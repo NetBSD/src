@@ -1,4 +1,4 @@
-/*	$NetBSD: com4.c,v 1.9 2000/09/10 10:51:17 jsm Exp $	*/
+/*	$NetBSD: com4.c,v 1.10 2000/09/17 23:04:17 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com4.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com4.c,v 1.9 2000/09/10 10:51:17 jsm Exp $");
+__RCSID("$NetBSD: com4.c,v 1.10 2000/09/17 23:04:17 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -76,17 +76,14 @@ take(from)
 				clearbit(from, value);
 				if (value == MEDALION)
 					win--;
-			} else
-				if (testbit(inven, value))
-					printf("You're already holding%s%s.\n", (objsht[value][n - 1] == 's' ? " " : " a "), objsht[value]);
-				else
-					if (!heavy)
-						printf("The %s %s too heavy.\n", objsht[value], (objsht[value][n - 1] == 's' ? "are" : "is"));
-					else
-						if (!bulky)
-							printf("The %s %s too cumbersome to hold.\n", objsht[value], (objsht[value][n - 1] == 's' ? "are" : "is"));
-						else
-							printf("I dont see any %s around here.\n", objsht[value]);
+			} else if (testbit(inven, value))
+				printf("You're already holding%s%s.\n", (objsht[value][n - 1] == 's' ? " " : " a "), objsht[value]);
+			else if (!heavy)
+				printf("The %s %s too heavy.\n", objsht[value], (objsht[value][n - 1] == 's' ? "are" : "is"));
+			else if (!bulky)
+				printf("The %s %s too cumbersome to hold.\n", objsht[value], (objsht[value][n - 1] == 's' ? "are" : "is"));
+			else
+				printf("I dont see any %s around here.\n", objsht[value]);
 			if (wordnumber < wordcount - 1 && wordvalue[++wordnumber] == AND)
 				wordnumber++;
 			else
@@ -117,26 +114,25 @@ take(from)
 				wordvalue[wordnumber] = MAID;
 				wordtype[wordnumber--] = OBJECT;
 				return (take(from));
-			} else
-				if (testbit(from, DEADWOOD)) {
-					wordvalue[wordnumber] = DEADWOOD;
+			} else if (testbit(from, DEADWOOD)) {
+				wordvalue[wordnumber] = DEADWOOD;
+				wordtype[wordnumber--] = OBJECT;
+				return (take(from));
+			} else if (testbit(from, DEADNATIVE)) {
+				wordvalue[wordnumber] = DEADNATIVE;
+				wordtype[wordnumber--] = OBJECT;
+				return (take(from));
+			} else {
+				if (testbit(from, DEADGOD)) {
+					wordvalue[wordnumber] = DEADGOD;
 					wordtype[wordnumber--] = OBJECT;
 					return (take(from));
-				} else
-					if (testbit(from, DEADNATIVE)) {
-						wordvalue[wordnumber] = DEADNATIVE;
-						wordtype[wordnumber--] = OBJECT;
-						return (take(from));
-					} else
-						if (testbit(from, DEADGOD)) {
-							wordvalue[wordnumber] = DEADGOD;
-							wordtype[wordnumber--] = OBJECT;
-							return (take(from));
-						} else {
-							wordvalue[wordnumber] = DEADTIME;
-							wordtype[wordnumber--] = OBJECT;
-							return (take(from));
-						}
+				} else {
+					wordvalue[wordnumber] = DEADTIME;
+					wordtype[wordnumber--] = OBJECT;
+					return (take(from));
+				}
+			}
 			break;
 
 		case AMULET:
@@ -306,9 +302,8 @@ drop(name)
 				if (testbit(location[position].objects, value)) {
 					if (*name == 'T')
 						puts("Kicked instead.");
-					else
-						if (*name == 'G')
-							puts("Given anyway.");
+					else if (*name == 'G')
+						puts("Given anyway.");
 				}
 			} else
 				puts("Kicked.");
@@ -377,14 +372,12 @@ eat()
 				snooze += CYCLE / 10;
 				ourtime++;
 				puts("Eaten.  You can explore a little longer now.");
-			} else
-				if (ourtime < ate - CYCLE)
-					puts("You're stuffed.");
-				else
-					if (!testbit(inven, KNIFE))
-						puts("You need a knife.");
-					else
-						printf("You aren't holding the %s.\n", objsht[value]);
+			} else if (ourtime < ate - CYCLE)
+				puts("You're stuffed.");
+			else if (!testbit(inven, KNIFE))
+				puts("You need a knife.");
+			else
+				printf("You aren't holding the %s.\n", objsht[value]);
 			if (wordnumber < wordcount - 1 && wordvalue[++wordnumber] == AND)
 				wordnumber++;
 			else

@@ -1,4 +1,4 @@
-/*	$NetBSD: com1.c,v 1.11 2000/09/08 17:25:31 jsm Exp $	*/
+/*	$NetBSD: com1.c,v 1.12 2000/09/17 23:04:17 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com1.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com1.c,v 1.11 2000/09/08 17:25:31 jsm Exp $");
+__RCSID("$NetBSD: com1.c,v 1.12 2000/09/17 23:04:17 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -51,7 +51,7 @@ moveplayer(thataway, token)
 	wordnumber++;
 	if ((!notes[CANTMOVE] && !notes[LAUNCHED]) ||
 	    testbit(location[position].objects, LAND) ||
-	    (fuel > 0 && notes[LAUNCHED]))
+	    (fuel > 0 && notes[LAUNCHED])) {
 		if (thataway) {
 			position = thataway;
 			newway(token);
@@ -62,11 +62,12 @@ moveplayer(thataway, token)
 			whichway(location[position]);
 			return (0);
 		}
-	else
+	} else {
 		if (notes[CANTMOVE] && !notes[LAUNCHED])
 			puts("You aren't able to move; you better drop something.");
 		else
 			puts("You are out of fuel; now you will rot in space forever!");
+	}
 	return (1);
 }
 
