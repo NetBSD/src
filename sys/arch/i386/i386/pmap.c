@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.164 2003/11/03 04:02:13 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.165 2003/12/10 13:59:48 drochner Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164 2003/11/03 04:02:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.165 2003/12/10 13:59:48 drochner Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -769,7 +769,7 @@ pmap_exec_fixup(struct vm_map *map, struct trapframe *tf, struct pcb *pcb)
 			va = trunc_page(ent->end) - PAGE_SIZE;
 	}
 	vm_map_unlock_read(map);
-	if (va == pm->pm_hiexec)
+	if (va == pm->pm_hiexec && tf->tf_cs == GSEL(GUCODEBIG_SEL, SEL_UPL))
 		return (0);
 
 	pm->pm_hiexec = va;
