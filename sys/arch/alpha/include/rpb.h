@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.30 1999/04/14 23:28:31 thorpej Exp $ */
+/* $NetBSD: rpb.h,v 1.31 1999/04/14 23:55:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -380,10 +380,10 @@ struct ctb {
 #define	CTB_TURBOSLOT_BUS(x)		(((x) >> 8) & 0xff)
 #define	CTB_TURBOSLOT_SLOT(x)		((x) & 0xff)
 
-#define	CTB_TURBOSLOT_BUS_TC		0	/* TURBOchannel */
-#define	CTB_TURBOSLOT_BUS_ISA		1	/* ISA */
-#define	CTB_TURBOSLOT_BUS_EISA		2	/* EISA */
-#define	CTB_TURBOSLOT_BUS_PCI		3	/* PCI */
+#define	CTB_TURBOSLOT_TYPE_TC		0	/* TURBOchannel */
+#define	CTB_TURBOSLOT_TYPE_ISA		1	/* ISA */
+#define	CTB_TURBOSLOT_TYPE_EISA		2	/* EISA */
+#define	CTB_TURBOSLOT_TYPE_PCI		3	/* PCI */
 
 /* 
  * CRD: Console Routine Descriptor
