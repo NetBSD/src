@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.31 2004/08/11 14:28:44 mycroft Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.32 2004/08/12 03:39:11 mycroft Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.31 2004/08/11 14:28:44 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.32 2004/08/12 03:39:11 mycroft Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -1601,18 +1601,13 @@ spc_datain_pio(sc, p, n)
 	bus_space_write_1(iot, ioh, SCMD,
 	    SCMD_XFR | SCMD_PROG_XFR);	/* XXX */
 #endif
-	for (;;) {
-		if ((bus_space_read_1(iot, ioh, SSTS) & SSTS_BUSY) != 0)
-			break;
-		if (bus_space_read_1(iot, ioh, INTS) != 0)
-			goto phasechange;
-	}
 
 	/*
 	 * We leave this loop if one or more of the following is true:
 	 * a) phase != PH_DATAIN && FIFOs are empty
 	 * b) reset has occurred or busfree is detected.
 	 */
+	intstat = 0;
 	while (n > 0) {
 		sstat = bus_space_read_1(iot, ioh, SSTS);
 		if ((sstat & SSTS_DREG_FULL) != 0) {
@@ -1625,9 +1620,9 @@ spc_datain_pio(sc, p, n)
 			in++;
 			*p++ = bus_space_read_1(iot, ioh, DREG);
 		} else {
-			intstat = bus_space_read_1(iot, ioh, INTS);
 			if (intstat != 0)
 				goto phasechange;
+			intstat = bus_space_read_1(iot, ioh, INTS);
 		}
 	}
 
@@ -1644,9 +1639,9 @@ spc_datain_pio(sc, p, n)
 			if ((sstat & SSTS_DREG_EMPTY) == 0) {
 				(void) bus_space_read_1(iot, ioh, DREG);
 			} else {
-				intstat = bus_space_read_1(iot, ioh, INTS);
 				if (intstat != 0)
 					goto phasechange;
+				intstat = bus_space_read_1(iot, ioh, INTS);
 			}
 		}
 		SPC_MISC(("extra data  "));
