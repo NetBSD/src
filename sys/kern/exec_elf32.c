@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.44 1999/04/30 23:02:06 cgd Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.45 1999/06/29 23:39:06 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -526,7 +526,12 @@ ELFNAME2(exec,makecmds)(p, epp)
 	if (epp->ep_hdrvalid < sizeof(Elf_Ehdr))
 		return ENOEXEC;
 
-	if (ELFNAME(check_header)(eh, Elf_et_exec))
+	/*
+	 * XXX allow for executing shared objects. It seems silly
+	 * but other ELF-based systems allow it as well.
+	 */
+	if (ELFNAME(check_header)(eh, Elf_et_exec) != 0 &&
+	    ELFNAME(check_header)(eh, Elf_et_dyn) != 0)
 		return ENOEXEC;
 
 	/*
