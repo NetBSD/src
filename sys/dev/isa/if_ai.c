@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ai.c,v 1.4 1998/04/15 01:45:43 thorpej Exp $	*/
+/*	$NetBSD: if_ai.c,v 1.5 1998/06/08 12:19:46 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -278,7 +278,7 @@ ai_match(parent, cf, aux)
 	val = bus_space_read_1(iot, ioh, AI_REVISION);
 
 	type = SL_BOARD(val);
-	if (type != SL10_BOARD || type != EN100_BOARD ||
+	if (type != SL10_BOARD && type != EN100_BOARD &&
 	    type != SLFIBER_BOARD) {
 		DPRINTF(("ai_match: unknown board code 0x%02x @ 0x%x\n",
 			 type, ia->ia_iobase));
@@ -331,6 +331,7 @@ ai_attach(parent, self, aux)
 	u_int8_t val = 0;
 	bus_space_handle_t ioh, memh;
 	u_int8_t ethaddr[ETHER_ADDR_LEN];
+	char name[80];
 
 	if (bus_space_map(ia->ia_iot, ia->ia_iobase,
 			  ia->ia_iosize, 0, &ioh) != 0) {
@@ -409,10 +410,10 @@ ai_attach(parent, self, aux)
 	val = bus_space_read_1(asc->sc_regt, asc->sc_regh, AI_REVISION);
 	asc->card_rev = SL_REV(val);
 	asc->card_type = SL_BOARD(val) - 1;
-	sprintf(version, "%s, rev. %d",
+	sprintf(name, "%s, rev. %d",
 		ai_names[asc->card_type], asc->card_rev);
 
-	i82586_attach(sc, version, ethaddr, NULL, 0, 0);
+	i82586_attach(sc, name, ethaddr, NULL, 0, 0);
 
 	asc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 					IPL_NET, i82586_intr, sc);
