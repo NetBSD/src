@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\"	$NetBSD: MAKEDEV.8,v 1.12 2000/05/07 01:38:15 wiz Exp $
+.\"	$NetBSD: MAKEDEV.8,v 1.13 2000/06/11 10:08:04 veego Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -137,9 +137,7 @@ Compaq array disk devices, see
 .It Console ports:
 . Bl -tag -width 0123456789 -compact
 . It Ar ttyv0
-Pccons or pcvt screen 0
-. It Ar ttyv#
-Pcvt
+Pccons
 . It Ar ttyE#
 Wscons
 . El
@@ -172,6 +170,8 @@ Standard PC COM ports, see
 . It Ar tty#
 Alias for PC COM ports, this is what the system really wants, see
 .Xr tty 4 
+. It Ar ttyCZ#
+Cyclades-Z multiport serial boards. Each ``unit'' makes 64 ports.
 . El
 .It Pseudo terminals:
 . Bl -tag -width 0123456789 -compact
@@ -244,6 +244,8 @@ PlanetConnect satellite receiver driver
 SCSI busses, see
 .Xr scsi 4 ,
 .Xr scsictl 8 
+. It Ar ses#
+SES/SAF-TE SCSI Devices
 . It Ar ss#
 SCSI scanner, see
 .Xr ss 4 
@@ -258,8 +260,9 @@ Coda file system device
 . It Ar lm
 LM7[89] hardware monitor, see
 .Xr lm 4 
-. It Ar bktr#
-Brooktree 848/849/878/879 based TV cards
+. It Ar bktr
+Brooktree 848/849/878/879 based TV cards, see
+.Xr bktr 4 
 . El
 .El
 .Pp
