@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.4 1997/07/12 16:19:38 perry Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.5 1997/10/12 15:39:35 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -231,3 +231,5 @@
 
 /* pcb base */
 #define	pcbb(p)		((u_int)(p)->p_addr)
+
+#define MACHINE_NONCONTIG	/* VM <=> pmap interface modifier */
