@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12 1999/02/17 04:46:45 scottr Exp $	*/
+/*	$NetBSD: intr.h,v 1.13 1999/02/28 04:52:07 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -83,14 +83,14 @@
  * splnet must block hardware network interrupts
  * splimp must be > spltty
  */
-extern unsigned short	mac68k_ttyipl;
-extern unsigned short	mac68k_bioipl;
-extern unsigned short	mac68k_netipl;
-extern unsigned short	mac68k_impipl;
-extern unsigned short	mac68k_audioipl;
-extern unsigned short	mac68k_clockipl;
-extern unsigned short	mac68k_statclockipl;
-extern unsigned short	mac68k_schedipl;
+extern u_short	mac68k_ttyipl;
+extern u_short	mac68k_bioipl;
+extern u_short	mac68k_netipl;
+extern u_short	mac68k_impipl;
+extern u_short	mac68k_audioipl;
+extern u_short	mac68k_clockipl;
+extern u_short	mac68k_statclockipl;
+extern u_short	mac68k_schedipl;
 
 /*
  * These should be used for:
@@ -140,6 +140,7 @@ extern volatile u_int8_t ssir;
 #define	setsoftadb()	siron(SIR_ADB)
 
 /* intr.c */
+void	intr_init __P((void));
 void	intr_establish __P((int (*)(void *), void *, int));
 void	intr_disestablish __P((int));
 void	intr_dispatch __P((int));
