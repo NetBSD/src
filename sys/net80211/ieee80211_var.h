@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_var.h,v 1.4 2003/10/13 04:27:40 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_var.h,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/net80211/ieee80211_var.h,v 1.5 2003/08/19 22:17:03 sam Exp $
+ * $FreeBSD: src/sys/net80211/ieee80211_var.h,v 1.10 2003/10/17 23:15:30 sam Exp $
  */
 #ifndef _NET80211_IEEE80211_VAR_H_
 #define _NET80211_IEEE80211_VAR_H_
@@ -41,6 +41,7 @@
 
 #include <net80211/ieee80211.h>
 #include <net80211/ieee80211_crypto.h>
+#include <net80211/ieee80211_ioctl.h>		/* for ieee80211_stats */
 #include <net80211/ieee80211_node.h>
 #include <net80211/ieee80211_proto.h>
 
@@ -192,12 +193,15 @@ struct ieee80211com {
 #ifdef __FreeBSD__
 	struct mtx		ic_nodelock;	/* on node table */
 #endif
+	u_int			ic_scangen;	/* gen# for timeout scan */
 	struct ieee80211_node	*(*ic_node_alloc)(struct ieee80211com *);
 	void			(*ic_node_free)(struct ieee80211com *,
 					struct ieee80211_node *);
 	void			(*ic_node_copy)(struct ieee80211com *,
 					struct ieee80211_node *,
 					const struct ieee80211_node *);
+	u_int8_t		(*ic_node_getrssi)(struct ieee80211com *,
+					struct ieee80211_node *);
 	TAILQ_HEAD(, ieee80211_node) ic_node;	/* information of all nodes */
 	LIST_HEAD(, ieee80211_node) ic_hash[IEEE80211_NODE_HASHSIZE];
 	u_int16_t		ic_lintval;	/* listen interval */
@@ -217,6 +221,7 @@ struct ieee80211com {
 	int			ic_wep_txkey;	/* default tx key index */
 	void			*ic_wep_ctx;	/* wep crypt context */
 	u_int32_t		ic_iv;		/* initial vector for wep */
+	struct ieee80211_stats	ic_stats;	/* statistics */
 };
 #ifdef __NetBSD__
 #define	ic_if		ic_ec.ec_if
@@ -245,7 +250,7 @@ struct ieee80211com {
 #define	IEEE80211_F_SHSLOT	0x00020000	/* CONF: short slot time */
 #define	IEEE80211_F_SHPREAMBLE	0x00040000	/* CONF: short preamble */
 
-/* ic_capabilities */
+/* ic_caps */
 #define	IEEE80211_C_WEP		0x00000001	/* CAPABILITY: WEP available */
 #define	IEEE80211_C_IBSS	0x00000002	/* CAPABILITY: IBSS available */
 #define	IEEE80211_C_PMGT	0x00000004	/* CAPABILITY: Power mgmt */
@@ -256,6 +261,7 @@ struct ieee80211com {
 #define	IEEE80211_C_SHSLOT	0x00000080	/* CAPABILITY: short slottime */
 #define	IEEE80211_C_SHPREAMBLE	0x00000100	/* CAPABILITY: short preamble */
 #define	IEEE80211_C_MONITOR	0x00000200	/* CAPABILITY: monitor mode */
+#define	IEEE80211_C_RCVMGT	0x00000400	/* CAPABILITY: rcv mgt frames */
 
 /* flags for ieee80211_fix_rate() */
 #define	IEEE80211_F_DOSORT	0x00000001	/* sort rate list */
