@@ -1,4 +1,4 @@
-/*	$NetBSD: line.c,v 1.2 1998/02/22 14:57:30 christos Exp $	*/
+/*	$NetBSD: line.c,v 1.3 1998/12/19 17:46:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -383,15 +383,15 @@ do_append(c, pos)
 		 * or just deletion of the character in the buffer.
 		 */
 		overstrike = 0;
-		if ((char)c == linebuf[curr])
+		if ((char)c == linebuf[curr]) {
 			STOREC(linebuf[curr], AT_BOLD);
-		else if (c == '_')
+		} else if (c == '_') { 
 			STOREC(linebuf[curr], AT_UNDERLINE);
-		else if (linebuf[curr] == '_')
+		} else if (linebuf[curr] == '_') {
 			STOREC(c, AT_UNDERLINE);
-		else if (control_char(c))
+		} else if (control_char(c)) {
 			goto do_control_char;
-		else
+		} else
 			STOREC(c, AT_NORMAL);
 	} else if (c == '\b')
 	{
