@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.86 2002/04/23 15:11:25 christos Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.87 2002/04/23 17:20:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.86 2002/04/23 15:11:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.87 2002/04/23 17:20:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1391,7 +1391,7 @@ fdcheckstd(p)
 	struct filedesc *fdp;
 	struct file *fp;
 	register_t retval;
-	int fd, i, error = 0, flags = FREAD|FWRITE, devnull = -1, logged = 0;
+	int fd, i, error, flags = FREAD|FWRITE, devnull = -1, logged = 0;
 
 	if ((fdp = p->p_fd) == NULL)
 	       return 0;
@@ -1420,6 +1420,8 @@ fdcheckstd(p)
 			fp->f_type = DTYPE_VNODE;
 			VOP_UNLOCK(nd.ni_vp, 0);
 			devnull = fd;
+			FILE_SET_MATURE(fp);
+			FILE_UNUSE(fp, p);
 		} else {
 restart:
 			if ((error = fdalloc(p, 0, &fd)) != 0) {
@@ -1433,5 +1435,5 @@ restart:
 				return error;
 		}
 	}
-	return error;
+	return 0;
 }
