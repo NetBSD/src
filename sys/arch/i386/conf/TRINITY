@@ -1,4 +1,4 @@
-#	$NetBSD: TRINITY,v 1.66 1996/03/12 01:33:02 perry Exp $
+#	$NetBSD: TRINITY,v 1.67 1996/03/16 06:09:14 thorpej Exp $
 #
 #	TRINITY -- Mycroft's 386 box
 #
@@ -111,7 +111,7 @@ lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
 #lms1	at isa? port 0x238 irq 5
 #mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #mms1	at isa? port 0x238 irq 5
-#pms0	at isa? port 0x60 irq 12	# PS/2 auxiliary port mouse
+#pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
 
 aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 #aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers

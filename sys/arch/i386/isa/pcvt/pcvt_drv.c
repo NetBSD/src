@@ -337,6 +337,16 @@ pcattach(struct isa_device *dev)
 #if PCVT_NETBSD > 101
 	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY, pcintr,
 	    (void *)0);
+
+#if PCVT_NETBSD > 110
+	/*
+	 * Look for children of the keyboard controller.
+	 * XXX Really should decouple keyboard controller
+	 * from the console code.
+	 */
+	while (config_found(self, NULL, NULL))
+		/* will break when no more children */ ;
+#endif /* PVCT_NETBSD > 110 */
 #else /* PCVT_NETBSD > 100 */
 	vthand.ih_fun = pcrint;
 	vthand.ih_arg = 0;
