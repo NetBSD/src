@@ -1,4 +1,4 @@
-/*	$NetBSD: pcictl.c,v 1.3 2001/09/15 18:35:00 thorpej Exp $	*/
+/*	$NetBSD: pcictl.c,v 1.4 2001/09/17 10:05:57 joda Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -231,12 +231,18 @@ cmd_dump(int argc, char *argv[])
 int
 parse_bdf(const char *str)
 {
+	long value;
+	char *end;
 
 	if (strcmp(str, "all") == 0 ||
 	    strcmp(str, "any") == 0)
 		return (-1);
 
-	return (atoi(str));
+	value = strtol(str, &end, 0);
+	if(*end != '\0') 
+		errx(1, "\"%s\" is not a number", str);
+
+	return value;
 }
 
 void
