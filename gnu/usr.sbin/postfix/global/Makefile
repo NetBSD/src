@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/04/30 21:21:58 perry Exp $
+#	$NetBSD: Makefile,v 1.2 2000/12/09 17:35:05 perry Exp $
 
 LIB=	global
 
@@ -23,7 +23,7 @@ SRCS=	been_here.c bounce.c canon_addr.c cleanup_strerror.c clnt_stream.c \
 	recipient_list.c record.c remove.c resolve_clnt.c resolve_local.c \
 	rewrite_clnt.c sent.c smtp_stream.c split_addr.c string_list.c \
 	sys_exits.c timed_ipc.c tok822_find.c tok822_node.c tok822_parse.c \
-	tok822_resolve.c tok822_rewrite.c tok822_tree.c
+	tok822_resolve.c tok822_rewrite.c tok822_tree.c abounce.c
 
 MKLINT=		no
 MKPIC=		no
