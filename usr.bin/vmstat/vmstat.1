@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmstat.1,v 1.12 2004/02/13 10:16:08 wiz Exp $
+.\"	$NetBSD: vmstat.1,v 1.13 2005/01/26 13:07:32 simonb Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,7 +60,7 @@
 .\"
 .\"	@(#)vmstat.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd May 6, 2003
+.Dd January 26, 2005
 .Dt VMSTAT 1
 .Os
 .Sh NAME
@@ -68,7 +68,7 @@
 .Nd report virtual memory statistics
 .Sh SYNOPSIS
 .Nm
-.Op Fl efHilLmsUv
+.Op Fl efHilLmsUvW
 .Bk -words
 .Op Fl M Ar core
 .Ek
@@ -150,6 +150,8 @@ When used with the
 or
 .Fl m
 options prints out all counters, not just those with non-zero values.
+.It Fl W
+Print more verbose information about kernel memory pools.
 .It Fl w Ar wait
 Pause
 .Ar wait

@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.125 2004/12/20 08:20:50 dsainty Exp $ */
+/* $NetBSD: vmstat.c,v 1.126 2005/01/26 13:07:32 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.125 2004/12/20 08:20:50 dsainty Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.126 2005/01/26 13:07:32 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -245,7 +245,7 @@ void	doevcnt(int verbose);
 void	dohashstat(int, int, const char *);
 void	dointr(int verbose);
 void	domem(void);
-void	dopool(int);
+void	dopool(int, int);
 void	dopoolcache(struct pool *, int);
 void	dosum(void);
 void	dovmstat(struct timespec *, int);
@@ -272,7 +272,7 @@ char	*nlistf, *memf;
 int
 main(int argc, char *argv[])
 {
-	int c, todo, verbose;
+	int c, todo, verbose, wide;
 	struct timespec interval;
 	int reps;
 	char errbuf[_POSIX2_LINE_MAX];
@@ -282,10 +282,10 @@ main(int argc, char *argv[])
 	histname = hashname = NULL;
 	(void)setegid(getgid());
 	memf = nlistf = NULL;
-	reps = todo = verbose = 0;
+	reps = todo = verbose = wide = 0;
 	interval.tv_sec = 0;
 	interval.tv_nsec = 0;
-	while ((c = getopt(argc, argv, "c:efh:HilLM:mN:su:Uvw:")) != -1) {
+	while ((c = getopt(argc, argv, "c:efh:HilLM:mN:su:UvWw:")) != -1) {
 		switch (c) {
 		case 'c':
 			reps = atoi(optarg);
@@ -331,6 +331,9 @@ main(int argc, char *argv[])
 			break;
 		case 'v':
 			verbose++;
+			break;
+		case 'W':
+			wide++;
 			break;
 		case 'w':
 			interval.tv_sec = atol(optarg);
@@ -430,7 +433,7 @@ main(int argc, char *argv[])
 			}
 			if (todo & MEMSTAT) {
 				domem();
-				dopool(verbose);
+				dopool(verbose, wide);
 				putchar('\n');
 			}
 			if (todo & SUMSTAT) {
@@ -1020,11 +1023,11 @@ domem(void)
 }
 
 void
-dopool(int verbose)
+dopool(int verbose, int wide)
 {
 	int first, ovflw;
 	void *addr;
-	long total = 0, inuse = 0;
+	long total, inuse, this_total, this_inuse;
 	TAILQ_HEAD(,pool) pool_head;
 	struct pool pool, *pp = &pool;
 	struct pool_allocator pa;
@@ -1032,6 +1035,8 @@ dopool(int verbose)
 
 	kread(X_POOLHEAD, &pool_head, sizeof(pool_head));
 	addr = TAILQ_FIRST(&pool_head);
+
+	total = inuse = 0;
 
 	for (first = 1; addr != NULL; addr = TAILQ_NEXT(pp, pr_poollist) ) {
 		deref_kptr(addr, pp, sizeof(*pp), "pool chain trashed");
@@ -1044,19 +1049,24 @@ dopool(int verbose)
 		if (first) {
 			(void)printf("Memory resource pool statistics\n");
 			(void)printf(
-			    "%-11s%5s%9s%5s%9s%6s%6s%6s%6s%6s%6s%5s\n",
-			    "Name",
-			    "Size",
-			    "Requests",
+			    "%-*s%*s%*s%5s%*s%s%s%*s%*s%6s%s%6s%6s%6s%5s%s%s\n",
+			    wide ? 16 : 11, "Name",
+			    wide ? 6 : 5, "Size",
+			    wide ? 12 : 9, "Requests",
 			    "Fail",
-			    "Releases",
-			    "Pgreq",
-			    "Pgrel",
+			    wide ? 12 : 9, "Releases",
+			    wide ? " InUse" : "",
+			    wide ? " Avail" : "",
+			    wide ? 7 : 6, "Pgreq",
+			    wide ? 7 : 6, "Pgrel",
 			    "Npage",
+			    wide ? " PageSz" : "",
 			    "Hiwat",
 			    "Minpg",
 			    "Maxpg",
-			    "Idle");
+			    "Idle",
+			    wide ? " Flags" : "",
+			    wide ? "   Util" : "");
 			first = 0;
 		}
 		if (pp->pr_nget == 0 && !verbose)
@@ -1081,38 +1091,57 @@ dopool(int verbose)
 		(ovflw) = 0;				\
 } while (/* CONSTCOND */0)
 		ovflw = 0;
-		PRWORD(ovflw, "%-*s", 11, 0, name);
-		PRWORD(ovflw, " %*u", 5, 1, pp->pr_size);
-		PRWORD(ovflw, " %*lu", 9, 1, pp->pr_nget);
+		PRWORD(ovflw, "%-*s", wide ? 16 : 11, 0, name);
+		PRWORD(ovflw, " %*u", wide ? 6 : 5, 1, pp->pr_size);
+		PRWORD(ovflw, " %*lu", wide ? 12 : 9, 1, pp->pr_nget);
 		PRWORD(ovflw, " %*lu", 5, 1, pp->pr_nfail);
-		PRWORD(ovflw, " %*lu", 9, 1, pp->pr_nput);
-		PRWORD(ovflw, " %*lu", 6, 1, pp->pr_npagealloc);
-		PRWORD(ovflw, " %*lu", 6, 1, pp->pr_npagefree);
-		PRWORD(ovflw, " %*d", 6, 1, pp->pr_npages);
-		PRWORD(ovflw, " %*d", 6, 1, pp->pr_hiwat);
-		PRWORD(ovflw, " %*d", 6, 1, pp->pr_minpages);
+		PRWORD(ovflw, " %*lu", wide ? 12 : 9, 1, pp->pr_nput);
+		if (wide)
+			PRWORD(ovflw, " %*u", 6, 1, pp->pr_nout);
+		if (wide)
+			PRWORD(ovflw, " %*u", 6, 1, pp->pr_nitems);
+		PRWORD(ovflw, " %*lu", wide ? 7 : 6, 1, pp->pr_npagealloc);
+		PRWORD(ovflw, " %*lu", wide ? 7 : 6, 1, pp->pr_npagefree);
+		PRWORD(ovflw, " %*u", 6, 1, pp->pr_npages);
+		if (wide)
+			PRWORD(ovflw, " %*u", 7, 1, pa.pa_pagesz);
+		PRWORD(ovflw, " %*u", 6, 1, pp->pr_hiwat);
+		PRWORD(ovflw, " %*u", 6, 1, pp->pr_minpages);
 		PRWORD(ovflw, " %*s", 6, 1, maxp);
-		PRWORD(ovflw, " %*lu\n", 5, 1, pp->pr_nidle);
+		PRWORD(ovflw, " %*lu", 5, 1, pp->pr_nidle);
+		if (wide)
+			PRWORD(ovflw, " 0x%0*x", 4, 1,
+			    pp->pr_flags | pp->pr_roflags);
 
+		this_inuse = pp->pr_nout * pp->pr_size;
+		this_total = pp->pr_npages * pa.pa_pagesz;
 		if (pp->pr_roflags & PR_RECURSIVE) {
 			/*
 			 * Don't count in-use memory, since it's part
 			 * of another pool and will be accounted for
 			 * there.
 			 */
-			total += pp->pr_npages * pa.pa_pagesz -
-			     (pp->pr_nget - pp->pr_nput) * pp->pr_size;
+			total += (this_total - this_inuse);
 		} else {
-			inuse += (pp->pr_nget - pp->pr_nput) * pp->pr_size;
-			total += pp->pr_npages * pa.pa_pagesz;
+			inuse += this_inuse;
+			total += this_total;
+
 		}
+		if (wide) {
+			if (this_total == 0)
+				printf("   ---");
+			else
+				printf(" %5.1f%%",
+				    (100.0 * this_inuse) / this_total);
+		}
+		printf("\n");
 		dopoolcache(pp, verbose);
 	}
 
 	inuse /= 1024;
 	total /= 1024;
 	printf("\nIn use %ldK, total allocated %ldK; utilization %.1f%%\n",
-	    inuse, total, (double)(100 * inuse) / total);
+	    inuse, total, (100.0 * inuse) / total);
 }
 
 void
