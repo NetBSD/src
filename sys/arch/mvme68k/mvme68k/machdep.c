@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29 1997/11/01 17:56:47 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30 1997/12/04 15:33:38 tv Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -140,12 +140,6 @@ extern	short exframesize[];
 
 #ifdef COMPAT_HPUX
 extern struct emul emul_hpux;
-#endif
-#ifdef COMPAT_SUNOS
-extern struct emul emul_sunos;
-#endif
-#ifdef COMPAT_SVR4
-extern struct emul emul_svr4;
 #endif
 
 /* prototypes for local functions */ 
@@ -1155,14 +1149,7 @@ cpu_exec_aout_makecmds(p, epp)
     struct proc *p;
     struct exec_package *epp;
 {
-    int error = ENOEXEC;
-#ifdef COMPAT_SUNOS
-    extern sunos_exec_aout_makecmds
-        __P((struct proc *, struct exec_package *));
-    if ((error = sunos_exec_aout_makecmds(p, epp)) == 0)
-        return 0;
-#endif
-    return error;
+    return ENOEXEC;
 }
 
 void
