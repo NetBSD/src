@@ -544,9 +544,8 @@ BUILDING
 
      sourcesets    Perform ``make sourcesets''.
 
-     The following command line options alter the behaviour of the above oper-
-     ations: The following command line options alter the behaviour of the
-     build.sh operations described above:
+     The following command line options alter the behaviour of the build.sh
+     operations described above:
 
      -a arch   Set the value of MACHINE_ARCH to arch.
 
@@ -565,6 +564,8 @@ BUILDING
 
                Note: It is highly recommended that you know what you are doing
                when you use this option.
+
+     -h        Print a help message.
 
      -j njob   Passed through to make(1).  Makefiles should use .WAIT or have
                explicit dependancies as necessary to enforce build ordering.
