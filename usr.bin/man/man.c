@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.18 1999/07/22 03:02:36 itohy Exp $	*/
+/*	$NetBSD: man.c,v 1.19 1999/07/22 15:09:45 kleink Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.18 1999/07/22 03:02:36 itohy Exp $");
+__RCSID("$NetBSD: man.c,v 1.19 1999/07/22 15:09:45 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -505,7 +505,8 @@ build_page(fmt, pathp)
 	TAG *intmpp;
 	int fd, n;
 	char *p, *b;
-	char buf[MAXPATHLEN], cmd[MAXPATHLEN], tpath[sizeof(_PATH_TMP)];
+	char buf[MAXPATHLEN], cmd[MAXPATHLEN], tpath[MAXPATHLEN];
+	const char *tmpdir;
 
 	/* Let the user know this may take awhile. */
 	if (!warned) {
@@ -550,7 +551,9 @@ build_page(fmt, pathp)
 	 * Get a temporary file and build a version of the file
 	 * to display.  Replace the old file name with the new one.
 	 */
-	(void)strcpy(tpath, _PATH_TMP);
+	if ((tmpdir = getenv("TMPDIR")) == NULL)
+		tmpdir = _PATH_TMP;
+	(void)snprintf(tpath, sizeof (tpath), "%s/%s", tmpdir, TMPFILE);
 	if ((fd = mkstemp(tpath)) == -1) {
 		warn("%s", tpath);
 		(void)cleanup();
