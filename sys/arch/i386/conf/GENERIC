@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.626 2004/07/31 17:35:19 mrg Exp $
+# $NetBSD: GENERIC,v 1.627 2004/08/08 08:57:09 mycroft Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.626 $"
+#ident 		"GENERIC-$Revision: 1.627 $"
 
 maxusers	32		# estimated number of users
 
@@ -790,8 +790,9 @@ sm*	at pcmcia? function ?		# Megahertz Ethernet
 # tr at pcmcia has problems with Cardbus bridges
 #tr*	at pcmcia? function ?		# TROPIC based Token-Ring
 wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
-xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
-
+xirc*	at pcmcia? function ?		# Xircom CreditCard Ethernet
+com*	at xirc?
+xi*	at xirc?
 mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
 com*	at mhzc?
 sm*	at mhzc?
