@@ -105,8 +105,7 @@ Boston, MA 02111-1307, USA.  */
   %{pic-lib:    -mhalf-pic} \
   %{pic-extern: -mhalf-pic} \
   %{pic-calls:  -mhalf-pic} \
-  %{save-temps: } \
-  %{!mno-abicalls:    -mabicalls}"
+  %{save-temps: }"
 
 #undef CPP_SPEC
 #define CPP_SPEC \
@@ -263,7 +262,7 @@ do {									 \
    GO_IF_LEGITIMATE_ADDRESS ever accepting such addresses. */
 
 #undef TARGET_DEFAULT
-#define TARGET_DEFAULT (MASK_GAS|MASK_DEBUG_A)
+#define TARGET_DEFAULT (MASK_GAS|MASK_DEBUG_A|MASK_ABICALLS)
 
 /* Since gas and gld are standard on NetBSD, we don't need these */
 #undef ASM_FINAL_SPEC
