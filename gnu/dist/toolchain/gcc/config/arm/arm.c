@@ -220,6 +220,22 @@ static struct processors all_cores[] =
   {"strongarm",	             FL_MODE26 | FL_MODE32 | FL_FAST_MULT | FL_ARCH4 |            FL_LDSCHED | FL_STRONG },
   {"strongarm110",           FL_MODE26 | FL_MODE32 | FL_FAST_MULT | FL_ARCH4 |            FL_LDSCHED | FL_STRONG },
   {"strongarm1100",          FL_MODE26 | FL_MODE32 | FL_FAST_MULT | FL_ARCH4 |            FL_LDSCHED | FL_STRONG },
+
+  /* Local NetBSD additions.  These switches also appear in gcc 3.x.  They
+     have been added to the NetBSD in-tree 2.95.3 in order to provide for
+     command-line compatibility with gcc 3.x.
+
+     We treat them like other CPUs that 2.95.3 already supports:
+
+     arm10tdmi -> arm9tdmi
+     arm1020t -> arm9tdmi
+
+     xscame -> strongarm
+
+     --thorpej@netbsd.org  */
+  {"arm10tdmi",	                         FL_MODE32 | FL_FAST_MULT | FL_ARCH4 | FL_THUMB | FL_LDSCHED },
+  {"arm1020t",	                         FL_MODE32 | FL_FAST_MULT | FL_ARCH4 | FL_THUMB | FL_LDSCHED },
+  {"xscale",	                         FL_MODE32 | FL_FAST_MULT | FL_ARCH4 |            FL_LDSCHED | FL_STRONG },
   
   {NULL, 0}
 };
@@ -236,6 +252,20 @@ static struct processors all_architectures[] =
   /* Strictly, FL_MODE26 is a permitted option for v4t, but there are no
      implementations that support it, so we will leave it out for now.  */
   {"armv4t",    FL_CO_PROC |             FL_MODE32 | FL_FAST_MULT | FL_ARCH4 | FL_THUMB },
+  /* Local NetBSD additions.  These switches also appear in gcc 3.x.  They
+     have been added to the NetBSD in-tree 2.95.3 in order to provide for
+     command-line compatibility with gcc 3.x.
+
+     We treat them like other ARCHs that 2.95.3 already supports:
+
+     armv5 -> armv4t
+     armv5t -> armv4t
+     armv5te -> armv4t
+
+     --thorpej@netbsd.org  */
+  {"armv5",    FL_CO_PROC |             FL_MODE32 | FL_FAST_MULT | FL_ARCH4 | FL_THUMB },
+  {"armv5t",   FL_CO_PROC |             FL_MODE32 | FL_FAST_MULT | FL_ARCH4 | FL_THUMB },
+  {"armv5te",  FL_CO_PROC |             FL_MODE32 | FL_FAST_MULT | FL_ARCH4 | FL_THUMB },
   {NULL, 0}
 };
 
