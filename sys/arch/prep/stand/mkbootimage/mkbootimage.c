@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.10 2004/05/09 01:31:27 thorpej Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.11 2004/06/23 21:39:32 kleink Exp $	*/
 
 /*-
  * Copyright (C) 1999, 2000 NONAKA Kimihiro (nonaka@NetBSD.org)
@@ -32,6 +32,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#include "../../sys/sys/bootblock.h"
+#else
+#include <sys/bootblock.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,13 +48,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/uio.h>
-
-#if HAVE_NBTOOL_CONFIG_H
-#include "nbtool_config.h"
-#include "../../sys/sys/bootblock.h"
-#else
-#include <sys/bootblock.h>
-#endif
 
 /* BFD ELF headers */
 #include <elf/common.h>
