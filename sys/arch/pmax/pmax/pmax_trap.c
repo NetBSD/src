@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_trap.c,v 1.20 1995/07/04 12:22:21 paulus Exp $	*/
+/*	$NetBSD: pmax_trap.c,v 1.21 1995/07/23 20:21:17 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -181,21 +181,31 @@ extern void MachUTLBMiss();
 
 static void pmax_errintr();
 static void kn02_errintr(), kn02ba_errintr();
+
 #ifdef DS5000_240
 static void kn03_errintr();
-#endif
+extern u_long kn03_tc3_imask;
+
+/*
+ * IOASIC 40ns bus-cycle counter, used as hi-resolution clock:
+ * may also be present on (some) XINE, 3min hardware, but not tested there.
+ */
+extern u_long asic_base;	/* Base address of I/O asic */
+u_long latched_cycle_cnt;	/*
+				 * IOASIC cycle counter, latched on every
+				 * interrupt from RTC chip (64Hz).
+				 */
+#endif /*DS5000_240*/
+
 static unsigned kn02ba_recover_erradr();
 extern tc_option_t tc_slot_info[TC_MAX_LOGICAL_SLOTS];
 extern u_long kmin_tc3_imask, xine_tc3_imask;
 extern const struct callback *callv;
-#ifdef DS5000_240
-extern u_long kn03_tc3_imask;
-extern u_long asic_base;	/* Base address of I/O asic */
-u_long latched_cycle_cnt;	/* IOASIC cycle counter, latched every tick */
-#endif
 int (*pmax_hardware_intr)() = (int (*)())0;
 extern volatile struct chiptime *Mach_clock_addr;
-extern unsigned long intrcnt[];
+extern u_long intrcnt[];
+extern u_long kernelfaults;
+u_long kernelfaults = 0;
 
 /*
  * Handle an exception.
@@ -326,6 +336,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 			int rv;
 
 		kernel_fault:
+			kernelfaults++;
 			va = trunc_page((vm_offset_t)vadr);
 			rv = vm_fault(kernel_map, va, ftype, FALSE);
 			if (rv == KERN_SUCCESS)
@@ -841,8 +852,8 @@ interrupt(statusReg, causeReg, pc)
 			pppintr();
 		}
 #endif
-
 	}
+
 	if (mask & MACH_SOFT_INT_MASK_0) {
 		clearsoftclock();
 		intrcnt[0]++;
@@ -1269,18 +1280,32 @@ kn03_intr(mask, pc, statusReg, causeReg)
 			(tc_slot_info[0].unit);
 			intrcnt[8]++;
 		}
+#ifdef DIAGNOSTIC
+		else if (intr & KN03_INTR_TC_0)
+			printf ("can't handle tc0 interrupt\n");
+#endif /*DIAGNOSTIC*/
+
 		if ((intr & KN03_INTR_TC_1) &&
 			tc_slot_info[1].intr) {
 			(*(tc_slot_info[1].intr))
 			(tc_slot_info[1].unit);
 			intrcnt[9]++;
 		}
+#ifdef DIAGNOSTIC
+		else if (intr & KN03_INTR_TC_1)
+			printf ("can't handle tc1 interrupt\n");
+#endif /*DIAGNOSTIC*/
+
 		if ((intr & KN03_INTR_TC_2) &&
 			tc_slot_info[2].intr) {
 			(*(tc_slot_info[2].intr))
 			(tc_slot_info[2].unit);
 			intrcnt[10]++;
 		}
+#ifdef DIAGNOSTIC
+		else if (intr & KN03_INTR_TC_2)
+			printf ("can't handle tc2 interrupt\n");
+#endif /*DIAGNOSTIC*/
 	
 		if ((intr & KN03_INTR_SCSI) &&
 			tc_slot_info[KN03_SCSI_SLOT].intr) {
