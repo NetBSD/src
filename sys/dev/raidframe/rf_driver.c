@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.51 2002/08/03 00:38:42 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.52 2002/08/03 00:55:54 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.51 2002/08/03 00:38:42 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.52 2002/08/03 00:55:54 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -490,6 +490,24 @@ rf_Configure(raidPtr, cfgPtr, ac)
 	rf_StartUserStats(raidPtr);
 
 	raidPtr->valid = 1;
+
+	printf("raid%d: %s\n", raidPtr->raidid,
+	       raidPtr->Layout.map->configName);
+	printf("raid%d: Components:", raidPtr->raidid);
+	for (row = 0; row < raidPtr->numRow; row++) {
+		for (col = 0; col < raidPtr->numCol; col++) {
+			printf(" %s", raidPtr->Disks[row][col].devname);
+			if (RF_DEAD_DISK(raidPtr->Disks[row][col].status)) {
+				printf("[**FAILED**]");
+			}
+		}
+	}
+	printf("\n");
+	printf("raid%d: Total Sectors: %lu (%lu MB)\n",
+	       raidPtr->raidid,
+	       (unsigned long) raidPtr->totalSectors,
+	       (unsigned long) (raidPtr->totalSectors / 1024 * 
+				(1 << raidPtr->logBytesPerSector) / 1024));
 
 	return (0);
 }
