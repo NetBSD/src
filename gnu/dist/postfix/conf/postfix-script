@@ -1,0 +1,3 @@
+#!/bin/sh
+
+echo Please read the SECURITY notes at the end of the INSTALL document 1>&2
