@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)savecore.c	5.26 (Berkeley) 4/8/91";*/
-static char rcsid[] = "$Id: savecore.c,v 1.11 1994/05/27 08:40:49 pk Exp $";
+static char rcsid[] = "$Id: savecore.c,v 1.12 1994/05/31 09:38:12 pk Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -448,6 +448,7 @@ save_core()
 	dumpsize *= NBPG;
 	log(LOG_NOTICE, "Saving %d bytes of image in ram.%d\n",
 	    dumpsize, bounds);
+	ret = 0;
 	while (dumpsize > 0) {
 		n = read(ifd, cp,
 		    dumpsize > BUFSIZE ? BUFSIZE : dumpsize);
