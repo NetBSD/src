@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.556 2003/07/23 10:18:06 kleink Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.557 2003/07/27 01:41:46 jonathan Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.554 2003/07/23 10:16:16 kleink Exp 
+ *	NetBSD: pcidevs,v 1.555 2003/07/27 01:16:10 jonathan Exp 
  */
 
 /*
@@ -562,6 +562,7 @@
 #define	PCI_VENDOR_TERRATEC	0x153b		/* TerraTec Electronic */
 #define	PCI_VENDOR_SOLIDUM	0x1588		/* Solidum Systems Corp. */
 #define	PCI_VENDOR_GEOCAST	0x15a1		/* Geocast Network Systems */
+#define	PCI_VENDOR_BLUESTEEL	0x15ab		/* Bluesteel Networks */
 #define	PCI_VENDOR_EUMITCOM	0x1638		/* Eumitcom */
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
 #define	PCI_VENDOR_SIBYTE	0x166d		/* Broadcom Corp. (SiByte) */
@@ -1031,6 +1032,10 @@
 #define	PCI_PRODUCT_BIT3_PCIVME618	0x0010		/* PCI-VME Interface Mod. 618 */
 #define	PCI_PRODUCT_BIT3_PCIVME2706	0x0300		/* PCI-VME Interface Mod. 2706 */
 
+/* Bluesteel Networks */
+#define	PCI_PRODUCT_BLUESTEEL_5501	0x0000		/* 5501 */
+#define	PCI_PRODUCT_BLUESTEEL_5601	0x5601		/* 5601 */
+
 /* Broadcom Corporation products */
 #define	PCI_PRODUCT_BROADCOM_BCM5700	0x1644		/* BCM5700 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5701	0x1645		/* BCM5701 10/100/1000 Ethernet */
@@ -1044,6 +1049,13 @@
 #define	PCI_PRODUCT_BROADCOM_BCM5705	0x1653		/* BCM5705 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5705M	0x165d		/* BCM5705M 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM4401	0x4401		/* BCM4401 10/100 Ethernet */
+#define	PCI_PRODUCT_BROADCOM_5801	0x5801		/* 5801 Security processor */
+#define	PCI_PRODUCT_BROADCOM_5802	0x5802		/* 5802 Security processor */
+#define	PCI_PRODUCT_BROADCOM_5805	0x5805		/* 5805 Security processor */
+#define	PCI_PRODUCT_BROADCOM_5820	0x5820		/* 5820 Security processor */
+#define	PCI_PRODUCT_BROADCOM_5821	0x5821		/* 5821 Security processor */
+#define	PCI_PRODUCT_BROADCOM_5822	0x5822		/* 5822 Security processor */
+#define	PCI_PRODUCT_BROADCOM_5823	0x5822		/* 5823 Security processor */
 
 /* Brooktree products */
 #define	PCI_PRODUCT_BROOKTREE_BT848	0x0350		/* Bt848 Video Capture */
