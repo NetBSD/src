@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.10 1998/10/08 02:04:56 wsanchez Exp $	*/
+/*	$NetBSD: mtree.c,v 1.11 1998/10/10 07:50:28 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.10 1998/10/08 02:04:56 wsanchez Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.11 1998/10/10 07:50:28 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,7 @@ extern int crc_total;
 
 int ftsoptions = FTS_PHYSICAL;
 int cflag, dflag, eflag, rflag, sflag, tflag, uflag, Uflag;
-u_short keys;
+int keys;
 char fullpath[MAXPATHLEN];
 
 	int	main __P((int, char **));

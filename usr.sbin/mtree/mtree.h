@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.h,v 1.8 1998/10/08 02:04:56 wsanchez Exp $	*/
+/*	$NetBSD: mtree.h,v 1.9 1998/10/10 07:50:28 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@
 #include <sys/time.h>
 
 #define	KEYDEFAULT \
-	(F_GID | F_MODE | F_NLINK | F_SIZE | F_SLINK | F_TIME | F_UID)
+	(F_GID | F_MODE | F_NLINK | F_SIZE | F_SLINK | F_TIME | F_UID | F_FLAGS)
 
 #define	MISMATCHEXIT	2
 
@@ -58,25 +58,27 @@ typedef struct _node {
 	gid_t	st_gid;				/* gid */
 #define	MBITS	(S_ISUID|S_ISGID|S_ISTXT|S_IRWXU|S_IRWXG|S_IRWXO)
 	mode_t	st_mode;			/* mode */
+	u_long	st_flags;			/* flags */
 	nlink_t	st_nlink;			/* link count */
 
-#define	F_CKSUM	0x0001				/* check sum */
-#define	F_DONE	0x0002				/* directory done */
-#define	F_GID	0x0004				/* gid */
-#define	F_GNAME	0x0008				/* group name */
-#define	F_IGN	0x0010				/* ignore */
-#define	F_MAGIC	0x0020				/* name has magic chars */
-#define	F_MODE	0x0040				/* mode */
-#define	F_NLINK	0x0080				/* number of links */
-#define	F_OPT	0x0100				/* existence optional */
-#define	F_SIZE	0x0200				/* size */
-#define	F_SLINK	0x0400				/* link count */
-#define	F_TIME	0x0800				/* modification time */
-#define	F_TYPE	0x1000				/* file type */
-#define	F_UID	0x2000				/* uid */
-#define	F_UNAME	0x4000				/* user name */
-#define	F_VISIT	0x8000				/* file visited */
-	u_short	flags;				/* items set */
+#define	F_CKSUM	0x00000001			/* check sum */
+#define	F_DONE	0x00000002			/* directory done */
+#define	F_GID	0x00000004			/* gid */
+#define	F_GNAME	0x00000008			/* group name */
+#define	F_IGN	0x00000010			/* ignore */
+#define	F_MAGIC	0x00000020			/* name has magic chars */
+#define	F_MODE	0x00000040			/* mode */
+#define	F_NLINK	0x00000080			/* number of links */
+#define	F_OPT	0x00000100			/* existence optional */
+#define	F_SIZE	0x00000200			/* size */
+#define	F_SLINK	0x00000400			/* link count */
+#define	F_TIME	0x00000800			/* modification time */
+#define	F_TYPE	0x00001000			/* file type */
+#define	F_UID	0x00002000			/* uid */
+#define	F_UNAME	0x00004000			/* user name */
+#define	F_VISIT	0x00008000			/* file visited */
+#define	F_FLAGS	0x00010000			/* file flags */
+	int	flags;				/* items set */
 
 #define	F_BLOCK	0x001				/* block special */
 #define	F_CHAR	0x002				/* char special */
@@ -85,7 +87,7 @@ typedef struct _node {
 #define	F_FILE	0x010				/* regular file */
 #define	F_LINK	0x020				/* symbolic link */
 #define	F_SOCK	0x040				/* socket */
-	u_char	type;				/* file type */
+	int	type;				/* file type */
 
 	char	name[1];			/* file name (must be last) */
 } NODE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.13 1998/10/08 02:04:57 wsanchez Exp $	*/
+/*	$NetBSD: spec.c,v 1.14 1998/10/10 07:50:29 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.13 1998/10/08 02:04:57 wsanchez Exp $");
+__RCSID("$NetBSD: spec.c,v 1.14 1998/10/10 07:50:29 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -191,6 +191,12 @@ set(t, ip)
 			ip->cksum = strtoul(val, &ep, 10);
 			if (*ep)
 				mtree_err("invalid checksum %s", val);
+			break;
+		case F_FLAGS:
+			if (strcmp("none", val) == 0)
+				ip->st_flags = 0;
+			else if (string_to_flags(&val, &ip->st_flags, NULL) != 0)
+				mtree_err("invalid flag %s", val);
 			break;
 		case F_GID:
 			ip->st_gid = (gid_t)strtoul(val, &ep, 10);

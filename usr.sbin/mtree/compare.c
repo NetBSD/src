@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.16 1998/10/08 02:04:55 wsanchez Exp $	*/
+/*	$NetBSD: compare.c,v 1.17 1998/10/10 07:50:28 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.16 1998/10/08 02:04:55 wsanchez Exp $");
+__RCSID("$NetBSD: compare.c,v 1.17 1998/10/10 07:50:28 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -204,6 +204,28 @@ typeerr:		LABEL;
 				(void)printf(")\n");
 			tab = "\t";
 		}
+	}
+	/*
+	 * XXX
+	 * since chflags(2) will reset file times, the utimes() above
+	 * may have been useless!  oh well, we'd rather have correct
+	 * flags, rather than times?
+	 */
+	if ((s->flags & F_FLAGS) && s->st_flags != p->fts_statp->st_flags) {
+		LABEL;
+		(void)printf("%sflags (\"%s\" is not ", tab,
+		    flags_to_string(s->st_flags, "none"));
+		(void)printf("\"%s\"",
+		    flags_to_string(p->fts_statp->st_flags, "none"));
+		if (uflag)
+			if (chflags(p->fts_accpath, s->st_flags))
+				(void)printf(", not modified: %s)\n",
+				    strerror(errno));
+			else
+				(void)printf(", modified)\n");
+		else
+			(void)printf(")\n");
+		tab = "\t";
 	}
 	if (s->flags & F_CKSUM) {
 		if ((fd = open(p->fts_accpath, O_RDONLY, 0)) < 0) {

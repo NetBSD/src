@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.15 1998/10/08 02:04:57 wsanchez Exp $	*/
+/*	$NetBSD: verify.c,v 1.16 1998/10/10 07:50:29 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: verify.c,v 1.15 1998/10/08 02:04:57 wsanchez Exp $");
+__RCSID("$NetBSD: verify.c,v 1.16 1998/10/10 07:50:29 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -192,7 +192,8 @@ miss(p, tail)
 		if (!(p->flags & F_VISIT))
 			(void)putchar('\n');
 
-		for (tp = tail; *tp; ++tp);
+		for (tp = tail; *tp; ++tp)
+			;
 		*tp = '/';
 		miss(p->child, tp + 1);
 		*tp = '\0';
@@ -202,10 +203,16 @@ miss(p, tail)
 		if (chown(path, p->st_uid, p->st_gid)) {
 			(void)printf("%s: user/group/mode not modified: %s\n",
 			    path, strerror(errno));
+			(void)printf("%s: warning: file mode %snot set\n", path,
+			    (p->flags & F_FLAGS) ? "and file flags " : "");
 			continue;
 		}
 		if (chmod(path, p->st_mode))
 			(void)printf("%s: permissions not set: %s\n",
+			    path, strerror(errno));
+		if ((p->flags & F_FLAGS) && p->st_flags &&
+		    chflags(path, p->st_flags))
+			(void)printf("%s: file flags not set: %s\n",
 			    path, strerror(errno));
 	}
 }
