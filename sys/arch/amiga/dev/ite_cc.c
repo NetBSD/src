@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.25 1996/04/21 21:11:54 veego Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.26 1999/03/25 21:55:17 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_amigaccgrf.h"
+
 #include "grfcc.h"
 #if NGRFCC > 0
 

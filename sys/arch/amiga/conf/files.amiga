@@ -1,12 +1,18 @@
-#	$NetBSD: files.amiga,v 1.80 1999/03/07 22:16:19 is Exp $
+#	$NetBSD: files.amiga,v 1.81 1999/03/25 21:55:17 is Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
 
 maxusers 2 8 64
 
-device	mainbus {}
-attach	mainbus at root
+defopt	opt_amigaccgrf.h	GRF_PAL:GRF_NTSC	# temporary workaround
+defopt	opt_amigaccgrf.h	GRF_NTSC
+defopt	opt_amigaccgrf.h	GRF_ECS GRF_AGA
+defopt	opt_amigaccgrf.h	GRF_AGA_VGA:GRF_AGA
+defopt	opt_amigaccgrf.h	GRF_SUPER72:GRF_AGA
+
+device mainbus {}
+attach mainbus at root
 
 device	cpu
 attach	cpu at mainbus
