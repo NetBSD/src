@@ -1,4 +1,4 @@
-/* $NetBSD: tc_machdep.h,v 1.6 1998/01/19 02:53:29 thorpej Exp $ */
+/* $NetBSD: tc_machdep.h,v 1.3 1999/03/19 03:12:31 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
