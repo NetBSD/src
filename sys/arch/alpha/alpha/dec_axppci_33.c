@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_axppci_33.c,v 1.13 1996/10/23 04:12:14 cgd Exp $	*/
+/*	$NetBSD: dec_axppci_33.c,v 1.14 1996/11/12 05:14:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -35,6 +35,7 @@
 
 #include <machine/rpb.h>
 #include <machine/autoconf.h>
+#include <machine/cpuconf.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/comreg.h>
@@ -45,13 +46,13 @@
 #include <alpha/pci/lcareg.h>
 #include <alpha/pci/lcavar.h>
 
-#include <alpha/alpha/dec_axppci_33.h>
-
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
-char *
-dec_axppci_33_modelname()
+cpu_decl(dec_axppci_33);
+
+const char *
+dec_axppci_33_model_name()
 {
 
 	switch (hwrpb->rpb_variation & SV_ST_MASK) {
@@ -66,7 +67,7 @@ dec_axppci_33_modelname()
 }
 
 void
-dec_axppci_33_consinit()
+dec_axppci_33_cons_init()
 {
 	struct ctb *ctb;
 	struct lca_config *lcp;
@@ -121,6 +122,13 @@ dec_axppci_33_consinit()
 		panic("consinit: unknown console type %d\n",
 		    ctb->ctb_term_type);
 	}
+}
+
+const char *
+dec_axppci_33_iobus_name()
+{
+
+	return ("lca");
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_kn20aa.c,v 1.13 1996/10/23 04:12:15 cgd Exp $	*/
+/*	$NetBSD: dec_kn20aa.c,v 1.14 1996/11/12 05:14:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -35,6 +35,7 @@
 
 #include <machine/rpb.h>
 #include <machine/autoconf.h>
+#include <machine/cpuconf.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/comreg.h>
@@ -45,13 +46,13 @@
 #include <alpha/pci/ciareg.h>
 #include <alpha/pci/ciavar.h>
 
-#include <alpha/alpha/dec_kn20aa.h>
-
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
-char *
-dec_kn20aa_modelname()
+cpu_decl(dec_kn20aa);
+
+const char *
+dec_kn20aa_model_name()
 {
 
 	switch (hwrpb->rpb_variation & SV_ST_MASK) {
@@ -66,7 +67,7 @@ dec_kn20aa_modelname()
 }
 
 void
-dec_kn20aa_consinit()
+dec_kn20aa_cons_init()
 {
 	struct ctb *ctb;
 	struct cia_config *ccp;
@@ -121,6 +122,13 @@ dec_kn20aa_consinit()
 		panic("consinit: unknown console type %d\n",
 		    ctb->ctb_term_type);
 	}
+}
+
+const char *
+dec_kn20aa_iobus_name()
+{
+
+	return ("cia");
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_2100_a50.c,v 1.15 1996/10/23 04:12:13 cgd Exp $	*/
+/*	$NetBSD: dec_2100_a50.c,v 1.16 1996/11/12 05:14:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -35,6 +35,7 @@
 
 #include <machine/rpb.h>
 #include <machine/autoconf.h>
+#include <machine/cpuconf.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/comreg.h>
@@ -45,13 +46,13 @@
 #include <alpha/pci/apecsreg.h>
 #include <alpha/pci/apecsvar.h>
 
-#include <alpha/alpha/dec_2100_a50.h>
-
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
-char *
-dec_2100_a50_modelname()
+cpu_decl(dec_2100_a50);
+
+const char *
+dec_2100_a50_model_name()
 {
 	static char s[80];
 
@@ -83,7 +84,7 @@ dec_2100_a50_modelname()
 }
 
 void
-dec_2100_a50_consinit()
+dec_2100_a50_cons_init()
 {
 	struct ctb *ctb;
 	struct apecs_config *acp;
@@ -138,6 +139,13 @@ dec_2100_a50_consinit()
 		panic("consinit: unknown console type %d\n",
 		    ctb->ctb_term_type);
 	}
+}
+
+const char *
+dec_2100_a50_iobus_name()
+{
+
+	return ("apecs");
 }
 
 void

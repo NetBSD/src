@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.53 1996/11/11 21:03:09 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.54 1996/11/12 05:14:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -75,28 +75,7 @@
 #include <machine/reg.h>
 #include <machine/rpb.h>
 #include <machine/prom.h>
-
-#ifdef DEC_3000_500
-#include <alpha/alpha/dec_3000_500.h>
-#endif
-#ifdef DEC_3000_300
-#include <alpha/alpha/dec_3000_300.h>
-#endif
-#ifdef DEC_2100_A50
-#include <alpha/alpha/dec_2100_a50.h>
-#endif
-#ifdef DEC_KN20AA
-#include <alpha/alpha/dec_kn20aa.h>
-#endif
-#ifdef DEC_AXPPCI_33
-#include <alpha/alpha/dec_axppci_33.h>
-#endif
-#ifdef DEC_21000
-#include <alpha/alpha/dec_21000.h>
-#endif
-#ifdef DEC_EB164
-#include <alpha/alpha/dec_eb164.h>
-#endif
+#include <machine/cpuconf.h>
 
 #include <net/netisr.h>
 #include <net/if.h>
@@ -161,38 +140,7 @@ u_int32_t no_optimize;
 /* the following is used externally (sysctl_hw) */
 char	machine[] = "alpha";
 char	cpu_model[128];
-char	*model_names[] = {
-	"UNKNOWN (0)",
-	"Alpha Demonstration Unit",
-	"DEC 4000 (\"Cobra\")",
-	"DEC 7000 (\"Ruby\")",
-	"DEC 3000/500 (\"Flamingo\") family",
-	"UNKNOWN (5)",
-	"DEC 2000/300 (\"Jensen\")",
-	"DEC 3000/300 (\"Pelican\")",
-	"UNKNOWN (8)",
-	"DEC 2100/A500 (\"Sable\")",
-	"AXPvme 64",
-	"AXPpci 33 (\"NoName\")",
-	"DEC 21000 (\"TurboLaser\")",
-	"DEC 2100/A50 (\"Avanti\") family",
-	"Mustang",
-	"DEC KN20AA",
-	"UNKNOWN (16)",
-	"DEC 1000 (\"Mikasa\")",
-	"UNKNOWN (18)",
-	"EB66",
-	"EB64+",
-	"UNKNOWN (21)",
-	"DEC 4100 (\"Rawhide\")",
-	"??? (\"Lego\")",
-	"DEC 2100A/A500 (\"Lynx\")",
-	"UNKNOWN (25)",
-	"EB164",
-	"DEC 1000A (\"Noritake\")",
-	"AlphaVME 224 (\"Cortex\")",
-};
-int	nmodel_names = sizeof model_names/sizeof model_names[0];
+const struct cpusw *cpu_fn_switch;		/* function switch */
 
 struct	user *proc0paddr;
 
@@ -207,12 +155,6 @@ extern int XentInt(), XentArith(), XentMM(), XentIF(), XentUna(), XentSys();
 
 /* number of cpus in the box.  really! */
 int		ncpus;
-
-/* various CPU-specific functions. */
-char		*(*cpu_modelname) __P((void));
-void		(*cpu_consinit) __P((void));
-void		(*cpu_device_register) __P((struct device *dev, void *aux));
-char		*cpu_iobus;
 
 char boot_flags[64];
 
@@ -406,93 +348,43 @@ alpha_init(pfn, ptb)
 	 * Find out what hardware we're on, and remember its type name.
 	 */
 	cputype = hwrpb->rpb_type;
-	switch (cputype) {
-#ifdef DEC_3000_500				/* and 400, [6-9]00 */
-	case ST_DEC_3000_500:
-		cpu_modelname = dec_3000_500_modelname;
-		cpu_consinit = dec_3000_500_consinit;
-		cpu_device_register = dec_3000_500_device_register;
-		cpu_iobus = "tcasic";
-		break;
-#endif
-
-#ifdef DEC_3000_300
-	case ST_DEC_3000_300:
-		cpu_modelname = dec_3000_300_modelname;
-		cpu_consinit = dec_3000_300_consinit;
-		cpu_device_register = dec_3000_300_device_register;
-		cpu_iobus = "tcasic";
-		break;
-#endif
-
-#ifdef DEC_2100_A50
-	case ST_DEC_2100_A50:
-		cpu_modelname = dec_2100_a50_modelname;
-		cpu_consinit = dec_2100_a50_consinit;
-		cpu_device_register = dec_2100_a50_device_register;
-		cpu_iobus = "apecs";
-		break;
-#endif
-
-#ifdef DEC_KN20AA
-	case ST_DEC_KN20AA:
-		cpu_modelname = dec_kn20aa_modelname;
-		cpu_consinit = dec_kn20aa_consinit;
-		cpu_device_register = dec_kn20aa_device_register;
-		cpu_iobus = "cia";
-		break;
-#endif
-
-#ifdef DEC_AXPPCI_33
-	case ST_DEC_AXPPCI_33:
-		cpu_modelname = dec_axppci_33_modelname;
-		cpu_consinit = dec_axppci_33_consinit;
-		cpu_device_register = dec_axppci_33_device_register;
-		cpu_iobus = "lca";
-		break;
-#endif
-
-#ifdef DEC_2000_300
-	case ST_DEC_2000_300:
-		cpu_modelname = dec_2000_300_modelname;
-		cpu_consinit = dec_2000_300_consinit;
-		cpu_device_register = dec_2000_300_device_register;
-		cpu_iobus = "ibus";
-	XXX DEC 2000/300 NOT SUPPORTED
-		break;
-#endif
-
-#ifdef DEC_21000
-	case ST_DEC_21000:
-		cpu_modelname = dec_21000_modelname;
-		cpu_consinit = dec_21000_consinit;
-		cpu_device_register = dec_21000_device_register;
-		cpu_iobus = "tlsb";
-	XXX DEC 21000 NOT SUPPORTED
-		break;
-#endif
-
-#ifdef DEC_EB164
-	case ST_EB164:
-		cpu_modelname = dec_eb164_modelname;
-		cpu_consinit = dec_eb164_consinit;
-		cpu_device_register = dec_eb164_device_register;
-		cpu_iobus = "cia";
-		break;
-#endif
-
-	default:
-		if (cputype > nmodel_names)
-			panic("Unknown system type %d", cputype);
-		else
-			panic("Support for %s system type not in kernel.",
-			    model_names[cputype]);
+	if (cputype < 0 || cputype > ncpusw) {
+unknown_cputype:
+		printf("\n");
+		printf("Unknown system type %d.\n", cputype);
+		printf("\n");
+		panic("unknown system type");
+	}
+	cpu_fn_switch = &cpusw[cputype];
+	if (cpu_fn_switch->family == NULL)
+		goto unknown_cputype;
+	if (cpu_fn_switch->option == NULL) {
+		printf("\n");
+		printf("NetBSD does not currently support system type %d\n",
+		    cputype);
+		printf("(%s family).\n", cpu_fn_switch->family);
+		printf("\n");
+		panic("unsupported system type");
+	}
+	if (!cpu_fn_switch->present) {
+		printf("\n");
+		printf("Support for system type %d (%s family) is\n", cputype,
+		    cpu_fn_switch->family);
+		printf("not present in this kernel.  Build a kernel with\n");
+		printf("\"options %s\" to include support for this system\n",
+		    cpu_fn_switch->option);
+		printf("type.\n");
+		printf("\n");
+		panic("support for system not present");
 	}
 
-	if ((*cpu_modelname)() != NULL)
-		strncpy(cpu_model, (*cpu_modelname)(), sizeof cpu_model - 1);
-	else
-		strncpy(cpu_model, model_names[cputype], sizeof cpu_model - 1);
+	if ((*cpu_fn_switch->model_name)() != NULL)
+		strncpy(cpu_model, (*cpu_fn_switch->model_name)(),
+		    sizeof cpu_model - 1);
+	else {
+		strncpy(cpu_model, cpu_fn_switch->family, sizeof cpu_model - 1);
+		strcat(cpu_model, " family");		/* XXX */
+	}
 	cpu_model[sizeof cpu_model - 1] = '\0';
 
 #if NLE_IOASIC > 0
@@ -683,7 +575,7 @@ void
 consinit()
 {
 
-	(*cpu_consinit)();
+	(*cpu_fn_switch->cons_init)();
 	pmap_unmap_prom();
 }
 
