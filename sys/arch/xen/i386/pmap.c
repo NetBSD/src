@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.7 2005/01/01 21:00:06 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.7.4.1 2005/02/13 10:20:49 yamt Exp $	*/
 /*	NetBSD: pmap.c,v 1.172 2004/04/12 13:17:46 yamt Exp 	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7 2005/01/01 21:00:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7.4.1 2005/02/13 10:20:49 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -408,8 +408,6 @@ TAILQ_HEAD(pv_pagelist, pv_page);
 static struct pv_pagelist pv_freepages;	/* list of pv_pages with free entrys */
 static struct pv_pagelist pv_unusedpgs; /* list of unused pv_pages */
 static int pv_nfpvents;			/* # of free pv entries */
-static struct pv_page *pv_initpage;	/* bootstrap page from kernel_map */
-static vaddr_t pv_cachedva;		/* cached VA for later use */
 
 #define PVE_LOWAT (PVE_PER_PVPAGE / 2)	/* free pv_entry low water mark */
 #define PVE_HIWAT (PVE_LOWAT + (PVE_PER_PVPAGE * 2))
@@ -1347,22 +1345,9 @@ pmap_init()
 {
 	int i;
 
-	/*
-	 * now we need to free enough pv_entry structures to allow us to get
-	 * the kmem_map/kmem_object allocated and inited (done after this
-	 * function is finished).  to do this we allocate one bootstrap page out
-	 * of kernel_map and use it to provide an initial pool of pv_entry
-	 * structures.   we never free this page.
-	 */
-
-	pv_initpage = (struct pv_page *) uvm_km_alloc(kernel_map, PAGE_SIZE);
-	if (pv_initpage == NULL)
-		panic("pmap_init: pv_initpage");
-	pv_cachedva = 0;   /* a VA we have allocated but not used yet */
 	pv_nfpvents = 0;
-	(void) pmap_add_pvpage(pv_initpage, FALSE);
 
-	pj_page = (void *)uvm_km_alloc(kernel_map, PAGE_SIZE);
+	pj_page = (void *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_WIRED);
 	if (pj_page == NULL)
 		panic("pmap_init: pj_page");
 
@@ -1465,7 +1450,6 @@ pmap_alloc_pvpage(pmap, mode)
 	struct pmap *pmap;
 	int mode;
 {
-	struct vm_page *pg;
 	struct pv_page *pvpage;
 	struct pv_entry *pv;
 	int s;
@@ -1491,38 +1475,17 @@ pmap_alloc_pvpage(pmap, mode)
 	}
 
 	/*
-	 *  see if we've got a cached unmapped VA that we can map a page in.
-	 * if not, try to allocate one.
-	 */
-
-	if (pv_cachedva == 0) {
-		s = splvm();   /* must protect kmem_map with splvm! */
-		pv_cachedva = uvm_km_kmemalloc(kmem_map, NULL, PAGE_SIZE,
-		    UVM_KMF_TRYLOCK|UVM_KMF_VALLOC);
-		splx(s);
-		if (pv_cachedva == 0) {
-			return (NULL);
-		}
-	}
-
-	pg = uvm_pagealloc(NULL, pv_cachedva - vm_map_min(kernel_map), NULL,
-	    UVM_PGA_USERESERVE);
-	if (pg == NULL)
-		return (NULL);
-	pg->flags &= ~PG_BUSY;	/* never busy */
-
-	/*
-	 * add a mapping for our new pv_page and free its entrys (save one!)
-	 *
 	 * NOTE: If we are allocating a PV page for the kernel pmap, the
 	 * pmap is already locked!  (...but entering the mapping is safe...)
 	 */
 
-	pmap_kenter_pa(pv_cachedva, VM_PAGE_TO_PHYS(pg),
-	    VM_PROT_READ | VM_PROT_WRITE);
-	pmap_update(pmap_kernel());
-	pvpage = (struct pv_page *) pv_cachedva;
-	pv_cachedva = 0;
+	s = splvm();   /* must protect kmem_map with splvm! */
+	pvpage = (struct pv_page *)uvm_km_alloc(kmem_map, PAGE_SIZE, 0,
+	    UVM_KMF_TRYLOCK|UVM_KMF_NOWAIT|UVM_KMF_WIRED);
+	splx(s);
+	if (pvpage == NULL)
+		return NULL;
+
 	return (pmap_add_pvpage(pvpage, mode != ALLOCPV_NONEED));
 }
 
@@ -1658,51 +1621,23 @@ pmap_free_pvs(pmap, pvs)
  *
  * => assume caller is holding the pvalloc_lock and that
  *	there is a page on the pv_unusedpgs list
- * => if we can't get a lock on the kmem_map we try again later
  */
 
 static void
 pmap_free_pvpage()
 {
 	int s;
-	struct vm_map *map;
-	struct vm_map_entry *dead_entries;
 	struct pv_page *pvp;
 
-	s = splvm(); /* protect kmem_map */
-
 	pvp = TAILQ_FIRST(&pv_unusedpgs);
+	/* remove pvp from pv_unusedpgs */
+	TAILQ_REMOVE(&pv_unusedpgs, pvp, pvinfo.pvpi_list);
 
-	/*
-	 * note: watch out for pv_initpage which is allocated out of
-	 * kernel_map rather than kmem_map.
-	 */
+	s = splvm();
+	uvm_km_free(kmem_map, (vaddr_t)pvp, PAGE_SIZE, UVM_KMF_WIRED);
+ 	splx(s);
 
-	if (pvp == pv_initpage)
-		map = kernel_map;
-	else
-		map = kmem_map;
-	if (vm_map_lock_try(map)) {
-
-		/* remove pvp from pv_unusedpgs */
-		TAILQ_REMOVE(&pv_unusedpgs, pvp, pvinfo.pvpi_list);
-
-		/* unmap the page */
-		dead_entries = NULL;
-		uvm_unmap_remove(map, (vaddr_t)pvp, ((vaddr_t)pvp) + PAGE_SIZE,
-		    &dead_entries, NULL);
-		vm_map_unlock(map);
-
-		if (dead_entries != NULL)
-			uvm_unmap_detach(dead_entries, 0);
-
-		pv_nfpvents -= PVE_PER_PVPAGE;  /* update free count */
-	}
-	if (pvp == pv_initpage)
-		/* no more initpage, we've freed it */
-		pv_initpage = NULL;
-
-	splx(s);
+	pv_nfpvents -= PVE_PER_PVPAGE;  /* update free count */
 }
 
 /*
@@ -2066,7 +2001,7 @@ pmap_destroy(pmap)
 		 */
 		ldt_free(pmap);
 		uvm_km_free(kernel_map, (vaddr_t)pmap->pm_ldt,
-			    pmap->pm_ldt_len * sizeof(union descriptor));
+		    pmap->pm_ldt_len * sizeof(union descriptor), UVM_KMF_WIRED);
 	}
 #endif
 
@@ -2106,7 +2041,8 @@ pmap_fork(pmap1, pmap2)
 		size_t len;
 
 		len = pmap1->pm_ldt_len * sizeof(union descriptor);
-		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map, len);
+		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map, len, 0,
+		    UVM_KMF_WIRED);
 		memcpy(new_ldt, pmap1->pm_ldt, len);
 		pmap2->pm_ldt = new_ldt;
 		pmap2->pm_ldt_len = pmap1->pm_ldt_len;
@@ -2153,7 +2089,7 @@ pmap_ldt_cleanup(l)
 	simple_unlock(&pmap->pm_obj.vmobjlock);
 
 	if (old_ldt != NULL)
-		uvm_km_free(kernel_map, (vaddr_t)old_ldt, len);
+		uvm_km_free(kernel_map, (vaddr_t)old_ldt, len, UVM_KMF_WIRED);
 }
 #endif /* USER_LDT */
 
@@ -3492,6 +3428,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 	XENPRINTK(("pmap_enter(%p, %p, %p, %08x, %08x)\n",
 	    pmap, (void *)va, (void *)pa, prot, flags));
 
+	KASSERT(pmap_initialized);
+
 #ifdef DIAGNOSTIC
 	/* sanity check: totally out of range? */
 	if (va >= VM_MAX_KERNEL_ADDRESS)
@@ -3616,7 +3554,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	pg = PHYS_TO_VM_PAGE(pa);
 	XENPRINTK(("pg %p from %p, init %d\n", pg, (void *)pa,
 		      pmap_initialized));
-	if (pmap_initialized && pg != NULL) {
+	if (pg != NULL) {
 		/* This is a managed page */
 		npte |= PG_PVLIST;
 		mdpg = &pg->mdpage;
