@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map_i.h,v 1.22 2001/06/26 17:55:15 thorpej Exp $	*/
+/*	$NetBSD: uvm_map_i.h,v 1.23 2002/09/22 07:21:31 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -178,36 +178,6 @@ uvm_map_reference(map)
 	map->ref_count++;
 	simple_unlock(&map->ref_lock);
 }
-
-/*
- * uvm_map_deallocate: drop reference to a map
- *
- * => caller must not lock map
- * => we will zap map if ref count goes to zero
- */
-
-MAP_INLINE void
-uvm_map_deallocate(map)
-	struct vm_map *map;
-{
-	int c;
-
-	simple_lock(&map->ref_lock);
-	c = --map->ref_count;
-	simple_unlock(&map->ref_lock);
-	if (c > 0) {
-		return;
-	}
-
-	/*
-	 * all references gone.   unmap and free.
-	 */
-
-	uvm_unmap(map, map->min_offset, map->max_offset);
-	pmap_destroy(map->pmap);
-	FREE(map, M_VMMAP);
-}
-
 #endif /* defined(UVM_MAP_INLINE) || defined(UVM_MAP) */
 
 #endif /* _UVM_UVM_MAP_I_H_ */
