@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.169 2002/03/11 16:39:40 uch Exp $	*/
+/*	$NetBSD: trap.c,v 1.170 2002/07/06 23:59:21 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.169 2002/03/11 16:39:40 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.170 2002/07/06 23:59:21 gmcgarry Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -128,9 +128,9 @@ const char *trap_type[] = {
 void trap(unsigned, unsigned, unsigned, unsigned, struct trapframe *);
 void ast(unsigned);
 
-vaddr_t MachEmulateBranch(struct frame *, vaddr_t, unsigned, int);
-extern void MachEmulateFP(unsigned);
-extern void MachFPInterrupt(unsigned, unsigned, unsigned, struct frame *);
+extern vaddr_t MachEmulateBranch(struct frame *, vaddr_t, unsigned, int);
+extern void MachEmulateInst(u_int32_t, u_int32_t, u_int32_t, struct frame *);
+extern void MachFPTrap(u_int32_t, u_int32_t, u_int32_t, struct frame *);
 
 #define DELAYBRANCH(x) ((int)(x)<0)
 
@@ -481,43 +481,29 @@ trap(status, cause, vaddr, opc, frame)
 		break; /* SIGNAL */
 	    }
 	case T_RES_INST+T_USER:
-#if defined(MIPS3_5900) && defined(SOFTFLOAT)
-		MachFPInterrupt(status, cause, opc, p->p_md.md_regs);
-		userret(p);
-		return; /* GEN */
-#else
-		sig = SIGILL;
-		break; /* SIGNAL */
-#endif
-		break; /* SIGNAL */
 	case T_COP_UNUSABLE+T_USER:
-#if defined(NOFPU) && !defined(SOFTFLOAT)
-		sig = SIGILL;
-		break; /* SIGNAL */
-#endif
-		if ((cause & MIPS_CR_COP_ERR) != 0x10000000) {
-			sig = SIGILL;	/* only FPU instructions allowed */
-			break; /* SIGNAL */
-		}
-#ifndef SOFTFLOAT
-		{
-		struct frame *f;
+#if !defined(SOFTFLOAT) && !defined(NOFPU)
+		if ((cause & MIPS_CR_COP_ERR) == 0x10000000) {
+			struct frame *f;
 
-		f = (struct frame *)p->p_md.md_regs;
-		savefpregs(fpcurproc);  		/* yield FPA */
-		loadfpregs(p);          		/* load FPA */
-		fpcurproc = p;
-		p->p_md.md_flags |= MDP_FPUSED;
-		f->f_regs[SR] |= MIPS_SR_COP_1_BIT;
-		}
-#else
-		MachFPInterrupt(status, cause, opc, p->p_md.md_regs);
+			f = (struct frame *)p->p_md.md_regs;
+			savefpregs(fpcurproc);  	/* yield FPA */
+			loadfpregs(p);          	/* load FPA */
+			fpcurproc = p;
+			p->p_md.md_flags |= MDP_FPUSED;
+			f->f_regs[SR] |= MIPS_SR_COP_1_BIT;
+		} else
 #endif
+		{
+			MachEmulateInst(status, cause, opc, p->p_md.md_regs);
+		}
 		userret(p);
 		return; /* GEN */
 	case T_FPE+T_USER:
-#if !defined(NOFPU) || defined(SOFTFLOAT)
-		MachFPInterrupt(status, cause, opc, p->p_md.md_regs);
+#if defined(SOFTFLOAT)
+		MachEmulateInst(status, cause, opc, p->p_md.md_regs);
+#elif !defined(NOFPU)
+		MachFPTrap(status, cause, opc, p->p_md.md_regs);
 #endif
 		userret(p);
 		return; /* GEN */
@@ -595,124 +581,6 @@ ast(pc)
 	}
 }
 
-/*
- * Analyse 'next' PC address taking account of branch/jump instructions
- */
-vaddr_t
-MachEmulateBranch(f, instpc, fpuCSR, allowNonBranch)
-	struct frame *f;
-	vaddr_t instpc;
-	unsigned fpuCSR;
-	int allowNonBranch;
-{
-#define	BRANCHTARGET(p) (4 + (p) + ((short)((InstFmt *)(p))->IType.imm << 2))
-	InstFmt inst;
-	vaddr_t nextpc;
-
-	if (instpc < MIPS_KSEG0_START)
-		inst.word = fuiword((void *)instpc);
-	else
-		inst.word = *(unsigned *)instpc;
-
-	switch ((int)inst.JType.op) {
-	case OP_SPECIAL:
-		if (inst.RType.func == OP_JR || inst.RType.func == OP_JALR)
-			nextpc = f->f_regs[inst.RType.rs];
-		else if (allowNonBranch)
-			nextpc = instpc + 4;
-		else
-			panic("MachEmulateBranch: Non-branch");
-		break;
-
-	case OP_BCOND:
-		switch ((int)inst.IType.rt) {
-		case OP_BLTZ:
-		case OP_BLTZAL:
-		case OP_BLTZL:		/* squashed */
-		case OP_BLTZALL:	/* squashed */
-			if ((int)(f->f_regs[inst.RType.rs]) < 0)
-				nextpc = BRANCHTARGET(instpc);
-			else
-				nextpc = instpc + 8;
-			break;
-
-		case OP_BGEZ:
-		case OP_BGEZAL:
-		case OP_BGEZL:		/* squashed */
-		case OP_BGEZALL:	/* squashed */
-			if ((int)(f->f_regs[inst.RType.rs]) >= 0)
-				nextpc = BRANCHTARGET(instpc);
-			else
-				nextpc = instpc + 8;
-			break;
-
-		default:
-			panic("MachEmulateBranch: Bad branch cond");
-		}
-		break;
-
-	case OP_J:
-	case OP_JAL:
-		nextpc = (inst.JType.target << 2) |
-			((unsigned)instpc & 0xF0000000);
-		break;
-
-	case OP_BEQ:
-	case OP_BEQL:	/* squashed */
-		if (f->f_regs[inst.RType.rs] == f->f_regs[inst.RType.rt])
-			nextpc = BRANCHTARGET(instpc);
-		else
-			nextpc = instpc + 8;
-		break;
-
-	case OP_BNE:
-	case OP_BNEL:	/* squashed */
-		if (f->f_regs[inst.RType.rs] != f->f_regs[inst.RType.rt])
-			nextpc = BRANCHTARGET(instpc);
-		else
-			nextpc = instpc + 8;
-		break;
-
-	case OP_BLEZ:
-	case OP_BLEZL:	/* squashed */
-		if ((int)(f->f_regs[inst.RType.rs]) <= 0)
-			nextpc = BRANCHTARGET(instpc);
-		else
-			nextpc = instpc + 8;
-		break;
-
-	case OP_BGTZ:
-	case OP_BGTZL:	/* squashed */
-		if ((int)(f->f_regs[inst.RType.rs]) > 0)
-			nextpc = BRANCHTARGET(instpc);
-		else
-			nextpc = instpc + 8;
-		break;
-
-	case OP_COP1:
-		if (inst.RType.rs == OP_BCx || inst.RType.rs == OP_BCy) {
-			int condition = (fpuCSR & MIPS_FPU_COND_BIT) != 0;
-			if ((inst.RType.rt & COPz_BC_TF_MASK) != COPz_BC_TRUE)
-				condition = !condition;
-			if (condition)
-				nextpc = BRANCHTARGET(instpc);
-			else
-				nextpc = instpc + 8;
-		}
-		else if (allowNonBranch)
-			nextpc = instpc + 4;
-		else
-			panic("MachEmulateBranch: Bad COP1 branch instruction");
-		break;
-
-	default:
-		if (!allowNonBranch)
-			panic("MachEmulateBranch: Non-branch instruction");
-		nextpc = instpc + 4;
-	}
-	return nextpc;
-#undef	BRANCHTARGET
-}
 
 /* XXX need to rewrite acient comment XXX
  * This routine is called by procxmt() to single step one instruction.
