@@ -1,4 +1,4 @@
-/*	$NetBSD: twevar.h,v 1.6 2001/01/23 20:51:01 ad Exp $	*/
+/*	$NetBSD: twevar.h,v 1.7 2001/03/04 17:50:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -65,9 +65,11 @@ struct twe_softc {
 	struct twe_ccb		*sc_ccbs;
 	SIMPLEQ_HEAD(, twe_ccb)	sc_ccb_queue;
 	SLIST_HEAD(, twe_ccb)	sc_ccb_freelist;
+	int			sc_flags;
 	int			sc_nunits;
 	u_int			sc_dsize[TWE_MAX_UNITS];
 };
+#define	TWEF_AEN	0x01	/* retrieving an AEN */
 
 /* Optional per-command context. */
 struct twe_context {
