@@ -1,12 +1,12 @@
 #
-#	$NetBSD: Makefile,v 1.15 1999/02/13 02:54:35 lukem Exp $
+#	$NetBSD: Makefile,v 1.16 1999/02/14 10:53:06 lukem Exp $
 #
 
-FILES=	README syscall vfs misc
+STUFF=	README syscall vfs misc
 MKOBJ=	no
 
 install:
-	find ${FILES} -follow -name CVS -prune -o -type f -print | \
+	find ${STUFF} -follow -name CVS -prune -o -type f -print | \
 	    cpio -pdumL ${DESTDIR}${BINDIR}/lkm
 	chown -R ${BINOWN}:${BINGRP} ${DESTDIR}${BINDIR}/lkm
 	find ${DESTDIR}${BINDIR}/lkm -type f | xargs chmod a=rX
