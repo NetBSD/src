@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.540 2004/11/29 06:00:57 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.541 2004/11/29 06:04:50 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -8104,3 +8104,12 @@ distrib/notes/i386/hardware			patch
 
 	Added Dell PERC 4/Di
 	[martti, ticket #971]
+
+distrib/notes/common/main			1.269
+distrib/notes/common/xfer			1.51
+distrib/notes/common/sysinst			1.73
+distrib/notes/common/contents			1.113
+
+	Clarified a few details about installing 32 bit sparc distribution on
+	sparc64 systems
+	[mbw, ticket #975]
