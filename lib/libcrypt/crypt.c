@@ -1,4 +1,4 @@
-/*	$NetBSD: crypt.c,v 1.11 1998/02/04 06:39:33 mikel Exp $	*/
+/*	$NetBSD: crypt.c,v 1.12 1998/06/01 20:25:24 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,12 +41,13 @@
 #if 0
 static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
 #else
-__RCSID("$NetBSD: crypt.c,v 1.11 1998/02/04 06:39:33 mikel Exp $");
+__RCSID("$NetBSD: crypt.c,v 1.12 1998/06/01 20:25:24 kleink Exp $");
 #endif
 #endif /* not lint */
 
 #include <limits.h>
 #include <pwd.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 /*
