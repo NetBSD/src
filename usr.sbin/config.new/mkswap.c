@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mkswap.c	5.2 (Berkeley) 4/18/93
- *	$Id: mkswap.c,v 1.2 1993/12/04 06:06:16 cgd Exp $
+ *	$Id: mkswap.c,v 1.3 1994/02/01 07:03:19 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -100,8 +100,13 @@ mkoneswap(cf)
 		if (fprintf(fp, "\t{ makedev(%d, %d),\t0,\t0 },\t/* %s */\n",
 		    major(nv->nv_int), minor(nv->nv_int), nv->nv_str) < 0)
 			goto wrerror;
-	if (fputs("\t{ NODEV, 0, 0 }\n};\n", fp) < 0)
+	if (fputs("\t{ NODEV, 0, 0 }\n};\n\n", fp) < 0)
 		goto wrerror;
+	if (fputs("extern int ufs_mountroot();\n", fp) < 0)
+		goto wrerror;
+	if (fputs("int (*mountroot)() = ufs_mountroot;\n", fp) < 0)
+		goto wrerror;
+
 	if (fclose(fp)) {
 		fp = NULL;
 		goto wrerror;
