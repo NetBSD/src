@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd_dagfuncs.h,v 1.2 1999/02/05 00:06:11 oster Exp $	*/
+/*	$NetBSD: rf_evenodd_dagfuncs.h,v 1.3 2003/02/05 00:02:38 perry Exp $	*/
 /*
  * rf_evenodd_dagfuncs.h
  */
@@ -71,7 +71,7 @@ int     rf_EOWriteDoubleRecoveryFunc(RF_DagNode_t * node);
 
 /*
  * RF_EO_MATRIX_DIM should be a prime number: and "bytesPerSector" should be
- * dividable by ( RF_EO_MATRIX_DIM - 1) to fully encode and utilize the space
+ * dividable by ( RF_EO_MATRIX_DIM - 1) to fully encode and use the space
  * in a sector, this number could also be 17. Tha later case doesn't apply
  * for disk array larger than 17 columns totally.
  */

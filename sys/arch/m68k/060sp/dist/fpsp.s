@@ -1,5 +1,5 @@
 #
-# $NetBSD: fpsp.s,v 1.2 2001/09/16 16:34:30 wiz Exp $
+# $NetBSD: fpsp.s,v 1.3 2003/02/05 00:02:33 perry Exp $
 #
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -6905,7 +6905,7 @@ sacosd:
 #		b) Even with the restrictions above, 			#
 #		   |p - (exp(R)-1)| < 2^(-68.8) for all |R| <= 0.0062.	#
 #		Note that 0.0062 is slightly bigger than 0.57 log2/64.	#
-#		c) To fully utilize the pipeline, p is separated into	#
+#		c) To fully use the pipeline, p is separated into	#
 #		two independent pieces of roughly equal complexities	#
 #			p = [ R + R*S*(A2 + S*A4) ]	+		#
 #				[ S*(A1 + S*(A3 + S*A5)) ]		#
@@ -7033,7 +7033,7 @@ sacosd:
 #		b) Even with the restriction above,			#
 #			|p - (exp(R)-1)| <	|R| * 2^(-72.7)		#
 #		for all |R| <= 0.0055.					#
-#		c) To fully utilize the pipeline, p is separated into	#
+#		c) To fully use the pipeline, p is separated into	#
 #		two independent pieces of roughly equal complexity	#
 #			p = [ R*S*(A2 + S*(A4 + S*A6)) ]	+	#
 #				[ R + S*(A1 + S*(A3 + S*A5)) ]		#
@@ -7096,7 +7096,7 @@ sacosd:
 #		computed as						#
 #			X + ( S*B1 +	Q ) where S = X*X and		#
 #			Q	=	X*S*(B2 + X*(B3 + ... + X*B12))	#
-#		d) To fully utilize the pipeline, Q is separated into	#
+#		d) To fully use the pipeline, Q is separated into	#
 #		two independent pieces of roughly equal complexity	#
 #			Q = [ X*S*(B2 + S*(B4 + ... + S*B12)) ] +	#
 #				[ S*S*(B3 + S*(B5 + ... + S*B11)) ]	#
@@ -7265,7 +7265,7 @@ EXPCONT1:
 #--Step 4.
 #--WE NOW COMPUTE EXP(R)-1 BY A POLYNOMIAL
 #-- R + R*R*(A1 + R*(A2 + R*(A3 + R*(A4 + R*A5))))
-#--TO FULLY UTILIZE THE PIPELINE, WE COMPUTE S = R*R
+#--TO FULLY USE THE PIPELINE, WE COMPUTE S = R*R
 #--[R+R*S*(A2+S*A4)] + [S*(A1+S*(A3+S*A5))]
 
 	fmov.x		%fp0,%fp1
@@ -7428,7 +7428,7 @@ EM1MAIN:
 #--Step 4.
 #--WE NOW COMPUTE EXP(R)-1 BY A POLYNOMIAL
 #-- R + R*R*(A1 + R*(A2 + R*(A3 + R*(A4 + R*(A5 + R*A6)))))
-#--TO FULLY UTILIZE THE PIPELINE, WE COMPUTE S = R*R
+#--TO FULLY USE THE PIPELINE, WE COMPUTE S = R*R
 #--[R*S*(A2+S*(A4+S*A6))] + [R+S*(A1+S*(A3+S*A5))]
 
 	fmov.x		%fp0,%fp1
