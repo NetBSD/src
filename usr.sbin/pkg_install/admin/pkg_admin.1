@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_admin.1,v 1.8 2000/05/08 22:48:42 hubertf Exp $
+.\"	$NetBSD: pkg_admin.1,v 1.8.4.1 2001/03/20 17:59:06 he Exp $
 .\"
 .\" Copyright (c) 1999 Hubert Feyrer.  All rights reserved.
 .\"
@@ -37,37 +37,21 @@
 .Nd perform various administrative tasks to the pkg system. 
 .Sh SYNOPSIS
 .Nm ""
+.Op Fl V
 .Ar command args ...
 .Sh DESCRIPTION
 This command performs various administrative tasks around the NetBSD
 Packages System. Available commands are:
 .Pp
 .Bl -tag -width check [pkg]
-.It Cm rebuild
-Rebuild the package database mapping from scratch, scanning
-subdirectories in
-.Pa /var/db/pkg
-for
-.Pa +CONTENTS
-files, parsing them and writing the resulting absolute pathnames
-together with the package they belong to into the package database.
-.Pp
-This option is intended to be used for upgrading from non-pkgdb-pkg_*
-tools to pkgdb-pkg_* tools, further manipulation of the pkgdb will be
-done by
-.Xr pkg_add 1 ,
-.Xr pkg_delete 1
-and
-.Xr pkg_create 1 .
-.Pp
-Needs to be run as root.
-.Pp
+.It Fl V
+Print version number and exit.
 .It Cm check Ar [pkg ...]
 Use this command to check the files belonging to some or all of the
 packages installed on the local machine against their MD5 checksum
 noted in their +CONTENTS files. If no additional argument is given,
-the files of all installed packages are installed, else only the named
-packages will be ckecked (wildcards can be used here, see
+the files of all installed packages are checked, else only the named
+packages will be checked (wildcards can be used here, see
 .Xr pkg_info 1
 ).
 .Pp
@@ -85,7 +69,7 @@ and the data field - the package the file belongs to.
 .It Cm lsbest /dir/pkgpattern
 List all/best package matching pattern in the given directory.
 Can be used to work around limitations of /bin/sh and other
-filename globbing mechanisms. This option implemente matching of
+filename globbing mechanisms. This option implements matching of
 pkg-wildcards against arbitrary files, useful mainly in the build
 system itself. See
 .Xr pkg_info 1
@@ -110,6 +94,25 @@ yui# pkg_admin lsall /usr/pkgsrc/packages/i386ELF/All/'{mit,unproven}-pthread*'
 /usr/pkgsrc/packages/i386ELF/All/mit-pthreads-1.60b6.tgz
 /usr/pkgsrc/packages/i386ELF/All/unproven-pthreads-0.15.tgz
 .Ed
+.It Cm rebuild
+Rebuild the package database mapping from scratch, scanning
+subdirectories in
+.Pa /var/db/pkg
+for
+.Pa +CONTENTS
+files, parsing them and writing the resulting absolute pathnames
+together with the package they belong to into the package database.
+.Pp
+This option is intended to be used for upgrading from non-pkgdb-pkg_*
+tools to pkgdb-pkg_* tools, further manipulation of the pkgdb will be
+done by
+.Xr pkg_add 1 ,
+.Xr pkg_delete 1
+and
+.Xr pkg_create 1 .
+.Pp
+Needs to be run as root.
+.Pp
 .El
 .Pp
 .Sh ENVIRONMENT
@@ -125,7 +128,7 @@ Where to register packages instead of
 .Xr pkg_add 1 ,
 .Xr pkg_delete 1 ,
 .Xr pkg_info 1 ,
-.Xr pkg_create 1 .
+.Xr pkg_create 1
 .Sh AUTHOR
 The
 .Nm
