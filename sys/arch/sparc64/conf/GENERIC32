@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.64 2003/04/26 14:34:17 ragge Exp $
+# 	$NetBSD: GENERIC32,v 1.65 2003/04/29 15:59:08 nakayama Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.64 $"
+#ident 		"GENERIC-$Revision: 1.65 $"
 
 maxusers	64
 
@@ -310,7 +310,8 @@ uk*	at scsibus? target ? lun ?		# unknown SCSI
 # how to set up DMA modes for this chip. This may work, or may cause
 # a machine hang with some controllers.
 pciide* at pci? dev ? function ? flags 0x0000
-atapibus* at pciide? channel ?
+
+atapibus* at atapi?
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
@@ -471,8 +472,6 @@ umodem*	at uhub? port ? configuration ?			# USB Modem
 ucom*	at umodem?
 
 umass*	at uhub? port ? configuration ? interface ?	# USB Mass Storage
-atapibus* at umass? channel ?
-scsibus* at umass? channel ?
 
 uaudio*	at uhub? port ? configuration ?			# USB audio
 
@@ -614,11 +613,9 @@ audiocs*	at sbus? slot ? offset ?	# SUNW,CS4231
 audiocs*	at ebus?			# SUNW,CS4231 in U5/U10
 autri*		at pci? dev ? function ?	# Blade 100 'sound'
 
-audio*		at audiocs?
-audio*		at autri?
-audio*		at uaudio?
+audio*		at audiobus?
 
-#midi*		at autri?
+#midi*		at midibus?
 
 
 ## Sun "bwtwo" black and white framebuffer, found on sun4, sun4c, and sun4m
