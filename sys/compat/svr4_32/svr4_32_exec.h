@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec.h,v 1.1 2001/02/06 16:37:57 eeh Exp $	 */
+/*	$NetBSD: svr4_32_exec.h,v 1.2 2001/02/11 01:10:24 eeh Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -39,10 +39,12 @@
 #ifndef	_SVR4_32_EXEC_H_
 #define	_SVR4_32_EXEC_H_
 
+#undef SVR4_COMPAT_SOLARIS2
 #ifdef SVR4_COMPAT_SOLARIS2
-# define SVR4_32_AUX_ARGSIZ howmany(sizeof(Aux32Info) * 12, sizeof(char *))
+# define SVR4_32_AUX_ARGSIZ howmany((sizeof(Aux32Info) * 15) + 256, \
+				sizeof(netbsd32_charp))
 #else
-# define SVR4_32_AUX_ARGSIZ howmany(sizeof(Aux32Info) * 8, sizeof(char *))
+# define SVR4_32_AUX_ARGSIZ howmany(sizeof(Aux32Info) * 8, sizeof(netbsd32_charp))
 #endif
 
 void *svr4_32_copyargs __P((struct exec_package *, struct ps_strings *,
@@ -58,7 +60,11 @@ void *svr4_32_copyargs __P((struct exec_package *, struct ps_strings *,
  * Here programs load at 0x00010000, so I load the interpreter far after
  * the end of the data segment.
  */
+#if 1
 #define SVR4_32_INTERP_ADDR	0x10000000
+#else
+#define SVR4_32_INTERP_ADDR	0xff3c0000U
+#endif
 #endif
 
 #ifndef SVR4_32_INTERP_ADDR

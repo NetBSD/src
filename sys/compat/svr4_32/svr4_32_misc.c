@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.1 2001/02/06 16:37:58 eeh Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.2 2001/02/11 01:10:24 eeh Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -517,7 +517,7 @@ svr4_32_sys_mmap(p, v, retval)
 	SCARG(&mm, addr) = (void *)(u_long)SCARG(uap, addr);
 	SCARG(&mm, pos) = SCARG(uap, pos);
 
-	rp = (void *) round_page((vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ);
+	rp = (void *)(u_long) round_page((u_int32_t)(u_long)p->p_vmspace->vm_daddr + MAXDSIZ);
 	if ((SCARG(&mm, flags) & MAP_FIXED) == 0 &&
 	    SCARG(&mm, addr) != 0 && SCARG(&mm, addr) < rp)
 		SCARG(&mm, addr) = rp;
@@ -1683,4 +1683,25 @@ bad:
 	vrele(nd.ni_vp);
 	PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 	return error;
+}
+
+/*
+ * Close a file descriptor.
+ */
+/* ARGSUSED */
+int
+svr4_32_close(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct svr4_32_close_args /* {
+		syscallarg(int) fd;
+	} */ *uap = v;
+	int fd = SCARG(uap, fd);
+	struct filedesc *fdp = p->p_fd;
+
+	if ((u_int)fd >= fdp->fd_nfiles)
+		return (EBADF);
+	return (fdrelease(p, fd));
 }

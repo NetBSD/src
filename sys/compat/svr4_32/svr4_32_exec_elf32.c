@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec_elf32.c,v 1.1 2001/02/06 16:37:57 eeh Exp $	 */
+/*	$NetBSD: svr4_32_exec_elf32.c,v 1.2 2001/02/11 01:10:24 eeh Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -68,6 +68,10 @@
  * lots of fancy specialized support.
  */
 
+int sun_flags = EF_SPARC_SUN_US1|EF_SPARC_32PLUS;
+int sun_hwcap = (AV_SPARC_HWMUL_32x32|AV_SPARC_HWDIV_32x32|AV_SPARC_HWFSMULD);
+
+#if 0
 void *
 svr4_32_copyargs(pack, arginfo, stack, argp)
 	struct exec_package *pack;
@@ -76,7 +80,7 @@ svr4_32_copyargs(pack, arginfo, stack, argp)
 	void *argp;
 {
 	size_t len;
-	AuxInfo ai[14+(256/4)], *a, *platform=NULL, *exec=NULL;
+	AuxInfo ai[SVR4_32_AUX_ARGSIZ], *a, *platform=NULL, *exec=NULL;
 	struct elf_args *ap;
 	extern char platform_type[32];
 
@@ -97,9 +101,126 @@ svr4_32_copyargs(pack, arginfo, stack, argp)
 		platform = a; /* Patch this later. */
 		a++;
 
-		a->a_type = AT_SUN_EXECNAME;
-		exec = a; /* Patch this later. */
+		if (pack->ep_ndp->ni_cnd.cn_flags & HASBUF) {
+			a->a_type = AT_SUN_EXECNAME;
+			exec = a; /* Patch this later. */
+			a++;
+		}
+
+		a->a_type = AT_PHDR;
+		a->a_v = ap->arg_phaddr;
 		a++;
+
+		a->a_type = AT_PHENT;
+		a->a_v = ap->arg_phentsize;
+		a++;
+
+		a->a_type = AT_PHNUM;
+		a->a_v = ap->arg_phnum;
+		a++;
+
+		a->a_type = AT_ENTRY;
+		a->a_v = ap->arg_entry;
+		a++;
+
+		a->a_type = AT_BASE;
+		a->a_v = ap->arg_interp;
+		a++;
+
+		if (sun_flags) {
+			a->a_type = AT_FLAGS;
+			a->a_v = sun_flags;
+			a++;
+		}
+
+		a->a_type = AT_PAGESZ;
+		a->a_v = PAGE_SIZE;
+		a++;
+
+		a->a_type = AT_SUN_UID;
+		a->a_v = p->p_ucred->cr_uid;
+		a++;
+
+		a->a_type = AT_SUN_RUID;
+		a->a_v = p->p_cred->p_ruid;
+		a++;
+
+		a->a_type = AT_SUN_GID;
+		a->a_v = p->p_ucred->cr_gid;
+		a++;
+
+		a->a_type = AT_SUN_RGID;
+		a->a_v = p->p_cred->p_rgid;
+		a++;
+
+		if (sun_hwcap) {
+			a->a_type = AT_SUN_HWCAP;
+			a->a_v = sun_hwcap;
+			a++;
+		}
+
+		free((char *)ap, M_TEMP);
+		pack->ep_emul_arg = NULL;
+	}
+
+	a->a_type = AT_NULL;
+	a->a_v = 0;
+	a++;
+
+	len = (a - ai) * sizeof(AuxInfo);
+
+	if (platform) {
+		char *ptr = (char *)a;
+		const char *path = NULL;
+
+		/* Copy out the platform name. */
+		platform->a_v = (u_long)stack + len;
+		/* XXXX extremely inefficient.... */
+		strcpy(ptr, platform_type);
+		ptr += strlen(platform_type) + 1;
+		len += strlen(platform_type) + 1;
+
+		if (exec) {
+			path = pack->ep_ndp->ni_cnd.cn_pnbuf;
+
+			/* Copy out the file we're executing. */
+			exec->a_v = (u_long)stack + len;
+			strcpy(ptr, path);
+			len += strlen(ptr)+1;
+		}
+
+		/* Round to 32-bits */
+		len = (len+7)&~0x7L;
+	}
+	if (copyout(ai, stack, len))
+		return NULL;
+	stack = (caddr_t)stack + len;
+
+	return stack;
+}
+#else
+void *
+svr4_32_copyargs(pack, arginfo, stack, argp)
+	struct exec_package *pack;
+	struct ps_strings *arginfo;
+	void *stack;
+	void *argp;
+{
+	size_t len;
+	AuxInfo ai[SVR4_32_AUX_ARGSIZ], *a;
+	struct elf_args *ap;
+
+	stack = netbsd32_copyargs(pack, arginfo, stack, argp);
+	if (!stack)
+		return NULL;
+
+	a = ai;
+
+	/*
+	 * Push extra arguments on the stack needed by dynamically
+	 * linked binaries
+	 */
+	if ((ap = (struct elf_args *)pack->ep_emul_arg)) {
 
 		a->a_type = AT_PHDR;
 		a->a_v = ap->arg_phaddr;
@@ -121,29 +242,15 @@ svr4_32_copyargs(pack, arginfo, stack, argp)
 		a->a_v = ap->arg_interp;
 		a++;
 
-		a->a_type = AT_FLAGS;
-		a->a_v = 0; /* XXXX -- what are these? */
-		a++;
-
 		a->a_type = AT_ENTRY;
 		a->a_v = ap->arg_entry;
 		a++;
 
-		a->a_type = AT_SUN_UID;
-		a->a_v = p->p_ucred->cr_uid;
-		a++;
-
-		a->a_type = AT_SUN_RUID;
-		a->a_v = p->p_cred->p_ruid;
-		a++;
-
-		a->a_type = AT_SUN_GID;
-		a->a_v = p->p_ucred->cr_gid;
-		a++;
-
-		a->a_type = AT_SUN_RGID;
-		a->a_v = p->p_cred->p_rgid;
-		a++;
+		if (sun_flags) {
+			a->a_type = AT_FLAGS;
+			a->a_v = sun_flags;
+			a++;
+		}
 
 		free((char *)ap, M_TEMP);
 		pack->ep_emul_arg = NULL;
@@ -154,30 +261,13 @@ svr4_32_copyargs(pack, arginfo, stack, argp)
 	a++;
 
 	len = (a - ai) * sizeof(AuxInfo);
-
-	if (platform) {
-		char *ptr = (char *)a;
-
-		/* Copy out the platform name. */
-		platform->a_v = (u_long)ptr;
-		strncpy(ptr, platform_type, 32);
-		ptr += 33;
-		len += 33;
-
-		/* Copy out the file we're executing. */
-		exec->a_v = (u_long)ptr;
-		strcpy(ptr, pack->ep_name);
-		len += strlen(pack->ep_name)+1;
-
-		/* Round to 32-bits */
-		len = (len+7)&~0x7L;
-	}
 	if (copyout(ai, stack, len))
 		return NULL;
 	stack = (caddr_t)stack + len;
 
 	return stack;
 }
+#endif
 
 int
 svr4_32_elf32_probe(p, epp, eh, itp, pos)
