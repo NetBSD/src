@@ -1,4 +1,4 @@
-/*	$NetBSD: elink.c,v 1.3 1994/10/27 04:17:10 cgd Exp $	*/
+/*	$NetBSD: elink.c,v 1.4 1995/01/03 05:04:04 hpeyerl Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -63,6 +63,9 @@ elink_idseq(p)
 {
 	register int i;
 	register u_char c;
+
+	outb(ELINK_ID_PORT, 0x0);
+	outb(ELINK_ID_PORT, 0x0);
 
 	c = 0xff;
 	for (i = 255; i; i--) {
