@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.13 1995/05/28 05:21:58 jtc Exp $	*/
+/*	$NetBSD: modload.c,v 1.14 1996/01/17 02:30:44 jtc Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -208,7 +208,7 @@ main(argc, argv)
 
 	strcpy(modout, modobj);
 
-	p = strchr(modout, '.');
+	p = strrchr(modout, '.');
 	if (!p || strcmp(p, ".o"))
 		errx(2, "module object must end in .o");
 	if (out == NULL) {
