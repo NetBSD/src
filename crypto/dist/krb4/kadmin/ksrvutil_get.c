@@ -34,7 +34,7 @@
 #include "kadm_locl.h"
 #include "ksrvutil.h"
 
-RCSID("$Id: ksrvutil_get.c,v 1.1.1.1 2000/06/16 18:46:06 thorpej Exp $");
+RCSID("$Id: ksrvutil_get.c,v 1.1.1.2 2000/12/29 01:43:07 assar Exp $");
 
 #define BAD_PW 1
 #define GOOD_PW 0

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: kdc_reply.c,v 1.1.1.1 2000/06/16 18:45:53 thorpej Exp $");
+RCSID("$Id: kdc_reply.c,v 1.1.1.2 2000/12/29 01:43:14 assar Exp $");
 
 static int little_endian; /* XXX ugly */
 
@@ -115,12 +115,18 @@ kdc_reply_cipher(KTEXT reply, KTEXT cip)
     if(type != AUTH_MSG_KDC_REPLY)
 	return INTK_PROT;
 
-    p += krb_get_nir(p, aname, inst, realm);
+    p += krb_get_nir(p,
+		     aname, sizeof(aname),
+		     inst, sizeof(inst),
+		     realm, sizeof(realm));
     p += krb_get_int(p, &kdc_time, 4, little_endian);
     p++; /* number of tickets */
     p += krb_get_int(p, &exp_date, 4, little_endian);
     p++; /* master key version number */
     p += krb_get_int(p, &clen, 2, little_endian);
+    if (reply->length - (p - reply->dat) < clen)
+	return INTK_PROT;
+
     cip->length = clen;
     memcpy(cip->dat, p, clen);
     p += clen;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: afssysdefs.h,v 1.1.1.1 2000/06/16 18:46:05 thorpej Exp $ */
+/* $Id: afssysdefs.h,v 1.1.1.2 2000/12/29 01:43:52 assar Exp $ */
 
 /*
  * This section is for machines using single entry point AFS syscalls!
@@ -50,7 +50,7 @@
 #define AFS_SYSCALL	105
 #endif
 
-#if SunOS == 57
+#if SunOS >= 57
 #define AFS_SYSCALL	73
 #endif
 
@@ -80,6 +80,10 @@
 
 #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 #define AFS_SYSCALL 210
+#endif
+
+#ifdef __APPLE__		/* MacOS X */
+#define AFS_SYSCALL 230
 #endif
 
 #ifdef SYS_afs_syscall

@@ -33,7 +33,7 @@
 
 #include "rxkad_locl.h"
 
-RCSID("$Id: rxk_locl.c,v 1.1.1.1 2000/06/16 18:45:50 thorpej Exp $");
+RCSID("$Id: rxk_locl.c,v 1.1.1.2 2000/12/29 01:43:21 assar Exp $");
 
 /* The header checksum is the last 16 bits of this struct after
  * encryption. Note that only the last 8 bytes change per packet. */

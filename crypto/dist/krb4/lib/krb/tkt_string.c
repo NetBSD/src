@@ -21,7 +21,7 @@ or implied warranty.
 
 #include "krb_locl.h"
 
-RCSID("$Id: tkt_string.c,v 1.1.1.1 2000/06/16 18:45:56 thorpej Exp $");
+RCSID("$Id: tkt_string.c,v 1.1.1.2 2000/12/29 01:43:20 assar Exp $");
 
 /*
  * This routine is used to generate the name of the file that holds

@@ -5,7 +5,7 @@
  */
 
 #include <popper.h>
-RCSID("$Id: pop_user.c,v 1.1.1.1 2000/06/16 18:46:26 thorpej Exp $");
+RCSID("$Id: pop_user.c,v 1.1.1.2 2000/12/29 01:42:47 assar Exp $");
 
 /* 
  *  user:   Prompt for the user name at the start of a POP session

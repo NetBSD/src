@@ -18,12 +18,11 @@
       use the Kerberos system.  For information about registering as a
       Kerberos user, see the _k_e_r_b_e_r_o_s_(_1_) manual page.
 
-      If you are logged in to a workstation that is running the _t_o_e_h_o_l_d
-      service, you do not have to use _k_i_n_i_t_.  The _t_o_e_h_o_l_d login procedure
-      will log you into Kerberos automatically.  You will need to use _k_i_n_i_t
-      only in those situations in which your original tickets have expired.
-      (Tickets expire in about a day.)  Note as well that _t_o_e_h_o_l_d will
-      automatically destroy your tickets when you logout from the
+      If you are using a replaced _l_o_g_i_n that already fetches tickets for
+      you, you do not have to use _k_i_n_i_t_.  You will need to use _k_i_n_i_t only in
+      those situations in which your original tickets have expired.
+      (Tickets expire in about a day.)  Note as well that the modified _l_o_g_i_n
+      will automatically destroy your tickets when you logout from the
       workstation.
 
       When you use _k_i_n_i_t without options, the utility prompts for your
@@ -36,11 +35,11 @@
       ticket will be stored in the _/_t_m_p directory, in the file _t_k_t_u_i_d _,
       where _u_i_d specifies your user identification number.
 
-      If you have logged in to Kerberos without the benefit of the
-      workstation _t_o_e_h_o_l_d system, make sure you use the _k_d_e_s_t_r_o_y command to
-      destroy any active tickets before you end your login session.  You may
-      want to put the _k_d_e_s_t_r_o_y command in your _._l_o_g_o_u_t file so that your
-      tickets will be destroyed automatically when you logout.
+      If you have logged in to Kerberos without the benefit of the modified
+      _l_o_g_i_n program, make sure you use the _k_d_e_s_t_r_o_y command to destroy any
+      active tickets before you end your login session.  You may want to put
+      the _k_d_e_s_t_r_o_y command in your _._l_o_g_o_u_t file so that your tickets will be
+      destroyed automatically when you logout.
 
       The options to _k_i_n_i_t are as follows:
 
@@ -57,10 +56,11 @@
              protocol restrictions in Kerberos Version 4, this value must be
              between 5 and 1275 minutes.
 
+      --pp     _k_i_n_i_t will acquires a ticket for changepw.kerberos.
 
 
 
-                                    - 1 -        Formatted:  March 12, 2000
+                                    - 1 -     Formatted:  December 28, 19100
 
 
 
@@ -72,10 +72,8 @@
 
 
 
-      --pp     _k_i_n_i_t will acquires a ticket for changepw.kerberos.
-
  SSEEEE AALLSSOO
-      kerberos(1), kdestroy(1), klist(1), toehold(1)
+      kerberos(1), kdestroy(1), klist(1), login(1)
 
  BBUUGGSS
       The --rr option has not been fully implemented.
@@ -126,7 +124,9 @@
 
 
 
-                                    - 2 -        Formatted:  March 12, 2000
+
+
+                                    - 2 -     Formatted:  December 28, 19100
 
 
 
