@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: param.h,v 1.2 1996/05/16 16:03:35 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -155,6 +155,7 @@
 })
 
 /* spl0 requires checking for software interrupts */
+void    spl0();
 #define spl1()  _spl(PSL_S|PSL_IPL1)
 #define spl2()  _spl(PSL_S|PSL_IPL2)
 #define spl3()  _spl(PSL_S|PSL_IPL3)
