@@ -29,6 +29,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: debugrm.c,v 1.2 2003/07/12 09:37:09 itojun Exp $");
+
 #define NONEED_DRM
 
 #include <sys/types.h>

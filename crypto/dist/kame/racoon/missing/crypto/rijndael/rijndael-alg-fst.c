@@ -13,6 +13,9 @@
  */
 
 #include <sys/cdefs.h>
+__RCSID("$NetBSD: rijndael-alg-fst.c,v 1.2 2003/07/12 09:37:14 itojun Exp $");
+
+#include <sys/cdefs.h>
 #include <sys/types.h>
 #ifdef _KERNEL
 #include <sys/systm.h>

@@ -29,6 +29,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: main.c,v 1.10 2003/07/12 09:37:11 itojun Exp $");
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>

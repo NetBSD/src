@@ -29,6 +29,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: sainfo.c,v 1.2 2003/07/12 09:37:12 itojun Exp $");
+
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>

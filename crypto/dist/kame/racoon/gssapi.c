@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: gssapi.c,v 1.2 2003/07/12 09:37:09 itojun Exp $");
+
 #ifdef HAVE_GSSAPI
 #include <sys/types.h>
 #include <sys/queue.h>

@@ -31,6 +31,9 @@
 
 /* Identity Protecion Exchange (Main Mode) */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: isakmp_ident.c,v 1.2 2003/07/12 09:37:10 itojun Exp $");
+
 #include <sys/types.h>
 #include <sys/param.h>
 

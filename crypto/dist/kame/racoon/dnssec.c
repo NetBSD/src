@@ -29,6 +29,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: dnssec.c,v 1.3 2003/07/12 09:37:09 itojun Exp $");
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <stdlib.h>

@@ -32,6 +32,9 @@
  * a stub function to make random() to return good random numbers.
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: arc4random.c,v 1.2 2003/07/12 09:37:13 itojun Exp $");
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/uio.h>
