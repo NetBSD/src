@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.22 1997/10/28 21:10:07 gwr Exp $ */
+/*	$NetBSD: if_ie.c,v 1.23 1997/11/05 00:02:51 gwr Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -643,7 +643,7 @@ ietint(sc)
 		if (status & IE_XS_UNDERRUN)
 			printf("%s: DMA underrun\n", sc->sc_dev.dv_xname);
 		if (status & IE_XS_EXCMAX) {
-			printf("%s: too many collisions\n", sc->sc_dev.dv_xname);
+			/* Do not print this one (too noisy). */
 			ifp->if_collisions += 16;
 		}
 	}
