@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2800var.h,v 1.1 2002/11/20 17:52:50 bsh Exp $ */
+/* $NetBSD: s3c2800var.h,v 1.2 2003/05/03 05:17:54 bsh Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -31,8 +31,6 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#include <arm/s3c2xx0/s3c2xx0var.h>
 
 #ifndef _ARM_S3C2800VAR_H_
 #define _ARM_S3C2800VAR_H_
