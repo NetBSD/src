@@ -1,4 +1,4 @@
-/*	$NetBSD: pass4.c,v 1.12 1997/09/14 14:36:36 lukem Exp $	*/
+/*	$NetBSD: pass4.c,v 1.13 1997/09/16 16:45:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,17 +36,19 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)pass4.c	8.1 (Berkeley) 6/5/93";
+static char sccsid[] = "@(#)pass4.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass4.c,v 1.12 1997/09/14 14:36:36 lukem Exp $");
+__RCSID("$NetBSD: pass4.c,v 1.13 1997/09/16 16:45:23 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
+
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
-#include <stdlib.h>
+
+#include <err.h>
 #include <string.h>
 
 #include "fsutil.h"
@@ -106,7 +108,7 @@ pass4()
 			break;
 
 		default:
-			errexit("BAD STATE %d FOR INODE I=%d",
+			errx(EEXIT, "BAD STATE %d FOR INODE I=%d",
 			    statemap[inumber], inumber);
 		}
 	}
@@ -118,7 +120,7 @@ pass4check(idesc)
 {
 	struct dups *dlp;
 	int nfrags, res = KEEPON;
-	daddr_t blkno = idesc->id_blkno;
+	ufs_daddr_t blkno = idesc->id_blkno;
 
 	for (nfrags = idesc->id_numfrags; nfrags > 0; blkno++, nfrags--) {
 		if (chkrange(blkno, 1)) {
