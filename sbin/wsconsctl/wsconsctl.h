@@ -1,4 +1,4 @@
-/*	$NetBSD: wsconsctl.h,v 1.1 1998/12/28 14:01:17 hannken Exp $ */
+/*	$NetBSD: wsconsctl.h,v 1.2 2001/02/04 21:16:59 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,9 @@ void mouse_get_values __P((int));
 void mouse_put_values __P((int));
 void display_get_values __P((int));
 void display_put_values __P((int));
+#ifndef YYEMPTY
 int yyparse __P((void));
+#endif
 void yyerror __P((char *));
 int yylex __P((void));
 void map_scan_setinput __P((char *));
