@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.25 1997/08/23 07:32:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.25 1997/08/23 07:32:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ __RCSID("$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $");
 #include <unistd.h>
 
 #include "ftp_var.h"
+#include "pathnames.h"
 
 int main __P((int, char **));
 
@@ -119,6 +120,8 @@ main(argc, argv)
 #endif
 	mark = HASHBYTES;
 	marg_sl = sl_init();
+	if ((tmpdir = getenv("TMPDIR")) == NULL)
+		tmpdir = _PATH_TMP;
 
 	cp = strrchr(argv[0], '/');
 	cp = (cp == NULL) ? argv[0] : cp + 1;
