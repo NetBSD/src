@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.6 1999/06/05 13:43:03 augustss Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.7 1999/08/02 19:49:50 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -262,6 +262,7 @@ usb_freemem(tag, p)
 	int s;
 
 	if (p->block->fullblock) {
+		DPRINTFN(1, ("usb_freemem: large free\n"));
 		usb_block_freemem(p->block);
 		return;
 	}
