@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.2 2001/11/06 03:16:17 augustss Exp $	*/
+/*	$NetBSD: ehcivar.h,v 1.3 2001/11/10 17:06:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define EHCI_COMPANION_MAX 8
 typedef struct ehci_softc {
 	struct usbd_bus sc_bus;		/* base device */
 	bus_space_tag_t iot;
@@ -49,9 +50,21 @@ typedef struct ehci_softc {
 	void *sc_powerhook;		/* cookie from power hook */
 	void *sc_shutdownhook;		/* cookie from shutdown hook */
 
+	u_int sc_ncomp;
+	struct usbd_bus *sc_comps[EHCI_COMPANION_MAX];
+
+	usb_dma_t sc_fldma;
+	u_int sc_flsize;
+
 	device_ptr_t sc_child;		/* /dev/usb# device */
 } ehci_softc_t;
 
+#define EREAD1(sc, a) bus_space_read_1((sc)->iot, (sc)->ioh, (a))
+#define EREAD2(sc, a) bus_space_read_2((sc)->iot, (sc)->ioh, (a))
+#define EREAD4(sc, a) bus_space_read_4((sc)->iot, (sc)->ioh, (a))
+#define EWRITE1(sc, a, x) bus_space_write_1((sc)->iot, (sc)->ioh, (a), (x))
+#define EWRITE2(sc, a, x) bus_space_write_2((sc)->iot, (sc)->ioh, (a), (x))
+#define EWRITE4(sc, a, x) bus_space_write_4((sc)->iot, (sc)->ioh, (a), (x))
 #define EOREAD1(sc, a) bus_space_read_1((sc)->iot, (sc)->ioh, (sc)->sc_offs+(a))
 #define EOREAD2(sc, a) bus_space_read_2((sc)->iot, (sc)->ioh, (sc)->sc_offs+(a))
 #define EOREAD4(sc, a) bus_space_read_4((sc)->iot, (sc)->ioh, (sc)->sc_offs+(a))
