@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.23 2002/03/04 01:28:09 dbj Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.24 2002/04/02 16:59:14 ichiro Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $Id: wiconfig.c,v 1.23 2002/03/04 01:28:09 dbj Exp $";
+	"@(#) $Id: wiconfig.c,v 1.24 2002/04/02 16:59:14 ichiro Exp $";
 #endif
 
 struct wi_table {
@@ -180,8 +180,8 @@ static void wi_apscan(iface)
 	wreq.wi_type = WI_RID_SCAN_APS;
 	wreq.wi_len = 4;
 	/* note chan. 1 is the least significant bit */
-	wreq.wi_val[0] = 0x7ff;		/* 1 bit per channel, 1-11 */
-	wreq.wi_val[1] = 3;		/* tx rate */
+	wreq.wi_val[0] = 0x3fff;	/* 1 bit per channel, 1-14 */
+	wreq.wi_val[1] = 0xf;		/* tx rate */
 
 	/* write the request */
 	wi_setval(iface, &wreq);
