@@ -1,5 +1,5 @@
-# $NetBSD: md.i386,v 1.7 2000/06/07 01:31:39 thorpej Exp $
-./etc/fstab.sd
-./etc/fstab.wd
-./etc/ld.so.conf
-./etc/ttyaction
+# $NetBSD: md.i386,v 1.8 2001/01/26 01:39:17 jwise Exp $
+./etc/fstab.sd		etc-sys-etc
+./etc/fstab.wd		etc-sys-etc
+./etc/ld.so.conf	etc-sys-etc
+./etc/ttyaction		etc-sys-etc
