@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.h,v 1.9 2002/07/28 22:48:38 christos Exp $	 */
+/*	$NetBSD: utmpx.h,v 1.10 2003/04/28 23:16:15 bjh21 Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 #ifndef	_UTMPX_H_
 #define	_UTMPX_H_
 
+#include <sys/featuretest.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 
@@ -51,7 +52,7 @@
 #define	_UTX_IDSIZE	4
 #define _UTX_HOSTSIZE	256
 
-#ifndef _XOPEN_SOURCE
+#if defined(_NETBSD_SOURCE)
 #define UTX_USERSIZE	_UTX_USERSIZE
 #define UTX_LINESIZE	_UTX_LINESIZE
 #define	UTX_IDSIZE	_UTX_IDSIZE
@@ -68,7 +69,7 @@
 #define USER_PROCESS	7
 #define DEAD_PROCESS	8
 
-#ifndef _XOPEN_SOURCE
+#if defined(_NETBSD_SOURCE)
 #define ACCOUNTING	9
 #define SIGNATURE	10
 #endif
@@ -100,7 +101,7 @@ struct utmpx {
 	uint32_t ut_pad[10];		/* reserved for future use */
 };
 
-#ifndef _XOPEN_SOURCE
+#if defined(_NETBSD_SOURCE)
 struct lastlogx {
 	struct timeval ll_tv;		/* time entry was created */
 	char ll_line[_UTX_LINESIZE];	/* tty name */
@@ -118,7 +119,7 @@ struct utmpx *getutxid __P((const struct utmpx *));
 struct utmpx *getutxline __P((const struct utmpx *));
 struct utmpx *pututxline __P((const struct utmpx *));
 
-#ifndef _XOPEN_SOURCE
+#if defined(_NETBSD_SOURCE)
 int updwtmpx __P((const char *, const struct utmpx *));
 int lastlogxname __P((const char *));
 struct lastlogx *getlastlogx __P((uid_t, struct lastlogx *));
@@ -129,7 +130,7 @@ void getutmpx __P((const struct utmp *, struct utmpx *));
 
 int utmpxname __P((const char *));
 
-#endif /* !_XOPEN_SOURCE */
+#endif /* _NETBSD_SOURCE */
 
 __END_DECLS
 

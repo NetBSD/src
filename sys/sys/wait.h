@@ -1,4 +1,4 @@
-/*	$NetBSD: wait.h,v 1.18 2003/02/14 14:27:24 dsl Exp $	*/
+/*	$NetBSD: wait.h,v 1.19 2003/04/28 23:16:32 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1994
@@ -38,6 +38,8 @@
 #ifndef _SYS_WAIT_H_
 #define _SYS_WAIT_H_
 
+#include <sys/featuretest.h>
+
 /*
  * This file holds definitions relevent to the wait4 system call
  * and the alternate interfaces that use it (wait, wait3, waitpid).
@@ -47,7 +49,7 @@
  * Macros to test the exit status returned by wait
  * and extract the relevant values.
  */
-#ifdef _POSIX_SOURCE
+#if !( defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE) )
 #define	_W_INT(i)	(i)
 #else
 #define	_W_INT(w)	(*(int *)(void *)&(w))	/* convert union wait to int */
@@ -62,7 +64,7 @@
 #define WTERMSIG(x)	(_WSTATUS(x))
 #define WIFEXITED(x)	(_WSTATUS(x) == 0)
 #define WEXITSTATUS(x)	((int)(((unsigned int)_W_INT(x)) >> 8) & 0xff)
-#ifndef _POSIX_SOURCE
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 #define WCOREDUMP(x)	(_W_INT(x) & WCOREFLAG)
 
 #define	W_EXITCODE(ret, sig)	((ret) << 8 | (sig))
@@ -81,7 +83,7 @@
 #define WNOHANG		0x00000001	/* don't hang in wait */
 #define WUNTRACED	0x00000002	/* tell about stopped,
 					   untraced children */
-#ifndef _POSIX_SOURCE
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 #define	WALTSIG		0x00000004	/* wait for processes that exit
 					   with an alternate signal (i.e.
 					   not SIGCHLD) */
@@ -102,9 +104,9 @@
  */
 #define	WNOWAIT		0x00010000	/* Don't mark child 'P_WAITED' */ 
 #define	WNOZOMBIE	0x00020000	/* Ignore zombies */
-#endif /* ! _POSIX_SOURCE */
+#endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
 
-#ifndef _POSIX_SOURCE
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 /* POSIX extensions and 4.2/4.3 compatibility: */
 
 /*
@@ -165,7 +167,7 @@ union wait {
 #define w_stopsig	w_S.w_Stopsig
 
 #define	WSTOPPED	_WSTOPPED
-#endif /* _POSIX_SOURCE */
+#endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
 
 #ifndef _KERNEL
 #include <sys/cdefs.h>
@@ -175,7 +177,7 @@ struct rusage;	/* forward declaration */
 
 pid_t	wait __P((int *));
 pid_t	waitpid __P((pid_t, int *, int));
-#ifndef _POSIX_SOURCE
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 pid_t	wait3 __P((int *, int, struct rusage *));
 pid_t	wait4 __P((pid_t, int *, int, struct rusage *));
 #endif

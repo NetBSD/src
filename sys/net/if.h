@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.86 2003/03/05 22:56:46 christos Exp $	*/
+/*	$NetBSD: if.h,v 1.87 2003/04/28 23:16:25 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,8 @@
 #ifndef _NET_IF_H_
 #define _NET_IF_H_
 
-#if !defined(_XOPEN_SOURCE)
+#include <sys/featuretest.h>
+#if defined(_NETBSD_SOURCE)
 
 #include <sys/socket.h>
 #include <sys/queue.h>
@@ -586,7 +587,7 @@ struct if_laddrreq {
 
 #include <net/if_arp.h>
 
-#endif /* !_XOPEN_SOURCE */
+#endif /* _NETBSD_SOURCE */
 
 #ifdef _KERNEL
 #ifdef IFAREF_DEBUG

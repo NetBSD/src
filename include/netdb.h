@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.28 2003/01/06 13:26:25 wiz Exp $	*/
+/*	$NetBSD: netdb.h,v 1.29 2003/04/28 23:16:14 bjh21 Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,6 +91,7 @@
 #include <machine/ansi.h>
 #include <sys/ansi.h>
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 #include <inttypes.h>
 
 /*
@@ -106,7 +107,7 @@ typedef _BSD_SIZE_T_	size_t;
 #undef  _BSD_SIZE_T_
 #endif
 
-#if !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #define	_PATH_HEQUIV	"/etc/hosts.equiv"
 #define	_PATH_HOSTS	"/etc/hosts"
 #define	_PATH_NETWORKS	"/etc/networks"
@@ -165,7 +166,7 @@ struct	protoent {
  * This should be deleted the next time the libc major number is
  * incremented.
  */
-#if !defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE - 0) >= 520
+#if (_XOPEN_SOURCE - 0) >= 520 || defined(_NETBSD_SOURCE)
 struct addrinfo {
 	int	ai_flags;	/* AI_PASSIVE, AI_CANONNAME, AI_NUMERICHOST */
 	int	ai_family;	/* PF_xxx */
@@ -189,7 +190,7 @@ struct addrinfo {
  * (left in extern int h_errno).
  */
 
-#if !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #define	NETDB_INTERNAL	-1	/* see errno */
 #define	NETDB_SUCCESS	0	/* no problem */
 #endif
@@ -197,14 +198,14 @@ struct addrinfo {
 #define	TRY_AGAIN	2 /* Non-Authoritative Host not found, or SERVERFAIL */
 #define	NO_RECOVERY	3 /* Non recoverable errors, FORMERR, REFUSED, NOTIMP */
 #define	NO_DATA		4 /* Valid name, no data record of requested type */
-#if !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #define	NO_ADDRESS	NO_DATA		/* no address, look for MX record */
 #endif
 
 /*
  * Error return codes from getaddrinfo()
  */
-#if !defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE - 0) >= 520
+#if (_XOPEN_SOURCE - 0) >= 520 || defined(_NETBSD_SOURCE)
 #define	EAI_ADDRFAMILY	 1	/* address family for hostname not supported */
 #define	EAI_AGAIN	 2	/* temporary failure in name resolution */
 #define	EAI_BADFLAGS	 3	/* invalid value for ai_flags */
@@ -219,12 +220,12 @@ struct addrinfo {
 #define	EAI_BADHINTS	12
 #define	EAI_PROTOCOL	13
 #define	EAI_MAX		14
-#endif /* !_XOPEN_SOURCE || (_XOPEN_SOURCE - 0) >= 520 */
+#endif /* (_XOPEN_SOURCE - 0) >= 520 || _NETBSD_SOURCE */
 
 /*
  * Flag values for getaddrinfo()
  */
-#if !defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE - 0) >= 520
+#if (_XOPEN_SOURCE - 0) >= 520 || defined(_NETBSD_SOURCE)
 #define	AI_PASSIVE	0x00000001 /* get address to use bind() */
 #define	AI_CANONNAME	0x00000002 /* fill ai_canonname */
 #define	AI_NUMERICHOST	0x00000004 /* prevent name resolution */
@@ -232,11 +233,11 @@ struct addrinfo {
 #define	AI_MASK		(AI_PASSIVE | AI_CANONNAME | AI_NUMERICHOST)
 #endif
 
-#if !defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE - 0) >= 520
+#if (_XOPEN_SOURCE - 0) >= 520 || defined(_NETBSD_SOURCE)
 /*
  * Constants for getnameinfo()
  */
-#if !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #define	NI_MAXHOST	1025
 #define	NI_MAXSERV	32
 #endif
@@ -249,33 +250,33 @@ struct addrinfo {
 #define	NI_NAMEREQD	0x00000004
 #define	NI_NUMERICSERV	0x00000008
 #define	NI_DGRAM	0x00000010
-#if !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #define	NI_WITHSCOPEID	0x00000020	/*KAME extension*/
 #endif
 
 /*
  * Scope delimit character
  */
-#if !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #define	SCOPE_DELIMITER '%'		/*KAME extension*/
 #endif
-#endif /* !_XOPEN_SOURCE || (_XOPEN_SOURCE - 0) >= 520 */
+#endif /* (_XOPEN_SOURCE - 0) >= 520 || _NETBSD_SOURCE */
 
 __BEGIN_DECLS
 void		endhostent __P((void));
 void		endnetent __P((void));
 void		endprotoent __P((void));
 void		endservent __P((void));
-#if !defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE - 0) >= 500
+#if (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
 void		freehostent __P((struct hostent *));
 #endif
 struct hostent	*gethostbyaddr __P((const char *, socklen_t, int));
 struct hostent	*gethostbyname __P((const char *));
-#if !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 struct hostent	*gethostbyname2 __P((const char *, int));
 #endif
 struct hostent	*gethostent __P((void));
-#if !defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE - 0) >= 520
+#if (_XOPEN_SOURCE - 0) >= 520 || defined(_NETBSD_SOURCE)
 #if 0 /* we do not ship these */
 struct hostent	*getipnodebyaddr __P((const void *, size_t, int, int *));
 struct hostent	*getipnodebyname __P((const char *, int, int, int *));
@@ -290,17 +291,17 @@ struct protoent	*getprotoent __P((void));
 struct servent	*getservbyname __P((const char *, const char *));
 struct servent	*getservbyport __P((int, const char *));
 struct servent	*getservent __P((void));
-#if !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 void		herror __P((const char *));
 const char	*hstrerror __P((int));
 #endif
 void		sethostent __P((int));
-#if !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 /* void		sethostfile __P((const char *)); */
 #endif
 void		setnetent __P((int));
 void		setprotoent __P((int));
-#if !defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE - 0) >= 520
+#if (_XOPEN_SOURCE - 0) >= 520 || defined(_NETBSD_SOURCE)
 int		getaddrinfo __P((const char *, const char *,
 				 const struct addrinfo *, struct addrinfo **));
 int		getnameinfo __P((const struct sockaddr *, socklen_t, char *,

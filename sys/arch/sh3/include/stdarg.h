@@ -1,4 +1,4 @@
-/* $NetBSD: stdarg.h,v 1.5 2002/04/28 17:10:37 uch Exp $ */
+/* $NetBSD: stdarg.h,v 1.6 2003/04/28 23:16:23 bjh21 Exp $ */
 
 #ifndef _SH3_STDARG_H_
 #define	_SH3_STDARG_H_
@@ -27,9 +27,9 @@ typedef __gnuc_va_list va_list;
 
 #endif /* __lint__ */
 
-#if !defined(_ANSI_SOURCE) && \
-    (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) || \
-     defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L)
+#if !defined(_ANSI_SOURCE) &&						\
+    (defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L ||	\
+     defined(_NETBSD_SOURCE))
 #define	va_copy		__va_copy
 #endif
 

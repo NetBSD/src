@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.13 2002/03/17 22:21:59 christos Exp $	*/
+/*	$NetBSD: sem.h,v 1.14 2003/04/28 23:16:29 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@ struct sem_undo {
 };
 #endif /* _KERNEL */
 
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 /*
  * semaphore info struct
  */
@@ -244,7 +244,7 @@ int	semctl __P((int, int, int, ...)) __RENAME(__semctl13);
 #endif
 int	semget __P((key_t, int, int));
 int	semop __P((int, struct sembuf *, size_t));
-#if !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 int	semconfig __P((int));
 #endif
 __END_DECLS

@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.26 2003/02/02 20:34:49 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.27 2003/04/28 23:16:31 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -111,7 +111,7 @@
 #define	SEEK_CUR	1	/* set file offset to current plus offset */
 #define	SEEK_END	2	/* set file offset to EOF plus offset */
 
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 /* whence values for lseek(2); renamed by POSIX 1003.1 */
 #define	L_SET		SEEK_SET
 #define	L_INCR		SEEK_CUR

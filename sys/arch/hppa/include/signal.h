@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.1 2002/06/05 01:04:23 fredette Exp $	*/
+/*	$NetBSD: signal.h,v 1.2 2003/04/28 23:16:19 bjh21 Exp $	*/
 
 /*	$OpenBSD: signal.h,v 1.1 1998/06/23 19:45:27 mickey Exp $	*/
 
@@ -29,9 +29,11 @@
  * Machine-dependent signal definitions
  */
 
+#include <sys/featuretest.h>
+
 typedef int sig_atomic_t;
 
-#ifndef _POSIX_SOURCE
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 #include <machine/trap.h>	/* codes for SIGILL, SIGFPE */
 #endif
 
