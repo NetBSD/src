@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.13.2.1 1993/09/14 17:32:21 mycroft Exp $
+ *	$Id: clock.c,v 1.13.2.2 1993/09/24 08:48:57 mycroft Exp $
  */
 /* 
  * Mach Operating System
@@ -149,7 +149,7 @@ clockattach(parent, self, aux)
 
 	/* check and clear diagnostic flags */
 	if (d = nvram(NVRAM_DIAG))
-		printf("clock%d: diagnostic error %b\n", self->sc_dev.dv_unit,
+		printf("clock%d: diagnostic error %b\n", sc->sc_dev.dv_unit,
 			d, NVRAM_DIAG_BITS);
 	outb(iobase, NVRAM_DIAG);
 	outb(iobase + 1, 0);
@@ -166,12 +166,15 @@ nvram(pos)
 	u_char pos;
 {
 	struct clock_softc *sc;
+	u_short iobase;
 
 	if (clockcd.cd_ndevs < 1 ||
 	    !(sc = (struct clock_softc *)clockcd.cd_devs[0]))
 		panic("nvram: no clock");
-	outb(sc->sc_iobase, pos);
-	return inb(sc->sc_iobase + 1);
+	iobase = sc->sc_iobase;
+
+	outb(iobase, pos);
+	return inb(iobase + 1);
 }
 
 struct timer_softc {
@@ -180,6 +183,7 @@ struct timer_softc {
 	struct	intrhand sc_ih;
 
 	u_short	sc_iobase;
+	u_short	sc_irq;
 	u_short sc_limit;
 };
 
@@ -206,7 +210,7 @@ timerprobe(parent, cf, aux)
 	if (ia->ia_irq == IRQUNK) {
 		ia->ia_irq = isa_discoverintr(timerforceintr, aux);
 		if (ia->ia_irq == IRQUNK)
-			return 0:
+			return 0;
 	}
 
 	ia->ia_iosize = TIMER_NPORTS;
@@ -240,11 +244,12 @@ timerattach(parent, self, aux)
 
 	printf(": Intel 8253\n");
 	sc->sc_iobase = iobase;
+	sc->sc_irq = ia->ia_irq;
 	sc->sc_limit = limit;
 
 	if (sc->sc_dev.dv_unit == 0) {
 		/* need to do this here so the rest of autoconfig can
-		   use delay() */
+		   use delay(); interrupt line is still masked */
 
 		findcpuspeed(iobase);	/* use the clock (while it's free)
 					   to find the cpu speed XXXX */
@@ -265,8 +270,22 @@ cpu_initclocks(void)
 		panic("cpu_initclocks: no timer");
 
 	sc->sc_ih.ih_fun = timerintr;
-	sc->sc_ih.ih_arg = XXXX;
-	intr_establish(ia->ia_irq, &sc->sc_ih, DV_DULL);
+	sc->sc_ih.ih_arg = (caddr_t)sc;
+	intr_establish(sc->sc_irq, &sc->sc_ih, DV_DULL);
+}
+
+static __inline u_short
+gettick(iobase)
+	u_short iobase;
+{
+	u_char lo, hi;
+
+	disable_intr();
+	outb(iobase + TIMER_MODE, TIMER_SEL0|TIMER_LATCH);
+	lo = inb(iobase + TIMER_CNTR0);
+	hi = inb(iobase + TIMER_CNTR0);
+	enable_intr();
+	return (hi << 8) | lo;
 }
 
 u_int delaycount;	/* calibrated loop variable (1 millisecond) */
@@ -276,8 +295,7 @@ u_int delaycount;	/* calibrated loop variable (1 millisecond) */
 findcpuspeed(iobase)
 	u_short iobase;
 {
-	u_char lo, hi;
-	u_int remainder;
+	u_short remainder;
 
 	/* put counter in count down mode */
 	outb(iobase + TIMER_MODE, TIMER_SEL0|TIMER_INTTC|TIMER_16BIT);
@@ -286,9 +304,7 @@ findcpuspeed(iobase)
 	delaycount = FIRST_GUESS;
 	spinwait(1);
 	/* read the value left in the counter */
-	lo = inb(iobase + TIMER_CNTR0);
-	hi = inb(iobase + TIMER_CNTR0);
-	remainder = (hi << 8) | lo;
+	remainder = gettick(iobase);
 	/*
 	 * Formula for delaycount is:
 	 * (loopcount * timer clock speed) / (counter ticks * 1000)
@@ -304,20 +320,6 @@ spinwait(int millisecs)
 {
 	/* XXXX */
 	DELAY(1000 * millisecs);
-}
-
-static __inline u_short
-gettick(iobase)
-	u_short iobase;
-{
-	u_char lo, hi;
-
-	disable_intr();
-	outb(iobase + TIMER_MODE, TIMER_SEL0|TIMER_LATCH);
-	lo = inb(iobase + TIMER_CNTR0);
-	hi = inb(iobase + TIMER_CNTR0);
-	enable_intr();
-	return (hi << 8) | lo;
 }
 
 /*
@@ -340,12 +342,27 @@ delay(n)
 
 	otick = gettick(iobase);
 
-	n -= 25;
-
+#if 1
+	/*
+	 * Calculate ((n * TIMER_FREQ) / 1e6) using explicit assembler code so
+	 * we can take advantage of the intermediate 64-bit quantity to prevent
+	 * loss of significance.
+	 */
+	n -= 10;
+	{register int m;
+	__asm __volatile("mul %3"
+			 : "=a" (n), "=d" (m)
+			 : "0" (n), "r" (TIMER_FREQ));
+	__asm __volatile("div %3"
+			 : "=a" (n)
+			 : "0" (n), "d" (m), "r" (1000000)
+			 : "2");}
+#else
 	/*
 	 * Calculate (n * (TIMER_FREQ / 1e6)) without using floating point and
 	 * without any avoidable overflows.
 	 */
+	n -= 20;
 	{
 		int sec = n / 1000000,
 		    usec = n % 1000000;
@@ -354,6 +371,7 @@ delay(n)
 		    usec * ((TIMER_FREQ % 1000000) / 1000) / 1000 +
 		    usec * (TIMER_FREQ % 1000) / 1000000;
 	}
+#endif
 
 	while (n > 0) {
 		tick = gettick(iobase);
@@ -365,43 +383,47 @@ delay(n)
 	}
 }
 
-/* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
-
 int
 rtcget(struct rtc_st *rtc_regs)
 {
-	int	i;
+	/* we would have panicked earlier if clock0 didn't exist */
+	struct clock_softc *sc = (struct clock_softc *)clockcd.cd_devs[0];
+	u_short iobase = sc->sc_iobase;
         u_char *regs = (u_char *)rtc_regs;
+	int i;
         
-	outb(IO_RTC, RTC_D); 
-	if (inb(IO_RTC+1) & RTC_VRT == 0) return(-1);
-	outb(IO_RTC, RTC_STATUSA);	
-	while (inb(IO_RTC+1) & RTC_UIP)		/* busy wait */
-		outb(IO_RTC, RTC_STATUSA);	
-	for (i = 0; i < RTC_NREG; i++) {
-		outb(IO_RTC, i);
-		regs[i] = inb(IO_RTC+1);
+	outb(iobase, NVRAM_VALID);
+	if ((inb(iobase + 1) & NVRAM_VALID_VRT) == 0)
+		return -1;
+	outb(iobase, CLOCK_RATE);	
+	while (inb(iobase + 1) & CLOCK_RATE_UIP)
+		outb(iobase, CLOCK_RATE);
+	for (i = 0; i < CLOCK_NREG; i++) {
+		outb(iobase, i);
+		regs[i] = inb(iobase + 1);
 	}
-	return(0);
+	return 0;
 }	
 
 void
 rtcput(struct rtc_st *rtc_regs)
 {
-	u_char	x;
-	int	i;
-        u_char *regs = (u_char *)rtc_regs;
+	/* we would have panicked earlier if clock0 didn't exist */
+	struct clock_softc *sc = (struct clock_softc *)clockcd.cd_devs[0];
+	u_short iobase = sc->sc_iobase;
+        u_char omode, *regs = (u_char *)rtc_regs;
+	int i;
 
-	outb(IO_RTC, RTC_STATUSB);
-	x = inb(IO_RTC+1);
-	outb(IO_RTC, RTC_STATUSB);
-	outb(IO_RTC+1, x | RTC_SET); 	
-	for (i = 0; i < RTC_NREGP; i++) {
-		outb(IO_RTC, i);
-		outb(IO_RTC+1, regs[i]);
+	outb(iobase, CLOCK_MODE);
+	omode = inb(iobase + 1);
+	outb(iobase, CLOCK_MODE);
+	outb(iobase + 1, omode | CLOCK_MODE_SET);
+	for (i = 0; i < CLOCK_NREG; i++) {
+		outb(iobase, i);
+		outb(iobase + 1, regs[i]);
 	}
-	outb(IO_RTC, RTC_STATUSB);
-	outb(IO_RTC+1, x & ~RTC_SET); 
+	outb(iobase, CLOCK_MODE);
+	outb(iobase + 1, omode & ~CLOCK_MODE_SET);
 }
 
 static int month[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
@@ -409,19 +431,72 @@ static int month[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 static int
 yeartoday(int year)
 {
-	return((year%4) ? 365 : 366);
+	return((!(year % 4) - !(year % 100) + !(year % 400)) ? 366 : 365);
 }
 
 static int
-hexdectodec(char n)
+bcdtodec(u_char n)
 {
-	return(((n>>4)&0x0F)*10 + (n&0x0F));
+	return(((n >> 4) & 0x0f) * 10 + (n & 0x0f));
 }
 
-static char
-dectohexdec(int n)
+static u_char
+dectobcd(int n)
 {
-	return((char)(((n/10)<<4)&0xF0) | ((n%10)&0x0F));
+	return((u_char)(((n / 10) << 4) | ((n % 10) & 0x0f)));
+}
+
+/*
+ * Reset the clock.
+ */
+void
+resettodr()
+{
+	struct rtc_st rtclk;
+	time_t n;
+	int diff, i, j;
+	int s;
+
+	/* attempt to read the clock to preserve the alarm time, but
+	   don't care if it fails */
+	s = splclock();
+	if (rtcget(&rtclk))
+		bzero(&rtclk, sizeof(rtclk));
+	splx(s);
+
+	/* clock is normally in local time, including DST */
+	diff = tz.tz_minuteswest * 60;
+	if (tz.tz_dsttime)
+		diff -= 3600;
+	n = time.tv_sec - diff;
+
+	rtclk.rtc_sec = dectobcd(n%60);
+	n /= 60;
+	rtclk.rtc_min = dectobcd(n%60);
+	n /= 60;
+	rtclk.rtc_hr = dectobcd(n%24);
+	n /= 24;
+
+	/* 1/1/70 is Thursday */
+	rtclk.rtc_dow = (n + 4) % 7;
+
+	for (j = 1970, i = yeartoday(j); n >= i; j++, i = yeartoday(j))
+		n -= i;
+	rtclk.rtc_yr = dectobcd(j - 1900);
+
+	if (i == 366)
+		month[1] = 29;
+	else
+		month[1] = 28;
+	for (i = 0; n >= month[i]; i++)
+		n -= month[i];
+	rtclk.rtc_mon = dectobcd(++i);
+
+	rtclk.rtc_dom = dectobcd(++n);
+
+	s = splclock();
+	rtcput(&rtclk);
+	splx(s);
 }
 
 /*
@@ -439,88 +514,43 @@ inittodr(base)
 	struct rtc_st rtclk;
 	time_t n;
 	int sec, min, hr, dom, mon, yr;
-	int i, days = 0;
-	int ospl;
+	int i, days;
+	int s;
 
-	ospl = splclock();
+	s = splclock();
 	if (rtcget(&rtclk)) {
-		splx(ospl);
+		splx(s);
 		return;
 	}
-	splx (ospl);
+	splx(s);
 
-	sec = hexdectodec(rtclk.rtc_sec);
-	min = hexdectodec(rtclk.rtc_min);
-	hr = hexdectodec(rtclk.rtc_hr);
-	dom = hexdectodec(rtclk.rtc_dom);
-	mon = hexdectodec(rtclk.rtc_mon);
-	yr = hexdectodec(rtclk.rtc_yr);
+	sec = bcdtodec(rtclk.rtc_sec);
+	min = bcdtodec(rtclk.rtc_min);
+	hr = bcdtodec(rtclk.rtc_hr);
+	dom = bcdtodec(rtclk.rtc_dom);
+	mon = bcdtodec(rtclk.rtc_mon);
+	yr = bcdtodec(rtclk.rtc_yr);
+
+	/* stupid clock has no century; fake it for another 70 years */
 	yr = (yr < 70) ? yr+100 : yr;
 
 	n = sec + 60 * min + 3600 * hr;
-	n += (dom - 1) * 3600 * 24;
 
+	days = dom - 1;
 	if (yeartoday(yr) == 366)
 		month[1] = 29;
+	else
+		month[1] = 28;
 	for (i = mon - 2; i >= 0; i--)
 		days += month[i];
-	month[1] = 28;
 	for (i = 70; i < yr; i++)
 		days += yeartoday(i);
-	n += days * 3600 * 24;
+	n += days * (3600 * 24);
 
 	n += tz.tz_minuteswest * 60;
 	if (tz.tz_dsttime)
 		n -= 3600;
+
 	time.tv_sec = n;
         time.tv_usec = 0;
-}
-
-/*
- * Reset the clock.
- */
-void
-resettodr()
-{
-	struct rtc_st rtclk;
-	time_t n;
-	int diff, i, j;
-	int ospl;
-
-	ospl = splclock();
-	if (rtcget(&rtclk)) {
-		splx(ospl);
-		return;
-	}
-	splx(ospl);
-
-	diff = tz.tz_minuteswest * 60;
-	if (tz.tz_dsttime)
-		diff -= 3600;
-	n = (time.tv_sec - diff) % (3600 * 24);   /* hrs+mins+secs */
-	rtclk.rtc_sec = dectohexdec(n%60);
-	n /= 60;
-	rtclk.rtc_min = dectohexdec(n%60);
-	rtclk.rtc_hr = dectohexdec(n/60);
-
-	n = (time.tv_sec - diff) / (3600 * 24);	/* days */
-	rtclk.rtc_dow = (n + 4) % 7;  /* 1/1/70 is Thursday */
-
-	for (j = 1970, i = yeartoday(j); n >= i; j++, i = yeartoday(j))
-		n -= i;
-
-	rtclk.rtc_yr = dectohexdec(j - 1900);
-
-	if (i == 366)
-		month[1] = 29;
-	for (i = 0; n >= month[i]; i++)
-		n -= month[i];
-	month[1] = 28;
-	rtclk.rtc_mon = dectohexdec(++i);
-
-	rtclk.rtc_dom = dectohexdec(++n);
-
-	ospl = splclock();
-	rtcput(&rtclk);
-	splx(ospl);
 }

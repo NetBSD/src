@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.1 1993/09/14 17:32:23 mycroft Exp $
+ *	$Id: fd.c,v 1.20.2.2 1993/09/24 08:49:02 mycroft Exp $
  *
  * Largely rewritten to handle multiple controllers and drives
  * By Julian Elischer, Sun Apr  4 16:34:33 WST 1993
@@ -49,6 +49,7 @@
 #include "disklabel.h"
 #include "buf.h"
 #include "uio.h"
+#include "syslog.h"
 #include "sys/device.h"
 #include "machine/cpufunc.h"
 #include "i386/isa/isa.h"
@@ -93,9 +94,9 @@ char *fdc_states[] = {
 };
 #endif	DEBUG
 
-struct fdc_softc
-{
-	struct	device sc_dev;
+/* software state, per controller */
+struct fdc_softc {
+	struct	device sc_dev;		/* boilerplate */
 	struct	isadev sc_id;
 	struct	intrhand sc_ih;
 
@@ -111,6 +112,7 @@ struct fdc_softc
 	u_char	sc_status[7];		/* copy of registers */
 };
 
+/* controller driver configuration */
 static int fdcprobe __P((struct device *, struct cfdata *, void *));
 static void fdcforceintr __P((void *));
 static void fdcattach __P((struct device *, struct device *, void *));
@@ -119,6 +121,10 @@ static int fdcintr __P((void *));
 struct	cfdriver fdccd =
 { NULL, "fdc", fdcprobe, fdcattach, sizeof(struct fdc_softc) };
 
+/*
+ * Floppies come in various flavors, e.g., 1.2MB vs 1.44MB; here is how
+ * we tell them apart.
+ */
 struct fd_type {
 	int	sectrac;		/* sectors per track         */
 	int	secsize;		/* size code for sectors     */
@@ -132,25 +138,18 @@ struct fd_type {
 	char 	*name;
 };
 
-#define	cf_drive	cf_loc[0]
-
-struct fdc_attach_args {
-	int	fa_drive;
-	struct	fd_type *fa_deftype;
-};
-
-struct fd_type fd_types[] =
-{
- 	{ 18,2,0xFF,0x1B,80,2880,1,0,2,"1.44MB" },
+/* The order of entries in the following table is important -- BEWARE! */
+static struct fd_type fd_types[] = {
+	{ 18,2,0xFF,0x1B,80,2880,1,0,2,"1.44MB" },
 	{ 15,2,0xFF,0x1B,80,2400,1,0,2, "1.2MB" },
 	{  9,2,0xFF,0x23,40, 720,2,1,2, "360KB" }, /* in 1.2MB drive */
 	{  9,2,0xFF,0x2A,40, 720,1,1,2, "360KB" }, /* in 360KB drive */
 	{  9,2,0xFF,0x2A,80,1440,1,0,2, "720KB" },
 };
 
+/* software state, per disk (with up to 2 disks per ctlr) */
 struct fd_softc {
 	struct	device sc_dev;
-	struct	fdc_softc *sc_fdc;
 
 	struct	fd_type *sc_deftype;	/* default type descriptor */
 	struct	fd_type *sc_type;	/* current type descriptor */
@@ -174,13 +173,16 @@ int	fd_debug = 1;
 #define TRACE1(arg1,arg2)
 #endif	DEBUG
 
-static int fdprobe __P((struct device *, struct cfdata *, void *));
+/* floppy driver configuration */
+static int fdmatch __P((struct device *, struct cfdata *, void *));
 static void fdattach __P((struct device *, struct device *, void *));
 
 struct	cfdriver fdcd =
-{ NULL, "fd", fdprobe, fdattach, sizeof(struct fd_softc) };
+{ NULL, "fd", fdmatch, fdattach, sizeof(struct fd_softc) };
 
 extern int hz;
+
+static struct fd_type *fd_nvtotype __P((char *, int, int));
 
 static void set_motor __P((struct fd_softc *fd, int reset));
 static void fd_turnoff __P((struct fd_softc *fd));
@@ -201,18 +203,16 @@ fdcprobe(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct isa_attach_args *ia = aux;
-	int fdcu = cf->cf_unit;
+	register struct isa_attach_args *ia = aux;
 	u_short iobase = ia->ia_iobase;
-	u_short irq;
 
 	/* XXX don't know how to search yet */
 	if (iobase == IOBASEUNK || ia->ia_drq == DRQUNK)
 		return 0;
 
 	/* try a reset, don't change motor on */
-	outb(iobase + fdout, FDO_FRST|FDO_FDMAEN);
-	DELAY(100);
+	outb(iobase + fdout, FDO_FRST | FDO_FDMAEN);
+	delay(100);
 	outb(iobase + fdout, 0);
 
 	if (ia->ia_irq == IRQUNK) {
@@ -224,57 +224,6 @@ fdcprobe(parent, cf, aux)
 	ia->ia_iosize = FDC_NPORT;
 	ia->ia_msize = 0;
 	return 1;
-}
-
-static int
-fdcsubmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
-{
-	struct fdc_attach_args *fa = aux;
-
-	fa->fa_drive = cf->cf_drive;
-
-#ifdef DIAGNOSTIC
-	if (!cf->cf_driver->cd_match || cf->cf_driver->cd_match != fdprobe) {
-		printf("fdcsubmatch: no or bad match function for `%s' device\n",
-			cf->cf_driver->cd_name);
-		panic("fdcsubmatch: no or bad match function\n");
-	}
-#endif
-
-	return (*cf->cf_driver->cd_match)(parent, cf, aux);
-}
-
-static void
-fdcattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-	struct	fdc_softc *fdc = (struct fdc_softc *)self;
-	struct	isa_attach_args *ia = aux;
-
-	fdc->sc_iobase = ia->ia_iobase;
-	fdc->sc_drq = ia->ia_drq;
-	fdc->sc_state = DEVIDLE;
-	printf(": NEC 765\n");
-	isa_establish(&fdc->sc_id, &fdc->sc_dev);
-
-	fdc->sc_ih.ih_fun = fdcintr;
-	fdc->sc_ih.ih_arg = self;
-	intr_establish(ia->ia_irq, &fdc->sc_ih, DV_DISK);
-
-	at_setup_dmachan(fdc->sc_drq, FDC_MAXIOSIZE);
-
-	for (;;) {
-		struct cfdata *child;
-		struct fdc_attach_args fa;
-		child = config_search(NULL, self, &fa);
-		if (!child)
-			break;
-		config_attach(self, child, &fa, NULL);
-	}
 }
 
 static void
@@ -291,81 +240,154 @@ fdcforceintr(aux)
 	out_fdc(iobase, 0);
 }
 
+/*
+ * Arguments passed between fdcattach and fdmatch.  Note that fdcattach
+ * effectively does the probing for each of the two drives (hence the
+ * name fdmatch, rather than fdprobe).
+ */
+struct fdc_attach_args {
+	int	fa_drive;
+	struct	fd_type *fa_deftype;
+};
+
+/*
+ * Print the location of a disk drive (called just before attaching the
+ * the drive).  If `fdc' is not NULL, the drive was found but was not
+ * in the system config file; print the drive name as well.
+ * Return UNCONF (config_find ignores this if the device was configured).
+ */
 static int
-fdprobe(parent, cf, aux)
+fdprint(args, fdc)
+	void *args;
+	char *fdc;
+{
+	register struct fdc_attach_args *fa = args;
+
+	if (fdc)
+		printf("%s:", fdc);
+	printf(" drive %d", fa->fa_drive);
+	return (UNCONF);
+}
+
+static void
+fdcattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	register struct fdc_softc *fdc = (struct fdc_softc *)self;
+	struct isa_attach_args *ia = aux;
+	int type;
+	struct fdc_attach_args fa;
+
+	fdc->sc_iobase = ia->ia_iobase;
+	fdc->sc_drq = ia->ia_drq;
+	fdc->sc_state = DEVIDLE;
+	printf(": NEC 765\n");
+	isa_establish(&fdc->sc_id, &fdc->sc_dev);
+
+	fdc->sc_ih.ih_fun = fdcintr;
+	fdc->sc_ih.ih_arg = self;
+	intr_establish(ia->ia_irq, &fdc->sc_ih, DV_DISK);
+
+	at_setup_dmachan(fdc->sc_drq, FDC_MAXIOSIZE);
+
+	/*
+	 * The NVRAM info only tells us about the `primary' floppy
+	 * controller.  This test is wrong but is the best I have....
+	 */
+	if (fdc->sc_dev.dv_unit == 0)
+		type = nvram(NVRAM_DISKETTE);
+	else
+		type = -1;
+
+	/* physical limit: two drives per controller. */
+	for (fa.fa_drive = 0; fa.fa_drive < 2; fa.fa_drive++) {
+		if (type >= 0) {
+			fa.fa_deftype = fd_nvtotype(fdc->sc_dev.dv_xname,
+			    type, fa.fa_drive);
+			if (fa.fa_deftype == NULL)	/* none or error */
+				continue;
+		} else {
+			/* XXXX should probe drive to make sure it exists */
+			fa.fa_deftype = NULL;		/* unknown */
+		}
+		(void)config_found(self, (void *)&fa, fdprint);
+	}
+}
+
+static int
+fdmatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-	struct	fdc_attach_args *fa = aux;
-	struct	fdc_softc *fdc = (struct fdc_softc *)parent;
-	int	type;
+	struct fdc_attach_args *fa = aux;
 
-	if (fa->fa_drive < 0 || fa->fa_drive > 1)
-		return 0;
-
-	/* XXXX should allow `flags' to override device type */
-
-	if (fdc->sc_dev.dv_unit == 0) {
-		type = nvram(NVRAM_DISKETTE);
-		if (fa->fa_drive == 1)
-			type <<= 4;
-		else
-			type &= 0xf0;
-	} else
-		type = -1;
-
-	switch (type) {
-	    case NVRAM_DISKETTE_NONE:
-		return 0;
-	    case NVRAM_DISKETTE_12M:
-		fa->fa_deftype = &fd_types[1];
-		break;
-	    case NVRAM_DISKETTE_144M:
-		fa->fa_deftype = &fd_types[0];
-		break;
-	    case NVRAM_DISKETTE_360K:
-		fa->fa_deftype = &fd_types[3];
-		break;
-	    case NVRAM_DISKETTE_720K:
-		fa->fa_deftype = &fd_types[4];
-		break;
-	    case -1:
-		fa->fa_deftype = NULL;
-		break;
-	    default:
-		printf("fd%d: unknown device type 0x%x\n",
-			cf->cf_unit, type);
-		return 0;
-	}
-
-	/* XXXX need to probe diskette to make sure it exists, at least when
-	   fdc->sc_dev.dv_unit != 0 */
-	return 1;
+#define cf_drive cf_loc[0]
+	return cf->cf_drive < 0 || cf->cf_drive == fa->fa_drive;
+#undef cf_drive
 }
 
+/*
+ * Controller is working, drive was found (or, if fa_deftype == NULL,
+ * not even tested for).  Attach it.
+ */
 static void
 fdattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct	fdc_softc *fdc = (struct fdc_softc *)parent;
-	struct	fd_softc *fd = (struct fd_softc *)self;
-	struct	fdc_attach_args *fa = aux;
-	struct	fd_type *type = fa->fa_deftype;
+	struct fdc_softc *fdc = (struct fdc_softc *)parent;
+	struct fd_softc *fd = (struct fd_softc *)self;
+	struct fdc_attach_args *fa = aux;
+	struct fd_type *type;
 
+	/* XXXX should allow `flags' to override device type */
+	type = fa->fa_deftype;
+	if (type)
+		printf(": %s %d cyl, %d head, %d sec\n", type->name,
+			type->tracks, type->heads, type->sectrac);
+	else
+		printf(": density unknown\n");
 	fd->sc_track = -1;
-	fd->sc_fdc = fdc;
 	fd->sc_drive = fa->fa_drive;
 	fd->sc_deftype = type;
 	fdc->sc_fd[fd->sc_drive] = fd;
+}
 
-	printf(" drive %d: ", fd->sc_drive);
-	if (type)
-		printf("%s %d cyl, %d head, %d sec\n", type->name,
-			type->tracks, type->heads, type->sectrac);
-	else
-		printf("density unknown\n");
+/*
+ * Translate nvram type into internal data structure.  Return NULL for
+ * none/unknown/unusable.
+ */
+static struct fd_type *
+fd_nvtotype(fdc, nvraminfo, drive)
+	char *fdc;
+	int nvraminfo, drive;
+{
+	int type;
+	type = (drive == 0 ? nvraminfo : nvraminfo << 4) & 0xf0;
+	switch (type) {
+
+	case NVRAM_DISKETTE_NONE:
+		return NULL;
+
+	case NVRAM_DISKETTE_12M:
+		return &fd_types[1];
+
+	case NVRAM_DISKETTE_144M:
+		return &fd_types[0];
+
+	case NVRAM_DISKETTE_360K:
+		return &fd_types[3];
+
+	case NVRAM_DISKETTE_720K:
+		return &fd_types[4];
+
+	default:
+		printf("%s: drive %d: unknown device type 0x%x\n",
+		    fdc, drive, type);
+		return NULL;
+	}
 }
 
 void
@@ -374,7 +396,7 @@ fdstrategy(bp)
 {
 	int	fdu = FDUNIT(minor(bp->b_dev));
 	struct	fd_softc *fd = (struct fd_softc *)&fdcd.cd_devs[fdu];
-	struct	fdc_softc *fdc = fd->sc_fdc;
+	struct	fdc_softc *fdc = (struct fdc_softc *)fd->sc_dev.dv_parent;
 	struct	fd_type *type = fd->sc_type;
 	register struct buf *dp;
 	int	nblks;
@@ -416,7 +438,7 @@ set_motor(fd, reset)
 	struct fd_softc *fd;
 	int reset;
 {
-	struct	fdc_softc *fdc = fd->sc_fdc;
+	struct	fdc_softc *fdc = (struct fdc_softc *)fd->sc_dev.dv_parent;
 	u_char	status = fd->sc_drive | (reset ? 0 : (FDO_FRST|FDO_FDMAEN));
 
 	if ((fd = fdc->sc_fd[0]) && (fd->sc_flags & FD_MOTOR))
@@ -442,11 +464,12 @@ static void
 fd_motor_on(fd)
 	struct fd_softc *fd;
 {
+	struct fdc_softc *fdc = (struct fdc_softc *)fd->sc_dev.dv_parent;
 	int s = splbio();
 
 	fd->sc_flags &= ~FD_MOTOR_WAIT;
-	if ((fd->sc_fdc->sc_afd == fd) && (fd->sc_fdc->sc_state == MOTORWAIT))
-		fdcintr(fd->sc_fdc);
+	if ((fdc->sc_afd == fd) && (fdc->sc_state == MOTORWAIT))
+		fdcintr(fdc);
 	splx(s);
 }
 
@@ -697,7 +720,7 @@ fdcstate(fdc)
 		return 0;			/* will return later */
 
 	    case SEEKWAIT:
-		untimeout((timeout_t)fd_timeout, fdc);
+		untimeout((timeout_t)fd_timeout, (caddr_t)fdc);
 		/* allow 1/50 second for heads to settle */
 		timeout((timeout_t)fd_pseudointr, (caddr_t)fdc, hz/50);
 		fdc->sc_state = SEEKCOMPLETE;
@@ -775,7 +798,7 @@ fdcstate(fdc)
 	    case RESETCTLR:
 		/* Try a reset, keep motor on */
 		set_motor(fd, 1);
-		DELAY(100);
+		delay(100);
 		set_motor(fd, 0);
 		outb(iobase + fdctl, fd->sc_type->trans);
 		TRACE1("[0x%x->fdctl]", fd->sc_type->trans);
@@ -870,13 +893,13 @@ fdcretry(fdc)
 		break;
 
 	    default:
-		printf("fd%d: hard error st0 %b ", fdc->sc_afd->sc_dev.dv_unit,
-			fdc->sc_status[0], NE7_ST0BITS);
+		diskerr(bp, "fd", "hard error", LOG_PRINTF,
+			fdc->sc_afd->sc_skip, (struct disklabel *)NULL);
+		printf(" (st0 %b ", fdc->sc_status[0], NE7_ST0BITS);
 		printf("st1 %b ", fdc->sc_status[1], NE7_ST1BITS);
 		printf("st2 %b ", fdc->sc_status[2], NE7_ST2BITS);
-		printf("st3 %b ", fdc->sc_status[3], NE7_ST3BITS);
-		printf("cyl %d hd %d sec %d\n", fdc->sc_status[4],
-			fdc->sc_status[5], fdc->sc_status[6]);
+		printf("cyl %d hd %d sec %d\n", fdc->sc_status[3],
+			fdc->sc_status[4], fdc->sc_status[5]);
 
 		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
@@ -899,7 +922,7 @@ fdioctl(dev, cmd, addr, flag)
 	caddr_t addr;
 	int flag;
 {
-	struct fd_softc *fd = (struct fd_softc *)fdcd.devs[FDUNIT(minor(dev))];
+	struct fd_softc *fd = (struct fd_softc *)fdcd.cd_devs[FDUNIT(minor(dev))];
 	struct fd_type *type;
 	char buffer[DEV_BSIZE];
 	struct disklabel *dl;
@@ -916,7 +939,7 @@ fdioctl(dev, cmd, addr, flag)
 		dl->d_secpercyl = type->size / type->tracks;
 		dl->d_type = DTYPE_FLOPPY;
 
-		if (readdisklabel(dev, fdstrategy, dl, NULL, 0, 0) == NULL)
+		if (readdisklabel(dev, fdstrategy, dl, NULL) == NULL)
 			error = 0;
 		else
 			error = EINVAL;

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.h	5.7 (Berkeley) 5/9/91
- *	$Id: isa.h,v 1.11.2.1 1993/09/14 17:32:41 mycroft Exp $
+ *	$Id: isa.h,v 1.11.2.2 1993/09/24 08:49:17 mycroft Exp $
  */
 
 /*
@@ -44,7 +44,6 @@
 #ifndef LOCORE
 #include <sys/cdefs.h>
 
-unsigned char rtcin __P((int));
 void sysbeep __P((int, int));
 unsigned kbd_8042cmd __P((int));
 struct isa_device;
@@ -124,5 +123,5 @@ int isa_irq_pending __P((struct isa_device *dvp));
 #endif
 
 #ifndef LOCORE
-extern vm_offset_t isaphysmem;
+extern caddr_t isaphysmem;
 #endif

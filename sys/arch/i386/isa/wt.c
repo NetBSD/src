@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wt.c	7.1 (Berkeley) 5/9/91
- *	$Id: wt.c,v 1.5 1993/07/28 02:21:40 cgd Exp $
+ *	$Id: wt.c,v 1.5.2.1 1993/09/24 08:49:39 mycroft Exp $
  */
 
 /*
@@ -290,7 +290,7 @@ extern time_t	lbolt;
  * trading off with disk & tape I/O.
  */
 
-int
+void
 wtstrategy(bp)
 register struct buf *bp;
 {

@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.19.4.1 1993/09/14 17:32:28 mycroft Exp $
+ *	$Id: icu.s,v 1.19.4.2 1993/09/24 08:49:10 mycroft Exp $
  */
 
 /*
@@ -267,6 +267,7 @@ _splnone:
 	COUNT_EVENT(_intrcnt_spl, 19)
 in_splnone:
 	movl	_cpl,%eax
+	pushl	%eax
 	testl   $~((1 << NETISR_SCLK) | (1 << NETISR_AST)),_netisr
 	jz	INTRLOCAL(over_net_stuff_for_splnone)
 	movl	_netmask,%eax	# mask off those network devices
@@ -291,6 +292,7 @@ INTRLOCAL(over_net_stuff_for_splnone):
 	movl	_ipending,%eax
 	testl   %eax,%eax
 	jne	INTRLOCAL(unpend_V)
+	popl	%eax
 	ret
 	
 	.globl _splx
@@ -301,11 +303,13 @@ _splx:
 	testl   %eax,%eax
 	je	in_splnone	# going to "zero level" is special
 	COUNT_EVENT(_intrcnt_spl, 23)
+	pushl	_cpl
 	movl	%eax,_cpl	# set new priority
 	SHOW_CPL
 	notl	%eax
 	andl	_ipending,%eax
 	jne	INTRLOCAL(unpend_V)
+	popl	%eax
 	ret
 
 	ALIGN_TEXT
@@ -340,6 +344,7 @@ INTRLOCAL(unpend_V_next):
 	notl	%eax
 	andl	_ipending,%eax
 	jne	INTRLOCAL(unpend_V)
+	popl	%eax
 	ret
 
 #define BUILD_VEC(irq_num) \

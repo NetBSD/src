@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.28.2.1 1993/09/14 17:32:39 mycroft Exp $
+ *	$Id: isa.c,v 1.28.2.2 1993/09/24 08:49:13 mycroft Exp $
  */
 
 /*
@@ -55,7 +55,7 @@
 #include "uio.h"
 #include "syslog.h"
 #include "malloc.h"
-#include "machine/segments.h"
+#include "machine/cpu.h"
 #include "machine/cpufunc.h"
 #include "sys/device.h"
 #include "vm/vm.h"
@@ -86,12 +86,19 @@
 isa_type isa_bustype;				/* type of bus */
 
 static int isaprobe __P((struct device *, struct cfdata *, void *));
-static void icuattach __P((struct device *, struct device *, void *));
+static void isaattach __P((struct device *, struct device *, void *));
+static int isasubmatch __P((struct device *, struct cfdata *, void *));
 
 struct cfdriver isacd =
-{ NULL, "isa", isaprobe, isaattach, DV_DULL, sizeof(struct isa_softc) };
+    { NULL, "isa", isaprobe, isaattach, DV_DULL, sizeof(struct isa_softc) };
 
-int
+void isa_defaultirq __P((void));
+static int isaprint __P((void *, char *));
+
+/*
+ * We think there might be an ISA bus here.  Check it out.
+ */
+static int
 isaprobe(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
@@ -103,50 +110,107 @@ isaprobe(parent, cf, aux)
 	return 1;
 }
 
+/*
+ * Probe succeeded, someone called config_attach.  Now we have to
+ * probe the ISA bus itself in our turn.
+ */
+static void
+isaattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+
+	/* should print ISA/EISA & bus clock frequency and anything else
+	   we can figure out? */
+	printf("\n");
+
+	isa_defaultirq();
+
+	enable_intr();
+	splhigh();
+	intr_enable(IRQ_SLAVE);
+
+	/* Iterate ``isasubmatch'' over all devices configured here. */
+	(void)config_search(isasubmatch, self, (void *)NULL);
+
+	/* and the problem is... if netmask == 0, then the loopback
+	 * code can do some really ugly things.
+	 * workaround for this: if netmask == 0, set it to 0x8000, which
+	 * is the value used by splsoftclock.  this is nasty, but it
+	 * should work until this interrupt system goes away. -- cgd
+	 */
+	if (netmask == 0)
+		netmask = 0x8000;	/* same as for softclock.  XXXX */
+
+	printf("biomask %x ttymask %x netmask %x impmask %x\n",
+	       biomask, ttymask, netmask, impmask);
+	splnone();
+}
+
+/*
+ * isaattach (above) iterates this function over all the sub-devices that
+ * were configured at the ``isa'' device.  Our job is to provide defaults
+ * and do some internal/external representation conversion (some of which
+ * is scheduled to get cleaned up later), then call the device's probe
+ * function.  If this says the device is there, we try to reserve ISA
+ * bus memory and ports for the device, and attach it.
+ *
+ * Note that we always return 0, but our ultimate caller (isaattach)
+ * does not care that we never `match' anything.  (In fact, our return
+ * value is entirely irrelevant; this function is run entirely for its
+ * side effects.)
+ */
 static int
-isasubmatch(parent, cf, aux)
-	struct device *parent;
+isasubmatch(isa, cf, aux)
+	struct device *isa;
 	struct cfdata *cf;
 	void *aux;
 {
-	struct	isa_attach_args *ia = aux;
-	int	rv;
-
-	ia->ia_iobase = cf->cf_iobase;
-	ia->ia_iosize = cf->cf_iosize;
-	if (cf->cf_irq == -1)
-		ia->ia_irq = IRQUNK;
-	else
-		ia->ia_irq = 1 << cf->cf_irq;
-	ia->ia_drq = cf->cf_drq;
-	ia->ia_maddr = cf->cf_maddr;
-	ia->ia_msize = cf->cf_msize;
+	struct isa_attach_args ia;
 
 #ifdef DIAGNOSTIC
-	if (!cf->cf_driver->cd_match) {
+	if (cf->cf_driver->cd_match == NULL) {
+		/* we really ought to add printf formats to panic(). */
 		printf("isasubmatch: no match function for `%s' device\n",
 			cf->cf_driver->cd_name);
 		panic("isasubmatch: no match function\n");
 	}
 #endif
 
-	rv = (*cf->cf_driver->cd_match)(parent, cf, aux);
+	/* Init the info needed in the device probe routine. */
+	ia.ia_iobase = cf->cf_iobase;
+	ia.ia_iosize = cf->cf_iosize;
+	if (cf->cf_irq == -1)
+		ia.ia_irq = IRQUNK;
+	else
+		ia.ia_irq = 1 << cf->cf_irq;
+	ia.ia_drq = cf->cf_drq;
+	ia.ia_maddr = (caddr_t)cf->cf_maddr;
+	ia.ia_msize = cf->cf_msize;
 
-	if (!rv)
+	/* If driver says it's not there, believe it. */
+	if (!cf->cf_driver->cd_match(isa, cf, &ia))
 		return 0;
 
-	if (!isa_reserveports(ia->ia_iobase, ia->ia_iosize))
-		return 0;
-
-	if (!isa_reservemem(ia->ia_maddr, ia->ia_msize)) {
-		isa_unreserveports(ia->ia_iobase, ia->ia_iosize);
-		return 0;
+	/* Driver says it is there.  Try to reserve ports and memory. */
+	if (isa_reserveports(ia.ia_iobase, ia.ia_iosize)) {
+		if (isa_reservemem(ia.ia_maddr, ia.ia_msize))
+			config_attach(isa, cf, &ia, isaprint);	/* victory! */
+		else
+			isa_unreserveports(ia.ia_iobase, ia.ia_iosize);
 	}
 
-	return 1;
+	/* In any case, move on to next config entry. */
+	return 0;
 }
 
-void
+/*
+ * Called indirectly via config_attach (see above).  Config has already
+ * printed, e.g., "wdc0 at isa0".  We can ignore our ``isaname'' arg
+ * (it is always NULL, by definition) and just extend the line with
+ * the standard info (port(s), irq, drq, and iomem).
+ */
+static int
 isaprint(aux, isaname)
 	void *aux;
 	char *isaname;
@@ -166,41 +230,7 @@ isaprint(aux, isaname)
 	if (ia->ia_msize > 1)
 		printf("-0x%x", ia->ia_maddr + ia->ia_msize - 1);
 	/* XXXX need to print flags */
-}
-
-void
-isaattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-
-	isa_defaultirq();
-
-	enable_intr();
-	splhigh();
-	intr_enable(IRQ_SLAVE);
-
-	for (;;) {
-		struct cfdata *child
-		struct isa_attach_args ia;
-		child = config_search(isasubmatch, self, &ia);
-		if (!child)
-			break;
-		config_attach(self, child, &ia, isaprint);
-	}
-
-	/* and the problem is... if netmask == 0, then the loopback
-	 * code can do some really ugly things.
-	 * workaround for this: if netmask == 0, set it to 0x8000, which
-	 * is the value used by splsoftclock.  this is nasty, but it
-	 * should work until this interrupt system goes away. -- cgd
-	 */
-	if (netmask == 0)
-		netmask = 0x8000;	/* same as for softclock.  XXXX */
-
-	printf("biomask %x ttymask %x netmask %x impmask %x\n",
-	       biomask, ttymask, netmask, impmask);
-	splnone();
+	return QUIET;	/* actually, our return value is irrelevant. */
 }
 
 

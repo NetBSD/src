@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.h	5.6 (Berkeley) 5/9/91
- *	$Id: icu.h,v 1.7.2.1 1993/09/14 17:32:27 mycroft Exp $
+ *	$Id: icu.h,v 1.7.2.2 1993/09/24 08:49:06 mycroft Exp $
  */
 
 /*
@@ -50,7 +50,7 @@ extern	unsigned imen;		/* interrupt mask enable */
 #define	intr_enable(s)	do {imen &= ~(s); SET_ICUS();} while (0)
 #define	intr_disable(s)	do {imen |= (s); SET_ICUS();} while (0)
 #define SET_ICUS()	do {outb(IO_ICU1 + 1, imen); \
-			    outb(IU_ICU2 + 1, imen >> 8);} while (0)
+			    outb(IO_ICU2 + 1, imen >> 8);} while (0)
 #endif
 
 /*
