@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sun_misc.c,v 1.9.2.6 1993/11/27 02:20:41 deraadt Exp $
+ * $Id: sun_misc.c,v 1.9.2.7 1993/11/27 03:10:31 deraadt Exp $
  */
 
 /*
@@ -798,4 +798,73 @@ sun_vhangup(p, uap, retval)
 	int *retval;
 {
 	return 0;
+}
+
+struct sun_statfs {
+	long	f_type;		/* type of info, zero for now */
+	long	f_bsize;	/* fundamental file system block size */
+	long	f_blocks;	/* total blocks in file system */
+	long	f_bfree;	/* free blocks */
+	long	f_bavail;	/* free blocks available to non-super-user */
+	long	f_files;	/* total file nodes in file system */
+	long	f_ffree;	/* free file nodes in fs */
+	fsid_t	f_fsid;		/* file system id */
+	long	f_spare[7];	/* spare for later */
+};
+struct sun_statfs_args {
+	char	*path;			/* or int fd for fstatfs() */
+	struct	sun_statfs *buf;
+};
+int
+sunstatfs(p, uap, retval, f)
+	struct proc *p;
+	struct sun_statfs_args *uap;
+	int *retval;
+	int (*f)();
+{
+	struct sun_statfs ssfs, *ssfsp = uap->buf;
+	struct statfs sfs;
+	int error, ret;
+	extern char sigcode[], esigcode[];
+
+	uap->buf = (struct sun_statfs *)ALIGN(PS_STRINGS - szsigcode - STACKGAPLEN);
+
+	if (ret = (*f)(p, uap, retval))
+		return ret;
+	if (error = copyin(uap->buf, &sfs, sizeof sfs))
+		return error;
+
+	bzero(&ssfs, sizeof ssfs);
+	ssfs.f_type = 0;
+	ssfs.f_bsize = sfs.f_fsize;
+	ssfs.f_blocks = sfs.f_blocks;
+	ssfs.f_bfree = sfs.f_bfree;
+	ssfs.f_bavail = sfs.f_bavail;
+	ssfs.f_files = sfs.f_files;
+	ssfs.f_ffree = sfs.f_ffree;
+	ssfs.f_fsid = sfs.f_fsid;
+
+	if (error = copyout(&ssfs, ssfsp, sizeof ssfs))
+		return error;
+	return ret;
+}
+
+sun_statfs(p, uap, retval)
+	struct proc *p;
+	struct sun_statfs_args *uap;
+	int *retval;
+{
+	extern statfs();
+
+	return sunstatfs(p, uap, retval, statfs);
+}
+
+sun_fstatfs(p, uap, retval)
+	struct proc *p;
+	struct sun_statfs_args *uap;
+	int *retval;
+{
+	extern fstatfs();
+
+	return sunstatfs(p, uap, retval, fstatfs);
 }
