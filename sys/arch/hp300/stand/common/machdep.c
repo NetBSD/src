@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2003/08/07 16:27:42 agc Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10 2003/10/02 13:53:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -138,15 +138,6 @@ getmachineid()
 
 int userom;
 
-struct trapframe {
-	int dregs[8];
-	int aregs[8];
-	int whoknows;
-	short sr;
-	int pc;
-	short frame;
-};
-
 trap(fp)
 	struct trapframe *fp;
 {
@@ -161,13 +152,17 @@ trap(fp)
 #endif
 
 	printf("Got unexpected trap: format=%x vector=%x ps=%x pc=%x\n",
-		  (fp->frame>>12)&0xF, fp->frame&0xFFF, fp->sr, fp->pc);
+		  fp->tf_format, fp->tf_format, fp->tf_sr, fp->tf_pc);
 	printf("dregs: %x %x %x %x %x %x %x %x\n",
-	       fp->dregs[0], fp->dregs[1], fp->dregs[2], fp->dregs[3], 
-	       fp->dregs[4], fp->dregs[5], fp->dregs[6], fp->dregs[7]);
+	       fp->tf_regs[0], fp->tf_regs[1],
+	       fp->tf_regs[2], fp->tf_regs[3], 
+	       fp->tf_regs[4], fp->tf_regs[5],
+	       fp->tf_regs[6], fp->tf_regs[7]);
 	printf("aregs: %x %x %x %x %x %x %x %x\n",
-	       fp->aregs[0], fp->aregs[1], fp->aregs[2], fp->aregs[3], 
-	       fp->aregs[4], fp->aregs[5], fp->aregs[6], fp->aregs[7]);
+	       fp->tf_regs[8], fp->tf_regs[9],
+	       fp->tf_regs[10], fp->tf_regs[11], 
+	       fp->tf_regs[12], fp->tf_regs[13],
+	       fp->tf_regs[14], fp->tf_regs[15]);
 
 #if 0
 	userom = 0;
