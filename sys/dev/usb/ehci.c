@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.88 2004/10/26 20:46:16 augustss Exp $ */
+/*	$NetBSD: ehci.c,v 1.89 2004/12/03 08:51:31 augustss Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.88 2004/10/26 20:46:16 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.89 2004/12/03 08:51:31 augustss Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -319,6 +319,7 @@ ehci_init(ehci_softc_t *sc)
 	u_int i;
 	usbd_status err;
 	ehci_soft_qh_t *sqh;
+	u_int ncomp;
 
 	DPRINTF(("ehci_init: start\n"));
 #ifdef EHCI_DEBUG
@@ -334,15 +335,17 @@ ehci_init(ehci_softc_t *sc)
 	sparams = EREAD4(sc, EHCI_HCSPARAMS);
 	DPRINTF(("ehci_init: sparams=0x%x\n", sparams));
 	sc->sc_npcomp = EHCI_HCS_N_PCC(sparams);
-	if (EHCI_HCS_N_CC(sparams) != sc->sc_ncomp) {
+	ncomp = EHCI_HCS_N_CC(sparams);
+	if (ncomp != sc->sc_ncomp) {
 		aprint_error("%s: wrong number of companions (%d != %d)\n",
 		       USBDEVNAME(sc->sc_bus.bdev),
-		       EHCI_HCS_N_CC(sparams), sc->sc_ncomp);
+		       ncomp, sc->sc_ncomp);
 #if NOHCI == 0 || NUHCI == 0
 		aprint_error("%s: ohci or uhci probably not configured\n",
 			     USBDEVNAME(sc->sc_bus.bdev));
 #endif
-		return (USBD_IOERROR);
+		if (ncomp < sc->sc_ncomp)
+			sc->sc_ncomp = ncomp;
 	}
 	if (sc->sc_ncomp > 0) {
 		aprint_normal("%s: companion controller%s, %d port%s each:",
