@@ -29,7 +29,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: usrdb.c,v 1.2 1995/03/08 21:39:03 pk Exp $";
+static char rcsid[] = "$Id: usrdb.c,v 1.3 1995/03/22 15:56:33 mycroft Exp $";
 #endif
 
 #include <sys/types.h>
@@ -51,7 +51,7 @@ usracct_init()
 	BTREEINFO bti;
 	int error;
 
-	bzero(&bti, sizeof bti);
+	memset(&bti, 0, sizeof(bti));
 	bti.compare = uid_compare;
 
 	usracct_db = dbopen(NULL, O_RDWR, 0, DB_BTREE, &bti);
@@ -125,7 +125,7 @@ usracct_add(ci)
 
 	uid = ci->ci_uid;
 	key.data = &uid;
-	key.size = sizeof uid;
+	key.size = sizeof(uid);
 
 	rv = DB_GET(usracct_db, &key, &data, 0);
 	if (rv < 0) {
@@ -133,7 +133,7 @@ usracct_add(ci)
 		return (-1);
 	} else if (rv == 0) {	/* it's there; copy whole thing */
 		/* add the old data to the new data */
-		bcopy(data.data, &newui, data.size);
+		memcpy(&newui, data.data, data.size);
 		if (newui.ui_uid != uid) {
 			warnx("key %d != expected record number %d",
 			    newui.ui_uid, uid);
@@ -141,7 +141,7 @@ usracct_add(ci)
 			return (-1);
 		}
 	} else {		/* it's not there; zero it and copy the key */
-		bzero(&newui, sizeof newui);
+		memset(&newui, 0, sizeof(newui));
 		newui.ui_uid = ci->ci_uid;
 	}
 
@@ -152,7 +152,7 @@ usracct_add(ci)
 	newui.ui_io += ci->ci_io;
 
 	data.data = &newui; 
-	data.size = sizeof newui;
+	data.size = sizeof(newui);
 	rv = DB_PUT(usracct_db, &key, &data, 0);
 	if (rv < 0) {
 		warn("add key %d to user accounting stats", uid);
@@ -174,7 +174,7 @@ usracct_update()
 	u_long uid;
 	int error, serr, nerr;
 
-	bzero(&bti, sizeof bti);
+	memset(&bti, 0, sizeof(bti));
 	bti.compare = uid_compare;
 
 	saved_usracct_db = dbopen(_PATH_USRACCT, O_RDWR|O_CREAT|O_TRUNC, 0644,
@@ -232,7 +232,7 @@ usracct_print()
 		warn("retrieving user accounting stats");
 
 	while (rv == 0) {
-		bcopy(data.data, ui, sizeof(struct userinfo));
+		memcpy(ui, data.data, sizeof(struct userinfo));
 
 		printf("%-8s %9qu ",
 		    user_from_uid(ui->ui_uid, 0), ui->ui_calls);
@@ -270,8 +270,8 @@ uid_compare(k1, k2)
 {
 	u_long d1, d2;
 
-	bcopy(k1->data, &d1, sizeof d1);
-	bcopy(k2->data, &d2, sizeof d2);
+	memcpy(&d1, k1->data, sizeof(d1));
+	memcpy(&d2, k2->data, sizeof(d2));
 	
 	if (d1 < d2)
 		return -1;
