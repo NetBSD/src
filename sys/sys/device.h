@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.6 1994/11/03 21:51:43 mycroft Exp $	*/
+/*	$NetBSD: device.h,v 1.7 1994/11/04 03:12:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -113,6 +113,18 @@ struct cfdriver {
 	int	cd_indirect;		/* indirectly configure subdevices */
 	int	cd_ndevs;		/* size of cd_devs array */
 };
+
+/*
+ * Structure used to record the state of a config_found() or a
+ * config_rootfound() loop.
+ */
+struct matchinfo {
+	cfmatch_t fn;
+	struct	device *parent;
+	void	*match, *aux;
+	int	indirect, pri;
+};
+void config_mapply __P((struct matchinfo *, struct cfdata *));
 
 /*
  * Configuration printing functions, and their return codes.  The second
