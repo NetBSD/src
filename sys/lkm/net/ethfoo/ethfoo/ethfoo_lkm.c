@@ -1,4 +1,4 @@
-/*	$NetBSD: ethfoo_lkm.c,v 1.2 2004/05/12 13:51:16 cube Exp $	*/
+/*	$NetBSD: ethfoo_lkm.c,v 1.3 2004/05/13 07:20:47 cube Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -92,7 +92,7 @@ static struct cfdata ethfoo_cfdata = {
  * ethfoo_log allows the module to log creations of nodes and
  * destroy them all at once using sysctl_teardown.
  */
-static struct sysctlnode *ethfoo_node;
+static int ethfoo_node;
 static struct sysctllog *ethfoo_log;
 static int	ethfoo_sysctl_setup();
 static int	ethfoo_sysctl_handler(SYSCTLFN_PROTO);
@@ -372,11 +372,11 @@ ethfoo_attach(struct device *parent, struct device *self, void *aux)
 	 * sysctl_teardown() in ethfoo_lkmunload, which undoes every creation we made in the
 	 * module.
 	 */
-	if ((error = sysctl_createv(&ethfoo_log, 0, &ethfoo_node,
+	if ((error = sysctl_createv(&ethfoo_log, 0, NULL,
 	    &node, CTLFLAG_READWRITE,
 	    CTLTYPE_STRING, sc->sc_dev.dv_xname, NULL,
 	    ethfoo_sysctl_handler, 0, sc, 18,
-	    CTL_CREATE, CTL_EOL)) != 0) {
+	    CTL_NET, PF_LINK, ethfoo_node, CTL_CREATE, CTL_EOL)) != 0) {
 		sc->sc_mibnum = -1;
 		aprint_error("%s: sysctl_createv returned %d, ignoring\n",
 		    sc->sc_dev.dv_xname, error);
@@ -400,8 +400,8 @@ ethfoo_detach(struct device* self, int flags)
 	 * sysctl_destroyv.  One should be sure to always end the path with
 	 * CTL_EOL.
 	 */
-	if (sc->sc_mibnum != -1 && (error = sysctl_destroyv(ethfoo_node, sc->sc_mibnum,
-	    CTL_EOL)) != 0)
+	if (sc->sc_mibnum != -1 && (error = sysctl_destroyv(NULL, CTL_NET, PF_LINK,
+	    ethfoo_node, sc->sc_mibnum, CTL_EOL)) != 0)
 		aprint_error("%s: sysctl_destroyv returned %d, ignoring\n",
 		    sc->sc_dev.dv_xname, error);
 	ether_ifdetach(ifp);
@@ -604,18 +604,26 @@ ethfoo_clone_destroy(struct ifnet *ifp)
  * (called a link set) which is used at init_sysctl() time to cycle
  * through all those functions to create the kernel's sysctl tree.
  *
- * It is not possible to use link sets in a LKM, so the easiest is
- * to simply call our own setup routine at load time.
+ * It is not (currently) possible to use link sets in a LKM, so the
+ * easiest is to simply call our own setup routine at load time.
  *
  * In the SYSCTL_SETUP blocks you find in the kernel, nodes have the
  * CTLFLAG_PERMANENT flag, meaning they cannot be removed.  Once the
  * whole kernel sysctl tree is built, it is not possible to add any
  * permanent node.  This is fine with us since ethfoo is meant to be
  * unloaded without leaving anything behind.
+ *
+ * It should be noted that we're not saving the sysctlnode pointer
+ * we are returned when creating the "ethfoo" node.  That structure
+ * cannot be trusted once out of the calling function, as it might
+ * get reused.  So we just save the MIB number, and always give the
+ * full path starting from the root for later calls to sysctl_createv
+ * and sysctl_destroyv.
  */
 int
 ethfoo_sysctl_setup(void)
 {
+	struct sysctlnode *node;
 	int error = 0;
 
 	if ((error = sysctl_createv(&ethfoo_log, 0, NULL, NULL, 0,
@@ -643,12 +651,13 @@ ethfoo_sysctl_setup(void)
 	 * is relative to the given root (third argument).  Here we're
 	 * starting from the root.
 	 */
-	error = sysctl_createv(&ethfoo_log, 0, NULL, &ethfoo_node, 0,
+	if ((error = sysctl_createv(&ethfoo_log, 0, NULL, &node, 0,
 	    CTLTYPE_NODE, "ethfoo", NULL,
 	    NULL, 0, NULL, 0,
-	    CTL_NET, PF_LINK, CTL_CREATE, CTL_EOL);
-
-	return (error);
+	    CTL_NET, PF_LINK, CTL_CREATE, CTL_EOL)) != 0)
+		return (error);
+	ethfoo_node = node->sysctl_num;
+	return (0);
 }
 
 /*
@@ -727,9 +736,9 @@ ethfoo_ether_aton(u_char *dest, char *str)
 
 #define	set_value			\
 	if (*cp > '9' && *cp < 'a')	\
-		*cp -= 'A' + 10;	\
+		*cp -= 'A' - 10;	\
 	else if (*cp > '9')		\
-		*cp -= 'a' + 10;	\
+		*cp -= 'a' - 10;	\
 	else				\
 		*cp -= '0'
 
