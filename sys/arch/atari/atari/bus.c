@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.21 2000/06/26 14:20:39 mrg Exp $	*/
+/*	$NetBSD: bus.c,v 1.22 2000/06/29 07:40:04 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -269,11 +269,22 @@ bus_space_handle_t	*bshp;
 	*bshp = (caddr_t)(va + (bpa & PGOFSET));
 
 	for(; pa < endpa; pa += NBPG, va += NBPG) {
+		u_int	*ptep, npte;
+
 		pmap_enter(pmap_kernel(), (vaddr_t)va, pa,
 				VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+
+		ptep = kvtopte(va);
+		npte = *ptep & ~PG_CMASK;
+
 		if (!(flags & BUS_SPACE_MAP_CACHEABLE))
-			pmap_changebit(pa, PG_CI, TRUE);
+			npte |= PG_CI;
+		else if (mmutype == MMU_68040)
+			npte |= PG_CCB;
+
+		*ptep = npte;
 	}
+	TBIAS();
 	return (0);
 }
 
