@@ -1,4 +1,4 @@
-/*	$NetBSD: C.c,v 1.6 1999/05/26 08:43:30 ross Exp $	*/
+/*	$NetBSD: C.c,v 1.7 1999/06/05 19:04:23 ross Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)C.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: C.c,v 1.6 1999/05/26 08:43:30 ross Exp $");
+__RCSID("$NetBSD: C.c,v 1.7 1999/06/05 19:04:23 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,6 +146,11 @@ c_entries()
 		 * level zero indicates a function.
 		 */
 		case '(':
+			do c = getc(inf);
+			while(iswhite(c));
+			if (c == '*')
+				break;
+			else	ungetc(c, inf);
 			if (!level && token) {
 				int	curline;
 
