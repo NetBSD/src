@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.10 2001/07/10 16:34:08 ichiro Exp $
+#	$NetBSD: IPAQ,v 1.11 2001/07/10 18:10:46 ichiro Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -138,8 +138,8 @@ saost*  at saip? addr 0x90000000 size 0x20
 ipaqbus* at saip?
 
 # Internal LCD controller
-#salcd* at saip?
-#hpcfb* at salcd?
+#ipaqlcd* at ipaqbus?
+#hpcfb* at ipaqlcd?
 
 # PCMCIA bus support
 ipaqpcic*	at ipaqbus?
