@@ -37,6 +37,11 @@
 #ifndef _DEV_IEEE1394_FWOHCIVAR_H_
 #define	_DEV_IEEE1394_FWOHCIVAR_H_
 
+#include <sys/mbuf.h>
+#include <sys/callout.h>
+#include <sys/queue.h>
+
+#include <machine/bus.h>
 
 #define	OHCI_PAGE_SIZE		0x0800
 #define	OHCI_BUF_ARRQ_CNT	16
@@ -47,6 +52,7 @@
 #define	OHCI_BUF_CNT		(OHCI_BUF_ARRQ_CNT + OHCI_BUF_ARRS_CNT + OHCI_BUF_ATRQ_CNT + OHCI_BUF_ATRS_CNT + OHCI_BUF_IR_CNT + 1 + 1)
 
 #define	OHCI_LOOP		1000
+#define	OHCI_SELFID_TIMEOUT	(hz * 3)
 
 struct fwohci_softc;
 
@@ -122,12 +128,14 @@ struct fwohci_softc {
 	bus_dma_segment_t sc_dseg;
 	int sc_dnseg;
 	bus_dmamap_t sc_ddmamap;
-	caddr_t sc_desc;
+	struct fwohci_desc *sc_desc;
+	struct fwohci_desc *sc_descfree;
 	int sc_descsize;
-	int sc_descfree;
-
 	int sc_isoctx;
-	int sc_tlabel;
+
+	void *sc_shutdownhook;
+	void *sc_powerhook;
+	struct callout sc_selfid_callout;
 
 	struct fwohci_ctx *sc_ctx_arrq;
 	struct fwohci_ctx *sc_ctx_arrs;
@@ -140,9 +148,10 @@ struct fwohci_softc {
 	u_int8_t sc_csr[CSR_SB_END];
 
 	struct fwohci_uidtbl *sc_uidtbl;
-	u_int16_t sc_nodeid;
-	u_int8_t sc_irmid;
-	u_int8_t sc_rootid;
+	u_int16_t sc_nodeid;			/* Full Node ID of this node */
+	u_int8_t sc_rootid;			/* Phy ID of Root */
+	u_int8_t sc_irmid;			/* Phy ID of IRM */
+	u_int8_t sc_tlabel;			/* Transaction Label */
 };
 
 int fwohci_init (struct fwohci_softc *, const struct evcnt *);
