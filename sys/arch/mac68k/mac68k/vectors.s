@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.8 1997/06/29 05:52:11 scottr Exp $
+|	$NetBSD: vectors.s,v 1.9 1997/09/03 06:16:24 scottr Exp $
 
 | Copyright (c) 1988 University of Utah
 | Copyright (c) 1990 Regents of the University of California.
@@ -49,8 +49,8 @@
 GLOBAL(vectab)
 	VECTOR_UNUSED		/* 0: NOT USED (reset SSP) */
 	VECTOR_UNUSED		/* 1: NOT USED (reset PC) */
-	VECTOR(buserr)		/* 2: bus error */
-	VECTOR(addrerr)		/* 3: address error */
+	VECTOR_UNUSED		/* 2: bus error */
+	VECTOR_UNUSED		/* 3: address error */
 	VECTOR(illinst)		/* 4: illegal instruction */
 	VECTOR(zerodiv)		/* 5: zero divide */
 	VECTOR(chkinst)		/* 6: CHK instruction */
