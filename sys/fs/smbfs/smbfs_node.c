@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.8 2003/02/23 21:55:20 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.9 2003/02/24 15:55:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -152,26 +152,27 @@ smbfs_node_alloc(struct mount *mp, struct vnode *dvp,
 		if (dvp == NULL)
 			return EINVAL;
 		vp = VTOSMB(dvp)->n_parent->n_vnode;
-		if ((error = vget(vp, LK_EXCLUSIVE)) == 0)
+		if ((error = vget(vp, LK_EXCLUSIVE | LK_RETRY)) == 0)
 			*vpp = vp;
 		return (error);
 	}
 
 	dnp = dvp ? VTOSMB(dvp) : NULL;
-	if (dnp == NULL && dvp != NULL) {
-		vprint("smbfs_node_alloc: dead parent vnode", dvp);
-		return EINVAL;
-	}
+#ifdef DIAGNOSTIC
+	if (dnp == NULL && dvp != NULL)
+		panic("smbfs_node_alloc: dead parent vnode %p", dvp);
+#endif
 	hashval = smbfs_hash(name, nmlen);
 retry:
 	smbfs_hash_lock(smp);
 loop:
 	nhpp = SMBFS_NOHASH(smp, hashval);
 	LIST_FOREACH(np, nhpp, n_hash) {
-		vp = SMBTOV(np);
-		if (np->n_parent != dnp ||
-		    np->n_nmlen != nmlen || memcmp(name, np->n_name, nmlen) != 0)
+		if (np->n_parent != dnp
+		    || np->n_nmlen != nmlen
+		    || memcmp(name, np->n_name, nmlen) != 0)
 			continue;
+		vp = SMBTOV(np);
 		simple_lock(&(vp)->v_interlock);
 		smbfs_hash_unlock(smp);
 		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK) != 0)
@@ -219,6 +220,10 @@ loop:
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
 	smbfs_hash_lock(smp);
+	/*
+	 * Check if the vnode wasn't added while we were in getnewvnode/
+	 * malloc.
+	 */
 	LIST_FOREACH(np2, nhpp, n_hash) {
 		if (np2->n_parent != dnp
 		    || np2->n_nmlen != nmlen
@@ -228,6 +233,7 @@ loop:
 		goto loop;
 	}
 
+	/* Not on hash list, add it now */
 	LIST_INSERT_HEAD(nhpp, np, n_hash);
 	smbfs_hash_unlock(smp);
 
