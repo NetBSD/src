@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.92 2003/10/23 20:55:08 mycroft Exp $	*/
+/*	$NetBSD: in.c,v 1.93 2003/11/11 20:25:26 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.92 2003/10/23 20:55:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.93 2003/11/11 20:25:26 jonathan Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -170,11 +170,11 @@ in_localaddr(in)
 	struct in_ifaddr *ia;
 
 	if (subnetsarelocal) {
-		TAILQ_FOREACH(ia, &in_ifaddr, ia_list)
+		TAILQ_FOREACH(ia, &in_ifaddrhead, ia_list)
 			if ((in.s_addr & ia->ia_netmask) == ia->ia_net)
 				return (1);
 	} else {
-		TAILQ_FOREACH(ia, &in_ifaddr, ia_list)
+		TAILQ_FOREACH(ia, &in_ifaddrhead, ia_list)
 			if ((in.s_addr & ia->ia_subnetmask) == ia->ia_subnet)
 				return (1);
 	}
@@ -254,7 +254,7 @@ in_setmaxmtu()
 	struct ifnet *ifp;
 	unsigned long maxmtu = 0;
 
-	TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
+	TAILQ_FOREACH(ia, &in_ifaddrhead, ia_list) {
 		if ((ifp = ia->ia_ifp) == 0)
 			continue;
 		if ((ifp->if_flags & (IFF_UP|IFF_LOOPBACK)) != IFF_UP)
@@ -385,7 +385,7 @@ in_control(so, cmd, data, ifp, p)
 			if (ia == 0)
 				return (ENOBUFS);
 			bzero((caddr_t)ia, sizeof *ia);
-			TAILQ_INSERT_TAIL(&in_ifaddr, ia, ia_list);
+			TAILQ_INSERT_TAIL(&in_ifaddrhead, ia, ia_list);
 			IFAREF(&ia->ia_ifa);
 			TAILQ_INSERT_TAIL(&ifp->if_addrlist, &ia->ia_ifa,
 			    ifa_list);
@@ -547,7 +547,7 @@ in_purgeaddr(ifa, ifp)
 	LIST_REMOVE(ia, ia_hash);
 	TAILQ_REMOVE(&ifp->if_addrlist, &ia->ia_ifa, ifa_list);
 	IFAFREE(&ia->ia_ifa);
-	TAILQ_REMOVE(&in_ifaddr, ia, ia_list);
+	TAILQ_REMOVE(&in_ifaddrhead, ia, ia_list);
 	if (ia->ia_allhosts != NULL)
 		in_delmulti(ia->ia_allhosts);
 	IFAFREE(&ia->ia_ifa);
@@ -896,7 +896,7 @@ in_addprefix(target, flags)
 		prefix.s_addr &= mask.s_addr;
 	}
 
-	TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
+	TAILQ_FOREACH(ia, &in_ifaddrhead, ia_list) {
 		if (rtinitflags(ia))
 			p = ia->ia_dstaddr.sin_addr;
 		else {
@@ -948,7 +948,7 @@ in_scrubprefix(target)
 		prefix.s_addr &= mask.s_addr;
 	}
 
-	TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
+	TAILQ_FOREACH(ia, &in_ifaddrhead, ia_list) {
 		if (rtinitflags(ia))
 			p = ia->ia_dstaddr.sin_addr;
 		else {
