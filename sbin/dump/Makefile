@@ -1,6 +1,6 @@
 #	@(#)Makefile	5.12 (Berkeley) 3/7/91
 #
-#	$Header: /cvsroot/src/sbin/dump/Makefile,v 1.3 1993/03/23 00:26:59 cgd Exp $
+#	$Header: /cvsroot/src/sbin/dump/Makefile,v 1.4 1993/04/08 13:53:28 cgd Exp $
 
 #	dump.h			header file
 #	dumpitime.c		reads /etc/dumpdates
@@ -34,7 +34,7 @@ dumprtape.o: dumptape.o
 	${CC} -c -DRDUMP ${CFLAGS} ${.CURDIR}/dumptape.c -o ${.TARGET}
 
 afterinstall:
-	install ${STRIP} -o root -g ${BINGRP} -m 6555 rdump \
+	install -c ${STRIP} -o root -g ${BINGRP} -m 6555 rdump \
 	    ${DESTDIR}${BINDIR}
 
 .include <bsd.prog.mk>
