@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_field_info.3,v 1.4 2002/02/20 11:30:58 wiz Exp $
+.\"	$NetBSD: form_field_info.3,v 1.5 2002/08/06 12:35:39 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -41,9 +41,10 @@
 .Sh SYNOPSIS
 .Fd #include \*[Lt]form.h\*[Gt]
 .Ft int
-.Fn dynamic_field_info "FIELD *field, int *drows, int *dcols, int *max"
+.Fn dynamic_field_info "FIELD *field" "int *drows" "int *dcols" "int *max"
 .Ft int
-.Fn field_info "FIELD *field, int *rows, int *cols, int *frow, int *fcol, int *nrow, int *nbuf"
+.Fn field_info "FIELD *field" "int *rows" "int *cols" "int *frow" "int *fcol" \
+"int *nrow" "int *nbuf"
 .Sh DESCRIPTION
 The function
 .Fn dynamic_field_info
