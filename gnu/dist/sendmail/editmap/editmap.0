@@ -13,9 +13,9 @@ SSYYNNOOPPSSIISS
        [ "value ..." ]
 
 DDEESSCCRRIIPPTTIIOONN
-       EEddiittmmaapp  queries  or  edits  one record in a database maps
-       used by the keyed map lookups in  sendmail(8).   Arguments
-       are passed on the command line and output (for queries) is
+       EEddiittmmaapp  queries or edits one record in database maps used
+       by the keyed map lookups in  sendmail(8).   Arguments  are
+       passed  on  the  command  line and output (for queries) is
        directed to standard output.
 
        Depending on how it is compiled,  eeddiittmmaapp  handles  up  to
@@ -61,7 +61,7 @@ DDEESSCCRRIIPPTTIIOONN
 
 
 
-                   Date: 2001/06/15 21:33:19                 1
+                   Date: 2003/03/15 23:38:57                 1
 
 
 
@@ -127,6 +127,6 @@ HHIISSTTOORRYY
 
 
 
-                   Date: 2001/06/15 21:33:19                 2
+                   Date: 2003/03/15 23:38:57                 2
 
 

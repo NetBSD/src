@@ -10,6 +10,7 @@ divert(-1)
 #	Compile/run a test program for libsm.
 #
 #	Id: sm-test.m4,v 1.7 2002/02/01 17:38:07 ca Exp
+#	$NetBSD: sm-test.m4,v 1.1.1.2 2003/06/01 14:01:14 atatat Exp $
 #
 define(`smtest',
 `bldPUSH_TARGET($1)dnl

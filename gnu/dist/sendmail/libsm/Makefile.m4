@@ -1,4 +1,5 @@
 dnl Id: Makefile.m4,v 1.64.2.1 2002/06/21 21:58:29 ca Exp
+dnl $NetBSD: Makefile.m4,v 1.1.1.2 2003/06/01 14:01:33 atatat Exp $
 define(`confREQUIRE_LIBUNIX')
 include(confBUILDTOOLSDIR`/M4/switch.m4')
 
