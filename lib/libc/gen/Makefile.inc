@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.41 1994/05/11 04:45:13 cgd Exp $
+#	$Id: Makefile.inc,v 1.42 1994/05/17 13:32:31 mycroft Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
@@ -11,10 +11,10 @@ SRCS+=	alarm.c assert.c clock.c confstr.c ctermid.c ctime.c ctype_.c \
 	directory.c disklabel.c err.c errlst.c errno.c exec.c fnmatch.c \
 	frexp.c fstab.c fts.c \
 	getbsize.c getcap.c getcwd.c getdomainname.c getgrent.c getgrouplist.c \
-	gethostname.c getloadavg.c getlogin.c getmntinfo.c getpagesize.c \
-	getpass.c getpwent.c getsubopt.c getttyent.c getusershell.c glob.c \
-	infinity.c initgroups.c isatty.c isctype.c isinf.c  \
-	lfind.c lsearch.c \
+	gethostname.c getloadavg.c getlogin.c getmntinfo.c getnetgrent.c \
+	getpagesize.c getpass.c getpwent.c getsubopt.c getttyent.c \
+	getusershell.c glob.c infinity.c initgroups.c isatty.c isctype.c \
+	isinf.c lfind.c lsearch.c \
 	msgctl.c msgget.c msgsnd.c msgrcv.c \
 	mktemp.c nice.c nlist.c pause.c popen.c psignal.c pwcache.c raise.c \
 	scandir.c semconfig.c semctl.c semget.c semop.c \
