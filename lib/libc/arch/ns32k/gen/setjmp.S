@@ -18,7 +18,7 @@
  * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
  *
- *	$Id: setjmp.S,v 1.1 1993/10/07 00:20:24 cgd Exp $
+ *	$Id: setjmp.S,v 1.2 1994/05/03 20:40:15 phil Exp $
  */
 
 #include <machine/asm.h>
@@ -26,7 +26,7 @@
 
 ENTRY(setjmp)
 	movqd	0, tos
-	bsr	EX(sigblock)
+	bsr	_sigblock
 	adjspb	-4
 	movd	4(sp), r2		/* jmp_buf */
 	movd	0(sp), JMP_BUF_PC(r2)	/* pc of caller */
@@ -47,7 +47,7 @@ ENTRY(setjmp)
 ENTRY(longjmp)
 	movd	4(sp),r2		/* jmp_buf */
 	movd	JMP_BUF_SIGMASK(r2), tos /* restore mask */
-	bsr	EX(sigsetmask)
+	bsr	_sigsetmask
 	adjspb	-4
 	movd	4(sp), r2		/* jmp_buf */
 	movd	8(sp), r0		/* value */

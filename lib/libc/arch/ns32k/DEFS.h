@@ -35,18 +35,10 @@
  *
  *	@(#)DEFS.h	5.1 (Berkeley) 4/23/90
  *
- *	$Id: DEFS.h,v 1.1 1993/10/07 00:20:03 cgd Exp $
+ *	$Id: DEFS.h,v 1.2 1994/05/03 20:39:52 phil Exp $
  *
  *  Modified for the ns532 by Phil Nelson, 12/1/92
  *
  */
 
-#ifdef PROF
-#define	ENTRY(x)	.globl _/**/x; _/**/x:  \
-			.data; 1:; .long 0; .text; addr 1b,tos ; bsr mcount
-#define	ASENTRY(x)	.globl x; x: \
-			.data; 1:; .long 0; .text; addr 1b,tos ; bsr mcount
-#else
-#define	ENTRY(x)	.globl _/**/x; _/**/x: 
-#define	ASENTRY(x)	.globl x; x: 
-#endif
+#include <machine/asm.h>

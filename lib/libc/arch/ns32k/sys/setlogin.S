@@ -18,13 +18,15 @@
  * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
  *
- *	$Id: setlogin.S,v 1.4 1994/03/09 07:50:56 phil Exp $
+ *	$Id: setlogin.S,v 1.5 1994/05/03 20:40:38 phil Exp $
  */
 
 #include "SYS.h"
 
-.globl  EX(__logname_valid)         /* in getlogin() */
+	.globl  ___logname_valid         /* in getlogin() */
 
 SYSCALL(setlogin)
-	movqd	0, EX(__logname_valid)(pc)
+	PIC_PROLOGUE
+	movqd	0, PIC_GOT(___logname_valid)
+	PIC_EPILOGUE
 	ret	0			/* setlogin(name) */
