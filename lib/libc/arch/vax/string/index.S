@@ -1,4 +1,4 @@
-/*	$NetBSD: index.S,v 1.1 1996/05/19 15:57:43 ragge Exp $	*/
+/*	$NetBSD: index.S,v 1.2 2002/02/24 01:06:20 matt Exp $	*/
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -45,19 +45,19 @@
 /* Alas not quite twice as fast as the generic C version on a uvax2 */
 
 ENTRY(index, 0)
-	movq	4(ap),r0	# r0 = cp; r1 = c
-	tstb	r1		# special case, looking for '\0'
+	movq	4(%ap),%r0	# %r0 = cp; %r1 = c
+	tstb	%r1		# special case, looking for '\0'
 	jeql	3f
 1:
-	cmpb	(r0),r1
+	cmpb	(%r0),%r1
 	jeql	2f
-	tstb	(r0)+
+	tstb	(%r0)+
 	jneq	1b
-	clrl	r0		# return NULL if no match
+	clrl	%r0		# return NULL if no match
 2:
 	ret
 3:
-	tstb	(r0)+
+	tstb	(%r0)+
 	jneq	3b
-	decl	r0
+	decl	%r0
 	jbr	2b
