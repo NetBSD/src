@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.39 2004/05/25 14:54:59 hannken Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.40 2004/06/04 07:43:56 he Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -64,6 +64,7 @@ struct nameidata;
 struct proc;
 struct statvfs;
 struct timeval;
+struct timespec;
 struct ucred;
 struct ufsmount;
 struct uio;
