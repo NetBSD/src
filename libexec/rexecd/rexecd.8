@@ -1,4 +1,4 @@
-.\"	$NetBSD: rexecd.8,v 1.4 1997/10/20 02:42:46 enami Exp $
+.\"	$NetBSD: rexecd.8,v 1.5 1998/04/29 08:33:12 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,11 +43,11 @@
 .Nm
 .Sh DESCRIPTION
 .Nm
-is the server for the 
+is the server for the
 .Xr rexec 3
-routine.  The server provides remote execution facilities
-with authentication based on user names and
-passwords.
+routine.
+The server provides remote execution facilities with authentication
+based on user names and passwords.
 .Pp
 .Nm
 listens for service requests at the port indicated in
@@ -57,17 +57,16 @@ When a service request is received the following protocol
 is initiated:
 .Bl -enum
 .It
-The server reads characters from the socket up
-to a NUL
+The server reads characters from the socket up to a NUL
 .Pq Ql \e0
-byte.  The resultant string is
-interpreted as an
+byte.
+The resultant string is interpreted as an
 .Tn ASCII
 number, base 10.
-.It 
+.It
 If the number received in step 1 is non-zero,
 it is interpreted as the port number of a secondary
-stream to be used for the 
+stream to be used for the
 .Em stderr .
 A second connection is then created to the specified
 port on the client's machine.
@@ -76,26 +75,23 @@ A NUL terminated user name of at most 16 characters
 is retrieved on the initial socket.
 .It
 A NUL terminated, unencrypted password of at most
-16 characters is retrieved on the initial socket.  
+16 characters is retrieved on the initial socket.
 .It
 A NUL terminated command to be passed to a
-shell is retrieved on the initial socket.  The length of
-the command is limited by the upper bound on the size of
-the system's argument list.  
+shell is retrieved on the initial socket.
+The length of the command is limited by the upper bound on the size
+of the system's argument list.
 .It
 .Nm
-then validates the user as is done at login time
-and, if the authentication was successful, changes
-to the user's home directory, and establishes the user
-and group protections of the user.
+then validates the user as is done at login time and, if the
+authentication was successful, changes to the user's home directory,
+and establishes the user and group protections of the user.
 If any of these steps fail the connection is
 aborted with a diagnostic message returned.
 .It
-A NUL byte is returned on the initial socket
-and the command line is passed to the normal login
-shell of the user.  The
-shell inherits the network connections established
-by
+A NUL byte is returned on the initial socket and the command line
+is passed to the normal login shell of the user.
+The shell inherits the network connections established by
 .Nm "" .
 .El
 .Sh DIAGNOSTICS
@@ -121,12 +117,12 @@ No password file entry for the user name existed.
 The wrong password was supplied.
 .ne 1i
 .It Sy \&No remote directory.
-The 
-.Xr chdir
-command to the home directory failed.
+The
+.Xr chdir 2
+to the home directory failed.
 .It Sy Try again.
 A
-.Xr fork
+.Xr fork 2
 by the server failed.
 .It Sy <shellname>: ...
 The user's login shell could not be started.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ttys.5,v 1.9 1998/04/22 08:11:10 hubertf Exp $
+.\"	$NetBSD: ttys.5,v 1.10 1998/04/29 08:33:11 fair Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,7 +47,7 @@ and control the use of terminal special files.
 This information is read with the
 .Xr getttyent 3
 library routines.
-There is one line in the 
+There is one line in the
 .Nm
 file per special device file.
 Fields are separated by tabs and/or spaces.
@@ -93,7 +93,7 @@ or specify a window system process that
 will maintain for the terminal line.
 .Pp
 As flag values, the strings ``on'' and ``off'' specify that
-.Xr init
+.Xr init 8
 should (should not) execute the command given in the second field,
 while ``secure'' (if ``on'' is also specified) allows users with a
 uid of 0 to login on
@@ -114,16 +114,16 @@ These flag fields should not be quoted.
 .Pp
 The string ``window='' may be followed by a quoted command
 string which
-.Xr init
+.Xr init 8
 will execute
 .Em before
 starting the command specified by the second field.
 .Pp
-After changing the 
+After changing the
 .Nm
 file a
 .Dv SIGHUP
-signal can be sent to 
+signal can be sent to
 .Xr init 8
 with the command
 .Dq Li "kill \-s HUP 1" .
