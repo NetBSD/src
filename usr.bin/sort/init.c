@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.10 2004/02/15 12:35:26 jdolecek Exp $	*/
+/*	$NetBSD: init.c,v 1.11 2004/02/15 14:19:22 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: init.c,v 1.10 2004/02/15 12:35:26 jdolecek Exp $");
+__RCSID("$NetBSD: init.c,v 1.11 2004/02/15 14:19:22 jdolecek Exp $");
 __SCCSID("@(#)init.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -253,56 +253,74 @@ optval(desc, tcolflag)
 	}
 }
 
+/*
+ * Replace historic +SPEC arguments with appropriate -kSPEC.
+ */ 
 void
 fixit(argc, argv)
 	int *argc;
 	char **argv;
 {
-	int i, j, v, w, x;
-	static char vbuf[ND*20], *vpos, *tpos;
-	vpos = vbuf;
+	int i, j, fplus=0;
+	char *vpos, *tpos, spec[20];
+	int col, indent;
+	size_t sz;
 
 	for (i = 1; i < *argc; i++) {
-		if (argv[i][0] == '+') {
-			tpos = argv[i]+1;
+		if (argv[i][0] != '+' && !fplus)
+			continue;
+
+		if (fplus && (argv[i][0] != '-' || !isdigit(argv[i][1]))) {
+			/* not a -POS argument, skip */
+			fplus = 0;
+			continue;
+		}
+
+		/* parse spec */
+		tpos = argv[i]+1;
+		col = (int)strtol(tpos, &tpos, 10);
+		if (*tpos == '.') {
+			++tpos;
+			indent = (int) strtol(tpos, &tpos, 10);
+		} else
+			indent = 0;
+		/* tpos points to optional flags now */
+
+		/*
+		 * For x.y, the obsolescent variant assumed 0 == beginning
+		 * of line, while the new form uses 0 == end of line.
+		 * Convert accordingly.
+		 */
+		if (!fplus) {
+			/* +POS */
+			col += 1;
+			indent += 1;
+		} else {
+			/* -POS */
+			if (indent > 0)
+				col += 1;
+		}
+
+		/* new style spec */
+		sz = snprintf(spec, sizeof(spec), "%d.%d%s", col, indent,
+		    tpos);
+
+		if (!fplus) {
+			/* Replace the +POS argument with new-style -kSPEC */
+			asprintf(&vpos, "-k%s", spec);
 			argv[i] = vpos;
-			vpos += sprintf(vpos, "-k");
-			tpos += sscanf(tpos, "%d", &v);
-			while (isdigit(*tpos))
-				tpos++;
-			vpos += sprintf(vpos, "%d", v+1);
-			if (*tpos == '.') {
-				++tpos;
-				tpos += sscanf(tpos, "%d", &x);
-				vpos += sprintf(vpos, ".%d", x+1);
-			}
-			while (*tpos)
-				*vpos++ = *tpos++;
-			vpos += sprintf(vpos, ",");
-			if (argv[i+1] &&
-			    argv[i+1][0] == '-' && isdigit(argv[i+1][1])) {
-				tpos = argv[i+1] + 1;
-				tpos += sscanf(tpos, "%d", &w);
-				while (isdigit(*tpos))
-					tpos++;
-				x = 0;
-				if (*tpos == '.') {
-					++tpos;
-					tpos += sscanf(tpos, "%d", &x);
-					while (isdigit(*tpos))
-						tpos++;
-				}
-				if (x) {
-					vpos += sprintf(vpos, "%d", w+1);
-					vpos += sprintf(vpos, ".%d", x);
-				} else
-					vpos += sprintf(vpos, "%d", w);
-				while (*tpos)
-					*vpos++ = *tpos++;
-				for (j= i+1; j < *argc; j++)
-					argv[j] = argv[j+1];
-				*argc -= 1;
-			}
+			fplus = 1;
+		} else {
+			/*
+			 * Append the spec to one previously generated from
+			 * +POS argument, and remove the argv element.
+			 */
+			asprintf(&vpos, "%s,%s", argv[i-1], spec);
+			free(argv[i-1]);
+			argv[i-1] = vpos;
+			for (j=i; j < *argc; j++)
+				argv[j] = argv[j+1];
+			*argc -= 1;
 		}
 	}
 }
