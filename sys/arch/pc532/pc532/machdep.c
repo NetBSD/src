@@ -384,13 +384,13 @@ again:
 			panic("startup: no room for tables");
 		goto again;
 	}
+
 	/*
 	 * End of second pass, addresses have been assigned
 	 */
 	if ((vm_size_t)(v - firstaddr) != size)
 		panic("startup: table size inconsistency");
 
-#if 1
 	/*
 	 * Now allocate buffers proper.  They are different than the above
 	 * in that they usually occupy more virtual memory than physical.
@@ -425,13 +425,14 @@ again:
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
 	}
-#else
+
+
 	/*
-	 * Allocate a submap for buffer space allocations.
+	 * Allocate a submap for exec arguments.  This map effectively
+	 * limits the number of processes exec'ing at any time.
 	 */
-	buffer_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-				 bufpages*CLBYTES, TRUE);
-#endif
+	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
+				16*NCARGS, TRUE);
 
 	/*
 	 * Allocate a submap for physio
