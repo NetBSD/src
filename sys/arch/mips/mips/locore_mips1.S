@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.20 2000/02/18 18:36:41 thorpej Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.21 2000/02/19 01:56:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -267,7 +267,7 @@ NESTED_NOPROFILE(mips1_KernGenException, KERNFRAME_SIZ, ra)
 	lw	t9, TF_BASE+TF_REG_T9(sp)
 	lw	ra, TF_BASE+TF_REG_RA(sp)
 	addu	sp, sp, KERNFRAME_SIZ
-#ifdef DDB
+#ifdef DDBnotyet
 	la	k1, _C_LABEL(kdbaux)
 	lw	s0, SF_REG_S0(k1)
 	lw	s1, SF_REG_S1(k1)

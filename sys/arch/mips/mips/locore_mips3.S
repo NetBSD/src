@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.16 2000/02/18 00:15:15 mycroft Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.17 2000/02/19 01:56:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -460,7 +460,7 @@ NESTED_NOPROFILE(mips3_KernGenException, KERNFRAME_SIZ, ra)
 	REG_L	t9, TF_BASE+TF_REG_T9(sp)
 	REG_L	ra, TF_BASE+TF_REG_RA(sp)
 	addu	sp, sp, KERNFRAME_SIZ
-#ifdef DDB
+#ifdef DDBnotyet
 	la	k0, _C_LABEL(kdbaux)
 	REG_L	s0, SF_REG_S0(k0)
 	REG_L	s1, SF_REG_S1(k0)
