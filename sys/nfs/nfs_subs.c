@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.37 1996/12/09 11:31:11 fvdl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.38 1997/01/31 02:58:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1139,7 +1139,7 @@ nfs_init()
 	nfs_timer(NULL);
 }
 
-#ifdef NFSCLIENT
+#ifdef NFS
 /*
  * Called once at VFS init to initialize client-specific data structures.
  */
@@ -1368,7 +1368,7 @@ nfs_getattrcache(vp, vaper)
 	}
 	return (0);
 }
-#endif /* NFSCLIENT */
+#endif /* NFS */
 
 /*
  * Set up nameidata for a lookup() call and do it
