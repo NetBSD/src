@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.28 1999/11/23 23:52:42 fvdl Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.29 2000/01/16 05:56:14 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -269,7 +269,7 @@ lfs_truncate(v)
 	 *
 	 * XXX KS - too restrictive?  Maybe only when cleaning?
 	 */
-	while(fs->lfs_seglock) {
+	while(fs->lfs_seglock && fs->lfs_lockpid != ap->a_p->p_pid) {
 		tsleep(&fs->lfs_seglock, (PRIBIO+1), "lfs_truncate", 0);
 	}
 	
