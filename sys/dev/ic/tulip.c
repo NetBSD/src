@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.46 2000/03/06 21:02:01 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.47 2000/03/07 00:39:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -152,6 +152,7 @@ void	tlp_stop __P((struct tulip_softc *, int));
 int	tlp_add_rxbuf __P((struct tulip_softc *, int));
 void	tlp_idle __P((struct tulip_softc *, u_int32_t));
 void	tlp_srom_idle __P((struct tulip_softc *));
+int	tlp_srom_size __P((struct tulip_softc *));
 
 void	tlp_filter_setup __P((struct tulip_softc *));
 void	tlp_winb_filter_setup __P((struct tulip_softc *));
@@ -597,6 +598,9 @@ tlp_detach(sc)
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg);
 
 	shutdownhook_disestablish(sc->sc_sdhook);
+
+	if (sc->sc_srom)
+		free(sc->sc_srom, M_DEVBUF);
 
 	return (0);
 }
@@ -1899,7 +1903,7 @@ tlp_stop(sc, drain)
 #define	SROM_EMIT(sc, x)						\
 do {									\
 	TULIP_WRITE((sc), CSR_MIIROM, (x));				\
-	delay(1);							\
+	delay(2);							\
 } while (0)
 
 /*
@@ -1925,8 +1929,8 @@ tlp_srom_idle(sc)
 
 	SROM_EMIT(sc, miirom|MIIROM_SROMSK);
 
-	/* Strobe the clock 25 times. */
-	for (i = 0; i < 25; i++) {
+	/* Strobe the clock 32 times. */
+	for (i = 0; i < 32; i++) {
 		SROM_EMIT(sc, miirom);
 		SROM_EMIT(sc, miirom|MIIROM_SROMSK);
 	}
@@ -1940,21 +1944,16 @@ tlp_srom_idle(sc)
 }
 
 /*
- * tlp_read_srom:
+ * tlp_srom_size:
  *
- *	Read the Tulip SROM.
+ *	Determine the number of address bits in the SROM.
  */
-void
-tlp_read_srom(sc, word, wordcnt, data)
+int
+tlp_srom_size(sc)
 	struct tulip_softc *sc;
-	int word, wordcnt;
-	u_int8_t *data;
 {
 	u_int32_t miirom;
-	u_int16_t datain;
-	int i, x;
-
-	tlp_srom_idle(sc);
+	int x;
 
 	/* Select the SROM. */
 	miirom = MIIROM_SR;
@@ -1963,7 +1962,77 @@ tlp_read_srom(sc, word, wordcnt, data)
 	miirom |= MIIROM_RD;
 	SROM_EMIT(sc, miirom);
 
-	for (i = 0; i < wordcnt; i++) {
+	/* Send CHIP SELECT for one clock tick. */
+	miirom |= MIIROM_SROMCS;
+	SROM_EMIT(sc, miirom);
+
+	/* Shift in the READ opcode. */
+	for (x = 3; x > 0; x--) {
+		if (TULIP_SROM_OPC_READ & (1 << (x - 1)))
+			miirom |= MIIROM_SROMDI;
+		else
+			miirom &= ~MIIROM_SROMDI;
+		SROM_EMIT(sc, miirom);
+		SROM_EMIT(sc, miirom|MIIROM_SROMSK);
+		SROM_EMIT(sc, miirom);
+	}
+
+	/* Shift in address and look for dummy 0 bit. */
+	for (x = 1; x <= 12; x++) {
+		miirom &= ~MIIROM_SROMDI;
+		SROM_EMIT(sc, miirom);
+		SROM_EMIT(sc, miirom|MIIROM_SROMSK);
+		if (!TULIP_ISSET(sc, CSR_MIIROM, MIIROM_SROMDO))
+			break;
+		SROM_EMIT(sc, miirom);
+	}
+
+	/* Clear CHIP SELECT. */
+	miirom &= ~MIIROM_SROMCS;
+	SROM_EMIT(sc, miirom);
+
+	/* Deselect the SROM. */
+	SROM_EMIT(sc, 0);
+
+	if (x > 12) {
+		printf("failed to find SROM size\n");
+		return (0);
+	} else {
+		printf("SROM size is 2^%d*16 (%d) bits\n", x, 1 << (x + 4));
+		return (x);
+	}
+}
+
+/*
+ * tlp_read_srom:
+ *
+ *	Read the Tulip SROM.
+ */
+int
+tlp_read_srom(sc)
+	struct tulip_softc *sc;
+{
+	int size;
+	u_int32_t miirom;
+	u_int16_t datain;
+	int i, x;
+
+	tlp_srom_idle(sc);
+
+	sc->sc_srom_addrbits = tlp_srom_size(sc);
+	if (sc->sc_srom_addrbits == 0)
+		return (0);
+	size = TULIP_ROM_SIZE(sc->sc_srom_addrbits);
+	sc->sc_srom = malloc(size, M_DEVBUF, M_NOWAIT);
+
+	/* Select the SROM. */
+	miirom = MIIROM_SR;
+	SROM_EMIT(sc, miirom);
+
+	miirom |= MIIROM_RD;
+	SROM_EMIT(sc, miirom);
+
+	for (i = 0; i < size; i += 2) {
 		/* Send CHIP SELECT for one clock tick. */
 		miirom |= MIIROM_SROMCS;
 		SROM_EMIT(sc, miirom);
@@ -1981,7 +2050,7 @@ tlp_read_srom(sc, word, wordcnt, data)
 
 		/* Shift in address. */
 		for (x = sc->sc_srom_addrbits; x > 0; x--) {
-			if ((word + i) & (1 << (x - 1)))
+			if (i & (1 << x))
 				miirom |= MIIROM_SROMDI;
 			else
 				miirom &= ~MIIROM_SROMDI;
@@ -1999,8 +2068,8 @@ tlp_read_srom(sc, word, wordcnt, data)
 				datain |= (1 << (x - 1));
 			SROM_EMIT(sc, miirom);
 		}
-		data[2 * i] = datain & 0xff;
-		data[(2 * i) + 1] = datain >> 8;
+		sc->sc_srom[i] = datain & 0xff;
+		sc->sc_srom[i + 1] = datain >> 8;
 
 		/* Clear CHIP SELECT. */
 		miirom &= ~MIIROM_SROMCS;
@@ -2012,6 +2081,18 @@ tlp_read_srom(sc, word, wordcnt, data)
 
 	/* ...and idle it. */
 	tlp_srom_idle(sc);
+
+#if 0
+	printf("SROM CONTENTS:");
+	for (i = 0; i < size; i++) {
+		if ((i % 8) == 0)
+			printf("\n\t");
+		printf("0x%02x ", sc->sc_srom[i]);
+	}
+	printf("\n");
+#endif
+
+	return (1);
 }
 
 #undef SROM_EMIT

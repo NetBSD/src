@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.28 2000/02/01 22:54:48 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.29 2000/03/07 00:39:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -276,7 +276,7 @@ struct tulip_softc {
 	/*
 	 * Contents of the SROM.
 	 */
-	u_int8_t sc_srom[TULIP_MAX_ROM_SIZE];
+	u_int8_t *sc_srom;
 	int sc_srom_addrbits;
 
 	/*
@@ -502,7 +502,7 @@ void	tlp_attach __P((struct tulip_softc *, const u_int8_t *));
 int	tlp_activate __P((struct device *, enum devact));
 int	tlp_detach __P((struct tulip_softc *));
 int	tlp_intr __P((void *));
-void	tlp_read_srom __P((struct tulip_softc *, int, int, u_int8_t *));
+int	tlp_read_srom __P((struct tulip_softc *));
 int	tlp_srom_crcok __P((const u_int8_t *));
 int	tlp_isv_srom __P((const u_int8_t *));
 int	tlp_isv_srom_enaddr __P((struct tulip_softc *, u_int8_t *));
