@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arc.inc,v 1.6 2002/01/12 04:07:27 tsutsui Exp $
+#	$NetBSD: Makefile.arc.inc,v 1.7 2002/03/19 00:57:53 atatat Exp $
 
 CFLAGS+=	-mips2 -mcpu=r4000
 AFLAGS+=	-mips2
@@ -8,5 +8,4 @@ SYSTEM_LD_TAIL_EXTRA=; \
 	echo ${OBJCOPY} -O ecoff-littlemips -R .mdebug -R .ident $@ $@.ecoff; \
 	${OBJCOPY} -O ecoff-littlemips -R .mdebug -R .ident $@ $@.ecoff
 
-# XXX works *only* for kernels with one config line named "netbsd"
-EXTRA_CLEAN+= netbsd.ecoff
+EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.ecoff@}
