@@ -1,4 +1,4 @@
-/*	$NetBSD: if_elmc_mca.c,v 1.13 2003/10/25 18:37:03 christos Exp $	*/
+/*	$NetBSD: if_elmc_mca.c,v 1.14 2003/10/25 20:19:01 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.13 2003/10/25 18:37:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.14 2003/10/25 20:19:01 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ elmc_mca_attach(struct device *parent, struct device *self, void *aux)
 	case 1: irq = 12; break;
 	default:
 		printf("%s: cannot determine irq\n", sc->sc_dev.dv_xname);
-		break;
+		return;
 	}
 
 	pbram_addr = ELMC_MADDR_BASE + (((pos2 & 24) >> 3) * 0x8000);
