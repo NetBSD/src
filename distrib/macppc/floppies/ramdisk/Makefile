@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2000/05/02 16:06:50 sjg Exp $
+#	$NetBSD: Makefile,v 1.11 2000/07/24 09:15:21 tsubai Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -8,7 +8,7 @@ IMAGE=		ramdisk.fs
 CBIN=		ramdiskbin
 
 MOUNT_POINT?=	/mnt
-VND?=		vnd1
+VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 MDEC=		${DESTDIR}/usr/mdec
@@ -19,6 +19,7 @@ MTREE=		mtree.conf
 
 SIZE=		2048k
 DISKTYPE=	floppyinstfs
+DBG=		-Os -mmultiple
 
 all: ${CBIN} 
 	dd if=/dev/zero of=${IMAGE} bs=${SIZE} count=1
@@ -45,7 +46,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c #libhack.o
-	make -f ${CBIN}.mk all
+	make -f ${CBIN}.mk DBG="${DBG}" all
 
 #HACKSRC=${TOP}/../../utils/libhack
 #.include "${HACKSRC}/Makefile.inc"
@@ -55,4 +56,3 @@ clean cleandir distclean:
 	rm -f *.core *.o *.cro *.c
 
 .include <bsd.obj.mk>
-.include <bsd.subdir.mk>
