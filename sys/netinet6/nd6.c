@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.76 2002/09/27 15:37:54 provos Exp $	*/
+/*	$NetBSD: nd6.c,v 1.77 2002/10/09 20:22:16 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.76 2002/09/27 15:37:54 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.77 2002/10/09 20:22:16 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -724,10 +724,10 @@ nd6_lookup(addr6, create, ifp)
 	    rt->rt_gateway->sa_family != AF_LINK || rt->rt_llinfo == NULL ||
 	    (ifp && rt->rt_ifa->ifa_ifp != ifp)) {
 		if (create) {
-			log(LOG_DEBUG,
+			nd6log((LOG_DEBUG,
 			    "nd6_lookup: failed to lookup %s (if = %s)\n",
 			    ip6_sprintf(addr6),
-			    ifp ? if_name(ifp) : "unspec");
+			    ifp ? if_name(ifp) : "unspec"));
 		}
 		return (NULL);
 	}
