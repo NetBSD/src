@@ -1,4 +1,4 @@
-/*	$NetBSD: lastcomm.c,v 1.13 1997/10/19 14:12:22 mrg Exp $	*/
+/*	$NetBSD: lastcomm.c,v 1.14 1998/04/02 10:22:03 kleink Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lastcomm.c	8.2 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: lastcomm.c,v 1.13 1997/10/19 14:12:22 mrg Exp $");
+__RCSID("$NetBSD: lastcomm.c,v 1.14 1998/04/02 10:22:03 kleink Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: lastcomm.c,v 1.13 1997/10/19 14:12:22 mrg Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <struct.h>
+#include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
 #include <utmp.h>
