@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.195 2000/02/21 20:38:46 erh Exp $ */
+/* $NetBSD: machdep.c,v 1.196 2000/02/22 15:43:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.195 2000/02/21 20:38:46 erh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.196 2000/02/22 15:43:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1850,7 +1850,7 @@ netintr()
 #define	DONETISR(bit, fn)						\
 	do {								\
 		if (n & (1 << (bit)))					\
-			fn;						\
+			fn();						\
 	} while (0)
 
 #include <net/netisr_dispatch.h>
