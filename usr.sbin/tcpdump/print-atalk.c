@@ -20,7 +20,7 @@
  *
  * Format and print AppleTalk packets.
  * 
- * $Id: print-atalk.c,v 1.1 1993/11/14 21:20:34 deraadt Exp $
+ * $Id: print-atalk.c,v 1.2 1994/12/23 17:06:10 cgd Exp $
  */
 #ifndef lint
 static  char rcsid[] =
@@ -34,6 +34,7 @@ static  char rcsid[] =
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/queue.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
