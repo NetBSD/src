@@ -1,12 +1,12 @@
-/*	$NetBSD: zic.c,v 1.14 1998/10/04 19:27:55 kleink Exp $	*/
+/*	$NetBSD: zic.c,v 1.15 1999/02/08 18:00:19 kleink Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #ifndef NOID
 #if 0
-static char	elsieid[] = "@(#)zic.c	7.95";
+static char	elsieid[] = "@(#)zic.c	7.99";
 #else
-__RCSID("$NetBSD: zic.c,v 1.14 1998/10/04 19:27:55 kleink Exp $");
+__RCSID("$NetBSD: zic.c,v 1.15 1999/02/08 18:00:19 kleink Exp $");
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
@@ -390,7 +390,7 @@ int	errnum;
 	extern int	sys_nerr;
 
 	return (errnum > 0 && errnum <= sys_nerr) ?
-		sys_errlist[errnum] : "Unknown system error";
+		sys_errlist[errnum] : _("Unknown system error");
 }
 #endif /* !(HAVE_STRERROR - 0) */
 
@@ -439,7 +439,7 @@ const char * const	string;
 {
 	char *	cp;
 
-	cp = ecpyalloc("warning: ");
+	cp = ecpyalloc(_("warning: "));
 	cp = ecatalloc(cp, string);
 	error(cp);
 	ifree(cp);
@@ -572,12 +572,18 @@ _("%s: More than one -L option specified\n"),
 	/*
 	** Make links.
 	*/
-	for (i = 0; i < nlinks; ++i)
+	for (i = 0; i < nlinks; ++i) {
+		eat(links[i].l_filename, links[i].l_linenum);
 		dolink(links[i].l_from, links[i].l_to);
-	if (lcltime != NULL)
+	}
+	if (lcltime != NULL) {
+		eat("command line", 1);
 		dolink(lcltime, TZDEFAULT);
-	if (psxrules != NULL)
+	}
+	if (psxrules != NULL) {
+		eat("command line", 1);
 		dolink(psxrules, TZDEFRULES);
+	}
 	return (errors == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
@@ -614,12 +620,20 @@ const char * const	tofile;
 
 		if (mkdirs(toname) != 0)
 			(void) exit(EXIT_FAILURE);
+
 		result = link(fromname, toname);
 #if (HAVE_SYMLINK - 0) 
 		if (result != 0) {
-			result = symlink(fromname, toname);
+		        char *s = (char *) tofile;
+		        register char * symlinkcontents = NULL;
+		        while ((s = strchr(s+1, '/')) != NULL)
+			        symlinkcontents = ecatalloc(symlinkcontents, "../");
+			symlinkcontents = ecatalloc(symlinkcontents, fromfile);
+
+			result = symlink(symlinkcontents, toname);
 			if (result == 0)
 warning(_("hard link failed, symbolic link used"));
+			ifree(symlinkcontents);
 		}
 #endif
 		if (result != 0) {
