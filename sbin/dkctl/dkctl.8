@@ -1,4 +1,4 @@
-.\"	$NetBSD: dkctl.8,v 1.7 2003/04/16 13:04:27 wiz Exp $
+.\"	$NetBSD: dkctl.8,v 1.8 2003/04/16 13:05:01 wiz Exp $
 .\"
 .\" Copyright 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -113,7 +113,8 @@ Clears the in kernel list of bad sectors.
 Prints out the list of bad sector ranges recorded by the kernel.
 .It retry
 Flushes the in kernel list and then retries all of the previously recorded
-bad sectors, causing the list to self update.  This option
+bad sectors, causing the list to self update.
+This option
 .Em can only
 be used with character devices.
 .El
