@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39sib.c,v 1.1 2000/01/08 21:07:02 uch Exp $ */
+/*	$NetBSD: tx39sib.c,v 1.2 2000/01/12 14:56:19 uch Exp $ */
 
 /*
  * Copyright (c) 2000, by UCHIYAMA Yasushi
@@ -29,7 +29,7 @@
 /*
  * TX39 SIB (Serial Interface Bus) module.
  */
-
+#undef TX39SIBDEBUG
 #include "opt_tx39_debug.h"
 
 #include <sys/param.h>
@@ -58,10 +58,55 @@ void	tx39sib_attach	__P((struct device*, struct device*, void*));
 int	tx39sib_print	__P((void*, const char*));
 int	tx39sib_search	__P((struct device*, struct cfdata*, void*));
 
+#define TX39_CLK2X	18432000
+const int sibsclk_divide_table[8] = {
+	2, 3, 4, 5, 6, 8, 10, 12
+};
+
+struct tx39sib_param {
+	/* SIB clock rate */
+	int sp_clock;
+/*
+ *	SIBMCLK = 18.432MHz = (CLK2X /4)
+ *	SIBSCLK = SIBMCLK / sp_clock
+ *	sp_clock	start	end	divide module
+ *	0		7	8	2
+ *	1		6	8	3
+ *	2		6	9	4
+ *	3		5	9	5
+ *	4		5	10	6
+ *	5		4	11	8
+ *	6		3	12	10
+ *	7		2	13	12
+ */
+	/* sampling rate */
+	int sp_snd_rate; /* SNDFSDIV + 1 */
+	int sp_tel_rate; /* TELFSDIV + 1 */
+/*
+ *	Fs = (SIBSCLK * 2) / ((FSDIV + 1) * 64
+ *	FSDIV + 1	sampling rate
+ *	15		19.2k		(1.6% error vs. CD-XA)
+ *	13		22.154k		(0.47% error vs. CD-Audio)
+ *	22		7.85k		(1.8% error vs. 8k)
+ */
+	/* data format 16/8bit */
+	int sp_sf0sndmode;
+	int sp_sf0telmode;
+};
+
+struct tx39sib_param tx39sib_param_default = {
+	0,			/* SIBSCLK = 9.216MHz */
+	13,			/* audio: CD-Audio */
+	40,			/* telecom: 7.2kHz */
+	TX39_SIBCTRL_SND16,	/* Audio 16bit mono */
+	TX39_SIBCTRL_TEL16	/* Telecom 16bit mono */
+};
+
 struct tx39sib_softc {
 	struct	device sc_dev;
 	tx_chipset_tag_t sc_tc;
 
+	struct tx39sib_param sc_param;
 	int sc_attached;
 };
 
@@ -90,38 +135,122 @@ tx39sib_attach(parent, self, aux)
 	struct txsim_attach_args *ta = aux;
 	struct tx39sib_softc *sc = (void*)self;
 	tx_chipset_tag_t tc;
-	txreg_t reg;
-
+	
 	sc->sc_tc = tc = ta->ta_tc;
 
+	/* set default param */
+	sc->sc_param = tx39sib_param_default;
+#define MHZ(a) ((a) / 1000000), (((a) % 1000000) / 1000)
+	printf(": %d.%03d MHz", MHZ(tx39sib_clock(self)));
+	
 	printf("\n");
 #ifdef TX39SIBDEBUG
 	tx39sib_dump(sc);
 #endif	
-	/* 
-	 * Enable subframe0 (UCB1200)
-	 */
-	reg = tx_conf_read(tc, TX39_SIBCTRL_REG);
-	reg |= TX39_SIBCTRL_ENSF0;
-	tx_conf_write(tc, TX39_SIBCTRL_REG, reg);
+	/* enable subframe0 */
+	tx39sib_enable1(self);
+	/* enable SIB */
+	tx39sib_enable2(self);
 
-	/* 
-	 * Disable subframe1 (external codec)
-	 */
-	reg = tx_conf_read(tc, TX39_SIBCTRL_REG);
-	reg &= ~TX39_SIBCTRL_ENSF1;
-	tx_conf_write(tc, TX39_SIBCTRL_REG, reg);
-
-	/*
-	 * Enable SIB module
-	 */
-	reg = tx_conf_read(tc, TX39_SIBCTRL_REG);
-	reg |= TX39_SIBCTRL_ENSIB;
-	tx_conf_write(tc, TX39_SIBCTRL_REG, reg);
+#ifdef TX39SIBDEBUG
+	tx39sib_dump(sc);
+#endif	
 
 	config_search(tx39sib_search, self, tx39sib_print);
 }
 
+void
+tx39sib_enable1(dev)
+	struct device *dev;
+{
+	struct tx39sib_softc *sc = (void*)dev;
+	struct tx39sib_param *param = &sc->sc_param;
+	tx_chipset_tag_t tc = sc->sc_tc;
+
+	txreg_t reg;
+
+	/* disable SIB */
+	tx39sib_disable(dev);
+
+	/* setup */
+	reg = 0;
+	/*  SIB clock rate */
+	reg = TX39_SIBCTRL_SCLKDIV_SET(reg, param->sp_clock);
+	/*  sampling rate (sound) */
+	reg = TX39_SIBCTRL_SNDFSDIV_SET(reg, param->sp_snd_rate - 1);
+	/*  sampling rate (telecom) */
+	reg = TX39_SIBCTRL_TELFSDIV_SET(reg, param->sp_tel_rate - 1);
+	/*  data format (8/16bit) */
+	reg |= param->sp_sf0sndmode;
+	reg |= param->sp_sf0telmode;
+	tx_conf_write(tc, TX39_SIBCTRL_REG, reg);
+
+	/* DMA */
+	reg = tx_conf_read(tc, TX39_SIBDMACTRL_REG);
+	reg &= ~(TX39_SIBDMACTRL_ENDMARXSND |
+		 TX39_SIBDMACTRL_ENDMATXSND |
+		 TX39_SIBDMACTRL_ENDMARXTEL |
+		 TX39_SIBDMACTRL_ENDMATXTEL);
+	tx_conf_write(tc, TX39_SIBDMACTRL_REG, reg);
+
+	/* 
+	 * Enable subframe0 (BETTY)
+	 */
+	reg = tx_conf_read(tc, TX39_SIBCTRL_REG);
+	reg |= TX39_SIBCTRL_ENSF0;
+	tx_conf_write(tc, TX39_SIBCTRL_REG, reg);
+}
+
+void
+tx39sib_enable2(dev)
+	struct device *dev;
+{
+	struct tx39sib_softc *sc = (void*)dev;
+	tx_chipset_tag_t tc = sc->sc_tc;
+	txreg_t reg;
+	
+	reg = tx_conf_read(tc, TX39_SIBCTRL_REG);
+	reg |= TX39_SIBCTRL_ENSIB;
+	tx_conf_write(tc, TX39_SIBCTRL_REG, reg);
+}
+
+void
+tx39sib_disable(dev)
+	struct device *dev;
+{
+	struct tx39sib_softc *sc = (void*)dev;
+	tx_chipset_tag_t tc = sc->sc_tc;
+	txreg_t reg;
+	/* disable codec side */
+	/* notyet */
+
+	/* disable TX39 side */
+	reg = tx_conf_read(tc, TX39_SIBCTRL_REG);
+	reg &= ~(TX39_SIBCTRL_ENTEL | TX39_SIBCTRL_ENSND);
+	tx_conf_write(tc, TX39_SIBCTRL_REG, reg);
+
+	/* 
+	 * Disable subframe0/1 (BETTY/external codec)
+	 */
+	reg = tx_conf_read(tc, TX39_SIBCTRL_REG);
+	reg &= ~TX39_SIBCTRL_ENSF0;
+	reg &= ~(TX39_SIBCTRL_ENSF1 | TX39_SIBCTRL_SELTELSF1 | 
+		 TX39_SIBCTRL_SELSNDSF1);
+	tx_conf_write(tc, TX39_SIBCTRL_REG, reg);
+
+	/* disable TX39SIB module */
+	reg &= ~TX39_SIBCTRL_ENSIB;
+	tx_conf_write(tc, TX39_SIBCTRL_REG, reg);	
+}
+
+int
+tx39sib_clock(dev)
+	struct device *dev;
+{
+	struct tx39sib_softc *sc = (void*)dev;
+
+	return TX39_CLK2X / sibsclk_divide_table[sc->sc_param.sp_clock];
+}
 
 int
 tx39sib_search(parent, cf, aux)
@@ -134,6 +263,8 @@ tx39sib_search(parent, cf, aux)
 	
 	sa.sa_tc	= sc->sc_tc;
 	sa.sa_slot	= cf->cf_loc[TXSIBIFCF_SLOT];
+	sa.sa_snd_rate	= sc->sc_param.sp_snd_rate;
+	sa.sa_tel_rate	= sc->sc_param.sp_tel_rate;
 
 	if (sa.sa_slot == TXSIBIFCF_SLOT_DEFAULT) {
 		printf("tx39sib_search: wildcarded slot, skipping\n");

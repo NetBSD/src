@@ -1,4 +1,4 @@
-/*	$NetBSD: txsim.c,v 1.1 1999/11/20 19:56:40 uch Exp $ */
+/*	$NetBSD: txsim.c,v 1.2 2000/01/12 14:56:20 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -39,6 +39,7 @@
 #include <machine/autoconf.h>
 
 #include <hpcmips/tx/tx39var.h>
+#include <hpcmips/tx/txsnd.h>
 
 int	txsim_match __P((struct device*, struct cfdata*, void*));
 void	txsim_attach __P((struct device*, struct device*, void*));
@@ -76,6 +77,8 @@ txsim_attach(parent, self, aux)
 	struct txsim_softc *sc = (void*)self;
 
 	printf("\n");
+
+	tx_sound_init(tx_conf_get_tag());
 	/* 
 	 *	interrupt, clock module is used by other system module. 
 	 *	so attach first.
