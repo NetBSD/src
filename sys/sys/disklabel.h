@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)disklabel.h	7.19 (Berkeley) 5/7/91
- *	$Id: disklabel.h,v 1.8.2.1 1993/09/24 08:57:50 mycroft Exp $
+ *	$Id: disklabel.h,v 1.8.2.2 1993/09/30 04:25:30 deraadt Exp $
  */
 
 #ifndef _SYS_DISKLABEL_H_
@@ -314,20 +314,28 @@ struct dos_partition {
 	unsigned long	dp_start;	/* absolute starting sector number */
 	unsigned long	dp_size;	/* partition size in sectors */
 } dos_partitions[NDOSPART];
-
-#include <sys/dkbad.h>
-struct cpu_disklabel {
-	struct dos_partition dosparts[NDOSPART];
-	struct dkbad bad;
-};
-
 #endif /* i386 */
 
-#if defined(hp300) || defined(mac) || defined(vax) || defined(pc532) || \
-    defined(sun3)
+#include <sys/dkbad.h>
+
 struct cpu_disklabel {
-};
+#if defined(hp300)
 #endif
+#if defined(mac)
+#endif
+#if defined(vax)
+#endif
+#if defined(pc532)
+#endif
+#if defined(sun3)
+#endif
+#if defined(sparc)
+#endif
+#if defined(i386)
+	struct dos_partition dosparts[NDOSPART];
+	struct dkbad bad;
+#endif
+};
 
 #define	DPSECT(s) ((s) & 0x3f)		/* isolate relevant bits of sector */
 #define	DPCYL(c, s) ((c) + (((s) & 0xc0)<<2)) /* and those that are cylinder */
@@ -363,17 +371,9 @@ int dkcksum __P((struct disklabel *));
 
 int setdisklabel __P((struct disklabel *, struct disklabel *, u_long,
 	struct cpu_disklabel *));
-int cpu_setdisklabel __P((struct disklabel *, struct disklabel *, u_long,
-	struct cpu_disklabel *));
-
 char *readdisklabel __P((dev_t, void (*)(), struct disklabel *,
 	struct cpu_disklabel *));
-char *cpu_readdisklabel __P((dev_t, void (*)(), struct disklabel *,
-	struct cpu_disklabel *));
-
 int writedisklabel __P((dev_t, void (*)(), struct disklabel *,
-	struct cpu_disklabel *));
-int cpu_writedisklabel __P((dev_t, void (*)(), struct disklabel *,
 	struct cpu_disklabel *));
 
 #endif
