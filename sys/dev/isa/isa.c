@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.82 1996/05/05 01:14:07 thorpej Exp $	*/
+/*	$NetBSD: isa.c,v 1.83 1996/05/08 23:32:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -85,7 +85,7 @@ isaattach(parent, self, aux)
 	sc->sc_ic = iba->iba_ic;
 
 	/*
-	 * Map port 0x84, which causes a 2.5us delay when read.
+	 * Map port 0x84, which causes a 1.25us delay when read.
 	 * We do this now, since several drivers need it.
 	 */
 	if (bus_io_map(sc->sc_bc, 0x84, 1, &sc->sc_delayioh))
