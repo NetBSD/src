@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.162 2001/06/02 02:22:35 tv Exp $
+#	$NetBSD: bsd.own.mk,v 1.163 2001/06/18 17:04:45 simonb Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -304,5 +304,7 @@ MKKERBEROS=no
 .else
 MKKERBEROS?=yes
 .endif
+
+MKSOFTFLOAT?=no
 
 .endif		# _BSD_OWN_MK_

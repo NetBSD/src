@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.46 2000/12/30 04:11:34 itojun Exp $
+#	$NetBSD: bsd.sys.mk,v 1.47 2001/06/18 17:04:45 simonb Exp $
 #
 # Overrides used for NetBSD source tree builds.
 
@@ -33,6 +33,11 @@ LINTFLAGS+= -d ${DESTDIR}/usr/include
 
 .if defined(AUDIT)
 CPPFLAGS+= -D__AUDIT__
+.endif
+
+.if (${MKSOFTFLOAT} != "no")
+COPTS+=		-msoft-float
+FOPTS+=		-msoft-float
 .endif
 
 # Helpers for cross-compiling
