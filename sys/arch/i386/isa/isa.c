@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.35 1994/02/22 23:36:11 mycroft Exp $
+ *	$Id: isa.c,v 1.36 1994/02/22 23:39:32 mycroft Exp $
  */
 
 /*
@@ -107,11 +107,11 @@ isa_configure()
 	INTREN(IRQ_SLAVE);
 	enable_intr();
 
-	for (dvp = isa_devtab_tty; config_isadev(dvp,&ttymask); dvp++)
+	for (dvp = isa_devtab_tty; config_isadev(dvp, &ttymask); dvp++)
 		;
-	for (dvp = isa_devtab_bio; config_isadev(dvp,&biomask); dvp++)
+	for (dvp = isa_devtab_bio; config_isadev(dvp, &biomask); dvp++)
 		;
-	for (dvp = isa_devtab_net; config_isadev(dvp,&netmask); dvp++)
+	for (dvp = isa_devtab_net; config_isadev(dvp, &netmask); dvp++)
 		;
 	for (dvp = isa_devtab_null; config_isadev(dvp, (u_int *) NULL); dvp++)
 		;
