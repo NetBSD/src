@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.21.2.3 2001/11/14 19:15:43 nathanw Exp $	*/
+/*	$NetBSD: dhu.c,v 1.21.2.4 2002/03/28 16:22:44 ragge Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -37,13 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.21.2.3 2001/11/14 19:15:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.21.2.4 2002/03/28 16:22:44 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
+#include <sys/lwp.h>
 #include <sys/map.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
@@ -402,7 +403,8 @@ dhuopen(dev, flag, mode, p)
 		}
 		(void) dhuparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if ((tp->t_state & TS_XCLUDE) && curproc->p_ucred->cr_uid != 0)
+	} else if ((tp->t_state & TS_XCLUDE) &&
+	    curproc->l_proc->p_ucred->cr_uid != 0)
 		return (EBUSY);
 	/* Use DMBIS and *not* DMSET or else we clobber incoming bits */
 	if (dhumctl(sc, line, DML_DTR|DML_RTS, DMBIS) & DML_DCD)
