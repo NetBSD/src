@@ -1,11 +1,11 @@
-/*	$NetBSD: gdt.h,v 1.2 2003/01/26 00:05:37 fvdl Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.1 2003/01/26 00:05:37 fvdl Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by John T. Kohl and Charles M. Hannum.
+ * by Klaus Klein.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,11 +36,62 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct proc;
-struct pmap;
+#ifndef _X86_64_MCONTEXT_H_
+#define _X86_64_MCONTEXT_H_
 
-void gdt_init __P((void));
-int tss_alloc __P((struct pcb *));
-void tss_free __P((int));
-void ldt_alloc __P((struct pmap *, char *, size_t));
-void ldt_free __P((struct pmap *));
+/*
+ * Layout of mcontext_t according to the System V Application Binary Interface,
+ * Intel386(tm) Architecture Processor Supplement, Fourth Edition.
+ */  
+
+/*
+ * General register state
+ */
+#define _NGREG		26
+typedef	long		__greg_t;
+typedef	__greg_t	__gregset_t[_NGREG];
+
+#define _REG_R15	0
+#define _REG_R14	1
+#define _REG_R13	2
+#define _REG_R12	3
+#define _REG_R11	4
+#define _REG_R10	5
+#define _REG_R9		6
+#define _REG_R8		7
+#define _REG_RDI	8
+#define _REG_RSI	9
+#define _REG_RBP	10
+#define _REG_RBX	11
+#define _REG_RDX	12
+#define _REG_RCX	13
+#define _REG_RAX	14
+#define _REG_GS		15
+#define _REG_FS		16
+#define _REG_ES		17
+#define _REG_DS		18
+#define _REG_TRAPNO	19
+#define _REG_ERR	20
+#define _REG_RIP	21
+#define _REG_CS		22
+#define _REG_RFL	23
+#define _REG_URSP	24
+#define _REG_SS		25
+
+/*
+ * Floating point register state
+ */
+typedef char __fpregset_t[512];
+
+typedef struct {
+	__gregset_t	__gregs;
+	__fpregset_t	__fpregs;
+} mcontext_t;
+
+#define _UC_UCONTEXT_ALIGN	(~0xf)
+
+#ifdef _KERNEL
+#define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_URSP])
+#endif
+
+#endif	/* !_X86_64_MCONTEXT_H_ */
