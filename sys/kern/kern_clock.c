@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.44 1998/04/22 07:08:11 jonathan Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.45 1999/02/23 02:56:04 ross Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -53,6 +53,7 @@
 #include <vm/vm.h>
 #include <sys/sysctl.h>
 #include <sys/timex.h>
+#include <sys/sched.h>
 
 #include <machine/cpu.h>
 
@@ -905,6 +906,7 @@ statclock(frame)
 	register struct gmonparam *g;
 	register int i;
 #endif
+	static int schedclk2;
 	register struct proc *p;
 
 	if (CLKF_USERMODE(frame)) {
@@ -963,28 +965,15 @@ statclock(frame)
 	}
 	pscnt = psdiv;
 
-	/*
-	 * We adjust the priority of the current process.  The priority of
-	 * a process gets worse as it accumulates CPU time.  The cpu usage
-	 * estimator (p_estcpu) is increased here.  The formula for computing
-	 * priorities (in kern_synch.c) will compute a different value each
-	 * time p_estcpu increases by 4.  The cpu usage estimator ramps up
-	 * quite quickly when the process is running (linearly), and decays
-	 * away exponentially, at a rate which is proportionally slower when
-	 * the system is busy.  The basic principal is that the system will
-	 * 90% forget that the process used a lot of CPU time in 5 * loadav
-	 * seconds.  This causes the system to favor processes which haven't
-	 * run much recently, and to round-robin among other processes.
-	 */
 	if (p != NULL) {
-		p->p_cpticks++;
-		if (++p->p_estcpu == 0)
-			p->p_estcpu--;
-		if ((p->p_estcpu & 3) == 0) {
-			resetpriority(p);
-			if (p->p_priority >= PUSER)
-				p->p_priority = p->p_usrpri;
-		}
+		++p->p_cpticks;
+		/*
+		 * If no schedclk is provided, call it here at ~~12-25 Hz,
+		 * ~~16 Hz is best
+		 */
+		if(schedhz == 0)
+			if ((++schedclk2 & 3) == 0)
+				schedclk(p);
 	}
 }
 
