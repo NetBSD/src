@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1999/05/11 20:08:01 veego Exp $
+#	$NetBSD: Makefile,v 1.8 1999/09/10 07:43:00 ross Exp $
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
@@ -7,7 +7,8 @@ VND_RDEV=	/dev/r${VND}a
 VND_CDEV=	/dev/${VND}c
 VND_CRDEV=	/dev/r${VND}c
 MDEC?=		${DESTDIR}/usr/mdec
-KERNEL=		${.CURDIR}/../../../sys/arch/alpha/compile/GENERIC/netbsd
+KERNEL?=	${.CURDIR}/../../../sys/arch/alpha/compile/GENERIC/netbsd
+STRIP?=		strip
 
 GZKERNEL=	netbsd
 IMAGE=		GENERIC.fs
@@ -40,7 +41,7 @@ GENERIC.fs: ${GZKERNEL} ${MDEC}/boot ${MDEC}/bootxx.old
 
 ${GZKERNEL}: ${KERNEL}
 	cp ${KERNEL} ${.TARGET}
-	strip ${.TARGET}
+	${STRIP} ${.TARGET}
 	gzip -9 ${.TARGET}
 	mv ${.TARGET}.gz ${.TARGET}
 
