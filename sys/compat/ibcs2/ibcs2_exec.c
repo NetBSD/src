@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.22.4.1 1999/06/21 01:07:12 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.22.4.2 1999/07/04 01:33:34 chs Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -496,7 +496,15 @@ n	 */
 #endif
 		return ETXTBSY;
 	}
+
+	/*
+	 * mark this vnode as being the image of a running process.
+	 * also flush any cached file mappings now so the process will
+	 * have a better chance of being able to use the cache.
+	 */
+
 	epp->ep_vp->v_flag |= VTEXT;
+	ubc_flush(&epp->ep_vp->v_uvm.u_obj, 0, 0);
 #endif
 	
 	/* DPRINTF(("VMCMD: addr %x size %d offset %d\n", epp->ep_taddr,

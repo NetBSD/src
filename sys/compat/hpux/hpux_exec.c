@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec.c,v 1.13 1999/02/09 20:21:18 christos Exp $	*/
+/*	$NetBSD: hpux_exec.c,v 1.13.4.1 1999/07/04 01:33:34 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -222,7 +222,15 @@ exec_hpux_prep_zmagic(p, epp)
 	if ((execp->ha_text != 0 || execp->ha_data != 0) &&
 	    epp->ep_vp->v_writecount != 0)
 		return (ETXTBSY);
+
+	/*
+	 * mark this vnode as being the image of a running process.
+	 * also flush any cached file mappings now so the process will
+	 * have a better chance of being able to use the cache.
+	 */
+
 	epp->ep_vp->v_flag |= VTEXT;
+	ubc_flush(&epp->ep_vp->v_uvm.u_obj, 0, 0);
 
 	/*
 	 * HP-UX ZMAGIC executables need to have their segment
