@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.73 2001/12/14 05:58:13 gehenna Exp $	*/
+/*	$NetBSD: umass.c,v 1.74 2001/12/14 06:21:56 gehenna Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.73 2001/12/14 05:58:13 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.74 2001/12/14 06:21:56 gehenna Exp $");
 
 #include "atapibus.h"
 
@@ -167,7 +167,6 @@ Static usbd_status umass_setup_transfer(struct umass_softc *sc,
 				void *buffer, int buflen, int flags,
 				usbd_xfer_handle xfer);
 Static usbd_status umass_setup_ctrl_transfer(struct umass_softc *sc,
-				usbd_device_handle dev,
 				usb_device_request_t *req,
 				void *buffer, int buflen, int flags, 
 				usbd_xfer_handle xfer);
@@ -804,10 +803,8 @@ umass_setup_transfer(struct umass_softc *sc, usbd_pipe_handle pipe,
 
 
 Static usbd_status
-umass_setup_ctrl_transfer(struct umass_softc *sc, usbd_device_handle dev,
-	 usb_device_request_t *req,
-	 void *buffer, int buflen, int flags,
-	 usbd_xfer_handle xfer)
+umass_setup_ctrl_transfer(struct umass_softc *sc, usb_device_request_t *req,
+	 void *buffer, int buflen, int flags, usbd_xfer_handle xfer)
 {
 	usbd_status err;
 
@@ -816,7 +813,7 @@ umass_setup_ctrl_transfer(struct umass_softc *sc, usbd_device_handle dev,
 
 	/* Initialiase a USB control transfer and then schedule it */
 
-	usbd_setup_default_xfer(xfer, dev, (void *) sc,
+	usbd_setup_default_xfer(xfer, sc->sc_udev, (void *) sc,
 	    sc->timeout, req, buffer, buflen, flags, sc->state);
 
 	err = usbd_transfer(xfer);
@@ -848,7 +845,7 @@ umass_clear_endpoint_stall(struct umass_softc *sc, int endpt,
 	USETW(sc->request.wValue, UF_ENDPOINT_HALT);
 	USETW(sc->request.wIndex, sc->sc_epaddr[endpt]);
 	USETW(sc->request.wLength, 0);
-	umass_setup_ctrl_transfer(sc, sc->sc_udev, &sc->request, NULL, 0, 0, xfer);
+	umass_setup_ctrl_transfer(sc, &sc->request, NULL, 0, 0, xfer);
 }
 
 #if 0
@@ -870,8 +867,6 @@ umass_reset(struct umass_softc *sc, transfer_cb_f cb, void *priv)
 Static void
 umass_bbb_reset(struct umass_softc *sc, int status)
 {
-	usbd_device_handle dev;
-
 	KASSERT(sc->proto & PROTO_BBB,
 		("sc->proto == 0x%02x wrong for umass_bbb_reset\n", sc->proto));
 
@@ -900,15 +895,13 @@ umass_bbb_reset(struct umass_softc *sc, int status)
 	sc->transfer_state = TSTATE_BBB_RESET1;
 	sc->transfer_status = status;
 
-	usbd_interface2device_handle(sc->iface, &dev);
-
 	/* reset is a class specific interface write */
 	sc->request.bmRequestType = UT_WRITE_CLASS_INTERFACE;
 	sc->request.bRequest = UR_BBB_RESET;
 	USETW(sc->request.wValue, 0);
 	USETW(sc->request.wIndex, sc->ifaceno);
 	USETW(sc->request.wLength, 0);
-	umass_setup_ctrl_transfer(sc, dev, &sc->request, NULL, 0, 0,
+	umass_setup_ctrl_transfer(sc, &sc->request, NULL, 0, 0,
 				  sc->transfer_xfer[XFER_BBB_RESET1]);
 }
 
@@ -1334,19 +1327,15 @@ Static int
 umass_cbi_adsc(struct umass_softc *sc, char *buffer, int buflen,
 	       usbd_xfer_handle xfer)
 {
-	usbd_device_handle dev;
-
 	KASSERT(sc->proto & (PROTO_CBI|PROTO_CBI_I),
 		("sc->proto == 0x%02x wrong for umass_cbi_adsc\n",sc->proto));
-
-	usbd_interface2device_handle(sc->iface, &dev);
 
 	sc->request.bmRequestType = UT_WRITE_CLASS_INTERFACE;
 	sc->request.bRequest = UR_CBI_ADSC;
 	USETW(sc->request.wValue, 0);
 	USETW(sc->request.wIndex, sc->ifaceno);
 	USETW(sc->request.wLength, buflen);
-	return umass_setup_ctrl_transfer(sc, dev, &sc->request, buffer,
+	return umass_setup_ctrl_transfer(sc, &sc->request, buffer,
 					 buflen, 0, xfer);
 }
 
@@ -1738,26 +1727,21 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 usbd_status
 umass_bbb_get_max_lun(struct umass_softc *sc, u_int8_t *maxlun)
 {
-	usbd_device_handle dev;
 	usb_device_request_t req;
 	usbd_status err;
-	usb_interface_descriptor_t *id;
 
 	*maxlun = 0;		/* Default to 0. */
 
 	DPRINTF(UDMASS_BBB, ("%s: Get Max Lun\n", USBDEVNAME(sc->sc_dev)));
 
-	usbd_interface2device_handle(sc->iface, &dev);
-	id = usbd_get_interface_descriptor(sc->iface);
-
 	/* The Get Max Lun command is a class-specific request. */
 	req.bmRequestType = UT_READ_CLASS_INTERFACE;
 	req.bRequest = UR_BBB_GET_MAX_LUN;
 	USETW(req.wValue, 0);
-	USETW(req.wIndex, id->bInterfaceNumber);
+	USETW(req.wIndex, sc->ifaceno);
 	USETW(req.wLength, 1);
 
-	err = usbd_do_request(dev, &req, maxlun);
+	err = usbd_do_request(sc->sc_udev, &req, maxlun);
 	switch (err) {
 	case USBD_NORMAL_COMPLETION:
 		DPRINTF(UDMASS_BBB, ("%s: Max Lun %d\n",
