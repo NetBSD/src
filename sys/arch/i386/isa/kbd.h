@@ -1,13 +1,24 @@
 /*
  * Keyboard definitions
  *
- *	$Id: kbd.h,v 1.2 1993/05/22 08:01:31 cgd Exp $
+ *	$Id: kbd.h,v 1.3 1993/09/28 03:25:01 andrew Exp $
  */
 
-/* commands and responses */
-#define	KBC_RESET	0xFF	/* Reset the keyboard */
-#define	KBC_STSIND	0xED	/* set keyboard status indicators */
-#define	KBR_OVERRUN	0xFE	/* Keyboard flooded */
-#define	KBR_RESEND	0xFE	/* Keyboard needs resend of command */
-#define	KBR_ACK		0xFA	/* Keyboard did receive command */
-#define	KBR_RSTDONE	0xAA	/* Keyboard reset complete */
+/* keyboard commands */
+#define	KBC_RESET	0xFF	/* reset the keyboard */
+#define	KBC_RESEND	0xFE	/* request the keyboard resend the last byte */
+#define	KBC_SETDEFAULT	0xF6	/* resets keyboard to its power-on defaults */
+#define	KBC_DISABLE	0xF5	/* as per KBC_SETDEFAULT, but also disable key scanning */
+#define	KBC_ENABLE	0xF4	/* enable key scanning */
+#define	KBC_TYPEMATIC	0xF3	/* set typematic rate and delay */
+#define	KBC_MODEIND	0xED	/* set mode indicators (i.e. LEDs) */
+#define	KBC_ECHO	0xEE	/* request an echo from the keyboard */
+
+/* keyboard responses */
+#define	KBR_RESEND	0xFE	/* needs resend of command */
+#define	KBR_ACK		0xFA	/* received a valid command */
+#define	KBR_OVERRUN	0x00	/* flooded */
+#define	KBR_FAILURE	0xFD	/* diagnosic failure */
+#define	KBR_BREAK	0xF0	/* break code prefix - sent on key release */
+#define	KBR_RSTDONE	0xAA	/* reset complete */
+#define	KBR_ECHO	0xEE	/* echo response */
