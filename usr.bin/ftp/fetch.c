@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.15 1997/09/13 09:05:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.15 1997/09/13 09:05:54 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -515,7 +515,7 @@ parsed_url:
 		}
 
 		/*
-		 * If cp is NULL, the file wasn't specified
+		 * If dir is NULL, the file wasn't specified
 		 * (URL looked something like ftp://host)
 		 */
 		if (dir != NULL)
