@@ -1,0 +1,27 @@
+# Config file and device description for machine-independent parallel port bus 
+# code.
+
+defflag	opt_ppbus.h		PPBUS_VERBOSE PPBUS_DEBUG
+defflag	opt_ppbus_1284.h	DONTPROBE_1284 DEBUG_1284
+
+# ppbus related files
+device	ppbus { }
+attach ppbus at parport
+file	dev/ppbus/ppbus_conf.c	ppbus		needs-flag
+file	dev/ppbus/ppbus_base.c	ppbus
+file	dev/ppbus/ppbus_msq.c	ppbus
+file	dev/ppbus/ppbus_1284.c	ppbus
+
+# lpt driver
+defflag	opt_ppbus_lpt.h		LPT_DEBUG LPT_VERBOSE
+device lpt
+attach lpt at ppbus
+file	dev/ppbus/lpt.c		lpt		needs-flag
+
+# lp driver - PLIP
+defflag opt_plip.h		PLIP_DEBUG
+device lp
+attach lp at ppbus
+file dev/ppbus/if_plip.c	lp		needs-flag
+
+# Add devices as necessary
