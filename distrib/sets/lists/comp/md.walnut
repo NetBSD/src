@@ -1,11 +1,10 @@
-# $NetBSD: md.walnut,v 1.2 2002/08/07 21:21:03 briggs Exp $
+# $NetBSD: md.walnut,v 1.3 2002/10/20 18:21:29 jdolecek Exp $
 ./usr/include/ieeefp.h			comp-c-include
 ./usr/include/walnut			comp-c-include
 ./usr/include/walnut/_G_config.h	comp-c-include
 ./usr/include/walnut/ansi.h		comp-c-include
 ./usr/include/walnut/aout_machdep.h	comp-c-include
 ./usr/include/walnut/asm.h		comp-c-include
-./usr/include/walnut/autoconf.h		comp-c-include
 ./usr/include/walnut/bswap.h		comp-c-include
 ./usr/include/walnut/bus.h		comp-c-include
 ./usr/include/walnut/cdefs.h		comp-c-include
