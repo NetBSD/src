@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.12 1999/01/13 16:48:58 drochner Exp $ */
+/* $NetBSD: vga.c,v 1.13 1999/02/12 11:25:24 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -110,7 +110,7 @@ void vga_init __P((struct vga_config *, bus_space_tag_t,
 		   bus_space_tag_t));
 static void vga_setfont __P((struct vga_config *, struct vgascreen *));
 
-static unsigned int vga_mapchar __P((void *, int));
+static int vga_mapchar __P((void *, int, unsigned int *));
 static int	vga_alloc_attr __P((void *, int, int, int, long *));
 void	vga_copyrows __P((void *, int, int, int));
 
@@ -963,77 +963,82 @@ static u_int16_t pcvt_unichars[0xa0] = {
 	NOTYET
 };
 
-static int vga_pcvt_mapchar __P((int));
+static int vga_pcvt_mapchar __P((int, unsigned int *));
 
 static int
-vga_pcvt_mapchar(uni)
+vga_pcvt_mapchar(uni, index)
 	int uni;
+	unsigned int *index;
 {
 	int i;
 
 	for (i = 0; i < 0xa0; i++) /* 0xa0..0xff are reserved */
-		if (uni == pcvt_unichars[i])
-			return (i);
-	return (-1);
+		if (uni == pcvt_unichars[i]) {
+			*index = i;
+			return (5);
+		}
+	*index = 0x99; /* middle dot */
+	return (0);
 }
 
 #endif /* WSCONS_SUPPORT_PCVTFONTS */
 
-static int _vga_mapchar __P((void *, struct vgafont *, int));
+static int _vga_mapchar __P((void *, struct vgafont *, int, unsigned int *));
 
 static int
-_vga_mapchar(id, font, uni)
+_vga_mapchar(id, font, uni, index)
 	void *id;
 	struct vgafont *font;
 	int uni;
+	unsigned int *index;
 {
-	int help = -1;
 
 	switch (font->encoding) {
 	case WSDISPLAY_FONTENC_ISO:
-		if (uni < 256)
-			help = uni;
+		if (uni < 256) {
+			*index = uni;
+			return (5);
+		} else {
+			*index = ' ';
+			return (0);
+		}
 		break;
 	case WSDISPLAY_FONTENC_IBM:
-		help = pcdisplay_mapchar(id, uni);
-		if (help == 1) /* XXX "not present" */
-			help = -1;
-		break;
+		return (pcdisplay_mapchar(id, uni, index));
 #ifdef WSCONS_SUPPORT_PCVTFONTS
 	case WSDISPLAY_FONTENC_PCVT:
-		help = vga_pcvt_mapchar(uni);
-		break;
+		return (vga_pcvt_mapchar(uni, index));
 #endif
+	default:
+		printf("_vga_mapchar: encoding=%d\n", font->encoding);
+		*index = ' ';
+		return (0);
 	}
-
-	if (help >= 0)
-		return (help); /* XXX (help - firstchar) */
-	else
-		return (-1);
 }
 
-static unsigned int
-vga_mapchar(id, uni)
+static int
+vga_mapchar(id, uni, index)
 	void *id;
 	int uni;
+	unsigned int *index;
 {
 	struct vgascreen *scr = id;
-	int res;
+	unsigned int idx1, idx2;
+	int res1, res2;
 
-	if (scr->fontset1) {
-		res = _vga_mapchar(id, scr->fontset1, uni);
-		if (res >= 0)
-			return (res);
-	}
+	res1 = 0;
+	idx1 = ' '; /* space */
+	if (scr->fontset1)
+		res1 = _vga_mapchar(id, scr->fontset1, uni, &idx1);
+	res2 = -1;
 	if (scr->fontset2) {
 		KASSERT(VGA_SCREEN_CANTWOFONTS(scr->pcs.type));
-		res = _vga_mapchar(id, scr->fontset2, uni);
-		if (res >= 0)
-			return (res | 0x0800); /* attribute bit 3 */
+		res2 = _vga_mapchar(id, scr->fontset2, uni, &idx2);
 	}
-	/*
-	 * return something for "non-displayable"
-	 * 1 = smiley on IBM charset, might be useless on other screens
-	 */
-	return (1);
+	if (res2 > res1) {
+		*index = idx2;
+		return (res2 | 0x0800); /* attribute bit 3 */
+	}
+	*index = idx1;
+	return (res1);
 }
