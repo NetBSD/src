@@ -1,4 +1,5 @@
-/*	$NetBSD: clock.c,v 1.2 1997/10/16 01:55:21 sakamoto Exp $	*/
+/*	$NetBSD: clock.c,v 1.2.2.1 1997/11/28 19:33:32 mellon Exp $	*/
+/*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,7 +35,7 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 
-#include <machine/cpu.h>
+#include <machine/pio.h>
 
 /*
  * Initially we assume a processor with a bus frequency of 12.5 MHz.
@@ -72,6 +73,8 @@ void
 decr_intr(frame)
 	struct clockframe *frame;
 {
+	int msr;
+	int pri;
 	u_long tb;
 	long tick;
 	int nticks;
@@ -91,15 +94,39 @@ decr_intr(frame)
 	for (nticks = 0; tick < 0; nticks++)
 		tick += ticks_per_intr;
 	asm volatile ("mtdec %0" :: "r"(tick));
+
 	/*
 	 * lasttb is used during microtime. Set it to the virtual
 	 * start of this tick interval.
 	 */
 	lasttb = tb + tick - ticks_per_intr;
 
-	intrcnt[31]++;		/* XXX */
+	intrcnt[CNT_CLOCK]++;
 
-	clock_return(frame, nticks);
+	pri = splclock();
+	if (pri & SPL_CLOCK)
+		tickspending += nticks;
+	else {
+		nticks += tickspending;
+		tickspending = 0;
+
+		/*
+		 * Reenable interrupts
+		 */
+		asm volatile ("mfmsr %0; ori %0, %0, %1; mtmsr %0"
+			      : "=r"(msr) : "K"(PSL_EE));
+		
+		/*
+		 * Do standard timer interrupt stuff.
+		 * Do softclock stuff only on the last iteration.
+		 */
+		frame->pri = pri | SINT_CLOCK;
+		while (--nticks > 0)
+			hardclock(frame);
+		frame->pri = pri;
+		hardclock(frame);
+	}
+	splx(pri);
 }
 
 void
@@ -116,7 +143,6 @@ cpu_initclocks()
 	findcpuspeed();
 	asm volatile ("mfdec %0" : "=r"(tmp));
 	ticks_per_sec = tmp * hz;
-printf("ticks_per_sec = %d\n", ticks_per_sec);
 #endif
 	ticks_per_sec = 8250000;
 
