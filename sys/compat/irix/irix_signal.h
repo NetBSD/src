@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.3 2001/12/08 11:17:37 manu Exp $ */
+/*	$NetBSD: irix_signal.h,v 1.1 2001/12/08 11:17:37 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,50 +36,47 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.3 2001/12/08 11:17:37 manu Exp $");
+#ifndef _IRIX_SIGNAL_H_
+#define _IRIX_SIGNAL_H_
 
-#include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/signal.h>
-#include <sys/systm.h>
-
-#include <compat/svr4/svr4_types.h>
 
 #include <compat/irix/irix_types.h>
-#include <compat/irix/irix_prctl.h>
-#include <compat/irix/irix_syscallargs.h>
 
-int
-irix_sys_prctl(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct irix_sys_prctl_args /* {
-		syscallarg(int) option;
-		syscallarg(void *) arg1;
-	} */ *uap = v;
-	int option = SCARG(uap, option);
+/* From IRIX's <sys/signal.h> */
 
-#ifdef DEBUG_IRIX
-	printf("irix_sys_prctl(): option = %d\n", option);
-#endif
+typedef struct irix_sigcontext {
+	__uint32_t	isc_regmask;
+	__uint32_t	isc_status;
+	__uint64_t	isc_pc;
+	__uint64_t	isc_regs[32];
+	__uint64_t	isc_fpregs[32];
+	__uint32_t	isc_ownedfp;
+	__uint32_t	isc_fpc_csr;
+	__uint32_t	isc_fpc_eir;
+	__uint32_t	isc_ssflags;
+	__uint64_t	isc_mdhi;
+	__uint64_t	isc_mdlo;
+	__uint64_t	isc_cause;
+	__uint64_t	isc_badvaddr;
+	__uint64_t	isc_triggersave;
+	irix_sigset_t	isc_sigset;
+	__uint64_t	isc_fp_rounded_result;
+	__uint64_t	isc_pad[31];
+} irix_sigcontext_t;
 
-	switch(option) {
-	case IRIX_PR_LASTSHEXIT:	/* "Last sproc exit" */
-		/* We do nothing */
-		break;
-	case IRIX_PR_GETNSHARE:		/* Number of sproc share group memb.*/
-		/* sproc needed here, we do nothing until we have it */
-		*retval = 1; /* one thread in the process */
-		break;
+struct irix_sigframe {
+	struct irix_sigcontext isf_sc;
+};
 
-	default:
-		printf("Warning: call to unimplemented prctl() command %d\n",
-		    option);
-		return EINVAL;
-		break;
-	}
-	return 0;
-}
+#ifdef _KERNEL
+__BEGIN_DECLS
+void native_to_irix_sigset __P((const sigset_t *, irix_sigset_t *));
+void irix_to_native_sigset __P((const irix_sigset_t *, sigset_t *));
+void irix_sendsig __P((sig_t, int, sigset_t *, u_long));
+__END_DECLS
+#endif /* _KERNEL */
+
+
+#endif /* _IRIX_SIGNAL_H_ */
