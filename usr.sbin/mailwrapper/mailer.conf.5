@@ -1,4 +1,4 @@
-.\"	$NetBSD: mailer.conf.5,v 1.1 1999/03/25 16:40:17 is Exp $
+.\"	$NetBSD: mailer.conf.5,v 1.2 1999/05/29 18:18:30 christos Exp $
 .\"
 .\" Copyright (c) 1998
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -69,10 +69,11 @@ newaliases	/usr/libexec/sendmail/sendmail
 This example shows how to invoke the fictitious "newmail" program in
 place of sendmail.
 .Bd -literal
-# Execute the "real" sendmail program, named /usr/local/sbin/newmail
-sendmail	/usr/local/sbin/newmail
-mailq		/usr/local/sbin/newmail
-newaliases	/usr/local/sbin/newmail
+# Emulate sendmail using postfix
+sendmail	/usr/libexec/postfix/sendmail
+send-mail	/usr/libexec/postfix/sendmail
+mailq		/usr/libexec/postfix/sendmail
+newaliases	/usr/libexec/postfix/sendmail
 .Ed
 .Sh FILES
 /etc/mailer.conf
