@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2002/01/15 17:41:41 pk Exp $
+#	$NetBSD: Makefile,v 1.45 2002/01/15 17:45:36 pk Exp $
 
 .include "../../Makefile.inc"
 .include <bsd.own.mk>
@@ -37,7 +37,7 @@ ICMD=		${INSTALL} ${RENAME} ${PRESERVE} ${COPY}	\
 CRUNCHGEN?=	crunchgen
 MTREE?=		mtree
 
-.ifndef DESTDIR
+.if !defined(DESTDIR) || ${DESTDIR} == ""
 all:
 	@echo setenv DESTDIR before making a miniroot!
 	@false
@@ -76,7 +76,7 @@ ${CBIN}.mk ${CBIN}.c: ${CRUNCHCONF}
 ${CBIN}: ${CBIN}.mk ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk all
 
-.ifndef RELEASEDIR
+.if !defined(RELEASEDIR) || ${RELEASEDIR} == ""
 release:
 	@echo setenv RELEASEDIR first
 	@false
