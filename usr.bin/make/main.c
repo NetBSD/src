@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.85 2002/06/15 18:24:57 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.86 2003/02/26 08:59:12 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.85 2002/06/15 18:24:57 wiz Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.86 2003/02/26 08:59:12 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.85 2002/06/15 18:24:57 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.86 2003/02/26 08:59:12 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -226,6 +226,7 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			break;
 		case 'B':
 			compatMake = TRUE;
+			Var_Append(MAKEFLAGS, "-B", VAR_GLOBAL);
 			break;
 #ifdef REMOTE
 		case 'L':
