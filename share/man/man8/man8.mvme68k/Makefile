@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 1997/06/22 06:18:08 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 1997/10/11 08:22:22 mycroft Exp $
 
 MAN=	installboot.8
 MANSUBDIR=/mvme68k
 
-.include <bsd.prog.mk>
+.include <bsd.man.mk>

@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 1997/06/23 03:35:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 1997/10/11 08:22:30 mycroft Exp $
 
 MAN=	keycap.5
 MANSUBDIR=/i386
 
-.include <bsd.prog.mk>
+.include <bsd.man.mk>
