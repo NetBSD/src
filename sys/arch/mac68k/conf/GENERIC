@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.55 1997/01/31 06:02:19 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.55.2.1 1997/03/12 15:08:19 is Exp $
 #
 # GENERIC
 
@@ -61,7 +61,7 @@ options 	GATEWAY		# IP packet forwarding
 #options 	CCITT,LLC,HDLC	# X.25
 options 	PPP_BSDCOMP	# PPP header compression
 options 	PPP_DEFLATE	# PPP-Deflate compression
-#options  	PFIL_HOOKS	# pfil(9) packet filter hooks.
+options  	PFIL_HOOKS	# pfil(9) packet filter hooks.
 
 # Mac-specific options
 options 	M68040
@@ -71,15 +71,16 @@ options 	FPSP
 options 	FPU_EMULATE
 options 	ZS_CONSOLE_ABORT
 options 	DISABLE_EXT_CACHE # Don't use IIci external cache
+options 	MAC68K_BROKEN_VIDEO
 
 config		netbsd	root on ? type ?
 
-intvid0		at obio?	# Internal video hardware
+asc0		at obio?			# ASC/EASC audio
+intvid0		at obio?			# Internal video hardware
 
 nubus0		at mainbus?
-
-ae*		at nubus?
-macvid*		at nubus?
+ae*		at nubus?			# 8390-based Ethernet NIC
+macvid*		at nubus?			# NuBus video card
 
 # Attach grf semantics to all video hardware as it is found
 grf*		at intvid?
@@ -89,24 +90,25 @@ grf*		at macvid?
 ite0		at grf?
 
 # Use only one of ncrscsi or sbc
-ncrscsi0	at obio?		# SCSI NCR 5380
-#sbc0		at obio? flags 0x1	# MI NCR 5380 SCSI Bus Controller
+ncrscsi0	at obio?			# SCSI NCR 5380
+#sbc0		at obio? flags 0x1		# MI SCSI NCR 5380
 
-esp0		at obio?		# SCSI NCR 53C9x
-esp1		at obio?		# SCSI NCR 53C9x
+esp0		at obio?			# SCSI NCR 53C9x
+esp1		at obio?			# SCSI NCR 53C9x
 
 scsibus*	at scsi?
-sd*	at scsibus? target ? lun ?	# SCSI disk drives
-st*	at scsibus? target ? lun ?	# SCSI tape drives
-cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
-ch*	at scsibus? target ? lun ?	# SCSI autochangers
-ss*	at scsibus? target ? lun ?	# SCSI scanners
-uk*	at scsibus? target ? lun ?	# SCSI unknown
+sd*		at scsibus? target ? lun ?	# SCSI disk drives
+st*		at scsibus? target ? lun ?	# SCSI tape drives
+cd*		at scsibus? target ? lun ?	# SCSI CD-ROM drives
+ch*		at scsibus? target ? lun ?	# SCSI autochangers
+ss*		at scsibus? target ? lun ?	# SCSI scanners
+uk*		at scsibus? target ? lun ?	# SCSI unknown
 
 pseudo-device	pty		16
 pseudo-device	bpfilter	12
 pseudo-device	vnd		2
 pseudo-device	ccd		2
+pseudo-device	md		1
 pseudo-device	ppp		2
 pseudo-device	loop
 pseudo-device	sl

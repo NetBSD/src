@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_mv.c,v 1.15 1996/12/16 16:17:06 scottr Exp $	*/
+/*	$NetBSD: grf_mv.c,v 1.15.6.1 1997/03/12 15:08:34 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -42,6 +42,7 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 
+#include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/grfioctl.h>
 #include <machine/viareg.h>
@@ -52,7 +53,9 @@
 static void	load_image_data __P((caddr_t data, struct image_data *image));
 static void	grfmv_intr __P((void *vsc, int slot));
 
+#ifndef MYSTERY
 static char zero = 0;
+#endif
 
 static int	grfmv_mode __P((struct grf_softc *gp, int cmd, void *arg));
 static caddr_t	grfmv_phys __P((struct grf_softc *gp, vm_offset_t addr));
@@ -97,12 +100,57 @@ grfmv_intr(vsc, slot)
 	void	*vsc;
 	int	slot;
 {
+#ifdef MYSTERY
+	struct grfbus_softc *sc;
+	caddr_t slotbase;
+
+	sc = (struct grfbus_softc *) vsc;
+	slotbase = (caddr_t) sc->sc_slot.virtual_base;
+	asm volatile("	movl	%0,a0
+			movl	a0@(0xff6028),d0
+			andl	#0x2,d0
+			beq	_mv_intr0
+			movql	#0x3,d0
+		_mv_intr0:
+			movl	a0@(0xff600c),d1
+			andl	#0x3,d1
+			cmpl	d1,d0
+			beq	_mv_intr_fin
+			movl	d0,a0@(0xff600c)
+			nop
+			tstb	d0
+			beq	_mv_intr1
+			movl	#0x0002,a0@(0xff6040)
+			movl	#0x0102,a0@(0xff6044)
+			movl	#0x0105,a0@(0xff6048)
+			movl	#0x000e,a0@(0xff604c)
+			movl	#0x001c,a0@(0xff6050)
+			movl	#0x00bc,a0@(0xff6054)
+			movl	#0x00c3,a0@(0xff6058)
+			movl	#0x0061,a0@(0xff605c)
+			movl	#0x0012,a0@(0xff6060)
+			bra	_mv_intr_fin
+		_mv_intr1:
+			movl	#0x0002,a0@(0xff6040)
+			movl	#0x0209,a0@(0xff6044)
+			movl	#0x020c,a0@(0xff6048)
+			movl	#0x000f,a0@(0xff604c)
+			movl	#0x0027,a0@(0xff6050)
+			movl	#0x00c7,a0@(0xff6054)
+			movl	#0x00d7,a0@(0xff6058)
+			movl	#0x006b,a0@(0xff605c)
+			movl	#0x0029,a0@(0xff6060)
+		_mv_intr_fin:
+			movl	#0x1,a0@(0xff6014)"
+		: : "g" (slotbase) : "a0","d0","d1");
+#else
 	caddr_t			 slotbase;
 	struct grfbus_softc	*sc;
 
 	sc = (struct grfbus_softc *) vsc;
 	slotbase = (caddr_t) sc->sc_slot.virtual_base;
 	slotbase[0xa0000] = zero;
+#endif
 }
 
 static int
@@ -240,6 +288,6 @@ grfmv_phys(gp, addr)
 	struct grf_softc *gp;
 	vm_offset_t addr;
 {
-	return (caddr_t) (NUBUS_SLOT_TO_PADDR(gp->sc_slot->slot) +
+	return (caddr_t) (NUBUS_SLOT2PA(gp->sc_slot->slot) +
 				(addr - gp->sc_slot->virtual_base));
 }
