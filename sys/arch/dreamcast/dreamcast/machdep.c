@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2002/01/27 09:02:37 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 2002/02/17 20:57:11 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -128,6 +128,7 @@
 #include <sh3/intcreg.h>
 #include <sh3/pfcreg.h>
 #include <sh3/wdtreg.h>
+#include <sh3/mmu.h>
 
 #include <sys/termios.h>
 #include "sci.h"
@@ -555,6 +556,8 @@ initSH3(pc)
 	p = (char *)avail + (1 + UPAGES) * NBPG + NBPG * (1 + nkpde); /* XXX */
 	memset(_edata, 0, p - _edata);
 
+	sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_7750);
+
 	/*
 	 * install trap handler
 	 */
@@ -597,7 +600,7 @@ initSH3(pc)
 	pagedir[PDSLOT_PTE] = pte;
 
 	/* set PageDirReg */
-	SHREG_TTB = (u_int)pagedir;
+	SH_MMU_TTB_WRITE((u_int32_t)pagedir);
 
 	/* Set TLB miss handler */
 	p = tlbmisshandler_stub;
@@ -607,12 +610,7 @@ initSH3(pc)
 	/*
 	 * Activate MMU
 	 */
-
-#ifdef SH4
-	SHREG_MMUCR = MMUCR_AT | MMUCR_TF | MMUCR_SV | MMUCR_SQMD;
-#else
-	SHREG_MMUCR = MMUCR_AT | MMUCR_TF | MMUCR_SV;
-#endif
+	sh_mmu_start();
 
 	/*
 	 * Now here is virtual address

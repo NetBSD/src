@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.23 2002/02/12 15:26:50 uch Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.24 2002/02/17 20:57:10 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,6 +98,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <sh3/cache.h>
+#include <sh3/mmu.h>
 
 char cpu_model[120];
 
@@ -105,6 +106,8 @@ char cpu_model[120];
  * if PCLOCK isn't defined in config file, use this.
  */
 int sh3_pclock;
+int cpu_arch;
+int cpu_product;
 
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
@@ -114,6 +117,21 @@ struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 extern int physmem;
+
+void
+sh_cpu_init(int arch, int product)
+{
+
+	/* CPU type */
+	cpu_arch = arch;
+	cpu_product = product;
+
+	/* Cache access ops. */
+	sh_cache_init();
+
+	/* MMU access ops. */
+	sh_mmu_init();
+}
 
 void
 sh3_startup()
@@ -126,8 +144,6 @@ sh3_startup()
 	vsize_t size;
 	struct pcb *pcb;
 	char pbuf[9];
-
-	sh_cache_config(0); /* XXX should call more early stage. */
 
 	printf(version);
 
