@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.2 2002/01/09 17:43:28 deberg Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.3 2003/02/18 12:52:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -582,17 +582,21 @@ smbfs_smb_create(struct smbnode *dnp, const char *name, int nmlen,
 	u_long tm;
 	int error;
 
-	error = smb_rq_init(rqp, SSTOCP(ssp), SMB_COM_CREATE, scred);
+	error = smb_rq_init(rqp, SSTOCP(ssp), SMB_COM_CREATE_NEW, scred);
 	if (error)
 		return error;
 	smb_rq_getrequest(rqp, &mbp);
-	smb_rq_wstart(rqp);
-	mb_put_uint16le(mbp, SMB_FA_ARCHIVE);		/* attributes  */
+
+	/* get current time */
 	microtime(&tv);
 	TIMEVAL_TO_TIMESPEC(&tv, &ctime);
 	smb_time_local2server(&ctime, SSTOVC(ssp)->vc_sopt.sv_tz, &tm);
+
+	smb_rq_wstart(rqp);
+	mb_put_uint16le(mbp, SMB_FA_ARCHIVE);	/* attributes  */
 	mb_put_uint32le(mbp, tm);
 	smb_rq_wend(rqp);
+
 	smb_rq_bstart(rqp);
 	mb_put_uint8(mbp, SMB_DT_ASCII);
 	error = smbfs_fullpath(mbp, SSTOVC(ssp), dnp, name, nmlen);
@@ -603,16 +607,17 @@ smbfs_smb_create(struct smbnode *dnp, const char *name, int nmlen,
 			smb_rq_getreply(rqp, &mdp);
 			md_get_uint8(mdp, &wc);
 			if (wc == 1)
-				md_get_uint16(mdp, &fid);
+				md_get_uint16le(mdp, &fid);
 			else
 				error = EBADRPC;
 		}
 	}
+
 	smb_rq_done(rqp);
-	if (error)
-		return error;
-	smbfs_smb_close(ssp, fid, &ctime, scred);
-	return error;
+	if (!error)
+		smbfs_smb_close(ssp, fid, &ctime, scred);
+
+	return (error);
 }
 
 int
