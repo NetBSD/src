@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.86 1999/10/05 22:12:34 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.87 1999/10/06 08:57:46 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.86 1999/10/05 22:12:34 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.87 1999/10/06 08:57:46 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1562,13 +1562,17 @@ go_fetch(url)
 	if (strncasecmp(url, ABOUT_URL, sizeof(ABOUT_URL) - 1) == 0) {
 		url += sizeof(ABOUT_URL) -1;
 		if (strcasecmp(url, "ftp") == 0) {
-			fprintf(ttyout, "%s\n%s\n",
-"This version of ftp has been enhanced by Luke Mewburn <lukem@netbsd.org>.",
-"Execute `man ftp' for more details.");
+			fputs(
+"This version of ftp has been enhanced by Luke Mewburn <lukem@netbsd.org>\n"
+"for the NetBSD project.  Execute `man ftp' for more details.\n", ttyout);
+		} else if (strcasecmp(url, "lukem") == 0) {
+			fputs(
+"Luke Mewburn is the author of most of the enhancements in this ftp client.\n"
+"Please email feedback to <lukem@netbsd.org>.\n", ttyout);
 		} else if (strcasecmp(url, "netbsd") == 0) {
-			fprintf(ttyout, "%s\n%s\n",
-"NetBSD is a freely available and redistributable UNIX-like operating system.",
-"For more information, see http://www.netbsd.org/index.html");
+			fputs(
+"NetBSD is a freely available and redistributable UNIX-like operating system.\n"
+"For more information, see http://www.netbsd.org/index.html\n", ttyout);
 		} else {
 			fprintf(ttyout, "`%s' is an interesting topic.\n", url);
 		}
