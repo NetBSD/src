@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.24 1996/11/06 20:19:28 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.25 1996/11/08 14:15:36 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1939,6 +1939,7 @@ Ldoreboot:
 	pmove	a0@,srp			|  and the Supervisor root pointer
 	jra	Ldoboot1		| Ok, continue with actual reboot
 Lmmuoff040:
+	movl	#0,d0
 	.word	0x4e7b,0x0003		|  movc d0,TC
 	.word	0x4e7b,0x0806		|  movc d0,URP
 	.word	0x4e7b,0x0807		|  movc d0,SRP
