@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.147 1999/06/30 06:51:13 augustss Exp $
+# $NetBSD: mi,v 1.148 1999/07/04 20:07:52 fvdl Exp $
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
 ./usr/share/info/binutils.info
@@ -384,6 +384,7 @@
 ./usr/share/man/cat4/fpa.0
 ./usr/share/man/cat4/fta.0
 ./usr/share/man/cat4/fxp.0
+./usr/share/man/cat4/gif.0
 ./usr/share/man/cat4/gre.0
 ./usr/share/man/cat4/gus.0
 ./usr/share/man/cat4/guspnp.0
@@ -392,6 +393,7 @@
 ./usr/share/man/cat4/idp.0
 ./usr/share/man/cat4/ifmedia.0
 ./usr/share/man/cat4/inet.0
+./usr/share/man/cat4/inet6.0
 ./usr/share/man/cat4/inphy.0
 ./usr/share/man/cat4/ip.0
 ./usr/share/man/cat4/ipf.0
@@ -399,6 +401,7 @@
 ./usr/share/man/cat4/ipip.0
 ./usr/share/man/cat4/ipl.0
 ./usr/share/man/cat4/ipnat.0
+./usr/share/man/cat4/ipsec.0
 ./usr/share/man/cat4/isa.0
 ./usr/share/man/cat4/isapnp.0
 ./usr/share/man/cat4/iso.0
@@ -566,6 +569,7 @@
 ./usr/share/man/cat5/resolv.conf.0
 ./usr/share/man/cat5/rhosts.0
 ./usr/share/man/cat5/rpc.0
+./usr/share/man/cat5/rtadvd.conf.0
 ./usr/share/man/cat5/security.conf.0
 ./usr/share/man/cat5/services.0
 ./usr/share/man/cat5/shells.0
@@ -644,6 +648,7 @@
 ./usr/share/man/cat8/fasthalt.0
 ./usr/share/man/cat8/fingerd.0
 ./usr/share/man/cat8/fixmount.0
+./usr/share/man/cat9/format_bytes.0
 ./usr/share/man/cat8/fsck.0
 ./usr/share/man/cat8/fsck_ext2fs.0
 ./usr/share/man/cat8/fsck_ffs.0
@@ -656,11 +661,13 @@
 ./usr/share/man/cat8/genassym.sh.0
 ./usr/share/man/cat8/getNAME.0
 ./usr/share/man/cat8/getty.0
+./usr/share/man/cat8/gifconfig.0
 ./usr/share/man/cat8/greconfig.0
 ./usr/share/man/cat8/halt.0
 ./usr/share/man/cat8/hlfsd.0
 ./usr/share/man/cat8/identd.0
 ./usr/share/man/cat8/ifconfig.0
+./usr/share/man/cat8/ifmcstat.0
 ./usr/share/man/cat8/inetd.0
 ./usr/share/man/cat8/init.0
 ./usr/share/man/cat8/intro.0
@@ -728,6 +735,7 @@
 ./usr/share/man/cat8/named.reload.0
 ./usr/share/man/cat8/named.restart.0
 ./usr/share/man/cat8/ndc.0
+./usr/share/man/cat8/ndp.0
 ./usr/share/man/cat8/netgroup_mkdb.0
 ./usr/share/man/cat8/newfs.0
 ./usr/share/man/cat8/newfs_lfs.0
@@ -745,6 +753,7 @@
 ./usr/share/man/cat8/pac.0
 ./usr/share/man/cat8/pcnfsd.0
 ./usr/share/man/cat8/ping.0
+./usr/share/man/cat8/ping6.0
 ./usr/share/man/cat8/portmap.0
 ./usr/share/man/cat8/pppd.0
 ./usr/share/man/cat8/pppstats.0
@@ -773,6 +782,7 @@
 ./usr/share/man/cat8/rmt.0
 ./usr/share/man/cat8/rndctl.0
 ./usr/share/man/cat8/route.0
+./usr/share/man/cat8/route6d.0
 ./usr/share/man/cat8/routed.0
 ./usr/share/man/cat8/rpc.bootparamd.0
 ./usr/share/man/cat8/rpc.lockd.0
@@ -789,7 +799,9 @@
 ./usr/share/man/cat8/rrestore.0
 ./usr/share/man/cat8/rshd.0
 ./usr/share/man/cat8/rstatd.0
+./usr/share/man/cat8/rtadvd.0
 ./usr/share/man/cat8/rtquery.0
+./usr/share/man/cat8/rtsol.0
 ./usr/share/man/cat8/rusersd.0
 ./usr/share/man/cat8/rwalld.0
 ./usr/share/man/cat8/rwhod.0
@@ -797,6 +809,7 @@
 ./usr/share/man/cat8/savecore.0
 ./usr/share/man/cat8/scsictl.0
 ./usr/share/man/cat8/sendmail.0
+./usr/share/man/cat8/setkey.0
 ./usr/share/man/cat8/showmount.0
 ./usr/share/man/cat8/shutdown.0
 ./usr/share/man/cat8/slattach.0
@@ -830,6 +843,7 @@
 ./usr/share/man/cat8/timed.0
 ./usr/share/man/cat8/timedc.0
 ./usr/share/man/cat8/traceroute.0
+./usr/share/man/cat8/traceroute6.0
 ./usr/share/man/cat8/trpt.0
 ./usr/share/man/cat8/trsp.0
 ./usr/share/man/cat8/ttyflags.0
@@ -985,6 +999,7 @@
 ./usr/share/man/cat9/fusword.0
 ./usr/share/man/cat9/fuword.0
 ./usr/share/man/cat9/gsignal.0
+./usr/share/man/cat9/humanize_number.0
 ./usr/share/man/cat9/inittodr.0
 ./usr/share/man/cat9/intro.0
 ./usr/share/man/cat9/ioctl.0
@@ -1502,6 +1517,7 @@
 ./usr/share/man/man4/fpa.4
 ./usr/share/man/man4/fta.4
 ./usr/share/man/man4/fxp.4
+./usr/share/man/man4/gif.4
 ./usr/share/man/man4/gre.4
 ./usr/share/man/man4/gus.4
 ./usr/share/man/man4/guspnp.4
@@ -1510,6 +1526,7 @@
 ./usr/share/man/man4/idp.4
 ./usr/share/man/man4/ifmedia.4
 ./usr/share/man/man4/inet.4
+./usr/share/man/man4/inet6.4
 ./usr/share/man/man4/inphy.4
 ./usr/share/man/man4/ip.4
 ./usr/share/man/man4/ipf.4
@@ -1517,6 +1534,7 @@
 ./usr/share/man/man4/ipip.4
 ./usr/share/man/man4/ipl.4
 ./usr/share/man/man4/ipnat.4
+./usr/share/man/man4/ipsec.4
 ./usr/share/man/man4/isa.4
 ./usr/share/man/man4/isapnp.4
 ./usr/share/man/man4/iso.4
@@ -1684,6 +1702,7 @@
 ./usr/share/man/man5/resolv.conf.5
 ./usr/share/man/man5/rhosts.5
 ./usr/share/man/man5/rpc.5
+./usr/share/man/man5/rtadvd.conf.5
 ./usr/share/man/man5/security.conf.5
 ./usr/share/man/man5/services.5
 ./usr/share/man/man5/shells.5
@@ -1774,11 +1793,13 @@
 ./usr/share/man/man8/genassym.sh.8
 ./usr/share/man/man8/getNAME.8
 ./usr/share/man/man8/getty.8
+./usr/share/man/man8/gifconfig.8
 ./usr/share/man/man8/greconfig.8
 ./usr/share/man/man8/halt.8
 ./usr/share/man/man8/hlfsd.8
 ./usr/share/man/man8/identd.8
 ./usr/share/man/man8/ifconfig.8
+./usr/share/man/man8/ifmcstat.8
 ./usr/share/man/man8/inetd.8
 ./usr/share/man/man8/init.8
 ./usr/share/man/man8/intro.8
@@ -1846,6 +1867,7 @@
 ./usr/share/man/man8/named.reload.8
 ./usr/share/man/man8/named.restart.8
 ./usr/share/man/man8/ndc.8
+./usr/share/man/man8/ndp.8
 ./usr/share/man/man8/netgroup_mkdb.8
 ./usr/share/man/man8/newfs.8
 ./usr/share/man/man8/newfs_lfs.8
@@ -1863,6 +1885,7 @@
 ./usr/share/man/man8/pac.8
 ./usr/share/man/man8/pcnfsd.8
 ./usr/share/man/man8/ping.8
+./usr/share/man/man8/ping6.8
 ./usr/share/man/man8/portmap.8
 ./usr/share/man/man8/pppd.8
 ./usr/share/man/man8/pppstats.8
@@ -1891,6 +1914,7 @@
 ./usr/share/man/man8/rmt.8
 ./usr/share/man/man8/rndctl.8
 ./usr/share/man/man8/route.8
+./usr/share/man/man8/route6d.8
 ./usr/share/man/man8/routed.8
 ./usr/share/man/man8/rpc.bootparamd.8
 ./usr/share/man/man8/rpc.lockd.8
@@ -1907,7 +1931,9 @@
 ./usr/share/man/man8/rrestore.8
 ./usr/share/man/man8/rshd.8
 ./usr/share/man/man8/rstatd.8
+./usr/share/man/man8/rtadvd.8
 ./usr/share/man/man8/rtquery.8
+./usr/share/man/man8/rtsol.8
 ./usr/share/man/man8/rusersd.8
 ./usr/share/man/man8/rwalld.8
 ./usr/share/man/man8/rwhod.8
@@ -1915,6 +1941,7 @@
 ./usr/share/man/man8/savecore.8
 ./usr/share/man/man8/scsictl.8
 ./usr/share/man/man8/sendmail.8
+./usr/share/man/man8/setkey.8
 ./usr/share/man/man8/showmount.8
 ./usr/share/man/man8/shutdown.8
 ./usr/share/man/man8/slattach.8
@@ -1948,6 +1975,7 @@
 ./usr/share/man/man8/timed.8
 ./usr/share/man/man8/timedc.8
 ./usr/share/man/man8/traceroute.8
+./usr/share/man/man8/traceroute6.8
 ./usr/share/man/man8/trpt.8
 ./usr/share/man/man8/trsp.8
 ./usr/share/man/man8/ttyflags.8
@@ -2095,6 +2123,7 @@
 ./usr/share/man/man9/fddi_ifattach.9
 ./usr/share/man/man9/fetch.9
 ./usr/share/man/man9/fork1.9
+./usr/share/man/man9/format_bytes.9
 ./usr/share/man/man9/free.9
 ./usr/share/man/man9/fubyte.9
 ./usr/share/man/man9/fuibyte.9
@@ -2103,6 +2132,7 @@
 ./usr/share/man/man9/fusword.9
 ./usr/share/man/man9/fuword.9
 ./usr/share/man/man9/gsignal.9
+./usr/share/man/man9/humanize_number.9
 ./usr/share/man/man9/inittodr.9
 ./usr/share/man/man9/intro.9
 ./usr/share/man/man9/ioctl.9
