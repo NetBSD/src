@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.81.2.1 2004/04/01 23:36:02 jmc Exp $	*/
+/*	$NetBSD: i82557.c,v 1.81.2.2 2004/04/28 07:04:42 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.81.2.1 2004/04/01 23:36:02 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.81.2.2 2004/04/28 07:04:42 tron Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1089,18 +1089,9 @@ fxp_start(struct ifnet *ifp)
 
 		/*
 		 * Issue a Resume command in case the chip was suspended.
-		 * We only do this if we know we were idle before.  If we
-		 * weren't idle before, we might be now, but we should also
-		 * have a pending interrupt, and we'll kick it again, there.
-		 * This might result in a tiny delay, but it also prevents
-		 * us from slamming the chip with CU_RESUME commands, which
-		 * might sometimes fail, resulting in SCB timeouts in
-		 * fxp_scb_wait().
 		 */
-		if (opending == 0) {
-			fxp_scb_wait(sc);
-			fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_RESUME);
-		}
+		fxp_scb_wait(sc);
+		fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_RESUME);
 
 		/* Set a watchdog timer in case the chip flakes out. */
 		ifp->if_timer = 5;
@@ -1233,10 +1224,6 @@ fxp_txintr(struct fxp_softc *sc)
 	 */
 	if (sc->sc_txpending == 0)
 		ifp->if_timer = 0;
-	else {
-		fxp_scb_wait(sc);
-		fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_RESUME);
-	}
 }
 
 /*
