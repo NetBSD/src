@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.57 2004/11/16 06:04:12 itojun Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.58 2004/11/29 17:00:06 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.57 2004/11/16 06:04:12 itojun Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.58 2004/11/29 17:00:06 ginsbach Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -535,8 +535,8 @@ rresvport_af(alport, family)
 		break;
 #endif
 	default:
-		portp = NULL;
-		return EAFNOSUPPORT;
+		errno = EAFNOSUPPORT;
+		return (-1);
 	}
 	sa->sa_family = family;
 	s = socket(family, SOCK_STREAM, 0);
