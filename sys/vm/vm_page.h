@@ -1,6 +1,6 @@
 /* 
- * Copyright (c) 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * The Mach Operating System project at Carnegie-Mellon University.
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_page.h	7.3 (Berkeley) 4/21/91
+ *	@(#)vm_page.h	8.3 (Berkeley) 1/9/95
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -94,60 +94,57 @@
  *	queues (P).
  */
 
+TAILQ_HEAD(pglist, vm_page);
+
 struct vm_page {
-	queue_chain_t	pageq;		/* queue info for FIFO
-					 * queue or free list (P) */
-	queue_chain_t	hashq;		/* hash table links (O)*/
-	queue_chain_t	listq;		/* all pages in same object (O)*/
+	TAILQ_ENTRY(vm_page)	pageq;		/* queue info for FIFO
+						 * queue or free list (P) */
+	TAILQ_ENTRY(vm_page)	hashq;		/* hash table links (O)*/
+	TAILQ_ENTRY(vm_page)	listq;		/* pages in same object (O)*/
 
-	vm_object_t	object;		/* which object am I in (O,P)*/
-	vm_offset_t	offset;		/* offset into that object (O,P) */
+	vm_object_t		object;		/* which object am I in (O,P)*/
+	vm_offset_t		offset;		/* offset into object (O,P) */
 
-	unsigned int	wire_count:16,	/* how many wired down maps use me?
-					   (P) */
-	/* boolean_t */	inactive:1,	/* page is in inactive list (P) */
-			active:1,	/* page is in active list (P) */
-			laundry:1,	/* page is being cleaned now (P)*/
-#ifdef DEBUG
-			pagerowned:1,	/* async paging op in progress */
-			ptpage:1,	/* is a user page table page */
-#endif
-			:0;		/* (force to 'long' boundary) */
-#ifdef	ns32000
-	int		pad;		/* extra space for ns32000 bit ops */
-#endif	ns32000
-	boolean_t	clean;		/* page has not been modified */
-	unsigned int
-	/* boolean_t */	busy:1,		/* page is in transit (O) */
-			wanted:1,	/* someone is waiting for page (O) */
-			tabled:1,	/* page is in VP table (O) */
-			copy_on_write:1,/* page must be copied before being
-					   changed (O) */
-			fictitious:1,	/* physical page doesn't exist (O) */
-			absent:1,	/* virtual page doesn't exist (O) */
-			fake:1,		/* page is a placeholder for page-in
-					   (O) */
-			:0;
+	u_short			wire_count;	/* wired down maps refs (P) */
+	u_short			flags;		/* see below */
 
-	vm_offset_t	phys_addr;	/* physical address of page */
-	vm_prot_t	page_lock;	/* Uses prohibited by data manager */
-	vm_prot_t	unlock_request;	/* Outstanding unlock request */
+	vm_offset_t		phys_addr;	/* physical address of page */
 };
 
-typedef struct vm_page	*vm_page_t;
+/*
+ * These are the flags defined for vm_page.
+ *
+ * Note: PG_FILLED and PG_DIRTY are added for the filesystems.
+ */
+#define	PG_INACTIVE	0x0001		/* page is in inactive list (P) */
+#define	PG_ACTIVE	0x0002		/* page is in active list (P) */
+#define	PG_LAUNDRY	0x0004		/* page is being cleaned now (P)*/
+#define	PG_CLEAN	0x0008		/* page has not been modified */
+#define	PG_BUSY		0x0010		/* page is in transit (O) */
+#define	PG_WANTED	0x0020		/* someone is waiting for page (O) */
+#define	PG_TABLED	0x0040		/* page is in VP table (O) */
+#define	PG_COPYONWRITE	0x0080		/* must copy page before changing (O) */
+#define	PG_FICTITIOUS	0x0100		/* physical page doesn't exist (O) */
+#define	PG_FAKE		0x0200		/* page is placeholder for pagein (O) */
+#define	PG_FILLED	0x0400		/* client flag to set when filled */
+#define	PG_DIRTY	0x0800		/* client flag to set when dirty */
+#define	PG_PAGEROWNED	0x4000		/* DEBUG: async paging op in progress */
+#define	PG_PTPAGE	0x8000		/* DEBUG: is a user page table page */
 
 #if	VM_PAGE_DEBUG
 #define	VM_PAGE_CHECK(mem) { \
-		if ( (((unsigned int) mem) < ((unsigned int) &vm_page_array[0])) || \
-		     (((unsigned int) mem) > ((unsigned int) &vm_page_array[last_page-first_page])) || \
-		     (mem->active && mem->inactive) \
-		    ) panic("vm_page_check: not valid!"); \
-		}
-#else	VM_PAGE_DEBUG
+	if ((((unsigned int) mem) < ((unsigned int) &vm_page_array[0])) || \
+	    (((unsigned int) mem) > \
+		((unsigned int) &vm_page_array[last_page-first_page])) || \
+	    ((mem->flags & (PG_ACTIVE | PG_INACTIVE)) == \
+		(PG_ACTIVE | PG_INACTIVE))) \
+		panic("vm_page_check: not valid!"); \
+}
+#else /* VM_PAGE_DEBUG */
 #define	VM_PAGE_CHECK(mem)
-#endif	VM_PAGE_DEBUG
+#endif /* VM_PAGE_DEBUG */
 
-#ifdef	KERNEL
+#ifdef KERNEL
 /*
  *	Each pageable resident page falls into one of three lists:
  *
@@ -165,11 +162,11 @@ typedef struct vm_page	*vm_page_t;
  */
 
 extern
-queue_head_t	vm_page_queue_free;	/* memory free queue */
+struct pglist	vm_page_queue_free;	/* memory free queue */
 extern
-queue_head_t	vm_page_queue_active;	/* active memory queue */
+struct pglist	vm_page_queue_active;	/* active memory queue */
 extern
-queue_head_t	vm_page_queue_inactive;	/* inactive memory queue */
+struct pglist	vm_page_queue_inactive;	/* inactive memory queue */
 
 extern
 vm_page_t	vm_page_array;		/* First resident page in table */
@@ -185,25 +182,6 @@ vm_offset_t	first_phys_addr;	/* physical address for first_page */
 extern
 vm_offset_t	last_phys_addr;		/* physical address for last_page */
 
-extern
-int	vm_page_free_count;	/* How many pages are free? */
-extern
-int	vm_page_active_count;	/* How many pages are active? */
-extern
-int	vm_page_inactive_count;	/* How many pages are inactive? */
-extern
-int	vm_page_wire_count;	/* How many pages are wired? */
-extern
-int	vm_page_free_target;	/* How many do we want free? */
-extern
-int	vm_page_free_min;	/* When to wakeup pageout */
-extern
-int	vm_page_inactive_target;/* How many do we want inactive? */
-extern
-int	vm_page_free_reserved;	/* How many pages reserved to do pageout */
-extern
-int	vm_page_laundry_count;	/* How many pages being laundered? */
-
 #define VM_PAGE_TO_PHYS(entry)	((entry)->phys_addr)
 
 #define IS_VM_PHYSADDR(pa) \
@@ -215,47 +193,50 @@ int	vm_page_laundry_count;	/* How many pages being laundered? */
 extern
 simple_lock_data_t	vm_page_queue_lock;	/* lock on active and inactive
 						   page queues */
-extern
+extern						/* lock on free page queue */
 simple_lock_data_t	vm_page_queue_free_lock;
-						/* lock on free page queue */
-vm_offset_t	vm_page_startup();
-vm_page_t	vm_page_lookup();
-vm_page_t	vm_page_alloc();
-void		vm_page_init();
-void		vm_page_free();
-void		vm_page_activate();
-void		vm_page_deactivate();
-void		vm_page_rename();
-void		vm_page_replace();
-
-boolean_t	vm_page_zero_fill();
-void		vm_page_copy();
-
-void		vm_page_wire();
-void		vm_page_unwire();
-
-void		vm_set_page_size();
 
 /*
  *	Functions implemented as macros
  */
 
 #define PAGE_ASSERT_WAIT(m, interruptible)	{ \
-				(m)->wanted = TRUE; \
-				assert_wait((int) (m), (interruptible)); \
+				(m)->flags |= PG_WANTED; \
+				assert_wait((m), (interruptible)); \
 			}
 
 #define PAGE_WAKEUP(m)	{ \
-				(m)->busy = FALSE; \
-				if ((m)->wanted) { \
-					(m)->wanted = FALSE; \
-					thread_wakeup((int) (m)); \
+				(m)->flags &= ~PG_BUSY; \
+				if ((m)->flags & PG_WANTED) { \
+					(m)->flags &= ~PG_WANTED; \
+					thread_wakeup((m)); \
 				} \
 			}
 
 #define	vm_page_lock_queues()	simple_lock(&vm_page_queue_lock)
 #define	vm_page_unlock_queues()	simple_unlock(&vm_page_queue_lock)
 
-#define vm_page_set_modified(m)	{ (m)->clean = FALSE; }
-#endif	KERNEL
-#endif	_VM_PAGE_
+#define vm_page_set_modified(m)	{ (m)->flags &= ~PG_CLEAN; }
+
+#define	VM_PAGE_INIT(mem, object, offset) { \
+	(mem)->flags = PG_BUSY | PG_CLEAN | PG_FAKE; \
+	vm_page_insert((mem), (object), (offset)); \
+	(mem)->wire_count = 0; \
+}
+
+void		 vm_page_activate __P((vm_page_t));
+vm_page_t	 vm_page_alloc __P((vm_object_t, vm_offset_t));
+void		 vm_page_copy __P((vm_page_t, vm_page_t));
+void		 vm_page_deactivate __P((vm_page_t));
+void		 vm_page_free __P((vm_page_t));
+void		 vm_page_insert __P((vm_page_t, vm_object_t, vm_offset_t));
+vm_page_t	 vm_page_lookup __P((vm_object_t, vm_offset_t));
+void		 vm_page_remove __P((vm_page_t));
+void		 vm_page_rename __P((vm_page_t, vm_object_t, vm_offset_t));
+void		 vm_page_startup __P((vm_offset_t *, vm_offset_t *));
+void		 vm_page_unwire __P((vm_page_t));
+void		 vm_page_wire __P((vm_page_t));
+boolean_t	 vm_page_zero_fill __P((vm_page_t));
+
+#endif /* KERNEL */
+#endif /* !_VM_PAGE_ */

@@ -1,6 +1,6 @@
 /* 
- * Copyright (c) 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * The Mach Operating System project at Carnegie-Mellon University.
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_init.c	7.3 (Berkeley) 4/21/91
+ *	@(#)vm_init.c	8.1 (Berkeley) 6/11/93
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -66,11 +66,11 @@
  *	Initialize the Virtual Memory subsystem.
  */
 
-#include "param.h"
+#include <sys/param.h>
 
-#include "vm.h"
-#include "vm_page.h"
-#include "vm_kern.h"
+#include <vm/vm.h>
+#include <vm/vm_page.h>
+#include <vm/vm_kern.h>
 
 /*
  *	vm_init initializes the virtual memory system.
@@ -89,12 +89,13 @@ void vm_mem_init()
 	 *	From here on, all physical memory is accounted for,
 	 *	and we use only virtual addresses.
 	 */
+	vm_set_page_size();
+	vm_page_startup(&avail_start, &avail_end);
 
-	virtual_avail = vm_page_startup(avail_start, avail_end, virtual_avail);
 	/*
 	 * Initialize other VM packages
 	 */
-	vm_object_init();
+	vm_object_init(virtual_end - VM_MIN_KERNEL_ADDRESS);
 	vm_map_startup();
 	kmem_init(virtual_avail, virtual_end);
 	pmap_init(avail_start, avail_end);

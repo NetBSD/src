@@ -1,6 +1,6 @@
 /* 
- * Copyright (c) 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * The Mach Operating System project at Carnegie-Mellon University.
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_pageout.h	7.3 (Berkeley) 4/21/91
+ *	@(#)vm_pageout.h	8.3 (Berkeley) 1/9/95
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -84,7 +84,13 @@ simple_lock_data_t	vm_pages_needed_lock;
 
 #define	VM_WAIT		{ \
 			simple_lock(&vm_pages_needed_lock); \
-			thread_wakeup((int)&vm_pages_needed); \
-			thread_sleep((int)&vm_page_free_count, \
+			thread_wakeup(&vm_pages_needed); \
+			thread_sleep(&cnt.v_free_count, \
 				&vm_pages_needed_lock, FALSE); \
 			}
+#ifdef KERNEL
+void		 vm_pageout __P((void));
+void		 vm_pageout_scan __P((void));
+void		 vm_pageout_page __P((vm_page_t, vm_object_t));
+void		 vm_pageout_cluster __P((vm_page_t, vm_object_t));
+#endif
