@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.90 2002/01/31 01:34:51 lukem Exp $
+# $NetBSD: mi,v 1.91 2002/02/11 10:20:04 martti Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV.local			etc-sys-etc
@@ -88,6 +88,7 @@
 ./etc/rc.d/ifwatchd			etc-net-rc
 ./etc/rc.d/inetd			etc-net-rc
 ./etc/rc.d/ipfilter			etc-ipf-rc
+./etc/rc.d/ipfs				etc-ipf-rc
 ./etc/rc.d/ipmon			etc-ipf-rc
 ./etc/rc.d/ipnat			etc-ipf-rc
 ./etc/rc.d/ipsec			etc-net-rc
