@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.20 1998/02/04 00:03:54 tron Exp $	*/
+/*	$NetBSD: popen.c,v 1.21 1998/03/19 18:21:25 tv Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: popen.c,v 1.20 1998/02/04 00:03:54 tron Exp $");
+__RCSID("$NetBSD: popen.c,v 1.21 1998/03/19 18:21:25 tv Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -110,28 +110,28 @@ popen(command, type)
 		return (NULL);
 		/* NOTREACHED */
 	case 0:				/* Child. */
-		if (*type == 'r') {
-			if (pdes[1] != STDOUT_FILENO) {
-				(void)dup2(pdes[1], STDOUT_FILENO);
-				(void)close(pdes[1]);
-			}
-			(void) close(pdes[0]);
-			if (twoway)
-				(void)dup2(STDOUT_FILENO, STDIN_FILENO);
-		} else {
-			if (pdes[0] != STDIN_FILENO) {
-				(void)dup2(pdes[0], STDIN_FILENO);
-				(void)close(pdes[0]);
-			}
-			(void)close(pdes[1]);
-		}
-
 		/* POSIX.2 B.3.2.2 "popen() shall ensure that any streams
 		   from previous popen() calls that remain open in the 
 		   parent process are closed in the new child process. */
 		for (old = pidlist; old; old = old->next)
-			close(fileno(old->fp));
-		
+			close(fileno(old->fp)); /* don't allow a flush */
+
+		if (*type == 'r') {
+			(void)close(pdes[0]);
+			if (pdes[1] != STDOUT_FILENO) {
+				(void)dup2(pdes[1], STDOUT_FILENO);
+				(void)close(pdes[1]);
+			}
+			if (twoway)
+				(void)dup2(STDOUT_FILENO, STDIN_FILENO);
+		} else {
+			(void)close(pdes[1]);
+			if (pdes[0] != STDIN_FILENO) {
+				(void)dup2(pdes[0], STDIN_FILENO);
+				(void)close(pdes[0]);
+			}
+		}
+
 		execl(_PATH_BSHELL, "sh", "-c", command, NULL);
 		_exit(127);
 		/* NOTREACHED */
