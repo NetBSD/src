@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.11 2003/09/13 07:56:54 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.12 2003/09/13 16:07:44 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.11 2003/09/13 07:56:54 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.12 2003/09/13 16:07:44 manu Exp $");
 
 #include "ioconf.h"
 #include "wsmux.h"
@@ -502,7 +502,13 @@ mach_notify_iohidsystem(l, mr)
 #endif
 	
 	mr->mr_refcount++;
-	(void)mach_message_get((mach_msg_header_t *)req, sizeof(*req), mp, l);
+
+	/* 
+	 * Call mach_message_get with a NULL lwp: the message is sent
+	 * by the kernel, not a userprocess. If we do not do that, 
+	 * we crash because iohidsystem thread has p->p_emuldata == NULL.
+	 */
+	mach_message_get((mach_msg_header_t *)req, sizeof(*req), mp, NULL);
 #ifdef DEBUG_MACH_MSG
 	printf("pid %d: message queued on port %p (%d) [%p]\n",
 	    l->l_proc->p_pid, mp, req->req_msgh.msgh_id,
