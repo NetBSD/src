@@ -1,4 +1,4 @@
-/*	$NetBSD: ipnat_y.y,v 1.1.1.1 2004/03/28 08:56:34 martti Exp $	*/
+/*	$NetBSD: ipnat_y.y,v 1.1.1.1.2.1 2004/05/30 11:27:32 tron Exp $	*/
 
 %{
 #ifdef  __FreeBSD__
@@ -685,7 +685,7 @@ ioctlfunc_t ioctlfunc;
 void *ptr;
 {
 	ipfobj_t obj;
-	int add, del;
+	ioctlcmd_t add, del;
 	ipnat_t *ipn;
 
 	ipn = ptr;
