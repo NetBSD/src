@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.36 1997/08/28 00:12:44 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.37 1997/09/12 11:04:36 drochner Exp 
  */
 
 /*
@@ -558,6 +558,9 @@
 #define	PCI_PRODUCT_ADP_2940U	0x8178		/* AHA-2940 Ultra */
 #define	PCI_PRODUCT_ADP_3940U	0x8278		/* AHA-3940 Ultra */
 #define	PCI_PRODUCT_ADP_2944U	0x8478		/* AHA-2944 Ultra */
+
+/* Alliance products */
+#define	PCI_PRODUCT_ALLIANCE_AT24	0x6424		/* AT24 */
 
 /* AMD products */
 #define	PCI_PRODUCT_AMD_PCNET_PCI	0x2000		/* 79c970 PCnet-PCI LANCE Ethernet */

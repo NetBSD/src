@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.36 1997/08/28 00:12:44 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.37 1997/09/12 11:04:36 drochner Exp 
  */
 
 /*
@@ -222,6 +222,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Adaptec",
 	    "AHA-2944 Ultra",
+	},
+	{
+	    PCI_VENDOR_ALLIANCE, PCI_PRODUCT_ALLIANCE_AT24,
+	    0,
+	    "Alliance Semiconductor",
+	    "AT24",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_PCI,
