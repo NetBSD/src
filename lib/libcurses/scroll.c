@@ -1,4 +1,4 @@
-/*	$NetBSD: scroll.c,v 1.13 2000/08/01 04:17:10 itojun Exp $	*/
+/*	$NetBSD: scroll.c,v 1.14 2000/12/19 21:34:24 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)scroll.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: scroll.c,v 1.13 2000/08/01 04:17:10 itojun Exp $");
+__RCSID("$NetBSD: scroll.c,v 1.14 2000/12/19 21:34:24 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -94,7 +94,7 @@ wscrl(WINDOW *win, int lines)
 
 	if (win == curscr) {
 		__cputchar('\n');
-		if (!NONL)
+		if (!__NONL)
 			win->curx = 0;
 #ifdef DEBUG
 		__CTRACE("scroll: win == curscr\n");
