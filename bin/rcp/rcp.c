@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.15 1997/07/20 20:47:32 christos Exp $	*/
+/*	$NetBSD: rcp.c,v 1.16 1997/07/30 05:07:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.15 1997/07/20 20:47:32 christos Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.16 1997/07/30 05:07:22 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -426,14 +426,15 @@ syserr:			run_err("%s: %s", name, strerror(errno));
 			 * versions expecting microseconds.
 			 */
 			(void)snprintf(buf, sizeof(buf), "T%ld 0 %ld 0\n",
-			    stb.st_mtimespec.tv_sec, stb.st_atimespec.tv_sec);
+			    (long)stb.st_mtimespec.tv_sec,
+			    (long)stb.st_atimespec.tv_sec);
 			(void)write(rem, buf, strlen(buf));
 			if (response() < 0)
 				goto next;
 		}
 #define	MODEMASK	(S_ISUID|S_ISGID|S_ISTXT|S_IRWXU|S_IRWXG|S_IRWXO)
 		(void)snprintf(buf, sizeof(buf), "C%04o %qd %s\n",
-		    stb.st_mode & MODEMASK, stb.st_size, last);
+		    stb.st_mode & MODEMASK, (long long)stb.st_size, last);
 		(void)write(rem, buf, strlen(buf));
 		if (response() < 0)
 			goto next;
@@ -490,7 +491,8 @@ rsource(name, statp)
 		last++;
 	if (pflag) {
 		(void)snprintf(path, sizeof(path), "T%ld 0 %ld 0\n",
-		    statp->st_mtimespec.tv_sec, statp->st_atimespec.tv_sec);
+		    (long)statp->st_mtimespec.tv_sec,
+		    (long)statp->st_atimespec.tv_sec);
 		(void)write(rem, path, strlen(path));
 		if (response() < 0) {
 			closedir(dirp);
