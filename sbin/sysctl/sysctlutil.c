@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlutil.c,v 1.3 2004/02/19 03:16:24 atatat Exp $ */
+/*	$NetBSD: sysctlutil.c,v 1.4 2004/02/19 06:40:14 atatat Exp $ */
 
 #include <sys/param.h>
 #define __USE_NEW_SYSCTL
@@ -36,8 +36,10 @@ static int compar(const void *, const void *);
 int learn_tree(int *, u_int, struct sysctlnode *);
 static void free_children(struct sysctlnode *);
 static void relearnhead(void);
-int sysctlnametomib(const char *, int *, u_int *,
-		    char *, size_t *, struct sysctlnode **);
+int sysctlnametomib(const char *, int *, size_t *);
+int sysctlbyname(const char *, void *, size_t *, void *, size_t);
+int sysctlgetmibinfo(const char *, int *, u_int *,
+		     char *, size_t *, struct sysctlnode **);
 
 /*
  * for ordering nodes -- a query may or may not be given them in
@@ -309,6 +311,41 @@ relearnhead(void)
 }
 
 /*
+ * freebsd compatible sysctlnametomib() function, implemented as an
+ * extremely thin wrapper around sysctlgetmibinfo().  i think the use
+ * of size_t as the third argument is erroneous, but what can we do
+ * about that?
+ */
+int
+sysctlnametomib(const char *gname, int *iname, size_t *namelenp)
+{
+	u_int unamelen;
+	int rc;
+
+	unamelen = *namelenp;
+	rc = sysctlgetmibinfo(gname, iname, &unamelen, NULL, NULL, NULL);
+	*namelenp = unamelen;
+
+	return (rc);
+}
+
+/*
+ * trivial sysctlbyname() function for the "lazy".
+ */
+int
+sysctlbyname(const char *gname, void *oldp, size_t *oldlenp, void *newp,
+	     size_t newlen)
+{
+	int name[CTL_MAXNAME], rc;
+	u_int namelen;
+
+	rc = sysctlgetmibinfo(gname, &name[0], &namelen, NULL, NULL, NULL);
+	if (rc == 0)
+		rc = sysctl(&name[0], namelen, oldp, oldlenp, newp, newlen);
+	return (rc);
+}
+
+/*
  * that's "given name" as a string, the integer form of the name fit
  * to be passed to sysctl(), "canonicalized name" (optional), and a
  * pointer to the length of the integer form.  oh, and then a pointer
@@ -323,28 +360,28 @@ relearnhead(void)
  */
 #ifdef _REENTRANT
 static mutex_t sysctl_mutex = MUTEX_INITIALIZER;
-static int sysctlnametomib_unlocked(const char *, int *, u_int *,
-				    char *, size_t *, struct sysctlnode **);
+static int sysctlgetmibinfo_unlocked(const char *, int *, u_int *,
+				     char *, size_t *, struct sysctlnode **);
 #endif /* __REENTRANT */
 
 int
-sysctlnametomib(const char *gname, int *iname, u_int *namelenp,
-		char *cname, size_t *csz, struct sysctlnode **rnode)
+sysctlgetmibinfo(const char *gname, int *iname, u_int *namelenp,
+		 char *cname, size_t *csz, struct sysctlnode **rnode)
 #ifdef _REENTRANT
 {
 	int rc;
 
 	mutex_lock(&sysctl_mutex);
-	rc = sysctlnametomib_unlocked(gname, iname, namelenp, cname, csz,
-				      rnode);
+	rc = sysctlgetmibinfo_unlocked(gname, iname, namelenp, cname, csz,
+				       rnode);
 	mutex_unlock(&sysctl_mutex);
 
 	return (rc);
 }
 
 static int
-sysctlnametomib_unlocked(const char *gname, int *iname, u_int *namelenp,
-			 char *cname, size_t *csz, struct sysctlnode **rnode)
+sysctlgetmibinfo_unlocked(const char *gname, int *iname, u_int *namelenp,
+			  char *cname, size_t *csz, struct sysctlnode **rnode)
 #endif /* _REENTRANT */
 {
 	struct sysctlnode *pnode, *node;

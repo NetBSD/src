@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.77 2004/01/05 23:23:33 jmmv Exp $ */
+/*	$NetBSD: sysctl.c,v 1.78 2004/02/19 06:40:14 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.77 2004/01/05 23:23:33 jmmv Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.78 2004/02/19 06:40:14 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,8 +146,9 @@ static void sysctlerror(int);
  * unexported from some place else (XXX tbd)
  */
 int learn_tree(int *, u_int, struct sysctlnode *);
-int sysctlnametomib(const char *, int *, u_int *,
-		    char *, size_t *, struct sysctlnode **);
+int sysctlbyname(const char *, void *, size_t *, void *, size_t);
+int sysctlgetmibinfo(const char *, int *, u_int *,
+		     char *, size_t *, struct sysctlnode **);
 
 /*
  * "handlers"
@@ -724,7 +725,7 @@ parse(char *l)
 	namelen = CTL_MAXNAME;
 	sz = sizeof(gsname);
 
-	if (sysctlnametomib(key, &name[0], &namelen, gsname, &sz, &node) == -1)
+	if (sysctlgetmibinfo(key, &name[0], &namelen, gsname, &sz, &node) == -1)
 	{
 		fprintf(warnfp, "%s: %s level name '%s' in '%s' is invalid\n",
 			getprogname(), lname[namelen], gsname, l);
@@ -1205,8 +1206,8 @@ cparse(char *l)
 		namelen = sizeof(name) / sizeof(name[0]);
 		sz = sizeof(gsname);
 		*t = '\0';
-		rc = sysctlnametomib(nname, &name[0], &namelen,
-				     gsname, &sz, NULL);
+		rc = sysctlgetmibinfo(nname, &name[0], &namelen,
+				      gsname, &sz, NULL);
 		*t = sep[0];
 		if (rc == -1) {
 			fprintf(warnfp,
@@ -1248,7 +1249,7 @@ dparse(char *l)
 	memset(name, 0, sizeof(name));
 	namelen = sizeof(name) / sizeof(name[0]);
 	sz = sizeof(gsname);
-	rc = sysctlnametomib(l, &name[0], &namelen, gsname, &sz, NULL);
+	rc = sysctlgetmibinfo(l, &name[0], &namelen, gsname, &sz, NULL);
 	if (rc == -1) {
 		fprintf(warnfp,
 			"%s: %s level name '%s' in '%s' is invalid\n",
