@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.19 2001/10/23 18:45:13 kleink Exp $ */
+/* $NetBSD: style,v 1.20 2001/10/23 18:51:05 kleink Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #ifndef __lint
 __COPYRIGHT("@(#) Copyright (c) 2000\n\
 	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: style,v 1.19 2001/10/23 18:45:13 kleink Exp $");
+__RCSID("$NetBSD: style,v 1.20 2001/10/23 18:51:05 kleink Exp $");
 #endif /* !__lint */
 
 /*
@@ -84,6 +84,7 @@ __RCSID("$NetBSD: style,v 1.19 2001/10/23 18:45:13 kleink Exp $");
  * Then there's a blank line, followed by the /usr include files.
  * The /usr include files should be sorted!
  */
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
