@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.43 2003/10/17 20:57:32 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.44 2003/10/17 21:12:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.43 2003/10/17 20:57:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.44 2003/10/17 21:12:48 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -209,6 +209,8 @@ struct wm_softc {
 	int sc_flags;			/* flags; see below */
 
 	void *sc_ih;			/* interrupt cookie */
+
+	int sc_ee_addrbits;		/* EEPROM address bits */
 
 	struct mii_data sc_mii;		/* MII/media information */
 
@@ -582,6 +584,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
+	const char *eetype;
 	bus_space_tag_t memt;
 	bus_space_handle_t memh;
 	bus_dma_segment_t seg;
@@ -591,6 +594,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	uint16_t myea[ETHER_ADDR_LEN / 2], cfg1, cfg2, swdpin;
 	pcireg_t preg, memtype;
+	uint32_t reg;
 	int pmreg;
 
 	callout_init(&sc->sc_tick_ch);
@@ -617,12 +621,6 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 		if (preg < 3)
 			sc->sc_type = WM_T_82542_2_0;
 	}
-
-	/*
-	 * Some chips require a handshake to access the EEPROM.
-	 */
-	if (sc->sc_type >= WM_T_82540)
-		sc->sc_flags |= WM_F_EEPROM_HANDSHAKE;
 
 	/*
 	 * Map the device.
@@ -763,6 +761,25 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	 * Reset the chip to a known state.
 	 */
 	wm_reset(sc);
+
+	/*
+	 * Get some information about the EEPROM.
+	 */
+	eetype = "MicroWire";
+	if (sc->sc_type >= WM_T_82540)
+		sc->sc_flags |= WM_F_EEPROM_HANDSHAKE;
+	if (sc->sc_type <= WM_T_82544)
+		sc->sc_ee_addrbits = 6;
+	else if (sc->sc_type <= WM_T_82546_3) {
+		reg = CSR_READ(sc, WMREG_EECD);
+		if (reg & EECD_EE_SIZE)
+			sc->sc_ee_addrbits = 8;
+		else
+			sc->sc_ee_addrbits = 6;
+	}
+	aprint_verbose("%s: %u word (%d address bits) %s EEPROM\n",
+	    sc->sc_dev.dv_xname, 1U << sc->sc_ee_addrbits,
+	    sc->sc_ee_addrbits, eetype);
 
 	/*
 	 * Read the Ethernet address from the EEPROM.
@@ -2276,15 +2293,11 @@ void
 wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 {
 	uint32_t reg;
-	int i, x, addrbits = 6;
+	int i, x;
 
 	for (i = 0; i < wordcnt; i++) {
 		if (sc->sc_flags & WM_F_EEPROM_HANDSHAKE) {
 			reg = CSR_READ(sc, WMREG_EECD);
-
-			/* Get number of address bits. */
-			if (reg & EECD_EE_SIZE)
-				addrbits = 8;
 
 			/* Request EEPROM access. */
 			reg |= EECD_EE_REQ;
@@ -2332,7 +2345,7 @@ wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 		}
 
 		/* Shift in address. */
-		for (x = addrbits; x > 0; x--) {
+		for (x = sc->sc_ee_addrbits; x > 0; x--) {
 			if ((word + i) & (1 << (x - 1)))
 				reg |= EECD_DI;
 			else
