@@ -1,5 +1,5 @@
-/*	$NetBSD: ipsec_strerror.h,v 1.6 2000/06/12 10:40:52 itojun Exp $	*/
-/*	$KAME: ipsec_strerror.h,v 1.7 2000/05/07 05:25:03 itojun Exp $	*/
+/*	$NetBSD: ipsec_strerror.h,v 1.6.2.1 2000/07/30 06:19:50 itojun Exp $	*/
+/*	$KAME: ipsec_strerror.h,v 1.8 2000/07/30 00:45:12 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -31,7 +31,7 @@
  */
 
 extern int __ipsec_errcode;
-extern void __ipsec_set_strerror __P((char *));
+extern void __ipsec_set_strerror __P((const char *));
 
 #define EIPSEC_NO_ERROR		0	/*success*/
 #define EIPSEC_NOT_SUPPORTED	1	/*not supported*/

@@ -1,5 +1,5 @@
-/*	$NetBSD: ipsec.h,v 1.14 2000/06/15 05:01:08 itojun Exp $	*/
-/*	$KAME: ipsec.h,v 1.32 2000/06/15 04:08:54 itojun Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.14.2.1 2000/07/30 06:19:50 itojun Exp $	*/
+/*	$KAME: ipsec.h,v 1.35 2000/07/30 00:45:11 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -48,7 +48,7 @@
 
 /*
  * Security Policy Index
- * NOTE: Encure to be same address family and upper layer protocol.
+ * NOTE: Ensure to be same address family and upper layer protocol.
  * NOTE: ul_proto, port number, uid, gid:
  *	ANY: reserved for waldcard.
  *	0 to (~0 - 1): is one of the number of each value.
@@ -384,7 +384,7 @@ extern caddr_t ipsec_set_policy __P((char *, int));
 extern int ipsec_get_policylen __P((caddr_t));
 extern char *ipsec_dump_policy __P((caddr_t, char *));
 
-extern char *ipsec_strerror __P((void));
+extern const char *ipsec_strerror __P((void));
 #endif /*!_KERNEL*/
 
 #endif /*_NETINET6_IPSEC_H_*/
