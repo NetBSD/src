@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.40 1997/06/23 23:59:53 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.41 1997/06/26 04:25:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1074,13 +1074,32 @@ ccdioctl(dev, cmd, data, flag, p)
 
 	bzero(&ccd, sizeof(ccd));
 
+	/* Must be open for writes for these commands... */
+	switch (cmd) {
+	case CCDIOCSET:
+	case CCDIOCCLR:
+	case DIOCSDINFO:
+	case DIOCWDINFO:
+	case DIOCWLABEL:
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+	}
+
+	/* Must be initialized for these... */
+	switch (cmd) {
+	case CCDIOCCLR:
+	case DIOCSDINFO: 
+	case DIOCWDINFO: 
+	case DIOCGPART:  
+	case DIOCWLABEL:
+		if ((cs->sc_flags & CCDF_INITED) == 0)
+			return (ENXIO);
+	}
+
 	switch (cmd) {
 	case CCDIOCSET:
 		if (cs->sc_flags & CCDF_INITED)
 			return (EBUSY);
-
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
 
 		if ((error = ccdlock(cs)) != 0)
 			return (error);
@@ -1172,12 +1191,6 @@ ccdioctl(dev, cmd, data, flag, p)
 		break;
 
 	case CCDIOCCLR:
-		if ((cs->sc_flags & CCDF_INITED) == 0)
-			return (ENXIO);
-
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
 		if ((error = ccdlock(cs)) != 0)
 			return (error);
 
@@ -1246,16 +1259,10 @@ ccdioctl(dev, cmd, data, flag, p)
 		break;
 
 	case DIOCGDINFO:
-		if ((cs->sc_flags & CCDF_INITED) == 0)
-			return (ENXIO);
-
 		*(struct disklabel *)data = *(cs->sc_dkdev.dk_label);
 		break;
 
 	case DIOCGPART:
-		if ((cs->sc_flags & CCDF_INITED) == 0)
-			return (ENXIO);
-
 		((struct partinfo *)data)->disklab = cs->sc_dkdev.dk_label;
 		((struct partinfo *)data)->part =
 		    &cs->sc_dkdev.dk_label->d_partitions[DISKPART(dev)];
@@ -1263,12 +1270,6 @@ ccdioctl(dev, cmd, data, flag, p)
 
 	case DIOCWDINFO:
 	case DIOCSDINFO:
-		if ((cs->sc_flags & CCDF_INITED) == 0)
-			return (ENXIO);
-
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
 		if ((error = ccdlock(cs)) != 0)
 			return (error);
 
@@ -1292,11 +1293,6 @@ ccdioctl(dev, cmd, data, flag, p)
 		break;
 
 	case DIOCWLABEL:
-		if ((cs->sc_flags & CCDF_INITED) == 0)
-			return (ENXIO);
-
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
 		if (*(int *)data != 0)
 			cs->sc_flags |= CCDF_WLABEL;
 		else
