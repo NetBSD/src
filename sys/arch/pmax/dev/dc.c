@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.38 1998/03/22 09:27:07 jonathan Exp $	*/
+/*	$NetBSD: dc.c,v 1.39 1998/03/24 00:23:55 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.38 1998/03/22 09:27:07 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.39 1998/03/24 00:23:55 jonathan Exp $");
 
 /*
  * devDC7085.c --
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.38 1998/03/22 09:27:07 jonathan Exp $");
 
 #include <pmax/dev/dcvar.h>
 #include <pmax/dev/dc_cons.h>
+#include <pmax/dev/rconsvar.h>
 
 #define DCUNIT(dev) (minor(dev) >> 2)
 #define DCLINE(dev) (minor(dev) & 3)
@@ -204,14 +205,20 @@ dcregs *dc_cons_addr = 0;
  * XXX used for ugly special-cased console input that should be redone
  * more cleanly.
  */
+#ifdef RCONS_BRAINDAMAGE
 static inline int raster_console __P((void));
 
 static inline int
 raster_console()
 {
-	return (cn_tab->cn_pri == CN_INTERNAL ||
-		cn_tab->cn_pri == CN_NORMAL);
+	return (cn_tab->cn_pri == CN_INTERNAL || cn_tab->cn_pri == CN_NORMAL);
 }
+#endif /*  RCONS_BRAINDAMAGE */
+
+/* Test to see if active serial console on this unit. */
+#define CONSOLE_ON_UNIT(unit) \
+  (major(cn_tab->cn_dev) == DCDEV && SCCUNIT(cn_tab->cn_dev) == (unit))
+
 
 
 /* XXX move back into dc_consinit when debugged */
@@ -320,23 +327,28 @@ dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
 	 * Special handling for consoles.
 	 */
 	if (sc->sc_dv.dv_unit == 0) {
-		if (raster_console()) {
+		if (major(cn_tab->cn_dev) == DCDEV) {
+			/* set params for serial console */
+			s = spltty();
+			dc_consinit(cn_tab->cn_dev, dcaddr);
+			dcaddr->dc_csr |= (CSR_MSE | CSR_TIE | CSR_RIE);
+			splx(s);
+		}
+		if ( 1 /*raster_console()*/) {
 			s = spltty();
 			dcaddr->dc_lpr = LPR_RXENAB | LPR_8_BIT_CHAR |
 				LPR_B4800 | DCKBD_PORT;
 			wbflush();
+			DELAY(10000);
+			KBDReset(makedev(DCDEV, DCKBD_PORT), dcPutc);
+			DELAY(10000);
 			dcaddr->dc_lpr = LPR_RXENAB | LPR_B4800 | LPR_OPAR |
 				LPR_PARENB | LPR_8_BIT_CHAR | DCMOUSE_PORT;
 			wbflush();
-			DELAY(1000);
-			KBDReset(makedev(DCDEV, DCKBD_PORT), dcPutc);
+			DELAY(10000);
+/*XXX*/printf("reset mouse\n");
 			MouseInit(makedev(DCDEV, DCMOUSE_PORT), dcPutc, dcGetc);
-			splx(s);
-		}
-		else if (major(cn_tab->cn_dev) == DCDEV) {
-			s = spltty();
-			dc_consinit(cn_tab->cn_dev, dcaddr);
-			dcaddr->dc_csr |= (CSR_MSE | CSR_TIE | CSR_RIE);
+/*XXX*/printf("done\n");
 			splx(s);
 		}
 	}
@@ -378,7 +390,6 @@ dcopen(dev, flag, mode, p)
 	register struct dc_softc *sc;
 	register int unit, line;
 	int s, error = 0;
-	int firstopen = 0;
 
 	unit = DCUNIT(dev);
 	line = DCLINE(dev);
@@ -399,7 +410,6 @@ dcopen(dev, flag, mode, p)
 	tp->t_dev = dev;
 	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		ttychars(tp);
-		firstopen = 1;
 #ifndef PORTSELECTOR
 		if (tp->t_ispeed == 0) {
 #endif
@@ -440,7 +450,7 @@ dcopen(dev, flag, mode, p)
 		return (error);
 	error = (*linesw[tp->t_line].l_open)(dev, tp);
 
-#if NRASTERCONSOLE > 0
+#if  NRASTERCONSOLE > 0 && RCONS_BRAINDAMAGE
 	/*
 	 * Handle console cases specially.
 	 */
@@ -449,7 +459,7 @@ dcopen(dev, flag, mode, p)
 	  	extern struct tty *fbconstty;
 		tp->t_winsize = fbconstty->t_winsize;
 	}
-#endif	/* NRASTERCONSOLE */
+#endif	/* NRASTERCONSOLE && RCONS_BRAINDAMAGE */
 	return (error);
 }
 
@@ -652,7 +662,7 @@ cold_dcparam(tp, t, dcaddr, allow_19200)
 	/*
 	 * Handle console cases specially.
 	 */
-	if (raster_console()) {
+	if (/*XXX*/ 1) {	/* XXX jrs */
 		if (unit == DCKBD_PORT) {
 			lpr = LPR_RXENAB | LPR_8_BIT_CHAR |
 				LPR_B4800 | DCKBD_PORT;
@@ -737,7 +747,7 @@ dcrint(sc)
 			overrun = 1;
 		}
 		/* the keyboard requires special translation */
-		if (raster_console() && tp == dc_tty[DCKBD_PORT]) {
+		if (tp == dc_tty[DCKBD_PORT]) {
 			if (cc == LK_DO) {
 #ifdef DDB
 				spl0();
@@ -755,6 +765,8 @@ dcrint(sc)
 			}
 			if ((cc = kbdMapChar(cc)) < 0)
 				return;
+			rcons_input(0, cc);
+			return;
 		} else if (tp == dc_tty[DCMOUSE_PORT] && dcMouseButtons) {
 			mouseInput(cc);
 			return;
@@ -883,7 +895,10 @@ dcstart(tp)
 	}
 	if (tp->t_outq.c_cc == 0)
 		goto out;
+
+#ifdef RCONS_BRAINDAMAGE
 	/* handle console specially */
+	/* XXX raster console output via serial port! */
 	if (raster_console() && tp == sc->dc_tty[DCKBD_PORT]) {
 		while (tp->t_outq.c_cc > 0) {
 			cc = getc(&tp->t_outq) & 0x7f;
@@ -902,6 +917,8 @@ dcstart(tp)
 		}
 		goto out;
 	}
+#endif	/* RCONS_BRAINDAMAGE */
+
   	cc = ndqb(&tp->t_outq, 0);
 	if (cc == 0)
 		goto out;
