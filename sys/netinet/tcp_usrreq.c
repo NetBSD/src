@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.54 2000/10/06 09:24:40 enami Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.55 2000/10/06 10:21:06 enami Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -205,12 +205,12 @@ tcp_usrreq(so, req, m, nam, control, p)
 		case PF_INET:
 			in_purgeif((struct ifnet *)control);
 			in_pcbpurgeif(&tcbtable, (struct ifnet *)control);
-		break;
+			break;
 #ifdef INET6
 		case PF_INET6:
 			in6_purgeif((struct ifnet *)control);
 			in6_pcbpurgeif(&tcb6, (struct ifnet *)control);
-		break;
+			break;
 #endif
 		default:
 			return (EAFNOSUPPORT);
