@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.15 2000/11/17 19:33:25 bouyer Exp $ */
+/* $NetBSD: if_ti.c,v 1.16 2000/12/14 06:42:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1792,7 +1792,17 @@ static void ti_attach(parent, self, aux)
 	ifp->if_ioctl = ti_ioctl;
 	ifp->if_start = ti_start;
 	ifp->if_watchdog = ti_watchdog;
+	IFQ_SET_READY(&ifp->if_snd);
+
+#if 0
+	/*
+	 * XXX This is not really correct -- we don't necessarily
+	 * XXX want to queue up as many as we can transmit at the
+	 * XXX upper layer like that.  Someone with a board should
+	 * XXX check to see how this affects performance.
+	 */
 	ifp->if_snd.ifq_maxlen = TI_TX_RING_CNT - 1;
+#endif
 
 	/*
 	 * We can support 802.1Q VLAN-sized frames.
@@ -2067,7 +2077,8 @@ static int ti_intr(xsc)
 	/* Re-enable interrupts. */
 	CSR_WRITE_4(sc, TI_MB_HOSTINTR, 0);
 
-	if (ifp->if_flags & IFF_RUNNING && ifp->if_snd.ifq_head != NULL)
+	if ((ifp->if_flags & IFF_RUNNING) != 0 &&
+	    IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		ti_start(ifp);
 
 	return (1);
@@ -2206,8 +2217,8 @@ static void ti_start(ifp)
 
 	prodidx = CSR_READ_4(sc, TI_MB_SENDPROD_IDX);
 
-	while(sc->ti_cdata.ti_tx_chain[prodidx] == NULL) {
-		IF_DEQUEUE(&ifp->if_snd, m_head);
+	while (sc->ti_cdata.ti_tx_chain[prodidx] == NULL) {
+		IFQ_POLL(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
 
@@ -2217,10 +2228,11 @@ static void ti_start(ifp)
 		 * for the NIC to drain the ring.
 		 */
 		if (ti_encap(sc, m_head, &prodidx)) {
-			IF_PREPEND(&ifp->if_snd, m_head);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
+
+		IFQ_DEQUEUE(&ifp->if_snd, m_head);
 
 		/*
 		 * If there's a BPF listener, bounce a copy of this frame
