@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.56 1999/11/15 05:25:57 nisimura Exp $	*/
+/*	$NetBSD: asc.c,v 1.57 2000/02/03 08:13:46 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -146,7 +146,6 @@
 #include <pmax/dev/scsi.h>
 #include <pmax/dev/ascreg.h>
 
-#include <pmax/pmax/asic.h>
 #include <pmax/pmax/kmin.h>
 
 
