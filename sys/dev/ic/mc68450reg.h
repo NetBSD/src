@@ -1,4 +1,4 @@
-/*	$NetBSD: mc68450reg.h,v 1.1 1999/01/30 14:58:26 minoura Exp $	*/
+/*	$NetBSD: mc68450reg.h,v 1.2 1999/02/10 16:00:54 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -169,6 +169,6 @@
  * (array chaining mode)
  */
 struct dmac_sg_array {
-	void		*da_addr;
+	u_int32_t	da_addr;
 	u_int16_t	da_count;
 };
