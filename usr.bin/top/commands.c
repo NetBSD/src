@@ -1,3 +1,5 @@
+/*	$NetBSD: commands.c,v 1.4 1999/04/12 06:02:25 ross Exp $	*/
+
 /*
  *  Top users/processes display for Unix
  *  Version 3

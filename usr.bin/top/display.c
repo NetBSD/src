@@ -1,3 +1,5 @@
+/*	$NetBSD: display.c,v 1.3 1999/04/12 06:02:25 ross Exp $	*/
+
 /*
  *  Top users/processes display for Unix
  *  Version 3
