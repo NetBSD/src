@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.70 2000/03/28 09:48:25 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.71 2000/03/29 01:45:21 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -267,6 +267,9 @@ usbd_transfer(xfer)
 		usbd_dump_queue(pipe);
 #endif
 	xfer->done = 0;
+
+	if (pipe->aborting)
+		return (USBD_CANCELLED);
 
 	size = xfer->length;
 	/* If there is no buffer, allocate one. */
@@ -769,6 +772,7 @@ usbd_ar_pipe(pipe)
 		usbd_dump_queue(pipe);
 #endif
 	pipe->repeat = 0;
+	pipe->aborting = 1;
 	while ((xfer = SIMPLEQ_FIRST(&pipe->queue)) != NULL) {
 		DPRINTFN(2,("usbd_ar_pipe: pipe=%p xfer=%p (methods=%p)\n", 
 			    pipe, xfer, pipe->methods));
@@ -776,6 +780,7 @@ usbd_ar_pipe(pipe)
 		pipe->methods->abort(xfer);
 		/* XXX only for non-0 usbd_clear_endpoint_stall(pipe); */
 	}
+	pipe->aborting = 0;
 	return (USBD_NORMAL_COMPLETION);
 }
 
