@@ -1,4 +1,4 @@
-/*	$NetBSD: insdelln.c,v 1.9 2003/02/17 11:07:20 dsl Exp $	*/
+/*	$NetBSD: insdelln.c,v 1.10 2003/07/29 16:42:55 dsl Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: insdelln.c,v 1.9 2003/02/17 11:07:20 dsl Exp $");
+__RCSID("$NetBSD: insdelln.c,v 1.10 2003/07/29 16:42:55 dsl Exp $");
 #endif				/* not lint */
 
 /* 
@@ -107,8 +107,7 @@ winsdelln(WINDOW *win, int lines)
 			} else {
 				(void) memcpy(win->lines[y + lines]->line,
 				    win->lines[y]->line,
-				    (size_t) win->maxx * __LDATASIZE * lines);
-				temp = win->lines[y];
+				    (size_t) win->maxx * __LDATASIZE);
 			}
 		}
 		for (y = win->cury - 1 + lines; y >= win->cury; --y)
@@ -144,8 +143,7 @@ winsdelln(WINDOW *win, int lines)
 			} else {
 				(void) memcpy(win->lines[y]->line,
 				    win->lines[y + lines]->line,
-				    (size_t) win->maxx * __LDATASIZE * lines);
-				temp = win->lines[y + lines];
+				    (size_t) win->maxx * __LDATASIZE);
 			}
 		}
 		for (y = last - lines; y < last; y++)
