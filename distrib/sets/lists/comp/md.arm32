@@ -21,7 +21,7 @@
 ./usr/include/machine/iic.h
 ./usr/include/machine/ipkdb.h
 ./usr/include/machine/io.h
-./usr/include/machine/iomd.h
+./usr/include/machine/intr.h
 ./usr/include/machine/irqhandler.h
 ./usr/include/machine/katelib.h
 ./usr/include/machine/kbd.h
