@@ -1,4 +1,4 @@
-/*	$NetBSD: ip2x.c,v 1.2 2003/12/30 23:56:19 sekiya Exp $	*/
+/*	$NetBSD: ip2x.c,v 1.3 2004/01/01 13:32:30 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip2x.c,v 1.2 2003/12/30 23:56:19 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip2x.c,v 1.3 2004/01/01 13:32:30 sekiya Exp $");
 
 #include "opt_cputype.h"
 #include "opt_machtypes.h"
@@ -346,7 +346,10 @@ ip2x_intr_establish(level, ipl, handler, arg)
 		panic("invalid interrupt level");
 
 	if (intrtab[level].ih_fun != NULL)
-		panic("cannot share CPU interrupts");
+	{
+		printf("warning: ip2x cannot share interrupts yet.\n");
+		return;
+	}
 
 	intrtab[level].ih_fun = handler;
 	intrtab[level].ih_arg = arg;
