@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2001/01/30 14:21:51 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.7 2001/03/04 16:15:51 tsutsui Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,7 @@ SIZE?= size
 
 S= ${.CURDIR}/../../../..
 
-LDFLAGS= -x -N -Ttext 0
+LDFLAGS= -x -N -Ttext 0 -e start
 CFLAGS= -Os -Wall
 
 CPPFLAGS+= -D_STANDALONE # -DBOOTXX_DEBUG
