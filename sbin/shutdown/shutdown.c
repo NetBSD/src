@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.24 1998/01/21 00:33:56 mycroft Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.25 1998/03/23 05:00:16 fair Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.24 1998/01/21 00:33:56 mycroft Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.25 1998/03/23 05:00:16 fair Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ struct interval {
 #undef S
 
 static time_t offset, shuttime;
-static int dofast, dohalt, doreboot, killflg, mbuflen, nosync, dodump;
+static int dofast, dohalt, doreboot, killflg, mbuflen, nofork, nosync, dodump;
 static char *whom, mbuf[BUFSIZ];
 
 void badtime __P((void));
@@ -118,10 +118,13 @@ main(argc, argv)
 	if (geteuid())
 		errx(1, "NOT super-user");
 #endif
-	while ((ch = getopt(argc, argv, "dfhknr")) != -1)
+	while ((ch = getopt(argc, argv, "Ddfhknr")) != -1)
 		switch (ch) {
 		case 'd':
 			dodump = 1;
+			break;
+		case 'D':
+			nofork = 1;
 			break;
 		case 'f':
 			dofast = 1;
@@ -203,7 +206,7 @@ main(argc, argv)
 	(void)putc('\n', stdout);
 #else
 	(void)setpriority(PRIO_PROCESS, 0, PRIO_MIN);
-	{
+	if (nofork == 0) {
 		int forkpid;
 
 		forkpid = fork();
@@ -515,6 +518,6 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: shutdown [-dfhknr] time [message ... | -]\n");
+	    "usage: shutdown [-Ddfhknr] time [message ... | -]\n");
 	exit(1);
 }
