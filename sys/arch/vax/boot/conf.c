@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.9 1998/03/11 22:13:55 ragge Exp $ */
+/*	$NetBSD: conf.c,v 1.10 1998/07/01 10:52:11 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -63,6 +63,7 @@ struct	devsw devsw[]={
         SADEV("sd",sdstrategy, sdopen, nullsys, noioctl),
 	SADEV("st",sdstrategy, sdopen, nullsys, noioctl),
 	SADEV("le",netstrategy, netopen, netclose, noioctl), /* LANCE */
+        SADEV("ze",netstrategy, netopen, netclose, noioctl), /* SGEC */
 };
 
 int	cnvtab[] = {
@@ -76,6 +77,7 @@ int	cnvtab[] = {
 	BDEV_SD,
 	BDEV_ST,
 	BDEV_LE,
+	BDEV_ZE,
 };
 
 int     ndevs = (sizeof(devsw)/sizeof(devsw[0]));
@@ -92,10 +94,12 @@ int nfsys = (sizeof(file_system) / sizeof(struct fs_ops));
 
 extern struct netif_driver qe_driver;
 extern struct netif_driver le_driver;
+extern struct netif_driver ze_driver;
  
 struct netif_driver *netif_drivers[] = {
 	&qe_driver,
 	&le_driver,
+	&ze_driver,
 }; 
 int     n_netif_drivers = (sizeof(netif_drivers) / sizeof(netif_drivers[0]));
 
