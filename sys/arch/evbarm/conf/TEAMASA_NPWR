@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR,v 1.12 2002/04/24 20:38:24 thorpej Exp $
+#	$NetBSD: TEAMASA_NPWR,v 1.13 2002/04/25 01:50:00 briggs Exp $
 #
 #	TEAMASA_NPWR -- Team ASA, Inc. Npwr -- XScale/IOP310-based
 #	server appliance.
@@ -22,6 +22,7 @@ options 	NTP		# NTP phase/frequency locked loop
 options 	CPU_XSCALE_80200	# Support the XScale core
 makeoptions	COPTS="-O2 -march=armv4 -mtune=strongarm"
 #makeoptions	COPTS="-O2 -march=armv5 -mtune=xscale"
+options 	XSCALE_CCLKCFG=7	# 600MHz
 
 # Architecture options
 
