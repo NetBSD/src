@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.38 2000/05/01 17:15:41 augustss Exp $	*/
+/*	$NetBSD: eap.c,v 1.39 2000/05/15 01:27:47 thorpej Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -74,7 +74,7 @@
 #include <dev/midi_if.h>
 #include <dev/mulaw.h>
 #include <dev/auconv.h>
-#include <dev/ic/ac97.h>
+#include <dev/ic/ac97var.h>
 
 #include <machine/bus.h>
 
