@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.91 2004/03/24 07:55:01 junyoung Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.92 2004/05/04 21:33:40 pk Exp $	*/
 
 /*
  *
@@ -460,7 +460,8 @@ extern struct uvmexp uvmexp;
  */
 struct vmspace {
 	struct	vm_map vm_map;	/* VM address map */
-	int	vm_refcnt;	/* number of references */
+	int	vm_refcnt;	/* number of references *
+				 * note: protected by vm_map.ref_lock */
 	caddr_t	vm_shm;		/* SYS5 shared memory private data XXX */
 /* we copy from vm_startcopy to the end of the structure on fork */
 #define vm_startcopy vm_rssize

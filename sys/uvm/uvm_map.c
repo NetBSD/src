@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.170 2004/05/03 20:10:36 petrov Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.171 2004/05/04 21:33:40 pk Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.170 2004/05/03 20:10:36 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.171 2004/05/04 21:33:40 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -3444,16 +3444,18 @@ uvmspace_init(struct vmspace *vm, struct pmap *pmap, vaddr_t min, vaddr_t max)
 /*
  * uvmspace_share: share a vmspace between two processes
  *
- * - XXX: no locking on vmspace
  * - used for vfork, threads(?)
  */
 
 void
 uvmspace_share(struct proc *p1, struct proc *p2)
 {
+	struct simplelock *slock = &p1->p_vmspace->vm_map.ref_lock;
 
 	p2->p_vmspace = p1->p_vmspace;
+	simple_lock(slock);
 	p1->p_vmspace->vm_refcnt++;
+	simple_unlock(slock);
 }
 
 /*
@@ -3484,8 +3486,6 @@ uvmspace_unshare(struct lwp *l)
 
 /*
  * uvmspace_exec: the process wants to exec a new program
- *
- * - XXX: no locking on vmspace
  */
 
 void
@@ -3566,28 +3566,27 @@ uvmspace_exec(struct lwp *l, vaddr_t start, vaddr_t end)
 
 /*
  * uvmspace_free: free a vmspace data structure
- *
- * - XXX: no locking on vmspace
  */
 
 void
 uvmspace_free(struct vmspace *vm)
 {
 	struct vm_map_entry *dead_entries;
-	struct vm_map *map;
+	struct vm_map *map = &vm->vm_map;
 	UVMHIST_FUNC("uvmspace_free"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist,"(vm=0x%x) ref=%d", vm, vm->vm_refcnt,0,0);
-	if (--vm->vm_refcnt > 0) {
+	simple_lock(&map->ref_lock);
+	int n = --vm->vm_refcnt;
+	simple_unlock(&map->ref_lock);
+	if (n > 0)
 		return;
-	}
 
 	/*
 	 * at this point, there should be no other references to the map.
 	 * delete all of the mappings, then destroy the pmap.
 	 */
 
-	map = &vm->vm_map;
 	map->flags |= VM_MAP_DYING;
 	pmap_remove_all(map->pmap);
 #ifdef SYSVSHM

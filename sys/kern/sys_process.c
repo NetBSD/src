@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.86 2004/03/13 18:43:18 matt Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.87 2004/05/04 21:33:40 pk Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.86 2004/03/13 18:43:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.87 2004/05/04 21:33:40 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -689,6 +689,7 @@ process_domem(curp, p, uio)
 	struct proc *p;			/* traced */
 	struct uio *uio;
 {
+	struct vmspace *vm;
 	int error;
 
 	size_t len;
@@ -708,12 +709,18 @@ process_domem(curp, p, uio)
 	if ((error = process_checkioperm(curp, p)) != 0)
 		return (error);
 
-	/* XXXCDC: how should locking work here? */
-	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1)) 
-		return(EFAULT);
-	p->p_vmspace->vm_refcnt++;  /* XXX */
-	error = uvm_io(&p->p_vmspace->vm_map, uio);
-	uvmspace_free(p->p_vmspace);
+	vm = p->p_vmspace;
+
+	simple_lock(&vm->vm_map.ref_lock);
+	if ((p->p_flag & P_WEXIT) || vm->vm_refcnt < 1) 
+		error = EFAULT;
+	if (error == 0)
+		p->p_vmspace->vm_refcnt++;  /* XXX */
+	simple_unlock(&vm->vm_map.ref_lock);
+	if (error != 0)
+		return (error);
+	error = uvm_io(&vm->vm_map, uio);
+	uvmspace_free(vm);
 
 #ifdef PMAP_NEED_PROCWR
 	if (error == 0 && uio->uio_rw == UIO_WRITE)
