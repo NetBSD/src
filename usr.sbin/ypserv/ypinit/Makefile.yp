@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.yp,v 1.7 1997/11/18 00:37:23 lukem Exp $
+#	$NetBSD: Makefile.yp,v 1.8 1998/06/08 03:44:34 lukem Exp $
 #
 # This is the YP Makefile, used to create and push YP maps.
 #
@@ -12,13 +12,10 @@ NOPUSH?=	""
 # a common solution: a secure map (generated with makedbm -s) can
 # only be accessed by a client bound to a privileged port.
 #
-# Comment out the following if you don't need compatibility with
-# sites that don't support this feature
+# Uncomment out the following if you need compatibility with
+# sites that don't support this feature.
 #
-# XXX:	`secure' maps are currently not supported by the system,
-#	so do not set this to `no' for NetBSD 1.3 clients.
-#
-INSECURE?=	yes
+#INSECURE?=	yes
 
 
 YPDBDIR=	/var/yp
