@@ -1,4 +1,4 @@
-/*	$NetBSD: mynetworks.c,v 1.4 2004/05/31 00:46:47 heas Exp $	*/
+/*	$NetBSD: mynetworks.c,v 1.5 2004/07/28 23:19:42 heas Exp $	*/
 
 /*++
 /* NAME
@@ -92,6 +92,17 @@ const char *mynetworks(void)
 
 	mask_style = name_mask("mynetworks mask style", mask_styles,
 			       var_mynetworks_style);
+
+	/*
+	 * XXX Workaround: name_mask() needs a flags argument so that we can
+	 * require exactly one value, or we need to provide an API that is
+	 * dedicated for single-valued flags.
+	 */
+	for (i = 0, junk = mask_style; junk != 0; junk >>= 1)
+	    i += (junk & 1);
+	if (i != 1)
+	    msg_fatal("bad %s value: %s; specify exactly one value",
+		      VAR_MYNETWORKS_STYLE, var_mynetworks_style);
 
 	result = vstring_alloc(20);
 	my_addr_list = own_inet_addr_list();
