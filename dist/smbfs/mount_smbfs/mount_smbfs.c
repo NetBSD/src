@@ -1,3 +1,5 @@
+/* $NetBSD: mount_smbfs.c,v 1.2 2003/02/18 09:53:55 jdolecek Exp $ */
+
 /*
  * Copyright (c) 2000-2002, Boris Popov
  * All rights reserved.
@@ -45,6 +47,7 @@
 #include <stdlib.h>
 #include <err.h>
 #include <sysexits.h>
+#include <errno.h>
 
 #include <cflib.h>
 
@@ -59,7 +62,7 @@
 static char mount_point[MAXPATHLEN + 1];
 static void usage(void);
 
-static struct mntopt mopts[] = {
+const static struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	{ NULL, 0, 0, 0 }
 };
@@ -71,19 +74,10 @@ main(int argc, char *argv[])
 	struct smb_ctx sctx, *ctx = &sctx;
 	struct smbfs_args mdata;
 	struct stat st;
-#ifdef APPLE
-	extern void dropsuid();
-	extern int loadsmbvfs();
-#else
-	struct vfsconf vfc;
-#endif /* APPLE */
 	char *next;
 	int opt, error, mntflags, caseopt;
 
 
-#ifdef APPLE
-	dropsuid();
-#endif /* APPLE */
 	if (argc == 2) {
 		if (strcmp(argv[1], "-h") == 0) {
 			usage();
@@ -95,20 +89,6 @@ main(int argc, char *argv[])
 	}
 	if (argc < 3)
 		usage();
-
-#ifdef APPLE
-	error = loadsmbvfs();
-#else
-	error = getvfsbyname(SMBFS_VFSNAME, &vfc);
-	if (error && vfsisloadable(SMBFS_VFSNAME)) {
-		if(vfsload(SMBFS_VFSNAME))
-			err(EX_OSERR, "vfsload("SMBFS_VFSNAME")");
-		endvfsent();
-		error = getvfsbyname(SMBFS_VFSNAME, &vfc);
-	}
-#endif /* APPLE */
-	if (error)
-		errx(EX_OSERR, "SMB filesystem is not available");
 
 	if (smb_lib_init() != 0)
 		exit(1);
