@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.11 1999/04/01 11:33:02 fvdl Exp $ */
+/*	$NetBSD: mbr.c,v 1.12 1999/04/03 22:56:22 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -451,9 +451,9 @@ int
 valid_mbr(buf)
 	char *buf;
 {
-	int magic;
+	u_int16_t magic;
 
-	magic = *((int *)&buf[MBR_MAGICOFF]);
+	magic = *((u_int16_t *)&buf[MBR_MAGICOFF]);
 
 	return (le_to_native16(magic) == MBR_MAGIC);
 }
