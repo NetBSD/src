@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.29 2002/07/20 08:40:17 grant Exp $ */
+/* $NetBSD: xlint.c,v 1.30 2002/10/21 21:16:13 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.29 2002/07/20 08:40:17 grant Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.30 2002/10/21 21:16:13 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -103,7 +103,7 @@ static	char	**libsrchpath;
 static  char	*libexec_path;
 
 /* flags */
-static	int	iflag, oflag, Cflag, sflag, tflag, Fflag, dflag, Bflag;
+static	int	iflag, oflag, Cflag, sflag, tflag, Fflag, dflag, Bflag, Sflag;
 
 /* print the commands executed to run the stages of compilation */
 static	int	Vflag;
@@ -285,13 +285,13 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "Usage: %s [-abceghprvwxzHF] [-s|-t] [-i|-nu] [-Dname[=def]]"
+	    "Usage: %s [-abceghprvwxzHFS] [-s|-t] [-i|-nu] [-Dname[=def]]"
 	    " [-Uname] [-X <id>[,<id>]...\n", getprogname());
 	(void)fprintf(stderr,
 	    "\t[-Idirectory] [-Ldirectory] [-llibrary] [-ooutputfile]"
 	    " file...\n");
 	(void)fprintf(stderr,
-	    "       %s [-abceghprvwzHF] [-s|-t] -Clibrary [-Dname[=def]]\n"
+	    "       %s [-abceghprvwzHFS] [|-s|-t] -Clibrary [-Dname[=def]]\n"
 	    " [-X <id>[,<id>]...\n", getprogname());
 	(void)fprintf(stderr, "\t[-Idirectory] [-Uname] [-Bpath] file"
 	    " ...\n");
@@ -361,8 +361,7 @@ main(int argc, char *argv[])
 	(void)signal(SIGINT, terminate);
 	(void)signal(SIGQUIT, terminate);
 	(void)signal(SIGTERM, terminate);
-
-	while ((c = getopt(argc, argv, "abcd:eghil:no:prstuvwxzB:C:D:FHI:L:U:VX:")) != -1) {
+	while ((c = getopt(argc, argv, "abcd:eghil:no:prstuvwxzB:C:D:FHI:L:SU:VX:")) != -1) {
 		switch (c) {
 
 		case 'a':
@@ -424,6 +423,13 @@ main(int argc, char *argv[])
 			appcstrg(&l1flags, "-s");
 			appcstrg(&l2flags, "-s");
 			sflag = 1;
+			break;
+
+		case 'S':
+			if (tflag)
+				usage();
+			appcstrg(&l1flags, "-S");
+			Sflag = 1;
 			break;
 
 #if !HAVE_CONFIG_H
