@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.c,v 1.13 2000/09/21 17:44:34 jsm Exp $	*/
+/*	$NetBSD: globals.c,v 1.14 2000/09/23 19:23:58 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)globals.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: globals.c,v 1.13 2000/09/21 17:44:34 jsm Exp $");
+__RCSID("$NetBSD: globals.c,v 1.14 2000/09/23 19:23:58 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -218,6 +218,17 @@ const int     objcumber[NUMOFOBJECTS] = {
 	1, 1, 3, 1, 0, 0, 1, 0,
 	0, 0, 10, 0, 0, 0, 7, 8,
 	10, 8, 8, 10, 10, 3, 1, 2
+};
+
+const int objflags[NUMOFOBJECTS] = {
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, OBJ_PLURAL, 0, OBJ_PLURAL,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, OBJ_PLURAL, 0, 0, 0,
+	0, 0, 0, 0, OBJ_PLURAL, 0, 0, OBJ_PLURAL,
+	0, 0, OBJ_PLURAL, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0
 };
 
 int     win = 1;
