@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.36 1998/01/12 20:12:30 thorpej Exp $	*/
+/*	$NetBSD: dc.c,v 1.37 1998/03/22 07:04:13 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.36 1998/01/12 20:12:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.37 1998/03/22 07:04:13 jonathan Exp $");
 
 /*
  * devDC7085.c --
@@ -396,8 +396,7 @@ dcopen(dev, flag, mode, p)
 	tp->t_oproc = dcstart;
 	tp->t_param = dcparam;
 	tp->t_dev = dev;
-	if ((tp->t_state & TS_ISOPEN) == 0) {
-		tp->t_state |= TS_WOPEN;
+	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		ttychars(tp);
 		firstopen = 1;
 #ifndef PORTSELECTOR
@@ -428,9 +427,11 @@ dcopen(dev, flag, mode, p)
 	s = spltty();
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
 	       !(tp->t_state & TS_CARR_ON)) {
-		tp->t_state |= TS_WOPEN;
-		if ((error = ttysleep(tp, (caddr_t)&tp->t_rawq,
-				      TTIPRI | PCATCH, ttopen, 0)) != 0)
+		tp->t_wopen++;
+		error = ttysleep(tp, (caddr_t)&tp->t_rawq,
+		    TTIPRI | PCATCH, ttopen, 0);
+		tp->t_wopen--;
+		if (error != 0)
 			break;
 	}
 	splx(s);
@@ -475,7 +476,7 @@ dcclose(dev, flag, mode, p)
 	}
 	splx(s);
 	(*linesw[tp->t_line].l_close)(tp, flag);
-	if ((tp->t_cflag & HUPCL) || (tp->t_state & TS_WOPEN) ||
+	if ((tp->t_cflag & HUPCL) || tp->t_wopen ||
 	    !(tp->t_state & TS_ISOPEN))
 		(void) dcmctl(dev, 0, DMSET);
 	return (ttyclose(tp));
@@ -760,7 +761,7 @@ dcrint(sc)
 		if (!(tp->t_state & TS_ISOPEN)) {
 			wakeup((caddr_t)&tp->t_rawq);
 #ifdef PORTSELECTOR
-			if (!(tp->t_state & TS_WOPEN))
+			if (tp->t_wopen == 0)
 #endif
 				return;
 		}
