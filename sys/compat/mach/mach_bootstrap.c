@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_bootstrap.c,v 1.1 2002/12/07 21:23:03 manu Exp $ */
+/*	$NetBSD: mach_bootstrap.c,v 1.2 2002/12/09 21:29:22 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_bootstrap.c,v 1.1 2002/12/07 21:23:03 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_bootstrap.c,v 1.2 2002/12/09 21:29:22 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -67,8 +67,6 @@ mach_bootstrap_look_up(p, msgh, maxlen, dst)
 	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
 		return error;
 
-	DPRINTF(("mach_sys_bootstrap_look_up();\n"));
-
 	bzero(&rep, sizeof(rep));
 
 	/* The trailer is word aligned  */
@@ -89,13 +87,6 @@ mach_bootstrap_look_up(p, msgh, maxlen, dst)
 	/* XXX This is the trailer. We should find something better */
 	rep.rep_service_name[service_name_len + 7] = 8;
 
-	if (msglen > maxlen)
-		return EMSGSIZE;
-	if (dst != NULL)
-		msgh = dst;
-
-	if ((error = copyout(&rep, msgh, msglen)) != 0)
-		return error;
-	return 0;
+	return MACH_MSG_RETURN(p, &rep, msgh, msglen, maxlen, dst);
 }
 

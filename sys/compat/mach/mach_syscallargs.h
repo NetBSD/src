@@ -1,4 +1,4 @@
-/* $NetBSD: mach_syscallargs.h,v 1.6 2002/11/26 08:10:58 manu Exp $ */
+/* $NetBSD: mach_syscallargs.h,v 1.7 2002/12/09 21:29:25 manu Exp $ */
 
 /*
  * System call argument lists.

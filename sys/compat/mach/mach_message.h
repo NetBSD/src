@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.h,v 1.6 2002/11/28 21:21:32 manu Exp $	 */
+/*	$NetBSD: mach_message.h,v 1.7 2002/12/09 21:29:24 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -106,6 +106,7 @@ typedef unsigned int mach_msg_descriptor_type_t;
 #define MACH_MSG_OOL_PORTS_DESCRIPTOR 		2
 #define MACH_MSG_OOL_VOLATILE_DESCRIPTOR  	3
 
+#define MACH_MAX_MSG_LEN 65536
 typedef	struct {
 	mach_msg_bits_t	msgh_bits;
 	mach_msg_size_t	msgh_size;
@@ -157,5 +158,12 @@ struct mach_subsystem_namemap {
 	const char	*map_name;
 };
 extern struct mach_subsystem_namemap mach_namemap[];
+
+#define MACH_MSG_RETURN(p,rep,msgh,msglen,maxlen,dst) \
+    mach_msg_return((p), (mach_msg_header_t *)(rep), (msgh), \
+    (msglen), (maxlen), (dst))
+
+int mach_msg_return(struct proc *, mach_msg_header_t *, mach_msg_header_t *, 
+    size_t, size_t, mach_msg_header_t *);
 
 #endif /* !_MACH_MESSAGE_H_ */

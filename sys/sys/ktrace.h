@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.24 2002/11/16 07:40:42 uebayasi Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.25 2002/12/09 21:29:20 manu Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -154,6 +154,25 @@ struct ktr_user {
 };
 
 /*
+ * KTR_MMSG - Mach message
+ */
+#define KTR_MMSG		9
+struct ktr_mmsg { 
+	/* 
+	 * This is a Mach message header
+	 */
+	int	ktr_bits;
+	int	ktr_size;
+	int	ktr_remote_port;
+	int	ktr_local_port;
+	int	ktr_reserved;
+	int	ktr_id;
+	/* 
+	 * Followed by ktr_size - sizeof(mach_msg_header_t) of message payload
+	 */
+};
+
+/*
  * kernel trace points (in p_traceflag)
  */
 #define KTRFAC_MASK	0x00ffffff
@@ -165,6 +184,7 @@ struct ktr_user {
 #define KTRFAC_CSW	(1<<KTR_CSW)
 #define KTRFAC_EMUL	(1<<KTR_EMUL)
 #define	KTRFAC_USER	(1<<KTR_USER)
+#define KTRFAC_MMSG	(1<<KTR_MMSG)
 /*
  * trace flags (also in p_traceflags)
  */
@@ -177,23 +197,26 @@ struct ktr_user {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	ktrace __P((const char *, int, int, pid_t));
-int	fktrace __P((int, int, int, pid_t));
-int	utrace __P((const char *, void *, size_t));
+int	ktrace(const char *, int, int, pid_t);
+int	fktrace(int, int, int, pid_t);
+int	utrace(const char *, void *, size_t);
 __END_DECLS
 
 #else
 
-void ktrcsw __P((struct proc *, int, int));
-void ktremul __P((struct proc *));
-void ktrgenio __P((struct proc *, int, enum uio_rw, struct iovec *, int, int));
-void ktrnamei __P((struct proc *, char *));
-void ktrpsig __P((struct proc *, int, sig_t, sigset_t *, int));
-void ktrsyscall __P((struct proc *, register_t, register_t, register_t []));
-void ktrsysret __P((struct proc *, register_t, int, register_t));
-void ktruser __P((struct proc *, const char *, void *, size_t, int));
-void ktrderef __P((struct proc *));
-void ktradref __P((struct proc *));
+void ktrcsw(struct proc *, int, int);
+void ktremul(struct proc *);
+void ktrgenio(struct proc *, int, enum uio_rw, struct iovec *, int, int);
+void ktrnamei(struct proc *, char *);
+void ktrpsig(struct proc *, int, sig_t, sigset_t *, int);
+void ktrsyscall(struct proc *, register_t, register_t, register_t []);
+void ktrsysret(struct proc *, register_t, int, register_t);
+void ktruser(struct proc *, const char *, void *, size_t, int);
+#ifdef COMPAT_MACH
+void ktrmmsg(struct proc *, const char *, size_t);
+#endif
+void ktrderef(struct proc *);
+void ktradref(struct proc *);
 
 #endif	/* !_KERNEL */
 
