@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *      from: @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.17 1994/09/16 21:14:58 mycroft Exp $
+ *	$Id: conf.c,v 1.18 1994/09/16 21:17:21 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -295,7 +295,7 @@ cdev_decl(tun);
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	(dev_type_reset((*))) enodev, 0, dev_init(c,n,select), \
-	(dev_type_mmap((*))) enodev, 0 }
+	(dev_type_map((*))) enodev, 0 }
 
 struct cdevsw	cdevsw[] =
 {
