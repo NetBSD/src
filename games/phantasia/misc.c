@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.12 2004/04/11 13:35:06 he Exp $	*/
+/*	$NetBSD: misc.c,v 1.13 2005/02/15 12:56:20 jsm Exp $	*/
 
 /*
  * misc.c  Phantasia miscellaneous support routines
@@ -673,7 +673,7 @@ death(how)
 	if (ch == 'Y') {
 		cleanup(FALSE);
 		execl(_PATH_GAMEPROG, "phantasia", "-s",
-		    (Wizard ? "-S" : (char *) NULL), 0);
+		    (Wizard ? "-S" : (char *) NULL), (char *) NULL);
 		exit(0);
 		/* NOTREACHED */
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.16 2004/01/27 20:30:28 jsm Exp $	*/
+/*	$NetBSD: input.c,v 1.17 2005/02/15 12:56:20 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: input.c,v 1.16 2004/01/27 20:30:28 jsm Exp $");
+__RCSID("$NetBSD: input.c,v 1.17 2005/02/15 12:56:20 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -322,10 +322,10 @@ gettoken()
 						base = shell;
 					else
 						base++;
-					execl(shell, base, 0);
+					execl(shell, base, (char *) 0);
 				}
 				else
-					execl(_PATH_BSHELL, "sh", 0);
+					execl(_PATH_BSHELL, "sh", (char *) 0);
 
 				exit(0);	/* oops */
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2004/02/08 22:23:50 jsm Exp $	*/
+/*	$NetBSD: main.c,v 1.21 2005/02/15 12:56:20 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.20 2004/02/08 22:23:50 jsm Exp $");
+__RCSID("$NetBSD: main.c,v 1.21 2005/02/15 12:56:20 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -150,7 +150,8 @@ main(argc, argv)
 			if (yorn(0)) {
 
 				fixtty(&old);	/* restore tty */
-				execl(TEACH, "teachgammon", args[0]?args:0, 0);
+				execl(TEACH, "teachgammon", args[0]?args:0,
+				      (char *) 0);
 
 				tflag = 0;	/* error! */
 				writel(noteach);

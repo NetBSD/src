@@ -1,4 +1,4 @@
-/*	$NetBSD: fish.c,v 1.15 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: fish.c,v 1.16 2005/02/15 12:56:20 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fish.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fish.c,v 1.15 2004/01/27 20:30:29 jsm Exp $");
+__RCSID("$NetBSD: fish.c,v 1.16 2005/02/15 12:56:20 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -472,7 +472,7 @@ instructions()
 			err(1, "open %s", _PATH_INSTR);
 		if (dup2(fd, 0) == -1)
 			err(1, "dup2");
-		(void)execl("/bin/sh", "sh", "-c", pager, NULL);
+		(void)execl("/bin/sh", "sh", "-c", pager, (char *) NULL);
 		err(1, "exec sh -c %s", pager);
 		/*NOTREACHED*/
 	case -1:
