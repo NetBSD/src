@@ -1,7 +1,7 @@
-/*	$NetBSD: pch.c,v 1.15 2003/05/29 00:59:24 kristerw Exp $	*/
+/*	$NetBSD: pch.c,v 1.16 2003/05/30 18:14:13 kristerw Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pch.c,v 1.15 2003/05/29 00:59:24 kristerw Exp $");
+__RCSID("$NetBSD: pch.c,v 1.16 2003/05/30 18:14:13 kristerw Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -84,11 +84,11 @@ void
 set_hunkmax(void)
 {
 	if (p_line == NULL)
-		p_line = malloc(hunkmax * sizeof(char *));
+		p_line = xmalloc(hunkmax * sizeof(char *));
 	if (p_len == NULL)
-		p_len  = malloc(hunkmax * sizeof(size_t));
+		p_len  = xmalloc(hunkmax * sizeof(size_t));
 	if (p_char == NULL)
-		p_char = malloc(hunkmax * sizeof(char));
+		p_char = xmalloc(hunkmax * sizeof(char));
 }
 
 /*
@@ -97,31 +97,11 @@ set_hunkmax(void)
 void
 grow_hunkmax(void)
 {
-	char **tp_line;
-	size_t *tp_len;
-	char *tp_char;
-
 	hunkmax *= 2;
-	if (p_line == NULL || p_len == NULL || p_char == NULL)
-		fatal("Out of memory\n");
-	tp_line = p_line;
-	tp_len = p_len;
-	tp_char = p_char;
-	p_line = realloc(p_line, hunkmax * sizeof(char *));
-	p_len  = realloc(p_len,  hunkmax * sizeof(size_t));
-	p_char = realloc(p_char, hunkmax * sizeof(char));
-	if (p_line != NULL && p_len != NULL && p_char != NULL)
-		return;
-	if (!using_plan_a)
-		fatal("Out of memory\n");
-	out_of_mem = TRUE;	/* whatever is null will be allocated again */
-				/* from within plan_a(), of all places */
-	if (p_line == NULL)
-		free(tp_line);
-	if (p_len == NULL)
-		free(tp_len);
-	if (p_char == NULL)
-		free(tp_char);
+
+	p_line = xrealloc(p_line, hunkmax * sizeof(char *));
+	p_len  = xrealloc(p_len,  hunkmax * sizeof(size_t));
+	p_char = xrealloc(p_char, hunkmax * sizeof(char));
 }
 
 /*
@@ -371,14 +351,14 @@ intuit_diff_type(void)
 			newname = fetchname(newtmp, strippath, TRUE);
 		if (oldname && newname) {
 			if (strlen(oldname) < strlen(newname))
-				bestguess = savestr(oldname);
+				bestguess = xstrdup(oldname);
 			else
-				bestguess = savestr(newname);
+				bestguess = xstrdup(newname);
 		}
 		else if (oldname)
-			bestguess = savestr(oldname);
+			bestguess = xstrdup(oldname);
 		else if (newname)
-			bestguess = savestr(newname);
+			bestguess = xstrdup(newname);
 	}
 	if (indtmp != NULL)
 		free(indtmp);
@@ -550,11 +530,7 @@ another_hunk(void)
 		    fatal("unexpected *** at line %d: %s", p_input_line, buf);
 		}
 		context = 0;
-		p_line[p_end] = savestr(buf);
-		if (out_of_mem) {
-		    p_end--;
-		    return FALSE;
-		}
+		p_line[p_end] = xstrdup(buf);
 		for (s=buf; *s && !isdigit((unsigned char)*s); s++) ;
 		if (!*s)
 		    malformed ();
@@ -615,11 +591,7 @@ another_hunk(void)
 		    repl_beginning = p_end;
 		    repl_backtrack_position = ftell(pfp);
 		    repl_patch_line = p_input_line;
-		    p_line[p_end] = savestr(buf);
-		    if (out_of_mem) {
-			p_end--;
-			return FALSE;
-		    }
+		    p_line[p_end] = xstrdup(buf);
 		    p_char[p_end] = '=';
 		    for (s=buf; *s && !isdigit((unsigned char)*s); s++) ;
 		    if (!*s)
@@ -665,11 +637,7 @@ another_hunk(void)
 			p_context = context;
 		    context = -1000;
 		}
-		p_line[p_end] = savestr(buf+2);
-		if (out_of_mem) {
-		    p_end--;
-		    return FALSE;
-		}
+		p_line[p_end] = xstrdup(buf+2);
 		if (p_end == p_ptrn_lines)
 		{
 			if (remove_special_line()) {
@@ -686,11 +654,7 @@ another_hunk(void)
 		    repl_missing = TRUE;
 		    goto hunk_done;
 		}
-		p_line[p_end] = savestr(buf);
-		if (out_of_mem) {
-		    p_end--;
-		    return FALSE;
-		}
+		p_line[p_end] = xstrdup(buf);
 		if (p_end != p_ptrn_lines + 1) {
 		    ptrn_spaces_eaten |= (repl_beginning != 0);
 		    context++;
@@ -708,11 +672,7 @@ another_hunk(void)
 		context++;
 		if (!repl_beginning)
 		    ptrn_copiable++;
-		p_line[p_end] = savestr(buf+2);
-		if (out_of_mem) {
-		    p_end--;
-		    return FALSE;
-		}
+		p_line[p_end] = xstrdup(buf+2);
 		break;
 	    default:
 		if (repl_beginning && repl_could_be_missing) {
@@ -862,18 +822,10 @@ another_hunk(void)
 	filldst = fillsrc + p_ptrn_lines;
 	p_end = filldst + p_repl_lines;
 	Sprintf(buf,"*** %d,%d ****\n",p_first,p_first + p_ptrn_lines - 1);
-	p_line[0] = savestr(buf);
-	if (out_of_mem) {
-	    p_end = -1;
-	    return FALSE;
-	}
+	p_line[0] = xstrdup(buf);
 	p_char[0] = '*';
         Sprintf(buf,"--- %d,%d ----\n",p_newfirst,p_newfirst+p_repl_lines-1);
-	p_line[filldst] = savestr(buf);
-	if (out_of_mem) {
-	    p_end = 0;
-	    return FALSE;
-	}
+	p_line[filldst] = xstrdup(buf);
 	p_char[filldst++] = '=';
 	p_context = 100;
 	context = 0;
@@ -891,17 +843,11 @@ another_hunk(void)
 	    }
 	    if (*buf == '\t' || *buf == '\n') {
 		ch = ' ';		/* assume the space got eaten */
-		s = savestr(buf);
+		s = xstrdup(buf);
 	    }
 	    else {
 		ch = *buf;
-		s = savestr(buf+1);
-	    }
-	    if (out_of_mem) {
-		while (--filldst > p_ptrn_lines)
-		    free(p_line[filldst]);
-		p_end = fillsrc-1;
-		return FALSE;
+		s = xstrdup(buf+1);
 	    }
 	    switch (ch) {
 	    case '-':
@@ -935,13 +881,7 @@ another_hunk(void)
 		p_char[fillsrc] = ch;
 		p_line[fillsrc] = s;
 		p_len[fillsrc++] = strlen(s);
-		s = savestr(s);
-		if (out_of_mem) {
-		    while (--filldst > p_ptrn_lines)
-			free(p_line[filldst]);
-		    p_end = fillsrc-1;
-		    return FALSE;
-		}
+		s = xstrdup(s);
 		/* FALLTHROUGH */
 	    case '+':
 		if (filldst > p_end) {
@@ -1013,11 +953,7 @@ another_hunk(void)
 	p_newfirst = min;
 	p_repl_lines = max - min + 1;
 	Sprintf(buf, "*** %d,%d\n", p_first, p_first + p_ptrn_lines - 1);
-	p_line[0] = savestr(buf);
-	if (out_of_mem) {
-	    p_end = -1;
-	    return FALSE;
-	}
+	p_line[0] = xstrdup(buf);
 	p_char[0] = '*';
 	for (i=1; i<=p_ptrn_lines; i++) {
 	    ret = pgets(buf, sizeof buf, pfp);
@@ -1027,11 +963,7 @@ another_hunk(void)
 		  p_input_line);
 	    if (*buf != '<')
 		fatal("< expected at line %d of patch\n", p_input_line);
-	    p_line[i] = savestr(buf+2);
-	    if (out_of_mem) {
-		p_end = i-1;
-		return FALSE;
-	    }
+	    p_line[i] = xstrdup(buf+2);
 	    p_len[i] = strlen(p_line[i]);
 	    p_char[i] = '-';
 	}
@@ -1051,11 +983,7 @@ another_hunk(void)
 		fatal("--- expected at line %d of patch\n", p_input_line);
 	}
 	Sprintf(buf, "--- %d,%d\n", min, max);
-	p_line[i] = savestr(buf);
-	if (out_of_mem) {
-	    p_end = i-1;
-	    return FALSE;
-	}
+	p_line[i] = xstrdup(buf);
 	p_char[i] = '=';
 	for (i++; i<=p_end; i++) {
 	    ret = pgets(buf, sizeof buf, pfp);
@@ -1065,11 +993,7 @@ another_hunk(void)
 		    p_input_line);
 	    if (*buf != '>')
 		fatal("> expected at line %d of patch\n", p_input_line);
-	    p_line[i] = savestr(buf+2);
-	    if (out_of_mem) {
-		p_end = i-1;
-		return FALSE;
-	    }
+	    p_line[i] = xstrdup(buf+2);
 	    p_len[i] = strlen(p_line[i]);
 	    p_char[i] = '+';
 	}

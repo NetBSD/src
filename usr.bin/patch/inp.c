@@ -1,7 +1,7 @@
-/*	$NetBSD: inp.c,v 1.11 2003/05/29 00:59:24 kristerw Exp $	*/
+/*	$NetBSD: inp.c,v 1.12 2003/05/30 18:14:13 kristerw Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: inp.c,v 1.11 2003/05/29 00:59:24 kristerw Exp $");
+__RCSID("$NetBSD: inp.c,v 1.12 2003/05/30 18:14:13 kristerw Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -176,15 +176,8 @@ plan_a(char *filename)
 	if (!S_ISREG(filemode))
 		fatal("%s is not a normal file--can't patch\n", filename);
 	i_size = filestat.st_size;
-	if (out_of_mem) {
-		set_hunkmax();	/* make sure dynamic arrays are allocated */
-		out_of_mem = FALSE;
-		return FALSE;	/* force plan b because plan a bombed */
-    }
 
-	i_womp = malloc(i_size + 2);
-	if (i_womp == NULL)
-		return FALSE;
+	i_womp = xmalloc(i_size + 2);
 	if ((ifd = open(filename, 0)) < 0)
 		pfatal("can't open file %s", filename);
 	if (read(ifd, i_womp, i_size) != i_size) {
@@ -210,11 +203,7 @@ plan_a(char *filename)
 		if (*s == '\n')
 			iline++;
 	}
-	i_ptr = malloc((iline + 2) * sizeof(char *));
-	if (i_ptr == NULL) {	/* shucks, it was a near thing */
-		free(i_womp);
-		return FALSE;
-	}
+	i_ptr = xmalloc((iline + 2) * sizeof(char *));
     
 	/* Now scan the buffer and build pointer array. */
 	iline = 1;
@@ -299,10 +288,8 @@ plan_b(char *filename)
 	Fseek(ifp, 0L, 0);		/* Rewind file. */
 	lines_per_buf = BUFFERSIZE / maxlen;
 	tireclen = maxlen;
-	tibuf[0] = malloc(BUFFERSIZE + 1);
-	tibuf[1] = malloc(BUFFERSIZE + 1);
-	if (tibuf[1] == NULL)
-		fatal("out of memory\n");
+	tibuf[0] = xmalloc(BUFFERSIZE + 1);
+	tibuf[1] = xmalloc(BUFFERSIZE + 1);
 	for (i = 1; ; i++) {
 		if (! (i % lines_per_buf))	/* New block. */
 			if (write(tifd, tibuf[0], BUFFERSIZE) < BUFFERSIZE)
