@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.h,v 1.4 2001/09/26 20:53:07 eeh Exp $ */
+/*	$NetBSD: promlib.h,v 1.5 2003/01/16 16:58:52 pk Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -140,7 +140,15 @@ int	prom_node_has_property __P((int, const char *));
 void	prom_halt __P((void))	__attribute__((__noreturn__));
 void	prom_boot __P((char *))	__attribute__((__noreturn__));
 
-#define callrom			prom_abort
+#if defined(MULTIPROCESSOR)
+#define callrom() do {		\
+	mp_pause_cpus();	\
+	prom_abort();		\
+	mp_resume_cpus();	\
+} while (0)
+#else
+#define callrom()		prom_abort()
+#endif
 
 #define prom_version()		(promops.po_version)
 #define prom_revision()		(promops.po_revision)
