@@ -1,4 +1,4 @@
-#	$NetBSD: files.explora,v 1.2 2003/11/19 14:27:24 scw Exp $
+#	$NetBSD: files.explora,v 1.3 2004/01/20 19:58:00 jdolecek Exp $
 
 # maxpartitions must be first item in files.${ARCH}
 
@@ -31,9 +31,6 @@ file	arch/powerpc/ibm4xx/cpu.c
 
 attach	com at elb with com_elb
 file	arch/evbppc/explora/dev/com_elb.c	com_elb
-
-device	lpt
-file	dev/ic/lpt.c				lpt		needs-flag
 
 attach	lpt at elb with lpt_elb
 file	arch/evbppc/explora/dev/lpt_elb.c	lpt_elb

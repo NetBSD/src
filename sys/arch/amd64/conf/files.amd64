@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.7 2003/10/06 22:53:47 fvdl Exp $
+#	$NetBSD: files.amd64,v 1.8 2004/01/20 19:58:00 jdolecek Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -129,14 +129,6 @@ file 	arch/amd64/pci/aapic.c			aapic
 #
 
 include	"dev/isa/files.isa"
-
-# XXX THE FOLLOWING BLOCK SHOULD GO INTO dev/pci/files.pci, BUT CANNOT
-# XXX BECAUSE NOT 'lpt' IS DEFINED IN files.isa, RATHER THAN files.
-# XXX (when the conf/files and files.isa bogons are fixed, this can
-# XXX be fixed as well.)
-
-attach	lpt at puc with lpt_puc
-file	dev/pci/lpt_puc.c			lpt_puc
 
 # PC clock
 file	arch/amd64/isa/clock.c			isa

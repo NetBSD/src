@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.61 2003/12/27 02:19:34 grant Exp $
+#	$NetBSD: files.macppc,v 1.62 2004/01/20 19:58:00 jdolecek Exp $
 #
 # macppc-specific configuration info
 
@@ -177,11 +177,6 @@ file arch/macppc/dev/gpio.c			gpio
 device macofcons: tty
 attach macofcons at pci
 file arch/macppc/dev/ofcons.c			macofcons needs-flag
-
-device lpt
-file dev/ic/lpt.c				lpt
-attach lpt at puc with lpt_puc
-file dev/pci/lpt_puc.c				lpt_puc
 
 include "dev/usb/files.usb"
 include "dev/ieee1394/files.ieee1394"
