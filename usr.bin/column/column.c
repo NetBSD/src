@@ -1,4 +1,4 @@
-/*	$NetBSD: column.c,v 1.5 1997/07/01 06:39:38 mikel Exp $	*/
+/*	$NetBSD: column.c,v 1.6 1997/10/18 13:03:08 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)column.c	8.4 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$NetBSD: column.c,v 1.5 1997/07/01 06:39:38 mikel Exp $";
+__RCSID("$NetBSD: column.c,v 1.6 1997/10/18 13:03:08 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -61,6 +61,7 @@ void  c_columnate __P((void));
 void *emalloc __P((int));
 void  input __P((FILE *));
 void  maketbl __P((void));
+int   main __P((int, char **));
 void  print __P((void));
 void  r_columnate __P((void));
 void  usage __P((void));
@@ -84,13 +85,13 @@ main(argc, argv)
 	char *p;
 
 	if (ioctl(1, TIOCGWINSZ, &win) == -1 || !win.ws_col) {
-		if (p = getenv("COLUMNS"))
+		if ((p = getenv("COLUMNS")) == NULL)
 			termwidth = atoi(p);
 	} else
 		termwidth = win.ws_col;
 
 	tflag = xflag = 0;
-	while ((ch = getopt(argc, argv, "c:s:tx")) != EOF)
+	while ((ch = getopt(argc, argv, "c:s:tx")) != -1)
 		switch(ch) {
 		case 'c':
 			termwidth = atoi(optarg);
@@ -114,7 +115,7 @@ main(argc, argv)
 	if (!*argv)
 		input(stdin);
 	else for (; *argv; ++argv)
-		if (fp = fopen(*argv, "r")) {
+		if ((fp = fopen(*argv, "r")) == NULL) {
 			input(fp);
 			(void)fclose(fp);
 		} else {
@@ -155,7 +156,7 @@ c_columnate()
 			endcol = maxlength;
 			putchar('\n');
 		} else {
-			while ((cnt = (chcnt + TAB & ~(TAB - 1))) <= endcol) {
+			while ((cnt = ((chcnt + TAB) & ~(TAB - 1))) <= endcol) {
 				(void)putchar('\t');
 				chcnt = cnt;
 			}
@@ -183,7 +184,7 @@ r_columnate()
 			chcnt += printf("%s", list[base]);
 			if ((base += numrows) >= entries)
 				break;
-			while ((cnt = (chcnt + TAB & ~(TAB - 1))) <= endcol) {
+			while ((cnt = ((chcnt + TAB) & ~(TAB - 1))) <= endcol) {
 				(void)putchar('\t');
 				chcnt = cnt;
 			}
@@ -223,14 +224,15 @@ maketbl()
 	cols = emalloc((maxcols = DEFCOLS) * sizeof(char *));
 	lens = emalloc(maxcols * sizeof(int));
 	for (cnt = 0, lp = list; cnt < entries; ++cnt, ++lp, ++t) {
-		for (coloff = 0, p = *lp; cols[coloff] = strtok(p, separator);
+		for (coloff = 0, p = *lp;
+		    (cols[coloff] = strtok(p, separator)) != NULL;
 		    p = NULL)
 			if (++coloff == maxcols) {
 				if (!(cols = realloc(cols, (u_int)maxcols +
 				    DEFCOLS * sizeof(char *))) ||
 				    !(lens = realloc(lens,
 				    (u_int)maxcols + DEFCOLS * sizeof(int))))
-					err(1, NULL);
+					err(1, "realloc");
 				memset((char *)lens + maxcols * sizeof(int),
 				    0, DEFCOLS * sizeof(int));
 				maxcols += DEFCOLS;
@@ -282,7 +284,7 @@ input(fp)
 			maxentry += DEFNUM;
 			if (!(list = realloc(list,
 			    (u_int)maxentry * sizeof(char *))))
-				err(1, NULL);
+				err(1, "realloc");
 		}
 		list[entries++] = strdup(buf);
 	}
@@ -295,7 +297,7 @@ emalloc(size)
 	char *p;
 
 	if (!(p = malloc(size)))
-		err(1, NULL);
+		err(1, "malloc");
 	memset(p, 0, size);
 	return (p);
 }

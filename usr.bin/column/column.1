@@ -1,4 +1,4 @@
-.\"	$NetBSD: column.1,v 1.3 1995/03/26 09:08:28 glass Exp $
+.\"	$NetBSD: column.1,v 1.4 1997/10/18 13:02:59 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,14 +40,14 @@
 .Nm column
 .Nd columnate lists
 .Sh SYNOPSIS
-.Nm column
+.Nm
 .Op Fl tx
 .Op Fl c Ar columns
 .Op Fl s Ar sep
 .Op Ar
 .Sh DESCRIPTION
 The
-.Nm column
+.Nm
 utility formats its input into multiple columns.
 Rows are filled before columns.
 Input is taken from
@@ -76,7 +76,7 @@ Useful for pretty-printing displays.
 Fill columns before filling rows.
 .El
 .Pp
-.Nm Column
+.Nm
 exits 0 on success, >0 if an error occurred.
 .Sh ENVIRONMENT
 .Bl -tag -width COLUMNS

@@ -1,4 +1,4 @@
-/*	$NetBSD: comm.c,v 1.10 1995/09/05 19:57:43 jtc Exp $	*/
+/*	$NetBSD: comm.c,v 1.11 1997/10/18 13:04:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)comm.c	8.4 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$NetBSD: comm.c,v 1.10 1995/09/05 19:57:43 jtc Exp $";
+__RCSID("$NetBSD: comm.c,v 1.11 1997/10/18 13:04:27 lukem Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -62,6 +62,7 @@ static char rcsid[] = "$NetBSD: comm.c,v 1.10 1995/09/05 19:57:43 jtc Exp $";
 char *tabs[] = { "", "\t", "\t\t" };
 
 FILE   *file __P((const char *));
+int	main __P((int, char **));
 void	show __P((FILE *, char *, char *));
 void	usage __P((void));
 
@@ -78,6 +79,7 @@ main(argc, argv)
 
 	setlocale(LC_ALL, "");
 
+	file1done = file2done = 0;
 	flag1 = flag2 = flag3 = 1;
 	while ((ch = getopt(argc, argv, "123")) != -1)
 		switch(ch) {
