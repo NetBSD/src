@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.212 2000/04/28 20:54:10 augustss Exp $
+$NetBSD: pcidevs,v 1.213 2000/04/30 18:34:53 dante Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -661,6 +661,7 @@ product ADVSYS 1200B	0x1200
 product ADVSYS ULTRA	0x1300	ABP-930/40UA
 product ADVSYS WIDE	0x2300	ABP-940UW
 product	ADVSYS U2W	0x2500	ASB-3940U2W
+product	ADVSYS U3W	0x2700	ASB-3940U3W
 
 /* Alliance products */
 product ALLIANCE AT24	0x6424	AT24
