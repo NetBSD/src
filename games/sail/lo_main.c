@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)lo_main.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)lo_main.c	8.2 (Berkeley) 4/28/95";
 #endif /* not lint */
 
 /*
@@ -42,7 +42,7 @@ static char sccsid[] = "@(#)lo_main.c	8.1 (Berkeley) 5/31/93";
  */
 #include <sys/types.h>
 #include <pwd.h>
-#include "externs.h"
+#include "extern.h"
 #include "pathnames.h"
 
 char *title[] = {
