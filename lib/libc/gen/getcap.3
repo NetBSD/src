@@ -1,4 +1,4 @@
-.\"	$NetBSD: getcap.3,v 1.16 2003/05/03 19:43:00 wiz Exp $
+.\"	$NetBSD: getcap.3,v 1.17 2003/06/30 19:12:33 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -452,20 +452,19 @@ Two types are predefined by
 and
 .Fn cgetstr :
 .Bl -column "nameXnumber"
-.Sm off
-.It Em name No \&# Em number Ta numeric
+.It Em name Ns \&# Ns Em number Ta numeric
 capability
 .Em name
 has value
 .Em number
-.It Em name No = Em string Ta "string capability"
+.It Em name Ns = Ns Em string Ta "string capability"
 .Em name
 has value
 .Em string
-.It Em name No \&#@ Ta "the numeric capability"
+.It Em name Ns \&#@ Ns Ta "the numeric capability"
 .Em name
 does not exist
-.It Em name No \&=@ Ta "the string capability"
+.It Em name Ns \&=@ Ns Ta "the string capability"
 .Em name
 does not exist
 .El

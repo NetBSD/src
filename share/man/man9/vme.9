@@ -1,4 +1,4 @@
-.\"     $NetBSD: vme.9,v 1.9 2003/04/16 13:35:35 wiz Exp $
+.\"     $NetBSD: vme.9,v 1.10 2003/06/30 19:12:34 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -189,9 +189,7 @@ is called with the argument
 and the bus-space tag and bus-space handle for accessing the VME space
 mapping and should return a nonzero positive integer for a positive
 device match.
-.It Fo vme_space_map
-.Fa "vc" "vmeaddr" "len" "am" "datasize" "swap" "tag" "handle" "resc"
-.Fc
+.It Fn vme_space_map "vc" "vmeaddr" "len" "am" "datasize" "swap" "tag" "handle" "resc"
 Maps the VME space managed by controller
 .Fa vc
 at address
@@ -253,10 +251,7 @@ is the value returned by
 .It Fn vme_intr_evcnt "vc" "handle"
 Increment the interrupt event counter for the interrupt specified by
 .Fa handle .
-.It Fo vme_dmamap_create
-.Fa "vc" "size" "am" "datasize" "swap" "nsegs" "segsz" "bound"
-.Fa "flags" "map"
-.Fc
+.It Fn vme_dmamap_create "vc" "size" "am" "datasize" "swap" "nsegs" "segsz" "bound" "flags" "map"
 Allocates a DMA handle and initializes it according to the parameters
 provided.
 The VME-specific parameters describe the address-space modifiers
@@ -271,9 +266,7 @@ The remaining parameters are described in
 Frees all resources associated with a given DMA handle.
 The parameters are described in
 .Xr bus_dma 9 .
-.It Fo vme_dmamem_alloc
-.Fa "vc" "size" "am" "datasize" "swap" "segs" "nsegs" "rsegs" "flags"
-.Fc
+.It Fn vme_dmamem_alloc "vc" "size" "am" "datasize" "swap" "segs" "nsegs" "rsegs" "flags"
 Allocates memory that is
 .Do
 DMA safe

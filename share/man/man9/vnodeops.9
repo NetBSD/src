@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.24 2003/06/19 14:36:14 yamt Exp $
+.\"     $NetBSD: vnodeops.9,v 1.25 2003/06/30 19:12:34 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1382,9 +1382,7 @@ Whiteout pathname component in directory with vnode
 The argument
 .Fa cnp
 specifies the pathname component to whiteout.
-.It Fo VOP_GETPAGES
-.Fa "vp" "offset" "m" "count" "centeridx"
-.Fa "access_type" "advice" "flags"
+.It Fn VOP_GETPAGES "vp" "offset" "m" "count" "centeridx" "access_type" "advice" "flags"
 .Fc
 Read VM pages from file.
 The argument

@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnsubr.9,v 1.15 2003/04/16 13:35:35 wiz Exp $
+.\"     $NetBSD: vnsubr.9,v 1.16 2003/06/30 19:12:34 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -193,10 +193,7 @@ or
 vnode operations.
 If the operation is successful zero is returned,
 otherwise an appropriate error code is returned.
-.It Fo vn_rdwr
-.Fa "rw" "vp" "base" "len" "offset" "segflg" "ioflg"
-.Fa "cred" "aresid" "p"
-.Fc
+.It Fn vn_rdwr "rw" "vp" "base" "len" "offset" "segflg" "ioflg" "cred" "aresid" "p"
 Common code to package up an I/O request on a vnode into a uio and
 then perform the I/O.
 The argument
@@ -213,10 +210,7 @@ are the calling process and its credentials.
 The remaining arguments specify the uio parameters.
 For further information on these parameters see
 .Xr uiomove 9 .
-.It Fo vn_readdir
-.Fa "fp" "buf" "segflg" "count" "done" "p" "cookies"
-.Fa "ncookies"
-.Fc
+.It Fn vn_readdir "fp" "buf" "segflg" "count" "done" "p" "cookies" "ncookies"
 Common code for reading the contents of a directory.
 The argument
 .Fa fp
