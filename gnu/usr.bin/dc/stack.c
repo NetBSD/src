@@ -1,7 +1,7 @@
 /* 
  * implement stack functions for dc
  *
- * Copyright (C) 1994 Free Software Foundation, Inc.
+ * Copyright (C) 1994, 1997 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -105,6 +105,49 @@ dc_binop DC_DECLARG((op, kscale))
 }
 
 /* check that there are two numbers on top of the stack,
+ * then call op with the popped numbers.  Construct two dc_data
+ * values from the dc_num's returned by op and push them
+ * on the stack.
+ * If the op call doesn't return DC_SUCCESS, then leave the stack
+ * unmodified.
+ */
+void
+dc_binop2 DC_DECLARG((op, kscale))
+	int (*op)DC_PROTO((dc_num, dc_num, int, dc_num *, dc_num *)) DC_DECLSEP
+	int kscale DC_DECLEND
+{
+	dc_data a;
+	dc_data b;
+	dc_data r1;
+	dc_data r2;
+
+	if (!dc_stack || !dc_stack->link){
+		Empty_Stack;
+		return;
+	}
+	if (dc_stack->value.dc_type!=DC_NUMBER
+			|| dc_stack->link->value.dc_type!=DC_NUMBER){
+		fprintf(stderr, "%s: non-numeric value\n", progname);
+		return;
+	}
+	(void)dc_pop(&b);
+	(void)dc_pop(&a);
+	if ((*op)(a.v.number, b.v.number, kscale,
+								&r1.v.number, &r2.v.number) == DC_SUCCESS){
+		r1.dc_type = DC_NUMBER;
+		dc_push(r1);
+		r2.dc_type = DC_NUMBER;
+		dc_push(r2);
+		dc_free_num(&a.v.number);
+		dc_free_num(&b.v.number);
+	}else{
+		/* op failed; restore the stack */
+		dc_push(a);
+		dc_push(b);
+	}
+}
+
+/* check that there are two numbers on top of the stack,
  * then call dc_compare with the popped numbers.
  * Return negative, zero, or positive based on the ordering
  * of the two numbers.
@@ -131,6 +174,51 @@ dc_cmpop DC_DECLVOID()
 	dc_free_num(&a.v.number);
 	dc_free_num(&b.v.number);
 	return result;
+}
+
+/* check that there are three numbers on top of the stack,
+ * then call op with the popped numbers.  Construct a dc_data
+ * value from the dc_num returned by op and push it
+ * on the stack.
+ * If the op call doesn't return DC_SUCCESS, then leave the stack
+ * unmodified.
+ */
+void
+dc_triop DC_DECLARG((op, kscale))
+	int (*op)DC_PROTO((dc_num, dc_num, dc_num, int, dc_num *)) DC_DECLSEP
+	int kscale DC_DECLEND
+{
+	dc_data a;
+	dc_data b;
+	dc_data c;
+	dc_data r;
+
+	if (!dc_stack || !dc_stack->link || !dc_stack->link->link){
+		Empty_Stack;
+		return;
+	}
+	if (dc_stack->value.dc_type!=DC_NUMBER
+			|| dc_stack->link->value.dc_type!=DC_NUMBER
+			|| dc_stack->link->link->value.dc_type!=DC_NUMBER){
+		fprintf(stderr, "%s: non-numeric value\n", progname);
+		return;
+	}
+	(void)dc_pop(&c);
+	(void)dc_pop(&b);
+	(void)dc_pop(&a);
+	if ((*op)(a.v.number, b.v.number, c.v.number,
+				kscale, &r.v.number) == DC_SUCCESS){
+		r.dc_type = DC_NUMBER;
+		dc_push(r);
+		dc_free_num(&a.v.number);
+		dc_free_num(&b.v.number);
+		dc_free_num(&c.v.number);
+	}else{
+		/* op failed; restore the stack */
+		dc_push(a);
+		dc_push(b);
+		dc_push(c);
+	}
 }
 
 
