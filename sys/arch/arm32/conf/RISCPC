@@ -1,4 +1,4 @@
-#	$NetBSD: RISCPC,v 1.28 2000/09/24 15:59:29 jdolecek Exp $
+#	$NetBSD: RISCPC,v 1.29 2000/10/26 14:15:33 abs Exp $
 #
 #	RISCPC -- Full RiscPC config
 #
@@ -22,6 +22,9 @@ options 	CPU_ARM6	# Support the ARM6 core
 options 	CPU_ARM7	# Support the ARM7 core
 #options 	CPU_ARM8	# Support the ARM8 core
 #options 	ARM6_LATE_ABORT	# ARM6XX late abort support
+
+# For StrongARM only kernels
+#makeoptions	COPTS="-O2 -march=armv3m -mtune=strongarm"
 
 # For A7000, Stork and other ARM7500 machines
 #options 	CPU_ARM7	# Support the ARM7 core
