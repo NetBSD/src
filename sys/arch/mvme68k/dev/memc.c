@@ -1,4 +1,4 @@
-/*	$NetBSD: memc.c,v 1.6 2001/07/27 20:48:58 scw Exp $	*/
+/*	$NetBSD: memc.c,v 1.7 2001/07/27 21:54:07 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ static void memecc_log_error(struct memc_softc *, u_int8_t, int, int);
  * XXX: This should probably be irq 7
  */
 #define MEMC_IRQ_LEVEL		6
-#define MEMECC_SCRUBBER_PERIOD	14400	/* ~4 hours */
+#define MEMECC_SCRUBBER_PERIOD	86400	/* ~24 hours */
 
 /*
  * The following stuff is used to decode the ECC syndrome code so
@@ -471,7 +471,7 @@ memecc_attach(struct memc_softc *sc)
 	rv |= MEMECC_DRAM_CONTROL_RAMEN;
 	memc_reg_write(sc, MEMECC_REG_DRAM_CONTROL, rv);
 	rv = memc_reg_read(sc, MEMECC_REG_SCRUB_CONTROL);
-	rv &= ~MEMECC_SCRUB_CONTROL_SBEIEN;
+	rv &= ~(MEMECC_SCRUB_CONTROL_SCRBEN | MEMECC_SCRUB_CONTROL_SBEIEN);
 	memc_reg_write(sc, MEMECC_REG_SCRUB_CONTROL, rv);
 
 	/*
@@ -492,47 +492,13 @@ memecc_attach(struct memc_softc *sc)
 	memc_reg_write(sc, MEMECC_REG_ERROR_LOGGER,
 		    MEMECC_ERROR_LOGGER_ERRLOG);
 
-	rv = memc_reg_read(sc, MEMECC_REG_ERROR_LOGGER + 3);
+	rv = memc_reg_read(sc, MEMECC_REG_ERROR_LOGGER + 2);
 #ifdef DIAGNOSTIC
 	if ((rv & MEMECC_ERROR_LOGGER_MASK) != 0)
-		memecc_log_error(sc, rv, 3, 0);
+		memecc_log_error(sc, rv, 2, 0);
 #endif
-	memc_reg_write(sc, MEMECC_REG_ERROR_LOGGER + 3,
+	memc_reg_write(sc, MEMECC_REG_ERROR_LOGGER + 2,
 		    MEMECC_ERROR_LOGGER_ERRLOG);
-
-	/*
-	 * Fix up the scrubber on/off times so that the initial scrub
-	 * has a chance of completing in a reasonable (read: quick) time.
-	 */
-	memc_reg_write(sc, MEMECC_REG_SCRUB_TIME_ONOFF,
-	    MEMECC_SCRUB_TIME_ON_128 | MEMECC_SCRUB_TIME_OFF_16);
-
-	/*
-	 * Start the scrubber...
-	 */
-	rv = memc_reg_read(sc, MEMECC_REG_SCRUB_CONTROL);
-	rv |= MEMECC_SCRUB_CONTROL_SCRBEN;
-	memc_reg_write(sc, MEMECC_REG_SCRUB_CONTROL, rv);
-
-	/*
-	 * Wait for it to acknowledge that the scrub is underway
-	 */
-	do
-		rv = memc_reg_read(sc, MEMECC_REG_SCRUB_CONTROL);
-	while ((rv & MEMECC_SCRUB_CONTROL_SCRB) != 0);
-
-	/*
-	 * Ensure it only does a single pass
-	 */
-	rv &= ~MEMECC_SCRUB_CONTROL_SCRBEN;
-	memc_reg_write(sc, MEMECC_REG_SCRUB_CONTROL, rv);
-
-	/*
-	 * Wait for the scrubber to finish
-	 */
-	do
-		rv = memc_reg_read(sc, MEMECC_REG_SCRUB_CONTROL);
-	while ((rv & MEMECC_SCRUB_CONTROL_SCRB) != 0);
 
 	/*
 	 * Now hook the ECC error interrupt
@@ -547,15 +513,17 @@ memecc_attach(struct memc_softc *sc)
 	memc_reg_write(sc, MEMECC_REG_DRAM_CONTROL, rv);
 
 	/*
-	 * Set up the scrubber to run roughly once every 4 hours
-	 * with minimal impact on the local bus.
+	 * Set up the scrubber to run roughly once every 24 hours
+	 * with minimal impact on the local bus. With these on/off
+	 * time settings, a scrub of a 32MB DRAM board will take
+	 * roughly half a minute.
 	 */
 	memc_reg_write(sc, MEMECC_REG_SCRUB_PERIOD_HI,
 	    MEMECC_SCRUB_PERIOD_HI(MEMECC_SCRUBBER_PERIOD));
 	memc_reg_write(sc, MEMECC_REG_SCRUB_PERIOD_LO,
 	    MEMECC_SCRUB_PERIOD_LO(MEMECC_SCRUBBER_PERIOD));
 	memc_reg_write(sc, MEMECC_REG_SCRUB_TIME_ONOFF,
-	    MEMECC_SCRUB_TIME_ON_16 | MEMECC_SCRUB_TIME_OFF_512);
+	    MEMECC_SCRUB_TIME_ON_1 | MEMECC_SCRUB_TIME_OFF_16);
 
 	/*
 	 * Start the scrubber, and enable interrupts on Correctable errors
@@ -602,10 +570,10 @@ memecc_err_intr(void *arg)
 		cnt++;
 	}
 
-	rv = memc_reg_read(sc, MEMECC_REG_ERROR_LOGGER + 3);
+	rv = memc_reg_read(sc, MEMECC_REG_ERROR_LOGGER + 2);
 	if ((rv & MEMECC_ERROR_LOGGER_MASK) != 0) {
-		memecc_log_error(sc, rv, 3, 1);
-		memc_reg_write(sc, MEMECC_REG_ERROR_LOGGER + 3,
+		memecc_log_error(sc, rv, 2, 1);
+		memc_reg_write(sc, MEMECC_REG_ERROR_LOGGER + 2,
 		    MEMECC_ERROR_LOGGER_ERRLOG);
 		cnt++;
 	}
