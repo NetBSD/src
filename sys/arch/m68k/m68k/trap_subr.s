@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.s,v 1.1 1997/04/25 01:33:18 thorpej Exp $	*/
+/*	$NetBSD: trap_subr.s,v 1.2 1997/06/04 22:12:43 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -75,6 +75,8 @@ ASENTRY(faultstkadj)
 /* for 68060 Branch Prediction Error handler */
 _ASM_LABEL(faultstkadjnotrap):
 	lea	sp@(12),sp		| pop value args
+/* for new 68060 Branch Prediction Error handler */
+_ASM_LABEL(faultstkadjnotrap2):
 	movl	sp@(FR_SP),a0		| restore user SP
 	movl	a0,usp			|   from save area 
 	movw	sp@(FR_ADJ),d0		| need to adjust stack?
