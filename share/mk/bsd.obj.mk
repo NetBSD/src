@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.obj.mk,v 1.26 2001/03/11 07:32:31 cgd Exp $
+#	$NetBSD: bsd.obj.mk,v 1.27 2001/06/10 13:32:21 mrg Exp $
 
 .if !target(__initialized_obj__)
 __initialized_obj__:
@@ -51,6 +51,10 @@ obj:
 	@cd ${.CURDIR}; \
 	here=`${PAWD}`; subdir=$${here#${BSDSRCDIR}/}; \
 	if test $$here != $$subdir ; then \
+		if test ! -d ${__usrobjdir}; then \
+			echo "BSDOBJDIR ${__usrobjdir} does not exist, bailing..."; \
+			exit 1; \
+		fi; \
 		dest=${__usrobjdir}/$$subdir${__usrobjdirpf} ; \
 		if [ -h $$here/${__objdir} ]; then \
 			curtarg=`ls -ld $$here/${__objdir} | awk '{print $$NF}'` ; \
@@ -66,7 +70,7 @@ obj:
 			rm -rf ${__objdir}; \
 			ln -s $$dest ${__objdir}; \
 		fi; \
-		if test -d ${__usrobjdir} -a ! -d $$dest; then \
+		if test ! -d $$dest; then \
 			mkdir -p $$dest; \
 		else \
 			true; \
