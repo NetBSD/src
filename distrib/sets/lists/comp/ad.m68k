@@ -1,4 +1,4 @@
-# $NetBSD: ad.m68k,v 1.31 2003/02/26 22:31:05 thorpej Exp $
+# $NetBSD: ad.m68k,v 1.32 2003/09/23 15:17:11 cl Exp $
 ./usr/bin/elf2aout	comp-sysutil-bin
 ./usr/include/m68k	comp-c-include
 ./usr/include/m68k/ansi.h	comp-c-include
@@ -15,6 +15,7 @@
 ./usr/include/m68k/cacheops_60.h	comp-c-include
 ./usr/include/m68k/cdefs.h	comp-c-include
 ./usr/include/m68k/cpu.h	comp-c-include
+./usr/include/m68k/cpuframe.h	comp-c-include
 ./usr/include/m68k/db_machdep.h	comp-c-include
 ./usr/include/m68k/elf_machdep.h	comp-c-include
 ./usr/include/m68k/endian.h	comp-c-include
