@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.3 2001/01/15 06:14:05 itojun Exp $	*/
+/*	$NetBSD: dump.c,v 1.4 2002/05/21 14:29:52 itojun Exp $	*/
 /*	$KAME: dump.c,v 1.15 2000/11/11 06:57:22 jinmei Exp $	*/
 
 /*
@@ -171,7 +171,7 @@ if_dump()
 				inet_ntop(AF_INET6, &pfx->prefix,
 					  prefixbuf, sizeof(prefixbuf)),
 				pfx->prefixlen);
-			switch(pfx->origin) {
+			switch (pfx->origin) {
 			case PREFIX_FROM_KERNEL:
 				fprintf(fp, "KERNEL, ");
 				break;
