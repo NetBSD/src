@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.203 2002/01/27 13:23:10 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.204 2002/02/07 02:16:04 ross Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@
 
 include		"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.203 $"
+#ident 		"GENERIC-$Revision: 1.204 $"
 
 maxusers 32
 
@@ -290,6 +290,7 @@ audio*	at	eap?
 audio*	at	eso?
 audio*	at	sv?
 audio*	at	yds?
+audio*	at	ess?
 
 opl*	at	cmpci? flags 1
 opl*	at	eso?
@@ -358,6 +359,8 @@ we1	at	isa? port 0x300 iomem 0xcc000 irq 10
 #wss*	at	isapnp?
 #audio*	at	wss?
 #midi*	at	wss?
+
+ess0	at	isa? port 0x220 irq 5 drq 1 drq2 5   # ESS 18XX
 sb*	at	isa? port 0x220 irq 5 drq 1	# SoundBlaster
 #sb*	at	isapnp?
 audio*	at	sb?
