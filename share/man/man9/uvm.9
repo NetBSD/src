@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.45 2003/06/30 19:12:34 wiz Exp $
+.\"	$NetBSD: uvm.9,v 1.46 2003/08/31 12:35:35 enami Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -112,7 +112,7 @@ initialises the swap sub-system.
 .Sh VIRTUAL ADDRESS SPACE MANAGEMENT
 .Ft int
 .br
-.Fn uvm_map "struct vm_map *map" "vaddr_t *startp" "vsize_t size" "struct uvm_object *uobj" "voff_t uoffset" "uvm_flag_t flags" ;
+.Fn uvm_map "struct vm_map *map" "vaddr_t *startp" "vsize_t size" "struct uvm_object *uobj" "voff_t uoffset" "vsize_t align" "uvm_flag_t flags" ;
 .Pp
 .Ft int
 .br
@@ -207,6 +207,12 @@ If
 is any other value, we are doing a normal mapping at this offset.
 The start address of the map will be returned in
 .Fa startp .
+.Pp
+.Fa align
+specifies alignment of mapping unless UVM_FLAG_FIXED is specified in
+.Fa flags .
+.Fa align
+must be power of 2.
 .Pp
 .Fa flags
 passed to
