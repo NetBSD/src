@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.28 1999/09/10 07:31:17 ross Exp $
+# $NetBSD: Makefile,v 1.28.12.1 2000/09/26 15:47:58 simonb Exp $
 
 PROG = boot
 
@@ -12,6 +12,7 @@ BOOT_RELOC = ${SECONDARY_LOAD_ADDRESS}
 
 CPPFLAGS += ${SECONDARY_CPPFLAGS} \
 		-DBOOT_TYPE_NAME='"Secondary"' \
+		-DBOOTXX_RAID1_SUPPORT \
 		-DLIBSA_SINGLE_DEVICE=blkdev \
 		  -D"blkdevioctl(x,y,z)=EINVAL"
 
