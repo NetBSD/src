@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.28 1999/05/05 20:01:05 thorpej Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.29 1999/08/22 13:43:10 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -344,8 +344,6 @@ oss_ioctl_audio(p, uap, retval)
 		for(idat = 0, tmpenc.index = 0; 
 		    ioctlf(fp, AUDIO_GETENC, (caddr_t)&tmpenc, p) == 0; 
 		    tmpenc.index++) {
-			if (tmpenc.flags & AUDIO_ENCODINGFLAG_EMULATED)
-				continue; /* Don't report emulated modes */
 			switch(tmpenc.encoding) {
 			case AUDIO_ENCODING_ULAW:
 				idat |= OSS_AFMT_MU_LAW;
