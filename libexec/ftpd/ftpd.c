@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.90 2000/05/30 05:31:31 itojun Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.91 2000/06/02 00:19:04 fredb Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.90 2000/05/30 05:31:31 itojun Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.91 2000/06/02 00:19:04 fredb Exp $");
 #endif
 #endif /* not lint */
 
@@ -178,15 +178,16 @@ int	mapped = 0;		/* IPv4 connection on AF_INET6 socket */
 off_t	file_size;
 off_t	byte_count;
 static char ttyline[20];
-char	*tty = ttyline;		/* for klogin */
 static struct utmp utmp;	/* for utmp */
 
 static char *anondir = NULL;
 static char confdir[MAXPATHLEN];
 
 #if defined(KERBEROS) || defined(KERBEROS5)
+int	has_ccache = 0;
 int	notickets = 1;
 char	*krbtkfile_env = NULL;
+char	*tty = ttyline;
 #endif
 
 int epsvall = 0;
