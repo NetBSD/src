@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.49 2001/06/29 16:01:47 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.50 2001/07/20 20:26:35 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.151 2001/06/19 14:24:41 sumikawa Exp $	*/
 
 /*
@@ -1887,9 +1887,17 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 				goto lookup;
 			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
 				rtfree(rt); rt = rt0;
-			lookup: rt->rt_gwroute = rtalloc1(rt->rt_gateway, 1);
+			lookup:
+				rt->rt_gwroute = rtalloc1(rt->rt_gateway, 1);
 				if ((rt = rt->rt_gwroute) == 0)
 					senderr(EHOSTUNREACH);
+				/* the "G" test below also prevents rt == rt0 */
+				if ((rt->rt_flags & RTF_GATEWAY) ||
+				    (rt->rt_ifp != ifp)) {
+					rt->rt_refcnt--;
+					rt0->rt_gwroute = 0;
+					senderr(EHOSTUNREACH);
+				}
 			}
 		}
 	}
