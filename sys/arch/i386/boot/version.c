@@ -1,9 +1,9 @@
-/*	$NetBSD: version.c,v 1.28.4.1 1996/12/10 05:26:19 mycroft Exp $	*/
+/*	$NetBSD: version.c,v 1.28.4.2 1996/12/10 05:27:00 mycroft Exp $	*/
 
 /*
  *	NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.
  *
- *	1.28 -> 1.28.2.1
+ *	1.28 -> 1.28.4.2
  *		various code cleanup. (mycroft)
  *
  *	1.27 -> 1.28
@@ -57,4 +57,4 @@
  *		look in boot.c revision logs
  */
 
-char *version = "1.28.2.1";
+char *version = "1.28.4.2";
