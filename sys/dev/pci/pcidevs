@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.158 1999/09/29 00:19:51 thorpej Exp $
+$NetBSD: pcidevs,v 1.159 1999/10/11 17:31:52 hannken Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -628,6 +628,7 @@ product ADP 2940U	0x8178	AHA-2940 Ultra
 product ADP 3940U	0x8278	AHA-3940 Ultra
 product ADP 389XU	0x8378	AHA-389X Ultra
 product ADP 2944U	0x8478	AHA-2944 Ultra
+product ADP 2940UP	0x8778	AHA-2940 Ultra Pro
 
 product ADP2 2940U2	0x0010	AHA-2940 Ultra2
 product ADP2 2930U2	0x0011	AHA-2930 Ultra2
