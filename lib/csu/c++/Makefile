@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1 1994/01/07 19:15:31 pk Exp $
+#	$Id: Makefile,v 1.2 1994/02/10 01:10:01 cgd Exp $
 
 CFLAGS+=	-DLIBC_SCCS -fpic
 OBJS=		c++rt0.o
@@ -11,7 +11,6 @@ c++rt0.o: c++rt0.c
 	@mv a.out ${.TARGET}
 
 install:
-	install -d -o ${BINOWN} -g ${BINGRP} -m 0755 ${DESTDIR}/usr/lib
 	install ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${OBJS} \
 	    ${DESTDIR}/usr/lib
 
