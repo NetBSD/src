@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.33 1996/08/09 10:30:23 mrg Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.34 1996/08/10 00:23:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -57,13 +57,22 @@ sys_reboot(p, v, retval)
 		syscallarg(char *) bootstr;
 	} */ *uap = v;
 	int error;
+	char *bootstr;
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
+
+	/*
+	 * Only use the boot string if RB_STRING is set.
+	 */
+	if (SCARG(uap, opt) & RB_STRING)
+		bootstr = SCARG(uap, bootstr);
+	else
+		bootstr = NULL;
 	/*
 	 * Not all ports use the bootstr currently.
 	 */
-	boot(SCARG(uap, opt), SCARG(uap, bootstr));
+	boot(SCARG(uap, opt), bootstr);
 	return (0);
 }
 
