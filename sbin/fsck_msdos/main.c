@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 1996/09/27 23:22:54 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.7 1996/10/03 20:09:44 christos Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank
@@ -34,7 +34,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: main.c,v 1.6 1996/09/27 23:22:54 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.7 1996/10/03 20:09:44 christos Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -75,8 +75,14 @@ main(argc, argv)
 	int ret = 0, erg;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "vpyn")) != EOF) {
+	while ((ch = getopt(argc, argv, "vpynf")) != EOF) {
 		switch (ch) {
+		case 'f':
+			/*
+			 * We are always forced, since we don't
+			 * have a clean flag
+			 */
+			break;
 		case 'n':
 			alwaysno = 1;
 			alwaysyes = preen = 0;
