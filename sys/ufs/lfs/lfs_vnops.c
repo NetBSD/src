@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.92 2003/03/02 04:34:32 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.93 2003/03/04 19:19:43 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.92 2003/03/02 04:34:32 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.93 2003/03/04 19:19:43 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1647,9 +1647,9 @@ lfs_putpages(void *v)
 
 	/*
 	 * VOP_PUTPAGES should not be called while holding the seglock.
-	 * XXX fix lfs_markv, or do this properly.
+	 * XXXUBC fix lfs_markv, or do this properly.
 	 */
-	KASSERT(fs->lfs_seglock == 1);
+	/* KASSERT(fs->lfs_seglock == 1); */
 
 	/*
 	 * We assume we're being called with sp->fip pointing at blank space.
