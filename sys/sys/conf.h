@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.76 2000/06/24 00:39:04 thorpej Exp $	*/
+/*	$NetBSD: conf.h,v 1.77 2000/06/26 04:56:32 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -161,7 +161,7 @@ struct cdevsw {
 	struct tty *
 		(*d_tty)	__P((dev_t dev));
 	int	(*d_poll)	__P((dev_t dev, int events, struct proc *p));
-	int	(*d_mmap)	__P((dev_t, int, int));
+	paddr_t	(*d_mmap)	__P((dev_t, off_t, int));
 	int	d_type;
 };
 
@@ -175,7 +175,7 @@ extern struct cdevsw cdevsw[];
 #define	dev_type_stop(n)	void n __P((struct tty *, int))
 #define	dev_type_tty(n)		struct tty *n __P((dev_t))
 #define	dev_type_poll(n)	int n __P((dev_t, int, struct proc *))
-#define	dev_type_mmap(n)	int n __P((dev_t, int, int))
+#define	dev_type_mmap(n)	paddr_t n __P((dev_t, off_t, int))
 
 #define	cdev_decl(n) \
 	dev_decl(n,open); dev_decl(n,close); dev_decl(n,read); \

@@ -1,5 +1,5 @@
-/* $NetBSD: mem.c,v 1.1 2000/01/05 08:49:03 nisimura Exp $ */
-/*	$NetBSD: mem.c,v 1.1 2000/01/05 08:49:03 nisimura Exp $	*/
+/* $NetBSD: mem.c,v 1.2 2000/06/26 04:55:46 simonb Exp $ */
+/*	$NetBSD: mem.c,v 1.2 2000/06/26 04:55:46 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.1 2000/01/05 08:49:03 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.2 2000/06/26 04:55:46 simonb Exp $");
 
 /*
  * Memory special file
@@ -205,10 +205,11 @@ unlock:
 	return (error);
 }
 
-int
+paddr_t
 mmmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	/*
 	 * /dev/mem is the only one that makes sense through this

@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.15 2000/05/22 17:17:44 uch Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.16 2000/06/26 04:55:43 simonb Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -77,7 +77,7 @@ int	tx3912video_print __P((void *, const char *));
 
 void	tx3912video_hpcfbinit __P((struct tx3912video_softc *));
 int	tx3912video_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-int	tx3912video_mmap __P((void *, off_t, int));
+paddr_t	tx3912video_mmap __P((void *, off_t, int));
 
 void	tx3912video_clut_init __P((struct tx3912video_softc *));
 void	tx3912video_clut_install __P((void *, struct rasops_info *));
@@ -558,7 +558,7 @@ tx3912video_ioctl(v, cmd, data, flag, p)
 	return (ENOTTY);
 }
 
-int
+paddr_t
 tx3912video_mmap(ctx, offset, prot)
 	void *ctx;
 	off_t offset;

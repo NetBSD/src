@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.40 2000/06/01 09:58:19 augustss Exp $	*/
+/*	$NetBSD: eap.c,v 1.41 2000/06/26 04:56:24 simonb Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -179,7 +179,7 @@ int	eap1370_query_devinfo __P((void *, mixer_devinfo_t *));
 void   *eap_malloc __P((void *, int, size_t, int, int));
 void	eap_free __P((void *, void *, int));
 size_t	eap_round_buffersize __P((void *, int, size_t));
-int	eap_mappage __P((void *, void *, int, int));
+paddr_t	eap_mappage __P((void *, void *, off_t, int));
 int	eap_get_props __P((void *));
 void	eap1370_set_mixer __P((struct eap_softc *sc, int a, int d));
 u_int32_t eap1371_src_wait __P((struct eap_softc *sc));
@@ -1707,11 +1707,11 @@ eap_round_buffersize(addr, direction, size)
 	return (size);
 }
 
-int
+paddr_t
 eap_mappage(addr, mem, off, prot)
 	void *addr;
 	void *mem;
-	int off;
+	off_t off;
 	int prot;
 {
 	struct eap_softc *sc = addr;

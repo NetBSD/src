@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.3 2000/05/15 01:27:46 thorpej Exp $	*/
+/*	$NetBSD: auvia.c,v 1.4 2000/06/26 04:56:22 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ int	auvia_query_devinfo(void *, mixer_devinfo_t *);
 void *	auvia_malloc(void *, int, size_t, int, int);
 void	auvia_free(void *, void *, int);
 size_t	auvia_round_buffersize(void *, int, size_t);
-int	auvia_mappage(void *, void *, int, int);
+paddr_t	auvia_mappage(void *, void *, off_t, int);
 int	auvia_get_props(void *);
 int	auvia_build_dma_ops(struct auvia_softc *, struct auvia_softc_chan *,
 	struct auvia_dma *, void *, void *, int);
@@ -770,8 +770,8 @@ auvia_round_buffersize(void *addr, int direction, size_t size)
 }
 
 
-int
-auvia_mappage(void *addr, void *mem, int off, int prot)
+paddr_t
+auvia_mappage(void *addr, void *mem, off_t off, int prot)
 {
 	struct auvia_softc *sc = addr;
 	struct auvia_dma *p;

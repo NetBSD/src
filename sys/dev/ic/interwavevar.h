@@ -1,4 +1,4 @@
-/*	$NetBSD: interwavevar.h,v 1.7 2000/02/07 22:07:30 thorpej Exp $	*/
+/*	$NetBSD: interwavevar.h,v 1.8 2000/06/26 04:56:18 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -250,7 +250,7 @@ int     iw_query_devinfo __P((void *, mixer_devinfo_t *));
 void *  iw_malloc __P((void *, int, size_t, int, int));
 void    iw_free __P((void *,void *,int));
 size_t	iw_round_buffersize __P((void *, int, size_t));
-int     iw_mappage __P((void *, void *, int, int));
+paddr_t	iw_mappage __P((void *, void *, off_t, int));
 int     iw_get_props __P((void *));
 
 #endif /* INTERWAVEVAR_H */

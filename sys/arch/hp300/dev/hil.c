@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.39 2000/03/13 23:52:28 soren Exp $	*/
+/*	$NetBSD: hil.c,v 1.40 2000/06/26 04:55:39 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -730,10 +730,11 @@ hpuxhilioctl(dev, cmd, data, flag)
 #endif
 
 /* ARGSUSED */
-int
+paddr_t
 hilmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	return (-1);
 }

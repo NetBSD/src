@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.10 2000/04/04 21:47:17 pk Exp $ */
+/*	$NetBSD: p9100.c,v 1.11 2000/06/26 04:56:05 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -472,8 +472,8 @@ p9100loadcmap(struct p9100_softc *sc, int start, int ncolors)
  * Return the address that would map the given device at the given
  * offset, allowing for the given protection, or return -1 for error.
  */
-int
-p9100mmap(dev_t dev, int off, int prot)
+paddr_t
+p9100mmap(dev_t dev, off_t off, int prot)
 {
 	struct p9100_softc *sc = pnozz_cd.cd_devs[minor(dev)];
 	bus_space_handle_t bh;
@@ -493,7 +493,7 @@ p9100mmap(dev_t dev, int off, int prot)
 				   sc->sc_fb_paddr + off,
 				   BUS_SPACE_MAP_LINEAR, &bh))
 			return (-1);
-		return ((int)bh);
+		return ((paddr_t)bh);
 	}
 
 	if (off >= sc->sc_fb_psize + sc->sc_ctl_psize + sc->sc_cmd_psize)
@@ -505,7 +505,7 @@ p9100mmap(dev_t dev, int off, int prot)
 				   sc->sc_fb_paddr + off,
 				   BUS_SPACE_MAP_LINEAR, &bh))
 			return (-1);
-		return ((int)bh);
+		return ((paddr_t)bh);
 	}
 	off -= sc->sc_fb_psize;
 	if (off < sc->sc_ctl_psize) {
@@ -514,7 +514,7 @@ p9100mmap(dev_t dev, int off, int prot)
 				   sc->sc_ctl_paddr + off,
 				   BUS_SPACE_MAP_LINEAR, &bh))
 			return (-1);
-		return ((int)bh);
+		return ((paddr_t)bh);
 	}
 	off -= sc->sc_ctl_psize;
 
@@ -523,5 +523,5 @@ p9100mmap(dev_t dev, int off, int prot)
 			   sc->sc_cmd_paddr + off,
 			   BUS_SPACE_MAP_LINEAR, &bh))
 		return (-1);
-	return ((int)bh);
+	return ((paddr_t)bh);
 }

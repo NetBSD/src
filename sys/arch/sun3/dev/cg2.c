@@ -1,4 +1,4 @@
-/*	$NetBSD: cg2.c,v 1.11 1998/01/23 00:01:28 gwr Exp $	*/
+/*	$NetBSD: cg2.c,v 1.12 2000/06/26 04:56:11 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -234,17 +234,18 @@ cg2ioctl(dev, cmd, data, flags, p)
  * Return the address that would map the given device at the given
  * offset, allowing for the given protection, or return -1 for error.
  */
-int
+paddr_t
 cg2mmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	struct cg2_softc *sc = cgtwo_cd.cd_devs[minor(dev)];
 
 	if (off & PGOFSET)
 		panic("cg2mmap");
 
-	if ((unsigned)off >= CG2_MAPPED_SIZE)
+	if (off >= CG2_MAPPED_SIZE)
 		return (-1);
 
 	/*

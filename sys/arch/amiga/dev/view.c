@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.16 1996/10/13 03:07:35 christos Exp $	*/
+/*	$NetBSD: view.c,v 1.17 2000/06/26 04:55:24 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -390,10 +390,11 @@ view_set_colormap(vu, ucm)
 }
 
 /*ARGSUSED*/
-int
+paddr_t
 viewmmap(dev, off, prot)
         dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	struct view_softc *vu;
 	bmap_t *bm;
@@ -406,7 +407,7 @@ viewmmap(dev, off, prot)
 	bmd_size = bm->bytes_per_row*bm->rows*bm->depth;
 
 	if (off >= 0 && off < bmd_size)
-		return(((u_int)bmd_start + off) >> PGSHIFT);
+		return(((paddr_t)bmd_start + off) >> PGSHIFT);
 
 	return(-1);
 }

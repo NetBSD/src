@@ -1,4 +1,4 @@
-/*	$NetBSD: vconsole.h,v 1.4 1997/10/14 09:20:38 mark Exp $	*/
+/*	$NetBSD: vconsole.h,v 1.5 2000/06/26 04:55:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Melvyn Tang-Richardson
@@ -75,7 +75,7 @@ struct render_engine {
         void ( *putchar		) __P(( dev_t dev, char c, struct vconsole *vc ));
         int  ( *spawn		) __P(( struct vconsole *vc ));
         int  ( *swapin		) __P(( struct vconsole *vc ));
-        int  ( *mmap		) __P(( struct vconsole *vc, int offset, int nprot ));
+        paddr_t ( *mmap		) __P(( struct vconsole *vc, off_t offset, int nprot ));
 	void ( *render		) __P(( struct vconsole *vc, char c));
 	void ( *scrollup	) __P(( struct vconsole *vc, int low, int high ));
 	void ( *scrolldown	) __P(( struct vconsole *vc, int low, int high ));

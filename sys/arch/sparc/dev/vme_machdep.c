@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.26 2000/06/25 13:07:34 pk Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.27 2000/06/26 04:56:05 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -152,8 +152,8 @@ static int	sparc_vme_dmamem_map __P((bus_dma_tag_t, bus_dma_segment_t *,
 #if 0
 static void	sparc_vme_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
 static void	sparc_vme_dmamem_unmap __P((bus_dma_tag_t, caddr_t, size_t));
-static int	sparc_vme_dmamem_mmap __P((bus_dma_tag_t,
-		    bus_dma_segment_t *, int, int, int, int));
+static paddr_t	sparc_vme_dmamem_mmap __P((bus_dma_tag_t,
+		    bus_dma_segment_t *, int, off_t, int, int));
 #endif
 
 int sparc_vme_mmap_cookie __P((vme_addr_t, vme_am_t, bus_space_handle_t *));

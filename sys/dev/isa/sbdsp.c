@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.104 2000/02/07 22:07:31 thorpej Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.105 2000/06/26 04:56:21 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2289,11 +2289,11 @@ sb_round_buffersize(addr, direction, size)
 	return (size);
 }
 
-int
+paddr_t
 sb_mappage(addr, mem, off, prot)
 	void *addr;
 	void *mem;
-	int off;
+	off_t off;
 	int prot;
 {
 	return isa_mappage(mem, off, prot);

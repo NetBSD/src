@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.14 2000/06/19 22:29:15 eeh Exp $	*/
+/*	$NetBSD: psycho.c,v 1.15 2000/06/26 04:56:09 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -553,7 +553,7 @@ psycho_init(sc, pba)
 				  0,
 				  &bh))
 			panic("could not map sabre PCI configuration space");
-		sc->sc_configaddr = (paddr_t)bh;
+		sc->sc_configaddr = (off_t)bh;
 	} else {
 		/* for psycho B, we just copy the config tag and address */
 		sc->sc_configtag = osc->sc_configtag;
