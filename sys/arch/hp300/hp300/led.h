@@ -1,4 +1,4 @@
-/*	$NetBSD: led.h,v 1.3 1995/03/28 18:16:24 jtc Exp $	*/
+/*	$NetBSD: led.h,v 1.4 1996/10/05 09:18:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992 University of Utah.
@@ -52,4 +52,6 @@
 #ifdef _KERNEL
 extern	char *ledaddr;
 extern	int inledcontrol;
+
+void	ledcontrol __P((int, int, int));
 #endif
