@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.6 2002/08/26 17:04:17 ad Exp $	*/
+/*	$NetBSD: cmds.c,v 1.7 2003/07/13 12:30:17 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cmds.c,v 1.6 2002/08/26 17:04:17 ad Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.7 2003/07/13 12:30:17 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -202,7 +202,7 @@ cmd_cstatus(char **argv)
 		}
 
 	if (i == sizeof(mlx_ctlr_names) / sizeof(mlx_ctlr_names[0])) {
-		sprintf(buf, " model 0x%x", ci.ci_hardware_id);
+		snprintf(buf, sizeof(buf), " model 0x%x", ci.ci_hardware_id);
 		model = buf;
 	}
 

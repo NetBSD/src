@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.41 2003/01/27 05:00:54 thorpej Exp $	*/
+/*	$NetBSD: gram.y,v 1.42 2003/07/13 12:36:48 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -592,7 +592,7 @@ setmachine(const char *mch, const char *mcharch, struct nvlist *mchsubarches)
 	 * Set up the file inclusion stack.  This empty include tells
 	 * the parser there are no more device definitions coming.
 	 */
-	strcpy(buf, _PATH_DEVNULL);
+	strlcpy(buf, _PATH_DEVNULL, sizeof(buf));
 	if (include(buf, ENDDEFS, 0, 0) != 0)
 		exit(1);
 
@@ -614,7 +614,7 @@ setmachine(const char *mch, const char *mcharch, struct nvlist *mchsubarches)
 		(void)sprintf(buf, "arch/%s/conf/files.%s",
 		    machinearch, machinearch);
 	else
-		strcpy(buf, _PATH_DEVNULL);
+		strlcpy(buf, _PATH_DEVNULL, sizeof(buf));
 	if (include(buf, ENDFILE, 0, 0) != 0)
 		exit(1);
 
