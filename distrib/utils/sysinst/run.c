@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.2.2.1 1997/11/02 20:44:36 mellon Exp $	*/
+/*	$NetBSD: run.c,v 1.2.2.2 1997/11/06 00:43:39 mellon Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -63,7 +63,7 @@ char* va_prog_cmdstr(char *cmd, va_list ap);
 #define BUFSIZE 4096
 
 int
-collect (int kind, char **buffer, char *name, ...)
+collect (int kind, char **buffer, const char *name, ...)
 {
 	size_t nbytes;		/* Number of bytes in buffer. */
 	size_t fbytes;		/* Number of bytes in file. */
