@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.30 2002/09/27 15:37:04 provos Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.31 2002/10/12 08:53:46 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.30 2002/09/27 15:37:04 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.31 2002/10/12 08:53:46 manu Exp $");
 
 #include "opt_ddb.h"
 
@@ -164,6 +164,15 @@ irix_sys_syssgi(p, v, retval)
 		return irix_syssgi_pathconf((char *)SCARG(uap, arg1),
 		    (int)SCARG(uap, arg2), p, retval);
 		break;
+
+	case IRIX_SGI_RUSAGE: {	/* BSD getrusage(2) */
+		struct sys_getrusage_args cup;
+
+		SCARG(&cup, who) = (int)SCARG(uap, arg1);
+		SCARG(&cup, rusage) = (struct rusage *)SCARG(uap, arg2);
+		return sys_getrusage(p, &cup, retval);
+		break;
+	}
 
 	case IRIX_SGI_RDNAME: {	/* Read Processes' name */
 		struct proc *tp;
