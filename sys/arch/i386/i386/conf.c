@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.71 1996/03/14 21:27:33 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.72 1996/03/25 18:47:47 perry Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -68,6 +68,9 @@ bdev_decl(vnd);
 bdev_decl(scd);
 #include "ccd.h"
 bdev_decl(ccd);
+#include "rd.h"
+bdev_decl(rd);
+/* no cdev for rd */
 
 struct bdevsw	bdevsw[] =
 {
@@ -90,6 +93,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NVND,vnd),	/* 14: vnode disk driver */
 	bdev_disk_init(NSCD,scd),	/* 15: Sony CD-ROM */
 	bdev_disk_init(NCCD,ccd),	/* 16: concatenated disk driver */
+	bdev_disk_init(NRD,rd),		/* 17: ram disk driver */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
