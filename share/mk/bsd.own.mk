@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.79 1998/08/31 17:55:26 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.80 1998/09/02 14:12:04 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -75,6 +75,7 @@ STRIPFLAG?=	-s
 	(${MACHINE} == "mac68k") || \
 	(${MACHINE} == "mvme68k") || \
 	(${MACHINE} == "sparc") || \
+	(${MACHINE} == "sparc64") || \
 	(${MACHINE} == "vax")
 UVM?=		yes
 .endif
