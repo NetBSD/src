@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.31 2002/10/06 01:36:09 lukem Exp $	*/
+/*	$NetBSD: verify.c,v 1.32 2002/10/08 00:34:08 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: verify.c,v 1.31 2002/10/06 01:36:09 lukem Exp $");
+__RCSID("$NetBSD: verify.c,v 1.32 2002/10/08 00:34:08 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -270,11 +270,7 @@ miss(NODE *p, char *tail)
 			continue;
 		}
 		if (p->flags & F_MODE) {
-#if HAVE_LCHMOD
 			if (lchmod(path, p->st_mode))
-#else
-			if ((p->type != F_LINK) && chmod(path, p->st_mode))
-#endif
 				printf("%s: permissions not set: %s\n",
 				    path, strerror(errno));
 		}
@@ -284,11 +280,7 @@ miss(NODE *p, char *tail)
 				flags = p->st_flags;
 			else
 				flags = p->st_flags & ~SP_FLGS;
-#if HAVE_LCHFLAGS
 			if (lchflags(path, flags))
-#else
-			if ((p->type != F_LINK) && chflags(path, flags))
-#endif
 				printf("%s: file flags not set: %s\n",
 				    path, strerror(errno));
 		}
