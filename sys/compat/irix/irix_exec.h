@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.h,v 1.8 2002/05/28 21:15:41 manu Exp $ */
+/*	$NetBSD: irix_exec.h,v 1.9 2002/06/02 19:06:02 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -41,9 +41,13 @@
 
 #include <sys/types.h> 
 #include <sys/exec.h>
+#include <sys/signal.h>
 #include <sys/exec_elf.h>
 
 #include <machine/vmparam.h>
+
+#include <compat/svr4/svr4_types.h>
+#include <compat/svr4/svr4_signal.h>
 
 /* Address and size of shared arena used by usinit(3) on IRIX */
 #define IRIX_SH_ARENA_ADDR	0x200000
@@ -52,7 +56,7 @@
 /* IRIX specific per-process data */
 struct irix_emuldata {
 #define ied_startcopy ied_sigtramp
-	void *ied_sigtramp;	/* Address of signal trampoline */
+	void *ied_sigtramp[SVR4_NSIG];	/* Address of signal trampoline */
 #define ied_endcopy ied_pptr	
 	struct proc *ied_pptr;	/* parent process or NULL */
 };

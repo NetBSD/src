@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.15 2002/05/28 21:15:41 manu Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.16 2002/06/02 19:06:02 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.15 2002/05/28 21:15:41 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.16 2002/06/02 19:06:02 manu Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
@@ -331,7 +331,7 @@ irix_e_proc_fork(p, parent)
 
         p->p_emuldata = NULL;
 
-	/* Use parent's vmspace beacause our vmspace may not be setup yet */
+	/* Use parent's vmspace because our vmspace may not be setup yet */
         irix_e_proc_init(p, parent->p_vmspace);
 
 	ied1 = p->p_emuldata;
