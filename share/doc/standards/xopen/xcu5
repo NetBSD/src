@@ -1,4 +1,4 @@
-.\" $NetBSD: xcu5,v 1.8 2000/07/07 20:06:27 tv Exp $
+.\" $NetBSD: xcu5,v 1.9 2002/01/30 21:43:29 jwise Exp $
 .\"
 .\" Copyright (c) 1999 Jim Wise
 .\" All rights reserved.
@@ -38,13 +38,15 @@ is part of the
 suite of tools which are not
 provided with
 .Nx ,
-or in pkgsrc.
-.Tn RCS ,
-provided with
-.Nx ,
+but can be approximated with the
+.Tn pkgsrc/devel/cssc
+package.
+.Tn RCS
 and
 .Tn CVS ,
-provided in pkgsrc, provide alternate forms of version
+both provided with
+.Nx ,
+provide alternate forms of version
 control.
 ..
 .\" ---------------------------------------------------------------------------------
