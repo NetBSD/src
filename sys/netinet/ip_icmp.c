@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.31 1998/12/19 02:46:12 thorpej Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.32 1999/01/11 22:35:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -159,7 +159,7 @@ icmp_error(n, type, code, dest, destifp)
 	m = m_gethdr(M_DONTWAIT, MT_HEADER);
 	if (m == NULL)
 		goto freeit;
-	icmplen = oiplen + min(8, oip->ip_len);
+	icmplen = oiplen + min(8, oip->ip_len - oiplen);
 	m->m_len = icmplen + ICMP_MINLEN;
 	MH_ALIGN(m, m->m_len);
 	icp = mtod(m, struct icmp *);
@@ -183,6 +183,9 @@ icmp_error(n, type, code, dest, destifp)
 			icp->icmp_nextmtu = htons(destifp->if_mtu);
 	}
 
+	HTONS(oip->ip_id);
+	HTONS(oip->ip_off);
+	HTONS(oip->ip_len);
 	icp->icmp_code = code;
 	bcopy((caddr_t)oip, (caddr_t)&icp->icmp_ip, icmplen);
 	nip = &icp->icmp_ip;
