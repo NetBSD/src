@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.29 2001/06/03 06:19:14 itojun Exp $
+# $NetBSD: obsolete.mi,v 1.30 2001/06/09 13:59:07 bjh21 Exp $
 /usr/share/man/cat1/amq.0
 /usr/share/man/cat1/i386
 /usr/share/man/cat1/i386/cursor.0
@@ -23,6 +23,7 @@
 /usr/share/man/cat3/i386
 /usr/share/man/cat3/i386/keycap.0
 /usr/share/man/cat4/amiga/le.0
+/usr/share/man/cat4/arm26/dtide.0
 /usr/share/man/cat4/arm26/ea.0
 /usr/share/man/cat4/arm32/com.0
 /usr/share/man/cat4/arm32/ea.0
@@ -105,6 +106,7 @@
 /usr/share/man/man3/i386
 /usr/share/man/man3/i386/keycap.3
 /usr/share/man/man4/amiga/le.4
+/usr/share/man/man4/arm26/dtide.4
 /usr/share/man/man4/arm26/ea.4
 /usr/share/man/man4/arm32/com.4
 /usr/share/man/man4/arm32/ea.4

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.364 2001/06/08 14:40:43 wiz Exp $
+# $NetBSD: mi,v 1.365 2001/06/09 13:59:06 bjh21 Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -465,7 +465,6 @@
 ./usr/share/man/cat4/arm26/arcwskbd.0		man-sys-catman
 ./usr/share/man/cat4/arm26/arcwsmouse.0		man-sys-catman
 ./usr/share/man/cat4/arm26/cpu.0		man-sys-catman
-./usr/share/man/cat4/arm26/dtide.0		man-sys-catman
 ./usr/share/man/cat4/arm26/eh.0			man-sys-catman
 ./usr/share/man/cat4/arm26/ei.0			man-sys-catman
 ./usr/share/man/cat4/arm26/podulebus.0		man-sys-catman
@@ -539,6 +538,7 @@
 ./usr/share/man/cat4/depca.0			man-sys-catman
 ./usr/share/man/cat4/dpt.0			man-sys-catman
 ./usr/share/man/cat4/drum.0			man-sys-catman
+./usr/share/man/cat4/dtide.0			man-sys-catman
 ./usr/share/man/cat4/dty.0			man-sys-catman
 ./usr/share/man/cat4/ea.0			man-sys-catman
 ./usr/share/man/cat4/eap.0			man-sys-catman
@@ -1997,7 +1997,6 @@
 ./usr/share/man/man4/arm26/arcwskbd.4		man-sys-man
 ./usr/share/man/man4/arm26/arcwsmouse.4		man-sys-man
 ./usr/share/man/man4/arm26/cpu.4		man-sys-man
-./usr/share/man/man4/arm26/dtide.4		man-sys-man
 ./usr/share/man/man4/arm26/eh.4			man-sys-man
 ./usr/share/man/man4/arm26/ei.4			man-sys-man
 ./usr/share/man/man4/arm26/podulebus.4		man-sys-man
@@ -2071,6 +2070,7 @@
 ./usr/share/man/man4/depca.4			man-sys-man
 ./usr/share/man/man4/dpt.4			man-sys-man
 ./usr/share/man/man4/drum.4			man-sys-man
+./usr/share/man/man4/dtide.4			man-sys-man
 ./usr/share/man/man4/dty.4			man-sys-man
 ./usr/share/man/man4/ea.4			man-sys-man
 ./usr/share/man/man4/eap.4			man-sys-man
