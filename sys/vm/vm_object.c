@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.c,v 1.40 1997/02/05 08:26:25 mrg Exp $	*/
+/*	$NetBSD: vm_object.c,v 1.41 1997/02/18 13:39:34 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -346,10 +346,7 @@ vm_object_terminate(object)
 	 * Wait until the pageout daemon is through with the object or a
 	 * potential collapse operation is finished.
 	 */
-	while (object->paging_in_progress) {
-		vm_object_sleep(object, object, FALSE, "vostrm");
-		vm_object_lock(object);
-	}
+	vm_object_paging_wait(object);
 
 	/*
 	 * Detach the object from its shadow if we are the shadow's
@@ -467,10 +464,8 @@ again:
 	/*
 	 * Wait until the pageout daemon is through with the object.
 	 */
-	while (object->paging_in_progress) {
-		vm_object_sleep(object, object, FALSE, "vospgc");
-		vm_object_lock(object);
-	}
+	vm_object_paging_wait(object);
+
 	/*
 	 * Loop through the object page list cleaning as necessary.
 	 */
@@ -516,12 +511,7 @@ again:
 			pmap_page_protect(VM_PAGE_TO_PHYS(p), VM_PROT_READ);
 			if (!(p->flags & PG_CLEAN)) {
 				p->flags |= PG_BUSY;
-#ifdef DIAGNOSTIC
-				if (object->paging_in_progress == 0xdead)
-					panic("vm_object_page_clean: "
-					    "object deallocated");
-#endif
-				object->paging_in_progress++;
+				vm_object_paging_begin(object);
 				vm_object_unlock(object);
 				/*
 				 * XXX if put fails we mark the page as
@@ -535,7 +525,7 @@ again:
 					noerror = FALSE;
 				}
 				vm_object_lock(object);
-				object->paging_in_progress--;
+				vm_object_paging_end(object);
 				if (!de_queue && onqueue) {
 					vm_page_lock_queues();
 					if (onqueue > 0)
@@ -1308,8 +1298,8 @@ vm_object_collapse_aux(object)
 				 * order to not get simultaneous
 				 * cascaded collapses.
 				 */
-				object->paging_in_progress++;
-				backing_object->paging_in_progress++;
+				vm_object_paging_begin(object);
+				vm_object_paging_begin(backing_object);
 				if (vm_pager_get_pages(backing_object->pager,
 				    &backing_page, 1, TRUE) != VM_PAGER_OK) {
 #ifdef DIAGNOSTIC
@@ -1339,10 +1329,8 @@ vm_object_collapse_aux(object)
 					    backing_object, FALSE, "vosca2");
 					vm_object_lock(backing_object);
 				}
-				backing_object->paging_in_progress--;
-				object->paging_in_progress--;
-				thread_wakeup(backing_object);
-				thread_wakeup(object);
+				vm_object_paging_end(backing_object);
+				vm_object_paging_end(object);
 
 				/*
 				 * During the pagein vm_object_terminate
