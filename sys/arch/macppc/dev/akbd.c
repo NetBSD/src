@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.26 2002/08/13 15:00:42 aymeric Exp $	*/
+/*	$NetBSD: akbd.c,v 1.27 2002/08/14 13:02:58 aymeric Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -33,7 +33,6 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>
-#include <sys/kernel.h>
 #include <sys/poll.h>
 #include <sys/select.h>
 #include <sys/proc.h>
@@ -82,9 +81,6 @@ extern struct cfdriver akbd_cd;
 int akbd_enable __P((void *, int));
 void akbd_set_leds __P((void *, int));
 int akbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-static void akbd_rawrepeat __P((void *));
-#endif
 
 struct wskbd_accessops akbd_accessops = {
 	akbd_enable,
@@ -139,10 +135,6 @@ akbdattach(parent, self, aux)
 	short cmd;
 	u_char buffer[9];
 	struct wskbddev_attach_args a;
-
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-	callout_init(&sc->sc_rawrepeat_ch);
-#endif
 
 	/* ohare based models have soft ejectable card slot. */
 	if (OF_finddevice("/bandit/ohare") != -1)
@@ -477,7 +469,6 @@ akbd_ioctl(v, cmd, data, flag, p)
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	case WSKBDIO_SETMODE:
 		sc->sc_rawkbd = *(int *)data == WSKBD_RAW;
-		callout_stop(&sc->sc_rawrepeat_ch);
 		return 0;
 #endif
 	}
@@ -485,27 +476,6 @@ akbd_ioctl(v, cmd, data, flag, p)
 
 	return EPASSTHROUGH;
 }
-
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-static void
-akbd_rawrepeat(v)
-	void *v;
-{
-	struct akbd_softc *sc = (struct akbd_softc *) v;
-	int s = spltty();
-
-	/* check for race condition and avoid it */
-	if (sc->sc_nrep == 0) {
-		splx(s);
-		return;
-	}
-
-	wskbd_rawinput(sc->sc_wskbddev, sc->sc_rep, sc->sc_nrep);
-	splx(s);
-	callout_reset(&sc->sc_rawrepeat_ch, hz * AKBD_RAW_REPEAT_DELAYN / 1000,
-		akbd_rawrepeat, sc);
-}
-#endif
 
 extern int adb_polling;
 
@@ -526,13 +496,10 @@ kbd_passup(sc,key)
 #endif
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	} else if (sc->sc_rawkbd) {
-		char cbuf[AKBD_RAW_MAX_KEYS * 2];
+		char cbuf[2];
 		int s;
 		int j = 0;
-		int npress = 0;
 		int c = keyboard[ADBK_KEYVAL(key)][3];
-
-		callout_stop(&sc->sc_rawrepeat_ch);
 
 		if (c == 0)			/* XXX */
 			return;
@@ -540,26 +507,11 @@ kbd_passup(sc,key)
 		if (c & 0x80)
 			cbuf[j++] = 0xe0;
 
-		cbuf[j++] = c & 0x7f;
-
-		if (!ADBK_PRESS(key))
-			cbuf[j - 1] |= 0x80;
-		else {
-			/* this only records last key pressed */
-			if (c & 0x80)
-				sc->sc_rep[npress++] = 0xe0;
-			sc->sc_rep[npress++] = c & 0x7f;
-		}
+		cbuf[j++] = (c & 0x7f) | (ADBK_PRESS(key)? 0 : 0x80);
 
 		s = spltty();
 		wskbd_rawinput(sc->sc_wskbddev, cbuf, j);
 		splx(s);
-
-		sc->sc_nrep = npress;
-		if (npress != 0)
-			callout_reset(&sc->sc_rawrepeat_ch,
-				hz * AKBD_RAW_REPEAT_DELAY1 / 1000,
-				akbd_rawrepeat, sc);
 #endif
 	} else {
 		int press, val;
