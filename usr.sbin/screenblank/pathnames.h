@@ -1,7 +1,7 @@
-/*	$NetBSD: pathnames.h,v 1.3 1997/07/30 22:54:35 jtc Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.4 1998/12/18 01:15:45 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,6 +37,13 @@
  */
 
 #define _PATH_SCREENBLANKPID	"/var/run/screenblank.pid"
+
+#ifdef HAVE_FBIO
 #define	_PATH_KEYBOARD		"/dev/kbd"
 #define _PATH_MOUSE		"/dev/mouse"
 #define _PATH_FB		"/dev/fb"
+#endif
+
+#define	_PATH_WSKBD		"/dev/wskbd0"
+#define	_PATH_WSMOUSE		"/dev/wsmouse0"
+#define	_PATH_WSDISPLAY		"/dev/ttyE0"
