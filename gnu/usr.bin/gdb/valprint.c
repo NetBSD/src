@@ -8,7 +8,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)valprint.c	6.5 (Berkeley) 5/8/91";*/
-static char rcsid[] = "$Id: valprint.c,v 1.2 1993/08/01 18:47:32 mycroft Exp $";
+static char rcsid[] = "$Id: valprint.c,v 1.3 1993/12/03 05:13:11 paulus Exp $";
 #endif /* not lint */
 
 /* Print values for GNU debugger gdb.
@@ -482,7 +482,7 @@ val_print (type, valaddr, address, stream, format,
 		fprintf_filtered (stream, " (offset in bits)");
 	      break;
 	    }
-	  fprintf_filtered (stream, "%d", val >> 3);
+	  fprintf_filtered (stream, "%d", (int) val >> 3);
 	}
       else
 	{
@@ -1238,7 +1238,11 @@ scalar_print_decimal(stream, type, val)
 	struct type *type;
 	LONGEST val;
 {
+#ifdef	LONG_LONG
+	fprintf_filtered(stream, TYPE_UNSIGNED(type)? "%qu":"%qd", val);
+#else
 	fprintf_filtered(stream, TYPE_UNSIGNED(type)? "%lu":"%ld", val);
+#endif
 }
 
 static void
@@ -1249,16 +1253,20 @@ scalar_print_hex(stream, type, val)
 {
 	switch (TYPE_LENGTH(type)) {
 	case 1:
-		fprintf_filtered (stream, "0x%02lx", val);
+		fprintf_filtered (stream, "0x%02lx", (long) val);
 		break;
 	case 2:
-		fprintf_filtered (stream, "0x%04lx", val);
+		fprintf_filtered (stream, "0x%04lx", (long) val);
 		break;
 	case 4:
-		fprintf_filtered (stream, "0x%08lx", val);
+		fprintf_filtered (stream, "0x%08lx", (long) val);
 		break;
 	default:
+#ifdef	LONG_LONG
+		fprintf_filtered (stream, "0x%qx", val);
+#else
 		fprintf_filtered (stream, "0x%lx", val);
+#endif
 		break;
 	}
 }
@@ -1271,16 +1279,20 @@ scalar_print_octal(stream, type, val)
 {
 	switch (TYPE_LENGTH(type)) {
 	case 1:
-		fprintf_filtered (stream, "0%03lo", val);
+		fprintf_filtered (stream, "0%03lo", (long) val);
 		break;
 	case 2:
-		fprintf_filtered (stream, "0%06lo", val);
+		fprintf_filtered (stream, "0%06lo", (long) val);
 		break;
 	case 4:
-		fprintf_filtered (stream, "0%012lo", val);
+		fprintf_filtered (stream, "0%012lo", (long) val);
 		break;
 	default:
+#ifdef	LONG_LONG
 		fprintf_filtered (stream, "0%lo", val);
+#else
+		fprintf_filtered (stream, "0%qo", val);
+#endif
 		break;
 	}
 }
