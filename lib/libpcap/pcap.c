@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap.c,v 1.7 1999/07/02 16:03:41 simonb Exp $	*/
+/*	$NetBSD: pcap.c,v 1.8 2000/04/12 14:40:33 itojun Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -39,7 +39,7 @@
 static const char rcsid[] =
     "@(#) Header: pcap.c,v 1.27 96/11/27 18:43:25 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: pcap.c,v 1.7 1999/07/02 16:03:41 simonb Exp $");
+__RCSID("$NetBSD: pcap.c,v 1.8 2000/04/12 14:40:33 itojun Exp $");
 #endif
 #endif
 
@@ -60,22 +60,29 @@ __RCSID("$NetBSD: pcap.c,v 1.7 1999/07/02 16:03:41 simonb Exp $");
 int
 pcap_dispatch(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 {
-	register int cc;
 
 	if (p->sf.rfile != NULL)
 		return (pcap_offline_read(p, cnt, callback, user));
-	/* XXX keep reading until we get something (or an error occurs) */
-	do {
-		cc = pcap_read(p, cnt, callback, user);
-	} while (cc == 0);
-	return (cc);
+	return (pcap_read(p, cnt, callback, user));
 }
 
 int
 pcap_loop(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 {
+	int n;
+
 	for (;;) {
-		int n = pcap_dispatch(p, cnt, callback, user);
+		if (p->sf.rfile != NULL)
+			n = pcap_offline_read(p, cnt, callback, user);
+		else {
+			/*
+			 * XXX keep reading until we get something
+			 * (or an error occurs)
+			 */
+			do {
+				n = pcap_read(p, cnt, callback, user);
+			} while (n == 0);
+		}
 		if (n <= 0)
 			return (n);
 		if (cnt > 0) {
