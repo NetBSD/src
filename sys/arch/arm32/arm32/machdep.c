@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40 1998/07/06 02:40:42 mark Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41 1998/07/08 00:10:46 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -48,7 +48,6 @@
 #include "opt_pmap_debug.h"
 #include "opt_uvm.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
@@ -57,12 +56,10 @@
 #include <sys/user.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
-#include <sys/buf.h>
 #include <sys/map.h>
 #include <sys/exec.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
-#include <sys/device.h>
 #include <sys/msgbuf.h>
 #include <vm/vm.h>
 #include <sys/sysctl.h>
@@ -95,7 +92,6 @@
 #include <machine/cpu.h>
 #include <machine/katelib.h>
 #include <machine/pte.h>
-#include <machine/undefined.h>
 #include <machine/bootconfig.h>
 
 #include "ipkdb.h"

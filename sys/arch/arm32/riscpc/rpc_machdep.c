@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.11 1998/07/07 03:05:17 mark Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.12 1998/07/08 00:10:44 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -49,33 +49,12 @@
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
-#include <sys/callout.h>
 #include <sys/proc.h>
-#include <sys/user.h>
-#include <sys/kernel.h>
-#include <sys/mbuf.h>
 #include <sys/msgbuf.h>
-#include <sys/buf.h>
-#include <sys/map.h>
 #include <sys/exec.h>
-#include <sys/mount.h>
-#include <sys/vnode.h>
-#include <sys/device.h>
-#include <sys/syscallargs.h>
-
-#ifdef SYSVMSG
-#include <sys/msg.h>
-#endif
-#ifdef SYSVSEM
-#include <sys/sem.h>
-#endif
-#ifdef SYSVSHM
-#include <sys/shm.h>
-#endif
 
 #include <dev/cons.h>
 
