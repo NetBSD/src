@@ -1,3 +1,5 @@
+/*	$NetBSD: ahc_pci.c,v 1.2 1996/05/20 00:56:39 thorpej Exp $	*/
+
 /*
  * Product specific probe and attach routines for:
  *      3940, 2940, aic7880, aic7870, aic7860 and aic7850 SCSI controllers
@@ -28,8 +30,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: ahc_pci.c,v 1.1 1996/05/16 03:44:13 mycroft Exp $
  */
 
 #if defined(__FreeBSD__)
