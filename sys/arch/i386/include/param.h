@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.54 2003/02/26 21:29:02 fvdl Exp $	*/
+/*	$NetBSD: param.h,v 1.55 2003/07/18 17:33:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -80,11 +80,24 @@
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
+#ifdef KERNBASE
+#ifndef KERNBASE_LOCORE
+#error you must define KERNBASE_LOCORE if you define KERNBASE.
+#endif
+#ifdef _LOCORE
+#undef KERNBASE
+#define KERNBASE KERNBASE_LOCORE
+#endif /* _LOCORE */
+#endif /* KERNBASE */
+
+#ifndef KERNBASE
 #ifndef _LOCORE
 #define	KERNBASE	0xc0000000UL	/* start of kernel virtual space */
 #else
 #define	KERNBASE	0xc0000000	/* start of kernel virtual space */
-#endif
+#endif /* _LOCORE */
+#endif /* KERNBASE */
+
 #define	KERNTEXTOFF	(KERNBASE + 0x100000) /* start of kernel text */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
