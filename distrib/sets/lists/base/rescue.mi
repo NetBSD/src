@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.6 2005/01/10 03:13:04 lukem Exp $
+# $NetBSD: rescue.mi,v 1.7 2005/01/10 09:53:00 lukem Exp $
 ./rescue/[					base-rescue-root
 ./rescue/atactl					base-rescue-root
 ./rescue/badsect				base-rescue-root
@@ -12,6 +12,7 @@
 ./rescue/chio					base-rescue-root
 ./rescue/chmod					base-rescue-root
 ./rescue/chown					base-rescue-root
+./rescue/chroot					base-rescue-root
 ./rescue/clri					base-rescue-root
 ./rescue/cp					base-rescue-root
 ./rescue/csh					base-rescue-root
@@ -51,6 +52,7 @@
 ./rescue/ktrace					base-rescue-root
 ./rescue/ktruss					base-rescue-root
 ./rescue/ldd					base-rescue-root
+./rescue/less					base-rescue-root
 ./rescue/lmcctl					base-rescue-root
 ./rescue/ln					base-rescue-root
 ./rescue/ls					base-rescue-root
@@ -59,6 +61,7 @@
 ./rescue/mknod					base-rescue-root
 ./rescue/modload				base-rescue-root
 ./rescue/modunload				base-rescue-root
+./rescue/more					base-rescue-root
 ./rescue/mount					base-rescue-root
 ./rescue/mount_ados				base-rescue-root
 ./rescue/mount_cd9660				base-rescue-root
@@ -124,6 +127,7 @@
 ./rescue/ttyflags				base-rescue-root
 ./rescue/tunefs					base-rescue-root
 ./rescue/umount					base-rescue-root
+./rescue/vi					base-rescue-root
 ./rescue/wdogctl				base-rescue-root
 ./rescue/wsconsctl				base-rescue-root
 ./rescue/zcat					base-rescue-root
