@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.21 2002/02/25 14:58:09 ad Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.22 2002/04/30 12:33:32 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -124,8 +124,8 @@ dz_vsbus_match(struct device *parent, struct cfdata *cf, void *aux)
 	struct ss_dz *dzP;
 	short i;
 
-#if VAX53 || VAXANY
-	if (vax_boardtype == VAX_BTYP_53)
+#if VAX53 || VAX49 || VAXANY
+	if (vax_boardtype == VAX_BTYP_53 || vax_boardtype == VAX_BTYP_49)
 		if (cf->cf_loc[0] != 0x25000000)
 			return 0; /* Ugly */
 #endif
