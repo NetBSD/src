@@ -386,8 +386,17 @@ void add_special(int argc, char **argv)
     }
     else if(!strcmp(argv[2], "srcdir")) {
 	if(argc != 4) goto argcount;
-	if((p->srcdir = strdup(argv[3])) == NULL)
-	    out_of_memory();
+	if (argv[3][0] == '/' || topdir[0] == '\0') {
+	    if((p->srcdir = strdup(argv[3])) == NULL)
+		out_of_memory();
+	} else {
+	    char tmppath[MAXPATHLEN];
+	    strcpy(tmppath, topdir);
+	    strcat(tmppath, "/");
+	    strcat(tmppath, argv[3]);
+	    if((p->srcdir = strdup(tmppath)) == NULL)
+		out_of_memory();
+	}
     }
     else if(!strcmp(argv[2], "objdir")) {
 	if(argc != 4) goto argcount;
@@ -484,10 +493,11 @@ void fillin_program(prog_t *p)
 	p->ident = genident(p->name);
     if(!p->srcdir) {
 	srcparent = dir_search(p->name);
-	if(srcparent)
+	if(srcparent) {
 	    sprintf(path, "%s/%s", srcparent, p->name);
-	if(is_dir(path))
-	    p->srcdir = strdup(path);
+	    if(is_dir(path))
+		p->srcdir = strdup(path);
+	}
     }
     if(!p->objdir && p->srcdir) {
 	sprintf(path, "%s/obj", p->srcdir);
