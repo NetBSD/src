@@ -1,4 +1,4 @@
-.\"	$NetBSD: dbopen.3,v 1.9 1999/02/07 07:27:13 lukem Exp $
+.\"	$NetBSD: dbopen.3,v 1.10 1999/07/29 00:22:29 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -420,6 +420,10 @@ incompatible with the current file specification or which is not
 meaningful for the function (for example, use of the cursor without
 prior initialization) or there is a mismatch between the version
 number of file and the software.
+.TP
+[EFBIG]
+The key could not be inserted due to limitations in the DB file format
+(e.g. a hash database was out of overflow pages).
 .PP
 The
 .I close
