@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrace.c,v 1.9 2000/04/17 12:25:45 blymn Exp $	*/
+/*	$NetBSD: ctrace.c,v 1.10 2000/04/20 09:36:11 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ctrace.c	8.2 (Berkeley) 10/5/93";
 #else
-__RCSID("$NetBSD: ctrace.c,v 1.9 2000/04/17 12:25:45 blymn Exp $");
+__RCSID("$NetBSD: ctrace.c,v 1.10 2000/04/20 09:36:11 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -52,8 +52,10 @@ __RCSID("$NetBSD: ctrace.c,v 1.9 2000/04/17 12:25:45 blymn Exp $");
 #endif
 
 #include <sys/time.h>
+#include <string.h>
 
 #include "curses.h"
+#include "curses_private.h"
 
 #ifndef TFILE
 #define	TFILE	"__curses.out"

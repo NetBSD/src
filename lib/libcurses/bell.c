@@ -1,4 +1,4 @@
-/*	$NetBSD: bell.c,v 1.2 2000/04/12 21:33:12 jdc Exp $	*/
+/*	$NetBSD: bell.c,v 1.3 2000/04/20 09:36:11 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
  */
 
 #include "curses.h"
+#include "curses_private.h"
 
 /*
  * beep
