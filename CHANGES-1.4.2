@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.80 1999/11/12 03:32:56 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.81 1999/11/20 17:43:15 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -1096,3 +1096,57 @@ usr.sbin/pkg_install/add/main.c			1.13
 usr.sbin/apmd/apmd.c				1.12
 
   Avoid excessive printing of power status.
+
+usr.sbin/mtree/Makefile				1.14
+usr.sbin/mtree/code.c				1.1-1.4 (new)
+usr.sbin/mtree/create.c				1.24
+usr.sbin/mtree/extern.h				1.6
+usr.sbin/mtree/mtree.8				1.12
+usr.sbin/mtree/spec.c				1.17
+
+  Make mtree able to properly encode file names with `funny' albeit
+  legal characters (`#', ` ', binary characters), fixing PR#5006 and
+  PR#7663.
+
+share/man/man8/compat_osf1.8			1.1 (new)
+
+  Provide minimal documentation for the Alpha OSF/1 aka Tru64 compat
+  environment.
+
+lib/libc/net/inet_pton.c			1.14
+
+  Do proper overflow checking of IPv4 addresses, fixing PR#8314.
+
+usr.sbin/mountd/mountd.c			1.58 (via patch)
+
+  Avoid spurious inaccessibility of exported file systems while
+  mountd is restarted or told to reload the exports file, fixing
+  PR#8791.
+
+usr.sbin/rwhod/rwhod.c				1.16
+
+  Fix possible Denial-of-Service attack triggered by sending short
+  packets to rwhod.
+
+usr.sbin/iostat/iostat.c			1.18
+
+  Truncate device names at 7, not at 4 chars (so raid0 et al comes
+  out ok).
+
+sys/arch/mac68k/dev/zs.c			1.32
+
+  Allow rates higher than 57600, fixing PR#8070
+
+sys/arch/alpha/pci/sio.c			1.27
+
+  Add support for the PCI<->ISA bridge in the DS10, allowing it to
+  boot.
+
+lib/libc/gen/vis.c				1.14
+
+  Make vis work again for chars > 0177 in VIS_OCTAL mode.  Fixes
+  PR#8802.
+
+usr.sbin/ypserv/ypinit/Makefile.yp		1.9
+
+  Sort maps before makedbm. Can speed up large maps over tenfold.
