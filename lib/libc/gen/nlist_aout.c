@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_aout.c,v 1.1 1996/09/27 22:23:04 cgd Exp $	*/
+/*	$NetBSD: nlist_aout.c,v 1.2 1996/09/30 23:49:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: nlist_aout.c,v 1.1 1996/09/27 22:23:04 cgd Exp $";
+static char rcsid[] = "$NetBSD: nlist_aout.c,v 1.2 1996/09/30 23:49:28 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,20 +57,6 @@ static char rcsid[] = "$NetBSD: nlist_aout.c,v 1.1 1996/09/27 22:23:04 cgd Exp $
 
 #ifdef NLIST_AOUT
 int
-__fdnlist_is_aout(fd)
-	register int fd;
-{
-	struct exec exec;
-
-	if (lseek(fd, (off_t)0, SEEK_SET) == -1 ||
-	    read(fd, &exec, sizeof(exec)) != sizeof(exec) ||
-	    N_BADMAG(exec))
-		return (-1);
-
-	return (0);
-}
-
-int
 __fdnlist_aout(fd, list)
 	register int fd;
 	register struct nlist *list;
@@ -86,10 +72,8 @@ __fdnlist_aout(fd, list)
 	struct stat st;
 
 	if (lseek(fd, (off_t)0, SEEK_SET) == -1 ||
-	    read(fd, &exec, sizeof(exec)) != sizeof(exec))
-		return (-1);
-
-	if (fstat(fd, &st) < 0)
+	    read(fd, &exec, sizeof(exec)) != sizeof(exec) ||
+	    N_BADMAG(exec) || fstat(fd, &st) < 0)
 		return (-1);
 
 	symoff = N_SYMOFF(exec);

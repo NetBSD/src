@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_private.h,v 1.2 1996/09/27 22:41:59 cgd Exp $	*/
+/*	$NetBSD: nlist_private.h,v 1.3 1996/09/30 23:49:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,21 +43,14 @@
 #define	ISLAST(p)	(p->n_un.n_name == 0 || p->n_un.n_name[0] == 0)
 
 #ifdef NLIST_AOUT
-int	__fdnlist_is_aout __P((int));
 int	__fdnlist_aout __P((int, struct nlist *));
 #endif
-
 #ifdef NLIST_ECOFF
-int	__fdnlist_is_ecoff __P((int));
 int	__fdnlist_ecoff __P((int, struct nlist *));
 #endif
-
 #ifdef NLIST_ELF32
-int	__fdnlist_is_elf32 __P((int));
 int	__fdnlist_elf32 __P((int, struct nlist *));
 #endif
-
 #ifdef NLIST_ELF64
-int	__fdnlist_is_elf64 __P((int));
 int	__fdnlist_elf64 __P((int, struct nlist *));
 #endif

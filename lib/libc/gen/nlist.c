@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.c,v 1.8 1996/09/27 22:23:04 cgd Exp $	*/
+/*	$NetBSD: nlist.c,v 1.9 1996/09/30 23:49:27 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: nlist.c,v 1.8 1996/09/27 22:23:04 cgd Exp $";
+static char rcsid[] = "$NetBSD: nlist.c,v 1.9 1996/09/30 23:49:27 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,20 +56,19 @@ static char rcsid[] = "$NetBSD: nlist.c,v 1.8 1996/09/27 22:23:04 cgd Exp $";
 #include "nlist_private.h"
 
 static struct {
-	int	(*check) __P((int));
 	int	(*fdnlist) __P((int, struct nlist *));
 } fdnlist_fmts[] = {
 #ifdef NLIST_AOUT
-	{	__fdnlist_is_aout,	__fdnlist_aout		},
+	{	__fdnlist_aout		},
 #endif
 #ifdef NLIST_ECOFF
-	{	__fdnlist_is_ecoff,	__fdnlist_ecoff		},
+	{	__fdnlist_ecoff		},
 #endif
 #ifdef NLIST_ELF32
-	{	__fdnlist_is_elf32,	__fdnlist_elf32		},
+	{	__fdnlist_elf32		},
 #endif
 #ifdef NLIST_ELF64
-	{	__fdnlist_is_elf64,	__fdnlist_elf64		},
+	{	__fdnlist_elf64		},
 #endif
 };
 	
@@ -96,7 +95,7 @@ __fdnlist(fd, list)
 	int i;
 
 	for (i = 0; i < sizeof(fdnlist_fmts) / sizeof(fdnlist_fmts[0]); i++)
-		if ((*fdnlist_fmts[i].check)(fd) != -1)
-			return ((*fdnlist_fmts[i].fdnlist)(fd, list));
+		if ((*fdnlist_fmts[i].fdnlist)(fd, list) != -1)
+			return;
 	return -1;
 }
