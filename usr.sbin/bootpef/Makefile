@@ -1,8 +1,8 @@
 # bootpef/Makefile
-# $Id: Makefile,v 1.1.1.1 1994/05/30 20:22:32 gwr Exp $
+# $Id: Makefile,v 1.2 1994/06/27 21:31:21 gwr Exp $
 
 PROG=	bootpef
-SRCDIR= ${.CURDIR}/../../libexec/bootpd
+SRCDIR= ${.CURDIR}/../bootpd
 CFLAGS+= -DETC_ETHERS -DDEBUG -I${SRCDIR}
 .PATH: ${SRCDIR}
 

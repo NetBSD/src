@@ -1,8 +1,8 @@
 # bootptest/Makefile
-# $Id: Makefile,v 1.1.1.1 1994/05/30 20:24:19 gwr Exp $
+# $Id: Makefile,v 1.2 1994/06/27 21:31:46 gwr Exp $
 
 PROG=	bootptest
-SRCDIR= ${.CURDIR}/../../libexec/bootpd
+SRCDIR= ${.CURDIR}/../bootpd
 CFLAGS+= -DBOOTPTEST -I${SRCDIR}
 .PATH: ${SRCDIR}
 
