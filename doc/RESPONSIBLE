@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.14 2003/04/01 23:34:37 perry Exp $
+#	$NetBSD: RESPONSIBLE,v 1.15 2003/04/02 05:03:50 perry Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -121,8 +121,7 @@ Portmasters:
 [should be synced with src/distrib/notes/common/main]
 acorn26		bjh21
 acorn32		reinoud
-alpha		ross
-alpha		thorpej
+alpha		ross, thorpej
 amiga		is
 arc		soda
 atari		leo
@@ -143,16 +142,14 @@ newsmips	tsubai
 next68k		dbj
 ofppc		ws
 pc532		phil
-pmax		jonathan
-pmax		simonb
+pmax		simonb, jonathan
 pmppc		augustss
 prep		nonaka
 sbmips		simonb
 sgimips		soren
 sh3		itojun
 sparc		pk
-sparc64		martin
-sparc64		petrov
+sparc64		martin, petrov
 sun2		fredette
 sun3		nathanw
 sun3x		jeremy
