@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.4 1998/01/12 20:23:53 thorpej Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.5 1998/03/21 20:23:09 pk Exp $ */
 
 /*
  * Copyright (c) 1996 Paul Kranenburg.  All rights reserved.
@@ -41,6 +41,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
+#include <sparc/bus.h>
 #include <sparc/autoconf.h>
 #include <sparc/cpu.h>
 
@@ -48,24 +49,54 @@
 #include <sparc/dev/lebuffervar.h>
 #include <sparc/dev/dmareg.h>/*XXX*/
 
-int	lebufprint __P((void *, const char *));
-void	lebufattach __P((struct device *, struct device *, void *));
+int	lebufprint	__P((void *, const char *));
+int	lebufmatch	__P((struct device *, struct cfdata *, void *));
+void	lebufattach	__P((struct device *, struct device *, void *));
+
+int	lebuf_bus_map __P((
+		void *,			/*cookie*/
+		bus_type_t,		/*slot*/
+		bus_addr_t,		/*offset*/
+		bus_size_t,		/*size*/
+		int,			/*flags*/
+		vm_offset_t,		/*preferred virtual address */
+		bus_space_handle_t *));
+
+void	*lebuf_intr_establish __P((
+		void *,			/*cookie*/
+		int,			/*level*/
+		int,			/*flags*/
+		int (*) __P((void *)),	/*handler*/
+		void *));		/*handler arg*/
 
 struct cfattach lebuffer_ca = {
-	sizeof(struct lebuf_softc), matchbyname, lebufattach
+	sizeof(struct lebuf_softc), lebufmatch, lebufattach
 };
 
 int
-lebufprint(aux, name)
+lebufprint(aux, busname)
 	void *aux;
-	const char *name;
+	const char *busname;
 {
-	register struct confargs *ca = aux;
+	struct sbus_attach_args *sa = aux;
+	bus_space_tag_t t = sa->sa_bustag;
+	struct lebuf_softc *sc = t->cookie;
 
-	if (name)
-		printf("[%s at %s]", ca->ca_ra.ra_name, name);
-	printf(" slot 0x%x offset 0x%x", ca->ca_slot, ca->ca_offset);
+	sa->sa_bustag = sc->sc_bustag;	/* XXX */
+	sbus_print(aux, busname);	/* XXX */
+	sa->sa_bustag = t;		/* XXX */
 	return (UNCONF);
+}
+
+int
+lebufmatch(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct sbus_attach_args *sa = aux;
+
+	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0);
 }
 
 /*
@@ -77,24 +108,34 @@ lebufattach(parent, self, aux)
 	void *aux;
 {
 #if defined(SUN4C) || defined(SUN4M)
-	register struct confargs *ca = aux;
+	struct sbus_attach_args *sa = aux;
 	struct lebuf_softc *sc = (void *)self;
 	int node;
-	struct confargs oca;
-	char *name;
 	int sbusburst;
+	bus_space_tag_t sbt;
+	bus_space_handle_t bh;
+	struct bootpath *bp;
 
-	if (ca->ca_ra.ra_vaddr == NULL || ca->ca_ra.ra_nvaddrs == 0)
-		ca->ca_ra.ra_vaddr =
-		    mapiodev(ca->ca_ra.ra_reg, 0, ca->ca_ra.ra_len);
+	sc->sc_bustag = sa->sa_bustag;
+	sc->sc_dmatag = sa->sa_dmatag;
+
+	if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
+			 sa->sa_offset,
+			 sa->sa_size,
+			 0, 0, &bh) != 0) {
+		printf("lebufattach: cannot map registers\n");
+		return;
+	}
 
 	/*
 	 * This device's "register space" is just a buffer where the
 	 * Lance ring-buffers can be stored. Note the buffer's location
 	 * and size, so the `le' driver can pick them up.
 	 */
-	sc->sc_buffer = (caddr_t)ca->ca_ra.ra_vaddr;
-	sc->sc_bufsiz = ca->ca_ra.ra_len;
+	sc->sc_buffer = (caddr_t)bh;
+	sc->sc_bufsiz = sa->sa_size;
+
+	node = sc->sc_node = sa->sa_node;
 
 	/*
 	 * Get transfer burst size from PROM
@@ -103,7 +144,7 @@ lebufattach(parent, self, aux)
 	if (sbusburst == 0)
 		sbusburst = SBUS_BURST_32 - 1; /* 1->16 */
 
-	sc->sc_burst = getpropint(ca->ca_ra.ra_node, "burst-sizes", -1);
+	sc->sc_burst = getpropint(node, "burst-sizes", -1);
 	if (sc->sc_burst == -1)
 		/* take SBus burst sizes */
 		sc->sc_burst = sbusburst;
@@ -113,26 +154,65 @@ lebufattach(parent, self, aux)
 
 	printf("\n");
 
-	node = sc->sc_node = ca->ca_ra.ra_node;
-
-	if (ca->ca_bustype == BUS_SBUS)
-		sbus_establish(&sc->sc_sd, &sc->sc_dev);
+	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 
 	/* Propagate bootpath */
-	if (ca->ca_ra.ra_bp != NULL)
-		oca.ca_ra.ra_bp = ca->ca_ra.ra_bp + 1;
+	if (sa->sa_bp != NULL)
+		bp = sa->sa_bp + 1;
 	else
-		oca.ca_ra.ra_bp = NULL;
+		bp = NULL;
+
+	/* Allocate a bus tag */
+	sbt = (bus_space_tag_t)
+		malloc(sizeof(struct sparc_bus_space_tag), M_DEVBUF, M_NOWAIT);
+	if (sbt == NULL) {
+		printf("lebufattach: out of memory\n");
+		return;
+	}
+
+	bzero(sbt, sizeof *sbt);
+	sbt->cookie = sc;
+	sbt->sparc_bus_map = lebuf_bus_map;
+	sbt->sparc_intr_establish = lebuf_intr_establish;
 
 	/* search through children */
 	for (node = firstchild(node); node; node = nextsibling(node)) {
-		name = getpropstring(node, "name");
-		if (!romprop(&oca.ca_ra, name, node))
-			continue;
-
-		sbus_translate(parent, &oca);
-		oca.ca_bustype = BUS_SBUS;
-		(void) config_found(&sc->sc_dev, (void *)&oca, lebufprint);
+		struct sbus_attach_args sa;
+		sbus_setup_attach_args((struct sbus_softc *)parent,
+				       sbt, sc->sc_dmatag, node, bp, &sa);
+		(void)config_found(&sc->sc_dev, (void *)&sa, lebufprint);
 	}
 #endif /* SUN4C || SUN4M */
+}
+
+/*
+ * Pass-through bus map & interrupt establish routines.
+ */
+int
+lebuf_bus_map(cookie, slot, offset, size, flags, vaddr, hp)
+        void *cookie;
+	bus_type_t slot;
+	bus_addr_t offset;
+	bus_size_t size;
+	int flags;
+	vm_offset_t vaddr;
+	bus_space_handle_t *hp;
+{
+	struct lebuf_softc *sc = cookie;
+
+	return (sbus_bus_map(sc->sc_bustag, slot, offset, size,
+			     flags, vaddr, hp));
+}
+
+void *
+lebuf_intr_establish(cookie, level, flags, handler, arg)
+        void *cookie;
+	int level;
+	int flags;
+	int (*handler) __P((void *));
+	void *arg;
+{
+	struct lebuf_softc *sc = cookie;
+
+	return (bus_intr_establish(sc->sc_bustag, level, flags, handler, arg));
 }
