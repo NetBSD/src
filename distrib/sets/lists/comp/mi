@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.604 2003/07/25 22:22:44 wiz Exp $
+#	$NetBSD: mi,v 1.605 2003/07/26 14:23:19 he Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -115,6 +115,8 @@
 ./usr/include/cdk/template.h		comp-c-include
 ./usr/include/cdk/viewer.h		comp-c-include
 ./usr/include/cpio.h			comp-c-include
+./usr/include/crypto			comp-c-include
+./usr/include/crypto/cryptodev.h	comp-c-include
 ./usr/include/ctype.h			comp-c-include
 ./usr/include/curses.h			comp-c-include
 ./usr/include/db.h			comp-c-include
