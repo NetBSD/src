@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.22 1998/07/08 00:39:02 mjacob Exp $ */
+/* $NetBSD: cpu.h,v 1.23 1998/07/08 17:20:42 mjacob Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -131,7 +131,16 @@ struct proc;
 struct reg;
 struct rpb;
 struct trapframe;
-struct mchkinfo;
+
+/* Per-CPU info for handling machine checks, an array of which		*/
+/* is allocated early in startup					*/
+struct mchkinfo {
+	volatile u_int		mc_expected;	/* machine check expected */
+	volatile u_int		mc_received;	/* machine check received */
+	/*
+	 * We don't really need more info at this time.
+	 */
+};
 
 extern int cold;
 extern struct proc *fpcurproc;
