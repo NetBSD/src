@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.141 2004/04/28 06:01:50 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.142 2004/04/28 06:04:11 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1459,3 +1459,10 @@ sbin/fsck_ffs/inode.c				1.46
 
 	Fix 64bit bug in chkrange().
 	[dbj, ticket #202]
+
+gnu/usr.bin/gcc3/backend/Makefile		1.15
+doc/HACKS					1.33
+
+	Drop workaround for PR#22489 now that the fix for it has been pulled
+	from the gcc current.
+	[uwe, ticket #203]
