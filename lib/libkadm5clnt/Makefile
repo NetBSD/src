@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2001/02/07 10:36:38 joda Exp $
+# $NetBSD: Makefile,v 1.8 2001/02/11 18:02:05 assar Exp $
 
 .include <bsd.own.mk>
 
@@ -36,6 +36,7 @@ SRCS	 =		\
 	randkey_c.c	\
 	rename_c.c	\
 	send_recv.c	\
+	client_glue.c	\
 	$(ERR_FILES)
 
 INCSDIR= /usr/include/kadm5
