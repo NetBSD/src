@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.46 2001/03/09 01:02:11 chs Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.47 2001/06/16 12:00:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.46 2001/03/09 01:02:11 chs Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.47 2001/06/16 12:00:04 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -181,6 +181,7 @@ static int sysctl_key __P((char *, char **, int[], int, int *));
 static int sysctl_vfs __P((char *, char **, int[], int, int *));
 static int sysctl_vfsgen __P((char *, char **, int[], int, int *));
 static int sysctl_mbuf __P((char *, char **, int[], int, int *));
+static int sysctl_pipe __P((char *, char **, int[], int, int *));
 static int sysctl_proc __P((char *, char **, int[], int, int *));
 static int findname __P((char *, char *, char **, struct list *));
 static void usage __P((void));
@@ -396,6 +397,11 @@ parse(string, flags)
 			return;
 		case KERN_CONSDEV:
 			special |= CONSDEV;
+			break;
+		case KERN_PIPE:
+			len = sysctl_pipe(string, &bufp, mib, flags, &type);
+			if (len < 0)
+				return;
 			break;
 		}
 		break;
@@ -1106,6 +1112,33 @@ sysctl_mbuf(string, bufpp, mib, flags, typep)
 	int *typep;
 {
 	struct list *lp = &mbufvars;
+	int indx;
+
+	if (*bufpp == NULL) {
+		listall(string, lp);
+		return (-1);
+	}
+	if ((indx = findname(string, "third", bufpp, lp)) == -1)
+		return (-1);
+	mib[2] = indx;
+	*typep = lp->list[indx].ctl_type;
+	return (3);
+}
+
+struct ctlname pipenames[] = CTL_PIPE_NAMES;
+struct list pipevars = { pipenames, KERN_PIPE_MAXID };
+/*
+ * handle kern.mbuf requests
+ */
+static int
+sysctl_pipe(string, bufpp, mib, flags, typep)
+	char *string;
+	char **bufpp;
+	int mib[];
+	int flags;
+	int *typep;
+{
+	struct list *lp = &pipevars;
 	int indx;
 
 	if (*bufpp == NULL) {

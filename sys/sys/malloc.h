@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.62 2001/05/30 12:07:05 mrg Exp $	*/
+/*	$NetBSD: malloc.h,v 1.63 2001/06/16 12:00:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -171,7 +171,8 @@
 #define	M_EMULDATA	115	/* Per-process emulation data */
 #define	M_1394CTL	116	/* IEEE 1394 control structures */
 #define	M_1394DATA	117	/* IEEE 1394 data buffers */
-#define	M_LAST		118	/* Must be last type + 1 */
+#define	M_PIPE		118	/* Pipe structures */
+#define	M_LAST		119	/* Must be last type + 1 */
 
 #define	INITKMEMNAMES { \
 	"free",		/* 0 M_FREE */ \
@@ -292,7 +293,8 @@
 	"emuldata",	/* 115 M_EMULDATA */ \
 	"1394ctl",	/* 116 M_1394CTL */ \
 	"1394data",	/* 117 M_1394DATA */ \
-	NULL,		/* 118 */ \
+	"pipe",		/* 118 M_PIPE */ \
+	NULL,		/* 119 */ \
 }
 
 struct kmemstats {
