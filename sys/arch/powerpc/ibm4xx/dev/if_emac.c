@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.18 2004/03/24 07:45:23 simonb Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.19 2004/10/30 18:08:35 thorpej Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.18 2004/03/24 07:45:23 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.19 2004/10/30 18:08:35 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -1014,7 +1014,10 @@ emac_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			error = emac_set_filter(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				error = emac_set_filter(sc);
+			else
+				error = 0;
 		}
 		break;
 	}

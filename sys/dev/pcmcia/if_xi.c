@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.48 2004/08/12 19:42:03 mycroft Exp $ */
+/*	$NetBSD: if_xi.c,v 1.49 2004/10/30 18:10:06 thorpej Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.48 2004/08/12 19:42:03 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.49 2004/10/30 18:10:06 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -1041,7 +1041,8 @@ xi_ioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
 			 */
-			xi_set_address(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				xi_set_address(sc);
 			error = 0;
 		}
 		break;

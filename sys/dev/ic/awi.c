@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.65 2004/08/10 00:57:20 dyoung Exp $	*/
+/*	$NetBSD: awi.c,v 1.66 2004/10/30 18:08:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.65 2004/08/10 00:57:20 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.66 2004/10/30 18:08:36 thorpej Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/awi/awi.c,v 1.30 2004/01/15 13:30:06 onoe Exp $");
@@ -947,7 +947,7 @@ awi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #endif
 		if (error == ENETRESET) {
 			/* do not rescan */
-			if (sc->sc_enabled)
+			if (ifp->if_flags & IFF_RUNNING)
 				error = awi_mode_init(sc);
 			else
 				error = 0;

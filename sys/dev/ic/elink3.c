@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.107 2004/08/09 00:25:33 mycroft Exp $	*/
+/*	$NetBSD: elink3.c,v 1.108 2004/10/30 18:08:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.107 2004/08/09 00:25:33 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.108 2004/10/30 18:08:36 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1758,7 +1758,8 @@ epioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			epreset(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				epreset(sc);
 			error = 0;
 		}
 		break;
