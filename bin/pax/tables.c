@@ -1,4 +1,4 @@
-/*	$NetBSD: tables.c,v 1.8 1999/02/12 15:04:00 kleink Exp $	*/
+/*	$NetBSD: tables.c,v 1.9 1999/07/03 14:42:39 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: tables.c,v 1.8 1999/02/12 15:04:00 kleink Exp $");
+__RCSID("$NetBSD: tables.c,v 1.9 1999/07/03 14:42:39 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: tables.c,v 1.8 1999/02/12 15:04:00 kleink Exp $");
 #include <stdio.h>
 #include <ctype.h>
 #include <fcntl.h>
+#include <paths.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
@@ -364,7 +365,8 @@ int
 ftime_start()
 #endif
 {
-	char *pt;
+	const char *tmpdir;
+	char template[MAXPATHLEN];
 
 	if (ftab != NULL)
 		return(0);
@@ -377,19 +379,16 @@ ftime_start()
 	 * get random name and create temporary scratch file, unlink name
 	 * so it will get removed on exit
 	 */
-	pt = strdup("/tmp/paxXXXXXX");
-	if (pt == NULL) {
-		tty_warn(1, "Unable to allocate memory");
-		return(-1);
-	}
-	if ((ffd = mkstemp(pt)) == -1) {
-		syswarn(1, errno, "Unable to create temporary file: %s", pt);
-		free(pt);
+	if ((tmpdir = getenv("TMPDIR")) == NULL)
+		tmpdir = _PATH_TMP;
+	(void)snprintf(template, sizeof(template), "%s/%s", tmpdir, TMPFILE);
+	if ((ffd = mkstemp(template)) == -1) {
+		syswarn(1, errno, "Unable to create temporary file: %s",
+		    template);
 		return(-1);
 	}
 
-	(void)unlink(pt);
-	free(pt);
+	(void)unlink(template);
 	return(0);
 }
 
@@ -1219,7 +1218,8 @@ int
 dir_start()
 #endif
 {
-	char *pt;
+	const char *tmpdir;
+	char template[MAXPATHLEN];
 
 	if (dirfd != -1)
 		return(0);
@@ -1227,19 +1227,15 @@ dir_start()
 	/*
 	 * unlink the file so it goes away at termination by itself
 	 */
-	pt = strdup("/tmp/paxXXXXXX");
-	if (pt == NULL) {
-		tty_warn(1, "Unable to allocate memory");
-		return(-1);
-	}
-	if ((dirfd = mkstemp(pt)) >= 0) {
-		(void)unlink(pt);
-		free(pt);
+	if ((tmpdir = getenv("TMPDIR")) == NULL)
+		tmpdir = _PATH_TMP;
+	(void)snprintf(template, sizeof(template), "%s/%s", tmpdir, TMPFILE);
+	if ((dirfd = mkstemp(template)) >= 0) {
+		(void)unlink(template);
 		return(0);
 	}
 	tty_warn(1, "Unable to create temporary file for directory times: %s",
-	    pt);
-	free(pt);
+	    template);
 	return(-1);
 }
 
