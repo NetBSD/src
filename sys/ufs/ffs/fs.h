@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.40 2004/01/03 19:18:17 dbj Exp $	*/
+/*	$NetBSD: fs.h,v 1.41 2004/03/20 15:37:12 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -66,6 +66,17 @@
  * given in byte-offset form, so they do not imply a sector size. The
  * SBLOCKSEARCH specifies the order in which the locations should be searched.
  *
+ * Unfortunately the UFS2/FFSv2 change was done without adequate consideration
+ * of backward compatibility.  In particular 'newfs' for a FFSv2 partition
+ * must overwrite any old FFSv1 superblock at 8k, and preferrably as many
+ * of the alternates as it can find - otherwise attempting to mount on a
+ * system that only supports FFSv1 is likely to succeed!.
+ * For a small FFSv1 filesystem, an old FFSv2 superblock can be left on
+ * the disk, and a system that tries to find an FFSv2 filesystem in preference
+ * to and FFSv1 one (as NetBSD does) can mount the old FFSv2 filesystem.
+ * As a added bonus, the 'first alternate' superblock of a FFSv1 filesystem
+ * with 64k blocks is at 64k - just where the code looks first when playing
+ * 'hunt the superblock'.
  */
 #define	BBSIZE		8192
 #define	BBOFF		((off_t)(0))
@@ -76,6 +87,10 @@
 #define SBLOCK_UFS2    65536
 #define SBLOCK_PIGGY  262144
 #define SBLOCKSIZE      8192
+/*
+ * NB ensure you check fs->fs_sblockloc == SBLOCKSEARCH[i] before assuming
+ * that the superblock is valid.
+ */
 #define SBLOCKSEARCH \
 	{ SBLOCK_UFS2, SBLOCK_UFS1, SBLOCK_FLOPPY, SBLOCK_PIGGY, -1 }
 
