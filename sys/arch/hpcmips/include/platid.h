@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.h,v 1.2 2000/02/06 08:47:17 takemura Exp $	*/
+/*	$NetBSD: platid.h,v 1.3 2000/12/28 07:10:15 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -74,6 +74,11 @@ struct platid_name {
 	char *name;
 };
 
+struct platid_data {
+	platid_mask_t *mask;
+	void *data;
+};
+
 #define PLATID_FLAGS_SHIFT		0
 #define PLATID_CPU_SUBMODEL_SHIFT	8
 #define PLATID_CPU_MODEL_SHIFT		14
@@ -120,6 +125,7 @@ void platid_dump(char *name, void* pxx);
 int platid_match(platid_t *platid, platid_mask_t *mask);
 int platid_match_sub(platid_t*, platid_mask_t*, int);
 char*	platid_name(platid_t *platid);
+struct platid_data *platid_search(platid_t *platid, struct platid_data *datap);
 
 #define PLATID_DEREFP(pp)	((platid_t*)(pp))
 #define PLATID_DEREF(pp)	(*PLATID_DEREFP(pp))
