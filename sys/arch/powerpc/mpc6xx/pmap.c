@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.36 2001/11/14 20:38:22 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.37 2002/01/02 00:51:37 chs Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1905,13 +1905,10 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 
 		/*
-		 * Downgrading to no mapping at all, we just remove
-		 * the entry EXCEPT if its WIRED.  If it WIRED, we
-		 * just leave it alone.
+		 * Downgrading to no mapping at all, we just remove the entry.
 		 */
 		if ((prot & VM_PROT_READ) == 0) {
-			if ((pvo->pvo_vaddr & PVO_WIRED) == 0)
-				pmap_pvo_remove(pvo, -1);
+			pmap_pvo_remove(pvo, -1);
 			continue;
 		} 
 
