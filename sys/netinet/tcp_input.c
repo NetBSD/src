@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.16 1995/06/11 20:39:22 mycroft Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.17 1995/06/11 21:36:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -1427,6 +1427,7 @@ tcp_xmit_timer(tp, rtt)
 	register short delta;
 
 	tcpstat.tcps_rttupdated++;
+	--rtt;
 	if (tp->t_srtt != 0) {
 		/*
 		 * srtt is stored as fixed point with 3 bits after the
@@ -1435,7 +1436,6 @@ tcp_xmit_timer(tp, rtt)
 		 * an alpha of .875 (srtt = rtt/8 + srtt*7/8 in fixed
 		 * point).  Adjust rtt to origin 0.
 		 */
-		--rtt;
 		delta = (rtt << 2) - (tp->t_srtt >> TCP_RTT_SHIFT);
 		if ((tp->t_srtt += delta) <= 0)
 			tp->t_srtt = 1;
