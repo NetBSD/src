@@ -1,4 +1,4 @@
-/*	$NetBSD: lk201var.h,v 1.3 1999/01/28 10:20:11 jonathan Exp $	*/
+/*	$NetBSD: lk201var.h,v 1.4 1999/03/22 03:25:29 ad Exp $	*/
 
 #ifndef _LK201VAR_H_
 #define _LK201VAR_H_
@@ -6,7 +6,7 @@
 
 #ifdef _KERNEL
 
-extern int kbdMapChar __P((int));
+extern char *kbdMapChar __P((int));
 extern void KBDReset __P((dev_t, void (*)(dev_t, int)));
 extern void MouseInit __P((dev_t, void (*)(dev_t, int), int (*)(dev_t)));
 extern void mouseInput __P((int cc));
