@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.51 1998/08/31 22:28:05 cgd Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.52 1998/10/01 18:52:42 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
@@ -110,6 +110,8 @@
 
 #include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
+
+#include <dev/cons.h>
 
 #include "locators.h"
 
@@ -257,9 +259,10 @@ zstty_attach(parent, self, aux)
 	if (zst->zst_swflags)
 		printf(" flags 0x%x", zst->zst_swflags);
 
-	if (ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE))
+	if (ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE)) {
 		printf(" (console)");
-	else {
+		cn_tab->cn_dev = dev;
+	} else {
 #ifdef KGDB
 		/*
 		 * Allow kgdb to "take over" this port.  Returns true
@@ -301,6 +304,8 @@ zstty_attach(parent, self, aux)
 	if (ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE)) {
 		/* Call zsparam similar to open. */
 		struct termios t;
+
+		DELAY(20000);
 
 		s = splzs();
 
