@@ -1,4 +1,4 @@
-/* $NetBSD: j720ssp.c,v 1.5 2002/03/17 19:40:39 atatat Exp $ */
+/* $NetBSD: j720ssp.c,v 1.5.4.1 2002/07/21 13:00:37 gehenna Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
@@ -86,15 +87,18 @@
 #include <machine/bootinfo.h>
 
 #include <hpcarm/dev/sed1356var.h>
-#include <hpcarm/sa11x0/sa11x0_var.h>
-#include <hpcarm/sa11x0/sa11x0_gpioreg.h>
-#include <hpcarm/sa11x0/sa11x0_ppcreg.h>
-#include <hpcarm/sa11x0/sa11x0_sspreg.h>
+
+#include <arm/sa11x0/sa11x0_var.h>
+#include <arm/sa11x0/sa11x0_gpioreg.h>
+#include <arm/sa11x0/sa11x0_ppcreg.h>
+#include <arm/sa11x0/sa11x0_sspreg.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
+#include <dev/wscons/wsmousevar.h>
+#include <dev/hpc/tpcalibvar.h>
 
 extern const struct wscons_keydesc j720kbd_keydesctab[];
 
@@ -106,19 +110,29 @@ struct j720ssp_softc {
 	bus_space_handle_t sc_ssph;
 
 	struct device *sc_wskbddev;
+	struct device *sc_wsmousedev;
+	struct tpcalib_softc sc_tpcalib;
 
-	void *sc_si;
+	void *sc_kbdsi;
+	void *sc_tpsi;
+	struct callout sc_tptimeout;
 	int sc_enabled;
 };
 
 int j720kbd_intr(void *);
+int j720tp_intr(void *);
 void j720kbdsoft(void *);
+void j720tpsoft(void *);
+void j720tp_timeout(void *);
 int j720lcdparam(void *, int, long, void *);
 static void j720kbd_read(struct j720ssp_softc *, char *);
 static int j720ssp_readwrite(struct j720ssp_softc *, int, int, int *);
 
 int j720sspprobe(struct device *, struct cfdata *, void *);
 void j720sspattach(struct device *, struct device *, void *);
+
+int j720kbd_submatch(struct device *, struct cfdata *, void *);
+int j720tp_submatch(struct device *, struct cfdata *, void *);
 
 int j720kbd_enable(void *, int);
 void j720kbd_set_leds(void *, int);
@@ -153,6 +167,16 @@ const struct wskbd_mapdata j720kbd_keymapdata = {
 #endif
 };
 
+static int j720tp_enable(void *);
+static int j720tp_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static void j720tp_disable(void *);
+
+const struct wsmouse_accessops j720tp_accessops = {
+	j720tp_enable,
+	j720tp_ioctl,
+	j720tp_disable,
+};
+
 static int j720ssp_powerstate = 1;
 
 static struct j720ssp_softc j720kbdcons_sc;
@@ -184,6 +208,7 @@ j720sspattach(struct device *parent, struct device *self, void *aux)
 	struct sa11x0_softc *psc = (void *)parent;
 	struct sa11x0_attach_args *sa = aux;
 	struct wskbddev_attach_args a;
+	struct wsmousedev_attach_args ma;
 
 	printf("\n");
 
@@ -196,7 +221,7 @@ j720sspattach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_si = softintr_establish(IPL_SOFTCLOCK, j720kbdsoft, sc);
+	sc->sc_kbdsi = softintr_establish(IPL_SOFTCLOCK, j720kbdsoft, sc);
 
 	sc->sc_enabled = 0;
 
@@ -220,7 +245,8 @@ j720sspattach(struct device *parent, struct device *self, void *aux)
 	 * Attach the wskbd, saving a handle to it.
 	 * XXX XXX XXX
 	 */
-	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
+	sc->sc_wskbddev = config_found_sm(self, &a, wskbddevprint,
+	    j720kbd_submatch);
 
 #ifdef DEBUG
 	/* Zero the stat counters */
@@ -230,6 +256,33 @@ j720sspattach(struct device *parent, struct device *self, void *aux)
 
 	if (j720kbdcons_initstate == 1)
 		j720kbd_enable(sc, 1);
+
+	ma.accessops = &j720tp_accessops;
+	ma.accesscookie = sc;
+
+	sc->sc_wsmousedev = config_found_sm(self, &ma, wsmousedevprint,
+	    j720tp_submatch);
+	tpcalib_init(&sc->sc_tpcalib);
+
+	/* XXX fill in "default" calibrate param */
+	{
+		static const struct wsmouse_calibcoords j720_default_calib = {
+			0, 0, 639, 239,
+			4,
+			{ { 988,  80,   0,   0 },
+			  {  88,  84, 639,   0 },
+			  { 988, 927,   0, 239 },
+			  {  88, 940, 639, 239 } } };
+		tpcalib_ioctl(&sc->sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
+		    (caddr_t)&j720_default_calib, 0, 0);
+	}
+
+	j720tp_disable(sc);
+	callout_init(&sc->sc_tptimeout);
+
+	/* Setup touchpad interrupt */
+	sc->sc_tpsi = softintr_establish(IPL_SOFTCLOCK, j720tpsoft, sc);
+	sa11x0_intr_establish(0, 9, 1, IPL_BIO, j720tp_intr, sc);
 
 	/* LCD control is on the same bus */
 	config_hook(CONFIG_HOOK_SET, CONFIG_HOOK_BRIGHTNESS,
@@ -245,6 +298,22 @@ j720sspattach(struct device *parent, struct device *self, void *aux)
 		    CONFIG_HOOK_SHARE, j720lcdparam, sc);
 	config_hook(CONFIG_HOOK_GET, CONFIG_HOOK_CONTRAST_MAX,
 		    CONFIG_HOOK_SHARE, j720lcdparam, sc);
+}
+
+int
+j720kbd_submatch(struct device *parant, struct cfdata *cf, void *aux) {
+
+	if (strcmp(cf->cf_driver->cd_name, "wskbd") == 0)
+		return (1);
+	return (0);
+}
+
+int
+j720tp_submatch(struct device *parant, struct cfdata *cf, void *aux) {
+
+	if (strcmp(cf->cf_driver->cd_name, "wsmouse") == 0)
+		return (1);
+	return (0);
 }
 
 int
@@ -290,7 +359,19 @@ j720kbd_intr(void *arg)
 	 * use callout to call j720kbdsoft after some delay in hope
 	 * of reducing interrupts.
 	 */
-	softintr_schedule(sc->sc_si);
+	softintr_schedule(sc->sc_kbdsi);
+
+	return (1);
+}
+
+int
+j720tp_intr(void *arg)
+{
+	struct j720ssp_softc *sc = arg;
+
+	bus_space_write_4(sc->sc_iot, sc->sc_gpioh, SAGPIO_EDR, 1 << 9);
+
+	softintr_schedule(sc->sc_tpsi);
 
 	return (1);
 }
@@ -371,6 +452,123 @@ out:
 	delay(100);
 	bus_space_write_4(sc->sc_iot, sc->sc_ssph, SASSP_CR0, 0x387);
 printf("j720kbd_read: error %x\n", data);
+}
+
+void
+j720tpsoft(void *arg)
+{
+	struct j720ssp_softc *sc = arg;
+	int buf[8], data, i, x, y;
+
+	bus_space_write_4(sc->sc_iot, sc->sc_gpioh, SAGPIO_PCR, 0x2000000);
+
+	/* send read touchpanel command */
+	if (j720ssp_readwrite(sc, 1, 0x500, &data) < 0 ||
+	    data != 0x88)
+		goto out;
+
+	for(i = 0; i < 8; i++) {
+		if (j720ssp_readwrite(sc, 0, 0x8800, &data) < 0)
+			goto out;
+		BIT_INVERT(data);
+		buf[i] = data;
+	}
+
+	bus_space_write_4(sc->sc_iot, sc->sc_gpioh, SAGPIO_PSR, 0x2000000);
+
+	buf[6] <<= 8;
+	buf[7] <<= 8;
+	for(i = 0; i < 3; i++) {
+		buf[i] |= buf[6] & 0x300;
+		buf[6] >>= 2;
+		buf[i + 3] |= buf[7] & 0x300;
+		buf[7] >>= 2;
+	}
+#if 0
+	printf("j720tpsoft: %d %d %d  %d %d %d\n", buf[0], buf[1], buf[2],
+	    buf[3], buf[4], buf[5]);
+#endif
+
+	/* XXX buf[1], buf[2], ... should also be used */
+	tpcalib_trans(&sc->sc_tpcalib, buf[1], buf[4], &x, &y);
+	wsmouse_input(sc->sc_wsmousedev, 1, x, y, 0,
+	    WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y);
+
+	callout_reset(&sc->sc_tptimeout, hz / 10, j720tp_timeout, sc);
+
+	return;
+
+out:
+	*buf = 0;
+	bus_space_write_4(sc->sc_iot, sc->sc_gpioh, SAGPIO_PSR, 0x2000000);
+
+	/* reset SSP */
+	bus_space_write_4(sc->sc_iot, sc->sc_ssph, SASSP_CR0, 0x307);
+	delay(100);
+	bus_space_write_4(sc->sc_iot, sc->sc_ssph, SASSP_CR0, 0x387);
+	printf("j720tpsoft: error %x\n", data);
+}
+
+void
+j720tp_timeout(void *arg)
+{
+	struct j720ssp_softc *sc = arg;
+
+#if 0
+	/* XXX I don't this this is necessary (untested) */
+	if (bus_space_read_4(sc->sc_iot, sc->sc_gpioh, SAGPIO_PLR) &
+	    (1 << 9)) {
+		/* Touchpad is still pressed */
+		callout_reset(&sc->sc_tptimeout, hz / 10, j720tp_timeout, sc);
+		return;
+	}
+#endif
+
+	wsmouse_input(sc->sc_wsmousedev, 0, 0, 0, 0, 0);
+}
+
+static int
+j720tp_enable(void *arg) {
+	struct j720ssp_softc *sc = arg;
+	int er, s;
+
+	s = splhigh();
+	er = bus_space_read_4(sc->sc_iot, sc->sc_gpioh, SAGPIO_FER);
+	er |= 1 << 9;
+	bus_space_write_4(sc->sc_iot, sc->sc_gpioh, SAGPIO_FER, er);
+	splx(s);
+
+	return (0);
+}
+	
+static void
+j720tp_disable(void *arg) {
+	struct j720ssp_softc *sc = arg;
+	int er, s;
+
+	s = splhigh();
+	er = bus_space_read_4(sc->sc_iot, sc->sc_gpioh, SAGPIO_FER);
+	er &= ~(1 << 9);
+	bus_space_write_4(sc->sc_iot, sc->sc_gpioh, SAGPIO_FER, er);
+	splx(s);
+}
+
+static int
+j720tp_ioctl(void *arg, u_long cmd, caddr_t data, int flag, struct proc *p) {
+	struct j720ssp_softc *sc = arg;
+
+	switch (cmd) {
+	case WSMOUSEIO_GTYPE:
+		*(u_int *)data = WSMOUSE_TYPE_TPANEL;
+		return (0);
+
+	case WSMOUSEIO_SCALIBCOORDS:
+	case WSMOUSEIO_GCALIBCOORDS:
+		return tpcalib_ioctl(&sc->sc_tpcalib, cmd, data, flag, p);
+
+	default:
+		return (EPASSTHROUGH);
+	}
 }
 
 int

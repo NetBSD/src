@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.61 2002/01/25 19:19:46 tsutsui Exp $ */
+/*	$NetBSD: cache.c,v 1.61.8.1 2002/07/21 13:00:52 gehenna Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -113,7 +113,10 @@ sun4_cache_enable()
 #endif
 }
 
-#if defined(SUN4M)
+/*
+ * XXX Hammer is a bit too big, here; SUN4D systems only have Viking.
+ */
+#if defined(SUN4M) || defined(SUN4D)
 void
 ms1_cache_enable()
 {
@@ -325,7 +328,7 @@ turbosparc_cache_enable()
 
 	CACHEINFO.c_enabled = 1;
 }
-#endif
+#endif /* SUN4M || SUN4D */
 
 /*
  * Flush the current context from the cache.
@@ -537,7 +540,7 @@ sun4_cache_flush(base, len)
 }
 
 
-#if defined(SUN4M)
+#if defined(SUN4M) || defined(SUN4D)
 /*
  * Flush the current context from the cache.
  *
@@ -926,7 +929,7 @@ viking_pcache_flush_page(pa, invalidate_only)
 		}
 	}
 }
-#endif /* SUN4M */
+#endif /* SUN4M || SUN4D */
 
 
 #if defined(MULTIPROCESSOR)

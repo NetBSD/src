@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.193.2.3 2002/07/17 02:10:49 gehenna Exp $ */
+/*	$NetBSD: machdep.c,v 1.193.2.4 2002/07/21 13:00:54 gehenna Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -336,7 +336,7 @@ cpu_startup()
         exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
                                  16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
-	if (CPU_ISSUN4OR4C) {
+	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 		/*
 		 * Allocate dma map for 24-bit devices (le, ie)
 		 * [dvma_base - dvma_end] is for VME devices..
@@ -1064,8 +1064,8 @@ caddr_t addr;
 	int res;
 	int s;
 
-	if (CPU_ISSUN4M) {
-		printf("warning: ldcontrolb called in sun4m\n");
+	if (CPU_ISSUN4M || CPU_ISSUN4D) {
+		printf("warning: ldcontrolb called on sun4m/sun4d\n");
 		return 0;
 	}
 

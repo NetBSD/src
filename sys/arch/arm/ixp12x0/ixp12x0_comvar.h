@@ -1,5 +1,4 @@
-/*      $NetBSD: sa11x0_var.h,v 1.7 2001/07/07 07:04:56 ichiro Exp $        */
-
+/*      $NetBSD: ixp12x0_comvar.h,v 1.2.2.2 2002/07/21 13:00:30 gehenna Exp $        */
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
  *
@@ -21,7 +20,6 @@
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
- *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -36,37 +34,72 @@
  *
  */
 
-#include <sys/conf.h>
-#include <sys/device.h>
+#ifndef _IXP12X0_COMVAR_H_
+#define _IXP12X0_COMVAR_H_
 
-#include <machine/bus.h>
+/* Hardware flag masks */
+#define COM_HW_NOIEN		0x01
+#define COM_HW_DEV_OK		0x20
+#define COM_HW_CONSOLE		0x40
+#define COM_HW_KGDB		0x80
 
-struct sa11x0_softc {
-	struct device sc_dev;
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
-	bus_space_handle_t sc_gpioh;
-	bus_space_handle_t sc_egpioh;
-	bus_space_handle_t sc_ppch;
-	bus_space_handle_t sc_dmach;
-	u_int32_t sc_intrmask;
+#define RX_TTY_BLOCKED		0x01
+#define RX_TTY_OVERFLOWED	0x02
+#define RX_IBUF_BLOCKED		0x04
+#define RX_IBUF_OVERFLOWED	0x08
+#define RX_ANY_BLOCK		0x0f
+
+#define IXPCOM_RING_SIZE	2048
+
+struct ixpcom_softc {
+	struct device		sc_dev;
+	bus_addr_t		sc_baseaddr;
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t 	sc_ioh;
+
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+	void			*sc_si;
+#endif
+	struct tty		*sc_tty;
+
+
+	u_char			*sc_rbuf, *sc_ebuf;
+
+ 	u_char			*sc_tba;
+ 	u_int			sc_tbc, sc_heldtbc;
+
+	u_char			*volatile sc_rbget,
+				*volatile sc_rbput;
+ 	volatile u_int		sc_rbavail;
+
+	/* status flags */
+	int			sc_hwflags, sc_swflags;
+
+	volatile u_int		sc_rx_flags,
+				sc_tx_busy,
+				sc_tx_done,
+				sc_tx_stopped,
+				sc_st_check,
+				sc_rx_ready;
+	volatile int		sc_heldchange;
+
+	/* control registers */
+	u_int			sc_xie;
+	u_int			sc_rie;
+	u_int			sc_speed;
+
+	/* power management hooks */
+	int			(*enable)(struct ixpcom_softc *);
+	int			(*disable)(struct ixpcom_softc *);
+
+	int			enabled;
 };
 
-/* Attach args all devices */
+extern struct bus_space ixpcom_bs_tag;
 
-typedef void *sa11x0_chipset_tag_t;
+void	ixpcom_attach_subr(struct ixpcom_softc *);
 
-struct sa11x0_attach_args {
-	sa11x0_chipset_tag_t	sa_sc;		
-	bus_space_tag_t		sa_iot;		/* Bus tag */
-	bus_addr_t		sa_addr;	/* i/o address  */
-	bus_size_t		sa_size;
-	bus_addr_t		sa_membase;	/* mem address  */
-	bus_size_t		sa_memsize;
+int	ixpcomintr(void* arg);
+int	ixpcomcnattach(bus_space_tag_t, bus_addr_t, int, tcflag_t);
 
-	int			sa_intr;
-};
-
-void *sa11x0_intr_establish(sa11x0_chipset_tag_t, int, int, int, 
-			    int (*)(void *), void *);
-void sa11x0_intr_disestablish(sa11x0_chipset_tag_t, void *);
+#endif /* _IXP12X0_COMVAR_H_ */
