@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.29 1995/06/26 21:32:51 pk Exp $ */
+/*	$NetBSD: zs.c,v 1.30 1995/06/26 21:45:31 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -429,7 +429,7 @@ zs_checkcons(zi, unit, cs)
 	register struct tty *tp;
 	char *i, *o;
 
-	if ((tp = zs_ctty) == NULL)
+	if ((tp = zs_ctty) == NULL) /* XXX */
 		return (0);
 	i = zs_consin == unit ? "input" : NULL;
 	o = zs_consout == unit ? "output" : NULL;
@@ -1095,9 +1095,9 @@ zsioctl(dev, cmd, data, flag, p)
 {
 	int unit = minor(dev);
 	struct zsinfo *zi = zscd.cd_devs[unit >> 1];
-	register struct tty *tp = zi->zi_cs[unit & 1].cs_ttyp;
-	register int error, s;
 	register struct zs_chanstate *cs = &zi->zi_cs[unit & 1];
+	register struct tty *tp = cs->cs_ttyp;
+	register int error, s;
 
 	error = linesw[tp->t_line].l_ioctl(tp, cmd, data, flag, p);
 	if (error >= 0)
@@ -1152,7 +1152,7 @@ zsioctl(dev, cmd, data, flag, p)
 			return(ENXIO);
 
 		s = splzs();
-		if ((userbits & TIOCFLAG_SOFTCAR) || (tp == zs_ctty)) {
+		if ((userbits & TIOCFLAG_SOFTCAR) || cs->cs_consio) {
 			cs->cs_softcar = 1;	/* turn on softcar */
 			cs->cs_preg[15] &= ~ZSWR15_DCD_IE; /* turn off dcd */
 			cs->cs_creg[15] &= ~ZSWR15_DCD_IE;
