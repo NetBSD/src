@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.21.2.2 1999/05/02 21:47:57 perry Exp $ */
+/*	$NetBSD: md.c,v 1.21.2.3 1999/06/24 22:46:17 cgd Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -16,7 +16,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software develooped for the NetBSD Project by
+ *      This product includes software developed for the NetBSD Project by
  *      Piermont Information Systems Inc.
  * 4. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
@@ -196,27 +196,8 @@ md_post_newfs(void)
 int
 md_copy_filesystem(void)
 {
-	if (target_already_root()) {
-		return 0;
-	}
-
-	/* Copy the instbin(s) to the disk */
-	msg_display(MSG_dotar);
-	if (run_prog(0, 0, NULL, "pax -X -r -w -pe / /mnt") != 0)
-		goto err;
-
-	/* Copy next-stage install profile into target /.profile. */
-	if (cp_to_target("/tmp/.hdprofile", "/.profile") != 0)
-		goto err;
-	if (cp_to_target("/usr/share/misc/termcap", "/.termcap") != 0)
-		goto err;
 	return 0;
-err:
-	msg_display(MSG_dotarfail);
-	process_menu(MENU_ok);
-	return 1;
 }
-
 
 
 int
@@ -450,7 +431,8 @@ md_update(void)
 	md_copy_filesystem();
 	md_post_newfs();
 	md_upgrade_mbrtype();
-	puts(CL);
+	puts(CL);		/* XXX */
+	wclear(stdscr);
 	wrefresh(stdscr);
 	return 1;
 }
