@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_meter.c	7.11 (Berkeley) 4/20/91
- *	$Id: vm_meter.c,v 1.10 1994/05/04 03:42:44 cgd Exp $
+ *	$Id: vm_meter.c,v 1.11 1994/05/05 05:41:00 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -82,19 +82,19 @@ vmtotal()
 	total.t_pw = 0;
 	total.t_sl = 0;
 	total.t_sw = 0;
-	for (p = (struct proc *)allproc; p != NULL; p = p->p_nxt) {
+	for (p = (struct proc *)allproc; p != NULL; p = p->p_next) {
 		if (p->p_flag & P_SYSTEM)
 			continue;
 		if (p->p_stat) {
 			switch (p->p_stat) {
 
 			case SSLEEP:
-				if (p->p_pri <= PZERO && p->p_slptime == 0)
+				if (p->p_priority <= PZERO && p->p_slptime == 0)
 					nrun++;
 				/* fall through */
 			case SSTOP:
 				if (p->p_flag & P_INMEM) {
-					if (p->p_pri <= PZERO)
+					if (p->p_priority <= PZERO)
 						total.t_dw++;
 					else if (p->p_slptime < maxslp)
 						total.t_sl++;
