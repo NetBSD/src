@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.24 2004/05/21 16:15:03 kochi Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.25 2004/05/21 16:17:48 kochi Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.24 2004/05/21 16:15:03 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.25 2004/05/21 16:17:48 kochi Exp $");
 
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
@@ -443,58 +443,6 @@ mpacpi_pcihier_cb(ACPI_HANDLE handle, UINT32 level, void *ct, void **status)
 	if (ACPI_FAILURE(ret))
 		return AE_OK;
 
-#if !defined(PCI_CONF_MODE)
-	maxdev = ( pci_mode == 1 ) ? 32 : 16;
-#elif (PCI_CONF_MODE == 1)
-	maxdev = 32;
-#elif (PCI_CONF_MODE == 2)
-	maxdev = 16;
-#endif
-
-	if ( mparent->mpr_bus >= 256 || ACPI_HIWORD(val) >= maxdev
-	     || ACPI_LOWORD(val) >= 8 ) {
-		if (mp_verbose) {
-			ACPI_BUFFER             Buffer;
-			ACPI_DEVICE_INFO        *Info;
-			ACPI_STATUS             Status;
-			ACPI_NATIVE_UINT        i;
-
-			printf("mpacpi: bad device found at bus %x dev %x, function %x\n",
-			       mparent->mpr_bus,
-			       ACPI_HIWORD(val),
-			       ACPI_LOWORD(val));
-
-			
-			Buffer.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
-			
-			Status = AcpiGetObjectInfo (handle, &Buffer);
-			if (ACPI_SUCCESS (Status))
-			{
-				Info = Buffer.Pointer;
-				AcpiOsPrintf ("HID: %s, ADR: %8.8X%8.8X, Status %8.8X\n",
-					      Info->HardwareId.Value,
-					      ACPI_FORMAT_UINT64 (Info->Address),
-					      Info->CurrentStatus);
-
-				if (Info->Valid & ACPI_VALID_CID)
-				{
-					for (i = 0; i < Info->CompatibilityId.Count; i++)
-					{
-						AcpiOsPrintf ("CID #%d: %s\n", (UINT32) i, Info->CompatibilityId.Id[i].Value);
-					}
-				}
-				
-				ACPI_MEM_FREE (Info);
-			}
-			else
-			{
-				AcpiOsPrintf ("%s\n", AcpiFormatException (Status));
-			}
-			
-		}
-		return AE_OK;
-	}
-	
 	tag = pci_make_tag(acpi->sc_pc, mparent->mpr_bus,
 	    ACPI_HIWORD(val), ACPI_LOWORD(val));
 	class = pci_conf_read(acpi->sc_pc, tag, PCI_CLASS_REG);
