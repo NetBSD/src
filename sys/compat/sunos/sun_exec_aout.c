@@ -28,38 +28,40 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * from: Id: exec_aout.c,v 1.1.2.5 1993/10/17 04:29:26 deraadt Exp
- * $Id: sun_exec_aout.c,v 1.1 1993/11/10 10:31:35 deraadt Exp $
+ * $Id: sun_exec_aout.c,v 1.2 1993/11/20 03:05:41 deraadt Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "filedesc.h"
-#include "kernel.h"
-#include "proc.h"
-#include "mount.h"
-#include "malloc.h"
-#include "namei.h"
-#include "vnode.h"
-#include "file.h"
-#include "exec.h"
-#include "resourcevar.h"
-#include "wait.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/filedesc.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/mount.h>
+#include <sys/malloc.h>
+#include <sys/namei.h>
+#include <sys/vnode.h>
+#include <sys/file.h>
+#include <sys/exec.h>
+#include <sys/resourcevar.h>
+#include <sys/wait.h>
 
-#include "machine/cpu.h"
-#include "machine/reg.h"
-#include "machine/exec.h"
+#include <machine/cpu.h>
+#include <machine/reg.h>
+#include <machine/exec.h>
 
-#include "mman.h"
-#include "vm/vm.h"
-#include "vm/vm_param.h"
-#include "vm/vm_map.h"
-#include "vm/vm_kern.h"
-#include "vm/vm_pager.h"
+#include <sys/mman.h>
+#include <vm/vm.h>
+#include <sys/vm/vm_param.h>
+#include <sys/vm/vm_map.h>
+#include <sys/vm/vm_kern.h>
+#include <sys/vm/vm_pager.h>
 
-/* define some macros usually in <a.out.h> that come in handy later.
-
-   NOTE: This is the only thing different than what's in 
-         kern/exec_aout.c ! Perhaps the two files could merge somehow? */
+/*
+ * define some macros usually in <a.out.h> that come in handy later.
+ *
+ * NOTE: This is the only thing different than what's in 
+ *       kern/exec_aout.c ! Perhaps the two files could merge somehow?
+ */
 
 /* suns keep data seg aligned to SEGSIZ because of sun custom mmu */
 #define SEGSIZ 0x20000
@@ -230,4 +232,3 @@ sun_exec_aout_prep_omagic(p, epp)
 
 	return exec_aout_setup_stack(p, epp, ccmdp);
 }
-
