@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.15 1995/08/17 02:57:20 mycroft Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.16 1996/02/04 02:18:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -51,6 +51,7 @@
 #include <sys/stat.h>
 #include <sys/mbuf.h>
 
+#include <kern/kern_extern.h>
 /*
  * Unix communications domain.
  *
@@ -403,7 +404,7 @@ unp_bind(unp, nam, p)
 	} else
 		*(mtod(nam, caddr_t) + nam->m_len) = 0;
 /* SHOULD BE ABLE TO ADOPT EXISTING AND wakeup() ALA FIFO's */
-	if (error = namei(&nd))
+	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
 	if (vp != NULL) {
@@ -419,7 +420,8 @@ unp_bind(unp, nam, p)
 	vattr.va_type = VSOCK;
 	vattr.va_mode = ACCESSPERMS;
 	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
-	if (error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr))
+	error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
+	if (error)
 		return (error);
 	vp = nd.ni_vp;
 	vp->v_socket = unp->unp_socket;
@@ -448,14 +450,14 @@ unp_connect(so, nam, p)
 			return (EMSGSIZE);
 	} else
 		*(mtod(nam, caddr_t) + nam->m_len) = 0;
-	if (error = namei(&nd))
+	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
 	if (vp->v_type != VSOCK) {
 		error = ENOTSOCK;
 		goto bad;
 	}
-	if (error = VOP_ACCESS(vp, VWRITE, p->p_ucred, p))
+	if ((error = VOP_ACCESS(vp, VWRITE, p->p_ucred, p)) != 0)
 		goto bad;
 	so2 = vp->v_socket;
 	if (so2 == 0) {

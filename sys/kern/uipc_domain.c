@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.12 1994/06/29 06:33:33 cgd Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.13 1996/02/04 02:17:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -46,6 +46,8 @@
 #include <sys/proc.h>
 #include <vm/vm.h>
 #include <sys/sysctl.h>
+
+#include <kern/kern_extern.h>
 
 void	pffasttimo __P((void *));
 void	pfslowtimo __P((void *));
@@ -195,7 +197,7 @@ pfctlinput(cmd, sa)
 	for (dp = domains; dp; dp = dp->dom_next)
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 			if (pr->pr_ctlinput)
-				(*pr->pr_ctlinput)(cmd, sa, (caddr_t)0);
+				(*pr->pr_ctlinput)(cmd, sa, NULL);
 }
 
 void
