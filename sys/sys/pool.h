@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.38 2002/08/25 23:03:39 thorpej Exp $	*/
+/*	$NetBSD: pool.h,v 1.39 2003/04/09 18:22:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -57,6 +57,8 @@
 #define PR_HASHTABSIZE		8
 #define	PCG_NOBJECTS		16
 
+#define	POOL_PADDR_INVALID	((paddr_t) -1)
+
 #ifdef __POOL_EXPOSE
 /* The pool cache group. */
 struct pool_cache_group {
@@ -64,7 +66,10 @@ struct pool_cache_group {
 		pcg_list;	/* link in the pool cache's group list */
 	u_int	pcg_avail;	/* # available objects */
 				/* pointers to the objects */
-	void	*pcg_objects[PCG_NOBJECTS];
+	struct {
+		void *pcgo_va;	/* cache object virtual address */
+		paddr_t pcgo_pa;/* cache object physical address */
+	} pcg_objects[PCG_NOBJECTS];
 };
 
 struct pool_cache {
@@ -250,8 +255,11 @@ void		pool_cache_init(struct pool_cache *, struct pool *,
 		    void (*dtor)(void *, void *),
 		    void *);
 void		pool_cache_destroy(struct pool_cache *);
-void		*pool_cache_get(struct pool_cache *, int);
-void		pool_cache_put(struct pool_cache *, void *);
+void		*pool_cache_get_paddr(struct pool_cache *, int, paddr_t *);
+#define		pool_cache_get(pc, f) pool_cache_get_paddr((pc), (f), NULL)
+void		pool_cache_put_paddr(struct pool_cache *, void *, paddr_t);
+#define		pool_cache_put(pc, o) pool_cache_put_paddr((pc), (o), \
+				          POOL_PADDR_INVALID)
 void		pool_cache_destruct_object(struct pool_cache *, void *);
 void		pool_cache_invalidate(struct pool_cache *);
 #endif /* _KERNEL */
