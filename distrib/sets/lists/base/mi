@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.196 2000/12/14 04:15:54 jmc Exp $
+# $NetBSD: mi,v 1.197 2000/12/17 03:08:39 thorpej Exp $
 .
 ./altroot
 ./bin
@@ -558,6 +558,8 @@
 ./usr/sbin
 ./usr/sbin/ac
 ./usr/sbin/accton
+./usr/sbin/altqd
+./usr/sbin/altqstat
 ./usr/sbin/amd
 ./usr/sbin/amq
 ./usr/sbin/arp
@@ -716,6 +718,7 @@
 ./usr/sbin/supfilesrv
 ./usr/sbin/supscan
 ./usr/sbin/syslogd
+./usr/sbin/tbrconfig
 ./usr/sbin/tcpdchk
 ./usr/sbin/tcpdmatch
 ./usr/sbin/tcpdump
