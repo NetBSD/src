@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.105 2001/01/15 20:19:53 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.106 2001/02/09 21:47:46 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,6 +66,10 @@
 #include <sys/queue.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+
+#if defined(DDB) && defined(__ELF__)
+#include <sys/exec_elf.h>
+#endif
 
 #include <net/netisr.h>
 #undef PS	/* XXX netccitt/pk.h conflict with machine/reg.h? */
@@ -157,7 +161,12 @@ consinit()
 		extern int end;
 		extern int *esym;
 
+#ifndef __ELF__
 		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
+#else
+		ddb_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
+			(void *)&end, esym);
+#endif
 	}
         if(boothowto & RB_KDB)
                 Debugger();
@@ -389,7 +398,7 @@ identifycpu()
 			char		cputxt[30];
 
 			asm(".word 0x4e7a,0x0808;"
-			    "movl d0,%0" : "=d"(pcr) : : "d0");
+			    "movl %%d0,%0" : "=d"(pcr) : : "d0");
 			sprintf(cputxt, "68%s060 rev.%d",
 				pcr & 0x10000 ? "LC/EC" : "", (pcr>>8)&0xff);
 			cpu = cputxt;
