@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.44 2002/04/12 08:11:02 gmcgarry Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.45 2002/04/12 17:58:17 mycroft Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.44 $"
+#ident 		"GENERIC-$Revision: 1.45 $"
 
 maxusers	32		# estimated number of users
 
@@ -255,7 +255,7 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
-#agp* 	at pchb?
+agp* 	at pchb?
 
 # ISA bus support
 isa0	at mainbus?
