@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.115 2004/06/26 02:17:00 mycroft Exp $	*/
+/*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.115 2004/06/26 02:17:00 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -895,6 +895,9 @@ umass_bbb_transfer(struct umass_softc *sc, int lun, void *cmd, int cmdlen,
 	KASSERT(sc->sc_wire & UMASS_WPROTO_BBB,
 		("sc->sc_wire == 0x%02x wrong for umass_bbb_transfer\n",
 		sc->sc_wire));
+
+	if (sc->sc_dying)
+		return;
 
 	/* Be a little generous. */
 	sc->timeout = timeout + USBD_DEFAULT_TIMEOUT;
