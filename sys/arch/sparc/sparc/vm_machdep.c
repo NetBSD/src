@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.16 1995/12/07 22:18:54 pk Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.17 1995/12/11 12:32:56 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -99,6 +99,40 @@ kdvma_mapin(va, len, canwait)
 	return ((caddr_t)dvma_mapin(kernel_map, (vm_offset_t)va, len, canwait));
 }
 
+caddr_t
+dvma_malloc(len, kaddr, flags)
+	int	len;
+	void	*kaddr;
+	int	flags;
+{
+	vm_offset_t	kva;
+	vm_offset_t	dva;
+
+	kva = (vm_offset_t)malloc(len, M_DEVBUF, flags);
+	if (kva == NULL)
+		return (NULL);
+
+	*(vm_offset_t *)kaddr = kva;
+	dva = dvma_mapin(kernel_map, kva, len, (flags & M_NOWAIT) ? 0 : 1);
+	if (dva == NULL) {
+		free((void *)kva, M_DEVBUF);
+		return (NULL);
+	}
+	return (caddr_t)dva;
+}
+
+void
+dvma_free(dva, len, kaddr)
+	caddr_t	dva;
+	int	len;
+	void	*kaddr;
+{
+	vm_offset_t	kva = *(vm_offset_t *)kaddr;
+
+	dvma_mapout((vm_offset_t)dva, kva, len);
+	free((void *)kva, M_DEVBUF);
+}
+
 /*
  * Map a range [va, va+len] of wired virtual addresses in the given map
  * to a kernel address in DVMA space.
@@ -145,9 +179,9 @@ dvma_mapin(map, va, len, canwait)
 			panic("dvma_mapin: null page frame");
 		pa = trunc_page(pa);
 
-#ifdef SUN4M
+#if defined(SUN4M)
 		if (cputyp == CPU_SUN4M) {
-			/* sun4m stuff goes here: iommu_enter(tva, pa);*/
+			iommu_enter(tva, pa);
 		} else
 #endif
 		{
@@ -186,7 +220,7 @@ dvma_mapout(kva, va, len)
 	kva -= off;
 	len = round_page(len + off);
 
-#ifdef SUN4M
+#if defined(SUN4M)
 	if (cputyp == CPU_SUN4M)
 		iommu_remove(kva, len);
 	else
