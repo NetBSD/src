@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.52 2004/07/10 17:35:59 yamt Exp $	*/
+/*	$NetBSD: gzip.c,v 1.53 2004/07/11 05:40:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.52 2004/07/10 17:35:59 yamt Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.53 2004/07/11 05:40:51 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -105,7 +105,7 @@ enum filetype {
 
 #define OS_CODE		3	/* Unix */
 
-static	const char	gzip_version[] = "NetBSD gzip 20040524";
+static	const char	gzip_version[] = "NetBSD gzip 20040711";
 
 static	int	cflag;			/* stdout mode */
 static	int	dflag;			/* decompress mode */
@@ -771,8 +771,15 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 
 				out_tot += wr;
 
-				if (error == Z_STREAM_END)
-					goto stop;
+				if (error == Z_STREAM_END) {
+					inflateEnd(&z);
+					state = GZSTATE_MAGIC0;
+					/* Why 8? */
+					z.next_in += 8;
+					z.avail_in -= 8;
+					if (!z.avail_in)
+						goto stop;
+				}
 
 				z.next_out = outbuf;
 				z.avail_out = BUFLEN;
