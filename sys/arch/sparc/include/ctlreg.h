@@ -1,3 +1,5 @@
+/*	$NetBSD: ctlreg.h,v 1.6 1994/11/20 20:52:58 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)ctlreg.h	8.1 (Berkeley) 6/11/93
- *
- * from: Header: ctlreg.h,v 1.6 93/04/27 14:29:07 torek Exp 
- * $Id: ctlreg.h,v 1.5 1994/10/26 07:15:09 deraadt Exp $
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: genassym.c,v 1.9 1994/11/20 20:54:17 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)genassym.c	8.1 (Berkeley) 6/11/93
- *
- * from: Header: genassym.c,v 1.15 93/04/21 06:09:30 torek Exp  (LBL)
- * $Id: genassym.c,v 1.8 1994/10/02 21:52:21 deraadt Exp $
  */
 
 #include <sys/param.h>

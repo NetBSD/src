@@ -1,3 +1,5 @@
+/*	$NetBSD: bsd_audioio.h,v 1.2 1994/11/20 20:52:53 deraadt Exp $ */
+
 /*
  * Copyright (c) 1991, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)bsd_audioio.h	8.1 (Berkeley) 6/11/93
- *
- * from: Header: bsd_audioio.h,v 1.5 92/11/21 20:46:46 van Exp  (LBL)
- * $Id: bsd_audioio.h,v 1.1 1993/10/02 10:23:05 deraadt Exp $
  */
 
 #ifndef _BSD_AUDIOIO_H_

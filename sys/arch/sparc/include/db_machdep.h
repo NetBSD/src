@@ -1,3 +1,5 @@
+/*	$NetBSD: db_machdep.h,v 1.2 1994/11/20 20:52:59 deraadt Exp $ */
+
 /* 
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -22,8 +24,6 @@
  * 
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
- *
- *	$Id: db_machdep.h,v 1.1 1994/03/24 08:46:45 pk Exp $
  */
 
 #ifndef	_SPARC_DB_MACHDEP_H_

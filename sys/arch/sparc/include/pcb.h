@@ -1,3 +1,5 @@
+/*	$NetBSD: pcb.h,v 1.3 1994/11/20 20:53:20 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)pcb.h	8.1 (Berkeley) 6/11/93
- *
- * from: Header: pcb.h,v 1.6 92/11/26 02:04:39 torek Exp 
- * $Id: pcb.h,v 1.2 1994/05/19 08:23:36 deraadt Exp $
  */
 
 #include <machine/reg.h>

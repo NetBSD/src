@@ -1,3 +1,5 @@
+/*	$NetBSD: psl.h,v 1.4 1994/11/20 20:53:25 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)psl.h	8.1 (Berkeley) 6/11/93
- *
- * from: Header: psl.h,v 1.12 92/11/26 02:04:42 torek Exp 
- * $Id: psl.h,v 1.3 1994/03/22 08:09:24 deraadt Exp $
  */
 
 #ifndef PSR_IMPL

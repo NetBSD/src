@@ -1,3 +1,5 @@
+/*	$NetBSD: if_ie.h,v 1.3 1994/11/20 20:52:20 deraadt Exp $ */
+
 /*
  * if_sunie.h
  *

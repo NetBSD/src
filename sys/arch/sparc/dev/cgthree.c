@@ -1,3 +1,5 @@
+/*	$NetBSD: cgthree.c,v 1.11 1994/11/20 20:52:02 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,10 +41,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	%W% (Berkeley) %G%
- *
- * from: Header: cgthree.c,v 1.8 93/10/31 05:09:24 torek Exp
- * $Id: cgthree.c,v 1.10 1994/11/02 04:55:53 deraadt Exp $
+ *	@(#)cgthree.c	8.2 (Berkeley) 10/30/93
  */
 
 /*

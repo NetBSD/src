@@ -1,3 +1,5 @@
+/*	$NetBSD: autoconf.c,v 1.17 1994/11/20 20:53:57 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,10 +41,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)autoconf.c	8.1 (Berkeley) 6/11/93
- *
- * from: Header: autoconf.c,v 1.32 93/05/28 03:55:59 torek Exp  (LBL)
- * $Id: autoconf.c,v 1.16 1994/10/20 04:40:58 deraadt Exp $
+ *	@(#)autoconf.c	8.4 (Berkeley) 10/1/93
  */
 
 #include <sys/param.h>

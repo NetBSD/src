@@ -1,3 +1,5 @@
+/*	$NetBSD: sbus.c,v 1.4 1994/11/20 20:52:25 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)sbus.c	8.1 (Berkeley) 6/11/93
- *
- * from: Header: sbus.c,v 1.10 92/11/26 02:28:13 torek Exp  (LBL)
- * $Id: sbus.c,v 1.3 1994/10/02 22:00:30 deraadt Exp $
  */
 
 /*

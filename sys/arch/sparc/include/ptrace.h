@@ -1,3 +1,5 @@
+/*	$NetBSD: ptrace.h,v 1.4 1994/11/20 20:53:27 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)ptrace.h	8.1 (Berkeley) 6/11/93
- *
- * from: Header: ptrace.h,v 1.6 92/11/26 02:04:43 torek Exp  (LBL)
- * $Id: ptrace.h,v 1.3 1994/02/11 16:51:36 pk Exp $
  */
 
 /*

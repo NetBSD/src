@@ -1,3 +1,5 @@
+/*	$NetBSD: README,v 1.4 1994/11/20 20:54:50 deraadt Exp $ */
+
 The sparc bootblocks are split into two parts: a small 1st-level program that
 gets written right after the superblock in a partition (and is hence limited
 in size to SBSIZE - DEV_BSIZE bytes), and a 2nd-level program that resides

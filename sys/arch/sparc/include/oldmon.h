@@ -1,3 +1,5 @@
+/*	$NetBSD: oldmon.h,v 1.4 1994/11/20 20:53:16 deraadt Exp $ */
+
 /*
  * Copyright (C) 1985 Regents of the University of California
  * Copyright (c) 1993 Adam Glass
@@ -31,7 +33,6 @@
  *
  *	from: Sprite /cdrom/src/kernel/Cvsroot/kernel/mach/sun3.md/machMon.h,v
  *	    9.1 90/10/03 13:52:34 mgbaker Exp SPRITE (Berkeley)
- *	$Id: oldmon.h,v 1.3 1994/10/02 21:50:58 deraadt Exp $
  */
 #ifndef _MACHINE_OLDMON_H
 #define _MACHINE_OLDMON_H

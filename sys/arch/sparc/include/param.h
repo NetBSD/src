@@ -1,3 +1,5 @@
+/*	$NetBSD: param.h,v 1.10 1994/11/20 20:53:19 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)param.h	8.1 (Berkeley) 6/11/93
- *
- * from: Header: param.h,v 1.13 92/11/26 02:04:38 torek Exp  (LBL)
- * $Id: param.h,v 1.9 1994/11/02 04:59:04 deraadt Exp $
  */
 
 /*

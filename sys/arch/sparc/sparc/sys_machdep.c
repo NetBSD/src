@@ -1,3 +1,5 @@
+/*	$NetBSD: sys_machdep.c,v 1.4 1994/11/20 20:54:40 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)sys_machdep.c	8.1 (Berkeley) 6/11/93
- *
- * from: Header: sys_machdep.c,v 1.6 92/11/26 03:05:08 torek Exp  (LBL)
- * $Id: sys_machdep.c,v 1.3 1994/10/20 04:46:30 cgd Exp $
  */
 
 #include <sys/param.h>

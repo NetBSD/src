@@ -1,3 +1,5 @@
+/*	$NetBSD: kbd.c,v 1.15 1994/11/20 20:52:23 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,10 +41,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kbd.c	8.1 (Berkeley) 6/11/93
- *
- * from: Header: kbd.c,v 1.16 92/11/26 01:28:44 torek Exp  (LBL)
- * $Id: kbd.c,v 1.14 1994/11/02 04:56:05 deraadt Exp $
+ *	@(#)kbd.c	8.2 (Berkeley) 10/30/93
  */
 
 /*

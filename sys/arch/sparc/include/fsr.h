@@ -1,3 +1,5 @@
+/*	$NetBSD: fsr.h,v 1.2 1994/11/20 20:53:08 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)fsr.h	8.1 (Berkeley) 6/11/93
- *
- * from: Header: fsr.h,v 1.6 92/11/26 02:04:36 torek Exp 
- * $Id: fsr.h,v 1.1 1993/10/02 10:23:12 deraadt Exp $
  */
 
 #ifndef _MACHINE_FSR_H_

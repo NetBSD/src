@@ -1,3 +1,5 @@
+/*	$NetBSD: cache.c,v 1.3 1994/11/20 20:54:03 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,10 +41,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)cache.c	8.1 (Berkeley) 7/19/93
- *
- * from: Header: cache.c,v 1.10 93/07/18 06:23:51 torek Exp  (LBL)
- * $Id: cache.c,v 1.2 1993/11/24 02:31:32 deraadt Exp $
+ *	@(#)cache.c	8.2 (Berkeley) 10/30/93
  */
 
 /*

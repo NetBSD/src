@@ -1,3 +1,5 @@
+/*	$NetBSD: if_le.c,v 1.16 1994/11/20 20:52:21 deraadt Exp $ */
+
 /*-
  * Copyright (c) 1982, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,9 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Header: if_le.c,v 1.25 93/10/31 04:47:50 leres Locked 
- * from: @(#)if_le.c	8.2 (Berkeley) 10/30/93
- * $Id: if_le.c,v 1.15 1994/11/02 04:56:02 deraadt Exp $
+ *	@(#)if_le.c	8.2 (Berkeley) 10/30/93
  */
 
 #include "bpfilter.h"
