@@ -1,13 +1,10 @@
 #include <cdk.h>
-#include <signal.h>
 
 /*
- * $Author: garbled $
- * $Date: 2001/01/04 19:58:24 $
- * $Revision: 1.1.1.1 $
+ * $Author: christos $
+ * $Date: 2004/04/02 16:11:17 $
+ * $Revision: 1.2 $
  */
-
-static void segvTrap (int sig);
 
 static boolean validObjType(EObjectType type)
 {
@@ -55,10 +52,6 @@ CDKSCREEN *initCDKScreen(WINDOW *window)
 {
    CDKSCREEN *screen = (CDKSCREEN *)malloc (sizeof(CDKSCREEN));
    int x;
-
-   /* Set signal trap handlers. */
-   signal (SIGSEGV, segvTrap);
-   signal (SIGBUS, segvTrap);
 
    /* Set up basic curses settings. */
    noecho();
@@ -260,18 +253,4 @@ void endCDK(void)
 #ifdef HAVE_XCURSES
    XCursesExit();
 #endif
-}
-
-/*
- * This is the function called when we trap a SEGV or a BUS error.
- */
-static void segvTrap (int sig)
-{
-   static int nested;
-   if (!nested++)
-   {
-      endCDK();
-      printf ("core dumped. your fault! (signal %d)\n", sig);
-   }
-   abort();
 }
