@@ -1,3 +1,5 @@
+/*	$NetBSD: mount_ntfs.c,v 1.2 1999/05/06 16:08:55 christos Exp $	*/
+
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * Copyright (c) 1999 Semen Ustimenko
@@ -31,6 +33,10 @@
  * Id: mount_ntfs.c,v 1.1.1.1 1999/02/03 03:51:19 semenu Exp 
  *
  */
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: mount_ntfs.c,v 1.2 1999/05/06 16:08:55 christos Exp $");
+#endif
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -55,10 +61,16 @@ static struct mntopt mopts[] = {
 	{ NULL }
 };
 
+#ifndef __dead2
+#define __dead2 __attribute__((__noreturn__))
+#endif
+
 static gid_t	a_gid __P((char *));
 static uid_t	a_uid __P((char *));
 static mode_t	a_mask __P((char *));
 static void	usage __P((void)) __dead2;
+
+int main __P((int, char **));
 
 int
 main(argc, argv)
@@ -67,12 +79,14 @@ main(argc, argv)
 {
 	struct ntfs_args args;
 	struct stat sb;
-	int c, mntflags, set_gid, set_uid, set_mask,error;
+	int c, mntflags, set_gid, set_uid, set_mask;
 	char *dev, *dir, ndir[MAXPATHLEN+1];
+#ifdef __FreeBSD__
 #if __FreeBSD_version >= 300000
 	struct vfsconf vfc;
 #else
 	struct vfsconf *vfc;
+#endif
 #endif
 
 	mntflags = set_gid = set_uid = set_mask = 0;
@@ -140,10 +154,10 @@ main(argc, argv)
 		if (!set_mask)
 			args.mode = sb.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
 	}
-
+#ifdef __FreeBSD__
 #if __FreeBSD_version >= 300000
-	error = getvfsbyname("ntfs", &vfc);
-	if(error && vfsisloadable("ntfs")) {
+	c = getvfsbyname("ntfs", &vfc);
+	if(c && vfsisloadable("ntfs")) {
 		if(vfsload("ntfs"))
 #else
 	vfc = getvfsbyname("ntfs");
@@ -153,13 +167,13 @@ main(argc, argv)
 			err(EX_OSERR, "vfsload(ntfs)");
 		endvfsent();	/* clear cache */
 #if __FreeBSD_version >= 300000
-		error = getvfsbyname("ntfs", &vfc);
+		c = getvfsbyname("ntfs", &vfc);
 #else
 		vfc = getvfsbyname("ntfs");
 #endif
 	}
 #if __FreeBSD_version >= 300000
-	if (error)
+	if (c)
 #else
 	if (!vfc)
 #endif
@@ -169,6 +183,9 @@ main(argc, argv)
 	if (mount(vfc.vfc_name, dir, mntflags, &args) < 0)
 #else
 	if (mount(vfc->vfc_index, dir, mntflags, &args) < 0)
+#endif
+#else
+	if (mount(MOUNT_NTFS, dir, mntflags, &args) < 0)
 #endif
 		err(EX_OSERR, "%s", dev);
 
