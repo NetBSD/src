@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.63 2000/02/27 01:50:22 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.64 2000/02/27 02:35:33 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -636,7 +636,7 @@ raidclose(dev, flags, fmt, p)
 		   Device shutdown has taken care of setting the 
 		   clean bits if RAIDF_INITED is not set 
 		   mark things as clean... */
-#if 1
+#if 0
 		printf("Last one on raid%d.  Updating status.\n",unit);
 #endif
 		rf_final_update_component_labels( raidPtrs[unit] );
