@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.39 1999/09/15 18:10:41 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.40 1999/09/20 18:29:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.39 1999/09/15 18:10:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.40 1999/09/20 18:29:21 thorpej Exp $");
 
 /*
  * Setup the system to run on the current machine.
@@ -75,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.39 1999/09/15 18:10:41 thorpej Exp $"
  * the configuration process, and are used in initializing
  * the machine.
  */
-int	cold = 1;	/* if 1, still working on cold-start */
 int	cpuspeed = 30;	/* approx # instr per usec. */
 
 /*
@@ -117,8 +116,6 @@ cpu_configure()
 	 */
 	printf("Beginning old-style SCSI device autoconfiguration\n");
 	configure_scsi();
-
-	cold = 0;
 }
 
 void
