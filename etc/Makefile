@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
-#	$Id: Makefile,v 1.48 1994/06/28 21:48:46 deraadt Exp $
+#	$Id: Makefile,v 1.49 1995/10/08 04:09:06 tls Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -91,6 +91,7 @@ distribution: distrib-dirs
 		${DESTDIR}/var/run/utmp
 	(cd etc.${MACHINE}; install -c -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    fstab.* ${DESTDIR}/etc)
+	(cd ${DESTDIR}/dev; ./MAKEDEV all)
 .if ${MACHINE} == "tahoe"
 	(cd etc.tahoe; install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${WCS1} \
 	    ${DESTDIR}/)
