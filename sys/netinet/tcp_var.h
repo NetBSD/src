@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.79 2001/04/13 23:30:24 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.80 2001/05/26 22:02:57 matt Exp $	*/
 
 /*
 %%% portions-copyright-nrl-98
@@ -140,7 +140,7 @@ struct tcpcb {
 	u_short	t_ourmss;		/* our's maximum segment size */
 	u_short t_segsz;		/* current segment size in use */
 	char	t_force;		/* 1 if forcing out a byte */
-	u_short	t_flags;
+	u_int	t_flags;
 #define	TF_ACKNOW	0x0001		/* ack peer immediately */
 #define	TF_DELACK	0x0002		/* ack, but try to delay it */
 #define	TF_NODELAY	0x0004		/* don't delay packets to coalesce */
