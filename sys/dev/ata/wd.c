@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.221 2002/06/28 16:40:50 yamt Exp $ */
+/*	$NetBSD: wd.c,v 1.222 2002/06/28 16:50:30 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.221 2002/06/28 16:40:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.222 2002/06/28 16:50:30 yamt Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1284,9 +1284,7 @@ wddump(dev, blkno, va, size)
 	}
   
 	while (nblks > 0) {
-		int do_perror;
 again:
-		do_perror = 0;
 		wd->sc_bp = NULL;
 		wd->sc_wdc_bio.blkno = blkno;
 		wd->sc_wdc_bio.flags = ATA_POLL;
@@ -1325,7 +1323,7 @@ again:
 			break;
 		case ERROR:
 			printf("wddump: ");
-			do_perror = 1;
+			wdperror(wd);
 			err = EIO;
 			break;
 		case NOERROR: 
@@ -1338,12 +1336,6 @@ again:
 			if (wddumpmulti != 1) {
 				wddumpmulti = 1; /* retry in single-sector */
 				printf(", retrying\n");
-			}
-			if (do_perror) {
-				printf("wddump: ");
-				wdperror(wd);
-			}
-			if (wddumpmulti != 1) {
 				goto again;
 			}
 			printf("\n");
