@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.49 1998/02/20 22:06:18 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.50 1998/02/27 13:22:59 agc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -510,18 +510,23 @@ PATCH_ARGS+=	-C
 PATCH_DIST_ARGS+=	-C
 .endif
 
-.if exists(/bin/tar)
-EXTRACT_CMD?=	/bin/tar
+.if exists(/bin/pax)
+EXTRACT_CMD?=		/bin/pax
+EXTRACT_BEFORE_ARGS?=	-zrf
 .else
-EXTRACT_CMD?=	/usr/bin/tar
+.if exists(/bin/tar)
+EXTRACT_CMD?=		/bin/tar
+.else
+EXTRACT_CMD?=		/usr/bin/tar
 .endif
-EXTRACT_SUFX?=	.tar.gz
 # Backwards compatability.
 .if defined(EXTRACT_ARGS)
 EXTRACT_BEFORE_ARGS?=   ${EXTRACT_ARGS}
 .else
 EXTRACT_BEFORE_ARGS?=   -xzf
 .endif
+.endif
+EXTRACT_SUFX?=		.tar.gz
 
 # Figure out where the local mtree file is
 .if !defined(MTREE_FILE)
