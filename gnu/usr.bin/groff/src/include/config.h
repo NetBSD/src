@@ -13,6 +13,13 @@
 /* Define if you have a C++ <stdint.h>. */
 #define HAVE_CC_STDINT_H 1
 
+/* Define to 1 if you have the declaration of `sys_siglist', and to 0 if you
+   don't. */
+#define HAVE_DECL_SYS_SIGLIST 1
+
+/* Define to 1 if you have the <direct.h> header file. */
+/* #undef HAVE_DIRECT_H */
+
 /* Define to 1 if you have the <dirent.h> header file. */
 #define HAVE_DIRENT_H 1
 
@@ -34,6 +41,9 @@
 /* Define to 1 if you have the `isatty' function. */
 #define HAVE_ISATTY 1
 
+/* Define to 1 if you have the `kill' function. */
+#define HAVE_KILL 1
+
 /* Define to 1 if you have the <limits.h> header file. */
 #define HAVE_LIMITS_H 1
 
@@ -48,6 +58,9 @@
 
 /* Define to 1 if you have a working `mmap' system call. */
 #define HAVE_MMAP 1
+
+/* Define to 1 if you have the <process.h> header file. */
+/* #undef HAVE_PROCESS_H */
 
 /* Define to 1 if you have the `putenv' function. */
 #define HAVE_PUTENV 1
@@ -94,10 +107,10 @@
 /* Define to 1 if you have the <sys/dir.h> header file. */
 #define HAVE_SYS_DIR_H 1
 
-/* Define if you have sys_errlist in <errno.h> or in <stdio.h>. */
+/* Define if you have sys_errlist in <errno.h>, <stdio.h>, or <stdlib.h>. */
 #define HAVE_SYS_ERRLIST 1
 
-/* Define if you have sysnerr in <errno.h> or <stdio.h>. */
+/* Define if you have sys_nerr in <errno.h>, <stdio.h>, or <stdio.h>. */
 #define HAVE_SYS_NERR 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
@@ -111,6 +124,9 @@
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
+
+/* Define to 1 if you have the `vsnprintf' function. */
+#define HAVE_VSNPRINTF 1
 
 /* Define if the host's encoding is EBCDIC. */
 /* #undef IS_EBCDIC_HOST */
@@ -148,6 +164,12 @@
 /* Define if your C++ doesn't declare strncasecmp(). */
 /* #undef NEED_DECLARATION_STRNCASECMP */
 
+/* Define if your C++ doesn't declare vfprintf(). */
+/* #undef NEED_DECLARATION_VFPRINTF */
+
+/* Define if your C++ doesn't declare vsnprintf(). */
+/* #undef NEED_DECLARATION_VSNPRINTF */
+
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT ""
 
@@ -174,9 +196,6 @@
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
-
-/* Define to 1 if `sys_siglist' is declared by <signal.h> or <unistd.h>. */
-#define SYS_SIGLIST_DECLARED 1
 
 /* Define if your C++ compiler uses a traditional (Reiser) preprocessor. */
 /* #undef TRADITIONAL_CPP */
