@@ -12,7 +12,7 @@ CLEANFILES= \
 CFLAGS+=-I.
 CFLAGS+=-I${.CURDIR}/../config
 CFLAGS+=-I${.CURDIR}/../include
-CFLAGS+=-DOS_HDR=\"os-netbsd.h\"
+CFLAGS+=-DOS_HDR=\"os-${OS}.h\"
 
 fsi_lex.o fsinfo.o: fsi_gram.h
 fsi_gram.c fsi_gram.h: ../fsinfo/fsi_gram.y
