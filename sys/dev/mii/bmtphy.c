@@ -1,4 +1,4 @@
-/*	$NetBSD: bmtphy.c,v 1.2 2001/06/08 07:09:40 enami Exp $	*/
+/*	$NetBSD: bmtphy.c,v 1.3 2001/07/27 17:55:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -105,10 +105,14 @@ const struct mii_phy_funcs bmtphy_funcs = {
 };
 
 const struct mii_phydesc bmtphys[] = {
+	{ MII_OUI_xxBROADCOM,		MII_MODEL_xxBROADCOM_3C905B,
+	  MII_STR_xxBROADCOM_3C905B },
 	{ MII_OUI_xxBROADCOM,		MII_MODEL_xxBROADCOM_3C905C,
 	  MII_STR_xxBROADCOM_3C905C },
 	{ MII_OUI_xxBROADCOM,		MII_MODEL_xxBROADCOM_BCM5201,
 	  MII_STR_xxBROADCOM_BCM5201 },
+	{ MII_OUI_BROADCOM,		MII_MODEL_xxBROADCOM_BCM5221,
+	  MII_STR_xxBROADCOM_BCM5221 },
 
 	{ 0,				0,
 	  NULL },
