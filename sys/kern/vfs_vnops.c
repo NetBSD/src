@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.68 2003/03/21 23:11:27 dsl Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.69 2003/04/03 14:53:38 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.68 2003/03/21 23:11:27 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.69 2003/04/03 14:53:38 fvdl Exp $");
 
 #include "fs_union.h"
 
@@ -608,6 +608,7 @@ vn_stat(vp, sb, p)
 	sb->st_atimespec = va.va_atime;
 	sb->st_mtimespec = va.va_mtime;
 	sb->st_ctimespec = va.va_ctime;
+	sb->st_birthtimespec = va.va_birthtime;
 	sb->st_blksize = va.va_blocksize;
 	sb->st_flags = va.va_flags;
 	sb->st_gen = 0;
