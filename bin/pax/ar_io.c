@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.42 2004/06/21 13:38:51 christos Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.43 2004/07/18 20:58:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.42 2004/06/21 13:38:51 christos Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.43 2004/07/18 20:58:36 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ int force_one_volume;			/* 1 if we ignore volume changes */
 static int get_phys(void);
 extern sigset_t s_mask;
 static void ar_start_gzip(int, const char *, int);
-static const char *timefmt(char *, size_t, off_t, time_t);
+static const char *timefmt(char *, size_t, off_t, time_t, const char *);
 static const char *sizefmt(char *, size_t, off_t);
 
 #ifdef SUPPORT_RMT
@@ -1596,14 +1596,15 @@ ar_start_gzip(int fd, const char *gzp, int wr)
 }
 
 static const char *
-timefmt(buf, size, sz, tm)
+timefmt(buf, size, sz, tm, unitstr)
 	char *buf;
 	size_t size;
 	off_t sz;
 	time_t tm;
+	const char *unitstr;
 {
-	(void)snprintf(buf, size, "%lu secs (" OFFT_F " bytes/sec)",
-	    (unsigned long)tm, (OFFT_T)(sz / tm));
+	(void)snprintf(buf, size, "%lu secs (" OFFT_F " %s/sec)",
+	    (unsigned long)tm, (OFFT_T)(sz / tm), unitstr);
 	return buf;
 }
 
@@ -1646,11 +1647,11 @@ ar_summary(int n)
 	 * we have skipped over looking for a header to id. there is no way we
 	 * could have written anything yet.
 	 */
-	if (frmt == NULL) {
+	if (frmt == NULL && act != COPY) {
 		len = snprintf(buf, sizeof(buf),
 		    "unknown format, %s skipped in %s\n",
 		    sizefmt(s1buf, sizeof(s1buf), rdcnt),
-		    timefmt(tbuf, sizeof(tbuf), rdcnt, secs));
+		    timefmt(tbuf, sizeof(tbuf), rdcnt, secs, "bytes"));
 		if (n == 0)
 			(void)fprintf(outf, "%s: %s", argv0, buf);
 		else
@@ -1666,12 +1667,19 @@ ar_summary(int n)
 	}
 
 
+	if (act == COPY) {
+	len = snprintf(buf, sizeof(buf),
+	    "%lu files in %s\n",
+	    (unsigned long)flcnt,
+	    timefmt(tbuf, sizeof(tbuf), flcnt, secs, "files"));
+	} else {
 	len = snprintf(buf, sizeof(buf),
 	    "%s vol %d, %lu files, %s read, %s written in %s\n",
 	    frmt->name, arvol-1, (unsigned long)flcnt,
 	    sizefmt(s1buf, sizeof(s1buf), rdcnt),
 	    sizefmt(s2buf, sizeof(s2buf), wrcnt),
-	    timefmt(tbuf, sizeof(tbuf), rdcnt + wrcnt, secs));
+	    timefmt(tbuf, sizeof(tbuf), rdcnt + wrcnt, secs, "bytes"));
+	}
 	if (n == 0)
 		(void)fprintf(outf, "%s: %s", argv0, buf);
 	else
