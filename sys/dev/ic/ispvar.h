@@ -1,4 +1,4 @@
-/* $NetBSD: ispvar.h,v 1.41 2001/02/12 23:33:49 mjacob Exp $ */
+/* $NetBSD: ispvar.h,v 1.42 2001/02/20 01:11:35 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -606,6 +606,7 @@ typedef enum {
 	ISPCTL_PDB_SYNC,		/* Synchronize Port Database */
 	ISPCTL_SEND_LIP,		/* Send a LIP */
 	ISPCTL_GET_POSMAP,		/* Get FC-AL position map */
+	ISPCTL_RUN_MBOXCMD,		/* run a mailbox command */
 	ISPCTL_TOGGLE_TMODE		/* toggle target mode */
 } ispctl_t;
 int isp_control __P((struct ispsoftc *, ispctl_t, void *));
@@ -644,6 +645,12 @@ int isp_control __P((struct ispsoftc *, ispctl_t, void *));
  * valid tag is set or not says whether something has arrived or departed.
  * The name refers to a favorite pastime of many city dwellers- watching
  * people come and go, talking of Michaelangelo, and so on..
+ *
+ * ISPASYNC_UNHANDLED_RESPONSE gives outer layers a chance to parse a
+ * response queue entry not otherwise handled. The outer layer should
+ * return non-zero if it handled it. The 'arg' points to a (possibly only
+ * partially) massaged response queue entry (see the platform's
+ * ISP_UNSWIZZLE_RESPONSE macro).
  */
 
 typedef enum {
@@ -657,7 +664,8 @@ typedef enum {
 	ISPASYNC_TARGET_MESSAGE,	/* target message */
 	ISPASYNC_TARGET_EVENT,		/* target asynchronous event */
 	ISPASYNC_TARGET_ACTION,		/* other target command action */
-	ISPASYNC_CONF_CHANGE		/* Platform Configuration Change */
+	ISPASYNC_CONF_CHANGE,		/* Platform Configuration Change */
+	ISPASYNC_UNHANDLED_RESPONSE	/* Unhandled Response Entry */
 } ispasync_t;
 int isp_async __P((struct ispsoftc *, ispasync_t, void *));
 
