@@ -1,4 +1,4 @@
-/* $NetBSD: dec_eb164.c,v 1.27 1999/02/13 02:41:40 thorpej Exp $ */
+/* $NetBSD: dec_eb164.c,v 1.28 1999/02/16 07:25:43 veego Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.27 1999/02/13 02:41:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.28 1999/02/16 07:25:43 veego Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,8 +150,8 @@ dec_eb164_device_register(dev, aux)
 	struct device *dev;
 	void *aux;
 {
-	static int found, initted, scsiboot, netboot;
-	static struct device *pcidev, *scsidev;
+	static int found, initted, scsiboot, ideboot, netboot;
+	static struct device *pcidev, *scsipidev;
 	struct bootdev_data *b = bootdev_data;
 	struct device *parent = dev->dv_parent;
 	struct cfdata *cf = dev->dv_cfdata;
@@ -163,8 +163,15 @@ dec_eb164_device_register(dev, aux)
 	if (!initted) {
 		scsiboot = (strcmp(b->protocol, "SCSI") == 0);
 		netboot = (strcmp(b->protocol, "BOOTP") == 0);
+		/*
+		 * Add an extra check to boot from ide drives:
+		 * Newer SRM firmware use the protocol identifier IDE,
+		 * older SRM firmware use the protocol identifier SCSI.
+		 */
+		ideboot = (strcmp(b->protocol, "IDE") == 0);
 #if 0
-		printf("scsiboot = %d, netboot = %d\n", scsiboot, netboot);
+		printf("scsiboot = %d, ideboot = %d, netboot = %d\n", scsiboot,
+			ideboot, netboot);
 #endif
 		initted =1;
 	}
@@ -186,7 +193,7 @@ dec_eb164_device_register(dev, aux)
 		}
 	}
 
-	if (scsiboot && (scsidev == NULL)) {
+	if ( (ideboot || scsiboot) && (scsipidev == NULL) ) {
 		if (parent != pcidev)
 			return;
 		else {
@@ -197,9 +204,9 @@ dec_eb164_device_register(dev, aux)
 
 			/* XXX function? */
 	
-			scsidev = dev;
+			scsipidev = dev;
 #if 0
-			printf("\nscsidev = %s\n", scsidev->dv_xname);
+			printf("\nscsipidev = %s\n", scsipidev->dv_xname);
 #endif
 			return;
 		}
@@ -211,7 +218,7 @@ dec_eb164_device_register(dev, aux)
 	     !strcmp(cd->cd_name, "cd"))) {
 		struct scsipibus_attach_args *sa = aux;
 
-		if (parent->dv_parent != scsidev)
+		if (parent->dv_parent != scsipidev)
 			return;
 
 		if (b->unit / 100 != sa->sa_sc_link->scsipi_scsi.target)
@@ -231,6 +238,28 @@ dec_eb164_device_register(dev, aux)
 			break;
 		default:
 			return;
+		}
+
+		/* we've found it! */
+		booted_device = dev;
+#if 0
+		printf("\nbooted_device = %s\n", booted_device->dv_xname);
+#endif
+		found = 1;
+	}
+
+	/*
+	 * Support to boot from IDE drives.
+	 * Should work with all SRM firmware versions, but is at the
+	 * moment limited to hard disks. (No support for booting from an
+	 * IDE cdrom).
+	 */
+	if ( (ideboot || scsiboot) && !strcmp(cd->cd_name, "wd")) {
+		if ((strncmp("pciide", parent->dv_xname, 6) != 0)) {
+			return;
+		} else {
+			if (parent != scsipidev)
+				return;
 		}
 
 		/* we've found it! */
