@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BOOT,v 1.13 1996/10/16 12:50:31 leo Exp $
+#	$NetBSD: BOOT,v 1.14 1996/11/08 14:12:21 leo Exp $
 #
 # BOOT
 #
@@ -102,6 +102,8 @@ pseudo-device	rd	1	# Boot ramdisk
 #
 #The following sections describe various hardware options.
 #
+fd0	at fdc0 unit 0		# builtin floppy drive
+fd1	at fdc0 unit 1		# external floppy drive
 zs0	at mainbus0		# Serial support through 8530
 nvr0	at mainbus0		# nvram driver
 lpt0	at mainbus0		# centronics printer
