@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.75 2000/07/06 18:04:56 ragge Exp $
+#	$NetBSD: GENERIC,v 1.76 2000/07/27 17:53:39 mason Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
 
 include		"arch/vax/conf/std.vax"
 
-#ident 		"GENERIC-$Revision: 1.75 $"
+#ident 		"GENERIC-$Revision: 1.76 $"
 
 # Here are all different supported CPU types listed.
 #options 	"VAX8800"	# VAX 8500, 8530, 8550, 8700, 8800
@@ -209,7 +209,7 @@ wsdisplay0	at smg0
 lkc0		at dz0
 
 pseudo-device   loop	1
-pseudo-device   pty	48
+pseudo-device   pty	64		# pseudo-terminals
 pseudo-device	bpfilter 8		# Not supported by de yet.
 pseudo-device	sl	2
 pseudo-device	ppp	2
