@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.77 1999/02/04 19:49:22 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.78 1999/02/08 19:37:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77 1999/02/04 19:49:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.78 1999/02/08 19:37:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3194,7 +3194,7 @@ pmap_physpage_alloc(usage)
 			}
 			if (pvh->pvh_refcnt != 0) {
 				printf("pmap_physpage_alloc: page 0x%lx has "
-				    "%d references", pa, pvh->pvh_refcnt);
+				    "%d references\n", pa, pvh->pvh_refcnt);
 				goto die;
 			}
 #endif
@@ -3232,7 +3232,7 @@ pmap_physpage_alloc(usage)
 	 * give up.
 	 */
 	printf("pmap_physpage_alloc: no pages for %s page available after "
-	    "5 tries", pmap_pgu_strings[usage]);
+	    "5 tries\n", pmap_pgu_strings[usage]);
 #ifdef DIAGNOSTIC
  die:
 #endif
