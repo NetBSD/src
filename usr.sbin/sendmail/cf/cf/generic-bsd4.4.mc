@@ -33,10 +33,16 @@ divert(-1)
 # SUCH DAMAGE.
 #
 
-divert(0)
-VERSIONID(`@(#)notsticky.m4	8.3 (Berkeley) 5/29/95')
 #
-#  This is now the default.  Use ``FEATURE(stickyhost)'' if you want
-#  the old default behaviour.
+#  This is a generic configuration file for 4.4 BSD-based systems,
+#  including 4.4-Lite, BSDi, NetBSD, and FreeBSD.
+#  It has support for local and SMTP mail only.  If you want to
+#  customize it, copy it to a name appropriate for your environment
+#  and do the modifications there.
 #
-divert(-1)
+
+VERSIONID(`@(#)generic-bsd4.4.mc	8.1 (Berkeley) 9/12/95')
+OSTYPE(bsd4.4)dnl
+DOMAIN(generic)dnl
+MAILER(local)dnl
+MAILER(smtp)dnl

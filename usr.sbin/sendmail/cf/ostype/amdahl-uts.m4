@@ -34,9 +34,11 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`@(#)notsticky.m4	8.3 (Berkeley) 5/29/95')
-#
-#  This is now the default.  Use ``FEATURE(stickyhost)'' if you want
-#  the old default behaviour.
-#
+VERSIONID(`@(#)amdahl-uts.m4	8.2 (Berkeley) 11/13/95')
 divert(-1)
+
+ifdef(`ALIAS_FILE',, `define(`ALIAS_FILE', /etc/mail/aliases)')
+ifdef(`HELP_FILE',, `define(`HELP_FILE', /etc/mail/sendmail.hf)')
+ifdef(`STATUS_FILE',, `define(`STATUS_FILE', /usr/lib/sendmail.st)')
+ifdef(`LOCAL_MAILER_FLAGS',, `define(`LOCAL_MAILER_FLAGS', `fSn')')
+define(`confCW_FILE', /etc/mail/sendmail.cw)

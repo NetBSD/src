@@ -1,4 +1,4 @@
-divert(-1)
+PUSHDIVERT(-1)
 #
 # Copyright (c) 1983 Eric P. Allman
 # Copyright (c) 1988, 1993
@@ -32,11 +32,20 @@ divert(-1)
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
+#  Contributed by Kimmo Suominen <kim@tac.nyc.ny.us>.
+#
 
-divert(0)
-VERSIONID(`@(#)notsticky.m4	8.3 (Berkeley) 5/29/95')
-#
-#  This is now the default.  Use ``FEATURE(stickyhost)'' if you want
-#  the old default behaviour.
-#
-divert(-1)
+ifdef(`PH_MAILER_PATH',, `define(`PH_MAILER_PATH', /usr/local/etc/phquery)')
+ifdef(`PH_MAILER_FLAGS',, `define(`PH_MAILER_FLAGS', `ehmu')')
+ifdef(`PH_MAILER_ARGS',, `define(`PH_MAILER_ARGS', `phquery -- $u')')
+
+POPDIVERT
+
+####################################
+###   PH Mailer specification   ###
+####################################
+
+VERSIONID(`@(#)phquery.m4	8.1 (Berkeley) 8/1/95')
+
+Mph,		P=PH_MAILER_PATH, F=CONCAT(`nrDFM', PH_MAILER_FLAGS), S=10, R=20/40,
+		A=PH_MAILER_ARGS

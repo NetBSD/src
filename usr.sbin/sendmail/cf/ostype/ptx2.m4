@@ -1,7 +1,7 @@
 divert(-1)
 #
-# Copyright (c) 1983 Eric P. Allman
-# Copyright (c) 1988, 1993
+# Copyright (c) 1994 Eric P. Allman
+# Copyright (c) 1994
 #	The Regents of the University of California.  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,10 +33,13 @@ divert(-1)
 # SUCH DAMAGE.
 #
 
+# Support for DYNIX/ptx 2.x.
+
 divert(0)
-VERSIONID(`@(#)notsticky.m4	8.3 (Berkeley) 5/29/95')
-#
-#  This is now the default.  Use ``FEATURE(stickyhost)'' if you want
-#  the old default behaviour.
-#
-divert(-1)
+VERSIONID(`@(#)ptx2.m4	8.1 (Berkeley) 12/4/94')
+ifdef(`ALIAS_FILE',,`define(`ALIAS_FILE', /usr/lib/aliases)')dnl
+ifdef(`HELP_FILE',,`define(`HELP_FILE', /usr/lib/sendmail.hf)')dnl
+ifdef(`STATUS_FILE',,`define(`STATUS_FILE', /usr/lib/sendmail.st)')dnl
+define(`LOCAL_MAILER_PATH', `/bin/mail')dnl
+define(`LOCAL_MAILER_FLAGS', `rmn')dnl
+define(`LOCAL_SHELL_FLAGS', `e')dnl

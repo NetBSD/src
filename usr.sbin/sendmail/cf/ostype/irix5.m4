@@ -1,8 +1,10 @@
 divert(-1)
 #
-# Copyright (c) 1983 Eric P. Allman
+# Copyright (c) 1995 Eric P. Allman
 # Copyright (c) 1988, 1993
 #	The Regents of the University of California.  All rights reserved.
+#
+#  Contributed by Kari E. Hurtta <Kari.Hurtta@dionysos.fmi.fi>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,10 +35,27 @@ divert(-1)
 # SUCH DAMAGE.
 #
 
+#
+# Notes:
+# - SGI's /etc/sendmail.cf defines also 'u' for local mailer flags -- you
+#   perhaps don't want it.
+# - Perhaps is should also add define(`LOCAL_MAILER_CHARSET', iso-8859-1)
+#   put some Asian sites may prefer otherwise -- or perhaps not.
+# - SGI's /etc/sendmail.cf seems use: A=mail -s -d $u
+#   It seems work without that -s however.
+# - SGI's /etc/sendmail.cf set's default uid and gid to 998 (guest)
+# - In SGI seems that TZ variable is needed that correct time is marked to
+#   syslog
+# - helpfile is in /etc/sendmail.hf in SGI's /etc/sendmail.cf
+#
+
 divert(0)
-VERSIONID(`@(#)notsticky.m4	8.3 (Berkeley) 5/29/95')
-#
-#  This is now the default.  Use ``FEATURE(stickyhost)'' if you want
-#  the old default behaviour.
-#
-divert(-1)
+VERSIONID(`@(#)irix5.m4	8.2 (Berkeley) 11/13/95')
+ifdef(`LOCAL_MAILER_FLAGS',, `define(`LOCAL_MAILER_FLAGS', Ehmu)')dnl
+ifdef(`LOCAL_MAILER_ARGS',, `define(`LOCAL_MAILER_ARGS', `mail -s -d $u')')dnl
+ifdef(`QUEUE_DIR',, `define(`QUEUE_DIR', /var/spool/mqueue)')dnl
+ifdef(`ALIAS_FILE',, `define(`ALIAS_FILE', /etc/aliases)')dnl
+ifdef(`STATUS_FILE',, `define(`STATUS_FILE', /var/sendmail.st)')dnl
+ifdef(`HELP_FILE',, `define(`HELP_FILE', /etc/sendmail.hf)')dnl
+define(`confDEF_USER_ID', `998:998')dnl
+define(`confTIME_ZONE', USE_TZ)dnl

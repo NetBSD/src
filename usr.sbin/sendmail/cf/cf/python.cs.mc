@@ -33,10 +33,30 @@ divert(-1)
 # SUCH DAMAGE.
 #
 
-divert(0)
-VERSIONID(`@(#)notsticky.m4	8.3 (Berkeley) 5/29/95')
 #
-#  This is now the default.  Use ``FEATURE(stickyhost)'' if you want
-#  the old default behaviour.
+#  This is a Berkeley-specific configuration file for a specific
+#  machine in the Computer Science Division at Berkeley, and should
+#  not be used elsewhere.   It is provided on the sendmail distribution
+#  as a sample only.
 #
-divert(-1)
+#  This file is for a home machine that wants to masquerade as an
+#  on-campus machine.  Additionally, all addresses without a hostname
+#  will be forwarded to that machine.
+#
+
+VERSIONID(`@(#)python.cs.mc	8.3 (Berkeley) 8/6/95')
+OSTYPE(bsd4.4)dnl
+DOMAIN(CS.Berkeley.EDU)dnl
+define(`LOCAL_RELAY', vangogh.CS.Berkeley.EDU)dnl
+MASQUERADE_AS(vangogh.CS.Berkeley.EDU)dnl
+MAILER(local)dnl
+MAILER(smtp)dnl
+
+# accept mail sent to the domain head
+DDBostic.COM
+
+LOCAL_RULE_0
+# accept mail sent to the domain head
+R< @ $D . > : $*		$@ $>7 $1		@here:... -> ...
+R$* $=O $* < @ $D . >		$@ $>7 $1 $2 $3		...@here -> ...
+R$* < @ $D . >			$#local $: $1		user@here -> user

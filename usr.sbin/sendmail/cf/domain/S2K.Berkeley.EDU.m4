@@ -32,11 +32,7 @@ divert(-1)
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-
 divert(0)
-VERSIONID(`@(#)notsticky.m4	8.3 (Berkeley) 5/29/95')
-#
-#  This is now the default.  Use ``FEATURE(stickyhost)'' if you want
-#  the old default behaviour.
-#
-divert(-1)
+VERSIONID(`@(#)S2K.Berkeley.EDU.m4	8.2 (Berkeley) 4/21/95')
+DOMAIN(CS.Berkeley.EDU)dnl
+MASQUERADE_AS(postgres.Berkeley.EDU)dnl

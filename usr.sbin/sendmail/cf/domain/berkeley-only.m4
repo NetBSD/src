@@ -32,11 +32,9 @@ divert(-1)
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-
 divert(0)
-VERSIONID(`@(#)notsticky.m4	8.3 (Berkeley) 5/29/95')
-#
-#  This is now the default.  Use ``FEATURE(stickyhost)'' if you want
-#  the old default behaviour.
-#
-divert(-1)
+VERSIONID(`@(#)unspecified-domain.m4	8.2 (Berkeley) 4/21/95')
+errprint(`*** ERROR: You are trying to use the Berkeley sample configuration')
+errprint(`	files outside of the Computer Science Division at Berkeley.')
+errprint(`	The configuration (.mc) files must be customized to reference')
+errprint(`	domain files appropriate for your environment.')

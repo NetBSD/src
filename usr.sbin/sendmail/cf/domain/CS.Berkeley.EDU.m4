@@ -32,11 +32,9 @@ divert(-1)
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-
 divert(0)
-VERSIONID(`@(#)notsticky.m4	8.3 (Berkeley) 5/29/95')
-#
-#  This is now the default.  Use ``FEATURE(stickyhost)'' if you want
-#  the old default behaviour.
-#
-divert(-1)
+VERSIONID(`@(#)CS.Berkeley.EDU.m4	8.2 (Berkeley) 4/21/95')
+DOMAIN(Berkeley.EDU)dnl
+HACK(cssubdomain)dnl
+define(`confUSERDB_SPEC',
+	`/usr/sww/share/lib/users.cs.db,/usr/sww/share/lib/users.eecs.db')dnl

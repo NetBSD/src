@@ -33,10 +33,31 @@ divert(-1)
 # SUCH DAMAGE.
 #
 
-divert(0)
-VERSIONID(`@(#)notsticky.m4	8.3 (Berkeley) 5/29/95')
 #
-#  This is now the default.  Use ``FEATURE(stickyhost)'' if you want
-#  the old default behaviour.
+#  This is a Berkeley-specific configuration file for a specific
+#  machine in the Computer Science Division at Berkeley, and should
+#  not be used elsewhere.   It is provided on the sendmail distribution
+#  as a sample only.
 #
-divert(-1)
+#  This file is for the backup CS Division mail server.
+#
+
+VERSIONID(`@(#)huginn.cs.mc	8.6 (Berkeley) 8/25/95')
+OSTYPE(hpux9)dnl
+DOMAIN(CS.Berkeley.EDU)dnl
+MASQUERADE_AS(CS.Berkeley.EDU)dnl
+MAILER(local)dnl
+MAILER(smtp)dnl
+
+LOCAL_CONFIG
+DDBerkeley.EDU
+
+# hosts for which we accept and forward mail (must be in .Berkeley.EDU)
+CF CS
+FF/etc/sendmail.cw
+
+LOCAL_RULE_0
+R< @ $=F . $D . > : $*		$@ $>7 $2		@here:... -> ...
+R$* $=O $* < @ $=F . $D . >	$@ $>7 $1 $2 $3		...@here -> ...
+
+R$* < @ $=F . $D . >		$#local $: $1		use UDB

@@ -34,9 +34,8 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`@(#)notsticky.m4	8.3 (Berkeley) 5/29/95')
-#
-#  This is now the default.  Use ``FEATURE(stickyhost)'' if you want
-#  the old default behaviour.
-#
-divert(-1)
+VERSIONID(`@(#)unknown.m4	8.1 (Berkeley) 4/21/95')
+errprint(`*** ERROR: You have not specified a valid operating system type.')
+errprint(`	Use the OSTYPE macro to select a valid system type.  This')
+errprint(`	is necessary in order to get the proper pathnames and flags')
+errprint(`	appropriate for your environment.')
