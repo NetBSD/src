@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_tblout.c,v 1.9 2002/01/31 19:36:49 tv Exp $	*/
+/*	$NetBSD: rpc_tblout.c,v 1.10 2002/02/05 22:41:47 christos Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_tblout.c 1.4 89/02/22 (C) 1988 SMI";
 #else
-__RCSID("$NetBSD: rpc_tblout.c,v 1.9 2002/01/31 19:36:49 tv Exp $");
+__RCSID("$NetBSD: rpc_tblout.c,v 1.10 2002/02/05 22:41:47 christos Exp $");
 #endif
 #endif
 
@@ -61,7 +61,8 @@ static const char null_entry[] = "\t(char *(*)())0,\n\
  \t(xdrproc_t)xdr_void,\t\t0,\n\
  \t(xdrproc_t)xdr_void,\t\t0,\n";
 
-static const char tbl_nproc[] = "int %s_nproc =\n\tsizeof(%s_table)/sizeof(%s_table[0]);\n\n";
+static const char tbl_nproc[] =
+    "u_int %s_nproc =\n\t(u_int)(sizeof(%s_table)/sizeof(%s_table[0]));\n\n";
 
 static void write_table __P((definition *));
 static void printit __P((char *, char *));
@@ -170,7 +171,7 @@ printit(prefix, type)
 	if (streq(type, "void")) {
 		f_print(fout, "0");
 	} else {
-		f_print(fout, "sizeof ( ");
+		f_print(fout, "(u_int)sizeof(");
 		/* XXX: should "follow" be 1 ??? */
 		ptype(prefix, type, 0);
 		f_print(fout, ")");
