@@ -1,18 +1,36 @@
-/*	$NetBSD: tvctrl.c,v 1.3 1998/08/06 14:08:55 minoura Exp $	*/
+/*	$NetBSD: tvctrl.c,v 1.3.6.1 1999/01/31 05:40:38 minoura Exp $	*/
 
 #include <sys/types.h>
-#include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <machine/iteioctl.h>
+#include <err.h>
+#include <stdio.h>
+#include <stdlib.h>
 
+int main __P((int, char *[]));
+
+int
 main(argc, argv)
-     int argc;
-     char *argv[];
+	int argc;
+	char *argv[];
 {
-  unsigned char ctl;
-  if (argc < 2) printf("usage: %s control_number [...]\n", argv[0]), exit(1);
-  while (argv++, --argc != 0) {
-    ctl = atoi(argv[0]);
-    if (ioctl(0, ITETVCTRL, &ctl)) perror(errno);
-  }
+	unsigned long num;
+	unsigned char ctl;
+	char *ep;
+
+	if (argc < 2) {
+		fprintf(stderr, "usage: %s control_number [...]\n", argv[0]);
+		return 1;
+	}
+	while (argv++, --argc != 0) {
+		num = strtoul(argv[0], &ep, 10);
+		if (num > 255 || *ep != '\0')
+			errx(1, "illegal number -- %s", argv[0]);
+
+		ctl = num;
+		if (ioctl(0, ITETVCTRL, &ctl))
+			err(1, "ioctl(ITETVCTRL)");
+	}
+
+	return 0;
 }
