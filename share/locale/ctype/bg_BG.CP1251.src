@@ -1,4 +1,4 @@
-/*	$NetBSD: bg_BG.CP1251.src,v 1.1 2003/07/21 17:41:17 tshiozak Exp $	*/
+/*	$NetBSD: bg_BG.CP1251.src,v 1.2 2003/07/23 06:52:31 tshiozak Exp $	*/
 
 /*
  * LOCALE_CTYPE for Bulgarian Cyrillic character set (CP1251)
@@ -8,9 +8,9 @@
 ENCODING	"NONE"
 VARIABLE        Bulgarian Cyrillic character set (CP1251) by <roam@ringlet.net>, CODESET=CP1251
 
-#
-# This is a comment
-#
+//
+// This is a comment
+//
 ALPHA           'A' - 'Z' 'a' - 'z'
 ALPHA           0x80 0x81 0x83 0x8a 0x8c - 0x90 0x9a 0x9c - 0x9f
 ALPHA           0xa1 - 0xa3 0xa5 0xa8 0xaa 0xaf 0xb2 - 0xb4 0xb8 0xba

@@ -1,4 +1,4 @@
-/*	$NetBSD: hy_AM.ARMSCII-8.src,v 1.1 2003/07/21 17:41:18 tshiozak Exp $	*/
+/*	$NetBSD: hy_AM.ARMSCII-8.src,v 1.2 2003/07/23 06:52:32 tshiozak Exp $	*/
 
 /*
  * LOCALE_CTYPE for Armenian armscii-8 character set
@@ -10,9 +10,9 @@
 ENCODING	"NONE"
 VARIABLE	Armenian ARMSCII-8 character set by <vahe@khachikyan.de>, CODESET=ARMSCII-8
 
-#
-# This is a comment
-#
+//
+// This is a comment
+//
 ALPHA		'A' - 'Z' 'a' - 'z' 0xa2 0xb2 - 0xfd
 CONTROL		0x00 - 0x1f 0x7f
 DIGIT		'0' - '9'
@@ -28,9 +28,9 @@ SWIDTH1		0x20 - 0x7e 0xa1 - 0xfe
 
 MAPLOWER       	<'A' - 'Z' : 'a'>
 MAPLOWER       	<'a' - 'z' : 'a'>
-#
-# Upper to lower
-#
+//
+// Upper to lower
+//
 MAPLOWER        <0xb2 0xb3>
 MAPLOWER        <0xb4 0xb5>
 MAPLOWER        <0xb6 0xb7>
