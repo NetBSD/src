@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.21 1996/10/18 02:34:42 thorpej Exp $
+#	$NetBSD: bsd.doc.mk,v 1.22 1997/01/17 01:15:55 perry Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 BIB?=		bib
@@ -40,10 +40,14 @@ obj:
 clean cleandir:
 	rm -f paper.* [eE]rrs mklog ${CLEANFILES}
 
+.if defined(NODOC)
+install:
+.else
 FILES?=	${SRCS}
 install:
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    Makefile ${FILES} ${EXTRA} ${DESTDIR}${BINDIR}/${DIR}
+.endif
 
 spell: ${SRCS}
 	spell ${SRCS} | sort | comm -23 - spell.ok > paper.spell
