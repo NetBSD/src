@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.23 2002/05/14 02:34:15 eeh Exp $ */
+/*	$NetBSD: genassym.c,v 1.24 2002/09/25 22:21:22 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -48,7 +48,6 @@
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>

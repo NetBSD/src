@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcrender.c,v 1.7 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: vidcrender.c,v 1.8 2002/09/25 22:21:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -53,7 +53,6 @@
 #include <sys/conf.h>
 #include <sys/tty.h>
 #include <sys/device.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/syslog.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.7 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: apmdev.c,v 1.8 2002/09/25 22:21:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -53,7 +53,6 @@
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
 #include <sys/lock.h>

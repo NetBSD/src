@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.118 2002/09/19 10:38:00 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.119 2002/09/25 22:21:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,6 @@
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.52 2002/09/04 01:32:33 matt Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.53 2002/09/25 22:21:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,13 +73,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.52 2002/09/04 01:32:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.53 2002/09/25 22:21:43 thorpej Exp $");
 
 #include "opt_kstack.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/map.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
