@@ -1,4 +1,4 @@
-/* $NetBSD: lock.h,v 1.9 2000/08/14 17:18:50 thorpej Exp $ */
+/* $NetBSD: lock.h,v 1.10 2000/08/14 20:28:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -126,7 +126,6 @@ __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 		"# BEGIN __cpu_simple_unlock\n"
 		"	mb			\n"
 		"	stl	$31, %0		\n"
-		"	mb	# XXX unnecessary?\n"
 		"	# END __cpu_simple_unlock"
 		: "=m" (*alp));
 }
