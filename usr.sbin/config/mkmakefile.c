@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.53 2002/01/29 10:20:37 tv Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.54 2002/02/12 23:20:11 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -97,7 +97,7 @@ mkmakefile(void)
 		free(ifname);
 		return (1);
 	}
-	if ((ofp = fopen("Makefile", "w")) == NULL) {
+	if ((ofp = fopen("Makefile.tmp", "w")) == NULL) {
 		(void)fprintf(stderr, "config: cannot write Makefile: %s\n",
 		    strerror(errno));
 		free(ifname);
@@ -138,7 +138,7 @@ mkmakefile(void)
 		    "config: error reading %s (at line %d): %s\n",
 		    ifname, lineno, strerror(errno));
 		goto bad;
-		/* (void)unlink("Makefile"); */
+		/* (void)unlink("Makefile.tmp"); */
 		free(ifname);
 		return (1);
 	}
@@ -147,6 +147,12 @@ mkmakefile(void)
 		goto wrerror;
 	}
 	(void)fclose(ifp);
+	if (moveifchanged("Makefile.tmp", "Makefile") != 0) {
+		(void)fprintf(stderr,
+		    "config: error renaming Makefile: %s\n",
+		    strerror(errno));
+		goto bad;
+	}
 	free(ifname);
 	return (0);
 wrerror:
@@ -155,7 +161,7 @@ wrerror:
 bad:
 	if (ofp != NULL)
 		(void)fclose(ofp);
-	/* (void)unlink("Makefile"); */
+	/* (void)unlink("Makefile.tmp"); */
 	free(ifname);
 	return (1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.2 2002/01/31 22:44:01 tv Exp $	*/
+/*	$NetBSD: defs.h,v 1.3 2002/02/12 23:20:11 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -425,6 +425,7 @@ void	logconfig_include(FILE *, const char *);
 
 /* mkheaders.c */
 int	mkheaders(void);
+int	moveifchanged(const char *, const char *);
 
 /* mkioconf.c */
 int	mkioconf(void);
