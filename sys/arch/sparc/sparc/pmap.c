@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.285 2004/04/10 20:51:24 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.286 2004/04/12 10:00:28 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.285 2004/04/10 20:51:24 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.286 2004/04/12 10:00:28 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -486,7 +486,46 @@ static u_int segfixmask = 0xffffffff; /* all bits valid to start */
 #define	getregmap(va)		((unsigned)lduha((va)+2, ASI_REGMAP) >> 8)
 #define	setregmap(va, smeg)	stha((va)+2, ASI_REGMAP, (smeg << 8))
 
+
 #if defined(SUN4M) || defined(SUN4D)
+#if 0
+#if VM_PROT_READ != 1 || VM_PROT_WRITE != 2 || VM_PROT_EXECUTE != 4
+#error fix protection code translation table
+#endif
+#endif
+/*
+ * Translation table for kernel vs. PTE protection bits.
+ */
+const u_int protection_codes[2][8] = {
+	/* kernel */
+	{
+	PPROT_N_RX,	/* VM_PROT_NONE    | VM_PROT_NONE  | VM_PROT_NONE */
+	PPROT_N_RX,	/* VM_PROT_NONE    | VM_PROT_NONE  | VM_PROT_READ */
+	PPROT_N_RWX,	/* VM_PROT_NONE    | VM_PROT_WRITE | VM_PROT_NONE */
+	PPROT_N_RWX,	/* VM_PROT_NONE    | VM_PROT_WRITE | VM_PROT_READ */
+	PPROT_N_RX,	/* VM_PROT_EXECUTE | VM_PROT_NONE  | VM_PROT_NONE */
+	PPROT_N_RX,	/* VM_PROT_EXECUTE | VM_PROT_NONE  | VM_PROT_READ */
+	PPROT_N_RWX,	/* VM_PROT_EXECUTE | VM_PROT_WRITE | VM_PROT_NONE */
+	PPROT_N_RWX,	/* VM_PROT_EXECUTE | VM_PROT_WRITE | VM_PROT_READ */
+	},
+
+	/* user */
+	{
+	PPROT_N_RX,	/* VM_PROT_NONE    | VM_PROT_NONE  | VM_PROT_NONE */
+	PPROT_R_R,	/* VM_PROT_NONE    | VM_PROT_NONE  | VM_PROT_READ */
+	PPROT_RW_RW,	/* VM_PROT_NONE    | VM_PROT_WRITE | VM_PROT_NONE */
+	PPROT_RW_RW,	/* VM_PROT_NONE    | VM_PROT_WRITE | VM_PROT_READ */
+	PPROT_X_X,	/* VM_PROT_EXECUTE | VM_PROT_NONE  | VM_PROT_NONE */
+	PPROT_RX_RX,	/* VM_PROT_EXECUTE | VM_PROT_NONE  | VM_PROT_READ */
+	PPROT_RWX_RWX,	/* VM_PROT_EXECUTE | VM_PROT_WRITE | VM_PROT_NONE */
+	PPROT_RWX_RWX,	/* VM_PROT_EXECUTE | VM_PROT_WRITE | VM_PROT_READ */
+	}
+};
+#define pte_kprot4m(prot) (protection_codes[0][(prot)])
+#define pte_uprot4m(prot) (protection_codes[1][(prot)])
+#define pte_prot4m(pm, prot) \
+	(protection_codes[(pm) == pmap_kernel() ? 0 : 1][(prot)])
+
 void		setpte4m(vaddr_t va, int pte);
 void		setpgt4m(int *ptep, int pte);
 void		setpgt4m_va(vaddr_t, int *, int, int, int, u_int);
@@ -873,59 +912,6 @@ setpte4m(va, pte)
 
 	tlb_flush_page(va, 0, CPUSET_ALL);
 	setpgt4m(sp->sg_pte + VA_SUN4M_VPG(va), pte);
-}
-
-/*
- * Translation table for kernel vs. PTE protection bits.
- */
-u_int protection_codes[2][8];
-#define pte_prot4m(pm, prot) \
-	(protection_codes[(pm) == pmap_kernel() ? 0 : 1][(prot)])
-
-static void
-sparc_protection_init4m(void)
-{
-	u_int prot, *kp, *up;
-
-	kp = protection_codes[0];
-	up = protection_codes[1];
-
-	for (prot = 0; prot < 8; prot++) {
-		switch (prot) {
-		case VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE:
-			kp[prot] = PPROT_N_RWX;
-			up[prot] = PPROT_RWX_RWX;
-			break;
-		case VM_PROT_READ | VM_PROT_WRITE | VM_PROT_NONE:
-			kp[prot] = PPROT_N_RWX;
-			up[prot] = PPROT_RW_RW;
-			break;
-		case VM_PROT_READ | VM_PROT_NONE  | VM_PROT_EXECUTE:
-			kp[prot] = PPROT_N_RX;
-			up[prot] = PPROT_RX_RX;
-			break;
-		case VM_PROT_READ | VM_PROT_NONE  | VM_PROT_NONE:
-			kp[prot] = PPROT_N_RX;
-			up[prot] = PPROT_R_R;
-			break;
-		case VM_PROT_NONE | VM_PROT_WRITE | VM_PROT_EXECUTE:
-			kp[prot] = PPROT_N_RWX;
-			up[prot] = PPROT_RWX_RWX;
-			break;
-		case VM_PROT_NONE | VM_PROT_WRITE | VM_PROT_NONE:
-			kp[prot] = PPROT_N_RWX;
-			up[prot] = PPROT_RW_RW;
-			break;
-		case VM_PROT_NONE | VM_PROT_NONE  | VM_PROT_EXECUTE:
-			kp[prot] = PPROT_N_RX;
-			up[prot] = PPROT_X_X;
-			break;
-		case VM_PROT_NONE | VM_PROT_NONE  | VM_PROT_NONE:
-			kp[prot] = PPROT_N_RX;
-			up[prot] = PPROT_N_RX;
-			break;
-		}
-	}
 }
 
 /*
@@ -3930,7 +3916,6 @@ pmap_bootstrap4m(top)
 	 * Now switch to kernel pagetables (finally!)
 	 */
 	mmu_install_tables(&cpuinfo);
-	sparc_protection_init4m();
 }
 
 static u_long prom_ctxreg;
@@ -6591,7 +6576,7 @@ pmap_kenter_pa4m(va, pa, prot)
 	pteproto |= SRMMU_TEPTE | PPROT_S;
 	pteproto |= PMAP_T2PTE_SRMMU(pa);
 	pteproto |= (atop(pa & ~PMAP_TNC_SRMMU) << SRMMU_PPNSHIFT);
-	pteproto |= pte_prot4m(pm, prot);
+	pteproto |= pte_kprot4m(prot);
 
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
@@ -6671,7 +6656,7 @@ pmap_kprotect4m(vaddr_t va, vsize_t size, vm_prot_t prot)
 	struct segmap *sp;
 
 	size = roundup(size,NBPG);
-	newprot = pte_prot4m(pm, prot);
+	newprot = pte_kprot4m(prot);
 
 	while (size > 0) {
 		rp = &pm->pm_regmap[VA_VREG(va)];
