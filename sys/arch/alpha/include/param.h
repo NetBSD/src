@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.7 1995/08/03 00:51:00 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.8 1995/08/13 00:03:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -147,6 +147,7 @@
 #define	splx(s)                 (s == PSL_IPL_0 ? spl0() : pal_swpipl(s))
 #define	splsoft()		pal_swpipl(PSL_IPL_SOFT)
 #define	splsoftclock()		splsoft()
+#define	splsoftnet()		splsoft()
 #define	splnet()                pal_swpipl(PSL_IPL_IO)
 #define	splbio()                pal_swpipl(PSL_IPL_IO)
 #define	splimp()                pal_swpipl(PSL_IPL_IO)
