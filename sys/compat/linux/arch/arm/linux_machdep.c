@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.4 2002/02/15 16:47:59 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.5 2002/02/17 22:00:09 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.4 2002/02/15 16:47:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.5 2002/02/17 22:00:09 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,6 +188,8 @@ linux_sendsig(catcher, sig, mask, code)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 
 }
+
+#if 0
 /*
  * System call to cleanup state after a signal
  * has been taken.  Reset signal mask and
@@ -207,6 +209,7 @@ linux_sys_rt_sigreturn(p, v, retval)
 	/* XXX XAX write me */
 	return(ENOSYS);
 }
+#endif
 
 int
 linux_sys_sigreturn(p, v, retval)
