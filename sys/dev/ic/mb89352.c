@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.15 2003/05/19 14:56:03 tsutsui Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.16 2003/07/05 18:56:55 tsutsui Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.15 2003/05/19 14:56:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.16 2003/07/05 18:56:55 tsutsui Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -81,14 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.15 2003/05/19 14:56:03 tsutsui Exp $")
 /*
  * A few customizable items:
  */
-
-/* Use doubleword transfers to/from SCSI chip.  Note: This requires
- * motherboard support.  Basicly, some motherboard chipsets are able to
- * split a 32 bit I/O operation into two 16 bit I/O operations,
- * transparently to the processor.  This speeds up some things, notably long
- * data transfers.
- */
-#define SPC_USE_DWORDS		0
 
 /* Synchronous data transfers? */
 #define SPC_USE_SYNCHRONOUS	0
@@ -112,7 +104,8 @@ __KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.15 2003/05/19 14:56:03 tsutsui Exp $")
 #define SPC_MSGIN_SPIN	1 	/* Will spinwait upto ?ms for a new msg byte */
 #define SPC_MSGOUT_SPIN	1
 
-/* Include debug functions?  At the end of this file there are a bunch of
+/*
+ * Include debug functions?  At the end of this file there are a bunch of
  * functions that will print out various information regarding queued SCSI
  * commands, driver state and chip contents.  You can call them from the
  * kernel debugger.  If you set SPC_DEBUG to 0 they are not included (the
@@ -151,7 +144,7 @@ __KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.15 2003/05/19 14:56:03 tsutsui Exp $")
 
 #include <dev/ic/mb89352reg.h>
 #include <dev/ic/mb89352var.h>
-
+
 #ifndef DDB
 #define	Debugger() panic("should call debugger here (mb89352.c)")
 #endif /* ! DDB */
@@ -190,7 +183,6 @@ void	spc_print_active_acb __P((void));
 
 extern struct cfdriver spc_cd;
 
-
 /*
  * INITIALIZATION ROUTINES (probe, attach ++)
  */
@@ -443,7 +435,7 @@ spc_get_acb(sc)
 	splx(s);
 	return acb;
 }
-
+
 /*
  * DRIVER FUNCTIONS CALLABLE FROM HIGHER LEVEL DRIVERS
  */
@@ -589,7 +581,7 @@ spc_poll(sc, xs, count)
 	}
 	return 1;
 }
-
+
 /*
  * LOW LEVEL SCSI UTILITIES
  */
@@ -753,7 +745,7 @@ abort:
 	spc_sched_msgout(sc, SEND_ABORT);
 	return (1);
 }
-
+
 /*
  * Schedule a SCSI operation.  This has now been pulled out of the interrupt
  * handler so that we may call it from spc_scsi_cmd and spc_done.  This may
@@ -793,7 +785,7 @@ spc_sched(sc)
 	SPC_MISC(("idle  "));
 	/* Nothing to start; just enable reselections and wait. */
 }
-
+
 /*
  * POST PROCESSING OF SCSI_CMD (usually current)
  */
@@ -873,7 +865,7 @@ spc_dequeue(sc, acb)
 	else
 		TAILQ_REMOVE(&sc->ready_list, acb, chain);
 }
-
+
 /*
  * INTERRUPT/PROTOCOL ENGINE
  */
@@ -1397,7 +1389,7 @@ out:
 	/* Disable REQ/ACK protocol. */
 	return;
 }
-
+
 /*
  * spc_dataout_pio: perform a data transfer using the FIFO datapath in the spc
  * Precondition: The SCSI bus should be in the DOUT phase, with REQ asserted
@@ -1508,7 +1500,7 @@ phasechange:
 
 	return out;
 }
-
+
 /*
  * spc_datain_pio: perform data transfers using the FIFO datapath in the spc
  * Precondition: The SCSI bus should be in the DIN phase, with REQ asserted
@@ -1617,7 +1609,7 @@ phasechange:
 
 	return in;
 }
-
+
 /*
  * Catch an interrupt from the adaptor
  */
@@ -2063,7 +2055,7 @@ spc_timeout(arg)
 
 	splx(s);
 }
-
+
 #ifdef SPC_DEBUG
 /*
  * The following functions are mostly used for debugging purposes, either
