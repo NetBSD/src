@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.2.2.9 2001/04/01 15:03:43 ad Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.2.2.10 2001/04/23 16:17:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -190,11 +190,12 @@ iopsp_attach(struct device *parent, struct device *self, void *aux)
 	memset(&sc->sc_channel, 0, sizeof(sc->sc_channel));
 	sc->sc_channel.chan_adapter = &sc->sc_adapter;
 	sc->sc_channel.chan_bustype = &scsi_bustype;
-	sc->sc_channel.chan_channel = 0;
+	sc->sc_channel.chan_channel = -1;
 	sc->sc_channel.chan_ntargets = fcal ?
 	    IOPSP_MAX_FCAL_TARGET : param.p.sci.maxdatawidth;
 	sc->sc_channel.chan_nluns = IOPSP_MAX_LUN;
 	sc->sc_channel.chan_id = le32toh(param.p.sci.initiatorid);
+	sc->sc_channel.chan_flags = SCSIPI_CHAN_NOSETTLE;
 
 #ifdef I2OVERBOSE
 	/*
@@ -637,7 +638,7 @@ iopsp_intr(struct device *dv, struct iop_msg *im, void *reply)
 		iop_msg_unmap(iop, im);
 	iop_msg_free(iop, im);
 
-	if (sc->sc_curqd-- > sc->sc_adapter.adapt_openings)
+	if (--sc->sc_curqd == sc->sc_adapter.adapt_openings)
 		wakeup(&sc->sc_curqd);
 
 	scsipi_done(xs);
