@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.9 1999/09/12 16:10:45 itojun Exp $	*/
+/*	$NetBSD: param.h,v 1.10 2000/04/09 01:08:17 bad Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -80,7 +80,7 @@
 #define SIZEOF_IS_ULONG		0
 #elif defined(__sparc__)
 #define PTRDIFF_IS_LONG		0
-#define SIZEOF_IS_ULONG		0
+#define SIZEOF_IS_ULONG		1
 #elif defined(__vax__)
 #define PTRDIFF_IS_LONG         0
 #define SIZEOF_IS_ULONG         0
