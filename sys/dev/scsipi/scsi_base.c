@@ -1,7 +1,7 @@
-/*	$NetBSD: scsi_base.c,v 1.81 2004/09/09 19:35:30 bouyer Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.82 2004/09/17 23:30:22 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsi_base.c,v 1.81 2004/09/09 19:35:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsi_base.c,v 1.82 2004/09/17 23:30:22 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,27 +78,12 @@ scsi_change_def(struct scsipi_periph *periph, int flags)
  * long the data is supposed to be. If we have  a buf
  * to associate with the transfer, we need that too.
  */
-int
-scsi_scsipi_cmd(struct scsipi_periph *periph, struct scsipi_xfer *xs,
-    struct scsipi_generic *scsipi_cmd, int cmdlen, void *data, size_t datalen,
-    int retries, int timeout, struct buf *bp, int flags)
+void
+scsi_scsipi_cmd(struct scsipi_xfer *xs)
 {
-	int error;
+	struct scsipi_periph *periph = xs->xs_periph;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("scsi_scsipi_cmd\n"));
-
-#ifdef DIAGNOSTIC
-	if (bp != NULL && (flags & XS_CTL_ASYNC) == 0)
-		panic("scsi_scsipi_cmd: buffer without async");
-#endif
-
-	if (xs == NULL) {
-		if ((xs = scsipi_make_xs(periph, scsipi_cmd, cmdlen, data,
-		    datalen, retries, timeout, bp, flags)) == NULL) {
-			/* let the caller deal with this */
-			return (ENOMEM);
-		}
-	}
 
 	/*
 	 * Set the LUN in the CDB if we have an older device.  We also
@@ -108,10 +93,6 @@ scsi_scsipi_cmd(struct scsipi_periph *periph, struct scsipi_xfer *xs,
 		xs->cmd->bytes[0] |=
 		    ((periph->periph_lun << SCSI_CMD_LUN_SHIFT) &
 			SCSI_CMD_LUN_MASK);
-
-	if ((error = scsipi_execute_xs(xs)) == EJUSTRETURN)
-		return (0);
-	return (error);
 }
 
 /*

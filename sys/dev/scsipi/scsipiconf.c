@@ -1,7 +1,7 @@
-/*	$NetBSD: scsipiconf.c,v 1.24 2004/09/09 19:35:31 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.25 2004/09/17 23:30:22 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.24 2004/09/09 19:35:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.25 2004/09/17 23:30:22 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.24 2004/09/09 19:35:31 bouyer Exp $
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipiconf.h>
+#include <dev/scsipi/scsipi_base.h>
 
 #define	STRVIS_ISWHITE(x) ((x) == ' ' || (x) == '\0' || (x) == (u_char)'\377')
 
@@ -75,21 +76,16 @@ scsipi_command(struct scsipi_periph *periph, struct scsipi_xfer *xs,
     struct scsipi_generic *cmd, int cmdlen, u_char *data_addr, int datalen,
     int retries, int timeout, struct buf *bp, int flags)
 {
-	int error;
  
-	if ((flags & XS_CTL_DATA_ONSTACK) != 0) {
-		/*
-		 * If the I/O buffer is allocated on stack, the
-		 * process must NOT be swapped out, as the device will
-		 * be accessing the stack.
-		 */
-		PHOLD(curlwp);
+	if (xs == NULL) {
+		if ((xs = scsipi_make_xs(periph, cmd, cmdlen, data_addr,
+		    datalen, retries, timeout, bp, flags)) == NULL) {
+			/* let the caller deal with this */
+			return (ENOMEM);
+		}
 	}
-	error = (*periph->periph_channel->chan_bustype->bustype_cmd)(periph,
-	    xs, cmd, cmdlen, data_addr, datalen, retries, timeout, bp, flags);
-	if ((flags & XS_CTL_DATA_ONSTACK) != 0)
-		PRELE(curlwp);
-	return (error);
+
+	return (scsipi_execute_xs(xs));
 }
 
 /*
