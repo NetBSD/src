@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.29 2000/05/14 01:14:29 lukem Exp $	*/
+/*	$NetBSD: termcap.c,v 1.30 2000/05/20 13:55:10 blymn Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.29 2000/05/14 01:14:29 lukem Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.30 2000/05/20 13:55:10 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -375,6 +375,53 @@ tgetstr(id, area)
 		return t_getstr(fbuf, ids, area, NULL);
 }
 
+/*
+ * Get a string valued option specified by id and append it to the
+ * given buffer.  If bufptr is NULL then a new buffer is allocated, if
+ * bufptr is non-NULL then extend the memory allocation to allow the
+ * new string to be appended to the buffer.  The pointer area is
+ * updated to point to the start of the new entry and this address is
+ * also returned to the caller.  If the string is not found or a
+ * memory allocation fails then NULL is returned and bufptr and area
+ * are unchanged.
+ */
+char *
+t_agetstr(struct tinfo *info, const char *id, char **bufptr, char **area)
+{
+	size_t new_size, offset;
+	char *new_buf;
+	
+	_DIAGASSERT(info != NULL);
+	_DIAGASSERT(id != NULL);
+	_DIAGASSERT(bufptr != NULL);
+	_DIAGASSERT(area != NULL);
+	_DIAGASSERT(size != NULL);
+
+	t_getstr(info, id, NULL, &new_size);
+
+	  /* either the string is empty or the capability does not exist. */
+	if (new_size == 0)
+		return NULL;
+
+	  /* check if we have a buffer, if not malloc one and fill it in. */
+	if (*bufptr == NULL) {
+		if ((new_buf = (char *) malloc(new_size)) == NULL)
+			return NULL;
+		*bufptr = new_buf;
+		*area = new_buf;
+	} else {
+		offset = *area - *bufptr;
+		if ((new_buf = realloc(*bufptr, offset + new_size)) == NULL)
+			return NULL;
+		
+		*bufptr = new_buf;
+		*area = *bufptr + offset; /* we need to do this just in case
+					     realloc shifted the buffer. */
+	}
+	
+	return t_getstr(info, id, area, NULL);
+}
+ 
 /*
  * Free the buffer allocated by t_getent
  *
