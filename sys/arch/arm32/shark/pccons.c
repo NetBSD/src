@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.5 1998/08/15 03:02:34 mycroft Exp $       */
+/*      $NetBSD: pccons.c,v 1.6 1998/10/18 12:21:51 mellon Exp $       */
 
 /*
  * Copyright 1997
@@ -2884,7 +2884,11 @@ static Scan_def scan_codes[] = {
 { ASCII,"[",            "{",            "\033" },       /* 26 [ */
 { ASCII,"]",            "}",            "\035" },       /* 27 ] */
 { ASCII,"\r",           "\r",           "\n" },         /* 28 return */
+#if defined (CAPS_IS_CONTROL)
+{ CAPS,  "",             "",             "" },           /* 29 caps */
+#else
 { CTL,  "",             "",             "" },           /* 29 control */
+#endif
 { ASCII,"a",            "A",            "\001" },       /* 30 a */
 { ASCII,"s",            "S",            "\023" },       /* 31 s */
 { ASCII,"d",            "D",            "\004" },       /* 32 d */
@@ -2913,7 +2917,11 @@ static Scan_def scan_codes[] = {
 { KP,   "*",            "*",            "*" },          /* 55 kp * */
 { ALT,  "",             "",             "" },           /* 56 alt */
 { ASCII," ",            " ",            "\000" },       /* 57 space */
+#if defined (CAPS_IS_CONTROL)
+{ CTL, "",             "",             "" },           /* 58 ctl */
+#else
 { CAPS, "",             "",             "" },           /* 58 caps */
+#endif
 { FUNC, "\033[M",       "\033[Y",       "\033[k" },     /* 59 f1 */
 { FUNC, "\033[N",       "\033[Z",       "\033[l" },     /* 60 f2 */
 { FUNC, "\033[O",       "\033[a",       "\033[m" },     /* 61 f3 */
