@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.42 2001/01/05 02:02:58 lukem Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.43 2001/01/09 21:31:02 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.42 2001/01/05 02:02:58 lukem Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.43 2001/01/09 21:31:02 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,6 +147,7 @@ struct list secondlevel[] = {
 	{ username, USER_MAXID },	/* CTL_USER_NAMES */
 	{ ddbname, DDBCTL_MAXID },	/* CTL_DDB_NAMES */
 	{ procname, 2 },		/* dummy name */
+	{ 0, 0},
 };
 
 int	Aflag, aflag, nflag, wflag;
@@ -493,6 +494,7 @@ parse(string, flags)
 		}
 		break;
 
+	case CTL_VENDOR:
 	case CTL_USER:
 	case CTL_DDB:
 		break;
