@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.23 1997/04/10 02:48:38 cgd Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.24 1997/06/09 01:51:03 thorpej Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -1539,18 +1539,22 @@ ahc_handle_seqint(ahc, intstat)
 			targ_scratch &= 0x7f;
 			ahc->needwdtr &= ~targ_mask;
 			ahc->wdtrpending &= ~targ_mask;
+#if !defined(__NetBSD__) || defined(DEBUG)
 			printf("%s:%c:%d: refuses WIDE negotiation.  Using "
 			       "8bit transfers\n", ahc_name(ahc),
 			       channel, target);
+#endif
 		} else if(ahc->sdtrpending & targ_mask){
 			/* note asynch xfers and clear flag */
 			targ_scratch &= 0xf0;
 			ahc->needsdtr &= ~targ_mask;
 			ahc->sdtrpending &= ~targ_mask;
+#if !defined(__NetBSD__) || defined(DEBUG)
 			printf("%s:%c:%d: refuses synchronous negotiation. "
 			       "Using asynchronous transfers\n",
 			       ahc_name(ahc),
 			       channel, target);
+#endif
 		} else {
 			/*
 			 * Otherwise, we ignore it.
