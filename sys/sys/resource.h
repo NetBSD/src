@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)resource.h	7.5 (Berkeley) 3/17/91
- *	$Id: resource.h,v 1.6 1994/05/04 01:38:59 cgd Exp $
+ *	from: @(#)resource.h	8.2 (Berkeley) 1/4/94
+ *	$Id: resource.h,v 1.7 1994/05/21 03:52:08 cgd Exp $
  */
 
 #ifndef _SYS_RESOURCE_H_
-#define _SYS_RESOURCE_H_
+#define	_SYS_RESOURCE_H_
 
 /*
  * Process priority specifications to get/setpriority.
@@ -108,7 +108,10 @@ struct loadavg {
 	long fscale;
 };
 
-#ifndef KERNEL
+#ifdef KERNEL
+extern struct loadavg averunnable;
+
+#else
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
@@ -119,13 +122,5 @@ int	setpriority __P((int, int, int));
 int	setrlimit __P((int, const struct rlimit *));
 __END_DECLS
 
-#else /* !KERNEL */
-
-extern struct loadavg averunnable;
-#if defined(COMPAT_43) && (defined(vax) || defined(tahoe))
-extern double avenrun[3];
-#endif /* COMPAT_43 */
-
-#endif	/* !KERNEL */
-
-#endif /* !_SYS_RESOURCE_H_ */
+#endif	/* KERNEL */
+#endif	/* !_SYS_RESOURCE_H_ */

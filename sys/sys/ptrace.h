@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ptrace.h	7.4 (Berkeley) 2/22/91
- *	$Id: ptrace.h,v 1.13 1994/05/04 03:42:34 cgd Exp $
+ *	$Id: ptrace.h,v 1.14 1994/05/21 03:52:05 cgd Exp $
  */
 
 #ifndef _SYS_PTRACE_H_
@@ -85,6 +85,7 @@ int	process_set_pc __P((struct proc *p, u_int addr));
 		(p)->p_flag &= ~P_SSTEP; \
 	} \
 }        
+void	proc_reparent __P((struct proc *child, struct proc *newparent));
 #else /* KERNEL */
 #include <sys/cdefs.h>
 

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1982, 1986 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vmmeter.h	7.3 (Berkeley) 5/5/91
- *	$Id: vmmeter.h,v 1.4 1994/04/15 07:04:36 cgd Exp $
+ *	from: @(#)vmmeter.h	8.1 (Berkeley) 6/2/93
+ *	$Id: vmmeter.h,v 1.5 1994/05/21 03:52:22 cgd Exp $
  */
-
-#ifndef _SYS_VMMETER_H_
-#define _SYS_VMMETER_H_
 
 /*
  * System wide statistics counters.
@@ -149,5 +146,3 @@ int	rres;
 unsigned rectime;		/* accumulator for reclaim times */
 unsigned pgintime;		/* accumulator for page in times */
 #endif
-
-#endif /* !_SYS_VMMETER_H_ */

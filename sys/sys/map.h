@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1982, 1986, The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
  * All or some portions of this file are derived from material licensed
  * to the University of California by American Telephone and Telegraph
@@ -35,8 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)map.h	7.5 (Berkeley) 5/7/91
- *	$Id: map.h,v 1.2 1994/05/17 04:25:05 cgd Exp $
+ *	from: @(#)map.h	8.3 (Berkeley) 1/26/94
+ *	$Id: map.h,v 1.3 1994/05/21 03:52:00 cgd Exp $
  */
 
 /*
@@ -68,12 +68,16 @@ struct map {
 };
 
 struct mapent {
-	int	m_size;			/* size of this segment of the map */
-	int	m_addr;			/* start of segment */
+	long	m_size;			/* size of this segment of the map */
+	long	m_addr;			/* start of segment */
 };
 
 #ifdef KERNEL
 #define	ARGMAPSIZE	16
 struct	map *kmemmap, *mbmap, *swapmap;
 int	nswapmap;
+
+long	rmalloc __P((struct map *, long));
+void	rmfree __P((struct map *, long, long));
+void	rminit __P((struct map *, long, long, char *, int));
 #endif

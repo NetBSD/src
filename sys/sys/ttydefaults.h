@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1982, 1986 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
  * All or some portions of this file are derived from material licensed
  * to the University of California by American Telephone and Telegraph
@@ -35,16 +35,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ttydefaults.h	7.9 (Berkeley) 5/9/91
- *	$Id: ttydefaults.h,v 1.4 1994/05/17 04:25:11 cgd Exp $
+ *	from: @(#)ttydefaults.h	8.4 (Berkeley) 1/21/94
+ *	$Id: ttydefaults.h,v 1.5 1994/05/21 03:52:15 cgd Exp $
  */
-
-#ifndef _SYS_TTYDEFAULTS_H_
-#define _SYS_TTYDEFAULTS_H_
 
 /*
  * System wide defaults for terminal state.
  */
+#ifndef _SYS_TTYDEFAULTS_H_
+#define	_SYS_TTYDEFAULTS_H_
 
 /*
  * Defaults on "first" open.
@@ -60,10 +59,10 @@
  */
 #define CTRL(x)	(x&037)
 #define	CEOF		CTRL('d')
-#define	CEOL		((unsigned)'\377')	/* XXX avoid _POSIX_VDISABLE */
+#define	CEOL		((unsigned char)'\377')	/* XXX avoid _POSIX_VDISABLE */
 #define	CERASE		0177
 #define	CINTR		CTRL('c')
-#define	CSTATUS		((unsigned)'\377')	/* XXX avoid _POSIX_VDISABLE */
+#define	CSTATUS		((unsigned char)'\377')	/* XXX avoid _POSIX_VDISABLE */
 #define	CKILL		CTRL('u')
 #define	CMIN		1
 #define	CQUIT		034		/* FS, ^\ */
@@ -82,6 +81,7 @@
 #define CRPRNT		CREPRINT
 #define	CFLUSH		CDISCARD
 
+/* PROTECTED INCLUSION ENDS HERE */
 #endif /* !_SYS_TTYDEFAULTS_H_ */
 
 /*
@@ -94,4 +94,4 @@ cc_t	ttydefchars[NCCS] = {
 	CDISCARD, CMIN,	CTIME,  CSTATUS, _POSIX_VDISABLE
 };
 #undef TTYDEFCHARS
-#endif /* TTYDEFCHARS */
+#endif
