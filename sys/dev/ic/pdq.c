@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.35 2002/11/25 20:43:44 fvdl Exp $	*/
+/*	$NetBSD: pdq.c,v 1.36 2003/01/17 02:43:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq.c,v 1.35 2002/11/25 20:43:44 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq.c,v 1.36 2003/01/17 02:43:40 matt Exp $");
 
 #define	PDQ_HWSUPPORT	/* for pdq.h */
 
@@ -183,6 +183,10 @@ pdq_print_fddi_chars(
     const pdq_response_status_chars_get_t *rsp)
 {
     static const char hexchars[] = "0123456789abcdef";
+    pdq_uint32_t phy_type;
+    pdq_uint32_t pmd_type;
+    pdq_uint32_t smt_version_id;
+    pdq_station_type_t station_type;
 
     printf(
 #if !defined(__bsdi__) && !defined(__NetBSD__)
@@ -195,7 +199,7 @@ pdq_print_fddi_chars(
 	   PDQ_OS_PREFIX_ARGS,
 #endif
 	   pdq_descriptions[pdq->pdq_type],
-	   pdq_station_types[rsp->status_chars_get.station_type]);
+	   pdq_station_types[le32toh(rsp->status_chars_get.station_type)]);
 
     printf(PDQ_OS_PREFIX "FDDI address %c%c:%c%c:%c%c:%c%c:%c%c:%c%c, FW=%c%c%c%c, HW=%c",
 	   PDQ_OS_PREFIX_ARGS,
@@ -215,20 +219,27 @@ pdq_print_fddi_chars(
 	   pdq->pdq_fwrev.fwrev_bytes[2], pdq->pdq_fwrev.fwrev_bytes[3],
 	   rsp->status_chars_get.module_rev.fwrev_bytes[0]);
 
-    if (rsp->status_chars_get.smt_version_id < PDQ_ARRAY_SIZE(pdq_smt_versions)) {
-	printf(", SMT %s\n", pdq_smt_versions[rsp->status_chars_get.smt_version_id]);
-    }
+    phy_type = le32toh(rsp->status_chars_get.phy_type[0]);
+    pmd_type = le32toh(rsp->status_chars_get.pmd_type[0]);
+    station_type = le32toh(rsp->status_chars_get.station_type);
+    smt_version_id = le32toh(rsp->status_chars_get.smt_version_id);
+
+    if (smt_version_id < PDQ_ARRAY_SIZE(pdq_smt_versions))
+	printf(", SMT %s\n", pdq_smt_versions[smt_version_id]);
 
     printf(PDQ_OS_PREFIX "FDDI Port%s = %c (PMD = %s)",
 	   PDQ_OS_PREFIX_ARGS,
-	   rsp->status_chars_get.station_type == PDQ_STATION_TYPE_DAS ? "[A]" : "",
-	   pdq_phy_types[rsp->status_chars_get.phy_type[0]],
-	   pdq_pmd_types[rsp->status_chars_get.pmd_type[0] / 100][rsp->status_chars_get.pmd_type[0] % 100]);
+	   le32toh(station_type) == PDQ_STATION_TYPE_DAS ? "[A]" : "",
+	   pdq_phy_types[phy_type],
+	   pdq_pmd_types[pmd_type / 100][pmd_type % 100]);
 
-    if (rsp->status_chars_get.station_type == PDQ_STATION_TYPE_DAS)
+    if (station_type == PDQ_STATION_TYPE_DAS) {
+	phy_type = le32toh(rsp->status_chars_get.phy_type[1]);
+	pmd_type = le32toh(rsp->status_chars_get.pmd_type[1]);
 	printf(", FDDI Port[B] = %c (PMD = %s)",
-	       pdq_phy_types[rsp->status_chars_get.phy_type[1]],
-	       pdq_pmd_types[rsp->status_chars_get.pmd_type[1] / 100][rsp->status_chars_get.pmd_type[1] % 100]);
+	       pdq_phy_types[phy_type],
+	       pdq_pmd_types[pmd_type / 100][pmd_type % 100]);
+    }
 
     printf("\n");
 
@@ -503,7 +514,8 @@ pdq_queue_commands(
      * Obtain and fill in the descriptor for the command (descriptor is
      * pre-initialized)
      */
-    txd->txd_seg_len = cmdlen;
+    txd->txd_pa_hi =
+	htole32(PDQ_TXDESC_SEG_LEN(cmdlen)|PDQ_TXDESC_EOP|PDQ_TXDESC_SOP);
 
     /*
      * Clear the command area, set the opcode, and the command from the pending
@@ -512,10 +524,11 @@ pdq_queue_commands(
 
     ci->ci_queued_commands[ci->ci_request_producer] = op;
 #if defined(PDQVERBOSE)
-    ((pdq_response_generic_t *) ci->ci_response_bufstart)->generic_op = PDQC_BOGUS_CMD;
+    ((pdq_response_generic_t *) ci->ci_response_bufstart)->generic_op =
+	htole32(PDQC_BOGUS_CMD);
 #endif
     PDQ_OS_MEMZERO(ci->ci_request_bufstart, cmdlen);
-    *(pdq_cmd_code_t *) ci->ci_request_bufstart = op;
+    *(pdq_uint32_t *) ci->ci_request_bufstart = htole32(op);
     ci->ci_pending_commands &= ~mask;
 
     /*
@@ -525,19 +538,28 @@ pdq_queue_commands(
 	case PDQC_FILTER_SET: {
 	    pdq_cmd_filter_set_t *filter_set = (pdq_cmd_filter_set_t *) ci->ci_request_bufstart;
 	    unsigned idx = 0;
-	    filter_set->filter_set_items[idx].item_code = PDQI_IND_GROUP_PROM;
-	    filter_set->filter_set_items[idx].filter_state = (pdq->pdq_flags & PDQ_PROMISC ? PDQ_FILTER_PASS : PDQ_FILTER_BLOCK);
+	    filter_set->filter_set_items[idx].item_code =
+		htole32(PDQI_IND_GROUP_PROM);
+	    filter_set->filter_set_items[idx].filter_state =
+		htole32(pdq->pdq_flags & PDQ_PROMISC ? PDQ_FILTER_PASS : PDQ_FILTER_BLOCK);
 	    idx++;
-	    filter_set->filter_set_items[idx].item_code = PDQI_GROUP_PROM;
-	    filter_set->filter_set_items[idx].filter_state = (pdq->pdq_flags & PDQ_ALLMULTI ? PDQ_FILTER_PASS : PDQ_FILTER_BLOCK);
+	    filter_set->filter_set_items[idx].item_code =
+		htole32(PDQI_GROUP_PROM);
+	    filter_set->filter_set_items[idx].filter_state =
+		htole32(pdq->pdq_flags & PDQ_ALLMULTI ? PDQ_FILTER_PASS : PDQ_FILTER_BLOCK);
 	    idx++;
-	    filter_set->filter_set_items[idx].item_code = PDQI_SMT_PROM;
-	    filter_set->filter_set_items[idx].filter_state = ((pdq->pdq_flags & (PDQ_PROMISC|PDQ_PASS_SMT)) == (PDQ_PROMISC|PDQ_PASS_SMT) ? PDQ_FILTER_PASS : PDQ_FILTER_BLOCK);
+	    filter_set->filter_set_items[idx].item_code =
+		htole32(PDQI_SMT_PROM);
+	    filter_set->filter_set_items[idx].filter_state =
+		htole32((pdq->pdq_flags & (PDQ_PROMISC|PDQ_PASS_SMT)) == (PDQ_PROMISC|PDQ_PASS_SMT) ? PDQ_FILTER_PASS : PDQ_FILTER_BLOCK);
 	    idx++;
-	    filter_set->filter_set_items[idx].item_code = PDQI_SMT_USER;
-	    filter_set->filter_set_items[idx].filter_state = (pdq->pdq_flags & PDQ_PASS_SMT ? PDQ_FILTER_PASS : PDQ_FILTER_BLOCK);
+	    filter_set->filter_set_items[idx].item_code =
+		htole32(PDQI_SMT_USER);
+	    filter_set->filter_set_items[idx].filter_state =
+		htole32((pdq->pdq_flags & PDQ_PASS_SMT) ? PDQ_FILTER_PASS : PDQ_FILTER_BLOCK);
 	    idx++;
-	    filter_set->filter_set_items[idx].item_code = PDQI_EOL;
+	    filter_set->filter_set_items[idx].item_code =
+		htole32(PDQI_EOL);
 	    break;
 	}
 	case PDQC_ADDR_FILTER_SET: {
@@ -556,11 +578,11 @@ pdq_queue_commands(
 	case PDQC_SNMP_SET: {
 	    pdq_cmd_snmp_set_t *snmp_set = (pdq_cmd_snmp_set_t *) ci->ci_request_bufstart;
 	    unsigned idx = 0;
-	    snmp_set->snmp_set_items[idx].item_code = PDQSNMP_FULL_DUPLEX_ENABLE;
-	    snmp_set->snmp_set_items[idx].item_value = (pdq->pdq_flags & PDQ_WANT_FDX ? 1 : 2);
+	    snmp_set->snmp_set_items[idx].item_code = htole32(PDQSNMP_FULL_DUPLEX_ENABLE);
+	    snmp_set->snmp_set_items[idx].item_value = htole32(pdq->pdq_flags & PDQ_WANT_FDX ? 1 : 2);
 	    snmp_set->snmp_set_items[idx].item_port = 0;
 	    idx++;
-	    snmp_set->snmp_set_items[idx].item_code = PDQSNMP_EOL;
+	    snmp_set->snmp_set_items[idx].item_code = htole32(PDQSNMP_EOL);
 	    break;
 	}
 	default: {	/* to make gcc happy */
@@ -573,7 +595,7 @@ pdq_queue_commands(
      * Sync the command request buffer and descriptor, then advance
      * the request producer index.
      */
-    PDQ_OS_CMDRQST_PRESYNC(pdq, txd->txd_seg_len);
+    PDQ_OS_CMDRQST_PRESYNC(pdq, cmdlen);
     PDQ_OS_DESC_PRESYNC(pdq, txd, sizeof(pdq_txdesc_t));
     PDQ_ADVANCE(ci->ci_request_producer, 1, PDQ_RING_MASK(dbp->pdqdb_command_requests));
 
@@ -604,6 +626,8 @@ pdq_process_command_responses(
     volatile const pdq_consumer_block_t * const cbp = pdq->pdq_cbp;
     pdq_descriptor_block_t * const dbp = pdq->pdq_dbp;
     const pdq_response_generic_t *rspgen;
+    pdq_cmd_code_t op;
+    pdq_response_code_t status;
 
     /*
      * We have to process the command and response in tandem so
@@ -611,25 +635,28 @@ pdq_process_command_responses(
      * consumed then the command must have been as well.
      */
 
-    if (cbp->pdqcb_command_response == ci->ci_response_completion)
+    if (le32toh(cbp->pdqcb_command_response) == ci->ci_response_completion)
 	return;
 
-    PDQ_ASSERT(cbp->pdqcb_command_request != ci->ci_request_completion);
+    PDQ_ASSERT(le32toh(cbp->pdqcb_command_request) != ci->ci_request_completion);
 
     PDQ_OS_CMDRSP_POSTSYNC(pdq, PDQ_SIZE_COMMAND_RESPONSE);
     rspgen = (const pdq_response_generic_t *) ci->ci_response_bufstart;
-    PDQ_ASSERT(rspgen->generic_op == ci->ci_queued_commands[ci->ci_request_completion]);
-    PDQ_ASSERT(rspgen->generic_status == PDQR_SUCCESS);
+    op = le32toh(rspgen->generic_op);
+    status = le32toh(rspgen->generic_status);
+    PDQ_ASSERT(op == ci->ci_queued_commands[ci->ci_request_completion]);
+    PDQ_ASSERT(status == PDQR_SUCCESS);
     PDQ_PRINTF(("PDQ Process Command Response: %s completed (status=%d [0x%x])\n",
-		pdq_cmd_info[rspgen->generic_op].cmd_name,
-		rspgen->generic_status, rspgen->generic_status));
+		pdq_cmd_info[op].cmd_name,
+		htole32(status),
+		htole32(status)));
 
-    if (rspgen->generic_op == PDQC_STATUS_CHARS_GET && (pdq->pdq_flags & PDQ_PRINTCHARS)) {
+    if (op == PDQC_STATUS_CHARS_GET && (pdq->pdq_flags & PDQ_PRINTCHARS)) {
 	pdq->pdq_flags &= ~PDQ_PRINTCHARS;
 	pdq_print_fddi_chars(pdq, (const pdq_response_status_chars_get_t *) rspgen);
-    } else if (rspgen->generic_op == PDQC_DEC_EXT_MIB_GET) {
+    } else if (op == PDQC_DEC_EXT_MIB_GET) {
 	pdq->pdq_flags &= ~PDQ_IS_FDX;
-	if (((const pdq_response_dec_ext_mib_get_t *)rspgen)->dec_ext_mib_get.fdx_operational)
+	if (le32toh(((const pdq_response_dec_ext_mib_get_t *)rspgen)->dec_ext_mib_get.fdx_operational))
 	    pdq->pdq_flags |= PDQ_IS_FDX;
     }
 
@@ -666,25 +693,29 @@ pdq_process_unsolicited_events(
      * Process each unsolicited event (if any).
      */
 
-    while (cbp->pdqcb_unsolicited_event != ui->ui_completion) {
+    while (le32toh(cbp->pdqcb_unsolicited_event) != ui->ui_completion) {
 	const pdq_unsolicited_event_t *event;
+	pdq_entity_t entity;
+	uint32_t value;
 	event = &ui->ui_events[ui->ui_completion & (PDQ_NUM_UNSOLICITED_EVENTS-1)];
 	PDQ_OS_UNSOL_EVENT_POSTSYNC(pdq, event);
 
 	switch (event->event_type) {
 	    case PDQ_UNSOLICITED_EVENT: {
 		int bad_event = 0;
-		switch (event->event_entity) {
+		entity = le32toh(event->event_entity);
+		value = le32toh(event->event_code.value);
+		switch (entity) {
 		    case PDQ_ENTITY_STATION: {
-			bad_event = event->event_code.value >= PDQ_STATION_EVENT_MAX;
+			bad_event = value >= PDQ_STATION_EVENT_MAX;
 			break;
 		    }
 		    case PDQ_ENTITY_LINK: {
-			bad_event = event->event_code.value >= PDQ_LINK_EVENT_MAX;
+			bad_event = value >= PDQ_LINK_EVENT_MAX;
 			break;
 		    }
 		    case PDQ_ENTITY_PHY_PORT: {
-			bad_event = event->event_code.value >= PDQ_PHY_EVENT_MAX;
+			bad_event = value >= PDQ_PHY_EVENT_MAX;
 			break;
 		    }
 		    default: {
@@ -697,10 +728,10 @@ pdq_process_unsolicited_events(
 		}
 		printf(PDQ_OS_PREFIX "Unsolicited Event: %s: %s",
 		       PDQ_OS_PREFIX_ARGS,
-		       pdq_entities[event->event_entity],
-		       pdq_event_codes[event->event_entity][event->event_code.value]);
+		       pdq_entities[entity],
+		       pdq_event_codes[entity][value]);
 		if (event->event_entity == PDQ_ENTITY_PHY_PORT)
-		    printf("[%d]", event->event_index);
+		    printf("[%d]", le32toh(event->event_index));
 		printf("\n");
 		break;
 	    }
@@ -741,15 +772,15 @@ pdq_process_received_data(
 	PDQ_OS_DATABUF_T *fpdu, *lpdu, *npdu;
 	pdq_uint8_t *dataptr;
 	pdq_uint32_t fc, datalen, pdulen, segcnt;
-	pdq_rxstatus_t status;
+	pdq_uint32_t status;
 
 	fpdu = lpdu = buffers[completion];
 	PDQ_ASSERT(fpdu != NULL);
 	PDQ_OS_RXPDU_POSTSYNC(pdq, fpdu, 0, sizeof(u_int32_t));
 	dataptr = PDQ_OS_DATABUF_PTR(fpdu);
-	status = *(pdq_rxstatus_t *) dataptr;
-	if (status.rxs_rcc_badpdu == 0) {
-	    datalen = status.rxs_len;
+	status = le32toh(*(pdq_uint32_t *) dataptr);
+	if (PDQ_RXS_RCC_BADPDU(status) == 0) {
+	    datalen = PDQ_RXS_LEN(status);
 	    PDQ_OS_RXPDU_POSTSYNC(pdq, fpdu, sizeof(u_int32_t),
 				  PDQ_RX_FC_OFFSET + 1 - sizeof(u_int32_t));
 	    fc = dataptr[PDQ_RX_FC_OFFSET];
@@ -813,20 +844,21 @@ pdq_process_received_data(
 	     * Do not pass to protocol if packet was received promiscuously
 	     */
 	    pdq_os_receive_pdu(pdq, fpdu, pdulen,
-			       status.rxs_rcc_dd < PDQ_RXS_RCC_DD_CAM_MATCH);
+			       PDQ_RXS_RCC_DD(status) < PDQ_RXS_RCC_DD_CAM_MATCH);
 	    rx->rx_free += PDQ_RX_SEGCNT;
 	    PDQ_ADVANCE(producer, PDQ_RX_SEGCNT, ring_mask);
 	    PDQ_ADVANCE(completion, PDQ_RX_SEGCNT, ring_mask);
 	    continue;
 	} else {
 	    PDQ_PRINTF(("discard: bad pdu 0x%x(%d.%d.%d.%d.%d)\n", status.rxs_status,
-			status.rxs_rcc_badpdu, status.rxs_rcc_badcrc,
-			status.rxs_rcc_reason, status.rxs_fsc, status.rxs_fsb_e));
-	    if (status.rxs_rcc_reason == 7)
+			PDQ_RXS_RCC_BADPDU(status), PDQ_RXS_RCC_BADCRC(status),
+			PDQ_RXS_RCC_REASON(status), PDQ_RXS_FSC(status),
+			PDQ_RXS_FSB_E(status)));
+	    if (PDQ_RXS_RCC_REASON(status) == 7)
 		goto discard_frame;
-	    if (status.rxs_rcc_reason != 0) {
+	    if (PDQ_RXS_RCC_REASON(status) != 0) {
 		/* hardware fault */
-		if (status.rxs_rcc_badcrc) {
+		if (PDQ_RXS_RCC_BADCRC(status)) {
 		    printf(PDQ_OS_PREFIX " MAC CRC error (source=%x-%x-%x-%x-%x-%x)\n",
 			   PDQ_OS_PREFIX_ARGS,
 			   dataptr[PDQ_RX_FC_OFFSET+1],
@@ -836,7 +868,7 @@ pdq_process_received_data(
 			   dataptr[PDQ_RX_FC_OFFSET+5],
 			   dataptr[PDQ_RX_FC_OFFSET+6]);
 		    /* rx->rx_badcrc++; */
-		} else if (status.rxs_fsc == 0 || status.rxs_fsb_e == 1) {
+		} else if (PDQ_RXS_FSC(status) == 0 || PDQ_RXS_FSB_E(status) == 1) {
 		    /* rx->rx_frame_status_errors++; */
 		} else {
 		    /* hardware fault */
@@ -853,13 +885,15 @@ pdq_process_received_data(
 	    buffers[completion] = NULL;
 	    rxd = &receives[rx->rx_producer];
 	    if (idx == 0) {
-		rxd->rxd_sop = 1; rxd->rxd_seg_cnt = PDQ_RX_SEGCNT - 1;
+		rxd->rxd_pa_hi = htole32(
+		    PDQ_RXDESC_SOP |
+		    PDQ_RXDESC_SEG_CNT(PDQ_RX_SEGCNT - 1) |
+		    PDQ_RXDESC_SEG_LEN(PDQ_OS_DATABUF_SIZE));
 	    } else {
-		rxd->rxd_sop = 0; rxd->rxd_seg_cnt = 0;
+		rxd->rxd_pa_hi =
+		    htole32(PDQ_RXDESC_SEG_LEN(PDQ_OS_DATABUF_SIZE));
 	    }
-	    rxd->rxd_pa_hi = 0;
-	    rxd->rxd_seg_len_hi = PDQ_OS_DATABUF_SIZE / 16;
-	    rxd->rxd_pa_lo = PDQ_OS_DATABUF_BUSPA(pdq, buffers[rx->rx_producer]);
+	    rxd->rxd_pa_lo = htole32(PDQ_OS_DATABUF_BUSPA(pdq, buffers[rx->rx_producer]));
 	    PDQ_OS_RXPDU_PRESYNC(pdq, buffers[rx->rx_producer], 0, PDQ_OS_DATABUF_SIZE);
 	    PDQ_OS_DESC_PRESYNC(pdq, rxd, sizeof(*rxd));
 	    PDQ_ADVANCE(rx->rx_producer, 1, ring_mask);	
@@ -885,13 +919,15 @@ pdq_process_received_data(
 	    }
 	    rxd = &receives[(rx->rx_producer + idx) & ring_mask];
 	    if (idx == 0) {
-		rxd->rxd_sop = 1; rxd->rxd_seg_cnt = PDQ_RX_SEGCNT - 1;
+		rxd->rxd_pa_hi = htole32(
+		    PDQ_RXDESC_SOP|
+		    PDQ_RXDESC_SEG_CNT(PDQ_RX_SEGCNT - 1)|
+		    PDQ_RXDESC_SEG_LEN(PDQ_OS_DATABUF_SIZE));
 	    } else {
-		rxd->rxd_sop = 0; rxd->rxd_seg_cnt = 0;
+		rxd->rxd_pa_hi =
+		    htole32(PDQ_RXDESC_SEG_LEN(PDQ_OS_DATABUF_SIZE));
 	    }
-	    rxd->rxd_pa_hi = 0;
-	    rxd->rxd_seg_len_hi = PDQ_OS_DATABUF_SIZE / 16;
-	    rxd->rxd_pa_lo = PDQ_OS_DATABUF_BUSPA(pdq, pdu);
+	    rxd->rxd_pa_lo = htole32(PDQ_OS_DATABUF_BUSPA(pdq, pdu));
 	    PDQ_OS_RXPDU_PRESYNC(pdq, pdu, 0, PDQ_OS_DATABUF_SIZE);
 	    PDQ_OS_DESC_PRESYNC(pdq, rxd, sizeof(*rxd));
 	}
@@ -955,9 +991,9 @@ pdq_queue_transmit_data(
 	     * Initialize the transmit descriptor
 	     */
 	    eop = &dbp->pdqdb_transmits[producer];
-	    eop->txd_seg_len = map->dm_segs[idx].ds_len;
-	    eop->txd_pa_lo = map->dm_segs[idx].ds_addr;
-	    eop->txd_sop = eop->txd_eop = eop->txd_pa_hi = 0;
+	    eop->txd_pa_hi =
+		htole32(PDQ_TXDESC_SEG_LEN(map->dm_segs[idx].ds_len));
+	    eop->txd_pa_lo = htole32(map->dm_segs[idx].ds_addr);
 	    PDQ_OS_DESC_PRESYNC(pdq, eop, sizeof(pdq_txdesc_t));
 	    freecnt--;
 	    PDQ_ADVANCE(producer, 1, PDQ_RING_MASK(dbp->pdqdb_transmits));
@@ -984,9 +1020,8 @@ pdq_queue_transmit_data(
 	     * Initialize the transmit descriptor
 	     */
 	    eop = &dbp->pdqdb_transmits[producer];
-	    eop->txd_seg_len = seglen;
-	    eop->txd_pa_lo = PDQ_OS_VA_TO_BUSPA(pdq, dataptr);
-	    eop->txd_sop = eop->txd_eop = eop->txd_pa_hi = 0;
+	    eop->txd_pa_hi = htole32(PDQ_TXDESC_SEG_LEN(seglen));
+	    eop->txd_pa_lo = htole32(PDQ_OS_VA_TO_BUSPA(pdq, dataptr));
 	    PDQ_OS_DESC_PRESYNC(pdq, eop, sizeof(pdq_txdesc_t));
 	    datalen -= seglen;
 	    dataptr += seglen;
@@ -1021,11 +1056,12 @@ pdq_queue_transmit_data(
      */
     tx->tx_descriptor_count[tx->tx_producer] = tx->tx_free - freecnt;
     if (PDQ_RX_FC_OFFSET != PDQ_OS_HDR_OFFSET) {
-	dbp->pdqdb_transmits[tx->tx_producer].txd_sop = 1;
+	dbp->pdqdb_transmits[tx->tx_producer].txd_pa_hi |=
+	    htole32(PDQ_TXDESC_SOP);
 	PDQ_OS_DESC_PRESYNC(pdq, &dbp->pdqdb_transmits[tx->tx_producer],
 	    sizeof(pdq_txdesc_t));
     }
-    eop->txd_eop = 1;
+    eop->txd_pa_hi |= htole32(PDQ_TXDESC_EOP);
     PDQ_OS_DESC_PRESYNC(pdq, eop, sizeof(pdq_txdesc_t));
     PDQ_OS_DATABUF_ENQUEUE(&tx->tx_txq, pdu);
     tx->tx_producer = producer;
@@ -1044,7 +1080,7 @@ pdq_process_transmitted_data(
     pdq_uint32_t completion = tx->tx_completion;
     int reclaimed = 0;
 
-    while (completion != cbp->pdqcb_transmits) {
+    while (completion != le16toh(cbp->pdqcb_transmits)) {
 	PDQ_OS_DATABUF_T *pdu;
 	pdq_uint32_t descriptor_count = tx->tx_descriptor_count[completion];
 	PDQ_ASSERT(dbp->pdqdb_transmits[completion].txd_sop == 1);
@@ -1085,7 +1121,8 @@ pdq_flush_transmitter(
     }
 
     tx->tx_free = PDQ_RING_MASK(pdq->pdq_dbp->pdqdb_transmits);
-    cbp->pdqcb_transmits = tx->tx_completion = tx->tx_producer;
+    tx->tx_completion = tx->tx_producer;
+    cbp->pdqcb_transmits = htole16(tx->tx_completion);
     PDQ_OS_CONSUMER_PRESYNC(pdq);
 
     PDQ_DO_TYPE2_PRODUCER(pdq);
@@ -1278,11 +1315,7 @@ pdq_stop(
     pdq_do_port_control(csrs, PDQ_PCTL_CONSUMER_BLOCK);
 
     PDQ_CSR_WRITE(csrs, csr_port_data_b, 0);
-#if !defined(BYTE_ORDER) || BYTE_ORDER == LITTLE_ENDIAN
     PDQ_CSR_WRITE(csrs, csr_port_data_a, pdq->pdq_pa_descriptor_block | PDQ_DMA_INIT_LW_BSWAP_DATA);
-#else
-    PDQ_CSR_WRITE(csrs, csr_port_data_a, pdq->pdq_pa_descriptor_block | PDQ_DMA_INIT_LW_BSWAP_DATA | PDQ_DMA_INIT_LW_BSWAP_LITERAL);
-#endif
     pdq_do_port_control(csrs, PDQ_PCTL_DMA_INIT);
 
     for (cnt = 0; cnt < 1000; cnt++) {
@@ -1365,13 +1398,13 @@ pdq_run(
 	    pdq_process_unsolicited_events(pdq);
 	    pdq_process_received_data(pdq, &pdq->pdq_rx_info,
 				      pdq->pdq_dbp->pdqdb_receives,
-				      pdq->pdq_cbp->pdqcb_receives,
+				      le16toh(pdq->pdq_cbp->pdqcb_receives),
 				      PDQ_RING_MASK(pdq->pdq_dbp->pdqdb_receives));
 	    PDQ_DO_TYPE2_PRODUCER(pdq);
 	    if (pdq->pdq_flags & PDQ_PASS_SMT) {
 		pdq_process_received_data(pdq, &pdq->pdq_host_smt_info,
 					  pdq->pdq_dbp->pdqdb_host_smt,
-					  pdq->pdq_cbp->pdqcb_host_smt,
+					  le32toh(pdq->pdq_cbp->pdqcb_host_smt),
 					  PDQ_RING_MASK(pdq->pdq_dbp->pdqdb_host_smt));
 		PDQ_CSR_WRITE(csrs, csr_host_smt_producer,
 			      pdq->pdq_host_smt_info.rx_producer
@@ -1396,7 +1429,7 @@ pdq_run(
 	    if (pdq->pdq_flags & PDQ_PASS_SMT) {
 		pdq_process_received_data(pdq, &pdq->pdq_host_smt_info,
 					  pdq->pdq_dbp->pdqdb_host_smt,
-					  pdq->pdq_cbp->pdqcb_host_smt,
+					  le32toh(pdq->pdq_cbp->pdqcb_host_smt),
 					  PDQ_RING_MASK(pdq->pdq_dbp->pdqdb_host_smt));
 		PDQ_CSR_WRITE(csrs, csr_host_smt_producer,
 			      pdq->pdq_host_smt_info.rx_producer
@@ -1432,14 +1465,14 @@ pdq_interrupt(
 	if (data & PDQ_PSTS_RCV_DATA_PENDING) {
 	    pdq_process_received_data(pdq, &pdq->pdq_rx_info,
 				      pdq->pdq_dbp->pdqdb_receives,
-				      pdq->pdq_cbp->pdqcb_receives,
+				      le16toh(pdq->pdq_cbp->pdqcb_receives),
 				      PDQ_RING_MASK(pdq->pdq_dbp->pdqdb_receives));
 	    PDQ_DO_TYPE2_PRODUCER(pdq);
 	}
 	if (data & PDQ_PSTS_HOST_SMT_PENDING) {
 	    pdq_process_received_data(pdq, &pdq->pdq_host_smt_info,
 				      pdq->pdq_dbp->pdqdb_host_smt,
-				      pdq->pdq_cbp->pdqcb_host_smt,
+				      le32toh(pdq->pdq_cbp->pdqcb_host_smt),
 				      PDQ_RING_MASK(pdq->pdq_dbp->pdqdb_host_smt));
 	    PDQ_DO_HOST_SMT_PRODUCER(pdq);
 	}
@@ -1693,9 +1726,8 @@ pdq_initialize(
     for (idx = 0; idx < sizeof(dbp->pdqdb_command_requests)/sizeof(dbp->pdqdb_command_requests[0]); idx++) {
 	pdq_txdesc_t *txd = &dbp->pdqdb_command_requests[idx];
 
-	txd->txd_pa_lo = pdq->pdq_command_info.ci_pa_request_bufstart;
-	txd->txd_eop = txd->txd_sop = 1;
-	txd->txd_pa_hi = 0;
+	txd->txd_pa_lo = htole32(pdq->pdq_command_info.ci_pa_request_bufstart);
+	txd->txd_pa_hi = htole32(PDQ_TXDESC_SOP | PDQ_TXDESC_EOP);
     }
     PDQ_OS_DESC_PRESYNC(pdq, dbp->pdqdb_command_requests,
 			sizeof(dbp->pdqdb_command_requests));
@@ -1709,11 +1741,9 @@ pdq_initialize(
     for (idx = 0; idx < sizeof(dbp->pdqdb_command_responses)/sizeof(dbp->pdqdb_command_responses[0]); idx++) {
 	pdq_rxdesc_t *rxd = &dbp->pdqdb_command_responses[idx];
 
-	rxd->rxd_pa_lo = pdq->pdq_command_info.ci_pa_response_bufstart;
-	rxd->rxd_sop = 1;
-	rxd->rxd_seg_cnt = 0;
-	rxd->rxd_seg_len_lo = 0;
-	rxd->rxd_seg_len_hi = PDQ_SIZE_COMMAND_RESPONSE / 16;
+	rxd->rxd_pa_hi = htole32(PDQ_RXDESC_SOP |
+	    PDQ_RXDESC_SEG_LEN(PDQ_SIZE_COMMAND_RESPONSE));
+	rxd->rxd_pa_lo = htole32(pdq->pdq_command_info.ci_pa_response_bufstart);
     }
     PDQ_OS_DESC_PRESYNC(pdq, dbp->pdqdb_command_responses,
 			sizeof(dbp->pdqdb_command_responses));
@@ -1730,12 +1760,10 @@ pdq_initialize(
 	pdq_rxdesc_t *rxd = &dbp->pdqdb_unsolicited_events[idx];
 	pdq_unsolicited_event_t *event = &pdq->pdq_unsolicited_info.ui_events[idx & (PDQ_NUM_UNSOLICITED_EVENTS-1)];
 
-	rxd->rxd_sop = 1;
-	rxd->rxd_seg_cnt = 0;
-	rxd->rxd_seg_len_hi = sizeof(pdq_unsolicited_event_t) / 16;
-	rxd->rxd_pa_lo = pdq->pdq_unsolicited_info.ui_pa_bufstart + (const pdq_uint8_t *) event
-	    - (const pdq_uint8_t *) pdq->pdq_unsolicited_info.ui_events;
-	rxd->rxd_pa_hi = 0;
+	rxd->rxd_pa_hi = htole32(PDQ_RXDESC_SOP |
+		PDQ_RXDESC_SEG_LEN(sizeof(pdq_unsolicited_event_t)));
+	rxd->rxd_pa_lo = htole32(pdq->pdq_unsolicited_info.ui_pa_bufstart + (const pdq_uint8_t *) event
+	    - (const pdq_uint8_t *) pdq->pdq_unsolicited_info.ui_events);
 	PDQ_OS_UNSOL_EVENT_PRESYNC(pdq, event);
     }
     PDQ_OS_DESC_PRESYNC(pdq, dbp->pdqdb_unsolicited_events,
@@ -1761,9 +1789,8 @@ pdq_initialize(
     dbp->pdqdb_tx_hdr[1] = PDQ_FDDI_PH1;
     dbp->pdqdb_tx_hdr[2] = PDQ_FDDI_PH2;
     pdq->pdq_tx_info.tx_free = PDQ_RING_MASK(dbp->pdqdb_transmits);
-    pdq->pdq_tx_info.tx_hdrdesc.txd_seg_len = 3;
-    pdq->pdq_tx_info.tx_hdrdesc.txd_sop = 1;
-    pdq->pdq_tx_info.tx_hdrdesc.txd_pa_lo = PDQ_DB_BUSPA(pdq, dbp->pdqdb_tx_hdr);
+    pdq->pdq_tx_info.tx_hdrdesc.txd_pa_hi = htole32(PDQ_TXDESC_SOP|PDQ_TXDESC_SEG_LEN(3));
+    pdq->pdq_tx_info.tx_hdrdesc.txd_pa_lo = htole32(PDQ_DB_BUSPA(pdq, dbp->pdqdb_tx_hdr));
     pdq->pdq_tx_info.tx_pa_descriptors = PDQ_DB_BUSPA(pdq, dbp->pdqdb_transmits);
 
     state = PDQ_PSTS_ADAPTER_STATE(PDQ_CSR_READ(&pdq->pdq_csrs, csr_port_status));
