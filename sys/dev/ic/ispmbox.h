@@ -1,18 +1,17 @@
-/* $NetBSD: ispmbox.h,v 1.23.4.1 2000/08/28 17:45:11 mjacob Exp $ */
+/* $NetBSD: ispmbox.h,v 1.23.4.2 2001/03/16 19:15:57 he Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
  *	sys/dev/ic/isp.c
- *	sys/dev/ic/ic/isp.c
- *	sys/dev/ic/ic/isp_inline.h
- *	sys/dev/ic/ic/isp_netbsd.c
- *	sys/dev/ic/ic/isp_netbsd.h
- *	sys/dev/ic/ic/isp_target.c
- *	sys/dev/ic/ic/isp_target.h
- *	sys/dev/ic/ic/isp_tpublic.h
- *	sys/dev/ic/ic/ispmbox.h
- *	sys/dev/ic/ic/ispreg.h
- *	sys/dev/ic/ic/ispvar.h
+ *	sys/dev/ic/isp_inline.h
+ *	sys/dev/ic/isp_netbsd.c
+ *	sys/dev/ic/isp_netbsd.h
+ *	sys/dev/ic/isp_target.c
+ *	sys/dev/ic/isp_target.h
+ *	sys/dev/ic/isp_tpublic.h
+ *	sys/dev/ic/ispmbox.h
+ *	sys/dev/ic/ispreg.h
+ *	sys/dev/ic/ispvar.h
  *	sys/microcode/isp/asm_sbus.h
  *	sys/microcode/isp/asm_1040.h
  *	sys/microcode/isp/asm_1080.h
@@ -405,7 +404,7 @@ typedef struct {
 } ispstatusreq_t;
 
 /* 
- * For Qlogic 2100, the high order byte of SCSI status has
+ * For Qlogic 2X00, the high order byte of SCSI status has
  * additional meaning.
  */
 #define	RQCS_RU	0x800	/* Residual Under */
@@ -469,6 +468,15 @@ typedef struct {
 #define RQSF_GOT_SENSE			0x2000
 #define	RQSF_XFER_COMPLETE		0x4000
 
+/*
+ * 2X00 specific State Flags
+ * (same as 1X00 except RQSF_GOT_BUS/RQSF_GOT_TARGET are not available)
+ */
+#define	RQSF_DATA_IN			0x0020
+#define	RQSF_DATA_OUT			0x0040
+#define	RQSF_STAG			0x0008
+#define	RQSF_OTAG			0x0004
+#define	RQSF_HTAG			0x0002
 /*
  * 1X00 Status Flags
  */
@@ -560,7 +568,7 @@ typedef struct isp_icb {
 #define	ICBOPT_PREVLOOP		0x0800
 #define	ICBOPT_STOP_ON_QFULL	0x1000
 #define	ICBOPT_FULL_LOGIN	0x2000
-#define	ICBOPT_USE_PORTNAME	0x4000
+#define	ICBOPT_BOTH_WWNS	0x4000
 #define	ICBOPT_EXTENDED		0x8000
 
 #define	ICBXOPT_CLASS2_ACK0	0x0200
@@ -611,6 +619,22 @@ typedef struct isp_icb {
 	array[ICB_NNM5] = (u_int8_t) ((wwn >> 40) & 0xff), \
 	array[ICB_NNM6] = (u_int8_t) ((wwn >> 48) & 0xff), \
 	array[ICB_NNM7] = (u_int8_t) ((wwn >> 56) & 0xff)
+
+/*
+ * FC-AL Position Map
+ *
+ * This is an at most 128 byte map that returns either
+ * the LILP or Firmware generated list of ports.
+ *
+ * We deviate a bit from the returned qlogic format to
+ * use an extra bit to say whether this was a LILP or
+ * f/w generated map.
+ */
+typedef struct {
+	u_int8_t	fwmap	: 1,
+			count	: 7;
+	u_int8_t	map[127];
+} fcpos_map_t;
 
 /*
  * Port Data Base Element
@@ -683,6 +707,7 @@ typedef struct {
 
 #define	SNS_GAN	0x100
 #define	SNS_GP3	0x171
+#define	SNS_RFT	0x217
 typedef struct {
 	u_int16_t	snscb_rblen;	/* response buffer length (words) */
 	u_int16_t	snscb_res0;
@@ -693,6 +718,7 @@ typedef struct {
 } sns_screq_t;	/* Subcommand Request Structure */
 #define	SNS_GAN_REQ_SIZE	(sizeof (sns_screq_t)+(5*(sizeof (u_int16_t))))
 #define	SNS_GP3_REQ_SIZE	(sizeof (sns_screq_t)+(5*(sizeof (u_int16_t))))
+#define	SNS_RFT_REQ_SIZE	(sizeof (sns_screq_t)+(21*(sizeof (u_int16_t))))
 
 typedef struct {
 	u_int8_t	snscb_cthdr[16];
@@ -703,6 +729,7 @@ typedef struct {
 } sns_scrsp_t;	/* Subcommand Response Structure */
 #define	SNS_GAN_RESP_SIZE	608	/* Maximum response size (bytes) */
 #define	SNS_GP3_RESP_SIZE	532	/* XXX: For 128 ports */
+#define	SNS_RFT_RESP_SIZE	16
 
 typedef struct {
 	u_int8_t	snscb_cthdr[16];
