@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.16 2000/06/11 14:31:11 mycroft Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.17 2000/09/08 17:20:47 matt Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunchgen.c,v 1.16 2000/06/11 14:31:11 mycroft Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.17 2000/09/08 17:20:47 matt Exp $");
 #endif
 
 #include <stdlib.h>
@@ -95,6 +95,7 @@ char *pname = "crunchgen";
 int verbose, readcache;	/* options */
 int reading_cache;
 char *machine;
+char *makeobjdirprefix;
 
 /* general library routines */
 
@@ -125,6 +126,7 @@ int main(int argc, char **argv)
 	}
 	machine = utsname.machine;
     }
+    makeobjdirprefix = getenv("MAKEOBJDIRPREFIX");
     verbose = 1;
     readcache = 1;
     *outmkname = *outcfname = *execfname = '\0';
@@ -514,15 +516,23 @@ void fillin_program(prog_t *p)
 	}
     }
     if(!p->objdir && p->srcdir) {
-	(void)snprintf(path, sizeof(path), "%s/obj.%s", p->srcdir, machine);
-	if(is_dir(path))
-	    p->objdir = strdup(path);
-	else {
+	if (makeobjdirprefix) {
+	    (void)snprintf(path, sizeof(path), "%s/%s", makeobjdirprefix, p->srcdir);
+	    if (is_dir(path))
+		p->objdir = strdup(path);
+	}
+	if (!p->objdir) {
+	    (void)snprintf(path, sizeof(path), "%s/obj.%s", p->srcdir, machine);
+	    if (is_dir(path))
+		p->objdir = strdup(path);
+	}
+	if (!p->objdir) {
 	    (void)snprintf(path, sizeof(path), "%s/obj", p->srcdir);
 	    if(is_dir(path))
 		p->objdir = strdup(path);
-	    else
-	        p->objdir = p->srcdir;
+	}
+	if (!p->objdir) {
+	    p->objdir = p->srcdir;
         }
     }
 
