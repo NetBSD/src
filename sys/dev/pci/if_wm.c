@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.63 2003/11/22 08:32:12 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.64 2003/12/04 06:57:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.63 2003/11/22 08:32:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.64 2003/12/04 06:57:37 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -115,10 +115,11 @@ int	wm_debug = WM_DEBUG_TX|WM_DEBUG_RX|WM_DEBUG_LINK;
  * Transmit descriptor list size.  Due to errata, we can only have
  * 256 hardware descriptors in the ring.  We tell the upper layers
  * that they can queue a lot of packets, and we go ahead and manage
- * up to 64 of them at a time.  We allow up to 16 DMA segments per
- * packet.
+ * up to 64 of them at a time.  We allow up to 40 DMA segments per
+ * packet (there have been reports of jumbo frame packets with as
+ * many as 30 DMA segments!).
  */
-#define	WM_NTXSEGS		16
+#define	WM_NTXSEGS		40
 #define	WM_IFQUEUELEN		256
 #define	WM_TXQUEUELEN		64
 #define	WM_TXQUEUELEN_MASK	(WM_TXQUEUELEN - 1)
@@ -591,7 +592,7 @@ const struct wm_product {
 };
 
 #ifdef WM_EVENT_COUNTERS
-#if WM_NTXSEGS != 16
+#if WM_NTXSEGS != 40
 #error Update wm_txseg_evcnt_names
 #endif
 static const char *wm_txseg_evcnt_names[WM_NTXSEGS] = {
@@ -611,6 +612,29 @@ static const char *wm_txseg_evcnt_names[WM_NTXSEGS] = {
 	"txseg14",
 	"txseg15",
 	"txseg16",
+	"txseg17",
+	"txseg18",
+	"txseg19",
+	"txseg21",
+	"txseg22",
+	"txseg23",
+	"txseg24",
+	"txseg25",
+	"txseg26",
+	"txseg27",
+	"txseg28",
+	"txseg29",
+	"txseg30",
+	"txseg31",
+	"txseg32",
+	"txseg33",
+	"txseg34",
+	"txseg35",
+	"txseg36",
+	"txseg37",
+	"txseg38",
+	"txseg39",
+	"txseg40",
 };
 #endif /* WM_EVENT_COUNTERS */
 
