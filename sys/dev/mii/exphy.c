@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.20 2000/02/02 08:05:32 thorpej Exp $	*/
+/*	$NetBSD: exphy.c,v 1.21 2000/02/02 17:09:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -134,6 +134,7 @@ exphyattach(parent, self, aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_service = exphy_service;
 	sc->mii_pdata = mii;
+	sc->mii_flags = mii->mii_flags;
 
 	/*
 	 * The 3Com PHY can never be isolated, so never allow non-zero

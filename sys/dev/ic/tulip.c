@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.43 2000/02/02 08:05:27 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.44 2000/02/02 17:09:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -4311,7 +4311,7 @@ tlp_2114x_isv_tmsw_init(sc)
 			 * search the whole thing anyhow.
 			 */
 			mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff,
-			    MII_PHY_ANY, tm->tm_phyno);
+			    MII_PHY_ANY, tm->tm_phyno, 0);
 
 			/*
 			 * Now, search for the PHY we hopefully just
@@ -4471,7 +4471,7 @@ tlp_2114x_isv_tmsw_init(sc)
 			 * search the whole thing anyhow.
 			 */
 			mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff,
-			    MII_PHY_ANY, tm->tm_phyno);
+			    MII_PHY_ANY, tm->tm_phyno, 0);
 
 			/*
 			 * Now, search for the PHY we hopefully just
@@ -4688,7 +4688,7 @@ tlp_sio_mii_tmsw_init(sc)
 	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
 	    tlp_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY);
+	    MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
@@ -4736,7 +4736,7 @@ tlp_pnic_tmsw_init(sc)
 	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
 	    tlp_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY);
+	    MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		/* XXX What about AUI/BNC support? */
 		printf("%s: ", sc->sc_dev.dv_xname);
@@ -5148,7 +5148,7 @@ tlp_pmac_tmsw_init(sc)
 	if (sc->sc_chip == TULIP_CHIP_MX98713 ||
 	    sc->sc_chip == TULIP_CHIP_MX98713A) {
 		mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff,
-		    MII_PHY_ANY, MII_OFFSET_ANY);
+		    MII_PHY_ANY, MII_OFFSET_ANY, 0);
 		if (LIST_FIRST(&sc->sc_mii.mii_phys) != NULL) {
 			sc->sc_flags |= TULIPF_HAS_MII;
 			sc->sc_tick = tlp_mii_tick;
@@ -5216,7 +5216,7 @@ tlp_al981_tmsw_init(sc)
 	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
 	    tlp_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY);
+	    MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);

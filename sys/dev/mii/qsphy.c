@@ -1,4 +1,4 @@
-/*	$NetBSD: qsphy.c,v 1.16 2000/02/02 08:05:33 thorpej Exp $	*/
+/*	$NetBSD: qsphy.c,v 1.17 2000/02/02 17:09:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -130,6 +130,7 @@ qsphyattach(parent, self, aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_service = qsphy_service;
 	sc->mii_pdata = mii;
+	sc->mii_flags = mii->mii_flags;
 
 	qsphy_reset(sc);
 

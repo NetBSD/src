@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.19 2000/02/02 13:19:44 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.20 2000/02/02 17:09:42 thorpej Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -852,7 +852,7 @@ USB_ATTACH(aue)
 	mii->mii_writereg = aue_miibus_writereg;
 	mii->mii_statchg = aue_miibus_statchg;
 	ifmedia_init(&mii->mii_media, 0, aue_ifmedia_upd, aue_ifmedia_sts);
-	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY);
+	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
 		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.18 2000/02/02 08:05:33 thorpej Exp $	*/
+/*	$NetBSD: mii.c,v 1.19 2000/02/02 17:09:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -62,10 +62,10 @@ int	mii_submatch __P((struct device *, struct cfdata *, void *));
  * to the network interface driver parent.
  */
 void
-mii_attach(parent, mii, capmask, phyloc, offloc)
+mii_attach(parent, mii, capmask, phyloc, offloc, flags)
 	struct device *parent;
 	struct mii_data *mii;
-	int capmask, phyloc, offloc;
+	int capmask, phyloc, offloc, flags;
 {
 	struct mii_attach_args ma;
 	struct mii_softc *child;
@@ -137,6 +137,7 @@ mii_attach(parent, mii, capmask, phyloc, offloc)
 
 		ma.mii_data = mii;
 		ma.mii_capmask = capmask;
+		ma.mii_flags = flags;
 
 		if ((child = (struct mii_softc *)config_found_sm(parent, &ma,
 		    mii_print, mii_submatch)) != NULL) {

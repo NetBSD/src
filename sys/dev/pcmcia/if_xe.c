@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp $	*/
-/*	$NetBSD: if_xe.c,v 1.3 2000/02/02 08:05:30 thorpej Exp $	*/
+/*	$NetBSD: if_xe.c,v 1.4 2000/02/02 17:09:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, C Stone, Job de Haas
@@ -446,7 +446,7 @@ xe_pcmcia_attach(parent, self, aux)
 	    ("bmsr %x\n", xe_mdi_read(&sc->sc_dev, 0, 1)));
 	mii_attach(self, &sc->sc_mii, 0xffffffff
 #ifdef __NetBSD__
-		      ,MII_PHY_ANY, MII_OFFSET_ANY
+		      ,MII_PHY_ANY, MII_OFFSET_ANY, 0
 #endif
 		      );
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL)

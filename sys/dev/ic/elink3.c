@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.72 2000/02/02 11:00:48 augustss Exp $	*/
+/*	$NetBSD: elink3.c,v 1.73 2000/02/02 17:09:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -483,7 +483,7 @@ epconfig(sc, chipset, enaddr)
 		 */
 		if (sc->ep_flags & ELINK_FLAGS_MII) {
 			mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff,
-			    MII_PHY_ANY, MII_OFFSET_ANY);
+			    MII_PHY_ANY, MII_OFFSET_ANY, 0);
 			if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 				ifmedia_add(&sc->sc_mii.mii_media,
 				    IFM_ETHER|IFM_NONE, 0, NULL);
