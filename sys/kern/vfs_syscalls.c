@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.148 1999/11/15 18:49:09 fvdl Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.149 2000/02/01 01:24:38 assar Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -985,7 +985,6 @@ sys_open(p, v, retval)
 	int type, indx, error;
 	struct flock lf;
 	struct nameidata nd;
-	extern struct fileops vnops;
 
 	flags = FFLAGS(SCARG(uap, flags));
 	if ((flags & (FREAD | FWRITE)) == 0)
@@ -1113,7 +1112,6 @@ sys_fhopen(p, v, retval)
 	struct flock lf;
 	struct vattr va;
 	fhandle_t fh;
-	extern struct fileops vnops;
 
 	/*
 	 * Must be super user
