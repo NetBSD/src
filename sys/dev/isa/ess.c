@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.18 1998/08/09 06:52:57 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.19 1998/08/10 15:32:18 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -59,20 +59,10 @@
 **
 **  MODIFICATION HISTORY:
 **
+**	Heavily modified by Lennart Augustsson and Charles M. Hannum for
+**	bus_dma, changes to audio interface, and many bug fixes.
 **--
 */
-
-/*
- * Modification by Lennart Augustsson:
- * Adapt for bus dma.
- * Change to 1.3 audio interface.
- * Major cleanup.
- */
-
-/*
- * TODO (falling priority):
- * - add looping DMA for input.
- */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,14 +116,14 @@ int	ess_drain __P((void *));
 int	ess_query_encoding __P((void *, struct audio_encoding *));
 
 int	ess_set_params __P((void *, int, int, struct audio_params *, 
-			    struct audio_params *));
+	    struct audio_params *));
 
 int	ess_round_blocksize __P((void *, int));
 
-int	ess_dma_init_output __P((void *, void *, int));
-int	ess_dma_output __P((void *, void *, int, void (*)(void *), void *));
-int	ess_dma_init_input __P((void *, void *, int));
-int	ess_dma_input __P((void *, void *, int, void (*)(void *), void *));
+int	ess_trigger_output __P((void *, void *, void *, int, void (*)(void *),
+	    void *, struct audio_params *));
+int	ess_trigger_input __P((void *, void *, void *, int, void (*)(void *),
+	    void *, struct audio_params *));
 int	ess_halt_output __P((void *));
 int	ess_halt_input __P((void *));
 
@@ -209,10 +199,10 @@ struct audio_hw_if ess_hw_if = {
 	ess_set_params,
 	ess_round_blocksize,
 	NULL,
-	ess_dma_init_output,
-	ess_dma_init_input,
-	ess_dma_output,
-	ess_dma_input,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 	ess_halt_output,
 	ess_halt_input,
 	ess_speaker_ctl,
@@ -226,6 +216,8 @@ struct audio_hw_if ess_hw_if = {
 	ess_round,
         ess_mappage,
 	ess_get_props,
+	ess_trigger_output,
+	ess_trigger_input,
 };
 
 #ifdef AUDIO_DEBUG
@@ -1046,6 +1038,7 @@ ess_set_params(addr, setmode, usemode, play, rec)
 	struct ess_softc *sc = addr;
 	struct audio_params *p;
 	int mode;
+	int rate;
 
 	DPRINTF(("ess_set_params: set=%d use=%d\n", setmode, usemode));
 
@@ -1056,18 +1049,18 @@ ess_set_params(addr, setmode, usemode, play, rec)
 	 * clock source selection.  However, we'll be conservative here.
 	 * - mycroft
 	 */
-	if (play->sample_rate != rec->sample_rate) {
-		if ((usemode | setmode) == AUMODE_PLAY) {
+	if (play->sample_rate != rec->sample_rate &&
+	    usemode == (AUMODE_PLAY | AUMODE_RECORD)) {
+		if (setmode == AUMODE_PLAY) {
 			rec->sample_rate = play->sample_rate;
 			setmode |= AUMODE_RECORD;
-		} else if ((usemode | setmode) == AUMODE_RECORD) {
+		} else if (setmode == AUMODE_RECORD) {
 			play->sample_rate = rec->sample_rate;
 			setmode |= AUMODE_PLAY;
 		} else
 			return (EINVAL);
 	}
 
-	/* Set first record info, then play info */
 	for (mode = AUMODE_RECORD; mode != -1; 
 	     mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
 		if ((setmode & mode) == 0)
@@ -1109,105 +1102,80 @@ ess_set_params(addr, setmode, usemode, play, rec)
 		default:
 			return (EINVAL);
 		}
-
-		switch (mode) {
-		case AUMODE_PLAY:
-			sc->sc_out.sample_rate = p->sample_rate;
-			sc->sc_out.channels = p->channels;
-			sc->sc_out.precision = p->precision * p->factor;
-			sc->sc_out.encoding = p->encoding;
-			break;
-		case AUMODE_RECORD:
-			sc->sc_in.sample_rate = p->sample_rate;
-			sc->sc_in.channels = p->channels;
-			sc->sc_in.precision = p->precision * p->factor;
-			sc->sc_in.encoding = p->encoding;
-			break;
-		}
 	}
 
-	sc->sc_in.active = 0;
-	sc->sc_out.active = 0;
+	if (usemode == AUMODE_RECORD)
+		rate = rec->sample_rate;
+	else
+		rate = play->sample_rate;
+
+	ess_write_mix_reg(sc, ESS_MREG_SAMPLE_RATE, ess_srtotc(rate));
+	ess_write_mix_reg(sc, ESS_MREG_FILTER_CLOCK, ess_srtofc(rate));
+
+	ess_write_x_reg(sc, ESS_XCMD_SAMPLE_RATE, ess_srtotc(rate));
+	ess_write_x_reg(sc, ESS_XCMD_FILTER_CLOCK, ess_srtofc(rate));
 
 	return (0);
 }
 
 int
-ess_dma_init_output(addr, buf, cc)
+ess_trigger_output(addr, start, end, blksize, intr, arg, param)
 	void *addr;
-	void *buf;
-	int cc;
-{
-	struct ess_softc *sc = addr;
-
-	ess_write_mix_reg(sc, ESS_MREG_SAMPLE_RATE,
-	    ess_srtotc(sc->sc_out.sample_rate));
-	ess_write_mix_reg(sc, ESS_MREG_FILTER_CLOCK,
-	    ess_srtofc(sc->sc_out.sample_rate));
-
-	if (sc->sc_out.precision == 16)
-		ess_set_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2,
-		    ESS_AUDIO2_CTRL2_FIFO_SIZE);
-	else
-		ess_clear_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2,
-		    ESS_AUDIO2_CTRL2_FIFO_SIZE);
-
-	if (sc->sc_out.channels == 2)
-		ess_set_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2,
-		    ESS_AUDIO2_CTRL2_CHANNELS);
-	else
-		ess_clear_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2,
-		    ESS_AUDIO2_CTRL2_CHANNELS);
-
-	if (sc->sc_out.encoding == AUDIO_ENCODING_SLINEAR_BE ||
-	    sc->sc_out.encoding == AUDIO_ENCODING_SLINEAR_LE)
-		ess_set_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2,
-		    ESS_AUDIO2_CTRL2_FIFO_SIGNED);
-	else
-		ess_clear_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2,
-		    ESS_AUDIO2_CTRL2_FIFO_SIGNED);
-
-	DPRINTF(("ess_dma_init_output: buf=%p cc=%d chan=%d\n",
-		 buf, cc, sc->sc_out.drq));
-	isa_dmastart(sc->sc_ic, sc->sc_out.drq, buf,
-		     cc, NULL, DMAMODE_WRITE | DMAMODE_LOOP, BUS_DMA_NOWAIT);
-
-	return 0;
-}
-
-int
-ess_dma_output(addr, p, cc, intr, arg)
-	void *addr;
-	void *p;
-	int cc;
+	void *start, *end;
+	int blksize;
 	void (*intr) __P((void *));
 	void *arg;
+	struct audio_params *param;
 {
 	struct ess_softc *sc = addr;
 
-	DPRINTFN(1,("ess_dma_output: cc=%d %p (%p)\n", cc, intr, arg));
+	DPRINTFN(1, ("ess_trigger_output: sc=%p start=%p end=%p blksize=%d intr=%p(%p)\n",
+	    addr, start, end, blksize, intr, arg));
+
 #ifdef DIAGNOSTIC
-	if (sc->sc_out.channels == 2 && (cc & 1)) {
-		DPRINTF(("stereo playback odd bytes (%d)\n", cc));
+	if (param->channels == 2 && (blksize & 1)) {
+		DPRINTF(("stereo playback odd bytes (%d)\n", blksize));
 		return EIO;
 	}
+	if (sc->sc_out.active)
+		panic("ess_trigger_output: already running");
+	sc->sc_out.active = 1;
 #endif
 
 	sc->sc_out.intr = intr;
 	sc->sc_out.arg = arg;
-	if (sc->sc_out.active)
-		return (0);
 
-	DPRINTF(("ess_dma_output: set up DMA\n"));
+	if (param->precision * param->factor == 16)
+		ess_set_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2,
+		    ESS_AUDIO2_CTRL2_FIFO_SIZE);
+	else
+		ess_clear_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2,
+		    ESS_AUDIO2_CTRL2_FIFO_SIZE);
 
-	sc->sc_out.active = 1;
+	if (param->channels == 2)
+		ess_set_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2,
+		    ESS_AUDIO2_CTRL2_CHANNELS);
+	else
+		ess_clear_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2,
+		    ESS_AUDIO2_CTRL2_CHANNELS);
+
+	if (param->encoding == AUDIO_ENCODING_SLINEAR_BE ||
+	    param->encoding == AUDIO_ENCODING_SLINEAR_LE)
+		ess_set_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2,
+		    ESS_AUDIO2_CTRL2_FIFO_SIGNED);
+	else
+		ess_clear_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2,
+		    ESS_AUDIO2_CTRL2_FIFO_SIGNED);
+
+	isa_dmastart(sc->sc_ic, sc->sc_out.drq, start, end - start, NULL,
+	    DMAMODE_WRITE | DMAMODE_LOOP, BUS_DMA_NOWAIT);
 
 	if (IS16BITDRQ(sc->sc_out.drq))
-		cc >>= 1;	/* use word count for 16 bit DMA */
+		blksize >>= 1;	/* use word count for 16 bit DMA */
 	/* Program transfer count registers with 2's complement of count. */
-	cc = -cc;
-	ess_write_mix_reg(sc, ESS_MREG_XFER_COUNTLO, cc);
-	ess_write_mix_reg(sc, ESS_MREG_XFER_COUNTHI, cc >> 8);
+	blksize = -blksize;
+	ess_write_mix_reg(sc, ESS_MREG_XFER_COUNTLO, blksize);
+	ess_write_mix_reg(sc, ESS_MREG_XFER_COUNTHI, blksize >> 8);
 
 	if (IS16BITDRQ(sc->sc_out.drq))
 		ess_set_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL1,
@@ -1231,26 +1199,40 @@ ess_dma_output(addr, p, cc, intr, arg)
 }
 
 int
-ess_dma_init_input(addr, buf, cc)
+ess_trigger_input(addr, start, end, blksize, intr, arg, param)
 	void *addr;
-	void *buf;
-	int cc;
+	void *start, *end;
+	int blksize;
+	void (*intr) __P((void *));
+	void *arg;
+	struct audio_params *param;
 {
 	struct ess_softc *sc = addr;
 
-	ess_write_x_reg(sc, ESS_XCMD_SAMPLE_RATE,
-	    ess_srtotc(sc->sc_in.sample_rate));
-	ess_write_x_reg(sc, ESS_XCMD_FILTER_CLOCK,
-	    ess_srtofc(sc->sc_in.sample_rate));
+	DPRINTFN(1, ("ess_trigger_input: sc=%p start=%p end=%p blksize=%d intr=%p(%p)\n",
+	    addr, start, end, blksize, intr, arg));
 
-	if (sc->sc_in.precision == 16)
+#ifdef DIAGNOSTIC
+	if (param->channels == 2 && (blksize & 1)) {
+		DPRINTF(("stereo record odd bytes (%d)\n", blksize));
+		return EIO;
+	}
+	if (sc->sc_in.active)
+		panic("ess_trigger_input: already running");
+	sc->sc_in.active = 1;
+#endif
+
+	sc->sc_in.intr = intr;
+	sc->sc_in.arg = arg;
+
+	if (param->precision * param->factor == 16)
 		ess_set_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL1,
 		    ESS_AUDIO1_CTRL1_FIFO_SIZE);
 	else
 		ess_clear_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL1,
 		    ESS_AUDIO1_CTRL1_FIFO_SIZE);
 
-	if (sc->sc_in.channels == 2) {
+	if (param->channels == 2) {
 		ess_write_x_reg(sc, ESS_XCMD_AUDIO_CTRL,
 		    (ess_read_x_reg(sc, ESS_XCMD_AUDIO_CTRL) |
 		     ESS_AUDIO_CTRL_STEREO) &~ ESS_AUDIO_CTRL_MONO);
@@ -1264,8 +1246,8 @@ ess_dma_init_input(addr, buf, cc)
 		    ESS_AUDIO1_CTRL1_FIFO_STEREO);
 	}
 
-	if (sc->sc_in.encoding == AUDIO_ENCODING_SLINEAR_BE ||
-	    sc->sc_in.encoding == AUDIO_ENCODING_SLINEAR_LE)
+	if (param->encoding == AUDIO_ENCODING_SLINEAR_BE ||
+	    param->encoding == AUDIO_ENCODING_SLINEAR_LE)
 		ess_set_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL1, 
 		    ESS_AUDIO1_CTRL1_FIFO_SIGNED);
 	else
@@ -1276,47 +1258,15 @@ ess_dma_init_input(addr, buf, cc)
 	ess_set_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL1,
 	    ESS_AUDIO1_CTRL1_FIFO_CONNECT);
 
-	DPRINTF(("ess_dma_init_input: buf=%p cc=%d chan=%d\n",
-		 buf, cc, sc->sc_in.drq));
-	isa_dmastart(sc->sc_ic, sc->sc_in.drq, buf,
-		     cc, NULL, DMAMODE_READ | DMAMODE_LOOP, BUS_DMA_NOWAIT);
-
-	return 0;
-}
-
-int
-ess_dma_input(addr, p, cc, intr, arg)
-	void *addr;
-	void *p;
-	int cc;
-	void (*intr) __P((void *));
-	void *arg;
-{
-	struct ess_softc *sc = addr;
-
-	DPRINTFN(1,("ess_dma_input: cc=%d %p (%p)\n", cc, intr, arg));
-#ifdef DIAGNOSTIC
-	if (sc->sc_in.channels == 2 && (cc & 1)) {
-		DPRINTF(("stereo record odd bytes (%d)\n", cc));
-		return EIO;
-	}
-#endif
-
-	sc->sc_in.intr = intr;
-	sc->sc_in.arg = arg;
-	if (sc->sc_in.active)
-		return (0);
-
-	DPRINTF(("ess_dma_input: set up DMA\n"));
-
-	sc->sc_in.active = 1;
+	isa_dmastart(sc->sc_ic, sc->sc_in.drq, start, end - start, NULL,
+	    DMAMODE_READ | DMAMODE_LOOP, BUS_DMA_NOWAIT);
 
 	if (IS16BITDRQ(sc->sc_in.drq))
-		cc >>= 1;	/* use word count for 16 bit DMA */
+		blksize >>= 1;	/* use word count for 16 bit DMA */
 	/* Program transfer count registers with 2's complement of count. */
-	cc = -cc;
-	ess_write_x_reg(sc, ESS_XCMD_XFER_COUNTLO, cc);
-	ess_write_x_reg(sc, ESS_XCMD_XFER_COUNTHI, cc >> 8);
+	blksize = -blksize;
+	ess_write_x_reg(sc, ESS_XCMD_XFER_COUNTLO, blksize);
+	ess_write_x_reg(sc, ESS_XCMD_XFER_COUNTHI, blksize >> 8);
 
 	/* Use 4 bytes per input DMA. */
 	ess_set_xreg_bits(sc, ESS_XCMD_DEMAND_CTRL,
