@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.91 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.92 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -268,3 +268,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	arc: Add support for the Cirrus Logic GD5428 ISA VGA console on
 		Express5800/240 R4400 EISA (NEC-J96A) and RISCserver2200
 		(NEC-R96).  [tsutsui 20030131]
+	Add extensible kernel malloc types, adapted from FreeBSD.
+		[thorpej 20030131]
