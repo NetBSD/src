@@ -1,4 +1,4 @@
-/*	$NetBSD: auth1.c,v 1.18 2002/06/24 05:48:27 itojun Exp $	*/
+/*	$NetBSD: auth1.c,v 1.19 2002/09/09 06:45:18 itojun Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -133,15 +133,27 @@ do_authloop(Authctxt *authctxt)
 #endif /* KRB4 */
 				} else {
 #ifdef KRB5
-					krb5_data tkt;
+ 					krb5_data tkt, reply;
 					tkt.length = dlen;
 					tkt.data = kdata;
 
-					if (auth_krb5(authctxt, &tkt, &client_user)) {
+					if (PRIVSEP(auth_krb5(authctxt, &tkt,
+					    &client_user, &reply))) {
 						authenticated = 1;
 						snprintf(info, sizeof(info),
 						    " tktuser %.100s",
 						    client_user);
+ 
+ 						/* Send response to client */
+ 						packet_start(
+						    SSH_SMSG_AUTH_KERBEROS_RESPONSE);
+ 						packet_put_string((char *)
+						    reply.data, reply.length);
+ 						packet_send();
+ 						packet_write_wait();
+
+ 						if (reply.length)
+ 							xfree(reply.data);
 						xfree(client_user);
 					}
 #endif /* KRB5 */
