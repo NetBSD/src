@@ -1,4 +1,4 @@
-/*	$NetBSD: proc_compare.c,v 1.10 2001/01/05 04:59:21 mjl Exp $	*/
+/*	$NetBSD: proc_compare.c,v 1.10.2.1 2002/05/04 19:04:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)proc_compare.c	8.2 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: proc_compare.c,v 1.10 2001/01/05 04:59:21 mjl Exp $");
+__RCSID("$NetBSD: proc_compare.c,v 1.10.2.1 2002/05/04 19:04:07 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,8 +67,8 @@ __RCSID("$NetBSD: proc_compare.c,v 1.10 2001/01/05 04:59:21 mjl Exp $");
  * TODO - consider whether pctcpu should be used.
  */
 
-#define ISRUN(p)	(((p)->p_stat == SRUN) || ((p)->p_stat == SIDL) || \
-			 ((p)->p_stat == SONPROC))
+#define ISRUN(p)	(((p)->p_stat == LSRUN) || ((p)->p_stat == SIDL) || \
+			 ((p)->p_stat == LSONPROC))
 #define TESTAB(a, b)    ((a)<<1 | (b))
 #define ONLYA   2
 #define ONLYB   1
@@ -119,9 +119,9 @@ proc_compare(struct kinfo_proc2 *p1, struct kinfo_proc2 *p2)
 	/*
 	 * favor one sleeping in a non-interruptible sleep
 	 */
-	if (p1->p_flag & P_SINTR && (p2->p_flag & P_SINTR) == 0)
+	if (p1->p_flag & L_SINTR && (p2->p_flag & L_SINTR) == 0)
 		return (1);
-	if (p2->p_flag & P_SINTR && (p1->p_flag & P_SINTR) == 0)
+	if (p2->p_flag & L_SINTR && (p1->p_flag & L_SINTR) == 0)
 		return (0);
 	return (p2->p_pid > p1->p_pid);		/* tie - return highest pid */
 }
