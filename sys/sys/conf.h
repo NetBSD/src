@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.46 1997/01/31 03:01:50 thorpej Exp $	*/
+/*	$NetBSD: conf.h,v 1.47 1997/03/18 01:39:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -291,6 +291,7 @@ extern struct cdevsw cdevsw[];
 #define	cdev_lkm_init(c,n)	cdev__oci_init(c,n)
 #define	cdev_ch_init(c,n)	cdev__oci_init(c,n)
 #define	cdev_uk_init(c,n)	cdev__oci_init(c,n)
+#define	cdev_se_init(c,n)	cdev__oci_init(c,n)
 
 /* open, close, ioctl, poll, mmap */
 #define	cdev_fb_init(c,n) { \
