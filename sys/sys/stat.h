@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.23 1997/10/16 23:33:10 christos Exp $	*/
+/*	$NetBSD: stat.h,v 1.24 1997/10/19 01:49:00 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -55,9 +55,9 @@ struct stat43 {				/* BSD-4.3 stat struct */
 	u_int16_t st_gid;		/* group ID of the file's group */
 	u_int16_t st_rdev;		/* device type */
 	int32_t	  st_size;		/* file size, in bytes */
-	struct	timespec st_atimespec;	/* time of last access */
-	struct	timespec st_mtimespec;	/* time of last data modification */
-	struct	timespec st_ctimespec;	/* time of last file status change */
+	struct	  timespec st_atimespec;/* time of last access */
+	struct	  timespec st_mtimespec;/* time of last data modification */
+	struct	  timespec st_ctimespec;/* time of last file status change */
 	int32_t	  st_blksize;		/* optimal blocksize for I/O */
 	int32_t	  st_blocks;		/* blocks allocated for file */
 	u_int32_t st_flags;		/* user defined flags for file */
@@ -72,18 +72,9 @@ struct stat12 {				/* NetBSD-1.2 stat struct */
 	uid_t	  st_uid;		/* user ID of the file's owner */
 	gid_t	  st_gid;		/* group ID of the file's group */
 	dev_t	  st_rdev;		/* device type */
-#ifndef _POSIX_SOURCE
-	struct	timespec st_atimespec;	/* time of last access */
-	struct	timespec st_mtimespec;	/* time of last data modification */
-	struct	timespec st_ctimespec;	/* time of last file status change */
-#else
-	time_t	  st_atime;		/* time of last access */
-	long	  st_atimensec;		/* nsec of last access */
-	time_t	  st_mtime;		/* time of last data modification */
-	long	  st_mtimensec;		/* nsec of last data modification */
-	time_t	  st_ctime;		/* time of last file status change */
-	long	  st_ctimensec;		/* nsec of last file status change */
-#endif
+	struct	  timespec st_atimespec;/* time of last access */
+	struct	  timespec st_mtimespec;/* time of last data modification */
+	struct	  timespec st_ctimespec;/* time of last file status change */
 	off_t	  st_size;		/* file size, in bytes */
 	int64_t	  st_blocks;		/* blocks allocated for file */
 	u_int32_t st_blksize;		/* optimal blocksize for I/O */
@@ -103,9 +94,9 @@ struct stat {
 	gid_t	  st_gid;		/* group ID of the file's group */
 	dev_t	  st_rdev;		/* device type */
 #ifndef _POSIX_SOURCE
-	struct	timespec st_atimespec;	/* time of last access */
-	struct	timespec st_mtimespec;	/* time of last data modification */
-	struct	timespec st_ctimespec;	/* time of last file status change */
+	struct	  timespec st_atimespec;/* time of last access */
+	struct	  timespec st_mtimespec;/* time of last data modification */
+	struct	  timespec st_ctimespec;/* time of last file status change */
 #else
 	time_t	  st_atime;		/* time of last access */
 	long	  st_atimensec;		/* nsec of last access */
