@@ -19,7 +19,7 @@ main(argc, argv)
 {
   struct exec e;
   int c;
-  u_long addr = 0;
+  u_long addr = 0, offset = 0;
   u_long replace = 0, do_replace = 0;
   char *symbol = 0;
   char size = 4;  /* default to long */
@@ -31,7 +31,7 @@ main(argc, argv)
   u_char  cval;
   
 
-  while ((c = getopt (argc, argv, "a:bwlr:s:")) != EOF)
+  while ((c = getopt (argc, argv, "a:bwlr:s:o:")) != EOF)
     switch (c)
       {
       case 'a':
@@ -70,6 +70,15 @@ main(argc, argv)
 	  error ("only one address/symbol allowed");
 	symbol = optarg;
 	break;
+
+      case 'o':
+	if (offset)
+	  error ("only one offset allowed");
+	if (! strncmp (optarg, "0x", 2))
+	  sscanf (optarg, "%x", &offset);
+	else
+          offset = atoi (optarg);
+        break;
       }
   
   argv += optind;
@@ -108,6 +117,7 @@ main(argc, argv)
       else if (addr >= N_DATADDR(e) && addr < N_DATADDR(e) + e.a_data)
 	type = N_DATA;
     }
+  addr += offset;
 
   /* if replace-mode, have to reopen the file for writing.
      Can't do that from the beginning, or nlist() will not 
