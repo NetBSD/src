@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.32 2002/01/18 11:41:49 ichiro Exp $	*/
+/*	$NetBSD: wi.c,v 1.33 2002/01/20 05:39:52 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.32 2002/01/18 11:41:49 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.33 2002/01/20 05:39:52 ichiro Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -256,6 +256,9 @@ wi_attach(sc)
 	    IFM_IEEE80211_ADHOC, 0), 0);
 	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2, 0, 0), 0);
 	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2,
+	    IFM_IEEE80211_ADHOC, 0), 0);
+	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5, 0, 0), 0);
+	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5,
 	    IFM_IEEE80211_ADHOC, 0), 0);
 	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11, 0, 0), 0);
 	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11,
@@ -788,13 +791,21 @@ static int wi_write_record(sc, ltv)
 			struct wi_ltv_str	ws;
 			struct wi_ltv_keys	*wk = (struct wi_ltv_keys *)ltv;
 			for (i = 0; i < 4; i++) {
-				ws.wi_len = 8;
+				memset(&ws, 0, sizeof(ws));
+				if(wk->wi_keys[i].wi_keylen <= 5) {
+					/* 5 Octets WEP Keys */
+					ws.wi_len = 4;
+					memcpy(ws.wi_str, &wk->wi_keys[i].wi_keydat, 5);
+					ws.wi_str[5] = '\0';
+				} else {
+					/* 13 Octets WEP Keys */
+					ws.wi_len = 8;
+					memcpy(ws.wi_str, &wk->wi_keys[i].wi_keydat, 13);
+					ws.wi_str[13] = '\0';
+				}
 				ws.wi_type = WI_RID_P2_CRYPT_KEY0 + i;
-				memcpy(ws.wi_str, &wk->wi_keys[i].wi_keydat, 13);
-				ws.wi_str[13] = '\0';
-				error = wi_write_record(sc,
-				    (struct wi_ltv_gen *)&ws);
-				if (error)
+
+				if(wi_write_record(sc, (struct wi_ltv_gen *)&ws))
 					return error;
 			}
 			return 0;
@@ -1901,6 +1912,9 @@ wi_sync_media(sc, ptype, txrate)
 	case 3:
 		subtype = IFM_AUTO;
 		break;
+	case 4:
+		subtype = IFM_IEEE80211_DS5;
+		break;
 	case 11:
 		subtype = IFM_IEEE80211_DS11;
 		break;
@@ -1951,6 +1965,9 @@ wi_media_change(ifp)
 		break;
 	case IFM_AUTO:
 		sc->wi_tx_rate = 3;
+		break;
+	case IFM_IEEE80211_DS5:
+		sc->wi_tx_rate = 4;
 		break;
 	case IFM_IEEE80211_DS11:
 		sc->wi_tx_rate = 11;
