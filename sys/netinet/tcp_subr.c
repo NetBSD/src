@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.88 2000/02/29 05:25:49 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.89 2000/03/01 12:49:42 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -555,7 +555,7 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 	}
 
 #ifdef IPSEC
-	m->m_pkthdr.rcvif = NULL;
+	ipsec_setsocket(m, NULL);
 #endif /*IPSEC*/
 
 	/*
@@ -569,7 +569,7 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 	if (tp != NULL && tp->t_inpcb != NULL) {
 		ro = &tp->t_inpcb->inp_route;
 #ifdef IPSEC
-		m->m_pkthdr.rcvif = (struct ifnet *)tp->t_inpcb->inp_socket;
+		ipsec_setsocket(m, tp->t_inpcb->inp_socket);
 #endif
 #ifdef DIAGNOSTIC
 		if (family != AF_INET)
@@ -585,7 +585,7 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 	else if (tp != NULL && tp->t_in6pcb != NULL) {
 		ro = (struct route *)&tp->t_in6pcb->in6p_route;
 #ifdef IPSEC
-		m->m_pkthdr.rcvif = (struct ifnet *)tp->t_in6pcb->in6p_socket;
+		ipsec_setsocket(m, tp->t_in6pcb->in6p_socket);
 #endif
 #ifdef DIAGNOSTIC
 		if (family == AF_INET) {

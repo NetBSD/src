@@ -1,4 +1,5 @@
-/*	$NetBSD: uipc_mbuf2.c,v 1.3 2000/02/06 12:49:51 itojun Exp $	*/
+/*	$NetBSD: uipc_mbuf2.c,v 1.4 2000/03/01 12:49:29 itojun Exp $	*/
+/*	$KAME: uipc_mbuf2.c,v 1.15 2000/02/22 14:01:37 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -103,6 +104,10 @@ m_pulldown(m, off, len, offp)
 	struct mbuf *n, *o;
 	int hlen, tlen, olen;
 	int sharedcluster;
+#if defined(PULLDOWN_STAT) && defined(INET6)
+	static struct mbuf *prev = NULL;
+	int prevlen = 0, prevmlen = 0;
+#endif
 
 	/* check invalid arguments. */
 	if (m == NULL)
@@ -114,6 +119,68 @@ m_pulldown(m, off, len, offp)
 
 #if defined(PULLDOWN_STAT) && defined(INET6)
 	ip6stat.ip6s_pulldown++;
+#endif
+
+#if defined(PULLDOWN_STAT) && defined(INET6)
+	/* statistics for m_pullup */
+	ip6stat.ip6s_pullup++;
+	if (off + len > MHLEN)
+		ip6stat.ip6s_pullup_fail++;
+	else {
+		int dlen, mlen;
+
+		dlen = (prev == m) ? prevlen : m->m_len;
+		mlen = (prev == m) ? prevmlen : m->m_len + M_TRAILINGSPACE(m);
+
+		if (dlen >= off + len)
+			ip6stat.ip6s_pullup--; /* call will not be made! */
+		else if ((m->m_flags & M_EXT) != 0) {
+			ip6stat.ip6s_pullup_alloc++;
+			ip6stat.ip6s_pullup_copy++;
+		} else {
+			if (mlen >= off + len)
+				ip6stat.ip6s_pullup_copy++;
+			else {
+				ip6stat.ip6s_pullup_alloc++;
+				ip6stat.ip6s_pullup_copy++;
+			}
+		}
+
+		prevlen = off + len;
+		prevmlen = MHLEN;
+	}
+
+	/* statistics for m_pullup2 */
+	ip6stat.ip6s_pullup2++;
+	if (off + len > MCLBYTES)
+		ip6stat.ip6s_pullup2_fail++;
+	else {
+		int dlen, mlen;
+
+		dlen = (prev == m) ? prevlen : m->m_len;
+		mlen = (prev == m) ? prevmlen : m->m_len + M_TRAILINGSPACE(m);
+		prevlen = off + len;
+		prevmlen = mlen;
+
+		if (dlen >= off + len)
+			ip6stat.ip6s_pullup2--; /* call will not be made! */
+		else if ((m->m_flags & M_EXT) != 0) {
+			ip6stat.ip6s_pullup2_alloc++;
+			ip6stat.ip6s_pullup2_copy++;
+			prevmlen = (off + len > MHLEN) ? MCLBYTES : MHLEN;
+		} else {
+			if (mlen >= off + len)
+				ip6stat.ip6s_pullup2_copy++;
+			else {
+				ip6stat.ip6s_pullup2_alloc++;
+				ip6stat.ip6s_pullup2_copy++;
+				prevmlen = (off + len > MHLEN) ? MCLBYTES
+							       : MHLEN;
+			}
+		}
+	}
+
+	prev = m;
 #endif
 
 #ifdef PULLDOWN_DEBUG
@@ -132,6 +199,9 @@ m_pulldown(m, off, len, offp)
 		off -= n->m_len;
 		n = n->m_next;
 	}
+	/* be sure to point non-empty mbuf */
+	while (n != NULL && n->m_len == 0)
+		n = n->m_next;
 	if (!n) {
 		m_freem(m);
 		return NULL;	/* mbuf chain too short */
@@ -274,4 +344,85 @@ ok:
 	if (offp)
 		*offp = off;
 	return n;
+}
+
+/*
+ * pkthdr.aux chain manipulation.
+ * we don't allow clusters at this moment. 
+ */
+struct mbuf *
+m_aux_add(m, af, type)
+	struct mbuf *m;
+	int af, type;
+{
+	struct mbuf *n;
+	struct mauxtag *t;
+
+	if ((m->m_flags & M_PKTHDR) == 0)
+		return NULL;
+
+	n = m_aux_find(m, af, type);
+	if (n)
+		return n;
+
+	MGET(n, M_DONTWAIT, m->m_type);
+	if (n == NULL)
+		return NULL;
+
+	t = mtod(n, struct mauxtag *);
+	t->af = af;
+	t->type = type;
+	n->m_data += sizeof(struct mauxtag);
+	n->m_len = 0;
+	n->m_next = m->m_pkthdr.aux;
+	m->m_pkthdr.aux = n;
+	return n;
+}
+
+struct mbuf *
+m_aux_find(m, af, type)
+	struct mbuf *m;
+	int af, type;
+{
+	struct mbuf *n;
+	struct mauxtag *t;
+
+	if ((m->m_flags & M_PKTHDR) == 0)
+		return NULL;
+
+	for (n = m->m_pkthdr.aux; n; n = n->m_next) {
+		t = (struct mauxtag *)n->m_dat;
+		if (t->af == af && t->type == type)
+			return n;
+	}
+	return NULL;
+}
+
+void
+m_aux_delete(m, victim)
+	struct mbuf *m;
+	struct mbuf *victim;
+{
+	struct mbuf *n, *prev, *next;
+	struct mauxtag *t;
+
+	if ((m->m_flags & M_PKTHDR) == 0)
+		return;
+
+	prev = NULL;
+	n = m->m_pkthdr.aux;
+	while (n) {
+		t = (struct mauxtag *)n->m_dat;
+		next = n->m_next;
+		if (n == victim) {
+			if (prev)
+				prev->m_next = n->m_next;
+			else
+				m->m_pkthdr.aux = n->m_next;
+			n->m_next = NULL;
+			m_free(n);
+		} else
+			prev = n;
+		n = next;
+	}
 }

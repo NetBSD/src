@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.17 2000/02/28 12:08:23 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.18 2000/03/01 12:49:47 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.49 2000/02/23 08:52:52 jinmei Exp $	*/
 
 /*
@@ -3136,6 +3136,14 @@ ipsec_copypkt(m)
 					if (mnew == NULL)
 						goto fail;
 					mnew->m_pkthdr = n->m_pkthdr;
+#if 0
+					if (n->m_pkthdr.aux) {
+						mnew->m_pkthdr.aux =
+						    m_copym(n->m_pkthdr.aux,
+						    0, M_COPYALL, M_DONTWAIT);
+					}
+#endif
+					M_COPY_PKTHDR(mnew, n);
 					mnew->m_flags = n->m_flags & M_COPYFLAGS;
 				}
 				else {
@@ -3207,6 +3215,42 @@ ipsec_copypkt(m)
   fail:
 	m_freem(m);
 	return(NULL);
+}
+
+void
+ipsec_setsocket(m, so)
+	struct mbuf *m;
+	struct socket *so;
+{
+	struct mbuf *n;
+
+	n = m_aux_find(m, AF_INET, IPPROTO_ESP);
+	if (so && !n)
+		n = m_aux_add(m, AF_INET, IPPROTO_ESP);
+	if (n) {
+		if (so) {
+			*mtod(n, struct socket **) = so;
+			/*
+			 * XXX think again about it when we put decryption
+			 * histrory into aux mbuf
+			 */
+			n->m_len = sizeof(struct socket *);
+		} else
+			m_aux_delete(m, n);
+	}
+}
+
+struct socket *
+ipsec_getsocket(m)
+	struct mbuf *m;
+{
+	struct mbuf *n;
+
+	n = m_aux_find(m, AF_INET, IPPROTO_ESP);
+	if (n && n->m_len >= sizeof(struct socket *))
+		return *mtod(n, struct socket **);
+	else
+		return NULL;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.42 2000/02/24 09:54:49 itojun Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.43 2000/03/01 12:49:32 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -766,8 +766,9 @@ icmp_send(m, opts)
 		printf("icmp_send dst %x src %x\n", ip->ip_dst, ip->ip_src);
 #endif
 #ifdef IPSEC
-	m->m_pkthdr.rcvif = NULL;
-#endif /*IPSEC*/
+	/* Don't lookup socket */
+	ipsec_setsocket(m, NULL);
+#endif
 	(void) ip_output(m, opts, NULL, 0, NULL);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.102 2000/02/20 00:56:39 darrenr Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.103 2000/03/01 12:49:33 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1403,8 +1403,9 @@ ip_forward(m, srcrt)
 	}
 
 #ifdef IPSEC
-	m->m_pkthdr.rcvif = NULL;
-#endif /*IPSEC*/
+	/* Don't lookup socket in forwading case */
+	ipsec_setsocket(m, NULL);
+#endif
 	error = ip_output(m, (struct mbuf *)0, &ipforward_rt,
 	    (IP_FORWARDING | (ip_directedbcast ? IP_ALLOWBROADCAST : 0)), 0);
 	if (error)

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.25 2000/02/28 16:10:52 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.26 2000/03/01 12:49:50 itojun Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.40 2000/02/28 15:44:13 itojun Exp $	*/
 
 /*
@@ -722,7 +722,7 @@ udp6_output(in6p, m, addr6, control)
 
 		udp6stat.udp6s_opackets++;
 #ifdef IPSEC
-		m->m_pkthdr.rcvif = (struct ifnet *)in6p->in6p_socket;
+		ipsec_setsocket(m, in6p->in6p_socket);
 #endif /*IPSEC*/
 		error = ip6_output(m, in6p->in6p_outputopts, &in6p->in6p_route,
 			    0, in6p->in6p_moptions, NULL);
@@ -750,7 +750,7 @@ udp6_output(in6p, m, addr6, control)
 
 		udpstat.udps_opackets++;
 #ifdef IPSEC
-		m->m_pkthdr.rcvif = NULL;	/*XXX*/
+		ipsec_setsocket(m, NULL);	/*XXX*/
 #endif /*IPSEC*/
 		error = ip_output(m, NULL, &in6p->in6p_route, 0 /*XXX*/);
 		break;
