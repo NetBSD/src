@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.46 2000/09/22 16:45:17 ad Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.46.2.1 2001/04/09 01:57:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -196,26 +196,29 @@ struct scsipi_link {
 #define	SDEV_DBX		0xf0	/* debuging flags (scsipi_debug.h) */
 #define	SDEV_WAITDRAIN		0x100	/* waiting for pending_xfers to drain */
 #define	SDEV_KEEP_LABEL		0x200	/* retain label after 'full' close */
-	u_int16_t quirks;		/* per-device oddities */
+	u_int32_t quirks;		/* per-device oddities */
 #define	SDEV_AUTOSAVE		0x0001	/*
 					 * Do implicit SAVEDATAPOINTER on
 					 * disconnect (ancient).
 					 */
-#define	SDEV_NOSYNC		0x0002	/* does not grok SDTR */
-#define	SDEV_NOWIDE		0x0004	/* does not grok WDTR */
-#define	SDEV_NOTAG		0x0008	/* does not do command tagging */
-#define	SDEV_NOLUNS		0x0010	/* does not grok LUNs */
-#define	SDEV_FORCELUNS		0x0020	/* prehistoric drive/ctlr groks LUNs */
-#define SDEV_NOMODESENSE	0x0040	/* removable media/optical drives */
-#define SDEV_NOSTARTUNIT	0x0080	/* Do not issue START UNIT requests */
-#define	SDEV_NOSYNCCACHE	0x0100	/* does not grok SYNCHRONIZE CACHE */
-#define SDEV_CDROM		0x0200	/* device is a CD-ROM */
-#define ADEV_LITTLETOC		0x0400	/* Audio TOC uses wrong byte order */
-#define ADEV_NOCAPACITY		0x0800	/* no READ_CD_CAPACITY command */
-#define ADEV_NOTUR		0x1000	/* no TEST_UNIT_READY command */
-#define ADEV_NODOORLOCK		0x2000	/* device can't lock door */
-#define ADEV_NOSENSE		0x4000	/* device can't handle request sense */
-#define SDEV_ONLYBIG		0x8000	/* only use SCSI_{READ,WRITE}_BIG */
+#define	SDEV_NOSYNC	    0x00000002	/* does not grok SDTR */
+#define	SDEV_NOWIDE	    0x00000004	/* does not grok WDTR */
+#define	SDEV_NOTAG	    0x00000008	/* does not do command tagging */
+#define	SDEV_NOLUNS	    0x00000010	/* does not grok LUNs */
+#define	SDEV_FORCELUNS	    0x00000020	/* prehistoric drive/ctlr groks LUNs */
+#define SDEV_NOMODESENSE    0x00000040	/* removable media/optical drives */
+#define SDEV_NOSTARTUNIT    0x00000080	/* Do not issue START UNIT requests */
+#define	SDEV_NOSYNCCACHE    0x00000100	/* does not grok SYNCHRONIZE CACHE */
+#define SDEV_CDROM	    0x00000200	/* device is a CD-ROM */
+#define SDEV_ONLYBIG	    0x00000400	/* only use SCSI_{READ,WRITE}_BIG */
+
+#define ADEV_LITTLETOC	    0x00010000	/* Audio TOC uses wrong byte order */
+#define ADEV_NOCAPACITY	    0x00020000	/* no READ_CD_CAPACITY command */
+#define ADEV_NOTUR	    0x00040000	/* no TEST_UNIT_READY command */
+#define ADEV_NODOORLOCK	    0x00080000	/* device can't lock door */
+#define ADEV_NOSENSE	    0x00100000	/* device can't handle request sense */
+#define ADEV_BYTE5_ZERO     0x00200000	/* byte5 in capacity is wrong */
+#define ADEV_NO_FLEX_PAGE   0x00400000  /* does not support flex geom page */
 
 	struct	scsipi_device *device;	/* device entry points etc. */
 	void	*device_softc;		/* needed for call to foo_start */
@@ -385,7 +388,7 @@ struct scsipibus_attach_args {
 
 struct scsi_quirk_inquiry_pattern {
 	struct scsipi_inquiry_pattern pattern;
-	u_int16_t quirks;
+	u_int32_t quirks;
 };
 
 /*

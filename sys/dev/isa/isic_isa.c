@@ -33,7 +33,7 @@
  *	isic_isa.c - ISA bus frontend for i4b_isic driver
  *	--------------------------------------------------
  *
- *	$Id: isic_isa.c,v 1.2 2001/02/20 22:24:38 martin Exp $ 
+ *	$Id: isic_isa.c,v 1.2.2.1 2001/04/09 01:56:43 nathanw Exp $ 
  *
  *      last edit-date: [Tue Jan  9 01:43:45 2001]
  *
@@ -82,6 +82,8 @@
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_mbuf.h>
 #include <netisdn/i4b_global.h>
+
+extern const struct isdn_layer1_bri_driver isic_std_driver;
 
 #if defined(__OpenBSD__)
 #define __BROKEN_INDIRECT_CONFIG
@@ -392,20 +394,6 @@ isicattach(int flags, struct l1_softc *sc)
 		"82525 or 21525 Version 2.1",
 		"Unknown Version"
 	};
-
-	/* done in bus specific attach code for other OS */
-
-#ifdef __FreeBSD__
-	if(dev->id_unit != next_isic_unit)
-	{
-/*XXX*/		printf("isicattach: Error: new unit (%d) != next_isic_unit (%d)!\n", dev->id_unit, next_isic_unit);
-		return(0);
-	}
-
-	sc->sc_unit = dev->id_unit;
-#else
-	l1_sc[sc->sc_unit] = sc;
-#endif
 	
 	/* card dependent setup */
 	switch(FLAGS)
@@ -598,9 +586,9 @@ isicattach(int flags, struct l1_softc *sc)
 
 	/* HSCX setup */
 
-	isic_bchannel_setup(sc->sc_unit, HSCX_CH_A, BPROT_NONE, 0);
+	isic_bchannel_setup(sc, HSCX_CH_A, BPROT_NONE, 0);
 	
-	isic_bchannel_setup(sc->sc_unit, HSCX_CH_B, BPROT_NONE, 0);
+	isic_bchannel_setup(sc, HSCX_CH_B, BPROT_NONE, 0);
 
 	/* setup linktab */
 
@@ -636,7 +624,7 @@ isicattach(int flags, struct l1_softc *sc)
 	
 	/* init higher protocol layers */
 	
-	MPH_Status_Ind(sc->sc_unit, STI_ATTACH, sc->sc_cardtyp);
+	sc->sc_l2 = isdn_attach_layer1_bri(sc, sc->sc_dev.dv_xname, "some isic card", &isic_std_driver);
 	
 	/* announce manufacturer and card type */
 	

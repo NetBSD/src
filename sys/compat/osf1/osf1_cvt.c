@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt.c,v 1.10 2000/12/01 12:28:34 jdolecek Exp $ */
+/* $NetBSD: osf1_cvt.c,v 1.10.2.1 2001/04/09 01:55:45 nathanw Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -644,6 +644,33 @@ osf1_cvt_stat_from_native(st, ost)
 	ost->st_blocks = st->st_blocks;
 	ost->st_flags = st->st_flags;
 	ost->st_gen = st->st_gen;
+}
+
+/*
+ * Convert from a stat structure to an osf1 stat structure.
+ */
+void
+osf1_cvt_stat2_from_native(st, ost)
+	const struct stat *st;
+	struct osf1_stat2 *ost;
+{
+
+	memset(ost, 0, sizeof *ost);
+	ost->st_dev = osf1_cvt_dev_from_native(st->st_dev);
+	ost->st_ino = st->st_ino;
+	ost->st_mode = st->st_mode;
+	ost->st_nlink = st->st_nlink;
+	ost->st_uid = st->st_uid == -2 ? (u_int16_t) -2 : st->st_uid;
+	ost->st_gid = st->st_gid == -2 ? (u_int16_t) -2 : st->st_gid;
+	ost->st_rdev = osf1_cvt_dev_from_native(st->st_rdev);
+	ost->st_size = st->st_size;
+	ost->st_atime_sec = st->st_atime;
+	ost->st_mtime_sec = st->st_mtime;
+	ost->st_ctime_sec = st->st_ctime;
+	ost->st_blocksize = st->st_blksize;
+	ost->st_blocks = st->st_blocks;
+	ost->st_flags = st->st_flags;
+	ost->st_generation = st->st_gen;
 }
 
 void

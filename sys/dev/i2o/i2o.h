@@ -1,7 +1,7 @@
-/*	$NetBSD: i2o.h,v 1.2 2000/12/03 13:17:03 ad Exp $	*/
+/*	$NetBSD: i2o.h,v 1.2.2.1 2001/04/09 01:55:59 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,8 +37,8 @@
  */
 
 /*
- * I2O structures and constants, as presented by the I2O specification
- * revision 1.5 (obtainable from http://www.i2osig.org/).  Currently, only
+ * Structures and constants, as presented by the I2O specification revision
+ * 1.5 (obtainable from http://www.intelligent-io.com/).  Currently, only
  * what's useful to us is defined in this file.
  */
 
@@ -51,6 +51,7 @@
 
 /* Organisation IDs */
 #define	I2O_ORG_DPT			0x001b
+#define	I2O_ORG_INTEL			0x0028
 #define	I2O_ORG_AMI			0x1000
 
 /* Macros to assist in building message headers */
@@ -96,6 +97,35 @@
 #define	I2O_STATUS_TRANSACTION_ERROR		0x0b
 #define	I2O_STATUS_PROGRESS_REPORT		0x80
 
+/* Detailed status codes */
+#define	I2O_DSC_SUCCESS				0x00
+#define	I2O_DSC_BAD_KEY				0x02
+#define	I2O_DSC_TCL_ERROR			0x03
+#define	I2O_DSC_REPLY_BUFFER_FULL		0x04
+#define	I2O_DSC_NO_SUCH_PAGE			0x05
+#define	I2O_DSC_INSUFFICIENT_RESOURCE_SOFT	0x06
+#define	I2O_DSC_INSUFFICIENT_RESOURCE_HARD	0x07
+#define	I2O_DSC_CHAIN_BUFFER_TOO_LARGE		0x09
+#define	I2O_DSC_UNSUPPORTED_FUNCTION		0x0a
+#define	I2O_DSC_DEVICE_LOCKED			0x0b
+#define	I2O_DSC_DEVICE_RESET			0x0c
+#define	I2O_DSC_INAPPROPRIATE_FUNCTION		0x0d
+#define	I2O_DSC_INVALID_INITIATOR_ADDRESS	0x0e
+#define	I2O_DSC_INVALID_MESSAGE_FLAGS		0x0f
+#define	I2O_DSC_INVALID_OFFSET			0x10
+#define	I2O_DSC_INVALID_PARAMETER		0x11
+#define	I2O_DSC_INVALID_REQUEST			0x12
+#define	I2O_DSC_INVALID_TARGET_ADDRESS		0x13
+#define	I2O_DSC_MESSAGE_TOO_LARGE		0x14
+#define	I2O_DSC_MESSAGE_TOO_SMALL		0x15
+#define	I2O_DSC_MISSING_PARAMETER		0x16
+#define	I2O_DSC_TIMEOUT				0x17
+#define	I2O_DSC_UNKNOWN_ERROR			0x18
+#define	I2O_DSC_UNKNOWN_FUNCTION		0x19
+#define	I2O_DSC_UNSUPPORTED_VERSION		0x1a
+#define	I2O_DSC_DEVICE_BUSY			0x1b
+#define	I2O_DSC_DEVICE_NOT_AVAILABLE		0x1c
+
 /* Message versions */
 #define	I2O_VERSION_10			0x00
 #define	I2O_VERSION_11			0x01
@@ -109,6 +139,7 @@
 /* SGL flags.  This list covers only a fraction of the possibilities. */
 #define	I2O_SGL_IGNORE			0x00000000
 #define	I2O_SGL_SIMPLE			0x10000000
+#define	I2O_SGL_PAGE_LIST		0x20000000
 
 #define	I2O_SGL_BC_32BIT		0x01000000
 #define	I2O_SGL_BC_64BIT		0x02000000
@@ -156,7 +187,7 @@ struct i2o_msg {
 #define	I2O_MSGFLAGS_STATICMF		0x0100
 #define	I2O_MSGFLAGS_64BIT		0x0200
 #define	I2O_MSGFLAGS_MULTI		0x1000
-#define	I2O_MSGFLAGS_CANT_PROCESS	0x2000
+#define	I2O_MSGFLAGS_FAIL		0x2000
 #define	I2O_MSGFLAGS_LAST_REPLY		0x4000
 #define	I2O_MSGFLAGS_REPLY		0x8000
 
@@ -176,6 +207,26 @@ struct i2o_reply {
 	/* Reply payload */
 
 } __attribute__ ((__packed__));
+
+/*
+ * Fault notification reply, returned when a message frame can not be
+ * processed (i.e I2O_MSGFLAGS_FAIL is set in the reply).
+ */
+struct i2o_fault_notify {
+	u_int32_t	msgflags;
+	u_int32_t	msgfunc;
+	u_int32_t	msgictx;
+	u_int32_t	msgtctx;	/* Not valid! */
+	u_int8_t	lowestver;
+	u_int8_t	highestver;
+	u_int8_t	severity;
+	u_int8_t	failurecode;
+	u_int16_t	failingiop;	/* Bits 0-12 only */
+	u_int16_t	failinghostunit;
+	u_int32_t	agelimit;
+	u_int32_t	lowmfa;
+	u_int32_t	highmfa;
+};
 
 /*
  * Hardware resource table.  Not documented here.
@@ -604,6 +655,11 @@ struct i2o_util_event_register_reply {
 #define	I2O_EVENT_EXEC_MODIFIED_LCT		0x00000200
 #define	I2O_EVENT_EXEC_DDM_AVAILIBILITY		0x00000400
 
+/* LAN class events. */
+#define	I2O_EVENT_LAN_LINK_DOWN			0x00000001
+#define	I2O_EVENT_LAN_LINK_UP			0x00000002
+#define	I2O_EVENT_LAN_MEDIA_CHANGE		0x00000004
+
 /*
  * ================= Utility parameter groups =================
  */
@@ -723,7 +779,7 @@ struct i2o_rbs_reply {
 	u_int32_t	msgictx;
 	u_int32_t	msgtctx;
 	u_int16_t	detail;
-	u_int8_t	reserved;
+	u_int8_t	retrycount;
 	u_int8_t	reqstatus;
 	u_int32_t	transfercount;
 	u_int64_t	offset;		/* Error replies only */
@@ -846,7 +902,8 @@ struct i2o_scsi_reply {
 	u_int32_t	msgfunc;
 	u_int32_t	msgictx;
 	u_int32_t	msgtctx;
-	u_int16_t	detail;
+	u_int8_t	scsistatus;
+	u_int8_t	hbastatus;
 	u_int8_t	reserved;
 	u_int8_t	reqstatus;
 	u_int32_t	datalen;
@@ -910,5 +967,238 @@ struct i2o_param_scsi_device_info {
 	u_int8_t	reserved2;
 	u_int64_t	negsyncrate;
 } __attribute__ ((__packed__));
+
+/*
+ * ================= LAN class messages =================
+ */
+
+#define	I2O_LAN_PACKET_SEND		0x3b
+struct i2o_lan_packet_send {
+	u_int32_t	msgflags;
+	u_int32_t	msgfunc;
+	u_int32_t	msgictx;
+	u_int32_t	tcw;
+
+	/* SGL follows */
+};
+
+#define	I2O_LAN_TCW_ACCESS_PRI_MASK	0x00000007
+#define	I2O_LAN_TCW_SUPPRESS_CRC	0x00000008
+#define	I2O_LAN_TCW_SUPPRESS_LOOPBACK	0x00000010
+#define	I2O_LAN_TCW_CKSUM_NETWORK	0x00000020
+#define	I2O_LAN_TCW_CKSUM_TRANSPORT	0x00000040
+#define	I2O_LAN_TCW_REPLY_BATCH		0x00000000
+#define	I2O_LAN_TCW_REPLY_IMMEDIATELY	0x40000000
+#define	I2O_LAN_TCW_REPLY_UNSUCCESSFUL	0x80000000
+#define	I2O_LAN_TCW_REPLY_NONE		0xc0000000
+
+#define	I2O_LAN_SDU_SEND		0x3d
+struct i2o_lan_sdu_send {
+	u_int32_t	msgflags;
+	u_int32_t	msgfunc;
+	u_int32_t	msgictx;
+	u_int32_t	tcw;		/* As per PACKET_SEND. */
+
+	/* SGL follows */
+};
+
+struct i2o_lan_send_reply {
+	u_int32_t	msgflags;
+	u_int32_t	msgfunc;
+	u_int32_t	msgictx;
+	u_int32_t	trl;
+	u_int16_t	detail;
+	u_int8_t	reserved;
+	u_int8_t	reqstatus;
+	u_int32_t	tctx[1];
+};
+
+#define	I2O_LAN_RECIEVE_POST		0x3e
+struct i2o_lan_recieve_post {
+	u_int32_t	msgflags;
+	u_int32_t	msgfunc;
+	u_int32_t	msgictx;
+	u_int32_t	bktcnt;
+
+	/* SGL follows */
+};
+
+struct i2o_lan_pdb {
+	u_int32_t	bctx;
+	u_int32_t	pktoff;
+	u_int32_t	pktlen;
+};
+
+#define	I2O_LAN_FRAG_VALID		0x00
+#define	I2O_LAN_FRAG_VALID_MASK		foo
+
+struct i2o_lan_recieve_reply {
+	u_int32_t	msgflags;
+	u_int32_t	msgfunc;
+	u_int32_t	msgictx;
+	u_int8_t	trlcount;
+	u_int8_t	trlesize;
+	u_int8_t	reserved;
+	u_int8_t	trlflags;
+	u_int32_t	bucketsleft;
+	struct i2o_lan_pdb	pdb[1];
+};
+
+#define	I2O_LAN_RESET			0x35
+struct i2o_lan_reset {
+	u_int32_t	msgflags;
+	u_int32_t	msgfunc;
+	u_int32_t	msgictx;
+	u_int16_t	reserved;
+	u_int16_t	resrcflags;
+};
+
+#define	I2O_LAN_RESRC_RETURN_BUCKETS	0x0001
+#define	I2O_LAN_RESRC_RETURN_XMITS	0x0002
+
+#define	I2O_LAN_SUSPEND			0x37
+struct i2o_lan_suspend {
+	u_int32_t	msgflags;
+	u_int32_t	msgfunc;
+	u_int32_t	msgictx;
+	u_int16_t	reserved;
+	u_int16_t	resrcflags;	/* As per RESET. */
+};
+
+#define	I2O_LAN_DSC_SUCCESS			0x00
+#define	I2O_LAN_DSC_DEVICE_FAILURE		0x01
+#define	I2O_LAN_DSC_DESTINATION_NOT_FOUND	0x02
+#define	I2O_LAN_DSC_TRANSMIT_ERROR		0x03
+#define	I2O_LAN_DSC_TRANSMIT_ABORTED		0x04
+#define	I2O_LAN_DSC_RECEIVE_ERROR		0x05
+#define	I2O_LAN_DSC_RECEIVE_ABORTED		0x06
+#define	I2O_LAN_DSC_DMA_ERROR			0x07
+#define	I2O_LAN_DSC_BAD_PACKET_DETECTED		0x08
+#define	I2O_LAN_DSC_OUT_OF_MEMORY		0x09
+#define	I2O_LAN_DSC_BUCKET_OVERRUN		0x0a
+#define	I2O_LAN_DSC_IOP_INTERNAL_ERROR		0x0b
+#define	I2O_LAN_DSC_CANCELED			0x0c
+#define	I2O_LAN_DSC_INVALID_TRANSACTION_CONTEXT	0x0d
+#define	I2O_LAN_DSC_DEST_ADDRESS_DETECTED	0x0e
+#define	I2O_LAN_DSC_DEST_ADDRESS_OMITTED	0x0f
+#define	I2O_LAN_DSC_PARTIAL_PACKET_RETURNED	0x10
+#define	I2O_LAN_DSC_TEMP_SUSPENDED_STATE	0x11
+
+/*
+ * ================= LAN class parameter groups =================
+ */
+
+#define	I2O_PARAM_LAN_DEVICE_INFO	0x0000
+struct i2o_param_lan_device_info {
+	u_int16_t	lantype;
+	u_int16_t	flags;
+	u_int8_t	addrfmt;
+	u_int8_t	reserved1;
+	u_int16_t	reserved2;
+	u_int32_t	minpktsize;
+	u_int32_t	maxpktsize;
+	u_int8_t	hwaddr[8];
+	u_int64_t	maxtxbps;
+	u_int64_t	maxrxbps;
+};
+
+#define	I2O_LAN_TYPE_ETHERNET		0x0030
+#define	I2O_LAN_TYPE_100BASEVG		0x0040
+#define	I2O_LAN_TYPE_TOKEN_RING		0x0050
+#define	I2O_LAN_TYPE_FDDI		0x0060
+#define	I2O_LAN_TYPE_FIBRECHANNEL	0x0070
+
+#define	I2O_PARAM_LAN_MAC_ADDRESS	0x0001
+struct i2o_param_lan_mac_address {
+	u_int8_t	activeaddr[8];
+	u_int8_t	localaddr[8];
+	u_int8_t	addrmask[8];
+	u_int8_t	filtermask[4];
+	u_int8_t	hwfiltermask[4];
+	u_int32_t	maxmcastaddr;
+	u_int32_t	maxfilterperfect;
+	u_int32_t	maxfilterimperfect;
+};
+
+#define	I2O_PARAM_LAN_MCAST_MAC_ADDRESS	0x0002
+/*
+ * This one's a table, not a scalar.
+ */
+
+#define	I2O_PARAM_LAN_BATCH_CONTROL	0x0003
+struct i2o_param_lan_batch_control {
+	u_int32_t	batchflags;
+	u_int32_t	risingloaddly;
+	u_int32_t	risingloadthresh;
+	u_int32_t	fallingloaddly;
+	u_int32_t	fallingloadthresh;
+	u_int32_t	maxbatchcount;
+	u_int32_t	maxbatchdelay;
+	u_int32_t	transcompdelay;
+};
+
+#define	I2O_PARAM_LAN_OPERATION		0x0004
+struct i2o_param_lan_operation {
+	u_int32_t	pktprepad;
+	u_int32_t	userflags;
+	u_int32_t	pktorphanlimit;
+};
+
+#define	I2O_PARAM_LAN_MEDIA_OPERATION	0x0005
+struct i2o_param_lan_media_operation {
+	u_int32_t	connectortype;
+	u_int32_t	connectiontype;
+	u_int32_t	curtxbps;
+	u_int32_t	currxbps;
+	u_int8_t	fullduplex;
+	u_int8_t	linkstatus;
+	u_int8_t	badpkthandling;
+};
+
+#define	I2O_LAN_CONNECTOR_OTHER		0x00
+#define	I2O_LAN_CONNECTOR_UNKNOWN	0x01
+#define	I2O_LAN_CONNECTOR_AUI		0x02
+#define	I2O_LAN_CONNECTOR_UTP		0x03
+#define	I2O_LAN_CONNECTOR_BNC		0x04
+#define	I2O_LAN_CONNECTOR_RJ45		0x05
+#define	I2O_LAN_CONNECTOR_STP_DB9	0x06
+#define	I2O_LAN_CONNECTOR_FIBER_MIC	0x07
+#define	I2O_LAN_CONNECTOR_APPLE_AUI	0x08
+#define	I2O_LAN_CONNECTOR_MII		0x09
+#define	I2O_LAN_CONNECTOR_COPPER_DB9	0x0a
+#define	I2O_LAN_CONNECTOR_COPPER_AW	0x0b
+#define	I2O_LAN_CONNECTOR_OPTICAL_LW	0x0c
+#define	I2O_LAN_CONNECTOR_SIP		0x0d
+#define	I2O_LAN_CONNECTOR_OPTICAL_SW	0x0e
+
+#define	I2O_LAN_CONNECTION_UNKNOWN		0x0000
+
+#define	I2O_LAN_CONNECTION_ETHERNET_AUI		0x0301
+#define	I2O_LAN_CONNECTION_ETHERNET_10BASE5	0x0302
+#define	I2O_LAN_CONNECTION_ETHERNET_FOIRL	0x0303
+#define	I2O_LAN_CONNECTION_ETHERNET_10BASE2	0x0304
+#define	I2O_LAN_CONNECTION_ETHERNET_10BROAD36	0x0305
+#define	I2O_LAN_CONNECTION_ETHERNET_10BASET	0x0306
+#define	I2O_LAN_CONNECTION_ETHERNET_10BASEFP	0x0307
+#define	I2O_LAN_CONNECTION_ETHERNET_10BASEFB	0x0308
+#define	I2O_LAN_CONNECTION_ETHERNET_10BASEFL	0x0309
+#define	I2O_LAN_CONNECTION_ETHERNET_100BASETX	0x030a
+#define	I2O_LAN_CONNECTION_ETHERNET_100BASEFX	0x030b
+#define	I2O_LAN_CONNECTION_ETHERNET_100BASET4	0x030c
+
+#define	I2O_LAN_CONNECTION_100BASEVG_100BASEVG	0x0401
+
+#define	I2O_LAN_CONNECTION_TOKEN_RING_4MBIT	0x0501
+#define	I2O_LAN_CONNECTION_TOKEN_RING_16MBIT	0x0502
+
+#define	I2O_LAN_CONNECTION_FDDI_125MBIT		0x0601
+
+#define	I2O_LAN_CONNECTION_FIBRECHANNEL_P2P	0x0701
+#define	I2O_LAN_CONNECTION_FIBRECHANNEL_AL	0x0702
+#define	I2O_LAN_CONNECTION_FIBRECHANNEL_PL	0x0703
+#define	I2O_LAN_CONNECTION_FIBRECHANNEL_F	0x0704
+
+#define	I2O_LAN_CONNECTION_OTHER_EMULATED	0x0f00
+#define	I2O_LAN_CONNECTION_OTHER_OTHER		0x0f01
 
 #endif	/* !defined _I2O_I2O_H_ */

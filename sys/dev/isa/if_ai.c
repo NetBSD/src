@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ai.c,v 1.9 2001/01/22 22:28:46 bjh21 Exp $	*/
+/*	$NetBSD: if_ai.c,v 1.9.2.1 2001/04/09 01:56:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@ const char *ai_names[] = {
 
 /* Functions required by the i82586 MI driver */
 static void 	ai_reset __P((struct ie_softc *, int));
-static void 	ai_atten __P((struct ie_softc *));
+static void 	ai_atten __P((struct ie_softc *, int));
 
 static void	ai_copyin __P((struct ie_softc *, void *, int, size_t));
 static void	ai_copyout __P((struct ie_softc *, const void *, int, size_t));
@@ -132,8 +132,9 @@ ai_reset(sc, why)
 }
 
 static void
-ai_atten(sc)
+ai_atten(sc, why)
 	struct ie_softc *sc;
+	int why;
 {
     struct ai_softc* asc = (struct ai_softc *) sc;
     bus_space_write_1(asc->sc_regt, asc->sc_regh, AI_ATTN, 0);

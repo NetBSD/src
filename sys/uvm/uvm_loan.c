@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.23 2001/01/23 02:27:39 thorpej Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.23.2.1 2001/04/09 01:59:16 nathanw Exp $	*/
 
 /*
  *
@@ -219,21 +219,15 @@ uvm_loan(map, start, len, result, flags)
 {
 	struct uvm_faultinfo ufi;
 	void **output;
-	int rv;
-
-#ifdef DIAGNOSTIC
-	if (map->flags & VM_MAP_INTRSAFE)
-		panic("uvm_loan: intrsafe map");
-#endif
+	int rv, error;
 
 	/*
 	 * ensure that one and only one of the flags is set
 	 */
 
-	if ((flags & (UVM_LOAN_TOANON|UVM_LOAN_TOPAGE)) == 
-	    (UVM_LOAN_TOANON|UVM_LOAN_TOPAGE) ||
-	    (flags & (UVM_LOAN_TOANON|UVM_LOAN_TOPAGE)) == 0)
-		return(KERN_FAILURE);
+	KASSERT(((flags & UVM_LOAN_TOANON) == 0) ^
+		((flags & UVM_LOAN_TOPAGE) == 0));
+	KASSERT((map->flags & VM_MAP_INTRSAFE) == 0);
 
 	/*
 	 * "output" is a pointer to the current place to put the loaned
@@ -261,15 +255,23 @@ uvm_loan(map, start, len, result, flags)
 		 * an unmapped region (an error)
 		 */
 
-		if (!uvmfault_lookup(&ufi, FALSE)) 
+		if (!uvmfault_lookup(&ufi, FALSE)) {
+			error = ENOENT;
 			goto fail;
+		}
 
 		/*
 		 * now do the loanout
 		 */
 		rv = uvm_loanentry(&ufi, &output, flags);
-		if (rv < 0) 
+		if (rv < 0) {
+			error = EINVAL;
 			goto fail;
+		}
+		if (rv == 0) {
+			uvmfault_unlockmaps(&ufi, FALSE);
+			continue;
+		}
 
 		/*
 		 * done!   advance pointers and unlock.
@@ -277,14 +279,13 @@ uvm_loan(map, start, len, result, flags)
 		rv <<= PAGE_SHIFT;
 		len -= rv;
 		start += rv;
-		uvmfault_unlockmaps(&ufi, FALSE);
 	}
 	
 	/*
 	 * got it!   return success.
 	 */
 
-	return(KERN_SUCCESS);
+	return 0;
 
 fail:
 	/*
@@ -298,7 +299,7 @@ fail:
 			uvm_unloanpage((struct vm_page **)result,
 			    output - result);
 	}
-	return(KERN_FAILURE);
+	return (error);
 }
 
 /*
@@ -353,15 +354,15 @@ uvm_loananon(ufi, output, flags, anon)
 	 * unlocked everything and returned an error code.
 	 */
 
-	if (result != VM_PAGER_OK) {
+	if (result != 0) {
 
 		/* need to refault (i.e. refresh our lookup) ? */
-		if (result == VM_PAGER_REFAULT)
+		if (result == ERESTART)
 			return(0);
 
 		/* "try again"?   sleep a bit and retry ... */
-		if (result == VM_PAGER_AGAIN) {
-			tsleep((caddr_t)&lbolt, PVM, "loanagain", 0);
+		if (result == EAGAIN) {
+			tsleep(&lbolt, PVM, "loanagain", 0);
 			return(0);
 		}
 
@@ -426,7 +427,7 @@ uvm_loanuobj(ufi, output, flags, va)
 		result = uobj->pgops->pgo_get(uobj, va - ufi->entry->start,
 		    &pg, &npages, 0, VM_PROT_READ, MADV_NORMAL, PGO_LOCKED);
 	} else {
-		result = VM_PAGER_ERROR;
+		result = EIO;
 	}
 
 	/*
@@ -434,7 +435,7 @@ uvm_loanuobj(ufi, output, flags, va)
 	 * then we fail the loan.
 	 */
 
-	if (result != VM_PAGER_OK && result != VM_PAGER_UNLOCK) {
+	if (result != 0 && result != EBUSY) {
 		uvmfault_unlockall(ufi, amap, uobj, NULL);
 		return(-1);
 	}
@@ -443,7 +444,7 @@ uvm_loanuobj(ufi, output, flags, va)
 	 * if we need to unlock for I/O, do so now.
 	 */
 
-	if (result == VM_PAGER_UNLOCK) {
+	if (result == EBUSY) {
 		uvmfault_unlockall(ufi, amap, NULL, NULL);
 		
 		npages = 1;
@@ -456,9 +457,9 @@ uvm_loanuobj(ufi, output, flags, va)
 		 * check for errors
 		 */
 
-		if (result != VM_PAGER_OK) {
-			 if (result == VM_PAGER_AGAIN) {
-				tsleep((caddr_t)&lbolt, PVM, "fltagain2", 0);
+		if (result != 0) {
+			 if (result == EAGAIN) {
+				tsleep(&lbolt, PVM, "fltagain2", 0);
 				return(0); /* redo the lookup and try again */
 			} 
 			return(-1);	/* total failure */

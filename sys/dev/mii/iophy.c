@@ -1,4 +1,4 @@
-/*	$NetBSD: iophy.c,v 1.10 2000/07/04 03:28:59 thorpej Exp $	*/
+/*	$NetBSD: iophy.c,v 1.10.2.1 2001/04/09 01:56:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -113,8 +113,8 @@ iophymatch(parent, match, aux)
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxINTEL_I82553)
 		return (10);
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_INTEL &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_INTEL_I82553)
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_yyINTEL &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_yyINTEL_I82553)
 		return (10);
 
 	return (0);
@@ -129,7 +129,7 @@ iophyattach(parent, self, aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
-	printf(": %s, rev. %d\n", MII_STR_INTEL_I82553,
+	printf(": %s, rev. %d\n", MII_STR_xxINTEL_I82553,
 	    MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;

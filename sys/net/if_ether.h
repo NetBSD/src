@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.21 2000/11/17 19:21:53 bouyer Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.21.2.1 2001/04/09 01:58:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -233,8 +233,18 @@ struct ether_multistep {
 }
 
 #ifdef _KERNEL
-u_int32_t ether_crc32_le (const u_int8_t *, size_t);
-u_int32_t ether_crc32_be (const u_int8_t *, size_t);
+void	ether_ifattach(struct ifnet *, const u_int8_t *);
+void	ether_ifdetach(struct ifnet *);
+
+char	*ether_sprintf(const u_int8_t *);
+
+u_int32_t ether_crc32_le(const u_int8_t *, size_t);
+u_int32_t ether_crc32_be(const u_int8_t *, size_t);
+
+#ifdef ALTQ
+void	altq_etherclassify(struct ifaltq *, struct mbuf *,
+	    struct altq_pktattr *);
+#endif /* ALTQ */
 #else
 /*
  * Prototype ethers(3) functions.

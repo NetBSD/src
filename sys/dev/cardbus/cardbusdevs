@@ -1,4 +1,4 @@
-$NetBSD: cardbusdevs,v 1.15 2001/02/07 09:56:21 haya Exp $
+$NetBSD: cardbusdevs,v 1.15.2.1 2001/04/09 01:55:54 nathanw Exp $
 
 /*
  * Copyright (C) 1999  Hayakawa Koichi.
@@ -44,6 +44,7 @@ vendor DEC		0x1011	Digital Equipment
 vendor OPTI		0x1045	Opti
 vendor HITACHI		0x1054	Hitachi
 vendor 3COM		0x10b7	3Com
+vendor ADVSYS		0x10cd	Advanced System Products
 vendor REALTEK		0x10ec	Realtek Semiconductor
 vendor IODATA		0x10fc	IO Data
 vendor ACCTON		0x1113	Accton Technology
@@ -75,6 +76,9 @@ product 3COM 3C656_E	0x6560	3CCFEM656 10/100 Ethernet
 product 3COM 3C656B_E	0x6562	3CCFEM656B 10/100 Ethernet
 product 3COM 3C656C_E	0x6564	3CXFEM656C 10/100 Ethernet
 
+/* Advanced System Products products */
+product ADVSYS ULTRA	0x1300	Ultra SCSI
+
 /* Realtek (Creative Labs?) products */
 product REALTEK RT8138	0x8138	8138 Ethernet
 
@@ -95,6 +99,7 @@ product	XIRCOM	MODEM56		0x0103	56k Modem
 
 /* AboCom products */
 product ABOCOM FE2500	0xab02	FE2500 10/100 Ethernet
+product ABOCOM PCM200	0xab03	FE2500 10/100 Ethernet
 
 /* Intel products */
 product INTEL 82557	0x1229	82557 Fast Ethernet LAN Controller

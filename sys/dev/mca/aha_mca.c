@@ -1,4 +1,4 @@
-/*	$NetBSD: aha_mca.c,v 1.1 2000/05/11 15:42:04 jdolecek Exp $	*/
+/*	$NetBSD: aha_mca.c,v 1.1.8.1 2001/04/09 01:56:45 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ aha_mca_attach(parent, self, aux)
 	mca_chipset_tag_t mc = ma->ma_mc;
 	bus_addr_t iobase;
 
-	printf("\n");
+	printf(" slot %d: Adaptec AHA-1640 SCSI Adapter\n", ma->ma_slot + 1);
 
 	iobase=((ma->ma_pos[3] & 0x03) << 8) + 0x30 +
 		((ma->ma_pos[3] & 0x40) >> 4);

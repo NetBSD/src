@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.27 2001/02/21 05:45:11 itojun Exp $	*/
+/*	$NetBSD: route.h,v 1.27.2.1 2001/04/09 01:58:17 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -150,7 +150,7 @@ struct ortentry {
 struct	rtstat {
 	u_quad_t rts_badredirect;	/* bogus redirect calls */
 	u_quad_t rts_dynamic;		/* routes created by redirects */
-	u_quad_t rts_newgateway;		/* routes modified by redirects */
+	u_quad_t rts_newgateway;	/* routes modified by redirects */
 	u_quad_t rts_unreach;		/* lookups which failed */
 	u_quad_t rts_wildcard;		/* lookups satisfied by a wildcard */
 };
@@ -193,7 +193,7 @@ struct rt_msghdr {
 
 #define RTV_MTU		0x1	/* init or lock _mtu */
 #define RTV_HOPCOUNT	0x2	/* init or lock _hopcount */
-#define RTV_EXPIRE	0x4	/* init or lock _hopcount */
+#define RTV_EXPIRE	0x4	/* init or lock _expire */
 #define RTV_RPIPE	0x8	/* init or lock _recvpipe */
 #define RTV_SPIPE	0x10	/* init or lock _sendpipe */
 #define RTV_SSTHRESH	0x20	/* init or lock _ssthresh */

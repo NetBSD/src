@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.28 2001/02/24 02:13:34 lukem Exp $
+#	$NetBSD: files.usb,v 1.28.2.1 2001/04/09 01:57:30 nathanw Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -138,6 +138,11 @@ file	dev/usb/uftdi.c			uftdi
 device	uplcom: ucombus
 attach	uplcom at uhub
 file	dev/usb/uplcom.c		uplcom
+
+# MCT USB-232 serial driver
+device	umct: ucombus
+attach	umct at uhub
+file	dev/usb/umct.c			umct
 
 # Scanners
 # Generic scanner support

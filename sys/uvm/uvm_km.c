@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.42.2.1 2001/04/09 01:59:15 nathanw Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -237,7 +237,7 @@ uvm_km_init(start, end)
 	kernel_map_store.pmap = pmap_kernel();
 	if (uvm_map(&kernel_map_store, &base, start - base, NULL,
 	    UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
-	    UVM_INH_NONE, UVM_ADV_RANDOM,UVM_FLAG_FIXED)) != KERN_SUCCESS)
+	    UVM_INH_NONE, UVM_ADV_RANDOM,UVM_FLAG_FIXED)) != 0)
 		panic("uvm_km_init: could not reserve space for kernel");
 	
 	/*
@@ -276,7 +276,7 @@ uvm_km_suballoc(map, min, max, size, flags, fixed, submap)
 
 	if (uvm_map(map, min, size, NULL, UVM_UNKNOWN_OFFSET, 0,
 	    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
-	    UVM_ADV_RANDOM, mapflags)) != KERN_SUCCESS) {
+	    UVM_ADV_RANDOM, mapflags)) != 0) {
 	       panic("uvm_km_suballoc: unable to allocate space in parent map");
 	}
 
@@ -304,7 +304,7 @@ uvm_km_suballoc(map, min, max, size, flags, fixed, submap)
 	 * now let uvm_map_submap plug in it...
 	 */
 
-	if (uvm_map_submap(map, *min, *max, submap) != KERN_SUCCESS)
+	if (uvm_map_submap(map, *min, *max, submap) != 0)
 		panic("uvm_km_suballoc: submap allocation failed");
 
 	return(submap);
@@ -510,7 +510,7 @@ uvm_km_kmemalloc(map, obj, size, flags)
 	if (__predict_false(uvm_map(map, &kva, size, obj, UVM_UNKNOWN_OFFSET,
 	      0, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
 			  UVM_ADV_RANDOM, (flags & UVM_KMF_TRYLOCK))) 
-			!= KERN_SUCCESS)) {
+			!= 0)) {
 		UVMHIST_LOG(maphist, "<- done (no VM)",0,0,0,0);
 		return(0);
 	}
@@ -613,11 +613,10 @@ uvm_km_free_wakeup(map, addr, size)
 	vm_map_entry_t dead_entries;
 
 	vm_map_lock(map);
-	(void)uvm_unmap_remove(map, trunc_page(addr), round_page(addr+size), 
-			 &dead_entries);
+	uvm_unmap_remove(map, trunc_page(addr), round_page(addr + size), 
+	    &dead_entries);
 	wakeup(map);
 	vm_map_unlock(map);
-
 	if (dead_entries != NULL)
 		uvm_unmap_detach(dead_entries, 0);
 }
@@ -651,7 +650,7 @@ uvm_km_alloc1(map, size, zeroit)
 	if (__predict_false(uvm_map(map, &kva, size, uvm.kernel_object,
 	      UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
 					      UVM_INH_NONE, UVM_ADV_RANDOM,
-					      0)) != KERN_SUCCESS)) {
+					      0)) != 0)) {
 		UVMHIST_LOG(maphist,"<- done (no VM)",0,0,0,0);
 		return(0);
 	}
@@ -757,7 +756,7 @@ uvm_km_valloc_align(map, size, align)
 	if (__predict_false(uvm_map(map, &kva, size, uvm.kernel_object,
 	    UVM_UNKNOWN_OFFSET, align, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
 					    UVM_INH_NONE, UVM_ADV_RANDOM,
-					    0)) != KERN_SUCCESS)) {
+					    0)) != 0)) {
 		UVMHIST_LOG(maphist, "<- done (no VM)", 0,0,0,0);
 		return(0);
 	}
@@ -801,7 +800,7 @@ uvm_km_valloc_prefer_wait(map, size, prefer)
 		if (__predict_true(uvm_map(map, &kva, size, uvm.kernel_object,
 		    prefer, 0, UVM_MAPFLAG(UVM_PROT_ALL,
 		    UVM_PROT_ALL, UVM_INH_NONE, UVM_ADV_RANDOM, 0))
-		    == KERN_SUCCESS)) {
+		    == 0)) {
 			UVMHIST_LOG(maphist,"<- done (kva=0x%x)", kva,0,0,0);
 			return(kva);
 		}

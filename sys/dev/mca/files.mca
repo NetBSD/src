@@ -1,4 +1,4 @@
-# $NetBSD: files.mca,v 1.2 2001/02/24 02:13:33 lukem Exp $
+# $NetBSD: files.mca,v 1.2.2.1 2001/04/09 01:56:45 nathanw Exp $
 #
 # Config.new file and device description for machine-independent MCA code.
 # Included by ports that need it.
@@ -10,19 +10,13 @@ attach	mca at mcabus
 file	dev/mca/mca.c			mca			needs-flag
 file	dev/mca/mca_subr.c		mca
 
-# 3Com 3C523 - new in 3.0, dissapeared in 3.1; re-port from isa attach
-# device	ef: ether, ifnet, arp, elink, i82586
-attach	ef at mca with ef_mca
-file	dev/mca/if_ef_mca.c		ef_mca
+# 3Com 3C529
+attach	ep at mca with ep_mca: elink
+file	dev/mca/if_ep_mca.c		ep_mca
 
-# 3Com 3C529 (not yet)
-#attach	ep at mca with ep_mca: elink
-#file	dev/mca/if_ep_mca.c		ep_mca
-
-# WD/SMC 80x3/A (not yet)
-#device	we: ether, ifnet, arp, dp8390nic
-#attach	we at mca
-#file	dev/mca/if_we_mca.c		we_mca
+# WD/SMC 80x3x/A and clones
+attach	we at mca with we_mca
+file	dev/mca/if_we_mca.c		we_mca
 
 # Adaptec AHA-1640
 attach	aha at mca with aha_mca: isadma
@@ -31,3 +25,17 @@ file	dev/mca/aha_mca.c		aha_mca
 # TROPIC based Token-Ring (IBM)
 attach	tr at mca with tr_mca
 file	dev/mca/if_tr_mca.c		tr_mca
+
+# 3Com 3C523
+device	elmc: ether, ifnet, arp, i82586
+attach	elmc at mca with elmc_mca
+file	dev/mca/if_elmc_mca.c		elmc_mca
+
+# serial port devices
+attach	com at mca with com_mca
+file	dev/mca/com_mca.c		com_mca
+
+# Allied Telesis AT1720
+# device in sys/conf/files
+attach	ate at mca with ate_mca
+file	dev/mca/if_ate_mca.c		ate_mca	

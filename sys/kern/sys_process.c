@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.66.2.1 2001/03/05 22:49:44 nathanw Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.66.2.2 2001/04/09 01:57:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -297,7 +297,7 @@ sys_ptrace(l, v, retval)
 			goto relebad;
 #endif
 
-		/* If the address paramter is not (int *)1, set the pc. */
+		/* If the address parameter is not (int *)1, set the pc. */
 		if ((int *)SCARG(uap, addr) != (int *)1)
 			if ((error = process_set_pc(lt, SCARG(uap, addr))) != 0)
 				goto relebad;

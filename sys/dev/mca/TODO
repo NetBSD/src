@@ -1,4 +1,4 @@
-# $NetBSD: TODO,v 1.6 2001/02/21 22:57:14 jdolecek Exp $
+# $NetBSD: TODO,v 1.6.2.1 2001/04/09 01:56:45 nathanw Exp $
 
 Bugs:
 * i386: detect the existence of MCA bus by BIOS call
@@ -9,5 +9,4 @@ Bugs:
 
 Projects:
 * bus_dma(9) support (primarily for AHA-1640 ATM)
-* 3Com 3c523 driver - linux 3c523.c driver is good as a help
 * ESDI support

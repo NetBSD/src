@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.120 2001/02/19 21:32:37 aymeric Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.120.2.1 2001/04/09 01:57:19 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.120 2001/02/13 02:07:53 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.123 2001/04/06 09:26:29 onoe Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -81,6 +81,7 @@
 #define	PCMCIA_VENDOR_TELECOMDEVICE	0x021b	/* Telecom Device */
 #define	PCMCIA_VENDOR_NOKIA	0x023d	/* Nokia Communications */
 #define	PCMCIA_VENDOR_SAMSUNG	0x0250	/* Samsung */
+#define	PCMCIA_VENDOR_IODATA2	0x028a	/* I-O DATA */
 #define	PCMCIA_VENDOR_LASAT	0x3401	/* Lasat Communications A/S */
 #define	PCMCIA_VENDOR_LEXARMEDIA	0x4e01	/* Lexar Media */
 #define	PCMCIA_VENDOR_COMPEX	0x8a01	/* Compex Corporation */
@@ -244,6 +245,9 @@
 #define	PCMCIA_CIS_IODATA_PCLATE	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_IODATA_PCLATE	0x2216
 #define	PCMCIA_STR_IODATA_PCLATE	"I-O DATA PCLA/TE"
+#define	PCMCIA_CIS_IODATA2_WNB11PCM	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_IODATA2_WNB11PCM	0x0002
+#define	PCMCIA_STR_IODATA2_WNB11PCM	"I-O DATA WN-B11/PCM"
 
 /* Farallon */
 #define	PCMCIA_CIS_FARALLON_SKYLINE	{ NULL, NULL, NULL, NULL }
@@ -437,6 +441,9 @@
 #define	PCMCIA_CIS_AIRONET_PC4800	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_AIRONET_PC4800	0x0007
 #define	PCMCIA_STR_AIRONET_PC4800	"Aironet PC4800 Wireless LAN Adapter"
+#define	PCMCIA_CIS_AIRONET_350	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_AIRONET_350	0x000a
+#define	PCMCIA_STR_AIRONET_350	"Aironet 350 Wireless LAN Adapter"
 
 /* Bay Networks */
 #define	PCMCIA_CIS_BAY_STACK_650	{ NULL, NULL, NULL, NULL }

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.1 2001/02/08 13:19:33 mrg Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.1.4.1 2001/04/09 01:55:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -607,7 +607,7 @@ netbsd32___fstat13(p, v, retval)
 		break;
 
 	case DTYPE_SOCKET:
-		error = soo_stat((struct socket *)fp->f_data, &ub);
+		error = soo_stat((struct socket *)fp->f_data, &ub, p);
 		break;
 
 	default:

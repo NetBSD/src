@@ -1,7 +1,7 @@
-/*	$NetBSD: mca.c,v 1.2 2001/02/14 19:31:19 jdolecek Exp $	*/
+/*	$NetBSD: mca.c,v 1.2.2.1 2001/04/09 01:56:48 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
  * Copyright (c) 1996-1999 Scott D. Telford.
  * All rights reserved.
  *
@@ -51,7 +51,7 @@
 
 #include <dev/mca/mcareg.h>
 #include <dev/mca/mcavar.h>
-
+#include <dev/mca/mcadevs.h>
 
 int	mca_match __P((struct device *, struct cfdata *, void *));
 void	mca_attach __P((struct device *, struct device *, void *));
@@ -96,7 +96,25 @@ mca_print(aux, pnp)
 		printf("%s slot %d: %s", pnp, ma->ma_slot + 1, devinfo);
 	}
 
-	return (UNCONF);
+	/*
+	 * Print "configured" for Memory Extension boards - there is no
+	 * meaningfull driver for them, they "just work".
+	 */
+	switch(ma->ma_id) {
+	case MCA_PRODUCT_HRAM: case MCA_PRODUCT_IQRAM: case MCA_PRODUCT_MICRAM:
+	case MCA_PRODUCT_ASTRAM: case MCA_PRODUCT_KINGRAM:
+	case MCA_PRODUCT_KINGRAM8: case MCA_PRODUCT_KINGRAM16:
+	case MCA_PRODUCT_KINGRAM609: case MCA_PRODUCT_HYPRAM:
+	case MCA_PRODUCT_QRAM1: case MCA_PRODUCT_QRAM2: case MCA_PRODUCT_EVERAM:
+	case MCA_PRODUCT_BOCARAM: case MCA_PRODUCT_IBMRAM1:
+	case MCA_PRODUCT_IBMRAM2: case MCA_PRODUCT_IBMRAM3:
+	case MCA_PRODUCT_IBMRAM4: case MCA_PRODUCT_IBMRAM5:
+	case MCA_PRODUCT_IBMRAM6: case MCA_PRODUCT_IBMRAM7:
+		printf(": configured\n");
+		return (QUIET);
+	default:
+		return (UNCONF);
+	}
 }
 
 int

@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.182 2001/02/24 01:39:11 lukem Exp $
+#	$NetBSD: files.i386,v 1.182.2.1 2001/04/09 01:53:28 nathanw Exp $
 #
 # new style config file for i386 architecture
 #
@@ -65,7 +65,6 @@ file	arch/i386/i386/db_trace.c	ddb
 file	arch/i386/i386/disksubr.c	disk
 file	arch/i386/i386/gdt.c
 file	arch/i386/i386/in_cksum.s	inet
-file	netinet/in4_cksum.c		inet
 file	arch/i386/i386/ipkdb_glue.c	ipkdb
 file	arch/i386/i386/kgdb_machdep.c	kgdb
 file	arch/i386/i386/machdep.c
@@ -170,6 +169,11 @@ file	arch/i386/pci/pceb.c		pceb
 device	pcib: isabus
 attach	pcib at pci
 file	arch/i386/pci/pcib.c		pcib
+
+# PCI-MCA bridges
+device	pcmb: mcabus
+attach	pcmb at pci
+file	arch/i386/pci/pcmb.c		pcmb
 
 # Game adapter (joystick)
 device	joy

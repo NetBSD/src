@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.78.2.1 2001/03/05 22:49:51 nathanw Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.78.2.2 2001/04/09 01:58:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -98,6 +98,7 @@ const struct proc_target {
 	{ DT_REG, N("note"),	Pnote,		NULL },
 	{ DT_REG, N("notepg"),	Pnotepg,	NULL },
 	{ DT_REG, N("map"),	Pmap,		procfs_validmap },
+	{ DT_REG, N("maps"),	Pmaps,		procfs_validmap },
 	{ DT_REG, N("cmdline"), Pcmdline,	NULL },
 	{ DT_REG, N("exe"),	Pfile,		procfs_validfile_linux },
 #undef N
@@ -553,6 +554,7 @@ procfs_getattr(v)
 	case Pnote:
 	case Pnotepg:
 	case Pmap:
+	case Pmaps:
 	case Pcmdline:
 		vap->va_nlink = 1;
 		vap->va_uid = procp->p_ucred->cr_uid;
@@ -640,11 +642,18 @@ procfs_getattr(v)
 	case Pstatus:
 	case Pnote:
 	case Pnotepg:
-	case Pmap:
 	case Pcmdline:
 	case Pmeminfo:
 	case Pcpuinfo:
 		vap->va_bytes = vap->va_size = 0;
+		break;
+	case Pmap:
+	case Pmaps:
+		/*
+		 * Advise a larger blocksize for the map files, so that
+		 * they may be read in one pass.
+		 */
+		vap->va_blocksize = 4 * PAGE_SIZE;
 		break;
 
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.76.2.1 2001/03/05 22:49:44 nathanw Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.76.2.2 2001/04/09 01:57:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -143,7 +143,7 @@ static void	 klogpri __P((int));
  * globals
  */
 
-struct	tty *constty;	/* pointer to console "window" tty */
+extern	struct tty *constty;	/* pointer to console "window" tty */
 extern	int log_open;	/* subr_log: is /dev/klog open? */
 const	char *panicstr; /* arg to first call to panic (used as a flag
 			   to indicate that panic has already been called). */

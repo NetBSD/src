@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.25 2000/11/27 08:39:48 chs Exp $	*/
+/*	$NetBSD: nfs.h,v 1.25.2.1 2001/04/09 01:58:55 nathanw Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -61,9 +61,22 @@
 #ifndef NFS_MAXATTRTIMO
 #define	NFS_MAXATTRTIMO 60
 #endif
-#define	NFS_WSIZE	32768		/* Def. write data size */
-#define	NFS_RSIZE	32768		/* Def. read data size */
+
+/*
+ * These can be overridden through <machine/param.h>, included via
+ * <sys/param.h>. This means that <sys/param.h> should always be
+ * included before this file.
+ */
+#ifndef NFS_WSIZE
+#define	NFS_WSIZE	8192		/* Def. write data size */
+#endif
+#ifndef NFS_RSIZE
+#define	NFS_RSIZE	8192		/* Def. read data size */
+#endif
+#ifndef NFS_READDIRSIZE
 #define NFS_READDIRSIZE	8192		/* Def. readdir size */
+#endif
+
 #define	NFS_DEFRAHEAD	2		/* Def. read ahead # blocks */
 #define	NFS_MAXRAHEAD	4		/* Max. read ahead # blocks */
 #define	NFS_MAXUIDHASH	64		/* Max. # of hashed uid entries/mp */
@@ -84,18 +97,8 @@ extern int nfs_niothreads;              /* Number of async_daemons desired */
  * DIRBLKSIZ.
  */
 
-#if 1
-/*
- * XXXUBC temp hack because of the removal of b_validend.
- * eventually we'll store NFS VDIR data in the page cache as well,
- * we'll fix this at that point.
- */
-#define	NFS_DIRBLKSIZ	PAGE_SIZE
-#define	NFS_DIRFRAGSIZ	PAGE_SIZE
-#else
 #define	NFS_DIRBLKSIZ	8192		/* Must be a multiple of DIRBLKSIZ */
 #define NFS_DIRFRAGSIZ	 512		/* Same as DIRBLKSIZ, generally */
-#endif
 
 /*
  * Maximum number of directory entries cached per NFS node, to avoid

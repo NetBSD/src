@@ -1,5 +1,5 @@
-/*	$NetBSD: icmp6.c,v 1.59 2001/03/01 16:31:40 itojun Exp $	*/
-/*	$KAME: icmp6.c,v 1.202 2001/03/01 16:15:52 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.59.2.1 2001/04/09 01:58:34 nathanw Exp $	*/
+/*	$KAME: icmp6.c,v 1.204 2001/03/20 02:44:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -378,6 +378,15 @@ icmp6_error(m, type, code, param)
 	icmp6->icmp6_type = type;
 	icmp6->icmp6_code = code;
 	icmp6->icmp6_pptr = htonl((u_int32_t)param);
+
+	/*
+	 * icmp6_reflect() is designed to be in the input path.
+	 * icmp6_error() can be called from both input and outut path,
+	 * and if we are in output path rcvif could contain bogus value.
+	 * clear m->m_pkthdr.rcvif for safety, we should have enough scope
+	 * information in ip header (nip6).
+	 */
+	m->m_pkthdr.rcvif = NULL;
 
 	icmp6stat.icp6s_outhist[type]++;
 	icmp6_reflect(m, sizeof(struct ip6_hdr)); /*header order: IPv6 - ICMPv6*/
@@ -1291,18 +1300,11 @@ ni6_input(m, off)
 			    subjlen, (caddr_t)&sin6.sin6_addr);
 			/* XXX kame scope hack */
 			if (IN6_IS_SCOPE_LINKLOCAL(&sin6.sin6_addr)) {
-#ifdef FAKE_LOOPBACK_IF
 				if ((m->m_flags & M_PKTHDR) != 0 &&
 				    m->m_pkthdr.rcvif) {
 					sin6.sin6_addr.s6_addr16[1] =
 					    htons(m->m_pkthdr.rcvif->if_index);
 				}
-#else
-				if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst)) {
-					sin6.sin6_addr.s6_addr16[1] =
-					    ip6->ip6_dst.s6_addr16[1];
-				}
-#endif
 			}
 			subj = (char *)&sin6;
 			if (IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &sin6.sin6_addr))
@@ -2833,7 +2835,6 @@ icmp6_mtudisc_clone(dst)
 		    RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC, &nrt);
 		if (error) {
 			rtfree(rt);
-			rtfree(nrt);
 			return NULL;
 		}
 		nrt->rt_rmx = rt->rt_rmx;
@@ -2862,9 +2863,8 @@ icmp6_mtudisc_timeout(rt, r)
 		rtrequest((int) RTM_DELETE, (struct sockaddr *)rt_key(rt),
 		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
 	} else {
-		if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0) {
-			rt->rt_rmx.rmx_mtu = 0;
-		}
+		if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
+			rt->rt_rmx.rmx_mtu = rt->rt_ifp->if_mtu;
 	}
 }
 

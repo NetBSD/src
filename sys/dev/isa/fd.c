@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.13 2001/01/18 20:28:19 jdolecek Exp $	*/
+/*	$NetBSD: fd.c,v 1.13.2.1 2001/04/09 01:56:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  * XXX This driver should be properly MI'd some day, but this allows us
  * XXX to eliminate a lot of code duplication for now.
  */
-#if !defined(alpha) && !defined(bebox) && !defined(i386) && !defined(prep)
+#if !defined(alpha) && !defined(bebox) && !defined(i386) && !defined(prep) && !defined(atari)
 #error platform not supported by this driver, yet
 #endif
 
@@ -129,7 +129,25 @@
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
+#if defined(atari)
+#include <sys/conf.h>
+
+bdev_decl(fd);
+cdev_decl(fd);
+
+/*
+ * On the atari, it is configured as fdcisa
+ */
+#define	FDCCF_DRIVE		FDCISACF_DRIVE
+#define	FDCCF_DRIVE_DEFAULT	FDCISACF_DRIVE_DEFAULT
+
+#define	fd_cd	fdisa_cd
+#define	fd_ca	fdisa_ca
+
+#else
 #include <machine/conf.h>
+#endif /* defined(atari) */
+
 #include <machine/intr.h>
 
 #include <dev/isa/isavar.h>
@@ -190,8 +208,16 @@ const struct fd_type mca_fd_types[] = {
 #endif /* NMCA > 0 */
 
 /* The order of entries in the following table is important -- BEWARE! */
+
+#if defined(atari)
 const struct fd_type fd_types[] = {
-	{ 18,2,36,2,0xff,0xcf,0x1b,0x6c,80,2880,1,FDC_500KBPS,0xf6,1, "1.44MB"    }, /* 1.44MB diskette */
+	{  9,2,18,2,0xff,0xdf,0x2a,0x50,40, 720,1,FDC_250KBPS,0xf6,1, "360KB/PC" }, /* 360kB PC diskettes */
+	{  9,2,18,2,0xff,0xdf,0x2a,0x50,80,1440,1,FDC_250KBPS,0xf6,1, "720KB"    }, /* 3.5 inch 720kB diskette */
+	{ 18,2,36,2,0xff,0xcf,0x1b,0x6c,80,2880,1,FDC_500KBPS,0xf6,1, "1.44MB"   }, /* 1.44MB diskette */
+};
+#else
+const struct fd_type fd_types[] = {
+	{ 18,2,36,2,0xff,0xcf,0x1b,0x6c,80,2880,1,FDC_500KBPS,0xf6,1, "1.44MB"   }, /* 1.44MB diskette */
 	{ 15,2,30,2,0xff,0xdf,0x1b,0x54,80,2400,1,FDC_500KBPS,0xf6,1, "1.2MB"    }, /* 1.2 MB AT-diskettes */
 	{  9,2,18,2,0xff,0xdf,0x23,0x50,40, 720,2,FDC_300KBPS,0xf6,1, "360KB/AT" }, /* 360kB in 1.2MB drive */
 	{  9,2,18,2,0xff,0xdf,0x2a,0x50,40, 720,1,FDC_250KBPS,0xf6,1, "360KB/PC" }, /* 360kB PC diskettes */
@@ -199,6 +225,7 @@ const struct fd_type fd_types[] = {
 	{  9,2,18,2,0xff,0xdf,0x23,0x50,80,1440,1,FDC_300KBPS,0xf6,1, "720KB/x"  }, /* 720kB in 1.2MB drive */
 	{  9,2,18,2,0xff,0xdf,0x2a,0x50,40, 720,2,FDC_250KBPS,0xf6,1, "360KB/x"  }, /* 360kB in 720kB drive */
 };
+#endif /* defined(atari) */
 
 /* software state, per disk (with up to 4 disks per ctlr) */
 struct fd_softc {
@@ -366,6 +393,11 @@ fdcattach(fdc)
 			    type, fa.fa_drive);
 		else
 			fa.fa_deftype = NULL;		/* unknown */
+#elif defined(atari)
+		/*
+		 * Atari has a different ordening, defaults to 1.44
+		 */
+		fa.fa_deftype = &fd_types[2];
 #else
 		/*
 		 * Default to 1.44MB on Alpha and BeBox.  How do we tell

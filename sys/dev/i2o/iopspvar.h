@@ -1,4 +1,4 @@
-/*	$NetBSD: iopspvar.h,v 1.2 2000/11/09 12:51:36 ad Exp $	*/
+/*	$NetBSD: iopspvar.h,v 1.2.4.1 2001/04/09 01:56:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -62,9 +62,8 @@ struct iopsp_softc {
 	struct	scsipi_adapter sc_adapter;	/* scsipi adapter */
 	struct	scsipi_link sc_link;		/* Prototype link */
 	struct	iop_initiator sc_ii;		/* I2O initiator state */
-	u_int	sc_tid;				/* Bus port TID */
 	u_short	*sc_tidmap;			/* Target/LUN -> TID map */
-	u_int	sc_chgindicator;		/* Last LCT change # */
+	u_int	sc_chgind;			/* Last LCT change # */
 #ifdef I2OVERBOSE
 	struct	iopsp_target *sc_targetmap;	/* Target information */
 #endif

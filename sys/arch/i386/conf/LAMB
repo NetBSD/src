@@ -1,4 +1,4 @@
-#	$NetBSD: LAMB,v 1.2 2001/03/04 07:34:20 itojun Exp $
+#	$NetBSD: LAMB,v 1.2.2.1 2001/04/09 01:53:28 nathanw Exp $
 #
 #	LAMB -- for "LAMB" router, http://www.wildlab.com/
 #
@@ -57,6 +57,8 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 options 	LKM		# loadable kernel modules
+
+options 	"TIMER_FREQ=1189200"	# LAMB uses nonstandard timer freq
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# cheap kernel consistency checks

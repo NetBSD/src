@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs.h,v 1.12 2001/02/07 10:23:47 haya Exp $	*/
+/*	$NetBSD: cardbusdevs.h,v 1.12.2.1 2001/04/09 01:55:54 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.15 2001/02/07 09:56:21 haya Exp 
+ *	NetBSD: cardbusdevs,v 1.17 2001/03/14 01:41:09 christos Exp 
  */
 
 /*
@@ -51,6 +51,7 @@
 #define	CARDBUS_VENDOR_OPTI	0x1045		/* Opti */
 #define	CARDBUS_VENDOR_HITACHI	0x1054		/* Hitachi */
 #define	CARDBUS_VENDOR_3COM	0x10b7		/* 3Com */
+#define	CARDBUS_VENDOR_ADVSYS	0x10cd		/* Advanced System Products */
 #define	CARDBUS_VENDOR_REALTEK	0x10ec		/* Realtek Semiconductor */
 #define	CARDBUS_VENDOR_IODATA	0x10fc		/* IO Data */
 #define	CARDBUS_VENDOR_ACCTON	0x1113		/* Accton Technology */
@@ -82,6 +83,9 @@
 #define	CARDBUS_PRODUCT_3COM_3C656B_E	0x6562		/* 3CCFEM656B 10/100 Ethernet */
 #define	CARDBUS_PRODUCT_3COM_3C656C_E	0x6564		/* 3CXFEM656C 10/100 Ethernet */
 
+/* Advanced System Products products */
+#define	CARDBUS_PRODUCT_ADVSYS_ULTRA	0x1300		/* Ultra SCSI */
+
 /* Realtek (Creative Labs?) products */
 #define	CARDBUS_PRODUCT_REALTEK_RT8138	0x8138		/* 8138 Ethernet */
 
@@ -102,6 +106,7 @@
 
 /* AboCom products */
 #define	CARDBUS_PRODUCT_ABOCOM_FE2500	0xab02		/* FE2500 10/100 Ethernet */
+#define	CARDBUS_PRODUCT_ABOCOM_PCM200	0xab03		/* FE2500 10/100 Ethernet */
 
 /* Intel products */
 #define	CARDBUS_PRODUCT_INTEL_82557	0x1229		/* 82557 Fast Ethernet LAN Controller */

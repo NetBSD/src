@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.27 2000/10/11 22:03:33 sommerfeld Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.27.2.1 2001/04/09 01:56:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -127,8 +127,8 @@ tlphymatch(parent, match, aux)
 {
 	struct mii_attach_args *ma = aux;       
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxTI &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxTI_TLAN10T)
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_TI &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_TI_TLAN10T)
 		return (10);
 
 	return (0);
@@ -145,7 +145,7 @@ tlphyattach(parent, self, aux)
 	struct mii_data *mii = ma->mii_data;
 	const char *sep = "";
 
-	printf(": %s, rev. %d\n", MII_STR_xxTI_TLAN10T,
+	printf(": %s, rev. %d\n", MII_STR_TI_TLAN10T,
 	    MII_REV(ma->mii_id2));
 
 	sc->sc_mii.mii_inst = mii->mii_instance;

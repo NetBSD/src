@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.169 2001/01/08 02:03:48 fvdl Exp $	*/
+/*	$NetBSD: sd.c,v 1.169.2.1 2001/04/09 01:57:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -409,11 +409,14 @@ sdopen(dev, flag, fmt, p)
 
 		sc_link->flags |= SDEV_OPEN;
 
-		/* Lock the pack in. */
-		error = scsipi_prevent(sc_link, PR_PREVENT,
-		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE);
-		if (error)
-			goto bad;
+		if (sd->sc_link->flags & SDEV_REMOVABLE) {
+			/* Lock the pack in. */
+			error = scsipi_prevent(sc_link, PR_PREVENT,
+					       XS_CTL_IGNORE_ILLEGAL_REQUEST
+					       | XS_CTL_IGNORE_MEDIA_CHANGE);
+			if (error)
+				goto bad;
+		}
 
 		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
 			sc_link->flags |= SDEV_MEDIA_LOADED;
@@ -526,8 +529,12 @@ sdclose(dev, flag, fmt, p)
 
 		scsipi_wait_drain(sd->sc_link);
 
-		scsipi_prevent(sd->sc_link, PR_ALLOW,
-		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_NOT_READY);
+		if (sd->sc_link->flags & SDEV_REMOVABLE) {
+			scsipi_prevent(sd->sc_link, PR_ALLOW,
+				       XS_CTL_IGNORE_ILLEGAL_REQUEST
+				       | XS_CTL_IGNORE_NOT_READY);
+		}
+
 		sd->sc_link->flags &= ~SDEV_OPEN;
 
 		if (! (sd->sc_link->flags & SDEV_KEEP_LABEL))

@@ -1,4 +1,4 @@
-/*      $NetBSD: adv.h,v 1.7 2000/03/23 07:01:28 thorpej Exp $        */
+/*      $NetBSD: adv.h,v 1.7.6.1 2001/04/09 01:56:04 nathanw Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
@@ -94,6 +94,7 @@ struct adv_control
 
 int adv_init __P((ASC_SOFTC *sc));
 void adv_attach __P((ASC_SOFTC *sc));
+int adv_detach __P((ASC_SOFTC *sc, int));
 int adv_intr __P((void *arg));
 ADV_CCB *adv_ccb_phys_kv __P((ASC_SOFTC *, u_long));
 

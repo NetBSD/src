@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.30 2001/01/19 23:04:23 eeh Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.30.2.1 2001/04/09 01:56:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -91,7 +91,8 @@
 #define	NCR_VARIANT_FAS408		6
 #define	NCR_VARIANT_FAS216		7
 #define	NCR_VARIANT_AM53C974		8
-#define	NCR_VARIANT_MAX			9
+#define	NCR_VARIANT_FAS366		9
+#define	NCR_VARIANT_MAX			10
 
 /*
  * ECB. Holds additional information for each SCSI command Comments: We
@@ -176,9 +177,12 @@ struct ncr53c9x_tinfo {
 #define T_SYNCHOFF	0x10	/* SYNC mode for is permanently off */
 #define T_RSELECTOFF	0x20	/* RE-SELECT mode is off */
 #define T_TAG		0x40	/* Turn on TAG QUEUEs */
+#define T_WIDE		0x80	/* Negotiate wide options */
 	u_char  period;		/* Period suggestion */
 	u_char  offset;		/* Offset suggestion */
+	u_char  cfg3;		/* per target config 3  */
 	u_char	nextag;		/* Next available tag */
+	u_char  width;		/* width suggesion */
 	LIST_HEAD(lun_list, ncr53c9x_linfo) luns;
 	struct ncr53c9x_linfo *lun[NCR_NLUN]; /* For speedy lookups */
 };
@@ -286,6 +290,7 @@ struct ncr53c9x_softc {
 	u_char	sc_espintr;
 	u_char	sc_espstat;
 	u_char	sc_espstep;
+	u_char  sc_espstat2;
 	u_char	sc_espfflags;
 
 	/* Lists of command blocks */
@@ -356,6 +361,7 @@ struct ncr53c9x_softc {
 /* values for sc_features */
 #define	NCR_F_HASCFG3	0x01	/* chip has CFG3 register */
 #define	NCR_F_FASTSCSI	0x02	/* chip supports Fast mode */
+#define NCR_F_DMASELECT 0x04	/*      can do dmaselect */
 
 /* values for sc_msgout */
 #define SEND_DEV_RESET		0x0001
@@ -364,8 +370,8 @@ struct ncr53c9x_softc {
 #define SEND_REJECT		0x0008
 #define SEND_IDENTIFY  		0x0010
 #define SEND_ABORT		0x0020
-#define SEND_SDTR		0x0040
-#define SEND_WDTR		0x0080
+#define SEND_WDTR		0x0040
+#define SEND_SDTR		0x0080
 #define SEND_TAG		0x0100
 
 /* SCSI Status codes */
@@ -435,5 +441,3 @@ int	ncr53c9x_scsi_cmd(struct scsipi_xfer *);
 void	ncr53c9x_reset(struct ncr53c9x_softc *);
 int	ncr53c9x_intr(void *);
 void	ncr53c9x_init(struct ncr53c9x_softc *, int);
-
-extern	int ncr53c9x_dmaselect;

@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.2 2001/01/19 12:44:45 martin Exp $ 
+ *	$Id: i4b_i4bdrv.c,v 1.2.2.1 2001/04/09 01:58:44 nathanw Exp $ 
  *
  * $FreeBSD$
  *
@@ -410,11 +410,11 @@ i4bioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 				break;
 			}
 
-			cd->controller = mcr->controller;	/* fill cd */
+			cd->bri = mcr->controller;	/* fill cd */
 			cd->bprot = mcr->bprot;
 			cd->driver = mcr->driver;
 			cd->driver_unit = mcr->driver_unit;
-			cd->cr = get_rand_cr(ctrl_desc[cd->controller].unit);
+			cd->cr = get_rand_cr(cd->bri);
 
 			cd->shorthold_data.shorthold_algorithm = mcr->shorthold_data.shorthold_algorithm;
 			cd->shorthold_data.unitlen_time  = mcr->shorthold_data.unitlen_time;
@@ -467,11 +467,6 @@ i4bioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 
 			cd->isdntxdelay = mcr->txdelay;
 			
-			/* check whether we have a pointer. Seems like */
-			/* this should be adequate. GJ 19.09.97 */
-			if(ctrl_desc[cd->controller].N_CONNECT_REQUEST == NULL)
-/*XXX*/				SET_CAUSE_VAL(cd->cause_in, CAUSE_I4B_NOCHAN);
-
 			if((GET_CAUSE_VAL(cd->cause_in)) != CAUSE_I4B_NORMAL)
 			{
 				i4b_l4_disconnect_ind(cd);
@@ -479,7 +474,7 @@ i4bioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 			}
 			else
 			{
-				(*ctrl_desc[cd->controller].N_CONNECT_REQUEST)(mcr->cdid);
+				ctrl_desc[cd->bri].N_CONNECT_REQUEST(mcr->cdid);
 			}
 			break;
 		}
@@ -514,7 +509,7 @@ i4bioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 			
 			NDBGL4(L4_TIMO, "I4B_CONNECT_RESP max_idle_time set to %ld seconds", (long)cd->max_idle_time);
 
-			(*ctrl_desc[cd->controller].N_CONNECT_RESPONSE)(mcrsp->cdid, mcrsp->response, mcrsp->cause);
+			(*ctrl_desc[cd->bri].N_CONNECT_RESPONSE)(mcrsp->cdid, mcrsp->response, mcrsp->cause);
 			break;
 		}
 		
@@ -536,7 +531,7 @@ i4bioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 			/* preset causes with our cause */
 			cd->cause_in = cd->cause_out = mdr->cause;
 			
-			(*ctrl_desc[cd->controller].N_DISCONNECT_REQUEST)(mdr->cdid, mdr->cause);
+			(*ctrl_desc[cd->bri].N_DISCONNECT_REQUEST)(mdr->cdid, mdr->cause);
 			break;
 		}
 		
@@ -728,7 +723,7 @@ i4bioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 
 			T400_stop(cd);
 			
-			(*ctrl_desc[cd->controller].N_ALERT_REQUEST)(mar->cdid);
+			(*ctrl_desc[cd->bri].N_ALERT_REQUEST)(mar->cdid);
 
 			break;
 		}
@@ -761,7 +756,7 @@ i4bioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 		}
 		
 		/* Download request */
-
+#if 0	/* XXX */
 		case I4B_CTRL_DOWNLOAD:
 		{
 			struct isdn_dr_prot *prots = NULL, *prots2 = NULL;
@@ -887,6 +882,7 @@ diag_done:
 
 			break;
 		}
+#endif
 
 		/* default */
 		

@@ -1,9 +1,9 @@
-/*	$NetBSD: if_iy.c,v 1.45 2000/12/14 06:59:02 thorpej Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.45.2.1 2001/04/09 01:56:41 nathanw Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996,2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -474,14 +474,12 @@ struct iy_softc *sc;
 
 	temp = bus_space_read_1(iot, ioh, REG1);
 	bus_space_write_1(iot, ioh, REG1,
-	    temp | XMT_CHAIN_INT | XMT_CHAIN_ERRSTOP | RCV_DISCARD_BAD);
+	    temp | /* XMT_CHAIN_INT | XMT_CHAIN_ERRSTOP | */ RCV_DISCARD_BAD);
 	
 	if (ifp->if_flags & (IFF_PROMISC|IFF_ALLMULTI)) {
 		temp = MATCH_ALL;
-	} else if (sc->sc_ethercom.ec_multicnt) {
-		temp = MATCH_MULTI;
 	} else 
-		temp = MATCH_ID;
+		temp = MATCH_BRDCST;
 
 	bus_space_write_1(iot, ioh, RECV_MODES_REG, temp);
 
@@ -573,11 +571,10 @@ struct iy_softc *sc;
 	}
 #endif
 
-
 	bus_space_write_1(iot, ioh, RCV_LOWER_LIMIT_REG, 0);
-	bus_space_write_1(iot, ioh, RCV_UPPER_LIMIT_REG, (sc->rx_size - 2) >> 8);
-	bus_space_write_1(iot, ioh, XMT_LOWER_LIMIT_REG, sc->rx_size >> 8);
-	bus_space_write_1(iot, ioh, XMT_UPPER_LIMIT_REG, sc->sram >> 8);
+	bus_space_write_1(iot, ioh, RCV_UPPER_LIMIT_REG, (sc->rx_size -2) >>8);
+	bus_space_write_1(iot, ioh, XMT_LOWER_LIMIT_REG, sc->rx_size >>8);
+	bus_space_write_1(iot, ioh, XMT_UPPER_LIMIT_REG, (sc->sram - 2) >>8);
 
 	temp = bus_space_read_1(iot, ioh, REG1);
 #ifdef IYDEBUG
@@ -606,6 +603,8 @@ struct iy_softc *sc;
 
 	bus_space_write_1(iot, ioh, INT_MASK_REG, ALL_INTS & ~(RX_BIT|TX_BIT));
 	bus_space_write_1(iot, ioh, STATUS_REG, ALL_INTS); /* clear ints */
+
+	bus_space_write_1(iot, ioh, RCV_COPY_THRESHOLD, 0);
 
 	bus_space_write_2(iot, ioh, RCV_START_LOW, 0);
 	bus_space_write_2(iot, ioh, RCV_STOP_LOW,  sc->rx_size - 2);
@@ -637,6 +636,7 @@ struct ifnet *ifp;
 	u_int llen, residual;
 	int avail;
 	caddr_t data;
+	unsigned temp;
 	u_int16_t resval, stat;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
@@ -648,6 +648,8 @@ struct ifnet *ifp;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
                 return;
+
+	iy_intr_tx(sc);
 
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
@@ -707,7 +709,18 @@ struct ifnet *ifp;
 			printf("%s: len = %d, avail = %d, setting OACTIVE\n",
 			    sc->sc_dev.dv_xname, len, avail);
 #endif
+			/* mark interface as full ... */
 			ifp->if_flags |= IFF_OACTIVE;
+
+			/* and wait for any transmission result */
+			bus_space_write_1(iot, ioh, 0, BANK_SEL(2));
+
+			temp = bus_space_read_1(iot, ioh, REG1);
+			bus_space_write_1(iot, ioh, REG1,
+	    			temp & ~XMT_CHAIN_INT);
+
+			bus_space_write_1(iot, ioh, 0, BANK_SEL(0));
+
 			return;
 		}
 	
@@ -830,6 +843,13 @@ struct ifnet *ifp;
 		sc->tx_last = last;
 		sc->tx_end = end;
 	}
+	/* and wait only for end of transmission chain */
+	bus_space_write_1(iot, ioh, 0, BANK_SEL(2));
+
+	temp = bus_space_read_1(iot, ioh, REG1);
+	bus_space_write_1(iot, ioh, REG1, temp | XMT_CHAIN_INT);
+
+	bus_space_write_1(iot, ioh, 0, BANK_SEL(0));
 }
 
 
@@ -925,14 +945,18 @@ int
 iyintr(arg)
 	void *arg;
 {
-	struct iy_softc *sc = arg;
+	struct iy_softc *sc;
+	struct ifnet *ifp;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 
 	u_short status;
 
+	sc = arg;
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
+
+	ifp = &sc->sc_ethercom.ec_if;
 
 	status = bus_space_read_1(iot, ioh, STATUS_REG);
 #ifdef IYDEBUG
@@ -959,7 +983,10 @@ iyintr(arg)
 		bus_space_write_1(iot, ioh, STATUS_REG, RX_INT);
 	}
 	if (status & TX_INT) {
-		iy_intr_tx(sc);
+		/* Tell feeders we may be able to accept more data... */
+		ifp->if_flags &= ~IFF_OACTIVE;
+		/* and get more data. */
+		iystart(ifp);
 		bus_space_write_1(iot, ioh, STATUS_REG, TX_INT);
 	}
 
@@ -1136,12 +1163,14 @@ struct iy_softc *sc;
 			sc->tx_start = sc->tx_end;
 		ifp->if_flags &= ~IFF_OACTIVE;
 		
+		if (txstat2 & 0x0020)
+			ifp->if_collisions += 16;
+		else
+			ifp->if_collisions += txstat2 & 0x000f;
+
 		if ((txstat2 & 0x2000) == 0)
 			++ifp->if_oerrors;
-		if (txstat2 & 0x000f)
-			ifp->if_oerrors += txstat2 & 0x000f;
 	}
-	ifp->if_flags &= ~IFF_OACTIVE;
 }
 
 int
@@ -1317,7 +1346,7 @@ iy_mc_setup(sc)
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 
-	len = 6 * ecp->ec_multicnt + 6;
+	len = 6 * ecp->ec_multicnt;
 	
 	avail = sc->tx_start - sc->tx_end;
 	if (avail <= 0)
@@ -1330,7 +1359,7 @@ iy_mc_setup(sc)
 	last = sc->rx_size;
 
 	bus_space_write_1(iot, ioh, 0, BANK_SEL(2));
-	bus_space_write_1(iot, ioh, RECV_MODES_REG, MATCH_MULTI);
+	bus_space_write_1(iot, ioh, RECV_MODES_REG, MATCH_BRDCST);
 	/* XXX VOODOO */
 	temp = bus_space_read_1(iot, ioh, MEDIA_SELECT);
 	bus_space_write_1(iot, ioh, MEDIA_SELECT, temp);
@@ -1342,9 +1371,6 @@ iy_mc_setup(sc)
 	bus_space_write_2(iot, ioh, MEM_PORT_REG, 0);
 	bus_space_write_stream_2(iot, ioh, MEM_PORT_REG, htole16(len));
 	
-	bus_space_write_multi_stream_2(iot, ioh, MEM_PORT_REG,
-	    LLADDR(ifp->if_sadl), 3);
-
 	ETHER_FIRST_MULTI(step, ecp, enm);
 	while(enm) {
 		bus_space_write_multi_stream_2(iot, ioh, MEM_PORT_REG,
@@ -1435,10 +1461,8 @@ setupmulti:
 	bus_space_write_1(iot, ioh, 0, BANK_SEL(2));
 	if (ifp->if_flags & (IFF_PROMISC|IFF_ALLMULTI)) {
 		temp = MATCH_ALL;
-	} else if (sc->sc_ethercom.ec_multicnt) {
-		temp = MATCH_MULTI;
 	} else 
-		temp = MATCH_ID;
+		temp = MATCH_BRDCST;
 
 	bus_space_write_1(iot, ioh, RECV_MODES_REG, temp);
 	/* XXX VOODOO */

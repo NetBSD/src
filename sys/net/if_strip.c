@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.35.2.1 2001/03/05 22:49:54 nathanw Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.35.2.2 2001/04/09 01:58:15 nathanw Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -446,7 +446,7 @@ stripopen(dev, tp)
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 
-	if (tp->t_linesw && (tp->t_linesw->l_no == STRIPDISC))
+	if (tp->t_linesw->l_no == STRIPDISC)
 		return (0);
 
 	for (nstrip = NSTRIP, sc = strip_softc; --nstrip >= 0; sc++) {

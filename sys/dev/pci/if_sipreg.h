@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sipreg.h,v 1.4 2000/09/21 04:05:43 thorpej Exp $	*/
+/*	$NetBSD: if_sipreg.h,v 1.4.2.1 2001/04/09 01:57:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -282,7 +282,9 @@ struct sip_desc {
 #define	RFCR_RFADDR_MC6	  0x000a0000	/* multicast hash word 6 */
 #define	RFCR_RFADDR_MC7	  0x000b0000	/* multicast hash word 7 */
 
-#define	RFCR_NS_RFADDR_PMATCH	0x0000	/* perfect match */
+#define	RFCR_NS_RFADDR_PMATCH0	0x0000	/* perfect match octets 1-0 */
+#define	RFCR_NS_RFADDR_PMATCH2	0x0002	/* perfect match octets 3-2 */
+#define	RFCR_NS_RFADDR_PMATCH4	0x0004	/* perfect match octets 5-4 */
 #define	RFCR_NS_RFADDR_PCOUNT	0x0006	/* pattern count */
 #define	RFCR_NS_RFADDR_FILTMEM	0x0200	/* filter memory (hash/pattern) */
 
@@ -353,7 +355,7 @@ struct sip_desc {
 #define	SIP_WAKEMASK2	0xc8
 #define	SIP_WAKEMASK3	0xcc
 #define	SIP_WAKEMASK4	0xe0
-#define	SIP_WASKMASK5	0xe4
+#define	SIP_WAKEMASK5	0xe4
 #define	SIP_WAKEMASK6	0xe8
 #define	SIP_WAKEMASK7	0xec
 
@@ -365,7 +367,7 @@ struct sip_desc {
 #define	SIP_EEPROM_OPC_READ	0x06
 
 /*
- * Serial EEPROM address map (byte address).
+ * Serial EEPROM address map (byte address) for the SiS900.
  */
 #define	SIP_EEPROM_SIGNATURE	0x00	/* SiS 900 signature */
 #define	SIP_EEPROM_MASK		0x02	/* `enable' mask */
@@ -379,5 +381,11 @@ struct sip_desc {
 #define	SIP_EEPROM_ETHERNET_ID1	0x12	/* Ethernet address 2, 3 */
 #define	SIP_EEPROM_ETHERNET_ID2	0x14	/* Ethernet address 4, 5 */
 #define	SIP_EEPROM_CHECKSUM	0x16	/* checksum */
+
+/*
+ * Serial EEPROM data (byte addresses) for the DP83815.
+ */
+#define	SIP_DP83815_EEPROM_CHECKSUM	0x16	/* checksum */
+#define	SIP_DP83815_EEPROM_LENGTH	0x18	/* length of EEPROM data */
 
 #endif /* _DEV_PCI_IF_SIPREG_H_ */

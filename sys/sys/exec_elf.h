@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.40 2000/12/15 06:14:21 mycroft Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.40.2.1 2001/04/09 01:59:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -158,6 +158,18 @@ typedef struct {
 /* e_ident[EI_OSABI] */
 #define	ELFOSABI_SYSV		0	/* UNIX System V ABI */
 #define	ELFOSABI_HPUX		1	/* HP-UX operating system */
+#define ELFOSABI_NETBSD		2	/* NetBSD */
+#define ELFOSABI_LINUX		3	/* GNU/Linux */
+#define ELFOSABI_HURD		4	/* GNU/Hurd */
+#define ELFOSABI_86OPEN		5	/* 86Open */
+#define ELFOSABI_SOLARIS	6	/* Solaris */
+#define ELFOSABI_MONTEREY	7	/* Monterey */
+#define ELFOSABI_IRIX		8	/* IRIX */
+#define ELFOSABI_FREEBSD	9	/* FreeBSD */
+#define ELFOSABI_TRU64		10	/* TRU64 UNIX */
+#define ELFOSABI_MODESTO	11	/* Novell Modesto */
+#define ELFOSABI_OPENBSD	12	/* OpenBSD */
+#define ELFOSABI_ARM		97	/* ARM */
 #define	ELFOSABI_STANDALONE	255	/* Standalone (embedded) application */
 
 /* e_type */

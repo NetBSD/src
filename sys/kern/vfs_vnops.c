@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.45 2000/11/27 08:39:44 chs Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.45.2.1 2001/04/09 01:58:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -63,7 +63,7 @@
 #endif
 
 struct 	fileops vnops =
-	{ vn_read, vn_write, vn_ioctl, vn_fcntl, vn_poll, vn_closefile };
+    { vn_read, vn_write, vn_ioctl, vn_fcntl, vn_poll, vn_stat, vn_closefile };
 
 /*
  * Common code for vnode open operations.
@@ -195,6 +195,10 @@ void
 vn_marktext(vp)
 	struct vnode *vp;
 {
+	if ((vp->v_flag & VTEXT) == 0) {
+		uvmexp.vnodepages -= vp->v_uvm.u_obj.uo_npages;
+		uvmexp.vtextpages += vp->v_uvm.u_obj.uo_npages;
+	}
 	vp->v_flag |= VTEXT;
 }
 
@@ -430,11 +434,12 @@ vn_write(fp, offset, uio, cred, flags)
  * File table vnode stat routine.
  */
 int
-vn_stat(vp, sb, p)
-	struct vnode *vp;
+vn_stat(fdata, sb, p)
+	void *fdata;
 	struct stat *sb;
 	struct proc *p;
 {
+	struct vnode *vp = fdata;
 	struct vattr va;
 	int error;
 	mode_t mode;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.57.2.1 2001/03/05 22:49:36 nathanw Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.57.2.2 2001/04/09 01:57:16 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -268,6 +268,12 @@ static const struct wi_pcmcia_product wi_pcmcia_products[] = {
 	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
 	  PCMCIA_CIS_NTT_ME_WLAN,
 	  PCMCIA_STR_NTT_ME_WLAN,
+	  1 },
+
+	{ PCMCIA_VENDOR_IODATA2,
+	  PCMCIA_PRODUCT_IODATA2_WNB11PCM,
+	  PCMCIA_CIS_IODATA2_WNB11PCM,
+	  PCMCIA_STR_IODATA2_WNB11PCM,
 	  1 },
 
 	{ 0,
@@ -806,7 +812,21 @@ static int wi_cmd(sc, cmd, val)
 {
 	int			i, s = 0;
 
+	/* wait for the busy bit to clear */
+	for (i = 0; i < WI_TIMEOUT; i++) {
+		if (!(CSR_READ_2(sc, WI_COMMAND) & WI_CMD_BUSY)) {
+			break;
+		}
+		DELAY(10*1000); /* 10 m sec */
+	}
+
+	if (i == WI_TIMEOUT) {
+		return(ETIMEDOUT);
+	}
+
 	CSR_WRITE_2(sc, WI_PARAM0, val);
+	CSR_WRITE_2(sc, WI_PARAM1, 0);
+	CSR_WRITE_2(sc, WI_PARAM2, 0);
 	CSR_WRITE_2(sc, WI_COMMAND, cmd);
 
 	for (i = 0; i < WI_TIMEOUT; i++) {
@@ -840,6 +860,8 @@ static int wi_cmd(sc, cmd, val)
 static void wi_reset(sc)
 	struct wi_softc		*sc;
 {
+	DELAY(100*1000); /* 100 m sec */
+
 	if (wi_cmd(sc, WI_CMD_INI, 0))
 		printf("%s: init failed\n", sc->sc_dev.dv_xname);
 	CSR_WRITE_2(sc, WI_INT_EN, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.3 2001/02/27 08:54:17 sato Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.3.2.1 2001/04/09 01:55:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -37,7 +37,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: bivideo.c,v 1.3 2001/02/27 08:54:17 sato Exp $";
+    "$Id: bivideo.c,v 1.3.2.1 2001/04/09 01:55:57 nathanw Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,9 +85,14 @@ struct bivideo_softc {
 	void			*sc_powerhook;	/* power management hook */
 	int			sc_powerstate;
 #define PWRSTAT_SUSPEND		(1<<0)
-#define PWRSTAT_LCD		(1<<1)
-#define PWRSTAT_BACKLIGHT	(1<<2)
+#define PWRSTAT_VIDEOOFF	(1<<1)
+#define PWRSTAT_LCD		(1<<2)
+#define PWRSTAT_BACKLIGHT	(1<<3)
 #define PWRSTAT_ALL		(0xffffffff)
+	int			sc_lcd_inited;
+#define BACKLIGHT_INITED	(1<<0)
+#define BRIGHTNESS_INITED	(1<<1)
+#define CONTRAST_INITED		(1<<2)
 	int			sc_brightness;
 	int			sc_brightness_save;
 	int			sc_max_brightness;
@@ -99,9 +104,9 @@ struct bivideo_softc {
 static int bivideo_init(struct hpcfb_fbconf *);
 static void bivideo_power(int, void *);
 static void bivideo_update_powerstate(struct bivideo_softc *, int);
-void	bivideo_get_backlight(struct bivideo_softc *);
-void	bivideo_init_brightness(struct bivideo_softc *);
-void	bivideo_init_contrast(struct bivideo_softc *);
+void	bivideo_init_backlight(struct bivideo_softc *, int);
+void	bivideo_init_brightness(struct bivideo_softc *, int);
+void	bivideo_init_contrast(struct bivideo_softc *, int);
 void	bivideo_set_brightness(struct bivideo_softc *, int);
 void	bivideo_set_contrast(struct bivideo_softc *, int);
 
@@ -173,11 +178,10 @@ bivideoattach(struct device *parent, struct device *self, void *aux)
 			sc->sc_dev.dv_xname);
 
 	/* initialize backlight brightness and lcd contrast */
-	sc->sc_brightness = sc->sc_contrast = 
-	sc->sc_max_brightness = sc->sc_max_contrast = -1;
-	bivideo_get_backlight(sc);
-	bivideo_init_brightness(sc);
-	bivideo_init_contrast(sc);
+	sc->sc_lcd_inited = 0;
+	bivideo_init_brightness(sc, 1);
+	bivideo_init_contrast(sc, 1);
+	bivideo_init_backlight(sc, 1);
 
 	ha.ha_console = console_flag;
 	ha.ha_accessops = &bivideo_ha;
@@ -351,12 +355,14 @@ bivideo_update_powerstate(struct bivideo_softc *sc, int updates)
 	if (updates & PWRSTAT_LCD)
 		config_hook_call(CONFIG_HOOK_POWERCONTROL,
 		    CONFIG_HOOK_POWERCONTROL_LCD,
-		    (void*)!(sc->sc_powerstate & PWRSTAT_SUSPEND));
+		    (void*)!(sc->sc_powerstate & 
+				(PWRSTAT_VIDEOOFF|PWRSTAT_SUSPEND)));
 
 	if (updates & PWRSTAT_BACKLIGHT)
 		config_hook_call(CONFIG_HOOK_POWERCONTROL,
 		    CONFIG_HOOK_POWERCONTROL_LCDLIGHT,
-		    (void*)(!(sc->sc_powerstate & PWRSTAT_SUSPEND) &&
+		    (void*)(!(sc->sc_powerstate & 
+				(PWRSTAT_VIDEOOFF|PWRSTAT_SUSPEND)) &&
 			     (sc->sc_powerstate & PWRSTAT_BACKLIGHT)));
 }
 
@@ -395,54 +401,67 @@ bivideo_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		 * This driver can't set color map.
 		 */
 		return (EINVAL);
+	
+	case WSDISPLAYIO_SVIDEO:
+		if (*(int *)data == WSDISPLAYIO_VIDEO_OFF)
+			sc->sc_powerstate |= PWRSTAT_VIDEOOFF;
+		else
+			sc->sc_powerstate &= ~PWRSTAT_VIDEOOFF;
+		bivideo_update_powerstate(sc, PWRSTAT_ALL);
+		return 0;
+
+	case WSDISPLAYIO_GVIDEO:
+		*(int *)data = (sc->sc_powerstate&PWRSTAT_VIDEOOFF) ? 
+				WSDISPLAYIO_VIDEO_OFF:WSDISPLAYIO_VIDEO_ON;
+		return 0;
 
 
 	case WSDISPLAYIO_GETPARAM:
 		dispparam = (struct wsdisplay_param*)data;
 		switch (dispparam->param) {
 		case WSDISPLAYIO_PARAM_BACKLIGHT:
-			VPRINTF(("bivideo_ioctl: GETPARAM:BACKLIGHT call\n"));
-			if (sc->sc_max_brightness == -1)
-				bivideo_init_brightness(sc);
-			bivideo_get_backlight(sc);
+			VPRINTF(("bivideo_ioctl: GET:BACKLIGHT\n"));
+			bivideo_init_brightness(sc, 0);
+			bivideo_init_backlight(sc, 0);
+			VPRINTF(("bivideo_ioctl: GET:(real)BACKLIGHT %d\n",
+				 (sc->sc_powerstate&PWRSTAT_BACKLIGHT)? 1: 0));
 			dispparam->min = 0;
 			dispparam->max = 1;
 			if (sc->sc_max_brightness > 0)
 				dispparam->curval = sc->sc_brightness > 0? 1: 0;
 			else
 				dispparam->curval =
-				    (sc->sc_powerstate & PWRSTAT_BACKLIGHT) ? 1 : 0;
-			VPRINTF(("bivideo_ioctl: GETPARAM:BACKLIGHT:%d\n",
-				dispparam->curval));
+				    (sc->sc_powerstate&PWRSTAT_BACKLIGHT) ? 1: 0;
+			VPRINTF(("bivideo_ioctl: GET:BACKLIGHT:%d(%s)\n",
+				dispparam->curval,
+				sc->sc_max_brightness > 0? "brightness": "light"));
 			return 0;
 			break;
 		case WSDISPLAYIO_PARAM_CONTRAST:
-			VPRINTF(("bivideo_ioctl: GETPARAM:CONTRAST call\n"));
-			if (sc->sc_max_contrast == -1)
-				bivideo_init_contrast(sc);
+			VPRINTF(("bivideo_ioctl: GET:CONTRAST\n"));
+			bivideo_init_contrast(sc, 0);
 			if (sc->sc_max_contrast > 0) {
 				dispparam->min = 0;
 				dispparam->max = sc->sc_max_contrast;
 				dispparam->curval = sc->sc_contrast;
-				VPRINTF(("bivideo_ioctl: GETPARAM:CONTRAST max=%d, current=%d\n", sc->sc_max_contrast, sc->sc_contrast));
+				VPRINTF(("bivideo_ioctl: GET:CONTRAST max=%d, current=%d\n", sc->sc_max_contrast, sc->sc_contrast));
 				return 0;
 			} else {
-				VPRINTF(("bivideo_ioctl: GETPARAM:CONTRAST ret\n"));
+				VPRINTF(("bivideo_ioctl: GET:CONTRAST EINVAL\n"));
 				return (EINVAL);
 			}
 			break;	
 		case WSDISPLAYIO_PARAM_BRIGHTNESS:
-			VPRINTF(("bivideo_ioctl: GETPARAM:BRIGHTNESS call\n"));
-			if (sc->sc_max_brightness == -1)
-				bivideo_init_brightness(sc);
+			VPRINTF(("bivideo_ioctl: GET:BRIGHTNESS\n"));
+			bivideo_init_brightness(sc, 0);
 			if (sc->sc_max_brightness > 0) {
 				dispparam->min = 0;
 				dispparam->max = sc->sc_max_brightness;
 				dispparam->curval = sc->sc_brightness;
-				VPRINTF(("bivideo_ioctl: GETPARAM:BRIGHTNESS max=%d, current=%d\n", sc->sc_max_brightness, sc->sc_brightness));
+				VPRINTF(("bivideo_ioctl: GET:BRIGHTNESS max=%d, current=%d\n", sc->sc_max_brightness, sc->sc_brightness));
 				return 0;
 			} else {
-				VPRINTF(("bivideo_ioctl: GETPARAM:BRIGHTNESS ret\n"));
+				VPRINTF(("bivideo_ioctl: GET:BRIGHTNESS EINVAL\n"));
 				return (EINVAL);
 			}
 			return (EINVAL);
@@ -455,13 +474,12 @@ bivideo_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		dispparam = (struct wsdisplay_param*)data;
 		switch (dispparam->param) {
 		case WSDISPLAYIO_PARAM_BACKLIGHT:
-			VPRINTF(("bivideo_ioctl: SETPARAM:BACKLIGHT call\n"));
+			VPRINTF(("bivideo_ioctl: SET:BACKLIGHT\n"));
 			if (dispparam->curval < 0 ||
 			    1 < dispparam->curval)
 				return (EINVAL);
-			if (sc->sc_max_brightness == -1)
-				bivideo_init_brightness(sc);
-			VPRINTF(("bivideo_ioctl: SETPARAM:max brightness=%d\n", sc->sc_max_brightness));
+			bivideo_init_brightness(sc, 0);
+			VPRINTF(("bivideo_ioctl: SET:max brightness=%d\n", sc->sc_max_brightness));
 			if (sc->sc_max_brightness > 0) { /* dimmer */
 				if (dispparam->curval == 0){
 					sc->sc_brightness_save = sc->sc_brightness;
@@ -471,51 +489,49 @@ bivideo_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 						sc->sc_brightness_save = sc->sc_max_brightness;
 					bivideo_set_brightness(sc, sc->sc_brightness_save);
 				}
-				VPRINTF(("bivideo_ioctl: SETPARAM:BACKLIGHT: brightness=%d\n", sc->sc_brightness));
+				VPRINTF(("bivideo_ioctl: SET:BACKLIGHT:brightness=%d\n", sc->sc_brightness));
 			} else { /* off */
 				if (dispparam->curval == 0)
 					sc->sc_powerstate &= ~PWRSTAT_BACKLIGHT;
 				else
 					sc->sc_powerstate |= PWRSTAT_BACKLIGHT;
-				VPRINTF(("bivideo_ioctl: SETPARAM:BACKLIGHT: powerstate %d\n",
+				VPRINTF(("bivideo_ioctl: SET:BACKLIGHT:powerstate %d\n",
 						(sc->sc_powerstate & PWRSTAT_BACKLIGHT)?1:0));
 				bivideo_update_powerstate(sc, PWRSTAT_BACKLIGHT);
-				VPRINTF(("bivideo_ioctl: SETPARAM:BACKLIGHT:%d\n",
+				VPRINTF(("bivideo_ioctl: SET:BACKLIGHT:%d\n",
 					(sc->sc_powerstate & PWRSTAT_BACKLIGHT)?1:0));
 			}
 			return 0;
 			break;
 		case WSDISPLAYIO_PARAM_CONTRAST:
-			VPRINTF(("bivideo_ioctl: SETPARAM:CONTRAST call\n"));
-			if (sc->sc_max_contrast == -1)
-				bivideo_init_contrast(sc);
+			VPRINTF(("bivideo_ioctl: SET:CONTRAST\n"));
+			bivideo_init_contrast(sc, 0);
 			if (dispparam->curval < 0 ||
 			    sc->sc_max_contrast < dispparam->curval)
 				return (EINVAL);
 			if (sc->sc_max_contrast > 0) {
 				int org = sc->sc_contrast;
 				bivideo_set_contrast(sc, dispparam->curval);	
-				VPRINTF(("bivideo_ioctl: SETPARAM:CONTRAST org=%d, current=%d\n", org, sc->sc_contrast));
+				VPRINTF(("bivideo_ioctl: SET:CONTRAST org=%d, current=%d\n", org, sc->sc_contrast));
 				return 0;
 			} else {
-				VPRINTF(("bivideo_ioctl: SETPARAM:CONTRAST ret\n"));
+				VPRINTF(("bivideo_ioctl: SET:CONTRAST EINVAL\n"));
 				return (EINVAL);
 			}
 			break;
 		case WSDISPLAYIO_PARAM_BRIGHTNESS:
-			VPRINTF(("bivideo_ioctl: SETPARAM:BRIGHTNESS call\n"));
-			if (sc->sc_max_brightness == -1)
-				bivideo_init_brightness(sc);
+			VPRINTF(("bivideo_ioctl: SET:BRIGHTNESS\n"));
+			bivideo_init_brightness(sc, 0);
 			if (dispparam->curval < 0 ||
 			    sc->sc_max_brightness < dispparam->curval)
 				return (EINVAL);
 			if (sc->sc_max_brightness > 0) {
 				int org = sc->sc_brightness;
 				bivideo_set_brightness(sc, dispparam->curval);	
-				VPRINTF(("bivideo_ioctl: SETPARAM:BRIGHTNESS org=%d, current=%d\n", org, sc->sc_brightness));
+				VPRINTF(("bivideo_ioctl: SET:BRIGHTNESS org=%d, current=%d\n", org, sc->sc_brightness));
 				return 0;
 			} else {
-				VPRINTF(("bivideo_ioctl: SETPARAM:BRIGHTNESS ret\n"));
+				VPRINTF(("bivideo_ioctl: SET:BRIGHTNESS EINVAL\n"));
 				return (EINVAL);
 			}
 			break;
@@ -589,54 +605,117 @@ bivideo_mmap(void *ctx, off_t offset, int prot)
 	return __BTOP((u_long)bootinfo->fb_addr + offset);
 }
 
+
 void
-bivideo_get_backlight(struct bivideo_softc *sc)
+bivideo_init_backlight(struct bivideo_softc *sc, int inattach)
 {
 	int val = -1;
 
-	if (sc->sc_max_brightness < 0) {
-		if (config_hook_call(CONFIG_HOOK_GET, 
-		     CONFIG_HOOK_POWER_LCDLIGHT, &val) != -1) {
-			if (val == 0)
-				sc->sc_powerstate &= ~PWRSTAT_BACKLIGHT;
-			else
-				sc->sc_powerstate |= PWRSTAT_BACKLIGHT;
-		}
+	if (sc->sc_lcd_inited&BACKLIGHT_INITED)
+		return;
+
+	if (config_hook_call(CONFIG_HOOK_GET, 
+	     CONFIG_HOOK_POWER_LCDLIGHT, &val) != -1) {
+		/* we can get real light state */
+		VPRINTF(("bivideo_init_backlight: real backlight=%d\n", val));
+		if (val == 0)
+			sc->sc_powerstate &= ~PWRSTAT_BACKLIGHT;
+		else
+			sc->sc_powerstate |= PWRSTAT_BACKLIGHT;
+		sc->sc_lcd_inited |= BACKLIGHT_INITED;
+	} else if (inattach) {
+		/* 
+		   we cannot get real light state in attach time
+		   because light device not yet attached.
+		   we will retry in !inattach.
+		   temporary assume light is on.
+		 */
+		sc->sc_powerstate |= PWRSTAT_BACKLIGHT;
+	} else {
+		/* we cannot get real light state, so work by myself state */
+		sc->sc_lcd_inited |= BACKLIGHT_INITED;
 	}
 }
 
 void
-bivideo_init_brightness(struct bivideo_softc *sc)
+bivideo_init_brightness(struct bivideo_softc *sc, int inattach)
 {
 	int val = -1;
 
-	if (config_hook_call(CONFIG_HOOK_GET, 
-	     CONFIG_HOOK_BRIGHTNESS, &val) != -1) {
-		sc->sc_brightness_save = sc->sc_brightness = val;
-	}
-	val = -1;
+	if (sc->sc_lcd_inited&BRIGHTNESS_INITED)
+		return;
+
+	VPRINTF(("bivideo_init_brightness\n"));
 	if (config_hook_call(CONFIG_HOOK_GET, 
 	     CONFIG_HOOK_BRIGHTNESS_MAX, &val) != -1) {
+		/* we can get real brightness max */
+		VPRINTF(("bivideo_init_brightness: real brightness max=%d\n", val));
 		sc->sc_max_brightness = val;
+		val = -1;
+		if (config_hook_call(CONFIG_HOOK_GET, 
+		     CONFIG_HOOK_BRIGHTNESS, &val) != -1) {
+			/* we can get real brightness */
+			VPRINTF(("bivideo_init_brightness: real brightness=%d\n", val));
+			sc->sc_brightness_save = sc->sc_brightness = val;
+		} else {
+			sc->sc_brightness_save =
+			sc->sc_brightness = sc->sc_max_brightness;
+		}
+		sc->sc_lcd_inited |= BRIGHTNESS_INITED;
+	} else if (inattach) {
+		/* 
+		   we cannot get real brightness in attach time
+		   because brightness device not yet attached.
+		   we will retry in !inattach.
+		 */
+		sc->sc_max_brightness = -1;
+		sc->sc_brightness = -1;
+		sc->sc_brightness_save = -1;
+	} else {
+		/* we cannot get real brightness */
+		sc->sc_lcd_inited |= BRIGHTNESS_INITED;
 	}
+
 	return;
 }
 
-
 void
-bivideo_init_contrast(struct bivideo_softc *sc)
+bivideo_init_contrast(struct bivideo_softc *sc, int inattach)
 {
 	int val = -1;
 
-	if (config_hook_call(CONFIG_HOOK_GET, 
-	     CONFIG_HOOK_CONTRAST, &val) != -1) {
-		sc->sc_contrast = val;
-	}
-	val = -1;
+	if (sc->sc_lcd_inited&CONTRAST_INITED)
+		return;
+
+	VPRINTF(("bivideo_init_contrast\n"));
 	if (config_hook_call(CONFIG_HOOK_GET, 
 	     CONFIG_HOOK_CONTRAST_MAX, &val) != -1) {
+		/* we can get real contrast max */
+		VPRINTF(("bivideo_init_contrast: real contrast max=%d\n", val));
 		sc->sc_max_contrast = val;
+		val = -1;
+		if (config_hook_call(CONFIG_HOOK_GET, 
+		     CONFIG_HOOK_CONTRAST, &val) != -1) {
+			/* we can get real contrast */
+			VPRINTF(("bivideo_init_contrast: real contrast=%d\n", val));
+			sc->sc_contrast = val;
+		} else {
+			sc->sc_contrast = sc->sc_max_contrast;
+		}
+		sc->sc_lcd_inited |= CONTRAST_INITED;
+	} else if (inattach) {
+		/* 
+		   we cannot get real contrast in attach time
+		   because contrast device not yet attached.
+		   we will retry in !inattach.
+		 */
+		sc->sc_max_contrast = -1;
+		sc->sc_contrast = -1;
+	} else {
+		/* we cannot get real contrast */
+		sc->sc_lcd_inited |= CONTRAST_INITED;
 	}
+
 	return;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.58 2001/01/22 12:17:37 jdolecek Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.58.2.1 2001/04/09 01:58:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -488,7 +488,7 @@ fdesc_attr(fd, vap, cred, p)
 		break;
 
 	case DTYPE_SOCKET:
-		error = soo_stat((struct socket *)fp->f_data, &stb);
+		error = soo_stat(fp->f_data, &stb, p);
 		if (error == 0) {
 			vattr_null(vap);
 			vap->va_type = VSOCK;
@@ -638,9 +638,6 @@ fdesc_setattr(v)
 	 */
 	switch (fp->f_type) {
 	case DTYPE_VNODE:
-		error = VOP_SETATTR((struct vnode *) fp->f_data, ap->a_vap, ap->a_cred, ap->a_p);
-		break;
-
 	case DTYPE_SOCKET:
 		error = 0;
 		break;

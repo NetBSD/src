@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.233.2.2 2001/04/06 21:00:40 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.233.2.3 2001/04/09 01:53:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -975,9 +975,9 @@ ENTRY(copyout)
 	 */
 	movl	%edi,%edx
 	addl	%eax,%edx
-	jc	_C_LABEL(copy_fault)
+	jc	_C_LABEL(copy_efault)
 	cmpl	$VM_MAXUSER_ADDRESS,%edx
-	ja	_C_LABEL(copy_fault)
+	ja	_C_LABEL(copy_efault)
 
 #if defined(I386_CPU)
 #if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
@@ -1015,10 +1015,10 @@ ENTRY(copyout)
 	jns	1b
 
 	movl	20(%esp),%edi
+	movl	24(%esp),%eax
 	jmp	3f
 	
 2:	/* Simulate a trap. */
-	pushl	%eax
 	pushl	%ecx
 	movl	%edi,%eax
 	shll	$PGSHIFT,%eax
@@ -1027,9 +1027,8 @@ ENTRY(copyout)
 	addl	$4,%esp			# pop argument
 	popl	%ecx
 	testl	%eax,%eax		# if not ok, return EFAULT
-	popl	%eax
 	jz	4b
-	jmp	_C_LABEL(copy_fault)
+	jmp	_C_LABEL(copy_efault)
 #endif /* I386_CPU */
 
 3:	movl	_C_LABEL(curpcb),%edx
@@ -1074,9 +1073,9 @@ ENTRY(copyin)
 	 */
 	movl	%esi,%edx
 	addl	%eax,%edx
-	jc	_C_LABEL(copy_fault)
+	jc	_C_LABEL(copy_efault)
 	cmpl	$VM_MAXUSER_ADDRESS,%edx
-	ja	_C_LABEL(copy_fault)
+	ja	_C_LABEL(copy_efault)
 
 3:	/* bcopy(%esi, %edi, %eax); */
 	cld
@@ -1096,12 +1095,14 @@ ENTRY(copyin)
 	xorl	%eax,%eax
 	ret
 
+ENTRY(copy_efault)
+	movl	$EFAULT,%eax
+
 ENTRY(copy_fault)
 	movl	_C_LABEL(curpcb),%edx
 	popl	PCB_ONFAULT(%edx)
 	popl	%edi
 	popl	%esi
-	movl	$EFAULT,%eax
 	ret
 
 /*
@@ -1139,7 +1140,7 @@ ENTRY(copyoutstr)
 	 * space, and check for a write fault.
 	 */
 	cmpl	$VM_MAXUSER_ADDRESS,%edi
-	jae	_C_LABEL(copystr_fault)
+	jae	_C_LABEL(copystr_efault)
 
 	/* Compute PTE offset. */
 	movl	%edi,%eax
@@ -1155,7 +1156,7 @@ ENTRY(copyoutstr)
 	addl	$4,%esp			# clear argument from stack
 	popl	%edx
 	testl	%eax,%eax
-	jnz	_C_LABEL(copystr_fault)
+	jnz	_C_LABEL(copystr_efault)
 
 2:	/* Copy up to end of this page. */
 	subl	%ecx,%edx		# predecrement total count
@@ -1215,7 +1216,7 @@ ENTRY(copyoutstr)
 
 2:	/* edx is zero -- return EFAULT or ENAMETOOLONG. */
 	cmpl	$VM_MAXUSER_ADDRESS,%edi
-	jae	_C_LABEL(copystr_fault)
+	jae	_C_LABEL(copystr_efault)
 	movl	$ENAMETOOLONG,%eax
 	jmp	copystr_return
 #endif /* I486_CPU || I586_CPU || I686_CPU */
@@ -1264,14 +1265,15 @@ ENTRY(copyinstr)
 
 2:	/* edx is zero -- return EFAULT or ENAMETOOLONG. */
 	cmpl	$VM_MAXUSER_ADDRESS,%esi
-	jae	_C_LABEL(copystr_fault)
+	jae	_C_LABEL(copystr_efault)
 	movl	$ENAMETOOLONG,%eax
 	jmp	copystr_return
 
-ENTRY(copystr_fault)
+ENTRY(copystr_efault)
 	movl	$EFAULT,%eax
 
-copystr_return:	
+ENTRY(copystr_fault)
+copystr_return:
 	/* Set *lencopied and return %eax. */
 	movl	_C_LABEL(curpcb),%ecx
 	movl	$0,PCB_ONFAULT(%ecx)
