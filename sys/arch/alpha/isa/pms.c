@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.6.2.1 1996/12/07 02:05:00 cgd Exp $	*/
+/*	$NetBSD: pms.c,v 1.6.2.2 1996/12/07 02:09:02 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -96,7 +96,11 @@ isa_chipset_tag_t pms_ic;
 int pmsprobe __P((struct device *, void *, void *));
 void pmsattach __P((struct device *, struct device *, void *));
 int pmsintr __P((void *));
+#ifdef __BROKEN_INDIRECT_CONFIG
 
+#else
+int pmsprobe __P((struct device *, struct cfdata *, void *));
+#endif
 struct cfattach pms_ca = {
 	sizeof(struct pms_softc), pmsprobe, pmsattach,
 };
@@ -170,7 +174,12 @@ pms_pit_cmd(value)
 int
 pmsprobe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct pcppi_attach_args *pa = aux;
 	u_char x;

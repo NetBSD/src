@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60 1996/12/03 19:52:58 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60.2.1 1996/12/07 02:08:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -160,6 +160,7 @@ caddr_t		le_iomem;		/* XXX iomem for LANCE DMA */
 int		ncpus;
 
 char boot_flags[64];
+char booted_kernel[64];
 
 /* for cpu_sysctl() */
 char	root_device[17];
@@ -514,10 +515,16 @@ unknown_cputype:
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.
+	 * Also, get kernel name so it can be used in user-land.
 	 */
 	prom_getenv(PROM_E_BOOTED_OSFLAGS, boot_flags, sizeof(boot_flags));
 #if 0
 	printf("boot flags = \"%s\"\n", boot_flags);
+#endif
+	prom_getenv(PROM_E_BOOTED_FILE, booted_kernel,
+	    sizeof(booted_kernel));
+#if 0
+	printf("booted kernel = \"%s\"\n", booted_kernel);
 #endif
 
 	boothowto = RB_SINGLE;
@@ -1334,6 +1341,9 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case CPU_UNALIGNED_SIGBUS:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &alpha_unaligned_sigbus));
+
+	case CPU_BOOTED_KERNEL:
+		return (sysctl_rdstring(oldp, oldlenp, newp, booted_kernel));
 
 	default:
 		return (EOPNOTSUPP);
