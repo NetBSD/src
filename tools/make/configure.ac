@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.4 2002/04/27 16:36:31 bjh21 Exp $
+#	$NetBSD: configure.ac,v 1.5 2002/10/04 22:21:57 thorpej Exp $
 #
 # Autoconf definition file for make.
 #
@@ -17,6 +17,9 @@ AC_DEFINE_UNQUOTED(_PATH_DEFSHELLDIR, "$nb_path_defshelldir")
 
 # Make sure we have POSIX regex ability.
 AC_CHECK_HEADER(regex.h,, AC_MSG_ERROR([POSIX regex.h is required]))
+
+# If we don't have <poll.h>, we need to use select(2).
+AC_CHECK_HEADER(poll.h,, AC_DEFINE(USE_SELECT))
 
 # regcomp() and regexec() are also names of functions in the old V8
 # regexp package.  To avoid them, we need to find out who has regfree().
