@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.179.2.31 2004/02/01 08:26:17 jmc Exp $
+.\"	$NetBSD: main,v 1.179.2.32 2004/02/27 22:43:03 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -103,6 +103,16 @@ Plain old
 You are reading the
 .Em \*[format]
 version.
+.
+.Ss "Dedication"
+.Pp
+The NetBSD Foundation would like to dedicate the NetBSD 1.6.2
+release to the memory of Erik Reid, who went missing and is presumed dead
+in a sailing accident on 18 February 2004.  Erik's contributions
+to NetBSD included work on support for SGI MIPS R4000, integrating
+XFree86 Direct Rendering Interface (DRI), and managing the build
+lab.  His death came as a shock, and he will be greatly missed by all of us. 
+May he rest in peace.
 .
 .if \n[i386]:\n[macppc]:\n[sparc] \{
 .Ss "Quick install notes for the impatient"
