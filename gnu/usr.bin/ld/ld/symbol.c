@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.11 1998/08/27 21:20:44 matt Exp $	*/
+/*	$NetBSD: symbol.c,v 1.12 1998/08/28 14:45:46 matt Exp $	*/
 
 /*
  *	- symbol table routines
@@ -34,21 +34,6 @@ symtab_init(relocatable_output)
 	/*
 	 * Put linker reserved symbols into symbol table.
 	 */
-#ifndef nounderscore
-#define ETEXT_SYM	"_etext"
-#define EDATA_SYM	"_edata"
-#define END_SYM		"_end"
-#define DYN_SYM		"__DYNAMIC"
-#define GOT_SYM		"__GLOBAL_OFFSET_TABLE_"
-#define PLT_SYM		"__PROCEDURE_LINKAGE_TABLE_"
-#else
-#define ETEXT_SYM	"etext"
-#define EDATA_SYM	"edata"
-#define END_SYM		"end"
-#define DYN_SYM		"_DYNAMIC"
-#define GOT_SYM		"_GLOBAL_OFFSET_TABLE_"
-#define PLT_SYM		"_PROCEDURE_LINKAGE_TABLE_"
-#endif
 
 	dynamic_symbol = getsym(DYN_SYM);
 	dynamic_symbol->defined = relocatable_output?N_UNDF:(N_DATA | N_EXT);

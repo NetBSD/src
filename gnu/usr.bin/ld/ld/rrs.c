@@ -1,4 +1,4 @@
-/*	$NetBSD: rrs.c,v 1.21 1998/08/26 14:37:42 matt Exp $	*/
+/*	$NetBSD: rrs.c,v 1.22 1998/08/28 14:45:46 matt Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -725,8 +725,13 @@ consider_rrs_section_lengths()
 	if (number_of_gotslots > 1)
 		got_symbol->flags |= GS_REFERENCED;
 
-	if (number_of_jmpslots > 1)
+	if (number_of_jmpslots > 1) {
+		if (plt_symbol == NULL) {
+			plt_symbol = getsym(PLT_SYM);
+			plt_symbol->defined = N_DATA | N_EXT;
+		}
 		plt_symbol->flags |= GS_REFERENCED;
+	}
 
 
 	/* Next, allocate relocs, got and plt */
