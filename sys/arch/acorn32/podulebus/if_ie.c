@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.5 2002/02/18 19:22:14 bjh21 Exp $ */
+/* $NetBSD: if_ie.c,v 1.5.10.1 2002/11/01 11:13:55 tron Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -61,7 +61,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ie.c,v 1.5 2002/02/18 19:22:14 bjh21 Exp $");
+__RCSID("$NetBSD: if_ie.c,v 1.5.10.1 2002/11/01 11:13:55 tron Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -309,10 +309,7 @@ ieprobe(struct device *parent, struct cfdata *cf, void *aux)
 
 /* Look for a network slot interface */
 
-	if (matchpodule(pa, MANUFACTURER_ACORN, PODULE_ACORN_ETHER1, -1) == 0)
-		return(0);
-
-	return(1);
+	return (pa->pa_product == PODULE_ETHER1);
 }
 
 /*

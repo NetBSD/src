@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.5 2001/11/13 13:32:34 lukem Exp $ */
+/* $NetBSD: if_ea.c,v 1.5.12.1 2002/11/01 11:13:56 tron Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ea.c,v 1.5 2001/11/13 13:32:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ea.c,v 1.5.12.1 2002/11/01 11:13:56 tron Exp $");
 
 #include <sys/param.h>
 
@@ -93,14 +93,7 @@ eaprobe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
 	
-	if ((matchpodule(pa, MANUFACTURER_ATOMWIDE,
-			 PODULE_ATOMWIDE_ETHER3, -1) == 0)
-	    && (matchpodule(pa, MANUFACTURER_ACORN,
-			    PODULE_ACORN_ETHER3XXX, -1) == 0)
-	    && (matchpodule(pa, MANUFACTURER_ANT, PODULE_ANT_ETHER3, -1) == 0))
-		return 0;
-
-	return 1;
+	return pa->pa_product == PODULE_ETHER3;
 }
 
 
