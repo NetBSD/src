@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 1998/04/09 00:32:32 tv Exp $
+#	$NetBSD: Makefile,v 1.18 1998/05/13 19:21:37 tv Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	atc
@@ -18,8 +18,6 @@ FILES=${GAMES:S@^@${.CURDIR}/games/@g}
 FILESDIR=/usr/share/games/atc
 FILESMODE=440
 
-y.tab.h:	grammar.c
-
-lex.o:	y.tab.h
+lex.o:	grammar.h
 
 .include <bsd.prog.mk>
