@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.31.2.7 1997/10/14 01:14:52 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.43 1997/10/14 20:52:38 thorpej Exp 
  */
 
 /*
