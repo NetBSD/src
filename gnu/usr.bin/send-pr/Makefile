@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 1995/08/31 18:48:25 jtc Exp $
+#	$NetBSD: Makefile,v 1.15 1995/09/12 19:01:51 jtc Exp $
 
 #
 # Makefile for building a standalone send-pr.
@@ -79,7 +79,7 @@ send-pr.el:	send-pr-el.in Makefile
             -e 's,xGNATS_ROOTx,$(GNATS_ROOT),' \
             -e 's,xGNATS_SITEx,$(GNATS_SITE),' \
             -e 's,xDATADIRx,$(datadir),' \
-            -e 's,xDEFAULT_SUBMITTERx,$(SUBMITTER),' \
+            -e 's,xSUBMITTERx,$(SUBMITTER),' \
             -e 's,xDEFAULT_RELEASEx,$(DEFAULT_RELEASE),' \
 		$(srcdir)/send-pr-el.in \
             > $@-t
