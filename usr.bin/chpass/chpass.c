@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.c,v 1.20 2000/10/27 16:16:03 phil Exp $	*/
+/*	$NetBSD: chpass.c,v 1.21 2001/02/13 00:11:45 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-__RCSID("$NetBSD: chpass.c,v 1.20 2000/10/27 16:16:03 phil Exp $");
+__RCSID("$NetBSD: chpass.c,v 1.21 2001/02/13 00:11:45 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,8 +65,6 @@ __RCSID("$NetBSD: chpass.c,v 1.20 2000/10/27 16:16:03 phil Exp $");
 
 #include "chpass.h"
 #include "pathnames.h"
-
-extern	char *__progname;		/* from crt0.o */
 
 char *tempname;
 uid_t uid;
