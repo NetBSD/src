@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.37 2003/02/05 21:38:41 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.38 2003/02/05 22:14:01 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.37 2003/02/05 21:38:41 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.38 2003/02/05 22:14:01 pk Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -1480,7 +1480,7 @@ fdformat(dev, finfo, p)
 	struct ne7_fd_formb *finfo;
 	struct proc *p;
 {
-	int rv = 0, s;
+	int rv = 0;
 	struct fd_softc *fd = device_lookup(&fd_cd, FDUNIT(dev));
 	struct fd_type *type = fd->sc_type;
 	struct buf *bp;
