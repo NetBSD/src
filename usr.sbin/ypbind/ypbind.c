@@ -31,7 +31,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypbind.c,v 1.18 1995/01/15 09:09:30 mycroft Exp $";
+static char rcsid[] = "$Id: ypbind.c,v 1.19 1995/04/21 04:40:36 cgd Exp $";
 #endif
 
 #include <sys/param.h>
@@ -749,6 +749,11 @@ int force;
 	/* XXX XXX USING POINTERS OVER THE NET LIKE THIS IS TOTALLY WRONG. */
 
 	/*printf("returned from %s about %s\n", inet_ntoa(raddrp->sin_addr), dom);*/
+
+#ifdef __alpha__						/* XXX XXX */
+	/* you _REALLY_ do not want to know... */		/* XXX XXX */
+	dom = (char *)((u_long)dom | (u_long)0x100000000);	/* XXX XXX */
+#endif								/* XXX XXX */
 
 	if (dom == NULL)
 		return;
