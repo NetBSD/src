@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_verbose.c,v 1.6 1998/07/11 00:52:10 mjacob Exp $	*/
+/*	$NetBSD: scsipi_verbose.c,v 1.7 1998/07/30 00:49:21 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -38,7 +38,7 @@
 #ifdef _KERNEL
 #include <sys/systm.h>
 
-#include "opt_scsiverbose.h"
+#include "opt_scsi.h"
 #else
 #include <stdio.h>
 #endif
