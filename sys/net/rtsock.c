@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.39 2000/03/30 09:45:40 augustss Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.40 2000/04/15 17:51:28 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -103,6 +103,9 @@ static struct mbuf *rt_msg1 __P((int, struct rt_addrinfo *, caddr_t, int));
 static int rt_msg2 __P((int, struct rt_addrinfo *, caddr_t, struct walkarg *,
     int *));
 static void rt_xaddrs __P((caddr_t, caddr_t, struct rt_addrinfo *));
+static int sysctl_dumpentry __P((struct radix_node *, void *));
+static int sysctl_iflist __P((int, struct walkarg *, int));
+static int sysctl_rtable __P((int *, u_int, void *, size_t *, void *, size_t));
 static __inline void rt_adjustcount __P((int, int));
 
 /* Sleazy use of local variables throughout file, warning!!!! */
@@ -816,7 +819,7 @@ rt_ifannouncemsg(ifp, what)
 /*
  * This is used in dumping the kernel table via sysctl().
  */
-int
+static int
 sysctl_dumpentry(rn, v)
 	struct radix_node *rn;
 	void *v;
@@ -858,7 +861,7 @@ sysctl_dumpentry(rn, v)
 	return (error);
 }
 
-int
+static int
 sysctl_iflist(af, w, type)
 	int	af;
 	struct	walkarg *w;
@@ -989,7 +992,7 @@ sysctl_iflist(af, w, type)
 	return (0);
 }
 
-int
+static int
 sysctl_rtable(name, namelen, where, given, new, newlen)
 	int	*name;
 	u_int	namelen;

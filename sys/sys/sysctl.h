@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.44 2000/04/15 17:43:53 simonb Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.45 2000/04/15 17:51:27 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -475,9 +475,6 @@ int sysctl_file __P((char *, size_t *));
 int sysctl_doeproc __P((int *, u_int, char *, size_t *));
 struct radix_node;
 struct walkarg;
-int sysctl_dumpentry __P((struct radix_node *, void *));
-int sysctl_iflist __P((int, struct walkarg *, int));
-int sysctl_rtable __P((int *, u_int, void *, size_t *, void *, size_t));
 int sysctl_clockrate __P((char *, size_t *));
 int sysctl_vnode __P((char *, size_t *, struct proc *));
 int sysctl_ntptime __P((char *, size_t *));
