@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.62 2003/02/01 07:23:56 atatat Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.63 2003/02/24 08:34:30 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.62 2003/02/01 07:23:56 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.63 2003/02/24 08:34:30 perseant Exp $");
 
 #include "fs_union.h"
 
@@ -703,9 +703,6 @@ vn_ioctl(fp, com, data, p)
 			return (0);			/* XXX */
 		/* fall into ... */
 
-	default:
-		return (EPASSTHROUGH);
-
 	case VFIFO:
 	case VCHR:
 	case VBLK:
@@ -717,6 +714,9 @@ vn_ioctl(fp, com, data, p)
 			VREF(vp);
 		}
 		return (error);
+
+	default:
+		return (EPASSTHROUGH);
 	}
 }
 
