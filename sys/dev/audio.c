@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.89 1998/07/09 09:27:33 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.90 1998/08/04 11:26:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -690,22 +690,24 @@ audio_initbufs(sc)
 	}
 
 #ifdef AUDIO_INTR_TIME
+#define double u_long
 	sc->sc_pnintr = 0;
 	sc->sc_pblktime = (u_long)(
-	    (double)sc->sc_pr.blksize * 1e6 / 
+	    (double)sc->sc_pr.blksize * 100000 / 
 	    (double)(sc->sc_pparams.precision / NBBY * 
                      sc->sc_pparams.channels * 
-		     sc->sc_pparams.sample_rate));
+		     sc->sc_pparams.sample_rate)) * 10;
 	DPRINTF(("audio: play blktime = %lu for %d\n", 
 		 sc->sc_pblktime, sc->sc_pr.blksize));
 	sc->sc_rnintr = 0;
 	sc->sc_rblktime = (u_long)(
-	    (double)sc->sc_rr.blksize * 1e6 / 
+	    (double)sc->sc_rr.blksize * 100000 / 
 	    (double)(sc->sc_rparams.precision / NBBY * 
                      sc->sc_rparams.channels * 
-		     sc->sc_rparams.sample_rate));
+		     sc->sc_rparams.sample_rate)) * 10;
 	DPRINTF(("audio: record blktime = %lu for %d\n", 
 		 sc->sc_rblktime, sc->sc_rr.blksize));
+#undef double
 #endif
 
 	return 0;
@@ -1801,14 +1803,13 @@ audio_pint(v)
 		if (sc->sc_pnintr) {
 			long lastdelta, totdelta;
 			lastdelta = t - sc->sc_plastintr - sc->sc_pblktime;
-			if (lastdelta > sc->sc_pblktime / 5) {
+			if (lastdelta > sc->sc_pblktime / 3) {
 				printf("audio: play interrupt(%d) off relative by %ld us (%lu)\n", 
 				       sc->sc_pnintr, lastdelta, sc->sc_pblktime);
 			}
 			totdelta = t - sc->sc_pfirstintr - sc->sc_pblktime * sc->sc_pnintr;
-			if (totdelta > sc->sc_pblktime / 2) {
-				sc->sc_pnintr++;
-				printf("audio: play interrupt(%d) off absolute by %ld us (%lu)\n", 
+			if (totdelta > sc->sc_pblktime) {
+				printf("audio: play interrupt(%d) off absolute by %ld us (%lu) (LOST)\n", 
 				       sc->sc_pnintr, totdelta, sc->sc_pblktime);
 				sc->sc_pnintr++; /* avoid repeated messages */
 			}
