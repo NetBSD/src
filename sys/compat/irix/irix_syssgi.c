@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.11 2001/12/27 09:31:09 manu Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.12 2002/01/19 14:56:02 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.11 2001/12/27 09:31:09 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.12 2002/01/19 14:56:02 manu Exp $");
 
 #include "opt_ddb.h"
 
@@ -214,12 +214,15 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 	struct exec_vmcmd_set vcset;
 	struct exec_vmcmd *base_vcp = NULL;
 	struct vnode *vp;
+	vaddr_t new_addr;
+	struct vm_map_entry *ret;
+	struct exec_vmcmd *vcp;
 
 	vcset.evs_cnt = 0;
 	vcset.evs_used = 0;
 
-	/* Check that the program header array is readable by the process */
-	if (!uvm_useracc((caddr_t)ph, sizeof(Elf_Phdr) * count, B_READ))
+	/* Check that the program header array is writable by the process */
+	if (!uvm_useracc((caddr_t)ph, sizeof(Elf_Phdr) * count, B_WRITE))
 		return EACCES;
 
 	kph = (Elf_Phdr *)malloc(sizeof(Elf_Phdr) * count,
@@ -265,26 +268,67 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 	/* 
 	 * Run the vmcmds
 	 */
+	pht = kph;
 	for (j = 0; j < vcset.evs_used && !error; j++) {
-		struct exec_vmcmd *vcp;
 		vcp = &vcset.evs_cmds[j];
 		if (vcp->ev_flags & VMCMD_RELATIVE) {
 			if (base_vcp == NULL)
-				panic("irix_syssgi_mapelf: bad vmcmd base\n");
+				panic("irix_syssgi_mapelf(): bad vmcmd base\n");
 				   
 			vcp->ev_addr += base_vcp->ev_addr;
 		}
 #ifdef DEBUG_IRIX
-	printf("irix_syssgi_mapelf(): mapping j = %d\n", j);
-	printf("uaddr = 0x%08lx, size = 0x%08lx, prot = 0x%08x ", 
-	    (unsigned long)uaddr, size, prot);
+		printf("irix_syssgi_mapelf(): mapping section j = %d \n", j);
+		printf("addr = 0x%08lx, size = 0x%08lx\n", 
+		    vcp->ev_addr, vcp->ev_len);
 #endif
 		error = (*vcp->ev_proc)(p, vcp);
+		if (error) {
+			/* 
+			 * We failed because the address where the default 
+			 * section proposes is already used. This happens
+			 * because there is already something at the default
+			 * load address for this ELF section. This happens
+			 * with the libX11.so text segment, which overlaps
+			 * with libXt.so sections.
+			 *
+			 * The fix is finding a free space and retrying.
+			 * IRIX maps libX11 at IRIX_MAPELF_RELOCATE, we
+			 * try to emulate this behavior.
+			 */
+			ret = uvm_map_findspace(&p->p_vmspace->vm_map, 
+			    IRIX_MAPELF_RELOCATE, vcp->ev_len, &new_addr, 
+			    NULL, 0, pht->p_align , 0);
+			if (ret) {
+#ifdef DEBUG_IRIX
+				printf("irix_syssgi_mapelf(): ");
+				printf("relocating from %p to %p\n",
+				    (void *)vcp->ev_addr, (void *)new_addr);
+#endif
+				vcp->ev_addr = new_addr;
+				error = (*vcp->ev_proc)(p, vcp);
+				/* 
+				 * Adjsut the virtual address in the ELF
+				 * program header
+				 */
+				if (!error)
+					pht->p_vaddr = new_addr;
+			}
+		}
 		if (vcp->ev_flags & VMCMD_BASE)
 			base_vcp = vcp;
+		pht++;
 	}
 
 	FILE_UNUSE(fp, p);
+	
+	/*
+	 * Copy back the program header table in case we had to
+	 * adjust some load virtual addresses 
+	 */
+	error = copyout(kph, ph, sizeof(Elf_Phdr) * count);
+	if (error)
+		goto bad;
 	
 	*retval = (register_t)kph->p_vaddr;	
 bad:
