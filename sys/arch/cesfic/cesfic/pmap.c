@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.14 2002/09/27 15:35:57 provos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.15 2002/10/14 05:18:46 chs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -370,7 +370,7 @@ pmap_init()
 		goto bogons;
 #endif
 	addr = (vaddr_t) Sysmap;
-	if (uvm_map(kernel_map, &addr, HP_MAX_PTSIZE,
+	if (uvm_map(kernel_map, &addr, M68K_MAX_PTSIZE,
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
@@ -399,7 +399,7 @@ pmap_init()
 	 */
 	for (page_cnt = 0, bank = 0; bank < vm_nphysseg; bank++)
 		page_cnt += vm_physmem[bank].end - vm_physmem[bank].start;
-	s = HP_STSIZE;					/* Segtabzero */
+	s = M68K_STSIZE;					/* Segtabzero */
 	s += page_cnt * sizeof(struct pv_entry);	/* pv table */
 	s += page_cnt * sizeof(char);			/* attribute table */
 	s = round_page(s);
@@ -409,7 +409,7 @@ pmap_init()
 
 	Segtabzero = (st_entry_t *) addr;
 	pmap_extract(pmap_kernel(), addr, (paddr_t *)&Segtabzeropa);
-	addr += HP_STSIZE;
+	addr += M68K_STSIZE;
 
 	pv_table = (struct pv_entry *) addr;
 	addr += page_cnt * sizeof(struct pv_entry);
@@ -439,7 +439,7 @@ pmap_init()
 	 * Allocate physical memory for kernel PT pages and their management.
 	 * We need 1 PT page per possible task plus some slop.
 	 */
-	npages = min(atop(HP_MAX_KPTSIZE), maxproc+16);
+	npages = min(atop(M68K_MAX_KPTSIZE), maxproc+16);
 	s = ptoa(npages) + round_page(npages * sizeof(struct kpt_page));
 
 	/*
@@ -480,22 +480,22 @@ pmap_init()
 	/*
 	 * Allocate the segment table map and the page table map.
 	 */
-	s = maxproc * HP_STSIZE;
+	s = maxproc * M68K_STSIZE;
 	st_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, 0,
 	    FALSE, &st_map_store);
 
-	addr = HP_PTBASE;
-	if ((HP_PTMAXSIZE / HP_MAX_PTSIZE) < maxproc) {
-		s = HP_PTMAXSIZE;
+	addr = M68K_PTBASE;
+	if ((M68K_PTMAXSIZE / M68K_MAX_PTSIZE) < maxproc) {
+		s = M68K_PTMAXSIZE;
 		/*
 		 * XXX We don't want to hang when we run out of
 		 * page tables, so we lower maxproc so that fork()
 		 * will fail instead.  Note that root could still raise
 		 * this value via sysctl(3).
 		 */
-		maxproc = (HP_PTMAXSIZE / HP_MAX_PTSIZE);
+		maxproc = (M68K_PTMAXSIZE / M68K_MAX_PTSIZE);
 	} else
-		s = (maxproc * HP_MAX_PTSIZE);
+		s = (maxproc * M68K_MAX_PTSIZE);
 	pt_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, 0,
 	    TRUE, &pt_map_store);
 
@@ -778,13 +778,13 @@ pmap_release(pmap)
 
 	if (pmap->pm_ptab) {
 		pmap_remove(pmap_kernel(), (vaddr_t)pmap->pm_ptab,
-		    (vaddr_t)pmap->pm_ptab + HP_MAX_PTSIZE);
+		    (vaddr_t)pmap->pm_ptab + M68K_MAX_PTSIZE);
 		uvm_km_pgremove(uvm.kernel_object,
 		    (vaddr_t)pmap->pm_ptab - vm_map_min(kernel_map),
-		    (vaddr_t)pmap->pm_ptab + HP_MAX_PTSIZE
+		    (vaddr_t)pmap->pm_ptab + M68K_MAX_PTSIZE
 				- vm_map_min(kernel_map));
 		uvm_km_free_wakeup(pt_map, (vaddr_t)pmap->pm_ptab,
-				   HP_MAX_PTSIZE);
+				   M68K_MAX_PTSIZE);
 	}
 	KASSERT(pmap->pm_stab == Segtabzero);
 }
@@ -1122,7 +1122,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	 */
 	if (pmap->pm_ptab == NULL)
 		pmap->pm_ptab = (pt_entry_t *)
-			uvm_km_valloc_wait(pt_map, HP_MAX_PTSIZE);
+			uvm_km_valloc_wait(pt_map, M68K_MAX_PTSIZE);
 
 	/*
 	 * Segment table entry not valid, we need a new PT page
@@ -1700,7 +1700,7 @@ pmap_collect1(pmap, startpa, endpa)
 			continue;
 #ifdef DEBUG
 		if (pv->pv_va < (vaddr_t)Sysmap ||
-		    pv->pv_va >= (vaddr_t)Sysmap + HP_MAX_PTSIZE)
+		    pv->pv_va >= (vaddr_t)Sysmap + M68K_MAX_PTSIZE)
 			printf("collect: kernel PT VA out of range\n");
 		else
 			goto ok;
@@ -1730,7 +1730,7 @@ ok:
 		 * ST and Sysptmap entries.
 		 */
 		pmap_extract(pmap, pv->pv_va, (paddr_t *)&kpa);
-		pmap_remove_mapping(pmap, pv->pv_va, PT_ENTRY_NULL,
+		pmap_remove_mapping(pmap, pv->pv_va, NULL,
 				    PRM_TFLUSH|PRM_CFLUSH);
 		/*
 		 * Use the physical address to locate the original
@@ -2055,7 +2055,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	/*
 	 * PTE not provided, compute it from pmap and va.
 	 */
-	if (pte == PT_ENTRY_NULL) {
+	if (pte == NULL) {
 		pte = pmap_pte(pmap, va);
 		if (*pte == PG_NV)
 			return;
@@ -2149,7 +2149,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	 * (raise IPL since we may be called at interrupt time).
 	 */
 	pv = pa_to_pvh(pa);
-	ste = ST_ENTRY_NULL;
+	ste = NULL;
 	s = splvm();
 	/*
 	 * If it is the first entry on the list, it is actually
@@ -2241,12 +2241,12 @@ pmap_remove_mapping(pmap, va, pte, flags)
 				    ptpmap->pm_stab));
 				pmap_remove(pmap_kernel(),
 				    (vaddr_t)ptpmap->pm_stab,
-				    (vaddr_t)ptpmap->pm_stab + HP_STSIZE);
+				    (vaddr_t)ptpmap->pm_stab + M68K_STSIZE);
 				uvm_pagefree(PHYS_TO_VM_PAGE((paddr_t)
 							     ptpmap->pm_stpa));
 				uvm_km_free_wakeup(st_map,
 						 (vaddr_t)ptpmap->pm_stab,
-						 HP_STSIZE);
+						 M68K_STSIZE);
 				ptpmap->pm_stab = Segtabzero;
 				ptpmap->pm_stpa = Segtabzeropa;
 #if defined(M68040)
@@ -2449,7 +2449,7 @@ pmap_enter_ptpage(pmap, va)
 	 */
 	if (pmap->pm_stab == Segtabzero) {
 		pmap->pm_stab = (st_entry_t *)
-			uvm_km_zalloc(st_map, HP_STSIZE);
+			uvm_km_zalloc(st_map, M68K_STSIZE);
 		pmap_extract(pmap_kernel(), (vaddr_t)pmap->pm_stab,
 			     (paddr_t *)&pmap->pm_stpa);
 #if defined(M68040)
