@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_yp.c,v 1.14.2.1 2000/10/19 14:33:12 he Exp $	*/
+/*	$NetBSD: pw_yp.c,v 1.14.2.2 2000/10/20 15:36:14 he Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pw_yp.c	1.0 2/2/93";
 #else
-__RCSID("$NetBSD: pw_yp.c,v 1.14.2.1 2000/10/19 14:33:12 he Exp $");
+__RCSID("$NetBSD: pw_yp.c,v 1.14.2.2 2000/10/20 15:36:14 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,8 +65,6 @@ __RCSID("$NetBSD: pw_yp.c,v 1.14.2.1 2000/10/19 14:33:12 he Exp $");
 
 static char *domain;
 
-static struct passwd *interpret __P((struct passwd *, char *));
-static char *pwskip __P((char *));
 
 /*
  * Check if rpc.yppasswdd is running on the master YP server.
@@ -197,118 +195,6 @@ pw_yp(pw, uid)
 		    "The YP password information has been changed on",
 		    master, "the master YP passwd server.");
 	return (0);
-}
-
-static char *
-pwskip(p)
-	char *p;
-{
-	while (*p && *p != ':' && *p != '\n')
-		++p;
-	if (*p)
-		*p++ = 0;
-	return (p);
-}
-
-static struct passwd *
-interpret(pwent, line)
-	struct passwd *pwent;
-	char *line;
-{
-	char	*p = line;
-
-	pwent->pw_passwd = "*";
-	pwent->pw_uid = 0;
-	pwent->pw_gid = 0;
-	pwent->pw_gecos = "";
-	pwent->pw_dir = "";
-	pwent->pw_shell = "";
-	pwent->pw_change = 0;
-	pwent->pw_expire = 0;
-	pwent->pw_class = "";
-	
-	/* line without colon separators is no good, so ignore it */
-	if(!strchr(p,':'))
-		return(NULL);
-
-	pwent->pw_name = p;
-	p = pwskip(p);
-	pwent->pw_passwd = p;
-	p = pwskip(p);
-	pwent->pw_uid = (uid_t)strtoul(p, NULL, 10);
-	p = pwskip(p);
-	pwent->pw_gid = (gid_t)strtoul(p, NULL, 10);
-	p = pwskip(p);
-	pwent->pw_gecos = p;
-	p = pwskip(p);
-	pwent->pw_dir = p;
-	p = pwskip(p);
-	pwent->pw_shell = p;
-	while (*p && *p != '\n')
-		p++;
-	*p = '\0';
-	return (pwent);
-}
-
-struct passwd *
-ypgetpwnam(nam)
-	const char *nam;
-{
-	static struct passwd pwent;
-	static char line[1024];
-	char *val;
-	int reason, vallen;
-	
-	/*
-	 * Get local domain
-	 */
-	if (!domain && (reason = yp_get_default_domain(&domain)))
-		errx(1, "can't get local YP domain. Reason: %s",
-		    yperr_string(reason));
-
-	val = NULL;
-	reason = yp_match(domain, "passwd.byname", nam, strlen(nam),
-	    &val, &vallen);
-	if (reason != 0) {
-		if (val)
-			free (val);
-		return (NULL);
-	}
-	val[vallen] = '\0';
-	(void)strncpy(line, val, sizeof(line) - 1);
-	free(val);
-
-	return(interpret(&pwent, line));
-}
-
-struct passwd *
-ypgetpwuid(uid)
-	uid_t uid;
-{
-	static struct passwd pwent;
-	static char line[1024];
-	char *val;
-	int reason, vallen;
-	char namebuf[16];
-	
-	if (!domain && (reason = yp_get_default_domain(&domain)))
-		errx(1, "can't get local YP domain. Reason: %s\n",
-		    yperr_string(reason));
-
-	(void)snprintf(namebuf, sizeof namebuf, "%d", uid);
-	val = NULL;
-	reason = yp_match(domain, "passwd.byuid", namebuf, strlen(namebuf),
-	    &val, &vallen);
-	if (reason != 0) {
-		if (val)
-			free (val);
-		return (NULL);
-	}
-	val[vallen] = '\0';
-	(void)strncpy(line, val, sizeof(line) - 1);
-	free(val);
-
-	return(interpret(&pwent, line));
 }
 
 void
