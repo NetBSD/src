@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.8 1999/01/14 18:45:45 castor Exp $	*/
+/*	$NetBSD: pcb.h,v 1.9 1999/01/16 03:12:18 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,6 @@
  */
 struct pcb
 {
-	mips_reg_t pcb_regs[38];	/* XXX saved general registers */
 	struct fpreg pcb_fpregs;	/* saved floating point registers */
 	mips_reg_t pcb_context[12];	/* kernel context for resume */
 	caddr_t	pcb_onfault;		/* for copyin/copyout faults */
@@ -58,10 +57,11 @@ struct pcb
 
 /*
  * The pcb is augmented with machine-dependent additional data for
- * core dumps. For the MIPS, there is nothing to add.
+ * core dumps.
  */
 struct md_coredump {
-	long	md_pad[8];
+	mips_reg_t md_regs[38];
+	struct fpreg md_fpregs;
 };
 
 #ifdef _KERNEL
