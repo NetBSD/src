@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.61 1996/10/03 07:11:35 mrg Exp $
+#	$NetBSD: rc,v 1.62 1996/12/04 12:55:33 mrg Exp $
 #	from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -193,7 +193,12 @@ if [ "X${sendmail_flags}" != X"NO" -a -r /etc/sendmail.cf ]; then
 	echo -n ' sendmail';		/usr/sbin/sendmail ${sendmail_flags}
 fi
 
-echo -n ' inetd';		inetd
+# $inetd_flags is imported from /etc/netstart;
+# If $inetd_flags == NO or /etc/inetd.conf doesn't exist, then
+# inetd isn't run.
+if [ "X${inetd_flags}" != X"NO" -a -r /etc/inetd.conf ]; then
+	echo -n ' inetd';		inetd ${inetd_flags}
+fi
 
 # $rarpd_flags is imported from /etc/netstart;
 # If $rarpd_flags == NO or /etc/ethers doesn't exist, then

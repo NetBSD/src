@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.25 1996/10/03 07:11:35 mrg Exp $
+#	$NetBSD: netstart,v 1.26 1996/12/04 12:55:34 mrg Exp $
 #	@(#)netstart	5.9 (Berkeley) 3/30/91
 
 # set these to "NO" to turn them off.  otherwise, they're used as flags
@@ -13,6 +13,7 @@ sendmail_flags=NO	# for 'normal' use: sendmail_flags="-bd -q30m"
 named_flags=NO		# for 'normal' use: named_flags=""
 dhcpd_flags=NO		# for 'normal' use: dhcpd_flags=""
 timed_flags=
+inetd_flags=		# for libwrap logging, use: inetd_flags=-l
 
 # If your system is to be a YP server, you need to enable ypserv
 # and (optionally) rpc.yppasswdd.  Set these variables to "NO"
