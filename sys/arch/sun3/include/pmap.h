@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.19 1997/02/18 20:18:56 gwr Exp $	*/
+/*	$NetBSD: pmap.h,v 1.20 1997/02/18 21:21:11 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,19 +44,18 @@
  */
 
 struct pmap {
-	int	                pm_refcount;	/* pmap reference count */
-	simple_lock_data_t      pm_lock;	/* lock on pmap */
-	struct pmap_statistics	pm_stats;	/* pmap statistics */
-	int                     pm_version;
-	int                     pm_ctxnum;
-	unsigned char           *pm_segmap;
+	int             	pm_refcount;	/* pmap reference count */
+	simple_lock_data_t	pm_lock;    	/* lock on pmap */
+	int             	pm_version;
+	int             	pm_ctxnum;
+	unsigned char   	*pm_segmap;
 };
 
 typedef struct pmap *pmap_t;
 
 #ifdef _KERNEL
 extern	struct pmap	kernel_pmap_store;
-#define	pmap_kernel()			(&kernel_pmap_store)
+#define	pmap_kernel()	(&kernel_pmap_store)
 
 /* This is called from locore.s:cpu_switch() */
 void	pmap_activate __P((pmap_t pmap));
