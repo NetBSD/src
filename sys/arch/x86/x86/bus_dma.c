@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.11 2004/06/05 07:31:31 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.12 2004/06/12 17:10:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.11 2004/06/05 07:31:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.12 2004/06/12 17:10:04 yamt Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -136,7 +136,7 @@ static int _bus_dma_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
 static void _bus_dma_free_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map);
 static int _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
 	    void *buf, bus_size_t buflen, struct proc *p, int flags,
-	    paddr_t *lastaddrp, int *segp, int first);
+	    paddr_t *lastaddrp, int *segp);
 
 
 /*
@@ -279,9 +279,9 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	if (buflen > map->_dm_size)
 		return EINVAL;
 
-	seg = 0;
+	seg = -1;
 	error = _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags,
-	    &lastaddr, &seg, 1);
+	    &lastaddr, &seg);
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
@@ -337,7 +337,7 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 	int flags;
 {
 	struct x86_bus_dma_cookie *cookie = map->_dm_cookie;
-	int seg, error, first;
+	int seg, error;
 	paddr_t lastaddr;
 	struct mbuf *m;
 
@@ -355,8 +355,7 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 	if (m0->m_pkthdr.len > map->_dm_size)
 		return (EINVAL);
 
-	first = 1;
-	seg = 0;
+	seg = -1;
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
 		if (m->m_len == 0)
@@ -370,8 +369,7 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 			lastaddr = m->m_ext.ext_paddr +
 			    (m->m_data - m->m_ext.ext_buf);
  have_addr:
-			if (first == 0 &&
-			    ++seg >= map->_dm_segcnt) {
+			if (++seg >= map->_dm_segcnt) {
 				error = EFBIG;
 				break;
 			}
@@ -390,9 +388,8 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 
 		default:
 			error = _bus_dmamap_load_buffer(t, map, m->m_data,
-			    m->m_len, NULL, flags, &lastaddr, &seg, first);
+			    m->m_len, NULL, flags, &lastaddr, &seg);
 		}
-		first = 0;
 	}
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
@@ -448,7 +445,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	int flags;
 {
 	paddr_t lastaddr;
-	int seg, i, error, first;
+	int seg, i, error;
 	bus_size_t minlen, resid;
 	struct proc *p = NULL;
 	struct iovec *iov;
@@ -472,8 +469,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 #endif
 	}
 
-	first = 1;
-	seg = 0;
+	seg = -1;
 	error = 0;
 	for (i = 0; i < uio->uio_iovcnt && resid != 0 && error == 0; i++) {
 		/*
@@ -484,8 +480,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 		addr = (caddr_t)iov[i].iov_base;
 
 		error = _bus_dmamap_load_buffer(t, map, addr, minlen,
-		    p, flags, &lastaddr, &seg, first);
-		first = 0;
+		    p, flags, &lastaddr, &seg);
 
 		resid -= minlen;
 	}
@@ -1057,7 +1052,7 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
  * first indicates if this is the first invocation of this function.
  */
 static int
-_bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
+_bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	void *buf;
@@ -1066,7 +1061,6 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 	int flags;
 	paddr_t *lastaddrp;
 	int *segp;
-	int first;
 {
 	bus_size_t sgsize;
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
@@ -1116,24 +1110,19 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 		 * Insert chunk into a segment, coalescing with
 		 * previous segment if possible.
 		 */
-		if (first) {
+		if (seg >= 0 && curaddr == lastaddr &&
+		    (map->dm_segs[seg].ds_len + sgsize) <= map->_dm_maxsegsz &&
+		    (map->_dm_boundary == 0 ||
+		    (map->dm_segs[seg].ds_addr & bmask) == (curaddr & bmask))) {
+			/* coalesce */
+			map->dm_segs[seg].ds_len += sgsize;
+		} else if (++seg >= map->_dm_segcnt) {
+			/* EFBIG */
+			break;
+		} else {
+			/* new segment */
 			map->dm_segs[seg].ds_addr = curaddr;
 			map->dm_segs[seg].ds_len = sgsize;
-			first = 0;
-		} else {
-			if (curaddr == lastaddr &&
-			    (map->dm_segs[seg].ds_len + sgsize) <=
-			     map->_dm_maxsegsz &&
-			    (map->_dm_boundary == 0 ||
-			     (map->dm_segs[seg].ds_addr & bmask) ==
-			     (curaddr & bmask)))
-				map->dm_segs[seg].ds_len += sgsize;
-			else {
-				if (++seg >= map->_dm_segcnt)
-					break;
-				map->dm_segs[seg].ds_addr = curaddr;
-				map->dm_segs[seg].ds_len = sgsize;
-			}
 		}
 
 		lastaddr = curaddr + sgsize;
