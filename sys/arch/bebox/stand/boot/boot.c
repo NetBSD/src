@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.13 2002/04/08 16:07:47 sakamoto Exp $	*/
+/*	$NetBSD: boot.c,v 1.14 2002/04/09 15:59:35 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -57,7 +57,7 @@ extern char bootprog_name[], bootprog_rev[], bootprog_maker[], bootprog_date[];
 
 void exec_kernel __P((char *, void *));
 
-int
+void
 main()
 {
 	int n = 0;
@@ -128,8 +128,6 @@ main()
 
 		exec_kernel(name, bootinfo);
 	}
-	/* NOTREACHED */
-	return 0;
 }
 
 /*
