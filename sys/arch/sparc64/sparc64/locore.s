@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.129 2001/07/31 06:58:09 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.130 2001/08/01 17:01:26 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -11195,24 +11195,24 @@ Lbzero_block:
 	 fzero	%f0					! for bzero
 
 #ifdef _LP64
-	stx	%i2, [%sp + BIAS + 0x50]		! Flush this puppy to RAM
+	stx	%i2, [%i0]				! Flush this puppy to RAM
 	membar	#StoreLoad
-	ldd	[%sp + BIAS + 0x50], %f0
+	ldd	[%i0], %f0
 #else
-	stw	%i2, [%sp + 0x28]			! Flush this puppy to RAM
+	stw	%i2, [%i0]				! Flush this puppy to RAM
 	membar	#StoreLoad
-	ld	[%sp + 0x28], %f0
+	ld	[%i0], %f0
 	fmovsa	%icc, %f0, %f1
 #endif
 	
 3:	
-	fmovda	%icc, %f0, %f2				! Duplicate the pattern
-	fmovda	%icc, %f0, %f4
-	fmovda	%icc, %f0, %f6
-	fmovda	%icc, %f0, %f8
-	fmovda	%icc, %f0, %f10
-	fmovda	%icc, %f0, %f12
-	fmovda	%icc, %f0, %f14
+	fmovd	%f0, %f2				! Duplicate the pattern
+	fmovd	%f0, %f4
+	fmovd	%f0, %f6
+	fmovd	%f0, %f8
+	fmovd	%f0, %f10
+	fmovd	%f0, %f12
+	fmovd	%f0, %f14
 
 	!! Remember: we were 8 bytes too far
 	dec	56, %i1					! Go one iteration too far
