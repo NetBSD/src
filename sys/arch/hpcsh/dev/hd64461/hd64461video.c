@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.23 2003/12/14 02:52:15 uwe Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.24 2004/03/15 03:38:39 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.23 2003/12/14 02:52:15 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.24 2004/03/15 03:38:39 uwe Exp $");
 
 #include "debug_hpcsh.h"
 // #define HD64461VIDEO_HWACCEL
@@ -413,6 +413,7 @@ hd64461video_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct hpcfb_dspconf *dspconf;
 	struct wsdisplay_cmap *cmap;
 	struct wsdisplay_param *dispparam;
+	long id, idmax;
 	int turnoff;
 	u_int8_t *r, *g, *b;
 	int error;
@@ -437,42 +438,41 @@ hd64461video_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (0);
 
 	case WSDISPLAYIO_GETPARAM:
-		dispparam = (struct wsdisplay_param*)data;
+		dispparam = (struct wsdisplay_param *)data;
+		dispparam->min = 0;
 		switch (dispparam->param) {
 		case WSDISPLAYIO_PARAM_BRIGHTNESS:
-			dispparam->min = 0;
-			error = config_hook_call(CONFIG_HOOK_GET,
-					CONFIG_HOOK_BRIGHTNESS_MAX,
-					&dispparam->max);
-			if (error == 0)
-				error = config_hook_call(CONFIG_HOOK_GET,
-						CONFIG_HOOK_BRIGHTNESS,
-						&dispparam->curval);
-			if (error == 0)
-				return (0);
-			else
-				return (EINVAL);
+			id = CONFIG_HOOK_BRIGHTNESS;
+			idmax = CONFIG_HOOK_BRIGHTNESS_MAX;
+			break;
+		case WSDISPLAYIO_PARAM_CONTRAST:
+			id = CONFIG_HOOK_CONTRAST;
+			idmax = CONFIG_HOOK_CONTRAST_MAX;
+			break;
 		default:
 			return (EINVAL);
 		}
-		return (0);
+		error = config_hook_call(CONFIG_HOOK_GET, idmax,
+					 &dispparam->max);
+		if (error)
+			return (error);
+		return config_hook_call(CONFIG_HOOK_GET, id,
+					&dispparam->curval);
 
 	case WSDISPLAYIO_SETPARAM:
-		dispparam = (struct wsdisplay_param*)data;
+		dispparam = (struct wsdisplay_param *)data;
 		switch (dispparam->param) {
 		case WSDISPLAYIO_PARAM_BRIGHTNESS:
-			error = config_hook_call(CONFIG_HOOK_SET,
-					CONFIG_HOOK_BRIGHTNESS,
-					&dispparam->curval);
-			if (error == 0)
-				return (0);
-			else
-				return (EINVAL);
+			id = CONFIG_HOOK_BRIGHTNESS;
+			break;
+		case WSDISPLAYIO_PARAM_CONTRAST:
+			id = CONFIG_HOOK_CONTRAST;
+			break;
 		default:
 			return (EINVAL);
 		}
-		return (0);
-
+		return config_hook_call(CONFIG_HOOK_SET, id,
+					&dispparam->curval);
 
 	case WSDISPLAYIO_GETCMAP:
 		cmap = (struct wsdisplay_cmap *)data;
