@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.68 1996/11/06 20:19:23 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.69 1996/11/17 18:22:37 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -581,6 +581,8 @@ _DraCoLev1intr:
 	movl	_draco_ioct,a0
 	btst	#5,a0@(7)
 	jeq	Ldrintrcommon
+	btst	#4,a0@(7)	| this only happens during autoconfiguration,
+	jeq	Ldrintrcommon	| so test last.
 	movw	#PSL_HIGHIPL,sr	| run clock at high ipl
 	clrb	a0@(9)		| reset timer irq
 Ldrclockretry:
