@@ -1,4 +1,4 @@
-/*	$NetBSD: find.h,v 1.7 1998/02/02 14:02:19 mrg Exp $	*/
+/*	$NetBSD: find.h,v 1.8 1998/02/21 22:47:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -98,12 +98,9 @@ typedef struct _plandata {
 typedef struct _option {
 	char *name;			/* option name */
 	enum ntype token;		/* token type */
-	PLAN *(*create)();		/* create function: DON'T PROTOTYPE! */
-#define	O_NONE		0x01		/* no call required */
-#define	O_ZERO		0x02		/* pass: nothing */
-#define	O_ARGV		0x04		/* pass: argv, increment argv */
-#define	O_ARGVP		0x08		/* pass: *argv, N_OK || N_EXEC */
-	int flags;
+	PLAN *(*create)			/* create function */
+		__P((char ***, int));
+	int arg;			/* function needs arg */
 } OPTION;
 
 #include "extern.h"

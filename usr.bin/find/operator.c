@@ -1,4 +1,4 @@
-/*	$NetBSD: operator.c,v 1.5 1997/10/19 11:52:55 lukem Exp $	*/
+/*	$NetBSD: operator.c,v 1.6 1998/02/21 22:47:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)operator.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: operator.c,v 1.5 1997/10/19 11:52:55 lukem Exp $");
+__RCSID("$NetBSD: operator.c,v 1.6 1998/02/21 22:47:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,9 @@ __RCSID("$NetBSD: operator.c,v 1.5 1997/10/19 11:52:55 lukem Exp $");
 
 #include "find.h"
     
+static PLAN *yanknode __P((PLAN **));
+static PLAN *yankexpr __P((PLAN **));
+
 /*
  * yanknode --
  *	destructively removes the top from the plan
