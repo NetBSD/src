@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.129 2001/05/19 08:52:05 manu Exp $	*/
+/*	$NetBSD: proc.h,v 1.130 2001/05/19 17:28:33 manu Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -91,8 +91,8 @@ struct ps_strings;
 struct emul {
 	const char	*e_name;	/* Symbolic name */
 	const char	*e_path;	/* Extra emulation path (NULL if none)*/
-	int		e_flags;	/* Miscellaneous flags, see above */
 #ifndef __HAVE_MINIMAL_EMUL
+	int		e_flags;	/* Miscellaneous flags, see above */
 					/* Syscall handling function */
 	const int	*e_errno;	/* Errno array */
 	int		e_nosys;	/* Offset of the nosys() syscall */
