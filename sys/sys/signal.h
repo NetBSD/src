@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.36 1998/09/13 02:19:06 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.37 1998/09/18 18:35:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -209,8 +209,9 @@ struct	sigaction {
 #endif /* (!_POSIX_C_SOURCE && !_XOPEN_SOURCE) || ... */
 /* Only valid for SIGCHLD. */
 #define SA_NOCLDSTOP	0x0008	/* do not generate SIGCHLD on child stop */
+#define SA_NOCLDWAIT	0x0020	/* do not generate zombies on unwaited child */
 #ifdef _KERNEL
-#define	SA_ALLBITS	0x011f
+#define	SA_ALLBITS	0x013f
 #endif
 
 /*
