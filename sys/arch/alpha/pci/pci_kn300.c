@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.c,v 1.10 1999/02/12 06:25:14 thorpej Exp $ */
+/* $NetBSD: pci_kn300.c,v 1.11 1999/04/15 22:37:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.10 1999/02/12 06:25:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.11 1999/04/15 22:37:25 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -76,8 +76,8 @@ void	dec_kn300_intr_disestablish __P((void *, void *));
 #define	NPIN		4
 
 #define	NVEC	(MAX_MC_BUS * MCPCIA_PER_MCBUS * MCPCIA_MAXSLOT * NPIN)
-static char savunit[NVEC];
-static char savirqs[NVEC];
+static int savunit[NVEC];
+static int savirqs[NVEC];
 extern struct mcpcia_softc *mcpcias;
 
 struct mcpcia_config *mcpcia_eisaccp = NULL;
@@ -121,20 +121,11 @@ pci_kn300_pickintr(ccp, first)
 	/* Not supported on KN300. */
 	pc->pc_pciide_compat_intr_establish = NULL;
 
-#if	NSIO
-	if (EISA_PRESENT(REGVAL(MCPCIA_PCI_REV(ccp->cc_sc)))) {
-		extern void dec_kn300_cons_init __P((void));
-		bus_space_tag_t iot = &ccp->cc_iot;
-		if (mcpcia_eisaccp) {
-			printf("Huh? There's only supposed to be one eisa!\n");
-		}
-		sio_intr_setup(pc, iot);
+#if NSIO > 0
+	if (EISA_PRESENT(REGVAL(MCPCIA_PCI_REV(ccp)))) {
+		sio_intr_setup(pc, &ccp->cc_iot);
 		kn300_enable_intr(ccp, KN300_PCEB_IRQ);
-		mcpcia_eisaccp = ccp;
-		dec_kn300_cons_init();	/* XXXXXXXXXXXXXXXXXXX */
 	}
-#else
-#error	"It will be impossible for you to have a console"
 #endif
 }
 
@@ -161,15 +152,10 @@ dec_kn300_intr_map(ccv, bustag, buspin, line, ihp)
 
 	alpha_pci_decompose_tag(pc, bustag, NULL, &device, NULL);
 
-	if (device == 1) {
-		/*
-		 * This can only be the NCR810 SCSI.
-		 * XXX: Do we need to check this more closely?
-		 */
-		if (EISA_PRESENT(REGVAL(MCPCIA_PCI_REV(ccp->cc_sc)))) {
-			printf("XXXXX: How can you have an EISA in the spot "
-				"as an NCR 810?\n");
-		}
+	/*
+	 * On MID 5 device 1 is the internal NCR 53c810.
+	 */
+	if (ccp->cc_mid == 5 && device == 1) {
 		kn300_irq = 16;
 	} else if (device >= 2 && device <= 5) {
 		kn300_irq = (device - 2) * 4;
@@ -177,6 +163,7 @@ dec_kn300_intr_map(ccv, bustag, buspin, line, ihp)
                 printf("dec_kn300_intr_map: weird device number %d\n", device);
                 return(1);
 	}
+
 	/*
 	 * handle layout:
 	 *
@@ -189,8 +176,8 @@ dec_kn300_intr_map(ccv, bustag, buspin, line, ihp)
 	*ihp = (pci_intr_handle_t)
 		(buspin - 1			    )	|
 		((device & 0x7)			<< 2)	|
-		((ccp->cc_sc->mcpcia_mid - 4)	<< 5)	|
-		((7 - ccp->cc_sc->mcpcia_gid)	<< 8)	|
+		((ccp->cc_mid - 4)		<< 5)	|
+		((7 - ccp->cc_gid)		<< 8)	|
 		(kn300_irq << 11);
 	return (0);
 }
@@ -261,9 +248,10 @@ kn300_iointr(framep, vec)
 {
 	struct mcpcia_softc *mcp;
 	int v, gidx, midx;
+	extern struct cfdriver mcpcia_cd;
 
 	if (vec >= MCPCIA_VEC_EISA && vec < MCPCIA_VEC_PCI) {
-#if NSIO
+#if NSIO > 0
 		sio_iointr(framep, vec);
 		return;
 #else
@@ -275,7 +263,6 @@ kn300_iointr(framep, vec)
 
 	v = (int) vec - MCPCIA_VEC_PCI;
 
-	
 	midx = v / 0x200;
 	gidx = midx / 4;
 	midx = midx % 4;
@@ -314,30 +301,19 @@ kn300_iointr(framep, vec)
 	}
 #endif
 
-	if (alpha_shared_intr_dispatch(kn300_pci_intr, v)) {
+	if (alpha_shared_intr_dispatch(kn300_pci_intr, v))
 		return;
-	}
+
 	/*
-	 * Nobody fielded the interrupt?
+	 * Stray interrupt; disable the IRQ on the appropriate MCPCIA
+	 * if we've reached the limit.
 	 */
 	alpha_shared_intr_stray(kn300_pci_intr, savirqs[v], kn300_spurious(v));
 	if (ALPHA_SHARED_INTR_DISABLE(kn300_pci_intr, v) == 0)
 		return;
-	/*
-	 * Search for the controlling mcpcia.
-	 */
-	for (mcp = mcpcias; mcp != NULL; mcp = mcp->mcpcia_next) {
-		if (mcp->mcpcia_dev.dv_unit == savunit[v]) {
-			break;
-		}
-	}
-	/*
-	 * And if found, disable this IRQ level. Guess what?
-	 * This may kill other things too.
-	 */
-	if (mcp) {
-		kn300_disable_intr(&mcp->mcpcia_cc, savirqs[v]);
-	}
+
+	mcp = mcpcia_cd.cd_devs[savunit[v]];
+	kn300_disable_intr(mcp->mcpcia_cc, savirqs[v]);
 }
 
 void
@@ -346,7 +322,7 @@ kn300_enable_intr(ccp, irq)
 	int irq;
 {
 	alpha_mb();
-	REGVAL(MCPCIA_INT_MASK0(ccp->cc_sc)) |= (1 << irq);
+	REGVAL(MCPCIA_INT_MASK0(ccp)) |= (1 << irq);
 	alpha_mb();
 }
 
@@ -356,6 +332,6 @@ kn300_disable_intr(ccp, irq)
 	int irq;
 {
 	alpha_mb();
-	REGVAL(MCPCIA_INT_MASK0(ccp->cc_sc)) &= ~(1 << irq);
+	REGVAL(MCPCIA_INT_MASK0(ccp)) &= ~(1 << irq);
 	alpha_mb();
 }
