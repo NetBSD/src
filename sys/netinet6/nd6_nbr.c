@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.43 2002/09/23 05:51:16 simonb Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.44 2003/05/14 06:47:44 itojun Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.43 2002/09/23 05:51:16 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.44 2003/05/14 06:47:44 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -110,16 +110,11 @@ nd6_ns_input(m, off, icmp6len)
 	union nd_opts ndopts;
 	struct sockaddr_dl *proxydl = NULL;
 
-#ifndef PULLDOWN_TEST
-	IP6_EXTHDR_CHECK(m, off, icmp6len,);
-	nd_ns = (struct nd_neighbor_solicit *)((caddr_t)ip6 + off);
-#else
 	IP6_EXTHDR_GET(nd_ns, struct nd_neighbor_solicit *, m, off, icmp6len);
 	if (nd_ns == NULL) {
 		icmp6stat.icp6s_tooshort++;
 		return;
 	}
-#endif
 	ip6 = mtod(m, struct ip6_hdr *); /* adjust pointer for safety */
 	taddr6 = nd_ns->nd_ns_target;
 
@@ -574,16 +569,11 @@ nd6_na_input(m, off, icmp6len)
 		goto bad;
 	}
 
-#ifndef PULLDOWN_TEST
-	IP6_EXTHDR_CHECK(m, off, icmp6len,);
-	nd_na = (struct nd_neighbor_advert *)((caddr_t)ip6 + off);
-#else
 	IP6_EXTHDR_GET(nd_na, struct nd_neighbor_advert *, m, off, icmp6len);
 	if (nd_na == NULL) {
 		icmp6stat.icp6s_tooshort++;
 		return;
 	}
-#endif
 	taddr6 = nd_na->nd_na_target;
 	flags = nd_na->nd_na_flags_reserved;
 	is_router = ((flags & ND_NA_FLAG_ROUTER) != 0);
