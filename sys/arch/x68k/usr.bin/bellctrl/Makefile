@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1997/06/22 07:09:00 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 1997/10/26 22:09:43 lukem Exp $
 #
 # Makefile for bellctrl
 
@@ -12,6 +12,6 @@ sample.fm: sample_fm.c
 
 PROG = bellctrl
 NOMAN=	yes
-CFLAGS+=-I${.CURDIR}/../../..
+CPPFLAGS+=-I${.CURDIR}/../../..
 
 .include <bsd.prog.mk>
