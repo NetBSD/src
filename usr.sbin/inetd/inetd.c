@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$Id: inetd.c,v 1.5 1993/10/13 11:22:50 pk Exp $";
+static char rcsid[] = "$Id: inetd.c,v 1.6 1993/12/14 21:31:53 pk Exp $";
 #endif /* not lint */
 
 /*
@@ -120,8 +120,8 @@ static char rcsid[] = "$Id: inetd.c,v 1.5 1993/10/13 11:22:50 pk Exp $";
 #include <sys/time.h>
 #include <sys/resource.h>
 
-#ifdef RLIMIT_NOFILE	/* Sun */
-#define RLIMIT_OFILE	RLIMIT_NOFILE
+#ifndef RLIMIT_NOFILE
+#define RLIMIT_NOFILE	RLIMIT_OFILE
 #endif
 
 #define RPC
@@ -178,7 +178,7 @@ char	*curdom;
 #define FD_MARGIN	(8)
 int	rlim_ofile_cur = OPEN_MAX;
 
-#ifdef RLIMIT_OFILE
+#ifdef RLIMIT_NOFILE
 struct rlimit	rlim_ofile;
 #endif
 
@@ -316,11 +316,13 @@ main(argc, argv, envp)
 	openlog(progname, LOG_PID | LOG_NOWAIT, LOG_DAEMON);
 	logpid();
 
-#ifdef RLIMIT_OFILE
-	if (getrlimit(RLIMIT_OFILE, &rlim_ofile) < 0) {
+#ifdef RLIMIT_NOFILE
+	if (getrlimit(RLIMIT_NOFILE, &rlim_ofile) < 0) {
 		syslog(LOG_ERR, "getrlimit: %m");
 	} else {
 		rlim_ofile_cur = rlim_ofile.rlim_cur;
+		if (rlim_ofile_cur == RLIM_INFINITY)	/* ! */
+			rlim_ofile_cur = OPEN_MAX;
 	}
 #endif
 
@@ -477,9 +479,9 @@ main(argc, argv, envp)
 				close(ctrl);
 				dup2(0, 1);
 				dup2(0, 2);
-#ifdef RLIMIT_OFILE
+#ifdef RLIMIT_NOFILE
 				if (rlim_ofile.rlim_cur != rlim_ofile_cur) {
-					if (setrlimit(RLIMIT_OFILE,
+					if (setrlimit(RLIMIT_NOFILE,
 							&rlim_ofile) < 0)
 						syslog(LOG_ERR,"setrlimit: %m");
 				}
@@ -1145,13 +1147,13 @@ logpid()
 
 bump_nofile()
 {
-#ifdef RLIMIT_OFILE
+#ifdef RLIMIT_NOFILE
 
 #define FD_CHUNK	32
 
 	struct rlimit rl;
 
-	if (getrlimit(RLIMIT_OFILE, &rl) < 0) {
+	if (getrlimit(RLIMIT_NOFILE, &rl) < 0) {
 		syslog(LOG_ERR, "getrlimit: %m");
 		return -1;
 	}
@@ -1163,7 +1165,7 @@ bump_nofile()
 		return -1;
 	}
 
-	if (setrlimit(RLIMIT_OFILE, &rl) < 0) {
+	if (setrlimit(RLIMIT_NOFILE, &rl) < 0) {
 		syslog(LOG_ERR, "setrlimit: %m");
 		return -1;
 	}
