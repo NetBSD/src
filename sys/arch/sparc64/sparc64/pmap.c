@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.128 2002/09/27 15:36:51 provos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.129 2002/10/01 20:41:22 provos Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -774,7 +774,7 @@ remap_data:
 		if (prom_map[i].vstart == ktext)
 			break;
 	if (i == prom_map_size) 
-		panic("No kernel text segment!\r");
+		panic("No kernel text segment!");
 	ktsize = prom_map[i].vsize;
 	ektext = ktext + ktsize;
 
