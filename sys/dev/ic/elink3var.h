@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3var.h,v 1.9.4.1 1997/02/07 18:01:29 is Exp $	*/
+/*	$NetBSD: elink3var.h,v 1.9.4.2 1997/02/20 16:32:38 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -40,7 +40,7 @@ struct ep_softc {
 	struct ethercom sc_ethercom;	/* Ethernet common part		*/
 	bus_space_tag_t sc_iot;		/* bus cookie			*/
 	bus_space_handle_t sc_ioh;	/* bus i/o handle		*/
-	u_int	    ep_connectors;	/* Connectors on this card.	*/
+	u_int	ep_connectors;		/* Connectors on this card.	*/
 #define MAX_MBS	8			/* # of mbufs we keep around	*/
 	struct mbuf *mb[MAX_MBS];	/* spare mbuf storage.		*/
 	int	next_mb;		/* Which mbuf to use next. 	*/
@@ -48,7 +48,31 @@ struct ep_softc {
 	int	tx_start_thresh;	/* Current TX_start_thresh.	*/
 	int	tx_succ_ok;		/* # packets sent in sequence   */
 					/* w/o underrun			*/
-	u_char	bustype;
+
+	u_int	ep_flags;		/* capabilities flag (from EEPROM) */
+#define EP_FLAGS_PNP			0x0001
+#define EP_FLAGS_FULLDUPLEX		0x0002
+#define EP_FLAGS_LARGEPKT		0x0004	/* 4k packet support */
+#define EP_FLAGS_SLAVEDMA		0x0008
+#define EP_FLAGS_SECONDDMA		0x0010
+#define EP_FLAGS_FULLDMA		0x0020
+#define EP_FLAGS_FRAGMENTDMA		0x0040
+#define EP_FLAGS_CRC_PASSTHRU		0x0080
+#define EP_FLAGS_TXDONE			0x0100
+#define EP_FLAGS_NO_TXLENGTH		0x0200
+#define EP_FLAGS_RXREPEAT		0x0400
+#define EP_FLAGS_SNOOPING		0x0800
+#define EP_FLAGS_100MBIT		0x1000
+#define EP_FLAGS_POWERMGMT		0x2000
+
+	u_short ep_chipset;		/* Chipset family on this board */
+#define EP_CHIPSET_UNKNOWN		0x00	/* unknown (assume 3c509) */
+#define EP_CHIPSET_3C509		0x01	/* PIO: 3c509, 3c589 */
+#define EP_CHIPSET_VORTEX		0x02	/* 100mbit, single-pkt dma */
+#define EP_CHIPSET_BOOMERANG		0x03	/* Saner dma plus PIO */
+#define EP_CHIPSET_BOOMERANG2		0x04	/* Saner dma, no PIO */
+
+	u_char	bustype;		/* parent bus type */
 #define EP_BUS_ISA	  	0x0
 #define	EP_BUS_PCMCIA	  	0x1
 #define	EP_BUS_EISA	  	0x2
@@ -59,6 +83,7 @@ struct ep_softc {
 };
 
 u_int16_t epreadeeprom __P((bus_space_tag_t, bus_space_handle_t, int));
-void	epconfig __P((struct ep_softc *, u_int));
+void	epconfig __P((struct ep_softc *, u_short));
+
 int	epintr __P((void *));
 void	epstop __P((struct ep_softc *));
