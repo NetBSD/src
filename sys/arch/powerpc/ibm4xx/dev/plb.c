@@ -1,4 +1,4 @@
-/* $NetBSD: plb.c,v 1.2 2002/08/13 05:43:25 simonb Exp $ */
+/* $NetBSD: plb.c,v 1.3 2002/08/23 15:01:08 scw Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -82,6 +82,7 @@
  */
 const struct plb_dev plb_devs [] = {
 	{ "cpu", },
+	{ "ecc", },
 	{ "opb", },
 	{ "pchb", },
 	{ NULL }
@@ -130,6 +131,7 @@ plb_attach(struct device *parent, struct device *self, void *aux)
 		paa.plb_name = plb_devs[i].plb_name;
 		paa.plb_bt = ibm4xx_make_bus_space_tag(0, 0);
 		paa.plb_dmat = &ibm4xx_default_bus_dma_tag;
+		paa.plb_irq = PLBCF_IRQ_DEFAULT;
 
 		(void) config_found_sm(self, &paa, plb_print, plb_submatch);
 	}
@@ -138,6 +140,7 @@ plb_attach(struct device *parent, struct device *self, void *aux)
 		paa.plb_name = local_plb_devs->plb_name;
 		paa.plb_bt = ibm4xx_make_bus_space_tag(0, 0);
 		paa.plb_dmat = &ibm4xx_default_bus_dma_tag;
+		paa.plb_irq = PLBCF_IRQ_DEFAULT;
 
 		(void) config_found_sm(self, &paa, plb_print, plb_submatch);
 		local_plb_devs++;
@@ -151,6 +154,8 @@ plb_print(void *aux, const char *pnp)
 
 	if (pnp)
 		printf("%s at %s", paa->plb_name, pnp);
+	if (paa->plb_irq != PLBCF_IRQ_DEFAULT)
+		printf(" irq %d", paa->plb_irq);
 
 	return (UNCONF);
 }
