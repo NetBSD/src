@@ -1,4 +1,5 @@
-/*	$NetBSD: dma.c,v 1.10 2000/01/23 20:08:08 soda Exp $	*/
+/*	$NetBSD: dma.c,v 1.11 2000/01/23 21:01:53 soda Exp $	*/
+/*	$OpenBSD: dma.c,v 1.4 1997/04/19 17:19:51 pefo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,26 +53,32 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
+#include <mips/locore.h>
 #include <machine/cpu.h>
+#include <machine/cpuregs.h>
 #include <machine/autoconf.h>
 #include <machine/bus.h>
-#include <machine/pte.h>
 #include <machine/pio.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
-#include <pica/pica/pica.h>
-#include <pica/dev/dma.h>
+#include <arc/pica/pica.h>
+#include <arc/dev/dma.h>
+
+void picaDmaReset __P((dma_softc_t *sc));
+void picaDmaEnd __P((dma_softc_t *sc));
+void picaDmaNull __P((dma_softc_t *sc));
 
 
 extern vm_map_t phys_map;
 
-#define dma_pte_to_pa(x)	(((x) - first_dma_pte) * PICA_DMA_PAGE_SIZE)
+#define dma_pte_to_pa(x)	(((x) - first_dma_pte) * R4030_DMA_PAGE_SIZE)
 
 dma_pte_t *free_dma_pte;	/* Pointer to free dma pte list */
 dma_pte_t *first_dma_pte;	/* Pointer to first dma pte */
+
 
 /*
  *  Initialize the dma mapping register area and pool.
@@ -81,7 +88,7 @@ picaDmaInit()
 {
 	int map = PICA_TL_BASE;
 
-	MachFlushCache();	/* Make shure no map entries are cached */
+	mips3_FlushCache();	/* Make shure no map entries are cached */
 
 	bzero((char *)map, PICA_TL_SIZE);
 	free_dma_pte = (dma_pte_t *)map;
@@ -89,9 +96,9 @@ picaDmaInit()
 	free_dma_pte->queue.next = NULL;
 	free_dma_pte->queue.size = PICA_TL_SIZE / sizeof(dma_pte_t);
 
-	out32(PICA_SYS_TL_BASE, MIPS_KSEG1_TO_PHYS(map));
-	out32(PICA_SYS_TL_LIMIT, PICA_TL_SIZE);
-	out32(PICA_SYS_TL_IVALID, 0);
+	out32(R4030_SYS_TL_BASE, MIPS_KSEG1_TO_PHYS(map));
+	out32(R4030_SYS_TL_LIMIT, PICA_TL_SIZE);
+	out32(R4030_SYS_TL_IVALID, 0);
 }
 
 /*
@@ -193,7 +200,7 @@ picaDmaTLBMap(dma_softc_t *sc)
 	int nbytes;
 
 	va = sc->next_va - sc->dma_va;
-	dma_pte = sc->pte_base + (va / PICA_DMA_PAGE_SIZE);
+	dma_pte = sc->pte_base + (va / R4030_DMA_PAGE_SIZE);
 	nbytes = dma_page_round(sc->next_size + dma_page_offs(va));
 	va = sc->req_va;
 	while(nbytes > 0) {
@@ -201,16 +208,17 @@ picaDmaTLBMap(dma_softc_t *sc)
 			pa = MIPS_KSEG0_TO_PHYS(va);
 		}
 		else {
-			pa = pmap_extract(vm_map_pmap(phys_map), va);
+			if (!pmap_extract(vm_map_pmap(phys_map), va, &pa))
+				panic("picaDmaTLBMap: pmap_extract %p", va);
 		}
-		pa &= PICA_DMA_PAGE_NUM;
+		pa &= R4030_DMA_PAGE_NUM;
 		if(pa == 0)
 			panic("picaDmaTLBMap: null page frame");
 		dma_pte->entry.lo_addr = pa;
 		dma_pte->entry.hi_addr = 0;
 		dma_pte++;
-		va += PICA_DMA_PAGE_SIZE;
-		nbytes -= PICA_DMA_PAGE_SIZE;
+		va += R4030_DMA_PAGE_SIZE;
+		nbytes -= R4030_DMA_PAGE_SIZE;
 	}
 }
 
@@ -238,21 +246,21 @@ picaDmaStart(sc, addr, size, datain)
 
 	/* Map up the request viritual dma space */
 	picaDmaTLBMap(sc);
-	out32(PICA_SYS_TL_IVALID, 0);	/* Flush dma map cache */
+	out32(R4030_SYS_TL_IVALID, 0);	/* Flush dma map cache */
 
 	/* Load new transfer parameters */
 	regs->dma_addr = sc->next_va;
 	regs->dma_count = sc->next_size;
-	regs->dma_mode = sc->mode & PICA_DMA_MODE;
+	regs->dma_mode = sc->mode & R4030_DMA_MODE;
 
 	sc->sc_active = 1;
 	if(datain == DMA_FROM_DEV) {
 		sc->mode &= ~DMA_DIR_WRITE;
-		regs->dma_enab = PICA_DMA_ENAB_RUN | PICA_DMA_ENAB_READ;
+		regs->dma_enab = R4030_DMA_ENAB_RUN | R4030_DMA_ENAB_READ;
 	}
 	else {
 		sc->mode |= DMA_DIR_WRITE;
-		regs->dma_enab = PICA_DMA_ENAB_RUN | PICA_DMA_ENAB_WRITE;
+		regs->dma_enab = R4030_DMA_ENAB_RUN | R4030_DMA_ENAB_WRITE;
 	}
 	wbflush();
 }
@@ -288,7 +296,7 @@ picaDmaFlush(sc, addr, size, datain)
 	size_t  size;
 	int     datain;
 {
-	out32(PICA_SYS_TL_IVALID, 0);	/* Flush dma map cache */
+	out32(R4030_SYS_TL_IVALID, 0);	/* Flush dma map cache */
 }
 
 /*
@@ -308,7 +316,7 @@ picaDmaReset(dma_softc_t *sc)
 /*
  *  End dma operation, return byte count left.
  */
-int
+void
 picaDmaEnd(dma_softc_t *sc)
 {
 	pDmaReg regs = sc->dma_reg;
@@ -320,51 +328,36 @@ picaDmaEnd(dma_softc_t *sc)
 	regs->dma_enab = 0;
 	regs->dma_mode = 0;
 	sc->sc_active = 0;
-
-	return res;
 }
 
 /*
  *  Null call rathole!
  */
-int /* XXX*/
+void
 picaDmaNull(dma_softc_t *sc)
 {
-	pDmaReg regs = sc->dma_reg;
-
 	printf("picaDmaNull called\n");
 }
-
-/*
- *  Null enable-interrupt rathole!
- */
-void /* XXX*/
-picaEnIntrNull(dma_softc_t *sc)
-{
-	pDmaReg regs = sc->dma_reg;
-
-	printf("picaEnIntrNull called\n");
-}
-
 
 /*
  *  dma_init..
  *	Called from asc to set up dma
  */
 void
-asc_dma_init(dma_softc_t *sc)
+asc_dma_init(sc)
+	dma_softc_t *sc;
 {
 	sc->reset = picaDmaReset;
-	sc->enintr = picaEnIntrNull;
+	sc->enintr = picaDmaNull;
 	sc->start = picaDmaStart;
 	sc->map = picaDmaMap;
-	sc->isintr = picaDmaNull;
-	sc->intr = picaDmaNull;
+	sc->isintr = (int(*)(struct dma_softc *))picaDmaNull;
+	sc->intr = (int(*)(struct dma_softc *))picaDmaNull;
 	sc->end = picaDmaEnd;
 
-	sc->dma_reg = (pDmaReg)PICA_SYS_DMA0_REGS;
+	sc->dma_reg = (pDmaReg)R4030_SYS_DMA0_REGS;
 	sc->pte_size = 32;
-	sc->mode = PICA_DMA_MODE_160NS | PICA_DMA_MODE_16;
+	sc->mode = R4030_DMA_MODE_160NS | R4030_DMA_MODE_16;
 	picaDmaTLBAlloc(sc);
 }
 /*
@@ -375,16 +368,16 @@ void
 fdc_dma_init(dma_softc_t *sc)
 {
 	sc->reset = picaDmaReset;
-	sc->enintr = picaEnIntrNull;
+	sc->enintr = picaDmaNull;
 	sc->start = picaDmaStart;
 	sc->map = picaDmaMap;
-	sc->isintr = picaDmaNull;
-	sc->intr = picaDmaNull;
+	sc->isintr = (int(*)(struct dma_softc *))picaDmaNull;
+	sc->intr = (int(*)(struct dma_softc *))picaDmaNull;
 	sc->end = picaDmaEnd;
 
-	sc->dma_reg = (pDmaReg)PICA_SYS_DMA1_REGS;
+	sc->dma_reg = (pDmaReg)R4030_SYS_DMA1_REGS;
 	sc->pte_size = 32;
-	sc->mode = PICA_DMA_MODE_160NS | PICA_DMA_MODE_8;
+	sc->mode = R4030_DMA_MODE_160NS | R4030_DMA_MODE_8;
 	picaDmaTLBAlloc(sc);
 }
 /*
@@ -394,12 +387,12 @@ fdc_dma_init(dma_softc_t *sc)
 void
 sn_dma_init(dma_softc_t *sc, int pages)
 {
-	sc->reset = picaEnIntrNull;	/* XXX*/
-	sc->enintr = picaEnIntrNull;
+	sc->reset = picaDmaNull;
+	sc->enintr = picaDmaNull;
 	sc->start = picaDmaFlush;
 	sc->map = picaDmaMap;
-	sc->isintr = picaDmaNull;
-	sc->intr = picaDmaNull;
+	sc->isintr = (int(*)(struct dma_softc *))picaDmaNull;
+	sc->intr = (int(*)(struct dma_softc *))picaDmaNull;
 	sc->end = picaDmaNull;
 
 	sc->dma_reg = (pDmaReg)NULL;

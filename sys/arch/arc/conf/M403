@@ -1,4 +1,4 @@
-#	$NetBSD: PICA,v 1.15 2000/01/23 21:01:53 soda Exp $
+#	$NetBSD: M403,v 1.1 2000/01/23 21:01:52 soda Exp $
 #
 #	Generic configuration file for MIPS R4400 PICA system
 #
@@ -8,7 +8,7 @@ include		"arch/arc/conf/std.arc"
 maxusers	32
 
 # Need to set locally
-options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+options 	RTC_OFFSET=-540	# hardware clock is this many mins. west of GMT
 
 # Standard system options
 options 	KTRACE			# system call tracing support
@@ -25,6 +25,15 @@ options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
 options 	SHMMAXPGS=1024	# 1024 pages is the default
+
+# Compatibilitry modules
+options 	COMPAT_43	# compatibility with 4.3BSD binaries
+options 	COMPAT_11
+options 	COMPAT_12
+options 	COMPAT_13
+options 	COMPAT_14
+#options 	COMPAT_ULTRIX	# Ultrix binary compatibility (no go yet)
+options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
 # Filesystem options
 file-system 	FFS		# fast filesystem
@@ -62,7 +71,7 @@ options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 
 # Networking options
 options 	INET		# Internet protocols
-options 	INET6		# IPV6
+#options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
@@ -72,21 +81,15 @@ options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# Multicast routing support
 #options 	ISO,TPIP	# OSI networking
 #options 	EON		# OSI tunneling over IP
-
-# Compatibilitry modules
-options 	COMPAT_43	# compatibility with 4.3BSD binaries
-options 	COMPAT_11
-options 	COMPAT_12
-options 	COMPAT_13
-options 	COMPAT_14
-#options 	COMPAT_ULTRIX	# Ultrix binary compatibility (no go yet)
-options 	COMPAT_386BSD_MBRPART # recognize old partition ID
+#options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 
 # Special options
 #options 	MACHINE_NONCONTIG # Support noncontigous memory.
 options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
+options 	COMCONSOLE
 
-options 	NFS_BOOT_BOOTP,NFS_BOOT_BOOTPARAM
+# XXX #options 	NFS_BOOT_BOOTP,NFS_BOOT_BOOTPARAM
+options 	NFS_BOOT_BOOTPARAM
 
 # Specify storage configuration
 config		netbsd root on ? type ?
@@ -100,8 +103,8 @@ cpu*		at mainbus0
 pica*		at mainbus0
 
 aclock0		at pica?
-pc0		at pica?
-opms0		at pica?
+#pc0		at pica?
+#opms0		at pica?
 com0		at pica?
 com1		at pica?
 lpt0		at pica?

@@ -1,4 +1,6 @@
+/*	$NetBSD: arcbios.h,v 1.2 2000/01/23 21:01:50 soda Exp $	*/
 /*	$OpenBSD: arcbios.h,v 1.4 1997/05/01 15:13:30 pefo Exp $	*/
+
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  *
@@ -329,11 +331,13 @@ typedef struct arc_param_blk
 #define ArcBiosBase ((arc_param_blk_t *) 0x80001000)
 #define ArcBios (ArcBiosBase->firmware_vect)
 
-
-int  bios_getchar __P((void));
-void bios_putchar __P((char));
-void bios_putstring __P((char *));
-void bios_ident __P((void));
+/*
+ * All functions except bios_ident() should be called only if
+ *	bios_ident() returns >= 0.
+ */
+int bios_ident __P((void));
+void bios_init_console __P((void));
+int bios_configure_memory __P((int *, phys_ram_seg_t *, int *));
+void bios_save_info __P((void));
 void bios_display_info __P((int *, int *, int *, int *));
-int  bios_load_miniroot __P((char *, caddr_t));
-
+int bios_load_miniroot __P((char *, caddr_t));

@@ -1,3 +1,4 @@
+/*	$NetBSD: pcibrvar.h,v 1.2 2000/01/23 21:02:00 soda Exp $	*/
 /*	$OpenBSD: pcibrvar.h,v 1.2 1997/04/10 16:29:32 pefo Exp $ */
 
 /*

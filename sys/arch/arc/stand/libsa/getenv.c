@@ -1,4 +1,4 @@
-/*	$NetBSD: getenv.c,v 1.1.1.1 2000/01/23 20:24:30 soda Exp $	*/
+/*	$NetBSD: getenv.c,v 1.2 2000/01/23 21:02:00 soda Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
