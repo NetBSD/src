@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.79 2004/04/11 04:02:43 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.80 2004/04/11 04:03:52 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -797,3 +797,8 @@ sys/arch/dreamcast/dreamcast/locore.S		1.6
 
 	Add ALTENTRY(kernel_text) for pmap(1).
 	[tsutsui, ticket #121]
+
+sys/arch/sgimips/sgimips/machdep.c		1.82
+
+	Tidy up total/avail memory message as well as other ports.
+	[tsutsui, ticket #122]
