@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2004/06/16 02:41:55 mhitch Exp $
+# $NetBSD: Makefile,v 1.2 2004/06/30 03:26:27 jmc Exp $
 
 SUBDIR=		stand
 TARGETS+=	release

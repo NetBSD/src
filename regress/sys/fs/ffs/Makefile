@@ -1,3 +1,4 @@
+##	$NetBSD: Makefile,v 1.6 2004/06/30 03:26:27 jmc Exp $
 ##  Notes:
 ##    This set of tests creates a dummy directory tree in /tmp and
 ##    populates it with several files.  The test requires around 1100
