@@ -1,11 +1,11 @@
-/*	$NetBSD: null.h,v 1.11 2000/03/13 23:52:40 soren Exp $	*/
+/*	$NetBSD: null.h,v 1.12 2001/06/07 13:44:46 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
  * All rights reserved.
  *
- * This software was written by William Studnemund of the
- * Numerical Aerospace Similation Facility, NASA Ames Research Center.
+ * This software was written by William Studenmund of the
+ * Numerical Aerospace Simulation Facility, NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
