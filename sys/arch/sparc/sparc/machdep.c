@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.236 2003/10/12 14:36:19 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.237 2003/10/12 16:12:20 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.236 2003/10/12 14:36:19 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.237 2003/10/12 16:12:20 pk Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -678,6 +678,7 @@ void sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	u_int onstack, oldsp, newsp;
 	u_int catcher;
 	int sig;
+	size_t ucsz;
 
 #ifdef COMPAT_16
 	if (p->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2) {
@@ -723,6 +724,7 @@ void sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	uc.uc_link = NULL;
 	memset(&uc.uc_stack, 0, sizeof(uc.uc_stack));
 	cpu_getmcontext(l, &uc.uc_mcontext, &uc.uc_flags);
+	ucsz = (int)&uc.__uc_pad - (int)&uc;
 
 	/*
 	 * Now copy the stack contents out to user space.
@@ -735,7 +737,7 @@ void sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	newsp = (int)fp - sizeof(struct frame);
 	if (copyout(ksi, &fp->sf_si, sizeof *ksi) ||
-	    copyout(&uc, &fp->sf_uc, sizeof uc) ||
+	    copyout(&uc, &fp->sf_uc, ucsz) ||
 	    suword(&((struct rwindow *)newsp)->rw_in[6], oldsp)) {
 		/*
 		 * Process has trashed its stack; give it an illegal
