@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ioctl.c,v 1.20.6.5 2002/07/12 01:40:04 nathanw Exp $	 */
+/*	$NetBSD: svr4_ioctl.c,v 1.20.6.6 2002/08/23 02:40:51 petrov Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_ioctl.c,v 1.20.6.5 2002/07/12 01:40:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_ioctl.c,v 1.20.6.6 2002/08/23 02:40:51 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -108,7 +108,7 @@ svr4_sys_ioctl(l, v, retval)
 	struct file	*fp;
 	struct filedesc	*fdp;
 	u_long		 cmd;
-	int (*fun) __P((struct file *, struct proc *, register_t *,
+	int (*fun) __P((struct file *, struct lwp *, register_t *,
 			int, u_long, caddr_t));
 #ifdef DEBUG_SVR4
 	char		 dir[4];
@@ -159,5 +159,5 @@ svr4_sys_ioctl(l, v, retval)
 		DPRINTF(("Unimplemented ioctl %lx\n", cmd));
 		return 0;	/* XXX: really ENOSYS */
 	}
-	return (*fun)(fp, p, retval, SCARG(uap, fd), cmd, SCARG(uap, data));
+	return (*fun)(fp, l, retval, SCARG(uap, fd), cmd, SCARG(uap, data));
 }
