@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.c,v 1.24 2004/03/04 03:27:30 oster Exp $	*/
+/*	$NetBSD: rf_psstatus.c,v 1.25 2004/03/05 02:53:58 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.24 2004/03/04 03:27:30 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.25 2004/03/05 02:53:58 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -62,8 +62,7 @@ RealPrintPSStatusTable(RF_Raid_t * raidPtr,
     RF_PSStatusHeader_t * pssTable);
 
 #define RF_MAX_FREE_PSS  32
-#define RF_PSS_INC        8
-#define RF_PSS_INITIAL    4
+#define RF_MIN_FREE_PSS   8
 
 static void rf_ShutdownPSStatus(void *);
 
@@ -84,15 +83,19 @@ rf_ConfigurePSStatus(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 	raidPtr->pssTableSize = RF_PSS_DEFAULT_TABLESIZE;
 	pool_init(&raidPtr->pss_pool, sizeof(RF_ReconParityStripeStatus_t), 0,
 		  0, 0, "raidpsspl", NULL);
+	pool_sethiwat(&raidPtr->pss_pool, RF_MAX_FREE_PSS);
+	pool_prime(&raidPtr->pss_pool, RF_MIN_FREE_PSS);
+	pool_setlowat(&raidPtr->pss_pool, RF_MIN_FREE_PSS);
+
 	pool_init(&raidPtr->pss_issued_pool,
 		  raidPtr->numCol * sizeof(char), 0,
 		  0, 0, "raidpssissuedpl", NULL);
+	pool_sethiwat(&raidPtr->pss_issued_pool, RF_MAX_FREE_PSS);
+	pool_prime(&raidPtr->pss_issued_pool, RF_MIN_FREE_PSS);
+	pool_setlowat(&raidPtr->pss_issued_pool, RF_MIN_FREE_PSS);
+
 	rf_ShutdownCreate(listp, rf_ShutdownPSStatus, raidPtr);
 
-	pool_sethiwat(&raidPtr->pss_pool, RF_MAX_FREE_PSS);
-	pool_sethiwat(&raidPtr->pss_issued_pool, RF_MAX_FREE_PSS);
-	pool_prime(&raidPtr->pss_pool, RF_PSS_INITIAL);
-	pool_prime(&raidPtr->pss_issued_pool, RF_PSS_INITIAL);
 	return (0);
 }
 /*****************************************************************************************
