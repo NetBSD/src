@@ -1,5 +1,5 @@
 #
-#	$NetBSD: dot.profile,v 1.1.1.1 1995/04/17 19:08:51 leo Exp $
+#	$NetBSD: dot.profile,v 1.2 1995/05/10 13:39:28 leo Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -32,7 +32,7 @@
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
-TERM=pc3
+TERM=vt200
 export TERM
 
 # set up some sane defaults
