@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.219 2002/05/04 19:43:57 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.219.2.1 2002/05/30 14:03:58 tv Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -106,7 +106,7 @@ BIN3+=	hosts.equiv
 
 NAMEDB=	127 root.cache named.conf localhost loopback.v6
 
-.if make(release) || make(snapshot) || make(distribution)		# {
+.if make(install-etc-files)						# {
 # find out endianness of target and set proper flag for pwd_mkdb so that
 # it creates database in same endianness
 .if exists(${DESTDIR}/usr/include/sys/endian.h)
@@ -124,7 +124,7 @@ TARGET_ENDIANNESS= -B
 .else
 TARGET_ENDIANNESS=
 .endif
-.endif	# release || snapshot || distribution				# }
+.endif	# install-etc-files						# }
 
 obj:
 	mkdir -p ${KERNOBJDIR}
