@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.51 2001/06/12 23:36:17 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.52 2001/07/03 18:08:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.51 2001/06/12 23:36:17 sjg Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.52 2001/07/03 18:08:50 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.51 2001/06/12 23:36:17 sjg Exp $");
+__RCSID("$NetBSD: job.c,v 1.52 2001/07/03 18:08:50 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1122,7 +1122,7 @@ Job_Touch(gn, silent)
     int		  streamID;   	/* ID of stream opened to do the touch */
     struct utimbuf times;	/* Times for utime() call */
 
-    if (gn->type & (OP_JOIN|OP_USE|OP_EXEC|OP_OPTIONAL|OP_PHONY)) {
+    if (gn->type & (OP_JOIN|OP_USE|OP_USEBEFORE|OP_EXEC|OP_OPTIONAL|OP_PHONY)) {
 	/*
 	 * .JOIN, .USE, .ZEROTIME and .OPTIONAL targets are "virtual" targets
 	 * and, as such, shouldn't really be created.
