@@ -1,4 +1,4 @@
-/*	$NetBSD: bill.c,v 1.5 1997/10/18 20:03:06 christos Exp $	 */
+/*	$NetBSD: bill.c,v 1.6 2001/02/05 00:57:32 christos Exp $	 */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -38,15 +38,15 @@
 #if 0
 static char sccsid[] = "@(#)bill.c	5.2 (Berkeley) 5/28/91";
 #else
-__RCSID("$NetBSD: bill.c,v 1.5 1997/10/18 20:03:06 christos Exp $");
+__RCSID("$NetBSD: bill.c,v 1.6 2001/02/05 00:57:32 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/file.h>
 #include <sys/wait.h>
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <unistd.h>
 #include "header.h"
 #include "extern.h"
@@ -134,18 +134,21 @@ mailbill()
 	if (fork() == 0) {
 		resetscroll();
 		cp = mail;
-		sprintf(fname, "/tmp/#%dlarnmail", getpid());
+		snprintf(fname, sizeof(fname), "/tmp/#%dlarnmail", getpid());
 		for (i = 0; i < 6; i++) {
 			if ((fd = open(fname, O_WRONLY | O_TRUNC | O_CREAT,
 				       0666)) == -1)
 				exit(0);
 			while (*cp != NULL) {
 				if (*cp[0] == '1') {
-					sprintf(buf, "\n%ld gold pieces back with you from your journey.  As the",
+					snprintf(buf, sizeof(buf),
+		"\n%ld gold pieces back with you from your journey.  As the",
 						(long) c[GOLD]);
 					write(fd, buf, strlen(buf));
 				} else if (*cp[0] == '2') {
-					sprintf(buf, "\nin preparing your tax bill.  You owe %ld gold pieces as", (long) c[GOLD] * TAXRATE);
+					snprintf(buf, sizeof(buf),
+		"\nin preparing your tax bill.  You owe %ld gold pieces as",
+					    (long) c[GOLD] * TAXRATE);
 					write(fd, buf, strlen(buf));
 				} else
 					write(fd, *cp, strlen(*cp));
@@ -154,8 +157,8 @@ mailbill()
 			cp++;
 
 			close(fd);
-			sprintf(buf, "mail -I %s < %s > /dev/null",
-				loginname, fname);
+			snprintf(buf, sizeof(buf),
+			    "mail -I %s < %s > /dev/null", loginname, fname);
 			system(buf);
 			unlink(fname);
 		}
