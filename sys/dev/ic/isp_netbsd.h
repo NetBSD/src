@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.20 1999/12/16 05:35:44 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.21 1999/12/20 00:37:49 mjacob Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  * Matthew Jacob <mjacob@nas.nasa.gov>
@@ -110,7 +110,7 @@ struct isposinfo {
 #define	CFGPRINTF		printf
 #elif	defined(DIAGNOSTIC)
 #define	DFLT_DBLEVEL		1
-#define	CFGPRINTF		if (0) printf
+#define	CFGPRINTF		printf
 #else
 #define	DFLT_DBLEVEL		0
 #define	CFGPRINTF		if (0) printf
