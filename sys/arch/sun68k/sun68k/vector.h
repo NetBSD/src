@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.h,v 1.1 2001/06/14 13:08:11 fredette Exp $	*/
+/*	$NetBSD: vector.h,v 1.2 2005/01/22 15:36:12 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,25 +42,25 @@
 
 extern void *vector_table[];
 
-void _isr_autovec __P((void));
+void _isr_autovec(void);
 
-void addrerr __P((void));
-void badtrap __P((void));
-void buserr __P((void));
-void chkinst __P((void));
-void coperr __P((void));
-void fmterr __P((void));
-void fpfline __P((void));
-void fpunsupp __P((void));
-void illinst __P((void));
-void privinst __P((void));
-void trace __P((void));
-void trap0 __P((void));
-void trap1 __P((void));
-void trap12 __P((void));
-void trap15 __P((void));
-void trap2 __P((void));
-void trap3 __P((void));
-void trapvinst __P((void));
-void zerodiv __P((void));
-void fpfault __P((void));
+void addrerr(void);
+void badtrap(void);
+void buserr(void);
+void chkinst(void);
+void coperr(void);
+void fmterr(void);
+void fpfline(void);
+void fpunsupp(void);
+void illinst(void);
+void privinst(void);
+void trace(void);
+void trap0(void);
+void trap1(void);
+void trap12(void);
+void trap15(void);
+void trap2(void);
+void trap3(void);
+void trapvinst(void);
+void zerodiv(void);
+void fpfault(void);

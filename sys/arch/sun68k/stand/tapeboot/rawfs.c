@@ -1,4 +1,4 @@
-/*	$NetBSD: rawfs.c,v 1.3 2003/08/21 22:34:48 he Exp $	*/
+/*	$NetBSD: rawfs.c,v 1.4 2005/01/22 15:36:12 chs Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -54,17 +54,15 @@ extern int debug;
 struct file {
 	daddr_t		fs_nextblk;	/* block number to read next */
 	off_t		fs_off;		/* seek offset in file */
-	int			fs_len;		/* amount left in f_buf */
+	int		fs_len;		/* amount left in f_buf */
 	char *		fs_ptr;		/* read pointer into f_buf */
 	char		fs_buf[RAWFS_BSIZE];
 };
 
-static int rawfs_get_block __P((struct open_file *));
+static int rawfs_get_block(struct open_file *);
 
-int
-rawfs_open(path, f)
-	const char *path;
-	struct open_file *f;
+int 
+rawfs_open(const char *path, struct open_file *f)
 {
 	struct file *fs;
 
@@ -86,9 +84,8 @@ rawfs_open(path, f)
 	return (0);
 }
 
-int
-rawfs_close(f)
-	struct open_file *f;
+int 
+rawfs_close(struct open_file *f)
 {
 	struct file *fs;
 
@@ -108,12 +105,8 @@ rawfs_close(f)
 	return (0);
 }
 
-int
-rawfs_read(f, start, size, resid)
-	struct open_file *f;
-	void *start;
-	u_int size;
-	u_int *resid;
+int 
+rawfs_read(struct open_file *f, void *start, u_int size, u_int *resid)
 {
 	struct file *fs = (struct file *)f->f_fsdata;
 	char *addr = start;
@@ -121,7 +114,6 @@ rawfs_read(f, start, size, resid)
 	size_t csize;
 
 	while (size != 0) {
-
 		if (fs->fs_len == 0)
 			if ((error = rawfs_get_block(f)) != 0)
 				break;
@@ -133,7 +125,7 @@ rawfs_read(f, start, size, resid)
 		if (csize > fs->fs_len)
 			csize = fs->fs_len;
 
-		bcopy(fs->fs_ptr, addr, csize);
+		memcpy(addr, fs->fs_ptr, csize);
 		fs->fs_off += csize;
 		fs->fs_ptr += csize;
 		fs->fs_len -= csize;
@@ -145,12 +137,8 @@ rawfs_read(f, start, size, resid)
 	return (error);
 }
 
-int
-rawfs_write(f, start, size, resid)
-	struct open_file *f;
-	void *start;
-	size_t size;
-	size_t *resid;	/* out */
+int 
+rawfs_write(struct open_file *f, void *start, size_t size, size_t *resid)
 {
 #ifdef	DEBUG_RAWFS
 	panic("rawfs_write");
@@ -158,11 +146,8 @@ rawfs_write(f, start, size, resid)
 	return (EROFS);
 }
 
-off_t
-rawfs_seek(f, offset, where)
-	struct open_file *f;
-	off_t offset;
-	int where;
+off_t 
+rawfs_seek(struct open_file *f, off_t offset, int where)
 {
 	struct file *fs = (struct file *)f->f_fsdata;
 	off_t csize;
@@ -201,10 +186,8 @@ rawfs_seek(f, offset, where)
 	return (fs->fs_off);
 }
 
-int
-rawfs_stat(f, sb)
-	struct open_file *f;
-	struct stat *sb;
+int 
+rawfs_stat(struct open_file *f, struct stat *sb)
 {
 #ifdef	DEBUG_RAWFS
 	panic("rawfs_stat");
@@ -217,9 +200,8 @@ rawfs_stat(f, sb)
  * Read a block from the underlying stream device
  * (In our case, a tape drive.)
  */
-static int
-rawfs_get_block(f)
-	struct open_file *f;
+static int 
+rawfs_get_block(struct open_file *f)
 {
 	struct file *fs;
 	int error, len;
@@ -238,4 +220,3 @@ rawfs_get_block(f)
 
 	return (error);
 }
-	

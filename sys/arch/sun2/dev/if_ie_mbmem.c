@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_mbmem.c,v 1.7 2003/07/15 03:36:11 lukem Exp $	*/
+/*	$NetBSD: if_ie_mbmem.c,v 1.8 2005/01/22 15:36:09 chs Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles D. Cranor
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_mbmem.c,v 1.7 2003/07/15 03:36:11 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_mbmem.c,v 1.8 2005/01/22 15:36:09 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,12 +191,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie_mbmem.c,v 1.7 2003/07/15 03:36:11 lukem Exp $"
 #define IEMBMEM_PGMASK 0x0fff	/* gives the physical page frame number */
 
 struct iembmem {
-	u_int16_t	pgmap[IEMBMEM_MAPSZ];
-	u_int16_t	xxx[32];	/* prom */
-	u_int16_t	status;		/* see below for bits */
-	u_int16_t	xxx2;		/* filler */
-	u_int16_t	pectrl;		/* parity control (see below) */
-	u_int16_t	peaddr;		/* low 16 bits of address */
+	uint16_t	pgmap[IEMBMEM_MAPSZ];
+	uint16_t	xxx[32];	/* prom */
+	uint16_t	status;		/* see below for bits */
+	uint16_t	xxx2;		/* filler */
+	uint16_t	pectrl;		/* parity control (see below) */
+	uint16_t	peaddr;		/* low 16 bits of address */
 };
 
 /*
@@ -232,13 +232,13 @@ static int media[] = {
  */
 
 
-static void ie_mbmemreset __P((struct ie_softc *, int));
-static void ie_mbmemattend __P((struct ie_softc *, int));
-static void ie_mbmemrun __P((struct ie_softc *));
-static int  ie_mbmemintr __P((struct ie_softc *, int));
+static void ie_mbmemreset(struct ie_softc *, int);
+static void ie_mbmemattend(struct ie_softc *, int);
+static void ie_mbmemrun(struct ie_softc *);
+static int  ie_mbmemintr(struct ie_softc *, int);
 
-int ie_mbmem_match __P((struct device *, struct cfdata *, void *));
-void ie_mbmem_attach __P((struct device *, struct device *, void *));
+int ie_mbmem_match(struct device *, struct cfdata *, void *);
+void ie_mbmem_attach(struct device *, struct device *, void *);
 
 struct ie_mbmem_softc {
 	struct ie_softc ie;
@@ -257,10 +257,8 @@ CFATTACH_DECL(ie_mbmem, sizeof(struct ie_mbmem_softc),
 /*
  * MULTIBUS support routines
  */
-void
-ie_mbmemreset(sc, what)
-	struct ie_softc *sc;
-	int what;
+void 
+ie_mbmemreset(struct ie_softc *sc, int what)
 {
 	struct ie_mbmem_softc *vsc = (struct ie_mbmem_softc *)sc;
 	write_iev(vsc, status, IEMBMEM_RESET);
@@ -268,10 +266,8 @@ ie_mbmemreset(sc, what)
 	write_iev(vsc, status, 0);
 }
 
-void
-ie_mbmemattend(sc, why)
-	struct ie_softc *sc;
-	int why;
+void 
+ie_mbmemattend(struct ie_softc *sc, int why)
 {
 	struct ie_mbmem_softc *vsc = (struct ie_mbmem_softc *)sc;
 
@@ -281,9 +277,8 @@ ie_mbmemattend(sc, why)
 	write_iev(vsc, status, read_iev(vsc, status) & ~IEMBMEM_ATTEN);
 }
 
-void
-ie_mbmemrun(sc)
-	struct ie_softc *sc;
+void 
+ie_mbmemrun(struct ie_softc *sc)
 {
 	struct ie_mbmem_softc *vsc = (struct ie_mbmem_softc *)sc;
 
@@ -291,10 +286,8 @@ ie_mbmemrun(sc)
 		  | IEMBMEM_ONAIR | IEMBMEM_IENAB | IEMBMEM_PEINT);
 }
 
-int
-ie_mbmemintr(sc, where)
-	struct ie_softc *sc;
-	int where;
+int 
+ie_mbmemintr(struct ie_softc *sc, int where)
 {
 	struct ie_mbmem_softc *vsc = (struct ie_mbmem_softc *)sc;
 
@@ -314,18 +307,14 @@ ie_mbmemintr(sc, where)
 	return (0);
 }
 
-void ie_mbmemcopyin __P((struct ie_softc *, void *, int, size_t));
-void ie_mbmemcopyout __P((struct ie_softc *, const void *, int, size_t));
+void ie_mbmemcopyin(struct ie_softc *, void *, int, size_t);
+void ie_mbmemcopyout(struct ie_softc *, const void *, int, size_t);
 
 /*
  * Copy board memory to kernel.
  */
-void
-ie_mbmemcopyin(sc, p, offset, size)
-	struct ie_softc	*sc;
-	void *p;
-	int offset;
-	size_t size;
+void 
+ie_mbmemcopyin(struct ie_softc *sc, void *p, int offset, size_t size)
 {
 	bus_space_copyin(sc->bt, sc->bh, offset, p, size);
 }
@@ -333,53 +322,42 @@ ie_mbmemcopyin(sc, p, offset, size)
 /*
  * Copy from kernel space to board memory.
  */
-void
-ie_mbmemcopyout(sc, p, offset, size)
-	struct ie_softc	*sc;
-	const void *p;
-	int offset;
-	size_t size;
+void 
+ie_mbmemcopyout(struct ie_softc *sc, const void *p, int offset, size_t size)
 {
 	bus_space_copyout(sc->bt, sc->bh, offset, p, size);
 }
 
 /* read a 16-bit value at BH offset */
-u_int16_t ie_mbmem_read16 __P((struct ie_softc *, int offset));
+uint16_t ie_mbmem_read16(struct ie_softc *, int offset);
 /* write a 16-bit value at BH offset */
-void ie_mbmem_write16 __P((struct ie_softc *, int offset, u_int16_t value));
-void ie_mbmem_write24 __P((struct ie_softc *, int offset, int addr));
+void ie_mbmem_write16(struct ie_softc *, int offset, uint16_t value);
+void ie_mbmem_write24(struct ie_softc *, int offset, int addr);
 
-u_int16_t
-ie_mbmem_read16(sc, offset)
-	struct ie_softc *sc;
-	int offset;
+uint16_t 
+ie_mbmem_read16(struct ie_softc *sc, int offset)
 {
-	u_int16_t v;
+	uint16_t v;
 
 	bus_space_barrier(sc->bt, sc->bh, offset, 2, BUS_SPACE_BARRIER_READ);
 	v = bus_space_read_2(sc->bt, sc->bh, offset);
 	return (((v&0xff)<<8) | ((v>>8)&0xff));
 }
 
-void
-ie_mbmem_write16(sc, offset, v)
-	struct ie_softc *sc;	
-	int offset;
-	u_int16_t v;
+void 
+ie_mbmem_write16(struct ie_softc *sc, int offset, uint16_t v)
 {
 	int v0 = ((((v)&0xff)<<8) | (((v)>>8)&0xff));
+
 	bus_space_write_2(sc->bt, sc->bh, offset, v0);
 	bus_space_barrier(sc->bt, sc->bh, offset, 2, BUS_SPACE_BARRIER_WRITE);
 }
 
-void
-ie_mbmem_write24(sc, offset, addr)
-	struct ie_softc *sc;	
-	int offset;
-	int addr;
+void 
+ie_mbmem_write24(struct ie_softc *sc, int offset, int addr)
 {
 	u_char *f = (u_char *)&addr;
-	u_int16_t v0, v1;
+	uint16_t v0, v1;
 	u_char *t;
 
 	t = (u_char *)&v0;
@@ -393,11 +371,8 @@ ie_mbmem_write24(sc, offset, addr)
 	bus_space_barrier(sc->bt, sc->bh, offset, 4, BUS_SPACE_BARRIER_WRITE);
 }
 
-int
-ie_mbmem_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+int 
+ie_mbmem_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mbmem_attach_args *mbma = aux;
 	bus_space_handle_t bh;
@@ -423,13 +398,10 @@ ie_mbmem_match(parent, cf, aux)
 	return (1);
 }
 
-void
-ie_mbmem_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void   *aux;
+void 
+ie_mbmem_attach(struct device *parent, struct device *self, void *aux)
 {
-	u_int8_t myaddr[ETHER_ADDR_LEN];
+	uint8_t myaddr[ETHER_ADDR_LEN];
 	struct ie_mbmem_softc *vsc = (void *) self;
 	struct mbmem_attach_args *mbma = aux;
 	struct ie_softc *sc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: si_obio.c,v 1.28 2004/02/24 15:05:54 wiz Exp $	*/
+/*	$NetBSD: si_obio.c,v 1.29 2005/01/22 15:36:10 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  ****************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si_obio.c,v 1.28 2004/02/24 15:05:54 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si_obio.c,v 1.29 2005/01/22 15:36:10 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,25 +115,23 @@ __KERNEL_RCSID(0, "$NetBSD: si_obio.c,v 1.28 2004/02/24 15:05:54 wiz Exp $");
  */
 #define UDC_WAIT_USEC 5
 
-void si_obio_dma_setup __P((struct ncr5380_softc *));
-void si_obio_dma_start __P((struct ncr5380_softc *));
-void si_obio_dma_eop __P((struct ncr5380_softc *));
-void si_obio_dma_stop __P((struct ncr5380_softc *));
+void si_obio_dma_setup(struct ncr5380_softc *);
+void si_obio_dma_start(struct ncr5380_softc *);
+void si_obio_dma_eop(struct ncr5380_softc *);
+void si_obio_dma_stop(struct ncr5380_softc *);
 
-static void si_obio_reset __P((struct ncr5380_softc *));
+static void si_obio_reset(struct ncr5380_softc *);
 
-static __inline__ void si_obio_udc_write
- __P((volatile struct si_regs *si, int regnum, int value));
-static __inline__ int si_obio_udc_read
- __P((volatile struct si_regs *si, int regnum));
+static __inline__ void si_obio_udc_write(volatile struct si_regs *, int, int);
+static __inline__ int si_obio_udc_read(volatile struct si_regs *, int);
 
 
 /*
  * New-style autoconfig attachment
  */
 
-static int	si_obio_match __P((struct device *, struct cfdata *, void *));
-static void	si_obio_attach __P((struct device *, struct device *, void *));
+static int	si_obio_match(struct device *, struct cfdata *, void *);
+static void	si_obio_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(si_obio, sizeof(struct si_softc),
     si_obio_match, si_obio_attach, NULL, NULL);
@@ -146,11 +144,8 @@ CFATTACH_DECL(si_obio, sizeof(struct si_softc),
 int si_obio_options = 0x0f;
 
 
-static int
-si_obio_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int 
+si_obio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -165,10 +160,8 @@ si_obio_match(parent, cf, aux)
 	return (1);
 }
 
-static void
-si_obio_attach(parent, self, args)
-	struct device	*parent, *self;
-	void		*args;
+static void 
+si_obio_attach(struct device *parent, struct device *self, void *args)
 {
 	struct si_softc *sc = (struct si_softc *) self;
 	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
@@ -240,10 +233,8 @@ si_obio_reset(struct ncr5380_softc *ncr_sc)
 	si->fifo_count = 0;
 }
 
-static __inline__ void
-si_obio_udc_write(si, regnum, value)
-	volatile struct si_regs *si;
-	int regnum, value;
+static __inline__ void 
+si_obio_udc_write(volatile struct si_regs *si, int regnum, int value)
 {
 	si->udc_addr = regnum;
 	delay(UDC_WAIT_USEC);
@@ -251,10 +242,8 @@ si_obio_udc_write(si, regnum, value)
 	delay(UDC_WAIT_USEC);
 }
 
-static __inline__ int
-si_obio_udc_read(si, regnum)
-	volatile struct si_regs *si;
-	int regnum;
+static __inline__ int 
+si_obio_udc_read(volatile struct si_regs *si, int regnum)
 {
 	int value;
 
@@ -276,9 +265,8 @@ si_obio_udc_read(si, regnum)
  * register after the SCSI bus goes into any DATA phase, so
  * this function has to setup the evil FIFO logic.
  */
-void
-si_obio_dma_setup(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+void 
+si_obio_dma_setup(struct ncr5380_softc *ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
@@ -379,9 +367,8 @@ si_obio_dma_setup(ncr_sc)
 }
 
 
-void
-si_obio_dma_start(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+void 
+si_obio_dma_start(struct ncr5380_softc *ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
@@ -431,18 +418,16 @@ si_obio_dma_start(ncr_sc)
 }
 
 
-void
-si_obio_dma_eop(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+void 
+si_obio_dma_eop(struct ncr5380_softc *ncr_sc)
 {
 
 	/* Not needed - DMA was stopped prior to examining sci_csr */
 }
 
 
-void
-si_obio_dma_stop(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+void 
+si_obio_dma_stop(struct ncr5380_softc *ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;

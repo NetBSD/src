@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.4 2003/08/07 16:29:54 agc Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.5 2005/01/22 15:36:09 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.4 2003/08/07 16:29:54 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.5 2005/01/22 15:36:09 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,11 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.4 2003/08/07 16:29:54 agc Exp $");
 #include <machine/cpu.h>
 #include <sun2/sun2/machdep.h>
 
-int
-sys_sysarch(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+int 
+sys_sysarch(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_sysarch_args /* {
 		syscallarg(int) op;

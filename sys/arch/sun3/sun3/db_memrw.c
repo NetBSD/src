@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.23 2003/07/15 03:36:17 lukem Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.24 2005/01/22 15:36:10 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.23 2003/07/15 03:36:17 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.24 2005/01/22 15:36:10 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.23 2003/07/15 03:36:17 lukem Exp $");
 extern char etext[];	/* defined by the linker */
 extern char	kernel_text[];	/* locore.s */
 
-static void db_write_text __P((char *, size_t size, char *));
+static void db_write_text(char *, size_t size, char *);
 
 
 /*
@@ -80,21 +80,18 @@ static void db_write_text __P((char *, size_t size, char *));
  * This used to check for valid PTEs, but now that
  * traps in DDB work correctly, "Just Do It!"
  */
-void
-db_read_bytes(addr, size, data)
-	db_addr_t addr;
-	size_t size;
-	char *data;
+void 
+db_read_bytes(db_addr_t addr, size_t size, char *data)
 {
-	 char *src = (char*)addr;
+	 char *src = (char *)addr;
 
 	if (size == 4) {
-		*((int*)data) = *((int*)src);
+		*((int *)data) = *((int *)src);
 		return;
 	}
 
 	if (size == 2) {
-		*((short*)data) = *((short*)src);
+		*((short *)data) = *((short *)src);
 		return;
 	}
 
@@ -108,13 +105,10 @@ db_read_bytes(addr, size, data)
  * Write bytes somewhere in kernel text.
  * Makes text page writable temporarily.
  */
-static void
-db_write_text(dst, size, data)
-	char *dst;
-	size_t size;
-	char *data;
+static void 
+db_write_text(char *dst, size_t size, char *data)
 {
-	int		oldpte, tmppte;
+	int oldpte, tmppte;
 	vaddr_t pgva, prevpg;
 
 	/* Prevent restoring a garbage PTE. */
@@ -185,11 +179,8 @@ db_write_text(dst, size, data)
 /*
  * Write bytes to kernel address space for debugger.
  */
-void
-db_write_bytes(addr, size, data)
-	db_addr_t addr;
-	size_t size;
-	char *data;
+void 
+db_write_bytes(db_addr_t addr, size_t size, char *data)
 {
 	char *dst = (char *)addr;
 
@@ -200,12 +191,12 @@ db_write_bytes(addr, size, data)
 	}
 
 	if (size == 4) {
-		*((int*)dst) = *((int*)data);
+		*((int *)dst) = *((int *)data);
 		return;
 	}
 
 	if (size == 2) {
-		*((short*)dst) = *((short*)data);
+		*((short *)dst) = *((short *)data);
 		return;
 	}
 

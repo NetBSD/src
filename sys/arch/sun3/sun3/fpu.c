@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.19 2003/07/15 03:36:17 lukem Exp $	*/
+/*	$NetBSD: fpu.c,v 1.20 2005/01/22 15:36:10 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.19 2003/07/15 03:36:17 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.20 2005/01/22 15:36:10 chs Exp $");
 
 #include "opt_fpu_emulate.h"
 
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.19 2003/07/15 03:36:17 lukem Exp $");
 
 #include <sun3/sun3/machdep.h>
 
-static int fpu_probe __P((void));
+static int fpu_probe(void);
 
 static char *fpu_descr[] = {
 #ifdef	FPU_EMULATE
@@ -68,8 +68,8 @@ static char *fpu_descr[] = {
 	"mc68060 internal",	/* 4 */
 	"unknown type" };	/* 5 */
 
-void
-initfpu()
+void 
+initfpu(void)
 {
 	char *descr;
 	int maxtype = sizeof(fpu_descr) / sizeof(fpu_descr[0]) - 1;
@@ -91,8 +91,8 @@ initfpu()
 	}
 }
 
-static int
-fpu_probe()
+static int 
+fpu_probe(void)
 {
 	label_t	faultbuf;
 	struct fpframe fpframe;

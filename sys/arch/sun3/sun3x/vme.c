@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.8 2003/07/15 03:36:21 lukem Exp $	*/
+/*	$NetBSD: vme.c,v 1.9 2005/01/22 15:36:11 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.8 2003/07/15 03:36:21 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.9 2005/01/22 15:36:11 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,17 +66,14 @@ static const struct {
 	{ BUS_VME32D32, "A32/D32" },
 };
 
-static int  vme_match __P((struct device *, struct cfdata *, void *));
-static void vme_attach __P((struct device *, struct device *, void *));
+static int  vme_match(struct device *, struct cfdata *, void *);
+static void vme_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(vme, sizeof(struct device),
     vme_match, vme_attach, NULL, NULL);
 
-static int
-vme_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int 
+vme_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 	int unit;
@@ -94,11 +91,8 @@ vme_match(parent, cf, aux)
 	return (1);
 }
 
-static void
-vme_attach(parent, self, args)
-	struct device *parent;
-	struct device *self;
-	void *args;
+static void 
+vme_attach(struct device *parent, struct device *self, void *args)
 {
 	int unit;
 
