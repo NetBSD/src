@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.6 1995/03/02 06:38:11 cgd Exp $      */
+/*	$NetBSD: ccd.c,v 1.7 1995/03/02 06:40:38 cgd Exp $      */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,11 +57,9 @@
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/stat.h>
-#ifdef COMPAT_NOLABEL
 #include <sys/ioctl.h>
 #include <sys/disklabel.h>
 #include <sys/fcntl.h>
-#endif
 
 #include <dev/ccdvar.h>
 
@@ -167,7 +165,8 @@ ccdinit(ccd)
 	size_t minsize;
 	dev_t dev;
 	struct bdevsw *bsw;
-	int error;
+	struct partinfo dpart;
+	int error, (*ioctl)();
 	struct proc *p = curproc; /* XXX */
 
 #ifdef DEBUG
@@ -202,12 +201,18 @@ ccdinit(ccd)
 		 * Calculate size (truncated to interleave boundary
 		 * if necessary.
 		 */
-		if (bsw->d_psize) {
-			size = (size_t) (*bsw->d_psize)(dev);
-			if ((int)size < 0)
+		if ((ioctl = bdevsw[major(dev)].d_ioctl) != NULL &&
+		    (*ioctl)(dev, DIOCGPART, (caddr_t)&dpart, FREAD, p) == 0)
+			if (dpart.part->p_fstype == FS_BSDFFS)
+				size = dpart.part->p_size;
+			else
 				size = 0;
-		} else
+		else
 			size = 0;
+
+		if (size < 0)
+			size = 0;
+
 		if (cs->sc_ileave > 1)
 			size -= size % cs->sc_ileave;
 		if (size == 0) {
@@ -293,6 +298,20 @@ ccddevtostr(dev)
 		dbuf[0] = 'c'; dbuf[1] = 'd';
 		break;
 	case 6:
+		dbuf[0] = 'v'; dbuf[1] = 'n';
+		break;
+#endif
+#ifdef i386
+	case 0:
+		dbuf[0] = 'w'; dbuf[1] = 'd';
+		break;
+	case 2:
+		dbuf[0] = 'f'; dbuf[1] = 'd';
+		break;
+	case 4:
+		dbuf[0] = 's'; dbuf[1] = 'd';
+		break;
+	case 14:
 		dbuf[0] = 'v'; dbuf[1] = 'n';
 		break;
 #endif
@@ -426,6 +445,17 @@ ccdopen(dev, flags)
 	if (unit >= numccd || (cs->sc_flags & CCDF_ALIVE) == 0)
 		return(ENXIO);
 	return(0);
+}
+
+ccdclose(dev, flags)
+	dev_t dev;
+	int flags;
+{
+#ifdef DEBUG
+	if (ccddebug & CCDB_FOLLOW)
+		printf("ccdclose(%x, %x)\n", dev, flags);
+#endif
+	return (0);
 }
 
 ccdstrategy(bp)
