@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.s,v 1.13 2001/05/19 00:36:37 thorpej Exp $	*/
+/*	$NetBSD: in_cksum.s,v 1.14 2001/05/21 06:13:12 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -72,6 +72,11 @@
 #include <machine/asm.h>
 #include "assym.h"
 
+/* LINTSTUB: include <sys/types.h> */
+/* LINTSTUB: include <machine/param.h> */
+/* LINTSTUB: include <sys/mbuf.h> */
+/* LINTSTUB: include <netinet/in.h> */
+
 /*
  * Checksum routine for Internet Protocol family headers.
  *
@@ -119,6 +124,9 @@
 	addw	%dx, %ax	; \
 	adcw	$0, %ax
 
+/* XXX There should really be a section 9 for this. --PM, May 21, 2001 */
+/* XXX The prototype below deserves better parameter names. */
+/* LINTSTUB: Func: int in4_cksum(struct mbuf *m, u_int8_t i, int j, int k) */
 ENTRY(in4_cksum)
 	pushl	%ebp
 	pushl	%ebx
@@ -163,6 +171,9 @@ mbuf_loop_0:
 	jmp	in4_entry
 
 
+/* XXX There should really be a section 9 for this. --PM, May 21, 2001 */
+/* XXX The prototype below deserves better parameter names. */
+/* LINTSTUB: Func: int in_cksum(struct mbuf *m, int i) */
 ENTRY(in_cksum)
 	pushl	%ebp
 	pushl	%ebx
