@@ -1,4 +1,4 @@
-/* $NetBSD: irix_syscallargs.h,v 1.48 2002/08/02 23:02:53 manu Exp $ */
+/* $NetBSD: irix_syscallargs.h,v 1.49 2002/10/05 23:17:29 manu Exp $ */
 
 /*
  * System call argument lists.
@@ -65,6 +65,13 @@ struct irix_sys_sysmp_args {
 	syscallarg(void *) arg2;
 	syscallarg(void *) arg3;
 	syscallarg(void *) arg4;
+};
+
+struct irix_sys_utssys_args {
+	syscallarg(void *) a1;
+	syscallarg(void *) a2;
+	syscallarg(int) sel;
+	syscallarg(void *) a3;
 };
 
 struct irix_sys_fcntl_args {
@@ -173,6 +180,10 @@ struct irix_sys_systeminfo_args {
 	syscallarg(int) what;
 	syscallarg(char *) buf;
 	syscallarg(long) len;
+};
+
+struct irix_sys_uname_args {
+	syscallarg(struct irix_utsname *) name;
 };
 
 struct irix_sys_xstat_args {
@@ -329,7 +340,7 @@ int	svr4_sys_semsys(struct proc *, void *, register_t *);
 #endif
 int	irix_sys_ioctl(struct proc *, void *, register_t *);
 int	irix_sys_sysmp(struct proc *, void *, register_t *);
-int	svr4_sys_utssys(struct proc *, void *, register_t *);
+int	irix_sys_utssys(struct proc *, void *, register_t *);
 int	svr4_sys_execve(struct proc *, void *, register_t *);
 int	sys_umask(struct proc *, void *, register_t *);
 int	sys_chroot(struct proc *, void *, register_t *);
@@ -398,6 +409,7 @@ int	irix_sys_setrlimit(struct proc *, void *, register_t *);
 int	sys___posix_fchown(struct proc *, void *, register_t *);
 int	sys_fchmod(struct proc *, void *, register_t *);
 int	irix_sys_systeminfo(struct proc *, void *, register_t *);
+int	irix_sys_uname(struct proc *, void *, register_t *);
 int	irix_sys_xstat(struct proc *, void *, register_t *);
 int	irix_sys_lxstat(struct proc *, void *, register_t *);
 int	irix_sys_fxstat(struct proc *, void *, register_t *);

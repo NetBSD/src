@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_misc.c,v 1.2 2002/05/28 21:15:41 manu Exp $ */
+/*	$NetBSD: irix_misc.c,v 1.3 2002/10/05 23:17:29 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,16 +37,24 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_misc.c,v 1.2 2002/05/28 21:15:41 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_misc.c,v 1.3 2002/10/05 23:17:29 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
 #include <sys/systm.h>
 #include <sys/param.h>
+#include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
 
 #include <sys/syscallargs.h>
+
+#include <compat/svr4/svr4_types.h>
+#include <compat/svr4/svr4_lwp.h>
+#include <compat/svr4/svr4_signal.h>
+#include <compat/svr4/svr4_ucontext.h>
+#include <compat/svr4/svr4_utsname.h>
+#include <compat/svr4/svr4_syscallargs.h>
 
 #include <compat/irix/irix_types.h>
 #include <compat/irix/irix_signal.h>
@@ -79,4 +87,69 @@ irix_sys_setpgrp(p, v, retval)
 		return sys_setsid(p, uap, retval);
 	else
 		return sys_setpgid(p, uap, retval);
+}
+
+int
+irix_sys_uname(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct irix_sys_uname_args /* {
+		syscallarg(struct irix_utsname *) name;
+	} */ *uap = v;
+	struct irix_utsname sut;
+	char *irix_sysname = "IRIX";
+	char *irix_release = "6.5";
+	char *irix_machine = "IP22"; /* XXX */
+	char *irix_version = "04131232";
+
+	memset(&sut, 0, sizeof(sut));
+
+	strncpy(sut.sysname, irix_sysname, sizeof(sut.sysname));
+	sut.sysname[sizeof(sut.sysname) - 1] = '\0';
+
+	strncpy(sut.nodename, hostname, sizeof(sut.nodename)); 
+	sut.nodename[sizeof(sut.nodename) - 1] = '\0';
+ 
+	strncpy(sut.release, irix_release, sizeof(sut.release));
+	sut.release[sizeof(sut.release) - 1] = '\0';
+
+	strncpy(sut.version, irix_version, sizeof(sut.version));
+	sut.version[sizeof(sut.version) - 1] = '\0';
+
+	strncpy(sut.machine, irix_machine, sizeof(sut.machine));
+	sut.machine[sizeof(sut.machine) - 1] = '\0';
+
+	return copyout((caddr_t) &sut, (caddr_t) SCARG(uap, name),
+	    sizeof(struct irix_utsname));
+}
+
+int
+irix_sys_utssys(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct irix_sys_utssys_args /* {
+		syscallarg(void *) a1;
+		syscallarg(void *) a2;
+		syscallarg(int) sel;
+		syscallarg(void) a3;
+	} */ *uap = v;
+ 
+	switch (SCARG(uap, sel)) {
+	case 0: {	/* uname(2)  */
+		struct irix_sys_uname_args ua;
+		SCARG(&ua, name) = SCARG(uap, a1);
+		return irix_sys_uname(p, &ua, retval);
+	}
+	break;
+
+	default:
+		return(svr4_sys_utssys(p, v, retval));
+	break;	
+	}
+
+	return 0;
 }

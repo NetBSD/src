@@ -1,4 +1,4 @@
-/* $NetBSD: irix_sysent.c,v 1.48 2002/08/02 23:02:54 manu Exp $ */
+/* $NetBSD: irix_sysent.c,v 1.49 2002/10/05 23:17:30 manu Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_sysent.c,v 1.48 2002/08/02 23:02:54 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_sysent.c,v 1.49 2002/10/05 23:17:30 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -164,8 +164,8 @@ struct sysent irix_sysent[] = {
 	    sys_nosys },			/* 55 = unimplemented uadmin */
 	{ 5, s(struct irix_sys_sysmp_args), 0,
 	    irix_sys_sysmp },			/* 56 = sysmp */
-	{ 4, s(struct svr4_sys_utssys_args), 0,
-	    svr4_sys_utssys },			/* 57 = utssys */
+	{ 4, s(struct irix_sys_utssys_args), 0,
+	    irix_sys_utssys },			/* 57 = utssys */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 58 = unimplemented */
 	{ 3, s(struct svr4_sys_execve_args), 0,
@@ -364,8 +364,8 @@ struct sysent irix_sysent[] = {
 	    sys_nosys },			/* 155 = unimplemented socketpair */
 	{ 3, s(struct irix_sys_systeminfo_args), 0,
 	    irix_sys_systeminfo },		/* 156 = systeminfo */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 157 = unimplemented uname */
+	{ 1, s(struct irix_sys_uname_args), 0,
+	    irix_sys_uname },			/* 157 = uname */
 	{ 3, s(struct irix_sys_xstat_args), 0,
 	    irix_sys_xstat },			/* 158 = xstat */
 	{ 3, s(struct irix_sys_lxstat_args), 0,

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_types.h,v 1.13 2002/06/12 20:33:21 manu Exp $ */
+/*	$NetBSD: irix_types.h,v 1.14 2002/10/05 23:17:30 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -174,5 +174,24 @@ typedef struct irix_dirent64 {
 	unsigned short	d_reclen;
 	char		d_name[1];
 } irix_dirent64_t;
+
+/* From IRIX's <sys/utsname.h> */
+#define IRIX_SYS_NMLN 257
+struct irix_utsname {
+	char sysname[IRIX_SYS_NMLN];
+	char nodename[IRIX_SYS_NMLN];
+	char release[IRIX_SYS_NMLN];
+	char version[IRIX_SYS_NMLN];
+	char machine[IRIX_SYS_NMLN];
+	char m_type[IRIX_SYS_NMLN];
+	char base_rel[IRIX_SYS_NMLN];
+	char reserve5[IRIX_SYS_NMLN];
+	char reserve4[IRIX_SYS_NMLN];
+	char reserve3[IRIX_SYS_NMLN];
+	char reserve2[IRIX_SYS_NMLN];
+	char reserve1[IRIX_SYS_NMLN];
+	char reserve0[IRIX_SYS_NMLN];
+};
+
 
 #endif /* _IRIX_TYPES_H_ */
