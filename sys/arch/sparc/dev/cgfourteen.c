@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.6 1996/12/10 22:54:49 pk Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.7 1997/05/24 20:16:08 pk Exp $ */
 
 /*
  * Copyright (c) 1996 
@@ -219,8 +219,7 @@ cgfourteenattach(parent, self, args)
 		ca->ca_ra.ra_len = 0x10000;
 	}
 	sc->sc_ctl = (struct cg14ctl *) mapiodev(ca->ca_ra.ra_reg, 0, 
-						 ca->ca_ra.ra_len, 
-						 ca->ca_bustype);
+						 ca->ca_ra.ra_len);
 
 	sc->sc_hwc = (struct cg14curs *) ((u_int)sc->sc_ctl + 
 					  CG14_OFFSET_CURS);
@@ -289,7 +288,7 @@ cgfourteenattach(parent, self, args)
 	if ((sc->sc_fb.fb_pixels = ca->ca_ra.ra_vaddr) == NULL && isconsole) {
 		/* this probably cannot happen, but what the heck */
 		sc->sc_fb.fb_pixels = mapiodev(ca->ca_ra.ra_reg, CG3REG_MEM,
-						ramsize, ca->ca_bustype);
+					       ramsize);
 	}
 #endif /* notdef */
 
@@ -615,7 +614,7 @@ cgfourteenmmap(dev, off, prot)
 	 * Use PMAP_NC to disable the cache, since otherwise refresh is
 	 * very confused.
 	 */
-	return (REG2PHYS(&sc->sc_phys, off, 0) | PMAP_NC);
+	return (REG2PHYS(&sc->sc_phys, off) | PMAP_NC);
 }
 
 int

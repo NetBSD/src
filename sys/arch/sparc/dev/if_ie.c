@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.29 1997/03/15 22:13:55 pk Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.30 1997/05/24 20:16:24 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -529,8 +529,7 @@ ieattach(parent, self, aux)
 		sc->memcopy = bcopy;
 		sc->memzero = bzero;
 		sc->sc_msize = 65536; /* XXX */
-		sc->sc_reg = mapiodev(ca->ca_ra.ra_reg, 0, sizeof(struct ieob),
-		    ca->ca_bustype);
+		sc->sc_reg = mapiodev(ca->ca_ra.ra_reg, 0, sizeof(struct ieob));
 		ieo = (volatile struct ieob *) sc->sc_reg;
 
 		/*
@@ -593,8 +592,8 @@ ieattach(parent, self, aux)
 		sc->memcopy = wcopy;
 		sc->memzero = wzero;
 		sc->sc_msize = 65536;	/* XXX */
-		sc->sc_reg = mapiodev(ca->ca_ra.ra_reg, 0, sizeof(struct ievme),
-		    ca->ca_bustype);
+		sc->sc_reg = mapiodev(ca->ca_ra.ra_reg, 0,
+				      sizeof(struct ievme));
 		iev = (volatile struct ievme *) sc->sc_reg;
 		/* top 12 bits */
 		rampaddr = (u_long)ca->ca_ra.ra_paddr & 0xfff00000;
@@ -602,7 +601,7 @@ ieattach(parent, self, aux)
 		rampaddr = rampaddr | ((iev->status & IEVME_HADDR) << 16);
 		rampaddr -= (u_long)ca->ca_ra.ra_paddr;
 		sc->sc_maddr = mapiodev(ca->ca_ra.ra_reg, rampaddr,
-					sc->sc_msize, ca->ca_bustype);
+					sc->sc_msize);
 		sc->sc_iobase = sc->sc_maddr;
 		iev->pectrl = iev->pectrl | IEVME_PARACK; /* clear to start */
 
