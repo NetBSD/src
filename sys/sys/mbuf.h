@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.60 2001/07/26 19:05:04 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.61 2001/07/26 22:08:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -233,11 +233,12 @@ struct mbuf {
  * prevents a section of code from from being interrupted by network
  * drivers.
  */
-#define	MBUFLOCK(code) \
-	do { int ms = splvm(); \
-	  { code } \
-	  splx(ms); \
-	} while (/* CONSTCOND */ 0)
+#define	MBUFLOCK(code)							\
+do {									\
+	int ms = splvm();						\
+	{ code }							\
+	splx(ms);							\
+} while (/* CONSTCOND */ 0)
 
 /*
  * mbuf allocation/deallocation macros:
@@ -252,35 +253,37 @@ struct mbuf {
  * If 'how' is M_WAIT, these macros (and the corresponding functions)
  * are guaranteed to return successfully.
  */
-#define	MGET(m, how, type) do { \
-	MBUFLOCK((m) = pool_cache_get(&mbpool_cache, \
-	    (how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0);); \
-	if (m) { \
-		MBUFLOCK(mbstat.m_mtypes[type]++;); \
-		(m)->m_type = (type); \
-		(m)->m_next = (struct mbuf *)NULL; \
-		(m)->m_nextpkt = (struct mbuf *)NULL; \
-		(m)->m_data = (m)->m_dat; \
-		(m)->m_flags = 0; \
-	} else \
-		(m) = m_retry((how), (type)); \
+#define	MGET(m, how, type)						\
+do {									\
+	MBUFLOCK((m) = pool_cache_get(&mbpool_cache,			\
+	    (how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0););		\
+	if (m) {							\
+		MBUFLOCK(mbstat.m_mtypes[type]++;);			\
+		(m)->m_type = (type);					\
+		(m)->m_next = (struct mbuf *)NULL;			\
+		(m)->m_nextpkt = (struct mbuf *)NULL;			\
+		(m)->m_data = (m)->m_dat;				\
+		(m)->m_flags = 0;					\
+	} else								\
+		(m) = m_retry((how), (type));				\
 } while (/* CONSTCOND */ 0)
 
-#define	MGETHDR(m, how, type) do { \
-	MBUFLOCK((m) = pool_cache_get(&mbpool_cache, \
-	    (how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0);); \
-	if (m) { \
-		MBUFLOCK(mbstat.m_mtypes[type]++;); \
-		(m)->m_type = (type); \
-		(m)->m_next = (struct mbuf *)NULL; \
-		(m)->m_nextpkt = (struct mbuf *)NULL; \
-		(m)->m_data = (m)->m_pktdat; \
-		(m)->m_flags = M_PKTHDR; \
-		(m)->m_pkthdr.csum_flags = 0; \
-		(m)->m_pkthdr.csum_data = 0; \
-		(m)->m_pkthdr.aux = (struct mbuf *)NULL; \
-	} else \
-		(m) = m_retryhdr((how), (type)); \
+#define	MGETHDR(m, how, type)						\
+do {									\
+	MBUFLOCK((m) = pool_cache_get(&mbpool_cache,			\
+	    (how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0););		\
+	if (m) {							\
+		MBUFLOCK(mbstat.m_mtypes[type]++;);			\
+		(m)->m_type = (type);					\
+		(m)->m_next = (struct mbuf *)NULL;			\
+		(m)->m_nextpkt = (struct mbuf *)NULL;			\
+		(m)->m_data = (m)->m_pktdat;				\
+		(m)->m_flags = M_PKTHDR;				\
+		(m)->m_pkthdr.csum_flags = 0;				\
+		(m)->m_pkthdr.csum_data = 0;				\
+		(m)->m_pkthdr.aux = (struct mbuf *)NULL;		\
+	} else								\
+		(m) = m_retryhdr((how), (type));			\
 } while (/* CONSTCOND */ 0)
 
 /*
@@ -289,14 +292,17 @@ struct mbuf {
  * Note: add and delete reference must be called at splvm().
  */
 #ifdef DEBUG
-#define MCLREFDEBUGN(m, file, line) do {				\
-		(m)->m_ext.ext_nfile = (file);				\
-		(m)->m_ext.ext_nline = (line);				\
-	} while (/* CONSTCOND */ 0)
-#define MCLREFDEBUGO(m, file, line) do {				\
-		(m)->m_ext.ext_ofile = (file);				\
-		(m)->m_ext.ext_oline = (line);				\
-	} while (/* CONSTCOND */ 0)
+#define MCLREFDEBUGN(m, file, line)					\
+do {									\
+	(m)->m_ext.ext_nfile = (file);					\
+	(m)->m_ext.ext_nline = (line);					\
+} while (/* CONSTCOND */ 0)
+
+#define MCLREFDEBUGO(m, file, line)					\
+do {									\
+	(m)->m_ext.ext_ofile = (file);					\
+	(m)->m_ext.ext_oline = (line);					\
+} while (/* CONSTCOND */ 0)
 #else
 #define MCLREFDEBUGN(m, file, line)
 #define MCLREFDEBUGO(m, file, line)
@@ -304,26 +310,31 @@ struct mbuf {
 
 #define	MCLBUFREF(p)
 #define	MCLISREFERENCED(m)	((m)->m_ext.ext_nextref != (m))
-#define	_MCLDEREFERENCE(m)	do {					\
-		(m)->m_ext.ext_nextref->m_ext.ext_prevref =		\
-			(m)->m_ext.ext_prevref;				\
-		(m)->m_ext.ext_prevref->m_ext.ext_nextref =		\
-			(m)->m_ext.ext_nextref;				\
-	} while (/* CONSTCOND */ 0)
-#define	_MCLADDREFERENCE(o, n)	do {					\
-		(n)->m_flags |= ((o)->m_flags & (M_EXT|M_CLUSTER));	\
-		(n)->m_ext.ext_nextref = (o)->m_ext.ext_nextref;	\
-		(n)->m_ext.ext_prevref = (o);				\
-		(o)->m_ext.ext_nextref = (n);				\
-		(n)->m_ext.ext_nextref->m_ext.ext_prevref = (n);	\
-		MCLREFDEBUGN((n), __FILE__, __LINE__);			\
-	} while (/* CONSTCOND */ 0)
-#define	MCLINITREFERENCE(m)	do {					\
-		(m)->m_ext.ext_prevref = (m);				\
-		(m)->m_ext.ext_nextref = (m);				\
-		MCLREFDEBUGO((m), __FILE__, __LINE__);			\
-		MCLREFDEBUGN((m), NULL, 0);				\
-	} while (/* CONSTCOND */ 0)
+#define	_MCLDEREFERENCE(m)						\
+do {									\
+	(m)->m_ext.ext_nextref->m_ext.ext_prevref =			\
+		(m)->m_ext.ext_prevref;					\
+	(m)->m_ext.ext_prevref->m_ext.ext_nextref =			\
+		(m)->m_ext.ext_nextref;					\
+} while (/* CONSTCOND */ 0)
+
+#define	_MCLADDREFERENCE(o, n)						\
+do {									\
+	(n)->m_flags |= ((o)->m_flags & (M_EXT|M_CLUSTER));		\
+	(n)->m_ext.ext_nextref = (o)->m_ext.ext_nextref;		\
+	(n)->m_ext.ext_prevref = (o);					\
+	(o)->m_ext.ext_nextref = (n);					\
+	(n)->m_ext.ext_nextref->m_ext.ext_prevref = (n);		\
+	MCLREFDEBUGN((n), __FILE__, __LINE__);				\
+} while (/* CONSTCOND */ 0)
+
+#define	MCLINITREFERENCE(m)						\
+do {									\
+	(m)->m_ext.ext_prevref = (m);					\
+	(m)->m_ext.ext_nextref = (m);					\
+	MCLREFDEBUGO((m), __FILE__, __LINE__);				\
+	MCLREFDEBUGN((m), NULL, 0);					\
+} while (/* CONSTCOND */ 0)
 
 #define	MCLADDREFERENCE(o, n)	MBUFLOCK(_MCLADDREFERENCE((o), (n));)
 
@@ -339,71 +350,74 @@ struct mbuf {
  * MEXTADD adds pre-allocated external storage to
  * a normal mbuf; the flag M_EXT is set upon success.
  */
-#define	MCLGET(m, how) do { \
-	MBUFLOCK( \
-		(m)->m_ext.ext_buf = \
-		    pool_cache_get(&mclpool_cache, (how) == M_WAIT ? \
-			(PR_WAITOK|PR_LIMITFAIL) : 0); \
-		if ((m)->m_ext.ext_buf == NULL) { \
-			m_reclaim((how)); \
-			(m)->m_ext.ext_buf = \
-			    pool_cache_get(&mclpool_cache, \
-			     (how) == M_WAIT ? PR_WAITOK : 0); \
-		} \
-	); \
-	if ((m)->m_ext.ext_buf != NULL) { \
-		(m)->m_data = (m)->m_ext.ext_buf; \
-		(m)->m_flags |= M_EXT|M_CLUSTER; \
-		(m)->m_ext.ext_size = MCLBYTES;  \
-		(m)->m_ext.ext_free = NULL;  \
-		(m)->m_ext.ext_arg = NULL;  \
-		MCLINITREFERENCE(m); \
-	} \
+#define	MCLGET(m, how)							\
+do {									\
+	MBUFLOCK(							\
+		(m)->m_ext.ext_buf =					\
+		    pool_cache_get(&mclpool_cache, (how) == M_WAIT ?	\
+			(PR_WAITOK|PR_LIMITFAIL) : 0);			\
+		if ((m)->m_ext.ext_buf == NULL) {			\
+			m_reclaim((how));				\
+			(m)->m_ext.ext_buf =				\
+			    pool_cache_get(&mclpool_cache,		\
+			     (how) == M_WAIT ? PR_WAITOK : 0);		\
+		}							\
+	);								\
+	if ((m)->m_ext.ext_buf != NULL) {				\
+		(m)->m_data = (m)->m_ext.ext_buf;			\
+		(m)->m_flags |= M_EXT|M_CLUSTER;			\
+		(m)->m_ext.ext_size = MCLBYTES;				\
+		(m)->m_ext.ext_free = NULL;				\
+		(m)->m_ext.ext_arg = NULL;				\
+		MCLINITREFERENCE(m);					\
+	}								\
 } while (/* CONSTCOND */ 0)
 
-#define	MEXTMALLOC(m, size, how) do { \
-	(m)->m_ext.ext_buf = \
-	    (caddr_t)malloc((size), mbtypes[(m)->m_type], (how)); \
-	if ((m)->m_ext.ext_buf != NULL) { \
-		(m)->m_data = (m)->m_ext.ext_buf; \
-		(m)->m_flags |= M_EXT; \
-		(m)->m_flags &= ~M_CLUSTER; \
-		(m)->m_ext.ext_size = (size); \
-		(m)->m_ext.ext_free = NULL; \
-		(m)->m_ext.ext_arg = NULL; \
-		(m)->m_ext.ext_type = mbtypes[(m)->m_type]; \
-		MCLINITREFERENCE(m); \
-	} \
+#define	MEXTMALLOC(m, size, how)					\
+do {									\
+	(m)->m_ext.ext_buf =						\
+	    (caddr_t)malloc((size), mbtypes[(m)->m_type], (how));	\
+	if ((m)->m_ext.ext_buf != NULL) {				\
+		(m)->m_data = (m)->m_ext.ext_buf;			\
+		(m)->m_flags |= M_EXT;					\
+		(m)->m_flags &= ~M_CLUSTER;				\
+		(m)->m_ext.ext_size = (size);				\
+		(m)->m_ext.ext_free = NULL;				\
+		(m)->m_ext.ext_arg = NULL;				\
+		(m)->m_ext.ext_type = mbtypes[(m)->m_type];		\
+		MCLINITREFERENCE(m);					\
+	}								\
 } while (/* CONSTCOND */ 0)
 
-#define	MEXTADD(m, buf, size, type, free, arg) do { \
-	(m)->m_data = (m)->m_ext.ext_buf = (caddr_t)(buf); \
-	(m)->m_flags |= M_EXT; \
-	(m)->m_flags &= ~M_CLUSTER; \
-	(m)->m_ext.ext_size = (size); \
-	(m)->m_ext.ext_free = (free); \
-	(m)->m_ext.ext_arg = (arg); \
-	(m)->m_ext.ext_type = (type); \
-	MCLINITREFERENCE(m); \
+#define	MEXTADD(m, buf, size, type, free, arg)				\
+do {									\
+	(m)->m_data = (m)->m_ext.ext_buf = (caddr_t)(buf);		\
+	(m)->m_flags |= M_EXT;						\
+	(m)->m_flags &= ~M_CLUSTER;					\
+	(m)->m_ext.ext_size = (size);					\
+	(m)->m_ext.ext_free = (free);					\
+	(m)->m_ext.ext_arg = (arg);					\
+	(m)->m_ext.ext_type = (type);					\
+	MCLINITREFERENCE(m);						\
 } while (/* CONSTCOND */ 0)
 
-#define	_MEXTREMOVE(m) do { \
-	if (MCLISREFERENCED(m)) { \
-		_MCLDEREFERENCE(m); \
-	} else if ((m)->m_flags & M_CLUSTER) { \
-		pool_cache_put(&mclpool_cache, (m)->m_ext.ext_buf); \
-	} else if ((m)->m_ext.ext_free) { \
-		(*((m)->m_ext.ext_free))((m)->m_ext.ext_buf, \
-		    (m)->m_ext.ext_size, (m)->m_ext.ext_arg); \
-	} else { \
-		free((m)->m_ext.ext_buf,(m)->m_ext.ext_type); \
-	} \
-	(m)->m_flags &= ~(M_CLUSTER|M_EXT); \
-	(m)->m_ext.ext_size = 0;	/* why ??? */ \
+#define	_MEXTREMOVE(m)							\
+do {									\
+	if (MCLISREFERENCED(m)) {					\
+		_MCLDEREFERENCE(m);					\
+	} else if ((m)->m_flags & M_CLUSTER) {				\
+		pool_cache_put(&mclpool_cache, (m)->m_ext.ext_buf);	\
+	} else if ((m)->m_ext.ext_free) {				\
+		(*((m)->m_ext.ext_free))((m)->m_ext.ext_buf,		\
+		    (m)->m_ext.ext_size, (m)->m_ext.ext_arg);		\
+	} else {							\
+		free((m)->m_ext.ext_buf,(m)->m_ext.ext_type);		\
+	}								\
+	(m)->m_flags &= ~(M_CLUSTER|M_EXT);				\
+	(m)->m_ext.ext_size = 0;	/* why ??? */			\
 } while (/* CONSTCOND */ 0)
 
-#define	MEXTREMOVE(m) \
-	MBUFLOCK(_MEXTREMOVE((m));)
+#define	MEXTREMOVE(m)	MBUFLOCK(_MEXTREMOVE((m));)
 
 /*
  * Reset the data pointer on an mbuf.
@@ -427,18 +441,18 @@ do {									\
  * code does not call M_PREPEND properly.
  * (example: call to bpf_mtap from drivers)
  */
-#define	MFREE(m, n) \
-	MBUFLOCK( \
-		mbstat.m_mtypes[(m)->m_type]--; \
+#define	MFREE(m, n)							\
+	MBUFLOCK(							\
+		mbstat.m_mtypes[(m)->m_type]--;				\
 		if (((m)->m_flags & M_PKTHDR) != 0 && (m)->m_pkthdr.aux) { \
-			m_freem((m)->m_pkthdr.aux); \
-			(m)->m_pkthdr.aux = NULL; \
-		} \
-		if ((m)->m_flags & M_EXT) { \
-			_MEXTREMOVE((m)); \
-		} \
-		(n) = (m)->m_next; \
-		pool_cache_put(&mbpool_cache, (m)); \
+			m_freem((m)->m_pkthdr.aux);			\
+			(m)->m_pkthdr.aux = NULL;			\
+		}							\
+		if ((m)->m_flags & M_EXT) {				\
+			_MEXTREMOVE((m));				\
+		}							\
+		(n) = (m)->m_next;					\
+		pool_cache_put(&mbpool_cache, (m));			\
 	)
 
 /*
@@ -446,29 +460,31 @@ do {									\
  * `from' must have M_PKTHDR set, and `to' must be empty.
  * aux pointer will be moved to `to'.
  */
-#define	M_COPY_PKTHDR(to, from) do { \
-	(to)->m_pkthdr = (from)->m_pkthdr; \
-	(from)->m_pkthdr.aux = (struct mbuf *)NULL; \
-	(to)->m_flags = (from)->m_flags & M_COPYFLAGS; \
-	(to)->m_data = (to)->m_pktdat; \
+#define	M_COPY_PKTHDR(to, from)						\
+do {									\
+	(to)->m_pkthdr = (from)->m_pkthdr;				\
+	(from)->m_pkthdr.aux = (struct mbuf *)NULL;			\
+	(to)->m_flags = (from)->m_flags & M_COPYFLAGS;			\
+	(to)->m_data = (to)->m_pktdat;					\
 } while (/* CONSTCOND */ 0)
 
 /*
  * Set the m_data pointer of a newly-allocated mbuf (m_get/MGET) to place
  * an object of the specified size at the end of the mbuf, longword aligned.
  */
-#define	M_ALIGN(m, len) \
-	do { \
-		(m)->m_data += (MLEN - (len)) &~ (sizeof(long) - 1); \
-	} while (/* CONSTCOND */ 0)
+#define	M_ALIGN(m, len)							\
+do {									\
+	(m)->m_data += (MLEN - (len)) &~ (sizeof(long) - 1);		\
+} while (/* CONSTCOND */ 0)
+
 /*
  * As above, for mbufs allocated with m_gethdr/MGETHDR
  * or initialized by M_COPY_PKTHDR.
  */
-#define	MH_ALIGN(m, len) \
-	do { \
-		(m)->m_data += (MHLEN - (len)) &~ (sizeof(long) - 1); \
-	} while (/* CONSTCOND */ 0)
+#define	MH_ALIGN(m, len)						\
+do {									\
+	(m)->m_data += (MHLEN - (len)) &~ (sizeof(long) - 1);		\
+} while (/* CONSTCOND */ 0)
 
 /*
  * Determine if an mbuf's data area is read-only.  This is true
@@ -509,20 +525,22 @@ do {									\
  * If how is M_DONTWAIT and allocation fails, the original mbuf chain
  * is freed and m is set to NULL.
  */
-#define	M_PREPEND(m, plen, how) do { \
-	if (M_LEADINGSPACE(m) >= (plen)) { \
-		(m)->m_data -= (plen); \
-		(m)->m_len += (plen); \
-	} else \
-		(m) = m_prepend((m), (plen), (how)); \
-	if ((m) && (m)->m_flags & M_PKTHDR) \
-		(m)->m_pkthdr.len += (plen); \
+#define	M_PREPEND(m, plen, how)						\
+do {									\
+	if (M_LEADINGSPACE(m) >= (plen)) {				\
+		(m)->m_data -= (plen);					\
+		(m)->m_len += (plen);					\
+	} else								\
+		(m) = m_prepend((m), (plen), (how));			\
+	if ((m) && (m)->m_flags & M_PKTHDR)				\
+		(m)->m_pkthdr.len += (plen);				\
 } while (/* CONSTCOND */ 0)
 
 /* change mbuf to new type */
-#define MCHTYPE(m, t) do { \
+#define MCHTYPE(m, t)							\
+do {									\
 	MBUFLOCK(mbstat.m_mtypes[(m)->m_type]--; mbstat.m_mtypes[t]++;); \
-	(m)->m_type = t; \
+	(m)->m_type = t;						\
 } while (/* CONSTCOND */ 0)
 
 /* length to m_copy to copy all */
@@ -572,13 +590,13 @@ struct mbstat {
 #define	MBUF_MCLLOWAT		5	/* int: mbuf cluster low water mark */
 #define	MBUF_MAXID		6	/* number of valid MBUF ids */
 
-#define	CTL_MBUF_NAMES { \
-	{ 0, 0 }, \
-	{ "msize", CTLTYPE_INT }, \
-	{ "mclbytes", CTLTYPE_INT }, \
-	{ "nmbclusters", CTLTYPE_INT }, \
-	{ "mblowat", CTLTYPE_INT }, \
-	{ "mcllowat", CTLTYPE_INT }, \
+#define	CTL_MBUF_NAMES {						\
+	{ 0, 0 },							\
+	{ "msize", CTLTYPE_INT },					\
+	{ "mclbytes", CTLTYPE_INT },					\
+	{ "nmbclusters", CTLTYPE_INT },					\
+	{ "mblowat", CTLTYPE_INT },					\
+	{ "mcllowat", CTLTYPE_INT },					\
 }
 
 #ifdef	_KERNEL
