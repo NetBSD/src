@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.45 2004/12/09 01:43:37 briggs Exp $	*/
+/*	$NetBSD: extintr.c,v 1.46 2004/12/17 05:42:30 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.45 2004/12/09 01:43:37 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.46 2004/12/17 05:42:30 briggs Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.45 2004/12/09 01:43:37 briggs Exp $");
 #include <machine/psl.h>
 #include <machine/pio.h>
 
+#include <powerpc/atomic.h>
 #include <powerpc/openpic.h>
 
 #include <dev/ofw/openfirm.h>
@@ -106,6 +107,7 @@ static inline int cntlzw __P((int));
 static inline uint32_t gc_read_irq __P((void));
 static inline int mapirq __P((int));
 static void gc_enable_irq __P((int));
+static void gc_reenable_irq __P((int));
 static void gc_disable_irq __P((int));
 
 static void do_pending_int __P((void));
@@ -234,7 +236,7 @@ gc_read_irq()
 }
 
 void
-gc_enable_irq(irq)
+gc_reenable_irq(irq)
 	int irq;
 {
 	struct cpu_info *ci = curcpu();
@@ -289,6 +291,23 @@ gc_enable_irq(irq)
 			}
 			out32rb(INT_CLEAR_REG_H, irqbit);
 		}
+	}
+}
+
+void
+gc_enable_irq(irq)
+	int irq;
+{
+	u_int mask;
+
+	if (irq < 32) {
+		mask = in32rb(INT_ENABLE_REG_L);
+		mask |= 1 << irq;
+		out32rb(INT_ENABLE_REG_L, mask);	/* unmask */
+	} else {
+		mask = in32rb(INT_ENABLE_REG_H);
+		mask |= 1 << (irq - 32);
+		out32rb(INT_ENABLE_REG_H, mask);	/* unmask */
 	}
 }
 
@@ -528,6 +547,9 @@ intr_establish(hwirq, type, level, ih_fun, ih_arg)
 	ih->ih_irq = irq;
 	*p = ih;
 
+	if (!have_openpic)
+		gc_reenable_irq(hwirq);
+
 	return ih;
 }
 
@@ -658,7 +680,7 @@ ext_intr()
 			int_state |= (ci->ci_ipending & ~pcpl & HWIRQ_MASK);
 
 			/* Ensure that this interrupt is enabled */
-			gc_enable_irq(is->is_hwirq);
+			gc_reenable_irq(is->is_hwirq);
 
 			uvmexp.intrs++;
 			is->is_ev.ev_count++;
@@ -800,7 +822,7 @@ again:
 		if (have_openpic)
 			openpic_enable_irq(is->is_hwirq, is->is_type);
 		else
-			gc_enable_irq(is->is_hwirq);
+			gc_reenable_irq(is->is_hwirq);
 	}
 #ifdef MULTIPROCESSOR
 	}
@@ -916,12 +938,9 @@ void
 softintr(ipl)
 	int ipl;
 {
-	int msrsave;
 
-	msrsave = mfmsr();
-	mtmsr(msrsave & ~PSL_EE);
-	curcpu()->ci_ipending |= 1 << ipl;
-	mtmsr(msrsave);
+	atomic_setbits_ulong((volatile unsigned long *) &curcpu()->ci_ipending,
+			     1 << ipl);
 }
 
 void
