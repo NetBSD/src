@@ -83,10 +83,14 @@
  * #define Bad_float_h if your system lacks a float.h or if it does not
  *	define some or all of DBL_DIG, DBL_MAX_10_EXP, DBL_MAX_EXP,
  *	FLT_RADIX, FLT_ROUNDS, and DBL_MAX.
+ * #define MALLOC your_malloc, where your_malloc(n) acts like malloc(n)
+ *	if memory is available and otherwise does something you deem
+ *	appropriate.  If MALLOC is undefined, malloc will be invoked
+ *	directly -- and assumed always to succeed.
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: strtod.c,v 1.13 1994/02/25 07:41:35 phil Exp $";
+static char *rcsid = "$Id: strtod.c,v 1.14 1994/07/22 05:08:04 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(i386) || defined(ns32k)
@@ -120,6 +124,16 @@ static char *rcsid = "$Id: strtod.c,v 1.13 1994/02/25 07:41:35 phil Exp $";
 #include "malloc.h"
 #include "memory.h"
 #endif
+#endif
+
+#ifdef MALLOC
+#ifdef KR_headers
+extern char *MALLOC();
+#else
+extern void *MALLOC(size_t);
+#endif
+#else
+#define MALLOC malloc
 #endif
 
 #include "ctype.h"
@@ -366,7 +380,7 @@ Balloc
 		}
 	else {
 		x = 1 << k;
-		rv = (Bigint *)malloc(sizeof(Bigint) + (x-1)*sizeof(Long));
+		rv = (Bigint *)MALLOC(sizeof(Bigint) + (x-1)*sizeof(Long));
 		rv->k = k;
 		rv->maxwds = x;
 		}
@@ -1325,6 +1339,7 @@ strtod
 	rv = y;
 	if (k > 9)
 		rv = tens[k - 9] * rv + z;
+	bd0 = 0;
 	if (nd <= DBL_DIG
 #ifndef RND_PRODQUOT
 		&& FLT_ROUNDS == 1
@@ -1395,6 +1410,8 @@ strtod
 				word1(rv) = Big1;
 #endif
 #endif
+				if (bd0)
+					goto retfree;
 				goto ret;
 				}
 			if (e1 >>= 4) {
@@ -1425,6 +1442,8 @@ strtod
 			rv /= tens[i];
 		if (e1 &= ~15) {
 			e1 >>= 4;
+			if (e1 >= 1 << n_bigtens)
+				goto undfl;
 			for(j = 0; e1 > 1; j++, e1 >>= 1)
 				if (e1 & 1)
 					rv *= tinytens[j];
@@ -1438,6 +1457,8 @@ strtod
  undfl:
 					rv = 0.;
 					errno = ERANGE;
+					if (bd0)
+						goto retfree;
 					goto ret;
 					}
 				word0(rv) = Tiny0;
@@ -1704,6 +1725,7 @@ strtod
 		Bfree(bs);
 		Bfree(delta);
 		}
+ retfree:
 	Bfree(bb);
 	Bfree(bd);
 	Bfree(bs);
