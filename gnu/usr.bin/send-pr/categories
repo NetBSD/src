@@ -13,6 +13,7 @@ port-arm32
 port-atari
 port-bebox
 port-cobalt
+port-dreamcast
 port-hp300
 port-hpcmips
 port-i386
