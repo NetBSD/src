@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)calendar.c	4.11 (Berkeley) 10/12/90";*/
-static char rcsid[] = "$Id: calendar.c,v 1.4 1994/02/22 09:46:29 cgd Exp $";
+static char rcsid[] = "$Id: calendar.c,v 1.5 1994/12/30 21:57:09 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -289,7 +289,7 @@ opencal()
 			(void)close(pdes[1]);
 		}
 		(void)close(pdes[0]);
-		execl(_PATH_CPP, "cpp", "-I.", _PATH_INCLUDE, NULL);
+		execl(_PATH_CPP, "cpp", "-P", "-I.", _PATH_INCLUDE, NULL);
 		_exit(1);
 	}
 	/* parent -- set stdin to pipe output */
