@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mac68k,v 1.49 1997/02/01 21:55:23 scottr Exp $
+#	$NetBSD: Makefile.mac68k,v 1.50 1997/02/04 04:32:08 perry Exp $
 
 # Makefile for NetBSD
 #
@@ -133,7 +133,7 @@ clean:
 	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
 
 lint:
-	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} -UKGDB \
+	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
 	    ${MAC68K}/mac68k/Locore.c ${CFILES} ${MAC68K}/mac68k/swapgeneric.c \
 	    ioconf.c param.c | \
 	    grep -v 'static function .* unused'
