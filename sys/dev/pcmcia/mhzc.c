@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.16 2004/08/07 05:27:39 mycroft Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.17 2004/08/07 05:46:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.16 2004/08/07 05:27:39 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.17 2004/08/07 05:46:39 mycroft Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"
@@ -779,7 +779,7 @@ sm_mhzc_attach(parent, self, aux)
 	struct mhzc_softc *msc = (void *)parent;
 	u_int8_t myla[ETHER_ADDR_LEN];
 
-	aprint_normal("\n ");
+	aprint_normal("\n");
 
 	if (pcmcia_io_map(msc->sc_pf, PCMCIA_WIDTH_IO16, 0,
 	    msc->sc_ethernet_pcioh.size, &msc->sc_ethernet_pcioh,
