@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.40 2000/02/03 02:00:31 cgd Exp $	*/
+/*	$NetBSD: stand.h,v 1.41 2000/10/21 13:48:06 takemura Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -75,6 +75,15 @@
 #define	NULL	0
 #endif
 
+#ifdef LIBSA_RENAME_PRINTF
+#define getchar		libsa_getchar
+#define gets		libsa_gets
+#define printf		libsa_printf
+#define putchar		libsa_putchar
+#define sprintf		libsa_sprintf
+#define vprintf		libsa_vprintf
+#define vsprintf	libsa_vsprintf
+#endif
 #ifdef LIBSA_USE_MEMSET
 #define	bzero(s, l)	memset(s, 0, l)
 #endif
