@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.77 2003/09/07 15:59:36 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.78 2003/09/10 22:29:27 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.77 2003/09/07 15:59:36 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.78 2003/09/10 22:29:27 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1114,11 +1114,13 @@ ipsec_init_pcbpolicy(so, pcb_sp)
 		in->policy = IPSEC_POLICY_ENTRUST;
 		in->dir = IPSEC_DIR_INBOUND;
 		in->readonly = 1;
+		in->so = so;
 
 		out->state = IPSEC_SPSTATE_ALIVE;
 		out->policy = IPSEC_POLICY_ENTRUST;
 		out->dir = IPSEC_DIR_OUTBOUND;
 		out->readonly = 1;
+		out->so = so;
 
 		initialized++;
 	}
@@ -1249,6 +1251,7 @@ ipsec_deepcopy_policy(src)
 	dst->state = src->state;
 	dst->policy = src->policy;
 	dst->dir = src->dir;
+	dst->so = src->so;
 	/* do not touch the refcnt fields */
 
 	return dst;

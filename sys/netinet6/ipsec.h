@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.38 2003/09/07 15:50:43 itojun Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.39 2003/09/10 22:29:28 itojun Exp $	*/
 /*	$KAME: ipsec.h,v 1.51 2001/08/05 04:52:58 itojun Exp $	*/
 
 /*
@@ -82,6 +82,7 @@ struct secpolicy {
 				 * 1 - 0x3fff are reserved for user operation.
 				 * 0 are reserved.  Others are for kernel use.
 				 */
+	struct socket *so;		/* backpointer to per-socket policy */
 	u_int state;			/* 0: dead, others: alive */
 #define IPSEC_SPSTATE_DEAD	0
 #define IPSEC_SPSTATE_ALIVE	1
