@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6 1995/12/20 00:38:53 cgd Exp $	*/
+/*	$NetBSD: clock.c,v 1.7 1996/03/17 01:06:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,9 +66,14 @@
 /* Definition of the driver for autoconfig. */
 static int	clockmatch __P((struct device *, void *, void *));
 static void	clockattach __P((struct device *, struct device *, void *));
-struct cfdriver clockcd =
-    { NULL, "clock", clockmatch, clockattach, DV_DULL,
-	sizeof(struct clock_softc) };
+
+struct cfattach clock_ca = {
+	sizeof(struct clock_softc), clockmatch, clockattach
+};
+
+struct cfdriver clock_cd = {
+	NULL, "clock", DV_DULL
+};
 
 #if defined(DEC_3000_500) || defined(DEC_3000_300) || \
     defined(DEC_2000_300) || defined(DEC_2100_A50) || \
@@ -94,7 +99,7 @@ clockmatch(parent, cfdata, aux)
 	struct confargs *ca = aux;
 
 #if NIOASIC
-	if (parent->dv_cfdata->cf_driver == &ioasiccd) {
+	if (parent->dv_cfdata->cf_driver == &ioasic_cd) {
 		struct ioasicdev_attach_args *d = aux;
 
 		if (strncmp("TOY_RTC ", d->iada_modname, TC_ROM_LLEN))
@@ -102,7 +107,7 @@ clockmatch(parent, cfdata, aux)
 	} else
 #endif
 #if NISA
-	if ((parent->dv_cfdata->cf_driver == &isacd)) {
+	if ((parent->dv_cfdata->cf_driver == &isa_cd)) {
 		struct isadev_attach_args *ida = aux;
 
 		/* XXX XXX XXX */
@@ -167,8 +172,8 @@ cpu_initclocks()
 	struct clock_softc *csc;
 	int fractick;
 
-	if (clockcd.cd_devs == NULL ||
-	    (csc = (struct clock_softc *)clockcd.cd_devs[0]) == NULL)
+	if (clock_cd.cd_devs == NULL ||
+	    (csc = (struct clock_softc *)clock_cd.cd_devs[0]) == NULL)
 		panic("cpu_initclocks: no clock attached");
 
 	hz = 1024;		/* 1024 Hz clock */
@@ -218,7 +223,7 @@ void
 inittodr(base)
 	time_t base;
 {
-	struct clock_softc *csc = (struct clock_softc *)clockcd.cd_devs[0];
+	struct clock_softc *csc = (struct clock_softc *)clock_cd.cd_devs[0];
 	register int days, yr;
 	struct clocktime ct;
 	long deltat;
@@ -287,7 +292,7 @@ bad:
 void
 resettodr()
 {
-	struct clock_softc *csc = (struct clock_softc *)clockcd.cd_devs[0];
+	struct clock_softc *csc = (struct clock_softc *)clock_cd.cd_devs[0];
 	register int t, t2;
 	struct clocktime ct;
 	int s;

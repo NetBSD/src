@@ -1,4 +1,4 @@
-/*	$NetBSD: sio.c,v 1.3 1995/11/23 02:38:16 cgd Exp $	*/
+/*	$NetBSD: sio.c,v 1.4 1996/03/17 01:06:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -44,14 +44,22 @@
 int	siomatch __P((struct device *, void *, void *));
 void	sioattach __P((struct device *, struct device *, void *));
 
-struct cfdriver siocd = {
-	NULL, "sio", siomatch, sioattach, DV_DULL, sizeof(struct device)
+struct cfattach sio_ca = {
+	sizeof(struct device), siomatch, sioattach
+};
+
+struct cfdriver sio_cd = {
+	NULL, "sio", DV_DULL
 };
 
 int	pcebmatch __P((struct device *, void *, void *));
 
-struct cfdriver pcebcd = {
-	NULL, "pceb", pcebmatch, sioattach, DV_DULL, sizeof(struct device)
+struct cfattach pceb_ca = {
+	sizeof(struct device), pcebmatch, sioattach
+};
+
+struct cfdriver pceb_cd = {
+	NULL, "pceb", DV_DULL
 };
 
 static int	sioprint __P((void *, char *pnp));

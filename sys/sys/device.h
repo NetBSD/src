@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.11 1996/03/05 22:14:58 thorpej Exp $	*/
+/*	$NetBSD: device.h,v 1.12 1996/03/17 01:03:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,6 +81,7 @@ struct evcnt {
  * Configuration data (i.e., data placed in ioconf.c).
  */
 struct cfdata {
+	struct	cfattach *cf_attach;	/* config attachment */
 	struct	cfdriver *cf_driver;	/* config driver */
 	short	cf_unit;		/* unit number */
 	short	cf_fstate;		/* finding state (below) */
@@ -98,20 +99,31 @@ typedef int (*cfmatch_t) __P((struct device *, void *, void *));
 typedef void (*cfscan_t) __P((struct device *, void *));
 
 /*
- * `configuration' driver (what the machine-independent autoconf uses).
- * As devices are found, they are applied against all the potential matches.
- * The one with the best match is taken, and a device structure (plus any
- * other data desired) is allocated.  Pointers to these are placed into
- * an array of pointers.  The array itself must be dynamic since devices
- * can be found long after the machine is up and running.
+ * `configuration' attachment and driver (what the machine-independent
+ * autoconf uses).  As devices are found, they are applied against all
+ * the potential matches.  The one with the best match is taken, and a
+ * device structure (plus any other data desired) is allocated.  Pointers
+ * to these are placed into an array of pointers.  The array itself must
+ * be dynamic since devices can be found long after the machine is up
+ * and running.
+ *
+ * Devices can have multiple configuration attachments if they attach
+ * to different attributes (busses, or whatever), to allow specification
+ * of multiple match and attach functions.  There is only one configuration
+ * driver per driver, so that things like unit numbers and the device
+ * structure array will be shared.
  */
+struct cfattach {
+	size_t	  ca_devsize;		/* size of dev data (for malloc) */
+	cfmatch_t ca_match;		/* returns a match level */
+	void	(*ca_attach) __P((struct device *, struct device *, void *));
+	/* XXX should have detach */
+};
+	
 struct cfdriver {
 	void	**cd_devs;		/* devices found */
 	char	*cd_name;		/* device name */
-	cfmatch_t cd_match;		/* returns a match level */
-	void	(*cd_attach) __P((struct device *, struct device *, void *));
 	enum	devclass cd_class;	/* device classification */
-	size_t	cd_devsize;		/* size of dev data (for malloc) */
 	int	cd_indirect;		/* indirectly configure subdevices */
 	int	cd_ndevs;		/* size of cd_devs array */
 };
