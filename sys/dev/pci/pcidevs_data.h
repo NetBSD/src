@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.377 2001/12/15 13:18:11 soren Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.378 2001/12/16 22:00:42 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.374 2001/12/15 13:17:49 soren Exp 
+ *	NetBSD: pcidevs,v 1.375 2001/12/16 21:59:47 thorpej Exp 
  */
 
 /*
@@ -3836,6 +3836,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "MediaQ Inc.",
 	    "MQ200",
+	},
+	{
+	    PCI_VENDOR_MIDDLE_DIGITAL, PCI_PRODUCT_MIDDLE_DIGITAL_WEASEL_VGA,
+	    0,
+	    "Middle Digital, Inc.",
+	    "Weasel Virtual VGA",
+	},
+	{
+	    PCI_VENDOR_MIDDLE_DIGITAL, PCI_PRODUCT_MIDDLE_DIGITAL_WEASEL_SERIAL,
+	    0,
+	    "Middle Digital, Inc.",
+	    "Weasel Serial Port",
+	},
+	{
+	    PCI_VENDOR_MIDDLE_DIGITAL, PCI_PRODUCT_MIDDLE_DIGITAL_WEASEL_CONTROL,
+	    0,
+	    "Middle Digital, Inc.",
+	    "Weasel Control",
 	},
 	{
 	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC105,
@@ -9841,6 +9859,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_CHRYSALIS, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Chrysalis-ITS",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_MIDDLE_DIGITAL, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Middle Digital, Inc.",
 	    NULL,
 	},
 	{

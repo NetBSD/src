@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.379 2001/12/15 13:18:10 soren Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.380 2001/12/16 22:00:41 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.374 2001/12/15 13:17:49 soren Exp 
+ *	NetBSD: pcidevs,v 1.375 2001/12/16 21:59:47 thorpej Exp 
  */
 
 /*
@@ -575,6 +575,7 @@
 #define	PCI_VENDOR_ATRONICS	0x907f		/* Atronics */
 #define	PCI_VENDOR_NETMOS	0x9710		/* Netmos */
 #define	PCI_VENDOR_CHRYSALIS	0xcafe		/* Chrysalis-ITS */
+#define	PCI_VENDOR_MIDDLE_DIGITAL	0xdeaf		/* Middle Digital, Inc. */
 #define	PCI_VENDOR_ARC	0xedd8		/* ARC Logic */
 #define	PCI_VENDOR_INVALID	0xffff		/* INVALID VENDOR ID */
 
@@ -1416,6 +1417,11 @@
 
 /* MediaQ Inc. products */
 #define	PCI_PRODUCT_MEDIAQ_MQ200	0x0200		/* MQ200 */
+
+/* Middle Digital, Inc. products */
+#define	PCI_PRODUCT_MIDDLE_DIGITAL_WEASEL_VGA	0x9050		/* Weasel Virtual VGA */
+#define	PCI_PRODUCT_MIDDLE_DIGITAL_WEASEL_SERIAL	0x9051		/* Weasel Serial Port */
+#define	PCI_PRODUCT_MIDDLE_DIGITAL_WEASEL_CONTROL	0x9052		/* Weasel Control */
 
 /* Motorola products */
 #define	PCI_PRODUCT_MOT_MPC105	0x0001		/* MPC105 \"Eagle\" Host Bridge */
