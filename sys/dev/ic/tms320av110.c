@@ -1,4 +1,4 @@
-/*	$NetBSD: tms320av110.c,v 1.4 1997/10/19 20:46:32 is Exp $	*/
+/*	$NetBSD: tms320av110.c,v 1.5 1997/10/20 19:07:59 is Exp $	*/
 
 /*-
  * Copyright (c) 1997 Ignatios Souvatzis. All rights reserved.
@@ -293,10 +293,7 @@ tav_start_output(hdl, block, bsize, intr, intrarg)
 	sc->sc_intr = intr;
 	sc->sc_intrarg = intrarg;
 
-	while (--count >= 0) {
-		bus_space_write_1(iot, ioh, TAV_DATAIN, *ptr++);
-		delay(1);
-	}
+	bus_space_write_multi_1(iot, ioh, TAV_DATAIN, ptr, count);
 	tav_write_short(iot, ioh, TAV_INTR_EN, TAV_INTR_LOWWATER);
 
 	return 0;
