@@ -1,9 +1,9 @@
 #!/bin/sh
 #
-# $NetBSD: daemon,v 1.1.1.1 2000/03/10 11:53:25 lukem Exp $
+# $NetBSD: DAEMON,v 1.1 2000/03/13 04:03:52 lukem Exp $
 #
 
-# PROVIDE: daemon
+# PROVIDE: DAEMON
 # REQUIRE: named sysctl cleartmp ldconfig accounting amd virecover ypbind
 # REQUIRE: ipnat ipmon savecore pwcheck quota databases network dmesg
 # REQUIRE: aftermountlkm nfslocking
