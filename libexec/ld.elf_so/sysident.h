@@ -1,4 +1,4 @@
-/* $NetBSD: sysident.h,v 1.6 2000/12/15 06:46:22 mycroft Exp $ */
+/* $NetBSD: sysident.h,v 1.7 2000/12/15 06:49:19 mycroft Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
@@ -35,8 +35,8 @@
  */
 
 /*
- * Here we define the NetBSD OS Version and emulation name in two
- * NetBSD ELF .note sections, which are structured like:
+ * Here we define the NetBSD OS Version in an ELF .note section, structured
+ * like:
  *
  * [NOTE HEADER]
  *	long		name size
@@ -49,14 +49,11 @@
  * OSVERSION notes also have:
  *	long		OS version (NetBSD constant from param.h)
  *
- * EMULNAME notes also have:
- *	string		OS emulation name (netbsd == native)
- *
  * The DATUM fields should be padded out such that their actual (not
  * declared) sizes % 4 == 0.
  *
- * These are (not yet!) used by the kernel to determine if this binary
- * is really a NetBSD binary, or some other OS's.
+ * These are used by the kernel to determine if this binary is really a
+ * NetBSD binary, or some other OS's.
  */
 
 #define	__S(x)	__STRING(x)
