@@ -33,7 +33,7 @@
 #
 #	@(#)fasthalt.sh	5.4 (Berkeley) 4/16/91
 #
-#	$Id: fasthalt.sh,v 1.2 1993/03/22 08:04:00 cgd Exp $
+#	$Header: /cvsroot/src/sbin/fastboot/fasthalt.sh,v 1.3 1993/03/23 00:27:41 cgd Exp $
 #
 
 cp /dev/null /fastboot

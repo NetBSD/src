@@ -32,7 +32,7 @@
  *
  *	@(#)dump.h	5.16 (Berkeley) 5/29/91
  *
- *	$Id: dump.h,v 1.2 1993/03/22 08:04:00 cgd Exp $
+ *	$Header: /cvsroot/src/sbin/dump/dump.h,v 1.3 1993/03/23 00:27:03 cgd Exp $
  */
 
 #define MAXINOPB	(MAXBSIZE / sizeof(struct dinode))

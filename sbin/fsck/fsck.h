@@ -32,7 +32,7 @@
  *
  *	@(#)fsck.h	5.17 (Berkeley) 7/27/90
  *
- *	$Id: fsck.h,v 1.2 1993/03/22 08:04:00 cgd Exp $
+ *	$Header: /cvsroot/src/sbin/fsck/Attic/fsck.h,v 1.3 1993/03/23 00:27:51 cgd Exp $
  */
 
 #define	MAXDUP		10	/* limit on dup blks (per inode) */

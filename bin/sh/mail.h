@@ -35,7 +35,7 @@
  *
  *	@(#)mail.h	5.1 (Berkeley) 3/7/91
  *
- *	$Id: mail.h,v 1.2 1993/03/22 08:04:00 cgd Exp $
+ *	$Header: /cvsroot/src/bin/sh/mail.h,v 1.3 1993/03/23 00:28:20 cgd Exp $
  */
 
 #ifdef __STDC__

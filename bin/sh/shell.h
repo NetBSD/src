@@ -35,7 +35,7 @@
  *
  *	@(#)shell.h	5.4 (Berkeley) 4/12/91
  *
- *	$Id: shell.h,v 1.2 1993/03/22 08:04:00 cgd Exp $
+ *	$Header: /cvsroot/src/bin/sh/shell.h,v 1.3 1993/03/23 00:29:23 cgd Exp $
  */
 
 /*

@@ -35,7 +35,7 @@
  *
  *	@(#)jobs.h	5.1 (Berkeley) 3/7/91
  *
- *	$Id: jobs.h,v 1.2 1993/03/22 08:04:00 cgd Exp $
+ *	$Header: /cvsroot/src/bin/sh/jobs.h,v 1.3 1993/03/23 00:28:13 cgd Exp $
  */
 
 /* Mode argument to forkshell.  Don't change FORK_FG or FORK_BG. */

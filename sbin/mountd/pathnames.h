@@ -32,7 +32,7 @@
  *
  *	@(#)pathnames.h	6.5 (Berkeley) 6/27/90
  *
- *	$Id: pathnames.h,v 1.2 1993/03/22 08:04:00 cgd Exp $
+ *	$Header: /cvsroot/src/sbin/mountd/Attic/pathnames.h,v 1.3 1993/03/23 00:29:13 cgd Exp $
  */
 #include <paths.h>
 

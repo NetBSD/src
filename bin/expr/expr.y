@@ -2,7 +2,7 @@
 /* Written by Pace Willisson (pace@blitz.com) 
  * and placed in the public domain
  *
- * $Id: expr.y,v 1.2 1993/03/22 08:04:00 cgd Exp $
+ * $Header: /cvsroot/src/bin/expr/expr.y,v 1.3 1993/03/23 00:25:46 cgd Exp $
  */
 #include <stdio.h>
 #include <ctype.h>

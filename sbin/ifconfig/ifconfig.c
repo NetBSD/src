@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "@(#)ifconfig.c	5.1 (Berkeley) 2/28/91";
-static char rcsid[] = "$Id: ifconfig.c,v 1.3 1993/03/22 08:04:00 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sbin/ifconfig/ifconfig.c,v 1.4 1993/03/23 00:28:32 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

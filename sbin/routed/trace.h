@@ -32,7 +32,7 @@
  *
  *	@(#)trace.h	5.8 (Berkeley) 6/1/90
  *
- *	$Id: trace.h,v 1.2 1993/03/22 08:04:00 cgd Exp $
+ *	$Header: /cvsroot/src/sbin/routed/Attic/trace.h,v 1.3 1993/03/23 00:30:51 cgd Exp $
  */
 
 /*

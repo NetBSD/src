@@ -32,7 +32,7 @@
  *
  *	@(#)csh.h	5.15 (Berkeley) 6/8/91
  *
- *	$Id: csh.h,v 1.2 1993/03/22 08:04:00 cgd Exp $
+ *	$Header: /cvsroot/src/bin/csh/csh.h,v 1.3 1993/03/23 00:24:19 cgd Exp $
  */
 
 /*
