@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.10 2001/03/19 16:59:19 tsutsui Exp $
+# 	$NetBSD: NEWS1200,v 1.11 2001/07/07 15:27:20 tsutsui Exp $
 
 #	news1200 config file
 #
@@ -101,8 +101,11 @@ mainbus0 at root
 # NEWS HYPER-BUS
 hb0	at mainbus0 systype NEWS1200
 
-# MK48T02 realtime clock
-clock0	at hb0 addr 0xe1420000 ipl 6
+# interval timer
+timer0	at hb0 addr 0xe1140000 ipl 6
+
+# MK48T02 TOD clock
+mkclock0 at hb0 addr 0xe1420000
 
 # onboard LANCE ethernet
 le0	at hb0 addr 0xe1a40000 ipl 4
