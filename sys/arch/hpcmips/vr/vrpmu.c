@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpmu.c,v 1.2 1999/12/08 01:54:59 sato Exp $	*/
+/*	$NetBSD: vrpmu.c,v 1.3 1999/12/16 09:37:33 sato Exp $	*/
 
 /*
  * Copyright (c) 1999 M. Warner Losh.  All rights reserved.
@@ -35,6 +35,12 @@
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/vrpmuvar.h>
 #include <hpcmips/vr/vrpmureg.h>
+
+#include "vrbcu.h"
+#if NVRBCU > 0
+#include <hpcmips/vr/bcuvar.h>
+#include <hpcmips/vr/bcureg.h>
+#endif
 
 static int vrpmumatch __P((struct device *, struct cfdata *, void *));
 static void vrpmuattach __P((struct device *, struct device *, void *));
@@ -167,12 +173,36 @@ vrpmu_dump_regs(arg)
         struct vrpmu_softc *sc = arg;
 	unsigned int intstat1;
 	unsigned int intstat2;
-
+	unsigned int reg;
+#if NVRBCU > 0
+	int cpuid;
+#endif
 	intstat1 = vrpmu_read(sc, PMUINT_REG_W);
 	intstat2 = vrpmu_read(sc, PMUINT2_REG_W);
 	vrpmu_dump_intr(intstat1, intstat2);
+
 	/* others? XXXX */
+	reg = vrpmu_read(sc, PMUCNT_REG_W);
+	printf("vrpmu: cnt 0x%x: ", reg);
+	bitdisp16(reg);
+	reg = vrpmu_read(sc, PMUCNT2_REG_W);
+	printf("vrpmu: cnt2 0x%x: ", reg);
+	bitdisp16(reg);
+#if NVRBCU > 0
+	cpuid = vrbcu_vrip_getcpuid();
+	if (cpuid >= BCUREVID_RID_4111){
+		reg = vrpmu_read(sc, PMUWAIT_REG_W);
+		printf("vrpmu: wait 0x%x", reg);
+	}
+	if (cpuid >= BCUREVID_RID_4121){
+		reg = vrpmu_read(sc, PMUDIV_REG_W);
+		printf(" div 0x%x", reg);
+	}
+#endif
+	printf("\n");
+
 }
+
 /*
  * PMU interrupt handler.
  * XXX
