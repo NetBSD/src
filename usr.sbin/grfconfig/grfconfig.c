@@ -1,4 +1,4 @@
-/*	$NetBSD: grfconfig.c,v 1.1 1995/10/09 03:43:24 chopps Exp $	*/
+/*	$NetBSD: grfconfig.c,v 1.2 1995/10/09 04:11:20 chopps Exp $	*/
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -67,7 +67,7 @@ main(ac, av)
     	    	    	oldmode = 8;
     	    	    	break;
 		default:
-			printf("grfconfig [-r] [dev] [file]\n");
+			printf("grfconfig [-r] device [file]\n");
 			return (1);
 		}
 	}
