@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.6 1999/02/22 00:21:39 jonathan Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.7 1999/02/28 21:53:00 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1449,7 +1449,7 @@ LEAF(mips1_FlushICache)
 	j	v1
 	nop
 1:
-#ifdef pmax
+#ifdef PMAX_CACHEFLUSH_FORCES_WBFLUSH	/* XXX */
 	/*
 	 * The insn below attempts to wait for the  writebuffer to drain. 
 	 * It does not work on all MIPS hosts or maybe even all DEC machines.
@@ -1459,7 +1459,7 @@ LEAF(mips1_FlushICache)
 	 * Why we are even doing this for an I-cache flush is beyond me.
 	 */
 	bc0f	1b				# make sure stores are complete
-#endif	/* pmax */
+#endif	/*  PMAX_CACHEFLUSH_FORCES_WBFLUSH */
 	li	v1, MIPS_SR_ISOL_CACHES | MIPS_SR_SWAP_CACHES	# DELAYSLOT
 
 	mtc0	v1, MIPS_COP_0_STATUS
@@ -1498,7 +1498,7 @@ LEAF(mips1_FlushDCache)
 	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts.
 	nop
 
-#ifdef pmax
+#ifdef PMAX_CACHEFLUSH_FORCES_WBFLUSH	/* XXX */
 	/*
 	 * The insn below attempts to wait for the writebuffer to drain. 
 	 * It does not work on all MIPS hosts or maybe even all DEC machines.
@@ -1508,7 +1508,7 @@ LEAF(mips1_FlushDCache)
 	 */
 1:
 	bc0f	1b				# make sure stores are complete
-#endif
+#endif	/* PMAX_CACHEFLUSH_FORCES_WBFLUSH */
 
 	li	v1, MIPS_SR_ISOL_CACHES		# DELAYSLOT
 	mtc0	v1, MIPS_COP_0_STATUS
