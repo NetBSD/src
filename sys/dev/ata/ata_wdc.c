@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.62 2004/08/11 17:49:27 mycroft Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.63 2004/08/11 18:41:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.62 2004/08/11 17:49:27 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.63 2004/08/11 18:41:46 mycroft Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -520,7 +520,7 @@ again:
 			wdc_ata_bio_done(chp, xfer);
 			return;
 		}
-		wdc_dataout_pio(chp, drvp->drive_flags,
+		wdc->dataout_pio(chp, drvp->drive_flags,
 		    (char *)xfer->c_databuf + xfer->c_skip, ata_bio->nbytes);
 	}
 
@@ -652,7 +652,7 @@ wdc_ata_bio_intr(struct wdc_channel *chp, struct ata_xfer *xfer, int irq)
 			wdc_ata_bio_done(chp, xfer);
 			return 1;
 		}
-		wdc_datain_pio(chp, drvp->drive_flags,
+		wdc->datain_pio(chp, drvp->drive_flags,
 		    (char *)xfer->c_databuf + xfer->c_skip, ata_bio->nbytes);
 	}
 

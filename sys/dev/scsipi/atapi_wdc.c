@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.76 2004/08/11 17:51:24 mycroft Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.77 2004/08/11 18:41:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.76 2004/08/11 17:51:24 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.77 2004/08/11 18:41:46 mycroft Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -685,7 +685,7 @@ again:
 
 		/* send packet command */
 		/* Commands are 12 or 16 bytes long. It's 32-bit aligned */
-		wdc_dataout_pio(chp, drvp->drive_flags, cmd, sc_xfer->cmdlen);
+		wdc->dataout_pio(chp, drvp->drive_flags, cmd, sc_xfer->cmdlen);
 
 		/* Start the DMA channel if necessary */
 		if (xfer->c_flags & C_DMA) {
@@ -716,7 +716,7 @@ again:
 		if (xfer->c_bcount < len) {
 			printf("wdc_atapi_intr: warning: write only "
 			    "%d of %d requested bytes\n", xfer->c_bcount, len);
-			wdc_dataout_pio(chp, drvp->drive_flags,
+			wdc->dataout_pio(chp, drvp->drive_flags,
 		    	    (char *)xfer->c_databuf + xfer->c_skip,
 			    xfer->c_bcount);
 			for (i = xfer->c_bcount; i < len; i += 2)
@@ -725,7 +725,7 @@ again:
 			xfer->c_skip += xfer->c_bcount;
 			xfer->c_bcount = 0;
 		} else {
-			wdc_dataout_pio(chp, drvp->drive_flags,
+			wdc->dataout_pio(chp, drvp->drive_flags,
 		    	    (char *)xfer->c_databuf + xfer->c_skip, len);
 			xfer->c_skip += len;
 			xfer->c_bcount -= len;
@@ -752,14 +752,14 @@ again:
 		if (xfer->c_bcount < len) {
 			printf("wdc_atapi_intr: warning: reading only "
 			    "%d of %d bytes\n", xfer->c_bcount, len);
-			wdc_datain_pio(chp, drvp->drive_flags,
+			wdc->datain_pio(chp, drvp->drive_flags,
 			    (char *)xfer->c_databuf + xfer->c_skip,
 			    xfer->c_bcount);
 			wdcbit_bucket(chp, len - xfer->c_bcount);
 			xfer->c_skip += xfer->c_bcount;
 			xfer->c_bcount = 0;
 		} else {
-			wdc_datain_pio(chp, drvp->drive_flags,
+			wdc->datain_pio(chp, drvp->drive_flags,
 			    (char *)xfer->c_databuf + xfer->c_skip, len);
 			xfer->c_skip += len;
 			xfer->c_bcount -=len;
