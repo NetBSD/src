@@ -1,8 +1,8 @@
-/*	$NetBSD: rtcreg.h,v 1.2 1999/12/07 04:54:54 sato Exp $	*/
+/*	$NetBSD: rtcreg.h,v 1.3 2001/05/17 05:04:30 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
- * Copyright (c) 1999 SATO Kazumi. All rights reserved.
+ * Copyright (c) 1999-2001 SATO Kazumi. All rights reserved.
  * Copyright (c) 1999 PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -61,7 +61,8 @@
 
 /*
  *	RTC (Real Time Clock Unit) Registers definitions.
- *		start 0x0B0000C0
+ *		start 0x0B0000C0 (Vr4102-4121)
+ *		start 0x0F000100 (Vr4122)
  */
 #define ETIME_L_REG_W		0x000	/* Elapsed Time L */
 #define ETIME_M_REG_W		0x002	/* Elapsed Time M */
@@ -95,15 +96,42 @@
 #define RTCL2_CNT_H_REG_W	0x01e	/* RTC Long 2 Count H */
 
 
-#define TCLK_L_REG_W		0x100	/* TCLK L */
-#define TCLK_H_REG_W		0x102	/* TCLK H */
+#define VR4102_TCLK_L_REG_W	0x100	/* TCLK L */
+#define VR4102_TCLK_H_REG_W	0x102	/* TCLK H */
+#define VR4122_TCLK_L_REG_W	0x020	/* TCLK L */
+#define VR4122_TCLK_H_REG_W	0x022	/* TCLK H */
+#if defined VRGROUP_4102_4121
+#define TCLK_L_REG_W		VR4102_TCLK_L_REG_W	/* TCLK L */
+#define TCLK_H_REG_W		VR4102_TCLK_H_REG_W	/* TCLK H */
+#endif /* VRGROUP_4102_4121 */
+#if defined VRGROUP_4122
+#define TCLK_L_REG_W		VR4122_TCLK_L_REG_W	/* TCLK L */
+#define TCLK_H_REG_W		VR4122_TCLK_H_REG_W	/* TCLK H */
+#endif /* VRGROUP_4122 */
 
 
-#define TCLK_CNT_L_REG_W	0x104	/* TCLK Count L */
-#define TCLK_CNT_H_REG_W	0x106	/* TCLK Count H */
+#define VR4102_TCLK_CNT_L_REG_W	0x104	/* TCLK Count L */
+#define VR4102_TCLK_CNT_H_REG_W	0x106	/* TCLK Count H */
+#define VR4122_TCLK_CNT_L_REG_W	0x024	/* TCLK Count L */
+#define VR4122_TCLK_CNT_H_REG_W	0x026	/* TCLK Count H */
+#if defined VRGROUP_4102_4121
+#define TCLK_CNT_L_REG_W	VR4102_TCLK_CNT_L_REG_W	/* TCLK Count L */
+#define TCLK_CNT_H_REG_W	VR4102_TCLK_CNT_L_REG_W	/* TCLK Count H */
+#endif /* VRGROUP_4102_4121 */
+#if defined VRGROUP_4122
+#define TCLK_CNT_L_REG_W	VR4122_TCLK_CNT_L_REG_W	/* TCLK Count L */
+#define TCLK_CNT_H_REG_W	VR4122_TCLK_CNT_H_REG_W	/* TCLK Count H */
+#endif /* VRGROUP_4122 */
 
 
-#define RTCINT_REG_W		0x11e	/* RTC intr reg. */
+#define VR4102_RTCINT_REG_W		0x11e	/* RTC intr reg. */
+#define VR4122_RTCINT_REG_W		0x03e	/* RTC intr reg. */
+#if defined VRGROUP_4102_4121
+#define RTCINT_REG_W		VR4102_RTCINT_REG_W	/* RTC intr reg. */
+#endif /* VRGROUP_4102_4121 */
+#if defined VRGROUP_4122
+#define RTCINT_REG_W		VR4122_RTCINT_REG_W	/* RTC intr reg. */
+#endif /* VRGROUP_4122 */
 
 #define		RTCINT_TCLOCK		(1<<3)	/* TClock */
 #define		RTCINT_RTCLONG2		(1<<2)	/* RTC Long 2 */
