@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.21 1997/04/21 11:34:37 mrg Exp $	*/
+/*	$NetBSD: dir.c,v 1.22 1997/09/14 14:36:29 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-static char rcsid[] = "$NetBSD: dir.c,v 1.21 1997/04/21 11:34:37 mrg Exp $";
+__RCSID("$NetBSD: dir.c,v 1.22 1997/09/14 14:36:29 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +82,7 @@ static int chgino __P((struct  inodesc *));
 void
 propagate()
 {
-	register struct inoinfo **inpp, *inp, *pinp;
+	struct inoinfo **inpp, *inp, *pinp;
 	struct inoinfo **inpend;
 
 	/*
@@ -116,10 +117,10 @@ propagate()
  */
 int
 dirscan(idesc)
-	register struct inodesc *idesc;
+	struct inodesc *idesc;
 {
-	register struct direct *dp;
-	register struct bufarea *bp;
+	struct direct *dp;
+	struct bufarea *bp;
 	int dsize, n;
 	long blksiz;
 	char dbuf[DIRBLKSIZ];
@@ -178,10 +179,10 @@ dirscan(idesc)
  */
 static struct direct *
 fsck_readdir(idesc)
-	register struct inodesc *idesc;
+	struct inodesc *idesc;
 {
-	register struct direct *dp, *ndp;
-	register struct bufarea *bp;
+	struct direct *dp, *ndp;
+	struct bufarea *bp;
 	long size, blksiz, fix, dploc;
 
 	blksiz = idesc->id_numfrags * sblock.fs_fsize;
@@ -241,10 +242,10 @@ dpok:
 int
 dircheck(idesc, dp)
 	struct inodesc *idesc;
-	register struct direct *dp;
+	struct direct *dp;
 {
-	register int size;
-	register char *cp;
+	int size;
+	char *cp;
 	u_char namlen, type;
 	int spaceleft;
 
@@ -296,7 +297,7 @@ fileerror(cwd, ino, errmesg)
 	ino_t cwd, ino;
 	char *errmesg;
 {
-	register struct dinode *dp;
+	struct dinode *dp;
 	char pathbuf[MAXPATHLEN + 1];
 
 	pwarn("%s ", errmesg);
@@ -317,10 +318,10 @@ fileerror(cwd, ino, errmesg)
 
 void
 adjust(idesc, lcnt)
-	register struct inodesc *idesc;
+	struct inodesc *idesc;
 	short lcnt;
 {
-	register struct dinode *dp;
+	struct dinode *dp;
 
 	dp = ginode(idesc->id_number);
 	if (dp->di_nlink == lcnt) {
@@ -350,7 +351,7 @@ static int
 mkentry(idesc)
 	struct inodesc *idesc;
 {
-	register struct direct *dirp = idesc->id_dirp;
+	struct direct *dirp = idesc->id_dirp;
 	struct direct newent;
 	int newlen, oldlen;
 
@@ -395,7 +396,7 @@ static int
 chgino(idesc)
 	struct inodesc *idesc;
 {
-	register struct direct *dirp = idesc->id_dirp;
+	struct direct *dirp = idesc->id_dirp;
 
 	if (memcmp(dirp->d_name, idesc->id_name, (int)dirp->d_namlen + 1))
 		return (KEEPON);
@@ -412,7 +413,7 @@ linkup(orphan, parentdir)
 	ino_t orphan;
 	ino_t parentdir;
 {
-	register struct dinode *dp;
+	struct dinode *dp;
 	int lostdir;
 	ino_t oldlfdir;
 	struct inodesc idesc;
@@ -573,11 +574,11 @@ makeentry(parent, ino, name)
  */
 static int
 expanddir(dp, name)
-	register struct dinode *dp;
+	struct dinode *dp;
 	char *name;
 {
 	daddr_t lastbn, newblk;
-	register struct bufarea *bp;
+	struct bufarea *bp;
 	char *cp, firstblk[DIRBLKSIZ];
 
 	lastbn = lblkno(&sblock, dp->di_size);
@@ -636,7 +637,7 @@ allocdir(parent, request, mode)
 	ino_t ino;
 	char *cp;
 	struct dinode *dp;
-	register struct bufarea *bp;
+	struct bufarea *bp;
 	struct dirtemplate *dirp;
 
 	ino = allocino(request, IFDIR|mode);
@@ -706,8 +707,8 @@ lftempname(bufp, ino)
 	char *bufp;
 	ino_t ino;
 {
-	register ino_t in;
-	register char *cp;
+	ino_t in;
+	char *cp;
 	int namlen;
 
 	cp = bufp + 2;
