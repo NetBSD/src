@@ -16,7 +16,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifdef __OpenBSD__
 #include <sys/limits.h>
+#else
+#include <limits.h>
+#endif
 #include <pcap.h>
 
 #define DEF_SNAPLEN 116		/* default plus allow for larger header of pflog */
