@@ -1,7 +1,7 @@
 #
 # KICKME -- 486Cx-33 development machine.
 #
-#	$Id: KICKME,v 1.1 1994/02/17 01:14:21 cgd Exp $
+#	$Id: KICKME,v 1.2 1994/02/28 01:46:20 cgd Exp $
 #
 
 machine		"i386"
@@ -36,11 +36,12 @@ disk		cd0	at aha0	flags 2 drive ?
 device		pc0	at isa? port "IO_KBD" tty irq 1 vector pcrint
 device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
 device		com0	at isa? port "IO_COM1" tty irq 4 vector comintr
-device		com1	at isa? port "IO_COM2" tty irq 3 vector comintr
+#device		com1	at isa? port "IO_COM2" tty irq 3 vector comintr
 
 #device		lpt0	at isa? port "IO_LPT3" tty irq 7 vector lptintr
 
-device ed0 at isa? port 0x280 net irq 9 iomem 0xd0000 vector edintr
+device	ed0	at isa? port 0x280 net irq 3 iomem 0xd0000 vector edintr
+device	ed1	at isa? port 0x300 net irq 10 iomem 0xcc000 vector edintr
 
 pseudo-device	ether
 pseudo-device	log
