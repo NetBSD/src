@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.2 1995/03/18 07:22:43 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.3 1995/03/24 15:01:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -87,11 +87,6 @@
 
 #define	UPAGES		2			/* pages of u-area */
 #define	USPACE		(UPAGES * NBPG)		/* total size of u-area */
-#define	SYSMAP_UPTES	0			/* sysmap index for u. ptes */
-#define	UADDR \
-    (VM_MIN_KERNEL_ADDRESS + SYSMAP_UPTES*NBPG)	/* address of u */
-#define	KSTACK		(UADDR)			/* low addr of kernel stack */
-#define	KSTACKTOP	(UADDR+UPAGES*NBPG)	/* high addr of kernel stack */
 
 /*
  * Constants related to network buffer management.

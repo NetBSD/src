@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.1 1995/02/13 23:07:45 cgd Exp $	*/
+/*	$NetBSD: proc.h,v 1.2 1995/03/24 15:01:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -35,7 +35,6 @@ struct mdproc {
 	u_long	md_flags;
 	struct	trapframe *md_tf;	/* trap/syscall registers */
 	struct pcb *md_pcbpaddr;	/* phys addr of the pcb */
-	u_int64_t md_upte[UPAGES];	/* ptes for mapping u page */
 };
 
 #define	MDP_FPUSED	0x0001		/* Process used the FPU */
