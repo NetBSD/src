@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map_i.h,v 1.24 2002/12/01 22:58:43 matt Exp $	*/
+/*	$NetBSD: uvm_map_i.h,v 1.25 2003/10/01 22:50:15 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -84,10 +84,7 @@
  */
 
 MAP_INLINE struct vm_map *
-uvm_map_create(pmap, min, max, flags)
-	pmap_t pmap;
-	vaddr_t min, max;
-	int flags;
+uvm_map_create(pmap_t pmap, vaddr_t min, vaddr_t max, int flags)
 {
 	struct vm_map *result;
 
@@ -105,10 +102,7 @@ uvm_map_create(pmap, min, max, flags)
  */
 
 MAP_INLINE void
-uvm_map_setup(map, min, max, flags)
-	struct vm_map *map;
-	vaddr_t min, max;
-	int flags;
+uvm_map_setup(struct vm_map *map, vaddr_t min, vaddr_t max, int flags)
 {
 
 	map->header.next = map->header.prev = &map->header;
@@ -140,9 +134,7 @@ uvm_map_setup(map, min, max, flags)
  */
 
 MAP_INLINE void
-uvm_unmap(map, start, end)
-	struct vm_map *map;
-	vaddr_t start,end;
+uvm_unmap(struct vm_map *map, vaddr_t start, vaddr_t end)
 {
 	struct vm_map_entry *dead_entries;
 	UVMHIST_FUNC("uvm_unmap"); UVMHIST_CALLED(maphist);
@@ -171,8 +163,7 @@ uvm_unmap(map, start, end)
  */
 
 MAP_INLINE void
-uvm_map_reference(map)
-	struct vm_map *map;
+uvm_map_reference(struct vm_map *map)
 {
 	simple_lock(&map->ref_lock);
 	map->ref_count++;
