@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.30 1996/03/17 01:33:21 thorpej Exp $	*/
+/*	$NetBSD: grf.c,v 1.31 1996/05/05 06:16:30 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,6 +57,7 @@
 #include <sys/mman.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
+#include <sys/systm.h>
 
 #include <machine/grfioctl.h>
 #include <machine/cpu.h>
@@ -69,6 +70,7 @@
 #include <vm/vm_pager.h>
 
 #include "nubus.h"
+#include "itevar.h"
 #include "grfvar.h"
 
 #include "grf.h"
@@ -79,41 +81,9 @@
 #define	iteoff(u,f)
 #endif
 
-static int	grf_match __P((/*struct device *parent, struct device *dev,
-				    void *aux*/));
-static void	grf_attach __P((struct device *parent, struct device *dev,
-				void *aux));
-
-static void	fake_internal __P((void));
-
-extern int	grfmv_probe __P((struct grf_softc *gp, nubus_slot *nu));
-extern int	grfmv_init __P((struct grf_softc *gp));
-extern int	grfmv_mode __P((struct grf_softc *gp, int cmd, void *arg));
-extern caddr_t	grfmv_phys __P((struct grf_softc *gp, vm_offset_t addr));
-
-extern int	grfiv_probe __P((struct grf_softc *gp, nubus_slot *ignore));
-extern int	grfiv_init __P((struct grf_softc *gp));
-extern int	grfiv_mode __P((struct grf_softc *gp, int cmd, void *arg));
-extern caddr_t	grfiv_phys __P((struct grf_softc *gp, vm_offset_t addr));
-
-struct cfattach grf_ca = {
-	sizeof(struct grf_softc), grf_match, grf_attach
-};
-
 struct cfdriver grf_cd = {
 	NULL, "grf", DV_DULL
 };
-
-struct grfdev grfdev[] = {
-/* DrSW             (*gd_probe)() (*gd_init)() (*gd_mode)()  gd_desc
-       (*gd_phys)()                                                   */
-{  NUBUS_DRSW_APPLE,  grfmv_probe,  grfmv_init,  grfmv_mode, "QD-compatible",
-         grfmv_phys },
-{              0xFF,  grfiv_probe,  grfiv_init,  grfiv_mode, "Internal video",
-         grfiv_phys },
-};
-
-static int ngrfdev=(sizeof(grfdev) / sizeof(grfdev[0]));
 
 #ifdef DEBUG
 static int grfdebug = 0xff;
@@ -122,51 +92,6 @@ static int grfdebug = 0xff;
 #define GDB_IOMAP	0x04
 #define GDB_LOCK	0x08
 #endif
-
-static int
-grf_match(parent, match, aux)
-	struct	device *parent;
-	void	*match, *aux;
-{
-	struct	grf_softc *sc = match;
-	nubus_slot *nu = (nubus_slot *) aux;
-	int	i, r;
-
-	for (i = 0; i < ngrfdev; i++) {
-		if ((r = (*grfdev[i].gd_probe)(sc, nu)) > 0) {
-			sc->g_type = i;
-			bcopy(aux, &sc->sc_slot, sizeof(nubus_slot));
-			return r;
-		}
-	}
-	return 0;
-}
-
-static void
-grf_attach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
-{
-	struct grf_softc	*sc;
-
-	sc = (struct grf_softc *) self;
-
-	if ((*grfdev[sc->g_type].gd_init)(sc) == 0) {
-		printf("\n");
-		return;
-	}
-	sc->g_flags = GF_ALIVE;
-
-	printf(": %d x %d ", sc->curr_mode.width, sc->curr_mode.height);
-
-	if (sc->curr_mode.psize == 1)
-		printf("monochrome");
-	else
-		printf("%d color", 1 << sc->curr_mode.psize);
-
-	printf(" %s (%s) display\n",
-		grfdev[sc->g_type].gd_desc, sc->card_name);
-}
 
 /*ARGSUSED*/
 int
@@ -202,6 +127,7 @@ grfopen(dev, flag, mode, p)
 }
 
 /*ARGSUSED*/
+int
 grfclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
@@ -219,6 +145,7 @@ grfclose(dev, flag, mode, p)
 }
 
 /*ARGSUSED*/
+int
 grfioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	int cmd;
@@ -267,13 +194,13 @@ grfioctl(dev, cmd, data, flag, p)
 		bcopy(&gp->curr_mode, data, sizeof(struct grfmode));
 		break;
 	case GRFIOCGETMODE:
-		error = (*grfdev[gp->g_type].gd_mode)(gp, GM_CURRMODE, data);
+		error = (*gp->g_mode)(gp, GM_CURRMODE, data);
 		break;
 	case GRFIOCSETMODE:
-		error = (*grfdev[gp->g_type].gd_mode)(gp, GM_NEWMODE, data);
+		error = (*gp->g_mode)(gp, GM_NEWMODE, data);
 		break;
 	case GRFIOCLISTMODES:
-		error = (*grfdev[gp->g_type].gd_mode)(gp, GM_LISTMODES, data);
+		error = (*gp->g_mode)(gp, GM_LISTMODES, data);
 		break;
 
 	default:
@@ -284,6 +211,7 @@ grfioctl(dev, cmd, data, flag, p)
 }
 
 /*ARGSUSED*/
+int
 grfselect(dev, rw, p)
 	dev_t dev;
 	int rw;
@@ -295,6 +223,7 @@ grfselect(dev, rw, p)
 }
 
 /*ARGSUSED*/
+int
 grfmmap(dev, off, prot)
 	dev_t dev;
 	int off;
@@ -323,7 +252,7 @@ grfon(dev)
 	 */
 	iteoff(unit, 3);
 
-	return (*grfdev[gp->g_type].gd_mode) (gp, GM_GRFON, NULL);
+	return (*gp->g_mode) (gp, GM_GRFON, NULL);
 }
 
 int
@@ -338,7 +267,7 @@ grfoff(dev)
 
 	(void) grfunmap(dev, (caddr_t) 0, curproc);
 
-	error = (*grfdev[gp->g_type].gd_mode) (gp, GM_GRFOFF, NULL);
+	error = (*gp->g_mode) (gp, GM_GRFOFF, NULL);
 
 	/* XXX: see comment for iteoff above */
 	iteon(unit, 2);
@@ -355,8 +284,7 @@ grfaddr(gp, off)
 	u_long	addr;
 
 	if (off < mac68k_round_page(gm->fbsize + gm->fboff) ) {
-		addr = (u_long) (*grfdev[gp->g_type].gd_phys) (gp, gm->fbbase)
-				+ off;
+		addr = (u_long) (*gp->g_phys)(gp, (int) gm->fbbase) + off;
 		return mac68k_btop(addr);
 	}
 	/* bogus */

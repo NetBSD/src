@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.18 1996/04/04 06:59:29 scottr Exp $	*/
+/*	$NetBSD: nubus.c,v 1.19 1996/05/05 06:17:03 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -33,6 +33,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <machine/autoconf.h>
 #include <machine/cpu.h>
 
 #include <vm/vm.h>
@@ -46,9 +47,9 @@ static int	nubus_debug = 0x01;
 #define NDB_ARITH	0x4
 #endif
 
-static int	nubusprint __P((void *aux, char *name));
-static void	nubusattach __P((struct device *parent, struct device *self,
-				 void *aux));
+static int	nubusprint __P((void *, char *));
+static int	nubusmatch __P((struct device *, void *, void *));
+static void	nubusattach __P((struct device *, struct device *, void *));
 
 static int	probe_slot __P((int slot, nubus_slot *fmt));
 static u_long	IncPtr __P((nubus_slot *fmt, u_long base, long amt));
@@ -59,48 +60,40 @@ static u_char	GetByte __P((nubus_slot *fmt, u_long ptr));
 #endif
 static u_long	GetLong __P((nubus_slot *fmt, u_long ptr));
 
-extern int matchbyname();	/* XXX - this really ought to be elsewhere! */
-
 struct cfattach nubus_ca = {
-	sizeof(struct nubus_softc), matchbyname, nubusattach
+	sizeof(struct nubus_softc), nubusmatch, nubusattach
 };
 
 struct cfdriver nubus_cd = {
 	NULL, "nubus", DV_DULL, 1
 };
 
+static int
+nubusmatch(parent, vcf, aux)
+	struct device *parent;
+	void *vcf, *aux;
+{
+	struct confargs *ca = aux;
+
+	if (ca->ca_bustype != BUS_NUBUS)
+		return (0);
+printf("nubus match.\n");
+	return(1);
+}
+
 static void
 nubusattach(parent, self, aux)
 	struct	device	*parent, *self;
 	void		*aux;
 {
-	extern u_int32_t	mac68k_vidlog;
 	nubus_slot		fmtblock;
 	int			i;
 
 	printf("\n");
 
-	/*
-	 * Kludge for internal video.
-	 */
-	if (mac68k_vidlog) {
-		int	int_video_slot = NUBUS_INT_VIDEO_PSUEDO_SLOT;
-
-		fmtblock.top = NUBUS_SLOT_TO_BASE(int_video_slot);
-		fmtblock.slot = int_video_slot;
-		fmtblock.bytelanes = 0x0F;
-		fmtblock.step = 4;
-		fmtblock.test_pattern = ~NUBUS_ROM_TEST_PATTERN;
-		fmtblock.format = 1;
-		fmtblock.revision_level = 1;
-		fmtblock.crc = 1;
-		fmtblock.length = 0;
-		fmtblock.directory_offset = 0;
-		config_found(self, &fmtblock, nubusprint);
-	}
-
-	for ( i = NUBUS_MIN_SLOT; i <= NUBUS_MAX_SLOT; i++) {
+	for (i = NUBUS_MIN_SLOT; i <= NUBUS_MAX_SLOT; i++) {
 		if (probe_slot(i, &fmtblock)) {
+			/*config_search(bus_scan, &fmtblock, nubusprint);*/
 			config_found(self, &fmtblock, nubusprint);
 		}
 	}
@@ -159,14 +152,14 @@ probe_slot(slot, fmt)
 	nubus_slot	*fmt;
 {
 	caddr_t		rom_probe;
-	u_long		hdr;
-	u_char		data;
+	vm_offset_t	hdr;
+	u_int		data;
 	int		hdr_size, i;
 
 	fmt->bytelanes = 0;
 	fmt->slot = (u_long)slot;
 
-	rom_probe = (caddr_t) (NUBUS_SLOT_TO_BASE(fmt->slot) + NBMEMSIZE);
+	rom_probe = (caddr_t) (NUBUS_SLOT_TO_PADDR(fmt->slot) + NBMEMSIZE);
 
 #ifdef DEBUG
 	if (nubus_debug & NDB_PROBE) {
@@ -180,10 +173,11 @@ probe_slot(slot, fmt)
 
 		rom_probe--;
 
-		if (badbaddr(rom_probe))
+		data = bus_peek(BUS_NUBUS, (vm_offset_t) rom_probe, 1);
+		if (data == -1)
 			continue;
 
-		if ((data = *rom_probe) == 0)
+		if (data == 0)
 			continue;
 
 		if (   ((((data & 0xf0) >> 4) ^ (data & 0x0f)) == 0x0f)
@@ -215,7 +209,17 @@ probe_slot(slot, fmt)
 	 * would be valid.  This is necessary for NUBUS_ROM_offset()
 	 * to work.
 	 */
-	hdr = NUBUS_SLOT_TO_BASE(fmt->slot) + NBMEMSIZE;
+printf("Mapping in space for slot %d.\n", fmt->slot);
+	hdr = (vm_offset_t)
+		bus_mapin(BUS_NUBUS,NUBUS_SLOT_TO_PADDR(fmt->slot),NBMEMSIZE);
+	if (hdr == NULL) {
+		printf("Failed to map %d bytes for NuBUS slot %d (0x%x) probe.\n",
+			NBMEMSIZE, fmt->slot,
+			(unsigned int) NUBUS_SLOT_TO_BASE(fmt->slot));
+	}
+	fmt->virtual_base = hdr;
+	hdr += NBMEMSIZE;
+
 	i = 0x10 | (fmt->bytelanes & 0x0f);
 	while ((i & 1) == 0) {
 		hdr++;

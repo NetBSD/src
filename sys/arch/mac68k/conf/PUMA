@@ -1,4 +1,4 @@
-#	$NetBSD: PUMA,v 1.9 1996/03/12 21:06:24 scottr Exp $
+#	$NetBSD: PUMA,v 1.10 1996/05/05 06:16:04 briggs Exp $
 #
 # PUMA
 
@@ -49,9 +49,12 @@ options		COMPAT_10
 
 config		netbsd	root on sd0 swap on sd0 and sd1 and vnd0a dumps on sd1b
 
-ae*	at nubus0	slot -1   id ?   claimed 0
+nubus0		at mainbus?
 
-ncrscsi0	at mainbus?		# SCSI NCR 5380
+ae*		at nubus?
+grf0		at nubus?
+
+ncrscsi0	at obio?		# SCSI NCR 5380
 
 scsibus*	at scsi?
 sd*	at scsibus? target ? lun ?

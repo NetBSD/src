@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.17 1996/03/25 03:27:51 briggs Exp $	*/
+/*	$NetBSD: genassym.c,v 1.18 1996/05/05 06:18:27 briggs Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,6 +42,7 @@
 #include <sys/msgbuf.h>
 #include <sys/syscall.h>
 #include <sys/systm.h>
+#include <sys/types.h>
 #include <sys/user.h>
 
 #include <vm/vm.h>

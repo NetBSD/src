@@ -1,4 +1,4 @@
-#	$NetBSD: SPOT,v 1.4 1996/04/13 19:12:46 scottr Exp $
+#	$NetBSD: SPOT,v 1.5 1996/05/05 06:16:08 briggs Exp $
 #
 # SPOT
 
@@ -63,7 +63,11 @@ options		MACHINE_NONCONTIG
 config		netbsd	swap generic
 options		GENERIC
 
-ae*	at nubus0	slot -1   id ?   claimed 0
+nubus0		at mainbus?
+
+ae*	at nubus?
+grf0	at nubus?
+grf*	at nubus?
 
 #ncrscsi0	at mainbus?		# SCSI NCR 5380
 #ncr96scsi0	at mainbus?		# SCSI NCR 53C96

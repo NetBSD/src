@@ -1,4 +1,4 @@
-/*	$NetBSD: viareg.h,v 1.2 1996/04/04 06:55:29 scottr Exp $	*/
+/*	$NetBSD: viareg.h,v 1.3 1996/05/05 06:18:07 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -157,7 +157,7 @@ extern int VIA2;
 #define RBVMonitorMask	0x38	/* Type numbers */
 #define RBVOff		0x40	/* monitor turn off */
 #define RBVMonIDNone	0x38	/* What RBV actually has for no video */
-#define RBVMonIDOff	0x0		/* What rbv_vidstatus() returns for no video */
+#define RBVMonIDOff	0x0	/* What rbv_vidstatus() returns for no video */
 #define RBVMonID15BWP	0x08	/* BW portrait */
 #define RBVMonIDRGB	0x10	/* color monitor */
 #define RBVMonIDRGB15	0x28	/* 15 inch RGB */
@@ -170,10 +170,12 @@ extern int VIA2;
 
 void	VIA_initialize   __P((void));
 int	rbv_vidstatus    __P((void));
-int	add_nubus_intr   __P((int addr, void (*func)(), void *client_data));
-void	mac68k_register_scsi_irq __P((void (*irq_func)(void *), void *clnt));
-void	mac68k_register_scsi_drq __P((void (*drq_func)(void *), void *clnt));
-void	mac68k_register_via1_t1_irq __P((void (*irq_func)(void *)));
+void	via_shutdown __P((void));
+int	add_nubus_intr   __P((int, void (*) __P((void *, int)), void *));
+void	enable_nubus_intr __P((void));
+void	mac68k_register_scsi_irq __P((void (*)(void *), void *clnt));
+void	mac68k_register_scsi_drq __P((void (*)(void *), void *clnt));
+void	mac68k_register_via1_t1_irq __P((void (*)(void *)));
 
-extern void	(*via1itab[7])();
-extern void	(*via2itab[7])();
+extern void	(*via1itab[7]) __P((void *));
+extern void	(*via2itab[7]) __P((void *));

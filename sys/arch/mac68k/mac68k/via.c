@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.39 1996/04/23 03:53:26 scottr Exp $	*/
+/*	$NetBSD: via.c,v 1.40 1996/05/05 06:19:04 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -41,6 +41,7 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/systm.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/viareg.h>
@@ -48,16 +49,20 @@
 #include "ncrscsi.h"
 #include "ncr96scsi.h"
 
-static void	via1_noint __P((int));
+static void	via1_noint __P((void *));
 static void	via2_noint __P((void *));
-void	mrg_adbintr(), mrg_pmintr(), rtclock_intr(), profclock();
-void	via2_nubus_intr();
-void	rbv_nubus_intr();
-void	slot_ignore(void *, int);
-void	slot_noint(void *, int);
+static void	slot_ignore __P((void *, int));
+static void	slot_noint __P((void *, int));
+void	mrg_adbintr __P((void *));
+void	mrg_pmintr __P((void *));
+void	rtclock_intr __P((void *));
+void	profclock __P((void *));
+void	via1_intr __P((struct frame *));
+void	via2_nubus_intr __P((void *));
+void	rbv_nubus_intr __P((void *));
 int	VIA2 = 1;		/* default for II, IIx, IIcx, SE/30. */
 
-void (*via1itab[7])()={
+void (*via1itab[7]) __P((void *))={
 	via1_noint,
 	via1_noint,
 	mrg_adbintr,
@@ -67,7 +72,7 @@ void (*via1itab[7])()={
 	rtclock_intr,
 };	/* VIA1 interrupt handler table */
 
-void (*via2itab[7])()={
+void (*via2itab[7]) __P((void *))={
 	via2_noint,
 	via2_nubus_intr,
 	via2_noint,
@@ -82,10 +87,10 @@ void *via2iarg[7] = {
 	(void *) 4, (void *) 5, (void *) 6
 };	/* Arg array for VIA2 interrupts. */
 
-void		via2_intr(struct frame *);
-void		rbv_intr(struct frame *);
+void		via2_intr __P((struct frame *));
+void		rbv_intr __P((struct frame *));
 
-void		(*real_via2_intr)(struct frame *);
+void		(*real_via2_intr) __P((struct frame *));
 
 /*
  * Nubus slot interrupt routines and parameters for slots 9-15.  Note
@@ -93,7 +98,7 @@ void		(*real_via2_intr)(struct frame *);
  * as a slot 15 interrupt; this slot is quite fictitious in real-world
  * Macs.  See also GMFH, pp. 165-167, and "Monster, Loch Ness."
  */
-void (*slotitab[7])(void *, int) = {
+void (*slotitab[7]) __P((void *, int)) = {
 	slot_noint,
 	slot_noint,
 	slot_noint,
@@ -171,7 +176,7 @@ via1_intr(fp)
 	struct frame *fp;
 {
 	register unsigned char intbits;
-	register unsigned char bitnum;
+	register int bitnum;
 
 	intbits = via_reg(VIA1, vIFR);	/* get interrupts pending */
 	intbits &= via_reg(VIA1, vIER);	/* only care about enabled ones */
@@ -184,7 +189,7 @@ via1_intr(fp)
 	bitnum = 0;
 	do {
 		if (intbits & 0x1)
-			via1itab[bitnum](bitnum); /* run interrupt handler */
+			via1itab[bitnum]((void *) bitnum);
 		intbits >>= 1;
 	} while (++bitnum != 7 && intbits);
 }
@@ -194,7 +199,7 @@ via2_intr(fp)
 	struct frame *fp;
 {
 	register unsigned char	intbits;
-	register char		bitnum;
+	register int		bitnum;
 
 	intbits = via2_reg(vIFR);	/* get interrupts pending */
 	intbits &= via2_reg(vIER);	/* only care about enabled */
@@ -219,7 +224,7 @@ rbv_intr(fp)
 	struct frame *fp;
 {
 	register unsigned char	intbits;
-	register char		bitnum, bitmsk;
+	register int		bitnum;
 
 	intbits = (via2_reg(vIFR + rIFR) & via2_reg(vIER + rIER));
 
@@ -240,9 +245,9 @@ rbv_intr(fp)
 
 static void
 via1_noint(bitnum)
-	int bitnum;
+	void *bitnum;
 {
-	printf("via1_noint(%d)\n", bitnum);
+	printf("via1_noint(%d)\n", (int) bitnum);
 }
 
 static void
@@ -257,7 +262,7 @@ static int	nubus_intr_mask = 0;
 int
 add_nubus_intr(slot, func, client_data)
 	int slot;
-	void (*func)();
+	void (*func) __P((void *, int));
 	void *client_data;
 {
 	int	s = splhigh();
@@ -296,15 +301,16 @@ enable_nubus_intr()
 		via2_reg(rIER) = V2IF_SLOTINT | 0x80;
 }
 
+/*ARGSUSED*/
 void
-via2_nubus_intr(bit)
-	int bit;
+via2_nubus_intr(bitarg)
+	void *bitarg;
 {
 	register int	i, mask, ints;
 
 try_again:
 	via2_reg(vIFR) = V2IF_SLOTINT;
-	if (ints = ((~via2_reg(vBufA)) & nubus_intr_mask)) {
+	if ((ints = ((~via2_reg(vBufA)) & nubus_intr_mask)) != 0) {
 		mask = (1 << 6);
 		i = 7;
 		while (i--) {
@@ -317,15 +323,16 @@ try_again:
 	goto try_again;
 }
 
+/*ARGSUSED*/
 void
-rbv_nubus_intr(bit)
-	int bit;
+rbv_nubus_intr(bitarg)
+	void *bitarg;
 {
 	register int	i, mask, ints;
 
 try_again:
 	via2_reg(rIFR) = V2IF_SLOTINT;
-	if (ints = ((~via2_reg(rBufA)) & via2_reg(rSlotInt))) {
+	if ((ints = ((~via2_reg(rBufA)) & via2_reg(rSlotInt))) != 0) {
 		mask = (1 << 6);
 		i = 7;
 		while (i--) {
@@ -338,7 +345,7 @@ try_again:
 	goto try_again;
 }
 
-void
+static void
 slot_ignore(client_data, slot)
 	void *client_data;
 	int slot;
@@ -353,7 +360,7 @@ slot_ignore(client_data, slot)
 		via2_reg(rBufA) = mask;
 }
 
-void
+static void
 slot_noint(client_data, slot)
 	void *client_data;
 	int slot;
@@ -384,7 +391,7 @@ rbv_vidstatus()
 	return(0);
 }
 
-extern void
+void
 mac68k_register_scsi_drq(drq_func, client_data)
 	void	(*drq_func)(void *);
 	void	*client_data;
@@ -398,7 +405,7 @@ mac68k_register_scsi_drq(drq_func, client_data)
 	}
 }
 
-extern void
+void
 mac68k_register_scsi_irq(irq_func, client_data)
 	void	(*irq_func)(void *);
 	void	*client_data;
@@ -412,7 +419,7 @@ mac68k_register_scsi_irq(irq_func, client_data)
 	}
 }
 
-extern void
+void
 mac68k_register_via1_t1_irq(irq_func)
 	void	(*irq_func)(void *);
 {
