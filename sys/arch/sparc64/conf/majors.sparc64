@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc64,v 1.1.2.4 2002/08/31 14:52:28 gehenna Exp $
+#	$NetBSD: majors.sparc64,v 1.1.2.5 2002/08/31 15:04:09 gehenna Exp $
 #
 # Device majors for sparc64
 #
@@ -55,7 +55,7 @@ device-major	isdnctl		char 73			isdnctl
 device-major	isdnbchan	char 74			isdnbchan
 device-major	isdntrc		char 75			isdntrc
 device-major	isdntel		char 76			isdntel
-device-major	sab		char 77			sabtty
+device-major	sabtty		char 77			sabtty
 
 device-major	cgfourteen	char 99			cgfourteen
 
