@@ -1,4 +1,4 @@
-.\"	$NetBSD: igsfb.4,v 1.1 2003/03/21 09:56:53 uwe Exp $
+.\"	$NetBSD: igsfb.4,v 1.2 2003/06/01 01:14:30 uwe Exp $
 .\"
 .\" Copyright (c) 2003 Valeriy E. Ushakov
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd March 21, 2003
+.Dd June 1, 2003
 .Dt IGSFB 4
 .Os
 .Sh NAME
@@ -38,12 +38,12 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides experimental support for IGA 1682 and CyberPro series
-of graphics cards by InteGraphics Systems, now Tvia.
+driver provides support for IGA 1682 and CyberPro series of graphics
+cards by InteGraphics Systems, now Tvia.
 The
 .Nm
-driver operates these cards in linear framebuffer mode, not in
-VGA mode.
+driver operates these cards in linear framebuffer mode, not in VGA
+mode.
 .Sh SEE ALSO
 .Xr wscons 4
 .Sh HISTORY
@@ -52,5 +52,5 @@ The
 driver first appeared in
 .Nx 1.6 .
 .Sh BUGS
-This driver is considered experimental.
-Acceleration is not yet supported.
+There's currently no way to change resolution, frequency, etc.
+The driver is hardcoded to init the card to 1024\[tmu]768, 8bpp at 60Hz.
