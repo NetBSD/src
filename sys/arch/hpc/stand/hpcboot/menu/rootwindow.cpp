@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.8 2003/12/23 04:41:13 uwe Exp $	*/
+/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.9 2003/12/23 17:18:25 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -218,7 +218,7 @@ RootWindow::WMCreate(HWND w, LPCREATESTRUCT aux)
  	// regsiter myself to menu
 	HpcMenuInterface::Instance()._root = this;
 
-	rect.top += cmdbar_height;
+	rect.top += _button_height;
 	// Tab control.
 	_base =  new TabWindowBase(_app, w, rect, IDC_BASE);
 	_base->create(aux);
@@ -308,8 +308,7 @@ CancelButton::create(LPCREATESTRUCT aux)
 BOOL
 ProgressBar::create(LPCREATESTRUCT aux)
 {
-	int cx = _rect.right - _rect.left
-	    - TABCTRL_TAB_WIDTH - BOOT_BUTTON_WIDTH * 2;
+	int cx = _rect.right - _rect.left - BOOT_BUTTON_WIDTH * 2;
 	int cy = _root._button_height;
 	int x = _rect.left + BOOT_BUTTON_WIDTH;
 	_window = CreateWindow(PROGRESS_CLASS, TEXT(""),
@@ -317,7 +316,7 @@ ProgressBar::create(LPCREATESTRUCT aux)
 	    x, _rect.top, cx, cy, _parent_window,
 	    reinterpret_cast <HMENU>(IDC_PROGRESSBAR),
 	    aux->hInstance, NULL);
-	SendMessage(_window, PBM_SETRANGE, 0, MAKELPARAM(0, 12));
+	SendMessage(_window, PBM_SETRANGE, 0, MAKELPARAM(0, 11));
 
 	return IsWindow(_window) ? TRUE : FALSE;
 }
