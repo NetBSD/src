@@ -1,4 +1,4 @@
-/*	$NetBSD: varargs.h,v 1.7 1995/12/25 22:22:12 mycroft Exp $	*/
+/*	$NetBSD: varargs.h,v 1.8 1995/12/26 00:19:18 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,10 +46,11 @@
 #define	__va_ellipsis	...
 #endif
 
-#define	va_dcl		va_list va_alist; __va_ellipsis
+#define	va_alist	__builtin_va_alist
+#define	va_dcl		va_list __builtin_va_alist; __va_ellipsis
 
 #undef va_start
 #define	va_start(ap) \
-	((ap) = (va_list)&va_alist)
+	((ap) = (va_list)&__builtin_va_alist)
 
 #endif /* !_VAX_VARARGS_H_ */
