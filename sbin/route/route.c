@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.64 2003/05/17 23:02:28 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.65 2003/06/03 04:41:42 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.64 2003/05/17 23:02:28 itojun Exp $");
+__RCSID("$NetBSD: route.c,v 1.65 2003/06/03 04:41:42 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1035,9 +1035,7 @@ newroute(argc, argv)
 }
 
 static void
-inet_makenetandmask(net, isin)
-	u_int32_t net;
-	struct sockaddr_in *isin;
+inet_makenetandmask(u_int32_t net, struct sockaddr_in *isin)
 {
 	u_int32_t addr, mask = 0;
 	char *cp;
@@ -1297,6 +1295,16 @@ badataddr:
 	if (hpp == NULL)
 		hpp = &hp;
 	*hpp = NULL;
+
+	if ((t = strchr(s, '/')) != NULL && which == RTA_DST) {
+		*t = '\0';
+		if ((val = inet_addr(s)) != INADDR_NONE) {
+			inet_makenetandmask(htonl(val), &su->sin);
+			prefixlen(&t[1]);
+			return (0);
+		}
+		*t = '/';
+	}
 	if (((val = inet_addr(s)) != INADDR_NONE) &&
 	    (which != RTA_DST || forcenet == 0)) {
 		su->sin.sin_addr.s_addr = val;
