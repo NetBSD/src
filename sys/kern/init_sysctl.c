@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.10 2003/12/10 14:16:12 atatat Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.11 2003/12/12 23:21:44 simonb Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -1401,11 +1401,11 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 	buflen = where != NULL ? *oldlenp : 0;
 	error = needed = 0;
 
-	if (newp != NULL || namelen != 4)
+	if (newp != NULL || namelen != 3)
 		return (EINVAL);
-	pid = name[1];
-	elem_size = name[2];
-	elem_count = name[3];
+	pid = name[0];
+	elem_size = name[1];
+	elem_count = name[2];
 
 	p = pfind(pid);
 	if (p == NULL)
@@ -1724,7 +1724,7 @@ again:
 		if (needed > *oldlenp)
 			return (ENOMEM);
 	} else {
-		needed += KERN_PROCSLOP;
+		needed += KERN_LWPSLOP;
 		*oldlenp = needed;
 	}
 	return (0);
