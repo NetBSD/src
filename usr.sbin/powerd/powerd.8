@@ -1,4 +1,4 @@
-.\"	$NetBSD: powerd.8,v 1.7 2004/05/03 07:54:59 kochi Exp $
+.\"	$NetBSD: powerd.8,v 1.8 2004/05/03 14:23:12 wiz Exp $
 .\"
 .\" Copyright (c) 2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -72,7 +72,7 @@ will look for these scripts in two locations.
 The first location is
 .Pa /etc/powerd/scripts/\*[Lt]power_type\*[Gt] ,
 where
-.Pa \*[Lt]power_type\*[Gt]
+.Aq Pa power_type
 is defined by the power management mechanism supported by the system,
 e.g.,
 .Dq apm
@@ -114,9 +114,9 @@ This script is called when an online or offline event occurs on an AC adapter de
 The following events are defined for power switch devices:
 .Bl -tag -width "released"
 .It pressed
-The button was pressed, the lid closed or the AC adapter connected.
+The button was pressed, the lid closed, or the AC adapter connected.
 .It released
-The button was released, the lid opened or the AC adapter disconnected.
+The button was released, the lid opened, or the AC adapter disconnected.
 Note that power and sleep button devices usually do not
 post this type of event.
 .El
