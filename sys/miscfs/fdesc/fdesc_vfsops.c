@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: fdesc_vfsops.c,v 1.4 1993/06/07 05:25:20 cgd Exp $
+ *	$Id: fdesc_vfsops.c,v 1.5 1993/08/23 16:02:46 mycroft Exp $
  */
 
 /*
@@ -236,7 +236,7 @@ fdesc_statfs(mp, sbp, p)
 	 * limit is ever reduced below the current number
 	 * of open files... ]
 	 */
-	lim = p->p_rlimit[RLIMIT_OFILE].rlim_cur;
+	lim = p->p_rlimit[RLIMIT_NOFILE].rlim_cur;
 	fdp = p->p_fd;
 	last = min(fdp->fd_nfiles, lim);
 	freefd = 0;
