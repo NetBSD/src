@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2004/02/21 08:35:28 rtr Exp $
+#	$NetBSD: Makefile,v 1.9 2004/02/24 15:17:48 rtr Exp $
 
 .include "../Makefile.serverlib"
 
@@ -23,7 +23,8 @@ CPPFLAGS+=	-DXSERV_t -DTRANS_SERVER \
 		${X11FLAGS.CONNECTION} \
 		-DHASXDMAUTH \
 		${X11FLAGS.OS_DEFINES} \
-		-DUSE_RGB_TXT
+		-DUSE_RGB_TXT \
+		-UDDXTIME
 
 .include "../Makefile.common"
 
