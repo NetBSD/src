@@ -33,7 +33,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: Makefile,v 1.1 1993/06/08 03:53:46 cgd Exp $
+#	$Id: Makefile,v 1.2 1994/07/24 03:13:30 mycroft Exp $
 #
 
 SRCS=kernfsmod.c
@@ -45,12 +45,12 @@ KOBJS=kernfs_vfsops.o kernfs_vnops.o
 MODOBJ=combined.o
 
 KMOD=kernfsmod
-CFLAGS= -DKERNEL
+CFLAGS= -DKERNEL -I/sys -I
 
 all:	$(MODOBJ)
 
 clean:
-	rm -f $(OBJS) $(KOBJS) $(MODOBJ) $(KMOD)
+	rm -f vnode_if.[ch] $(OBJS) $(KOBJS) $(MODOBJ) $(KMOD)
 
 load:
 	modload -o $(KMOD) -e$(KMOD) $(MODOBJ)
@@ -58,11 +58,14 @@ load:
 unload:
 	modunload -n $(KMOD)
 
-kernfs_vfsops.o: /sys/miscfs/kernfs/kernfs_vfsops.c
-	$(CC) $(CFLAGS) -c -O $@ $<
+kernfs_vfsops.o: /sys/miscfs/kernfs/kernfs_vfsops.c vnode_if.h
+	$(CC) $(CFLAGS) -c -o $@ $<
 
-kernfs_vnops.o: /sys/miscfs/kernfs/kernfs_vnops.c
-	$(CC) $(CFLAGS) -c -O $@ $<
+kernfs_vnops.o: /sys/miscfs/kernfs/kernfs_vnops.c vnode_if.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+vnode_if.h: /sys/kern/vnode_if.sh /sys/kern/vnode_if.src
+	sh /sys/kern/vnode_if.sh /sys/kern/vnode_if.src
 
 $(MODOBJ): $(OBJS) $(KOBJS)
 	$(LD) -r -o $(MODOBJ) $(OBJS) $(KOBJS)

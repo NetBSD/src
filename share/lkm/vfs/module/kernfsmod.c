@@ -33,12 +33,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kernfsmod.c,v 1.1 1993/06/08 03:53:47 cgd Exp $
+ *	$Id: kernfsmod.c,v 1.2 1994/07/24 03:13:33 mycroft Exp $
  */
 #define printf I_HATE_ANSI
 #include <stdio.h>
 #undef printf
-#include <stdlib.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/systm.h>
@@ -46,7 +45,6 @@
 #include <sys/mount.h>
 #include <sys/exec.h>
 #include <sys/lkm.h>
-#include <a.out.h>
 #include <sys/file.h>
 #include <sys/errno.h>
 
@@ -68,7 +66,7 @@ extern struct vfsops kernfs_vfsops;
  * change the file system operation: for instance, in ISOFS, this
  * could be used to enable/disable Rockridge extensions.
  */
-MOD_VFS("kernfs",MOUNT_KERNFS,0,&kernfs_vfsops)
+MOD_VFS("kernfs",MOUNT_KERNFS,&kernfs_vfsops)
 
 /*
  * This function is called each time the module is loaded.   Technically,
