@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.30 2004/04/23 02:48:12 simonb Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.31 2004/04/29 23:13:35 enami Exp $	*/
 
 /*
  *
@@ -162,7 +162,7 @@ extern	struct uvm_history_head uvm_histories;
 #define UVMHIST_INIT(NAME,N) \
 do { \
 	(NAME).name = __STRING(NAME); \
-	(NAME).namelen = strlen((NAME).name); \
+	(NAME).namelen = strlen(__STRING(NAME)); \
 	(NAME).n = (N); \
 	(NAME).f = 0; \
 	simple_lock_init(&(NAME).l); \
@@ -176,7 +176,7 @@ do { \
 #define UVMHIST_INIT_STATIC(NAME,BUF) \
 do { \
 	(NAME).name = __STRING(NAME); \
-	(NAME).namelen = strlen((NAME).name); \
+	(NAME).namelen = strlen(__STRING(NAME)); \
 	(NAME).n = sizeof(BUF) / sizeof(struct uvm_history_ent); \
 	(NAME).f = 0; \
 	simple_lock_init(&(NAME).l); \
@@ -210,9 +210,9 @@ do { \
 		microtime(&(NAME).e[_i_].tv); \
 	(NAME).e[_i_].cpunum = cpu_number(); \
 	(NAME).e[_i_].fmt = (FMT); \
-	(NAME).e[_i_].fmtlen = strlen((NAME).e[_i_].fmt); \
+	(NAME).e[_i_].fmtlen = strlen(FMT); \
 	(NAME).e[_i_].fn = _uvmhist_name; \
-	(NAME).e[_i_].fnlen = strlen((NAME).e[_i_].fn); \
+	(NAME).e[_i_].fnlen = strlen(_uvmhist_name); \
 	(NAME).e[_i_].call = _uvmhist_call; \
 	(NAME).e[_i_].v[0] = (u_long)(A); \
 	(NAME).e[_i_].v[1] = (u_long)(B); \
@@ -235,7 +235,7 @@ do { \
 
 #define UVMHIST_FUNC(FNAME) \
 	static int _uvmhist_cnt = 0; \
-	static char *_uvmhist_name = FNAME; \
+	static char *const _uvmhist_name = FNAME; \
 	int _uvmhist_call;
 
 static __inline void uvmhist_print(struct uvm_history_ent *);
