@@ -394,6 +394,7 @@ BFD32_BACKENDS = \
 	m68knetbsd.lo \
 	m88kmach3.lo \
 	mipsbsd.lo \
+	netbsdaout.lo \
 	newsos3.lo \
 	nlm.lo \
 	nlm32-i386.lo \
@@ -552,6 +553,7 @@ BFD32_BACKENDS_CFILES = \
 	m68knetbsd.c \
 	m88kmach3.c \
 	mipsbsd.c \
+	netbsdaout.c \
 	newsos3.c \
 	nlm.c \
 	nlm32-i386.c \
