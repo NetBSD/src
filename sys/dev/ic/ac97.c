@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.51 2003/11/22 06:15:29 kent Exp $ */
+/*      $NetBSD: ac97.c,v 1.52 2003/11/24 16:05:10 kent Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.51 2003/11/22 06:15:29 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.52 2003/11/24 16:05:10 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -887,9 +887,9 @@ ac97_attach(struct ac97_host_if *host_if)
 		as->host_flags = host_if->flags(host_if->arg);
 
 	ac97_setup_defaults(as);
+	ac97_read(as, AC97_REG_RESET, &as->caps);
 	ac97_read(as, AC97_REG_VENDOR_ID1, &id1);
 	ac97_read(as, AC97_REG_VENDOR_ID2, &id2);
-	ac97_read(as, AC97_REG_RESET, &as->caps);
 
 	id = (id1 << 16) | id2;
 
