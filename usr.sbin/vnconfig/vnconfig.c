@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.22 2001/11/08 02:14:09 christos Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.23 2001/11/08 07:44:32 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -205,21 +205,29 @@ config(dev, file, geom, action)
 	 * Configure the device
 	 */
 	if (action == VND_CONFIG) {
-		rv = ioctl(fd, VNDIOCSET, &vndio);
-		if (rv)
-			warn("%s: VNDIOCSET", rdev);
-		else if (verbose) {
-			printf("%s: %d bytes on %s", rdev, vndio.vnd_size,
-			    file);
-			if (vndio.vnd_flags & VNDIOF_HASGEOM)
-				printf(" using geometry %d/%d/%d/%d",
-				    vndio.vnd_geom.vng_secsize,
-				    vndio.vnd_geom.vng_nsectors,
-				    vndio.vnd_geom.vng_ntracks,
-				    vndio.vnd_geom.vng_ncylinders);
-			printf("\n");
-		}
+		int	ffd;
 
+		ffd = open(file, O_RDWR);
+		if (ffd < 0)
+			warn("%s", file);
+		else {
+			(void) close(ffd);
+
+			rv = ioctl(fd, VNDIOCSET, &vndio);
+			if (rv)
+				warn("%s: VNDIOCSET", rdev);
+			else if (verbose) {
+				printf("%s: %d bytes on %s", rdev,
+				    vndio.vnd_size, file);
+				if (vndio.vnd_flags & VNDIOF_HASGEOM)
+					printf(" using geometry %d/%d/%d/%d",
+					    vndio.vnd_geom.vng_secsize,
+					    vndio.vnd_geom.vng_nsectors,
+					    vndio.vnd_geom.vng_ntracks,
+				    vndio.vnd_geom.vng_ncylinders);
+				printf("\n");
+			}
+		}
 	}
 
 	(void) close(fd);
