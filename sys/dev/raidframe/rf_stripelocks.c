@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.c,v 1.14 2002/09/14 17:53:59 oster Exp $	*/
+/*	$NetBSD: rf_stripelocks.c,v 1.15 2002/09/23 04:34:46 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.14 2002/09/14 17:53:59 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.15 2002/09/23 04:34:46 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -98,7 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.14 2002/09/14 17:53:59 oster Ex
 
 #define HASH_STRIPEID(_sid_)  ( (_sid_) & (rf_lockTableSize-1) )
 
-static void AddToWaitersQueue(RF_LockTableEntry_t * lockTable, RF_StripeLockDesc_t * lockDesc, RF_LockReqDesc_t * lockReqDesc);
+static void AddToWaitersQueue(RF_StripeLockDesc_t * lockDesc, RF_LockReqDesc_t * lockReqDesc);
 static RF_StripeLockDesc_t *AllocStripeLockDesc(RF_StripeNum_t stripeID);
 static void FreeStripeLockDesc(RF_StripeLockDesc_t * p);
 #if RF_DEBUG_STRIPELOCK
@@ -350,9 +350,8 @@ rf_AcquireStripeLock(
 					FLUSH;
 				}
 #endif
-				AddToWaitersQueue(lockTable, lockDesc, lockReqDesc);	/* conflict => the
-											 * current access must
-											 * wait */
+				AddToWaitersQueue(lockDesc, lockReqDesc);
+				/* conflict => the current access must wait */
 			}
 		}
 	}
@@ -544,9 +543,7 @@ rf_ReleaseStripeLock(
 				if (candidate_t) {
 					candidate_t->next = candidate->next;
 					if (lockDesc->waitersT == candidate)
-						lockDesc->waitersT = candidate_t;	/* cannot be waitersH
-											 * since candidate_t is
-											 * not NULL */
+						lockDesc->waitersT = candidate_t;	/* cannot be waitersH since candidate_t is not NULL */
 				} else {
 					RF_ASSERT(candidate == lockDesc->waitersH);
 					lockDesc->waitersH = lockDesc->waitersH->next;
@@ -612,7 +609,6 @@ rf_ReleaseStripeLock(
 /* must have the indicated lock table mutex upon entry */
 static void 
 AddToWaitersQueue(
-    RF_LockTableEntry_t * lockTable,
     RF_StripeLockDesc_t * lockDesc,
     RF_LockReqDesc_t * lockReqDesc)
 {
