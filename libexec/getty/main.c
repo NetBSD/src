@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.37 2001/02/04 22:09:01 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.38 2001/02/19 22:46:14 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.37 2001/02/04 22:09:01 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.38 2001/02/19 22:46:14 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,6 @@ __RCSID("$NetBSD: main.c,v 1.37 2001/02/04 22:09:01 christos Exp $");
 #include "extern.h"
 
 extern char **environ;
-extern char *__progname;
 extern char editedhost[];
 
 /*
@@ -195,6 +194,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
+	const char *progname;
 	char *tname;
 	int repcnt = 0, failopenlogged = 0, uugetty = 0, first_time = 1;
 	struct rlimit limit;
@@ -216,7 +216,8 @@ main(argc, argv)
 		strcpy(hostname, "Amnesiac");
 	uname(&kerninfo);
 
-	if (__progname[0] == 'u' && __progname[1] == 'u')
+	progname = getprogname();
+	if (progname[0] == 'u' && progname[1] == 'u')
 		uugetty = 1;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.22 2001/01/09 23:29:22 lukem Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.23 2001/02/19 22:46:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.22 2001/01/09 23:29:22 lukem Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.23 2001/02/19 22:46:14 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,6 @@ __RCSID("$NetBSD: tftpd.c,v 1.22 2001/01/09 23:29:22 lukem Exp $");
 
 #define	TIMEOUT		5
 
-extern	char *__progname;
 int	peer;
 int	rexmtval = TIMEOUT;
 int	maxtimeout = 5*TIMEOUT;
@@ -142,7 +141,7 @@ usage(void)
 
 	syslog(LOG_ERR,
     "Usage: %s [-ln] [-u user] [-g group] [-s directory] [directory ...]",
-		    __progname);
+		    getprogname());
 	exit(1);
 }
 

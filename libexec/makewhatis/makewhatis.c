@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.12 2000/07/13 06:45:22 tron Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.13 2001/02/19 22:46:14 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: makewhatis.c,v 1.12 2000/07/13 06:45:22 tron Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.13 2001/02/19 22:46:14 cgd Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -102,8 +102,6 @@ char *default_manpath[] = {
 char sectionext[] = "0123456789ln";
 char whatisdb[]   = "whatis.db";
 
-extern char *__progname;
-
 int
 main(int argc,char **argv)
 {
@@ -119,7 +117,7 @@ main(int argc,char **argv)
 	manpath = (argc < 2) ? default_manpath : &argv[1];
 
 	if ((fts = fts_open(manpath, FTS_LOGICAL, NULL)) == NULL) {
-		perror(__progname);
+		perror(getprogname());
 		return EXIT_FAILURE;
 	}
 
@@ -462,19 +460,19 @@ nroff(gzFile *in)
 	pid_t child;
 
 	if (gzrewind(in) < 0) {
-		perror(__progname);
+		perror(getprogname());
 		return NULL;
 	}
 
 	if ((devnull < 0) &&
 	    ((devnull = open(_PATH_DEVNULL, O_WRONLY, 0)) < 0)) {
-		perror(__progname);
+		perror(getprogname());
 		return NULL;
 	}
 
 	(void)strcpy(tempname, _PATH_TMP "makewhatis.XXXXXX");
 	if ((tempfd = mkstemp(tempname)) < 0) {
-		perror(__progname);
+		perror(getprogname());
 		return NULL;
 	}
 
@@ -487,7 +485,7 @@ nroff(gzFile *in)
 	if ((bytes < 0) ||
             (lseek(tempfd, 0, SEEK_SET) < 0) ||
             (pipe(pipefd) < 0)) {
-		perror(__progname);
+		perror(getprogname());
 		(void)close(tempfd);
 		(void)unlink(tempname);
 		return NULL;
@@ -495,7 +493,7 @@ nroff(gzFile *in)
 
 	switch (child = vfork()) {
 	case -1:
-		perror(__progname);
+		perror(getprogname());
 		(void)close(pipefd[1]);
 		(void)close(pipefd[0]);
 		(void)close(tempfd);
@@ -527,7 +525,7 @@ nroff(gzFile *in)
 	if ((in = gzdopen(pipefd[0], "r")) == NULL) {
 		if (errno == 0)
 			errno = ENOMEM;
-		perror(__progname);
+		perror(getprogname());
 		(void)close(pipefd[0]);
 		(void)kill(child, SIGTERM);
 		while (waitpid(child, NULL, 0) != child);
