@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.487 2004/06/22 22:19:36 itojun Exp $
+# $NetBSD: mi,v 1.488 2004/06/25 00:06:09 itojun Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -909,6 +909,7 @@
 ./usr/sbin/amd					base-amd-bin
 ./usr/sbin/amq					base-amd-bin
 ./usr/sbin/arp					base-netutil-bin
+./usr/sbin/authpf				base-netutil-bin
 ./usr/sbin/bootpd				base-bootserver-bin
 ./usr/sbin/bootpef				base-bootserver-bin
 ./usr/sbin/bootpgw				base-bootserver-bin
