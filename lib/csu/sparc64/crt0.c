@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.17 2001/02/21 00:47:22 eeh Exp $ */
+/* $NetBSD: crt0.c,v 1.18 2002/02/11 06:08:41 mrg Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -44,26 +44,28 @@
  * 	%g1 instead of a termination routine.
  */
 
-__asm__("
-	.data
-__data_start:					! Start of data section
-	.text
-	.align 4
-	.global start
-	.global _start
-	.global __start
-start:
-_start:
-__start:
-	setx	__data_start, %o0, %g4		! Point %g4 to start of data section
-	clr	%g4				! egcs thinks this is zero. XXX
-	clr	%fp
-	add	%sp, 8*16 + 0x7ff, %o0		! start of stack
-	mov	%g1, %o1			! Cleanup routine
-	mov	%g3, %o1			! XXXX our rtld uses %g3
-	mov	%g2, %o2			! XXXX obj from rtld.
-	ba,pt	%icc, ___start			! XXXX jump over the retl egcs 2.96 inserts
-	mov	%g1, %o3			! ps_strings XXXX
+__asm__("\n\
+	.data\n\
+__data_start:					! Start of data section\n\
+	.text\n\
+	.align 4\n\
+	.global start\n\
+	.global _start\n\
+	.global __start\n\
+	.register %g3,#scratch\n\
+	.register %g2,#scratch\n\
+start:\n\
+_start:\n\
+__start:\n\
+	setx	__data_start, %o0, %g4		! Point %g4 to start of data section\n\
+	clr	%g4				! egcs thinks this is zero. XXX\n\
+	clr	%fp\n\
+	add	%sp, 8*16 + 0x7ff, %o0		! start of stack\n\
+	mov	%g1, %o1			! Cleanup routine\n\
+	mov	%g3, %o1			! XXXX our rtld uses %g3\n\
+	mov	%g2, %o2			! XXXX obj from rtld.\n\
+	ba,pt	%icc, ___start			! XXXX jump over the retl egcs 2.96 inserts\n\
+	mov	%g1, %o3			! ps_strings XXXX\n\
 ");
 
 void ___start __P((char **, void (*cleanup) __P((void)), const Obj_Entry *,
@@ -114,7 +116,7 @@ ___start(sp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ _start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.17 2001/02/21 00:47:22 eeh Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.18 2002/02/11 06:08:41 mrg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /* XXX XXX XXX THIS SHOULD GO AWAY XXX XXX XXX
