@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 1999/01/21 11:58:00 pk Exp $
+#	$NetBSD: Makefile,v 1.31.2.1 1999/06/21 23:19:57 perry Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/17/94
 
 PROG=	disklabel
@@ -21,6 +21,12 @@ CPPFLAGS+= -DNUMBOOT=1
 .if (${MACHINE} == "sparc") || (${MACHINE} == "sparc64") \
 	|| (${MACHINE} == "sun3")
 CPPFLAGS+= -DSTRICT_CYLINDER_ALIGNMENT
+.endif
+
+.if (${MACHINE} == "alpha")
+# read in the old boot area even though we don't support writing the boot
+# area with disklabel(8).
+CPPFLAGS+= -DSAVEBOOTAREA
 .endif
 
 .include <bsd.prog.mk>
