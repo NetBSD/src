@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 1998/12/06 09:06:45 dbj Exp $
+#	$NetBSD: Makefile,v 1.30 1999/08/21 06:27:29 simonb Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/27/95
 
 .include <bsd.own.mk>
@@ -51,9 +51,9 @@ afterinstall: clobber
 .endif
 
 clobber: 
-	${INSTALL} -c -o games -g games -m 660 /dev/null \
+	${INSTALL} ${INSTPRIV} -c -o games -g games -m 660 /dev/null \
 	    ${DESTDIR}/var/games/hackdir/perm
-	${INSTALL} -c -o games -g games -m 660 /dev/null \
+	${INSTALL} ${INSTPRIV} -c -o games -g games -m 660 /dev/null \
 	    ${DESTDIR}/var/games/hackdir/record
 	rm -f ${DESTDIR}/var/games/hackdir/bones*
 

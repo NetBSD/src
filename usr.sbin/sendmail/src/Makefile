@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 1999/02/13 02:55:00 lukem Exp $
+#	$NetBSD: Makefile,v 1.38 1999/08/21 06:27:29 simonb Exp $
 #
 #  NetBSD Makefile
 #
@@ -49,7 +49,7 @@ FILESDIR=/usr/share/misc
 .endif
 
 afterinstall:
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
+	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
 	    ${DESTDIR}/var/log/sendmail.st
 
 .include <bsd.prog.mk>
