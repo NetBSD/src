@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.37 2003/08/07 16:44:24 agc Exp $	*/
+/*	$NetBSD: setterm.c,v 1.38 2003/10/21 00:30:05 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.37 2003/08/07 16:44:24 agc Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.38 2003/10/21 00:30:05 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -450,7 +450,7 @@ does_esc_m(char *cap)
 		return 0;
 	capptr = cap;
 	seq = WAITING;
-	while (*capptr != NULL) {
+	while (*capptr != 0) {
 		switch (seq) {
 		/* Start of sequence */
 		case WAITING:
@@ -509,7 +509,7 @@ does_ctrl_o(char *cap)
 #ifdef DEBUG
 	__CTRACE("does_ctrl_o: Looping on %s\n", capptr);
 #endif
-	while (*capptr != NULL) {
+	while (*capptr != 0) {
 		if (*capptr == '\x0f')
 			return 1;
 		capptr++;
