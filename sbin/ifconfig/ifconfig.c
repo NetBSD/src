@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.140 2004/02/27 21:36:17 itojun Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.141 2004/03/01 00:11:33 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.140 2004/02/27 21:36:17 itojun Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.141 2004/03/01 00:11:33 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -252,6 +252,7 @@ const struct cmd {
 	{ "-bssid",	-1,		0,		setifbssid },
 	{ "chan",	NEXTARG,	0,		setifchan },
 	{ "-chan",	-1,		0,		setifchan },
+	{ "ssid",	NEXTARG,	0,		setifnwid },
 	{ "nwid",	NEXTARG,	0,		setifnwid },
 	{ "nwkey",	NEXTARG,	0,		setifnwkey },
 	{ "-nwkey",	-1,		0,		setifnwkey },
@@ -1570,7 +1571,7 @@ ieee80211_status()
 		warnx("SIOCG80211NWID: wrong length of nwid (%d)", nwid.i_len);
 		return;
 	}
-	printf("\tnwid ");
+	printf("\tssid ");
 	print_string(nwid.i_nwid, nwid.i_len);
 	memset(&nwkey, 0, sizeof(nwkey));
 	(void)strncpy(nwkey.i_name, name, sizeof(nwkey.i_name));
