@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.146 2002/11/14 17:11:54 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.147 2002/11/15 03:00:12 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.146 2002/11/14 17:11:54 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.147 2002/11/15 03:00:12 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -548,10 +548,6 @@ raidopen(dev, flags, fmt, p)
 	part = DISKPART(dev);
 	pmask = (1 << part);
 
-	db1_printf(("Opening raid device number: %d partition: %d\n",
-		unit, part));
-
-
 	if ((rs->sc_flags & RAIDF_INITED) &&
 	    (rs->sc_dkdev.dk_openmask == 0))
 		raidgetdisklabel(dev);
@@ -559,13 +555,11 @@ raidopen(dev, flags, fmt, p)
 	/* make sure that this partition exists */
 
 	if (part != RAW_PART) {
-		db1_printf(("Not a raw partition..\n"));
 		if (((rs->sc_flags & RAIDF_INITED) == 0) ||
 		    ((part >= lp->d_npartitions) ||
 			(lp->d_partitions[part].p_fstype == FS_UNUSED))) {
 			error = ENXIO;
 			raidunlock(rs);
-			db1_printf(("Bailing out...\n"));
 			return (error);
 		}
 	}
@@ -643,9 +637,7 @@ raidclose(dev, flags, fmt, p)
 		   Device shutdown has taken care of setting the 
 		   clean bits if RAIDF_INITED is not set 
 		   mark things as clean... */
-#if 0
-		printf("Last one on raid%d.  Updating status.\n",unit);
-#endif
+
 		rf_update_component_labels(raidPtrs[unit],
 						 RF_FINAL_COMPONENT_UPDATE);
 		if (doing_shutdown) {
@@ -750,8 +742,6 @@ raidread(dev, uio, flags)
 		return (ENXIO);
 	part = DISKPART(dev);
 
-	db1_printf(("raidread: unit: %d partition: %d\n", unit, part));
-
 	return (physio(raidstrategy, NULL, dev, B_READ, minphys, uio));
 
 }
@@ -771,7 +761,7 @@ raidwrite(dev, uio, flags)
 
 	if ((rs->sc_flags & RAIDF_INITED) == 0)
 		return (ENXIO);
-	db1_printf(("raidwrite\n"));
+
 	return (physio(raidstrategy, NULL, dev, B_WRITE, minphys, uio));
 
 }
@@ -1182,8 +1172,7 @@ raidioctl(dev, cmd, data, flag, p)
 			sizeof(RF_SingleComponent_t));
 		row = component.row;
 		column = component.column;
-		printf("raid%d: Rebuild: %d %d\n", raidPtr->raidid, 
-		       row, column);
+
 		if ((row < 0) || (row >= raidPtr->numRow) ||
 		    (column < 0) || (column >= raidPtr->numCol)) {
 			return(EINVAL);
@@ -1274,9 +1263,6 @@ raidioctl(dev, cmd, data, flag, p)
 		if (rr->row < 0 || rr->row >= raidPtr->numRow
 		    || rr->col < 0 || rr->col >= raidPtr->numCol)
 			return (EINVAL);
-
-		printf("raid%d: Failing the disk: row: %d col: %d\n",
-		       unit, rr->row, rr->col);
 
 		/* make a copy of the recon request so that we don't rely on
 		 * the user's buffer */
@@ -1992,7 +1978,6 @@ raidgetdefaultlabel(raidPtr, rs, lp)
 	struct raid_softc *rs;
 	struct disklabel *lp;
 {
-	db1_printf(("Building a default label...\n"));
 	memset(lp, 0, sizeof(*lp));
 
 	/* fabricate a label... */
@@ -2119,9 +2104,6 @@ raidlookup(path, p, vpp)
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, p);
 	if ((error = vn_open(&nd, FREAD | FWRITE, 0)) != 0) {
-#if 0
-		printf("RAIDframe: vn_open returned %d\n", error);
-#endif
 		return (error);
 	}
 	vp = nd.ni_vp;
@@ -2249,14 +2231,7 @@ raidread_component_label(dev, b_vp, clabel)
 	if (!error) {
 		memcpy(clabel, bp->b_data,
 		       sizeof(RF_ComponentLabel_t));
-#if 0
-		rf_print_component_label( clabel );
-#endif
-        } else {
-#if 0
-		printf("Failed to read RAID component label!\n");
-#endif
-	}
+        } 
 
 	brelse(bp); 
 	return(error);
@@ -2483,7 +2458,6 @@ rf_update_component_labels(raidPtr, final)
 			}
 		}
 	}
-	/* 	printf("Component labels updated\n"); */
 }
 
 void
@@ -2505,11 +2479,7 @@ rf_close_component(raidPtr, vp, auto_configured)
 		} else {				
 			(void) vn_close(vp, FREAD | FWRITE, p->p_ucred, p);
 		}
-	} else {
-#if 0
-		printf("vnode was NULL\n");
-#endif
-	}
+	} 
 }
 
 
@@ -2526,10 +2496,6 @@ rf_UnconfigureVnodes(raidPtr)
 
 	for (r = 0; r < raidPtr->numRow; r++) {
 		for (c = 0; c < raidPtr->numCol; c++) {
-#if 0
-			printf("raid%d: Closing vnode for row: %d col: %d\n", 
-			       raidPtr->raidid, r, c);
-#endif
 			vp = raidPtr->raid_cinfo[r][c].ci_vp;
 			acd = raidPtr->Disks[r][c].auto_configured;
 			rf_close_component(raidPtr, vp, acd);
@@ -2538,10 +2504,6 @@ rf_UnconfigureVnodes(raidPtr)
 		}
 	}
 	for (r = 0; r < raidPtr->numSpare; r++) {
-#if 0
-		printf("raid%d: Closing vnode for spare: %d\n", 
-		       raidPtr->raidid, r);
-#endif
 		vp = raidPtr->raid_cinfo[0][raidPtr->numCol + r].ci_vp;
 		acd = raidPtr->Disks[0][raidPtr->numCol + r].auto_configured;
 		rf_close_component(raidPtr, vp, acd);
