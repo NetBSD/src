@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.163 2002/11/12 02:10:13 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.164 2003/02/26 06:31:14 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.163 2002/11/12 02:10:13 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.164 2003/02/26 06:31:14 matt Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -309,6 +309,11 @@ static	struct ip_srcrt {
 
 static void save_rte __P((u_char *, struct in_addr));
 
+#ifdef MBUFTRACE
+struct mowner ip_rx_mowner = { "internet", "rx" };
+struct mowner ip_tx_mowner = { "internet", "tx" };
+#endif
+
 /*
  * IP initialization: fill in IP protocol switch table.
  * All protocols not implemented in kernel go to raw IP protocol handler.
@@ -358,6 +363,11 @@ ip_init()
 	evcnt_attach_static(&ip_hwcsum_ok);
 	evcnt_attach_static(&ip_swcsum);
 #endif /* INET_CSUM_COUNTERS */
+
+#ifdef MBUFTRACE
+	MOWNER_ATTACH(&ip_tx_mowner);
+	MOWNER_ATTACH(&ip_rx_mowner);
+#endif /* MBUFTRACE */
 }
 
 struct	sockaddr_in ipaddr = { sizeof(ipaddr), AF_INET };
@@ -378,6 +388,7 @@ ipintr()
 		splx(s);
 		if (m == 0)
 			return;
+		MCLAIM(m, &ip_rx_mowner);
 		ip_input(m);
 	}
 }
@@ -397,6 +408,7 @@ ip_input(struct mbuf *m)
 	int hlen = 0, mff, len;
 	int downmatch;
 
+	MCLAIM(m, &ip_rx_mowner);
 #ifdef	DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("ipintr no HDR");
@@ -411,6 +423,7 @@ ip_input(struct mbuf *m)
 		m->m_flags &= ~M_AUTHIPDGM;
 	}
 #endif
+
 	/*
 	 * If no IP addresses have been set yet but the interfaces
 	 * are receiving, can't do anything with incoming packets yet.
@@ -1389,6 +1402,7 @@ ip_srcroute()
 	if (m == 0)
 		return ((struct mbuf *)0);
 
+	MCLAIM(m, &inetdomain.dom_mowner);
 #define OPTSIZ	(sizeof(ip_srcrt.nop) + sizeof(ip_srcrt.srcopt))
 
 	/* length is (nhops+1)*sizeof(addr) + sizeof(nop + srcrt header) */
@@ -1507,6 +1521,11 @@ ip_forward(m, srcrt)
 #ifdef IPSEC
 	struct ifnet dummyifp;
 #endif
+
+	/*
+	 * We are now in the output path.
+	 */
+	MCLAIM(m, &ip_tx_mowner);
 
 	/*
 	 * Clear any in-bound checksum flags for this packet.

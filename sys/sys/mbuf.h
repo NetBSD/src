@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.73 2003/02/01 06:23:50 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.74 2003/02/26 06:31:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -76,6 +76,10 @@
 #ifndef _SYS_MBUF_H_
 #define _SYS_MBUF_H_
 
+#ifdef _KERNEL_OPT
+#include "opt_mbuftrace.h"
+#endif
+
 #ifndef M_WAITOK
 #include <sys/malloc.h>
 #endif
@@ -103,6 +107,19 @@ struct m_tag {
 	u_int16_t		m_tag_len;	/* Length of data */
 };
 
+/* mbuf ownership structure */
+struct mowner {
+	char mo_name[16];		/* owner name (fxp0) */
+	char mo_descr[16];		/* owner description (input) */
+	LIST_ENTRY(mowner) mo_link;	/* */
+	u_long mo_claims;		/* # of small mbuf claimed */
+	u_long mo_releases;		/* # of small mbuf released */
+	u_long mo_cluster_claims;	/* # of M_CLUSTER mbuf claimed */
+	u_long mo_cluster_releases;	/* # of M_CLUSTER mbuf released */
+	u_long mo_ext_claims;		/* # of M_EXT mbuf claimed */
+	u_long mo_ext_releases;		/* # of M_EXT mbuf released */
+};
+
 /*
  * Macros for type conversion
  * mtod(m,t) -	convert mbuf pointer to data pointer of correct type
@@ -114,6 +131,7 @@ struct m_hdr {
 	struct	mbuf *mh_next;		/* next buffer in chain */
 	struct	mbuf *mh_nextpkt;	/* next chain in queue/record */
 	caddr_t	mh_data;		/* location of data */
+	struct	mowner *mh_owner;	/* mbuf owner */
 	int	mh_len;			/* amount of data in this mbuf */
 	short	mh_type;		/* type of data in this mbuf */
 	short	mh_flags;		/* flags; see below */
@@ -188,6 +206,7 @@ struct mbuf {
 #define	m_next		m_hdr.mh_next
 #define	m_len		m_hdr.mh_len
 #define	m_data		m_hdr.mh_data
+#define	m_owner		m_hdr.mh_owner
 #define	m_type		m_hdr.mh_type
 #define	m_flags		m_hdr.mh_flags
 #define	m_nextpkt	m_hdr.mh_nextpkt
@@ -247,6 +266,65 @@ do {									\
 	splx(ms);							\
 } while (/* CONSTCOND */ 0)
 
+#ifdef MBUFTRACE
+/*
+ * mbuf allocation tracing macros
+ *
+ */
+#define _MOWNERINIT(m, type)						\
+	((m)->m_owner = &unknown_mowners[(type)], (m)->m_owner->mo_claims++)
+
+#define	_MOWNERREF(m, flags)	do {					\
+	if ((flags) & M_EXT)						\
+		(m)->m_owner->mo_ext_claims++;				\
+	if ((flags) & M_CLUSTER)					\
+		(m)->m_owner->mo_cluster_claims++;			\
+} while (/* CONSTCOND */ 0)
+
+#define	MOWNERREF(m, flags)	MBUFLOCK( _MOWNERREF((m), (flags)); );
+
+#define	_MOWNERREVOKE(m, all, flags)	do {				\
+	if ((flags) & M_EXT)						\
+		(m)->m_owner->mo_ext_releases++;			\
+	if ((flags) & M_CLUSTER)					\
+		(m)->m_owner->mo_cluster_releases++;			\
+	if (all) {							\
+		(m)->m_owner->mo_releases++;				\
+		(m)->m_owner = &revoked_mowner;				\
+	}								\
+} while (/* CONSTCOND */ 0)
+
+#define	_MOWNERCLAIM(m, mowner)	do {					\
+	(m)->m_owner = (mowner);					\
+	(mowner)->mo_claims++;						\
+	if ((m)->m_flags & M_EXT)					\
+		(mowner)->mo_ext_claims++;				\
+	if ((m)->m_flags & M_CLUSTER)					\
+		(mowner)->mo_cluster_claims++;				\
+} while (/* CONSTCOND */ 0)
+
+#define	MCLAIM(m, mowner) 						\
+	MBUFLOCK(							\
+		if ((m)->m_owner != (mowner) && (mowner) != NULL) {	\
+			_MOWNERREVOKE((m), 1, (m)->m_flags);		\
+			_MOWNERCLAIM((m), (mowner));			\
+		}							\
+	)
+
+#define	MOWNER_ATTACH(mo)	LIST_INSERT_HEAD(&mowners, (mo), mo_link)
+#define	MOWNER_DETACH(mo)	LIST_REMOVE((mo), mo_link)
+#else
+#define _MOWNERINIT(m, type)		do { } while (/* CONSTCOND */ 0)
+#define	_MOWNERREF(m, flags)		do { } while (/* CONSTCOND */ 0)
+#define	MOWNERREF(m, flags)		do { } while (/* CONSTCOND */ 0)
+#define	_MOWNERREVOKE(m, all, flags)	do { } while (/* CONSTCOND */ 0)
+#define	_MOWNERCLAIM(m, mowner)		do { } while (/* CONSTCOND */ 0)
+#define	MCLAIM(m, mowner) 		do { } while (/* CONSTCOND */ 0)
+#define	MOWNER_ATTACH(mo)		do { } while (/* CONSTCOND */ 0)
+#define	MOWNER_DETACH(mo)		do { } while (/* CONSTCOND */ 0)
+#endif
+
+
 /*
  * mbuf allocation/deallocation macros:
  *
@@ -265,7 +343,8 @@ do {									\
 	MBUFLOCK((m) = pool_cache_get(&mbpool_cache,			\
 	    (how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0););		\
 	if (m) {							\
-		MBUFLOCK(mbstat.m_mtypes[type]++;);			\
+		MBUFLOCK(mbstat.m_mtypes[type]++;			\
+		    _MOWNERINIT((m), (type)); );			\
 		(m)->m_type = (type);					\
 		(m)->m_next = (struct mbuf *)NULL;			\
 		(m)->m_nextpkt = (struct mbuf *)NULL;			\
@@ -279,7 +358,8 @@ do {									\
 	MBUFLOCK((m) = pool_cache_get(&mbpool_cache,			\
 	    (how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0););		\
 	if (m) {							\
-		MBUFLOCK(mbstat.m_mtypes[type]++;);			\
+		MBUFLOCK(mbstat.m_mtypes[type]++;			\
+		    _MOWNERINIT((m), (type)); );			\
 		(m)->m_type = (type);					\
 		(m)->m_next = (struct mbuf *)NULL;			\
 		(m)->m_nextpkt = (struct mbuf *)NULL;			\
@@ -291,6 +371,7 @@ do {									\
 	}								\
 } while (/* CONSTCOND */ 0)
 
+#define	_M_
 /*
  * Macros for tracking external storage associated with an mbuf.
  *
@@ -330,6 +411,7 @@ do {									\
 	(n)->m_ext.ext_prevref = (o);					\
 	(o)->m_ext.ext_nextref = (n);					\
 	(n)->m_ext.ext_nextref->m_ext.ext_prevref = (n);		\
+	_MOWNERREF((n), (n)->m_flags);					\
 	MCLREFDEBUGN((n), __FILE__, __LINE__);				\
 } while (/* CONSTCOND */ 0)
 
@@ -361,6 +443,8 @@ do {									\
 		(m)->m_ext.ext_buf =					\
 		    pool_cache_get(&mclpool_cache, (how) == M_WAIT ?	\
 			(PR_WAITOK|PR_LIMITFAIL) : 0);			\
+		if ((m)->m_ext.ext_buf != NULL)				\
+			_MOWNERREF((m), M_EXT|M_CLUSTER);		\
 	);								\
 	if ((m)->m_ext.ext_buf != NULL) {				\
 		(m)->m_data = (m)->m_ext.ext_buf;			\
@@ -385,6 +469,7 @@ do {									\
 		(m)->m_ext.ext_arg = NULL;				\
 		(m)->m_ext.ext_type = mbtypes[(m)->m_type];		\
 		MCLINITREFERENCE(m);					\
+		MOWNERREF((m), M_EXT);					\
 	}								\
 } while (/* CONSTCOND */ 0)
 
@@ -398,11 +483,13 @@ do {									\
 	(m)->m_ext.ext_arg = (arg);					\
 	(m)->m_ext.ext_type = (type);					\
 	MCLINITREFERENCE(m);						\
+	MOWNERREF((m), M_EXT);						\
 } while (/* CONSTCOND */ 0)
 
 #define	MEXTREMOVE(m)							\
 do {									\
 	int _ms_ = splvm(); /* MBUFLOCK */				\
+	_MOWNERREVOKE((m), 0, (m)->m_flags);				\
 	if (MCLISREFERENCED(m)) {					\
 		_MCLDEREFERENCE(m);					\
 		splx(_ms_);						\
@@ -450,6 +537,7 @@ do {									\
 		if ((m)->m_flags & M_PKTHDR)				\
 			m_tag_delete_chain((m), NULL);			\
 		(n) = (m)->m_next;					\
+		_MOWNERREVOKE((m), 1, m->m_flags);			\
 		if ((m)->m_flags & M_EXT) {				\
 			if (MCLISREFERENCED(m)) {			\
 				_MCLDEREFERENCE(m);			\
@@ -472,8 +560,9 @@ do {									\
 				    (m)->m_ext.ext_type);		\
 				pool_cache_put(&mbpool_cache, (m));	\
 			}						\
-		} else							\
+		} else {						\
 			pool_cache_put(&mbpool_cache, (m));		\
+		}							\
 	)
 
 /*
@@ -601,7 +690,9 @@ struct mbstat {
 #define	MBUF_NMBCLUSTERS	3	/* int: limit on the # of clusters */
 #define	MBUF_MBLOWAT		4	/* int: mbuf low water mark */
 #define	MBUF_MCLLOWAT		5	/* int: mbuf cluster low water mark */
-#define	MBUF_MAXID		6	/* number of valid MBUF ids */
+#define	MBUF_STATS		6	/* struct: mbstat */
+#define	MBUF_MOWNERS		7	/* struct: m_owner[] */
+#define	MBUF_MAXID		8	/* number of valid MBUF ids */
 
 #define	CTL_MBUF_NAMES {						\
 	{ 0, 0 },							\
@@ -610,6 +701,8 @@ struct mbstat {
 	{ "nmbclusters", CTLTYPE_INT },					\
 	{ "mblowat", CTLTYPE_INT },					\
 	{ "mcllowat", CTLTYPE_INT },					\
+	{ 0 /* "stats" */, CTLTYPE_STRUCT },				\
+	{ 0 /* "mowners" */, CTLTYPE_STRUCT },				\
 }
 
 #ifdef	_KERNEL
@@ -630,8 +723,15 @@ extern struct pool mbpool;
 extern struct pool mclpool;
 extern struct pool_cache mbpool_cache;
 extern struct pool_cache mclpool_cache;
+#ifdef MBUFTRACE
+LIST_HEAD(mownerhead, mowner);
+extern struct mownerhead mowners;
+extern struct mowner unknown_mowners[];
+extern struct mowner revoked_mowner;
+#endif
 
 MALLOC_DECLARE(M_MBUF);
+MALLOC_DECLARE(M_SONAME);
 MALLOC_DECLARE(M_SOOPTS);
 
 struct	mbuf *m_copym(struct mbuf *, int, int, int);
@@ -650,6 +750,10 @@ struct	mbuf *m_copyup(struct mbuf *, int, int);
 struct	mbuf *m_split(struct mbuf *,int,int);
 void	m_adj(struct mbuf *, int);
 void	m_cat(struct mbuf *,struct mbuf *);
+#ifdef MBUFTRACE
+void	m_claim(struct mbuf *, struct mowner *);
+#endif
+void	m_clget(struct mbuf *, int);
 int	m_mballoc(int, int);
 void	m_copyback(struct mbuf *, int, int, caddr_t);
 void	m_copydata(struct mbuf *, int, int, caddr_t);
@@ -689,7 +793,7 @@ struct malloc_type *mbtypes[] = {		/* XXX */
 	M_FREE,		/* MT_FREE	0	should be on free list */
 	M_MBUF,		/* MT_DATA	1	dynamic (data) allocation */
 	M_MBUF,		/* MT_HEADER	2	packet header */
-	M_MBUF,		/* MT_SONAME	3	socket name */
+	M_SONAME,	/* MT_SONAME	3	socket name */
 	M_SOOPTS,	/* MT_SOOPTS	4	socket options */
 	M_FTABLE,	/* MT_FTABLE	5	fragment reassembly header */
 	M_MBUF,		/* MT_CONTROL	6	extra-data protocol message */

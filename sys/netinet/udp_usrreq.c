@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.97 2003/01/20 00:05:46 simonb Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.98 2003/02/26 06:31:17 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.97 2003/01/20 00:05:46 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.98 2003/02/26 06:31:17 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -163,6 +163,12 @@ static	void udp_notify __P((struct inpcb *, int));
 #endif
 int	udbhashsize = UDBHASHSIZE;
 
+#ifdef MBUFTRACE
+struct mowner udp_mowner = { "udp" };
+struct mowner udp_rx_mowner = { "udp", "rx" };
+struct mowner udp_tx_mowner = { "udp", "tx" };
+#endif
+
 #ifdef UDP_CSUM_COUNTERS
 #include <sys/device.h>
 
@@ -197,6 +203,10 @@ udp_init()
 	evcnt_attach_static(&udp_hwcsum_data);
 	evcnt_attach_static(&udp_swcsum);
 #endif /* UDP_CSUM_COUNTERS */
+
+	MOWNER_ATTACH(&udp_tx_mowner);
+	MOWNER_ATTACH(&udp_rx_mowner);
+	MOWNER_ATTACH(&udp_mowner);
 }
 
 #ifdef INET
@@ -223,6 +233,7 @@ udp_input(m, va_alist)
 	(void)va_arg(ap, int);		/* ignore value, advance ap */
 	va_end(ap);
 
+	MCLAIM(m, &udp_rx_mowner);
 	udpstat.udps_ipackets++;
 
 #ifndef PULLDOWN_TEST
@@ -868,6 +879,7 @@ udp_output(m, va_alist)
 	int error = 0;
 	va_list ap;
 
+	MCLAIM(m, &udp_tx_mowner);
 	va_start(ap, m);
 	inp = va_arg(ap, struct inpcb *);
 	va_end(ap);
@@ -988,6 +1000,11 @@ udp_usrreq(so, req, m, nam, control, p)
 			error = EISCONN;
 			break;
 		}
+#ifdef MBUFTRACE
+		so->so_mowner = &udp_mowner;
+		so->so_rcv.sb_mowner = &udp_rx_mowner;
+		so->so_snd.sb_mowner = &udp_tx_mowner;
+#endif
 		if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
 			error = soreserve(so, udp_sendspace, udp_recvspace);
 			if (error)
