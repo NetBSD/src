@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.26 2004/06/19 05:31:50 christos Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.27 2004/08/01 10:43:47 mrg Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1393,6 +1393,19 @@ clcd*)
 		mkdev ttyA$unit$j c %clcd_chr% $(($unit * 8 + $j + $dialin)) "" "" $u_uucp
 		mkdev dtyA$unit$j c %clcd_chr% $(($unit * 8 + $j + $dialout)) "" "" $u_uucp
 	done
+	;;
+
+spif*)
+	unit=${i#spif}
+	if [ 0$unit -gt 3 ]; then
+		warn "bad unit for $i: $unit"
+		break
+	fi
+	for j in 0 1 2 3 4 5 6 7; do
+		mkdev ttyS$unit$j c 102 $(($unit * 64 + $j)) "" "" $u_uucp
+	done
+	mkdev bppS${unit}0 c 103 $(($unit * 64 + 0))
+	mkdev bppS${unit}1 c 103 $(($unit * 64 + 1))
 	;;
 
 bpp*)
