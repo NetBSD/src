@@ -27,14 +27,14 @@
  *	i4b_isac.c - i4b siemens isdn chipset driver ISAC handler
  *	---------------------------------------------------------
  *
- *	$Id: isac.c,v 1.16 2002/04/29 13:42:42 martin Exp $ 
+ *	$Id: isac.c,v 1.17 2002/05/21 10:31:12 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.16 2002/04/29 13:42:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.17 2002/05/21 10:31:12 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "opt_i4b.h"
@@ -185,7 +185,7 @@ isic_isac_irq(struct isic_softc *sc, int ista)
 				hdr.type = TRC_CH_D;
 				hdr.dir = FROM_NT;
 				hdr.count = ++sc->sc_trace_dcount;
-				isdn_layer2_trace_ind(&sc->sc_l2, &hdr, sc->sc_ibuf->m_len, sc->sc_ibuf->m_data);
+				isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, &hdr, sc->sc_ibuf->m_len, sc->sc_ibuf->m_data);
 			}
 
 			c |= ISAC_CMDR_RMC;
@@ -193,7 +193,7 @@ isic_isac_irq(struct isic_softc *sc, int ista)
 			if(sc->sc_intr_valid == ISIC_INTR_VALID &&
 			   (((struct isdn_l3_driver*)sc->sc_l3token)->protocol != PROTOCOL_D64S))
 			{
-				isdn_layer2_data_ind(&sc->sc_l2, sc->sc_ibuf);
+				isdn_layer2_data_ind(&sc->sc_l2, sc->sc_l3token, sc->sc_ibuf);
 			}
 			else
 			{
@@ -401,7 +401,7 @@ isic_isac_ind_hdlr(register struct isic_softc *sc, int ind)
 			if(sc->sc_bustyp == BUS_TYPE_IOM2)
 				isic_isac_l1_cmd(sc, CMD_AR8);
 			event = EV_INFO48;
-			isdn_layer2_status_ind(&sc->sc_l2, STI_L1STAT, LAYER_ACTIVE);
+			isdn_layer2_status_ind(&sc->sc_l2, sc->sc_l3token, STI_L1STAT, LAYER_ACTIVE);
 			break;
 			
 		case ISAC_CIRR_IAI10:
@@ -409,7 +409,7 @@ isic_isac_ind_hdlr(register struct isic_softc *sc, int ind)
 			if(sc->sc_bustyp == BUS_TYPE_IOM2)
 				isic_isac_l1_cmd(sc, CMD_AR10);
 			event = EV_INFO410;
-			isdn_layer2_status_ind(&sc->sc_l2, STI_L1STAT, LAYER_ACTIVE);
+			isdn_layer2_status_ind(&sc->sc_l2, sc->sc_l3token, STI_L1STAT, LAYER_ACTIVE);
 			break;
 
 		case ISAC_CIRR_IRSY:
@@ -431,7 +431,7 @@ isic_isac_ind_hdlr(register struct isic_softc *sc, int ind)
 		case ISAC_CIRR_IDID:
 			NDBGL1(L1_I_CICO, "rx DID in state %s", isic_printstate(sc));
 			event = EV_INFO0;
-			isdn_layer2_status_ind(&sc->sc_l2, STI_L1STAT, LAYER_IDLE);
+			isdn_layer2_status_ind(&sc->sc_l2, sc->sc_l3token, STI_L1STAT, LAYER_IDLE);
 			break;
 
 		case ISAC_CIRR_IDIS:
