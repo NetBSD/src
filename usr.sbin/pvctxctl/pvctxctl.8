@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $NetBSD: pvctxctl.8,v 1.4 2002/01/19 11:44:59 wiz Exp $
+.\" $NetBSD: pvctxctl.8,v 1.5 2002/02/02 01:38:54 wiz Exp $
 .\"
 .Dd December 29, 1997
 .Dt PVCTXCTL 8
@@ -34,18 +34,18 @@
 .Nm pvctxctl
 .Ar interface
 .Oo
-.Op vpi:
+.Op vpi :
 .Ar vci
 .Oc
 .Nm pvctxctl
 .Ar interface
-.Op vpi:
+.Op vpi :
 .Ar vci
 .Op Fl p Ar pcr
 .Op Fl b Ar max-bandwidth
 .Oo
 .Fl j
-.Op vpi:
+.Op vpi :
 .Ar vci
 .Oc
 .Op Fl n
@@ -83,7 +83,7 @@ The
 parameter is a string of the form
 .Dq name unit ,
 for example,
-.Dq en0
+.Dq en0 .
 .It Op vpi: Ar vci
 The VC number to which the shaper is assigned.
 When the VPI number is omitted, VPI number 0 is
@@ -139,23 +139,24 @@ For example, if two VCs (say 201 and 202) share a
 This parameter is only for a sub interface.
 Use NULL encapsulation instead of LLC/SNAP.
 .El
-.Sh CAVEATS
+.Sh SEE ALSO
+.Xr en 4 ,
+.Xr ifconfig 8 ,
+.Xr pvcsif 8 ,
+.Xr route 8
+.Sh BUGS
 A real ATM interface and a sub interface require different
 sequences to set a shaper.
 For example, to assign a 45Mbps shaper to VC 201 (0xc9) of en0:
-.Pp
-.Dl # ifconfig en0 10.0.0.1
-.Dl # route add -iface 10.0.0.2 -link en0:3.0.0.c9
-.Dl # pvctxctl en0 0xc9 -b 45M
+.Bd -literal -offset indent
+# ifconfig en0 10.0.0.1
+# route add -iface 10.0.0.2 -link en0:3.0.0.c9
+# pvctxctl en0 0xc9 -b 45M
+.Ed
 .Pp
 For a shadow interface,
-.Pp
-.Dl # pvcsif en0      			# creates pvc0
-.Dl # ifconfig pvc0 10.0.0.1 10.0.0.2
-.Dl # pvctxctl pvc0 201 -b 45M
-
-.Sh SEE ALSO
-.Xr ifconfig 8 ,
-.Xr route 8 ,
-.Xr en 4 ,
-.Xr pvcsif 8
+.Bd -literal -offset indent
+# pvcsif en0      			# creates pvc0
+# ifconfig pvc0 10.0.0.1 10.0.0.2
+# pvctxctl pvc0 201 -b 45M
+.Ed
