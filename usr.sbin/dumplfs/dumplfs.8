@@ -1,4 +1,4 @@
-.\"	$NetBSD: dumplfs.8,v 1.5 1999/04/20 07:15:38 mrg Exp $
+.\"	$NetBSD: dumplfs.8,v 1.5.6.1 2000/06/22 18:00:56 minoura Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)dumplfs.8	8.1 (Berkeley) 6/18/93
 .\"
-.Dd June 18, 1993
+.Dd June 13, 2000
 .Dt DUMPLFS 8
 .Os
 .Sh NAME
@@ -41,6 +41,11 @@
 .Nd dump file system information
 .Sh SYNOPSIS
 .Nm dumplfs
+.Op Fl a
+.Op Fl b Ar blkno
+.Op Fl I Ar blkno
+.Op Fl i
+.Op Fl s Ar segno
 .Op Ar filesys No \&| Ar device
 .Sh DESCRIPTION
 .Nm Dumplfs
@@ -49,6 +54,26 @@ LFS file system or special device specified.
 The listing is very long and detailed.
 This command is useful mostly for finding out certain file system
 information such as the file system block size.
+.Pp
+The following flags are interpreted by
+.Nm dumplfs .
+.Bl -tag -width indent
+.It Fl a
+Dump the contents of all superblocks, not just the first.  Superblocks
+appear in the dumplfs output with the segment containing them.
+.It Fl b
+Use the block specified immediately after the flag as the super block for the
+filesystem.
+.It Fl I
+Use the block specified immediately after the flag as the inode block
+containing the index file inode.
+.It Fl i
+Dump information about the inode free list.
+.It Fl s
+Add the segment number immediately following the flag to a list of segments to
+dump.  This flag may be specified more than once to dump more than one segment.
+The default is to dump all segments.
+.El
 .Sh SEE ALSO
 .Xr fs 5 ,
 .Xr disktab 5 ,

@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: db.c,v 1.1.1.9 2000/04/22 07:11:59 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: db.c,v 1.1.1.9.2.1 2000/06/22 18:00:54 minoura Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -69,7 +69,7 @@ int write_lease (lease)
 	if (counting)
 		++count;
 	errno = 0;
-	fprintf (db_file, "lease %s {\n", piaddr (lease -> ip_addr));
+	fprintf (db_file, "lease %s {", piaddr (lease -> ip_addr));
 	if (errno) {
 		++errors;
 	}
@@ -77,32 +77,36 @@ int write_lease (lease)
 	/* Note: the following is not a Y2K bug - it's a Y1.9K bug.   Until
 	   somebody invents a time machine, I think we can safely disregard
 	   it. */
-	if (lease -> starts != MAX_TIME) {
-		t = gmtime (&lease -> starts);
-		sprintf (tbuf, "%d %d/%02d/%02d %02d:%02d:%02d;",
-			 t -> tm_wday, t -> tm_year + 1900,
-			 t -> tm_mon + 1, t -> tm_mday,
-			 t -> tm_hour, t -> tm_min, t -> tm_sec);
-	} else
-		strcpy (tbuf, "never;");
-	errno = 0;
-	fprintf (db_file, "  starts %s\n", tbuf);
-	if (errno) {
-		++errors;
+	if (lease -> starts) {
+		if (lease -> starts != MAX_TIME) {
+			t = gmtime (&lease -> starts);
+			sprintf (tbuf, "%d %d/%02d/%02d %02d:%02d:%02d;",
+				 t -> tm_wday, t -> tm_year + 1900,
+				 t -> tm_mon + 1, t -> tm_mday,
+				 t -> tm_hour, t -> tm_min, t -> tm_sec);
+		} else
+			strcpy (tbuf, "never;");
+		errno = 0;
+		fprintf (db_file, "\n  starts %s", tbuf);
+		if (errno) {
+			++errors;
+		}
 	}
 
-	if (lease -> ends != MAX_TIME) {
-		t = gmtime (&lease -> ends);
-		sprintf (tbuf, "%d %d/%02d/%02d %02d:%02d:%02d;",
-			 t -> tm_wday, t -> tm_year + 1900,
-			 t -> tm_mon + 1, t -> tm_mday,
-			 t -> tm_hour, t -> tm_min, t -> tm_sec);
-	} else
-		strcpy (tbuf, "never;");
-	errno = 0;
-	fprintf (db_file, "  ends %s", tbuf);
-	if (errno) {
-		++errors;
+	if (lease -> ends) {
+		if (lease -> ends != MAX_TIME) {
+			t = gmtime (&lease -> ends);
+			sprintf (tbuf, "%d %d/%02d/%02d %02d:%02d:%02d;",
+				 t -> tm_wday, t -> tm_year + 1900,
+				 t -> tm_mon + 1, t -> tm_mday,
+				 t -> tm_hour, t -> tm_min, t -> tm_sec);
+		} else
+			strcpy (tbuf, "never;");
+		errno = 0;
+		fprintf (db_file, "\n  ends %s", tbuf);
+		if (errno) {
+			++errors;
+		}
 	}
 
 	if (lease -> tstp) {
@@ -127,14 +131,31 @@ int write_lease (lease)
 			++errors;
 		}
 	}
-
-	if (lease -> flags & PEER_IS_OWNER) {
+	if (lease -> cltt) {
+		t = gmtime (&lease -> cltt);
 		errno = 0;
-		fprintf (db_file, "\n  peer is owner;");
+		fprintf (db_file, "\n  cltt %d %d/%02d/%02d %02d:%02d:%02d;",
+			 t -> tm_wday, t -> tm_year + 1900,
+			 t -> tm_mon + 1, t -> tm_mday,
+			 t -> tm_hour, t -> tm_min, t -> tm_sec);
 		if (errno) {
 			++errors;
 		}
 	}
+
+	fprintf (db_file, "\n  binding state %s;",
+		 ((lease -> binding_state > 0 &&
+		   lease -> binding_state <= FTS_BOOTP)
+		  ? binding_state_names [lease -> binding_state - 1]
+		  : "abandoned"));
+
+	if (lease -> binding_state != lease -> next_binding_state)
+		fprintf (db_file, "\n  next binding state %s;",
+			 ((lease -> next_binding_state > 0 &&
+			   lease -> next_binding_state <= FTS_BOOTP)
+			  ? (binding_state_names
+			     [lease -> next_binding_state - 1])
+		  : "abandoned"));
 
 	/* If this lease is billed to a class and is still valid,
 	   write it out. */
@@ -157,8 +178,8 @@ int write_lease (lease)
 		int i;
 		if (db_printable_len (lease -> uid,
 				      lease -> uid_len)) {
-			fprintf (db_file, "\n  uid \"%*s\";",
-				 lease -> uid_len, lease -> uid);
+			fprintf (db_file, "\n  uid \"%.*s\";",
+				 (int)lease -> uid_len, lease -> uid);
 		} else {
 			errno = 0;
 			fprintf (db_file, "\n  uid %2.2x", lease -> uid [0]);
@@ -173,20 +194,6 @@ int write_lease (lease)
 				}
 			}
 			putc (';', db_file);
-		}
-	}
-	if (lease -> flags & BOOTP_LEASE) {
-		errno = 0;
-		fprintf (db_file, "\n  dynamic-bootp;");
-		if (errno) {
-			++errors;
-		}
-	}
-	if (lease -> flags & ABANDONED_LEASE) {
-		errno = 0;
-		fprintf (db_file, "\n  abandoned;");
-		if (errno) {
-			++errors;
 		}
 	}
 	for (b = lease -> scope.bindings; b; b = b -> next) {
@@ -347,8 +354,8 @@ int write_host (host)
 			errno = 0;
 			if (db_printable_len (host -> client_identifier.data,
 					      host -> client_identifier.len)) {
-				fprintf (db_file, "\n  uid \"%*s\";",
-					 host -> client_identifier.len,
+				fprintf (db_file, "\n  uid \"%.*s\";",
+					 (int)host -> client_identifier.len,
 					 host -> client_identifier.data);
 			} else {
 				fprintf (db_file,
@@ -416,7 +423,7 @@ int write_host (host)
 		if (host -> group &&
 		    (!host -> named_group ||
 		     host -> group != host -> named_group -> group) &&
-		    host -> group != &root_group) {
+		    host -> group != root_group) {
 			errno = 0;
 			write_statements (db_file,
 					  host -> group -> statements, 8);
@@ -495,6 +502,51 @@ int write_group (group)
 			  group -> name);
 	return !errors;
 }
+
+#if defined (FAILOVER_PROTOCOL)
+int write_failover_state (dhcp_failover_state_t *state)
+{
+	struct tm *t;
+	int errors = 0;
+
+	errno = 0;
+	fprintf (db_file, "\nfailover peer \"%s\" state {", state -> name);
+	if (errno)
+		++errors;
+
+	t = gmtime (&state -> my_stos);
+	errno = 0;
+	fprintf (db_file, "\n  my state %s at %d %d/%02d/%02d %02d:%02d:%02d;",
+		 dhcp_failover_state_name_print (state -> my_state),
+		 t -> tm_wday, t -> tm_year + 1900,
+		 t -> tm_mon + 1, t -> tm_mday,
+		 t -> tm_hour, t -> tm_min, t -> tm_sec);
+	if (errno)
+		++errors;
+
+	t = gmtime (&state -> partner_stos);
+	errno = 0;
+	fprintf (db_file,
+		 "\n  partner state %s at %d %d/%02d/%02d %02d:%02d:%02d;",
+		 dhcp_failover_state_name_print (state -> my_state),
+		 t -> tm_wday, t -> tm_year + 1900,
+		 t -> tm_mon + 1, t -> tm_mday,
+		 t -> tm_hour, t -> tm_min, t -> tm_sec);
+	if (errno)
+		++errors;
+	fprintf (db_file, "\n}\n");
+	if (errno)
+		++errors;
+
+	if (errors) {
+		log_info ("write_failover_state: unable to write state %s",
+			  state -> name);
+		return 0;
+	}
+	return 1;
+
+}
+#endif
 
 int db_printable (s)
 	const char *s;
@@ -671,4 +723,13 @@ void new_lease_file ()
 		       newfname, path_dhcpd_db);
 
 	counting = 1;
+}
+
+int group_writer (struct group_object *group)
+{
+	if (!write_group (group))
+		return 0;
+	if (!commit_leases ())
+		return 0;
+	return 1;
 }

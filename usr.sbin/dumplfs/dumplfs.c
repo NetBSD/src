@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.13 1999/05/02 00:26:01 perseant Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.13.6.1 2000/06/22 18:00:56 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.13 1999/05/02 00:26:01 perseant Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.13.6.1 2000/06/22 18:00:56 minoura Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ __RCSID("$NetBSD: dumplfs.c,v 1.13 1999/05/02 00:26:01 perseant Exp $");
 static void	addseg __P((char *));
 static void	dump_cleaner_info __P((struct lfs *, void *));
 static void	dump_dinode __P((struct dinode *));
-static void	dump_ifile __P((int, struct lfs *, int));
+static void	dump_ifile __P((int, struct lfs *, int, int));
 static int	dump_ipage_ifile __P((int, IFILE *, int));
 static int	dump_ipage_segusage __P((struct lfs *, int, IFILE *, int));
 static void	dump_segment __P((int, int, daddr_t, struct lfs *, int));
@@ -121,18 +121,26 @@ main(argc, argv)
 	char *argv[];
 {
 	struct lfs lfs_sb1, lfs_sb2, *lfs_master;
-	daddr_t seg_addr;
+	daddr_t seg_addr, idaddr, sbdaddr;
 	int ch, do_allsb, do_ientries, fd, segnum;
 
 	do_allsb = 0;
 	do_ientries = 0;
-	while ((ch = getopt(argc, argv, "ais:")) != -1)
+	idaddr = 0x0;
+	sbdaddr = 0x0;
+	while ((ch = getopt(argc, argv, "ab:iI:s:")) != -1)
 		switch(ch) {
 		case 'a':		/* Dump all superblocks */
 			do_allsb = 1;
 			break;
+		case 'b':		/* Use this superblock */
+			sbdaddr = strtol(optarg, NULL, 0);
+			break;
 		case 'i':		/* Dump ifile entries */
 			do_ientries = 1;
+			break;
+		case 'I':		/* Use this ifile inode */
+			idaddr = strtol(optarg, NULL, 0);
 			break;
 		case 's':		/* Dump out these segments */
 			addseg(optarg);
@@ -150,26 +158,35 @@ main(argc, argv)
 	if ((fd = open(special, O_RDONLY, 0)) < 0)
 		err(1, "%s", special);
 
-	/* Read the first superblock */
-	get(fd, LFS_LABELPAD, &(lfs_sb1.lfs_dlfs), sizeof(struct dlfs));
-	daddr_shift = lfs_sb1.lfs_bshift - lfs_sb1.lfs_fsbtodb;
-
-	/*
-	 * Read the second superblock and figure out which check point is
-	 * most up to date.
-	 */
-	get(fd,
-	    lfs_sb1.lfs_sboffs[1] << daddr_shift, &(lfs_sb2.lfs_dlfs), sizeof(struct dlfs));
-
-	lfs_master = &lfs_sb1;
-	if (lfs_sb1.lfs_tstamp > lfs_sb2.lfs_tstamp) {
-		lfs_master = &lfs_sb2;
+	if (sbdaddr == 0x0) {
+		/* Read the first superblock */
+		get(fd, LFS_LABELPAD, &(lfs_sb1.lfs_dlfs), sizeof(struct dlfs));
+		daddr_shift = lfs_sb1.lfs_bshift - lfs_sb1.lfs_fsbtodb;
+	
+		/*
+	 	* Read the second superblock and figure out which check point is
+	 	* most up to date.
+	 	*/
+		get(fd,
+	    	lfs_sb1.lfs_sboffs[1] << daddr_shift, &(lfs_sb2.lfs_dlfs), sizeof(struct dlfs));
+	
+		lfs_master = &lfs_sb1;
+		if (lfs_sb1.lfs_tstamp > lfs_sb2.lfs_tstamp) {
+			lfs_master = &lfs_sb2;
+			sbdaddr = lfs_sb1.lfs_sboffs[1] << daddr_shift;
+		} else
+			sbdaddr = btodb(LFS_LABELPAD);
+	} else {
+		/* Read the first superblock */
+		get(fd, dbtob(sbdaddr), &(lfs_sb1.lfs_dlfs), sizeof(struct dlfs));
+		daddr_shift = lfs_sb1.lfs_bshift - lfs_sb1.lfs_fsbtodb;
+		lfs_master = &lfs_sb1;
 	}
 
-	(void)printf("Master Superblock at 0x%x:\n", (lfs_master==&lfs_sb1 ? (LFS_LABELPAD>>daddr_shift) : lfs_sb1.lfs_sboffs[1]));
+	(void)printf("Master Superblock at 0x%x:\n", sbdaddr);
 	dump_super(lfs_master);
 
-	dump_ifile(fd, lfs_master, do_ientries);
+	dump_ifile(fd, lfs_master, do_ientries, idaddr);
 
 	if (seglist != NULL)
 		for (; seglist != NULL; seglist = seglist->next) {
@@ -195,18 +212,20 @@ main(argc, argv)
  * printed out rather than making this code incredibly efficient.
  */
 static void
-dump_ifile(fd, lfsp, do_ientries)
+dump_ifile(fd, lfsp, do_ientries, addr)
 	int fd;
 	struct lfs *lfsp;
 	int do_ientries;
+	daddr_t addr;
 {
 	IFILE *ipage;
 	struct dinode *dip, *dpage;
-	daddr_t addr, *addrp, *dindir, *iaddrp, *indir;
+	daddr_t *addrp, *dindir, *iaddrp, *indir;
 	int block_limit, i, inum, j, nblocks, psize;
 
 	psize = lfsp->lfs_bsize;
-	addr = lfsp->lfs_idaddr;
+	if (!addr)
+		addr = lfsp->lfs_idaddr;
 
 	if (!(dpage = malloc(psize)))
 		err(1, "malloc");
@@ -217,7 +236,8 @@ dump_ifile(fd, lfsp, do_ientries)
 			break;
 
 	if (dip < dpage)
-		errx(1, "unable to locate ifile inode");
+		errx(1, "unable to locate ifile inode at disk address 0x%x",
+		     addr);
 
 	(void)printf("\nIFILE inode\n");
 	dump_dinode(dip);
@@ -385,12 +405,12 @@ dump_dinode(dip)
 	(void)printf("inum  %d\n", dip->di_inumber);
 	(void)printf("Direct Addresses\n");
 	for (i = 0; i < NDADDR; i++) {
-		(void)printf("\t0x%X", dip->di_db[i]);
+		(void)printf("\t0x%x", dip->di_db[i]);
 		if ((i % 6) == 5)
 			(void)printf("\n");
 	}
 	for (i = 0; i < NIADDR; i++)
-		(void)printf("\t0x%X", dip->di_ib[i]);
+		(void)printf("\t0x%x", dip->di_ib[i]);
 	(void)printf("\n");
 }
 
@@ -411,16 +431,22 @@ dump_sum(fd, lfsp, sp, segnum, addr)
 	if (sp->ss_magic != SS_MAGIC || 
 	    sp->ss_sumsum != (ck = cksum(&sp->ss_datasum, 
 	    LFS_SUMMARY_SIZE - sizeof(sp->ss_sumsum)))) {
-		(void)printf("dumplfs: %s %d address 0x%x\n",
-		    "corrupt summary block; segment", segnum, addr);
+		/* Don't print "corrupt" if we're just too close to the edge */
+		if (datosn(lfsp, addr + fsbtodb(lfsp, lfsp->lfs_bsize)) ==
+		    datosn(lfsp, addr))
+			(void)printf("dumplfs: %s %d address 0x%x\n",
+		                     "corrupt summary block; segment", segnum,
+				     addr);
 		return(0);
 	}
 
 	(void)printf("Segment Summary Info at 0x%x\n", addr);
-	(void)printf("    %s0x%X\t%s%d\t%s%d\n    %s0x%X\t%s0x%X",
+	(void)printf("    %s0x%x\t%s%d\t%s%d\t%s%c%c\n    %s0x%x\t%s0x%x",
 		"next     ", sp->ss_next,
 		"nfinfo   ", sp->ss_nfinfo,
 		"ninos    ", sp->ss_ninos,
+		"flags    ", (sp->ss_flags & SS_DIROP) ? 'D' : '-',
+			     (sp->ss_flags & SS_CONT)  ? 'C' : '-',
 		"sumsum   ", sp->ss_sumsum,
 		"datasum  ", sp->ss_datasum );
 	(void)printf("\tcreate   %s", ctime((time_t *)&sp->ss_create));
@@ -433,7 +459,7 @@ dump_sum(fd, lfsp, sp, segnum, addr)
 	numbytes = 0;
 	for (dp--, i = 0; i < sp->ss_ninos; dp--) {
 		numbytes += lfsp->lfs_bsize;	/* add bytes for inode block */
-		printf("\t0x%X {", *dp);
+		printf("\t0x%x {", *dp);
 		get(fd, *dp << (lfsp->lfs_bshift - lfsp->lfs_fsbtodb), inop, 
 		    (1 << lfsp->lfs_bshift));
 		for (j = 0; i < sp->ss_ninos && j < INOPB(lfsp); j++, i++) {
@@ -480,10 +506,13 @@ dump_segment(fd, segnum, addr, lfsp, dump_sb)
 	SEGSUM *sump;
 	char sumblock[LFS_SUMMARY_SIZE];
 	int did_one, nbytes, sb;
-	off_t sum_offset, super_off = 0;
+	off_t sum_offset;
+	daddr_t new_addr;
 
-	(void)printf("\nSEGMENT %d (Disk Address 0x%X)\n",
-	    addr >> (lfsp->lfs_segshift - daddr_shift), addr);
+	(void)printf("\nSEGMENT %d (Disk Address 0x%x)\n",
+	    /* addr >> (lfsp->lfs_segshift - daddr_shift), */
+		datosn(lfsp, addr),
+		addr);
 	sum_offset = (addr << (lfsp->lfs_bshift - lfsp->lfs_fsbtodb));
 
 	sb = 0;
@@ -495,12 +524,19 @@ dump_segment(fd, segnum, addr, lfsp, dump_sb)
 			LFS_SUMMARY_SIZE - sizeof(sump->ss_sumsum))) {
 			sbp = (struct lfs *)sump;
 			if ((sb = (sbp->lfs_magic == LFS_MAGIC))) {
-				super_off = sum_offset;
+				if (dump_sb)  {
+					get(fd, sum_offset, &(lfs_sb.lfs_dlfs),
+					    sizeof(struct dlfs));
+					(void)printf("\nSuperblock at 0x%x:\n",
+						   (unsigned)btodb(sum_offset));
+					dump_super(&lfs_sb);
+					(void)printf("%s","\n");
+				}
 				sum_offset += LFS_SBPAD;
 			} else if (did_one)
 				break;
 			else {
-				printf("Segment at 0x%X corrupt\n", addr);
+				printf("Segment at 0x%x corrupt\n", addr);
 				break;
 			}
 		} else {
@@ -512,12 +548,12 @@ dump_segment(fd, segnum, addr, lfsp, dump_sb)
 				sum_offset = 0;
 			did_one = 1;
 		}
+		/* If the segment ends right on a boundary, it still ends */
+		new_addr = sum_offset >> (lfsp->lfs_bshift - lfsp->lfs_fsbtodb);
+		if (datosn(lfsp, new_addr) != datosn(lfsp, addr))
+			break;
 	} while (sum_offset);
 
-	if (dump_sb && sb)  {
-		get(fd, super_off, &(lfs_sb.lfs_dlfs), sizeof(struct dlfs));
-		dump_super(&lfs_sb);
-	}
 	return;
 }
 
@@ -527,7 +563,7 @@ dump_super(lfsp)
 {
 	int i;
 
-	(void)printf("%s0x%X\t%s0x%X\t%s%d\t%s%d\n",
+	(void)printf("%s0x%x\t%s0x%x\t%s%d\t%s%d\n",
 		"magic    ", lfsp->lfs_magic,
 		"version  ", lfsp->lfs_version,
 		"size     ", lfsp->lfs_size,
@@ -550,7 +586,7 @@ dump_super(lfsp)
 		"cleansz  ", lfsp->lfs_cleansz,
 		"segtabsz ", lfsp->lfs_segtabsz);
 
-	(void)printf("%s0x%X\t%s%d\t%s0x%qX\t%s%d\n",
+	(void)printf("%s0x%x\t%s%d\t%s0x%qX\t%s%d\n",
 		"segmask  ", lfsp->lfs_segmask,
 		"segshift ", lfsp->lfs_segshift,
 		"bmask    ", (long long)lfsp->lfs_bmask,
@@ -562,7 +598,7 @@ dump_super(lfsp)
 		"fbmask   ", (long long)lfsp->lfs_fbmask,
 		"fbshift  ", lfsp->lfs_fbshift);
 
-	(void)printf("%s%d\t%s%d\t%s0x%X\t%s0x%qx\n",
+	(void)printf("%s%d\t%s%d\t%s0x%x\t%s0x%qx\n",
 		"sushift  ", lfsp->lfs_sushift,
 		"fsbtodb  ", lfsp->lfs_fsbtodb,
 		"cksum    ", lfsp->lfs_cksum,
@@ -570,14 +606,14 @@ dump_super(lfsp)
 
 	(void)printf("Superblock disk addresses:\t");
 	for (i = 0; i < LFS_MAXNUMSB; i++) {
-		(void)printf(" 0x%X", lfsp->lfs_sboffs[i]);
+		(void)printf(" 0x%x", lfsp->lfs_sboffs[i]);
 		if ( i == (LFS_MAXNUMSB >> 1))
 			(void)printf("\n\t\t\t\t");
 	}
 	(void)printf("\n");
 
 	(void)printf("Checkpoint Info\n");
-	(void)printf("%s%d\t%s0x%X\t%s%d\n",
+	(void)printf("%s%d\t%s0x%x\t%s%d\n",
 		"free     ", lfsp->lfs_free,
 		"idaddr   ", lfsp->lfs_idaddr,
 		"ifile    ", lfsp->lfs_ifile);
@@ -585,7 +621,7 @@ dump_super(lfsp)
 		"bfree    ", lfsp->lfs_bfree,
 		"avail    ", lfsp->lfs_avail,
 		"uinodes  ", lfsp->lfs_uinodes);
-	(void)printf("%s%d\t%s0x%X\t%s0x%X\n%s0x%X\t%s0x%X\t",
+	(void)printf("%s%d\t%s0x%x\t%s0x%x\n%s0x%x\t%s0x%x\t",
 		"nfiles   ", lfsp->lfs_nfiles,
 		"lastseg  ", lfsp->lfs_lastseg,
 		"nextseg  ", lfsp->lfs_nextseg,
@@ -594,13 +630,13 @@ dump_super(lfsp)
 	(void)printf("tstamp   %s", ctime((time_t *)&lfsp->lfs_tstamp));
 #if 0  /* This is no longer stored on disk! --ks */
 	(void)printf("\nIn-Memory Information\n");
-	(void)printf("%s%d\t%s0x%X\t%s%d%s%d\t%s%d\n",
+	(void)printf("%s%d\t%s0x%x\t%s%d%s%d\t%s%d\n",
 		"seglock  ", lfsp->lfs_seglock,
 		"iocount  ", lfsp->lfs_iocount,
 		"writer   ", lfsp->lfs_writer,
 		"dirops   ", lfsp->lfs_dirops,
 		"doifile  ", lfsp->lfs_doifile);
-	(void)printf("%s%d\t%s%d\t%s0x%X\t%s%d\n",
+	(void)printf("%s%d\t%s%d\t%s0x%x\t%s%d\n",
 		"nactive  ", lfsp->lfs_nactive,
 		"fmod     ", lfsp->lfs_fmod,
 		"clean    ", lfsp->lfs_clean,

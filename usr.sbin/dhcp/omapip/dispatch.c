@@ -46,6 +46,11 @@
 static omapi_io_object_t omapi_io_states;
 u_int32_t cur_time;
 
+OMAPI_OBJECT_ALLOC (omapi_io,
+		    omapi_io_object_t, omapi_type_io_object)
+OMAPI_OBJECT_ALLOC (omapi_waiter,
+		    omapi_waiter_object_t, omapi_type_waiter)
+
 /* Register an I/O handle so that we can do asynchronous I/O on it. */
 
 isc_result_t omapi_register_io_object (omapi_object_t *h,
@@ -71,24 +76,21 @@ isc_result_t omapi_register_io_object (omapi_object_t *h,
 		omapi_io_states.type = omapi_type_io_object;
 	}
 		
-	obj = dmalloc (sizeof *obj, MDL);
-	if (!obj)
-		return ISC_R_NOMEMORY;
-	memset (obj, 0, sizeof *obj);
-	obj -> refcnt = 1;
-	rc_register_mdl (&obj, obj, obj -> refcnt);
-	obj -> type = omapi_type_io_object;
+	obj = (omapi_io_object_t *)0;
+	status = omapi_io_allocate (&obj, MDL);
+	if (status != ISC_R_SUCCESS)
+		return status;
 
 	status = omapi_object_reference (&obj -> inner, h, MDL);
 	if (status != ISC_R_SUCCESS) {
-		omapi_object_dereference ((omapi_object_t **)&obj, MDL);
+		omapi_io_dereference (&obj, MDL);
 		return status;
 	}
 
 	status = omapi_object_reference (&h -> outer,
 					 (omapi_object_t *)obj, MDL);
 	if (status != ISC_R_SUCCESS) {
-		omapi_object_dereference ((omapi_object_t **)&obj, MDL);
+		omapi_io_dereference (&obj, MDL);
 		return status;
 	}
 
@@ -97,15 +99,49 @@ isc_result_t omapi_register_io_object (omapi_object_t *h,
 	     p && p -> next; p = p -> next)
 		;
 	if (p)
-		p -> next = obj;
+		omapi_io_reference (&p -> next, obj, MDL);
 	else
-		omapi_io_states.next = obj;
+		omapi_io_reference (&omapi_io_states.next, obj, MDL);
 
 	obj -> readfd = readfd;
 	obj -> writefd = writefd;
 	obj -> reader = reader;
 	obj -> writer = writer;
 	obj -> reaper = reaper;
+	return ISC_R_SUCCESS;
+}
+
+isc_result_t omapi_unregister_io_object (omapi_object_t *h)
+{
+	omapi_io_object_t *p, *obj, *last, *ph;
+
+	if (!h -> outer || h -> outer -> type != omapi_type_io_object)
+		return ISC_R_INVALIDARG;
+	obj = (omapi_io_object_t *)h -> outer;
+	ph = (omapi_io_object_t *)0;
+	omapi_io_reference (&ph, obj, MDL);
+
+	/* remove from the list of I/O states */
+	for (p = omapi_io_states.next; p; p = p -> next) {
+		if (p == obj) {
+			omapi_io_dereference (&last -> next, MDL);
+			omapi_io_reference (&last -> next, p -> next, MDL);
+			break;
+		}
+		last = p;
+	}
+	if (obj -> next)
+		omapi_io_dereference (&obj -> next, MDL);
+
+	if (obj -> outer) {
+		if (obj -> outer -> inner == (omapi_object_t *)obj)
+			omapi_object_dereference (&obj -> outer -> inner,
+						  MDL);
+		omapi_object_dereference (&obj -> outer, MDL);
+	}
+	omapi_object_dereference (&obj -> inner, MDL);
+	omapi_object_dereference (&h -> outer, MDL);
+	omapi_io_dereference (&ph, MDL);
 	return ISC_R_SUCCESS;
 }
 
@@ -123,13 +159,10 @@ isc_result_t omapi_wait_for_completion (omapi_object_t *object,
 	omapi_object_t *inner;
 
 	if (object) {
-		waiter = dmalloc (sizeof *waiter, MDL);
-		if (!waiter)
-			return ISC_R_NOMEMORY;
-		memset (waiter, 0, sizeof *waiter);
-		waiter -> refcnt = 1;
-		rc_register_mdl (&waiter, waiter, waiter -> refcnt);
-		waiter -> type = omapi_type_waiter;
+		waiter = (omapi_waiter_object_t *)0;
+		status = omapi_waiter_allocate (&waiter, MDL);
+		if (status != ISC_R_SUCCESS)
+			return status;
 
 		/* Paste the waiter object onto the inner object we're
 		   waiting on. */
@@ -138,8 +171,7 @@ isc_result_t omapi_wait_for_completion (omapi_object_t *object,
 
 		status = omapi_object_reference (&waiter -> outer, inner, MDL);
 		if (status != ISC_R_SUCCESS) {
-			omapi_object_dereference ((omapi_object_t **)&waiter,
-						  MDL);
+			omapi_waiter_dereference (&waiter, MDL);
 			return status;
 		}
 		
@@ -147,8 +179,7 @@ isc_result_t omapi_wait_for_completion (omapi_object_t *object,
 						 (omapi_object_t *)waiter,
 						 MDL);
 		if (status != ISC_R_SUCCESS) {
-			omapi_object_dereference ((omapi_object_t **)&waiter,
-						  MDL);
+			omapi_waiter_dereference (&waiter, MDL);
 			return status;
 		}
 	} else
@@ -174,7 +205,7 @@ isc_result_t omapi_wait_for_completion (omapi_object_t *object,
 	if (waiter -> inner)
 		omapi_object_dereference (&waiter -> inner, MDL);
 	
-	omapi_object_dereference ((omapi_object_t **)&waiter, MDL);
+	omapi_waiter_dereference (&waiter, MDL);
 	return ISC_R_SUCCESS;
 }
 
@@ -189,6 +220,7 @@ isc_result_t omapi_one_dispatch (omapi_object_t *wo,
 	omapi_io_object_t *io, *prev;
 	isc_result_t status;
 	omapi_waiter_object_t *waiter;
+	omapi_object_t *tmp = (omapi_object_t *)0;
 
 	if (!wo || wo -> type != omapi_type_waiter)
 		waiter = (omapi_waiter_object_t *)0;
@@ -232,7 +264,7 @@ isc_result_t omapi_one_dispatch (omapi_object_t *wo,
 		/* Check for a read socket.   If we shouldn't be
 		   trying to read for this I/O object, either there
 		   won't be a readfd function, or it'll return -1. */
-		if (io -> readfd &&
+		if (io -> readfd && io -> inner &&
 		    (desc = (*(io -> readfd)) (io -> inner)) >= 0) {
 			FD_SET (desc, &r);
 			if (desc > max)
@@ -240,7 +272,7 @@ isc_result_t omapi_one_dispatch (omapi_object_t *wo,
 		}
 		
 		/* Same deal for write fdets. */
-		if (io -> writefd &&
+		if (io -> writefd && io -> inner &&
 		    (desc = (*(io -> writefd)) (io -> inner)) >= 0) {
 			FD_SET (desc, &w);
 			if (desc > max)
@@ -260,23 +292,27 @@ isc_result_t omapi_one_dispatch (omapi_object_t *wo,
 		return ISC_R_UNEXPECTED;
 
 	for (io = omapi_io_states.next; io; io = io -> next) {
+		if (!io -> inner)
+			continue;
+		omapi_object_reference (&tmp, io -> inner, MDL);
 		/* Check for a read descriptor, and if there is one,
 		   see if we got input on that socket. */
 		if (io -> readfd &&
-		    (desc = (*(io -> readfd)) (io -> inner)) >= 0) {
+		    (desc = (*(io -> readfd)) (tmp)) >= 0) {
 			if (FD_ISSET (desc, &r))
-				status = ((*(io -> reader)) (io -> inner));
+				status = ((*(io -> reader)) (tmp));
 				/* XXX what to do with status? */
 		}
 		
 		/* Same deal for write descriptors. */
 		if (io -> writefd &&
-		    (desc = (*(io -> writefd)) (io -> inner)) >= 0)
+		    (desc = (*(io -> writefd)) (tmp)) >= 0)
 		{
 			if (FD_ISSET (desc, &w))
-				status = ((*(io -> writer)) (io -> inner));
+				status = ((*(io -> writer)) (tmp));
 				/* XXX what to do with status? */
 		}
+		omapi_object_dereference (&tmp, MDL);
 	}
 
 	/* Now check for I/O handles that are no longer valid,
@@ -284,38 +320,30 @@ isc_result_t omapi_one_dispatch (omapi_object_t *wo,
 	prev = (omapi_io_object_t *)0;
 	for (io = omapi_io_states.next; io; io = io -> next) {
 		if (io -> reaper) {
-			status = (*(io -> reaper)) (io -> inner);
-			if (status != ISC_R_SUCCESS) {
+			if (io -> inner)
+				status = (*(io -> reaper)) (io -> inner);
+			if (!io -> inner || status != ISC_R_SUCCESS) {
 				omapi_io_object_t *tmp =
 					(omapi_io_object_t *)0;
 				/* Save a reference to the next
 				   pointer, if there is one. */
 				if (io -> next)
-					omapi_object_reference
-						((omapi_object_t **)&tmp,
-						 (omapi_object_t *)io -> next,
-						 MDL);
+					omapi_io_reference (&tmp,
+							    io -> next, MDL);
 				if (prev) {
-					omapi_object_dereference
-						(((omapi_object_t **)
-						  &prev -> next), MDL);
+					omapi_io_dereference (&prev -> next,
+							      MDL);
 					if (tmp)
-						omapi_object_reference
-						    (((omapi_object_t **)
-						      &prev -> next),
-						     (omapi_object_t *)tmp,
-						     MDL);
+						omapi_io_reference
+							(&prev -> next,
+							 tmp, MDL);
 				} else {
-					omapi_object_dereference
-						(((omapi_object_t **)
-						  &omapi_io_states.next),
-						 MDL);
+					omapi_io_dereference
+						(&omapi_io_states.next, MDL);
 					if (tmp)
-						omapi_object_reference
-						    (((omapi_object_t **)
-						      &omapi_io_states.next),
-						     (omapi_object_t *)tmp,
-						     MDL);
+						omapi_io_reference
+						    (&omapi_io_states.next,
+						     tmp, MDL);
 					else
 						omapi_signal_in
 							((omapi_object_t *)
@@ -323,8 +351,7 @@ isc_result_t omapi_one_dispatch (omapi_object_t *wo,
 							 "ready");
 				}
 				if (tmp)
-					omapi_object_dereference
-						((omapi_object_t **)&tmp, MDL);
+					omapi_io_dereference (&tmp, MDL);
 			}
 		}
 		prev = io;
@@ -370,22 +397,17 @@ isc_result_t omapi_io_destroy (omapi_object_t *h, const char *file, int line)
 	
 	obj = (omapi_io_object_t *)h;
 
-	/* only ios for interface objects? */
-	if (strcmp (obj -> inner -> type ->name, "interface") == 0) {
-		/* remove from the list of I/O states */
-		for (p = omapi_io_states.next; p; p = p -> next) {
-			if (p == obj) {
-				last -> next = p -> next;
-				break;
-			}
-			last = p;
+	/* remove from the list of I/O states */
+	for (p = omapi_io_states.next; p; p = p -> next) {
+		if (p == obj) {
+			omapi_io_dereference (&last -> next, MDL);
+			omapi_io_reference (&last -> next, p -> next, MDL);
+			omapi_io_dereference (&p, MDL);
+			break;
 		}
-		
-		/*
-		 * omapi_object_dereference ((omapi_object_t **)&obj, MDL);
-		 */
+		last = p;
 	}
-	
+		
 	return ISC_R_SUCCESS;
 }
 

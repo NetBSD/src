@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.61 2000/05/13 06:42:13 itojun Exp $	*/
+/*	$NetBSD: inetd.c,v 1.61.2.1 2000/06/22 18:00:57 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.61 2000/05/13 06:42:13 itojun Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.61.2.1 2000/06/22 18:00:57 minoura Exp $");
 #endif
 #endif /* not lint */
 
@@ -215,7 +215,8 @@ __RCSID("$NetBSD: inetd.c,v 1.61 2000/05/13 06:42:13 itojun Exp $");
 #include <arpa/inet.h>
 #ifdef RPC
 #include <rpc/rpc.h>
-#include <rpc/pmap_clnt.h>
+#include <rpc/rpcb_clnt.h>
+#include <netconfig.h>
 #endif
 
 #include <ctype.h>
@@ -432,18 +433,6 @@ char	*CONFIG = _PATH_INETDCONF;
 char	**Argv;
 char 	*LastArg;
 extern char	*__progname;
-
-#ifdef sun
-/*
- * Sun's RPC library caches the result of `dtablesize()'
- * This is incompatible with our "bumping" of file descriptors "on demand"
- */
-int
-_rpc_dtablesize()
-{
-	return rlim_ofile_cur;
-}
-#endif
 
 int
 main(argc, argv, envp)
@@ -1152,12 +1141,12 @@ register_rpc(sep)
 {
 #ifdef RPC
 	int n;
+	struct netbuf nbuf;
 	struct sockaddr_storage ss;
-	struct sockaddr_in *sin = (struct sockaddr_in *)&ss;
-	struct protoent *pp;
+	struct netconfig *nconf;
 
-	if ((pp = getprotobyname(sep->se_proto+4)) == NULL) {
-		syslog(LOG_ERR, "%s: getproto: %m",
+	if ((nconf = getnetconfigent(sep->se_proto+4)) == NULL) {
+		syslog(LOG_ERR, "%s: getnetconfigent failed",
 		    sep->se_proto);
 		return;
 	}
@@ -1167,22 +1156,20 @@ register_rpc(sep)
 		    sep->se_service, sep->se_proto);
 		return;
 	}
-	if (ss.ss_family != AF_INET) {	/*XXX*/
-		syslog(LOG_ERR, "%s/%s: rpc not supported",
-		    sep->se_service, sep->se_proto);
-		return;
-	}
 
+	nbuf.buf = &ss;
+	nbuf.len = ss.ss_len;
+	nbuf.maxlen = sizeof (struct sockaddr_storage);
 	for (n = sep->se_rpcversl; n <= sep->se_rpcversh; n++) {
 		if (debug)
-			fprintf(stderr, "pmap_set: %u %u %u %u\n",
-			    sep->se_rpcprog, n, pp->p_proto,
-			    ntohs(sin->sin_port));
-		(void)pmap_unset(sep->se_rpcprog, n);
-		if (!pmap_set(sep->se_rpcprog, n, pp->p_proto, ntohs(sin->sin_port)))
-			syslog(LOG_ERR, "pmap_set: %u %u %u %u: %m",
-			    sep->se_rpcprog, n, pp->p_proto,
-			    ntohs(sin->sin_port));
+			fprintf(stderr, "rpcb_set: %u %d %s %s\n",
+			    sep->se_rpcprog, n, nconf->nc_netid,
+			    taddr2uaddr(nconf, &nbuf));
+		(void)rpcb_unset(sep->se_rpcprog, n, nconf);
+		if (!rpcb_set(sep->se_rpcprog, n, nconf, &nbuf))
+			syslog(LOG_ERR, "rpcb_set: %u %d %s %s%s",
+			    sep->se_rpcprog, n, nconf->nc_netid,
+			    taddr2uaddr(nconf, &nbuf), clnt_spcreateerror(""));
 	}
 #endif /* RPC */
 }
@@ -1193,14 +1180,21 @@ unregister_rpc(sep)
 {
 #ifdef RPC
 	int n;
+	struct netconfig *nconf;
+
+	if ((nconf = getnetconfigent(sep->se_proto+4)) == NULL) {
+		syslog(LOG_ERR, "%s: getnetconfigent failed",
+		    sep->se_proto);
+		return;
+	}
 
 	for (n = sep->se_rpcversl; n <= sep->se_rpcversh; n++) {
 		if (debug)
-			fprintf(stderr, "pmap_unset(%u, %u)\n",
-			    sep->se_rpcprog, n);
-		if (!pmap_unset(sep->se_rpcprog, n))
-			syslog(LOG_ERR, "pmap_unset(%u, %u)\n",
-			    sep->se_rpcprog, n);
+			fprintf(stderr, "rpcb_unset(%u, %d, %s)\n",
+			    sep->se_rpcprog, n, nconf->nc_netid);
+		if (!rpcb_unset(sep->se_rpcprog, n, nconf))
+			syslog(LOG_ERR, "rpcb_unset(%u, %d, %s) failed\n",
+			    sep->se_rpcprog, n, nconf->nc_netid);
 	}
 #endif /* RPC */
 }

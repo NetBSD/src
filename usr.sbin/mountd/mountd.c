@@ -1,4 +1,4 @@
-/* $NetBSD: mountd.c,v 1.62 2000/02/16 04:08:40 enami Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.62.2.1 2000/06/22 18:01:04 minoura Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.62 2000/02/16 04:08:40 enami Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.62.2.1 2000/06/22 18:01:04 minoura Exp $");
 #endif
 #endif				/* not lint */
 
@@ -140,13 +140,13 @@ struct exportlist {
 #define	EX_LINKED	0x1
 
 struct netmsk {
-	u_int32_t       nt_net;
-	u_int32_t       nt_mask;
+	struct sockaddr_storage nt_net;
+	int		nt_len;
 	char           *nt_name;
 };
 
 union grouptypes {
-	struct hostent *gt_hostent;
+	struct addrinfo *gt_addrinfo;
 	struct netmsk   gt_net;
 #ifdef ISO
 	struct sockaddr_iso *gt_isoaddr;
@@ -183,7 +183,7 @@ static void add_dlist __P((struct dirlist **, struct dirlist *,
 static void add_mlist __P((char *, char *, int));
 static int check_dirpath __P((const char *, size_t, char *));
 static int check_options __P((const char *, size_t, struct dirlist *));
-static int chk_host __P((struct dirlist *, u_int32_t, int *, int *));
+static int chk_host __P((struct dirlist *, struct sockaddr *, int *, int *));
 static int del_mlist __P((char *, char *, struct sockaddr *));
 static struct dirlist *dirp_search __P((struct dirlist *, char *));
 static int do_mount __P((const char *, size_t, struct exportlist *,
@@ -214,7 +214,7 @@ static void mntsrv __P((struct svc_req *, SVCXPRT *));
 static void nextfield __P((char **, char **));
 static void parsecred __P((char *, struct ucred *));
 static int put_exlist __P((struct dirlist *, XDR *, struct dirlist *, int *));
-static int scan_tree __P((struct dirlist *, u_int32_t));
+static int scan_tree __P((struct dirlist *, struct sockaddr *));
 static void send_umntall __P((int));
 static int umntall_each __P((caddr_t, struct sockaddr_in *));
 static int xdr_dir __P((XDR *, char *));
@@ -223,6 +223,11 @@ static int xdr_fhs __P((XDR *, caddr_t));
 static int xdr_mlist __P((XDR *, caddr_t));
 static void *emalloc __P((size_t));
 static char *estrdup __P((const char *));
+static int bitcmp __P((void *, void *, int));
+static int netpartcmp __P((struct sockaddr *, struct sockaddr *, int));
+static int sacmp __P((struct sockaddr *, struct sockaddr *));
+static int allones __P((struct sockaddr_storage *, int));
+static int countones __P((struct sockaddr *));
 #ifdef ISO
 static int get_isoaddr __P((const char *, size_t, char *, struct grouplist *));
 #endif
@@ -237,7 +242,10 @@ static struct ucred def_anon = {
 	0,
 	{}
 };
-	static int      opt_flags;
+
+static int      opt_flags;
+static int	have_v6 = 1;
+
 /* Bits for above */
 #define	OP_MAPROOT	0x001
 #define	OP_MAPALL	0x002
@@ -248,6 +256,7 @@ static struct ucred def_anon = {
 #define	OP_ALLDIRS	0x040
 #define OP_NORESPORT	0x080
 #define OP_NORESMNT	0x100
+#define OP_MASKLEN	0x200
 
 static int      debug = 0;
 #if 0
@@ -268,8 +277,11 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	SVCXPRT *udptransp, *tcptransp;
-	int c;
+	SVCXPRT *udptransp, *tcptransp, *udp6transp, *tcp6transp;
+	struct netconfig *udpconf, *tcpconf, *udp6conf, *tcp6conf;
+	int udpsock, tcpsock, udp6sock, tcp6sock;
+	int xcreated = 0, s;
+	int c, one = 1;
 
 	while ((c = getopt(argc, argv, "dnr")) != -1)
 		switch (c) {
@@ -294,6 +306,13 @@ main(argc, argv)
 	else
 		exname = _PATH_EXPORTS;
 	openlog("mountd", LOG_PID, LOG_DAEMON);
+
+	s = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+	if (s < 0)
+		have_v6 = 0;
+	else
+		close(s);
+
 	if (debug)
 		(void)fprintf(stderr, "Getting export list.\n");
 	get_exportlist(0);
@@ -310,24 +329,107 @@ main(argc, argv)
 	(void)signal(SIGHUP, get_exportlist);
 	(void)signal(SIGTERM, send_umntall);
 	pidfile(NULL);
-	if ((udptransp = svcudp_create(RPC_ANYSOCK)) == NULL ||
-	    (tcptransp = svctcp_create(RPC_ANYSOCK, 0, 0)) == NULL) {
-		syslog(LOG_ERR, "Can't create socket");
+
+	rpcb_unset(RPCPROG_MNT, RPCMNT_VER1, NULL);
+	rpcb_unset(RPCPROG_MNT, RPCMNT_VER3, NULL);
+
+	udpsock  = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	tcpsock  = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	udp6sock = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+	tcp6sock = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
+
+	/*
+	 * We're doing host-based access checks here, so don't allow
+	 * v4-in-v6 to confuse things. The kernel will disable it
+	 * by default on NFS sockets too.
+	 */
+	if (udp6sock != -1 && setsockopt(udp6sock, IPPROTO_IPV6,
+	    IPV6_BINDV6ONLY, &one, sizeof one) < 0){
+		syslog(LOG_ERR, "can't disable v4-in-v6 on UDP socket");
 		exit(1);
 	}
-	pmap_unset(RPCPROG_MNT, RPCMNT_VER1);
-	pmap_unset(RPCPROG_MNT, RPCMNT_VER3);
-	if (!svc_register(udptransp, RPCPROG_MNT, RPCMNT_VER1, mntsrv,
-	    IPPROTO_UDP) ||
-	    !svc_register(udptransp, RPCPROG_MNT, RPCMNT_VER3, mntsrv,
-	    IPPROTO_UDP) ||
-	    !svc_register(tcptransp, RPCPROG_MNT, RPCMNT_VER1, mntsrv,
-	    IPPROTO_TCP) ||
-	    !svc_register(tcptransp, RPCPROG_MNT, RPCMNT_VER3, mntsrv,
-	    IPPROTO_TCP)) {
-		syslog(LOG_ERR, "Can't register mount");
+	if (tcp6sock != -1 && setsockopt(tcp6sock, IPPROTO_IPV6,
+	    IPV6_BINDV6ONLY, &one, sizeof one) < 0){
+		syslog(LOG_ERR, "can't disable v4-in-v6 on UDP socket");
 		exit(1);
 	}
+
+	udpconf  = getnetconfigent("udp");
+	tcpconf  = getnetconfigent("tcp");
+	udp6conf = getnetconfigent("udp6");
+	tcp6conf = getnetconfigent("tcp6");
+
+	if (udpsock != -1 && udpconf != NULL) {
+		bindresvport(udpsock, NULL);
+		udptransp = svc_dg_create(udpsock, 0, 0);
+		if (udptransp != NULL) {
+			if (!svc_reg(udptransp, RPCPROG_MNT, RPCMNT_VER1,
+				mntsrv, udpconf) ||
+			    !svc_reg(udptransp, RPCPROG_MNT, RPCMNT_VER3,
+				mntsrv, udpconf))
+				syslog(LOG_WARNING, "can't register UDP service");
+			else
+				xcreated++;
+		} else
+			syslog(LOG_WARNING, "can't create UDP service");
+			
+	}
+
+	if (tcpsock != -1 && tcpconf != NULL) {
+		bindresvport(tcpsock, NULL);
+		listen(tcpsock, SOMAXCONN);
+		tcptransp = svc_vc_create(tcpsock, 0, 0);
+		if (tcptransp != NULL) {
+			if (!svc_reg(tcptransp, RPCPROG_MNT, RPCMNT_VER1,
+				mntsrv, tcpconf) ||
+			    !svc_reg(tcptransp, RPCPROG_MNT, RPCMNT_VER3,
+				mntsrv, tcpconf))
+				syslog(LOG_WARNING, "can't register TCP service");
+			else
+				xcreated++;
+		} else
+			syslog(LOG_WARNING, "can't create TCP service");
+			
+	}
+
+	if (udp6sock != -1 && udp6conf != NULL) {
+		bindresvport(udp6sock, NULL);
+		udp6transp = svc_dg_create(udp6sock, 0, 0);
+		if (udp6transp != NULL) {
+			if (!svc_reg(udp6transp, RPCPROG_MNT, RPCMNT_VER1,
+				mntsrv, udp6conf) ||
+			    !svc_reg(udp6transp, RPCPROG_MNT, RPCMNT_VER3,
+				mntsrv, udp6conf))
+				syslog(LOG_WARNING, "can't register UDP6 service");
+			else
+				xcreated++;
+		} else
+			syslog(LOG_WARNING, "can't create UDP6 service");
+			
+	}
+
+	if (tcp6sock != -1 && tcp6conf != NULL) {
+		bindresvport(tcp6sock, NULL);
+		listen(tcpsock, SOMAXCONN);
+		tcp6transp = svc_vc_create(tcp6sock, 0, 0);
+		if (tcp6transp != NULL) {
+			if (!svc_reg(tcp6transp, RPCPROG_MNT, RPCMNT_VER1,
+				mntsrv, tcp6conf) ||
+			    !svc_reg(tcp6transp, RPCPROG_MNT, RPCMNT_VER3,
+				mntsrv, tcp6conf))
+				syslog(LOG_WARNING, "can't register TCP6 service");
+			else
+				xcreated++;
+		} else
+			syslog(LOG_WARNING, "can't create TCP6 service");
+			
+	}
+
+	if (xcreated == 0) {
+		syslog(LOG_ERR, "could not create any services");
+		exit(1);
+	}
+
 #ifdef KERBEROS
 	kuidinit();
 #endif
@@ -349,19 +451,39 @@ mntsrv(rqstp, transp)
 	struct fhreturn fhr;
 	struct stat     stb;
 	struct statfs   fsb;
-	struct hostent *hp;
-	struct in_addr  saddr;
+	struct addrinfo *ai;
+	char host[NI_MAXHOST], numerichost[NI_MAXHOST];
+	int lookup_failed = 1;
+	struct sockaddr *saddr;
 	u_short         sport;
 	char            rpcpath[RPCMNT_PATHLEN + 1], dirpath[MAXPATHLEN];
 	long            bad = EACCES;
 	int             defset, hostset, ret;
 	sigset_t        sighup_mask;
+	struct sockaddr_in6 *sin6;
+	struct sockaddr_in *sin;
 
 	(void)sigemptyset(&sighup_mask);
 	(void)sigaddset(&sighup_mask, SIGHUP);
-	saddr = transp->xp_raddr.sin_addr;
-	sport = ntohs(transp->xp_raddr.sin_port);
-	hp = NULL;
+	saddr = svc_getrpccaller(transp)->buf;
+	switch (saddr->sa_family) {
+	case AF_INET6:
+		sin6 = (struct sockaddr_in6 *)saddr;
+		sport = ntohs(sin6->sin6_port);
+		break;
+	case AF_INET:
+		sin = (struct sockaddr_in *)saddr;
+		sport = ntohs(sin->sin_port);
+		break;
+	default:
+		syslog(LOG_ERR, "request from unknown address family");
+		return;
+	}
+	lookup_failed = getnameinfo(saddr, saddr->sa_len, host, sizeof host, 
+	    NULL, 0, 0);
+	getnameinfo(saddr, saddr->sa_len, numerichost,
+	    sizeof numerichost, NULL, 0, NI_NUMERICHOST);
+	ai = NULL;
 #ifdef KERBEROS
 	kuidreset();
 #endif
@@ -376,6 +498,9 @@ mntsrv(rqstp, transp)
 			svcerr_decode(transp);
 			return;
 		}
+		if (debug)
+			fprintf(stderr,
+			    "got mount request from %s\n", numerichost);
 		/*
 		 * Get the real pathname and make sure it is a file or
 		 * directory that exists.
@@ -396,16 +521,16 @@ mntsrv(rqstp, transp)
 		(void)sigprocmask(SIG_BLOCK, &sighup_mask, NULL);
 		ep = ex_search(&fsb.f_fsid);
 		hostset = defset = 0;
-		if (ep && (chk_host(ep->ex_defdir, saddr.s_addr, &defset,
+		if (ep && (chk_host(ep->ex_defdir, saddr, &defset,
 		   &hostset) || ((dp = dirp_search(ep->ex_dirl, dirpath)) &&
-		   chk_host(dp, saddr.s_addr, &defset, &hostset)) ||
-		   (defset && scan_tree(ep->ex_defdir, saddr.s_addr) == 0 &&
-		   scan_tree(ep->ex_dirl, saddr.s_addr) == 0))) {
+		   chk_host(dp, saddr, &defset, &hostset)) ||
+		   (defset && scan_tree(ep->ex_defdir, saddr) == 0 &&
+		   scan_tree(ep->ex_dirl, saddr) == 0))) {
 			if (sport >= IPPORT_RESERVED &&
 			    !(hostset & DP_NORESMNT)) {
 				syslog(LOG_NOTICE,
 				    "Refused mount RPC from host %s port %d",
-				    inet_ntoa(saddr), sport);
+				    numerichost, sport);
 				svcerr_weakauth(transp);
 				goto out;
 			}
@@ -426,14 +551,10 @@ mntsrv(rqstp, transp)
 			}
 			if (!svc_sendreply(transp, xdr_fhs, (char *) &fhr))
 				syslog(LOG_ERR, "Can't send reply");
-			if (hp == NULL)
-				hp = gethostbyaddr((const char *) &saddr,
-				    sizeof(saddr), AF_INET);
-			if (hp)
-				add_mlist(hp->h_name, dirpath, hostset);
+			if (!lookup_failed)
+				add_mlist(host, dirpath, hostset);
 			else
-				add_mlist(inet_ntoa(transp->xp_raddr.sin_addr),
-				    dirpath, hostset);
+				add_mlist(numerichost, dirpath, hostset);
 			if (debug)
 				(void)fprintf(stderr, "Mount successful.\n");
 		} else {
@@ -452,12 +573,9 @@ out:
 			svcerr_decode(transp);
 			return;
 		}
-		hp = gethostbyaddr((caddr_t) &saddr, sizeof(saddr), AF_INET);
-		if (hp)
-			ret = del_mlist(hp->h_name, dirpath,
-			    (struct sockaddr *) &transp->xp_raddr);
-		ret |= del_mlist(inet_ntoa(transp->xp_raddr.sin_addr), dirpath,
-		    (struct sockaddr *) &transp->xp_raddr);
+		if (!lookup_failed)
+			ret = del_mlist(host, dirpath, saddr);
+		ret |= del_mlist(numerichost, dirpath, saddr);
 		if (ret) {
 			svcerr_weakauth(transp);
 			return;
@@ -466,12 +584,9 @@ out:
 			syslog(LOG_ERR, "Can't send reply");
 		return;
 	case MOUNTPROC_UMNTALL:
-		hp = gethostbyaddr((caddr_t)&saddr, sizeof(saddr), AF_INET);
-		if (hp)
-			ret = del_mlist(hp->h_name, NULL,
-			    (struct sockaddr *)&transp->xp_raddr);
-		ret |= del_mlist(inet_ntoa(transp->xp_raddr.sin_addr),
-		    NULL, (struct sockaddr *)&transp->xp_raddr);
+		if (!lookup_failed)
+			ret = del_mlist(host, NULL, saddr);
+		ret |= del_mlist(numerichost, NULL, saddr);
 		if (ret) {
 			svcerr_weakauth(transp);
 			return;
@@ -646,7 +761,8 @@ put_exlist(dp, xdrsp, adp, putdefp)
 				if (grp->gr_type == GT_HOST) {
 					if (!xdr_bool(xdrsp, &true))
 						return (1);
-					strp = grp->gr_ptr.gt_hostent->h_name;
+					strp =
+					  grp->gr_ptr.gt_addrinfo->ai_canonname;
 					if (!xdr_string(xdrsp, &strp,
 							RPCMNT_NAMELEN))
 						return (1);
@@ -792,7 +908,7 @@ get_exportlist(n)
 	struct exportlist **epp;
 	struct dirlist *dirhead;
 	struct statfs fsb, *fsp;
-	struct hostent *hpe;
+	struct addrinfo *ai;
 	struct ucred anon;
 	char *cp, *endcp, *dirp, savedc;
 	int has_host, exflags, got_nondir, dirplen, num, i;
@@ -967,12 +1083,17 @@ get_exportlist(n)
 				(void)fprintf(stderr,
 				    "Adding a default entry\n");
 			/* add a default group and make the grp list NULL */
-			hpe = emalloc(sizeof(struct hostent));
-			hpe->h_name = estrdup("Default");
-			hpe->h_addrtype = AF_INET;
-			hpe->h_length = sizeof(u_int32_t);
-			hpe->h_addr_list = NULL;
-			grp->gr_ptr.gt_hostent = hpe;
+			ai = emalloc(sizeof(struct addrinfo));
+			ai->ai_flags = 0;
+			ai->ai_family = AF_INET;	/* XXXX */
+			ai->ai_socktype = SOCK_DGRAM;
+			/* setting the length to 0 will match anything */
+			ai->ai_addrlen = 0;
+			ai->ai_flags = AI_CANONNAME;
+			ai->ai_canonname = estrdup("Default");
+			ai->ai_addr = NULL;
+			ai->ai_next = NULL;
+			grp->gr_ptr.gt_addrinfo = ai;
 
 		} else if ((opt_flags & OP_NET) && tgrp->gr_next) {
 			/*
@@ -1251,18 +1372,192 @@ dirp_search(dp, dirp)
 }
 
 /*
+ * Some helper functions for netmasks. They all assume masks in network
+ * order (big endian).
+ */
+static int
+bitcmp(void *dst, void *src, int bitlen)
+{
+	int i;
+	u_int8_t *p1 = dst, *p2 = src;
+	u_int8_t bitmask;
+	int bytelen, bitsleft;
+
+	bytelen = bitlen / 8;
+	bitsleft = bitlen % 8;
+
+	if (debug) {
+		printf("comparing:\n");
+		for (i = 0; i < (bitsleft ? bytelen + 1 : bytelen); i++)
+			printf("%02x", p1[i]);
+		printf("\n");
+		for (i = 0; i < (bitsleft ? bytelen + 1 : bytelen); i++)
+			printf("%02x", p2[i]);
+		printf("\n");
+	}
+
+	for (i = 0; i < bytelen; i++) {
+		if (*p1 != *p2)
+			return 1;
+		p1++;
+		p2++;
+	}
+
+	for (i = 0; i < bitsleft; i++) {
+		bitmask = 1 << (7 - i);
+		if ((*p1 & bitmask) != (*p2 & bitmask))
+			return 1;
+	}
+
+	return 0;
+}
+
+static int
+netpartcmp(struct sockaddr *s1, struct sockaddr *s2, int bitlen)
+{
+	void *src, *dst;
+
+	if (s1->sa_family != s2->sa_family)
+		return 1;
+
+	switch (s1->sa_family) {
+	case AF_INET:
+		src = &((struct sockaddr_in *)s1)->sin_addr;
+		dst = &((struct sockaddr_in *)s2)->sin_addr;
+		if (bitlen > sizeof(((struct sockaddr_in *)s1)->sin_addr) * 8)
+			return 1;
+		break;
+	case AF_INET6:
+		src = &((struct sockaddr_in6 *)s1)->sin6_addr;
+		dst = &((struct sockaddr_in6 *)s2)->sin6_addr;
+		if (((struct sockaddr_in6 *)s1)->sin6_scope_id !=
+		    ((struct sockaddr_in6 *)s2)->sin6_scope_id)
+			return 1;
+		if (bitlen > sizeof(((struct sockaddr_in6 *)s1)->sin6_addr) * 8)
+			return 1;
+		break;
+	default:
+		return 1;
+	}
+
+	return bitcmp(src, dst, bitlen);
+}
+
+static int
+allones(struct sockaddr_storage *ssp, int bitlen)
+{
+	u_int8_t *p;
+	int bytelen, bitsleft, i;
+	int zerolen;
+
+	switch (ssp->ss_family) {
+	case AF_INET:
+		p = (u_int8_t *)&((struct sockaddr_in *)ssp)->sin_addr;
+		zerolen = sizeof (((struct sockaddr_in *)ssp)->sin_addr);
+		break;
+	case AF_INET6:
+		p = (u_int8_t *)&((struct sockaddr_in6 *)ssp)->sin6_addr;
+		zerolen = sizeof (((struct sockaddr_in6 *)ssp)->sin6_addr);
+		break;
+	default:
+		return -1;
+	}
+
+	memset(p, 0, zerolen);
+
+	bytelen = bitlen / 8;
+	bitsleft = bitlen % 8;
+
+	if (bytelen > zerolen)
+		return -1;
+
+	for (i = 0; i < bytelen; i++)
+		*p++ = 0xff;
+
+	for (i = 0; i < bitsleft; i++)
+		*p |= 1 << (7 - i);
+	
+	return 0;
+}
+
+static int
+countones(struct sockaddr *sa)
+{
+	void *mask;
+	int i, bits = 0, bytelen;
+	u_int8_t *p;
+
+	switch (sa->sa_family) {
+	case AF_INET:
+		mask = (u_int8_t *)&((struct sockaddr_in *)sa)->sin_addr;
+		bytelen = 4;
+		break;
+	case AF_INET6:
+		mask = (u_int8_t *)&((struct sockaddr_in6 *)sa)->sin6_addr;
+		bytelen = 16;
+		break;
+	default:
+		return 0;
+	}
+
+	p = mask;
+
+	for (i = 0; i < bytelen; i++, p++) {
+		if (*p != 0xff) {
+			for (bits = 0; bits < 8; bits++) {
+				if (!(*p & (1 << (7 - bits))))
+					break;
+			}
+			break;
+		}
+	}
+
+	return (i * 8 + bits);
+}
+
+static int
+sacmp(struct sockaddr *sa1, struct sockaddr *sa2)
+{
+	void *p1, *p2;
+	int len;
+
+	if (sa1->sa_family != sa2->sa_family)
+		return 1;
+
+	switch (sa1->sa_family) {
+	case AF_INET:
+		p1 = &((struct sockaddr_in *)sa1)->sin_addr;
+		p2 = &((struct sockaddr_in *)sa2)->sin_addr;
+		len = 4;
+		break;
+	case AF_INET6:
+		p1 = &((struct sockaddr_in6 *)sa1)->sin6_addr;
+		p2 = &((struct sockaddr_in6 *)sa2)->sin6_addr;
+		len = 16;
+		if (((struct sockaddr_in6 *)sa1)->sin6_scope_id !=
+		    ((struct sockaddr_in6 *)sa2)->sin6_scope_id)
+			return 1;
+		break;
+	default:
+		return 1;
+	}
+
+	return memcmp(p1, p2, len);
+}
+
+/*
  * Scan for a host match in a directory tree.
  */
 static int
 chk_host(dp, saddr, defsetp, hostsetp)
 	struct dirlist *dp;
-	u_int32_t saddr;
+	struct sockaddr *saddr;
 	int *defsetp;
 	int *hostsetp;
 {
 	struct hostlist *hp;
 	struct grouplist *grp;
-	u_int32_t **addrp;
+	struct addrinfo *ai;
 
 	if (dp) {
 		if (dp->dp_flag & DP_DEFSET)
@@ -1272,18 +1567,20 @@ chk_host(dp, saddr, defsetp, hostsetp)
 			grp = hp->ht_grp;
 			switch (grp->gr_type) {
 			case GT_HOST:
-				addrp = (u_int32_t **)
-				    grp->gr_ptr.gt_hostent->h_addr_list;
-				for (; *addrp; addrp++) {
-					if (**addrp != saddr)
-						continue;
-					*hostsetp = (hp->ht_flag | DP_HOSTSET);
-					return (1);
+				ai = grp->gr_ptr.gt_addrinfo;
+				for (; ai; ai = ai->ai_next) {
+					if (!sacmp(ai->ai_addr, saddr)) {
+						*hostsetp =
+						    (hp->ht_flag | DP_HOSTSET);
+						return (1);
+					}
 				}
 				break;
 			case GT_NET:
-				if ((saddr & grp->gr_ptr.gt_net.nt_mask) ==
-				    grp->gr_ptr.gt_net.nt_net) {
+				if (!netpartcmp(saddr,
+				    (struct sockaddr *)
+					&grp->gr_ptr.gt_net.nt_net,
+				    grp->gr_ptr.gt_net.nt_len)) {
 					*hostsetp = (hp->ht_flag | DP_HOSTSET);
 					return (1);
 				}
@@ -1301,7 +1598,7 @@ chk_host(dp, saddr, defsetp, hostsetp)
 static int
 scan_tree(dp, saddr)
 	struct dirlist *dp;
-	u_int32_t saddr;
+	struct sockaddr *saddr;
 {
 	int defset, hostset;
 
@@ -1407,6 +1704,11 @@ do_opt(line, lineno, cpp, endcpp, ep, grp, has_hostp, exflagsp, cr)
 			opt_flags |= OP_MASK;
 		} else if (cpoptarg && (!strcmp(cpopt, "network") ||
 		    !strcmp(cpopt, "n"))) {
+			if (strchr(cpoptarg, '/') != NULL) {
+				if (debug)
+					fprintf(stderr, "setting OP_MASKLEN\n");
+				opt_flags |= OP_MASKLEN;
+			}
 			if (grp->gr_type != GT_NULL) {
 				syslog(LOG_ERR,
 				    "\"%s\", line %ld: Network/host conflict",
@@ -1478,12 +1780,9 @@ get_host(line, lineno, cp, grp)
 	const char *cp;
 	struct grouplist *grp;
 {
-	struct hostent *hp, *nhp;
-	char **addrp, **naddrp;
-	struct hostent  t_host;
-	int i;
-	u_int32_t saddr;
-	char *aptr[2];
+	struct addrinfo *ai, hints;
+	int ecode;
+	char host[NI_MAXHOST];
 
 	if (grp->gr_type != GT_NULL) {
 		syslog(LOG_ERR,
@@ -1491,52 +1790,30 @@ get_host(line, lineno, cp, grp)
 		    line, (unsigned long)lineno, cp);
 		return (1);
 	}
-	if ((hp = gethostbyname(cp)) == NULL) {
-		if (isdigit(*cp)) {
-			saddr = inet_addr(cp);
-			if (saddr == -1) {
-				syslog(LOG_ERR,
-				    "\"%s\", line %ld: inet_addr failed for %s",
-				    line, (unsigned long) lineno, cp);
-				return (1);
-			}
-			if ((hp = gethostbyaddr((const char *) &saddr,
-			    sizeof(saddr), AF_INET)) == NULL) {
-				hp = &t_host;
-				hp->h_name = (char *) cp;
-				hp->h_addrtype = AF_INET;
-				hp->h_length = sizeof(u_int32_t);
-				hp->h_addr_list = aptr;
-				aptr[0] = (char *) &saddr;
-				aptr[1] = NULL;
-			}
-		} else {
-			syslog(LOG_ERR,
-			    "\"%s\", line %ld: gethostbyname failed for %s: %s",
-			    line, (unsigned long) lineno, cp,
-			    hstrerror(h_errno));
-			return (1);
-		}
+	memset(&hints, 0, sizeof hints);
+	hints.ai_flags = AI_CANONNAME;
+	hints.ai_protocol = IPPROTO_UDP;
+	ecode = getaddrinfo(cp, NULL, &hints, &ai);
+	if (ecode != 0) {
+		syslog(LOG_ERR, "\"%s\", line %ld: can't get address info for "
+				"host %s",
+		    line, (long)lineno, cp);
+		return 1;
 	}
 	grp->gr_type = GT_HOST;
-	nhp = grp->gr_ptr.gt_hostent = emalloc(sizeof(struct hostent));
-	(void)memcpy(nhp, hp, sizeof(struct hostent));
-	nhp->h_name = estrdup(hp->h_name);
-	addrp = hp->h_addr_list;
-	i = 1;
-	while (*addrp++)
-		i++;
-	naddrp = nhp->h_addr_list = emalloc(i * sizeof(char *));
-	addrp = hp->h_addr_list;
-	while (*addrp) {
-		*naddrp = emalloc(hp->h_length);
-		(void)memcpy(*naddrp, *addrp, hp->h_length);
-		addrp++;
-		naddrp++;
+	grp->gr_ptr.gt_addrinfo = ai;
+	while (ai != NULL) {
+		if (ai->ai_canonname == NULL) {
+			getnameinfo(ai->ai_addr, ai->ai_addrlen, host,
+			    sizeof host, NULL, 0, NI_NUMERICHOST);
+			ai->ai_canonname = estrdup(host);
+			ai->ai_flags |= AI_CANONNAME;
+		} else
+			ai->ai_flags &= ~AI_CANONNAME;
+		if (debug)
+			(void)fprintf(stderr, "got host %s\n", ai->ai_canonname);
+		ai = ai->ai_next;
 	}
-	*naddrp = NULL;
-	if (debug)
-		(void)fprintf(stderr, "got host %s\n", hp->h_name);
 	return (0);
 }
 
@@ -1669,11 +1946,13 @@ do_mount(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 	int dirplen;
 	struct statfs *fsb;
 {
+	struct sockaddr *addrp;
+	struct sockaddr_storage ss;
+	struct addrinfo *ai;
+	int addrlen;
 	char *cp = NULL;
-	u_int32_t **addrp;
 	int done;
 	char savedc = '\0';
-	struct sockaddr_in sin, imask;
 	union {
 		struct ufs_args ua;
 		struct iso_args ia;
@@ -1681,57 +1960,48 @@ do_mount(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 		struct msdosfs_args da;
 		struct adosfs_args aa;
 	} args;
-	u_int32_t net;
 
 	args.ua.fspec = 0;
 	args.ua.export.ex_flags = exflags;
 	args.ua.export.ex_anon = *anoncrp;
 	args.ua.export.ex_indexfile = ep->ex_indexfile;
-	(void)memset(&sin, 0, sizeof(sin));
-	(void)memset(&imask, 0, sizeof(imask));
-	sin.sin_family = AF_INET;
-	sin.sin_len = sizeof(sin);
-	imask.sin_family = AF_INET;
-	imask.sin_len = sizeof(sin);
-	if (grp->gr_type == GT_HOST)
-		addrp = (u_int32_t **) grp->gr_ptr.gt_hostent->h_addr_list;
-	else
+	if (grp->gr_type == GT_HOST) {
+		ai = grp->gr_ptr.gt_addrinfo;
+		addrp = ai->ai_addr;
+		addrlen = ai->ai_addrlen;
+	} else
 		addrp = NULL;
 	done = FALSE;
 	while (!done) {
 		switch (grp->gr_type) {
 		case GT_HOST:
-			if (addrp) {
-				sin.sin_addr.s_addr = **addrp;
-				args.ua.export.ex_addrlen = sizeof(sin);
-			} else
-				args.ua.export.ex_addrlen = 0;
-			args.ua.export.ex_addr = (struct sockaddr *)&sin;
+			if (addrp->sa_family == AF_INET6 && have_v6 == 0)
+				goto skip;
+			args.ua.export.ex_addr = addrp;
+			args.ua.export.ex_addrlen = addrlen;
 			args.ua.export.ex_masklen = 0;
 			break;
 		case GT_NET:
-			if (grp->gr_ptr.gt_net.nt_mask)
-				imask.sin_addr.s_addr =
-				    grp->gr_ptr.gt_net.nt_mask;
-			else {
-				net = ntohl(grp->gr_ptr.gt_net.nt_net);
-				if (IN_CLASSA(net))
-					imask.sin_addr.s_addr =
-					    inet_addr("255.0.0.0");
-				else if (IN_CLASSB(net))
-					imask.sin_addr.s_addr =
-					    inet_addr("255.255.0.0");
-				else
-					imask.sin_addr.s_addr =
-					    inet_addr("255.255.255.0");
-				grp->gr_ptr.gt_net.nt_mask =
-				    imask.sin_addr.s_addr;
+			args.ua.export.ex_addr = (struct sockaddr *)
+			    &grp->gr_ptr.gt_net.nt_net;
+			if (args.ua.export.ex_addr->sa_family == AF_INET6 &&
+			    have_v6 == 0)
+				goto skip;
+			args.ua.export.ex_addrlen =
+			    args.ua.export.ex_addr->sa_len;
+			memset(&ss, 0, sizeof ss);
+			ss.ss_family = args.ua.export.ex_addr->sa_family;
+			ss.ss_len = args.ua.export.ex_addr->sa_len;
+			if (allones(&ss, grp->gr_ptr.gt_net.nt_len) != 0) {
+				syslog(LOG_ERR,
+				    "\"%s\", line %ld: Bad network flag",
+				    line, (unsigned long)lineno);
+				if (cp)
+					*cp = savedc;
+				return (1);
 			}
-			sin.sin_addr.s_addr = grp->gr_ptr.gt_net.nt_net;
-			args.ua.export.ex_addr = (struct sockaddr *) &sin;
-			args.ua.export.ex_addrlen = sizeof(sin);
-			args.ua.export.ex_mask = (struct sockaddr *) &imask;
-			args.ua.export.ex_masklen = sizeof(imask);
+			args.ua.export.ex_mask = (struct sockaddr *)&ss;
+			args.ua.export.ex_masklen = ss.ss_len;
 			break;
 #ifdef ISO
 		case GT_ISO:
@@ -1768,7 +2038,7 @@ do_mount(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 		    "\"%s\", line %ld: Can't change attributes for %s to %s",
 				    line, (unsigned long)lineno,
 				    dirp, (grp->gr_type == GT_HOST) ?
-				    grp->gr_ptr.gt_hostent->h_name :
+				    grp->gr_ptr.gt_addrinfo->ai_canonname :
 				    (grp->gr_type == GT_NET) ?
 				    grp->gr_ptr.gt_net.nt_name :
 				    "Unknown");
@@ -1797,10 +2067,15 @@ do_mount(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 			savedc = *cp;
 			*cp = '\0';
 		}
+skip:
 		if (addrp) {
-			++addrp;
-			if (*addrp == NULL)
+			ai = ai->ai_next;
+			if (ai == NULL)
 				done = TRUE;
+			else {
+				addrp = ai->ai_addr;
+				addrlen = ai->ai_addrlen;
+			}
 		} else
 			done = TRUE;
 	}
@@ -1819,45 +2094,104 @@ get_net(cp, net, maskflg)
 	int maskflg;
 {
 	struct netent *np;
-	long netaddr;
-	struct in_addr inetaddr, inetaddr2;
-	char *name;
+	char *name, *p, *prefp;
+	struct sockaddr_in sin, *sinp;
+	struct sockaddr *sa;
+	struct addrinfo hints, *ai = NULL;
+	char netname[NI_MAXHOST];
+	long preflen;
+	int ecode;
 
-	if ((np = getnetbyname(cp)) != NULL)
-		inetaddr = inet_makeaddr(np->n_net, 0);
-	else if (isdigit(*cp)) {
-		if ((netaddr = inet_network(cp)) == -1)
-			return (1);
-		inetaddr = inet_makeaddr(netaddr, 0);
-		/*
-		 * Due to arbritrary subnet masks, you don't know how many
-		 * bits to shift the address to make it into a network,
-		 * however you do know how to make a network address into
-		 * a host with host == 0 and then compare them.
-		 * (What a pest)
-		 */
-		if (!maskflg) {
-			setnetent(0);
-			while ((np = getnetent()) != NULL) {
-				inetaddr2 = inet_makeaddr(np->n_net, 0);
-				if (inetaddr2.s_addr == inetaddr.s_addr)
-					break;
-			}
-			endnetent();
-		}
+	if ((opt_flags & OP_MASKLEN) && !maskflg) {
+		p = strchr(cp, '/');
+		*p = '\0';
+		prefp = p + 1;
+	}
+
+	if ((np = getnetbyname(cp)) != NULL) {
+		sin.sin_family = AF_INET;
+		sin.sin_len = sizeof sin;
+		sin.sin_addr = inet_makeaddr(np->n_net, 0);
+		sa = (struct sockaddr *)&sin;
+	} else if (isdigit(*cp)) {
+		memset(&hints, 0, sizeof hints);
+		hints.ai_family = AF_UNSPEC;
+		hints.ai_flags = AI_NUMERICHOST;
+		if (getaddrinfo(cp, NULL, &hints, &ai) != 0) {
+			/*
+			 * If getaddrinfo() failed, try the inet4 network
+			 * notation with less than 3 dots.
+			 */
+			sin.sin_family = AF_INET;
+			sin.sin_len = sizeof sin;
+			sin.sin_addr = inet_makeaddr(inet_network(cp),0);
+			if (debug)
+				fprintf(stderr, "get_net: v4 addr %x\n",
+				    sin.sin_addr.s_addr);
+			sa = (struct sockaddr *)&sin;
+		} else
+			sa = ai->ai_addr;
+	} else if (isxdigit(*cp) || *cp == ':') {
+		memset(&hints, 0, sizeof hints);
+		hints.ai_family = AF_UNSPEC;
+		hints.ai_flags = AI_NUMERICHOST;
+		if (getaddrinfo(cp, NULL, &hints, &ai) == 0)
+			sa = ai->ai_addr;
+		else
+			goto fail;
 	} else
-		return (1);
+		goto fail;
+
+	ecode = getnameinfo(sa, sa->sa_len, netname, sizeof netname,
+	    NULL, 0, NI_NUMERICHOST);
+	if (ecode != 0)
+		goto fail;
+
 	if (maskflg)
-		net->nt_mask = inetaddr.s_addr;
+		net->nt_len = countones(sa);
 	else {
+		if (opt_flags & OP_MASKLEN) {
+			preflen = strtol(prefp, NULL, 10);
+			if (preflen == LONG_MIN && errno == ERANGE)
+				goto fail;
+			net->nt_len = (int)preflen;
+			*p = '/';
+		}
+
 		if (np)
 			name = np->n_name;
-		else
-			name = inet_ntoa(inetaddr);
+		else {
+			getnameinfo(sa, sa->sa_len, netname, sizeof netname,
+			    NULL, 0, NI_NUMERICHOST);
+			name = netname;
+		}
 		net->nt_name = estrdup(name);
-		net->nt_net = inetaddr.s_addr;
+		memcpy(&net->nt_net, sa, sa->sa_len);
 	}
-	return (0);
+
+	if (!maskflg && sa->sa_family == AF_INET &&
+	    !(opt_flags & (OP_MASK|OP_MASKLEN))) {
+		sinp = (struct sockaddr_in *)sa;
+		if (IN_CLASSA(sinp->sin_addr.s_addr))
+			net->nt_len = 8;
+		else if (IN_CLASSB(sinp->sin_addr.s_addr))
+			net->nt_len = 16;
+		else if (IN_CLASSC(sinp->sin_addr.s_addr))
+			net->nt_len = 24;
+		else if (IN_CLASSD(sinp->sin_addr.s_addr))
+			net->nt_len = 28;
+		else
+			net->nt_len = 32;	/* XXX */
+	}
+
+	if (ai)
+		freeaddrinfo(ai);
+	return 0;
+
+fail:
+	if (ai)
+		freeaddrinfo(ai);
+	return 1;
 }
 
 /*
@@ -2093,7 +2427,7 @@ send_umntall(n)
 	int n;
 {
 	(void)clnt_broadcast(RPCPROG_MNT, RPCMNT_VER1, RPCMNT_UMNTALL,
-	    xdr_void, NULL, xdr_void, NULL, umntall_each);
+	    xdr_void, NULL, xdr_void, NULL, (resultproc_t)umntall_each);
 	exit(0);
 }
 
@@ -2112,19 +2446,10 @@ static void
 free_grp(grp)
 	struct grouplist *grp;
 {
-	char **addrp;
 
 	if (grp->gr_type == GT_HOST) {
-		if (grp->gr_ptr.gt_hostent->h_name) {
-			addrp = grp->gr_ptr.gt_hostent->h_addr_list;
-			if (addrp) {
-				while (*addrp)
-					free(*addrp++);
-				free(grp->gr_ptr.gt_hostent->h_addr_list);
-			}
-			free(grp->gr_ptr.gt_hostent->h_name);
-		}
-		free(grp->gr_ptr.gt_hostent);
+		if (grp->gr_ptr.gt_addrinfo != NULL)
+			freeaddrinfo(grp->gr_ptr.gt_addrinfo);
 	} else if (grp->gr_type == GT_NET) {
 		if (grp->gr_ptr.gt_net.nt_name)
 			free(grp->gr_ptr.gt_net.nt_name);
@@ -2179,6 +2504,12 @@ check_options(line, lineno, dp)
 	}
 	if ((opt_flags & OP_MASK) && (opt_flags & OP_NET) == 0) {
 		syslog(LOG_ERR, "\"%s\", line %ld: -mask requires -net",
+		    line, (unsigned long)lineno);
+		return (1);
+	}
+	if ((opt_flags & OP_MASK) && (opt_flags & OP_MASKLEN) != 0) {
+		syslog(LOG_ERR, "\"%s\", line %ld: /pref and -net mutually"
+		    "exclusive",
 		    line, (unsigned long)lineno);
 		return (1);
 	}

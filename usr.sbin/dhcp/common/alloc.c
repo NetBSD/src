@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: alloc.c,v 1.1.1.5 2000/04/22 07:11:32 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: alloc.c,v 1.1.1.5.2.1 2000/06/22 18:00:45 minoura Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -51,6 +51,121 @@ static char copyright[] =
 
 struct dhcp_packet *dhcp_free_list;
 struct packet *packet_free_list;
+
+OMAPI_OBJECT_ALLOC (subnet, struct subnet, dhcp_type_subnet)
+OMAPI_OBJECT_ALLOC (shared_network, struct shared_network,
+		    dhcp_type_shared_network)
+OMAPI_OBJECT_ALLOC (group_object, struct group_object, dhcp_type_group)
+
+int group_allocate (ptr, file, line)
+	struct group **ptr;
+	const char *file;
+	int line;
+{
+	int size;
+
+	if (!ptr) {
+		log_error ("%s(%d): null pointer", file, line);
+#if defined (POINTER_DEBUG)
+		abort ();
+#else
+		return 0;
+#endif
+	}
+	if (*ptr) {
+		log_error ("%s(%d): non-null pointer", file, line);
+#if defined (POINTER_DEBUG)
+		abort ();
+#else
+		*ptr = (struct group *)0;
+#endif
+	}
+
+	*ptr = dmalloc (sizeof **ptr, file, line);
+	if (*ptr) {
+		memset (*ptr, 0, sizeof **ptr);
+		(*ptr) -> refcnt = 1;
+		return 1;
+	}
+	return 0;
+}
+
+int group_reference (ptr, bp, file, line)
+	struct group **ptr;
+	struct group *bp;
+	const char *file;
+	int line;
+{
+	if (!ptr) {
+		log_error ("%s(%d): null pointer", file, line);
+#if defined (POINTER_DEBUG)
+		abort ();
+#else
+		return 0;
+#endif
+	}
+	if (*ptr) {
+		log_error ("%s(%d): non-null pointer", file, line);
+#if defined (POINTER_DEBUG)
+		abort ();
+#else
+		*ptr = (struct group *)0;
+#endif
+	}
+	*ptr = bp;
+	bp -> refcnt++;
+	rc_register (file, line, ptr, bp, bp -> refcnt);
+	dmalloc_reuse (bp, file, line, 1);
+	return 1;
+}
+
+int group_dereference (ptr, file, line)
+	struct group **ptr;
+	const char *file;
+	int line;
+{
+	int i;
+	struct group *group;
+
+	if (!ptr || !*ptr) {
+		log_error ("%s(%d): null pointer", file, line);
+#if defined (POINTER_DEBUG)
+		abort ();
+#else
+		return 0;
+#endif
+	}
+
+	group = *ptr;
+	*ptr = (struct group *)0;
+	--group -> refcnt;
+	rc_register (file, line, ptr, group, group -> refcnt);
+	if (group -> refcnt > 0)
+		return 1;
+
+	if (group -> refcnt < 0) {
+		log_error ("%s(%d): negative refcnt!", file, line);
+#if defined (DEBUG_RC_HISTORY)
+		dump_rc_history ();
+#endif
+#if defined (POINTER_DEBUG)
+		abort ();
+#else
+		return 0;
+#endif
+	}
+
+	if (group -> object)
+		group_object_dereference (&group -> object, MDL);
+	if (group -> subnet)	
+		subnet_dereference (&group -> subnet, MDL);
+	if (group -> shared_network)
+		shared_network_dereference (&group -> shared_network, MDL);
+	if (group -> statements)
+		executable_statement_dereference (&group -> statements, MDL);
+	dfree (group, file, line);
+	return 1;
+}
 
 struct dhcp_packet *new_dhcp_packet (file, line)
 	const char *file;
@@ -86,57 +201,12 @@ struct hash_bucket *new_hash_bucket (file, line)
 	return rval;
 }
 
-struct lease *new_leases (n, file, line)
-	unsigned n;
+void free_hash_bucket (ptr, file, line)
+	struct hash_bucket *ptr;
 	const char *file;
 	int line;
 {
-	struct lease *rval = dmalloc (n * sizeof (struct lease), file, line);
-	return rval;
-}
-
-struct lease *new_lease (file, line)
-	const char *file;
-	int line;
-{
-	struct lease *rval = dmalloc (sizeof (struct lease), file, line);
-	return rval;
-}
-
-struct subnet *new_subnet (file, line)
-	const char *file;
-	int line;
-{
-	struct subnet *rval = dmalloc (sizeof (struct subnet), file, line);
-	return rval;
-}
-
-struct class *new_class (file, line)
-	const char *file;
-	int line;
-{
-	struct class *rval = dmalloc (sizeof (struct class), file, line);
-	return rval;
-}
-
-struct shared_network *new_shared_network (file, line)
-	const char *file;
-	int line;
-{
-	struct shared_network *rval =
-		dmalloc (sizeof (struct shared_network), file, line);
-	return rval;
-}
-
-struct group *new_group (file, line)
-	const char *file;
-	int line;
-{
-	struct group *rval =
-		dmalloc (sizeof (struct group), file, line);
-	if (rval)
-		memset (rval, 0, sizeof *rval);
-	return rval;
+	dfree ((VOIDPTR)ptr, file, line);
 }
 
 struct protocol *new_protocol (file, line)
@@ -144,32 +214,6 @@ struct protocol *new_protocol (file, line)
 	int line;
 {
 	struct protocol *rval = dmalloc (sizeof (struct protocol), file, line);
-	return rval;
-}
-
-struct lease_state *free_lease_states;
-
-struct lease_state *new_lease_state (file, line)
-	const char *file;
-	int line;
-{
-	struct lease_state *rval;
-
-	if (free_lease_states) {
-		rval = free_lease_states;
-		free_lease_states =
-			(struct lease_state *)(free_lease_states -> next);
- 		dmalloc_reuse (rval, file, line, 0);
-	} else {
-		rval = dmalloc (sizeof (struct lease_state), file, line);
-		if (!rval)
-			return rval;
-	}
-	memset (rval, 0, sizeof *rval);
-	if (!option_state_allocate (&rval -> options, file, line)) {
-		free_lease_state (rval, file, line);
-		return (struct lease_state *)0;
-	}
 	return rval;
 }
 
@@ -248,73 +292,8 @@ void free_domain_search_list (ptr, file, line)
 	dfree ((VOIDPTR)ptr, file, line);
 }
 
-void free_lease_state (ptr, file, line)
-	struct lease_state *ptr;
-	const char *file;
-	int line;
-{
-	if (ptr -> options)
-		option_state_dereference (&ptr -> options, file, line);
-	if (ptr -> packet)
-		packet_dereference (&ptr -> packet, file, line);
-	data_string_forget (&ptr -> parameter_request_list, file, line);
-	data_string_forget (&ptr -> filename, file, line);
-	data_string_forget (&ptr -> server_name, file, line);
-	ptr -> next = free_lease_states;
-	free_lease_states = ptr;
-	dmalloc_reuse (free_lease_states, (char *)0, 0, 0);
-}
-
 void free_protocol (ptr, file, line)
 	struct protocol *ptr;
-	const char *file;
-	int line;
-{
-	dfree ((VOIDPTR)ptr, file, line);
-}
-
-void free_group (ptr, file, line)
-	struct group *ptr;
-	const char *file;
-	int line;
-{
-	dfree ((VOIDPTR)ptr, file, line);
-}
-
-void free_shared_network (ptr, file, line)
-	struct shared_network *ptr;
-	const char *file;
-	int line;
-{
-	dfree ((VOIDPTR)ptr, file, line);
-}
-
-void free_class (ptr, file, line)
-	struct class *ptr;
-	const char *file;
-	int line;
-{
-	dfree ((VOIDPTR)ptr, file, line);
-}
-
-void free_subnet (ptr, file, line)
-	struct subnet *ptr;
-	const char *file;
-	int line;
-{
-	dfree ((VOIDPTR)ptr, file, line);
-}
-
-void free_lease (ptr, file, line)
-	struct lease *ptr;
-	const char *file;
-	int line;
-{
-	dfree ((VOIDPTR)ptr, file, line);
-}
-
-void free_hash_bucket (ptr, file, line)
-	struct hash_bucket *ptr;
 	const char *file;
 	int line;
 {
@@ -353,26 +332,6 @@ void free_client_lease (lease, file, line)
 	dfree (lease, file, line);
 }
 
-struct pool *new_pool (file, line)
-	const char *file;
-	int line;
-{
-	struct pool *pool = ((struct pool *)
-			     dmalloc (sizeof (struct pool), file, line));
-	if (!pool)
-		return pool;
-	memset (pool, 0, sizeof *pool);
-	return pool;
-}
-
-void free_pool (pool, file, line)
-	struct pool *pool;
-	const char *file;
-	int line;
-{
-	dfree (pool, file, line);
-}
-
 struct auth_key *new_auth_key (len, file, line)
 	unsigned len;
 	const char *file;
@@ -394,26 +353,6 @@ void free_auth_key (peer, file, line)
 	int line;
 {
 	dfree (peer, file, line);
-}
-
-struct permit *new_permit (file, line)
-	const char *file;
-	int line;
-{
-	struct permit *permit = ((struct permit *)
-				 dmalloc (sizeof (struct permit), file, line));
-	if (!permit)
-		return permit;
-	memset (permit, 0, sizeof *permit);
-	return permit;
-}
-
-void free_permit (permit, file, line)
-	struct permit *permit;
-	const char *file;
-	int line;
-{
-	dfree (permit, file, line);
 }
 
 pair free_pairs;
@@ -1095,6 +1034,8 @@ int packet_dereference (ptr, file, line)
 
 	if (packet -> options)
 		option_state_dereference (&packet -> options, file, line);
+	if (packet -> interface)
+		interface_dereference (&packet -> interface, MDL);
 	packet -> raw = (struct dhcp_packet *)free_packets;
 	free_packets = packet;
 	dmalloc_reuse (free_packets, (char *)0, 0, 0);

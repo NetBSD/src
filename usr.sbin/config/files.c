@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.10 1999/07/09 06:44:58 thorpej Exp $	*/
+/*	$NetBSD: files.c,v 1.10.8.1 2000/06/22 18:00:43 minoura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -133,9 +133,24 @@ addfile(path, optx, flags, rule)
 		free(fi);
 		if ((fi = ht_lookup(pathtab, path)) == NULL)
 			panic("addfile: ht_lookup(%s)", path);
+
+		/*
+		 * If it's a duplicate entry, it is must specify a make
+		 * rule, and only a make rule, and must come from
+		 * a different source file than the original entry.
+		 * If it does otherwise, it is disallowed.  This allows
+		 * machine-dependent files to override the compilation
+		 * options for specific files.
+		 */
+		if (rule != NULL && optx == NULL && flags == 0 &&
+		    yyfile != fi->fi_srcfile) {
+			fi->fi_mkrule = rule;
+			return;
+		}
 		error("duplicate file %s", path);
 		xerror(fi->fi_srcfile, fi->fi_srcline,
 		    "here is the original definition");
+		goto bad;
 	}
 	memcpy(base, tail, baselen);
 	base[baselen] = 0;
