@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tables.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: tables.c,v 1.8 1994/09/23 14:28:10 mycroft Exp $";
+static char *rcsid = "$Id: tables.c,v 1.9 1994/10/31 04:36:02 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -43,6 +43,7 @@ static char *rcsid = "$Id: tables.c,v 1.8 1994/09/23 14:28:10 mycroft Exp $";
 #include <sys/ioctl.h>
 #include <errno.h>
 #include <sys/syslog.h>
+#include <stdlib.h>
 
 #ifndef DEBUG
 #define	DEBUG	0
