@@ -1,10 +1,10 @@
-#	$NetBSD: files.pmax,v 1.7 1994/10/26 21:08:47 cgd Exp $
+#	$NetBSD: files.pmax,v 1.8 1994/11/23 23:06:43 dean Exp $
 arch/pmax/pmax/autoconf.c		standard
 arch/pmax/pmax/clock.c			standard
 arch/pmax/pmax/conf.c			standard
 arch/pmax/pmax/cons.c			standard
 arch/pmax/pmax/disksubr.c		standard
-arch/pmax/pmax/fp.s			standard
+arch/pmax/pmax/fp.S			standard
 arch/pmax/pmax/kadb.c			optional kadb
 arch/pmax/pmax/machdep.c		standard config-dependent
 arch/pmax/pmax/mem.c			standard
