@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.12 1998/12/19 16:32:34 christos Exp $	*/
+/*	$NetBSD: fio.c,v 1.13 2001/02/05 02:07:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: fio.c,v 1.12 1998/12/19 16:32:34 christos Exp $");
+__RCSID("$NetBSD: fio.c,v 1.13 2001/02/05 02:07:53 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,8 @@ __RCSID("$NetBSD: fio.c,v 1.12 1998/12/19 16:32:34 christos Exp $");
  *
  * File I/O.
  */
+extern int wait_status;
+extern char *tmpdir;
 
 /*
  * Set up the input pointers while copying the mail file into /tmp.
@@ -59,7 +61,6 @@ setptr(ibuf, offset)
 	FILE *ibuf;
 	off_t offset;
 {
-	extern char *tmpdir;
 	int c, count;
 	char *cp, *cp2;
 	struct message this;
@@ -355,7 +356,6 @@ expand(name)
 	char *cp, *shell;
 	int pivec[2];
 	struct stat sbuf;
-	extern int wait_status;
 
 	/*
 	 * The order of evaluation is "%" and "#" expand into constants.

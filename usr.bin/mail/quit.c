@@ -1,4 +1,4 @@
-/*	$NetBSD: quit.c,v 1.11 2000/02/10 12:34:43 tron Exp $	*/
+/*	$NetBSD: quit.c,v 1.12 2001/02/05 02:07:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)quit.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quit.c,v 1.11 2000/02/10 12:34:43 tron Exp $");
+__RCSID("$NetBSD: quit.c,v 1.12 2001/02/05 02:07:53 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,9 @@ __RCSID("$NetBSD: quit.c,v 1.11 2000/02/10 12:34:43 tron Exp $");
  *
  * Termination processing.
  */
+
+extern char *tmpdir;
+extern char *tempQuit, *tempResid;
 
 /*
  * The "quit" command.
@@ -79,7 +82,6 @@ quit()
 	FILE *ibuf = NULL, *obuf, *fbuf, *rbuf, *readstat = NULL, *abuf;
 	struct message *mp;
 	int c;
-	extern char *tempQuit, *tempResid;
 	struct stat minfo;
 	char *mbox;
 
@@ -441,7 +443,6 @@ writeback(res)
 void
 edstop()
 {
-	extern char *tmpdir;
 	int gotcha, c;
 	struct message *mp;
 	FILE *obuf, *ibuf, *readstat = NULL;
