@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.68 2002/07/15 12:47:58 rafal Exp $
+.\"	$NetBSD: contents,v 1.69 2002/07/19 02:28:09 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -520,7 +520,8 @@ This set includes the games and their manual pages.
 .el .ie r_arm .setsize 3 7
 .el .ie r_i386 .setsize 3 7
 .el .ie r_m68k .setsize 3 7
-.el .ie r_mips .setsize 3 8
+.el .ie r_mipseb .setsize 3 8
+.el .ie r_mipsel .setsize 3 8
 .el .ie r_powerpc .setsize 3 7
 .el .ie r_sh3 .setsize 7 14
 .el .ie r_sparc .setsize 3 7
@@ -642,7 +643,8 @@ all related programs, and their manual pages.
 .el .ie r_arm .setsize 2 6
 .el .ie r_i386 .setsize 2 6
 .el .ie r_m68k .setsize 2 6
-.el .ie r_mips .setsize 2 8
+.el .ie r_mipseb .setsize 2 8
+.el .ie r_mipsel .setsize 2 8
 .el .ie r_powerpc .setsize 2 6
 .el .ie r_sh3 .setsize 3 8
 .el .ie r_sparc .setsize 2 6
@@ -679,7 +681,8 @@ This does not include the X servers.
 .el .ie r_i386 .setsize 5 12
 .el .ie r_atari .setsize 3 8
 .el .ie r_m68k .setsize 3 7
-.el .ie r_mips .setsize 4 12
+.el .ie r_mipseb .setsize 4 12
+.el .ie r_mipsel .setsize 4 12
 .el .ie r_powerpc .setsize ??? ???
 .el .ie r_sh3 .setsize ??? ???
 .el .ie r_sparc .setsize ??? ???
@@ -694,7 +697,8 @@ The extra libraries and include files needed to compile X source code.
 .el .ie r_arm .setsize 2 8
 .el .ie r_i386 .setsize 4 14
 .el .ie r_m68k .setsize 2 8
-.el .ie r_mips .setsize 3 10
+.el .ie r_mipseb .setsize 3 10
+.el .ie r_mipsel .setsize 3 10
 .el .ie r_powerpc .setsize ??? ???
 .el .ie r_sh3 .setsize ??? ???
 .el .ie r_sparc .setsize ??? ???
