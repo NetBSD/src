@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_signal.c,v 1.2 2001/02/28 15:58:35 eeh Exp $	 */
+/*	$NetBSD: svr4_32_signal.c,v 1.3 2001/06/04 22:00:10 mrg Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if defined(_KERNEL_OPT)
 #include "opt_compat_svr4.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,9 +76,9 @@ void native_to_svr4_32_sigaction __P((const struct sigaction *,
 				struct svr4_32_sigaction *));
 
 #ifdef COMPAT_SVR4
-extern int svr4_to_native_sig[];
+extern const int svr4_to_native_sig[];
 #else
-int native_to_svr4_sig[NSIG] = {
+const int native_to_svr4_sig[NSIG] = {
 	0,
 	SVR4_SIGHUP,
 	SVR4_SIGINT,
