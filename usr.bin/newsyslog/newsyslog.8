@@ -1,4 +1,4 @@
-.\"	$NetBSD: newsyslog.8,v 1.21 2001/12/08 19:09:16 wiz Exp $
+.\"	$NetBSD: newsyslog.8,v 1.22 2002/03/29 02:45:54 heinz Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
 .\" All rights reserved.
@@ -122,13 +122,13 @@ For backward compatibility, "." is useable in lieu of ":", however use of
 this feature is discouraged.
 .It Ar mode
 Specify the mode of the log file and archives.
-.It Ar count
+.It Ar ngen
 Specify the number of archive files to be kept
 besides the log file itself.
 .It Ar size
 When the size of the log file reaches
-.Ar size ,
-the log file will be trimmed as described above.  If this field
+.Ar size
+kilobytes, the log file will be trimmed as described above.  If this field
 is replaced by an asterisk
 .Pq Ql \&* ,
 then the size of the log file is not taken into account
