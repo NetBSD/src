@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_vga.c,v 1.2 2001/05/21 14:30:42 leo Exp $	*/
+/*	$NetBSD: pci_vga.c,v 1.3 2001/05/28 07:22:37 leo Exp $	*/
 
 /*
  * Copyright (c) 1999 Leo Weppelman.  All rights reserved.
@@ -51,17 +51,24 @@ static u_char conscolors[3][3] = {	/* background, foreground, hilite */
 	{0x0, 0x0, 0x0}, {0x30, 0x30, 0x30}, { 0x3f,  0x3f,  0x3f}
 };
 
+
+#define		VGA_REG_SIZE	(8*1024)
+#define		VGA_FB_SIZE	(32*1024)
+
 /*
  * Go look for a VGA card on the PCI-bus. This search is a
  * stripped down version of the PCI-probe. It only looks on
  * bus0 for VGA cards. The first card found is used.
  */
 int
-check_for_vga()
+check_for_vga(iot, memt)
+	bus_space_tag_t iot, memt;
 {
 	pci_chipset_tag_t	pc = NULL; /* XXX */
+	bus_space_handle_t	ioh_regs, memh_fb;
 	pcitag_t		tag;
 	int			device, found, id, maxndevs, i, j;
+	int			class, got_ioh, got_memh, rv;
 	volatile u_char		*regs;
 	u_char			*fb;
 	char			*nbd = "NetBSD/Atari";
@@ -69,13 +76,26 @@ check_for_vga()
 	found    = 0;
 	tag      = 0;
 	id       = 0;
+	rv	 = 0;
+	got_ioh	 = 0;
+	got_memh = 0;
 	maxndevs = pci_bus_maxdevs(pc, 0);
 
 	/*
-	 * These are setup in atari_init.c
+	 * Map 8Kb of registers and 32Kb frame buffer.
+	 * XXX: The way the registers are mapped here is plain wrong.
+	 *      We should try to pin-point the region down to 3[bcd]0 (see
+	 *      .../dev/ic/vga.c).
 	 */
-	regs = (volatile caddr_t)pci_io_addr;
-	fb   = (caddr_t)pci_mem_addr;
+	if (bus_space_map(iot, 0, VGA_REG_SIZE, 0, &ioh_regs))
+		return 0;
+	got_ioh = 1;
+
+	if (bus_space_map(memt, 0xa0000, VGA_FB_SIZE, 0, &memh_fb))
+		goto bad;
+	got_memh = 1;
+	regs = bus_space_vaddr(iot, ioh_regs);
+	fb   = bus_space_vaddr(memt, memh_fb);
 
 	for (device = 0; !found && (device < maxndevs); device++) {
 
@@ -83,6 +103,21 @@ check_for_vga()
 		id  = pci_conf_read(pc, tag, PCI_ID_REG);
 		if (id == 0 || id == 0xffffffff)
 			continue;
+
+		/*
+		 * Check if we have some display device here...
+		 */
+		class = pci_conf_read(pc, tag, PCI_CLASS_REG);
+		i = 0;
+		if (PCI_CLASS(class) == PCI_CLASS_PREHISTORIC &&
+		    PCI_SUBCLASS(class) == PCI_SUBCLASS_PREHISTORIC_VGA)
+			i = 1;
+		if (PCI_CLASS(class) == PCI_CLASS_DISPLAY &&
+		    PCI_SUBCLASS(class) == PCI_SUBCLASS_DISPLAY_VGA)
+			i = 1;
+		if (i == 0)
+			continue;
+
 		switch (id = PCI_PRODUCT(id)) {
 
 			/*
@@ -102,12 +137,17 @@ check_for_vga()
 		}
 	}
 	if (!found)
-		return (0);
+		goto bad;
 
 	/*
 	 * Assume the device is in CGA mode. Wscons expects this too...
 	 */
-	fb = fb + 0x18000;
+	bus_space_unmap(memt, memh_fb, VGA_FB_SIZE);
+	if (bus_space_map(memt, 0xb8000, VGA_FB_SIZE, 0, &memh_fb)) {
+		got_memh = 0;
+		goto bad;
+	}
+	fb = bus_space_vaddr(memt, memh_fb);
 
 	/*
 	 * Generic parts of the initialization...
@@ -134,7 +174,17 @@ check_for_vga()
 	for (i = 56; *nbd; i += 2)
 		fb[i] = *nbd++;
 	
-	return (1);
+	rv = 1;
+	vga_iot  = iot;
+	vga_memt = memt;
+	rv = tags_valid = 1;
+
+bad:
+	if (got_memh)
+		bus_space_unmap(memt, memh_fb, VGA_FB_SIZE);
+	if (got_ioh)
+		bus_space_unmap(iot, ioh_regs, VGA_REG_SIZE);
+	return (rv);
 }
 
 /*
