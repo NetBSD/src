@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.55 1997/02/04 05:08:29 perry Exp $
+#	$NetBSD: Makefile.amiga,v 1.56 1997/05/22 22:45:37 veego Exp $
 
 # Makefile for NetBSD
 #
@@ -36,7 +36,7 @@ AMIGA=	$S/arch/amiga
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dmc68020 -Damiga
-CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes
+CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
 .if empty(IDENT:M-DM68060)
 CMACHFLAGS=	-m68020
 .else
@@ -46,10 +46,6 @@ CFLAGS=		${DEBUG} ${CWARNFLAGS} ${COPTS} ${CMACHFLAGS} -msoft-float
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
 STRIPFLAGS=	-d
-
-HOSTED_CC=	${CC}
-HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
-HOSTED_CFLAGS=	${CFLAGS}
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
@@ -78,8 +74,6 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
-
-HOSTED_C=	${HOSTED_CC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
 .SUFFIXES: .o .g
 
@@ -118,14 +112,10 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-assym.h: genassym
-	./genassym >assym.h
-
-genassym: genassym.o
-	${CC} -o $@ genassym.o
-
-genassym.o: ${AMIGA}/amiga/genassym.c
-	${HOSTED_C}
+assym.h: ${AMIGA}/amiga/genassym.cf $S/kern/genassym.sh
+	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	    < ${AMIGA}/amiga/genassym.cf > assym.h.tmp && \
+	mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
 	rm -f param.c
@@ -145,7 +135,7 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 clean: cleankernel
 cleankernel:
 	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
-	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
+	    [Ee]rrs linterrs makelinks assym.h
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
@@ -171,9 +161,6 @@ depend: .depend
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${AMIGA}/amiga/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} \
-	    ${AMIGA}/amiga/genassym.c
-
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
@@ -182,7 +169,7 @@ autoconf.o conf.o: Makefile
 uipc_proto.o vfs_conf.o: Makefile 
 
 # depend on maxusers
-genassym.o machdep.o: Makefile
+machdep.o: Makefile
 
 # depend on CPU configuration 
 amiga_init.o locore.o pmap.o sys_machdep.o bzsc.o flsc.o sbic.o sfas.o: Makefile
