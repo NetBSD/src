@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_lfs.c,v 1.4 1996/04/13 05:35:44 cgd Exp $	*/
+/*	$NetBSD: mount_lfs.c,v 1.5 1997/09/15 04:52:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.3 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$NetBSD: mount_lfs.c,v 1.4 1996/04/13 05:35:44 cgd Exp $";
+__RCSID("$NetBSD: mount_lfs.c,v 1.5 1997/09/15 04:52:37 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,8 +65,9 @@ const struct mntopt mopts[] = {
 	{ NULL }
 };
 
-void	usage __P((void));
+int	main __P((int, char *[]));
 void	invoke_cleaner __P((char *));
+void	usage __P((void));
 
 int short_rds, cleaner_debug;
 
@@ -81,7 +82,7 @@ main(argc, argv)
 
 	options = NULL;
 	mntflags = noclean = 0;
-	while ((ch = getopt(argc, argv, "dno:s")) != EOF)
+	while ((ch = getopt(argc, argv, "dno:s")) != -1)
 		switch (ch) {
 		case 'd':
 			cleaner_debug = 1;
@@ -116,7 +117,7 @@ main(argc, argv)
 		args.export.ex_flags = 0;
 
 	if (mount(MOUNT_LFS, fs_name, mntflags, &args))
-		err(1, NULL);
+		err(1, "%s", "");
 
 	if (!noclean)
 		invoke_cleaner(fs_name);

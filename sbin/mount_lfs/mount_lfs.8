@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_lfs.8,v 1.3 1997/05/29 01:48:36 cgd Exp $
+.\"	$NetBSD: mount_lfs.8,v 1.4 1997/09/15 04:52:36 lukem Exp $
 .\"
 .\" Copyright (c) 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,14 +40,14 @@
 .Nm mount_lfs
 .Nd mount a log-structured file system
 .Sh SYNOPSIS
-.Nm mount_lfs
+.Nm
 .Op Fl dns
 .Op Fl o Ar options
 .Ar special
 .Ar node
 .Sh DESCRIPTION
 The
-.Nm mount_lfs
+.Nm
 command attaches a log-structured file system
 .Ar special
 device on to the file system tree at the point
@@ -123,5 +123,5 @@ to read data in small chunks when cleaning the file system.
 .Re
 .Sh HISTORY
 The
-.Nm mount_lfs
+.Nm
 function first appeared in 4.4BSD.
