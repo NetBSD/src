@@ -14,12 +14,11 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
- *	$Id: scsiconf.h,v 1.4.3.1 1993/11/24 05:03:08 mycroft Exp $
+ *	$Id: scsiconf.h,v 1.4.3.2 1993/11/24 09:45:12 mycroft Exp $
  */
 #ifndef	SCSI_SCSICONF_H
 #define SCSI_SCSICONF_H 1
 typedef	int			boolean;
-typedef	int			errval;
 typedef	long int		int32;
 typedef	short int		int16;
 typedef	char 			int8;
@@ -103,7 +102,7 @@ struct scsi_adapter
  */
 struct scsi_device
 {
-/*  4*/	errval	(*err_handler)(); /* returns -1 to say err processing complete */
+/*  4*/	int	(*err_handler)(); /* returns -1 to say err processing complete */
 /*  8*/	void	(*start)();
 /* 12*/	int32	(*async)();
 /* 16*/	int32	(*done)();	/* returns -1 to say done processing complete */
@@ -223,28 +222,25 @@ struct scsi_xfer
 #define XS_SWTIMEOUT	0x04	/* The Timeout reported was caught by SW  */
 #define XS_BUSY		0x08	/* The device busy, try again later?	  */
 
-/* void scsi_attachdevs __P((struct scsi_link *sc_link_proto));*/
-void scsi_attachdevs __P((struct device *parent, struct device *self, void *aux));
-struct scsi_xfer *get_xs( struct scsi_link *sc_link, u_int32 flags);
-void free_xs(struct scsi_xfer *xs, struct scsi_link *sc_link,u_int32 flags);
-u_int32 scsi_size( struct scsi_link *sc_link,u_int32 flags);
-errval scsi_test_unit_ready( struct scsi_link *sc_link, u_int32 flags);
-errval scsi_change_def( struct scsi_link *sc_link, u_int32 flags);
-errval scsi_inquire( struct scsi_link *sc_link,
-			struct scsi_inquiry_data *inqbuf, u_int32 flags);
-errval scsi_prevent( struct scsi_link *sc_link, u_int32 type,u_int32 flags);
-errval scsi_start_unit( struct scsi_link *sc_link, u_int32 flags);
-void scsi_done(struct scsi_xfer *xs);
-errval scsi_scsi_cmd( struct scsi_link *sc_link, struct scsi_generic *scsi_cmd,
+struct scsi_xfer *get_xs __P((struct scsi_link *, u_int32));
+void free_xs __P((struct scsi_xfer *, struct scsi_link *, u_int32));
+u_int32 scsi_size __P((struct scsi_link *, u_int32));
+int scsi_test_unit_ready __P((struct scsi_link *, u_int32));
+int scsi_change_def __P((struct scsi_link *, u_int32));
+int scsi_inquire __P((struct scsi_link *, struct scsi_inquiry_data *, u_int32));
+int scsi_prevent __P((struct scsi_link *, u_int32, u_int32));
+int scsi_start_unit __P((struct scsi_link *, u_int32));
+void scsi_done __P((struct scsi_xfer *));
+int scsi_scsi_cmd __P((struct scsi_link *, struct scsi_generic *,
 			u_int32 cmdlen, u_char *data_addr,
 			u_int32 datalen, u_int32 retries,
 			u_int32 timeout, struct buf *bp,
-			u_int32 flags);
-errval	scsi_do_ioctl __P((struct scsi_link *sc_link, int cmd, caddr_t addr, int f));
+			u_int32 flags));
+int scsi_do_ioctl __P((struct scsi_link *, int, caddr_t, int));
 
-void show_scsi_xs(struct scsi_xfer *xs);
-void show_scsi_cmd(struct scsi_xfer *xs);
-void show_mem(unsigned char * , u_int32);
+void show_scsi_xs __P((struct scsi_xfer *));
+void show_scsi_cmd __P((struct scsi_xfer *));
+void show_mem __P((unsigned char *, u_int32));
 
 void	lto3b __P((int val, u_char *bytes));
 int	_3btol __P((u_char *bytes));

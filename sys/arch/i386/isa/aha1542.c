@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1542.c,v 1.14.2.1 1993/11/24 05:38:59 mycroft Exp $
+ *	$Id: aha1542.c,v 1.14.2.2 1993/11/24 09:45:42 mycroft Exp $
  */
 
 /*
@@ -986,11 +986,8 @@ aha_find(aha)
 	 * Initialize memory transfer speed
 	 * Not compiled in by default because it breaks some machines 
 	 */
-	if (!(aha_set_bus_speed(aha))) {
+	if (!(aha_set_bus_speed(aha)))
 		return EIO;
-	}
-#else
-	printf ("\n");
 #endif	/*TUNE_1542*/
 
 	return 0;

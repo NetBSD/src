@@ -14,7 +14,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
- *      $Id: scsiconf.c,v 1.9.3.1 1993/11/24 05:03:06 mycroft Exp $
+ *      $Id: scsiconf.c,v 1.9.3.2 1993/11/24 09:45:09 mycroft Exp $
  */
 
 #include <sys/types.h>
@@ -73,32 +73,6 @@ extern  ukattach();
 #endif	/* NUK */
 
 /*
- * The structure of pre-configured devices that might be turned
- * off and therefore may not show up
- */
-struct predefined {
-	u_char  scsibus;
-	u_char  dev;
-	u_char  lu;
-	        errval(*attach_rtn) ();
-	char   *devname;
-	char    flags;
-} pd[] =
-
-{
-#ifdef EXAMPLE_PREDEFINE
-#if NSD > 0
-	{
-		0, 0, 0, sdattach, "sd", 0
-	},			/* define a disk at scsibus=0 dev=0 lu=0 */
-#endif	/* NSD */
-#endif	/* EXAMPLE_PREDEFINE */
-	{
-		0, 9, 9
-	} /*illegal dummy end entry */
-};
-
-/*
  * The structure of known drivers for autoconfiguration
  */
 struct scsidevs {
@@ -107,7 +81,7 @@ struct scsidevs {
 	char   *manufacturer;
 	char   *model;
 	char   *version;
-	        errval(*attach_rtn) ();
+	        int(*attach_rtn) ();
 	char   *devname;
 	char    flags;		/* 1 show my comparisons during boot(debug) */
 };
@@ -185,10 +159,9 @@ static struct scsidevs knowndevs[] =
 /*
  * Declarations
  */
-struct predefined *scsi_get_predef();
 struct scsidevs *scsi_probedev();
 struct scsidevs *selectdev();
-errval scsi_probe_bus __P((int bus, int targ, int lun));
+int scsi_probe_bus __P((int bus, int targ, int lun));
 
 struct scsi_device probe_switch =
 {
@@ -256,10 +229,11 @@ scsibusattach(parent, self, aux)
  * -1 requests all set up scsi busses.
  * targ and lun optionally narrow the search if not -1
  */
-errval
+int
 scsi_probe_busses(bus, targ, lun)
 	int bus, targ, lun;
 {
+
 	if (bus == -1) {
 		for (bus = 0; bus < scsibuscd.cd_ndevs; bus++)
 			if (scsibuscd.cd_devs[bus])
@@ -274,7 +248,7 @@ scsi_probe_busses(bus, targ, lun)
  * Probe the requested scsi bus. It must be already set up.
  * targ and lun optionally narrow the search if not -1
  */
-errval
+int
 scsi_probe_bus(bus, targ, lun)
 	int bus, targ, lun;
 {
@@ -283,7 +257,6 @@ scsi_probe_bus(bus, targ, lun)
 	struct scsi_link *sc_link_proto;
 	u_int8  scsi_addr ;
 	struct scsidevs *bestmatch = NULL;
-	struct predefined *predef = NULL;
 	struct scsi_link *sc_link = NULL;
 	boolean maybe_more;
 
@@ -305,7 +278,7 @@ scsi_probe_bus(bus, targ, lun)
 		maxtarg = mintarg = targ;
 	}
 
-	if (lun == -1 ){
+	if (lun == -1) {
 		maxlun = 7;
 		minlun = 0;
 	} else {
@@ -343,81 +316,20 @@ scsi_probe_bus(bus, targ, lun)
 			}
 			sc_link->target = targ;
 			sc_link->lun = lun;
-			predef = scsi_get_predef(sc_link, &maybe_more);
 			bestmatch = scsi_probedev(sc_link, &maybe_more);
-			if (bestmatch && predef) {	/* both exist */
-				if (bestmatch->attach_rtn
-				    != predef->attach_rtn) {
-					printf("Clash in found/expected devices\n");
-#if NUK > 0
-					if (bestmatch == &unknowndev) {
-						printf("will link in PREDEFINED\n");
-						(*(predef->attach_rtn)) (sc_link);
-					} else 
-#endif	/*NUK*/
-					{
-						printf("will link in FOUND\n");
-						(*(bestmatch->attach_rtn)) (sc_link);
-					}
-				} else {
-					(*(bestmatch->attach_rtn)) (sc_link);
-				}
-			}
-			if (bestmatch && !predef)	/* just FOUND */
+			if (bestmatch) {
 				(*(bestmatch->attach_rtn)) (sc_link);
-			if (!bestmatch && predef)	/* just predef */
-				(*(predef->attach_rtn)) (sc_link);
-			if (bestmatch || predef) {	/* one exists */
 				scsi->sc_link[targ][lun] = sc_link;
 				sc_link = NULL;		/* it's been used */
 			}
-			if (!(maybe_more)) {	/* nothing suggests we'll find more */
+			if (!(maybe_more))	/* nothing suggests we'll find more */
 				break;	/* nothing here, skip to next targ */
-			}
 			/* otherwise something says we should look further */
 		}
 	}
-	if (sc_link) {
+	if (sc_link)
 		free(sc_link, M_TEMP);
-	}
 	return 0;
-}
-
-/*
- * given a target and lu, check if there is a predefined device for
- * that address
- */
-struct predefined *
-scsi_get_predef(sc_link, maybe_more)
-	struct scsi_link *sc_link;
-	boolean *maybe_more;
-{
-	u_int8  unit = sc_link->scsibus;
-	u_int8  target = sc_link->target;
-	u_int8  lu = sc_link->lun;
-	struct scsi_adapter *scsi_adapter = sc_link->adapter;
-	u_int32 upto, numents;
-
-	numents = (sizeof(pd) / sizeof(struct predefined)) - 1;
-
-	for (upto = 0; upto < numents; upto++) {
-		if (pd[upto].scsibus != unit)
-			continue;
-		if (pd[upto].dev != target)
-			continue;
-		if (pd[upto].lu != lu)
-			continue;
-
-		printf("%s%d targ %d lun %d: <%s> - PRECONFIGURED -\n"
-		    ,scsi_adapter->name
-		    ,unit
-		    ,target
-		    ,lu
-		    ,pd[upto].devname);
-		*maybe_more = pd[upto].flags & SC_MORE_LUS;
-		return &(pd[upto]);
-	}
-	return NULL;
 }
 
 /*
