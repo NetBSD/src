@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.60 2000/03/30 09:27:12 augustss Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.61 2000/04/15 04:38:07 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -995,9 +995,17 @@ again:
 			break;
 
 		case KERN_PROC_TTY:
-			if ((p->p_flag & P_CONTROLT) == 0 ||
-			    p->p_session->s_ttyp == NULL ||
-			    p->p_session->s_ttyp->t_dev != (dev_t)name[1])
+			if (name[1] == KERN_PROC_TTY_REVOKE) {
+				if ((p->p_flag & P_CONTROLT) == 0 ||
+				    p->p_session->s_ttyp == NULL ||
+				    p->p_session->s_ttyvp != NULL)
+					continue;
+			} else if ((p->p_flag & P_CONTROLT) == 0 ||
+			    p->p_session->s_ttyp == NULL) {
+				if ((dev_t)name[1] != KERN_PROC_TTY_NODEV)
+					continue;
+			} else if (p->p_session->s_ttyp->t_dev !=
+			    (dev_t)name[1])
 				continue;
 			break;
 
@@ -1056,7 +1064,7 @@ fill_eproc(p, ep)
 	struct tty *tp;
 
 	ep->e_paddr = p;
-	ep->e_sess = p->p_pgrp->pg_session;
+	ep->e_sess = p->p_session;
 	ep->e_pcred = *p->p_cred;
 	ep->e_ucred = *p->p_ucred;
 	if (p->p_stat == SIDL || P_ZOMBIE(p)) {
