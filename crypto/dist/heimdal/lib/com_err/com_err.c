@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: com_err.c,v 1.1.1.1 2000/06/16 18:32:19 thorpej Exp $");
+RCSID("$Id: com_err.c,v 1.1.1.1.2.1 2001/04/05 23:25:03 he Exp $");
 #endif
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,7 +43,10 @@ RCSID("$Id: com_err.c,v 1.1.1.1 2000/06/16 18:32:19 thorpej Exp $");
 
 struct et_list *_et_list = NULL;
 
-
+static void
+default_proc (const char *whoami, long code, const char *fmt, va_list args)
+	__attribute__((__format__(__printf__, 3, 0)));
+	
 const char *
 error_message (long code)
 {
