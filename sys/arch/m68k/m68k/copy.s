@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.s,v 1.23 1996/02/02 02:36:44 mycroft Exp $	*/
+/*	$NetBSD: copy.s,v 1.24 1996/07/20 01:53:42 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Charles Hannum.
@@ -461,6 +461,7 @@ Lsdone:
  *
  * Works for counts up to 128K.
  */
+ALTENTRY(memmove, _memcpy)
 ENTRY(memcpy)
 	movl	sp@(12),d0		| get count
 	jeq	Lbccpyexit		| if zero, return
