@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.44 2002/02/27 13:55:28 lukem Exp $
+#  $NetBSD: build.sh,v 1.45 2002/02/27 21:19:08 scw Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -41,7 +41,7 @@ getarch () {
 		pc532)
 			MACHINE_ARCH=ns32k;;
 
-		bebox|prep|sandpoint|walnut|*ppc)
+		bebox|mvmeppc|prep|sandpoint|walnut|*ppc)
 			MACHINE_ARCH=powerpc;;
 
 		evbsh3|mmeye)
@@ -347,7 +347,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.44 2002/02/27 13:55:28 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.45 2002/02/27 21:19:08 scw Exp $
 #
 
 EOF
