@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.4,v 1.4 1997/01/16 06:50:16 mikel Exp $
+.\"	$NetBSD: route.4,v 1.5 1997/03/11 00:10:16 cjs Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -202,17 +202,17 @@ Messages include:
 A message header consists of:
 .Bd -literal
 struct rt_msghdr {
-    u_short rmt_msglen;  /* to skip over non-understood messages */
+    u_short rtm_msglen;  /* to skip over non-understood messages */
     u_char  rtm_version; /* future binary compatibility */
     u_char  rtm_type;    /* message type */
-    u_short rmt_index;   /* index for associated ifp */
+    u_short rtm_index;   /* index for associated ifp */
     int     rtm_flags;   /* flags, incl kern & message, e.g. DONE */
     int     rtm_addrs;   /* bitmask identifying sockaddrs in msg */
-    pid_t   rmt_pid;     /* identify sender */
+    pid_t   rtm_pid;     /* identify sender */
     int     rtm_seq;     /* for sender to identify action */
     int     rtm_errno;   /* why failed */
     int     rtm_use;     /* from rtentry */
-    u_long  rtm_inits;   /* which values we are initializing */
+    u_long  rtm_inits;   /* which metrics we are initializing */
     struct  rt_metrics rtm_rmx;	/* metrics themselves */
 };
 .Ed
