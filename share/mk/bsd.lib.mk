@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.227 2003/07/28 02:29:35 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.228 2003/07/28 04:08:47 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -126,7 +126,7 @@ CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
 APICFLAGS?= -k
 # XXX libraries often need the millicode functions in libgcc.a,
 # so we have to work around the -nostdlib:
-LDADD+= `$(CC) -print-libgcc-file-name`
+LDADD+= `${CC} -print-libgcc-file-name`
 
 .else
 
@@ -163,148 +163,133 @@ CFLAGS+=	${COPTS}
 FFLAGS+=	${FOPTS}
 
 .c.o:
+	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(COPTS) && !empty(COPTS:M*-g*)
-	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
+	mv ${.TARGET}.tmp ${.TARGET}
 .else
-	@echo ${COMPILE.c:Q} ${COPTS.${.IMPSRC:T}:Q} ${CPUFLAGS.${.IMPSRC:T}:Q} ${CPPFLAGS.${.IMPSRC:T}:Q} ${.IMPSRC}
-	@${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
+	${LD} -x -r ${.TARGET}.tmp -o ${.TARGET}
+	rm -f ${.TARGET}.tmp
 .endif
 
 .c.po:
+	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(COPTS) && !empty(COPTS:M*-g*)
-	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}
+	mv ${.TARGET}.tmp ${.TARGET}
 .else
-	@echo ${COMPILE.c:Q} ${COPTS.${.IMPSRC:T}:Q} ${CPUFLAGS.${.IMPSRC:T}:Q} ${CPPFLAGS.${.IMPSRC:T}:Q} -pg ${.IMPSRC} -o ${.TARGET}
-	@${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
+	${LD} -X -r ${.TARGET}.tmp -o ${.TARGET}
+	rm -f ${.TARGET}.tmp
 .endif
 
 .c.so:
+	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(COPTS) && !empty(COPTS:M*-g*)
-	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}
+	mv ${.TARGET}.tmp ${.TARGET}
 .else
-	@echo ${COMPILE.c:Q} ${COPTS.${.IMPSRC:T}:Q} ${CPUFLAGS.${.IMPSRC:T}:Q} ${CPPFLAGS.${.IMPSRC:T}:Q} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}
-	@${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
+	${LD} -x -r ${.TARGET}.tmp -o ${.TARGET}
+	rm -f ${.TARGET}.tmp
 .endif
 
 .c.ln:
 	${LINT} ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} ${CPPFLAGS.${.IMPSRC:T}:M-[-IDU]*} -i ${.IMPSRC}
 
 .cc.o .cpp.o .cxx.o .C.o:
+	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(COPTS) && !empty(COPTS:M*-g*)
-	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
+	mv ${.TARGET}.tmp ${.TARGET}
 .else
-	@echo ${COMPILE.cc:Q} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
-	@${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
+	${LD} -x -r ${.TARGET}.tmp -o ${.TARGET}
+	rm -f ${.TARGET}.tmp
 .endif
 
 .cc.po .cpp.po .cxx.o .C.po:
+	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(COPTS) && !empty(COPTS:M*-g*)
-	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}
+	mv ${.TARGET}.tmp ${.TARGET}
 .else
-	@echo ${COMPILE.cc:Q} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}
-	@${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
+	${LD} -X -r ${.TARGET}.tmp -o ${.TARGET}
+	rm -f ${.TARGET}.tmp
 .endif
 
 .cc.so .cpp.so .cxx.so .C.so:
+	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(COPTS) && !empty(COPTS:M*-g*)
-	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}
+	mv ${.TARGET}.tmp ${.TARGET}
 .else
-	@echo ${COMPILE.cc:Q} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CPICFLAGS} ${.IMPSRC} -o ${.TARGET}
-	@${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
+	${LD} -x -r ${.TARGET}.tmp -o ${.TARGET}
+	rm -f ${.TARGET}.tmp
 .endif
 
 .f.o:
+	${COMPILE.f} ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(FOPTS) && !empty(FOPTS:M*-g*)
-	${COMPILE.f} ${.IMPSRC}
+	mv ${.TARGET}.tmp ${.TARGET}
 .else
-	@echo ${COMPILE.f:Q} ${.IMPSRC}
-	@${COMPILE.f} ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
+	${LD} -x -r ${.TARGET}.tmp -o ${.TARGET}
+	rm -f ${.TARGET}.tmp
 .endif
 
 .f.po:
+	${COMPILE.f} -pg ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(FOPTS) && !empty(FOPTS:M*-g*)
-	${COMPILE.f} -pg ${.IMPSRC} -o ${.TARGET}
+	mv ${.TARGET}.tmp ${.TARGET}
 .else
-	@echo ${COMPILE.f:Q} -pg ${.IMPSRC} -o ${.TARGET}
-	@${COMPILE.f} -pg ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
+	${LD} -X -r ${.TARGET}.tmp -o ${.TARGET}
+	rm -f ${.TARGET}.tmp
 .endif
 
 .f.so:
+	${COMPILE.f} ${FPICFLAGS} ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(FOPTS) && !empty(FOPTS:M*-g*)
-	${COMPILE.f} ${FPICFLAGS} ${.IMPSRC} -o ${.TARGET}
+	mv ${.TARGET}.tmp ${.TARGET}
 .else
-	@echo ${COMPILE.f:Q} ${FPICFLAGS} ${.IMPSRC} -o ${.TARGET}
-	@${COMPILE.f} ${FPICFLAGS} ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
+	${LD} -x -r ${.TARGET}.tmp -o ${.TARGET}
+	rm -f ${.TARGET}.tmp
 .endif
 
 .f.ln:
 	@echo Skipping lint for Fortran libraries.
 
 .m.o:
+	${COMPILE.m} ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(OBJCFLAGS) && !empty(OBJCFLAGS:M*-g*)
-	${COMPILE.m} ${.IMPSRC}
+	mv ${.TARGET}.tmp ${.TARGET}
 .else
-	@echo ${COMPILE.m:Q} ${.IMPSRC}
-	@${COMPILE.m} ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
+	${LD} -x -r ${.TARGET}.tmp -o ${.TARGET}
+	rm -f ${.TARGET}.tmp
 .endif
 
 .m.po:
+	${COMPILE.m} -pg ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(OBJCFLAGS) && !empty(OBJCFLAGS:M*-g*)
-	${COMPILE.m} -pg ${.IMPSRC} -o ${.TARGET}
+	mv ${.TARGET}.tmp ${.TARGET}
 .else
-	@echo ${COMPILE.m:Q} -pg ${.IMPSRC} -o ${.TARGET}
-	@${COMPILE.m} -pg ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
+	${LD} -X -r ${.TARGET}.tmp -o ${.TARGET}
+	rm -f ${.TARGET}.tmp
 .endif
 
 .m.so:
+	${COMPILE.m} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(OBJCFLAGS) && !empty(OBJCFLAGS:M*-g*)
-	${COMPILE.m} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}
+	mv ${.TARGET}.tmp ${.TARGET}
 .else
-	@echo ${COMPILE.m:Q} ${CPICFLAGS} ${.IMPSRC} -o ${.TARGET}
-	@${COMPILE.m} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
+	${LD} -x -r ${.TARGET}.tmp -o ${.TARGET}
+	rm -f ${.TARGET}.tmp
 .endif
 
 .S.o .s.o:
-	@echo ${COMPILE.S:Q} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC}
-	@${COMPILE.S} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
+	${COMPILE.S} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.tmp
+	${LD} -x -r ${.TARGET}.tmp -o ${.TARGET}
+	rm -f ${.TARGET}.tmp
 
 .S.po .s.po:
-	@echo ${COMPILE.S:Q} -DGPROF -DPROF ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}
-	@${COMPILE.S} -DGPROF -DPROF ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
+	${COMPILE.S} -DGPROF -DPROF ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.tmp
+	${LD} -X -r ${.TARGET}.tmp -o ${.TARGET}
+	rm -f ${.TARGET}.tmp
 
 .S.so .s.so:
-	@echo ${COMPILE.S:Q} ${CAPICFLAGS} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}
-	@${COMPILE.S} ${CAPICFLAGS} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
+	${COMPILE.S} ${CAPICFLAGS} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.tmp
+	${LD} -x -r ${.TARGET}.tmp -o ${.TARGET}
+	rm -f ${.TARGET}.tmp
 
 .if defined(LIB)
 .if ${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != "") \
@@ -367,7 +352,7 @@ realall: ${SRCS} ${ALLOBJS:O} ${_LIBS}
 
 __archivebuild: .USE
 	@rm -f ${.TARGET}
-	@${AR} cq ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
+	${AR} cq ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
 	${RANLIB} ${.TARGET}
 
 __archiveinstall: .USE
@@ -394,14 +379,14 @@ lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} \
 	@echo building shared ${LIB} library \(version ${SHLIB_FULLVERSION}\)
 	@rm -f lib${LIB}.so.${SHLIB_FULLVERSION}
 .if defined(DESTDIR)
-	$(CC) -Wl,-nostdlib -B${_GCC_CRTDIR}/ -B${DESTDIR}/usr/lib/ \
+	${CC} -Wl,-nostdlib -B${_GCC_CRTDIR}/ -B${DESTDIR}/usr/lib/ \
 	    -Wl,-x -shared ${SHLIB_SHFLAGS} -o ${.TARGET} \
 	    -Wl,--whole-archive ${SOLIB} \
 	    -Wl,--no-whole-archive ${LDADD} \
 	    -L${_GCC_LIBGCCDIR} -L${DESTDIR}${_LIBSODIR} -L${DESTDIR}${LIBDIR} \
 	    -R${_LIBSODIR} -R${LIBDIR}
 .else
-	$(CC) -Wl,-x -shared ${SHLIB_SHFLAGS} -o ${.TARGET} \
+	${CC} -Wl,-x -shared ${SHLIB_SHFLAGS} -o ${.TARGET} \
 	    -Wl,--whole-archive ${SOLIB} -Wl,--no-whole-archive ${LDADD}
 .endif
 .if ${OBJECT_FMT} == "ELF"
@@ -420,9 +405,9 @@ llib-l${LIB}.ln: ${LOBJS}
 	@echo building llib-l${LIB}.ln
 	@rm -f llib-l${LIB}.ln
 .if defined(DESTDIR)
-	@${LINT} -C${LIB} ${.ALLSRC} -L${DESTDIR}/usr/libdata ${LLIBS}
+	${LINT} -C${LIB} ${.ALLSRC} -L${DESTDIR}/usr/libdata ${LLIBS}
 .else
-	@${LINT} -C${LIB} ${.ALLSRC} ${LLIBS}
+	${LINT} -C${LIB} ${.ALLSRC} ${LLIBS}
 .endif
 .endif
 
@@ -431,6 +416,7 @@ cleanlib:
 	rm -f lib${LIB}.a ${OBJS}
 	rm -f lib${LIB}_p.a ${POBJS}
 	rm -f lib${LIB}_pic.a lib${LIB}.so.* lib${LIB}.so ${SOBJS}
+	rm -f ${OBJS:=.tmp} ${POBJS:=.tmp} ${SOBJS:=.tmp}
 	rm -f llib-l${LIB}.ln ${LOBJS}
 
 .if defined(SRCS)
