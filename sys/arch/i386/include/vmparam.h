@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vmparam.h	5.9 (Berkeley) 5/12/91
- *	$Id: vmparam.h,v 1.13 1994/01/05 16:02:40 mycroft Exp $
+ *	$Id: vmparam.h,v 1.14 1994/01/16 01:36:07 cgd Exp $
  */
 
 
@@ -86,7 +86,7 @@
  * Size of shared memory map
  */
 #ifndef SHMMAXPGS
-#define SHMMAXPGS	64		/* XXXX should be 1024 */
+#define SHMMAXPGS	1024
 #endif
 
 /*
