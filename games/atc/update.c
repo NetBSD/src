@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.6 1997/10/10 02:07:34 lukem Exp $	*/
+/*	$NetBSD: update.c,v 1.7 1998/09/11 12:53:29 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -50,7 +50,7 @@
 #if 0
 static char sccsid[] = "@(#)update.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: update.c,v 1.6 1997/10/10 02:07:34 lukem Exp $");
+__RCSID("$NetBSD: update.c,v 1.7 1998/09/11 12:53:29 hubertf Exp $");
 #endif
 #endif not lint
 
@@ -377,6 +377,7 @@ addplane()
 
 PLANE	*
 findplane(n)
+	int	n;
 {
 	PLANE	*pp;
 
