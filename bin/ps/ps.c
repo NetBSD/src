@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.18 1997/04/21 05:28:43 mrg Exp $	*/
+/*	$NetBSD: ps.c,v 1.19 1997/07/20 20:37:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1990, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: ps.c,v 1.18 1997/04/21 05:28:43 mrg Exp $";
+__RCSID("$NetBSD: ps.c,v 1.19 1997/07/20 20:37:57 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,6 +93,7 @@ static int	 pscomp __P((const void *, const void *));
 static void	 saveuser __P((KINFO *));
 static void	 scanvars __P((void));
 static void	 usage __P((void));
+int		 main __P((int, char *[]));
 
 char dfmt[] = "pid tt state time command";
 char jfmt[] = "user pid ppid pgid sess jobc state tt time command";
@@ -307,7 +308,7 @@ main(argc, argv)
 	if ((kp = kvm_getprocs(kd, what, flag, &nentries)) == 0)
 		errx(1, "%s", kvm_geterr(kd));
 	if ((kinfo = malloc(nentries * sizeof(*kinfo))) == NULL)
-		err(1, NULL);
+		err(1, "%s", "");
 	for (i = nentries; --i >= 0; ++kp) {
 		kinfo[i].ki_p = kp;
 		if (needuser)
@@ -434,7 +435,7 @@ kludge_oldps_options(s)
 
 	len = strlen(s);
 	if ((newopts = ns = malloc(len + 3)) == NULL)
-		err(1, NULL);
+		err(1, "%s", "");
 	/*
 	 * options begin with '-'
 	 */
@@ -466,8 +467,8 @@ kludge_oldps_options(s)
 	 * if there's a trailing number, and not a preceding 'p' (pid) or
 	 * 't' (tty) flag, then assume it's a pid and insert a 'p' flag.
 	 */
-	if (isdigit(*cp) && (cp == s || cp[-1] != 't' && cp[-1] != 'p' &&
-	    (cp - 1 == s || cp[-2] != 't')))
+	if (isdigit(*cp) && (cp == s || (cp[-1] != 't' && cp[-1] != 'p' &&
+	    (cp - 1 == s || cp[-2] != 't'))))
 		*ns++ = 'p';
 	/* and append the number */
 	(void)strcpy(ns, cp);		/* XXX strcpy is safe */

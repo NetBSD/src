@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.32 1997/03/19 05:45:27 mycroft Exp $	*/
+/*	$NetBSD: print.c,v 1.33 1997/07/20 20:37:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$NetBSD: print.c,v 1.32 1997/03/19 05:45:27 mycroft Exp $";
+__RCSID("$NetBSD: print.c,v 1.33 1997/07/20 20:37:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,6 +80,7 @@ extern kvm_t *kd;
 extern int needenv, needcomm, commandonly;
 
 static char *cmdpart __P((char *));
+static void  printval __P((char *, VAR *));
 
 #define	min(a,b)	((a) <= (b) ? (a) : (b))
 #define	max(a,b)	((a) >= (b) ? (a) : (b))
@@ -134,7 +136,7 @@ command(ki, ve)
 		left = -1;
 	if (needenv) {
 		argv = kvm_getenvv(kd, ki->ki_p, termwidth);
-		if (p = argv) {
+		if ((p = argv) != NULL) {
 			while (*p) {
 				fmt_puts(*p, &left);
 				p++;
@@ -145,7 +147,7 @@ command(ki, ve)
 	if (needcomm) {
 		if (!commandonly) {
 			argv = kvm_getargv(kd, ki->ki_p, termwidth);
-			if (p = argv) {
+			if ((p = argv) != NULL) {
 				while (*p) {
 					fmt_puts(*p, &left);
 					p++;
@@ -717,7 +719,8 @@ printval(bp, v)
 	if (v->flag & LJUST)
 		*cp++ = '-';
 	*cp++ = '*';
-	while (*cp++ = *fcp++);
+	while ((*cp++ = *fcp++) != '\0')
+		continue;
 
 	/*
 	 * Note that the "INF127" check is nonsensical for types

@@ -3,6 +3,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <vis.h>
+#include <sys/resource.h>
+#include "ps.h"
+#include "extern.h"
 
 void
 fmt_puts(s, leftp)
