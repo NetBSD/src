@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.16 2002/01/21 12:59:50 ichiro Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.17 2002/01/22 02:09:11 ichiro Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $Id: wiconfig.c,v 1.16 2002/01/21 12:59:50 ichiro Exp $";
+	"@(#) $Id: wiconfig.c,v 1.17 2002/01/22 02:09:11 ichiro Exp $";
 #endif
 
 struct wi_table {
@@ -109,12 +109,44 @@ static void wi_dumpinfo		__P((char *));
 static void wi_setkeys		__P((char *, char *, int));
 static void wi_printkeys	__P((struct wi_req *));
 static void wi_dumpstats	__P((char *));
+static int  get_if_flags	__P((int, const char *));
+static int  set_if_flags	__P((int, const char *, int));
 static void usage		__P((void));
 static struct wi_table *
 	wi_optlookup __P((struct wi_table *, int));
 static int  wi_hex2int(char c);
 static void wi_str2key		__P((char *, struct wi_key *));
 int main __P((int argc, char **argv));
+
+static int get_if_flags(s, name)
+	int		s;
+	const char	*name;
+{
+	struct ifreq	ifreq;
+	int		flags;
+
+	strncpy(ifreq.ifr_name, name, sizeof(ifreq.ifr_name));
+	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifreq) == -1)
+		  err(1, "SIOCGIFFLAGS");
+	flags = ifreq.ifr_flags;
+
+	return flags;
+}
+
+static int set_if_flags(s, name, flags)
+	int		s;
+	const char	*name;
+	int		flags;
+{
+	struct ifreq ifreq;
+
+	ifreq.ifr_flags = flags;
+	strncpy(ifreq.ifr_name, name, sizeof(ifreq.ifr_name));
+	if (ioctl(s, SIOCSIFFLAGS, (caddr_t)&ifreq) == -1)
+		  err(1, "SIOCSIFFLAGS");
+
+	return 0;
+}
 
 static void wi_apscan(iface)
 	char			*iface;
@@ -124,11 +156,20 @@ static void wi_apscan(iface)
 	int			s;
 	int			naps, rate;
 	int			retries = 10;
+	int			flags;
 	struct wi_apinfo	*w;
 	int			i, j;
 
 	if (iface == NULL)
 		errx(1, "must specify interface name");
+
+	s = socket(AF_INET, SOCK_DGRAM, 0);
+	if (s == -1)
+		err(1, "socket");
+	flags = get_if_flags(s, iface);
+	if ((flags & IFF_UP) == 0)
+		flags = set_if_flags(s, iface, flags | IFF_UP);
+
 	memset((char *)&wreq, 0, sizeof(wreq));
 
 	wreq.wi_type = WI_RID_SCAN_APS;
@@ -154,12 +195,8 @@ static void wi_apscan(iface)
         strcpy(ifr.ifr_name, iface);
         ifr.ifr_data = (caddr_t)&wreq;
 
-	s = socket(AF_INET, SOCK_DGRAM, 0);
-
-	if (s == -1)
-		err(1, "socket");
-
 	printf("scanning ...");
+	fflush(stdout);
 	while (ioctl(s, SIOCGWAVELAN, &ifr) == -1) {
 		retries--;
 		if (retries >= 0) {
@@ -170,10 +207,10 @@ static void wi_apscan(iface)
 		errno = 0;
 	}
 
-	close(s);
 	if (errno) {
+		set_if_flags(s, iface, flags);
+		close(s);
 		err(1, "ioctl");
-		exit(1);
 	}
 	printf("\nAP Information\n");
 
@@ -232,6 +269,9 @@ static void wi_apscan(iface)
 		}
 		if (rate) printf("\tDataRate [Mbps]:\t\t[ %d ]\n", rate);
 	}
+
+	set_if_flags(s, iface, flags);
+	close(s);
 }
 
 static void wi_getval(iface, wreq)
