@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.c,v 1.14 2003/08/07 11:15:58 agc Exp $	*/
+/*	$NetBSD: keyboard.c,v 1.15 2003/09/12 17:31:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyboard.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: keyboard.c,v 1.14 2003/08/07 11:15:58 agc Exp $");
+__RCSID("$NetBSD: keyboard.c,v 1.15 2003/09/12 17:31:26 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -99,6 +99,7 @@ keyboard(void)
 					move(CMDLINE, 0);
 					break;
 				    case 'Q':
+				    case 'q':
 					command("quit");
 					break;
 				    case ':':
