@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.9 1999/01/11 22:21:30 kleink Exp $	 */
+/* $NetBSD: installboot.c,v 1.10 1999/01/16 18:26:47 he Exp $	 */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -318,7 +318,7 @@ save_ffs(diskdev, bootblkname, bp, size)
 	char *diskdev, *bootblkname, *bp;
 	unsigned int size;
 {
-	ino_t inode;
+	ino_t inode = -2;
 
 	/* do we need the fraglist? */
 	if (size > fraglist->loadsz * DEV_BSIZE) {
