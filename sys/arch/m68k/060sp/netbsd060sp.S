@@ -1,5 +1,5 @@
 #
-# $NetBSD: netbsd060sp.S,v 1.4 1997/09/28 12:57:57 is Exp $
+# $NetBSD: netbsd060sp.S,v 1.5 1999/01/30 21:54:49 is Exp $
 #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
@@ -170,7 +170,6 @@ dmrbu:
 
 dmrbs:
 	moveb	a0@,d0			|# fetch super byte
-	clrl	d1			|# return success
 	rts
 
 #
@@ -237,7 +236,6 @@ dmrlu:
 	bra	Lfdone
 dmrls:
 	movel	a0@,d0			|# fetch super longword
-	clrl	d1			|# return success
 	rts
 
 #
