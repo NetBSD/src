@@ -1,4 +1,4 @@
-/* $NetBSD: md_root.c,v 1.1 1998/11/17 22:41:06 jonathan Exp $ */
+/* $NetBSD: md_root.c,v 1.2 1999/03/17 18:59:23 sommerfe Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -30,13 +30,15 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.1 1998/11/17 22:41:06 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.2 1999/03/17 18:59:23 sommerfe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
 
 #include <dev/md.h>
+
+#include "opt_mdsize.h"
 
 extern int boothowto;
 

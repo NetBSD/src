@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.61 1999/03/06 01:29:53 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.62 1999/03/17 18:59:21 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -95,6 +95,7 @@
 
 #include "ipkdb.h"
 #include "md.h"
+#include "opt_mdsize.h"
 
 #if defined(UVM)
 vm_map_t exec_map = NULL;
