@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.xxb,v 1.1 2003/05/23 21:56:39 leo Exp $
+#	$NetBSD: Makefile.xxb,v 1.2 2003/10/28 11:35:00 he Exp $
 
 PROG=	xxboot.ahdi
-SRCS=	xxboot.ahdi.s
+SRCS=	xxboot.ahdi.S
 NOMAN=	# defined
 LIBCRT0=
 .PATH: ${.CURDIR}/..

@@ -1,4 +1,4 @@
-/*	$NetBSD: xxboot.ahdi.s,v 1.6 2002/04/15 09:29:59 leo Exp $	*/
+/*	$NetBSD: xxboot.ahdi.S,v 1.1 2003/10/28 11:35:00 he Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
