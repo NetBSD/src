@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.1 2001/05/11 03:22:21 thorpej Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.2 2001/06/07 12:20:42 rafal Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -141,8 +141,9 @@ struct sq_action_trace {
 	int freebuf;
 };
 
+#define SQ_TRACEBUF_SIZE	100
 int sq_trace_idx = 0;
-struct sq_action_trace sq_trace[100];
+struct sq_action_trace sq_trace[SQ_TRACEBUF_SIZE];
 
 void sq_trace_dump(struct sq_softc* sc);
 
@@ -151,7 +152,7 @@ void sq_trace_dump(struct sq_softc* sc);
 	sq_trace[sq_trace_idx].bufno = (buf);				\
 	sq_trace[sq_trace_idx].status = (stat);				\
 	sq_trace[sq_trace_idx].freebuf = (free);			\
-	if (++sq_trace_idx == 100) {					\
+	if (++sq_trace_idx == SQ_TRACEBUF_SIZE) {			\
 		bzero(&sq_trace, sizeof(sq_trace));			\
 		sq_trace_idx = 0;					\
 	}								\
@@ -288,8 +289,7 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = sq_start;
 	ifp->if_ioctl = sq_ioctl;
 	ifp->if_watchdog = sq_watchdog;
-	ifp->if_flags = 
-		IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_NOTRAILERS;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
@@ -376,14 +376,17 @@ sq_init(struct ifnet *ifp)
 	/* Set up HPC ethernet DMA config */
 	reg = bus_space_read_4(sc->sc_hpct, sc->sc_hpch, HPC_ENETR_DMACFG);
 	bus_space_write_4(sc->sc_hpct, sc->sc_hpch, HPC_ENETR_DMACFG,
-						    reg | 0xe000);
+			    	reg | ENETR_DMACFG_FIX_RXDC | 
+				ENETR_DMACFG_FIX_INTR | 
+				ENETR_DMACFG_FIX_EOP);
 
 	/* Pass the start of the receive ring to the HPC */
         bus_space_write_4(sc->sc_hpct, sc->sc_hpch, HPC_ENETR_NDBP, 
 						    SQ_CDRXADDR(sc, 0));
 
 	/* And turn on the HPC ethernet receive channel */
-	bus_space_write_4(sc->sc_hpct, sc->sc_hpch, HPC_ENETR_CTL, 0x200);
+	bus_space_write_4(sc->sc_hpct, sc->sc_hpch, HPC_ENETR_CTL, 
+						    ENETR_CTL_ACTIVE);
 
         ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -620,7 +623,7 @@ sq_start(struct ifnet *ifp)
 		status = bus_space_read_4(sc->sc_hpct, sc->sc_hpch, 
 						       HPC_ENETX_CTL);
 
-		if ((status & 0x200) != 0) {
+		if ((status & ENETX_CTL_ACTIVE) != 0) {
 		    SQ_TRACE(SQ_ADD_TO_DMA, firsttx, status, sc->sc_nfreetx);
 
 		    sc->sc_txdesc[SQ_PREVTX(firsttx)].hdd_ctl &=
@@ -635,12 +638,12 @@ sq_start(struct ifnet *ifp)
 
 		    /* Kick DMA channel into life */
 		    bus_space_write_4(sc->sc_hpct, sc->sc_hpch, 
-				      HPC_ENETX_CTL, 0x200);
+				      HPC_ENETX_CTL, ENETX_CTL_ACTIVE);
+		}
 
 		    /* Set a watchdog timer in case the chip flakes out. */
 		    ifp->if_timer = 5;
 		}
-	}
 }
 
 void
@@ -758,10 +761,10 @@ sq_rxintr(struct sq_softc *sc)
 
 	    /* If this is a CPU-owned buffer, we're at the end of the list */
 	    if (sc->sc_rxdesc[i].hdd_ctl & HDD_CTL_OWN) {
+#if 0
 		u_int32_t reg;
 
 		reg = bus_space_read_4(sc->sc_hpct, sc->sc_hpch, HPC_ENETR_CTL);
-#if 0
 		printf("%s: rxintr: done at %d (ctl %08x)\n", 
 				sc->sc_dev.dv_xname, i, reg);
 #endif
@@ -781,12 +784,11 @@ sq_rxintr(struct sq_softc *sc)
 	    pktstat = *((u_int8_t*)m->m_data + framelen + 2);
 
 	    if ((pktstat & RXSTAT_GOOD) == 0) {
-		/* XXXrkb: increment error counters based on error type */
-		printf("%s: rxintr: bad packet, buf %d, stat %02x (dexc ctl "
-		       "%08x)\n", sc->sc_dev.dv_xname, i, pktstat, 
-				  sc->sc_rxdesc[i].hdd_ctl);
+		ifp->if_ierrors++;
 
-	    	sq_dump_buffer((u_int32_t)m->m_data + 2, framelen);
+		if (pktstat & RXSTAT_OFLOW)
+		    printf("%s: receive FIFO overflow\n", sc->sc_dev.dv_xname);
+
 		SQ_INIT_RXDESC(sc, i);
 		continue;
 	    }
@@ -839,13 +841,14 @@ sq_rxintr(struct sq_softc *sc)
 					       HPC_ENETR_CTL);
 
 	/* If receive channel is stopped, restart it... */
-	if ((status & 0x200) == 0) {
+	if ((status & ENETR_CTL_ACTIVE) == 0) {
 	    /* Pass the start of the receive ring to the HPC */
 	    bus_space_write_4(sc->sc_hpct, sc->sc_hpch, 
 			      HPC_ENETR_NDBP, SQ_CDRXADDR(sc, sc->sc_nextrx));
 
 	    /* And turn on the HPC ethernet receive channel */
-	    bus_space_write_4(sc->sc_hpct, sc->sc_hpch, HPC_ENETR_CTL, 0x200);
+	    bus_space_write_4(sc->sc_hpct, sc->sc_hpch, HPC_ENETR_CTL, 
+							ENETR_CTL_ACTIVE);
 	}
 
 	return count;
@@ -862,7 +865,7 @@ sq_txintr(struct sq_softc *sc)
 
 	SQ_TRACE(SQ_TXINTR_ENTER, sc->sc_prevtx, status, sc->sc_nfreetx);
 
-	if ((status & (0x200 | TXSTAT_GOOD)) == 0) {
+	if ((status & (ENETX_CTL_ACTIVE | TXSTAT_GOOD)) == 0) {
 		if (status & TXSTAT_COLL) 
 		    ifp->if_collisions++;
 
@@ -880,15 +883,20 @@ sq_txintr(struct sq_softc *sc)
 
 	i = sc->sc_prevtx;
 	while (sc->sc_nfreetx < SQ_NTXDESC) {
+		/* 
+		 * Check status first so we don't end up with a case of 
+		 * the buffer not being finished while the DMA channel
+		 * has gone idle.
+		 */
+		status = bus_space_read_4(sc->sc_hpct, sc->sc_hpch, 
+							HPC_ENETX_CTL);
+
 		SQ_CDTXSYNC(sc, i, sc->sc_txmap[i]->dm_nsegs,
 				BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 		/* If not yet transmitted, try and start DMA engine again */
 		if ((sc->sc_txdesc[i].hdd_ctl & HDD_CTL_XMITDONE) == 0) {
-		    status = bus_space_read_4(sc->sc_hpct, sc->sc_hpch, 
-							   HPC_ENETX_CTL);
-
-		    if ((status & 0x200) == 0) {
+		    if ((status & ENETX_CTL_ACTIVE) == 0) {
 			SQ_TRACE(SQ_RESTART_DMA, i, status, sc->sc_nfreetx);
 
 			bus_space_write_4(sc->sc_hpct, sc->sc_hpch, 
@@ -896,7 +904,7 @@ sq_txintr(struct sq_softc *sc)
 
 			/* Kick DMA channel into life */
 			bus_space_write_4(sc->sc_hpct, sc->sc_hpch, 
-					  HPC_ENETX_CTL, 0x200);
+					  HPC_ENETX_CTL, ENETX_CTL_ACTIVE);
 
 			/* Set a watchdog timer in case the chip flakes out. */
 			ifp->if_timer = 5;
