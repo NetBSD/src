@@ -1,4 +1,4 @@
-/*	$NetBSD: pppoectl.c,v 1.9 2002/09/01 09:42:05 martin Exp $	*/
+/*	$NetBSD: pppoectl.c,v 1.10 2002/09/01 11:28:07 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Joerg Wunsch
@@ -414,7 +414,8 @@ usage(void)
             "                      [query-dns=3]\n"
 	    "           to set authentication names, passwords\n"
 	    "           and (optional) paramaters\n"
-	    "       %s [-v] ifname lcp-timeout=ms|idle-timeout=s|max-auth-failure=count\n"
+	    "       %s [-v] ifname lcp-timeout=ms|idle-timeout=s|\n"
+	    "                      max-auth-failure=count|clear-auth-failure\n"
 	    "           to set general parameters\n"
 	    "   or\n"
 	    "       %s -e ethernet-ifname ifname\n"
