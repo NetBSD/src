@@ -53,8 +53,6 @@ static boolean elf_vax_finish_dynamic_symbol
 	   Elf_Internal_Sym *));
 static boolean elf_vax_finish_dynamic_sections
   PARAMS ((bfd *, struct bfd_link_info *));
-static void elf_vax_post_process_headers
-  PARAMS ((bfd *, struct bfd_link_info *));
 
 
 static boolean elf32_vax_set_private_flags
@@ -67,29 +65,228 @@ static boolean elf32_vax_print_private_bfd_data
   PARAMS ((bfd *, PTR));
 
 static reloc_howto_type howto_table[] = {
-  HOWTO(R_VAX_NONE,       0, 0, 0, false,0, complain_overflow_dont,     bfd_elf_generic_reloc, "R_VAX_NONE",      false, 0, 0x00000000, false),
-  HOWTO(R_VAX_32,         0, 2,32, false,0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_VAX_32",        false, 0, 0xffffffff, false),
-  HOWTO(R_VAX_16,         0, 1,16, false,0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_VAX_16",        false, 0, 0x0000ffff, false),
-  HOWTO(R_VAX_8,          0, 0, 8, false,0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_VAX_8",         false, 0, 0x000000ff, false),
-  HOWTO(R_VAX_PC32,       0, 2,32, true, 0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_VAX_PC32",      false, 0, 0xffffffff, true),
-  HOWTO(R_VAX_PC16,       0, 1,16, true, 0, complain_overflow_signed,   bfd_elf_generic_reloc, "R_VAX_PC16",      false, 0, 0x0000ffff, true),
-  HOWTO(R_VAX_PC8,        0, 0, 8, true, 0, complain_overflow_signed,   bfd_elf_generic_reloc, "R_VAX_PC8",       false, 0, 0x000000ff, true),
-  HOWTO(R_VAX_GOT32,      0, 2,32, true, 0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_VAX_GOT32",     false, 0, 0xffffffff, true),
-  EMPTY_HOWTO(-1),
-  EMPTY_HOWTO(-1),
-  HOWTO(R_VAX_GOT32O,     0, 2,32, false,0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_VAX_GOT32O",    false, 0, 0xffffffff, true),
-  EMPTY_HOWTO(-1),
-  EMPTY_HOWTO(-1),
-  HOWTO(R_VAX_PLT32,      0, 2,32, true, 0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_VAX_PLT32",     false, 0, 0xffffffff, true),
-  EMPTY_HOWTO(-1),
-  EMPTY_HOWTO(-1),
-  HOWTO(R_VAX_PLT32O,     0, 2,32, false,0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_VAX_PLT32O",    false, 0, 0xffffffff, false),
-  EMPTY_HOWTO(-1),
-  EMPTY_HOWTO(-1),
-  HOWTO(R_VAX_COPY,       0, 0, 0, false,0, complain_overflow_dont,     bfd_elf_generic_reloc, "R_VAX_COPY",      false, 0, 0xffffffff, true),
-  HOWTO(R_VAX_GLOB_DAT,   0, 2,32, false,0, complain_overflow_dont,     bfd_elf_generic_reloc, "R_VAX_GLOB_DAT",  false, 0, 0xffffffff, true),
-  HOWTO(R_VAX_JMP_SLOT,   0, 2,32, false,0, complain_overflow_dont,     bfd_elf_generic_reloc, "R_VAX_JMP_SLOT",  false, 0, 0xffffffff, true),
-  HOWTO(R_VAX_RELATIVE,   0, 2,32, false,0, complain_overflow_dont,     bfd_elf_generic_reloc, "R_VAX_RELATIVE",  false, 0, 0xffffffff, true),
+  HOWTO (R_VAX_NONE,		/* type */
+	 0,			/* rightshift */
+	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* bitsize */
+	 false,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_dont, /* complain_on_overflow */
+	 bfd_elf_generic_reloc,	/* special_function */
+	 "R_VAX_NONE",		/* name */
+	 false,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0x00000000,		/* dst_mask */
+	 false),		/* pcrel_offset */
+
+  HOWTO (R_VAX_32,		/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 false,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_bitfield, /* complain_on_overflow */
+	 bfd_elf_generic_reloc,	/* special_function */
+	 "R_VAX_32",		/* name */
+	 false,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 false),		/* pcrel_offset */
+
+  HOWTO (R_VAX_16,		/* type */
+	 0,			/* rightshift */
+	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 false,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_bitfield, /* complain_on_overflow */
+	 bfd_elf_generic_reloc,	/* special_function */
+	 "R_VAX_16",		/* name */
+	 false,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0x0000ffff,		/* dst_mask */
+	 false),		/* pcrel_offset */
+
+  HOWTO (R_VAX_8,		/* type */
+	 0,			/* rightshift */
+	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 8,			/* bitsize */
+	 false,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_bitfield, /* complain_on_overflow */
+	 bfd_elf_generic_reloc,	/* special_function */
+	 "R_VAX_8",		/* name */
+	 false,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0x000000ff,		/* dst_mask */
+	 false),		/* pcrel_offset */
+
+  HOWTO (R_VAX_PC32,		/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 true,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_bitfield, /* complain_on_overflow */
+	 bfd_elf_generic_reloc,	/* special_function */
+	 "R_VAX_PC32",		/* name */
+	 false,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 true),			/* pcrel_offset */
+
+  HOWTO (R_VAX_PC16,		/* type */
+	 0,			/* rightshift */
+	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 true,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 bfd_elf_generic_reloc,	/* special_function */
+	 "R_VAX_PC16",		/* name */
+	 false,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0x0000ffff,		/* dst_mask */
+	 true),			/* pcrel_offset */
+
+  HOWTO (R_VAX_PC8,		/* type */
+	 0,			/* rightshift */
+	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 8,			/* bitsize */
+	 true,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 bfd_elf_generic_reloc,	/* special_function */
+	 "R_VAX_PC8",		/* name */
+	 false,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0x000000ff,		/* dst_mask */
+	 true),			/* pcrel_offset */
+
+  HOWTO (R_VAX_GOT32,		/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 true,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_bitfield, /* complain_on_overflow */
+	 bfd_elf_generic_reloc,	/* special_function */
+	 "R_VAX_GOT32",		/* name */
+	 false,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 true),			/* pcrel_offset */
+
+  EMPTY_HOWTO (-1),
+  EMPTY_HOWTO (-1),
+
+  HOWTO (R_VAX_GOT32O,		/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 false,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_bitfield, /* complain_on_overflow */
+	 bfd_elf_generic_reloc,	/* special_function */
+	 "R_VAX_GOT32O",	/* name */
+	 false,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 false),		/* pcrel_offset */
+
+  EMPTY_HOWTO (-1),
+  EMPTY_HOWTO (-1),
+
+  HOWTO (R_VAX_PLT32,		/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 true,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_bitfield, /* complain_on_overflow */
+	 bfd_elf_generic_reloc,	/* special_function */
+	 "R_VAX_PLT32",		/* name */
+	 false,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 true),			/* pcrel_offset */
+
+  EMPTY_HOWTO (-1),
+  EMPTY_HOWTO (-1),
+
+  HOWTO (R_VAX_PLT32O,		/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 false,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_bitfield, /* complain_on_overflow */
+	 bfd_elf_generic_reloc,	/* special_function */
+	 "R_VAX_PLT32O",	/* name */
+	 false,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 false),		/* pcrel_offset */
+
+  EMPTY_HOWTO (-1),
+  EMPTY_HOWTO (-1),
+
+  HOWTO (R_VAX_COPY,		/* type */
+	 0,			/* rightshift */
+	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* bitsize */
+	 false,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_dont, /* complain_on_overflow */
+	 bfd_elf_generic_reloc,	/* special_function */
+	 "R_VAX_COPY",		/* name */
+	 false,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 false),		/* pcrel_offset */
+
+  HOWTO (R_VAX_GLOB_DAT,	/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 false,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_dont, /* complain_on_overflow */
+	 bfd_elf_generic_reloc,	/* special_function */
+	 "R_VAX_GLOB_DAT",	/* name */
+	 false,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 false),		/* pcrel_offset */
+
+  HOWTO (R_VAX_JMP_SLOT,	/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 false,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_dont, /* complain_on_overflow */
+	 bfd_elf_generic_reloc,	/* special_function */
+	 "R_VAX_JMP_SLOT",	/* name */
+	 false,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 false),		/* pcrel_offset */
+
+  HOWTO (R_VAX_RELATIVE,	/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 false,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_dont, /* complain_on_overflow */
+	 bfd_elf_generic_reloc,	/* special_function */
+	 "R_VAX_RELATIVE",	/* name */
+	 false,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 false),		/* pcrel_offset */
+
   /* GNU extension to record C++ vtable hierarchy */
   HOWTO (R_VAX_GNU_VTINHERIT,	/* type */
 	 0,			/* rightshift */
@@ -103,7 +300,8 @@ static reloc_howto_type howto_table[] = {
 	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 false),
+	 false),		/* pcrel_offset */
+
   /* GNU extension to record C++ vtable member usage */
   HOWTO (R_VAX_GNU_VTENTRY,	/* type */
 	 0,			/* rightshift */
@@ -117,7 +315,7 @@ static reloc_howto_type howto_table[] = {
 	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 false),
+	 false),		/* pcrel_offset */
 };
 
 static void
@@ -1831,9 +2029,19 @@ elf_vax_relocate_section (output_bfd, info, input_bfd, input_section,
 	  break;
 	}
 
+#if 1
       /* VAX PCREL relocations are from the end of relocation, not the start */
       if (howto->pc_relative && howto->pcrel_offset)
-	relocation -= bfd_get_reloc_size(howto);
+	{
+	  relocation -= bfd_get_reloc_size(howto);
+#if 0
+	  (*_bfd_error_handler)
+		      (_("%s: warning: %s relocation adjusted down by %d"),
+		      bfd_get_filename (input_bfd), howto->name,
+		      bfd_get_reloc_size(howto));
+#endif
+	}
+#endif
 
       r = _bfd_final_link_relocate (howto, input_bfd, input_section,
 				    contents, rel->r_offset,
@@ -2155,27 +2363,6 @@ elf_vax_finish_dynamic_sections (output_bfd, info)
   return true;
 }
 
-/* Tweak the OSABI field of the elf header.  */
-
-static void
-elf_vax_post_process_headers (abfd, link_info)
-     bfd *abfd;
-     struct bfd_link_info *link_info ATTRIBUTE_UNUSED;
-{
-  Elf_Internal_Ehdr * i_ehdrp;
-
-  i_ehdrp = elf_elfheader (abfd);
-
-  if (strcmp (bfd_get_target (abfd), "elf32-vax-linux") == 0)
-    {
-      i_ehdrp->e_ident[EI_OSABI] = ELFOSABI_LINUX;
-    }
-  else
-    {
-      i_ehdrp->e_ident[EI_OSABI] = ELFOSABI_NETBSD;
-    }
-}
-
 #define elf_backend_create_dynamic_sections \
 					_bfd_elf_create_dynamic_sections
 #define bfd_elf32_bfd_link_hash_table_create \
@@ -2194,8 +2381,6 @@ elf_vax_post_process_headers (abfd, link_info)
 					elf_vax_finish_dynamic_sections
 #define elf_backend_gc_mark_hook	elf_vax_gc_mark_hook
 #define elf_backend_gc_sweep_hook	elf_vax_gc_sweep_hook
-#define elf_backend_post_process_headers \
-					elf_vax_post_process_headers
 #define bfd_elf32_bfd_copy_private_bfd_data \
                                         elf32_vax_copy_private_bfd_data
 #define bfd_elf32_bfd_merge_private_bfd_data \
@@ -2216,12 +2401,4 @@ elf_vax_post_process_headers (abfd, link_info)
 #define ELF_MACHINE_CODE		EM_VAX
 #define ELF_MAXPAGESIZE			0x1000
 
-#include "elf32-target.h"
-
-#undef TARGET_LITTLE_SYM
-#define TARGET_LITTLE_SYM		bfd_elf32_vax_linux_vec
-#undef TARGET_LITTLE_NAME
-#define TARGET_LITTLE_NAME		"elf32-vax-linux"
-
-#define INCLUDED_TARGET_FILE 1
 #include "elf32-target.h"
