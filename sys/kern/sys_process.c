@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.88 2004/05/04 21:58:47 pk Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.89 2004/05/14 16:36:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.88 2004/05/04 21:58:47 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.89 2004/05/14 16:36:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -583,17 +583,18 @@ process_doregs(curp, l, uio)
 	char *kv;
 	int kl;
 
+	if (uio->uio_offset < 0 || uio->uio_offset > (off_t)sizeof(r))
+		return EINVAL;
+
 	if ((error = process_checkioperm(curp, l->l_proc)) != 0)
 		return error;
 
 	kl = sizeof(r);
-	kv = (char *) &r;
+	kv = (char *)&r;
 
 	kv += uio->uio_offset;
 	kl -= uio->uio_offset;
-	if (kl < 0)
-		return (EINVAL);
-	if ((size_t) kl > uio->uio_resid)
+	if ((size_t)kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
 	PHOLD(l);
@@ -641,17 +642,18 @@ process_dofpregs(curp, l, uio)
 	char *kv;
 	int kl;
 
+	if (uio->uio_offset < 0 || uio->uio_offset > (off_t)sizeof(r))
+		return EINVAL;
+
 	if ((error = process_checkioperm(curp, l->l_proc)) != 0)
 		return (error);
 
 	kl = sizeof(r);
-	kv = (char *) &r;
+	kv = (char *)&r;
 
 	kv += uio->uio_offset;
 	kl -= uio->uio_offset;
-	if (kl < 0)
-		return (EINVAL);
-	if ((size_t) kl > uio->uio_resid)
+	if ((size_t)kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
 	PHOLD(l);
@@ -700,6 +702,9 @@ process_domem(curp, p, uio)
 #ifdef PMAP_NEED_PROCWR
 	vaddr_t	addr;
 #endif
+
+	if (uio->uio_offset < 0)
+		return EINVAL;
 
 	len = uio->uio_resid;
 
