@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.27 2001/06/26 22:00:44 bjh21 Exp $ */
+/* $NetBSD: seeq8005.c,v 1.28 2001/07/07 05:35:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -63,7 +63,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: seeq8005.c,v 1.27 2001/06/26 22:00:44 bjh21 Exp $");
+__RCSID("$NetBSD: seeq8005.c,v 1.28 2001/07/07 05:35:41 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/endian.h>
@@ -1384,7 +1384,7 @@ ea_mc_reset_8004(struct seeq8005_softc *sc)
 		af[i] = 0;
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    sizeof(enm->enm_addrlo)) != 0) {
 			/*
 			 * We must listen to a range of multicast addresses.
@@ -1431,7 +1431,7 @@ ea_mc_reset_8005(struct seeq8005_softc *sc)
 	while (enm != NULL) {
 		/* Have we got space? */
 		if (naddr >= maxaddrs ||
-		    bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
+		    memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
 			sc->sc_ethercom.ec_if.if_flags |= IFF_ALLMULTI;
 			ea_ioctl(&sc->sc_ethercom.ec_if, SIOCSIFFLAGS, NULL);
 			return;
