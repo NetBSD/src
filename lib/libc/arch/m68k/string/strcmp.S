@@ -1,4 +1,4 @@
-/*	$NetBSD: strcmp.S,v 1.3 1995/11/17 20:21:22 thorpej Exp $	*/
+/*	$NetBSD: strcmp.S,v 1.4 1995/11/28 22:50:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,8 +41,8 @@
 #if 0
 	RCSID("from: @(#)strcmp.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: strcmp.S,v 1.3 1995/11/17 20:21:22 thorpej Exp $")
-#else
+	RCSID("$NetBSD: strcmp.S,v 1.4 1995/11/28 22:50:18 thorpej Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
