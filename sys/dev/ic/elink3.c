@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.90 2001/05/14 07:03:50 jdolecek Exp $	*/
+/*	$NetBSD: elink3.c,v 1.91 2001/05/14 08:01:23 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,19 +92,6 @@
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/in_var.h>
-#include <netinet/ip.h>
-#include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -1641,7 +1628,7 @@ epget(sc, totlen)
 	 * an interrupt from another device won't cause the card's packet
 	 * buffer to overflow.  We choose splsched() since that blocks
 	 * essentially everything except for interrupts from serial
-	 * devices (which typically lose data of their interrupt isn't
+	 * devices (which typically lose data if their interrupt isn't
 	 * serviced fast enough).
 	 *
 	 * XXX THIS CAN CAUSE CLOCK DRIFT!
