@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.19 1998/03/27 01:17:18 ross Exp $ */
+/* $NetBSD: asm.h,v 1.20 1998/10/01 16:19:59 erh Exp $ */
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -595,6 +595,13 @@ label:	ASCIZ msg;						\
 
 #define	CALLSYS_NOERROR(name)					\
 	ldiq	v0, SYSCALLNUM(name);				\
+	call_pal PAL_OSF1_callsys
+
+#define LINUX_SYSCALLNUM(name)					\
+	___CONCAT(LINUX_SYS_,name)
+
+#define LINUX_CALLSYS_NOERROR(name)				\
+	ldiq	v0, LINUX_SYSCALLNUM(name);			\
 	call_pal PAL_OSF1_callsys
 
 /*
