@@ -1,4 +1,0 @@
-# $NetBSD: fstab.nfs,v 1.1 2002/03/24 21:20:41 bjh21 Exp $
-#
-server:/export/client/root / nfs rw,-r=1024,-w=1024
-server:/export/netbsd.acorn26/usr /usr nfs ro,-r=1024,-w=1024
