@@ -1,4 +1,4 @@
-.\"	$NetBSD: isa.4,v 1.10 1998/06/06 10:16:59 augustss Exp $
+.\"	$NetBSD: isa.4,v 1.11 1998/06/07 09:10:30 enami Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -124,6 +124,8 @@ IBM RT four-port serial cards.
 .Pp
 .Ss Network interfaces
 .Bl -tag -width speaker -offset indent
+.It ate
+Allied Telesis AT1700 series and RE2000 series.
 .It ec
 3Com Etherlink II (3c503)
 .Tn Ethernet
@@ -140,10 +142,8 @@ interfaces.
 3Com Etherlink III (3c509)
 .Tn Ethernet
 interfaces.
-.It fe
-Ethernet interfaces based on the Fujitsu MB86960A/MB86965A chipset,
-including Fujitsu FMV-181, FMV-182, Allied Telesis AT1700 series,
-and RE2000 series.
+.It fmv
+Fujitsu FMV-181 and FMV-182 interfaces.
 .\".It hp
 .\" Broken driver for HP -relabelled
 .\" .Tn Ethernet
@@ -211,7 +211,6 @@ These are listed in
 .Xr ec 4 ,
 .Xr el 4 ,
 .Xr ep 4 ,
-.Xr fe 4 ,
 .Xr ie 4 ,
 .Xr isapnp 4 ,
 .Xr iy 4 ,
