@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.5 2003/01/19 16:30:13 thorpej Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.6 2003/03/15 07:20:23 perseant Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.5 2003/01/19 16:30:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.6 2003/03/15 07:20:23 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -46,7 +46,10 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.5 2003/01/19 16:30:13 thorpej Exp 
 #include <sys/file.h>
 #include <sys/errno.h>
 
-#define LFS
+#ifndef LFS
+# define LFS
+#endif
+
 #include <sys/syscall.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
