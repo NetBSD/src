@@ -1,11 +1,11 @@
-/*	$NetBSD: start.S,v 1.2 2004/01/07 12:43:44 cdi Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.1 2004/01/07 12:43:44 cdi Exp $	*/
 
-/*
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+/*-
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Wayne Knowles
+ * by Jonathan Stone, Michael Hitch and Simon Burge.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,30 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <mips/asm.h>
+#include <machine/bootinfo.h>
 
-LEAF(start)
-	.set	noreorder
-#ifdef __GP_SUPPORT__
-	la      gp, _C_LABEL (_gp)
-#endif
-	la	sp, start - CALLFRAME_SIZ
-	sw	zero, CALLFRAME_RA(sp)		# clear ra for debugger
-	sw	zero, CALLFRAME_SP(sp)		# clear fp for debugger
-	move	s0, a0				# save argc
-	move	s1, a1				# save argv
-
-	la	a0, _C_LABEL (edata)		# clear BSS
-	move	a1, zero
-	la	a2, _C_LABEL (end)
-	jal	_C_LABEL(memset)		# memset(edata, 0, end - edata)
-	subu	a2, a2, a0
-
-	move	a0, s0				# restore argc
-	jal	_C_LABEL(main)			# main(unsigned int)
-	move	a1, s1				# restore argv
-
-XLEAF(_xtt)
-	jal	_C_LABEL(cpu_reboot)		# failed, reboot
-	nop
-END(start)
+char*	bi_init __P((void));
+void	bi_add __P((void *, int, int));
