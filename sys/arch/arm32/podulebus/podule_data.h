@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.6 1997/07/28 17:47:53 mark Exp 
+ *	NetBSD: podules,v 1.7 1997/10/14 22:22:08 mark Exp 
  */
 
 /*
@@ -37,6 +37,7 @@
  */
 
 static struct podule_description podules_acorn[] = {
+	{ PODULE_ACORN_ETHER3XXX,	"Ether3 (NOROM)" },
 	{ PODULE_ACORN_SCSI,	"SCSI 1 interface" },
 	{ PODULE_ACORN_ETHER1,	"ether 1 interface" },
 	{ PODULE_ACORN_RAMROM,	"RAM/ROM podule" },
