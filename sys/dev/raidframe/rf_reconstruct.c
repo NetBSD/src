@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.39 2002/09/16 02:48:34 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.40 2002/09/17 03:21:41 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.39 2002/09/16 02:48:34 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.40 2002/09/17 03:21:41 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -875,7 +875,7 @@ ProcessReconEvent(raidPtr, frow, event)
 
 		/* a write I/O has completed */
 	case RF_REVENT_WRITEDONE:
-#if RF_DEBUG_RECONBUFFER
+#if RF_DEBUG_RECON
 		if (rf_floatingRbufDebug) {
 			rf_CheckFloatingRbufCount(raidPtr, 1);
 		}
@@ -928,7 +928,7 @@ ProcessReconEvent(raidPtr, frow, event)
 	case RF_REVENT_BUFREADY:
 		Dprintf2("RECON: BUFREADY EVENT: row %d col %d\n", frow, event->col);
 		retcode = IssueNextWriteRequest(raidPtr, frow);
-#if RF_DEBUG_RECONBUFFER
+#if RF_DEBUG_RECON
 		if (rf_floatingRbufDebug) {
 			rf_CheckFloatingRbufCount(raidPtr, 1);
 		}
