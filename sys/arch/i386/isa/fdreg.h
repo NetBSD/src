@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fdreg.h	7.1 (Berkeley) 5/9/91
- *	$Id: fdreg.h,v 1.3 1993/05/22 08:01:11 cgd Exp $
+ *	$Id: fdreg.h,v 1.4 1993/06/18 06:19:20 cgd Exp $
  */
 
 /*
@@ -43,11 +43,13 @@
 
 /* registers */
 #define	fdout	2	/* Digital Output Register (W) */
-#define	FDO_FDSEL	0x01	/*  floppy device select */
+#define	FDO_FDSEL	0x03	/*  floppy device select */
 #define	FDO_FRST	0x04	/*  floppy controller reset */
 #define	FDO_FDMAEN	0x08	/*  enable floppy DMA and Interrupt */
 #define	FDO_MOEN0	0x10	/*  motor enable drive 0 */
 #define	FDO_MOEN1	0x20	/*  motor enable drive 1 */
+#define	FDO_MOEN2	0x30	/*  motor enable drive 2 */
+#define	FDO_MOEN3	0x40	/*  motor enable drive 3 */
 
 #define	fdsts	4	/* NEC 765 Main Status Register (R) */
 #define	fddata	5	/* NEC 765 Data Register (R/W) */
@@ -60,5 +62,3 @@
 
 #define	fdin	7	/* Digital Input Register (R) */
 #define	FDI_DCHG	0x80	/* diskette has been changed */
-
-
