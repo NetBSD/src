@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.10 1996/11/06 13:32:21 leo Exp $
+#	$NetBSD: MAKEDEV,v 1.11 1996/12/16 21:30:37 leo Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -82,6 +82,7 @@
 #	ss*	SCSI scanner
 #	uk*	SCSI unknown
 #	ch	SCSI changer
+#	rtc	Atari RealTimeClock
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 umask 77
@@ -90,18 +91,18 @@ do
 case $i in
 all)
 	sh MAKEDEV std fd st0 ttye0 ttye1 ttye2 ttye3 ttye4 ttye5 grf0 grf1
-	sh MAKEDEV grf2 grf3 grf4 grf5 mouse0 mouse1
+	sh MAKEDEV grf2 grf3 grf4 grf5 mouse0 mouse1 rtc
 	sh MAKEDEV kbd sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 vnd0 vnd1 vnd2
 	sh MAKEDEV vnd3 vnd4 view00 view01 view02 view03 view04 view05 pty0 
 	sh MAKEDEV vnd5 vnd6 cd0 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
-	sh MAKEDEV tun0 tun1 lkm ser02 mdm02 lpt0 local
 	sh MAKEDEV ss0 ch0 uk0 uk1
+	sh MAKEDEV tun0 tun1 lkm ser02 mdm02 lpt0 local
 	;;
 
 floppy)
 	sh MAKEDEV std st0 ttye0 ttye1 ttye2 grf0 grf1 grf2 kbd tun0 tun1
-	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 sd5 sd6 cd0 fd0 fd1 rd0
+	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 sd5 sd6 cd0 fd0 fd1 rd0 rtc
 	;;
 
 std)
@@ -398,6 +399,12 @@ lpt*)
 	rm -f lpt$unit
 	mknod lpt$unit c 29 $unit
 	chown root.wheel lpt$unit
+	;;
+
+rtc)
+	rm -f rtc
+	mknod rtc c 33 0
+	chown root.wheel rtc
 	;;
 
 bpf*)
