@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.46.4.16 2003/02/07 18:38:01 tron Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.46.4.17 2003/02/07 18:40:19 tron Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.46.4.16 2003/02/07 18:38:01 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.46.4.17 2003/02/07 18:40:19 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -1584,7 +1584,6 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			sp->rst_counter[cp->protoidx] = 0;
 			sppp_cp_change_state(cp, sp, STATE_STOPPING);
 			goto sta;
-			break;
 		default:
 			printf(SPP_FMT "%s illegal %s in state %s\n",
 			       SPP_ARGS(ifp), cp->name,
