@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.124 2005/03/07 09:32:51 yamt Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.125 2005/03/09 03:38:33 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.124 2005/03/07 09:32:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.125 2005/03/09 03:38:33 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1282,9 +1282,10 @@ send:
 	switch (af) {
 #ifdef INET
 	case AF_INET:
+		m->m_pkthdr.csum_data = offsetof(struct tcphdr, th_sum);
 		if (use_tso) {
 			m->m_pkthdr.segsz = txsegsize;
-			m->m_pkthdr.csum_flags |= M_CSUM_TSOv4;
+			m->m_pkthdr.csum_flags = M_CSUM_TSOv4;
 		} else {
 			if (__predict_true(ro->ro_rt == NULL ||
 					   !(ro->ro_rt->rt_ifp->if_flags &
@@ -1293,7 +1294,6 @@ send:
 				m->m_pkthdr.csum_flags = M_CSUM_TCPv4;
 			else
 				m->m_pkthdr.csum_flags = 0;
-			m->m_pkthdr.csum_data = offsetof(struct tcphdr, th_sum);
 			if (len + optlen) {
 				/* Fixup the pseudo-header checksum. */
 				/* XXXJRT Not IP Jumbogram safe. */
