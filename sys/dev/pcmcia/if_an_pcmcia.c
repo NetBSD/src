@@ -1,4 +1,4 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.20 2004/08/08 23:17:12 mycroft Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.21 2004/08/09 18:41:36 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.20 2004/08/08 23:17:12 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.21 2004/08/09 18:41:36 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,22 +200,16 @@ an_pcmcia_attach(parent, self, aux)
 		goto fail2;
 	}
 
+	sc->sc_iot = psc->sc_pcioh.iot;
+	sc->sc_ioh = psc->sc_pcioh.ioh;
+
 	pcmcia_function_init(psc->sc_pf, cfe);
 
-	if (pcmcia_function_enable(psc->sc_pf)) {
-		printf("%s: failed to enable pcmcia\n", sc->sc_dev.dv_xname);
+	if (an_pcmcia_enable(sc)) {
+		printf("%s: enable failed\n", sc->sc_dev.dv_xname);
 		goto fail3;
 	}
 
-	if ((psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, an_intr,
-	    sc)) == NULL) {
-		printf("%s: unable to establish interrupt\n",
-		    sc->sc_dev.dv_xname);
-		goto fail4;
-	}
-
-	sc->sc_iot = psc->sc_pcioh.iot;
-	sc->sc_ioh = psc->sc_pcioh.ioh;
 	sc->sc_enabled = 1;
 	sc->sc_enable = an_pcmcia_enable;
 	sc->sc_disable = an_pcmcia_disable;
@@ -223,24 +217,23 @@ an_pcmcia_attach(parent, self, aux)
 	if (an_attach(sc) != 0) {
 		printf("%s: failed to attach controller\n",
 		    sc->sc_dev.dv_xname);
-		goto fail5;
+		goto fail4;
 	}
 	psc->sc_powerhook = powerhook_establish(an_power, sc);
-	sc->sc_enabled = 0;
 
 	/* disable device and disestablish the interrupt */
+	sc->sc_enabled = 0;
 	an_pcmcia_disable(sc);
 	return;
 
-  fail5:
-	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
-  fail4:
-	pcmcia_function_disable(psc->sc_pf);
-  fail3:
+fail4:
+	sc->sc_enabled = 0;
+	an_pcmcia_disable(sc);
+fail3:
 	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
-  fail2:
+fail2:
 	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
-  fail1:
+fail1:
 	psc->sc_io_window = -1;
 }
 
