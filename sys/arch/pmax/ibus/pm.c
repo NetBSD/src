@@ -1,4 +1,4 @@
-/* $NetBSD: pm.c,v 1.1.2.5 1999/01/07 06:44:22 nisimura Exp $ */
+/* $NetBSD: pm.c,v 1.1.2.6 1999/01/11 22:17:50 drochner Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.5 1999/01/07 06:44:22 nisimura Exp $");
+__KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.6 1999/01/11 22:17:50 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,7 +204,6 @@ int	pm_alloc_screen __P((void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *));
 void	pm_free_screen __P((void *, void *));
 void	pm_show_screen __P((void *, void *));
-int	pm_load_font __P((void *, void *, int, int, int, void *));
 
 struct wsdisplay_accessops pm_accessops = {
 	pmioctl,
@@ -212,7 +211,7 @@ struct wsdisplay_accessops pm_accessops = {
 	pm_alloc_screen,
 	pm_free_screen,
 	pm_show_screen,
-	pm_load_font
+	0 /* load_font */
 };
 
 int  pm_cnattach __P((tc_addr_t));
@@ -470,16 +469,6 @@ pm_show_screen(v, cookie)
 	void *v;
 	void *cookie;
 {
-}
-
-int
-pm_load_font(v, cookie, first, num, stride, data)
-	void *v;
-	void *cookie;
-	int first, num, stride;
-	void *data;
-{
-	return (EINVAL);
 }
 
 int
