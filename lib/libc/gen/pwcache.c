@@ -1,4 +1,4 @@
-/*	$NetBSD: pwcache.c,v 1.15 2000/09/13 22:32:28 msaitoh Exp $	*/
+/*	$NetBSD: pwcache.c,v 1.15.2.1 2002/01/28 20:50:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -37,12 +37,48 @@
  * SUCH DAMAGE.
  */
 
+/*-
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#if HAVE_CONFIG_H 
+#include "config.h"
+#else
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pwcache.c,v 1.15 2000/09/13 22:32:28 msaitoh Exp $");
+__RCSID("$NetBSD: pwcache.c,v 1.15.2.1 2002/01/28 20:50:33 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,12 +95,16 @@ __RCSID("$NetBSD: pwcache.c,v 1.15 2000/09/13 22:32:28 msaitoh Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#include "pwcache.h"
-
 #ifdef __weak_alias
 __weak_alias(user_from_uid,_user_from_uid)
 __weak_alias(group_from_gid,_group_from_gid)
+__weak_alias(pwcache_userdb,_pwcache_userdb)
+__weak_alias(pwcache_groupdb,_pwcache_groupdb)
 #endif
+#endif	/* HAVE_CONFIG_H */
+
+#if !HAVE_PWCACHE_USERDB
+#include "pwcache.h"
 
 /*
  * routines that control user, group, uid and gid caches (for the archive
@@ -73,24 +113,44 @@ __weak_alias(group_from_gid,_group_from_gid)
  * these routines cache BOTH hits and misses, a major performance improvement
  */
 
-static	int pwopn = 0;		/* is password file open */
-static	int gropn = 0;		/* is group file open */
-static UIDC **uidtb = NULL;	/* uid to name cache */
-static GIDC **gidtb = NULL;	/* gid to name cache */
-static UIDC **usrtb = NULL;	/* user name to uid cache */
-static GIDC **grptb = NULL;	/* group name to gid cache */
+/*
+ * function pointers to various name lookup routines.
+ * these may be changed as necessary.
+ */
+static	int		(*_pwcache_setgroupent)(int)		= setgroupent;
+static	void		(*_pwcache_endgrent)(void)		= endgrent;
+static	struct group *	(*_pwcache_getgrnam)(const char *)	= getgrnam;
+static	struct group *	(*_pwcache_getgrgid)(gid_t)		= getgrgid;
+static	int		(*_pwcache_setpassent)(int)		= setpassent;
+static	void		(*_pwcache_endpwent)(void)		= endpwent;
+static	struct passwd *	(*_pwcache_getpwnam)(const char *)	= getpwnam;
+static	struct passwd *	(*_pwcache_getpwuid)(uid_t)		= getpwuid;
 
-static u_int st_hash __P((const char *, size_t, int));
-static int uidtb_start __P((void));
-static int gidtb_start __P((void));
-static int usrtb_start __P((void));
-static int grptb_start __P((void));
+/*
+ * internal state
+ */
+static	int	pwopn;		/* is password file open */
+static	int	gropn;		/* is group file open */
+static	UIDC	**uidtb;	/* uid to name cache */
+static	GIDC	**gidtb;	/* gid to name cache */
+static	UIDC	**usrtb;	/* user name to uid cache */
+static	GIDC	**grptb;	/* group name to gid cache */
+
+static	int	uidtb_fail;	/* uidtb_start() failed ? */
+static	int	gidtb_fail;	/* gidtb_start() failed ? */
+static	int	usrtb_fail;	/* usrtb_start() failed ? */
+static	int	grptb_fail;	/* grptb_start() failed ? */
+
+
+static	u_int	st_hash(const char *, size_t, int);
+static	int	uidtb_start(void);
+static	int	gidtb_start(void);
+static	int	usrtb_start(void);
+static	int	grptb_start(void);
+
 
 static u_int
-st_hash(name, len, tabsz)
-	const char *name;
-	size_t len;
-	int tabsz;
+st_hash(const char *name, size_t len, int tabsz)
 {
 	u_int key = 0;
 
@@ -110,23 +170,16 @@ st_hash(name, len, tabsz)
  * Return:
  *	0 if ok, -1 otherwise
  */
-
-#if __STDC__
 static int
 uidtb_start(void)
-#else
-static int
-uidtb_start()
-#endif
 {
-	static int fail = 0;
 
 	if (uidtb != NULL)
 		return (0);
-	if (fail)
+	if (uidtb_fail)
 		return (-1);
 	if ((uidtb = (UIDC **)calloc(UID_SZ, sizeof(UIDC *))) == NULL) {
-		++fail;
+		++uidtb_fail;
 		return (-1);
 	}
 	return (0);
@@ -138,23 +191,16 @@ uidtb_start()
  * Return:
  *	0 if ok, -1 otherwise
  */
-
-#if __STDC__
-int
+static int
 gidtb_start(void)
-#else
-int
-gidtb_start()
-#endif
 {
-	static int fail = 0;
 
 	if (gidtb != NULL)
 		return (0);
-	if (fail)
+	if (gidtb_fail)
 		return (-1);
 	if ((gidtb = (GIDC **)calloc(GID_SZ, sizeof(GIDC *))) == NULL) {
-		++fail;
+		++gidtb_fail;
 		return (-1);
 	}
 	return (0);
@@ -166,23 +212,16 @@ gidtb_start()
  * Return:
  *	0 if ok, -1 otherwise
  */
-
-#if __STDC__
-int
+static int
 usrtb_start(void)
-#else
-int
-usrtb_start()
-#endif
 {
-	static int fail = 0;
 
 	if (usrtb != NULL)
 		return (0);
-	if (fail)
+	if (usrtb_fail)
 		return (-1);
 	if ((usrtb = (UIDC **)calloc(UNM_SZ, sizeof(UIDC *))) == NULL) {
-		++fail;
+		++usrtb_fail;
 		return (-1);
 	}
 	return (0);
@@ -194,23 +233,16 @@ usrtb_start()
  * Return:
  *	0 if ok, -1 otherwise
  */
-
-#if __STDC__
-int
+static int
 grptb_start(void)
-#else
-int
-grptb_start()
-#endif
 {
-	static int fail = 0;
 
 	if (grptb != NULL)
 		return (0);
-	if (fail)
+	if (grptb_fail)
 		return (-1);
 	if ((grptb = (GIDC **)calloc(GNM_SZ, sizeof(GIDC *))) == NULL) {
-		++fail;
+		++grptb_fail;
 		return (-1);
 	}
 	return (0);
@@ -218,21 +250,15 @@ grptb_start()
 
 /*
  * user_from_uid()
- *	caches the name (if any) for the uid. If noname clear, we always return the
- *	the stored name (if valid or invalid match). We use a simple hash table.
+ *	caches the name (if any) for the uid. If noname clear, we always
+ *	return the the stored name (if valid or invalid match).
+ *	We use a simple hash table.
  * Return
  *	Pointer to stored name (or a empty string)
  */
 
-#if __STDC__
 const char *
 user_from_uid(uid_t uid, int noname)
-#else
-const char *
-user_from_uid(uid, noname)
-	uid_t uid;
-	int noname;
-#endif
 {
 	struct passwd *pw;
 	UIDC *ptr, **pptr;
@@ -259,14 +285,15 @@ user_from_uid(uid, noname)
 	 * No entry for this uid, we will add it
 	 */
 	if (!pwopn) {
-		setpassent(1);
+		if (_pwcache_setpassent != NULL)
+			(*_pwcache_setpassent)(1);
 		++pwopn;
 	}
 
 	if (ptr == NULL)
 		*pptr = ptr = (UIDC *)malloc(sizeof(UIDC));
 
-	if ((pw = getpwuid(uid)) == NULL) {
+	if ((pw = (*_pwcache_getpwuid)(uid)) == NULL) {
 		/*
 		 * no match for this uid in the local password file
 		 * a string that is the uid in numberic format
@@ -274,11 +301,7 @@ user_from_uid(uid, noname)
 		if (ptr == NULL)
 			return (NULL);
 		ptr->uid = uid;
-#		ifdef NET2_STAT
-		(void)snprintf(ptr->name, UNMLEN, "%u", uid);
-#		else
 		(void)snprintf(ptr->name, UNMLEN, "%lu", (long) uid);
-#		endif
 		ptr->valid = INVALID;
 		if (noname)
 			return (NULL);
@@ -289,8 +312,7 @@ user_from_uid(uid, noname)
 		if (ptr == NULL)
 			return (pw->pw_name);
 		ptr->uid = uid;
-		(void)strncpy(ptr->name, pw->pw_name, UNMLEN);
-		ptr->name[UNMLEN-1] = '\0';
+		(void)strlcpy(ptr->name, pw->pw_name, UNMLEN);
 		ptr->valid = VALID;
 	}
 	return (ptr->name);
@@ -298,21 +320,15 @@ user_from_uid(uid, noname)
 
 /*
  * group_from_gid()
- *	caches the name (if any) for the gid. If noname clear, we always return the
- *	the stored name (if valid or invalid match). We use a simple hash table.
+ *	caches the name (if any) for the gid. If noname clear, we always
+ *	return the the stored name (if valid or invalid match).
+ *	We use a simple hash table.
  * Return
  *	Pointer to stored name (or a empty string)
  */
 
-#if __STDC__
 const char *
 group_from_gid(gid_t gid, int noname)
-#else
-const char *
-group_from_gid(gid, noname)
-	gid_t gid;
-	int noname;
-#endif
 {
 	struct group *gr;
 	GIDC *ptr, **pptr;
@@ -339,14 +355,15 @@ group_from_gid(gid, noname)
 	 * No entry for this gid, we will add it
 	 */
 	if (!gropn) {
-		setgroupent(1);
+		if (_pwcache_setgroupent != NULL)
+			(*_pwcache_setgroupent)(1);
 		++gropn;
 	}
 
 	if (ptr == NULL)
 		*pptr = ptr = (GIDC *)malloc(sizeof(GIDC));
 
-	if ((gr = getgrgid(gid)) == NULL) {
+	if ((gr = (*_pwcache_getgrgid)(gid)) == NULL) {
 		/*
 		 * no match for this gid in the local group file, put in
 		 * a string that is the gid in numberic format
@@ -354,11 +371,7 @@ group_from_gid(gid, noname)
 		if (ptr == NULL)
 			return (NULL);
 		ptr->gid = gid;
-#		ifdef NET2_STAT
-		(void)snprintf(ptr->name, GNMLEN, "%u", gid);
-#		else
 		(void)snprintf(ptr->name, GNMLEN, "%lu", (long) gid);
-#		endif
 		ptr->valid = INVALID;
 		if (noname)
 			return (NULL);
@@ -369,8 +382,7 @@ group_from_gid(gid, noname)
 		if (ptr == NULL)
 			return (gr->gr_name);
 		ptr->gid = gid;
-		(void)strncpy(ptr->name, gr->gr_name, GNMLEN);
-		ptr->name[GNMLEN-1] = '\0';
+		(void)strlcpy(ptr->name, gr->gr_name, GNMLEN);
 		ptr->valid = VALID;
 	}
 	return (ptr->name);
@@ -383,15 +395,8 @@ group_from_gid(gid, noname)
  *	the uid (if any) for a user name, or a -1 if no match can be found
  */
 
-#if __STDC__
 int
 uid_from_user(const char *name, uid_t *uid)
-#else
-int
-uid_from_user(name, uid)
-	const char *name;
-	uid_t *uid;
-#endif
 {
 	struct passwd *pw;
 	UIDC *ptr, **pptr;
@@ -420,7 +425,8 @@ uid_from_user(name, uid)
 	}
 
 	if (!pwopn) {
-		setpassent(1);
+		if (_pwcache_setpassent != NULL)
+			(*_pwcache_setpassent)(1);
 		++pwopn;
 	}
 
@@ -432,14 +438,13 @@ uid_from_user(name, uid)
 	 * or store the matching uid
 	 */
 	if (ptr == NULL) {
-		if ((pw = getpwnam(name)) == NULL)
+		if ((pw = (*_pwcache_getpwnam)(name)) == NULL)
 			return (-1);
 		*uid = pw->pw_uid;
 		return (0);
 	}
-	(void)strncpy(ptr->name, name, UNMLEN);
-	ptr->name[UNMLEN-1] = '\0';
-	if ((pw = getpwnam(name)) == NULL) {
+	(void)strlcpy(ptr->name, name, UNMLEN);
+	if ((pw = (*_pwcache_getpwnam)(name)) == NULL) {
 		ptr->valid = INVALID;
 		return (-1);
 	}
@@ -455,15 +460,8 @@ uid_from_user(name, uid)
  *	the gid (if any) for a group name, or a -1 if no match can be found
  */
 
-#if __STDC__
 int
 gid_from_group(const char *name, gid_t *gid)
-#else
-int
-gid_from_group(name, gid)
-	const char *name;
-	gid_t *gid;
-#endif
 {
 	struct group *gr;
 	GIDC *ptr, **pptr;
@@ -492,7 +490,8 @@ gid_from_group(name, gid)
 	}
 
 	if (!gropn) {
-		setgroupent(1);
+		if (_pwcache_setgroupent != NULL)
+			(*_pwcache_setgroupent)(1);
 		++gropn;
 	}
 
@@ -504,15 +503,14 @@ gid_from_group(name, gid)
 	 * or store the matching gid
 	 */
 	if (ptr == NULL) {
-		if ((gr = getgrnam(name)) == NULL)
+		if ((gr = (*_pwcache_getgrnam)(name)) == NULL)
 			return (-1);
 		*gid = gr->gr_gid;
 		return (0);
 	}
 
-	(void)strncpy(ptr->name, name, GNMLEN);
-	ptr->name[GNMLEN-1] = '\0';
-	if ((gr = getgrnam(name)) == NULL) {
+	(void)strlcpy(ptr->name, name, GNMLEN);
+	if ((gr = (*_pwcache_getgrnam)(name)) == NULL) {
 		ptr->valid = INVALID;
 		return (-1);
 	}
@@ -520,3 +518,130 @@ gid_from_group(name, gid)
 	*gid = ptr->gid = gr->gr_gid;
 	return (0);
 }
+
+#define FLUSHTB(arr, len, fail)				\
+	do {						\
+		if (arr != NULL) {			\
+			for (i = 0; i < len; i++)	\
+				if (arr[i] != NULL)	\
+					free(arr[i]);	\
+			arr = NULL;			\
+		}					\
+		fail = 0;				\
+	} while (/* CONSTCOND */0);
+
+int
+pwcache_userdb(
+	int		(*a_setpassent)(int),
+	void		(*a_endpwent)(void),
+	struct passwd *	(*a_getpwnam)(const char *),
+	struct passwd *	(*a_getpwuid)(uid_t))
+{
+	int i;
+
+		/* a_setpassent and a_endpwent may be NULL */
+	if (a_getpwnam == NULL || a_getpwuid == NULL)
+		return (-1);
+
+	if (_pwcache_endpwent != NULL)
+		(*_pwcache_endpwent)();
+	FLUSHTB(uidtb, UID_SZ, uidtb_fail);
+	FLUSHTB(usrtb, UNM_SZ, usrtb_fail);
+	pwopn = 0;
+	_pwcache_setpassent = a_setpassent;
+	_pwcache_endpwent = a_endpwent;
+	_pwcache_getpwnam = a_getpwnam;
+	_pwcache_getpwuid = a_getpwuid;
+
+	return (0);
+}
+
+int
+pwcache_groupdb(
+	int		(*a_setgroupent)(int),
+	void		(*a_endgrent)(void),
+	struct group *	(*a_getgrnam)(const char *),
+	struct group *	(*a_getgrgid)(gid_t))
+{
+	int i;
+
+		/* a_setgroupent and a_endgrent may be NULL */
+	if (a_getgrnam == NULL || a_getgrgid == NULL)
+		return (-1);
+
+	if (_pwcache_endgrent != NULL)
+		(*_pwcache_endgrent)();
+	FLUSHTB(gidtb, GID_SZ, gidtb_fail);
+	FLUSHTB(grptb, GNM_SZ, grptb_fail);
+	gropn = 0;
+	_pwcache_setgroupent = a_setgroupent;
+	_pwcache_endgrent = a_endgrent;
+	_pwcache_getgrnam = a_getgrnam;
+	_pwcache_getgrgid = a_getgrgid;
+
+	return (0);
+}
+
+
+#ifdef TEST_PWCACHE
+
+struct passwd *
+test_getpwnam(const char *name)
+{
+	static struct passwd foo;
+
+	memset(&foo, 0, sizeof(foo));
+	if (strcmp(name, "toor") == 0) {
+		foo.pw_uid = 666;
+		return &foo;
+	}
+	return (getpwnam(name));
+}
+
+int
+main(int argc, char *argv[])
+{
+	uid_t	u;
+	int	r, i;
+
+	printf("pass 1 (default userdb)\n");
+	for (i = 1; i < argc; i++) {
+		printf("i: %d, pwopn %d usrtb_fail %d usrtb %p\n",
+		    i, pwopn, usrtb_fail, usrtb);
+		r = uid_from_user(argv[i], &u);
+		if (r == -1)
+			printf("  uid_from_user %s: failed\n", argv[i]);
+		else
+			printf("  uid_from_user %s: %d\n", argv[i], u);
+	}
+	printf("pass 1 finish: pwopn %d usrtb_fail %d usrtb %p\n",
+		    pwopn, usrtb_fail, usrtb);
+
+	puts("");
+	printf("pass 2 (replacement userdb)\n");
+	printf("pwcache_userdb returned %d\n",
+	    pwcache_userdb(setpassent, test_getpwnam, getpwuid));
+	printf("pwopn %d usrtb_fail %d usrtb %p\n", pwopn, usrtb_fail, usrtb);
+
+	for (i = 1; i < argc; i++) {
+		printf("i: %d, pwopn %d usrtb_fail %d usrtb %p\n",
+		    i, pwopn, usrtb_fail, usrtb);
+		u = -1;
+		r = uid_from_user(argv[i], &u);
+		if (r == -1)
+			printf("  uid_from_user %s: failed\n", argv[i]);
+		else
+			printf("  uid_from_user %s: %d\n", argv[i], u);
+	}
+	printf("pass 2 finish: pwopn %d usrtb_fail %d usrtb %p\n",
+		    pwopn, usrtb_fail, usrtb);
+
+	puts("");
+	printf("pass 3 (null pointers)\n");
+	printf("pwcache_userdb returned %d\n",
+	    pwcache_userdb(NULL, NULL, NULL));
+
+	return (0);
+}
+#endif	/* TEST_PWCACHE */
+#endif	/* !HAVE_PWCACHE_USERDB */

@@ -1,4 +1,4 @@
-/* $NetBSD: fpsetsticky.c,v 1.1 2000/06/06 08:15:04 bjh21 Exp $ */
+/* $NetBSD: fpsetsticky.c,v 1.1.6.1 2002/01/28 20:50:50 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,8 +38,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpsetsticky.c,v 1.1 2000/06/06 08:15:04 bjh21 Exp $");
+__RCSID("$NetBSD: fpsetsticky.c,v 1.1.6.1 2002/01/28 20:50:50 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
+
+#include "namespace.h"
 
 #include <ieeefp.h>
 #ifdef SOFTFLOAT_FOR_GCC
@@ -47,6 +49,10 @@ __RCSID("$NetBSD: fpsetsticky.c,v 1.1 2000/06/06 08:15:04 bjh21 Exp $");
 #endif
 #include "milieu.h"
 #include "softfloat.h"
+
+#ifdef __weak_alias
+__weak_alias(fpsetsticky,_fpsetsticky)
+#endif
 
 fp_except
 fpsetsticky(fp_except except)

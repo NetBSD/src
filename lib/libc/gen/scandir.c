@@ -1,4 +1,4 @@
-/*	$NetBSD: scandir.c,v 1.18.6.1 2001/11/14 19:31:57 nathanw Exp $	*/
+/*	$NetBSD: scandir.c,v 1.18.6.2 2002/01/28 20:50:34 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)scandir.c	8.3 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: scandir.c,v 1.18.6.1 2001/11/14 19:31:57 nathanw Exp $");
+__RCSID("$NetBSD: scandir.c,v 1.18.6.2 2002/01/28 20:50:34 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -82,18 +82,16 @@ scandir(dirname, namelist, select, dcomp)
 	int (*select) __P((const struct dirent *));
 	int (*dcomp) __P((const void *, const void *));
 {
-	struct dirent *d, *p, **names;
+	struct dirent *d, *p, **names, **newnames;
 	size_t nitems, arraysz;
 	struct stat stb;
 	DIR *dirp;
 
 	_DIAGASSERT(dirname != NULL);
 	_DIAGASSERT(namelist != NULL);
-	
-	nitems = 0;
 
 	if ((dirp = opendir(dirname)) == NULL)
-		return(-1);
+		return (-1);
 	if (fstat(dirp->dd_fd, &stb) < 0)
 		goto bad;
 
@@ -106,27 +104,16 @@ scandir(dirname, namelist, select, dcomp)
 	if (names == NULL)
 		goto bad;
 
+	nitems = 0;
 	while ((d = readdir(dirp)) != NULL) {
 		if (select != NULL && !(*select)(d))
 			continue;	/* just selected names */
-		/*
-		 * Make a minimum size copy of the data
-		 */
-		p = (struct dirent *)malloc(DIRSIZ(d));
-		if (p == NULL)
-			goto bad;
-		p->d_fileno = d->d_fileno;
-		p->d_reclen = d->d_reclen;
-		p->d_type = d->d_type;
-		p->d_namlen = d->d_namlen;
-		memmove(p->d_name, d->d_name,  (size_t)(p->d_namlen + 1));
+
 		/*
 		 * Check to make sure the array has space left and
 		 * realloc the maximum size.
 		 */
-		if (++nitems >= arraysz) {
-			struct dirent **newnames;
-
+		if (nitems >= arraysz) {
 			if (fstat(dirp->dd_fd, &stb) < 0)
 				goto bad2;	/* just might have grown */
 			arraysz = (size_t)(stb.st_size / 12);
@@ -136,25 +123,33 @@ scandir(dirname, namelist, select, dcomp)
 				goto bad2;
 			names = newnames;
 		}
-		names[nitems-1] = p;
+
+		/*
+		 * Make a minimum size copy of the data
+		 */
+		p = (struct dirent *)malloc(DIRSIZ(d));
+		if (p == NULL)
+			goto bad2;
+		p->d_fileno = d->d_fileno;
+		p->d_reclen = d->d_reclen;
+		p->d_type = d->d_type;
+		p->d_namlen = d->d_namlen;
+		memmove(p->d_name, d->d_name, (size_t)(p->d_namlen + 1));
+		names[nitems++] = p;
 	}
 	closedir(dirp);
 	if (nitems && dcomp != NULL)
 		qsort(names, nitems, sizeof(struct dirent *), dcomp);
 	*namelist = names;
-	return(nitems);
+	return (nitems);
+
 bad2:
-	free(p);
-	nitems--;
+	while (nitems-- > 0)
+		free(names[nitems]);
+	free(names);
 bad:
-	if (names) {
-		for (; nitems; )
-			free(names[--nitems]);
-		free(names);
-	}
-	if (dirp)
-		closedir(dirp);
-	return(-1);
+	closedir(dirp);
+	return (-1);
 }
 
 /*
@@ -169,6 +164,6 @@ alphasort(d1, d2)
 	_DIAGASSERT(d1 != NULL);
 	_DIAGASSERT(d2 != NULL);
 
-	return(strcmp((*(const struct dirent *const *)d1)->d_name,
+	return (strcmp((*(const struct dirent *const *)d1)->d_name,
 	    (*(const struct dirent *const *)d2)->d_name));
 }

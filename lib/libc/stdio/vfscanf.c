@@ -1,4 +1,4 @@
-/*	$NetBSD: vfscanf.c,v 1.27.6.1 2001/10/08 20:20:59 nathanw Exp $	*/
+/*	$NetBSD: vfscanf.c,v 1.27.6.2 2002/01/28 20:51:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vfscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vfscanf.c,v 1.27.6.1 2001/10/08 20:20:59 nathanw Exp $");
+__RCSID("$NetBSD: vfscanf.c,v 1.27.6.2 2002/01/28 20:51:13 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -144,6 +144,7 @@ __svfscanf(fp, fmt0, ap)
 	_DIAGASSERT(fmt0 != NULL);
 
 	FLOCKFILE(fp);
+	_SET_ORIENTATION(fp, -1);
 
 	nassigned = 0;
 	nread = 0;
@@ -263,6 +264,7 @@ literal:
 
 #ifdef FLOATING_POINT
 		case 'E':
+		case 'F':
 		case 'G':
 		case 'e': 
 		case 'f': 

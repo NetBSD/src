@@ -1,4 +1,4 @@
-/*	$NetBSD: strtod.c,v 1.36.2.2 2001/10/08 20:21:18 nathanw Exp $	*/
+/*	$NetBSD: strtod.c,v 1.36.2.3 2002/01/28 20:51:20 nathanw Exp $	*/
 
 /****************************************************************
  *
@@ -93,13 +93,13 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strtod.c,v 1.36.2.2 2001/10/08 20:21:18 nathanw Exp $");
+__RCSID("$NetBSD: strtod.c,v 1.36.2.3 2002/01/28 20:51:20 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define Unsigned_Shifts
 #if defined(__m68k__) || defined(__sparc__) || defined(__i386__) || \
     defined(__mips__) || defined(__ns32k__) || defined(__alpha__) || \
-    defined(__powerpc__) || defined(__sh3__) || defined(__x86_64__) || \
+    defined(__powerpc__) || defined(__sh__) || defined(__x86_64__) || \
     (defined(__arm__) && defined(__VFP_FP__))
 #include <sys/types.h>
 #if BYTE_ORDER == BIG_ENDIAN
@@ -1279,6 +1279,46 @@ strtod
 
 	if (*s == '\0') {
 		s = s00;
+		goto ret;
+	}
+
+	/* "INF" or "INFINITY" */
+	if (tolower(*s) == 'i' && strncasecmp(s, "inf", 3) == 0) {
+		if (strncasecmp(s + 3, "inity", 5) == 0)
+			s += 8;
+		else
+			s += 3;
+
+		value(rv) = HUGE_VAL;
+		goto ret;
+	}
+
+	/* "NAN" or "NAN(n-char-sequence-opt)" */
+	if (tolower(*s) == 'n' && strncasecmp(s, "nan", 3) == 0) {
+#ifdef IEEE_Arith
+		/* Build a quiet NaN. */
+		word0(rv) = Exp_mask | ((1 << Exp_shift) - 1);
+		word1(rv) = 0;
+#else
+#ifdef VAX
+		/* Lacking a quiet NaN, build a reserved operand. */
+		word0(rv) = Sign_bit;
+		word1(rv) = 0;
+#endif
+#endif
+		s+= 3;
+
+		/* Don't interpret (n-char-sequence-opt), for now. */
+		if (*s == '(') {
+			s0 = s;
+			for (s++; *s != ')' && *s != '\0'; s++)
+				;
+			if (*s == ')')
+				s++;	/* Skip over closing paren ... */
+			else
+				s = s0;	/* ... otherwise go back. */
+		}
+
 		goto ret;
 	}
 

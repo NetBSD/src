@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetmask.c,v 1.3 1997/07/13 18:45:35 christos Exp $	*/
+/*	$NetBSD: fpsetmask.c,v 1.3.14.1 2002/01/28 20:50:00 nathanw Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 10, 1995
@@ -7,12 +7,18 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpsetmask.c,v 1.3 1997/07/13 18:45:35 christos Exp $");
+__RCSID("$NetBSD: fpsetmask.c,v 1.3.14.1 2002/01/28 20:50:00 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
+
+#include "namespace.h"
 
 #include <ieeefp.h>
 #include <machine/cpufunc.h>
 #include <machine/fpu.h>
+
+#ifdef __weak_alias
+__weak_alias(fpsetmask,_fpsetmask)
+#endif
 
 fp_except
 fpsetmask(mask)

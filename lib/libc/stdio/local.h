@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.9 1998/07/27 16:05:07 mycroft Exp $	*/
+/*	$NetBSD: local.h,v 1.9.12.1 2002/01/28 20:51:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,6 +38,9 @@
  *	@(#)local.h	8.3 (Berkeley) 7/3/94
  */
 
+#include "wcio.h"
+#include "fileext.h"
+
 /*
  * Information local to this implementation of stdio,
  * in particular, macros and private variables.
@@ -75,11 +78,11 @@ extern int	__gettemp __P((char *, int *, int));
  * Test whether the given stdio file has an active ungetc buffer;
  * release such a buffer, without restoring ordinary unread data.
  */
-#define	HASUB(fp) ((fp)->_ub._base != NULL)
+#define	HASUB(fp) (_UB(fp)._base != NULL)
 #define	FREEUB(fp) { \
-	if ((fp)->_ub._base != (fp)->_ubuf) \
-		free((char *)(fp)->_ub._base); \
-	(fp)->_ub._base = NULL; \
+	if (_UB(fp)._base != (fp)->_ubuf) \
+		free((char *)_UB(fp)._base); \
+	_UB(fp)._base = NULL; \
 }
 
 /*
@@ -90,3 +93,4 @@ extern int	__gettemp __P((char *, int *, int));
 	free((char *)(fp)->_lb._base); \
 	(fp)->_lb._base = NULL; \
 }
+

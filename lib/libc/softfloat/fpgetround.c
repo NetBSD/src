@@ -1,4 +1,4 @@
-/* $NetBSD: fpgetround.c,v 1.1 2000/06/06 08:15:03 bjh21 Exp $ */
+/* $NetBSD: fpgetround.c,v 1.1.6.1 2002/01/28 20:50:48 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,8 +38,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpgetround.c,v 1.1 2000/06/06 08:15:03 bjh21 Exp $");
+__RCSID("$NetBSD: fpgetround.c,v 1.1.6.1 2002/01/28 20:50:48 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
+
+#include "namespace.h"
 
 #include <ieeefp.h>
 #ifdef SOFTFLOAT_FOR_GCC
@@ -47,6 +49,10 @@ __RCSID("$NetBSD: fpgetround.c,v 1.1 2000/06/06 08:15:03 bjh21 Exp $");
 #endif
 #include "milieu.h"
 #include "softfloat.h"
+
+#ifdef __weak_alias
+__weak_alias(fpgetround,_fpgetround)
+#endif
 
 fp_rnd
 fpgetround(void)

@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.10 2000/12/29 23:16:42 matthias Exp $	*/
+/*	$NetBSD: SYS.h,v 1.10.2.1 2002/01/28 20:49:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -75,6 +75,15 @@
 
 #define RSYSCALL(x)							\
 	PSEUDO(x,x)
+
+#ifdef WEAK_ALIAS
+#define	WSYSCALL(weak,strong)						\
+	WEAK_ALIAS(weak,strong);					\
+	PSEUDO(strong,weak)
+#else
+#define	WSYSCALL(weak,strong)						\
+	PSEUDO(weak,weak)
+#endif
 
 #define CALL(x,y)							\
 	bsr _C_LABEL(y);						\

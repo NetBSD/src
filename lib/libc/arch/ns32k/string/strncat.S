@@ -1,4 +1,4 @@
-/*	$NetBSD: strncat.S,v 1.5 1999/11/16 18:17:39 matthias Exp $	*/
+/*	$NetBSD: strncat.S,v 1.5.6.1 2002/01/28 20:50:02 nathanw Exp $	*/
 
 /* 
  * Written by Matthias Pfaller, 1996
@@ -8,13 +8,13 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strncat.S,v 1.5 1999/11/16 18:17:39 matthias Exp $")
+	RCSID("$NetBSD: strncat.S,v 1.5.6.1 2002/01/28 20:50:02 nathanw Exp $")
 #endif
 
 /*
  * char *
  * strncat(char *d, const char *s, size_t count)
- *	append string s to d. append not more then count bytes.
+ *	append string s to d. append not more than count bytes.
  */
 KENTRY(strncat, 12)
 	enter	[r4],0

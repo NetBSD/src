@@ -1,7 +1,7 @@
-/*	$NetBSD: namespace.h,v 1.60.2.2 2001/10/08 20:19:44 nathanw Exp $	*/
+/*	$NetBSD: namespace.h,v 1.60.2.3 2002/01/28 20:50:40 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -192,6 +192,12 @@
 #define fdopen			_fdopen
 #define fgetln			_fgetln
 #define fnmatch			_fnmatch
+#define fpgetmask		_fpgetmask
+#define fpgetround		_fpgetround
+#define fpgetsticky		_fpgetsticky
+#define fpsetmask		_fpsetmask
+#define fpsetround		_fpsetround
+#define fpsetsticky		_fpsetsticky
 #define freenetconfigent	_freenetconfigent
 #define freeaddrinfo		_freeaddrinfo
 #define freeifaddrs		_freeifaddrs
@@ -352,6 +358,8 @@
 #define pread			_pread
 #define psignal			_psignal
 #define putenv			_putenv
+#define pwcache_userdb		_pwcache_userdb
+#define pwcache_groupdb		_pwcache_groupdb
 #define pwrite			_pwrite
 #define qabs			_qabs
 #define qdiv			_qdiv
@@ -464,6 +472,7 @@
 #define svcudp_create		_svcudp_create
 #define svcudp_enablecache	_svcudp_enablecache
 #define svis			_svis
+#define sysarch			_sysarch
 #define sysctl			_sysctl
 #define syslog			_syslog
 #define tcdrain			_tcdrain
@@ -612,6 +621,6 @@
 #define dlerror			__dlerror
 #define dladdr			__dladdr
 #define fmtcheck		__fmtcheck
-#endif
+#endif /* __weak_alias */
 
-#endif
+#endif /* _NAMESPACE_H_ */

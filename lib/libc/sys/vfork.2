@@ -1,4 +1,4 @@
-.\"	$NetBSD: vfork.2,v 1.14.6.1 2001/10/08 20:22:16 nathanw Exp $
+.\"	$NetBSD: vfork.2,v 1.14.6.2 2002/01/28 20:51:31 nathanw Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -92,11 +92,12 @@ if you can't
 since
 .Xr exit 3
 will flush and close standard I/O channels, and thereby mess up the
-parent processes standard I/O data structures (even with
+standard I/O data structures
+in the parent process.  (Even with
 .Xr fork 2
 it is wrong to call
 .Xr exit 3
-since buffered data would then be flushed twice).
+since buffered data would then be flushed twice.)
 .Sh RETURN VALUES
 Same as for
 .Xr fork 2 .

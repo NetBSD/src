@@ -1,4 +1,4 @@
-/*	$NetBSD: fputs.c,v 1.10 1999/09/20 04:39:28 lukem Exp $	*/
+/*	$NetBSD: fputs.c,v 1.10.10.1 2002/01/28 20:50:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fputs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fputs.c,v 1.10 1999/09/20 04:39:28 lukem Exp $");
+__RCSID("$NetBSD: fputs.c,v 1.10.10.1 2002/01/28 20:50:56 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: fputs.c,v 1.10 1999/09/20 04:39:28 lukem Exp $");
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include "local.h"
 #include "fvwrite.h"
 #include "reentrant.h"
 
@@ -73,6 +74,7 @@ fputs(s, fp)
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1;
 	FLOCKFILE(fp);
+	_SET_ORIENTATION(fp, -1);
 	r = __sfvwrite(fp, &uio);
 	FUNLOCKFILE(fp);
 	return r;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetmask.S,v 1.1 2000/12/29 20:13:52 bjh21 Exp $	*/
+/*	$NetBSD: fpgetmask.S,v 1.1.2.1 2002/01/28 20:49:46 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -39,7 +39,12 @@
  * Return the current FP exception enable mask
  */
 
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(fpgetmask, _fpgetmask)
+ENTRY(_fpgetmask)
+#else
 ENTRY(fpgetmask)
+#endif
 	rfs	r0
 	mov	r0, r0, lsr #16
 	and	r0, r0, #0x1f

@@ -1,11 +1,19 @@
-/*	$NetBSD: fpsetsticky.c,v 1.2 1998/01/09 03:15:19 perry Exp $	*/
+/*	$NetBSD: fpsetsticky.c,v 1.2.12.1 2002/01/28 20:50:16 nathanw Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 10, 1995
  * Public domain.
  */
 
+#include <sys/cdefs.h>
+
+#include "namespace.h"
+
 #include <ieeefp.h>
+
+#ifdef __weak_alias
+__weak_alias(fpsetsticky,_fpsetsticky)
+#endif
 
 fp_except
 fpsetsticky(sticky)

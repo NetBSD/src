@@ -1,4 +1,4 @@
-/*	$NetBSD: setvbuf.c,v 1.14 1999/09/20 04:39:32 lukem Exp $	*/
+/*	$NetBSD: setvbuf.c,v 1.14.10.1 2002/01/28 20:51:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setvbuf.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: setvbuf.c,v 1.14 1999/09/20 04:39:32 lukem Exp $");
+__RCSID("$NetBSD: setvbuf.c,v 1.14.10.1 2002/01/28 20:51:06 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: setvbuf.c,v 1.14 1999/09/20 04:39:32 lukem Exp $");
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <wchar.h>
 #include "local.h"
 #include "reentrant.h"
 
@@ -90,6 +91,7 @@ setvbuf(fp, buf, mode, size)
 	(void)__sflush(fp);
 	if (HASUB(fp))
 		FREEUB(fp);
+	WCIO_FREE(fp);
 	fp->_r = fp->_lbfsize = 0;
 	flags = fp->_flags;
 	if (flags & __SMBF)

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpurge.c,v 1.10 2000/01/21 19:53:03 mycroft Exp $	*/
+/*	$NetBSD: fpurge.c,v 1.10.6.1 2002/01/28 20:50:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fpurge.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fpurge.c,v 1.10 2000/01/21 19:53:03 mycroft Exp $");
+__RCSID("$NetBSD: fpurge.c,v 1.10.6.1 2002/01/28 20:50:55 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: fpurge.c,v 1.10 2000/01/21 19:53:03 mycroft Exp $");
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <wchar.h>
 #include "local.h"
 #include "reentrant.h"
 
@@ -70,6 +71,7 @@ fpurge(fp)
 	FLOCKFILE(fp);
 	if (HASUB(fp))
 		FREEUB(fp);
+	WCIO_FREE(fp);
 	fp->_p = fp->_bf._base;
 	fp->_r = 0;
 	fp->_w = fp->_flags & (__SLBF|__SNBF) ? 0 : fp->_bf._size;

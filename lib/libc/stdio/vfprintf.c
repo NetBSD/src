@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.35.2.2 2001/11/14 19:32:02 nathanw Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.35.2.3 2002/01/28 20:51:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.35.2.2 2001/11/14 19:32:02 nathanw Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.35.2.3 2002/01/28 20:51:12 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -115,10 +115,13 @@ __sbprintf(fp, fmt, ap)
 {
 	int ret;
 	FILE fake;
+	struct __sfileext fakeext;
 	unsigned char buf[BUFSIZ];
 
 	_DIAGASSERT(fp != NULL);
 	_DIAGASSERT(fmt != NULL);
+
+	_FILEEXT_SETUP(&fake, &fakeext);
 
 	/* copy the important variables */
 	fake._flags = fp->_flags & ~__SNBF;
@@ -308,6 +311,7 @@ vfprintf(fp, fmt0, ap)
 	_DIAGASSERT(fmt0 != NULL);
 
 	FLOCKFILE(fp);
+	_SET_ORIENTATION(fp, -1);
 
 	/* sorry, fprintf(read_only_file, "") returns -1, not 0 */
 	if (cantwrite(fp)) {
@@ -469,6 +473,7 @@ reswitch:	switch (ch) {
 		case 'e':
 		case 'E':
 		case 'f':
+		case 'F':
 		case 'g':
 		case 'G':
 			if (prec == -1) {
@@ -487,12 +492,18 @@ reswitch:	switch (ch) {
 			if (isinf(_double)) {
 				if (_double < 0)
 					sign = '-';
-				cp = "Inf";
+				if (ch == 'E' || ch == 'F' || ch == 'G')
+					cp = "INF";
+				else
+					cp = "inf";
 				size = 3;
 				break;
 			}
 			if (isnan(_double)) {
-				cp = "NaN";
+				if (ch == 'E' || ch == 'F' || ch == 'G')
+					cp = "NAN";
+				else
+					cp = "nan";
 				size = 3;
 				break;
 			}
@@ -506,13 +517,13 @@ reswitch:	switch (ch) {
 				else
 					ch = 'g';
 			} 
-			if (ch <= 'e') {	/* 'e' or 'E' fmt */
+			if (ch == 'e' || ch == 'E') {
 				--expt;
 				expsize = exponent(expstr, expt, ch);
 				size = expsize + ndig;
 				if (ndig > 1 || flags & ALT)
 					++size;
-			} else if (ch == 'f') {		/* f fmt */
+			} else if (ch == 'f' || ch == 'F') {
 				if (expt > 0) {
 					size = expt;
 					if (prec || flags & ALT)
@@ -812,12 +823,12 @@ cvt(value, ndigits, flags, sign, decpt, ch, length)
 		mode = 2;		/* ndigits significant digits */
 	}
 
-	if (value < 0) {
+	digits = __dtoa(value, mode, ndigits, decpt, &dsgn, &rve);
+	if (dsgn) {
 		value = -value;
 		*sign = '-';
 	} else
 		*sign = '\000';
-	digits = __dtoa(value, mode, ndigits, decpt, &dsgn, &rve);
 	if ((ch != 'g' && ch != 'G') || flags & ALT) {	/* Print trailing zeros */
 		bp = digits + ndigits;
 		if (ch == 'f') {

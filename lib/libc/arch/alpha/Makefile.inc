@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 1999/01/15 13:31:15 bouyer Exp $
+#	$NetBSD: Makefile.inc,v 1.10.12.1 2002/01/28 20:49:40 nathanw Exp $
 
 KMINCLUDES=
 KMSRCS=	divrem.m4 \

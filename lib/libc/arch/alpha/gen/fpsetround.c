@@ -1,4 +1,4 @@
-/* $NetBSD: fpsetround.c,v 1.3.4.1 2001/10/08 20:16:51 nathanw Exp $ */
+/* $NetBSD: fpsetround.c,v 1.3.4.2 2002/01/28 20:49:43 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -34,8 +34,16 @@
  * <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
  */
 
+#include <sys/cdefs.h>
+
+#include "namespace.h"
+
 #include <sys/types.h>
 #include <ieeefp.h>
+
+#ifdef __weak_alias
+__weak_alias(fpsetround,_fpsetround)
+#endif
 
 fp_rnd
 fpsetround(rnd_dir)

@@ -1,4 +1,4 @@
-/*	$NetBSD: strlcat.c,v 1.8 2001/01/13 04:19:54 itojun Exp $	*/
+/*	$NetBSD: strlcat.c,v 1.8.2.1 2002/01/28 20:51:23 nathanw Exp $	*/
 /*	$OpenBSD: strlcat.c,v 1.4 2001/01/12 22:55:23 millert Exp $	*/
 
 /*
@@ -28,21 +28,26 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#else
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strlcat.c,v 1.8 2001/01/13 04:19:54 itojun Exp $");
+__RCSID("$NetBSD: strlcat.c,v 1.8.2.1 2002/01/28 20:51:23 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <assert.h>
 #include <string.h>
+#endif
 
+#if !HAVE_STRLCAT
 /*
  * Appends src to string dst of size siz (unlike strncat, siz is the
  * full size of dst, not space left).  At most siz-1 characters
- * will be copied.  Always NUL terminates (unless siz == 0).
- * Returns strlen(initial dst) + strlen(src); if retval >= siz,
- * truncation occurred.
+ * will be copied.  Always NUL terminates (unless siz <= strlen(dst)).
+ * Returns strlen(src) + MIN(siz, strlen(initial dst)).
+ * If retval >= siz, truncation occurred.
  */
 size_t
 strlcat(dst, src, siz)
@@ -77,3 +82,4 @@ strlcat(dst, src, siz)
 
 	return(dlen + (s - src));	/* count does not include NUL */
 }
+#endif

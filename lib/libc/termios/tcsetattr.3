@@ -1,4 +1,4 @@
-.\"	$NetBSD: tcsetattr.3,v 1.5.12.1 2001/10/08 20:22:18 nathanw Exp $
+.\"	$NetBSD: tcsetattr.3,v 1.5.12.2 2002/01/28 20:51:32 nathanw Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -204,7 +204,7 @@ The
 function copies the parameters associated with the terminal referenced
 by
 .Fa fd
-in the termios structure referenced by
+to the termios structure referenced by
 .Fa tp .
 This function is allowed from a background process, however, the terminal
 attributes may be subsequently changed by a foreground process.
