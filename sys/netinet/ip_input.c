@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.63 1998/04/29 21:37:55 matt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.64 1998/05/01 03:23:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -309,9 +309,19 @@ next:
 			m_adj(m, len - m->m_pkthdr.len);
 	}
 
+	/*
+	 * Assume that we can create a fast-forward IP flow entry
+	 * based on this packet.
+	 */
+	m->m_flags |= M_CANFASTFWD;
+
 #ifdef PFIL_HOOKS
 	/*
-	 * Run through list of hooks for input packets.
+	 * Run through list of hooks for input packets.  If there are any
+	 * filters which require that additional packets in the flow are
+	 * not fast-forwarded, they must clear the M_CANFASTFWD flag.
+	 * Note that filters must _never_ set this flag, as another filter
+	 * in the list may have previously cleared it.
 	 */
 	m0 = m;
 	for (pfh = pfil_hook_get(PFIL_IN); pfh; pfh = pfh->pfil_link.tqe_next)
@@ -1197,7 +1207,8 @@ ip_forward(m, srcrt)
 		else {
 			if (mcopy) {
 #ifdef GATEWAY
-				ipflow_create(&ipforward_rt, mcopy);
+				if (mcopy->m_flags & M_CANFASTFWD)
+					ipflow_create(&ipforward_rt, mcopy);
 #endif
 				m_freem(mcopy);
 			}
