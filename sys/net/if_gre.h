@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.8 2000/12/12 18:00:26 thorpej Exp $ */
+/*	$NetBSD: if_gre.h,v 1.9 2001/05/10 01:23:51 itojun Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,10 +46,10 @@ struct gre_softc {
 	LIST_ENTRY(gre_softc) sc_list;
 	int gre_unit;
 	int gre_flags;
-	struct    in_addr g_src;  /* source address of gre packets */
-	struct    in_addr g_dst;  /* destination address of gre packets */
+	struct in_addr g_src;	/* source address of gre packets */
+	struct in_addr g_dst;	/* destination address of gre packets */
 	struct route route;	/* routing entry that determines, where a
-                                   encapsulated packet should go */
+				   encapsulated packet should go */
 	u_char g_proto;		/* protocol of encapsulator */
 };	
 
@@ -57,27 +57,26 @@ struct gre_softc {
 struct gre_h {
 	u_int16_t flags;	/* GRE flags */
 	u_int16_t ptype;	/* protocol type of payload typically 
-                               Ether protocol type*/
+				   Ether protocol type*/
 /* 
  *  from here on: fields are optional, presence indicated by flags 
  *
-	u_int_16 checksum	 checksum (one-complements of GRE header
-                             and payload
-                             Present if (ck_pres | rt_pres == 1).
-                             Valid if (ck_pres == 1).
-	u_int_16 offset			 offset from start of routing filed to
-                             first octet of active SRE (see below).
-                             Present if (ck_pres | rt_pres == 1).
-                             Valid if (rt_pres == 1).
-    u_int_32 key             inserted by encapsulator e.g. for
-                             authentication
-                             Present if (key_pres ==1 ).
-    u_int_32 seq_num         Sequence number to allow for packet order
-                             Present if (seq_pres ==1 ).
-
-    struct gre_sre[] routing Routing fileds (see below)
-                             Present if (rt_pres == 1)
-*/
+	u_int_16 checksum	checksum (one-complements of GRE header
+				and payload
+				Present if (ck_pres | rt_pres == 1).
+				Valid if (ck_pres == 1).
+	u_int_16 offset		offset from start of routing filed to
+				first octet of active SRE (see below).
+				Present if (ck_pres | rt_pres == 1).
+				Valid if (rt_pres == 1).
+	u_int_32 key		inserted by encapsulator e.g. for
+				authentication
+				Present if (key_pres ==1 ).
+	u_int_32 seq_num	Sequence number to allow for packet order
+				Present if (seq_pres ==1 ).
+	struct gre_sre[] routing Routing fileds (see below)
+				Present if (rt_pres == 1)
+ */
 } __attribute__((__packed__));
 
 struct greip {
@@ -85,34 +84,34 @@ struct greip {
 	struct gre_h  gi_g;
 } __attribute__((__packed__));
 
-#define gi_pr           gi_i.ip_p
-#define gi_len          gi_i.ip_len
-#define gi_src          gi_i.ip_src
-#define gi_dst          gi_i.ip_dst
+#define gi_pr		gi_i.ip_p
+#define gi_len		gi_i.ip_len
+#define gi_src		gi_i.ip_src
+#define gi_dst		gi_i.ip_dst
 #define gi_ptype	gi_g.ptype
 #define gi_flags	gi_g.flags
 
-#define GRE_CP          0x8000  /* Checksum Present */
-#define GRE_RP          0x4000  /* Routing Present */
-#define GRE_KP          0x2000  /* Key Present */
-#define GRE_SP          0x1000  /* Sequence Present */
+#define GRE_CP		0x8000  /* Checksum Present */
+#define GRE_RP		0x4000  /* Routing Present */
+#define GRE_KP		0x2000  /* Key Present */
+#define GRE_SP		0x1000  /* Sequence Present */
 #define GRE_SS		0x0800	/* Strict Source Route */
 
-/* gre_sre defines a Source route Entry. These are needed if packets
- *  should be routed over more than one tunnel hop by hop
+/*
+ * gre_sre defines a Source route Entry. These are needed if packets
+ * should be routed over more than one tunnel hop by hop
  */
-
 struct gre_sre {
 	u_int16_t sre_family;	/* adress family */
-	u_char  sre_offset;	/* offset to first octet of active entry */
-	u_char  sre_length;	/* number of octets in the SRE. 
-                               sre_lengthl==0 -> last entry. */
-	u_char  *sre_rtinfo;	/* the routing information */
+	u_char	sre_offset;	/* offset to first octet of active entry */
+	u_char	sre_length;	/* number of octets in the SRE. 
+				   sre_lengthl==0 -> last entry. */
+	u_char	*sre_rtinfo;	/* the routing information */
 };
 
 struct greioctl {
 	int unit;
-	struct    in_addr addr;
+	struct in_addr addr;
 };
 
 /* for mobile encaps */
@@ -125,8 +124,8 @@ struct mobile_h {
 } __attribute__((__packed__));
 
 struct mobip_h {
-	struct ip       mi;
-	struct mobile_h mh;
+	struct ip	mi;
+	struct mobile_h	mh;
 } __attribute__((__packed__));
 
 
@@ -139,19 +138,19 @@ struct mobip_h {
  * ioctls needed to manipulate the interface 
  */
 
-#define GRESADDRS       _IOW('i', 101, struct ifreq)
-#define GRESADDRD       _IOW('i', 102, struct ifreq)   
-#define GREGADDRS       _IOWR('i', 103, struct ifreq)
-#define GREGADDRD       _IOWR('i', 104, struct ifreq)
-#define GRESPROTO       _IOW('i' , 105, struct ifreq)
-#define GREGPROTO       _IOWR('i', 106, struct ifreq)
+#define GRESADDRS	_IOW('i', 101, struct ifreq)
+#define GRESADDRD	_IOW('i', 102, struct ifreq)   
+#define GREGADDRS	_IOWR('i', 103, struct ifreq)
+#define GREGADDRD	_IOWR('i', 104, struct ifreq)
+#define GRESPROTO	_IOW('i' , 105, struct ifreq)
+#define GREGPROTO	_IOWR('i', 106, struct ifreq)
 
 #ifdef _KERNEL
 LIST_HEAD(gre_softc_head, gre_softc);
 extern struct gre_softc_head gre_softc_list;
 
-int     gre_ioctl __P((struct ifnet *, u_long, caddr_t));
-int     gre_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
+int	gre_ioctl __P((struct ifnet *, u_long, caddr_t));
+int	gre_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *rt));
 u_short	gre_in_cksum(u_short *p, u_int len);
 #endif /* _KERNEL */
