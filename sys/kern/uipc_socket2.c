@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_socket2.c	7.17 (Berkeley) 5/4/91
- *	$Id: uipc_socket2.c,v 1.5 1993/12/18 04:22:30 mycroft Exp $
+ *	$Id: uipc_socket2.c,v 1.6 1994/04/25 08:08:58 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -263,17 +263,6 @@ socantrcvmore(so)
 /*
  * Socket select/wakeup routines.
  */
-
-/*
- * Queue a process for a select on a socket buffer.
- */
-sbselqueue(sb, cp)
-	struct sockbuf *sb;
-	struct proc *cp;
-{
-	selrecord(cp, &sb->sb_sel);
-	sb->sb_flags |= SB_SEL;
-}
 
 /*
  * Wait for data to arrive at/drain from a socket buffer.

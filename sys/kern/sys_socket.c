@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sys_socket.c	7.11 (Berkeley) 4/16/91
- *	$Id: sys_socket.c,v 1.5 1993/12/18 04:21:41 mycroft Exp $
+ *	$Id: sys_socket.c,v 1.6 1994/04/25 08:08:56 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -43,6 +43,7 @@
 #include <sys/socketvar.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <sys/select.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -149,7 +150,8 @@ soo_select(fp, which, p)
 			splx(s);
 			return (1);
 		}
-		sbselqueue(&so->so_rcv, p);
+		selrecord(p, &so->so_rcv.sb_sel);
+		so->so_rcv.sb_flags |= SB_SEL;
 		break;
 
 	case FWRITE:
@@ -157,7 +159,8 @@ soo_select(fp, which, p)
 			splx(s);
 			return (1);
 		}
-		sbselqueue(&so->so_snd, p);
+		selrecord(p, &so->so_snd.sb_sel);
+		so->so_snd.sb_flags |= SB_SEL;
 		break;
 
 	case 0:
@@ -166,7 +169,8 @@ soo_select(fp, which, p)
 			splx(s);
 			return (1);
 		}
-		sbselqueue(&so->so_rcv, p);
+		selrecord(p, &so->so_rcv.sb_sel);
+		so->so_rcv.sb_flags |= SB_SEL;
 		break;
 	}
 	splx(s);
