@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.23 2000/06/07 14:26:11 leo Exp $	*/
+/*	$NetBSD: clock.c,v 1.23.2.1 2001/02/26 22:49:25 he Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -434,7 +434,7 @@ gettod()
 		return(0);
 	if (range_test(clkregs[MC_MONTH], 1, 12))
 		return(0);
-	if(clkregs[MC_YEAR] > (2000 - GEMSTARTOFTIME))
+	if(clkregs[MC_YEAR] > 99)
 		return(0);
 
 	dt.dt_year = clkregs[MC_YEAR] + GEMSTARTOFTIME;
