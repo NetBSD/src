@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 1997/10/13 21:03:49 christos Exp $ */
+/*	$NetBSD: extern.h,v 1.6 1998/03/29 04:57:19 mrg Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -231,7 +231,7 @@ struct scenario {
 	char *name;			/* 14 */
 	struct ship ship[NSHIP];	/* 16 */
 };
-struct scenario scene[];
+extern struct scenario scene[];
 int nscene;
 
 struct shipspecs {
@@ -255,7 +255,7 @@ struct shipspecs {
 	int rig4;
 	short pts;
 };
-struct shipspecs specs[];
+extern struct shipspecs specs[];
 
 struct scenario *cc;		/* the current scenario */
 struct ship *ls;		/* &cc->ship[cc->vessels] */
@@ -280,15 +280,15 @@ char HDTrake[9][10];
 char QUAL[9][5];
 char MT[9][3];
 
-char *countryname[];
-char *classname[];
-char *directionname[];
-char *qualname[];
-char loadname[];
+extern char *countryname[];
+extern char *classname[];
+extern char *directionname[];
+extern char *qualname[];
+extern char loadname[];
 
-char rangeofshot[];
+extern char rangeofshot[];
 
-char dr[], dc[];
+extern char dr[], dc[];
 
 int winddir;
 int windspeed;

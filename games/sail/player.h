@@ -1,4 +1,4 @@
-/*	$NetBSD: player.h,v 1.5 1997/01/07 12:42:24 tls Exp $	*/
+/*	$NetBSD: player.h,v 1.6 1998/03/29 04:57:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -109,7 +109,7 @@ char loaded, fired, changed, repaired;
 char dont_adjust;
 int viewrow, viewcol;
 char movebuf[sizeof SHIP(0)->file->movebuf];
-char version[];
+extern char version[];
 int player;
 struct ship *ms;		/* memorial structure, &cc->ship[player] */
 struct File *mf;		/* ms->file */
