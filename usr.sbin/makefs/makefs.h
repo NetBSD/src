@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.h,v 1.4 2001/12/05 11:08:53 lukem Exp $	*/
+/*	$NetBSD: makefs.h,v 1.5 2002/01/07 05:07:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef	_MAKEFS_H
+#define	_MAKEFS_H
 
 #include <sys/stat.h>
 
@@ -214,3 +217,14 @@ extern	struct timespec	start_time;
 #ifndef	DEFAULT_FSTYPE
 #define	DEFAULT_FSTYPE	"ffs"
 #endif
+
+
+/*
+ *	ffs specific settings
+ *	---------------------
+ */
+
+#define	FFS_EI		/* for opposite endian support in ffs headers */
+
+
+#endif	/* _MAKEFS_H */

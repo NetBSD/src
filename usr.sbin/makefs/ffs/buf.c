@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.4 2001/11/22 02:47:26 lukem Exp $	*/
+/*	$NetBSD: buf.c,v 1.5 2002/01/07 05:07:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint
-__RCSID("$NetBSD: buf.c,v 1.4 2001/11/22 02:47:26 lukem Exp $");
+__RCSID("$NetBSD: buf.c,v 1.5 2002/01/07 05:07:51 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -50,10 +50,10 @@ __RCSID("$NetBSD: buf.c,v 1.4 2001/11/22 02:47:26 lukem Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "makefs.h"
+
 #include "ufs/ufs/inode.h"
 #include "ufs/ffs/fs.h"
-
-#include "makefs.h"
 
 #include "ffs/buf.h"
 
