@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.28 1995/08/25 02:56:41 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.29 1995/09/01 04:10:11 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -203,13 +203,13 @@ via2_intr(struct frame *fp)
 	 */
 	via_reg(VIA2, vIFR) = intbits;
 
-	bitmsk = 0x40;
+	bitmsk = 0x01;
 	bitnum = 7;
 	while(bitnum--){
 		if(intbits & bitmsk){
-			via2itab[bitnum](bitnum);
+			via2itab[6-bitnum](6-bitnum);
 		}
-		bitmsk >>= 1;
+		bitmsk <<= 1;
 	}
 }
 
@@ -227,13 +227,13 @@ rbv_intr(struct frame *fp)
 
 	via_reg(VIA2, rIFR) = intbits;
 
-	bitmsk = 0x40;
+	bitmsk = 0x01;
 	bitnum = 7;
 	while(bitnum--){
 		if(intbits & bitmsk){
-			via2itab[bitnum](bitnum);
+			via2itab[6-bitnum](6-bitnum);
 		}
-		bitmsk >>= 1;
+		bitmsk <<= 1;
 	}
 }
 
