@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uba.c,v 1.15 1999/01/01 21:43:18 ragge Exp $	*/
+/*	$NetBSD: if_uba.c,v 1.16 2002/03/05 09:40:42 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -292,7 +292,7 @@ rcv_xmtbuf(ifw)
 	register int i;
 	char *cp;
 
-	while ((i = ffs((long)ifw->ifw_xswapd)) != 0) {
+	while ((i = ffs(ifw->ifw_xswapd)) != 0) {
 		cp = ifw->ifw_base + i * MCLBYTES;
 		i--;
 		ifw->ifw_xswapd &= ~(1<<i);
@@ -379,7 +379,7 @@ if_ubaput(ifu, ifw, m)
 	cc = cp - ifw->ifw_addr;
 	x = ((cc - ifu->iff_hlen) + MCLBYTES - 1) >> MCLSHIFT;
 	ifw->ifw_xswapd &= ~xswapd;
-	while ((i = ffs((long)ifw->ifw_xswapd)) != 0) {
+	while ((i = ffs(ifw->ifw_xswapd)) != 0) {
 		i--;
 		if (i >= x)
 			break;
