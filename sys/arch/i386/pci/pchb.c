@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.24 2001/09/10 10:06:54 fvdl Exp $	*/
+/*	$NetBSD: pchb.c,v 1.25 2001/09/10 10:54:46 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -107,7 +107,9 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 	struct pcibus_attach_args pba;
+#if NAGP > 0
 	struct agp_phcb_attach_args apa;
+#endif
 	pcireg_t bcreg;
 	u_char bdnum, pbnum;
 	pcitag_t tag;
