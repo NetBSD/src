@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.21 1996/05/07 01:24:48 thorpej Exp $
+#	$NetBSD: files.sparc,v 1.22 1996/05/16 22:38:04 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -81,16 +81,16 @@ major { sd = 7 }
 major { vnd = 8 }
 major { cd = 18 }
 
-device dma
+device dma {}
 attach dma at sbus, obio
-device espdma { slot = -1, offset = -1 }
+device espdma {}
 attach espdma at sbus
-device ledma { slot = -1, offset = -1 }
+device ledma {}
 attach ledma at sbus
 file	arch/sparc/dev/dma.c		dma | espdma | ledma needs-flag
 
 device esp: scsi
-attach esp at sbus, espdma, obio
+attach esp at sbus, espdma, dma, obio
 file	arch/sparc/dev/esp.c		esp needs-flag
 
 # Brooktree DAC attribute
