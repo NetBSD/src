@@ -1388,7 +1388,7 @@ regular:
  	{
  		static u_char in_Debugger;
 
- 		if(!in_Debugger)
+ 		if(!in_Debugger && pcvt_is_console)
  		{
  			in_Debugger = 1;
 #if PCVT_FREEBSD

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.105 1996/11/05 06:21:25 mikel Exp $	*/
+/*	$NetBSD: pccons.c,v 1.106 1997/07/26 12:32:24 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -94,6 +94,7 @@ static u_short cursor_shape = 0xffff,	/* don't update until set by user */
 #ifdef XSERVER
 int pc_xmode = 0;
 #endif
+int pccons_is_console = 0;
 
 #define	PCUNIT(x)	(minor(x))
 
@@ -774,7 +775,7 @@ void
 pccninit(cp)
 	struct consdev *cp;
 {
-
+	pccons_is_console = 1;
 	/*
 	 * For now, don't screw with it.
 	 */
@@ -1484,7 +1485,7 @@ top:
 	if (pc_xmode > 0) {
 #if defined(DDB) && defined(XSERVER_DDB)
 		/* F12 enters the debugger while in X mode */
-		if (dt == 88)
+		if ((dt == 88) && pccons_is_console)
 			Debugger();
 #endif
 		capchar[0] = dt;
@@ -1546,7 +1547,8 @@ top:
 	/*
 	 * Check for cntl-alt-esc.
 	 */
-	if ((dt == 1) && (shift_state & (CTL | ALT)) == (CTL | ALT)) {
+	if ((dt == 1) && ((shift_state & (CTL | ALT)) == (CTL | ALT))
+	    && pccons_is_console) {
 		Debugger();
 		dt |= 0x80;	/* discard esc (ddb discarded ctl-alt) */
 	}
