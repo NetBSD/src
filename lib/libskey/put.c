@@ -1,3 +1,5 @@
+/*	$NetBSD: put.c,v 1.3 1996/09/19 19:39:43 thorpej Exp $	*/
+
 /* S/KEY v1.1b (put.c)
  *
  * Authors:
@@ -7,8 +9,6 @@
  *          Scott Chasin <chasin@crimelab.com>
  *
  * Dictionary lookup and extraction.
- *
- * $Id: put.c,v 1.2 1996/09/19 19:36:53 thorpej Exp $
  */
 
 #include <stdio.h>
