@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.317 2001/03/04 02:33:37 assar Exp $
+#	$NetBSD: mi,v 1.318 2001/03/10 02:21:56 cgd Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -2653,6 +2653,8 @@
 ./usr/share/man/cat3/setvbuf.0	comp-c-catman
 ./usr/share/man/cat3/sha.0		comp-c-catman
 ./usr/share/man/cat3/sha1.0	comp-c-catman
+./usr/share/man/cat3/shquote.0	comp-c-catman
+./usr/share/man/cat3/shquotev.0	comp-c-catman
 ./usr/share/man/cat3/sigaddset.0	comp-c-catman
 ./usr/share/man/cat3/sigblock.0	comp-c-catman
 ./usr/share/man/cat3/sigdelset.0	comp-c-catman
@@ -4499,6 +4501,8 @@
 ./usr/share/man/man3/setvbuf.3		comp-c-man
 ./usr/share/man/man3/sha.3		comp-c-man
 ./usr/share/man/man3/sha1.3		comp-c-man
+./usr/share/man/man3/shquote.3		comp-c-man
+./usr/share/man/man3/shquotev.3		comp-c-man
 ./usr/share/man/man3/sigaddset.3		comp-c-man
 ./usr/share/man/man3/sigblock.3		comp-c-man
 ./usr/share/man/man3/sigdelset.3		comp-c-man
