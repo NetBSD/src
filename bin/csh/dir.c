@@ -29,17 +29,11 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00013
- * --------------------         -----   ----------------------
- *
- * 19 Aug 92	Kevin Lahey		Fixed csh segmentation violation
  */
 
 #ifndef lint
 static char sccsid[] = "@(#)dir.c	5.12 (Berkeley) 6/27/91";
+static char rcsid[] = "$Id: dir.c,v 1.3 1993/03/22 08:04:00 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

@@ -36,6 +36,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)dirent.c	5.1 (Berkeley) 3/7/91";
+static char rcsid[] = "$Id: dirent.c,v 1.2 1993/03/22 08:04:00 cgd Exp $";
 #endif /* not lint */
 
 #include "shell.h"	/* definitions for pointer, NULL, DIRENT, and BSD */

@@ -34,6 +34,8 @@
  * SUCH DAMAGE.
  *
  *	@(#)nodes.c.pat	5.2 (Berkeley) 3/8/91
+ *
+ *	$Id: nodes.c.pat,v 1.2 1993/03/22 08:04:00 cgd Exp $
  */
 
 /*

@@ -33,6 +33,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)mkfs.c	6.18 (Berkeley) 7/3/91";
+static char rcsid[] = "$Id: mkfs.c,v 1.2 1993/03/22 08:04:00 cgd Exp $";
 #endif /* not lint */
 
 #ifndef STANDALONE

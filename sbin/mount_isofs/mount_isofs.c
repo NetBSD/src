@@ -1,3 +1,7 @@
+#ifndef lint
+static char rcsid[] = "$Id: mount_isofs.c,v 1.2 1993/03/22 08:04:00 cgd Exp $";
+#endif
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/mount.h>

@@ -1,6 +1,8 @@
 %{
 /* Written by Pace Willisson (pace@blitz.com) 
  * and placed in the public domain
+ *
+ * $Id: expr.y,v 1.2 1993/03/22 08:04:00 cgd Exp $
  */
 #include <stdio.h>
 #include <ctype.h>

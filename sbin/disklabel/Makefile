@@ -1,4 +1,6 @@
 #	@(#)Makefile	5.6 (Berkeley) 4/1/91
+#
+#	$Id: Makefile,v 1.2 1993/03/22 08:04:00 cgd Exp $
 
 PROG=	disklabel
 SRCS=	disklabel.c dkcksum.c

@@ -29,13 +29,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00036
- * --------------------         -----   ----------------------
- *
- * 14 Sep 92	Goran Hammarback	Fixed ps exception due to gcc bug
  */
 
 #ifndef lint
@@ -46,6 +39,7 @@ char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "@(#)ps.c	5.43 (Berkeley) 7/1/91";
+static char rcsid[] = "$Id: ps.c,v 1.3 1993/03/22 08:04:00 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

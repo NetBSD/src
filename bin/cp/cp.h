@@ -31,6 +31,8 @@
  * SUCH DAMAGE.
  *
  *	@(#)cp.h	5.2 (Berkeley) 4/3/91
+ *
+ *	$Id: cp.h,v 1.2 1993/03/22 08:04:00 cgd Exp $
  */
 
 typedef struct {

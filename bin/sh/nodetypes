@@ -35,6 +35,8 @@
 # SUCH DAMAGE.
 #
 #	@(#)nodetypes	5.1 (Berkeley) 3/7/91
+#
+#	$Id: nodetypes,v 1.2 1993/03/22 08:04:00 cgd Exp $
 
 # This file describes the nodes used in parse trees.  Unindented lines
 # contain a node type followed by a structure tag.  Subsequent indented

@@ -1,4 +1,4 @@
-#	%W% (Berkeley) %G%
+#	$Id: Makefile,v 1.2 1993/03/22 08:04:00 cgd Exp $
 
 PROG=	sh
 SRCS=	builtins.c cd.c dirent.c echo.c error.c eval.c exec.c expand.c \

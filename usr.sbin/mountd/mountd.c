@@ -32,14 +32,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00054
- * --------------------         -----   ----------------------
- *
- * 08 Sep 92    Rick "gopher I"         Fix infinite loop when subdirs
- *						of local mount exported
  */
 
 #ifndef lint
@@ -50,6 +42,7 @@ char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "@(#)mountd.c	5.14 (Berkeley) 2/26/91";
+static char rcsid[] = "$Id: mountd.c,v 1.3 1993/03/22 08:04:00 cgd Exp $";
 #endif not lint
 
 #include <sys/param.h>
