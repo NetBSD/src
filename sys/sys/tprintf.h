@@ -1,4 +1,4 @@
-/*	$NetBSD: tprintf.h,v 1.9 1996/04/03 20:46:50 christos Exp $	*/
+/*	$NetBSD: tprintf.h,v 1.10 1996/04/09 20:55:43 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,4 +42,3 @@ void	tprintf_close __P((tpr_t));
 
 void	tprintf __P((tpr_t, const char *fmt, ...))
     __kprintf_attribute__((__format__(__kprintf__,2,3)));
-	

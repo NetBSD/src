@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.13 1996/03/14 18:59:09 christos Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.14 1996/04/09 20:55:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -50,7 +50,7 @@
  * that will fit in a power-of-two sized piece of memory.
  */
 #define NDFILE		20
-#define NDEXTENT	50		/* 250 bytes in 256-byte alloc. */ 
+#define NDEXTENT	50		/* 250 bytes in 256-byte alloc. */
 
 struct filedesc {
 	struct	file **fd_ofiles;	/* file structures for open files */

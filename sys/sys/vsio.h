@@ -1,4 +1,4 @@
-/*	$NetBSD: vsio.h,v 1.6 1994/06/29 06:46:20 cgd Exp $	*/
+/*	$NetBSD: vsio.h,v 1.7 1996/04/09 20:55:50 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1987, 1993
@@ -56,16 +56,16 @@
  * 									    *
  *									    *
  ****************************************************************************/
-/* 
+/*
  * vsio.h - VS100 I/O command definitions
- * 
+ *
  * Author:	Christopher A. Kent
  *		Digital Equipment Corporation
  *		Western Research Lab
  * Date:	Tue Jun 21 1983
  */
 
-/* 
+/*
  * Possible ioctl calls
  */
 
@@ -90,7 +90,7 @@
 #define	VS_FIB_FINITE	1		/* finite retries */
 #define	VS_FIB_INFINITE	2		/* infinite retries */
 
-/* 
+/*
  * Event queue entries
  */
 
