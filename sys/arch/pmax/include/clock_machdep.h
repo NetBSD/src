@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_machdep.h,v 1.3 1998/09/26 20:59:42 drochner Exp $	*/
+/*	$NetBSD: clock_machdep.h,v 1.4 1999/08/25 02:12:05 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  * System-dependent clock declarations for the ``cpu-independent''
  * clock interface.
  *
- * This file must prototype or define the folluwing functions of
+ * This file must prototype or define the following functions or
  * macros (one or more of which may be no-ops):
  *
  * CLOCK_RATE	default rate at which clock runs. Some platforms
@@ -49,5 +49,5 @@
  */
 
 
-/* The  default clock rate on a pmax is 256 Hz. */
+/* The default clock rate on a pmax is 256 Hz. */
 #define CLOCK_RATE	256
