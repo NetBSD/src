@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.499 2004/09/10 15:12:51 ian Exp $
+# $NetBSD: mi,v 1.500 2004/09/11 01:19:14 ian Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -2019,6 +2019,8 @@
 ./usr/share/locale/zh_CN/LC_MESSAGES		base-locale-zh
 ./usr/share/locale/zh_CN/LC_MESSAGES/texinfo.mo	base-texinfo_locale-zh	nls
 ./usr/share/locale/zh_TW			base-locale-zh
+./usr/share/locale/zh_TW.BIG5			base-locale-zh		obsolete
+./usr/share/locale/zh_TW.BIG5/LC_CTYPE		base-locale-zh		obsolete
 ./usr/share/locale/zh_TW.Big5			base-locale-zh
 ./usr/share/locale/zh_TW.Big5/LC_CTYPE		base-locale-zh		nls
 ./usr/share/locale/zh_TW.eucTW			base-locale-zh
