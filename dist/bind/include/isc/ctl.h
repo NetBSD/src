@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.h,v 1.1.1.1 1999/11/20 18:54:03 veego Exp $	*/
+/*	$NetBSD: ctl.h,v 1.2 2000/10/08 20:03:12 is Exp $	*/
 
 #ifndef ISC_CTL_H
 #define ISC_CTL_H
@@ -64,7 +64,8 @@ struct ctl_verb {
 
 #define	ctl_logger	__ctl_logger
 
-void			ctl_logger(enum ctl_severity, const char *, ...);
+void			ctl_logger(enum ctl_severity, const char *, ...)
+     __attribute__((__format__(__printf__, 2, 3)));
 
 /* Client symbols. */
 
