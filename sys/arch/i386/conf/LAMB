@@ -1,4 +1,4 @@
-#	$NetBSD: LAMB,v 1.35 2004/02/16 17:11:27 wiz Exp $
+#	$NetBSD: LAMB,v 1.36 2004/07/06 22:53:37 mycroft Exp $
 #
 #	LAMB - a complete kernel for wildlab LAMB, http://www.wildlab.com/
 #
@@ -265,9 +265,6 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 #options 	FINNISH_KBD
 #options 	GERMAN_KBD
 #options 	NORWEGIAN_KBD
-# pccons-specific options:
-#options 	XSERVER_DDB	# PF12 gets you into DDB when X is running
-#options 	XSERVER		# X server support
 
 
 # wscons

@@ -1,4 +1,4 @@
-# $NetBSD: VIRTUALPC,v 1.5 2004/06/20 03:24:04 thorpej Exp $
+# $NetBSD: VIRTUALPC,v 1.6 2004/07/06 22:53:37 mycroft Exp $
 #
 # VIRTUALPC machine description file --
 #
@@ -11,7 +11,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VIRTUALPC-$Revision: 1.5 $"
+#ident 		"VIRTUALPC-$Revision: 1.6 $"
 
 maxusers	32		# estimated number of users
 
@@ -329,9 +329,6 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 #options 	FINNISH_KBD
 #options 	GERMAN_KBD
 #options 	NORWEGIAN_KBD
-# pccons-specific options:
-#options 	XSERVER_DDB	# PF12 gets you into DDB when X is running
-#options 	XSERVER		# X server support
 
 
 # wscons
