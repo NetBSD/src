@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.104 1999/11/21 17:04:05 is Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.105 1999/12/30 15:59:26 eeh Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -345,9 +345,14 @@ sys_execve(p, v, retval)
 	szsigcode = pack.ep_emul->e_esigcode - pack.ep_emul->e_sigcode;
 
 	/* Now check if args & environ fit into new stack */
-	len = ((argc + envc + 2 + pack.ep_emul->e_arglen) * sizeof(char *) +
-	    sizeof(long) + dp + STACKGAPLEN + szsigcode +
-	    sizeof(struct ps_strings)) - argp;
+	if (pack.ep_flags & EXEC_32)
+		len = ((argc + envc + 2 + pack.ep_emul->e_arglen) * sizeof(char *) +
+		       sizeof(int) + dp + STACKGAPLEN + szsigcode +
+		       sizeof(struct ps_strings)) - argp;
+	else
+		len = ((argc + envc + 2 + pack.ep_emul->e_arglen) * sizeof(int) +
+		       sizeof(int) + dp + STACKGAPLEN + szsigcode +
+		       sizeof(struct ps_strings)) - argp;
 
 	len = ALIGN(len);	/* make the stack "safely" aligned */
 
