@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.17 1999/08/31 12:30:35 bouyer Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.18 2001/06/19 13:42:20 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -95,7 +95,7 @@
     (_XOPEN_SOURCE - 0) >= 500
 #define	O_SYNC		0x00000080		/* synchronous writes */
 #endif
-#define	O_CREAT		0x00000200		/* create if nonexistant */
+#define	O_CREAT		0x00000200		/* create if nonexistent */
 #define	O_TRUNC		0x00000400		/* truncate to zero length */
 #define	O_EXCL		0x00000800		/* error if already exists */
 

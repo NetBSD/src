@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.8 2001/04/12 20:05:12 thorpej Exp $	*/
+/*	$NetBSD: rl.c,v 1.9 2001/06/19 13:42:18 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -488,7 +488,7 @@ static char *rlerr[] = {
 	"header not found",
 	"",
 	"",
-	"non-existant memory",
+	"non-existent memory",
 	"memory parity error",
 	"",
 	"",

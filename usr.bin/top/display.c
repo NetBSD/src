@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.4 2000/11/02 15:28:51 christos Exp $	*/
+/*	$NetBSD: display.c,v 1.5 2001/06/19 13:42:22 wiz Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -21,7 +21,7 @@
  *  ASSUMPTIONS:
  *        None of the "i_" routines use any of the termcap capabilities.
  *        In this way, those routines can be safely used on terminals that
- *        have minimal (or nonexistant) terminal capabilities.
+ *        have minimal (or nonexistent) terminal capabilities.
  *
  *        The routines are called in this order:  *_loadave, i_timeofday,
  *        *_procstates, *_cpustates, *_memory, *_message, *_header,
