@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.133 2002/06/27 03:43:47 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.134 2002/07/04 19:20:02 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.133 2002/06/27 03:43:47 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.134 2002/07/04 19:20:02 thorpej Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -1069,15 +1069,7 @@ setregs(p, pack, stack)
 	p->p_md.md_ss_addr = 0;
 }
 
-/*
- * WARNING: code in locore.s assumes the layout shown for sf_signum
- * thru sf_handler so... don't screw with them!
- */
 struct sigframe {
-	int	sf_signum;		/* signo for handler */
-	int	sf_code;		/* additional info for handler */
-	struct	sigcontext *sf_scp;	/* context ptr for handler */
-	sig_t	sf_handler;		/* handler addr for u_sigc */
 	struct	sigcontext sf_sc;	/* actual context */
 };
 

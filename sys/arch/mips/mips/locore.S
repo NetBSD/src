@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.140 2002/06/01 12:27:04 simonb Exp $	*/
+/*	$NetBSD: locore.S,v 1.141 2002/07/04 19:20:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -173,7 +173,7 @@ _C_LABEL(verylocore):
  * NB: we cannot profile sigcode(), it executes from userspace.
  */
 LEAF_NOPROFILE(sigcode)
-	addu	a0, sp, 16		# address of sigcontext
+	move	a0, sp			# address of sigcontext
 	li	v0, SYS___sigreturn14	# sigreturn(scp)
 	syscall
 	break	0			# just in case sigreturn fails
@@ -182,7 +182,7 @@ XLEAF(esigcode)
 
 #ifdef COMPAT_ULTRIX
 LEAF_NOPROFILE(ultrix_sigcode)
-	addu	a0, sp, 16		# address of sigcontext
+	move	a0, sp			# address of sigcontext
 	li	v0, ULTRIX_SYS_sigreturn	# sigreturn(scp)
 	syscall
 	break	0			# just in case sigreturn fails
@@ -193,7 +193,7 @@ XLEAF(ultrix_esigcode)
 #ifdef COMPAT_LINUX
 #define SYSCALL_SHIFT 4000		# 4000 shift as in linux_syscall.c
 LEAF_NOPROFILE(linux_sigcode)
-	move	a0, sp
+	move	a0, sp			# address of sigcontext
 	li	v0, LINUX_SYS_sigreturn	+ SYSCALL_SHIFT # sigreturn(sf)
 	syscall
 	break	0			# just in case sigreturn fails
