@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.50 2004/03/27 00:49:47 petrov Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.51 2004/05/18 11:59:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.50 2004/03/27 00:49:47 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.51 2004/05/18 11:59:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -622,7 +622,7 @@ sa_yield(struct lwp *l)
 	int ret;
 
 #if defined(MULTIPROCESSOR)
-	KDASSERT(l->l_flag & L_BIGLOCK);
+	KDASSERT(lockstatus(&kernel_lock) == LK_EXCLUSIVE);
 #endif
 
 	if (vp->savp_lwp != l) {

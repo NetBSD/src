@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.143 2004/05/12 20:13:58 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.144 2004/05/18 11:59:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.143 2004/05/12 20:13:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.144 2004/05/18 11:59:11 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -840,23 +840,18 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	struct rlimit *rlim;
 	long s, u;
 	struct timeval tv;
-#if defined(MULTIPROCESSOR)
-	int hold_count = 0;	/* XXX: gcc */
-#endif
+	int hold_count;
 	struct proc *p = l->l_proc;
 	int retval;
 
 	SCHED_ASSERT_LOCKED();
 
-#if defined(MULTIPROCESSOR)
 	/*
 	 * Release the kernel_lock, as we are about to yield the CPU.
 	 * The scheduler lock is still held until cpu_switch()
 	 * selects a new process and removes it from the run queue.
 	 */
-	if (l->l_flag & L_BIGLOCK)
-		hold_count = spinlock_release_all(&kernel_lock);
-#endif
+	hold_count = KERNEL_LOCK_RELEASE_ALL();
 
 	KDASSERT(l->l_cpu != NULL);
 	KDASSERT(l->l_cpu == curcpu());
@@ -967,15 +962,12 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	KDASSERT(l->l_cpu == curcpu());
 	microtime(&l->l_cpu->ci_schedstate.spc_runtime);
 
-#if defined(MULTIPROCESSOR)
 	/*
 	 * Reacquire the kernel_lock now.  We do this after we've
 	 * released the scheduler lock to avoid deadlock, and before
 	 * we reacquire the interlock.
 	 */
-	if (l->l_flag & L_BIGLOCK)
-		spinlock_acquire_count(&kernel_lock, hold_count);
-#endif
+	KERNEL_LOCK_ACQUIRE_COUNT(hold_count);
 
 	return retval;
 }
