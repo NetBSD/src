@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp1.S,v 1.2 2003/10/06 05:30:21 matt Exp $	*/
+/*	$NetBSD: __sigtramp1.S,v 1.3 2004/03/26 19:36:40 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -102,7 +102,7 @@ L$sigcode_bounce:
 	ldil	L%SYSCALLGATE, %r1
 	.call
 	ble	4(%sr7, %r1)
-	ldi	SYS___sigreturn14, %t1
+	ldi	SYS_compat_16___sigreturn14, %t1
 	/* Make a SYS_exit system call. */
 	copy	%ret0, %arg0
 	ldil	L%SYSCALLGATE, %r1
