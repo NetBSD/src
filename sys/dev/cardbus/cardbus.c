@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.19 2000/01/31 08:49:07 haya Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.20 2000/02/18 18:55:31 soren Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -47,14 +47,13 @@
 
 #include <dev/cardbus/cardbusvar.h>
 #include <dev/cardbus/cardbusdevs.h>
-#include <dev/cardbus/pccardcis.h>
 
 #include <dev/cardbus/cardbus_exrom.h>
 
 #include <dev/pci/pcivar.h>	/* XXX */
 #include <dev/pci/pcireg.h>	/* XXX */
 
-#include <dev/pcmcia/pcmciareg.h> /* XXX */
+#include <dev/pcmcia/pcmciareg.h>
 
 #if defined CARDBUS_DEBUG
 #define STATIC
@@ -63,7 +62,6 @@
 #define STATIC static
 #define DPRINTF(a)
 #endif
-
 
 
 STATIC void cardbusattach __P((struct device *, struct device *, void *));
@@ -866,7 +864,7 @@ decode_tuples(tuple, buflen, func, data)
 {
   u_int8_t *tp = tuple;
 
-  if (CISTPL_LINKTARGET != *tuple) {
+  if (PCMCIA_CISTPL_LINKTARGET != *tuple) {
     DPRINTF(("WRONG TUPLE: 0x%x\n", *tuple));
     return 0;
   }
@@ -895,7 +893,7 @@ decode_tuple(tuple, func, data)
 
     (*func)(tuple, len, data);
 
-    if (CISTPL_END == type) {
+    if (PCMCIA_CISTPL_END == type) {
 	return NULL;
     }
 
@@ -966,4 +964,3 @@ print_tuple(tuple, len, data)
 }
 
 #endif
-
