@@ -37,7 +37,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)compile.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: compile.c,v 1.10 1994/02/03 23:44:46 cgd Exp $";
+static char *rcsid = "$Id: compile.c,v 1.11 1994/04/17 04:19:27 alm Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -65,6 +65,7 @@ static struct labhash {
 } *labels[LHSZ];
 
 static char	 *compile_addr __P((char *, struct s_addr *));
+static char	 *compile_ccl __P((char **, char *));
 static char	 *compile_delimited __P((char *, char *));
 static char	 *compile_flags __P((char *, struct s_subst *));
 static char	 *compile_re __P((char *, regex_t **));
@@ -346,7 +347,13 @@ compile_delimited(p, d)
 	else if (c == '\n')
 		err(COMPILE, "newline can not be used as a string delimiter");
 	while (*p) {
-		if (*p == '\\' && p[1] == c)
+		if (*p == '[') {
+			if ((d = compile_ccl(&p, d)) == NULL)
+				err(COMPILE, "unbalanced brackets ([])");
+			continue;
+		} else if (*p == '\\' && p[1] == '[') {
+			*d++ = *p++;
+		} else if (*p == '\\' && p[1] == c)
 			p++;
 		else if (*p == '\\' && p[1] == 'n') {
 			*d++ = '\n';
@@ -361,6 +368,32 @@ compile_delimited(p, d)
 		*d++ = *p++;
 	}
 	return (NULL);
+}
+
+
+/* compile_ccl: expand a POSIX character class */
+static char *
+compile_ccl(sp, t)
+	char **sp;
+	char *t;
+{
+	int c, d;
+	char *s = *sp;
+
+	*t++ = *s++;
+	if (*s == '^')
+		*t++ = *s++;
+	if (*s == ']')
+		*t++ = *s++;
+	for (; *s && (*t = *s) != ']'; s++, t++)
+		if (*s == '[' && ((d = *(s+1)) == '.' || d == ':' || d == '=')) {
+			*++t = *++s, t++, s++;
+			for (c = *s; (*t = *s) != ']' || c != d; s++, t++)
+				if ((c = *s) == '\0')
+					return NULL;
+		} else if (*s == '\\' && s[1] == 'n')
+			    *t = '\n', s++;
+	return (*s == ']') ? *sp = ++s, ++t : NULL;
 }
 
 /*
