@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.4 2001/09/05 17:08:41 matt Exp $	*/
+/*	$NetBSD: stubs.c,v 1.5 2001/10/27 16:41:00 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -201,7 +201,7 @@ dumpsys()
 #ifndef NEWINTR
 /* This is interrupt / SPL related */
 
-int current_spl_level = _SPL_HIGH;
+int current_spl_level = _SPL_SERIAL;
 u_int spl_masks[_SPL_LEVELS + 1];
 u_int spl_smasks[_SPL_LEVELS];
 int safepri = _SPL_0;
@@ -223,6 +223,11 @@ set_spl_masks()
 	spl_masks[_SPL_IMP]	   = irqmasks[IPL_IMP];
 	spl_masks[_SPL_AUDIO]	   = irqmasks[IPL_AUDIO];
 	spl_masks[_SPL_CLOCK]	   = irqmasks[IPL_CLOCK];
+#ifdef IPL_STATCLOCK
+	spl_masks[_SPL_STATCLOCK]  = irqmasks[IPL_STATCLOCK];
+#else
+	spl_masks[_SPL_STATCLOCK]  = irqmasks[IPL_CLOCK];
+#endif
 	spl_masks[_SPL_HIGH]	   = irqmasks[IPL_HIGH];
 	spl_masks[_SPL_SERIAL]	   = irqmasks[IPL_SERIAL];
 	spl_masks[_SPL_LEVELS]	   = 0;
