@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.29 1999/04/16 15:42:32 simonb Exp $	*/
+/*	$NetBSD: md.c,v 1.30 1999/04/21 11:55:07 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -122,7 +122,7 @@ md_get_info (void)
  */
 int	md_pre_disklabel (void)
 {
-	return 1;
+	return 0;
 }
 
 
