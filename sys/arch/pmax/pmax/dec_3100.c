@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.38 2003/12/13 23:04:38 ad Exp $ */
+/* $NetBSD: dec_3100.c,v 1.39 2005/01/11 08:05:14 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.38 2003/12/13 23:04:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.39 2005/01/11 08:05:14 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,7 +231,7 @@ dec_3100_cons_init()
 #define CALLINTR(vvv, cp0)					\
     do {							\
 	if (ipending & (cp0)) {					\
-		intrcnt[vvv] += 1;				\
+		intrtab[vvv].ih_count.ev_count++;		\
 		(*intrtab[vvv].ih_func)(intrtab[vvv].ih_arg);	\
 	}							\
     } while (0)
