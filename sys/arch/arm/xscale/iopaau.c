@@ -1,4 +1,4 @@
-/*	$NetBSD: iopaau.c,v 1.5 2002/08/03 21:31:16 thorpej Exp $	*/
+/*	$NetBSD: iopaau.c,v 1.6 2002/08/03 21:58:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.5 2002/08/03 21:31:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.6 2002/08/03 21:58:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -295,14 +295,14 @@ iopaau_func_fill_immed_setup(struct iopaau_softc *sc,
 		cur->d_dar = dmamap->dm_segs[seg].ds_addr;
 		cur->d_bc = dmamap->dm_segs[seg].ds_len;
 		cur->d_dc = AAU_DC_B1_CC(AAU_DC_CC_FILL) | AAU_DC_DWE;
-		SYNC_DESC_4(cur);
+		SYNC_DESC(cur, sizeof(struct aau_desc_4));
 	}
 
 	*prevp = NULL;
 	*prevpa = 0;
 
 	cur->d_dc |= AAU_DC_IE;
-	SYNC_DESC_4(cur);
+	SYNC_DESC(cur, sizeof(struct aau_desc_4));
 
 	sc->sc_lastdesc = cur;
 
@@ -385,6 +385,7 @@ iopaau_func_xor_1_4_setup(struct iopaau_softc *sc, struct dmover_request *dreq)
 	struct aau_desc_4 **prevp, *cur;
 	int ninputs = dreq->dreq_assignment->das_algdesc->dad_ninputs;
 	int i, error, seg;
+	size_t descsz = AAU_DESC_SIZE(ninputs);
 
 	KASSERT(ninputs <= AAU_MAX_INPUTS);
 
@@ -499,14 +500,14 @@ iopaau_func_xor_1_4_setup(struct iopaau_softc *sc, struct dmover_request *dreq)
 		cur->d_dar = dmamap->dm_segs[seg].ds_addr;
 		cur->d_bc = dmamap->dm_segs[seg].ds_len;
 		cur->d_dc = iopaau_dc_inputs[ninputs] | AAU_DC_DWE;
-		SYNC_DESC_4(cur);
+		SYNC_DESC(cur, descsz);
 	}
 
 	*prevp = NULL;
 	*prevpa = 0;
 
 	cur->d_dc |= AAU_DC_IE;
-	SYNC_DESC_4(cur);
+	SYNC_DESC(cur, descsz);
 
 	sc->sc_lastdesc = cur;
 
