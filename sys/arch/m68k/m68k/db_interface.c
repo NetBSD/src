@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.12 1994/11/28 19:29:14 gwr Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.13 1995/01/18 17:10:47 gwr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -58,7 +58,8 @@ kdb_kintr(regs)
 }
 
 /*
- *  kdb_trap - field a TRACE or BPT trap
+ * kdb_trap - field a TRACE or BPT trap
+ * Return non-zero if we "handled" the trap.
  */
 kdb_trap(type, regs)
 	int	type;
@@ -74,9 +75,11 @@ kdb_trap(type, regs)
 	default:
 		kdbprinttrap(type, 0);
 		if (db_recover != 0) {
+			/* This will longjmp back to db_command_loop */
 			db_error("Caught exception in ddb.\n");
 			/*NOTREACHED*/
 		}
+		return (0);
 	}
 
 	/* XXX - Should switch to kdb's own stack here. */
