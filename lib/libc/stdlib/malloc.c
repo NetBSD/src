@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.26 1999/09/10 10:38:06 kleink Exp $	*/
+/*	$NetBSD: malloc.c,v 1.27 2000/01/23 00:38:43 mycroft Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -253,7 +253,7 @@ static char *malloc_func;
 /* Macro for mmap */
 #define MMAP(size) \
 	mmap(0, (size), PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, \
-	    MMAP_FD, 0);
+	    MMAP_FD, (off_t)0);
 
 /*
  * Necessary function declarations
@@ -294,7 +294,7 @@ wrtwarning(char *p)
  * Allocate a number of pages from the OS
  */
 static void *
-map_pages(int pages)
+map_pages(size_t pages)
 {
     caddr_t result, tail;
 
@@ -324,12 +324,10 @@ static int
 extend_pgdir(u_long idx)
 {
     struct  pginfo **new, **old;
-    int i, oldlen;
+    size_t newlen, oldlen;
 
     /* Make it this many pages */
-    i = idx * sizeof *page_dir;
-    i /= malloc_pagesize;
-    i += 2;
+    newlen = pageround(idx * sizeof *page_dir) + malloc_pagesize;
 
     /* remember the old mapping size */
     oldlen = malloc_ninfo * sizeof *page_dir;
@@ -350,16 +348,15 @@ extend_pgdir(u_long idx)
      */
 
     /* Get new pages */
-    new = (struct pginfo**) MMAP(i * malloc_pagesize);
+    new = (struct pginfo**) MMAP(newlen);
     if (new == (struct pginfo **)-1)
 	return 0;
 
     /* Copy the old stuff */
-    memcpy(new, page_dir,
-	    malloc_ninfo * sizeof *page_dir);
+    memcpy(new, page_dir, oldlen);
 
     /* register the new size */
-    malloc_ninfo = i * malloc_pagesize / sizeof *page_dir;
+    malloc_ninfo = newlen / sizeof *page_dir;
 
     /* swap the pointers */
     old = page_dir;
@@ -383,7 +380,7 @@ malloc_init (void)
     /*
      * Compute page-size related variables.
      */
-    malloc_pagesize = sysconf(_SC_PAGESIZE);
+    malloc_pagesize = (size_t)sysconf(_SC_PAGESIZE);
     malloc_pagemask = malloc_pagesize - 1;
     for (malloc_pageshift = 0;
 	 (1UL << malloc_pageshift) != malloc_pagesize;
@@ -618,7 +615,7 @@ malloc_make_chunks(int bits)
 
     /* Do a bunch at a time */
     for(;k-i >= MALLOC_BITS; i += MALLOC_BITS)
-	bp->bits[i / MALLOC_BITS] = ~0;
+	bp->bits[i / MALLOC_BITS] = ~0U;
 
     for(; i < k; i++)
         bp->bits[i/MALLOC_BITS] |= 1<<(i%MALLOC_BITS);
@@ -697,7 +694,7 @@ malloc_bytes(size_t size)
     k <<= bp->shift;
 
     if (malloc_junk)
-	memset((u_char*)bp->page + k, SOME_JUNK, bp->size);
+	memset((u_char*)bp->page + k, SOME_JUNK, (size_t)bp->size);
 
     return (u_char *)bp->page + k;
 }
@@ -976,7 +973,7 @@ free_bytes(void *ptr, int idx, struct pginfo *info)
     }
 
     if (malloc_junk)
-	memset(ptr, SOME_JUNK, info->size);
+	memset(ptr, SOME_JUNK, (size_t)info->size);
 
     info->bits[i/MALLOC_BITS] |= 1<<(i%MALLOC_BITS);
     info->free++;
@@ -1010,7 +1007,7 @@ free_bytes(void *ptr, int idx, struct pginfo *info)
     *mp = info->next;
 
     /* Free the page & the info structure if need be */
-    page_dir[ptr2idx(info->page)] = MALLOC_FIRST;
+    page_dir[idx] = MALLOC_FIRST;
     vp = info->page;		/* Order is important ! */
     if(vp != (void*)info) 
 	ifree(info);
