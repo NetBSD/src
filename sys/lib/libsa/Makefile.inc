@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 1997/02/16 21:25:21 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.10 1998/02/07 00:11:31 cgd Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -33,7 +33,11 @@ SAMAKE= \
 	cd ${SADIR} && MAKEOBJDIR=${SADST} ${MAKE} \
 	    CC=${CC:Q} CFLAGS=${CFLAGS:Q} \
 	    AS=${AS:Q} AFLAGS=${AFLAGS:Q} \
+	    LORDER=${LORDER:Q} \
+	    TSORT=${TSORT:Q} \
 	    LD=${LD:Q} STRIP=${STRIP:Q} \
+	    AR=${AR:Q} NM=${NM:Q} \
+	    RANLIB=${RANLIB:Q} SIZE=${SIZE:Q} \
 	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:Q} \
 	    SACPPFLAGS=${CPPFLAGS:S@^-I.@-I../../.@g:Q} \
 	    SAMISCCPPFLAGS=${SAMISCCPPFLAGS:Q} \
