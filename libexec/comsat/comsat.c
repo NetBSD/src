@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	5.24 (Berkeley) 2/25/91";*/
-static char rcsid[] = "$Id: comsat.c,v 1.2 1993/08/01 18:31:05 mycroft Exp $";
+static char rcsid[] = "$Id: comsat.c,v 1.3 1994/01/30 18:32:39 briggs Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -224,8 +224,17 @@ jkfprintf(tp, name, offset)
 	register char *cp, ch;
 	register FILE *fi;
 	register int linecnt, charcnt, inheader;
+	struct stat st;
 	char line[BUFSIZ];
 
+	if (lstat(name, &st) != 0) {
+		syslog(LOG_ERR, "Unable to stat mail file.");
+		return;
+	}
+	if (!(S_ISREG(st.st_mode))) {
+		syslog(LOG_ERR, "Mail file is not a regular file.");
+		return;
+	}
 	if ((fi = fopen(name, "r")) == NULL)
 		return;
 	(void)fseek(fi, offset, L_SET);
