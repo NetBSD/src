@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.97 2004/07/07 01:39:00 mycroft Exp $	*/
+/*	$NetBSD: in.c,v 1.98 2004/07/18 11:37:38 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.97 2004/07/07 01:39:00 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.98 2004/07/18 11:37:38 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -468,7 +468,7 @@ in_control(so, cmd, data, ifp, p)
 
 	case SIOCSIFADDR:
 		error = in_ifinit(ifp, ia, satosin(&ifr->ifr_addr), 1);
-#ifdef PFIL_HOOK
+#ifdef PFIL_HOOKS
 		if (!error)
 			(void)pfil_run_hooks(&if_pfil,
 			    (struct mbuf **)SIOCSIFADDR, ifp, PFIL_IFADDR);
@@ -525,7 +525,7 @@ in_control(so, cmd, data, ifp, p)
 		else
 			bzero(&ifra->ifra_broadaddr,
 			      sizeof(ifra->ifra_broadaddr));
-#ifdef PFIL_HOOK
+#ifdef PFIL_HOOKS
 		(void)pfil_run_hooks(&if_pfil,
 		    (struct mbuf **)SIOCGIFALIAS, ifp, PFIL_IFADDR);
 #endif
@@ -533,7 +533,7 @@ in_control(so, cmd, data, ifp, p)
 
 	case SIOCDIFADDR:
 		in_purgeaddr(&ia->ia_ifa, ifp);
-#ifdef PFIL_HOOK
+#ifdef PFIL_HOOKS
 		(void)pfil_run_hooks(&if_pfil, (struct mbuf **)SIOCDIFADDR,
 		    ifp, PFIL_IFADDR);
 #endif
