@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.91 2003/06/30 03:23:15 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.92 2003/06/30 03:26:28 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1022,3 +1022,10 @@ sys/arch/amiga/amiga/amiga_init.c		1.86
 
 	From Gunther Nikl on port-amiga@. Thanks!
 	[aymeric, ticket #1357]
+
+sys/netinet/ip_output.c				1.106-1.107
+
+	after pfil_run_hooks, need to fix hlen as well
+
+	freebsd code somehow crept in
+	[itojun, ticket #1358]
