@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.244 2004/09/16 15:59:52 snj Exp $
+#	$NetBSD: 3RDPARTY,v 1.245 2004/09/28 00:55:15 dyoung Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -384,12 +384,12 @@ might be worthwhile to import at some future date, but for now we should
 leave it alone.  (garbled 1/4/2001)
 
 Package:	libpcap
-Version:	0.4
-Current Vers:	0.7.2
+Version:	0.8.3
+Current Vers:	0.8.3
 Maintainer:	tcpdump-workers@tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Mailing List:	tcpdump-workers@tcpdump.org
-Responsible:	itojun
+Responsible:	itojun,dyoung
 Notes:
 
 Package:	libwrap
@@ -647,8 +647,8 @@ arithmetic code is unchanged, though, and should behave exactly like the
 original.
 
 Package:	tcpdump
-Version:	3.7.1 as of 2002/5/31
-Current Vers:	3.7.2
+Version:	3.8.3
+Current Vers:	3.8.3
 Maintainer:	tcpdump-workers@tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Mailing List:	tcpdump-workers@tcpdump.org
