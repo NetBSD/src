@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.7 2000/05/02 04:41:11 thorpej Exp $ */
+/*	$NetBSD: lock.h,v 1.8 2000/05/05 20:12:01 hannken Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -54,6 +54,9 @@ typedef	__volatile int		__cpu_simple_lock_t;
 #define	__SIMPLELOCK_UNLOCKED	0
 
 /* XXX So we can expose this to userland. */
+#ifdef __lint__
+#define __ldstub(__addr)	(__addr)
+#else /* !__lint__ */
 #define	__ldstub(__addr)						\
 ({									\
 	int __v;							\
@@ -65,6 +68,7 @@ typedef	__volatile int		__cpu_simple_lock_t;
 									\
 	__v;								\
 })
+#endif /* __lint__ */
 
 static __inline void __cpu_simple_lock_init __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
