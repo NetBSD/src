@@ -1,4 +1,4 @@
-/*	$NetBSD: gt_mainbus.c,v 1.2 2003/03/06 06:04:22 matt Exp $	*/
+/*	$NetBSD: gt_mainbus.c,v 1.3 2003/03/07 18:24:01 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -44,6 +44,7 @@
 #define _POWERPC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
+#include "opt_pci.h"
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
 
@@ -53,11 +54,11 @@
 #include <dev/marvell/gtpcireg.h>
 #include <dev/marvell/gtpcivar.h>
 
-extern struct powerpc_bus_space ev64260_gt_mem_bs_tag;
-extern struct powerpc_bus_space ev64260_pci0_mem_bs_tag;
-extern struct powerpc_bus_space ev64260_pci0_io_bs_tag;
-extern struct powerpc_bus_space ev64260_pci1_mem_bs_tag;
-extern struct powerpc_bus_space ev64260_pci1_io_bs_tag;
+extern struct powerpc_bus_space gt_mem_bs_tag;
+extern struct powerpc_bus_space gt_pci0_mem_bs_tag;
+extern struct powerpc_bus_space gt_pci0_io_bs_tag;
+extern struct powerpc_bus_space gt_pci1_mem_bs_tag;
+extern struct powerpc_bus_space gt_pci1_io_bs_tag;
 
 struct powerpc_bus_dma_tag gt_bus_dma_tag = {
 	0,			/* _bounce_thresh */
@@ -108,11 +109,11 @@ gt_attach(struct device *parent, struct device *self, void *aux)
 
 	gt->gt_vbase = GT_BASE;
 	gt->gt_dmat = &gt_bus_dma_tag;
-	gt->gt_memt = &ev64260_gt_mem_bs_tag;
-	gt->gt_pci0_memt = &ev64260_pci0_io_bs_tag;
-	gt->gt_pci0_iot =  &ev64260_pci0_mem_bs_tag;
-	gt->gt_pci1_memt = &ev64260_pci1_io_bs_tag;
-	gt->gt_pci1_iot =  &ev64260_pci1_mem_bs_tag;
+	gt->gt_memt = &gt_mem_bs_tag;
+	gt->gt_pci0_memt = &gt_pci0_io_bs_tag;
+	gt->gt_pci0_iot =  &gt_pci0_mem_bs_tag;
+	gt->gt_pci1_memt = &gt_pci1_io_bs_tag;
+	gt->gt_pci1_iot =  &gt_pci1_mem_bs_tag;
 
 	gt_attach_common(gt);
 }
@@ -121,20 +122,32 @@ void
 gt_setup(struct device *gt)
 {
 #if 1
-	GT_DecodeAddr_SET(gt, GT_PCI0_IO_Low_Decode,  0x80000000);
-	GT_DecodeAddr_SET(gt, GT_PCI0_IO_High_Decode, 0x807FFFFF);
-	GT_DecodeAddr_SET(gt, GT_PCI1_IO_Low_Decode,  0x80800000);
-	GT_DecodeAddr_SET(gt, GT_PCI1_IO_High_Decode, 0x80FFFFFF);
-	GT_DecodeAddr_SET(gt, GT_PCI0_Mem0_Low_Decode,  0x81000000);
-	GT_DecodeAddr_SET(gt, GT_PCI0_Mem0_High_Decode, 0x88FFFFFF);
-	GT_DecodeAddr_SET(gt, GT_PCI1_Mem0_Low_Decode,  0x89000000);
-	GT_DecodeAddr_SET(gt, GT_PCI1_Mem0_High_Decode, 0x8FFFFFFF);
+	GT_DecodeAddr_SET(gt, GT_PCI0_IO_Low_Decode,
+	    gt_pci0_io_bs_tag.pbs_offset + gt_pci0_io_bs_tag.pbs_base);
+	GT_DecodeAddr_SET(gt, GT_PCI0_IO_High_Decode,
+	    gt_pci0_io_bs_tag.pbs_offset + gt_pci0_io_bs_tag.pbs_limit - 1);
+
+	GT_DecodeAddr_SET(gt, GT_PCI1_IO_Low_Decode,
+	    gt_pci1_io_bs_tag.pbs_offset + gt_pci1_io_bs_tag.pbs_base);
+	GT_DecodeAddr_SET(gt, GT_PCI1_IO_High_Decode,
+	    gt_pci1_io_bs_tag.pbs_offset + gt_pci1_io_bs_tag.pbs_limit - 1);
+
+	GT_DecodeAddr_SET(gt, GT_PCI0_Mem0_Low_Decode,
+	    gt_pci0_mem_bs_tag.pbs_offset + gt_pci0_mem_bs_tag.pbs_base);
+	GT_DecodeAddr_SET(gt, GT_PCI0_Mem0_High_Decode,
+	    gt_pci1_mem_bs_tag.pbs_offset + gt_pci1_mem_bs_tag.pbs_limit - 1);
+
+	GT_DecodeAddr_SET(gt, GT_PCI1_Mem0_Low_Decode,
+	    gt_pci1_mem_bs_tag.pbs_offset + gt_pci1_mem_bs_tag.pbs_base);
+	GT_DecodeAddr_SET(gt, GT_PCI1_Mem0_High_Decode,
+	    gt_pci1_mem_bs_tag.pbs_offset + gt_pci1_mem_bs_tag.pbs_limit - 1);
 #endif
 }
 
 void
 gtpci_config_bus(struct pci_chipset *pc, int busno)
 {
+#ifdef PCI_NETBSD_CONFIGURE
 	struct extent *ioext, *memext;
 	uint32_t data;
 	pcitag_t tag;
@@ -145,16 +158,20 @@ gtpci_config_bus(struct pci_chipset *pc, int busno)
 
 	switch (busno) {
 	case 0:
-		ioext  = extent_create("pciio0",  0x00000600, 0x0000ffff,
-				      M_DEVBUF, NULL, 0, EX_NOWAIT);
-		memext = extent_create("pcimem0", 0x81000000, 0x88ffffff,
-				       M_DEVBUF, NULL, 0, EX_NOWAIT);
+		ioext  = extent_create("pci0-io",  0x00000600, 0x0000ffff,
+		    M_DEVBUF, NULL, 0, EX_NOWAIT);
+		memext = extent_create("pci0-mem",
+		    gt_pci0_mem_bs_tag.pbs_base,
+		    gt_pci0_mem_bs_tag.pbs_limit-1,
+		    M_DEVBUF, NULL, 0, EX_NOWAIT);
 		break;
 	case 1:
-		ioext  = extent_create("pciio1",  0x00000600, 0x0000ffff,
-				      M_DEVBUF, NULL, 0, EX_NOWAIT);
-		memext = extent_create("pcimem1", 0x89000000, 0x8fffffff,
-				       M_DEVBUF, NULL, 0, EX_NOWAIT);
+		ioext  = extent_create("pci1-io",  0x00000600, 0x0000ffff,
+		    M_DEVBUF, NULL, 0, EX_NOWAIT);
+		memext = extent_create("pci1-mem",
+		    gt_pci1_mem_bs_tag.pbs_base,
+		    gt_pci1_mem_bs_tag.pbs_limit-1,
+		    M_DEVBUF, NULL, 0, EX_NOWAIT);
 		break;
 	}
 
@@ -255,6 +272,15 @@ gtpci_config_bus(struct pci_chipset *pc, int busno)
 		 PCI_BARE_SCS2En | /* PCI_BARE_SCS3En | */ \
 		 PCI_BARE_IntMemEn | PCI_BARE_IntIOEn);
 	gtpci_write(pc, PCI_BASE_ADDR_REGISTERS_ENABLE(pc->pc_md.mdpc_busno), data);
+#endif /* PCI_NETBSD_CONFIGURE */
+}
+
+void
+gtpci_md_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin,
+	int swiz, int *iline)
+{
+#ifdef PCI_NETBSD_CONFIGURE
+#endif /* PCI_NETBSD_CONFIGURE */
 }
 
 void
@@ -275,12 +301,6 @@ gtpci_md_conf_hook(pci_chipset_tag_t pc, int bus, int dev, int func,
 		return 0;
 
 	return 1;
-}
-
-void
-gtpci_md_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin,
-	int swiz, int *iline)
-{
 }
 
 int
