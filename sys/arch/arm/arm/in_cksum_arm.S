@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum_arm.S,v 1.1 2003/09/11 18:54:35 scw Exp $	*/
+/*	$NetBSD: in_cksum_arm.S,v 1.2 2003/09/23 10:01:36 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -282,21 +282,20 @@ ASENTRY_NP(L_cksumdata)
 	blt	.Lcksumdata_endgame	/* Yup */
 
 	/* Now quad-align, if necessary */
-	ands	r3, r0, #0x04
-	ldrne	r3, [r0], #0x04
+	ands	r7, r0, #0x04
+	ldrne	r7, [r0], #0x04
 	subne	r1, r1, #0x04
 	subs	r1, r1, #0x40
-	blt	.Lcksumdata_bigloop_end
+	blt	.Lcksumdata_bigloop_end	/* Note: C flag clear if branch taken */
 
 	/*
 	 * Buffer is now quad aligned. Sum 64 bytes at a time.
 	 * Note: First ldrd is hoisted above the loop, together with
-	 * setting r6/r7 to zero to avoid stalling for results in
-	 * the loop.
+	 * setting r6 to zero to avoid stalling for results in the
+	 * loop. (r7 is live, from above).
 	 */
 	ldrd	r4, [r0], #0x08
 	mov	r6, #0x00
-	mov	r7, #0x00
 .Lcksumdata_bigloop:
 	pld	[r0, #0x18]
 	adds	r2, r2, r6
@@ -329,9 +328,8 @@ ASENTRY_NP(L_cksumdata)
 	bge	.Lcksumdata_bigloop
 
 	adds	r2, r2, r6		/* r6/r7 still need summing */
-	adcs	r2, r2, r7
 .Lcksumdata_bigloop_end:
-	adcs	r2, r2, r3		/* Mop up r3, too */
+	adcs	r2, r2, r7
 	adc	r2, r2, #0x00
 
 #else	/* !__XSCALE__ */
