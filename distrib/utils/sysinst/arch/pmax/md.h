@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.2 1997/10/29 01:09:54 phil Exp $	*/
+/*	$NetBSD: md.h,v 1.3 1997/10/29 03:06:38 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -58,14 +58,18 @@ EXTERN char ftp_prefix[STRSIZE] INIT("/binary/Tarfiles");
 EXTERN char dist_postfix[STRSIZE] INIT(".tar.gz");
 EXTERN distinfo dist_list[]
 #ifdef MAIN
-= { {"kern%s%s", 1, NULL, "Kernel       : "},
-    {"etc%s%s",  1, NULL, "System (/etc): "},
-    {"base%s%s", 1, NULL, "Base         : "}, 
-    {"comp%s%s", 1, NULL, "Compiler     : "},
-    {"games%s%s", 1, NULL,"Games        : "},
-    {"man%s%s",  1, NULL, "Manuals      : "},
-    {"misc%s%s", 1, NULL, "Miscellaneous: "},
-    {"text%s%s", 1, NULL, "Text tools   : "},
+= { {"kern%s%s",    1, NULL, "Kernel       : "},
+    {"etc%s%s",	    1, NULL, "System (/etc): "},
+    {"base%s%s",    1, NULL, "Base         : "}, 
+    {"comp%s%s",    1, NULL, "Compiler     : "},
+    {"games%s%s",   1, NULL, "Games        : "},
+    {"man%s%s",     1, NULL, "Manuals      : "},
+    {"misc%s%s",    1, NULL, "Miscellaneous: "},
+    {"text%s%s",    1, NULL, "Text tools   : "},
+    {"xbase%s%s",   1, NULL, "X11 clients  : "},
+    {"xserver%s%s", 1, NULL, "X11 servers  : "},
+    {"xcomp%s%s",   1, NULL, "X programming: "},
+
     {NULL, 0, NULL }
 }
 #endif
