@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.2 1998/02/06 22:32:03 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.3 1998/02/07 02:22:24 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -125,8 +125,6 @@ UVMHIST_DECL(maphist);
 MAP_INLINE
 void		uvm_map_deallocate __P((vm_map_t));
 
-boolean_t	uvm_map_checkprot __P((vm_map_t, vm_offset_t, vm_offset_t,
-				       vm_prot_t));
 int		uvm_map_clean __P((vm_map_t, vm_offset_t, vm_offset_t, int));
 void		uvm_map_clip_start __P((vm_map_t,
 				vm_map_entry_t, vm_offset_t));
