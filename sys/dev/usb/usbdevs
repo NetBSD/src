@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.294 2003/01/24 00:18:26 markd Exp $
+$NetBSD: usbdevs,v 1.295 2003/01/24 01:49:22 tsarna Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -677,6 +677,7 @@ product GREENHOUSE2 USBKR100	0x8150	USB Ethernet Adapter GH-USB100B
 
 /* Griffin Technology */
 product GRIFFIN IMATE		0x0405	iMate, ADB adapter
+product GRIFFIN POWERMATE	0x0410	PowerMate Assignable Controller
 
 /* Freecom products */
 product FREECOM DVD		0xfc01	Connector for DVD drive
