@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.85 2003/09/21 19:17:13 jdolecek Exp $	*/
+/*	$NetBSD: bpf.c,v 1.86 2003/09/22 13:00:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.85 2003/09/21 19:17:13 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.86 2003/09/22 13:00:01 christos Exp $");
 
 #include "bpfilter.h"
 
@@ -520,7 +520,7 @@ bpf_wakeup(d)
 {
 	wakeup((caddr_t)d);
 	if (d->bd_async)
-		fownsignal(d->bd_pgid, 0, 0, NULL);
+		fownsignal(d->bd_pgid, SIGIO, 0, 0, NULL);
 
 	selnotify(&d->bd_sel, 0);
 	/* XXX */
