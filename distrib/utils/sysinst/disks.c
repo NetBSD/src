@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.65 2003/07/25 08:26:21 dsl Exp $ */
+/*	$NetBSD: disks.c,v 1.66 2003/07/27 07:45:08 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -131,7 +131,7 @@ get_disks(struct disk_desc *dd)
 }
 
 static int
-set_dsk_select(menudesc *m, menu_ent *opt, void *arg)
+set_dsk_select(menudesc *m, void *arg)
 {
 	*(int *)arg = m->cursel;
 	return 1;
