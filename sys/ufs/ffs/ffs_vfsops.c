@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.140.2.1 2004/04/27 17:56:01 jdc Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.140.2.2 2004/04/28 05:49:56 jmc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.140.2.1 2004/04/27 17:56:01 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.140.2.2 2004/04/28 05:49:56 jmc Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -980,34 +980,9 @@ ffs_oldfscompat_read(fs, ump, sblockloc)
 	off_t maxfilesize;
 	int32_t *extrasave;
 
-	/* XXX This warning should be removed before the next release. -- dbj */
-	if (fs->fs_flags & 0x40000000) {
-		printf("WARNING: possible botched superblock upgrade detected\n"
-		    "on filesystem previously mounted on %s\n"
-		    "Extra bits discovered in fs_flags on filesystem (0x%08x)\n"
-		    "Consider running the program mentioned in\n"
-		    "http://mail-index.NetBSD.org/tech-kern/2003/10/07/0005.html\n",
-		    fs->fs_fsmnt, fs->fs_flags);
-	}
-
 	if ((fs->fs_magic != FS_UFS1_MAGIC) ||
 	    (fs->fs_old_flags & FS_FLAGS_UPDATED))
 		return;
-
-	/* XXX This warning should be removed before the next release. -- dbj */
-	if (fs->fs_maxbsize == fs->fs_bsize) {
-		printf("WARNING: possible botched superblock upgrade detected\n"
-		    "on filesystem previously mounted on %s\n"
-		    "fs_bsize == fs_maxbsize (0x%08x) but FS_FLAGS_UPDATED is not set\n"
-		    "Test your filesystem by running fsck_ffs -n -f on it.\n"
-		    "If it reports:\n"
-		    "``VALUES IN SUPER BLOCK DISAGREE WITH THOSE IN FIRST ALTERNATE''\n"
-		    "you should be able to recover with fsck_ffs -b 16 -c 4\n"
-		    "See the file src/UPDATING or\n"
-		    "http://mail-index.NetBSD.org/current-users/2004/01/11/0022.html\n"
-		    "for more details\n",
-		    fs->fs_fsmnt, fs->fs_maxbsize);
-	}
 
 	if (!ump->um_oldfscompat)
 		ump->um_oldfscompat = malloc(512 + 3*sizeof(int32_t),
