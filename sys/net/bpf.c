@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.101 2004/06/06 04:35:53 dyoung Exp $	*/
+/*	$NetBSD: bpf.c,v 1.102 2004/08/05 03:58:58 enami Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.101 2004/06/06 04:35:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.102 2004/08/05 03:58:58 enami Exp $");
 
 #include "bpfilter.h"
 
@@ -1035,14 +1035,10 @@ bpf_setif(d, ifr)
 			continue;
 		/*
 		 * We found the requested interface.
-		 * If it's not up, return an error.
 		 * Allocate the packet buffers if we need to.
 		 * If we're already attached to requested interface,
 		 * just flush the buffer.
 		 */
-		if ((ifp->if_flags & IFF_UP) == 0)
-			return (ENETDOWN);
-
 		if (d->bd_sbuf == 0) {
 			error = bpf_allocbufs(d);
 			if (error != 0)
