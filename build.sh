@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.112 2003/08/10 16:20:37 sommerfeld Exp $
+#	$NetBSD: build.sh,v 1.113 2003/08/11 19:26:04 jmc Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -646,7 +646,7 @@ rebuildmake()
 		${runcmd} cd "${tmpdir}"
 		${runcmd} env CC="${HOST_CC-cc}" CPPFLAGS="${HOST_CPPFLAGS}" \
 			CFLAGS="${HOST_CFLAGS--O}" LDFLAGS="${HOST_LDFLAGS}" \
-			"${TOP}/tools/make/configure" ||
+			sh "${TOP}/tools/make/configure" ||
 		    bomb "Configure of ${toolprefix}make failed"
 		${runcmd} sh buildmake.sh ||
 		    bomb "Build of ${toolprefix}make failed"
@@ -802,7 +802,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.112 2003/08/10 16:20:37 sommerfeld Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.113 2003/08/11 19:26:04 jmc Exp $
 #
 
 EOF
