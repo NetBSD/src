@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.13 1998/10/13 11:25:26 tsubai Exp $
+#	$NetBSD: GENERIC,v 1.14 1998/10/14 13:54:09 tsubai Exp $
 #
 # POWERMAC config file
 #
@@ -87,6 +87,10 @@ options 	NMBCLUSTERS=1024
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 
+# wscons options
+#options 	WSEMUL_SUN		# sun terminal emulation
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
 
@@ -120,6 +124,10 @@ aed*	at adb?				# ADB Event Device
 akbd*	at adb?				# ADB keyboard
 ams*	at adb?				# ADB mouse
 
+ofb0	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
+wsdisplay* at ofb? console ?
+wskbd*	at akbd? console ?
+
 mc0	at obio0			# MACE ethernet
 esp0	at obio0 flags 0x00ff		# 53c9x SCSI
 scsibus* at esp0
@@ -127,10 +135,6 @@ scsibus* at esp0
 zsc0	at obio0
 zstty0	at zsc0 channel 0
 zstty1	at zsc0 channel 1
-
-grfati0 at pci? dev ? function ?	# ATY,mach64
-grf0	at grfati0
-ite0	at grf0
 
 sd*	at scsibus? target ? lun ?	# SCSI disks
 st*	at scsibus? target ? lun ?	# SCSI tape drives
