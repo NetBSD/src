@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.13 1999/11/21 00:17:18 eeh Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.14 1999/12/30 16:19:00 eeh Exp $
 
 # Makefile for NetBSD
 #
@@ -71,7 +71,7 @@ LINKFLAGS=	-N -p -Ttext f1000000 -e start >lderr
 %INCLUDES
 
 ### find out what to use for libkern
-KERN_AS=	obj
+# KERN_AS=	obj	# bcopy, bzero, memcpy, memset, etc. are in locore.s
 .include "$S/lib/libkern/Makefile.inc"
 .ifndef PROF
 LIBKERN=	${KERNLIB}
