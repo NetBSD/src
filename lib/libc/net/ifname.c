@@ -1,4 +1,4 @@
-/*	$NetBSD: ifname.c,v 1.6 1999/11/30 15:55:25 kleink Exp $	*/
+/*	$NetBSD: ifname.c,v 1.7 2000/01/23 00:01:35 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -106,7 +106,8 @@ struct if_nameindex *
 if_nameindex()
 {
 	size_t needed;
-	int mib[6], i, ifn = 0, off = 0, hlen;
+	int mib[6], i, ifn = 0, off = 0;
+	size_t hlen;
 	char *buf = NULL, *lim, *next, *cp, *ifbuf = NULL;
 	struct rt_msghdr *rtm;
 	struct if_msghdr *ifm;
@@ -165,7 +166,7 @@ if_nameindex()
 						sdl = (struct sockaddr_dl *)sa;
 						memcpy(ifbuf + off,
 						       sdl->sdl_data,
-						       sdl->sdl_nlen);
+						       (size_t)sdl->sdl_nlen);
 						off += sdl->sdl_nlen;
 						*(ifbuf + off) = '\0';
 						off++;
@@ -195,7 +196,7 @@ if_nameindex()
 		errno = ENOMEM;
 		goto end;
 	}
-	(void)memcpy(cp + hlen, ifbuf, off);
+	memcpy(cp + hlen, ifbuf, (size_t)off);
 	ret = (struct if_nameindex *)cp;
 	for (i = 0; i < ifn; i++) {
 		ret[i].if_index = ifx[i].if_index;
