@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.26 2002/12/19 14:02:54 grant Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.27 2002/12/19 14:23:53 grant Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.26 2002/12/19 14:02:54 grant Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.27 2002/12/19 14:23:53 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -746,8 +746,9 @@ set_ids(char *fnm, uid_t uid, gid_t gid)
 #endif
 		{
 			(void)fflush(listf);
-			syswarn(0, errno, "Unable to set file uid/gid of %s",
+			syswarn(1, errno, "Unable to set file uid/gid of %s",
 			    fnm);
+			return(-1);
 		}
 	return(0);
 }
