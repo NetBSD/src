@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.9 1995/10/02 17:35:11 jpo Exp $	*/
+/*	$NetBSD: tree.c,v 1.10 1995/10/02 17:35:57 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: tree.c,v 1.9 1995/10/02 17:35:11 jpo Exp $";
+static char rcsid[] = "$NetBSD: tree.c,v 1.10 1995/10/02 17:35:57 jpo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -819,8 +819,7 @@ typeok(op, arg, ln, rn)
 		 * Here we only must check for totaly wrong things.
 		 */
 		if (lt == FUNC || lt == VOID || ltp->t_isfield ||
-		    ((lt != STRUCT && lt != UNION) && !ln->tn_lvalue) ||
-		    (ln->tn_op == NAME && ln->tn_sym->s_reg)) {
+		    ((lt != STRUCT && lt != UNION) && !ln->tn_lvalue)) {
 			/* Without tflag we got already an error */
 			if (tflag)
 				/* unacceptable operand of %s */
