@@ -1,4 +1,4 @@
-# $NetBSD: rc.wscons,v 1.2 1999/03/15 22:02:24 drochner Exp $
+# $NetBSD: rc.wscons,v 1.3 1999/05/15 14:28:14 drochner Exp $
 
 wscfg=/usr/sbin/wsconscfg
 wsfld=/usr/sbin/wsfontload
@@ -93,6 +93,19 @@ done
 					;;
 			esac
 			cmd="$cmd $idx"
+			eval $DOIT $cmd
+			;;
+		keyboard)
+			kbd=$arg1
+			cmd=$wscfg
+			case $kbd in
+				-|auto)
+					cmd="$cmd -k"
+					;;
+				*)
+					cmd="$cmd -k $kbd"
+					;;
+			esac
 			eval $DOIT $cmd
 			;;
 	esac
