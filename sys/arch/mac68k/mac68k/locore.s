@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.132 2000/11/26 11:47:25 jdolecek Exp $	*/
+/*	$NetBSD: locore.s,v 1.133 2000/12/29 17:23:31 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -367,6 +367,8 @@ GLOBAL(proc_trampoline)
 #include <m68k/m68k/trap_subr.s>
 
 	.data
+GLOBAL(mac68k_a2_fromfault)
+	.long	0
 GLOBAL(m68k_fault_addr)
 	.long	0
 
@@ -417,6 +419,7 @@ Lberr3:
 Lberr60:
 	tstl	_C_LABEL(nofault)	| catch bus error?
 	jeq	Lisberr			| no, handle as usual
+	movl	a2,_C_LABEL(mac68k_a2_fromfault) | save a2
 	movl	sp@(FR_HW+8+8),_C_LABEL(m68k_fault_addr) | save fault addr
 	movl	_C_LABEL(nofault),sp@-	| yes,
 	jbsr	_C_LABEL(longjmp)	|  longjmp(nofault)
@@ -445,6 +448,7 @@ Lbe1stpg:
 Lberr40:
 	tstl	_C_LABEL(nofault)	| catch bus error?
 	jeq	Lisberr			| no, handle as usual
+	movl	a2,_C_LABEL(mac68k_a2_fromfault) | save a2
 	movl	sp@(FR_HW+8+20),_C_LABEL(m68k_fault_addr) | save fault addr
 	movl	_C_LABEL(nofault),sp@-	| yes,
 	jbsr	_C_LABEL(longjmp)	|  longjmp(nofault)
@@ -535,6 +539,7 @@ Lisberr1:
 	clrw	sp@			| re-clear pad word
 	tstl	_C_LABEL(nofault)	| catch bus error?
 	jeq	Lisberr			| no, handle as usual
+	movl	a2,_C_LABEL(mac68k_a2_fromfault) | save a2
 	movl	sp@(FR_HW+8+16),_C_LABEL(m68k_fault_addr) | save fault addr
 	movl	_C_LABEL(nofault),sp@-	| yes,
 	jbsr	_C_LABEL(longjmp)	|  longjmp(nofault)
