@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.8 1996/06/03 21:43:06 mark Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.9 1996/08/21 20:29:19 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -46,6 +46,7 @@
 #include "assym.h"
 #include <machine/param.h>
 #include <machine/cpu.h>
+#include <machine/iomd.h>
 
 sp	.req	r13
 lr	.req	r14
@@ -276,11 +277,11 @@ idle:
  */
 
 #if defined(CPU_ARM7500) && !defined(RC7500)
-/* ARM7500 has a suspend mode so use it ! [danny, does this work ? - mark] */
+/* ARM7500 has a suspend mode so use it */
 
 	mov	r7, #(IOMD_BASE)
 	orr	r7, r7, #(IOMD_SUSPEND - IOMD_BASE)
-	mov	r3, #0x00000001
+	mov	r3, #0x00000001		/* Keep external clocks running */
 	strb	r3, [r7]
 #endif
 
@@ -401,7 +402,7 @@ switchmodeok:
  * that the queue has something in it.
  */
 
-/* This ffs() type routine code be optimised */
+/* This ffs() type routine could be optimised */
 
 	mov	r4, #0x00000000
 
@@ -572,7 +573,7 @@ switch_exited:
 /* At this point we need to kill IRQ's again. */
 
 	mrs	r0, cpsr_all
-	orr	r0, r0, #(I32_bit | F32_bit)
+	orr	r0, r0, #(I32_bit)
 	msr	cpsr_all , r0
 
 /*	IRQdisable*/
@@ -653,7 +654,7 @@ switch_return:
 	ldr	r0, [sp], #0x0004
 	bl	_splx
 
-/*	IRQenable*/
+	IRQenable		/***  just changed this ***/
 
 /* cpu_switch returns the proc it switched to. */
 
@@ -723,7 +724,6 @@ _switch_exit:
 /* This is not really needed ! */
 /* Yes it is for the su and fu routines */
 
-/*	ldr	sp, [r2, #(PCB_SP)]*/
 	ldr	r3, Lcurpcb
 	str	r2, [r3]
 
@@ -809,4 +809,4 @@ trampoline_return:
 	PULLFRAME
 
 	movs	pc, lr			/* Exit */
-	
+
