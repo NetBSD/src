@@ -1,4 +1,4 @@
-/* $NetBSD: identd.c,v 1.20 2004/01/31 21:47:17 christos Exp $ */
+/* $NetBSD: identd.c,v 1.21 2004/01/31 22:03:31 christos Exp $ */
 
 /*
  * identd.c - TCP/IP Ident protocol server.
@@ -36,6 +36,8 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+
+__RCSID("$NetBSD: identd.c,v 1.21 2004/01/31 22:03:31 christos Exp $");
 
 #define OPSYS_NAME      "UNIX"
 #define IDENT_SERVICE   "auth"
