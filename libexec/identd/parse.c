@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.9 1998/07/15 07:31:57 msaitoh Exp $	*/
+/*	$NetBSD: parse.c,v 1.10 1998/07/26 19:47:06 mycroft Exp $	*/
 
 /*
 ** parse.c                         This file contains the protocol parser
@@ -50,7 +50,7 @@ extern int errno;
 #include "error.h"
 
 static int eat_whitespace __P((void));
-static int check_noident __P((char *));
+static int check_noident __P((const char *));
 static int valid_fhost(struct in_addr *, char *);
 
 /*
@@ -132,7 +132,7 @@ static int valid_fhost(faddr, password)
 ** file in a users home directory.
 */
 static int check_noident(homedir)
-  char *homedir;
+  const char *homedir;
 {
   char *tmp_path;
   struct stat sbuf;
@@ -629,8 +629,8 @@ int parse(fp, laddr, faddr)
 #ifdef ALLOW_FORMAT
     if (format_flag)
     {
-      char* cp;
-      char** gmp;
+      char *cp;
+      const char *const *gmp;
       int bp;
       char buff[512];
       for (cp = format, bp = 0; *cp != 0; cp++)
