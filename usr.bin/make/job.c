@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.58 2002/02/08 17:44:23 pk Exp $	*/
+/*	$NetBSD: job.c,v 1.59 2002/02/10 12:01:59 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.58 2002/02/08 17:44:23 pk Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.59 2002/02/10 12:01:59 pk Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.58 2002/02/08 17:44:23 pk Exp $");
+__RCSID("$NetBSD: job.c,v 1.59 2002/02/10 12:01:59 pk Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3223,7 +3223,7 @@ JobRestartJobs()
 	    (void) fprintf(stdout, "Restarting a stopped job.\n");
 	    (void) fflush(stdout);
 	}
-	if (JobRestart((Job *)Lst_DeQueue(stoppedJobs)) == 0)
+	if (JobRestart((Job *)Lst_DeQueue(stoppedJobs)) != 0)
 		break;
     }
 }
