@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.20 2004/01/08 01:39:26 lukem Exp $
+#	$NetBSD: sets.subr,v 1.21 2004/01/11 08:55:55 lukem Exp $
 #
 
 #
@@ -22,6 +22,7 @@
 #	HAVE_GCC3
 #	TOOLCHAIN_MISSING
 #	OBJECT_FMT
+#	MKBFD
 #	MKCRYPTO
 #	MKCRYPTO_IDEA
 #	MKCRYPTO_MDC2
@@ -37,7 +38,7 @@
 #	MKSKEY
 #	MKYP
 
-MKVARS="MKCRYPTO MKCRYPTO_IDEA MKCRYPTO_MDC2 MKCRYPTO_RC5 MKCVS MKHESIOD MKKERBEROS MKKERBEROS4 MKLINT MKPOSTFIX MKPROFILE MKSENDMAIL MKSKEY MKYP"
+MKVARS="MKBFD MKCRYPTO MKCRYPTO_IDEA MKCRYPTO_MDC2 MKCRYPTO_RC5 MKCVS MKHESIOD MKKERBEROS MKKERBEROS4 MKLINT MKPOSTFIX MKPROFILE MKSENDMAIL MKSKEY MKYP"
 
 oIFS=$IFS
 IFS="
@@ -98,7 +99,7 @@ fi
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.20 2004/01/08 01:39:26 lukem Exp $
+# 	# $NetBSD: sets.subr,v 1.21 2004/01/11 08:55:55 lukem Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -118,6 +119,7 @@ fi
 #	obsolete		file is obsolete, and only printed if 
 #				${obsolete} != 0
 #
+#	bfd			<bsd.own.mk> ${MKBFD} != no
 #	crypto			<bsd.own.mk> ${MKCRYPTO} != no
 #	crypto_idea		<bsd.own.mk> ${MKCRYPTO_IDEA} != no
 #	crypto_mdc2		<bsd.own.mk> ${MKCRYPTO_MDC2} != no
