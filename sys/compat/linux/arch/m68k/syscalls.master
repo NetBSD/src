@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.3 1999/03/23 03:00:52 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.4 1999/03/27 01:10:57 tron Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -319,7 +319,7 @@
 ;182 chown on i386; lchown on m68k.
 182	STD		{ int linux_sys_lchown(const char *path, int uid, \
 			    int gid); }
-183	UNIMPL		getcwd
+183	NOARGS		{ int sys___getcwd(char *bufp, size_t length); }
 184	UNIMPL		capget
 185	UNIMPL		capset
 186	UNIMPL		sigaltstack
