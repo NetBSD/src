@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.27 2000/07/24 04:39:01 mycroft Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.28 2000/07/24 04:45:49 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -69,8 +69,8 @@ CWARNFLAGS=	-Wimplicit -Wunused -Wswitch -Wcomment -Wtrigraphs -Wchar-subscripts
 #CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -Wa,-Av9a -mno-fpu
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -Wa,-Av9a
-LINKFLAGS=	-p -Ttext f1000000 -Tdata f1400000 -e start >lderr
-#LINKFLAGS=	-N -p -Ttext f1000000 -e start >lderr
+LINKFLAGS=	-p -Ttext f1000000 -Tdata f1400000 -e start
+#LINKFLAGS=	-N -p -Ttext f1000000 -e start
 STRIPFLAGS=	-g
 
 %INCLUDES
@@ -171,7 +171,7 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 __CLEANKERNEL: .USE
 	@echo "${.TARGET}ing the kernel objects"
 	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
-	    [Ee]rrs lderr linterrs makelinks assym.h.tmp assym.h
+	    [Ee]rrs linterrs makelinks assym.h.tmp assym.h
 
 __CLEANDEPEND: .USE
 	rm -f .depend
