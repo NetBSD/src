@@ -1,4 +1,4 @@
-.\"	$NetBSD: osiop.4,v 1.1 2001/05/12 14:06:30 tsutsui Exp $
+.\"	$NetBSD: osiop.4,v 1.2 2001/09/22 01:44:55 wiz Exp $
 .\"
 .\" Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
 .\"
@@ -71,15 +71,15 @@ for use in
 files:
 .Pp
 .Bl -tag -compact -width "bits 8-15:"
-.It bits 0-7:
+.It bits 0-7 :
 disable disconnect/reselect for the corresponding
 .Tn SCSI
 target
-.It bits 8-15:
+.It bits 8-15 :
 disable synchronous negotiation for
 .Tn SCSI
 target
-.It bits 16:
+.It bits 16 :
 disable DMA interrupts
 .El
 .Pp
@@ -97,16 +97,16 @@ will suffer.
 .\" .Tn DMA
 .\" or synchronous data transfers are currently supported.
 .Sh SEE ALSO
-.Xr intro 4 ,
-.Xr scsi 4 ,
-.Xr scsipi 9 ,
-.Xr siop 4 ,
 .Xr cd 4 ,
 .Xr ch 4 ,
+.Xr intro 4 ,
+.Xr scsi 4 ,
 .Xr sd 4 ,
+.Xr siop 4 ,
 .Xr ss 4 ,
 .Xr st 4 ,
-.Xr uk 4
+.Xr uk 4 ,
+.Xr scsipi 9
 .Pp
 .Pa http://www.lsilogic.com/techlib/techdocs/storage_stand_prod/
 .Sh HISTORY
