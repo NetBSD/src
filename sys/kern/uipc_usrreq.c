@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.40 1999/04/21 02:31:50 mrg Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.41 1999/04/21 02:37:07 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -916,8 +916,6 @@ unp_internalize(control, p)
 morespace:
 	neededspace = (ALIGN(sizeof(*cm)) + nfds * sizeof(struct file *)) -
 		control->m_len;
-	if (neededspace)
-		printf("unp_internalize: neededspace=%d\n", neededspace);
 	if (neededspace > M_TRAILINGSPACE(control)) {
 
 		/* if we already have a cluster, the message is just too big */
@@ -938,22 +936,6 @@ morespace:
 	/* adjust message & mbuf to note amount of space actually used. */
 	cm->cmsg_len += neededspace;
 	control->m_len = cm->cmsg_len;
-
-	if (neededspace) {
-		fdp = (int *)(cm + 1);
-		for (i = 0; i < nfds; i++) {
-			fd = *fdp++;
-			if ((unsigned)fd >= fdescp->fd_nfiles ||
-			    fdescp->fd_ofiles[fd] == NULL) {
-				printf("unp_internalize: ERROR DETECTED (1)\n");
-				return (EBADF);
-			}
-		}
-		if ((cm->cmsg_len / sizeof(struct file *)) != nfds) {
-			printf("unp_internalize: ERROR DETECTED (2)\n");
-			return (EBADF);
-		}
-	}
 
 	/*
 	 * Transform the file descriptors into struct file pointers, in
