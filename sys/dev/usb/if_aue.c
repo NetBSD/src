@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.3 2000/01/16 15:10:27 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.4 2000/01/16 15:12:41 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -75,10 +75,12 @@
  * investigate short rx problem
  */
 
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include "opt_inet.h"
 #include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
