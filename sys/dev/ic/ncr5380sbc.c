@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.25 1998/07/04 22:18:50 jonathan Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.26 1998/09/14 05:56:14 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -670,7 +670,8 @@ new:
 		if ((xs->flags & ITSDONE) == 0)
 			panic("ncr5380_scsi_cmd: poll didn't finish");
 		rv = COMPLETE;
-	}
+	} else if ((xs->flags & ITSDONE))
+		rv = COMPLETE;
 
 out:
 	splx(s);
@@ -2537,7 +2538,7 @@ ncr5380_show_req(sr)
 		return;
 	}
 	db_printf("\n");
-#ifdef	PIDEBUG
+#ifdef	SCSIDEBUG
 	show_scsipi_xs(xs);
 #else
 	db_printf("xs=%p\n", xs);
