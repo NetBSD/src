@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.10 1997/01/01 21:08:03 leo Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.11 1997/01/12 15:41:24 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -94,8 +94,8 @@ struct genericconf {
  * in preference of boot.
  */
 static struct genericconf genericconf[] = {
-#if NRD > 0
-	{&rd_cd, makedev(1, 0)},
+#if NMD > 0
+	{&md_cd, makedev(1, 0)},
 #endif
 #if NSD > 0
 	{&sd_cd, makedev(4, 0)},
