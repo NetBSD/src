@@ -27,7 +27,7 @@
  *	i4b daemon - misc support routines
  *	----------------------------------
  *
- *	$Id: support.c,v 1.6 2002/04/05 15:26:59 martin Exp $ 
+ *	$Id: support.c,v 1.7 2002/04/10 23:35:08 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -791,6 +791,25 @@ close_allactive(void)
 		log(LL_DMN, "close_allactive: waiting for all connections terminated");
 		sleep(5);
 	}
+
+	SIMPLEQ_FOREACH(cep, &cfg_entry_list, cfgq) {
+		if (cep->autoupdown & AUTOUPDOWN_DONE) {
+			struct ifreq ifr;
+			int r, s;
+
+			s = socket(AF_INET, SOCK_DGRAM, 0);
+			memset(&ifr, 0, sizeof ifr);
+			snprintf(ifr.ifr_name, sizeof ifr.ifr_name, "%s%d", cep->usrdevicename, cep->usrdeviceunit);
+			r = ioctl(s, SIOCGIFFLAGS, &ifr);
+			if (r >= 0) {
+				ifr.ifr_flags &= ~IFF_UP;
+				ioctl(s, SIOCSIFFLAGS, &ifr);
+			}
+			close(s);
+			cep->autoupdown &= ~AUTOUPDOWN_DONE;
+		}
+	}
+
 }
 
 /*--------------------------------------------------------------------------*
