@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.20.2.6 2005/04/06 22:26:01 tron Exp $
+#	$NetBSD: Makefile.common,v 1.20.2.7 2005/04/06 22:38:04 tron Exp $
 
 # These define parts of the Xserver tree that are to be
 # conditionally compiled for different platforms.  See
@@ -79,7 +79,6 @@ XSERVER_XSUN24=		yes
 .endif
 
 .if ${MACHINE} == "vax"
-XSERVER_HAS_FB=		no
 XSERVER_XVFB=		no
 .endif
 
