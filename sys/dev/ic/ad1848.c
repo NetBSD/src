@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.1 1998/08/25 22:36:40 pk Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.2 1998/08/26 15:06:37 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -91,7 +91,7 @@
 
 #ifdef AUDIO_DEBUG
 #define DPRINTF(x)	if (ad1848debug) printf x
-int	ad1848debug = 1;
+int	ad1848debug = 0;
 #else
 #define DPRINTF(x)
 #endif
