@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.S,v 1.10 1995/01/18 17:28:08 mycroft Exp $	*/
+/*	$NetBSD: asm.S,v 1.11 1995/01/18 17:50:50 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -132,6 +132,7 @@ xreal:
 	movl	%ax, %ss
 	movl	%ax, %es
 
+	sti
 	data32
 	ret
 
