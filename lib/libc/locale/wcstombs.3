@@ -1,4 +1,4 @@
-.\" $NetBSD: wcstombs.3,v 1.2 2002/03/18 07:56:29 wiz Exp $
+.\" $NetBSD: wcstombs.3,v 1.3 2002/03/25 20:01:22 yamt Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -88,10 +88,7 @@ The
 .Fn wcstombs
 returns:
 .Bl -tag -width 012345678901
-.It 0
-.Fa pwcs
-points a null wide character (L\'\\0\').
-.It positive
+.It 0 or positive
 number of bytes stored to the array pointed by
 .Fa s .
 There is no cases that the value returned is greater than
