@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_proc.h,v 1.1 2003/09/07 08:05:47 manu Exp $ */
+/*	$NetBSD: darwin_proc.h,v 1.2 2003/09/10 16:44:45 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -51,7 +51,9 @@ struct darwin_ucred {
 
 struct darwin_pcred {
 	struct  darwin_lock__bsd__ {
+#ifdef notyet
 		struct darwin_slock lk_interlock;
+#endif
 		u_int	lk_flags;
 		int	lk_sharecount;
 		int	lk_waitcount;
