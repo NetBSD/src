@@ -1,4 +1,4 @@
-/*	$NetBSD: acpireg.h,v 1.3 2002/06/15 18:03:42 thorpej Exp $	*/
+/*	$NetBSD: acpireg.h,v 1.4 2005/01/29 18:06:18 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
 #define	ACPI_NOTIFY_LidStatusChanged		0x80
 
 /* Processor Device Notification Values */
-#define	ACPI_NOTIFY_PerformancePresentCapabiltitesChanged 0x80
+#define	ACPI_NOTIFY_PerformancePresentCapabilitiesChanged 0x80
 #define	ACPI_NOTIFY_CStatesChanged		0x81
 
 /*
