@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.16 1997/05/06 20:59:42 mycroft Exp $	*/
+/*	$NetBSD: dir.c,v 1.17 1997/05/08 21:24:41 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$NetBSD: dir.c,v 1.16 1997/05/06 20:59:42 mycroft Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.17 1997/05/08 21:24:41 gwr Exp $";
 #endif
 #endif /* not lint */
 
@@ -181,6 +181,7 @@ static int    hits,	      /* Found in directory cache */
 	      bigmisses;      /* Sought by itself */
 
 static Path    	  *dot;	    /* contents of current directory */
+static Path    	  *cur;	    /* contents of current directory, if not dot */
 static Hash_Table mtimes;   /* Results of doing a last-resort stat in
 			     * Dir_FindFile -- if we have to go to the
 			     * system to find the file, we might as well
@@ -212,7 +213,8 @@ static int DirPrintDir __P((ClientData, ClientData));
  *-----------------------------------------------------------------------
  */
 void
-Dir_Init ()
+Dir_Init (cdname)
+    const char *cdname;
 {
     dirSearchPath = Lst_Init (FALSE);
     openDirectories = Lst_Init (FALSE);
@@ -224,14 +226,22 @@ Dir_Init ()
      * we need to remove "." from openDirectories and what better time to
      * do it than when we have to fetch the thing anyway?
      */
-    Dir_AddDir (openDirectories, ".");
-    dot = (Path *) Lst_DeQueue (openDirectories);
+    dot = Dir_AddDir (NULL, ".");
 
     /*
      * We always need to have dot around, so we increment its reference count
      * to make sure it's not destroyed.
      */
     dot->refCount += 1;
+
+    if (cdname != NULL) {
+	/*
+	 * Our build directory is not the same as our source directory.
+	 * Keep this one around too.
+	 */
+	cur = Dir_AddDir (NULL, cdname);
+	cur->refCount += 1;
+    }
 }
 
 /*-
@@ -249,6 +259,10 @@ Dir_Init ()
 void
 Dir_End()
 {
+    if (cur) {
+	cur->refCount -= 1;
+	Dir_Destroy((ClientData) cur);
+    }
     dot->refCount -= 1;
     Dir_Destroy((ClientData) dot);
     Dir_ClearPath(dirSearchPath);
@@ -631,7 +645,7 @@ Dir_Expand (word, path, expansions)
 			if (*dp == '/')
 			    *dp = '\0';
 			path = Lst_Init(FALSE);
-			Dir_AddDir(path, dirpath);
+			(void) Dir_AddDir(path, dirpath);
 			DirExpandInt(cp+1, path, expansions);
 			Lst_Destroy(path, NOFREE);
 		    }
@@ -720,14 +734,24 @@ Dir_FindFile (name, path)
      * This is so there are no conflicts between what the user specifies
      * (fish.c) and what pmake finds (./fish.c).
      */
-    if ((!hasSlash || (cp - name == 2 && *name == '.')) &&
-	(Hash_FindEntry (&dot->files, cp) != (Hash_Entry *)NULL)) {
+    if ((!hasSlash || (cp - name == 2 && *name == '.'))) {
+	if (Hash_FindEntry (&dot->files, cp) != (Hash_Entry *)NULL) {
 	    if (DEBUG(DIR)) {
 		printf("in '.'\n");
 	    }
 	    hits += 1;
 	    dot->hits += 1;
 	    return (estrdup (name));
+	}
+	if (cur &&
+	    Hash_FindEntry (&cur->files, cp) != (Hash_Entry *)NULL) {
+	    if (DEBUG(DIR)) {
+		printf("in ${.CURDIR} = %s\n", cur->name);
+	    }
+	    hits += 1;
+	    cur->hits += 1;
+	    return str_concat (cur->name, cp, STR_ADDSLASH);
+	}
     }
 
     if (Lst_Open (path) == FAILURE) {
@@ -871,7 +895,7 @@ Dir_FindFile (name, path)
 		     */
 		    cp = strrchr (file, '/');
 		    *cp = '\0';
-		    Dir_AddDir (path, file);
+		    (void) Dir_AddDir (path, file);
 		    *cp = '/';
 		}
 
@@ -929,7 +953,7 @@ Dir_FindFile (name, path)
      */
 #ifdef notdef
     cp[-1] = '\0';
-    Dir_AddDir (path, name);
+    (void) Dir_AddDir (path, name);
     cp[-1] = '/';
 
     bigmisses += 1;
@@ -1001,7 +1025,7 @@ Dir_MTime (gn)
     if (gn->type & OP_ARCHV) {
 	return Arch_MTime (gn);
     } else if (gn->path == (char *)NULL) {
-	if (gn->type & OP_PHONY)
+	if (gn->type & (OP_PHONY|OP_NOPATH))
 	    fullName = NULL;
 	else
 	    fullName = Dir_FindFile (gn->name, dirSearchPath);
@@ -1058,14 +1082,14 @@ Dir_MTime (gn)
  *	read and hashed.
  *-----------------------------------------------------------------------
  */
-void
+Path *
 Dir_AddDir (path, name)
     Lst           path;	      /* the path to which the directory should be
 			       * added */
-    char          *name;      /* the name of the directory to add */
+    const char   *name;	      /* the name of the directory to add */
 {
     LstNode       ln;	      /* node in case Path structure is found */
-    register Path *p;	      /* pointer to new Path structure */
+    register Path *p = NULL;  /* pointer to new Path structure */
     DIR     	  *d;	      /* for reading directory */
     register struct dirent *dp; /* entry in directory */
 
@@ -1110,12 +1134,14 @@ Dir_AddDir (path, name)
 	    }
 	    (void) closedir (d);
 	    (void)Lst_AtEnd (openDirectories, (ClientData)p);
-	    (void)Lst_AtEnd (path, (ClientData)p);
+	    if (path != NULL)
+		(void)Lst_AtEnd (path, (ClientData)p);
 	}
 	if (DEBUG(DIR)) {
 	    printf("done\n");
 	}
     }
+    return p;
 }
 
 /*-
