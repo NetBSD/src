@@ -1,4 +1,4 @@
-/*	$NetBSD: skeysubr.c,v 1.8 1997/01/23 14:03:10 mrg Exp $	*/
+/*	$NetBSD: skeysubr.c,v 1.9 1997/06/18 19:18:31 christos Exp $	*/
 
 /* S/KEY v1.1b (skeysubr.c)
  *
@@ -18,8 +18,7 @@
 #include <string.h>
 #include <signal.h>
 #include <termios.h>
-
-#include "md4.h"
+#include <md4.h>
 #include "skey.h"
 
 struct termios newtty;
@@ -41,7 +40,7 @@ char *seed;	/* Seed, any length */
 char *passwd;	/* Password, any length */
 {
 	char *buf;
-	MDstruct md;
+	MD4_CTX md;
 	unsigned int buflen;
 	int i;
 	register int tmp;
@@ -54,8 +53,8 @@ char *passwd;	/* Password, any length */
 
 	/* Crunch the key through MD4 */
 	sevenbit(buf);
-	MDbegin(&md);
-	MDupdate(&md,(unsigned char *)buf,8*buflen);
+	MD4Init(&md);
+	MD4Update(&md,(unsigned char *)buf,8*buflen);
 
 	free(buf);
 
@@ -85,11 +84,11 @@ void
 f(x)
 	char *x;
 {
-	MDstruct md;
+	MD4_CTX md;
 	register int tmp;
 
-	MDbegin(&md);
-	MDupdate(&md,(unsigned char *)x,64);
+	MD4Init(&md);
+	MD4Update(&md,(unsigned char *)x,64);
 
 	/* Fold 128 to 64 bits */
 	md.buffer[0] ^= md.buffer[2];
