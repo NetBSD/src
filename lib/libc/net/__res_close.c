@@ -1,4 +1,4 @@
-/*	$NetBSD: __res_close.c,v 1.4 1997/11/04 23:52:38 thorpej Exp $	*/
+/*	$NetBSD: __res_close.c,v 1.5 1999/08/17 03:57:15 mycroft Exp $	*/
 
 /*
  * written by matthew green, 22/04/97.
@@ -8,7 +8,7 @@
 #include <sys/cdefs.h>
 
 #ifdef __indr_reference
-__indr_reference(__res_close,_res_close)
+__indr_reference(__res_close,res_close)
 #else
 
 #include <sys/types.h>
@@ -17,11 +17,11 @@ __indr_reference(__res_close,_res_close)
 
 /* XXX THIS IS A MESS!  SEE <resolv.h> XXX */
 
-#undef _res_close
-void	_res_close __P((void));
+#undef res_close
+void	res_close __P((void));
 
 void
-_res_close()
+res_close()
 {
 
 	__res_close();
