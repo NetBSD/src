@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.15 1997/05/02 14:24:27 christos Exp $	*/
+/*	$NetBSD: make.c,v 1.16 1997/05/06 23:51:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: make.c,v 1.15 1997/05/02 14:24:27 christos Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.16 1997/05/06 23:51:31 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -529,7 +529,8 @@ Make_Update (cgn)
 	 * the target is made now. Otherwise archives with ... rules
 	 * don't work!
 	 */
-	if (noExecute || (cgn->type & OP_SAVE_CMDS) || Dir_MTime(cgn) == 0) {
+	if ((noExecute && !(cgn->type & OP_MAKE)) ||
+	    (cgn->type & OP_SAVE_CMDS) || Dir_MTime(cgn) == 0) {
 	    cgn->mtime = now;
 	}
 	if (DEBUG(MAKE)) {
