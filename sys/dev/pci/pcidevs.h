@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.468 2002/08/10 16:30:45 toshii Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.469 2002/08/16 15:08:08 heinz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.464 2002/08/10 16:26:14 toshii Exp 
+ *	NetBSD: pcidevs,v 1.465 2002/08/16 15:03:02 heinz Exp 
  */
 
 /*
@@ -1583,6 +1583,7 @@
 #define	PCI_PRODUCT_LUCENT_OR3LP26	0x5400		/* Lucent ORCA FPGA w/32-bit PCI ASIC core */
 #define	PCI_PRODUCT_LUCENT_OR3TP12	0x5401		/* Lucent ORCA FPGA w/64-bit PCI ASIC core */
 #define	PCI_PRODUCT_LUCENT_USBHC	0x5801		/* USB Host Controller */
+#define	PCI_PRODUCT_LUCENT_FW322_323	0x5811		/* FW322/323 IEEE 1394 OHCI Controller */
 
 /* Macronix */
 #define	PCI_PRODUCT_MACRONIX_MX98713	0x0512		/* MX98713 (PMAC) 10/100 Ethernet */
