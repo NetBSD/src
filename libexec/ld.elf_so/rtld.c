@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.34 2000/06/16 19:51:05 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.35 2000/07/14 21:59:58 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -161,11 +161,13 @@ _rtld_init(mapbase)
 	caddr_t mapbase;
 {
 	Obj_Entry objself;/* The dynamic linker shared object */
+	const Elf_Ehdr *hdr = (Elf_Ehdr *) mapbase;
 #ifdef RTLD_RELOCATE_SELF
 	int dodebug = false;
 #else
 	int dodebug = true;
 #endif
+	int i;
 
 	memset(&objself, 0, sizeof objself);
 
@@ -173,6 +175,13 @@ _rtld_init(mapbase)
 	objself.path = NULL;
 	objself.rtld = true;
 	objself.mapbase = mapbase;
+	objself.phdr = (Elf_Phdr *) (mapbase + hdr->e_phoff);
+	for (i = 0; i < hdr->e_phnum; i++) {
+		if (objself.phdr[i].p_type == PT_LOAD) {
+			objself.textsize = round_up(objself.phdr[i].p_vaddr + objself.phdr[i].p_memsz) - round_down(objself.phdr[i].p_vaddr);
+			break;
+		}
+	}
 
 #if defined(__mips__)
 	/*
@@ -206,7 +215,7 @@ _rtld_init(mapbase)
 #endif
 	assert(objself.needed == NULL);
 
-#if !defined(__mips__) && !defined(__i386__)
+#if !defined(__mips__) && !defined(__i386__) && !defined(__vax__)
 	/* no relocation for mips/i386 */
 	assert(!objself.textrel);
 #endif
