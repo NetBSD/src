@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrmt.c,v 1.1 1996/03/05 20:39:38 scottr Exp $	*/
+/*	$NetBSD: mtrmt.c,v 1.2 1996/03/06 06:22:07 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -80,6 +80,9 @@ static	int rmtstate = TS_CLOSED;
 static	int rmtape;
 static	char *rmtpeer;
 
+extern	int uid;
+extern	int euid;
+
 static	int okname __P((char *));
 static	int rmtcall __P((char *, char *));
 static	void rmtconnaborted __P((/* int, int */));
@@ -141,17 +144,23 @@ rmtgetconn()
 		rmtpeer = ++cp;
 	} else
 		tuser = pwd->pw_name;
+
+	(void) seteuid(euid);
 	rmtape = rcmd(&rmtpeer, (u_short)sp->s_port, pwd->pw_name, tuser,
 	    _PATH_RMT, (int *)0);
+	(void) setuid(uid); /* Just to be Really Really Safe */
+
 	size = TP_BSIZE;
 	if (size > 60 * 1024)		/* XXX */
 		size = 60 * 1024;
 	/* Leave some space for rmt request/response protocol */
 	size += 2 * 1024;
+
 	while (size > TP_BSIZE &&
 	    setsockopt(rmtape, SOL_SOCKET, SO_SNDBUF, &size, sizeof (size)) < 0)
 		    size -= TP_BSIZE;
 	(void)setsockopt(rmtape, SOL_SOCKET, SO_RCVBUF, &size, sizeof (size));
+
 	maxseg = 1024;
 	if (setsockopt(rmtape, IPPROTO_TCP, TCP_MAXSEG,
 	    &maxseg, sizeof (maxseg)) < 0)
