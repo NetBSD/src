@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.302 2001/02/04 18:16:43 briggs Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.303 2001/02/11 15:33:54 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.298 2001/02/04 18:16:20 briggs Exp 
+ *	NetBSD: pcidevs,v 1.299 2001/02/11 15:33:25 ad Exp 
  */
 
 /*
@@ -272,6 +272,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3ware",
 	    "Escalade IDE RAID",
+	},
+	{
+	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_ESCALADE_ASIC,
+	    0,
+	    "3ware",
+	    "Escalade IDE RAID (ASIC)",
 	},
 	{
 	    PCI_VENDOR_ACC, PCI_PRODUCT_ACC_2188,
