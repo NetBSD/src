@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.3 2003/01/22 22:51:42 thorpej Exp $	*/
+/*	$NetBSD: sem.c,v 1.4 2003/01/22 23:18:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -140,7 +140,8 @@ sem_init(sem_t *sem, int pshared, unsigned int value)
 		return (-1);
 
 	if ((error = sem_alloc(value, semid, sem)) != 0) {
-		_ksem_destroy(semid);
+		if (semid != USEM_USER)
+			_ksem_destroy(semid);
 		errno = error;
 		return (-1);
 	}
