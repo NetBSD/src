@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.75 1998/08/26 12:10:22 augustss Exp $
+#	$NetBSD: files.isa,v 1.76 1998/08/26 13:33:59 augustss Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -293,7 +293,7 @@ attach	wss at isa with wss_isa
 file	dev/isa/wss_isa.c		wss_isa needs-flag
 
 # ESS Technology ES1887/ES888/ES1888
-device	ess { } : ess, audio, isadma, mulaw, auconv, midibus
+device	ess { } : audio, isadma, mulaw, auconv, midibus
 file	dev/isa/ess.c			ess needs-flag
 
 attach	ess at isa with ess_isa
@@ -301,6 +301,10 @@ file	dev/isa/ess_isa.c		ess_isa needs-flag
 
 attach	opl at ess with opl_ess
 file	dev/isa/opl_ess.c		opl_ess
+
+# Yamaha OPL2/OPL3 FM synth
+attach	opl at isa with opl_isa
+file	dev/isa/opl_isa.c		opl_isa
 
 # Yamaha OPL3-SA3
 device	ym: audio, isadma, ad1848, auconv
