@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.23 1998/05/18 14:36:46 pk Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.24 1998/05/18 16:47:37 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -289,8 +289,10 @@ dead_lock(v)
 		struct proc *a_p;
 	} */ *ap = v;
 
-	if (ap->a_flags & LK_INTERLOCK)
+	if (ap->a_flags & LK_INTERLOCK) {
 		simple_unlock(&ap->a_vp->v_interlock);
+		ap->a_flags &= ~LK_INTERLOCK;
+	}
 	if (!chkvnlock(ap->a_vp))
 		return (0);
 	return (VCALL(ap->a_vp, VOFFSET(vop_lock), ap));
