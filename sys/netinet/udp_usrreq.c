@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.80 2001/07/03 08:06:20 itojun Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.81 2001/07/17 02:44:00 enami Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -536,6 +536,7 @@ udp4_sendup(m, off, src, so)
 			m_freem(n);
 			if (opts)
 				m_freem(opts);
+			udpstat.udps_fullsock++;
 		} else
 			sorwakeup(so);
 	}
@@ -1107,6 +1108,7 @@ udp_input(m, va_alist)
 						m_freem(n);
 						if (opts)
 							m_freem(opts);
+						udpstat.udps_fullsock++;
 					} else
 						sorwakeup(last->inp_socket);
 					opts = 0;
