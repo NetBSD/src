@@ -1,28 +1,8 @@
 /*
  * National Semiconductor DS8390 NIC register definitions 
  *
- * $Id: if_sereg.h,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $
+ * $NetBSD: if_sereg.h,v 1.2 1997/10/13 14:22:52 lukem Exp $
  *
- * Modification history
- *
- * $Log: if_sereg.h,v $
- * Revision 1.1.1.1  1996/05/05 12:17:03  oki
- * NetBSD/x68k, by Masaru Oki.
- *
- * Revision 1.1  1995/05/16  19:54:23  oki
- * *** empty log message ***
- *
- * Revision 1.2  1994/03/01  15:24:26  briggs
- * More Dayna separation.
- *
- * Revision 1.1  1993/11/29  00:32:46  briggs
- * Update to current work in progress.  This includes an update to
- * use config.new.
- * Numerous updates to console so it works better on the SE/30 screen.
- * Some nice changes from Brad Parker for handling NuBUS and an ethernet
- * driver that I haven't worked on, yet.
- *
- * 
  */
 
 #define	CMD_CLEAR_TALLIES	0x02
