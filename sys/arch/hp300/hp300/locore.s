@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.128 2003/02/02 10:24:39 wiz Exp $	*/
+/*	$NetBSD: locore.s,v 1.129 2003/04/08 22:57:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -77,7 +77,7 @@ GLOBAL(kernel_text)
  * The bootloader places the bootinfo in this page, and we allocate
  * a VA for it and map it in pmap_bootstrap().
  */
-	.fill	NBPG/4,4,0
+	.fill	PAGE_SIZE/4,4,0
 
 /*
  * Temporary stack for a variety of purposes.
@@ -86,7 +86,7 @@ GLOBAL(kernel_text)
  * our text segment.
  */
 	.data
-	.space	NBPG
+	.space	PAGE_SIZE
 ASLOCAL(tmpstk)
 
 #include <hp300/hp300/vectors.s>
@@ -376,7 +376,7 @@ Lstart2:
 #endif
 	movl	#_C_LABEL(end),%d5	| end of static kernel text/data
 Lstart3:
-	addl	#NBPG-1,%d5
+	addl	#PAGE_SIZE-1,%d5
 	andl	#PG_FRAME,%d5		| round to a page
 	movl	%d5,%a4
 	addl	%a5,%a4			| convert to PA
@@ -1442,7 +1442,7 @@ Lbootcode:
 	movl	#0,%d0
 	movc	%d0,%cacr		| caches off
 	.long	0x4e7b0003		| movc %d0,%tc
-	movl	%d2,MAXADDR+NBPG-4	| restore old high page contents
+	movl	%d2,MAXADDR+PAGE_SIZE-4	| restore old high page contents
 	DOREBOOT
 LmotommuF:
 #endif
@@ -1457,7 +1457,7 @@ LhpmmuB:
 #if defined(M68K_MMU_HP)
 	MMUADDR(%a0)
 	movl	#0xFFFF0000,%a0@(MMUCMD)	| totally disable MMU
-	movl	%d2,MAXADDR+NBPG-4	| restore old high page contents
+	movl	%d2,MAXADDR+PAGE_SIZE-4	| restore old high page contents
 	DOREBOOT
 #endif
 Lebootcode:

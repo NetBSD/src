@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.16 2003/01/17 23:13:12 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.17 2003/04/08 22:57:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,7 +68,7 @@
  * our text segment.
  */
 	.data
-	.space	NBPG
+	.space	PAGE_SIZE
 ASLOCAL(tmpstk)
 
 #include <luna68k/luna68k/vectors.s>
@@ -216,7 +216,7 @@ Lstart2:
 	RELOC(end,%a0)
 	movl	%a0,%d2			| end of static kernel text/data
 Lstart3:
-	addl	#NBPG-1,%d2
+	addl	#PAGE_SIZE-1,%d2
 	andl	#PG_FRAME,%d2		| round to a page
 	movl	%d2,%a4
 	addl	%a5,%a4			| convert to PA

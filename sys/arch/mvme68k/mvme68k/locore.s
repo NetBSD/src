@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.90 2003/01/17 23:42:04 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.91 2003/04/08 22:57:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,7 +62,7 @@
  * our text segment.
  */
 	.data
-	.space	NBPG
+	.space	PAGE_SIZE
 ASLOCAL(tmpstk)
 
 ASLOCAL(bug_vbr)
@@ -314,13 +314,13 @@ Linit147:
 
 	/* offboard RAM */
 	clrl	%a0@(0x0c)		| phys_seg_list[1].ps_start
-	movl	#NBPG-1,%d0
+	movl	#PAGE_SIZE-1,%d0
 	addl	0xfffe0764,%d0		| Start of offboard segment
-	andl	#-NBPG,%d0		| Round up to page boundary
+	andl	#-PAGE_SIZE,%d0		| Round up to page boundary
 	jbeq	Lsavmaxmem		| Jump if none defined
-	movl	#NBPG,%d1		| Note: implicit '+1'
+	movl	#PAGE_SIZE,%d1		| Note: implicit '+1'
 	addl	0xfffe0768,%d1		| End of offboard segment
-	andl	#-NBPG,%d1		| Round up to page boundary
+	andl	#-PAGE_SIZE,%d1		| Round up to page boundary
 	cmpl	%d1,%d0			| Quick and dirty validity check
 	jbcs	Loff_ok			| Yup, looks good.
 	movel	%a0@(4),%d1		| Just use onboard RAM otherwise
@@ -508,13 +508,13 @@ Lis1xx_common:
 
 	/* offboard RAM */
 	clrl	%a0@(0x0c)		| phys_seg_list[1].ps_start
-	movl	#NBPG-1,%d0
+	movl	#PAGE_SIZE-1,%d0
 	addl	0xfffc0000,%d0		| Start of offboard segment
-	andl	#-NBPG,%d0		| Round up to page boundary
+	andl	#-PAGE_SIZE,%d0		| Round up to page boundary
 	jbeq	Ldone1xx		| Jump if none defined
-	movl	#NBPG,%d1		| Note: implicit '+1'
+	movl	#PAGE_SIZE,%d1		| Note: implicit '+1'
 	addl	0xfffc0004,%d1		| End of offboard segment
-	andl	#-NBPG,%d1		| Round up to page boundary
+	andl	#-PAGE_SIZE,%d1		| Round up to page boundary
 	cmpl	%d1,%d0			| Quick and dirty validity check
 	jbcs	Lramsave1xx		| Yup, looks good.
 	movel	%a0@(4),%d1		| Just use onboard RAM otherwise
@@ -561,7 +561,7 @@ Lstart1:
 #endif
 	movl	#_C_LABEL(end),%d2	| end of static kernel text/data
 Lstart2:
-	addl	#NBPG-1,%d2
+	addl	#PAGE_SIZE-1,%d2
 	andl	#PG_FRAME,%d2		| round to a page
 	movl	%d2,%a4
 	addl	%a5,%a4			| convert to PA

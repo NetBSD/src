@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.134 2003/01/17 22:17:05 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.135 2003/04/08 22:57:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,8 +64,8 @@
 	.text
 GLOBAL(kernel_text)
 L_base:
-	.long	0x4ef80400+NBPG	/* jmp jmp0.w */
-	.fill	NBPG/4-1,4,0/*xdeadbeef*/
+	.long	0x4ef80400+PAGE_SIZE	/* jmp jmp0.w */
+	.fill	PAGE_SIZE/4-1,4,0/*xdeadbeef*/
 
 #include <amiga/amiga/vectors.s>
 #include <amiga/amiga/custom.h>
@@ -1583,7 +1583,7 @@ ENTRY_NOPROFILE(fpeaemu60)
 #endif
 
 	.data
-	.space	NBPG
+	.space	PAGE_SIZE
 ASLOCAL(tmpstk)
 
 GLOBAL(mmutype)

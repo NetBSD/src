@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.38 2003/02/02 10:24:39 wiz Exp $	*/
+/*	$NetBSD: locore.s,v 1.39 2003/04/08 22:57:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -75,14 +75,14 @@ GLOBAL(kernel_text)
  /*
   * Leave page zero empty so it can be unmapped
   */     
-	.space	NBPG
+	.space	PAGE_SIZE
 
 /*
  * Temporary stack for a variety of purposes.
  */
 	.data
 GLOBAL(endstack)
-	.space	NBPG
+	.space	PAGE_SIZE
 GLOBAL(bgnstack)
 ASLOCAL(tmpstk)
 
@@ -271,7 +271,7 @@ Lstart2:
 	movl	#_C_LABEL(end),%d5	| end of static kernel text/data
 
 Lstart3:
-	addl	#NBPG-1,%d5
+	addl	#PAGE_SIZE-1,%d5
 	andl	#PG_FRAME,%d5		| round to a page
 	movl	%d5,%a4
 	addl	%a5,%a4			| convert to PA

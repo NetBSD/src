@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy_page.S,v 1.5 2002/08/17 16:36:33 thorpej Exp $	*/
+/*	$NetBSD: bcopy_page.S,v 1.6 2003/04/08 22:57:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -38,8 +38,9 @@
  * Created      : 08/04/95
  */
 
-#include <machine/param.h>
 #include <machine/asm.h>
+
+#include "assym.h"
 
 /* #define BIG_LOOPS */
 
@@ -53,7 +54,7 @@
  *   r1 - dest address
  *
  * Requires:
- *   number of bytes per page (NBPG) is a multiple of 512 (BIG_LOOPS), 128
+ *   number of bytes per page (PAGE_SIZE) is a multiple of 512 (BIG_LOOPS), 128
  *   otherwise.
  */
 
@@ -84,9 +85,9 @@ ENTRY(bcopy_page)
 	PREFETCH_FIRST_CHUNK
 	SAVE_REGS
 #ifdef BIG_LOOPS
-	mov	r2, #(NBPG >> 9)
+	mov	r2, #(PAGE_SIZE >> 9)
 #else
-	mov	r2, #(NBPG >> 7)
+	mov	r2, #(PAGE_SIZE >> 7)
 #endif
 
 1:
@@ -128,16 +129,16 @@ ENTRY(bcopy_page)
  *   r0 - dest address
  *
  * Requires:
- *   number of bytes per page (NBPG) is a multiple of 512 (BIG_LOOPS), 128
+ *   number of bytes per page (PAGE_SIZE) is a multiple of 512 (BIG_LOOPS), 128
  *   otherwise
  */
 
 ENTRY(bzero_page)
 	stmfd	sp!, {r4-r8, lr}
 #ifdef BIG_LOOPS
-	mov	r2, #(NBPG >> 9)
+	mov	r2, #(PAGE_SIZE >> 9)
 #else
-	mov	r2, #(NBPG >> 7)
+	mov	r2, #(PAGE_SIZE >> 7)
 #endif
 	mov	r3, #0
 	mov	r4, #0
