@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.16 2000/12/05 17:59:43 drochner Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.17 2001/06/02 01:52:10 kim Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -607,10 +607,10 @@ bootpc_call(nd, procp)
 	 * the buffer at bpc.replybuf.
 	 */
 #ifdef NFS_BOOT_DHCP
-	printf("nfs_boot: %s server: %s\n",
+	printf("nfs_boot: %s next-server: %s\n",
 	       (bpc.dhcp_ok ? "DHCP" : "BOOTP"),
 #else
-	printf("nfs_boot: BOOTP server: %s\n",
+	printf("nfs_boot: BOOTP next-server: %s\n",
 #endif
 	       inet_ntoa(bpc.replybuf->bp_siaddr));
 
