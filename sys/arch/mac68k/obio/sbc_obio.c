@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc_obio.c,v 1.8 1998/05/02 16:45:31 scottr Exp $	*/
+/*	$NetBSD: sbc_obio.c,v 1.9 1998/11/19 21:46:25 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1996,1997 Scott Reynolds.  All rights reserved.
@@ -160,12 +160,18 @@ sbc_obio_attach(parent, self, args)
 	}
 
 	/*
+	 * Fill in the adapter.
+	 */
+	ncr_sc->sc_adapter.scsipi_cmd = ncr5380_scsi_cmd;
+	ncr_sc->sc_adapter.scsipi_minphys = minphys;
+
+	/*
 	 * Fill in the prototype scsi_link.
 	 */
 	ncr_sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	ncr_sc->sc_link.adapter_softc = sc;
 	ncr_sc->sc_link.scsipi_scsi.adapter_target = 7;
-	ncr_sc->sc_link.adapter = &sbc_ops;
+	ncr_sc->sc_link.adapter = &ncr_sc->sc_adapter;
 	ncr_sc->sc_link.device = &sbc_dev;
 	ncr_sc->sc_link.type = BUS_SCSI;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: csa.c,v 1.3 1998/10/10 00:28:38 thorpej Exp $	*/
+/*	$NetBSD: csa.c,v 1.4 1998/11/19 21:44:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,12 +76,6 @@
 void csa_attach __P((struct device *, struct device *, void *));
 int  csa_match  __P((struct device *, struct cfdata *, void *));
 static void csa_minphys __P((struct buf *bp));
-
-struct scsipi_adapter csa_scsiswitch = {
-	ncr5380_scsi_cmd,	/* scsipi_cmd */
-	csa_minphys,		/* scsipi_minphys */
-	NULL,			/* scsipi_ioctl */
-};
 
 struct scsipi_device csa_scsidev = {
 	NULL,		/* use default error handler */
@@ -190,11 +184,14 @@ csa_attach(parent, self, aux)
 
 	sc->sc_ncr5380.sc_pio_in = ncr5380_pio_in;
 	sc->sc_ncr5380.sc_pio_out = ncr5380_pio_out;
-	
+
+	sc->sc_ncr5380.sc_adapter.scsipi_cmd = ncr5380_scsi_cmd;
+	sc->sc_ncr5380.sc_adapter.scsipi_minphys = csa_minphys;
+
 	sc->sc_ncr5380.sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_ncr5380.sc_link.adapter_softc = sc;
 	sc->sc_ncr5380.sc_link.scsipi_scsi.adapter_target = 7;
-	sc->sc_ncr5380.sc_link.adapter = &csa_scsiswitch;
+	sc->sc_ncr5380.sc_link.adapter = &sc->sc_ncr5380.sc_adapter;
 	sc->sc_ncr5380.sc_link.device = &csa_scsidev;
 
 	/* Provide an override for the host id */

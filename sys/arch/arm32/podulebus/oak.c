@@ -1,4 +1,4 @@
-/*	$NetBSD: oak.c,v 1.15 1998/10/10 00:28:38 thorpej Exp $	*/
+/*	$NetBSD: oak.c,v 1.16 1998/11/19 21:44:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,12 +61,6 @@
 void oak_attach __P((struct device *, struct device *, void *));
 int  oak_match  __P((struct device *, struct cfdata *, void *));
 static void oak_minphys __P((struct buf *bp));
-
-struct scsipi_adapter oak_scsiswitch = {
-	ncr5380_scsi_cmd,	/* scsipi_cmd */
-	oak_minphys,		/* scsipi_minphys */
-	NULL,			/* scsipi_ioctl */
-};
 
 struct scsipi_device oak_scsidev = {
 	NULL,		/* use default error handler */
@@ -163,11 +157,14 @@ oak_attach(parent, self, aux)
 	
 	sc->sc_ncr5380.sc_pio_in = ncr5380_pio_in;
 	sc->sc_ncr5380.sc_pio_out = ncr5380_pio_out;
-	
+
+	sc->sc_ncr5380.sc_adapter.scsipi_cmd = ncr5380_scsi_cmd;
+	sc->sc_ncr5380.sc_adapter.scsipi_minphys = oak_minphys;
+
 	sc->sc_ncr5380.sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_ncr5380.sc_link.adapter_softc = sc;
 	sc->sc_ncr5380.sc_link.scsipi_scsi.adapter_target = 7;
-	sc->sc_ncr5380.sc_link.adapter = &oak_scsiswitch;
+	sc->sc_ncr5380.sc_link.adapter = &sc->sc_ncr5380.sc_adapter;
 	sc->sc_ncr5380.sc_link.device = &oak_scsidev;
 
 	/* Provide an override for the host id */

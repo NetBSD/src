@@ -1,4 +1,4 @@
-/*	$NetBSD: otgsc.c,v 1.20 1998/10/10 00:28:37 thorpej Exp $	*/
+/*	$NetBSD: otgsc.c,v 1.21 1998/11/19 21:44:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -56,12 +56,6 @@ int otgsc_dma_xfer_in __P((struct sci_softc *dev, int len,
 int otgsc_dma_xfer_out __P((struct sci_softc *dev, int len,
     register u_char *buf, int phase));
 int otgsc_intr __P((void *));
-
-struct scsipi_adapter otgsc_scsiswitch = {
-	sci_scsicmd,
-	sci_minphys,
-	NULL,		/* scsipi_ioctl */
-};
 
 struct scsipi_device otgsc_scsidev = {
 	NULL,		/* use default error handler */
@@ -145,10 +139,13 @@ otgscattach(pdp, dp, auxp)
 
 	scireset(sc);
 
+	sc->sc_adapter.scsipi_cmd = sci_scsicmd;
+	sc->sc_adapter.scsipi_minphys = sci_minphys;
+
 	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.scsipi_scsi.adapter_target = 7;
-	sc->sc_link.adapter = &otgsc_scsiswitch;
+	sc->sc_link.adapter = &sc->sc_adapter;
 	sc->sc_link.device = &otgsc_scsidev;
 	sc->sc_link.openings = 1;
 	sc->sc_link.scsipi_scsi.max_target = 7;

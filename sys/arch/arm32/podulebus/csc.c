@@ -1,4 +1,4 @@
-/*	$NetBSD: csc.c,v 1.2 1998/10/10 00:28:38 thorpej Exp $	*/
+/*	$NetBSD: csc.c,v 1.3 1998/11/19 21:44:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,12 +64,6 @@
 void cscattach   __P((struct device *, struct device *, void *));
 int  cscmatch    __P((struct device *, struct cfdata *, void *));
 int  csc_scsicmd __P((struct scsipi_xfer *));
-
-struct scsipi_adapter csc_scsiswitch = {
-	csc_scsicmd,
-	sfas_minphys,
-	NULL,		/* scsipi_ioctl */
-};
 
 struct scsipi_device csc_scsidev = {
 	NULL,		/* use default error handler */
@@ -170,10 +164,13 @@ cscattach(pdp, dp, auxp)
 
 	sfasinitialize((struct sfas_softc *)sc);
 
+	sc->sc_softc.sc_adapter.scsipi_cmd = csc_scsicmd;
+	sc->sc_softc.sc_adapter.scsipi_minphys = sfas_minphys;
+
 	sc->sc_softc.sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;	
 	sc->sc_softc.sc_link.adapter_softc  = sc;
 	sc->sc_softc.sc_link.scsipi_scsi.adapter_target = sc->sc_softc.sc_host_id;
-	sc->sc_softc.sc_link.adapter	    = &csc_scsiswitch;
+	sc->sc_softc.sc_link.adapter	    = &sc->sc_adapter;
 	sc->sc_softc.sc_link.device	    = &csc_scsidev;
 	sc->sc_softc.sc_link.openings	    = 1;
 	sc->sc_softc.sc_link.scsipi_scsi.max_target = 7;

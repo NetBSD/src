@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360var.h,v 1.2 1997/10/16 22:57:02 enami Exp $	*/
+/*	$NetBSD: aic6360var.h,v 1.3 1998/11/19 21:52:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -118,6 +118,7 @@ struct aic_softc {
 	bus_space_handle_t sc_ioh;
 
 	struct scsipi_link sc_link;	/* prototype for subdevs */
+	struct scsipi_adapter sc_adapter;
 
 	TAILQ_HEAD(, aic_acb) free_list, ready_list, nexus_list;
 	struct aic_acb *sc_nexus;	/* current command */

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.7 1998/11/17 14:14:52 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.8 1998/11/19 21:53:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+/* XXX for scsipi_adapter */
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsipiconf.h>
 
 #define	WAITTIME    (10 * hz)    /* time to wait for a completion */
 	/* this is a lot for hard drives, but not for cdroms */
@@ -90,6 +94,11 @@ struct wdc_softc { /* Per controller state */
 	u_int8_t      dma_mode; /* highest DMA mode supported */
 	int nchannels;	/* Number of channels on this controller */
 	struct channel_softc *channels;  /* channels-specific datas (array) */
+
+	/*
+	 * The reference count here is used for both IDE and ATAPI devices.
+	 */
+	struct scsipi_adapter sc_atapi_adapter;
 
 	/* if WDC_CAPABILITY_DMA set in 'cap' */
 	void            *dma_arg;

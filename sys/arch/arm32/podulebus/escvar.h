@@ -1,4 +1,4 @@
-/* $NetBSD: escvar.h,v 1.3 1997/08/27 11:23:29 bouyer Exp $ */
+/* $NetBSD: escvar.h,v 1.4 1998/11/19 21:44:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -157,6 +157,7 @@ struct nexus {
 struct	esc_softc {
 	struct	device		 sc_dev;	/* System required struct */
 	struct	scsipi_link	 sc_link;	/* For sub devices */
+	struct	scsipi_adapter	 sc_adapter;
 	irqhandler_t		 sc_ih;		/* Interrupt chain struct */
 
 	TAILQ_HEAD(,esc_pending) sc_xs_pending;

@@ -1,4 +1,4 @@
-/*	$NetBSD: scivar.h,v 1.11 1997/08/27 11:23:18 bouyer Exp $	*/
+/*	$NetBSD: scivar.h,v 1.12 1998/11/19 21:44:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -51,6 +51,7 @@ struct	sci_softc {
 	struct	device sc_dev;
 	struct	isr sc_isr;
 	struct	scsipi_link sc_link;	/* proto for sub devices */
+	struct	scsipi_adapter sc_adapter;
 	TAILQ_HEAD(,sci_pending) sc_xslist;
 	struct	sci_pending sc_xsstore[8][8];
 	struct	scsipi_xfer *sc_xs;	/* transfer from high level code */

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.18 1998/10/10 00:28:30 thorpej Exp $	*/
+/*	$NetBSD: esp.c,v 1.19 1998/11/19 21:46:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -111,12 +111,6 @@ int	espmatch	__P((struct device *, struct cfdata *, void *));
 /* Linkup to the rest of the kernel */
 struct cfattach esp_ca = {
 	sizeof(struct esp_softc), espmatch, espattach
-};
-
-struct scsipi_adapter esp_switch = {
-	ncr53c9x_scsi_cmd,
-	minphys,		/* no max at this level; handled by DMA code */
-	NULL,			/* scsipi_ioctl */
 };
 
 struct scsipi_device esp_dev = {
@@ -316,7 +310,9 @@ espattach(parent, self, aux)
 	/*
 	 * Now try to attach all the sub-devices
 	 */
-	ncr53c9x_attach(sc, &esp_switch, &esp_dev);
+	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
+	sc->sc_adapter.scsipi_minphys = minphys; 
+	ncr53c9x_attach(sc, &esp_dev);
 
 	/*
 	 * Configure interrupts.

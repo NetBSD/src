@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.33 1998/10/10 00:28:30 thorpej Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.34 1998/11/19 21:45:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -80,12 +80,6 @@ static u_char	busy;
 static void	ncr5380_minphys __P((struct buf *bp));
 static int	ncr5380_scsi_cmd __P((struct scsipi_xfer *xs));
 static void	ncr5380_show_scsi_cmd __P((struct scsipi_xfer *xs));
-
-struct scsipi_adapter ncr5380_switch = {
-	ncr5380_scsi_cmd,		/* scsipi_cmd			*/
-	ncr5380_minphys,		/* scsipi_minphys		*/
-	NULL,				/* scsipi_ioctl			*/
-};
 
 struct scsipi_device ncr5380_dev = {
 	NULL,		/* use default error handler		*/
@@ -233,10 +227,13 @@ void		*auxp;
 
 	sc = (struct ncr_softc *)dp;
 
+	sc->sc_adapter.scsipi_cmd = ncr5380_scsi_cmd;
+	sc->sc_adapter.scsipi_minphys = ncr5380_minphys;
+
 	sc->sc_link.scsipi_scsi.channel         = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc   = sc;
 	sc->sc_link.scsipi_scsi.adapter_target  = 7;
-	sc->sc_link.adapter         = &ncr5380_switch;
+	sc->sc_link.adapter         = &sc->sc_adapter;
 	sc->sc_link.device          = &ncr5380_dev;
 	sc->sc_link.openings        = NREQ - 1;
 	sc->sc_link.scsipi_scsi.max_target      = 7;
