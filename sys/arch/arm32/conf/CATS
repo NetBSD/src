@@ -1,4 +1,4 @@
-#	$NetBSD: CATS,v 1.25 2000/02/19 00:14:58 tsutsui Exp $
+#	$NetBSD: CATS,v 1.26 2000/03/06 03:16:25 mark Exp $
 #
 #	CATS -- CHALTECH CATS Development kernel
 #
@@ -159,7 +159,6 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 #options 	PORTMASTER	# Enable PortMaster only options
 options 	DIAGNOSTIC	# internally consistency checks
 #options  	PMAP_DEBUG	# Enable pmap_debug_level code
-options 	POSTMORTEM	# perform postmortem on panic
 #options 	IPKDB		# remote kernel debugging
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB

@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.64 2000/02/29 06:32:23 simonb Exp $
+#	$NetBSD: GENERIC,v 1.65 2000/03/06 03:16:25 mark Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include	"arch/arm32/conf/std.arm32"
 
-#ident 		"GENERIC-$Revision: 1.64 $"
+#ident 		"GENERIC-$Revision: 1.65 $"
 
 # estimated number of users
 maxusers	32
@@ -134,7 +134,6 @@ options 	KMEMSTATS	# kernel memory statistics
 #options 	PORTMASTER	# Enable PortMaster only options
 options 	DIAGNOSTIC	# internal consistency checks
 #options  	PMAP_DEBUG	# Enable pmap_debug_level code
-options 	POSTMORTEM	# perform postmortem on panic
 #options 	IPKDB		# remote kernel debugging
 options 	DDB		# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB

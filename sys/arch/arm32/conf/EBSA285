@@ -1,4 +1,4 @@
-#	$NetBSD: EBSA285,v 1.12 2000/02/13 05:26:04 mark Exp $
+#	$NetBSD: EBSA285,v 1.13 2000/03/06 03:16:25 mark Exp $
 #
 #	EBSA285 -- EBSA285 Architecture Kernel
 #
@@ -125,7 +125,6 @@ options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	PORTMASTER	# Enable PortMaster only options
 options 	DIAGNOSTIC	# internally consistency checks
 #options  	PMAP_DEBUG	# Enable pmap_debug_level code
-options 	POSTMORTEM	# perform postmortem on panic
 #options 	IPKDB		# remote kernel debugging
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB

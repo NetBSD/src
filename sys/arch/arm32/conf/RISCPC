@@ -1,4 +1,4 @@
-#	$NetBSD: RISCPC,v 1.26 1999/12/24 00:15:51 tron Exp $
+#	$NetBSD: RISCPC,v 1.27 2000/03/06 03:16:26 mark Exp $
 #
 #	RISCPC -- Full RiscPC config
 #
@@ -112,7 +112,6 @@ options 	KMEMSTATS	# kernel memory statistics
 #options 	PORTMASTER	# Enable PortMaster only options
 options 	DIAGNOSTIC	# internally consistency checks
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
-options 	POSTMORTEM	# perform postmortem on panic
 #options 	IPKDB		# remote kernel debugging
 options 	DDB		# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
