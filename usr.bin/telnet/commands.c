@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.26 1999/07/02 15:09:10 itojun Exp $	*/
+/*	$NetBSD: commands.c,v 1.27 1999/07/02 15:11:53 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.26 1999/07/02 15:09:10 itojun Exp $");
+__RCSID("$NetBSD: commands.c,v 1.27 1999/07/02 15:11:53 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -2858,6 +2858,7 @@ sourceroute(ai, arg, cpp, protop, optp)
 			return -1;
 		}
 		if (ai->ai_family != res->ai_family) {
+			fprintf(stderr, "%s: address family mismach\n", cp);
 			freeaddrinfo(res);
 			return -1;
 		}
