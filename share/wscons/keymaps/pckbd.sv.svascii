@@ -1,0 +1,11 @@
+# $NetBSD: pckbd.sv.svascii,v 1.1 2001/05/02 15:08:35 drochner Exp $
+#
+# This is an overlay to the swedish keymap which maps
+# the natinal characters to their ASCII counterparts.
+# From Michael Eriksson per PR kern/8456.
+
+keycode 5 = 4 dollar currency
+keycode 26 = braceright bracketright aring Aring
+keycode 39 = bar backslash odiaeresis Odiaeresis
+keycode 40 = braceleft bracketleft adiaeresis Adiaeresis
+keycode 41 = asciitilde
