@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24 2000/01/28 06:22:10 shin Exp $	*/
+/*	$NetBSD: main.c,v 1.25 2000/01/31 12:45:29 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -103,6 +103,10 @@ int fb_bpl[] = {
 };
 
 struct fb_setting fb_settings[] = {
+	/*
+	 * You must choose fb_type to make the screen look black-on-white.
+	 * (Foreground color is black and background color is white.)
+	 */
 	{ NULL, BIFB_D2_M2L_3,
 		320, 240, 80, 0xa000000,
 		PLATID_UNKNOWN, PLATID_UNKNOWN },
@@ -124,13 +128,13 @@ struct fb_setting fb_settings[] = {
 	{ TEXT("MobileGearII MC-R320"), BIFB_D2_M2L_0,
 		640, 240, 160, 0xa000000,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_320 },
-	{ TEXT("MobileGearII MC/R430"), BIFB_D16_FFFF,
+	{ TEXT("MobileGearII MC/R430"), BIFB_D16_0000,
 		640, 240, 1280, 0xa180100,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_430 },
-	{ TEXT("MobileGearII MC-R500"), BIFB_D8_FF,
+	{ TEXT("MobileGearII MC-R500"), BIFB_D8_00,
 		640, 240, 1024, 0x13000000,
 		PLATID_CPU_MIPS_VR_4111, PLATID_MACH_NEC_MCR_500 },
-	{ TEXT("Mobile Pro 750c"), BIFB_D8_FF,
+	{ TEXT("Mobile Pro 750c"), BIFB_D8_00,
 		640, 240, 1024, 0x13000000,
 		PLATID_CPU_MIPS_VR_4111, PLATID_MACH_NEC_MCR_500A },
 	{ TEXT("MobileGearII MC-R510"), BIFB_D8_00,
@@ -142,7 +146,7 @@ struct fb_setting fb_settings[] = {
 	{ TEXT("MobileGearII MC-R520"), BIFB_D16_0000,
 		640, 240, 1600, 0xa000000,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_520 },
-	{ TEXT("MobileGearII MC/R530"), BIFB_D16_FFFF,
+	{ TEXT("MobileGearII MC/R530"), BIFB_D16_0000,
 		640, 240, 1280, 0xa180100,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_530 },
 	{ TEXT("Mobile Pro 770"), BIFB_D16_0000,
@@ -254,6 +258,7 @@ int kernel_list_items = ARRAYSIZEOF(kernel_list);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 void SetBootInfo(struct bootinfo *bi, struct fb_setting *fbs);
 void wstrcpy(TCHAR* dst, TCHAR* src);
+int reverse_fb_type(int type);
 
 /*-----------------------------------------------------------------------------
 
@@ -266,6 +271,30 @@ void wstrcpy(TCHAR* dst, TCHAR* src)
 		*dst++ = *src++;
 	}
 	*dst = *src;
+}
+
+int reverse_fb_type(int type)
+{
+	int i;
+	struct {
+		int type0, type1;
+	} types[] = {
+		{ BIFB_D2_M2L_3,	BIFB_D2_M2L_0	},
+		{ BIFB_D2_M2L_3x2,	BIFB_D2_M2L_0x2	},
+		{ BIFB_D8_FF,		BIFB_D8_00		},
+		{ BIFB_D16_FFFF,	BIFB_D16_0000,	},
+	};
+
+	for (i = 0; i < ARRAYSIZEOF(types); i++) {
+		if (types[i].type0 == type) {
+			return (types[i].type1);
+		}
+		if (types[i].type1 == type) {
+			return (types[i].type0);
+		}
+	}
+	debug_printf(TEXT("reverse_fb_type(): unknown type %d\n"), type);
+	return (type);
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
@@ -362,6 +391,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		pref.check_last_chance = FALSE;
 		pref.load_debug_info = FALSE;
 		pref.serial_port = FALSE;
+		pref.reverse_video = FALSE;
 	}
 	fb_settings[0].name = pref.setting_name;
 
@@ -411,6 +441,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			   pref.load_debug_info, 0);
 	SendDlgItemMessage(hWndMain, IDC_COMM, BM_SETCHECK,
 			   pref.serial_port, 0);
+	SendDlgItemMessage(hWndMain, IDC_REVERSEVIDEO, BM_SETCHECK,
+			   pref.reverse_video, 0);
 
 	/*
 	 *  Map window and message loop
@@ -467,7 +499,7 @@ BOOL CALLBACK DlgProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		 */
 		SetDlgItemText(hWnd, IDC_ABOUT_EDIT,
 			       TEXT("PocketBSD boot loader\r\n")
-			       TEXT("Version 1.9.1 2000.01.23\r\n")
+			       TEXT("Version 1.10.0 2000.01.30\r\n")
 			       TEXT("\r\n")
 			       TEXT("Copyright(C) 1999 Shin Takemura,\r\n")
 			       TEXT("All rights reserved.\r\n")
@@ -845,6 +877,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
 				pref.serial_port = FALSE;
 			}
 
+			if (SendDlgItemMessage(hWndMain, IDC_REVERSEVIDEO,
+					       BM_GETCHECK, 0, 0) ==
+								BST_CHECKED) {
+				pref.reverse_video = TRUE;
+			} else {
+				pref.reverse_video = FALSE;
+			}
+
 			if (GetDlgItemText(hWndMain, IDC_KERNEL, wkernel_name,
 					   sizeof(wkernel_name)) == 0) {      
 				MessageBox (NULL, TEXT("Kernel name required"),
@@ -954,6 +994,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
 
 				if (pref.serial_port) {
 					SerialPort(TRUE);
+				}
+				if (pref.reverse_video) {
+					bi.fb_type = reverse_fb_type(bi.fb_type);
 				}
 				/* 
 				 * Set system infomation

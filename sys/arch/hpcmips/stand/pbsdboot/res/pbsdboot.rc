@@ -78,7 +78,7 @@ BEGIN
     COMBOBOX        IDC_FBSELECT,55,36,75,109,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
     PUSHBUTTON      "...",IDC_FBSETTING,130,40,10,8
-    PUSHBUTTON      "Boot",IDC_BOOT,51,102,45,12
+    PUSHBUTTON      "Boot",IDC_BOOT,51,114,45,12
     EDITTEXT        IDC_OPTIONS,55,51,85,12,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_CLIENTEDGE
     RTEXT           "Kernel name:",IDC_STATIC,0,25,52,8
@@ -92,6 +92,8 @@ BEGIN
                     WS_TABSTOP,30,80,95,10
     CONTROL         "Serial port on",IDC_COMM,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,30,90,95,10
+    CONTROL         "Reverse Video",IDC_REVERSEVIDEO,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,30,100,96,9
 END
 
 IDD_MAIN_640X240 DIALOGEX 0, 0, 240, 120
@@ -117,8 +119,8 @@ BEGIN
                     WS_TABSTOP,135,66,80,10
     CONTROL         "Serial port on",IDC_COMM,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,50,78,64,10
-    CONTROL         "Load debug info.",IDC_XXX,"Button",BS_AUTOCHECKBOX | 
-                    NOT WS_VISIBLE | WS_DISABLED | WS_TABSTOP,135,78,80,10
+    CONTROL         "Reverse Video",IDC_REVERSEVIDEO,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,135,78,80,10
 END
 
 IDD_ABOUT DIALOG DISCARDABLE  0, 0, 137, 119
