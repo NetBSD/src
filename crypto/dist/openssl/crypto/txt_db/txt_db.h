@@ -59,9 +59,7 @@
 #ifndef HEADER_TXT_DB_H
 #define HEADER_TXT_DB_H
 
-#ifndef NO_BIO
 #include <openssl/bio.h>
-#endif
 #include <openssl/stack.h>
 #include <openssl/lhash.h>
 
@@ -88,13 +86,8 @@ typedef struct txt_db_st
 	char **arg_row;
 	} TXT_DB;
 
-#ifndef NO_BIO
 TXT_DB *TXT_DB_read(BIO *in, int num);
 long TXT_DB_write(BIO *out, TXT_DB *db);
-#else
-TXT_DB *TXT_DB_read(char *in, int num);
-long TXT_DB_write(char *out, TXT_DB *db);
-#endif
 int TXT_DB_create_index(TXT_DB *db,int field,int (*qual)(),
 	 unsigned long (*hash)(),int (*cmp)());
 void TXT_DB_free(TXT_DB *db);

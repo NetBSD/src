@@ -71,8 +71,8 @@ __warn_references(RC5_32_encrypt,
 __warn_references(RC5_32_decrypt,
     "RC5 is a patented algorithm; link against libcrypto_rc5.a")
 
-void RC5_32_cbc_encrypt(unsigned char *in, unsigned char *out, long length,
-	     RC5_32_KEY *ks, unsigned char *iv, int encrypt)
+void RC5_32_cbc_encrypt(const unsigned char *in, unsigned char *out,
+	long length, RC5_32_KEY *ks, unsigned char *iv, int encrypt)
 {
 
 	fprintf(stderr,

@@ -59,12 +59,14 @@
 #ifndef HEADER_ERR_H
 #define HEADER_ERR_H
 
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <openssl/bio.h>
+#include <openssl/lhash.h>
+
 #ifdef	__cplusplus
 extern "C" {
-#endif
-
-#ifndef NO_FP_API
-#include <stdio.h>
 #endif
 
 /* The following is a bit of a trick to help the object files only contain
@@ -119,6 +121,7 @@ typedef struct err_state_st
 #define ERR_LIB_X509V3		34
 #define ERR_LIB_PKCS12		35
 #define ERR_LIB_RAND		36
+#define ERR_LIB_DSO		37
 
 #define ERR_LIB_USER		128
 
@@ -147,6 +150,7 @@ typedef struct err_state_st
 #define X509V3err(f,r) ERR_PUT_error(ERR_LIB_X509V3,(f),(r),ERR_file_name,__LINE__)
 #define PKCS12err(f,r) ERR_PUT_error(ERR_LIB_PKCS12,(f),(r),ERR_file_name,__LINE__)
 #define RANDerr(f,r) ERR_PUT_error(ERR_LIB_RAND,(f),(r),ERR_file_name,__LINE__)
+#define DSOerr(f,r) ERR_PUT_error(ERR_LIB_DSO,(f),(r),ERR_file_name,__LINE__)
 
 /* Borland C seems too stupid to be able to shift and do longs in
  * the pre-processor :-( */
@@ -195,6 +199,7 @@ typedef struct err_state_st
 #define ERR_R_BIO_LIB	ERR_LIB_BIO
 #define ERR_R_PKCS7_LIB	ERR_LIB_PKCS7
 #define ERR_R_PKCS12_LIB ERR_LIB_PKCS12
+#define ERR_R_DSO_LIB	ERR_LIB_DSO
 
 /* fatal error */
 #define	ERR_R_MALLOC_FAILURE			(1|ERR_R_FATAL)
@@ -226,16 +231,13 @@ unsigned long ERR_peek_error_line_data(const char **file,int *line,
 				       const char **data,int *flags);
 void ERR_clear_error(void );
 char *ERR_error_string(unsigned long e,char *buf);
+void ERR_error_string_n(unsigned long e, char *buf, size_t len);
 const char *ERR_lib_error_string(unsigned long e);
 const char *ERR_func_error_string(unsigned long e);
 const char *ERR_reason_error_string(unsigned long e);
-#ifndef NO_FP_API
 void ERR_print_errors_fp(FILE *fp);
-#endif
-#ifdef HEADER_BIO_H
 void ERR_print_errors(BIO *bp);
 void ERR_add_error_data(int num, ...);
-#endif
 void ERR_load_strings(int lib,ERR_STRING_DATA str[]);
 void ERR_load_ERR_strings(void);
 void ERR_load_crypto_strings(void);
@@ -244,15 +246,11 @@ void ERR_free_strings(void);
 void ERR_remove_state(unsigned long pid); /* if zero we look it up */
 ERR_STATE *ERR_get_state(void);
 
-#ifdef HEADER_LHASH_H
-LHASH *ERR_get_string_table(void );
-LHASH *ERR_get_err_state_table(void );
-#else
-char *ERR_get_string_table(void );
-char *ERR_get_err_state_table(void );
-#endif
+LHASH *ERR_get_string_table(void);
+LHASH *ERR_get_err_state_table(void); /* even less thread-safe than
+				       * ERR_get_string_table :-) */
 
-int ERR_get_next_error_library(void );
+int ERR_get_next_error_library(void);
 
 #ifdef	__cplusplus
 }

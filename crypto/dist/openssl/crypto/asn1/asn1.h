@@ -60,9 +60,7 @@
 #define HEADER_ASN1_H
 
 #include <time.h>
-#ifndef NO_BIO
 #include <openssl/bio.h>
-#endif
 #include <openssl/bn.h>
 #include <openssl/stack.h>
 #include <openssl/safestack.h>
@@ -220,24 +218,6 @@ DECLARE_STACK_OF(ASN1_STRING_TABLE)
 #define ub_title			64
 #define ub_email_address		128
 
-#ifdef NO_ASN1_TYPEDEFS
-#define ASN1_INTEGER		ASN1_STRING
-#define ASN1_ENUMERATED		ASN1_STRING
-#define ASN1_BIT_STRING		ASN1_STRING
-#define ASN1_OCTET_STRING	ASN1_STRING
-#define ASN1_PRINTABLESTRING	ASN1_STRING
-#define ASN1_T61STRING		ASN1_STRING
-#define ASN1_IA5STRING		ASN1_STRING
-#define ASN1_UTCTIME		ASN1_STRING
-#define ASN1_GENERALIZEDTIME	ASN1_STRING
-#define ASN1_TIME		ASN1_STRING
-#define ASN1_GENERALSTRING	ASN1_STRING
-#define ASN1_UNIVERSALSTRING	ASN1_STRING
-#define ASN1_BMPSTRING		ASN1_STRING
-#define ASN1_VISIBLESTRING	ASN1_STRING
-#define ASN1_UTF8STRING		ASN1_STRING
-#define ASN1_BOOLEAN		int
-#else
 typedef struct asn1_string_st ASN1_INTEGER;
 typedef struct asn1_string_st ASN1_ENUMERATED;
 typedef struct asn1_string_st ASN1_BIT_STRING;
@@ -254,7 +234,6 @@ typedef struct asn1_string_st ASN1_GENERALIZEDTIME;
 typedef struct asn1_string_st ASN1_VISIBLESTRING;
 typedef struct asn1_string_st ASN1_UTF8STRING;
 typedef int ASN1_BOOLEAN;
-#endif
 
 typedef int ASN1_NULL;
 
@@ -621,10 +600,8 @@ int		ASN1_BIT_STRING_set(ASN1_BIT_STRING *a, unsigned char *d,
 int		ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value);
 int		ASN1_BIT_STRING_get_bit(ASN1_BIT_STRING *a, int n);
 
-#ifndef NO_BIO
 int ASN1_BIT_STRING_name_print(BIO *out, ASN1_BIT_STRING *bs,
 				BIT_STRING_BITNAME *tbl, int indent);
-#endif
 int ASN1_BIT_STRING_num_asc(char *name, BIT_STRING_BITNAME *tbl);
 int ASN1_BIT_STRING_set_asc(ASN1_BIT_STRING *bs, char *name, int value,
 				BIT_STRING_BITNAME *tbl);
@@ -755,7 +732,6 @@ STACK *		d2i_ASN1_SET(STACK **a, unsigned char **pp, long length,
 			char *(*func)(), void (*free_func)(void *),
 			int ex_tag, int ex_class);
 
-#ifndef NO_BIO
 int i2a_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *a);
 int a2i_ASN1_INTEGER(BIO *bp,ASN1_INTEGER *bs,char *buf,int size);
 int i2a_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *a);
@@ -763,7 +739,6 @@ int a2i_ASN1_ENUMERATED(BIO *bp,ASN1_ENUMERATED *bs,char *buf,int size);
 int i2a_ASN1_OBJECT(BIO *bp,ASN1_OBJECT *a);
 int a2i_ASN1_STRING(BIO *bp,ASN1_STRING *bs,char *buf,int size);
 int i2a_ASN1_STRING(BIO *bp, ASN1_STRING *a, int type);
-#endif
 int i2t_ASN1_OBJECT(char *buf,int buf_len,ASN1_OBJECT *a);
 
 int a2d_ASN1_OBJECT(unsigned char *out,int olen, const char *buf, int num);
@@ -805,15 +780,12 @@ int ASN1_object_size(int constructed, int length, int tag);
 /* Used to implement other functions */
 char *ASN1_dup(int (*i2d)(),char *(*d2i)(),char *x);
 
-#ifndef NO_FP_API
 char *ASN1_d2i_fp(char *(*xnew)(),char *(*d2i)(),FILE *fp,unsigned char **x);
 int ASN1_i2d_fp(int (*i2d)(),FILE *out,unsigned char *x);
 int ASN1_STRING_print_ex_fp(FILE *fp, ASN1_STRING *str, unsigned long flags);
-#endif
 
 int ASN1_STRING_to_UTF8(unsigned char **out, ASN1_STRING *in);
 
-#ifndef NO_BIO
 char *ASN1_d2i_bio(char *(*xnew)(),char *(*d2i)(),BIO *bp,unsigned char **x);
 int ASN1_i2d_bio(int (*i2d)(),BIO *out,unsigned char *x);
 int ASN1_UTCTIME_print(BIO *fp,ASN1_UTCTIME *a);
@@ -823,7 +795,6 @@ int ASN1_STRING_print(BIO *bp,ASN1_STRING *v);
 int ASN1_STRING_print_ex(BIO *out, ASN1_STRING *str, unsigned long flags);
 int ASN1_parse(BIO *bp,unsigned char *pp,long len,int indent);
 int ASN1_parse_dump(BIO *bp,unsigned char *pp,long len,int indent,int dump);
-#endif
 const char *ASN1_tag2str(int tag);
 
 /* Used to load and write netscape format cert/key */

@@ -60,8 +60,9 @@
 #include <openssl/rc5.h>
 #include "rc5_locl.h"
 
-void RC5_32_cbc_encrypt(unsigned char *in, unsigned char *out, long length,
-	     RC5_32_KEY *ks, unsigned char *iv, int encrypt)
+void RC5_32_cbc_encrypt(const unsigned char *in, unsigned char *out,
+			long length, RC5_32_KEY *ks, unsigned char *iv,
+			int encrypt)
 	{
 	register RC5_32_INT tin0,tin1;
 	register RC5_32_INT tout0,tout1,xor0,xor1;

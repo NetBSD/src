@@ -59,13 +59,15 @@
 #ifndef HEADER_PEM_H
 #define HEADER_PEM_H
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
+#include <openssl/bio.h>
+#include <openssl/stack.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/pem2.h>
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 #define PEM_BUFSIZE		1024
 
@@ -165,11 +167,7 @@ typedef struct pem_ctx_st
 	int num_recipient;
 	PEM_USER **recipient;
 
-#ifdef HEADER_STACK_H
 	STACK *x509_chain;	/* certificate chain */
-#else
-	char *x509_chain;	/* certificate chain */
-#endif
 	EVP_MD *md;		/* signature type */
 
 	int md_enc;		/* is the md encrypted or not? */
@@ -192,13 +190,6 @@ typedef struct pem_ctx_st
  * IMPLEMENT_PEM_rw(...) or IMPLEMENT_PEM_rw_cb(...)
  */
 
-#ifdef NO_FP_API
-
-#define IMPLEMENT_PEM_read_fp(name, type, str, asn1) /**/
-#define IMPLEMENT_PEM_write_fp(name, type, str, asn1) /**/
-#define IMPLEMENT_PEM_write_cb_fp(name, type, str, asn1) /**/
-
-#else
 
 #define IMPLEMENT_PEM_read_fp(name, type, str, asn1) \
 type *PEM_read_##name(FILE *fp, type **x, pem_password_cb *cb, void *u)\
@@ -223,7 +214,6 @@ int PEM_write_##name(FILE *fp, type *x, const EVP_CIPHER *enc, \
 		(char *)x,enc,kstr,klen,cb,u)); \
 	}
 
-#endif
 
 #define IMPLEMENT_PEM_read_bio(name, type, str, asn1) \
 type *PEM_read_bio_##name(BIO *bp, type **x, pem_password_cb *cb, void *u)\
@@ -269,7 +259,7 @@ int PEM_write_bio_##name(BIO *bp, type *x, const EVP_CIPHER *enc, \
 
 /* These are the same except they are for the declarations */
 
-#if defined(WIN16) || defined(NO_FP_API)
+#if defined(WIN16) /* || defined(NO_FP_API) */
 
 #define DECLARE_PEM_read_fp(name, type) /**/
 #define DECLARE_PEM_write_fp(name, type) /**/
@@ -289,7 +279,6 @@ int PEM_write_bio_##name(BIO *bp, type *x, const EVP_CIPHER *enc, \
 
 #endif
 
-#ifdef HEADER_BIO_H
 #define DECLARE_PEM_read_bio(name, type) \
 	type *PEM_read_bio_##name(BIO *bp, type **x, pem_password_cb *cb, void *u);
 
@@ -300,13 +289,6 @@ int PEM_write_bio_##name(BIO *bp, type *x, const EVP_CIPHER *enc, \
 	int PEM_write_bio_##name(BIO *bp, type *x, const EVP_CIPHER *enc, \
 	     unsigned char *kstr, int klen, pem_password_cb *cb, void *u);
 
-#else
-
-#define DECLARE_PEM_read_bio(name, type) /**/
-#define DECLARE_PEM_write_bio(name, type) /**/
-#define DECLARE_PEM_write_cb_bio(name, type) /**/
-
-#endif
 
 #define DECLARE_PEM_write(name, type) \
 	DECLARE_PEM_write_bio(name, type) \
@@ -477,7 +459,6 @@ int	PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher);
 int	PEM_do_header (EVP_CIPHER_INFO *cipher, unsigned char *data,long *len,
 	pem_password_cb *callback,void *u);
 
-#ifdef HEADER_BIO_H
 int	PEM_read_bio(BIO *bp, char **name, char **header,
 		unsigned char **data,long *len);
 int	PEM_write_bio(BIO *bp,const char *name,char *hdr,unsigned char *data,
@@ -490,7 +471,6 @@ int	PEM_ASN1_write_bio(int (*i2d)(),const char *name,BIO *bp,char *x,
 STACK_OF(X509_INFO) *	PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk, pem_password_cb *cb, void *u);
 int	PEM_X509_INFO_write_bio(BIO *bp,X509_INFO *xi, EVP_CIPHER *enc,
 		unsigned char *kstr, int klen, pem_password_cb *cd, void *u);
-#endif
 
 #ifndef WIN16
 int	PEM_read(FILE *fp, char **name, char **header,
@@ -525,9 +505,7 @@ void	PEM_dek_info(char *buf, const char *type, int len, char *str);
 
 #ifndef SSLEAY_MACROS
 
-#ifdef VMS
-#include <openssl/vms_idhacks.h>
-#endif
+#include <openssl/symhacks.h>
 
 DECLARE_PEM_rw(X509, X509)
 

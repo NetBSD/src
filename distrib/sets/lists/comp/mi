@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.327 2001/04/11 19:34:43 jdolecek Exp $
+#	$NetBSD: mi,v 1.328 2001/04/12 07:49:30 itojun Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -657,10 +657,12 @@
 ./usr/include/openssl/cast.h		comp-c-include
 ./usr/include/openssl/comp.h		comp-c-include
 ./usr/include/openssl/conf.h		comp-c-include
+./usr/include/openssl/conf_api.h	comp-c-include
 ./usr/include/openssl/crypto.h		comp-c-include
 ./usr/include/openssl/des.h		comp-c-include
 ./usr/include/openssl/dh.h		comp-c-include
 ./usr/include/openssl/dsa.h		comp-c-include
+./usr/include/openssl/dso.h		comp-c-include
 ./usr/include/openssl/e_os.h		comp-c-include
 ./usr/include/openssl/e_os2.h		comp-c-include
 ./usr/include/openssl/ebcdic.h		comp-c-include
@@ -670,8 +672,10 @@
 ./usr/include/openssl/idea.h		comp-c-include
 ./usr/include/openssl/lhash.h		comp-c-include
 ./usr/include/openssl/md2.h		comp-c-include
+./usr/include/openssl/md4.h		comp-c-include
 ./usr/include/openssl/md5.h		comp-c-include
 ./usr/include/openssl/mdc2.h		comp-c-include
+./usr/include/openssl/obj_mac.h		comp-c-include
 ./usr/include/openssl/objects.h		comp-c-include
 ./usr/include/openssl/opensslconf.h	comp-c-include
 ./usr/include/openssl/opensslv.h	comp-c-include
@@ -693,6 +697,7 @@
 ./usr/include/openssl/ssl23.h		comp-c-include
 ./usr/include/openssl/ssl3.h		comp-c-include
 ./usr/include/openssl/stack.h		comp-c-include
+./usr/include/openssl/symhack.h		comp-c-include
 ./usr/include/openssl/tls1.h		comp-c-include
 ./usr/include/openssl/tmdiff.h		comp-c-include
 ./usr/include/openssl/txt_db.h		comp-c-include

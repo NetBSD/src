@@ -61,8 +61,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "openssl/e_os.h"
-
 #ifdef VMS
 #include <unixio.h>
 #endif
@@ -75,6 +73,7 @@
 # include <sys/stat.h>
 #endif
 
+#include "openssl/e_os.h"
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
 
@@ -83,6 +82,9 @@
 #define RAND_DATA 1024
 
 /* #define RFILE ".rnd" - defined in ../../e_os.h */
+
+/* Note that these functions are intended for seed files only.
+ * Entropy devices and EGD sockets are handled in rand_unix.c */
 
 int RAND_load_file(const char *file, long bytes)
 	{
@@ -127,7 +129,7 @@ int RAND_load_file(const char *file, long bytes)
 		if (bytes > 0)
 			{
 			bytes-=n;
-			if (bytes == 0) break;
+			if (bytes <= 0) break;
 			}
 		}
 	fclose(in);
@@ -139,7 +141,7 @@ err:
 int RAND_write_file(const char *file)
 	{
 	unsigned char buf[BUFSIZE];
-	int i,ret=0,err=0;
+	int i,ret=0,rand_err=0;
 	FILE *out = NULL;
 	int n;
 	struct stat sb;
@@ -157,18 +159,18 @@ int RAND_write_file(const char *file)
 		}
         }
 	
-#if defined(O_CREAT) && defined(O_EXCL) && !defined(WIN32)
+#if defined(O_CREAT) && !defined(WIN32)
 	/* For some reason Win32 can't write to files created this way */
-
-        /* chmod(..., 0600) is too late to protect the file,
-         * permissions should be restrictive from the start */
-        int fd = open(file, O_CREAT | O_EXCL, 0600);
-        if (fd != -1)
-                out = fdopen(fd, "wb");
+	
+	/* chmod(..., 0600) is too late to protect the file,
+	 * permissions should be restrictive from the start */
+	int fd = open(file, O_CREAT, 0600);
+	if (fd != -1)
+		out = fdopen(fd, "wb");
 #endif
-        if (out == NULL)
-                out = fopen(file,"wb");
-        if (out == NULL) goto err;
+	if (out == NULL)
+		out = fopen(file,"wb");
+	if (out == NULL) goto err;
 
 #ifndef NO_CHMOD
 	chmod(file,0600);
@@ -179,7 +181,7 @@ int RAND_write_file(const char *file)
 		i=(n > BUFSIZE)?BUFSIZE:n;
 		n-=BUFSIZE;
 		if (RAND_bytes(buf,i) <= 0)
-			err=1;
+			rand_err=1;
 		i=fwrite(buf,1,i,out);
 		if (i <= 0)
 			{
@@ -195,7 +197,7 @@ int RAND_write_file(const char *file)
 	{
 	char *tmpf;
 
-	tmpf = Malloc(strlen(file) + 4);  /* to add ";-1" and a nul */
+	tmpf = OPENSSL_malloc(strlen(file) + 4);  /* to add ";-1" and a nul */
 	if (tmpf)
 		{
 		strcpy(tmpf, file);
@@ -212,17 +214,17 @@ int RAND_write_file(const char *file)
 	fclose(out);
 	memset(buf,0,BUFSIZE);
 err:
-	return(err ? -1 : ret);
+	return (rand_err ? -1 : ret);
 	}
 
-const char *RAND_file_name(char *buf, int size)
+const char *RAND_file_name(char *buf, size_t size)
 	{
-	char *s = NULL;
+	char *s=NULL;
 	char *ret=NULL;
 	struct stat sb;
 
-	if (issetugid() == 0)
-		s = getenv("RANDFILE");
+	if (OPENSSL_issetugid() == 0)
+		s=getenv("RANDFILE");
 	if (s != NULL && *s && strlen(s) + 1 < size)
 		{
 		strlcpy(buf,s,size);
@@ -230,9 +232,9 @@ const char *RAND_file_name(char *buf, int size)
 		}
 	else
 		{
-		if (issetugid() == 0)
+		if (OPENSSL_issetugid() == 0)
 			s=getenv("HOME");
-		if (s && *s && strlen(s)+strlen(RFILE)+2 < size)
+		if (s != NULL && *s && (strlen(s)+strlen(RFILE)+2 < size))
 			{
 			strlcpy(buf,s,size);
 #ifndef VMS
@@ -241,6 +243,8 @@ const char *RAND_file_name(char *buf, int size)
 			strlcat(buf,RFILE,size);
 			ret=buf;
 			}
+		  else
+		  	buf[0] = '\0'; /* no file name */
 		}
 
 #ifdef DEVRANDOM

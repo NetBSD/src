@@ -65,16 +65,16 @@
 #ifndef HEADER_DSA_H
 #define HEADER_DSA_H
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
-
+#include <openssl/bio.h>
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
 # include <openssl/dh.h>
 
 #define DSA_FLAG_CACHE_MONT_P	0x01
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 typedef struct dsa_st DSA;
 
@@ -183,14 +183,10 @@ int	i2d_DSAPublicKey(DSA *a, unsigned char **pp);
 int 	i2d_DSAPrivateKey(DSA *a, unsigned char **pp);
 int	i2d_DSAparams(DSA *a,unsigned char **pp);
 
-#ifdef HEADER_BIO_H
 int	DSAparams_print(BIO *bp, DSA *x);
 int	DSA_print(BIO *bp, DSA *x, int off);
-#endif
-#ifndef NO_FP_API
 int	DSAparams_print_fp(FILE *fp, DSA *x);
 int	DSA_print_fp(FILE *bp, DSA *x, int off);
-#endif
 
 #define DSS_prime_checks 50
 /* Primality test according to FIPS PUB 186[-1], Appendix 2.1:
