@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.52.2.3 2001/10/13 17:42:51 fvdl Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.52.2.4 2001/10/13 18:01:29 fvdl Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.52.2.3 2001/10/13 17:42:51 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.52.2.4 2001/10/13 18:01:29 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -717,7 +717,7 @@ wsdisplayopen(devvp, flag, mode, p)
 		tp = scr->scr_tty;
 		tp->t_oproc = wsdisplaystart;
 		tp->t_param = wsdisplayparam;
-		tp->t_dev = dev;
+		tp->t_dev = rdev;
 		newopen = (tp->t_state & TS_ISOPEN) == 0;
 		if (newopen) {
 			ttychars(tp);
