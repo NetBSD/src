@@ -1,4 +1,4 @@
-/*	$NetBSD: int_types.h,v 1.1 2000/06/26 15:43:14 kleink Exp $	*/
+/*	$NetBSD: int_types.h,v 1.2 2000/06/27 04:58:54 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,25 +48,38 @@
 #define	_SPARC64_INT_TYPES_H_
 
 /*
- * 7.18.1.1 Exact-width integer types
+ * 7.18.1 Integer types
  */
+
+/* 7.18.1.1 Exact-width integer types */
+
 typedef	__signed char		 __int8_t;
 typedef	unsigned char		__uint8_t;
-typedef	short			__int16_t;
-typedef	unsigned short	       __uint16_t;
+typedef	short int		__int16_t;
+typedef	unsigned short int     __uint16_t;
 typedef	int			__int32_t;
 typedef	unsigned int	       __uint32_t;
 
 #ifdef __arch64__
 /* 64-bit compiler */
-typedef	long			__int64_t;
-typedef unsigned long	       __uint64_t;
+typedef	long int		__int64_t;
+typedef	unsigned long int       __uint64_t;
 #else
 /* 32-bit compiler */
 /* LONGLONG */
-typedef	long long		__int64_t;
+typedef	long long int		__int64_t;
 /* LONGLONG */
-typedef	unsigned long long     __uint64_t;
+typedef	unsigned long longint  __uint64_t;
+#endif
+
+/* 7.18.1.4 Integer types capable of holding object pointers */
+
+#ifdef __arch64__
+typedef	long int	       __intptr_t;
+typedef	unsigned long int     __uintptr_t;
+#else
+typedef	int		       __intptr_t;
+typedef	unsigned int	      __uintptr_t;
 #endif
 
 #endif	/* !_SPARC64_INT_TYPES_H_ */
