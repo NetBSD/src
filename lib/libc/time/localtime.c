@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.15 1998/07/26 13:00:41 mycroft Exp $	*/
+/*	$NetBSD: localtime.c,v 1.16 1998/07/27 09:47:45 mycroft Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -11,7 +11,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	7.64";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.15 1998/07/26 13:00:41 mycroft Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.16 1998/07/27 09:47:45 mycroft Exp $");
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
@@ -190,9 +190,9 @@ static char		lcl_TZname[TZ_STRLEN_MAX + 1];
 static int		lcl_is_set;
 static int		gmt_is_set;
 
-const char *		tzname[2] = {
-	wildabbr,
-	wildabbr
+__aconst char *		tzname[2] = {
+	(__aconst char *)wildabbr,
+	(__aconst char *)wildabbr
 };
 
 /*
@@ -246,8 +246,8 @@ settzname P((void))
 	register struct state * const	sp = lclptr;
 	register int			i;
 
-	tzname[0] = wildabbr;
-	tzname[1] = wildabbr;
+	tzname[0] = (__aconst char *)wildabbr;
+	tzname[1] = (__aconst char *)wildabbr;
 #ifdef USG_COMPAT
 	daylight = 0;
 	timezone = 0;
@@ -1107,7 +1107,7 @@ struct tm * const	tmp;
 	** but this is no time for a treasure hunt.
 	*/
 	if (offset != 0)
-		tmp->TM_ZONE = wildabbr;
+		tmp->TM_ZONE = (__aconst char *)wildabbr;
 	else {
 #ifdef ALL_STATE
 		if (gmtptr == NULL)

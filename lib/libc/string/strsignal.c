@@ -1,4 +1,4 @@
-/*	$NetBSD: strsignal.c,v 1.8 1998/07/26 13:36:34 mycroft Exp $	*/
+/*	$NetBSD: strsignal.c,v 1.9 1998/07/27 09:47:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
 #else
-__RCSID("$NetBSD: strsignal.c,v 1.8 1998/07/26 13:36:34 mycroft Exp $");
+__RCSID("$NetBSD: strsignal.c,v 1.9 1998/07/27 09:47:45 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,11 +51,11 @@ __RCSID("$NetBSD: strsignal.c,v 1.8 1998/07/26 13:36:34 mycroft Exp $");
 __weak_alias(strsignal,_strsignal);
 #endif
 
-const char *
+__aconst char *
 strsignal(sig)
 	int sig;
 {
 	static char buf[NL_TEXTMAX];
 
-	return __strsignal(sig, buf, NL_TEXTMAX);
+	return (__aconst char *)__strsignal(sig, buf, NL_TEXTMAX);
 }
