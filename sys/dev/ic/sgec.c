@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.9 2000/11/14 18:21:02 thorpej Exp $ */
+/*      $NetBSD: sgec.c,v 1.10 2000/11/15 01:02:17 thorpej Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -213,9 +213,6 @@ sgec_attach(sc)
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 	printf("\n%s: hardware address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(sc->sc_enaddr));
 	return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.9 2000/10/01 23:32:40 thorpej Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.10 2000/11/15 01:02:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -177,10 +177,6 @@ mcsetup(sc, lladdr)
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 	ifp->if_watchdog = mcwatchdog;
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 
 	/* initialize ifmedia structures */
 	ifmedia_init(&sc->sc_media, 0, mc_mediachange, mc_mediastatus);

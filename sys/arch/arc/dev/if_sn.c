@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.21 2000/10/01 23:32:40 thorpej Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.22 2000/11/15 01:02:12 thorpej Exp $	*/
 /*	$OpenBSD: if_sn.c,v 1.12 1999/05/13 15:44:48 jason Exp $	*/
 
 /*
@@ -342,9 +342,6 @@ printf("mapped to offset 0x%x size 0x%x\n", SONICBUF - pp, p - SONICBUF);
 	ifp->if_watchdog = snwatchdog;
 	if_attach(ifp);
 	ether_ifattach(ifp, myaddr);
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
 			  RND_TYPE_NET, 0);

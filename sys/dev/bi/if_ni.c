@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.6 2000/10/01 23:32:41 thorpej Exp $ */
+/*	$NetBSD: if_ni.c,v 1.7 2000/11/15 01:02:14 thorpej Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -475,10 +475,6 @@ retry:	WAITREG(NI_PCR, PCR_OWN);
 	if (shutdownhook_establish(ni_shutdown, sc) == 0)
 		printf("%s: WARNING: unable to establish shutdown hook\n",
 		    sc->sc_dev.dv_xname);
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 }
 
 /*

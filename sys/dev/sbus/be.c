@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.21 2000/07/09 20:57:41 pk Exp $	*/
+/*	$NetBSD: be.c,v 1.22 2000/11/15 01:02:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -474,10 +474,6 @@ beattach(parent, self, aux)
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 }
 
 

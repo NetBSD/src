@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.31 2000/03/23 06:42:33 thorpej Exp $	*/
+/*	$NetBSD: lpt.c,v 1.32 2000/11/15 01:02:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -543,9 +543,6 @@ plipattach(sc, unit)
 	ether_ifattach(ifp, myaddr);
 	ifp->if_mtu = PLIPMTU;
 
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif                 
 	sc->sc_ifsoftint = intr_establish(SOFTINT, plipsoftint, sc,
 				sc->sc_dev.dv_xname, IPL_NET, IPL_ZERO, 0);
 }
