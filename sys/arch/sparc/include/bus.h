@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.20 2000/06/21 13:41:23 pk Exp $	*/
+/*	$NetBSD: bus.h,v 1.21 2000/06/24 22:47:47 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1026,6 +1026,13 @@ struct sparc_bus_dmamap {
 	int		_dm_flags;	/* misc. flags */
 
 	void		*_dm_cookie;	/* cookie for bus-specific functions */
+
+	u_long		_dm_align;	/* DVMA alignment; must be a
+					   multiple of the page size */
+	u_long		_dm_ex_start;	/* constraints on DVMA map */
+	u_long		_dm_ex_end;	/* allocations; used by the VME bus
+					   driver and by the IOMMU driver
+					   when mapping 24-bit devices */
 
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
