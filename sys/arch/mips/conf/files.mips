@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.17 1998/09/13 10:29:02 thorpej Exp $
+#	$NetBSD: files.mips,v 1.18 1998/10/02 18:46:58 drochner Exp $
 #
 
 defopt 	opt_cputype.h	NOTHING_YET	# reserved for  CPU level
@@ -20,4 +20,4 @@ file	arch/mips/mips/in_cksum.c	inet
 file	netns/ns_cksum.c		ns
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX) 
-file	arch/mips/mips/compat_13_machdep.c	compat_13
+file	arch/mips/mips/compat_13_machdep.c	compat_13 | compat_ultrix
