@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.8 1998/10/04 18:30:50 christos Exp $
+$NetBSD: isapnpdevs,v 1.9 1998/11/12 14:06:34 drochner Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -105,12 +105,13 @@ devlogic	gus	GRV0000		Gravis Ultrasound
 /*
  * le
  */
-devlogic	le	TKN0010		Lance Ethernet
+devlogic	le	TKN0010		Lance Ethernet on TEKNOR board
 
 /*
  * ne
  */
 devcompat	ne	PNP80D6		Digital DE305 ISAPnP
+devlogic	ne	@@@1980		OvisLink LE-8019R	
 
 /*
  * pcic
