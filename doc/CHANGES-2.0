@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.274 2004/06/15 23:18:40 he Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.275 2004/06/16 18:15:20 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3888,3 +3888,10 @@ distrib/notes/common/main			1.259
 	Removed references to split sets, which are no longer
 	being distributed.  Fixes PR#24434.
 	[mbw, ticket #488]
+
+sys/kern/uipc_socket2.c				1.64
+
+	Fix mbuf leak after mbuf exhaustion in sbappendaddrchain() if
+	MBUFTRACE is enabled.
+	[jonathan, ticket #503]
+
