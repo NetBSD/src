@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_geometry.h,v 1.1 1998/11/13 04:20:30 oster Exp $	*/
+/*	$NetBSD: rf_geometry.h,v 1.2 1999/01/26 02:33:58 oster Exp $	*/
 /* geometry.h
  * code from raidSim to model disk behavior
  */
@@ -11,52 +11,11 @@
  *	(AS)	 2. The type 'Geometry' has been modified.
  */
 
-/* :  
- * Log: rf_geometry.h,v 
- * Revision 1.10  1996/08/06 22:25:08  jimz
- * include raidframe stuff before system stuff
- *
- * Revision 1.9  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.8  1996/05/31  10:16:14  jimz
- * add raidsim note
- *
- * Revision 1.7  1996/05/30  23:22:16  jimz
- * bugfixes of serialization, timing problems
- * more cleanup
- *
- * Revision 1.6  1996/05/30  11:29:41  jimz
- * Numerous bug fixes. Stripe lock release code disagreed with the taking code
- * about when stripes should be locked (I made it consistent: no parity, no lock)
- * There was a lot of extra serialization of I/Os which I've removed- a lot of
- * it was to calculate values for the cache code, which is no longer with us.
- * More types, function, macro cleanup. Added code to properly quiesce the array
- * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
- * before. Fixed memory allocation, freeing bugs.
- *
- * Revision 1.5  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.4  1995/12/01  18:29:45  root
- * added copyright info
- *
- */
-
 #ifndef _RF__RF_GEOMETRY_H_
 #define _RF__RF_GEOMETRY_H_
 
 #include "rf_types.h"
 #include "rf_sys.h"
-#ifndef _KERNEL
-#include <string.h>
-#include <math.h>
-#ifdef __NetBSD__
-#include <stdio.h>
-#endif /* __NetBSD__ */
-#endif
 
 #define RF_MAX_DISKNAME_LEN 80
 

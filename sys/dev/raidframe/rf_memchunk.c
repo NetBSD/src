@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_memchunk.c,v 1.1 1998/11/13 04:20:31 oster Exp $	*/
+/*	$NetBSD: rf_memchunk.c,v 1.2 1999/01/26 02:33:59 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -57,57 +57,6 @@
  * It's worth a try, though, and it can be turned off by setting useMemChunks to 0.
  *
  ********************************************************************************/
-
-/* :  
- * Log: rf_memchunk.c,v 
- * Revision 1.17  1996/07/27 23:36:08  jimz
- * Solaris port of simulator
- *
- * Revision 1.16  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.15  1996/06/09  02:36:46  jimz
- * lots of little crufty cleanup- fixup whitespace
- * issues, comment #ifdefs, improve typing in some
- * places (esp size-related)
- *
- * Revision 1.14  1996/06/05  18:06:02  jimz
- * Major code cleanup. The Great Renaming is now done.
- * Better modularity. Better typing. Fixed a bunch of
- * synchronization bugs. Made a lot of global stuff
- * per-desc or per-array. Removed dead code.
- *
- * Revision 1.13  1996/06/02  17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
- * Revision 1.12  1996/05/30  23:22:16  jimz
- * bugfixes of serialization, timing problems
- * more cleanup
- *
- * Revision 1.11  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.10  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.9  1996/05/20  16:15:45  jimz
- * switch to rf_{mutex,cond}_{init,destroy}
- *
- * Revision 1.8  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.7  1995/12/01  19:26:07  root
- * added copyright info
- *
- */
 
 #include "rf_types.h"
 #include "rf_threadstuff.h"

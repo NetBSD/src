@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_owner.h,v 1.1 1998/11/13 04:20:31 oster Exp $	*/
+/*	$NetBSD: rf_owner.h,v 1.2 1999/01/26 02:33:59 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -24,30 +24,6 @@
  *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- */
-
-/* :  
- * Log: rf_owner.h,v 
- * Revision 1.8  1996/08/20 14:36:51  jimz
- * add bufLen to RF_EventCreate_t to be able to include buffer length
- * when freeing buffer
- *
- * Revision 1.7  1996/06/02  17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
- * Revision 1.6  1996/05/24  22:17:04  jimz
- * continue code + namespace cleanup
- * typed a bunch of flags
- *
- * Revision 1.5  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.4  1995/12/01  19:44:30  root
- * added copyright info
- *
  */
 
 #ifndef _RF__RF_OWNER_H_

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_geometry.c,v 1.1 1998/11/13 04:20:30 oster Exp $	*/
+/*	$NetBSD: rf_geometry.c,v 1.2 1999/01/26 02:33:58 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -39,61 +39,6 @@
  *		      with zone-bit recording.
  */
 
-/* :  
- * Log: rf_geometry.c,v 
- * Revision 1.18  1996/08/11 00:40:57  jimz
- * fix up broken comment
- *
- * Revision 1.17  1996/07/28  20:31:39  jimz
- * i386netbsd port
- * true/false fixup
- *
- * Revision 1.16  1996/07/18  22:57:14  jimz
- * port simulator to AIX
- *
- * Revision 1.15  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.14  1996/06/05  18:06:02  jimz
- * Major code cleanup. The Great Renaming is now done.
- * Better modularity. Better typing. Fixed a bunch of
- * synchronization bugs. Made a lot of global stuff
- * per-desc or per-array. Removed dead code.
- *
- * Revision 1.13  1996/05/30  23:22:16  jimz
- * bugfixes of serialization, timing problems
- * more cleanup
- *
- * Revision 1.12  1996/05/30  11:29:41  jimz
- * Numerous bug fixes. Stripe lock release code disagreed with the taking code
- * about when stripes should be locked (I made it consistent: no parity, no lock)
- * There was a lot of extra serialization of I/Os which I've removed- a lot of
- * it was to calculate values for the cache code, which is no longer with us.
- * More types, function, macro cleanup. Added code to properly quiesce the array
- * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
- * before. Fixed memory allocation, freeing bugs.
- *
- * Revision 1.11  1996/05/24  22:17:04  jimz
- * continue code + namespace cleanup
- * typed a bunch of flags
- *
- * Revision 1.10  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.9  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.8  1995/12/12  18:10:06  jimz
- * MIN -> RF_MIN, MAX -> RF_MAX, ASSERT -> RF_ASSERT
- * fix 80-column brain damage in comments
- *
- * Revision 1.7  1995/12/01  18:29:34  root
- * added copyright info
- *
- */
 
 #include "rf_types.h"
 #include "rf_geometry.h"

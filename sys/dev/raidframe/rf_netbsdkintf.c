@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.7 1999/01/15 17:55:52 explorer Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.8 1999/01/26 02:33:59 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -112,189 +112,8 @@
  * rf_kintf.c -- the kernel interface routines for RAIDframe
  *
  ***********************************************************/
-/*
- * :  
- * Log: rf_kintf.c,v 
- * Revision 1.57  1996/07/19 16:12:20  jimz
- * remove addition of protectedSectors in InitBP- it's already
- * done in the diskqueue code
- *
- * Revision 1.56  1996/07/17  21:00:58  jimz
- * clean up timer interface, tracing
- *
- * Revision 1.55  1996/06/17  03:00:54  jimz
- * Change RAIDFRAME_GET_INFO interface to do its own copyout()
- * (because size of device config structure now exceeds 8k)
- *
- * Revision 1.54  1996/06/09  02:36:46  jimz
- * lots of little crufty cleanup- fixup whitespace
- * issues, comment #ifdefs, improve typing in some
- * places (esp size-related)
- *
- * Revision 1.53  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.52  1996/06/06  17:28:08  jimz
- * track sector number of last I/O dequeued
- *
- * Revision 1.51  1996/06/05  18:06:02  jimz
- * Major code cleanup. The Great Renaming is now done.
- * Better modularity. Better typing. Fixed a bunch of
- * synchronization bugs. Made a lot of global stuff
- * per-desc or per-array. Removed dead code.
- *
- * Revision 1.50  1996/06/03  23:28:26  jimz
- * more bugfixes
- * check in tree to sync for IPDS runs with current bugfixes
- * there still may be a problem with threads in the script test
- * getting I/Os stuck- not trivially reproducible (runs ~50 times
- * in a row without getting stuck)
- *
- * Revision 1.49  1996/06/02  17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
- * Revision 1.48  1996/05/31  22:26:54  jimz
- * fix a lot of mapping problems, memory allocation problems
- * found some weird lock issues, fixed 'em
- * more code cleanup
- *
- * Revision 1.47  1996/05/30  12:59:18  jimz
- * make etimer happier, more portable
- *
- * Revision 1.46  1996/05/30  11:29:41  jimz
- * Numerous bug fixes. Stripe lock release code disagreed with the taking code
- * about when stripes should be locked (I made it consistent: no parity, no lock)
- * There was a lot of extra serialization of I/Os which I've removed- a lot of
- * it was to calculate values for the cache code, which is no longer with us.
- * More types, function, macro cleanup. Added code to properly quiesce the array
- * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
- * before. Fixed memory allocation, freeing bugs.
- *
- * Revision 1.45  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.44  1996/05/24  22:17:04  jimz
- * continue code + namespace cleanup
- * typed a bunch of flags
- *
- * Revision 1.43  1996/05/24  01:59:45  jimz
- * another checkpoint in code cleanup for release
- * time to sync kernel tree
- *
- * Revision 1.42  1996/05/23  22:17:54  jimz
- * fix sector size hardcoding problems
- *
- * Revision 1.41  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.40  1996/05/23  13:18:07  jimz
- * tracing_mutex -> rf_tracing_mutex
- *
- * Revision 1.39  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.38  1996/05/20  16:15:32  jimz
- * switch to rf_{mutex,cond}_{init,destroy}
- *
- * Revision 1.37  1996/05/10  16:23:47  jimz
- * RF_offset -> RF_Offset
- *
- * Revision 1.36  1996/05/08  21:01:24  jimz
- * fixed up enum type names that were conflicting with other
- * enums and function names (ie, "panic")
- * future naming trends will be towards RF_ and rf_ for
- * everything raidframe-related
- *
- * Revision 1.35  1996/05/03  19:10:48  jimz
- * change sanity checking for bogus I/Os to return more appropriate
- * values (to make some user-level utilities happer with RAIDframe)
- *
- * Revision 1.34  1996/05/02  22:17:00  jimz
- * When using DKUSAGE, send a bogus IO after configuring to let DKUSAGE know
- * that we exist. This will let user-level programs doing group stats on the
- * RF device function without error before RF gets its first IO
- *
- * Changed rf_device_config devs and spares fields to RF_RaidDisk_t
- *
- * Inc numOutstanding for the disk queue in rf_DispatchKernelIO if
- * type is IO_TYPE_NOP. I'm not sure this is right, but it seems to be,
- * because the disk IO completion routine wants to dec it, and doesn't
- * care if there was no such IO.
- *
- * Revision 1.33  1996/05/02  15:05:44  jimz
- * for now, rf_DoAccessKernel will reject non-sector-sized I/Os
- * eventually, it should do something more clever...
- * (and do it in DoAccess(), not just DoAccessKernel())
- *
- * Revision 1.32  1996/05/01  16:28:39  jimz
- * get rid of uses of ccmn_ functions
- *
- * Revision 1.31  1996/05/01  15:42:17  jimz
- * ccmn_* memory management is on the way out. This is an archival checkpoint-
- * both the old and new code are in place (all the ccmn_ calls are #if 0). After
- * this, the ccmn_ code will no longer appear.
- *
- * Revision 1.30  1996/04/22  15:53:13  jimz
- * MAX_RAIDS -> NRAIDFRAME
- *
- * Revision 1.29  1995/12/12  18:10:06  jimz
- * MIN -> RF_MIN, MAX -> RF_MAX, ASSERT -> RF_ASSERT
- * fix 80-column brain damage in comments
- *
- * Revision 1.28  1995/12/01  19:11:01  root
- * added copyright info
- *
- * Revision 1.27  1995/11/28  18:56:40  wvcii
- * disabled buffer copy in rf_write
- *
- * Revision 1.26  1995/10/06  16:37:08  jimz
- * get struct bufs from ubc, not cam
- * copy all write data, and operate on copy
- * (temporary hack to get around dags in PQ that want
- * to Xor into user write buffers)
- *
- * Revision 1.25  1995/09/30  22:23:08  jimz
- * do not require raid to be active to perform ACCTOTAL ioctl
- *
- * Revision 1.24  1995/09/30  20:39:08  jimz
- * added new ioctls:
- *   RAIDFRAME_RESET_ACCTOTALS
- *   RAIDFRAME_GET_ACCTOTALS
- *   RAIDFRAME_KEEP_ACCTOTALS
- *
- * Revision 1.23  1995/09/20  21:11:59  jimz
- * include dfstrace.h in KERNEL block
- * (even though it's a kernel-only file, this makes the depend process
- * at user-level happy. Why the user-level Makefile wants to depend
- * kintf.c is less clear, but this is a workaround).
- *
- * Revision 1.22  1995/09/19  23:19:03  jimz
- * added DKUSAGE support
- *
- */
-
-
-
-
-#ifdef _KERNEL
-#define KERNEL
-#endif
-
-
-
-#ifdef KERNEL
 
 #include <sys/errno.h>
-
-#ifdef __NetBSD__
-#include "raid.h"
 #include <sys/param.h>
 #include <sys/pool.h>
 #include <sys/queue.h>
@@ -306,25 +125,16 @@
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
-#endif
-
 #include <sys/param.h>
 #include <sys/types.h>
-
 #include <machine/types.h>
-
 #include <sys/disklabel.h>
-
 #include <sys/conf.h>
-
-
-#ifdef __NetBSD__
 #include <sys/lock.h>
-#endif /* __NetBSD__ */
-
-
 #include <sys/buf.h>
 #include <sys/user.h>
+
+#include "raid.h"
 #include "rf_raid.h"
 #include "rf_raidframe.h"
 #include "rf_dag.h"
@@ -1838,7 +1648,6 @@ static void InitBP(
 	bp->b_vp          = b_vp; 
 	
 }
-#endif /* KERNEL */
 
 /* Extras... */
 

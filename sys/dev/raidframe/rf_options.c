@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_options.c,v 1.1 1998/11/13 04:20:31 oster Exp $	*/
+/*	$NetBSD: rf_options.c,v 1.2 1999/01/26 02:33:59 oster Exp $	*/
 /*
  * rf_options.c
  */
@@ -29,15 +29,6 @@
  * rights to redistribute these changes.
  */
 
-#ifdef _KERNEL
-#define KERNEL
-#endif
-
-#ifdef KERNEL
-#ifndef __NetBSD__
-#include <dfstrace.h>
-#endif /* !__NetBSD__ */
-#endif /* KERNEL */
 
 #include "rf_threadstuff.h"
 #include "rf_types.h"

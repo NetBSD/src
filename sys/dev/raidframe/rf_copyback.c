@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.1 1998/11/13 04:20:27 oster Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.2 1999/01/26 02:33:51 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,117 +37,10 @@
  *
  ****************************************************************************************/
 
-/*
- * :  
- * Log: rf_copyback.c,v 
- * Revision 1.26  1996/08/06 22:26:00  jimz
- * don't include sys/buf.h on linux
- *
- * Revision 1.25  1996/07/30  03:30:40  jimz
- * include rf_types.h first
- *
- * Revision 1.24  1996/07/27  18:39:52  jimz
- * cleanup sweep
- *
- * Revision 1.23  1996/07/18  22:57:14  jimz
- * port simulator to AIX
- *
- * Revision 1.22  1996/07/11  19:08:00  jimz
- * generalize reconstruction mechanism
- * allow raid1 reconstructs via copyback (done with array
- * quiesced, not online, therefore not disk-directed)
- *
- * Revision 1.21  1996/07/11  16:03:47  jimz
- * fixed hanging bug in rf_CopybackWriteDoneProc()
- *
- * Revision 1.20  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.19  1996/06/09  02:36:46  jimz
- * lots of little crufty cleanup- fixup whitespace
- * issues, comment #ifdefs, improve typing in some
- * places (esp size-related)
- *
- * Revision 1.18  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.17  1996/06/05  18:06:02  jimz
- * Major code cleanup. The Great Renaming is now done.
- * Better modularity. Better typing. Fixed a bunch of
- * synchronization bugs. Made a lot of global stuff
- * per-desc or per-array. Removed dead code.
- *
- * Revision 1.16  1996/06/03  23:28:26  jimz
- * more bugfixes
- * check in tree to sync for IPDS runs with current bugfixes
- * there still may be a problem with threads in the script test
- * getting I/Os stuck- not trivially reproducible (runs ~50 times
- * in a row without getting stuck)
- *
- * Revision 1.15  1996/06/02  17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
- * Revision 1.14  1996/05/31  22:26:54  jimz
- * fix a lot of mapping problems, memory allocation problems
- * found some weird lock issues, fixed 'em
- * more code cleanup
- *
- * Revision 1.13  1996/05/30  11:29:41  jimz
- * Numerous bug fixes. Stripe lock release code disagreed with the taking code
- * about when stripes should be locked (I made it consistent: no parity, no lock)
- * There was a lot of extra serialization of I/Os which I've removed- a lot of
- * it was to calculate values for the cache code, which is no longer with us.
- * More types, function, macro cleanup. Added code to properly quiesce the array
- * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
- * before. Fixed memory allocation, freeing bugs.
- *
- * Revision 1.12  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.11  1996/05/24  22:17:04  jimz
- * continue code + namespace cleanup
- * typed a bunch of flags
- *
- * Revision 1.10  1996/05/24  01:59:45  jimz
- * another checkpoint in code cleanup for release
- * time to sync kernel tree
- *
- * Revision 1.9  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.8  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.7  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.6  1995/12/12  18:10:06  jimz
- * MIN -> RF_MIN, MAX -> RF_MAX, ASSERT -> RF_ASSERT
- * fix 80-column brain damage in comments
- *
- * Revision 1.5  1995/12/01  15:15:31  root
- * added copyright info
- *
- * Revision 1.4  1995/06/23  13:41:36  robby
- * updeated to prototypes in rf_layout.h
- *
- */
-
 #include "rf_types.h"
+
 #include <sys/time.h>
-#ifndef LINUX
 #include <sys/buf.h>
-#endif /* !LINUX */
 #include "rf_raid.h"
 #include "rf_threadid.h"
 #include "rf_mcpair.h"
@@ -156,9 +49,6 @@
 #include "rf_general.h"
 #include "rf_utils.h"
 #include "rf_copyback.h"
-#if !defined(__NetBSD__)
-#include "rf_camlayer.h"
-#endif
 #include "rf_decluster.h"
 #include "rf_driver.h"
 #include "rf_shutdown.h"
@@ -183,7 +73,6 @@ int rf_ConfigureCopyback(listp)
   return(0);
 }
 
-#if defined(__NetBSD__) && defined(_KERNEL)
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,13 +82,11 @@ int rf_ConfigureCopyback(listp)
 #include <sys/vnode.h>
 
 int raidlookup __P((char *, struct proc *, struct vnode **));
-#endif
 
 /* do a complete copyback */
 void rf_CopybackReconstructedData(raidPtr)
   RF_Raid_t  *raidPtr;
 {
-#if defined(__NetBSD__) && defined(_KERNEL)
   int done,retcode;
   RF_CopybackDesc_t *desc;
   RF_RowCol_t frow, fcol;
@@ -210,15 +97,6 @@ void rf_CopybackReconstructedData(raidPtr)
   struct vnode *vp;
   struct vattr va;
   struct proc *proc;
-
-#else
-  int bus, targ, lun, done, retcode;
-  RF_CopybackDesc_t *desc;
-  RF_RowCol_t frow, fcol;
-  RF_RaidDisk_t *badDisk;
-  RF_DiskOp_t *tur_op;
-  char *databuf;
-#endif
 
   done = 0;
   fcol = 0;
@@ -241,15 +119,8 @@ void rf_CopybackReconstructedData(raidPtr)
   }
 
   badDisk = &raidPtr->Disks[frow][fcol];
-#ifndef SIMULATE
-#if defined(__NetBSD__) && defined(_KERNEL)
 
   proc = raidPtr->proc;  /* XXX Yes, this is not nice.. */
-
-#if 0
-  printf("Pretending the disk is happy...\n");
-  retcode = 0;  /* XXX this should be set to something more realistic. */
-#endif
 
   /* This device may have been opened successfully the first time. 
      Close it before trying to open it again.. */
@@ -306,7 +177,9 @@ void rf_CopybackReconstructedData(raidPtr)
 		  raidPtr->Disks[frow][fcol].numBlocks * 
 		  rf_sizePercentage / 100;
   }
-#else
+#if 0
+  /* This is the way it was done before the CAM stuff was removed */
+
   if (rf_extract_ids(badDisk->devname, &bus, &targ, &lun)) {
     printf("COPYBACK: unable to extract bus, target, lun from devname %s\n",
       badDisk->devname);
@@ -323,7 +196,6 @@ void rf_CopybackReconstructedData(raidPtr)
     printf("COPYBACK: target disk failed TUR\n");
     return;
   }
-#endif /* !SIMULATE */
 
   /* get a buffer to hold one SU  */
   RF_Malloc(databuf, rf_RaidAddressToByte(raidPtr, raidPtr->Layout.sectorsPerStripeUnit), (char *));
@@ -340,9 +212,7 @@ void rf_CopybackReconstructedData(raidPtr)
   desc->sectPerSU     = raidPtr->Layout.sectorsPerStripeUnit;
   desc->sectPerStripe = raidPtr->Layout.sectorsPerStripeUnit * raidPtr->Layout.numDataCol;
   desc->databuf       = databuf;
-#ifndef SIMULATE
   desc->mcpair        = rf_AllocMCPair();
-#endif /* !SIMULATE */
 
   printf("COPYBACK: Quiescing the array\n");
   /* quiesce the array, since we don't want to code support for user accs here */
@@ -404,12 +274,8 @@ void rf_ContinueCopyback(desc)
       
       if (testRow == desc->frow && testCol == desc->fcol) {
         rf_CopybackOne(desc, RF_COPYBACK_DATA, addr, testRow, testCol, testOffs);
-#ifdef SIMULATE
-        return;
-#else /* SIMULATE */
         done = 1;
         break;
-#endif /* SIMULATE */
       }
     }
 
@@ -421,9 +287,6 @@ void rf_ContinueCopyback(desc)
     
       if (testRow == desc->frow && testCol == desc->fcol) {
         rf_CopybackOne(desc, RF_COPYBACK_PARITY, stripeAddr, testRow, testCol, testOffs);
-#ifdef SIMULATE
-        return;
-#endif /* SIMULATE */
       }
     }
 
@@ -479,21 +342,19 @@ static void rf_CopybackOne(desc, typ, addr, testRow, testCol, testOffs)
    * at user-level & in the kernel, wait for the read-write pair to complete.
    * in the simulator, just return, since everything will happen as callbacks 
    */
-#ifndef SIMULATE
+
   RF_LOCK_MUTEX(desc->mcpair->mutex);
   desc->mcpair->flag = 0;
-#endif /* !SIMULATE */
 
   rf_DiskIOEnqueue(&raidPtr->Queues[spRow][spCol], desc->readreq, RF_IO_NORMAL_PRIORITY);
   
-#ifndef SIMULATE
   while (!desc->mcpair->flag) {
     RF_WAIT_MCPAIR(desc->mcpair);
   }
   RF_UNLOCK_MUTEX(desc->mcpair->mutex);
   rf_FreeDiskQueueData(desc->readreq);
   rf_FreeDiskQueueData(desc->writereq);
-#endif /* !SIMULATE */
+
 }
 
 
@@ -525,17 +386,8 @@ static int rf_CopybackWriteDoneProc(desc, status)
     printf("COPYBACK: copyback write failed.  Aborting.\n");
   }
 
-#ifdef SIMULATE
-  rf_FreeDiskQueueData(desc->readreq);
-  rf_FreeDiskQueueData(desc->writereq);
-  if (!status)
-    rf_ContinueCopyback(desc);
-  else
-    rf_CopybackComplete(desc, 1);
-#else /* SIMULATE */
   desc->status = status;
   rf_MCPairWakeupFunc(desc->mcpair);
-#endif /* SIMULATE */
   return(0);
 }  
 
@@ -564,9 +416,7 @@ static void rf_CopybackComplete(desc, status)
   } else printf("COPYBACK: Failure.\n");
 
   RF_Free(desc->databuf, rf_RaidAddressToByte(raidPtr, desc->sectPerSU));
-#ifndef SIMULATE
   rf_FreeMCPair(desc->mcpair);
-#endif /* !SIMULATE */
   RF_Free(desc, sizeof(*desc));
 
   rf_copyback_in_progress = 0;

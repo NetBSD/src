@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.2 1998/12/03 15:06:25 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.3 1999/01/26 02:33:56 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,102 +30,6 @@
  * rf_disks.c -- code to perform operations on the actual disks
  ***************************************************************/
 
-/* :  
- * Log: rf_disks.c,v 
- * Revision 1.32  1996/07/27 18:40:24  jimz
- * cleanup sweep
- *
- * Revision 1.31  1996/07/22  19:52:16  jimz
- * switched node params to RF_DagParam_t, a union of
- * a 64-bit int and a void *, for better portability
- * attempted hpux port, but failed partway through for
- * lack of a single C compiler capable of compiling all
- * source files
- *
- * Revision 1.30  1996/07/19  16:11:21  jimz
- * pass devname to DoReadCapacity
- *
- * Revision 1.29  1996/07/18  22:57:14  jimz
- * port simulator to AIX
- *
- * Revision 1.28  1996/07/10  22:28:38  jimz
- * get rid of obsolete row statuses (dead,degraded2)
- *
- * Revision 1.27  1996/06/10  12:06:14  jimz
- * don't do any SCSI op stuff in simulator at all
- *
- * Revision 1.26  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.25  1996/06/09  02:36:46  jimz
- * lots of little crufty cleanup- fixup whitespace
- * issues, comment #ifdefs, improve typing in some
- * places (esp size-related)
- *
- * Revision 1.24  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.23  1996/06/03  23:28:26  jimz
- * more bugfixes
- * check in tree to sync for IPDS runs with current bugfixes
- * there still may be a problem with threads in the script test
- * getting I/Os stuck- not trivially reproducible (runs ~50 times
- * in a row without getting stuck)
- *
- * Revision 1.22  1996/06/02  17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
- * Revision 1.21  1996/05/30  23:22:16  jimz
- * bugfixes of serialization, timing problems
- * more cleanup
- *
- * Revision 1.20  1996/05/30  11:29:41  jimz
- * Numerous bug fixes. Stripe lock release code disagreed with the taking code
- * about when stripes should be locked (I made it consistent: no parity, no lock)
- * There was a lot of extra serialization of I/Os which I've removed- a lot of
- * it was to calculate values for the cache code, which is no longer with us.
- * More types, function, macro cleanup. Added code to properly quiesce the array
- * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
- * before. Fixed memory allocation, freeing bugs.
- *
- * Revision 1.19  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.18  1996/05/24  22:17:04  jimz
- * continue code + namespace cleanup
- * typed a bunch of flags
- *
- * Revision 1.17  1996/05/24  01:59:45  jimz
- * another checkpoint in code cleanup for release
- * time to sync kernel tree
- *
- * Revision 1.16  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.15  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.14  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.13  1996/05/02  14:57:43  jimz
- * initialize sectorMask
- *
- * Revision 1.12  1995/12/01  15:57:04  root
- * added copyright info
- *
- */
-
 #include "rf_types.h"
 #include "rf_raid.h"
 #include "rf_alloclist.h"
@@ -138,7 +42,6 @@
 #include "rf_options.h"
 #include "rf_sys.h"
 
-#if defined(__NetBSD__) && defined(_KERNEL)
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,12 +51,7 @@
 #include <sys/vnode.h>
 
 int raidlookup __P((char *, struct proc *p, struct vnode **));
-#endif
 
-#ifdef SIMULATE
-static char disk_db_file_name[120], disk_type_name[120];
-static double init_offset;
-#endif /* SIMULATE  */
 
 #define DPRINTF6(a,b,c,d,e,f) if (rf_diskDebug) printf(a,b,c,d,e,f)
 #define DPRINTF7(a,b,c,d,e,f,g) if (rf_diskDebug) printf(a,b,c,d,e,f,g)
@@ -185,10 +83,7 @@ int rf_ConfigureDisks(
   RF_DiskOp_t *rdcap_op = NULL, *tur_op = NULL;
   int num_rows_done,num_cols_done;
 
-#if defined(__NetBSD__) && defined(_KERNEL)
 	struct proc *proc = 0;  
-#endif
-#ifndef SIMULATE
 #ifndef __NetBSD__
   ret = rf_SCSI_AllocReadCapacity(&rdcap_op);
   if (ret)
@@ -197,7 +92,6 @@ int rf_ConfigureDisks(
   if (ret)
     goto fail;
 #endif /* !__NetBSD__ */
-#endif /* !SIMULATE */
 
   num_rows_done = 0;
   num_cols_done = 0;
@@ -210,7 +104,6 @@ int rf_ConfigureDisks(
   }
   raidPtr->Disks = disks;
 
-#if defined(__NetBSD__) && defined(_KERNEL)
 
   proc = raidPtr->proc; /* Blah XXX */
 
@@ -222,7 +115,6 @@ int rf_ConfigureDisks(
 	  ret = ENOMEM;
 	  goto fail;
   }
-#endif
 
   for (r=0; r<raidPtr->numRow; r++) {
     numFailuresThisRow = 0;
@@ -268,14 +160,12 @@ int rf_ConfigureDisks(
       raidPtr->status[r] = rf_rs_degraded;
     num_rows_done++;
   }
-#ifndef SIMULATE
 #if defined(__NetBSD__) && defined(_KERNEL)
   /* we do nothing */
 #else
   rf_SCSI_FreeDiskOp(rdcap_op, 1); rdcap_op = NULL;
   rf_SCSI_FreeDiskOp(tur_op, 0);   tur_op   = NULL;
 #endif
-#endif /* !SIMULATE */
   /* all disks must be the same size & have the same block size, bs must be a power of 2 */
   bs = 0;
   for (foundone=r=0; !foundone && r<raidPtr->numRow; r++) {
@@ -323,7 +213,6 @@ int rf_ConfigureDisks(
 
 fail:
 
-#ifndef SIMULATE
 #if defined(__NetBSD__) && defined(_KERNEL)
 
   for(r=0;r<raidPtr->numRow;r++) {
@@ -347,7 +236,6 @@ fail:
   if (tur_op)   rf_SCSI_FreeDiskOp(tur_op, 0);
 
 #endif
-#endif /* !SIMULATE */
   return(ret);
 }
 
@@ -369,11 +257,8 @@ int rf_ConfigureSpareDisks(
   RF_RaidDisk_t *disks;
   int num_spares_done;
 
-#if defined(__NetBSD__) && defined(_KERNEL)
 	struct proc *proc;  
-#endif
 
-#ifndef SIMULATE
 #ifndef __NetBSD__
   ret = rf_SCSI_AllocReadCapacity(&rdcap_op);
   if (ret)
@@ -382,15 +267,12 @@ int rf_ConfigureSpareDisks(
   if (ret)
     goto fail;
 #endif /* !__NetBSD__ */
-#endif /* !SIMULATE */
 
   num_spares_done = 0;
 
-#if defined(__NetBSD__) && defined(_KERNEL)
   proc = raidPtr->proc;
   /* The space for the spares should have already been 
      allocated by ConfigureDisks() */
-#endif
 
   disks = &raidPtr->Disks[0][raidPtr->numCol];
   for (i=0; i<raidPtr->numSpare; i++) {
@@ -410,14 +292,12 @@ int rf_ConfigureSpareDisks(
     }
     num_spares_done++;
   }
-#ifndef SIMULATE
 #if defined(__NetBSD__) && (_KERNEL)
 
 #else
   rf_SCSI_FreeDiskOp(rdcap_op, 1); rdcap_op = NULL;
   rf_SCSI_FreeDiskOp(tur_op, 0);   tur_op   = NULL;
 #endif
-#endif /* !SIMULATE */
 
   /* check sizes and block sizes on spare disks */
   bs = 1 << raidPtr->logBytesPerSector;
@@ -442,7 +322,6 @@ int rf_ConfigureSpareDisks(
   return(0);
 
 fail:
-#ifndef SIMULATE
 #if defined(__NetBSD__) && defined(_KERNEL)
 
   /* Release the hold on the main components.  We've failed to allocate a 
@@ -479,7 +358,6 @@ fail:
 
 #endif
 
-#endif /* !SIMULATE */
   return(ret);
 }
 
@@ -497,23 +375,13 @@ int rf_ConfigureDisk(raidPtr, buf, diskPtr, rdcap_op, tur_op, dev, row, col)
   RF_RowCol_t     col;
 {
   char *p;
-#ifdef SIMULATE
-  double	init_offset;
-#else /* SIMULATE  */
-#if defined(__NetBSD__) && defined(_KERNEL)
   int retcode;
-#else
-  int busid, targid, lun, retcode;
-#endif
-#endif /* SIMULATE  */
 
-#if defined(__NetBSD__) && defined(_KERNEL)
 	struct partinfo dpart;
 	struct vnode *vp;
 	struct vattr va;
 	struct proc *proc;
 	int error;
-#endif
 
 retcode = 0;
   p = rf_find_non_white(buf);
@@ -523,18 +391,6 @@ retcode = 0;
   }
   (void) strcpy(diskPtr->devname, p);
 
-#ifdef SIMULATE
-
-  init_offset = 0.0;
-  rf_InitDisk(&diskPtr->diskState, disk_db_file_name,diskPtr->devname,0,0,init_offset,row,col);
-  rf_GeometryDoReadCapacity(&diskPtr->diskState, &diskPtr->numBlocks, &diskPtr->blockSize);
-  diskPtr->numBlocks = diskPtr->numBlocks * rf_sizePercentage / 100;
-  
-  /* we allow the user to specify that only a fraction of the disks should be used
-   * this is just for debug:  it speeds up the parity scan
-   */
-
-#else /* SIMULATE */
 #ifndef __NetBSD__
   /* get bus, target, lun */
   retcode = rf_extract_ids(p, &busid, &targid, &lun);
@@ -563,7 +419,6 @@ retcode = 0;
     diskPtr->numBlocks = diskPtr->numBlocks * rf_sizePercentage / 100;
   }
 #endif
-#if defined(__NetBSD__) && defined(_KERNEL)
   
   proc = raidPtr->proc;  /* XXX Yes, this is not nice.. */
   
@@ -619,30 +474,6 @@ retcode = 0;
     
   }
 
-#endif /* !__NetBSD__ */
-#endif /* SIMULATE */
-
   return(0);
 }
 
-#ifdef SIMULATE
-
-void rf_default_disk_names()
-{
-    sprintf(disk_db_file_name,"disk.db");
-    sprintf(disk_type_name,"HP2247");
-}
-
-void rf_set_disk_db_name(s)
- char  *s;
-{
-    strcpy(disk_db_file_name,s);
-}
-
-void rf_set_disk_type_name(s)
- char  *s;
-{
-    strcpy(disk_type_name,s);
-}
-
-#endif /* SIMULATE */

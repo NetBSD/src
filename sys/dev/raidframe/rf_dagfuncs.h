@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.h,v 1.1 1998/11/13 04:20:28 oster Exp $	*/
+/*	$NetBSD: rf_dagfuncs.h,v 1.2 1999/01/26 02:33:53 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,57 +31,6 @@
  * dagfuncs.h -- header file for DAG node execution routines
  * 
  ****************************************************************************************/
-
-/*
- * :  
- * Log: rf_dagfuncs.h,v 
- * Revision 1.17  1996/07/22 19:52:16  jimz
- * switched node params to RF_DagParam_t, a union of
- * a 64-bit int and a void *, for better portability
- * attempted hpux port, but failed partway through for
- * lack of a single C compiler capable of compiling all
- * source files
- *
- * Revision 1.16  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.15  1996/06/06  17:27:20  jimz
- * added another read mirror func (partitioning), changed names so dag
- * creation routines can use the appropriate one
- *
- * Revision 1.14  1996/05/30  11:29:41  jimz
- * Numerous bug fixes. Stripe lock release code disagreed with the taking code
- * about when stripes should be locked (I made it consistent: no parity, no lock)
- * There was a lot of extra serialization of I/Os which I've removed- a lot of
- * it was to calculate values for the cache code, which is no longer with us.
- * More types, function, macro cleanup. Added code to properly quiesce the array
- * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
- * before. Fixed memory allocation, freeing bugs.
- *
- * Revision 1.13  1996/05/24  22:17:04  jimz
- * continue code + namespace cleanup
- * typed a bunch of flags
- *
- * Revision 1.12  1996/05/24  04:28:55  jimz
- * release cleanup ckpt
- *
- * Revision 1.11  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.10  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.9  1995/12/01  15:56:46  root
- * added copyright info
- *
- * Revision 1.8  1995/11/07  16:25:23  wvcii
- * added DiskUnlockFuncForThreads
- *
- */
 
 #ifndef _RF__RF_DAGFUNCS_H_
 #define _RF__RF_DAGFUNCS_H_

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.h,v 1.1 1998/11/13 04:20:29 oster Exp $	*/
+/*	$NetBSD: rf_engine.h,v 1.2 1999/01/26 02:33:57 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,35 +31,6 @@
  * engine.h -- header file for execution engine functions *
  *                                                        *
  **********************************************************/
-
-/* :  
- * Log: rf_engine.h,v 
- * Revision 1.11  1996/06/14 14:16:22  jimz
- * new decl of ConfigureEngine
- *
- * Revision 1.10  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.9  1996/05/30  12:59:18  jimz
- * make etimer happier, more portable
- *
- * Revision 1.8  1996/05/24  04:28:55  jimz
- * release cleanup ckpt
- *
- * Revision 1.7  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.6  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.5  1995/12/01  18:12:17  root
- * added copyright info
- *
- */
 
 #ifndef _RF__RF_ENGINE_H_
 #define _RF__RF_ENGINE_H_

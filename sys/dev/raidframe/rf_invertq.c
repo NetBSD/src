@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_invertq.c,v 1.1 1998/11/13 04:20:30 oster Exp $	*/
+/*	$NetBSD: rf_invertq.c,v 1.2 1999/01/26 02:33:58 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -26,29 +26,7 @@
  * rights to redistribute these changes.
  */
 
-/* :  
- * Log: rf_invertq.c,v 
- * Revision 1.5  1996/07/29 16:36:36  jimz
- * include rf_archs.h here, not rf_invertq.h, to avoid VPATH
- * problems in OSF/1 kernel
- *
- * Revision 1.4  1995/11/30  15:57:27  wvcii
- * added copyright info
- *
- */
-
-#ifdef _KERNEL
-#define KERNEL
-#endif
-
 #include "rf_archs.h"
 #include "rf_pqdeg.h"
-#ifdef KERNEL
-#ifndef __NetBSD__
-#include <raidframe/du_data/rf_invertq.h>
-#else
-#include "rf_invertq.h" /* XXX this is a hack. */
-#endif /* !__NetBSD__ */
-#else /* KERNEL */
 #include "rf_invertq.h"
-#endif /* KERNEL */
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_utils.h,v 1.1 1998/11/13 04:20:35 oster Exp $	*/
+/*	$NetBSD: rf_utils.h,v 1.2 1999/01/26 02:34:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,29 +32,6 @@
  *
  ***************************************/
 
-/* :  
- * Log: rf_utils.h,v 
- * Revision 1.7  1996/06/07 21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.6  1996/06/02  17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
- * Revision 1.5  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.4  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.3  1995/12/06  15:17:53  root
- * added copyright info
- *
- */
 
 #ifndef _RF__RF_UTILS_H_
 #define _RF__RF_UTILS_H_

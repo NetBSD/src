@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.c,v 1.1 1998/11/13 04:20:33 oster Exp $	*/
+/*	$NetBSD: rf_reconmap.c,v 1.2 1999/01/26 02:34:01 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,77 +32,6 @@
  * code to maintain a map of what sectors have/have not been reconstructed
  *
  *************************************************************************/
-
-/* :  
- * Log: rf_reconmap.c,v 
- * Revision 1.23  1996/07/27 23:36:08  jimz
- * Solaris port of simulator
- *
- * Revision 1.22  1996/07/15  17:22:18  jimz
- * nit-pick code cleanup
- * resolve stdlib problems on DEC OSF
- *
- * Revision 1.21  1996/06/17  14:38:33  jimz
- * properly #if out RF_DEMO code
- * fix bug in MakeConfig that was causing weird behavior
- * in configuration routines (config was not zeroed at start)
- * clean up genplot handling of stacks
- *
- * Revision 1.20  1996/06/09  02:36:46  jimz
- * lots of little crufty cleanup- fixup whitespace
- * issues, comment #ifdefs, improve typing in some
- * places (esp size-related)
- *
- * Revision 1.19  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.18  1996/06/05  18:06:02  jimz
- * Major code cleanup. The Great Renaming is now done.
- * Better modularity. Better typing. Fixed a bunch of
- * synchronization bugs. Made a lot of global stuff
- * per-desc or per-array. Removed dead code.
- *
- * Revision 1.17  1996/05/31  22:26:54  jimz
- * fix a lot of mapping problems, memory allocation problems
- * found some weird lock issues, fixed 'em
- * more code cleanup
- *
- * Revision 1.16  1996/05/30  23:22:16  jimz
- * bugfixes of serialization, timing problems
- * more cleanup
- *
- * Revision 1.15  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.14  1996/05/24  22:17:04  jimz
- * continue code + namespace cleanup
- * typed a bunch of flags
- *
- * Revision 1.13  1996/05/24  04:40:57  jimz
- * don't do recon meter demo stuff in kernel
- *
- * Revision 1.12  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.11  1996/05/20  16:14:50  jimz
- * switch to rf_{mutex,cond}_{init,destroy}
- *
- * Revision 1.10  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.9  1995/12/12  18:10:06  jimz
- * MIN -> RF_MIN, MAX -> RF_MAX, ASSERT -> RF_ASSERT
- * fix 80-column brain damage in comments
- *
- * Revision 1.8  1995/12/06  15:05:23  root
- * added copyright info
- *
- */
 
 #include "rf_raid.h"
 #include <sys/time.h>

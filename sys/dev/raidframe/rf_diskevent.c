@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskevent.c,v 1.1 1998/11/13 04:20:28 oster Exp $	*/
+/*	$NetBSD: rf_diskevent.c,v 1.2 1999/01/26 02:33:56 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,62 +31,6 @@
  * adapted from original code by David Kotz, Song Bac Toh (1994)
  */
 
-/* :  
- * Log: rf_diskevent.c,v 
- * Revision 1.18  1996/07/28 20:31:39  jimz
- * i386netbsd port
- * true/false fixup
- *
- * Revision 1.17  1996/07/27  16:05:19  jimz
- * return ENOMEM if DDEventInit fails its call to InitHeap
- *
- * Revision 1.16  1996/06/10  12:06:24  jimz
- * fix spelling errors
- *
- * Revision 1.15  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.14  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.13  1996/06/02  17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
- * Revision 1.12  1996/05/30  11:29:41  jimz
- * Numerous bug fixes. Stripe lock release code disagreed with the taking code
- * about when stripes should be locked (I made it consistent: no parity, no lock)
- * There was a lot of extra serialization of I/Os which I've removed- a lot of
- * it was to calculate values for the cache code, which is no longer with us.
- * More types, function, macro cleanup. Added code to properly quiesce the array
- * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
- * before. Fixed memory allocation, freeing bugs.
- *
- * Revision 1.11  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.10  1996/05/24  04:28:55  jimz
- * release cleanup ckpt
- *
- * Revision 1.9  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.8  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.7  1995/12/01  15:57:56  root
- * added copyright info
- *
- */
-       
 #include "rf_types.h"
 #include "rf_heap.h"
 #include "rf_diskevent.h"

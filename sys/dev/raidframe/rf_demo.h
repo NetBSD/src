@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_demo.h,v 1.1 1998/11/13 04:20:28 oster Exp $	*/
+/*	$NetBSD: rf_demo.h,v 1.2 1999/01/26 02:33:55 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -28,30 +28,6 @@
 
 /* rf_demo.h
  * some constants for demo'ing software
- */
-
-/* :  
- * Log: rf_demo.h,v 
- * Revision 1.8  1996/06/14 23:15:38  jimz
- * attempt to deal with thread GC problem
- *
- * Revision 1.7  1996/06/09  02:36:46  jimz
- * lots of little crufty cleanup- fixup whitespace
- * issues, comment #ifdefs, improve typing in some
- * places (esp size-related)
- *
- * Revision 1.6  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.5  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.4  1995/12/01  15:58:53  root
- * added copyright info
- *
  */
 
 #ifndef _RF__RF_DEMO_H_

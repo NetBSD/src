@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.c,v 1.1 1998/11/13 04:20:26 oster Exp $	*/
+/*	$NetBSD: rf_aselect.c,v 1.2 1999/01/26 02:33:50 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,108 +31,7 @@
  * aselect.c -- algorithm selection code
  * 
  *****************************************************************************/
-/*
- * :  
- * Log: rf_aselect.c,v 
- * Revision 1.35  1996/07/28 20:31:39  jimz
- * i386netbsd port
- * true/false fixup
- *
- * Revision 1.34  1996/07/27  18:39:39  jimz
- * cleanup sweep
- *
- * Revision 1.33  1996/07/22  19:52:16  jimz
- * switched node params to RF_DagParam_t, a union of
- * a 64-bit int and a void *, for better portability
- * attempted hpux port, but failed partway through for
- * lack of a single C compiler capable of compiling all
- * source files
- *
- * Revision 1.32  1996/06/12  03:29:40  jimz
- * Note: things that call InitHdrNode should check
- * for successful return.
- *
- * Revision 1.31  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.30  1996/06/05  18:06:02  jimz
- * Major code cleanup. The Great Renaming is now done.
- * Better modularity. Better typing. Fixed a bunch of
- * synchronization bugs. Made a lot of global stuff
- * per-desc or per-array. Removed dead code.
- *
- * Revision 1.29  1996/05/31  22:26:54  jimz
- * fix a lot of mapping problems, memory allocation problems
- * found some weird lock issues, fixed 'em
- * more code cleanup
- *
- * Revision 1.28  1996/05/30  11:29:41  jimz
- * Numerous bug fixes. Stripe lock release code disagreed with the taking code
- * about when stripes should be locked (I made it consistent: no parity, no lock)
- * There was a lot of extra serialization of I/Os which I've removed- a lot of
- * it was to calculate values for the cache code, which is no longer with us.
- * More types, function, macro cleanup. Added code to properly quiesce the array
- * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
- * before. Fixed memory allocation, freeing bugs.
- *
- * Revision 1.27  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.26  1996/05/24  22:17:04  jimz
- * continue code + namespace cleanup
- * typed a bunch of flags
- *
- * Revision 1.25  1996/05/24  04:28:55  jimz
- * release cleanup ckpt
- *
- * Revision 1.24  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.23  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.22  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.21  1996/05/08  21:01:24  jimz
- * fixed up enum type names that were conflicting with other
- * enums and function names (ie, "panic")
- * future naming trends will be towards RF_ and rf_ for
- * everything raidframe-related
- *
- * Revision 1.20  1996/05/03  19:45:35  wvcii
- * removed includes of old deg creation files
- * updated SelectAlgorithm comments
- *
- * Revision 1.19  1995/12/12  18:10:06  jimz
- * MIN -> RF_MIN, MAX -> RF_MAX, ASSERT -> RF_ASSERT
- * fix 80-column brain damage in comments
- *
- * Revision 1.18  1995/11/30  16:27:48  wvcii
- * added copyright info
- *
- * Revision 1.17  1995/11/19  16:25:55  wvcii
- * SelectAlgorithm now creates an array, returned in desc->dagArray
- * return value is now int (1 = FAIL)
- *
- * Revision 1.16  1995/11/17  15:09:58  wvcii
- * fixed bug in SelectAlgorithm in which multiple graphs per stripe are required
- *
- * Revision 1.15  1995/11/07  17:12:42  wvcii
- * changed SelectAlgorithm as follows:
- *
- * dag creation funcs now create term nodes
- * dag selection funcs no longer return numHdrSucc, numTermAnt
- * there is now one dag hdr for each dag in a request, implying
- * that SelectAlgorithm now returns a linked list of dag hdrs
- *
- */
+
 
 #include "rf_archs.h"
 #include "rf_types.h"

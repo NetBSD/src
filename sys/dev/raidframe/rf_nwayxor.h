@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_nwayxor.h,v 1.1 1998/11/13 04:20:31 oster Exp $	*/
+/*	$NetBSD: rf_nwayxor.h,v 1.2 1999/01/26 02:33:59 oster Exp $	*/
 /*
  * rf_nwayxor.h
  */
@@ -30,27 +30,6 @@
  */
 /*
  * rf_nwayxor.h -- types and prototypes for nwayxor module
- */
-/*
- * :  
- * Log: rf_nwayxor.h,v 
- * Revision 1.4  1996/06/10 11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.3  1996/06/02  17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
- * Revision 1.2  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.1  1996/05/18  19:56:47  jimz
- * Initial revision
- *
  */
 
 #ifndef _RF__RF_NWAYXOR_H_

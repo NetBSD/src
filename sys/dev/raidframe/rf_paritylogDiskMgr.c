@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.1 1998/11/13 04:20:31 oster Exp $	*/
+/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.2 1999/01/26 02:33:59 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -26,113 +26,6 @@
  * rights to redistribute these changes.
  */
 /* Code for flushing and reintegration operations related to parity logging.
- *
- * :  
- * Log: rf_paritylogDiskMgr.c,v 
- * Revision 1.25  1996/07/28 20:31:39  jimz
- * i386netbsd port
- * true/false fixup
- *
- * Revision 1.24  1996/07/27  23:36:08  jimz
- * Solaris port of simulator
- *
- * Revision 1.23  1996/07/22  19:52:16  jimz
- * switched node params to RF_DagParam_t, a union of
- * a 64-bit int and a void *, for better portability
- * attempted hpux port, but failed partway through for
- * lack of a single C compiler capable of compiling all
- * source files
- *
- * Revision 1.22  1996/06/11  10:17:33  jimz
- * Put in thread startup/shutdown mechanism for proper synchronization
- * with start and end of day routines.
- *
- * Revision 1.21  1996/06/09  02:36:46  jimz
- * lots of little crufty cleanup- fixup whitespace
- * issues, comment #ifdefs, improve typing in some
- * places (esp size-related)
- *
- * Revision 1.20  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.19  1996/06/05  18:06:02  jimz
- * Major code cleanup. The Great Renaming is now done.
- * Better modularity. Better typing. Fixed a bunch of
- * synchronization bugs. Made a lot of global stuff
- * per-desc or per-array. Removed dead code.
- *
- * Revision 1.18  1996/06/02  17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
- * Revision 1.17  1996/05/31  22:26:54  jimz
- * fix a lot of mapping problems, memory allocation problems
- * found some weird lock issues, fixed 'em
- * more code cleanup
- *
- * Revision 1.16  1996/05/30  23:22:16  jimz
- * bugfixes of serialization, timing problems
- * more cleanup
- *
- * Revision 1.15  1996/05/30  12:59:18  jimz
- * make etimer happier, more portable
- *
- * Revision 1.14  1996/05/30  11:29:41  jimz
- * Numerous bug fixes. Stripe lock release code disagreed with the taking code
- * about when stripes should be locked (I made it consistent: no parity, no lock)
- * There was a lot of extra serialization of I/Os which I've removed- a lot of
- * it was to calculate values for the cache code, which is no longer with us.
- * More types, function, macro cleanup. Added code to properly quiesce the array
- * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
- * before. Fixed memory allocation, freeing bugs.
- *
- * Revision 1.13  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.12  1996/05/24  22:17:04  jimz
- * continue code + namespace cleanup
- * typed a bunch of flags
- *
- * Revision 1.11  1996/05/24  04:28:55  jimz
- * release cleanup ckpt
- *
- * Revision 1.10  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.9  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.8  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.7  1995/12/12  18:10:06  jimz
- * MIN -> RF_MIN, MAX -> RF_MAX, ASSERT -> RF_ASSERT
- * fix 80-column brain damage in comments
- *
- * Revision 1.6  1995/12/06  20:58:27  wvcii
- * added prototypes
- *
- * Revision 1.5  1995/11/30  16:06:05  wvcii
- * added copyright info
- *
- * Revision 1.4  1995/10/09  22:41:10  wvcii
- * minor bug fix
- *
- * Revision 1.3  1995/10/08  20:43:47  wvcii
- * lots of random debugging - debugging still incomplete
- *
- * Revision 1.2  1995/09/07  15:52:19  jimz
- * noop compile when INCLUDE_PARITYLOGGING not defined
- *
- * Revision 1.1  1995/09/06  19:24:44  wvcii
- * Initial revision
  *
  */
 
@@ -436,10 +329,8 @@ static void FlushLogsToDisk(
       WriteCoreLog(log, fwr_mcpair, raidPtr, &fwr_dag_h, &fwr_alloclist, &fwr_pda);
 
       /* wait for the DAG to complete */
-#ifndef SIMULATE
       while (!fwr_mcpair->flag)
 	RF_WAIT_COND(fwr_mcpair->cond, fwr_mcpair->mutex);
-#endif /* !SIMULATE */
       if (fwr_dag_h->status != rf_enable)
 	{
 	  RF_ERRORMSG1("Unable to write core log to disk (region %d)\n", regionID);
@@ -505,11 +396,9 @@ static void ReintegrateRegion(
     }
 
   /* wait on read of region parity to complete */
-#ifndef SIMULATE
   while (!prd_mcpair->flag) {
     RF_WAIT_COND(prd_mcpair->cond, prd_mcpair->mutex);
   }
-#endif /* !SIMULATE */
   RF_UNLOCK_MUTEX(prd_mcpair->mutex);
   if (prd_dag_h->status != rf_enable)
     {
@@ -525,10 +414,8 @@ static void ReintegrateRegion(
   if (raidPtr->regionInfo[regionID].diskCount > 0)
     {
       /* wait on read of region log to complete */
-#ifndef SIMULATE
       while (!rrd_mcpair->flag)
 	RF_WAIT_COND(rrd_mcpair->cond, rrd_mcpair->mutex);
-#endif /* !SIMULATE */
       RF_UNLOCK_MUTEX(rrd_mcpair->mutex);
       if (rrd_dag_h->status != rf_enable)
 	{
@@ -554,10 +441,8 @@ static void ReintegrateRegion(
   RF_LOCK_MUTEX(pwr_mcpair->mutex);
   pwr_mcpair->flag = RF_FALSE;
   WriteRegionParity(regionID, pwr_mcpair, parityBuffer, raidPtr, &pwr_dag_h, &pwr_alloclist, &pwr_pda);
-#ifndef SIMULATE
   while (!pwr_mcpair->flag)
     RF_WAIT_COND(pwr_mcpair->cond, pwr_mcpair->mutex);
-#endif /* !SIMULATE */
   RF_UNLOCK_MUTEX(pwr_mcpair->mutex);
   if (pwr_dag_h->status != rf_enable)
     {

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_optnames.h,v 1.1 1998/11/13 04:20:31 oster Exp $	*/
+/*	$NetBSD: rf_optnames.h,v 1.2 1999/01/26 02:33:59 oster Exp $	*/
 /*
  * rf_optnames.h
  */
@@ -32,10 +32,6 @@
 /*
  * Don't protect against multiple inclusion here- we actually want this.
  */
-
-#ifdef _KERNEL
-#define KERNEL
-#endif
 
 RF_DBG_OPTION(accSizeKB,0) /* if nonzero, the fixed access size to run */
 RF_DBG_OPTION(accessDebug,0)
@@ -100,26 +96,14 @@ RF_DBG_OPTION(validateVisitedDebug,1) /* XXX turn to zero by default? */
 RF_DBG_OPTION(verifyParityDebug,0)
 RF_DBG_OPTION(warnLongIOs,0)
 
-#ifdef KERNEL
 RF_DBG_OPTION(debugKernelAccess,0) /* DoAccessKernel debugging */
-#endif /* KERNEL */
 
-#ifndef KERNEL
+#ifndef _KERNEL
 RF_DBG_OPTION(disableParityVerify,0) /* supress verification of parity */
 RF_DBG_OPTION(interactiveScript,0) /* set as a debug option for now */
 RF_DBG_OPTION(looptestShowWrites,0) /* user-level loop test write debugging */
 RF_DBG_OPTION(traceDebug,0)
 #endif /* !KERNEL */
-
-#ifdef SIMULATE
-RF_DBG_OPTION(addrSizePercentage,100)
-RF_DBG_OPTION(diskTrace,0) /* ised to turn the timing traces on and of */
-RF_DBG_OPTION(eventDebug,0)
-RF_DBG_OPTION(mWactive,1500)
-RF_DBG_OPTION(mWidle,625)
-RF_DBG_OPTION(mWsleep,15)
-RF_DBG_OPTION(mWspinup,3500)
-#endif /* SIMULATE */
 
 #if RF_INCLUDE_PARITYLOGGING > 0
 RF_DBG_OPTION(forceParityLogReint,0)

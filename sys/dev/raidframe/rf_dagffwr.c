@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffwr.c,v 1.1 1998/11/13 04:20:27 oster Exp $	*/
+/*	$NetBSD: rf_dagffwr.c,v 1.2 1999/01/26 02:33:53 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,100 +30,6 @@
  * rf_dagff.c
  *
  * code for creating fault-free DAGs
- *
- * :  
- * Log: rf_dagffwr.c,v 
- * Revision 1.19  1996/07/31 15:35:24  jimz
- * evenodd changes; bugfixes for double-degraded archs, generalize
- * some formerly PQ-only functions
- *
- * Revision 1.18  1996/07/28  20:31:39  jimz
- * i386netbsd port
- * true/false fixup
- *
- * Revision 1.17  1996/07/27  18:40:24  jimz
- * cleanup sweep
- *
- * Revision 1.16  1996/07/22  19:52:16  jimz
- * switched node params to RF_DagParam_t, a union of
- * a 64-bit int and a void *, for better portability
- * attempted hpux port, but failed partway through for
- * lack of a single C compiler capable of compiling all
- * source files
- *
- * Revision 1.15  1996/06/11  01:27:50  jimz
- * Fixed bug where diskthread shutdown would crash or hang. This
- * turned out to be two distinct bugs:
- * (1) [crash] The thread shutdown code wasn't properly waiting for
- * all the diskthreads to complete. This caused diskthreads that were
- * exiting+cleaning up to unlock a destroyed mutex.
- * (2) [hang] TerminateDiskQueues wasn't locking, and DiskIODequeue
- * only checked for termination _after_ a wakeup if the queues were
- * empty. This was a race where the termination wakeup could be lost
- * by the dequeueing thread, and the system would hang waiting for the
- * thread to exit, while the thread waited for an I/O or a signal to
- * check the termination flag.
- *
- * Revision 1.14  1996/06/10  22:24:01  wvcii
- * added write dags which do not have a commit node and are
- * used in forward and backward error recovery experiments.
- *
- * Revision 1.13  1996/06/07  22:26:27  jimz
- * type-ify which_ru (RF_ReconUnitNum_t)
- *
- * Revision 1.12  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.11  1996/05/31  22:26:54  jimz
- * fix a lot of mapping problems, memory allocation problems
- * found some weird lock issues, fixed 'em
- * more code cleanup
- *
- * Revision 1.10  1996/05/30  11:29:41  jimz
- * Numerous bug fixes. Stripe lock release code disagreed with the taking code
- * about when stripes should be locked (I made it consistent: no parity, no lock)
- * There was a lot of extra serialization of I/Os which I've removed- a lot of
- * it was to calculate values for the cache code, which is no longer with us.
- * More types, function, macro cleanup. Added code to properly quiesce the array
- * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
- * before. Fixed memory allocation, freeing bugs.
- *
- * Revision 1.9  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.8  1996/05/24  22:17:04  jimz
- * continue code + namespace cleanup
- * typed a bunch of flags
- *
- * Revision 1.7  1996/05/24  04:28:55  jimz
- * release cleanup ckpt
- *
- * Revision 1.6  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.5  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.4  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.3  1996/05/15  23:23:12  wvcii
- * fixed bug in small write read old q node succedent initialization
- *
- * Revision 1.2  1996/05/08  21:01:24  jimz
- * fixed up enum type names that were conflicting with other
- * enums and function names (ie, "panic")
- * future naming trends will be towards RF_ and rf_ for
- * everything raidframe-related
- *
- * Revision 1.1  1996/05/03  19:20:45  wvcii
- * Initial revision
  *
  */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_desc.h,v 1.2 1999/01/15 17:55:52 explorer Exp $	*/
+/*	$NetBSD: rf_desc.h,v 1.3 1999/01/26 02:33:55 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -26,78 +26,6 @@
  * rights to redistribute these changes.
  */
 
-/*
- * :  
- * Log: rf_desc.h,v 
- * Revision 1.29  1996/07/22 19:52:16  jimz
- * switched node params to RF_DagParam_t, a union of
- * a 64-bit int and a void *, for better portability
- * attempted hpux port, but failed partway through for
- * lack of a single C compiler capable of compiling all
- * source files
- *
- * Revision 1.28  1996/06/07  22:49:22  jimz
- * fix up raidPtr typing
- *
- * Revision 1.27  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.26  1996/06/05  18:06:02  jimz
- * Major code cleanup. The Great Renaming is now done.
- * Better modularity. Better typing. Fixed a bunch of
- * synchronization bugs. Made a lot of global stuff
- * per-desc or per-array. Removed dead code.
- *
- * Revision 1.25  1996/06/02  17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
- * Revision 1.24  1996/05/30  11:29:41  jimz
- * Numerous bug fixes. Stripe lock release code disagreed with the taking code
- * about when stripes should be locked (I made it consistent: no parity, no lock)
- * There was a lot of extra serialization of I/Os which I've removed- a lot of
- * it was to calculate values for the cache code, which is no longer with us.
- * More types, function, macro cleanup. Added code to properly quiesce the array
- * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
- * before. Fixed memory allocation, freeing bugs.
- *
- * Revision 1.23  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.22  1996/05/24  22:17:04  jimz
- * continue code + namespace cleanup
- * typed a bunch of flags
- *
- * Revision 1.21  1996/05/24  04:28:55  jimz
- * release cleanup ckpt
- *
- * Revision 1.20  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.19  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.18  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.17  1995/12/01  15:58:43  root
- * added copyright info
- *
- * Revision 1.16  1995/11/19  16:31:30  wvcii
- * descriptors now contain an array of dag lists as opposed to a dag header
- *
- * Revision 1.15  1995/11/07  16:24:17  wvcii
- * updated def of _AccessState
- *
- */
-
 #ifndef _RF__RF_DESC_H_
 #define _RF__RF_DESC_H_
 
@@ -115,7 +43,6 @@ struct RF_RaidReconDesc_s {
   int                  numDisksDone; /* the number of surviving disks that have completed their work */
   RF_RowCol_t          srow;         /* row ID of the spare disk (not used in dist sparing) */
   RF_RowCol_t          scol;         /* col ID of the spare disk (not used in dist sparing) */
-#ifdef KERNEL
   /*
    * Prevent recon from hogging CPU
    */
@@ -123,7 +50,6 @@ struct RF_RaidReconDesc_s {
   RF_uint64            reconExecTimerRunning;
   RF_uint64            reconExecTicks;
   RF_uint64            maxReconExecTicks;
-#endif /* KERNEL */
 
 #if RF_RECON_STATS > 0
   RF_uint64            hsStallCount;       /* head sep stall count */
@@ -140,11 +66,6 @@ struct RF_RaidAccessDesc_s {
   RF_SectorCount_t        numBlocks;        /* number of blocks (sectors) to transfer */
   RF_StripeCount_t        numStripes;       /* number of stripes involved in access */
   caddr_t                 bufPtr;           /* pointer to data buffer */
-
-#if !defined(KERNEL) && !defined(SIMULATE)
-  caddr_t                 obufPtr;          /* real pointer to data buffer */
-#endif /* !KERNEL && !SIMULATE */
-
   RF_RaidAccessFlags_t    flags;            /* flags controlling operation */
   int                     state;            /* index into states telling how far along the RAID operation has gotten */
   RF_AccessState_t       *states;	        /* array of states to be run */
@@ -169,9 +90,6 @@ struct RF_RaidAccessDesc_s {
   RF_DECLARE_MUTEX(mutex)   /* these are used to implement blocking I/O */
   RF_DECLARE_COND(cond)
 
-#ifdef SIMULATE
-  RF_Owner_t  owner;                            
-#endif /* SIMULATE */
   int         async_flag;
 
   RF_Etimer_t                 timer;            /* used for timing this access */

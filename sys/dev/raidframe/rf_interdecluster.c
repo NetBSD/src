@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_interdecluster.c,v 1.1 1998/11/13 04:20:30 oster Exp $	*/
+/*	$NetBSD: rf_interdecluster.c,v 1.2 1999/01/26 02:33:58 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,94 +32,6 @@
  *
  ************************************************************/
 
-/* :  
- * Log: rf_interdecluster.c,v 
- * Revision 1.24  1996/08/02 13:20:38  jimz
- * get rid of bogus (long) casts
- *
- * Revision 1.23  1996/07/31  16:56:18  jimz
- * dataBytesPerStripe, sectorsPerDisk init arch-indep.
- *
- * Revision 1.22  1996/07/29  14:05:12  jimz
- * fix numPUs/numRUs confusion (everything is now numRUs)
- * clean up some commenting, return values
- *
- * Revision 1.21  1996/07/22  19:52:16  jimz
- * switched node params to RF_DagParam_t, a union of
- * a 64-bit int and a void *, for better portability
- * attempted hpux port, but failed partway through for
- * lack of a single C compiler capable of compiling all
- * source files
- *
- * Revision 1.20  1996/07/18  22:57:14  jimz
- * port simulator to AIX
- *
- * Revision 1.19  1996/07/13  00:00:59  jimz
- * sanitized generalized reconstruction architecture
- * cleaned up head sep, rbuf problems
- *
- * Revision 1.18  1996/06/19  17:53:48  jimz
- * move GetNumSparePUs, InstallSpareTable ops into layout switch
- *
- * Revision 1.17  1996/06/11  15:17:55  wvcii
- * added include of rf_interdecluster.h
- * fixed parameter list of rf_ConfigureInterDecluster
- * fixed return type of rf_GetNumSparePUsInterDecluster
- * removed include of rf_raid1.h
- *
- * Revision 1.16  1996/06/11  08:55:15  jimz
- * improved error-checking at configuration time
- *
- * Revision 1.15  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.14  1996/06/07  22:26:27  jimz
- * type-ify which_ru (RF_ReconUnitNum_t)
- *
- * Revision 1.13  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.12  1996/06/06  18:41:48  jimz
- * add interleaved declustering dag selection
- *
- * Revision 1.11  1996/06/02  17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
- * Revision 1.10  1996/05/31  22:26:54  jimz
- * fix a lot of mapping problems, memory allocation problems
- * found some weird lock issues, fixed 'em
- * more code cleanup
- *
- * Revision 1.9  1996/05/31  05:03:01  amiri
- * fixed a bug related to sparing layout.
- *
- * Revision 1.8  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.7  1996/05/24  01:59:45  jimz
- * another checkpoint in code cleanup for release
- * time to sync kernel tree
- *
- * Revision 1.6  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.5  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.4  1996/05/03  19:50:38  wvcii
- * removed include of rf_redstripe.h
- * fixed change log parameters in header
- *
- */
 
 #include "rf_types.h"
 #include "rf_raid.h"

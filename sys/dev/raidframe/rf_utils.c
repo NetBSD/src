@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_utils.c,v 1.1 1998/11/13 04:20:35 oster Exp $	*/
+/*	$NetBSD: rf_utils.c,v 1.2 1999/01/26 02:34:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,70 +32,9 @@
  *
  ****************************************/
 
-/* :  
- * Log: rf_utils.c,v 
- * Revision 1.20  1996/07/27 23:36:08  jimz
- * Solaris port of simulator
- *
- * Revision 1.19  1996/07/22  19:52:16  jimz
- * switched node params to RF_DagParam_t, a union of
- * a 64-bit int and a void *, for better portability
- * attempted hpux port, but failed partway through for
- * lack of a single C compiler capable of compiling all
- * source files
- *
- * Revision 1.18  1996/07/15  17:22:18  jimz
- * nit-pick code cleanup
- * resolve stdlib problems on DEC OSF
- *
- * Revision 1.17  1996/06/09  02:36:46  jimz
- * lots of little crufty cleanup- fixup whitespace
- * issues, comment #ifdefs, improve typing in some
- * places (esp size-related)
- *
- * Revision 1.16  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.15  1996/06/03  23:28:26  jimz
- * more bugfixes
- * check in tree to sync for IPDS runs with current bugfixes
- * there still may be a problem with threads in the script test
- * getting I/Os stuck- not trivially reproducible (runs ~50 times
- * in a row without getting stuck)
- *
- * Revision 1.14  1996/06/02  17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
- * Revision 1.13  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.12  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.11  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.10  1995/12/06  15:17:44  root
- * added copyright info
- *
- */
 
 #include "rf_threadstuff.h"
 
-#ifdef _KERNEL
-#define KERNEL
-#endif
-
-#ifndef KERNEL
-#include <stdio.h>
-#endif /* !KERNEL */
 #include <sys/time.h>
 
 #include "rf_threadid.h"
@@ -104,10 +43,6 @@
 #include "rf_alloclist.h"
 #include "rf_general.h"
 #include "rf_sys.h"
-
-#ifndef KERNEL
-#include "rf_randmacros.h"
-#endif /* !KERNEL */
 
 /* creates & zeros 2-d array with b rows and k columns (MCH) */
 RF_RowCol_t **rf_make_2d_array(b, k, allocList)
@@ -173,33 +108,6 @@ int rf_gcd(m, n)
     }
     return(n);
 }
-
-#if !defined(KERNEL) && !defined(SIMULATE) && defined(__osf__)
-/* this is used to generate a random number when _FASTRANDOM is off
- * in randmacros.h
- */
-long rf_do_random(rval, rdata)
-  long                *rval;
-  struct random_data  *rdata;
-{
-  int a, b;
-  long c;
-  /*
-   * random_r() generates random 32-bit values. OR them together.
-   */
-  if (random_r(&a, rdata)!=0) {
-    fprintf(stderr,"Yikes!  call to random_r failed\n");
-    exit(1);
-  }
-  if (random_r(&b, rdata)!=0) {
-    fprintf(stderr,"Yikes!  call to random_r failed\n");
-    exit(1);
-  }
-  c = ((long)a)<<32;
-  *rval = c|b;
-  return(*rval);
-}
-#endif /* !KERNEL && !SIMULATE && __osf__ */
 
 /* these convert between text and integer.  Apparently the regular C macros
  * for doing this are not available in the kernel

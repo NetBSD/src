@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_invertq.h,v 1.1 1998/11/13 04:20:30 oster Exp $	*/
+/*	$NetBSD: rf_invertq.h,v 1.2 1999/01/26 02:33:58 oster Exp $	*/
 /*
  * rf_invertq.h
  */
@@ -8,10 +8,6 @@
 
 #ifndef _RF__RF_INVERTQ_H_
 #define _RF__RF_INVERTQ_H_
-
-#ifdef _KERNEL
-#define KERNEL
-#endif
 
 /*
  * rf_geniq.c must include rf_archs.h before including
@@ -60,13 +56,7 @@ RF_ua32_t rf_qfor[32] = {
 /* i = 31 */ { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, },
 };
 #define RF_Q_DATA_COL(col_num) rf_rn[col_num],rf_qfor[28-(col_num)]
-#ifdef KERNEL
 RF_ua1024_t rf_qinv[1];        /* don't compile monster table into kernel */
-#elif defined(NO_PQ)
-RF_ua1024_t rf_qinv[29*29];
-#else /* !KERNEL && NO_PQ */
-
-#endif /* !KERNEL && NO_PQ */
 
 #endif /* (RF_INCLUDE_PQ > 0) || (RF_INCLUDE_RAID6 > 0) */
 #endif /* !_RF__RF_INVERTQ_H_ */

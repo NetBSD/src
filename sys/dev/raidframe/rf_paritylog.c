@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylog.c,v 1.1 1998/11/13 04:20:31 oster Exp $	*/
+/*	$NetBSD: rf_paritylog.c,v 1.2 1999/01/26 02:33:59 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -28,107 +28,6 @@
 
 /* Code for manipulating in-core parity logs
  *
- * :  
- * Log: rf_paritylog.c,v 
- * Revision 1.27  1996/07/28 20:31:39  jimz
- * i386netbsd port
- * true/false fixup
- *
- * Revision 1.26  1996/07/27  23:36:08  jimz
- * Solaris port of simulator
- *
- * Revision 1.25  1996/07/17  21:00:58  jimz
- * clean up timer interface, tracing
- *
- * Revision 1.24  1996/06/11  10:18:59  jimz
- * AllocParityLogCommonData() was freeing the common pointer immediately
- * after allocating this. It appeared that this free really belonged
- * inside one of the failure cases (for backing out), so I moved it
- * in there.
- *
- * Revision 1.23  1996/06/05  18:06:02  jimz
- * Major code cleanup. The Great Renaming is now done.
- * Better modularity. Better typing. Fixed a bunch of
- * synchronization bugs. Made a lot of global stuff
- * per-desc or per-array. Removed dead code.
- *
- * Revision 1.22  1996/06/02  17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
- * Revision 1.21  1996/05/31  22:26:54  jimz
- * fix a lot of mapping problems, memory allocation problems
- * found some weird lock issues, fixed 'em
- * more code cleanup
- *
- * Revision 1.20  1996/05/30  23:22:16  jimz
- * bugfixes of serialization, timing problems
- * more cleanup
- *
- * Revision 1.19  1996/05/30  12:59:18  jimz
- * make etimer happier, more portable
- *
- * Revision 1.18  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.17  1996/05/24  04:28:55  jimz
- * release cleanup ckpt
- *
- * Revision 1.16  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.15  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.14  1996/05/20  16:16:59  jimz
- * switch to rf_{mutex,cond}_{init,destroy}
- *
- * Revision 1.13  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.12  1995/12/12  18:10:06  jimz
- * MIN -> RF_MIN, MAX -> RF_MAX, ASSERT -> RF_ASSERT
- * fix 80-column brain damage in comments
- *
- * Revision 1.11  1995/12/06  20:54:44  wvcii
- * added prototyping
- *
- * Revision 1.10  1995/11/30  16:05:37  wvcii
- * added copyright info
- *
- * Revision 1.9  1995/10/08  20:41:28  wvcii
- * fixed bug in allocation of CommonLogData (was allocating incorrect size)
- *
- * Revision 1.8  1995/09/07  15:52:12  jimz
- * noop compile when INCLUDE_PARITYLOGGING not defined
- *
- * Revision 1.7  1995/09/06  19:17:36  wvcii
- * moved code for reintegration to rf_paritylogDiskMgr.c
- *
- * Revision 1.6  95/07/07  00:16:06  wvcii
- * this version free from deadlock, fails parity verification
- * 
- * Revision 1.5  1995/06/09  13:14:24  wvcii
- * code is now nonblocking
- *
- * Revision 1.4  95/06/01  17:01:59  wvcii
- * code debug
- * 
- * Revision 1.3  95/05/31  13:08:23  wvcii
- * code debug
- * 
- * Revision 1.2  95/05/21  15:42:15  wvcii
- * code debug
- * 
- * Revision 1.1  95/05/18  10:43:54  wvcii
- * Initial revision
- * 
  */
 
 #include "rf_archs.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_decluster.h,v 1.1 1998/11/13 04:20:28 oster Exp $	*/
+/*	$NetBSD: rf_decluster.h,v 1.2 1999/01/26 02:33:55 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,68 +34,6 @@
  * Created 10-21-92 (MCH)
  *
  *--------------------------------------------------------------------*/
-
-/*
- * :  
- * Log: rf_decluster.h,v 
- * Revision 1.20  1996/07/29 14:05:12  jimz
- * fix numPUs/numRUs confusion (everything is now numRUs)
- * clean up some commenting, return values
- *
- * Revision 1.19  1996/07/13  00:00:59  jimz
- * sanitized generalized reconstruction architecture
- * cleaned up head sep, rbuf problems
- *
- * Revision 1.18  1996/06/19  17:53:48  jimz
- * move GetNumSparePUs, InstallSpareTable ops into layout switch
- *
- * Revision 1.17  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.16  1996/06/09  02:36:46  jimz
- * lots of little crufty cleanup- fixup whitespace
- * issues, comment #ifdefs, improve typing in some
- * places (esp size-related)
- *
- * Revision 1.15  1996/06/07  22:26:27  jimz
- * type-ify which_ru (RF_ReconUnitNum_t)
- *
- * Revision 1.14  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.13  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.12  1996/05/24  01:59:45  jimz
- * another checkpoint in code cleanup for release
- * time to sync kernel tree
- *
- * Revision 1.11  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.10  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.9  1995/12/01  15:58:23  root
- * added copyright info
- *
- * Revision 1.8  1995/11/17  18:57:02  wvcii
- * added prototyping to MapParity
- *
- * Revision 1.7  1995/07/02  15:08:31  holland
- * bug fixes related to getting distributed sparing numbers
- *
- * Revision 1.6  1995/06/23  13:41:18  robby
- * updeated to prototypes in rf_layout.h
- *
- */
 
 #ifndef _RF__RF_DECLUSTER_H_
 #define _RF__RF_DECLUSTER_H_

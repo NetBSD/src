@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_freelist.h,v 1.1 1998/11/13 04:20:30 oster Exp $	*/
+/*	$NetBSD: rf_freelist.h,v 1.2 1999/01/26 02:33:58 oster Exp $	*/
 /*
  * rf_freelist.h
  */
@@ -28,71 +28,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
-/*
- * :  
- * Log: rf_freelist.h,v 
- * Revision 1.13  1996/06/10 12:50:57  jimz
- * Add counters to freelists to track number of allocations, frees,
- * grows, max size, etc. Adjust a couple sets of PRIME params based
- * on the results.
- *
- * Revision 1.12  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.11  1996/06/05  18:06:02  jimz
- * Major code cleanup. The Great Renaming is now done.
- * Better modularity. Better typing. Fixed a bunch of
- * synchronization bugs. Made a lot of global stuff
- * per-desc or per-array. Removed dead code.
- *
- * Revision 1.10  1996/06/02  17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
- * Revision 1.9  1996/05/31  22:26:54  jimz
- * fix a lot of mapping problems, memory allocation problems
- * found some weird lock issues, fixed 'em
- * more code cleanup
- *
- * Revision 1.8  1996/05/30  11:29:41  jimz
- * Numerous bug fixes. Stripe lock release code disagreed with the taking code
- * about when stripes should be locked (I made it consistent: no parity, no lock)
- * There was a lot of extra serialization of I/Os which I've removed- a lot of
- * it was to calculate values for the cache code, which is no longer with us.
- * More types, function, macro cleanup. Added code to properly quiesce the array
- * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
- * before. Fixed memory allocation, freeing bugs.
- *
- * Revision 1.7  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.6  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.5  1996/05/20  16:16:12  jimz
- * switch to rf_{mutex,cond}_{init,destroy}
- *
- * Revision 1.4  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.3  1996/05/16  16:04:52  jimz
- * allow init func to fail for FREELIST ops
- *
- * Revision 1.2  1996/05/16  14:54:08  jimz
- * added _INIT and _CLEAN versions of ops for objects with
- * internal allocations
- *
- * Revision 1.1  1996/05/15  23:37:53  jimz
- * Initial revision
- *
- */
+
 /*
  * rf_freelist.h -- code to manage counted freelists
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pqdegdags.h,v 1.1 1998/11/13 04:20:32 oster Exp $	*/
+/*	$NetBSD: rf_pqdegdags.h,v 1.2 1999/01/26 02:34:00 oster Exp $	*/
 /*
  * rf_pqdegdags.h
  */
@@ -31,34 +31,6 @@
 /*
  * rf_pqdegdags.c
  * Degraded mode dags for double fault cases. 
- */
-/*
- * :  
- * Log: rf_pqdegdags.h,v 
- * Revision 1.6  1996/07/31 15:35:20  jimz
- * evenodd changes; bugfixes for double-degraded archs, generalize
- * some formerly PQ-only functions
- *
- * Revision 1.5  1996/06/02  17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
- * Revision 1.4  1996/05/31  22:26:54  jimz
- * fix a lot of mapping problems, memory allocation problems
- * found some weird lock issues, fixed 'em
- * more code cleanup
- *
- * Revision 1.3  1996/05/24  04:28:55  jimz
- * release cleanup ckpt
- *
- * Revision 1.2  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.1  1996/05/18  19:56:30  jimz
- * Initial revision
- *
  */
 
 #ifndef _RF__RF_PQDEGDAGS_H_

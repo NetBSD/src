@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconbuffer.c,v 1.1 1998/11/13 04:20:33 oster Exp $	*/
+/*	$NetBSD: rf_reconbuffer.c,v 1.2 1999/01/26 02:34:01 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,85 +32,6 @@
  *
  ***************************************************/
 
-/* :  
- * Log: rf_reconbuffer.c,v 
- * Revision 1.33  1996/07/27 23:36:08  jimz
- * Solaris port of simulator
- *
- * Revision 1.32  1996/07/17  21:00:58  jimz
- * clean up timer interface, tracing
- *
- * Revision 1.31  1996/07/13  00:00:59  jimz
- * sanitized generalized reconstruction architecture
- * cleaned up head sep, rbuf problems
- *
- * Revision 1.30  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.29  1996/06/06  01:23:58  jimz
- * don't free reconCtrlPtr until after all fields have been used out of it
- *
- * Revision 1.28  1996/06/05  18:06:02  jimz
- * Major code cleanup. The Great Renaming is now done.
- * Better modularity. Better typing. Fixed a bunch of
- * synchronization bugs. Made a lot of global stuff
- * per-desc or per-array. Removed dead code.
- *
- * Revision 1.27  1996/06/03  23:28:26  jimz
- * more bugfixes
- * check in tree to sync for IPDS runs with current bugfixes
- * there still may be a problem with threads in the script test
- * getting I/Os stuck- not trivially reproducible (runs ~50 times
- * in a row without getting stuck)
- *
- * Revision 1.26  1996/06/02  17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
- * Revision 1.25  1996/05/31  22:26:54  jimz
- * fix a lot of mapping problems, memory allocation problems
- * found some weird lock issues, fixed 'em
- * more code cleanup
- *
- * Revision 1.24  1996/05/30  12:59:18  jimz
- * make etimer happier, more portable
- *
- * Revision 1.23  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.22  1996/05/24  22:17:04  jimz
- * continue code + namespace cleanup
- * typed a bunch of flags
- *
- * Revision 1.21  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.20  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.19  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.18  1995/12/12  18:10:06  jimz
- * MIN -> RF_MIN, MAX -> RF_MAX, ASSERT -> RF_ASSERT
- * fix 80-column brain damage in comments
- *
- * Revision 1.17  1995/12/06  15:03:24  root
- * added copyright info
- *
- */
-
-#ifdef _KERNEL
-#define KERNEL
-#endif
-
 #include "rf_raid.h"
 #include "rf_reconbuffer.h"
 #include "rf_acctrace.h"
@@ -121,33 +42,11 @@
 #include "rf_reconutil.h"
 #include "rf_nwayxor.h"
 
-#ifdef KERNEL
 #define Dprintf1(s,a) if (rf_reconbufferDebug) printf(s,a)
 #define Dprintf2(s,a,b) if (rf_reconbufferDebug) printf(s,a,b)
 #define Dprintf3(s,a,b,c) if (rf_reconbufferDebug) printf(s,a,b,c)
 #define Dprintf4(s,a,b,c,d) if (rf_reconbufferDebug) printf(s,a,b,c,d)
 #define Dprintf5(s,a,b,c,d,e) if (rf_reconbufferDebug) printf(s,a,b,c,d,e)
-#else /* KERNEL */
-#define Dprintf1(s,a)         if (rf_reconbufferDebug) rf_debug_printf(s,(void *)((unsigned long)a),NULL,NULL,NULL,NULL,NULL,NULL,NULL)
-#define Dprintf2(s,a,b)       if (rf_reconbufferDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),NULL,NULL,NULL,NULL,NULL,NULL)
-#define Dprintf3(s,a,b,c)     if (rf_reconbufferDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),NULL,NULL,NULL,NULL,NULL)
-#define Dprintf4(s,a,b,c,d)   if (rf_reconbufferDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),NULL,NULL,NULL,NULL)
-#define Dprintf5(s,a,b,c,d,e) if (rf_reconbufferDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),(void *)((unsigned long)e),NULL,NULL,NULL)
-#endif /* KERNEL */
-
-#if defined(__NetBSD__) && defined(_KERNEL)
-
-/* XXX XXX XXX This is wrong, for a number of reasons:
-  a) thread_block doesn't exist with UVM
-  b) The prototype begin used here is wrong for the regular VM 
-  (regular VM expects a (char *) as an argument.  I don't put 
-  that in here as this code uses thread_block with no arguments.. :-/ 
-
-*/
-#if 0
-void thread_block(void); 
-#endif
-#endif
 
 /*****************************************************************************************
  *
@@ -363,11 +262,11 @@ int rf_MultiWayReconXor(raidPtr, pssPtr)
   
   RF_ASSERT(pssPtr->rbuf != NULL);
   RF_ASSERT(numBufs > 0 && numBufs < RF_PS_MAX_BUFS);
-#ifdef KERNEL
+#ifdef _KERNEL
 #ifndef __NetBSD__
   thread_block(); /* yield the processor before doing a big XOR */
 #endif
-#endif /* KERNEL */
+#endif /* _KERNEL */
   /*
    * XXX
    *

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_kintf.h,v 1.1 1998/11/13 04:20:30 oster Exp $	*/
+/*	$NetBSD: rf_kintf.h,v 1.2 1999/01/26 02:33:58 oster Exp $	*/
 /*
  * rf_kintf.h
  *
@@ -29,20 +29,6 @@
  *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- */
-/*
- * :  
- * Log: rf_kintf.h,v 
- * Revision 1.2  1996/06/03 23:28:26  jimz
- * more bugfixes
- * check in tree to sync for IPDS runs with current bugfixes
- * there still may be a problem with threads in the script test
- * getting I/Os stuck- not trivially reproducible (runs ~50 times
- * in a row without getting stuck)
- *
- * Revision 1.1  1996/05/31  18:59:14  jimz
- * Initial revision
- *
  */
 
 #ifndef _RF__RF_KINTF_H_

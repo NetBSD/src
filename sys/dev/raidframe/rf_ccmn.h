@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_ccmn.h,v 1.1 1998/11/13 04:20:26 oster Exp $	*/
+/*	$NetBSD: rf_ccmn.h,v 1.2 1999/01/26 02:33:50 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,19 +31,6 @@
  * the files needed to use them.
  */
 
-/* :  
- * Log: rf_ccmn.h,v 
- * Revision 1.4  1996/07/18 22:57:14  jimz
- * port simulator to AIX
- *
- * Revision 1.3  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.2  1995/12/01  15:16:45  root
- * added copyright info
- *
- */
 
 #ifndef _RF__RF_CCMN_H_
 #define _RF__RF_CCMN_H_

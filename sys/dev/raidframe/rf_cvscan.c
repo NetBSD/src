@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_cvscan.c,v 1.2 1998/11/18 15:13:51 oster Exp $	*/
+/*	$NetBSD: rf_cvscan.c,v 1.3 1999/01/26 02:33:51 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,33 +33,6 @@
  * Nov 9, 1994, adapted from raidSim version (MCH)
  *
  ******************************************************************************/
-
-/*
- * :  
- * Log: rf_cvscan.c,v 
- * Revision 1.6  1996/07/27 23:36:08  jimz
- * Solaris port of simulator
- *
- * Revision 1.5  1996/07/15  17:22:18  jimz
- * nit-pick code cleanup
- * resolve stdlib problems on DEC OSF
- *
- * Revision 1.4  1996/06/09  02:36:46  jimz
- * lots of little crufty cleanup- fixup whitespace
- * issues, comment #ifdefs, improve typing in some
- * places (esp size-related)
- *
- * Revision 1.3  1996/06/07  22:26:27  jimz
- * type-ify which_ru (RF_ReconUnitNum_t)
- *
- * Revision 1.2  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.1  1996/06/05  19:17:40  jimz
- * Initial revision
- *
- */
 
 #include "rf_types.h"
 #include "rf_alloclist.h"

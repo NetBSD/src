@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dag.h,v 1.1 1998/11/13 04:20:27 oster Exp $	*/
+/*	$NetBSD: rf_dag.h,v 1.2 1999/01/26 02:33:52 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,106 +31,6 @@
  * dag.h -- header file for DAG-related data structures                     *
  *                                                                          *
  ****************************************************************************/
-/*
- *
- * :  
- * Log: rf_dag.h,v 
- * Revision 1.35  1996/11/05 18:38:37  jimz
- * add patch from galvarez@cs.ucsd.edu (Guillermo Alvarez)
- * to fix dag_params memory-sizing problem (should be an array
- * of the type, not an array of pointers to the type)
- *
- * Revision 1.34  1996/07/28  20:31:39  jimz
- * i386netbsd port
- * true/false fixup
- *
- * Revision 1.33  1996/07/22  19:52:16  jimz
- * switched node params to RF_DagParam_t, a union of
- * a 64-bit int and a void *, for better portability
- * attempted hpux port, but failed partway through for
- * lack of a single C compiler capable of compiling all
- * source files
- *
- * Revision 1.32  1996/06/10  22:22:13  wvcii
- * added two node status types for use in backward error
- * recovery experiments.
- *
- * Revision 1.31  1996/06/09  02:36:46  jimz
- * lots of little crufty cleanup- fixup whitespace
- * issues, comment #ifdefs, improve typing in some
- * places (esp size-related)
- *
- * Revision 1.30  1996/06/07  22:49:18  jimz
- * fix up raidPtr typing
- *
- * Revision 1.29  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.28  1996/05/24  22:17:04  jimz
- * continue code + namespace cleanup
- * typed a bunch of flags
- *
- * Revision 1.27  1996/05/24  04:28:55  jimz
- * release cleanup ckpt
- *
- * Revision 1.26  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.25  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.24  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.23  1996/05/16  23:05:20  jimz
- * Added dag_ptrs field, RF_DAG_PTRCACHESIZE
- *
- * The dag_ptrs field of the node is basically some scribble
- * space to be used here. We could get rid of it, and always
- * allocate the range of pointers, but that's expensive. So,
- * we pick a "common case" size for the pointer cache. Hopefully,
- * we'll find that:
- * (1) Generally, nptrs doesn't exceed RF_DAG_PTRCACHESIZE by
- *     only a little bit (least efficient case)
- * (2) Generally, ntprs isn't a lot less than RF_DAG_PTRCACHESIZE
- *     (wasted memory)
- *
- * Revision 1.22  1996/05/08  21:01:24  jimz
- * fixed up enum type names that were conflicting with other
- * enums and function names (ie, "panic")
- * future naming trends will be towards RF_ and rf_ for
- * everything raidframe-related
- *
- * Revision 1.21  1996/05/08  15:23:47  wvcii
- * added new node states:  undone, recover, panic
- *
- * Revision 1.20  1995/12/01  14:59:19  root
- * increased MAX_ANTECEDENTS from 10 to 20
- * should consider getting rid of this (eliminate static array)
- *
- * Revision 1.19  1995/11/30  15:58:59  wvcii
- * added copyright info
- *
- * Revision 1.18  1995/11/19  16:27:03  wvcii
- * created struct dagList
- *
- * Revision 1.17  1995/11/07  15:43:01  wvcii
- * added static array to DAGnode: antType
- * added commitNode type
- * added commit node counts to dag header
- * added ptr (firstDag) to support multi-dag requests
- * added succedent done/fired counts to nodes to support rollback
- * added node status type "skipped"
- * added hdr status types "rollForward, rollBackward"
- * deleted hdr status type "disable"
- * updated ResetNode & ResetDAGHeader to zero new fields
- *
- */
 
 #ifndef _RF__RF_DAG_H_
 #define _RF__RF_DAG_H_
@@ -148,9 +48,7 @@
 #define RF_INTR_CONTEXT     1 /* we were invoked from interrupt context */
 #define RF_MAX_ANTECEDENTS 20 /* max num of antecedents a node may posses */
 
-#ifdef KERNEL
 #include <sys/buf.h>
-#endif /* KERNEL */
 
 struct RF_PropHeader_s { /* structure for propagation of results */
   int               resultNum; /* bind result # resultNum */
@@ -266,9 +164,6 @@ struct RF_DagHeader_s {
   int xtraChunkIndex;                  /* number of ptrs to valid chunks */
   int xtraChunkCnt;                    /* number of ptrs to chunks allocated */
 
-#ifdef SIMULATE
-  int done;                            /* Tag to tell if termination node has been fired */
-#endif /* SIMULATE */
 };
 
 struct RF_DagList_s {
@@ -290,20 +185,11 @@ struct RF_DagList_s {
   (_n_)->next = NULL;        \
 }
 
-#ifdef SIMULATE
-#define RF_ResetDagHeader(_h_) { \
-  (_h_)->done = RF_FALSE;           \
-  (_h_)->numNodesCompleted = 0;  \
-  (_h_)->numCommits = 0;         \
-  (_h_)->status = rf_enable;     \
-}
-#else /* SIMULATE */
 #define RF_ResetDagHeader(_h_) { \
   (_h_)->numNodesCompleted = 0;  \
   (_h_)->numCommits = 0;         \
   (_h_)->status = rf_enable;     \
 }
-#endif /* SIMULATE */
 
 /* convience macro for declaring a create dag function */
 
