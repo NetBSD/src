@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.11 1999/11/06 20:18:50 eeh Exp $ */
+/*	$NetBSD: genassym.c,v 1.12 1999/12/30 16:35:25 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -123,6 +123,7 @@ main()
 	off("P_WCHAN", struct proc, p_wchan);
 	off("P_VMSPACE", struct proc, p_vmspace);
 	off("P_PID", struct proc, p_pid);
+	off("P_FPSTATE", struct proc, p_md.md_fpstate);
 	def("SRUN", SRUN);
 
 	/* user struct stuff */
@@ -144,6 +145,7 @@ main()
 	/* FPU state */
 	off("FS_REGS", struct fpstate64, fs_regs);
 	off("FS_FSR", struct fpstate64, fs_fsr);
+	off("FS_GSR", struct fpstate64, fs_gsr);
 	off("FS_QSIZE", struct fpstate64, fs_qsize);
 	off("FS_QUEUE", struct fpstate64, fs_queue);
 	siz("FS_SIZE", struct fpstate64);
