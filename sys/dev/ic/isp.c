@@ -1,4 +1,4 @@
-/*	$NetBSD: isp.c,v 1.10 1997/08/16 00:22:11 mjacob Exp $	*/
+/*	$NetBSD: isp.c,v 1.11 1997/08/16 00:56:52 mjacob Exp $	*/
 
 /*
  * Machine Independent (well, as best as possible)
@@ -1328,7 +1328,6 @@ static u_int8_t mbpcnt[] = {
 	MAKNIB(0, 0),	/* 0x5d: */
 	MAKNIB(0, 0),	/* 0x5e: */
 	MAKNIB(0, 0),	/* 0x5f: */
-#ifdef	USE_SUN_FW
 	MAKNIB(8, 6),	/* 0x60: MBOX_INIT_FIRMWARE */
 	MAKNIB(0, 0),	/* 0x60: MBOX_GET_INIT_CONTROL_BLOCK  (FORMAT?) */
 	MAKNIB(2, 1),	/* 0x62: MBOX_INIT_LIP */
@@ -1338,17 +1337,6 @@ static u_int8_t mbpcnt[] = {
 	MAKNIB(3, 1),	/* 0x66: MBOX_TARGET_RESET */
 	MAKNIB(3, 1),	/* 0x67: MBOX_CLEAR_TASK_SET */
 	MAKNIB(3, 1),	/* 0x69: MBOX_ABORT_TASK_SET */
-#else
-	MAKNIB(0, 0),	/* 0x60: */
-	MAKNIB(0, 0),	/* 0x61: */
-	MAKNIB(0, 0),	/* 0x62: */
-	MAKNIB(0, 0),	/* 0x63: */
-	MAKNIB(0, 0),	/* 0x64: */
-	MAKNIB(0, 0),	/* 0x65: */
-	MAKNIB(0, 0),	/* 0x66: */
-	MAKNIB(0, 0),	/* 0x67: */
-	MAKNIB(0, 0),	/* 0x68: */
-#endif
 	MAKNIB(1, 2),	/* 0x69: MBOX_GET_FIRMWARE_STATE */
 	MAKNIB(0, 0),	/* 0x6a: */
 	MAKNIB(0, 0),	/* 0x6b: */
@@ -1371,9 +1359,6 @@ static u_int8_t mbpcnt[] = {
 	MAKNIB(0, 0),	/* 0x7c: */
 	MAKNIB(0, 0),	/* 0x7d: */
 	MAKNIB(0, 0),	/* 0x7e: */
-#ifdef	USE_SUN_FW
-	MAKNIB(0, 0)	/* 0x7f: */
-#else
 	MAKNIB(0, 0),	/* 0x7f: */
 	MAKNIB(8, 6),	/* 0x80: MBOX_INIT_FIRMWARE */
 	MAKNIB(2, 1),	/* 0x81: MBOX_INIT_LIP */
@@ -1385,7 +1370,6 @@ static u_int8_t mbpcnt[] = {
 	MAKNIB(3, 1),	/* 0x87: MBOX_TARGET_RESET */
 	MAKNIB(3, 1),	/* 0x88: MBOX_CLEAR_TASK_SET */
 	MAKNIB(3, 1)	/* 0x89: MBOX_ABORT_TASK_SET */
-#endif
 };
 #define	NMBCOM	(sizeof (mbpcnt) / sizeof (mbpcnt[0]))
 
@@ -1872,19 +1856,6 @@ isp_watch(void *arg)
 		printf("%s: commands really timed out!\n", isp->isp_name);
 
 		isp_phoenix(isp);
-#if	not
-	{
-		mbreg_t mbs;
-		mbs.param[0] = MBOX_BUS_RESET;
-		mbs.param[1] = 0;
-		isp_mboxcmd(isp, &mbs);
-		if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
-			printf("%s: bus reset failed\n", isp->isp_name);
-			isp_phoenix(isp);
-		}
-		isp->isp_sendmarker = 1;
-	}
-#endif
 		break;
 	}
 	(void) splx(s);
