@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.25 2001/11/10 10:59:08 lukem Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.26 2002/09/22 19:15:09 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross, Adam Glass
@@ -43,11 +43,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.25 2001/11/10 10:59:08 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.26 2002/09/22 19:15:09 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
@@ -56,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.25 2001/11/10 10:59:08 lukem Exp $")
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 
-#include <net/if.h>
 #include <netinet/in.h>
 
 #include <nfs/rpcv2.h>
