@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.46.4.15 2003/02/07 18:35:51 tron Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.46.4.16 2003/02/07 18:38:01 tron Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.46.4.15 2003/02/07 18:35:51 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.46.4.16 2003/02/07 18:38:01 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -1130,15 +1130,22 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 #define ifr_mtu ifr_metric
 #endif
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < 128 || ifr->ifr_mtu > sp->lcp.their_mru)
-			return (EINVAL);
+		if (ifr->ifr_mtu < 128 || ifr->ifr_mtu > sp->lcp.their_mru) {
+			error = EINVAL;
+			break;
+		}
+
 		ifp->if_mtu = ifr->ifr_mtu;
 		break;
 #endif
 #ifdef SLIOCSETMTU
 	case SLIOCSETMTU:
 		if (*(short *)data < 128 || *(short *)data > sp->lcp.their_mru)
-			return (EINVAL);
+		{
+			error = EINVAL;
+			break;
+		}
+
 		ifp->if_mtu = *(short *)data;
 		break;
 #endif
