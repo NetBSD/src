@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.6 2003/09/27 02:09:36 mrg Exp $
+# $NetBSD: md.amd64,v 1.7 2003/10/22 11:56:35 kleink Exp $
 ./usr/include/amd64			comp-c-include
 ./usr/include/amd64/ansi.h		comp-c-include
 ./usr/include/amd64/aout_machdep.h	comp-c-include
@@ -72,6 +72,7 @@
 ./usr/include/x86/intr.h		comp-c-include  
 ./usr/include/x86/intrdefs.h		comp-c-include
 ./usr/include/x86/lock.h		comp-c-include
+./usr/include/x86/math.h		comp-c-include
 ./usr/include/x86/mtrr.h		comp-c-include
 ./usr/include/x86/pio.h			comp-c-include
 ./usr/include/x86/psl.h			comp-c-include
