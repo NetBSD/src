@@ -1,5 +1,5 @@
 #
-#	$NetBSD: mini_usr.list,v 1.7 1999/05/16 08:21:53 gwr Exp $
+#	$NetBSD: mini_usr.list,v 1.8 1999/05/16 08:33:47 gwr Exp $
 #
 # miniroot files from /usr:
 
@@ -40,6 +40,11 @@ COPY	${DESTDIR}/usr/bin/sed			usr/bin
 COPY	${DESTDIR}/usr/bin/strings		usr/bin
 COPY	${DESTDIR}/usr/bin/tip			usr/bin
 COPY	${DESTDIR}/usr/bin/vi			usr/bin
+
+# gnu/usr.bin:
+COPY	${DESTDIR}/usr/bin/gzip			usr/bin
+LINK		   usr/bin/gzip 		usr/bin/gunzip
+LINK		   usr/bin/gzip 		usr/bin/gzcat
 
 # install.md still uses sort
 COPY	${DESTDIR}/usr/bin/sort			usr/bin
