@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.6 2000/02/02 13:02:56 itojun Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.7 2000/02/07 09:40:37 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,9 +82,9 @@
  * to determine registers and a general outline of how the card works)
  * That driver is publically available and copyright
  *
- * John Markus Bj,Ax(Brndalen
+ * John Markus Bjørndalen
  * Department of Computer Science
- * University of Troms,Ax(B
+ * University of Tromsø
  * Norway             
  * johnm@staff.cs.uit.no, http://www.cs.uit.no/~johnm/
  */
