@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.41 2000/06/28 02:53:49 mrg Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.42 2000/09/28 01:14:06 erh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -103,7 +103,7 @@ struct walkarg {
 static struct mbuf *rt_msg1 __P((int, struct rt_addrinfo *, caddr_t, int));
 static int rt_msg2 __P((int, struct rt_addrinfo *, caddr_t, struct walkarg *,
     int *));
-static void rt_xaddrs __P((caddr_t, caddr_t, struct rt_addrinfo *));
+static int rt_xaddrs __P((caddr_t, caddr_t, struct rt_addrinfo *));
 static int sysctl_dumpentry __P((struct radix_node *, void *));
 static int sysctl_iflist __P((int, struct walkarg *, int));
 static int sysctl_rtable __P((int *, u_int, void *, size_t *, void *, size_t));
@@ -247,7 +247,8 @@ route_output(m, va_alist)
 	}
 	rtm->rtm_pid = curproc->p_pid;
 	info.rti_addrs = rtm->rtm_addrs;
-	rt_xaddrs((caddr_t)(rtm + 1), len + (caddr_t)rtm, &info);
+	if (rt_xaddrs((caddr_t)(rtm + 1), len + (caddr_t)rtm, &info))
+		senderr(EINVAL);
 	if (dst == 0 || (dst->sa_family >= AF_MAX))
 		senderr(EINVAL);
 	if (gate != 0 && (gate->sa_family >= AF_MAX))
@@ -452,7 +453,7 @@ rt_setmetrics(which, in, out)
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
-static void
+static int
 rt_xaddrs(cp, cplim, rtinfo)
 	caddr_t cp, cplim;
 	struct rt_addrinfo *rtinfo;
@@ -467,6 +468,10 @@ rt_xaddrs(cp, cplim, rtinfo)
 		rtinfo->rti_info[i] = sa = (struct sockaddr *)cp;
 		ADVANCE(cp, sa);
 	}
+	/* Check for bad data length, or extra addresses specified */
+	if ( (cp != cplim) || (rtinfo->rti_addrs & (~0 << i)) )
+		return 1;
+	return 0;
 }
 
 static struct mbuf *
