@@ -1,5 +1,5 @@
-/*	$NetBSD: getnameinfo.c,v 1.18 2000/06/12 03:55:10 itojun Exp $	*/
-/*	$KAME: getnameinfo.c,v 1.42 2000/06/12 02:51:06 itojun Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.19 2000/06/12 04:27:58 itojun Exp $	*/
+/*	$KAME: getnameinfo.c,v 1.43 2000/06/12 04:27:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.18 2000/06/12 03:55:10 itojun Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.19 2000/06/12 04:27:58 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -103,7 +103,7 @@ static int ip6_sa2str __P((const struct sockaddr_in6 *, char *, size_t, int));
 #define ENI_MEMORY	EAI_MEMORY
 #define ENI_SYSTEM	EAI_SYSTEM
 #define ENI_FAMILY	EAI_FAMILY
-#define ENI_SALEN	EAI_FAIL		/*XXX*/
+#define ENI_SALEN	EAI_FAMILY
 
 int
 getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
