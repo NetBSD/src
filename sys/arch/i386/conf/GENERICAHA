@@ -1,12 +1,13 @@
 #
 # GENERICAHA -- Generic machine w/aha driver -- distribution floppy
 #
-#	$Id: GENERICAHA,v 1.38 1994/04/13 07:53:03 deraadt Exp $
+#	$Id: GENERICAHA,v 1.39 1994/04/15 00:25:14 cgd Exp $
 #
 
 machine		"i386"
 cpu		"I386_CPU"
 cpu		"I486_CPU"
+cpu		"I586_CPU"
 ident		GENERICAHA
 timezone	8 dst
 maxusers	10
@@ -22,6 +23,7 @@ options		KERNFS
 options		SCSI
 options		"MATH_EMULATE"
 options		"COMPAT_NOMID"
+options		"COMPAT_09"
 options		"MACHINE_NONCONTIG"
 
 config		netbsd	root on wd0 swap on wd0 and sd0

@@ -1,7 +1,7 @@
 #
 # PAIN -- kernel for another of cgd's 486/50 EISA boxes...
 #
-#	$Id: PAIN,v 1.24 1994/03/29 04:40:46 mycroft Exp $
+#	$Id: PAIN,v 1.25 1994/04/15 00:25:16 cgd Exp $
 #
 machine		"i386"
 cpu		"I486_CPU"
@@ -29,6 +29,7 @@ options		GATEWAY
 # "optional, but generally included"
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
+options		"COMPAT_09"
 
 # i386 stuff
 options		UCONSOLE, XSERVER
