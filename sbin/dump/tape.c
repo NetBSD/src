@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.37 2002/01/07 17:34:09 bouyer Exp $	*/
+/*	$NetBSD: tape.c,v 1.38 2002/08/18 08:03:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.37 2002/01/07 17:34:09 bouyer Exp $");
+__RCSID("$NetBSD: tape.c,v 1.38 2002/08/18 08:03:35 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -265,9 +265,11 @@ statussig(int notused)
 {
 	time_t	tnow, deltat;
 	char	msgbuf[128];
+	int	errno_save;
 
 	if (blockswritten < 500)
 		return;
+	errno_save = errno;
 	(void) time((time_t *) &tnow);
 	if (tnow <= tstart_volume)
 		return;
@@ -280,6 +282,7 @@ statussig(int notused)
 	      (tnow - tstart_volume)),
 	    (int)(deltat / 3600), (int)((deltat % 3600) / 60));
 	write(STDERR_FILENO, msgbuf, strlen(msgbuf));
+	errno = errno_save;
 }
 
 static void
