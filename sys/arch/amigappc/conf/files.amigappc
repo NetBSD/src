@@ -1,4 +1,4 @@
-#	$NetBSD: files.amigappc,v 1.16 2003/09/27 21:32:12 is Exp $
+#	$NetBSD: files.amigappc,v 1.17 2004/01/20 19:58:00 jdolecek Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -245,9 +245,6 @@ file	arch/amiga/dev/aster.c		aster
 device	gvpbus {}
 attach	gvpbus at zbus
 file	arch/amiga/dev/gvpbus.c		gvpbus
-
-device	lpt
-file	dev/ic/lpt.c			lpt needs-flag
 
 attach	lpt at supio with lpt_supio
 file	arch/amiga/dev/lpt_supio.c	lpt_supio

@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.27 2003/10/21 08:15:40 skrll Exp $
+#	$NetBSD: files.cats,v 1.28 2004/01/20 19:58:00 jdolecek Exp $
 #
 # CATS-specific configuration info
 #
@@ -93,14 +93,6 @@ include "dev/pci/files.pci"
 device	pcib: isabus
 attach	pcib at pci
 file	arch/cats/pci/pcib.c			pcib
-
-# XXX THE FOLLOWING BLOCK SHOULD GO INTO dev/pci/files.pci, BUT CANNOT
-# XXX BECAUSE NOT 'lpt' IS DEFINED IN files.isa, RATHER THAN files.
-# XXX (when the conf/files and files.isa bogons are fixed, this can
-# XXX be fixed as well.)
-
-attach	lpt at puc with lpt_puc
-file	dev/pci/lpt_puc.c	lpt_puc
 
 file	arch/cats/pci/pciide_machdep.c	pciide_common
 
