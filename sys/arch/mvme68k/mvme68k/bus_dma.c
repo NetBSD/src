@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.13 2001/05/11 13:01:44 scw Exp $	*/
+/* $NetBSD: bus_dma.c,v 1.14 2001/05/16 19:06:47 scw Exp $	*/
 
 /*
  * This file was taken from from next68k/dev/bus_dma.c, which was originally
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.13 2001/05/11 13:01:44 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.14 2001/05/16 19:06:47 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,12 +70,6 @@ extern	phys_ram_seg_t mem_clusters[];
 int	_bus_dmamap_load_buffer_direct_common __P((bus_dma_tag_t,
 	    bus_dmamap_t, void *, bus_size_t, struct proc *, int,
 	    paddr_t *, int *, int));
-
-/*
- * Initialised in mvme68k/machdep.c according to the host cpu type
- */
-void	(*_bus_dmamap_sync)(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
-	    bus_size_t, int);
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
@@ -162,7 +156,7 @@ _bus_dmamap_load_buffer_direct_common(t, map, buf, buflen, p, flags,
 	bus_size_t sgsize;
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
 	vaddr_t vaddr = (vaddr_t)buf;
-	int seg;
+	int seg, cacheable, coherent = BUS_DMA_COHERENT;
 
 	lastaddr = *lastaddrp;
 	bmask = ~(map->_dm_boundary - 1);
@@ -171,11 +165,20 @@ _bus_dmamap_load_buffer_direct_common(t, map, buf, buflen, p, flags,
 		/*
 		 * Get the physical address for this segment.
 		 */
-		if (p != NULL)
+		if (p != NULL) {
 			(void) pmap_extract(p->p_vmspace->vm_map.pmap,
 			    vaddr, &curaddr);
-		else
+			cacheable =
+			    _pmap_page_is_cacheable(p->p_vmspace->vm_map.pmap,
+				vaddr);
+		} else {
 			(void) pmap_extract(pmap_kernel(),vaddr, &curaddr);
+			cacheable =
+			    _pmap_page_is_cacheable(pmap_kernel(), vaddr);
+		}
+
+		if (cacheable)
+			coherent = 0;
 
 		/*
 		 * Compute the segment size, and adjust counts.
@@ -201,6 +204,8 @@ _bus_dmamap_load_buffer_direct_common(t, map, buf, buflen, p, flags,
 			map->dm_segs[seg].ds_addr =
 			    map->dm_segs[seg]._ds_cpuaddr = curaddr;
 			map->dm_segs[seg].ds_len = sgsize;
+			map->dm_segs[seg]._ds_flags =
+			    cacheable ? 0 : BUS_DMA_COHERENT;
 			first = 0;
 		} else {
 			if (curaddr == lastaddr &&
@@ -216,6 +221,8 @@ _bus_dmamap_load_buffer_direct_common(t, map, buf, buflen, p, flags,
 				map->dm_segs[seg].ds_addr =
 				    map->dm_segs[seg]._ds_cpuaddr = curaddr;
 				map->dm_segs[seg].ds_len = sgsize;
+				map->dm_segs[seg]._ds_flags =
+				    cacheable ? 0 : BUS_DMA_COHERENT;
 			}
 		}
 
@@ -226,6 +233,8 @@ _bus_dmamap_load_buffer_direct_common(t, map, buf, buflen, p, flags,
 
 	*segp = seg;
 	*lastaddrp = lastaddr;
+	map->_dm_flags &= ~BUS_DMA_COHERENT;
+	map->_dm_flags |= coherent;
 
 	/*
 	 * Did we fit?
@@ -438,6 +447,7 @@ _bus_dmamap_unload(t, map)
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	map->_dm_flags &= ~BUS_DMA_COHERENT;
 }
 
 /*
@@ -467,11 +477,18 @@ _bus_dmamap_sync_0460(t, map, offset, len, ops)
 	bus_size_t len;
 	int ops;
 {
-	bus_addr_t p, e;
+	bus_addr_t p, e, ps, pe;
 	bus_size_t seglen;
 	int i;
 
-	if ((ops & (BUS_DMASYNC_PREWRITE | BUS_DMASYNC_POSTREAD)) == 0)
+	/* If the whole DMA map is uncached, do nothing.  */
+	if (map->_dm_flags & BUS_DMA_COHERENT)
+		return;
+
+	/* Short-circuit for unsupported `ops' */
+	if ((ops & (BUS_DMASYNC_PREREAD  |
+		    BUS_DMASYNC_PREWRITE |
+		    BUS_DMASYNC_POSTREAD)) == 0)
 		return;
 
 	for (i = 0; i < map->dm_nsegs && len > 0; i++) {
@@ -486,9 +503,16 @@ _bus_dmamap_sync_0460(t, map, offset, len, ops)
 			seglen = len;
 		len -= seglen;
 
+		/* Ignore cache-inhibited segments */
+		if (map->dm_segs[i]._ds_flags & BUS_DMA_COHERENT)
+			continue;
+
+		ps = map->dm_segs[i]._ds_cpuaddr + offset;
+		pe = ps + seglen;
+
 		if (ops & BUS_DMASYNC_PREWRITE) {
-			p = (map->dm_segs[i]._ds_cpuaddr + offset) & ~0xf;
-			e = p + ((seglen + 15) & ~0xf);
+			p = ps & ~0xf;
+			e = (pe + 15) & ~0xf;
 
 			/* flush cache line (060 too) */
 			while((p < e) && (p % NBPG)) {
@@ -509,9 +533,39 @@ _bus_dmamap_sync_0460(t, map, offset, len, ops)
 			}
 		}
 
+		/*
+		 * Normally, the `PREREAD' flag instructs us to purge the
+		 * cache for the specified offset and length. However, if
+		 * the offset/length is not aligned to a cacheline boundary,
+		 * we may end up purging some legitimate data from the
+		 * start/end of the cache. In such a case, *flush* the
+		 * cachelines at the start and end of the required region.
+		 * We assume someone will do a `POSTREAD' afterwards to
+		 * ensure the cache is purged for the remainder of the region.
+		 *
+		 * Note: Even though the high-end MVME boards support bus-
+		 * snooping (well, the 060 isn't *quite* there), the osiop(4)
+		 * driver *ALWAYS* issues a `POSTREAD' EVEN IF NO DATA WAS
+		 * TRANSFERRED!
+		 *
+		 * This isn't necessarily a bug, since a SCSI target is free
+		 * to disconnect part way through a data-in phase anyway.
+		 * Thus, the CPU may never get to snoop the incoming data
+		 * before we purge the dmamap region.
+		 *
+		 * Note #2: All this is necessary on mvme68k because we
+		 * normally run the cache in Copy Back mode...
+		 */
+		if (ops & BUS_DMASYNC_PREREAD) {
+			if (ps & 0xf)
+				DCFL_40(ps);
+			if (pe & 0xf)
+				DCFL_40(pe);
+		}
+
 		if (ops & BUS_DMASYNC_POSTREAD) {
-			p = (map->dm_segs[i]._ds_cpuaddr + offset) & ~0xf;
-			e = p + ((seglen + 15) & ~0xf);
+			p = ps & ~0xf;
+			e = (pe + 15) & ~0xf;
 
 			/* purge cache line */
 			while((p < e) && (p % NBPG)) {
@@ -583,6 +637,7 @@ _bus_dmamem_alloc_common(t, low, high, size, alignment, boundary,
 	lastaddr = VM_PAGE_TO_PHYS(m);
 	segs[curseg].ds_addr = segs[curseg]._ds_cpuaddr = lastaddr;
 	segs[curseg].ds_len = PAGE_SIZE;
+	segs[curseg]._ds_flags = 0;
 	m = m->pageq.tqe_next;
 
 	for (; m != NULL; m = m->pageq.tqe_next) {
@@ -612,6 +667,7 @@ _bus_dmamem_alloc_common(t, low, high, size, alignment, boundary,
 			segs[curseg].ds_addr =
 			    segs[curseg]._ds_cpuaddr = curaddr;
 			segs[curseg].ds_len = PAGE_SIZE;
+			segs[curseg]._ds_flags = 0;
 		}
 		lastaddr = curaddr;
 	}
@@ -728,8 +784,11 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 
 			/* Cache-inhibit the page if necessary */
-			if ( (flags & BUS_DMA_COHERENT) != 0 )
+			if ((flags & BUS_DMA_COHERENT) != 0)
 				_pmap_set_page_cacheinhibit(pmap_kernel(), va);
+
+			segs[curseg]._ds_flags &= ~BUS_DMA_COHERENT;
+			segs[curseg]._ds_flags |= (flags & BUS_DMA_COHERENT);
 		}
 	}
 	pmap_update();
