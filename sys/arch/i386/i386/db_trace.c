@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.33 2002/10/01 12:56:50 fvdl Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.34 2002/10/05 21:19:16 fvdl Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.33 2002/10/01 12:56:50 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.34 2002/10/05 21:19:16 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,6 +105,8 @@ struct i386_frame {
 #define	TRAP		1
 #define	SYSCALL		2
 #define	INTERRUPT	3
+#define INTERRUPT_TSS	4
+#define TRAP_TSS	5
 
 db_addr_t	db_trap_symbol_value = 0;
 db_addr_t	db_syscall_symbol_value = 0;
@@ -167,6 +169,7 @@ db_numargs(fp)
  *   It might be possible to dig out from the next frame up the name
  *   of the function that faulted, but that could get hairy.
  */
+
 void
 db_nextframe(fp, ip, argp, is_trap, pr)
 	struct i386_frame **fp;		/* in/out */
@@ -175,6 +178,8 @@ db_nextframe(fp, ip, argp, is_trap, pr)
 	int is_trap;			/* in */
 	void (*pr) __P((const char *, ...)); /* in */
 {
+	struct trapframe *tf;
+	struct i386tss *tss;
 
 	switch (is_trap) {
 	    case NONE:
@@ -184,8 +189,21 @@ db_nextframe(fp, ip, argp, is_trap, pr)
 			db_get_value((int) &(*fp)->f_frame, 4, FALSE);
 		break;
 
-	    default: {
-		struct trapframe *tf;
+	    case TRAP_TSS:
+	    case INTERRUPT_TSS:
+		tss = (struct i386tss *)*argp;
+		*ip = tss->__tss_eip;
+		*fp = (struct i386_frame *)tss->tss_ebp;
+		if (is_trap == INTERRUPT_TSS)
+			printf("--- interrupt via task gate ---\n");
+		else
+			printf("--- trap via task gate ---\n");
+		break;
+
+	    case TRAP:
+	    case SYSCALL:
+	    case INTERRUPT:
+	    default:
 
 		/* The only argument to trap() or syscall() is the trapframe. */
 		tf = (struct trapframe *)argp;
@@ -203,7 +221,6 @@ db_nextframe(fp, ip, argp, is_trap, pr)
 		*fp = (struct i386_frame *)tf->tf_ebp;
 		*ip = (db_addr_t)tf->tf_eip;
 		break;
-	    }
 	}
 }
 
@@ -298,7 +315,9 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			 * (e.g., npxdna) don't go through trap()
 			 */
 #ifdef __ELF__
-			if (!strcmp(name, "trap")) {
+			if (!strcmp(name, "trap_tss")) {
+				is_trap = TRAP_TSS;
+			} else if (!strcmp(name, "trap")) {
 				is_trap = TRAP;
 			} else if (!strcmp(name, "syscall")) {
 				is_trap = SYSCALL;
@@ -311,13 +330,17 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 				    !strcmp(name, "Xdoreti") ||
 				    !strncmp(name, "Xsoft", 5)) {
 					is_trap = INTERRUPT;
+				} else if (!strncmp(name, "Xtss_", 5)) {
+					is_trap = INTERRUPT_TSS;
 				} else
 					goto normal;
 			} else
 				goto normal;
 			narg = 0;
 #else
-			if (!strcmp(name, "_trap")) {
+			if (!strcmp(name, "_trap_tss")) {
+				is_trap = TRAP_TSS;
+			} else if (!strcmp(name, "_trap")) {
 				is_trap = TRAP;
 			} else if (!strcmp(name, "_syscall")) {
 				is_trap = SYSCALL;
@@ -330,6 +353,8 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 				    !strcmp(name, "_Xdoreti") ||
 				    !strncmp(name, "_Xsoft", 6)) {
 					is_trap = INTERRUPT;
+				} else if (!strncmp(name, "_Xtss_", 6)) {
+					is_trap = INTERRUPT_TSS;
 				} else
 					goto normal;
 			} else
