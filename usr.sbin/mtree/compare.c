@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.18 1998/12/06 19:07:53 jwise Exp $	*/
+/*	$NetBSD: compare.c,v 1.19 1998/12/19 15:38:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.18 1998/12/06 19:07:53 jwise Exp $");
+__RCSID("$NetBSD: compare.c,v 1.19 1998/12/19 15:38:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,28 +121,29 @@ typeerr:		LABEL;
 	/* Set the uid/gid first, then set the mode. */
 	if (s->flags & (F_UID | F_UNAME) && s->st_uid != p->fts_statp->st_uid) {
 		LABEL;
-		(void)printf("%suser (%u, %u",
-		    tab, s->st_uid, p->fts_statp->st_uid);
-		if (uflag)
+		(void)printf("%suser (%lu, %lu",
+		    tab, (u_long)s->st_uid, (u_long)p->fts_statp->st_uid);
+		if (uflag) {
 			if (chown(p->fts_accpath, s->st_uid, -1))
 				(void)printf(", not modified: %s)\n",
 				    strerror(errno));
 			else
 				(void)printf(", modified)\n");
-		else
+		} else
 			(void)printf(")\n");
 		tab = "\t";
 	}
 	if (s->flags & (F_GID | F_GNAME) && s->st_gid != p->fts_statp->st_gid) {
 		LABEL;
-		(void)printf("%sgid (%u, %u",
-		    tab, s->st_gid, p->fts_statp->st_gid);
-		if (uflag)
+		(void)printf("%sgid (%lu, %lu",
+		    tab, (u_long)s->st_gid, (u_long)p->fts_statp->st_gid);
+		if (uflag) {
 			if (chown(p->fts_accpath, -1, s->st_gid))
 				(void)printf(", not modified: %s)\n",
 				    strerror(errno));
 			else
 				(void)printf(", modified)\n");
+		}
 		else
 			(void)printf(")\n");
 		tab = "\t";
@@ -150,14 +151,16 @@ typeerr:		LABEL;
 	if (s->flags & F_MODE &&
 	    s->st_mode != (p->fts_statp->st_mode & MBITS)) {
 		LABEL;
-		(void)printf("%spermissions (%#o, %#o",
-		    tab, s->st_mode, p->fts_statp->st_mode & MBITS);
-		if (uflag)
+		(void)printf("%spermissions (%#lo, %#lo",
+		    tab, (u_long)s->st_mode,
+		    (u_long)p->fts_statp->st_mode & MBITS);
+		if (uflag) {
 			if (chmod(p->fts_accpath, s->st_mode))
 				(void)printf(", not modified: %s)\n",
 				    strerror(errno));
 			else
 				(void)printf(", modified)\n");
+		}
 		else
 			(void)printf(")\n");
 		tab = "\t";
@@ -165,8 +168,8 @@ typeerr:		LABEL;
 	if (s->flags & F_NLINK && s->type != F_DIR &&
 	    s->st_nlink != p->fts_statp->st_nlink) {
 		LABEL;
-		(void)printf("%slink count (%u, %u)\n",
-		    tab, s->st_nlink, p->fts_statp->st_nlink);
+		(void)printf("%slink count (%lu, %lu)\n",
+		    tab, (u_long)s->st_nlink, (u_long)p->fts_statp->st_nlink);
 		tab = "\t";
 	}
 	if (s->flags & F_SIZE && s->st_size != p->fts_statp->st_size) {
@@ -220,13 +223,13 @@ typeerr:		LABEL;
 		    flags_to_string(s->st_flags, "none"));
 		(void)printf("\"%s\"",
 		    flags_to_string(p->fts_statp->st_flags, "none"));
-		if (uflag)
+		if (uflag) {
 			if (chflags(p->fts_accpath, s->st_flags))
 				(void)printf(", not modified: %s)\n",
 				    strerror(errno));
 			else
 				(void)printf(", modified)\n");
-		else
+		} else
 			(void)printf(")\n");
 		tab = "\t";
 	}

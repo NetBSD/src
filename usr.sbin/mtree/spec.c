@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.15 1998/12/06 19:07:53 jwise Exp $	*/
+/*	$NetBSD: spec.c,v 1.16 1998/12/19 15:38:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.15 1998/12/06 19:07:53 jwise Exp $");
+__RCSID("$NetBSD: spec.c,v 1.16 1998/12/19 15:38:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ spec()
 		*p = '\0';
 
 		/* Skip leading whitespace. */
-		for (p = buf; *p && isspace(*p); ++p);
+		for (p = buf; *p && isspace((unsigned char)*p); ++p);
 
 		/* If nothing but whitespace or comment char, continue. */
 		if (!*p || *p == '#')
