@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.21 1997/10/17 03:26:20 gwr Exp $	*/
+/*	$NetBSD: idprom.c,v 1.21.4.1 1998/01/27 19:51:03 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,10 +46,11 @@
 #include <sys/kernel.h>
 
 #include <machine/autoconf.h>
-#include <machine/control.h>
 #include <machine/idprom.h>
-#include <machine/machdep.h>
-#include <machine/mon.h>
+/* #include <machine/mon.h> */
+
+#include <sun3/sun3/control.h>
+#include <sun3/sun3/machdep.h>
 
 /*
  * This structure is what this driver is all about.
@@ -79,10 +80,11 @@ idprom_init()
 	} while (--len > 0);
 
 	if (xorsum != 0)
-		mon_printf("idprom: bad checksum\n");
+		printf("idprom: bad checksum\n");
 	if (identity_prom.idp_format < 1)
-		mon_printf("idprom: bad version\n");
+		printf("idprom: bad version\n");
 
+	cpu_machine_id = identity_prom.idp_machtype;
 	hostid = idprom_hostid();
 }
 
@@ -95,11 +97,11 @@ idprom_hostid()
 		char c[4];
 	} hid;
 
-	idp = &identity_prom;
 	/*
 	 * Construct the hostid from the idprom contents.
 	 * This appears to be the way SunOS does it.
 	 */
+	idp = &identity_prom;
 	hid.c[0] = idp->idp_machtype;
 	hid.c[1] = idp->idp_serialnum[0];
 	hid.c[2] = idp->idp_serialnum[1];

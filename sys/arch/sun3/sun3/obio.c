@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.33 1998/01/12 20:32:23 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.33.4.1 1998/01/27 19:51:10 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,11 +41,12 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/control.h>
-#include <machine/machdep.h>
 #include <machine/mon.h>
-#include <machine/obio.h>
 #include <machine/pte.h>
+
+#include <sun3/sun3/control.h>
+#include <sun3/sun3/machdep.h>
+#include <sun3/sun3/obio.h>
 
 static int  obio_match __P((struct device *, struct cfdata *, void *));
 static void obio_attach __P((struct device *, struct device *, void *));
@@ -210,8 +211,8 @@ save_prom_mappings __P((void))
 	vm_offset_t pa, segva, pgva;
 	int pte, sme, i;
 
-	segva = (vm_offset_t)MONSTART;
-	while (segva < (vm_offset_t)MONEND) {
+	segva = (vm_offset_t)SUN3_MONSTART;
+	while (segva < (vm_offset_t)SUN3_MONEND) {
 		sme = get_segmap(segva);
 		if (sme == SEGINV) {
 			segva += NBSG;
@@ -306,27 +307,4 @@ obio_init()
 	 * would poll the zs and toggle some LEDs...
 	 */
 	intreg_init();
-
-	/* Make the zs driver ready for console duty. */
-	zs_init();
-}
-
-/*
- * This function is used by some OBIO drivers to conserve
- * kernel virtual space by sharing mappings made by the
- * PROM monitor.  If we could not find any mapping made by
- * the PROM monitor, then make our own as usual.
- */
-caddr_t
-obio_mapin(obio_addr, obio_size)
-	int obio_addr, obio_size;
-{
-	caddr_t cp;
-
-	cp = obio_find_mapping((vm_offset_t)obio_addr, obio_size);
-	if (cp)
-		return (cp);
-
-	cp = bus_mapin(BUS_OBIO, obio_addr, obio_size);
-	return (cp);
 }

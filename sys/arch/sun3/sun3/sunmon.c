@@ -1,4 +1,4 @@
-/*	$NetBSD: sunmon.c,v 1.7 1997/07/29 06:43:58 fair Exp $	*/
+/*	$NetBSD: sunmon.c,v 1.7.8.1 1998/01/27 19:51:13 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,8 +41,8 @@
 #include <sys/reboot.h>
 
 #include <machine/mon.h>
-#include <machine/machdep.h>
 
+#include <sun3/sun3/machdep.h>
 #include <sun3/sun3/interreg.h>
 #include <sun3/sun3/vector.h>
 
@@ -118,7 +118,7 @@ void sunmon_halt()
 	(void) splhigh();
 	_mode_monitor();
 	*romVectorPtr->vector_cmd = sunmon_vcmd;
-#ifdef sun3x
+#ifdef	_SUN3X_
 	loadcrp(&mon_crp);
 #endif
 	mon_exit_to_mon();
@@ -135,7 +135,7 @@ void sunmon_reboot(bs)
 	(void) splhigh();
 	_mode_monitor();
 	*romVectorPtr->vector_cmd = sunmon_vcmd;
-#ifdef	sun3x
+#ifdef	_SUN3X_
 	loadcrp(&mon_crp);
 #endif
 	mon_reboot(bs);
@@ -180,7 +180,8 @@ tracedump(x1)
 /*
  * Handler for monitor vector cmd -
  * For now we just implement the old "g0" and "g4"
- * commands and a printf hack.  [lifted from freed cmu mach3 sun3 port]
+ * commands and a printf hack.
+ * [lifted from freed cmu mach3 sun3 port]
  */
 static void
 v_handler(addr, str)
@@ -248,8 +249,8 @@ v_handler(addr, str)
 void
 sunmon_init()
 {
-	MachMonRomVector *rvec;
-	MachMonBootParam *bp;
+	struct sunromvec *rvec;
+	struct bootparam *bp;
 	char **argp;
 	char *p;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.49 1997/08/27 11:24:30 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.49.6.1 1998/01/27 19:50:58 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -54,8 +54,14 @@
 #include <dev/scsipi/scsiconf.h>
 
 #include <machine/autoconf.h>
-#include <machine/machdep.h>
 #include <machine/mon.h>
+
+#include <sun3/sun3/machdep.h>
+
+/* Make sure the config is OK. */
+#if (defined(_SUN3_) + defined(_SUN3X_)) != 1
+#error "Must have exactly one of: SUN3 and SUN3X options"
+#endif
 
 /* Want compile-time initialization here. */
 int cold = 1;
@@ -124,7 +130,7 @@ static struct prom_n2f prom_dev_table[] = {
 void
 cpu_rootconf()
 {
-	MachMonBootParam *bp;
+	struct bootparam *bp;
 	struct prom_n2f *nf;
 	struct device *boot_device;
 	int boot_partition;

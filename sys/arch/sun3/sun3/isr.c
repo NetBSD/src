@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.33 1997/11/13 10:43:24 veego Exp $	*/
+/*	$NetBSD: isr.c,v 1.33.2.1 1998/01/27 19:51:05 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -52,9 +52,8 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/mon.h>
-#include <machine/obio.h>
-#include <machine/machdep.h>
 
+#include <sun3/sun3/machdep.h>
 #include <sun3/sun3/vector.h>
 
 extern int intrcnt[];	/* statistics */

@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.h,v 1.20 1997/04/28 21:59:25 gwr Exp $	*/
+/*	$NetBSD: obio.h,v 1.20.4.1 1998/01/27 19:51:10 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -75,19 +75,3 @@
 #define OBIO_DES_SIZE		0x00004
 #define OBIO_ECCREG_SIZE	0x00100
 
-#ifdef	_KERNEL
-
-caddr_t	obio_mapin __P((int, int));
-void	obio_init __P((void));
-caddr_t	obio_find_mapping __P((int pa, int size));
-caddr_t	obio_vm_alloc __P((int));
-
-/*
- * These are some OBIO devices that need early init calls.
- */
-void	zs_init     __P((void));
-void	eeprom_init __P((void));
-void	intreg_init __P((void));
-void	clock_init  __P((void));
-
-#endif	/* _KERNEL */

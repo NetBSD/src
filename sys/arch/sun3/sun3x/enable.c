@@ -1,4 +1,4 @@
-/*	$NetBSD: enable.c,v 1.1.2.1 1998/01/26 01:21:44 gwr Exp $	*/
+/*	$NetBSD: enable.c,v 1.1.2.2 1998/01/27 19:51:19 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,8 +39,19 @@
 #include <sys/param.h>
 #include <machine/fbio.h>
 #include <sun3/dev/fbvar.h>
-
+#include <sun3/sun3/machdep.h>
 #include <sun3/sun3x/enable.h>
+#include <sun3/sun3x/obio.h>
+
+volatile short *enable_reg;
+
+void
+enable_init()
+{
+
+	enable_reg = (short*) obio_find_mapping(OBIO_ENABLEREG, 2);
+}
+
 
 /*
  * External interfaces to the system enable register.

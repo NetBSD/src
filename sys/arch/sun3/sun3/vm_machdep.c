@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.40 1997/10/07 18:28:55 gwr Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.40.4.1 1998/01/27 19:51:16 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -60,7 +60,8 @@
 #include <machine/reg.h>
 #include <machine/pte.h>
 #include <machine/pmap.h>
-#include <machine/machdep.h>
+
+#include <sun3/sun3/machdep.h>
 
 extern void proc_do_uret __P((void));
 extern void proc_trampoline __P((void));
