@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.9 1999/03/27 01:21:36 wrstuden Exp $	*/
+/*	$NetBSD: zs.c,v 1.10 1999/04/24 21:08:12 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ int zs_major = 12;
 # error "no suitable software interrupt bit"
 #endif
 
-#define	ZS_DELAY()		(0)
+#define	ZS_DELAY()
 
 /* The layout of this is hardware-dependent (padding, order). */
 struct zschan {
@@ -169,8 +169,6 @@ zs_get_chan_addr(zs_unit, channel)
 	if (zs_unit >= NZS)
 		return (NULL);
 	addr = zsaddr[zs_unit];
-	if (addr == NULL)
-		addr = zsaddr[zs_unit] = findzs(zs_unit);
 	if (addr == NULL)
 		return (NULL);
 	if (channel == 0) {
@@ -284,7 +282,7 @@ zs_attach_mainbus(parent, self, aux)
 	void *aux;
 {
 #ifdef SUN4U
-	return 0;
+	return;
 #else
 	struct zsc_softc *zsc = (void *) self;
 	struct mainbus_attach_args *ma = aux;
@@ -317,8 +315,36 @@ zs_attach_sbus(parent, self, aux)
 	zsc->zsc_dmatag = sa->sa_dmatag;
 
 	/* Use the mapping setup by the Sun PROM. */
-	if (zsaddr[zs_unit] == NULL)
-		zsaddr[zs_unit] = findzs(zs_unit);
+	if (zsaddr[zs_unit] == NULL) {
+		if (sa->sa_npromvaddrs) {
+			/*
+			 * We're converting from a 32-bit pointer to a 64-bit
+			 * pointer.  Since the 32-bit entity is negative, but
+			 * the kernel is still mapped into the lower 4GB
+			 * range, this needs to be zero-extended.
+			 *
+			 * XXXXX If we map the kernel and devices into the
+			 * high 4GB range, this needs to be changed to
+			 * sign-extend the address.
+			 */
+			zsaddr[zs_unit] = 
+				(struct zsdevice *)
+				(unsigned long)sa->sa_promvaddrs[0];
+		} else {
+			bus_space_handle_t kvaddr;
+
+			if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
+					 sa->sa_offset,
+					 sa->sa_size,
+					 BUS_SPACE_MAP_LINEAR,
+					 0, &kvaddr) != 0) {
+				printf("%s @ sbus: cannot map registers\n",
+				       self->dv_xname);
+				return;
+			}
+			zsaddr[zs_unit] = (struct zsdevice *)kvaddr;
+		}
+	}
 	zs_attach(zsc, sa->sa_pri);
 }
 
@@ -933,7 +959,6 @@ static int
 prom_cngetc(dev)
 	dev_t dev;
 {
-	int s;
 	char c0;
 
 	if (!stdin) {
