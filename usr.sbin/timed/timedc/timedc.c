@@ -1,4 +1,4 @@
-/*	$NetBSD: timedc.c,v 1.8 2001/09/02 00:13:08 reinoud Exp $	*/
+/*	$NetBSD: timedc.c,v 1.9 2002/07/06 22:01:41 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)timedc.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: timedc.c,v 1.8 2001/09/02 00:13:08 reinoud Exp $");
+__RCSID("$NetBSD: timedc.c,v 1.9 2002/07/06 22:01:41 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,8 +135,7 @@ main(int argc, char *argv[])
 }
 
 void
-intr(signo)
-	int signo;
+intr(int signo)
 {
 	if (!fromatty)
 		exit(0);
@@ -179,7 +178,7 @@ getcmd(char *name)
  * Slice a string up into argc/argv.
  */
 void
-makeargv()
+makeargv(void)
 {
 	register char *cp;
 	register char **argp = margv;
@@ -207,9 +206,7 @@ makeargv()
  * Help command.
  */
 void
-help(argc, argv)
-	int argc;
-	char *argv[];
+help(int argc, char *argv[])
 {
 	register struct cmd *c;
 	extern struct cmd cmdtab[];
