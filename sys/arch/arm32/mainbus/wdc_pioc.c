@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pioc.c,v 1.9 1998/12/03 18:24:30 bouyer Exp $	*/
+/*	$NetBSD: wdc_pioc.c,v 1.10 1998/12/28 09:40:28 mark Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe.
@@ -145,13 +145,15 @@ wdc_pioc_attach(parent, self, aux)
 	    &sc->wdc_channel.ctl_ioh))
 		panic("%s: couldn't map aux registers\n", self->dv_xname);
 
-	sc->sc_ih = intr_claim(pa->pa_irq, IPL_BIO, "wdc",  wdcintr, sc);
+	sc->sc_ih = intr_claim(pa->pa_irq, IPL_BIO, "wdc",  wdcintr,
+	     &sc->wdc_channel);
 	if (!sc->sc_ih)
 		panic("%s: Cannot claim IRQ %d\n", self->dv_xname, pa->pa_irq);
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
 	sc->sc_wdcdev.PIO_cap = 0;
 	sc->wdc_chanptr = &sc->wdc_channel;
 	sc->sc_wdcdev.channels = &sc->wdc_chanptr;
+	sc->wdc_channel.wdc = &sc->sc_wdcdev
 	sc->sc_wdcdev.nchannels = 1;
 	sc->wdc_channel.channel = 0;
 	sc->wdc_channel.ch_queue = malloc(sizeof(struct channel_queue),
