@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.29 1997/04/09 19:37:53 thorpej Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.30 1997/06/05 19:45:29 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -52,6 +52,7 @@
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <vm/pmap.h>
+
 #include <machine/vmparam.h>
 #include <machine/pte.h>
 #include <machine/cpu.h>
@@ -60,6 +61,10 @@
 #include <machine/scu.h>
 #include <machine/acia.h>
 #include <machine/kcore.h>
+
+#include <m68k/cpu.h>
+#include <m68k/cacheops.h>
+
 #include <atari/atari/intr.h>
 #include <atari/atari/stalloc.h>
 #include <atari/dev/ym2149reg.h>
@@ -67,6 +72,7 @@
 void start_c __P((int, u_int, u_int, u_int, char *));
 static void atari_hwinit __P((void));
 static void cpu_init_kcorehdr __P((u_long));
+static void initcpu __P((void));
 static void mmu030_setup __P((st_entry_t *, u_int, pt_entry_t *, u_int,
 			      pt_entry_t *, u_int, u_int));
 static void map_io_areas __P((pt_entry_t *, u_int, u_int));
@@ -137,7 +143,6 @@ u_long	st_pool_virt, st_pool_phys;
  * Some of the code in here is `stolen' from Amiga MACH, and was 
  * written by Bryan Ford and Niklas Hallqvist.
  * 
- * Very crude 68040 support by Michael L. Hitch.
  */
 
 void
@@ -208,6 +213,11 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 * to be done early!
 	 */
 	set_machtype();
+
+	/*
+	 * Initialize cpu specific stuff
+	 */
+	initcpu();
 
 	/*
 	 * We run the kernel from ST memory at the moment.
@@ -888,6 +898,57 @@ mmu040_setup(sysseg, kstsize, pt, ptsize, sysptmap, sysptsize, kbase)
 		*sg++ = SG_NV;
 }
 #endif /* M68040 */
+
+#if defined(M68060)
+int m68060_pcr_init = 0x21;	/* make this patchable */
+#endif
+
+static void
+initcpu()
+{
+	/* XXX should init '40 vecs here, too */
+#if defined(M68060)
+	extern caddr_t vectab[256];
+
+#if defined(M060SP)
+	extern u_int8_t FP_CALL_TOP[], I_CALL_TOP[];
+#else
+	extern u_int8_t illinst;
+#endif
+	extern u_int8_t fpfault;
+
+	if (cputype == CPU_68060) {
+		asm volatile ("movl %0,d0; .word 0x4e7b,0x0808" : : 
+			"d"(m68060_pcr_init):"d0" );
+
+#if defined(M060SP)
+		/* integer support */
+		vectab[61] = &I_CALL_TOP[128 + 0x00];
+
+		/* floating point support */
+		/*
+		 * XXX maybe we really should run-time check for the
+		 * stack frame format here:
+		 */
+		vectab[11] = &FP_CALL_TOP[128 + 0x30];
+
+		vectab[55] = &FP_CALL_TOP[128 + 0x38];
+		vectab[60] = &FP_CALL_TOP[128 + 0x40];
+
+		vectab[54] = &FP_CALL_TOP[128 + 0x00];
+		vectab[52] = &FP_CALL_TOP[128 + 0x08];
+		vectab[53] = &FP_CALL_TOP[128 + 0x10];
+		vectab[51] = &FP_CALL_TOP[128 + 0x18];
+		vectab[50] = &FP_CALL_TOP[128 + 0x20];
+		vectab[49] = &FP_CALL_TOP[128 + 0x28];
+#else
+		vectab[61] = &illinst;
+#endif
+		vectab[48] = &fpfault;
+	}
+	DCIS();
+#endif
+}
 
 #ifdef DEBUG
 void
