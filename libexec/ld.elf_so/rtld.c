@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.16 1999/03/03 21:18:00 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.17 1999/03/08 10:44:25 kleink Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -231,11 +231,9 @@ _rtld_exit()
  * environment strings.  Finally, there is a sequence of "auxiliary
  * vector" entries.
  *
- * This function returns the entry point for the main program in %eax,
- * and the dynamic linker's exit procedure in %edx.  We accomplish this
- * by declaring the return value to have the 64-bit type "long long".
- * Such values are returned with their most-significant 32 bits in %edx,
- * and their least-significant 32 bits in %eax.
+ * This function returns the entry point for the main program, the dynamic
+ * linker's exit procedure in sp[0], and a pointer to the main object in
+ * sp[1].
  */
 Elf_Addr
 _rtld(sp)
