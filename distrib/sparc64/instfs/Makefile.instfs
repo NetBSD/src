@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.instfs,v 1.1.2.1 2002/06/02 01:26:51 tv Exp $
+#	$NetBSD: Makefile.instfs,v 1.1.2.2 2002/10/13 23:59:43 lukem Exp $
 
 INSTFSDIR=	${.CURDIR}/../instfs
 
 MAKEFS_FLAGS=	-o bsize=16k,fsize=2k -f 15
 
 WARNS=		1
-DBG=		-Os
+DBG= #		-Os
 
 CRUNCHBIN=	ramdiskbin
 LISTS=		${INSTFSDIR}/list ${DISTRIBDIR}/common/list.sysinst
