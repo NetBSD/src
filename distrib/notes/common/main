@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.179.2.16 2002/07/22 17:27:11 lukem Exp $
+.\"	$NetBSD: main,v 1.179.2.17 2002/07/24 06:57:23 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd July 10, 2002
+.Dd July 24, 2002
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
@@ -749,6 +749,8 @@ amd 6.0.6
 .It
 BIND 8.3.3
 .It
+binutils 2.11.2
+.It
 bzip2 1.0.2
 .It
 cvs 1.11
@@ -756,6 +758,8 @@ cvs 1.11
 dhcp 3.0.1rc9
 .It
 file 3.38
+.It
+gcc 2.95.3
 .It
 groff 1.16.1
 .It
@@ -784,8 +788,10 @@ routed 2.24
 sendmail 8.11.6
 .It
 tcpdump 3.7.1
+.if \n[i386] \{\
 .It
-XFree86 4.2.0
+XFree86 4.2.0 (i386 only)
+\}
 .bullet)
 .It
 Many new packages in the
