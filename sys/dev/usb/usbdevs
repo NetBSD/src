@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.360 2003/12/31 14:33:20 hamajima Exp $
+$NetBSD: usbdevs,v 1.361 2004/01/03 14:12:57 soren Exp $
 
 /*
  * Copyright (c) 1998-2003 The NetBSD Foundation, Inc.
@@ -1099,6 +1099,7 @@ product MOBILITY EA		0x0204	Ethernet Adapter
 product MOTOROLA MC141555	0x1555	MC141555 hub controller
 product MOTOROLA SB4100		0x4100	SB4100 USB Cable Modem
 product MOTOROLA2 T720C		0x2822	T720c
+product MOTOROLA2 A920		0x4002	A920
 
 /* MultiTech products */
 product MULTITECH ATLAS		0xf101	MT5634ZBA-USB modem
