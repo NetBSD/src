@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.45 2001/07/26 22:59:57 lukem Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.46 2001/07/27 06:41:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.45 2001/07/26 22:59:57 lukem Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.46 2001/07/27 06:41:02 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -493,7 +493,7 @@ next:
 	if ((i = fssize - j * sblock.fs_fpg) < sblock.fs_fpg &&
 	    cgdmin(&sblock, j) - cgbase(&sblock, j) > i) {
 		if (j == 0) {
-			printf("Filesystem must have at least %d sectors\n",
+			printf("File system must have at least %d sectors\n",
 			    NSPF(&sblock) *
 			    (cgdmin(&sblock, 0) + 3 * sblock.fs_frag));
 			exit(30);
@@ -995,7 +995,7 @@ calcipg(int32_t cylpg, int32_t bpcg, off_t *usedbp)
 
 	/*
 	 * Prepare to scale by fssize / (number of sectors in cylinder groups).
-	 * Note that fssize is still in sectors, not filesystem blocks.
+	 * Note that fssize is still in sectors, not file system blocks.
 	 */
 	ncyl = howmany(fssize, secpercyl);
 	ncg = howmany(ncyl, cylpg);
