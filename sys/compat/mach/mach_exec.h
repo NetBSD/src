@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.h,v 1.19 2003/06/29 22:29:34 fvdl Exp $	 */
+/*	$NetBSD: mach_exec.h,v 1.20 2003/11/17 13:20:06 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@ struct mach_emuldata {
 	struct mach_port *med_bootstrap;/* task bootstrap port */
 	struct mach_port *med_kernel;	/* task kernel port */
 	struct mach_port *med_host;	/* task host port */
-	struct mach_port *med_exc[MACH_EXC_MAX];	/* Exception ports */
+	struct mach_port *med_exc[MACH_EXC_MAX + 1];	/* Exception ports */
 
 	int med_dirty_thid;		/* Thread id not yet initialized */
 	int med_suspend;		/* Suspend semaphore */
