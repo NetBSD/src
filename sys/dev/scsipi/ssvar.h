@@ -1,4 +1,4 @@
-/*	$NetBSD: ssvar.h,v 1.11 2004/08/21 20:40:36 thorpej Exp $	*/
+/*	$NetBSD: ssvar.h,v 1.12 2004/08/27 20:37:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -68,6 +68,7 @@ struct ss_softc {
 	struct scsipi_periph *sc_periph; /* contains our targ, lun, etc. */
 	struct scan_io sio;
 	struct bufq_state buf_queue;	/* the queue of pending IO operations */
+	struct callout sc_callout;	/* to restart the buf queue */
 	u_int quirks;			/* scanner is only mildly twisted */
 #define SS_Q_GET_BUFFER_SIZE	0x0001	/* poll for available data in ssread() */
 /* truncate to byte boundary is assumed by default unless one of these is set */
@@ -76,6 +77,8 @@ struct ss_softc {
 #define SS_Q_THRESHOLD_FOLLOWS_BRIGHTNESS 0x0008
 	struct ss_special *special;	/* special handlers for spec. devices */
 };
+
+void	ssrestart(void *); 
 
 /*
  * define the special attach routines if configured
