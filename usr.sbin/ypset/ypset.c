@@ -1,4 +1,4 @@
-/*	$NetBSD: ypset.c,v 1.9 1996/05/29 20:12:03 thorpej Exp $	*/
+/*	$NetBSD: ypset.c,v 1.10 1996/06/18 20:32:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,13 +33,17 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$NetBSD: ypset.c,v 1.9 1996/05/29 20:12:03 thorpej Exp $";
+static char rcsid[] = "$NetBSD: ypset.c,v 1.10 1996/06/18 20:32:25 christos Exp $";
 #endif
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <err.h>
 #include <netdb.h>
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
@@ -47,59 +51,78 @@ static char rcsid[] = "$NetBSD: ypset.c,v 1.9 1996/05/29 20:12:03 thorpej Exp $"
 #include <rpcsvc/ypclnt.h>
 #include <arpa/inet.h>
 
+extern char *__progname;
+
+static void usage __P((void));
+static void gethostaddr __P((const char *, struct in_addr *));
+static int bind_tohost __P((struct sockaddr_in *, char *, char *));
+
+static void
 usage()
 {
-	fprintf(stderr, "Usage:\n");
-	fprintf(stderr, "\typset [-h host ] [-d domain] server\n");
+	(void) fprintf(stderr, "Usage: %s [-h host ] [-d domain] server\n",
+	    __progname);
 	exit(1);
 }
 
+static void
+gethostaddr(host, ia)
+	const char *host;
+	struct in_addr *ia;
+{
+	struct hostent *hp;
+
+	if (inet_aton(host, ia) != 0)
+		return;
+
+	hp = gethostbyname(host);
+	if (hp == NULL)
+		errx(1, "Cannot get host address for %s: %s", host,
+		    hstrerror(h_errno));
+	(void) memcpy(ia, hp->h_addr, sizeof(*ia));
+}
+
+
+static int
 bind_tohost(sin, dom, server)
-struct sockaddr_in *sin;
-char *dom, *server;
+	struct sockaddr_in *sin;
+	char *dom, *server;
 {
 	struct ypbind_setdom ypsd;
 	struct timeval tv;
-	struct hostent *hp;
 	CLIENT *client;
 	int sock, port;
 	int r;
 	
-	if( (port=htons(getrpcport(server, YPPROG, YPPROC_NULL, IPPROTO_UDP))) == 0) {
-		fprintf(stderr, "%s not running ypserv.\n", server);
-		exit(1);
-	}
+	port = htons(getrpcport(server, YPPROG, YPPROC_NULL, IPPROTO_UDP));
+	if (port == 0)
+		errx(1, "%s not running ypserv.", server);
 
-	bzero(&ypsd, sizeof ypsd);
+	(void) memset(&ypsd, 0, sizeof ypsd);
 
-	if (inet_aton(server, &ypsd.ypsetdom_addr) == 0) {
-		hp = gethostbyname(server);
-		if (hp == NULL) {
-			fprintf(stderr, "ypset: can't find address for %s\n", server);
-			exit(1);
-		}
-		bcopy(hp->h_addr, &ypsd.ypsetdom_addr, sizeof(ypsd.ypsetdom_addr));
-	}
+	gethostaddr(server, &ypsd.ypsetdom_addr);
 
-	strncpy(ypsd.ypsetdom_domain, dom, sizeof ypsd.ypsetdom_domain);
+	(void) strncpy(ypsd.ypsetdom_domain, dom, sizeof ypsd.ypsetdom_domain);
+	ypsd.ypsetdom_domain[sizeof(ypsd.ypsetdom_domain) - 1] = '\0';
 	ypsd.ypsetdom_port = port;
 	ypsd.ypsetdom_vers = YPVERS;
 	
 	tv.tv_sec = 15;
 	tv.tv_usec = 0;
 	sock = RPC_ANYSOCK;
+
 	client = clntudp_create(sin, YPBINDPROG, YPBINDVERS, tv, &sock);
-	if (client==NULL) {
-		fprintf(stderr, "can't yp_bind: Reason: %s\n",
-			yperr_string(YPERR_YPBIND));
+	if (client == NULL) {
+		warnx("Can't yp_bind: Reason: %s", yperr_string(YPERR_YPBIND));
 		return YPERR_YPBIND;
 	}
 	client->cl_auth = authunix_create_default();
 
 	r = clnt_call(client, YPBINDPROC_SETDOM,
-		xdr_ypbind_setdom, &ypsd, xdr_void, NULL, tv);
-	if(r) {
-		fprintf(stderr, "Sorry, cannot ypset for domain %s on host.\n", dom);
+	    xdr_ypbind_setdom, &ypsd, xdr_void, NULL, tv);
+	if (r) {
+		warnx("Cannot ypset for domain %s on host %s: %s.\n",
+		    dom, server, clnt_sperrno(r));
 		clnt_destroy(client);
 		return YPERR_YPBIND;
 	}
@@ -109,10 +132,10 @@ char *dom, *server;
 
 int
 main(argc, argv)
-char **argv;
+	int argc;
+	char *argv[];
 {
 	struct sockaddr_in sin;
-	struct hostent *hent;
 	extern char *optarg;
 	extern int optind;
 	char *domainname;
@@ -120,35 +143,24 @@ char **argv;
 
 	yp_get_default_domain(&domainname);
 
-	bzero(&sin, sizeof sin);
+	(void) memset(&sin, 0, sizeof sin);
 	sin.sin_family = AF_INET;
-	sin.sin_addr.s_addr = htonl(0x7f000001);
+	sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 
-	while( (c=getopt(argc, argv, "h:d:")) != -1)
+	while((c = getopt(argc, argv, "h:d:")) != -1)
 		switch(c) {
 		case 'd':
 			domainname = optarg;
 			break;
 		case 'h':
-			if (inet_aton(optarg, &sin.sin_addr) == 0) {
-				hent = gethostbyname(optarg);
-				if (hent == NULL) {
-					fprintf(stderr, "ypset: host %s unknown\n",
-					    optarg);
-					exit(1);
-				}
-				bcopy(&hent->h_addr, &sin.sin_addr,
-				    sizeof(sin.sin_addr));
-			}
+			gethostaddr(optarg, &sin.sin_addr);
 			break;
 		default:
 			usage();
 		}
 
-	if(optind + 1 != argc )
+	if(optind + 1 != argc)
 		usage();
 
-	if (bind_tohost(&sin, domainname, argv[optind]))
-		exit(1);
-	exit(0);
+	return bind_tohost(&sin, domainname, argv[optind]) != 0;
 }
