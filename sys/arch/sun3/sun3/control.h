@@ -33,3 +33,4 @@
 #define CONTEXT_7  0x7
 #define CONTEXT_NUM 0x8
 
+void control_copy_byte __P((caddr_t from, caddr_t to, int size));
