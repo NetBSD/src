@@ -1,8 +1,10 @@
-# $NetBSD: Makefile,v 1.1.1.1 1995/10/08 22:39:09 gwr Exp $
+# $NetBSD: Makefile,v 1.1.1.1.6.1 1996/06/28 17:42:49 jtc Exp $
 # edlabel (Edit Disk LABEL)
 
 PROG=	edlabel
 NOMAN=
+CFLAGS += -Wall
+LDADD  += -lutil
 
 all: ${PROG}
 
