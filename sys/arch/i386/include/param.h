@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.49 2002/10/01 12:57:08 fvdl Exp $	*/
+/*	$NetBSD: param.h,v 1.50 2002/10/06 12:37:12 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,6 +37,9 @@
  *
  *	@(#)param.h	5.8 (Berkeley) 6/28/91
  */
+
+#ifndef _I386_PARAM_H_
+#define _I386_PARAM_H_
 
 /*
  * Machine dependent constants for Intel 386.
@@ -90,7 +93,15 @@
 
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
+
+#ifdef _KERNEL_OPT
+#include "opt_noredzone.h"
+#endif
+#ifdef NOREDZONE
 #define	UPAGES		2		/* pages of u-area */
+#else
+#define UPAGES		4
+#endif
 #define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
 
 #ifndef MSGBUFSIZE
@@ -170,3 +181,5 @@
 #define	i386_trunc_page(x)	((unsigned)(x) & ~PGOFSET)
 #define	i386_btop(x)		((unsigned)(x) >> PGSHIFT)
 #define	i386_ptob(x)		((unsigned)(x) << PGSHIFT)
+
+#endif /* _I386_PARAM_H_ */
