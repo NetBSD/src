@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 1997/07/20 22:37:33 christos Exp $
+#	$NetBSD: Makefile,v 1.7 1997/10/10 19:56:36 christos Exp $
 #       @(#)Makefile	8.1 (Berkeley) 5/31/93
 
 # To install on versions prior to BSD 4.4 the following may have to be
-# defined with CFLAGS +=
+# defined with CPPFLAGS +=
 #
 # -DNET2_STAT	Use NET2 or older stat structure. The version of the
 # 		stat structure is easily determined by looking at the

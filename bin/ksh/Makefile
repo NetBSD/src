@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.9 1997/07/20 22:37:12 christos Exp $
+#	$NetBSD: Makefile,v 1.10 1997/10/10 19:56:26 christos Exp $
 
-CFLAGS+=	-DHAVE_CONFIG_H -I.
+CPPFLAGS+=	-DHAVE_CONFIG_H -I.
 
 PROG=	ksh
 SRCS=	alloc.c c_ksh.c c_sh.c c_test.c c_ulimit.c edit.c emacs.c \

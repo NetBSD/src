@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1997/05/08 21:11:17 gwr Exp $
+#	$NetBSD: Makefile,v 1.4 1997/10/10 19:49:44 christos Exp $
 
 PROG=	mount_ffs
 SRCS=	mount_ffs.c getmntopts.c
@@ -8,7 +8,7 @@ MLINKS=	mount_ffs.8 mount_ufs.8
 LINKS=  ${BINDIR}/mount_ffs ${BINDIR}/mount_ufs
 
 MOUNT=	${.CURDIR}/../mount
-CFLAGS+= -I${MOUNT}
+CPPFLAGS+= -I${MOUNT}
 .PATH:	${MOUNT}
 
 .include <bsd.prog.mk>

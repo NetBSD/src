@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 1997/07/20 22:37:44 christos Exp $
+#	$NetBSD: Makefile,v 1.5 1997/10/10 19:56:46 christos Exp $
 
 PROG=	rcmd
 SRCS=	rsh.c
-CFLAGS+=-DIN_RCMD
+CPPFLAGS+=-DIN_RCMD
 BINOWN=	root
 BINMODE=4555
 .PATH:	${.CURDIR}/../../usr.bin/rsh
