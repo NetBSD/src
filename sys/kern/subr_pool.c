@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.17 1998/12/27 21:13:43 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.18 1999/03/23 02:49:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -723,7 +723,7 @@ pool_prime(pp, n, storage)
 	(void)lockmgr(&pp->pr_resourcelock, LK_EXCLUSIVE, NULL);
 	newnitems = pp->pr_minitems + n;
 	newpages =
-		roundup(pp->pr_itemsperpage,newnitems) / pp->pr_itemsperpage
+		roundup(newnitems, pp->pr_itemsperpage) / pp->pr_itemsperpage
 		- pp->pr_minpages;
 
 	while (newpages-- > 0) {
@@ -841,7 +841,7 @@ pool_setlowat(pp, n)
 	pp->pr_minitems = n;
 	pp->pr_minpages = (n == 0)
 		? 0
-		: roundup(pp->pr_itemsperpage,n) / pp->pr_itemsperpage;
+		: roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
 	(void)lockmgr(&pp->pr_resourcelock, LK_RELEASE, NULL);
 }
 
@@ -854,7 +854,7 @@ pool_sethiwat(pp, n)
 	(void)lockmgr(&pp->pr_resourcelock, LK_EXCLUSIVE, NULL);
 	pp->pr_maxpages = (n == 0)
 		? 0
-		: roundup(pp->pr_itemsperpage,n) / pp->pr_itemsperpage;
+		: roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
 	(void)lockmgr(&pp->pr_resourcelock, LK_RELEASE, NULL);
 }
 
