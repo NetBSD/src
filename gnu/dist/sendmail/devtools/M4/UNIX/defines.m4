@@ -1,6 +1,6 @@
 divert(-1)
 #
-# Copyright (c) 1999-2000 Sendmail, Inc. and its suppliers.
+# Copyright (c) 1999-2001 Sendmail, Inc. and its suppliers.
 #	All rights reserved.
 #
 # By using this file, you agree to the terms and conditions set
@@ -10,7 +10,7 @@ divert(-1)
 #
 #  Definitions for Makefile construction for sendmail
 #
-#	Id: defines.m4,v 8.31.4.1 2000/06/05 17:29:45 gshapiro Exp
+#	Id: defines.m4,v 8.31.4.6 2001/02/14 04:07:22 gshapiro Exp
 #
 divert(0)dnl
 
@@ -51,7 +51,7 @@ ENVDEF= ifdef(`confENVDEF', `confENVDEF') ifdef(`conf_'bldCURRENT_PRD`_ENVDEF', 
 # location of the source directory
 SRCDIR=	ifdef(`confSRCDIR', `confSRCDIR', `_SRC_PATH_')
 
-# include directories
+# inc`'lude directories
 INCDIRS= confINCDIRS
 
 # library directories
@@ -61,7 +61,6 @@ LIBDIRS=confLIBDIRS
 LIBADD= ifdef(`conf_'bldCURRENT_PRD`_LIBS', `conf_'bldCURRENT_PRD`_LIBS') 
 
 # libraries required on your system
-#  delete -l44bsd if you are not running BIND 4.9.x
 LIBS= ${LIBADD} ifdef(`confLIBS', `confLIBS') ifdef(`conf_'bldCURRENT_PRD`_LIB_POST', `conf_'bldCURRENT_PRD`_LIB_POST') 
 
 # location of sendmail binary (usually /usr/sbin or /usr/lib)
@@ -75,6 +74,12 @@ SBINDIR=ifdef(`confSBINDIR', `confSBINDIR', `/usr/sbin')
 
 # location of "libexec" binaries (usually /usr/libexec or /usr/etc)
 EBINDIR=ifdef(`confEBINDIR', `confEBINDIR', `/usr/libexec')
+
+# where to install inc`'lude files (usually /usr/inc`'lude)
+INCLUDEDIR=ifdef(`confINCLUDEDIR', `confINCLUDEDIR', `/usr/inc`'lude')
+
+# where to install library files (usually /usr/lib)
+LIBDIR=ifdef(`confLIBDIR', `confLIBDIR', `/usr/lib')
 
 # additional .c files needed
 SRCADD= ifdef(`confSRCADD', `confSRCADD')
@@ -126,3 +131,12 @@ SBINOWN=ifdef(`confSBINOWN', `confSBINOWN', `root')
 SBINGRP=ifdef(`confSBINGRP', `confSBINGRP', `bin')
 SBINMODE=ifdef(`confSBINMODE', `confSBINMODE', `4555')
 
+# Library ownership/permissions
+LIBOWN=ifdef(`confLIBOWN', `confLIBOWN', `root')
+LIBGRP=ifdef(`confLIBGRP', `confLIBGRP', `bin')
+LIBMODE=ifdef(`confLIBMODE', `confLIBMODE', `0444')
+
+# Include file ownership/permissions
+INCOWN=ifdef(`confINCOWN', `confINCOWN', `root')
+INCGRP=ifdef(`confINCGRP', `confINCGRP', `bin')
+INCMODE=ifdef(`confINCMODE', `confINCMODE', `0444')

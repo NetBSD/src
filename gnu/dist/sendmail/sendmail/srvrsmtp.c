@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -16,14 +16,16 @@
 
 #ifndef lint
 # if SMTP
-static char id[] = "@(#)Id: srvrsmtp.c,v 8.471.2.2.2.40 2000/07/18 02:24:45 gshapiro Exp (with SMTP)";
+static char id[] = "@(#)Id: srvrsmtp.c,v 8.471.2.2.2.67 2001/01/07 19:31:05 gshapiro Exp (with SMTP)";
 # else /* SMTP */
-static char id[] = "@(#)Id: srvrsmtp.c,v 8.471.2.2.2.40 2000/07/18 02:24:45 gshapiro Exp (without SMTP)";
+static char id[] = "@(#)Id: srvrsmtp.c,v 8.471.2.2.2.67 2001/01/07 19:31:05 gshapiro Exp (without SMTP)";
 # endif /* SMTP */
 #endif /* ! lint */
 
 #if SMTP
-# include "sfsasl.h"
+# if SASL || STARTTLS
+#  include "sfsasl.h"
+# endif /* SASL || STARTTLS */
 # if SASL
 #  define ENC64LEN(l)	(((l) + 2) * 4 / 3 + 1)
 static int saslmechs __P((sasl_conn_t *, char **));
@@ -111,6 +113,11 @@ struct cmd
 /* debugging-only commands, only enabled if SMTPDEBUG is defined */
 # define CMDDBGQSHOW	24	/* showq -- show send queue */
 # define CMDDBGDEBUG	25	/* debug -- set debug mode */
+
+/*
+**  Note: If you change this list,
+**        remember to update 'helpfile'
+*/
 
 static struct cmd	CmdTab[] =
 {
@@ -232,6 +239,7 @@ smtp(nullserver, d_flags, e)
 # endif /* SASL */
 # if STARTTLS
 	int r;
+	int rfd, wfd;
 	volatile bool usetls = TRUE;
 	volatile bool tls_active = FALSE;
 	bool saveQuickAbort;
@@ -368,8 +376,8 @@ smtp(nullserver, d_flags, e)
 	saveSuprErrs = SuprErrs;
 	SuprErrs = TRUE;
 	QuickAbort = FALSE;
-	if (rscheck("offer_tls", CurSmtpClient, "", e, TRUE, FALSE, 8) != EX_OK
-		    || Errors > 0)
+	if (rscheck("offer_tls", CurSmtpClient, "", e, TRUE, FALSE, 8,
+		    NULL) != EX_OK || Errors > 0)
 		usetls = FALSE;
 	QuickAbort = saveQuickAbort;
 	SuprErrs = saveSuprErrs;
@@ -435,7 +443,7 @@ smtp(nullserver, d_flags, e)
 	else
 		snprintf(cmdbuf, sizeof cmdbuf,
 			 "%s-%%.*s ESMTP%%s", greetcode);
-	message(cmdbuf, id - inp, inp, id);
+	message(cmdbuf, (int) (id - inp), inp, id);
 
 	/* output remaining lines */
 	while ((id = p) != NULL && (p = strchr(id, '\n')) != NULL)
@@ -1001,8 +1009,11 @@ smtp(nullserver, d_flags, e)
 				message("454 4.3.3 TLS not available: error generating SSL handle");
 				break;
 			}
-			if (SSL_set_rfd(srv_ssl, fileno(InChannel)) <= 0 ||
-			    SSL_set_wfd(srv_ssl, fileno(OutChannel)) <= 0)
+			rfd = fileno(InChannel);
+			wfd = fileno(OutChannel);
+			if (rfd < 0 || wfd < 0 ||
+			    SSL_set_rfd(srv_ssl, rfd) <= 0 ||
+			    SSL_set_wfd(srv_ssl, wfd) <= 0)
 			{
 				message("454 4.3.3 TLS not available: error set fd");
 				SSL_free(srv_ssl);
@@ -1043,7 +1054,7 @@ smtp(nullserver, d_flags, e)
 
 			/* ignore return code for now, it's in {verify} */
 			(void) tls_get_info(srv_ssl, &BlankEnvelope, TRUE,
-					    CurSmtpClient);
+					    CurSmtpClient, TRUE);
 
 			/*
 			**  call Stls_client to find out whether
@@ -1056,8 +1067,8 @@ smtp(nullserver, d_flags, e)
 			QuickAbort = FALSE;
 			if (rscheck("tls_client",
 				     macvalue(macid("{verify}", NULL), e),
-				     "STARTTLS", e, TRUE, TRUE, 6) != EX_OK ||
-			    Errors > 0)
+				     "STARTTLS", e, TRUE, TRUE, 6, NULL) !=
+			    EX_OK || Errors > 0)
 			{
 				extern char MsgBuf[];
 
@@ -1148,7 +1159,7 @@ smtp(nullserver, d_flags, e)
 			if (gothello)
 			{
 				usrerr("503 %s Duplicate HELO/EHLO",
-					MyHostName);
+				       MyHostName);
 				break;
 			}
 
@@ -1252,7 +1263,14 @@ smtp(nullserver, d_flags, e)
 				break;
 			}
 
-			/* print EHLO features list */
+			/*
+			**  print EHLO features list
+			**
+			**  Note: If you change this list,
+			**        remember to update 'helpfile'
+			*/
+
+
 			message("250-ENHANCEDSTATUSCODES");
 			if (!bitset(PRIV_NOEXPN, PrivacyFlags))
 			{
@@ -1502,11 +1520,12 @@ smtp(nullserver, d_flags, e)
 
 			/* do config file checking of the sender */
 			if (rscheck("check_mail", addr,
-				    NULL, e, TRUE, TRUE, 4) != EX_OK ||
+				    NULL, e, TRUE, TRUE, 4, NULL) != EX_OK ||
 			    Errors > 0)
 				goto undo_subproc_no_pm;
 
-			if (MaxMessageSize > 0 && e->e_msgsize > MaxMessageSize)
+			if (MaxMessageSize > 0 &&
+			   (e->e_msgsize > MaxMessageSize || e->e_msgsize < 0))
 			{
 				usrerr("552 5.2.3 Message size exceeds fixed maximum message size (%ld)",
 					MaxMessageSize);
@@ -1544,7 +1563,7 @@ smtp(nullserver, d_flags, e)
 					break;
 
 				  case SMFIR_TEMPFAIL:
-					usrerr("451 4.7.1 Try again later");
+					usrerr("451 4.7.1 Please try again later");
 					break;
 				}
 				if (response != NULL)
@@ -1696,7 +1715,7 @@ smtp(nullserver, d_flags, e)
 
 			/* do config file checking of the recipient */
 			if (rscheck("check_rcpt", addr,
-				    NULL, e, TRUE, TRUE, 4) != EX_OK ||
+				    NULL, e, TRUE, TRUE, 4, NULL) != EX_OK ||
 			    Errors > 0)
 				break;
 
@@ -1722,7 +1741,7 @@ smtp(nullserver, d_flags, e)
 					break;
 
 				  case SMFIR_TEMPFAIL:
-					usrerr("451 4.7.1 Try again later");
+					usrerr("451 4.7.1 Please try again later");
 					break;
 				}
 				if (response != NULL)
@@ -1824,7 +1843,7 @@ smtp(nullserver, d_flags, e)
 					break;
 
 				  case SMFIR_TEMPFAIL:
-					usrerr("451 4.7.1 Try again later");
+					usrerr("451 4.7.1 Please try again later");
 					break;
 				}
 				if (response != NULL)
@@ -2055,13 +2074,19 @@ smtp(nullserver, d_flags, e)
 			{
 				/* do config file checking of the address */
 				if (rscheck(vrfy ? "check_vrfy" : "check_expn",
-					    p, NULL, e, TRUE, FALSE, 4)
+					    p, NULL, e, TRUE, FALSE, 4, NULL)
 				    != EX_OK || Errors > 0)
 					goto undo_subproc;
 				(void) sendtolist(p, NULLADDR, &vrfyqueue, 0, e);
 			}
 			if (wt > 0)
-				(void) sleep(wt - (curtime() - previous));
+			{
+				time_t t;
+
+				t = wt - (curtime() - previous);
+				if (t > 0)
+					(void) sleep(t);
+			}
 			if (Errors > 0)
 				goto undo_subproc;
 			if (vrfyqueue == NULL)
@@ -2079,7 +2104,7 @@ smtp(nullserver, d_flags, e)
 				/* see if there is more in the vrfy list */
 				a = vrfyqueue;
 				while ((a = a->q_next) != NULL &&
-				       (!QS_IS_UNDELIVERED(vrfyqueue->q_state)))
+				       (!QS_IS_UNDELIVERED(a->q_state)))
 					continue;
 				printvrfyaddr(vrfyqueue, a == NULL, vrfy);
 				vrfyqueue = a;
@@ -2122,8 +2147,8 @@ smtp(nullserver, d_flags, e)
 					     "ETRN", e);
 
 			/* do config file checking of the parameter */
-			if (rscheck("check_etrn", p, NULL, e, TRUE, FALSE, 4)
-			    != EX_OK || Errors > 0)
+			if (rscheck("check_etrn", p, NULL, e, TRUE, FALSE, 4,
+				    NULL) != EX_OK || Errors > 0)
 				break;
 
 			if (LogLevel > 5)
@@ -2311,7 +2336,7 @@ doquit:
 **		e -- the current envelope.
 **
 **	Returns:
-**		none.
+**		time to wait.
 **
 **	Side Effects:
 **		Slows down if we seem to be under attack.
@@ -2429,11 +2454,12 @@ mail_esmtp_args(kp, vp, e)
 			/* NOTREACHED */
 		}
 		define(macid("{msg_size}", NULL), newstr(vp), e);
-# if defined(__STDC__) && !defined(BROKEN_ANSI_LIBRARY)
-		e->e_msgsize = strtoul(vp, (char **) NULL, 10);
-# else /* defined(__STDC__) && !defined(BROKEN_ANSI_LIBRARY) */
 		e->e_msgsize = strtol(vp, (char **) NULL, 10);
-# endif /* defined(__STDC__) && !defined(BROKEN_ANSI_LIBRARY) */
+		if (e->e_msgsize == LONG_MAX && errno == ERANGE)
+		{
+			usrerr("552 5.2.3 Message size exceeds maximum value");
+			/* NOTREACHED */
+		}
 	}
 	else if (strcasecmp(kp, "body") == 0)
 	{
@@ -2560,8 +2586,8 @@ mail_esmtp_args(kp, vp, e)
 		SuprErrs = TRUE;
 		QuickAbort = FALSE;
 		if (strcmp(auth_param, "<>") != 0 &&
-		     (rscheck("trust_auth", pbuf, NULL, e, TRUE, FALSE, 10)
-		      != EX_OK || Errors > 0))
+		     (rscheck("trust_auth", pbuf, NULL, e, TRUE, FALSE, 10,
+			      NULL) != EX_OK || Errors > 0))
 		{
 			if (tTd(95, 8))
 			{
@@ -2587,7 +2613,7 @@ mail_esmtp_args(kp, vp, e)
 # endif /* SASL */
 	else
 	{
-		usrerr("501 5.5.4 %s parameter unrecognized", kp);
+		usrerr("555 5.5.4 %s parameter unrecognized", kp);
 		/* NOTREACHED */
 	}
 }
@@ -2676,7 +2702,7 @@ rcpt_esmtp_args(a, kp, vp, e)
 	}
 	else
 	{
-		usrerr("501 5.5.4 %s parameter unrecognized", kp);
+		usrerr("555 5.5.4 %s parameter unrecognized", kp);
 		/* NOTREACHED */
 	}
 }
@@ -2780,6 +2806,7 @@ runinchild(label, e)
 
 		(void) blocksignal(SIGCHLD);
 
+
 		childpid = dofork();
 		if (childpid < 0)
 		{
@@ -2869,6 +2896,7 @@ saslmechs(conn, mechlist)
 			sm_syslog(LOG_WARNING, NOQID,
 				  "SASL error: listmech=%d, num=%d",
 				  result, num);
+		num = 0;
 	}
 	return num;
 }
@@ -2949,7 +2977,7 @@ get_dh512()
 **		logl -- loglevel
 **
 **	Returns:
-**		None. (not yet, maybe it should return success/failure?)
+**		success/failure
 **
 **	Side Effects:
 **		initializes PRNG for tls library.
@@ -2957,26 +2985,37 @@ get_dh512()
 
 #define MIN_RAND_BYTES	16	/* 128 bits */
 
-void
+bool
 tls_rand_init(randfile, logl)
 	char *randfile;
 	int logl;
 {
-#  ifndef HASURANDOMDEV
+# ifndef HASURANDOMDEV
 	/* not required if /dev/urandom exists, OpenSSL does it internally */
 
 #define RF_OK		0	/* randfile OK */
 #define RF_MISS		1	/* randfile == NULL || *randfile == '\0' */
 #define RF_UNKNOWN	2	/* unknown prefix for randfile */
 
+#define RI_NONE		0	/* no init yet */
+#define RI_SUCCESS	1	/* init was successful */
+#define RI_FAIL		2	/* init failed */
+
 	bool ok;
 	int randdef;
+	static int done = RI_NONE;
 
 	/*
 	**  initialize PRNG
 	*/
 
+	/* did we try this before? if yes: return old value */
+	if (done != RI_NONE)
+		return done == RI_SUCCESS;
+
+	/* set default values */
 	ok = FALSE;
+	done = RI_FAIL;
 	randdef = (randfile == NULL || *randfile == '\0') ? RF_MISS : RF_OK;
 #   if EGD
 	if (randdef == RF_OK && strncasecmp(randfile, "egd:", 4) == 0)
@@ -3104,8 +3143,13 @@ tls_rand_init(randfile, logl)
 		if (LogLevel > logl)
 			sm_syslog(LOG_WARNING, NOQID,
 				  "TLS: Warning: random number generator not properly seeded");
+		ok = TRUE;
 	}
-#  endif /* !HASURANDOMDEV */
+	done = ok ? RI_SUCCESS : RI_FAIL;
+	return ok;
+# else /* !HASURANDOMDEV */
+	return TRUE;
+# endif /* !HASURANDOMDEV */
 }
 
 /*
@@ -3288,6 +3332,12 @@ inittls(ctx, req, srv, certfile, keyfile, cacertpath, cacertfile, dhparam)
 	/* already initialized? (we could re-init...) */
 	if (*ctx != NULL)
 		return TRUE;
+
+	/* PRNG seeded? */
+	if (!tls_rand_init(RandFile, 10))
+		return FALSE;
+
+	/* let's start with the assumption it will work */
 	ok = TRUE;
 
 # if _FFR_TLS_1
@@ -3362,12 +3412,11 @@ inittls(ctx, req, srv, certfile, keyfile, cacertpath, cacertfile, dhparam)
 					sm_syslog(LOG_WARNING, NOQID,
 						  "TLS: error: illegal value '%s' for DHParam",
 						  dhparam);
-				free(dhparam);
 				dhparam = NULL;
 			}
 		}
 		if (dhparam == NULL)
-			dhparam = srv ? newstr("1") : newstr("5");
+			dhparam = srv ? "1" : "5";
 		else if (*dhparam == '/')
 		{
 			TLS_OK_F(dhparam, "DHParameters",
@@ -3771,6 +3820,7 @@ initsrvtls()
 **		e -- current envelope
 **		srv -- server or client
 **		host -- hostname of other side
+**		log -- log connection information?
 **
 **	Returns:
 **		result of authentication.
@@ -3781,11 +3831,12 @@ initsrvtls()
 */
 
 int
-tls_get_info(ssl, e, srv, host)
+tls_get_info(ssl, e, srv, host, log)
 	SSL *ssl;
 	ENVELOPE *e;
 	bool srv;
 	char *host;
+	bool log;
 {
 	SSL_CIPHER *c;
 	int b, r;
@@ -3808,11 +3859,11 @@ tls_get_info(ssl, e, srv, host)
 	define(macid("{tls_version}", NULL), newstr(s), e);
 
 	cert = SSL_get_peer_certificate(ssl);
-	if (LogLevel >= 14)
+	if (log && LogLevel >= 14)
 		sm_syslog(LOG_INFO, e->e_id,
-			  "TLS: get_verify in %s: %d get_peer: 0x%x",
+			  "TLS: get_verify in %s: %ld get_peer: 0x%lx",
 			  srv ? "srv" : "clt",
-			  SSL_get_verify_result(ssl), cert);
+			  SSL_get_verify_result(ssl), (u_long) cert);
 	if (cert != NULL)
 	{
 		char buf[MAXNAME];
@@ -3869,7 +3920,7 @@ tls_get_info(ssl, e, srv, host)
 		X509_free(cert);
 
 	/* do some logging */
-	if (LogLevel > 9)
+	if (log && LogLevel > 9)
 	{
 		char *vers, *s1, *s2, *bits;
 

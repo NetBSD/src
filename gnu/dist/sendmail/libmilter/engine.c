@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 1999-2000 Sendmail, Inc. and its suppliers.
+ *  Copyright (c) 1999-2001 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: engine.c,v 8.67.4.12 2000/07/14 06:16:57 msk Exp";
+static char id[] = "@(#)Id: engine.c,v 8.67.4.17 2001/01/22 19:00:16 gshapiro Exp";
 #endif /* ! lint */
 
 #if _FFR_MILTER
@@ -122,7 +122,7 @@ static int	dec_arg2 __P((char *, size_t, char **, char **));
 #define NX_INIT	(MASK(ST_OPTS))
 #define NX_OPTS	(MASK(ST_CONN))
 #define NX_CONN	(MASK(ST_HELO) | MASK(ST_MAIL))
-#define NX_HELO	(MASK(ST_MAIL))
+#define NX_HELO	(MASK(ST_HELO) | MASK(ST_MAIL))
 #define NX_MAIL	(MASK(ST_RCPT) | MASK(ST_ABRT))
 #define NX_RCPT	(MASK(ST_HDRS) | MASK(ST_EOHS) | MASK(ST_RCPT) | MASK(ST_ABRT))
 #define NX_HDRS	(MASK(ST_EOHS) | MASK(ST_HDRS) | MASK(ST_ABRT))
@@ -208,7 +208,8 @@ mi_engine(ctx)
 	fi_abort = ctx->ctx_smfi->xxfi_abort;
 	mi_clr_macros(ctx, 0);
 	fix_stm(ctx);
-	do {
+	do
+	{
 		/* call abort only if in a mail transaction */
 		call_abort = ST_IN_MAIL(curstate);
 		timeout.tv_sec = ctx->ctx_timeout;
@@ -226,7 +227,7 @@ mi_engine(ctx)
 		    cmd < SMFIC_VALIDCMD)
 		{
 			if (ctx->ctx_dbg > 5)
-				dprintf("[%d] error (%x)\n",
+				dprintf("[%d] mi_engine: mi_rd_cmd error (%x)\n",
 					(int) ctx->ctx_id, (int) cmd);
 
 			/*
@@ -380,7 +381,7 @@ sendreply(r, sd, timeout_ptr, ctx)
 {
 	int ret = MI_SUCCESS;
 
-	switch(r)
+	switch (r)
 	{
 	  case SMFIS_CONTINUE:
 		ret = mi_wr_cmd(sd, timeout_ptr, SMFIR_CONTINUE, NULL, 0);
@@ -806,7 +807,7 @@ st_macros(g)
 		return _SMFIS_FAIL;
 	if ((argv = dec_argv(g->a_buf + 1, g->a_len - 1)) == NULL)
 		return _SMFIS_FAIL;
-	switch(g->a_buf[0])
+	switch (g->a_buf[0])
 	{
 	  case SMFIC_CONNECT:
 		i = CI_CONN;
@@ -958,7 +959,8 @@ trans_ok(old, new)
 	int s, n;
 
 	s = old;
-	do {
+	do
+	{
 		/* is this state transition allowed? */
 		if ((MASK(new) & next_states[s]) != 0)
 			return TRUE;

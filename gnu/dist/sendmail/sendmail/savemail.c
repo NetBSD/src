@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: savemail.c,v 8.212.4.3 2000/06/13 07:16:26 gshapiro Exp";
+static char id[] = "@(#)Id: savemail.c,v 8.212.4.12 2001/01/07 19:31:05 gshapiro Exp";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -332,7 +332,8 @@ savemail(e, sendbody)
 			{
 				if (e->e_from.q_home != NULL)
 					p = e->e_from.q_home;
-				else if ((pw = sm_getpwnam(e->e_from.q_user)) != NULL)
+				else if ((pw = sm_getpwnam(e->e_from.q_user)) != NULL &&
+					 *pw->pw_dir != '\0')
 					p = pw->pw_dir;
 			}
 			if (p == NULL || e->e_dfp == NULL)
@@ -445,6 +446,7 @@ savemail(e, sendbody)
 		  case ESM_PANIC:
 			/* leave the locked queue & transcript files around */
 			loseqfile(e, "savemail panic");
+			errno = 0;
 			syserr("!554 savemail: cannot save rejected email anywhere");
 		}
 	}
@@ -612,7 +614,7 @@ returntosender(msg, returnq, flags, e)
 		addheader("MIME-Version", "1.0", 0, &ee->e_header);
 
 		(void) snprintf(buf, sizeof buf, "%s.%ld/%.100s",
-				ee->e_id, curtime(), MyHostName);
+				ee->e_id, (long) curtime(), MyHostName);
 		ee->e_msgboundary = newstr(buf);
 		(void) snprintf(buf, sizeof buf,
 #if DSN
@@ -991,6 +993,8 @@ errbody(mci, e, separator)
 
 	if (e->e_msgboundary != NULL)
 	{
+		time_t now = curtime();
+
 		putline("", mci);
 		(void) snprintf(buf, sizeof buf, "--%s", e->e_msgboundary);
 		putline(buf, mci);
@@ -1011,7 +1015,8 @@ errbody(mci, e, separator)
 		}
 
 		/* Reporting-MTA: is us (required) */
-		(void) snprintf(buf, sizeof buf, "Reporting-MTA: dns; %.800s", MyHostName);
+		(void) snprintf(buf, sizeof buf, "Reporting-MTA: dns; %.800s",
+				MyHostName);
 		putline(buf, mci);
 
 		/* DSN-Gateway: not relevant since we are not translating */
@@ -1044,7 +1049,13 @@ errbody(mci, e, separator)
 			char *action;
 
 			if (QS_IS_BADADDR(q->q_state))
+			{
+				/* RFC 1891, 6.2.6 (b) */
+				if (bitset(QHASNOTIFY, q->q_flags) &&
+				    !bitset(QPINGONFAILURE, q->q_flags))
+					continue;
 				action = "failed";
+			}
 			else if (!bitset(QPRIMARY, q->q_flags))
 				continue;
 			else if (bitset(QDELIVERED, q->q_flags))
@@ -1194,7 +1205,7 @@ errbody(mci, e, separator)
 
 			/* Last-Attempt-Date: -- fine granularity */
 			if (q->q_statdate == (time_t) 0L)
-				q->q_statdate = curtime();
+				q->q_statdate = now;
 			(void) snprintf(buf, sizeof buf,
 					"Last-Attempt-Date: %s",
 					arpadate(ctime(&q->q_statdate)));
