@@ -1,10 +1,10 @@
-/*	$NetBSD: podule_data.h,v 1.16 2000/12/05 00:44:21 bjh21 Exp $	*/
+/*	$NetBSD: podule_data.h,v 1.17 2000/12/07 21:23:54 bjh21 Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.14 2000/12/05 00:43:55 bjh21 Exp 
+ *	NetBSD: podules,v 1.15 2000/12/07 21:23:32 bjh21 Exp 
  */
 
 /*
@@ -153,15 +153,16 @@ static struct podule_description podules_aleph1[] = {
 };
 
 static struct podule_description podules_icubed[] = {
-	{ PODULE_ICUBED_ETHERLAN600,	"EtherLan 600 network slot interface" },
-	{ PODULE_ICUBED_ETHERLAN600A,	"EtherLan 600A network slot interface" },
-	{ PODULE_ICUBED_ETHERLAN500,	"EtherLan 500 interface" },
-	{ PODULE_ICUBED_ETHERLAN500A,	"EtherLan 500A interface" },
-	{ PODULE_ICUBED_ETHERLAN200,	"EtherLan 200 interface" },
-	{ PODULE_ICUBED_ETHERLAN200A,	"EtherLan 200A interface" },
-	{ PODULE_ICUBED_ETHERLAN100,	"EtherLan 100 interface" },
-	{ PODULE_ICUBED_ETHERLAN100LK,	"EtherLan 100Lk interface" },
-	{ PODULE_ICUBED_ETHERLAN100A,	"EtherLan 100A interface" },
+	{ PODULE_ICUBED_ETHERLAN100,	"EtherLan 100-series" },
+	{ PODULE_ICUBED_ETHERLAN200,	"EtherLan 200-series" },
+	{ PODULE_ICUBED_ETHERLAN500,	"EtherLan 500-series" },
+	{ PODULE_ICUBED_ETHERLAN600,	"EtherLan 600-series" },
+	{ PODULE_ICUBED_ETHERLAN700,	"EtherLan 700-series" },
+	{ PODULE_ICUBED_ETHERLAN100AEH,	"AEH77 (EtherLan 102)" },
+	{ PODULE_ICUBED_ETHERLAN200AEH,	"AEH79 (EtherLan 210)" },
+	{ PODULE_ICUBED_ETHERLAN600AEH,	"AEH60/AEH78 (EtherLan 602)" },
+	{ PODULE_ICUBED_ETHERLAN500AEH,	"AEH54/AEH75 (EtherLan 512)" },
+	{ PODULE_ICUBED_ETHERLAN100XXX,	"EtherLan 100???" },
 	{ 0x0000, NULL }
 };
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: podules.h,v 1.16 2000/12/05 00:44:21 bjh21 Exp $	*/
+/*	$NetBSD: podules.h,v 1.17 2000/12/07 21:23:54 bjh21 Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.14 2000/12/05 00:43:55 bjh21 Exp 
+ *	NetBSD: podules,v 1.15 2000/12/07 21:23:32 bjh21 Exp 
  */
 
 /*
@@ -134,15 +134,19 @@
 
 #define	PODULE_ALEPH1_PCCARD	0x00ea		/* PC card */
 
-#define	PODULE_ICUBED_ETHERLAN600	0x00ec		/* EtherLan 600 network slot interface */
-#define	PODULE_ICUBED_ETHERLAN600A	0x011e		/* EtherLan 600A network slot interface */
-#define	PODULE_ICUBED_ETHERLAN500	0x00d4		/* EtherLan 500 interface */
-#define	PODULE_ICUBED_ETHERLAN500A	0x011f		/* EtherLan 500A interface */
-#define	PODULE_ICUBED_ETHERLAN200	0x00bd		/* EtherLan 200 interface */
-#define	PODULE_ICUBED_ETHERLAN200A	0x011d		/* EtherLan 200A interface */
-#define	PODULE_ICUBED_ETHERLAN100	0x00c4		/* EtherLan 100 interface */
-#define	PODULE_ICUBED_ETHERLAN100LK	0x00cf		/* EtherLan 100Lk interface */
-#define	PODULE_ICUBED_ETHERLAN100A	0x011c		/* EtherLan 100A interface */
+/* i-cubed's own cards */
+#define	PODULE_ICUBED_ETHERLAN100	0x00cf		/* EtherLan 100-series */
+#define	PODULE_ICUBED_ETHERLAN200	0x00bd		/* EtherLan 200-series */
+#define	PODULE_ICUBED_ETHERLAN500	0x00d4		/* EtherLan 500-series */
+#define	PODULE_ICUBED_ETHERLAN600	0x00ec		/* EtherLan 600-series */
+#define	PODULE_ICUBED_ETHERLAN700	0x012f		/* EtherLan 700-series */
+/* cards made by i-cubed for Acorn */
+#define	PODULE_ICUBED_ETHERLAN100AEH	0x011c		/* AEH77 (EtherLan 102) */
+#define	PODULE_ICUBED_ETHERLAN200AEH	0x011d		/* AEH79 (EtherLan 210) */
+#define	PODULE_ICUBED_ETHERLAN600AEH	0x011e		/* AEH60/AEH78 (EtherLan 602) */
+#define	PODULE_ICUBED_ETHERLAN500AEH	0x011f		/* AEH54/AEH75 (EtherLan 512) */
+/* XXX Not listed by Design IT. */
+#define	PODULE_ICUBED_ETHERLAN100XXX	0x00c4		/* EtherLan 100??? */
 
 #define	PODULE_BRINI_PORT	0x0000		/* BriniPort intelligent I/O interface */
 #define	PODULE_BRINI_LINK	0x00df		/* BriniLink transputer link adapter */
