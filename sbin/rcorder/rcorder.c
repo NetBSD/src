@@ -1,4 +1,4 @@
-/*	$NetBSD: rcorder.c,v 1.6 2000/07/19 09:58:03 enami Exp $	*/
+/*	$NetBSD: rcorder.c,v 1.7 2000/08/04 07:33:55 enami Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Matthew R. Green
@@ -463,6 +463,7 @@ crunch_file(filename)
 	FILE *fp;
 	char *buf;
 	int require_flag, provide_flag, before_flag, keywords_flag;
+	enum { BEFORE_PARSING, PARSING, PARSING_DONE } state;
 	filenode *node;
 	char delims[3] = { '\\', '\\', '\0' };
 	struct stat st;
@@ -490,7 +491,8 @@ crunch_file(filename)
 	 * we don't care about length, line number, don't want # for comments,
 	 * and have no flags.
 	 */
-	while ((buf = fparseln(fp, NULL, NULL, delims, 0))) {
+	for (state = BEFORE_PARSING; state != PARSING_DONE &&
+	    (buf = fparseln(fp, NULL, NULL, delims, 0)) != NULL; free(buf)) {
 		require_flag = provide_flag = before_flag = keywords_flag = 0;
 		if (strncmp(REQUIRE_STR, buf, REQUIRE_LEN) == 0)
 			require_flag = REQUIRE_LEN;
@@ -506,7 +508,13 @@ crunch_file(filename)
 			keywords_flag = KEYWORD_LEN;
 		else if (strncmp(KEYWORDS_STR, buf, KEYWORDS_LEN) == 0)
 			keywords_flag = KEYWORDS_LEN;
+		else {
+			if (state == PARSING)
+				state = PARSING_DONE;
+			continue;
+		}
 
+		state = PARSING;
 		if (require_flag)
 			parse_require(node, buf + require_flag);
 		else if (provide_flag)
@@ -515,7 +523,6 @@ crunch_file(filename)
 			parse_before(node, buf + before_flag);
 		else if (keywords_flag)
 			parse_keywords(node, buf + keywords_flag);
-		free(buf);
 	}
 	fclose(fp);
 }
