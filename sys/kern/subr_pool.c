@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.43 2000/12/07 05:45:57 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.44 2000/12/07 19:30:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1377,10 +1377,12 @@ static void
 pool_print1(struct pool *pp, const char *modif, void (*pr)(const char *, ...))
 {
 	struct pool_item_header *ph;
+	struct pool_cache *pc;
+	struct pool_cache_group *pcg;
 #ifdef DIAGNOSTIC
 	struct pool_item *pi;
 #endif
-	int print_log = 0, print_pagelist = 0;
+	int i, print_log = 0, print_pagelist = 0, print_cache = 0;
 	char c;
 
 	while ((c = *modif++) != '\0') {
@@ -1388,6 +1390,8 @@ pool_print1(struct pool *pp, const char *modif, void (*pr)(const char *, ...))
 			print_log = 1;
 		if (c == 'p')
 			print_pagelist = 1;
+		if (c == 'c')
+			print_cache = 1;
 		modif++;
 	}
 
@@ -1443,6 +1447,23 @@ pool_print1(struct pool *pp, const char *modif, void (*pr)(const char *, ...))
 		pr_printlog(pp, NULL, pr);
 
  skip_log:
+
+	if (print_cache == 0)
+		goto skip_cache;
+
+	for (pc = TAILQ_FIRST(&pp->pr_cachelist); pc != NULL;
+	     pc = TAILQ_NEXT(pc, pc_poollist)) {
+		(*pr)("\tcache %p: allocfrom %p freeto %p\n", pc,
+		    pc->pc_allocfrom, pc->pc_freeto);
+		for (pcg = TAILQ_FIRST(&pc->pc_grouplist); pcg != NULL;
+		     pcg = TAILQ_NEXT(pcg, pcg_list)) {
+			(*pr)("\t\tgroup %p: avail %d\n", pcg, pcg->pcg_avail);
+			for (i = 0; i < PCG_NOBJECTS; i++)
+				(*pr)("\t\t\t%p\n", pcg->pcg_objects[i]);
+		}
+	}
+
+ skip_cache:
 
 	pr_enter_check(pp, pr);
 }
