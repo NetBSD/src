@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_isapnp.c,v 1.10 1999/03/22 09:44:14 mycroft Exp $	*/
+/*	$NetBSD: if_ne_isapnp.c,v 1.11 1999/03/22 10:00:12 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -112,9 +112,12 @@ ne_isapnp_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	int variant;
+	int pri, variant;
 
-	return (isapnp_devmatch(aux, &isapnp_ne_devinfo, &variant));
+	pri = isapnp_devmatch(aux, &isapnp_ne_devinfo, &variant);
+	if (pri && variant > 0)
+		pri = 0;
+	return (pri);
 }
 
 static void
