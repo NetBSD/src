@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoul.c,v 1.1.1.3 2003/06/03 07:04:48 itojun Exp $	*/
+/*	$NetBSD: strtoul.c,v 1.2 2003/06/03 07:33:52 itojun Exp $	*/
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)strtoul.c	8.1 (Berkeley) 6/4/93";

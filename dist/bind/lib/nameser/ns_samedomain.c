@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_samedomain.c,v 1.3 2002/11/17 14:09:53 itojun Exp $	*/
+/*	$NetBSD: ns_samedomain.c,v 1.4 2003/06/03 07:34:08 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995,1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "Id: ns_samedomain.c,v 8.9.6.2 2002/11/14 22:36:46 marka Exp";
+static const char rcsid[] = "Id: ns_samedomain.c,v 8.10.8.1 2003/06/02 05:05:05 marka Exp";
 #endif
 
 #include "port_before.h"
@@ -127,12 +127,12 @@ ns_samedomain(const char *a, const char *b) {
 	 */
 	escaped = 0;
 	for (i = diff - 2; i >= 0; i--)
-		if (a[i] == '\\')
+		if (a[i] == '\\') {
 			if (escaped)
 				escaped = 0;
 			else
 				escaped = 1;
-		else
+		} else
 			break;
 	if (escaped)
 		return (0);
@@ -168,14 +168,14 @@ int
 ns_makecanon(const char *src, char *dst, size_t dstsize) {
 	size_t n = strlen(src);
 
-	if (n + sizeof "." + 1 > dstsize) {
+	if (n + sizeof "." > dstsize) {			/* Note: sizeof == 2 */
 		errno = EMSGSIZE;
 		return (-1);
 	}
 	strcpy(dst, src);
-	while (n > 0 && dst[n - 1] == '.')		/* Ends in "." */
-		if (n > 1 && dst[n - 2] == '\\' &&	/* Ends in "\." */
-		    (n < 2 || dst[n - 3] != '\\'))	/* But not "\\." */
+	while (n >= 1 && dst[n - 1] == '.')		/* Ends in "." */
+		if (n >= 2 && dst[n - 2] == '\\' &&	/* Ends in "\." */
+		    (n < 3 || dst[n - 3] != '\\'))	/* But not "\\." */
 			break;
 		else
 			dst[--n] = '\0';

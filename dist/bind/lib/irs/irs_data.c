@@ -1,4 +1,4 @@
-/*	$NetBSD: irs_data.c,v 1.5 2002/06/20 11:43:05 itojun Exp $	*/
+/*	$NetBSD: irs_data.c,v 1.6 2003/06/03 07:34:00 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: irs_data.c,v 1.19 2001/08/20 07:08:41 marka Exp";
+static const char rcsid[] = "Id: irs_data.c,v 1.20.2.1 2003/06/02 10:09:48 marka Exp";
 #endif
 
 #include "port_before.h"
@@ -40,6 +40,7 @@ static const char rcsid[] = "Id: irs_data.c,v 1.19 2001/08/20 07:08:41 marka Exp
 #endif
 
 #include <irs.h>
+#include <stdlib.h>
 
 #include "port_after.h"
 
@@ -98,6 +99,14 @@ net_data_destroy(void *p) {
 		(*net_data->ng->close)(net_data->ng);
 		net_data->ng = NULL;
 	}
+	if (net_data->ho_data != NULL) {
+		free(net_data->ho_data);
+		net_data->ho_data = NULL;
+	}
+	if (net_data->nw_data != NULL) {
+		free(net_data->nw_data);
+		net_data->nw_data = NULL;
+	}
 
 	(*net_data->irs->close)(net_data->irs);
 	memput(net_data, sizeof *net_data);
@@ -144,19 +153,27 @@ net_data_create(const char *conf_file) {
 		return (NULL);
 	memset(net_data, 0, sizeof (struct net_data));
 
-	if ((net_data->irs = irs_gen_acc("", conf_file)) == NULL)
+	if ((net_data->irs = irs_gen_acc("", conf_file)) == NULL) {
+		memput(net_data, sizeof (struct net_data));
 		return (NULL);
+	}
 #ifndef DO_PTHREADS
 	(*net_data->irs->res_set)(net_data->irs, &_res, NULL);
 #endif
 
 	net_data->res = (*net_data->irs->res_get)(net_data->irs);
-	if (net_data->res == NULL)
+	if (net_data->res == NULL) {
+		(*net_data->irs->close)(net_data->irs);
+		memput(net_data, sizeof (struct net_data));
 		return (NULL);
+	}
 
 	if ((net_data->res->options & RES_INIT) == 0 &&
-	    res_ninit(net_data->res) == -1)
+	    res_ninit(net_data->res) == -1) {
+		(*net_data->irs->close)(net_data->irs);
+		memput(net_data, sizeof (struct net_data));
 		return (NULL);
+	}
 
 	return (net_data);
 }
