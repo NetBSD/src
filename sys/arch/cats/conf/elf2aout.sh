@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: elf2aout.sh,v 1.1 2002/01/31 10:37:41 chris Exp $
+# $NetBSD: elf2aout.sh,v 1.2 2002/01/31 21:50:06 chris Exp $
 # Shell script to convert a cats ELF kernel into a bootable a.out kernel by
 # changing the header block on the kernel, and shuffling bits around in the
 # file.  Care has to be taken with the sections as they need to be page
@@ -16,8 +16,18 @@ function x(v) { printf "%c%c%c\0", v, v / 256, v / 65536 } \
         printf "\0\0\0\0\040\0\0\360\0\0\0\0\0\0\0\0" \
 }'
 
-OBJCOPY=$TOOLDIR/bin/arm--netbsdelf-objcopy
-SIZE=$TOOLDIR/bin/arm--netbsdelf-size
+if [ "x${TOOLDIR}" = "x" ]; then
+OBJCOPY=objcopy
+SIZE=size
+else
+OBJCOPY=${TOOLDIR}/bin/arm--netbsdelf-objcopy
+SIZE=${TOOLDIR}/bin/arm--netbsdelf-size
+fi
+
+if [ ! -f netbsd ]; then 
+echo "Missing netbsd kernel"
+exit 1
+fi
 
 mv -f netbsd netbsd.elf
 ${OBJCOPY} -O binary -j .text netbsd.elf netbsd.text
@@ -48,5 +58,7 @@ echo DPAD = $DPAD
 ) > netbsd.aout
 
 cp netbsd.aout netbsd
+${SIZE} netbsd
+chmod 755 netbsd
 
 exit 0
