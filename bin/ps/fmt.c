@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.5 1995/03/21 09:08:00 cgd Exp $	*/
+/*	$NetBSD: fmt.c,v 1.6 1995/05/18 15:27:31 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.4 (Berkeley) 4/15/94";
 #else
-static char rcsid[] = "$NetBSD: fmt.c,v 1.5 1995/03/21 09:08:00 cgd Exp $";
+static char rcsid[] = "$NetBSD: fmt.c,v 1.6 1995/05/18 15:27:31 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ shquote(argv)
 	for (p = argv; (src = *p++) != 0; ) {
 		if (*src == 0)
 			continue;
-		strvis(dst, src, VIS_NL | VIS_CSTYLE);
+		strvis(dst, src, VIS_TAB | VIS_NL | VIS_CSTYLE);
 		dst += strlen(dst);
 		*dst++ = ' ';
 	}
