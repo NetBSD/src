@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.1 1996/07/15 03:13:42 cgd Exp $	*/
+/*	$NetBSD: ffs.S,v 1.2 1996/07/15 05:20:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -34,46 +34,52 @@
 #include "DEFS.h"
 
 LEAF(ffs, 1)
-	addl	a0, 0, a0
-	beq	a0, Lallzero
+	addl	a0, 0, t0
+	beq	t0, Lallzero
 
+	/*
+	 * Initialize return value (v0), and set up t1 so that it
+	 * contains the mask with only the lowest bit set.
+	 */
+	subl	zero, t0, t1
 	ldil	v0, 1
+	and	t0, t1, t1
 
-	and	a0, 0xff, t0
-	bne	t0, Ldo8
+	and	t1, 0xff, t2
+	bne	t2, Ldo8
 
 	/*
 	 * If lower 16 bits empty, add 16 to result and use upper 16.
 	 */
-	zapnot	a0, 0x03, t1
-	bne	t1, Ldo16
-	sra	a0, 16, a0
+	zapnot	t1, 0x03, t3
+	bne	t3, Ldo16
+	sra	t1, 16, t1
 	addl	v0, 16, v0
 
 Ldo16:
 	/*
 	 * If lower 8 bits empty, add 8 to result and use upper 8.
 	 */
-	and	a0, 0xff, t2
-	bne	t2, Ldo8
-	sra	a0, 8, a0
+	and	t1, 0xff, t4
+	bne	t4, Ldo8
+	sra	t1, 8, t1
 	addl	v0, 8, v0
 
 Ldo8:
-	and	a0, 0x0f, t3		/* lower 4 of 8 empty? */
-	and	a0, 0x33, t4		/* lower 2 of each 4 empty? */
-	and	a0, 0x55, t5		/* lower 1 of each 2 empty? */
+	and	t1, 0x0f, t5		/* lower 4 of 8 empty? */
+	and	t1, 0x33, t6		/* lower 2 of each 4 empty? */
+	and	t1, 0x55, t7		/* lower 1 of each 2 empty? */
 
 	/* If lower 4 bits empty, add 4 to result. */
-	bne	t3, Ldo4
+	bne	t5, Ldo4
 	addl	v0, 4, v0
 
 Ldo4:	/* If lower 2 bits of each 4 empty, add 2 to result. */
-	bne	t4, Ldo2
+	bne	t6, Ldo2
 	addl	v0, 2, v0
 
 Ldo2:	/* If lower bit of each 2 empty, add 1 to result. */
-	bne	t5, Ldone
+	bne	t7, Ldone
 	addl	v0, 1, v0
 
 Ldone:
