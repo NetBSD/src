@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.125 2005/01/26 10:30:58 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.126 2005/01/27 11:29:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.125 2005/01/26 10:30:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.126 2005/01/27 11:29:25 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -284,6 +284,18 @@ diragain:
 		    }
 		}
 
+		if (bp->b_bcount == bp->b_resid) {
+
+			/*
+			 * empty block implies EOF.
+			 */
+
+			nfs_putdircache(np, ndp);
+			bp->b_flags |= B_NOCACHE;
+			brelse(bp);
+			return 0;
+		}
+
 		/*
 		 * Just return if we hit EOF right away with this
 		 * block. Always check here, because direofoffset
@@ -293,6 +305,7 @@ diragain:
 		if (NFS_EOFVALID(np) && 
 		    ndp->dc_blkcookie == np->n_direofoffset) {
 			nfs_putdircache(np, ndp);
+			bp->b_flags |= B_NOCACHE;
 			brelse(bp);
 			return (0);
 		}
