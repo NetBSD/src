@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_sgc.c,v 1.7 2004/08/26 16:48:06 jkunz Exp $	*/
+/*	$NetBSD: sti_sgc.c,v 1.8 2004/09/19 23:00:29 chs Exp $	*/
 
 /*	$OpenBSD: sti_sgc.c,v 1.21 2003/12/22 23:39:06 mickey Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.7 2004/08/26 16:48:06 jkunz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.8 2004/09/19 23:00:29 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,6 +191,7 @@ sti_sgc_probe(struct device *parent, struct cfdata *cf, void *aux)
 		printf("sti: unknown type (%x)\n", devtype);
 #endif
 		rv = 0;
+		romend = 0;
 	}
 
 	if (rv &&

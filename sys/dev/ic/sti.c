@@ -1,4 +1,4 @@
-/* $NetBSD: sti.c,v 1.1 2004/08/26 16:48:06 jkunz Exp $ */
+/* $NetBSD: sti.c,v 1.2 2004/09/19 23:00:29 chs Exp $ */
 
 /*	$OpenBSD: sti.c,v 1.35 2003/12/16 06:07:13 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.1 2004/08/26 16:48:06 jkunz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.2 2004/09/19 23:00:29 chs Exp $");
 
 #include "wsdisplay.h"
 
@@ -132,6 +132,7 @@ sti_attach_common(struct sti_softc *sc)
 	u_int32_t addr, eaddr;
 	struct sti_region r;
 	u_int32_t *q;
+	uint32_t tmp;
 
 	dd = &sc->sc_dd;
 	if (sc->sc_devtype == STI_DEVTYPE1) {
@@ -269,10 +270,10 @@ sti_attach_common(struct sti_softc *sc)
 	     q < &cc->regions[STI_REGION_MAX]; q++) {
 
 		if (sc->sc_devtype == STI_DEVTYPE1)
-			*(u_int *)&r = parseword(i), i += 16;
+			tmp = parseword(i), i += 16;
 		else
-			*(u_int *)&r = bus_space_read_4(sc->memt, sc->romh, i),
-			    i += 4;
+			tmp = bus_space_read_4(sc->memt, sc->romh, i), i += 4;
+		memcpy(&r, &tmp, sizeof (r));
 
 		*q = (q == cc->regions ? sc->romh : sc->base) +
 		    (r.offset << PGSHIFT);
