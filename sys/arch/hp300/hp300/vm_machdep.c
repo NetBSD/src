@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: vm_machdep.c 1.21 91/04/06
  *	from: @(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
- *	$Id: vm_machdep.c,v 1.5 1993/08/14 14:29:11 mycroft Exp $
+ *	$Id: vm_machdep.c,v 1.6 1994/04/05 07:45:54 mycroft Exp $
  */
 
 #include "param.h"
@@ -85,6 +85,7 @@ cpu_fork(p1, p2)
 	offset = getsp() - kstack;
 	bcopy((caddr_t)kstack + offset, (caddr_t)p2->p_addr + offset,
 	    (unsigned) ctob(UPAGES) - offset);
+	p2->p_regs = p1->p_regs;
 
 	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, &up->u_pcb, 0);
 
