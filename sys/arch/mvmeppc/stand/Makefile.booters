@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.2 2002/05/31 13:46:00 bjh21 Exp $
+#	$NetBSD: Makefile.booters,v 1.3 2003/10/24 06:48:53 matt Exp $
 
 S?=		${.CURDIR}/../../../..
 MDEC_DIR?=	/usr/mdec
@@ -17,7 +17,7 @@ NOLINT=# defined
 
 INCPATH=-I${.OBJDIR} -I${.CURDIR} -I${.CURDIR}/../libsa -I${.CURDIR}/../libbug \
         -I${.CURDIR}/../../include -I${S} -I${S}/lib/libsa
-CFLAGS= -nostdinc -D_STANDALONE \
+CFLAGS= -nostdinc -ffreestanding -D_STANDALONE \
 	-DLIBSA_USE_MEMSET -DLIBSA_USE_MEMCPY ${INCPATH} ${DEFS}
 BINDIR= ${MDEC_DIR}
 
