@@ -1,7 +1,7 @@
-/*	$NetBSD: dptvar.h,v 1.4.2.2 2000/11/20 11:40:32 bouyer Exp $	*/
+/*	$NetBSD: dptvar.h,v 1.4.2.3 2001/04/01 15:04:27 ad Exp $	*/
 
 /*
- * Copyright (c) 1999 Andrew Doran <ad@NetBSD.org>
+ * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@netbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,13 @@
 
 #ifndef _IC_DPTVAR_H_
 #define _IC_DPTVAR_H_ 1
-#ifdef _KERNEL
+
+/* Software parameters */
+#define DPT_SG_SIZE        	17
+#define	DPT_MAX_XFER		65536
+#define DPT_MAX_CCBS		256
+#define DPT_ABORT_TIMEOUT	2000	/* milliseconds */
+#define DPT_SCRATCH_SIZE	256	/* bytes */
 
 #define	CCB_OFF(sc,m)	((u_long)(m) - (u_long)((sc)->sc_ccbs))
 
@@ -51,53 +57,34 @@ struct dpt_ccb {
 	int		ccb_hba_status;		/* from status packet */
 	int		ccb_scsi_status;	/* from status packet */
 	int		ccb_id;			/* unique ID of this CCB */
-	TAILQ_ENTRY(dpt_ccb) ccb_chain;		/* link to next CCB */
+	SLIST_ENTRY(dpt_ccb) ccb_chain;		/* link to next CCB */
 	struct scsipi_xfer *ccb_xs;		/* initiating SCSI command */
 };
 
 struct dpt_softc {
 	struct device	sc_dv;		/* generic device data */
+	struct scsipi_adapter sc_adapt;	/* scsipi adapter */
+	struct scsipi_channel sc_chans[3]; /* each channel */
 	bus_space_handle_t sc_ioh;	/* bus space handle */
-	struct scsipi_adapter sc_adapter;/* scsipi adapter */
-	struct scsipi_channel sc_channels[3]; /* each channel */
 	bus_space_tag_t	sc_iot;		/* bus space tag */
 	bus_dma_tag_t	sc_dmat;	/* bus DMA tag */
 	bus_dmamap_t	sc_dmamap;	/* maps the CCBs */
-	int		sc_dmamapsize;	/* size of above map in bytes */
 	void	 	*sc_ih;		/* interrupt handler cookie */
 	struct dpt_ccb	*sc_ccbs;	/* all our CCBs */
 	struct eata_sp	*sc_stp;	/* EATA status packet */
 	int		sc_stpoff;	/* status packet offset in dmamap */
 	u_int32_t	sc_stppa;	/* status packet physical address */
 	caddr_t		sc_scr;		/* scratch area */
-	int		sc_scrlen;	/* scratch area length */
 	int		sc_scroff;	/* scratch area offset in dmamap */
 	u_int32_t	sc_scrpa;	/* scratch area physical address */
 	int		sc_hbaid[3];	/* ID of HBA on each channel */
 	int		sc_nccbs;	/* number of CCBs available */
-	TAILQ_HEAD(, dpt_ccb) sc_free_ccb;/* free ccb list */
-	TAILQ_ENTRY(dpt_softc) sc_chain;/* link to next HBA's softc */
+	SLIST_HEAD(, dpt_ccb) sc_ccb_free;/* free ccb list */
 	struct eata_cfg sc_ec;		/* EATA configuration data */
 };
 
-int	dpt_intr __P((void *));
-int	dpt_readcfg __P((struct dpt_softc *));
-void	dpt_init __P((struct dpt_softc *, const char *));
-void	dpt_shutdown __P((void *));
-void	dpt_timeout __P((void *));
-void	dpt_minphys __P((struct buf *));
-void	dpt_scsipi_request __P((struct scsipi_channel *,
-	    scsipi_adapter_req_t, void *));
-int	dpt_wait __P((struct dpt_softc *, u_int8_t, u_int8_t, int));
-int	dpt_poll __P((struct dpt_softc *, struct dpt_ccb *));
-int	dpt_cmd __P((struct dpt_softc *, struct eata_cp *, u_int32_t, int, int));
-void	dpt_hba_inquire __P((struct dpt_softc *, struct eata_inquiry_data **));
-void	dpt_reset_ccb __P((struct dpt_softc *, struct dpt_ccb *));
-void	dpt_free_ccb __P((struct dpt_softc *, struct dpt_ccb *));
-void	dpt_done_ccb __P((struct dpt_softc *, struct dpt_ccb *));
-int	dpt_init_ccb __P((struct dpt_softc *, struct dpt_ccb *));
-int	dpt_create_ccbs __P((struct dpt_softc *, struct dpt_ccb *, int));
-struct dpt_ccb	*dpt_alloc_ccb __P((struct dpt_softc *));
+void	dpt_init(struct dpt_softc *, const char *);
+int	dpt_intr(void *);
+int	dpt_readcfg(struct dpt_softc *);
 
-#endif	/* _KERNEL */
 #endif	/* !defined _IC_DPTVAR_H_ */

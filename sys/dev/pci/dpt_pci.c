@@ -1,7 +1,7 @@
-/*	$NetBSD: dpt_pci.c,v 1.2.2.2 2001/01/05 17:36:03 bouyer Exp $	*/
+/*	$NetBSD: dpt_pci.c,v 1.2.2.3 2001/04/01 15:04:27 ad Exp $	*/
 
 /*
- * Copyright (c) 1999 Andrew Doran <ad@NetBSD.org>
+ * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@netbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,20 +31,14 @@
  * PCI front-end for DPT EATA SCSI driver.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.2.2.2 2001/01/05 17:36:03 bouyer Exp $");
-
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/queue.h>
-#include <sys/proc.h>
 
-#include <machine/endian.h>
 #include <machine/bus.h>
+#include <machine/intr.h>
 
-#include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
@@ -57,18 +51,15 @@ __KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.2.2.2 2001/01/05 17:36:03 bouyer Exp $
 #define	PCI_CBMA	0x14	/* Configuration base memory address */
 #define	PCI_CBIO	0x10	/* Configuration base I/O address */
 
-int	dpt_pci_match __P((struct device *, struct cfdata *, void *));
-void	dpt_pci_attach __P((struct device *, struct device *, void *));
+static int	dpt_pci_match(struct device *, struct cfdata *, void *);
+static void	dpt_pci_attach(struct device *, struct device *, void *);
 
 struct cfattach dpt_pci_ca = {
 	sizeof(struct dpt_softc), dpt_pci_match, dpt_pci_attach
 };
 
-int
-dpt_pci_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+dpt_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa;
 	
@@ -81,11 +72,8 @@ dpt_pci_match(parent, match, aux)
 	return (0);
 }
 
-void
-dpt_pci_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+static void
+dpt_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa;
 	struct dpt_softc *sc;
@@ -106,7 +94,7 @@ dpt_pci_attach(parent, self, aux)
 		return;
 	}
 	
-	/* Need to map in by 16 registers */
+	/* Need to map in by 16 registers. */
 	if (bus_space_subregion(sc->sc_iot, ioh, 16, 16, &sc->sc_ioh)) {
 		printf("can't map i/o subregion\n");
 		return;
@@ -134,13 +122,13 @@ dpt_pci_attach(parent, self, aux)
 		return;
 	}
 
-	/* Read the EATA configuration */
+	/* Read the EATA configuration. */
 	if (dpt_readcfg(sc)) {
 		printf("%s: readcfg failed - see dpt(4)\n", 
 		    sc->sc_dv.dv_xname);
 		return;	
 	}
-	
-	/* Now attach to the bus-independent code */
+
+	/* Now attach to the bus-independent code. */
 	dpt_init(sc, intrstr);
 }
