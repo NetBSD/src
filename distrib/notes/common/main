@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.79 2000/10/10 22:03:42 lukem Exp $
+.\"	$NetBSD: main,v 1.80 2000/10/11 11:56:28 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -314,9 +314,6 @@ source code to follow it.
 Implementation of many SUSv2 features to the
 .Xr curses 3
 library, including support for color.
-.It
-Several new ports, including macppc, bebox, sparc64, next68k, and
-others, have been integrated into the source tree.
 .It
 Most third party packages that are shipped in the base system, including
 .Xr file 1 ,
