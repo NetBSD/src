@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.12 2002/09/24 00:02:46 mycroft Exp $	 */
+/*	$NetBSD: search.c,v 1.13 2002/09/24 12:52:20 mycroft Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -103,25 +103,10 @@ _rtld_load_library(name, refobj, mode)
 	if (strchr(name, '/') != NULL) {	/* Hard coded pathname */
 		if (name[0] != '/' && !_rtld_trust) {
 			_rtld_error(
-			"Absolute pathname required for shared object \"%s\"",
+			"absolute pathname required for shared object \"%s\"",
 			    name);
 			return NULL;
 		}
-#ifdef SVR4_LIBDIR
-		if (strncmp(name, SVR4_LIBDIR, SVR4_LIBDIRLEN) == 0
-		    && name[SVR4_LIBDIRLEN] == '/') {	/* In "/usr/lib" */
-			/*
-			 * Map hard-coded "/usr/lib" onto our ELF library
-			 * directory.
-			 */
-			pathname = xmalloc(strlen(name) + LIBDIRLEN -
-			    SVR4_LIBDIRLEN + 1);
-			(void)strcpy(pathname, LIBDIR);
-			(void)strcpy(pathname + LIBDIRLEN, name +
-			    SVR4_LIBDIRLEN);
-			goto found;
-		}
-#endif /* SVR4_LIBDIR */
 		pathname = xstrdup(name);
 		goto found;
 	}
