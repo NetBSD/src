@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.30 2001/02/27 02:57:02 chs Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.31 2001/02/28 02:59:19 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -638,10 +638,10 @@ genfs_getpages(v)
 	LIST_INIT(&mbp->b_dep);
 
 	/*
-	 * if EOF is in the middle of the last page, zero the part past EOF.
+	 * if EOF is in the middle of the range, zero the part past EOF.
 	 */
 
-	if (tailbytes > 0 && (pgs[bytes >> PAGE_SHIFT]->flags & PG_FAKE)) {
+	if (tailbytes > 0) {
 		memset((void *)(kva + bytes), 0, tailbytes);
 	}
 
