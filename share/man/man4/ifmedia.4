@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifmedia.4,v 1.18 2002/08/20 15:47:46 wiz Exp $
+.\"	$NetBSD: ifmedia.4,v 1.19 2002/08/21 03:30:54 onoe Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -206,15 +206,16 @@ Direct Sequence 11Mbps.  [DS11]
 .El
 .Pp
 The following media options are defined for IEEE802.11 Wireless LAN:
-.Bl -tag -offset indent -width IFM_IEEE80211_IBSSMASTER -compact
+.Bl -tag -offset indent -width IFM_IEEE80211_HOSTAP -compact
 .It Dv IFM_IEEE80211_ADHOC
-adhoc mode vs. BSS mode [adhoc]
+Adhoc (IBSS) mode. [adhoc, ibss]
+.br
+In some drivers,
+it may be used with the
+.Dv IFM_FLAG0
+[flag0] media option to specify non-standard adhoc demo mode.
 .It Dv IFM_IEEE80211_HOSTAP
 Access Point mode [hostap]
-.It Dv IFM_IEEE80211_IBSS
-IBSS mode [ibss]
-.It Dv IFM_IEEE80211_IBSSMASTER
-IBSS master mode [ibss-master]
 .El
 .Sh SEE ALSO
 .Xr netintro 4 ,
