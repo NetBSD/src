@@ -30,7 +30,7 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-SUBDIR=	common server client relay
+SUBDIR=	common server client relay statmsg sysconfd
 
 all-server all-client all-relay: all-common
 
