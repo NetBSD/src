@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 1997/02/24 20:35:23 cgd Exp $
+#	$NetBSD: Makefile,v 1.18 1997/03/18 20:04:11 cgd Exp $
 
 # Make a distribution for the alpha, on a spare disk.
 # This creates a large, gzipped disk image in ${.OBJDIR}
@@ -66,11 +66,11 @@ unmount-fs:
 diskimage.gz: mount-fs build-fs unmount-fs
 	mount /dev/${DESTDISK}a ${DESTDIR}
 	mount /dev/${DESTDISK}d ${DESTDIR}/usr
-	mkdir ${DESTDIR}/alphadist
-	cp -p ${DESTDIR}/usr/sbin/sysctl ${DESTDIR}/alphadist
-	mv ${DESTDIR}/etc/rc ${DESTDIR}/alphadist/rc.real
-	cp ${.CURDIR}/rc.hack ${DESTDIR}/alphadist/rc.hack
-	cp -p ${DESTDIR}/alphadist/rc.hack ${DESTDIR}/etc/rc
+#	mkdir ${DESTDIR}/alphadist
+#	cp -p ${DESTDIR}/usr/sbin/sysctl ${DESTDIR}/alphadist
+#	mv ${DESTDIR}/etc/rc ${DESTDIR}/alphadist/rc.real
+#	cp ${.CURDIR}/rc.hack ${DESTDIR}/alphadist/rc.hack
+#	cp -p ${DESTDIR}/alphadist/rc.hack ${DESTDIR}/etc/rc
 	umount ${DESTDIR}/usr ${DESTDIR}
 	/bin/rm -f $@
 	dd if=/dev/r${DESTDISK}c bs=`expr ${SECPERCYL} \* 512` \
