@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.2 1998/08/14 18:04:08 mark Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.3 1998/09/07 15:58:37 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -526,6 +526,9 @@ filecore_pathconf(v)
 		*ap->a_retval = 1;
 		return (0);
 	case _PC_NO_TRUNC:
+		*ap->a_retval = 1;
+		return (0);
+	case _PC_SYNC_IO:
 		*ap->a_retval = 1;
 		return (0);
 	default:
