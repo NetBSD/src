@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr_bootsel.S,v 1.5 2002/08/04 20:29:44 ross Exp $	*/
+/*	$NetBSD: mbr_bootsel.S,v 1.6 2002/09/09 03:01:26 enami Exp $	*/
 
 
 /*-
@@ -124,7 +124,7 @@
 #define movw_ax_mem(mem)	.byte 0xa3 ; .word mem
 
 #define movw_mem_reg(mem,reg) \
-	.byte 0x8b ; .byte (0x06 | ((reg) << 3) ; .word mem
+	.byte 0x8b ; .byte (0x06 | ((reg) << 3)) ; .word mem
 
 #define movw_imm_reg(imm,reg) \
 	.byte 0xb8 | reg ; .word imm
