@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.c,v 1.10 2003/10/08 00:40:54 thorpej Exp $ */
+/*	$NetBSD: darwin_machdep.c,v 1.11 2003/12/16 13:36:18 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.10 2003/10/08 00:40:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.11 2003/12/16 13:36:18 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,13 +77,11 @@ darwin_sendsig(ksi, mask)
 	size_t stack_size;
 	sig_t catcher;
 	int sig;
-	u_long code;
 	int error;
 
 	tf = trapframe(l);
 
 	sig = ksi->ksi_signo;
-	code = ksi->ksi_code;
 	catcher = SIGACTION(p, sig).sa_handler;
 
 	/* Use an alternate signal stack? */
@@ -163,7 +161,7 @@ darwin_sendsig(ksi, mask)
 	tf->fixreg[1] = (u_long)sfp;
 	tf->fixreg[3] = (u_long)catcher;
 	tf->fixreg[4] = 1; /* 1 => without siginfo, 2 => with siginfo */
-	tf->fixreg[5] = (u_long)code;
+	tf->fixreg[5] = (u_long)sig;
 	tf->fixreg[6] = (u_long)&sfp->duc.si;
 	tf->fixreg[7] = (u_long)&sfp->duc.uctx;
 	tf->lr = (u_long)tf->srr0;
@@ -204,7 +202,7 @@ darwin_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 	if ((error = copyin(SCARG(uap, uctx), &uctx, sizeof(uctx))) != 0)
 		return (error);
 
-	/* Check mcontext size, as it is handed by used code */
+	/* Check mcontext size, as it is handed by user code */
 	mcsize = uctx.uc_mcsize;
 	if (mcsize > sizeof(mctx))
 		mcsize = sizeof(mctx);
