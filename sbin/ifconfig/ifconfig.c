@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.61 2000/01/24 22:31:27 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.62 2000/01/24 23:24:16 chopps Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.61 2000/01/24 22:31:27 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.62 2000/01/24 23:24:16 chopps Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,6 +91,8 @@ __RCSID("$NetBSD: ifconfig.c,v 1.61 2000/01/24 22:31:27 thorpej Exp $");
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
+#include <net/if_ether.h>
+#include <net/if_ieee80211.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #ifdef INET6
@@ -153,6 +155,7 @@ void 	setifbroadaddr __P((char *, int));
 void 	setifipdst __P((char *, int));
 void 	setifmetric __P((char *, int));
 void 	setifmtu __P((char *, int));
+void	setifnwid __P((char *, int));
 void 	setifnetmask __P((char *, int));
 void	setifprefixlen __P((char *, int));
 void 	setnsellength __P((char *, int));
@@ -219,6 +222,7 @@ struct	cmd {
 	{ "netmask",	NEXTARG,	0,		setifnetmask },
 	{ "metric",	NEXTARG,	0,		setifmetric },
 	{ "mtu",	NEXTARG,	0,		setifmtu },
+	{ "nwid",	NEXTARG,	0,		setifnwid },
 	{ "broadcast",	NEXTARG,	0,		setifbroadaddr },
 	{ "ipdst",	NEXTARG,	0,		setifipdst },
 	{ "prefixlen",  NEXTARG,	0,		setifprefixlen},
@@ -293,6 +297,7 @@ void 	xns_status __P((int));
 void 	xns_getaddr __P((char *, int));
 void 	iso_status __P((int));
 void 	iso_getaddr __P((char *, int));
+void	ieee80211_status __P((void));
 
 /* Known address families */
 struct afswtch {
@@ -909,6 +914,34 @@ setifmtu(val, d)
 }
 
 void
+setifnwid(val, d)
+	char *val;
+	int d;
+{
+	u_int8_t nwid[IEEE80211_NWID_LEN];
+
+	memset(&nwid, 0, sizeof(nwid));
+	(void)strncpy(nwid, val, sizeof(nwid));
+	(void)strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	ifr.ifr_data = (caddr_t)nwid;
+	if (ioctl(s, SIOCS80211NWID, (caddr_t)&ifr) < 0)
+		warn("SIOCS80211NWID");
+}
+
+void
+ieee80211_status()
+{
+	u_int8_t nwid[IEEE80211_NWID_LEN + 1];
+
+	memset(&ifr, 0, sizeof(ifr));
+	ifr.ifr_data = (caddr_t)nwid;
+	(void)strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	nwid[IEEE80211_NWID_LEN] = 0;
+	if (ioctl(s, SIOCG80211NWID, (caddr_t)&ifr) == 0)
+		printf("\tnwid %s\n", nwid);
+}
+
+void
 init_current_media()
 {
 	struct ifmediareq ifmr;
@@ -1333,6 +1366,8 @@ status(ap, alen)
 	free(media_list);
 
  proto_status:
+	ieee80211_status();
+
 	if ((p = afp) != NULL) {
 		(*p->af_status)(1);
 		if (Aflag & !aflag)
