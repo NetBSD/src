@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.10 1995/03/07 21:26:28 cgd Exp $	*/
+/*	$NetBSD: verify.c,v 1.11 1997/06/23 14:34:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: verify.c,v 1.10 1995/03/07 21:26:28 cgd Exp $";
+static char rcsid[] = "$NetBSD: verify.c,v 1.11 1997/06/23 14:34:52 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -119,13 +119,13 @@ vwalk()
 				ep->flags |= F_VISIT;
 				if (compare(ep->name, ep, p))
 					rval = MISMATCHEXIT;
-				if (ep->flags & F_IGN)
-					(void)fts_set(t, p, FTS_SKIP);
-				else if (ep->child && ep->type == F_DIR &&
+				if (!(ep->flags & F_IGN) &&
+				    ep->child && ep->type == F_DIR &&
 				    p->fts_info == FTS_D) {
 					level = ep->child;
 					++specdepth;
-				}
+				} else
+					(void)fts_set(t, p, FTS_SKIP);
 				break;
 			}
 
