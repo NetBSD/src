@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.109 2001/10/29 23:06:03 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.110 2001/10/30 15:32:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1840,7 +1840,7 @@ uvm_map_protect(map, start, end, new_prot, set_max)
 
 				if (UVM_OBJ_IS_VNODE(uobj) &&
 				    (current->protection & VM_PROT_EXECUTE))
-					vn_marktext((struct vnode *) uobj);
+					vn_markexec((struct vnode *) uobj);
 			}
 		}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec_aout.c,v 1.1 2000/12/01 19:15:12 jdolecek Exp $	*/
+/*	$NetBSD: hpux_exec_aout.c,v 1.2 2001/10/30 15:32:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -194,7 +194,7 @@ exec_hpux_prep_zmagic(p, epp)
 	if ((execp->ha_text != 0 || execp->ha_data != 0) &&
 	    epp->ep_vp->v_writecount != 0)
 		return (ETXTBSY);
-	vn_marktext(epp->ep_vp);
+	epp->ep_vp->v_flag |= VTEXT;
 
 	/*
 	 * HP-UX ZMAGIC executables need to have their segment

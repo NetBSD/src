@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_aout.c,v 1.45 2001/07/29 21:28:46 christos Exp $	*/
+/*	$NetBSD: linux_exec_aout.c,v 1.46 2001/10/30 15:32:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -312,7 +312,7 @@ exec_linux_aout_prep_qmagic(p, epp)
 #endif
 		return ETXTBSY;
 	}
-	vn_marktext(epp->ep_vp);
+	epp->ep_vp->v_flag |= VTEXT;
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,
