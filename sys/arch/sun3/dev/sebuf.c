@@ -1,4 +1,4 @@
-/*	$NetBSD: sebuf.c,v 1.9 2002/10/02 16:02:26 thorpej Exp $	*/
+/*	$NetBSD: sebuf.c,v 1.10 2002/10/26 13:25:39 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,8 +68,6 @@
 
 #include "sereg.h"
 #include "sevar.h"
-
-#define	offsetof(type, member) ((size_t)(&((type *)0)->member))
 
 struct sebuf_softc {
 	struct	device sc_dev;		/* base device (required) */
