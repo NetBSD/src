@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.92 2000/12/24 07:08:03 lukem Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.93 2001/01/03 06:55:30 enami Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.92 2000/12/24 07:08:03 lukem Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.93 2001/01/03 06:55:30 enami Exp $");
 #endif
 #endif	/* not lint */
 
@@ -492,7 +492,7 @@ writelabel(int f, const char *boot, struct disklabel *lp)
 		struct partition *pp = &lp->d_partitions[2];
 
 		/*
-		 * If NetBSD/i386 DOS partition is missing, or if 
+		 * If NetBSD/i386 DOS partition is missing, or if
 		 * the label to be written is not within partition,
 		 * prompt first. Need to allow this in case operator
 		 * wants to convert the drive for dedicated use.
@@ -646,7 +646,7 @@ readmbr(int f)
 	if (lseek(f, (off_t)MBR_BBSECTOR * DEV_BSIZE, SEEK_SET) < 0 ||
 	    read(f, mbr, sizeof(mbr)) < sizeof(mbr))
 		err(4, "can't read master boot record");
-		
+
 #if !defined(__i386__)
 	/* avoid alignment error */
 	memcpy(mbr, &mbr[MBR_PARTOFF], NMBRPART * sizeof(*dp));
@@ -724,7 +724,7 @@ filecore_checksum(u_char *bootblock)
 	u_char	byte0, accum_diff;
 	u_int	sum;
 	int	i;
-    
+
 	sum = 0;
 	accum_diff = 0;
 	byte0 = bootblock[0];
@@ -821,7 +821,7 @@ get_filecore_partition(int f)
 	} else {
 		/*
 		 * Valid filecore boot block and no non-ADFS partition.
-		 * This means that the whole disc is allocated for ADFS 
+		 * This means that the whole disc is allocated for ADFS
 		 * so do not trash ! If the user really wants to put a
 		 * NetBSD disklabel on the disc then they should remove
 		 * the filecore boot block first with dd.
@@ -1128,7 +1128,7 @@ makedisktab(FILE *f, struct disklabel *lp)
 			(void) fprintf(f, "o%c#%d:", c, pp->p_offset);
 			if (pp->p_fstype != FS_UNUSED) {
 				if ((unsigned) pp->p_fstype < FSMAXTYPES)
-					(void) fprintf(f, "t%c=%s:", c, 
+					(void) fprintf(f, "t%c=%s:", c,
 					    fstypenames[pp->p_fstype]);
 				else
 					(void) fprintf(f, "t%c=unknown%d:",
@@ -1545,7 +1545,7 @@ getasciilabel(FILE *f, struct disklabel *lp)
 				pp->p_offset = v;
 			/* can't use word() here because of blanks
 			   in fstypenames[] */
-			cp = tp; 
+			cp = tp;
 			cpp = fstypenames;
 			for (; cpp < &fstypenames[FSMAXTYPES]; cpp++) {
 				s = *cpp;
