@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.1.1.1 1995/03/26 07:12:14 leo Exp $	*/
+/*	$NetBSD: zsvar.h,v 1.2 1995/04/11 02:37:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)
@@ -130,6 +130,9 @@ struct zs_chanstate {
 	volatile u_int	cs_rbput;	/* ring buffer `put' index	*/
 	int		cs_rbuf[ZLRB_RING_SIZE];/* type, value pairs	*/
 };
+
+#define	ZS_CHAN_A	0
+#define	ZS_CHAN_B	1
 
 /*
  * Macros to read and write individual registers (except 0) in a channel.
