@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.1.2.3 1997/12/05 08:24:36 jonathan Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.1.2.4 1997/12/05 21:49:42 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,7 +54,7 @@ message upgrade
 
 message hello
 {Bienvenue dans sysinst, l'outil d'installation de NetBSD-@@VERSION@@  .
-Cet utilitaire a été conçu pour vous aider à installer ou à mettre à jours
+Cet utilitaire a été conçu pour vous aider à installer ou à mettre à jour
 NetBSD sur votre disque dur avec un minimum de travail.
 Dans les menus suivants, vous pourrez changer de sélection soit en tapant la
 lettre en référence (a, b, c, d,...) ou en utilisant les flèches.
@@ -80,12 +80,26 @@ On continue ?
 }
 
 message upgradeusure
-{D'accord, mettons à jours NetBSD sur votre disque dur. Comme d'habitude, cela
+{D'accord, mettons à jour NetBSD sur votre disque dur. Comme d'habitude, cela
 va changer les informations contenues sur votre disque dur. Vous devriez faire
 une sauvegarde complète de celui ci avant de continuer la procédure de mise à 
-jours. Voulez vous vraiment mettre à jours NetBSD ?
+jour. Voulez vous vraiment mettre à jour NetBSD ?
 (Ceci est le dernier avertissement avant que cette procédure ne commence à 
 modifier votre disque.)
+}
+
+message reinstallusure
+{Bien, décompactons les composants de NetBSD sur un disque dur bootable.
+Cette procédure se contente de rapatrier et décompater les composants
+sur un disque bootable déjà partitionnné. Elle n'inscrit pas de label
+sur le disque, n'installe pas de nouveau secteurs d'ammorcage et ne sauve
+pas les fichiers de configuration existants (Quittez et choisissez
+`installer' ou `mettre à jour'). Vous devriez déjà avoir fait une installation
+ou une mise à jour avant de démarrer cette procédure !
+
+Voulez-vous réellement réinstaller les composants NetBSD ?
+(Ceci est le dernier avertissement avant que cette procédure commence à
+modifier vos disques.)
 }
 
 message nodisk
@@ -109,7 +123,7 @@ Les disques suivants sont disponibles : %s
 \nSur quel disque voulez vous installer NetBSD ?}
 
 message pleasemountroot
-{Le système de fichiers racine n'est pas "monté". SVP, montez le.
+{Le système de fichiers racine n'est pas monté. SVP, montez le.
 
 Votre disque de destination %s contient aussi le système de fichiers racine.
 J'ai besoin de savoir si je suis entrain de m'exécuter hors de la racine de 
@@ -117,7 +131,7 @@ destination (%sa), ou hors d'une racine alternative (disons %sb,
 votre partition de swap).
 Je ne peux pas le savoir tant que vous ne montez pas la racine de destination.
 
-J'abandonne et retourne au menu principal pour que vous lanciez un sous shell.
+J'abandonne et retourne au menu principal pour que vous lanciez un shell.
 }
 
 message scsigeom1
@@ -246,18 +260,20 @@ message packname
 
 message lastchance
 {Bon, nous sommes prêt à installer NetBSD sur votre disque. Rien n'a été écrit
-pour l'instant. C'est votre dernière chance de quitter cette procédure en laissant votre disque intact. On continue ?
+pour l'instant. C'est votre dernière chance de quitter cette procédure en
+laissant votre disque intact. On continue ?
 }
 
 message disksetupdone
-{Bien, la première partie de la procédure est terminée. Sysinst a écrit, sur
-votre disque de destination, un disklabel, créé (newfs) et testé (fsck) vos
-nouvelles partitions.
-Si vous voyez si dessus des messages d'erreurs sur votre disque de destination
-et plus particulièrement sur les partitions / et /usr abandonnez maintenant.
+{Bien, la première partie de la procédure est terminée. Sysinst a écrit,
+sur votre disque de destination, un disklabel, créé (newfs) et testé (fsck)
+vos nouvelles partitions.
+Si vous voyez ci dessus des messages d'erreurs sur votre disque de
+destination et plus particulièrement sur les partitions / et /usr
+abandonnez maintenant.
 
 Si les systèmes de fichiers cibles semblent bons, l'étape suivant consiste a
-recopier les différentes distributions. Appuyer sur <entrée> pour continuer.
+recopier les différents composants. Appuyer sur <entrée> pour continuer.
 }
 
 message nomount
@@ -278,22 +294,39 @@ message instcomplete
 {L'installation de NetBSD-@@VERSION@@ est terminée. L'ordinateur devrait
 redémarrer depuis le disque dur. Suivez les instructions du document
 d'installation (INSTALL en anglais) pour finir de configurer votre ordinateur.
+
+Vous devez au minimum éditer /etc/rc.conf pour votre environnement local
+et mettre RC_CONFIGURED à `YES' avant de pouvoir démarrer en multi-utilisateur.
 }
 
-message upgrcomplete
+message unpackcomplete
 {La mise à jour de NetBSD-@@VERSION@@ est terminée. Suivez les instructions du
 document d'installation (INSTALL en anglais) pour finir de reconfigurer votre
 ordinateur. Votre ancien /etc a été sauvegardé sous /etc.old .
+
+Vous devez au minimum éditer /etc/rc.conf pour votre environnement local
+et mettre RC_CONFIGURED à `YES' avant de pouvoir démarrer en multi-utilisateur.
+}
+
+message upgrcomplete
+{ L'installation de composants de NetBSD-@@VERSION@@ supplémentaires est
+terminée. L'installation a modifié le /etc de destination. un /etc.old sauvé
+par une mise à jour précédente n'a pas été touché. Suivez les instructions du
+document d'installation (INSTALL en anglais) afin de reconfigurer votre
+ordinateur.
+
+Vous devez au minimum éditer /etc/rc.conf pour votre environnement local
+et mettre RC_CONFIGURED à `YES' avant de pouvoir démarrer en multi-utilisateur.
 }
 
 message distmedium
-{Votre disque est maintenant prêt pour installer un noyau et les différentes
-distributions. Comme indiqué dans la documentation d'installation, vous avez
+{Votre disque est maintenant prêt pour installer un noyau et les différents
+composants. Comme indiqué dans le document d'installation, vous avez
 plusieurs possibilités. Pour une installation via nfs ou ftp, vous devez être
 connecté au réseau et avoir accès au bon serveur. Si vous n'êtes pas prêt pour
 terminer l'installation maintenant, choisissez aucun et vous retournerez au
 menu principal. Plus tard, quand vous serez prêt, choisissez l'option
-"mise à jours" pour terminer l'installation.
+"mise à jour" pour terminer l'installation.
 }
 
 message distset
@@ -304,9 +337,9 @@ composants optionnels.
 }
 
 message ftpsource
-{Vous trouverez ci dessous le site ftp, le répertoire le code utilisateur et le
-mot de passe prêt à l'emplois actuellement. Si l'utilisateur est ftp, alors le
-mot de passe n'est pas nécessaire.
+{Vous trouverez ci dessous le site ftp, le répertoire, le code utilisateur et
+le mot de passe prêt à l'emplois actuellement. Si l'utilisateur est ftp, alors
+le mot de passe n'est pas nécessaire.
 
 serveur:      %s
 répertoire:   %s
@@ -332,20 +365,20 @@ message dev
 {device}
 
 message nfssource
-{Donnez le nom du serveur nfs et du répertoire où ce trouvent les distributions.
-Rappelez vous que le répertoire doit contenir les fichiers .tgz et qu'il doit
-être accessible par nfs.
+{Donnez le nom du serveur nfs et du répertoire sur ce serveur où se trouvent
+les composants. Rappelez vous que le répertoire doit contenir les
+fichiers .tgz et qu'il doit être accessible par nfs.
 
 serveur:    %s
 répertoire: %s
 }
 
 message nfsbadmount
-{Le répertoire %s n'est pas "montable" par nfs.}
+{Le répertoire %s n'est pas montable par nfs.}
 
 message cdromsource
-{Donnez le nom de device du CDROM a utiliser ainsi que le répertoire du CDROM
-contenant les distributions. Rappelez vous que le répertoire doit contenir les
+{Donnez le nom de device du CDROM à utiliser ainsi que le répertoire du CDROM
+contenant les composants. Rappelez vous que le répertoire doit contenir les
 fichiers .tgz .
 
 device:    %s
@@ -354,8 +387,8 @@ répertoire: %s
 
 
 message localfssource
-{Donnez le nom du device local a utiliser ainsi que le répertoire contenant les
-distributions. Rappelez vous que le répertoire doit contenir les fichiers 
+{Donnez le nom du device local à utiliser ainsi que le répertoire contenant les
+composants. Rappelez vous que le répertoire doit contenir les fichiers 
 .tgz .
 
 device:               %s
@@ -363,14 +396,28 @@ système de fichiers : %s
 répertoire:           %s
 }
 
+message localdir
+{Entrez le répertoire local (déjà monté) ou se trouve la distribution.
+Rapellez vous que ce répertoire doit contenir les fichiers .tgz.
+
+Répertoie: %s
+}
+
 message filesys
 {système de fichiers}
 
 message cdrombadmount
-{Le CDROM ne peut pas être "monté" depuis le device %s.}
+{Le CDROM ne peut pas être monté depuis le device %s.}
 
 message localfsbadmount
-{%s ne peut pas être "monté" depuis le device %s.}
+{%s ne peut pas être monté depuis le device %s.}
+
+message badlocalsetdir
+{%s n'est pas un répertoire}
+
+message badsetdir
+{%s ne contient pas les composants indispensables base.tgz et kern.tgz.
+Etes-vous sur que c'est le bon répertoire ?}
 
 message nonet
 {Je ne peux trouver aucune interface réseau utilisable par NetBSD. Vous allez
@@ -429,11 +476,11 @@ celles par défaut.
 }
 
 message resolv
-{Impossible de créer le fichier /etc/resol.conf. L'installation a échouée.
+{Impossible de créer le fichier /etc/resol.conf. L'installation a échoué.
 }
 
 message realdir
-{Impossible de se déplacer sur le répertoire %s. L'installation a échouée.
+{Impossible de se déplacer sur le répertoire %s. L'installation a échoué.
 }
 
 message ftperror_cont
@@ -452,25 +499,43 @@ apparaître au fur et à mesure qu'ils seront extraits ?
 
 message badls
 {Impossible d'exécuter /bin/ls. Cette erreur n'aurait pas du arriver.
-L'installation a échouée.
+L'installation a échoué.
 }
 
-message endtar
+message notarfile
+{La distribution %s n'existe pas.
+}
+
+message endtarok
 {Tous les fichiers ont étés extraits. SVP appuyer sur <entrée> pour continuer.}
+
+message endtar
+{Il y a eu des problèmes au decopactage des composants. Je n'ai pas
+pu trouver %d de ces composants. Sur les %d qui ont été trouvées, %d
+ont été décompactées sans erreurs et %d avec erreurs.
+
+La procédure d'installation a échoué. Vérifiez vos composants et
+envisagez une réinstallation des composants depuis le menu principal.}
 
 message abort
 {Vos choix rendent l'installation de NetBSD impossible. L'installation a
-échouée.
+échoué.
 }
 
 message abortinst
 {La distribution n'a pas été correctement chargée. Vous allez devoir terminer à
-la main. L'installation a échouée.
+la main. L'installation a échoué.
 }
 
 message abortupgr
 {La distribution n'a pas été correctement chargée. Vous allez devoir la
-terminer à la main. La mise à jours a échouée.
+terminer à la main. La mise à jour a échoué.
+}
+
+message abortunpack
+{Les composants supplémentaires n'ont pu etre décompactées. Vous allez
+devoir procéder à la main, ou choisir une source differente pour les
+composants et essayer à nouveau.
 }
 
 message openmsgbuf
@@ -482,7 +547,7 @@ message anonprog
 }
 
 message anonprogfailed
-{Le programme "%s" c'est interrompu avec un code retouy %s.
+{Le programme "%s" c'est interrompu avec un code retour %s.
 
 Ceci est probablement du à un mauvais choix d'option d'installation - tel que
 tenter une mise à jour sur un disque vide, ou réaliser une installation à
@@ -516,8 +581,15 @@ Arrêt de la mise à jour.
 
 message etc_oldexists
 {Impossible de sauvegarder /etc en /etc.old. Le disque cible a déjà un /etc.old.
-Ceci provient sans doute d'une mise à jours précédente ? Veuillez le corriger
-avant de continuer. Arrêt de la mise à jour.
+Merci de corriger ceci avant de continuer.
+
+Une solution est de démarrer un shell du menu `Utilitaires', et d'examiner
+les répertoires /etc et /etc.old sur le disque destination. Si /etc.old
+provient d'une mise à jour complète, vous pouvez effacer /etc.old.
+Si /etc.old provient d'une mise à jour récente et incomplete, vous pouvez
+effacer /etc et renommer /etc.old en /etc.
+
+Arrêt de la mise à jour.
 }
 
 message netnotup
@@ -540,7 +612,7 @@ La mise à jour a été interrompue avec un code erreur %d.
 }
 
 message badmount
-{Le système de fichiers %s%s n'a pas été "monté" correctement.
+{Le système de fichiers %s%s n'a pas été monté correctement.
 Arrêt de la mise à jour
 }
 
@@ -571,7 +643,7 @@ disquette contenant ce fichier.
 }
 
 message fdremount
-{La disquette n'a pas été "montée" correctement. Vous devez :
+{La disquette n'a pas été montée correctement. Vous devez :
     Réessayer en inserrant la disquette contenant le fichier %s.
     Ne plus charger d'autre fichiers depuis la disquette et interrompre le 
     processus
@@ -582,14 +654,17 @@ message mntnetconfig
 utilisation normale et désirez vous l'enregistrer sous /etc ?}
 
 message cur_distsets
-{Vous trouverez ci dessous la liste des distributions qui seront installées.
+{Vous trouverez ci dessous la liste des composants qui seront installées.
 
 }
 
 message tarerror
 {Il y a eu des erreurs lors de l'extraction du fichier %s. Ceci signifie que
 certains fichiers n'ont pas étés extraits correctement et que votre système 
-n'est pas complet. Appuyer sur <entrée> pour continuer.
+n'est pas complet.
+Arrêt de la mise à jour.
+
+Appuyer sur <entrée> pour continuer après un court délais.
 }
 
 message etc_hosts
