@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.1 1996/05/05 06:17:31 briggs Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.2 1996/05/18 18:52:48 briggs Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -51,17 +51,17 @@ struct confargs {
 	int	slot;
 };
 
-void	configure __P((void));
-
-void	mrg_init __P((void));
-void	startrtclock __P((void));
+/* autoconf.c */
 void	setconf __P((void));
-void	dumpconf __P((void));
-
 int	bus_scan __P((struct device *, void *, void *));
 int	bus_print __P((void *, char *));
 int	bus_peek __P((int, vm_offset_t, int));
 char	*bus_mapin __P((int, int, int));
+void	configure __P((void));
+
+/* machdep.c */
+void	mac68k_set_io_offsets __P((vm_offset_t));
+void	dumpconf __P((void));
 int	badbaddr __P((register caddr_t addr));
 int	badwaddr __P((register caddr_t addr));
 int	badladdr __P((register caddr_t addr));
@@ -78,3 +78,7 @@ u_long	clkread __P((void));
 void	inittodr __P((time_t));
 void	resettodr __P((void));
 void	mac68k_calibrate_delay __P((void));
+void	startrtclock __P((void));
+
+/* macrom.c */
+void	mrg_init __P((void));
