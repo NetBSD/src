@@ -1,4 +1,4 @@
-/*	$NetBSD: test-policy.c,v 1.2 1999/07/06 13:13:03 itojun Exp $	*/
+/*	$NetBSD: test-policy.c,v 1.3 2000/02/06 11:21:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -33,8 +33,7 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netinet6/in6.h>
-#include <netkey/keyv2.h>
+#include <net/pfkeyv2.h>
 #include <stdlib.h>
 #include <string.h>
 
