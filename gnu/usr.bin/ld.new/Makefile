@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2000/11/17 06:51:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.20 2000/12/07 08:18:35 scw Exp $
 
 # for OBJECT_FMT, UNPRIVILEGED
 .include <bsd.own.mk>
@@ -58,7 +58,7 @@ DEFAULT_EMUL.i386=	i386nbsd
 ##### m68k #####
 EMULS.m68k=		m68knbsd m68kelf
 .if defined(ELF_PLEASE)
-DEFAULT_EMUL.m68k=	m68kelf
+DEFAULT_EMUL.m68k=	m68kelfnbsd
 .else
 DEFAULT_EMUL.m68k=	m68knbsd
 .endif
