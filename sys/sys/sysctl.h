@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.117 2004/04/08 03:57:48 atatat Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.118 2004/04/09 15:43:19 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@
 #include <uvm/uvm_extern.h>
 
 /* For offsetof() */
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_STANDALONE)
 #include <sys/systm.h>
 #else
 #include <stddef.h>
