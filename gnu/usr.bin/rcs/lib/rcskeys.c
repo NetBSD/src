@@ -30,14 +30,18 @@ Report problems and direct all questions to:
 
 #include "rcsbase.h"
 
-libId(keysId, "$Id: rcskeys.c,v 1.2 1993/08/02 17:47:25 mycroft Exp $")
+libId(keysId, "$Id: rcskeys.c,v 1.3 1994/06/29 05:26:39 mycroft Exp $")
 
 
 char const *const Keyword[] = {
     /* This must be in the same order as rcsbase.h's enum markers type. */
 	nil,
 	AUTHOR, DATE, HEADER, IDH,
-	LOCKER, LOG, RCSFILE, REVISION, SOURCE, STATE
+	LOCKER, LOG,
+#ifdef NETBSD_DEVELOPMENT
+	NETBSDH,
+#endif
+	RCSFILE, REVISION, SOURCE, STATE
 };
 
 
