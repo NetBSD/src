@@ -38,14 +38,16 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)rmpproto.c	8.1 (Berkeley) 6/4/93
+ *	from: @(#)rmpproto.c	8.1 (Berkeley) 6/4/93
+ *	      $Id: rmpproto.c,v 1.2 1994/01/11 16:41:55 brezak Exp $
  *
- * Utah $Hdr: rmpproto.c 3.1 92/07/06$
+ * From: Utah Hdr: rmpproto.c 3.1 92/07/06
  * Author: Jeff Forys, University of Utah CSS
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)rmpproto.c	8.1 (Berkeley) 6/4/93";
+/*static char sccsid[] = "@(#)rmpproto.c	8.1 (Berkeley) 6/4/93";*/
+static char rcsid[] = "$Id: rmpproto.c,v 1.2 1994/01/11 16:41:55 brezak Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -111,7 +113,7 @@ ProcessPacket(rconn, client)
 			 *  of active connections, otherwise delete it since
 			 *  an error was encountered.
 			 */
-			if (rmp->r_brq.rmp_session == RMP_PROBESID) {
+			if (ntohs(rmp->r_brq.rmp_session) == RMP_PROBESID) {
 				if (WORDZE(rmp->r_brq.rmp_seqno))
 					(void) SendServerID(rconnout);
 				else
@@ -188,7 +190,7 @@ SendServerID(rconn)
 	rpl->r_brpl.rmp_retcode = RMP_E_OKAY;
 	ZEROWORD(rpl->r_brpl.rmp_seqno);
 	rpl->r_brpl.rmp_session = 0;
-	rpl->r_brpl.rmp_version = RMP_VERSION;
+	rpl->r_brpl.rmp_version = htons(RMP_VERSION);
 
 	size = &rpl->r_brpl.rmp_flnmsize;	/* ptr to length of host name */
 
@@ -243,7 +245,7 @@ SendFileNo(req, rconn, filelist)
 	PUTWORD(i, rpl->r_brpl.rmp_seqno);
 	i--;
 	rpl->r_brpl.rmp_session = 0;
-	rpl->r_brpl.rmp_version = RMP_VERSION;
+	rpl->r_brpl.rmp_version = htons(RMP_VERSION);
 
 	size = &rpl->r_brpl.rmp_flnmsize;	/* ptr to length of filename */
 	*size = 0;				/* init length to zero */
@@ -315,8 +317,8 @@ SendBootRepl(req, rconn, filelist)
 	 */
 	rpl->r_brpl.rmp_type = RMP_BOOT_REPL;
 	COPYWORD(req->r_brq.rmp_seqno, rpl->r_brpl.rmp_seqno);
-	rpl->r_brpl.rmp_session = GenSessID();
-	rpl->r_brpl.rmp_version = RMP_VERSION;
+	rpl->r_brpl.rmp_session = htons(GenSessID());
+	rpl->r_brpl.rmp_version = htons(RMP_VERSION);
 	rpl->r_brpl.rmp_flnmsize = req->r_brq.rmp_flnmsize;
 
 	/*
@@ -428,9 +430,9 @@ SendReadRepl(rconn)
 	/*
 	 *  Make sure Session ID's match.
 	 */
-	if (req->r_rrq.rmp_session !=
-	    ((rpl->r_type == RMP_BOOT_REPL)? rpl->r_brpl.rmp_session:
-	                                    rpl->r_rrpl.rmp_session)) {
+	if (ntohs(req->r_rrq.rmp_session) !=
+	    ((rpl->r_type == RMP_BOOT_REPL)? ntohs(rpl->r_brpl.rmp_session):
+	                                     ntohs(rpl->r_rrpl.rmp_session))) {
 		syslog(LOG_ERR, "SendReadRepl: bad session id (%s)",
 		       EnetStr(rconn));
 		rpl->r_rrpl.rmp_retcode = RMP_E_BADSID;
@@ -446,8 +448,8 @@ SendReadRepl(rconn)
 	 *  to work.  This is necessary for bpfwrite() on machines
 	 *  with MCLBYTES less than 1514.
 	 */
-	if (req->r_rrq.rmp_size > RMPREADDATA)
-		req->r_rrq.rmp_size = RMPREADDATA;
+	if (ntohs(req->r_rrq.rmp_size) > RMPREADDATA)
+		req->r_rrq.rmp_size = htons(RMPREADDATA);
 
 	/*
 	 *  Position read head on file according to info in request packet.
@@ -533,9 +535,9 @@ BootDone(rconn)
 	/*
 	 *  Make sure Session ID's match.
 	 */
-	if (rconn->rmp.r_rrq.rmp_session !=
-	    ((rpl->r_type == RMP_BOOT_REPL)? rpl->r_brpl.rmp_session:
-	                                    rpl->r_rrpl.rmp_session)) {
+	if (ntohs(rconn->rmp.r_rrq.rmp_session) !=
+	    ((rpl->r_type == RMP_BOOT_REPL)? ntohs(rpl->r_brpl.rmp_session):
+	                                    ntohs(rpl->r_rrpl.rmp_session))) {
 		syslog(LOG_ERR, "BootDone: bad session id (%s)",
 		       EnetStr(rconn));
 		return(0);

@@ -38,9 +38,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)rbootd.c	8.1 (Berkeley) 6/4/93
+ *	from: @(#)rbootd.c	8.1 (Berkeley) 6/4/93
+ *	      $Id: rbootd.c,v 1.2 1994/01/11 16:41:47 brezak Exp $
  *
- * Utah $Hdr: rbootd.c 3.1 92/07/06$
+ * From: Utah Hdr: rbootd.c 3.1 92/07/06
  * Author: Jeff Forys, University of Utah CSS
  */
 
@@ -51,7 +52,8 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)rbootd.c	8.1 (Berkeley) 6/4/93";
+/*static char sccsid[] = "@(#)rbootd.c	8.1 (Berkeley) 6/4/93";*/
+static char rcsid[] = "$Id: rbootd.c,v 1.2 1994/01/11 16:41:47 brezak Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
