@@ -1,13 +1,23 @@
-#	$NetBSD: Makefile,v 1.11 1998/04/09 00:32:40 tv Exp $
+#	$NetBSD: Makefile,v 1.11.2.1 1999/12/20 21:06:55 he Exp $
 
 PROG=	ipsend
 SRCS=	ipsend.c ip.c ipsopt.c 44arp.c sbpf.c iplang_l.l iplang_y.y
-CPPFLAGS+=-I${.CURDIR}/../ipftest -I${.CURDIR}/../ipf -I.
 YHEADER=1
 LDADD=	-ll
 DPADD=	${LIBL}
 
+CPPFLAGS+=-I${.CURDIR}/../../../dist/ipf -I${.CURDIR}/../../../dist/ipf/ipsend -I.
+
 MAN=	ipsend.1 ipsend.5
 
-.PATH: ${.CURDIR}/../ipf
+.PATH:	${.CURDIR}/../../../dist/ipf/ipsend \
+	${.CURDIR}/../../../dist/ipf/iplang
+
+# XXX
+# We have a problem with make and linking ipsend
+# cc   -o /home/source/src/usr.sbin/ipf/ipsend/../../../dist/ipf/ipsend .....
+# isn't correct.
+# Use .NOPATH as an workaround for that problem
+.NOPATH: ipsend
+
 .include <bsd.prog.mk>
