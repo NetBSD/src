@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.331 2001/06/20 05:44:33 imp Exp $
+$NetBSD: pcidevs,v 1.332 2001/06/20 16:32:32 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1677,6 +1677,7 @@ product SYMPHONY	83C553	0x0565	83C553 PCI-ISA Bridge
 
 /* Schneider & Koch (really SysKonnect) products */
 product	SCHNEIDERKOCH	SKNET_FDDI	0x4000	SK-NET FDDI-xP
+product	SCHNEIDERKOCH	SKNET_GE	0x4300	SK-NET GE
 
 /* Tekram Technology products (1st PCI Vendor ID)*/
 product TEKRAM DC290		0xdc29	DC-290(M)
