@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.225 2000/06/05 11:29:28 kleink Exp $
+$NetBSD: pcidevs,v 1.226 2000/06/05 11:33:35 kleink Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -935,6 +935,7 @@ product ESSTECH	MAESTRO1	0x0100	Maestro 1 PCI Audio Accelerator
 product ESSTECH	MAESTRO2	0x1968	Maestro 2 PCI Audio Accelerator
 product ESSTECH	SOLO1		0x1969	Solo-1 PCI AudioDrive
 product ESSTECH	MAESTRO2E	0x1978	Maestro 2E PCI Audio Accelerator
+product ESSTECH	MAESTRO3	0x1998	Maestro 3 PCI Audio Accelerator
 
 /* O2 Micro Inc */
 product O2MICRO  OZ6832	0x6832	OZ6832 CardBus Controller
