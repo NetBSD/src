@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.215 2003/04/20 21:57:17 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.216 2003/04/22 12:55:26 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -349,7 +349,6 @@ LOBJS+=${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 .if ${MKLINT} != "no" && ${MKLINKLIB} != "no" && !empty(LOBJS)
 _LIBS+=llib-l${LIB}.ln
 .endif
-.endif
 
 .if ${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != "") \
 	|| ${MKLINKLIB} != "no"
@@ -359,6 +358,10 @@ ALLOBJS=${POBJS} ${SOBJS}
 .endif
 .if ${MKLINT} != "no" && ${MKLINKLIB} != "no" && !empty(LOBJS)
 ALLOBJS+=${LOBJS}
+.endif
+.else
+LOBJS=
+SOBJS=
 .endif
 
 .NOPATH: ${ALLOBJS} ${_LIBS} ${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
