@@ -1,4 +1,4 @@
-/*	$NetBSD: faithd.c,v 1.6 1999/12/20 16:03:19 itojun Exp $	*/
+/*	$NetBSD: faithd.c,v 1.7 1999/12/20 16:22:41 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -85,6 +85,7 @@ char *serverpath = NULL;
 char *serverarg[MAXARGV + 1];
 static char *faithdname = NULL;
 char logname[BUFSIZ];
+char procname[BUFSIZ];
 struct myaddrs {
 	struct myaddrs *next;
 	struct sockaddr *addr;
@@ -169,7 +170,7 @@ main(int argc, char *argv[])
 
 		memset(&ss, 0, sizeof(ss));
 		memset(&hints, 0, sizeof(hints));
-		sprintf(serv, "%u", NAMESERVER_PORT);
+		snprintf(serv, sizeof(serv), "%u", NAMESERVER_PORT);
 		hints.ai_flags = AI_NUMERICHOST;
 		if (getaddrinfo(ns, serv, &hints, &res) ==  0) {
 			res_init();
@@ -272,7 +273,8 @@ main(int argc, char *argv[])
 
 	start_daemon();
 
-	sprintf(logname, "accepting port %s", service);
+	snprintf(logname, sizeof(logname), "faithd %s", service);
+	snprintf(procname, sizeof(procname), "accepting port %s", service);
 	openlog(logname, LOG_PID | LOG_NOWAIT, LOG_DAEMON);
 	syslog(LOG_INFO, "Staring faith daemon for %s port", service);
 
@@ -296,7 +298,7 @@ play_service(int s_wld)
 	 * Wait, accept, fork, faith....
 	 */
 again:
-	setproctitle(logname);
+	setproctitle(procname);
 
 	FD_ZERO(&rfds);
 	FD_SET(s_wld, &rfds);
@@ -642,7 +644,7 @@ exit_error(const char *fmt, ...)
 	char buf[BUFSIZ];
 
 	va_start(ap, fmt);
-	vsprintf(buf, fmt, ap);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	fprintf(stderr, "%s\n", buf);
 	exit(EXIT_FAILURE);
@@ -655,7 +657,7 @@ exit_failure(const char *fmt, ...)
 	char buf[BUFSIZ];
 
 	va_start(ap, fmt);
-	vsprintf(buf, fmt, ap);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	syslog(LOG_ERR, buf);
 	exit(EXIT_FAILURE);
@@ -668,7 +670,7 @@ exit_success(const char *fmt, ...)
 	char buf[BUFSIZ];
 
 	va_start(ap, fmt);
-	vsprintf(buf, fmt, ap);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	syslog(LOG_INFO, buf);
 	exit(EXIT_SUCCESS);
