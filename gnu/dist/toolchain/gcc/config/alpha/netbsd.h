@@ -82,7 +82,7 @@ Boston, MA 02111-1307, USA.  */
 
 #undef CPP_PREDEFINES
 #define CPP_PREDEFINES "\
--D__alpha__ -D__alpha -D__NetBSD__ -D__ELF__ -D__KPRINTF_ATTRIBUTE__ \
+-D__alpha__ -D__alpha -D__NetBSD__ -D__ELF__ -D_LP64 -D__KPRINTF_ATTRIBUTE__ \
 -Asystem(unix) -Asystem(NetBSD) -Acpu(alpha) -Amachine(alpha)"
 
 /* Make gcc agree with <machine/ansi.h> */
