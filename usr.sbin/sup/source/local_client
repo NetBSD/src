@@ -1,0 +1,28 @@
+cntrl  host=SERVER hostbase=/SERVER_CONTROL_DIRECTORY_BASE base=/usr/src crypt=CRYPT
+src.nfstools host=SERVER hostbase=/SERVER_CONTROL_DIRECTORY_BASE base=/usr/src prefix=nfstools crypt=CRYPT
+mach.fs host=SERVER hostbase=/SERVER_CONTROL_DIRECTORY_BASE base=/usr/src prefix=sys crypt=CRYPT
+bin.cmu  host=SERVER hostbase=/SERVER_CONTROL_DIRECTORY_BASE base=/usr/src crypt=CRYPT
+src.local  host=SERVER hostbase=/SERVER_CONTROL_DIRECTORY_BASE base=/usr/src crypt=CRYPT
+
+src.MISC host=SERVER hostbase=/SERVER_CONTROL_DIRECTORY_BASE base=/usr/src crypt=CRYPT
+src.bin host=SERVER hostbase=/SERVER_CONTROL_DIRECTORY_BASE base=/usr/src prefix=bin crypt=CRYPT
+src.cci host=SERVER hostbase=/SERVER_CONTROL_DIRECTORY_BASE base=/usr/src prefix=cci crypt=CRYPT
+src.doc host=SERVER hostbase=/SERVER_CONTROL_DIRECTORY_BASE base=/usr/src prefix=doc crypt=CRYPT
+src.etc host=SERVER hostbase=/SERVER_CONTROL_DIRECTORY_BASE base=/usr/src prefix=etc crypt=CRYPT
+src.games host=SERVER hostbase=/SERVER_CONTROL_DIRECTORY_BASE base=/usr/src prefix=games crypt=CRYPT
+src.include host=SERVER hostbase=/SERVER_CONTROL_DIRECTORY_BASE base=/usr/src prefix=include crypt=CRYPT
+src.lib host=SERVER hostbase=/SERVER_CONTROL_DIRECTORY_BASE base=/usr/src prefix=lib crypt=CRYPT
+src.man host=SERVER hostbase=/SERVER_CONTROL_DIRECTORY_BASE base=/usr/src prefix=man crypt=CRYPT
+src.new host=SERVER hostbase=/SERVER_CONTROL_DIRECTORY_BASE base=/usr/src prefix=new crypt=CRYPT
+src.old host=SERVER hostbase=/SERVER_CONTROL_DIRECTORY_BASE base=/usr/src prefix=old crypt=CRYPT
+src.tests host=SERVER hostbase=/SERVER_CONTROL_DIRECTORY_BASE base=/usr/src prefix=tests crypt=CRYPT
+src.ucb host=SERVER hostbase=/SERVER_CONTROL_DIRECTORY_BASE base=/usr/src prefix=ucb crypt=CRYPT
+src.undoc host=SERVER hostbase=/SERVER_CONTROL_DIRECTORY_BASE base=/usr/src prefix=undoc crypt=CRYPT
+src.usr.bin host=SERVER hostbase=/SERVER_CONTROL_DIRECTORY_BASE base=/usr/src prefix=usr.bin crypt=CRYPT
+src.gnu host=SERVER hostbase=/SERVER_CONTROL_DIRECTORY_BASE base=/usr/src prefix=gnu crypt=CRYPT
+src.usr.lib host=SERVER hostbase=/SERVER_CONTROL_DIRECTORY_BASE base=/usr/src prefix=usr.lib crypt=CRYPT
+
+mach.sys host=SERVER hostbase=/SERVER_CONTROL_DIRECTORY_BASE base=/usr/src prefix=sys crypt=CRYPT
+
+bin.root host=SERVER hostbase=/SERVER_CONTROL_DIRECTORY_BASE base=/usr/src crypt=CRYPT
+bin.usr  host=SERVER hostbase=/SERVER_CONTROL_DIRECTORY_BASE base=/usr/src crypt=CRYPT
