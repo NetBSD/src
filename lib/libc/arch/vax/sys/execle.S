@@ -1,4 +1,4 @@
-/*	$NetBSD: execle.S,v 1.2 2001/09/06 18:42:58 chuck Exp $	*/
+/*	$NetBSD: execle.S,v 1.3 2002/02/24 01:06:20 matt Exp $	*/
 /*
  * Copyright (c) 2001 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -32,9 +32,9 @@
 #include "SYS.h"
 
 ENTRY(execle, 0)
-	movl	(ap),r0		# Get number of args
-	pushl	(ap)[r0]	# Push last arg (envp)
-	pushal	8(ap)		# Push pointer to argv vector
-	pushl	4(ap)		# Push path
+	movl	(%ap),%r0		# Get number of args
+	pushl	(%ap)[%r0]	# Push last arg (envp)
+	pushal	8(%ap)		# Push pointer to argv vector
+	pushl	4(%ap)		# Push path
 	calls	$3,_C_LABEL(execve)
 	ret

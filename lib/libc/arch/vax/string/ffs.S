@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.1 1996/05/19 15:57:41 ragge Exp $	*/
+/*	$NetBSD: ffs.S,v 1.2 2002/02/24 01:06:20 matt Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,9 +41,9 @@
 #include "DEFS.h"
 
 ENTRY(ffs, 0)
-	ffs	$0,$32,4(ap),r0
+	ffs	$0,$32,4(%ap),%r0
 	bneq	1f
-	mnegl	$1,r0
+	mnegl	$1,%r0
 1:
-	incl	r0
+	incl	%r0
 	ret

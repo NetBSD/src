@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.S,v 1.1 1996/05/19 15:57:38 ragge Exp $	*/
+/*	$NetBSD: bcmp.S,v 1.2 2002/02/24 01:06:20 matt Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,23 +40,23 @@
 /*  still, this is four times faster than the generic C version on a uvax2 */
 
 ENTRY(bcmp, 0)
-	movl	12(ap),r0	# r0 = n
+	movl	12(%ap),%r0	# %r0 = n
 	jeql	9f
-	movq	4(ap),r1	# r1 = s1, r2 = s2
-	ashl	$-2,r0,r3	# convert len to # of long words
+	movq	4(%ap),%r1	# %r1 = s1, %r2 = s2
+	ashl	$-2,%r0,%r3	# convert len to # of long words
 	jeql	2f
 1:
-	cmpl	(r1)+,(r2)+	# no "cmpq" alas, so four bytes at a time
+	cmpl	(%r1)+,(%r2)+	# no "cmpq" alas, so four bytes at a time
 	jneq	9f
-	sobgtr	r3,1b
+	sobgtr	%r3,1b
 2:
-	bicl3	$-4,r0,r3	# handle at most 3 extra bytes
+	bicl3	$-4,%r0,%r3	# handle at most 3 extra bytes
 	jeql	8f
 3:
-	cmpb	(r1)+,(r2)+
+	cmpb	(%r1)+,(%r2)+
 	jneq	9f
-	sobgtr	r3,3b
+	sobgtr	%r3,3b
 8:
-	clrl	r0		# we have a match!
+	clrl	%r0		# we have a match!
 9:
 	ret

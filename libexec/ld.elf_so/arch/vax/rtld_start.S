@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.6 2000/08/07 01:47:07 matt Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.7 2002/02/24 01:06:22 matt Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -39,34 +39,34 @@ ENTRY(_rtld_start, 0)
 	/* Allocate space on the stack for the cleanup and obj_main
 	 * entries that _rtld() will provide for us.
 	 */
-	clrl	fp
-	subl2	$8,sp
-	pushl	sp
+	clrl	%fp
+	subl2	$8,%sp
+	pushl	%sp
 
 	calls	$1,_rtld
 
-	movq	(sp)+,r7	/* grab cleanup and obj_main into r7/r8 */
-	jmp	2(r0)		/* jump to entry point + 2 */
+	movq	(%sp)+,%r7	/* grab cleanup and obj_main into %r7/%r8 */
+	jmp	2(%r0)		/* jump to entry point + 2 */
 
 /*
  * Lazy binding entry point, called via PLT.
  */
 ALTENTRY(_rtld_bind_start)
 	pushr	$0xff		/* save R0-R7 */
-	movq	32(sp),r0	/* get addresses of plt.got & reloc index */
-	pushl	(r1)		/* push relocation index */
-	pushl	r0		/* push address of obj entry */
+	movq	32(%sp),%r0	/* get addresses of plt.got & reloc index */
+	pushl	(%r1)		/* push relocation index */
+	pushl	%r0		/* push address of obj entry */
 	calls	$2,_rtld_bind
-	movpsl	-(sp)		/* flush the instruction cache */
+	movpsl	-(%sp)		/* flush the instruction cache */
 	pushab	1f		/*   by issuing an */
 	rei			/*   rei. */
-1:	movl	r0,36(sp)	/* save return address onto stack */
-2:	bicw3	6(fp),(r0),r0	/* does the entry mask save any additional regs */
+1:	movl	%r0,36(%sp)	/* save return address onto stack */
+2:	bicw3	6(%fp),(%r0),%r0	/* does the entry mask save any additional regs */
 	popr	$0xff		/* restore R0-R7 (cond flags not modified) */
 	bneq	4f		/* yes? do it the hard way */
-3:	addl2	$4,sp		/* no? skip past plt.got on stack */
-	addl2	$2,(sp)		/*    skip past the mask */
+3:	addl2	$4,%sp		/* no? skip past plt.got on stack */
+	addl2	$2,(%sp)		/*    skip past the mask */
 	rsb			/*    and jump to it */
-4:	addl2	$4,sp
-	callg	(ap),*(sp)+	/* return value from _rtld_bind() == actual */
+4:	addl2	$4,%sp
+	callg	(%ap),*(%sp)+	/* return value from _rtld_bind() == actual */
 	ret

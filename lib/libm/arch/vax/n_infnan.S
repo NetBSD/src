@@ -1,4 +1,4 @@
-/*      $NetBSD: n_infnan.S,v 1.4 2000/07/14 04:50:58 matt Exp $ */
+/*      $NetBSD: n_infnan.S,v 1.5 2002/02/24 01:06:21 matt Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -51,10 +51,10 @@ _sccsid:
 	.set	ERANGE,34
 
 ENTRY(infnan, 0)
-	cmpl	4(ap),$ERANGE
+	cmpl	4(%ap),$ERANGE
 	bneq	1f
 	movl	$ERANGE,_C_LABEL(errno)
 	brb	2f
 1:	movl	$EDOM,_C_LABEL(errno)
-2:	emodd	$0,$0,$0x8000,r0,r0	# generates the reserved operand fault
+2:	emodd	$0,$0,$0x8000,%r0,%r0	# generates the reserved operand fault
 	ret

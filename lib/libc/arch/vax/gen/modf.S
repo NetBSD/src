@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)modf.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: modf.S,v 1.1 1995/04/17 12:23:45 ragge Exp $"
+	.asciz "$NetBSD: modf.S,v 1.2 2002/02/24 01:06:19 matt Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -47,10 +47,10 @@
 #include "DEFS.h"
 
 ENTRY(modf, 0)
-	emodd	4(ap),$0,$0f1.0,r2,r0
+	emodd	4(%ap),$0,$0f1.0,%r2,%r0
 	jvs	1f			# integer overflow
-	cvtld	r2,*12(ap)
+	cvtld	%r2,*12(%ap)
 	ret
 1:
-	subd3	r0,4(ap),*12(ap)
+	subd3	%r0,4(%ap),*12(%ap)
 	ret

@@ -1,4 +1,4 @@
-/*	$NetBSD: execl.S,v 1.1 2001/07/01 13:31:18 ragge Exp $	*/
+/*	$NetBSD: execl.S,v 1.2 2002/02/24 01:06:20 matt Exp $	*/
 /*
  * Copyright (c) 2001 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -32,7 +32,7 @@
 #include "SYS.h"
 
 ENTRY(execl, 0)
-	pushal	8(ap)	# Push pointer to argv vector
-	pushl	4(ap)	# Push path
+	pushal	8(%ap)	# Push pointer to argv vector
+	pushl	4(%ap)	# Push path
 	calls	$2,_C_LABEL(execv)
 	ret

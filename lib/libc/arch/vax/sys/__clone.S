@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.1 2001/07/20 06:10:12 matt Exp $	*/
+/*	$NetBSD: __clone.S,v 1.2 2002/02/24 01:06:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,32 +52,32 @@ ENTRY(__clone, 0)
 	/*
 	 * Sanity checks: func and stack may not be NULL.
 	 */
-	movl	4(ap),r2	/* check and save function */
+	movl	4(%ap),%r2	/* check and save function */
 	beql	9f
-	tstl	8(ap)		/* check stack */
+	tstl	8(%ap)		/* check stack */
 	beql	9f
 
 	/*
 	 * The system call expects (flags, stack).
 	 */
-	movl	12(ap),4(ap)	/* XXX this doesn't work for
+	movl	12(%ap),4(%ap)	/* XXX this doesn't work for
 				   callg with a RO arglist */
-	movl	$2,(ap)
-	SYSTRAP(__clone)	/* only r0/r1 munged */
+	movl	$2,(%ap)
+	SYSTRAP(__clone)	/* only %r0/%r1 munged */
 
-	blbc	r1,8f		/* r1<0>:   0=parent  1=child */
+	blbc	%r1,8f		/* %r1<0>:   0=parent  1=child */
 
 	/* Call the clone's entry point. */
-	pushl	16(ap)
-	calls	$1,(r2)
+	pushl	16(%ap)
+	calls	$1,(%r2)
 
 	/* Pass return value to _exit(). */
-	pushl	r0
+	pushl	%r0
 	calls	$1,_C_LABEL(_exit)
 
 	/* NOTREACHED */
 
 8:	ret
 
-9:	movl	$EINVAL,r0
+9:	movl	$EINVAL,%r0
 	jmp	CERROR+2

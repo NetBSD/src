@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.6 2001/09/08 18:59:20 matt Exp $ */
+/* $NetBSD: crt0.c,v 1.7 2002/02/24 01:06:18 matt Exp $ */
 
 /*
  * Copyright (c) 1999 Matt Thomas
@@ -48,13 +48,13 @@ __asm("
 __start:
 _start:
 	.word	0x0101
-	pushl	r9		# ps_strings
-	pushl	r8		# obj
-	pushl	r7		# cleanup
-	movl	(r6),r0		# argc
-	pushal	8(r6)[r0]	# envp = &argv[argc + 1]
-	pushal	4(r6)		# argv
-	pushl	r0		# argc
+	pushl	%r9		# ps_strings
+	pushl	%r8		# obj
+	pushl	%r7		# cleanup
+	movl	(%r6),%r0	# argc
+	pushal	8(%r6)[%r0]	# envp = &argv[argc + 1]
+	pushal	4(%r6)		# argv
+	pushl	%r0		# argc
 	calls	$6,___start
 ");
 
@@ -99,7 +99,7 @@ ___start(argc, argv, envp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.6 2001/09/08 18:59:20 matt Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.7 2002/02/24 01:06:18 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
