@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: bootconf.sh,v 1.5 2002/03/25 03:22:10 wiz Exp $
+# $NetBSD: bootconf.sh,v 1.6 2002/12/05 16:52:58 wiz Exp $
 #
 
 # PROVIDE: bootconf
@@ -16,13 +16,13 @@ bootconf_start()
 	fi
 	if [ -h /etc/etc.default ]; then
 		def=`ls -ld /etc/etc.default 2>&1`
-		default="${def##*-> etc.}"
+		default="${def##*-> *etc.}"
 	else
 		default=current
 	fi
 	if [ "$default" = "current" ]; then
 		def=`ls -ld /etc/etc.current 2>&1`
-		default="${def##*-> etc.}"
+		default="${def##*-> *etc.}"
 	fi
 
 	spc=""
