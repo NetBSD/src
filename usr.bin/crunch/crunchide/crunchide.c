@@ -1,3 +1,4 @@
+/*	$NetBSD: crunchide.c,v 1.6 1997/08/02 21:30:16 perry Exp $	*/
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1994 University of Maryland
@@ -56,7 +57,12 @@
  *      - arrange that all the BSS segments start at the same address, so
  *	  that the final crunched binary BSS size is the max of all the
  *	  component programs' BSS sizes, rather than their sum.
- */ 
+ */
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: crunchide.c,v 1.6 1997/08/02 21:30:16 perry Exp $");
+#endif
+
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -79,6 +85,8 @@ void add_file_to_keep_list(char *filename);
 int hide_syms(const char *filename);
 
 int verbose;
+
+int main __P((int, char *[]));
 
 int main(argc, argv)
 int argc;
@@ -160,6 +168,8 @@ int in_keep_list(const char *symbol)
 {
     struct keep *curp;
     int cmp;
+
+    cmp = 0;
 
     for(curp = keep_list; curp; curp = curp->next)
 	if((cmp = strcmp(symbol, curp->sym)) <= 0) break;

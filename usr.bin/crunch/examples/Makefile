@@ -1,3 +1,4 @@
+#	$NetBSD: Makefile,v 1.2 1997/08/02 21:30:21 perry Exp $
 
 CRUNCHED=   fixit
 
