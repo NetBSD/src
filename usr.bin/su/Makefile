@@ -1,9 +1,10 @@
-#	from: @(#)Makefile	5.5 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.7 1996/10/12 23:54:38 christos Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
+#	$Id: Makefile,v 1.8 1997/01/09 11:43:05 tls Exp $
 
 PROG=	su
 BINOWN=	root
 BINMODE=4555
+INSTALLFLAGS=-fschg
 
 .include <bsd.prog.mk>
 
@@ -14,6 +15,10 @@ DPADD+= ${LIBCRYPT} ${LIBSKEY}
 .endif
 
 .ifdef KERBEROS
+.ifdef AFS
+LDADD+=	-lkafs
+DPADD+=	${LIBKAFS}
+.endif
 CFLAGS+=-DKERBEROS
 LDADD+= -lkrb -ldes
 DPADD+= ${LIBKRB} ${LIBDES}

@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.12 1996/10/15 14:35:41 christos Exp $	*/
+/*	$NetBSD: su.c,v 1.13 1997/01/09 11:43:07 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,9 +41,9 @@ char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)su.c	5.26 (Berkeley) 7/6/91";*/
+static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-static char rcsid[] = "$NetBSD: su.c,v 1.12 1996/10/15 14:35:41 christos Exp $";
+static char rcsid[] = "$NetBSD: su.c,v 1.13 1997/01/09 11:43:07 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ static char rcsid[] = "$NetBSD: su.c,v 1.12 1996/10/15 14:35:41 christos Exp $";
 #include <sys/resource.h>
 #include <syslog.h>
 #include <stdio.h>
+#include <err.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <pwd.h>
@@ -90,8 +91,8 @@ main(argc, argv)
 {
 	extern char *__progname;
 	extern char **environ;
-	register struct passwd *pwd;
-	register char *p, **g;
+	struct passwd *pwd;
+	char *p, **g;
 	struct group *gr;
 	uid_t ruid;
 	int asme, ch, asthem, fastlogin, prio;
@@ -142,8 +143,7 @@ main(argc, argv)
 	    pwd->pw_uid != ruid)
 		pwd = getpwuid(ruid);
 	if (pwd == NULL) {
-		(void)fprintf(stderr, "su: who are you?\n");
-		exit(1);
+		errx(1, "who are you?");
 	}
 	username = strdup(pwd->pw_name);
 	if (asme)
@@ -159,8 +159,7 @@ main(argc, argv)
 	np = *argv ? argv : argv-1;
 
 	if ((pwd = getpwnam(user)) == NULL) {
-		fprintf(stderr, "su: unknown login %s\n", user);
-		exit(1);
+		errx(1, "unknown login %s", user);
 	}
 
 	if (ruid) {
@@ -171,12 +170,10 @@ main(argc, argv)
 		/* only allow those in group zero to su to root. */
 		if (pwd->pw_uid == 0 && (gr = getgrgid((gid_t)0)))
 			for (g = gr->gr_mem;; ++g) {
-				if (!*g) {
-					(void)fprintf(stderr,
-			    "su: you are not in the correct group to su %s.\n",
+				if (!*g)
+					errx(1, 
+			    "you are not in the correct group to su %s.",
 					    user);
-					exit(1);
-				}
 				if (!strcmp(username, *g))
 					break;
 		}
@@ -185,10 +182,9 @@ main(argc, argv)
 			p = getpass("Password:");
 #ifdef SKEY
 			if (strcasecmp(p, "s/key") == 0) {
-				if (skey_haskey(user)) {
-					fprintf(stderr, "Sorry, you have no s/key.\n");
-					exit(1);
-				} else {
+				if (skey_haskey(user))
+					errx(1, "Sorry, you have no s/key.");
+				else {
 					if (skey_authenticate(user)) {
 						goto badlogin;
 					}
@@ -210,11 +206,8 @@ badlogin:
 
 	if (asme) {
 		/* if asme and non-standard target shell, must be root */
-		if (!chshell(pwd->pw_shell) && ruid) {
-			(void)fprintf(stderr,
-				"su: permission denied (shell).\n");
-			exit(1);
-		}
+		if (!chshell(pwd->pw_shell) && ruid)
+			errx(1,"permission denied (shell).");
 	} else if (pwd->pw_shell && *pwd->pw_shell) {
 		shell = pwd->pw_shell;
 		iscsh = UNSET;
@@ -223,7 +216,7 @@ badlogin:
 		iscsh = NO;
 	}
 
-	if (p = rindex(shell, '/'))
+	if (p = strrchr(shell, '/'))
 		avshell = p+1;
 	else
 		avshell = shell;
@@ -233,18 +226,12 @@ badlogin:
 		iscsh = strstr(avshell, "csh") ? YES : NO;
 
 	/* set permissions */
-	if (setgid(pwd->pw_gid) < 0) {
-		perror("su: setgid");
-		exit(1);
-	}
-	if (initgroups(user, pwd->pw_gid)) {
-		(void)fprintf(stderr, "su: initgroups failed.\n");
-		exit(1);
-	}
-	if (setuid(pwd->pw_uid) < 0) {
-		perror("su: setuid");
-		exit(1);
-	}
+	if (setgid(pwd->pw_gid) < 0)
+		err(1, "setgid");
+	if (initgroups(user, pwd->pw_gid))
+		errx(1, "initgroups failed");
+	if (setuid(pwd->pw_uid) < 0)
+		err(1, "setuid");
 
 	if (!asme) {
 		if (asthem) {
@@ -254,10 +241,8 @@ badlogin:
 			(void)setenv("PATH", _PATH_DEFPATH, 1);
 			if (p)
 				(void)setenv("TERM", p, 1);
-			if (chdir(pwd->pw_dir) < 0) {
-				fprintf(stderr, "su: no directory\n");
-				exit(1);
-			}
+			if (chdir(pwd->pw_dir) < 0)
+				errx(1, "no directory");
 		}
 		if (asthem || pwd->pw_uid)
 			(void)setenv("USER", pwd->pw_name, 1);
@@ -291,15 +276,14 @@ badlogin:
 	(void)setpriority(PRIO_PROCESS, 0, prio);
 
 	execv(shell, np);
-	(void)fprintf(stderr, "su: %s not found.\n", shell);
-	exit(1);
+	err(1, "%s", shell);
 }
 
 static int
 chshell(sh)
 	char *sh;
 {
-	register char *cp;
+	char *cp;
 	char *getusershell();
 
 	while ((cp = getusershell()) != NULL)
@@ -339,7 +323,7 @@ kerberos(username, user, uid)
 	if (krb_get_lrealm(lrealm, 1) != KSUCCESS)
 		return (1);
 	if (koktologin(username, lrealm, user) && !uid) {
-		(void)fprintf(stderr, "kerberos su: not in %s's ACL.\n", user);
+		warnx("kerberos: not in %s's ACL.", user);
 		return (1);
 	}
 	(void)sprintf(krbtkfile, "%s_%s_%d", TKT_ROOT, user, getuid());
@@ -351,7 +335,7 @@ kerberos(username, user, uid)
 	 * to make the kerberos library do the right thing.
 	 */
 	if (setuid(0) < 0) {
-		perror("su: setuid");
+		warn("setuid");
 		return (1);
 	}
 
@@ -371,13 +355,12 @@ kerberos(username, user, uid)
 
 	if (kerno != KSUCCESS) {
 		if (kerno == KDC_PR_UNKNOWN) {
-			fprintf(stderr, "principal unknown: %s.%s@%s\n",
+			warnx("kerberos: principal unknown: %s.%s@%s",
 				(uid == 0 ? username : user),
 				(uid == 0 ? "root" : ""), lrealm);
 			return (1);
 		}
-		(void)fprintf(stderr, "su: unable to su: %s\n",
-		    krb_err_txt[kerno]);
+		warnx("kerberos: unable to su: %s", krb_err_txt[kerno]);
 		syslog(LOG_NOTICE|LOG_AUTH,
 		    "BAD Kerberos SU: %s to %s%s: %s",
 		    username, user, ontty(), krb_err_txt[kerno]);
@@ -385,7 +368,7 @@ kerberos(username, user, uid)
 	}
 
 	if (chown(krbtkfile, uid, -1) < 0) {
-		perror("su: chown:");
+		warn("chown");
 		(void)unlink(krbtkfile);
 		return (1);
 	}
@@ -393,7 +376,7 @@ kerberos(username, user, uid)
 	(void)setpriority(PRIO_PROCESS, 0, -2);
 
 	if (gethostname(hostname, sizeof(hostname)) == -1) {
-		perror("su: gethostname");
+		warn("gethostname");
 		dest_tkt();
 		return (1);
 	}
@@ -404,31 +387,28 @@ kerberos(username, user, uid)
 	kerno = krb_mk_req(&ticket, "rcmd", savehost, lrealm, 33);
 
 	if (kerno == KDC_PR_UNKNOWN) {
-		(void)fprintf(stderr, "Warning: TGT not verified.\n");
+		warnx("Warning: TGT not verified.");
 		syslog(LOG_NOTICE|LOG_AUTH,
 		    "%s to %s%s, TGT not verified (%s); %s.%s not registered?",
 		    username, user, ontty(), krb_err_txt[kerno],
 		    "rcmd", savehost);
 	} else if (kerno != KSUCCESS) {
-		(void)fprintf(stderr, "Unable to use TGT: %s\n",
-		    krb_err_txt[kerno]);
+		warnx("Unable to use TGT: %s", krb_err_txt[kerno]);
 		syslog(LOG_NOTICE|LOG_AUTH, "failed su: %s to %s%s: %s",
 		    username, user, ontty(), krb_err_txt[kerno]);
 		dest_tkt();
 		return (1);
 	} else {
 		if (!(hp = gethostbyname(hostname))) {
-			(void)fprintf(stderr, "su: can't get addr of %s\n",
-			    hostname);
+			warnx("can't get addr of %s", hostname);
 			dest_tkt();
 			return (1);
 		}
-		(void)bcopy((char *)hp->h_addr, (char *)&faddr, sizeof(faddr));
+		memmove((char *)&faddr, (char *)hp->h_addr, sizeof(faddr));
 
 		if ((kerno = krb_rd_req(&ticket, "rcmd", savehost, faddr,
 		    &authdata, "")) != KSUCCESS) {
-			(void)fprintf(stderr,
-			    "su: unable to verify rcmd ticket: %s\n",
+			warnx("kerberos: unable to verify rcmd ticket: %s\n",
 			    krb_err_txt[kerno]);
 			syslog(LOG_NOTICE|LOG_AUTH,
 			    "failed su: %s to %s%s: %s", username,
@@ -448,7 +428,7 @@ koktologin(name, realm, toname)
 	AUTH_DAT kdata_st;
 
 	kdata = &kdata_st;
-	bzero((caddr_t) kdata, sizeof(*kdata));
+	memset((char *)kdata, 0, sizeof(*kdata));
 	(void)strcpy(kdata->pname, name);
 	(void)strcpy(kdata->pinst,
 	    ((strcmp(toname, "root") == 0) ? "root" : ""));
