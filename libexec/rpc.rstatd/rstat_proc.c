@@ -1,3 +1,5 @@
+/*	$NetBSD: rstat_proc.c,v 1.16 1996/08/30 20:17:42 thorpej Exp $	*/
+
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -29,7 +31,7 @@
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";*/
 /*static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$Id: rstat_proc.c,v 1.15 1996/03/10 15:24:20 ragge Exp $";
+static char rcsid[] = "$NetBSD: rstat_proc.c,v 1.16 1996/08/30 20:17:42 thorpej Exp $";
 #endif
 
 /*
