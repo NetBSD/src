@@ -1,4 +1,4 @@
-.\"	$NetBSD: stge.4,v 1.2 2001/07/25 00:28:06 thorpej Exp $
+.\"	$NetBSD: stge.4,v 1.3 2001/07/25 01:34:05 thorpej Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,6 +50,10 @@ The
 .Nm
 device driver supports the Sundance/Tamarack TC9021 Gigabit Ethernet
 chip.
+.Pp    
+The Sundance/Tamarack TC9021 is found on the D-Link DGE-550T, and
+the Antares Microsystems Gigabit Ethernet board.  It uses an external
+PHY or an external 10-bit interface.
 .Pp
 The TC9021 supports IPv4/TCP/UDP checksumming in hardware.  The
 .Nm
