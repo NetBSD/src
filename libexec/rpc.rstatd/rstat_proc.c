@@ -1,4 +1,4 @@
-/*	$NetBSD: rstat_proc.c,v 1.17 1996/10/01 04:01:52 cgd Exp $	*/
+/*	$NetBSD: rstat_proc.c,v 1.18 1997/02/22 01:41:35 thorpej Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -31,7 +31,7 @@
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";*/
 /*static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$NetBSD: rstat_proc.c,v 1.17 1996/10/01 04:01:52 cgd Exp $";
+static char rcsid[] = "$NetBSD: rstat_proc.c,v 1.18 1997/02/22 01:41:35 thorpej Exp $";
 #endif
 
 /*
@@ -56,6 +56,7 @@ static char rcsid[] = "$NetBSD: rstat_proc.c,v 1.17 1996/10/01 04:01:52 cgd Exp 
 #ifdef BSD
 #include <sys/vmmeter.h>
 #include <sys/dkstat.h>
+#include "dkstats.h"
 #else
 #include <sys/dk.h>
 #endif
@@ -77,34 +78,21 @@ static char rcsid[] = "$NetBSD: rstat_proc.c,v 1.17 1996/10/01 04:01:52 cgd Exp 
 int	cp_xlat[CPUSTATES] = { CP_USER, CP_NICE, CP_SYS, CP_IDLE };
 #endif
 
-#ifdef __NetBSD__
-/*
- * NetBSD does not (currently) support the rpc.rstatd functionality
- * formerly provided by grabbing dk_xfer from kmem, since NetBSD's
- * new disk attachment code makes the data harder to look up and the
- * data is not usually used.  If this becomes a problem, lookup via
- * the new disk structures should be implemented.
- */
-#define	NO_DK_XFER
-#endif
-
 struct nlist nl[] = {
-#define	X_CPTIME	0
-	{ "_cp_time" },
-#define	X_CNT		1
+#define	X_CNT		0
 	{ "_cnt" },
-#define	X_IFNET		2
+#define	X_IFNET		1
 	{ "_ifnet" },
-#define	X_BOOTTIME	3
+#define	X_BOOTTIME	2
 	{ "_boottime" },
-#define X_HZ		4
-	{ "_hz" },
-#ifndef NO_DK_XFER
-#define	X_DKXFER	5
-	{ "_dk_xfer" },
-#endif
 	{ NULL },
 };
+
+extern int dk_ndrive;		/* From dkstats.c */
+extern struct _disk cur, last;
+int hz;
+char *memf = NULL, *nlistf = NULL;
+
 struct ifnet_head ifnetq;	/* chain of ethernet interfaces */
 int numintfs;
 int stats_service();
@@ -204,7 +192,7 @@ void
 updatestat()
 {
 	long off;
-	int i, hz;
+	int i;
 	struct vmmeter cnt;
 	struct ifnet ifnet;
 	double avrun[3];
@@ -229,20 +217,18 @@ updatestat()
 	}
 	sincelastreq++;
 
-	if (kvm_read(kfd, (long)nl[X_HZ].n_value, (char *)&hz, sizeof hz) !=
-	    sizeof hz) {
-		syslog(LOG_ERR, "can't read hz from kmem");
-		exit(1);
-	}
+	/* 
+	 * dkreadstats reads in the "disk_count" as well as the "disklist"
+	 * statistics.  It also retrieves "hz" and the "cp_time" array.
+	 */
+	dkreadstats();
+	memset(stats_all.s1.dk_xfer, 0, sizeof(stats_all.s1.dk_xfer));
+	for (i = 0; i < dk_ndrive && i < DK_NDRIVE; i++)
+		stats_all.s1.dk_xfer[i] = cur.dk_xfer[i];
+
 #ifdef BSD
- 	if (kvm_read(kfd, (long)nl[X_CPTIME].n_value, (char *)cp_time,
-		     sizeof (cp_time))
-	    != sizeof (cp_time)) {
-		syslog(LOG_ERR, "can't read cp_time from kmem");
-		exit(1);
-	}
 	for (i = 0; i < CPUSTATES; i++)
-		stats_all.s1.cp_time[i] = cp_time[cp_xlat[i]];
+		stats_all.s1.cp_time[i] = cur.cp_time[cp_xlat[i]];
 #else
  	if (kvm_read(kfd, (long)nl[X_CPTIME].n_value,
 		     (char *)stats_all.s1.cp_time,
@@ -287,19 +273,7 @@ updatestat()
 	stats_all.s1.v_intr -= hz*(tm.tv_sec - btm.tv_sec) +
 	    hz*(tm.tv_usec - btm.tv_usec)/1000000;
 	stats_all.s2.v_swtch = cnt.v_swtch;
-
-#ifdef NO_DK_XFER
-	memset(stats_all.s1.dk_xfer, 0, sizeof (stats_all.s1.dk_xfer));
-#else
- 	if (kvm_read(kfd, (long)nl[X_DKXFER].n_value,
-		     (char *)stats_all.s1.dk_xfer,
-		     sizeof (stats_all.s1.dk_xfer))
-	    != sizeof (stats_all.s1.dk_xfer)) {
-		syslog(LOG_ERR, "can't read dk_xfer from kmem");
-		exit(1);
-	}
-#endif
-
+	
 	stats_all.s1.if_ipackets = 0;
 	stats_all.s1.if_opackets = 0;
 	stats_all.s1.if_ierrors = 0;
@@ -356,6 +330,7 @@ setup()
 		numintfs++;
 		off = (long)ifnet.if_list.tqe_next;
 	}
+	dkinit(0);
 }
 
 /*
@@ -364,27 +339,7 @@ setup()
 int
 havedisk()
 {
-#ifdef NO_DK_XFER
-	return (0);
-#else
-	int i, cnt;
-	long  xfer[DK_NDRIVE];
-
-	if (kvm_nlist(kfd, nl) != 0) {
-		syslog(LOG_ERR, "can't get namelist");
-		exit (1);
-        }
-
-	if (kvm_read(kfd, (long)nl[X_DKXFER].n_value,
-		     (char *)xfer, sizeof xfer) != sizeof xfer) {
-		syslog(LOG_ERR, "can't read dk_xfer from kmem");
-		exit(1);
-	}
-	cnt = 0;
-	for (i=0; i < DK_NDRIVE; i++)
-		cnt += xfer[i];
-	return (cnt != 0);
-#endif
+	return dk_ndrive != 0;
 }
 
 void
