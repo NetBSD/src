@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.14 1997/04/01 05:42:01 briggs Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.15 1997/05/01 03:34:08 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,6 +59,7 @@ struct grfbus_softc {
 	u_int32_t	card_id;	/* DrHW value for nubus cards	*/
 	u_int32_t	cli_offset;	/* Offset of byte to clear intr */
 					/* for cards where that's suff.  */
+	unsigned char	cli_value;	/* Value to write at cli_offset */
 	nubus_dir	board_dir;	/* Nubus dir for curr board	*/
 };
 
