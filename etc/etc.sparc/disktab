@@ -1,4 +1,4 @@
-#	$NetBSD: disktab,v 1.11 2002/04/09 12:40:42 tron Exp $
+#	$NetBSD: disktab,v 1.12 2002/04/09 14:11:30 tron Exp $
 #
 #	@(#)disktab	5.5 (Berkeley) 2/27/91
 #
@@ -865,10 +865,3 @@ Toshiba MK 156F:\
 Vertex V185:\
 	:ty#ACB4000:ns#17:nt#7:nc#1163:
 
-
-# This entry is required for the FFS regression test.
-floppy288|2.88MB 3.5in Extra High Density Floppy:\
-	:ty=floppy:se#512:nt#2:rm#300:ns#36:nc#80:\
-	:pa#5760:oa#0:ba#4096:fa#512:ta=4.2BSD:\
-	:pb#5760:ob#0:\
-	:pc#5760:oc#0:

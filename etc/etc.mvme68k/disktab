@@ -1,4 +1,4 @@
-#	$NetBSD: disktab,v 1.5 2002/04/09 12:40:39 tron Exp $
+#	$NetBSD: disktab,v 1.6 2002/04/09 14:11:27 tron Exp $
 #
 #	@(#)disktab	5.5 (Berkeley) 2/27/91
 #
@@ -35,10 +35,3 @@ miniroot|Installation root-on-swap FS image:\
 	:ta=4.4BSD:oa#0:pa#16384:\
 	:ob#0:pb#0:oc#0:pc#16384:
 
-
-# This entry is required for the FFS regression test.
-floppy288|2.88MB 3.5in Extra High Density Floppy:\
-	:ty=floppy:se#512:nt#2:rm#300:ns#36:nc#80:\
-	:pa#5760:oa#0:ba#4096:fa#512:ta=4.2BSD:\
-	:pb#5760:ob#0:\
-	:pc#5760:oc#0:

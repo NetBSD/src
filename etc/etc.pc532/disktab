@@ -1,4 +1,4 @@
-#	$NetBSD: disktab,v 1.6 2002/04/09 12:40:40 tron Exp $
+#	$NetBSD: disktab,v 1.7 2002/04/09 14:11:29 tron Exp $
 #
 # PC532 version.
 #
@@ -68,10 +68,3 @@ m2614esa|Fujitsu M2614 ESA 180Mb:\
 	:td=4.2BSD:od#49662:pd#16554:bd#8192:fd#1024:\
 	:te=4.2BSD:oe#66216:pe#289962:be#8192:fe#1024:\
 	:tg=boot:og#2:pg#265:
-
-# This entry is required for the FFS regression test.
-floppy288|2.88MB 3.5in Extra High Density Floppy:\
-	:ty=floppy:se#512:nt#2:rm#300:ns#36:nc#80:\
-	:pa#5760:oa#0:ba#4096:fa#512:ta=4.2BSD:\
-	:pb#5760:ob#0:\
-	:pc#5760:oc#0:
