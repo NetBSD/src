@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.26 1994/03/23 01:28:23 cgd Exp $
+ *	$Id: com.c,v 1.27 1994/03/23 03:01:53 mycroft Exp $
  */
 
 /*
@@ -157,13 +157,13 @@ comprobe1(iobase)
 }
 
 int
-comprobe(isa_dev)
-	struct isa_device *isa_dev;
+comprobe(dev)
+	struct isa_device *dev;
 {
-	struct com_softc *sc = &com_softc[isa_dev->id_unit];
-	u_short iobase = isa_dev->id_iobase;
+	struct com_softc *sc = &com_softc[dev->id_unit];
+	u_short iobase = dev->id_iobase;
 
-	if (isa_dev->id_parent) {
+	if (dev->id_parent) {
 		if (iobase == 0) {
 			/*
 			 * For multiport cards, the iobase may be left
@@ -172,15 +172,14 @@ comprobe(isa_dev)
 			 * (parent) iobase setting and the slave port
 			 * number (physid).
 			 */
-			iobase = isa_dev->id_iobase
-			    = isa_dev->id_parent->id_iobase +
-			    (8 * isa_dev->id_physid);
+			iobase = dev->id_iobase =
+			    dev->id_parent->id_iobase + (8 * dev->id_physid);
 		}
 	}
 
 	/* XXX HACK */
-	sprintf(sc->sc_dev.dv_xname, "%s%d", comdriver.name, isa_dev->id_unit);
-	sc->sc_dev.dv_unit = isa_dev->id_unit;
+	sprintf(sc->sc_dev.dv_xname, "%s%d", comdriver.name, dev->id_unit);
+	sc->sc_dev.dv_unit = dev->id_unit;
 
 	if (!comprobe1(iobase))
 		return 0;
@@ -189,12 +188,12 @@ comprobe(isa_dev)
 }
 
 int
-comattach(isa_dev)
-	struct isa_device *isa_dev;
+comattach(dev)
+	struct isa_device *dev;
 {
-	int unit = isa_dev->id_unit;
+	int unit = dev->id_unit;
 	struct com_softc *sc = &com_softc[unit];
-	u_short iobase = isa_dev->id_iobase;
+	u_short iobase = dev->id_iobase;
 	struct tty *tp;
 
 	if (unit == comconsole)
@@ -208,13 +207,11 @@ comattach(isa_dev)
 
 	printf("%s", sc->sc_dev.dv_xname);
 #if NAST > 0
-	if (isa_dev->id_parent) {
+	if (dev->id_parent) {
 		printf(" at 0x%x %s%d slave %d",
-		    isa_dev->id_iobase,
-		    isa_dev->id_parent->id_driver->name,
-		    isa_dev->id_parent->id_unit,
-		    isa_dev->id_physid);
-		astslave(isa_dev, unit);
+		    dev->id_iobase, dev->id_parent->id_driver->name,
+		    dev->id_parent->id_unit, dev->id_physid);
+		astslave(dev);
 		sc->sc_hwflags |= COM_HW_MULTI;
 	}
 #endif
