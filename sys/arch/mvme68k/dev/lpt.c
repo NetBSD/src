@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.4.6.1 1999/01/30 21:58:41 scw Exp $ */
+/*	$NetBSD: lpt.c,v 1.4.6.2 1999/02/13 16:54:26 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -71,25 +71,6 @@
 int lptdebug = 1;
 #endif
 
-struct lpt_softc {
-	struct device		sc_dev;
-	struct lpt_funcs	*sc_funcs;
-	void			*sc_arg;
-	size_t			sc_count;
-	struct buf		*sc_inbuf;
-	u_char			*sc_cp;
-	int			sc_spinmax;
-	u_char			sc_state;
-#define	LPT_OPEN	0x01	/* device is open */
-#define	LPT_OBUSY	0x02	/* printer is busy doing output */
-#define	LPT_INIT	0x04	/* waiting to initialize for open */
-	u_char			sc_flags;
-#define	LPT_FAST_STROBE	0x10	/* Select 1.6uS strobe pulse */
-#define	LPT_AUTOLF	0x20	/* automatic LF on CR */
-#define	LPT_NOPRIME	0x40	/* don't prime on open */
-#define	LPT_NOINTR	0x80	/* do not use interrupt */
-};
-
 /* {b,c}devsw[] function prototypes */
 dev_type_open(lptopen);
 dev_type_close(lptclose);
@@ -97,61 +78,20 @@ dev_type_write(lptwrite);
 dev_type_ioctl(lptioctl);
 
 
-
-/*
- * Autoconfig stuff
- */
-static int  lpt_match  __P((struct device *, struct cfdata *, void *));
-static void lpt_attach __P((struct device *, struct device *, void *));
-
-struct cfattach lpt_ca = {
-	sizeof(struct lpt_softc), lpt_match, lpt_attach
-};
-
-extern struct cfdriver lpt_cd;
-
 #define	LPTUNIT(s)	(minor(s) & 0x0f)
 #define	LPTFLAGS(s)	(minor(s) & 0xf0)
 
 static void lpt_wakeup __P((void *arg));
-static int lpt_intr __P((void *));
 static int pushbytes __P((struct lpt_softc *));
 
+extern struct cfdriver lpt_cd;
 
-/*ARGSUSED*/
-static	int
-lpt_match(pdp, cf, auxp)
-	struct device *pdp;
-	struct cfdata *cf;
-	void *auxp;
+
+void
+lpt_attach_subr(sc)
+	struct lpt_softc *sc; 
 {
-	if (strcmp((char *)auxp, lpt_cd.cd_name))
-		return (0);
-	return (1);
-}
-
-/*ARGSUSED*/
-static void
-lpt_attach(pdp, dp, auxp)
-struct	device *pdp, *dp;
-void	*auxp;
-{
-	struct lpt_softc *sc = (void *)dp;
-	struct lpt_attach_args *pa = auxp;
-
-	/*
-	 * Get pointer to regs
-	 */
-	sc->sc_funcs = pa->pa_funcs;
-	sc->sc_arg = sc->sc_arg;
 	sc->sc_state = 0;
-
-	/*
-	 * Hook the printer interrupt
-	 */
-	(sc->sc_funcs->lf_hook_int)(sc->sc_arg, lpt_intr, sc);
-
-	printf("\n");
 }
 
 /*
@@ -191,17 +131,17 @@ lptopen(dev, flag, mode, p)
 
 	if ((flags & LPT_NOPRIME) == 0) {
 		/* assert Input Prime for 100 usec to start up printer */
-		(sc->sc_funcs->lf_iprime)(sc->sc_arg);
+		(sc->sc_funcs->lf_iprime)(sc);
 	}
 
 	/* select fast or slow strobe depending on minor device number */
 	if ( flags & LPT_FAST_STROBE )
-		(sc->sc_funcs->lf_speed)(sc->sc_arg, LPT_STROBE_FAST);
+		(sc->sc_funcs->lf_speed)(sc, LPT_STROBE_FAST);
 	else
-		(sc->sc_funcs->lf_speed)(sc->sc_arg, LPT_STROBE_SLOW);
+		(sc->sc_funcs->lf_speed)(sc, LPT_STROBE_SLOW);
 
 	/* wait till ready (printer running diagnostics) */
-	for (spin = 0; (sc->sc_funcs->lf_notrdy)(sc->sc_arg, 1); spin += STEP) {
+	for (spin = 0; (sc->sc_funcs->lf_notrdy)(sc, 1); spin += STEP) {
 		if (spin >= TIMEOUT) {
 			sc->sc_state = 0;
 			return EBUSY;
@@ -222,7 +162,7 @@ lptopen(dev, flag, mode, p)
 	if ( (sc->sc_flags & LPT_NOINTR) == 0 )
 		lpt_wakeup(sc);
 
-	(sc->sc_funcs->lf_open)(sc->sc_arg, sc->sc_flags & LPT_NOINTR);
+	(sc->sc_funcs->lf_open)(sc, sc->sc_flags & LPT_NOINTR);
 
 	LPRINTF(("%s: opened\n", sc->sc_dev.dv_xname));
 	return 0;
@@ -261,7 +201,7 @@ lptclose(dev, flag, mode, p)
 	if ( (sc->sc_flags & LPT_NOINTR) == 0 )
 		untimeout(lpt_wakeup, sc);
 
-	(sc->sc_funcs->lf_close)(sc->sc_arg);
+	(sc->sc_funcs->lf_close)(sc);
 
 	sc->sc_state = 0;
 	brelse(sc->sc_inbuf);
@@ -281,13 +221,13 @@ pushbytes(sc)
 
 		while (sc->sc_count > 0) {
 			spin = 0;
-			while ( (sc->sc_funcs->lf_notrdy)(sc->sc_arg, 0) ) {
+			while ( (sc->sc_funcs->lf_notrdy)(sc, 0) ) {
 				if (++spin < sc->sc_spinmax)
 					continue;
 				tic = 0;
 				/* adapt busy-wait algorithm */
 				sc->sc_spinmax++;
-				while((sc->sc_funcs->lf_notrdy)(sc->sc_arg,1)) {
+				while((sc->sc_funcs->lf_notrdy)(sc,1)) {
 					/* exponential backoff */
 					tic = tic + tic + 1;
 					if (tic > TIMEOUT)
@@ -300,7 +240,7 @@ pushbytes(sc)
 				break;
 			}
 
-			(sc->sc_funcs->lf_wrdata)(sc->sc_arg, *sc->sc_cp++);
+			(sc->sc_funcs->lf_wrdata)(sc, *sc->sc_cp++);
 			sc->sc_count--;
 
 			/* adapt busy-wait algorithm */
@@ -364,14 +304,12 @@ lptwrite(dev, uio, flags)
  * another char.
  */
 int
-lpt_intr(arg)
-	void *arg;
+lpt_intr(sc)
+	struct lpt_softc *sc;
 {
-	struct lpt_softc *sc = arg;
-
 	if (sc->sc_count) {
 		/* send char */
-		(sc->sc_funcs->lf_wrdata)(sc->sc_arg, *sc->sc_cp++);
+		(sc->sc_funcs->lf_wrdata)(sc, *sc->sc_cp++);
 		sc->sc_count--;
 		sc->sc_state |= LPT_OBUSY;
 	} else

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.10.6.1 1999/01/31 14:12:31 scw Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.10.6.2 1999/02/13 16:54:30 scw Exp $ */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -67,9 +67,6 @@ extern phys_ram_seg_t mem_clusters[];
 extern int mem_cluster_cnt;
 extern paddr_t msgbufpa;
 extern int protection_codes[];
-#ifdef HAVEVAC
-extern int pmap_aliasmask;
-#endif
 
 /*
  * Special purpose kernel virtual addresses, used for mapping
@@ -89,7 +86,7 @@ extern caddr_t	msgbufaddr;
  * the memory is allocated from on-board RAM only.
  *
  * The driver for the ethernet chip appropriate to the
- * platform (lance or i82596) will use these two variables
+ * platform (lance or i82586) will use these two variables
  * to locate and size the chip's packet buffer.
  */
 #ifndef ETHER_DATA_BUFF_PAGES
@@ -119,6 +116,7 @@ pmap_bootstrap(nextpa, firstpa)
 	st_entry_t protoste, *ste;
 	pt_entry_t protopte, *pte, *epte;
 	psize_t size;
+	u_int iiomapsize;
 	int i;
 
 	/*
@@ -131,12 +129,12 @@ pmap_bootstrap(nextpa, firstpa)
 	 *			kernel PT pages		Sysptsize+ pages
 	 *
 	 *	iiopa		internal IO space
-	 *			PT pages		IIOMAPSIZE pages
+	 *			PT pages		iiomapsize pages
 	 *
 	 *	eiiopa		page following
 	 *			internal IO space
 	 *
-	 * [ Sysptsize is the number of pages of PT, and IIOMAPSIZE
+	 * [ Sysptsize is the number of pages of PT, and iiomapsize
 	 *   is the number of PTEs, hence we need to round
 	 *   the total to a page boundary with IO maps at the end. ]
 	 *
@@ -149,6 +147,9 @@ pmap_bootstrap(nextpa, firstpa)
 	 * The KVA corresponding to any of these PAs is:
 	 *	(PA - firstpa + KERNBASE).
 	 */
+	iiomapsize = m68k_btop(RELOC(intiotop_phys, u_int) -
+			       RELOC(intiobase_phys, u_int));
+
 	if (RELOC(mmutype, int) == MMU_68040)
 		kstsize = MAXKL2SIZE / (NPTEPG/SG4_LEV2SIZE);
 	else
@@ -157,10 +158,10 @@ pmap_bootstrap(nextpa, firstpa)
 	nextpa += kstsize * NBPG;
 	kptpa = nextpa;
 	nptpages = RELOC(Sysptsize, int) +
-		(IIOMAPSIZE + NPTEPG - 1) / NPTEPG;
+		(iiomapsize + NPTEPG - 1) / NPTEPG;
 	nextpa += nptpages * NBPG;
 	eiiopa = nextpa;		/* just a reference for later */
-	iiopa = nextpa - IIOMAPSIZE * sizeof(pt_entry_t);
+	iiopa = nextpa - iiomapsize * sizeof(pt_entry_t);
 	kptmpa = nextpa;
 	nextpa += NBPG;
 	lkptpa = nextpa;
@@ -169,6 +170,12 @@ pmap_bootstrap(nextpa, firstpa)
 	nextpa += USPACE;
 	ether_data_buff = (void *)nextpa;
 	nextpa += ether_data_buff_size;
+
+	/*
+	 * Clear all PTEs to zero
+	 */
+	for (pte = (pt_entry_t *)kstpa; pte < (pt_entry_t *)nextpa; pte++)
+		*pte = 0;
 
 	/*
 	 * Initialize segment table and kernel page table map.
@@ -265,7 +272,13 @@ pmap_bootstrap(nextpa, firstpa)
 			*pte++ = protopte;
 			protopte += NBPG;
 		}
-		pte = &((u_int *)kptmpa)[NPTEPG-1];
+		/*
+		 * Invalidate all but the last remaining entry.
+		 */
+		epte = &((u_int *)kptmpa)[NPTEPG-1];
+		while (pte < epte) {
+			*pte++ = PG_NV;
+		}
 		*pte = lkptpa | PG_RW | PG_CI | PG_V;
 	} else {
 		/*
@@ -308,10 +321,7 @@ pmap_bootstrap(nextpa, firstpa)
 	epte = &pte[NPTEPG-1];
 	while (pte < epte)
 		*pte++ = PG_NV;
-#ifdef MAXADDR
-	/* tmp double-map for cpu's with physmem at the end of memory */
-	*pte = MAXADDR | PG_RW | PG_CI | PG_V;
-#endif
+
 	/*
 	 * Initialize kernel page table.
 	 * Start by invalidating the `nptpages' that we have allocated.
@@ -356,14 +366,10 @@ pmap_bootstrap(nextpa, firstpa)
 
 	/*
 	 * Finally, validate the internal IO space PTEs (RW+CI).
-	 * We do this here since the 320/350 MMU registers (also
-	 * used, but to a lesser extent, on other models) are mapped
-	 * in this range and it would be nice to be able to access
-	 * them after the MMU is turned on.
 	 */
 	pte = (u_int *)iiopa;
 	epte = (u_int *)eiiopa;
-	protopte = INTIOBASE | PG_RW | PG_CI | PG_V;
+	protopte = RELOC(intiobase_phys, u_int) | PG_RW | PG_CI | PG_V;
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += NBPG;
@@ -390,11 +396,11 @@ pmap_bootstrap(nextpa, firstpa)
 		(pt_entry_t *)m68k_ptob(nptpages * NPTEPG);
 	/*
 	 * intiobase, intiolimit: base and end of internal IO space.
-	 * IIOMAPSIZE pages prior to external IO space at end of static
+	 * iiomapsize pages prior to external IO space at end of static
 	 * kernel page table.
 	 */
 	RELOC(intiobase, char *) =
-		(char *)m68k_ptob(nptpages*NPTEPG - IIOMAPSIZE);
+		(char *)m68k_ptob(nptpages*NPTEPG - iiomapsize);
 	RELOC(intiolimit, char *) =
 		(char *)m68k_ptob(nptpages*NPTEPG);
 
