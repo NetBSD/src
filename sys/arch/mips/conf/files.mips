@@ -1,16 +1,14 @@
-#	$NetBSD: files.mips,v 1.36 2001/12/02 10:37:25 uch Exp $
+#	$NetBSD: files.mips,v 1.37 2002/01/14 19:07:16 soren Exp $
 #
 
 defflag	opt_cputype.h		NOTYET	# MIPS1	MIPS2 MIPS3 MIPS4 MIPS5
 					# MIPS32 MIPS64
 					# MIPS3_4100
-					# MIPS3_5200
 					# ENABLE_MIPS_TX3900
 					# ENABLE_MIPS_R4700
 					# ENABLE_MIPS_R3NKK
 					# NOFPU
 defflag	opt_mips_cache.h		MIPS3_L2CACHE_ABSENT
-					MIPS3_L2CACHE_PRESENT
 					MIPS3_NO_PV_UNCACHED
 
 file	arch/mips/mips/cache.c
