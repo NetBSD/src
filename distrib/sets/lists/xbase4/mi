@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.13 2004/03/05 20:07:27 tron Exp $
+# $NetBSD: mi,v 1.13.6.1 2005/01/30 15:03:21 he Exp $
 ./etc/X11
 ./etc/fonts
 ./etc/fonts/fonts.conf
@@ -492,6 +492,9 @@
 ./usr/X11R6/lib/X11/xdm/Xwilling
 ./usr/X11R6/lib/X11/xdm/chooser
 ./usr/X11R6/lib/X11/xdm/pixmaps
+./usr/X11R6/lib/X11/xdm/pixmaps/NetBSD.xpm
+./usr/X11R6/lib/X11/xdm/pixmaps/NetBSDbw.xpm
+./usr/X11R6/lib/X11/xdm/pixmaps/NetBSDinv.xpm
 ./usr/X11R6/lib/X11/xdm/pixmaps/XFree86.xpm
 ./usr/X11R6/lib/X11/xdm/pixmaps/XFree86bw.xpm
 ./usr/X11R6/lib/X11/xdm/xdm-config
