@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.23 1996/05/23 13:49:04 christos Exp $	 */
+/*	$NetBSD: yplib.c,v 1.24 1996/05/29 20:06:04 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yplib.c,v 1.23 1996/05/23 13:49:04 christos Exp $";
+static char rcsid[] = "$NetBSD: yplib.c,v 1.24 1996/05/29 20:06:04 thorpej Exp $";
 #endif
 
 #include <sys/param.h>
@@ -187,8 +187,9 @@ trynet:
 				free(ysd);
 			return YPERR_YPBIND;
 		}
-		r = clnt_call(client, YPBINDPROC_DOMAIN, xdr_domainname,
-			      dom, xdr_ypbind_resp, &ypbr, _yplib_timeout);
+		r = clnt_call(client, YPBINDPROC_DOMAIN,
+		    xdr_ypdomain_wrap_string, &dom, xdr_ypbind_resp,
+		    &ypbr, _yplib_timeout);
 		if (r != RPC_SUCCESS) {
 			if (new == 0 || count)
 				fprintf(stderr,
