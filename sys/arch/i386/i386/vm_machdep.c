@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.104 2002/10/06 12:35:16 fvdl Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.105 2002/10/11 17:31:11 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.104 2002/10/06 12:35:16 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.105 2002/10/11 17:31:11 fvdl Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -305,6 +305,7 @@ setredzone(struct proc *p)
 {
 	pmap_remove(pmap_kernel(), (vaddr_t)p->p_addr + PAGE_SIZE,
 	    (vaddr_t)p->p_addr + 2 * PAGE_SIZE);
+	pmap_update(pmap_kernel());
 }
 #endif
 
