@@ -1,4 +1,4 @@
 #	from: @(#)Makefile.inc	5.1 (Berkeley) 5/11/90
-#	$Id: Makefile.inc,v 1.1 1996/05/05 12:17:20 oki Exp $
+#	$NetBSD: Makefile.inc,v 1.2 1997/10/13 14:23:11 lukem Exp $
 
 BINDIR?=	/usr/sbin
