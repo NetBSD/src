@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.11 2001/12/06 00:11:18 augustss Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.12 2001/12/12 17:21:36 augustss Exp $	*/
 
 /*
  * TODO
@@ -751,7 +751,7 @@ irt_delay(struct tty *tp, u_int ms)
 	if (cold)
 		delay(ms * 1000);
 	else
-		tsleep(&irt_delay, PZERO, "irtdly", ms * hz / 1000);
+		tsleep(&irt_delay, PZERO, "irtdly", ms * hz / 1000 + 1);
 		
 }
 
