@@ -23,8 +23,8 @@
 
 #ifndef lint
 /*static char rcsid[] =
-    "@(#) $Header: /cvsroot/src/usr.sbin/slstats/Attic/slstats.c,v 1.1 1993/11/16 04:16:48 brezak Exp $ (LBL)";*/
-static char rcsid[] = "$Id: slstats.c,v 1.1 1993/11/16 04:16:48 brezak Exp $";
+    "@(#) $Header: /cvsroot/src/usr.sbin/slstats/Attic/slstats.c,v 1.2 1993/12/22 12:16:00 cgd Exp $ (LBL)";*/
+static char rcsid[] = "$Id: slstats.c,v 1.2 1993/12/22 12:16:00 cgd Exp $";
 #endif
 
 #include <stdio.h>
@@ -164,7 +164,7 @@ intpr()
 			putchar('\n');
 		}
 		printf("%8u %6d %6u %6u %6u",
-			V(sc_bytesrcvd),
+			V(sc_if.if_ibytes),
 			V(sc_if.if_ipackets),
 			V(sc_comp.sls_compressedin),
 			V(sc_comp.sls_uncompressedin),
@@ -177,7 +177,7 @@ intpr()
 				  V(sc_comp.sls_uncompressedin) -
 				  V(sc_comp.sls_errorin));
 		printf(" | %8u %6d %6u %6u %6u",
-			V(sc_bytessent),
+			V(sc_if.if_obytes),
 			V(sc_if.if_opackets),
 			V(sc_comp.sls_compressed),
 			V(sc_comp.sls_packets) - V(sc_comp.sls_compressed),
