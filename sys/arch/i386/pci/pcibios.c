@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.8 2002/01/22 15:07:27 uch Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.9 2002/01/28 23:53:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.8 2002/01/22 15:07:27 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.9 2002/01/28 23:53:08 christos Exp $");
 
 #include "opt_pcibios.h"
 
@@ -240,8 +240,14 @@ pcibios_pir_init()
 
 	for (pa = PCI_IRQ_TABLE_START; pa < PCI_IRQ_TABLE_END; pa += 16) {
 		p = (caddr_t)ISA_HOLE_VADDR(pa);
-		if (*(int *)p != BIOS32_MAKESIG('$', 'P', 'I', 'R'))
-			continue;
+		if (*(int *)p != BIOS32_MAKESIG('$', 'P', 'I', 'R')) {
+			/*
+			 * XXX: Some laptops (Toshiba/Libretto L series
+			 * use _PIR instead of $PIR. So we try that too.
+			 */
+			if (*(int *)p != BIOS32_MAKESIG('_', 'P', 'I', 'R'))
+				continue;
+		}
 		
 		rev_min = *(p + 4);
 		rev_maj = *(p + 5);
