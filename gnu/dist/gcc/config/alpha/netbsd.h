@@ -68,10 +68,6 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
 
-/* XXX Redefine this; <alpha/alpha.h> mucks with it. */
-#undef TARGET_VERSION
-#define TARGET_VERSION fprintf (stderr, " (%s)", TARGET_NAME);           
-
 /* Generate calls to memcpy, etc., not bcopy, etc. */
 #define TARGET_MEM_FUNCTIONS
 
