@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.633 2003/09/22 17:26:14 matt Exp $
+#	$NetBSD: files,v 1.634 2003/09/25 15:58:14 pooka Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -928,6 +928,7 @@ defparam opt_bpf.h	BPF_BUFSIZE
 define	isdndev		# the ISDN subsystem
 define	passive_isdn	# files needed by passive cards (XXX - protocol
 			# specific)
+define	isdncapi	# ISDN CAPI (http://www.capi.org/)
 
 # The isac found on the Fritz V2.0 Card.
 define	nisacsx
@@ -951,6 +952,11 @@ file	dev/ic/isic_bchan.c		isic
 #
 device	daic: isdndev
 file	dev/ic/daic.c			daic
+
+# AWM B1/T1
+# XXX: passive_isdn
+device	iavc: isdndev, isdncapi, passive_isdn
+file	dev/ic/iavc.c			iavc
 
 # legitimate pseudo-devices
 #
@@ -1271,6 +1277,10 @@ file	netisdn/i4b_i4bdrv.c		isdn			needs-flag
 file	netisdn/i4b_l4.c		isdndev			needs-flag
 file	netisdn/i4b_l4mgmt.c		isdndev			needs-flag
 file	netisdn/i4b_l4timer.c		isdndev			needs-flag
+# capi
+file	netisdn/i4b_capi_l4if.c		isdncapi
+file	netisdn/i4b_capi_llif.c		isdncapi
+file	netisdn/i4b_capi_msgs.c		isdncapi
 
 # Game adapter (joystick)
 device	joy
