@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.67 1996/03/16 23:17:15 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.68 1996/03/29 01:55:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1890,10 +1890,10 @@ ttyinfo(tp)
 		ttyprintf(tp, "%ld.%02lds ", stime.tv_sec,
 		    stime.tv_usec / 10000);
 
-#define	pgtok(a)	(((a) * NBPG) / 1024)
+#define	pgtok(a)	(((u_long) ((a) * NBPG) / 1024))
 		/* Print percentage cpu, resident set size. */
 		tmp = (pick->p_pctcpu * 10000 + FSCALE / 2) >> FSHIFT;
-		ttyprintf(tp, "%d%% %dk\n",
+		ttyprintf(tp, "%d%% %ldk\n",
 		    tmp / 100,
 		    pick->p_stat == SIDL || pick->p_stat == SZOMB ? 0 :
 #ifdef pmap_resident_count
