@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.18 1999/07/16 09:24:46 christos Exp $
+$NetBSD: acronyms,v 1.19 1999/07/16 09:26:59 christos Exp $
 
 AFAICT	as far as I can tell
 AFAIK	as far as I know
@@ -6,6 +6,7 @@ BBL	[I'll] be back later
 BFD	big fucking deal
 BIAB	back in a bit
 BIAF	back in a few
+BIAS	back in a second
 BIAW	back in a while
 BRB	[I'll] be right back
 BTW	by the way
