@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.3 1998/07/19 21:41:16 dbj Exp $ */
+/* $NetBSD: bus_dma.c,v 1.4 1998/09/21 23:01:31 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
 #if 0
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.3 1998/07/19 21:41:16 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.4 1998/09/21 23:01:31 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -343,7 +343,6 @@ _bus_dmamap_load_uio_direct(t, map, uio, flags)
 	bus_size_t minlen, resid;
 	struct proc *p = NULL;
 	struct iovec *iov;
-	off_t offset;
 	caddr_t addr;
 
 	/*
@@ -352,7 +351,6 @@ _bus_dmamap_load_uio_direct(t, map, uio, flags)
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 
-	offset = uio->uio_offset;
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;
 
@@ -368,27 +366,18 @@ _bus_dmamap_load_uio_direct(t, map, uio, flags)
 	seg = 0;
 	error = 0;
 	for (i = 0; i < uio->uio_iovcnt && resid != 0 && error == 0; i++) {
-		/* Find the beginning iovec. */
-		if (offset >= iov[i].iov_len) {
-			offset -= iov[i].iov_len;
-			continue;
-		}
-
 		/*
 		 * Now at the first iovec to load.  Load each iovec
 		 * until we have exhausted the residual count.
 		 */
-		minlen = resid < iov[i].iov_len - offset ?
-		    resid : iov[i].iov_len - offset;
-
-		addr = (caddr_t)iov[i].iov_base + offset;
+		minlen = resid < iov[i].iov_len ? resid : iov[i].iov_len;
+		addr = (caddr_t)iov[i].iov_base;
 
 		error = _bus_dmamap_load_buffer_direct_common(map, addr,
 		    minlen, p, flags, 
 				&lastaddr, &seg, first);
 		first = 0;
 
-		offset = 0;
 		resid -= minlen;
 	}
 	if (error == 0) {
