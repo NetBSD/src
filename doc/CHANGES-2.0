@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.178 2004/05/06 05:05:08 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.179 2004/05/06 05:14:23 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1823,3 +1823,10 @@ share/man/man4/Makefile				1.317-1.318
 	Add manpages for crypto(4),and for the hifn(4) and ubsec(4) hardware 
 	crypto accelerators.
 	[jonathan, ticket #237]
+
+sys/arch/sparc/stand/ofwboot/version		1.8
+sys/arch/sparc/stand/ofwboot/elfXX_exec.c	1.4
+
+	When calculating the allocated symbol table size, round up the section
+	sizes with ELF_ALIGN(). PR#25429
+	[martin, ticket #248]
