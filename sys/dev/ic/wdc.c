@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.193 2004/08/12 05:02:50 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.194 2004/08/12 14:36:46 mycroft Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.193 2004/08/12 05:02:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.194 2004/08/12 14:36:46 mycroft Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -472,9 +472,9 @@ atabusconfig(struct atabus_softc *atabus_sc)
         free(atabus_initq, M_DEVBUF);
         wakeup(&atabus_initq_head);
 
-	config_pending_decr();
-
 	wdc_delref(chp);
+
+	config_pending_decr();
 }
 
 int
