@@ -1,4 +1,4 @@
-/*	$NetBSD: boot1.c,v 1.3 2003/08/12 10:03:03 dsl Exp $	*/
+/*	$NetBSD: boot1.c,v 1.4 2003/12/07 20:11:11 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: boot1.c,v 1.3 2003/08/12 10:03:03 dsl Exp $");
+__RCSID("$NetBSD: boot1.c,v 1.4 2003/12/07 20:11:11 dsl Exp $");
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
@@ -79,7 +79,7 @@ boot1(uint32_t biosdev, uint32_t sector)
 		 * Maybe the filesystem is enclosed in a raid set.
 		 * add in size of raidframe header and try again.
 		 * (Maybe this should only be done if the filesystem
-		 * magic number os absent.)
+		 * magic number is absent.)
 		 */
 		 bios_sector += RF_PROTECTED_SECTORS;
 		 fd = open("boot", 0);
