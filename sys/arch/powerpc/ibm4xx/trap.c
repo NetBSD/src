@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.2.6.10 2002/08/06 22:47:08 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.2.6.11 2002/08/29 16:52:43 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -679,9 +679,9 @@ upcallret(arg)
 	while ((sig = CURSIG(l)) != 0)
 		postsig(sig);
 
-	/* If our process is on the way out, die. */
-	if (l->l_proc->p_flag & P_WEXIT)
-		lwp_exit(l);
+	/* Invoke per-process kernel-exit handling, if any */
+	if (l->l_proc->p_userret)
+		(l->l_proc->p_userret)(l, l->l_proc->p_userret_arg);
 
 	/* Invoke any pending upcalls */
 	if (l->l_flag & L_SA_UPCALL)
