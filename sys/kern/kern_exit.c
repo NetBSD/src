@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.29 1994/12/24 15:07:26 cgd Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.30 1995/06/24 20:33:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -64,10 +64,6 @@
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>
-#ifdef COMPAT_43
-#include <machine/reg.h>
-#include <machine/psl.h>
-#endif
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -270,64 +266,8 @@ exit1(p, rv)
 	cpu_exit(p);
 }
 
-#ifdef COMPAT_43
-#ifdef m68k
-#include <machine/frame.h>
-#define GETPS(rp)	((struct frame *)(rp))->f_sr
-#else
-#define GETPS(rp)	(rp)[PS]
-#endif
-
 int
-compat_43_wait(p, uap, retval)
-	struct proc *p;
-	void *uap;
-	int *retval;
-{
-	struct wait4_args /* {
-		syscallarg(int) pid;
-		syscallarg(int *) status;
-		syscallarg(int) options;
-		syscallarg(struct rusage *) rusage;
-	} */ a;
-
-#ifdef PSL_ALLCC
-	if ((GETPS(p->p_md.md_regs) & PSL_ALLCC) != PSL_ALLCC) {
-		SCARG(&a, options) = 0;
-		SCARG(&a, rusage) = NULL;
-	} else {
-		SCARG(&a, options) = p->p_md.md_regs[R0];
-		SCARG(&a, rusage) = (struct rusage *)p->p_md.md_regs[R1];
-	}
-#else
-	SCARG(&a, options) = 0;
-	SCARG(&a, rusage) = NULL;
-#endif
-	SCARG(&a, pid) = WAIT_ANY;
-	SCARG(&a, status) = NULL;
-	return (wait1(p, &a, retval, 1));
-}
-
-int
-wait4(p, uap, retval)
-	struct proc *p;
-	struct wait4_args /* {
-		syscallarg(int) pid;
-		syscallarg(int *) status;
-		syscallarg(int) options;
-		syscallarg(struct rusage *) rusage;
-	} */ *uap;
-	int *retval;
-{
-
-	return (wait1(p, uap, retval, 0));
-}
-#else
-#define	wait1	wait4
-#endif
-
-int
-wait1(q, uap, retval, compat)
+wait4(q, uap, retval, compat)
 	register struct proc *q;
 	register struct wait4_args /* {
 		syscallarg(int) pid;
@@ -336,9 +276,6 @@ wait1(q, uap, retval, compat)
 		syscallarg(struct rusage *) rusage;
 	} */ *uap;
 	register_t *retval;
-#ifdef COMPAT_43
-	int compat;
-#endif
 {
 	register int nfound;
 	register struct proc *p, *t;
@@ -364,11 +301,7 @@ loop:
 		nfound++;
 		if (p->p_stat == SZOMB) {
 			retval[0] = p->p_pid;
-#ifdef COMPAT_43
-			if (compat)
-				retval[1] = p->p_xstat;
-			else
-#endif
+
 			if (SCARG(uap, status)) {
 				status = p->p_xstat;	/* convert to int */
 				if (error = copyout((caddr_t)&status,
@@ -437,12 +370,7 @@ loop:
 		    (p->p_flag & P_TRACED || SCARG(uap, options) & WUNTRACED)) {
 			p->p_flag |= P_WAITED;
 			retval[0] = p->p_pid;
-#ifdef COMPAT_43
-			if (compat) {
-				retval[1] = W_STOPCODE(p->p_xstat);
-				error = 0;
-			} else
-#endif
+
 			if (SCARG(uap, status)) {
 				status = W_STOPCODE(p->p_xstat);
 				error = copyout((caddr_t)&status,

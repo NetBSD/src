@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.27 1995/06/01 22:43:58 jtc Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.28 1995/06/24 20:34:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -383,77 +383,6 @@ setgroups(p, uap, retval)
 	p->p_flag |= P_SUGID;
 	return (0);
 }
-
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_LINUX) || \
-    defined(COMPAT_HPUX)
-/* ARGSUSED */
-compat_43_setreuid(p, uap, retval)
-	register struct proc *p;
-	struct compat_43_setreuid_args /* {
-		syscallarg(int) ruid;
-		syscallarg(int) euid;
-	} */ *uap;
-	register_t *retval;
-{
-	struct seteuid_args seuidargs;
-	struct setuid_args suidargs;
-
-	/*
-	 * There are five cases, and we attempt to emulate them in
-	 * the following fashion:
-	 * -1, -1: return 0. This is correct emulation.
-	 * -1,  N: call seteuid(N). This is correct emulation.
-	 *  N, -1: if we called setuid(N), our euid would be changed
-	 *         to N as well. the theory is that we don't want to
-	 * 	   revoke root access yet, so we call seteuid(N)
-	 * 	   instead. This is incorrect emulation, but often
-	 *	   suffices enough for binary compatibility.
-	 *  N,  N: call setuid(N). This is correct emulation.
-	 *  N,  M: call setuid(N). This is close to correct emulation.
-	 */
-	if (SCARG(uap, ruid) == (uid_t)-1) {
-		if (SCARG(uap, euid) == (uid_t)-1)
-			return (0);				/* -1, -1 */
-		SCARG(&seuidargs, euid) = SCARG(uap, euid);	/* -1,  N */
-		return (seteuid(p, &seuidargs, retval));
-	}
-	if (SCARG(uap, euid) == (uid_t)-1) {
-		SCARG(&seuidargs, euid) = SCARG(uap, ruid);	/* N, -1 */
-		return (seteuid(p, &seuidargs, retval));
-	}
-	SCARG(&suidargs, uid) = SCARG(uap, ruid);	/* N, N and N, M */
-	return (setuid(p, &suidargs, retval));
-}
-
-/* ARGSUSED */
-compat_43_setregid(p, uap, retval)
-	register struct proc *p;
-	struct compat_43_setregid_args /* {
-		syscallarg(int) rgid;
-		syscallarg(int) egid;
-	} */ *uap;
-	register_t *retval;
-{
-	struct setegid_args segidargs;
-	struct setgid_args sgidargs;
-
-	/*
-	 * There are five cases, described above in osetreuid()
-	 */
-	if (SCARG(uap, rgid) == (gid_t)-1) {
-		if (SCARG(uap, egid) == (gid_t)-1)
-			return (0);				/* -1, -1 */
-		SCARG(&segidargs, egid) = SCARG(uap, egid);	/* -1,  N */
-		return (setegid(p, &segidargs, retval));
-	}
-	if (SCARG(uap, egid) == (gid_t)-1) {
-		SCARG(&segidargs, egid) = SCARG(uap, rgid);	/* N, -1 */
-		return (setegid(p, &segidargs, retval));
-	}
-	SCARG(&sgidargs, gid) = SCARG(uap, rgid);	/* N, N and N, M */
-	return (setgid(p, &sgidargs, retval));
-}
-#endif /* COMPAT_43 || COMPAT_SUNOS || COMPAT_LINUX || COMPAT_HPUX */
 
 /*
  * Check if gid is a member of the group set.

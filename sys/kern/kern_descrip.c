@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.34 1995/04/10 18:28:04 mycroft Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.35 1995/06/24 20:33:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -99,20 +99,6 @@ fd_unused(fdp, fd)
 /*
  * System calls on descriptors.
  */
-
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_ULTRIX) || \
-    defined(COMPAT_HPUX) || defined(COMPAT_OSF1)
-/* ARGSUSED */
-compat_43_getdtablesize(p, uap, retval)
-	struct proc *p;
-	void *uap;
-	register_t *retval;
-{
-
-	*retval = min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles);
-	return (0);
-}
-#endif
 
 /*
  * Duplicate a file descriptor.
@@ -384,51 +370,6 @@ close(p, uap, retval)
 		return (EBADF);
 	return (fdrelease(p, fd));
 }
-
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_IBCS2)
-/*
- * Return status information about a file descriptor.
- */
-/* ARGSUSED */
-compat_43_fstat(p, uap, retval)
-	struct proc *p;
-	register struct compat_43_fstat_args /* {
-		syscallarg(int) fd;
-		syscallarg(struct ostat *) sb;
-	} */ *uap;
-	register_t *retval;
-{
-	int fd = SCARG(uap, fd);
-	register struct filedesc *fdp = p->p_fd;
-	register struct file *fp;
-	struct stat ub;
-	struct ostat oub;
-	int error;
-
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL)
-		return (EBADF);
-	switch (fp->f_type) {
-
-	case DTYPE_VNODE:
-		error = vn_stat((struct vnode *)fp->f_data, &ub, p);
-		break;
-
-	case DTYPE_SOCKET:
-		error = soo_stat((struct socket *)fp->f_data, &ub);
-		break;
-
-	default:
-		panic("ofstat");
-		/*NOTREACHED*/
-	}
-	cvtstat(&ub, &oub);
-	if (error == 0)
-		error = copyout((caddr_t)&oub, (caddr_t)SCARG(uap, sb),
-		    sizeof (oub));
-	return (error);
-}
-#endif /* COMPAT_43 || COMPAT_SUNOS || COMPAT_IBCS2 */
 
 /*
  * Return status information about a file descriptor.

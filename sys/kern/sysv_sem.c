@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.21 1995/06/05 12:57:03 pk Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.22 1995/06/24 20:34:16 christos Exp $	*/
 
 /*
  * Implementation of SVID semaphores
@@ -999,66 +999,3 @@ unlock:
 		wakeup((caddr_t)&semlock_holder);
 	}
 }
-
-#if defined(COMPAT_10) && !defined(alpha) || defined(COMPAT_SUNOS)
-int
-compat_10_semsys(p, uap, retval)
-	struct proc *p;
-	struct compat_10_semsys_args /* {
-		syscallarg(int) which;
-		syscallarg(int) a2;
-		syscallarg(int) a3;
-		syscallarg(int) a4;
-		syscallarg(int) a5;
-	} */ *uap;
-	register_t *retval;
-{
-	struct __semctl_args /* {
-		syscallarg(int) semid;
-		syscallarg(int) semnum;
-		syscallarg(int) cmd;
-		syscallarg(union semun *) arg;
-	} */ __semctl_args;
-	struct semget_args /* {
-		syscallarg(key_t) key;
-		syscallarg(int) nsems;
-		syscallarg(int) semflg;
-	} */ semget_args;
-	struct semop_args /* {
-		syscallarg(int) semid;
-		syscallarg(struct sembuf *) sops;
-		syscallarg(u_int) nsops;
-	} */ semop_args;
-	struct semconfig_args /* {
-		syscallarg(int) flag;
-	} */ semconfig_args;
-
-	switch (SCARG(uap, which)) {
-	case 0:						/* __semctl() */
-		SCARG(&__semctl_args, semid) = SCARG(uap, a2);
-		SCARG(&__semctl_args, semnum) = SCARG(uap, a3);
-		SCARG(&__semctl_args, cmd) = SCARG(uap, a4);
-		SCARG(&__semctl_args, arg) = (union semun *)SCARG(uap, a5);
-		return (__semctl(p, &__semctl_args, retval));
-
-	case 1:						/* semget() */
-		SCARG(&semget_args, key) = SCARG(uap, a2);
-		SCARG(&semget_args, nsems) = SCARG(uap, a3);
-		SCARG(&semget_args, semflg) = SCARG(uap, a4);
-		return (semget(p, &semget_args, retval));
-
-	case 2:						/* semop() */
-		SCARG(&semop_args, semid) = SCARG(uap, a2);
-		SCARG(&semop_args, sops) = (struct sembuf *)SCARG(uap, a3);
-		SCARG(&semop_args, nsops) = SCARG(uap, a4);
-		return (semop(p, &semop_args, retval));
-
-	case 3:						/* semconfig() */
-		SCARG(&semconfig_args, flag) = SCARG(uap, a2);
-		return (semconfig(p, &semconfig_args, retval));
-
-	default:
-		return (EINVAL);
-	}
-}
-#endif /* defined(COMPAT_10) && !defined(alpha) || defined(COMPAT_SUNOS) */

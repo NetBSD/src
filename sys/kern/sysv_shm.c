@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.29 1995/06/05 12:57:07 pk Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.30 1995/06/24 20:34:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles Hannum.  All rights reserved.
@@ -508,63 +508,3 @@ shminit()
 	shm_nused = 0;
 	shm_committed = 0;
 }
-
-#if defined(COMPAT_10) && !defined(alpha) || defined(COMPAT_SUNOS)
-int
-compat_10_shmsys(p, uap, retval)
-	struct proc *p;
-	struct compat_10_shmsys_args /* {
-		syscallarg(int) which;
-		syscallarg(int) a2;
-		syscallarg(int) a3;
-		syscallarg(int) a4;
-	} */ *uap;
-	register_t *retval;
-{
-	struct shmat_args /* {
-		syscallarg(int) shmid;
-		syscallarg(void *) shmaddr;
-		syscallarg(int) shmflg;
-	} */ shmat_args;
-	struct shmctl_args /* {
-		syscallarg(int) shmid;
-		syscallarg(int) cmd;
-		syscallarg(struct shmid_ds *) buf;
-	} */ shmctl_args;
-	struct shmdt_args /* {
-		syscallarg(void *) shmaddr;
-	} */ shmdt_args;
-	struct shmget_args /* {
-		syscallarg(key_t) key;
-		syscallarg(int) size;
-		syscallarg(int) shmflg;
-	} */ shmget_args;
-
-	switch (SCARG(uap, which)) {
-	case 0:						/* shmat() */
-		SCARG(&shmat_args, shmid) = SCARG(uap, a2);
-		SCARG(&shmat_args, shmaddr) = (void *)SCARG(uap, a3);
-		SCARG(&shmat_args, shmflg) = SCARG(uap, a4);
-		return (shmat(p, &shmat_args, retval));
-
-	case 1:						/* shmctl() */
-		SCARG(&shmctl_args, shmid) = SCARG(uap, a2);
-		SCARG(&shmctl_args, cmd) = SCARG(uap, a3);
-		SCARG(&shmctl_args, buf) = (struct shmid_ds *)SCARG(uap, a4);
-		return (shmctl(p, &shmctl_args, retval));
-
-	case 2:						/* shmdt() */
-		SCARG(&shmat_args, shmaddr) = (void *)SCARG(uap, a2);
-		return (shmdt(p, &shmdt_args, retval));
-
-	case 3:						/* shmget() */
-		SCARG(&shmget_args, key) = SCARG(uap, a2);
-		SCARG(&shmget_args, size) = SCARG(uap, a3);
-		SCARG(&shmget_args, shmflg) = SCARG(uap, a4);
-		return (shmget(p, &shmget_args, retval));
-
-	default:
-		return (EINVAL);
-	}
-}
-#endif /* defined(COMPAT_10) && !defined(alpha) || defined(COMPAT_SUNOS) */
