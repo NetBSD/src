@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_req.c,v 1.5 2002/06/20 11:42:58 itojun Exp $	*/
+/*	$NetBSD: ns_req.c,v 1.6 2002/11/14 02:04:28 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_req.c	4.47 (Berkeley) 7/1/91";
@@ -2197,7 +2197,7 @@ make_rr(const char *name, struct databuf *dp, u_char *buf,
 
 		/* first just copy over the type_covered, algorithm, */
 		/* labels, orig ttl, two timestamps, and the footprint */
-		if ((dp->d_size - 18) > buflen)
+		if (buflen < 18)
 			goto cleanup;  /* out of room! */
 		memcpy(cp, cp1, 18);
 		cp  += 18;
