@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sys_machdep.c	5.5 (Berkeley) 1/19/91
- *	$Id: sys_machdep.c,v 1.11 1994/10/20 04:43:24 cgd Exp $
+ *	$Id: sys_machdep.c,v 1.12 1994/10/20 23:48:21 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -123,8 +123,10 @@ vdoualarm(arg)
 
 #ifdef USER_LDT
 void
-set_user_ldt(struct pcb *pcb)
+set_user_ldt(pcb)
+	struct pcb *pcb;
 {
+
 	gdt_segs[GUSERLDT_SEL].ssd_base = (unsigned)pcb->pcb_ldt;
 	gdt_segs[GUSERLDT_SEL].ssd_limit = (pcb->pcb_ldt_len * sizeof(union descriptor)) - 1;
 	ssdtosd(gdt_segs+GUSERLDT_SEL, gdt+GUSERLDT_SEL);
@@ -132,10 +134,12 @@ set_user_ldt(struct pcb *pcb)
 	currentldt = GSEL(GUSERLDT_SEL, SEL_KPL);
 }
 
+#define	syscallarg(x)	union { x datum; register_t pad; }
+
 struct i386_get_ldt_args {
-	int start;
-	union descriptor *desc;
-	int num;
+	syscallarg(int) start;
+	syscallarg(union descriptor *) desc;
+	syscallarg(int) num;
 };
 
 int
@@ -188,9 +192,9 @@ i386_get_ldt(p, args, retval)
 }
 
 struct i386_set_ldt_args {
-	int start;
-	union descriptor *desc;
-	int num;
+	syscallarg(int) start;
+	syscallarg(union descriptor *) desc;
+	syscallarg(int) num;
 };
 
 int
