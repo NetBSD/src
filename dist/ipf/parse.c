@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.1.1.1.2.2 1999/12/20 21:01:44 he Exp $	*/
+/*	$NetBSD: parse.c,v 1.1.1.1.2.3 2000/01/08 16:41:21 he Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -245,7 +245,11 @@ int     linenum;
 		return NULL;
 
 	if (!strcasecmp("log", *cpp)) {
-		cpp++;
+		if (!*++cpp) {
+			fprintf(stderr, "%d: missing source specification\n",
+				linenum);
+			return NULL;
+		}
 		if (fil.fr_flags & FR_PASS)
 			fil.fr_flags |= FR_LOGP;
 		else if (fil.fr_flags & FR_BLOCK)
