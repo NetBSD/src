@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.3 1999/01/16 08:45:53 nisimura Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.4 1999/01/28 18:37:02 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -141,15 +141,15 @@
 	.globl	_C_LABEL(mips3_TLBMiss)
 _C_LABEL(mips3_TLBMiss):
 	.set	noat
-	dmfc0	k0, MIPS_COP_0_TLB_XCONTEXT
-	addu	k1, $0, k0		# Pick up up sign of k0 for user/kernel
-	bltz	k1, 4f
-	srl	k1, k0, (SEGSHIFT - 2 - (PGSHIFT - 3))
-	andi	k1, k1, 0x7fc		# index of segment table
-	dsra	k0, k0, 32		# Tricky -- The lower bit is
+	dmfc0	k0, MIPS_COP_0_BAD_VADDR	# get the virtual address
+	dmfc0	k1, MIPS_COP_0_TLB_XCONTEXT
+	bltz	k0, 4f
+	srl	k0, k0, SEGSHIFT - 2	# compute segment table index
+	andi	k0, k0, 0x7fc		# index of segment table
+	dsra	k1, k1, 32		# Tricky -- The lower bit is
 					# actually part of KSU but we must
 					# be a user address
-	add	k1, k0, k1		
+	add	k1, k0, k1
 	lw	k1, 0(k1)		
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	# get the virtual address
 	beq	k1, zero, 5f			# invalid segment map
@@ -179,7 +179,7 @@ _C_LABEL(mips3_TLBMiss):
 	nop
 	eret
 4:
-	j	mips3_TLBMissException
+	j	_C_LABEL(mips3_TLBMissException)
 	nop
 5:
 	j	mips3_SlowFault
@@ -1030,11 +1030,9 @@ END(mips3_UserIntr)
  */
 LEAF(mips3_TLBInvalidException)
 	.set	noat
-	dmfc0	k0, MIPS_COP_0_TLB_XCONTEXT
-	addu	k1, k0, 0			# Get User/Kernel mode bit
-	bgez	k1, _C_LABEL(mips3_KernGenException)	# full trap processing
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address
 	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
+	bgez	k0, _C_LABEL(mips3_KernGenException)	# full trap processing
 	subu	k0, k0, k1
 	lw	k1, _C_LABEL(Sysmapsize)	# index within range?
 	srl	k0, k0, PGSHIFT
@@ -1063,8 +1061,8 @@ LEAF(mips3_TLBInvalidException)
 	beq	k0, zero, _C_LABEL(mips3_KernGenException)	# PTE invalid
 	lw	k0, 4(k1)			# get odd PTE entry
 	dsll	k0, k0, 34
-	dsrl	k0, k0, 34
 	mfc0	k1, MIPS_COP_0_TLB_INDEX
+	dsrl	k0, k0, 34
 	sltiu	k1, k1, MIPS3_TLB_WIRED_ENTRIES	# Luckily this is MIPS3_PG_G
 	or	k1, k1, k0
 	dmtc0	k0, MIPS_COP_0_TLB_LO1		# load PTE entry
@@ -1092,8 +1090,8 @@ KernTLBIOdd:
 	beq	k0, zero, _C_LABEL(mips3_KernGenException)	# PTE invalid
 	lw	k0, -4(k1)			# get even PTE entry
 	dsll	k0, k0, 34
-	dsrl	k0, k0, 34
 	mfc0	k1, MIPS_COP_0_TLB_INDEX
+	dsrl	k0, k0, 34
 	sltiu	k1, k1, MIPS3_TLB_WIRED_ENTRIES	# Luckily this is MIPS3_PG_G
 	or	k1, k1, k0
 	dmtc0	k0, MIPS_COP_0_TLB_LO0		# save PTE entry
@@ -2306,7 +2304,7 @@ LEAF(mips3_write_xcontext_upper)
 	j	ra
 	nop
 END(mips3_write_xcontext_upper)
-	
+
 
 LEAF(mips3_FetchIcache)
 	lw	t1, mips_L1ICacheSize
