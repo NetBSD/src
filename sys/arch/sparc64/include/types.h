@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.9 1999/11/27 11:33:44 mrg Exp $ */
+/*	$NetBSD: types.h,v 1.10 1999/11/27 20:05:45 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,7 +88,7 @@ typedef unsigned long		register_t;
 typedef u_int32_t		register32_t;
 typedef u_int64_t		register64_t;
 
-#if defined(_KERNEL)
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 typedef unsigned long		vaddr_t;
 typedef vaddr_t			vsize_t;
 #ifdef SUN4U
