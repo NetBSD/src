@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461uart.c,v 1.2 2001/03/20 16:03:28 uch Exp $	*/
+/*	$NetBSD: hd64461uart.c,v 1.3 2001/07/13 16:21:39 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@ struct cfattach hd64461uart_ca = {
 static void hd64461uart_init(void);
 static u_int8_t hd64461uart_read_1(void *, bus_space_handle_t, bus_size_t);
 static void hd64461uart_write_1(void *, bus_space_handle_t, bus_size_t,
-				u_int8_t);
+    u_int8_t);
 
 #ifdef DEBUG
 static void hd64461uart_info(struct hd64461uart_softc *);
@@ -115,10 +115,11 @@ comcnprobe(struct consdev *cp)
 void
 comcninit(struct consdev *cp)
 {
+
 	hd64461uart_init();
 
 	comcnattach(hd64461uart_chip.io_tag, 0x0, COMCN_SPEED, COM_FREQ, 
-		    CONMODE);	
+	    CONMODE);	
 
 	hd64461uart_chip.console = 1;
 }
@@ -174,12 +175,13 @@ hd64461uart_attach(struct device *parent, struct device *self, void *aux)
 	com_attach_subr(csc);
 
 	hd64461_intr_establish(HD64461_IRQ_UART, IST_LEVEL, IPL_TTY,
-			       comintr, self);
+	    comintr, self);
 }
 
 static void
 hd64461uart_init()
 {
+
 	if (hd64461uart_chip.io_tag)
 		return;
 
@@ -195,12 +197,13 @@ hd64461uart_init()
 static u_int8_t
 hd64461uart_read_1(void *t, bus_space_handle_t h, bus_size_t ofs)
 {
+
 	return *(volatile u_int8_t *)(h + (ofs << 1));
 }
 
 static void
 hd64461uart_write_1(void *t, bus_space_handle_t h, bus_size_t ofs,
-		    u_int8_t val)
+    u_int8_t val)
 {
 
 	*(volatile u_int8_t *)(h + (ofs << 1)) = val;	
