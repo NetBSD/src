@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.49 1999/11/28 06:06:21 simonb Exp $	*/
+/*	$NetBSD: rz.c,v 1.50 1999/11/28 06:28:37 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.49 1999/11/28 06:06:21 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.50 1999/11/28 06:28:37 simonb Exp $");
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
@@ -703,8 +703,12 @@ rzstrategy(bp)
 			/* otherwise, truncate */
 			bp->b_bcount = dbtob(sz);
 		}
-		/* check for write to write protected label */
-		if (bn + pp->p_offset <= LABELSECTOR &&
+		/*
+		 * Check for write to write protected label (except on the
+		 * raw partition).
+		 */
+		if (part != RAW_PART &&
+		    bn + pp->p_offset <= LABELSECTOR &&
 #if LABELSECTOR != 0
 		    bn + pp->p_offset + sz > LABELSECTOR &&
 #endif
