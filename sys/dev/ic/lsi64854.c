@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.7 1999/04/20 20:21:04 pk Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.8 1999/06/05 08:35:45 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -264,8 +264,8 @@ lsi64854_setup(sc, addr, len, datain, dmasize)
 	sc->sc_dmaaddr = addr;
 	sc->sc_dmalen = len;
 
-	DPRINTF(("%s: start %d@%p,%d\n", sc->sc_dev.dv_xname,
-		*sc->sc_dmalen, *sc->sc_dmaaddr, datain ? 1 : 0));
+	DPRINTF(("%s: start %ld@%p,%d\n", sc->sc_dev.dv_xname,
+		(long)*sc->sc_dmalen, *sc->sc_dmaaddr, datain ? 1 : 0));
 
 	/*
 	 * the rules say we cannot transfer more than the limit
@@ -275,7 +275,7 @@ lsi64854_setup(sc, addr, len, datain, dmasize)
 	*dmasize = sc->sc_dmasize =
 		min(*dmasize, DMAMAX((size_t) *sc->sc_dmaaddr));
 
-	DPRINTF(("dma_setup: dmasize = %d\n", sc->sc_dmasize));
+	DPRINTF(("dma_setup: dmasize = %ld\n", (long)sc->sc_dmasize));
 
 	/* Program the DMA address */
 	if (sc->sc_dmasize) {
@@ -499,8 +499,8 @@ lsi64854_setup_pp(sc, addr, len, datain, dmasize)
 	sc->sc_dmaaddr = addr;
 	sc->sc_dmalen = len;
 
-	DPRINTF(("%s: start %d@%p,%d\n", sc->sc_dev.dv_xname,
-		*sc->sc_dmalen, *sc->sc_dmaaddr, datain ? 1 : 0));
+	DPRINTF(("%s: start %ld@%p,%d\n", sc->sc_dev.dv_xname,
+		(long)*sc->sc_dmalen, *sc->sc_dmaaddr, datain ? 1 : 0));
 
 	/*
 	 * the rules say we cannot transfer more than the limit
@@ -510,7 +510,7 @@ lsi64854_setup_pp(sc, addr, len, datain, dmasize)
 	*dmasize = sc->sc_dmasize =
 		min(*dmasize, DMAMAX((size_t) *sc->sc_dmaaddr));
 
-	DPRINTF(("dma_setup: dmasize = %d\n", sc->sc_dmasize));
+	DPRINTF(("dma_setup: dmasize = %ld\n", (long)sc->sc_dmasize));
 
 	/* Program the DMA address */
 	if (sc->sc_dmasize) {
