@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.30 1996/06/05 00:18:58 cgd Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.31 1996/08/08 04:11:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: vmstat.c,v 1.30 1996/06/05 00:18:58 cgd Exp $";
+static char rcsid[] = "$NetBSD: vmstat.c,v 1.31 1996/08/08 04:11:27 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,48 +78,44 @@ static char rcsid[] = "$NetBSD: vmstat.c,v 1.30 1996/06/05 00:18:58 cgd Exp $";
 struct nlist namelist[] = {
 #define	X_CPTIME	0
 	{ "_cp_time" },
-#define	X_DK_NDRIVE	1
-	{ "_dk_ndrive" },
-#define X_SUM		2
+#define X_SUM		1
 	{ "_cnt" },
-#define	X_BOOTTIME	3
+#define	X_BOOTTIME	2
 	{ "_boottime" },
-#define	X_DKXFER	4
-	{ "_dk_xfer" },
-#define X_HZ		5
+#define X_HZ		3
 	{ "_hz" },
-#define X_STATHZ	6
+#define X_STATHZ	4
 	{ "_stathz" },
-#define X_NCHSTATS	7
+#define X_NCHSTATS	5
 	{ "_nchstats" },
-#define	X_INTRNAMES	8
+#define	X_INTRNAMES	6
 	{ "_intrnames" },
-#define	X_EINTRNAMES	9
+#define	X_EINTRNAMES	7
 	{ "_eintrnames" },
-#define	X_INTRCNT	10
+#define	X_INTRCNT	8
 	{ "_intrcnt" },
-#define	X_EINTRCNT	11
+#define	X_EINTRCNT	9
 	{ "_eintrcnt" },
-#define	X_KMEMSTAT	12
+#define	X_KMEMSTAT	10
 	{ "_kmemstats" },
-#define	X_KMEMBUCKETS	13
+#define	X_KMEMBUCKETS	11
 	{ "_bucket" },
-#define X_ALLEVENTS	14
+#define X_ALLEVENTS	12
 	{ "_allevents" },
 #ifdef notdef
-#define	X_DEFICIT	15
+#define	X_DEFICIT	13
 	{ "_deficit" },
-#define	X_FORKSTAT	16
+#define	X_FORKSTAT	14
 	{ "_forkstat" },
-#define X_REC		17
+#define X_REC		15
 	{ "_rectime" },
-#define X_PGIN		18
+#define X_PGIN		16
 	{ "_pgintime" },
-#define	X_XSTATS	19
+#define	X_XSTATS	17
 	{ "_xstats" },
-#define X_END		20
+#define X_END		18
 #else
-#define X_END		15
+#define X_END		13
 #endif
 #ifdef tahoe
 #define	X_VBDINIT	(X_END)
