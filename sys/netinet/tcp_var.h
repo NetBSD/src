@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tcp_var.h	7.10 (Berkeley) 6/28/90
+ *	from: @(#)tcp_var.h	7.10 (Berkeley) 6/28/90
+ *	$Id: tcp_var.h,v 1.3 1993/05/20 03:50:42 cgd Exp $
  */
 
 #ifndef _NETINET_TCP_VAR_H_

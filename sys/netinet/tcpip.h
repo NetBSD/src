@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tcpip.h	7.4 (Berkeley) 6/28/90
+ *	from: @(#)tcpip.h	7.4 (Berkeley) 6/28/90
+ *	$Id: tcpip.h,v 1.3 1993/05/20 03:50:44 cgd Exp $
  */
 
 #ifndef _NETINET_TCPIP_H_

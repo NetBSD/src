@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)in_proto.c	7.5 (Berkeley) 6/28/90
+ *	from: @(#)in_proto.c	7.5 (Berkeley) 6/28/90
+ *	$Id: in_proto.c,v 1.3 1993/05/20 03:50:08 cgd Exp $
  */
 
 #include "param.h"

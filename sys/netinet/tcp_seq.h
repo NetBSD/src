@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tcp_seq.h	7.4 (Berkeley) 6/28/90
+ *	from: @(#)tcp_seq.h	7.4 (Berkeley) 6/28/90
+ *	$Id: tcp_seq.h,v 1.3 1993/05/20 03:50:37 cgd Exp $
  */
 
 #ifndef _NETINET_TCP_SEQ_H_

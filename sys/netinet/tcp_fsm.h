@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tcp_fsm.h	7.4 (Berkeley) 6/28/90
+ *	from: @(#)tcp_fsm.h	7.4 (Berkeley) 6/28/90
+ *	$Id: tcp_fsm.h,v 1.3 1993/05/20 03:50:35 cgd Exp $
  */
 
 #ifndef _NETINET_TCP_FSM_H_

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)in_pcb.h	7.6 (Berkeley) 6/28/90
+ *	from: @(#)in_pcb.h	7.6 (Berkeley) 6/28/90
+ *	$Id: in_pcb.h,v 1.3 1993/05/20 03:50:06 cgd Exp $
  */
 
 #ifndef _NETINET_IN_PCB_H_
