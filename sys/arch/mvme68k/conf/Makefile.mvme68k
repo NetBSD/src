@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mvme68k,v 1.26 1997/07/12 22:07:59 leo Exp $
+#	$NetBSD: Makefile.mvme68k,v 1.26.2.1 1997/09/16 03:48:59 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -37,7 +37,7 @@ MVME68K=$S/arch/mvme68k
 # Keep -nostdinc before all -I flags, similar for -undef ...
 INCLUDES=	-nostdinc -I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
-		-Dmc68020 -Dmvme68k -DFPCOPROC
+		-Dmc68020 -Dmvme68k
 CWARNFLAGS=	-Werror
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
@@ -133,8 +133,7 @@ cleankernel:
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${MVME68K}/mvme68k/Locore.c ${CFILES} \
-	    ioconf.c param.c | \
+	    ${CFILES} ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 
 tags:

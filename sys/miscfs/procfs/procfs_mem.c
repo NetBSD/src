@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_mem.c,v 1.11.10.2 1997/08/28 00:21:47 thorpej Exp $	*/
+/*	$NetBSD: procfs_mem.c,v 1.11.10.3 1997/09/16 03:51:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -264,7 +264,7 @@ procfs_checkioperm(p, t)
 	 *	    (unless you're root), or...
 	 */
 	if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||
-	    ISSET(t->p_flag, P_SUGID)) &&
+		ISSET(t->p_flag, P_SUGID)) &&
 	    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 
@@ -317,7 +317,7 @@ procfs_findtextvp(p)
 
 			printf("procfs: found vm object\n");
 			vm_map_lookup_done(map, out_entry);
-			printf("procfs: vm object = %x\n", object);
+			printf("procfs: vm object = %p\n", object);
 
 			/*
 			 * At this point, assuming no errors, object
@@ -327,7 +327,7 @@ procfs_findtextvp(p)
 			 */
 
 			pager = object->pager;
-			printf("procfs: pager = %x\n", pager);
+			printf("procfs: pager = %p\n", pager);
 			if (pager)
 				printf("procfs: found pager, type = %d\n",
 				    pager->pg_type);
@@ -335,7 +335,7 @@ procfs_findtextvp(p)
 				struct vnode *vp;
 
 				vp = (struct vnode *) pager->pg_handle;
-				printf("procfs: vp = 0x%x\n", vp);
+				printf("procfs: vp = %p\n", vp);
 				return (vp);
 			}
 		}

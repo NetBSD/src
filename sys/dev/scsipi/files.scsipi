@@ -1,8 +1,10 @@
-#	$NetBSD: files.scsipi,v 1.9.2.2 1997/08/27 23:33:06 thorpej Exp $
+#	$NetBSD: files.scsipi,v 1.9.2.3 1997/09/16 03:50:50 thorpej Exp $
 #
 # Config file and device description for machine-independent SCSI code.
 # Included by ports that need it.  Ports that use it must provide
 # their own "major" declarations for the appropriate devices.
+
+defopt	SCSIVERBOSE
 
 file	dev/scsipi/scsipiconf.c			scsi | atapi
 file	dev/scsipi/scsipi_base.c			scsi | atapi

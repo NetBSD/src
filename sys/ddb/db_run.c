@@ -1,4 +1,4 @@
-/*	$NetBSD: db_run.c,v 1.11 1997/06/26 01:18:11 thorpej Exp $	*/
+/*	$NetBSD: db_run.c,v 1.11.4.1 1997/09/16 03:49:54 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -94,7 +94,11 @@ db_stop_at_pc(regs, is_breakpoint)
 		return (TRUE);	/* stop here */
 	    }
 	} else if (*is_breakpoint) {
+#ifdef PC_ADVANCE
+		PC_ADVANCE(regs);
+#else
 		PC_REGS(regs) += BKPT_SIZE;
+#endif
 	}
 		
 	*is_breakpoint = FALSE;

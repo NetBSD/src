@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.84 1997/05/08 16:20:07 mycroft Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.84.4.1 1997/09/16 03:51:02 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -472,7 +472,7 @@ sys_execve(p, v, retval)
 	vrele(pack.ep_vp);
 
 	/* setup new registers and do misc. setup. */
-	(*pack.ep_emul->e_setregs)(p, &pack, (u_long) stack, retval);
+	(*pack.ep_emul->e_setregs)(p, &pack, (u_long) stack);
 
 	if (p->p_flag & P_TRACED)
 		psignal(p, SIGTRAP);
@@ -484,7 +484,8 @@ sys_execve(p, v, retval)
 	if (KTRPOINT(p, KTR_EMUL))
 		ktremul(p->p_tracep, p->p_emul->e_name);
 #endif
-	return 0;
+
+	return (EJUSTRETURN);
 
 bad:
 	/* free the vmspace-creation commands, and release their references */

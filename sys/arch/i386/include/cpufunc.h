@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.9.2.1 1997/09/06 18:14:12 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.9.2.2 1997/09/16 03:48:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Charles Hannum.
@@ -39,16 +39,6 @@
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
-
-static __inline int bdb(void)
-{
-	extern int bdb_exists;
-
-	if (!bdb_exists)
-		return (0);
-	__asm __volatile("int $3");
-	return (1);
-}
 
 static __inline void 
 invlpg(u_int addr)

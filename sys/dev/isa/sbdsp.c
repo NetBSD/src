@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.63.2.3 1997/09/01 20:26:45 thorpej Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.63.2.4 1997/09/16 03:50:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -388,7 +388,6 @@ sbdsp_attach(sc)
 		sc->in_filter = 0;	/* no filters turned on, please */
 	}
 
-	DPRINTF((" drq16 %d", sc->sc_drq16));
 	printf(": dsp v%d.%02d%s\n",
 	       SBVER_MAJOR(sc->sc_version), SBVER_MINOR(sc->sc_version),
 	       sc->sc_model == SB_JAZZ ? ": <Jazz16>" : "");
@@ -1265,13 +1264,21 @@ sbdsp_dma_input(addr, p, cc, intr, arg)
 	}
 #endif
 
-	if (sc->sc_i.dmachan == sc->sc_drq8) {
+	if (sc->sc_i.modep->precision == 8) {
+#ifdef DIAGNOSTIC
+		if (sc->sc_i.dmachan != sc->sc_drq8) {
+			printf("sbdsp_dma_input: prec=%d bad chan %d\n",
+			       sc->sc_i.modep->precision, sc->sc_i.dmachan);
+			return EIO;
+		}
+#endif
 		sc->sc_intr8 = intr;
 		sc->sc_arg8 = arg;
 	} else {
 #ifdef DIAGNOSTIC
 		if (sc->sc_i.dmachan != sc->sc_drq16) {
-			printf("sbdsp_dma_input: bad chan %d\n", sc->sc_i.dmachan);
+			printf("sbdsp_dma_input: prec=%d bad chan %d\n",
+			       sc->sc_i.modep->precision, sc->sc_i.dmachan);
 			return EIO;
 		}
 #endif
@@ -1431,13 +1438,21 @@ sbdsp_dma_output(addr, p, cc, intr, arg)
 	}
 #endif
 
-	if (sc->sc_o.dmachan == sc->sc_drq8) {
+	if (sc->sc_o.modep->precision == 8) {
+#ifdef DIAGNOSTIC
+		if (sc->sc_o.dmachan != sc->sc_drq8) {
+			printf("sbdsp_dma_output: prec=%d bad chan %d\n",
+			       sc->sc_o.modep->precision, sc->sc_o.dmachan);
+			return EIO;
+		}
+#endif
 		sc->sc_intr8 = intr;
 		sc->sc_arg8 = arg;
 	} else {
 #ifdef DIAGNOSTIC
 		if (sc->sc_o.dmachan != sc->sc_drq16) {
-			printf("sbdsp_dma_output: bad chan %d\n", sc->sc_i.dmachan);
+			printf("sbdsp_dma_output: prec=%d bad chan %d\n",
+			       sc->sc_o.modep->precision, sc->sc_o.dmachan);
 			return EIO;
 		}
 #endif

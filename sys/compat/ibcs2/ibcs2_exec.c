@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.12 1996/10/12 02:13:52 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.12.10.1 1997/09/16 03:49:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -49,6 +49,8 @@
 #include <compat/ibcs2/ibcs2_util.h>
 #include <compat/ibcs2/ibcs2_syscall.h>
 
+#include <machine/ibcs2_machdep.h>
+
 int exec_ibcs2_coff_prep_omagic __P((struct proc *, struct exec_package *,
 				     struct coff_filehdr *, 
 				     struct coff_aouthdr *));
@@ -91,7 +93,7 @@ struct emul emul_ibcs2 = {
 	ibcs2_syscallnames,
 	0,
 	copyargs,
-	setregs,
+	ibcs2_setregs,
 	sigcode,
 	esigcode,
 };
