@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.8 1999/07/02 15:21:26 simonb Exp $	*/
+/*	$NetBSD: refresh.c,v 1.9 1999/10/15 17:01:19 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.8 1999/07/02 15:21:26 simonb Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.9 1999/10/15 17:01:19 jdolecek Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -193,7 +193,7 @@ re_refresh(el)
 	    cur.h = el->el_refresh.r_cursor.h;	/* save for later */
 	    cur.v = el->el_refresh.r_cursor.v;
 	}
-	re_addc(el, *cp);
+	re_addc(el, (unsigned char) *cp);
     }
 
     if (cur.h == -1) {		/* if I haven't been set yet, I'm at the end */
