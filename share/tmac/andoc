@@ -31,15 +31,17 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from @(#)tmac.andoc	5.6 (Berkeley) 8/5/91
-.\"	$NetBSD: andoc,v 1.1 1997/03/27 03:12:33 mycroft Exp $
+.\"	$NetBSD: andoc,v 1.2 1997/05/28 19:55:09 cgd Exp $
 .\"
 .de Dd
 .rm Dd
 .so /usr/share/tmac/tmac.doc
-.Dd "\\$1" "\\$2" "\\$3" "\\$4" "\\$5" "\\$6" "\\$7" "\\$8"
+.\" XXX the following is groff-specific
+.Dd \\$@
 ..
 .de TH
 .rm TH
 .so /usr/share/tmac/tmac.an.old
-.TH "\\$1" "\\$2" "\\$3" "\\$4" "\\$5" "\\$6" "\\$7" "\\$8"
+.\" XXX the following is groff-specific
+.TH \\$@
 ..
