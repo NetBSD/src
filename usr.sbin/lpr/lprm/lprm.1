@@ -1,4 +1,5 @@
-.\" $NetBSD: lprm.1,v 1.6 1997/07/09 02:04:30 jtc Exp $
+.\"	$NetBSD: lprm.1,v 1.7 1997/10/05 15:12:21 mrg Exp $
+.\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -39,16 +40,16 @@
 .Nm lprm
 .Nd remove jobs from the line printer spooling queue
 .Sh SYNOPSIS
-.Nm lprm
+.Nm
 .Op Fl P Ns Ar printer
 .Op Fl
 .Op job # ...
 .Op Ar user ...
 .Sh DESCRIPTION
-.Nm Lprm
+.Nm
 will remove a job, or jobs, from a printer's spool queue.
 Since the spooling directory is protected from users, using
-.Nm lprm
+.Nm
 is normally the only method by which a user may remove a job.
 The owner of a job is determined by the user's login name
 and host name on the machine where the
@@ -65,16 +66,16 @@ Specify the queue associated with a specific
 If a single
 .Sq Fl
 is given,
-.Nm lprm
+.Nm
 will remove all jobs which a user
 owns.  If the super-user employs this flag, the spool queue will
 be emptied entirely.
 .It Ar user
 Causes
-.Nm lprm
+.Nm
 to attempt to remove any jobs queued belonging to that user
 (or users).  This form of invoking
-.Nm lprm
+.Nm
 is useful only to the super-user.
 .It Ar job\ \&#
 A user may dequeue an individual job by specifying its job number.
@@ -92,22 +93,22 @@ program, e.g.
 .El
 .Pp
 If neither arguments or options are given,
-.Nm Lprm
+.Nm
 will delete the currently active job if it is
 owned by the user who invoked
-.Nm lprm  .
+.Nm "" .
 .Pp
-.Nm Lprm
+.Nm
 announces the names of any files it removes and is silent if
 there are no jobs in the queue which match the request list.
 .Pp
-.Nm Lprm
+.Nm
 will kill off an active daemon, if necessary, before removing
 any spooling files.  If a daemon is killed, a new one is
 automatically restarted upon completion of file removals.
 .Sh ENVIRONMENT
 If the following environment variable exists, it is utilized by
-.Nm lprm .
+.Nm "" .
 .Bl -tag -width PRINTER
 .It Ev PRINTER
 If the environment variable
@@ -141,6 +142,6 @@ Since there are race conditions possible in the update of the lock file,
 the currently active job may be incorrectly identified.
 .Sh HISTORY
 The
-.Nm lprm
+.Nm
 command appeared in
 .Bx 3.0 .

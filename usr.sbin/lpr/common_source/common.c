@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.10 1997/10/05 11:52:17 mrg Exp $	*/
+/*	$NetBSD: common.c,v 1.11 1997/10/05 15:12:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,8 +38,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
+#else
+__RCSID("$NetBSD: common.c,v 1.11 1997/10/05 15:12:00 mrg Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -48,6 +53,7 @@ static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <netdb.h>
 
 #include <dirent.h>
@@ -141,8 +147,7 @@ getport(rhost, rport)
 	if (rhost == NULL)
 		fatal("no remote host to connect to");
 	bzero((char *)&sin, sizeof(sin));
-	sin.sin_addr.s_addr = inet_addr(rhost);
-	if (sin.sin_addr.s_addr != INADDR_NONE)
+	if (inet_aton(rhost, &sin.sin_addr) == 1)
 		sin.sin_family = AF_INET;
 	else {
 		hp = gethostbyname(rhost);
@@ -195,18 +200,17 @@ int
 getline(cfp)
 	FILE *cfp;
 {
-	register int linel = 0;
-	register char *lp = line;
-	register c;
+	int linel = 0, c;
+	char *lp = line;
 
-	while ((c = getc(cfp)) != '\n') {
+	while ((c = getc(cfp)) != '\n' && linel+1<sizeof(line)) {
 		if (c == EOF)
 			return(0);
 		if (c == '\t') {
 			do {
 				*lp++ = ' ';
 				linel++;
-			} while ((linel & 07) != 0);
+			} while ((linel & 07) != 0 && linel+1 < sizeof(line));
 			continue;
 		}
 		*lp++ = c;
@@ -225,12 +229,11 @@ int
 getq(namelist)
 	struct queue *(*namelist[]);
 {
-	register struct dirent *d;
-	register struct queue *q, **queue;
-	register int nitems;
+	struct dirent *d;
+	struct queue *q, **queue;
 	struct stat stbuf;
 	DIR *dirp;
-	int arraysz;
+	int nitems, arraysz;
 
 	seteuid(euid);
 	if ((dirp = opendir(SD)) == NULL)
@@ -307,7 +310,7 @@ char *
 checkremote()
 {
 	char name[MAXHOSTNAMELEN];
-	register struct hostent *hp;
+	struct hostent *hp;
 	static char errbuf[128];
 
 	remote = 0;	/* assume printer is local */
@@ -321,7 +324,10 @@ checkremote()
 			"unable to get official name for local machine %s",
 			name);
 		    return errbuf;
-		} else (void)strncpy(name, hp->h_name, MAXHOSTNAMELEN - 1);
+		} else {
+			(void)strncpy(name, hp->h_name, sizeof(name) - 1);
+			name[sizeof(name) - 1] = '\0';
+		}
 
 		/* get the official name of RM */
 		hp = gethostbyname(RM);
@@ -355,14 +361,14 @@ delay(n)
 	(void) select(0, (fd_set *)0, (fd_set *)0, (fd_set *)0, &tdelay);
 }
 
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
 
 void
-#if __STDC__
+#ifdef __STDC__
 fatal(const char *msg, ...)
 #else
 fatal(msg, va_alist)
@@ -371,7 +377,7 @@ fatal(msg, va_alist)
 #endif
 {
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, msg);
 #else
 	va_start(ap);

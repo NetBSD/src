@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.12 1997/10/05 11:52:32 mrg Exp $	*/
+/*	$NetBSD: lpd.c,v 1.13 1997/10/05 15:12:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.12 1997/10/05 11:52:32 mrg Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.13 1997/10/05 15:12:13 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,6 +116,7 @@ static void       doit __P((void));
 static void       startup __P((void));
 static void       chkhost __P((struct sockaddr_in *));
 static int	  ckqueue __P((char *));
+static void	  usage __P((void));
 
 uid_t	uid, euid;
 
@@ -128,7 +129,7 @@ main(argc, argv)
 	fd_set defreadfds;
 	struct sockaddr_un un, fromunix;
 	struct sockaddr_in sin, frominet;
-	int omask, lfd;
+	int omask, lfd, errs, i;
 
 	euid = geteuid();	/* these shouldn't be different */
 	uid = getuid();
@@ -136,21 +137,22 @@ main(argc, argv)
 	gethostname(host, sizeof(host));
 	name = argv[0];
 
-	while (--argc > 0) {
-		argv++;
-		if (argv[0][0] == '-')
-			switch (argv[0][1]) {
-			case 'd':
-				options |= SO_DEBUG;
-				break;
-			case 'l':
-				lflag++;
-				break;
-			case 's':
-				sflag++;
-				break;
-			}
-	}
+	errs = 0;
+	while ((i = getopt(argc, argv, "dl")) != -1)
+		switch (i) {
+		case 'd':
+			options |= SO_DEBUG;
+			break;
+		case 'l':
+			lflag++;
+			break;
+		default:
+			errs++;
+		}
+	argc -= optind;
+	argv += optind;
+	if (errs || argc != 0)
+		usage();
 
 #ifndef DEBUG
 	/*
@@ -337,8 +339,8 @@ char	*cmdnames[] = {
 static void
 doit()
 {
-	register char *cp;
-	register int n;
+	char *cp;
+	int n;
 
 	for (;;) {
 		cp = cbuf;
@@ -446,7 +448,7 @@ static void
 startup()
 {
 	char *buf;
-	register char *cp;
+	char *cp;
 	int pid;
 
 	/*
@@ -485,7 +487,7 @@ static int
 ckqueue(cap)
 	char *cap;
 {
-	register struct dirent *d;
+	struct dirent *d;
 	DIR *dirp;
 	char *spooldir;
 
@@ -512,9 +514,9 @@ static void
 chkhost(f)
 	struct sockaddr_in *f;
 {
-	register struct hostent *hp;
-	register FILE *hostf;
-	int first = 1;
+	struct hostent *hp;
+	FILE *hostf;
+	int first = 1, good = 0;
 
 	f->sin_port = ntohs(f->sin_port);
 	if (f->sin_family != AF_INET || f->sin_port >= IPPORT_RESERVED)
@@ -531,6 +533,19 @@ chkhost(f)
 	from[sizeof(fromb) - 1] = '\0';
 	from = fromb;
 
+	/* Check for spoof, ala rlogind */
+	hp = gethostbyname(fromb);
+	if (!hp)
+		fatal("hostname for your address (%s) unknown",
+		    inet_ntoa(f->sin_addr));
+	for (; good == 0 && hp->h_addr_list[0] != NULL; hp->h_addr_list++) {
+		if (!bcmp(hp->h_addr_list[0], (caddr_t)&f->sin_addr,
+		    sizeof(f->sin_addr)))
+			good = 1;
+	}
+	if (good == 0)
+		fatal("address for your hostname (%s) not matched",
+		    inet_ntoa(f->sin_addr));
 	hostf = fopen(_PATH_HOSTSEQUIV, "r");
 again:
 	if (hostf) {
@@ -548,4 +563,13 @@ again:
 	}
 	fatal("Your host does not have line printer access");
 	/*NOTREACHED*/
+}
+
+static void
+usage()
+{
+	extern char *__progname;	/* XXX */
+
+	fprintf(stderr, "usage: %s [-d] [-l]\n", __progname);
+	exit(1);
 }

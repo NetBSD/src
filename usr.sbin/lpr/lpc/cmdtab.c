@@ -1,4 +1,5 @@
-/*	$NetBSD: cmdtab.c,v 1.4 1995/11/15 22:27:34 pk Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.5 1997/10/05 15:12:07 mrg Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: cmdtab.c,v 1.5 1997/10/05 15:12:07 mrg Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/cdefs.h>
