@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.c,v 1.10 2001/06/18 02:31:09 lukem Exp $	*/
+/*	$NetBSD: fsutil.c,v 1.11 2001/11/09 07:50:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -35,8 +35,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsutil.c,v 1.10 2001/06/18 02:31:09 lukem Exp $");
+__RCSID("$NetBSD: fsutil.c,v 1.11 2001/11/09 07:50:19 lukem Exp $");
 #endif /* not lint */
+
+#include <sys/param.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -155,7 +157,7 @@ panic(const char *fmt, ...)
 const char *
 unrawname(const char *name)
 {
-	static char unrawbuf[32];
+	static char unrawbuf[MAXPATHLEN];
 	const char *dp;
 	struct stat stb;
 
@@ -167,19 +169,21 @@ unrawname(const char *name)
 		return (name);
 	if (dp[1] != 'r')
 		return (name);
-	(void)snprintf(unrawbuf, 32, "%.*s/%s", (int)(dp - name), name, dp + 2);
+	(void)snprintf(unrawbuf, sizeof(unrawbuf), "%.*s/%s",
+	    (int)(dp - name), name, dp + 2);
 	return (unrawbuf);
 }
 
 const char *
 rawname(const char *name)
 {
-	static char rawbuf[32];
+	static char rawbuf[MAXPATHLEN];
 	const char *dp;
 
 	if ((dp = strrchr(name, '/')) == 0)
 		return (0);
-	(void)snprintf(rawbuf, 32, "%.*s/r%s", (int)(dp - name), name, dp + 1);
+	(void)snprintf(rawbuf, sizeof(rawbuf), "%.*s/r%s",
+	    (int)(dp - name), name, dp + 1);
 	return (rawbuf);
 }
 
