@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.265 2000/09/20 00:46:35 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.266 2000/09/27 02:15:30 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.261 2000/09/20 00:46:10 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.262 2000/09/27 02:14:54 augustss Exp 
  */
 
 /*
@@ -944,6 +944,222 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ATI Technologies",
 	    "Mach64 LR",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE1PCI,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 Pro PCI",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE1AGP2X,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 Pro AGP 2x",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE1AGP4X,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 Pro AGP 4x",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE1PCIT,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 Pro PCI (TMDS)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE1AGP2XT,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 Pro AGP 2x (TMDS)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE1AGP4XT,
+	    0,
+	    "ATI Technologies",
+	    "Rage Fury MAXX AGP 4x (TMDS)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE2PCI,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 Pro PCI",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE2AGP2X,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 Pro AGP 2x",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE2AGP4X,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 Pro AGP 4x",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE2PCIT,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 Pro PCI (TMDS)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE2AGP2XT,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 Pro AGP 2x (TMDS)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE2AGP4XT,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 Pro AGP 4x (TMDS)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE3PCI,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 Pro PCI",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE3AGP2X,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 Pro AGP 2x",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE3AGP4X,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 Pro AGP 4x",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE3PCIT,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 Pro PCI (TMDS)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE3AGP2XT,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 Pro AGP 2x (TMDS)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE3AGP4XT,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 Pro AGP 4x (TMDS)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE4PCI,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 Pro PCI",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE4AGP2X,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 Pro AGP 2x",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE4AGP4X,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 Pro AGP 4x",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE4PCIT,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 Pro PCI (TMDS)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE4AGP2XT,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 Pro AGP 2x (TMDS)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE4AGP4XT,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 Pro AGP 4x (TMDS)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGEGLPCI,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 GL PCI",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGEGLAGP,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 GL AGP 2x",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGEVRPCI,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 VR PCI",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGEVRAGP,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 VR AGP 2x",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE4XPCI,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 4x PCI",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE4XA2X,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 4x AGP 2x",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE4XA4X,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 4x AGP 4x",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE4X,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 4x",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE24XPCI,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 4x PCI",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE24XA2X,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 4x AGP 2x",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE24XA4X,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 4x AGP 4x",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE24X,
+	    0,
+	    "ATI Technologies",
+	    "Rage 128 4x",
 	},
 	{
 	    PCI_VENDOR_AURAVISION, PCI_PRODUCT_AURAVISION_VXP524,
@@ -2018,6 +2234,66 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "InBusiness Fast Ethernet LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_01,
+	    0,
+	    "Intel",
+	    "82815 (Solano) PCI to AGP Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_02,
+	    0,
+	    "Intel",
+	    "82815 (Solano) Internal GUI Accelerator",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_10,
+	    0,
+	    "Intel",
+	    "82815 (Solano) Host to Hub Bridge, AGP Not Implemented",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_12,
+	    0,
+	    "Intel",
+	    "82815 (Solano) Internal GUI Accelerator",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_20,
+	    0,
+	    "Intel",
+	    "82815 (Solano) Host to Hub Bridge, AGP Implemented",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_21,
+	    0,
+	    "Intel",
+	    "82815 (Solano) PCI to AGP Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_30,
+	    0,
+	    "Intel",
+	    "82815 (Solano) Host to Hub Bridge (Fully featured chipset)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_31,
+	    0,
+	    "Intel",
+	    "82815 (Solano) PCI to AGP Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_32,
+	    0,
+	    "Intel",
+	    "82815 (Solano) Interal GUI Accelerator",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82806AA,
+	    0,
+	    "Intel",
+	    "82806AA PCI64 Hub Advanced Programmable Interrupt Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82559ER,
