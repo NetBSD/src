@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.48 1996/11/13 06:13:40 thorpej Exp $ */
+/*	$NetBSD: trap.c,v 1.49 1996/11/16 20:45:13 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -320,11 +320,6 @@ trap(type, psr, pc, tf)
 	switch (type) {
 
 	default:
-#if defined(SUN4M)
-		if (type == 0x29)
-			/* Mysterious trap 29.. for now print&signal process */
-			goto badtrap;
-#endif
 		if (type < 0x80) {
 dopanic:
 			printf("trap type 0x%x: pc=%x npc=%x psr=%s\n",
@@ -333,13 +328,13 @@ dopanic:
 			panic(type < N_TRAP_TYPES ? trap_type[type] : T);
 			/* NOTREACHED */
 		}
-#if defined(COMPAT_SVR4) || defined(SUN4M)
+#if defined(COMPAT_SVR4)
 badtrap:
 #endif
 		/* the following message is gratuitous */
 		/* ... but leave it in until we find anything */
 		printf("%s[%d]: unimplemented software trap 0x%x\n",
-		    p->p_comm, p->p_pid, type);
+			p->p_comm, p->p_pid, type);
 		trapsignal(p, SIGILL, type);
 		break;
 
