@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.22 2000/11/17 03:55:18 erh Exp $
+	$NetBSD: syscalls.master,v 1.23 2000/12/01 21:02:55 jdolecek Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -57,9 +57,11 @@
 ; UNIMPL osf_*   = osf functions implemented in linux, not here.
 ;
 
+if defined(_KERNEL) && !defined(_LKM)
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
 #include "opt_compat_osf1.h"
+endif
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -310,7 +312,8 @@
 ;165	ALIAS		osf1_sys_getdomainname
 165	NOARGS		{ int compat_09_sys_getdomainname(char *domainname, \
 			    int len); }
-166	UNIMPL		setdomainname
+166	STD		{ int linux_sys_setdomainname(char *domainname, \
+                            int len); }
 167	UNIMPL
 168	UNIMPL
 169	UNIMPL
@@ -494,7 +497,7 @@
 			    int cmd, void *arg); }
 312	STD		{ int linux_sys_clone(int flags, void *stack); }
 #ifdef EXEC_AOUT
-313	STD		{ int linux_sys_uselib(char *path); }
+313	STD		{ int linux_sys_uselib(const char *path); }
 #else
 313	UNIMPL		sys_uselib
 #endif
@@ -506,7 +509,7 @@
 319	STD		{ int linux_sys___sysctl(struct linux___sysctl *lsp); }
 320	UNIMPL		idle
 321	UNIMPL		oldumount
-322	NOARGS		{ int compat_12_sys_swapon(const char *name); }
+322	STD		{ int linux_sys_swapon(const char *name); }
 323	STD		{ int linux_sys_times(struct times *tms); }
 324	STD		{ int linux_sys_personality(int per); }
 325	STD		{ int linux_sys_setfsuid(uid_t uid); }
