@@ -1,4 +1,4 @@
-/*	$NetBSD: uuidgen.c,v 1.1 2004/09/13 23:35:19 thorpej Exp $	*/
+/*	$NetBSD: uuidgen.c,v 1.2 2004/09/13 23:44:19 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: uuidgen.c,v 1.1 2004/09/13 23:35:19 thorpej Exp $");
+__RCSID("$NetBSD: uuidgen.c,v 1.2 2004/09/13 23:44:19 wiz Exp $");
 
 #include <err.h>
 #include <stdio.h>
@@ -75,7 +75,7 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: %s [-1] [-n count] [-o filename] [-s]\n",
+	(void)fprintf(stderr, "usage: %s [-1s] [-n count] [-o filename]\n",
 	    getprogname());
 	exit(1);
 }
