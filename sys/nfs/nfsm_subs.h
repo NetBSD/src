@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.37 2004/05/10 10:40:43 yamt Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.38 2004/09/29 11:24:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -50,13 +50,6 @@
  */
 
 #define	M_HASCL(m)	((m)->m_flags & M_EXT)
-#define	NFSMINOFF(m) \
-		if (M_HASCL(m)) \
-			(m)->m_data = (m)->m_ext.ext_buf; \
-		else if ((m)->m_flags & M_PKTHDR) \
-			(m)->m_data = (m)->m_pktdat; \
-		else \
-			(m)->m_data = (m)->m_dat
 #define	NFSMADV(m, s)	(m)->m_data += (s)
 #define	NFSMSIZ(m)	((M_HASCL(m)) ? (m)->m_ext.ext_size : \
 				(((m)->m_flags & M_PKTHDR) ? MHLEN : MLEN))
