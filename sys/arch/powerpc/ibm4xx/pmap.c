@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.24 2003/07/19 08:20:22 simonb Exp $	*/
+/*	$NetBSD: pmap.c,v 1.25 2003/08/12 05:06:58 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24 2003/07/19 08:20:22 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.25 2003/08/12 05:06:58 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -1144,16 +1144,7 @@ pmap_activate(struct lwp *l)
 	 * XXX Normally performed in cpu_fork().
 	 */
 	printf("pmap_activate(%p), pmap=%p\n",l,pmap);
-	if (pcb->pcb_pm != pmap) {
-		pcb->pcb_pm = pmap;
-		(void) pmap_extract(pmap_kernel(), (vaddr_t)pcb->pcb_pm,
-		    (paddr_t *)&pcb->pcb_pmreal);
-	}
-
-	if (l == curlwp) {
-		/* Store pointer to new current pmap. */
-		curpm = pcb->pcb_pmreal;
-	}
+	pcb->pcb_pm = pmap;
 #endif
 }
 

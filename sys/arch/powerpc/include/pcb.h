@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.14 2003/03/05 05:27:25 matt Exp $	*/
+/*	$NetBSD: pcb.h,v 1.15 2003/08/12 05:06:54 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -50,7 +50,6 @@ struct fpu {
 
 struct pcb {
 	struct pmap *pcb_pm;	/* pmap of our vmspace */
-	struct pmap *pcb_pmreal; /* real address of above */
 	register_t pcb_sp;	/* saved SP */
 	int pcb_spl;		/* saved SPL */
 	int pcb_flags;

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.16 2003/08/11 15:39:24 matt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.17 2003/08/12 05:06:55 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -326,6 +326,10 @@ ENTRY_NOPROFILE(cpu_switch)
 	stint	%r9,_C_LABEL(sched_whichqs)@l(%r8) /* mark it empty */
 
 switch_common:
+	/*
+	 * r31 = lwp now running on this cpu
+	 * r30 = previous lwp (maybe be NULL)
+	 */
 1:
 	/* just did this resched thing */
 	li	%r3,0
@@ -343,7 +347,7 @@ switch_common:
 
 	/* record new lwp */
 	stptr	%r31,CI_CURLWP(%r4)
-	ldptr	%r4,L_ADDR(%r31)
+	ldptr	%r4,L_ADDR(%r31)	/* put PCB addr in r4 */
 
 #if !defined(MULTIPROCESSOR)		/* XXX */
 	li	%r3,0			/* if it is the same lwp, return 0 */
@@ -371,10 +375,6 @@ switch_exited:
 	/* indicate new pcb */
 	GET_CPUINFO(%r6)
 	stptr	%r4,CI_CURPCB(%r6)
-
-	/* save real pmap pointer for spill fill */
-	ldptr	%r5,PCB_PMR(%r4)
-	stptru	%r5,CI_CURPM(%r6)
 #ifdef PPC_OEA64
 	stdcx.	%r5,%r0,%r6		/* clear possible reservation */
 #else
@@ -416,7 +416,8 @@ switch_return:
 #if defined(PPC_IBM4XX)
 0:
 	GET_CPUINFO(%r3)
-	ldreg	%r3,CI_CURPM(%r3)	/* Do we need a context? */
+	ldreg	%r3,CI_CURPCB(%r3)	/* Do we need a context? */
+	ldreg	%r3,PCB_PM(%r3)	
 	ldreg	%r4,PM_CTX(%r3)
 	cmpwi	%r4,0
 #	mtspr	SPR_SPR0,4		/* Always keep the current ctx here */

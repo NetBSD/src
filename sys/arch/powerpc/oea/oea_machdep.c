@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.10 2003/08/08 07:14:27 matt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.11 2003/08/12 05:06:57 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.10 2003/08/08 07:14:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.11 2003/08/12 05:06:57 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -158,7 +158,7 @@ oea_init(void (*handler)(void))
 	curpcb->pcb_vr.vscr = 0;
 	curpcb->pcb_vr.vrsave = 0;
 #endif
-	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
+	curpcb->pcb_pm = pmap_kernel();
 
 	/*
 	 * Cause a PGM trap if we branch to 0.

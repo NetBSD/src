@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.53 2003/07/15 02:54:49 lukem Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.54 2003/08/12 05:06:56 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.53 2003/07/15 02:54:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.54 2003/08/12 05:06:56 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -111,7 +111,6 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	*pcb = l1->l_addr->u_pcb;
 
 	pcb->pcb_pm = l2->l_proc->p_vmspace->vm_map.pmap;
-	pcb->pcb_pmreal = pcb->pcb_pm;
 
 	/*
 	 * Setup the trap frame for the new process
@@ -204,9 +203,6 @@ void
 cpu_swapin(l)
 	struct lwp *l;
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
-
-	pcb->pcb_pmreal = pcb->pcb_pm;		/* XXX */
 }
 
 /*
