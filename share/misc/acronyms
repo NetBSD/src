@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.52 1999/12/17 14:25:45 pooka Exp $
+$NetBSD: acronyms,v 1.53 2000/01/24 22:38:21 thorpej Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -71,6 +71,7 @@ NP	no problem
 NRFPT	not ready for prime time
 NRN	no reply necessary
 OIC	oh, I see
+OTL	out to lunch
 OTOH	on the other hand
 OTTOMH	off the top of my head
 PITA	pain in the ass
