@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.38 2003/06/12 16:48:43 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.39 2003/06/13 11:57:29 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -304,9 +304,6 @@ edit_mbr(struct mbr_sector *mbr)
 
 		/* Ask if a boot selector is wanted. XXXX */
 	}
-
-	/* Compute minimum NetBSD partition sizes (in sectors). */
-	minfsdmb = (80 + 4*rammb) * (MEG / sectorsize);
 
 	return 1;
 }
