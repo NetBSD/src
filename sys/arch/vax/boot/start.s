@@ -1,4 +1,4 @@
-/*	$NetBSD: start.s,v 1.2 1995/04/25 14:14:32 ragge Exp $ */
+/*	$NetBSD: start.s,v 1.3 1995/06/16 15:08:08 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -226,6 +226,7 @@ ENTRY(hoppabort, 0)
         movl    4(ap),r6
         movl    8(ap),r11
         movl    0xc(ap),r10
+	movl	0x10(ap),r9
         calls   $0,(r6)
 	halt
 
