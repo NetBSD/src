@@ -1409,7 +1409,12 @@ search.  The only need to set it is when debugging a stripped executable.",
    The alpha does not have a "trace" mode (for H/W single step)
    so either the kernel simulates it, or else we simulate it.
    Some systems (i.e. NetBSD) choose not to do this work in the
-   kernel, so this section is used instead.  */
+   kernel, so this section is used instead.
+
+   This implementation of single_step() was developed by
+   Gordon W. Ross <gwr@netbsd.org> as a derivation of the
+   mips implementation by Ted Lemon <mellon@netbsd.org>
+   using hints from Chris G. Demetriou <cgd@netbsd.org>  */
 
 /* Non-zero if we just simulated a single-step ptrace call.  This is
    needed because we cannot remove the breakpoints in the inferior
