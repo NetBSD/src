@@ -71,7 +71,7 @@
 #define md_start_line_hook() arm_start_line_hook ()
 #define tc_frob_label(S) arm_frob_label (S) 
 
-#define obj_fix_adjustable(fixP) 0
+/*#define obj_fix_adjustable(fixP) */	/* get this from obj-aout.h */
 
 #define TC_FIX_TYPE PTR
 #define TC_INIT_FIX_DATA(FIXP) ((FIXP)->tc_fix_data = NULL)
