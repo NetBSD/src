@@ -1,4 +1,4 @@
-# 	$NetBSD: BILL-THE-CAT,v 1.6 1999/06/06 13:06:38 mrg Exp $
+# 	$NetBSD: BILL-THE-CAT,v 1.7 1999/07/28 09:48:36 drochner Exp $
 # 	From: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 
 include "arch/sparc/conf/std.sparc"
@@ -178,10 +178,11 @@ cpu0	at mainbus0
 
 #sbus0	at mainbus0				# sun4c
 obio0	at mainbus0				# sun4 and sun4m
-#vme0	at mainbus0				# sun4
+#sparcvme0	at mainbus0			# sun4
 iommu0	at mainbus0				# sun4m
 sbus0	at iommu0				# sun4m
-#vme0	at iommu0				# sun4m
+#sparcvme0	at iommu0			# sun4m
+#vme0	at sparcvme0			# mi VME attachment
 
 ## SBus expander box
 #xbox*	at sbus? slot ? offset ?
@@ -308,11 +309,11 @@ scsibus* at esp?
 ##	0x04		Allow disconnect/reselect
 ##
 ## E.g. the following would enable DMA, interrupts, and reselect:
-## si0	at vme0 addr 0x200000 level 3 vect 0x40 flags 0x07
+## si0	at vme0 addr 0x200000 irq 3 vect 0x40 flags 0x07
 ##
 ## By default, DMA is enabled in the driver.
 
-#si0	at vme0 addr 0x200000 pri 2 vec 0x40
+#si0	at vme0 addr 0x200000 irq 2 vect 0x40
 #scsibus* at si?
 
 ## NCR5380-based "SCSI Weird" on-board SCSI interface found
@@ -341,16 +342,16 @@ cd*	at scsibus? target ? lun ?		# SCSI CD-ROMs
 
 ## Xylogics 753 or 7053 VME SMD disk controllers and disks, found
 ## on sun4 systems.
-#xdc0	at vme0 addr 0xee80 pri 3 vec 0x44
-#xdc1	at vme0 addr 0xee90 pri 3 vec 0x45
-#xdc2	at vme0 addr 0xeea0 pri 3 vec 0x46
-#xdc3	at vme0 addr 0xeeb0 pri 3 vec 0x47
+#xdc0	at vme0 addr 0xee80 irq 3 vect 0x44
+#xdc1	at vme0 addr 0xee90 irq 3 vect 0x45
+#xdc2	at vme0 addr 0xeea0 irq 3 vect 0x46
+#xdc3	at vme0 addr 0xeeb0 irq 3 vect 0x47
 #xd*	at xdc? drive ?
 
 ## Xylogics 451 or 451 VME SMD disk controllers and disks, found
 ## on sun4 systems.
-#xyc0	at vme0 addr 0xee40 pri 3 vec 0x48
-#xyc1	at vme0 addr 0xee48 pri 3 vec 0x49
+#xyc0	at vme0 addr 0xee40 irq 3 vect 0x48
+#xyc1	at vme0 addr 0xee48 irq 3 vect 0x49
 #xy*	at xyc? drive ?
 
 
@@ -408,10 +409,10 @@ le0		at ledma0				# sun4m on-board
 ## or on a Multibus/VME card.
 #ie0	at obio0 addr 0xf6000000 level 6		# sun4/200 on-board
 #ie0	at obio0 addr 0x06000000 level 6		# sun4/100 on-board
-#ie1	at vme0 addr 0xe88000 pri 3 vec 0x75		# VME
-#ie2	at vme0 addr 0x31ff02 pri 3 vec 0x76		# VME
-#ie3	at vme0 addr 0x35ff02 pri 3 vec 0x77		# VME
-#ie4	at vme0 addr 0x2dff02 pri 3 vec 0x7c		# VME
+#ie1	at vme0 addr 0xe88000 irq 3 vect 0x75		# VME
+#ie2	at vme0 addr 0x31ff02 irq 3 vect 0x76		# VME
+#ie3	at vme0 addr 0x35ff02 irq 3 vect 0x77		# VME
+#ie4	at vme0 addr 0x2dff02 irq 3 vect 0x7c		# VME
 
 ## qec/be, qec/hme
 #qec*		at sbus? slot ? offset ?
@@ -491,7 +492,7 @@ audio*		at audioamd0
 #bwtwo0		at obio0 addr 0x0b300000 level 4	# sun4/100 in P4 slot
 
 ## Sun "cgtwo" VME color framebuffer
-#cgtwo0		at vme0 addr 0x400000 pri ? vec 0xa8
+#cgtwo0		at vme0 addr 0x400000 irq ? vect 0xa8
 
 ## Sun "cgthree" Sbus color framebuffer
 cgthree0	at sbus? slot ? offset ?
