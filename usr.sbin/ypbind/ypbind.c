@@ -31,7 +31,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypbind.c,v 1.12 1994/09/20 07:21:46 deraadt Exp $";
+static char rcsid[] = "$Id: ypbind.c,v 1.13 1994/09/28 01:39:54 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -60,9 +60,8 @@ static char rcsid[] = "$Id: ypbind.c,v 1.12 1994/09/20 07:21:46 deraadt Exp $";
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
 
-#ifndef BINDINGDIR
-#define BINDINGDIR "/var/yp/binding"
-#endif
+#define BINDINGDIR	"/var/yp/binding"
+#define YPBINDLOCK	"/var/run/ypbind.lock"
 
 struct _dom_binding {
 	struct _dom_binding *dom_pnext;
@@ -183,7 +182,7 @@ struct ypbind_setdom *argp;
 CLIENT *clnt;
 {
 	struct sockaddr_in *fromsin, bindsin;
-	char res;
+	static bool_t res;
 
 	bzero((char *)&res, sizeof(res));
 	fromsin = svc_getcaller(transp);
@@ -191,20 +190,20 @@ CLIENT *clnt;
 	switch(ypsetmode) {
 	case YPSET_LOCAL:
 		if( fromsin->sin_addr.s_addr != htonl(INADDR_LOOPBACK))
-			return (void *)NULL;
+			return (bool_t *)NULL;
 		break;
 	case YPSET_ALL:
 		break;
 	case YPSET_NO:
 	default:
-		return (void *)NULL;
+		return (bool_t *)NULL;
 	}
 
 	if(ntohs(fromsin->sin_port) >= IPPORT_RESERVED)
-		return (void *)&res;
+		return &res;
 
 	if(argp->ypsetdom_vers != YPVERS)
-		return (void *)&res;
+		return &res;
 
 	bzero((char *)&bindsin, sizeof bindsin);
 	bindsin.sin_family = AF_INET;
@@ -213,7 +212,7 @@ CLIENT *clnt;
 	rpc_received(argp->ypsetdom_domain, &bindsin, 1);
 
 	res = 1;
-	return (void *)&res;
+	return &res;
 }
 
 static void
@@ -284,7 +283,7 @@ char **argv;
 	char path[MAXPATHLEN];
 	struct timeval tv;
 	fd_set fdsr;
-	int width;
+	int width, lockfd;
 	int i;
 
 	yp_get_default_domain(&domainname);
@@ -302,7 +301,20 @@ char **argv;
 
 	/* blow away everything in BINDINGDIR */
 
-
+#ifdef O_SHLOCK
+	lockfd = open(YPBINDLOCK, O_CREAT|O_SHLOCK|O_RDWR|O_TRUNC, 0644);
+	if (lockfd == -1) {
+		fprintf(stderr, "ypbind: cannot create %s\n", YPBINDLOCK);
+		exit(1);
+	}
+#else
+	lockfd = open(YPBINDLOCK, O_CREAT|O_RDWR|O_TRUNC, 0644);
+	if (lockfd == -1) {
+		fprintf(stderr, "ypbind: cannot create %s\n", YPBINDLOCK);
+		exit(1);
+	}
+	flock(lockfd, LOCK_SH);
+#endif
 
 #ifdef DAEMON
 	switch(fork()) {
