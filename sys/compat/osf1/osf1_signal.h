@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_signal.h,v 1.4 1999/04/30 05:24:04 cgd Exp $	*/
+/*	$NetBSD: osf1_signal.h,v 1.5 1999/05/01 02:57:11 cgd Exp $	*/
 
 #ifndef _OSF1_SIGNAL_H
 #define _OSF1_SIGNAL_H
@@ -44,11 +44,5 @@
 #define OSF1_SIG_BLOCK		1
 #define OSF1_SIG_UNBLOCK	2
 #define OSF1_SIG_SETMASK	3
-
-extern int osf1_to_linux_sig[];
-void bsd_to_osf1_sigaltstack __P((const struct sigaltstack *, struct osf1_sigaltstack *));
-void bsd_to_osf1_sigset __P((const sigset_t *, osf1_sigset_t *));
-int osf1_to_bsd_sigaltstack __P((const struct osf1_sigaltstack *, struct sigaltstack *));
-void osf1_to_bsd_sigset __P((const osf1_sigset_t *, sigset_t *));
 
 #endif /* !_OSF1_SIGNAL_H */

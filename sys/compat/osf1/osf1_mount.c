@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.12 1999/04/26 05:32:18 cgd Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.13 1999/05/01 02:57:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -72,6 +72,7 @@
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_syscallargs.h>
 #include <compat/osf1/osf1_util.h>
+#include <compat/osf1/osf1_cvt.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
@@ -98,47 +99,10 @@
 #define	OSF1_UNMOUNT_FLAGS	(OSF1_MNT_FORCE|OSF1_MNT_NOFORCE)
 
 
-void bsd2osf_statfs __P((struct statfs *, struct osf1_statfs *));
 int osf1_mount_mfs __P((struct proc *, struct osf1_sys_mount_args *,
 			struct sys_mount_args *));
 int osf1_mount_nfs __P((struct proc *, struct osf1_sys_mount_args *,
 			struct sys_mount_args *));
-
-
-
-void
-bsd2osf_statfs(bsfs, osfs)
-	struct statfs *bsfs;
-	struct osf1_statfs *osfs;
-{
-
-	memset(osfs, 0, sizeof (struct osf1_statfs));
-	if (!strncmp(MOUNT_FFS, bsfs->f_fstypename, MFSNAMELEN))
-		osfs->f_type = OSF1_MOUNT_UFS;
-	else if (!strncmp(MOUNT_NFS, bsfs->f_fstypename, MFSNAMELEN))
-		osfs->f_type = OSF1_MOUNT_NFS;
-	else if (!strncmp(MOUNT_MFS, bsfs->f_fstypename, MFSNAMELEN))
-		osfs->f_type = OSF1_MOUNT_MFS;
-	else
-		/* uh oh...  XXX = PC, CDFS, PROCFS, etc. */
-		osfs->f_type = OSF1_MOUNT_ADDON;
-	osfs->f_flags = bsfs->f_flags;		/* XXX translate */
-	osfs->f_fsize = bsfs->f_bsize;
-	osfs->f_bsize = bsfs->f_iosize;
-	osfs->f_blocks = bsfs->f_blocks;
-	osfs->f_bfree = bsfs->f_bfree;
-	osfs->f_bavail = bsfs->f_bavail;
-	osfs->f_files = bsfs->f_files;
-	osfs->f_ffree = bsfs->f_ffree;
-	memcpy(&osfs->f_fsid, &bsfs->f_fsid,
-	    max(sizeof bsfs->f_fsid, sizeof osfs->f_fsid));
-	/* osfs->f_spare zeroed above */
-	memcpy(osfs->f_mntonname, bsfs->f_mntonname,
-	    max(sizeof bsfs->f_mntonname, sizeof osfs->f_mntonname));
-	memcpy(osfs->f_mntfromname, bsfs->f_mntfromname,
-	    max(sizeof bsfs->f_mntfromname, sizeof osfs->f_mntfromname));
-	/* XXX osfs->f_xxx should be filled in... */
-}
 
 int
 osf1_sys_statfs(p, v, retval)
@@ -162,7 +126,7 @@ osf1_sys_statfs(p, v, retval)
 	if ((error = VFS_STATFS(mp, sp, p)))
 		return (error);
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-	bsd2osf_statfs(sp, &osfs);
+	osf1_cvt_statfs_from_native(sp, &osfs);
 	return copyout(&osfs, SCARG(uap, buf), min(sizeof osfs,
 	    SCARG(uap, len)));
 }
@@ -187,7 +151,7 @@ osf1_sys_fstatfs(p, v, retval)
 	if ((error = VFS_STATFS(mp, sp, p)))
 		return (error);
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-	bsd2osf_statfs(sp, &osfs);
+	osf1_cvt_statfs_from_native(sp, &osfs);
 	return copyout(&osfs, SCARG(uap, buf), min(sizeof osfs,
 	    SCARG(uap, len)));
 }
@@ -225,7 +189,7 @@ osf1_sys_getfsstat(p, v, retval)
 			    (error = VFS_STATFS(mp, sp, p)))
 				continue;
 			sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-			bsd2osf_statfs(sp, &osfs);
+			osf1_cvt_statfs_from_native(sp, &osfs);
 			if ((error = copyout(&osfs, osf_sfsp,
 			    sizeof (struct osf1_statfs))))
 				return (error);
@@ -327,33 +291,6 @@ osf1_mount_mfs(p, osf_argp, bsd_argp)
 
 	return 0;
 }
-
-const struct emul_flags_xtab osf1_nfs_mount_flags_xtab[] = {
-    {	OSF1_NFSMNT_SOFT,	OSF1_NFSMNT_SOFT,	NFSMNT_SOFT,	},
-    {	OSF1_NFSMNT_WSIZE,	OSF1_NFSMNT_WSIZE,	NFSMNT_WSIZE,	},
-    {	OSF1_NFSMNT_RSIZE,	OSF1_NFSMNT_RSIZE,	NFSMNT_RSIZE,	},
-    {	OSF1_NFSMNT_TIMEO,	OSF1_NFSMNT_TIMEO,	NFSMNT_TIMEO,	},
-    {	OSF1_NFSMNT_RETRANS,	OSF1_NFSMNT_RETRANS,	NFSMNT_RETRANS,	},
-#if 0 /* no equivalent; needs special handling, see below */
-    {	OSF1_NFSMNT_HOSTNAME,	OSF1_NFSMNT_HOSTNAME,	???,		},
-#endif
-    {	OSF1_NFSMNT_INT,	OSF1_NFSMNT_INT,	NFSMNT_INT,	},
-    {	OSF1_NFSMNT_NOCONN,	OSF1_NFSMNT_NOCONN,	NFSMNT_NOCONN,	},
-#if 0 /* no equivalents */
-    {	OSF1_NFSMNT_NOAC,	OSF1_NFSMNT_NOAC,	???,		},
-    {	OSF1_NFSMNT_ACREGMIN,	OSF1_NFSMNT_ACREGMIN,	???,		},
-    {	OSF1_NFSMNT_ACREGMAX,	OSF1_NFSMNT_ACREGMAX,	???,		},
-    {	OSF1_NFSMNT_ACDIRMIN,	OSF1_NFSMNT_ACDIRMIN,	???,		},
-    {	OSF1_NFSMNT_ACDIRMAX,	OSF1_NFSMNT_ACDIRMAX,	???,		},
-    {	OSF1_NFSMNT_NOCTO,	OSF1_NFSMNT_NOCTO,	???,		},
-    {	OSF1_NFSMNT_POSIX,	OSF1_NFSMNT_POSIX,	???,		},
-    {	OSF1_NFSMNT_AUTO,	OSF1_NFSMNT_AUTO,	???,		},
-    {	OSF1_NFSMNT_SEC,	OSF1_NFSMNT_SEC,	???,		},
-    {	OSF1_NFSMNT_TCP,	OSF1_NFSMNT_TCP,	???,		},
-    {	OSF1_NFSMNT_PROPLIST,	OSF1_NFSMNT_PROPLIST,	???,		},
-#endif
-    {	0								}
-};
 
 int
 osf1_mount_nfs(p, osf_argp, bsd_argp)
