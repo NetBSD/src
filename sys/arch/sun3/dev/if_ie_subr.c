@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_subr.c,v 1.3 1994/12/15 21:08:10 gwr Exp $	*/
+/*	$NetBSD: if_ie_subr.c,v 1.4 1995/01/11 20:32:08 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -67,6 +67,7 @@ static void ie_vmereset __P((struct ie_softc *));
 static void ie_vmeattend __P((struct ie_softc *));
 static void ie_vmerun __P((struct ie_softc *));
 
+static void wcopy(), wzero();
 
 int
 ie_md_match(parent, vcf, args)
@@ -100,7 +101,6 @@ ie_md_match(parent, vcf, args)
 	if (ca->ca_intpri == -1)
 		ca->ca_intpri = 3;
 
-	/* The peek returns non-zero on bus error. */
 	x = bus_peek(ca->ca_bustype, ca->ca_paddr, sz);
 	return (x != -1);
 }
@@ -152,7 +152,6 @@ ie_md_attach(parent, self, args)
 
 		break;
 
-#if 0	/* not yet... */
 	case BUS_VME16: {
 		volatile struct ievme *iev;
 		u_long  rampaddr;
@@ -165,7 +164,8 @@ ie_md_attach(parent, self, args)
 		sc->memcopy = wcopy;
 		sc->memzero = wzero;
 		sc->sc_msize = 0x10000;	/* XXX */
-		sc->sc_reg = bus_mapin(ca->ca_paddr, sizeof(struct ievme), ca);
+		sc->sc_reg = bus_mapin(ca->ca_bustype, ca->ca_paddr,
+							   sizeof(struct ievme));
 
 		/* XXX - Move this gunk into a separate function? */
 
@@ -173,8 +173,8 @@ ie_md_attach(parent, self, args)
 		/* top 12 bits */
 		rampaddr = ca->ca_paddr & 0xfff00000;
 		/* 4 more */
-		rampaddr = rampaddr | ((iev->status & IEVME_HADDR) << 16);
-		sc->sc_maddr = bus_mapin((caddr_t)rampaddr, sc->sc_msize, aux);
+		rampaddr |= ((iev->status & IEVME_HADDR) << 16);
+		sc->sc_maddr = bus_mapin(ca->ca_bustype, rampaddr, sc->sc_msize);
 		sc->sc_iobase = sc->sc_maddr;
 		iev->pectrl = iev->pectrl | IEVME_PARACK; /* clear to start */
 
@@ -192,13 +192,11 @@ ie_md_attach(parent, self, args)
 		iev->pgmap[IEVME_MAPSZ - 1] = IEVME_SBORDR | IEVME_OBMEM | 0;
 		(sc->memzero)(sc->sc_maddr, sc->sc_msize);
 
-		isr_add_vectored(ieintr, (void *)sc,
+		isr_add_vectored(ie_intr, (void *)sc,
 						 ca->ca_intpri,
 						 ca->ca_intvec);
-	}
 		break;
-
-#endif	/* not yet... */
+	}
 
 	default:
 		printf("unknown\n");
@@ -285,4 +283,80 @@ ie_obrun(sc)
 	volatile struct ieob *ieo = (struct ieob *) sc->sc_reg;
 
 	ieo->obctrl |= (IEOB_ONAIR|IEOB_IENAB|IEOB_NORSET);
+}
+
+/*
+ * wcopy/wzero - like bcopy/bzero but largest access is 16-bits,
+ * and also does byte swaps...
+ * XXX - Would be nice to have asm versions in some library...
+ */
+
+static void
+wzero(vb, l)
+	void *vb;
+	u_int l;
+{
+	u_char *b = vb;
+	u_char *be = b + l;
+	u_short *sp;
+
+	if (l == 0)
+		return;
+
+	/* front, */
+	if ((u_long)b & 1)
+		*b++ = 0;
+
+	/* back, */
+	if (b != be && ((u_long)be & 1) != 0) {
+		be--;
+		*be = 0;
+	}
+
+	/* and middle. */
+	sp = (u_short *)b;
+	while (sp != (u_short *)be)
+		*sp++ = 0;
+}
+
+static void
+wcopy(vb1, vb2, l)
+	const void *vb1;
+	void *vb2;
+	u_int l;
+{
+	const u_char *b1e, *b1 = vb1;
+	u_char *b2 = vb2;
+	u_short *sp;
+	int bstore = 0;
+
+	if (l == 0)
+		return;
+
+	/* front, */
+	if ((u_long)b1 & 1) {
+		*b2++ = *b1++;
+		l--;
+	}
+
+	/* middle, */
+	sp = (u_short *)b1;
+	b1e = b1 + l;
+	if (l & 1)
+		b1e--;
+	bstore = (u_long)b2 & 1;
+
+	while (sp < (u_short *)b1e) {
+		if (bstore) {
+			b2[1] = *sp & 0xff;
+			b2[0] = *sp >> 8;
+		} else
+			*((short *)b2) = *sp;
+		sp++;
+		b2 += 2;
+	}
+
+	/* and back. */
+	if (l & 1)
+		*b2 = *b1e;
 }
