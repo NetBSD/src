@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.6 2000/03/09 07:04:08 garbled Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.7 2000/03/14 21:24:54 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@
 
 #include <sparc/dev/ts102reg.h>
 #include <sparc/dev/tctrlvar.h>
+#include <sparc/sparc/auxiotwo.h>
 
 cdev_decl(tctrl);
 
@@ -947,6 +948,7 @@ tctrlioctl(dev, cmd, data, flags, p)
         struct proc *p;
 {
 	struct tctrl_req req, *reqn;
+	struct tctrl_pwr *pwrreq;  
 	envsys_range_t *envrange;
 	envsys_temp_data_t *envdata;
 	envsys_temp_info_t *envinfo;
@@ -1154,6 +1156,20 @@ tctrlioctl(dev, cmd, data, flags, p)
 		} else
 			envinfo->validflags = 0;
                 break;
+
+	/* serial power mode (via auxiotwo) */
+	case TCTRL_SERIAL_PWR:
+		pwrreq = (struct tctrl_pwr *)data;  
+		if (pwrreq->rw)
+			pwrreq->state = auxiotwoserialgetapm();
+		else
+			auxiotwoserialsetapm(pwrreq->state);
+		break;
+
+	/* modem power mode (via auxio) */
+	case TCTRL_MODEM_PWR:
+		return(EOPNOTSUPP); /* for now */
+		break;
 
 
         default:
