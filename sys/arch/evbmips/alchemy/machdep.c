@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.5 2003/01/17 22:47:10 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.6 2003/04/01 17:35:45 hpeyerl Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2003/01/17 22:47:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2003/04/01 17:35:45 hpeyerl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -92,6 +92,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2003/01/17 22:47:10 thorpej Exp $");
 #endif
 int	aucomcnrate = CONSPEED;
 #endif /* NAUCOM > 0 */
+
+#include "ohci.h"
 
 /* The following are used externally (sysctl_hw). */
 extern char	cpu_model[];
@@ -285,6 +287,29 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	if ((allocsys(v, NULL) - v) != memsize)
 		panic("mach_init: table size inconsistency");
 
+#if NOHCI > 0
+	{
+#define	USBH_ALL   (0x1f<<10)  /* All relevant bits in USBH portion of SYS_CLKSRC */
+		/*
+		 * Assign a clock for the USB Host controller.
+		 */
+		volatile u_int32_t *scsreg;
+		u_int32_t	tmp;
+
+		scsreg = (volatile u_int32_t *)(MIPS_PHYS_TO_KSEG1(SYS_CLKSRC));
+#if 0
+		auxpll = (volatile u_int32_t *)(MIPS_PHYS_TO_KSEG1(SYS_AUXPLL));
+		*auxpll = 8;		/* 96Mhz */
+		tmp = *sfc0;
+		tmp |= SFC_FE0|SFC_FRDIV0;
+		*sfc0 = tmp;
+#endif
+		tmp = *scsreg;
+		tmp &= ~USBH_ALL;	/* clear all USBH bits in SYS_CLKSRC first */
+		tmp |= (SCS_DUH|SCS_CUH|SCS_MUH(SCS_MEx_AUX));	/* 48Mhz */
+		*scsreg = tmp;
+	}
+#endif   /* NOHCI */
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.
 	 */
