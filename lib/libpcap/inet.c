@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.7 2000/01/13 17:14:56 itojun Exp $	*/
+/*	$NetBSD: inet.c,v 1.8 2000/04/13 05:14:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996, 1997
@@ -39,7 +39,7 @@
 static const char rcsid[] =
     "@(#) Header: inet.c,v 1.21 97/07/17 14:24:58 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: inet.c,v 1.7 2000/01/13 17:14:56 itojun Exp $");
+__RCSID("$NetBSD: inet.c,v 1.8 2000/04/13 05:14:19 itojun Exp $");
 #endif
 #endif
 
@@ -67,6 +67,9 @@ struct rtentry;
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#ifdef HAVE_IFADDRS_H
+#include <ifaddrs.h>
+#endif
 
 #include "pcap-int.h"
 
@@ -79,7 +82,8 @@ struct rtentry;
 #ifdef IFF_LOOPBACK
 #define ISLOOPBACK(p) ((p)->ifr_flags & IFF_LOOPBACK)
 #else
-#define ISLOOPBACK(p) (strcmp((p)->ifr_name, "lo0") == 0)
+#define ISLOOPBACK(p) ((p)->ifr_name[0] == 'l' && (p)->ifr_name[1] == 'o' && \
+    (isdigit((p)->ifr_name[2]) || (p)->ifr_name[2] == '\0'))
 #endif
 
 /*
@@ -91,6 +95,53 @@ char *
 pcap_lookupdev(errbuf)
 	register char *errbuf;
 {
+#ifdef HAVE_IFADDRS_H
+	struct ifaddrs *ifap, *ifa, *mp;
+	int n, minunit;
+	char *cp;
+	static char device[IF_NAMESIZE + 1];
+
+	if (getifaddrs(&ifap) != 0) {
+		(void)snprintf(errbuf, PCAP_ERRBUF_SIZE,
+		    "getifaddrs: %s", pcap_strerror(errno));
+		return NULL;
+	}
+
+	mp = NULL;
+	minunit = 666;
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if ((ifa->ifa_flags & IFF_UP) == 0)
+			continue;
+#ifdef IFF_LOOPBACK
+		if ((ifa->ifa_flags & IFF_LOOPBACK) != 0)
+			continue;
+#else
+		if (strncmp(ifa->ifa_name, "lo", 2) == 0 &&
+		    (ifa->ifa_name[2] == '\0' || isdigit(ifa->ifa_name[2]))) {
+			continue;
+		}
+#endif
+
+		for (cp = ifa->ifa_name; !isdigit(*cp); ++cp)
+			continue;
+		n = atoi(cp);
+		if (n < minunit) {
+			minunit = n;
+			mp = ifa;
+		}
+	}
+	if (mp == NULL) {
+		(void)strncpy(errbuf, "no suitable device found",
+		    PCAP_ERRBUF_SIZE);
+		freeifaddrs(ifap);
+		return (NULL);
+	}
+
+	(void)strncpy(device, mp->ifa_name, sizeof(device) - 1);
+	device[sizeof(device) - 1] = '\0';
+	freeifaddrs(ifap);
+	return (device);
+#else
 	register int fd, minunit, n;
 	register char *cp;
 	register struct ifreq *ifrp, *ifend, *ifnext, *mp;
@@ -172,6 +223,7 @@ pcap_lookupdev(errbuf)
 	(void)strncpy(device, mp->ifr_name, sizeof(device) - 1);
 	device[sizeof(device) - 1] = '\0';
 	return (device);
+#endif
 }
 
 int
