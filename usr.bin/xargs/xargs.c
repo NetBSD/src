@@ -1,4 +1,4 @@
-/*	$NetBSD: xargs.c,v 1.8 1997/06/24 00:45:29 lukem Exp $	*/
+/*	$NetBSD: xargs.c,v 1.9 1997/10/20 03:30:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)xargs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: xargs.c,v 1.8 1997/06/24 00:45:29 lukem Exp $";
+__RCSID("$NetBSD: xargs.c,v 1.9 1997/10/20 03:30:16 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -63,16 +63,17 @@ static char rcsid[] = "$NetBSD: xargs.c,v 1.8 1997/06/24 00:45:29 lukem Exp $";
 
 int tflag, zflag, rval;
 
-void run __P((char **));
-void usage __P((void));
+void	run __P((char **));
+int	main __P((int, char **));
+void	usage __P((void));
 
 int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	register int ch;
-	register char *p, *bbp, *ebp, **bxp, **exp, **xp;
+	int ch;
+	char *p, *bbp, *ebp, **bxp, **exp, **xp;
 	int cnt, indouble, insingle, nargs, nflag, nline, xflag;
 	char **av, *argp;
 
@@ -130,7 +131,7 @@ main(argc, argv)
 	 */
 	if (!(av = bxp =
 	    malloc((u_int)(1 + argc + nargs + 1) * sizeof(char **))))
-		err(1, NULL);
+		err(1, "malloc");
 
 	/*
 	 * Use the user's name for the utility as argv[0], just like the
@@ -166,7 +167,7 @@ main(argc, argv)
 		errx(1, "insufficient space for command");
 
 	if (!(bbp = malloc((u_int)nline + 1)))
-		err(1, NULL);
+		err(1, "malloc");
 	ebp = (argp = p = bbp) + nline - 1;
 
 	for (insingle = indouble = 0;;)
@@ -259,7 +260,7 @@ addch:			if (p < ebp) {
 			run(av);
 			xp = bxp;
 			cnt = ebp - argp;
-			bcopy(argp, bbp, cnt);
+			memmove(bbp, argp, cnt);
 			p = (argp = bbp) + cnt;
 			*p++ = ch;
 			break;
@@ -272,7 +273,7 @@ run(argv)
 	char **argv;
 {
 	volatile int noinvoke;
-	register char **p;
+	char **p;
 	pid_t pid;
 	int status;
 
