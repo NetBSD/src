@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.3 1995/04/08 20:46:23 briggs Exp $	*/
+/*	$NetBSD: macrom.c,v 1.4 1995/06/21 03:46:52 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -445,7 +445,7 @@ void mrg_setvectors(
 		/* IIsi crap */
 	*((unsigned long *)(mrg_adbstore + 0x180)) = 0x4081517c;
 	*((unsigned long *)(mrg_adbstore + 0x194)) = 0x408151ea;
-	jEgret = 0x40814800;
+	jEgret = (void (*))0x40814800;
 
 	mrg_OStraps[0x77] = rom->CountADBs;
 	mrg_OStraps[0x78] = rom->GetIndADB;
@@ -538,7 +538,7 @@ void mrg_init()
   	if(TimeDBRA == 0)
 		TimeDBRA = 0xa3b;		/* BARF default is Mac II */
   	if(ROMBase == 0)
-		ROMBase = (caddr_t)0x40800000;	/* BARF default is Mac II */
+		panic("ROMBase not set in mrg_init()!\n");
 
 	strcpy(&FinderName[1], findername);
 	FinderName[0] = (u_char) strlen(findername);
@@ -627,4 +627,31 @@ void mrg_initadbintr()
 	via_reg(VIA1, vIFR) = 0x4; /* XXX - why are we setting the flag?  */
 
 	via_reg(VIA1, vIER) = 0x84; /* enable ADB interrupt. */
+}
+
+void
+mrg_fixupROMBase(obase, nbase)
+	caddr_t	obase;
+	caddr_t	nbase;
+{
+	int	i;
+	u_long	temp, *p, oldbase, newbase;
+
+	oldbase = (u_long) obase;
+	newbase = (u_long) nbase;
+	for (i=0 ; i<256 ; i++)
+		if (   mrg_OStraps[i] > obase
+		    && mrg_OStraps[i] < obase + ROMLEN) {
+			temp = (u_int) mrg_OStraps[i];
+			temp = (temp - oldbase) + newbase;
+			mrg_OStraps[i] = (caddr_t) temp;
+		}
+	p = (u_long *) mrg_adbstore;
+	for (i=0 ; i<512/4 ; i++)
+		if (   p[i] > oldbase
+		    && p[i] < oldbase + ROMLEN) {
+			p[i] = (p[i] - oldbase) + newbase;
+		}
+	jEgret = (void (*)) ((((u_int) jEgret) - oldbase) + newbase);
+	mrg_romadbintr = mrg_romadbintr - oldbase + newbase;
 }
