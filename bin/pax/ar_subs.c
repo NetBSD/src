@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.16 2002/01/31 19:27:53 tv Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.17 2002/10/12 15:39:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.16 2002/01/31 19:27:53 tv Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.17 2002/10/12 15:39:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -131,7 +131,7 @@ list(void)
 			if ((res = mod_name(arcn)) < 0)
 				break;
 			if (res == 0)
-				ls_list(arcn, now);
+				ls_list(arcn, now, stdout);
 		}
 
 		/*
@@ -166,6 +166,7 @@ extract(void)
 	off_t cnt;
 	struct stat sb;
 	int fd;
+	time_t now;
 
 	arcn = &archd;
 	/*
@@ -176,6 +177,8 @@ extract(void)
 	if ((get_arc() < 0) || ((*frmt->options)() < 0) ||
 	    ((*frmt->st_rd)() < 0) || (dir_start() < 0))
 		return;
+
+	now = time((time_t *)NULL);
 
 	/*
 	 * When we are doing interactive rename, we store the mapping of names
@@ -281,10 +284,21 @@ extract(void)
 		}
 
 		if (vflag) {
-			(void)fputs(arcn->name, stderr);
-			vfpart = 1;
+			if (vflag > 1)
+				ls_list(arcn, now, listf);
+			else {
+				(void)safe_print(arcn->name, listf);
+				vfpart = 1;
+			}
 		}
 
+		/*
+		 * if required, chdir around.
+		 */
+		if ((arcn->pat != NULL) && (arcn->pat->chdname != NULL))
+			if (chdir(arcn->pat->chdname) != 0)
+				syswarn(1, errno, "Cannot chdir to %s",
+				    arcn->pat->chdname);
 		/*
 		 * all ok, extract this member based on type
 		 */
@@ -305,7 +319,7 @@ extract(void)
 				purg_lnk(arcn);
 
 			if (vflag && vfpart) {
-				(void)putc('\n', stderr);
+				(void)putc('\n', listf);
 				vfpart = 0;
 			}
 			continue;
@@ -329,11 +343,19 @@ extract(void)
 		if (!gnu_longlink_hack)
 			file_close(arcn, fd);
 		if (vflag && vfpart) {
-			(void)putc('\n', stderr);
+			(void)putc('\n', listf);
 			vfpart = 0;
 		}
 		if (!res)
 			(void)rd_skip(cnt + arcn->pad);
+
+		/*
+		 * if required, chdir around.
+		 */
+		if ((arcn->pat != NULL) && (arcn->pat->chdname != NULL))
+			if (fchdir(cwdfd) != 0)
+				syswarn(1, errno,
+				    "Can't fchdir to starting directory");
 	}
 
 	/*
@@ -363,6 +385,7 @@ wr_archive(ARCHD *arcn, int is_app)
 	off_t cnt;
 	int (*wrf)(ARCHD *);
 	int fd = -1;
+	time_t now;
 
 	/*
 	 * if this format supports hard link storage, start up the database
@@ -377,6 +400,8 @@ wr_archive(ARCHD *arcn, int is_app)
 	if ((ftree_start() < 0) || ((*frmt->st_wr)() < 0))
 		return;
 	wrf = frmt->wr;
+
+	now = time((time_t *)NULL);
 
 	/*
 	 * When we are doing interactive rename, we store the mapping of names
@@ -462,8 +487,12 @@ wr_archive(ARCHD *arcn, int is_app)
 		}
 
 		if (vflag) {
-			(void)fputs(arcn->name, stderr);
-			vfpart = 1;
+			if (vflag > 1)
+				ls_list(arcn, now, listf);
+			else {
+				(void)safe_print(arcn->name, listf);
+				vfpart = 1;
+			}
 		}
 		++flcnt;
 
@@ -482,7 +511,7 @@ wr_archive(ARCHD *arcn, int is_app)
 			 * so we are done messing with this file
 			 */
 			if (vflag && vfpart) {
-				(void)putc('\n', stderr);
+				(void)putc('\n', listf);
 				vfpart = 0;
 			}
 			rdfile_close(arcn, &fd);
@@ -500,7 +529,7 @@ wr_archive(ARCHD *arcn, int is_app)
 		res = (*frmt->wr_data)(arcn, fd, &cnt);
 		rdfile_close(arcn, &fd);
 		if (vflag && vfpart) {
-			(void)putc('\n', stderr);
+			(void)putc('\n', listf);
 			vfpart = 0;
 		}
 		if (res < 0)
@@ -611,7 +640,7 @@ append(void)
 	 * reading the archive may take a long time. If verbose tell the user
 	 */
 	if (vflag) {
-		(void)fprintf(stderr,
+		(void)fprintf(listf,
 			"%s: Reading archive to position at the end...", argv0);
 		vfpart = 1;
 	}
@@ -673,7 +702,7 @@ append(void)
 	 * tell the user we are done reading.
 	 */
 	if (vflag && vfpart) {
-		(void)fputs("done.\n", stderr);
+		(void)safe_print("done.\n", listf);
 		vfpart = 0;
 	}
 
@@ -731,7 +760,12 @@ copy(void)
 	 * set up the destination dir path and make sure it is a directory. We
 	 * make sure we have a trailing / on the destination
 	 */
-	dlen = l_strncpy(dirbuf, dirptr, PAXPATHLEN);
+	dlen = strlcpy(dirbuf, dirptr, sizeof(dirbuf));
+	if (dlen >= sizeof(dirbuf) ||
+	    (dlen == sizeof(dirbuf) - 1 && dirbuf[dlen - 1] != '/')) {
+		tty_warn(1, "directory name is too long %s", dirptr);
+		return;
+	}
 	dest_pt = dirbuf + dlen;
 	if (*(dest_pt-1) != '/') {
 		*dest_pt++ = '/';
@@ -795,17 +829,12 @@ copy(void)
 			/*
 			 * create the destination name
 			 */
-			if (*(arcn->name) == '/')
-				res = 1;
-			else
-				res = 0;
-			if ((arcn->nlen - res) > drem) {
+			if (strlcpy(dest_pt, arcn->name + (*arcn->name == '/'),
+			    drem + 1) > drem) {
 				tty_warn(1, "Destination pathname too long %s",
 					arcn->name);
 				continue;
 			}
-			(void)strncpy(dest_pt, arcn->name + res, drem);
-			dirbuf[PAXPATHLEN] = '\0';
 
 			/*
 			 * if existing file is same age or newer skip
@@ -859,7 +888,7 @@ copy(void)
 		}
 
 		if (vflag) {
-			(void)fputs(arcn->name, stderr);
+			(void)safe_print(arcn->name, listf);
 			vfpart = 1;
 		}
 		++flcnt;
@@ -874,7 +903,7 @@ copy(void)
 			res = chk_same(arcn);
 		if (res <= 0) {
 			if (vflag && vfpart) {
-				(void)putc('\n', stderr);
+				(void)putc('\n', listf);
 				vfpart = 0;
 			}
 			continue;
@@ -894,7 +923,7 @@ copy(void)
 			if (res < 0)
 				purg_lnk(arcn);
 			if (vflag && vfpart) {
-				(void)putc('\n', stderr);
+				(void)putc('\n', listf);
 				vfpart = 0;
 			}
 			continue;
@@ -924,7 +953,7 @@ copy(void)
 		rdfile_close(arcn, &fdsrc);
 
 		if (vflag && vfpart) {
-			(void)putc('\n', stderr);
+			(void)putc('\n', listf);
 			vfpart = 0;
 		}
 	}
@@ -969,6 +998,7 @@ next_head(ARCHD *arcn)
 	int hsz;
 	int in_resync = 0;		/* set when we are in resync mode */
 	int cnt = 0;			/* counter for trailer function */
+	int first = 1;			/* on 1st read, EOF isn't premature. */
 
 	/*
 	 * set up initial conditions, we want a whole frmt->hsz block as we
@@ -985,6 +1015,17 @@ next_head(ARCHD *arcn)
 		for (;;) {
 			if ((ret = rd_wrbuf(hdend, res)) == res)
 				break;
+
+			/*
+			 * If we read 0 bytes (EOF) from an archive when we
+			 * expect to find a header, we have stepped upon
+			 * an archive without the customary block of zeroes
+			 * end marker.  It's just stupid to error out on
+			 * them, so exit gracefully.
+			 */
+			if (first && ret == 0)
+				return(-1);
+			first = 0;
 
 			/*
 			 * some kind of archive read problem, try to resync the

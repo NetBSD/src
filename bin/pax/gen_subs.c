@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_subs.c,v 1.24 2002/08/01 18:41:34 wiz Exp $	*/
+/*	$NetBSD: gen_subs.c,v 1.25 2002/10/12 15:39:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: gen_subs.c,v 1.24 2002/08/01 18:41:34 wiz Exp $");
+__RCSID("$NetBSD: gen_subs.c,v 1.25 2002/10/12 15:39:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: gen_subs.c,v 1.24 2002/08/01 18:41:34 wiz Exp $");
 #include <ctype.h>
 #include <grp.h>
 #include <pwd.h>
+#include <vis.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -87,7 +88,7 @@ __RCSID("$NetBSD: gen_subs.c,v 1.24 2002/08/01 18:41:34 wiz Exp $");
  */
 
 void
-ls_list(ARCHD *arcn, time_t now)
+ls_list(ARCHD *arcn, time_t now, FILE *fp)
 {
 	struct stat *sbp;
 	char f_mode[MODELEN];
@@ -98,8 +99,8 @@ ls_list(ARCHD *arcn, time_t now)
 	 * if not verbose, just print the file name
 	 */
 	if (!vflag) {
-		(void)printf("%s\n", arcn->name);
-		(void)fflush(stdout);
+		(void)fprintf(fp, "%s\n", arcn->name);
+		(void)fflush(fp);
 		return;
 	}
 
@@ -124,31 +125,31 @@ ls_list(ARCHD *arcn, time_t now)
 		f_date[0] = '\0';
 	user = user_from_uid(sbp->st_uid, 0);
 	group = group_from_gid(sbp->st_gid, 0);
-	(void)printf("%s%2lu %-*s %-*s ", f_mode, (unsigned long)sbp->st_nlink,
+	(void)fprintf(fp, "%s%2lu %-*s %-*s ", f_mode,
+	    (unsigned long)sbp->st_nlink,
 	    UT_NAMESIZE, user ? user : "", UT_GRPSIZE, group ? group : "");
 
 	/*
 	 * print device id's for devices, or sizes for other nodes
 	 */
 	if ((arcn->type == PAX_CHR) || (arcn->type == PAX_BLK))
-		(void)printf("%4lu,%4lu ", (long) MAJOR(sbp->st_rdev),
+		(void)fprintf(fp, "%4lu,%4lu ", (long) MAJOR(sbp->st_rdev),
 		    (long) MINOR(sbp->st_rdev));
 	else {
-		(void)printf(OFFT_FP("9") " ", (OFFT_T)sbp->st_size);
+		(void)fprintf(fp, OFFT_FP("9") " ", (OFFT_T)sbp->st_size);
 	}
 
 	/*
 	 * print name and link info for hard and soft links
 	 */
-	(void)printf("%s %s", f_date, arcn->name);
+	(void)fprintf(fp, "%s %s", f_date, arcn->name);
 	if ((arcn->type == PAX_HLK) || (arcn->type == PAX_HRG))
-		(void)printf(" == %s\n", arcn->ln_name);
+		(void)fprintf(fp, " == %s\n", arcn->ln_name);
 	else if (arcn->type == PAX_SLK)
-		(void)printf(" => %s\n", arcn->ln_name);
+		(void)fprintf(fp, " => %s\n", arcn->ln_name);
 	else
-		(void)putchar('\n');
-	(void)fflush(stdout);
-	return;
+		(void)fputc('\n', fp);
+	(void)fflush(fp);
 }
 
 /*
@@ -179,48 +180,23 @@ ls_tty(ARCHD *arcn)
 	return;
 }
 
-/*
- * zf_strncpy()
- *	copy src to dest up to len chars (stopping at first '\0'), when src is
- *	shorter than len, pads to len with '\0'. big performance win (and
- *	a lot easier to code) over strncpy(), then a strlen() then a
- *	memset(). (or doing the memset() first).
- */
-
 void
-zf_strncpy(char *dest, const char *src, int len)
+safe_print(const char *str, FILE *fp)
 {
-	char *stop;
+	char visbuf[5];
+	const char *cp;
 
-	stop = dest + len;
-	while ((dest < stop) && (*src != '\0'))
-		*dest++ = *src++;
-	while (dest < stop)
-		*dest++ = '\0';
-	return;
-}
-
-/*
- * l_strncpy()
- *	copy src to dest up to len chars (stopping at first '\0')
- * Return:
- *	number of chars copied. (Note this is a real performance win over
- *	doing a strncpy() then a strlen()
- */
-
-int
-l_strncpy(char *dest, const char *src, int len)
-{
-	char *stop;
-	char *start;
-
-	stop = dest + len;
-	start = dest;
-	while ((dest < stop) && (*src != '\0'))
-		*dest++ = *src++;
-	if (dest < stop)
-		*dest = '\0';
-	return(dest - start);
+	/*
+	 * if printing to a tty, use vis(3) to print special characters.
+	 */
+	if (isatty(fileno(fp))) {
+		for (cp = str; *cp; cp++) {
+			(void)vis(visbuf, cp[0], VIS_CSTYLE, cp[1]);
+			(void)fputs(visbuf, fp);
+		}
+	} else {
+		(void)fputs(str, fp);
+	}
 }
 
 /*

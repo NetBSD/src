@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.39 2002/02/02 12:34:39 lukem Exp $	*/
+/*	$NetBSD: options.c,v 1.40 2002/10/12 15:39:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.39 2002/02/02 12:34:39 lukem Exp $");
+__RCSID("$NetBSD: options.c,v 1.40 2002/10/12 15:39:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,12 +52,14 @@ __RCSID("$NetBSD: options.c,v 1.39 2002/02/02 12:34:39 lukem Exp $");
 #include <sys/mtio.h>
 #include <sys/param.h>
 #include <ctype.h>
+#include <errno.h>
 #include <getopt.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <paths.h>
 #include "pax.h"
 #include "options.h"
 #include "cpio.h"
@@ -71,18 +73,16 @@ __RCSID("$NetBSD: options.c,v 1.39 2002/02/02 12:34:39 lukem Exp $");
  * Routines which handle command line options
  */
 
-int cpio_mode;			/* set if we are in cpio mode */
-
 static int nopids;		/* tar mode: suppress "pids" for -p option */
 static char *flgch = FLGCH;	/* list of all possible flags (pax) */
 static OPLIST *ophead = NULL;	/* head for format specific options -x */
 static OPLIST *optail = NULL;	/* option tail */
-static char *firstminusC;	/* first -C argument encountered. */
 
 static int no_op(void);
 static void printflg(unsigned int);
 static int c_frmt(const void *, const void *);
 static off_t str_offt(char *);
+static char *getline(FILE *fp);
 static void pax_options(int, char **);
 static void pax_usage(void);
 static void tar_options(int, char **);
@@ -90,7 +90,10 @@ static void tar_usage(void);
 static void cpio_options(int, char **);
 static void cpio_usage(void);
 
-static void checkpositionalminusC(char ***, int (*)(char *, int));
+/* errors from getline */
+#define GETLINE_FILE_CORRUPT 1
+#define GETLINE_OUT_OF_MEM 2
+static int getline_error;
 
 #define GZIP_CMD	"gzip"		/* command to run as gzip */
 #define COMPRESS_CMD	"compress"	/* command to run as compress */
@@ -169,12 +172,12 @@ options(int argc, char **argv)
 		argv0 = argv[0];
 
 	if (strcmp(NM_TAR, argv0) == 0)
-		tar_options(argc, argv);
+		return(tar_options(argc, argv));
 	else if (strcmp(NM_CPIO, argv0) == 0)
-		cpio_options(argc, argv);
+		return(cpio_options(argc, argv));
 	else {
 		argv0 = NM_PAX;
-		pax_options(argc, argv);
+		return(pax_options(argc, argv));
 	}
 }
 
@@ -324,8 +327,8 @@ pax_options(int argc, char **argv)
 					pmode = 1;
 					break;
 				default:
-					tty_warn(1,
-					    "Invalid -p string: %c", *pt);
+					tty_warn(1, "Invalid -p string: %c",
+					    *pt);
 					pax_usage();
 					break;
 				}
@@ -397,7 +400,6 @@ pax_options(int argc, char **argv)
 			/*
 			 * use gzip.  Non standard option.
 			 */
-			zflag = 1;
 			gzip_program = GZIP_CMD;
 			break;
 		case 'A':
@@ -567,6 +569,7 @@ pax_options(int argc, char **argv)
 	 */
 	if (ISLIST(flg)) {
 		act = LIST;
+		listf = stdout;
 		bflg = flg & BDLIST;
 	} else if (ISEXTRACT(flg)) {
 		act = EXTRACT;
@@ -602,7 +605,7 @@ pax_options(int argc, char **argv)
 	case LIST:
 	case EXTRACT:
 		for (; optind < argc; optind++)
-			if (pat_add(argv[optind], 0) < 0)
+			if (pat_add(argv[optind], NULL) < 0)
 				pax_usage();
 		break;
 	case COPY:
@@ -610,8 +613,9 @@ pax_options(int argc, char **argv)
 			tty_warn(0, "Destination directory was not supplied");
 			pax_usage();
 		}
-		--argc;
-		dirptr = argv[argc];
+		dirptr = argv[optind++];
+		if (mkpath(dirptr) < 0)
+			cpio_usage();
 		/* FALLTHROUGH */
 	case ARCHIVE:
 	case APPND:
@@ -647,6 +651,7 @@ pax_options(int argc, char **argv)
 #define	OPT_EXCLUDE			11
 #define	OPT_BLOCK_COMPRESS		12
 #define	OPT_NORECURSE			13
+#define	OPT_FORCE_LOCAL			14
 
 struct option tar_longopts[] = {
 	{ "block-size",		required_argument,	0,	'b' },
@@ -675,6 +680,7 @@ struct option tar_longopts[] = {
 	{ "directory",		required_argument,	0,	'C' },
 	{ "tape-length",	required_argument,	0,	'L' },
 	{ "absolute-paths",	no_argument,		0,	'P' },
+	{ "files-from",		required_argument,	0,	'T' },
 	{ "exclude-from",	required_argument,	0,	'X' },
 	{ "compress",		no_argument,		0,	'Z' },
 	{ "uncompress",		no_argument,		0,	'Z' },
@@ -684,6 +690,8 @@ struct option tar_longopts[] = {
 						OPT_UNLINK },
 	{ "use-compress-program", required_argument,	0,
 						OPT_USE_COMPRESS_PROGRAM },
+	{ "force-local",	no_argument,		0,
+						OPT_FORCE_LOCAL },
 #if 0 /* Not implemented */
 	{ "catenate",		no_argument,		0,	'A' },	/* F */
 	{ "concatenate",	no_argument,		0,	'A' },	/* F */
@@ -714,7 +722,6 @@ struct option tar_longopts[] = {
 	{ "same-order",		no_argument,		0,	's' },
 	{ "preserve-order",	no_argument,		0,	's' },
 	{ "sparse",		no_argument,		0,	'S' },
-	{ "files-from",		no_argument,		0,	'T' },
 	{ "null",		no_argument,		0,
 						OPT_NULL },
 	{ "totals",		no_argument,		0,
@@ -739,35 +746,43 @@ tar_options(int argc, char **argv)
 {
 	int c;
 	int fstdin = 0;
+	int Oflag = 0;
+	int nincfiles = 0;
+	int incfiles_max = 0;
+	struct incfile {
+		char *file;
+		char *dir;
+	};
+	struct incfile *incfiles = NULL;
+
+	/*
+	 * Set default values.
+	 */
+	rmleadslash = 1;
 
 	/*
 	 * process option flags
 	 */
-	while ((c = getoldopt(argc, argv, "b:cef:hlmoprutvwxzBC:LPX:Z014578",
+	while ((c = getoldopt(argc, argv,
+	    "b:cef:hlmopqrstuvwxzBC:HI:LOPTX:Z014578",
 	    tar_longopts, NULL))
 	    != -1)  {
 		switch(c) {
 		case 'b':
 			/*
-			 * specify blocksize
+			 * specify blocksize in 512-byte blocks
 			 */
 			if ((wrblksz = (int)str_offt(optarg)) <= 0) {
 				tty_warn(1, "Invalid block size %s", optarg);
 				tar_usage();
 			}
+			wrblksz *= 512;		/* XXX - check for int oflow */
 			break;
 		case 'c':
 			/*
 			 * create an archive
 			 */
 			act = ARCHIVE;
-			break;
-		case 'C':
-			/*
-			 * chdir here before extracting.
-			 * do so lazily, in case it's a list
-			 */
-			firstminusC = optarg;
 			break;
 		case 'e':
 			/*
@@ -784,7 +799,7 @@ tar_options(int argc, char **argv)
 				 * treat a - as stdin
 				 */
 				fstdin = 1;
-				arcname = (char *)0;
+				arcname = NULL;
 				break;
 			}
 			fstdin = 0;
@@ -826,6 +841,9 @@ tar_options(int argc, char **argv)
 				nopids = 1;
 			}
 			break;
+		case 'O':
+			Oflag = 1;
+			break;
 		case 'p':
 			/*
 			 * preserve user id, group id, file
@@ -837,12 +855,27 @@ tar_options(int argc, char **argv)
 			patime = 1;
 			pmtime = 1;
 			break;
+		case 'q':
+			/*
+			 * select first match for a pattern only
+			 */
+			nflag = 1;
+			break;
 		case 'r':
 		case 'u':
 			/*
 			 * append to the archive
 			 */
 			act = APPND;
+			break;
+		case 's':
+			/*
+			 * file name substitution name pattern
+			 */
+			if (rep_add(optarg) < 0) {
+				tar_usage();
+				break;
+			}
 			break;
 		case 't':
 			/*
@@ -864,9 +897,11 @@ tar_options(int argc, char **argv)
 			break;
 		case 'x':
 			/*
-			 * write an archive
+			 * extract an archive, preserving mode,
+			 * and mtime if possible.
 			 */
 			act = EXTRACT;
+			pmtime = 1;
 			break;
 		case 'z':
 			/*
@@ -880,6 +915,30 @@ tar_options(int argc, char **argv)
 			 * Nothing to do here, this is pax default
 			 */
 			break;
+		case 'C':
+			chdname = optarg;
+			break;
+		case 'H':
+			/*
+			 * follow command line symlinks only
+			 */
+			Hflag = 1;
+			break;
+		case 'I':
+		case 'T':
+			if (++nincfiles > incfiles_max) {
+				incfiles_max = nincfiles + 3;
+				incfiles = realloc(incfiles,
+				    sizeof(*incfiles) * incfiles_max);
+				if (incfiles == NULL) {
+					tty_warn(0, "Unable to allocate space "
+					    "for option list");
+					exit(1);
+				}
+			}
+			incfiles[nincfiles - 1].file = optarg;
+			incfiles[nincfiles - 1].dir = chdname;
+			break;
 		case 'L':
 			/*
 			 * follow symlinks
@@ -887,6 +946,10 @@ tar_options(int argc, char **argv)
 			Lflag = 1;
 			break;
 		case 'P':
+			/*
+			 * do not remove leading '/' from pathnames
+			 */
+			rmleadslash = 0;
 			Aflag = 1;
 			break;
 		case 'X':
@@ -931,6 +994,9 @@ tar_options(int argc, char **argv)
 			zflag = 1;
 			gzip_program = optarg;
 			break;
+		case OPT_FORCE_LOCAL:
+			forcelocal = 1;
+			break;
 		default:
 			tar_usage();
 			break;
@@ -939,31 +1005,159 @@ tar_options(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (firstminusC && (opt_chdir(firstminusC) < 0))
-		tty_warn(1, "can't remember -C directory");
+	/* Traditional tar behaviour (pax uses stderr unless in list mode) */
+	if (fstdin == 1 && act == ARCHIVE)
+		listf = stderr;
+	else
+		listf = stdout;
 
+	/* Traditional tar behaviour (pax wants to read file list from stdin) */
+	if ((act == ARCHIVE || act == APPND) && argc == 0 && nincfiles == 0)
+		exit(0);
 	/*
 	 * if we are writing (ARCHIVE) specify tar, otherwise run like pax
+	 * (unless -o specified)
 	 */
-	if (act == ARCHIVE && frmt == NULL)
-		frmt = &(fsub[F_USTAR]);
+	if (act == ARCHIVE || act == APPND)
+		frmt = &(fsub[Oflag ? F_TAR : F_USTAR]);
+	else if (Oflag) {
+		tty_warn(1, "The -O/-o options are only valid when writing an archive");
+		tar_usage();		/* only valid when writing */
+	}
 
 	/*
 	 * process the args as they are interpreted by the operation mode
 	 */
 	switch (act) {
 	case LIST:
-	default:
-		while (*argv != (char *)NULL)
-			if (pat_add(*argv++, 0) < 0)
-				tar_usage();
-		break;
 	case EXTRACT:
-		checkpositionalminusC(&argv, pat_add);
+	default:
+		{
+			int sawpat = 0;
+			char *file, *dir;
+
+			while (nincfiles || *argv != NULL) {
+				/*
+				 * If we queued up any include files,
+				 * pull them in now.  Otherwise, check
+				 * for -I and -C positional flags.
+				 * Anything else must be a file to
+				 * extract.
+				 */
+				if (nincfiles) {
+					file = incfiles->file;
+					dir = incfiles->dir;
+					incfiles++;
+					nincfiles--;
+				} else if (strcmp(*argv, "-I") == 0) {
+					if (*++argv == NULL)
+						break;
+					file = *argv++;
+					dir = chdname;
+				} else
+					file = NULL;
+				if (file != NULL) {
+					FILE *fp;
+					char *str;
+
+					if (strcmp(file, "-") == 0)
+						fp = stdin;
+					else if ((fp = fopen(file, "r")) == NULL) {
+						tty_warn(1, "Unable to open file '%s' for read", file);
+						tar_usage();
+					}
+					while ((str = getline(fp)) != NULL) {
+						if (pat_add(str, dir) < 0)
+							tar_usage();
+						sawpat = 1;
+					}
+					if (strcmp(file, "-") != 0)
+						fclose(fp);
+					if (getline_error) {
+						tty_warn(1, "Problem with file '%s'", file);
+						tar_usage();
+					}
+				} else if (strcmp(*argv, "-C") == 0) {
+					if (*++argv == NULL)
+ 						break;
+					chdname = *argv++;
+				} else if (pat_add(*argv++, chdname) < 0)
+					tar_usage();
+				else
+					sawpat = 1;
+			}
+			/*
+			 * if patterns were added, we are doing	chdir()
+			 * on a file-by-file basis, else, just one
+			 * global chdir (if any) after opening input.
+			 */
+			if (sawpat > 0)
+				chdname = NULL;
+		}
 		break;
 	case ARCHIVE:
 	case APPND:
-		checkpositionalminusC(&argv, ftree_add);
+		if (chdname != NULL) {	/* initial chdir() */
+			if (ftree_add(chdname, 1) < 0)
+				tar_usage();
+		}
+
+		while (nincfiles || *argv != NULL) {
+			char *file, *dir;
+
+			/*
+			 * If we queued up any include files, pull them in
+			 * now.  Otherwise, check for -I and -C positional
+			 * flags.  Anything else must be a file to include
+			 * in the archive.
+			 */
+			if (nincfiles) {
+				file = incfiles->file;
+				dir = incfiles->dir;
+				incfiles++;
+				nincfiles--;
+			} else if (strcmp(*argv, "-I") == 0) {
+				if (*++argv == NULL)
+					break;
+				file = *argv++;
+				dir = NULL;
+			} else
+				file = NULL;
+			if (file != NULL) {
+				FILE *fp;
+				char *str;
+
+				/* Set directory if needed */
+				if (dir) {
+					if (ftree_add(dir, 1) < 0)
+						tar_usage();
+				}
+
+				if (strcmp(file, "-") == 0)
+					fp = stdin;
+				else if ((fp = fopen(file, "r")) == NULL) {
+					tty_warn(1, "Unable to open file '%s' for read", file);
+					tar_usage();
+				}
+				while ((str = getline(fp)) != NULL) {
+					if (ftree_add(str, 0) < 0)
+						tar_usage();
+				}
+				if (strcmp(file, "-") != 0)
+					fclose(fp);
+				if (getline_error) {
+					tty_warn(1, "Problem with file '%s'",
+					    file);
+					tar_usage();
+				}
+			} else if (strcmp(*argv, "-C") == 0) {
+				if (*++argv == NULL)
+					break;
+				if (ftree_add(*argv++, 1) < 0)
+					tar_usage();
+			} else if (ftree_add(*argv++, 0) < 0)
+				tar_usage();
+		}
 		/*
 		 * no read errors allowed on updates/append operation!
 		 */
@@ -972,9 +1166,43 @@ tar_options(int argc, char **argv)
 	}
 	if (!fstdin && ((arcname == (char *)NULL) || (*arcname == '\0'))) {
 		arcname = getenv("TAPE");
-		if ((arcname == (char *)NULL) || (*arcname == '\0'))
-			arcname = DEV_8;
+		if ((arcname == NULL) || (*arcname == '\0'))
+			arcname = _PATH_DEFTAPE;
 	}
+}
+
+int
+mkpath(path)
+	char *path;
+{
+	struct stat sb;
+	char *slash;
+	int done = 0;
+
+	slash = path;
+
+	while (!done) {
+		slash += strspn(slash, "/");
+		slash += strcspn(slash, "/");
+
+		done = (*slash == '\0');
+		*slash = '\0';
+
+		if (stat(path, &sb)) {
+			if (errno != ENOENT || mkdir(path, 0777)) {
+				tty_warn(1, "%s", path);
+				return (-1);
+			}
+		} else if (!S_ISDIR(sb.st_mode)) {
+			syswarn(1, ENOTDIR, "%s", path);
+			return (-1);
+		}
+
+		if (!done)
+			*slash = '/';
+	}
+
+	return (0);
 }
 
 /*
@@ -990,14 +1218,141 @@ cpio_options(int argc, char **argv)
 	unsigned int flg = 0;
 	unsigned int bflg = 0;
 	int c, i;
+	FILE *fp;
+	char *str;
 
-	cpio_mode = uflag = 1;
+	uflag = 1;
+	kflag = 1;
+	pids = 1;
+	pmode = 1;
+	pmtime = 0;
+	arcname = NULL;
+	dflag = 1;
+	act = -1;
+	nodirs = 1;
 	/*
 	 * process option flags
 	 */
 	while ((c = getoldopt(argc, argv,
-	    "ABC:E:H:I:LM:O:R:SVabcdfiklmoprstuv", NULL, NULL)) != -1)  {
+	    "abcdfiklmoprstuvzABC:E:F:H:I:LM:O:R:SVZ6", NULL, NULL)) != -1)  {
 		switch(c) {
+		case 'a':
+			/*
+			 * preserve access time on filesystem nodes we read
+			 */
+			tflag = 1;
+			flg |= TF;
+			break;
+#ifdef notyet
+		case 'b':
+			/*
+			 * swap bytes and half-words when reading data
+			 */
+			break;
+#endif
+		case 'c':
+			/*
+			 * ASCII cpio header
+			 */
+			frmt = &fsub[F_SV4CPIO];
+			break;
+		case 'd':
+			/*
+			 * create directories as needed
+			 * pax does this by default ..
+			 */
+			nodirs = 0;
+			flg |= RF;
+			break;
+		case 'f':
+			/*
+			 * inverse match on patterns
+			 */
+			cflag = 1;
+			flg |= CF;
+			break;
+		case 'i':
+			/*
+			 * read the archive
+			 */
+			act = EXTRACT;
+			flg |= RF;
+			break;
+#ifdef notyet
+		case 'k':
+			break;
+#endif
+		case 'l':
+			/*
+			 * try to link src to dest with copy (-rw)
+			 */
+			lflag = 1;
+			flg |= LF;
+			break;
+		case 'm':
+			/*
+			 * preserve mtime
+			 */
+			flg |= PF;
+			pmtime = 1;
+			break;
+		case 'o':
+			/*
+			 * write an archive
+			 */
+			act = ARCHIVE;
+			frmt = &(fsub[F_SV4CRC]);
+			flg |= WF;
+			break;
+		case 'p':
+			/*
+			 * cpio -p is like pax -rw
+			 */
+			act = COPY;
+			flg |= RF | WF;
+			break;
+		case 'r':
+			/*
+			 * interactive file rename
+			 */
+			iflag = 1;
+			flg |= IF;
+			break;
+#ifdef notyet
+		case 's':
+			/*
+			 * swap bytes after reading data
+			 */
+			break;
+#endif
+		case 't':
+			/*
+			 * list contents of archive
+			 */
+			act = LIST;
+			listf = stdout;
+			break;
+		case 'u':
+			/*
+			 * don't ignore those older files
+			 */
+			uflag = 0;
+			kflag = 0;
+			flg |= UF;
+			break;
+		case 'v':
+			/*
+			 * verbose operation mode
+			 */
+			vflag = 1;
+			flg |= VF;
+			break;
+		case 'z':
+			/*
+			 * use gzip.  Non standard option.
+			 */
+			gzip_program = GZIP_CMD;
+			break;
 		case 'A':
 			/*
 			 * append to an archive
@@ -1020,11 +1375,24 @@ cpio_options(int argc, char **argv)
 				tar_usage();
 			}
 			break;
-#ifdef notyet
 		case 'E':
-			arg = optarg;
+			/*
+			 * file with patterns to extract or list
+			 */
+			if ((fp = fopen(optarg, "r")) == NULL) {
+				tty_warn(1, "Unable to open file '%s' for read",
+				    optarg);
+				cpio_usage();
+			}
+			while ((str = getline(fp)) != NULL) {
+				pat_add(str, NULL);
+			}
+			fclose(fp);
+			if (getline_error) {
+				tty_warn(1, "Problem with file '%s'", optarg);
+				cpio_usage();
+			}
 			break;
-#endif
 		case 'H':
 			/*
 			 * specify an archive format on write
@@ -1052,7 +1420,7 @@ cpio_options(int argc, char **argv)
 				/*
 				 * treat a - as stdin
 				 */
-				arcname = (char *)0;
+				arcname = NULL;
 				break;
 			}
 			arcname = optarg;
@@ -1073,103 +1441,26 @@ cpio_options(int argc, char **argv)
 			break;
 #endif
 		case 'S':
+			/*
+			 * swap halfwords after reading data
+			 */
 			cpio_swp_head = 1;
 			break;
 #ifdef notyet
 		case 'V':
 			break;
 #endif
-		case 'a':
+		case 'Z':
 			/*
-			 * preserve access time on filesystem nodes we read
+			 * use compress.  Non standard option.
 			 */
-			tflag = 1;
-			flg |= TF;
+			gzip_program = COMPRESS_CMD;
 			break;
-#ifdef notyet
-		case 'b':
-			break;
-#endif
-		case 'c':
-			frmt = &fsub[F_SV4CPIO];
-			break;
-		case 'd':
+		case '6':
 			/*
-			 * pax does this by default ..
+			 * process Version 6 cpio format
 			 */
-			flg |= RF;
-			break;
-		case 'f':
-			/*
-			 * inverse match on patterns
-			 */
-			cflag = 1;
-			flg |= CF;
-			break;
-		case 'i':
-			/*
-			 * read the archive
-			 */
-			flg |= RF;
-			break;
-#ifdef notyet
-		case 'k':
-			break;
-#endif
-		case 'l':
-			/*
-			 * try to link src to dest with copy (-rw)
-			 */
-			lflag = 1;
-			flg |= LF;
-			break;
-		case 'm':
-			/*
-			 * preserve mtime
-			 */
-			flg |= PF;
-			pmtime = 1;
-			break;
-		case 'o':
-			/*
-			 * write an archive
-			 */
-			flg |= WF;
-			break;
-		case 'p':
-			/*
-			 * cpio -p is like pax -rw
-			 */
-			flg |= RF | WF;
-			break;
-		case 'r':
-			/*
-			 * interactive file rename
-			 */
-			iflag = 1;
-			flg |= IF;
-			break;
-#ifdef notyet
-		case 's':
-			break;
-#endif
-		case 't':
-			act = LIST;
-			break;
-		case 'u':
-			/*
-			 * don't ignore those older files
-			 */
-			uflag = 0;
-			flg |= UF;
-			break;
-		case 'v':
-			/*
-			 * verbose operation mode
-			 */
-			vflag = 1;
-			flg |= VF;
-			break;
+			frmt = &(fsub[F_BCPIO]);
 		default:
 			cpio_usage();
 			break;
@@ -1229,13 +1520,26 @@ cpio_options(int argc, char **argv)
 		/* FALLTHROUGH */
 	case ARCHIVE:
 	case APPND:
-		for (; optind < argc; optind++)
-			if (ftree_add(argv[optind], 0) < 0)
-				cpio_usage();
+		if (argc != optind) {
+			for (; optind < argc; optind++)
+				if (ftree_add(argv[optind], 0) < 0)
+					cpio_usage();
+			break;
+		}
 		/*
 		 * no read errors allowed on updates/append operation!
 		 */
 		maxflt = 0;
+		while ((str = getline(stdin)) != NULL) {
+			ftree_add(str, NULL);
+		}
+		if (getline_error) {
+			tty_warn(1, "Problem while reading stdin");
+			cpio_usage();
+		}
+		break;
+	default:
+		cpio_usage();
 		break;
 	}
 }
@@ -1329,12 +1633,17 @@ opt_add(const char *str)
 	char *frpt;
 	char *pt;
 	char *endpt;
+	char *dstr;
 
 	if ((str == NULL) || (*str == '\0')) {
 		tty_warn(0, "Invalid option name");
 		return(-1);
 	}
-	frpt = endpt = strdup(str);
+	if ((dstr = strdup(str)) == NULL) {
+		tty_warn(0, "Unable to allocate space for option list");
+		return(-1);
+	}
+	frpt = endpt = dstr;
 
 	/*
 	 * break into name and values pieces and stuff each one into a
@@ -1346,10 +1655,12 @@ opt_add(const char *str)
 			*endpt = '\0';
 		if ((pt = strchr(frpt, '=')) == NULL) {
 			tty_warn(0, "Invalid options format");
+			free(dstr);
 			return(-1);
 		}
 		if ((opt = (OPLIST *)malloc(sizeof(OPLIST))) == NULL) {
 			tty_warn(0, "Unable to allocate space for option list");
+			free(dstr);
 			return(-1);
 		}
 		*pt++ = '\0';
@@ -1442,6 +1753,29 @@ str_offt(char *val)
 	return(num);
 }
 
+char *
+getline(FILE *f)
+{
+	char *name, *temp;
+	size_t len;
+
+	name = fgetln(f, &len);
+	if (!name) {
+		getline_error = ferror(f) ? GETLINE_FILE_CORRUPT : 0;
+		return(0);
+	}
+	if (name[len-1] != '\n')
+		len++;
+	temp = malloc(len);
+	if (!temp) {
+		getline_error = GETLINE_OUT_OF_MEM;
+		return(0);
+	}
+	memcpy(temp, name, len-1);
+	temp[len-1] = 0;
+	return(temp);
+}
+
 /*
  * no_op()
  *	for those option functions where the archive format has nothing to do.
@@ -1530,49 +1864,4 @@ cpio_usage(void)
 #endif
 	exit(1);
 	/* NOTREACHED */
-}
-
-/*
- * opt_chdir
- *	call ftree_add or pat_add, depending on archive type.
- *
- * Returns: -1 for listing, else what ftree_add or pat_add returned.
- */
-
-int
-opt_chdir(char *name)
-{
-	switch (act) {
-	default:
-		return (-1);
-		break;
-	case ARCHIVE:
-	case APPND:
-		return (ftree_add(name, 1));
-		break;
-	case EXTRACT:
-		return (pat_add(name, 1));
-		break;
-	}
-}
-
-/*
- * checkpositionalminusC(argvp, addfunc)
- */
-
-void
-checkpositionalminusC(char ***argvp, int (*addfunc)(char *, int))
-{
-	while (**argvp != (char *)NULL) {
-		if (!strcmp(**argvp, "-C")) {
-			/* XXX should be allow for positional -C/dir, too? */
-			if ((*addfunc)(*++*argvp, 1) < 0) {
-				tar_usage();
-			}
-			++*argvp;
-			continue;
-		}
-		if ((*addfunc)(*(*argvp)++, 0) < 0)
-			tar_usage();
-	}
 }
