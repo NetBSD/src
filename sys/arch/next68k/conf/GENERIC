@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.27 2000/03/06 03:48:57 deberg Exp $
+# $NetBSD: GENERIC,v 1.28 2000/03/21 16:44:01 deberg Exp $
 #
 # GENERIC next68k
 #
@@ -6,7 +6,7 @@
 
 include "arch/next68k/conf/std.next68k"
 
-#ident 		"GENERIC-$Revision: 1.27 $"
+#ident 		"GENERIC-$Revision: 1.28 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
@@ -52,10 +52,7 @@ options 	COMPAT_12	# NetBSD 1.2
 options 	COMPAT_13	# NetBSD 1.3
 options 	COMPAT_14	# NetBSD 1.4
 
-# @@ COMPAT_M68K4K doesn't compile because my egcs cross compiler isn't defining __m68k__
-#   I don't know whether the compiler is broken or whether 
-#    /sys/compat/m68k4k/m68k4k_exec.c should be updated.  -- dbj
-#options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
+options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
 options 	COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
 options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
 #options 	COMPAT_SVR4	# can run SVR4 executables
