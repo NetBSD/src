@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.465 2002/01/15 13:34:52 drochner Exp $	*/
+/*	$NetBSD: machdep.c,v 1.466 2002/01/24 03:20:28 rafal Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.465 2002/01/15 13:34:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.466 2002/01/24 03:20:28 rafal Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -3051,16 +3051,16 @@ init386(first_avail)
 	    SDT_MEMERA, SEL_UPL, 1, 1);
 	setsegment(&gdt[GUDATA_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
 	    SDT_MEMRWA, SEL_UPL, 1, 1);
+#ifdef COMPAT_MACH
+	setgate(&gdt[GMACHCALLS_SEL].gd, &IDTVEC(mach_trap), 1,
+	    SDT_SYS386CGT, SEL_UPL);
+#endif
 #if NBIOSCALL > 0
 	/* bios trampoline GDT entries */
 	setsegment(&gdt[GBIOSCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 0,
 	    0);
 	setsegment(&gdt[GBIOSDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 0,
 	    0);
-#endif
-#ifdef GMACHCALLS_SEL
-	setgate(&gdt[GMACHCALLS_SEL].gd, &IDTVEC(mach_trap), 1,
-	    SDT_SYS386CGT, SEL_UPL);
 #endif
 
 	/* make ldt gates and memory segments */
