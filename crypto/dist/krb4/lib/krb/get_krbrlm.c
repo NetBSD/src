@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: get_krbrlm.c,v 1.2 2000/08/02 05:24:37 thorpej Exp $");
+RCSID("$Id: get_krbrlm.c,v 1.3 2000/10/04 04:08:30 simonb Exp $");
 
 /*
  * krb_get_lrealm takes a pointer to a string, and a number, n.  It fills
@@ -48,26 +48,20 @@ RCSID("$Id: get_krbrlm.c,v 1.2 2000/08/02 05:24:37 thorpej Exp $");
  */
 
 static int
-krb_get_lrealm_f(char *r, int n, const char *fname)
+krb_get_lrealm_f(char *r, int n, FILE *f)
 {
     char buf[1024];
     char *p;
     int nchar;
-    FILE *f;
-    int ret = KFAILURE;
 
     if (n < 0)
         return KFAILURE;
     if(n == 0)
 	n = 1;
 
-    f = fopen(fname, "r");
-    if (f == 0)
-        return KFAILURE;
-
     for (; n > 0; n--)
         if (fgets(buf, sizeof(buf), f) == 0)
-            goto done;
+	    return KFAILURE;
 
     /* We now have the n:th line, remove initial white space. */
     p = buf + strspn(buf, " \t");
@@ -75,7 +69,7 @@ krb_get_lrealm_f(char *r, int n, const char *fname)
     /* Collect realmname. */
     nchar    = strcspn(p, " \t\n");
     if (nchar == 0 || nchar > REALM_SZ)
-        goto done;		/* No realmname */
+	return KFAILURE;	/* No realmname */
     strncpy(r, p, nchar);
     r[nchar] = 0;
 
@@ -83,11 +77,9 @@ krb_get_lrealm_f(char *r, int n, const char *fname)
     p += nchar;
     nchar = strspn(p, " \t\n");
     if (p[nchar] == 0)
-        ret = KSUCCESS;		/* This was a realm name only line. */
+	return KSUCCESS;	/* This was a realm name only line. */
 
-  done:
-    fclose(f);
-    return ret;
+    return KFAILURE;
 }
 
 static const char *no_default_realm = "NO.DEFAULT.REALM";
@@ -95,12 +87,28 @@ static const char *no_default_realm = "NO.DEFAULT.REALM";
 int
 krb_get_lrealm(char *r, int n)
 {
-    int i;
-    char file[MaxPathLen];
+    FILE *f;
+    int i, have_krb_conf = 0;
+    char fname[MaxPathLen];
 
-    for (i = 0; krb_get_krbconf(i, file, sizeof(file)) == 0; i++)
-	if (krb_get_lrealm_f(r, n, file) == KSUCCESS)
+    for (i = 0; krb_get_krbconf(i, fname, sizeof(fname)) == 0; i++) {
+	f = fopen(fname, "r");
+	if (f == 0)
+	    continue;
+	have_krb_conf = 1;
+	if (krb_get_lrealm_f(r, n, f) == KSUCCESS) {
+	    fclose(f);
 	    return KSUCCESS;
+	}
+	fclose(f);
+    }
+
+    /*
+     * If there is no krb.conf file, don't continue; it is not
+     * intended that Kerberos be used.
+     */
+    if (!have_krb_conf)
+	return KFAILURE;
 
     /* When nothing else works try default realm */
     if (n == 1) {
