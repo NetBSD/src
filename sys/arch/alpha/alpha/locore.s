@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.45 1998/03/19 06:44:25 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.46 1998/03/22 05:46:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.45 1998/03/19 06:44:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.46 1998/03/22 05:46:02 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -56,15 +56,7 @@ BSS(curpcb, 8)
 	stq	a0, curpcb					;	\
 									\
 	/* Swap in the new context. */					\
-	call_pal PAL_OSF1_swpctx				;	\
-									\
-	/*								\
-	 * Invalidate the TLB.						\
-	 * XXX Should use ASNs, and not have to invalidate.		\
-	 */								\
-	ldiq	a0, -2						;	\
-	call_pal PAL_OSF1_tbi					;	\
-	call_pal PAL_imb
+	call_pal PAL_OSF1_swpctx
 
 
 	/* don't reorder instructions; paranoia. */
@@ -129,6 +121,14 @@ Lstart1: LDGP(pv)
 	lda	t0,proc0			/* get phys addr of pcb */
 	ldq	a0,P_MD_PCBPADDR(t0)
 	SWITCH_CONTEXT
+
+	/*
+	 * We've switched to a new page table base, so invalidate the TLB
+	 * and I-stream.  This happens automatically everywhere but here.
+	 */
+	ldiq	a0, -2				/* TBIA */
+	call_pal PAL_OSF1_tbi
+	call_pal PAL_imb
 
 	/*
 	 * Construct a fake trap frame, so execve() can work normally.
@@ -706,8 +706,28 @@ Lcs5:
 	 * s0 is clear before jumping here to find a new process.
 	 */
 	cmpeq	s0, t4, t0			/* oldproc == newproc? */
-	bne	t0, Lcs6			/* Yes!  Skip! */
+	bne	t0, Lcs7			/* Yes!  Skip! */
 
+	/*
+	 * Deactivate the old address space before activating the
+	 * new one.  We need to do this before activating the
+	 * new process's address space in the event that new
+	 * process is using the same vmspace as the old.  If we
+	 * do this after we activate, then we might end up
+	 * incorrectly marking the pmap inactive!
+	 *
+	 * We don't deactivate if we came here from switch_exit
+	 * (old pmap no longer exists; vmspace has been freed).
+	 * oldproc will be NULL in this case.  We have actually
+	 * taken care of calling pmap_deactivate() in cpu_exit(),
+	 * before the vmspace went away.
+	 */
+	beq	s0, Lcs6
+
+	mov	s0, a0				/* pmap_deactivate(oldproc) */
+	CALL(pmap_deactivate)
+
+Lcs6:
 	/*
 	 * Activate the new process's address space and perform
 	 * the actual context swap.
@@ -719,19 +739,7 @@ Lcs5:
 	mov	s3, a0				/* swap the context */
 	SWITCH_CONTEXT
 
-	/*
-	 * Don't pmap_deactivate() if we came here from switch_exit
-	 * (old pmap no longer exists; vmspace has been freed).  oldproc
-	 * will be NULL in this case.  We have actually taken care of
-	 * calling pmap_deactivate() in cpu_exit(), before the vmspace
-	 * went away.
-	 */
-	beq	s0, Lcs6
-
-	mov	s0, a0				/* pmap_deactivate(oldproc) */
-	CALL(pmap_deactivate)
-
-Lcs6:
+Lcs7:
 	/*
 	 * Now that the switch is done, update curproc and other
 	 * globals.  We must do this even if switching to ourselves
