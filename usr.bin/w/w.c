@@ -102,15 +102,13 @@ struct	entry {
 	dev_t	tdev;		/* dev_t of terminal */
 	time_t	idle;		/* idle time of terminal in seconds */
 	struct	kinfo_proc *kp;	/* `most interesting' proc */
-	char	*args;		/* arg list of interesting process */
 } *ep, *ehead = NULL, **nextp = &ehead;
 
+static void	 pr_args __P((struct kinfo_proc *));
 static void	 pr_header __P((time_t *, int));
 static struct stat
 		*ttystat __P((char *));
 static void	 usage __P((int));
-
-char *fmt_argv __P((char **, char *, int));	/* ../../bin/ps/fmt.c */
 
 int
 main(argc, argv)
@@ -123,9 +121,8 @@ main(argc, argv)
 	struct stat *stp;
 	FILE *ut;
 	u_long l;
-	size_t arglen;
 	int ch, i, nentries, nusers, wcmd;
-	char *memf, *nlistf, *p, *vis_args, *x;
+	char *memf, *nlistf, *p, *x;
 	char buf[MAXHOSTNAMELEN], errbuf[256];
 
 	/* Are we w(1) or uptime(1)? */
@@ -253,16 +250,6 @@ main(argc, argv)
 	argwidth = ttywidth - WUSED;
 	if (argwidth < 4)
 		argwidth = 8;
-	for (ep = ehead; ep != NULL; ep = ep->next) {
-		if (ep->kp == NULL) {
-			ep->args = "-";
-			continue;
-		}
-		ep->args = fmt_argv(kvm_getargv(kd, ep->kp, argwidth),
-		    ep->kp->kp_proc.p_comm, MAXCOMLEN);
-		if (ep->args == NULL)
-			err(1, NULL);
-	}
 	/* sort by idle time */
 	if (sortidle && ehead != NULL) {
 		struct entry *from = ehead, *save;
@@ -289,8 +276,6 @@ main(argc, argv)
 			memmove(domain, p, strlen(p) + 1);
 		}
 
-	if ((vis_args = malloc(argwidth * 4 + 1)) == NULL)
-		err(1, NULL);
 	for (ep = ehead; ep != NULL; ep = ep->next) {
 		p = *ep->utmp.ut_host ? ep->utmp.ut_host : "-";
 		if ((x = strchr(p, ':')) != NULL)
@@ -319,15 +304,28 @@ main(argc, argv)
 		    UT_HOSTSIZE, UT_HOSTSIZE, *p ? p : "-");
 		pr_attime(&ep->utmp.ut_time, &now);
 		pr_idle(ep->idle);
-		if (ep->args != NULL) {
-			arglen = strlen(ep->args);
-			strvisx(vis_args, ep->args,
-			    arglen > argwidth ? argwidth : arglen,
-			    VIS_TAB | VIS_NL | VIS_NOSLASH);
-		}
-		(void)printf("%.*s\n", argwidth, ep->args);
+		pr_args(ep->kp);
+		printf("\n");
 	}
 	exit(0);
+}
+
+static void
+pr_args(kp)
+	struct kinfo_proc *kp;
+{
+	char **argv;
+	int left;
+
+	left = argwidth;
+	argv = kvm_getargv(kd, kp, argwidth);
+	if (argv) {
+		while (*argv) {
+			fmt_puts(*argv, &left);
+			argv++;
+			fmt_putc(' ', &left);
+		}
+	}
 }
 
 static void
