@@ -1,4 +1,4 @@
-#	$NetBSD: files.tsarm,v 1.6 2005/01/31 06:12:35 joff Exp $
+#	$NetBSD: files.tsarm,v 1.7 2005/02/04 06:02:36 joff Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -31,7 +31,7 @@ device tsrtc: mc146818
 attach tsrtc at tspldbus
 file	arch/evbarm/tsarm/tsrtc.c		tsrtc
 
-device	tslcd: hd44780
+device	tslcd: hd44780, wsemuldisplaydev
 attach	tslcd at tspldbus
 file	arch/evbarm/tsarm/tslcd.c		tslcd
 
