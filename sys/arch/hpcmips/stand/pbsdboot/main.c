@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.36 2000/04/01 02:37:23 takemura Exp $	*/
+/*	$NetBSD: main.c,v 1.37 2000/04/12 15:07:34 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -59,7 +59,7 @@
  */
 TCHAR *version_string = 
 	TEXT("PocketBSD boot loader\r\n")
-	TEXT("Version 1.12.1 2000.04.01\r\n")
+	TEXT("Version 1.13.0 2000.04.12\r\n")
 #if ( _WIN32_WCE < 200 )
 	TEXT("Compiled for WinCE 1.01\r\n")
 #else
@@ -392,17 +392,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	/*
 	 *	Main Window
          */
-	hWndMain = CreateWindow(szAppName,		// Class
-				szTitle,		// Title
-				WS_VISIBLE,		// Style
-				CW_USEDEFAULT,		// x-position
-				CW_USEDEFAULT,		// y-position
-				CW_USEDEFAULT,		// x-size
-				CW_USEDEFAULT,		// y-size
-				NULL,			// Parent handle
-				NULL,			// Menu handle
-				hInstance,		// Instance handle
-				NULL);			// Creation
+#define WS_EX_CONTROLPARENT     0x00010000L
+	hWndMain = CreateWindowEx(WS_EX_CONTROLPARENT,
+				  szAppName,
+				  szTitle,
+				  WS_VISIBLE,
+				  CW_USEDEFAULT,
+				  CW_USEDEFAULT,
+				  CW_USEDEFAULT,
+				  CW_USEDEFAULT,
+				  NULL,
+				  NULL,
+				  hInstance,
+				  NULL);
 
 	GetClientRect(hWndMain, &rect);
 	if (rect.right < rect.bottom) {
@@ -420,6 +422,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 				 MAKEINTRESOURCE(IDD_MAIN_640X240),
 				 CommandBar_Height(hWndCB));
 	}
+	SetFocus(GetDlgItem(hWndMain, IDC_BOOT));
 
 	/*
 	 *  load preferences
@@ -501,7 +504,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	}
 	SendDlgItemMessage(hWndMain, IDC_FBSELECT, CB_SETCURSEL,
 			   pref.setting_idx, (LPARAM)NULL);
-
 	/*
 	 *  Check box, 'Pause before boot'
 	 */
@@ -519,9 +521,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	 */
 	ShowWindow(hWndMain, SW_SHOW);
 	UpdateWindow(hWndMain);
-	while ( GetMessage(&msg, NULL, 0, 0) != FALSE ) {
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
+	while (GetMessage(&msg, NULL, 0, 0)) {
+#if ( 200 <= _WIN32_WCE )
+		if (hWndMain == 0 || !IsDialogMessage(hWndMain, &msg))
+#endif
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
 	}
 
 	return(msg.wParam);
