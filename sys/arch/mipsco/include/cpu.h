@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.2 2000/08/17 21:26:34 wdk Exp $	*/
+/*	$NetBSD: cpu.h,v 1.3 2001/02/21 09:10:42 wdk Exp $	*/
 
 #ifndef _MIPSCO_CPU_H_
 #define _MIPSCO_CPU_H_
@@ -25,6 +25,11 @@ extern struct cpu_info cpu_info_store;
 
 #define	curcpu()		(&cpu_info_store)
 #define	cpu_number()		0
+
+#ifdef	KGDB
+void zs_kgdb_init __P((void));
+#endif
+
 #endif /* _KERNEL */
 #endif /* !_LOCORE */
 
