@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.4 1998/08/17 21:16:11 augustss Exp $	*/
+/*	$NetBSD: midi.c,v 1.5 1998/08/24 17:59:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -580,6 +580,45 @@ midiwrite(dev, uio, ioflag)
 		error = midi_start_output(sc, 0);
 	}
 	return error;
+}
+
+/*
+ * This write routine is only called from sequencer code and expect
+ * a write that is smaller than the MIDI buffer.
+ */
+int
+midi_writebytes(unit, buf, cc)
+	int unit;
+	u_char *buf;
+	int cc;
+{
+	struct midi_softc *sc = midi_cd.cd_devs[unit];
+	struct midi_buffer *mb = &sc->outbuf;
+	int n, s;
+
+	DPRINTFN(2, ("midi_writebytes: %p, unit=%d, cc=%d\n", sc, unit, cc));
+
+	s = splaudio();
+	if (mb->used + cc >= mb->usedhigh) {
+		splx(s);
+		return (EWOULDBLOCK);
+	}
+	n = mb->end - mb->inp;
+	if (cc < n)
+		n = cc;
+	memcpy(mb->inp, buf, cc);
+	mb->inp += n;
+	if (mb->inp >= mb->end) {
+		mb->inp = mb->start;
+		cc -= n;
+		if (cc > 0) {
+			memcpy(mb->inp, buf + n, cc);
+			mb->inp += cc;
+		}
+	}
+	mb->used += cc;
+	splx(s);
+	return (midi_start_output(sc, 0));
 }
 
 int
