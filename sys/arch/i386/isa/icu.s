@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1993 Charles Hannum.
+ * Copyright (c) 1993, 1994 Charles Hannum.
  * Copyright (c) 1989, 1990 William F. Jolitz.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.22 1994/02/01 01:53:39 deraadt Exp $
+ *	$Id: icu.s,v 1.23 1994/02/22 23:36:09 mycroft Exp $
  */
 
 /*
@@ -71,6 +71,9 @@ _ipending:
 	.globl	_imen
 _imen:
 	.long	0xffff		# interrupt mask enable (all off)
+	.globl	_clockmask
+_clockmask:
+	.long	1
 	.globl	_ttymask
 _ttymask:
 	.long	0
@@ -237,7 +240,7 @@ test_ast:
 	GENSPL(net, _netmask, 16)
 	GENSPL(imp, _impmask, 15)
 	GENSPL(high, $-1, 14)
-	GENSPL(clock, $-1, 13)	/* splclock == splhigh ex for count */
+	GENSPL(clock, _clockmask, 13)
 	GENSPL(softclock, _astmask, 17)
 
 	.globl _spl0
