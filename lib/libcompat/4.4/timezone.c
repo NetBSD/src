@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)timezone.c	5.10 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: timezone.c,v 1.3 1993/08/26 00:45:16 jtc Exp $";
+static char *rcsid = "$Id: timezone.c,v 1.4 1993/11/24 19:43:58 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -64,7 +64,7 @@ timezone(zone, dst)
 			*end;
 
 	if (beg = getenv("TZNAME")) {		/* set in environment */
-		if (end = index(beg, ',')) {	/* "PST,PDT" */
+		if (end = strchr(beg, ',')) {	/* "PST,PDT" */
 			if (dst)
 				return(++end);
 			*end = '\0';

@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)syslog.c	5.36 (Berkeley) 10/4/92";*/
-static char *rcsid = "$Id: syslog.c,v 1.4 1993/08/26 00:45:12 jtc Exp $";
+static char *rcsid = "$Id: syslog.c,v 1.5 1993/11/24 19:43:57 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -188,7 +188,7 @@ vsyslog(pri, fmt, ap)
 	if ((fd = open(_PATH_CONSOLE, O_WRONLY, 0)) >= 0) {
 		(void)strcat(tbuf, "\r\n");
 		cnt += 2;
-		p = index(tbuf, '>') + 1;
+		p = strchr(tbuf, '>') + 1;
 		(void)write(fd, p, cnt - (p - tbuf));
 		(void)close(fd);
 	}

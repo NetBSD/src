@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)fnmatch.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: fnmatch.c,v 1.9 1993/11/11 19:04:25 jtc Exp $";
+static char *rcsid = "$Id: fnmatch.c,v 1.10 1993/11/24 19:43:51 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -87,12 +87,12 @@ fnmatch(pattern, string, flags)
 			/* Optimize for pattern with * at end or before /. */
 			if (c == EOS)
 				if (flags & FNM_PATHNAME)
-					return (index(string, '/') == NULL ?
+					return (strchr(string, '/') == NULL ?
 					    0 : FNM_NOMATCH);
 				else
 					return (0);
 			else if (c == '/' && flags & FNM_PATHNAME) {
-				if ((string = index(string, '/')) == NULL)
+				if ((string = strchr(string, '/')) == NULL)
 					return (FNM_NOMATCH);
 				break;
 			}

@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)putenv.c	5.4 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: putenv.c,v 1.3 1993/08/26 00:48:05 jtc Exp $";
+static char *rcsid = "$Id: putenv.c,v 1.4 1993/11/24 19:44:13 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
@@ -48,7 +48,7 @@ putenv(str)
 
 	if (!(p = strdup(str)))
 		return(1);
-	if (!(equal = index(p, '='))) {
+	if (!(equal = strchr(p, '='))) {
 		(void)free(p);
 		return(1);
 	}

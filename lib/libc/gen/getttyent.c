@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)getttyent.c	5.10 (Berkeley) 3/23/91";*/
-static char *rcsid = "$Id: getttyent.c,v 1.3 1993/08/26 00:44:44 jtc Exp $";
+static char *rcsid = "$Id: getttyent.c,v 1.4 1993/11/24 19:43:56 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <ttyent.h>
@@ -74,7 +74,7 @@ getttyent()
 		if (!fgets(p = line, sizeof(line), tf))
 			return (NULL);
 		/* skip lines that are too big */
-		if (!index(p, '\n')) {
+		if (!strchr(p, '\n')) {
 			while ((c = getc(tf)) != '\n' && c != EOF)
 				;
 			continue;
@@ -121,7 +121,7 @@ getttyent()
 	tty.ty_comment = p;
 	if (*p == 0)
 		tty.ty_comment = 0;
-	if (p = index(p, '\n'))
+	if (p = strchr(p, '\n'))
 		*p = '\0';
 	return (&tty);
 }
@@ -171,7 +171,7 @@ value(p)
 	register char *p;
 {
 
-	return ((p = index(p, '=')) ? ++p : NULL);
+	return ((p = strchr(p, '=')) ? ++p : NULL);
 }
 
 int
