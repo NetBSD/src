@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.117 2005/01/27 03:39:36 mycroft Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.118 2005/02/06 20:13:09 pk Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -795,7 +795,7 @@ int	 tcp_signature_compute(struct mbuf *, struct tcphdr *, int, int,
 void	 tcp_slowtimo(void);
 struct mbuf *
 	 tcp_template(struct tcpcb *);
-void	 tcp_trace(int, int, struct tcpcb *, struct mbuf *, int);
+void	 tcp_trace(short, short, struct tcpcb *, struct mbuf *, int);
 struct tcpcb *
 	 tcp_usrclosed(struct tcpcb *);
 int	 tcp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
