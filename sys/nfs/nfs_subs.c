@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.60 1998/06/24 20:58:46 sommerfe Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.61 1998/06/25 22:18:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,6 +39,7 @@
  */
 
 #include "fs_nfs.h"
+#include "opt_nfsserver.h"
 #include "opt_uvm.h"
 
 /*
