@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.3 1995/04/21 05:21:37 mycroft Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.4 1995/05/04 19:39:46 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -134,5 +134,4 @@ extern u_long atdevbase;           /* kernel virtual address of "hole" */
 /*
  * Miscellanous functions.
  */
-unsigned char rtcin __P((int));		/* read a value from the RTC */
 void sysbeep __P((int, int));		/* beep with the system speaker */

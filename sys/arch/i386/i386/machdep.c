@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.157 1995/05/01 14:15:18 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.158 1995/05/04 19:39:18 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -87,8 +87,9 @@
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <dev/ic/i8042.h>
+#include <dev/ic/mc146818.h>
 #include <i386/isa/isa_machdep.h>
-#include <i386/isa/rtc.h>
+#include <i386/isa/nvram.h>
 
 #include "isa.h"
 #include "npx.h"
@@ -1108,8 +1109,10 @@ init386(first_avail)
 	 * Use BIOS values stored in RTC CMOS RAM, since probing
 	 * breaks certain 386 AT relics.
 	 */
-	biosbasemem = (rtcin(RTC_BASEHI)<<8) | (rtcin(RTC_BASELO));
-	biosextmem = (rtcin(RTC_EXTHI)<<8) | (rtcin(RTC_EXTLO));
+	biosbasemem = (mc146818_read(NULL, NVRAM_BASEHI) << 8) |
+	    mc146818_read(NULL, NVRAM_BASELO);
+	biosextmem = (mc146818_read(NULL, NVRAM_EXTHI) << 8) |
+	    mc146818_read(NULL, NVRAM_EXTLO);
 
 	/* Round down to whole pages. */
 	biosbasemem &= -(NBPG / 1024);
