@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.66 2001/01/20 07:23:21 ur Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.67 2001/05/29 17:51:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -2175,6 +2175,77 @@ LEAF(mips3_proc_trampoline)
 	eret
 	.set	at
 END(mips3_proc_trampoline)
+
+/*
+ * rm52xx_idle:
+ *
+ *	When no processes are on the runq, cpu_switch branches to
+ *	idle to wait for something to come ready.
+ *
+ *	NOTE: This is really part of cpu_switch(), but defined here
+ *	for kernel profiling.
+ *
+ *	This version takes advantage of power-saving features on
+ *	the QED RM52xx family of CPUs.
+ */
+LEAF(rm52xx_idle)
+	li	t0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
+	DYNAMIC_STATUS_MASK(t0,t1)		# machine dependent masking
+	mtc0	t0, MIPS_COP_0_STATUS		# enable all interrupts
+	nop
+	sw	zero, _C_LABEL(curproc)		# set curproc NULL for stats
+#if defined(LOCKDEBUG)
+	jal	_C_LABEL(sched_unlock_idle)	# release sched_lock
+	nop
+#endif
+
+	/* Try to zero from free pages. */
+	lw	t0, _C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO
+	nop
+	beq	t0, zero, 1f
+	nop
+	jal	_C_LABEL(uvm_pageidlezero)
+	nop
+1:
+#ifdef MIPS_DYNAMIC_STATUS_MASK
+	# Do this again since the mask may have changed.
+	li	t3, (MIPS_INT_MASK | MIPS_SR_INT_IE)
+	DYNAMIC_STATUS_MASK(t3,t1)		# machine dependent masking
+	mtc0	t3, MIPS_COP_0_STATUS		# enable all interrupts
+	nop
+#endif
+	lw	t0, _C_LABEL(sched_whichqs)	# look for non-empty queue
+	bne	t0, zero, 1f
+	nop
+#define	QED_RM52xx_OPCODE_WAIT	0x42000020
+	.word	QED_RM52xx_OPCODE_WAIT
+	nop
+	nop
+	nop
+	b	1b
+	nop
+1:
+#if defined(LOCKDEBUG)
+	mtc0	zero, MIPS_COP_0_STATUS		# disable all interrupts
+	nop
+	nop
+	nop
+	nop
+	jal	_C_LABEL(sched_lock_idle)	# acquire sched_lock
+	nop
+	la	ra, cpu_switch_queuescan
+	j	ra
+	nop
+#else
+	mtc0	zero, MIPS_COP_0_STATUS		# disable all interrupts
+	nop
+	nop
+	nop
+	la	ra, cpu_switch_queuescan
+	j	ra
+	nop
+#endif
+END(rm52xx_idle)
 
 /*
  * void mips3_cpu_switch_resume(struct proc *newproc)
