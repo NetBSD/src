@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.10 1999/09/10 16:14:03 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.11 1999/09/10 17:30:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -155,7 +155,45 @@ ntfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 static int
 ntfs_mountroot()
 {
-	return (EINVAL);
+	struct mount *mp;
+	extern struct vnode *rootvp;
+	struct proc *p = curproc;	/* XXX */
+	int error;
+	struct ntfs_args args;
+
+	if (root_device->dv_class != DV_DISK)
+		return (ENODEV);
+
+	/*
+	 * Get vnodes for rootdev.
+	 */
+	if (bdevvp(rootdev, &rootvp))
+		panic("ntfs_mountroot: can't setup rootvp");
+
+	if ((error = vfs_rootmountalloc(MOUNT_NTFS, "root_device", &mp))) {
+		vrele(rootvp);
+		return (error);
+	}
+
+	args.flag = 0;
+	args.uid = 0;
+	args.gid = 0;
+	args.mode = 0777;
+
+	if ((error = ntfs_mountfs(rootvp, mp, &args, p)) != 0) {
+		mp->mnt_op->vfs_refcount--;
+		vfs_unbusy(mp);
+		free(mp, M_MOUNT);
+		vrele(rootvp);
+		return (error);
+	}
+
+	simple_lock(&mountlist_slock);
+	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
+	simple_unlock(&mountlist_slock);
+	(void)ntfs_statfs(mp, &mp->mnt_stat, p);
+	vfs_unbusy(mp);
+	return (0);
 }
 
 static void
