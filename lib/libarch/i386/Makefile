@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 1996/02/21 00:21:45 jtk Exp $
+#	$NetBSD: Makefile,v 1.1 1996/02/21 02:45:47 jtk Exp $
 
 .PATH: ${LIBC}/i386
 
@@ -12,3 +12,6 @@ MAN+=	i386_get_ldt.2 \
 
 MLINKS+=i386_get_ldt.2 i386_set_ldt.2 \
 	i386_get_ioperm.2 i386_set_ioperm.2
+
+.include <bsd.lib.mk>
+
