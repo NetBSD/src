@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.2 2003/02/01 06:23:41 thorpej Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.3 2003/08/02 11:41:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -57,6 +57,11 @@ struct msdosfs_args {
 	gid_t	gid;		/* gid that owns msdosfs files */
 	mode_t  mask;		/* mask to be applied for msdosfs perms */
 	int	flags;		/* see below */
+
+	/* Following items added after versioning support */
+	int	version;	/* version of the struct */
+#define MSDOSFSMNT_VERSION	2
+	mode_t  dirmask;	/* v2: mask to be applied for msdosfs perms */
 };
 
 /*
@@ -66,17 +71,19 @@ struct msdosfs_args {
 #define	MSDOSFSMNT_LONGNAME	2	/* Force Win'95 long names */
 #define	MSDOSFSMNT_NOWIN95	4	/* Completely ignore Win95 entries */
 #define	MSDOSFSMNT_GEMDOSFS	8	/* This is a gemdos-flavour */
+#define MSDOSFSMNT_VERSIONED	16	/* Struct is versioned */
 
 /* All flags above: */
 #define	MSDOSFSMNT_MNTOPT \
 	(MSDOSFSMNT_SHORTNAME|MSDOSFSMNT_LONGNAME|MSDOSFSMNT_NOWIN95 \
-	 |MSDOSFSMNT_GEMDOSFS)
+	 |MSDOSFSMNT_GEMDOSFS|MSDOSFSMNT_VERSIONED)
+
 #define	MSDOSFSMNT_RONLY	0x80000000	/* mounted read-only	*/
 #define	MSDOSFSMNT_WAITONFAT	0x40000000	/* mounted synchronous	*/
 #define	MSDOSFS_FATMIRROR	0x20000000	/* FAT is mirrored */
 
 #define MSDOSFSMNT_BITS "\177\20" \
-    "b\00shortname\0b\01longname\0b\02nowin95\0bgemdosfs\0" \
+    "b\00shortname\0b\01longname\0b\02nowin95\0b\03gemdosfs\0b\04mntversioned\0" \
     "b\037ronly\0b\036waitonfat\0b\035fatmirror"
 
 #ifdef _KERNEL
@@ -91,7 +98,10 @@ struct msdosfsmount {
 	dev_t pm_dev;		/* block special device mounted */
 	uid_t pm_uid;		/* uid to set as owner of the files */
 	gid_t pm_gid;		/* gid to set as owner of the files */
-	mode_t pm_mask;		/* mask to and with file protection bits */
+	mode_t pm_mask;		/* mask to and with file protection bits
+				   for files */
+	mode_t pm_dirmask;	/* mask to and with file protection bits
+				   for directories */
 	struct vnode *pm_devvp;	/* vnode for block device mntd */
 	struct bpb50 pm_bpb;	/* BIOS parameter blk for this fs */
 	u_long pm_FATsecs;	/* actual number of fat sectors */

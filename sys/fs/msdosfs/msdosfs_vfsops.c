@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.7 2003/06/29 22:31:10 fvdl Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.8 2003/08/02 11:41:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.7 2003/06/29 22:31:10 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.8 2003/08/02 11:41:21 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -146,6 +146,7 @@ update_mp(mp, argp)
 	pmp->pm_gid = argp->gid;
 	pmp->pm_uid = argp->uid;
 	pmp->pm_mask = argp->mask & ALLPERMS;
+	pmp->pm_dirmask = argp->dirmask & ALLPERMS;
 	pmp->pm_flags |= argp->flags & MSDOSFSMNT_MNTOPT;
 
 	/*
@@ -199,10 +200,12 @@ msdosfs_mountroot()
 		return (error);
 	}
 
-	args.flags = 0;
+	args.flags = MSDOSFSMNT_VERSIONED;
 	args.uid = 0;
 	args.gid = 0;
 	args.mask = 0777;
+	args.version = MSDOSFSMNT_VERSION;
+	args.dirmask = 0777;
 
 	if ((error = msdosfs_mountfs(rootvp, mp, p, &args)) != 0) {
 		mp->mnt_op->vfs_refcount--;
@@ -257,12 +260,24 @@ msdosfs_mount(mp, path, data, ndp, p)
 		args.gid = pmp->pm_gid;
 		args.mask = pmp->pm_mask;
 		args.flags = pmp->pm_flags;
+		args.version = MSDOSFSMNT_VERSION;
+		args.dirmask = pmp->pm_dirmask;
 		vfs_showexport(mp, &args.export, &pmp->pm_export);
 		return copyout(&args, data, sizeof(args));
 	}
 	error = copyin(data, &args, sizeof(struct msdosfs_args));
 	if (error)
 		return (error);
+
+	/*
+	 * If not versioned (i.e. using old mount_msdos(8)), fill in
+	 * the additional structure items with suitable defaults.
+	 */
+	if ((args.flags & MSDOSFSMNT_VERSIONED) == 0) {
+		args.version = 1;
+		args.dirmask = args.mask;
+	}
+
 	/*
 	 * If updating, check whether changing from read-only to
 	 * read/write; if there is no device name, that's all we do.

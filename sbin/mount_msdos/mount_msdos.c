@@ -1,4 +1,4 @@
-/* $NetBSD: mount_msdos.c,v 1.28 2003/05/03 15:37:08 christos Exp $ */
+/* $NetBSD: mount_msdos.c,v 1.29 2003/08/02 11:41:20 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_msdos.c,v 1.28 2003/05/03 15:37:08 christos Exp $");
+__RCSID("$NetBSD: mount_msdos.c,v 1.29 2003/08/02 11:41:20 jdolecek Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -67,7 +67,7 @@ static const struct mntopt mopts[] = {
 
 int	main __P((int, char *[]));
 int	mount_msdos __P((int argc, char **argv));
-static void	usage __P((void));
+static void	usage __P((void)) __attribute__((__noreturn__));
 
 #ifndef MOUNT_NOMAIN
 int
@@ -86,13 +86,13 @@ mount_msdos(argc, argv)
 {
 	struct msdosfs_args args;
 	struct stat sb;
-	int c, mntflags, set_gid, set_uid, set_mask;
+	int c, mntflags, set_gid, set_uid, set_mask, set_dirmask;
 	char *dev, *dir, ndir[MAXPATHLEN+1];
 
-	mntflags = set_gid = set_uid = set_mask = 0;
+	mntflags = set_gid = set_uid = set_mask = set_dirmask = 0;
 	(void)memset(&args, '\0', sizeof(args));
 
-	while ((c = getopt(argc, argv, "Gsl9u:g:m:o:")) != -1) {
+	while ((c = getopt(argc, argv, "Gsl9u:g:m:M:o:")) != -1) {
 		switch (c) {
 		case 'G':
 			args.flags |= MSDOSFSMNT_GEMDOSFS;
@@ -118,6 +118,10 @@ mount_msdos(argc, argv)
 			args.mask = a_mask(optarg);
 			set_mask = 1;
 			break;
+		case 'M':
+			args.dirmask = a_mask(optarg);
+			set_dirmask = 1;
+			break;
 		case 'o':
 			getmntopts(optarg, mopts, &mntflags, 0);
 			break;
@@ -130,6 +134,14 @@ mount_msdos(argc, argv)
 
 	if (optind + 2 != argc)
 		usage();
+
+	if (set_mask && !set_dirmask) {
+		args.dirmask = args.mask;
+		set_dirmask = 1;
+	} else if (set_dirmask && !set_mask) {
+		args.mask = args.dirmask;
+		set_mask = 1;
+	}
 
 	dev = argv[optind];
 	dir = argv[optind + 1];
@@ -157,9 +169,13 @@ mount_msdos(argc, argv)
 			args.uid = sb.st_uid;
 		if (!set_gid)
 			args.gid = sb.st_gid;
-		if (!set_mask)
-			args.mask = sb.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
+		if (!set_mask) {
+			args.mask = args.dirmask =
+				sb.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
+		}
 	}
+	args.flags |= MSDOSFSMNT_VERSIONED;
+	args.version = MSDOSFSMNT_VERSION;
 
 	if (mount(MOUNT_MSDOS, dir, mntflags, &args) < 0)
 		err(1, "%s on %s", dev, dir);
@@ -167,8 +183,8 @@ mount_msdos(argc, argv)
 	if (mntflags & MNT_GETARGS) {
 		char buf[1024];
 		(void)snprintb(buf, sizeof(buf), MSDOSFSMNT_BITS, args.flags);
-		printf("uid=%d, gid=%d, mask=0%o, flags=%s\n", args.uid,
-		    args.gid, args.mask, buf);
+		printf("uid=%d, gid=%d, mask=0%o, dirmask=0%o, flags=%s\n",
+		    args.uid, args.gid, args.mask, args.dirmask, buf);
 	}
 
 	exit (0);
@@ -178,6 +194,6 @@ static void
 usage()
 {
 
-	fprintf(stderr, "usage: mount_msdos [-o options] [-u user] [-g group] [-m mask] bdev dir\n");
+	fprintf(stderr, "Usage:\nmount_msdos [-o options] [-u user] [-g group] [-m mask] [-M mask] [-G] bdev dir\n");
 	exit(1);
 }
