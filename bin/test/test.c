@@ -1,3 +1,5 @@
+/*	$NetBSD: test.c,v 1.15 1995/03/21 07:04:06 cgd Exp $	*/
+
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
  * modified by Eric Gisin to be used as built-in.
@@ -9,7 +11,7 @@
  */
 
 #ifndef lint
-static char *rcsid = "$Id: test.c,v 1.14 1994/07/07 19:08:11 cgd Exp $";
+static char rcsid[] = "$NetBSD: test.c,v 1.15 1995/03/21 07:04:06 cgd Exp $";
 #endif
 
 #include <sys/types.h>
