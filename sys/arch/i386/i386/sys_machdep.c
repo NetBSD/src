@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.53.2.5 2001/09/22 23:01:15 sommerfeld Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.53.2.6 2001/12/29 21:09:08 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.53.2.6 2001/12/29 21:09:08 sommerfeld Exp $");
 
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.63.2.6 2001/05/27 00:02:18 sommerfeld Exp $	*/
+/*	$NetBSD: clock.c,v 1.63.2.7 2001/12/29 21:09:09 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -85,12 +85,16 @@ NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
-/* #define CLOCKDEBUG */
-/* #define CLOCK_PARANOIA */
-
 /*
  * Primitive clock interrupt routines.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.63.2.7 2001/12/29 21:09:09 sommerfeld Exp $");
+
+/* #define CLOCKDEBUG */
+/* #define CLOCK_PARANOIA */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
@@ -759,7 +763,7 @@ inittodr(base)
 	 * the latter case, it's likely that the CMOS battery has died.)
 	 */
 
-	if (base < 25*SECYR) {	/* if before 1995, something's odd... */
+	if (base && base < 25*SECYR) {	/* if before 1995, something's odd... */
 		printf("WARNING: preposterous time in file system\n");
 		/* read the system clock anyway */
 		base = 27*SECYR + 186*SECDAY + SECDAY/2;
@@ -815,7 +819,7 @@ inittodr(base)
 	}
 #endif
 
-	if (base < time.tv_sec - 5*SECYR)
+	if (base != 0 && base < time.tv_sec - 5*SECYR)
 		printf("WARNING: file system time much less than clock time\n");
 	else if (base > time.tv_sec + 5*SECYR) {
 		printf("WARNING: clock time much less than file system time\n");
