@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.22 2002/12/04 21:01:13 bouyer Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.23 2002/12/05 22:54:45 jonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,6 +83,8 @@ struct quotause {
 	char	qfname[1];	/* actually longer */
 };
 #define	FOUND	0x01
+
+#define MAX_TMPSTR	(100+MAXPATHLEN)
 
 int	main __P((int, char **));
 void	usage __P((void));
@@ -416,6 +418,7 @@ editit(tmpfile)
 {
 	long omask;
 	int pid, stat;
+	char p[MAX_TMPSTR];
 
 	omask = sigblock(sigmask(SIGINT)|sigmask(SIGQUIT)|sigmask(SIGHUP));
  top:
@@ -440,7 +443,11 @@ editit(tmpfile)
 		setuid(getuid());
 		if ((ed = getenv("EDITOR")) == (char *)0)
 			ed = _PATH_VI;
-		execlp(ed, ed, tmpfile, 0);
+		if (strlen(ed) + strlen(tmpfile) + 2 >= MAX_TMPSTR) {
+			err (1, "%s", "editor or filename too long");
+		}
+		snprintf (p, MAX_TMPSTR, "%s %s", ed, tmpfile);
+		execlp(_PATH_BSHELL, _PATH_BSHELL, "-c", p, NULL);
 		err(1, "%s", ed);
 	}
 	waitpid(pid, &stat, 0);
