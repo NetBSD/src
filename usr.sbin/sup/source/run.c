@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.7 1997/07/15 18:15:55 christos Exp $	*/
+/*	$NetBSD: run.c,v 1.8 1997/07/30 15:33:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -102,6 +102,27 @@
 #endif
 
 static int dorun __P((char *, char **, int));
+static char **makearglist __P((va_list));
+
+static char **
+makearglist(ap)
+	va_list ap;
+{
+	static size_t ns = 0;
+	static char **np = NULL;
+	int i = 0;
+
+	do {
+		if (i >= ns) {
+			ns += 20;
+			if ((np = realloc(np, ns)) == NULL)
+				return NULL;
+		}
+		np[i] = va_arg(ap, char *);
+	}
+	while (np[i++] != NULL);
+	return np;
+}
 
 int
 #ifdef __STDC__
@@ -123,7 +144,8 @@ va_dcl
 	name = va_arg(ap, char *);
 #endif
 
-	argv = va_arg(ap, char **);
+	if ((argv = makearglist(ap)) == NULL)
+		return -1;
 	val = runv (name, argv);
 	va_end(ap);
 	return(val);
@@ -155,7 +177,8 @@ va_dcl
 	name = va_arg(ap, char *);
 #endif
 
-	argv = va_arg(ap, char **);
+	if ((argv = makearglist(ap)) == NULL)
+		return -1;
 	val = runvp (name, argv);
 	va_end(ap);
 	return (val);
@@ -187,7 +210,8 @@ int usepath;
 		    execvp(name,argv);
 		else
 		    execv(name,argv);
-		fprintf (stderr,"run: can't exec %s\n",name);
+		fprintf (stderr,"run: can't exec %s (%s)\n",name,
+		    strerror(errno));
 		_exit (0377);
 	}
 
