@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2001/06/10 05:26:58 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 2001/06/14 05:58:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -265,7 +265,7 @@ mach_init(int argc, char *argv[], char *envp[])
 		led_display('h', 'z', ' ', ' ');
 		bus_space_map(&acp->ac_lociot, P4032_RTC, 2, 0, &sh);
 		algor_p4032_cal_timer(&acp->ac_lociot, sh);
-		bus_space_unmap(&acp->ac_iot, sh, 2);
+		bus_space_unmap(&acp->ac_lociot, sh, 2);
 	    }
 #elif defined(ALGOR_P5064)
 	    {
