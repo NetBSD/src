@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.37 1999/01/09 21:52:08 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.38 1999/01/09 21:54:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -191,18 +191,6 @@ struct mbuf {
 /* flags to m_get/MGET */
 #define	M_DONTWAIT	M_NOWAIT
 #define	M_WAIT		M_WAITOK
-
-/*
- * Freelists:
- *
- * Normal mbuf clusters are normally treated as character arrays
- * after allocation, but use the first word of the buffer as a free list
- * pointer while on the free list.
- */
-union mcluster {
-	union	mcluster *mcl_next;
-	char	mcl_buf[MCLBYTES];
-};
 
 /*
  * mbuf utility macros:
@@ -488,7 +476,6 @@ extern struct mbstat mbstat;
 extern int	nmbclusters;
 extern int	nmbufs;
 extern struct mbuf *mmbfree;
-extern union mcluster *mclfree;
 extern int	max_linkhdr;		/* largest link-level header */
 extern int	max_protohdr;		/* largest protocol header */
 extern int	max_hdr;		/* largest link+protocol header */
