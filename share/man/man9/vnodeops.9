@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.9 2002/02/13 08:18:56 ross Exp $
+.\"     $NetBSD: vnodeops.9,v 1.10 2002/06/29 01:43:05 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1225,9 +1225,16 @@ and
 respectively.  The change time is always taken from the current time.
 The argument
 .Fa flags
-is a set of file system type dependent flags indicating which times
-should be updated.
-.It Fn VOP_LEASE "vp" "p" "cred" "flag"
+is a set of file system type dependent flags indicating how times
+should be updated:
+.Pp
+.Bl -tag -offset indent -width UPDATE_DIROP -compact
+.It UPDATE_WAIT
+wait for completion
+.It UPDATE_DIROP
+hint to file system to wait or not
+.El
+.It Fn VOP_LEASE "vp" "p" "cred" "flags"
 Validate vnode credentials and operation type.  The argument
 .Fa vp
 is the locked vnode of the file to validate credentials
