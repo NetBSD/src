@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2004/06/02 14:07:07 pooka Exp $
+#	$NetBSD: Makefile,v 1.28 2004/12/10 16:40:40 nathanw Exp $
 #
 
 WARNS=	2
@@ -26,6 +26,7 @@ ARCHDIR=	${.CURDIR}/arch/${ARCHSUBDIR}
 .PATH:	${ARCHDIR}
 
 CPPFLAGS+=	-I${ARCHDIR} -I${.CURDIR} -I${.OBJDIR} -D_LIBC
+CPPFLAGS+=	-D__LIBPTHREAD_SOURCE__
 
 DPSRCS+=	assym.h
 CLEANFILES+=	assym.h
