@@ -1,4 +1,4 @@
-.\" Copyright (c) 1983, 1991, 1993
+.\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -29,73 +29,51 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)listen.2	8.2 (Berkeley) 12/11/93
+.\"	@(#)setsid.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd December 11, 1993
-.Dt LISTEN 2
-.Os BSD 4.2
+.Dd "June 4, 1993"
+.Dt SETSID 2
+.Os
 .Sh NAME
-.Nm listen
-.Nd listen for connections on a socket
+.Nm setsid
+.Nd create session and set process group ID
 .Sh SYNOPSIS
-.Fd #include <sys/socket.h>
-.Ft int
-.Fn listen "int s" "int backlog"
+.Fd #include <sys/types.h>
+.Ft pid_t
+.Fn setsid "void"
 .Sh DESCRIPTION
-To accept connections, a socket
-is first created with
-.Xr socket 2 ,
-a willingness to accept incoming connections and
-a queue limit for incoming connections are specified with
-.Fn listen ,
-and then the connections are
-accepted with
-.Xr accept 2 .
 The
-.Fn listen
-call applies only to sockets of type
-.Dv SOCK_STREAM
-or
-.Dv SOCK_SEQPACKET.
+.Nm setsid
+function creates a new session.
+The calling process is the session leader of the new session, is the
+process group leader of a new process group and has no controlling
+terminal.
+The calling process is the only process in either the session or the
+process group.
 .Pp
-The
-.Fa backlog
-parameter defines the maximum length the queue of
-pending connections may grow to.
-If a connection
-request arrives with the queue full the client may
-receive an error with an indication of
-.Er ECONNREFUSED ,
-or, if the underlying protocol supports retransmission,
-the request may be ignored so that retries may succeed.
-.Sh RETURN VALUES
-A 0 return value indicates success; -1 indicates an error.
+Upon successful completion, the
+.Nm setsid
+function returns the value of the process group ID of the new process
+group, which is the same as the process ID of the calling process.
 .Sh ERRORS
-.Fn Listen 
-will fail if:
-.Bl -tag -width [EOPNOTSUPP]
-.It Bq Er EBADF
-The argument
-.Fa s
-is not a valid descriptor.
-.It Bq Er ENOTSOCK
-The argument
-.Fa s
-is not a socket.
-.It Bq Er EOPNOTSUPP
-The socket is not of a type that supports the operation
-.Fn listen .
+If an error occurs,
+.Nm setsid
+returns -1 and the global variable
+.Va errno
+is set to indicate the error, as follows:
+.Bl -tag -width Er
+.It Bq Er EPERM
+The calling process is already a process group leader, or the process
+group ID of a process other than the calling process matches the process
+ID of the calling process.
 .El
 .Sh SEE ALSO
-.Xr accept 2 ,
-.Xr connect 2 ,
-.Xr socket 2
-.Sh BUGS
+.Xr setpgid 3 ,
+.Xr tcgetpgrp 3 ,
+.Xr tcsetpgrp 3
+.Sh STANDARDS
 The
-.Fa backlog
-is currently limited (silently) to 5.
-.Sh HISTORY
-The
-.Nm
-function call appeared in
-.Bx 4.2 .
+.Nm setsid
+function is expected to be compliant with the
+.St -p1003.1-88
+specification.

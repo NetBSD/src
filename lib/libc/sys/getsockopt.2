@@ -1,5 +1,5 @@
-.\" Copyright (c) 1983, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1983, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,42 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)getsockopt.2	6.9 (Berkeley) 5/1/91
+.\"     @(#)getsockopt.2	8.3 (Berkeley) 4/19/94
 .\"
-.\" Copyright (c) 1983, 1991 The Regents of the University of California.
-.\" All rights reserved.
-.\"
-.\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
-.\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
-.\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in the
-.\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
-.\" 4. Neither the name of the University nor the names of its contributors
-.\"    may be used to endorse or promote products derived from this software
-.\"    without specific prior written permission.
-.\"
-.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
-.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
-.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-.\" SUCH DAMAGE.
-.\"
-.\"     @(#)getsockopt.2	6.9 (Berkeley) 5/1/91
-.\"
-.Dd May 1, 1991
+.Dd April 19, 1994
 .Dt GETSOCKOPT 2
 .Os BSD 4.3r
 .Sh NAME
@@ -171,6 +138,7 @@ and set with
 .Bl -column SO_OOBINLINE -offset indent
 .It Dv SO_DEBUG Ta "enables recording of debugging information"
 .It Dv SO_REUSEADDR Ta "enables local address reuse"
+.It Dv SO_REUSEPORT Ta "enables duplicate address and port bindings"
 .It Dv SO_KEEPALIVE Ta "enables keep connections alive"
 .It Dv SO_DONTROUTE Ta "enables routing bypass for outgoing messages"
 .It Dv SO_LINGER  Ta "linger on close if data present"
@@ -193,6 +161,13 @@ indicates that the rules used in validating addresses supplied
 in a
 .Xr bind 2
 call should allow reuse of local addresses.
+.Dv SO_REUSEPORT
+allows completely duplicate bindings by multiple processes
+if they all set
+.Dv SO_REUSEPORT
+before binding the port.
+This option permits multiple instances of a program to each
+receive UDP/IP multicast or broadcast datagrams destined for the bound port.
 .Dv SO_KEEPALIVE
 enables the
 periodic transmission of messages on a connected socket.  Should the
@@ -207,7 +182,7 @@ to the appropriate network interface according to the network portion
 of the destination address.
 .Pp
 .Dv SO_LINGER
-controls the action taken when unsent messags
+controls the action taken when unsent messages
 are queued on socket and a 
 .Xr close 2
 is performed.
@@ -274,13 +249,13 @@ is set to a convenient size for network efficiency, often 1024.
 .Dv SO_RCVLOWAT
 is an option to set the minimum count for input operations.
 In general, receive calls will block until any (non-zero) amount of data
-is received, then return with smaller of the amount available or the amount
+is received, then return with the smaller of the amount available or the amount
 requested.
 The default value for
-.Dv SO_SNDLOWAT
+.Dv SO_RCVLOWAT
 is 1.
 If 
-.Dv SO_SNDLOWAT
+.Dv SO_RCVLOWAT
 is set to a larger value, blocking receive calls normally
 wait until they have received the smaller of the low water mark value
 or the requested amount.
@@ -323,7 +298,7 @@ Finally,
 and
 .Dv SO_ERROR
 are options used only with
-.Fn setsockopt .
+.Fn getsockopt .
 .Dv SO_TYPE
 returns the type of the socket, such as
 .Dv SOCK_STREAM ;

@@ -1,5 +1,5 @@
-.\" Copyright (c) 1980, 1991 Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1980, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)ioctl.2	6.4 (Berkeley) 3/10/91
+.\"     @(#)ioctl.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd March 10, 1991
+.Dd December 11, 1993
 .Dt IOCTL 2
 .Os BSD 4
 .Sh NAME
@@ -74,7 +74,7 @@ If an error has occurred, a value of -1 is returned and
 is set to indicate the error.
 .Sh ERRORS
 .Fn Ioctl
-will fail:
+will fail if:
 .Bl -tag -width [ENOTTY]
 .It Bq Er EBADF
 .Fa d
@@ -95,9 +95,9 @@ or
 is not valid.
 .El
 .Sh SEE ALSO
+.Xr mt 1 ,
 .Xr execve 2 ,
 .Xr fcntl 2 ,
-.Xr mt 4 ,
 .Xr tty 4 ,
 .Xr intro 4
 .Sh HISTORY
