@@ -1,18 +1,15 @@
-# $NetBSD: md.sun3,v 1.8 2004/03/14 08:12:20 jdc Exp $
+# $NetBSD: md.sun3,v 1.9 2004/03/28 06:48:43 jmc Exp $
 ./usr/X11R6/bin/X
-./usr/X11R6/bin/Xnest
 ./usr/X11R6/bin/Xsun
 ./usr/X11R6/bin/XsunMono
 ./usr/X11R6/bin/Xvfb
 ./usr/X11R6/bin/constype
 ./usr/X11R6/bin/kbd_mode
-./usr/X11R6/man/cat1/Xnest.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/Xsun.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/XsunMono.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/Xvfb.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/constype.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/kbd_mode.0			-unknown-		.cat
-./usr/X11R6/man/man1/Xnest.1			-unknown-		.man
 ./usr/X11R6/man/man1/Xsun.1			-unknown-		.man
 ./usr/X11R6/man/man1/XsunMono.1			-unknown-		.man
 ./usr/X11R6/man/man1/Xvfb.1			-unknown-		.man
