@@ -30,14 +30,14 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)tip.1	6.8 (Berkeley) 7/27/91
-.\"	$Id: tip.1,v 1.3 1993/08/04 19:52:59 jtc Exp $
+.\"	$Id: tip.1,v 1.4 1993/08/04 20:17:28 jtc Exp $
 .\"
 .Dd July 27, 1991
 .Dt TIP 1
 .Os BSD 4
 .Sh NAME
-.Nm tip ,
-.Nm cu
+.Nm tip 
+.\" .Nm cu
 .Nd connect to a remote system
 .Sh SYNOPSIS
 .Nm tip
@@ -48,31 +48,31 @@
 .Op Fl v
 .Fl Ns Ns Ar speed 
 .Ar phone\-number
-.Nm cu
-.Ar phone\-number
-.Op Fl t
-.Op Fl s Ar speed
-.Op Fl a Ar acu
-.Op Fl l Ar line
-.Op Fl #
+.\" .Nm cu
+.\" .Ar phone\-number
+.\" .Op Fl t
+.\" .Op Fl s Ar speed
+.\" .Op Fl a Ar acu
+.\" .Op Fl l Ar line
+.\" .Op Fl #
 .Sh DESCRIPTION
 .Nm Tip
-and
-.Nm cu
+.\" and
+.\" .Nm cu
 establish a full-duplex connection to another machine,
 giving the appearance of being logged in directly on the
 remote cpu.  It goes without saying that you must have a login
 on the machine (or equivalent) to which you wish to connect.
-The preferred interface is
-.Nm tip  .
-The
-.Nm cu
-interface is included for those people attached to the
-``call
-.Ux Ns ''
-command of version 7.  This manual page
-describes only
-.Nm tip  .
+.\" The preferred interface is
+.\" .Nm tip  .
+.\" The
+.\" .Nm cu
+.\" interface is included for those people attached to the
+.\" ``call
+.\" .Ux Ns ''
+.\" command of version 7.  This manual page
+.\" describes only
+.\" .Nm tip  .
 .Pp
 Available Option:
 .Bl -tag -width indent

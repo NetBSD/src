@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.9 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.2 1993/07/30 23:50:25 mycroft Exp $
+#	$Id: Makefile,v 1.3 1993/08/04 20:17:26 jtc Exp $
 #
 # Files are:
 #	/etc/remote		remote host description file
@@ -36,8 +36,8 @@ CFLAGS+=-I${.CURDIR} -DV831 -DVENTEL -DHAYES -DCOURIER -DDEFBR=2400 \
 BINOWN=	uucp
 BINGRP=	dialer
 BINMODE=4510
-LINKS=	${BINDIR}/tip ${BINDIR}/cu
-MLINKS=	tip.1 cu.1
+# LINKS=	${BINDIR}/tip ${BINDIR}/cu
+# MLINKS=	tip.1 cu.1
 SRCS=	acu.c acutab.c cmds.c cmdtab.c cu.c hunt.c log.c partab.c remcap.c \
 	remote.c tip.c tipout.c uucplock.c value.c vars.c biz22.c courier.c \
 	df.c dn11.c hayes.c v3451.c v831.c ventel.c
