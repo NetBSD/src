@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1997/05/09 13:59:18 mycroft Exp $
+#	$NetBSD: Makefile,v 1.11 1997/05/15 10:04:27 veego Exp $
 
 LIB=	pcap
 MAN=	pcap.3
@@ -19,5 +19,7 @@ SRCS=	bpf_filter.c bpf_image.c etherent.c gencode.c grammar.y inet.c \
 
 INCS=pcap.h pcap-namedb.h
 INCSDIR=/usr/include
+
+CLEANFILES+= y.tab.h
 
 .include <bsd.lib.mk>
