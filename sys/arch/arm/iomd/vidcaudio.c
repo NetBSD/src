@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.33 2004/01/10 22:33:24 bjh21 Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.34 2004/01/17 21:49:24 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.33 2004/01/10 22:33:24 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.34 2004/01/17 21:49:24 bjh21 Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.33 2004/01/10 22:33:24 bjh21 Exp $")
 #include <uvm/uvm_extern.h>
 
 #include <dev/audio_if.h>
+#include <dev/audiobellvar.h>
 #include <dev/mulaw.h>
 
 #include <machine/intr.h>
@@ -87,9 +88,12 @@ __KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.33 2004/01/10 22:33:24 bjh21 Exp $")
 #include <arm/iomd/vidcaudiovar.h>
 #include <arm/iomd/iomdreg.h>
 #include <arm/iomd/iomdvar.h>
+#include <arm/iomd/rpckbdvar.h>
 #include <arm/iomd/vidc.h>
 #include <arm/mainbus/mainbus.h>
 #include <arm/iomd/waveform.h>
+
+#include "rpckbd.h"
 
 extern int *vidc_base;
 
@@ -183,14 +187,6 @@ static struct audio_hw_if vidcaudio_hw_if = {
 	NULL,
 };
 
-
-void
-vidcaudio_beep_generate(void)
-{
-
-}
-
-
 static int
 vidcaudio_probe(struct device *parent, struct cfdata *cf, void *aux)
 {
@@ -215,6 +211,7 @@ static void
 vidcaudio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vidcaudio_softc *sc = (void *)self;
+	struct device *beepdev;
 
 	switch (IOMD_ID) {
 #ifndef EB7500ATX
@@ -252,7 +249,10 @@ vidcaudio_attach(struct device *parent, struct device *self, void *aux)
 
 	disable_irq(sc->sc_dma_intr);
 
-	audio_attach_mi(&vidcaudio_hw_if, sc, self);
+	beepdev = audio_attach_mi(&vidcaudio_hw_if, sc, self);
+#if NRPCKBD > 0
+	rpckbd_hookup_bell(audiobell, beepdev);
+#endif
 }
 
 static int
