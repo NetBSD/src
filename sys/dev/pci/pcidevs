@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.585 2003/10/18 01:32:30 lukem Exp $
+$NetBSD: pcidevs,v 1.586 2003/10/18 18:51:29 matt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1858,6 +1858,7 @@ product PHILIPS SAA7130HL	0x7130	SAA7130HL PCI video broadcast decoder
 product PHILIPS SAA7133HL	0x7133	SAA7133HL PCI A/V broadcast decoder
 product PHILIPS SAA7134HL	0x7134	SAA7134HL PCI A/V broadcast decoder
 product PHILIPS SAA7135HL	0x7135	SAA7135HL PCI A/V broadcast decoder
+product PHILIPS SAA7146AH	0x7146	SAA7146AH PCI Multimedia bridge
 
 /* NCR/Symbios Logic products */
 product SYMBIOS 810	0x0001	53c810
