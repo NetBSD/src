@@ -90,7 +90,7 @@ void MD5_Final();
 unsigned char *MD5();
 #endif
 
-/* to provide backward compatabilty to RSAREF calls ogud@tis.com 1997/11/14 */
+/* to provide backward compatibility to RSAREF calls ogud@tis.com 1997/11/14 */
 #define MD5Init(c)             MD5_Init(c)
 #define MD5Update(c,data, len) MD5_Update(c,data,len)
 #define MD5Final(md, c)        MD5_Final(md, c) 

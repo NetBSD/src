@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.36 2001/03/05 16:20:33 sjg Exp $	*/
+/*	$NetBSD: make.c,v 1.37 2001/06/11 01:50:58 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: make.c,v 1.36 2001/03/05 16:20:33 sjg Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.37 2001/06/11 01:50:58 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.36 2001/03/05 16:20:33 sjg Exp $");
+__RCSID("$NetBSD: make.c,v 1.37 2001/06/11 01:50:58 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -191,7 +191,7 @@ Make_OODate (gn)
      * Libraries are only considered out-of-date if the archive module says
      * they are.
      *
-     * These weird rules are brought to you by Backward-Compatability and
+     * These weird rules are brought to you by Backward-Compatibility and
      * the strange people who wrote 'Make'.
      */
     if (gn->type & OP_USE) {
