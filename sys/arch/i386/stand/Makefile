@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.21 2003/04/30 19:52:17 dsl Exp $
+#	$NetBSD: Makefile,v 1.22 2003/05/12 14:48:56 dsl Exp $
 
 SUBDIR=		genprom installboot .WAIT
 
-SUBDIR+=	mbr
+SUBDIR+=	mbr bootxx boot
 
 SUBDIR+=	biosboot
 
