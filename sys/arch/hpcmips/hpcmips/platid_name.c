@@ -1,4 +1,4 @@
-/* $Id: platid_name.c,v 1.7 2000/05/22 15:05:37 uch Exp $ */
+/* $Id: platid_name.c,v 1.8 2000/06/03 08:00:43 takemura Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000
@@ -246,5 +246,15 @@ struct platid_name platid_name_table[] = {
 	  "IBM WorkPad z50" },
 	{ &platid_mask_MACH_IBM_WORKPAD_26011AU,
 	  "IBM WorkPad z50 2601 1AU" },
+	{ &platid_mask_MACH_VADEM,
+	  "VADEM" },
+	{ &platid_mask_MACH_VADEM_CLIO,
+	  "VADEM CLIO" },
+	{ &platid_mask_MACH_VADEM_CLIO_C,
+	  "VADEM CLIO C" },
+	{ &platid_mask_MACH_VADEM_CLIO_C1000,
+	  "VADEM CLIO C-1000" },
+	{ &platid_mask_MACH_VADEM_CLIO_C1050,
+	  "VADEM CLIO C-1050" },
 };
-int platid_name_table_size = 103;
+int platid_name_table_size = 108;
