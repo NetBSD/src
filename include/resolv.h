@@ -55,7 +55,7 @@
 
 /*
  *	@(#)resolv.h	8.1 (Berkeley) 6/2/93
- *	$Id: resolv.h,v 1.10 1997/04/13 09:26:22 mrg Exp $
+ *	$NetBSD: resolv.h,v 1.11 1997/10/13 09:26:07 lukem Exp $
  */
 
 #ifndef _RESOLV_H_
