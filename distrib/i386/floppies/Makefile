@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.10 1999/11/09 00:22:41 he Exp $
+#	$NetBSD: Makefile,v 1.11 2000/04/23 15:05:02 sommerfeld Exp $
 
-SUBDIR=	ramdisk fdset bootfloppy-big bootfloppy-tiny
+SUBDIR=	ramdisk fdset bootfloppy-big 
+
+# SUBDIR += bootfloppy-tiny
 
 TARGETS+=release
 
