@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.33 2002/05/09 12:28:09 uch Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.34 2002/09/22 05:42:20 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -212,7 +212,7 @@ cpu_exit(struct proc *p)
 	/* Schedule freeing process resources */
 	exit2(p);
 
-	cpu_switch(p);
+	cpu_switch(p, NULL);
 	/* NOTREACHED */
 }
 
