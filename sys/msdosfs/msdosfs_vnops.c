@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.38 1995/10/15 15:34:32 ws Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.39 1995/11/03 19:36:41 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -1351,7 +1351,7 @@ msdosfs_readdir(ap)
 	struct uio *uio = ap->a_uio;
 	u_long *cookies;
 	int ncookies;
-	off_t offset, coffset;
+	off_t offset;
 	int chksum = -1;
 	
 #ifdef MSDOSFS_DEBUG
@@ -1480,8 +1480,6 @@ msdosfs_readdir(ap)
 			if (dentp->deAttributes == ATTR_WIN95) {
 				if (pmp->pm_flags & MSDOSFSMNT_SHORTNAME)
 					continue;
-				if (chksum == -1)
-					coffset = offset;
 				chksum = win2unixfn((struct winentry *)dentp, &dirbuf, chksum);
 				continue;
 			}
@@ -1516,11 +1514,10 @@ msdosfs_readdir(ap)
 			dirbuf.d_fileno = fileno;
 			dirbuf.d_type =
 			    (dentp->deAttributes & ATTR_DIRECTORY) ? DT_DIR : DT_REG;
-			if (chksum != winChksum(dentp->deName)) {
+			if (chksum != winChksum(dentp->deName))
 				dirbuf.d_namlen = dos2unixfn(dentp->deName,
 							     (u_char *)dirbuf.d_name);
-				coffset = offset;
-			} else
+			else
 				dirbuf.d_name[dirbuf.d_namlen] = 0;
 			chksum = -1;
 			dirbuf.d_reclen = DIRSIZ(&dirbuf);
@@ -1533,7 +1530,7 @@ msdosfs_readdir(ap)
 				goto out;
 			}
 			if (cookies) {
-				*cookies++ = coffset;
+				*cookies++ = offset + sizeof(struct direntry);
 				if (--ncookies <= 0) {
 					brelse(bp);
 					goto out;
