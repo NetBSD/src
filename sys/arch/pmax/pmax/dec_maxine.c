@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_maxine.c,v 1.6 1998/06/22 09:37:42 jonathan Exp $	*/
+/*	$NetBSD: dec_maxine.c,v 1.7 1999/03/02 09:24:17 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6 1998/06/22 09:37:42 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.7 1999/03/02 09:24:17 jonathan Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -402,16 +402,7 @@ dec_maxine_intr(mask, pc, statusReg, causeReg)
 				printf ("can't handle isdn interrupt\n");
 				intrcnt[ISDN_INTR]++;
 		}
-	
-		if (intr & IOASIC_INTR_SCSI) {
-			if (tc_slot_info[XINE_SCSI_SLOT].intr)
-				(*(tc_slot_info[XINE_SCSI_SLOT].intr))
-				(tc_slot_info[XINE_SCSI_SLOT].sc);
-			else
-				printf ("can't handle scsi interrupt\n");
-			intrcnt[SCSI_INTR]++;
-		}
-	
+
 		if (intr & IOASIC_INTR_LANCE) {
 			if (tc_slot_info[XINE_LANCE_SLOT].intr)
 				(*(tc_slot_info[XINE_LANCE_SLOT].intr))
@@ -420,6 +411,15 @@ dec_maxine_intr(mask, pc, statusReg, causeReg)
 				printf ("can't handle lance interrupt\n");
 	
 			intrcnt[LANCE_INTR]++;
+		}
+
+		if (intr & IOASIC_INTR_SCSI) {
+			if (tc_slot_info[XINE_SCSI_SLOT].intr)
+				(*(tc_slot_info[XINE_SCSI_SLOT].intr))
+				(tc_slot_info[XINE_SCSI_SLOT].sc);
+			else
+				printf ("can't handle scsi interrupt\n");
+			intrcnt[SCSI_INTR]++;
 		}
 	}
 	if (mask & MIPS_INT_MASK_2)
