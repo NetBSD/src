@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.53 2004/04/21 01:05:41 christos Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.54 2004/04/29 16:10:55 jrf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.53 2004/04/21 01:05:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.54 2004/04/29 16:10:55 jrf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -384,7 +384,7 @@ portal_open(v)
 			splx(s);
 			goto bad;
 		}
-		(void) tsleep((caddr_t) &so->so_timeo, PSOCK, "portalcon", 5 * hz);
+		(void) tsleep(&so->so_timeo, PSOCK, "portalcon", 5 * hz);
 	}
 	splx(s);
 
@@ -407,7 +407,7 @@ portal_open(v)
 	pcred.pcr_gid = ap->a_cred->cr_gid;
 	pcred.pcr_ngroups = ap->a_cred->cr_ngroups;
 	memcpy(pcred.pcr_groups, ap->a_cred->cr_groups, NGROUPS * sizeof(gid_t));
-	aiov[0].iov_base = (caddr_t) &pcred;
+	aiov[0].iov_base = &pcred;
 	aiov[0].iov_len = sizeof(pcred);
 	aiov[1].iov_base = pt->pt_arg;
 	aiov[1].iov_len = pt->pt_size;
@@ -640,7 +640,7 @@ portal_reclaim(v)
 	struct portalnode *pt = VTOPORTAL(ap->a_vp);
 
 	if (pt->pt_arg) {
-		free((caddr_t) pt->pt_arg, M_TEMP);
+		free(pt->pt_arg, M_TEMP);
 		pt->pt_arg = 0;
 	}
 	FREE(ap->a_vp->v_data, M_TEMP);

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.112 2004/04/22 00:31:00 itojun Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.113 2004/04/29 16:10:55 jrf Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.112 2004/04/22 00:31:00 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.113 2004/04/29 16:10:55 jrf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1041,7 +1041,7 @@ procfs_readdir(v)
 
 	error = 0;
 	i = uio->uio_offset;
-	memset((caddr_t)&d, 0, UIO_MX);
+	memset(&d, 0, UIO_MX);
 	d.d_reclen = UIO_MX;
 	ncookies = uio->uio_resid / UIO_MX;
 
@@ -1080,7 +1080,7 @@ procfs_readdir(v)
 			memcpy(d.d_name, pt->pt_name, pt->pt_namlen + 1);
 			d.d_type = pt->pt_type;
 
-			if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
+			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
 				break;
 			if (cookies)
 				*cookies++ = i + 1;
@@ -1118,7 +1118,7 @@ procfs_readdir(v)
 			    pt->pt_pfstype, -1);
 			(void)memcpy(d.d_name, pt->pt_name, pt->pt_namlen + 1);
 			d.d_type = pt->pt_type;
-			if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
+			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
 				break;
 			if (cookies)
 				*cookies++ = i + 1;
@@ -1138,7 +1138,7 @@ procfs_readdir(v)
 			d.d_namlen = snprintf(d.d_name, sizeof(d.d_name),
 			    "%lld", (long long)(i - 2));
 			d.d_type = VREG;
-			if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
+			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
 				break;
 			if (cookies)
 				*cookies++ = i + 1;
@@ -1224,7 +1224,7 @@ procfs_readdir(v)
 				break;
 			}
 
-			if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
+			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
 				break;
 			nc++;
 			if (cookies)
@@ -1254,7 +1254,7 @@ procfs_readdir(v)
 			memcpy(d.d_name, pt->pt_name, pt->pt_namlen + 1);
 			d.d_type = pt->pt_type;
 
-			if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
+			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
 				break;
 			nc++;
 			if (cookies)
@@ -1350,7 +1350,7 @@ procfs_readlink(v)
 		}
 	}
 
-	error = uiomove((caddr_t)bp, len, ap->a_uio);
+	error = uiomove(bp, len, ap->a_uio);
 	if (path)
 		free(path, M_TEMP);
 	return error;

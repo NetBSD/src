@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.43 2004/04/27 17:37:31 jrf Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.44 2004/04/29 16:10:55 jrf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.43 2004/04/27 17:37:31 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.44 2004/04/29 16:10:55 jrf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -125,7 +125,7 @@ portal_mount(mp, path, data, ndp, p)
 	if (mp->mnt_flag & MNT_UPDATE)
 		return (EOPNOTSUPP);
 
-	error = copyin(data, (caddr_t) &args, sizeof(struct portal_args));
+	error = copyin(data, &args, sizeof(struct portal_args));
 	if (error)
 		return (error);
 
