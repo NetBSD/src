@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.144 1996/01/07 22:03:41 thorpej Exp $	*/
+/*	$NetBSD: wd.c,v 1.145 1996/01/08 21:21:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -421,7 +421,6 @@ wdstart(wd)
 	wd->sc_q.b_active = 1;
 	TAILQ_INSERT_TAIL(&wdc->sc_drives, wd, sc_drivechain);
 
-	/* Instrumentation. */
 	disk_busy(&wd->sc_dk);
     
 	/* If controller not already active, start it. */
@@ -458,6 +457,12 @@ wdfinish(wd, bp)
 	wd->sc_q.b_actf = bp->b_actf;
 
 	disk_unbusy(&wd->sc_dk, (bp->b_bcount - bp->b_resid));
+
+	if (!wd->sc_q.b_actf) {
+		TAILQ_REMOVE(&wdc->sc_drives, wd, sc_drivechain);
+		wd->sc_q.b_active = 0;
+	} else
+		disk_busy(&wd->sc_dk);
 
 	biodone(bp);
 }
@@ -518,11 +523,6 @@ loop:
     
 	/* Is there a transfer to this drive?  If not, deactivate drive. */
 	bp = wd->sc_q.b_actf;
-	if (bp == NULL) {
-		TAILQ_REMOVE(&wdc->sc_drives, wd, sc_drivechain);
-		wd->sc_q.b_active = 0;
-		goto loop;
-	}
     
 	if (wdc->sc_errors >= WDIORETRIES) {
 		wderror(wd, bp, "hard error");
@@ -1709,8 +1709,15 @@ wdctimeout(arg)
 
 	s = splbio();
 	if ((wdc->sc_flags & WDCF_ACTIVE) != 0) {
+		struct wd_softc *wd = wdc->sc_drives.tqh_first;
+		struct buf *bp = wd->sc_q.b_actf;
+
 		wdc->sc_flags &= ~WDCF_ACTIVE;
 		wderror(wdc, NULL, "lost interrupt");
+		printf("%s: lost interrupt: %sing %d@%s:%d\n",
+		    wdc->sc_dev.dv_xname,
+		    (bp->b_flags & B_READ) ? "read" : "writ",
+		    wd->sc_nblks, wd->sc_dev.dv_xname, wd->sc_blkno);
 		wdcunwedge(wdc);
 	} else
 		wderror(wdc, NULL, "missing untimeout");
