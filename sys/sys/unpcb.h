@@ -1,4 +1,4 @@
-/*	$NetBSD: unpcb.h,v 1.10 1997/06/24 19:12:53 thorpej Exp $	*/
+/*	$NetBSD: unpcb.h,v 1.11 1998/01/07 22:49:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,11 @@ struct	unpcb {
 	int	unp_cc;			/* copy of rcv.sb_cc */
 	int	unp_mbcnt;		/* copy of rcv.sb_mbcnt */
 	struct	timespec unp_ctime;	/* holds creation time */
+	int	unp_flags;		/* misc flags; see below*/
 };
+
+/* unp_flags */
+#define	UNP_WANTCRED	0x0001		/* credentials wanted */
 
 #define	sotounpcb(so)	((struct unpcb *)((so)->so_pcb))
 
