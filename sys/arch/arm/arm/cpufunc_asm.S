@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm.S,v 1.6 2001/08/30 01:15:39 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm.S,v 1.7 2001/09/05 16:14:49 matt Exp $	*/
 
 /*
  * xscale support code Copyright (c) 2001 Matt Thomas
@@ -772,6 +772,11 @@ Lxscale_cache_cleanD_loop:
 	bne	Lxscale_cache_cleanD_loop
 
 /*
+ * It's expected that we only use the minidata cache for kernel
+ * addresses, so there is no need to purge it on context switch
+ */
+#ifdef CACHE_CLEAN_MINIDATA
+/*
  * Clean mini-data-cache
  */
 	mov	r1, #64
@@ -779,6 +784,7 @@ Lxscale_cache_cleanD_loop2:
 	ldr	r3, [r0], #32
 	subs	r1, r1, #1
 	bne	Lxscale_cache_cleanD_loop2
+#endif
 
 	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
 
