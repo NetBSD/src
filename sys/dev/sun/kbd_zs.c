@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_zs.c,v 1.4 2000/03/23 07:01:44 thorpej Exp $	*/
+/*	$NetBSD: kbd_zs.c,v 1.5 2000/03/30 12:45:42 augustss Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -210,11 +210,11 @@ kbd_zs_write_data(k, c)
 
 static void
 kbd_zs_rxint(cs)
-	register struct zs_chanstate *cs;
+	struct zs_chanstate *cs;
 {
-	register struct kbd_softc *k;
-	register int put, put_next;
-	register u_char c, rr1;
+	struct kbd_softc *k;
+	int put, put_next;
+	u_char c, rr1;
 
 	k = cs->cs_private;
 	put = k->k_rbput;
@@ -274,9 +274,9 @@ kbd_zs_rxint(cs)
 
 static void
 kbd_zs_txint(cs)
-	register struct zs_chanstate *cs;
+	struct zs_chanstate *cs;
 {
-	register struct kbd_softc *k;
+	struct kbd_softc *k;
 
 	k = cs->cs_private;
 	zs_write_csr(cs, ZSWR0_RESET_TXINT);
@@ -288,11 +288,11 @@ kbd_zs_txint(cs)
 
 static void
 kbd_zs_stint(cs, force)
-	register struct zs_chanstate *cs;
+	struct zs_chanstate *cs;
 	int force;
 {
-	register struct kbd_softc *k;
-	register int rr0;
+	struct kbd_softc *k;
+	int rr0;
 
 	k = cs->cs_private;
 
@@ -330,10 +330,10 @@ static void
 kbd_zs_softint(cs)
 	struct zs_chanstate *cs;
 {
-	register struct kbd_softc *k;
-	register int get, c, s;
+	struct kbd_softc *k;
+	int get, c, s;
 	int intr_flags;
-	register u_short ring_data;
+	u_short ring_data;
 
 	k = cs->cs_private;
 

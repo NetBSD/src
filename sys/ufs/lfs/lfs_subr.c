@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.12 2000/01/19 00:03:05 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.13 2000/03/30 12:41:13 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ lfs_blkatoff(v)
 		char **a_res;
 		struct buf **a_bpp;
 		} */ *ap = v;
-	register struct lfs *fs;
+	struct lfs *fs;
 	struct inode *ip;
 	struct buf *bp;
 	ufs_daddr_t lbn;

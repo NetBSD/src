@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.60 2000/03/30 02:48:22 simonb Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.61 2000/03/30 12:41:12 augustss Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -165,7 +165,7 @@ ffs_mountroot()
  */
 int
 ffs_mount(mp, path, data, ndp, p)
-	register struct mount *mp;
+	struct mount *mp;
 	const char *path;
 	void *data;
 	struct nameidata *ndp;
@@ -174,7 +174,7 @@ ffs_mount(mp, path, data, ndp, p)
 	struct vnode *devvp;
 	struct ufs_args args;
 	struct ufsmount *ump = NULL;
-	register struct fs *fs;
+	struct fs *fs;
 	size_t size;
 	int error, flags;
 	mode_t accessmode;
@@ -340,11 +340,11 @@ ffs_mount(mp, path, data, ndp, p)
  */
 int
 ffs_reload(mountp, cred, p)
-	register struct mount *mountp;
+	struct mount *mountp;
 	struct ucred *cred;
 	struct proc *p;
 {
-	register struct vnode *vp, *nvp, *devvp;
+	struct vnode *vp, *nvp, *devvp;
 	struct inode *ip;
 	struct buf *bp;
 	struct fs *fs, *newfs;
@@ -499,7 +499,7 @@ loop:
  */
 int
 ffs_mountfs(devvp, mp, p)
-	register struct vnode *devvp;
+	struct vnode *devvp;
 	struct mount *mp;
 	struct proc *p;
 {
@@ -727,8 +727,8 @@ ffs_unmount(mp, mntflags, p)
 	int mntflags;
 	struct proc *p;
 {
-	register struct ufsmount *ump;
-	register struct fs *fs;
+	struct ufsmount *ump;
+	struct fs *fs;
 	int error, flags;
 
 	flags = 0;
@@ -768,12 +768,12 @@ ffs_unmount(mp, mntflags, p)
  */
 int
 ffs_flushfiles(mp, flags, p)
-	register struct mount *mp;
+	struct mount *mp;
 	int flags;
 	struct proc *p;
 {
 	extern int doforce;
-	register struct ufsmount *ump;
+	struct ufsmount *ump;
 	int error;
 
 	if (!doforce)
@@ -816,11 +816,11 @@ ffs_flushfiles(mp, flags, p)
 int
 ffs_statfs(mp, sbp, p)
 	struct mount *mp;
-	register struct statfs *sbp;
+	struct statfs *sbp;
 	struct proc *p;
 {
-	register struct ufsmount *ump;
-	register struct fs *fs;
+	struct ufsmount *ump;
+	struct fs *fs;
 
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
@@ -1068,11 +1068,11 @@ ffs_vget(mp, ino, vpp)
  */
 int
 ffs_fhtovp(mp, fhp, vpp)
-	register struct mount *mp;
+	struct mount *mp;
 	struct fid *fhp;
 	struct vnode **vpp;
 {
-	register struct ufid *ufhp;
+	struct ufid *ufhp;
 	struct fs *fs;
 
 	ufhp = (struct ufid *)fhp;
@@ -1092,8 +1092,8 @@ ffs_vptofh(vp, fhp)
 	struct vnode *vp;
 	struct fid *fhp;
 {
-	register struct inode *ip;
-	register struct ufid *ufhp;
+	struct inode *ip;
+	struct ufid *ufhp;
 
 	ip = VTOI(vp);
 	ufhp = (struct ufid *)fhp;
@@ -1169,8 +1169,8 @@ ffs_sbupdate(mp, waitfor)
 	struct ufsmount *mp;
 	int waitfor;
 {
-	register struct fs *fs = mp->um_fs;
-	register struct buf *bp;
+	struct fs *fs = mp->um_fs;
+	struct buf *bp;
 	int i, error = 0;
 	int32_t saved_nrpos = fs->fs_nrpos;
 	int64_t saved_qbmask = fs->fs_qbmask;
@@ -1220,8 +1220,8 @@ ffs_cgupdate(mp, waitfor)
 	struct ufsmount *mp;
 	int waitfor;
 {
-	register struct fs *fs = mp->um_fs;
-	register struct buf *bp;
+	struct fs *fs = mp->um_fs;
+	struct buf *bp;
 	int blks;
 	caddr_t space;
 	int i, size, error = 0, allerror = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.17 2000/01/24 02:40:29 matt Exp $	*/
+/*	$NetBSD: qd.c,v 1.18 2000/03/30 12:45:37 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -558,7 +558,7 @@ qd_match(parent, match, aux)
 	struct qd_softc *sc = &ssc;
 	struct uba_attach_args *ua = aux;
 	struct uba_softc *uh = (void *)parent;
-	register int unit;
+	int unit;
 	volatile struct dga *dga;       /* pointer to gate array structure */
 	int vector;
 #ifdef notdef
@@ -732,8 +732,8 @@ void qd_attach(parent, self, aux)
 	   struct device *parent, *self;
 	   void *aux;
      {
-	register struct uba_attach_args *ua = aux;
-	register int unit;	/* QDSS module # for this call */
+	struct uba_attach_args *ua = aux;
+	int unit;	/* QDSS module # for this call */
 
 	printf("\n");
 	
@@ -797,8 +797,8 @@ qdopen(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	volatile register struct dga *dga;	/* ptr to gate array struct */
-	register struct tty *tp;
+	volatile struct dga *dga;	/* ptr to gate array struct */
+	struct tty *tp;
 	volatile struct duart *duart;
 	int unit;
 	int minor_dev;
@@ -883,9 +883,9 @@ qdclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	register struct tty *tp;
-	register struct qdmap *qd;
-	volatile register int *ptep;
+	struct tty *tp;
+	struct qdmap *qd;
+	volatile int *ptep;
 	volatile struct dga *dga;      	/* gate array register map pointer */
 	volatile struct duart *duart;
 	volatile struct adder *adder;
@@ -1083,11 +1083,11 @@ qdioctl(dev, cmd, datap, flags, p)
 	int flags;
 	struct proc *p;
 {
-	volatile register int *ptep;	/* page table entry pointer */
-	register int mapix;		/* QVmap[] page table index */
-	register struct _vs_event *event;
-	register struct tty *tp;
-	register int i;
+	volatile int *ptep;	/* page table entry pointer */
+	int mapix;		/* QVmap[] page table index */
+	struct _vs_event *event;
+	struct tty *tp;
+	int i;
 	struct qdmap *qd;		/* pointer to device map struct */
 	volatile struct dga *dga;	/* Gate Array reg structure pntr */
 	volatile struct duart *duart;	/* DUART reg structure pointer */
@@ -1515,9 +1515,9 @@ qdpoll(dev, events, p)
 	int events;
 	struct proc *p;
 {
-	register int s;
-	register int unit;
-	register struct tty *tp;
+	int s;
+	int unit;
+	struct tty *tp;
 	u_int minor_dev = minor(dev);
 	int revents = 0;
 
@@ -1597,9 +1597,9 @@ qdwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	register struct tty *tp;
-	register int minor_dev;
-	register int unit;
+	struct tty *tp;
+	int minor_dev;
+	int unit;
 
 	minor_dev = minor(dev);
 	unit = (minor_dev >> 2) & 0x07;
@@ -1626,9 +1626,9 @@ qdread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	register struct tty *tp;
-	register int minor_dev;
-	register int unit;
+	struct tty *tp;
+	int minor_dev;
+	int unit;
 
 	minor_dev = minor(dev);
 	unit = (minor_dev >> 2) & 0x07;
@@ -1657,11 +1657,11 @@ qdread(dev, uio, flag)
 
 void
 qd_strategy(bp)
-	register struct buf *bp;
+	struct buf *bp;
 {
-	volatile register struct dga *dga;
-	volatile register struct adder *adder;
-	register int unit;
+	volatile struct dga *dga;
+	volatile struct adder *adder;
+	int unit;
 	int QBAreg;
 	int s;
 	int cookie;
@@ -1731,7 +1731,7 @@ panic("qd_strategy");
 void qdstart(tp)
 	struct tty *tp;
 {
-	register int which_unit, unit, c;
+	int which_unit, unit, c;
 	int s;
 
 	unit = minor(tp->t_dev);
@@ -1783,7 +1783,7 @@ qdstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	register int s;
+	int s;
 
 	s = spl5();	/* block intrpts during state modification */
 	if (tp->t_state & TS_BUSY) {
@@ -1803,9 +1803,9 @@ blitc(unit, chr)
 	int unit;
 	u_char chr;
 {
-	volatile register struct adder *adder;
-	volatile register struct dga *dga;
-	register int i;
+	volatile struct adder *adder;
+	volatile struct dga *dga;
+	int i;
 	int nograph = !(qdflags[unit].inuse&GRAPHIC_DEV);
 	static short inescape[NQD];
 
@@ -2012,9 +2012,9 @@ qddint(arg)
 	void *arg;
 {
 	struct device *dv = arg;
-	register struct DMAreq_header *header;
-	register struct DMAreq *request;
-	volatile register struct dga *dga;
+	struct DMAreq_header *header;
+	struct DMAreq *request;
+	volatile struct dga *dga;
 	volatile struct adder *adder;
 	int cookie;			/* DMA adrs for QDSS */
 
@@ -2201,13 +2201,13 @@ qdaint(arg)
 	void *arg;
 {
 	struct device *dv = arg;
-	volatile register struct adder *adder;
+	volatile struct adder *adder;
 	struct color_buf *cbuf;
 	int i;
-	register struct rgb *rgbp;
-	volatile register short *red;
-	volatile register short *green;
-	volatile register short *blue;
+	struct rgb *rgbp;
+	volatile short *red;
+	volatile short *green;
+	volatile short *blue;
 
 	(void)spl4(); 			/* allow interval timer in */
 
@@ -2287,8 +2287,8 @@ qdiint(arg)
 	void *arg;
 {
 	struct device *dv = arg;
-	register struct _vs_event *event;
-	register struct qdinput *eqh;
+	struct _vs_event *event;
+	struct qdinput *eqh;
 	volatile struct dga *dga;
 	volatile struct duart *duart;
 	struct mouse_report *new_rep;
@@ -2881,7 +2881,7 @@ void
 clear_qd_screen(unit)
 	int unit;
 {
-	volatile register struct adder *adder;
+	volatile struct adder *adder;
 	adder = (struct adder *) qdmap[unit].adder;
 
 	adder->x_limit = 1024;
@@ -2936,9 +2936,9 @@ ldcursor(unit, bitmap)
 	int unit;
 	short *bitmap;
 {
-	volatile register struct dga *dga;
-	volatile register short *temp;
-	register int i;
+	volatile struct dga *dga;
+	volatile short *temp;
+	int i;
 	int curs;
 
 	dga = (struct dga *) qdmap[unit].dga;
@@ -2970,10 +2970,10 @@ void
 ldfont(unit)
 	int unit;
 {
-	volatile register struct adder *adder;
+	volatile struct adder *adder;
 
-	register int i, j, k, max_chars_line;
-	register short packed;
+	int i, j, k, max_chars_line;
+	short packed;
 
 	adder = (struct adder *) qdmap[unit].adder;
 
@@ -3113,9 +3113,9 @@ int
 qdcngetc(dev)
 	dev_t dev;
 {
-	register short key;
-	register char chr;
-	volatile register struct duart *duart;
+	short key;
+	char chr;
+	volatile struct duart *duart;
 
 	duart = (struct duart *) qdmap[0].duart;
 
@@ -3211,8 +3211,8 @@ void
 led_control(unit, cmd, led_mask)
 	int unit, cmd, led_mask;
 {
-	register int i;
-	volatile register struct duart *duart;
+	int i;
+	volatile struct duart *duart;
 
 	duart = (struct duart *)qdmap[unit].duart;
 
@@ -3302,7 +3302,7 @@ void
 init_shared(unit)
 	int unit;
 {
-	volatile register struct dga *dga;
+	volatile struct dga *dga;
 
 	dga = (struct dga *) qdmap[unit].dga;
 
@@ -3366,10 +3366,10 @@ setup_dragon(unit)
 	int unit;
 {
 
-	volatile register struct adder *adder;
-	volatile register struct dga *dga;
+	volatile struct adder *adder;
+	volatile struct dga *dga;
 	volatile short *memcsr;
-	register int i;
+	int i;
 	short top;		/* clipping/scrolling boundaries */
 	short bottom;
 	short right;
@@ -3620,8 +3620,8 @@ void
 setup_input(unit)
 	int unit;
 {
-	volatile register struct duart *duart;	/* DUART register structure pointer */
-	register int i, bits;
+	volatile struct duart *duart;	/* DUART register structure pointer */
+	int i, bits;
 	char id_byte;
 
 	duart = (struct duart *) qdmap[unit].duart;
@@ -3788,7 +3788,7 @@ wait_status(adder, mask)
 	volatile struct adder *adder;
 	int mask;
 {
-	register int i;
+	int i;
 
 	for (i = 10000, adder->status = 0 ; i > 0  &&  
 	     !(adder->status&mask) ; --i)
@@ -3812,7 +3812,7 @@ write_ID(adder, adrs, data)
 	short adrs;
 	short data;
 {
-	register int i;
+	int i;
 
 	for (i = 100000, adder->status = 0 ; 
 	      i > 0  &&  !(adder->status&ADDRESS_COMPLETE) ; --i)

@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.21 1998/06/08 07:04:46 thorpej Exp $	*/
+/*	$NetBSD: eisa.c,v 1.22 2000/03/30 12:45:28 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -82,7 +82,7 @@ eisaprint(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
-	register struct eisa_attach_args *ea = aux;
+	struct eisa_attach_args *ea = aux;
 	char devinfo[256]; 
 
 	if (pnp) {

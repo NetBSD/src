@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.8 1998/06/13 16:26:22 kleink Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.9 2000/03/30 12:41:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -109,7 +109,7 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	int *nump;
 	int *runp;
 {
-	register struct inode *ip;
+	struct inode *ip;
 	struct buf *bp;
 	struct ufsmount *ump;
 	struct mount *mp;
@@ -236,7 +236,7 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 int
 ufs_getlbns(vp, bn, ap, nump)
 	struct vnode *vp;
-	register ufs_daddr_t bn;
+	ufs_daddr_t bn;
 	struct indir *ap;
 	int *nump;
 {

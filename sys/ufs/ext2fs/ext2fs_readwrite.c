@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.10 1999/03/24 05:51:30 mrg Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.11 2000/03/30 12:41:11 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -78,10 +78,10 @@ ext2fs_read(v)
 		int a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	register struct vnode *vp;
-	register struct inode *ip;
-	register struct uio *uio;
-	register struct m_ext2fs *fs;
+	struct vnode *vp;
+	struct inode *ip;
+	struct uio *uio;
+	struct m_ext2fs *fs;
 	struct buf *bp;
 	ufs_daddr_t lbn, nextlbn;
 	off_t bytesinfile;
@@ -181,10 +181,10 @@ ext2fs_write(v)
 		int a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	register struct vnode *vp;
-	register struct uio *uio;
-	register struct inode *ip;
-	register struct m_ext2fs *fs;
+	struct vnode *vp;
+	struct uio *uio;
+	struct inode *ip;
+	struct m_ext2fs *fs;
 	struct buf *bp;
 	struct proc *p;
 	ufs_daddr_t lbn;

@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_rops.c,v 1.5 1999/02/12 11:25:23 drochner Exp $ */
+/* $NetBSD: wscons_rops.c,v 1.6 2000/03/30 12:45:44 augustss Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -60,8 +60,8 @@ rcons_cursor(id, on, row, col)
 	void *id;
 	int on, row, col;
 {
-	register struct rcons *rc = id;
-	register int x, y;
+	struct rcons *rc = id;
+	int x, y;
 
 	/* turn the cursor off */
 	if (!on) {
@@ -120,7 +120,7 @@ rcons_putchar(id, row, col, uc, attr)
 	long attr;
 {
 	struct rcons *rc = id;
-	register int x, y, op;
+	int x, y, op;
 	u_char help;
 
 	x = col * rc->rc_font->width + rc->rc_xorigin;

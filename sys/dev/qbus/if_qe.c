@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.39 2000/01/24 02:40:29 matt Exp $ */
+/*      $NetBSD: if_qe.c,v 1.40 2000/03/30 12:45:37 augustss Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -669,7 +669,7 @@ qeintr(arg)
  */
 int
 qeioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {

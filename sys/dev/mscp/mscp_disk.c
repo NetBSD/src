@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.22 2000/01/21 23:39:59 thorpej Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.23 2000/03/30 12:45:34 augustss Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -205,7 +205,7 @@ raopen(dev, flag, fmt, p)
 	int flag, fmt;
 	struct	proc *p;
 {
-	register struct ra_softc *ra;
+	struct ra_softc *ra;
 	int part, unit, mask;
 	/*
 	 * Make sure this is a reasonable open request.
@@ -266,8 +266,8 @@ raclose(dev, flags, fmt, p)
 	int flags, fmt;
 	struct	proc *p;
 {
-	register int unit = DISKUNIT(dev);
-	register struct ra_softc *ra = ra_cd.cd_devs[unit];
+	int unit = DISKUNIT(dev);
+	struct ra_softc *ra = ra_cd.cd_devs[unit];
 	int mask = (1 << DISKPART(dev));
 
 	switch (fmt) {
@@ -303,10 +303,10 @@ raclose(dev, flags, fmt, p)
  */
 void
 rastrategy(bp)
-	register struct buf *bp;
+	struct buf *bp;
 {
-	register int unit;
-	register struct ra_softc *ra;
+	int unit;
+	struct ra_softc *ra;
 	/*
 	 * Make sure this is a reasonable drive to use.
 	 */
@@ -379,9 +379,9 @@ raioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register int unit = DISKUNIT(dev);
-	register struct disklabel *lp, *tp;
-	register struct ra_softc *ra = ra_cd.cd_devs[unit];
+	int unit = DISKUNIT(dev);
+	struct disklabel *lp, *tp;
+	struct ra_softc *ra = ra_cd.cd_devs[unit];
 	int error = 0;
 
 	lp = ra->ra_disk.dk_label;
@@ -458,7 +458,7 @@ int
 rasize(dev)
 	dev_t dev;
 {
-	register int unit = DISKUNIT(dev);
+	int unit = DISKUNIT(dev);
 	struct ra_softc *ra;
 
 	if (unit >= ra_cd.cd_ndevs || ra_cd.cd_devs[unit] == 0)
@@ -603,7 +603,7 @@ rxopen(dev, flag, fmt, p)
 	int flag, fmt;
 	struct	proc *p;
 {
-	register struct rx_softc *rx;
+	struct rx_softc *rx;
 	int unit;
 
 	/*
@@ -646,10 +646,10 @@ rxclose(dev, flags, fmt, p)
  */
 void
 rxstrategy(bp)
-	register struct buf *bp;
+	struct buf *bp;
 {
-	register int unit;
-	register struct rx_softc *rx;
+	int unit;
+	struct rx_softc *rx;
 
 	/*
 	 * Make sure this is a reasonable drive to use.
@@ -717,9 +717,9 @@ rxioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register int unit = DISKUNIT(dev);
-	register struct disklabel *lp;
-	register struct rx_softc *rx = rx_cd.cd_devs[unit];
+	int unit = DISKUNIT(dev);
+	struct disklabel *lp;
+	struct rx_softc *rx = rx_cd.cd_devs[unit];
 	int error = 0;
 
 	lp = rx->ra_disk.dk_label;
@@ -902,8 +902,8 @@ rrmakelabel(dl, type)
  */
 int
 rrgotstatus(usc, mp)
-	register struct device *usc;
-	register struct mscp *mp;
+	struct device *usc;
+	struct mscp *mp;
 {	
 	if ((mp->mscp_status & M_ST_MASK) != M_ST_SUCCESS) {
 		printf("%s: attempt to get status failed: ", usc->dv_xname);
@@ -937,8 +937,8 @@ rrreplace(usc, mp)
 /*ARGSUSED*/
 int 
 rrioerror(usc, mp, bp)
-	register struct device *usc;
-	register struct mscp *mp;
+	struct device *usc;
+	struct mscp *mp;
 	struct buf *bp;
 {
 	struct ra_softc *ra = (void *)usc;
