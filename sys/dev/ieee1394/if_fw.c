@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fw.c,v 1.14 2002/03/05 04:12:58 itojun Exp $	*/
+/*	$NetBSD: if_fw.c,v 1.15 2002/03/06 05:33:05 nathanw Exp $	*/
 
 /* XXX ALTQ XXX */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fw.c,v 1.14 2002/03/05 04:12:58 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fw.c,v 1.15 2002/03/06 05:33:05 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -288,7 +288,6 @@ fw_stop(struct ifnet *ifp, int disable)
 	struct fw_softc *sc = (struct fw_softc *)ifp->if_softc;
 	struct ieee1394_softc *psc =
 	    (struct ieee1394_softc *)sc->sc_sc1394.sc1394_dev.dv_parent;
-	struct mbuf *m;
 
 	(*psc->sc1394_ifinreg)
 	    (sc->sc_sc1394.sc1394_dev.dv_parent, FW_FIFO_HI, FW_FIFO_LO,
