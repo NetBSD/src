@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.2 1998/04/07 15:57:48 drochner Exp $ */
+/* $NetBSD: pckbc.c,v 1.3 1998/04/18 09:42:20 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -1017,23 +1017,40 @@ pckbc_cnattach(iot, slot)
 	bus_space_tag_t iot;
 	pckbc_slot_t slot;
 {
-	int res;
+	bus_space_handle_t ioh_d, ioh_c;
+	int res = 0;
 
-	pckbc_consdata.t_iot = iot;
-	if (bus_space_map(iot, IO_KBD + KBDATAP, 1, 0,
-			  &pckbc_consdata.t_ioh_d))
+	if (bus_space_map(iot, IO_KBD + KBDATAP, 1, 0, &ioh_d))
                 return (ENXIO);
-	if (bus_space_map(iot, IO_KBD + KBCMDP, 1, 0,
-			  &pckbc_consdata.t_ioh_c)) {
-		bus_space_unmap(iot, pckbc_consdata.t_ioh_d, 1);
+	if (bus_space_map(iot, IO_KBD + KBCMDP, 1, 0, &ioh_c)) {
+		bus_space_unmap(iot, ioh_d, 1);
                 return (ENXIO);
 	}
 
+	pckbc_consdata.t_iot = iot;
+	pckbc_consdata.t_ioh_d = ioh_d;
+	pckbc_consdata.t_ioh_c = ioh_c;
+
+	/* flush */
+	(void) pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, 0);
+
+	/* selftest? */
+
+	/* init cmd byte, enable ports */
+	pckbc_consdata.t_cmdbyte = KC8_CPU;
+	if (!pckbc_put8042cmd(&pckbc_consdata)) {
+		printf("kbc: cmd word write error\n");
+		res = EIO;
+	}
+
+	if (!res) {
 #if (NPCKBD > 0)
-	res = pckbd_cnattach(&pckbc_consdata, slot);
+		res = pckbd_cnattach(&pckbc_consdata, slot);
 #else
-	res = pckbc_machdep_cnattach(&pckbc_consdata, slot);
+		res = pckbc_machdep_cnattach(&pckbc_consdata, slot);
 #endif
+	}
+
 	if (res) {
 		bus_space_unmap(iot, pckbc_consdata.t_ioh_d, 1);
 		bus_space_unmap(iot, pckbc_consdata.t_ioh_c, 1);
