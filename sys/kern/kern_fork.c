@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.117 2004/08/08 11:00:05 jdolecek Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.118 2004/08/08 11:02:10 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.117 2004/08/08 11:00:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.118 2004/08/08 11:02:10 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -163,6 +163,13 @@ sys___clone(struct lwp *l, void *v, register_t *retval)
 	 * We don't support the CLONE_PID or CLONE_PTRACE flags.
 	 */
 	if (SCARG(uap, flags) & (CLONE_PID|CLONE_PTRACE))
+		return (EINVAL);
+
+	/*
+	 * Linux enforces CLONE_VM with CLONE_SIGHAND, do same.
+	 */
+	if (SCARG(uap, flags) & CLONE_SIGHAND
+	    && (SCARG(uap, flags) & CLONE_VM) == 0)
 		return (EINVAL);
 
 	flags = 0;
