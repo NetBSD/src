@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.42 2001/01/27 04:49:34 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.43 2001/01/27 04:53:14 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.42 2001/01/27 04:49:34 itojun Exp $");
+__RCSID("$NetBSD: route.c,v 1.43 2001/01/27 04:53:14 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -736,6 +736,9 @@ newroute(argc, argv)
 				break;
 			case K_BLACKHOLE:
 				flags |= RTF_BLACKHOLE;
+				break;
+			case K_CLONED:
+				flags |= RTF_CLONED;
 				break;
 			case K_PROTO1:
 				flags |= RTF_PROTO1;
