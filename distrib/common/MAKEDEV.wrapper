@@ -1,5 +1,7 @@
 #!/bin/sh
 #
+# $NetBSD: MAKEDEV.wrapper,v 1.2 2002/02/08 05:17:49 lukem Exp $
+#
 # MAKEDEV.wrapper --
 #	Wrapper script for the MAKEDEV script defined in ${MAKEDEVSCRIPT}
 #	to output a list of commands that MAKEDEV would have run to
