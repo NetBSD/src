@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.1.2.23 2002/12/31 01:03:52 thorpej Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.1.2.24 2003/01/07 22:12:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@ do {									\
 #define	PRELE(l)	(--(l)->l_holdcnt)
 
 
-void	preempt (struct lwp *);
+void	preempt (int);
 int	mi_switch (struct lwp *, struct lwp *);
 #ifndef remrunqueue
 void	remrunqueue (struct lwp *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.74.4.21 2002/12/29 19:41:16 thorpej Exp $ */
+/*	$NetBSD: trap.c,v 1.74.4.22 2003/01/07 22:12:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -461,7 +461,7 @@ userret(l, pc, oticks)
 		/*
 		 * We are being preempted.
 		 */
-		preempt(NULL);
+		preempt(0);
 		while ((sig = CURSIG(l)) != 0)
 			postsig(sig);
 	}
@@ -694,7 +694,7 @@ badtrap:
 			extern int sadebug;
 			if (sadebug)
 				printf("trap: T_AST, preempt\n");
-			preempt(NULL);
+			preempt(0);
 		}
 		want_ast = 0;
 #endif

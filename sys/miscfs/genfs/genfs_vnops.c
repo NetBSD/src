@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.31.2.21 2002/12/11 06:46:30 thorpej Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.31.2.22 2003/01/07 22:12:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.31.2.21 2002/12/11 06:46:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.31.2.22 2003/01/07 22:12:12 thorpej Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -1138,7 +1138,7 @@ genfs_putpages(void *v)
 			}
 			if (yield) {
 				simple_unlock(slock);
-				preempt(NULL);
+				preempt(1);
 				simple_lock(slock);
 			} else {
 				pg->flags |= PG_WANTED;

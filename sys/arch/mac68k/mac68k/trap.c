@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.96.4.11 2002/11/11 22:00:04 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.96.4.12 2003/01/07 22:12:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -538,7 +538,7 @@ copyfault:
 			ADDUPROF(p);
 		}
 		if (want_resched)
-			preempt(NULL);
+			preempt(0);
 		goto out;
 
 	case T_MMUFLT:		/* Kernel mode page fault */

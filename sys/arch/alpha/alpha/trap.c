@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.77.2.7 2002/07/12 01:39:21 nathanw Exp $ */
+/* $NetBSD: trap.c,v 1.77.2.8 2003/01/07 22:12:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.77.2.7 2002/07/12 01:39:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.77.2.8 2003/01/07 22:12:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -640,7 +640,7 @@ ast(struct trapframe *framep)
 		/*
 		 * We are being preempted.
 		 */
-		preempt(NULL);
+		preempt(0);
 	}
 
 	KERNEL_PROC_UNLOCK(l);

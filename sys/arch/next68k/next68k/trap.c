@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.35.4.10 2002/09/26 20:04:51 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.35.4.11 2003/01/07 22:12:33 thorpej Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -565,7 +565,7 @@ trap(type, code, v, frame)
 			ADDUPROF(p);
 		}
 		if (want_resched)
-			preempt(NULL);
+			preempt(0);
 		goto out;
 
 	case T_MMUFLT:		/* kernel mode page fault */

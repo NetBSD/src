@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.66.8.13 2002/12/29 19:42:17 thorpej Exp $     */
+/*	$NetBSD: trap.c,v 1.66.8.14 2003/01/07 22:12:44 thorpej Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -130,7 +130,7 @@ userret(struct lwp *l, struct trapframe *frame, u_quad_t oticks)
 		/*
 		 * We are being preempted.
 		 */
-		preempt(NULL);
+		preempt(0);
 		while ((sig = CURSIG(l)) != 0)
 			postsig(sig);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.53.4.18 2002/12/11 06:11:46 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.53.4.19 2003/01/07 22:12:35 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -297,7 +297,7 @@ trap(struct trapframe *frame)
 		}
 		/* Check whether we are being preempted. */
 		if (want_resched)
-			preempt(NULL);
+			preempt(0);
 		KERNEL_PROC_UNLOCK(l);
 		break;
 
