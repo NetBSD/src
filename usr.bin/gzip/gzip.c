@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.29.2.8 2004/05/10 14:39:00 tron Exp $	*/
+/*	$NetBSD: gzip.c,v 1.29.2.9 2004/05/30 14:45:06 tron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.29.2.8 2004/05/10 14:39:00 tron Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.29.2.9 2004/05/30 14:45:06 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -1170,7 +1170,7 @@ file_uncompress(char *file)
 			    (unsigned long long)osb.st_size);
 			goto lose;
 		}
-		newfile = outfile;
+		newfile = strdup(outfile);
 		if (cflag == 0)
 			unlink(file);
 		size = osb.st_size;
@@ -1301,7 +1301,7 @@ handle_stdout(void)
 static void
 handle_pathname(char *path)
 {
-	char *opath = path, *s = 0;
+	char *opath = path, *s = NULL;
 	ssize_t len;
 	struct stat sb;
 
@@ -1316,13 +1316,14 @@ handle_pathname(char *path)
 retry:
 	if (stat(path, &sb) < 0) {
 		/* lets try <path>.gz if we're decompressing */
-		if (dflag && s == 0 && errno == ENOENT) {
+		if (dflag && s == NULL && errno == ENOENT) {
 			len = strlen(path);
-			s = malloc(len + suffix_len);
-			if (s == 0)
+			s = malloc(len + suffix_len + 1);
+			if (s == NULL)
 				maybe_err(1, "malloc");
 			memmove(s, path, len);
 			memmove(&s[len], suffix, suffix_len);
+			s[len + suffix_len] = 0x0;
 			path = s;
 			goto retry;
 		}
