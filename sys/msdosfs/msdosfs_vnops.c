@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.47 1996/03/08 18:13:10 scottr Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.48 1996/03/20 00:45:43 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -1662,7 +1662,9 @@ msdosfs_lock(v)
 	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	register struct denode *dep;
+#ifdef DIAGNOSTIC
 	struct proc *p = curproc;	/* XXX */
+#endif
 
 start:
 	while (vp->v_flag & VXLOCK) {
@@ -1708,7 +1710,9 @@ msdosfs_unlock(v)
 		struct vnode *vp;
 	} */ *ap = v;
 	register struct denode *dep = VTODE(ap->a_vp);
+#ifdef DIAGNOSTIC
 	struct proc *p = curproc;	/* XXX */
+#endif
 
 #ifdef DIAGNOSTIC
 	if ((dep->de_flag & DE_LOCKED) == 0) {
@@ -1844,11 +1848,12 @@ msdosfs_print(v)
 	} */ *ap = v;
 	struct denode *dep = VTODE(ap->a_vp);
 
-	printf("tag VT_MSDOSFS, startcluster %d, dircluster %d, diroffset %d ",
-	       dep->de_StartCluster, dep->de_dirclust, dep->de_diroffset);
+	printf(
+	    "tag VT_MSDOSFS, startcluster %d, dircluster %ld, diroffset %ld ",
+	    dep->de_StartCluster, dep->de_dirclust, dep->de_diroffset);
 	printf(" dev %d, %d, %s\n",
-	       major(dep->de_dev), minor(dep->de_dev),
-	       dep->de_flag & DE_LOCKED ? "(LOCKED)" : "");
+	    major(dep->de_dev), minor(dep->de_dev),
+	    dep->de_flag & DE_LOCKED ? "(LOCKED)" : "");
 #ifdef DIAGNOSTIC
 	if (dep->de_lockholder) {
 		printf("    owner pid %d", dep->de_lockholder);
