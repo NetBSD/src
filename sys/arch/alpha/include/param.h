@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.15 1996/11/13 21:13:19 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.16 1997/02/24 23:16:53 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,9 +58,16 @@
  * Round p (pointer or byte index) up to a correctly-aligned value for all
  * data types (int, long, ...).   The result is u_long and must be cast to
  * any desired pointer type.
+ *
+ * ALIGNED_POINTER is a boolean macro that checks whether an address
+ * is valid to fetch data elements of type t from on this architecture.
+ * This does not reflect the optimal alignment, just the possibility
+ * (within reasonable limits). 
+ *
  */
-#define	ALIGNBYTES	7
-#define	ALIGN(p)	(((u_long)(p) + ALIGNBYTES) &~ ALIGNBYTES)
+#define	ALIGNBYTES		7
+#define	ALIGN(p)		(((u_long)(p) + ALIGNBYTES) &~ ALIGNBYTES)
+#define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
 
 #define	NBPG		(1 << ALPHA_PGSHIFT)		/* bytes/page */
 #define	PGOFSET		(NBPG-1)			/* byte off. into pg */
