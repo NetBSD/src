@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: file2netbsd,v 1.6 2003/09/25 18:19:53 pooka Exp $
+#	$NetBSD: file2netbsd,v 1.7 2003/10/27 16:31:46 pooka Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -41,7 +41,7 @@
 #
 
 # edit this
-file_vers='4.04'
+file_vers='4.06'
 
 #
 # (usually) NO NEED TO EDIT BELOW THIS LINE
@@ -111,6 +111,9 @@ wq' | ed Makefile.am >/dev/null 2>&1
 automake
 autoconf
 rm -rf autom4te.cache
+
+#### No python in the base system
+rm -rf python
 
 echo done
 
