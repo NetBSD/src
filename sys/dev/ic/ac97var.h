@@ -1,4 +1,4 @@
-/*	$NetBSD: ac97var.h,v 1.11 2004/11/08 14:24:17 kent Exp $	*/
+/*	$NetBSD: ac97var.h,v 1.12 2004/11/10 04:20:26 kent Exp $	*/
 /*	$OpenBSD: ac97.h,v 1.4 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -79,5 +79,14 @@ struct ac97_codec_if {
 };
 
 int ac97_attach(struct ac97_host_if *);
+
+#define AC97_IS_FIXED_RATE(codec)	\
+	!((codec)->vtbl->get_extcaps(codec) & AC97_EXT_AUDIO_VRA)
+#define AC97_IS_4CH(codec)		\
+	((codec)->vtbl->get_extcaps(codec) & AC97_EXT_AUDIO_SDAC)
+#define AC97_IS_6CH(codec)		\
+	(((codec)->vtbl->get_extcaps(codec) \
+	& (AC97_EXT_AUDIO_SDAC | AC97_EXT_AUDIO_CDAC | AC97_EXT_AUDIO_LDAC)) \
+	== (AC97_EXT_AUDIO_SDAC | AC97_EXT_AUDIO_CDAC | AC97_EXT_AUDIO_LDAC))
 
 #endif /* _DEV_IC_AC97VAR_H_ */
