@@ -1,4 +1,4 @@
-/*	$NetBSD: read_line.c,v 1.4 2000/07/21 16:03:14 tron Exp $	*/
+/*	$NetBSD: read_line.c,v 1.5 2002/07/10 20:19:41 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: read_line.c,v 1.4 2000/07/21 16:03:14 tron Exp $");
+__RCSID("$NetBSD: read_line.c,v 1.5 2002/07/10 20:19:41 wiz Exp $");
 #endif
 
 #include <sys/param.h>
@@ -50,27 +50,25 @@ __RCSID("$NetBSD: read_line.c,v 1.4 2000/07/21 16:03:14 tron Exp $");
  *	and eliminating trailing newlines.
  *	Returns a pointer to an internal buffer that is reused upon
  *	next invocation.
+ *
+ * NOTE: if HAS_FPARSELN is not defined, delim and flags are currently unused.
  */
 char *
-read_line(fp, size, lineno, delim, flags)
-	FILE		*fp;
-	size_t		*size;
-	size_t		*lineno;
-	const char	delim[3];	/* unused */
-	int		flags;		/* unused */
+read_line(FILE * fp, size_t * size, size_t * lineno, const char *delim,
+	  int flags)
 {
-	static char	*buf;
+	static char *buf;
 #ifdef HAS_FPARSELN
 
 	if (buf != NULL)
 		free(buf);
 	return (buf = fparseln(fp, size, lineno, delim, flags));
 #else
-	static int	 buflen;
+	static int buflen;
 
-	size_t	 s, len;
-	char	*ptr;
-	int	 cnt;
+	size_t s, len;
+	char *ptr;
+	int cnt;
 
 	len = 0;
 	cnt = 1;
@@ -86,12 +84,12 @@ read_line(fp, size, lineno, delim, flags)
 				return buf;
 		}
 		if (ptr[s - 1] == '\n')	/* the newline may be missing at EOF */
-			s--;		/* forget newline */
+			s--;	/* forget newline */
 		if (!s)
 			cnt = 0;
 		else {
 			if ((cnt = (ptr[s - 1] == '\\')) != 0)
-				s--;		/* forget \\ */
+				s--;	/* forget \\ */
 		}
 
 		if (len + s + 1 > buflen) {
@@ -107,5 +105,5 @@ read_line(fp, size, lineno, delim, flags)
 	if (size != NULL)
 		*size = len;
 	return buf;
-#endif /* HAS_FPARSELN */
+#endif				/* HAS_FPARSELN */
 }

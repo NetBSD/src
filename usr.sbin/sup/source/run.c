@@ -1,9 +1,9 @@
-/*	$NetBSD: run.c,v 1.10 2002/07/10 18:53:58 wiz Exp $	*/
+/*	$NetBSD: run.c,v 1.11 2002/07/10 20:19:42 wiz Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
@@ -51,11 +51,11 @@
  * HISTORY
  * Revision 1.1  89/10/14  19:53:39  rvb
  * Initial revision
- * 
+ *
  * Revision 1.2  89/08/03  14:36:46  mja
  * 	Update run() and runp() to use <varargs.h>.
  * 	[89/04/19            mja]
- * 
+ *
  * 23-Sep-86  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Merged old runv and runvp modules.
  *
@@ -99,8 +99,7 @@ static int dorun(char *, char **, int);
 static char **makearglist(va_list);
 
 static char **
-makearglist(ap)
-	va_list ap;
+makearglist(va_list ap)
 {
 	static size_t ns = 0;
 	static char **np = NULL;
@@ -130,15 +129,15 @@ run(char *name, ...)
 		va_end(ap);
 		return -1;
 	}
-	val = runv (name, argv);
+	val = runv(name, argv);
 	va_end(ap);
-	return(val);
+	return (val);
 }
 
-int runv (name,argv)
-char *name,**argv;
+int 
+runv(char *name, char **argv)
 {
-	return (dorun (name, argv, 0));
+	return (dorun(name, argv, 0));
 }
 
 int
@@ -153,58 +152,55 @@ runp(char *name, ...)
 		va_end(ap);
 		return -1;
 	}
-	val = runvp (name, argv);
+	val = runvp(name, argv);
 	va_end(ap);
 	return (val);
 }
 
-int runvp (name,argv)
-char *name,**argv;
+int 
+runvp(char *name, char **argv)
 {
-	return (dorun (name, argv, 1));
+	return (dorun(name, argv, 1));
 }
 
-static
-int dorun (name,argv,usepath)
-char *name,**argv;
-int usepath;
+static int 
+dorun(char *name, char **argv, int usepath)
 {
 	int wpid;
-	register int pid;
-	struct sigaction ignoresig,intsig,quitsig;
+	int pid;
+	struct sigaction ignoresig, intsig, quitsig;
 	int status;
 
 	if ((pid = vfork()) == -1)
-		return(-1);	/* no more process's, so exit with error */
+		return (-1);	/* no more processes, so exit with error */
 
-	if (pid == 0) {			/* child process */
-		setgid (getgid());
-		setuid (getuid());
+	if (pid == 0) {		/* child process */
+		setgid(getgid());
+		setuid(getuid());
 		if (usepath)
-		    execvp(name,argv);
+			execvp(name, argv);
 		else
-		    execv(name,argv);
-		fprintf (stderr,"run: can't exec %s (%s)\n",name,
+			execv(name, argv);
+		fprintf(stderr, "run: can't exec %s (%s)\n", name,
 		    strerror(errno));
-		_exit (0377);
+		_exit(0377);
 	}
-
 	ignoresig.sa_handler = SIG_IGN;	/* ignore INT and QUIT signals */
 	sigemptyset(&ignoresig.sa_mask);
 	ignoresig.sa_flags = 0;
-	sigaction (SIGINT,&ignoresig,&intsig);
-	sigaction (SIGQUIT,&ignoresig,&quitsig);
+	sigaction(SIGINT, &ignoresig, &intsig);
+	sigaction(SIGQUIT, &ignoresig, &quitsig);
 	do {
-		wpid = wait3 (&status, WUNTRACED, 0);
-		if (WIFSTOPPED (status)) {
-		    kill (0,SIGTSTP);
-		    wpid = 0;
+		wpid = wait3(&status, WUNTRACED, 0);
+		if (WIFSTOPPED(status)) {
+			kill(0, SIGTSTP);
+			wpid = 0;
 		}
 	} while (wpid != pid && wpid != -1);
-	sigaction (SIGINT,&intsig,0);	/* restore signals */
-	sigaction (SIGQUIT,&quitsig,0);
+	sigaction(SIGINT, &intsig, 0);	/* restore signals */
+	sigaction(SIGQUIT, &quitsig, 0);
 
-	if (WIFSIGNALED (status) || WEXITSTATUS(status) == 0377)
+	if (WIFSIGNALED(status) || WEXITSTATUS(status) == 0377)
 		return (-1);
 
 	return (WEXITSTATUS(status));
@@ -215,15 +211,12 @@ int usepath;
  * that does not use the shell
  */
 int
-runio(argv, infile, outfile, errfile)
-	char *const argv[];
-	const char *infile;
-	const char *outfile;
-	const char *errfile;
+runio(char *const * argv, const char *infile, const char *outfile,
+      const char *errfile)
 {
-	int	fd;
-	pid_t	pid;
-	int	status;
+	int fd;
+	pid_t pid;
+	int status;
 
 	switch ((pid = fork())) {
 	case -1:
@@ -237,29 +230,27 @@ runio(argv, infile, outfile, errfile)
 			if (fd != 0)
 				(void) dup2(fd, 0);
 		}
-
 		if (outfile) {
 			(void) close(1);
-			if ((fd = open(outfile, O_RDWR|O_CREAT|O_TRUNC,
-				       0666)) == -1)
+			if ((fd = open(outfile, O_RDWR | O_CREAT | O_TRUNC,
+				    0666)) == -1)
 				exit(1);
 			if (fd != 1)
 				(void) dup2(fd, 1);
 		}
-
 		if (errfile) {
 			(void) close(2);
-			if ((fd = open(errfile, O_RDWR|O_CREAT|O_TRUNC,
-				       0666)) == -1)
+			if ((fd = open(errfile, O_RDWR | O_CREAT | O_TRUNC,
+				    0666)) == -1)
 				exit(1);
 			if (fd != 2)
 				(void) dup2(fd, 2);
 		}
 		execvp(argv[0], argv);
 		exit(1);
-		/*NOTREACHED*/
+		/* NOTREACHED */
 		return 0;
-	
+
 	default:
 		if (waitpid(pid, &status, 0) == -1)
 			return -1;
@@ -271,28 +262,28 @@ runio(argv, infile, outfile, errfile)
  * Like runio, but works with filedescriptors instead of filenames
  */
 int
-runiofd(argv, infile, outfile, errfile)
-	char *const argv[];
-	const int infile;
-	const int outfile;
-	const int errfile;
+runiofd(char *const * argv, const int infile, const int outfile,
+	const int errfile)
 {
-	pid_t	pid;
-	int	status;
+	pid_t pid;
+	int status;
 
 	switch ((pid = fork())) {
 	case -1:
 		return -1;
 
 	case 0:
-		if (infile  != 0) dup2(infile, 0);
-		if (outfile != 1) dup2(outfile,1);
-		if (errfile != 2) dup2(errfile,2);
+		if (infile != 0)
+			dup2(infile, 0);
+		if (outfile != 1)
+			dup2(outfile, 1);
+		if (errfile != 2)
+			dup2(errfile, 2);
 		execvp(argv[0], argv);
 		exit(1);
-		/*NOTREACHED*/
+		/* NOTREACHED */
 		return 0;
-	
+
 	default:
 		if (waitpid(pid, &status, 0) == -1)
 			return -1;

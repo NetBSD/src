@@ -1,9 +1,9 @@
-/*	$NetBSD: supcname.c,v 1.5 1999/04/12 20:48:07 pk Exp $	*/
+/*	$NetBSD: supcname.c,v 1.6 2002/07/10 20:19:45 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
@@ -31,7 +31,7 @@
  * Revision 1.4  92/08/11  12:07:32  mrt
  * 	Added copyright.
  * 	[92/08/10            mrt]
- * 
+ *
  * 21-Dec-87  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Changed to no longer use a name server.
  *
@@ -54,7 +54,7 @@
 #include "supcdefs.h"
 #include "supextern.h"
 
-extern COLLECTION *firstC;		/* collection list pointer */
+extern COLLECTION *firstC;	/* collection list pointer */
 
 /*****************************************
  ***    G E T   H O S T   N A M E S    ***
@@ -66,47 +66,56 @@ extern COLLECTION *firstC;		/* collection list pointer */
  * It's a fatal error if a collection has no file server.
  */
 
-void getnams ()
+void 
+getnams(void)
 {
-	register COLLECTION *c;
+	COLLECTION *c;
 	char buf[STRINGLENGTH];
-	register FILE *f;
-	char *p,*q;
+	FILE *f;
+	char *p, *q;
 
 	for (c = firstC; c && c->Chtree != NULL; c = c->Cnext);
-	if (c == NULL) return;
-	(void) sprintf (buf,FILEHOSTS,DEFDIR);
-	f = fopen (buf,"r");
-	if (f == NULL)  logquit (1,"Can't open %s",buf);
-	while ((p = fgets (buf,STRINGLENGTH,f)) != NULL) {
-		if ((q = index (p,'\n')) != NULL)
+	if (c == NULL)
+		return;
+	(void) sprintf(buf, FILEHOSTS, DEFDIR);
+	f = fopen(buf, "r");
+	if (f == NULL)
+		logquit(1, "Can't open %s", buf);
+	while ((p = fgets(buf, STRINGLENGTH, f)) != NULL) {
+		if ((q = index(p, '\n')) != NULL)
 			*q = '\0';
-		if (index ("#;:",*p))  continue;
-		q = nxtarg (&p,"= \t");
-		p = skipover (p," \t");
-		if (*p == '=')  p++;
-		p = skipover (p," \t");
-		if (*p == '\0')  goaway ("error in collection/host file");
+		if (index("#;:", *p))
+			continue;
+		q = nxtarg(&p, "= \t");
+		p = skipover(p, " \t");
+		if (*p == '=')
+			p++;
+		p = skipover(p, " \t");
+		if (*p == '\0')
+			goaway("error in collection/host file");
 		do {
-			if (strcmp (c->Cname, q) == 0) {
+			if (strcmp(c->Cname, q) == 0) {
 				do {
-					q = nxtarg (&p,", \t");
-					p = skipover (p," \t");
-					if (*p == ',')  p++;
-					p = skipover (p," \t");
-					(void) Tinsert (&c->Chtree,q,FALSE);
+					q = nxtarg(&p, ", \t");
+					p = skipover(p, " \t");
+					if (*p == ',')
+						p++;
+					p = skipover(p, " \t");
+					(void) Tinsert(&c->Chtree, q, FALSE);
 				} while (*p != '\0');
 			}
 			while ((c = c->Cnext) != NULL && c->Chtree != NULL);
 		} while (c != NULL);
 		for (c = firstC; c && c->Chtree != NULL; c = c->Cnext);
-		if (c == NULL) break;
+		if (c == NULL)
+			break;
 	}
-	(void) fclose (f);
-	if (c == NULL)  return;
+	(void) fclose(f);
+	if (c == NULL)
+		return;
 	do {
-		logerr ("Host for collection %s not found",c->Cname);
+		logerr("Host for collection %s not found", c->Cname);
 		while ((c = c->Cnext) != NULL && c->Chtree != NULL);
 	} while (c);
-	logquit (1,"Hosts not found for all collections");
+	logquit(1, "Hosts not found for all collections");
 }

@@ -1,9 +1,9 @@
-/*	$NetBSD: netcryptvoid.c,v 1.7 2002/07/10 18:53:57 wiz Exp $	*/
+/*	$NetBSD: netcryptvoid.c,v 1.8 2002/07/10 20:19:40 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
@@ -29,7 +29,7 @@
  * Revision 2.2  92/09/09  22:04:34  mrt
  * 	Created.
  * 	[92/09/09            mrt]
- * 
+ *
  */
 /*
  * DATA ENCRYPTION
@@ -56,35 +56,33 @@
 int cryptflag;			/* whether to encrypt/decrypt data */
 char *cryptbuf;			/* buffer for data encryption/decryption */
 
-int netcrypt (pword)
-char *pword;
+int 
+netcrypt(char *pword)
 {
-	if (pword == NULL || (strcmp(pword,PSWDCRYPT) == 0)) {
+	if (pword == NULL || (strcmp(pword, PSWDCRYPT) == 0)) {
 		cryptflag = 0;
-		(void) getcryptbuf (0);
+		(void) getcryptbuf(0);
 		return (SCMOK);
 	}
 	return (SCMERR);
 }
 
-int getcryptbuf (x)
-int x;
+int 
+getcryptbuf(int x)
 {
 	if (cryptflag == 0) {
-		return(SCMOK);
-	} else 
+		return (SCMOK);
+	} else
 		return (SCMERR);
 }
 
-void decode (in,out,count)
-char *in,*out;
-int count;
+void 
+decode(char *in, char *out, int count)
 {
 }
 
 
-void encode (in,out,count)
-char *in,*out;
-int count;
+void 
+encode(char *in, char *out, int count)
 {
 }

@@ -1,9 +1,9 @@
-/*	$NetBSD: atoo.c,v 1.3 1997/06/17 18:56:05 christos Exp $	*/
+/*	$NetBSD: atoo.c,v 1.4 2002/07/10 20:19:38 wiz Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
@@ -42,17 +42,17 @@
 #include "supcdefs.h"
 #include "supextern.h"
 
-unsigned int atoo(ap)
-char *ap;
+unsigned int 
+atoo(char *ap)
 {
-	register unsigned int n;
-	register char *p;
+	unsigned int n;
+	char *p;
 
 	p = ap;
 	n = 0;
-	while(*p == ' ' || *p == '	')
+	while (*p == ' ' || *p == '	')
 		p++;
-	while(*p >= '0' && *p <= '7')
+	while (*p >= '0' && *p <= '7')
 		n = n * 8 + *p++ - '0';
-	return(n);
+	return (n);
 }

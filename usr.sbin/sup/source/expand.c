@@ -1,9 +1,9 @@
-/*	$NetBSD: expand.c,v 1.13 2002/07/10 18:53:57 wiz Exp $	*/
+/*	$NetBSD: expand.c,v 1.14 2002/07/10 20:19:39 wiz Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
@@ -75,17 +75,17 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-static	jmp_buf	sjbuf;
+static jmp_buf sjbuf;
 
-static	char	pathbuf[MAXPATHLEN];
-static	char	*path, *pathp, *lastpathp;
+static char pathbuf[MAXPATHLEN];
+static char *path, *pathp, *lastpathp;
 
-static	char	*globchars = "{[*?";	/* meta characters */
-static	char	*entp;			/* current dir entry pointer */
+static char *globchars = "{[*?";/* meta characters */
+static char *entp;		/* current dir entry pointer */
 
-static	char	**BUFFER;		/* pointer to the buffer */
-static	int	BUFSIZE;		/* maximum number in buffer */
-static	int	bufcnt;			/* current number in buffer */
+static char **BUFFER;		/* pointer to the buffer */
+static int BUFSIZE;		/* maximum number in buffer */
+static int bufcnt;		/* current number in buffer */
 
 #define fixit(a) (a[0] ? a : ".")
 
@@ -96,13 +96,11 @@ static int execbrc(char *, char *);
 static int match(char *, char *);
 static int amatch(char *, char *);
 static void addone(char *, char *);
-static int addpath(int);
+static int addpath(char);
 static int gethdir(char *, int);
 
-int expand(spec, buffer, bufsize)
-	register char *spec;
-	char **buffer;
-	int bufsize;
+int 
+expand(char *spec, char **buffer, int bufsize)
 {
 	pathp = path = pathbuf;
 	*pathp = 0;
@@ -111,40 +109,45 @@ int expand(spec, buffer, bufsize)
 	BUFSIZE = bufsize;
 	bufcnt = 0;
 	if (setjmp(sjbuf) == 0)
-	    glob(spec);
-	return(bufcnt);
+		glob(spec);
+	return (bufcnt);
 }
 
-static void glob(as)
-	char *as;
+static void 
+glob(char *as)
 {
-	register char *cs;
-	register char *spathp, *oldcs;
+	char *cs;
+	char *spathp, *oldcs;
 	struct stat stb;
 
 	spathp = pathp;
 	cs = as;
 	if (*cs == '~' && pathp == path) {
-		if (addpath('~')) goto endit;
+		if (addpath('~'))
+			goto endit;
 		for (cs++; isalnum(*cs) || *cs == '_' || *cs == '-';)
-			if (addpath(*cs++)) goto endit;
+			if (addpath(*cs++))
+				goto endit;
 		if (!*cs || *cs == '/') {
 			if (pathp != path + 1) {
 				*pathp = 0;
-				if (gethdir(path + 1,sizeof path-1)) goto endit;
-				strncpy(path, path + 1, sizeof path-1);
+				if (gethdir(path + 1, sizeof path - 1))
+					goto endit;
+				strncpy(path, path + 1, sizeof path - 1);
 			} else
-				strncpy(path, (char *)getenv("HOME"), sizeof path-1);
-			path[sizeof path-1] = '\0';
+				strncpy(path, (char *) getenv("HOME"), sizeof path - 1);
+			path[sizeof path - 1] = '\0';
 			pathp = path + strlen(path);
 		}
 	}
 	while (*cs == 0 || strchr(globchars, *cs) == 0) {
 		if (*cs == 0) {
-			if (lstat(fixit(path), &stb) >= 0) addone(path, "");
+			if (lstat(fixit(path), &stb) >= 0)
+				addone(path, "");
 			goto endit;
 		}
-		if (addpath(*cs++)) goto endit;
+		if (addpath(*cs++))
+			goto endit;
 	}
 	oldcs = cs;
 	while (cs > as && *cs != '/')
@@ -165,13 +168,13 @@ endit:
 	return;
 }
 
-static void matchdir(pattern)
-	char *pattern;
+static void 
+matchdir(char *pattern)
 {
 #ifdef HAS_POSIX_DIR
-	register struct dirent *dp;
+	struct dirent *dp;
 #else
-	register struct direct *dp;
+	struct direct *dp;
 #endif
 	DIR *dirp;
 
@@ -180,9 +183,11 @@ static void matchdir(pattern)
 		return;
 	while ((dp = readdir(dirp)) != NULL) {
 #if defined(HAS_POSIX_DIR) && !defined(__SVR4)
-		if (dp->d_fileno == 0) continue;
+		if (dp->d_fileno == 0)
+			continue;
 #else
-		if (dp->d_ino == 0) continue;
+		if (dp->d_ino == 0)
+			continue;
 #endif
 		if (match(dp->d_name, pattern))
 			addone(path, dp->d_name);
@@ -191,33 +196,36 @@ static void matchdir(pattern)
 	return;
 }
 
-static int execbrc(p, s)
-	char *p, *s;
+static int 
+execbrc(char *p, char *s)
 {
 	char restbuf[MAXPATHLEN + 1];
-	register char *pe, *pm, *pl;
+	char *pe, *pm, *pl;
 	int brclev = 0;
 	char *lm, savec, *spathp;
 
 	for (lm = restbuf; *p != '{'; *lm++ = *p++)
 		continue;
 	for (pe = ++p; *pe; pe++)
-	switch (*pe) {
-	case '{':
-		brclev++;
-		continue;
-	case '}':
-		if (brclev == 0) goto pend;
-		brclev--;
-		continue;
-	case '[':
-		for (pe++; *pe && *pe != ']'; pe++)
+		switch (*pe) {
+		case '{':
+			brclev++;
 			continue;
-		if (!*pe) break;
-		continue;
-	}
+		case '}':
+			if (brclev == 0)
+				goto pend;
+			brclev--;
+			continue;
+		case '[':
+			for (pe++; *pe && *pe != ']'; pe++)
+				continue;
+			if (!*pe)
+				break;
+			continue;
+		}
 pend:
-	if (brclev || !*pe) return (0);
+	if (brclev || !*pe)
+		return (0);
 	for (pl = pm = p; pm <= pe; pm++)
 		switch (*pm & 0177) {
 		case '{':
@@ -230,8 +238,9 @@ pend:
 			}
 			goto doit;
 		case ',':
-			if (brclev) continue;
-doit:
+			if (brclev)
+				continue;
+	doit:
 			savec = *pm;
 			*pm = 0;
 			snprintf(lm, sizeof(restbuf) - (lm - restbuf),
@@ -250,19 +259,21 @@ doit:
 		case '[':
 			for (pm++; *pm && *pm != ']'; pm++)
 				continue;
-			if (!*pm) break;
+			if (!*pm)
+				break;
 			continue;
 		}
 	return (0);
 }
 
-static int match(s, p)
-	char *s, *p;
+static int 
+match(char *s, char *p)
 {
-	register int c;
-	register char *sentp;
+	int c;
+	char *sentp;
 
-	if (*s == '.' && *p != '.') return(0);
+	if (*s == '.' && *p != '.')
+		return (0);
 	sentp = entp;
 	entp = s;
 	c = amatch(s, p);
@@ -270,10 +281,10 @@ static int match(s, p)
 	return (c);
 }
 
-static int amatch(s, p)
-	register char *s, *p;
+static int 
+amatch(char *s, char *p)
 {
-	register int scc;
+	int scc;
 	int ok, lc;
 	char *spathp;
 	struct stat stb;
@@ -289,20 +300,22 @@ static int amatch(s, p)
 			lc = 077777;
 			while ((cc = *p++) != 0) {
 				if (cc == ']') {
-					if (ok) break;
+					if (ok)
+						break;
 					return (0);
 				}
 				if (cc == '-') {
 					if (lc <= scc && scc <= *p++)
 						ok++;
-				} else
-					if (scc == (lc = cc))
-						ok++;
+				} else if (scc == (lc = cc))
+					ok++;
 			}
-			if (cc == 0) return (0);
+			if (cc == 0)
+				return (0);
 			continue;
 		case '*':
-			if (!*p) return (1);
+			if (!*p)
+				return (1);
 			if (*p == '/') {
 				p++;
 				goto slash;
@@ -314,27 +327,32 @@ static int amatch(s, p)
 		case 0:
 			return (scc == 0);
 		default:
-			if (c != scc) return (0);
+			if (c != scc)
+				return (0);
 			continue;
 		case '?':
-			if (scc == 0) return (0);
+			if (scc == 0)
+				return (0);
 			continue;
 		case '/':
-			if (scc) return (0);
-slash:
+			if (scc)
+				return (0);
+	slash:
 			s = entp;
 			spathp = pathp;
 			while (*s)
-				if (addpath(*s++)) goto pathovfl;
-			if (addpath('/')) goto pathovfl;
+				if (addpath(*s++))
+					goto pathovfl;
+			if (addpath('/'))
+				goto pathovfl;
 			if (stat(fixit(path), &stb) >= 0 &&
-			    (stb.st_mode&S_IFMT) == S_IFDIR) {
+			    (stb.st_mode & S_IFMT) == S_IFDIR) {
 				if (*p == 0)
 					addone(path, "");
 				else
 					glob(p);
 			}
-pathovfl:
+	pathovfl:
 			pathp = spathp;
 			*pathp = 0;
 			return (0);
@@ -342,45 +360,45 @@ pathovfl:
 	}
 }
 
-static void addone(s1, s2)
-	register char *s1, *s2;
+static void 
+addone(char *s1, char *s2)
 {
-	register char *ep;
+	char *ep;
 
 	if (bufcnt >= BUFSIZE) {
 		bufcnt = BUFSIZE + 1;
 		longjmp(sjbuf, 1);
 	}
-	ep = (char *)malloc(strlen(s1) + strlen(s2) + 1);
+	ep = (char *) malloc(strlen(s1) + strlen(s2) + 1);
 	if (ep == 0) {
 		bufcnt = -1;
 		longjmp(sjbuf, 1);
 	}
 	BUFFER[bufcnt++] = ep;
-	while (*s1) *ep++ = *s1++;
+	while (*s1)
+		*ep++ = *s1++;
 	while ((*ep++ = *s2++) != '\0')
 		continue;
 }
 
-static int addpath(c)
-	char c;
+static int 
+addpath(char c)
 {
 	if (pathp >= lastpathp)
-		return(1);
+		return (1);
 	*pathp++ = c;
 	*pathp = 0;
-	return(0);
+	return (0);
 }
 
-static int gethdir(home,homelen)
-	char *home;
-	int homelen;
+static int 
+gethdir(char *home, int homelen)
 {
-	register struct passwd *pp = getpwnam(home);
+	struct passwd *pp = getpwnam(home);
 
 	if (pp == 0)
-		return(1);
-	strncpy(home, pp->pw_dir, homelen-1);
-	home[homelen-1] = '\0';
-	return(0);
+		return (1);
+	strncpy(home, pp->pw_dir, homelen - 1);
+	home[homelen - 1] = '\0';
+	return (0);
 }

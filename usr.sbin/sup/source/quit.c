@@ -1,9 +1,9 @@
-/*	$NetBSD: quit.c,v 1.4 2002/07/10 18:53:58 wiz Exp $	*/
+/*	$NetBSD: quit.c,v 1.5 2002/07/10 20:19:41 wiz Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
@@ -40,7 +40,7 @@
  * Revision 1.2  88/12/13  13:52:41  gm0w
  * 	Rewritten to use varargs.
  * 	[88/12/13            gm0w]
- * 
+ *
  **********************************************************************
  */
 
@@ -48,8 +48,8 @@
 #include "supcdefs.h"
 #include "supextern.h"
 
-void 
-quit (int status, char * fmt, ...)
+void
+quit(int status, char *fmt, ...)
 {
 	va_list args;
 
