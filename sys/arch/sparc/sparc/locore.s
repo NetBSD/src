@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.131 2000/05/31 05:28:29 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.132 2000/05/31 11:23:21 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -3903,7 +3903,7 @@ Lgandul:	nop
 	sethi	%hi(cpcb), %l0
 	st	%o0, [%l0 + %lo(cpcb)]
 
-	sethi	%hi(CPUINFO_VA), %o0		| cpuinfo.ci_self = &cpuinfo;
+	sethi	%hi(CPUINFO_VA), %o0		! cpuinfo.ci_self = &cpuinfo;
 	sethi	%hi(_CISELFP), %l0
 	st	%o0, [%l0 + %lo(_CISELFP)]
 
@@ -4696,7 +4696,8 @@ Lsw_scan:
 
 	/* p->p_cpu initialized in fork1() for single-processor */
 #if defined(MULTIPROCESSOR)
-	ld	[%g7 + %lo(_CISELFP)], %o0	! p->p_cpu = cpuinfo.ci_self;
+	sethi	%hi(_CISELFP), %o0		! p->p_cpu = cpuinfo.ci_self;
+	ld	[%o0 + %lo(_CISELFP)], %o0
 	st	%o0, [%g3 + P_CPU]
 #endif
 

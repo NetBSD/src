@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.46 2000/05/01 14:06:43 pk Exp $ */
+/*	$NetBSD: pmap.h,v 1.47 2000/05/31 11:23:22 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -267,6 +267,7 @@ struct user;
 void		switchexit __P((struct proc *));
 int		mmu_pagein __P((struct pmap *pm, vaddr_t, int));
 void		pmap_writetext __P((unsigned char *, int));
+void		pmap_globalize_boot_cpuinfo __P((struct cpu_info *));
 
 #if !defined(MACHINE_NEW_CONCONTIG)
 u_int		pmap_free_pages __P((void));
