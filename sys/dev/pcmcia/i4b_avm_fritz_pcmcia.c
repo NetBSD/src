@@ -33,7 +33,7 @@
  *	Fritz!Card pcmcia specific routines for isic driver
  *	---------------------------------------------------
  *
- *	$Id: i4b_avm_fritz_pcmcia.c,v 1.2 2001/02/17 11:41:35 martin Exp $ 
+ *	$Id: i4b_avm_fritz_pcmcia.c,v 1.3 2001/02/17 15:00:49 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
@@ -85,7 +85,7 @@
 #include <dev/ic/i4b_hscx.h>
 
 #ifndef __FreeBSD__
-#include <dev/pcmcia/pcmcia_isic.h>
+#include <dev/pcmcia/i4b_isic_pcmcia.h>
 
 /* PCMCIA support routines */
 static u_int8_t avma1_pcmcia_read_reg __P((struct l1_softc *sc, int what, bus_size_t offs));
@@ -233,7 +233,7 @@ avma1_pcmcia_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
 
 /*---------------------------------------------------------------------------*
  *	isic_probe_avma1_pcmcia - probe for AVM PCMCIA Fritz!Card
- *	This is in the bus attachemnt part on NetBSD (pcmcia_isic.c), no
+ *	This is in the bus attachemnt part on NetBSD (i4b_isic_pcmcia.c), no
  *	card specicfic probe is needed on direct config buses like pcmcia.
  *---------------------------------------------------------------------------*/
 #ifdef __FreeBSD__
