@@ -1,4 +1,4 @@
-/*	$NetBSD: mac.c,v 1.1.1.2 2001/04/10 07:13:57 itojun Exp $	*/
+/*	$NetBSD: mac.c,v 1.2 2001/04/10 08:07:58 itojun Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *

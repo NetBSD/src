@@ -1,3 +1,4 @@
+/*	$NetBSD: scp.c,v 1.11 2001/04/10 08:08:00 itojun Exp $	*/
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
  * uses ssh to do the data transfer (instead of using rcmd).
@@ -75,7 +76,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: scp.c,v 1.61 2001/03/15 15:05:59 markus Exp $");
+RCSID("$OpenBSD: scp.c,v 1.65 2001/04/06 16:46:59 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "atomicio.h"
@@ -187,8 +188,6 @@ typedef struct {
 	char *buf;
 } BUF;
 
-extern int iamremote;
-
 BUF *allocbuf(BUF *, int, int);
 char *colon(char *);
 void lostconn(int);
@@ -278,7 +277,6 @@ main(argc, argv)
 			iamremote = 1;
 			tflag = 1;
 			break;
-		case '?':
 		default:
 			usage();
 		}
@@ -487,10 +485,14 @@ source(argc, argv)
 	off_t i;
 	int amt, fd, haderr, indx, result;
 	char *last, *name, buf[2048];
+	int len;
 
 	for (indx = 0; indx < argc; ++indx) {
 		name = argv[indx];
 		statbytes = 0;
+		len = strlen(name);
+		while (len > 1 && name[len-1] == '/')
+			name[--len] = '\0';
 		if ((fd = open(name, O_RDONLY, 0)) < 0)
 			goto syserr;
 		if (fstat(fd, &stb) < 0) {
@@ -615,7 +617,7 @@ rsource(name, statp)
 		closedir(dirp);
 		return;
 	}
-	while ((dp = readdir(dirp))) {
+	while ((dp = readdir(dirp)) != NULL) {
 		if (dp->d_ino == 0)
 			continue;
 		if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
@@ -744,7 +746,7 @@ sink(argc, argv)
 		if (*cp++ != ' ')
 			SCREWUP("mode not delimited");
 
-		for (size = 0; *cp >= '0' && *cp <= '9';)
+		for (size = 0; isdigit(*cp);)
 			size = size * 10 + (*cp++ - '0');
 		if (*cp++ != ' ')
 			SCREWUP("size not delimited");
@@ -827,7 +829,7 @@ bad:			run_err("%s: %s", np, strerror(errno));
 					continue;
 				} else if (j <= 0) {
 					run_err("%s", j ? strerror(errno) :
-						"dropped connection");
+					    "dropped connection");
 					exit(1);
 				}
 				amt -= j;
@@ -864,12 +866,12 @@ bad:			run_err("%s: %s", np, strerror(errno));
 			if (exists || omode != mode)
 				if (fchmod(ofd, omode))
 					run_err("%s: set mode: %s",
-						np, strerror(errno));
+					    np, strerror(errno));
 		} else {
 			if (!exists && omode != mode)
 				if (fchmod(ofd, omode & ~mask))
 					run_err("%s: set mode: %s",
-						np, strerror(errno));
+					    np, strerror(errno));
 		}
 		if (close(ofd) == -1) {
 			wrerr = YES;
@@ -880,7 +882,7 @@ bad:			run_err("%s: %s", np, strerror(errno));
 			setimes = 0;
 			if (utimes(np, tv) < 0) {
 				run_err("%s: set times: %s",
-					np, strerror(errno));
+				    np, strerror(errno));
 				wrerr = DISPLAYED;
 			}
 		}
@@ -901,7 +903,7 @@ screwup:
 }
 
 int
-response()
+response(void)
 {
 	char ch, *cp, resp, rbuf[2048];
 
@@ -934,11 +936,11 @@ response()
 }
 
 void
-usage()
+usage(void)
 {
 	(void) fprintf(stderr, "usage: scp "
-	    "[-pqrvC46] [-S ssh] [-P port] [-c cipher] [-i identity] f1 f2; or:\n"
-	    "       scp [options] f1 ... fn directory\n");
+	    "[-pqrvBC46] [-S ssh] [-P port] [-c cipher] [-i identity] f1 f2\n"
+	    "   or: scp [options] f1 ... fn directory\n");
 	exit(1);
 }
 

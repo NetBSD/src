@@ -1,3 +1,4 @@
+/*	$NetBSD: ssh.h,v 1.5 2001/04/10 08:08:03 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland

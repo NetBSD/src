@@ -1,3 +1,4 @@
+/*	$NetBSD: ssh-rsa.c,v 1.4 2001/04/10 08:08:03 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -23,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-rsa.c,v 1.6 2001/02/08 19:30:52 itojun Exp $");
+RCSID("$OpenBSD: ssh-rsa.c,v 1.8 2001/03/27 10:57:00 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -34,6 +35,7 @@ RCSID("$OpenBSD: ssh-rsa.c,v 1.6 2001/02/08 19:30:52 itojun Exp $");
 #include "bufaux.h"
 #include "key.h"
 #include "ssh-rsa.h"
+#include "compat.h"
 
 /* RSASSA-PKCS1-v1_5 (PKCS #1 v2.0 signature) with SHA1 */
 int
@@ -42,27 +44,32 @@ ssh_rsa_sign(
     u_char **sigp, int *lenp,
     u_char *data, int datalen)
 {
-	EVP_MD *evp_md = EVP_sha1();
+	const EVP_MD *evp_md;
 	EVP_MD_CTX md;
 	u_char *digest, *sig, *ret;
 	u_int slen, dlen, len;
-	int ok;
+	int ok, nid;
 	Buffer b;
 
 	if (key == NULL || key->type != KEY_RSA || key->rsa == NULL) {
 		error("ssh_rsa_sign: no RSA key");
 		return -1;
 	}
-	slen = RSA_size(key->rsa);
-	sig = xmalloc(slen);
-
+	nid = (datafellows & SSH_BUG_RSASIGMD5) ? NID_md5 : NID_sha1;
+	if ((evp_md = EVP_get_digestbynid(nid)) == NULL) {
+		error("ssh_rsa_sign: EVP_get_digestbynid %d failed", nid);
+		return -1;
+	}
 	dlen = evp_md->md_size;
 	digest = xmalloc(dlen);
 	EVP_DigestInit(&md, evp_md);
 	EVP_DigestUpdate(&md, data, datalen);
 	EVP_DigestFinal(&md, digest, NULL);
 
-	ok = RSA_sign(NID_sha1, digest, dlen, sig, &len, key->rsa);
+	slen = RSA_size(key->rsa);
+	sig = xmalloc(slen);
+
+	ok = RSA_sign(nid, digest, dlen, sig, &len, key->rsa);
 	memset(digest, 'd', dlen);
 	xfree(digest);
 
@@ -108,13 +115,12 @@ ssh_rsa_verify(
     u_char *data, int datalen)
 {
 	Buffer b;
-	EVP_MD *evp_md = EVP_sha1();
+	const EVP_MD *evp_md;
 	EVP_MD_CTX md;
 	char *ktype;
 	u_char *sigblob, *digest;
 	u_int len, dlen;
-	int rlen;
-	int ret;
+	int rlen, ret, nid;
 
 	if (key == NULL || key->type != KEY_RSA || key->rsa == NULL) {
 		error("ssh_rsa_verify: no RSA key");
@@ -139,17 +145,23 @@ ssh_rsa_verify(
 	rlen = buffer_len(&b);
 	buffer_free(&b);
 	if(rlen != 0) {
+		xfree(sigblob);
 		error("ssh_rsa_verify: remaining bytes in signature %d", rlen);
 		return -1;
 	}
-
+	nid = (datafellows & SSH_BUG_RSASIGMD5) ? NID_md5 : NID_sha1;
+	if ((evp_md = EVP_get_digestbynid(nid)) == NULL) {
+		xfree(sigblob);
+		error("ssh_rsa_verify: EVP_get_digestbynid %d failed", nid);
+		return -1;
+	}
 	dlen = evp_md->md_size;
 	digest = xmalloc(dlen);
 	EVP_DigestInit(&md, evp_md);
 	EVP_DigestUpdate(&md, data, datalen);
 	EVP_DigestFinal(&md, digest, NULL);
 
-	ret = RSA_verify(NID_sha1, digest, dlen, sigblob, len, key->rsa);
+	ret = RSA_verify(nid, digest, dlen, sigblob, len, key->rsa);
 	memset(digest, 'd', dlen);
 	xfree(digest);
 	memset(sigblob, 's', len);

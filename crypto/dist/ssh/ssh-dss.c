@@ -1,3 +1,4 @@
+/*	$NetBSD: ssh-dss.c,v 1.4 2001/04/10 08:08:02 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *

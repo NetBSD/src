@@ -1,4 +1,4 @@
-/*	$NetBSD: kexgex.c,v 1.1.1.1 2001/04/10 07:13:56 itojun Exp $	*/
+/*	$NetBSD: kexgex.c,v 1.2 2001/04/10 08:07:57 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -40,7 +40,7 @@ RCSID("$OpenBSD: kexgex.c,v 1.5 2001/04/05 10:42:50 markus Exp $");
 #include "ssh2.h"
 #include "compat.h"
 
-u_char *
+static u_char *
 kexgex_hash(
     char *client_version_string,
     char *server_version_string,
@@ -100,7 +100,7 @@ kexgex_hash(
 
 /* client */
 
-void
+static void
 kexgex_client(Kex *kex)
 {
 	BIGNUM *dh_server_pub = NULL, *shared_secret = NULL;
@@ -253,7 +253,7 @@ kexgex_client(Kex *kex)
 
 /* server */
 
-void
+static void
 kexgex_server(Kex *kex)
 {
 	BIGNUM *shared_secret = NULL, *dh_client_pub = NULL;
