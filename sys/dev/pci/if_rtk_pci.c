@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.7 2001/06/12 22:28:16 thorpej Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.8 2001/07/08 18:02:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -85,11 +85,6 @@
  * to select which interface to use depending on the chip type.
  */
 
-#include "opt_inet.h"
-#include "opt_ns.h"
-#include "bpfilter.h"
-#include "rnd.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
@@ -105,18 +100,6 @@
 #include <net/if_ether.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
-#if NRND > 0
-#include <sys/rnd.h>
-#endif
 
 #include <machine/bus.h>
 

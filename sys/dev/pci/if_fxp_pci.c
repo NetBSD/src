@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.17 2001/06/12 22:28:16 thorpej Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.18 2001/07/08 18:02:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,6 @@
  * driver.  Works with Intel Etherexpress Pro 10+, 100B, 100+ cards.
  */
 
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -65,10 +64,6 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>
