@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.200 2003/11/09 07:55:38 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.201 2003/11/15 01:19:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.200 2003/11/09 07:55:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.201 2003/11/15 01:19:38 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -3001,6 +3001,80 @@ sys_fsync(l, v, retval)
 		(*bioops.io_fsync)(vp);
 	VOP_UNLOCK(vp, 0);
 	vn_finished_write(mp, 0);
+	FILE_UNUSE(fp, p);
+	return (error);
+}
+
+/*
+ * Sync a range of file data.  API modeled after that found in AIX.
+ *
+ * FDATASYNC indicates that we need only save enough metadata to be able
+ * to re-read the written data.  Note we duplicate AIX's requirement that
+ * the file be open for writing.
+ */
+/* ARGSUSED */
+int
+sys_fsync_range(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct sys_fsync_range_args /* {
+		syscallarg(int) fd;
+		syscallarg(int) flags;
+		syscallarg(off_t) start;
+		syscallarg(int) length;
+	} */ *uap = v;
+	struct proc *p = l->l_proc;
+	struct vnode *vp;
+	struct file *fp;
+	int flags, nflags;
+	off_t s, e, len;
+	int error;
+
+	/* getvnode() will use the descriptor for us */
+	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+		return (error);
+
+	if ((fp->f_flag & FWRITE) == 0) {
+		FILE_UNUSE(fp, p);
+		return (EBADF);
+	}
+
+	flags = SCARG(uap, flags);
+	if (((flags & (FDATASYNC | FFILESYNC)) == 0) ||
+	    ((~flags & (FDATASYNC | FFILESYNC)) == 0)) {
+		return (EINVAL);
+	}
+	/* Now set up the flags for value(s) to pass to VOP_FSYNC() */
+	if (flags & FDATASYNC)
+		nflags = FSYNC_DATAONLY | FSYNC_WAIT;
+	else
+		nflags = FSYNC_WAIT;
+
+	len = SCARG(uap, length);
+	/* If length == 0, we do the whole file, and s = l = 0 will do that */
+	if (len) {
+		s = SCARG(uap, start);
+		e = s + len;
+		if (e < s) {
+			FILE_UNUSE(fp, p);
+			return (EINVAL);
+		}
+	} else {
+		e = 0;
+		s = 0;
+	}
+
+	vp = (struct vnode *)fp->f_data;
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	error = VOP_FSYNC(vp, fp->f_cred, nflags, s, e, p);
+
+	if (error == 0 && bioops.io_fsync != NULL &&
+	    vp->v_mount && (vp->v_mount->mnt_flag & MNT_SOFTDEP))
+		(*bioops.io_fsync)(vp);
+
+	VOP_UNLOCK(vp, 0);
 	FILE_UNUSE(fp, p);
 	return (error);
 }

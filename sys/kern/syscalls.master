@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.133 2003/09/30 20:36:10 christos Exp $
+	$NetBSD: syscalls.master,v 1.134 2003/11/15 01:19:38 thorpej Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -705,3 +705,6 @@
 351	UNIMPL		sys_sched_get_priority_max
 352	UNIMPL		sys_sched_get_priority_min
 353	UNIMPL		sys_sched_rr_get_interval
+
+354	STD		{ int sys_fsync_range(int fd, int flags, off_t start, \
+			    off_t length); }
