@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.157 1999/09/08 14:02:24 soren Exp $
+# $NetBSD: mi,v 1.158 1999/09/13 09:38:07 kleink Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -334,6 +334,7 @@
 ./usr/include/filecorefs
 ./usr/include/filecorefs/filecore_mount.h
 ./usr/include/float.h
+./usr/include/fmtmsg.h
 ./usr/include/fnmatch.h
 ./usr/include/frame.h
 ./usr/include/fstab.h
@@ -1658,6 +1659,7 @@
 ./usr/share/man/cat3/floorf.0
 ./usr/share/man/cat3/fmod.0
 ./usr/share/man/cat3/fmodf.0
+./usr/share/man/cat3/fmtmsg.0
 ./usr/share/man/cat3/fnmatch.0
 ./usr/share/man/cat3/fopen.0
 ./usr/share/man/cat3/forkpty.0
@@ -2821,6 +2823,7 @@
 ./usr/share/man/man3/floorf.3
 ./usr/share/man/man3/fmod.3
 ./usr/share/man/man3/fmodf.3
+./usr/share/man/man3/fmtmsg.3
 ./usr/share/man/man3/fnmatch.3
 ./usr/share/man/man3/fopen.3
 ./usr/share/man/man3/forkpty.3
