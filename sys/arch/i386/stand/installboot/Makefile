@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2000/01/23 16:45:38 mycroft Exp $
+#	$NetBSD: Makefile,v 1.16 2000/01/23 16:45:54 mycroft Exp $
 
 # XXX: bsd.own.mk included so LDSTATIC can be overwridden
 .include <bsd.own.mk>
@@ -21,7 +21,7 @@ LDSTATIC?=-static
 
 .BEGIN: machine
 .NOPATH: machine
-depend all: machine
+realdepend realall: machine
 CLEANFILES+= machine
 
 machine::
