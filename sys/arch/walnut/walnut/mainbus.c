@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6 2001/11/08 23:28:15 eeh Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.7 2001/11/09 19:29:13 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -227,7 +227,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	    EX_NOWAIT);
 	ioext = extent_create("pciio", MIN_PCI_PCI_IOADDR,
 	    MIN_PCI_PCI_IOADDR + 0xffff, M_DEVBUF, NULL, 0, EX_NOWAIT);
-	pci_configure_bus(0, ioext, memext, NULL);
+	pci_configure_bus(0, ioext, memext, NULL, 0);
 	extent_destroy(memext);
 #endif /* PCI_NETBSD_CONFIGURE */
 

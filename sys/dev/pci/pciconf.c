@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.11 2001/11/09 19:20:19 thorpej Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.12 2001/11/09 19:29:12 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -1022,13 +1022,13 @@ configure_bus(pciconf_bus_t *pb)
  */
 int
 pci_configure_bus(pci_chipset_tag_t pc, struct extent *ioext,
-    struct extent *memext, struct extent *pmemext)
+    struct extent *memext, struct extent *pmemext, int firstbus)
 {
 	pciconf_bus_t	*pb;
 	int		rv;
 
 	pb = malloc (sizeof (pciconf_bus_t), M_DEVBUF, M_NOWAIT);
-	pb->busno = 0;
+	pb->busno = firstbus;
 	pb->busno_spacing = PCI_BUSNO_SPACING;
 	pb->next_busno = pb->busno + 1;
 	pb->last_busno = 255;
