@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.8 1999/11/12 18:13:00 thorpej Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.9 2000/01/27 16:44:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -143,6 +143,9 @@ mii_phy_auto_timeout(arg)
 	struct mii_softc *sc = arg;
 	int s, bmsr;
 
+	if ((sc->mii_dev.dv_flags & DVF_ACTIVE) == 0)
+		return;
+
 	s = splnet();
 	sc->mii_flags &= ~MIIF_DOINGAUTO;
 	bmsr = PHY_READ(sc, MII_BMSR);
@@ -253,4 +256,48 @@ mii_add_media(sc)
 	}
 #undef ADD
 #undef PRINT
+}
+
+void
+mii_delete_media(sc)
+	struct mii_softc *sc;
+{
+	struct mii_data *mii = sc->mii_pdata;
+
+	ifmedia_delete_instance(&mii->mii_media, sc->mii_inst);
+}
+
+int
+mii_activate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		/* Nothing special to do. */
+		break;
+	}
+
+	return (rv);
+}
+
+int
+mii_detach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct mii_softc *sc = (void *) self;
+
+	if (sc->mii_flags & MIIF_DOINGAUTO)
+		untimeout(mii_phy_auto_timeout, sc);
+
+	mii_delete_media(sc);
+
+	return (0);
 }

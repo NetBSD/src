@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy.c,v 1.4 1999/11/12 18:13:01 thorpej Exp $	*/
+/*	$NetBSD: ukphy.c,v 1.5 2000/01/27 16:44:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -88,7 +88,8 @@ int	ukphymatch __P((struct device *, struct cfdata *, void *));
 void	ukphyattach __P((struct device *, struct device *, void *));
 
 struct cfattach ukphy_ca = {
-	sizeof(struct mii_softc), ukphymatch, ukphyattach
+	sizeof(struct mii_softc), ukphymatch, ukphyattach, mii_detach,
+	    mii_activate
 };
 
 int	ukphy_service __P((struct mii_softc *, struct mii_data *, int));
@@ -150,6 +151,9 @@ ukphy_service(sc, mii, cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
+
+	if ((sc->mii_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENXIO);
 
 	switch (cmd) {
 	case MII_POLLSTAT:

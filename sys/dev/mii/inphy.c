@@ -1,4 +1,4 @@
-/*	$NetBSD: inphy.c,v 1.13 1999/11/12 18:13:00 thorpej Exp $	*/
+/*	$NetBSD: inphy.c,v 1.14 2000/01/27 16:44:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -92,7 +92,8 @@ int	inphymatch __P((struct device *, struct cfdata *, void *));
 void	inphyattach __P((struct device *, struct device *, void *));
 
 struct cfattach inphy_ca = {
-	sizeof(struct mii_softc), inphymatch, inphyattach
+	sizeof(struct mii_softc), inphymatch, inphyattach, mii_detach,
+	    mii_activate
 };
 
 int	inphy_service __P((struct mii_softc *, struct mii_data *, int));
@@ -157,6 +158,9 @@ inphy_service(sc, mii, cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
+
+	if ((sc->mii_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENXIO);
 
 	switch (cmd) {
 	case MII_POLLSTAT:
