@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.c,v 1.2 2002/04/13 07:34:41 tsutsui Exp $	*/
+/*	$NetBSD: bootinfo.c,v 1.2.20.1 2005/02/12 18:17:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,8 +46,7 @@ static char *bi_next;
 static int bi_size;
 
 void
-bi_init(addr)
-	paddr_t addr;
+bi_init(paddr_t addr)
 {
 	struct btinfo_common *bi;
 	struct btinfo_magic bi_magic;
@@ -63,9 +62,7 @@ bi_init(addr)
 }
 
 void
-bi_add(new, type, size)
-	void *new;
-	int type, size;
+bi_add(void *new, int type, int size)
 {
 	struct btinfo_common *bi;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.56 2005/01/01 21:00:06 yamt Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.56.4.1 2005/02/12 18:17:56 yamt Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.56 2005/01/01 21:00:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.56.4.1 2005/02/12 18:17:56 yamt Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
@@ -204,6 +204,17 @@ fail2:
 	free(amap->am_slots, M_UVMAMAP);
 fail1:
 	pool_put(&uvm_amap_pool, amap);
+
+	/*
+	 * XXX hack to tell the pagedaemon how many pages we need,
+	 * since we can need more than it would normally free.
+	 */
+	if (waitf == M_NOWAIT) {
+		extern int uvm_extrapages;
+		uvm_extrapages += ((sizeof(int) * 2 +
+				    sizeof(struct vm_anon *)) *
+				   totalslots) >> PAGE_SHIFT;
+	}
 	return (NULL);
 }
 

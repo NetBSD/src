@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbiosvar.h,v 1.5 2000/12/17 07:59:14 jmc Exp $ */
+/* $NetBSD: pnpbiosvar.h,v 1.5.36.1 2005/02/12 18:17:35 yamt Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -30,7 +30,7 @@ struct pnpbios_attach_args {
 	isa_chipset_tag_t paa_ic;
 };
 
-int pnpbios_probe __P((void));
+int pnpbios_probe(void);
 
 struct pnp_compatid {
 	char idstr[8];
@@ -85,18 +85,16 @@ struct pnpbiosdev_attach_args {
 	char *primid;
 };
 
-int pnpbios_io_map __P((pnpbios_tag_t, struct pnpresources *, int,
-			bus_space_tag_t *, bus_space_handle_t *));
-void pnpbios_io_unmap __P((pnpbios_tag_t, struct pnpresources *, int,
-			bus_space_tag_t, bus_space_handle_t));
-void *pnpbios_intr_establish __P((pnpbios_tag_t, struct pnpresources *, int,
-				  int, int (*)(void *), void *));
+int pnpbios_io_map(pnpbios_tag_t, struct pnpresources *, int,
+			bus_space_tag_t *, bus_space_handle_t *);
+void pnpbios_io_unmap(pnpbios_tag_t, struct pnpresources *, int,
+			bus_space_tag_t, bus_space_handle_t);
+void *pnpbios_intr_establish(pnpbios_tag_t, struct pnpresources *, int,
+				  int, int (*)(void *), void *);
 
-int pnpbios_getiobase __P((pnpbios_tag_t, struct pnpresources *, int,
-			   bus_space_tag_t *, int *));
-int pnpbios_getiosize __P((pnpbios_tag_t, struct pnpresources *, int, int *));
-int pnpbios_getirqnum __P((pnpbios_tag_t, struct pnpresources *, int, int *,
-			   int *));
-int pnpbios_getdmachan __P((pnpbios_tag_t, struct pnpresources *, int, int *));
-void pnpbios_print_devres __P((struct device *,
-			       struct pnpbiosdev_attach_args *));
+int pnpbios_getiobase(pnpbios_tag_t, struct pnpresources *, int,
+			   bus_space_tag_t *, int *);
+int pnpbios_getiosize(pnpbios_tag_t, struct pnpresources *, int, int *);
+int pnpbios_getirqnum(pnpbios_tag_t, struct pnpresources *, int, int *, int *);
+int pnpbios_getdmachan(pnpbios_tag_t, struct pnpresources *, int, int *);
+void pnpbios_print_devres(struct device *, struct pnpbiosdev_attach_args *);

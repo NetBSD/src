@@ -1,4 +1,4 @@
-#	$NetBSD: MMTA,v 1.25 2004/11/10 17:54:05 christos Exp $
+#	$NetBSD: MMTA,v 1.25.6.1 2005/02/12 18:17:36 yamt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -202,6 +202,7 @@ include	"arch/mmeye/conf/GENERIC.local"
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
+#pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
 

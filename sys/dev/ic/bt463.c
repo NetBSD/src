@@ -1,4 +1,4 @@
-/* $NetBSD: bt463.c,v 1.9 2003/11/13 03:09:29 chs Exp $ */
+/* $NetBSD: bt463.c,v 1.9.10.1 2005/02/12 18:17:43 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt463.c,v 1.9 2003/11/13 03:09:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt463.c,v 1.9.10.1 2005/02/12 18:17:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,33 +91,26 @@ __KERNEL_RCSID(0, "$NetBSD: bt463.c,v 1.9 2003/11/13 03:09:29 chs Exp $");
 /*
  * Functions exported via the RAMDAC configuration table.
  */
-void	bt463_init __P((struct ramdac_cookie *));
-int	bt463_set_cmap __P((struct ramdac_cookie *,
-	    struct wsdisplay_cmap *));
-int	bt463_get_cmap __P((struct ramdac_cookie *,
-	    struct wsdisplay_cmap *));
-int	bt463_set_cursor __P((struct ramdac_cookie *,
-	    struct wsdisplay_cursor *));
-int	bt463_get_cursor __P((struct ramdac_cookie *,
-	    struct wsdisplay_cursor *));
-int	bt463_set_curpos __P((struct ramdac_cookie *,
-	    struct wsdisplay_curpos *));
-int	bt463_get_curpos __P((struct ramdac_cookie *,
-	    struct wsdisplay_curpos *));
-int	bt463_get_curmax __P((struct ramdac_cookie *,
-	    struct wsdisplay_curpos *));
-int	bt463_check_curcmap __P((struct ramdac_cookie *,
-	    struct wsdisplay_cursor *cursorp));
-void	bt463_set_curcmap __P((struct ramdac_cookie *,
-	    struct wsdisplay_cursor *cursorp));
-int	bt463_get_curcmap __P((struct ramdac_cookie *,
-	    struct wsdisplay_cursor *cursorp));
+void	bt463_init(struct ramdac_cookie *);
+int	bt463_set_cmap(struct ramdac_cookie *, struct wsdisplay_cmap *);
+int	bt463_get_cmap(struct ramdac_cookie *, struct wsdisplay_cmap *);
+int	bt463_set_cursor(struct ramdac_cookie *, struct wsdisplay_cursor *);
+int	bt463_get_cursor(struct ramdac_cookie *, struct wsdisplay_cursor *);
+int	bt463_set_curpos(struct ramdac_cookie *, struct wsdisplay_curpos *);
+int	bt463_get_curpos(struct ramdac_cookie *, struct wsdisplay_curpos *);
+int	bt463_get_curmax(struct ramdac_cookie *, struct wsdisplay_curpos *);
+int	bt463_check_curcmap(struct ramdac_cookie *,
+	    struct wsdisplay_cursor *cursorp);
+void	bt463_set_curcmap(struct ramdac_cookie *,
+	    struct wsdisplay_cursor *cursorp);
+int	bt463_get_curcmap(struct ramdac_cookie *,
+	    struct wsdisplay_cursor *cursorp);
 
 #ifdef BT463_DEBUG
-int bt463_store __P((void *));
-int bt463_debug __P((void *));
-int bt463_readback __P((void *));
-void	bt463_copyback __P((void *));
+int bt463_store(void *);
+int bt463_debug(void *);
+int bt463_readback(void *);
+void	bt463_copyback(void *);
 #endif
 
 struct ramdac_funcs bt463_funcsstruct = {
@@ -146,9 +139,9 @@ struct bt463data {
 					 * struct tga_devconfig *
 					 */
 	
-	int             (*ramdac_sched_update) __P((void *, void (*)(void *)));
-	void            (*ramdac_wr) __P((void *, u_int, u_int8_t));
-	u_int8_t        (*ramdac_rd) __P((void *, u_int));
+	int             (*ramdac_sched_update)(void *, void (*)(void *));
+	void            (*ramdac_wr)(void *, u_int, u_int8_t);
+	u_int8_t        (*ramdac_rd)(void *, u_int);
 
 	int	changed;			/* what changed; see below */
 	char curcmap_r[2];			/* cursor colormap */
@@ -187,9 +180,9 @@ static struct bt463data *console_data;
 /*
  * Internal functions.
  */
-inline void bt463_wraddr __P((struct bt463data *, u_int16_t));
+inline void bt463_wraddr(struct bt463data *, u_int16_t);
 
-void	bt463_update __P((void *));
+void	bt463_update(void *);
 
  
 /*****************************************************************************/

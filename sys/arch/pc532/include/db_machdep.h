@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.16 2004/01/23 04:12:39 simonb Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.16.10.1 2005/02/12 18:17:38 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -90,7 +90,7 @@ db_regs_t  	ddb_regs;		/* register state */
 #define	inst_load(ins)	0
 #define	inst_store(ins)	0
 
-extern int db_active_ipl;
+extern long db_active_ipl;
 
 /*
  * This is needed for kgdb.

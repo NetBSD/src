@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.14 2004/09/13 10:52:34 tron Exp $	*/
+/*	$NetBSD: endian.h,v 1.14.6.1 2005/02/12 18:17:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -44,6 +44,37 @@
 #define	_BIG_ENDIAN	4321	/* MSB first: 68000, ibm, net */
 #define	_PDP_ENDIAN	3412	/* LSB first in word, MSW first in long */
 
+
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
+#ifndef _LOCORE
+
+/* C-family endian-ness definitions */
+
+#include <sys/ansi.h>
+#include <sys/cdefs.h>
+#include <sys/types.h>
+
+#ifndef in_addr_t
+typedef __in_addr_t	in_addr_t;
+#define	in_addr_t	__in_addr_t
+#endif
+
+#ifndef in_port_t
+typedef __in_port_t	in_port_t;
+#define	in_port_t	__in_port_t
+#endif
+
+__BEGIN_DECLS
+uint32_t htonl(uint32_t) __attribute__((__const__));
+uint16_t htons(uint16_t) __attribute__((__const__));
+uint32_t ntohl(uint32_t) __attribute__((__const__));
+uint16_t ntohs(uint16_t) __attribute__((__const__));
+__END_DECLS
+
+#endif /* !_LOCORE */
+#endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
+
+
 #include <machine/endian_machdep.h>
 
 /*
@@ -72,28 +103,6 @@
 #define BYTE_ORDER	_BYTE_ORDER
 
 #ifndef _LOCORE
-/* C-family endian-ness definitions */
-
-#include <sys/ansi.h>
-#include <sys/cdefs.h>
-#include <sys/types.h>
-
-#ifndef in_addr_t
-typedef __in_addr_t	in_addr_t;
-#define	in_addr_t	__in_addr_t
-#endif
-
-#ifndef in_port_t
-typedef __in_port_t	in_port_t;
-#define	in_port_t	__in_port_t
-#endif
-
-__BEGIN_DECLS
-uint32_t	htonl __P((uint32_t)) __attribute__((__const__));
-uint16_t	htons __P((uint16_t)) __attribute__((__const__));
-uint32_t	ntohl __P((uint32_t)) __attribute__((__const__));
-uint16_t	ntohs __P((uint16_t)) __attribute__((__const__));
-__END_DECLS
 
 /*
  * Macros for network/external number representation conversion.

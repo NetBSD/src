@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.39 2004/12/06 04:15:03 briggs Exp $	*/
+/*	$NetBSD: cpu.c,v 1.39.6.1 2005/02/12 18:17:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.39 2004/12/06 04:15:03 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.39.6.1 2005/02/12 18:17:36 yamt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -116,6 +116,36 @@ cpumatch(parent, cf, aux)
 	return 0;
 }
 
+void cpu_OFgetspeed(struct device *, struct cpu_info *);
+
+void
+cpu_OFgetspeed(struct device *self, struct cpu_info *ci)
+{
+	int	node;
+
+	node = OF_finddevice("/cpus");
+	if (node != -1) {
+		for (node = OF_child(node); node; node = OF_peer(node)) {
+			uint32_t cpunum;
+			int l;
+			l = OF_getprop(node, "reg", &cpunum, sizeof(cpunum));
+			if (l == 4 && ci->ci_cpuid == cpunum) {
+				uint32_t cf;
+				l = OF_getprop(node, "clock-frequency",
+						&cf, sizeof(cf));
+				if (l == 4)
+					ci->ci_khz = cf / 1000;
+				break;
+			}
+		}
+	}
+	if (ci->ci_khz) {
+		aprint_normal("%s: %u.%02u MHz\n",
+			      self->dv_xname,
+			      ci->ci_khz / 1000, (ci->ci_khz / 10) % 100);
+	}
+}
+
 void
 cpuattach(parent, self, aux)
 	struct device *parent, *self;
@@ -128,6 +158,10 @@ cpuattach(parent, self, aux)
 	ci = cpu_attach_common(self, id);
 	if (ci == NULL)
 		return;
+
+	if (ci->ci_khz == 0) {
+		cpu_OFgetspeed(self, ci);
+	}
 
 	if (id > 0) {
 #ifdef MULTIPROCESSOR

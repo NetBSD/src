@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.106 2004/07/06 01:30:08 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.106.6.1 2005/02/12 18:17:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.106 2004/07/06 01:30:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.106.6.1 2005/02/12 18:17:34 yamt Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -292,8 +292,7 @@ npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
 	return (rv);
 }
 
-void npxinit(ci)
-	struct cpu_info *ci;
+void npxinit(struct cpu_info *ci)
 {
 	lcr0(rcr0() & ~(CR0_EM|CR0_TS));
 	fninit();

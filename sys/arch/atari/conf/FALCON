@@ -1,12 +1,12 @@
 #
-# $NetBSD: FALCON,v 1.64 2004/11/24 20:52:23 bouyer Exp $
+# $NetBSD: FALCON,v 1.64.6.1 2005/02/12 18:17:30 yamt Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: FALCON.in,v 1.7 2003/10/08 11:05:27 bouyer Exp $
-#		NetBSD: GENERIC.in,v 1.41 2004/11/10 17:54:03 christos Exp $
+#		NetBSD: GENERIC.in,v 1.44 2005/01/31 16:54:33 hannken Exp $
 include "arch/atari/conf/std.atari"
 
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
@@ -57,6 +57,7 @@ file-system LFS # log-structured file system
 options QUOTA # Disk quotas for local disks
 
 options SOFTDEP # FFS soft updates support.
+
 options NFSSERVER # Network File System server side code
 
 options PANICWAIT # Require keystroke to dump/reboot
@@ -118,6 +119,7 @@ pseudo-device md 3 # Boot memory disk
 
 pseudo-device bpfilter 2 # berkeley packet filters
 pseudo-device tun 2 # network tunnel
+pseudo-device tap # virtual Ethernet
 
 pseudo-device gif 4 # IPv[46] over IPv[46] tunnel (RFC1933)
 
@@ -125,6 +127,7 @@ pseudo-device ccd 4 # concatenating disk driver
 
 pseudo-device raid 8 # RAIDframe disk driver
 options RAID_AUTOCONFIG # auto-configuration of RAID components
+pseudo-device fss 4 # file system snapshot device
 pseudo-device ipfilter # IP filtering device
 pseudo-device rnd # /dev/random and in-kernel generator
 pseudo-device clockctl # user control of clock subsystem

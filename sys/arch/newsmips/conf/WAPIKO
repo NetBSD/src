@@ -1,7 +1,7 @@
 #
 # NEWS3400 config file
 #
-# 	$NetBSD: WAPIKO,v 1.25 2005/01/21 12:15:26 tsutsui Exp $
+# 	$NetBSD: WAPIKO,v 1.25.2.1 2005/02/12 18:17:37 yamt Exp $
 #
 include		"arch/newsmips/conf/std.newsmips"
 
@@ -92,6 +92,7 @@ wsmouse0 at ms?
 
 pseudo-device	vnd		4	# disk-like interface to files
 #pseudo-device	ccd		4	# concatenated and striped disks
+#pseudo-device	fss		4	# file system snapshot device
 pseudo-device	loop			# loopback interface; required
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter	16	# Berkeley Packet Filter

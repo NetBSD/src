@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.43 2004/09/13 12:55:48 drochner Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.43.6.1 2005/02/12 18:17:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.43 2004/09/13 12:55:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.43.6.1 2005/02/12 18:17:46 yamt Exp $");
 
 #include "isadma.h"
 
@@ -64,31 +64,30 @@ __KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.43 2004/09/13 12:55:48 drochner Exp $")
 #define ISAPNP_ALLOC_INTR_MASK (~0)
 #endif
 
-static void isapnp_init __P((struct isapnp_softc *));
-static __inline u_char isapnp_shift_bit __P((struct isapnp_softc *));
-static int isapnp_findcard __P((struct isapnp_softc *));
-static void isapnp_free_region __P((bus_space_tag_t, struct isapnp_region *));
-static int isapnp_alloc_region __P((bus_space_tag_t, struct isapnp_region *));
-static int isapnp_alloc_irq __P((isa_chipset_tag_t, struct isapnp_pin *));
-static int isapnp_alloc_drq __P((isa_chipset_tag_t, struct isapnp_pin *));
-static int isapnp_testconfig __P((bus_space_tag_t, bus_space_tag_t,
-    struct isapnp_attach_args *, int));
-static struct isapnp_attach_args *isapnp_bestconfig __P((struct isapnp_softc *,
-    struct isapnp_attach_args **));
-static void isapnp_print_region __P((const char *, struct isapnp_region *,
-    size_t));
-static void isapnp_configure __P((struct isapnp_softc *,
-    const struct isapnp_attach_args *));
-static void isapnp_print_pin __P((const char *, struct isapnp_pin *, size_t));
-static int isapnp_print __P((void *, const char *));
+static void isapnp_init(struct isapnp_softc *);
+static __inline u_char isapnp_shift_bit(struct isapnp_softc *);
+static int isapnp_findcard(struct isapnp_softc *);
+static void isapnp_free_region(bus_space_tag_t, struct isapnp_region *);
+static int isapnp_alloc_region(bus_space_tag_t, struct isapnp_region *);
+static int isapnp_alloc_irq(isa_chipset_tag_t, struct isapnp_pin *);
+static int isapnp_alloc_drq(isa_chipset_tag_t, struct isapnp_pin *);
+static int isapnp_testconfig(bus_space_tag_t, bus_space_tag_t,
+    struct isapnp_attach_args *, int);
+static struct isapnp_attach_args *isapnp_bestconfig(struct isapnp_softc *,
+    struct isapnp_attach_args **);
+static void isapnp_print_region(const char *, struct isapnp_region *, size_t);
+static void isapnp_configure(struct isapnp_softc *,
+    const struct isapnp_attach_args *);
+static void isapnp_print_pin(const char *, struct isapnp_pin *, size_t);
+static int isapnp_print(void *, const char *);
 #ifdef _KERNEL
-static int isapnp_submatch __P((struct device *, struct cfdata *,
-				const locdesc_t *, void *));
+static int isapnp_submatch(struct device *, struct cfdata *,
+				const locdesc_t *, void *);
 #endif
-static int isapnp_find __P((struct isapnp_softc *, int));
-static int isapnp_match __P((struct device *, struct cfdata *, void *));
-static void isapnp_attach __P((struct device *, struct device *, void *));
-static void isapnp_callback __P((struct device *));
+static int isapnp_find(struct isapnp_softc *, int);
+static int isapnp_match(struct device *, struct cfdata *, void *);
+static void isapnp_attach(struct device *, struct device *, void *);
+static void isapnp_callback(struct device *);
 
 CFATTACH_DECL(isapnp, sizeof(struct isapnp_softc),
     isapnp_match, isapnp_attach, NULL, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.188 2005/01/17 14:13:19 minoura Exp $	*/
+/*	$NetBSD: audio.c,v 1.188.2.1 2005/02/12 18:17:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.188 2005/01/17 14:13:19 minoura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.188.2.1 2005/02/12 18:17:42 yamt Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2310,23 +2310,27 @@ audiostartp(struct audio_softc *sc)
 	int used;
 
 	used = audio_stream_get_used(&sc->sc_pr.s);
-	DPRINTF(("audiostartp: start=%p used=%d(hi=%d) mmapped=%d\n",
+	DPRINTF(("audiostartp: start=%p used=%d(hi=%d blk=%d) mmapped=%d\n",
 		 sc->sc_pr.s.start, used, sc->sc_pr.usedhigh,
-		 sc->sc_pr.mmapped));
+		 sc->sc_pr.blksize, sc->sc_pr.mmapped));
 
 	if (!sc->sc_pr.mmapped && used < sc->sc_pr.blksize) {
 		wakeup(&sc->sc_wchan);
+		DPRINTF(("%s: wakeup and return\n", __func__));
 		return 0;
 	}
 
-	if (sc->hw_if->trigger_output)
+	if (sc->hw_if->trigger_output) {
+		DPRINTF(("%s: call trigger_output\n", __func__));
 		error = sc->hw_if->trigger_output(sc->hw_hdl, sc->sc_pr.s.start,
 		    sc->sc_pr.s.end, sc->sc_pr.blksize,
 		    audio_pint, (void *)sc, &sc->sc_pr.s.param);
-	else
+	} else {
+		DPRINTF(("%s: call start_output\n", __func__));
 		error = sc->hw_if->start_output(sc->hw_hdl,
 		    __UNCONST(sc->sc_pr.s.outp), sc->sc_pr.blksize,
 		    audio_pint, (void *)sc);
+	}
 	if (error) {
 		DPRINTF(("audiostartp failed: %d\n", error));
 		return error;
@@ -3292,18 +3296,42 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 	}
 
 	if (SPECIFIED(ai->blocksize)) {
+		int pblksize, rblksize;
+
 		/* Block size specified explicitly. */
-		if (!cleared) {
-			audio_clear(sc);
-			cleared = TRUE;
-		}
 		if (ai->blocksize == 0) {
+			if (!cleared) {
+				audio_clear(sc);
+				cleared = TRUE;
+			}
 			sc->sc_blkset = FALSE;
 			audio_calc_blksize(sc, AUMODE_RECORD);
 			audio_calc_blksize(sc, AUMODE_PLAY);
 		} else {
 			sc->sc_blkset = TRUE;
-			sc->sc_pr.blksize = sc->sc_rr.blksize = ai->blocksize;
+			/* check whether new blocksize changes actually */
+			if (hw->round_blocksize == NULL) {
+				if (!cleared) {
+					audio_clear(sc);
+					cleared = TRUE;
+				}
+				sc->sc_pr.blksize = ai->blocksize;
+				sc->sc_rr.blksize = ai->blocksize;
+			} else {
+				pblksize = hw->round_blocksize(sc->hw_hdl,
+				    ai->blocksize, AUMODE_PLAY, &sc->sc_pr.s.param);
+				rblksize = hw->round_blocksize(sc->hw_hdl,
+				    ai->blocksize, AUMODE_RECORD, &sc->sc_rr.s.param);
+				if (pblksize != sc->sc_pr.blksize ||
+				    rblksize != sc->sc_rr.blksize) {
+					if (!cleared) {
+						audio_clear(sc);
+						cleared = TRUE;
+					}
+					sc->sc_pr.blksize = ai->blocksize;
+					sc->sc_rr.blksize = ai->blocksize;
+				}
+			}
 		}
 	}
 

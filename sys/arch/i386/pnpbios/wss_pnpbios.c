@@ -1,4 +1,4 @@
-/* $NetBSD: wss_pnpbios.c,v 1.11 2002/10/03 03:02:11 uwe Exp $ */
+/* $NetBSD: wss_pnpbios.c,v 1.11.16.1 2005/02/12 18:17:35 yamt Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_pnpbios.c,v 1.11 2002/10/03 03:02:11 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_pnpbios.c,v 1.11.16.1 2005/02/12 18:17:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,9 +50,9 @@ __KERNEL_RCSID(0, "$NetBSD: wss_pnpbios.c,v 1.11 2002/10/03 03:02:11 uwe Exp $")
 #include <dev/isa/wssreg.h>
 #include <dev/isa/wssvar.h>
 
-int wss_pnpbios_match __P((struct device *, struct cfdata *, void *));
-void wss_pnpbios_attach __P((struct device *, struct device *, void *));
-int wss_pnpbios_hints_index __P((const char *));
+int wss_pnpbios_match(struct device *, struct cfdata *, void *);
+void wss_pnpbios_attach(struct device *, struct device *, void *);
+int wss_pnpbios_hints_index(const char *);
 
 
 CFATTACH_DECL(wss_pnpbios, sizeof(struct wss_softc),

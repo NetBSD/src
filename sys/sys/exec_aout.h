@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.h,v 1.33 2004/02/11 01:03:35 matt Exp $	*/
+/*	$NetBSD: exec_aout.h,v 1.33.10.1 2005/02/12 18:17:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -123,18 +123,18 @@ struct exec {
  */
 #define	N_GETMAGIC(ex) \
     ((((ex).a_midmag)&0xffff0000) ? \
-    (ntohl((u_int32_t)((ex).a_midmag))&0xffff) : ((ex).a_midmag))
+    (be32toh((u_int32_t)((ex).a_midmag))&0xffff) : ((ex).a_midmag))
 #define	N_GETMAGIC2(ex) \
     ((((ex).a_midmag)&0xffff0000) ? \
-    (ntohl((u_int32_t)((ex).a_midmag))&0xffff) : (((ex).a_midmag) | 0x10000))
+    (be32toh((u_int32_t)((ex).a_midmag))&0xffff) : (((ex).a_midmag) | 0x10000))
 #define	N_GETMID(ex) \
     ((((ex).a_midmag)&0xffff0000) ? \
-    ((ntohl((u_int32_t)((ex).a_midmag))>>16)&0x03ff) : MID_ZERO)
+    ((be32toh((u_int32_t)((ex).a_midmag))>>16)&0x03ff) : MID_ZERO)
 #define	N_GETFLAG(ex) \
     ((((ex).a_midmag)&0xffff0000) ? \
-    ((ntohl((u_int32_t)((ex).a_midmag))>>26)&0x3f) : 0)
+    ((be32toh((u_int32_t)((ex).a_midmag))>>26)&0x3f) : 0)
 #define	N_SETMAGIC(ex,mag,mid,flag) \
-    ((ex).a_midmag = htonl((u_int32_t) \
+    ((ex).a_midmag = htobe32((u_int32_t) \
     ((((flag)&0x3f)<<26)|(((mid)&0x03ff)<<16)|(((mag)&0xffff)))))
 
 #define	N_ALIGN(ex,x) \
@@ -189,25 +189,27 @@ struct exec {
 #ifdef _KERNEL
 
 /* the "a.out" format's entry in the exec switch */
-int	exec_aout_makecmds __P((struct proc *, struct exec_package *));
+int	exec_aout_makecmds(struct proc *, struct exec_package *);
 
 /* functions which prepare various a.out executable types */
 /*
  * MI portion
  */
-int	exec_aout_prep_zmagic __P((struct proc *, struct exec_package *));
-int	exec_aout_prep_nmagic __P((struct proc *, struct exec_package *));
-int	exec_aout_prep_omagic __P((struct proc *, struct exec_package *));
+int	exec_aout_prep_zmagic(struct proc *, struct exec_package *);
+int	exec_aout_prep_nmagic(struct proc *, struct exec_package *);
+int	exec_aout_prep_omagic(struct proc *, struct exec_package *);
 
 /* For compatibility modules */
-int	exec_aout_prep_oldzmagic __P((struct proc *, struct exec_package *));
-int	exec_aout_prep_oldnmagic __P((struct proc *, struct exec_package *));
-int	exec_aout_prep_oldomagic __P((struct proc *, struct exec_package *));
+int	exec_aout_prep_oldzmagic(struct proc *, struct exec_package *);
+int	exec_aout_prep_oldnmagic(struct proc *, struct exec_package *);
+int	exec_aout_prep_oldomagic(struct proc *, struct exec_package *);
 
 /*
  * MD portion
  */
-int	cpu_exec_aout_makecmds __P((struct proc *, struct exec_package *));
+#ifndef cpu_exec_aout_makecmds
+int	cpu_exec_aout_makecmds(struct proc *, struct exec_package *);
+#endif
 
 #endif /* _KERNEL */
 

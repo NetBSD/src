@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.53 2005/01/09 19:23:26 christos Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.53.4.1 2005/02/12 18:17:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -86,7 +86,7 @@ struct sigctx {
 #define	SAS_OLDMASK	0x01		/* need to restore mask before pause */
 
 /* additional signal action values, used only temporarily/internally */
-#define	SIG_CATCH	(void (*) __P((int)))2
+#define	SIG_CATCH	(void (*)(int))2
 
 /*
  * get signal action for process and signal; currently only for current process
@@ -139,70 +139,69 @@ struct ucred;
 /*
  * Machine-independent functions:
  */
-int	coredump __P((struct lwp *, const char *));
-int	coredump_netbsd __P((struct lwp *, struct vnode *, struct ucred *));
-void	execsigs __P((struct proc *));
-void	gsignal __P((int, int));
-void	kgsignal __P((int, struct ksiginfo *, void *));
-int	issignal __P((struct lwp *));
-void	pgsignal __P((struct pgrp *, int, int));
-void	kpgsignal __P((struct pgrp *, struct ksiginfo *, void *, int));
-void	postsig __P((int));
-void	psignal1 __P((struct proc *, int, int));
-void	kpsignal1 __P((struct proc *, struct ksiginfo *, void *, int));
+int	coredump(struct lwp *, const char *);
+int	coredump_netbsd(struct lwp *, struct vnode *, struct ucred *);
+void	execsigs(struct proc *);
+void	gsignal(int, int);
+void	kgsignal(int, struct ksiginfo *, void *);
+int	issignal(struct lwp *);
+void	pgsignal(struct pgrp *, int, int);
+void	kpgsignal(struct pgrp *, struct ksiginfo *, void *, int);
+void	postsig(int);
+void	psignal1(struct proc *, int, int);
+void	kpsignal1(struct proc *, struct ksiginfo *, void *, int);
 #define	kpsignal(p, ksi, data)		kpsignal1((p), (ksi), (data), 1)
 #define	psignal(p, sig)			psignal1((p), (sig), 1)
 #define	sched_psignal(p, sig)		psignal1((p), (sig), 0)
-void	siginit __P((struct proc *));
-void	trapsignal __P((struct lwp *, const struct ksiginfo *));
-void	sigexit __P((struct lwp *, int));
-void	killproc __P((struct proc *, const char *));
-void	setsigvec __P((struct proc *, int, struct sigaction *));
-int	killpg1 __P((struct proc *, struct ksiginfo *, int, int));
-struct lwp *proc_unstop __P((struct proc *p));
+void	siginit(struct proc *);
+void	trapsignal(struct lwp *, const struct ksiginfo *);
+void	sigexit(struct lwp *, int);
+void	killproc(struct proc *, const char *);
+void	setsigvec(struct proc *, int, struct sigaction *);
+int	killpg1(struct proc *, struct ksiginfo *, int, int);
+struct lwp *proc_unstop(struct proc *p);
 
-int	sigaction1 __P((struct proc *, int, const struct sigaction *,
-	    struct sigaction *, const void *, int));
-int	sigprocmask1 __P((struct proc *, int, const sigset_t *, sigset_t *));
-void	sigpending1 __P((struct proc *, sigset_t *));
-int	sigsuspend1 __P((struct proc *, const sigset_t *));
-int	sigaltstack1 __P((struct proc *, const struct sigaltstack *,
-	    struct sigaltstack *));
-int	sigismasked __P((struct proc *, int));
+int	sigaction1(struct proc *, int, const struct sigaction *,
+	    struct sigaction *, const void *, int);
+int	sigprocmask1(struct proc *, int, const sigset_t *, sigset_t *);
+void	sigpending1(struct proc *, sigset_t *);
+int	sigsuspend1(struct proc *, const sigset_t *);
+int	sigaltstack1(struct proc *, const struct sigaltstack *,
+	    struct sigaltstack *);
+int	sigismasked(struct proc *, int);
 
-void	signal_init __P((void));
+void	signal_init(void);
 
-void	sigactsinit __P((struct proc *, struct proc *, int));
-void	sigactsunshare __P((struct proc *));
-void	sigactsfree __P((struct sigacts *));
+void	sigactsinit(struct proc *, struct proc *, int);
+void	sigactsunshare(struct proc *);
+void	sigactsfree(struct sigacts *);
 
-void	kpsendsig __P((struct lwp *, const struct ksiginfo *,
-    const sigset_t *));
+void	kpsendsig(struct lwp *, const struct ksiginfo *, const sigset_t *);
 
 /*
  * Machine-dependent functions:
  */
-void	sendsig __P((const struct ksiginfo *, const sigset_t *));
+void	sendsig(const struct ksiginfo *, const sigset_t *);
 struct core;
 struct core32;
-int	cpu_coredump __P((struct lwp *, struct vnode *, struct ucred *,
-	    struct core *));
-int	cpu_coredump32 __P((struct lwp *, struct vnode *, struct ucred *,
-	    struct core32 *));
+int	cpu_coredump(struct lwp *, struct vnode *, struct ucred *,
+	    struct core *);
+int	cpu_coredump32(struct lwp *, struct vnode *, struct ucred *,
+	    struct core32 *);
 
 /*
  * Compatibility functions.  See compat/common/kern_sig_13.c.
  */
-void	native_sigset13_to_sigset __P((const sigset13_t *, sigset_t *));
-void	native_sigset_to_sigset13 __P((const sigset_t *, sigset13_t *));
-void	native_sigaction13_to_sigaction __P((const struct sigaction13 *,
-	    struct sigaction *));
-void	native_sigaction_to_sigaction13 __P((const struct sigaction *,
-	    struct sigaction13 *));
-void	native_sigaltstack13_to_sigaltstack __P((const struct sigaltstack13 *,
-	    struct sigaltstack *));
-void	native_sigaltstack_to_sigaltstack13 __P((const struct sigaltstack *,
-	    struct sigaltstack13 *));
+void	native_sigset13_to_sigset(const sigset13_t *, sigset_t *);
+void	native_sigset_to_sigset13(const sigset_t *, sigset13_t *);
+void	native_sigaction13_to_sigaction(const struct sigaction13 *,
+	    struct sigaction *);
+void	native_sigaction_to_sigaction13(const struct sigaction *,
+	    struct sigaction13 *);
+void	native_sigaltstack13_to_sigaltstack(const struct sigaltstack13 *,
+	    struct sigaltstack *);
+void	native_sigaltstack_to_sigaltstack13(const struct sigaltstack *,
+	    struct sigaltstack13 *);
 #endif	/* _KERNEL */
 #endif	/* !_SYS_SIGNALVAR_H_ */
 

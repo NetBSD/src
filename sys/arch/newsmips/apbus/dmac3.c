@@ -1,4 +1,4 @@
-/*	$NetBSD: dmac3.c,v 1.6 2003/07/15 02:59:28 lukem Exp $	*/
+/*	$NetBSD: dmac3.c,v 1.6.10.1 2005/02/12 18:17:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmac3.c,v 1.6 2003/07/15 02:59:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmac3.c,v 1.6.10.1 2005/02/12 18:17:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -67,19 +67,16 @@ struct dmac3_softc {
 	int sc_ctlnum;
 };
 
-int dmac3_match __P((struct device *, struct cfdata *, void *));
-void dmac3_attach __P((struct device *, struct device *, void *));
+int dmac3_match(struct device *, struct cfdata *, void *);
+void dmac3_attach(struct device *, struct device *, void *);
 
-paddr_t kvtophys __P((vaddr_t));
+extern paddr_t kvtophys(vaddr_t);
 
 CFATTACH_DECL(dmac, sizeof(struct dmac3_softc),
     dmac3_match, dmac3_attach, NULL, NULL);
 
 int
-dmac3_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+dmac3_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct apbus_attach_args *apa = aux;
 
@@ -90,9 +87,7 @@ dmac3_match(parent, cf, aux)
 }
 
 void
-dmac3_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+dmac3_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct dmac3_softc *sc = (void *)self;
 	struct apbus_attach_args *apa = aux;
@@ -120,8 +115,7 @@ dmac3_attach(parent, self, aux)
 }
 
 void *
-dmac3_link(ctlnum)
-	int ctlnum;
+dmac3_link(int ctlnum)
 {
 	struct dmac3_softc *sc;
 	struct device *dv;
@@ -137,8 +131,7 @@ dmac3_link(ctlnum)
 }
 
 void
-dmac3_reset(sc)
-	struct dmac3_softc *sc;
+dmac3_reset(struct dmac3_softc *sc)
 {
 	struct dmac3reg *reg = sc->sc_reg;
 
@@ -149,10 +142,7 @@ dmac3_reset(sc)
 }
 
 void
-dmac3_start(sc, addr, len, direction)
-	struct dmac3_softc *sc;
-	vaddr_t addr;
-	int len, direction;
+dmac3_start(struct dmac3_softc *sc, vaddr_t addr, int len, int direction)
 {
 	struct dmac3reg *reg = sc->sc_reg;
 	paddr_t pa;
@@ -184,8 +174,7 @@ dmac3_start(sc, addr, len, direction)
 }
 
 int
-dmac3_intr(v)
-	void *v;
+dmac3_intr(void *v)
 {
 	struct dmac3_softc *sc = v;
 	struct dmac3reg *reg = sc->sc_reg;
@@ -218,9 +207,7 @@ dmac3_intr(v)
 }
 
 void
-dmac3_misc(sc, cmd)
-	struct dmac3_softc *sc;
-	int cmd;
+dmac3_misc(struct dmac3_softc *sc, int cmd)
 {
 	struct dmac3reg *reg = sc->sc_reg;
 	int conf;

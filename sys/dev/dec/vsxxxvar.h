@@ -1,4 +1,4 @@
-/* $NetBSD: vsxxxvar.h,v 1.1 1999/11/20 04:55:30 nisimura Exp $ */
+/* $NetBSD: vsxxxvar.h,v 1.1.42.1 2005/02/12 18:17:42 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
@@ -52,4 +52,4 @@ struct vsxxx_softc {
 };
 
 extern struct wsmouse_accessops vsxxx_accessops;
-void vsxxx_input __P((int));
+void vsxxx_input(int);

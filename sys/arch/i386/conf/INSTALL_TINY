@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.82 2004/11/10 17:25:22 christos Exp $
+#	$NetBSD: INSTALL_TINY,v 1.82.6.1 2005/02/12 18:17:34 yamt Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -122,6 +122,7 @@ file-system 	KERNFS		# /kern
 #options 	NFSSERVER	# Network File System server
 options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
+#options 	FFS_SNAPSHOT	# ffs snapshots
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
@@ -485,6 +486,7 @@ include	"arch/i386/conf/GENERIC.local"
 
 # disk/mass storage pseudo-devices
 #pseudo-device	ccd		4	# concatenated/striped disk devices
+#pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device (ramdisk)
 #pseudo-device	vnd		4	# disk-like interface to files
 

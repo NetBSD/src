@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.38 2004/03/24 15:34:49 atatat Exp $ */
+/* $NetBSD: machdep.c,v 1.38.10.1 2005/02/12 18:17:35 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38 2004/03/24 15:34:49 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.1 2005/02/12 18:17:35 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -101,9 +101,6 @@ char	cpu_model[60];
 
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
-
-extern char kernel_text[];
-extern char etext[];
 
 struct vm_map *exec_map = NULL;  
 struct vm_map *mb_map = NULL;
@@ -291,26 +288,6 @@ cpu_startup()
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-
-	/*
-	 * Tell the VM system that the area before the text segment
-	 * is invalid.
-	 *
-	 * XXX Should just change KERNBASE and VM_MIN_KERNEL_ADDRESS,
-	 * XXX but not right now.
-	 */
-	if (uvm_map_protect(kernel_map, 0, round_page((vaddr_t)&kernel_text),
-	    UVM_PROT_NONE, TRUE) != 0)
-		panic("can't mark pre-text pages off-limits");
-
-	/*
-	 * Tell the VM system that writing to kernel text isn't allowed.
-	 * If we don't, we might end up COW'ing the text segment!
-	 */
-	if (uvm_map_protect(kernel_map, trunc_page((vaddr_t)&kernel_text),
-	    trunc_page((vaddr_t)&etext), UVM_PROT_READ|UVM_PROT_EXEC, TRUE)
-	    != 0)
-		panic("can't protect kernel text");
 
 	/*
 	 * Say "Hi" to the world

@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop_pcctwo.c,v 1.7 2004/02/13 11:36:22 wiz Exp $	*/
+/*	$NetBSD: osiop_pcctwo.c,v 1.7.10.1 2005/02/12 18:17:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop_pcctwo.c,v 1.7 2004/02/13 11:36:22 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop_pcctwo.c,v 1.7.10.1 2005/02/12 18:17:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,8 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: osiop_pcctwo.c,v 1.7 2004/02/13 11:36:22 wiz Exp $")
 #include <dev/mvme/pcctwovar.h>
 
 
-int osiop_pcctwo_match __P((struct device *, struct cfdata *, void *));
-void osiop_pcctwo_attach __P((struct device *, struct device *, void *));
+int osiop_pcctwo_match(struct device *, struct cfdata *, void *);
+void osiop_pcctwo_attach(struct device *, struct device *, void *);
 
 struct osiop_pcctwo_softc {
 	struct osiop_softc	sc_osiop;
@@ -75,7 +75,7 @@ struct osiop_pcctwo_softc {
 CFATTACH_DECL(osiop_pcctwo, sizeof(struct osiop_pcctwo_softc),
     osiop_pcctwo_match, osiop_pcctwo_attach, NULL, NULL);
 
-static int osiop_pcctwo_intr __P((void *));
+static int osiop_pcctwo_intr(void *);
 
 extern struct cfdriver osiop_cd;
 

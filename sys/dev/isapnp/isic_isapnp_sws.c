@@ -47,7 +47,7 @@
  *		EXPERIMENTAL !!!!
  *		=================
  *
- *	$Id: isic_isapnp_sws.c,v 1.5 2003/11/10 08:51:52 wiz Exp $
+ *	$Id: isic_isapnp_sws.c,v 1.5.10.1 2005/02/12 18:17:46 yamt Exp $
  *
  *	last edit-date: [Fri Jan  5 11:38:29 2001]
  *
@@ -57,7 +57,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_sws.c,v 1.5 2003/11/10 08:51:52 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_sws.c,v 1.5.10.1 2005/02/12 18:17:46 yamt Exp $");
 
 #include "opt_isicpnp.h"  
 #ifdef ISICPNP_SEDLBAUER
@@ -123,11 +123,11 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp_sws.c,v 1.5 2003/11/10 08:51:52 wiz Exp 
 #include <netisdn/i4b_mbuf.h>
 
 #ifndef __FreeBSD__
-static u_int8_t sws_read_reg   __P((struct isic_softc *sc, int what, bus_size_t offs));
-static void     sws_write_reg  __P((struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data));
-static void     sws_read_fifo  __P((struct isic_softc *sc, int what, void *buf, size_t size));
-static void     sws_write_fifo __P((struct isic_softc *sc, int what, const void *data, size_t size));
-void		isic_attach_sws __P((struct isic_softc *sc));
+static u_int8_t sws_read_reg  (struct isic_softc *sc, int what, bus_size_t offs);
+static void     sws_write_reg (struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data);
+static void     sws_read_fifo (struct isic_softc *sc, int what, void *buf, size_t size);
+static void     sws_write_fifo(struct isic_softc *sc, int what, const void *data, size_t size);
+void		isic_attach_sws(struct isic_softc *sc);
 #endif
 
 /*---------------------------------------------------------------------------*

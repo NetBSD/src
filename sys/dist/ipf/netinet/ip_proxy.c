@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.1 2004/10/01 15:26:00 christos Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.1.8.1 2005/02/12 18:17:52 yamt Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
@@ -105,13 +105,18 @@ struct file;
 /* END OF INCLUDES */
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.62.2.7 2004/07/11 10:40:54 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.62.2.9 2004/10/17 15:21:28 darrenr Exp";
 #endif
 
 static int appr_fixseqack __P((fr_info_t *, ip_t *, ap_session_t *, int ));
 
 #define	AP_SESS_SIZE	53
 
+#if defined(_KERNEL)
+int		ipf_proxy_debug = 0;
+#else
+int		ipf_proxy_debug = 2;
+#endif
 ap_session_t	*ap_sess_tab[AP_SESS_SIZE];
 ap_session_t	*ap_sess_list = NULL;
 aproxy_t	*ap_proxylist = NULL;
@@ -181,14 +186,22 @@ aproxy_t *ap;
 	for (a = ap_proxies; a->apr_p; a++)
 		if ((a->apr_p == ap->apr_p) &&
 		    !strncmp(a->apr_label, ap->apr_label,
-			     sizeof(ap->apr_label)))
+			     sizeof(ap->apr_label))) {
+			if (ipf_proxy_debug > 1)
+				printf("appr_add: %s/%d already present (B)\n",
+				       a->apr_label, a->apr_p);
 			return -1;
+		}
 
 	for (a = ap_proxylist; a->apr_p; a = a->apr_next)
 		if ((a->apr_p == ap->apr_p) &&
 		    !strncmp(a->apr_label, ap->apr_label,
-			     sizeof(ap->apr_label)))
+			     sizeof(ap->apr_label))) {
+			if (ipf_proxy_debug > 1)
+				printf("appr_add: %s/%d already present (D)\n",
+				       a->apr_label, a->apr_p);
 			return -1;
+		}
 	ap->apr_next = ap_proxylist;
 	ap_proxylist = ap;
 	if (ap->apr_init != NULL)
@@ -209,12 +222,22 @@ ap_ctl_t *ctl;
 	int error;
 
 	a = appr_lookup(ctl->apc_p, ctl->apc_label);
-	if (a == NULL)
+	if (a == NULL) {
+		if (ipf_proxy_debug > 1)
+			printf("appr_ctl: can't find %s/%d\n",
+				ctl->apc_label, ctl->apc_p);
 		error = ESRCH;
-	else if (a->apr_ctl == NULL)
+	} else if (a->apr_ctl == NULL) {
+		if (ipf_proxy_debug > 1)
+			printf("appr_ctl: no ctl function for %s/%d\n",
+				ctl->apc_label, ctl->apc_p);
 		error = ENXIO;
-	else
+	} else {
 		error = (*a->apr_ctl)(a, ctl);
+		if ((error != 0) && (ipf_proxy_debug > 1))
+			printf("appr_ctl: %s/%d ctl error %d\n",
+				a->apr_label, a->apr_p, error);
+	}
 	return error;
 }
 
@@ -233,10 +256,16 @@ aproxy_t *ap;
 		if (a == ap) {
 			a->apr_flags |= APR_DELETE;
 			*app = a->apr_next;
-			if (ap->apr_ref != 0)
+			if (ap->apr_ref != 0) {
+				if (ipf_proxy_debug > 2)
+					printf("appr_del: orphaning %s/%d\n",
+						ap->apr_label, ap->apr_p);
 				return 1;
+			}
 			return 0;
 		}
+	if (ipf_proxy_debug > 1)
+		printf("appr_del: proxy %lx not found\n", (u_long)ap);
 	return -1;
 }
 
@@ -296,7 +325,8 @@ int mode;
 		if (error == 0)
 			error = appr_ctl(&ctl);
 
-		if (ctl.apc_dsize > 0 && ptr != NULL && ctl.apc_data == ptr) {
+		if ((ctl.apc_dsize > 0) && (ptr != NULL) &&
+		    (ctl.apc_data == ptr)) {
 			KFREES(ptr, ctl.apc_dsize);
 		}
 		break;
@@ -318,23 +348,37 @@ nat_t *nat;
 {
 	aproxy_t *apr;
 	ipnat_t *ipn;
-
-#if PROXY_DEBUG
-	printf("appr_match(%lx,%lx)\n", fin, nat);
-#endif
-	if ((fin->fin_flx & (FI_SHORT|FI_BAD)) != 0)
-		return -1;
+	int result;
 
 	ipn = nat->nat_ptr;
-	if (ipn == NULL)
+	if (ipf_proxy_debug > 8)
+		printf("appr_match(%lx,%lx) aps %lx ptr %lx\n",
+			(u_long)fin, (u_long)nat, (u_long)nat->nat_aps,
+			(u_long)ipn);
+
+	if ((fin->fin_flx & (FI_SHORT|FI_BAD)) != 0) {
+		if (ipf_proxy_debug > 0)
+			printf("appr_match: flx 0x%x (BAD|SHORT)\n",
+				fin->fin_flx);
 		return -1;
+	}
+
 	apr = ipn->in_apr;
-	if ((apr == NULL) || (apr->apr_flags & APR_DELETE) ||
-	    (nat->nat_aps == NULL))
+	if ((apr == NULL) || (apr->apr_flags & APR_DELETE)) {
+		if (ipf_proxy_debug > 0)
+			printf("appr_match:apr %lx apr_flags 0x%x\n",
+				(u_long)apr, apr ? apr->apr_flags : 0);
 		return -1;
-	if (apr->apr_match != NULL)
-		if ((*apr->apr_match)(fin, nat->nat_aps, nat) != 0)
+	}
+
+	if (apr->apr_match != NULL) {
+		result = (*apr->apr_match)(fin, nat->nat_aps, nat);
+		if (result != 0) {
+			if (ipf_proxy_debug > 4)
+				printf("appr_match: result %d\n", result);
 			return -1;
+		}
+	}
 	return 0;
 }
 
@@ -351,21 +395,34 @@ nat_t *nat;
 	register ap_session_t *aps;
 	aproxy_t *apr;
 
-#if PROXY_DEBUG
-	printf("appr_new(%lx,%lx)\n", fin, nat);
-#endif
-	if ((nat->nat_ptr == NULL) || (nat->nat_aps != NULL))
+	if (ipf_proxy_debug > 8)
+		printf("appr_new(%lx,%lx) \n", (u_long)fin, (u_long)nat);
+
+	if ((nat->nat_ptr == NULL) || (nat->nat_aps != NULL)) {
+		if (ipf_proxy_debug > 0)
+			printf("appr_new: nat_ptr %lx nat_aps %lx\n",
+				(u_long)nat->nat_ptr, (u_long)nat->nat_aps);
 		return -1;
+	}
 
 	apr = nat->nat_ptr->in_apr;
 
-	if (!apr || (apr->apr_flags & APR_DELETE) ||
-	    (fin->fin_p != apr->apr_p))
+	if ((apr->apr_flags & APR_DELETE) ||
+	    (fin->fin_p != apr->apr_p)) {
+		if (ipf_proxy_debug > 2)
+			printf("appr_new: apr_flags 0x%x p %d/%d\n",
+				apr->apr_flags, fin->fin_p, apr->apr_p);
 		return -1;
+	}
 
 	KMALLOC(aps, ap_session_t *);
-	if (!aps)
+	if (!aps) {
+		if (ipf_proxy_debug > 0)
+			printf("appr_new: malloc failed (%lu)\n",
+				(u_long)sizeof(ap_session_t));
 		return -1;
+	}
+
 	bzero((char *)aps, sizeof(*aps));
 	aps->aps_p = fin->fin_p;
 	aps->aps_data = NULL;
@@ -377,6 +434,9 @@ nat_t *nat;
 				KFREES(aps->aps_data, aps->aps_psiz);
 			}
 			KFREE(aps);
+			if (ipf_proxy_debug > 2)
+				printf("appr_new: new(%lx) failed\n",
+					(u_long)apr->apr_new);
 			return -1;
 		}
 	aps->aps_nat = nat;
@@ -415,14 +475,17 @@ nat_t *nat;
 	u_32_t s1, s2, sd;
 #endif
 
-	if (fin->fin_flx & FI_BAD)
+	if (fin->fin_flx & FI_BAD) {
+		if (ipf_proxy_debug > 0)
+			printf("appr_check: flx 0x%x (BAD)\n", fin->fin_flx);
 		return -1;
+	}
 
 #ifndef IPFILTER_CKSUM
 	if ((fin->fin_out == 0) && (fr_checkl4sum(fin) == -1)) {
-# if PROXY_DEBUG || !defined(_KERNEL)
-		printf("proxy l4 checksum failure on %p\n", fin);
-# endif
+		if (ipf_proxy_debug > 0)
+			printf("appr_check: l4 checksum failure %d\n",
+				fin->fin_p);
 		if (fin->fin_p == IPPROTO_TCP)
 			frstats[fin->fin_out].fr_tcpbad++;
 		return -1;
@@ -437,8 +500,11 @@ nat_t *nat;
 		 */
 #if defined(MENTAT) || defined(HAVE_M_PULLDOWN)
 		if ((fin->fin_dlen > 0) && !(fin->fin_flx & FI_COALESCE))
-			if (fr_coalesce(fin) == -1)
+			if (fr_coalesce(fin) == -1) {
+				if (ipf_proxy_debug > 0)
+					printf("appr_check: fr_coalesce failed %x\n", fin->fin_flx);
 				return -1;
+			}
 #endif
 		ip = fin->fin_ip;
 
@@ -477,17 +543,14 @@ nat_t *nat;
 		}
 
 		rv = APR_EXIT(err);
-		if (rv == 1) {
-#if PROXY_DEBUG || !defined(_KERNEL)
-			printf("%d:proxy says bad packet received (%x)\n",
-				fin->fin_out, err);
-#endif
+		if (((ipf_proxy_debug > 0) && (rv != 0)) ||
+		    (ipf_proxy_debug > 8))
+			printf("appr_check: out %d err %x rv %d\n",
+				fin->fin_out, err, rv);
+		if (rv == 1)
 			return -1;
-		}
+
 		if (rv == 2) {
-#if PROXY_DEBUG || !defined(_KERNEL)
-			printf("proxy says free app proxy data (%x)\n", err);
-#endif
 			appr_free(apr);
 			nat->nat_aps = NULL;
 			return -1;
@@ -555,9 +618,8 @@ char *name;
 {
 	aproxy_t *ap;
 
-#if PROXY_DEBUG
-	printf("appr_lookup(%d,%s)\n", pr, name);
-#endif
+	if (ipf_proxy_debug > 8)
+		printf("appr_lookup(%d,%s)\n", pr, name);
 
 	for (ap = ap_proxies; ap->apr_p; ap++)
 		if ((ap->apr_p == pr) &&
@@ -572,6 +634,8 @@ char *name;
 			ap->apr_ref++;
 			return ap;
 		}
+	if (ipf_proxy_debug > 2)
+		printf("appr_lookup: failed for %d/%s\n", pr, name);
 	return NULL;
 }
 
@@ -640,10 +704,10 @@ int inc;
 		/* switch to other set ? */
 		if ((aps->aps_seqmin[!sel] > aps->aps_seqmin[sel]) &&
 		    (seq1 > aps->aps_seqmin[!sel])) {
-#if PROXY_DEBUG
-			printf("proxy out switch set seq %d -> %d %x > %x\n",
-				sel, !sel, seq1, aps->aps_seqmin[!sel]);
-#endif
+			if (ipf_proxy_debug > 7)
+				printf("proxy out switch set seq %d -> %d %x > %x\n",
+					sel, !sel, seq1,
+					aps->aps_seqmin[!sel]);
 			sel = aps->aps_sel[out] = !sel;
 		}
 
@@ -660,11 +724,10 @@ int inc;
 		if (inc && (seq1 > aps->aps_seqmin[!sel])) {
 			aps->aps_seqmin[sel] = seq1 + nlen - 1;
 			aps->aps_seqoff[sel] = aps->aps_seqoff[sel] + inc;
-#if PROXY_DEBUG
-			printf("proxy seq set %d at %x to %d + %d\n", sel,
-				aps->aps_seqmin[sel], aps->aps_seqoff[sel],
-				inc);
-#endif
+			if (ipf_proxy_debug > 7)
+				printf("proxy seq set %d at %x to %d + %d\n",
+					sel, aps->aps_seqmin[sel],
+					aps->aps_seqoff[sel], inc);
 		}
 
 		/***/
@@ -675,10 +738,10 @@ int inc;
 		/* switch to other set ? */
 		if ((aps->aps_ackmin[!sel] > aps->aps_ackmin[sel]) &&
 		    (seq1 > aps->aps_ackmin[!sel])) {
-#if PROXY_DEBUG
-			printf("proxy out switch set ack %d -> %d %x > %x\n",
-				sel, !sel, seq1, aps->aps_ackmin[!sel]);
-#endif
+			if (ipf_proxy_debug > 7)
+				printf("proxy out switch set ack %d -> %d %x > %x\n",
+					sel, !sel, seq1,
+					aps->aps_ackmin[!sel]);
 			sel = aps->aps_sel[1 - out] = !sel;
 		}
 
@@ -694,10 +757,9 @@ int inc;
 		/* switch to other set ? */
 		if ((aps->aps_ackmin[!sel] > aps->aps_ackmin[sel]) &&
 		    (seq1 > aps->aps_ackmin[!sel])) {
-#if PROXY_DEBUG
-			printf("proxy in switch set ack %d -> %d %x > %x\n",
-				sel, !sel, seq1, aps->aps_ackmin[!sel]);
-#endif
+			if (ipf_proxy_debug > 7)
+				printf("proxy in switch set ack %d -> %d %x > %x\n",
+					sel, !sel, seq1, aps->aps_ackmin[!sel]);
 			sel = aps->aps_sel[out] = !sel;
 		}
 
@@ -714,11 +776,11 @@ int inc;
 		if (inc && (seq1 > aps->aps_ackmin[!sel])) {
 			aps->aps_ackmin[!sel] = seq1 + nlen - 1;
 			aps->aps_ackoff[!sel] = aps->aps_ackoff[sel] + inc;
-#if PROXY_DEBUG
-			printf("proxy ack set %d at %x to %d + %d\n", !sel,
-				aps->aps_seqmin[!sel], aps->aps_seqoff[sel],
-				inc);
-#endif
+
+			if (ipf_proxy_debug > 7)
+				printf("proxy ack set %d at %x to %d + %d\n",
+					!sel, aps->aps_seqmin[!sel],
+					aps->aps_seqoff[sel], inc);
 		}
 
 		/***/
@@ -729,19 +791,17 @@ int inc;
 		/* switch to other set ? */
 		if ((aps->aps_seqmin[!sel] > aps->aps_seqmin[sel]) &&
 		    (seq1 > aps->aps_seqmin[!sel])) {
-#if PROXY_DEBUG
-			printf("proxy in switch set seq %d -> %d %x > %x\n",
-				sel, !sel, seq1, aps->aps_seqmin[!sel]);
-#endif
+			if (ipf_proxy_debug > 7)
+				printf("proxy in switch set seq %d -> %d %x > %x\n",
+					sel, !sel, seq1, aps->aps_seqmin[!sel]);
 			sel = aps->aps_sel[1 - out] = !sel;
 		}
 
 		if (aps->aps_seqoff[sel] != 0) {
-#if PROXY_DEBUG
-			printf("sel %d seqoff %d seq1 %x seqmin %x\n", sel,
-				aps->aps_seqoff[sel], seq1,
-				aps->aps_seqmin[sel]);
-#endif
+			if (ipf_proxy_debug > 7)
+				printf("sel %d seqoff %d seq1 %x seqmin %x\n",
+					sel, aps->aps_seqoff[sel], seq1,
+					aps->aps_seqmin[sel]);
 			if (seq1 > aps->aps_seqmin[sel]) {
 				seq2 = aps->aps_seqoff[sel];
 				tcp->th_ack = htonl(seq1 - seq2);
@@ -749,10 +809,10 @@ int inc;
 			}
 		}
 	}
-#if PROXY_DEBUG
-	printf("appr_fixseqack: seq %lx ack %lx\n", ntohl(tcp->th_seq),
-		ntohl(tcp->th_ack));
-#endif
+
+	if (ipf_proxy_debug > 8)
+		printf("appr_fixseqack: seq %x ack %x\n",
+			ntohl(tcp->th_seq), ntohl(tcp->th_ack));
 	return ch ? 2 : 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_eso.c,v 1.8 2004/12/02 09:50:42 xtraeme Exp $	*/
+/*	$NetBSD: mpu_eso.c,v 1.8.6.1 2005/02/12 18:17:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_eso.c,v 1.8 2004/12/02 09:50:42 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_eso.c,v 1.8.6.1 2005/02/12 18:17:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,8 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: mpu_eso.c,v 1.8 2004/12/02 09:50:42 xtraeme Exp $");
 #include <dev/ic/mpuvar.h>
 #include <dev/pci/esovar.h>
 
-static int	mpu_eso_match __P((struct device *, struct cfdata *, void *));
-static void	mpu_eso_attach __P((struct device *, struct device *, void *));
+static int	mpu_eso_match(struct device *, struct cfdata *, void *);
+static void	mpu_eso_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(mpu_eso, sizeof (struct mpu_softc),
     mpu_eso_match, mpu_eso_attach, NULL, NULL);

@@ -1,4 +1,4 @@
-# $NetBSD: MRCOFFEE,v 1.5 2004/11/10 17:54:07 christos Exp $
+# $NetBSD: MRCOFFEE,v 1.5.6.1 2005/02/12 18:17:40 yamt Exp $
 # From: NetBSD: GENERIC,v 1.160 2004/07/10 12:05:35 uwe Exp
 #
 # Mr.Coffee (JavaStation 1) machine description file
@@ -12,7 +12,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MRCOFFEE-$Revision: 1.5 $"
+#ident 		"MRCOFFEE-$Revision: 1.5.6.1 $"
 
 maxusers	32
 
@@ -181,6 +181,7 @@ file-system	PROCFS		# /proc
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	SOFTDEP		# FFS soft updates support.
+#options 	FFS_SNAPSHOT	# ffs snapshots
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4

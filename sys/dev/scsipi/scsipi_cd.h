@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_cd.h,v 1.7 2003/09/07 22:11:24 mycroft Exp $	*/
+/*	$NetBSD: scsipi_cd.h,v 1.7.10.1 2005/02/12 18:17:51 yamt Exp $	*/
 
 /*
  * Written by Julian Elischer (julian@tfs.com)
@@ -98,8 +98,9 @@ struct scsipi_read_subchannel {
 #define READ_TOC		0x43	/* cdrom read TOC */
 struct scsipi_read_toc {
 	u_int8_t opcode;
-	u_int8_t byte2;
-	u_int8_t unused[4];
+	u_int8_t addr_mode;
+	u_int8_t resp_format;
+	u_int8_t unused[3];
 	u_int8_t from_track;
 	u_int8_t data_len[2];
 	u_int8_t control;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.10 2004/10/30 18:08:36 thorpej Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.10.6.1 2005/02/12 18:17:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.10 2004/10/30 18:08:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.10.6.1 2005/02/12 18:17:43 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -766,7 +766,7 @@ sonic_rxintr(struct sonic_softc *sc)
 		/*
 		 * The SONIC includes the CRC with every packet.
 		 */
-		len = bytecount;
+		len = bytecount - ETHER_CRC_LEN;
 
 		/*
 		 * Ok, if the chip is in 32-bit mode, then receive
@@ -835,7 +835,6 @@ sonic_rxintr(struct sonic_softc *sc)
 		}
 
 		ifp->if_ipackets++;
-		m->m_flags |= M_HASFCS;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 

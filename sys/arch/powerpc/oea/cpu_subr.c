@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.22 2005/01/21 00:58:34 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.22.2.1 2005/02/12 18:17:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.22 2005/01/21 00:58:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.22.2.1 2005/02/12 18:17:39 yamt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -58,7 +58,7 @@ static void cpu_enable_l2cr(register_t);
 static void cpu_enable_l3cr(register_t);
 static void cpu_config_l2cr(int);
 static void cpu_config_l3cr(int);
-static void cpu_print_speed(void);
+static void cpu_probe_speed(struct cpu_info *);
 static void cpu_idlespin(void);
 #if NSYSMON_ENVSYS > 0
 static void cpu_tau_setup(struct cpu_info *);
@@ -479,6 +479,8 @@ cpu_setup(self, ci)
 	bitmask_snprintf(hid0, bitmask, hidbuf, sizeof hidbuf);
 	aprint_normal("%s: HID0 %s\n", self->dv_xname, hidbuf);
 
+	ci->ci_khz = 0;
+
 	/*
 	 * Display speed and cache configuration.
 	 */
@@ -496,7 +498,9 @@ cpu_setup(self, ci)
 	case MPC7455:
 	case MPC7457:
 		aprint_normal("%s: ", self->dv_xname);
-		cpu_print_speed();
+		cpu_probe_speed(ci);
+		aprint_normal("%u.%02u MHz",
+			      ci->ci_khz / 1000, (ci->ci_khz / 10) % 100);
 
 		if (vers == IBM750FX || vers == MPC750 ||
 		    vers == MPC7400  || vers == MPC7410 || MPC745X_P(vers)) {
@@ -822,7 +826,7 @@ cpu_config_l3cr(int vers)
 }
 
 void
-cpu_print_speed(void)
+cpu_probe_speed(struct cpu_info *ci)
 {
 	uint64_t cps;
 
@@ -834,7 +838,7 @@ cpu_print_speed(void)
 
 	mtspr(SPR_MMCR0, MMCR0_FC);
 
-	aprint_normal("%lld.%02lld MHz", cps / 1000000, (cps / 10000) % 100);
+	ci->ci_khz = cps / 1000;
 }
 
 #if NSYSMON_ENVSYS > 0

@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.4 2005/01/13 00:48:01 simonb Exp $ */
+/* $NetBSD: auixp.c,v 1.4.6.1 2005/02/12 18:17:47 yamt Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.4 2005/01/13 00:48:01 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.4.6.1 2005/02/12 18:17:47 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -773,7 +773,8 @@ auixp_trigger_output(void *hdl, void *start, void *end, int blksize,
 
 	/* not ours ? then bail out */
 	if (!sound_dma) {
-		printf("auixp_trigger_output: bad sound addr %p\n", start);
+		printf("%s: auixp_trigger_output: bad sound addr %p\n",
+		    sc->sc_dev.dv_xname, start);
 		return EINVAL;
 	}
 
@@ -847,7 +848,8 @@ auixp_trigger_input(void *hdl, void *start, void *end, int blksize,
 
 	/* not ours ? then bail out */
 	if (!sound_dma) {
-		printf("auixp_trigger_input: bad sound addr %p\n", start);
+		printf("%s: auixp_trigger_input: bad sound addr %p\n",
+		    sc->sc_dev.dv_xname, start);
 		return EINVAL;
 	}
 
@@ -910,14 +912,10 @@ auixp_intr(void *softc)
 	/* get status from the interrupt status register */
 	status = bus_space_read_4(iot, ioh, ATI_REG_ISR);
 
-	/* nothing set?? but why do you call then??? */
-	if (status == 0) {
-		printf("%s: spurious hardware interrupt? status = 0\n",
-		    sc->sc_dev.dv_xname);
-		return 1;	/* be safe */
-	}
+	if (status == 0)
+		return 0;
 
-	DPRINTF(("auixp: (status = %x)\n", status));
+	DPRINTF(("%s: (status = %x)\n", sc->sc_dev.dv_xname, status));
 
 	/* check DMA UPDATE flags for input & output */
 	if (status & ATI_REG_ISR_IN_STATUS) {
@@ -1287,8 +1285,8 @@ auixp_post_config(struct device *self)
 	res = auconv_create_encodings(sc->sc_formats, AUIXP_NFORMATS,
 	    &sc->sc_encodings);
 	if (res) {
-		printf("auixp: auconv_create_encodings failed; "
-		    "no attachments\n");
+		printf("%s: auconv_create_encodings failed; "
+		    "no attachments\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -1554,8 +1552,9 @@ auixp_autodetect_codecs(struct auixp_softc *sc)
 	}
 
 	if (timeout == 0)
-		printf( "WARNING: timeout during codec detection; "
-			"codecs might be present but haven't interrupted\n");
+		printf("%s: WARNING: timeout during codec detection; "
+			"codecs might be present but haven't interrupted\n",
+			sc->sc_dev.dv_xname);
 
 	/* disable all interrupts for now */
 	auixp_disable_interrupts(sc);
@@ -1579,28 +1578,29 @@ auixp_autodetect_codecs(struct auixp_softc *sc)
 
 	if (!(sc->sc_codec_not_ready_bits & ATI_REG_ISR_CODEC0_NOT_READY)) {
 		/* codec 0 present */
-		// printf("auixp : YAY! codec 0 present!\n");
+		DPRINTF(("auixp : YAY! codec 0 present!\n"));
 		if (ac97_attach(&sc->sc_codec[0].host_if, &sc->sc_dev) == 0)
 			sc->sc_num_codecs++;
 	}
 
 	if (!(sc->sc_codec_not_ready_bits & ATI_REG_ISR_CODEC1_NOT_READY)) {
 		/* codec 1 present */
-		printf("auixp : YAY! codec 1 present!\n");
+		DPRINTF(("auixp : YAY! codec 1 present!\n"));
 		if (ac97_attach(&sc->sc_codec[1].host_if, &sc->sc_dev) == 0)
 			sc->sc_num_codecs++;
 	}
 
 	if (!(sc->sc_codec_not_ready_bits & ATI_REG_ISR_CODEC2_NOT_READY)) {
 		/* codec 2 present */
-		printf("auixp : YAY! codec 2 present!\n");
+		DPRINTF(("auixp : YAY! codec 2 present!\n"));
 		if (ac97_attach(&sc->sc_codec[2].host_if, &sc->sc_dev) == 0)
 			sc->sc_num_codecs++;
 	}
 
 	if (sc->sc_num_codecs == 0) {
-		printf("auixp : BUMMER, no codecs detected or "
-				"no codecs managed to initialise\n");
+		printf("%s: no codecs detected or "
+				"no codecs managed to initialise\n",
+				sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -1651,7 +1651,7 @@ auixp_reset_aclink(struct auixp_softc *sc)
 {
 
 	/* XXX fix me! XXX */
-	printf("auixp : could reset aclink\n");
+	printf("%s: could reset aclink\n", sc->sc_dev.dv_xname);
 }
 
 
@@ -1774,7 +1774,7 @@ auixp_dumpreg(void)
 	sc  = static_sc;
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
-	printf("auixp register dump:\n");
+	printf("%s register dump:\n", sc->sc_dev.dv_xname);
 	for (i = 0; i < 256; i+=4) {
 		printf("\t0x%02x: 0x%08x\n", i, bus_space_read_4(iot, ioh, i));
 	}

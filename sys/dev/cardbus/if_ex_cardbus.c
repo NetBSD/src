@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.33 2004/08/02 19:14:28 mycroft Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.33.6.1 2005/02/12 18:17:42 yamt Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.33 2004/08/02 19:14:28 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.33.6.1 2005/02/12 18:17:42 yamt Exp $");
 
 /* #define EX_DEBUG 4 */	/* define to report information for debugging */
 
@@ -83,14 +83,14 @@ __KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.33 2004/08/02 19:14:28 mycroft E
 #define EX_CB_INTR 4		/* intr acknowledge reg. CardBus only */
 #define EX_CB_INTR_ACK 0x8000 /* intr acknowledge bit */
 
-int ex_cardbus_match __P((struct device *, struct cfdata *, void *));
-void ex_cardbus_attach __P((struct device *, struct device *,void *));
-int ex_cardbus_detach __P((struct device *, int));
-void ex_cardbus_intr_ack __P((struct ex_softc *));
+int ex_cardbus_match(struct device *, struct cfdata *, void *);
+void ex_cardbus_attach(struct device *, struct device *,void *);
+int ex_cardbus_detach(struct device *, int);
+void ex_cardbus_intr_ack(struct ex_softc *);
 
-int ex_cardbus_enable __P((struct ex_softc *));
-void ex_cardbus_disable __P((struct ex_softc *));
-void ex_cardbus_power __P((struct ex_softc *, int));
+int ex_cardbus_enable(struct ex_softc *);
+void ex_cardbus_disable(struct ex_softc *);
+void ex_cardbus_power(struct ex_softc *, int);
 
 struct ex_cardbus_softc {
 	struct ex_softc sc_softc;
@@ -185,10 +185,10 @@ const struct ex_cardbus_product {
 };
 
 
-void ex_cardbus_setup __P((struct ex_cardbus_softc *));
+void ex_cardbus_setup(struct ex_cardbus_softc *);
 
 const struct ex_cardbus_product *ex_cardbus_lookup
-    __P((const struct cardbus_attach_args *));
+   (const struct cardbus_attach_args *);
 
 const struct ex_cardbus_product *
 ex_cardbus_lookup(ca)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.21 2004/08/21 23:48:33 thorpej Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.21.6.1 2005/02/12 18:17:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.21 2004/08/21 23:48:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.21.6.1 2005/02/12 18:17:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +96,9 @@ struct rtk_pci_softc {
 	void *sc_ih;
 	pci_chipset_tag_t sc_pc; 	/* PCI chipset */
 	pcitag_t sc_pcitag;		/* PCI tag */
+
+	void *sc_powerhook;		/* powerhook ctxt. */
+	struct pci_conf_state sc_pciconf;
 };
 
 static const struct rtk_type rtk_pci_devs[] = {
@@ -118,6 +121,7 @@ static const struct rtk_type rtk_pci_devs[] = {
 
 static int	rtk_pci_match(struct device *, struct cfdata *, void *);
 static void	rtk_pci_attach(struct device *, struct device *, void *);
+static void	rtk_pci_powerhook(int, void *);
 
 CFATTACH_DECL(rtk_pci, sizeof(struct rtk_pci_softc),
     rtk_pci_match, rtk_pci_attach, NULL, NULL);
@@ -242,5 +246,33 @@ rtk_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_flags |= RTK_ENABLED;
 
+	psc->sc_powerhook = powerhook_establish(rtk_pci_powerhook, psc);
+	if (psc->sc_powerhook == NULL)
+		printf("%s: WARNING: unable to establish pci power hook\n",
+			sc->sc_dev.dv_xname);
+
 	rtk_attach(sc);
+}
+
+static void
+rtk_pci_powerhook(int why, void *arg)
+{
+	struct rtk_pci_softc *sc = (struct rtk_pci_softc *)arg;
+	int s;
+
+	s = splnet();
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		pci_conf_capture(sc->sc_pc, sc->sc_pcitag, &sc->sc_pciconf);
+		break;
+	case PWR_RESUME:
+		pci_conf_restore(sc->sc_pc, sc->sc_pcitag, &sc->sc_pciconf);
+		break;
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
+	}
+	splx(s);
 }

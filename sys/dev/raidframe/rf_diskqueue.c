@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.36 2004/11/24 13:42:36 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.36.6.1 2005/02/12 18:17:50 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.36 2004/11/24 13:42:36 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.36.6.1 2005/02/12 18:17:50 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -444,24 +444,26 @@ rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
 		       RF_StripeNum_t parityStripeID,
 		       RF_ReconUnitNum_t which_ru,
 		       int (*wakeF) (void *, int), void *arg,
-		       RF_DiskQueueData_t *next,
-		       RF_AccTraceEntry_t *tracerec, void *raidPtr,
-		       RF_DiskQueueDataFlags_t flags, void *kb_proc)
+		       RF_AccTraceEntry_t *tracerec, RF_Raid_t *raidPtr,
+		       RF_DiskQueueDataFlags_t flags, void *kb_proc,
+		       int waitflag)
 {
 	RF_DiskQueueData_t *p;
 	int s;
 
-	p = pool_get(&rf_pools.dqd, PR_WAITOK);
+	p = pool_get(&rf_pools.dqd, waitflag);
+	if (p == NULL)
+		return (NULL);
+
 	memset(p, 0, sizeof(RF_DiskQueueData_t));
 	/* Need to be at splbio to access bufpool! */
 	s = splbio();
-	p->bp = pool_get(&bufpool, PR_NOWAIT); /* XXX: make up our minds here.
-						  WAITOK, or NOWAIT?? */
+	p->bp = pool_get(&bufpool, waitflag); 
 	splx(s);
 	if (p->bp == NULL) {
 		/* no memory for the buffer!?!? */
 		pool_put(&rf_pools.dqd, p);
-		return(NULL);
+		return (NULL);
 	}
 
 	memset(p->bp, 0, sizeof(struct buf));
@@ -473,7 +475,7 @@ rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
 	p->which_ru = which_ru;
 	p->CompleteFunc = wakeF;
 	p->argument = arg;
-	p->next = next;
+	p->next = NULL;
 	p->tracerec = tracerec;
 	p->priority = RF_IO_NORMAL_PRIORITY;
 	p->raidPtr = raidPtr;

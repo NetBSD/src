@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.4 2003/10/08 04:25:46 lukem Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.4.12.1 2005/02/12 18:17:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.4 2003/10/08 04:25:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.4.12.1 2005/02/12 18:17:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -545,7 +545,7 @@ bounds_check_with_label(dk, bp, wlabel)
 	struct disklabel *lp = dk->dk_label;
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
 	int labelsector = lp->d_partitions[2].p_offset + LABELSECTOR;
-	int sz;
+	int64_t sz;
 
 	sz = howmany(bp->b_bcount, lp->d_secsize);
 

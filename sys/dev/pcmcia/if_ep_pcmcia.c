@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.52 2004/08/10 18:43:49 mycroft Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.52.6.1 2005/02/12 18:17:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.52 2004/08/10 18:43:49 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.52.6.1 2005/02/12 18:17:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,15 +97,15 @@ __KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.52 2004/08/10 18:43:49 mycroft Ex
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciadevs.h>
 
-int	ep_pcmcia_match __P((struct device *, struct cfdata *, void *));
-void	ep_pcmcia_attach __P((struct device *, struct device *, void *));
-int	ep_pcmcia_detach __P((struct device *, int));
+int	ep_pcmcia_match(struct device *, struct cfdata *, void *);
+void	ep_pcmcia_attach(struct device *, struct device *, void *);
+int	ep_pcmcia_detach(struct device *, int);
 
-int	ep_pcmcia_get_enaddr __P((struct pcmcia_tuple *, void *));
-int	ep_pcmcia_enable __P((struct ep_softc *));
-void	ep_pcmcia_disable __P((struct ep_softc *));
+int	ep_pcmcia_get_enaddr(struct pcmcia_tuple *, void *);
+int	ep_pcmcia_enable(struct ep_softc *);
+void	ep_pcmcia_disable(struct ep_softc *);
 
-void	ep_pcmcia_disable1 __P((struct ep_softc *));
+void	ep_pcmcia_disable1(struct ep_softc *);
 
 struct ep_pcmcia_softc {
 	struct ep_softc sc_ep;			/* real "ep" softc */

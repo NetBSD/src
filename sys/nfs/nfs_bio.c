@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.124 2005/01/09 16:42:44 chs Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.124.4.1 2005/02/12 18:17:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.124 2005/01/09 16:42:44 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.124.4.1 2005/02/12 18:17:55 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -154,7 +154,6 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 			((np->n_flag & NMODIFIED) && vp->v_type == VDIR)) {
 			if (vp->v_type == VDIR) {
 				nfs_invaldircache(vp, 0);
-				np->n_direofoffset = 0;
 			}
 			error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
 			if (error)
@@ -164,7 +163,6 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 		} else if (vp->v_type == VDIR && (np->n_flag & NMODIFIED)) {
 		    nfs_invaldircache(vp, 0);
 		    error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
-		    np->n_direofoffset = 0;
 		    if (error)
 			return (error);
 		}
@@ -255,7 +253,7 @@ diragain:
 				uio->uio_offset, 0, 0);
 		}
 
-		if (uio->uio_offset != 0 &&
+		if (NFS_EOFVALID(np) &&
 		    ndp->dc_cookie == np->n_direofoffset) {
 			nfs_putdircache(np, ndp);
 			nfsstats.direofcache_hits++;
@@ -291,12 +289,19 @@ diragain:
 		 * block. Always check here, because direofoffset
 		 * may have been set by an nfsiod since the last
 		 * check.
+		 *
+		 * also, empty block implies EOF.
 		 */
-		if (np->n_direofoffset != 0 && 
-			ndp->dc_blkcookie == np->n_direofoffset) {
+
+		if (bp->b_bcount == bp->b_resid ||
+		    (NFS_EOFVALID(np) &&
+		    ndp->dc_blkcookie == np->n_direofoffset)) {
+			KASSERT(bp->b_bcount != bp->b_resid ||
+			    ndp->dc_blkcookie == bp->b_dcookie);
 			nfs_putdircache(np, ndp);
+			bp->b_flags |= B_NOCACHE;
 			brelse(bp);
-			return (0);
+			return 0;
 		}
 
 		/*
@@ -419,7 +424,7 @@ diragain:
 		 *  directory offset cookie of the next block.)
 		 */
 		if (nfs_numasync > 0 && nmp->nm_readahead > 0 &&
-		    np->n_direofoffset == 0 && !(np->n_flag & NQNFSNONCACHE)) {
+		    !NFS_EOFVALID(np) && !(np->n_flag & NQNFSNONCACHE)) {
 			rabp = nfs_getcacheblk(vp, NFSDC_BLKNO(nndp),
 						NFS_DIRBLKSIZ, p);
 			if (rabp) {
@@ -759,7 +764,6 @@ nfs_flushstalebuf(struct vnode *vp, struct ucred *cred, struct proc *p,
 				return error;
 			if (vp->v_type == VDIR) {
 				nfs_invaldircache(vp, 0);
-				np->n_direofoffset = 0;
 			}
 		} else {
 			/*
@@ -778,7 +782,6 @@ nfs_flushstalebuf(struct vnode *vp, struct ucred *cred, struct proc *p,
 		if (timespeccmp(&np->n_mtime, &vattr.va_mtime, !=)) {
 			if (vp->v_type == VDIR) {
 				nfs_invaldircache(vp, 0);
-				np->n_direofoffset = 0;
 			}
 			error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
 			if (error)

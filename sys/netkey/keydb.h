@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.21 2004/12/06 08:05:26 itojun Exp $	*/
+/*	$NetBSD: keydb.h,v 1.21.6.1 2005/02/12 18:17:55 yamt Exp $	*/
 /*	$KAME: keydb.h,v 1.23 2003/09/07 05:25:20 itojun Exp $	*/
 
 /*
@@ -107,6 +107,11 @@ struct secasvar {
 	struct secashead *sah;		/* back pointer to the secashead */
 
 	u_int32_t id;			/* SA id */
+	/* Nat-Traversal state */ 
+	u_int16_t	natt_type;
+	u_int16_t	remote_ike_port;
+	u_int16_t	local_ike_port;
+	u_int16_t	esp_frag;
 };
 
 /* replay prevention */

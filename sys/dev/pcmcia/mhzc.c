@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.29 2004/08/12 19:32:36 mycroft Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.29.6.1 2005/02/12 18:17:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.29 2004/08/12 19:32:36 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.29.6.1 2005/02/12 18:17:50 yamt Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"
@@ -139,25 +139,25 @@ struct mhzc_softc {
 #define	MHZC_MODEM_ALLOCED	0x10
 #define	MHZC_ETHERNET_ALLOCED	0x20
 
-int	mhzc_match __P((struct device *, struct cfdata *, void *));
-void	mhzc_attach __P((struct device *, struct device *, void *));
-int	mhzc_detach __P((struct device *, int));
-int	mhzc_activate __P((struct device *, enum devact));
+int	mhzc_match(struct device *, struct cfdata *, void *);
+void	mhzc_attach(struct device *, struct device *, void *);
+int	mhzc_detach(struct device *, int);
+int	mhzc_activate(struct device *, enum devact);
 
 CFATTACH_DECL(mhzc, sizeof(struct mhzc_softc),
     mhzc_match, mhzc_attach, mhzc_detach, mhzc_activate);
 
-int	mhzc_em3336_enaddr __P((struct mhzc_softc *, u_int8_t *));
-int	mhzc_em3336_enable __P((struct mhzc_softc *));
+int	mhzc_em3336_enaddr(struct mhzc_softc *, u_int8_t *);
+int	mhzc_em3336_enable(struct mhzc_softc *);
 
 const struct mhzc_product {
 	struct pcmcia_product mp_product;
 
 	/* Get the Ethernet address for this card. */
-	int		(*mp_enaddr) __P((struct mhzc_softc *, u_int8_t *));
+	int		(*mp_enaddr)(struct mhzc_softc *, u_int8_t *);
 
 	/* Perform any special `enable' magic. */
-	int		(*mp_enable) __P((struct mhzc_softc *));
+	int		(*mp_enable)(struct mhzc_softc *);
 } mhzc_products[] = {
 	{ { PCMCIA_VENDOR_MEGAHERTZ, PCMCIA_PRODUCT_MEGAHERTZ_EM3336,
 	    PCMCIA_CIS_INVALID },
@@ -166,15 +166,15 @@ const struct mhzc_product {
 static const size_t mhzc_nproducts =
     sizeof(mhzc_products) / sizeof(mhzc_products[0]);
 
-int	mhzc_print __P((void *, const char *));
+int	mhzc_print(void *, const char *);
 
-int	mhzc_check_cfe __P((struct mhzc_softc *, struct pcmcia_config_entry *));
-int	mhzc_alloc_ethernet __P((struct mhzc_softc *, struct pcmcia_config_entry *));
+int	mhzc_check_cfe(struct mhzc_softc *, struct pcmcia_config_entry *);
+int	mhzc_alloc_ethernet(struct mhzc_softc *, struct pcmcia_config_entry *);
 
-int	mhzc_enable __P((struct mhzc_softc *, int));
-void	mhzc_disable __P((struct mhzc_softc *, int));
+int	mhzc_enable(struct mhzc_softc *, int);
+void	mhzc_disable(struct mhzc_softc *, int);
 
-int	mhzc_intr __P((void *));
+int	mhzc_intr(void *);
 
 int
 mhzc_match(parent, match, aux)
@@ -518,8 +518,8 @@ mhzc_disable(sc, flag)
  * Megahertz EM3336 (and compatibles) support
  *****************************************************************************/
 
-int	mhzc_em3336_lannid_ciscallback __P((struct pcmcia_tuple *, void *));
-int	mhzc_em3336_ascii_enaddr __P((const char *cisstr, u_int8_t *));
+int	mhzc_em3336_lannid_ciscallback(struct pcmcia_tuple *, void *);
+int	mhzc_em3336_ascii_enaddr(const char *cisstr, u_int8_t *);
 
 int
 mhzc_em3336_enaddr(sc, myla)
@@ -658,16 +658,16 @@ mhzc_em3336_ascii_enaddr(cisstr, myla)
 /****** Here begins the com attachment code. ******/
 
 #if NCOM_MHZC > 0
-int	com_mhzc_match __P((struct device *, struct cfdata *, void *));
-void	com_mhzc_attach __P((struct device *, struct device *, void *));
-int	com_mhzc_detach __P((struct device *, int));
+int	com_mhzc_match(struct device *, struct cfdata *, void *);
+void	com_mhzc_attach(struct device *, struct device *, void *);
+int	com_mhzc_detach(struct device *, int);
 
 /* No mhzc-specific goo in the softc; it's all in the parent. */
 CFATTACH_DECL(com_mhzc, sizeof(struct com_softc),
     com_mhzc_match, com_mhzc_attach, com_detach, com_activate);
 
-int	com_mhzc_enable __P((struct com_softc *));
-void	com_mhzc_disable __P((struct com_softc *));
+int	com_mhzc_enable(struct com_softc *);
+void	com_mhzc_disable(struct com_softc *);
 
 int
 com_mhzc_match(parent, match, aux)
@@ -736,15 +736,15 @@ com_mhzc_disable(sc)
 /****** Here begins the sm attachment code. ******/
 
 #if NSM_MHZC > 0
-int	sm_mhzc_match __P((struct device *, struct cfdata *, void *));
-void	sm_mhzc_attach __P((struct device *, struct device *, void *));
+int	sm_mhzc_match(struct device *, struct cfdata *, void *);
+void	sm_mhzc_attach(struct device *, struct device *, void *);
 
 /* No mhzc-specific goo in the softc; it's all in the parent. */
 CFATTACH_DECL(sm_mhzc, sizeof(struct smc91cxx_softc),
     sm_mhzc_match, sm_mhzc_attach, smc91cxx_detach, smc91cxx_activate);
 
-int	sm_mhzc_enable __P((struct smc91cxx_softc *));
-void	sm_mhzc_disable __P((struct smc91cxx_softc *));
+int	sm_mhzc_enable(struct smc91cxx_softc *);
+void	sm_mhzc_disable(struct smc91cxx_softc *);
 
 int
 sm_mhzc_match(parent, match, aux)

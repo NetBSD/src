@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm_7043_140.c,v 1.3 2005/01/13 23:57:04 kleink Exp $	*/
+/*	$NetBSD: ibm_7043_140.c,v 1.3.4.1 2005/02/12 18:17:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm_7043_140.c,v 1.3 2005/01/13 23:57:04 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm_7043_140.c,v 1.3.4.1 2005/02/12 18:17:39 yamt Exp $");
 
 #include "opt_openpic.h"
 #if !defined(OPENPIC)
@@ -99,7 +99,21 @@ init_intr_mpic(void)
 		address = pci_conf_read(&pc, tag, 0x10);
 		if ((address & PCI_MAPREG_TYPE_MASK) == PCI_MAPREG_TYPE_MEM) {
 			address &= PCI_MAPREG_MEM_ADDR_MASK;
-			baseaddr = (unsigned char *)(PREP_BUS_SPACE_MEM | address);
+			/*
+			 * PReP PCI memory space is from 0xc0000000 to
+			 * 0xffffffff but machdep.c maps only 0xc0000000 to
+			 * 0xcfffffff of PCI memory space. So look if the 
+			 * address offset is bigger then 0xfffffff. If it is
+			 * we are outside the already mapped region and we need
+			 * to add an additional mapping for the OpenPIC.
+			 * The OpenPIC register window is always 256kB.
+			 */
+			if (address > 0xfffffff)
+				baseaddr = (unsigned char *) mapiodev(
+				    PREP_BUS_SPACE_MEM | address, 0x40000);
+			else
+				baseaddr = (unsigned char *)
+				    (PREP_BUS_SPACE_MEM | address);
 		}
 	}
 #endif

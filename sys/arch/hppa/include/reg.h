@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.3 2004/08/26 16:48:06 jkunz Exp $	*/
+/*	$NetBSD: reg.h,v 1.3.6.1 2005/02/12 18:17:33 yamt Exp $	*/
 
 /*	$OpenBSD: reg.h,v 1.7 2000/06/15 17:00:37 mickey Exp $	*/
 
@@ -110,6 +110,7 @@
 #define	DR0_PCXT_IHE		18	/* r/w I-cache sid hash enable */
 #define	DR0_PCXT_DHE		20	/* r/w D-cache sid hash enable */
 
+/* Bits in CPU Diagnose Register 0 */
 #define	DR0_PCXL_L2IHPMC	6	/* r/c L2 I-cache error flag */
 #define	DR0_PCXL_L2IHPMC_DIS	7	/* r/w L2 I-cache hpmc disable mask */
 #define	DR0_PCXL_L2DHPMC	8	/* r/c L2 D-cache error flag */
@@ -132,6 +133,9 @@
 #define	DR0_PCXL_L1ICACHE_EN	29	/* r/w L1 I-cache enable */
 #define	DR0_PCXL_HIT		30	/* r   Diag cache read hit indication */
 #define	DR0_PCXL_PARERR		31	/* r   Diag cache read parity error */
+
+/* Bits in CPU Diagnose Register 25 */
+#define	DR25_PCXL_POWFAIL	31	/* r   set to 0 by HW on PWR fail */
 
 #define	DR0_PCXL2_L1DHPMC	8	/* r/c L1 D-cache error flag */
 #define	DR0_PCXL2_L1DHPMC_DIS	9	/* r/w L1 D-cache hpmc disable */

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL3X,v 1.23 2005/01/21 12:19:25 tsutsui Exp $
+# $NetBSD: INSTALL3X,v 1.23.2.1 2005/02/12 18:17:40 yamt Exp $
 #
 # INSTALL3X - Installation kernel for the Sun3X
 #
@@ -80,6 +80,7 @@ file-system	KERNFS		# /kern
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
+#options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 options 	INET		# IP prototol stack support
@@ -140,7 +141,7 @@ le0 at obio0 addr 0x65002000 ipl 3
 # Both `dma' and `esp' are needed.
 # See GENERIC3X for the flags description.
 dma0 at obio0 addr 0x66001000 ipl 2
-esp0 at obio0 addr 0x66000000 ipl 2 flags 0xff0f
+esp0 at obio0 addr 0x66000000 ipl 2 flags 0x000000
 
 # Floppy drive
 fdc0 at obio0 addr 0x6e000000 ipl 6 vect 0x40
@@ -195,3 +196,4 @@ pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 #pseudo-device	vnd		4	# paging to files
 #pseudo-device	ccd		4	# concatenated disks
+#pseudo-device	fss		4	# file system snapshot device

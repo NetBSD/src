@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.42 2005/01/17 15:28:51 cube Exp $
+#	$NetBSD: GENERIC.in,v 1.42.2.1 2005/02/12 18:17:31 yamt Exp $
 #
 # Generic atari
 #
@@ -120,9 +120,11 @@ file-system 	LFS		# log-structured file system
 options 	QUOTA		# Disk quotas for local disks
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
+#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server side code
 #options 	EXT2FS_SYSTEM_FLAGS	# makes ext2fs file flags (append and
 				# immutable) behave as system flags.
+options 	FFS_SNAPSHOT	# ffs snapshots
 #endif
 
 #
@@ -263,6 +265,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # options	RF_INCLUDE_INTERDECLUSTER=1
 # options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 # options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+pseudo-device	fss		4	# file system snapshot device
 pseudo-device	ipfilter		# IP filtering device
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem

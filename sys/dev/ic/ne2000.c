@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.44 2004/08/09 00:26:15 mycroft Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.44.6.1 2005/02/12 18:17:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.44 2004/08/09 00:26:15 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.44.6.1 2005/02/12 18:17:44 yamt Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -98,16 +98,16 @@ __KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.44 2004/08/09 00:26:15 mycroft Exp $");
 #include <machine/bswap.h>
 #endif
 
-int	ne2000_write_mbuf __P((struct dp8390_softc *, struct mbuf *, int));
-int	ne2000_ring_copy __P((struct dp8390_softc *, int, caddr_t, u_short));
-void	ne2000_read_hdr __P((struct dp8390_softc *, int, struct dp8390_ring *));
-int	ne2000_test_mem __P((struct dp8390_softc *));
+int	ne2000_write_mbuf(struct dp8390_softc *, struct mbuf *, int);
+int	ne2000_ring_copy(struct dp8390_softc *, int, caddr_t, u_short);
+void	ne2000_read_hdr(struct dp8390_softc *, int, struct dp8390_ring *);
+int	ne2000_test_mem(struct dp8390_softc *);
 
-void	ne2000_writemem __P((bus_space_tag_t, bus_space_handle_t,
+void	ne2000_writemem(bus_space_tag_t, bus_space_handle_t,
 	    bus_space_tag_t, bus_space_handle_t, u_int8_t *, int, size_t,
-	    int, int));
-void	ne2000_readmem __P((bus_space_tag_t, bus_space_handle_t,
-	    bus_space_tag_t, bus_space_handle_t, int, u_int8_t *, size_t, int));
+	    int, int);
+void	ne2000_readmem(bus_space_tag_t, bus_space_handle_t,
+	    bus_space_tag_t, bus_space_handle_t, int, u_int8_t *, size_t, int);
 
 #define	ASIC_BARRIER(asict, asich) \
 	bus_space_barrier((asict), (asich), 0, 0x10, \

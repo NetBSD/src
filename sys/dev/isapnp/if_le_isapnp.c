@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isapnp.c,v 1.24 2002/10/04 16:16:32 tsutsui Exp $	*/
+/*	$NetBSD: if_le_isapnp.c,v 1.24.16.1 2005/02/12 18:17:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_isapnp.c,v 1.24 2002/10/04 16:16:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_isapnp.c,v 1.24.16.1 2005/02/12 18:17:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,15 +127,15 @@ struct le_isapnp_softc {
 	int	sc_rap, sc_rdp;		/* offsets to LANCE registers */
 };
 
-int le_isapnp_match __P((struct device *, struct cfdata *, void *));
-void le_isapnp_attach __P((struct device *, struct device *, void *));
+int le_isapnp_match(struct device *, struct cfdata *, void *);
+void le_isapnp_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(le_isapnp, sizeof(struct le_isapnp_softc),
     le_isapnp_match, le_isapnp_attach, NULL, NULL);
 
-int	le_isapnp_intredge __P((void *));
-static void le_isapnp_wrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
-static u_int16_t le_isapnp_rdcsr __P((struct lance_softc *, u_int16_t));
+int	le_isapnp_intredge(void *);
+static void le_isapnp_wrcsr(struct lance_softc *, u_int16_t, u_int16_t);
+static u_int16_t le_isapnp_rdcsr(struct lance_softc *, u_int16_t);
 
 static void
 le_isapnp_wrcsr(sc, port, val)

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.19 2003/07/15 02:59:30 lukem Exp $	*/
+/*	$NetBSD: zs.c,v 1.19.10.1 2005/02/12 18:17:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.19 2003/07/15 02:59:30 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.19.10.1 2005/02/12 18:17:37 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -72,9 +72,7 @@ extern struct cfdriver zsc_cd;
 int zs_def_cflag = (CREAD | CS8 | HUPCL);
 
 int
-zs_print(aux, name)
-	void *aux;
-	const char *name;
+zs_print(void *aux, const char *name)
 {
 	struct zsc_attach_args *args = aux;
 
@@ -92,8 +90,7 @@ zs_print(aux, name)
  * so we have to look at all of them on each interrupt.
  */
 int
-zshard(arg)
-	void *arg;
+zshard(void *arg)
 {
 	struct zsc_softc *zsc;
 	int unit, rval, softreq;
@@ -117,8 +114,7 @@ zshard(arg)
  * Similar scheme as for zshard (look at all of them)
  */
 void
-zssoft(arg)
-	void *arg;
+zssoft(void *arg)
 {
 	struct zsc_softc *zsc;
 	int s, unit;
@@ -138,28 +134,25 @@ zssoft(arg)
  * Compute the current baud rate given a ZS channel.
  */
 int
-zs_get_speed(cs)
-	struct zs_chanstate *cs;
+zs_get_speed(struct zs_chanstate *cs)
 {
 	int tconst;
 
 	tconst = zs_read_reg(cs, 12);
 	tconst |= zs_read_reg(cs, 13) << 8;
-	return (TCONST_TO_BPS(cs->cs_brg_clk, tconst));
+	return TCONST_TO_BPS(cs->cs_brg_clk, tconst);
 }
 
 /*
  * MD functions for setting the baud rate and control modes.
  */
 int
-zs_set_speed(cs, bps)
-	struct zs_chanstate *cs;
-	int bps;	/* bits per second */
+zs_set_speed(struct zs_chanstate *cs, int bps)
 {
 	int tconst, real_bps;
 
 	if (bps == 0)
-		return (0);
+		return 0;
 
 #ifdef	DIAGNOSTIC
 	if (cs->cs_brg_clk == 0)
@@ -168,26 +161,24 @@ zs_set_speed(cs, bps)
 
 	tconst = BPS_TO_TCONST(cs->cs_brg_clk, bps);
 	if (tconst < 0)
-		return (EINVAL);
+		return EINVAL;
 
 	/* Convert back to make sure we can do it. */
 	real_bps = TCONST_TO_BPS(cs->cs_brg_clk, tconst);
 
 	/* XXX - Allow some tolerance here? */
 	if (real_bps != bps)
-		return (EINVAL);
+		return EINVAL;
 
 	cs->cs_preg[12] = tconst;
 	cs->cs_preg[13] = tconst >> 8;
 
 	/* Caller will stuff the pending registers. */
-	return (0);
+	return 0;
 }
 
 int
-zs_set_modes(cs, cflag)
-	struct zs_chanstate *cs;
-	int cflag;	/* bits per second */
+zs_set_modes(struct zs_chanstate *cs, int cflag)
 {
 	int s;
 
@@ -222,7 +213,7 @@ zs_set_modes(cs, cflag)
 	splx(s);
 
 	/* Caller will stuff the pending registers. */
-	return (0);
+	return 0;
 }
 
 /*
@@ -230,9 +221,7 @@ zs_set_modes(cs, cflag)
  */
 
 u_char
-zs_read_reg(cs, reg)
-	struct zs_chanstate *cs;
-	u_char reg;
+zs_read_reg(struct zs_chanstate *cs, u_char reg)
 {
 	u_char val;
 
@@ -244,18 +233,16 @@ zs_read_reg(cs, reg)
 }
 
 void
-zs_write_reg(cs, reg, val)
-	struct zs_chanstate *cs;
-	u_char reg, val;
+zs_write_reg(struct zs_chanstate *cs, u_char reg, u_char val)
 {
+
 	*cs->cs_reg_csr = reg;
 	ZS_DELAY();
 	*cs->cs_reg_csr = val;
 	ZS_DELAY();
 }
 
-u_char zs_read_csr(cs)
-	struct zs_chanstate *cs;
+u_char zs_read_csr(struct zs_chanstate *cs)
 {
 	u_char val;
 
@@ -264,16 +251,14 @@ u_char zs_read_csr(cs)
 	return val;
 }
 
-void  zs_write_csr(cs, val)
-	struct zs_chanstate *cs;
-	u_char val;
+void  zs_write_csr(struct zs_chanstate *cs, u_char val)
 {
+
 	*cs->cs_reg_csr = val;
 	ZS_DELAY();
 }
 
-u_char zs_read_data(cs)
-	struct zs_chanstate *cs;
+u_char zs_read_data(struct zs_chanstate *cs)
 {
 	u_char val;
 
@@ -282,18 +267,17 @@ u_char zs_read_data(cs)
 	return val;
 }
 
-void  zs_write_data(cs, val)
-	struct zs_chanstate *cs;
-	u_char val;
+void  zs_write_data(struct zs_chanstate *cs, u_char val)
 {
+
 	*cs->cs_reg_data = val;
 	ZS_DELAY();
 }
 
 void
-zs_abort(cs)
-	struct zs_chanstate *cs;
+zs_abort(struct zs_chanstate *cs)
 {
+
 #ifdef DDB
 	Debugger();
 #endif

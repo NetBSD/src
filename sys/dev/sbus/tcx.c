@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.16 2004/07/14 19:07:29 pk Exp $ */
+/*	$NetBSD: tcx.c,v 1.16.6.1 2005/02/12 18:17:50 yamt Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.16 2004/07/14 19:07:29 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.16.6.1 2005/02/12 18:17:50 yamt Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -113,9 +113,9 @@ struct tcx_softc {
 #define TCX_CTL_PIXELMASK	0x00FFFFFF	/* mask for index/level */
 
 /* autoconfiguration driver */
-static void	tcxattach __P((struct device *, struct device *, void *));
-static int	tcxmatch __P((struct device *, struct cfdata *, void *));
-static void	tcx_unblank __P((struct device *));
+static void	tcxattach(struct device *, struct device *, void *);
+static int	tcxmatch(struct device *, struct cfdata *, void *);
+static void	tcx_unblank(struct device *);
 
 CFATTACH_DECL(tcx, sizeof(struct tcx_softc),
     tcxmatch, tcxattach, NULL, NULL);
@@ -138,8 +138,8 @@ static struct fbdriver tcx_fbdriver = {
 	nokqfilter
 };
 
-static void tcx_reset __P((struct tcx_softc *));
-static void tcx_loadcmap __P((struct tcx_softc *, int, int));
+static void tcx_reset(struct tcx_softc *);
+static void tcx_loadcmap(struct tcx_softc *, int, int);
 
 #define OBPNAME	"SUNW,tcx"
 

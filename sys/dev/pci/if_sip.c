@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.96 2004/10/30 18:09:22 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.96.6.1 2005/02/12 18:17:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.96 2004/10/30 18:09:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.96.6.1 2005/02/12 18:17:47 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -308,6 +308,8 @@ struct sip_softc {
 
 	struct sip_txsq sc_txfreeq;	/* free Tx descsofts */
 	struct sip_txsq sc_txdirtyq;	/* dirty Tx descsofts */
+
+	short	sc_if_flags;
 
 	int	sc_rxptr;		/* next ready Rx descriptor/descsoft */
 #if defined(DP83820)
@@ -979,6 +981,7 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	sc->sc_if_flags = ifp->if_flags;
 	ifp->if_ioctl = SIP_DECL(ioctl);
 	ifp->if_start = SIP_DECL(start);
 	ifp->if_watchdog = SIP_DECL(watchdog);
@@ -1551,7 +1554,23 @@ SIP_DECL(ioctl)(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
-
+	case SIOCSIFFLAGS:
+		/* If the interface is up and running, only modify the receive
+		 * filter when setting promiscuous or debug mode.  Otherwise
+		 * fall through to ether_ioctl, which will reset the chip.
+		 */
+#define RESETIGN (IFF_CANTCHANGE|IFF_DEBUG)
+		if (((ifp->if_flags & (IFF_UP|IFF_RUNNING))
+		    == (IFF_UP|IFF_RUNNING))
+		    && ((ifp->if_flags & (~RESETIGN))
+		    == (sc->sc_if_flags & (~RESETIGN)))) {
+			/* Set up the receive filter. */
+			(*sc->sc_model->sip_variant->sipv_set_filter)(sc);
+			error = 0;
+			break;
+#undef RESETIGN
+		}
+		/* FALLTHROUGH */
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) { 
@@ -1569,6 +1588,7 @@ SIP_DECL(ioctl)(struct ifnet *ifp, u_long cmd, caddr_t data)
 	/* Try to get more packets going. */
 	SIP_DECL(start)(ifp);
 
+	sc->sc_if_flags = ifp->if_flags;
 	splx(s);
 	return (error);
 }
@@ -1799,9 +1819,9 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct sip_rxsoft *rxs;
-	struct mbuf *m, *tailm;
+	struct mbuf *m;
 	u_int32_t cmdsts, extsts;
-	int i, len, frame_len;
+	int i, len;
 
 	for (i = sc->sc_rxptr;; i = SIP_NEXTRX(i)) {
 		rxs = &sc->sc_rxsoft[i];
@@ -1810,6 +1830,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 
 		cmdsts = le32toh(sc->sc_rxdescs[i].sipd_cmdsts);
 		extsts = le32toh(sc->sc_rxdescs[i].sipd_extsts);
+		len = CMDSTS_SIZE(cmdsts);
 
 		/*
 		 * NOTE: OWN is set if owned by _consumer_.  We're the
@@ -1859,22 +1880,26 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 
 		SIP_RXCHAIN_LINK(sc, m);
 
+		m->m_len = len;
+
 		/*
 		 * If this is not the end of the packet, keep
 		 * looking.
 		 */
 		if (cmdsts & CMDSTS_MORE) {
-			sc->sc_rxlen += m->m_len;
+			sc->sc_rxlen += len;
 			continue;
 		}
 
 		/*
-		 * Okay, we have the entire packet now...
+		 * Okay, we have the entire packet now.  The chip includes
+		 * the FCS, so we need to trim it.
 		 */
+		m->m_len -= ETHER_CRC_LEN;
+
 		*sc->sc_rxtailp = NULL;
 		m = sc->sc_rxhead;
-		tailm = sc->sc_rxtail;
-		frame_len = sc->sc_rxlen;
+		len = m->m_len + sc->sc_rxlen;
 
 		SIP_RXCHAIN_RESET(sc);
 
@@ -1902,16 +1927,6 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 			m_freem(m);
 			continue;
 		}
-
-		/*
-		 * No errors.
-		 *
-		 * Note, the DP83820 includes the CRC with
-		 * every packet.
-		 */
-		len = CMDSTS_SIZE(cmdsts);
-		frame_len += len;
-		tailm->m_len = len;
 
 		/*
 		 * If the packet is small enough to fit in a
@@ -1997,9 +2012,8 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 		}
 
 		ifp->if_ipackets++;
-		m->m_flags |= M_HASFCS;
 		m->m_pkthdr.rcvif = ifp;
-		m->m_pkthdr.len = frame_len;
+		m->m_pkthdr.len = len;
 
 #if NBPFILTER > 0
 		/*
@@ -2091,7 +2105,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 		 * No errors; receive the packet.  Note, the SiS 900
 		 * includes the CRC with every packet.
 		 */
-		len = CMDSTS_SIZE(cmdsts);
+		len = CMDSTS_SIZE(cmdsts) - ETHER_CRC_LEN;
 
 #ifdef __NO_STRICT_ALIGNMENT
 		/*
@@ -2166,7 +2180,6 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 #endif /* __NO_STRICT_ALIGNMENT */
 
 		ifp->if_ipackets++;
-		m->m_flags |= M_HASFCS;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
@@ -2549,6 +2562,7 @@ SIP_DECL(init)(struct ifnet *ifp)
 	 */
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
+	sc->sc_if_flags = ifp->if_flags;
 
  out:
 	if (error)

@@ -1,4 +1,4 @@
-/* $NetBSD: vga_pcivar.h,v 1.1 1998/03/22 15:16:19 drochner Exp $ */
+/* $NetBSD: vga_pcivar.h,v 1.1.58.1 2005/02/12 18:17:48 yamt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,5 +33,5 @@
 	     (PCI_CLASS(class) == PCI_CLASS_PREHISTORIC &&		\
 	      PCI_SUBCLASS(class) == PCI_SUBCLASS_PREHISTORIC_VGA)) ? 1 : 0)
 
-int vga_pci_cnattach __P((bus_space_tag_t, bus_space_tag_t,
-			  pci_chipset_tag_t, int, int, int));
+int vga_pci_cnattach(bus_space_tag_t, bus_space_tag_t,
+			  pci_chipset_tag_t, int, int, int);

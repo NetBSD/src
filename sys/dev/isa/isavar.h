@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.44 2004/09/14 20:20:48 drochner Exp $	*/
+/*	$NetBSD: isavar.h,v 1.44.6.1 2005/02/12 18:17:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -264,7 +264,7 @@ int	isabusprint(void *, const char *);
  */
 
 /* ISA interrupt sharing types */
-char	*isa_intr_typename __P((int));
+char	*isa_intr_typename(int);
 
 /*
  * Some ISA devices (e.g. on a VLB) can perform 32-bit DMA.  This

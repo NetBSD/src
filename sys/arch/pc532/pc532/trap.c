@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.65 2004/08/28 17:53:02 jdolecek Exp $	*/
+/*	$NetBSD: trap.c,v 1.65.6.1 2005/02/12 18:17:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.65 2004/08/28 17:53:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.65.6.1 2005/02/12 18:17:38 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -281,7 +281,6 @@ trap(frame)
 # endif
 # ifdef DDB
 		if (r == 0) {
-			extern int db_active_ipl;
 			db_active_ipl = s;
 			r = kdb_trap(type, 0, db_frame);
 		}

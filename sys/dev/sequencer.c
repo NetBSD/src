@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.25 2003/12/04 13:57:30 keihan Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.25.10.1 2005/02/12 18:17:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.25 2003/12/04 13:57:30 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.25.10.1 2005/02/12 18:17:42 yamt Exp $");
 
 #include "sequencer.h"
 
@@ -111,43 +111,41 @@ int	sequencerdebug = 0;
 
 struct sequencer_softc seqdevs[NSEQUENCER];
 
-void sequencerattach __P((int));
-void seq_reset __P((struct sequencer_softc *));
-int seq_do_command __P((struct sequencer_softc *, seq_event_rec *));
-int seq_do_extcommand __P((struct sequencer_softc *, seq_event_rec *));
-int seq_do_chnvoice __P((struct sequencer_softc *, seq_event_rec *));
-int seq_do_chncommon __P((struct sequencer_softc *, seq_event_rec *));
-int seq_do_timing __P((struct sequencer_softc *, seq_event_rec *));
-int seq_do_local __P((struct sequencer_softc *, seq_event_rec *));
-int seq_do_sysex __P((struct sequencer_softc *, seq_event_rec *));
-int seq_do_fullsize __P((struct sequencer_softc *, seq_event_rec *, 
-			 struct uio *));
-int seq_timer __P((struct sequencer_softc *, int, int, seq_event_rec *));
-static int seq_input_event __P((struct sequencer_softc *, seq_event_rec *));
-int seq_drain __P((struct sequencer_softc *));
-void seq_startoutput __P((struct sequencer_softc *));
-void seq_timeout __P((void *));
-int seq_to_new __P((seq_event_rec *, struct uio *));
+void sequencerattach(int);
+void seq_reset(struct sequencer_softc *);
+int seq_do_command(struct sequencer_softc *, seq_event_rec *);
+int seq_do_extcommand(struct sequencer_softc *, seq_event_rec *);
+int seq_do_chnvoice(struct sequencer_softc *, seq_event_rec *);
+int seq_do_chncommon(struct sequencer_softc *, seq_event_rec *);
+int seq_do_timing(struct sequencer_softc *, seq_event_rec *);
+int seq_do_local(struct sequencer_softc *, seq_event_rec *);
+int seq_do_sysex(struct sequencer_softc *, seq_event_rec *);
+int seq_do_fullsize(struct sequencer_softc *, seq_event_rec *, struct uio *);
+int seq_timer(struct sequencer_softc *, int, int, seq_event_rec *);
+static int seq_input_event(struct sequencer_softc *, seq_event_rec *);
+int seq_drain(struct sequencer_softc *);
+void seq_startoutput(struct sequencer_softc *);
+void seq_timeout(void *);
+int seq_to_new(seq_event_rec *, struct uio *);
 static int seq_sleep_timo(int *, char *, int);
 static int seq_sleep(int *, char *);
 static void seq_wakeup(int *);
 
 struct midi_softc;
-int midiseq_out __P((struct midi_dev *, u_char *, u_int, int));
-struct midi_dev *midiseq_open __P((int, int));
-void midiseq_close __P((struct midi_dev *));
-void midiseq_reset __P((struct midi_dev *));
-int midiseq_noteon __P((struct midi_dev *, int, int, int));
-int midiseq_noteoff __P((struct midi_dev *, int, int, int));
-int midiseq_keypressure __P((struct midi_dev *, int, int, int));
-int midiseq_pgmchange __P((struct midi_dev *, int, int));
-int midiseq_chnpressure __P((struct midi_dev *, int, int));
-int midiseq_ctlchange __P((struct midi_dev *, int, int, int));
-int midiseq_pitchbend __P((struct midi_dev *, int, int));
-int midiseq_loadpatch __P((struct midi_dev *, struct sysex_info *, 
-			   struct uio *));
-int midiseq_putc __P((struct midi_dev *, int));
-void midiseq_in __P((struct midi_dev *, u_char *, int));
+int midiseq_out(struct midi_dev *, u_char *, u_int, int);
+struct midi_dev *midiseq_open(int, int);
+void midiseq_close(struct midi_dev *);
+void midiseq_reset(struct midi_dev *);
+int midiseq_noteon(struct midi_dev *, int, int, int);
+int midiseq_noteoff(struct midi_dev *, int, int, int);
+int midiseq_keypressure(struct midi_dev *, int, int, int);
+int midiseq_pgmchange(struct midi_dev *, int, int);
+int midiseq_chnpressure(struct midi_dev *, int, int);
+int midiseq_ctlchange(struct midi_dev *, int, int, int);
+int midiseq_pitchbend(struct midi_dev *, int, int);
+int midiseq_loadpatch(struct midi_dev *, struct sysex_info *, struct uio *);
+int midiseq_putc(struct midi_dev *, int);
+void midiseq_in(struct midi_dev *, u_char *, int);
 
 dev_type_open(sequenceropen);
 dev_type_close(sequencerclose);

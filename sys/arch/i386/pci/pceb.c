@@ -1,4 +1,4 @@
-/*	$NetBSD: pceb.c,v 1.14 2004/08/30 15:05:17 drochner Exp $	*/
+/*	$NetBSD: pceb.c,v 1.14.6.1 2005/02/12 18:17:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.14 2004/08/30 15:05:17 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.14.6.1 2005/02/12 18:17:34 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,13 +57,13 @@ __KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.14 2004/08/30 15:05:17 drochner Exp $");
 #include "eisa.h"
 #include "isa.h"
 
-int	pcebmatch __P((struct device *, struct cfdata *, void *));
-void	pcebattach __P((struct device *, struct device *, void *));
+int	pcebmatch(struct device *, struct cfdata *, void *);
+void	pcebattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(pceb, sizeof(struct device),
     pcebmatch, pcebattach, NULL, NULL);
 
-void	pceb_callback __P((struct device *));
+void	pceb_callback(struct device *);
 
 union pceb_attach_args {
 	const char *ea_name;			/* XXX should be common */
@@ -72,10 +72,7 @@ union pceb_attach_args {
 };
 
 int
-pcebmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+pcebmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -104,9 +101,7 @@ pcebmatch(parent, match, aux)
 }
 
 void
-pcebattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pcebattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
@@ -125,8 +120,7 @@ pcebattach(parent, self, aux)
 }
 
 void
-pceb_callback(self)
-	struct device *self;
+pceb_callback(struct device *self)
 {
 	union pceb_attach_args ea;
 

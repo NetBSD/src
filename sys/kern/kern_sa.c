@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.56 2005/01/06 19:26:41 mycroft Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.56.4.1 2005/02/12 18:17:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.56 2005/01/06 19:26:41 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.56.4.1 2005/02/12 18:17:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -801,7 +801,9 @@ sa_upcall_getstate(union sau_state *ss, struct lwp *l)
 	size_t ucsize;
 
 	if (l) {
+		l->l_flag |= L_SA_SWITCHING;
 		getucontext(l, &ss->ss_captured.ss_ctx);
+		l->l_flag &= ~L_SA_SWITCHING;
 		sp = (void *)
 			((intptr_t)_UC_MACHINE_SP(&ss->ss_captured.ss_ctx));
 		sp = STACK_ALIGN(sp, ~_UC_UCONTEXT_ALIGN);

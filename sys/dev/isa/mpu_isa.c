@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_isa.c,v 1.11 2004/12/02 09:50:42 xtraeme Exp $	*/
+/*	$NetBSD: mpu_isa.c,v 1.11.6.1 2005/02/12 18:17:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_isa.c,v 1.11 2004/12/02 09:50:42 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_isa.c,v 1.11.6.1 2005/02/12 18:17:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,8 +60,8 @@ struct mpu_isa_softc {
 	void	*sc_ih;			/* ISA interrupt handler */
 };
 
-int	mpu_isa_match __P((struct device *, struct cfdata *, void *));
-void	mpu_isa_attach __P((struct device *, struct device *, void *));
+int	mpu_isa_match(struct device *, struct cfdata *, void *);
+void	mpu_isa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(mpu_isa, sizeof(struct mpu_isa_softc),
     mpu_isa_match, mpu_isa_attach, NULL, NULL);

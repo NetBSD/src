@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.16 2004/11/10 17:54:07 christos Exp $
+#	$NetBSD: INSTALL,v 1.16.6.1 2005/02/12 18:17:39 yamt Exp $
 #
 #	Shark installation kernel
 #
@@ -60,6 +60,7 @@ file-system	KERNFS		# /kern
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 
@@ -210,6 +211,7 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
 #pseudo-device	vnd	4		# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
+#pseudo-device	fss	4		# file system snapshot device
 pseudo-device	rnd			# /dev/random and /dev/urandom
 
 pseudo-device	md	1		# Ramdisk driver

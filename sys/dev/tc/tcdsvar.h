@@ -1,4 +1,4 @@
-/* $NetBSD: tcdsvar.h,v 1.2 2001/08/22 05:00:27 nisimura Exp $ */
+/* $NetBSD: tcdsvar.h,v 1.2.30.1 2005/02/12 18:17:51 yamt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -36,7 +36,7 @@ struct tcds_slotconfig {
 	bus_space_tag_t sc_bst;			/* to frob TCDS regs */
 	bus_space_handle_t sc_bsh;
 
-	int	(*sc_intrhand) __P((void *));	/* intr. handler */
+	int	(*sc_intrhand)(void *);	/* intr. handler */
 	void	*sc_intrarg;			/* intr. handler arg. */
 	struct evcnt sc_evcnt;			/* intr. count */
 	char	sc_name[8];			/* ev_name */
@@ -76,11 +76,10 @@ struct tcdsdev_attach_args {
 /*
  * TCDS functions.
  */
-void	tcds_intr_establish __P((struct device *, int,
-	    int (*)(void *), void *));
-void	tcds_intr_disestablish __P((struct device *, int));
-void	tcds_dma_enable __P((struct tcds_slotconfig *, int));
-void	tcds_scsi_enable __P((struct tcds_slotconfig *, int));
-int	tcds_scsi_iserr __P((struct tcds_slotconfig *));
-int	tcds_scsi_isintr __P((struct tcds_slotconfig *, int));
-void	tcds_scsi_reset __P((struct tcds_slotconfig *));
+void	tcds_intr_establish(struct device *, int, int (*)(void *), void *);
+void	tcds_intr_disestablish(struct device *, int);
+void	tcds_dma_enable(struct tcds_slotconfig *, int);
+void	tcds_scsi_enable(struct tcds_slotconfig *, int);
+int	tcds_scsi_iserr(struct tcds_slotconfig *);
+int	tcds_scsi_isintr(struct tcds_slotconfig *, int);
+void	tcds_scsi_reset(struct tcds_slotconfig *);

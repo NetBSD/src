@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.209 2005/01/24 21:25:10 matt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.209.2.1 2005/02/12 18:17:54 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.209 2005/01/24 21:25:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.209.2.1 2005/02/12 18:17:54 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -241,7 +241,7 @@ struct pfil_head inet_pfil_hook;
  * recalculate IP parameters derived from nmbclusters.
  */
 static int	ip_nmbclusters;			/* copy of nmbclusters */
-static void	ip_nmbclusters_changed __P((void));	/* recalc limits */
+static void	ip_nmbclusters_changed(void);	/* recalc limits */
 
 #define CHECK_NMBCLUSTER_PARAMS()				\
 do {								\
@@ -275,15 +275,15 @@ int	ip_maxfrags;		        /* limit on fragments. XXX sysctl */
  * repeatedly deleting single packets under heavy fragmentation load
  * (e.g., from lossy NFS peers).
  */
-static u_int	ip_reass_ttl_decr __P((u_int ticks)); 
-static void	ip_reass_drophalf __P((void));
+static u_int	ip_reass_ttl_decr(u_int ticks); 
+static void	ip_reass_drophalf(void);
 
 
-static __inline int ipq_lock_try __P((void));
-static __inline void ipq_unlock __P((void));
+static __inline int ipq_lock_try(void);
+static __inline void ipq_unlock(void);
 
 static __inline int
-ipq_lock_try()
+ipq_lock_try(void)
 {
 	int s;
 
@@ -302,7 +302,7 @@ ipq_lock_try()
 }
 
 static __inline void
-ipq_unlock()
+ipq_unlock(void)
 {
 	int s;
 
@@ -373,7 +373,7 @@ static	struct ip_srcrt {
 	struct	in_addr route[MAX_IPOPTLEN/sizeof(struct in_addr)];
 } ip_srcrt;
 
-static void save_rte __P((u_char *, struct in_addr));
+static void save_rte(u_char *, struct in_addr);
 
 #ifdef MBUFTRACE
 struct mowner ip_rx_mowner = { "internet", "rx" };
@@ -395,7 +395,7 @@ ip_nmbclusters_changed(void)
  * All protocols not implemented in kernel go to raw IP protocol handler.
  */
 void
-ip_init()
+ip_init(void)
 {
 	const struct protosw *pr;
 	int i;
@@ -452,7 +452,7 @@ struct	route ipforward_rt;
  * IP software interrupt routine
  */
 void
-ipintr()
+ipintr(void)
 {
 	int s;
 	struct mbuf *m;
@@ -1044,10 +1044,7 @@ badcsum:
  * is given as fp; otherwise have to make a chain.
  */
 struct mbuf *
-ip_reass(ipqe, fp, ipqhead)
-	struct ipqent *ipqe;
-	struct ipq *fp;
-	struct ipqhead *ipqhead;
+ip_reass(struct ipqent *ipqe, struct ipq *fp, struct ipqhead *ipqhead)
 {
 	struct mbuf *m = ipqe->ipqe_m;
 	struct ipqent *nq, *p, *q;
@@ -1247,8 +1244,7 @@ dropfrag:
  * associated datagrams.
  */
 void
-ip_freef(fp)
-	struct ipq *fp;
+ip_freef(struct ipq *fp)
 {
 	struct ipqent *q, *p;
 	u_int nfrags = 0;
@@ -1345,7 +1341,7 @@ ip_reass_drophalf(void)
  * queue, discard it.
  */
 void
-ip_slowtimo()
+ip_slowtimo(void)
 {
 	static u_int dropscanidx = 0;
 	u_int i;
@@ -1402,7 +1398,7 @@ ip_slowtimo()
  * Drain off all datagram fragments.
  */
 void
-ip_drain()
+ip_drain(void)
 {
 
 	/*
@@ -1429,8 +1425,7 @@ ip_drain()
  * 0 if the packet should be processed further.
  */
 int
-ip_dooptions(m)
-	struct mbuf *m;
+ip_dooptions(struct mbuf *m)
 {
 	struct ip *ip = mtod(m, struct ip *);
 	u_char *cp, *cp0;
@@ -1659,8 +1654,7 @@ bad:
  * return internet address info of interface to be used to get there.
  */
 struct in_ifaddr *
-ip_rtaddr(dst)
-	 struct in_addr dst;
+ip_rtaddr(struct in_addr dst)
 {
 	struct sockaddr_in *sin;
 
@@ -1687,9 +1681,7 @@ ip_rtaddr(dst)
  * to be picked up later by ip_srcroute if the receiver is interested.
  */
 void
-save_rte(option, dst)
-	u_char *option;
-	struct in_addr dst;
+save_rte(u_char *option, struct in_addr dst)
 {
 	unsigned olen;
 
@@ -1711,7 +1703,7 @@ save_rte(option, dst)
  * The first hop is placed before the options, will be removed later.
  */
 struct mbuf *
-ip_srcroute()
+ip_srcroute(void)
 {
 	struct in_addr *p, *q;
 	struct mbuf *m;
@@ -1783,9 +1775,7 @@ ip_srcroute()
  * XXX should be deleted; last arg currently ignored.
  */
 void
-ip_stripoptions(m, mopt)
-	struct mbuf *m;
-	struct mbuf *mopt;
+ip_stripoptions(struct mbuf *m, struct mbuf *mopt)
 {
 	int i;
 	struct ip *ip = mtod(m, struct ip *);
@@ -1827,9 +1817,7 @@ const int inetctlerrmap[PRC_NCMDS] = {
  * via a source route.
  */
 void
-ip_forward(m, srcrt)
-	struct mbuf *m;
-	int srcrt;
+ip_forward(struct mbuf *m, int srcrt)
 {
 	struct ip *ip = mtod(m, struct ip *);
 	struct sockaddr_in *sin;
@@ -2057,11 +2045,8 @@ ip_forward(m, srcrt)
 }
 
 void
-ip_savecontrol(inp, mp, ip, m)
-	struct inpcb *inp;
-	struct mbuf **mp;
-	struct ip *ip;
-	struct mbuf *m;
+ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
+    struct mbuf *m)
 {
 
 	if (inp->inp_socket->so_options & SO_TIMESTAMP) {
