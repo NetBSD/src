@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.1.1.1.2.1 1998/07/30 14:03:51 eeh Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.1.1.1.2.2 1998/08/02 00:06:48 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,17 +92,27 @@
  * fake name ("mainbus").
  */
 
+/*
+ * S-bus variables.
+ */
+struct sbusdev {
+	struct	device *sd_dev;		/* backpointer to generic */
+	struct	sbusdev *sd_bchain;	/* forward link in bus chain */
+	void	(*sd_reset) __P((struct device *));
+};
+
+
 /* Device register space description */
 struct sbus_reg {
-	u_int32_t	rr_iospace;	/* register space (obio, etc) */
-	u_int32_t	rr_paddr;	/* register physical address */
-	u_int32_t	rr_len;		/* register length */
+	u_int32_t	sbr_slot;
+	u_int32_t	sbr_offset;
+	u_int32_t	sbr_size;
 };
 
 /* Interrupt information */
 struct sbus_intr {
-	u_int32_t	int_pri;	/* priority (IPL) */
-	u_int32_t	int_vec;	/* vector (always 0?) */
+	u_int32_t	sbi_pri;	/* priority (IPL) */
+	u_int32_t	sbi_vec;	/* vector (always 0?) */
 };
 
 /* Address translation accross busses */
@@ -115,12 +125,29 @@ struct sbus_range {		/* Only used on v3 PROMs */
 };
 
 /*
- * S-bus variables.
+ * Sbus driver attach arguments.
  */
-struct sbusdev {
-	struct	device *sd_dev;		/* backpointer to generic */
-	struct	sbusdev *sd_bchain;	/* forward link in bus chain */
-	void	(*sd_reset) __P((struct device *));
+struct sbus_attach_args {
+	int		sa_placeholder;	/* for obio attach args sharing */
+	bus_space_tag_t	sa_bustag;
+	bus_dma_tag_t	sa_dmatag;
+	char		*sa_name;	/* PROM node name */
+	int		sa_node;	/* PROM handle */
+	struct sbus_reg	*sa_reg;	/* Sbus register space for device */
+	int		sa_nreg;	/* Number of Sbus register spaces */
+#define sa_slot		sa_reg[0].sbr_slot
+#define sa_offset	sa_reg[0].sbr_offset
+#define sa_size		sa_reg[0].sbr_size
+
+	struct sbus_intr *sa_intr;	/* Sbus interrupts for device */
+	int		sa_nintr;	/* Number of interrupts */
+#define sa_pri		sa_intr[0].sbi_pri
+
+	void		**sa_promvaddrs;/* PROM-supplied virtual addresses */
+	int		sa_npromvaddrs;	/* Number of PROM VAs */
+#define sa_promvaddr	sa_promvaddrs[0]
+
+	struct bootpath *sa_bp;		/* used for locating boot device */
 };
 
 /* variables per Sbus */
@@ -149,22 +176,6 @@ struct sbus_softc {
 	int64_t		sc_flush;
 };
 
-/*
- * Sbus driver attach arguments.
- */
-struct sbus_attach_args {
-	bus_space_tag_t	sa_bustag;
-	bus_dma_tag_t	sa_dmatag;
-	char		*sa_name;	/* PROM node name */
-	int		sa_node;	/* PROM handle */
-	int		sa_slot;	/* Sbus slot number */
-	int		sa_offset;	/* Sbus slot offset */
-	int		sa_size;	/* Sbus space size */
-	int		sa_pri;		/* priority (IPL) */
-	void		*sa_promvaddr;	/* PROM virtual address, if any */
-	struct bootpath *sa_bp;		/* used for locating boot device */
-};
-
 /* sbus_attach() is also used from obio.c */
 #if 0
 void	sbus_attach __P((struct sbus_softc *, char *, int, struct bootpath *,
@@ -182,6 +193,7 @@ int	sbus_setup_attach_args __P((
 		int,			/*node*/
 		struct bootpath *,
 		struct sbus_attach_args *));
+void	sbus_destroy_attach_args __P((struct sbus_attach_args *));
 
 #define sbus_bus_map(t, b, a, s, f, v, hp) \
 	bus_space_map2(t, b, a, s, f, v, hp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_subr.c,v 1.1.1.1 1998/06/20 04:58:50 eeh Exp $ */
+/*	$NetBSD: bt_subr.c,v 1.1.1.1.2.1 1998/08/02 00:06:46 eeh Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -101,8 +101,9 @@ bt_putcmap(p, cm, cmsize)
 	register u_int i, start, count;
 	register u_char *cp;
 
-	start = fuword(&p->index);
-	count = fuword(&p->count);
+	/* Apparently the ioctl interface does a copyin of this structure for us. */
+	start = p->index;
+	count = p->count;
 	if (start >= cmsize || start + count > cmsize)
 		return (EINVAL);
 #if defined(UVM)

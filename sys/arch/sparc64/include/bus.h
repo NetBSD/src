@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.2.2.1 1998/07/30 14:03:53 eeh Exp $	*/
+/*	$NetBSD: bus.h,v 1.2.2.2 1998/08/02 00:06:48 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -84,14 +84,14 @@
 #define	SBUS_BUS_SPACE	ASI_PHYS_NON_CACHED
 #define PCI_CONFIG_BUS_SPACE	ASI_PHYS_NON_CACHED_LITTLE
 #define PCI_IO_BUS_SPACE	ASI_PHYS_NON_CACHED_LITTLE
-#define PCI_MEMORY_BUS_SPACE	ASI_PHYS_NON_CACHED_LITTLE
+#define PCI_MEMORY_BUS_SPACE	ASI_PHYS_CACHED_LITTLE
 /* For backwards compatibility */
 #define SPARC_BUS_SPACE	UPA_BUS_SPACE
 
 /*
  * Bus address and size types
  */
-typedef	u_long		bus_space_handle_t;
+typedef	u_int64_t	bus_space_handle_t;
 typedef u_long		bus_type_t;
 typedef u_int64_t	bus_addr_t;
 typedef u_int64_t	bus_size_t;

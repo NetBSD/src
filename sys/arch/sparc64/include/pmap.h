@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.2.2.1 1998/07/30 14:03:53 eeh Exp $	*/
+/*	$NetBSD: pmap.h,v 1.2.2.2 1998/08/02 00:06:49 eeh Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -112,6 +112,7 @@ struct prom_map {
 
 #define PMAP_NC		1	/* Set the E bit in the page */
 #define PMAP_NVC	2	/* Don't enable the virtual cache */
+#define PMAP_LITTLE	3	/* Map in little endian mode */
 /* If these bits are different in va's to the same PA then there is an aliasing in the d$ */
 #define VA_ALIAS_MASK   (1<<14)	
 
@@ -135,7 +136,7 @@ int pmap_is_referenced __P((paddr_t pa));
 int pmap_count_res __P((pmap_t pmap));
 /* int pmap_change_wiring __P((pmap_t pm, vaddr_t va, boolean_t wired)); */
 #define pmap_resident_count(pm)		pmap_count_res((pm))
-#define	pmap_phys_address(x)		(((x)<<NBPG)|PMAP_NC)
+#define	pmap_phys_address(x)		(((x)))
 
 void pmap_bootstrap __P((u_int kernelstart, u_int kernelend, u_int numctx));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.1.1.1 1998/06/20 04:58:50 eeh Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.1.1.1.2.1 1998/08/02 00:06:47 eeh Exp $ */
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -456,7 +456,7 @@ bwtwopoll(dev, events, p)
  * Return the address that would map the given device at the given
  * offset, allowing for the given protection, or return -1 for error.
  */
-int
+paddr_t
 bwtwommap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
