@@ -1,4 +1,4 @@
-/*	$NetBSD: event_var.h,v 1.2 1996/09/12 01:35:34 mrg Exp $	*/
+/*	$NetBSD: event_var.h,v 1.3 2001/06/07 17:52:52 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,6 +80,11 @@ void	ev_init __P((struct evvar *));
 void	ev_fini __P((struct evvar *));
 int	ev_read __P((struct evvar *, struct uio *, int));
 int	ev_poll __P((struct evvar *, int, struct proc *));
+
+/*
+ * Hook for 32-bit compatibility on a 64-bit kernel.
+ */
+extern	int (*ev_out32_hook) __P((struct firm_event *, int, struct uio *));
 
 /*
  * PEVENT is set just above PSOCK, which is just above TTIPRI, on the
