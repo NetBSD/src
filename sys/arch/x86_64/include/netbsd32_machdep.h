@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.3 2002/07/04 23:32:08 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.4 2002/07/07 23:27:00 fvdl Exp $	*/
 
 #ifndef _MACHINE_NETBSD32_H_
 #define _MACHINE_NETBSD32_H_
@@ -95,6 +95,24 @@ struct fpreg32 {
 	char	__data[108];
 };
 
+struct mtrr32 {
+	uint64_t base;
+	uint64_t len;
+	uint8_t type;
+	uint8_t __pad0[3];
+	int flags;
+	uint32_t owner;
+} __attribute__((packed));
+
+struct x86_64_get_mtrr_args32 {
+	uint32_t mtrrp;
+	uint32_t n;
+};
+
+struct x86_64_set_mtrr_args32 {
+	uint32_t mtrrp;
+	uint32_t n;
+};
 
 struct exec_package;
 void netbsd32_setregs(struct proc *p, struct exec_package *pack, u_long stack);
