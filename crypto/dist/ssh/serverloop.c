@@ -1,4 +1,4 @@
-/*	$NetBSD: serverloop.c,v 1.11 2001/09/27 03:24:04 itojun Exp $	*/
+/*	$NetBSD: serverloop.c,v 1.12 2001/11/07 06:26:48 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: serverloop.c,v 1.77 2001/09/17 21:04:02 markus Exp $");
+RCSID("$OpenBSD: serverloop.c,v 1.82 2001/10/10 22:18:47 markus Exp $");
 
 #include "xmalloc.h"
 #include "packet.h"
@@ -81,6 +81,7 @@ static int connection_in;	/* Connection to client (input). */
 static int connection_out;	/* Connection to client (output). */
 static int connection_closed = 0;	/* Connection to client closed. */
 static u_int buffer_high;	/* "Soft" max buffer size. */
+static int client_alive_timeouts = 0;
 
 /*
  * This SIGCHLD kludge is used to detect when the child exits.  The server
@@ -91,8 +92,6 @@ static volatile int child_terminated;	/* The child has terminated. */
 
 /* prototypes */
 static void server_init_dispatch(void);
-
-int client_alive_timeouts = 0;
 
 static void
 sigchld_handler(int sig)
@@ -162,6 +161,26 @@ make_packets_from_stdout_data(void)
 	}
 }
 
+static void
+client_alive_check(void)
+{
+	int id;
+
+	/* timeout, check to see how many we have had */
+	if (++client_alive_timeouts > options.client_alive_count_max)
+		packet_disconnect("Timeout, your session not responding.");
+
+	id = channel_find_open();
+	if (id == -1)
+		packet_disconnect("No open channels after timeout!");
+	/*
+	 * send a bogus channel request with "wantreply",
+	 * we should get back a failure
+	 */
+	channel_request_start(id, "keepalive@openssh.com", 1);
+	packet_send();
+}
+
 /*
  * Sleep in select() until we can do something.  This will initialize the
  * select masks.  Upon return, the masks will indicate which descriptors
@@ -190,16 +209,15 @@ wait_until_can_do_something(fd_set **readsetp, fd_set **writesetp, int *maxfdp,
 		max_time_milliseconds = options.client_alive_interval * 1000;
 	}
 
-	/* When select fails we restart from here. */
-retry_select:
-
 	/* Allocate and update select() masks for channel descriptors. */
 	channel_prepare_select(readsetp, writesetp, maxfdp, nallocp, 0);
 
 	if (compat20) {
+#if 0
 		/* wrong: bad condition XXX */
 		if (channel_not_very_much_buffered_data())
-			FD_SET(connection_in, *readsetp);
+#endif
+		FD_SET(connection_in, *readsetp);
 	} else {
 		/*
 		 * Read packets from the client unless we have too much
@@ -255,35 +273,12 @@ retry_select:
 	ret = select((*maxfdp)+1, *readsetp, *writesetp, NULL, tvp);
 
 	if (ret == -1) {
+		memset(*readsetp, 0, *maxfdp);
+		memset(*writesetp, 0, *maxfdp);
 		if (errno != EINTR)
 			error("select: %.100s", strerror(errno));
-		else
-			goto retry_select;
-	}
-	if (ret == 0 && client_alive_scheduled) {
-		/* timeout, check to see how many we have had */
-		client_alive_timeouts++;
-
-		if (client_alive_timeouts > options.client_alive_count_max ) {
-			packet_disconnect(
-				"Timeout, your session not responding.");
-		} else {
-			/*
-			 * send a bogus channel request with "wantreply" 
-			 * we should get back a failure
-			 */
-			int id;
-			
-			id = channel_find_open();
-			if (id != -1) {
-				channel_request_start(id,
-				  "keepalive@openssh.com", 1);
-				packet_send();
-			} else 
-				packet_disconnect(
-					"No open channels after timeout!");
-		}
-	} 
+	} else if (ret == 0 && client_alive_scheduled)
+		client_alive_check();
 }
 
 /*
@@ -670,12 +665,30 @@ server_loop(pid_t pid, int fdin_arg, int fdout_arg, int fderr_arg)
 	/* NOTREACHED */
 }
 
+static void
+collect_children(void)
+{
+	pid_t pid;
+	sigset_t oset, nset;
+	int status;
+
+	/* block SIGCHLD while we check for dead children */
+	sigemptyset(&nset);
+	sigaddset(&nset, SIGCHLD);
+	sigprocmask(SIG_BLOCK, &nset, &oset);
+	if (child_terminated) {
+		while ((pid = waitpid(-1, &status, WNOHANG)) > 0)
+			session_close_by_pid(pid, status);
+		child_terminated = 0;
+	}
+	sigprocmask(SIG_SETMASK, &oset, NULL);
+}
+
 void
 server_loop2(Authctxt *authctxt)
 {
 	fd_set *readset = NULL, *writeset = NULL;
-	int rekeying = 0, max_fd, status, nalloc = 0;
-	pid_t pid;
+	int rekeying = 0, max_fd, nalloc = 0;
 
 	debug("Entering interactive session for SSH2.");
 
@@ -698,11 +711,8 @@ server_loop2(Authctxt *authctxt)
 			channel_output_poll();
 		wait_until_can_do_something(&readset, &writeset, &max_fd,
 		    &nalloc, 0);
-		if (child_terminated) {
-			while ((pid = waitpid(-1, &status, WNOHANG)) > 0)
-				session_close_by_pid(pid, status);
-			child_terminated = 0;
-		}
+
+		collect_children();
 		if (!rekeying)
 			channel_after_select(readset, writeset);
 		process_input(readset);
@@ -710,32 +720,18 @@ server_loop2(Authctxt *authctxt)
 			break;
 		process_output(writeset);
 	}
+	collect_children();
+
 	if (readset)
 		xfree(readset);
 	if (writeset)
 		xfree(writeset);
 
-	signal(SIGCHLD, SIG_DFL);
-
-	while ((pid = waitpid(-1, &status, WNOHANG)) > 0)
-		session_close_by_pid(pid, status);
-	/*
-	 * there is a race between channel_free_all() killing children and
-	 * children dying before kill()
-	 */
-	channel_detach_all();
-	channel_stop_listening();
-
-	while (session_have_children()) {
-		pid = waitpid(-1, &status, 0);
-		if (pid > 0)
-			session_close_by_pid(pid, status);
-		else {
-			error("waitpid returned %d: %s", pid, strerror(errno));
-			break;
-		}
-	}
+	/* free all channels, no more reads and writes */
 	channel_free_all();
+
+	/* free remaining sessions, e.g. remove wtmp entries */
+	session_destroy_all();
 }
 
 static void
