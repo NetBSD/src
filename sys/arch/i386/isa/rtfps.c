@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.3 1994/11/04 18:35:18 mycroft Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.4 1994/11/04 19:01:59 mycroft Exp $	*/
 
 /*
  * Multi-port serial card interrupt demuxing support.
@@ -16,7 +16,6 @@
 #ifndef NEWCONFIG
 #include <i386/isa/isa_device.h>
 #endif
-#include <i386/isa/icu.h>
 #include <i386/isa/isavar.h>
 
 struct rtfps_softc {
