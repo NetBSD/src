@@ -1,4 +1,4 @@
-/*	$NetBSD: pppoectl.c,v 1.8 2002/08/16 23:54:52 itojun Exp $	*/
+/*	$NetBSD: pppoectl.c,v 1.9 2002/09/01 09:42:05 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Joerg Wunsch
@@ -73,7 +73,8 @@ main(int argc, char **argv)
 	struct spppauthfailuresettings authfailset;
 	struct spppdnssettings dnssettings;
 	int mib[2];
-	int set_auth = 0, set_lcp = 0, set_idle_to = 0, set_auth_failure = 0, set_dns = 0;
+	int set_auth = 0, set_lcp = 0, set_idle_to = 0, set_auth_failure = 0,
+	    set_dns = 0, clear_auth_failure_count = 0;
 	struct clockinfo clockinfo;
 
 	setprogname(argv[0]);
@@ -348,6 +349,8 @@ main(int argc, char **argv)
 		} else if (startswith("max-auth-failure=")) {
 			authfailset.max_failures = atoi(argv[0]+off);
 			set_auth_failure = 1;
+		} else if (strcmp(argv[0], "clear-auth-failure") == 0) {
+			clear_auth_failure_count = 1;
 		} else if (startswith("query-dns=")) {
 			dnssettings.query_dns = atoi(argv[0]+off);
 			set_dns = 1;
@@ -371,6 +374,18 @@ main(int argc, char **argv)
 			err(EX_OSERR, "SPPPSETIDLETO");
 	}
 	if (set_auth_failure) {
+		if (ioctl(s, SPPPSETAUTHFAILURE, &authfailset) == -1)
+			err(EX_OSERR, "SPPPSETAUTHFAILURE");
+	}
+	if (clear_auth_failure_count && !(set_auth || set_auth_failure)) {
+		/*
+		 * We want to clear the auth failure count, but did not
+		 * do that implicitly by setting authentication - so
+		 * do a zero-effect auth setting change
+		 */
+		if (ioctl(s, SPPPGETAUTHFAILURES, &authfailstats) == -1)
+			err(EX_OSERR, "SPPPGETAUTHFAILURES");
+		authfailset.max_failures = authfailstats.max_failures;
 		if (ioctl(s, SPPPSETAUTHFAILURE, &authfailset) == -1)
 			err(EX_OSERR, "SPPPSETAUTHFAILURE");
 	}
