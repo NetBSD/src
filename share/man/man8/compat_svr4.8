@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_svr4.8,v 1.21 2002/06/30 00:21:16 dmcmahill Exp $
+.\"	$NetBSD: compat_svr4.8,v 1.22 2003/02/04 22:38:17 perry Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas
 .\" All rights reserved.
@@ -226,7 +226,7 @@ Setup the configuration files and devices:
 .Pp
 As the major number allocated for emulation of SVR4 devices may vary between
 .Nx
-platforms, the SVR4_MAKEDEV script utilizes the
+platforms, the SVR4_MAKEDEV script uses the
 .Xr uname 1
 command to determine the architecture the devices nodes are being created for;
 this can be overridden by setting the
