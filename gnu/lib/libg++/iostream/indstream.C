@@ -62,8 +62,8 @@ streampos indirectbuf::seekoff(streamoff off, _seek_dir dir, int mode)
 {
     int ret_val = 0;
     int select = mode == 0 ? (ios::in|ios::out) : mode;
-    streambuf *gbuf = (select & ios::in) ? get_stream() : NULL;
-    streambuf *pbuf = (select & ios::out) ? put_stream() : NULL;
+    streambuf *gbuf = (select & ios::in) ? get_stream() : 0;
+    streambuf *pbuf = (select & ios::out) ? put_stream() : 0;
     if (gbuf == pbuf)
 	ret_val = gbuf->seekoff(off, dir, mode);
     else {
@@ -79,8 +79,8 @@ streampos indirectbuf::seekpos(streampos pos, int mode)
 {
     int ret_val = EOF;
     int select = mode == 0 ? (ios::in|ios::out) : mode;
-    streambuf *gbuf = (select & ios::in) ? get_stream() : NULL;
-    streambuf *pbuf = (select & ios::out) ? put_stream() : NULL;
+    streambuf *gbuf = (select & ios::in) ? get_stream() : 0;
+    streambuf *pbuf = (select & ios::out) ? put_stream() : 0;
     if (gbuf == pbuf)
 	ret_val = gbuf->seekpos(pos, mode);
     else {
