@@ -1,11 +1,11 @@
-/*	$NetBSD: zs_pcc.c,v 1.10 2000/09/06 19:51:44 scw Exp $	*/
+/*	$NetBSD: zs_pcctwo.c,v 1.1 2000/09/06 19:51:44 scw Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Gordon W. Ross and Jason R. Thorpe.
+ * by Gordon W. Ross, Jason R. Thorpe and Steve C. Woodford.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -43,6 +43,8 @@
  * Plain tty/async lines use the zs_async slave.
  *
  * Modified for NetBSD/mvme68k by Jason R. Thorpe <thorpej@NetBSD.ORG>
+ *
+ * Modified to attach to the PCCchip2/MCchip backend by Steve Woodford.
  */
 
 #include <sys/param.h>
@@ -65,39 +67,39 @@
 #include <machine/bus.h>
 
 #include <mvme68k/dev/mainbus.h>
-#include <mvme68k/dev/pccreg.h>
-#include <mvme68k/dev/pccvar.h>
+#include <mvme68k/dev/pcctworeg.h>
+#include <mvme68k/dev/pcctwovar.h>
 #include <mvme68k/dev/zsvar.h>
 
 
 /* Definition of the driver for autoconfig. */
-static int	zsc_pcc_match  __P((struct device *, struct cfdata *, void *));
-static void	zsc_pcc_attach __P((struct device *, struct device *, void *));
+static int	zsc_pcctwo_match(struct device *, struct cfdata *, void *);
+static void	zsc_pcctwo_attach(struct device *, struct device *, void *);
 
-struct cfattach zsc_pcc_ca = {
-	sizeof(struct zsc_softc), zsc_pcc_match, zsc_pcc_attach
+struct cfattach zsc_pcctwo_ca = {
+	sizeof(struct zsc_softc), zsc_pcctwo_match, zsc_pcctwo_attach
 };
 
 extern struct cfdriver zsc_cd;
 
-cons_decl(zsc_pcc);
+cons_decl(zsc_pcctwo);
 
 
 /*
  * Is the zs chip present?
  */
 static int
-zsc_pcc_match(parent, cf, aux)
+zsc_pcctwo_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-	struct pcc_attach_args *pa = aux;
+	struct pcctwo_attach_args *pa = aux;
 
-	if (strcmp(pa->pa_name, zsc_cd.cd_name))
+	if (strcmp(pa->pa_name, zsc_cd.cd_name) || machineid != MVME_162)
 		return (0);
 
-	pa->pa_ipl = cf->pcccf_ipl;
+	pa->pa_ipl = cf->pcctwocf_ipl;
 	if (pa->pa_ipl == -1)
 		pa->pa_ipl = ZSHARD_PRI;
 	return (1);
@@ -105,64 +107,42 @@ zsc_pcc_match(parent, cf, aux)
 
 /*
  * Attach a found zs.
- *
- * Match slave number to zs unit number, so that misconfiguration will
- * not set up the keyboard as ttya, etc.
  */
 static void
-zsc_pcc_attach(parent, self, aux)
+zsc_pcctwo_attach(parent, self, aux)
 	struct device *parent;
 	struct device *self;
 	void *aux;
 {
 	struct zsc_softc *zsc = (void *) self;
-	struct pcc_attach_args *pa = aux;
+	struct pcctwo_attach_args *pa = aux;
 	struct zsdevice zs;
 	bus_space_handle_t bush;
-	int zs_level, ir;
-	static int didintr;
+	int zs_level;
+	static int vector = MCCHIPV_ZS0;
 
 	/* Map the device's registers */
-	bus_space_map(pa->pa_bust, pa->pa_offset, 4, 0, &bush);
+	bus_space_map(pa->pa_bust, pa->pa_offset, 8, 0, &bush);
 
 	zs_level = pa->pa_ipl;
 
 	/* XXX: This is a gross hack. I need to bus-space zs.c ... */
-	zs.zs_chan_b.zc_csr = (volatile u_char *) bush;
-	zs.zs_chan_b.zc_data = (volatile u_char *) bush + 1;
-	zs.zs_chan_a.zc_csr = (volatile u_char *) bush + 2;
-	zs.zs_chan_a.zc_data = (volatile u_char *) bush + 3;
+	zs.zs_chan_b.zc_csr = (volatile u_char *) bush + 1;
+	zs.zs_chan_b.zc_data = (volatile u_char *) bush + 3;
+	zs.zs_chan_a.zc_csr = (volatile u_char *) bush + 5;
+	zs.zs_chan_a.zc_data = (volatile u_char *) bush + 7;
+
+	/* Do common parts of SCC configuration. */
+	zs_config(zsc, &zs, vector + PCCTWO_VECBASE, PCLK_162);
 
 	/*
-	 * Do common parts of SCC configuration.
-	 * Note that the vector is not actually used by the ZS chip on
-	 * MVME-147. We set up the PCC so that it provides the vector.
-	 * This is just here so the real vector is printed at config time.
+	 * Now safe to install interrupt handlers.
 	 */
-	zs_config(zsc, &zs, PCC_VECBASE + PCCV_ZS, PCLK_147);
+	pcctwointr_establish(vector++, zshard_unshared, zs_level, zsc);
 
 	/*
-	 * Now safe to install interrupt handlers.  Note the arguments
-	 * to the interrupt handlers aren't used.  Note, we only do this
-	 * once since both SCCs interrupt at the same level and vector.
+	 * Set master interrupt enable.
 	 */
-	if (didintr == 0) {
-		didintr = 1;
-		pccintr_establish(PCCV_ZS, zshard_shared, zs_level, zsc);
-	}
-
-	/* Sanity check the interrupt levels. */
-	ir = pcc_reg_read(sys_pcc, PCCREG_SERIAL_INTR_CTRL);
-	if (((ir & PCC_IMASK) != 0) &&
-	    ((ir & PCC_IMASK) != zs_level))
-		panic("zs_pcc_attach: zs configured at different IPLs");
-
-	/*
-	 * Set master interrupt enable. Vector is supplied by the PCC.
-	 */
-	pcc_reg_write(sys_pcc, PCCREG_SERIAL_INTR_CTRL,
-	    zs_level | PCC_IENABLE | PCC_ZSEXTERN);
-	zs_write_reg(zsc->zsc_cs[0], 2, PCC_VECBASE + PCCV_ZS);
 	zs_write_reg(zsc->zsc_cs[0], 9, zs_init_reg[9]);
 }
 
@@ -171,13 +151,13 @@ zsc_pcc_attach(parent, self, aux)
  ****************************************************************/
 
 /*
- * Check for SCC console.  The MVME-147 always uses unit 0 chan 0.
+ * Check for SCC console.  The MVME-162 always uses unit 0 chan 0.
  */
 void
-zsc_pcccnprobe(cp)
+zsc_pcctwocnprobe(cp)
 	struct consdev *cp;
 {
-	if (machineid != MVME_147) {
+	if (machineid != MVME_162) {
 		cp->cn_pri = CN_DEAD;
 		return;
 	}
@@ -188,21 +168,21 @@ zsc_pcccnprobe(cp)
 }
 
 void
-zsc_pcccninit(cp)
+zsc_pcctwocninit(cp)
 	struct consdev *cp;
 {
 	bus_space_tag_t bust = MVME68K_INTIO_BUS_SPACE;
 	bus_space_handle_t bush;
 	struct zsdevice zs;
 
-	bus_space_map(bust, MAINBUS_PCC_OFFSET + PCC_ZS0_OFF, 4, 0, &bush);
+	bus_space_map(bust, MAINBUS_PCCTWO_OFFSET + MCCHIP_ZS0_OFF, 8, 0,&bush);
 
 	/* XXX: This is a gross hack. I need to bus-space zs.c ... */
-	zs.zs_chan_b.zc_csr = (volatile u_char *) bush;
-	zs.zs_chan_b.zc_data = (volatile u_char *) bush + 1;
-	zs.zs_chan_a.zc_csr = (volatile u_char *) bush + 2;
-	zs.zs_chan_a.zc_data = (volatile u_char *) bush + 3;
+	zs.zs_chan_b.zc_csr = (volatile u_char *) bush + 1;
+	zs.zs_chan_b.zc_data = (volatile u_char *) bush + 3;
+	zs.zs_chan_a.zc_csr = (volatile u_char *) bush + 5;
+	zs.zs_chan_a.zc_data = (volatile u_char *) bush + 7;
 
 	/* Do common parts of console init. */
-	zs_cnconfig(0, 0, &zs, PCLK_147);
+	zs_cnconfig(0, 0, &zs, PCLK_162);
 }
