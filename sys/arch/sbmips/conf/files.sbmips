@@ -1,4 +1,4 @@
-# $NetBSD: files.sbmips,v 1.1 2002/03/06 02:13:39 simonb Exp $
+# $NetBSD: files.sbmips,v 1.2 2002/03/06 23:50:42 simonb Exp $
 
 maxpartitions 8
 
@@ -132,7 +132,3 @@ file	arch/sbmips/sbmips/zbbus.c		zbbus
 device	cpu
 attach	cpu at zbbus
 file	arch/sbmips/sbmips/cpu.c		cpu
-
-
-
-file	nfs/nfs_bio.c			compile-with "${NORMAL_C} -O0"
