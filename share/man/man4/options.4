@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.92 1999/12/17 03:55:52 jdolecek Exp $
+.\"	$NetBSD: options.4,v 1.93 2000/01/06 05:33:05 itojun Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -985,12 +985,17 @@ See
 .Xr ipsec 4
 for details.
 .Em IPSEC
-will enable only US-exportable portion of IPsec protocol,
-namely
+will enable
 secret key management part,
+policy management part,
 .Tn AH
 and
 .Tn IPComp .
+Kernel binary will not be subject to export control in most of countries,
+even if compiled with
+.Em IPSEC .
+For example, it should be okay to export it from within the United States
+to the outside.
 .Em INET6
 and
 .Em IPSEC
@@ -1014,8 +1019,9 @@ See
 .Xr ipsec 4
 for details.
 .Em IPSEC_ESP
-will enable US-export controlled source code, so compiled binary is
-subject to US-export restriction.
+will enable source code that is subject to export control in some countries
+.Pq including the United States ,
+and compiled kernel binary will be subject to certain restriction.
 This option assumes
 .Em IPSEC .
 To use this option, you will need have a symbolic link from
