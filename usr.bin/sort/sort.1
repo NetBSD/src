@@ -1,4 +1,4 @@
-.\"	$NetBSD: sort.1,v 1.3 2000/10/07 20:37:06 bjh21 Exp $
+.\"	$NetBSD: sort.1,v 1.4 2000/10/14 18:48:49 bjh21 Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,7 +48,8 @@
 .Op Fl t Ar char
 .Op Fl T Ar char
 .Oo
-.Cm Fl k Ar field1[,field2]
+.Fl k
+.Ar field1 Ns Op Li \&, Ns Ar field2
 .Oc
 .Ar ...
 .Op Fl o Ar output
@@ -66,16 +67,16 @@ lexicographically. By default, if keys are not given,
 regards each input line as a single field.
 .Pp
 The following options are available:
-.Bl -tag -width indent
+.Bl -tag -width Fl
 .It Fl c
 Check that the single input file is sorted.
 If the file is not sorted,
-.Nm sort
+.Nm
 produces the appropriate error messages and exits with code 1;
 otherwise,
-.Nm sort
+.Nm
 returns 0.
-.Nm Sort
+.Nm
 .Fl c
 produces no output.
 .It Fl m
@@ -104,7 +105,7 @@ When attached to a specific key (see
 .Fl k ) ,
 the ordering options override
 all global ordering options for that key.
-.Bl -tag -width indent
+.Bl -tag -width Fl
 .It Fl d
 Only blank space and alphanumeric characters
 .\" according
@@ -141,7 +142,7 @@ used for files larger than 60Mb.
 .Pp
 The treatment of field separators can be altered using the
 options:
-.Bl -tag -width indent
+.Bl -tag -width Fl
 .It Fl b
 Ignores leading blank space when determining the start
 and end of a restricted sort key.
@@ -165,7 +166,7 @@ Note that the
 option
 has no effect unless key fields are specified.
 .It Fl t Ar char
-.Ar Char
+.Ar char
 is used as the field separator character. The initial
 .Ar char
 is not considered to be part of a field when determining
@@ -181,13 +182,16 @@ is not specified,
 blank space characters are used as default field
 separators.
 .It Fl T Ar char
-.Ar Char
+.Ar char
 is used as the record separator character.
 This should be used with discretion;
 .Fl T Ar <alphanumeric>
 usually produces undesirable results.
 The default line separator is newline.
-.It Fl k Ar field1[,field2]
+.It Xo
+.Fl k
+.Ar field1 Ns Op Li \&, Ns Ar field2
+.Xc
 Designates the starting position,
 .Ar field1 ,
 and optional ending position, 
@@ -202,7 +206,7 @@ and
 .El
 .Pp
 The following operands are available:
-.Bl -tag -width indent
+.Bl -tag -width Ar
 .It Ar file
 The pathname of a file to be sorted, merged, or checked.
 If no file
@@ -224,7 +228,8 @@ first field.
 .Pp
 Fields are specified
 by the
-.Fl k Ar field1[,field2]
+.Fl k
+.Ar field1 Ns Op \&, Ns Ar field2
 argument. A missing
 .Ar field2
 argument defaults to the end of a line.
@@ -234,85 +239,98 @@ The arguments
 and
 .Ar field2
 have the form
-.Em m.n
+.Ar m Ns Li \&. Ns Ar n
 followed by one or more of the options
-.Fl b , d , f , i ,
-.Fl n , r .
+.Cm b , d , f , i ,
+.Cm n , r .
 A
 .Ar field1
 position specified by
-.Em m.n
-.Em (m,n > 0)
+.Ar m Ns Li \&. Ns Ar n
+.Pq Ar m , n No > 0
 is interpreted as the
-.Em n Ns th
+.Ar n Ns th
 character in the
-.Em m Ns th
+.Ar m Ns th
 field.
 A missing
-.Em \&.n
+.Li \&. Ns Ar n
 in
 .Ar field1
 means
 .Ql \&.1 ,
 indicating the first character of the
-.Em m Ns th
+.Ar m Ns th
 field;
 If the
 .Fl b
 option is in effect,
-.Em n
+.Ar n
 is counted from the first
 non-blank character in the
-.Em m Ns th
+.Ar m Ns th
 field;
-.Em m Ns \&.1b
+.Ar m Ns Li \&.1b
 refers to the first
 non-blank character in the
-.Em m Ns th
+.Ar m Ns th
 field.
 .Pp
 A
 .Ar field2
 position specified by
-.Em m.n
+.Ar m Ns Li \&. Ns Ar n
 is interpreted as
 the
-.Em n Ns th
+.Ar n Ns th
 character (including separators) of the
-.Em m Ns th
+.Ar m Ns th
 field.
 A missing
-.Em \&.n
+.Li \&. Ns Ar n
 indicates the last character of the 
-.Em m Ns th
+.Ar m Ns th
 field;
-.Em m 
+.Ar m 
 = \&0
 designates the end of a line.
 Thus the option
-.Fl k Ar v.x,w.y
+.Fl k
+.Sm off
+.Xo
+.Ar v Li \&. Ar x Li \&,
+.Ar w Li \&. Ar y
+.Xc
+.Sm on
 is synonymous with the obsolescent option
-.Cm \(pl Ns Ar v-\&1.x-\&1
-.Fl Ns Ar w-\&1.y ;
+.Sm off
+.Cm \(pl Ar v-\&1 Li \&. Ar x-\&1
+.Fl Ar w-\&1 Li \&. Ar y ;
+.Sm on
 when
-.Em y
+.Ar y
 is omitted,
-.Fl k Ar v.x,w
+.Fl k
+.Sm off
+.Ar v Li \&. Ar x Li \&, Ar w
+.Sm on
 is synonymous with
-.Cm \(pl Ns Ar v-\&1.x-\&1 
-.Fl Ns Ar w+1.0 .
+.Sm off
+.Cm \(pl Ar v-\&1 Li \&. Ar x-\&1 
+.Fl Ar w+1 Li \&.0 .
+.Sm on
 The obsolescent
 .Cm \(pl Ns Ar pos1
 .Fl Ns Ar pos2
 option is still supported, except for
-.Fl Ns Ar w\&.0b,
+.Fl Ns Ar w Ns Li \&.0b,
 which has no
 .Fl k
 equivalent.
 .Sh ENVIRONMENT
 If the following environment variable exists, it is utilized by
 .Nm sort .
-.Bl -tag -width Fl
+.Bl -tag -width Ev
 .It Ev TMPDIR
 .Nm Sort
 uses the contents of the
@@ -338,13 +356,13 @@ already exists.
 .Sh RETURN VALUES
 Sort exits with one of the following values:
 .Bl -tag -width flag -compact
-.It Pa 0:
+.It 0
 normal behavior.
-.It Pa 1:
+.It 1
 on disorder (or non-uniqueness) with the
 .Fl c
 option
-.It Pa 2:
+.It 2
 an error occurred.
 .El
 .Sh BUGS
