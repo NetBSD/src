@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.6.12.1 2000/06/30 16:27:46 simonb Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.6.12.2 2002/03/27 10:14:00 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -101,6 +101,7 @@ struct ad1848_softc {
 
 	char	*chip_name;
 	int	mode;
+	int	is_ad1845;
 
 	u_int	precision;		/* 8/16 bits */
 	int	channels;
