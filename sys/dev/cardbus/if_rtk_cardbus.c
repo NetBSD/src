@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.20 2004/06/06 04:10:49 dyoung Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.21 2004/07/22 15:50:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.20 2004/06/06 04:10:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.21 2004/07/22 15:50:50 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -345,13 +345,13 @@ rtk_cardbus_setup(csc)
 		}
 	}
 
-	/* Make sure the right access type is on the CardBus bridge. */
-	(*ct->ct_cf->cardbus_ctrl)(cc, csc->sc_cben);
-	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
-
 	/* Program the BAR */
 	cardbus_conf_write(cc, cf, csc->sc_tag,
 		csc->sc_bar_reg, csc->sc_bar_val);
+
+	/* Make sure the right access type is on the CardBus bridge. */
+	(*ct->ct_cf->cardbus_ctrl)(cc, csc->sc_cben);
+	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* Enable the appropriate bits in the CARDBUS CSR. */
 	reg = cardbus_conf_read(cc, cf, csc->sc_tag, 

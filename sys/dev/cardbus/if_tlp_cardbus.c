@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.41 2004/05/09 01:39:41 jonathan Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.42 2004/07/22 15:50:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.41 2004/05/09 01:39:41 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.42 2004/07/22 15:50:50 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -623,13 +623,13 @@ tlp_cardbus_setup(csc)
 	(void)cardbus_setpowerstate(sc->sc_dev.dv_xname, ct, csc->sc_tag,
 	    PCI_PWR_D0);
 
-	/* Make sure the right access type is on the CardBus bridge. */
-	(*ct->ct_cf->cardbus_ctrl)(cc, csc->sc_cben);
-	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
-
 	/* Program the BAR. */
 	cardbus_conf_write(cc, cf, csc->sc_tag, csc->sc_bar_reg,
 	    csc->sc_bar_val);
+
+	/* Make sure the right access type is on the CardBus bridge. */
+	(*ct->ct_cf->cardbus_ctrl)(cc, csc->sc_cben);
+	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* Enable the appropriate bits in the PCI CSR. */
 	reg = cardbus_conf_read(cc, cf, csc->sc_tag, PCI_COMMAND_STATUS_REG);
