@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.44 2000/01/27 23:39:40 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.45 2000/07/27 04:09:27 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.44 2000/01/27 23:39:40 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.45 2000/07/27 04:09:27 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,8 +125,7 @@ STATIC void setprompt __P((int));
  */
 
 union node *
-parsecmd(interact)
-	int interact;
+parsecmd(int interact)
 {
 	int t;
 
@@ -604,10 +603,7 @@ makename() {
 	return n;
 }
 
-void fixredir(n, text, err)
-	union node *n;
-	const char *text;
-	int err;
+void fixredir(union node *n, const char *text, int err)
 	{
 	TRACE(("Fix redir %s %d\n", text, err));
 	if (!err)
@@ -1490,8 +1486,7 @@ noexpand(text)
  */
 
 int
-goodname(name)
-	char *name;
+goodname(char *name)
 	{
 	char *p;
 
@@ -1557,8 +1552,7 @@ setprompt(which)
  *    should be added here.
  */
 const char *
-getprompt(unused)
-	void *unused;
+getprompt(void *unused)
 	{
 	switch (whichprompt) {
 	case 0:
