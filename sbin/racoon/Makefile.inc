@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2000/10/04 00:21:18 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2000/10/04 00:27:48 itojun Exp $
 
 # point top of your KAME tree by ${KAMEROOT}
 #KAMEROOT=	/home/itojun/k
@@ -8,5 +8,7 @@
 
 # this may or may not work.
 ##TCPDUMPSRCDIR=	${.CURDIR}/../../../usr.sbin/tcpdump
+
+ETCDIR?=	/etc/racoon
 
 .include "../Makefile.inc"
