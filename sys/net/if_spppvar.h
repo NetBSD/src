@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.9 2003/07/09 20:12:54 martin Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.10 2003/09/03 20:48:46 martin Exp $	*/
 
 /*
  * Defines for synchronous PPP/Cisco link level subroutines.
@@ -81,11 +81,16 @@ struct sppp {
 	struct  sppp *pp_next;  /* next interface in keepalive list */
 	u_int   pp_flags;       /* use Cisco protocol instead of PPP */
 	u_int	pp_framebytes;	/* number of bytes added by (hardware) framing */
-	u_short pp_alivecnt;    /* keepalive packets counter */
-	u_short pp_loopcnt;     /* loopback detection counter */
+	u_int   pp_alivecnt;    /* keepalive packets counter */
+	u_int   pp_loopcnt;     /* loopback detection counter */
+	u_int	pp_maxalive;	/* number or echo req. w/o reply */
 	u_long  pp_seq[IDX_COUNT];	/* local sequence number */
 	u_long  pp_rseq[IDX_COUNT];	/* remote sequence number */
 	u_quad_t	pp_saved_mtu;	/* saved MTU value */
+	time_t	pp_last_receive;	/* peer's last "sign of life" */
+	time_t	pp_max_noreceive;	/* seconds since last receive before
+					   we start to worry and send echo
+					   requests */
 	time_t	pp_last_activity;	/* second of last payload data s/r */
 	time_t	pp_idle_timeout;	/* idle seconds before auto-disconnect,
 					 * 0 = disabled */
