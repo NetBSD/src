@@ -1,4 +1,4 @@
-/*	$NetBSD: disktab.h,v 1.5 1998/07/26 18:29:09 mycroft Exp $	*/
+/*	$NetBSD: disktab.h,v 1.6 1998/07/27 09:09:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,6 +38,8 @@
 #ifndef	_DISKTAB_H_
 #define	_DISKTAB_H_
 
+#include <sys/cdefs.h>
+
 /*
  * Disk description table, see disktab(5)
  */
@@ -50,16 +52,16 @@ struct	partition {
 };
 
 struct	disktab {
-	const char *d_name;		/* drive name */
-	const char *d_type;		/* drive type */
-	int	    d_secsize;		/* sector size in bytes */
-	int	    d_ntracks;		/* # tracks/cylinder */
-	int	    d_nsectors;		/* # sectors/track */
-	int	    d_ncylinders;	/* # cylinders */
-	int	    d_rpm;		/* revolutions/minute */
-	int	    d_badsectforw;	/* supports DEC bad144 std */
-	int	    d_sectoffset;	/* use sect rather than cyl offsets */
-	struct	    partition d_partitions[8];
+	__aconst char *d_name;		/* drive name */
+	__aconst char *d_type;		/* drive type */
+	int	d_secsize;		/* sector size in bytes */
+	int	d_ntracks;		/* # tracks/cylinder */
+	int	d_nsectors;		/* # sectors/track */
+	int	d_ncylinders;	/* # cylinders */
+	int	d_rpm;		/* revolutions/minute */
+	int	d_badsectforw;	/* supports DEC bad144 std */
+	int	d_sectoffset;	/* use sect rather than cyl offsets */
+	struct	partition d_partitions[8];
 };
 
 #endif /* !_DISKTAB_H_ */
