@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 2001/11/29 22:46:02 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2001/12/07 06:59:20 minoura Exp $
 #
 #	etc.x68k/Makefile.inc -- x68k-specific etc Makefile targets
 #
@@ -16,6 +16,9 @@ snap_md_post:
 .ifndef UPDATE
 	cd ${.CURDIR}/../distrib && ${MAKE} cleandir
 .endif
-	cd ${.CURDIR}/../distrib && ${MAKE} depend && ${MAKE}
-	cd ${.CURDIR}/../distrib/${MACHINE} && ${MAKE} release
+	cd ${.CURDIR}/../distrib/notes && ${MAKE} dependall
+	cd ${.CURDIR}/../distrib/${MACHINE} && ${MAKE} dependall
 	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
+	cd ${.CURDIR}/../distrib/${MACHINE} && ${MAKE} release
+	cd ${.CURDIR}/../sys/arch/x68k/stand/loadbsd && ${MAKE} release
+	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/floppy '*.gz'
