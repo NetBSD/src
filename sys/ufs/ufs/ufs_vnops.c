@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.126 2005/02/26 22:32:20 perry Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.127 2005/03/23 00:12:51 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.126 2005/02/26 22:32:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.127 2005/03/23 00:12:51 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1259,8 +1259,9 @@ ufs_mkdir(void *v)
 	 * but not have it entered in the parent directory. The entry is
 	 * made later after writing "." and ".." entries.
 	 */
-	if ((error = VOP_VALLOC(dvp, dmode, cnp->cn_cred, &tvp)) != 0)
+	if ((error = VOP_VALLOC(dvp, dmode, cnp->cn_cred, ap->a_vpp)) != 0)
 		goto out;
+	tvp = *ap->a_vpp;
 	ip = VTOI(tvp);
 	ip->i_uid = cnp->cn_cred->cr_uid;
 	DIP_ASSIGN(ip, uid, ip->i_uid);
@@ -1375,7 +1376,6 @@ ufs_mkdir(void *v)
  bad:
 	if (error == 0) {
 		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
-		*ap->a_vpp = tvp;
 	} else {
 		dp->i_ffs_effnlink--;
 		dp->i_nlink--;
@@ -2065,15 +2065,15 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	if ((cnp->cn_flags & HASBUF) == 0)
 		panic("ufs_makeinode: no name");
 #endif
-	*vpp = NULL;
 	if ((mode & IFMT) == 0)
 		mode |= IFREG;
 
-	if ((error = VOP_VALLOC(dvp, mode, cnp->cn_cred, &tvp)) != 0) {
+	if ((error = VOP_VALLOC(dvp, mode, cnp->cn_cred, vpp)) != 0) {
 		PNBUF_PUT(cnp->cn_pnbuf);
 		vput(dvp);
 		return (error);
 	}
+	tvp = *vpp;
 	ip = VTOI(tvp);
 	ip->i_gid = pdir->i_gid;
 	DIP_ASSIGN(ip, gid, ip->i_gid);
