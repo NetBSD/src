@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.12 1995/11/22 23:01:53 cgd Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.13 1998/03/01 02:24:14 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)resourcevar.h	8.3 (Berkeley) 2/22/94
+ *	@(#)resourcevar.h	8.4 (Berkeley) 1/9/95
  */
 
 #ifndef	_SYS_RESOURCEVAR_H_

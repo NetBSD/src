@@ -1,4 +1,4 @@
-/*	$NetBSD: tuba_table.h,v 1.5 1996/05/22 13:56:11 mycroft Exp $	*/
+/*	$NetBSD: tuba_table.h,v 1.6 1998/03/01 02:24:47 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tuba_table.h	8.1 (Berkeley) 6/10/93
+ *	@(#)tuba_table.h	8.2 (Berkeley) 7/13/94
  */
 
 struct tuba_cache {
@@ -45,6 +45,7 @@ struct tuba_cache {
 	u_short         tc_sum;	/* cksum of nsap inc. length */
 	u_short         tc_ssum;/* swab(tc_sum) */
 	struct sockaddr_iso tc_siso;	/* for responding */
+	struct  iso_addr tc_addr;
 };
 
 #define ADDCARRY(x)  (x >= 65535 ? x -= 65535 : x)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.h,v 1.18 1998/02/10 14:08:55 mrg Exp $	*/
+/*	$NetBSD: vm.h,v 1.19 1998/03/01 02:23:59 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm.h	8.2 (Berkeley) 12/13/93
+ *	@(#)vm.h	8.5 (Berkeley) 5/11/95
  */
 
 #ifndef VM_H

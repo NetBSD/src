@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.38 1996/09/07 12:41:03 mycroft Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.39 1998/03/01 02:22:33 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tty_pty.c	8.2 (Berkeley) 9/23/93
+ *	@(#)tty_pty.c	8.4 (Berkeley) 2/20/95
  */
 
 /*
@@ -594,7 +594,7 @@ ptyioctl(dev, cmd, data, flag, p)
 			}
 			SET(tp->t_lflag, EXTPROC);
 		} else {
-			if (ISSET(tp->t_state, EXTPROC) &&
+			if (ISSET(tp->t_lflag, EXTPROC) &&
 			    (pti->pt_flags & PF_PKT)) {
 				pti->pt_send |= TIOCPKT_IOCTL;
 				ptcwakeup(tp, FREAD);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.25 1998/02/12 20:39:46 kleink Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.26 1998/03/01 02:22:33 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
+ *	@(#)uipc_mbuf.c	8.4 (Berkeley) 2/14/95
  */
 
 #include "opt_uvm.h"

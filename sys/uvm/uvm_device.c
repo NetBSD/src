@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.5 1998/02/10 14:12:07 mrg Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.6 1998/03/01 02:25:28 fvdl Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -70,9 +70,7 @@
 
 LIST_HEAD(udv_list_struct, uvm_device);
 static struct udv_list_struct udv_list;
-#if NCPU > 1
 static simple_lock_data_t udv_lock;
-#endif
 
 /*
  * functions

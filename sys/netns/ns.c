@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.c,v 1.13 1996/10/10 23:25:51 christos Exp $	*/
+/*	$NetBSD: ns.c,v 1.14 1998/03/01 02:24:38 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ns.c	8.2 (Berkeley) 11/15/93
+ *	@(#)ns.c	8.5 (Berkeley) 2/9/95
  */
 
 #include <sys/param.h>

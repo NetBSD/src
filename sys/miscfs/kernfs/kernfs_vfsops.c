@@ -1,7 +1,7 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.31 1998/02/18 07:05:48 thorpej Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.32 1998/03/01 02:21:04 fvdl Exp $	*/
 
 /*
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software donated to Berkeley by
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kernfs_vfsops.c	8.5 (Berkeley) 6/15/94
+ *	@(#)kernfs_vfsops.c	8.10 (Berkeley) 5/14/95
  */
 
 /*
@@ -72,8 +72,9 @@ int	kernfs_vget __P((struct mount *, ino_t, struct vnode **));
 int	kernfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
 			   struct vnode **, int *, struct ucred **));
 int	kernfs_vptofh __P((struct vnode *, struct fid *));
+int	kernfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
+			   struct proc *));
 
-/*ARGSUSED*/
 void
 kernfs_init()
 {
@@ -142,7 +143,7 @@ kernfs_mount(mp, path, data, ndp, p)
 	fmp->kf_root = rvp;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = (qaddr_t)fmp;
-	getnewfsid(mp, makefstype(MOUNT_KERNFS));
+	vfs_getnewfsid(mp, MOUNT_KERNFS);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
@@ -174,19 +175,14 @@ kernfs_unmount(mp, mntflags, p)
 {
 	int error;
 	int flags = 0;
-	extern int doforce;
 	struct vnode *rootvp = VFSTOKERNFS(mp)->kf_root;
 
 #ifdef KERNFS_DIAGNOSTIC
 	printf("kernfs_unmount(mp = %p)\n", mp);
 #endif
 
-	if (mntflags & MNT_FORCE) {
-		/* kernfs can never be rootfs so don't check for it */
-		if (!doforce)
-			return (EINVAL);
+	 if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
-	}
 
 	/*
 	 * Clear out buffer cache.  I don't think we
@@ -233,7 +229,7 @@ kernfs_root(mp, vpp)
 	 */
 	vp = VFSTOKERNFS(mp)->kf_root;
 	VREF(vp);
-	VOP_LOCK(vp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	*vpp = vp;
 	return (0);
 }
@@ -261,11 +257,6 @@ kernfs_statfs(mp, sbp, p)
 	printf("kernfs_statfs(mp = %p)\n", mp);
 #endif
 
-#ifdef COMPAT_09
-	sbp->f_type = 7;
-#else
-	sbp->f_type = 0;
-#endif
 	sbp->f_bsize = DEV_BSIZE;
 	sbp->f_iosize = DEV_BSIZE;
 	sbp->f_blocks = 2;		/* 1K to keep df happy */
@@ -273,6 +264,11 @@ kernfs_statfs(mp, sbp, p)
 	sbp->f_bavail = 0;
 	sbp->f_files = 0;
 	sbp->f_ffree = 0;
+#ifdef COMPAT_09
+	sbp->f_type = 7;
+#else
+	sbp->f_type = 0;
+#endif
 	if (sbp != &mp->mnt_stat) {
 		bcopy(&mp->mnt_stat.f_fsid, &sbp->f_fsid, sizeof(sbp->f_fsid));
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
@@ -332,6 +328,19 @@ kernfs_vptofh(vp, fhp)
 	return (EOPNOTSUPP);
 }
 
+int
+kernfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	return (EOPNOTSUPP);
+}
+
 extern struct vnodeopv_desc kernfs_vnodeop_opv_desc;
 
 struct vnodeopv_desc *kernfs_vnodeopv_descs[] = {
@@ -352,6 +361,7 @@ struct vfsops kernfs_vfsops = {
 	kernfs_fhtovp,
 	kernfs_vptofh,
 	kernfs_init,
+	kernfs_sysctl,
 	NULL,				/* vfs_mountroot */
 	kernfs_vnodeopv_descs,
 };

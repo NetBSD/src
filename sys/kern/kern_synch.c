@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.49 1998/02/12 20:39:41 kleink Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.50 1998/03/01 02:22:30 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kern_synch.c	8.6 (Berkeley) 1/21/94
+ *	@(#)kern_synch.c	8.9 (Berkeley) 5/19/95
  */
 
 #include "opt_uvm.h"
@@ -579,6 +579,10 @@ mi_switch()
 	register long s, u;
 	struct timeval tv;
 
+#ifdef DEBUG
+	if (p->p_simple_locks)
+		panic("sleep: holding simple lock");
+#endif
 	/*
 	 * Compute the amount of time during which the current
 	 * process was running, and add that to its total so far.

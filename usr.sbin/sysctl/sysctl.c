@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.12 1998/02/06 21:18:46 jonathan Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.13 1998/03/01 02:26:07 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$NetBSD: sysctl.c,v 1.12 1998/02/06 21:18:46 jonathan Exp $";
+static char *rcsid = "$NetBSD: sysctl.c,v 1.13 1998/03/01 02:26:07 fvdl Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ struct list secondlevel[] = {
 	{ 0, 0 },			/* CTL_UNSPEC */
 	{ kernname, KERN_MAXID },	/* CTL_KERN */
 	{ vmname, VM_MAXID },		/* CTL_VM */
-	{ 0, 0 },			/* CTL_FS */
+	{ 0, 0 },			/* CTL_VFS */
 	{ netname, NET_MAXID },		/* CTL_NET */
 	{ 0, CTL_DEBUG_MAXID },		/* CTL_DEBUG */
 	{ hwname, HW_MAXID },		/* CTL_HW */
@@ -333,7 +333,7 @@ parse(string, flags)
 #endif
 		break;
 
-	case CTL_FS:
+	case CTL_VFS:
 	case CTL_USER:
 	case CTL_DDB:
 		break;

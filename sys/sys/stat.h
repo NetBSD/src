@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.32 1998/02/16 09:52:19 kleink Exp $	*/
+/*	$NetBSD: stat.h,v 1.33 1998/03/01 02:24:14 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)stat.h	8.9 (Berkeley) 8/17/94
+ *	@(#)stat.h	8.12 (Berkeley) 8/17/94
  */
 
 #ifndef _SYS_STAT_H_

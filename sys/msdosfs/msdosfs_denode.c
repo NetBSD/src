@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.29 1998/02/12 10:12:55 mrg Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.30 1998/03/01 02:25:11 fvdl Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -79,6 +79,8 @@ u_long dehash;			/* size of hash table - 1 */
 #define	DEHASH(dev, dcl, doff)	(((dev) + (dcl) + (doff) / sizeof(struct direntry)) \
 				 & dehash)
 
+struct simplelock msdosfs_ihashlock;
+
 static struct denode *msdosfs_hashget __P((dev_t, u_long, u_long));
 static void msdosfs_hashins __P((struct denode *));
 static void msdosfs_hashrem __P((struct denode *));
@@ -87,6 +89,7 @@ void
 msdosfs_init()
 {
 	dehashtbl = hashinit(desiredvnodes/2, M_MSDOSFSMNT, M_WAITOK, &dehash);
+	simple_lock_init(&msdosfs_ihashlock);
 }
 
 static struct denode *
@@ -96,27 +99,26 @@ msdosfs_hashget(dev, dirclust, diroff)
 	u_long diroff;
 {
 	struct denode *dep;
+	struct vnode *vp;
 
-	for (;;)
-		for (dep = dehashtbl[DEHASH(dev, dirclust, diroff)];;
-		     dep = dep->de_next) {
-			if (dep == NULL)
-				return (NULL);
-			if (dirclust == dep->de_dirclust &&
-			    diroff == dep->de_diroffset &&
-			    dev == dep->de_dev &&
-			    dep->de_refcnt != 0) {
-				if (dep->de_flag & DE_LOCKED) {
-					dep->de_flag |= DE_WANTED;
-					sleep(dep, PINOD);
-					break;
-				}
-				if (!vget(DETOV(dep), 1))
-					return (dep);
-				break;
-			}
+loop:
+	simple_lock(&msdosfs_ihash_slock);
+	for (dep = dehashtbl[DEHASH(dev, dirclust, diroff)]; dep;
+	     dep = dep->de_next) {
+		if (dirclust == dep->de_dirclust &&
+		    diroff == dep->de_diroffset &&
+		    dev == dep->de_dev &&
+		    dep->de_refcnt != 0) {
+			vp = DETOV(dep);
+			simple_lock(&vp->v_interlock);
+			simple_unlock(&ufs_ihash_slock);
+			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
+				goto loop;
+			return (dep);
 		}
-	/* NOTREACHED */
+	}
+	simple_lock(&msdosfs_ihash_slock);
+	return (NULL);
 }
 
 static void
@@ -125,12 +127,15 @@ msdosfs_hashins(dep)
 {
 	struct denode **depp, *deq;
 
+	/* XXX use queue macros here */
+	simple_lock(&msdosfs_ihash_slock);
 	depp = &dehashtbl[DEHASH(dep->de_dev, dep->de_dirclust, dep->de_diroffset)];
 	if ((deq = *depp) != NULL)
 		deq->de_prev = &dep->de_next;
 	dep->de_next = deq;
 	dep->de_prev = depp;
 	*depp = dep;
+	simple_unlock(&msdosfs_ihash_slock);
 }
 
 static void
@@ -139,6 +144,8 @@ msdosfs_hashrem(dep)
 {
 	struct denode *deq;
 
+	/* XXX use queue macros here */
+	simple_lock(&msdosfs_ihash_slock);
 	if ((deq = dep->de_next) != NULL)
 		deq->de_prev = dep->de_prev;
 	*dep->de_prev = deq;
@@ -146,6 +153,7 @@ msdosfs_hashrem(dep)
 	dep->de_next = NULL;
 	dep->de_prev = NULL;
 #endif
+	simple_unlock(&msdosfs_ihash_slock);
 }
 
 /*
@@ -232,7 +240,7 @@ deget(pmp, dirclust, diroffset, depp)
 	 * can't be accessed until we've read it in and have done what we
 	 * need to it.
 	 */
-	VOP_LOCK(nvp);
+	vn_lock(nvp, LK_EXCLUSIVE | LK_RETRY);
 	msdosfs_hashins(ldep);
 
 	ldep->de_pmp = pmp;
@@ -591,10 +599,12 @@ msdosfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
+		struct proc *a_p;
 	} */ *ap = v;
+	struct proc *p = ap->a_p;
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
-	int error;
+	int error = 0;
 	extern int prtactive;
 
 #ifdef MSDOSFS_DEBUG
@@ -607,22 +617,13 @@ msdosfs_inactive(v)
 	/*
 	 * Get rid of denodes related to stale file handles.
 	 */
-	if (dep->de_Name[0] == SLOT_DELETED) {
-		if ((vp->v_flag & VXLOCK) == 0)
-			vgone(vp);
-		return (0);
-	}
+	if (dep->de_Name[0] == SLOT_DELETED)
+		goto out;
 
-	error = 0;
 #ifdef DIAGNOSTIC
-	if (VOP_ISLOCKED(vp))
-		panic("msdosfs_inactive: locked denode");
-	if (curproc)
-		dep->de_lockholder = curproc->p_pid;
-	else
-		dep->de_lockholder = -1;
+	if (!VOP_ISLOCKED(vp))
+		panic("msdosfs_inactive: unlocked denode");
 #endif
-	dep->de_flag |= DE_LOCKED;
 	/*
 	 * If the file has been deleted and it is on a read/write
 	 * filesystem, then truncate the file, and mark the directory slot
@@ -637,7 +638,8 @@ msdosfs_inactive(v)
 		dep->de_Name[0] = SLOT_DELETED;
 	}
 	deupdat(dep, 0);
-	VOP_UNLOCK(vp);
+out:
+	VOP_UNLOCK(vp, 0);
 	/*
 	 * If we are done with the denode, reclaim it
 	 * so that it can be reused immediately.
@@ -646,7 +648,7 @@ msdosfs_inactive(v)
 	printf("msdosfs_inactive(): v_usecount %d, de_Name[0] %x\n", vp->v_usecount,
 	       dep->de_Name[0]);
 #endif
-	if (vp->v_usecount == 0 && dep->de_Name[0] == SLOT_DELETED)
-		vgone(vp);
+	if (dep->de_Name[0] == SLOT_DELETED)
+		vrecycle(vp, (struct simplelock *)0, p);
 	return (error);
 }

@@ -1,7 +1,7 @@
-/*	$NetBSD: null_vfsops.c,v 1.18 1998/02/18 07:05:48 thorpej Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.19 1998/03/01 02:21:43 fvdl Exp $	*/
 
 /*
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software donated to Berkeley by
@@ -37,7 +37,7 @@
  *
  *	from: Id: lofs_vfsops.c,v 1.9 1992/05/30 10:26:24 jsp Exp
  *	from: @(#)lofs_vfsops.c	1.2 (Berkeley) 6/18/92
- *	@(#)null_vfsops.c	8.2 (Berkeley) 1/21/94
+ *	@(#)null_vfsops.c	8.7 (Berkeley) 5/14/95
  */
 
 /*
@@ -48,6 +48,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
+#include <sys/proc.h>
 #include <sys/types.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
@@ -68,6 +69,8 @@ int	nullfs_vget __P((struct mount *, ino_t, struct vnode **));
 int	nullfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
 			   struct vnode **, int *, struct ucred **));
 int	nullfs_vptofh __P((struct vnode *, struct fid *));
+int	nullfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
+			   struct proc *));
 /*
  * Mount null layer
  */
@@ -137,7 +140,7 @@ nullfs_mount(mp, path, data, ndp, p)
 	/*
 	 * Unlock the node (either the lower or the alias)
 	 */
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0);
 	/*
 	 * Make sure the node alias worked
 	 */
@@ -157,7 +160,7 @@ nullfs_mount(mp, path, data, ndp, p)
 	if (NULLVPTOLOWERVP(nullm_rootvp)->v_mount->mnt_flag & MNT_LOCAL)
 		mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = (qaddr_t) xmp;
-	getnewfsid(mp, makefstype(MOUNT_NULL));
+	vfs_getnewfsid(mp, MOUNT_NULL);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
@@ -199,18 +202,13 @@ nullfs_unmount(mp, mntflags, p)
 	struct vnode *nullm_rootvp = MOUNTTONULLMOUNT(mp)->nullm_rootvp;
 	int error;
 	int flags = 0;
-	extern int doforce;
 
 #ifdef NULLFS_DIAGNOSTIC
 	printf("nullfs_unmount(mp = %p)\n", mp);
 #endif
 
-	if (mntflags & MNT_FORCE) {
-		/* lofs can never be rootfs so don't check for it */
-		if (!doforce)
-			return (EINVAL);
+	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
-	}
 
 	/*
 	 * Clear out buffer cache.  I don't think we
@@ -264,7 +262,7 @@ nullfs_root(mp, vpp)
 	 */
 	vp = MOUNTTONULLMOUNT(mp)->nullm_rootvp;
 	VREF(vp);
-	VOP_LOCK(vp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	*vpp = vp;
 	return 0;
 }
@@ -367,10 +365,23 @@ nullfs_vptofh(vp, fhp)
 	return (EOPNOTSUPP);
 }
 
-extern struct vnodeopv_desc nullfs_vnodeop_opv_desc;
+int
+nullfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	return (EOPNOTSUPP);
+}
+
+extern struct vnodeopv_desc null_vnodeop_opv_desc;
 
 struct vnodeopv_desc *nullfs_vnodeopv_descs[] = {
-	&nullfs_vnodeop_opv_desc,
+	&null_vnodeop_opv_desc,
 	NULL,
 };
 
@@ -387,6 +398,7 @@ struct vfsops nullfs_vfsops = {
 	nullfs_fhtovp,
 	nullfs_vptofh,
 	nullfs_init,
+	nullfs_sysctl,
 	NULL,				/* vfs_mountroot */
 	nullfs_vnodeopv_descs,
 };

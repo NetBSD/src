@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.27 1998/02/18 07:05:47 thorpej Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.28 1998/03/01 02:25:18 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -62,6 +62,10 @@ int adosfs_vptofh __P((struct vnode *, struct fid *));
 
 int adosfs_mountfs __P((struct vnode *, struct mount *, struct proc *));
 int adosfs_loadbitmap __P((struct adosfsmount *));
+int adosfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
+			struct proc *));
+
+struct simplelock adosfs_hashlock;
 
 int
 adosfs_mount(mp, path, data, ndp, p)
@@ -122,13 +126,13 @@ adosfs_mount(mp, path, data, ndp, p)
 		accessmode = VREAD;
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
-		VOP_LOCK(devvp);
+		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, p);
 		if (error) {
 			vput(devvp);
 			return (error);
 		}
-		VOP_UNLOCK(devvp);
+		VOP_UNLOCK(devvp, 0);
 	}
 /* MNT_UPDATE? */
 	if ((error = adosfs_mountfs(devvp, mp, p)) != 0) {
@@ -319,7 +323,11 @@ adosfs_statfs(mp, sbp, p)
 	struct adosfsmount *amp;
 
 	amp = VFSTOADOSFS(mp);
+#ifdef COMPAT_09
+	sbp->f_type = 16;
+#else
 	sbp->f_type = 0;
+#endif
 	sbp->f_bsize = amp->bsize;
 	sbp->f_iosize = amp->dbsize;
 	sbp->f_blocks = amp->numblks;
@@ -743,6 +751,20 @@ adosfs_sync(mp, waitfor, uc, p)
 void
 adosfs_init()
 {
+	simple_lock_init(&adosfs_hashlock);
+}
+
+int
+adosfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	return (EOPNOTSUPP);
 }
 
 /*
@@ -769,6 +791,7 @@ struct vfsops adosfs_vfsops = {
 	adosfs_fhtovp,                  
 	adosfs_vptofh,                  
 	adosfs_init,                    
+	adosfs_sysctl,
 	NULL,				/* vfs_mountroot */
 	adosfs_vnodeopv_descs,
 };

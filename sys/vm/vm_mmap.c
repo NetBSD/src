@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_mmap.c,v 1.53 1997/10/20 22:05:26 thorpej Exp $	*/
+/*	$NetBSD: vm_mmap.c,v 1.54 1998/03/01 02:24:01 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  *
  * from: Utah $Hdr: vm_mmap.c 1.6 91/10/21$
  *
- *	@(#)vm_mmap.c	8.5 (Berkeley) 5/19/94
+ *	@(#)vm_mmap.c	8.10 (Berkeley) 2/19/95
  */
 
 /*
@@ -424,11 +424,14 @@ sys_munmap(p, v, retval)
 	if (addr > addr + size)
 		return (EINVAL);
 	map = &p->p_vmspace->vm_map;
+#if 0
 	/*
 	 * Make sure entire range is allocated.
+	 * XXX Too strict?
 	 */
 	if (!vm_map_check_protection(map, addr, addr + size, VM_PROT_NONE))
 		return(EINVAL);
+#endif
 	/* returns nothing but KERN_SUCCESS anyway */
 	(void) vm_map_remove(map, addr, addr+size);
 	return(0);

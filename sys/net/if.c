@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.43 1998/01/28 02:35:30 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.44 1998/03/01 02:25:04 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if.c	8.3 (Berkeley) 1/4/94
+ *	@(#)if.c	8.5 (Berkeley) 1/9/95
  */
 
 #include <sys/param.h>

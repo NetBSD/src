@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.8 1998/02/10 14:08:47 mrg Exp $	*/
+/*	$NetBSD: lock.h,v 1.9 1998/03/01 02:24:13 fvdl Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -185,7 +185,7 @@ struct proc;
 void	lockinit __P((struct lock *, int prio, const char *wmesg, int timo,
 			int flags));
 int	lockmgr __P((__volatile struct lock *, u_int flags,
-			struct simplelock *, struct proc *p));
+			struct simplelock *));
 int	lockstatus __P((struct lock *));
 void	lockmgr_printinfo __P((struct lock *));
 
@@ -199,7 +199,7 @@ void _simple_lock __P((__volatile struct simplelock *alp, const char *, int));
 void simple_lock_init __P((struct simplelock *alp));
 #else /* !LOCKDEBUG */
 #if NCPUS == 1 /* no multiprocessor locking is necessary */
-#define	simple_lock_init(alp)
+#define	simple_lock_init(alp)	(alp)->lock_data = 0
 #define	simple_lock(alp)
 #define	simple_lock_try(alp)	(1)	/* always succeeds */
 #define	simple_unlock(alp)

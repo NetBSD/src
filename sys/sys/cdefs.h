@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.24 1997/11/05 00:50:29 thorpej Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.25 1998/03/01 02:24:12 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)cdefs.h	8.7 (Berkeley) 1/21/94
+ *	@(#)cdefs.h	8.8 (Berkeley) 1/9/95
  */
 
 #ifndef	_SYS_CDEFS_H_

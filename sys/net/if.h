@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.29 1997/10/02 19:41:57 is Exp $	*/
+/*	$NetBSD: if.h,v 1.30 1998/03/01 02:25:04 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if.h	8.1 (Berkeley) 6/10/93
+ *	@(#)if.h	8.3 (Berkeley) 2/9/95
  */
 
 #ifndef _NET_IF_H_

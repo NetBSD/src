@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.38 1997/10/20 18:12:56 drochner Exp $	*/
+/*	$NetBSD: pstat.c,v 1.39 1998/03/01 02:25:58 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.38 1997/10/20 18:12:56 drochner Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.39 1998/03/01 02:25:58 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,10 +134,7 @@ struct {
 	{ MNT_DELEXPORT, "delexport" },
 	{ MNT_RELOAD, "reload" },
 	{ MNT_FORCE, "force" },
-	{ MNT_MLOCK, "mlock" },
-	{ MNT_WAIT, "wait" },
-	{ MNT_MPBUSY, "mpbusy" },
-	{ MNT_MPWANT, "mpwant" },
+	{ MNT_MWAIT, "wait" },
 	{ MNT_UNMOUNT, "unmount" },
 	{ MNT_WANTRDWR, "wantrdwr" },
 	{ 0 }
@@ -330,7 +327,7 @@ vnodemode()
 void
 vnode_header()
 {
-	(void)printf("ADDR     TYP VFLAG  USE HOLD");
+	(void)printf("ADDR     TYP VFLAG  USE HOLD TAG");
 }
 
 void
@@ -392,8 +389,9 @@ vnode_print(avnode, vp)
 	if (flag == 0)
 		*fp++ = '-';
 	*fp = '\0';
-	(void)printf("%8lx %s %5s %4d %4ld",
-	    (long)avnode, type, flags, vp->v_usecount, (long)vp->v_holdcnt);
+	(void)printf("%8lx %s %5s %4d %4ld %4d",
+	    (long)avnode, type, flags, vp->v_usecount, (long)vp->v_holdcnt,
+	    vp->v_tag);
 }
 
 void
@@ -404,11 +402,11 @@ ufs_getflags(vp, ip, flags)
 {
 	int flag;
 
+	/*
+	 * XXX need to to locking state.
+	 */
+
 	flag = ip->i_flag;
-	if (flag & IN_LOCKED)
-		*flags++ = 'L';
-	if (flag & IN_WANTED)
-		*flags++ = 'W';
 	if (flag & IN_RENAME)
 		*flags++ = 'R';
 	if (flag & IN_UPDATE)
@@ -423,8 +421,6 @@ ufs_getflags(vp, ip, flags)
 		*flags++ = 'S';
 	if (flag & IN_EXLOCK)
 		*flags++ = 'E';
-	if (flag & IN_LWAIT)
-		*flags++ = 'Z';
 	if (flag == 0)
 		*flags++ = '-';
 	*flags = '\0';

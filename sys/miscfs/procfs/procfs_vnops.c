@@ -1,8 +1,8 @@
-/*	$NetBSD: procfs_vnops.c,v 1.52 1997/10/10 02:01:05 fvdl Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.53 1998/03/01 02:21:17 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
- * Copyright (c) 1993
+ * Copyright (c) 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)procfs_vnops.c	8.8 (Berkeley) 6/15/94
+ *	@(#)procfs_vnops.c	8.18 (Berkeley) 5/21/95
  */
 
 /*
@@ -111,6 +111,7 @@ int	procfs_setattr	__P((void *));
 #define	procfs_write	procfs_rw
 #define	procfs_ioctl	genfs_eopnotsupp
 #define	procfs_poll	genfs_poll
+#define procfs_revoke	genfs_revoke
 #define	procfs_mmap	genfs_eopnotsupp
 #define	procfs_fsync	genfs_nullop
 #define	procfs_seek	genfs_nullop
@@ -125,13 +126,13 @@ int	procfs_readlink	__P((void *));
 #define	procfs_abortop	genfs_abortop
 int	procfs_inactive	__P((void *));
 int	procfs_reclaim	__P((void *));
-#define	procfs_lock	genfs_nullop
-#define	procfs_unlock	genfs_nullop
+#define	procfs_lock	genfs_nolock
+#define	procfs_unlock	genfs_nounlock
 int	procfs_bmap	__P((void *));
 #define	procfs_strategy	genfs_badop
 int	procfs_print	__P((void *));
 int	procfs_pathconf	__P((void *));
-#define	procfs_islocked	genfs_nullop
+#define	procfs_islocked	genfs_noislocked
 #define	procfs_advlock	genfs_eopnotsupp
 #define	procfs_blkatoff	genfs_eopnotsupp
 #define	procfs_valloc	genfs_eopnotsupp
@@ -160,6 +161,7 @@ struct vnodeopv_entry_desc procfs_vnodeop_entries[] = {
 	{ &vop_write_desc, procfs_write },		/* write */
 	{ &vop_ioctl_desc, procfs_ioctl },		/* ioctl */
 	{ &vop_poll_desc, procfs_poll },		/* poll */
+	{ &vop_revoke_desc, procfs_revoke },		/* revoke */
 	{ &vop_mmap_desc, procfs_mmap },		/* mmap */
 	{ &vop_fsync_desc, procfs_fsync },		/* fsync */
 	{ &vop_seek_desc, procfs_seek },		/* seek */
@@ -294,12 +296,15 @@ procfs_bmap(v)
 		daddr_t  a_bn;
 		struct vnode **a_vpp;
 		daddr_t *a_bnp;
+		int * a_runp;
 	} */ *ap = v;
 
 	if (ap->a_vpp != NULL)
 		*ap->a_vpp = ap->a_vp;
 	if (ap->a_bnp != NULL)
 		*ap->a_bnp = ap->a_bn;
+	if (ap->a_runp != NULL)
+		*ap->a_runp = 0;
 	return (0);
 }
 
@@ -317,7 +322,7 @@ procfs_bmap(v)
  * chances are that the process will still be
  * there and PFIND is not free.
  *
- * (vp) is not locked on entry or exit.
+ * (vp) is ocked on entry, but must be unlocked on exit.
  */
 int
 procfs_inactive(v)
@@ -325,9 +330,11 @@ procfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
+		struct proc *a_p;
 	} */ *ap = v;
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
 
+	VOP_UNLOCK(ap->a_vp, 0);
 	if (PFIND(pfs->pfs_pid) == 0)
 		vgone(ap->a_vp);
 
@@ -687,7 +694,7 @@ procfs_lookup(v)
 	if (cnp->cn_namelen == 1 && *pname == '.') {
 		*vpp = dvp;
 		VREF(dvp);
-		/*VOP_LOCK(dvp);*/
+		/* vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY, curp); */
 		return (0);
 	}
 
@@ -731,7 +738,7 @@ procfs_lookup(v)
 			fvp = procfs_findtextvp(p);
 			/* We already checked that it exists. */
 			VREF(fvp);
-			VOP_LOCK(fvp);
+			vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY);
 			*vpp = fvp;
 			return (0);
 		}
@@ -775,16 +782,16 @@ procfs_readdir(v)
 		struct uio *a_uio;
 		struct ucred *a_cred;
 		int *a_eofflag;
-		off_t *a_cookies;
-		int a_ncookies;
+		off_t **a_cookies;
+		int *a_ncookies;
 	} */ *ap = v;
 	struct uio *uio = ap->a_uio;
 	struct dirent d;
 	struct pfsnode *pfs;
 	int i;
 	int error;
-	off_t *cookies = ap->a_cookies;
-	int ncookies = ap->a_ncookies;
+	off_t *cookies = NULL;
+	int ncookies;
 
 	pfs = VTOPFS(ap->a_vp);
 
@@ -797,6 +804,7 @@ procfs_readdir(v)
 	i = uio->uio_offset;
 	bzero((caddr_t)&d, UIO_MX);
 	d.d_reclen = UIO_MX;
+	ncookies = uio->uio_resid / UIO_MX;
 
 	switch (pfs->pfs_type) {
 	/*
@@ -812,6 +820,13 @@ procfs_readdir(v)
 		if (p == NULL)
 			break;
 
+		if (ap->a_ncookies) {
+			ncookies = min(ncookies, (nproc_targets - i));
+			MALLOC(cookies, off_t *, ncookies * sizeof (off_t),
+			    M_TEMP, M_WAITOK);
+			*ap->a_cookies = cookies;
+		}
+
 		for (pt = &proc_targets[i];
 		     uio->uio_resid >= UIO_MX && i < nproc_targets; pt++, i++) {
 			if (pt->pt_valid && (*pt->pt_valid)(p) == 0)
@@ -824,7 +839,7 @@ procfs_readdir(v)
 
 			if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
 				break;
-			if (ncookies-- > 0)
+			if (cookies)
 				*cookies++ = i + 1;
 		}
 
@@ -844,11 +859,20 @@ procfs_readdir(v)
 #ifdef PROCFS_ZOMBIE
 		int doingzomb = 0;
 #endif
-		int pcnt = i;
+		int pcnt = i, nc = 0;
 		volatile struct proc *p = allproc.lh_first;
 
 		if (pcnt > 3)
 			pcnt = 3;
+		if (ap->a_ncookies) {
+			/*
+			 * XXX Potentially allocating too much space here,
+			 * but I'm lazy. This loop needs some work.
+			 */
+			MALLOC(cookies, off_t *, ncookies * sizeof (off_t),
+			    M_TEMP, M_WAITOK);
+			*ap->a_cookies = cookies;
+		}
 #ifdef PROCFS_ZOMBIE
 	again:
 #endif
@@ -887,7 +911,8 @@ procfs_readdir(v)
 
 			if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
 				break;
-			if (ncookies-- > 0)
+			nc++;
+			if (cookies)
 				*cookies++ = i + 1;
 		}
 	done:
@@ -899,6 +924,7 @@ procfs_readdir(v)
 			goto again;
 		}
 #endif
+		ncookies = nc;
 
 		break;
 
@@ -909,6 +935,14 @@ procfs_readdir(v)
 		break;
 	}
 
+	if (ap->a_ncookies) {
+		if (error) {
+			FREE(*ap->a_cookies, M_TEMP);
+			*ap->a_ncookies = 0;
+			*ap->a_cookies = NULL;
+		} else
+			*ap->a_ncookies = ncookies;
+	}
 	uio->uio_offset = i;
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_slvar.h,v 1.18 1998/02/09 17:43:52 perry Exp $	*/
+/*	$NetBSD: if_slvar.h,v 1.19 1998/03/01 02:25:05 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if_slvar.h	8.3 (Berkeley) 2/1/94
+ *	@(#)if_slvar.h	8.4 (Berkeley) 1/9/95
  */
 
 #ifndef _NET_IF_SLVAR_H_

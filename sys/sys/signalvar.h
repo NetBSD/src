@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.17 1996/04/22 01:23:31 christos Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.18 1998/03/01 02:24:14 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)signalvar.h	8.3 (Berkeley) 1/4/94
+ *	@(#)signalvar.h	8.6 (Berkeley) 2/19/95
  */
 
 #ifndef	_SYS_SIGNALVAR_H_		/* tmp for user.h */

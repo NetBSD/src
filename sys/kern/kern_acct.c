@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.43 1997/10/19 02:00:25 mycroft Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.44 1998/03/01 02:22:27 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -38,7 +38,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kern_acct.c	8.1 (Berkeley) 6/14/93
+ *	@(#)kern_acct.c	8.8 (Berkeley) 5/14/95
  */
 
 #include <sys/param.h>
@@ -119,7 +119,7 @@ sys_acct(p, v, retval)
 		    p);
 		if ((error = vn_open(&nd, FWRITE, 0)) != 0)
 			return (error);
-		VOP_UNLOCK(nd.ni_vp);
+		VOP_UNLOCK(nd.ni_vp, 0);
 		if (nd.ni_vp->v_type != VREG) {
 			vn_close(nd.ni_vp, FWRITE, p->p_ucred, p);
 			return (EACCES);

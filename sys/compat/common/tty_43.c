@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_43.c,v 1.7 1996/10/13 00:46:49 christos Exp $	*/
+/*	$NetBSD: tty_43.c,v 1.8 1998/03/01 02:22:41 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tty_compat.c	8.1 (Berkeley) 6/10/93
+ *	@(#)tty_compat.c	8.2 (Berkeley) 1/9/95
  */
 
 /*

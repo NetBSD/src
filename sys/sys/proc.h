@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.58 1998/02/14 00:37:26 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.59 1998/03/01 02:24:14 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)proc.h	8.8 (Berkeley) 1/21/94
+ *	@(#)proc.h	8.15 (Berkeley) 5/19/95
  */
 
 #ifndef _SYS_PROC_H_

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.22 1998/01/28 02:38:45 thorpej Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.23 1998/03/01 02:24:45 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if_eon.c	8.1 (Berkeley) 6/10/93
+ *	@(#)if_eon.c	8.2 (Berkeley) 1/9/95
  */
 
 /***********************************************************

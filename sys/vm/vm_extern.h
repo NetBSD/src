@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_extern.h,v 1.32 1998/02/10 14:08:57 mrg Exp $	*/
+/*	$NetBSD: vm_extern.h,v 1.33 1998/03/01 02:24:00 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_extern.h	8.2 (Berkeley) 1/12/94
+ *	@(#)vm_extern.h	8.5 (Berkeley) 5/3/95
  */
 
 #if defined(_KERNEL) && !defined(_LKM)
@@ -147,6 +147,8 @@ int		 vm_mmap __P((vm_map_t, vm_offset_t *, vm_size_t,
 int		 vm_protect __P((vm_map_t,
 		    vm_offset_t, vm_size_t, boolean_t, vm_prot_t));
 void		 vm_set_page_size __P((void));
+int		 vm_sysctl __P((int *, u_int, void *, size_t *, void *,
+		    size_t, struct proc *));
 void		 vmmeter __P((void));
 #if !defined(UVM)
 struct vmspace	*vmspace_alloc __P((vm_offset_t, vm_offset_t, int));

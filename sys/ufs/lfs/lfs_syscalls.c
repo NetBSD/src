@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.15 1998/02/19 00:54:39 thorpej Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.16 1998/03/01 02:23:25 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)lfs_syscalls.c	8.6 (Berkeley) 6/16/94
+ *	@(#)lfs_syscalls.c	8.10 (Berkeley) 5/14/95
  */
 
 #include "fs_lfs.h"		/* for prototypes in syscallargs.h */
@@ -72,6 +72,10 @@ if (sp->sum_bytes_left < (s)) {		\
 }
 struct buf *lfs_fakebuf __P((struct vnode *, int, size_t, caddr_t));
 
+int debug_cleaner = 0; 
+int clean_vnlocked = 0;
+int clean_inlocked = 0;
+
 /*
  * lfs_markv:
  *
@@ -107,7 +111,7 @@ lfs_markv(p, v, retval)
 	fsid_t fsid;
 	void *start;
 	ino_t lastino;
-	daddr_t b_daddr, v_daddr;
+	ufs_daddr_t b_daddr, v_daddr;
 	u_long bsize;
 	int cnt, error;
 
@@ -116,7 +120,7 @@ lfs_markv(p, v, retval)
 
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
 		return (error);
-	if ((mntp = getvfs(&fsid)) == NULL)
+	if ((mntp = vfs_getvfs(&fsid)) == NULL)
 		return (EINVAL);
 
 	cnt = SCARG(uap, blkcnt);
@@ -144,7 +148,7 @@ lfs_markv(p, v, retval)
 				if (sp->fip->fi_nblocks == 0) {
 					DEC_FINFO(sp);
 					sp->sum_bytes_left +=
-					    sizeof(FINFO) - sizeof(daddr_t);
+					    sizeof(FINFO) - sizeof(ufs_daddr_t);
 				} else {
 					lfs_updatemeta(sp);
 					BUMP_FIP(sp);
@@ -156,7 +160,7 @@ lfs_markv(p, v, retval)
 
 			/* Start a new file */
 			CHECK_SEG(sizeof(FINFO));
-			sp->sum_bytes_left -= sizeof(FINFO) - sizeof(daddr_t);
+			sp->sum_bytes_left -= sizeof(FINFO) - sizeof(ufs_daddr_t);
 			INC_FINFO(sp);
 			sp->start_lbp = &sp->fip->fi_blocks[0];
 			sp->vp = NULL;
@@ -181,6 +185,7 @@ lfs_markv(p, v, retval)
 #ifdef DIAGNOSTIC
 				printf("lfs_markv: VFS_VGET failed (%d)\n",
 				    blkp->bi_inode);
+				panic("lfs_markv VFS_VGET FAILED");
 #endif
 				lastino = LFS_UNUSED_INUM;
 				v_daddr = LFS_UNUSED_DADDR;
@@ -211,7 +216,7 @@ lfs_markv(p, v, retval)
 			bp = getblk(vp, blkp->bi_lbn, bsize, 0, 0);
 			if (!(bp->b_flags & (B_DELWRI | B_DONE | B_CACHE)) &&
 			    (error = copyin(blkp->bi_bp, bp->b_data,
-			    bsize)))
+			    blkp->bi_size)))
 				goto err2;
 			if ((error = VOP_BWRITE(bp)) != 0)
 				goto err2;
@@ -222,7 +227,7 @@ lfs_markv(p, v, retval)
 		if (sp->fip->fi_nblocks == 0) {
 			DEC_FINFO(sp);
 			sp->sum_bytes_left +=
-			    sizeof(FINFO) - sizeof(daddr_t);
+			    sizeof(FINFO) - sizeof(ufs_daddr_t);
 		} else
 			lfs_updatemeta(sp);
 
@@ -276,10 +281,11 @@ lfs_bmapv(p, v, retval)
 	} */ *uap = v;
 	BLOCK_INFO *blkp;
 	struct mount *mntp;
+	struct ufsmount *ump;
 	struct vnode *vp;
 	fsid_t fsid;
 	void *start;
-	daddr_t daddr;
+	ufs_daddr_t daddr;
 	int cnt, error, step;
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
@@ -288,7 +294,7 @@ lfs_bmapv(p, v, retval)
 	error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t));
 	if (error)
 		return (error);
-	if ((mntp = getvfs(&fsid)) == NULL)
+	if ((mntp = vfs_getvfs(&fsid)) == NULL)
 		return (EINVAL);
 
 	cnt = SCARG(uap, blkcnt);
@@ -302,8 +308,16 @@ lfs_bmapv(p, v, retval)
 	for (step = cnt; step--; ++blkp) {
 		if (blkp->bi_lbn == LFS_UNUSED_LBN)
 			continue;
-		/* Could be a deadlock ? */
-		if (VFS_VGET(mntp, blkp->bi_inode, &vp))
+		/*
+		 * A regular call to VFS_VGET could deadlock
+		 * here.  Instead, we try an unlocked access.
+		 */
+		ump = VFSTOUFS(mntp);
+		if ((vp =
+		    ufs_ihashlookup(ump->um_dev, blkp->bi_inode)) != NULL) {
+			if (VOP_BMAP(vp, blkp->bi_lbn, NULL, &daddr, NULL))
+				daddr = LFS_UNUSED_DADDR;
+		} else if (VFS_VGET(mntp, blkp->bi_inode, &vp))
 			daddr = LFS_UNUSED_DADDR;
 		else {
 			if (VOP_BMAP(vp, blkp->bi_lbn, NULL, &daddr, NULL))
@@ -348,7 +362,7 @@ lfs_segclean(p, v, retval)
 
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
 		return (error);
-	if ((mntp = getvfs(&fsid)) == NULL)
+	if ((mntp = vfs_getvfs(&fsid)) == NULL)
 		return (EINVAL);
 
 	fs = VFSTOUFS(mntp)->um_lfs;
@@ -413,14 +427,14 @@ lfs_segwait(p, v, retval)
 	if (fsid == (fsid_t)-1)
 		addr = &lfs_allclean_wakeup;
 	else {
-		if ((mntp = getvfs(&fsid)) == NULL)
+		if ((mntp = vfs_getvfs(&fsid)) == NULL)
 			return (EINVAL);
 		addr = &VFSTOUFS(mntp)->um_lfs->lfs_nextseg;
 	}
 #else
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
 		return (error);
-	if ((mntp = getvfs(&fsid)) == NULL)
+	if ((mntp = vfs_getvfs(&fsid)) == NULL)
 		addr = &lfs_allclean_wakeup;
 	else
 		addr = &VFSTOUFS(mntp)->um_lfs->lfs_nextseg;
@@ -453,7 +467,7 @@ int
 lfs_fastvget(mp, ino, daddr, vpp, dinp)
 	struct mount *mp;
 	ino_t ino;
-	daddr_t daddr;
+	ufs_daddr_t daddr;
 	struct vnode **vpp;
 	struct dinode *dinp;
 {
@@ -474,14 +488,12 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp)
 	if ((*vpp = ufs_ihashlookup(dev, ino)) != NULL) {
 		lfs_vref(*vpp);
 		if ((*vpp)->v_flag & VXLOCK)
-			printf ("Cleaned vnode VXLOCKED\n");
+			clean_vnlocked++;
 		ip = VTOI(*vpp);
-		if (ip->i_flag & IN_LOCKED)
-			printf("cleaned vnode locked\n");
-		if (!(ip->i_flag & IN_MODIFIED)) {
+		if (lockstatus(&ip->i_lock))
+			clean_inlocked++;
+		if (!(ip->i_flag & IN_MODIFIED))
 			++ump->um_lfs->lfs_uinodes;
-			ip->i_flag |= IN_MODIFIED;
-		}
 		ip->i_flag |= IN_MODIFIED;
 		return (0);
 	}
@@ -536,9 +548,6 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp)
 		    *lfs_ifind(ump->um_lfs, ino, (struct dinode *)bp->b_data);
 		brelse(bp);
 	}
-
-	/* Inode was just read from user space or disk, make sure it's locked */
-	ip->i_flag |= IN_LOCKED;
 
 	/*
 	 * Initialize the vnode from the inode, check for aliases.  In all

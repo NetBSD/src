@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.7 1998/02/10 14:10:53 mrg Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.8 1998/03/01 02:23:14 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ffs_balloc.c	8.4 (Berkeley) 9/23/93
+ *	@(#)ffs_balloc.c	8.8 (Berkeley) 6/16/95
  */
 
 #include "opt_uvm.h"
@@ -63,27 +63,27 @@
  * the inode and the logical block number in a file.
  */
 int
-ffs_balloc(ip, bn, size, cred, bpp, flags)
+ffs_balloc(ip, lbn, size, cred, bpp, flags)
 	register struct inode *ip;
-	register daddr_t bn;
+	register ufs_daddr_t lbn;
 	int size;
 	struct ucred *cred;
 	struct buf **bpp;
 	int flags;
 {
 	register struct fs *fs;
-	register daddr_t nb;
+	register ufs_daddr_t nb;
 	struct buf *bp, *nbp;
 	struct vnode *vp = ITOV(ip);
 	struct indir indirs[NIADDR + 2];
-	daddr_t newb, lbn, *bap, pref;
-	int osize, nsize, num, i, error;
+	ufs_daddr_t newb, *bap, pref;
+	int deallocated, osize, nsize, num, i, error;
+	ufs_daddr_t *allocib, *blkp, *allocblk, allociblk[NIADDR + 1];
 
 	*bpp = NULL;
-	if (bn < 0)
+	if (lbn < 0)
 		return (EFBIG);
 	fs = ip->i_fs;
-	lbn = bn;
 
 	/*
 	 * If the next write will extend the file into a new block,
@@ -91,7 +91,7 @@ ffs_balloc(ip, bn, size, cred, bpp, flags)
 	 * this fragment has to be extended to be a full block.
 	 */
 	nb = lblkno(fs, ip->i_ffs_size);
-	if (nb < NDADDR && nb < bn) {
+	if (nb < NDADDR && nb < lbn) {
 		osize = blksize(fs, ip, nb);
 		if (osize < fs->fs_bsize && osize > 0) {
 			error = ffs_realloccg(ip, nb,
@@ -116,10 +116,10 @@ ffs_balloc(ip, bn, size, cred, bpp, flags)
 	/*
 	 * The first NDADDR blocks are direct blocks
 	 */
-	if (bn < NDADDR) {
-		nb = ip->i_ffs_db[bn];
-		if (nb != 0 && ip->i_ffs_size >= (bn + 1) * fs->fs_bsize) {
-			error = bread(vp, bn, fs->fs_bsize, NOCRED, &bp);
+	if (lbn < NDADDR) {
+		nb = ip->i_ffs_db[lbn];
+		if (nb != 0 && ip->i_ffs_size >= (lbn + 1) * fs->fs_bsize) {
+			error = bread(vp, lbn, fs->fs_bsize, NOCRED, &bp);
 			if (error) {
 				brelse(bp);
 				return (error);
@@ -134,34 +134,35 @@ ffs_balloc(ip, bn, size, cred, bpp, flags)
 			osize = fragroundup(fs, blkoff(fs, ip->i_ffs_size));
 			nsize = fragroundup(fs, size);
 			if (nsize <= osize) {
-				error = bread(vp, bn, osize, NOCRED, &bp);
+				error = bread(vp, lbn, osize, NOCRED, &bp);
 				if (error) {
 					brelse(bp);
 					return (error);
 				}
 			} else {
-				error = ffs_realloccg(ip, bn,
-				    ffs_blkpref(ip, bn, (int)bn, &ip->i_ffs_db[0]),
-				    osize, nsize, cred, &bp);
+				error = ffs_realloccg(ip, lbn,
+				    ffs_blkpref(ip, lbn, (int)lbn,
+					&ip->i_ffs_db[0]), osize, nsize, cred,
+					&bp);
 				if (error)
 					return (error);
 			}
 		} else {
-			if (ip->i_ffs_size < (bn + 1) * fs->fs_bsize)
+			if (ip->i_ffs_size < (lbn + 1) * fs->fs_bsize)
 				nsize = fragroundup(fs, size);
 			else
 				nsize = fs->fs_bsize;
-			error = ffs_alloc(ip, bn,
-			    ffs_blkpref(ip, bn, (int)bn, &ip->i_ffs_db[0]),
-			    nsize, cred, &newb);
+			error = ffs_alloc(ip, lbn,
+			    ffs_blkpref(ip, lbn, (int)lbn, &ip->i_ffs_db[0]),
+				nsize, cred, &newb);
 			if (error)
 				return (error);
-			bp = getblk(vp, bn, nsize, 0, 0);
+			bp = getblk(vp, lbn, nsize, 0, 0);
 			bp->b_blkno = fsbtodb(fs, newb);
 			if (flags & B_CLRBUF)
 				clrbuf(bp);
 		}
-		ip->i_ffs_db[bn] = dbtofsb(fs, bp->b_blkno);
+		ip->i_ffs_db[lbn] = dbtofsb(fs, bp->b_blkno);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		*bpp = bp;
 		return (0);
@@ -170,7 +171,7 @@ ffs_balloc(ip, bn, size, cred, bpp, flags)
 	 * Determine the number of levels of indirection.
 	 */
 	pref = 0;
-	if ((error = ufs_getlbns(vp, bn, indirs, &num)) != 0)
+	if ((error = ufs_getlbns(vp, lbn, indirs, &num)) != 0)
 		return(error);
 #ifdef DIAGNOSTIC
 	if (num < 1)
@@ -181,25 +182,27 @@ ffs_balloc(ip, bn, size, cred, bpp, flags)
 	 */
 	--num;
 	nb = ip->i_ffs_ib[indirs[0].in_off];
+	allocib = NULL;
+	allocblk = allociblk;
 	if (nb == 0) {
-		pref = ffs_blkpref(ip, lbn, 0, (daddr_t *)0);
+		pref = ffs_blkpref(ip, lbn, 0, (ufs_daddr_t *)0);
 	        error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize,
 				  cred, &newb);
 		if (error)
 			return (error);
 		nb = newb;
+		*allocblk++ = nb;
 		bp = getblk(vp, indirs[1].in_lbn, fs->fs_bsize, 0, 0);
-		bp->b_blkno = fsbtodb(fs, newb);
+		bp->b_blkno = fsbtodb(fs, nb);
 		clrbuf(bp);
 		/*
 		 * Write synchronously so that indirect blocks
 		 * never point at garbage.
 		 */
-		if ((error = bwrite(bp)) != 0) {
-			ffs_blkfree(ip, nb, fs->fs_bsize);
-			return (error);
-		}
-		ip->i_ffs_ib[indirs[0].in_off] = newb;
+		if ((error = bwrite(bp)) != 0)
+			goto fail;
+		allocib = &ip->i_ffs_ib[indirs[0].in_off];
+		*allocib = nb;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
 	/*
@@ -210,9 +213,9 @@ ffs_balloc(ip, bn, size, cred, bpp, flags)
 		    indirs[i].in_lbn, (int)fs->fs_bsize, NOCRED, &bp);
 		if (error) {
 			brelse(bp);
-			return (error);
+			goto fail;
 		}
-		bap = (daddr_t *)bp->b_data;
+		bap = (ufs_daddr_t *)bp->b_data;
 		nb = bap[indirs[i].in_off];
 		if (i == num)
 			break;
@@ -222,14 +225,15 @@ ffs_balloc(ip, bn, size, cred, bpp, flags)
 			continue;
 		}
 		if (pref == 0)
-			pref = ffs_blkpref(ip, lbn, 0, (daddr_t *)0);
+			pref = ffs_blkpref(ip, lbn, 0, (ufs_daddr_t *)0);
 		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize, cred,
 				  &newb);
 		if (error) {
 			brelse(bp);
-			return (error);
+			goto fail;
 		}
 		nb = newb;
+		*allocblk++ = nb;
 		nbp = getblk(vp, indirs[i].in_lbn, fs->fs_bsize, 0, 0);
 		nbp->b_blkno = fsbtodb(fs, nb);
 		clrbuf(nbp);
@@ -238,9 +242,8 @@ ffs_balloc(ip, bn, size, cred, bpp, flags)
 		 * never point at garbage.
 		 */
 		if ((error = bwrite(nbp)) != 0) {
-			ffs_blkfree(ip, nb, fs->fs_bsize);
 			brelse(bp);
-			return (error);
+			goto fail;
 		}
 		bap[indirs[i - 1].in_off] = nb;
 		/*
@@ -262,9 +265,10 @@ ffs_balloc(ip, bn, size, cred, bpp, flags)
 				  &newb);
 		if (error) {
 			brelse(bp);
-			return (error);
+			goto fail;
 		}
 		nb = newb;
+		*allocblk++ = nb;
 		nbp = getblk(vp, lbn, fs->fs_bsize, 0, 0);
 		nbp->b_blkno = fsbtodb(fs, nb);
 		if (flags & B_CLRBUF)
@@ -287,7 +291,7 @@ ffs_balloc(ip, bn, size, cred, bpp, flags)
 		error = bread(vp, lbn, (int)fs->fs_bsize, NOCRED, &nbp);
 		if (error) {
 			brelse(nbp);
-			return (error);
+			goto fail;
 		}
 	} else {
 		nbp = getblk(vp, lbn, fs->fs_bsize, 0, 0);
@@ -295,4 +299,26 @@ ffs_balloc(ip, bn, size, cred, bpp, flags)
 	}
 	*bpp = nbp;
 	return (0);
+fail:
+	/*
+	 * If we have failed part way through block allocation, we
+	 * have to deallocate any indirect blocks that we have allocated.
+	 */
+	for (deallocated = 0, blkp = allociblk; blkp < allocblk; blkp++) {
+		ffs_blkfree(ip, *blkp, fs->fs_bsize);
+		deallocated += fs->fs_bsize;
+	}
+	if (allocib != NULL)
+		*allocib = 0;
+	if (deallocated) {
+#ifdef QUOTA
+		/*
+		 * Restore user's disk quota because allocation failed.
+		 */
+		(void)chkdq(ip, (long)-btodb(deallocated), cred, FORCE);
+#endif
+		ip->i_ffs_blocks -= btodb(deallocated);
+		ip->i_ffs_flags |= IN_CHANGE | IN_UPDATE;
+	}
+	return (error);
 }

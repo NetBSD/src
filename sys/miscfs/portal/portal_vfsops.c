@@ -1,7 +1,7 @@
-/*	$NetBSD: portal_vfsops.c,v 1.16 1998/02/18 07:05:48 thorpej Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.17 1998/03/01 02:21:38 fvdl Exp $	*/
 
 /*
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software donated to Berkeley by
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: Id: portal_vfsops.c,v 1.5 1992/05/30 10:25:27 jsp Exp
- *	@(#)portal_vfsops.c	8.6 (Berkeley) 1/21/94
+ *	@(#)portal_vfsops.c	8.11 (Berkeley) 5/14/95
  */
 
 /*
@@ -76,6 +76,8 @@ int	portal_vget __P((struct mount *, ino_t, struct vnode **));
 int	portal_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
 			   struct vnode **, int *, struct ucred **));
 int	portal_vptofh __P((struct vnode *, struct fid *));
+int	portal_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
+			   struct proc *));
 
 void
 portal_init()
@@ -135,7 +137,7 @@ portal_mount(mp, path, data, ndp, p)
 
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = (qaddr_t)fmp;
-	getnewfsid(mp, makefstype(MOUNT_PORTAL));
+	vfs_getnewfsid(mp, MOUNT_PORTAL);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
@@ -161,16 +163,11 @@ portal_unmount(mp, mntflags, p)
 	int mntflags;
 	struct proc *p;
 {
-	extern int doforce;
 	struct vnode *rootvp = VFSTOPORTAL(mp)->pm_root;
 	int error, flags = 0;
 
-	if (mntflags & MNT_FORCE) {
-		/* portal can never be rootfs so don't check for it */
-		if (!doforce)
-			return (EINVAL);
+	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
-	}
 
 	/*
 	 * Clear out buffer cache.  I don't think we
@@ -226,7 +223,7 @@ portal_root(mp, vpp)
 	 */
 	vp = VFSTOPORTAL(mp)->pm_root;
 	VREF(vp);
-	VOP_LOCK(vp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	*vpp = vp;
 	return (0);
 }
@@ -250,11 +247,6 @@ portal_statfs(mp, sbp, p)
 	struct proc *p;
 {
 
-#ifdef COMPAT_09
-	sbp->f_type = 12;
-#else
-	sbp->f_type = 0;
-#endif
 	sbp->f_bsize = DEV_BSIZE;
 	sbp->f_iosize = DEV_BSIZE;
 	sbp->f_blocks = 2;		/* 1K to keep df happy */
@@ -262,6 +254,11 @@ portal_statfs(mp, sbp, p)
 	sbp->f_bavail = 0;
 	sbp->f_files = 1;		/* Allow for "." */
 	sbp->f_ffree = 0;		/* See comments above */
+#ifdef COMPAT_09
+	sbp->f_type = 12;
+#else
+	sbp->f_type = 0;
+#endif
 	if (sbp != &mp->mnt_stat) {
 		bcopy(&mp->mnt_stat.f_fsid, &sbp->f_fsid, sizeof(sbp->f_fsid));
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
@@ -315,6 +312,19 @@ portal_vptofh(vp, fhp)
 	return (EOPNOTSUPP);
 }
 
+int
+portal_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	return (EOPNOTSUPP);
+}
+
 extern struct vnodeopv_desc portal_vnodeop_opv_desc;
 
 struct vnodeopv_desc *portal_vnodeopv_descs[] = {
@@ -335,6 +345,7 @@ struct vfsops portal_vfsops = {
 	portal_fhtovp,
 	portal_vptofh,
 	portal_init,
+	portal_sysctl,
 	NULL,				/* vfs_mountroot */
 	portal_vnodeopv_descs,
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.6 1998/02/19 00:55:04 thorpej Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.7 1998/03/01 02:25:28 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -213,9 +213,7 @@ static struct extent *swapmap;		/* controls the mapping of /dev/drum */
 SIMPLEQ_HEAD(swapbufhead, swapbuf);
 static struct swapbufhead freesbufs;	/* list of free swapbufs */
 static int sbufs_wanted = 0;		/* someone sleeping for swapbufs? */
-#if NCPU > 1
 static simple_lock_data_t swap_buf_lock;/* locks freesbufs and sbufs_wanted */
-#endif
 
 /* list of all active swap devices [by priority] */
 LIST_HEAD(swap_priority, swappri);
@@ -223,9 +221,7 @@ static struct swap_priority swap_priority;
 
 /* locks */
 lock_data_t swap_syscall_lock;
-#if NCPU > 1
 static simple_lock_data_t swap_data_lock;
-#endif
 
 /*
  * prototypes
@@ -517,7 +513,7 @@ sys_swapctl(p, v, retval)
 	/*
 	 * ensure serialized syscall access by grabbing the swap_syscall_lock
 	 */
-	lockmgr(&swap_syscall_lock, LK_EXCLUSIVE, (void *)0, curproc);
+	lockmgr(&swap_syscall_lock, LK_EXCLUSIVE, (void *)0);
 	
 	/*
 	 * we handle the non-priv NSWAP and STATS request first.
@@ -528,7 +524,7 @@ sys_swapctl(p, v, retval)
 	if (SCARG(uap, cmd) == SWAP_NSWAP) {
 		UVMHIST_LOG(pdhist, "<- done SWAP_NSWAP=%d", uvmexp.nswapdev, 0, 0, 0);
 		*retval = uvmexp.nswapdev;
-		lockmgr(&swap_syscall_lock, LK_RELEASE, (void *)0, curproc);
+		lockmgr(&swap_syscall_lock, LK_RELEASE, (void *)0);
 		return (0);
 	}
 
@@ -556,7 +552,7 @@ sys_swapctl(p, v, retval)
 				    (caddr_t)sep, sizeof(struct swapent));
 				if (error) {
 					lockmgr(&swap_syscall_lock, 
-					    LK_RELEASE, (void *)0, curproc);
+					    LK_RELEASE, (void *)0);
 					return (error);
 				}
 				count++;
@@ -567,7 +563,7 @@ sys_swapctl(p, v, retval)
 		UVMHIST_LOG(pdhist, "<-done SWAP_STATS", 0, 0, 0, 0);
 
 		*retval = count;
-		lockmgr(&swap_syscall_lock, LK_RELEASE, (void *)0, curproc);
+		lockmgr(&swap_syscall_lock, LK_RELEASE, (void *)0);
 		return (0);
 	} 
 
@@ -575,7 +571,7 @@ sys_swapctl(p, v, retval)
 	 * all other requests require superuser privs.   verify.
 	 */
 	if ((error = suser(p->p_ucred, &p->p_acflag))) {
-		lockmgr(&swap_syscall_lock, LK_RELEASE, (void *)0, curproc);
+		lockmgr(&swap_syscall_lock, LK_RELEASE, (void *)0);
 		return (error);
 	}
 
@@ -589,9 +585,9 @@ sys_swapctl(p, v, retval)
 	 */
 	if (SCARG(uap, arg) == NULL) {
 		vp = rootvp;		/* miniroot */
-		if (vget(vp, 1)) {
+		if (vget(vp, LK_EXCLUSIVE)) {
 			lockmgr(&swap_syscall_lock, LK_RELEASE, 
-				(void *)0, curproc);
+				(void *)0);
 			return (EBUSY);
 		}
 	} else {
@@ -599,7 +595,7 @@ sys_swapctl(p, v, retval)
 		       SCARG(uap, arg), p);
 		if ((error = namei(&nd))) {
 			lockmgr(&swap_syscall_lock, LK_RELEASE, 
-				(void *)0, curproc);
+				(void *)0);
 			return (error);
 		}
 		vp = nd.ni_vp;
@@ -738,7 +734,7 @@ bad:
 	 * done!   use vput to drop our reference and unlock
 	 */
 	vput(vp);
-	lockmgr(&swap_syscall_lock, LK_RELEASE, (void *)0, curproc);
+	lockmgr(&swap_syscall_lock, LK_RELEASE, (void *)0);
 
 	UVMHIST_LOG(pdhist, "<- done!  error=%d", error, 0, 0, 0);
 	return (error);

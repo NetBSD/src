@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.48 1998/02/10 14:09:28 mrg Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.49 1998/03/01 02:22:28 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kern_exit.c	8.7 (Berkeley) 2/12/94
+ *	@(#)kern_exit.c	8.10 (Berkeley) 2/23/95
  */
 
 #include "opt_uvm.h"
@@ -189,7 +189,7 @@ exit1(p, rv)
 				 * if we blocked.
 				 */
 				if (sp->s_ttyvp)
-					vgoneall(sp->s_ttyvp);
+					VOP_REVOKE(sp->s_ttyvp, REVOKEALL);
 			}
 			if (sp->s_ttyvp)
 				vrele(sp->s_ttyvp);

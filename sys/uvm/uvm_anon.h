@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.h,v 1.5 1998/02/10 02:34:25 perry Exp $	*/
+/*	$NetBSD: uvm_anon.h,v 1.6 1998/03/01 02:25:28 fvdl Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -55,9 +55,7 @@
 
 struct vm_anon {
 	int an_ref;			/* reference count [an_lock] */
-#if NCPU > 1
 	simple_lock_data_t an_lock;	/* lock for an_ref */
-#endif
 	union {
 		struct vm_anon *an_nxt;	/* if on free list [afreelock] */
 		struct vm_page *an_page;/* if in RAM [pageqlock] */
@@ -90,9 +88,7 @@ struct vm_anon {
 				   vm_map_entry_t's. */
 
 struct vm_amap {
-#if NCPU > 1
 	simple_lock_data_t am_l; /* simple lock [locks all vm_amap fields] */
-#endif
 	int am_ref;		/* reference count */
 	int am_flags;		/* flags */
 	int am_maxslot;		/* max # of slots allocated */

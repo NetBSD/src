@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.69 1998/02/12 10:12:59 mrg Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.70 1998/03/01 02:25:11 fvdl Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -234,10 +234,12 @@ msdosfs_close(v)
 	struct denode *dep = VTODE(vp);
 	struct timespec ts;
 
-	if (vp->v_usecount > 1 && !(dep->de_flag & DE_LOCKED)) {
+	simple_lock(&vp->v_interlock);
+	if (vp->v_usecount > 1) {
 		TIMEVAL_TO_TIMESPEC(&time, &ts);
 		DETIMES(dep, &ts, &ts, &ts);
 	}
+	simple_unlock(&vp->v_interlock);
 	return (0);
 }
 
@@ -251,9 +253,27 @@ msdosfs_access(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	struct denode *dep = VTODE(ap->a_vp);
+	struct vnode *vp = ap->a_vp;
+	struct denode *dep = VTODE(vp);
 	struct msdosfsmount *pmp = dep->de_pmp;
-	mode_t mode;
+	mode_t mode = 0;
+
+	/*
+	 * Disallow write attempts on read-only file systems;
+	 * unless the file is a socket, fifo, or a block or
+	 * character device resident on the file system.
+	 */
+	if (mode & VWRITE) {
+		switch (vp->v_type) {
+		case VDIR:
+		case VLNK:
+		case VREG:
+			if (vp->v_mount->mnt_flag & MNT_RDONLY)
+				return (EROFS);
+		default:
+			break;
+		}
+	}
 
 	if ((dep->de_Attributes & ATTR_READONLY) == 0)
 		mode = S_IRWXU|S_IRWXG|S_IRWXO;
@@ -905,6 +925,7 @@ msdosfs_rename(v)
 	register struct vnode *fdvp = ap->a_fdvp;
 	register struct componentname *tcnp = ap->a_tcnp;
 	register struct componentname *fcnp = ap->a_fcnp;
+	struct proc *p = tcnp->cn_proc;
 	register struct denode *ip, *xp, *dp, *zp;
 	u_char toname[11], oldname[11];
 	u_long from_diroffset, to_diroffset;
@@ -953,7 +974,7 @@ abortit:
 	}
 
 	/* */
-	if ((error = VOP_LOCK(fvp)) != 0)
+	if ((error = vn_lock(fvp, LK_EXCLUSIVE)) != 0)
 		goto abortit;
 	dp = VTODE(fdvp);
 	ip = VTODE(fvp);
@@ -973,7 +994,7 @@ abortit:
 		    (fcnp->cn_flags & ISDOTDOT) ||
 		    (tcnp->cn_flags & ISDOTDOT) ||
 		    (ip->de_flag & DE_RENAME)) {
-			VOP_UNLOCK(fvp);
+			VOP_UNLOCK(fvp, 0);
 			error = EINVAL;
 			goto abortit;
 		}
@@ -1003,8 +1024,8 @@ abortit:
 	 * to namei, as the parent directory is unlocked by the
 	 * call to doscheckpath().
 	 */
-	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_proc);
-	VOP_UNLOCK(fvp);
+	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, p);
+	VOP_UNLOCK(fvp, 0);
 	if (VTODE(fdvp)->de_StartCluster != VTODE(tdvp)->de_StartCluster)
 		newparent = 1;
 	vrele(fdvp);
@@ -1070,7 +1091,7 @@ abortit:
 	if ((fcnp->cn_flags & SAVESTART) == 0)
 		panic("msdosfs_rename: lost from startdir");
 	if (!newparent)
-		VOP_UNLOCK(tdvp);
+		VOP_UNLOCK(tdvp, 0);
 	(void) relookup(fdvp, &fvp, fcnp);
 	if (fvp == NULL) {
 		/*
@@ -1080,7 +1101,7 @@ abortit:
 			panic("rename: lost dir entry");
 		vrele(ap->a_fvp);
 		if (newparent)
-			VOP_UNLOCK(tdvp);
+			VOP_UNLOCK(tdvp, 0);
 		vrele(tdvp);
 		return 0;
 	}
@@ -1100,9 +1121,9 @@ abortit:
 		if (doingdirectory)
 			panic("rename: lost dir entry");
 		vrele(ap->a_fvp);
-		VOP_UNLOCK(fvp);
+		VOP_UNLOCK(fvp, 0);
 		if (newparent)
-			VOP_UNLOCK(fdvp);
+			VOP_UNLOCK(fdvp, 0);
 		xp = NULL;
 	} else {
 		vrele(fvp);
@@ -1124,8 +1145,8 @@ abortit:
 		if (error) {
 			bcopy(oldname, ip->de_Name, 11);
 			if (newparent)
-				VOP_UNLOCK(fdvp);
-			VOP_UNLOCK(fvp);
+				VOP_UNLOCK(fdvp, 0);
+			VOP_UNLOCK(fvp, 0);
 			goto bad;
 		}
 		ip->de_refcnt++;
@@ -1133,8 +1154,8 @@ abortit:
 		if ((error = removede(zp, ip)) != 0) {
 			/* XXX should really panic here, fs is corrupt */
 			if (newparent)
-				VOP_UNLOCK(fdvp);
-			VOP_UNLOCK(fvp);
+				VOP_UNLOCK(fdvp, 0);
+			VOP_UNLOCK(fvp, 0);
 			goto bad;
 		}
 		if (!doingdirectory) {
@@ -1143,8 +1164,8 @@ abortit:
 			if (error) {
 				/* XXX should really panic here, fs is corrupt */
 				if (newparent)
-					VOP_UNLOCK(fdvp);
-				VOP_UNLOCK(fvp);
+					VOP_UNLOCK(fdvp, 0);
+				VOP_UNLOCK(fvp, 0);
 				goto bad;
 			}
 			if (ip->de_dirclust != MSDOSFSROOT)
@@ -1152,7 +1173,7 @@ abortit:
 		}
 		reinsert(ip);
 		if (newparent)
-			VOP_UNLOCK(fdvp);
+			VOP_UNLOCK(fdvp, 0);
 	}
 
 	/*
@@ -1171,19 +1192,19 @@ abortit:
 		if (error) {
 			/* XXX should really panic here, fs is corrupt */
 			brelse(bp);
-			VOP_UNLOCK(fvp);
+			VOP_UNLOCK(fvp, 0);
 			goto bad;
 		}
 		dotdotp = (struct direntry *)bp->b_data + 1;
 		putushort(dotdotp->deStartCluster, dp->de_StartCluster);
 		if ((error = bwrite(bp)) != 0) {
 			/* XXX should really panic here, fs is corrupt */
-			VOP_UNLOCK(fvp);
+			VOP_UNLOCK(fvp, 0);
 			goto bad;
 		}
 	}
 
-	VOP_UNLOCK(fvp);
+	VOP_UNLOCK(fvp, 0);
 bad:
 	if (xp)
 		vput(tvp);
@@ -1433,8 +1454,8 @@ msdosfs_readdir(v)
 		struct uio *a_uio;
 		struct ucred *a_cred;
 		int *a_eofflag;
-		off_t *a_cookies;
-		int a_ncookies;
+		off_t **a_cookies;
+		int *a_ncookies;
 	} */ *ap = v;
 	int error = 0;
 	int diff;
@@ -1454,8 +1475,8 @@ msdosfs_readdir(v)
 	struct direntry *dentp;
 	struct dirent dirbuf;
 	struct uio *uio = ap->a_uio;
-	off_t *cookies;
-	int ncookies;
+	off_t *cookies = NULL;
+	int ncookies = 0, nc;
 	off_t offset;
 	int chksum = -1;
 
@@ -1491,8 +1512,11 @@ msdosfs_readdir(v)
 	lost = uio->uio_resid - count;
 	uio->uio_resid = count;
 
-	cookies = ap->a_cookies;
-	ncookies = ap->a_ncookies;
+	if (ap->a_ncookies) {
+		nc = uio->uio_resid / sizeof(struct direntry);
+		MALLOC(cookies, off_t *, nc * sizeof (off_t), M_TEMP, M_WAITOK);
+		*ap->a_cookies = cookies;
+	}
 
 	dirsperblk = pmp->pm_BytesPerSec / sizeof(struct direntry);
 
@@ -1540,8 +1564,7 @@ msdosfs_readdir(v)
 				offset += sizeof(struct direntry);
 				if (cookies) {
 					*cookies++ = offset;
-					if (--ncookies <= 0)
-						goto out;
+					ncookies++;
 				}
 			}
 		}
@@ -1653,10 +1676,7 @@ msdosfs_readdir(v)
 			}
 			if (cookies) {
 				*cookies++ = offset + sizeof(struct direntry);
-				if (--ncookies <= 0) {
-					brelse(bp);
-					goto out;
-				}
+				ncookies++;
 			}
 		}
 		brelse(bp);
@@ -1669,6 +1689,15 @@ out:
 		*ap->a_eofflag = 1;
 	else
 		*ap->a_eofflag = 0;
+
+	if (ap->a_ncookies) {
+		if (error) {
+			FREE(*ap->a_cookies, M_TEMP);
+			*ap->a_ncookies = 0;
+			*ap->a_cookies = NULL;
+		} else
+			*ap->a_ncookies = ncookies;
+	}
 	return (error);
 }
 
@@ -1696,45 +1725,12 @@ msdosfs_lock(v)
 {
 	struct vop_lock_args /* {
 		struct vnode *a_vp;
+		int a_flags;
+		struct proc *a_p;
 	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
-	register struct denode *dep;
-#ifdef DIAGNOSTIC
-	struct proc *p = curproc;	/* XXX */
-#endif
 
-start:
-	while (vp->v_flag & VXLOCK) {
-		vp->v_flag |= VXWANT;
-		sleep((caddr_t)vp, PINOD);
-	}
-	if (vp->v_tag == VT_NON)
-		return (ENOENT);
-	dep = VTODE(vp);
-	if (dep->de_flag & DE_LOCKED) {
-		dep->de_flag |= DE_WANTED;
-#ifdef DIAGNOSTIC
-		if (p) {
-			if (p->p_pid == dep->de_lockholder)
-				panic("locking against myself");
-			dep->de_lockwaiter = p->p_pid;
-		} else
-			dep->de_lockwaiter = -1;
-#endif
-		(void) sleep((caddr_t)dep, PINOD);
-		goto start;
-	}
-#ifdef DIAGNOSTIC
-	dep->de_lockwaiter = 0;
-	if (dep->de_lockholder != 0)
-		panic("lockholder (%d) != 0", dep->de_lockholder);
-	if (p)
-		dep->de_lockholder = p->p_pid;
-	else
-		dep->de_lockholder = -1;
-#endif
-	dep->de_flag |= DE_LOCKED;
-	return (0);
+	return (lockmgr(&VTODE(vp)->de_lock, ap->a_flags, &vp->v_interlock));
 }
 
 int
@@ -1743,29 +1739,13 @@ msdosfs_unlock(v)
 {
 	struct vop_unlock_args /* {
 		struct vnode *vp;
+		int a_flags;
+		struct proc *a_p;
 	} */ *ap = v;
-	register struct denode *dep = VTODE(ap->a_vp);
-#ifdef DIAGNOSTIC
-	struct proc *p = curproc;	/* XXX */
-#endif
+	struct vnode *vp = ap->a_vp;
 
-#ifdef DIAGNOSTIC
-	if ((dep->de_flag & DE_LOCKED) == 0) {
-		vprint("msdosfs_unlock: unlocked denode", ap->a_vp);
-		panic("msdosfs_unlock NOT LOCKED");
-	}
-	if (p && p->p_pid != dep->de_lockholder && p->p_pid > -1 &&
-	    dep->de_lockholder > -1/* && lockcount++ < 100*/)
-		panic("unlocker (%d) != lock holder (%d)",
-		    p->p_pid, dep->de_lockholder);
-	dep->de_lockholder = 0;
-#endif
-	dep->de_flag &= ~DE_LOCKED;
-	if (dep->de_flag & DE_WANTED) {
-		dep->de_flag &= ~DE_WANTED;
-		wakeup((caddr_t)dep);
-	}
-	return (0);
+	return (lockmgr(&VTODE(vp)->de_lock, ap->a_flags | LK_RELEASE,
+		&vp->v_interlock));
 }
 
 int
@@ -1776,9 +1756,7 @@ msdosfs_islocked(v)
 		struct vnode *a_vp;
 	} */ *ap = v;
 
-	if (VTODE(ap->a_vp)->de_flag & DE_LOCKED)
-		return (1);
-	return (0);
+	return (lockstatus(&VTODE(ap->a_vp)->de_lock));
 }
 
 /*
@@ -1886,17 +1864,9 @@ msdosfs_print(v)
 	printf(
 	    "tag VT_MSDOSFS, startcluster %ld, dircluster %ld, diroffset %ld ",
 	    dep->de_StartCluster, dep->de_dirclust, dep->de_diroffset);
-	printf(" dev %d, %d, %s\n",
-	    major(dep->de_dev), minor(dep->de_dev),
-	    dep->de_flag & DE_LOCKED ? "(LOCKED)" : "");
-#ifdef DIAGNOSTIC
-	if (dep->de_lockholder) {
-		printf("    owner pid %d", dep->de_lockholder);
-		if (dep->de_lockwaiter)
-			printf(" waiting pid %d", dep->de_lockwaiter);
-		printf("\n");
-	}
-#endif
+	printf(" dev %d, %d ", major(dep->de_dev), minor(dep->de_dev));
+	lockmgr_printinfo(&dep->de_lock);
+	printf("\n");
 	return (0);
 }
 
@@ -1967,6 +1937,7 @@ struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
 	{ &vop_lease_desc, msdosfs_lease_check },	/* lease */
 	{ &vop_ioctl_desc, msdosfs_ioctl },		/* ioctl */
 	{ &vop_poll_desc, msdosfs_poll },		/* poll */
+	{ &vop_revoke_desc, msdosfs_poll },		/* revoke */
 	{ &vop_mmap_desc, msdosfs_mmap },		/* mmap */
 	{ &vop_fsync_desc, msdosfs_fsync },		/* fsync */
 	{ &vop_seek_desc, msdosfs_seek },		/* seek */

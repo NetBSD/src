@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.16 1997/04/11 21:52:05 kleink Exp $	*/
+/*	$NetBSD: specdev.h,v 1.17 1998/03/01 02:21:34 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)specdev.h	8.3 (Berkeley) 8/10/94
+ *	@(#)specdev.h	8.6 (Berkeley) 5/21/95
  */
 
 /*
@@ -97,6 +97,7 @@ int	spec_write	__P((void *));
 #define	spec_lease_check genfs_nullop
 int	spec_ioctl	__P((void *));
 int	spec_poll	__P((void *));
+#define spec_revoke	genfs_revoke
 #define	spec_mmap	genfs_badop
 int	spec_fsync	__P((void *));
 #define	spec_seek	genfs_nullop		/* XXX should query device */
@@ -109,14 +110,14 @@ int	spec_fsync	__P((void *));
 #define	spec_readdir	genfs_badop
 #define	spec_readlink	genfs_badop
 #define	spec_abortop	genfs_badop
-#define	spec_inactive	genfs_nullop
 #define	spec_reclaim	genfs_nullop
-int	spec_lock	__P((void *));
-int	spec_unlock	__P((void *));
+int	spec_inactive	__P((void *));
+#define	spec_lock	genfs_nolock
+#define	spec_unlock	genfs_nounlock
 int	spec_bmap	__P((void *));
 int	spec_strategy	__P((void *));
 int	spec_print	__P((void *));
-#define	spec_islocked	genfs_nullop
+#define	spec_islocked	genfs_noislocked
 int	spec_pathconf	__P((void *));
 int	spec_advlock	__P((void *));
 #define	spec_blkatoff	genfs_badop
