@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: print.c,v 1.1.1.2 1997/06/03 02:49:32 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: print.c,v 1.1.1.3 1997/06/08 04:54:21 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -61,7 +61,7 @@ char *print_hw_addr (htype, hlen, data)
 	} else {
 		s = habuf;
 		for (i = 0; i < hlen; i++) {
-			sprintf (s, "%x", data [i]);
+			sprintf (s, "%2.2x", data [i]);
 			s += strlen (s);
 			*s++ = ':';
 		}

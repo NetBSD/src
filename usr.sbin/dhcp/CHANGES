@@ -1,3 +1,23 @@
+970607
+
+- Change size_t to ssize_t in return values where a negative number
+  is used to indicate an error.
+
+- Always write out two digits for single-byte quantities in arrays.
+
+- When parsing a lease database, correctly transfer the client
+  hostname and hostname to the memory-resident lease structure.
+
+- If the lease we want to give the client is different than the
+  one it's asking for, and we recognize the one it's asking for as
+  ours, NAK it.
+
+- Only accept a DHCPRELEASE or DHCPNAK if the client supplies an IP
+  address and the lease corresponding to that address is available to
+  that client.
+
+- Make it a warning rather than an error if resolv.conf is missing.
+
 970605
 
 - Add client-hostname token to lexer so that the parser can use it.

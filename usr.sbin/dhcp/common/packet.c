@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: packet.c,v 1.1.1.2 1997/06/03 02:49:30 mellon Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: packet.c,v 1.1.1.3 1997/06/08 04:54:18 mellon Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -216,7 +216,7 @@ void assemble_udp_ip_header (interface, buf, bufix,
 /* Decode a hardware header... */
 /* XXX currently only supports ethernet; doesn't check for other types. */
 
-size_t decode_hw_header (interface, buf, bufix, from)
+ssize_t decode_hw_header (interface, buf, bufix, from)
      struct interface_info *interface;
      unsigned char *buf;
      int bufix;
@@ -239,7 +239,7 @@ size_t decode_hw_header (interface, buf, bufix, from)
 
 /* UDP header and IP header decoded together for convenience. */
 
-size_t decode_udp_ip_header (interface, buf, bufix, from, data, len)
+ssize_t decode_udp_ip_header (interface, buf, bufix, from, data, len)
 	struct interface_info *interface;
 	unsigned char *buf;
 	int bufix;

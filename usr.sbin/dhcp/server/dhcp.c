@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhcp.c,v 1.1.1.2 1997/06/03 02:49:56 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcp.c,v 1.1.1.3 1997/06/08 04:55:18 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -86,7 +86,7 @@ void dhcp (packet)
 void dhcpdiscover (packet)
 	struct packet *packet;
 {
-	struct lease *lease = find_lease (packet, packet -> shared_network);
+	struct lease *lease = find_lease (packet, packet -> shared_network, 0);
 	struct host_decl *hp;
 
 	note ("DHCPDISCOVER from %s via %s",
@@ -164,6 +164,7 @@ void dhcprequest (packet)
 	struct lease *lease;
 	struct iaddr cip;
 	struct subnet *subnet;
+	int ours = 0;
 
 	if (packet -> options [DHO_DHCP_REQUESTED_ADDRESS].len) {
 		cip.len = 4;
@@ -180,7 +181,7 @@ void dhcprequest (packet)
 	   client. */
 
 	if (subnet)
-		lease = find_lease (packet, subnet -> shared_network);
+		lease = find_lease (packet, subnet -> shared_network, &ours);
 	else
 		lease = (struct lease *)0;
 
@@ -265,6 +266,11 @@ void dhcprequest (packet)
 	   client asked for, don't send it - some other server probably
 	   made the cut. */
 	if (lease && !addr_eq (lease -> ip_addr, cip)) {
+		/* If we found the address the client asked for, but
+                   it wasn't what got picked, the lease belongs to us,
+                   so we can tenuously justify NAKing it. */
+		if (ours)
+			nak_lease (packet, &cip);
 		return;
 	}
 
@@ -289,7 +295,18 @@ void dhcprequest (packet)
 void dhcprelease (packet)
 	struct packet *packet;
 {
-	struct lease *lease = find_lease (packet, packet -> shared_network);
+	struct lease *lease;
+	struct iaddr cip;
+
+	/* DHCPRELEASEmust specify address. */
+	if (!packet -> options [DHO_DHCP_REQUESTED_ADDRESS].len) {
+		return;
+	}
+
+	cip.len = 4;
+	memcpy (cip.iabuf,
+		packet -> options [DHO_DHCP_REQUESTED_ADDRESS].data, 4);
+	lease = find_lease_by_ip_addr (cip);
 
 	note ("DHCPRELEASE of %s from %s via %s",
 	      inet_ntoa (packet -> raw -> ciaddr),
@@ -310,17 +327,18 @@ void dhcprelease (packet)
 void dhcpdecline (packet)
 	struct packet *packet;
 {
-	struct lease *lease = find_lease (packet, packet -> shared_network);
+	struct lease *lease;
 	struct iaddr cip;
 
-	if (packet -> options [DHO_DHCP_REQUESTED_ADDRESS].len) {
-		cip.len = 4;
-		memcpy (cip.iabuf,
-			packet -> options [DHO_DHCP_REQUESTED_ADDRESS].data,
-			4);
-	} else {
-		cip.len = 0;
+	/* DHCPDECLINE must specify address. */
+	if (!packet -> options [DHO_DHCP_REQUESTED_ADDRESS].len) {
+		return;
 	}
+
+	cip.len = 4;
+	memcpy (cip.iabuf,
+		packet -> options [DHO_DHCP_REQUESTED_ADDRESS].data, 4);
+	lease = find_lease_by_ip_addr (cip);
 
 	note ("DHCPDECLINE on %s from %s via %s",
 	      piaddr (cip),
@@ -1056,9 +1074,10 @@ void dhcp_reply (lease)
 	lease -> state = (struct lease_state *)0;
 }
 
-struct lease *find_lease (packet, share)
+struct lease *find_lease (packet, share, ours)
 	struct packet *packet;
 	struct shared_network *share;
+	int *ours;
 {
 	struct lease *uid_lease, *ip_lease, *hw_lease;
 	struct lease *lease = (struct lease *)0;
@@ -1139,6 +1158,12 @@ struct lease *find_lease (packet, share)
 		ip_lease = find_lease_by_ip_addr (cip);
 	} else
 		ip_lease = (struct lease *)0;
+
+	/* If ip_lease is valid at this point, set ours to one, so that
+	   even if we choose a different lease, we know that the address
+	   the client was requesting was ours, and thus we can NAK it. */
+	if (ip_lease && ours)
+		*ours = 1;
 
 	/* If the requested IP address isn't on the network the packet
 	   came from, or if it's been abandoned, don't use it. */
