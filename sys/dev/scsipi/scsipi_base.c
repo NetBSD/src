@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.16 1998/12/08 00:26:22 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.17 1999/01/10 06:26:23 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -371,7 +371,8 @@ scsipi_interpret_sense(xs)
 	 */
 	default:
 		sc_link->sc_print_addr(sc_link);
-		printf("error code %d", sense->error_code & SSD_ERRCODE);
+		printf("Sense Error Code 0x%x",
+			sense->error_code & SSD_ERRCODE);
 		if ((sense->error_code & SSD_ERRCODE_VALID) != 0) {
 			struct scsipi_sense_data_unextended *usense =
 			    (struct scsipi_sense_data_unextended *)sense;
