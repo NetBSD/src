@@ -1,4 +1,4 @@
-/*	$NetBSD: c_jazz_eisa.c,v 1.2 2002/12/09 13:36:26 tsutsui Exp $	*/
+/*	$NetBSD: c_jazz_eisa.c,v 1.3 2003/01/27 15:33:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -86,17 +86,17 @@ char *c_jazz_eisa_mainbusdevs[] = {
  */
 u_int mc_jazz_eisa_read __P((struct mcclock_softc *, u_int));
 void mc_jazz_eisa_write __P((struct mcclock_softc *, u_int, u_int));
- 
+
 struct mcclock_jazzio_config mcclock_jazz_eisa_conf = {
 	0x80004000, 1,
 	{ mc_jazz_eisa_read, mc_jazz_eisa_write }
 };
 
-u_int   
+u_int
 mc_jazz_eisa_read(sc, reg)
 	struct mcclock_softc *sc;
 	u_int reg;
-{       
+{
 	int i, as;
 
 	as = in32(arc_bus_io.bs_vbase + C_JAZZ_EISA_TODCLOCK_AS) & 0x80;
