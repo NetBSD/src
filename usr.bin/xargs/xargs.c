@@ -1,4 +1,4 @@
-/*	$NetBSD: xargs.c,v 1.10 1998/04/14 09:26:33 fair Exp $	*/
+/*	$NetBSD: xargs.c,v 1.11 1998/12/20 15:06:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xargs.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: xargs.c,v 1.10 1998/04/14 09:26:33 fair Exp $");
+__RCSID("$NetBSD: xargs.c,v 1.11 1998/12/20 15:06:53 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -320,7 +320,7 @@ run(argv)
 			rval = 123;
 		}
 	} else if (WIFSIGNALED (status)) {
-		if (WTERMSIG(status) < _NSIG) {
+		if (WTERMSIG(status) < NSIG) {
 			warnx("%s terminated by SIG%s", argv[0],
 				sys_signame[WTERMSIG(status)]);
 		} else {
