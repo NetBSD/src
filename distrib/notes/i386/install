@@ -45,7 +45,76 @@
 	at any time, but if you do, you'll have to begin the installation
 	process again from scratch.
 
-2. Booting NetBSD
+2. Quick install
+
+	First, let's describe a quick install. The other sections of
+	this document go into the installation procedure in more
+	detail, but you may find that you do not need this. If you
+	want detailed instructions, skip to section 3. This section
+	describes a basic installation, using a CD-ROM install as
+	an example.
+
+2.1 What you need.
+
+	* The distribution sets (in this example, they are on CD).
+	* One 1.44M 3.5" floppy.
+	* A PC with a 386 or newer processor, a CD-ROM drive
+	  (SCSI or ATAPI), a harddisk and a minimum of 4Mb of
+	  memory installed.
+	* The harddisk should have at least 70 + N megabytes of
+	  space free, where N is the number of megabytes of
+	  main memory in your system. If you wish to install
+	  the X window system as well, you will need at least
+	  60Mb more.
+
+2.2 Creating a bootfloppy.
+
+	* You can create the floppy needed for installation
+	  under DOS or Windows. Supposing your 1.44M floppy
+	  drive is drive A:, and your CD is drive E: do the
+	  following from an MS-DOS command prompt:
+
+	  e:
+	  cd \NetBSD-_VER\installation\misc
+	  rawrite
+
+	  When asked for a source filename, answer
+
+	  ..\floppy\boot.fs
+
+	  When asked for a destination drive answer
+
+	  a
+
+2.3 The installation
+
+	* Insert the bootfloppy you just created. Restart the
+	  PC. You will be presented with a menu.
+	* If you wish, you can configure some network settings
+	  immediately by choosing the "utilities" menu and
+	  then "configure network". This isn't needed, but
+	  more convenient to do now. Go back to the main menu.
+	* Choose "install"
+	* You will be guided through some steps regarding the
+	  setup of your harddisk, and parts to install. When
+	  in doubt, refer to the rest of this document for
+	  details.
+	* After your disk has been prepared, choose CD-ROM
+	  as the medium. The default values for the path
+	  and device should be ok.
+	* After all the files have been unpacked, go back to
+	  the main menu and select "reboot", after you
+	  have removed the bootfloppy from the drive.
+	* NetBSD will now boot. You should log in as root,
+	  and set a password for that account. You are also
+	  advised to edit the file "/etc/rc.conf" to match
+	  your system needs.
+	* Your installation is now complete.
+	* For configuring the X window system, if installed,
+	  see the files in /usr/X11R6/lib/X11/doc. Further
+	  information can be found on http://www.xfree86.org/
+
+3. Booting NetBSD
 
 	[PCMCIA]: unplug your PCMCIA devices, so that they won't be
 	found by NetBSD.
@@ -95,7 +164,7 @@
 	you will be presented with a welcome message and a main menu.
 	It will also include instructions for using the menus.
 
-3. Network configuration
+4. Network configuration
 
 	[PCMCIA] You can skip this section, as you will only get data
 	         from floppy in the first part of the install.
@@ -109,7 +178,7 @@
 	you can give an empty response in reply to answers relating to
 	this.
 
-4. The hard disk to install on and its parameters.
+5. The hard disk to install on and its parameters.
 
 	To start the installation, select the menu option to install
 	NetBSD from the main menu.
@@ -141,9 +210,9 @@
 	are SURE that it does, reply affirmatively.  Otherwise, the install
 	program will automatically reserve space for bad144 tables.
 
-5. Partitioning the disk.
+6. Partitioning the disk.
 
-5.1 Which portion of the disk to use.
+6.1 Which portion of the disk to use.
 
 	You will be asked if you want to use the entire disk or
 	only part of the disk. If you decide to use the entire disk
@@ -152,10 +221,10 @@
 	whether you want to overwrite these.
 
 	If you want to use the entire disk for NetBSD, you can skip
-	the following section and go to section 5.3, "Editing the
+	the following section and go to section 6.3, "Editing the
 	NetBSD disklabel".
 
-5.2 Editing the Master Boot Record.
+6.2 Editing the Master Boot Record.
 
 	First, you will be prompted to specify the units of size
 	that you want to express the sizes of the partitions in.
@@ -176,7 +245,7 @@
 	If everything is ok, you can go on to the next step,
 	editing the NetBSD disklabel.
 
-5.3 Editing the NetBSD disklabel.
+6.3 Editing the NetBSD disklabel.
 
 	The partition table of a NetBSD part of a disk is called
 	a 'disklabel'. There are 3 layouts for the NetBSD part
@@ -214,7 +283,7 @@
 	is a single word and contains no special characters.  You don't
 	need to remember this name.
 
-6. Preparing your hard disk
+7. Preparing your hard disk
 
 	YOU ARE NOW AT THE POINT OF NO RETURN.  Nothing has been
 	written to your disk yet, but if you confirm that you want to
@@ -239,7 +308,7 @@
         be unloaded onto the drive. So, you can not boot from your
 	hard drive yet at this point.
 
-7. Getting the distribution sets.
+8. Getting the distribution sets.
 
 	[PCMCIA] Load a kernel tar file (i.e. the kern.tgz set file)
 	         on to your hard disk, for example by mounting the
@@ -280,9 +349,9 @@
 	The sets can be made available in a few different ways. The
 	following sections describe each of those methods. After
 	reading the one about the method you will be using, you
-	can continue to section 8
+	can continue to section 9
 
-7.1 Installation using ftp
+8.1 Installation using ftp
 
 	To be able to install using ftp, you first need to configure
 	your network setup, if you haven't already at the start of
@@ -303,7 +372,7 @@
 	sysinst will proceed to transfer all the default set files
 	from the remote site to your hard disk.
 
-7.2 Installation using NFS
+8.2 Installation using NFS
 
 	To be able to install using NFS, you first need to configure
 	your network setup, if you haven't already at the start of
@@ -324,7 +393,7 @@
 	instead of a hostname for the NFS server.
 
 
-7.3 Installation from CD-ROM
+8.3 Installation from CD-ROM
 
 	When installing from a CD-ROM, you will be asked to specify
 	the device name for your CD-ROM player (usually 'cd0'), and
@@ -334,7 +403,7 @@
 	in the specified location, and proceed to the actual
 	extraction of the sets.
 
-7.4 Installation from floppy
+8.4 Installation from floppy
 
 	Because the installation sets are too big to fit on one floppy,
 	the floppies are expected to be filled with the split set
@@ -345,7 +414,7 @@
 	will continue until all the sets have been loaded from floppy.
 	
 
-7.5 Installation from an unmounted filesystem
+8.5 Installation from an unmounted filesystem
 
 	In order to install from a local filesystem, you will
 	need to specify the device that the filesystem resides
@@ -354,14 +423,14 @@
 	sets are located. sysinst will then check if it
 	can indeed access the sets at that location. 
 
-7.6 Installation from a local directory
+8.6 Installation from a local directory
 
 	This option assumes that you have already done some preparation
 	yourself. The sets should be located in a directory on a
 	filesystem that is already accessible. sysinst will ask you
 	for the name of this directory.
 
-8. Extracting the distribution sets
+9. Extracting the distribution sets
 
 	After you the install sets containing the NetBSD distribution
 	have been made available, you can either extract all the
@@ -382,46 +451,29 @@
 	use this configuration for normal operation. If so, these
 	values will be installed in the network configuration files.
 
-9. Finalizing your installation.
+10. Finalizing your installation.
 
 	Congratulations, you have successfully installed NetBSD _VER.
-	You can now reboot the machine, and boot from harddisk. NetBSD
-	will enter single-user mode, and you will be presented with
-	a shell prompt. You should now edit the /etc/rc.conf file
-	to configure the system to suit your needs. To do this,
-	you might want to first make all local filesystems accessible
-	and set the terminal type, so that, for example, vi will work
-	properly. The following commands will do this:
-
-		mount -a
-		TERM=pc3 ; export TERM
-
-	You should at least do the following in /etc/rc.conf:
-
-		* Change rc_configured=NO to rc_configured=YES
-		* Set the hostname in the 'hostname' line, e.g.
-		  hostname="somename"
-
-	You are advised to take a look at the other items in the
-	/etc/rc.conf file, and change them if you wish. After you
-	have made and saved the changes, reboot the machine again.
+	You can now reboot the machine, and boot from harddisk.
 
 	After reboot, you can log in "root" at the login prompt.  There
 	is no initial password, but if you're using the machine in a
 	networked environment, you should create yourself an account
 	and protect it and the "root" account with good passwords.
 
+	You should now edit the /etc/rc.conf file to configure the system
+	to suit your needs, and then reboot the system again.
+
 	Some other files in the NetBSD _VER distribution might need to be
 	tailored for your site.  In particular, the /etc/sendmail.cf file will
 	almost definitely need to be adjusted, and other files in /etc will
 	probably need to be modified, as well.
 
-	Some leftover files from the installation may be on your hard disk,
-	depending on the procedure you followed. If you find any of
-	the files, you should remove them:
-
-		/.termcap
-		/sysinst
-
 	If you are unfamiliar with UN*X-like system administration, it's
 	recommended that you buy a book that discusses it.
+
+	If you have installed the X window system, look at the files in
+	/usr/X11R6/lib/X11/doc for information. You will need to set up
+	a configuration file. An example of such a file is
+	/usr/X11R6/lib/X11/XF86Config.eg. See http://www.xfree86.org/
+	and the XFree86 manual page for more information.
