@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 1999/06/07 20:16:12 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 1999/07/08 12:28:06 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,6 +66,7 @@
 
 #include <machine/cpu.h>
 #include <machine/adrsmap.h>
+#include <machine/romcall.h>
 
 #include <newsmips/newsmips/machid.h>
 
@@ -137,7 +138,7 @@ findroot(devpp, partp)
 	struct device **devpp;
 	int *partp;
 {
-	int unit, part, controller;
+	int ctlr, unit, part, type;
 	struct device *dv;
 
 	/*
@@ -146,12 +147,16 @@ findroot(devpp, partp)
 	*devpp = NULL;
 	*partp = 0;
 
-	if ((bootdev & B_MAGICMASK) != 0x50000000) /* NEWS-OS's B_DEVMAGIC */
+	if (BOOTDEV_MAG(bootdev) != 5)	/* NEWS-OS's B_DEVMAGIC */
 		return;
 
-	controller = B_CONTROLLER(bootdev);
-	part = (bootdev >> 8) & 0x0f;
-	unit = (bootdev >> 20) & 0x0f;
+	ctlr = BOOTDEV_CTLR(bootdev);	/* SCSI ID */
+	unit = BOOTDEV_UNIT(bootdev);
+	part = BOOTDEV_PART(bootdev);	/* LUN */
+	type = BOOTDEV_TYPE(bootdev);
+
+	if (type != BOOTDEV_SD)
+		return;
 
 	/*
 	 * XXX assumes only one controller exists.
@@ -160,10 +165,10 @@ findroot(devpp, partp)
 		if (strcmp(dv->dv_xname, "scsibus0") == 0) {
 			struct scsibus_softc *sdv = (void *)dv;
 
-			if (sdv->sc_link[unit][0] == NULL)
+			if (sdv->sc_link[ctlr][0] == NULL)
 				continue;
 
-			*devpp = sdv->sc_link[unit][0]->device_softc;
+			*devpp = sdv->sc_link[ctlr][0]->device_softc;
 			*partp = part;
 			return;
 		}
