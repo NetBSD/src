@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.18 1996/02/04 20:14:20 jonathan Exp $	*/
+/*	$NetBSD: locore.S,v 1.19 1996/03/25 06:40:39 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1956,6 +1956,7 @@ LEAF(Mach_spl0)
 	li	t0, ~(MACH_INT_MASK_0|MACH_SOFT_INT_MASK_1|MACH_SOFT_INT_MASK_0)
 	and	t0, t0, v0
 	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
+	nop					# 3 ins to disable on r4x00
 	j	ra
 	and	v0, v0, (MACH_INT_MASK | MACH_SR_INT_ENA_CUR)
 END(Mach_spl0)
@@ -1965,6 +1966,7 @@ LEAF(Mach_spl1)
 	li	t0, ~(MACH_INT_MASK_1|MACH_SOFT_INT_MASK_1|MACH_SOFT_INT_MASK_0)
 	and	t0, t0, v0
 	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
+	nop					# 3 ins to disable on r4x00
 	j	ra
 	and	v0, v0, (MACH_INT_MASK | MACH_SR_INT_ENA_CUR)
 END(Mach_spl1)
@@ -1974,6 +1976,7 @@ LEAF(Mach_spl2)
 	li	t0, ~(MACH_INT_MASK_2|MACH_SOFT_INT_MASK_1|MACH_SOFT_INT_MASK_0)
 	and	t0, t0, v0
 	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
+	nop					# 3 ins to disable on r4x00
 	j	ra
 	and	v0, v0, (MACH_INT_MASK | MACH_SR_INT_ENA_CUR)
 END(Mach_spl2)
@@ -1983,9 +1986,31 @@ LEAF(Mach_spl3)
 	li	t0, ~(MACH_INT_MASK_3|MACH_SOFT_INT_MASK_1|MACH_SOFT_INT_MASK_0)
 	and	t0, t0, v0
 	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
+	nop					# 3 ins to disable on r4x00
 	j	ra
 	and	v0, v0, (MACH_INT_MASK | MACH_SR_INT_ENA_CUR)
 END(Mach_spl3)
+
+LEAF(Mach_spl4)
+	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
+	li	t0, ~(MACH_INT_MASK_4|MACH_SOFT_INT_MASK_1|MACH_SOFT_INT_MASK_0)
+	and	t0, t0, v0
+	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
+	nop					# 3 ins to disable
+	j	ra
+	and	v0, v0, (MACH_INT_MASK | MACH_SR_INT_ENA_CUR)
+END(Mach_spl4)
+
+LEAF(Mach_spl5)
+	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
+	li	t0, ~(MACH_INT_MASK_5|MACH_SOFT_INT_MASK_1|MACH_SOFT_INT_MASK_0)
+	and	t0, t0, v0
+	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
+	nop					# 3 ins to disable
+	j	ra
+	and	v0, v0, (MACH_INT_MASK | MACH_SR_INT_ENA_CUR)
+END(Mach_spl5)
+
 
 /*
  * We define an alternate entry point after mcount is called so it
@@ -2620,9 +2645,13 @@ END(MachSaveCurFPState)
  *
  * MachFPInterrupt --
  *
- *	Handle a floating point interrupt.
+ *	Handle a floating point interrupt (r3k) or trap (r4k).
  *
  *	MachFPInterrupt(statusReg, causeReg, pc)
+ *		unsigned statusReg;
+ *		unsigned causeReg;
+ *		unsigned pc;
+ *	MachFPTrap(statusReg, causeReg, pc)
  *		unsigned statusReg;
  *		unsigned causeReg;
  *		unsigned pc;
@@ -2636,6 +2665,10 @@ END(MachSaveCurFPState)
  *----------------------------------------------------------------------------
  */
 NON_LEAF(MachFPInterrupt, STAND_FRAME_SIZE, ra)
+
+	# should use ANONLEAF (or ANESTED) instead of ALEAF.
+ALEAF(MachFPTrap)
+
 	subu	sp, sp, STAND_FRAME_SIZE
 	mfc0	t0, MACH_COP_0_STATUS_REG
 	sw	ra, STAND_RA_OFFSET(sp)
@@ -2645,6 +2678,9 @@ NON_LEAF(MachFPInterrupt, STAND_FRAME_SIZE, ra)
 	mtc0	t1, MACH_COP_0_STATUS_REG
 	nop
 	nop
+	nop				# 1st extra nop for r4k
+	nop				# 2nd extra nop for r4k
+
 	cfc1	t1, MACH_FPC_CSR	# stall til FP done
 	cfc1	t1, MACH_FPC_CSR	# now get status
 	nop
@@ -3174,12 +3210,14 @@ _C_LABEL(intrnames):
 	.asciiz	"tcslot2"
 	.asciiz "dtop"
 	.asciiz "isdn"
+	.asciiz	"floppy"
 	.asciiz	"stray"
 	.asciiz	"nmi"
+	.asciiz	"lostclock"
 _C_LABEL(eintrnames):
 	.align	2
 _C_LABEL(intrcnt):
-	.word	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0
+	.word	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0
 _C_LABEL(eintrcnt):
 	.word	0	# This shouldn't be needed but with 4.4bsd's as, the eintrcnt
 			#  label ends end up in a different section otherwise.
