@@ -84,6 +84,8 @@
 #include <stringops.h>
 #include <readlline.h>
 #include <inet_addr_list.h>
+#include <inet_util.h>
+#include <inet_addr_host.h>
 
 /* Global library. */
 
@@ -91,7 +93,6 @@
 #include <mail_params.h>
 #include <own_inet_addr.h>
 #include <wildcard_inet_addr.h>
-#include <inet_util.h>
 
 /* Local stuff. */
 
