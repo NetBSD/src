@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.34.4.1 1996/06/01 03:35:16 scottr Exp $	*/
+/*	$NetBSD: cpu.h,v 1.34.4.2 1996/06/07 01:11:13 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -240,6 +240,12 @@ struct mac68k_machine_S {
 	int			do_graybars;
 	int			serial_boot_echo;
 	int			serial_console;
+	int			modem_flags;
+	int			modem_cts_clk;
+	int			modem_dcd_clk;
+	int			print_flags;
+	int			print_cts_clk;
+	int			print_dcd_clk;
 	/*
 	 * Misc. hardware info.
 	 */

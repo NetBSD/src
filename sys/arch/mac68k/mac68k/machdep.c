@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.103.4.1 1996/06/01 03:37:06 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.103.4.2 1996/06/07 01:10:52 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -832,10 +832,6 @@ boot(howto)
 		pmap_map(MacOSROMBase, MacOSROMBase,
 			 MacOSROMBase + 4 * 1024 * 1024,
 			 VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
-#if 1
-		pmap_map(0xfc000000, 0xfc000000, 0xfd000000,
-		    VM_PROT_READ | VM_PROT_WRITE);
-#endif
 		doboot();
 		/* NOTREACHED */
 	}
@@ -1678,12 +1674,12 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080c5cc,	/* InitUtil */
 		(caddr_t) 0x4080b186,	/* ReadXPRam */
 		(caddr_t) 0x4080b190,	/* WriteXPRam */
-		(caddr_t) 0x408b39b2,	/* jClkNoMem */		/* From PB180 */
+		(caddr_t) 0x408b39b2,	/* jClkNoMem */	/* From PB180 */
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
 		(caddr_t) 0x40814800,	/* Egret */
-		(caddr_t) 0x40888400,	/* InitPwrMgr */	/* From PB180 */
-		(caddr_t) 0x0,		/* ADBReInit_JTBL */
-		(caddr_t) 0x0,		/* ROMResourceMap List Head */
+		(caddr_t) 0x40888400,	/* InitPwrMgr */ /* From PB180 */
+		(caddr_t) 0x408cce28,	/* ADBReInit_JTBL -- from PB160*/
+		(caddr_t) 0x4087eb90,	/* ROMRsrcMap List Head -- from PB160*/
 		(caddr_t) 0x4081c406,	/* FixDiv, wild guess */
 		(caddr_t) 0x4081c312,	/* FixMul, wild guess */
 	},
@@ -1885,10 +1881,10 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x40a0b190,	/* WriteXPRam */
 		(caddr_t) 0x40ab3bf4,	/* jClkNoMem */
 		(caddr_t) 0x40a0a818,	/* ADBAlternateInit */
-		(caddr_t) 0x40ad1450,	/* Egret */
+		(caddr_t) 0x40acfd40,	/* Egret */
 		(caddr_t) 0x40a147c4,	/* InitEgret */
-		(caddr_t) 0x0,		/* ADBReInit_JTBL */
-		(caddr_t) 0x0,		/* ROMResourceMap List Head */
+		(caddr_t) 0x40a038a0,	/* ADBReInit_JTBL */
+		(caddr_t) 0x40a7eb90,	/* ROMResourceMap List Head */
 		(caddr_t) 0x40a1c406,	/* FixDiv */
 		(caddr_t) 0x40a1c312,	/* FixMul */
 	},
@@ -2091,6 +2087,13 @@ getenvvars()
 	mac68k_machine.do_graybars = getenv("GRAYBARS");
 	mac68k_machine.serial_boot_echo = getenv("SERIALECHO");
 	mac68k_machine.serial_console = getenv("SERIALCONSOLE");
+
+	mac68k_machine.modem_flags = getenv("SERIAL_MODEM_FLAGS");
+	mac68k_machine.modem_cts_clk = getenv("SERIAL_MODEM_HSKICLK");
+	mac68k_machine.modem_dcd_clk = getenv("SERIAL_MODEM_GPICLK");
+	mac68k_machine.print_flags = getenv("SERIAL_PRINT_FLAGS");
+	mac68k_machine.print_cts_clk = getenv("SERIAL_PRINT_HSKICLK");
+	mac68k_machine.print_dcd_clk = getenv("SERIAL_PRINT_GPICLK");
 	/* Should probably check this and fail if old */
 	mac68k_machine.booter_version = getenv("BOOTERVER");
 
