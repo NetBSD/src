@@ -1,4 +1,4 @@
-.\"	$NetBSD: pw_lock.3,v 1.5 2000/07/10 11:19:16 ad Exp $
+.\"	$NetBSD: pw_lock.3,v 1.6 2000/12/06 13:37:53 tron Exp $
 .\"
 .\" Copyright (c) 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,9 @@
 .Sh NAME
 .Nm pw_lock ,
 .Nm pw_mkdb ,
-.Nm pw_abort
+.Nm pw_abort ,
+.Nm pw_setprefix ,
+.Nm pw_getprefix
 .Nd passwd file update functions
 .Sh LIBRARY
 .Lb libutil
@@ -53,6 +55,12 @@
 .Fn pw_mkdb "void"
 .Ft void
 .Fn pw_abort "void"
+.Ft void
+.Fn pw_error "const char *name" "int err" "int eval"
+.Ft int
+.Fn pw_setprefix "const char *new_prefix"
+.Ft "const char *"
+.Fn pw_getprefix "void"
 .Sh DESCRIPTION
 The
 .Fn pw_lock ,
@@ -94,6 +102,21 @@ The
 function aborts a passwd file update by deleting
 .Pa /etc/ptmp .
 The passwd database remains unchanged.
+.Pp
+The
+.Fn pw_setprefix
+function defines the root directory used for passwd file updates. If
+the prefix is set to
+.Pa /newroot
+.Fn pw_lock
+will operate on
+.Pa /newroot/etc/ptmp
+afterwards. The default prefix is an empty string.
+.Pp
+The
+.Fn pw_getprefix
+function returns the root directory which is currently used for passwd file
+updates.
 .Sh RETURN VALUES
 The
 .Fn pw_lock

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2000/07/07 11:05:06 itojun Exp $
+#	$NetBSD: Makefile,v 1.28 2000/12/06 13:37:53 tron Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	util
@@ -35,6 +35,8 @@ MLINKS+=pw_init.3 pw_scan.3
 MLINKS+=pw_init.3 pw_error.3
 MLINKS+=pw_lock.3 pw_mkdb.3
 MLINKS+=pw_lock.3 pw_abort.3
+MLINKS+=pw_lock.3 pw_getprefix.3
+MLINKS+=pw_lock.3 pw_setprefix.3
 MLINKS+=pidlock.3 ttylock.3
 MLINKS+=pidlock.3 ttyunlock.3
 
