@@ -1,16 +1,18 @@
-#	$NetBSD: Makefile,v 1.9 2004/10/01 15:24:45 christos Exp $
+#	$NetBSD: Makefile,v 1.10 2004/10/05 04:55:48 yamt Exp $
 
 INCSDIR= /usr/include/netinet
 
 INCS=	icmp6.h icmp_var.h if_atm.h if_ether.h if_inarp.h igmp.h \
 	igmp_var.h in.h in_gif.h in_pcb.h in_pcb_hdr.h in_systm.h \
-	in_var.h ip.h ip6.h ip_ecn.h ip_encap.h ip_gre.h ip_htable.h \
-	ip_icmp.h ip_lookup.h ip_mroute.h ip_var.h pim.h pim_var.h \
+	in_var.h ip.h ip6.h ip_ecn.h ip_encap.h ip_gre.h \
+	ip_icmp.h ip_mroute.h ip_var.h pim.h pim_var.h \
 	tcp.h tcp_debug.h tcp_fsm.h tcp_seq.h tcp_timer.h tcp_var.h \
 	tcpip.h udp.h udp_var.h
 
-INCS+=	ip_auth.h ip_compat.h ip_fil.h ip_frag.h ip_nat.h ip_pool.h \
-	ip_proxy.h ip_scan.h ip_state.h ip_sync.h
+# ipfilter headers
+# XXX shouldn't be here
+INCS+=	ip_auth.h ip_compat.h ip_fil.h ip_frag.h ip_htable.h ip_nat.h \
+	ip_lookup.h ip_pool.h ip_proxy.h ip_scan.h ip_state.h ip_sync.h
  
 
 .include <bsd.kinc.mk>
