@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.33.2.1 2002/01/10 20:04:30 thorpej Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.33.2.2 2002/09/30 20:43:49 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -242,6 +242,7 @@ int	nfs_truncate	__P((void *));
 int	nfs_update	__P((void *));
 int	nfs_getpages	__P((void *));
 int	nfs_putpages	__P((void *));
+int	nfs_kqfilter	__P((void *));
 int	nfs_gop_write(struct vnode *, struct vm_page **, int, int);
 
 extern int (**nfsv2_vnodeop_p) __P((void *));

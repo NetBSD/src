@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.95.2.5 2002/09/06 08:49:49 jdolecek Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.95.2.6 2002/09/30 20:43:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.95.2.5 2002/09/06 08:49:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.95.2.6 2002/09/30 20:43:44 jdolecek Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1487,6 +1487,11 @@ nfs_init()
 	 */
 	TAILQ_INIT(&nfs_reqq);
 	nfs_timer(NULL);
+
+#ifdef NFS
+	/* Initialize the kqueue structures */
+	nfs_kqinit();
+#endif
 }
 
 #ifdef NFS
