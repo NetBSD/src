@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2000/12/17 16:20:23 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.10 2000/12/18 20:50:09 jdolecek Exp $
 
 .include "../Makefile.inc"
 
@@ -39,7 +39,7 @@ SRCS+=	compat_util.c
 # MD source files
 .if ${MACHINE} == "i386"
 .PATH: $S/arch/i386/i386
-SRCS+=	freebsd_machdep.c freebsd_sigcode.s
+SRCS+=	freebsd_machdep.c freebsd_sigcode.s freebsd_syscall.c
 .endif
 
 .include <bsd.kmod.mk>
