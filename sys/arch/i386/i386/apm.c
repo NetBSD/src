@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.35 1998/11/12 21:32:31 thorpej Exp $ */
+/*	$NetBSD: apm.c,v 1.36 1998/12/19 14:46:10 drochner Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -622,8 +622,15 @@ apm_cpu_busy()
 	if (!apm_inited || !apm_do_idle)
 	    return;
 	if ((apminfo.apm_detail & APM_IDLE_SLOWS) &&
-	    apmcall(APM_CPU_BUSY, &regs) != 0)
+	    apmcall(APM_CPU_BUSY, &regs) != 0) {
+		/*
+		 * XXX BIOSes use to set carry without valid
+		 * error number
+		 */
+#ifdef APMDEBUG
 		apm_perror("set CPU busy", &regs);
+#endif
+	}
 }
 
 void
@@ -633,8 +640,15 @@ apm_cpu_idle()
 
 	if (!apm_inited || !apm_do_idle)
 	    return;
-	if (apmcall(APM_CPU_IDLE, &regs) != 0)
+	if (apmcall(APM_CPU_IDLE, &regs) != 0) {
+		/*
+		 * XXX BIOSes use to set carry without valid
+		 * error number
+		 */
+#ifdef APMDEBUG
 		apm_perror("set CPU idle", &regs);
+#endif
+	}
 }
 
 static void
