@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.241 2003/04/15 14:11:00 darrenr Exp $ */
+/*	$NetBSD: wd.c,v 1.242 2003/04/15 17:42:44 dogcow Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.241 2003/04/15 14:11:00 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.242 2003/04/15 17:42:44 dogcow Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -776,9 +776,9 @@ retry:		/* Just reset and retry. Can we do more ? */
 		 * do this for reads because the drive should do it for writes,
 		 * itself, according to Manuel.
 		 */
-		if ((b->b_flags & B_READ) &&
+		if ((bp->b_flags & B_READ) &&
 		    ((wd->drvp->ata_vers >= 4 && wd->sc_wdc_bio.r_error & 64) ||
-		     (wd->drvp->ata_vers < 4 && wd->sc_wdc_bio.r_error & 192)) {
+	     	     (wd->drvp->ata_vers < 4 && wd->sc_wdc_bio.r_error & 192))) {
 			struct disk_badsectors *dbs;
 
 			dbs = malloc(sizeof *dbs, M_TEMP, M_WAITOK);
