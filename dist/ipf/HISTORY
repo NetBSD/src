@@ -20,6 +20,28 @@
 # and especially those who have found the time to port IP Filter to new
 # platforms.
 #
+3.4.6	11/06/2000 - Released
+
+add extra regression tests for new nat functionality
+
+place restrictions on using '!' in map/rdr rules
+
+fix up solaris compile problems
+
+3.4.5	10/06/2000 - Released
+
+mention -sl in ipfstat.8
+
+fix/support '!' in from/to rules (rdr) for NAT
+
+add from/to support to rdr NAT rules
+
+don't send ICMP errors in response to ICMP errors
+
+fix sunos5 compilation for "ipfstat-top" and cleanup ipfboot
+
+input accounting list used for both outbound and inbound packets
+
 3.4.4	23/05/2000 - Released
 
 don't add TCP state if it is an RST packet and (attempt) to send out
