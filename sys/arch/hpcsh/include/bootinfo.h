@@ -1,9 +1,6 @@
-/*	$NetBSD: bootinfo.h,v 1.6 2002/02/01 18:16:06 uch Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.7 2002/02/11 17:30:44 uch Exp $	*/
 
 #include <hpc/include/bootinfo.h>
-
 /* hpcsh specific goo */
-#define BI_CNUSE_SCI		2
-#define BI_CNUSE_SCIF		3
-#define BI_CNUSE_HD64461COM	4
-#define BI_CNUSE_HD64461VIDEO	5
+#include <machine/console.h>
+
