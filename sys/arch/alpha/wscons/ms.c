@@ -1,4 +1,4 @@
-/* $NetBSD: ms.c,v 1.4 1997/04/06 20:09:06 cgd Exp $ */
+/* $NetBSD: ms.c,v 1.5 1997/04/07 06:09:17 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,6 @@
 #include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
@@ -59,6 +58,8 @@
 #include <sys/systm.h>
 #include <sys/tty.h>
 #include <sys/signalvar.h>
+
+#include <machine/conf.h>
 
 #include <machine/vuid_event.h>
 #include <alpha/wscons/event_var.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: mem.c,v 1.12 1997/04/07 00:19:17 cgd Exp $ */
+/* $NetBSD: mem.c,v 1.13 1997/04/07 06:09:08 cgd Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,13 +47,13 @@
 #include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
 
 #include <machine/cpu.h>
+#include <machine/conf.h>
 
 #include <vm/vm.h>
 

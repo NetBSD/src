@@ -1,4 +1,4 @@
-/* $NetBSD: promcons.c,v 1.6 1997/04/07 00:19:21 cgd Exp $ */
+/* $NetBSD: promcons.c,v 1.7 1997/04/07 06:09:09 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -36,7 +36,6 @@
 #include <sys/tty.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
@@ -44,6 +43,7 @@
 #include <sys/types.h>
 #include <sys/device.h>
 
+#include <machine/conf.h>
 #include <machine/prom.h>
 
 static struct  tty *prom_tty[1];

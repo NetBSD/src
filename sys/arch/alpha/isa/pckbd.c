@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.16 1997/04/06 23:22:28 cgd Exp $ */
+/* $NetBSD: pckbd.c,v 1.17 1997/04/07 06:09:10 cgd Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -46,7 +46,6 @@
 #include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -56,6 +55,7 @@
 
 #include <machine/intr.h>
 #include <machine/bus.h>
+#include <machine/conf.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

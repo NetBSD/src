@@ -1,4 +1,4 @@
-/* $NetBSD: wscons.c,v 1.12 1997/04/06 20:09:07 cgd Exp $ */
+/* $NetBSD: wscons.c,v 1.13 1997/04/07 06:09:18 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -32,13 +32,14 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/conf.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
 #include <sys/termios.h>
+
+#include <machine/conf.h>
 
 #include <dev/cons.h>
 #include <alpha/wscons/wsconsvar.h>

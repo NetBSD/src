@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.15 1997/04/07 02:01:30 cgd Exp $ */
+/* $NetBSD: tga.c,v 1.16 1997/04/07 06:09:11 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -35,11 +35,11 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
-#include <sys/conf.h>
 #include <sys/ioctl.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
+#include <machine/conf.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

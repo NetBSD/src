@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.72 1997/04/07 05:40:45 cgd Exp $ */
+/* $NetBSD: machdep.c,v 1.73 1997/04/07 06:09:06 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -36,7 +36,6 @@
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
-#include <sys/conf.h>
 #include <sys/file.h>
 #ifdef REAL_CLISTS
 #include <sys/clist.h>
@@ -75,7 +74,7 @@
 #include <machine/reg.h>
 #include <machine/rpb.h>
 #include <machine/prom.h>
-#include <machine/cpuconf.h>
+#include <machine/conf.h>
 
 #include <net/netisr.h>
 #include <net/if.h>

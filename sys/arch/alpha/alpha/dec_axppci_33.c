@@ -1,4 +1,4 @@
-/* $NetBSD: dec_axppci_33.c,v 1.21 1997/04/07 05:19:08 cgd Exp $ */
+/* $NetBSD: dec_axppci_33.c,v 1.22 1997/04/07 06:09:03 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -35,7 +35,7 @@
 
 #include <machine/rpb.h>
 #include <machine/autoconf.h>
-#include <machine/cpuconf.h>
+#include <machine/conf.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/comreg.h>
