@@ -42,7 +42,7 @@
  *	@(#)trap.c	8.1 (Berkeley) 6/16/93
  *
  * from: Header: trap.c,v 1.34 93/05/28 04:34:50 torek Exp 
- * $Id: trap.c,v 1.18 1994/05/19 07:13:09 deraadt Exp $
+ * $Id: trap.c,v 1.19 1994/05/21 08:23:04 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -56,7 +56,6 @@
 #include <sys/wait.h>
 #include <sys/syscall.h>
 #include <sys/syslog.h>
-#include <sys/vmmeter.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
