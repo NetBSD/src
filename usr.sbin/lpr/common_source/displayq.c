@@ -1,4 +1,4 @@
-/*	$NetBSD: displayq.c,v 1.17.4.1 2000/10/17 19:50:22 tv Exp $	*/
+/*	$NetBSD: displayq.c,v 1.17.4.2 2001/09/30 13:32:14 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: displayq.c,v 1.17.4.1 2000/10/17 19:50:22 tv Exp $");
+__RCSID("$NetBSD: displayq.c,v 1.17.4.2 2001/09/30 13:32:14 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,8 +76,8 @@ extern int	users;		/* # of users in user array */
 extern uid_t	uid, euid;
 
 static int	col;		/* column on screen */
-static char	current[40];	/* current file being printed */
-static char	file[132];	/* print file name */
+static char	current[MAXPATHLEN]; /* current file being printed */
+static char	file[MAXPATHLEN]; /* print file name */
 static int	first;		/* first file in ``files'' column? */
 static int	garbage;	/* # of garbage cf files */
 static int	lflag;		/* long output option */
@@ -100,7 +100,7 @@ displayq(format)
 {
 	struct queue *q;
 	int i, nitems, fd, ret;
-	char *cp;
+	char *cp, *ecp;
 	struct queue **queue;
 	struct stat statb;
 	FILE *fp;
@@ -173,8 +173,11 @@ displayq(format)
 		else {
 			/* get daemon pid */
 			cp = current;
-			while ((i = getc(fp)) != EOF && i != '\n')
-				*cp++ = i;
+			ecp = cp + sizeof(current) - 1;
+			while ((i = getc(fp)) != EOF && i != '\n') {
+				if (cp < ecp)
+					*cp++ = i;
+			}
 			*cp = '\0';
 			i = atoi(current);
 			if (i <= 0) {
@@ -189,8 +192,11 @@ displayq(format)
 			} else {
 				/* read current file name */
 				cp = current;
-				while ((i = getc(fp)) != EOF && i != '\n')
-					*cp++ = i;
+		    		ecp = cp + sizeof(current) - 1;
+				while ((i = getc(fp)) != EOF && i != '\n') {
+					if (cp < ecp)
+						*cp++ = i;
+				}
 				*cp = '\0';
 				/*
 				 * Print the status file.
