@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: install.sh,v 1.2 1994/04/18 12:10:54 deraadt Exp $
+# $Id: install.sh,v 1.2.2.1 1994/07/28 09:00:48 cgd Exp $
 umask 0
 cat ./bin.tar.gz | gzip -d | (cd /mnt; tar xvpf -)
 cat ./dev.cpio.gz | gzip -d | (cd /mnt; cpio -iduv)
@@ -14,6 +14,4 @@ cat ./usr.misc.tar.gz | gzip -d | (cd /mnt; tar xvpf -)
 cat ./usr.sbin.tar.gz | gzip -d | (cd /mnt; tar xvpf -)
 cat ./usr.share.tar.gz | gzip -d | (cd /mnt; tar xvpf -)
 cat ./var.tar.gz | gzip -d | (cd /mnt; tar xvpf -)
-cp ./netbsd-sd0 /mnt/netbsd-sd0
-cp ./netbsd-sd1 /mnt/netbsd-sd1
-(cd /mnt; ln -s netbsd-sd0 netbsd)
+cp ./netbsd /mnt/netbsd

@@ -1,7 +1,4 @@
-# $Id: README,v 1.2 1994/06/28 22:07:48 deraadt Exp $
-
-Sparc Binary Snapshot #2: Tue Mar 29 02:58:07 MST 1994	src: Mar 22.
-Sparc Binary Snapshot #3: Mon Apr 18 02:48:08 MDT 1994	src: Apr 16.
+# $Id: README,v 1.2.2.1 1994/07/28 09:00:43 cgd Exp $
 
 Initial test versions of a NetBSD/sparc binaries install are available
 at
@@ -72,12 +69,10 @@ Until there are better instructions written, here's a rough idea:
     If you have done anything weird with partitions, take this moment
     to ensure that etc/fstab is corrent for your disk layout.
 
-5.  the install script puts both the standard kernels in /mnt, and
-    links netbsd to netbsd-sd0. the filesystem images do NOT contain
-    these kernels. The same /etc/fstab file will work with either kernel.
-
-    the kernel "netbsd-sd0" expects your root drive to be at the standard
-    sunos sd0/scsi-id#3 location. "netbsd-sd1" maps scsi-id#1 to be sd0.
+5.  the install script puts the standard kernel in /mnt. the filesystem
+    image dooes NOT contain this kernel.
+    the kernel expects your root drive to be at the standard sunos
+    sd0/scsi-id#3 location.
 
 6.  your rom may need some setup. make sure you boot from `new command mode'.
     If your machine comes up and gives you a `>' prompt instead of `ok', type:
