@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1 1996/09/30 16:34:38 ws Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.2 1997/04/16 23:03:52 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -94,3 +94,8 @@
 #define	VM_KMEM_SIZE		(NKMEMCLUSTERS * CLBYTES)
 #define	VM_MBUF_SIZE		(NMBCLUSTERS * CLBYTES)
 #define	VM_PHYS_SIZE		(USRIOSIZE * CLBYTES)
+
+/*
+ * MACHINE_NONCONTIG is necessart for NetBSD/powerpc.
+ */
+#define	MACHINE_NONCONTIG
