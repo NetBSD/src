@@ -610,7 +610,7 @@ void SHA256_Final(sha2_byte digest[], SHA256_CTX* context) {
 	}
 
 	/* Clean up state data: */
-	bzero(context, sizeof(context));
+	bzero(context, sizeof(*context));
 	usedspace = 0;
 }
 
@@ -631,7 +631,7 @@ char *SHA256_End(SHA256_CTX* context, char buffer[]) {
 		}
 		*buffer = (char)0;
 	} else {
-		bzero(context, sizeof(context));
+		bzero(context, sizeof(*context));
 	}
 	bzero(digest, SHA256_DIGEST_LENGTH);
 	return buffer;
@@ -940,7 +940,7 @@ void SHA512_Final(sha2_byte digest[], SHA512_CTX* context) {
 	}
 
 	/* Zero out state data */
-	bzero(context, sizeof(context));
+	bzero(context, sizeof(*context));
 }
 
 char *SHA512_End(SHA512_CTX* context, char buffer[]) {
@@ -960,7 +960,7 @@ char *SHA512_End(SHA512_CTX* context, char buffer[]) {
 		}
 		*buffer = (char)0;
 	} else {
-		bzero(context, sizeof(context));
+		bzero(context, sizeof(*context));
 	}
 	bzero(digest, SHA512_DIGEST_LENGTH);
 	return buffer;
@@ -1015,7 +1015,7 @@ void SHA384_Final(sha2_byte digest[], SHA384_CTX* context) {
 	}
 
 	/* Zero out state data */
-	bzero(context, sizeof(context));
+	bzero(context, sizeof(*context));
 }
 
 char *SHA384_End(SHA384_CTX* context, char buffer[]) {
@@ -1035,7 +1035,7 @@ char *SHA384_End(SHA384_CTX* context, char buffer[]) {
 		}
 		*buffer = (char)0;
 	} else {
-		bzero(context, sizeof(context));
+		bzero(context, sizeof(*context));
 	}
 	bzero(digest, SHA384_DIGEST_LENGTH);
 	return buffer;
