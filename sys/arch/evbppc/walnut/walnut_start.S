@@ -1,4 +1,4 @@
-/*	$NetBSD: walnut_start.S,v 1.1 2002/12/09 12:16:22 scw Exp $	*/
+/*	$NetBSD: walnut_start.S,v 1.2 2002/12/19 19:37:26 thorpej Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -119,9 +119,6 @@ GLOBAL(intrcnt)
 	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 	.long	0
 GLOBAL(eintrcnt)
-
-GLOBAL(powersave)
-	.long	0
 
 /*
  * File-scope for locore.S
