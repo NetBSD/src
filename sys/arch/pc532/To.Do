@@ -1,14 +1,10 @@
-$NetBSD: To.Do,v 1.7 1996/10/09 07:21:47 matthias Exp $
+$NetBSD: To.Do,v 1.8 1996/10/23 07:55:10 matthias Exp $
 
 This is the "To Do" list for NetBSD/pc532
   (Order is not in order of importance.)
   (Last updated, 12/6/95)
 
-- improve scn driver (integrate mods from Phil Bunde)
-
 - write an aic scsi driver
-
-- get gdb working (partially done) including kernel debugging
 
 - man4 man pages
 
