@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.11 2001/03/09 01:02:12 chs Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.12 2001/05/26 16:32:47 chs Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 struct uvm_object {
-	simple_lock_data_t	vmobjlock;	/* lock on memq */
+	struct simplelock	vmobjlock;	/* lock on memq */
 	struct uvm_pagerops	*pgops;		/* pager ops */
 	struct pglist		memq;		/* pages in this object */
 	int			uo_npages;	/* # of pages in memq */

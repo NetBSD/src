@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.45 2001/05/25 04:06:16 chs Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.46 2001/05/26 16:32:47 chs Exp $	*/
 
 /*
  *
@@ -72,7 +72,7 @@ struct uvm_pagerops *uvmpagerops[] = {
  */
 
 vm_map_t pager_map;		/* XXX */
-simple_lock_data_t pager_map_wanted_lock;
+struct simplelock pager_map_wanted_lock;
 boolean_t pager_map_wanted;	/* locked by pager map */
 static vaddr_t emergva;
 static boolean_t emerginuse;
