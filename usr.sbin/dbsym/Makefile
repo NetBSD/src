@@ -1,6 +1,6 @@
-#	$Id: Makefile,v 1.5 1997/06/23 04:51:19 mrg Exp $
+#	$Id: Makefile,v 1.6 1997/09/24 07:22:37 jeremy Exp $
 
-.if ${MACHINE} == "sun3"
+.if ${MACHINE} == "sun3" || ${MACHINE} == "sun3x"
 PROG=dbsym
 .endif
 
