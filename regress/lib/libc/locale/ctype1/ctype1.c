@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype1.c,v 1.1 2002/09/11 14:54:34 minoura Exp $	*/
+/*	$NetBSD: ctype1.c,v 1.2 2002/09/11 22:48:03 minoura Exp $	*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,6 +33,11 @@ main(int ac, char **av)
     wcstombs(buf, wbuf, 255);
     printf("%s\n", buf);
 
+    /*
+     * The output here is implementation-dependent.
+     * When we replace the conversion routine, we might have to
+     * update the *.exp files.
+     */
     for ( p=wbuf; *p; p++) {
         printf("0x%04X  ", (unsigned)*p);
     }
