@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.461 2002/08/02 01:31:06 thorpej Exp $
+#	$NetBSD: mi,v 1.462 2002/08/04 01:07:21 gmcgarry Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3266,6 +3266,7 @@
 ./usr/share/man/cat9/pci_find_device.0		comp-sys-catman
 ./usr/share/man/cat9/pci_findvendor.0		comp-sys-catman
 ./usr/share/man/cat9/pci_get_capability.0		comp-sys-catman
+./usr/share/man/cat9/pci_get_powerstate.0		comp-sys-catman
 ./usr/share/man/cat9/pci_intr.0		comp-sys-catman
 ./usr/share/man/cat9/pci_intr_disestablish.0	comp-sys-catman
 ./usr/share/man/cat9/pci_intr_establish.0	comp-sys-catman
@@ -3276,6 +3277,7 @@
 ./usr/share/man/cat9/pci_mapreg_info.0		comp-sys-catman
 ./usr/share/man/cat9/pci_mapreg_map.0		comp-sys-catman
 ./usr/share/man/cat9/pci_mapreg_type.0		comp-sys-catman
+./usr/share/man/cat9/pci_set_powerstate.0		comp-sys-catman
 ./usr/share/man/cat9/pcmcia.0		comp-sys-catman
 ./usr/share/man/cat9/pcmcia_cis_read_1.0		comp-sys-catman
 ./usr/share/man/cat9/pcmcia_cis_read_2.0		comp-sys-catman
@@ -5844,6 +5846,7 @@
 ./usr/share/man/man9/pci_find_device.9		comp-sys-man
 ./usr/share/man/man9/pci_findvendor.9		comp-sys-man
 ./usr/share/man/man9/pci_get_capability.9		comp-sys-man
+./usr/share/man/man9/pci_get_powerstate.9		comp-sys-man
 ./usr/share/man/man9/pci_intr.9		comp-sys-man
 ./usr/share/man/man9/pci_intr_disestablish.9		comp-sys-man
 ./usr/share/man/man9/pci_intr_establish.9		comp-sys-man
@@ -5854,6 +5857,7 @@
 ./usr/share/man/man9/pci_mapreg_info.9		comp-sys-man
 ./usr/share/man/man9/pci_mapreg_map.9		comp-sys-man
 ./usr/share/man/man9/pci_mapreg_type.9		comp-sys-man
+./usr/share/man/man9/pci_set_powerstate.9		comp-sys-man
 ./usr/share/man/man9/pcmcia.9		comp-sys-man
 ./usr/share/man/man9/pcmcia_cis_read_1.9		comp-sys-man
 ./usr/share/man/man9/pcmcia_cis_read_2.9		comp-sys-man
@@ -5876,11 +5880,11 @@
 ./usr/share/man/man9/pcmcia_scan_cis.9		comp-sys-man
 ./usr/share/man/man9/pfil.9		comp-sys-man
 ./usr/share/man/man9/pfil_add_hook.9		comp-sys-man
-./usr/share/man/man9/pfil_remove_hook.9		comp-sys-man
 ./usr/share/man/man9/pfil_get_head.9		comp-sys-man
 ./usr/share/man/man9/pfil_head_register.9		comp-sys-man
 ./usr/share/man/man9/pfil_head_unregister.9		comp-sys-man
 ./usr/share/man/man9/pfil_hook_get.9		comp-sys-man
+./usr/share/man/man9/pfil_remove_hook.9		comp-sys-man
 ./usr/share/man/man9/pfil_run_hooks.9		comp-sys-man
 ./usr/share/man/man9/pgsignal.9		comp-sys-man
 ./usr/share/man/man9/physio.9		comp-sys-man
