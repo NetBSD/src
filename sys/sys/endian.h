@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.1 1999/08/21 05:27:26 simonb Exp $	*/
+/*	$NetBSD: endian.h,v 1.2 2000/03/17 00:10:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -35,12 +35,10 @@
  *	@(#)endian.h	8.1 (Berkeley) 6/11/93
  */
 
-#ifndef _MACHINE_ENDIAN_H_	/* _BEFORE_ #ifndef _SYS_ENDIAN_H_ */
-#include <machine/endian.h>
-#endif
-
 #ifndef _SYS_ENDIAN_H_
 #define _SYS_ENDIAN_H_
+
+#include <machine/endian_machdep.h>
 
 /*
  * Definitions for byte order, according to byte significance from low
