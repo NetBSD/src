@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.1.2.3 2003/01/08 19:34:23 thorpej Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.1.2.4 2003/01/09 19:27:52 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,13 +45,13 @@
 
 static void pthread_rwlock__callback(void *);
 
-__strong_alias(__libc_rwlock_init,pthread_rwlock_init);
-__strong_alias(__libc_rwlock_rdlock,pthread_rwlock_rdlock);
-__strong_alias(__libc_rwlock_wrlock,pthread_rwlock_wrlock);
-__strong_alias(__libc_rwlock_tryrdlock,pthread_rwlock_tryrdlock);
-__strong_alias(__libc_rwlock_trywrlock,pthread_rwlock_trywrlock);
-__strong_alias(__libc_rwlock_unlock,pthread_rwlock_unlock);
-__strong_alias(__libc_rwlock_destroy,pthread_rwlock_destroy);
+__strong_alias(__libc_rwlock_init,pthread_rwlock_init)
+__strong_alias(__libc_rwlock_rdlock,pthread_rwlock_rdlock)
+__strong_alias(__libc_rwlock_wrlock,pthread_rwlock_wrlock)
+__strong_alias(__libc_rwlock_tryrdlock,pthread_rwlock_tryrdlock)
+__strong_alias(__libc_rwlock_trywrlock,pthread_rwlock_trywrlock)
+__strong_alias(__libc_rwlock_unlock,pthread_rwlock_unlock)
+__strong_alias(__libc_rwlock_destroy,pthread_rwlock_destroy)
 
 int
 pthread_rwlock_init(pthread_rwlock_t *rwlock,
