@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.11 1999/04/19 03:11:33 simonb Exp $
+# $NetBSD: ad.mips,v 1.12 1999/06/09 03:01:21 simonb Exp $
 ./usr/bin/elf2aout
 ./usr/bin/elf2ecoff
 ./usr/include/mips
@@ -45,7 +45,3 @@
 ./usr/include/mips/types.h
 ./usr/include/mips/varargs.h
 ./usr/include/mips/vmparam.h
-./usr/share/man/cat1/elf2aout.0
-./usr/share/man/cat1/elf2ecoff.0
-./usr/share/man/man1/elf2aout.1
-./usr/share/man/man1/elf2ecoff.1
