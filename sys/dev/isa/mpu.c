@@ -1,6 +1,4 @@
-/*	$NetBSD: mpu.c,v 1.1 1999/03/22 07:37:35 mycroft Exp $	*/
-
-#define	AUDIO_DEBUG
+/*	$NetBSD: mpu.c,v 1.2 1999/03/24 20:59:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
