@@ -1,4 +1,4 @@
-/*	$NetBSD: mksyntax.c,v 1.13 1997/07/04 21:02:14 christos Exp $	*/
+/*	$NetBSD: mksyntax.c,v 1.14 1997/07/04 21:40:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mksyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mksyntax.c,v 1.13 1997/07/04 21:02:14 christos Exp $");
+__RCSID("$NetBSD: mksyntax.c,v 1.14 1997/07/04 21:40:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,7 +147,7 @@ main(argc, argv)
 
 	/* Determine the characteristics of chars. */
 	c = -1;
-	if (c < 0)
+	if (c <= 0)
 		sign = 1;
 	else
 		sign = 0;
@@ -193,8 +193,8 @@ main(argc, argv)
 		fprintf(hfile, "/* %s */\n", is_entry[i].comment);
 	}
 	putc('\n', hfile);
-	fprintf(hfile, "#define SYNBASE %d\n", base);
-	fprintf(hfile, "#define PEOF %d\n\n", -base);
+	fprintf(hfile, "#define SYNBASE ((unsigned char) %d)\n", base);
+	fprintf(hfile, "#define PEOF ((unsigned char) %d)\n\n", -base);
 	putc('\n', hfile);
 	fputs("#define BASESYNTAX (basesyntax + SYNBASE)\n", hfile);
 	fputs("#define DQSYNTAX (dqsyntax + SYNBASE)\n", hfile);
