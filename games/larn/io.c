@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$NetBSD: io.c,v 1.4 1995/04/24 12:23:57 cgd Exp $";
+static char rcsid[] = "$NetBSD: io.c,v 1.5 1996/08/15 03:53:24 mrg Exp $";
 #endif /* not lint */
 
 /* io.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -61,6 +61,7 @@ static char rcsid[] = "$NetBSD: io.c,v 1.4 1995/04/24 12:23:57 cgd Exp $";
 
 #include "header.h"
 #include <string.h>
+#include <errno.h>
 
 #ifdef SYSV	/* system III or system V */
 #include <termio.h>
@@ -458,7 +459,9 @@ lcreat(str)
 	if (str==NULL) return(lfd=1);
 	if ((lfd=creat(str,0644)) < 0) 
 		{
-		lfd=1; lprintf("error creating file <%s>\n",str); lflush(); return(-1);
+		lfd=1; lprintf("error creating file <%s>: %s\n",str,
+			strerror(errno));
+		lflush(); return(-1);
 		}
 	return(lfd);
 	}
