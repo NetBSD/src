@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.eng,v 1.2.2.1 1997/10/30 06:19:26 mellon Exp $	*/
+/*	$NetBSD: menus.md.eng,v 1.2.2.2 1997/10/31 21:37:18 mellon Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,7 +41,7 @@
 menu editfsparts, y=15, exit;
 	display action  {
 			ask_sizemult();
-			msg_display(MSG_fspart);
+			msg_display(MSG_fspart, multname);
 			disp_cur_fspart(-1, 1);
 		};
 	option "Change a", action { editpart = A;}, sub menu edfspart;
