@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.7 2000/08/25 16:47:17 joda Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.8 2000/08/28 13:27:37 joda Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -68,7 +68,7 @@ static void
 usage(void)
 {
 	fprintf(stderr, "usage: rndctl -CEce [-t devtype] [-d devname]\n");
-	fprintf(stderr, "       rndctl -l [-t devtype] [-d devname]\n");
+	fprintf(stderr, "       rndctl -ls [-t devtype] [-d devname]\n");
 	exit(1);
 }
 
