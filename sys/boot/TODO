@@ -1,0 +1,12 @@
+Necessary:
+	need support for bootparam
+	small printf
+	hooks for bootstrapping
+	multiple ethernets
+	nfs diskless stuff, i.e do we change the thing, and how.
+
+High Priority:
+
+Low Priority:
+	remove ether-orientation? FDDI support?
+	
