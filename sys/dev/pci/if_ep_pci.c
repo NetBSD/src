@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.16 1996/12/30 19:18:28 jonathan Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.17 1996/12/31 21:26:10 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -169,13 +169,13 @@ ep_pci_attach(parent, self, aux)
 	if (i & IS_PCI_UTP)
 		conn |= IS_UTP;
 	if (i & IS_PCI_100BASE_TX)
-		conn |= TX;
+		conn |= IS_100BASE_TX;
 	if (i & IS_PCI_100BASE_T4)
-		conn |= T4;
+		conn |= IS_100BASE_T4;
 	if (i & IS_PCI_100BASE_FX)
-		conn |= FX;
+		conn |= IS_100BASE_FX;
 	if (i & IS_PCI_100BASE_MII)
-		conn |= MII;
+		conn |= IS_100BASE_MII;
 
 	GO_WINDOW(0);
 
