@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35 2002/03/03 14:28:49 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.36 2002/03/08 13:22:12 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -114,7 +114,6 @@
 
 #include <machine/cpu.h>
 #include <machine/psl.h>
-#include <machine/bootinfo.h>
 #include <machine/bus.h>
 #include <sh3/cpgreg.h>
 #include <sh3/bscreg.h>
@@ -128,8 +127,6 @@
 /* the following is used externally (sysctl_hw) */
 char machine[] = MACHINE;		/* cpu "architecture" */
 char machine_arch[] = MACHINE_ARCH;	/* machine_arch = "sh3" */
-
-char bootinfo[BOOTINFO_MAXSIZE];
 
 int physmem;
 int dumpmem_low;
@@ -160,7 +157,6 @@ struct	extent *ioport_ex;
 struct	extent *iomem_ex;
 static	int ioport_malloc_safe;
 
-void setup_bootinfo __P((void));
 void initSH3 __P((void *));
 void LoadAndReset __P((char *));
 void XLoadAndReset __P((char *));
@@ -464,11 +460,6 @@ initSH3(pc)
 	 */
 	initmsgbuf((caddr_t)msgbuf_paddr, round_page(MSGBUFSIZE));
 
-	/*
-	 * set boot device information
-	 */
-	setup_bootinfo();
-
 	/* setup proc0 stack */
 	sp = avail + NBPG + USPACE - 16 - sizeof(struct trapframe);
 
@@ -478,35 +469,6 @@ initSH3(pc)
 	 */
 	__asm __volatile ("jmp @%0; mov %1, r15" :: "r"(pc), "r"(sp));
 }
-
-void
-setup_bootinfo(void)
-{
-	struct btinfo_bootdisk *help;
-
-	*(int *)bootinfo = 1;
-	help = (struct btinfo_bootdisk *)(bootinfo + sizeof(int));
-	help->biosdev = 0;
-	help->partition = 0;
-	((struct btinfo_common *)help)->len = sizeof(struct btinfo_bootdisk);
-	((struct btinfo_common *)help)->type = BTINFO_BOOTDISK;
-}
-
-void *
-lookup_bootinfo(type)
-	int type;
-{
-	struct btinfo_common *help;
-	int n = *(int*)bootinfo;
-	help = (struct btinfo_common *)(bootinfo + sizeof(int));
-	while (n--) {
-		if (help->type == type)
-			return (help);
-		help = (struct btinfo_common *)((char*)help + help->len);
-	}
-	return (0);
-}
-
 
 /*
  * consinit:

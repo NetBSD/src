@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 2002/03/03 14:28:48 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14 2002/03/08 13:22:12 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -107,13 +107,10 @@
 #include <sh3/cpu.h>
 #include <sh3/mmu.h>
 #include <dev/cons.h>
-#include <machine/bootinfo.h>
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = MACHINE;		/* cpu "architecture" */
 char machine_arch[] = MACHINE_ARCH;	/* machine_arch = "sh3" */
-
-char bootinfo[BOOTINFO_MAXSIZE];
 
 int physmem;
 paddr_t msgbuf_paddr;
@@ -127,7 +124,6 @@ extern char start[], _etext[], _edata[], _end[];
 
 void main(void) __attribute__((__noreturn__));
 void dreamcast_startup(void) __attribute__((__noreturn__));
-void setup_bootinfo __P((void));
 
 /*
  * Machine-dependent startup code
@@ -338,11 +334,6 @@ dreamcast_startup()
 	 */
 	initmsgbuf((caddr_t)msgbuf_paddr, round_page(MSGBUFSIZE));
 
-	/*
-	 * set boot device information
-	 */
-	setup_bootinfo();
-
 	/* setup proc0 stack */
 	sp = avail + NBPG + USPACE - 16 - sizeof(struct trapframe);
 
@@ -353,34 +344,6 @@ dreamcast_startup()
 	/* NOTREACHED */
 	while (1)
 		;
-}
-
-void
-setup_bootinfo(void)
-{
-	struct btinfo_bootdisk *help;
-
-	*(int *)bootinfo = 1;
-	help = (struct btinfo_bootdisk *)(bootinfo + sizeof(int));
-	help->biosdev = 0;
-	help->partition = 0;
-	((struct btinfo_common *)help)->len = sizeof(struct btinfo_bootdisk);
-	((struct btinfo_common *)help)->type = BTINFO_BOOTDISK;
-}
-
-void *
-lookup_bootinfo(type)
-	int type;
-{
-	struct btinfo_common *help;
-	int n = *(int*)bootinfo;
-	help = (struct btinfo_common *)(bootinfo + sizeof(int));
-	while (n--) {
-		if (help->type == type)
-			return (help);
-		help = (struct btinfo_common *)((char*)help + help->len);
-	}
-	return (0);
 }
 
 void
