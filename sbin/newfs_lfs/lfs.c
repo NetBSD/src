@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.3.2.2 1999/09/05 14:57:34 he Exp $	*/
+/*	$NetBSD: lfs.c,v 1.3.2.3 2000/10/11 21:03:12 he Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.3.2.2 1999/09/05 14:57:34 he Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.3.2.3 2000/10/11 21:03:12 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -668,7 +668,8 @@ put(fd, off, p, len)
 	if ((wbytes = write(fd, p, len)) < 0)
 		fatal("%s: write: %s", special, strerror(errno));
 	if (wbytes != len)
-		fatal("%s: short write (%d, not %d)", special, wbytes, len);
+		fatal("%s: short write (%d, not %ld)", 
+		      special, wbytes, (u_long) len);
 }
 
 /*
