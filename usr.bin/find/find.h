@@ -1,4 +1,4 @@
-/*	$NetBSD: find.h,v 1.11 1999/01/16 13:27:30 simonb Exp $	*/
+/*	$NetBSD: find.h,v 1.12 1999/07/20 01:28:41 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,14 +38,17 @@
  *	from: @(#)find.h	8.1 (Berkeley) 6/6/93
  */
 
+#include <regex.h>
+
 /* node type */
 enum ntype {
 	N_AND = 1, 				/* must start > 0 */
 	N_AMIN, N_ATIME, N_CLOSEPAREN, N_CMIN, N_CTIME, N_DEPTH, N_EXEC,
-	N_EXPR, N_FLAGS, N_FOLLOW, N_FSTYPE, N_GROUP, N_INUM, N_LINKS, N_LS,
+	N_EXPR, N_FLAGS, N_FOLLOW, N_FSTYPE, N_GROUP, N_INUM, N_IREGEX,
+	N_LINKS, N_LS,
 	N_MMIN, N_MTIME, N_NAME, N_NEWER, N_NOGROUP, N_NOT, N_NOUSER, N_OK,
 	N_OPENPAREN, N_OR, N_PATH, N_PERM, N_PRINT, N_PRINT0, N_PRINTX,
-	N_PRUNE, N_SIZE, N_TYPE, N_USER, N_XDEV,
+	N_PRUNE, N_REGEX, N_SIZE, N_TYPE, N_USER, N_XDEV,
 };
 
 /* node definition */
@@ -80,6 +83,7 @@ typedef struct _plandata {
 		} ex;
 		char *_a_data[2];		/* array of char pointers */
 		char *_c_data;			/* char pointer */
+		regex_t _regexp_data;		/* compiled regexp */
 	} p_un;
 } PLAN;
 #define	a_data	p_un._a_data
@@ -97,6 +101,7 @@ typedef struct _plandata {
 #define	e_argv	p_un.ex._e_argv
 #define	e_orig	p_un.ex._e_orig
 #define	e_len	p_un.ex._e_len
+#define	regexp_data p_un._regexp_data
 
 typedef struct _option {
 	char *name;			/* option name */
