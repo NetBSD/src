@@ -1,4 +1,4 @@
-$Id: README.gre,v 1.2 1998/09/30 06:16:07 hwr Exp $
+$Id: README.gre,v 1.3 1998/10/31 13:07:02 hwr Exp $
 ---------------------------------------------------------------------------
                       A GRE Tunnel for NetBSD
 
@@ -8,7 +8,7 @@ $Id: README.gre,v 1.2 1998/09/30 06:16:07 hwr Exp $
 This is a very alpha implementation of GRE packet encapsulation.
 Generic Route Encapsulation (GRE) is described in RFC 1701 and 1702.
 The interface also supports IPIP (protocol 4) encapsulation,
-as described in RFC 2003 and MOBILE (protcol 55) as of RFC 2004  but 
+as described in RFC 2003 and MOBILE (protocol 55) as of RFC 2004  but 
 default is GRE mode.
 
 Basically GRE allows to tunnel not only IP over IP, but also provides
@@ -58,7 +58,7 @@ Todos/Bugs:
 
   GRE RFC not yet fully implemented (no GRE options), no other protocols
   yet than IP over IP.
-  RFC 2003 also not yet fully supportet wrt. options etc.
+  RFC 2003 also not yet fully supported wrt. options etc.
 
   Code quality is surely not best and possibly not near anything like KNF
 
