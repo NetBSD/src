@@ -31,10 +31,10 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)externs.h	5.4 (Berkeley) 6/1/90
- *	$Id: externs.h,v 1.2 1993/08/01 18:56:15 mycroft Exp $
+ *	$Id: externs.h,v 1.3 1995/02/28 18:31:09 jtc Exp $
  */
 
-#include <sys/signal.h>
+#include <signal.h>
 #include <stdio.h>
 
 #define BITS (8 * sizeof (int))

@@ -39,10 +39,10 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)crib.c	5.6 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: crib.c,v 1.3 1993/08/01 18:55:15 mycroft Exp $";
+static char rcsid[] = "$Id: crib.c,v 1.4 1995/02/28 18:31:26 jtc Exp $";
 #endif /* not lint */
 
-# include	<sys/signal.h>
+# include	<signal.h>
 # include	<curses.h>
 # include	<unistd.h>
 # include	"deck.h"
