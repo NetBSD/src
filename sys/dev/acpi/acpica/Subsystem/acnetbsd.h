@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acnetbsd.h - OS specific defines, etc.
- *       $Revision: 1.1 $
+ *       $Revision: 1.2 $
  *
  *****************************************************************************/
 
@@ -131,6 +131,15 @@
 
 #include "acgcc.h"
 
+#ifdef _LP64
+#define	ACPI_MACHINE_WIDTH	64
+#else
+#define	ACPI_MACHINE_WIDTH	32
+#endif
+
+#define	COMPILER_DEPENDENT_INT64  int64_t
+#define	COMPILER_DEPENDENT_UINT64 uint64_t
+
 #ifdef _KERNEL
 #include "opt_acpi.h"		/* collect build-time options here */
 
@@ -140,11 +149,27 @@
 
 #define asm         __asm
 
+#define	ACPI_USE_NATIVE_DIVIDE
+
+#define ACPI_ASM_MACROS		/* tell acenv.h */
+
+#define	ACPI_SYSTEM_XFACE       
+#define	ACPI_EXTERNAL_XFACE     
+#define	ACPI_INTERNAL_XFACE
+#define	ACPI_INTERNAL_VAR_XFACE
+
 /* XXX This is not a perfect world. */
 #ifdef __i386__
 #include <machine/cpufunc.h>
-#define __cli()     disable_intr()
-#define __sti()     enable_intr()
+
+#define	ACPI_DISABLE_IRQS()		disable_intr()
+#define	ACPI_ENABLE_IRQS()		enable_intr()
+
+/* XXX */
+#define	ACPI_ACQUIRE_GLOBAL_LOCK(GLptr, Acq)
+#define	ACPI_RELEASE_GLOBAL_LOCK(GLptr, Acq)
+
+#define	ACPI_FLUSH_CPU_CACHE()		wbinvd()
 #endif /* __i386__ */
 
 #ifdef ACPI_DEBUG
