@@ -26,6 +26,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 #define	DEFAULT_ARCH	bfd_arch_vax
 #define	DEFAULT_MID 	M_VAX_NETBSD
 
+/* XXX Recognize kernels, which have little-endian ULTRIX magic */
+#define SWAP_MAGIC(ext) (bfd_getb32(ext) == 0x0b010000 ? 0x008c010b : bfd_getb32(ext))
+
 #define MY(OP) CAT(vaxnetbsd_,OP)
 /* This needs to start with a.out so GDB knows it is an a.out variant.  */
 #define TARGETNAME "a.out-vax-netbsd"
