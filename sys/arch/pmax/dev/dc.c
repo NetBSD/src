@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell and Rick Macklem.
@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)dc.c	7.12 (Berkeley) 12/20/92
+ *	from: @(#)dc.c	8.2 (Berkeley) 11/30/93
+ *      $Id: dc.c,v 1.3 1994/05/27 08:39:22 glass Exp $
  */
 
 /*
@@ -50,8 +51,8 @@
  *	suitability of this software for any purpose.  It is provided "as is"
  *	without express or implied warranty.
  *
- * from: $Header: /sprite/src/kernel/dev/ds3100.md/RCS/devDC7085.c,
- *	v 1.4 89/08/29 11:55:30 nelson Exp $ SPRITE (DECWRL)";
+ * from: Header: /sprite/src/kernel/dev/ds3100.md/RCS/devDC7085.c,
+ *	v 1.4 89/08/29 11:55:30 nelson Exp  SPRITE (DECWRL)";
  */
 
 #include <dc.h>
@@ -100,10 +101,9 @@ void dcstart	__P((struct tty *));
 void dcxint	__P((struct tty *));
 void dcPutc	__P((dev_t, int));
 void dcscan	__P((void *));
+extern void ttrstrt __P((void *));
 int dcGetc	__P((dev_t));
 int dcparam	__P((struct tty *, struct termios *));
-extern void KBDReset	__P((dev_t, void (*)()));
-extern void MouseInit	__P((dev_t, void (*)(), int (*)()));
 
 struct	tty dc_tty[NDCLINE];
 int	dc_cnt = NDCLINE;
@@ -198,7 +198,6 @@ dcprobe(cp)
 		pdp->p_addr = (void *)dcaddr;
 		pdp->p_arg = (int)tp;
 		pdp->p_fcn = dcxint;
-		tp->t_addr = (caddr_t)pdp;
 		pdp++, tp++;
 	}
 	dcsoftCAR[cp->pmax_unit] = cp->pmax_flags | 0xB;
@@ -216,6 +215,7 @@ dcprobe(cp)
 			s = spltty();
 			dcaddr->dc_lpr = LPR_RXENAB | LPR_8_BIT_CHAR |
 				LPR_B4800 | DCKBD_PORT;
+			MachEmptyWriteBuffer();
 			dcaddr->dc_lpr = LPR_RXENAB | LPR_B4800 | LPR_OPAR |
 				LPR_PARENB | LPR_8_BIT_CHAR | DCMOUSE_PORT;
 			MachEmptyWriteBuffer();
@@ -251,7 +251,6 @@ dcopen(dev, flag, mode, p)
 	if (unit >= dc_cnt || dcpdma[unit].p_addr == (void *)0)
 		return (ENXIO);
 	tp = &dc_tty[unit];
-	tp->t_addr = (caddr_t)&dcpdma[unit];
 	tp->t_oproc = dcstart;
 	tp->t_param = dcparam;
 	tp->t_dev = dev;
@@ -334,11 +333,12 @@ dcwrite(dev, uio, flag)
 }
 
 /*ARGSUSED*/
-dcioctl(dev, cmd, data, flag)
+dcioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	int cmd;
 	caddr_t data;
 	int flag;
+	struct proc *p;
 {
 	register struct tty *tp;
 	register int unit = minor(dev);
@@ -346,7 +346,7 @@ dcioctl(dev, cmd, data, flag)
 	int error;
 
 	tp = &dc_tty[unit];
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag);
+	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 	error = ttioctl(tp, cmd, data, flag);
@@ -455,6 +455,7 @@ dcparam(tp, t)
 		lpr |= LPR_2_STOP;
 	dcaddr->dc_lpr = lpr;
 	MachEmptyWriteBuffer();
+	DELAY(10);
 	return (0);
 }
 
@@ -573,7 +574,7 @@ dcxint(tp)
 	register struct pdma *dp;
 	register dcregs *dcaddr;
 
-	dp = (struct pdma *)tp->t_addr;
+	dp = &dcpdma[minor(tp->t_dev)];
 	if (dp->p_mem < dp->p_end) {
 		dcaddr = (dcregs *)dp->p_addr;
 		dcaddr->dc_tdr = dc_brk[(tp - dc_tty) >> 2] | *dp->p_mem++;
@@ -585,7 +586,7 @@ dcxint(tp)
 	if (tp->t_state & TS_FLUSH)
 		tp->t_state &= ~TS_FLUSH;
 	else {
-		ndflush(&tp->t_outq, (u_char *)(dp->p_mem) - tp->t_outq.c_cf);
+		ndflush(&tp->t_outq, dp->p_mem-tp->t_outq.c_cf);
 		dp->p_end = dp->p_mem = tp->t_outq.c_cf;
 	}
 	if (tp->t_line)
@@ -593,7 +594,8 @@ dcxint(tp)
 	else
 		dcstart(tp);
 	if (tp->t_outq.c_cc == 0 || !(tp->t_state & TS_BUSY)) {
-		((dcregs *)dp->p_addr)->dc_tcr &= ~(1 << (minor(tp->t_dev) & 03));
+		dcaddr = (dcregs *)dp->p_addr;
+		dcaddr->dc_tcr &= ~(1 << (minor(tp->t_dev) & 03));
 		MachEmptyWriteBuffer();
 		DELAY(10);
 	}
@@ -608,7 +610,7 @@ dcstart(tp)
 	register int cc;
 	int s;
 
-	dp = (struct pdma *)tp->t_addr;
+	dp = &dcpdma[minor(tp->t_dev)];
 	dcaddr = (dcregs *)dp->p_addr;
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
@@ -671,7 +673,7 @@ dcstop(tp, flag)
 	register struct pdma *dp;
 	register int s;
 
-	dp = (struct pdma *)tp->t_addr;
+	dp = &dcpdma[minor(tp->t_dev)];
 	s = spltty();
 	if (tp->t_state & TS_BUSY) {
 		dp->p_end = dp->p_mem;
