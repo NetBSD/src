@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.c,v 1.4 1997/10/10 12:32:29 lukem Exp $	*/
+/*	$NetBSD: extern.c,v 1.5 1999/09/19 18:12:09 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)extern.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: extern.c,v 1.4 1997/10/10 12:32:29 lukem Exp $");
+__RCSID("$NetBSD: extern.c,v 1.5 1999/09/19 18:12:09 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,10 +47,10 @@ __RCSID("$NetBSD: extern.c,v 1.4 1997/10/10 12:32:29 lukem Exp $");
 #include "deck.h"
 #include "cribbage.h"
 
-bool	explain		= FALSE;	/* player mistakes explained */
-bool	iwon		= FALSE;	/* if comp won last game */
-bool	quiet		= FALSE;	/* if suppress random mess */
-bool	rflag		= FALSE;	/* if all cuts random */
+BOOLEAN	explain		= FALSE;	/* player mistakes explained */
+BOOLEAN	iwon		= FALSE;	/* if comp won last game */
+BOOLEAN	quiet		= FALSE;	/* if suppress random mess */
+BOOLEAN	rflag		= FALSE;	/* if all cuts random */
 
 char	expl[128];			/* explanation */
 
