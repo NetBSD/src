@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.77 2005/02/05 10:43:14 jmmv Exp $ */
+/* $NetBSD: user.c,v 1.78 2005/04/05 22:03:57 peter Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.77 2005/02/05 10:43:14 jmmv Exp $");
+__RCSID("$NetBSD: user.c,v 1.78 2005/04/05 22:03:57 peter Exp $");
 #endif
 
 #include <sys/types.h>
@@ -663,7 +663,7 @@ valid_group(char *group)
 	unsigned char	*cp;
 
 	for (cp = group ; *cp ; cp++) {
-		if (!isalnum(*cp)) {
+		if (!isalnum(*cp) && *cp != '.' && *cp != '_' && *cp != '-') {
 			return 0;
 		}
 	}
