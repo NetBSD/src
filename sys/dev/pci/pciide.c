@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.45 1999/10/25 14:13:12 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.46 1999/11/03 14:54:07 mycroft Exp $	*/
 
 
 /*
@@ -1300,7 +1300,7 @@ piix_chip_map(sc, pa)
 		    PIIX_IDETIM_IDE) == 0) {
 			printf("%s: %s channel ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-			return;
+			continue;
 		}
 		/* PIIX are compat-only pciide devices */
 		pciide_mapchan(pa, cp, 0, &cmdsize, &ctlsize, pciide_pci_intr);
@@ -1691,7 +1691,7 @@ apollo_chip_map(sc, pa)
 		if ((ideconf & APO_IDECONF_EN(channel)) == 0) {
 			printf("%s: %s channel ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-			return;
+			continue;
 		}
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
 		    pciide_pci_intr);
@@ -2210,7 +2210,7 @@ sis_chip_map(sc, pa)
 		    (channel == 1 && (sis_ctr0 & SIS_CTRL0_CHAN1_EN) == 0)) {
 			printf("%s: %s channel ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-			return;
+			continue;
 		}
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
 		    pciide_pci_intr);
