@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.39 2003/04/19 19:34:23 fvdl Exp $
+ * $Id: ahc_pci.c,v 1.40 2003/04/25 16:02:52 fvdl Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -852,6 +852,12 @@ ahc_pci_attach(parent, self, aux)
 	 */
 	ahc_intr_enable(ahc, FALSE);
 
+	/*
+	 * XXX somehow reading this once fails on some sparc64 systems.
+	 *     This may be a problem in the sparc64 PCI code. Doing it
+	 *     twice works around it.
+	 */
+	devconfig = pci_conf_read(pa->pa_pc, pa->pa_tag, DEVCONFIG);
 	devconfig = pci_conf_read(pa->pa_pc, pa->pa_tag, DEVCONFIG);
 
 	/*
