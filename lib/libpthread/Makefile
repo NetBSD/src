@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.8.2.8 2001/09/06 19:11:53 nathanw Exp $
+#	$NetBSD: Makefile,v 1.8.2.9 2001/11/16 18:09:26 thorpej Exp $
 #
 
 WARNS=	2
+
+.include <bsd.own.mk>
 
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH})
 ARCHSUBDIR=	${MACHINE_ARCH}
