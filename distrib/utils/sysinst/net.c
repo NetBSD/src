@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.8.2.1 1997/10/27 19:36:26 thorpej Exp $	*/
+/*	$NetBSD: net.c,v 1.8.2.2 1997/10/30 06:13:21 mellon Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,7 +49,7 @@
 #include "menu_defs.h"
 #include "txtwalk.h"
 
-static network_up = 0;
+static int network_up = 0;
 
 /* Get the list of network interfaces. */
 
@@ -169,8 +169,8 @@ int config_network (void)
 	run_prog ("/sbin/route add default %s > /dev/null 2> /dev/null",
 		  net_defroute);
 
-	network_up =  run_prog ("/sbin/ping -c 2 %s > /dev/null", net_defroute)
-		|| run_prog ("/sbin/ping -c 2 %s > /dev/null", net_namesvr);
+	network_up = !run_prog ("/sbin/ping -c 2 %s > /dev/null", net_defroute)
+		&& !run_prog ("/sbin/ping -c 2 %s > /dev/null", net_namesvr);
 
 	return network_up;
 }
@@ -178,42 +178,30 @@ int config_network (void)
 int
 get_via_ftp (void)
 { 
-	char **list;
-	char realdir[STRSIZE];
+	distinfo *list;
 	char filename[SSTRSIZE];
 	int  ret;
 
-	while (config_network ()) {
+	while (!config_network ()) {
 		msg_display (MSG_netnotup);
 		process_menu (MENU_yesno);
 		if (!yesno)
 			return 0;
 	}
-		
+
+	cd_dist_dir ("ftp");
+
 	strncat (ftp_dir, ftp_prefix, STRSIZE-strlen(ftp_dir));
 	process_menu (MENU_ftpsource);
-	msg_prompt (MSG_distdir, dist_dir, dist_dir, STRSIZE, "ftp");
-	if (*dist_dir == '/')
-		snprintf (realdir, STRSIZE, "/mnt%s", dist_dir);
-	else
-		snprintf (realdir, STRSIZE, "/mnt/%s", dist_dir);
-	strcpy (dist_dir, realdir);
-	run_prog ("/bin/mkdir %s", realdir);
-	clean_dist_dir = 1;
-#ifndef DEBUG
-	if (chdir(realdir)) {
-		endwin();
-		(void)fprintf(stderr, msg_string(MSG_realdir), realdir);
-		exit(1);
-	}
-#else
-	printf ("chdir (%s)\n", realdir);
-#endif
 	
 	list = dist_list;
 	endwin();
-	while (*list) {
-		snprintf (filename, SSTRSIZE, *list, rels, dist_postfix);
+	while (list->name) {
+		if (!list->getit) {
+			list++;
+			continue;
+		}
+		snprintf (filename, SSTRSIZE, list->name, rels, dist_postfix);
 		if (strcmp ("ftp", ftp_user) == 0)
 			ret = run_prog("/usr/bin/ftp -a ftp://%s/%s/%s",
 				       ftp_host, ftp_dir,
@@ -247,7 +235,7 @@ get_via_ftp (void)
 int
 get_via_nfs(void)
 {
-        while (config_network ()) {
+        while (!config_network ()) {
                 msg_display (MSG_netnotup);
                 process_menu (MENU_yesno);
                 if (!yesno)
@@ -258,7 +246,7 @@ get_via_nfs(void)
 	process_menu (MENU_nfssource);
 
 	/* Mount it */
-	while(!run_prog("/sbin/mount -t nfs %s:%s /mnt2", nfs_host, nfs_dir)) {
+	while(run_prog("/sbin/mount -t nfs %s:%s /mnt2", nfs_host, nfs_dir)) {
 		process_menu (MENU_nfsbadmount);
 		if (!yesno)
 			return 0;
