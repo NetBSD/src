@@ -32,34 +32,13 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)misc.c	5.5 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: misc.c,v 1.2 1993/08/01 18:53:37 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)misc.c	5.6 (Berkeley) 3/25/93";*/
+static char rcsid[] = "$Id: misc.c,v 1.3 1993/08/07 08:27:57 mycroft Exp $";
 #endif /* not lint */
 
 # include	"monop.ext"
 # include	<ctype.h>
 # include	<signal.h>
-
-# define	execsh(sh)	execl(sh, shell_name[roll(1, num_names)-1], 0)
-
-static char	*shell_def	= "/bin/csh",
-		*shell_name[]	= {
-			".Hi Mom!",
-			".Kick Me",
-			".I'm really the next process down",
-			".Hi Kids!",
-			".This space for rent",
-			".Singin' in the rain....",
-			".I am but a Cog in the Wheel of Life",
-			".Look out!!! Behind you!!!!!",
-			".Looking for a good time, sailor?",
-			".I don't get NO respect...",
-			".Augghh!  You peeked!"
-		};
-
-static int	num_names	= sizeof shell_name / sizeof (char *);;
-
-char	*shell_in();
 
 /*
  *	This routine executes a truncated set of commands until a
@@ -291,70 +270,4 @@ reg int	*s1, *s2, size; {
 	size /= 2;
 	while (size--)
 		*s1++ = *s2++;
-}
-/*
- *	This routine forks off a shell.  It uses the users login shell
- */
-shell_out() {
-
-	static char	*shell = NULL;
-
-	printline();
-	if (shell == NULL)
-		shell = shell_in();
-	fflush(stdout);
-	if (!fork()) {
-		signal(SIGINT, SIG_DFL);
-		execsh(shell);
-	}
-	ignoresigs();
-	wait();
-	resetsigs();
-	putchar('\n');
-	printline();
-}
-/*
- *	This routine looks up the users login shell
- */
-# include	<sys/types.h>
-# include	<pwd.h>
-
-char		*getenv();
-
-char *
-shell_in() {
-
-	reg struct passwd	*pp;
-	reg char		*sp;
-
-	if ((sp = getenv("SHELL")) == NULL) {
-		pp = getpwuid(getuid());
-		if (pp->pw_shell[0] != '\0')
-			return pp->pw_shell;
-		else
-			return shell_def;
-		/*return (*(pp->pw_shell) != '\0' ? pp->pw_shell : shell_def);*/
-	}
-	return sp;
-}
-/*
- *	This routine sets things up to ignore all the signals.
- */
-ignoresigs() {
-
-	reg int	i;
-
-	for (i = 0; i < NSIG; i++)
-		signal(i, SIG_IGN);
-}
-/*
- *	This routine sets up things as they were before.
- */
-resetsigs() {
-
-	reg int	i;
-
-	for (i = 0; i < NSIG; i++)
-		signal(i, SIG_DFL);
-	signal(SIGINT, quit);
 }
