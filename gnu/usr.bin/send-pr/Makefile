@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2003/10/21 10:01:20 lukem Exp $
+#	$NetBSD: Makefile,v 1.29 2003/12/04 23:32:37 keihan Exp $
 
 .include <bsd.own.mk>
 
@@ -19,7 +19,7 @@ VERSION=3.95
 GNATS_ROOT =
 
 # Email address to which people should submit bugs.
-GNATS_ADDR = gnats-bugs@gnats.netbsd.org
+GNATS_ADDR = gnats-bugs@gnats.NetBSD.org
 
 # The default release for this send-pr.
 DEFAULT_RELEASE = `uname -s` `uname -r`
