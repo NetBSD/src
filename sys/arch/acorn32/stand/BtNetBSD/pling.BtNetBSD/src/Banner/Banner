@@ -1,0 +1,295 @@
+REM> Banner
+REM $NetBSD: Banner,v 1.1 2001/10/05 22:28:04 reinoud Exp $
+REM
+REM Copyright (c) 1995 Mark Brinicombe
+REM All rights reserved
+REM
+REM Redistribution and use in source and binary forms, with or without
+REM modification, are permitted provided that the following conditions
+REM are met:
+REM 1. Redistributions of source code must retain the above copyright
+REM    notice, this list of conditions and the following disclaimer.
+REM 2. Redistributions in binary form must reproduce the above copyright
+REM    notice, this list of conditions and the following disclaimer in the
+REM    documentation and/or other materials provided with the distribution.
+REM 3. All advertising materials mentioning features or use of this software
+REM    must display the following acknowledgement:
+REM        This product includes software developed by Mark Brinicombe.
+REM 4. The name of the company nor the name of the author may be used to
+REM    endorse or promote products derived from this software without specific
+REM    prior written permission.
+REM
+REM THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+REM IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+REM OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+REM IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+REM INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+REM BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+REM OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+REM ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+REM OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+REM THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+REM DAMAGE.
+REM
+REM RiscBSD kernel project
+REM
+REM banner
+REM
+REM Assembly code for banner module.
+REM
+REM Created      : 12/07/95
+REM Last updated : 12/07/95
+REM
+
+DIM code% &20000
+
+LIBRARY "<asmlib$dir>.resutil"
+
+service_resourcefsstarting = &60
+
+version_number = 020
+version$ = "0.20 (12 July 1995) © Mark Brinicombe"
+
+vdu = 256
+
+FOR pass% = 4 TO 7 STEP 2
+
+P% = code%
+O% = code%
+
+[ opt pass%
+.modulestart
+]
+
+PROCmodule
+PROCresourceutils
+PROCresourcefile("<asmlib$dir>.sprite", "Resources.RiscBSD.BannerSp")
+PROCresourcefile("", "")
+
+[ opt pass%
+.moduleend
+]
+
+IF (pass% AND %10) <> 0 THEN PRINT'"Total length";TAB(49);~moduleend-modulestart
+
+NEXT
+
+
+OSCLI("SAVE ^.^.Banner "+STR$~(modulestart)+" "+STR$~(moduleend))
+*settype ^.^.Banner ffa
+REM*rmkill RiscBSD_Banner
+*rmload ^.^.Banner
+
+END
+
+
+DEF PROCmodule
+
+[ OPT pass%
+.modulestart
+equd &00000000                       \ Start code offset
+equd (initialisation - modulestart)  \ Initialisation code offset
+equd (finalisation - modulestart)    \ No finalisation point
+equd (serviceentry - modulestart)    \ Service call handler offset
+equd (titlestring - modulestart)     \ Title string offset
+equd (helpstring - modulestart)      \ Help string offset
+equd &00000000                       \ Command table offset
+equd &00000000                       \ SWI
+equd &00000000                       \ SWI
+equd &00000000                       \ SWI
+equd &00000000                       \ SWI
+
+
+.initialisation
+stmfd r13!, {r14}                    \ store return address
+bl initresources
+ldmfd r13!, {pc}                     \ exit
+
+
+.finalisation
+stmfd r13!,{r0-r2, r8, r14}          \ store return address
+ldr r12, [r12]                       \ get module workspace address
+bl deinitresources
+ldmfd r13!, {r0-r2, r8, pc}          \ exit
+
+
+.titlestring
+equs "RiscBSD_Banner"
+equb &00
+
+align
+
+.helpstring
+equs "RiscBSD Banner"
+equb &09
+equb &09
+equs version$
+equb &00
+
+align
+
+
+.serviceentry
+cmp r1, #&7c                              \ test for reset
+beq servicedesktopbanner                  \
+cmp r1, #service_resourcefsstarting
+bleq resourceservice
+movs pc, r14                              \ exit
+
+.servicedesktopbanner
+stmfd r13!, {r0-r9, r14}                  \ store registers
+
+mov r0, #&00000005                        \ Get the file size
+adr r1, spritefile                        \
+swi "XOS_File"                            \
+bvs abort                                 \
+
+mov r0, #&00000006                        \ claim RMA workspace
+add r3, r4, #&00000010                    \
+swi "OS_Module"                          \
+bvs abort                                 \
+
+mov r8, r2
+
+mov r3, #&00010000                        \ Set up sprite area
+str r3, [r2, #&0000]                      \
+mov r0, #&00000010                        \
+str r0, [r2, #&0008]                      \
+
+mov r0, #&00000009                        \ Initialise sprite area
+orr r0, r0, #&00000100                    \
+mov r1, r2                                \
+swi "XOS_SpriteOp"                        \
+
+movvc r0, #&0000000a                      \ Load sprite file
+orrvc r0, r0, #&00000100                  \
+adrvc r2, spritefile                      \
+swivc "XOS_SpriteOp"                      \
+
+movvc r0, #&00000028                      \ Get sprite information
+orrvc r0, r0, #&00000100                  \
+movvc r1, r8                              \
+adrvc r2, spritename                      \
+swivc "XOS_SpriteOp"                      \
+
+movvc r0, r6                              \ Get sprite width in
+movvc r1, #&00000004                      \ OS units
+swivc "XOS_ReadModeVariable"              \
+movvc r3, r3, lsl r2                      \
+
+movvc r0, r6                              \ Get sprite height in
+movvc r1, #&00000005                      \ OS units
+swivc "XOS_ReadModeVariable"              \
+movvc r4, r4, lsl r2                      \
+
+blvc getscreensize                        \ Get the screen size
+bvs abort1                                \
+
+mov r0, r0, lsr #1                        \ Calculate sprite
+mov r1, r1, lsr #1                        \ corner position
+mov r3, r3, lsr #1                        \
+mov r4, r4, lsr #1                        \
+sub r3, r0, r3                            \
+sub r4, r1, r4                            \
+
+bl colourtrans
+
+mov r0, #&00000134                        \ Plot sprite
+mov r1, r8                                \
+adr r2, spritename                        \
+mov r5, #&00000000                        \
+mov r6, #&00000000                        \
+mov r7, r9
+swi "OS_SpriteOp"                        \
+\bvs abort1
+
+mov r0, #&00000007                        \ release RMA workspace
+mov r2, r9                                \
+swi "XOS_Module"                          \
+
+mov r0, #&00000007                        \ release RMA workspace
+mov r2, r8                                \
+swi "XOS_Module"                          \
+
+ldmfd r13!, {r0-r9, r14}                  \ Restore registers
+mov r1, #&00000000                        \ Claim service call
+movs pc, r14                              \ Exit
+
+.abort1
+mov r0, #&00000007                        \ release RMA workspace
+mov r2, r8                                \
+swi "XOS_Module"                          \
+
+.abort
+ldmfd r13!, {r0-r9, r14}                  \ Restore registers
+movs pc, r14                              \ Exit
+
+.spritefile
+equs "Resources:Resources.RiscBSD.BannerSp"
+equb &00
+
+.spritename
+equs "banner"
+equb &00
+
+
+.getscreensize
+stmfd r13!, {r2-r4, r14}
+mvn r0, #&00000000
+mov r1, #&0000000b
+swi "XOS_ReadModeVariable"
+addvc r3, r2, #&00000001
+
+movvc r1, #&00000004
+swivc "XOS_ReadModeVariable"
+movvc r3, r3, lsl r2
+
+mvnvc r0, #&00000000
+movvc r1, #&0000000c
+swivc "XOS_ReadModeVariable"
+addvc r4, r2, #&00000001
+
+movvc r1, #&00000005
+swivc "XOS_ReadModeVariable"
+movvc r4, r4, lsl r2
+
+movvc r0, r3
+movvc r1, r4
+ldmfd r13!, {r2-r4, pc}
+
+.colourtrans
+stmfd r13!, {r0-r7, r14}
+mov r0, r8
+adr r1, spritename
+mvn r2, #0
+mvn r3, #0
+mov r4, #0
+mov r5, #&00000002
+mov r6, #0
+mov r7, #0
+swi "XColourTrans_SelectTable"
+bvs abort1
+
+mov r0, #&00000006                        \ claim RMA workspace
+mov r3, r4
+swi "XOS_Module"                          \
+bvs abort1                                \
+
+mov r9, r2
+mov r0, r8
+adr r1, spritename
+mvn r2, #0
+mvn r3, #0
+mov r4, r9
+mov r5, #&00000002
+mov r6, #0
+mov r7, #0
+swi "XColourTrans_SelectTable"
+bvs abort1
+
+ldmfd r13!, {r0-r7, pc}
+
+.moduleend
+]
+
+ENDPROC

@@ -1,0 +1,14 @@
+| $NetBSD: !Run,v 1.1 2001/10/05 22:28:01 reinoud Exp $
+|
+| run file for !BtNetBSD application
+|
+
+WimpSlot -min 64k -max 64k
+IconSprites <Obey$Dir>.!Sprites
+Set BtNetBSD$Dir <Obey$Dir>
+
+| First, check if we are running the version of RISC OS 4.03 that
+| needs the memfix module
+
+Run <BtNetBSD$Dir>.checkro403
+Obey <BtNetBSD$Dir>.fastboot
