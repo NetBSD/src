@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.3 1999/10/15 10:59:58 augustss Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.4 1999/10/19 09:29:46 haya Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -28,8 +28,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-/* $Id: pccbb.c,v 1.3 1999/10/15 10:59:58 augustss Exp $ */
 
 /*
 #define CBB_DEBUG
@@ -270,11 +268,6 @@ pcicbbmatch(parent, match, aux)
   if ((pa->pa_class & PCI_CLASS_INTERFACE_MASK) == PCI_CLASS_INTERFACE_YENTA) {
     /* OK, It must be YENTA PCI-CardBus bridge */
 
-#if 0
-    if (cb_chipset(pa->pa_id, 0, 0) > 0) {
-      return 1;
-    }
-#endif
     return 1;
   }
 
@@ -396,34 +389,26 @@ pccbbattach(parent, self, aux)
   struct pccbb_softc *sc = (void *)self;
   struct pci_attach_args *pa = aux;
   pci_chipset_tag_t pc = pa->pa_pc;
-  pcireg_t sock_base;
+  pcireg_t sock_base, busreg;
   bus_addr_t sockbase;
   char const *name;
   int flags;
 
   sc->sc_chipset = cb_chipset(pa->pa_id, &name, &flags);
-  printf(" (%s), flags %d\n", name, flags);
+  printf(" (%s), chipflags %d\n", name, flags);
 
 #if rbus
   sc->sc_rbus_iot = rbus_pccbb_parent_io(pa);
   sc->sc_rbus_memt = rbus_pccbb_parent_mem(pa);
-  /*
-    sc->sc_rbus_iot = pa->pa_rbus_iot;
-    sc->sc_rbus_memt = pa->pa_rbus_memt;
-    */
-#if 0
-  sc->sc_rbus_iot->rb_space_alloc = 
-    pccbb_rb_space_alloc_io(sc->sc_rbus_iot);
-  sc->sc_rbus_iot->rb_space_alloc = 
-    pccbb_rb_space_alloc_mem(sc->sc_rbus_memt);
-#endif /* 0 */
 #endif /* rbus */
 
   sc->sc_base_memh = 0;
 
-  /* MAP socket registers and ExCA registers on memory-space
-     When no valid address is set on socket base registers (on pci
-     config space), get it not polite way */
+  /*
+   * MAP socket registers and ExCA registers on memory-space
+   * When no valid address is set on socket base registers (on pci
+   * config space), get it not polite way.
+   */
   sock_base = pci_conf_read(pc, pa->pa_tag, PCI_SOCKBASE);
 
   if (PCI_MAPREG_MEM_ADDR(sock_base) >= 0x100000 &&
@@ -449,20 +434,29 @@ pccbbattach(parent, self, aux)
   }
 
 
-
-#if 1
   sc->sc_mem_start = 0;		/* XXX */
-#else
-  sc->sc_mem_start = CBB_PCI_BASE; /* XXX */
-#endif
   sc->sc_mem_end = 0xffffffff;	/* XXX */
   
-  /****** modify Interrupt line ******/
+  /*
+   * When interrupt isn't routed correctly, give up probing cbb and do
+   * not kill pcic-compatible port.
+   */
   if ((0 == pa->pa_intrline) || (255 == pa->pa_intrline)) {
-    printf("changing intrline %d to 10\n", pa->pa_intrline);
-    /* We must ask PCI BIOS for the proper interrupt. */
-    pa->pa_intrline = 10;	/* XXX: no good guess */
+    printf(" Do not use %s because of intr unconfig.\n", sc->sc_dev.dv_xname);
+    return;
   }
+
+  /*
+   * When bus number isn't set correctly, give up using 32-bit CardBus
+   * mode.
+   */
+  busreg = pci_conf_read(pc, pa->pa_tag, PCI_BUSNUM);
+#if notyet
+  if (((busreg >> 8) & 0xff) == 0) {
+    printf(" CardBus on %s will not be configured, because of bus no unconfig.\n", sc->sc_dev.dv_xname);
+    flags |= PCCBB_PCMCIA_16BITONLY;
+  }
+#endif
 
   /* pccbb_machdep.c end */
 
@@ -476,7 +470,7 @@ pccbbattach(parent, self, aux)
 #endif
 
 
-  /****** setup softc ******/
+  /* setup softc */
   sc->sc_pc = pc;
   sc->sc_iot = pa->pa_iot;
   sc->sc_memt = pa->pa_memt;
@@ -489,6 +483,9 @@ pccbbattach(parent, self, aux)
   sc->sc_intrpin = pa->pa_intrpin;
 
   sc->sc_pcmcia_flags = flags;	/* set PCMCIA facility */
+
+  /* bus bridge initialisation */
+  pccbb_chipinit(sc);
 
 #if __NetBSD_Version__ > 103060000
   config_defer(self, pccbb_pci_callback);
@@ -553,8 +550,6 @@ pccbb_pci_callback(self)
 #endif
   }
 
-  pccbb_chipinit(sc);
-
   base_memt = sc->sc_base_memt;	/* socket regs memory tag */
   base_memh = sc->sc_base_memh;	/* socket regs memory handle */
 
@@ -595,8 +590,10 @@ pccbb_pci_callback(self)
     }
   }
 
-  /****** attach cardbus ******/
-  {
+  /*
+   * attach cardbus 
+   */
+  if (!(sc->sc_pcmcia_flags & PCCBB_PCMCIA_16BITONLY)) {
     pcireg_t busreg = pci_conf_read(pc, sc->sc_tag, PCI_BUSNUM);
     pcireg_t bhlc = pci_conf_read(pc, sc->sc_tag, PCI_BHLC_REG);
     pcireg_t pci_lscp = pci_conf_read(pc, sc->sc_tag, PCI_CB_LSCP_REG);
@@ -606,11 +603,7 @@ pccbb_pci_callback(self)
     cba.cba_iot = sc->sc_iot;
     cba.cba_memt = sc->sc_memt;
     cba.cba_dmat = sc->sc_dmat;
-#if 0
-    cba.cba_function = sc->sc_function;
-#else
     cba.cba_function = 0;
-#endif
     cba.cba_bus = (busreg >> 8) & 0x0ff;
     cba.cba_cc = (void *)sc;
     cba.cba_cf = &pccbb_funcs;
@@ -634,7 +627,10 @@ pccbb_pci_callback(self)
   }
 
   pccbb_pcmcia_attach_setup(sc, &paa);
-  caa.caa_cb_attach = &cba;
+  caa.caa_cb_attach = NULL;
+  if (!(sc->sc_pcmcia_flags & PCCBB_PCMCIA_16BITONLY)) {
+    caa.caa_cb_attach = &cba;
+  }
   caa.caa_16_attach = &paa;
   caa.caa_ph = &sc->sc_pcmcia_h;
 
@@ -659,8 +655,8 @@ pccbb_chipinit(sc)
   pcireg_t cbctrl;
 
   /*
-     Set PCI command reg.
-     Some laptop's BIOSes (i.e. TICO) do not enable CardBus chip.
+   * Set PCI command reg.
+   * Some laptop's BIOSes (i.e. TICO) do not enable CardBus chip.
    */
   {
     pcireg_t command = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
@@ -668,14 +664,11 @@ pccbb_chipinit(sc)
     /* I believe it is harmless. */
     command |= (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
 		PCI_COMMAND_MASTER_ENABLE);
-/*
-    pa->pa_flags |= (PCI_FLAGS_MEM_ENABLED | PCI_FLAGS_IO_ENABLED);
-*/
     pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, command);
   }
 
   /*
-     Set CardBus latency timer
+   * Set CardBus latency timer
    */
   {
     pcireg_t pci_lscp = pci_conf_read(pc, tag, PCI_CB_LSCP_REG);
@@ -689,7 +682,7 @@ pccbb_chipinit(sc)
   }
 
   /*
-     Set PCI latency timer
+   * Set PCI latency timer
    */
   {
     pcireg_t pci_bhlc = pci_conf_read(pc, tag, PCI_BHLC_REG);
@@ -707,6 +700,12 @@ pccbb_chipinit(sc)
   switch (sc->sc_chipset) {
   case CB_RF5C46X:		/* fallthrogh */
   case CB_RF5C47X:
+    /*
+     * The legacy pcic io-port on Ricoh CardBus bridges cannot be
+     * disabled by substituting 0 into PCI_LEGACY register.  Ricoh
+     * CardBus bridges have special bits on Bridge control reg (addr
+     * 0x3e on PCI config space).
+     */
     {
       pcireg_t bcri = pci_conf_read(pc, tag, PCI_BCR_INTR);
       bcri &= ~(CB_BCRI_RL_3E0_ENA | CB_BCRI_RL_3E2_ENA);
@@ -721,9 +720,9 @@ pccbb_chipinit(sc)
 
 
 
-  /****** Interrupt routing ******/
-
-  /* use PCI interrupt */
+  /*
+   * Interrupt routing: use PCI interrupt
+   */
   {
     u_int32_t bcr = pci_conf_read(pc, tag, PCI_BCR_INTR);
     bcr &= ~CB_BCR_INTR_IREQ_ENABLE; /* use PCI Intr */
@@ -759,10 +758,12 @@ pccbb_chipinit(sc)
     cbctrl = pci_conf_read(pc, tag, PCI_CBCTRL);
     cbctrl &= ~PCI12XX_CBCTRL_INT_MASK;	/* intr routing reset */
     pci_conf_write(pc, tag, PCI_CBCTRL, cbctrl);
-    /* set ExCA regs: PCI12XX required to be set bit 4 at Interrupt
-       and General Register, which is IRQ Enable Register, and clear
-       bit 3:0 to zero in order to route CSC interrupt to PCI
-       interrupt pin. */
+    /*
+     * set ExCA regs: PCI12XX required to be set bit 4 at Interrupt
+     * and General Register, which is IRQ Enable Register, and clear
+     * bit 3:0 to zero in order to route CSC interrupt to PCI
+     * interrupt pin.
+     */
     bus_space_write_1(base_memt, base_memh, 0x0803, 0x10);
     /* set ExCA regs: prohibit all pcmcia-style CSC intr. */
     bus_space_write_1(base_memt, base_memh, 0x0805, 0x00);
@@ -776,7 +777,6 @@ pccbb_chipinit(sc)
     slot_ctrl = pci_conf_read(pc, tag, TOPIC_SLOT_CTRL);
     DPRINTF(("%s: topic slot ctrl reg 0x%x -> ", sc->sc_dev.dv_xname,
 	     slot_ctrl));
-//    slot_ctrl &= ~TOPIC_SLOT_CTRL_CLOCK_MASK;
     slot_ctrl |= (TOPIC_SLOT_CTRL_SLOTON | TOPIC_SLOT_CTRL_SLOTEN |
 		  TOPIC_SLOT_CTRL_ID_LOCK);
     slot_ctrl |= TOPIC_SLOT_CTRL_CARDBUS;
@@ -800,7 +800,9 @@ pccbb_chipinit(sc)
 
 
 
-/****** attach pccard bus ******/
+/*
+ * attach pccard bus
+ */
 STATIC void
 pccbb_pcmcia_attach_setup(sc, paa)
      struct pccbb_softc *sc;
@@ -869,12 +871,12 @@ pccbb_pcmcia_detach_card(ph, flags)
 
 
 
-/**********************************************************************
-* int pccbbintr(arg)
-*    void *arg;
-*   This routine handles the interrupt from Yenta PCI-CardBus bridge
-*   itself.
-**********************************************************************/
+/*
+ * int pccbbintr(arg)
+ *    void *arg;
+ *   This routine handles the interrupt from Yenta PCI-CardBus bridge
+ *   itself.
+ */
 int
 pccbbintr(arg)
      void *arg;
@@ -997,9 +999,9 @@ pccbb_pcmcia_write(ph, reg, val)
 
 
 
-/**********************************************************************
-* STATIC int pccbb_ctrl(cardbus_chipset_tag_t, int)
-**********************************************************************/
+/*
+ * STATIC int pccbb_ctrl(cardbus_chipset_tag_t, int)
+ */
 STATIC int
 pccbb_ctrl(ct, command)
      cardbus_chipset_tag_t ct;
@@ -1047,11 +1049,11 @@ pccbb_ctrl(ct, command)
 
 
 
-/**********************************************************************
-* STATIC int pccbb_power(cardbus_chipset_tag_t, int)
-*   This function returns true when it succeeds and returns false when
-*   it fails.
-**********************************************************************/
+/*
+ * STATIC int pccbb_power(cardbus_chipset_tag_t, int)
+ *   This function returns true when it succeeds and returns false when
+ *   it fails.
+ */
 STATIC int
 pccbb_power(ct, command)
      cardbus_chipset_tag_t ct;
@@ -1236,12 +1238,12 @@ cb_pcmcia_poll(arg)
 
 
 
-/**********************************************************************
-* static int pccbb_detect_card(struct pccbb_softc *sc)
-*   return value:  0 if no card exists.
-*                  1 if 16-bit card exists.
-*                  2 if cardbus card exists.
-**********************************************************************/
+/*
+ * static int pccbb_detect_card(struct pccbb_softc *sc)
+ *   return value:  0 if no card exists.
+ *                  1 if 16-bit card exists.
+ *                  2 if cardbus card exists.
+ */
 static int
 pccbb_detect_card(sc)
      struct pccbb_softc *sc;
@@ -1267,10 +1269,10 @@ pccbb_detect_card(sc)
 
 
 
-/**********************************************************************
-* STATIC int cb_reset(struct pccbb_softc *sc)
-*   This function resets CardBus card.
-**********************************************************************/
+/*
+ * STATIC int cb_reset(struct pccbb_softc *sc)
+ *   This function resets CardBus card.
+ */
 STATIC int
 cb_reset(sc)
      struct pccbb_softc *sc;
@@ -1293,10 +1295,10 @@ cb_reset(sc)
      
 
 
-/**********************************************************************
-* STATIC int cb_detect_voltage(struct pccbb_softc *sc)
-*  This function detect card Voltage.
-**********************************************************************/
+/*
+ * STATIC int cb_detect_voltage(struct pccbb_softc *sc)
+ *  This function detect card Voltage.
+ */
 STATIC int
 cb_detect_voltage(sc)
      struct pccbb_softc *sc;
@@ -1341,10 +1343,10 @@ cbbprint(aux, pcic)
 
 
 
-/**********************************************************************
-* STATIC int pccbb_cardenable(struct pccbb_softc *sc, int function)
-*   This function enables and disables the card
-**********************************************************************/
+/*
+ * STATIC int pccbb_cardenable(struct pccbb_softc *sc, int function)
+ *   This function enables and disables the card
+ */
 STATIC int
 pccbb_cardenable(sc, function)
      struct pccbb_softc *sc;
@@ -1387,9 +1389,9 @@ pccbb_cardenable(sc, function)
 
 
 #if !rbus
-/**********************************************************************
-* int pccbb_io_open(cardbus_chipset_tag_t, int, u_int32_t, u_int32_t)
-**********************************************************************/
+/*
+ * int pccbb_io_open(cardbus_chipset_tag_t, int, u_int32_t, u_int32_t)
+ */
 static int
 pccbb_io_open(ct, win, start, end)
      cardbus_chipset_tag_t ct;
@@ -1418,9 +1420,9 @@ pccbb_io_open(ct, win, start, end)
   return 1;
 }
      
-/**********************************************************************
-* int pccbb_io_close(cardbus_chipset_tag_t, int)
-**********************************************************************/
+/*
+ * int pccbb_io_close(cardbus_chipset_tag_t, int)
+ */
 static int
 pccbb_io_close(ct, win)
      cardbus_chipset_tag_t ct;
@@ -1445,9 +1447,9 @@ pccbb_io_close(ct, win)
   return 1;
 }
 
-/**********************************************************************
-* int pccbb_mem_open(cardbus_chipset_tag_t, int, u_int32_t, u_int32_t)
-**********************************************************************/
+/*
+ * int pccbb_mem_open(cardbus_chipset_tag_t, int, u_int32_t, u_int32_t)
+ */
 static int
 pccbb_mem_open(ct, win, start, end)
      cardbus_chipset_tag_t ct;
@@ -1474,9 +1476,9 @@ pccbb_mem_open(ct, win, start, end)
 }
 
 
-/**********************************************************************
-* int pccbb_mem_close(cardbus_chipset_tag_t, int);
-**********************************************************************/
+/*
+ * int pccbb_mem_close(cardbus_chipset_tag_t, int)
+ */
 static int
 pccbb_mem_close(ct, win)
      cardbus_chipset_tag_t ct;
@@ -1600,12 +1602,12 @@ cb_show_regs(pc, tag, memt, memh)
 
 
 
-/**********************************************************************
-* static cardbustag_t pccbb_make_tag(cardbus_chipset_tag_t cc,
-*                                    int busno, int devno, int function);
-*   This is the function to make a tag to access config space of
-*  a CardBus Card.  It works same as pci_conf_read.
-**********************************************************************/
+/*
+ * static cardbustag_t pccbb_make_tag(cardbus_chipset_tag_t cc,
+ *                                    int busno, int devno, int function)
+ *   This is the function to make a tag to access config space of
+ *  a CardBus Card.  It works same as pci_conf_read.
+ */
 static cardbustag_t
 pccbb_make_tag(cc, busno, devno, function)
      cardbus_chipset_tag_t cc;
@@ -1625,12 +1627,12 @@ pccbb_free_tag(cc, tag)
 }
 
 
-/**********************************************************************
-* static cardbusreg_t pccbb_conf_read(cardbus_chipset_tag_t cc,
-*                                     cardbustag_t tag, int offset)
-*   This is the function to read the config space of a CardBus Card.
-*  It works same as pci_conf_read.
-**********************************************************************/
+/*
+ * static cardbusreg_t pccbb_conf_read(cardbus_chipset_tag_t cc,
+ *                                     cardbustag_t tag, int offset)
+ *   This is the function to read the config space of a CardBus Card.
+ *  It works same as pci_conf_read.
+ */
 static cardbusreg_t
 pccbb_conf_read(cc, tag, offset)
      cardbus_chipset_tag_t cc;
@@ -1644,12 +1646,12 @@ pccbb_conf_read(cc, tag, offset)
 
 
 
-/**********************************************************************
-* static void pccbb_conf_write(cardbus_chipset_tag_t cc, cardbustag_t tag,
-*                              int offs, cardbusreg_t val)
-*   This is the function to write the config space of a CardBus Card.
-*  It works same as pci_conf_write.
-**********************************************************************/
+/*
+ * static void pccbb_conf_write(cardbus_chipset_tag_t cc, cardbustag_t tag,
+ *                              int offs, cardbusreg_t val)
+ *   This is the function to write the config space of a CardBus Card.
+ *  It works same as pci_conf_write.
+ */
 static void
 pccbb_conf_write(cc, tag, reg, val)
      cardbus_chipset_tag_t cc;
@@ -1676,17 +1678,17 @@ pccbb_new_pcmcia_io_alloc(pcmcia_chipset_handle_t pch,
 #endif
 
 
-/**********************************************************************
-* STATIC int pccbb_pcmcia_io_alloc(pcmcia_chipset_handle_t pch,
-*                                  bus_addr_t start, bus_size_t size,
-*                                  bus_size_t align,
-*                                  struct pcmcia_io_handle *pcihp
-*
-* This function only allocates I/O region for pccard. This function
-* never maps the allcated region to pccard I/O area.
-*
-* XXX: The interface of this function is not very good, I believe.
-**********************************************************************/
+/*
+ * STATIC int pccbb_pcmcia_io_alloc(pcmcia_chipset_handle_t pch,
+ *                                  bus_addr_t start, bus_size_t size,
+ *                                  bus_size_t align,
+ *                                  struct pcmcia_io_handle *pcihp
+ *
+ * This function only allocates I/O region for pccard. This function
+ * never maps the allcated region to pccard I/O area.
+ *
+ * XXX: The interface of this function is not very good, I believe.
+ */
 STATIC int 
 pccbb_pcmcia_io_alloc(pch, start, size, align, pcihp)
      pcmcia_chipset_handle_t pch;
@@ -1754,14 +1756,14 @@ pccbb_pcmcia_io_alloc(pch, start, size, align, pcihp)
 
 
 
-/**********************************************************************
-* STATIC int pccbb_pcmcia_io_free(pcmcia_chipset_handle_t pch,
-*                                 struct pcmcia_io_handle *pcihp)
-*
-* This function only frees I/O region for pccard.
-*
-* XXX: The interface of this function is not very good, I believe.
-**********************************************************************/
+/*
+ * STATIC int pccbb_pcmcia_io_free(pcmcia_chipset_handle_t pch,
+ *                                 struct pcmcia_io_handle *pcihp)
+ *
+ * This function only frees I/O region for pccard.
+ *
+ * XXX: The interface of this function is not very good, I believe.
+ */
 void 
 pccbb_pcmcia_io_free(pch, pcihp)
      pcmcia_chipset_handle_t pch;
@@ -1788,19 +1790,19 @@ pccbb_pcmcia_io_free(pch, pcihp)
 
 
 
-/**********************************************************************
-* STATIC int pccbb_pcmcia_io_map(pcmcia_chipset_handle_t pch, int width,
-*                                bus_addr_t offset, bus_size_t size,
-*                                struct pcmcia_io_handle *pcihp,
-*                                int *windowp)
-*
-* This function maps the allocated I/O region to pccard. This function
-* never allocates any I/O region for pccard I/O area.  I don't
-* understand why the original authors of pcmciabus separated alloc and
-* map.  I believe the two must be unite.
-*
-* XXX: no wait timing control?
-**********************************************************************/
+/*
+ * STATIC int pccbb_pcmcia_io_map(pcmcia_chipset_handle_t pch, int width,
+ *                                bus_addr_t offset, bus_size_t size,
+ *                                struct pcmcia_io_handle *pcihp,
+ *                                int *windowp)
+ *
+ * This function maps the allocated I/O region to pccard. This function
+ * never allocates any I/O region for pccard I/O area.  I don't
+ * understand why the original authors of pcmciabus separated alloc and
+ * map.  I believe the two must be unite.
+ *
+ * XXX: no wait timing control?
+ */
 int 
 pccbb_pcmcia_io_map(pch, width, offset, size, pcihp, windowp)
      pcmcia_chipset_handle_t pch;
@@ -1866,11 +1868,11 @@ pccbb_pcmcia_io_map(pch, width, offset, size, pcihp, windowp)
 
 
 
-/**********************************************************************
-* STATIC void pccbb_pcmcia_do_io_map(struct pcic_handle *h, int win)
-*
-* This function changes register-value to map I/O region for pccard.
-**********************************************************************/
+/*
+ * STATIC void pccbb_pcmcia_do_io_map(struct pcic_handle *h, int win)
+ *
+ * This function changes register-value to map I/O region for pccard.
+ */
 static void 
 pccbb_pcmcia_do_io_map(ph, win)
      struct pcic_handle *ph;
@@ -1936,11 +1938,11 @@ pccbb_pcmcia_do_io_map(ph, win)
 
 
 
-/**********************************************************************
-* STATIC void pccbb_pcmcia_io_unmap(pcmcia_chipset_handle_t *h, int win)
-*
-* This function unmapss I/O region.  No return value.
-**********************************************************************/
+/*
+ * STATIC void pccbb_pcmcia_io_unmap(pcmcia_chipset_handle_t *h, int win)
+ *
+ * This function unmapss I/O region.  No return value.
+ */
 STATIC void 
 pccbb_pcmcia_io_unmap(pch, win)
      pcmcia_chipset_handle_t pch;
@@ -1971,12 +1973,12 @@ pccbb_pcmcia_io_unmap(pch, win)
 
 
 
-/**********************************************************************
-* static void pccbb_pcmcia_wait_ready(struct pcic_handle *ph)
-*
-* This function enables the card.  All information is stored in
-* the first argument, pcmcia_chipset_handle_t.
-**********************************************************************/
+/*
+ * static void pccbb_pcmcia_wait_ready(struct pcic_handle *ph)
+ *
+ * This function enables the card.  All information is stored in
+ * the first argument, pcmcia_chipset_handle_t.
+ */
 static void
 pccbb_pcmcia_wait_ready(ph)
      struct pcic_handle *ph;
@@ -2005,12 +2007,12 @@ pccbb_pcmcia_wait_ready(ph)
 
 
 
-/**********************************************************************
-* STATIC void pccbb_pcmcia_socket_enable(pcmcia_chipset_handle_t pch)
-*
-* This function enables the card.  All information is stored in
-* the first argument, pcmcia_chipset_handle_t.
-**********************************************************************/
+/*
+ * STATIC void pccbb_pcmcia_socket_enable(pcmcia_chipset_handle_t pch)
+ *
+ * This function enables the card.  All information is stored in
+ * the first argument, pcmcia_chipset_handle_t.
+ */
 STATIC void
 pccbb_pcmcia_socket_enable(pch)
      pcmcia_chipset_handle_t pch;
@@ -2031,10 +2033,10 @@ pccbb_pcmcia_socket_enable(pch)
 
   spsr = bus_space_read_4(sc->sc_base_memt, sc->sc_base_memh, CB_SOCKET_STAT);
   if (spsr & CB_SOCKET_STAT_5VCARD) {
-    printf("5V card\n");	/* XXX */
+    DPRINTF(("5V card\n"));
     voltage = CARDBUS_VCC_5V | CARDBUS_VPP_VCC;
   } else if (spsr & CB_SOCKET_STAT_3VCARD) {
-    printf("3V card\n");	/* XXX */
+    DPRINTF(("3V card\n"));
     voltage = CARDBUS_VCC_3V | CARDBUS_VPP_VCC;
   } else {
     printf("?V card, 0x%x\n", spsr);	/* XXX */
@@ -2135,12 +2137,12 @@ pccbb_pcmcia_socket_enable(pch)
 
 
 
-/**********************************************************************
-* STATIC void pccbb_pcmcia_socket_disable(pcmcia_chipset_handle_t *ph)
-*
-* This function disables the card.  All information is stored in
-* the first argument, pcmcia_chipset_handle_t.
-**********************************************************************/
+/*
+ * STATIC void pccbb_pcmcia_socket_disable(pcmcia_chipset_handle_t *ph)
+ *
+ * This function disables the card.  All information is stored in
+ * the first argument, pcmcia_chipset_handle_t.
+ */
 STATIC void
 pccbb_pcmcia_socket_disable(pch)
      pcmcia_chipset_handle_t pch;
@@ -2172,12 +2174,12 @@ pccbb_pcmcia_socket_disable(pch)
 
 
 
-/**********************************************************************
+/*
  * STATIC int pccbb_pcmcia_card_detect(pcmcia_chipset_handle_t *ph)
  *
  * This function detects whether a card is in the slot or not.
  * If a card is inserted, return 1.  Otherwise, return 0.
- **********************************************************************/
+ */
 STATIC int
 pccbb_pcmcia_card_detect(pch)
      pcmcia_chipset_handle_t pch;
@@ -2202,16 +2204,16 @@ pccbb_new_pcmcia_mem_alloc(pcmcia_chipset_handle_t pch,
 #endif
 
 
-/**********************************************************************
-* STATIC int pccbb_pcmcia_mem_alloc(pcmcia_chipset_handle_t pch,
-*                                   bus_size_t size,
-*                                   struct pcmcia_mem_handle *pcmhp)
-*
-* This function only allocates memory region for pccard. This
-* function never maps the allcated region to pccard memory area.
-*
-* XXX: Why the argument of start address is not in?
-**********************************************************************/
+/*
+ * STATIC int pccbb_pcmcia_mem_alloc(pcmcia_chipset_handle_t pch,
+ *                                   bus_size_t size,
+ *                                   struct pcmcia_mem_handle *pcmhp)
+ *
+ * This function only allocates memory region for pccard. This
+ * function never maps the allcated region to pccard memory area.
+ *
+ * XXX: Why the argument of start address is not in?
+ */
 STATIC int 
 pccbb_pcmcia_mem_alloc(pch, size, pcmhp)
      pcmcia_chipset_handle_t pch;
@@ -2282,13 +2284,13 @@ pccbb_pcmcia_mem_alloc(pch, size, pcmhp)
 
 
 
-/**********************************************************************
-* STATIC void pccbb_pcmcia_mem_free(pcmcia_chipset_handle_t pch,
-*                                   struct pcmcia_mem_handle *pcmhp)
-*
-* This function release the memory space allocated by the fuction
-* pccbb_pcmcia_mem_alloc().
-**********************************************************************/
+/*
+ * STATIC void pccbb_pcmcia_mem_free(pcmcia_chipset_handle_t pch,
+ *                                   struct pcmcia_mem_handle *pcmhp)
+ *
+ * This function release the memory space allocated by the fuction
+ * pccbb_pcmcia_mem_alloc().
+ */
 STATIC void 
 pccbb_pcmcia_mem_free(pch, pcmhp)
      pcmcia_chipset_handle_t pch;
@@ -2307,12 +2309,12 @@ pccbb_pcmcia_mem_free(pch, pcmhp)
 
 
 
-/**********************************************************************
-* STATIC void pccbb_pcmcia_do_mem_map(struct pcic_handle *ph, int win)
-*
-* This function release the memory space allocated by the fuction
-* pccbb_pcmcia_mem_alloc().
-**********************************************************************/
+/*
+ * STATIC void pccbb_pcmcia_do_mem_map(struct pcic_handle *ph, int win)
+ *
+ * This function release the memory space allocated by the fuction
+ * pccbb_pcmcia_mem_alloc().
+ */
 STATIC void 
 pccbb_pcmcia_do_mem_map(ph, win)
      struct pcic_handle *ph;
@@ -2415,15 +2417,15 @@ pccbb_pcmcia_do_mem_map(ph, win)
 
 
 
-/**********************************************************************
-* STATIC int pccbb_pcmcia_mem_map(pcmcia_chipset_handle_t pch, int kind,
-*                                 bus_addr_t card_addr, bus_size_t size,
-*                                 struct pcmcia_mem_handle *pcmhp,
-*                                 bus_addr_t *offsetp, int *windowp)
-*
-* This function maps memory space allocated by the fuction
-* pccbb_pcmcia_mem_alloc().
-**********************************************************************/
+/*
+ * STATIC int pccbb_pcmcia_mem_map(pcmcia_chipset_handle_t pch, int kind,
+ *                                 bus_addr_t card_addr, bus_size_t size,
+ *                                 struct pcmcia_mem_handle *pcmhp,
+ *                                 bus_addr_t *offsetp, int *windowp)
+ *
+ * This function maps memory space allocated by the fuction
+ * pccbb_pcmcia_mem_alloc().
+ */
 STATIC int 
 pccbb_pcmcia_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
      pcmcia_chipset_handle_t pch;
@@ -2494,13 +2496,13 @@ pccbb_pcmcia_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
 
 
 
-/**********************************************************************
-* STATIC int pccbb_pcmcia_mem_unmap(pcmcia_chipset_handle_t pch,
-*                                   int window)
-*
-* This function unmaps memory space which mapped by the fuction
-* pccbb_pcmcia_mem_map().
-**********************************************************************/
+/*
+ * STATIC int pccbb_pcmcia_mem_unmap(pcmcia_chipset_handle_t pch,
+ *                                   int window)
+ *
+ * This function unmaps memory space which mapped by the fuction
+ * pccbb_pcmcia_mem_map().
+ */
 STATIC void 
 pccbb_pcmcia_mem_unmap(pch, window)
      pcmcia_chipset_handle_t pch;
@@ -2562,7 +2564,6 @@ pccbb_pcmcia_poll(arg)
   }
     
   spsr = bus_space_read_4(sc->sc_base_memt, sc->sc_base_memh, CB_SOCKET_STAT);
-//  printf("pccbb_pcmcia_poll: socket 0x%08x\n", spsr);
 
 #if defined PCCBB_PCMCIA_POLL_ONLY && defined LEVEL2
   if (!(spsr & 0x40))		/* CINT low */
@@ -2585,15 +2586,15 @@ pccbb_pcmcia_poll(arg)
 
 
 
-/**********************************************************************
-* STATIC void *pccbb_pcmcia_intr_establish(pcmcia_chipset_handle_t pch,
-*                                          struct pcmcia_function *pf,
-*                                          int ipl,
-*                                          int (*func)(void *),
-*                                          void *arg);
-*
-* This function enables PC-Card interrupt.  PCCBB uses PCI interrupt line.
-**********************************************************************/
+/*
+ * STATIC void *pccbb_pcmcia_intr_establish(pcmcia_chipset_handle_t pch,
+ *                                          struct pcmcia_function *pf,
+ *                                          int ipl,
+ *                                          int (*func)(void *),
+ *                                          void *arg);
+ *
+ * This function enables PC-Card interrupt.  PCCBB uses PCI interrupt line.
+ */
 STATIC void *
 pccbb_pcmcia_intr_establish(pch, pf, ipl, func, arg)
      pcmcia_chipset_handle_t pch;
@@ -2614,8 +2615,10 @@ pccbb_pcmcia_intr_establish(pch, pf, ipl, func, arg)
 	       sc->sc_dev.dv_xname));
       return NULL;
     }
-    /* XXX Noooooo!  The interrupt flag must set properly!! */
-    /* dumb pcmcia driver!! */
+    /*
+     * XXX Noooooo!  The interrupt flag must set properly!!
+     * dumb pcmcia driver!!
+     */
   }
 
   if (pci_intr_map(sc->sc_pc, sc->sc_intrtag, sc->sc_intrpin,
@@ -2658,12 +2661,12 @@ pccbb_pcmcia_intr_establish(pch, pf, ipl, func, arg)
 
 
 
-/**********************************************************************
-* STATIC void pccbb_pcmcia_intr_disestablish(pcmcia_chipset_handle_t pch,
-*                                            void *ih)
-*
-* This function disables PC-Card interrupt.
-**********************************************************************/
+/*
+ * STATIC void pccbb_pcmcia_intr_disestablish(pcmcia_chipset_handle_t pch,
+ *                                            void *ih)
+ *
+ * This function disables PC-Card interrupt.
+ */
 STATIC void
 pccbb_pcmcia_intr_disestablish(pch, ih)
      pcmcia_chipset_handle_t pch;
@@ -2679,17 +2682,17 @@ pccbb_pcmcia_intr_disestablish(pch, ih)
 
 
 #if rbus
-/**********************************************************************
-* static int
-* pccbb_rbus_cb_space_alloc(cardbus_chipset_tag_t ct, rbus_tag_t rb,
-*			    bus_addr_t addr, bus_size_t size,
-*			    bus_addr_t mask, bus_size_t align,
-*			    int flags, bus_addr_t *addrp;
-*			    bus_space_handle_t *bshp)
-*
-*   This function allocates a portion of memory or io space for
-*   clients.  This function is called from CardBus card drivers.
-**********************************************************************/
+/*
+ * static int
+ * pccbb_rbus_cb_space_alloc(cardbus_chipset_tag_t ct, rbus_tag_t rb,
+ *			    bus_addr_t addr, bus_size_t size,
+ *			    bus_addr_t mask, bus_size_t align,
+ *			    int flags, bus_addr_t *addrp;
+ *			    bus_space_handle_t *bshp)
+ *
+ *   This function allocates a portion of memory or io space for
+ *   clients.  This function is called from CardBus card drivers.
+ */
 static int
 pccbb_rbus_cb_space_alloc(ct, rb, addr, size, mask, align, flags, addrp, bshp)
      cardbus_chipset_tag_t ct;
@@ -2745,13 +2748,13 @@ pccbb_rbus_cb_space_alloc(ct, rb, addr, size, mask, align, flags, addrp, bshp)
 
 
 
-/**********************************************************************
-* static int
-* pccbb_rbus_cb_space_free(cardbus_chipset_tag_t *ct, rbus_tag_t rb,
-*			   bus_space_handle_t *bshp, bus_size_t size);
-*
-*   This function is called from CardBus card drivers.
-**********************************************************************/
+/*
+ * static int
+ * pccbb_rbus_cb_space_free(cardbus_chipset_tag_t *ct, rbus_tag_t rb,
+ *			   bus_space_handle_t *bshp, bus_size_t size);
+ *
+ *   This function is called from CardBus card drivers.
+ */
 static int
 pccbb_rbus_cb_space_free(ct, rb, bsh, size)
      cardbus_chipset_tag_t ct;
