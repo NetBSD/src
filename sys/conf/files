@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.408 2000/12/05 17:59:43 drochner Exp $
+#	$NetBSD: files,v 1.409 2000/12/11 23:16:51 onoe Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -278,6 +278,10 @@ file dev/ic/siop.c			siop
 # UltraStor SCSI controllers
 device	uha: scsi
 file	dev/ic/uha.c			uha
+
+# Aironet PC4500/PC4800
+device	an: arp, ether, ifnet
+file	dev/ic/an.c			an
 
 # AMD 79c930-based 802.11 cards
 device	awi: arp, wlan, ifnet
