@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.78 2002/09/21 07:14:37 lukem Exp $
+# $NetBSD: obsolete.mi,v 1.79 2002/09/25 23:07:39 thorpej Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
@@ -693,6 +693,7 @@
 /usr/include/sys/clist.h
 /usr/include/sys/dmap.h
 /usr/include/sys/fnv_hash.h
+/usr/include/sys/map.h
 /usr/include/sys/vcmd.h
 /usr/include/sys/vlimit.h
 /usr/include/sys/vsio.h

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.483 2002/09/22 13:11:45 jdolecek Exp $
+#	$NetBSD: mi,v 1.484 2002/09/25 23:07:38 thorpej Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -737,7 +737,6 @@
 ./usr/include/sys/lock.h		comp-c-include
 ./usr/include/sys/lockf.h		comp-c-include
 ./usr/include/sys/malloc.h		comp-c-include
-./usr/include/sys/map.h			comp-c-include
 ./usr/include/sys/mbuf.h		comp-c-include
 ./usr/include/sys/md4.h			comp-c-include
 ./usr/include/sys/md5.h			comp-c-include
