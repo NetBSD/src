@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.69 1998/04/15 00:47:22 mjacob Exp $
+# $NetBSD: files.alpha,v 1.70 1998/04/15 20:35:37 drochner Exp $
 #
 # alpha-specific configuration info
 
@@ -28,10 +28,6 @@ defopt	ZS_IOASIC_DMA
 # XXX Temporary, until integration is finished.
 defopt	NEW_SCC_DRIVER
 
-# a wscons output device; used later, but needs to be near the top for
-# common file (e.g. vga) definitions.
-define	wsconsdev {[console = -1]}
-
 # this loses, but there's no way to define attributes which have attributes
 define	alpha_shared_intr
 file	arch/alpha/common/shared_intr.c	alpha_shared_intr | dec_eb164 |
@@ -39,9 +35,6 @@ file	arch/alpha/common/shared_intr.c	alpha_shared_intr | dec_eb164 |
 					dec_kn300
 define	alpha_sgmap
 file	arch/alpha/common/sgmap_common.c alpha_sgmap | dec_3000_500
-
-device	vga: wsconsdev
-file	arch/alpha/common/vga.c		vga
 
 #
 # Bus-independent devices
@@ -75,27 +68,11 @@ major { wd = 4 }
 file	arch/alpha/alpha/md_root.c	memory_disk_hooks
 major { md = 6 }
 
-#
-# raster console routines
-#
-
-define	raster
-include "dev/rcons/files.rcons"
-file	arch/alpha/wscons/wscons_rinit.c	raster
-file	arch/alpha/wscons/wscons_rops.c		raster
-
 
 #
-# "Workstation Console" glue; attaches frame buffer to emulator & kbd.
+# "Workstation Console" glue.
 #
-device	wscons: tty
-attach	wscons at wsconsdev
-file	arch/alpha/wscons/wscons.c	wscons		needs-flag
-file	arch/alpha/wscons/wscons_emul.c	wscons
-
-file	arch/alpha/wscons/event.c	wscons
-file	arch/alpha/wscons/kbd.c		wscons
-file	arch/alpha/wscons/ms.c		wscons
+include "dev/wscons/files.wscons"
 
 
 #
@@ -159,12 +136,12 @@ file	arch/alpha/tc/tc_3000_300.c	tcasic & dec_3000_300
 file	arch/alpha/tc/ioasic.c		ioasic
 
 # Color Frame buffer
-device	cfb: raster, wsconsdev
+device	cfb: wsemuldisplaydev, wsrasteremulops
 attach	cfb at tc
 file	arch/alpha/tc/cfb.c		cfb
 
 # Smart Frame buffer
-device	sfb: raster, wsconsdev
+device	sfb: wsemuldisplaydev, wsrasteremulops
 attach	sfb at tc
 file	arch/alpha/tc/sfb.c		sfb
 
@@ -216,20 +193,7 @@ include "dev/isa/files.isa"
 
 file	arch/alpha/isa/isa_machdep.c	isa
 
-device	pcppi { }
-attach	pcppi at isa
-file	arch/alpha/isa/pcppi.c		pcppi
-
-device	pckbd
-attach	pckbd at pcppi
-file	arch/alpha/isa/pckbd.c		pckbd
-
-device	pms
-attach	pms at pcppi
-file	arch/alpha/isa/pms.c		pms
-
-attach	vga at isa with vga_isa
-file	arch/alpha/isa/vga_isa.c	vga_isa		needs-flag
+include "dev/pckbc/files.pckbc"
 
 # Floppy disk controller
 device	fdc { drive = -1 }
@@ -239,7 +203,6 @@ attach	fd at fdc
 file	arch/alpha/isa/fd.c		fdc needs-flag
 major	{ fd = 0 }
 
-# PC speaker
 #
 # EISA Bus support
 #
@@ -333,15 +296,6 @@ attach	pceb at pci
 file	arch/alpha/pci/sio.c		sio | pceb	needs-flag
 file	arch/alpha/pci/sio_pic.c	sio | pceb
 
-device	tga: raster, wsconsdev
-attach	tga at pci
-file	arch/alpha/pci/tga.c		tga		needs-flag
-file	arch/alpha/pci/tga_conf.c	tga
-file	arch/alpha/pci/tga_bt463.c	tga
-file	arch/alpha/pci/tga_bt485.c	tga
-
-attach	vga at pci with vga_pci
-file	arch/alpha/pci/vga_pci.c	vga_pci		needs-flag
 
 #
 # A12 if_de hack, this is temporary!
