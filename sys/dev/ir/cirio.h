@@ -1,4 +1,4 @@
-/*	$NetBSD: cirio.h,v 1.1 2001/12/12 15:33:53 augustss Exp $	*/
+/*	$NetBSD: cirio.h,v 1.2 2001/12/13 15:08:26 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define _SYS_DEV_CIRIO_H_
 
 struct cir_params {
-	int raw;
+	unsigned int raw;
 };
 
 /* Coordinate numbering with irdaio.h. */
