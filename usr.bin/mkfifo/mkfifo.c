@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfifo.c,v 1.8 1997/10/19 05:11:54 lukem Exp $	*/
+/*	$NetBSD: mkfifo.c,v 1.9 2000/10/10 14:30:41 enami Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mkfifo.c	8.2 (Berkeley) 1/5/94";
 #endif
-__RCSID("$NetBSD: mkfifo.c,v 1.8 1997/10/19 05:11:54 lukem Exp $");
+__RCSID("$NetBSD: mkfifo.c,v 1.9 2000/10/10 14:30:41 enami Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -65,7 +65,7 @@ main(argc, argv)
 	char *argv[];
 {
 	int ch, exitval;
-	void * set;
+	void *set;
 	mode_t mode;
 
 	setlocale (LC_ALL, "");
@@ -85,7 +85,8 @@ main(argc, argv)
 			/* In symbolic mode strings, the + and - operators are
 			   interpreted relative to an assumed initial mode of
 			   a=rw. */
-			mode = getmode (set, 0666);
+			mode = getmode(set, 0666);
+			free(set);
 			break;
 		case '?':
 		default:
