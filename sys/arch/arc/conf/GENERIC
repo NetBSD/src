@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.34 2000/06/22 20:27:50 fvdl Exp $
+#	$NetBSD: GENERIC,v 1.35 2000/06/30 17:10:15 itojun Exp $
 #	$OpenBSD: GENERIC,v 1.29 1999/08/29 12:14:03 niklas Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -6,7 +6,7 @@
 
 include		"arch/arc/conf/std.arc"
 
-#ident		"GENERIC-$Revision: 1.34 $"
+#ident		"GENERIC-$Revision: 1.35 $"
 
 maxusers	32		# estimated number of users
 
@@ -79,6 +79,7 @@ options 	NFSSERVER	# Network File System server
 #options 	GATEWAY		# IP packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
+options 	PULLDOWN_TEST	# use m_pulldown for IPv4/v6 processing
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security

@@ -1,11 +1,11 @@
-# $NetBSD: GENERIC,v 1.69 2000/06/22 20:27:57 fvdl Exp $
+# $NetBSD: GENERIC,v 1.70 2000/06/30 17:10:21 itojun Exp $
 
 # GENERIC Sun3 (3/50, 3/60, 3/110, 3/160, 3/260, 3/E)
 # Supports root on: ie0, le0, sd*, ...
 
 include "arch/sun3/conf/std.sun3"
 
-#ident 		"GENERIC-$Revision: 1.69 $"
+#ident 		"GENERIC-$Revision: 1.70 $"
 
 # Machines to be supported by this kernel
 options 	FPU_EMULATE
@@ -72,6 +72,7 @@ options 	SOFTDEP         # FFS soft updates support.
 # Networking options
 options 	INET		# IP prototol stack support
 options 	INET6		# IPV6
+options 	PULLDOWN_TEST	# use m_pulldown for IPv4/v6 processing
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security

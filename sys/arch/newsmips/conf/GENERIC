@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC,v 1.23 2000/06/22 20:27:54 fvdl Exp $
+# 	$NetBSD: GENERIC,v 1.24 2000/06/30 17:10:19 itojun Exp $
 #
 #	GENERIC kernel for RISC-NEWS
 
 include		"arch/newsmips/conf/std.newsmips"
 
-#ident 		"GENERIC-$Revision: 1.23 $"
+#ident 		"GENERIC-$Revision: 1.24 $"
 
 maxusers	16
 
@@ -65,6 +65,7 @@ options 	SOFTDEP         # FFS soft updates support.
 # Networking options
 options 	INET		# Internet protocols
 options 	INET6		# IPV6
+options 	PULLDOWN_TEST	# use m_pulldown for IPv4/v6 processing
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
