@@ -1,4 +1,4 @@
-/*	$NetBSD: movstr.S,v 1.4 2003/09/22 02:35:46 uwe Exp $	*/
+/*	$NetBSD: movstr.S,v 1.5 2004/03/27 03:48:23 uwe Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,6 +27,10 @@
  */
 
 #include <machine/asm.h>
+
+#ifdef PIC	/* XXX: uwe */
+	.hidden __movstr
+#endif
 
 NENTRY(__movstr)
 	mov	#16, r0

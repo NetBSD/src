@@ -1,4 +1,4 @@
-/*	$NetBSD: movstr_i4.S,v 1.2 2003/09/22 02:42:02 uwe Exp $	*/
+/*	$NetBSD: movstr_i4.S,v 1.3 2004/03/27 03:48:23 uwe Exp $	*/
 
 /*-
  * Copyright (C) 2002 SHIMIZU Ryo.  All rights reserved.
@@ -28,6 +28,10 @@
 
 #include <machine/asm.h>
 
+#ifdef PIC	/* XXX: uwe */
+	.hidden __movstr_i4_odd
+#endif
+
 NENTRY(__movstr_i4_odd)
 	add	#-8,r4
 	nop
@@ -49,6 +53,9 @@ odd_loop:
 	 mov.l	r2,@(16,r4)
 
 
+#ifdef PIC	/* XXX: uwe */
+	.hidden __movstr_i4_even
+#endif
 
 NENTRY(__movstr_i4_even)
 	add	#-8,r4
