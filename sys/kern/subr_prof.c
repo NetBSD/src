@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)subr_prof.c	8.3 (Berkeley) 9/23/93
- *	$Id: subr_prof.c,v 1.1 1994/05/05 05:38:24 cgd Exp $
+ *	$Id: subr_prof.c,v 1.2 1994/05/07 00:55:46 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -88,7 +88,6 @@ kmstartup()
 	p->froms = (u_short *)cp;
 }
 
-#ifdef notyet
 /*
  * Return kernel profiling information.
  */
@@ -133,7 +132,6 @@ sysctl_doprof(name, namelen, oldp, oldlenp, newp, newlen, p)
 	}
 	/* NOTREACHED */
 }
-#endif
 #endif /* GPROF */
 
 /*
