@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.13 1999/11/19 15:19:14 joda Exp $	*/
+/*	$NetBSD: i82557.c,v 1.14 1999/12/04 02:02:30 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,8 @@
  */
 
 /*
- * Device driver for the Intel i82557 fast Ethernet controller.
+ * Device driver for the Intel i82557 fast Ethernet controller,
+ * and its successors, the i82558 and i82559.
  */
 
 #include "opt_inet.h"
