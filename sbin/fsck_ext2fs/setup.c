@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.1 1997/06/11 11:22:01 bouyer Exp $	*/
+/*	$NetBSD: setup.c,v 1.2 1997/06/16 08:14:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static char rcsid[] = "$NetBSD: setup.c,v 1.1 1997/06/11 11:22:01 bouyer Exp $";
+static char rcsid[] = "$NetBSD: setup.c,v 1.2 1997/06/16 08:14:38 bouyer Exp $";
 #endif
 #endif /* not lint */
 
@@ -114,8 +114,8 @@ setup(dev)
 	lfdir = 0;
 	initbarea(&sblk);
 	initbarea(&asblk);
-	sblk.b_un.b_buf = malloc(SBSIZE);
-	asblk.b_un.b_buf = malloc(SBSIZE);
+	sblk.b_un.b_buf = malloc(sizeof(struct m_ext2fs));
+	asblk.b_un.b_buf = malloc(sizeof(struct m_ext2fs));
 	if (sblk.b_un.b_buf == NULL || asblk.b_un.b_buf == NULL)
 		errexit("cannot allocate space for superblock\n");
 	if ((lp = getdisklabel((char *)NULL, fsreadfd)) != NULL)
