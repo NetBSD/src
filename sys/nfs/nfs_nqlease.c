@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.28 1999/03/06 05:34:41 fair Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.29 1999/03/25 04:07:33 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -465,6 +465,8 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred)
 				nam2 = (struct mbuf *)0;
 				so = lph->lph_slp->ns_so;
 			} else
+				goto nextone;
+			if (!so)
 				goto nextone;
 			sotype = so->so_type;
 			if (so->so_proto->pr_flags & PR_CONNREQUIRED)
