@@ -8,3 +8,6 @@ char	*memcpy(char *from, char *to, unsigned int size)
     return to;
 }
 
+extern int ufs_mountroot();
+int (*mountroot)() = ufs_mountroot;
+     

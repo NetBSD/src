@@ -11,6 +11,78 @@
 #include "machine/cpu.h"
 #include "machine/pte.h"
 
+/*
+ * Finish a fork operation, with process p2 nearly set up.
+ * Copy and update the kernel stack and pcb, making the child
+ * ready to run, and marking it so that it can return differently
+ * than the parent.  Returns 1 in the child process, 0 in the parent.
+ * We currently double-map the user area so that the stack is at the same
+ * address in each process; in the future we will probably relocate
+ * the frame pointers on the stack after copying.
+ */
+cpu_fork(p1, p2)
+	register struct proc *p1, *p2;
+{
+	register struct user *up = p2->p_addr;
+	int offset;
+	extern caddr_t getsp();
+	extern char kstack[];
+
+	/*
+	 * Copy pcb and stack from proc p1 to p2. 
+	 * We do this as cheaply as possible, copying only the active
+	 * part of the stack.  The stack and pcb need to agree;
+	 * this is tricky, as the final pcb is constructed by savectx,
+	 * but its frame isn't yet on the stack when the stack is copied.
+	 * swtch compensates for this when the child eventually runs.
+	 * This should be done differently, with a single call
+	 * that copies and updates the pcb+stack,
+	 * replacing the bcopy and savectx.
+	 */
+	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
+	offset = getsp() - kstack;
+	bcopy((caddr_t)kstack + offset, (caddr_t)p2->p_addr + offset,
+	    (unsigned) ctob(UPAGES) - offset);
+
+	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, &up->u_pcb, 0);
+
+	/*
+	 * Arrange for a non-local goto when the new process
+	 * is started, to resume here, returning nonzero from setjmp.
+	 */
+	if (savectx(up, 1)) {
+		/*
+		 * Return 1 in child.
+		 */
+		return (1);
+	}
+	return (0);
+}
+
+/*
+ * cpu_exit is called as the last action during exit.
+ * We release the address space and machine-dependent resources,
+ * including the memory for the user structure and kernel stack.
+ * Once finished, we call swtch_exit, which switches to a temporary
+ * pcb and stack and never returns.  We block memory allocation
+ * until swtch_exit has made things safe again.
+ */
+void
+cpu_exit(p)
+	struct proc *p;
+{
+
+	vmspace_free(p->p_vmspace);
+
+	(void) splimp();
+	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
+	swtch_exit();
+	/* NOTREACHED */
+}
+
+
+
+
 extern vm_map_t phys_map;
 
 /*

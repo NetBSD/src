@@ -327,6 +327,8 @@ extern  void    Mach_MonTrap _ARGS_((Address address_to_trap_to));
 #define mon_putchar (romVectorPtr->printf)
 #define mon_exit_to_mon (romVectorPtr->exitToMon)
 #define mon_reboot (romVectorPtr->exitToMon)
+#define mon_setcxsegmap(context, va, sme) \
+     romVectorPtr->setcxsegmap(context, va, sme)
 #define romp (romVectorPtr)
 
 /*

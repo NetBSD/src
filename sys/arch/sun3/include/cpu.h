@@ -103,7 +103,7 @@ typedef struct intrframe {
 int	astpending;		/* need to trap before returning to user mode */
 int	want_resched;		/* resched() was called */
 
-
+#include <machine/mtpr.h>
 
 /* values for machineid */
 

@@ -67,5 +67,25 @@ ENTRY(set_control_word)
 	movsl d0, a0@
 	rts
 
-	
+/*
+ * Get callers current SP value.
+ * Note that simply taking the address of a local variable in a C function
+ * doesn't work because callee saved registers may be outside the stack frame
+ * defined by A6 (e.g. GCC generated code).
+ *
+ * [I don't think the ENTRY() macro will do the right thing with this -- glass]
+ */
+	.globl	_getsp
+_getsp:
+	movl	sp,d0			| get current SP
+	addql	#4,d0			| compensate for return address
+	rts
+
+	.globl	_getsfc, _getdfc
+_getsfc:
+	movc	sfc,d0
+	rts
+_getdfc:
+	movc	dfc,d0
+	rts
 

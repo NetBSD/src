@@ -17,7 +17,6 @@
 #include "machine/vmparam.h"
 #include "machine/pmap.h"
 
-extern int memavail;
 /*
  * globals needed by the vm system
  *
@@ -26,6 +25,11 @@ extern int memavail;
 
 vm_offset_t virtual_avail, virtual_end;
 vm_offset_t avail_start, avail_end;
+int msgbufmapped = 0;
+struct msgbuf *msgbufp = NULL;
+vm_offset_t msgbuf_pa;
+caddr_t vmmap;
+
 
 /* current_projects:
  * 
@@ -71,6 +75,14 @@ vm_offset_t avail_start, avail_end;
 #define	NUSEG	(NSEGMAP-NKSEG)			
 
 #define splpmap splbio
+
+#define PMAP_LOCK() s = splpmap()
+#define PMAP_UNLOCK() splx(s)
+/*
+ * locking issues:
+ *
+ */
+
 /*
  * pv support, i.e stuff that maps from physical pages to virtual addresses
  *
@@ -237,24 +249,32 @@ int get_pte_val(pmap, va,ptep)
      pmap_t pmap;
      vm_offset_t va,*ptep;
 {
-    int saved_context;
+    int saved_context,s;
     unsigned char sme;
     pmeg_t pmegp;
 
     if (pmap->pm_context) {
+	PMAP_LOCK();
 	saved_context = get_context();
 	set_context(pmap->pm_context->context_num);
 	sme = get_segmap(va);
-	if (sme == SEGINV) return 0;
+	if (sme == SEGINV) {
+	    PMAP_UNLOCK();
+	    return 0;
+	}
 	*ptep = get_pte(va);
 	set_context(saved_context);
-	return 1;
+    } else {
+	/* we don't have a context */
+	pmegp = pmeg_cache(pmap, sun3_trunc_seg(va), PM_UPDATE_CACHE);
+	if (!pmegp) {
+	    PMAP_UNLOCK();
+	    return 0;
+	}
+	*ptep = get_pte_pmeg(pmegp->pmeg_index, VA_PTE_NUM(va));
+	pmeg_release(pmegp);
     }
-    /* we don't have a context */
-    pmegp = pmeg_cache(pmap, sun3_trunc_seg(va), PM_UPDATE_CACHE);
-    if (!pmegp) return 0;
-    *ptep = get_pte_pmeg(pmegp->pmeg_index, VA_PTE_NUM(va));
-    pmeg_release(pmegp);
+    PMAP_UNLOCK();
     return 1;
 }
 
@@ -262,31 +282,36 @@ void set_pte_val(pmap, va,pte)
      pmap_t pmap;
      vm_offset_t va,pte;
 {
-    int saved_context;
+    int saved_context, s;
     pmeg_t pmegp;
     unsigned char sme;
 
+    PMAP_LOCK();
     if (pmap->pm_context) {
 	saved_context = get_context();
 	set_context(pmap->pm_context->context_num);
 	sme = get_segmap(va);
-	if (sme == SEGINV) return;
+	if (sme == SEGINV) goto outta_here;
 	set_pte(va, pte);
 	set_context(saved_context);
-	return;
     }
+    else {
     /* we don't have a context */
-    pmegp = pmeg_cache(pmap, sun3_trunc_seg(va), PM_UPDATE_CACHE);
-    if (!pmegp) panic("pmap: no pmeg to set pte in");
-    set_pte_pmeg(pmegp->pmeg_index, VA_PTE_NUM(va), pte);
-    pmeg_release(pmegp);
-    return;
+	pmegp = pmeg_cache(pmap, sun3_trunc_seg(va), PM_UPDATE_CACHE);
+	if (!pmegp) panic("pmap: no pmeg to set pte in");
+	set_pte_pmeg(pmegp->pmeg_index, VA_PTE_NUM(va), pte);
+	pmeg_release(pmegp);
+    }
+outta_here:
+    PMAP_UNLOCK();
 }
 void context_allocate(pmap)
      pmap_t pmap;
 {
     context_t context;
+    int s;
 
+    PMAP_LOCK();
     if (pmap->pm_context)
 	panic("pmap: pmap already has context allocated to it");
     if (queue_empty(&context_free_queue)) { /* steal one from active*/
@@ -301,14 +326,17 @@ void context_allocate(pmap)
 	panic("pmap: context in use???");
     pmap->pm_context = context;
     context->context_upmap = pmap;
+    PMAP_UNLOCK();
 }
 void context_free(pmap)		/* :) */
      pmap_t pmap;
 {
-    int saved_context;
+    int saved_context, i, s;
     context_t context;
-    int i;
+
     vm_offset_t va;
+
+    PMAP_LOCK();
     saved_context = get_context();
     if (!pmap->pm_context)
 	panic("pmap: can't free a non-existent context");
@@ -323,7 +351,9 @@ void context_free(pmap)		/* :) */
     set_context(saved_context);
     enqueue_tail(&context_free_queue, context);
     pmap->pm_context = NULL;
+    PMAP_UNLOCK();
 }
+
 void context_init()
 {
     int i;
@@ -361,14 +391,20 @@ void pmeg_flush(pmegp)
     vm_offset_t pte;
     int i;
     
-    if (!pmegp->pmeg_vpages)
-	printf("pmap: pmeg_flush() on clean pmeg\n");
+/*    if (!pmegp->pmeg_vpages)
+	printf("pmap: pmeg_flush() on clean pmeg\n");*/
     for (i = 0; i < NPAGSEG; i++) {
-	pte = get_pte_pmeg(pmegp->pmeg_index, i);
-	if (pte & PG_VALID) {
-	    save_modified_bits(pte);
-	    pv_unlink(pmegp->pmeg_owner, PG_PA(pte), pmegp->pmeg_va);
-	    pmegp->pmeg_vpages--;
+	if (pmegp->pmeg_owner) {
+	    pte = get_pte_pmeg(pmegp->pmeg_index, i);
+	    if (pte & PG_VALID) {
+		save_modified_bits(pte);
+		pv_unlink(pmegp->pmeg_owner, PG_PA(pte), pmegp->pmeg_va);
+		pmegp->pmeg_vpages--;
+		set_pte_pmeg(pmegp->pmeg_index, i, PG_INVAL);
+	    }
+	}
+	else {
+	    pmegp->pmeg_vpages = 0;
 	    set_pte_pmeg(pmegp->pmeg_index, i, PG_INVAL);
 	}
     }
@@ -546,6 +582,7 @@ unsigned char pv_link(pmap, pa, va, flags)
 {
     unsigned char nflags;
     pv_entry_t last,pv,head,npv;
+    int s;
 
     head = pv = pa_to_pvp(pa);
     PMAP_LOCK();
@@ -674,19 +711,19 @@ void pv_init()
     int i;
 
     pv_head_table = (pv_entry_t) kmem_alloc(kernel_map,
-					    (memavail >> PGSHIFT) *
+					    (avail_end >> PGSHIFT) *
 					    sizeof(struct pv_entry));
-    for (i = 0; i < memavail; i++) { /* dumb XXX*/
+    for (i = 0; i < (avail_end >>PGSHIFT); i++) { /* dumb XXX*/
 	bzero(&pv_head_table[i], sizeof(struct pv_entry));
     }
     pv_modified_table = (unsigned char *) kmem_alloc(kernel_map,
-						     (memavail >> PGSHIFT)*
+						     (avail_end >> PGSHIFT)*
 						     sizeof(char));
-    bzero(pv_modified_table, sizeof(char)* (memavail>>PGSHIFT));
+    bzero(pv_modified_table, sizeof(char)* (avail_end >> PGSHIFT));
     pv_cache_table = (unsigned char *) kmem_alloc(kernel_map,
-						  (memavail >> PGSHIFT) *
+						  (avail_end >> PGSHIFT) *
 						  sizeof(char));
-    bzero(pv_cache_table, sizeof(char)* (memavail>>PGSHIFT));
+    bzero(pv_cache_table, sizeof(char)* (avail_end >> PGSHIFT));
 }
 
 void sun3_protection_init()
@@ -727,17 +764,57 @@ void pmap_common_init(pmap)
 
 void pmap_bootstrap()
 {
-    
+    vm_offset_t temp_seg;
+    extern vm_size_t page_size;
+    extern void vm_set_page_size();
+
+    page_size = NBPG;
+    vm_set_page_size();
+
     sun3_protection_init();
+
    /* after setting up some structures */
 
     kernel_pmap = &kernel_pmap_store;
     pmap_common_init(kernel_pmap);
 
-    /*    pmeg_init();*/
+    /* pmeg_init(); done in sun3_vm_init() */
     context_init();
     
-    /* unmap everything else, and copy into all contexts*/
+    /* msgbuf */
+    avail_end -= NBPG;
+    msgbuf_pa = avail_end;
+    msgbufp = (struct msgbuf *) virtual_avail;
+    virtual_avail += NBPG;
+
+    /* vmmap (used by /dev/mem */
+    vmmap = (caddr_t) virtual_avail;
+    set_pte((vm_offset_t) vmmap, PG_INVAL);
+    virtual_avail += NBPG;
+
+    /*
+     * vpages array:
+     *   just some virtual addresses for temporary mappings
+     *   in the pmap modue
+     */
+
+    tmp_vpages[0] = virtual_avail;
+    virtual_avail += NBPG;
+    tmp_vpages[1] = virtual_avail;
+    virtual_avail += NBPG;
+
+    /*
+     * we need to kill off a segment to handle the stupid non-contexted
+     * pmeg 
+     *
+     */
+
+    temp_seg = sun3_round_seg(virtual_avail);
+    mon_printf("%d virtual bytes lost allocating temporary segment for pmap\n",
+	       temp_seg - virtual_avail); 
+    virtual_avail = temp_seg + NBSG;
+    set_temp_seg_addr(temp_seg);
+    
 }
 /*
  *	Initialize the pmap module.
@@ -751,6 +828,10 @@ pmap_init(phys_start, phys_end)
     vm_offset_t tmp,end;
 
     pv_init();
+
+    pmap_enter(kernel_pmap, (vm_offset_t) msgbufp, msgbuf_pa ,
+	       VM_PROT_READ | VM_PROT_WRITE, FALSE);
+    msgbufmapped = 1;
 }
 
 vm_offset_t
@@ -836,7 +917,6 @@ pmap_destroy(pmap)
     pmap_lock(pmap);
     count = pmap_del_ref(pmap);
     pmap_unlock(pmap);
-    simple_unlock(&pmap->pm_lock);
     if (count == 0) {
 	pmap_release(pmap);
 	free((caddr_t)pmap, M_VMPMAP); /* XXXX -- better make sure we
@@ -854,6 +934,9 @@ pmap_page_protect(pa, prot)
         vm_offset_t     pa;
         vm_prot_t       prot;
 {
+    int s;
+
+    PMAP_LOCK();
     switch (prot) {
     case VM_PROT_ALL:
 	break;
@@ -869,6 +952,7 @@ pmap_page_protect(pa, prot)
 	 */
 	pv_remove_all(pa);
     }
+    PMAP_UNLOCK();
 }
 
 /*
@@ -1005,6 +1089,7 @@ void pmap_remove(pmap, sva, eva)
 {
     vm_offset_t va,neva;
     pmeg_t pmegp;
+    int s;
     /* some form of locking?, when where. */
 
     /* do something about contexts */
@@ -1206,8 +1291,8 @@ pmap_enter(pmap, va, pa, prot, wired)
      vm_prot_t prot;
      boolean_t wired;
 {
-    vm_offset_t pte_proto;
-    vm_offset_t mem_type;
+    vm_offset_t pte_proto, mem_type;
+    int s;
 
     if (pmap == NULL) return;
 
@@ -1222,32 +1307,46 @@ pmap_enter(pmap, va, pa, prot, wired)
      *   be in the mmu either.
      *
      */
+    PMAP_LOCK();
     if (pmap == kernel_pmap)
 	pmap_enter_kernel(va, pa, prot, wired, pte_proto, mem_type);
     else
 	pmap_enter_user(pmap, va, pa, prot, wired, pte_proto, mem_type);
+    PMAP_UNLOCK();
 }
 
 void
 pmap_clear_modify(pa)
      vm_offset_t	pa;
 {
+    int s;
+
+    PMAP_LOCK();
     pv_modified_table[PG_PGNUM(pa)] = 0;
     pv_change_pte(&pv_head_table[PG_PGNUM(pa)], 0, PG_MOD);
+    PMAP_UNLOCK();
 }
 boolean_t
 pmap_is_modified(pa)
      vm_offset_t	pa;
 {
+    int s;
+
     if (pv_modified_table[PG_PGNUM(pa)]) return 1;
+    PMAP_LOCK();
     pv_modified_table[PG_PGNUM(pa)] = pv_compute_modified(pa_to_pvp(pa));
+    PMAP_UNLOCK();
     return pv_modified_table[PG_PGNUM(pa)];
 }
 
 void pmap_clear_reference(pa)
      vm_offset_t	pa;
 {
+    int s;
+    
+    PMAP_LOCK();
     pv_remove_all(pa);
+    PMAP_UNLOCK();
 }
 
 boolean_t
@@ -1263,13 +1362,18 @@ void pmap_activate(pmap, pcbp, is_curproc)
      struct pcb *pcbp;
      int is_curproc;
 {
+    int s;
+
     if (is_curproc) return;
+    PMAP_LOCK();
     if (pmap->pm_context) {
 	set_context(pmap->pm_context->context_num);
+	PMAP_UNLOCK();
 	return;
     }
     context_allocate(pmap);
     set_context(pmap->pm_context->context_num);
+    PMAP_UNLOCK();
 }
 void pmap_deactivate(pmap, pcbp)
      pmap_t pmap;
@@ -1320,7 +1424,9 @@ void pmap_copy_page(src, dst)
 	 vm_offset_t	src, dst;
 {
     vm_offset_t pte;
+    int s;
 
+    PMAP_LOCK();
     pte = PG_VALID |PG_SYSTEM|PG_WRITE|PG_NC|PG_MMEM| (src >>PGSHIFT);
     set_pte(tmp_vpages[0], pte);
     pte = PG_VALID |PG_SYSTEM|PG_WRITE|PG_NC|PG_MMEM| (dst >>PGSHIFT);
@@ -1328,6 +1434,7 @@ void pmap_copy_page(src, dst)
     bcopy((char *) tmp_vpages[0], (char *) tmp_vpages[1], NBPG);
     set_pte(tmp_vpages[0], PG_INVAL);
     set_pte(tmp_vpages[0], PG_INVAL);
+    PMAP_UNLOCK();
 }
 /*
  *	Routine:	pmap_extract
@@ -1343,6 +1450,7 @@ pmap_extract(pmap, va)
     unsigned char sme;
     unsigned int seg;
     vm_offset_t pte;
+    int s;
 
     if (pmap == kernel_pmap) {
 	sme = get_segmap(va);
@@ -1350,7 +1458,7 @@ pmap_extract(pmap, va)
 	    panic("pmap: pmap_extract() failed on kernel va");
 	pte = get_pte(va);
 	if (pte & PG_VALID)
-	    return PG_PA(pte);
+	    goto valid;
 	panic("pmap: pmap_extract() failed on invalid kernel va");
     }
     seg = VA_SEGNUM(va);
@@ -1358,9 +1466,12 @@ pmap_extract(pmap, va)
     	panic("pmap: pmap_extract() failed on user va");
     if (get_pte_val(pmap, va,&pte)) {
 	if (pte & PG_VALID)
-	    return PG_PA(pte);
+	    goto valid;
     }
     panic("pmap: pmap_extract() failed on invalid user va");
+ valid:
+    PMAP_UNLOCK();
+    return PG_PA(pte);
 }
 /*
  *	Routine:	pmap_pageable
@@ -1405,13 +1516,14 @@ pmap_pinit(pmap)
     pmap_common_init(pmap);
     pmap_user_pmap_init(pmap);
 }
+
 void pmap_protect_range_contextless(pmap, sva, eva,pte_proto, pmegp)
      pmap_t pmap;
      vm_offset_t sva, eva;
      vm_offset_t pte_proto;
      pmeg_t pmegp;
 {
-    int sp,ep,i;
+    int sp, ep, i, s;
     unsigned char nflags;
     vm_offset_t pte,va;
 
@@ -1480,16 +1592,17 @@ void pmap_protect_range(pmap, sva, eva, pte_proto)
      vm_offset_t pte_proto;
 {
     pmeg_t pmegp;
+
     if ((pmap != kernel_pmap))    
 	if (get_pmeg_cache(pmap, VA_SEGNUM(sva)) == SEGINV) return;
     if ((pmap == kernel_pmap) ||
- 	(pmap->pm_context)) {
+ 	(pmap->pm_context)) 
 	pmap_protect_range_mmu(pmap, sva, eva,pte_proto);
-	return;
+    else {
+	pmegp = pmeg_cache(pmap, sun3_trunc_seg(sva),PM_UPDATE_CACHE);
+	if (!pmegp) return;
+	pmap_protect_range_contextless(pmap, sva, eva, pte_proto, pmegp);
     }
-    pmegp = pmeg_cache(pmap, sun3_trunc_seg(sva),PM_UPDATE_CACHE);
-    if (!pmegp) return;
-    pmap_protect_range_contextless(pmap, sva, eva, pte_proto, pmegp);
 }
 /*
  *	Set the physical protection on the
@@ -1501,7 +1614,8 @@ pmap_protect(pmap, sva, eva, prot)
 	vm_offset_t	sva, eva;
 	vm_prot_t	prot;
 {
-    vm_offset_t pte_proto,va,neva;
+    vm_offset_t pte_proto, va, neva;
+    int s;
     
     if (pmap == NULL) return;
     if (pmap == kernel_pmap) {
@@ -1518,6 +1632,7 @@ pmap_protect(pmap, sva, eva, prot)
 	pmap_remove(pmap, sva, eva);
 	return;
     }
+    PMAP_LOCK();
     pte_proto = pmap_pte_prot(prot);
     va = sva;
     while (va < eva) {
@@ -1527,6 +1642,7 @@ pmap_protect(pmap, sva, eva, prot)
 	pmap_protect_range(pmap, va, neva, pte_proto);
 	va = neva;
     }
+    PMAP_UNLOCK();
 }
 
 /*
@@ -1550,11 +1666,14 @@ void pmap_zero_page(pa)
 	 vm_offset_t	pa;
 {
     vm_offset_t pte;
+    int s;
 
+    PMAP_LOCK();
     pte = PG_VALID |PG_SYSTEM|PG_WRITE|PG_NC|PG_MMEM| (pa >>PGSHIFT);
     set_pte(tmp_vpages[0], pte);
     bzero((char *) tmp_vpages[0], NBPG);
     set_pte(tmp_vpages[0], PG_INVAL);
+    PMAP_UNLOCK();
 }
 
 

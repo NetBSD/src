@@ -5,9 +5,9 @@
 
 
 .text
-.globl start
+.globl start; .globl _start
 
-start:
+start: _start:
 /*
  * First we need to set it up so we can access the sun MMU, and be otherwise
  * undisturbed.  Until otherwise noted, all code must be position independent
@@ -61,7 +61,7 @@ bsszero: clrl a0@
 	addql #4, a0
 	cmpl a0, a1
 	bne bsszero
-	movl #_start, sp
+	movl #start, sp
 	jsr _sun3_bootstrap
 	jsr _main
 	rts					|should never get here
@@ -98,3 +98,5 @@ _szicode:
 #include "m68k.s"
 #include "signal.s"
 #include "process.s"
+#include "softint.s"
+
