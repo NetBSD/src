@@ -1,4 +1,4 @@
-/*	$NetBSD: apmvar.h,v 1.13 2001/07/22 16:05:18 itojun Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.14 2001/09/10 05:23:32 perry Exp $	*/
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -295,9 +295,11 @@ struct apm_ctl {
 #define	APM_IOC_REJECT	_IOW('A', 0, struct apm_event_info) /* reject request # */
 #define	APM_IOC_STANDBY	_IO('A', 1)	/* put system into standby */
 #define	APM_IOC_SUSPEND	_IO('A', 2)	/* put system into suspend */
-#define	APM_IOC_GETPOWER _IOR('A', 3, struct apm_power_info) /* fetch battery state */
+#define	OAPM_IOC_GETPOWER _IOR('A', 3, struct apm_power_info) /* fetch battery state */
+#define	APM_IOC_GETPOWER _IOWR('A', 3, struct apm_power_info) /* fetch battery state */
 #define	APM_IOC_NEXTEVENT _IOR('A', 4, struct apm_event_info) /* fetch event */
 #define	APM_IOC_DEV_CTL	_IOW('A', 5, struct apm_ctl) /* put device into mode */
+
 
 struct apm_attach_args {
 	char *aaa_busname;
