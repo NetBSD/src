@@ -15,6 +15,7 @@
 ./usr/include/atari/float.h
 ./usr/include/atari/frame.h
 ./usr/include/atari/grfioctl.h
+./usr/include/atari/ieee.h
 ./usr/include/atari/ieeefp.h
 ./usr/include/atari/intr.h
 ./usr/include/atari/iteioctl.h
@@ -23,6 +24,7 @@
 ./usr/include/atari/kcore.h
 ./usr/include/atari/limits.h
 ./usr/include/atari/msioctl.h
+./usr/include/atari/mtpr.h
 ./usr/include/atari/param.h
 ./usr/include/atari/pcb.h
 ./usr/include/atari/pmap.h

@@ -13,6 +13,7 @@
 ./usr/include/mvme68k/endian.h
 ./usr/include/mvme68k/float.h
 ./usr/include/mvme68k/frame.h
+./usr/include/mvme68k/ieee.h
 ./usr/include/mvme68k/ieeefp.h
 ./usr/include/mvme68k/kcore.h
 ./usr/include/mvme68k/limits.h
