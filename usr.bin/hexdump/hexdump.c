@@ -1,4 +1,4 @@
-/*	$NetBSD: hexdump.c,v 1.10 2003/08/07 11:14:03 agc Exp $	*/
+/*	$NetBSD: hexdump.c,v 1.11 2003/10/22 12:30:39 dmcmahill Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,9 +39,13 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)hexdump.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: hexdump.c,v 1.10 2003/08/07 11:14:03 agc Exp $");
+__RCSID("$NetBSD: hexdump.c,v 1.11 2003/10/22 12:30:39 dmcmahill Exp $");
 #endif
 #endif /* not lint */
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <sys/types.h>
 
