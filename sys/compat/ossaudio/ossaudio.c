@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.30.4.1 2000/08/07 00:28:49 augustss Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.30.4.2 2000/08/16 17:07:52 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -57,8 +57,8 @@ int ossdebug = 0;
 #define DPRINTF(x)
 #endif
 
-#define TO_OSSVOL(x) ((x) * 100 / 255)
-#define FROM_OSSVOL(x) (((x) > 100 ? 100 : (x)) * 255 / 100)
+#define TO_OSSVOL(x)	(((x) * 100 + 127) / 255)
+#define FROM_OSSVOL(x)	((((x) > 100 ? 100 : (x)) * 255 + 50) / 100)
 
 static struct audiodevinfo *getdevinfo __P((struct file *, struct proc *));
 static int opaque_to_enum(struct audiodevinfo *di, audio_mixer_name_t *label, int opq);
