@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.10.2.2 1997/06/07 04:43:04 cgd Exp $ */
+/* $NetBSD: bus.h,v 1.10.2.3 1997/06/07 05:47:20 cgd Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -380,6 +380,7 @@ struct alpha_bus_space {
 /* Forwards needed by prototypes below. */
 struct mbuf;
 struct uio;
+struct alpha_sgmap_cookie;
 
 /*
  *	bus_dmasync_op_t
@@ -517,7 +518,8 @@ struct alpha_bus_dmamap {
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
 
-	void		*_dm_cookie;	/* cookie for bus-specific functions */
+	/* SGMAP cookie used for SGMAP-mapped DMA */
+	struct alpha_sgmap_cookie *_dm_sgcookie;
 
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
