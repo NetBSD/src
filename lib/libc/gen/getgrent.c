@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.49 2004/10/04 04:11:33 lukem Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.50 2004/10/24 14:52:46 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.49 2004/10/04 04:11:33 lukem Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.50 2004/10/24 14:52:46 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -108,12 +108,13 @@ __RCSID("$NetBSD: getgrent.c,v 1.49 2004/10/04 04:11:33 lukem Exp $");
 #include <grp.h>
 #include <limits.h>
 #include <nsswitch.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <threadlib.h>
 
-#include <stdarg.h>
 
 #ifdef HESIOD
 #include <hesiod.h>
@@ -138,6 +139,10 @@ __weak_alias(getgrnam,_getgrnam)
 __weak_alias(getgrnam_r,_getgrnam_r)
 __weak_alias(setgrent,_setgrent)
 __weak_alias(setgroupent,_setgroupent)
+#endif
+ 
+#ifdef _REENTRANT
+static 	mutex_t			_grmutex = MUTEX_INITIALIZER;
 #endif
 
 static const ns_src defaultcompat[] = {
@@ -1695,8 +1700,10 @@ getgrent(void)
 		{ 0 }
 	};
 
+	mutex_lock(&_grmutex);
 	rv = nsdispatch(NULL, dtab, NSDB_GROUP, "getgrent", defaultcompat,
 	    &retval);
+	mutex_unlock(&_grmutex);
 	return (rv == NS_SUCCESS) ? retval : NULL;
 }
 
@@ -1714,8 +1721,10 @@ getgrgid(gid_t gid)
 		{ 0 }
 	};
 
+	mutex_lock(&_grmutex);
 	rv = nsdispatch(NULL, dtab, NSDB_GROUP, "getgrgid", defaultcompat,
 	    &retval, gid);
+	mutex_unlock(&_grmutex);
 	return (rv == NS_SUCCESS) ? retval : NULL;
 }
 
@@ -1739,8 +1748,10 @@ getgrgid_r(gid_t gid, struct group *grp, char *buffer, size_t buflen,
 
 	*result = NULL;
 	retval = 0;
+	mutex_lock(&_grmutex);
 	rv = nsdispatch(NULL, dtab, NSDB_GROUP, "getgrgid_r", defaultcompat,
 	    &retval, gid, grp, buffer, buflen, result);
+	mutex_unlock(&_grmutex);
 	return (rv == NS_SUCCESS) ? 0 : retval ? retval : ENOENT;
 }
 
@@ -1758,8 +1769,10 @@ getgrnam(const char *name)
 		{ 0 }
 	};
 
+	mutex_lock(&_grmutex);
 	rv = nsdispatch(NULL, dtab, NSDB_GROUP, "getgrnam", defaultcompat,
 	    &retval, name);
+	mutex_unlock(&_grmutex);
 	return (rv == NS_SUCCESS) ? retval : NULL;
 }
 
@@ -1784,8 +1797,10 @@ getgrnam_r(const char *name, struct group *grp, char *buffer, size_t buflen,
 
 	*result = NULL;
 	retval = 0;
+	mutex_lock(&_grmutex);
 	rv = nsdispatch(NULL, dtab, NSDB_GROUP, "getgrnam_r", defaultcompat,
 	    &retval, name, grp, buffer, buflen, result);
+	mutex_unlock(&_grmutex);
 	return (rv == NS_SUCCESS) ? 0 : retval ? retval : ENOENT;
 }
 
@@ -1800,9 +1815,11 @@ endgrent(void)
 		{ 0 }
 	};
 
+	mutex_lock(&_grmutex);
 					/* force all endgrent() methods */
 	(void) nsdispatch(NULL, dtab, NSDB_GROUP, "endgrent",
 	    defaultcompat_forceall);
+	mutex_unlock(&_grmutex);
 }
 
 int
@@ -1817,9 +1834,11 @@ setgroupent(int stayopen)
 	};
 	int	rv, retval;
 
+	mutex_lock(&_grmutex);
 					/* force all setgroupent() methods */
 	rv = nsdispatch(NULL, dtab, NSDB_GROUP, "setgroupent",
 	    defaultcompat_forceall, &retval, stayopen);
+	mutex_unlock(&_grmutex);
 	return (rv == NS_SUCCESS) ? retval : 0;
 }
 
@@ -1834,7 +1853,9 @@ setgrent(void)
 		{ 0 }
 	};
 
+	mutex_lock(&_grmutex);
 					/* force all setgrent() methods */
 	(void) nsdispatch(NULL, dtab, NSDB_GROUP, "setgrent",
 	    defaultcompat_forceall);
+	mutex_unlock(&_grmutex);
 }
