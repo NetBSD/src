@@ -1,4 +1,4 @@
-/* $NetBSD: bwx.s,v 1.1 1997/09/16 23:09:10 thorpej Exp $ */
+/* $NetBSD: bwx.s,v 1.2 1997/09/16 23:12:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,11 +37,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(3, "$NetBSD: bwx.s,v 1.1 1997/09/16 23:09:10 thorpej Exp $")
+__KERNEL_RCSID(3, "$NetBSD: bwx.s,v 1.2 1997/09/16 23:12:35 thorpej Exp $")
 
 /*
  * Alpha Byte/Word Extension instructions.  These are functions because
- * gas(1) cannot currently witch targets on the fly.  Eventually, these
+ * gas(1) cannot currently switch targets on the fly.  Eventually, these
  * might be replaced by inline __asm() functions.
  *
  * These instructions are available on EV56 (21164A) and later processors.
