@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sh3.c,v 1.4 2001/08/05 03:33:15 matt Exp $	*/
+/*	$NetBSD: kvm_sh3.c,v 1.5 2002/07/10 09:17:02 scw Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,12 +42,12 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sh3.c,v 1.4 2001/08/05 03:33:15 matt Exp $");
+__RCSID("$NetBSD: kvm_sh3.c,v 1.5 2002/07/10 09:17:02 scw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
- * i386 machine dependent routines for kvm.
+ * SH3 machine dependent routines for kvm.
  */
 
 #include <sys/param.h>
