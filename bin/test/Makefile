@@ -1,14 +1,9 @@
 #	from: @(#)Makefile	5.1 (Berkeley) 6/8/92
-#	$Id: Makefile,v 1.4 1993/08/01 05:46:39 mycroft Exp $
+#	$Id: Makefile,v 1.5 1994/06/30 05:12:29 jtc Exp $
 
 PROG=	test
-SRCS=   test.c operators.c
-CFLAGS+=-I.
+SRCS=   test.c
 LINKS=	${BINDIR}/test ${BINDIR}/[
 MLINKS=	test.1 '[.1'
-
-# use this rule to if you update binary_ops, or unary_ops
-make_op: 
-	sh ${.CURDIR}/mkops
 
 .include <bsd.prog.mk>
