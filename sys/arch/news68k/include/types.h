@@ -1,10 +1,8 @@
-/*	$NetBSD: types.h,v 1.2 2000/02/05 00:13:24 cgd Exp $	*/
+/*	$NetBSD: types.h,v 1.3 2000/02/13 05:40:36 tsutsui Exp $	*/
 
 #ifndef _MACHINE_TYPES_H_
 #define _MACHINE_TYPES_H_
 
 #include <m68k/types.h>
-
-#define __BROKEN_CONFIG_UNIT_USAGE
 
 #endif
