@@ -1,6 +1,6 @@
 # GENERIC
 #
-#     $Id: GENERIC,v 1.12 1994/04/15 01:44:03 briggs Exp $
+#     $Id: GENERIC,v 1.13 1994/04/21 23:12:44 briggs Exp $
 
 include	"std.mac68k"
 
@@ -53,6 +53,7 @@ options		SYSVSHM,SYSVSEM,SYSVMSG
 
 # Mac-specific options
 options		FPCOPROC
+options		FPSP
 options		COMPAT_NOMID
 options		COMPAT_SUNOS
 options		COMPAT_09
