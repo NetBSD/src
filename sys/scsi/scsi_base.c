@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.20 1994/12/01 12:45:25 mycroft Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.21 1994/12/01 13:07:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -479,33 +479,20 @@ sc_err1(xs)
 	switch (xs->error) {
 	case XS_NOERROR:	/* nearly always hit this one */
 		error = 0;
-		if (bp) {
-			bp->b_error = 0;
-			bp->b_resid = 0;
-		}
 		break;
 
 	case XS_SENSE:
-		if (bp) {
-			bp->b_error = 0;
-			bp->b_resid = 0;
-			if (error = scsi_interpret_sense(xs)) {
-				bp->b_flags |= B_ERROR;
-				bp->b_error = error;
-				bp->b_resid = bp->b_bcount;
-			}
-			SC_DEBUG(xs->sc_link, SDEV_DB3,
-			    ("scsi_interpret_sense (bp) returned %d\n", error));
-		} else {
-			error = scsi_interpret_sense(xs);
-			SC_DEBUG(xs->sc_link, SDEV_DB3,
-			    ("scsi_interpret_sense (no bp) returned %d\n", error));
-		}
+		error = scsi_interpret_sense(xs);
+		SC_DEBUG(xs->sc_link, SDEV_DB3,
+		    ("scsi_interpret_sense returned %d\n", error));
+		if (error == -2)
+			goto doretry;
 		break;
 
 	case XS_BUSY:
-		/*should somehow arange for a 1 sec delay here (how?) */
+		/* should somehow arange for a 1 sec delay here (how?) */
 	case XS_TIMEOUT:
+	doretry:
 		/*
 		 * If we can, resubmit it to the adapter.
 		 */
@@ -516,18 +503,28 @@ sc_err1(xs)
 		}
 		/* fall through */
 	case XS_DRIVER_STUFFUP:
-		if (bp) {
-			bp->b_flags |= B_ERROR;
-			bp->b_error = EIO;
-		}
 		error = EIO;
 		break;
+
 	default:
-		error = EIO;
 		sc_print_addr(xs->sc_link);
 		printf("unknown error category from scsi driver\n");
+		error = EIO;
+		break;
+	}
+
+	if (bp) {
+		if (error) {
+			bp->b_flags |= B_ERROR;
+			bp->b_error = error;
+			bp->b_resid = bp->b_bcount;
+		} else {
+			bp->b_error = 0;
+			bp->b_resid = 0;
+		}
 	}
 	return error;
+
 retry:
 	return -1;
 }
