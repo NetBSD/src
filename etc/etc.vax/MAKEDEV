@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.36 2001/05/10 01:31:40 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.37 2001/12/19 17:58:10 wiz Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -62,7 +62,7 @@
 #	lkm	loadable kernel modules
 #	bpf*	berkeley packet filter
 #	tun*	network tunnel device
-#	scsibus* SCSI busses, scsictl(8), scsi(4)
+#	scsibus* SCSI busses, see scsi(4), scsictl(8)
 #	ss*	SCSI scanner
 #	uk*	SCSI unknown
 #	ch*	SCSI changer
