@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.5 1999/10/20 15:09:59 hubertf Exp $	*/
+/*	$NetBSD: edit.c,v 1.6 1999/11/02 22:06:45 jdolecek Exp $	*/
 
 /*
  * Command line editing - common code
@@ -556,7 +556,7 @@ x_file_glob(flags, str, slen, wordsp)
 {
 	char *toglob;
 	char **words;
-	int nwords;
+	int nwords, i, idx, escaping;
 	XPtrV w;
 	struct source *s, *sold;
 
@@ -564,6 +564,20 @@ x_file_glob(flags, str, slen, wordsp)
 		return 0;
 
 	toglob = add_glob(str, slen);
+
+	/* remove all escaping backward slashes */
+	escaping = 0;
+	for(i = 0, idx = 0; toglob[i]; i++) {
+		if (toglob[i] == '\\' && !escaping) {
+			escaping = 1;
+			continue;
+		}
+
+		toglob[idx] = toglob[i];
+		idx++;
+		if (escaping) escaping = 0;
+	}
+	toglob[idx] = '\0';
 
 	/*
 	 * Convert "foo*" (toglob) to an array of strings (words)
@@ -751,11 +765,14 @@ x_locate_word(buf, buflen, pos, startp, is_commandp)
 	/* Keep going backwards to start of word (has effect of allowing
 	 * one blank after the end of a word)
 	 */
-	for (; start > 0 && IS_WORDC(buf[start - 1]); start--)
+	for (; (start > 0 && IS_WORDC(buf[start - 1]))
+		|| (start > 1 && buf[start-2] == '\\'); start--)
 		;
 	/* Go forwards to end of word */
-	for (end = start; end < buflen && IS_WORDC(buf[end]); end++)
-		;
+	for (end = start; end < buflen && IS_WORDC(buf[end]); end++) {
+		if (buf[end] == '\\' && (end+1) < buflen && buf[end+1] == ' ')
+			end++;
+	}
 
 	if (is_commandp) {
 		int iscmd;
@@ -1022,4 +1039,40 @@ glob_path(flags, pat, wp, path)
 	Xfree(xs, xp);
 }
 
+/*
+ * if argument string contains any special characters, they will
+ * be escaped and the result will be put into edit buffer by
+ * keybinding-specific function
+ */
+int
+x_escape(s, len, putbuf_func)
+	const char *s;
+	size_t len;
+	int putbuf_func ARGS((const char *s, size_t len));
+{
+	size_t add, wlen;
+	const char *ifs = str_val(local("IFS", 0));
+	int rval=0;
+
+	for (add = 0, wlen = len; wlen - add > 0; add++) {
+		if (strchr("\\$(){}*&;|<>\"'", s[add]) || strchr(ifs, s[add])) {
+			if (putbuf_func(s, add) != 0) {
+				rval = -1;
+				break;
+			}
+
+			putbuf_func("\\", 1);
+			putbuf_func(&s[add], 1);
+
+			add++;
+			wlen -= add;
+			s += add;
+			add = -1; /* after the increment it will go to 0 */
+		}
+	}
+	if (wlen > 0 && rval == 0)
+		rval = putbuf_func(s, wlen);
+
+	return (rval);
+}
 #endif /* EDIT */
