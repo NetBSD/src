@@ -1,4 +1,5 @@
-/*	$NetBSD: apmcall.s,v 1.4 1998/10/03 02:14:30 jtk Exp $ */
+/*	$NetBSD: apmcall.s,v 1.5 1998/12/01 04:30:59 thorpej Exp $ */
+
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -81,7 +82,7 @@ NENTRY(apmcall)
 	cli
 	pushl	%ds
 	/* Now call the 32-bit code segment entry point */
-	lcall	%cs:(_apminfo+APM_ENTRY)
+	lcall	%cs:(_C_LABEL(apminfo)+APM_ENTRY)
 	popl	%ds
 	setc	apmstatus
 	popfl
