@@ -1254,7 +1254,6 @@ nfsrv_readdir(mrep, md, dpos, cred, xid, mrq, repstat, p)
 	struct uio io;
 	struct iovec iv;
 	int siz, cnt, fullsiz, eofflag;
-	u_long on;
 	char *rbuf;
 	off_t off;
 	u_int *cookiebuf, *cookie;
@@ -1264,8 +1263,6 @@ nfsrv_readdir(mrep, md, dpos, cred, xid, mrq, repstat, p)
 	nfsm_srvmtofh(fhp);
 	nfsm_disect(tl, u_long *, 2*NFSX_UNSIGNED);
 	off = fxdr_unsigned(off_t, *tl++);
-	on = off & (NFS_DIRBLKSIZ-1);
-	off &= ~(NFS_DIRBLKSIZ-1);
 	cnt = fxdr_unsigned(int, *tl);
 	siz = ((cnt+NFS_DIRBLKSIZ-1) & ~(NFS_DIRBLKSIZ-1));
 	if (cnt > NFS_MAXREADDIR)
@@ -1328,7 +1325,7 @@ again:
 	cend = rbuf + siz;
 	while (cpos < cend) {
 		dp = (struct direct *)cpos;
-		if (cpos < rbuf + on || dp->d_ino == 0) {
+		if (cpos < rbuf || dp->d_ino == 0) {
 			cpos += dp->d_reclen;
 			cookie++;
 		} else
@@ -1336,7 +1333,6 @@ again:
 	}
 	if (cpos >= cend) {
 		siz = fullsiz;
-		on = 0;
 		goto again;
 	}
 

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_lookup.c	7.33 (Berkeley) 5/19/91
- *	$Id: isofs_lookup.c,v 1.11 1993/11/20 09:40:32 cgd Exp $
+ *	$Id: isofs_lookup.c,v 1.12 1993/11/26 19:56:51 ws Exp $
  */
 
 #include "param.h"
@@ -182,12 +182,12 @@ isofs_lookup(vdp, ndp, p)
 		ndp->ni_vp = NULL;
 	}
 	
+	len = ndp->ni_namelen;
+	name = ndp->ni_ptr;
 	/*
 	 * A leading `=' means, we are looking for an associated file
 	 */
-	len = ndp->ni_namelen;
-	name = ndp->ni_ptr;
-	if (assoc = *name == ASSOCCHAR) {
+	if (assoc = (imp->iso_ftype != ISO_FTYPE_RRIP && *name == ASSOCCHAR)) {
 		len--;
 		name++;
 	}

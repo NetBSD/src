@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: isofs_rrip.c,v 1.4 1993/10/28 17:38:47 ws Exp $
+ *	$Id: isofs_rrip.c,v 1.5 1993/11/26 19:56:55 ws Exp $
  */
 
 #include "param.h"
@@ -90,7 +90,7 @@ isofs_rrip_slink(p,ana)
 	pcomp = (ISO_RRIP_SLINK_COMPONENT *)p->component;
 	pcompe = (ISO_RRIP_SLINK_COMPONENT *)((char *)p + isonum_711(p->h.length));
 	len = *ana->outlen;
-	outbuf = ana->outbuf + len;
+	outbuf = ana->outbuf;
 	cont = ana->cont;
 	
 	/*
@@ -164,7 +164,9 @@ isofs_rrip_slink(p,ana)
 			/* indicate error to caller */
 			ana->cont = 1;
 			ana->fields = 0;
-			return;
+			ana->outbuf -= *ana->outlen;
+			*ana->outlen = 0;
+			return 0;
 		}
 		
 		bcopy(inbuf,outbuf,wlen);
@@ -234,6 +236,8 @@ isofs_rrip_altname(p,ana)
 	if ((*ana->outlen += wlen) > ana->maxlen) {
 		/* treat as no name field */
 		ana->fields &= ~ISO_SUSP_ALTNAME;
+		ana->outbuf -= *ana->outlen - wlen;
+		*ana->outlen = 0;
 		return 0;
 	}
 	
