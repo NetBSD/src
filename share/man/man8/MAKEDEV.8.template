@@ -1,4 +1,4 @@
-.\" $NetBSD: MAKEDEV.8.template,v 1.4 2003/10/24 20:26:57 jdolecek Exp $
+.\" $NetBSD: MAKEDEV.8.template,v 1.5 2003/12/21 18:02:06 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,9 +42,13 @@
 .Nd create system and device special files
 .Sh SYNOPSIS
 .Nm
+.Op Fl fs
+.Op Fl m Ar mknod
 .Ar special Op Ar ...
 .Pp
 .Nm
+.Op Fl fs
+.Op Fl m Ar mknod
 .Ar device Op Ar ...
 .Sh DESCRIPTION
 .Nm
@@ -66,6 +70,26 @@ For the creation of the devices,
 .Xr mknod 8
 is used, which can only be used for creating devices by the
 super-user.
+The
+.Xr mknod 8
+used can be overridden by the
+.Fl m
+flag.
+.Pp
+Supported options are:
+.Bl -tag -width XmXmknodXX
+.It Fl f
+Force permissions to be updated on existing devices.
+.It Fl m Ar mknod
+Name of
+.Xr mknod 8
+program.
+[Usually, $TOOL_MKNOD or mknod.]
+.It Fl s
+Generate
+.Xr mtree 8
+specfile instead of creating devices.
+.El
 .Pp
 The special targets supported on
 .Nx
