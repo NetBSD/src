@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_soc.c,v 1.5 2000/06/07 01:45:25 fvdl Exp $	*/
+/*	$NetBSD: rpc_soc.c,v 1.6 2000/07/06 03:10:35 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -62,6 +62,7 @@ static char sccsid[] = "@(#)rpc_soc.c 1.41 89/05/02 Copyr 1988 Sun Micro";
 #include <rpc/rpc.h>
 #include <rpc/pmap_clnt.h>
 #include <rpc/pmap_prot.h>
+#include <rpc/nettype.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <errno.h>
@@ -120,7 +121,7 @@ clnt_com_create(raddr, prog, vers, sockp, sendsz, recvsz, tp)
 	if ((nconf = __rpc_getconfip(tp)) == NULL) {
 		rpc_createerr.cf_stat = RPC_UNKNOWNPROTO;
 		mutex_unlock(&rpcsoc_lock);
-		return ((CLIENT *)NULL);
+		return (NULL);
 	}
 	if (fd == RPC_ANYSOCK) {
 		fd = __rpc_nconf2fd(nconf);
@@ -135,7 +136,8 @@ clnt_com_create(raddr, prog, vers, sockp, sendsz, recvsz, tp)
 
 		mutex_unlock(&rpcsoc_lock);	/* pmap_getport is recursive */
 		proto = strcmp(tp, "udp") == 0 ? IPPROTO_UDP : IPPROTO_TCP;
-		sport = pmap_getport(raddr, prog, vers, proto);
+		sport = pmap_getport(raddr, (u_long)prog, (u_long)vers,
+		    proto);
 		if (sport == 0) {
 			goto err;
 		}
@@ -155,7 +157,7 @@ clnt_com_create(raddr, prog, vers, sockp, sendsz, recvsz, tp)
 			/*
 			 * The fd should be closed while destroying the handle.
 			 */
-			(void) CLNT_CONTROL(cl, CLSET_FD_CLOSE, (char *)NULL);
+			(void) CLNT_CONTROL(cl, CLSET_FD_CLOSE, NULL);
 			*sockp = fd;
 		}
 		(void) freenetconfigent(nconf);
@@ -172,12 +174,12 @@ err:	if (madefd == TRUE)
 		(void) close(fd);
 	(void) freenetconfigent(nconf);
 	mutex_unlock(&rpcsoc_lock);
-	return ((CLIENT *)NULL);
+	return (NULL);
 }
 
 CLIENT *
 clntudp_bufcreate(raddr, prog, vers, wait, sockp, sendsz, recvsz)
-	register struct sockaddr_in *raddr;
+	struct sockaddr_in *raddr;
 	u_long prog;
 	u_long vers;
 	struct timeval wait;
@@ -187,11 +189,12 @@ clntudp_bufcreate(raddr, prog, vers, wait, sockp, sendsz, recvsz)
 {
 	CLIENT *cl;
 
-	cl = clnt_com_create(raddr, prog, vers, sockp, sendsz, recvsz, "udp");
-	if (cl == (CLIENT *)NULL) {
-		return ((CLIENT *)NULL);
+	cl = clnt_com_create(raddr, (rpcprog_t)prog, (rpcvers_t)vers, sockp,
+	    sendsz, recvsz, "udp");
+	if (cl == NULL) {
+		return (NULL);
 	}
-	(void) CLNT_CONTROL(cl, CLSET_RETRY_TIMEOUT, (char *)&wait);
+	(void) CLNT_CONTROL(cl, CLSET_RETRY_TIMEOUT, (char *)(void *)&wait);
 	return (cl);
 }
 
@@ -212,12 +215,12 @@ clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
 	struct sockaddr_in *raddr;
 	u_long prog;
 	u_long vers;
-	register int *sockp;
+	int *sockp;
 	u_int sendsz;
 	u_int recvsz;
 {
-	return clnt_com_create(raddr, prog, vers, sockp, sendsz,
-			recvsz, "tcp");
+	return clnt_com_create(raddr, (rpcprog_t)prog, (rpcvers_t)vers, sockp,
+	    sendsz, recvsz, "tcp");
 }
 
 CLIENT *
@@ -225,7 +228,7 @@ clntraw_create(prog, vers)
 	u_long prog;
 	u_long vers;
 {
-	return clnt_raw_create(prog, vers);
+	return clnt_raw_create((rpcprog_t)prog, (rpcvers_t)vers);
 }
 
 /*
@@ -233,7 +236,7 @@ clntraw_create(prog, vers)
  */
 static SVCXPRT *
 svc_com_create(fd, sendsize, recvsize, netid)
-	register int fd;
+	int fd;
 	u_int sendsize;
 	u_int recvsize;
 	char *netid;
@@ -246,7 +249,7 @@ svc_com_create(fd, sendsize, recvsize, netid)
 
 	if ((nconf = __rpc_getconfip(netid)) == NULL) {
 		(void) syslog(LOG_ERR, "Could not get %s transport", netid);
-		return ((SVCXPRT *)NULL);
+		return (NULL);
 	}
 	if (fd == RPC_ANYSOCK) {
 		fd = __rpc_nconf2fd(nconf);
@@ -254,7 +257,7 @@ svc_com_create(fd, sendsize, recvsize, netid)
 			(void) freenetconfigent(nconf);
 			(void) syslog(LOG_ERR,
 			"svc%s_create: could not open connection", netid);
-			return ((SVCXPRT *)NULL);
+			return (NULL);
 		}
 		madefd = TRUE;
 	}
@@ -263,13 +266,12 @@ svc_com_create(fd, sendsize, recvsize, netid)
 	sin.sin_family = AF_INET;
 	bindresvport(fd, &sin);
 	listen(fd, SOMAXCONN);
-	svc = svc_tli_create(fd, nconf, (struct t_bind *)NULL,
-				sendsize, recvsize);
+	svc = svc_tli_create(fd, nconf, NULL, sendsize, recvsize);
 	(void) freenetconfigent(nconf);
-	if (svc == (SVCXPRT *)NULL) {
+	if (svc == NULL) {
 		if (madefd)
 			(void) close(fd);
-		return ((SVCXPRT *)NULL);
+		return (NULL);
 	}
 	port = (((struct sockaddr_in *)svc->xp_ltaddr.buf)->sin_port);
 	svc->xp_port = ntohs(port);
@@ -278,7 +280,7 @@ svc_com_create(fd, sendsize, recvsize, netid)
 
 SVCXPRT *
 svctcp_create(fd, sendsize, recvsize)
-	register int fd;
+	int fd;
 	u_int sendsize;
 	u_int recvsize;
 {
@@ -287,7 +289,7 @@ svctcp_create(fd, sendsize, recvsize)
 
 SVCXPRT *
 svcudp_bufcreate(fd, sendsz, recvsz)
-	register int fd;
+	int fd;
 	u_int sendsz, recvsz;
 {
 	return svc_com_create(fd, sendsz, recvsz, "udp");
@@ -305,7 +307,7 @@ svcfd_create(fd, sendsize, recvsize)
 
 SVCXPRT *
 svcudp_create(fd)
-	register int fd;
+	int fd;
 {
 	return svc_com_create(fd, UDPMSGSIZE, UDPMSGSIZE, "udp");
 }
@@ -337,8 +339,8 @@ callrpc(host, prognum, versnum, procnum, inproc, in, outproc, out)
 	xdrproc_t inproc, outproc;
 	char *in, *out;
 {
-	return (int)rpc_call(host, (u_long)prognum, (u_long)versnum,
-		    (u_long)procnum, inproc, in, outproc, out, "udp");
+	return (int)rpc_call(host, (rpcprog_t)prognum, (rpcvers_t)versnum,
+	    (rpcproc_t)procnum, inproc, in, outproc, out, "udp");
 }
 
 /*
@@ -350,8 +352,8 @@ registerrpc(prognum, versnum, procnum, progname, inproc, outproc)
 	char *(*progname) __P((char [UDPMSGSIZE]));
 	xdrproc_t inproc, outproc;
 {
-	return rpc_reg((u_long)prognum, (u_long)versnum, (u_long)procnum,
-	    progname, inproc, outproc, "udp");
+	return rpc_reg((rpcprog_t)prognum, (rpcvers_t)versnum,
+	    (rpcproc_t)procnum, progname, inproc, outproc, "udp");
 }
 
 /*
@@ -424,8 +426,9 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 #else
 	clnt_broadcast_result_main = eachresult;
 #endif
-	return rpc_broadcast(prog, vers, proc, xargs, argsp, xresults,
-				resultsp, (resultproc_t) rpc_wrap_bcast, "udp");
+	return rpc_broadcast((rpcprog_t)prog, (rpcvers_t)vers,
+	    (rpcproc_t)proc, xargs, argsp, xresults, resultsp,
+	    (resultproc_t) rpc_wrap_bcast, "udp");
 }
 
 #endif /* PORTMAP */
