@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.5 1999/07/02 15:21:25 simonb Exp $	*/
+/*	$NetBSD: key.c,v 1.6 2000/01/19 18:31:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: key.c,v 1.5 1999/07/02 15:21:25 simonb Exp $");
+__RCSID("$NetBSD: key.c,v 1.6 2000/01/19 18:31:10 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -614,19 +614,19 @@ key_kprint(el, key, val, ntype)
 	switch (ntype) {
 	case XK_STR:
 	case XK_EXE:
-	    (void) fprintf(el->el_errfile, fmt, key,
+	    (void) fprintf(el->el_outfile, fmt, key,
 			   key__decode_str(val->str, unparsbuf,
 					      ntype == XK_STR ? "\"\"" : "[]"));
 	    break;
 	case XK_CMD:
 	    for (fp = el->el_map.help; fp->name; fp++)
 		if (val->cmd == fp->func) {
-		    (void) fprintf(el->el_errfile, fmt, key, fp->name);
+		    (void) fprintf(el->el_outfile, fmt, key, fp->name);
 		    break;
 		}
 #ifdef DEBUG_KEY
 	    if (fp->name == NULL)
-		(void) fprintf(el->el_errfile, "BUG! Command not found.\n");
+		(void) fprintf(el->el_outfile, "BUG! Command not found.\n");
 #endif
 
 	    break;
@@ -635,7 +635,7 @@ key_kprint(el, key, val, ntype)
 	    break;
 	}
     else
-	(void) fprintf(el->el_errfile, fmt, key, "no input");
+	(void) fprintf(el->el_outfile, fmt, key, "no input");
 }
 
 
