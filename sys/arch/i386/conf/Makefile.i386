@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.129 2003/03/02 22:19:05 christos Exp $
+#	$NetBSD: Makefile.i386,v 1.130 2003/04/02 22:10:23 christos Exp $
 
 # Makefile for NetBSD
 #
@@ -76,7 +76,7 @@ LINKFORMAT=	-z
 
 freebsd_sigcode.o ibcs2_sigcode.o linux_sigcode.o: assym.h
 svr4_sigcode.o mach_sigcode.o: assym.h
-apmcall.o in_cksum.o pnpbioscall.o: assym.h
+apmcall.o in_cksum.o pnpbioscall.o bioscall.o: assym.h
 clock.o: config_time.h
 
 ##
