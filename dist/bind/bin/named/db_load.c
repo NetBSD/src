@@ -1,4 +1,4 @@
-/*	$NetBSD: db_load.c,v 1.1.1.1 1999/11/20 18:53:59 veego Exp $	*/
+/*	$NetBSD: db_load.c,v 1.2 2000/10/08 19:41:17 is Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)db_load.c	4.38 (Berkeley) 3/2/91";
@@ -685,7 +685,7 @@ db_load(const char *filename, const char *in_origin,
 					ns_notice(ns_log_load,
 			 "%s:%d: WARNING: new serial number < old (%lu < %lu)",
 						  filename , lineno,
-						  zp->z_serial, serial);
+						  (long)zp->z_serial, (long)serial);
 				}
 				if (getttl(fp, filename, lineno, &n,
 					   &multiline) <= 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_func.h,v 1.2 1999/11/21 10:40:10 veego Exp $	*/
+/*	$NetBSD: ns_func.h,v 1.3 2000/10/08 19:41:18 is Exp $	*/
 
 /*
  * Copyright (c) 1985, 1990
@@ -99,17 +99,19 @@
 extern struct in_addr	ina_get(const u_char *data);
 extern const char	*sin_ntoa(struct sockaddr_in);
 extern int		ns_wouldlog(int category, int level);
-extern void		ns_debug(int, int, const char *, ...),
-			ns_info(int, const char *, ...),
-			ns_notice(int, const char *, ...),
-			ns_warning(int, const char *, ...),
-			ns_error(int, const char *, ...),
-			ns_panic(int, int, const char *, ...),
+extern void		ns_debug(int, int, const char *, ...) __attribute__((__format__(__printf__, 3, 4))),
+			ns_info(int, const char *, ...) __attribute__((__format__(__printf__, 2, 3))),
+			ns_notice(int, const char *, ...) __attribute__((__format__(__printf__, 2, 3))),
+			ns_warning(int, const char *, ...) __attribute__((__format__(__printf__, 2, 3))),
+			ns_error(int, const char *, ...) __attribute__((__format__(__printf__, 2, 3))),
+			ns_panic(int, int, const char *, ...) __attribute__((__format__(__printf__, 3, 4))),
 			ns_assertion_failed(char *file, int line,
 					    assertion_type type, char *cond,
 					    int print_errno);
-extern void		panic(const char *, const void *),
-			gettime(struct timeval *);
+
+#define panic(a, b) ns_panic(ns_log_default, 1, a, b)
+
+extern void 		gettime(struct timeval *);
 extern int		nlabels(const char *),
 			my_close(int),
 			my_fclose(FILE *);
@@ -123,7 +125,8 @@ extern char		*__newstr_record(size_t, int, char *, int);
 extern char		*__savestr_record(const char *, int, char *, int);
 extern u_char		*ina_put(struct in_addr ina, u_char *data),
 			*savebuf(const u_char *, size_t, int);
-extern void		dprintf(int level, const char *format, ...);
+extern void		dprintf(int level, const char *format, ...)
+     __attribute__((__format__(__printf__, 2, 3)));
 #ifdef DEBUG_STRINGS
 extern char		*debug_newstr(size_t, int, const char *, int),
 			*debug_savestr(const char *, int, const char *, int);

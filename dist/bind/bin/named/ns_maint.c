@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_maint.c,v 1.1.1.1 1999/11/20 18:54:00 veego Exp $	*/
+/*	$NetBSD: ns_maint.c,v 1.2 2000/10/08 19:41:19 is Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_maint.c	4.39 (Berkeley) 3/2/91";
@@ -553,7 +553,7 @@ qserial_answer(struct qinfo *qp) {
 		qs = &qp->q_addr[n];
 		ns_debug(ns_log_default, 1, "qserial_answer(%s): [%s] -> %lu",
 			 zp->z_origin, inet_ntoa(qs->ns_addr.sin_addr),
-			 qs->serial);
+			 (unsigned long)qs->serial);
 		/* Don't consider serials which weren't set by a response. */
 		if (qs->serial == 0)
 			continue;
@@ -568,9 +568,9 @@ qserial_answer(struct qinfo *qp) {
 				ns_notice(ns_log_xfer_in,
  "Zone \"%s\" (%s) SOA serial# (%lu) rcvd from [%s] is < ours (%lu)%s",
 					  zp->z_origin, p_class(zp->z_class),
-					  qs->serial,
+					  (unsigned long)qs->serial,
 					  inet_ntoa(qs->ns_addr.sin_addr),
-					  zp->z_serial, qp->q_naddr != 1 ?
+					  (unsigned long)zp->z_serial, qp->q_naddr != 1 ?
 							": skipping" : "");
 			qs->serial = 0;
 			continue;
@@ -588,7 +588,7 @@ qserial_answer(struct qinfo *qp) {
 			ns_debug(ns_log_default, 1,
 				 "qserial_answer after sort: [%s] -> %lu",
 				 inet_ntoa(qs->ns_addr.sin_addr),
-				 qs->serial);
+				 (unsigned long)qs->serial);
 		}
 	}
 
@@ -797,7 +797,7 @@ startxfer(struct zoneinfo *zp) {
 			curr++;
 		}
 		*curr = '\0';
-		ns_debug(ns_log_xfer_in, 1, buffer);
+		ns_debug(ns_log_xfer_in, 1, "%s", buffer);
         }
 #endif /* DEBUG */
 
@@ -882,8 +882,8 @@ printzoneinfo(int zonenum, int category, int level) {
 	if (zp->z_type == z_master && (zp->z_flags & Z_DYNAMIC) != 0) {
 		ns_debug(category, level,
 			 "\tdumpintvl %lu, soaincrintvl %lu deferupdcnt %lu",
-			 zp->z_dumpintvl, zp->z_soaincrintvl,
-			 zp->z_deferupdcnt);
+			 (unsigned long)zp->z_dumpintvl, zp->z_soaincrintvl,
+			 (unsigned long)zp->z_deferupdcnt);
 		if (zp->z_soaincrtime)
 			ns_debug(category, level,
 				 "\tz_soaincrtime %lu (now %lu, left: %lu)",

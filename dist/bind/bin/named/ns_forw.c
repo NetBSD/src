@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_forw.c,v 1.1.1.1 1999/11/20 18:53:59 veego Exp $	*/
+/*	$NetBSD: ns_forw.c,v 1.2 2000/10/08 19:41:17 is Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_forw.c	4.32 (Berkeley) 3/3/91";
@@ -466,7 +466,7 @@ nslookup(struct databuf *nsp[], struct qinfo *qp,
 	int oldn, naddr, class, found_arr, potential_ns, lame_ns;
 	time_t curtime;
 
-	ns_debug(ns_log_default, 3, "nslookup(nsp=%#x, qp=%#x, \"%s\")",
+	ns_debug(ns_log_default, 3, "nslookup(nsp=%p, qp=%p, \"%s\")",
 		nsp, qp, syslogdname);
 
 	lame_ns = potential_ns = 0;
@@ -504,7 +504,7 @@ nslookup(struct databuf *nsp[], struct qinfo *qp,
 		tmphtp = ((nsdp->d_flags & DB_F_HINT) ?fcachetab :hashtab);
 		np = nlookup(dname, &tmphtp, &fname, 0);
 		if (np == NULL) {
-			ns_debug(ns_log_default, 3, "%s: not found %s %#x",
+			ns_debug(ns_log_default, 3, "%s: not found %s %p",
 				 dname, fname, np);
 			found_arr = 0;
 			goto need_sysquery;
@@ -818,11 +818,11 @@ void
 schedretry(struct qinfo *qp, time_t t) {
 	struct qinfo *qp1, *qp2;
 
-	ns_debug(ns_log_default, 4, "schedretry(%#x, %ld sec)", qp, (long)t);
+	ns_debug(ns_log_default, 4, "schedretry(%p, %ld sec)", qp, (long)t);
 	if (qp->q_time)
 		ns_debug(ns_log_default, 4,
-			 "WARNING: schedretry(%#lx, %ld) q_time already %ld",
-			 (u_long)qp, (long)t, (long)qp->q_time);
+			 "WARNING: schedretry(%p, %ld) q_time already %ld",
+			 qp, (long)t, (long)qp->q_time);
 	gettime(&tt);
 	t += (u_long) tt.tv_sec;
 	qp->q_time = t;

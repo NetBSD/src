@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ctl.c,v 1.1.1.1 1999/11/20 18:53:59 veego Exp $	*/
+/*	$NetBSD: ns_ctl.c,v 1.2 2000/10/08 19:41:17 is Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char rcsid[] = "Id: ns_ctl.c,v 8.28 1999/10/13 16:39:04 vixie Exp";
@@ -91,7 +91,8 @@ static void		propagate_changes(const control, control);
 static void		install(control);
 static void		install_inet(control);
 static void		install_unix(control);
-static void		logger(enum ctl_severity, const char *fmt, ...);
+static void		logger(enum ctl_severity, const char *fmt, ...)
+     __attribute__((__format__(__printf__, 2, 3)));
 static void		verb_connect(struct ctl_sctx *, struct ctl_sess *,
 				     const struct ctl_verb *,
 				     const char *, u_int, void *, void *);
