@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.74.4.1 2001/04/06 00:25:20 he Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.74.4.2 2002/01/14 15:44:38 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -322,6 +322,10 @@ ip_output(m0, va_alist)
 			struct in_ifaddr *ia;
 
 			IFP_TO_IA(ifp, ia);
+			if (!ia) {
+				error = EADDRNOTAVAIL;
+				goto bad;
+			}
 			ip->ip_src = ia->ia_addr.sin_addr;
 		}
 
