@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.16 2003/11/17 10:07:58 keihan Exp $	*/
+/*	$NetBSD: hpc.c,v 1.17 2003/11/20 08:34:05 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.16 2003/11/17 10:07:58 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.17 2003/11/20 08:34:05 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,11 @@ const struct hpc_device {
 	  /* XXX Magic numbers */
 	  HPC_PBUS_CH6_DEVREGS + 0x30,	0,
 	  29,
+	  HPCDEV_IP22 | HPCDEV_IP24 },
+
+	{ "pckbc",
+	  HPC_PBUS_CH6_DEVREGS + 0x40, 0,
+	  28,
 	  HPCDEV_IP22 | HPCDEV_IP24 },
 
 	{ "sq",
