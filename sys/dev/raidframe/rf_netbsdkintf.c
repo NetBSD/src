@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.143 2002/10/04 20:05:14 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.144 2002/10/23 09:13:40 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.143 2002/10/04 20:05:14 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.144 2002/10/23 09:13:40 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -196,7 +196,7 @@ const struct bdevsw raid_bdevsw = {
 
 const struct cdevsw raid_cdevsw = {
 	raidopen, raidclose, raidread, raidwrite, raidioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 /*

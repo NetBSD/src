@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.47 2002/10/10 22:33:16 jdolecek Exp $	*/
+/*	$NetBSD: grf.c,v 1.48 2002/10/23 09:11:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.47 2002/10/10 22:33:16 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.48 2002/10/23 09:11:05 jdolecek Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -104,7 +104,7 @@ dev_type_mmap(grfmmap);
 
 const struct cdevsw grf_cdevsw = {
 	grfopen, grfclose, nullread, nullwrite, grfioctl,
-	nostop, notty, nopoll, grfmmap,
+	nostop, notty, nopoll, grfmmap, nokqfilter,
 };
 
 int	grfprint __P((void *, const char *));

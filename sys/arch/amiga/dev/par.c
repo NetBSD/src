@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.28 2002/10/02 04:55:52 thorpej Exp $ */
+/*	$NetBSD: par.c,v 1.29 2002/10/23 09:10:35 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.28 2002/10/02 04:55:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.29 2002/10/23 09:10:35 jdolecek Exp $");
 
 /*
  * parallel port interface
@@ -119,7 +119,7 @@ dev_type_ioctl(parioctl);
 
 const struct cdevsw par_cdevsw = {
 	paropen, parclose, parread, parwrite, parioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 /*ARGSUSED*/

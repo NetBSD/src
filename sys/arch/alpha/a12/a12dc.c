@@ -1,4 +1,4 @@
-/* $NetBSD: a12dc.c,v 1.9 2002/10/02 04:06:36 thorpej Exp $ */
+/* $NetBSD: a12dc.c,v 1.10 2002/10/23 09:10:28 jdolecek Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -64,7 +64,7 @@
 #ifndef BSIDE
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.9 2002/10/02 04:06:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.10 2002/10/23 09:10:28 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -117,7 +117,7 @@ dev_type_poll(a12dcpoll);
 
 const struct cdevsw a12dc_cdevsw = {
 	a12dcopen, a12dcclose, a12dcread, a12dcwrite, a12dcioctl,
-	a12dcstop, a12dctty, a12dcpoll, nommap, D_TTY
+	a12dcstop, a12dctty, a12dcpoll, nommap, ttykqfilter, D_TTY
 };
 
 int	a12dcfound;		/* There Can Be Only One. */
@@ -164,7 +164,7 @@ a12dcattach(parent, self, aux)
 	/* note that we've attached the chipset; can't have 2 A12Cs. */
 	a12dcfound = 1;
 
-	printf(": driver %s\n", "$Revision: 1.9 $");
+	printf(": driver %s\n", "$Revision: 1.10 $");
 
 	tp = a12dc_tty[0] = ttymalloc();
 	tp->t_oproc = a12dcstart;

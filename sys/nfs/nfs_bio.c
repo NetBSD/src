@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.83 2002/10/21 12:52:32 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.84 2002/10/23 09:14:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.83 2002/10/21 12:52:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.84 2002/10/23 09:14:48 jdolecek Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -521,6 +521,7 @@ nfs_write(v)
 	voff_t oldoff, origoff;
 	vsize_t bytelen;
 	int error = 0, iomode, must_commit;
+	int extended = 0, wrotedta = 0;
 
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_WRITE)
@@ -633,6 +634,7 @@ nfs_write(v)
 		if (error) {
 			break;
 		}
+		wrotedta = 1;
 
 		/*
 		 * update UVM's notion of the size now that we've
@@ -641,6 +643,7 @@ nfs_write(v)
 
 		if (vp->v_size < uio->uio_offset) {
 			uvm_vnp_setsize(vp, uio->uio_offset);
+			extended = 1;
 		}
 
 		if ((oldoff & ~(nmp->nm_wsize - 1)) !=
@@ -652,6 +655,8 @@ nfs_write(v)
 				       ~(nmp->nm_wsize - 1)), PGO_CLEANIT);
 		}
 	} while (uio->uio_resid > 0);
+	if (wrotedta)
+		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 	if ((np->n_flag & NQNFSNONCACHE) || (ioflag & IO_SYNC)) {
 		simple_lock(&vp->v_interlock);
 		error = VOP_PUTPAGES(vp,

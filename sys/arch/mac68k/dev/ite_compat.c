@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_compat.c,v 1.5 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: ite_compat.c,v 1.6 2002/10/23 09:11:28 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 2000 Scott Reynolds
@@ -57,10 +57,11 @@ dev_type_write(itewrite);
 dev_type_ioctl(iteioctl);
 dev_type_tty(itetty);
 dev_type_poll(itepoll);
+dev_type_kqfilter(itekqfilter);
 
 const struct cdevsw ite_cdevsw = {
 	iteopen, iteclose, iteread, itewrite, iteioctl,
-	nostop, itetty, itepoll, nommap, D_TTY
+	nostop, itetty, itepoll, nommap, itekqfilter, D_TTY
 };
 
 #if NWSDISPLAY > 0
@@ -208,4 +209,13 @@ itepoll(dev, events, p)
 {
 	return ite_initted ?
 	    (*wsdisplay_cdevsw.d_poll)(cn_tab->cn_dev, events, p) : (ENXIO);
+}
+
+int
+itekqfilter(dev, kn)
+	dev_t dev;
+	struct knote *kn;
+{
+	return ite_initted ?
+	    (*wsdisplay_cdevsw.d_kqfilter)(cn_tab->cn_dev, kn) : (ENXIO);
 }

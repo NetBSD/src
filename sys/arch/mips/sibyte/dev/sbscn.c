@@ -1,4 +1,4 @@
-/* $NetBSD: sbscn.c,v 1.4 2002/10/02 15:52:26 thorpej Exp $ */
+/* $NetBSD: sbscn.c,v 1.5 2002/10/23 09:11:38 jdolecek Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -196,7 +196,7 @@ dev_type_poll(sbscnpoll);
 
 const struct cdevsw sbscn_cdevsw = {
 	sbscnopen, sbscnclose, sbscnread, sbscnwrite, sbscnioctl,
-	sbscnstop, sbscntty, sbscnpoll, nommap, D_TTY
+	sbscnstop, sbscntty, sbscnpoll, nommap, ttykqfilter, D_TTY
 };
 
 #define	integrate	static inline

@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.17 2002/10/02 20:35:28 jdolecek Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.18 2002/10/23 09:11:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -40,6 +40,7 @@
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/event.h>
 
 #define FSTYPENAMES
 #define DKTYPENAMES
@@ -241,7 +242,7 @@ const struct bdevsw fd_bdevsw = {
 
 const struct cdevsw fd_cdevsw = {
 	fdopen, fdclose, fdread, fdwrite, fdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 /* disk(9) framework device switch */

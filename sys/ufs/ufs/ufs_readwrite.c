@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.43 2002/10/18 01:05:52 yamt Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.44 2002/10/23 09:15:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.43 2002/10/18 01:05:52 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.44 2002/10/23 09:15:08 jdolecek Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -206,6 +206,7 @@ WRITE(void *v)
 	int blkoffset, error, flags, ioflag, resid, size, xfersize;
 	int bsize, aflag;
 	int ubc_alloc_flags;
+	int extended=0;
 	void *win;
 	vsize_t bytelen;
 	boolean_t async;
@@ -372,6 +373,7 @@ WRITE(void *v)
 		newoff = oldoff + bytelen;
 		if (vp->v_size < newoff) {
 			uvm_vnp_setsize(vp, newoff);
+			extended = 1;
 		}
 
 		if (error) {
@@ -421,6 +423,7 @@ WRITE(void *v)
 		if (uio->uio_offset + xfersize > ip->i_ffs_size) {
 			ip->i_ffs_size = uio->uio_offset + xfersize;
 			uvm_vnp_setsize(vp, ip->i_ffs_size);
+			extended = 1;
 		}
 		size = BLKSIZE(fs, ip, lbn) - bp->b_resid;
 		if (xfersize > size)
@@ -464,6 +467,8 @@ out:
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	if (resid > uio->uio_resid && ap->a_cred && ap->a_cred->cr_uid != 0)
 		ip->i_ffs_mode &= ~(ISUID | ISGID);
+	if (resid > uio->uio_resid)
+		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 	if (error) {
 		(void) VOP_TRUNCATE(vp, osize, ioflag & IO_SYNC, ap->a_cred,
 		    uio->uio_procp);

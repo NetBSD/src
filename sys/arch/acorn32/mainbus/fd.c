@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.10 2002/10/02 03:31:58 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.11 2002/10/23 09:10:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -281,7 +281,7 @@ const struct bdevsw fd_bdevsw = {
 
 const struct cdevsw fd_cdevsw = {
 	fdopen, fdclose, fdread, fdwrite, fdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 void fdgetdisklabel __P((struct fd_softc *));

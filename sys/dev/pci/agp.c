@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.21 2002/10/02 16:51:00 thorpej Exp $	*/
+/*	$NetBSD: agp.c,v 1.22 2002/10/23 09:13:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.21 2002/10/02 16:51:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.22 2002/10/23 09:13:31 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ dev_type_mmap(agpmmap);
 
 const struct cdevsw agp_cdevsw = {
 	agpopen, agpclose, noread, nowrite, agpioctl,
-	nostop, notty, nopoll, agpmmap,
+	nostop, notty, nopoll, agpmmap, nokqfilter,
 };
 
 int agpmatch(struct device *, struct cfdata *, void *);

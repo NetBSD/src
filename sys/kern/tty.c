@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.142 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: tty.c,v 1.143 2002/10/23 09:14:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.142 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.143 2002/10/23 09:14:25 jdolecek Exp $");
 
 #include "opt_uconsole.h"
 
@@ -1069,6 +1069,89 @@ ttpoll(struct tty *tp, int events, struct proc *p)
 	return (revents);
 }
 
+static void
+filt_ttyrdetach(struct knote *kn)
+{
+	struct tty	*tp;
+	int		s;
+
+	tp = kn->kn_hook;
+	s = spltty();
+	SLIST_REMOVE(&tp->t_rsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_ttyread(struct knote *kn, long hint)
+{
+	struct tty	*tp;
+
+	tp = kn->kn_hook;
+	kn->kn_data = ttnread(tp);
+	return (kn->kn_data > 0);
+}
+
+static void
+filt_ttywdetach(struct knote *kn)
+{
+	struct tty	*tp;
+	int		s;
+
+	tp = kn->kn_hook;
+	s = spltty();
+	SLIST_REMOVE(&tp->t_wsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_ttywrite(struct knote *kn, long hint)
+{
+	struct tty	*tp;
+
+	tp = kn->kn_hook;
+	kn->kn_data = tp->t_outq.c_cn - tp->t_outq.c_cc;
+	return (tp->t_outq.c_cc <= tp->t_lowat && CONNECTED(tp));
+}
+
+static const struct filterops ttyread_filtops =
+	{ 1, NULL, filt_ttyrdetach, filt_ttyread };
+static const struct filterops ttywrite_filtops =
+	{ 1, NULL, filt_ttywdetach, filt_ttywrite };
+
+int
+ttykqfilter(dev_t dev, struct knote *kn)
+{
+	struct tty	*tp;
+	struct klist	*klist;
+	int		s;
+	const struct cdevsw	*cdev;
+
+	cdev = cdevsw_lookup(dev);
+	if (cdev == NULL)
+		return (ENXIO);
+	tp = (*cdev->d_tty)(dev);
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &tp->t_rsel.si_klist;
+		kn->kn_fop = &ttyread_filtops;
+		break;
+	case EVFILT_WRITE:
+		klist = &tp->t_wsel.si_klist;
+		kn->kn_fop = &ttywrite_filtops;
+		break;
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = tp;
+
+	s = spltty();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
+}
+
 static int
 ttnread(struct tty *tp)
 {
@@ -1145,7 +1228,7 @@ ttyflush(struct tty *tp, int rw)
 			(*cdev->d_stop)(tp, rw);
 		FLUSHQ(&tp->t_outq);
 		wakeup((caddr_t)&tp->t_outq);
-		selwakeup(&tp->t_wsel);
+		selnotify(&tp->t_wsel, 0);
 	}
 	splx(s);
 }
@@ -1883,7 +1966,7 @@ void
 ttwakeup(struct tty *tp)
 {
 
-	selwakeup(&tp->t_rsel);
+	selnotify(&tp->t_rsel, 0);
 	if (ISSET(tp->t_state, TS_ASYNC))
 		pgsignal(tp->t_pgrp, SIGIO, 1);
 	wakeup((caddr_t)&tp->t_rawq);

@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.64 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.65 2002/10/23 09:14:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.64 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.65 2002/10/23 09:14:38 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -95,6 +95,7 @@ const struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_fcntl_desc, spec_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
 	{ &vop_poll_desc, spec_poll },			/* poll */
+	{ &vop_kqfilter_desc, spec_kqfilter },		/* kqfilter */
 	{ &vop_revoke_desc, spec_revoke },		/* revoke */
 	{ &vop_mmap_desc, spec_mmap },			/* mmap */
 	{ &vop_fsync_desc, spec_fsync },		/* fsync */
@@ -503,6 +504,36 @@ spec_poll(v)
 		return (genfs_poll(v));
 	}
 }
+
+/* ARGSUSED */
+int
+spec_kqfilter(v)
+	void *v;
+{
+	struct vop_kqfilter_args /* {
+		struct vnode	*a_vp;
+		struct proc	*a_kn;
+	} */ *ap = v;
+	const struct cdevsw *cdev;
+	dev_t dev;
+
+	switch (ap->a_vp->v_type) {
+
+	case VCHR:
+		dev = ap->a_vp->v_rdev;
+		cdev = cdevsw_lookup(dev);
+		if (cdev == NULL)
+			return (ENXIO);
+		return (*cdev->d_kqfilter)(dev, ap->a_kn);
+	default:
+		/*
+		 * Block devices don't support kqfilter, and refuse it
+		 * for any other files (like those vflush()ed) too.
+		 */
+		return (EOPNOTSUPP);
+	}
+}
+
 /*
  * Synch buffers associated with a block device
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.33 2002/09/23 03:20:51 itojun Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.34 2002/10/23 09:13:18 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.33 2002/09/23 03:20:51 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.34 2002/10/23 09:13:18 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -140,6 +140,7 @@ const struct cdevsw esh_cdevsw = {
 #else
 	nommap,
 #endif
+	nullkqfilter,
 };
 
 /* General routines, not externally visable */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.4 2002/10/22 20:20:35 jdolecek Exp $	*/
+/*	$NetBSD: kbd.c,v 1.5 2002/10/23 09:10:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -156,7 +156,7 @@ dev_type_ioctl(kbdioctl);
 
 const struct cdevsw kbd_cdevsw = {
 	kbdopen, kbdclose, kbdread, nowrite, kbdioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 /* keyboard commands */

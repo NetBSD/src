@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.86 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: vnd.c,v 1.87 2002/10/23 09:13:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.86 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.87 2002/10/23 09:13:05 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -198,7 +198,7 @@ const struct bdevsw vnd_bdevsw = {
 
 const struct cdevsw vnd_cdevsw = {
 	vndopen, vndclose, vndread, vndwrite, vndioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 void

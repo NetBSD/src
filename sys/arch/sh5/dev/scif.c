@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.8 2002/10/19 08:43:33 scw Exp $	*/
+/*	$NetBSD: scif.c,v 1.9 2002/10/23 09:11:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -274,7 +274,7 @@ dev_type_poll(scifpoll);
 
 const struct cdevsw scif_cdevsw = {
 	scifopen, scifclose, scifread, scifwrite, scifioctl,
-	scifstop, sciftty, scifpoll, nommap, D_TTY
+	scifstop, sciftty, scifpoll, nommap, ttykqfilter, D_TTY
 };
 
 void InitializeScif(bus_space_tag_t, bus_space_handle_t, unsigned int);

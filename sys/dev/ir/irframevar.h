@@ -1,4 +1,4 @@
-/*	$NetBSD: irframevar.h,v 1.8 2001/12/13 15:09:07 augustss Exp $	*/
+/*	$NetBSD: irframevar.h,v 1.9 2002/10/23 09:13:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@ struct irframe_methods {
 	int (*im_read)(void *h, struct uio *uio, int flag);
 	int (*im_write)(void *h, struct uio *uio, int flag);
 	int (*im_poll)(void *h, int events, struct proc *p);
+	int (*im_kqfilter)(void *h, struct knote *kn);
 	int (*im_set_params)(void *h, struct irda_params *params);
 	int (*im_get_speeds)(void *h, int *speeds);
 	int (*im_get_turnarounds)(void *h, int *times);

@@ -1,4 +1,4 @@
-/* $NetBSD: wseventvar.h,v 1.4 2001/10/25 14:46:41 augustss Exp $ */
+/* $NetBSD: wseventvar.h,v 1.5 2002/10/23 09:14:07 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -96,7 +96,7 @@ struct wseventvar {
 #define	splwsevent()	spltty()
 
 #define	WSEVENT_WAKEUP(ev) { \
-	selwakeup(&(ev)->sel); \
+	selnotify(&(ev)->sel, 0); \
 	if ((ev)->wanted) { \
 		(ev)->wanted = 0; \
 		wakeup((ev)); \
@@ -109,6 +109,7 @@ void	wsevent_init(struct wseventvar *);
 void	wsevent_fini(struct wseventvar *);
 int	wsevent_read(struct wseventvar *, struct uio *, int);
 int	wsevent_poll(struct wseventvar *, int, struct proc *);
+int	wsevent_kqfilter(struct wseventvar *ev, struct knote *kn);
 
 /*
  * PWSEVENT is set just above PSOCK, which is just above TTIPRI, on the

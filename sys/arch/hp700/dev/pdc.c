@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.7 2002/10/02 05:17:48 thorpej Exp $	*/
+/*	$NetBSD: pdc.c,v 1.8 2002/10/23 09:11:14 jdolecek Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -82,7 +82,7 @@ dev_type_poll(pdcpoll);
 
 const struct cdevsw pdc_cdevsw = {
 	pdcopen, pdcclose, pdcread, pdcwrite, pdcioctl,
-	pdcstop, pdctty, pdcpoll, nommap, D_TTY
+	pdcstop, pdctty, pdcpoll, nommap, ttykqfilter, D_TTY
 };
 
 void pdcstart __P((struct tty *tp));

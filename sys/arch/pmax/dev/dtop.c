@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.61 2002/10/02 04:15:07 thorpej Exp $	*/
+/*	$NetBSD: dtop.c,v 1.62 2002/10/23 09:11:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.61 2002/10/02 04:15:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.62 2002/10/23 09:11:48 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "rasterconsole.h"
@@ -242,7 +242,7 @@ dev_type_poll(dtoppoll);
 
 const struct cdevsw dtop_cdevsw = {
 	dtopopen, dtopclose, dtopread, dtopwrite, dtopioctl,
-	dtopstop, dtoptty, dtoppoll, nommap, D_TTY
+	dtopstop, dtoptty, dtoppoll, nommap, ttykqfilter, D_TTY
 };
 
 /* QVSS-compatible in-kernel X input event parser, pointer tracker */

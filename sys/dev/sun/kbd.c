@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.33 2002/10/21 15:36:35 uwe Exp $	*/
+/*	$NetBSD: kbd.c,v 1.34 2002/10/23 09:13:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.33 2002/10/21 15:36:35 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.34 2002/10/23 09:13:56 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,10 +85,11 @@ dev_type_close(kbdclose);
 dev_type_read(kbdread);
 dev_type_ioctl(kbdioctl);
 dev_type_poll(kbdpoll);
+dev_type_kqfilter(kbdkqfilter);
 
 const struct cdevsw kbd_cdevsw = {
 	kbdopen, kbdclose, kbdread, nowrite, kbdioctl,
-	nostop, notty, kbdpoll, nommap,
+	nostop, notty, kbdpoll, nommap, kbdkqfilter
 };
 
 
@@ -229,6 +230,16 @@ kbdpoll(dev, events, p)
 	return (ev_poll(&k->k_events, events, p));
 }
 
+int
+kbdkqfilter(dev, kn)
+	dev_t dev;
+	struct knote *kn;
+{
+	struct kbd_softc *k;
+
+	k = kbd_cd.cd_devs[minor(dev)];
+	return (ev_kqfilter(&k->k_events, kn));
+}
 
 int
 kbdioctl(dev, cmd, data, flag, p)

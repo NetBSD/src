@@ -27,7 +27,7 @@
  *	i4b_tel.c - device driver for ISDN telephony
  *	--------------------------------------------
  *
- *	$Id: i4b_tel.c,v 1.10 2002/09/06 13:18:43 gehenna Exp $
+ *	$Id: i4b_tel.c,v 1.11 2002/10/23 09:14:46 jdolecek Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.10 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.11 2002/10/23 09:14:46 jdolecek Exp $");
 
 #include "isdntel.h"
 
@@ -188,6 +188,7 @@ int isdntelwrite __P((dev_t dev, struct uio * uio, int ioflag));
 
 #ifdef OS_USES_POLL
 int isdntelpoll	__P((dev_t dev, int events, struct proc *p));
+int isdntelkqfilter __P((dev_t dev, struct knote *kn));
 #else
 int isdntelsel __P((dev_t dev, int rw, struct proc *p));
 #endif
@@ -197,7 +198,7 @@ int isdntelsel __P((dev_t dev, int rw, struct proc *p));
 #ifdef __NetBSD__
 const struct cdevsw isdntel_cdevsw = {
 	isdntelopen, isdntelclose, isdntelread, isdntelwrite, isdntelioctl,
-	nostop, notty, isdntelpoll, nommap,
+	nostop, notty, isdntelpoll, nommap, isdntelkqfilter,
 };
 #endif /* __NetBSD__ */
 
@@ -939,6 +940,117 @@ isdntelpoll(dev_t dev, int events, struct proc *p)
 	return(revents);
 }
 
+static void
+filt_i4btel_detach(struct knote *kn)
+{
+	tel_sc_t *sc = kn->kn_hook;
+	int s;
+
+	s = splhigh();
+	SLIST_REMOVE(&sc->selp.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_i4btel_telread(struct knote *kn, long hint)
+{
+	tel_sc_t *sc = kn->kn_hook;
+
+	if ((sc->devstate & ST_CONNECTED) == 0)
+		return (0);
+	if (sc->isdn_linktab == NULL)
+		return (0);
+	if (IF_QEMPTY(sc->isdn_linktab->rx_queue))
+		return (0);
+
+	kn->kn_data = 0;	/* XXXLUKEM (thorpej): what to put here? */
+	return (1);
+}
+
+static const struct filterops i4btel_telread_filtops =
+	{ 1, NULL, filt_i4btel_detach, filt_i4btel_telread };
+
+static int
+filt_i4btel_telwrite(struct knote *kn, long hint)
+{
+	tel_sc_t *sc = kn->kn_hook;
+
+	if ((sc->devstate & ST_CONNECTED) == 0)
+		return (0);
+	if (sc->isdn_linktab == NULL)
+		return (0);
+	if (IF_QFULL(sc->isdn_linktab->tx_queue))
+		return (0);
+
+	kn->kn_data = 0;	/* XXXLUKEM (thorpej): what to put here? */
+	return (1);
+}
+
+static const struct filterops i4btel_telwrite_filtops =
+	{ 1, NULL, filt_i4btel_detach, filt_i4btel_telwrite };
+
+static int
+filt_i4btel_dialread(struct knote *kn, long hint)
+{
+	tel_sc_t *sc = kn->kn_hook;
+
+	if (sc->result == 0)
+		return (0);
+
+	kn->kn_data = 0;	/* XXXLUKEM (thorpej): what to put here? */
+	return (1);
+}
+
+static const struct filterops i4btel_dialread_filtops =
+	{ 1, NULL, filt_i4btel_detach, filt_i4btel_dialread };
+
+static const struct filterops i4btel_seltrue_filtops =
+	{ 1, NULL, filt_i4btel_detach, filt_seltrue };
+
+int
+isdntelkqfilter(dev_t dev, struct knote *kn)
+{
+	int s;
+	int unit = UNIT(dev);
+	int func = FUNC(dev);	
+
+	struct klist *klist;
+	tel_sc_t *sc = &tel_sc[unit][func];
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sc->selp.si_klist;
+		if (func == FUNCTEL)
+			kn->kn_fop = &i4btel_telread_filtops;
+		else if (func == FUNCDIAL)
+			kn->kn_fop = &i4btel_dialread_filtops;
+		else
+			return (1);
+		break;
+
+	case EVFILT_WRITE:
+		klist = &sc->selp.si_klist;
+		if (func == FUNCTEL)
+			kn->kn_fop = &i4btel_telwrite_filtops;
+		else if (func == FUNCDIAL)
+			kn->kn_fop = &i4btel_seltrue_filtops;
+		else
+			return (1);
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = sc;
+
+	s = splhigh();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
+}
+
 #else /* OS_USES_POLL */
 
 /*---------------------------------------------------------------------------*
@@ -1049,7 +1161,7 @@ tel_connect(void *softc, void *cdp)
 			sc->devstate &= ~ST_RDWAITDATA;
 			wakeup((caddr_t) &sc->result);
 		}
-		selwakeup(&sc->selp);
+		selnotify(&sc->selp, 0);
 	}
 }
 
@@ -1090,7 +1202,7 @@ tel_disconnect(void *softc, void *cdp)
 			sc->devstate &= ~ST_RDWAITDATA;
 			wakeup((caddr_t) &sc->result);
 		}
-		selwakeup(&sc->selp);
+		selnotify(&sc->selp, 0);
 
 		if (sc->devstate & ST_TONE) {
 			sc->devstate &= ~ST_TONE;
@@ -1118,7 +1230,7 @@ tel_dialresponse(void *softc, int status, cause_t cause)
 			sc->devstate &= ~ST_RDWAITDATA;
 			wakeup((caddr_t) &sc->result);
 		}
-		selwakeup(&sc->selp);
+		selnotify(&sc->selp, 0);
 	}
 }
 	
@@ -1145,7 +1257,7 @@ tel_rx_data_rdy(void *softc)
 		sc->devstate &= ~ST_RDWAITDATA;
 		wakeup((caddr_t) &sc->isdn_linktab->rx_queue);
 	}
-	selwakeup(&sc->selp);
+	selnotify(&sc->selp, 0);
 }
 
 /*---------------------------------------------------------------------------*
@@ -1166,7 +1278,7 @@ tel_tx_queue_empty(void *softc)
 	if(sc->devstate & ST_TONE) {
 		tel_tone(sc);
 	} else {
-		selwakeup(&sc->selp);
+		selnotify(&sc->selp, 0);
 	}
 }
 

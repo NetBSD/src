@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.38 2002/10/02 05:04:25 thorpej Exp $	*/
+/*	$NetBSD: ite.c,v 1.39 2002/10/23 09:10:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -164,7 +164,7 @@ dev_type_poll(itepoll);
 
 const struct cdevsw ite_cdevsw = {
 	iteopen, iteclose, iteread, itewrite, iteioctl,
-	nostop, itetty, itepoll, nommap, D_TTY
+	nostop, itetty, itepoll, nommap, ttykqfilter, D_TTY
 };
 
 /*

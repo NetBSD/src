@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.16 2001/11/12 23:04:11 lukem Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.17 2002/10/23 09:14:10 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.16 2001/11/12 23:04:11 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.17 2002/10/23 09:14:10 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -544,6 +544,7 @@ const struct vnodeopv_entry_desc filecore_vnodeop_entries[] = {
 	{ &vop_fcntl_desc, filecore_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, filecore_ioctl },		/* ioctl */
 	{ &vop_poll_desc, filecore_poll },		/* poll */
+	{ &vop_kqfilter_desc, genfs_kqfilter },		/* kqfilter */
 	{ &vop_revoke_desc, filecore_revoke },		/* revoke */
 	{ &vop_mmap_desc, filecore_mmap },		/* mmap */
 	{ &vop_fsync_desc, filecore_fsync },		/* fsync */

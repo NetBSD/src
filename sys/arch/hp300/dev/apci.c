@@ -1,4 +1,4 @@
-/*	$NetBSD: apci.c,v 1.20 2002/10/02 05:15:48 thorpej Exp $	*/
+/*	$NetBSD: apci.c,v 1.21 2002/10/23 09:11:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apci.c,v 1.20 2002/10/02 05:15:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apci.c,v 1.21 2002/10/23 09:11:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ dev_type_poll(apcipoll);
 
 const struct cdevsw apci_cdevsw = {
 	apciopen, apciclose, apciread, apciwrite, apciioctl,
-	apcistop, apcitty, apcipoll, nommap, D_TTY
+	apcistop, apcitty, apcipoll, nommap, ttykqfilter, D_TTY
 };
 
 int	apciintr __P((void *));

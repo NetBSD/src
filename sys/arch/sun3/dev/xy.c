@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.41 2002/10/02 16:02:27 thorpej Exp $	*/
+/*	$NetBSD: xy.c,v 1.42 2002/10/23 09:12:29 jdolecek Exp $	*/
 
 /*
  *
@@ -223,7 +223,7 @@ const struct bdevsw xy_bdevsw = {
 
 const struct cdevsw xy_cdevsw = {
 	xyopen, xyclose, xyread, xywrite, xyioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 /*

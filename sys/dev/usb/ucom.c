@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.46 2002/09/27 03:18:21 thorpej Exp $	*/
+/*	$NetBSD: ucom.c,v 1.47 2002/10/23 09:13:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.46 2002/09/27 03:18:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.47 2002/10/23 09:13:59 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,7 @@ dev_type_poll(ucompoll);
 
 const struct cdevsw ucom_cdevsw = {
 	ucomopen, ucomclose, ucomread, ucomwrite, ucomioctl,
-	ucomstop, ucomtty, ucompoll, nommap, D_TTY
+	ucomstop, ucomtty, ucompoll, nommap, ttykqfilter, D_TTY
 };
 
 Static void	ucom_cleanup(struct ucom_softc *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.53 2002/10/01 12:56:57 fvdl Exp $	*/
+/*	$NetBSD: mem.c,v 1.54 2002/10/23 09:11:21 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.53 2002/10/01 12:56:57 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.54 2002/10/23 09:11:21 jdolecek Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -74,7 +74,7 @@ dev_type_mmap(mmmmap);
 
 const struct cdevsw mem_cdevsw = {
 	mmopen, nullclose, mmrw, mmrw, mmioctl,
-	nostop, notty, nopoll, mmmmap,
+	nostop, notty, nopoll, mmmmap, nokqfilter,
 };
 
 

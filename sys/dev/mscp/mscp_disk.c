@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.36 2002/10/02 16:34:23 thorpej Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.37 2002/10/23 09:13:27 jdolecek Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.36 2002/10/02 16:34:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.37 2002/10/23 09:13:27 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -121,7 +121,7 @@ const struct bdevsw ra_bdevsw = {
 
 const struct cdevsw ra_cdevsw = {
 	raopen, raclose, raread, rawrite, raioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 /*
@@ -537,7 +537,7 @@ const struct bdevsw rx_bdevsw = {
 
 const struct cdevsw rx_cdevsw = {
 	rxopen, nullclose, rxread, rxwrite, rxioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 /*

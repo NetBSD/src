@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.19 2002/10/02 15:45:16 thorpej Exp $	*/
+/*	$NetBSD: maple.c,v 1.20 2002/10/23 09:11:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -103,7 +103,7 @@ dev_type_ioctl(mapleioctl);
 
 const struct cdevsw maple_cdevsw = {
 	mapleopen, mapleclose, noread, nowrite, mapleioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.15 2002/10/02 05:30:44 thorpej Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.16 2002/10/23 09:11:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -210,7 +210,7 @@ dev_type_poll(zspoll);
 
 const struct cdevsw zstty_cdevsw = {
 	zsopen, zsclose, zsread, zswrite, zsioctl,
-	zsstop, zstty, zspoll, nommap, D_TTY
+	zsstop, zstty, zspoll, nommap, ttykqfilter, D_TTY
 };
 
 struct zsops zsops_tty;

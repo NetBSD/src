@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.28 2002/10/02 16:02:24 thorpej Exp $	*/
+/*	$NetBSD: cg4.c,v 1.29 2002/10/23 09:12:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -129,7 +129,7 @@ dev_type_mmap(cg4mmap);
 
 const struct cdevsw cgfour_cdevsw = {
 	cg4open, nullclose, noread, nowrite, cg4ioctl,
-	nostop, notty, nopoll, cg4mmap,
+	nostop, notty, nopoll, cg4mmap, nokqfilter,
 };
 
 static int	cg4gattr   __P((struct fbdevice *, void *));
@@ -147,7 +147,7 @@ static void	cg4b_init   __P((struct cg4_softc *));
 static void	cg4b_ldcmap __P((struct cg4_softc *));
 
 static struct fbdriver cg4_fbdriver = {
-	cg4open, nullclose, cg4mmap, cg4gattr,
+	cg4open, nullclose, cg4mmap, nokqfilter, cg4gattr,
 	cg4gvideo, cg4svideo,
 	cg4getcmap, cg4putcmap };
 

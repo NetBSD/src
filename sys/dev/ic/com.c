@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.199 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: com.c,v 1.200 2002/10/23 09:13:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.199 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.200 2002/10/23 09:13:15 jdolecek Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -192,7 +192,7 @@ dev_type_poll(compoll);
 
 const struct cdevsw com_cdevsw = {
 	comopen, comclose, comread, comwrite, comioctl,
-	comstop, comtty, compoll, nommap, D_TTY
+	comstop, comtty, compoll, nommap, ttykqfilter, D_TTY
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.30 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: pccons.c,v 1.31 2002/10/23 09:10:38 jdolecek Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -152,7 +152,7 @@ dev_type_mmap(pcmmap);
 
 const struct cdevsw pc_cdevsw = {
 	pcopen, pcclose, pcread, pcwrite, pcioctl,
-	nostop, pctty, pcpoll, pcmmap, D_TTY
+	nostop, pctty, pcpoll, pcmmap, ttykqfilter, D_TTY
 };
 
 #define	CHR		2

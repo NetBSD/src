@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.10 2002/10/02 16:33:49 thorpej Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.11 2002/10/23 09:13:11 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.10 2002/10/02 16:33:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.11 2002/10/23 09:13:11 jdolecek Exp $");
 
 #define BTNMGRDEBUG
 
@@ -101,7 +101,7 @@ dev_type_ioctl(btnmgrioctl);
 
 const struct cdevsw btnmgr_cdevsw = {
 	btnmgropen, btnmgrclose, btnmgrread, btnmgrwrite, btnmgrioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 #endif /* notyet */
 

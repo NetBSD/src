@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.37 2002/10/02 04:18:56 thorpej Exp $	*/
+/*	$NetBSD: lpt.c,v 1.38 2002/10/23 09:11:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -217,7 +217,7 @@ dev_type_ioctl(lptioctl);
 
 const struct cdevsw lpt_cdevsw = {
 	lptopen, lptclose, noread, lptwrite, lptioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 static int

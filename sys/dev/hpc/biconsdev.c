@@ -1,4 +1,4 @@
-/*	$NetBSD: biconsdev.c,v 1.6 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: biconsdev.c,v 1.7 2002/10/23 09:13:11 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.6 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.7 2002/10/23 09:13:11 jdolecek Exp $");
 
 #include "biconsdev.h"
 #include <sys/param.h>
@@ -100,7 +100,8 @@ dev_type_poll(biconsdevpoll);
 
 const struct cdevsw biconsdev_cdevsw = {
 	biconsdevopen, biconsdevclose, biconsdevread, biconsdevwrite,
-	biconsdevioctl, nostop, biconsdevtty, biconsdevpoll, nommap, D_TTY
+	biconsdevioctl, nostop, biconsdevtty, biconsdevpoll, nommap,
+	ttykqfilter, D_TTY
 };
 
 void

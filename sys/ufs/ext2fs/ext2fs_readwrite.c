@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.25 2002/09/22 19:32:56 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.26 2002/10/23 09:15:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.25 2002/09/22 19:32:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.26 2002/10/23 09:15:04 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,6 +212,7 @@ ext2fs_write(v)
 	void *win;
 	off_t oldoff;
 	boolean_t async;
+	int extended=0;
 
 	ioflag = ap->a_ioflag;
 	uio = ap->a_uio;
@@ -292,6 +293,7 @@ ext2fs_write(v)
 
 			if (vp->v_size < uio->uio_offset) {
 				uvm_vnp_setsize(vp, uio->uio_offset);
+				extended = 1;
 			}
 
 			/*
@@ -340,6 +342,7 @@ ext2fs_write(v)
 
 		if (vp->v_size < uio->uio_offset) {
 			uvm_vnp_setsize(vp, uio->uio_offset);
+			extended = 1;
 		}
 
 		if (ioflag & IO_SYNC)
@@ -362,6 +365,8 @@ out:
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	if (resid > uio->uio_resid && ap->a_cred && ap->a_cred->cr_uid != 0)
 		ip->i_e2fs_mode &= ~(ISUID | ISGID);
+	if (resid > uio->uio_resid)
+		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 	if (error) {
 		(void) VOP_TRUNCATE(vp, osize, ioflag & IO_SYNC, ap->a_cred,
 		    uio->uio_procp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_conf.c,v 1.9 2002/09/22 20:09:15 jdolecek Exp $	*/
+/*	$NetBSD: altq_conf.c,v 1.10 2002/10/23 09:10:25 jdolecek Exp $	*/
 /*	$KAME: altq_conf.c,v 1.13 2002/01/29 10:16:01 kjc Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.9 2002/09/22 20:09:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.10 2002/10/23 09:10:25 jdolecek Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -204,7 +204,7 @@ static struct cdevsw altq_cdevsw =
 #if defined(__NetBSD__)
 const struct cdevsw altq_cdevsw = {
 	altqopen, altqclose, noread, nowrite, altqioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter
 };
 #endif
 

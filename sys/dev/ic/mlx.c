@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.24 2002/10/08 12:51:20 ad Exp $	*/
+/*	$NetBSD: mlx.c,v 1.25 2002/10/23 09:13:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.24 2002/10/08 12:51:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.25 2002/10/23 09:13:17 jdolecek Exp $");
 
 #include "ld.h"
 
@@ -141,7 +141,7 @@ dev_type_ioctl(mlxioctl);
 
 const struct cdevsw mlx_cdevsw = {
 	mlxopen, mlxclose, noread, nowrite, mlxioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 extern struct	cfdriver mlx_cd; 

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.65 2002/10/21 15:21:35 fvdl Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.66 2002/10/23 09:14:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.65 2002/10/21 15:21:35 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.66 2002/10/23 09:14:36 jdolecek Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.65 2002/10/21 15:21:35 fvdl Exp $"
 #include <sys/malloc.h>
 #include <sys/poll.h>
 #include <sys/mman.h>
+#include <sys/file.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
@@ -1646,4 +1647,81 @@ genfs_compat_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	}
 	uvm_aio_aiodone(bp);
 	return (error);
+}
+
+static void
+filt_genfsdetach(struct knote *kn)
+{
+	struct vnode *vp = (struct vnode *)kn->kn_hook;
+
+	/* XXXLUKEM lock the struct? */
+	SLIST_REMOVE(&vp->v_klist, kn, knote, kn_selnext);
+}
+
+static int
+filt_genfsread(struct knote *kn, long hint)
+{
+	struct vnode *vp = (struct vnode *)kn->kn_hook;
+
+	/*
+	 * filesystem is gone, so set the EOF flag and schedule
+	 * the knote for deletion.
+	 */
+	if (hint == NOTE_REVOKE) {
+		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
+		return (1);
+	}
+
+	/* XXXLUKEM lock the struct? */
+	kn->kn_data = vp->v_size - kn->kn_fp->f_offset;
+        return (kn->kn_data != 0);
+}
+
+static int
+filt_genfsvnode(struct knote *kn, long hint)
+{
+
+	if (kn->kn_sfflags & hint)
+		kn->kn_fflags |= hint;
+	if (hint == NOTE_REVOKE) {
+		kn->kn_flags |= EV_EOF;
+		return (1);
+	}
+	return (kn->kn_fflags != 0);
+}
+
+static const struct filterops genfsread_filtops = 
+	{ 1, NULL, filt_genfsdetach, filt_genfsread };
+static const struct filterops genfsvnode_filtops = 
+	{ 1, NULL, filt_genfsdetach, filt_genfsvnode };
+
+int
+genfs_kqfilter(void *v)
+{
+	struct vop_kqfilter_args /* {
+		struct vnode	*a_vp;
+		struct knote	*a_kn;
+	} */ *ap = v;
+	struct vnode *vp;
+	struct knote *kn;
+
+	vp = ap->a_vp;
+	kn = ap->a_kn;
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		kn->kn_fop = &genfsread_filtops;
+		break;
+	case EVFILT_VNODE:
+		kn->kn_fop = &genfsvnode_filtops;
+		break;
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = vp;
+
+	/* XXXLUKEM lock the struct? */
+	SLIST_INSERT_HEAD(&vp->v_klist, kn, kn_selnext);
+
+	return (0);
 }

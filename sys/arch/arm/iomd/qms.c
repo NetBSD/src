@@ -1,4 +1,4 @@
-/*	$NetBSD: qms.c,v 1.2 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: qms.c,v 1.3 2002/10/23 09:10:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -72,10 +72,11 @@ dev_type_close(qmsclose);
 dev_type_read(qmsread);
 dev_type_ioctl(qmsioctl);
 dev_type_poll(qmspoll);
+dev_type_kqfilter(qmskqfilter);
 
 const struct cdevsw qms_cdevsw = {
 	qmsopen, qmsclose, qmsread, nowrite, qmsioctl,
-	nostop, notty, qmspoll, nommap,
+	nostop, notty, qmspoll, nommap, qmskqfilter,
 };
 
 /* qms device structure */
@@ -476,5 +477,55 @@ qmsputbuffer(sc, buffer)
 		psignal(sc->sc_proc, SIGIO);
 }
 #endif
+
+/* XXXLUKEM (jdolecek) kqueue hooks not tested */
+static void
+filt_qmsrdetach(struct knote *kn)
+{
+	struct qms_softc *sc = kn->kn_hook;
+	int s;
+
+	s = spltty();
+	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_qmsread(struct knote *kn, long hint)
+{
+	struct qms_softc *sc = kn->kn_hook;
+
+	kn->kn_data = sc->sc_buffer.c_cc;
+	return (kn->kn_data > 0);
+}
+
+static const struct filterops qmsread_filtops =
+	{ 1, NULL, filt_qmsrdetach, filt_qmsread };
+
+int
+qmskqfilter(dev_t dev, struct knote *kn)
+{
+	struct qms_softc *sc = qms_cd.cd_devs[minor(dev)];
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sc->sc_rsel.si_klist;
+		kn->kn_fop = &qmsread_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = sc;
+
+	s = spltty();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
+}
 
 /* End of qms.c */

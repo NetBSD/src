@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.39 2002/10/02 16:02:27 thorpej Exp $	*/
+/*	$NetBSD: xd.c,v 1.40 2002/10/23 09:12:27 jdolecek Exp $	*/
 
 /*
  *
@@ -284,7 +284,7 @@ const struct bdevsw xd_bdevsw = {
 
 const struct cdevsw xd_cdevsw = {
 	xdopen, xdclose, xdread, xdwrite, xdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 /*

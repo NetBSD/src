@@ -1,4 +1,4 @@
-/*	$NetBSD: bthci.c,v 1.8 2002/10/02 16:33:39 thorpej Exp $	*/
+/*	$NetBSD: bthci.c,v 1.9 2002/10/23 09:13:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -81,10 +81,11 @@ extern struct cfdriver bthci_cd;
 dev_type_open(bthciopen);
 dev_type_close(bthciclose);
 dev_type_poll(bthcipoll);
+dev_type_kqfilter(bthcikqfilter);
 
 const struct cdevsw bthci_cdevsw = {
 	bthciopen, bthciclose, noread, nowrite, noioctl,
-	nostop, notty, bthcipoll, nommap,
+	nostop, notty, bthcipoll, nommap, bthcikqfilter,
 };
 
 #define BTHCIUNIT(dev) (minor(dev))
@@ -109,7 +110,8 @@ bthci_attach(struct device *parent, struct device *self, void *aux)
 #ifdef DIAGNOSTIC_XXX
 	if (sc->sc_methods->bt_read == NULL ||
 	    sc->sc_methods->bt_write == NULL ||
-	    sc->sc_methods->bt_poll == NULL)
+	    sc->sc_methods->bt_poll == NULL ||
+	    sc->sc_methods->bt_kqfilter == NULL)
 		panic("%s: missing methods", sc->sc_dev.dv_xname);
 #endif
 
@@ -290,3 +292,16 @@ bthcipoll(dev_t dev, int events, struct proc *p)
 	return (sc->sc_methods->bt_poll(sc->sc_handle, events, p));
 }
 
+int
+bthcikqfilter(dev_t dev, struct knote *kn)
+{
+	struct bthci_softc *sc;
+
+	sc = device_lookup(&bthci_cd, BTHCIUNIT(dev));
+	if (sc == NULL)
+		return (ENXIO);
+	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
+		return (EIO);
+
+	return (sc->sc_methods->bt_kqfilter(sc->sc_handle, events, p));
+}

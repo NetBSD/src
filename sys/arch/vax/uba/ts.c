@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.23 2002/10/02 16:02:33 thorpej Exp $ */
+/*	$NetBSD: ts.c,v 1.24 2002/10/23 09:12:34 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -212,7 +212,7 @@ const struct bdevsw ts_bdevsw = {
 
 const struct cdevsw ts_cdevsw = {
 	tsopen, tsclose, tsread, tswrite, tsioctl,
-	nostop, notty, nopoll, nommap, D_TAPE
+	nostop, notty, nopoll, nommap, nokqfilter, D_TAPE
 };
 
 #define ST_INVALID	0	/* uninitialized, before probe */

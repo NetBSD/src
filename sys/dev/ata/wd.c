@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.230 2002/10/18 14:31:13 junyoung Exp $ */
+/*	$NetBSD: wd.c,v 1.231 2002/10/23 09:13:07 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.230 2002/10/18 14:31:13 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.231 2002/10/23 09:13:07 jdolecek Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -204,7 +204,7 @@ const struct bdevsw wd_bdevsw = {
 
 const struct cdevsw wd_cdevsw = {
 	wdopen, wdclose, wdread, wdwrite, wdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.167 2002/09/18 01:46:23 chs Exp $	*/
+/*	$NetBSD: cd.c,v 1.168 2002/10/23 09:13:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.167 2002/09/18 01:46:23 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.168 2002/10/23 09:13:44 jdolecek Exp $");
 
 #include "rnd.h"
 
@@ -155,7 +155,7 @@ const struct bdevsw cd_bdevsw = {
 
 const struct cdevsw cd_cdevsw = {
 	cdopen, cdclose, cdread, cdwrite, cdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 struct dkdriver cddkdriver = { cdstrategy };

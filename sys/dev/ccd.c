@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.78 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: ccd.c,v 1.79 2002/10/23 09:12:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.78 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.79 2002/10/23 09:12:59 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,7 @@ const struct bdevsw ccd_bdevsw = {
 
 const struct cdevsw ccd_cdevsw = {
 	ccdopen, ccdclose, ccdread, ccdwrite, ccdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 #ifdef DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.52 2002/10/02 05:15:48 thorpej Exp $	*/
+/*	$NetBSD: dca.c,v 1.53 2002/10/23 09:11:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dca.c,v 1.52 2002/10/02 05:15:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dca.c,v 1.53 2002/10/23 09:11:03 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -149,7 +149,7 @@ dev_type_poll(dcapoll);
 
 const struct cdevsw dca_cdevsw = {
 	dcaopen, dcaclose, dcaread, dcawrite, dcaioctl,
-	dcastop, dcatty, dcapoll, nommap, D_TTY
+	dcastop, dcatty, dcapoll, nommap, ttykqfilter, D_TTY
 };
 
 int	dcaintr __P((void *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.25 2002/10/02 05:05:29 thorpej Exp $	*/
+/*	$NetBSD: pccons.c,v 1.26 2002/10/23 09:10:57 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -193,7 +193,7 @@ dev_type_mmap(pcmmap);
 
 const struct cdevsw pc_cdevsw = {
 	pcopen, pcclose, pcread, pcwrite, pcioctl,
-	pcstop, pctty, pcpoll, pcmmap, D_TTY
+	pcstop, pctty, pcpoll, pcmmap, ttykqfilter, D_TTY
 };
 
 #define	COL		80

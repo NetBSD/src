@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.16 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: ld.c,v 1.17 2002/10/23 09:13:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.16 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.17 2002/10/23 09:13:02 jdolecek Exp $");
 
 #include "rnd.h"
 
@@ -93,7 +93,7 @@ const struct bdevsw ld_bdevsw = {
 
 const struct cdevsw ld_cdevsw = {
 	ldopen, ldclose, ldread, ldwrite, ldioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 static struct	dkdriver lddkdriver = { ldstrategy };

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_kmem.c,v 1.3 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: irix_kmem.c,v 1.4 2002/10/23 09:12:53 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_kmem.c,v 1.3 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_kmem.c,v 1.4 2002/10/23 09:12:53 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ dev_type_write(irix_kmemwrite);
 
 const struct cdevsw irix_kmem_cdevsw = {
 	irix_kmemopen, irix_kmemclose, irix_kmemread, irix_kmemwrite,
-	noioctl, nostop, notty, nopoll, nommap,
+	noioctl, nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 void

@@ -1,4 +1,4 @@
-/*      $NetBSD: opms.c,v 1.6 2002/10/02 15:52:40 thorpej Exp $        */
+/*      $NetBSD: opms.c,v 1.7 2002/10/23 09:12:01 jdolecek Exp $        */
 
 /*
  * Copyright 1997
@@ -202,10 +202,11 @@ dev_type_close(opmsclose);
 dev_type_read(opmsread);
 dev_type_ioctl(opmsioctl);
 dev_type_poll(opmspoll);
+dev_type_kqfilter(opmskqfilter);
 
 const struct cdevsw opms_cdevsw = {
 	opmsopen, opmsclose, opmsread, nowrite, opmsioctl,
-	nostop, notty, opmspoll, nommap,
+	nostop, notty, opmspoll, nommap, opmskqfilter,
 };
 
 /* variable to control which debugs printed if kernel compiled with 
@@ -986,3 +987,51 @@ opmspoll(dev, events, p)
     return (revents);
 } /* End opmspoll */
 
+static void
+filt_opmsrdetach(struct knote *kn)
+{
+	struct opms_softc *sc = kn->kn_hook;
+	int s;
+
+	s = spltty();
+	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_opmsread(struct knote *kn, long hint)
+{
+	struct opms_softc *sc = kn->kn_hook;
+
+	kn->kn_data = sc->sc_q.c_cc;
+	return (kn->kn_data > 0);
+}
+
+static const struct filterops opmsread_filtops =
+	{ 1, NULL, filt_opmsrdetach, filt_opmsread };
+
+int
+opmskqfilter(dev_t dev, struct knote *kn)
+{
+	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sc->sc_rsel.si_klist;
+		kn->kn_fop = &opmsread_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = sc;
+
+	s = spltty();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.29 2002/10/02 03:10:46 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.30 2002/10/23 09:13:22 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.29 2002/10/02 03:10:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.30 2002/10/23 09:13:22 jdolecek Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -285,7 +285,7 @@ const struct bdevsw fd_bdevsw = {
 
 const struct cdevsw fd_cdevsw = {
 	fdopen, fdclose, fdread, fdwrite, fdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 void fdgetdisklabel __P((struct fd_softc *));

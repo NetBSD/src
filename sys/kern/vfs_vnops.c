@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.56 2002/10/14 04:18:57 gmcgarry Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.57 2002/10/23 09:14:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.56 2002/10/14 04:18:57 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.57 2002/10/23 09:14:32 jdolecek Exp $");
 
 #include "fs_union.h"
 
@@ -77,7 +77,7 @@ static int vn_ioctl(struct file *fp, u_long com, caddr_t data, struct proc *p);
 
 struct 	fileops vnops = {
 	vn_read, vn_write, vn_ioctl, vn_fcntl, vn_poll,
-	vn_statfile, vn_closefile
+	vn_statfile, vn_closefile, vn_kqfilter
 };
 
 /*
@@ -618,6 +618,18 @@ vn_poll(fp, events, p)
 {
 
 	return (VOP_POLL(((struct vnode *)fp->f_data), events, p));
+}
+
+/*
+ * File table vnode kqfilter routine.
+ */
+int
+vn_kqfilter(fp, kn)
+	struct file *fp;
+	struct knote *kn;
+{
+
+	return (VOP_KQFILTER((struct vnode *)fp->f_data, kn));
 }
 
 /*

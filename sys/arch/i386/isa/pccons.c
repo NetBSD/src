@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.158 2002/10/02 15:52:22 thorpej Exp $	*/
+/*	$NetBSD: pccons.c,v 1.159 2002/10/23 09:11:23 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.158 2002/10/02 15:52:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.159 2002/10/23 09:11:23 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -242,7 +242,7 @@ dev_type_mmap(pcmmap);
  
 const struct cdevsw pc_cdevsw = {
 	pcopen, pcclose, pcread, pcwrite, pcioctl,
-	pcstop, pctty, pcpoll, pcmmap, D_TTY
+	pcstop, pctty, pcpoll, pcmmap, ttykqfilter, D_TTY
 };
 
 #define	COL		80

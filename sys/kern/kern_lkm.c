@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.60 2002/09/18 22:59:36 lha Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.61 2002/10/23 09:14:19 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.60 2002/09/18 22:59:36 lha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.61 2002/10/23 09:14:19 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -115,7 +115,7 @@ dev_type_ioctl(lkmioctl);
 
 const struct cdevsw lkm_cdevsw = {
 	lkmopen, lkmclose, noread, nowrite, lkmioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 /*ARGSUSED*/

@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.69 2002/10/02 16:53:17 thorpej Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.70 2002/10/23 09:14:06 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.69 2002/10/02 16:53:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.70 2002/10/23 09:14:06 jdolecek Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_compat_netbsd.h"
@@ -158,11 +158,12 @@ dev_type_stop(wsdisplaystop);
 dev_type_tty(wsdisplaytty);
 dev_type_poll(wsdisplaypoll);
 dev_type_mmap(wsdisplaymmap);
+dev_type_kqfilter(wsdisplaykqfilter);
 
 const struct cdevsw wsdisplay_cdevsw = {
 	wsdisplayopen, wsdisplayclose, wsdisplayread, wsdisplaywrite,
 	wsdisplayioctl, wsdisplaystop, wsdisplaytty, wsdisplaypoll,
-	wsdisplaymmap, D_TTY
+	wsdisplaymmap, wsdisplaykqfilter, D_TTY
 };
 
 static void wsdisplaystart(struct tty *);
@@ -867,6 +868,26 @@ wsdisplaypoll(dev_t dev, int events, struct proc *p)
 
 	tp = scr->scr_tty;
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
+}
+
+int
+wsdisplaykqfilter(dev, kn)
+	dev_t dev;
+	struct knote *kn;
+{
+	struct wsdisplay_softc *sc =
+	    device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
+	struct wsscreen *scr;
+
+	if (ISWSDISPLAYCTL(dev))
+		return (1);
+
+	scr = sc->sc_scr[WSDISPLAYSCREEN(dev)];
+
+	if (WSSCREEN_HAS_TTY(scr))
+		return (ttykqfilter(dev, kn));
+	else
+		return (1);
 }
 
 struct tty *

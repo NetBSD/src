@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.4 2002/09/27 15:36:44 provos Exp $	*/
+/*	$NetBSD: profile.c,v 1.5 2002/10/23 09:12:03 jdolecek Exp $	*/
 
 /*
  * Copyright 1997
@@ -116,7 +116,7 @@ dev_type_ioctl(profioctl);
 
 const struct cdevsw prof_cdevsw = {
 	profopen, profclose, profread, nowrite, profioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 void 

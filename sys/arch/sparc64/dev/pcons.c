@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.13 2002/10/02 16:02:18 thorpej Exp $	*/
+/*	$NetBSD: pcons.c,v 1.14 2002/10/23 09:12:14 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -75,7 +75,7 @@ dev_type_poll(pconspoll);
 
 const struct cdevsw pcons_cdevsw = {
 	pconsopen, pconsclose, pconsread, pconswrite, pconsioctl,
-	nostop, pconstty, pconspoll, nommap, D_TTY
+	nostop, pconstty, pconspoll, nommap, ttykqfilter, D_TTY
 };
 
 static struct cnm_state pcons_cnm_state;

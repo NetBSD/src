@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.4 2002/10/02 05:30:39 thorpej Exp $	*/
+/*	$NetBSD: apm.c,v 1.5 2002/10/23 09:11:32 jdolecek Exp $	*/
 /*	$OpenBSD: apm.c,v 1.5 2002/06/07 07:13:59 miod Exp $	*/
 
 /*-
@@ -128,10 +128,11 @@ dev_type_open(apmopen);
 dev_type_close(apmclose);
 dev_type_ioctl(apmioctl);
 dev_type_poll(apmpoll);
+dev_type_kqfilter(apmkqfilter);
 
 const struct cdevsw apm_cdevsw = {
 	apmopen, apmclose, noread, nowrite, apmioctl,
-	nostop, notty, apmpoll, nommap,
+	nostop, notty, apmpoll, nommap, apmkqfilter,
 };
 #endif
 
@@ -141,15 +142,6 @@ int	apm_evindex;
 #define	APMDEV(dev)	(minor(dev)&0x0f)
 #define APMDEV_NORMAL	0
 #define APMDEV_CTL	8
-
-#ifdef __OpenBSD__
-void filt_apmrdetach(struct knote *kn);
-int filt_apmread(struct knote *kn, long hint);
-int apmkqfilter(dev_t dev, struct knote *kn);
-
-struct filterops apmread_filtops =
-	{ 1, NULL, filt_apmrdetach, filt_apmread};
-#endif
 
 /*
  * Flags to control kernel display
@@ -431,51 +423,50 @@ apmpoll(dev, events, p)
 }
 #endif
 
-#ifdef __OpenBSD__
-void
-filt_apmrdetach(kn)
-	struct knote *kn;
+static void
+filt_apmrdetach(struct knote *kn)
 {
 	struct apm_softc *sc = (struct apm_softc *)kn->kn_hook;
 
-	SLIST_REMOVE(&sc->sc_note, kn, knote, kn_selnext);
+	APM_LOCK(sc);
+	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
+	APM_UNLOCK(sc);
 }
 
-int
-filt_apmread(kn, hint)
-	struct knote *kn;
-	long hint;
+static int
+filt_apmread(struct knote *kn, long hint)
 {
-	/* XXX weird kqueue_scan() semantics */
-	if (hint && !kn->kn_data)
-		kn->kn_data = (int)hint;
+	struct apm_softc *sc = kn->kn_hook;
 
-	return (1);
+	kn->kn_data = sc->event_count;
+	return (kn->kn_data > 0);
 }
+
+static struct filterops apmread_filtops =
+	{ 1, NULL, filt_apmrdetach, filt_apmread};
 
 int
 apmkqfilter(dev, kn)
 	dev_t dev;
 	struct knote *kn;
 {
-	struct apm_softc *sc;
-
-	/* apm0 only */
-	if (!apm_cd.cd_ndevs || APMUNIT(dev) != 0 ||
-	    !(sc = apm_cd.cd_devs[APMUNIT(dev)]))
-		return ENXIO;
+	struct apm_softc *sc = apm_cd.cd_devs[APMUNIT(dev)];
+	struct klist *klist;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
+		klist = &sc->sc_rsel.si_klist;
 		kn->kn_fop = &apmread_filtops;
 		break;
 	default:
 		return (1);
 	}
 
-	kn->kn_hook = (caddr_t)sc;
-	SLIST_INSERT_HEAD(&sc->sc_note, kn, kn_selnext);
+	kn->kn_hook = sc;
+
+	APM_LOCK(sc);
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	APM_UNLOCK(sc);
 
 	return (0);
 }
-#endif

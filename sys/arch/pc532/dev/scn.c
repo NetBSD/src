@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.56 2002/10/02 04:18:57 thorpej Exp $ */
+/*	$NetBSD: scn.c,v 1.57 2002/10/23 09:11:44 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -106,7 +106,7 @@ dev_type_poll(scnpoll);
 
 const struct cdevsw scn_cdevsw = {
 	scnopen, scnclose, scnread, scnwrite, scnioctl,
-	scnstop, scntty, scnpoll, nommap, D_TTY
+	scnstop, scntty, scnpoll, nommap, ttykqfilter, D_TTY
 };
 
 #ifndef CONSOLE_SPEED

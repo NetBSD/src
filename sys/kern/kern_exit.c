@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.102 2002/09/25 22:21:41 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.103 2002/10/23 09:14:16 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.102 2002/09/25 22:21:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.103 2002/10/23 09:14:16 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -300,6 +300,11 @@ exit1(struct proc *p, int rv)
 	*p->p_ru = p->p_stats->p_ru;
 	calcru(p, &p->p_ru->ru_utime, &p->p_ru->ru_stime, NULL);
 	ruadd(p->p_ru, &p->p_stats->p_cru);
+
+	/*
+	 * Notify interested parties of our demise.
+	 */
+	KNOTE(&p->p_klist, NOTE_EXIT);
 
 #if PERFCTRS
 	/*

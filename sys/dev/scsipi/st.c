@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.157 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: st.c,v 1.158 2002/10/23 09:13:51 jdolecek Exp $ */
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.157 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.158 2002/10/23 09:13:51 jdolecek Exp $");
 
 #include "opt_scsi.h"
 
@@ -113,7 +113,7 @@ const struct bdevsw st_bdevsw = {
 
 const struct cdevsw st_cdevsw = {
 	stopen, stclose, stread, stwrite, stioctl,
-	nostop, notty, nopoll, nommap, D_TAPE
+	nostop, notty, nopoll, nommap, nokqfilter, D_TAPE
 };
 
 /*

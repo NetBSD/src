@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.9 2002/10/02 16:52:30 thorpej Exp $ */
+/*	$NetBSD: ts.c,v 1.10 2002/10/23 09:13:38 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.9 2002/10/02 16:52:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.10 2002/10/23 09:13:38 jdolecek Exp $");
 
 #undef	TSDEBUG
 
@@ -185,7 +185,7 @@ const struct bdevsw ts_bdevsw = {
 
 const struct cdevsw ts_cdevsw = {
 	tsopen, tsclose, tsread, tswrite, tsioctl,
-	nostop, notty, nopoll, nommap, D_TAPE
+	nostop, notty, nopoll, nommap, nokqfilter, D_TAPE
 };
 
 /* Bits in minor device */ 

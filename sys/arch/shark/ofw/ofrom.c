@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.8 2002/10/02 15:52:39 thorpej Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.9 2002/10/23 09:12:00 jdolecek Exp $	*/
 
 /*
  * Copyright 1998
@@ -69,7 +69,7 @@ dev_type_mmap(ofrommmap);
 
 const struct cdevsw ofrom_cdevsw = {
 	ofromopen, nullclose, ofromrw, ofromrw, noioctl,
-	nostop, notty, nopoll, ofrommmap,
+	nostop, notty, nopoll, ofrommmap, nokqfilter,
 };
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.38 2002/10/02 05:04:26 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.39 2002/10/23 09:10:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -208,7 +208,7 @@ dev_type_poll(zspoll);
 
 const struct cdevsw zs_cdevsw = {
 	zsopen, zsclose, zsread, zswrite, zsioctl,
-	zsstop, zstty, zspoll, nommap, D_TTY
+	zsstop, zstty, zspoll, nommap, ttykqfilter, D_TTY
 };
 
 /* Interrupt handlers. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.16 2002/10/02 16:52:32 thorpej Exp $ */
+/*	$NetBSD: bpp.c,v 1.17 2002/10/23 09:13:42 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.16 2002/10/02 16:52:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.17 2002/10/23 09:13:42 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -129,10 +129,11 @@ dev_type_close(bppclose);
 dev_type_write(bppwrite);
 dev_type_ioctl(bppioctl);
 dev_type_poll(bpppoll);
+dev_type_kqfilter(bppkqfilter);
 
 const struct cdevsw bpp_cdevsw = {
 	bppopen, bppclose, noread, bppwrite, bppioctl,
-	nostop, notty, bpppoll, nommap,
+	nostop, notty, bpppoll, nommap, bppkqfilter,
 };
 
 #define BPPUNIT(dev)	(minor(dev))
@@ -503,6 +504,84 @@ bpppoll(dev, events, p)
 	return (revents);
 }
 
+static void
+filt_bpprdetach(struct knote *kn)
+{
+	struct bpp_softc *sc = kn->kn_hook;
+	int s;
+
+	s = splbpp();
+	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_bppread(struct knote *kn, long hint)
+{
+	/* XXX Read not yet implemented. */
+	return (0);
+}
+
+static const struct filterops bppread_filtops =
+	{ 1, NULL, filt_bpprdetach, filt_bppread };
+
+static void
+filt_bppwdetach(struct knote *kn)
+{
+	struct bpp_softc *sc = kn->kn_hook;
+	int s;
+
+	s = splbpp();
+	SLIST_REMOVE(&sc->sc_wsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_bpfwrite(struct knote *kn, long hint)
+{
+	struct bpp_softc *sc = kn->kn_hook;
+
+	if (sc->sc_flags & BPP_LOCKED)
+		return (0);
+
+	kn->kn_data = 0;	/* XXXLUKEM (thorpej): what to put here? */
+	return (1);
+}
+
+static const struct filterops bppwrite_filtops =
+	{ 1, NULL, filt_bppwdetach, filt_bpfwrite };
+
+int
+bppkqfilter(dev_t dev, struct knote *kn)
+{
+	struct bpp_softc *sc = bpp_cd.cd_devs[BPPUNIT(dev)];
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sc->sc_rsel.si_klist;
+		kn->kn_fop = &bppread_filtops;
+		break;
+
+	case EVFILT_WRITE:
+		klist = &sc->sc_wsel.si_klist;
+		kn->kn_fop = &bppwrite_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = sc;
+
+	s = splbpp();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
+}
+
 int
 bppintr(arg)
 	void *arg;
@@ -531,7 +610,7 @@ bppintr(arg)
 		sc->sc_flags &= ~BPP_WANT;
 		wakeup(sc->sc_buf);
 	} else {
-		selwakeup(&sc->sc_wsel);
+		selnotify(&sc->sc_wsel, 0);
 		if (sc->sc_asyncproc != NULL)
 			psignal(sc->sc_asyncproc, SIGIO);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.21 2002/10/02 05:04:26 thorpej Exp $ */
+/*	$NetBSD: lpt.c,v 1.22 2002/10/23 09:10:52 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -134,7 +134,7 @@ extern struct cfdriver lp_cd;
 
 const struct cdevsw lp_cdevsw = {
 	lpopen, lpclose, noread, lpwrite, lpioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 /*ARGSUSED*/

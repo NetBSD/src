@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.21 2002/10/02 05:04:26 thorpej Exp $	*/
+/*	$NetBSD: kbd.c,v 1.22 2002/10/23 09:10:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -76,6 +76,7 @@ dev_type_close(kbdclose);
 dev_type_read(kbdread);
 dev_type_ioctl(kbdioctl);
 dev_type_poll(kbdpoll);
+dev_type_kqfilter(kbdkqfilter);
 
 /* Interrupt handler */
 void	kbdintr __P((int));
@@ -92,7 +93,7 @@ CFATTACH_DECL(kbd, sizeof(struct device),
 
 const struct cdevsw kbd_cdevsw = {
 	kbdopen, kbdclose, kbdread, nowrite, kbdioctl,
-	nostop, notty, kbdpoll, nommap,
+	nostop, notty, kbdpoll, nommap, kbdkqfilter,
 };
 
 /*ARGSUSED*/
@@ -264,6 +265,13 @@ int
 kbdpoll (dev_t dev, int events, struct proc *p)
 {
   return ev_poll (&kbd_softc.k_events, events, p);
+}
+
+int
+kbdkqfilter(dev_t dev, struct knote *kn)
+{
+
+	return (ev_kqfilter(&kbd_softc.k_events, kn));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.23 2002/10/02 04:55:52 thorpej Exp $ */
+/*	$NetBSD: ms.c,v 1.24 2002/10/23 09:10:34 jdolecek Exp $ */
 
 /*
  * based on:
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.23 2002/10/02 04:55:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.24 2002/10/23 09:10:34 jdolecek Exp $");
 
 /*
  * Mouse driver.
@@ -114,10 +114,11 @@ dev_type_close(msclose);
 dev_type_read(msread);
 dev_type_ioctl(msioctl);
 dev_type_poll(mspoll);
+dev_type_kqfilter(mskqfilter);
 
 const struct cdevsw ms_cdevsw = {
 	msopen, msclose, msread, nowrite, msioctl,
-	nostop, notty, mspoll, nommap,
+	nostop, notty, mspoll, nommap, mskqfilter,
 };
 
 #define	MS_UNIT(d)	((minor(d) & ~0x1) >> 1)
@@ -445,4 +446,16 @@ mspoll(dev_t dev, int events, struct proc *p)
 	ms = MS_DEV2MSPORT(dev);
 
 	return(ev_poll(&ms->ms_events, events, p));
+}
+
+int
+mskqfilter(dev, kn)
+	dev_t dev;
+	struct knote *kn;
+{
+	struct ms_port *ms;
+
+	ms = MS_DEV2MSPORT(dev);
+
+	return (ev_kqfilter(&ms->ms_events, kn));
 }

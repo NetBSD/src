@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.55 2002/09/23 05:51:11 simonb Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.56 2002/10/23 09:14:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.55 2002/09/23 05:51:11 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.56 2002/10/23 09:14:42 jdolecek Exp $");
 
 #include "tun.h"
 
@@ -97,10 +97,11 @@ dev_type_read(tunread);
 dev_type_write(tunwrite);
 dev_type_ioctl(tunioctl);
 dev_type_poll(tunpoll);
+dev_type_kqfilter(tunkqfilter);
 
 const struct cdevsw tun_cdevsw = {
 	tunopen, tunclose, tunread, tunwrite, tunioctl,
-	nostop, notty, tunpoll, nommap,
+	nostop, notty, tunpoll, nommap, tunkqfilter,
 };
 
 void
@@ -314,7 +315,7 @@ tunclose(dev, flag, mode, p)
 		splx(s);
 	}
 	tp->tun_pgrp = 0;
-	selwakeup(&tp->tun_rsel);
+	selnotify(&tp->tun_rsel, 0);
 		
 	TUNDEBUG ("%s: closed\n", ifp->if_xname);
 	simple_unlock(&tp->tun_lock);
@@ -518,7 +519,7 @@ tun_output(ifp, m0, dst, rt)
 		else if ((p = pfind(-tp->tun_pgrp)) != NULL)
 			psignal(p, SIGIO);
 	}
-	selwakeup(&tp->tun_rsel);
+	selnotify(&tp->tun_rsel, 0);
 	simple_unlock(&tp->tun_lock);
 	return (0);
 }
@@ -922,4 +923,74 @@ tunpoll(dev, events, p)
 	splx(s);
 	simple_unlock(&tp->tun_lock);
 	return (revents);
+}
+
+static void
+filt_tunrdetach(struct knote *kn)
+{
+	struct tun_softc *tp = kn->kn_hook;
+	int s;
+
+	s = splnet();
+	SLIST_REMOVE(&tp->tun_rsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_tunread(struct knote *kn, long hint)
+{
+	struct tun_softc *tp = kn->kn_hook;
+	struct ifnet *ifp = &tp->tun_if;
+	struct mbuf *m;
+	int s;
+
+	s = splnet();
+	IF_POLL(&ifp->if_snd, m);
+	if (m == NULL) {
+		splx(s);
+		return (0);
+	}
+
+	for (kn->kn_data = 0; m != NULL; m = m->m_next)
+		kn->kn_data += m->m_len;
+
+	splx(s);
+	return (1);
+}
+
+static const struct filterops tunread_filtops =
+	{ 1, NULL, filt_tunrdetach, filt_tunread };
+
+static const struct filterops tun_seltrue_filtops =
+	{ 1, NULL, filt_tunrdetach, filt_seltrue };
+
+int
+tunkqfilter(dev_t dev, struct knote *kn)
+{
+	struct tun_softc *tp = tun_find_unit(dev);
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &tp->tun_rsel.si_klist;
+		kn->kn_fop = &tunread_filtops;
+		break;
+
+	case EVFILT_WRITE:
+		klist = &tp->tun_rsel.si_klist;
+		kn->kn_fop = &tun_seltrue_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = tp;
+
+	s = splnet();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
 }

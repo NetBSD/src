@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.79 2002/10/02 03:10:49 thorpej Exp $	*/
+/*	$NetBSD: mcd.c,v 1.80 2002/10/23 09:13:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.79 2002/10/02 03:10:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.80 2002/10/23 09:13:23 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,7 +211,7 @@ const struct bdevsw mcd_bdevsw = {
 
 const struct cdevsw mcd_cdevsw = {
 	mcdopen, mcdclose, mcdread, mcdwrite, mcdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 void	mcdgetdefaultlabel __P((struct mcd_softc *, struct disklabel *));
