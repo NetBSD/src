@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.141 2001/10/07 12:58:21 isaki Exp $
+.\"	$NetBSD: main,v 1.142 2001/10/18 17:44:32 uch Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,7 +46,7 @@
 .ds MACHINE_LIST algor alpha amiga amigappc arc arm26 arm32 atari bebox cobalt
 .as MACHINE_LIST " dreamcast evbsh3 hp300 hpcmips hpcsh i386 luna68k mac68k
 .as MACHINE_LIST " macppc mmeye mvme68k news68k newsmips next68k ofppc pc532
-.as MACHINE_LIST " pmax prep sgimips sparc sparc64 sun3 vax x68k
+.as MACHINE_LIST " playstation2 pmax prep sgimips sparc sparc64 sun3 vax x68k
 .
 .so \*[.CURDIR]/../common/macros
 .
