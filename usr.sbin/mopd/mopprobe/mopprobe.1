@@ -1,4 +1,4 @@
-.\"	$NetBSD: mopprobe.1,v 1.3 1997/10/16 23:25:23 lukem Exp $
+.\"	$NetBSD: mopprobe.1,v 1.3.12.1 2001/04/26 09:39:28 he Exp $
 .\"
 .\" Copyright (c) 1996 Mats O Jansson.  All rights reserved.
 .\"
@@ -44,15 +44,15 @@
 prints the ethernet address and nodename of MOP SID message on the Ethernet
 connected to
 .Ar interface
-or all known interfaces if 
+or all known interfaces if
 .Sq Fl a
 is given.
 .Sh OPTIONS
 .Bl -tag -width indent
 .It Fl a
 Listen on all the Ethernets attached to the system.
-If 
-.Sq Fl a 
+If
+.Sq Fl a
 is omitted, an interface must be specified.
 .It Fl 3
 Ignore MOP V3 messages (Ethernet II).
@@ -62,7 +62,7 @@ Ignore MOP V4 messages (Ethernet 802.3).
 .Sh SEE ALSO
 .Xr mopa.out 1 ,
 .Xr mopchk 1 ,
-.Xr mopd 8 ,
-.Xr moptrace 8
+.Xr moptrace 1 ,
+.Xr mopd 8
 .Sh AUTHORS
 Mats O Jansson (moj@stacken.kth.se).
