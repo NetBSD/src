@@ -1,4 +1,4 @@
-/*	$NetBSD: reader.c,v 1.6 1997/07/25 16:46:36 perry Exp $	*/
+/*	$NetBSD: reader.c,v 1.7 1998/10/10 20:45:59 itohy Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)reader.c	5.7 (Berkeley) 1/20/91";
 #else
-__RCSID("$NetBSD: reader.c,v 1.6 1997/07/25 16:46:36 perry Exp $");
+__RCSID("$NetBSD: reader.c,v 1.7 1998/10/10 20:45:59 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -891,6 +891,7 @@ get_tag()
     if (c == EOF) unexpected_EOF();
     if (c != '>')
 	illegal_tag(t_lineno, t_line, t_cptr);
+    FREE(t_line);
     ++cptr;
 
     for (i = 0; i < ntags; ++i)
@@ -913,7 +914,6 @@ get_tag()
     strcpy(s, cache);
     tag_table[ntags] = s;
     ++ntags;
-    FREE(t_line);
     return (s);
 }
 
@@ -1434,6 +1434,7 @@ loop:
     case ';':
 	if (depth > 0) goto loop;
 	fprintf(f, "\nbreak;\n");
+	FREE(a_line);
 	return;
 
     case '{':
@@ -1443,6 +1444,7 @@ loop:
     case '}':
 	if (--depth > 0) goto loop;
 	fprintf(f, "\nbreak;\n");
+	FREE(a_line);
 	return;
 
     case '\'':
