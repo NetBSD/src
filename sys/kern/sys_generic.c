@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.59 2001/11/12 15:25:23 lukem Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.60 2001/11/14 18:43:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.59 2001/11/12 15:25:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.60 2001/11/14 18:43:58 christos Exp $");
 
 #include "opt_ktrace.h"
 
@@ -871,9 +871,11 @@ pollscan(struct proc *p, struct pollfd *fds, int nfd, register_t *retval)
 	fdp = p->p_fd;
 	n = 0;
 	for (i = 0; i < nfd; i++, fds++) {
-		if ((u_int)fds->fd >= fdp->fd_nfiles) {
+		if (fds->fd >= fdp->fd_nfiles) {
 			fds->revents = POLLNVAL;
 			n++;
+		} else if (fds->fd < 0) {
+			fds->revents = 0;
 		} else {
 			if ((fp = fd_getfile(fdp, fds->fd)) == NULL) {
 				fds->revents = POLLNVAL;
