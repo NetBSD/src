@@ -1,4 +1,4 @@
-# $Id: Makefile.sun3,v 1.21 1994/07/18 14:59:47 gwr Exp $
+# $Id: Makefile.sun3,v 1.22 1994/09/20 16:17:53 gwr Exp $
 # Makefile for 4.4 BSD
 #
 # This makefile is constructed from a machine description:
@@ -27,7 +27,7 @@ AWK = nawk
 # DEBUG=-g XXX
 # PROF is set to -pg by config if profiling is requested (config -p).
 AS=	gas 
-CC=	gcc ${DEBUG}
+CC=	gcc -O ${DEBUG}
 CPP=	gcpp -traditional ${XINC}
 LD=	ld
 TOUCH=	touch -f -c
