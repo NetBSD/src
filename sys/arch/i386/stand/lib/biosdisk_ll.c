@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.c,v 1.17 2003/04/16 12:41:03 dsl Exp $	 */
+/*	$NetBSD: biosdisk_ll.c,v 1.18 2003/06/25 04:21:51 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -116,6 +116,25 @@ static int      ra_dev;
 static int      ra_end;
 static int      ra_first;
 
+/*
+ * Because some older BIOSes have bugs in their int13 extensions, we
+ * only try to use the extended read if the I/O request can't be addressed
+ * using CHS.
+ *
+ * Of course, some BIOSes have bugs in ths CHS read, such as failing to
+ * function properly if the MBR table has a different geometry than the
+ * BIOS would generate internally for the device in question, and so we
+ * provide a way to force the extended on hard disks via a compile-time
+ * option.
+ */
+#if defined(FORCE_INT13EXT)
+#define	NEED_INT13EXT(d, dblk, num)				\
+	(((d)->dev & 0x80) != 0)
+#else
+#define	NEED_INT13EXT(d, dblk, num)				\
+	(((d)->dev & 0x80) != 0 && ((dblk) + (num)) >= (d)->chs_sectors)
+#endif
+
 static int
 do_read(struct biosdisk_ll *d, daddr_t dblk, int num, char *buf)
 {
@@ -129,7 +148,7 @@ do_read(struct biosdisk_ll *d, daddr_t dblk, int num, char *buf)
 		int64_t	sec;
 	}		ext;
 
-	if ((d->dev & 0x80) && (dblk + num) >= d->chs_sectors) {
+	if (NEED_INT13EXT(d, dblk, num)) {
 		if (!(d->flags & BIOSDISK_EXT13))
 			return -1;
 		ext.size = sizeof(ext);
