@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.35 1997/10/19 01:46:20 fvdl Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.36 1997/10/19 20:27:32 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -216,7 +216,8 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 		/*
 		 * Start the read ahead(s), as required.
 		 */
-		if (nfs_numasync > 0 && nmp->nm_readahead > 0) {
+		if (nfs_numasync > 0 && nmp->nm_readahead > 0 &&
+		    lbn - 1 == vp->v_lastr) {
 		    for (nra = 0; nra < nmp->nm_readahead &&
 			(lbn + 1 + nra) * biosize < np->n_size; nra++) {
 			rabn = (lbn + 1 + nra) * (biosize / DEV_BSIZE);
