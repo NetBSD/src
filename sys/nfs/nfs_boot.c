@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.27 1996/10/10 23:31:19 christos Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.28 1996/10/13 01:39:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Adam Glass, Gordon Ross
@@ -144,7 +144,7 @@ nfs_boot_init(nd, procp)
 	if (ifp == NULL)
 		panic("nfs_boot: no suitable interface");
 	bcopy(ifp->if_xname, ireq.ifr_name, IFNAMSIZ);
-	kprintf("nfs_boot: using network interface '%s'\n",
+	printf("nfs_boot: using network interface '%s'\n",
 	    ireq.ifr_name);
 
 	/*
@@ -168,7 +168,7 @@ nfs_boot_init(nd, procp)
 	 */
 	if ((error = revarpwhoami(&my_ip, ifp)) != 0)
 		panic("revarp failed, error=%d", error);
-	kprintf("nfs_boot: client_addr=0x%x\n", (u_int32_t)ntohl(my_ip.s_addr));
+	printf("nfs_boot: client_addr=0x%x\n", (u_int32_t)ntohl(my_ip.s_addr));
 
 	/*
 	 * Do enough of ifconfig(8) so that the chosen interface
@@ -203,9 +203,9 @@ nfs_boot_init(nd, procp)
 	error = bp_whoami(&bp_sin, &my_ip, &gw_ip);
 	if (error)
 		panic("nfs_boot: bootparam whoami, error=%d", error);
-	kprintf("nfs_boot: server_addr=0x%x\n",
+	printf("nfs_boot: server_addr=0x%x\n",
 		   (u_int32_t)ntohl(bp_sin.sin_addr.s_addr));
-	kprintf("nfs_boot: hostname=%s\n", hostname);
+	printf("nfs_boot: hostname=%s\n", hostname);
 
 #ifdef	NFS_BOOT_GATEWAY
 	/*
@@ -236,12 +236,12 @@ nfs_boot_init(nd, procp)
 		/* Mask: (zero length) */
 		bzero(&mask, sizeof(mask));
 
-		kprintf("nfs_boot: gateway=0x%x\n", ntohl(gw_ip.s_addr));
+		printf("nfs_boot: gateway=0x%x\n", ntohl(gw_ip.s_addr));
 		/* add, dest, gw, mask, flags, 0 */
 		error = rtrequest(RTM_ADD, &dst, (struct sockaddr *)&gw,
 		    &mask, (RTF_UP | RTF_GATEWAY | RTF_STATIC), NULL);
 		if (error)
-			kprintf("nfs_boot: add route, error=%d\n", error);
+			printf("nfs_boot: add route, error=%d\n", error);
 	}
 #endif
 
@@ -401,7 +401,7 @@ bp_whoami(bpsin, my_ip, gw_ip)
 	goto out;
 
 bad:
-	kprintf("nfs_boot: bootparam_whoami: bad reply\n");
+	printf("nfs_boot: bootparam_whoami: bad reply\n");
 	error = EBADRPC;
 
 out:
@@ -485,7 +485,7 @@ bp_getfile(bpsin, key, md_sin, serv_name, pathname)
 	goto out;
 
 bad:
-	kprintf("nfs_boot: bootparam_getfile: bad reply\n");
+	printf("nfs_boot: bootparam_getfile: bad reply\n");
 	error = EBADRPC;
 
 out:

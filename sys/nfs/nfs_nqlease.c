@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.15 1996/10/10 23:31:20 christos Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.16 1996/10/13 01:39:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -276,10 +276,10 @@ doreply:
 	/*
 	 * Allocate new lease
 	 * The value of nqsrv_maxnumlease should be set generously, so that
-	 * the following "kprintf" happens infrequently.
+	 * the following "printf" happens infrequently.
 	 */
 	if (nfsstats.srvnqnfs_leases > nqsrv_maxnumlease) {
-		kprintf("Nqnfs server, too many leases\n");
+		printf("Nqnfs server, too many leases\n");
 		do {
 			(void) tsleep((caddr_t)&lbolt, PSOCK,
 					"nqsrvnuml", 0);
@@ -501,7 +501,7 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred)
 				m = m->m_next;
 			}
 			if (siz <= 0 || siz > NFS_MAXPACKET) {
-				kprintf("mbuf siz=%d\n",siz);
+				printf("mbuf siz=%d\n",siz);
 				panic("Bad nfs svc reply");
 			}
 			m = nfsm_rpchead(cred, (NFSMNT_NFSV3 | NFSMNT_NQNFS),
