@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.4 1996/10/11 00:11:27 christos Exp $	*/
+/*	$NetBSD: mt.c,v 1.5 1996/10/13 03:14:18 christos Exp $	*/
 
 /* 
  * Copyright (c) 1992, The University of Utah and
@@ -139,7 +139,7 @@ mtattach(hd)
 	unit = hd->hp_unit;
 	sc = &mt_softc[unit];
 	sc->sc_type = mtinfo[id].hwid;
-	kprintf(": %s tape\n", mtinfo[id].desc);
+	printf(": %s tape\n", mtinfo[id].desc);
 
 	sc->sc_hpibno = hpibno;
 	sc->sc_slave = slave;
