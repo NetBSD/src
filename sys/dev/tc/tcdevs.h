@@ -1,10 +1,10 @@
-/*	$NetBSD: tcdevs.h,v 1.12 1998/06/18 23:29:46 jonathan Exp $	*/
+/*	$NetBSD: tcdevs.h,v 1.13 1999/09/18 01:46:25 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: tcdevs,v 1.10 1998/06/18 23:28:12 jonathan Exp 
+ *	NetBSD: tcdevs,v 1.11 1999/09/18 01:46:01 ad Exp 
  */
 
 /*
@@ -68,17 +68,17 @@
 #define	TC_DEVICE_PMAG_BA	"cfb"
 #define	TC_DESCRIPTION_PMAG_BA	"Color Frame Buffer"
 
-#define	TC_DEVICE_PMAG_CA	"ga"
+#define	TC_DEVICE_PMAG_CA	"px"
 #define	TC_DESCRIPTION_PMAG_CA	"2D Graphics"
 
-#define	TC_DEVICE_PMAG_DA	"gq"
-#define	TC_DESCRIPTION_PMAG_DA	"3D Graphics (LM)"
+#define	TC_DEVICE_PMAG_DA	"px"
+#define	TC_DESCRIPTION_PMAG_DA	"3D Graphics (low/mid end)"
+
+#define	TC_DEVICE_PMAG_FA	"px"
+#define	TC_DESCRIPTION_PMAG_FA	"3D Graphics (high end)"
 
 #define	TC_DEVICE_PMAG_DV	"xcfb"
 #define	TC_DESCRIPTION_PMAG_DV	"Maxine Color Frame Buffer"
-
-#define	TC_DEVICE_PMAG_FA	"gq"
-#define	TC_DESCRIPTION_PMAG_FA	"3D Graphics (HE)"
 
 #define	TC_DEVICE_PMAGB_BA	"sfb"
 #define	TC_DESCRIPTION_PMAGB_BA	"Smart Frame Buffer"
