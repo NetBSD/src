@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.114 2001/06/13 16:06:28 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.114.2.1 2001/07/10 13:45:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -79,6 +79,14 @@
 static void	proc_stop(struct proc *p);
 void		killproc(struct proc *, char *);
 static int	build_corename(struct proc *, char [MAXPATHLEN]);
+static int	filt_sigattach(struct knote *kn);
+static void	filt_sigdetach(struct knote *kn);
+static int	filt_signal(struct knote *kn, long hint);
+
+struct filterops sig_filtops = {
+	0, filt_sigattach, filt_sigdetach, filt_signal
+};
+
 sigset_t	contsigmask, stopsigmask, sigcantmask;
 
 struct pool	sigacts_pool;	/* memory pool for sigacts structures */
@@ -735,6 +743,12 @@ psignal1(struct proc *p, int signum,
 	else
 		SCHED_ASSERT_LOCKED();
 #endif
+	/*
+	 * Notify any interested parties in the signal.
+	 */
+			/* XXXLUKEM: should we LOCK the process first? */
+	KNOTE(&p->p_klist, NOTE_SIGNAL | signum);
+
 	prop = sigprop[signum];
 
 	/*
@@ -1475,4 +1489,49 @@ sigismasked(struct proc *p, int sig)
 
 	return sigismember(&p->p_sigctx.ps_sigignore, SIGTTOU)
 		|| sigismember(&p->p_sigctx.ps_sigmask, SIGTTOU);
+}
+
+
+static int
+filt_sigattach(struct knote *kn)
+{
+	struct proc *p = curproc;
+
+	kn->kn_ptr.p_proc = p;
+	kn->kn_flags |= EV_CLEAR;               /* automatically set */
+
+	KERNEL_PROC_LOCK(p);			/* XXXLUKEM; needed? */
+	SLIST_INSERT_HEAD(&p->p_klist, kn, kn_selnext);
+	KERNEL_PROC_UNLOCK(p);
+
+	return (0);
+}
+
+static void
+filt_sigdetach(struct knote *kn)
+{
+	struct proc *p = kn->kn_ptr.p_proc;
+
+	KERNEL_PROC_LOCK(p);			/* XXXLUKEM; needed? */
+	SLIST_REMOVE(&p->p_klist, kn, knote, kn_selnext);
+	KERNEL_PROC_UNLOCK(p);
+}
+
+/*
+ * signal knotes are shared with proc knotes, so we apply a mask to
+ * the hint in order to differentiate them from process hints.  This
+ * could be avoided by using a signal-specific knote list, but probably
+ * isn't worth the trouble.
+ */
+static int
+filt_signal(struct knote *kn, long hint)
+{
+
+	if (hint & NOTE_SIGNAL) {
+		hint &= ~NOTE_SIGNAL;
+
+		if (kn->kn_id == hint)
+			kn->kn_data++;
+	}
+	return (kn->kn_data != 0);
 }
