@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.39 2001/02/25 01:49:18 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.40 2001/02/28 05:46:46 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -73,6 +73,16 @@
 #include <dev/microcode/isp/asm_sbus.h>
 #include <dev/sbus/sbusvar.h>
 #include <sys/reboot.h>
+
+/*
+ * Gross! But there's no way around this until either bus_dma is corrected
+ * or sparc64 iommu.c is fixed.
+ */
+#if	_MACHINE == sparc64
+#define	LMAP_FLAGS	BUS_DMA_NOWAIT|BUS_DMA_COHERENT
+#else
+#define	LMAP_FLAGS	BUS_DMA_NOWAIT
+#endif
 
 static int isp_sbus_intr __P((void *));
 static u_int16_t isp_sbus_rd_reg __P((struct ispsoftc *, int));
@@ -344,8 +354,8 @@ isp_sbus_mbxdma(isp)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	bus_dma_tag_t dmatag = sbc->sbus_dmatag;
-	bus_dma_segment_t seg;
-	int rs, i;
+	bus_dma_segment_t reqseg, rspseg;
+	int reqrs, rsprs, i, progress;
 	size_t n;
 	bus_size_t len;
 
@@ -387,70 +397,87 @@ isp_sbus_mbxdma(isp)
 	}
 
 	/*
-	 * Allocate and map the request queue.
+	 * Allocate and map the request and response queues
 	 */
+	progress = 0;
 	len = ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN(isp));
-	/* Allocate DMA map */
 	if (bus_dmamap_create(dmatag, len, 1, len, 0, BUS_DMA_NOWAIT,
 	    &sbc->sbus_rquest_dmamap) != 0) {
 		goto dmafail;
 	}
-
-	/* Allocate DMA buffer */
-	if (bus_dmamem_alloc(dmatag, len, 0, 0, &seg, 1, &rs, BUS_DMA_NOWAIT)) {
+	progress++;
+	if (bus_dmamem_alloc(dmatag, len, 0, 0, &reqseg, 1, &reqrs,
+	    BUS_DMA_NOWAIT)) {
 		goto dmafail;
 	}
-
-	/* Load the buffer */
-	if (bus_dmamap_load_raw(dmatag, sbc->sbus_rquest_dmamap,
-	    &seg, rs, len, BUS_DMA_NOWAIT) != 0) {
-		bus_dmamem_free(dmatag, &seg, rs);
+	progress++;
+	if (bus_dmamap_load_raw(dmatag, sbc->sbus_rquest_dmamap, &reqseg, reqrs,
+	    len, LMAP_FLAGS) != 0) {
 		goto dmafail;
 	}
 	isp->isp_rquest_dma = sbc->sbus_rquest_dmamap->dm_segs[0].ds_addr;
-
-	/* Map DMA buffer in CPU addressable space */
-	if (bus_dmamem_map(dmatag, &seg, rs, len, (caddr_t *)&isp->isp_rquest,
-	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
-		bus_dmamap_unload(dmatag, sbc->sbus_rquest_dmamap);
-		bus_dmamem_free(dmatag, &seg, rs);
+	progress++;
+	if (bus_dmamem_map(dmatag, &reqseg, reqrs, len,
+	    (caddr_t *)&isp->isp_rquest, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		goto dmafail;
 	}
+	progress++;
 
-	/*
-	 * Allocate and map the result queue.
-	 */
 	len = ISP_QUEUE_SIZE(RESULT_QUEUE_LEN(isp));
-	/* Allocate DMA map */
 	if (bus_dmamap_create(dmatag, len, 1, len, 0, BUS_DMA_NOWAIT,
 	    &sbc->sbus_result_dmamap) != 0) {
 		goto dmafail;
 	}
-
-	/* Allocate DMA buffer */
-	if (bus_dmamem_alloc(dmatag, len, 0, 0, &seg, 1, &rs, BUS_DMA_NOWAIT)) {
+	progress++;
+	if (bus_dmamem_alloc(dmatag, len, 0, 0, &rspseg, 1, &rsprs,
+	    BUS_DMA_NOWAIT)) {
 		goto dmafail;
 	}
-
-	/* Load the buffer */
-	if (bus_dmamap_load_raw(dmatag, sbc->sbus_result_dmamap,
-	    &seg, rs, len, BUS_DMA_NOWAIT) != 0) {
-		bus_dmamem_free(dmatag, &seg, rs);
+	progress++;
+	if (bus_dmamap_load_raw(dmatag, sbc->sbus_result_dmamap, &rspseg, rsprs,
+	    len, LMAP_FLAGS) != 0) {
 		goto dmafail;
 	}
-
-	/* Map DMA buffer in CPU addressable space */
-	if (bus_dmamem_map(dmatag, &seg, rs, len, (caddr_t *)&isp->isp_result,
-	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
-		bus_dmamap_unload(dmatag, sbc->sbus_result_dmamap);
-		bus_dmamem_free(dmatag, &seg, rs);
+	progress++;
+	if (bus_dmamem_map(dmatag, &rspseg, rsprs, len,
+	    (caddr_t *)&isp->isp_result, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		goto dmafail;
 	}
 	isp->isp_result_dma = sbc->sbus_result_dmamap->dm_segs[0].ds_addr;
-
 	return (0);
 
 dmafail:
+	isp_prt(isp, ISP_LOGERR, "Mailbox DMA Setup Failure");
+
+	if (progress >= 8) {
+		bus_dmamem_unmap(dmatag,
+		    isp->isp_result, ISP_QUEUE_SIZE(RESULT_QUEUE_LEN(isp)));
+	}
+	if (progress >= 7) {
+		bus_dmamap_unload(dmatag,  sbc->sbus_result_dmamap);
+	}
+	if (progress >= 6) {
+		bus_dmamem_free(dmatag, &rspseg, rsprs);
+	}
+	if (progress >= 5) {
+		bus_dmamap_destroy(dmatag, sbc->sbus_result_dmamap);
+	}
+
+
+	if (progress >= 4) {
+		bus_dmamem_unmap(dmatag,
+		    isp->isp_rquest, ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN(isp)));
+	}
+	if (progress >= 3) {
+		bus_dmamap_unload(dmatag,  sbc->sbus_rquest_dmamap);
+	}
+	if (progress >= 2) {
+		bus_dmamem_free(dmatag, &reqseg, reqrs);
+	}
+	if (progress >= 1) {
+		bus_dmamap_destroy(dmatag, sbc->sbus_rquest_dmamap);
+	}
+
 	for (i = 0; i < isp->isp_maxcmds; i++) {
 		bus_dmamap_destroy(dmatag, sbc->sbus_dmamap[i]);
 	}
