@@ -1,3 +1,5 @@
+/*	$NetBSD: fsdb.h,v 1.2 1995/10/08 23:18:11 thorpej Exp $	*/
+
 /*
  *  Copyright (c) 1995 John T. Kohl
  *  All rights reserved.
@@ -24,10 +26,7 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- * 
  */
-
-#include <sys/cdefs.h>
 
 extern int bread __P((int fd, char *buf, daddr_t blk, long size));
 extern void bwrite __P((int fd, char *buf, daddr_t blk, long size));
