@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.12 1998/04/19 22:43:27 mark Exp $ */
+/*	$NetBSD: syscall.c,v 1.13 1998/06/02 20:41:51 mark Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -43,6 +43,7 @@
  * Created      : 09/11/94
  */
 
+#include "opt_uvm.h"
 #include <sys/param.h>
 #include <sys/filedesc.h>
 #include <sys/errno.h>
@@ -63,12 +64,17 @@
 #include <sys/user.h>
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
+
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
+
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/katelib.h>
@@ -133,7 +139,11 @@ syscall(frame, code)
 	u_quad_t sticks;
 	int regparams;
 
+#if defined(UVM)
+	uvmexp.syscalls++;
+#else
 	cnt.v_syscall++;
+#endif
 
 	/*
 	 * Trap SWI instructions executed in non-USR32 mode
@@ -286,11 +296,19 @@ syscall(frame, code)
 		SYSCALL_SPECIAL_RETURN;
 		break;
 	case 0x1017:
+#if defined(UVM)
+		frame->tf_r0 = uvm_km_zalloc(kernel_map, round_page(frame->tf_r0));
+#else
 		frame->tf_r0 = kmem_alloc(kernel_map, round_page(frame->tf_r0));
+#endif
 		SYSCALL_SPECIAL_RETURN;
 		break;
 	case 0x1018:
+#if defined(UVM)
+		uvm_km_free(kernel_map, frame->tf_r0, frame->tf_r1);
+#else
 		kmem_free(kernel_map, frame->tf_r0, frame->tf_r1);
+#endif
 		SYSCALL_SPECIAL_RETURN;
 		break;
 #endif	/* NHYDRABUS */

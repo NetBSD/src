@@ -1,4 +1,4 @@
-#	$NetBSD: A7000,v 1.21 1998/05/08 23:40:20 mark Exp $
+#	$NetBSD: A7000,v 1.22 1998/06/02 20:41:52 mark Exp $
 #
 #	A7000 - Full A7000 configuration
 #
@@ -16,7 +16,7 @@ options 	SWAPPAGER	# paging; REQUIRED
 options 	VNODEPAGER	# mmap() of files
 options 	DEVPAGER	# mmap() of devices
 #options 	NTP		# NTP phase/frequency locked loop
-#options 	MACHINE_NEW_NONCONTIG
+#options 	UVM		# Use UVM instead of Mach VM.
 
 # CPU options
 
