@@ -1,4 +1,4 @@
-.\"	$NetBSD: vlan.4,v 1.4 2000/11/09 14:58:51 ad Exp $
+.\"	$NetBSD: vlan.4,v 1.5 2000/12/11 13:10:24 ad Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -70,16 +70,13 @@ ioctls.
 .Sh HISTORY
 The
 .Nm
-first appeared in
+device first appeared in
 .Nx 1.5.
 .Sh BUGS
 The
 .Nm
 interfaces do not currently inherit changes made to the physical
 interfaces's MTU.
-.Pp
-Certain types of Ethernet interface have the ability to insert and/or
-extract VLAN tags using hardware.  This ability is not yet exploited.
 .Sh AUTHOR
 The
 .Nm
