@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn300.c,v 1.11 1998/11/19 02:22:01 ross Exp $ */
+/* $NetBSD: dec_kn300.c,v 1.12 1999/02/13 02:41:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.11 1998/11/19 02:22:01 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.12 1999/02/13 02:41:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ dec_kn300_cons_init()
 	default:
 		printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
 		printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
-		panic("dec_kn300_cons_init: unknown console type %d\n",
+		panic("dec_kn300_cons_init: unknown console type %ld\n",
 		    ctb->ctb_term_type);
 	}
 }
@@ -371,7 +371,7 @@ kn300_softerr(mces, type, logout, framep)
 		"I/O Bridge Module" : sys));
 
 	printf("    Machine Check Code 0x%lx\n", hdr->mcheck_code);
-	printf("    Physical Address of Error %p\n", ptr->ei_addr);
+	printf("    Physical Address of Error 0x%lx\n", ptr->ei_addr);
 	if (ptr->ei_stat & 0x80000000L)
 		printf("    Corrected ECC Error ");
 	else
@@ -496,7 +496,7 @@ dec_kn300_mcheck_handler(mces, framep, vector, param)
 		kn300_mcheck(mces, vector, param, framep);
 		break;
 	default:
-		printf("KN300_MCHECK: unknown check vector %x\n", vector);
+		printf("KN300_MCHECK: unknown check vector 0x%lx\n", vector);
 		machine_check(mces, framep, vector, param);
 		break;
 	}
