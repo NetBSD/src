@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_hash.h,v 1.2 2003/06/27 17:43:15 tshiozak Exp $	*/
+/*	$NetBSD: citrus_hash.h,v 1.3 2004/01/02 21:49:35 itojun Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -37,7 +37,7 @@ struct headname {					\
 #define _CITRUS_HASH_INIT(head, hashsize)			\
 do {								\
 	int _ch_loop;						\
-	for (_ch_loop=0; _ch_loop<hashsize; _ch_loop++)		\
+	for (_ch_loop = 0; _ch_loop < hashsize; _ch_loop++)	\
 		LIST_INIT(&(head)->chh_table[_ch_loop]);	\
 } while (/*CONSTCOND*/0)
 #define _CITRUS_HASH_REMOVE(elm, field) LIST_REMOVE(elm, field)
