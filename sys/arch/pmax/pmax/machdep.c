@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.120.2.7 1999/04/05 06:55:18 nisimura Exp $ */
+/*	$NetBSD: machdep.c,v 1.120.2.8 1999/04/12 18:05:24 drochner Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.7 1999/04/05 06:55:18 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.8 1999/04/12 18:05:24 drochner Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -506,7 +506,7 @@ cpu_startup()
 		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
-			pg = uvm_pagealloc(NULL, 0, NULL);
+			pg = uvm_pagealloc(NULL, 0, NULL, 0);
 			if (pg == NULL)
 				panic("cpu_startup: not enough memory for "
 				    "buffer cache");
