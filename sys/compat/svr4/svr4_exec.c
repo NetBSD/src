@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.26 1998/10/23 04:06:00 erh Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.27 1998/10/23 19:36:03 mjacob Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@
 #include <compat/svr4/svr4_util.h>
 #include <compat/svr4/svr4_syscall.h>
 #include <compat/svr4/svr4_exec.h>
+#include <compat/svr4/svr4_errno.h>
 
 static void *svr4_copyargs __P((struct exec_package *, struct ps_strings *,
 			       void *, void *));
