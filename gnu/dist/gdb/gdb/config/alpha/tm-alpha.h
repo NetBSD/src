@@ -89,7 +89,7 @@ extern struct frame_info *alpha_setup_arbitrary_frame (int, CORE_ADDR *);
 #endif
 #if SOFTWARE_SINGLE_STEP_P()
 #define SOFTWARE_SINGLE_STEP(sig,bpt) alpha_software_single_step((sig), (bpt))
-void alpha_software_single_step PARAMS((int, int));
+void alpha_software_single_step PARAMS((enum target_signal, int));
 #endif
 
 CORE_ADDR alpha_next_pc (CORE_ADDR pc);
