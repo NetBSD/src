@@ -1,4 +1,4 @@
-/*	$NetBSD: rmtlib.c,v 1.5 1997/01/23 14:03:05 mrg Exp $	*/
+/*	$NetBSD: rmtlib.c,v 1.6 1997/06/20 04:24:23 mikel Exp $	*/
 
 /*
  *	rmt --- remote tape emulator subroutines
@@ -28,7 +28,7 @@
  */
 
 #define RMTIOCTL	1
-/* #define USE_REXEC	1	/* rexec code courtesy of Dan Kegel, srs!dan */
+/* #define USE_REXEC	1 */	/* rexec code courtesy of Dan Kegel, srs!dan */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -57,8 +57,8 @@
 #define READ(fd)	(Ctp[fd][0])
 #define WRITE(fd)	(Ptc[fd][1])
 
-static int Ctp[MAXUNIT][2] = { -1, -1, -1, -1, -1, -1, -1, -1 };
-static int Ptc[MAXUNIT][2] = { -1, -1, -1, -1, -1, -1, -1, -1 };
+static int Ctp[MAXUNIT][2] = { {-1, -1}, {-1, -1}, {-1, -1}, {-1, -1} };
+static int Ptc[MAXUNIT][2] = { {-1, -1}, {-1, -1}, {-1, -1}, {-1, -1} };
 
 
 /*
@@ -465,7 +465,7 @@ int whence;
 {
 	char buffer[BUFMAGIC];
 
-	(void)snprintf(buffer, sizeof buffer, "L%d\n%d\n", offset, whence);
+	(void)snprintf(buffer, sizeof buffer, "L%ld\n%d\n", offset, whence);
 	if (command(fildes, buffer) == -1)
 		return(-1);
 
@@ -478,7 +478,7 @@ int whence;
  */
 
 #ifdef RMTIOCTL
-static _rmt_ioctl(fildes, op, arg)
+static int _rmt_ioctl(fildes, op, arg)
 int fildes;
 unsigned long op;
 char *arg;
@@ -652,6 +652,17 @@ int amode;
 	{
 		return (access (path, amode));
 	}
+}
+
+
+/*
+ *	Isrmt. Let a programmer know he has a remote device.
+ */
+
+int isrmt (fd)
+int fd;
+{
+	return (fd >= REM_BIAS);
 }
 
 
@@ -832,16 +843,6 @@ int mode;
 	{
 		return (creat (path, mode));
 	}
-}
-
-/*
- *	Isrmt. Let a programmer know he has a remote device.
- */
-
-int isrmt (fd)
-int fd;
-{
-	return (fd >= REM_BIAS);
 }
 
 /*
