@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.565 2003/08/20 22:58:23 jonathan Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.566 2003/08/23 00:14:43 dogcow Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -8984,6 +8984,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT8237 EHCI USB Controller",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105,
+	    0,
+	    "VIA Technologies",
+	    "VT6105 (Rhine III) 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8233A,
