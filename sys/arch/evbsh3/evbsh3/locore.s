@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.20 2000/08/11 14:51:08 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.21 2000/08/11 15:11:22 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -398,7 +398,9 @@ main_label:
 		.align	2
 
 	.globl	_C_LABEL(ram_start)
+#ifndef	DONT_INIT_BSC
 XLInitializeBsc:.long	_C_LABEL(InitializeBsc)
+#endif
 ___start:	.long	start
 ___etext:	.long	_etext
 ___end:		.long	_end
