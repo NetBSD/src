@@ -1,7 +1,7 @@
-/*	$NetBSD: twe.c,v 1.54 2003/12/04 05:46:47 thorpej Exp $	*/
+/*	$NetBSD: twe.c,v 1.55 2004/04/15 02:03:03 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.54 2003/12/04 05:46:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.55 2004/04/15 02:03:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.54 2003/12/04 05:46:47 thorpej Exp $");
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/disk.h>
+#include <sys/syslog.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -207,41 +208,52 @@ const struct twe_code_table twe_table_stripedepth[] = {
  *	a - not unit/port specific
  *	u - unit specific
  *	p - port specific
+ *
+ * They are further qualified with a severity:
+ *	E - LOG_EMERG
+ *	a - LOG_ALERT
+ *	c - LOG_CRIT
+ *	e - LOG_ERR
+ *	w - LOG_WARNING
+ *	n - LOG_NOTICE
+ *	i - LOG_INFO
+ *	d - LOG_DEBUG
+ *	blank - just use printf
  */
 const struct twe_code_table twe_table_aen[] = {
-	{ 0x00,	"a queue empty" },
-	{ 0x01,	"a soft reset" },
-	{ 0x02,	"u degraded mode" },
-	{ 0x03,	"a controller error" },
-	{ 0x04,	"u rebuild fail" },
-	{ 0x05,	"u rebuild done" },
-	{ 0x06,	"u incomplete unit" },
-	{ 0x07,	"u initialization done" },
-	{ 0x08,	"u unclean shutdown detected" },
-	{ 0x09,	"p drive timeout" },
-	{ 0x0a,	"p drive error" },
-	{ 0x0b,	"u rebuild started" },
-	{ 0x0c,	"u initialization started" },
-	{ 0x0d,	"u logical unit deleted" },
-	{ 0x0f,	"p SMART threshold exceeded" },
-	{ 0x15,	"a table undefined" },	/* XXX: Not in FreeBSD's table */
-	{ 0x21,	"p ATA UDMA downgrade" },
-	{ 0x22,	"p ATA UDMA upgrade" },
-	{ 0x23,	"p sector repair occurred" },
-	{ 0x24,	"a SBUF integrity check failure" },
-	{ 0x25,	"p lost cached write" },
-	{ 0x26,	"p drive ECC error detected" },
-	{ 0x27,	"p DCB checksum error" },
-	{ 0x28,	"p DCB unsupported version" },
-	{ 0x29,	"u verify started" },
-	{ 0x2a,	"u verify failed" },
-	{ 0x2b,	"u verify complete" },
-	{ 0x2c,	"p overwrote bad sector during rebuild" },
-	{ 0x2d,	"p encountered bad sector during rebuild" },
-	{ 0x2e,	"p replacement drive too small" },
-	{ 0x2f,	"u array not previously initialized" },
-	{ 0x30,	"p drive not supported" },
-	{ 0xff,	"a aen queue full" },
+	{ 0x00,	"a  queue empty" },
+	{ 0x01,	"a  soft reset" },
+	{ 0x02,	"uc degraded mode" },
+	{ 0x03,	"aa controller error" },
+	{ 0x04,	"uE rebuild fail" },
+	{ 0x05,	"un rebuild done" },
+	{ 0x06,	"ue incomplete unit" },
+	{ 0x07,	"un initialization done" },
+	{ 0x08,	"uw unclean shutdown detected" },
+	{ 0x09,	"pe drive timeout" },
+	{ 0x0a,	"pc drive error" },
+	{ 0x0b,	"un rebuild started" },
+	{ 0x0c,	"un initialization started" },
+	{ 0x0d,	"ui logical unit deleted" },
+	{ 0x0f,	"pc SMART threshold exceeded" },
+	{ 0x15,	"a  table undefined" },	/* XXX: Not in FreeBSD's table */
+	{ 0x21,	"pe ATA UDMA downgrade" },
+	{ 0x22,	"pi ATA UDMA upgrade" },
+	{ 0x23,	"pw sector repair occurred" },
+	{ 0x24,	"aa SBUF integrity check failure" },
+	{ 0x25,	"pa lost cached write" },
+	{ 0x26,	"pa drive ECC error detected" },
+	{ 0x27,	"pe DCB checksum error" },
+	{ 0x28,	"pn DCB unsupported version" },
+	{ 0x29,	"ui verify started" },
+	{ 0x2a,	"ua verify failed" },
+	{ 0x2b,	"ui verify complete" },
+	{ 0x2c,	"pw overwrote bad sector during rebuild" },
+	{ 0x2d,	"pa encountered bad sector during rebuild" },
+	{ 0x2e,	"pe replacement drive too small" },
+	{ 0x2f,	"ue array not previously initialized" },
+	{ 0x30,	"p  drive not supported" },
+	{ 0xff,	"a  aen queue full" },
 
 	{ 0,	NULL },
 };
@@ -926,7 +938,7 @@ static void
 twe_aen_enqueue(struct twe_softc *sc, uint16_t aen, int quiet)
 {
 	const char *str, *msg;
-	int s, next, nextnext;
+	int s, next, nextnext, level;
 
 	/*
 	 * First report the AEN on the console.  Maybe.
@@ -937,20 +949,49 @@ twe_aen_enqueue(struct twe_softc *sc, uint16_t aen, int quiet)
 			printf("%s: unknown AEN 0x%04x\n",
 			    sc->sc_dv.dv_xname, aen);
 		} else {
-			msg = str + 2;
-			switch (*str) {
-			case 'u':
-				printf("%s: unit %d: %s\n",
-				    sc->sc_dv.dv_xname, TWE_AEN_UNIT(aen), msg);
-				break;
-
-			case 'p':
-				printf("%s: port %d: %s\n",
-				    sc->sc_dv.dv_xname, TWE_AEN_UNIT(aen), msg);
-				break;
-
+			msg = str + 3;
+			switch (str[1]) {
+			case 'E':	level = LOG_EMERG; break;
+			case 'a':	level = LOG_ALERT; break;
+			case 'c':	level = LOG_CRIT; break;
+			case 'e':	level = LOG_ERR; break;
+			case 'w':	level = LOG_WARNING; break;
+			case 'n':	level = LOG_NOTICE; break;
+			case 'i':	level = LOG_INFO; break;
+			case 'd':	level = LOG_DEBUG; break;
 			default:
-				printf("%s: %s\n", sc->sc_dv.dv_xname, msg);
+				/* Don't use syslog. */
+				level = -1;
+			}
+
+			if (level < 0) {
+				switch (str[0]) {
+				case 'u':
+				case 'p':
+					printf("%s: %s %d: %s\n",
+					    sc->sc_dv.dv_xname,
+					    str[0] == 'u' ? "unit" : "port",
+					    TWE_AEN_UNIT(aen), msg);
+					break;
+
+				default:
+					printf("%s: %s\n",
+					    sc->sc_dv.dv_xname, msg);
+				}
+			} else {
+				switch (str[0]) {
+				case 'u':
+				case 'p':
+					log(level, "%s: %s %d: %s\n",
+					    sc->sc_dv.dv_xname,
+					    str[0] == 'u' ? "unit" : "port",
+					    TWE_AEN_UNIT(aen), msg);
+					break;
+
+				default:
+					log(level, "%s: %s\n",
+					    sc->sc_dv.dv_xname, msg);
+				}
 			}
 		}
 	}
