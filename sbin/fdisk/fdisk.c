@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.57 2002/11/24 21:49:15 fvdl Exp $ */
+/*	$NetBSD: fdisk.c,v 1.58 2002/11/30 13:47:19 fvdl Exp $ */
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.57 2002/11/24 21:49:15 fvdl Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.58 2002/11/30 13:47:19 fvdl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: fdisk.c,v 1.57 2002/11/24 21:49:15 fvdl Exp $");
 #include <unistd.h>
 #include <util.h>
 
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64__)
 #include <machine/cpu.h>
 #endif
 
@@ -82,7 +82,7 @@ struct mboot {
 };
 struct mboot mboot;
 
-#ifdef	__i386__
+#if defined(__i386__) || defined(__x86_64__)
 
 #define PARTNAMESIZE	8	/* From mbr_bootsel.S */
 
@@ -291,7 +291,7 @@ void	decimal(const char *, int *);
 int	type_match(const void *, const void *);
 const char *get_type(int);
 int	get_mapping(int, int *, int *, int *, unsigned long *);
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64__)
 void	configure_bootsel(void);
 #endif
 
@@ -335,7 +335,7 @@ main(int argc, char *argv[])
 		case '3':
 			partition = 3;
 			break;
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64__)
 		case 'B':
 			B_flag = 1;
 			break;
@@ -403,7 +403,7 @@ main(int argc, char *argv[])
 	if (read_s0(0, &mboot))
 		init_sector0(sectors > 63 ? 63 : sectors, 1);
 
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64__)
 	get_geometry();
 #else
 	intuit_translated_geometry();
@@ -432,7 +432,7 @@ main(int argc, char *argv[])
 	if (a_flag)
 		change_active(partition);
 
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64__)
 	if (B_flag) {
 		configure_bootsel();
 		if (B_flag && bootsel_modified)
@@ -610,7 +610,7 @@ read_boot(const char *name, void *buf, size_t len)
 		err(1, "%s", name);
 	if (fstat(bfd, &st) == -1)
 		err(1, "%s", name);
-	if (st.st_size > len)
+	if (st.st_size > (off_t)len)
 		errx(1, "%s: bootcode too large", name);
 	ret = st.st_size;
 	if (ret < 0x200)
@@ -649,7 +649,7 @@ init_sector0(int start, int dopart)
 
 }
 
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64__)
 
 void	    
 get_diskname(const char *fullname, char *diskname, size_t size)
@@ -910,7 +910,7 @@ done:
 	for (i = 0; i < NMBRPART; i++) {
 		if (mboot.parts[i].mbrp_typ != 0 &&
 		   mboot.parts[i].mbrp_start >=
-		     (dos_cylinders * dos_heads * dos_sectors)) {
+		     (unsigned)(dos_cylinders * dos_heads * dos_sectors)) {
 			mbs->flags |= BFL_EXTINT13;
 			break;
 		}
