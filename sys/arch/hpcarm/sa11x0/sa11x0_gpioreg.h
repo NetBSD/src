@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_gpioreg.h,v 1.7 2001/07/07 15:49:41 ichiro Exp $	*/
+/*	$NetBSD: sa11x0_gpioreg.h,v 1.8 2001/07/08 10:36:31 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -132,8 +132,11 @@ Extended GPIO
 #define EGPIO_H3600_LCD33_ON		GPIO (6)
 #define EGPIO_H3600_RS232_ON		GPIO (7)
 #define EGPIO_H3600_LCD_PCI		GPIO (8)
-#define EGPIO_H3600_AUD_ON		GPIO (9)
-#define EGPIO_H3600_AUD_ALLON		GPIO (10)
+#define EGPIO_H3600_IR_ON		GPIO (9)
+#define EGPIO_H3600_AUD_ON		GPIO (10)
+#define EGPIO_H3600_AUD_PWRON		GPIO (11)
+#define EGPIO_H3600_QMUTE		GPIO (12)
+#define EGPIO_H3600_IR_FSEL		GPIO (13)
 #define EGPIO_H3600_LCD5_ON		GPIO (14)
 #define EGPIO_H3600_LVDD_ON		GPIO (15)
 
