@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.16 2003/02/24 09:57:31 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.17 2003/02/24 18:41:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -72,15 +72,16 @@ int smbfs_sync(struct mount *, int, struct ucred *, struct proc *);
 int smbfs_unmount(struct mount *, int, struct proc *);
 void smbfs_init(void);
 void smbfs_reinit(void);
-void smbfs_uninit(void);
+void smbfs_done(void);
 
 int smbfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp);
 int smbfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int smbfs_vptofh(struct vnode *, struct fid *);
 
+extern struct pool smbfs_node_pool;
 extern struct vnodeopv_desc smbfs_vnodeop_opv_desc;
 
-const struct vnodeopv_desc *smbfs_vnodeopv_descs[] = {
+static const struct vnodeopv_desc *smbfs_vnodeopv_descs[] = {
 	&smbfs_vnodeop_opv_desc,
 	NULL,
 };
@@ -99,7 +100,7 @@ struct vfsops smbfs_vfsops = {
 	smbfs_vptofh,
 	smbfs_init,
 	smbfs_reinit,
-	smbfs_uninit,
+	smbfs_done,
 	(int (*) (int *, u_int, void *, size_t *, void *, size_t, 
 		  struct proc *)) eopnotsupp, /* sysctl */
 	(int (*) (void)) eopnotsupp, /* mountroot */
@@ -150,9 +151,9 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 	vcp = SSTOVC(ssp);
 	mp->mnt_stat.f_iosize = vcp->vc_txmax;
 
-        MALLOC(smp, struct smbmount *, sizeof(*smp), M_SMBFSDATA, M_WAITOK);
+	MALLOC(smp, struct smbmount *, sizeof(*smp), M_SMBFSDATA, M_WAITOK);
 	memset(smp, 0, sizeof(*smp));
-        mp->mnt_data = smp;
+	mp->mnt_data = smp;
 
 	smp->sm_hash = hashinit(desiredvnodes, HASH_LIST, 
 				M_SMBFSHASH, M_WAITOK, &smp->sm_hashlen);
@@ -160,7 +161,7 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 	lockinit(&smp->sm_hashlock, PVFS, "smbfsh", 0, 0);
 	smp->sm_share = ssp;
 	smp->sm_root = NULL;
-        smp->sm_args = args;
+	smp->sm_args = args;
 	smp->sm_caseopt = args.caseopt;
 	smp->sm_args.file_mode = (smp->sm_args.file_mode &
 			    (S_IRWXU|S_IRWXG|S_IRWXO)) | S_IFREG;
@@ -189,7 +190,7 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 	return (0);
 
 bad:
-        if (smp) {
+	if (smp) {
 		if (smp->sm_hash)
 			free(smp->sm_hash, M_SMBFSHASH);
 #ifdef __NetBSD__
@@ -197,13 +198,13 @@ bad:
 #else
 		lockdestroy(&smp->sm_hashlock);
 #endif
-		free(smp, M_SMBFSDATA);
+		FREE(smp, M_SMBFSDATA);
 	}
 	if (ssp) {
 		smb_share_lock(smp->sm_share, 0);
 		smb_share_put(ssp, &scred);
 	}
-        return error;
+	return error;
 }
 
 /* Unmount the filesystem described by mp. */
@@ -242,7 +243,7 @@ smbfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 #else
 	lockdestroy(&smp->sm_hashlock);
 #endif
-	free(smp, M_SMBFSDATA);
+	FREE(smp, M_SMBFSDATA);
 	mp->mnt_flag &= ~MNT_LOCAL;
 	return error;
 }
@@ -311,8 +312,10 @@ smbfs_quotactl(mp, cmd, uid, arg, p)
 void
 smbfs_init(void)
 {
+	pool_init(&smbfs_node_pool, sizeof(struct smbnode), 0, 0, 0,
+		"smbfsnopl", &pool_allocator_nointr);
 
-	SMBVDEBUG("done.\n");
+	SMBVDEBUG("init.\n");
 }
 
 void
@@ -323,10 +326,11 @@ smbfs_reinit(void)
 }
 
 void
-smbfs_uninit(void)
+smbfs_done(void)
 {
 
-	SMBVDEBUG("uninit.\n");
+	pool_destroy(&smbfs_node_pool);
+	SMBVDEBUG("done.\n");
 }
 
 /*
