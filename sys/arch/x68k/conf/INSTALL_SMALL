@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.22 1999/12/24 17:02:16 minoura Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.1 1999/12/24 17:02:16 minoura Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -12,9 +12,10 @@ maxusers	8
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT     # Force root on memory-disk
 options 	MEMORY_DISK_SERVER=0	# No user space hooks
-#options 	MINIROOTSIZE=2400	# 1.2M, same as a 130mm floppy
-options 	MINIROOTSIZE=2880	# 1.44M, same as a 90mm floppy
+options 	MINIROOTSIZE=2400	# 1.2M, same as a 130mm floppy
+#options 	MINIROOTSIZE=2880	# 1.44M, same as a 90mm floppy
 #options 	MINIROOTSIZE=2048
+#options 	BUFCACHE=5		# Reserve 5% of the RAM as the cache.
 
 ## System kernel configuration.  See options(4) for more detail.
 
@@ -28,7 +29,7 @@ options 	M68060
 
 #### System options specific to the x68k port
 
-options 	EXTENDED_MEMORY		# support for >16MB memory
+#options 	EXTENDED_MEMORY		# support for >16MB memory
 options 	FPU_EMULATE		# software fpu emulation for MC68030
 options 	FPSP			# floating point emulation for MC68040
 options 	M060SP			# int/fp emulation for MC68060
@@ -234,14 +235,14 @@ scsibus* at mha0
 
 sd*	at scsibus? target ? lun ?	# SCSI disks
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
-st*	at scsibus? target ? lun ?	# SCSI tapes
+#st*	at scsibus? target ? lun ?	# SCSI tapes
 #ss*	at scsibus? target ? lun ?	# SCSI scanners
 #ch*	at scsibus? target ? lun ?	# SCSI changer devices
 #uk*	at scsibus? target ? lun ?	# SCSI unknown devices
 
 ## Serial ports
-zsc0	at intio0 addr 0xe98000 intr 112
-zstty0	at zsc0 channel 0		# built-in RS-232C
+#zsc0	at intio0 addr 0xe98000 intr 112
+#zstty0	at zsc0 channel 0		# built-in RS-232C
 #ms0	at zsc0 channel 1		# standard mouse
 #zsc1	at intio0 addr 0xeafc00 intr 113
 #zstty2	at zsc1 channel 0
@@ -279,7 +280,7 @@ ne0	at neptune? addr 0x300			# NE2000 or clone
 ## Concatenated and striped disks; with this, you can create a software-based
 ## disk array similar to a "RAID 0" setup.  See ccd(4).
 
-pseudo-device	ccd	4
+#pseudo-device	ccd	4
 
 ## RAIDframe disk driver: software RAID driver.  See raid(4).
 
@@ -294,7 +295,7 @@ pseudo-device	md	1
 pseudo-device	loop
 
 ## SLIP and CSLIP interfaces, for IP over a serial line.
-pseudo-device	sl		1
+#pseudo-device	sl		1
 
 ## PPP, the successor to SLIP.  See pppd(8).
 #pseudo-device	ppp		1
@@ -326,7 +327,7 @@ pseudo-device	sl		1
 ## number still requires you to run /dev/MAKEDEV to create the files
 ## for the ptys.
 
-pseudo-device	pty		8	# pseudo-ttys (for network, etc.)
+#pseudo-device	pty		8	# pseudo-ttys (for network, etc.)
 
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.
