@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.53 2000/07/03 21:21:26 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.54 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.53 2000/07/03 21:21:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.54 2000/08/21 02:03:12 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -96,8 +96,9 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.53 2000/07/03 21:21:26 thorpej Exp $");
  */
 struct cpu_info cpu_info[ALPHA_MAXPROCS];
 
-/* Bitmask of CPUs currently running. */
+/* Bitmask of CPUs currently running and paused. */
 __volatile u_long cpus_running;
+__volatile u_long cpus_paused;
 
 void	cpu_boot_secondary __P((struct cpu_info *));
 #else
@@ -490,6 +491,32 @@ cpu_boot_secondary(ci)
 	if (timeout == 0)
 		printf("%s: processor failed to hatch\n",
 		    ci->ci_softc->sc_dev.dv_xname);
+}
+
+void
+cpu_pause_resume(u_long cpu_id, int pause)
+{
+	u_long cpu_mask = (1UL << cpu_id);
+
+	if (pause) {
+		atomic_setbits_ulong(&cpus_paused, cpu_mask);
+		alpha_send_ipi(cpu_id, ALPHA_IPI_PAUSE);
+	} else
+		atomic_clearbits_ulong(&cpus_paused, cpu_mask);
+}
+
+void
+cpu_pause_resume_all(int pause)
+{
+	u_long cpu_id, cpu_me = cpu_number();
+
+	for (cpu_id = 0; cpu_id < ALPHA_MAXPROCS; cpu_id++) {
+		if ((cpus_running & (1UL << cpu_id)) == 0)
+			continue;
+		if (cpu_id == cpu_me)
+			continue;
+		cpu_pause_resume(cpu_id, pause);
+	}
 }
 
 void

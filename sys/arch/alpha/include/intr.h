@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.32 2000/08/15 22:16:19 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.33 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -146,6 +146,7 @@ _splraise(int s)
 #define splstatclock()		_splraise(ALPHA_PSL_IPL_CLOCK)
 #define splhigh()		_splraise(ALPHA_PSL_IPL_HIGH)
 
+#define	splsched()		splhigh()
 #define spllpt()		spltty()
 
 /*
@@ -159,8 +160,9 @@ _splraise(int s)
 #define	ALPHA_IPI_AST		0x0000000000000020UL
 #define	ALPHA_IPI_SYNCH_FPU	0x0000000000000040UL
 #define	ALPHA_IPI_DISCARD_FPU	0x0000000000000080UL
+#define	ALPHA_IPI_PAUSE		0x0000000000000100UL
 
-#define	ALPHA_NIPIS		8	/* must not exceed 64 */
+#define	ALPHA_NIPIS		9	/* must not exceed 64 */
 
 typedef void (*ipifunc_t)(void);
 extern	ipifunc_t ipifuncs[ALPHA_NIPIS];

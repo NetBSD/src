@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.15 2000/08/15 22:16:17 thorpej Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.16 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.15 2000/08/15 22:16:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.16 2000/08/21 02:03:12 thorpej Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -66,6 +66,7 @@ void	alpha_ipi_imb(void);
 void	alpha_ipi_ast(void);
 void	alpha_ipi_synch_fpu(void);
 void	alpha_ipi_discard_fpu(void);
+void	alpha_ipi_pause(void);
 
 /*
  * NOTE: This table must be kept in order with the bit definitions
@@ -80,6 +81,7 @@ ipifunc_t ipifuncs[ALPHA_NIPIS] = {
 	alpha_ipi_ast,
 	alpha_ipi_synch_fpu,
 	alpha_ipi_discard_fpu,
+	alpha_ipi_pause,
 };
 
 /*
@@ -203,4 +205,32 @@ alpha_ipi_discard_fpu(void)
 {
 
 	release_fpu(0);
+}
+
+void
+alpha_ipi_pause(void)
+{
+	u_long cpu_mask = (1UL << cpu_number());
+	int s;
+
+	/*
+	 * XXX Problematic -- this always puts a PS of IPL_HIGH
+	 * XXX into the DDB register state.
+	 */
+
+	s = splhigh();
+
+#if defined(DDB) || defined(KGDB)
+	/* XXX Dump register state into cpu_info */
+#endif
+
+	/* Spin with interrupts disabled until we're resumed. */
+	while (cpus_paused & cpu_mask)
+		alpha_mb();	/* spin */
+
+#if defined(DDB) || defined(KGDB)
+	/* XXX Restore register state from cpu_info into trapframe */
+#endif
+
+	splx(s);
 }
