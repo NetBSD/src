@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.51 2000/06/10 04:17:58 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.52 2000/06/10 04:51:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.51 2000/06/10 04:17:58 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.52 2000/06/10 04:51:00 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.51 2000/06/10 04:17:58 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.52 2000/06/10 04:51:00 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1782,12 +1782,13 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		 * so kludge up a Var structure for the modifications
 		 */
 		v = (Var *) emalloc(sizeof(Var));
-		v->name = &str[1];
+		v->name = str;
 		v->val = Buf_Init(1);
 		v->flags = VAR_JUNK;
+		Buf_Destroy (buf, FALSE);
 	    }
-	}
-	Buf_Destroy (buf, TRUE);
+	} else
+	    Buf_Destroy (buf, TRUE);
     }
 
 
@@ -2065,37 +2066,26 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		}
 	        case 'L':
 		{
-		    if (v->flags & VAR_JUNK) {
+		    if ((v->flags & VAR_JUNK) != 0)
 			v->flags |= VAR_KEEP;
-			/*
-			 * JUNK vars get name = &str[1]
-			 * we want the full name here.
-			 */
-			v->name--;
-		    }
+		    newStr = strdup(v->name);
 		    cp = ++tstr;
 		    termc = *tstr;
-		    newStr = strdup(v->name);
 		    break;
 		}
 	        case 'P':
 		{
 		    GNode *gn;
 		    
-		    if (v->flags & VAR_JUNK) {
+		    if ((v->flags & VAR_JUNK) != 0)
 			v->flags |= VAR_KEEP;
-			/*
-			 * JUNK vars get name = &str[1]
-			 * we want the full name here.
-			 */
-			v->name--;
-		    }
+		    gn = Targ_FindNode(v->name, TARG_NOCREATE);
+		    if (gn == NILGNODE)
+			newStr = strdup(v->name);
+		    else
+			newStr = strdup(gn->path);
 		    cp = ++tstr;
 		    termc = *tstr;
-		    gn = Targ_FindNode(v->name, TARG_NOCREATE);
-		    newStr = strdup((gn == NILGNODE || gn->path == NULL) ?
-			v->name :
-			gn->path);
 		    break;
 		}
 	        case '!':
@@ -2530,8 +2520,8 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	     */
 	    *freePtr = TRUE;
 	}
-	free(v->name);
 	Buf_Destroy(v->val, destroy);
+	free((Address)v->name);
 	free((Address)v);
     } else if (v->flags & VAR_JUNK) {
 	/*
@@ -2544,9 +2534,6 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		free(str);
 	    }
 	    *freePtr = FALSE;
-	}
-	Buf_Destroy(v->val, TRUE);
-	if (!(v->flags & VAR_KEEP)) {
 	    if (dynamic) {
 		str = emalloc(*lengthPtr + 1);
 		strncpy(str, start, *lengthPtr);
@@ -2556,6 +2543,8 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		str = var_Error;
 	    }
 	}
+	Buf_Destroy(v->val, TRUE);
+	free((Address)v->name);
 	free((Address)v);
     }
     return (str);
