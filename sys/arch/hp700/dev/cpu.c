@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.2 2002/08/05 20:58:36 fredette Exp $	*/
+/*	$NetBSD: cpu.c,v 1.3 2002/08/16 15:02:40 fredette Exp $	*/
 
 /*	$OpenBSD: cpu.c,v 1.8 2000/08/15 20:38:24 mickey Exp $	*/
 
@@ -168,4 +168,14 @@ cpuattach(parent, self, aux)
 		printf ("%s: bad irq number %d\n", sc->sc_dev.dv_xname,
 			ca->ca_irq);
 	}
+
+	/*
+	 * Set the allocatable bits in the CPU interrupt registers.
+	 * These should only be used by major chipsets, like ASP and
+	 * LASI, and the bits used appear to be important - the
+	 * ASP doesn't seem to like to use interrupt bits above 28
+	 * or below 27.
+	 */
+	int_reg_cpu.int_reg_allocatable_bits =
+		(1 << 28) | (1 << 27);
 }

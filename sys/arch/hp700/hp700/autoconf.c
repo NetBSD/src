@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2002/08/11 19:53:41 fredette Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3 2002/08/16 15:02:40 fredette Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -401,10 +401,10 @@ find_dev_byname(name)
 #endif
 
 void
-pdc_scanbus(self, ca, bus, maxmod)
+pdc_scanbus(self, bus, maxmod, callback)
 	struct device *self;
-	struct confargs *ca;
 	int bus, maxmod;
+	void (*callback) __P((struct device *, struct confargs *));
 {
 	struct pdc_memmap pdc_memmap;
 	struct device_path dp;
@@ -423,7 +423,6 @@ pdc_scanbus(self, ca, bus, maxmod)
 			     PDC_MEMMAP_HPA, &pdc_memmap, &dp) < 0)
 			continue;
 
-		nca = *ca;
 		if (pdc_call((iodcio_t)pdc, 0, PDC_IODC, PDC_IODC_READ,
 			     &pdc_iodc_read, pdc_memmap.hpa, IODC_DATA,
 			     &nca.ca_type, sizeof(nca.ca_type)) < 0)
@@ -431,12 +430,11 @@ pdc_scanbus(self, ca, bus, maxmod)
 
 		nca.ca_mod = i;
 		nca.ca_hpa = pdc_memmap.hpa;
-		nca.ca_irq = HPPACF_IRQ_UNDEF;
+		nca.ca_irq = HP700CF_IRQ_UNDEF;
 		nca.ca_pdc_iodc_read = &pdc_iodc_read;
 		nca.ca_name = hppa_mod_info(nca.ca_type.iodc_type,
 					    nca.ca_type.iodc_sv_model);
-
-		config_found_sm(self, &nca, mbprint, mbsubmatch);
+		(*callback)(self, &nca);
 	}
 }
 
