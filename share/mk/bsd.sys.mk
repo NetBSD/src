@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.109 2003/11/14 05:22:02 matt Exp $
+#	$NetBSD: bsd.sys.mk,v 1.110 2003/11/16 16:10:50 lukem Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -165,7 +165,7 @@ TOOL_ZIC?=		zic
 # object files anything but *.o
 .c.lo:
 	${_MKTARGET_COMPILE}
-	${HOST_COMPILE.c} -o ${.TARGET}.o ${.IMPSRC}
+	${HOST_COMPILE.c} -o ${.TARGET}.o ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 	mv ${.TARGET}.o ${.TARGET}
 
 # Assembly
