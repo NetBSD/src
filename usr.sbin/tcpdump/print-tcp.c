@@ -1,4 +1,4 @@
-/*	$NetBSD: print-tcp.c,v 1.12 1999/07/02 11:31:36 itojun Exp $	*/
+/*	$NetBSD: print-tcp.c,v 1.13 1999/07/02 14:51:22 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-tcp.c,v 1.55 97/06/15 13:20:28 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-tcp.c,v 1.12 1999/07/02 11:31:36 itojun Exp $");
+__RCSID("$NetBSD: print-tcp.c,v 1.13 1999/07/02 14:51:22 itojun Exp $");
 #endif
 #endif
 
@@ -369,7 +369,7 @@ tcp_print(register const u_char *bp, register u_int length,
 		return;
 	}
 
-	if (vflag) {
+	if (ip->ip_v == 4 && vflag) {
 		int sum;
 		if (TTEST2(tp->th_sport, length)) {
 			sum = tcp_cksum(ip, tp, length);
