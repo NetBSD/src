@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.42 2000/12/28 22:59:12 sommerfeld Exp $	*/
+/*	$NetBSD: eap.c,v 1.43 2001/01/27 18:37:01 augustss Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -1770,6 +1770,7 @@ eap_midi_close(addr)
 {
 	struct eap_softc *sc = addr;
 
+	tsleep(sc, PWAIT, "eapclm", hz/10); /* give uart a chance to drain */
 	EWRITE1(sc, EAP_UART_CONTROL, 0);
 	EWRITE4(sc, EAP_ICSC, EREAD4(sc, EAP_ICSC) & ~EAP_UART_EN);
 

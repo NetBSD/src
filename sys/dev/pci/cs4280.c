@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.12 2001/01/18 20:28:15 jdolecek Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.13 2001/01/27 18:37:01 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -65,6 +65,7 @@ int cs4280debug = 0;
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/proc.h>
 #include <sys/types.h>
 #include <sys/systm.h>
 
@@ -1886,6 +1887,7 @@ cs4280_midi_close(addr)
 	u_int32_t mem;
 	
 	DPRINTF(("midi_close\n"));
+	tsleep(sc, PWAIT, "cs0clm", hz/10); /* give uart a chance to drain */
 	mem = BA0READ4(sc, CS4280_MIDCR);
 	mem &= ~MIDCR_MASK;
 	BA0WRITE4(sc, CS4280_MIDCR, mem);
