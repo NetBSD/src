@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.38 2004/04/21 02:33:28 matt Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.39 2005/02/11 06:21:21 simonb Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.38 2004/04/21 02:33:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.39 2005/02/11 06:21:21 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -513,7 +513,7 @@ update_window:
 	MALLOC(si_q, struct spidp_q *, sizeof (struct spidp_q),
 	    M_SPIDPQ, M_NOWAIT);
 	if (si_q == NULL) {
-		sppstat.spps_rcvshort ++;	/* XXX rcvmemdrop... */
+		sppstat.spps_rcvshort++;	/* XXX rcvmemdrop... */
 		return (1);
 	}
 	si_q->si_spidp = si;

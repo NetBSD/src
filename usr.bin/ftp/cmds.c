@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.110 2005/02/09 23:17:27 christos Exp $	*/
+/*	$NetBSD: cmds.c,v 1.111 2005/02/11 06:21:22 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.110 2005/02/09 23:17:27 christos Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.111 2005/02/11 06:21:22 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -1399,7 +1399,7 @@ mls(int argc, char *argv[])
 			ointer = interactive;
 			interactive = 1;
 			if (confirm("Continue with", argv[0])) {
-				mflag ++;
+				mflag++;
 			}
 			interactive = ointer;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv_std.c,v 1.9 2004/12/21 11:25:43 yamt Exp $	*/
+/*	$NetBSD: citrus_iconv_std.c,v 1.10 2005/02/11 06:21:21 simonb Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iconv_std.c,v 1.9 2004/12/21 11:25:43 yamt Exp $");
+__RCSID("$NetBSD: citrus_iconv_std.c,v 1.10 2005/02/11 06:21:21 simonb Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -515,7 +515,7 @@ _citrus_iconv_std_iconv_convert(struct _citrus_iconv * __restrict cv,
 		ret = do_conv(is, sc, &csid, &idx);
 		if (ret) {
 			if (ret == E_NO_CORRESPONDING_CHAR) {
-				inval ++;
+				inval++;
 				szrout = 0;
 				if ((flags&_CITRUS_ICONV_F_HIDE_INVALID)==0 &&
 				    is->is_use_invalid) {
