@@ -1,4 +1,4 @@
-/*	$NetBSD: sun68k.c,v 1.13 2002/05/14 06:40:33 lukem Exp $ */
+/*	$NetBSD: sun68k.c,v 1.14 2002/05/14 15:29:50 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: sun68k.c,v 1.13 2002/05/14 06:40:33 lukem Exp $");
+__RCSID("$NetBSD: sun68k.c,v 1.14 2002/05/14 15:29:50 lukem Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -119,7 +119,7 @@ sun68k_setboot(ib_params *params)
 	size_t		bbi;
 	struct sun68k_bbinfo	*bbinfop;	/* bbinfo in prototype image */
 	uint32_t	maxblk, nblk, blk_i;
-	ib_block	*blocks = NULL;
+	ib_block	*blocks;
 
 	assert(params != NULL);
 	assert(params->fsfd != -1);
@@ -129,12 +129,18 @@ sun68k_setboot(ib_params *params)
 	assert(params->stage1 != NULL);
 	assert(SUN68K_BBINFO_MAGICSIZE == 32);
 
+	retval = 0;
+	blocks = NULL;
+
 	if (params->stage2 == NULL) {
 		warnx("You must provide the name of the secondary bootstrap");
-		return (0);
+		goto done;
 	}
-
-	retval = 0;
+	if (params->flags & IB_STAGE1START) {
+		warnx("`-b bno' is not supported for %s",
+		    params->machine->name);
+		goto done;
+	}
 
 	if (fstat(params->fsfd, &filesystemsb) == -1) {
 		warn("Examining `%s'", params->filesystem);
