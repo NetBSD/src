@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.84.2.21 2002/12/11 15:44:47 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.84.2.22 2002/12/15 23:32:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.84.2.21 2002/12/11 15:44:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.84.2.22 2002/12/15 23:32:00 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -377,11 +377,9 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Finish creating the child process.  It will return through a
 	 * different path later.
 	 */
-	newlwp(l1, p2, uaddr, 0, stack, stacksize, 
+	newlwp(l1, p2, uaddr, inmem, 0, stack, stacksize, 
 	    (func != NULL) ? func : child_return, 
 	    arg, &l2);
-	if (inmem)
-		l2->l_flag |= L_INMEM;
 
 	/*
 	 * BEGIN PID ALLOCATION.

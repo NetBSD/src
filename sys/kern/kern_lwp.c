@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.1.2.21 2002/12/15 22:18:55 thorpej Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.1.2.22 2002/12/15 23:32:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -96,11 +96,9 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 	 * __LWP_ASLWP is probably needed for Solaris compat.
 	 */
 
-	newlwp(l, p, uaddr,
+	newlwp(l, p, uaddr, inmem,
 	    SCARG(uap, flags) & LWP_DETACHED,
 	    NULL, NULL, startlwp, newuc, &l2);
-	if (inmem)
-		l2->l_flag |= L_INMEM;
 
 	if ((SCARG(uap, flags) & LWP_SUSPENDED) == 0) {
 		SCHED_LOCK(s);
@@ -408,7 +406,7 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 
 
 int
-newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr,
+newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
     int flags, void *stack, size_t stacksize,
     void (*func)(void *), void *arg, struct lwp **rnewlwpp)
 {
@@ -445,7 +443,7 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr,
 	l2->l_cpu = NULL;
 #endif /* ! MULTIPROCESSOR */
 
-	l2->l_flag = L_INMEM;
+	l2->l_flag = inmem ? L_INMEM : 0;
 	l2->l_flag |= (flags & LWP_DETACHED) ? L_DETACHED : 0;
 
 	callout_init(&l2->l_tsleep_ch);
