@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.17 1994/10/30 21:47:34 cgd Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.18 1994/12/06 06:56:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -708,6 +708,7 @@ cd9660_readlink(ap)
 	ISODIR	*dirp;
 	ISOMNT	*imp;
 	struct	buf *bp;
+	struct	uio *uio;
 	u_short	symlen;
 	int	error;
 	char	*symname;
@@ -715,6 +716,7 @@ cd9660_readlink(ap)
 
 	ip  = VTOI(ap->a_vp);
 	imp = ip->i_mnt;
+	uio = ap->a_uio;
 
 	if (imp->iso_ftype != ISO_FTYPE_RRIP)
 		return (EINVAL);
@@ -735,17 +737,6 @@ cd9660_readlink(ap)
 	 * Setup the directory pointer for this inode
 	 */
 	dirp = (ISODIR *)(bp->b_data + (ip->i_number & imp->im_bmask));
-#ifdef DEBUG
-	printf("lbn=%d,off=%d,bsize=%d,DEV_BSIZE=%d, dirp= %08x, b_addr=%08x, offset=%08x(%08x)\n",
-	       (daddr_t)(ip->i_number >> imp->im_bshift),
-	       ip->i_number & imp->im_bmask,
-	       imp->logical_block_size,
-	       DEV_BSIZE,
-	       dirp,
-	       bp->b_data,
-	       ip->i_number,
-	       ip->i_number & imp->im_bmask );
-#endif
 
 	/*
 	 * Just make sure, we have a right one....
@@ -761,13 +752,17 @@ cd9660_readlink(ap)
 	 * Now get a buffer
 	 * Abuse a namei buffer for now.
 	 */
-	MALLOC(symname,char *,MAXPATHLEN,M_NAMEI,M_WAITOK);
-
+	if (uio->uio_segflg == UIO_SYSSPACE)
+		symname = uio->uio_iov->iov_base;
+	else
+		MALLOC(symname, char *, MAXPATHLEN, M_NAMEI, M_WAITOK);
+	
 	/*
 	 * Ok, we just gathering a symbolic name in SL record.
 	 */
-	if (cd9660_rrip_getsymname(dirp,symname,&symlen,imp) == 0) {
-		FREE(symname,M_NAMEI);
+	if (cd9660_rrip_getsymname(dirp, symname, &symlen, imp) == 0) {
+		if (uio->uio_segflg != UIO_SYSSPACE)
+			FREE(symname, M_NAMEI);
 		brelse(bp);
 		return (EINVAL);
 	}
@@ -779,11 +774,15 @@ cd9660_readlink(ap)
 	/*
 	 * return with the symbolic name to caller's.
 	 */
-	error = uiomove(symname,symlen,ap->a_uio);
-
-	FREE(symname,M_NAMEI);
-
-	return (error);
+	if (uio->uio_segflg != UIO_SYSSPACE) {
+		error = uiomove(symname, symlen, uio);
+		FREE(symname, M_NAMEI);
+		return (error);
+	}
+	uio->uio_resid -= symlen;
+	uio->uio_iov->iov_base += symlen;
+	uio->uio_iov->iov_len -= symlen;
+	return (0);
 }
 
 /*
@@ -1034,7 +1033,7 @@ cd9660_enotsupp()
 	((int (*) __P((struct  vop_bwrite_args *)))cd9660_enotsupp)
 
 /*
- * Global vfs data structures for nfs
+ * Global vfs data structures for cd9660
  */
 int (**cd9660_vnodeop_p)();
 struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
@@ -1091,8 +1090,8 @@ int (**cd9660_specop_p)();
 struct vnodeopv_entry_desc cd9660_specop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, spec_lookup },	/* lookup */
-	{ &vop_create_desc, cd9660_create },	/* create */
-	{ &vop_mknod_desc, cd9660_mknod },	/* mknod */
+	{ &vop_create_desc, spec_create },	/* create */
+	{ &vop_mknod_desc, spec_mknod },	/* mknod */
 	{ &vop_open_desc, spec_open },		/* open */
 	{ &vop_close_desc, spec_close },	/* close */
 	{ &vop_access_desc, cd9660_access },	/* access */
@@ -1105,12 +1104,12 @@ struct vnodeopv_entry_desc cd9660_specop_entries[] = {
 	{ &vop_mmap_desc, spec_mmap },		/* mmap */
 	{ &vop_fsync_desc, spec_fsync },	/* fsync */
 	{ &vop_seek_desc, spec_seek },		/* seek */
-	{ &vop_remove_desc, cd9660_remove },	/* remove */
-	{ &vop_link_desc, cd9660_link },	/* link */
-	{ &vop_rename_desc, cd9660_rename },	/* rename */
-	{ &vop_mkdir_desc, cd9660_mkdir },	/* mkdir */
-	{ &vop_rmdir_desc, cd9660_rmdir },	/* rmdir */
-	{ &vop_symlink_desc, cd9660_symlink },	/* symlink */
+	{ &vop_remove_desc, spec_remove },	/* remove */
+	{ &vop_link_desc, spec_link },		/* link */
+	{ &vop_rename_desc, spec_rename },	/* rename */
+	{ &vop_mkdir_desc, spec_mkdir },	/* mkdir */
+	{ &vop_rmdir_desc, spec_rmdir },	/* rmdir */
+	{ &vop_symlink_desc, spec_symlink },	/* symlink */
 	{ &vop_readdir_desc, spec_readdir },	/* readdir */
 	{ &vop_readlink_desc, spec_readlink },	/* readlink */
 	{ &vop_abortop_desc, spec_abortop },	/* abortop */
@@ -1119,8 +1118,7 @@ struct vnodeopv_entry_desc cd9660_specop_entries[] = {
 	{ &vop_lock_desc, cd9660_lock },	/* lock */
 	{ &vop_unlock_desc, cd9660_unlock },	/* unlock */
 	{ &vop_bmap_desc, spec_bmap },		/* bmap */
-		/* XXX strategy: panics, should be notsupp instead? */
-	{ &vop_strategy_desc, cd9660_strategy },/* strategy */
+	{ &vop_strategy_desc, spec_strategy },	/* strategy */
 	{ &vop_print_desc, cd9660_print },	/* print */
 	{ &vop_islocked_desc, cd9660_islocked },/* islocked */
 	{ &vop_pathconf_desc, spec_pathconf },	/* pathconf */
@@ -1141,8 +1139,8 @@ int (**cd9660_fifoop_p)();
 struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, fifo_lookup },	/* lookup */
-	{ &vop_create_desc, cd9660_create },	/* create */
-	{ &vop_mknod_desc, cd9660_mknod },	/* mknod */
+	{ &vop_create_desc, fifo_create },	/* create */
+	{ &vop_mknod_desc, fifo_mknod },	/* mknod */
 	{ &vop_open_desc, fifo_open },		/* open */
 	{ &vop_close_desc, fifo_close },	/* close */
 	{ &vop_access_desc, cd9660_access },	/* access */
@@ -1155,12 +1153,12 @@ struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
 	{ &vop_mmap_desc, fifo_mmap },		/* mmap */
 	{ &vop_fsync_desc, fifo_fsync },	/* fsync */
 	{ &vop_seek_desc, fifo_seek },		/* seek */
-	{ &vop_remove_desc, cd9660_remove },	/* remove */
-	{ &vop_link_desc, cd9660_link },	/* link */
-	{ &vop_rename_desc, cd9660_rename },	/* rename */
-	{ &vop_mkdir_desc, cd9660_mkdir },	/* mkdir */
-	{ &vop_rmdir_desc, cd9660_rmdir },	/* rmdir */
-	{ &vop_symlink_desc, cd9660_symlink },	/* symlink */
+	{ &vop_remove_desc, fifo_remove },	/* remove */
+	{ &vop_link_desc, fifo_link }	,	/* link */
+	{ &vop_rename_desc, fifo_rename },	/* rename */
+	{ &vop_mkdir_desc, fifo_mkdir },	/* mkdir */
+	{ &vop_rmdir_desc, fifo_rmdir },	/* rmdir */
+	{ &vop_symlink_desc, fifo_symlink },	/* symlink */
 	{ &vop_readdir_desc, fifo_readdir },	/* readdir */
 	{ &vop_readlink_desc, fifo_readlink },	/* readlink */
 	{ &vop_abortop_desc, fifo_abortop },	/* abortop */
@@ -1169,7 +1167,7 @@ struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
 	{ &vop_lock_desc, cd9660_lock },	/* lock */
 	{ &vop_unlock_desc, cd9660_unlock },	/* unlock */
 	{ &vop_bmap_desc, fifo_bmap },		/* bmap */
-	{ &vop_strategy_desc, fifo_badop },	/* strategy */
+	{ &vop_strategy_desc, fifo_strategy },	/* strategy */
 	{ &vop_print_desc, cd9660_print },	/* print */
 	{ &vop_islocked_desc, cd9660_islocked },/* islocked */
 	{ &vop_pathconf_desc, fifo_pathconf },	/* pathconf */
