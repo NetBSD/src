@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.91 2001/03/20 18:20:53 reinoud Exp $	*/
+/*	$NetBSD: machdep.c,v 1.92 2001/04/12 20:15:06 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -122,9 +122,12 @@ struct user *proc0paddr;
 
 char *booted_kernel;
 
+
 /* Prototypes */
 
 void consinit		__P((void));
+extern void comcninit	__P((struct consdev *cp));
+
 
 void map_section	__P((vaddr_t pt, vaddr_t va, paddr_t pa,
 			     int cacheable));
@@ -140,6 +143,7 @@ void zero_page_readonly		__P((void));
 void zero_page_readwrite	__P((void));
 extern void configure		__P((void));
 extern void dumpsys	__P((void));
+
 
 /*
  * Debug function just to park the CPU
@@ -494,6 +498,10 @@ consinit(void)
 	if (consinit_called != 0) return;
 	consinit_called = 1;
 
+#ifdef COMCONSOLE
+	ksc = ksc;	/* Not used */
+	comcninit(NULL);
+#else
 	/* set up bus variables for attachment */
 	ksc->sc_iot	 = &iomd_bs_tag;
 	ksc->t_isconsole = 1;
@@ -504,6 +512,7 @@ consinit(void)
 
 	rpckbd_cnattach((struct device *) ksc);
 	vidcvideo_cnattach(videomemory.vidm_vbase);
+#endif
 }
 
 #else

@@ -1,4 +1,4 @@
-#	$NetBSD: RPC_WSCONS,v 1.1 2001/03/20 18:20:54 reinoud Exp $
+#	$NetBSD: RPC_WSCONS,v 1.2 2001/04/12 20:15:07 reinoud Exp $
 #
 #	RPC_WSCONS -- Full RiscPC config with wscons
 #
@@ -128,7 +128,10 @@ options 	DDB		# in-kernel debugger
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
 config		netbsd	root on ? type ?
-#options 	COMCONSOLE=0,CONADDR=0x3f8,CONUNIT=0,CONSPEED=9600
+
+# serial console ... the conaddr is hardcoded as the pioc address + 4*com offset
+# this really be fixed some day
+options 	COMCONSOLE,CONADDR="0x210000+4*0x3f8",CONUNIT=0,CONSPEED=9600
 
 # The main bus device
 mainbus0 at root

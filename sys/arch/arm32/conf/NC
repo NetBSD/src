@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.1 2001/04/05 22:34:28 reinoud Exp $
+#	$NetBSD: NC,v 1.2 2001/04/12 20:15:07 reinoud Exp $
 #
 #	NC - with vidcconsole
 #
@@ -129,7 +129,10 @@ options 	DIAGNOSTIC	# internally consistency checks
 config		netbsd	root on ne0 type nfs
 options		NFS_BOOT_DHCP
 #options		NFS_BOOTPARAM
-#options 	COMCONSOLE=0,CONADDR=0x3f8,CONUNIT=0,CONSPEED=9600
+
+# serial console ... the conaddr is hardcoded as the pioc address + 4*com offset
+# this really be fixed some day
+#options         COMCONSOLE,CONADDR="0x210000+4*0x3f8",CONUNIT=0,CONSPEED=9600    
 
 # The main bus device
 mainbus0 at root
@@ -276,6 +279,8 @@ pseudo-device	rnd			# /dev/random and /dev/urandom
 
 #makeoptions MONITOR="Taxan875+LR"
 makeoptions MONITOR="AKF85"
-#makeoptions MODES="800,600,60"
 makeoptions MODES="640,480,70"
-#makeoptions MODES="1024,768,60"
+#makeoptions MODES="800,600,60"
+#makeoptions MONITOR="PALTV"
+#makeoptions MODES="640,256,60 640,480,60 1024,768,60 1024,768,70 800,600,60 1280,1024 1152,900"
+
