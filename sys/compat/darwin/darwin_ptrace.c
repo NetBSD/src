@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ptrace.c,v 1.2 2003/12/04 23:59:50 manu Exp $ */
+/*	$NetBSD: darwin_ptrace.c,v 1.3 2003/12/24 23:22:22 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.2 2003/12/04 23:59:50 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.3 2003/12/24 23:22:22 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,46 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.2 2003/12/04 23:59:50 manu Exp $
 #include <compat/darwin/darwin_ptrace.h>
 #include <compat/darwin/darwin_syscallargs.h>
 
-#if 0
 #define ISSET(t, f)     ((t) & (f))
-
-static inline int ptrace_sanity_check(struct proc *, struct proc *);
-
-/* Sanity checks copied from native sys_ptrace() */
-static inline int 
-ptrace_sanity_check(p, t)
-	struct proc *p;
-	struct proc *t;
-{
-	/*
-	 * You can't do what you want to the process if:
-	 *	(1) It's not being traced at all,
-	 */
-	if (!ISSET(t->p_flag, P_TRACED))
-		return (EPERM);
-
-	/*
-	 *	(2) it's being traced by procfs (which has
-	 *	    different signal delivery semantics),
-	 */
-	if (ISSET(t->p_flag, P_FSTRACE))
-		return (EBUSY);
-
-	/*
-	 *	(3) it's not being traced by _you_, or
-	 */
-	if (t->p_pptr != p)
-		return (EBUSY);
-
-	/*
-	 *	(4) it's not currently stopped.
-	 */
-	if (t->p_stat != SSTOP || !ISSET(t->p_flag, P_WAITED))
-		return (EBUSY);
-
-	return 0;
-}
-#endif
 
 int
 darwin_sys_ptrace(l, v, retval)
@@ -115,32 +76,100 @@ darwin_sys_ptrace(l, v, retval)
 	struct proc *t;			/* target process */
 	int error;
 
+	ded = (struct darwin_emuldata *)p->p_emuldata;
+
 	switch (req) {
+	case DARWIN_PT_ATTACHEXC:
+		if ((t = pfind(SCARG(uap, pid))) == NULL)
+			return ESRCH;
+
+		if (t->p_emul != &emul_darwin)
+			return ESRCH;
+		ded = t->p_emuldata;
+
+		if (ded->ded_flags & DARWIN_DED_SIGEXC)
+			return EBUSY;
+
+		ded->ded_flags |= DARWIN_DED_SIGEXC;
+
+		SCARG(uap, req) = PT_ATTACH;
+		if ((error = sys_ptrace(l, v, retval)) != 0)
+			 ded->ded_flags &= ~DARWIN_DED_SIGEXC;
+
+		return error;
+		break;
+		
 	case DARWIN_PT_SIGEXC:
-		ded = (struct darwin_emuldata *)p->p_emuldata;
+		if ((p->p_flag & P_TRACED) == 0)
+			return EBUSY;
+
 		ded->ded_flags |= DARWIN_DED_SIGEXC;
 		break;
 
-	case DARWIN_PT_DETACH:
+	case DARWIN_PT_DETACH: {
+		int had_sigexc = 0;
+
 		if ((t = pfind(SCARG(uap, pid))) == NULL)
 			return (ESRCH);
 
-		/* 
-		 * Clear signal-as-exceptions flag if detaching is 
-		 * successful and if it is a Darwin process.
-		 */
-		if (((error = sys_ptrace(l, v, retval)) == 0) &&
-		    (t->p_emul != &emul_darwin)) {
-			ded = (struct darwin_emuldata *)t->p_emuldata;
-			ded->ded_flags &= ~DARWIN_DED_SIGEXC;
+		if ((t->p_emul == &emul_darwin) &&
+		    (t->p_flag & P_TRACED) &&
+		    (t->p_pptr == p)) {
+			ded = t->p_emuldata;
+			if (ded->ded_flags & DARWIN_DED_SIGEXC) {
+				had_sigexc = 1;
+				ded->ded_flags &= ~DARWIN_DED_SIGEXC;
+			}
 		}
+
+		/*
+		 * If the process is not marked as stopped, 
+		 * sys_ptrace sanity checks will return EBUSY.
+		 */
+		proc_stop(t, 0);
+
+		if ((error = sys_ptrace(l, v, retval)) != 0) {
+			proc_unstop(t);
+			if (had_sigexc)
+				ded->ded_flags |= DARWIN_DED_SIGEXC;
+		}
+
 		break;
+	}
+
+	case DARWIN_PT_THUPDATE: {
+		int signo = SCARG(uap, data);
+		
+		if ((t = pfind(SCARG(uap, pid))) == NULL)
+			return ESRCH;
+
+		/* Checks from native ptrace */
+		if (!ISSET(t->p_flag, P_TRACED))
+			return EPERM;
+
+		if (ISSET(t->p_flag, P_FSTRACE))
+			return EBUSY;
+
+		if (t->p_pptr != p)
+			return EBUSY;
+
+#if 0
+		if (t->p_stat != SSTOP || !ISSET(t->p_flag, P_WAITED))
+			return EBUSY;
+#endif
+		if ((signo < 0) || (signo > NSIG))
+			return EINVAL;
+
+		t->p_xstat = signo;
+		if (signo != 0)
+			sigaddset(&p->p_sigctx.ps_siglist, signo);
+
+		break;		
+	}
 
 	case DARWIN_PT_READ_U:
 	case DARWIN_PT_WRITE_U:
 	case DARWIN_PT_STEP:
-	case DARWIN_PT_THUPDATE:
-	case DARWIN_PT_ATTACHEXC:
 	case DARWIN_PT_FORCEQUOTA:
 	case DARWIN_PT_DENY_ATTACH:
 		printf("darwin_sys_ptrace: unimplemented command %d\n", req);
