@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.26 1999/09/27 03:25:12 hubertf Exp $
+.\" $NetBSD: main,v 1.27 1999/09/29 16:54:29 wennmach Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -893,6 +893,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Todd Vierling Ta Mt tv@NetBSD.ORG
 .It Ta Paul Vixie Ta Mt vixie@NetBSD.ORG
 .It Ta Krister Walfridsson Ta Mt kristerw@NetBSD.ORG
+.It Ta Lex Wennmacher Ta Mt wennmach@NetBSD.ORG
 .It Ta Nathan Williams Ta Mt nathanw@NetBSD.ORG
 .It Ta Rob Windsor Ta Mt windsor@NetBSD.ORG
 .It Ta Dan Winship Ta Mt danw@NetBSD.ORG
