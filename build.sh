@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#  $NetBSD: build.sh,v 1.76 2002/12/09 12:49:55 scw Exp $
+#  $NetBSD: build.sh,v 1.77 2002/12/25 00:42:50 lukem Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -20,13 +20,16 @@ bomb () {
 [ -d usr.bin/make ] || bomb "build.sh must be run from the top source level"
 [ -f share/mk/bsd.own.mk ] || bomb "src/share/mk is missing; please re-fetch the source tree"
 
+uname_s=$(uname -s 2>/dev/null)
+uname_m=$(uname -m 2>/dev/null)
+
 # If $PWD is a valid name of the current directory, POSIX mandates that pwd
 # return it by default which causes problems in the presence of symlinks.
 # Unsetting PWD is simpler than changing every occurrence of pwd to use -P.
 #
 # XXX Except that doesn't work on Solaris.
 unset PWD
-if [ "x`uname -s`" = "xSunOS" ]; then
+if [ "${uname_s}" = "SunOS" ]; then
 	TOP=`pwd -P`
 else
 	TOP=`pwd`
@@ -104,8 +107,8 @@ resolvepath () {
 usage () {
 	cat <<_usage_
 Usage:
-`basename $0` [-bdEnortUu] [-a arch] [-B buildid] [-D dest] [-j njob] [-k kernel]
-	   [-M obj] [-m mach] [-O obj] [-R release] [-T tools] [-w wrapper]
+`basename $0` [-bdEnortUu] [-a arch] [-B buildid] [-D dest] [-i idir] [-j njob]
+    [-k kernel] [-M obj] [-m mach] [-O obj] [-R release] [-T tools] [-w wrapper]
 
     -a arch	set MACHINE_ARCH to arch (otherwise deduced from MACHINE)
     -B buildid	set BUILDID to buildid
@@ -113,6 +116,7 @@ Usage:
     -D dest	set DESTDIR to dest
     -d		build a full distribution into DESTDIR (including etc files)
     -E		set "expert" mode; disables some DESTDIR checks
+    -i idir	installworld from DESTDIR to idir
     -j njob	run up to njob jobs in parallel; see make(1)
     -k kernel	build a kernel using the named configuration file
     -M obj	set obj root directory to obj (sets MAKEOBJDIRPREFIX)
@@ -146,8 +150,9 @@ do_removedirs=false
 expert_mode=false
 makeenv=
 makewrapper=
+installworlddir=
 opt_a=no
-opts='a:B:bD:dEhj:k:M:m:nO:oR:rT:tUuw:'
+opts='a:B:bD:dEhi:j:k:M:m:nO:oR:rT:tUuw:'
 runcmd=
 
 if type getopts >/dev/null 2>&1; then
@@ -183,6 +188,9 @@ while eval $getoptcmd; do case $opt in
 	-d)	buildtarget=distribution;;
 
 	-E)	expert_mode=true;;
+
+	-i)	eval $optargcmd
+		installworlddir=$OPTARG;;
 
 	-j)	eval $optargcmd
 		parallel="-j $OPTARG";;
@@ -236,11 +244,11 @@ esac; done
 
 # Set up MACHINE*.  On a NetBSD host, these are allowed to be unset.
 if [ -z "$MACHINE" ]; then
-	if [ "`uname -s 2>/dev/null`" != "NetBSD" ]; then
+	if [ "${uname_s}" != "NetBSD" ]; then
 		echo "MACHINE must be set, or -m must be used, for cross builds."
 		echo ""; usage
 	fi
-	MACHINE=`uname -m`
+	MACHINE=${uname_m}
 fi
 [ -n "$MACHINE_ARCH" ] || getarch
 validatearch
@@ -362,8 +370,8 @@ removedirs="$TOOLDIR"
 if [ -z "$DESTDIR" ] || [ "$DESTDIR" = "/" ]; then
 	if $do_buildsystem; then
 		if [ "$buildtarget" != "build" ] || \
-		   [ "`uname -s 2>/dev/null`" != "NetBSD" ] || \
-		   [ "`uname -m`" != "$MACHINE" ]; then
+		   [ "${uname_s}" != "NetBSD" ] || \
+		   [ "${uname_m}" != "$MACHINE" ]; then
 			bomb "DESTDIR must be set to a non-root path for cross builds or -d or -R."
 		fi
 		if ! $expert_mode; then
@@ -377,6 +385,13 @@ if [ -z "$DESTDIR" ] || [ "$DESTDIR" = "/" ]; then
 	fi
 else
 	removedirs="$removedirs $DESTDIR"
+fi
+
+if [ "$installworlddir" = "/" ]; then
+	if [ "${uname_s}" != "NetBSD" ] || \
+	   [ "${uname_m}" != "$MACHINE" ]; then
+		bomb "-i installworlddir must be set to a non-root path for cross builds."
+	fi
 fi
 
 # Remove the target directories.
@@ -419,7 +434,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.76 2002/12/09 12:49:55 scw Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.77 2002/12/25 00:42:50 lukem Exp $
 #
 
 EOF
@@ -520,4 +535,9 @@ else
 			|| bomb "make all failed in ${kernbuilddir}"
 		$runcmd echo "===> New kernel should be in ${kernbuilddir}"
 	fi
+fi
+
+if [ -n "$installworlddir" ]; then
+	${runcmd-exec} "$makewrapper" INSTALLWORLDDIR=${installworlddir} \
+		installworld || bomb "failed to make installworld"
 fi
