@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfs.c,v 1.2 2000/11/02 00:34:51 thorpej Exp $	*/
+/*	$NetBSD: dosfs.c,v 1.3 2000/11/08 19:38:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Robert Nordier
@@ -241,9 +241,10 @@ out:
  * Read from file
  */
 int
-dosfs_read(struct open_file * fd, void *buf, size_t nbyte, size_t * resid)
+dosfs_read(struct open_file * fd, void *vbuf, size_t nbyte, size_t * resid)
 {
 	off_t   size;
+	u_int8_t *buf = vbuf;
 	u_int   nb, off, clus, c, cnt, n;
 	DOS_FILE *f = (DOS_FILE *) fd->f_fsdata;
 	int     err = 0;
