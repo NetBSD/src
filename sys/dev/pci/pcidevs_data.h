@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.658 2004/10/22 15:01:32 cube Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.659 2004/10/26 11:31:17 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.658 2004/10/22 15:00:50 cube Exp 
+ *	NetBSD: pcidevs,v 1.659 2004/10/26 11:30:52 augustss Exp 
  */
 
 /*
@@ -2172,6 +2172,10 @@ const struct pci_vendor pci_vendors[] = {
 	    "Sandburst, Inc.",
 	},
 	{
+	    PCI_VENDOR_I4,
+	    "I4",
+	},
+	{
 	    PCI_VENDOR_S2IO,
 	    "S2io Technologies",
 	},
@@ -2300,7 +2304,7 @@ const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 565;
+const int pci_nvendors = 566;
 
 const struct pci_product pci_products[] = {
 	{
@@ -2354,6 +2358,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C555,
 	    "3c555 10/100 Mini-PCI Ethernet",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C154G72,
+	    "3CRWE154G72 Wireless LAN adapter",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C556,
@@ -6320,8 +6328,12 @@ const struct pci_product pci_products[] = {
 	    "PRISM2.5 Mini-PCI WLAN",
 	},
 	{
-	    PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_MINI_PCI_P54,
-	    "PRISM-54 Mini-PCI WLAN",
+	    PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_MINI_PCI_3877,
+	    "PRISM Indigo Mini-PCI WLAN",
+	},
+	{
+	    PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_MINI_PCI_3890,
+	    "PRISM Duette Mini-PCI WLAN",
 	},
 	{
 	    PCI_VENDOR_INVERTEX, PCI_PRODUCT_INVERTEX_AEON,
@@ -9760,4 +9772,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1864;
+const int pci_nproducts = 1866;
