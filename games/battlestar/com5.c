@@ -1,4 +1,4 @@
-/*	$NetBSD: com5.c,v 1.12 2000/09/10 10:51:17 jsm Exp $	*/
+/*	$NetBSD: com5.c,v 1.13 2000/09/17 23:04:17 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com5.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com5.c,v 1.12 2000/09/10 10:51:17 jsm Exp $");
+__RCSID("$NetBSD: com5.c,v 1.13 2000/09/17 23:04:17 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -189,7 +189,7 @@ chime()
 {
 	if ((ourtime / CYCLE + 1) % 2 && OUTSIDE)
 		switch ((ourtime % CYCLE) / (CYCLE / 7)) {
-			case 0:
+		case 0:
 			puts("It is just after sunrise.");
 			break;
 		case 1:
@@ -211,33 +211,32 @@ chime()
 			puts("It is near sunset.");
 			break;
 		}
+	else if (OUTSIDE)
+		switch ((ourtime % CYCLE) / (CYCLE / 7)) {
+		case 0:
+			puts("It is just after sunset.");
+			break;
+		case 1:
+			puts("It is early evening.");
+			break;
+		case 2:
+			puts("The evening is getting old.");
+			break;
+		case 3:
+			puts("It is near midnight.");
+			break;
+		case 4:
+			puts("These are the wee hours of the morning.");
+			break;
+		case 5:
+			puts("The night is waning.");
+			break;
+		case 6:
+			puts("It is almost morning.");
+			break;
+		}
 	else
-		if (OUTSIDE)
-			switch ((ourtime % CYCLE) / (CYCLE / 7)) {
-			case 0:
-				puts("It is just after sunset.");
-				break;
-			case 1:
-				puts("It is early evening.");
-				break;
-			case 2:
-				puts("The evening is getting old.");
-				break;
-			case 3:
-				puts("It is near midnight.");
-				break;
-			case 4:
-				puts("These are the wee hours of the morning.");
-				break;
-			case 5:
-				puts("The night is waning.");
-				break;
-			case 6:
-				puts("It is almost morning.");
-				break;
-			}
-		else
-			puts("I can't tell the time in here.");
+		puts("I can't tell the time in here.");
 }
 
 int
@@ -274,12 +273,12 @@ give()
 	 * that's no worse than what other commands than give do in
 	 * the same place.  */
 	wordnumber = last1 - 1;
-	if (person && testbit(location[position].objects, person))
+	if (person && testbit(location[position].objects, person)) {
 		if (person == NORMGOD && godready < 2 && !(obj == RING || obj == BRACELET))
 			puts("The goddess won't look at you.");
 		else
 			result = drop("Given");
-	else {
+	} else {
 		puts("I don't think that is possible.");
 		wordnumber = max(last1, last2) + 1;
 		return (0);
