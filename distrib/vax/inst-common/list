@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.4 1999/11/23 23:16:05 simonb Exp $
+#	$NetBSD: list,v 1.5 2000/06/07 20:46:01 thorpej Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -56,6 +56,7 @@ COPY	${DESTDIR}/etc/group		etc
 COPY	${DESTDIR}/etc/master.passwd	etc
 COPY	${DESTDIR}/etc/passwd		etc
 COPY	${DESTDIR}/etc/protocols	etc
+COPY	${DESTDIR}/etc/netconfig	etc
 COPY	${DESTDIR}/etc/pwd.db		etc
 COPY	${DESTDIR}/etc/services		etc
 COPY	${DESTDIR}/etc/spwd.db		etc
