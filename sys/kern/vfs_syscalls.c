@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.92 1997/08/25 19:32:10 kleink Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.93 1997/10/03 13:29:20 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -125,7 +125,7 @@ sys_mount(p, v, retval)
 		 * permitted to update it.
 		 */
 		if (mp->mnt_stat.f_owner != p->p_ucred->cr_uid &&
-		    (error = suser(p->p_ucred, &p->p_acflag))) {
+		    (error = suser(p->p_ucred, &p->p_acflag)) != 0) {
 			vput(vp);
 			return (error);
 		}
@@ -147,9 +147,9 @@ sys_mount(p, v, retval)
 	 * If the user is not root, ensure that they own the directory
 	 * onto which we are attempting to mount.
 	 */
-	if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)) ||
+	if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)) != 0 ||
 	    (va.va_uid != p->p_ucred->cr_uid &&
-	     (error = suser(p->p_ucred, &p->p_acflag)))) {
+		(error = suser(p->p_ucred, &p->p_acflag)) != 0)) {
 		vput(vp);
 		return (error);
 	}
@@ -346,7 +346,7 @@ sys_unmount(p, v, retval)
 	 * permitted to unmount this filesystem.
 	 */
 	if ((mp->mnt_stat.f_owner != p->p_ucred->cr_uid) &&
-	    (error = suser(p->p_ucred, &p->p_acflag))) {
+	    (error = suser(p->p_ucred, &p->p_acflag)) != 0) {
 		vput(vp);
 		return (error);
 	}
@@ -595,7 +595,7 @@ sys_getfsstat(p, v, retval)
 			 */
 			if (((SCARG(uap, flags) & MNT_NOWAIT) == 0 ||
 			    (SCARG(uap, flags) & MNT_WAIT)) &&
-			    (error = VFS_STATFS(mp, sp, p)))
+			    (error = VFS_STATFS(mp, sp, p)) != 0)
 				continue;
 			sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
 			error = copyout(sp, sfsp, sizeof(*sp));
@@ -1561,7 +1561,7 @@ change_owner(vp, uid, gid, p)
 		error = EROFS;
 		goto out;
 	}
-	if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)))
+	if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)) != 0)
 		goto out;
 
 	/* Clear (S_ISUID | S_ISGID) bits: alter va_mode only if necessary. */
@@ -2161,7 +2161,7 @@ sys_revoke(p, v, retval)
 	if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)) != 0)
 		goto out;
 	if (p->p_ucred->cr_uid != vattr.va_uid &&
-	    (error = suser(p->p_ucred, &p->p_acflag)))
+	    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		goto out;
 	if (vp->v_usecount > 1 || (vp->v_flag & VALIASED))
 		vgoneall(vp);
