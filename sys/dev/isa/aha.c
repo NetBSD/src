@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.14 1996/08/28 19:01:07 cgd Exp $	*/
+/*	$NetBSD: aha.c,v 1.15 1996/09/07 12:12:18 mycroft Exp $	*/
 
 #undef AHADIAG
 #ifdef DDB
@@ -63,8 +63,8 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
+#include <machine/bus.h>
 #include <machine/intr.h>
-#include <machine/pio.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -72,65 +72,21 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
 #include <dev/isa/ahareg.h>
+#include <dev/isa/ahavar.h>
 
 #ifndef DDB
 #define Debugger() panic("should call debugger here (aha1542.c)")
 #endif /* ! DDB */
 
-/*
- * Mail box defs  etc.
- * these could be bigger but we need the aha_softc to fit on a single page..
- */
-#define AHA_MBX_SIZE	16	/* mail box size */
-
-#define	AHA_CCB_MAX	16	/* store up to 32 CCBs at one time */
-#define	CCB_HASH_SIZE	16	/* hash table size for phystokv */
-#define	CCB_HASH_SHIFT	9
-#define	CCB_HASH(x)	((((long)(x))>>CCB_HASH_SHIFT) & (CCB_HASH_SIZE - 1))
-
-#define aha_nextmbx(wmb, mbx, mbio) \
-	if ((wmb) == &(mbx)->mbio[AHA_MBX_SIZE - 1])	\
-		(wmb) = &(mbx)->mbio[0];		\
-	else						\
-		(wmb)++;
-
-struct aha_mbx {
-	struct aha_mbx_out mbo[AHA_MBX_SIZE];
-	struct aha_mbx_in mbi[AHA_MBX_SIZE];
-	struct aha_mbx_out *cmbo;	/* Collection Mail Box out */
-	struct aha_mbx_out *tmbo;	/* Target Mail Box out */
-	struct aha_mbx_in *tmbi;	/* Target Mail Box in */
-};
-
 #define KVTOPHYS(x)	vtophys(x)
-
-struct aha_softc {
-	struct device sc_dev;
-	struct isadev sc_id;
-	void *sc_ih;
-
-	int sc_iobase;
-	int sc_irq, sc_drq;
-
-	char sc_model[18],
-	     sc_firmware[4];
-
-	struct aha_mbx sc_mbx;		/* all the mailboxes */
-#define	wmbx	(&sc->sc_mbx)
-	struct aha_ccb *sc_ccbhash[CCB_HASH_SIZE];
-	TAILQ_HEAD(, aha_ccb) sc_free_ccb, sc_waiting_ccb;
-	int sc_numccbs, sc_mbofull;
-	int sc_scsi_dev;		/* our scsi id */
-	struct scsi_link sc_link;
-};
 
 #ifdef AHADEBUG
 int	aha_debug = 1;
 #endif /* AHADEBUG */
 
-int aha_cmd __P((int, struct aha_softc *, int, u_char *, int, u_char *));
+int aha_cmd __P((bus_chipset_tag_t, bus_io_handle_t, struct aha_softc *, int,
+    u_char *, int, u_char *));
 integrate void aha_finish_ccbs __P((struct aha_softc *));
-int ahaintr __P((void *));
 integrate void aha_reset_ccb __P((struct aha_softc *, struct aha_ccb *));
 void aha_free_ccb __P((struct aha_softc *, struct aha_ccb *));
 integrate void aha_init_ccb __P((struct aha_softc *, struct aha_ccb *));
@@ -140,7 +96,6 @@ void aha_queue_ccb __P((struct aha_softc *, struct aha_ccb *));
 void aha_collect_mbo __P((struct aha_softc *));
 void aha_start_ccbs __P((struct aha_softc *));
 void aha_done __P((struct aha_softc *, struct aha_ccb *));
-int aha_find __P((struct isa_attach_args *, struct aha_softc *));
 void aha_init __P((struct aha_softc *));
 void aha_inquire_setup_information __P((struct aha_softc *));
 void ahaminphys __P((struct buf *));
@@ -163,11 +118,13 @@ struct scsi_device aha_dev = {
 	NULL,			/* Use default 'done' routine */
 };
 
-int	ahaprobe __P((struct device *, void *, void *));
-void	ahaattach __P((struct device *, struct device *, void *));
+#define	AHA_ISA_IOSIZE	4
 
-struct cfattach aha_ca = {
-	sizeof(struct aha_softc), ahaprobe, ahaattach
+int	aha_isa_probe __P((struct device *, void *, void *));
+void	aha_isa_attach __P((struct device *, struct device *, void *));
+
+struct cfattach aha_isa_ca = {
+	sizeof(struct aha_softc), aha_isa_probe, aha_isa_attach
 };
 
 struct cfdriver aha_cd = {
@@ -178,7 +135,7 @@ struct cfdriver aha_cd = {
 #define	AHA_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
 
 /*
- * aha_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
+ * aha_cmd(bc, ioh, sc, icnt, ibuf, ocnt, obuf)
  *
  * Activate Adapter command
  *    icnt:   number of args (outbound bytes including opcode)
@@ -192,8 +149,9 @@ struct cfdriver aha_cd = {
  * tells it to read in a scsi command.
  */
 int
-aha_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
-	int iobase;
+aha_cmd(bc, ioh, sc, icnt, ibuf, ocnt, obuf)
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
 	struct aha_softc *sc;
 	int icnt, ocnt;
 	u_char *ibuf, *obuf;
@@ -214,7 +172,7 @@ aha_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
 	 */
 	switch (opcode) {
 	case AHA_INQUIRE_DEVICES:
-		wait = 15 * 20000;
+		wait = 90 * 20000;
 		break;
 	default:
 		wait = 1 * 20000;
@@ -227,7 +185,7 @@ aha_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
 	 */
 	if (opcode != AHA_MBO_INTR_EN) {
 		for (i = 20000; i; i--) {	/* 1 sec? */
-			sts = inb(iobase + AHA_STAT_PORT);
+			sts = bus_io_read_1(bc, ioh, AHA_STAT_PORT);
 			if (sts & AHA_STAT_IDLE)
 				break;
 			delay(50);
@@ -235,7 +193,7 @@ aha_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
 		if (!i) {
 			printf("%s: aha_cmd, host not idle(0x%x)\n",
 			    name, sts);
-			return ENXIO;
+			return (1);
 		}
 	}
 	/*
@@ -243,8 +201,8 @@ aha_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
 	 * queue feeding to us.
 	 */
 	if (ocnt) {
-		while ((inb(iobase + AHA_STAT_PORT)) & AHA_STAT_DF)
-			inb(iobase + AHA_DATA_PORT);
+		while ((bus_io_read_1(bc, ioh, AHA_STAT_PORT)) & AHA_STAT_DF)
+			bus_io_read_1(bc, ioh, AHA_DATA_PORT);
 	}
 	/*
 	 * Output the command and the number of arguments given
@@ -252,7 +210,7 @@ aha_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
 	 */
 	while (icnt--) {
 		for (i = wait; i; i--) {
-			sts = inb(iobase + AHA_STAT_PORT);
+			sts = bus_io_read_1(bc, ioh, AHA_STAT_PORT);
 			if (!(sts & AHA_STAT_CDF))
 				break;
 			delay(50);
@@ -260,10 +218,10 @@ aha_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
 		if (!i) {
 			if (opcode != AHA_INQUIRE_REVISION)
 				printf("%s: aha_cmd, cmd/data port full\n", name);
-			outb(iobase + AHA_CTRL_PORT, AHA_CTRL_SRST);
-			return ENXIO;
+			bus_io_write_1(bc, ioh, AHA_CTRL_PORT, AHA_CTRL_SRST);
+			return (1);
 		}
-		outb(iobase + AHA_CMD_PORT, *ibuf++);
+		bus_io_write_1(bc, ioh, AHA_CMD_PORT, *ibuf++);
 	}
 	/*
 	 * If we expect input, loop that many times, each time,
@@ -271,7 +229,7 @@ aha_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
 	 */
 	while (ocnt--) {
 		for (i = wait; i; i--) {
-			sts = inb(iobase + AHA_STAT_PORT);
+			sts = bus_io_read_1(bc, ioh, AHA_STAT_PORT);
 			if (sts & AHA_STAT_DF)
 				break;
 			delay(50);
@@ -280,10 +238,10 @@ aha_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
 			if (opcode != AHA_INQUIRE_REVISION)
 				printf("%s: aha_cmd, cmd/data port empty %d\n",
 				    name, ocnt);
-			outb(iobase + AHA_CTRL_PORT, AHA_CTRL_SRST);
-			return ENXIO;
+			bus_io_write_1(bc, ioh, AHA_CTRL_PORT, AHA_CTRL_SRST);
+			return (1);
 		}
-		*obuf++ = inb(iobase + AHA_DATA_PORT);
+		*obuf++ = bus_io_read_1(bc, ioh, AHA_DATA_PORT);
 	}
 	/*
 	 * Wait for the board to report a finished instruction.
@@ -292,7 +250,7 @@ aha_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
 	 */
 	if (opcode != AHA_MBO_INTR_EN) {
 		for (i = 20000; i; i--) {	/* 1 sec? */
-			sts = inb(iobase + AHA_INTR_PORT);
+			sts = bus_io_read_1(bc, ioh, AHA_INTR_PORT);
 			/* XXX Need to save this in the interrupt handler? */
 			if (sts & AHA_INTR_HACC)
 				break;
@@ -301,11 +259,11 @@ aha_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
 		if (!i) {
 			printf("%s: aha_cmd, host not finished(0x%x)\n",
 			    name, sts);
-			return ENXIO;
+			return (1);
 		}
 	}
-	outb(iobase + AHA_CTRL_PORT, AHA_CTRL_IRST);
-	return 0;
+	bus_io_write_1(bc, ioh, AHA_CTRL_PORT, AHA_CTRL_IRST);
+	return (0);
 }
 
 /*
@@ -315,44 +273,79 @@ aha_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
  * autoconf.c
  */
 int
-ahaprobe(parent, match, aux)
+aha_isa_probe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	register struct isa_attach_args *ia = aux;
+	struct isa_attach_args *ia = aux;
+	struct aha_softc sc;
+	bus_chipset_tag_t bc = ia->ia_bc;
+	bus_io_handle_t ioh;
+	isa_chipset_tag_t ic = ia->ia_ic;
+	int rv;
 
-#ifdef NEWCONFIG
-	if (ia->ia_iobase == IOBASEUNK)
-		return 0;
-#endif
+	if (bus_io_map(bc, ia->ia_iobase, AHA_ISA_IOSIZE, &ioh))
+		return (0);
 
-	/* See if there is a unit at this location. */
-	if (aha_find(ia, NULL) != 0)
-		return 0;
+	rv = aha_find(bc, ioh, &sc);
 
-	ia->ia_msize = 0;
-	ia->ia_iosize = 4;
-	/* IRQ and DRQ set by aha_find(). */
-	return 1;
+	bus_io_unmap(bc, ioh, AHA_ISA_IOSIZE);
+
+	if (rv) {
+		if (ia->ia_irq != -1 && ia->ia_irq != sc.sc_irq)
+			return (0);
+		if (ia->ia_drq != -1 && ia->ia_drq != sc.sc_drq)
+			return (0);
+		ia->ia_irq = sc.sc_irq;
+		ia->ia_drq = sc.sc_drq;
+		ia->ia_msize = 0;
+		ia->ia_iosize = AHA_ISA_IOSIZE;
+	}
+	return (rv);
 }
 
 /*
  * Attach all the sub-devices we can find
  */
 void
-ahaattach(parent, self, aux)
+aha_isa_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
 	struct aha_softc *sc = (void *)self;
+	bus_chipset_tag_t bc = ia->ia_bc;
+	bus_io_handle_t ioh;
+	isa_chipset_tag_t ic = ia->ia_ic;
 
-	if (aha_find(ia, sc) != 0)
-		panic("ahaattach: aha_find of %s failed", self->dv_xname);
-	sc->sc_iobase = ia->ia_iobase;
+	printf("\n");
 
-	if (sc->sc_drq != DRQUNK)
+	if (bus_io_map(bc, ia->ia_iobase, AHA_ISA_IOSIZE, &ioh))
+		panic("aha_attach: bus_io_map failed!");
+
+	sc->sc_bc = bc;
+	sc->sc_ioh = ioh;
+	if (!aha_find(bc, ioh, sc))
+		panic("aha_attach: aha_find failed!");
+
+	if (sc->sc_drq != -1)
 		isa_dmacascade(sc->sc_drq);
+
+	sc->sc_ih = isa_intr_establish(ic, sc->sc_irq, IST_EDGE, IPL_BIO,
+	    aha_intr, sc);
+	if (sc->sc_ih == NULL) {
+		printf("%s: couldn't establish interrupt\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
+	aha_attach(sc);
+}
+
+void
+aha_attach(sc)
+	struct aha_softc *sc;
+{
 
 	aha_inquire_setup_information(sc);
 	aha_init(sc);
@@ -369,16 +362,10 @@ ahaattach(parent, self, aux)
 	sc->sc_link.device = &aha_dev;
 	sc->sc_link.openings = 2;
 
-#ifdef NEWCONFIG
-	isa_establish(&sc->sc_id, &sc->sc_dev);
-#endif
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, sc->sc_irq, IST_EDGE,
-	    IPL_BIO, ahaintr, sc);
-
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	config_found(self, &sc->sc_link, scsiprint);
+	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
 }
 
 integrate void
@@ -472,25 +459,26 @@ AGAIN:
  * Catch an interrupt from the adaptor
  */
 int
-ahaintr(arg)
+aha_intr(arg)
 	void *arg;
 {
 	struct aha_softc *sc = arg;
-	int iobase = sc->sc_iobase;
+	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_io_handle_t ioh = sc->sc_ioh;
 	u_char sts;
 
 #ifdef AHADEBUG
-	printf("%s: ahaintr ", sc->sc_dev.dv_xname);
+	printf("%s: aha_intr ", sc->sc_dev.dv_xname);
 #endif /*AHADEBUG */
 
 	/*
 	 * First acknowlege the interrupt, Then if it's not telling about
 	 * a completed operation just return.
 	 */
-	sts = inb(iobase + AHA_INTR_PORT);
+	sts = bus_io_read_1(bc, ioh, AHA_INTR_PORT);
 	if ((sts & AHA_INTR_ANYINTR) == 0)
-		return 0;
-	outb(iobase + AHA_CTRL_PORT, AHA_CTRL_IRST);
+		return (0);
+	bus_io_write_1(bc, ioh, AHA_CTRL_PORT, AHA_CTRL_IRST);
 
 #ifdef AHADIAG
 	/* Make sure we clear CCB_SENDING before finishing a CCB. */
@@ -503,8 +491,9 @@ ahaintr(arg)
 
 		toggle.cmd.opcode = AHA_MBO_INTR_EN;
 		toggle.cmd.enable = 0;
-		aha_cmd(iobase, sc, sizeof(toggle.cmd), (u_char *)&toggle.cmd, 0,
-		    (u_char *)0);
+		aha_cmd(bc, ioh, sc,
+		    sizeof(toggle.cmd), (u_char *)&toggle.cmd,
+		    0, (u_char *)0);
 		aha_start_ccbs(sc);
 	}
 
@@ -512,7 +501,7 @@ ahaintr(arg)
 	if (sts & AHA_INTR_MBIF)
 		aha_finish_ccbs(sc);
 
-	return 1;
+	return (1);
 }
 
 integrate void
@@ -634,7 +623,7 @@ aha_ccb_phys_kv(sc, ccb_phys)
 			break;
 		ccb = ccb->nexthash;
 	}
-	return ccb;
+	return (ccb);
 }
 
 /*
@@ -685,7 +674,8 @@ void
 aha_start_ccbs(sc)
 	struct aha_softc *sc;
 {
-	int iobase = sc->sc_iobase;
+	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_io_handle_t ioh = sc->sc_ioh;
 	struct aha_mbx_out *wmbo;	/* Mail Box Out pointer */
 	struct aha_ccb *ccb;
 
@@ -699,8 +689,9 @@ aha_start_ccbs(sc)
 
 				toggle.cmd.opcode = AHA_MBO_INTR_EN;
 				toggle.cmd.enable = 1;
-				aha_cmd(iobase, sc, sizeof(toggle.cmd),
-				    (u_char *)&toggle.cmd, 0, (u_char *)0);
+				aha_cmd(bc, ioh, sc,
+				    sizeof(toggle.cmd), (u_char *)&toggle.cmd,
+				    0, (u_char *)0);
 				break;
 			}
 		}
@@ -718,7 +709,7 @@ aha_start_ccbs(sc)
 			wmbo->cmd = AHA_MBO_START;
 
 		/* Tell the card to poll immediately. */
-		outb(iobase + AHA_CMD_PORT, AHA_START_SCSI);
+		bus_io_write_1(bc, ioh, AHA_CMD_PORT, AHA_START_SCSI);
 
 		if ((ccb->xs->flags & SCSI_POLL) == 0)
 			timeout(aha_timeout, ccb, (ccb->timeout * hz) / 1000);
@@ -802,11 +793,11 @@ aha_done(sc, ccb)
  * Find the board and find its irq/drq
  */
 int
-aha_find(ia, sc)
-	struct isa_attach_args *ia;
+aha_find(bc, ioh, sc)
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
 	struct aha_softc *sc;
 {
-	int iobase = ia->ia_iobase;
 	int i;
 	u_char sts;
 	struct aha_config config;
@@ -817,11 +808,11 @@ aha_find(ia, sc)
 	 * that it's not there.. good for the probe
 	 */
 
-	outb(iobase + AHA_CTRL_PORT, AHA_CTRL_HRST | AHA_CTRL_SRST);
+	bus_io_write_1(bc, ioh, AHA_CTRL_PORT, AHA_CTRL_HRST | AHA_CTRL_SRST);
 
 	delay(100);
 	for (i = AHA_RESET_TIMEOUT; i; i--) {
-		sts = inb(iobase + AHA_STAT_PORT);
+		sts = bus_io_read_1(bc, ioh, AHA_STAT_PORT);
 		if (sts == (AHA_STAT_IDLE | AHA_STAT_INIT))
 			break;
 		delay(1000);	/* calibrated in msec */
@@ -831,7 +822,7 @@ aha_find(ia, sc)
 		if (aha_debug)
 			printf("aha_find: No answer from adaptec board\n");
 #endif /* AHADEBUG */
-		return 1;
+		return (0);
 	}
 
 	/*
@@ -840,11 +831,12 @@ aha_find(ia, sc)
 	 */
 	delay(1000);		/* for Bustek 545 */
 	config.cmd.opcode = AHA_INQUIRE_CONFIG;
-	aha_cmd(iobase, sc, sizeof(config.cmd), (u_char *)&config.cmd,
+	aha_cmd(bc, ioh, sc,
+	    sizeof(config.cmd), (u_char *)&config.cmd,
 	    sizeof(config.reply), (u_char *)&config.reply);
 	switch (config.reply.chan) {
 	case EISADMA:
-		drq = DRQUNK;	/* for EISA/VLB/PCI clones */
+		drq = -1;
 		break;
 	case CHAN0:
 		drq = 0;
@@ -860,7 +852,7 @@ aha_find(ia, sc)
 		break;
 	default:
 		printf("aha_find: illegal drq setting %x\n", config.reply.chan);
-		return 1;
+		return (0);
 	}
 
 	switch (config.reply.intr) {
@@ -884,28 +876,16 @@ aha_find(ia, sc)
 		break;
 	default:
 		printf("aha_find: illegal irq setting %x\n", config.reply.intr);
-		return EIO;
+		return (0);
 	}
 
 	if (sc != NULL) {
-		/* who are we on the scsi bus? */
-		sc->sc_scsi_dev = config.reply.scsi_dev;
-
-		sc->sc_iobase = iobase;
 		sc->sc_irq = irq;
 		sc->sc_drq = drq;
-	} else {
-		if (ia->ia_irq == IRQUNK)
-			ia->ia_irq = irq;
-		else if (ia->ia_irq != irq)
-			return 1;
-		if (ia->ia_drq == DRQUNK)
-			ia->ia_drq = drq;
-		else if (ia->ia_drq != drq)
-			return 1;
+		sc->sc_scsi_dev = config.reply.scsi_dev;
 	}
 
-	return 0;
+	return (1);
 }
 
 /*
@@ -915,7 +895,8 @@ void
 aha_init(sc)
 	struct aha_softc *sc;
 {
-	int iobase = sc->sc_iobase;
+	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_io_handle_t ioh = sc->sc_ioh;
 	struct aha_devices devices;
 	struct aha_setup setup;
 	struct aha_mailbox mailbox;
@@ -934,7 +915,8 @@ aha_init(sc)
 
 		printf("%s: unlocking mailbox interface\n", sc->sc_dev.dv_xname);
 		extbios.cmd.opcode = AHA_EXT_BIOS;
-		aha_cmd(iobase, sc, sizeof(extbios.cmd), (u_char *)&extbios.cmd,
+		aha_cmd(bc, ioh, sc,
+		    sizeof(extbios.cmd), (u_char *)&extbios.cmd,
 		    sizeof(extbios.reply), (u_char *)&extbios.reply);
 
 #ifdef AHADEBUG
@@ -946,7 +928,8 @@ aha_init(sc)
 		unlock.cmd.opcode = AHA_MBX_ENABLE;
 		unlock.cmd.junk = 0;
 		unlock.cmd.magic = extbios.reply.mailboxlock;
-		aha_cmd(iobase, sc, sizeof(unlock.cmd), (u_char *)&unlock.cmd,
+		aha_cmd(bc, ioh, sc,
+		    sizeof(unlock.cmd), (u_char *)&unlock.cmd,
 		    0, (u_char *)0);
 	}
 
@@ -954,19 +937,21 @@ aha_init(sc)
 	/*
 	 * Change the bus on/off times to not clash with other dma users.
 	 */
-	aha_cmd(sc, 1, 0, 0, 0, AHA_BUS_ON_TIME_SET, 7);
-	aha_cmd(sc, 1, 0, 0, 0, AHA_BUS_OFF_TIME_SET, 4);
+	aha_cmd(bc, ioh, 1, 0, 0, 0, AHA_BUS_ON_TIME_SET, 7);
+	aha_cmd(bc, ioh, 1, 0, 0, 0, AHA_BUS_OFF_TIME_SET, 4);
 #endif
 
 	/* Inquire Installed Devices (to force synchronous negotiation). */
 	devices.cmd.opcode = AHA_INQUIRE_DEVICES;
-	aha_cmd(iobase, sc, sizeof(devices.cmd), (u_char *)&devices.cmd,
+	aha_cmd(bc, ioh, sc,
+	    sizeof(devices.cmd), (u_char *)&devices.cmd,
 	    sizeof(devices.reply), (u_char *)&devices.reply);
 
 	/* Obtain setup information from. */
 	setup.cmd.opcode = AHA_INQUIRE_SETUP;
 	setup.cmd.len = sizeof(setup.reply);
-	aha_cmd(iobase, sc, sizeof(setup.cmd), (u_char *)&setup.cmd,
+	aha_cmd(bc, ioh, sc,
+	    sizeof(setup.cmd), (u_char *)&setup.cmd,
 	    sizeof(setup.reply), (u_char *)&setup.reply);
 
 	printf("%s: %s, %s\n",
@@ -998,7 +983,8 @@ aha_init(sc)
 	mailbox.cmd.opcode = AHA_MBX_INIT;
 	mailbox.cmd.nmbx = AHA_MBX_SIZE;
 	ltophys(KVTOPHYS(wmbx), mailbox.cmd.addr);
-	aha_cmd(iobase, sc, sizeof(mailbox.cmd), (u_char *)&mailbox.cmd,
+	aha_cmd(bc, ioh, sc,
+	    sizeof(mailbox.cmd), (u_char *)&mailbox.cmd,
 	    0, (u_char *)0);
 }
 
@@ -1006,7 +992,8 @@ void
 aha_inquire_setup_information(sc)
 	struct aha_softc *sc;
 {
-	int iobase = sc->sc_iobase;
+	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_io_handle_t ioh = sc->sc_ioh;
 	struct aha_revision revision;
 	u_char sts;
 	int i;
@@ -1021,14 +1008,15 @@ aha_inquire_setup_information(sc)
 	 * clone, and skip the board-specific stuff.
 	 */
 	revision.cmd.opcode = AHA_INQUIRE_REVISION;
-	if (aha_cmd(iobase, sc, sizeof(revision.cmd), (u_char *)&revision.cmd,
+	if (aha_cmd(bc, ioh, sc,
+	    sizeof(revision.cmd), (u_char *)&revision.cmd,
 	    sizeof(revision.reply), (u_char *)&revision.reply)) {
 		/*
 		 * aha_cmd() already started the reset.  It's not clear we
 		 * even need to bother here.
 		 */
 		for (i = AHA_RESET_TIMEOUT; i; i--) {
-			sts = inb(iobase + AHA_STAT_PORT);
+			sts = bus_io_read_1(bc, ioh, AHA_STAT_PORT);
 			if (sts == (AHA_STAT_IDLE | AHA_STAT_INIT))
 				break;
 			delay(1000);
@@ -1123,7 +1111,7 @@ aha_scsi_cmd(xs)
 	flags = xs->flags;
 	if ((ccb = aha_get_ccb(sc, flags)) == NULL) {
 		xs->error = XS_DRIVER_STUFFUP;
-		return TRY_AGAIN_LATER;
+		return (TRY_AGAIN_LATER);
 	}
 	ccb->xs = xs;
 	ccb->timeout = xs->timeout;
@@ -1257,7 +1245,7 @@ aha_scsi_cmd(xs)
 	 */
 	SC_DEBUG(sc_link, SDEV_DB3, ("cmd_sent\n"));
 	if ((flags & SCSI_POLL) == 0)
-		return SUCCESSFULLY_QUEUED;
+		return (SUCCESSFULLY_QUEUED);
 
 	/*
 	 * If we can't use interrupts, poll on completion
@@ -1267,12 +1255,12 @@ aha_scsi_cmd(xs)
 		if (aha_poll(sc, xs, ccb->timeout))
 			aha_timeout(ccb);
 	}
-	return COMPLETE;
+	return (COMPLETE);
 
 bad:
 	xs->error = XS_DRIVER_STUFFUP;
 	aha_free_ccb(sc, ccb);
-	return COMPLETE;
+	return (COMPLETE);
 }
 
 /*
@@ -1284,7 +1272,8 @@ aha_poll(sc, xs, count)
 	struct scsi_xfer *xs;
 	int count;
 {
-	int iobase = sc->sc_iobase;
+	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_io_handle_t ioh = sc->sc_ioh;
 
 	/* timeouts are in msec, so we loop in 1000 usec cycles */
 	while (count) {
@@ -1292,14 +1281,14 @@ aha_poll(sc, xs, count)
 		 * If we had interrupts enabled, would we
 		 * have got an interrupt?
 		 */
-		if (inb(iobase + AHA_INTR_PORT) & AHA_INTR_ANYINTR)
-			ahaintr(sc);
+		if (bus_io_read_1(bc, ioh, AHA_INTR_PORT) & AHA_INTR_ANYINTR)
+			aha_intr(sc);
 		if (xs->flags & ITSDONE)
-			return 0;
+			return (0);
 		delay(1000);	/* only happens in boot so ok */
 		count--;
 	}
-	return 1;
+	return (1);
 }
 
 void
