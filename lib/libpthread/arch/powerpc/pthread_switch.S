@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.2 2003/01/18 10:34:21 thorpej Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.3 2003/06/06 19:35:03 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -105,7 +105,7 @@ ENTRY(pthread__switch)
 #endif
 
 	/*
-	 * Exit the context to make it continue at switch_return instead of
+	 * Edit the context to make it continue at switch_return instead of
 	 * here.
 	 */
 #ifdef PIC
