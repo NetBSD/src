@@ -1,4 +1,9 @@
-/*	$NetBSD: report.c,v 1.2 1998/01/09 08:09:15 perry Exp $	*/
+/*	$NetBSD: report.c,v 1.3 1998/03/14 04:39:55 lukem Exp $	*/
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: report.c,v 1.3 1998/03/14 04:39:55 lukem Exp $");
+#endif
 
 /*
  * report() - calls syslog
@@ -11,6 +16,7 @@
 #endif
 
 #include <stdio.h>
+#include <string.h>
 #include <syslog.h>
 
 #include "report.h"
@@ -138,7 +144,6 @@ char *
 get_errmsg()
 {
 	extern int errno;
-	extern char *strerror();
 
 	return strerror(errno);
 }

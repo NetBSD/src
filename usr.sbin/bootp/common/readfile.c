@@ -20,8 +20,9 @@ ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 ************************************************************************/
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: readfile.c,v 1.4 1997/10/18 04:37:05 lukem Exp $";
+__RCSID("$NetBSD: readfile.c,v 1.5 1998/03/14 04:39:55 lukem Exp $");
 #endif
 
 
@@ -235,7 +236,6 @@ PRIVATE struct htypename htnamemap[] = {
 #define P(args) ()
 #endif
 
-extern boolean iplookcmp();
 boolean nmcmp P((hash_datum *, hash_datum *));
 
 PRIVATE void

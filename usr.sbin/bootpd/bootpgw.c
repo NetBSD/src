@@ -25,8 +25,9 @@ ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 ************************************************************************/
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: bootpgw.c,v 1.6 1997/10/18 04:36:58 lukem Exp $";
+__RCSID("$NetBSD: bootpgw.c,v 1.7 1998/03/14 04:39:53 lukem Exp $");
 #endif
 
 /*
@@ -98,6 +99,7 @@ static char rcsid[] = "$NetBSD: bootpgw.c,v 1.6 1997/10/18 04:36:58 lukem Exp $"
 static void usage P((void));
 static void handle_reply P((void));
 static void handle_request P((void));
+int main P((int, char **));
 
 #undef	P
 
@@ -513,7 +515,9 @@ static void
 handle_request()
 {
 	struct bootp *bp = (struct bootp *) pktbuf;
+#if 0
 	struct ifreq *ifr;
+#endif
 	u_short secs, hops;
 
 	/* XXX - SLIP init: Set bp_ciaddr = clnt_addr here? */

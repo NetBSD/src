@@ -20,8 +20,9 @@ ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 ************************************************************************/
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: bootpd.c,v 1.7 1997/10/18 04:36:55 lukem Exp $";
+__RCSID("$NetBSD: bootpd.c,v 1.8 1998/03/14 04:39:53 lukem Exp $");
 #endif
 
 /*
@@ -126,6 +127,7 @@ PRIVATE void handle_reply P((void));
 PRIVATE void handle_request P((void));
 PRIVATE void sendreply P((int forward, int32 dest_override));
 PRIVATE void usage P((void));
+int main P((int, char **));
 
 #undef	P
 
@@ -911,7 +913,9 @@ HW addr type is IEEE 802.  convert to %s and check again\n",
 	if (debug > 2)
 		report(LOG_INFO, "bootfile=\"%s\"", clntpath);
 
+#ifdef	CHECK_FILE_ACCESS
 null_file_name:
+#endif	/* CHECK_FILE_ACCESS */
 
 
 	/*
@@ -1206,7 +1210,6 @@ dovend_rfc1048(bp, hp, bootsize)
 {
 	int bytesleft, len;
 	byte *vp;
-	char *tmpstr;
 
 	static char noroom[] = "%s: No room for \"%s\" option";
 

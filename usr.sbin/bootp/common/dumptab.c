@@ -1,4 +1,9 @@
-/*	$NetBSD: dumptab.c,v 1.4 1998/01/09 08:09:07 perry Exp $	*/
+/*	$NetBSD: dumptab.c,v 1.5 1998/03/14 04:39:54 lukem Exp $	*/
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: dumptab.c,v 1.5 1998/03/14 04:39:54 lukem Exp $");
+#endif
 
 /*
  * dumptab.c - handles dumping the database
@@ -37,6 +42,7 @@
 static void dump_generic P((FILE *, struct shared_bindata *));
 static void dump_host P((FILE *, struct host *));
 static void list_ipaddresses P((FILE *, struct in_addr_list *));
+void dumptab P((char *));
 
 #undef P
 
@@ -262,7 +268,7 @@ dump_host(fp, hp)
 		/* NetBSD: domainname (see above) */
 		/* NetBSD: dumpfile (see above) */
 		if (hp->flags.time_offset) {
-			fprintf(fp, "\\\n\t:to=%ld:", hp->time_offset);
+			fprintf(fp, "\\\n\t:to=%ld:", (long)hp->time_offset);
 		}
 		if (hp->flags.time_server) {
 			fprintf(fp, "\\\n\t:ts=");
