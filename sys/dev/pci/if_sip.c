@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.17 2000/10/11 16:58:47 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.18 2000/10/15 20:02:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -1166,9 +1166,9 @@ sip_rxintr(sc)
 
 		/*
 		 * No errors; receive the packet.  Note, the SiS 900
-		 * includes the CRC with every packet; trim it.
+		 * includes the CRC with every packet.
 		 */
-		len = CMDSTS_SIZE(cmdsts) - ETHER_CRC_LEN;
+		len = CMDSTS_SIZE(cmdsts);
 
 #ifdef __NO_STRICT_ALIGNMENT
 		/*
@@ -1243,6 +1243,7 @@ sip_rxintr(sc)
 #endif /* __NO_STRICT_ALIGNMENT */
 
 		ifp->if_ipackets++;
+		m->m_flags |= M_HASFCS;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
