@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.132 2002/11/17 07:21:11 takemura Exp $
+# $NetBSD: GENERIC,v 1.133 2002/11/27 07:33:01 shin Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.132 $"
+#ident 		"GENERIC-$Revision: 1.133 $"
 
 maxusers	16
 
@@ -113,7 +113,7 @@ options 	NFS_BOOT_BOOTP
 #options 	NFS_BOOT_BOOTPARAM
 
 # compile options
-makeoptions	DEFGP="-G 10"
+#makeoptions	DEFGP="-G 10"
 
 config		netbsd		root on ? type ?
 
