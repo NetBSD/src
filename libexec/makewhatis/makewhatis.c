@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.21 2002/01/31 22:43:41 tv Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.22 2002/03/07 20:37:14 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: makewhatis.c,v 1.21 2002/01/31 22:43:41 tv Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.22 2002/03/07 20:37:14 jdolecek Exp $");
 #endif /* not lint */
 
 #if HAVE_CONFIG_H
@@ -73,6 +73,8 @@ typedef struct manpagestruct manpage;
 struct manpagestruct {
 	manpage *mp_left,*mp_right;
 	ino_t	 mp_inode;
+	size_t	 mp_sdoff;
+	size_t	 mp_sdlen;
 	char	 mp_name[1];
 };
 
@@ -80,16 +82,17 @@ typedef struct whatisstruct whatis;
 struct whatisstruct {
 	whatis	*wi_left,*wi_right;
 	char	*wi_data;
+	char	wi_prefix[1];
 };
 
-int	 main(int, char **);
+int	 main(int, char * const *);
 char	*findwhitespace(char *);
 char	*strmove(char *,char *);
 char	*GetS(gzFile, char *, size_t);
 int	 manpagesection(char *);
 char	*createsectionstring(char *);
-void	 addmanpage(manpage **, ino_t, char *);
-void	 addwhatis(whatis **, char *);
+void	 addmanpage(manpage **, ino_t, char *, size_t, size_t);
+void	 addwhatis(whatis **, char *, char *);
 char	*replacestring(char *, char *, char *);
 void	 catpreprocess(char *);
 char	*parsecatpage(gzFile *);
@@ -102,23 +105,24 @@ void	 dumpwhatis(FILE *, whatis *);
 void	*emalloc(size_t);
 char	*estrdup(const char *);
 
-char *default_manpath[] = {
+char * const default_manpath[] = {
 	"/usr/share/man",
 	NULL
 };
 
-char sectionext[] = "0123456789ln";
-char whatisdb[]	  = "whatis.db";
+const char *sectionext	= "0123456789ln";
+const char *whatisdb	= "whatis.db";
 
 int
-main(int argc, char **argv)
+main(int argc, char *const *argv)
 {
-	char	**manpath;
+	char	* const *manpath;
 	FTS	*fts;
 	FTSENT	*fe;
 	manpage *source;
 	whatis	*dest;
 	FILE	*out;
+	size_t	sdoff, sdlen;
 
 	(void)setlocale(LC_ALL, "");
 
@@ -131,9 +135,35 @@ main(int argc, char **argv)
 	while ((fe = fts_read(fts)) != NULL) {
 		switch (fe->fts_info) {
 		case FTS_F:
-			if (manpagesection(fe->fts_path) >= 0)
+			if (manpagesection(fe->fts_path) >= 0) {
+				/*
+				 * Get manpage subdirectory prefix. Most
+				 * commonly, this is arch-specific subdirectory.
+				 */
+				if (fe->fts_level >= 3) {
+					int sl = fe->fts_level - 1;
+					const char *s, *lsl=NULL;
+
+					s = &fe->fts_path[fe->fts_pathlen-1];
+					for(; sl > 0; sl--) {
+						s--;
+						while(s[0] != '/') s--;
+						if (!lsl)
+							lsl = s;
+					}
+					
+					/* Include trailing '/', so we get
+					 * 'arch/'. */
+					sdoff = s + 1 - fe->fts_path;
+					sdlen = lsl - s + 1;
+				} else {
+					sdoff = 0;
+					sdlen = 0;
+				}
+
 				addmanpage(&source, fe->fts_statp->st_ino,
-				    fe->fts_path);
+				    fe->fts_path, sdoff, sdlen);
+			}
 			/*FALLTHROUGH*/
 		case FTS_D:
 		case FTS_DC:
@@ -233,7 +263,7 @@ createsectionstring(char *section_id)
 }
 
 void
-addmanpage(manpage **tree,ino_t inode,char *name)
+addmanpage(manpage **tree,ino_t inode,char *name, size_t sdoff, size_t sdlen)
 {
 	manpage *mp;
 
@@ -247,12 +277,14 @@ addmanpage(manpage **tree,ino_t inode,char *name)
 	mp->mp_left = NULL;
 	mp->mp_right = NULL;
 	mp->mp_inode = inode;
+	mp->mp_sdoff = sdoff;
+	mp->mp_sdlen = sdlen;
 	(void)strcpy(mp->mp_name, name);
 	*tree = mp;
 }
 
 void
-addwhatis(whatis **tree, char *data)
+addwhatis(whatis **tree, char *data, char *prefix)
 {
 	whatis *wi;
 	int result;
@@ -275,11 +307,15 @@ addwhatis(whatis **tree, char *data)
 		tree = result < 0 ? &wi->wi_left : &wi->wi_right;
 	}
 
-	wi = emalloc(sizeof(whatis) + strlen(data));
+	wi = emalloc(sizeof(whatis) + strlen(prefix));
 
 	wi->wi_left = NULL;
 	wi->wi_right = NULL;
 	wi->wi_data = data;
+	if (prefix[0] != '\0')
+		(void) strcpy(wi->wi_prefix, prefix);
+	else
+		wi->wi_prefix[0] = '\0';
 	*tree = wi;
 }
 
@@ -817,6 +853,7 @@ void
 processmanpages(manpage **source, whatis **dest)
 {
 	manpage *mp;
+	char sd[128];
 
 	mp = *source;
 	*source = NULL;
@@ -828,8 +865,16 @@ processmanpages(manpage **source, whatis **dest)
 		if (mp->mp_left != NULL)
 			processmanpages(&mp->mp_left,dest);
 
-		if ((data = getwhatisdata(mp->mp_name)) != NULL)
-			addwhatis(dest,data);
+		if ((data = getwhatisdata(mp->mp_name)) != NULL) {
+			/* Pass eventual directory prefix to addwhatis() */
+			if (mp->mp_sdlen > 0 && mp->mp_sdlen < sizeof(sd)-1)
+				strlcpy(sd, &mp->mp_name[mp->mp_sdoff],
+					mp->mp_sdlen);
+			else
+				sd[0] = '\0';
+
+			addwhatis(dest, data, sd);
+		}
 
 		obsolete = mp;
 		mp = mp->mp_right;
@@ -844,7 +889,8 @@ dumpwhatis(FILE *out, whatis *tree)
 		if (tree->wi_left)
 			dumpwhatis(out, tree->wi_left);
 
-		if ((fputs(tree->wi_data, out) == EOF) ||
+		if ((tree->wi_data[0] && fputs(tree->wi_prefix, out) == EOF) ||
+		    (fputs(tree->wi_data, out) == EOF) ||
 		    (fputc('\n', out) == EOF))
 			err(EXIT_FAILURE, "Write failed");
 
