@@ -1,4 +1,4 @@
-/*	$NetBSD: preadv.c,v 1.1 1998/07/02 01:25:37 thorpej Exp $	*/
+/*	$NetBSD: preadv.c,v 1.2 1998/07/02 01:42:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: preadv.c,v 1.1 1998/07/02 01:25:37 thorpej Exp $");
+__RCSID("$NetBSD: preadv.c,v 1.2 1998/07/02 01:42:28 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: preadv.c,v 1.1 1998/07/02 01:25:37 thorpej Exp $");
  * This function provides 64-bit offset padding that
  * is not supplied by GCC 1.X but is supplied by GCC 2.X.
  */
-int
+ssize_t
 preadv(fd, iovp, iovcnt, offset)
 	int fd;
 	const struct iovec *iovp;
