@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.c,v 1.18 2003/06/25 04:21:51 thorpej Exp $	 */
+/*	$NetBSD: biosdisk_ll.c,v 1.19 2004/08/23 09:45:53 junyoung Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -44,15 +44,9 @@
 
 #include "biosdisk_ll.h"
 #include "diskbuf.h"
+#include "libi386.h"
 
-extern int get_diskinfo(int);
-extern void int13_getextinfo(int, struct biosdisk_ext13info *);
-extern int int13_extension(int);
-extern int biosread(int, int, int, int, int, void *);
-extern int biosdiskreset(int);
-extern int biosextread(int, void *);
 static int do_read(struct biosdisk_ll *, daddr_t, int, char *);
-extern u_int vtophys(void *);
 
 /*
  * we get from get_diskinfo():
