@@ -8,9 +8,9 @@ Bugs:
    * Don't save FP context at getcontext() time, but do something
      More Clever with lazy FPU switching.
 
-- MD bug: tetts/thread2 panics the alpha somewhere after the first
+- MD bug: tests/thread2 panics the alpha somewhere after the first
   unblocked upcall. The kernel appears to jump into space.
-  sh3 appears to also have the same problem.
+  sh3 appears to also have the same problem.  Check cpu_setfunc()!
 
 - MI/MD bug: The PMC framework does not work with SAs .. at all.  This
   needs to be straightened out.
@@ -48,13 +48,13 @@ Platform status:
 
 - cobalt: GENERIC compiles, otherwise untested.
 
-- dreamcast: See sh3.
+- dreamcast: GENERIC compiles.  See sh3.
 
 - evbarm: Works.
 
 - evbmips: Works
 
-- evbsh3: See sh3.
+- evbsh3: COMPUTEXEVB compiles.  See sh3.
 
 - evbsh5: Not yet branched.
 
@@ -66,7 +66,7 @@ Platform status:
 
 - hpcmips: GENERIC compiles, otherwise untested.
 
-- hpcsh: See sh3.
+- hpcsh: GENERIC compiles.  See sh3.
 
 - i386: Works.
 
@@ -78,11 +78,11 @@ Platform status:
 
 - mipsco: GENERIC compiles, otherwise untested.
 
-- mmeye: See sh3.
+- mmeye: GENERIC compiles.  See sh3.
 
 - mvme68k: GENERIC compiles, otherwise untested.
 
-- mvmeppc: GENERIC compiles, otherwise untested.
+- mvmeppc: MVME1600 compiles, otherwise untested.
 
 - netwinder: Works.
 
