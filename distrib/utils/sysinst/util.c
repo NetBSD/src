@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.11 1997/11/02 09:42:01 jonathan Exp $	*/
+/*	$NetBSD: util.c,v 1.12 1997/11/04 01:39:09 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -104,42 +104,6 @@ ask_ynquestion (char *quest, char def, ...)
 	return c == 'y' || c == 'Y';
 }
 
-void
-extract_dist (void)
-{
-	int verbose;
-	int numchar;
-	char *files;
-	char *p;
-
-	msg_display (MSG_verboseextract);
-	process_menu (MENU_noyes);
-	verbose = yesno;
-
-	numchar = collect (T_OUTPUT, &files, "/bin/ls %s/*.tar.gz", dist_dir);
-	if (numchar < 0) {
-		endwin();
-		(void)fprintf (stderr, msg_string(MSG_badls));
-		exit(1);
-	}
-	files[numchar] = '\0';
-
-	target_chdir_or_die("/");
-
-	p = strtok (files, " \n");
-	while (p != NULL) {
-		(void)printf (msg_string(MSG_extracting), p);
-		run_prog ("/usr/bin/tar --unlink -xpz%s -f %s",
-			  verbose ? "v":"", p);
-		p= strtok (NULL, " \n");
-	}
-	(void)printf(msg_string(MSG_endtar));
-	getchar();
-	puts(CL);
-	wrefresh(stdscr);
-}
-
-
 void run_makedev (void)
 {
 	msg_display (MSG_makedev);
@@ -212,6 +176,8 @@ int get_via_floppy (void)
 	return 1;
 }
 
+/* Get from a CDROM distribution. */
+
 int
 get_via_cdrom(void)
 {
@@ -269,6 +235,64 @@ void show_cur_distsets (void)
 }
 
 
+/* Do we want a verbose extract? */
+static	int verbose = -1;
+
+void
+ask_verbose_dist (void)
+{
+	if (verbose < 0) {
+		msg_display (MSG_verboseextract);
+		process_menu (MENU_noyes);
+		verbose = yesno;
+	}
+}
+
+void
+extract_file (char *path)
+{
+	char *owd;
+	int   tarexit;
+	
+	owd = getcwd (NULL,0);
+
+	target_chdir_or_die("/");	
+
+	endwin();
+	(void)printf (msg_string(MSG_extracting), path);
+	tarexit = run_prog ("/usr/bin/tar --unlink -xpz%s -f %s",
+			    verbose ? "v":"", path);
+	puts(CL);
+	wrefresh(stdscr);
+
+	/* XXXX Check tarexit for errors and give warning ... */
+
+	chdir (owd);
+	free (owd);
+}
+
+void
+extract_dist (void)
+{
+	char distname[STRSIZE];
+	char fname[STRSIZE];
+	distinfo *list;
+	char extdir[STRSIZE];
+
+	/* Current directory has the distribution included. */
+	strncpy(extdir, target_expand(dist_dir), STRSIZE);
+
+	list = dist_list;
+	while (list->name) {
+		(void)snprintf (distname, STRSIZE, list->name, rels,
+				dist_postfix);
+		(void)snprintf (fname, STRSIZE, "%s/%s", extdir, distname);
+		extract_file (fname);
+		list++;
+	}
+}
+
+
 /*
  * Get  and unpack the distribution.
  * show success_msg if installation  completes. Otherwise,,
@@ -281,6 +305,8 @@ void get_and_unpack_sets(int success_msg, int failure_msg)
 	process_menu (MENU_distmedium);
 	if (nodist)
 		return;
+
+	ask_verbose_dist ();
 
 	if (got_dist) {
 		/* Extract the distribution */

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 1997/10/31 23:00:40 phil Exp $	*/
+/*	$NetBSD: main.c,v 1.3 1997/11/04 01:39:05 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,6 +40,7 @@
 
 #include <stdio.h>
 #include <curses.h>
+#include <unistd.h>
 
 #define MAIN
 #include "defs.h"
@@ -48,17 +49,33 @@
 #include "menu_defs.h"
 
 int main(int argc, char **argv);
+void usage (void);
 
 int main(int argc, char **argv)
 {
 	WINDOW *win;
+	int ch;
 
 	/* Check for TERM ... */
 	if (!getenv("TERM")) {
-		fprintf (stderr, "%s: TERM environment varible not set.\n",
-			 argv[0]);
+		(void)fprintf (stderr,
+			 "sysinst: environment varible TERM not set.\n");
 		exit(1);
 	}
+
+	/* argv processing */
+	while ((ch  = getopt(argc, argv, "r:")) != -1)
+		switch(ch) {
+		case 'r':
+			/* Release name other than compiled in release. */
+			strncpy (rel, optarg, SSTRSIZE);
+			strncpy (rels, optarg, SSTRSIZE);
+			break;
+		case '?':
+		default:
+			usage();
+		}
+	
 
 	/* initialize message window */
 	win = newwin(22,78,1,1);
@@ -78,3 +95,12 @@ int main(int argc, char **argv)
 	return 0;
 }
 	
+
+/* The usage ... */
+
+void
+usage(void)
+{
+	(void)fprintf (stderr, "usage: sysinst [-r release]\n");
+	exit(1);
+}
