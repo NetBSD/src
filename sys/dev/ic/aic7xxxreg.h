@@ -1,3 +1,5 @@
+/*	$NetBSD: aic7xxxreg.h,v 1.2 1996/05/20 00:58:10 thorpej Exp $	*/
+
 /*
  * Aic7xxx register and scratch ram definitions.
  *
@@ -27,8 +29,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: aic7xxxreg.h,v 1.1 1996/05/16 03:59:06 mycroft Exp $
  */
 
 /*

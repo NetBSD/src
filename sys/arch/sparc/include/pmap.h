@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.21 1996/05/16 15:57:01 abrown Exp $ */
+/*	$NetBSD: pmap.h,v 1.22 1996/05/20 01:12:22 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -41,8 +41,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)pmap.h	8.1 (Berkeley) 6/11/93
- *
- * $Id: pmap.h,v 1.21 1996/05/16 15:57:01 abrown Exp $
  */
 
 #ifndef	_SPARC_PMAP_H_
