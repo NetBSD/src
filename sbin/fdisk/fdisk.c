@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.20 1997/09/30 17:09:13 phil Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.21 1997/09/30 17:29:40 phil Exp $	*/
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.20 1997/09/30 17:09:13 phil Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.21 1997/09/30 17:29:40 phil Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -229,8 +229,6 @@ void	decimal __P((char *, int *));
 int	type_match __P((const void *, const void *));
 char	*get_type __P((int));
 int	get_mapping __P((int, int *, int *, int *, long *));
-
-int	opendisk __P((const char *, int, char *, size_t, int));
 
 static inline unsigned short getshort __P((void *));
 static inline void putshort __P((void *p, unsigned short));
