@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 1999/07/12 22:04:09 thorpej Exp $
+#	$NetBSD: Makefile,v 1.30 1999/07/20 09:35:19 mrg Exp $
 
 SRCTOP=	../..
 .include <bsd.crypto.mk>
@@ -14,7 +14,7 @@ DPADD+= ${LIBCRYPT}
 #MLINKS= ed.1 red.1
 
 .if defined(CRYPTOPATH)
-.include "${CRYPTOPATH}/bin/ed/Makefile.frag"
+.sinclude "${CRYPTOPATH}/bin/ed/Makefile.frag"
 .endif
 
 .include <bsd.prog.mk>
