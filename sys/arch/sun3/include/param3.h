@@ -1,4 +1,4 @@
-/*	$NetBSD: param3.h,v 1.42 1997/06/10 19:32:15 veego Exp $	*/
+/*	$NetBSD: param3.h,v 1.43 1997/07/10 08:23:30 veego Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -63,6 +63,8 @@
 #define	KERNBASE	0x0E000000	/* start of kernel virtual */
 #define	KERNTEXTOFF	0x0E004000	/* start of kernel text */
 #define	KERN_END	0x0FE00000	/* end of kernel virtual */
+
+#define	UPAGES		2		/* pages of u-area */
 
 #include <m68k/param.h>
 
