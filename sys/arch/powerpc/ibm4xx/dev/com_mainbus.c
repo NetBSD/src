@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.2 2001/10/29 02:00:01 simonb Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.3 2002/03/08 01:36:34 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -38,6 +38,8 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/tty.h>
+
+#include <lib/libkern/libkern.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
