@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94"; */
-static char *rcsid = "$Id: chown.c,v 1.5 1994/06/18 20:55:58 cgd Exp $";
+static char *rcsid = "$Id: chown.c,v 1.6 1995/06/03 06:09:03 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -238,7 +238,9 @@ void
 chownerr(file)
 	char *file;
 {
-	static int euid = -1, ngroups = -1;
+	static uid_t euid = -1;
+	static gid_t egid = -1;
+	static int ngroups = -1;
 	gid_t groups[NGROUPS];
 
 	/* Check for chown without being root. */
@@ -249,14 +251,16 @@ chownerr(file)
 		err(1, "%s", file);
 	}
 
-	/* Check group membership; kernel just returns EPERM. */
-	if (gid != -1 && ngroups == -1) {
-		ngroups = getgroups(NGROUPS, groups);
-		while (--ngroups >= 0 && gid != groups[ngroups]);
-		if (ngroups < 0) {
-			if (fflag)
-				exit(0);
-			errx(1, "you are not a member of group %s", gname);
+	if (gid != -1 && egid == -1 && (egid = getegid()) != gid) {
+		if (ngroups == -1) {
+
+			ngroups = getgroups(NGROUPS, groups);
+			while (--ngroups >= 0 && gid != groups[ngroups]);
+			if (ngroups < 0) {
+				if (fflag)
+					exit(0);
+				errx(1, "you are not a member of group %s", gname);
+			}
 		}
 	}
 
