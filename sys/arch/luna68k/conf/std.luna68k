@@ -1,0 +1,10 @@
+#	$NetBSD: std.luna68k,v 1.1 2000/01/05 08:48:54 nisimura Exp $
+
+machine luna68k m68k
+
+prefix ../gnu/sys
+cinclude "conf/files.softdep"
+prefix
+
+options	EXEC_AOUT	# exec a.out binaries
+options	EXEC_SCRIPT	# exec #! scripts
