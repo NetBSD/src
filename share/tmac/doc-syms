@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc-syms,v 1.45 1999/05/22 22:08:49 jwise Exp $
+.\"	$NetBSD: doc-syms,v 1.46 1999/05/22 23:08:24 kleink Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -369,11 +369,6 @@
 .		ds b1 System V Interface Definition
 .		as b1 , Fourth Edition\\*(sV
 .		as b1 (``\\*(tNSVID4\\*(aa'')
-.       \}
-.       if "\\*(A\\n(aP"-susv2" \{\
-.		ds b1 Version 2 of the Single \\*(tNUNIX\\*(aa Specification
-.		as b1 \\*(sV
-.		as b1 (``\\*(tNSUSV2\\*(aa'')
 .       \}
 .	ie \\n(aC>\\n(aP \{\
 .		nr aP \\n(aP+1
