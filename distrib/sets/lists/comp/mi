@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.586 2003/06/27 05:21:51 tshiozak Exp $
+#	$NetBSD: mi,v 1.587 2003/07/04 04:56:27 atatat Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -309,6 +309,9 @@
 ./usr/include/md5.h			comp-c-include
 ./usr/include/memory.h			comp-c-include
 ./usr/include/menu.h			comp-c-include
+./usr/include/milter			comp-sendmail-include
+./usr/include/milter/mfapi.h		comp-sendmail-include
+./usr/include/milter/mfdef.h		comp-sendmail-include
 ./usr/include/miscfs			comp-c-include
 ./usr/include/miscfs/fdesc		comp-c-include
 ./usr/include/miscfs/fdesc/fdesc.h	comp-c-include
@@ -1004,6 +1007,7 @@
 ./usr/lib/libmagic_p.a		comp-c-proflib
 ./usr/lib/libmenu.a		comp-c-lib
 ./usr/lib/libmenu_p.a		comp-c-proflib
+./usr/lib/libmilter.a		comp-sendmail-lib
 ./usr/lib/libobjc.a		comp-objc-lib
 ./usr/lib/libobjc_p.a		comp-objc-proflib
 ./usr/lib/libossaudio.a		comp-c-lib
@@ -1031,6 +1035,7 @@
 ./usr/lib/libskey_p.a		comp-c-proflib
 ./usr/lib/libsl.a		comp-krb5-lib
 ./usr/lib/libsl_p.a		comp-krb5-proflib
+./usr/lib/libsm.a		comp-sendmail-lib
 ./usr/lib/libss.a		comp-krb5-lib
 ./usr/lib/libss_p.a		comp-krb5-proflib
 ./usr/lib/libssl.a		comp-c-lib
