@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.7 2004/03/01 23:20:53 thorpej Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.8 2004/03/20 02:57:48 jonathan Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.7 2004/03/01 23:20:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.8 2004/03/20 02:57:48 jonathan Exp $");
 
 /*
  * IPsec input processing.
@@ -485,6 +485,12 @@ ipsec6_common_input(struct mbuf **mp, int *offp, int proto)
 	return IPPROTO_DONE;
 }
 
+/* 
+ * NB: ipsec_netbsd.c has a duplicate definition of esp6_ctlinput(),
+ * with slightly ore recent multicast tests. These should be merged.
+ * For now, ifdef accordingly.
+ */
+#ifdef __FreeBSD__
 void
 esp6_ctlinput(int cmd, struct sockaddr *sa, void *d)
 {
@@ -560,6 +566,7 @@ esp6_ctlinput(int cmd, struct sockaddr *sa, void *d)
 		/* we normally notify any pcb here */
 	}
 }
+#endif /* __FreeBSD__ */
 
 extern	struct ip6protosw inet6sw[];
 extern	u_char ip6_protox[];
