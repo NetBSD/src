@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.14 1996/02/09 22:40:51 christos Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.15 1996/02/12 15:01:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -50,8 +50,6 @@
 
 static struct pfsnode *pfshead;
 static int pfsvplock;
-
-int procfs_rw __P((struct vop_read_args *));
 
 /*
  * allocate a pfsnode/vnode pair.  the vnode is
@@ -214,9 +212,10 @@ procfs_freevp(vp)
 }
 
 int
-procfs_rw(ap)
-	struct vop_read_args *ap;
+procfs_rw(v)
+	void *v;
 {
+	struct vop_read_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
 	struct proc *curp = uio->uio_procp;
