@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.16 2003/01/17 22:28:49 thorpej Exp $	*/
+/*	$NetBSD: undefined.c,v 1.17 2003/04/28 01:54:49 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -47,10 +47,14 @@
 #define FAST_FPE
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
+#ifdef KGDB
+#include <sys/kgdb.h>
+#endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.16 2003/01/17 22:28:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.17 2003/04/28 01:54:49 briggs Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -123,10 +127,14 @@ static int
 gdb_trapper(u_int addr, u_int insn, struct trapframe *frame, int code)
 {
 
-	if ((insn == GDB_BREAKPOINT || insn == GDB5_BREAKPOINT) &&
-	    code == FAULT_USER) {
-		trapsignal(curlwp, SIGTRAP, 0);
-		return 0;
+	if (insn == GDB_BREAKPOINT || insn == GDB5_BREAKPOINT) {
+		if (code == FAULT_USER) {
+			trapsignal(curlwp, SIGTRAP, 0);
+			return 0;
+		}
+#ifdef KGDB
+		return !kgdb_trap(T_BREAKPOINT, frame);
+#endif
 	}
 	return 1;
 }
