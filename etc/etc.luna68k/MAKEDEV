@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.5 2000/07/27 18:43:23 mason Exp $
+#	$NetBSD: MAKEDEV,v 1.6 2000/10/29 13:03:38 tsutsui Exp $
 #
 # Device "make" file.  Valid arguments:
 #	std	standard devices
@@ -40,7 +40,7 @@ do
 case $i in
 
 all)
-	sh -$- $0 std ttya sd0 st0
+	sh -$- $0 std ttya sd0 st0 md0
 	sh -$- $0 pty0 pty1 pty2 pty3 bpf0 bpf1 lkm ipl
 	sh -$- $0 wskbd wsmouse ttyE0 ttyEcfg
 	sh -$- $0 scsibus0
