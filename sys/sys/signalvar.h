@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.18 1998/03/01 02:24:14 fvdl Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.19 1998/09/11 12:50:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -48,22 +48,17 @@
  * (not necessarily resident).
  */
 struct	sigacts {
-	sig_t	ps_sigact[NSIG];	/* disposition of signals */
-	sigset_t ps_catchmask[NSIG];	/* signals to be blocked */
-	sigset_t ps_sigonstack;		/* signals to take on sigstack */
-	sigset_t ps_sigintr;		/* signals that interrupt syscalls */
-	sigset_t ps_sigreset;		/* signals that reset when caught */
+	struct	sigaction ps_sigact[NSIG];	/* disposition of signals */
+	struct	sigaltstack ps_sigstk;	/* sp & on stack state variable */
 	sigset_t ps_oldmask;		/* saved mask from before sigpause */
 	int	ps_flags;		/* signal flags, below */
-	struct	sigaltstack ps_sigstk;	/* sp & on stack state variable */
 	int	ps_sig;			/* for core dump/debugger XXX */
 	long	ps_code;		/* for core dump/debugger XXX */
-	sigset_t ps_usertramp;		/* SunOS compat; libc sigtramp XXX */
+	void	*ps_sigcode;		/* address of signal trampoline */
 };
 
 /* signal flags */
 #define	SAS_OLDMASK	0x01		/* need to restore mask before pause */
-#define	SAS_ALTSTACK	0x02		/* have alternate signal stack */
 
 /* additional signal action values, used only temporarily/internally */
 #define	SIG_CATCH	(void (*) __P((int)))2
@@ -79,16 +74,12 @@ struct	sigacts {
  * process, 0 if none.  If there is a pending stop signal with default
  * action, the process stops in issignal().
  */
-#define	CURSIG(p)							\
-	(((p)->p_siglist == 0 ||					\
-	    (((p)->p_flag & P_TRACED) == 0 &&				\
-	    ((p)->p_siglist & ~(p)->p_sigmask) == 0)) ?			\
-	    0 : issignal(p))
+#define	CURSIG(p)	(p->p_sigcheck ? issignal(p) : 0)
 
 /*
  * Clear a pending signal from a process.
  */
-#define	CLRSIG(p, sig)	{ (p)->p_siglist &= ~sigmask(sig); }
+#define	CLRSIG(p, sig)	sigdelset(&p->p_siglist, sig)
 
 /*
  * Signal properties and actions.
@@ -102,50 +93,47 @@ struct	sigacts {
 #define	SA_IGNORE	0x10		/* ignore by default */
 #define	SA_CONT		0x20		/* continue if suspended */
 #define	SA_CANTMASK	0x40		/* non-maskable, catchable */
+#define	SA_NORESET	0x80		/* not reset when caught */
 
 #ifdef	SIGPROP
-int sigprop[NSIG + 1] = {
-	0,			/* unused */
-	SA_KILL,		/* SIGHUP */
-	SA_KILL,		/* SIGINT */
-	SA_KILL|SA_CORE,	/* SIGQUIT */
-	SA_KILL|SA_CORE,	/* SIGILL */
-	SA_KILL|SA_CORE,	/* SIGTRAP */
-	SA_KILL|SA_CORE,	/* SIGABRT */
-	SA_KILL|SA_CORE,	/* SIGEMT */
-	SA_KILL|SA_CORE,	/* SIGFPE */
-	SA_KILL,		/* SIGKILL */
-	SA_KILL|SA_CORE,	/* SIGBUS */
-	SA_KILL|SA_CORE,	/* SIGSEGV */
-	SA_KILL|SA_CORE,	/* SIGSYS */
-	SA_KILL,		/* SIGPIPE */
-	SA_KILL,		/* SIGALRM */
-	SA_KILL,		/* SIGTERM */
-	SA_IGNORE,		/* SIGURG */
-	SA_STOP,		/* SIGSTOP */
-	SA_STOP|SA_TTYSTOP,	/* SIGTSTP */
-	SA_IGNORE|SA_CONT,	/* SIGCONT */
-	SA_IGNORE,		/* SIGCHLD */
-	SA_STOP|SA_TTYSTOP,	/* SIGTTIN */
-	SA_STOP|SA_TTYSTOP,	/* SIGTTOU */
-	SA_IGNORE,		/* SIGIO */
-	SA_KILL,		/* SIGXCPU */
-	SA_KILL,		/* SIGXFSZ */
-	SA_KILL,		/* SIGVTALRM */
-	SA_KILL,		/* SIGPROF */
-	SA_IGNORE,		/* SIGWINCH  */
-	SA_IGNORE,		/* SIGINFO */
-	SA_KILL,		/* SIGUSR1 */
-	SA_KILL,		/* SIGUSR2 */
+const int sigprop[NSIG] = {
+	0,				/* unused */
+	SA_KILL,			/* SIGHUP */
+	SA_KILL,			/* SIGINT */
+	SA_KILL|SA_CORE,		/* SIGQUIT */
+	SA_KILL|SA_CORE|SA_NORESET,	/* SIGILL */
+	SA_KILL|SA_CORE|SA_NORESET,	/* SIGTRAP */
+	SA_KILL|SA_CORE,		/* SIGABRT */
+	SA_KILL|SA_CORE,		/* SIGEMT */
+	SA_KILL|SA_CORE,		/* SIGFPE */
+	SA_KILL|SA_CANTMASK,		/* SIGKILL */
+	SA_KILL|SA_CORE,		/* SIGBUS */
+	SA_KILL|SA_CORE,		/* SIGSEGV */
+	SA_KILL|SA_CORE,		/* SIGSYS */
+	SA_KILL,			/* SIGPIPE */
+	SA_KILL,			/* SIGALRM */
+	SA_KILL,			/* SIGTERM */
+	SA_IGNORE,			/* SIGURG */
+	SA_STOP|SA_CANTMASK,		/* SIGSTOP */
+	SA_STOP|SA_TTYSTOP,		/* SIGTSTP */
+	SA_IGNORE|SA_CONT,		/* SIGCONT */
+	SA_IGNORE,			/* SIGCHLD */
+	SA_STOP|SA_TTYSTOP,		/* SIGTTIN */
+	SA_STOP|SA_TTYSTOP,		/* SIGTTOU */
+	SA_IGNORE,			/* SIGIO */
+	SA_KILL,			/* SIGXCPU */
+	SA_KILL,			/* SIGXFSZ */
+	SA_KILL,			/* SIGVTALRM */
+	SA_KILL,			/* SIGPROF */
+	SA_IGNORE,			/* SIGWINCH  */
+	SA_IGNORE,			/* SIGINFO */
+	SA_KILL,			/* SIGUSR1 */
+	SA_KILL,			/* SIGUSR2 */
+	SA_IGNORE|SA_NORESET,		/* SIGPWR */
 };
-
-#define	contsigmask	(sigmask(SIGCONT))
-#define	stopsigmask	(sigmask(SIGSTOP) | sigmask(SIGTSTP) | \
-			    sigmask(SIGTTIN) | sigmask(SIGTTOU))
-
 #endif /* SIGPROP */
 
-#define	sigcantmask	(sigmask(SIGKILL) | sigmask(SIGSTOP))
+sigset_t contsigmask, stopsigmask, sigcantmask;
 
 #ifdef _KERNEL
 /*
@@ -164,10 +152,19 @@ void	sigexit __P((struct proc *, int));
 void	setsigvec __P((struct proc *, int, struct sigaction *));
 int	killpg1 __P((struct proc *, int, int, int));
 
+int	sigaction1 __P((struct proc *p, int signum, \
+	    const struct sigaction *nsa, struct sigaction *osa));
+int	sigprocmask1 __P((struct proc *p, int how, \
+	    const sigset_t *nss, sigset_t *oss));
+void	sigpending1 __P((struct proc *p, sigset_t *ss));
+int	sigsuspend1 __P((struct proc *p, const sigset_t *ss));
+int	sigaltstack1 __P((struct proc *p, \
+	    const struct sigaltstack *nss, struct sigaltstack *oss));
+
 /*
  * Machine-dependent functions:
  */
-void	sendsig __P((sig_t action, int sig, int returnmask, u_long code));
+void	sendsig __P((sig_t action, int sig, sigset_t *returnmask, u_long code));
 struct core;
 struct vnode;
 struct ucred;
