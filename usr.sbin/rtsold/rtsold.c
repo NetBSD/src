@@ -1,5 +1,5 @@
-/*	$NetBSD: rtsold.c,v 1.7 2000/08/13 06:20:03 itojun Exp $	*/
-/*	$KAME: rtsold.c,v 1.22 2000/08/13 06:14:59 itojun Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.8 2000/08/13 18:19:13 itojun Exp $	*/
+/*	$KAME: rtsold.c,v 1.26 2000/08/13 18:17:15 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -203,6 +203,9 @@ main(argc, argv)
 	/* warn if accept_rtadv is down */
 	if (!getinet6sysctl(IPV6CTL_ACCEPT_RTADV))
 		warnx("kernel is configured not to accept RAs");
+	/* warn if forwarding is up */
+	if (getinet6sysctl(IPV6CTL_FORWARDING))
+		warnx("kernel is configured as a router, not a host");
 
 	/* initialization to dump internal status to a file */
 	if (signal(SIGUSR1, (void *)rtsold_set_dump_file) < 0) {
@@ -709,6 +712,9 @@ warnmsg(priority, func, msg, va_alist)
 static char **
 autoifprobe()
 {
+#ifndef HAVE_GETIFADDRS
+	errx(1, "-a is not available with the configuration");
+#else
 	static char ifname[IFNAMSIZ + 1];
 	static char *argv[2];
 	struct ifaddrs *ifap, *ifa, *target;
@@ -759,4 +765,5 @@ autoifprobe()
 		return argv;
 	else
 		return (char **)NULL;
+#endif
 }
