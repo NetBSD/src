@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_ofisa.c,v 1.4 1998/08/13 02:10:52 eeh Exp $	*/
+/*	$NetBSD: ess_ofisa.c,v 1.5 1999/03/16 13:07:45 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -126,15 +126,15 @@ ess_ofisa_attach(parent, self, aux)
 
 	n = ofisa_intr_get(aa->oba.oba_phandle, intr, 2);
 	if (n == 1) {
-		sc->sc_in.irq = intr[0].irq;
-		sc->sc_in.ist = intr[0].share;
-		sc->sc_out.irq = intr[0].irq;
-		sc->sc_out.ist = intr[0].share;
+		sc->sc_audio1.irq = intr[0].irq;
+		sc->sc_audio1.ist = intr[0].share;
+		sc->sc_audio2.irq = intr[0].irq;
+		sc->sc_audio2.ist = intr[0].share;
 	} else if (n == 2) {
-		sc->sc_in.irq = intr[0].irq;
-		sc->sc_in.ist = intr[0].share;
-		sc->sc_out.irq = intr[1].irq;
-		sc->sc_out.ist = intr[1].share;
+		sc->sc_audio1.irq = intr[0].irq;
+		sc->sc_audio1.ist = intr[0].share;
+		sc->sc_audio2.irq = intr[1].irq;
+		sc->sc_audio2.ist = intr[1].share;
 	} else {
 		printf(": error getting interrupt data\n");
 		return;
@@ -145,8 +145,8 @@ ess_ofisa_attach(parent, self, aux)
 		printf(": error getting DMA data\n");
 		return;
 	}
-	sc->sc_in.drq = dma[0].drq;
-	sc->sc_out.drq = dma[1].drq;
+	sc->sc_audio1.drq = dma[0].drq;
+	sc->sc_audio2.drq = dma[1].drq;
 
 	sc->sc_ic = aa->ic;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_isa.c,v 1.1 1999/03/02 20:42:10 nathanw Exp $	*/
+/*	$NetBSD: ess_isa.c,v 1.2 1999/03/16 13:07:45 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -83,12 +83,12 @@ ess_isa_probe(parent, match, aux)
 	  return 0;
 	}
 
-	sc->sc_in.irq = ia->ia_irq;
-	sc->sc_in.ist = IST_EDGE;
-	sc->sc_in.drq = ia->ia_drq;
-	sc->sc_out.irq = ia->ia_irq;
-	sc->sc_out.ist = IST_EDGE;
-	sc->sc_out.drq = ia->ia_drq2;
+	sc->sc_audio1.irq = ia->ia_irq;
+	sc->sc_audio1.ist = IST_EDGE;
+	sc->sc_audio1.drq = ia->ia_drq;
+	sc->sc_audio2.irq = ia->ia_irq;
+	sc->sc_audio2.ist = IST_EDGE;
+	sc->sc_audio2.drq = ia->ia_drq2;
 
 	ret = essmatch(sc);
 		
@@ -120,12 +120,12 @@ void ess_isa_attach(parent, self, aux)
 	  return;
 	}
 
-	sc->sc_in.irq = ia->ia_irq;
-	sc->sc_in.ist = IST_EDGE;
-	sc->sc_in.drq = ia->ia_drq;
-	sc->sc_out.irq = ia->ia_irq;
-	sc->sc_out.ist = IST_EDGE;
-	sc->sc_out.drq = ia->ia_drq;
+	sc->sc_audio1.irq = ia->ia_irq;
+	sc->sc_audio1.ist = IST_EDGE;
+	sc->sc_audio1.drq = ia->ia_drq;
+	sc->sc_audio2.irq = ia->ia_irq;
+	sc->sc_audio2.ist = IST_EDGE;
+	sc->sc_audio2.drq = ia->ia_drq;
 
 	printf("%s:", sc->sc_dev.dv_xname);
 
