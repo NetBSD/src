@@ -1,5 +1,5 @@
-/*	$NetBSD: locore.S,v 1.6.4.2 2004/12/17 11:20:20 bouyer Exp $	*/
-/*	$NetBSD: locore.S,v 1.6.4.2 2004/12/17 11:20:20 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.6.4.3 2004/12/17 14:38:39 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.6.4.3 2004/12/17 14:38:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -230,7 +230,7 @@ _C_LABEL(biosextmem):	.long	REALEXTMEM
 #endif
 
 #include <machine/xen.h>
-#define __HYPERVISOR_yield		   8
+#define __HYPERVISOR_sched_op		   8
 #define __SCHEDOP_yield			   0
 
 	.space 512
@@ -1574,7 +1574,7 @@ idle_loop:
 	addl	$4,%esp
 	jmp	idle_start
 4:
-	movl	$__HYPERVISOR_yield,%eax
+	movl	$__HYPERVISOR_sched_op,%eax
 	movl	$__SCHEDOP_yield,%ebx
 	TRAP_INSTR
 NENTRY(mpidle)
