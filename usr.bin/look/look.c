@@ -1,4 +1,4 @@
-/*	$NetBSD: look.c,v 1.6 1994/12/23 01:11:01 jtc Exp $	*/
+/*	$NetBSD: look.c,v 1.7 1995/08/31 22:41:02 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -44,9 +44,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)look.c	8.1 (Berkeley) 6/14/93";
+static char sccsid[] = "@(#)look.c	8.2 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$NetBSD: look.c,v 1.6 1994/12/23 01:11:01 jtc Exp $";
+static char rcsid[] = "$NetBSD: look.c,v 1.7 1995/08/31 22:41:02 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -61,15 +61,16 @@ static char rcsid[] = "$NetBSD: look.c,v 1.6 1994/12/23 01:11:01 jtc Exp $";
 #include <sys/mman.h>
 #include <sys/stat.h>
 
-#include <limits.h>
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include <unistd.h>
 #include <err.h>
+
 #include "pathnames.h"
 
 /*

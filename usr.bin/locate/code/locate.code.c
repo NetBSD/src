@@ -1,4 +1,4 @@
-/*	$NetBSD: locate.code.c,v 1.4 1995/05/06 06:39:33 jtc Exp $	*/
+/*	$NetBSD: locate.code.c,v 1.5 1995/08/31 22:36:33 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,9 +44,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)locate.code.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)locate.code.c	8.4 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$NetBSD: locate.code.c,v 1.4 1995/05/06 06:39:33 jtc Exp $";
+static char rcsid[] = "$NetBSD: locate.code.c,v 1.5 1995/08/31 22:36:33 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -85,11 +85,14 @@ static char rcsid[] = "$NetBSD: locate.code.c,v 1.4 1995/05/06 06:39:33 jtc Exp 
  */
 
 #include <sys/param.h>
+
 #include <err.h>
 #include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
+#include <unistd.h>
+
 #include "locate.h"
 
 #define	BGBUFSIZE	(NBG * 2)	/* size of bigram buffer */
@@ -141,7 +144,7 @@ main(argc, argv)
 			*cp = '\0';
 
 		/* Squelch characters that would botch the decoding. */
-		for (cp = path; *cp != NULL; cp++) {
+		for (cp = path; *cp != '\0'; cp++) {
 			*cp &= PARITY-1;
 			if (*cp <= SWITCH)
 				*cp = '?';
@@ -149,7 +152,7 @@ main(argc, argv)
 
 		/* Skip longest common prefix. */
 		for (cp = path; *cp == *oldpath; cp++, oldpath++)
-			if (*oldpath == NULL)
+			if (*oldpath == '\0')
 				break;
 		count = cp - path;
 		diffcount = count - oldcount + OFFSET;
@@ -162,8 +165,8 @@ main(argc, argv)
 			if (putchar(diffcount) == EOF)
 				err(1, "stdout");
 
-		while (*cp != NULL) {
-			if (*(cp + 1) == NULL) {
+		while (*cp != '\0') {
+			if (*(cp + 1) == '\0') {
 				if (putchar(*cp) == EOF)
 					err(1, "stdout");
 				break;
@@ -201,10 +204,10 @@ bgindex(bg)			/* Return location of bg in bigrams or -1. */
 
 	bg0 = bg[0];
 	bg1 = bg[1];
-	for (p = bigrams; *p != NULL; p++)
+	for (p = bigrams; *p != '\0'; p++)
 		if (*p++ == bg0 && *p == bg1)
 			break;
-	return (*p == NULL ? -1 : --p - bigrams);
+	return (*p == '\0' ? -1 : --p - bigrams);
 }
 
 void

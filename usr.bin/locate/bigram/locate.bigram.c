@@ -1,4 +1,4 @@
-/*	$NetBSD: locate.bigram.c,v 1.3 1994/12/22 06:17:40 jtc Exp $	*/
+/*	$NetBSD: locate.bigram.c,v 1.4 1995/08/31 22:36:32 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,10 +43,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
+<<<<<<< locate.bigram.c
 #if 0
-static char sccsid[] = "@(#)locate.bigram.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)locate.bigram.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$NetBSD: locate.bigram.c,v 1.3 1994/12/22 06:17:40 jtc Exp $";
+static char rcsid[] = "$NetBSD: locate.bigram.c,v 1.4 1995/08/31 22:36:32 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -71,12 +72,12 @@ main ( )
 
 		/* skip longest common prefix */
 		for ( cp = path; *cp == *oldpath; cp++, oldpath++ )
-			if ( *oldpath == NULL )
+			if ( *oldpath == '\0' )
 				break;
 		/*
 		 * output post-residue bigrams only
 		 */
-		while ( *cp != NULL && *(cp + 1) != NULL ) {
+		while ( *cp != '\0' && *(cp + 1) != '\0' ) {
 			putchar ( *cp++ );
 			putchar ( *cp++ );
 			putchar ( '\n' );
@@ -86,4 +87,5 @@ main ( )
 		else
 			path = buf1, oldpath = buf2;
    	}
+	return (0);
 }
