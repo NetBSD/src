@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.60 2001/06/05 09:20:13 mrg Exp $	*/
+/*	$NetBSD: pstat.c,v 1.61 2001/07/09 17:30:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.60 2001/06/05 09:20:13 mrg Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.61 2001/07/09 17:30:37 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -901,7 +901,7 @@ getfiles(abuf, alen)
 	 * Add emulation of KINFO_FILE here.
 	 */
 	if (memf != NULL)
-		errx(1, "files on dead kernel, not implemented\n");
+		errx(1, "files on dead kernel, not implemented");
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_FILE;
