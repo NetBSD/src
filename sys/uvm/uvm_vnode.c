@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.46.2.11 2002/07/12 01:40:46 nathanw Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.46.2.12 2002/07/16 14:07:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.46.2.11 2002/07/12 01:40:46 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.46.2.12 2002/07/16 14:07:43 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -166,7 +166,7 @@ uvn_attach(arg, accessprot)
 
 	vp->v_flag |= VXLOCK;
 	simple_unlock(&uobj->vmobjlock); /* drop lock in case we sleep */
-		/* XXX: curlwp? */
+		/* XXX: curproc? */
 	if (vp->v_type == VBLK) {
 		/*
 		 * We could implement this as a specfs getattr call, but:
@@ -184,8 +184,7 @@ uvn_attach(arg, accessprot)
 			    (voff_t)pi.part->p_size;
 		}
 	} else {
-		result = VOP_GETATTR(vp, &vattr, curproc->p_ucred, 
-		    curproc);
+		result = VOP_GETATTR(vp, &vattr, curproc->p_ucred, curproc);
 		if (result == 0)
 			used_vnode_size = vattr.va_size;
 	}
