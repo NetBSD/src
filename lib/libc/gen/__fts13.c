@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.24 1999/08/27 20:02:14 mycroft Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.25 1999/08/27 21:10:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.24 1999/08/27 20:02:14 mycroft Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.25 1999/08/27 21:10:46 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -602,7 +602,7 @@ fts_build(sp, type)
 	size_t nitems;
 	FTSENT *cur, *tail;
 	DIR *dirp;
-	int adjust, cderrno, descend, len, level, nlinks, saved_errno;
+	int adjust, cderrno, descend, len, level, nlinks, saved_errno, nostat;
 	size_t maxlen;
 #ifdef FTS_WHITEOUT
 	int oflag;
@@ -637,12 +637,16 @@ fts_build(sp, type)
 	 * directory if we're cheating on stat calls, 0 if we're not doing
 	 * any stat calls at all, -1 if we're doing stats on everything.
 	 */
-	if (type == BNAMES)
+	if (type == BNAMES) {
 		nlinks = 0;
-	else if (ISSET(FTS_NOSTAT) && ISSET(FTS_PHYSICAL))
+		nostat = 1;
+	} else if (ISSET(FTS_NOSTAT) && ISSET(FTS_PHYSICAL)) {
 		nlinks = cur->fts_nlink - (ISSET(FTS_SEEDOT) ? 0 : 2);
-	else
+		nostat = 1;
+	} else {
 		nlinks = -1;
+		nostat = 0;
+	}
 
 #ifdef notdef
 	(void)printf("nlinks == %d (cur: %d)\n", nlinks, cur->fts_nlink);
@@ -753,7 +757,7 @@ mem1:				saved_errno = errno;
 			p->fts_accpath = cur->fts_accpath;
 		} else if (nlinks == 0
 #ifdef DT_DIR
-		    || (nlinks > 0 && 
+		    || (nostat && 
 		    dp->d_type != DT_DIR && dp->d_type != DT_UNKNOWN)
 #endif
 		    ) {
