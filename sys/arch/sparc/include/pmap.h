@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.36 1999/03/26 23:41:34 mycroft Exp $ */
+/*	$NetBSD: pmap.h,v 1.37 1999/06/17 18:21:22 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -252,7 +252,6 @@ pmap_t		pmap_create __P((vsize_t));
 void		pmap_destroy __P((pmap_t));
 void		pmap_init __P((void));
 vaddr_t		pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
-void		pmap_pageable __P((pmap_t, vaddr_t, vaddr_t, boolean_t));
 paddr_t		pmap_phys_address __P((int));
 void		pmap_pinit __P((pmap_t));
 void		pmap_reference __P((pmap_t));
