@@ -1,7 +1,7 @@
-Installation is really only supported from the local Macintosh
+Installation is currently only supported from the local Macintosh
 hard drive or from an AppleShare volume.  This means that you'll
 need at least enough room for the largest file that you will have
-to install.  This is the 7.2M base12 file.  There has been talk
+to install.  This is the 8.6MB base13 file.  There has been talk
 of allowing an install from split files.  If you have the time,
 desire, and knowledge, please feel free to add that functionality.
 
@@ -16,9 +16,10 @@ but be sure to specify a binary file transfer.
 You will also need to collect the MacOS tools:
 	Mkfs,
 	Installer, and
-	NetBSD/mac68k Booter.
+	BSD/mac68k Booter.
 
-These three are compacted and in binhex form as mkfs.cpt.hqx,
-Installer1.1.sea.hqx, and Booter1.9.4.sit.bin, respectively.
-Extract them as you would any other Macintosh applications.  If
-you need them, the sources are in the "src" subdirectory.
+These three are in binhexed, self-extracting archives as
+Mkfs_1.45.sea.hqx, Installer_1.1f.sea.hqx, and
+Booter1.11.0.sea.hqx, respectively.  Extract them as you would
+any other Macintosh applications.  If you need them, the sources
+are in the "src" subdirectory.
