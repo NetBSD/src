@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.59 2002/03/30 22:06:47 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.60 2002/04/03 21:33:34 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -2627,4 +2627,18 @@ lib/libc/gen/syslog.c				1.27
 
   Add a single retry into syslog(), to cope with a restarted syslogd,
   so that log messages don't get lost.  Most useful for long-running
-  programs.
+  programs.  Fixes PR#11087.
+
+sys/netinet/tcp_input.c				1.138-1.140 via patch
+sys/netinet/in.c				1.75
+
+  Reject TCP SYN packets sent to the broadcast address.
+
+distrib/notes/common/main			patch
+
+  Note that arm32 X11 needs to be built from 1.5.2 sources due to
+  non-backward-compatible changes in xsrc for arm32.
+
+sys/conf/osrelease.sh				patch
+
+  Mark this as NetBSD 1.5.3.
