@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi96.c,v 1.5 1994/10/26 08:46:18 cgd Exp $	*/
+/*	$NetBSD: scsi96.c,v 1.6 1994/11/29 03:43:54 briggs Exp $	*/
 
 /*
  * Copyright (C) 1994	Allen K. Briggs
@@ -42,9 +42,9 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/device.h>
-#include "../scsi/scsi_all.h"
-#include "../scsi/scsi_debug.h"
-#include "../scsi/scsiconf.h"
+#include <scsi/scsi_all.h>
+#include <scsi/scsi_debug.h>
+#include <scsi/scsiconf.h>
 
 #include <machine/scsi96reg.h>
 #include "../mac68k/via.h"
