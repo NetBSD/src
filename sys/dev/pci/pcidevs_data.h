@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.241 2000/06/21 09:16:17 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.242 2000/06/24 12:16:55 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.237 2000/06/21 08:58:57 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.238 2000/06/24 12:16:21 joda Exp 
  */
 
 /*
@@ -880,6 +880,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Mach64 LI",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LM,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 LM",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LP,
 	    0,
 	    "ATI Technologies",
@@ -1720,18 +1726,6 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Forte Media 801 Sound",
 	},
 	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM,
-	    0,
-	    "AT&T Microelectronics",
-	    "K56flex DSVD LTMODEM",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_USBHC,
-	    0,
-	    "AT&T Microelectronics",
-	    "USB Host Controller",
-	},
-	{
 	    PCI_VENDOR_FUTUREDOMAIN, PCI_PRODUCT_FUTUREDOMAIN_TMC_18C30,
 	    0,
 	    "Future Domain",
@@ -2134,6 +2128,60 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82801AB Hub-to-PCI Bridge",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_LPC,
+	    0,
+	    "Intel",
+	    "82801BA LPC Interface Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_USB1,
+	    0,
+	    "Intel",
+	    "82801BA USB Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_SMB,
+	    0,
+	    "Intel",
+	    "82801BA SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_USB2,
+	    0,
+	    "Intel",
+	    "82801BA USB Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_ACA,
+	    0,
+	    "Intel",
+	    "82801BA AC-97 Audio Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_ACM,
+	    0,
+	    "Intel",
+	    "82801BA AC-97 PCI Modem",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_LAN,
+	    0,
+	    "Intel",
+	    "82801BA LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_IDE,
+	    0,
+	    "Intel",
+	    "82801BA IDE Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_HPB,
+	    0,
+	    "Intel",
+	    "82801BA Hub-to-PCI Bridge",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371SB_ISA,
 	    0,
 	    "Intel",
@@ -2354,6 +2402,168 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Lite-On Communications",
 	    "82C115 (PNIC II) 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0440,
+	    0,
+	    "AT&T Microelectronics",
+	    "K56flex DSVD LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0441,
+	    0,
+	    "AT&T Microelectronics",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0442,
+	    0,
+	    "AT&T Microelectronics",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0443,
+	    0,
+	    "AT&T Microelectronics",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0444,
+	    0,
+	    "AT&T Microelectronics",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0445,
+	    0,
+	    "AT&T Microelectronics",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0446,
+	    0,
+	    "AT&T Microelectronics",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0447,
+	    0,
+	    "AT&T Microelectronics",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0448,
+	    0,
+	    "AT&T Microelectronics",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0449,
+	    0,
+	    "AT&T Microelectronics",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044A,
+	    0,
+	    "AT&T Microelectronics",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044B,
+	    0,
+	    "AT&T Microelectronics",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044C,
+	    0,
+	    "AT&T Microelectronics",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044D,
+	    0,
+	    "AT&T Microelectronics",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044E,
+	    0,
+	    "AT&T Microelectronics",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0450,
+	    0,
+	    "AT&T Microelectronics",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0451,
+	    0,
+	    "AT&T Microelectronics",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0452,
+	    0,
+	    "AT&T Microelectronics",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0453,
+	    0,
+	    "AT&T Microelectronics",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0454,
+	    0,
+	    "AT&T Microelectronics",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0455,
+	    0,
+	    "AT&T Microelectronics",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0456,
+	    0,
+	    "AT&T Microelectronics",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0457,
+	    0,
+	    "AT&T Microelectronics",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0458,
+	    0,
+	    "AT&T Microelectronics",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0459,
+	    0,
+	    "AT&T Microelectronics",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_045A,
+	    0,
+	    "AT&T Microelectronics",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_USBHC,
+	    0,
+	    "AT&T Microelectronics",
+	    "USB Host Controller",
 	},
 	{
 	    PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98713,
@@ -3464,6 +3674,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Symphony Labs",
 	    "83C553 PCI-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SKNET_FDDI,
+	    0,
+	    "Schneider & Koch",
+	    "SK-NET FDDI-xP",
 	},
 	{
 	    PCI_VENDOR_TEKRAM, PCI_PRODUCT_TEKRAM_DC290,
