@@ -1,29 +1,39 @@
-/*	$NetBSD: tx39uartreg.h,v 1.1 1999/11/20 19:56:38 uch Exp $ */
+/*	$NetBSD: tx39uartreg.h,v 1.2 2001/06/14 11:09:56 uch Exp $ */
 
-/*
- * Copyright (c) 1999, by UCHIYAMA Yasushi
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by UCHIYAMA Yasushi.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. The name of the developer may NOT be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 /*
  * Toshiba TX3912/3922 UART module
@@ -47,19 +57,19 @@
 
 #define TX39_UARTA_REG_START	0x0b0
 #define TX39_UARTB_REG_START	0x0c8
-#define	TX39_UARTCTRL1_REG(x) \
+#define	TX39_UARTCTRL1_REG(x)						\
 	(((x) ? TX39_UARTB_REG_START : TX39_UARTA_REG_START))
-#define	TX39_UARTCTRL2_REG(x) \
+#define	TX39_UARTCTRL2_REG(x)						\
 	(((x) ? TX39_UARTB_REG_START : TX39_UARTA_REG_START) + 4) 
-#define	TX39_UARTDMACTRL1_REG(x) \
+#define	TX39_UARTDMACTRL1_REG(x)					\
 	(((x) ? TX39_UARTB_REG_START : TX39_UARTA_REG_START) + 8)
-#define	TX39_UARTDMACTRL2_REG(x) \
+#define	TX39_UARTDMACTRL2_REG(x)					\
 	(((x) ? TX39_UARTB_REG_START : TX39_UARTA_REG_START) + 12)
-#define	TX39_UARTDMACNT_REG(x) \
+#define	TX39_UARTDMACNT_REG(x)						\
 	(((x) ? TX39_UARTB_REG_START : TX39_UARTA_REG_START) + 16)
-#define	TX39_UARTTXHOLD_REG(x) \
+#define	TX39_UARTTXHOLD_REG(x)						\
 	(((x) ? TX39_UARTB_REG_START : TX39_UARTA_REG_START) + 20)
-#define	TX39_UARTRXHOLD_REG(x) \
+#define	TX39_UARTRXHOLD_REG(x)						\
 	(((x) ? TX39_UARTB_REG_START : TX39_UARTA_REG_START) + 20)
 
 /*
@@ -111,8 +121,8 @@
 #define TX39_UARTCTRL2_BAUDRATE_MASK	TX3922_UARTCTRL2_BAUDRATE_MASK
 #endif
 
-#define TX39_UARTCTRL2_BAUDRATE_SET(cr, val) \
-	((cr) | (((val) << TX39_UARTCTRL2_BAUDRATE_SHIFT) & \
+#define TX39_UARTCTRL2_BAUDRATE_SET(cr, val)				\
+	((cr) | (((val) << TX39_UARTCTRL2_BAUDRATE_SHIFT) &		\
 	(TX39_UARTCTRL2_BAUDRATE_MASK << TX39_UARTCTRL2_BAUDRATE_SHIFT)))
 
 /*
@@ -120,7 +130,7 @@
  */
 /* W */
 #define TX39_UARTDMACTRL1_DMASTARTVAL_MASK	0xfffffffc
-#define TX39_UARTDMACTRL1_DMASTARTVAL_SET(cr, val) \
+#define TX39_UARTDMACTRL1_DMASTARTVAL_SET(cr, val)			\
 	((cr) | ((val) & TX39_UARTDMACTRL1_DMASTARTVAL_MASK))
 
 /*
@@ -128,7 +138,7 @@
  */
 /* W */
 #define TX39_UARTDMACTRL2_DMALENGTH_MASK	0x0000ffff
-#define TX39_UARTDMACTRL2_DMALENGTH_SET(cr, val) \
+#define TX39_UARTDMACTRL2_DMALENGTH_SET(cr, val)			\
 	((cr) | ((val) & TX39_UARTDMACTRL1_DMALENGTH_MASK))
 
 /*
@@ -137,7 +147,7 @@
 /* R */
 #define TX39_UARTDMACNT_DMACNT_SHIFT	0
 #define TX39_UARTDMACNT_DMACNT_MASK	0xffff
-#define TX39_UARTDMACNT_DMACNT(cr) \
+#define TX39_UARTDMACNT_DMACNT(cr)					\
 	((cr) & TX39_UARTDMACNT_DMACNT_MASK)
 
 /*
@@ -147,7 +157,7 @@
 #define	TX39_UARTTXHOLD_BREAK		0x00000100
 #define TX39_UARTTXHOLD_TXDATA_SHIFT	0
 #define TX39_UARTTXHOLD_TXDATA_MASK	0x000000ff
-#define TX39_UARTTXHOLD_TXDATA_SET(cr, val) \
+#define TX39_UARTTXHOLD_TXDATA_SET(cr, val)				\
 	((cr) | ((val) & TX39_UARTTXHOLD_TXDATA_MASK))
 
 /*
@@ -156,5 +166,5 @@
 /* R */
 #define TX39_UARTRXHOLD_RXDATA_SHIFT	0
 #define TX39_UARTRXHOLD_RXDATA_MASK	0x000000ff
-#define	TX39_UARTRXHOLD_RXDATA(cr) \
+#define	TX39_UARTRXHOLD_RXDATA(cr)					\
 	((cr) & TX39_UARTRXHOLD_RXDATA_MASK)

@@ -1,29 +1,39 @@
-/*	$NetBSD: tx39sib.c,v 1.7 2000/10/22 10:42:32 uch Exp $ */
+/*	$NetBSD: tx39sib.c,v 1.8 2001/06/14 11:09:56 uch Exp $ */
 
-/*
- * Copyright (c) 2000, by UCHIYAMA Yasushi
+/*-
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by UCHIYAMA Yasushi.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. The name of the developer may NOT be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -53,10 +63,10 @@ int	tx39sibdebug = 0;
 #define	DPRINTF(arg)
 #endif
 
-int	tx39sib_match	__P((struct device*, struct cfdata*, void*));
-void	tx39sib_attach	__P((struct device*, struct device*, void*));
-int	tx39sib_print	__P((void*, const char*));
-int	tx39sib_search	__P((struct device*, struct cfdata*, void*));
+int	tx39sib_match(struct device *, struct cfdata *, void *);
+void	tx39sib_attach(struct device *, struct device *, void *);
+int	tx39sib_print(void *, const char *);
+int	tx39sib_search(struct device *, struct cfdata *, void *);
 
 #define TX39_CLK2X	18432000
 const int sibsclk_divide_table[8] = {
@@ -123,9 +133,9 @@ struct tx39sib_softc {
 	int sc_attached;
 };
 
-__inline int	__txsibsf0_ready __P((tx_chipset_tag_t));
+__inline int	__txsibsf0_ready(tx_chipset_tag_t);
 #ifdef TX39SIBDEBUG
-void	tx39sib_dump __P((struct tx39sib_softc*));
+void	tx39sib_dump(struct tx39sib_softc *);
 #endif
 
 struct cfattach tx39sib_ca = {
@@ -133,19 +143,13 @@ struct cfattach tx39sib_ca = {
 };
 
 int
-tx39sib_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+tx39sib_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	return ATTACH_FIRST;
+	return (ATTACH_FIRST);
 }
 
 void
-tx39sib_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+tx39sib_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct txsim_attach_args *ta = aux;
 	struct tx39sib_softc *sc = (void*)self;
@@ -183,8 +187,7 @@ tx39sib_attach(parent, self, aux)
 }
 
 void
-tx39sib_enable1(dev)
-	struct device *dev;
+tx39sib_enable1(struct device *dev)
 {
 	struct tx39sib_softc *sc = (void*)dev;
 	struct tx39sib_param *param = &sc->sc_param;
@@ -211,9 +214,9 @@ tx39sib_enable1(dev)
 	/* DMA */
 	reg = tx_conf_read(tc, TX39_SIBDMACTRL_REG);
 	reg &= ~(TX39_SIBDMACTRL_ENDMARXSND |
-		 TX39_SIBDMACTRL_ENDMATXSND |
-		 TX39_SIBDMACTRL_ENDMARXTEL |
-		 TX39_SIBDMACTRL_ENDMATXTEL);
+	    TX39_SIBDMACTRL_ENDMATXSND |
+	    TX39_SIBDMACTRL_ENDMARXTEL |
+	    TX39_SIBDMACTRL_ENDMATXTEL);
 	tx_conf_write(tc, TX39_SIBDMACTRL_REG, reg);
 
 	/* 
@@ -225,8 +228,7 @@ tx39sib_enable1(dev)
 }
 
 void
-tx39sib_enable2(dev)
-	struct device *dev;
+tx39sib_enable2(struct device *dev)
 {
 	struct tx39sib_softc *sc = (void*)dev;
 	tx_chipset_tag_t tc = sc->sc_tc;
@@ -238,8 +240,7 @@ tx39sib_enable2(dev)
 }
 
 void
-tx39sib_disable(dev)
-	struct device *dev;
+tx39sib_disable(struct device *dev)
 {
 	struct tx39sib_softc *sc = (void*)dev;
 	tx_chipset_tag_t tc = sc->sc_tc;
@@ -258,7 +259,7 @@ tx39sib_disable(dev)
 	reg = tx_conf_read(tc, TX39_SIBCTRL_REG);
 	reg &= ~TX39_SIBCTRL_ENSF0;
 	reg &= ~(TX39_SIBCTRL_ENSF1 | TX39_SIBCTRL_SELTELSF1 | 
-		 TX39_SIBCTRL_SELSNDSF1);
+	    TX39_SIBCTRL_SELSNDSF1);
 	tx_conf_write(tc, TX39_SIBCTRL_REG, reg);
 
 	/* disable TX39SIB module */
@@ -267,19 +268,15 @@ tx39sib_disable(dev)
 }
 
 int
-tx39sib_clock(dev)
-	struct device *dev;
+tx39sib_clock(struct device *dev)
 {
 	struct tx39sib_softc *sc = (void*)dev;
 
-	return TX39_CLK2X / sibsclk_divide_table[sc->sc_param.sp_clock];
+	return (TX39_CLK2X / sibsclk_divide_table[sc->sc_param.sp_clock]);
 }
 
 int
-tx39sib_search(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+tx39sib_search(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct tx39sib_softc *sc = (void*)parent;
 	struct txsib_attach_args sa;
@@ -291,7 +288,7 @@ tx39sib_search(parent, cf, aux)
 
 	if (sa.sa_slot == TXSIBIFCF_SLOT_DEFAULT) {
 		printf("tx39sib_search: wildcarded slot, skipping\n");
-		return 0;
+		return (0);
 	}
 	
 	if (!(sc->sc_attached & (1 << sa.sa_slot)) &&/* not attached slot */
@@ -300,34 +297,31 @@ tx39sib_search(parent, cf, aux)
 		sc->sc_attached |= (1 << sa.sa_slot);
 	}
 
-	return 0;
+	return (0);
 }
 
 int
-tx39sib_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+tx39sib_print(void *aux, const char *pnp)
 {
 	struct txsib_attach_args *sa = aux;
 
 	printf(" slot %d", sa->sa_slot);
 
-	return QUIET;
+	return (QUIET);
 }
 
 /*
  * sync access method. don't use runtime.
  */
 
-__inline int
-__txsibsf0_ready(tc)
-	tx_chipset_tag_t tc;
+__inline__ int
+__txsibsf0_ready(tx_chipset_tag_t tc)
 {
 	int i;
 	
 	tx_conf_write(tc, TX39_INTRSTATUS1_REG, TX39_INTRSTATUS1_SIBSF0INT);
 	for (i = 0; (!(tx_conf_read(tc, TX39_INTRSTATUS1_REG) & 
-		       TX39_INTRSTATUS1_SIBSF0INT)) && i < 1000; i++) {
+	    TX39_INTRSTATUS1_SIBSF0INT)) && i < 1000; i++) {
 		if (i > 100 && !(i % 100)) {
 			printf("sf0 busy loop: retry count %d\n", i);
 		}
@@ -335,17 +329,14 @@ __txsibsf0_ready(tc)
 
 	if (i >= 1000) {
 		printf("sf0 busy\n");
-		return 0;
+		return (0);
 	}
 
-	return 1;
+	return (1);
 }
 
 void
-txsibsf0_reg_write(tc, addr, val)
-	tx_chipset_tag_t tc;
-	int addr;
-	u_int16_t val;
+txsibsf0_reg_write(tx_chipset_tag_t tc, int addr, u_int16_t val)
 {
 	txreg_t reg;
 
@@ -359,17 +350,13 @@ txsibsf0_reg_write(tc, addr, val)
 }
 
 u_int16_t
-txsibsf0_reg_read(tc, addr)
-	tx_chipset_tag_t tc;
-	int addr;
+txsibsf0_reg_read(tx_chipset_tag_t tc, int addr)
 {
-	return TX39_SIBSF0_REGDATA(txsibsf0_read(tc, addr));
+	return (TX39_SIBSF0_REGDATA(txsibsf0_read(tc, addr)));
 }
 
 u_int32_t
-txsibsf0_read(tc, addr)
-	tx_chipset_tag_t tc;
-	int addr;
+txsibsf0_read(tx_chipset_tag_t tc, int addr)
 {
 	txreg_t reg;
 	int retry = 3;
@@ -387,18 +374,17 @@ txsibsf0_read(tc, addr)
 	if (retry <= 0) 
 		printf("txsibsf0_read: command failed\n");
 
-	return reg;
+	return (reg);
 }
 
 #ifdef TX39SIBDEBUG
-#define ISSETPRINT_CTRL(r, m) \
+#define ISSETPRINT_CTRL(r, m)						\
 	__is_set_print(r, TX39_SIBCTRL_##m, #m)
-#define ISSETPRINT_DMACTRL(r, m) \
+#define ISSETPRINT_DMACTRL(r, m)					\
 	__is_set_print(r, TX39_SIBDMACTRL_##m, #m)
 
 void
-tx39sib_dump(sc)
-	struct tx39sib_softc *sc;
+tx39sib_dump(struct tx39sib_softc *sc)
 {
 	tx_chipset_tag_t tc = sc->sc_tc;
 	txreg_t reg;

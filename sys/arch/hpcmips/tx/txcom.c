@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.13 2001/06/13 19:09:08 uch Exp $ */
+/*	$NetBSD: txcom.c,v 1.14 2001/06/14 11:09:56 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -167,7 +167,7 @@ cdev_decl(txcom);
 
 struct consdev txcomcons = {
 	NULL, NULL, txcom_cngetc, txcom_cnputc, txcom_cnpollc, 
-	    NULL, NODEV, CN_NORMAL
+	NULL, NODEV, CN_NORMAL
 };
 
 /* Serial console */
@@ -199,13 +199,13 @@ txcom_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Check this slot used as serial console */
 	console = (ua->ua_slot == txcom_chip.sc_slot) &&
-		(txcom_chip.sc_hwflags & TXCOM_HW_CONSOLE);
+	    (txcom_chip.sc_hwflags & TXCOM_HW_CONSOLE);
 
 	if (console) {
 		sc->sc_chip = &txcom_chip;
 	} else {
 		if (!(sc->sc_chip = malloc(sizeof(struct txcom_chip),
-					   M_DEVBUF, M_WAITOK))) {
+		    M_DEVBUF, M_WAITOK))) {
 			printf(": can't allocate chip\n");
 			return;
 		}
@@ -255,19 +255,19 @@ txcom_attach(struct device *parent, struct device *self, void *aux)
 #define TXCOMINTR(i, s) MAKEINTR(2, TX39_INTRSTATUS2_UART##i##INT(s))
 	
 	tx_intr_establish(tc, TXCOMINTR(RX, slot), IST_EDGE, IPL_TTY, 
-			  txcom_rxintr, sc);
+	    txcom_rxintr, sc);
 	tx_intr_establish(tc, TXCOMINTR(TX, slot), IST_EDGE, IPL_TTY,
-			  txcom_txintr, sc);
+	    txcom_txintr, sc);
 	tx_intr_establish(tc, TXCOMINTR(RXOVERRUN, slot), IST_EDGE, IPL_TTY,
-			  txcom_rxintr, sc);
+	    txcom_rxintr, sc);
 	tx_intr_establish(tc, TXCOMINTR(TXOVERRUN, slot), IST_EDGE, IPL_TTY,
-			  txcom_txintr, sc);
+	    txcom_txintr, sc);
 	tx_intr_establish(tc, TXCOMINTR(FRAMEERR, slot), IST_EDGE, IPL_TTY,
-			  txcom_frameerr_intr, sc);
+	    txcom_frameerr_intr, sc);
 	tx_intr_establish(tc, TXCOMINTR(PARITYERR, slot), IST_EDGE, IPL_TTY,
-			  txcom_parityerr_intr, sc);
+	    txcom_parityerr_intr, sc);
 	tx_intr_establish(tc, TXCOMINTR(BREAK, slot), IST_EDGE, IPL_TTY,
-			  txcom_break_intr, sc);
+	    txcom_break_intr, sc);
 
 	/*
 	 * UARTA has external signal line. (its wiring is platform dependent)
@@ -275,9 +275,9 @@ txcom_attach(struct device *parent, struct device *self, void *aux)
 	if (IS_COM0(slot)) {
 		/* install DCD, CTS hooks. */
 		config_hook(CONFIG_HOOK_EVENT, CONFIG_HOOK_COM0_DCD,
-			    CONFIG_HOOK_EXCLUSIVE, txcom_dcd_hook, sc);
+		    CONFIG_HOOK_EXCLUSIVE, txcom_dcd_hook, sc);
 		config_hook(CONFIG_HOOK_EVENT, CONFIG_HOOK_COM0_CTS,
-			    CONFIG_HOOK_EXCLUSIVE, txcom_cts_hook, sc);
+		    CONFIG_HOOK_EXCLUSIVE, txcom_cts_hook, sc);
 	}
 
 	/*
@@ -330,7 +330,7 @@ txcom_enable(struct txcom_chip *chip)
 
 	/* External power supply (if any) */
 	config_hook_call(CONFIG_HOOK_POWERCONTROL,
-			 CONFIG_HOOK_POWERCONTROL_COM0, PWCTL_ON);
+	    CONFIG_HOOK_POWERCONTROL_COM0, PWCTL_ON);
 	delay(3);
 
 	/* Supply clock */
@@ -354,7 +354,7 @@ txcom_enable(struct txcom_chip *chip)
 	timeout = 100000;
 	
 	while(!(tx_conf_read(tc, ofs) & TX39_UARTCTRL1_UARTON) &&
-	      --timeout > 0)
+	    --timeout > 0)
 		;
 	
 	if (timeout == 0 && !cold) {
@@ -465,7 +465,7 @@ txcom_cnputc(dev_t dev, int c)
 	__txcom_txbufready(chip, -1);
 
 	tx_conf_write(tc, TX39_UARTTXHOLD_REG(chip->sc_slot), 
-		      (c & TX39_UARTTXHOLD_TXDATA_MASK));
+	    (c & TX39_UARTTXHOLD_TXDATA_MASK));
 
 	__txcom_txbufready(chip, -1);
 	
@@ -577,7 +577,7 @@ txcom_break(struct txcom_softc *sc, int on)
 	struct txcom_chip *chip = sc->sc_chip;
 
 	tx_conf_write(chip->sc_tc, TX39_UARTTXHOLD_REG(chip->sc_slot), 
-		      on ? TX39_UARTTXHOLD_BREAK : 0);
+	    on ? TX39_UARTTXHOLD_BREAK : 0);
 }
 
 void
@@ -591,8 +591,8 @@ txcom_modem(struct txcom_softc *sc, int on)
 	/* assert DTR */
 	if (IS_COM0(slot)) {
 		config_hook_call(CONFIG_HOOK_SET, 
-				 CONFIG_HOOK_COM0_DTR,
-				 (void *)on);
+		    CONFIG_HOOK_COM0_DTR,
+		    (void *)on);
 	}
 
 	reg = tx_conf_read(tc, TX39_UARTCTRL1_REG(slot));
@@ -686,7 +686,7 @@ txcom_rxintr(void *arg)
 
 	c = TX39_UARTRXHOLD_RXDATA(
 		tx_conf_read(chip->sc_tc, 
-			     TX39_UARTRXHOLD_REG(chip->sc_slot)));
+		    TX39_UARTRXHOLD_REG(chip->sc_slot)));
 
 	sc->sc_rbuf[sc->sc_rbput] = c;
 	sc->sc_rbput = (sc->sc_rbput + 1) % TXCOM_RING_MASK;
@@ -701,7 +701,7 @@ txcom_rxsoft(void *arg)
 {
 	struct txcom_softc *sc = arg;
 	struct tty *tp = sc->sc_tty;
-	int (*rint) __P((int c, struct tty *tp));
+	int (*rint)(int, struct tty *);
 	int code;
 	int s, end, get;
 
@@ -735,8 +735,8 @@ txcom_txintr(void *arg)
 
 	if (sc->sc_tbc > 0) {
 		tx_conf_write(tc, TX39_UARTTXHOLD_REG(chip->sc_slot), 
-			      (*sc->sc_tba & 
-			       TX39_UARTTXHOLD_TXDATA_MASK));
+		    (*sc->sc_tba & 
+			TX39_UARTTXHOLD_TXDATA_MASK));
 		sc->sc_tbc--;
 		sc->sc_tba++;
 	} else {
@@ -1035,7 +1035,7 @@ txcomstart(struct tty *tp)
 
 	/* Output the first character of the contiguous buffer. */
 	tx_conf_write(tc, TX39_UARTTXHOLD_REG(slot), 
-		      (*sc->sc_tba & TX39_UARTTXHOLD_TXDATA_MASK));
+	    (*sc->sc_tba & TX39_UARTTXHOLD_TXDATA_MASK));
 		       
 	sc->sc_tbc--;
 	sc->sc_tba++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39power.c,v 1.8 2000/10/22 10:42:32 uch Exp $ */
+/*	$NetBSD: tx39power.c,v 1.9 2001/06/14 11:09:56 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@ static void __tx39power_dump(struct tx39power_softc *);
 int
 tx39power_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	return ATTACH_FIRST;
+	return (ATTACH_FIRST);
 }
 
 void
@@ -121,34 +121,34 @@ tx39power_attach(struct device *parent, struct device *self, void *aux)
 	/* enable stop timer */
 	reg = tx_conf_read(tc, TX39_POWERCTRL_REG);
 	reg &= ~(TX39_POWERCTRL_STPTIMERVAL_MASK <<
-		 TX39_POWERCTRL_STPTIMERVAL_SHIFT);
+	    TX39_POWERCTRL_STPTIMERVAL_SHIFT);
 	reg = TX39_POWERCTRL_STPTIMERVAL_SET(reg,
-					     TX39_POWERCTRL_STPTIMERVAL_MAX);
+	    TX39_POWERCTRL_STPTIMERVAL_MAX);
 	reg |= TX39_POWERCTRL_ENSTPTIMER;
 	tx_conf_write(tc, TX39_POWERCTRL_REG, reg);
 
 	/* install power event handler */
 	/* low priority */
 	tx_intr_establish(tc, MAKEINTR(5, TX39_INTRSTATUS5_POSPWRINT),
-			  IST_EDGE, IPL_CLOCK, 
-			  tx39power_intr_p, sc);
+	    IST_EDGE, IPL_CLOCK, 
+	    tx39power_intr_p, sc);
 	tx_intr_establish(tc, MAKEINTR(5, TX39_INTRSTATUS5_NEGPWRINT),
-			  IST_EDGE, IPL_CLOCK,			    
-			  tx39power_intr_n, sc);
+	    IST_EDGE, IPL_CLOCK,			    
+	    tx39power_intr_n, sc);
 	/* high priority */
 	tx_intr_establish(tc, MAKEINTR(5, TX39_INTRSTATUS5_POSPWROKINT),
-			  IST_EDGE, IPL_CLOCK, 
-			  tx39power_ok_intr_p, sc);
+	    IST_EDGE, IPL_CLOCK, 
+	    tx39power_ok_intr_p, sc);
 	tx_intr_establish(tc, MAKEINTR(5, TX39_INTRSTATUS5_NEGPWROKINT),
-			  IST_EDGE, IPL_CLOCK,			    
-			  tx39power_ok_intr_n, sc);
+	    IST_EDGE, IPL_CLOCK,			    
+	    tx39power_ok_intr_n, sc);
 	/* user driven event */
 	tx_intr_establish(tc, MAKEINTR(5, TX39_INTRSTATUS5_POSONBUTNINT),
-			  IST_EDGE, IPL_CLOCK,
-			  tx39power_button_intr_p, sc);
+	    IST_EDGE, IPL_CLOCK,
+	    tx39power_button_intr_p, sc);
 	tx_intr_establish(tc, MAKEINTR(5, TX39_INTRSTATUS5_NEGONBUTNINT),
-			  IST_EDGE, IPL_CLOCK,			    
-			  tx39power_button_intr_n, sc);
+	    IST_EDGE, IPL_CLOCK,			    
+	    tx39power_button_intr_n, sc);
 }
 
 void
@@ -222,19 +222,21 @@ static int
 tx39power_button_intr_p(void *arg)
 {
 	config_hook_call(CONFIG_HOOK_BUTTONEVENT,
-			 CONFIG_HOOK_BUTTONEVENT_POWER,
-			 (void *)1 /* on */);
-	return 0;
+	    CONFIG_HOOK_BUTTONEVENT_POWER,
+	    (void *)1 /* on */);
+
+	return (0);
 }
 
 static int
 tx39power_button_intr_n(void *arg)
 {
 	config_hook_call(CONFIG_HOOK_BUTTONEVENT,
-			 CONFIG_HOOK_BUTTONEVENT_POWER,
-			 (void *)0 /* off */);
+	    CONFIG_HOOK_BUTTONEVENT_POWER,
+	    (void *)0 /* off */);
 	DUMP_REGS(arg);
-	return 0;
+
+	return (0);
 }
 
 int
@@ -243,7 +245,8 @@ tx39power_intr_p(void *arg)
 	/* low priority event */
 	printf("power_p\n");
 	DUMP_REGS(arg);
-	return 0;
+
+	return (0);
 }
 
 static int
@@ -252,7 +255,8 @@ tx39power_intr_n(void *arg)
 	/* low priority event */
 	printf("power_n\n");
 	DUMP_REGS(arg);
-	return 0;
+
+	return (0);
 }
 
 static int
@@ -262,8 +266,9 @@ tx39power_ok_intr_p(void *arg)
 	printf("power NG\n");
 	DUMP_REGS(arg);
 	config_hook_call(CONFIG_HOOK_PMEVENT,
-			 CONFIG_HOOK_PMEVENT_SUSPENDREQ, NULL);
-	return 0;
+	    CONFIG_HOOK_PMEVENT_SUSPENDREQ, NULL);
+
+	return (0);
 }
 
 static int
@@ -272,7 +277,8 @@ tx39power_ok_intr_n(void *arg)
 	/* high priority event */
 	printf("power OK\n");
 	DUMP_REGS(arg);
-	return 0;
+
+	return (0);
 }
 
 #ifdef TX39POWERDEBUG
@@ -314,4 +320,3 @@ __tx39power_dump (struct tx39power_softc *sc)
 	printf("\n");
 }
 #endif /* TX39POWERDEBUG */
-

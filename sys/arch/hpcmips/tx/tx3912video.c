@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.22 2001/02/22 18:38:04 uch Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.23 2001/06/14 11:09:55 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -106,7 +106,8 @@ paddr_t	tx3912video_mmap(void *, off_t, int);
 
 void	tx3912video_clut_init(struct tx3912video_softc *);
 void	tx3912video_clut_install(void *, struct rasops_info *);
-void	tx3912video_clut_get(struct tx3912video_softc *, u_int32_t *, int, int);
+void	tx3912video_clut_get(struct tx3912video_softc *, u_int32_t *, int,
+	    int);
 			     
 static int __get_color8(int);
 static int __get_color4(int);
@@ -124,7 +125,7 @@ struct hpcfb_accessops tx3912video_ha = {
 int
 tx3912video_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	return ATTACH_NORMAL;
+	return (ATTACH_NORMAL);
 }
 
 void
@@ -148,9 +149,9 @@ tx3912video_attach(struct device *parent, struct device *self, void *aux)
 
 	/* print video module information */
 	printf(": %s, frame buffer 0x%08x-0x%08x\n",
-	       depth_print[(ffs(chip->vc_fbdepth) - 1) & 0x3],
-	       (unsigned)chip->vc_fbpaddr, 
-	       (unsigned)(chip->vc_fbpaddr + chip->vc_fbsize));
+	    depth_print[(ffs(chip->vc_fbdepth) - 1) & 0x3],
+	    (unsigned)chip->vc_fbpaddr, 
+	    (unsigned)(chip->vc_fbpaddr + chip->vc_fbsize));
 
 	/* don't inverse VDAT[3:0] signal */
 	tc = chip->vc_v;
@@ -163,13 +164,12 @@ tx3912video_attach(struct device *parent, struct device *self, void *aux)
 
 	/* if serial console, power off video module */
 	tx3912video_power(sc, 0, 0, (void *)
-			  (console ? PWR_RESUME : PWR_SUSPEND));
+	    (console ? PWR_RESUME : PWR_SUSPEND));
 	
 	/* Add a hard power hook to power saving */
 	sc->sc_powerhook = config_hook(CONFIG_HOOK_PMEVENT,
-				       CONFIG_HOOK_PMEVENT_HARDPOWER,
-				       CONFIG_HOOK_SHARE,
-				       tx3912video_power, sc);
+	    CONFIG_HOOK_PMEVENT_HARDPOWER, CONFIG_HOOK_SHARE,
+	    tx3912video_power, sc);
 	if (sc->sc_powerhook == 0)
 		printf("WARNING unable to establish hard power hook");
 
@@ -211,7 +211,7 @@ tx3912video_power(void *ctx, int type, long id, void *msg)
 	switch (why) {
 	case PWR_RESUME:
 		if (!sc->sc_console)
-			return 0; /* serial console */
+			return (0); /* serial console */
 
 		DPRINTF(("%s: ON\n", sc->sc_dev.dv_xname));
 		val = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);
@@ -228,7 +228,7 @@ tx3912video_power(void *ctx, int type, long id, void *msg)
 		break;
 	}
 
-	return 0;
+	return (0);
 }
 
 void
@@ -251,10 +251,10 @@ tx3912video_hpcfbinit(sc)
 	fb->hf_width		= chip->vc_fbwidth;
 	fb->hf_baseaddr		= (u_long)fbvaddr;
 	fb->hf_offset		= (u_long)fbvaddr -
-					 mips_ptob(mips_btop(fbvaddr));
+	    mips_ptob(mips_btop(fbvaddr));
 					/* frame buffer start offset   	*/
 	fb->hf_bytes_per_line	= (chip->vc_fbwidth * chip->vc_fbdepth)
-		/ NBBY;
+	    / NBBY;
 	fb->hf_nplanes		= 1;
 	fb->hf_bytes_per_plane	= chip->vc_fbheight * fb->hf_bytes_per_line;
 
@@ -316,8 +316,8 @@ tx3912video_init(paddr_t fb_start, paddr_t *fb_end)
 		bootinfo->fb_type = reverse ? BIFB_D2_M2L_3 : BIFB_D2_M2L_0;
 		reg = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);	
 		TX3912_VIDEOCTRL1_BITSEL_CLR(reg);
-		reg = TX3912_VIDEOCTRL1_BITSEL_SET(
-			reg, TX3912_VIDEOCTRL1_BITSEL_2BITGREYSCALE);
+		reg = TX3912_VIDEOCTRL1_BITSEL_SET(reg,
+		    TX3912_VIDEOCTRL1_BITSEL_2BITGREYSCALE);
 		tx_conf_write(tc, TX3912_VIDEOCTRL1_REG, reg);
 		break;
 	case 8:
@@ -351,9 +351,9 @@ tx3912video_init(paddr_t fb_start, paddr_t *fb_end)
 	return (0);
 }
 
- int
+int
 tx3912video_framebuffer_alloc(struct video_chip *chip, paddr_t fb_start,
-			      paddr_t *fb_end /* buffer allocation hint */)
+    paddr_t *fb_end /* buffer allocation hint */)
 {
 	struct extent_fixed ex_fixed[10];
 	struct extent *ex;
@@ -362,25 +362,23 @@ tx3912video_framebuffer_alloc(struct video_chip *chip, paddr_t fb_start,
 
 	/* calcurate frame buffer size */
 	size = (chip->vc_fbwidth * chip->vc_fbheight * chip->vc_fbdepth) /
-		NBBY;
+	    NBBY;
 
 	/* extent V-RAM region */
 	ex = extent_create("Frame buffer address", fb_start, *fb_end,
-			   0, (caddr_t)ex_fixed, sizeof ex_fixed,
-			   EX_NOWAIT);
+	    0, (caddr_t)ex_fixed, sizeof ex_fixed,
+	    EX_NOWAIT);
 	if (ex == 0)
 		return (1);
 
 	/* Allocate V-RAM area */
 	error = extent_alloc_subregion(ex, fb_start, fb_start + size - 1,
-				       size, TX3912_FRAMEBUFFER_ALIGNMENT,
-				       TX3912_FRAMEBUFFER_BOUNDARY,
-				       EX_FAST|EX_NOWAIT, &addr);
+	    size, TX3912_FRAMEBUFFER_ALIGNMENT,
+	    TX3912_FRAMEBUFFER_BOUNDARY, EX_FAST|EX_NOWAIT, &addr);
 	extent_destroy(ex);
 
-	if (error != 0) {
+	if (error != 0)
 		return (1);
-	}
 
 	chip->vc_fbpaddr = addr;
 	chip->vc_fbvaddr = MIPS_PHYS_TO_KSEG1(addr);
@@ -445,11 +443,10 @@ tx3912video_resolution_init(struct video_chip *chip)
 	reg = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);
 	split = reg & TX3912_VIDEOCTRL1_DISPSPLIT;
 	bit8  = (TX3912_VIDEOCTRL1_BITSEL(reg) == 
-		 TX3912_VIDEOCTRL1_BITSEL_8BITCOLOR);
+	    TX3912_VIDEOCTRL1_BITSEL_8BITCOLOR);
 	val = TX3912_VIDEOCTRL1_BITSEL(reg);
 
-	if ((val == TX3912_VIDEOCTRL1_BITSEL_8BITCOLOR) &&
-	    !split) {
+	if ((val == TX3912_VIDEOCTRL1_BITSEL_8BITCOLOR) && !split) {
 		/* (LCD horizontal pixels / 8bit) * RGB - 1 */
 		horzval = (h / 8) * 3 - 1; 
 	} else {
@@ -517,9 +514,9 @@ tx3912video_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		idx = cmap->index;
 
 		if (sc->sc_fbconf.hf_class != HPCFB_CLASS_INDEXCOLOR ||
-			sc->sc_fbconf.hf_pack_width != 8 ||
-			!LEGAL_CLUT_INDEX(idx) ||
-			!LEGAL_CLUT_INDEX(idx + cnt -1)) {
+		    sc->sc_fbconf.hf_pack_width != 8 ||
+		    !LEGAL_CLUT_INDEX(idx) ||
+		    !LEGAL_CLUT_INDEX(idx + cnt -1)) {
 			return (EINVAL);
 		}
 
@@ -574,9 +571,9 @@ tx3912video_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case HPCFBIO_GDSPCONF:
 		dspconf = (struct hpcfb_dspconf *)data;
 		if ((dspconf->hd_unit_index != 0 &&
-		     dspconf->hd_unit_index != HPCFB_CURRENT_UNIT) ||
+		    dspconf->hd_unit_index != HPCFB_CURRENT_UNIT) ||
 		    (dspconf->hd_conf_index != 0 &&
-		     dspconf->hd_conf_index != HPCFB_CURRENT_CONFIG)) {
+			dspconf->hd_conf_index != HPCFB_CURRENT_CONFIG)) {
 			return (EINVAL);
 		}
 		*dspconf = sc->sc_dspconf;	/* structure assignment */
@@ -585,9 +582,9 @@ tx3912video_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case HPCFBIO_SDSPCONF:
 		dspconf = (struct hpcfb_dspconf *)data;
 		if ((dspconf->hd_unit_index != 0 &&
-		     dspconf->hd_unit_index != HPCFB_CURRENT_UNIT) ||
+		    dspconf->hd_unit_index != HPCFB_CURRENT_UNIT) ||
 		    (dspconf->hd_conf_index != 0 &&
-		     dspconf->hd_conf_index != HPCFB_CURRENT_CONFIG)) {
+			dspconf->hd_conf_index != HPCFB_CURRENT_CONFIG)) {
 			return (EINVAL);
 		}
 		/*
@@ -611,7 +608,7 @@ tx3912video_mmap(void *ctx, off_t offset, int prot)
 	struct tx3912video_softc *sc = (struct tx3912video_softc *)ctx;
 
 	if (offset < 0 || (sc->sc_fbconf.hf_bytes_per_plane +
-			   sc->sc_fbconf.hf_offset) <  offset) {
+	    sc->sc_fbconf.hf_offset) <  offset) {
 		return (-1);
 	}
 
@@ -680,7 +677,7 @@ __get_color4(int luti)
 
 void
 tx3912video_clut_get(struct tx3912video_softc *sc, u_int32_t *rgb, int beg,
-		     int cnt)
+    int cnt)
 {
 	int i;
 
@@ -690,8 +687,8 @@ tx3912video_clut_get(struct tx3912video_softc *sc, u_int32_t *rgb, int beg,
 	
 	for (i = beg; i < beg + cnt; i++) {
 		*rgb++ =  RGB24(__get_color8((i >> 5) & 0x7),
-				__get_color8((i >> 2) & 0x7),
-				__get_color4(i & 0x3));
+		    __get_color8((i >> 2) & 0x7),
+		    __get_color4(i & 0x3));
 	}
 }
 
@@ -740,56 +737,56 @@ tx3912video_clut_init(struct tx3912video_softc *sc)
 	 */
 	/* 2/3, 1/3 */
 	tx_conf_write(tc, TX3912_VIDEOCTRL8_REG, 
-		      TX3912_VIDEOCTRL8_PAT2_3_DEFAULT);
+	    TX3912_VIDEOCTRL8_PAT2_3_DEFAULT);
 	/* 3/4, 2/4 */
 	tx_conf_write(tc, TX3912_VIDEOCTRL9_REG, 
-		      (TX3912_VIDEOCTRL9_PAT3_4_DEFAULT << 16) |
-		      TX3912_VIDEOCTRL9_PAT2_4_DEFAULT);
+	    (TX3912_VIDEOCTRL9_PAT3_4_DEFAULT << 16) |
+	    TX3912_VIDEOCTRL9_PAT2_4_DEFAULT);
 	/* 4/5, 1/5 */
 	tx_conf_write(tc, TX3912_VIDEOCTRL10_REG, 
-		      TX3912_VIDEOCTRL10_PAT4_5_DEFAULT);
+	    TX3912_VIDEOCTRL10_PAT4_5_DEFAULT);
 	/* 3/5, 2/5 */
 	tx_conf_write(tc, TX3912_VIDEOCTRL11_REG, 
-		      TX3912_VIDEOCTRL11_PAT3_5_DEFAULT);
+	    TX3912_VIDEOCTRL11_PAT3_5_DEFAULT);
 	/* 6/7, 1/7 */
 	tx_conf_write(tc, TX3912_VIDEOCTRL12_REG, 
-		      TX3912_VIDEOCTRL12_PAT6_7_DEFAULT);
+	    TX3912_VIDEOCTRL12_PAT6_7_DEFAULT);
 	/* 5/7, 2/7 */
 	tx_conf_write(tc, TX3912_VIDEOCTRL13_REG, 
-		      TX3912_VIDEOCTRL13_PAT5_7_DEFAULT);
+	    TX3912_VIDEOCTRL13_PAT5_7_DEFAULT);
 	/* 4/7, 3/7 */
 	tx_conf_write(tc, TX3912_VIDEOCTRL14_REG, 
-		      TX3912_VIDEOCTRL14_PAT4_7_DEFAULT);
+	    TX3912_VIDEOCTRL14_PAT4_7_DEFAULT);
 
 	/* 
 	 * dither-pattern look-up table. (selected by uch)
 	 */
 	/* red */
 	tx_conf_write(tc, TX3912_VIDEOCTRL5_REG,
-		      (dither_level8[7] << 28) |
-		      (dither_level8[6] << 24) |
-		      (dither_level8[5] << 20) |
-		      (dither_level8[4] << 16) |
-		      (dither_level8[3] << 12) |
-		      (dither_level8[2] << 8) |
-		      (dither_level8[1] << 4) |
-		      (dither_level8[0] << 0));
+	    (dither_level8[7] << 28) |
+	    (dither_level8[6] << 24) |
+	    (dither_level8[5] << 20) |
+	    (dither_level8[4] << 16) |
+	    (dither_level8[3] << 12) |
+	    (dither_level8[2] << 8) |
+	    (dither_level8[1] << 4) |
+	    (dither_level8[0] << 0));
 	/* green */
 	tx_conf_write(tc, TX3912_VIDEOCTRL6_REG,
-		      (dither_level8[7] << 28) |
-		      (dither_level8[6] << 24) |
-		      (dither_level8[5] << 20) |
-		      (dither_level8[4] << 16) |
-		      (dither_level8[3] << 12) |
-		      (dither_level8[2] << 8) |
-		      (dither_level8[1] << 4) |
-		      (dither_level8[0] << 0));
+	    (dither_level8[7] << 28) |
+	    (dither_level8[6] << 24) |
+	    (dither_level8[5] << 20) |
+	    (dither_level8[4] << 16) |
+	    (dither_level8[3] << 12) |
+	    (dither_level8[2] << 8) |
+	    (dither_level8[1] << 4) |
+	    (dither_level8[0] << 0));
 	/* blue (2bit gray scale also use this look-up table) */
 	tx_conf_write(tc, TX3912_VIDEOCTRL7_REG,
-		      (dither_level4[3] << 12) |
-		      (dither_level4[2] << 8) |
-		      (dither_level4[1] << 4) |
-		      (dither_level4[0] << 0));
+	    (dither_level4[3] << 12) |
+	    (dither_level4[2] << 8) |
+	    (dither_level4[1] << 4) |
+	    (dither_level4[0] << 0));
 
 	tx3912video_reset(sc->sc_chip);
 }
