@@ -1,4 +1,4 @@
-.\"	$NetBSD: kdump.1,v 1.23 2003/11/16 10:13:48 manu Exp $
+.\"	$NetBSD: kdump.1,v 1.24 2003/11/16 10:16:56 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)kdump.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd July 17, 2003
+.Dd November 15, 2003
 .Dt KDUMP 1
 .Os
 .Sh NAME
@@ -107,10 +107,12 @@ option of
 .It Fl x Op Ar size
 Display GIO data in hex and ascii instead of
 .Xr vis 3
-format. The optional
+format.
+The optional
 .Ar size
-argument force byte groupping in the display. Supported values are 1 
-(byte per byte) and 4 (word per word). Default is 1.
+argument force byte groupping in the display.
+Supported values are 1 (byte per byte) and 4 (word per word).
+Default is 1.
 .El
 .Sh SEE ALSO
 .Xr ktrace 1
