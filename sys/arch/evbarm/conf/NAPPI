@@ -1,6 +1,6 @@
-#	$NetBSD: IXM1200,v 1.2 2002/07/15 17:18:03 ichiro Exp $
+#	$NetBSD: NAPPI,v 1.1 2002/07/15 17:18:03 ichiro Exp $
 #
-#	IXM1200 -- Intel IXM1200 Evaluation Board Kernel
+#	NAPPI -- Netwise APlication Platform Board Kernel
 #
 
 include	"arch/evbarm/conf/std.ixm1200"
@@ -147,6 +147,9 @@ ixpclk*		at ixpsip? addr 0xf0010300 size 0x10
 
 # Serial
 ixpcom*		at ixpsip? addr 0xf0000000 size 0x4000
+
+# Status LEDs
+nappinr*	at ixpsip? addr 0xf0021000 size 0x1000
 
 # IXP12x0 fast bus
 ixpio0		at mainbus?
