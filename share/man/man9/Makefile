@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.84 2001/07/01 04:11:14 gmcgarry Exp $
+#       $NetBSD: Makefile,v 1.85 2001/07/05 18:38:49 nathanw Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -14,7 +14,7 @@ MAN=	access.9 arp.9 audio.9 autoconf.9 bitmask_snprintf.9 \
 	pcmcia.9 pfil.9 physio.9 \
 	pmap.9 pool.9 powerhook_establish.9 ppsratecheck.9 psignal.9 \
 	ratecheck.9 resettodr.9 rnd.9 rt_timer.9 \
-	scsipi.9 shutdownhook_establish.9 sleep.9 softintr.9 \
+	scsipi.9 setrunqueue.9 shutdownhook_establish.9 sleep.9 softintr.9 \
 	spl.9 store.9 time.9 todr.9 uiomove.9 ucom.9 vme.9 \
 	usbdi.9 uvm.9 wdc.9
 MLINKS+=arp.9 arp_ifinit.9 arp.9 arpresolve.9 arp.9 arpintr.9
@@ -224,6 +224,7 @@ MLINKS+=rt_timer.9 rt_timer_queue_create.9 rt_timer.9 rt_timer_queue_change.9 \
 MLINKS+=pfil.9 pfil_hook_get.9 pfil.9 pfil_add_hook.9 pfil.9 pfil_remove_hook.9
 MLINKS+=powerhook_establish.9 powerhook_disestablish.9
 MLINKS+=psignal.9 pgsignal.9 psignal.9 gsignal.9
+MLINKS+=setrunqueue.9 remrunqueue.9
 MLINKS+=shutdownhook_establish.9 shutdownhook_disestablish.9
 MLINKS+=sleep.9 wakeup.9 sleep.9 tsleep.9 sleep.9 ltsleep.9
 MLINKS+=softintr.9 softintr_establish.9 softintr.9 softintr_disestablish.9 \
