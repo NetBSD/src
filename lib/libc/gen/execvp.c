@@ -1,4 +1,4 @@
-/*	$NetBSD: execvp.c,v 1.16 2000/01/22 22:19:09 mycroft Exp $	*/
+/*	$NetBSD: execvp.c,v 1.17 2001/09/18 05:09:37 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: execvp.c,v 1.16 2000/01/22 22:19:09 mycroft Exp $");
+__RCSID("$NetBSD: execvp.c,v 1.17 2001/09/18 05:09:37 simonb Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -95,7 +95,9 @@ execvp(name, argv)
 	/* Get the path we're searching. */
 	if (!(path = getenv("PATH")))
 		path = _PATH_DEFPATH;
-	cur = path = strdup(path);
+	cur = alloca(strlen(path) + 1);
+	strcpy(cur, path);
+	path = cur;
 
 	while ((p = strsep(&cur, ":")) != NULL) {
 		/*
@@ -136,7 +138,7 @@ retry:		rwlock_rdlock(&__environ_lock);
 			break;
 		case ENOEXEC:
 			for (cnt = 0; argv[cnt] != NULL; ++cnt);
-			if ((memp = malloc((cnt + 2) * sizeof (*memp))) == NULL)
+			if ((memp = alloca((cnt + 2) * sizeof (*memp))) == NULL)
 				goto done;
 			memp[0] = _PATH_BSHELL;
 			memp[1] = bp;
@@ -144,7 +146,6 @@ retry:		rwlock_rdlock(&__environ_lock);
 			rwlock_rdlock(&__environ_lock);
 			(void)execve(_PATH_BSHELL, (char * const *)memp, environ);
 			rwlock_unlock(&__environ_lock);
-			free(memp);
 			goto done;
 		case ETXTBSY:
 			if (etxtbsy < 3)
@@ -158,7 +159,6 @@ retry:		rwlock_rdlock(&__environ_lock);
 		errno = EACCES;
 	else if (!errno)
 		errno = ENOENT;
-done:	if (path)
-		free(path);
+done:
 	return (-1);
 }
