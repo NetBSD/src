@@ -14,6 +14,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: hpux11.m4,v 8.1 1999/11/19 05:22:59 gshapiro Exp')
+VERSIONID(`$NetBSD: hpux11.m4,v 1.3 2003/06/01 14:06:50 atatat Exp $')
 
 ifdef(`LOCAL_MAILER_PATH',, `define(`LOCAL_MAILER_PATH', /usr/bin/rmail)')dnl
 _DEFIFNOT(`LOCAL_MAILER_FLAGS', `m9')dnl

@@ -21,6 +21,7 @@ divert(-1)
 
 divert(0)dnl
 VERSIONID(`Id: generic-ultrix4.mc,v 8.11 1999/02/07 07:26:03 gshapiro Exp')
+VERSIONID(`$NetBSD: generic-ultrix4.mc,v 1.3 2003/06/01 14:06:44 atatat Exp $')
 OSTYPE(ultrix4)dnl
 DOMAIN(generic)dnl
 MAILER(local)dnl

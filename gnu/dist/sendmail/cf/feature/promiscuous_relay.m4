@@ -11,6 +11,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: promiscuous_relay.m4,v 8.12 2001/02/06 17:14:35 ca Exp')
+VERSIONID(`$NetBSD: promiscuous_relay.m4,v 1.4 2003/06/01 14:06:46 atatat Exp $')
 divert(-1)
 
 define(`_PROMISCUOUS_RELAY_', 1)
