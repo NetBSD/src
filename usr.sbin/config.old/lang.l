@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)lang.l	5.8 (Berkeley) 4/19/91
- *	$Id: lang.l,v 1.7 1993/12/05 23:04:49 mycroft Exp $
+ *	$Id: lang.l,v 1.8 1994/02/01 02:07:26 cgd Exp $
  */
 
 #include <ctype.h>
@@ -78,6 +78,9 @@ struct kt {
 	{ "machine",	MACHIN },
 	{ "major",	MAJOR },
 	{ "makeoptions", MAKEOPTIONS },
+#if MACHINE_AMIGA
+        { "manufacturer", MANUFACTURER },
+#endif
 	{ "master",	MASTER },
 	{ "maxfdescs",	MAXFDESCS },
 	{ "maxusers",	MAXUSERS },
@@ -92,6 +95,9 @@ struct kt {
 	{ "port",	PORT },
 #endif MACHINE_I386
 	{ "priority",	PRIORITY },
+#if MACHINE_AMIGA
+        { "product",    PRODUCT },
+#endif
 	{ "pseudo-device",PSEUDO_DEVICE },
 	{ "root",	ROOT },
 #if MACHINE_HP300
@@ -110,7 +116,7 @@ struct kt {
 	{ 0, 0 },
 };
 %}
-WORD	[A-Za-z_][-A-Za-z_]*
+WORD  [A-Za-z_]([A-Za-z_0-9]+[A-Za-z_])*[-A-Za-z_]*
 %%
 {WORD}		{
 			int i;
