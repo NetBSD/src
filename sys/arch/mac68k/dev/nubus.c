@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.11 1995/04/29 20:23:46 briggs Exp $	*/
+/*	$NetBSD: nubus.c,v 1.12 1995/06/21 02:59:08 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -35,7 +35,16 @@
 
 #include <machine/cpu.h>
 
+#include <vm/vm.h>
+
 #include "nubus.h"
+
+#if DEBUG
+static int	nubus_debug = 0x01;
+#define NDB_PROBE	0x1
+#define NDB_FOLLOW	0x2
+#define NDB_ARITH	0x4
+#endif
 
 extern int	matchbyname();
 
@@ -60,6 +69,7 @@ nubusattach(parent, self, aux)
 	struct	device	*parent, *self;
 	void		*aux;
 {
+	extern u_long	int_video_start;
 	nubus_slot	fmtblock;
 	int		i;
 
@@ -69,6 +79,24 @@ nubusattach(parent, self, aux)
 		if (probe_slot(i, &fmtblock)) {
 			config_found(self, &fmtblock, nubusprint);
 		}
+	}
+
+	/*
+	 * Kludge for internal video.
+	 */
+	if (int_video_start) {
+		int	int_video_slot = 0xe;
+		fmtblock.top = NUBUS_SLOT_TO_BASE(int_video_slot+1);
+		fmtblock.slot = int_video_slot;
+		fmtblock.bytelanes = 0x0F;
+		fmtblock.step = 4;
+		fmtblock.test_pattern = ~NUBUS_ROM_TEST_PATTERN;
+		fmtblock.format = 1;
+		fmtblock.revision_level = 1;
+		fmtblock.crc = 1;
+		fmtblock.length = 0;
+		fmtblock.directory_offset = 0;
+		config_found(self, &fmtblock, nubusprint);
 	}
 }
 
@@ -83,11 +111,11 @@ nubusprint(aux, name)
 
 	fmt = (nubus_slot *) aux;
 	if (name) {
-		printf("%s: Card in slot %d: Name: %s", name, fmt->slot,
+		printf("%s: slot %x: %s ", name, fmt->slot,
 				nubus_get_card_name(fmt));
-		printf("Vendor: %s, \n",
+		printf("(Vendor: %s, ",
 				nubus_get_vendor(fmt, NUBUS_RSRC_VEND_ID));
-		printf("Part: %s.\n",
+		printf("Part: %s) ",
 				nubus_get_vendor(fmt, NUBUS_RSRC_VEND_PART));
 	}
 	return (UNCONF);
@@ -128,6 +156,7 @@ probe_slot(slot, fmt)
 {
 	caddr_t		rom_probe;
 	u_long		hdr;
+	u_long		phys;
 	u_char		data;
 	int		hdr_size, i;
 
@@ -135,6 +164,14 @@ probe_slot(slot, fmt)
 	fmt->slot = (u_long)slot;
 
 	rom_probe = (caddr_t) (NUBUS_SLOT_TO_BASE(fmt->slot) + NBMEMSIZE);
+
+#ifdef DEBUG
+	if (nubus_debug & NDB_PROBE) {
+		phys = pmap_extract(pmap_kernel(), rom_probe-1);
+		printf("probing slot %d, first probe at 0x%x (phys 0x%x).\n",
+			slot, rom_probe-1, phys);
+	}
+#endif
 
 	for (i = 4; i && (fmt->bytelanes == 0); i--) {
 
@@ -153,16 +190,18 @@ probe_slot(slot, fmt)
 		}
 	}
 #ifdef DEBUG
-	if (fmt->bytelanes == 0)
-		printf("bytelanes not found for slot 0x%x.\n", slot);
+	if (nubus_debug & NDB_PROBE)
+		if (fmt->bytelanes == 0)
+			printf("bytelanes not found for slot 0x%x.\n", slot);
 #endif
 
 	if (fmt->bytelanes == 0)
 		return 0;
 
 #ifdef DEBUG
-	printf("bytelanes of 0x%x found for slot 0x%x.\n",
-		fmt->bytelanes, slot);
+	if (nubus_debug & NDB_PROBE)
+		printf("bytelanes of 0x%x found for slot 0x%x (base 0x%x).\n",
+			fmt->bytelanes, slot, NUBUS_SLOT_TO_BASE(slot));
 #endif
 
 	hdr_size = 20;
@@ -182,8 +221,9 @@ probe_slot(slot, fmt)
 	fmt->top = hdr;
 	hdr = IncPtr(fmt, hdr, -hdr_size);
 #ifdef DEBUG
-	printf("fmt->top is 0x%x, that minus 0x%x puts us at 0x%x.\n",
-		fmt->top, hdr_size, hdr);
+	if (nubus_debug & NDB_PROBE)
+		printf("fmt->top is 0x%x, that minus 0x%x puts us at 0x%x.\n",
+			fmt->top, hdr_size, hdr);
 #if 0
 	for (i=1 ; i < 8 ; i++) {
 		printf("0x%x - 0x%x = 0x%x, + 0x%x = 0x%x.\n",
@@ -206,14 +246,21 @@ probe_slot(slot, fmt)
 	fmt->test_pattern = GetLong(fmt, hdr);
 
 #if DEBUG
-printf("Directory offset 0x%x\t", fmt->directory_offset);
-printf("Length 0x%x\t", fmt->length);
-printf("CRC 0x%x\n", fmt->crc);
-printf("Revision level 0x%x\t", fmt->revision_level);
-printf("Format 0x%x\t", fmt->format);
-printf("Test Pattern 0x%x\n", fmt->test_pattern);
+	if (nubus_debug & NDB_PROBE) {
+		printf("Directory offset 0x%x\t", fmt->directory_offset);
+		printf("Length 0x%x\t", fmt->length);
+		printf("CRC 0x%x\n", fmt->crc);
+		printf("Revision level 0x%x\t", fmt->revision_level);
+		printf("Format 0x%x\t", fmt->format);
+		printf("Test Pattern 0x%x\n", fmt->test_pattern);
+	}
 #endif
 
+	if ((fmt->directory_offset & 0x00ff0000) == 0) {
+		printf("Invalid looking directory offset (0x%x)!\n",
+			fmt->directory_offset);
+		return 0;
+	}
 	if (fmt->test_pattern != NUBUS_ROM_TEST_PATTERN) {
 		printf("Nubus--test pattern invalid:\n");
 		printf("       slot 0x%x, bytelanes 0x%x?\n",
@@ -354,6 +401,11 @@ nubus_get_main_dir(slot, dir_return)
 {
 	u_long		off;
 
+#if DEBUG
+	if (nubus_debug & NDB_FOLLOW)
+		printf("nubus_get_main_dir(0x%x, 0x%x)\n",
+			(u_int) slot, (u_int) dir_return);
+#endif
 	dir_return->dirbase = IncPtr(slot, slot->top,
 					slot->directory_offset - 20);
 	dir_return->curr_ent = dir_return->dirbase;
@@ -369,14 +421,21 @@ nubus_find_rsrc(slot, dir, rsrcid, dirent_return)
 	u_long		entry;
 	u_char		byte;
 
-	entry = dir->curr_ent;
 #if DEBUG
-printf("nubus_find_rsrc (0x%x,0x%x)\n", dir, rsrcid);
+	if (nubus_debug & NDB_FOLLOW)
+		printf("nubus_find_rsrc(0x%x, 0x%x, 0x%x, 0x%x)\n",
+			(u_int) slot, (u_int) dir, (u_int) rsrcid,
+			(u_int) dirent_return);
 #endif
+	if (slot->test_pattern != NUBUS_ROM_TEST_PATTERN)
+		return -1;
+
+	entry = dir->curr_ent;
 	do {
 		byte = GetByte(slot, entry);
 #if DEBUG
-printf("\tFound rsrc 0x%x.\n", byte);
+		if (nubus_debug & NDB_FOLLOW)
+			printf("\tFound rsrc 0x%x.\n", byte);
 #endif
 		if (byte == rsrcid) {
 			dirent_return->myloc = entry;
@@ -402,6 +461,11 @@ nubus_get_dir_from_rsrc(slot, dirent, dir_return)
 {
 	u_long	loc;
 
+#if DEBUG
+	if (nubus_debug & NDB_FOLLOW)
+		printf("nubus_get_dir_from_rsrc(0x%x, 0x%x, 0x%x).\n",
+			(u_int) slot, (u_int) dirent, (u_int) dir_return);
+#endif
 	if ((loc = dirent->offset) & 0x800000) {
 		loc |= 0xff000000;
 	}
@@ -418,6 +482,12 @@ nubus_get_ind_data(slot, dirent, data_return, nbytes)
 {
 	u_long	loc;
 
+#if DEBUG
+	if (nubus_debug & NDB_FOLLOW)
+		printf("nubus_get_ind_data(0x%x, 0x%x, 0x%x, %d).\n",
+			(u_int) slot, (u_int) dirent, (u_int) data_return,
+			nbytes);
+#endif
 	if ((loc = dirent->offset) & 0x800000) {
 		loc |= 0xff000000;
 	}
@@ -439,6 +509,12 @@ nubus_get_c_string(slot, dirent, data_return, max_bytes)
 {
 	u_long	loc;
 
+#if DEBUG
+	if (nubus_debug & NDB_FOLLOW)
+		printf("nubus_get_c_string(0x%x, 0x%x, 0x%x, %d).\n",
+			(u_int) slot, (u_int) dirent, (u_int) data_return,
+			max_bytes);
+#endif
 	if ((loc = dirent->offset) & 0x800000) {
 		loc |= 0xff000000;
 	}
@@ -464,6 +540,10 @@ static	char		str_ret[64];
 	nubus_dir	dir;
 	nubus_dirent	ent;
 
+#if DEBUG
+	if (nubus_debug & NDB_FOLLOW)
+		printf("nubus_get_vendor(0x%x, 0x%x).\n", (u_int) slot, rsrc);
+#endif
 	nubus_get_main_dir(slot, &dir);
 	if (nubus_find_rsrc(slot, &dir, 1, &ent) <= 0)
 		return huh;
@@ -489,6 +569,10 @@ static	char		name_ret[64];
 	nubus_dir	dir;
 	nubus_dirent	ent;
 
+#if DEBUG
+	if (nubus_debug & NDB_FOLLOW)
+		printf("nubus_get_card_name(0x%x).\n", (u_long) slot);
+#endif
 	nubus_get_main_dir(slot, &dir);
 
 	if (nubus_find_rsrc(slot, &dir, 1, &ent) <= 0)
