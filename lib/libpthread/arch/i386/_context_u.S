@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.4 2001/08/02 19:29:21 nathanw Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.5 2001/09/04 21:50:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,62 +37,62 @@
  */
 
 #include <machine/asm.h>
+#include "assym.h"
 
 #define GETC \
-	movl	%gs,	%eax	;		\
-	movl	%eax,  36(%ecx) ; /* GS  */	\
-	movl	%fs,	%eax	;		\
-	movl	%eax,  40(%ecx)	; /* FS  */	\
-	movl	%es,	%eax	;		\
-	movl	%eax,  44(%ecx)	; /* ES  */	\
-	movl	%ds,	%eax	;		\
-	movl	%eax,  48(%ecx)	; /* DS  */	\
-	movl	%edi,  52(%ecx)	; /* EDI */	\
-	movl	%esi,  56(%ecx)	; /* ESI */	\
-	movl	%ebp,  60(%ecx)	; /* EBP */	\
-	movl	%ebx,  68(%ecx)	; /* EBX */	\
-	movl	%edx,  92(%ecx)	; /* EIP */	\
-	movl	%cs,	%eax	;		\
-	movl	%eax,  96(%ecx) ; /* CS	 */	\
-	pushfl			;		\
-	popl	%eax		;		\
-	movl	%eax, 100(%ecx)	; /* EFLAGS */	\
-	movl	%ss,	%eax	;		\
-	movl	%eax, 108(%ecx)	; /* SS */	\
-	movl	$4,	%eax	;		\
- 	movl	%eax,	0(%ecx)	
+	movl	%gs,	%eax				; \
+	movl	%eax,  (UC_REGS + _REG_GS * 4)(%ecx)	; \
+	movl	%fs,	%eax				; \
+	movl	%eax,  (UC_REGS + _REG_FS * 4)(%ecx)	; \
+	movl	%es,	%eax				; \
+	movl	%eax,  (UC_REGS + _REG_ES * 4)(%ecx)	; \
+	movl	%ds,	%eax				; \
+	movl	%eax,  (UC_REGS + _REG_DS * 4)(%ecx)	; \
+	movl	%edi,  (UC_REGS + _REG_EDI * 4)(%ecx)	; \
+	movl	%esi,  (UC_REGS + _REG_ESI * 4)(%ecx)	; \
+	movl	%ebp,  (UC_REGS + _REG_EBP * 4)(%ecx)	; \
+	movl	%ebx,  (UC_REGS + _REG_EBX * 4)(%ecx)	; \
+	movl	%edx,  (UC_REGS + _REG_EIP * 4)(%ecx)	; \
+	movl	%cs,	%eax				; \
+	movl	%eax,  (UC_REGS + _REG_CS * 4)(%ecx)	; \
+	pushfl						; \
+	popl	%eax					; \
+	movl	%eax,  (UC_REGS + _REG_EFL * 4)(%ecx)	; \
+	movl	%ss,	%eax				; \
+	movl	%eax,  (UC_REGS + _REG_SS * 4)(%ecx)	; \
+	movl	$_UC_CPU,%eax				; \
+ 	movl	%eax,   UC_FLAGS(%ecx)	
 
 #define SETC \
-	movl	36(%ecx), %gs	; /* GS	 */	\
-	movl	40(%ecx), %fs	; /* FS  */	\
-	movl	44(%ecx), %es	; /* ES	 */	\
-	movl	52(%ecx), %edi	; /* EDI */	\
-	movl	56(%ecx), %esi	; /* ESI */	\
-	movl	60(%ecx), %ebp	; /* EBP */	\
-	movl	68(%ecx), %ebx	; /* EBX */	\
-	;; \
-	movl	104(%ecx), %edx ; /* UESP */	\
-	movl	96(%ecx), %eax  ; /* CS	 */	\
-	mov	%eax, -4(%edx)	;		\
-	movl	92(%ecx), %eax	; /* EIP */	\
-	movl	%eax, -8(%edx)	;		\
-	movl	48(%ecx), %eax	; /* DS	 */	\
-	movl	%ax, -12(%edx)	;		\
-	movl	72(%ecx), %eax	; /* EDX */	\
-	movl	%eax, -16(%edx)	;		\
-	movl	76(%ecx), %eax	; /* ECX */	\
-	movl	%eax, -20(%edx)	;		\
-	movl	80(%ecx), %eax	; /* EAX */	\
-	movl	%eax, -24(%edx)	;		\
-	movl	100(%ecx), %eax ; /* EFLAGS */	\
-	movl	%eax, -28(%edx)	;		\
-	movl	108(%ecx), %ss	; /* SS	 */	\
-	leal	-28(%edx), %esp	;		\
-	popfl			;		\
-	popl	%eax		;		\
-	popl	%ecx		;		\
-	popl	%edx		;		\
-	popl	%ds		;		\
+	movl	(UC_REGS + _REG_GS * 4)(%ecx), %gs	; \
+	movl	(UC_REGS + _REG_FS * 4)(%ecx), %fs	; \
+	movl	(UC_REGS + _REG_ES * 4)(%ecx), %es	; \
+	movl	(UC_REGS + _REG_EDI * 4)(%ecx), %edi	; \
+	movl	(UC_REGS + _REG_ESI * 4)(%ecx), %esi	; \
+	movl	(UC_REGS + _REG_EBP * 4)(%ecx), %ebp	; \
+	movl	(UC_REGS + _REG_EBX * 4)(%ecx), %ebx	; \
+	movl	(UC_REGS + _REG_UESP * 4)(%ecx), %edx	; \
+	movl	(UC_REGS + _REG_CS * 4)(%ecx), %eax	; \
+	mov	%eax, -4(%edx)				; \
+	movl	(UC_REGS + _REG_EIP * 4)(%ecx), %eax	; \
+	movl	%eax, -8(%edx)				; \
+	movl	(UC_REGS + _REG_DS * 4)(%ecx), %eax	; \
+	movl	%ax, -12(%edx)				; \
+	movl	(UC_REGS + _REG_EDX * 4)(%ecx), %eax	; \
+	movl	%eax, -16(%edx)				; \
+	movl	(UC_REGS + _REG_ECX * 4)(%ecx), %eax	; \
+	movl	%eax, -20(%edx)				; \
+	movl	(UC_REGS + _REG_EAX * 4)(%ecx), %eax	; \
+	movl	%eax, -24(%edx)				; \
+	movl	(UC_REGS + _REG_EFL * 4)(%ecx), %eax	; \
+	movl	%eax, -28(%edx)				; \
+	movl	(UC_REGS + _REG_SS * 4)(%ecx), %ss	; \
+	leal	-28(%edx), %esp				; \
+	popfl						; \
+	popl	%eax					; \
+	popl	%ecx					; \
+	popl	%edx					; \
+	popl	%ds					; \
 	lret
 
 
@@ -103,7 +103,7 @@ ENTRY(_getcontext_u)
 	GETC
 	movl	%esp, %eax
 	addl	$4, %eax
-	movl	%eax, 104(%ecx)
+	movl	%eax, (UC_REGS + _REG_UESP * 4)(%ecx)
 	xorl	%eax,  %eax
 	ret
 
@@ -117,6 +117,6 @@ ENTRY(_swapcontext_u)
 	GETC
 	movl	%esp, %eax
 	addl	$4, %eax
-	movl	%eax, 104(%ecx)
+	movl	%eax, (UC_REGS + _REG_UESP * 4)(%ecx)
 	movl	8(%esp), %ecx
 	SETC
