@@ -1028,11 +1028,14 @@ is_ioctl(ifp, cmd, data)
 #endif
 		break;
 
-#ifdef notdef
-	case SIOCGHWADDR:
-		bcopy((caddr_t)sc->sc_arpcom.ac_enaddr, (caddr_t) &ifr->ifr_data,
-		      sizeof(sc->sc_arpcom.ac_enaddr));
+#if NBPFILTER > 0
+	case SIOCGIFADDR: {
+		struct sockaddr *sa;
+		sa = (struct sockaddr *)&ifr->ifr_data;
+		bcopy((caddr_t)sc->sc_arpcom.ac_enaddr, (caddr_t)sa->sa_data,
+			ETHER_ADDR_LEN);
 		break;
+	}
 #endif
 
 	default:

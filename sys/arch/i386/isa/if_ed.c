@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: if_ed.c,v 1.8.2.8 1993/12/03 03:38:04 mycroft Exp $
+ * $Id: if_ed.c,v 1.8.2.9 1993/12/03 03:56:16 mycroft Exp $
  */
 
 /*
@@ -229,7 +229,6 @@ static u_short ed_intr_mask[] = {
 #define	ETHER_MIN_LEN	64
 #define ETHER_MAX_LEN	1518
 #define	ETHER_ADDR_LEN	6
-#define	ETHER_HDR_SIZE	14
 
 /*
  * Determine if the device is present
