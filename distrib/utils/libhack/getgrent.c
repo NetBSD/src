@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.1.1.1 1995/10/08 23:08:48 gwr Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.2 1995/10/13 18:10:23 gwr Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,13 +34,16 @@
  * SUCH DAMAGE.
  */
 
+/*
+ * Copied from:  lib/libc/gen/getgrent.c
+ * and then gutted, leaving only /etc/group support.
+ */
 
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <grp.h>
-
 
 static FILE *_gr_fp;
 static struct group _gr_group;
@@ -51,7 +54,6 @@ static int grscan(), start_gr();
 static char *members[MAXGRP];
 #define	MAXLINELENGTH	1024
 static char line[MAXLINELENGTH];
-
 
 struct group *
 getgrent()

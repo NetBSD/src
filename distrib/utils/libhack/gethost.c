@@ -1,4 +1,4 @@
-/*	$NetBSD: gethost.c,v 1.1.1.1 1995/10/08 23:08:48 gwr Exp $	*/
+/*	$NetBSD: gethost.c,v 1.2 1995/10/13 18:10:25 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1988, 1993
@@ -53,6 +53,10 @@
  * --Copyright--
  */
 
+/*
+ * Copied from:  lib/libc/net/gethostnamadr.c
+ * and then gutted, leaving only /etc/hosts support.
+ */
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -66,12 +70,10 @@
 #include <errno.h>
 #include <string.h>
 
-
 #define	MAXALIASES	35
 #define	MAXADDRS	35
 
 static char *h_addr_ptrs[MAXADDRS + 1];
-
 
 static struct hostent host;
 static char *host_aliases[MAXALIASES];
@@ -88,7 +90,6 @@ static int stayopen = 0;
 
 extern int h_errno;
 
-
 struct hostent *
 gethostbyname(name)
 	const char *name;
@@ -96,8 +97,6 @@ gethostbyname(name)
 	register const char *cp;
 	int n, i;
 	extern struct hostent *_gethtbyname();
-	register struct hostent *hp;
-	char lookups[MAXDNSLUS];
 
 	/*
 	 * disallow names consisting only of digits/dots, unless
@@ -141,11 +140,9 @@ gethostbyaddr(addr, len, type)
 	int len, type;
 {
 	int n, i;
-	register struct hostent *hp;
 	char qbuf[MAXDNAME];
 	extern struct hostent *_gethtbyaddr();
-	char lookups[MAXDNSLUS];
-	
+
 	if (type != AF_INET)
 		return ((struct hostent *) NULL);
 	(void)sprintf(qbuf, "%u.%u.%u.%u.in-addr.arpa",
