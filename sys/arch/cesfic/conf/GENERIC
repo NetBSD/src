@@ -1,0 +1,86 @@
+#	$NetBSD: GENERIC,v 1.1 2001/05/14 18:23:06 drochner Exp $
+#
+# Generic kernel - one size fits all.
+#
+
+# Include attributes common to all cesfics
+include "arch/cesfic/conf/std.cesfic"
+
+# Need to set locally
+maxusers	32
+
+#options LEDEBUG
+
+options FPSP
+# Standard system options
+options 	COMPAT_43	# compatibility with 4.3BSD interfaces
+options 	COMPAT_44	# compatibility with 4.4BSD binaries
+options 	COMPAT_09	# compatibility with NetBSD 0.9
+options 	COMPAT_10	# compatibility with NetBSD 1.0
+options 	COMPAT_11	# compatibility with NetBSD 1.1
+options 	COMPAT_12	# compatibility with NetBSD 1.2
+options 	COMPAT_13	# compatibility with NetBSD 1.3
+options 	COMPAT_14	# compatibility with NetBSD 1.3
+#options 	SYSVSHM		# System V-style shared memory
+#options 	SYSVSEM		# System V-style semaphores
+#options 	SYSVMSG		# System V-style message queues
+options 	KTRACE		# system call tracing support
+#options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
+#options 	LKM		# Loadable kernel modules
+options COMPAT_SUNOS
+
+# Filesystems
+#file-system 	FFS		# fast filesystem
+#file-system 	CD9660		# CD-ROM ISO-9660 filesystem
+file-system 	NFS		# Network filesystem client
+#file-system 	UNION		# Union filesystem (req. for FDESC)
+#file-system 	KERNFS		# kernel data-structure filesystem
+#file-system 	FDESC		# user file descriptor filesystem
+#file-system 	PROCFS		# /proc filesystem
+#file-system 	MFS		# Memory-based filesystem
+
+# Filesystem options
+options 	FIFO		# POSIX fifo support (in all filesystems)
+#options 	QUOTA		# User and group quotas in FFS
+#options 	NFSSERVER	# Network filesystem server
+
+# Networking options
+options 	INET		# Internet protocols
+#options  	GATEWAY		# IP forwarding + larger mb_map
+#options  	MROUTING	# Multicast routing
+#options  	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
+#options 	PFIL_HOOKS	# packet filter hooks
+
+# This option enables a different copyin/copyout that uses page
+# mapping for large copies.
+#options 	MAPPEDCOPY	# different copyin/copyout for large copies
+
+options 	COMPAT_M68K4K	# compat. with NetBSD/m68k4k binaries
+
+# Debugging options
+options 	DIAGNOSTIC	# Extra kernel sanity checks
+options 	DEBUG		# Enable misc. kernel debugging code
+options 	DDB		# Kernel Dynamic Debugger
+#options	KGDB
+makeoptions	DEBUG="-g"	# netbsd.gdb with full debugging symbols
+
+options NFS_BOOT_DHCP
+
+config		netbsd root on ? type ?
+
+mainbus0	at root		# root "bus"
+
+zsc*		at mainbus0
+zstty*		at zsc? channel ?
+
+le*		at mainbus0		# LANCE ethernet interfaces
+
+pseudo-device	pty		64	# pseudo ptys
+#pseudo-device	sl		4	# SLIP network interfaces
+#pseudo-device	ppp		4	# PPP network interfaces
+#pseudo-device	bpfilter	16	# Berkeley packet filter
+#pseudo-device	vnd		4	# vnode pseudo-disks
+#pseudo-device	ccd		4	# concatenated disk devices
+pseudo-device	loop			# loopback network interface
+#pseudo-device	ipfilter 		# IP Filter package
+pseudo-device	rnd

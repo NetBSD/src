@@ -1,0 +1,10 @@
+#	$NetBSD: std.cesfic,v 1.1 2001/05/14 18:23:07 drochner Exp $
+#
+# Options/devices that all cesfics should have
+#
+
+machine cesfic m68k
+
+options		EXEC_ELF32
+options 	EXEC_AOUT	# support for exec'ing a.out
+options 	EXEC_SCRIPT	# support for #! scripts
