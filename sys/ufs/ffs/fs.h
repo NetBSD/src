@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.9 1998/03/18 15:57:28 bouyer Exp $	*/
+/*	$NetBSD: fs.h,v 1.10 1998/07/28 04:17:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -515,5 +515,7 @@ struct ocg {
  */
 #define	NINDIR(fs)	((fs)->fs_nindir)
 
+#ifdef _KERNEL
 extern int inside[], around[];
 extern u_char *fragtbl[];
+#endif
