@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.1 1996/12/17 08:41:15 thorpej Exp $	*/
+/*	$NetBSD: intio.c,v 1.2 1997/01/30 09:18:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_dv.c,v 1.9 1996/12/17 08:41:07 thorpej Exp $	*/
+/*	$NetBSD: grf_dv.c,v 1.10 1997/01/30 09:18:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -78,7 +78,6 @@ int	dv_init __P((struct grf_data *, int, caddr_t));
 int	dv_mode __P((struct grf_data *, int, caddr_t));
 void	dv_reset __P((struct dvboxfb *));
 
-#ifdef NEWCONFIG
 int	dvbox_intio_match __P((struct device *, struct cfdata *, void *));
 void	dvbox_intio_attach __P((struct device *, struct device *, void *));
 
@@ -96,7 +95,6 @@ struct cfattach dvbox_dio_ca = {
 struct cfdriver dvbox_cd = {
 	NULL, "dvbox", DV_DULL
 };
-#endif /* NEWCONFIG */
 
 /* DaVinci grf switch */
 struct grfsw dvbox_grfsw = {
@@ -120,7 +118,6 @@ struct itesw dvbox_itesw = {
 };
 #endif /* NITE > 0 */
 
-#ifdef NEWCONFIG
 int
 dvbox_intio_match(parent, match, aux)
 	struct device *parent;
@@ -195,7 +192,6 @@ dvbox_dio_attach(parent, self, aux)
 
 	grfdev_attach(sc, dv_init, grf, &dvbox_grfsw);
 }
-#endif /* NEWCONFIG */
 
 /*
  * Initialize hardware.

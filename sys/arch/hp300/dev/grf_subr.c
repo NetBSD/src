@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_subr.c,v 1.1 1996/12/17 08:41:11 thorpej Exp $	*/
+/*	$NetBSD: grf_subr.c,v 1.2 1997/01/30 09:18:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
