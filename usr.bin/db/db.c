@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.2 2002/12/11 14:30:53 lukem Exp $	*/
+/*	$NetBSD: db.c,v 1.3 2002/12/11 14:33:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: db.c,v 1.2 2002/12/11 14:30:53 lukem Exp $");
+__RCSID("$NetBSD: db.c,v 1.3 2002/12/11 14:33:15 lukem Exp $");
 #endif /* not lint */
 
 #include <db.h>
@@ -49,6 +49,13 @@ __RCSID("$NetBSD: db.c,v 1.2 2002/12/11 14:30:53 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+
+/*
+ * TODO --
+ *   -	support output field separator for read ?
+ *   -	add option to strunvis(3) key (& value) from infile ?
+ */
 
 typedef enum {
 	F_WRITE		= 1<<0,
@@ -64,7 +71,6 @@ typedef enum {
 	F_DUPLICATES	= 1<<21,
 	F_REPLACE	= 1<<22,
 } flags_t;
-
 
 int	main(int, char *[]);
 void	db_print(DBT *, DBT *);
