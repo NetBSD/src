@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.9.4.6 2002/08/17 15:47:44 lukem Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.9.4.7 2002/11/07 20:05:02 tron Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -36,8 +36,7 @@
  */
 
 /*
- * Device driver for the Intel i82542 (``Wiseman''), i82543 (``Livengood''),
- * and i82544 (``Cordova'') Gigabit Ethernet chips.
+ * Device driver for the Intel i8254x family of Gigabit Ethernet chips.
  *
  * TODO (in order of importance):
  *
@@ -287,10 +286,13 @@ do {									\
 } while (/*CONSTCOND*/0)
 
 /* sc_type */
-#define	WM_T_WISEMAN_2_0	0	/* Wiseman (i82542) 2.0 (really old) */
-#define	WM_T_WISEMAN_2_1	1	/* Wiseman (i82542) 2.1+ (old) */
-#define	WM_T_LIVENGOOD		2	/* Livengood (i82543) */
-#define	WM_T_CORDOVA		3	/* Cordova (i82544) */
+#define	WM_T_82542_2_0		0	/* i82542 2.0 (really old) */
+#define	WM_T_82542_2_1		1	/* i82542 2.1+ (old) */
+#define	WM_T_82543		2	/* i82543 */
+#define	WM_T_82544		3	/* i82544 */
+#define	WM_T_82540		4	/* i82540 */
+#define	WM_T_82545		5	/* i82545 */
+#define	WM_T_82546		6	/* i82546 */
 
 /* sc_flags */
 #define	WM_F_HAS_MII		0x01	/* has MII */
@@ -404,11 +406,11 @@ void	wm_tbi_check_link(struct wm_softc *);
 
 void	wm_gmii_reset(struct wm_softc *);
 
-int	wm_gmii_livengood_readreg(struct device *, int, int);
-void	wm_gmii_livengood_writereg(struct device *, int, int, int);
+int	wm_gmii_i82543_readreg(struct device *, int, int);
+void	wm_gmii_i82543_writereg(struct device *, int, int, int);
 
-int	wm_gmii_cordova_readreg(struct device *, int, int);
-void	wm_gmii_cordova_writereg(struct device *, int, int, int);
+int	wm_gmii_i82544_readreg(struct device *, int, int);
+void	wm_gmii_i82544_writereg(struct device *, int, int, int);
 
 void	wm_gmii_statchg(struct device *);
 
@@ -439,35 +441,31 @@ const struct wm_product {
 } wm_products[] = {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82542,
 	  "Intel i82542 1000BASE-X Ethernet",
-	  WM_T_WISEMAN_2_1,	WMP_F_1000X },
+	  WM_T_82542_2_1,	WMP_F_1000X },
 
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82543_FIBER,
-	  "Intel i82543 1000BASE-X Ethernet",
-	  WM_T_LIVENGOOD,	WMP_F_1000X },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82543GC_FIBER,
+	  "Intel i82543GC 1000BASE-X Ethernet",
+	  WM_T_82543,		WMP_F_1000X },
 
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82543_SC,
-	  "Intel i82543-SC 1000BASE-X Ethernet",
-	  WM_T_LIVENGOOD,	WMP_F_1000X },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82543GC_COPPER,
+	  "Intel i82543GC 1000BASE-T Ethernet",
+	  WM_T_82543,		WMP_F_1000T },
 
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82543_COPPER,
-	  "Intel i82543 1000BASE-T Ethernet",
-	  WM_T_LIVENGOOD,	WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82544EI_COPPER,
+	  "Intel i82544EI 1000BASE-T Ethernet",
+	  WM_T_82544,		WMP_F_1000T },
 
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82544_XT,
-	  "Intel i82544 1000BASE-T Ethernet",
-	  WM_T_CORDOVA,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82544EI_FIBER,
+	  "Intel i82544EI 1000BASE-X Ethernet",
+	  WM_T_82544,		WMP_F_1000X },
 
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82544_XF,
-	  "Intel i82544 1000BASE-X Ethernet",
-	  WM_T_CORDOVA,		WMP_F_1000X },
-
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82544GC,
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82544GC_COPPER,
 	  "Intel i82544GC 1000BASE-T Ethernet",
-	  WM_T_CORDOVA,		WMP_F_1000T },
+	  WM_T_82544,		WMP_F_1000T },
 
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82544GC_64,
-	  "Intel i82544GC 1000BASE-T Ethernet",
-	  WM_T_CORDOVA,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82544GC_LOM,
+	  "Intel i82544GC (LOM) 1000BASE-T Ethernet",
+	  WM_T_82544,		WMP_F_1000T },
 
 	{ 0,			0,
 	  NULL,
@@ -556,14 +554,14 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s, rev. %d\n", wmp->wmp_name, preg);
 
 	sc->sc_type = wmp->wmp_type;
-	if (sc->sc_type < WM_T_LIVENGOOD) {
+	if (sc->sc_type < WM_T_82543) {
 		if (preg < 2) {
-			printf("%s: Wiseman must be at least rev. 2\n",
+			printf("%s: i82542 must be at least rev. 2\n",
 			    sc->sc_dev.dv_xname);
 			return;
 		}
 		if (preg < 3)
-			sc->sc_type = WM_T_WISEMAN_2_0;
+			sc->sc_type = WM_T_82542_2_0;
 	}
 
 	/*
@@ -589,10 +587,10 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/* Enable bus mastering.  Disable MWI on the Wiseman 2.0. */
+	/* Enable bus mastering.  Disable MWI on the i82542 2.0. */
 	preg = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	preg |= PCI_COMMAND_MASTER_ENABLE;
-	if (sc->sc_type < WM_T_WISEMAN_2_1)
+	if (sc->sc_type < WM_T_82542_2_1)
 		preg &= ~PCI_COMMAND_INVALIDATE_ENABLE;
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, preg);
 
@@ -722,12 +720,12 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	wm_read_eeprom(sc, EEPROM_OFF_CFG1, 1, &cfg1);
 	wm_read_eeprom(sc, EEPROM_OFF_CFG2, 1, &cfg2);
-	if (sc->sc_type >= WM_T_CORDOVA)
+	if (sc->sc_type >= WM_T_82544)
 		wm_read_eeprom(sc, EEPROM_OFF_SWDPIN, 1, &swdpin);
 
 	if (cfg1 & EEPROM_CFG1_ILOS)
 		sc->sc_ctrl |= CTRL_ILOS;
-	if (sc->sc_type >= WM_T_CORDOVA) {
+	if (sc->sc_type >= WM_T_82544) {
 		sc->sc_ctrl |=
 		    ((swdpin >> EEPROM_SWDPIN_SWDPIO_SHIFT) & 0xf) <<
 		    CTRL_SWDPIO_SHIFT;
@@ -741,7 +739,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 #if 0
-	if (sc->sc_type >= WM_T_CORDOVA) {
+	if (sc->sc_type >= WM_T_82544) {
 		if (cfg1 & EEPROM_CFG1_IPS0)
 			sc->sc_ctrl_ext |= CTRL_EXT_IPS;
 		if (cfg1 & EEPROM_CFG1_IPS1)
@@ -766,9 +764,9 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * Set up some register offsets that are different between
-	 * the Wiseman and the Livengood and later chips.
+	 * the i82542 and the i82543 and later chips.
 	 */
-	if (sc->sc_type < WM_T_LIVENGOOD) {
+	if (sc->sc_type < WM_T_82543) {
 		sc->sc_rdt_reg = WMREG_OLD_RDT0;
 		sc->sc_tdt_reg = WMREG_OLD_TDT;
 	} else {
@@ -778,16 +776,16 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * Determine if we should use flow control.  We should
-	 * always use it, unless we're on a Wiseman < 2.1.
+	 * always use it, unless we're on a i82542 < 2.1.
 	 */
-	if (sc->sc_type >= WM_T_WISEMAN_2_1)
+	if (sc->sc_type >= WM_T_82542_2_1)
 		sc->sc_ctrl |= CTRL_TFCE | CTRL_RFCE;
 
 	/*
 	 * Determine if we're TBI or GMII mode, and initialize the
 	 * media structures accordingly.
 	 */
-	if (sc->sc_type < WM_T_LIVENGOOD ||
+	if (sc->sc_type < WM_T_82543 ||
 	    (CSR_READ(sc, WMREG_STATUS) & STATUS_TBIMODE) != 0) {
 		if (wmp->wmp_flags & WMP_F_1000T)
 			printf("%s: WARNING: TBIMODE set on 1000BASE-T "
@@ -813,17 +811,17 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
-	 * If we're a Livengood or greater, we can support VLANs.
+	 * If we're a i82543 or greater, we can support VLANs.
 	 */
-	if (sc->sc_type >= WM_T_LIVENGOOD)
+	if (sc->sc_type >= WM_T_82543)
 		sc->sc_ethercom.ec_capabilities |=
 		    ETHERCAP_VLAN_MTU /* XXXJRT | ETHERCAP_VLAN_HWTAGGING */;
 
 	/*
 	 * We can perform TCPv4 and UDPv4 checkums in-bound.  Only
-	 * on Livengood and later.
+	 * on i82543 and later.
 	 */
-	if (sc->sc_type >= WM_T_LIVENGOOD)
+	if (sc->sc_type >= WM_T_82543)
 		ifp->if_capabilities |=
 		    IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 
@@ -1477,7 +1475,7 @@ wm_txintr(struct wm_softc *sc)
 		/*
 		 * XXX We should probably be using the statistics
 		 * XXX registers, but I don't know if they exist
-		 * XXX on chips before the Cordova.
+		 * XXX on chips before the i82544.
 		 */
 
 #ifdef WM_EVENT_COUNTERS
@@ -1867,7 +1865,7 @@ wm_init(struct ifnet *ifp)
 	sc->sc_txctx_ipcs = 0xffffffff;
 	sc->sc_txctx_tucs = 0xffffffff;
 
-	if (sc->sc_type < WM_T_LIVENGOOD) {
+	if (sc->sc_type < WM_T_82543) {
 		CSR_WRITE(sc, WMREG_OLD_TBDAH, 0);
 		CSR_WRITE(sc, WMREG_OLD_TBDAL, WM_CDTXADDR(sc, 0));
 		CSR_WRITE(sc, WMREG_OLD_TDLEN, sizeof(sc->sc_txdescs));
@@ -1901,7 +1899,7 @@ wm_init(struct ifnet *ifp)
 	 * Initialize the receive descriptor and receive job
 	 * descriptor rings.
 	 */
-	if (sc->sc_type < WM_T_LIVENGOOD) {
+	if (sc->sc_type < WM_T_82543) {
 		CSR_WRITE(sc, WMREG_OLD_RDBAH0, 0);
 		CSR_WRITE(sc, WMREG_OLD_RDBAL0, WM_CDRXADDR(sc, 0));
 		CSR_WRITE(sc, WMREG_OLD_RDLEN0, sizeof(sc->sc_rxdescs));
@@ -1961,7 +1959,7 @@ wm_init(struct ifnet *ifp)
 		CSR_WRITE(sc, WMREG_FCAH, FCAH_CONST);
 		CSR_WRITE(sc, WMREG_FCT, ETHERTYPE_FLOWCONTROL);
 
-		if (sc->sc_type < WM_T_LIVENGOOD) {
+		if (sc->sc_type < WM_T_82543) {
 			CSR_WRITE(sc, WMREG_OLD_FCRTH, FCRTH_DFLT);
 			CSR_WRITE(sc, WMREG_OLD_FCRTL, FCRTL_DFLT);
 		} else {
@@ -2037,7 +2035,7 @@ wm_init(struct ifnet *ifp)
 	 * the register when we set the receive filter.  Use multicast
 	 * address offset type 0.
 	 *
-	 * Only the Cordova has the ability to strip the incoming
+	 * Only the i82544 has the ability to strip the incoming
 	 * CRC, so we don't enable that feature.
 	 */
 	sc->sc_mchash_type = 0;
@@ -2246,7 +2244,7 @@ wm_set_ral(struct wm_softc *sc, const uint8_t *enaddr, int idx)
 		ral_hi = 0;
 	}
 
-	if (sc->sc_type >= WM_T_CORDOVA) {
+	if (sc->sc_type >= WM_T_82544) {
 		CSR_WRITE(sc, WMREG_RAL_LO(WMREG_CORDOVA_RAL_BASE, idx),
 		    ral_lo);
 		CSR_WRITE(sc, WMREG_RAL_HI(WMREG_CORDOVA_RAL_BASE, idx),
@@ -2292,7 +2290,7 @@ wm_set_filter(struct wm_softc *sc)
 	uint32_t hash, reg, bit;
 	int i;
 
-	if (sc->sc_type >= WM_T_CORDOVA)
+	if (sc->sc_type >= WM_T_82544)
 		mta_reg = WMREG_CORDOVA_MTA;
 	else
 		mta_reg = WMREG_MTA;
@@ -2341,7 +2339,7 @@ wm_set_filter(struct wm_softc *sc)
 		hash |= 1U << bit;
 
 		/* XXX Hardware bug?? */
-		if (sc->sc_type == WM_T_CORDOVA && (reg & 0xe) == 1) {
+		if (sc->sc_type == WM_T_82544 && (reg & 0xe) == 1) {
 			bit = CSR_READ(sc, mta_reg + ((reg - 1) << 2));
 			CSR_WRITE(sc, mta_reg + (reg << 2), hash);
 			CSR_WRITE(sc, mta_reg + ((reg - 1) << 2), bit);
@@ -2372,7 +2370,7 @@ wm_tbi_mediainit(struct wm_softc *sc)
 {
 	const char *sep = "";
 
-	if (sc->sc_type < WM_T_LIVENGOOD)
+	if (sc->sc_type < WM_T_82543)
 		sc->sc_tipg = TIPG_WM_DFLT;
 	else
 		sc->sc_tipg = TIPG_LG_DFLT;
@@ -2575,7 +2573,7 @@ wm_gmii_reset(struct wm_softc *sc)
 {
 	uint32_t reg;
 
-	if (sc->sc_type >= WM_T_CORDOVA) {
+	if (sc->sc_type >= WM_T_82544) {
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl | CTRL_PHY_RESET);
 		delay(20000);
 
@@ -2627,12 +2625,12 @@ wm_gmii_mediainit(struct wm_softc *sc)
 	/* Initialize our media structures and probe the GMII. */
 	sc->sc_mii.mii_ifp = ifp;
 
-	if (sc->sc_type >= WM_T_CORDOVA) {
-		sc->sc_mii.mii_readreg = wm_gmii_cordova_readreg;
-		sc->sc_mii.mii_writereg = wm_gmii_cordova_writereg;
+	if (sc->sc_type >= WM_T_82544) {
+		sc->sc_mii.mii_readreg = wm_gmii_i82544_readreg;
+		sc->sc_mii.mii_writereg = wm_gmii_i82544_writereg;
 	} else {
-		sc->sc_mii.mii_readreg = wm_gmii_livengood_readreg;
-		sc->sc_mii.mii_writereg = wm_gmii_livengood_writereg;
+		sc->sc_mii.mii_readreg = wm_gmii_i82543_readreg;
+		sc->sc_mii.mii_writereg = wm_gmii_i82543_writereg;
 	}
 	sc->sc_mii.mii_statchg = wm_gmii_statchg;
 
@@ -2685,7 +2683,7 @@ wm_gmii_mediachange(struct ifnet *ifp)
 #define	MDI_CLK		CTRL_SWDPIN(3)
 
 static void
-livengood_mii_sendbits(struct wm_softc *sc, uint32_t data, int nbits)
+i82543_mii_sendbits(struct wm_softc *sc, uint32_t data, int nbits)
 {
 	uint32_t i, v;
 
@@ -2708,7 +2706,7 @@ livengood_mii_sendbits(struct wm_softc *sc, uint32_t data, int nbits)
 }
 
 static uint32_t
-livengood_mii_recvbits(struct wm_softc *sc)
+i82543_mii_recvbits(struct wm_softc *sc)
 {
 	uint32_t v, i, data = 0;
 
@@ -2746,20 +2744,20 @@ livengood_mii_recvbits(struct wm_softc *sc)
 #undef MDI_CLK
 
 /*
- * wm_gmii_livengood_readreg:	[mii interface function]
+ * wm_gmii_i82543_readreg:	[mii interface function]
  *
- *	Read a PHY register on the GMII (Livengood version).
+ *	Read a PHY register on the GMII (i82543 version).
  */
 int
-wm_gmii_livengood_readreg(struct device *self, int phy, int reg)
+wm_gmii_i82543_readreg(struct device *self, int phy, int reg)
 {
 	struct wm_softc *sc = (void *) self;
 	int rv;
 
-	livengood_mii_sendbits(sc, 0xffffffffU, 32);
-	livengood_mii_sendbits(sc, reg | (phy << 5) |
+	i82543_mii_sendbits(sc, 0xffffffffU, 32);
+	i82543_mii_sendbits(sc, reg | (phy << 5) |
 	    (MII_COMMAND_READ << 10) | (MII_COMMAND_START << 12), 14);
-	rv = livengood_mii_recvbits(sc) & 0xffff;
+	rv = i82543_mii_recvbits(sc) & 0xffff;
 
 	DPRINTF(WM_DEBUG_GMII,
 	    ("%s: GMII: read phy %d reg %d -> 0x%04x\n",
@@ -2769,28 +2767,28 @@ wm_gmii_livengood_readreg(struct device *self, int phy, int reg)
 }
 
 /*
- * wm_gmii_livengood_writereg:	[mii interface function]
+ * wm_gmii_i82543_writereg:	[mii interface function]
  *
- *	Write a PHY register on the GMII (Livengood version).
+ *	Write a PHY register on the GMII (i82543 version).
  */
 void
-wm_gmii_livengood_writereg(struct device *self, int phy, int reg, int val)
+wm_gmii_i82543_writereg(struct device *self, int phy, int reg, int val)
 {
 	struct wm_softc *sc = (void *) self;
 
-	livengood_mii_sendbits(sc, 0xffffffffU, 32);
-	livengood_mii_sendbits(sc, val | (MII_COMMAND_ACK << 16) |
+	i82543_mii_sendbits(sc, 0xffffffffU, 32);
+	i82543_mii_sendbits(sc, val | (MII_COMMAND_ACK << 16) |
 	    (reg << 18) | (phy << 23) | (MII_COMMAND_WRITE << 28) |
 	    (MII_COMMAND_START << 30), 32);
 }
 
 /*
- * wm_gmii_cordova_readreg:	[mii interface function]
+ * wm_gmii_i82544_readreg:	[mii interface function]
  *
  *	Read a PHY register on the GMII.
  */
 int
-wm_gmii_cordova_readreg(struct device *self, int phy, int reg)
+wm_gmii_i82544_readreg(struct device *self, int phy, int reg)
 {
 	struct wm_softc *sc = (void *) self;
 	uint32_t mdic;
@@ -2826,12 +2824,12 @@ wm_gmii_cordova_readreg(struct device *self, int phy, int reg)
 }
 
 /*
- * wm_gmii_cordova_writereg:	[mii interface function]
+ * wm_gmii_i82544_writereg:	[mii interface function]
  *
  *	Write a PHY register on the GMII.
  */
 void
-wm_gmii_cordova_writereg(struct device *self, int phy, int reg, int val)
+wm_gmii_i82544_writereg(struct device *self, int phy, int reg, int val)
 {
 	struct wm_softc *sc = (void *) self;
 	uint32_t mdic;
