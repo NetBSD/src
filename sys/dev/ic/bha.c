@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.33.2.2 1999/10/19 22:39:40 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.33.2.3 1999/10/19 22:48:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -1930,8 +1930,10 @@ bha_get_ccb(sc)
 
 	s = splbio();
 	ccb = TAILQ_FIRST(&sc->sc_free_ccb);
-	if (ccb != NULL)
+	if (ccb != NULL) {
+		TAILQ_REMOVE(&sc->sc_free_ccb, ccb, chain);
 		ccb->flags |= CCB_ALLOC;
+	}
 	splx(s);
 	return (ccb);
 }
