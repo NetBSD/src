@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.76 1998/12/05 19:43:56 mjacob Exp $	*/
+/*	$NetBSD: ncr.c,v 1.77 1998/12/11 23:21:11 thorpej Exp $	*/
 
 /**************************************************************************
 **
@@ -1052,6 +1052,59 @@ struct ccb {
 **==========================================================
 */
 
+/*
+ * These variables are softc variables that the script must access, and
+ * thus must be in DMA-safe memory.  The comments above them associate them
+ * with sections of the rest of the ncb.
+ */
+struct ncr_softc_dma {
+	/*
+	 * The global header.  Accessible to both the host and
+	 * the script processor.  We assume it is cache line size
+	 * aligned.
+	 */
+	struct head	header;
+
+	/*
+	 * During reselection, the NCR jumps to this point.  The
+	 * SFBR register is loaded with the encoded target ID.
+	 *
+	 * Jump to the first target.
+	 *
+	 * JUMP
+	 * @(next tcb)
+	 */
+	struct link	jump_tcb;
+
+	/*
+	 * Profiling data.
+	 */
+	u_long		disc_phys;
+
+	/*
+	 * Timeout handler.
+	 */
+	u_long		heartbeat;
+
+	/*
+	 * Start queue.
+	 */
+	u_int32_t	squeue[MAX_START];
+
+	/*
+	 * Message buffers.  Should be longword aligned, because they're
+	 * written with a COPY script command.
+	 */
+	u_char		msgout[8];
+	u_char		msgin[8];
+	u_int32_t	lastmsg;
+
+	/*
+	 * Buffer for STATUS_IN phase.
+	 */
+	u_char		scratch;
+};
+
 struct ncb {
 #ifdef __NetBSD__
 	struct device sc_dev;
@@ -1059,32 +1112,14 @@ struct ncb {
 	void *sc_ih;
 	bus_space_tag_t sc_st;
 	bus_space_handle_t sc_sh;
+	bus_dma_tag_t sc_dmat;
+	bus_dmamap_t sc_ncb_dmamap;
 	int sc_iomapped;
 #else /* !__NetBSD__ */
 	int	unit;
 #endif /* __NetBSD__ */
 
-	/*
-	**	The global header.
-	**	Accessible to both the host and the
-	**	script-processor.
-	**	We assume it is cache line size aligned.
-	*/
-	struct head     header;
-
-	/*-----------------------------------------------
-	**	Scripts ..
-	**-----------------------------------------------
-	**
-	**	During reselection the ncr jumps to this point.
-	**	The SFBR register is loaded with the encoded target id.
-	**
-	**	Jump to the first target.
-	**
-	**	JUMP
-	**	@(next tcb)
-	*/
-	struct link     jump_tcb;
+	struct ncr_softc_dma *ncb_dma;
 
 	/*-----------------------------------------------
 	**	Configuration ..
@@ -1187,14 +1222,12 @@ struct ncb {
 	/*
 	**	Start queue.
 	*/
-	u_int32_t	squeue [MAX_START];
 	u_short		squeueput;
 	u_short		actccbs;
 
 	/*
 	**	Timeout handler
 	*/
-	u_long		heartbeat;
 	u_short		ticks;
 	u_short		latetime;
 	u_long		lasttime;
@@ -1212,7 +1245,6 @@ struct ncb {
 	**	Profiling data
 	*/
 	struct profile	profile;
-	u_long		disc_phys;
 	u_long		disc_ref;
 
 	/*
@@ -1224,21 +1256,6 @@ struct ncb {
 	**	cache line size alignment.
 	*/
 	struct ccb      *ccb;
-
-	/*
-	**	message buffers.
-	**	Should be longword aligned,
-	**	because they're written with a
-	**	COPY script command.
-	*/
-	u_char		msgout[8];
-	u_char		msgin [8];
-	u_int32_t	lastmsg;
-
-	/*
-	**	Buffer for STATUS_IN phase.
-	*/
-	u_char		scratch;
 
 	/*
 	**	controller chip dependent maximal transfer width.
@@ -1435,7 +1452,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.76 1998/12/05 19:43:56 mjacob Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.77 1998/12/11 23:21:11 thorpej Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -1564,7 +1581,7 @@ static char *ncr_name (ncb_p np)
 #define	RELOC_LABELH	0x80000000
 #define	RELOC_MASK	0xf0000000
 
-#define	NADDR(label)	(RELOC_SOFTC | offsetof(struct ncb, label))
+#define	NADDR(label)	(RELOC_SOFTC | offsetof(struct ncr_softc_dma, label))
 #define PADDR(label)    (RELOC_LABEL | offsetof(struct script, label))
 #define PADDRH(label)   (RELOC_LABELH | offsetof(struct scripth, label))
 #define	RADDR(label)	(RELOC_REGISTER | REG(label))
@@ -1598,7 +1615,7 @@ static	struct script script0 = {
 	/*
 	**	Claim to be still alive ...
 	*/
-	SCR_COPY (sizeof (((struct ncb *)0)->heartbeat)),
+	SCR_COPY (sizeof (((struct ncr_softc_dma *)0)->heartbeat)),
 		KVAR (KVAR_TIME_TV_SEC),
 		NADDR (heartbeat),
 	/*
@@ -3331,7 +3348,8 @@ static void ncr_script_copy_and_bind (ncb_p np, ncrcmd *src, ncrcmd *dst, int le
 					new = (old & ~RELOC_MASK) + np->p_scripth;
 					break;
 				case RELOC_SOFTC:
-					new = (old & ~RELOC_MASK) + vtophys(np);
+					new = (old & ~RELOC_MASK) +
+					  np->sc_ncb_dmamap->dm_segs[0].ds_addr;
 					break;
 				case RELOC_KVAR:
 					if (((old & ~RELOC_MASK) <
@@ -3626,6 +3644,8 @@ static void ncr_attach (pcici_t config_id, int unit)
 	bus_space_handle_t ioh, memh;
 	bus_addr_t ioaddr, memaddr;
 	int ioh_valid, memh_valid;
+	bus_dma_segment_t seg;
+	int rseg, error;
 
 	i = ncr_chip_lookup(pa->pa_id, rev);
 	printf(": %s\n", ncr_chip_table[i].name);
@@ -3674,6 +3694,47 @@ static void ncr_attach (pcici_t config_id, int unit)
 #endif /* defined(NCR_IOMAPPED) */
 	else {
 		printf("%s: unable to map device registers\n", self->dv_xname);
+		return;
+	}
+
+	np->sc_dmat = pa->pa_dmat;
+
+	/*
+	 * Allocate DMA-safe memory for the script-accessible parts of
+	 * the ncb, and map it.
+	 */
+	if ((error = bus_dmamem_alloc(np->sc_dmat,
+	    sizeof(struct ncr_softc_dma), NBPG, 0, &seg, 1, &rseg,
+	    BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: unable to allocate ncb_dma, error = %d\n",
+		    self->dv_xname, error);
+		return;
+	}
+
+	if ((error = bus_dmamem_map(np->sc_dmat, &seg, rseg,
+	    sizeof(struct ncr_softc_dma), (caddr_t *)&np->ncb_dma,
+	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+		printf("%s: unable to map ncb_dma, error = %d\n",
+		    self->dv_xname, error);
+		return;
+	}
+
+	memset(np->ncb_dma, 0, sizeof(struct ncr_softc_dma));
+
+	if ((error = bus_dmamap_create(np->sc_dmat,
+	    sizeof(struct ncr_softc_dma), 1,
+	    sizeof(struct ncr_softc_dma), 0, BUS_DMA_NOWAIT,
+	    &np->sc_ncb_dmamap)) != 0) {
+		printf("%s: unable to create ncb_dma DMA map, error = %d\n",
+		    self->dv_xname, error);
+		return;
+	}
+
+	if ((error = bus_dmamap_load(np->sc_dmat, np->sc_ncb_dmamap,
+	    np->ncb_dma, sizeof(struct ncr_softc_dma), NULL,
+	    BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: unable to load ncb_dma DMA map, error = %d\n",
+		    self->dv_xname, error);
 		return;
 	}
 
@@ -4068,8 +4129,8 @@ static void ncr_attach (pcici_t config_id, int unit)
 	**	init data structure
 	*/
 
-	np->jump_tcb.l_cmd	= SCR_JUMP;
-	np->jump_tcb.l_paddr	= NCB_SCRIPTH_PHYS (np, abort);
+	np->ncb_dma->jump_tcb.l_cmd	= SCR_JUMP;
+	np->ncb_dma->jump_tcb.l_paddr	= NCB_SCRIPTH_PHYS (np, abort);
 
 	/*
 	**  Get SCSI addr of host adapter (set by bios?).
@@ -4729,8 +4790,8 @@ static INT32 ncr_start (struct scsipi_xfer * xp)
 
 	qidx = np->squeueput + 1;
 	if (qidx >= MAX_START) qidx=0;
-	np->squeue [qidx	 ] = NCB_SCRIPT_PHYS (np, idle);
-	np->squeue [np->squeueput] = CCB_PHYS (cp, phys);
+	np->ncb_dma->squeue [qidx	 ] = NCB_SCRIPT_PHYS (np, idle);
+	np->ncb_dma->squeue [np->squeueput] = CCB_PHYS (cp, phys);
 	np->squeueput = qidx;
 
 	if(DEBUG_FLAGS & DEBUG_QUEUE)
@@ -5153,7 +5214,7 @@ void ncr_init (ncb_p np, char * msg, u_long code)
 	*/
 
 	for (i=0;i<MAX_START;i++)
-		np -> squeue [i] = NCB_SCRIPT_PHYS (np, idle);
+		np -> ncb_dma -> squeue [i] = NCB_SCRIPT_PHYS (np, idle);
 
 	/*
 	**	Start at first entry.
@@ -5451,9 +5512,9 @@ static void ncr_setsync (ncb_p np, ccb_p cp, u_char scntl3, u_char sxfer)
 	**	set actual value and sync_status
 	*/
 	OUTB (nc_sxfer, sxfer);
-	np->sync_st = sxfer;
+	np->ncb_dma->sync_st = sxfer;
 	OUTB (nc_scntl3, scntl3);
-	np->wide_st = scntl3;
+	np->ncb_dma->wide_st = scntl3;
 
 	/*
 	**	patch ALL ccbs of this target.
@@ -5518,9 +5579,9 @@ static void ncr_setwide (ncb_p np, ccb_p cp, u_char wide, u_char ack)
 	**	set actual value and sync_status
 	*/
 	OUTB (nc_sxfer, sxfer);
-	np->sync_st = sxfer;
+	np->ncb_dma->sync_st = sxfer;
 	OUTB (nc_scntl3, scntl3);
-	np->wide_st = scntl3;
+	np->ncb_dma->wide_st = scntl3;
 
 	/*
 	**	patch ALL ccbs of this target.
@@ -5712,7 +5773,7 @@ static void ncr_timeout (void *arg)
 		**----------------------------------------------------
 		*/
 
-		t = thistime - np->heartbeat;
+		t = thistime - np->ncb_dma->heartbeat;
 
 		if (t<2) np->latetime=0; else np->latetime++;
 
@@ -6301,12 +6362,12 @@ static void ncr_int_ma (ncb_p np, u_char dstat)
 
 	if (!cp) {
 	    printf ("%s: SCSI phase error fixup: CCB already dequeued (%p)\n", 
-		    ncr_name (np), np->header.cp);
+		    ncr_name (np), np->ncb_dma->header.cp);
 	    return;
 	}
-	if (cp != np->header.cp) {
+	if (cp != np->ncb_dma->header.cp) {
 	    printf ("%s: SCSI phase error fixup: CCB address mismatch (0x%08lx != 0x%08lx) np->ccb = %p\n", 
-		    ncr_name (np), (u_long) cp, (u_long) np->header.cp, np->ccb);
+		    ncr_name (np), (u_long) cp, (u_long) np->ncb_dma->header.cp, np->ccb);
 /*	    return;*/
 	}
 
@@ -6344,7 +6405,7 @@ static void ncr_int_ma (ncb_p np, u_char dstat)
 	};
 	if (DEBUG_FLAGS & DEBUG_PHASE) {
 		printf ("\nCP=%p CP2=%p DSP=%x NXT=%x VDSP_BASE=%p VDSP_OFF=0x%x CMD=%x ",
-			cp, np->header.cp, (unsigned)dsp,
+			cp, np->ncb_dma->header.cp, (unsigned)dsp,
 			(unsigned)nxtdsp, vdsp_base, (unsigned)vdsp_off, cmd);
 	};
 
@@ -6486,8 +6547,8 @@ void ncr_int_sir (ncb_p np)
 		assert (cp);
 		if (!cp)
 			goto out;
-		assert (cp == np->header.cp);
-		if (cp != np->header.cp)
+		assert (cp == np->ncb_dma->header.cp);
+		if (cp != np->ncb_dma->header.cp)
 			goto out;
 	}
 
@@ -6667,8 +6728,8 @@ void ncr_int_sir (ncb_p np)
 			break;
 
 		};
-		np->msgin [0] = M_NOOP;
-		np->msgout[0] = M_NOOP;
+		np->ncb_dma->msgin [0] = M_NOOP;
+		np->ncb_dma->msgout[0] = M_NOOP;
 		cp->nego_status = 0;
 		OUTL (nc_dsp, NCB_SCRIPT_PHYS (np, dispatch));
 		break;
@@ -6681,7 +6742,7 @@ void ncr_int_sir (ncb_p np)
 		if (DEBUG_FLAGS & DEBUG_NEGO) {
 			PRINT_ADDR(cp->xfer);
 			printf ("sync msgin: ");
-			(void) ncr_show_msg (np->msgin);
+			(void) ncr_show_msg (np->ncb_dma->msgin);
 			printf (".\n");
 		};
 
@@ -6690,8 +6751,8 @@ void ncr_int_sir (ncb_p np)
 		*/
 
 		chg = 0;
-		per = np->msgin[3];
-		ofs = np->msgin[4];
+		per = np->ncb_dma->msgin[3];
+		ofs = np->ncb_dma->msgin[4];
 		if (ofs==0) per=255;
 
 		/*
@@ -6775,18 +6836,18 @@ void ncr_int_sir (ncb_p np)
 
 		ncr_setsync (np, cp, scntl3, (fak<<5)|ofs);
 
-		np->msgout[0] = M_EXTENDED;
-		np->msgout[1] = 3;
-		np->msgout[2] = M_X_SYNC_REQ;
-		np->msgout[3] = per;
-		np->msgout[4] = ofs;
+		np->ncb_dma->msgout[0] = M_EXTENDED;
+		np->ncb_dma->msgout[1] = 3;
+		np->ncb_dma->msgout[2] = M_X_SYNC_REQ;
+		np->ncb_dma->msgout[3] = per;
+		np->ncb_dma->msgout[4] = ofs;
 
 		cp->nego_status = NS_SYNC;
 
 		if (DEBUG_FLAGS & DEBUG_NEGO) {
 			PRINT_ADDR(cp->xfer);
 			printf ("sync msgout: ");
-			(void) ncr_show_msg (np->msgout);
+			(void) ncr_show_msg (np->ncb_dma->msgout);
 			printf (".\n");
 		}
 
@@ -6794,7 +6855,7 @@ void ncr_int_sir (ncb_p np)
 			OUTL (nc_dsp, NCB_SCRIPT_PHYS (np, msg_bad));
 			return;
 		}
-		np->msgin [0] = M_NOOP;
+		np->ncb_dma->msgin [0] = M_NOOP;
 
 		break;
 
@@ -6805,7 +6866,7 @@ void ncr_int_sir (ncb_p np)
 		if (DEBUG_FLAGS & DEBUG_NEGO) {
 			PRINT_ADDR(cp->xfer);
 			printf ("wide msgin: ");
-			(void) ncr_show_msg (np->msgin);
+			(void) ncr_show_msg (np->ncb_dma->msgin);
 			printf (".\n");
 		};
 
@@ -6814,7 +6875,7 @@ void ncr_int_sir (ncb_p np)
 		*/
 
 		chg  = 0;
-		wide = np->msgin[3];
+		wide = np->ncb_dma->msgin[3];
 
 		/*
 		**      if target sends WDTR message,
@@ -6872,19 +6933,19 @@ void ncr_int_sir (ncb_p np)
 
 		ncr_setwide (np, cp, wide, 1);
 
-		np->msgout[0] = M_EXTENDED;
-		np->msgout[1] = 2;
-		np->msgout[2] = M_X_WIDE_REQ;
-		np->msgout[3] = wide;
+		np->ncb_dma->msgout[0] = M_EXTENDED;
+		np->ncb_dma->msgout[1] = 2;
+		np->ncb_dma->msgout[2] = M_X_WIDE_REQ;
+		np->ncb_dma->msgout[3] = wide;
 
-		np->msgin [0] = M_NOOP;
+		np->ncb_dma->msgin [0] = M_NOOP;
 
 		cp->nego_status = NS_WIDE;
 
 		if (DEBUG_FLAGS & DEBUG_NEGO) {
 			PRINT_ADDR(cp->xfer);
 			printf ("wide msgout: ");
-			(void) ncr_show_msg (np->msgout);
+			(void) ncr_show_msg (np->ncb_dma->msgout);
 			printf (".\n");
 		}
 		break;
@@ -6906,7 +6967,7 @@ void ncr_int_sir (ncb_p np)
 
 		PRINT_ADDR(cp->xfer);
 		printf ("M_REJECT received (%x:%x).\n",
-			(unsigned)np->lastmsg, np->msgout[0]);
+			(unsigned)np->ncb_dma->lastmsg, np->ncb_dma->msgout[0]);
 		break;
 
 	case SIR_REJECT_SENT:
@@ -6919,7 +6980,7 @@ void ncr_int_sir (ncb_p np)
 
 		PRINT_ADDR(cp->xfer);
 		printf ("M_REJECT sent for ");
-		(void) ncr_show_msg (np->msgin);
+		(void) ncr_show_msg (np->ncb_dma->msgin);
 		printf (".\n");
 		break;
 
@@ -6956,8 +7017,8 @@ void ncr_int_sir (ncb_p np)
 		printf ("M_DISCONNECT received, but datapointer not saved:\n"
 			"\tdata=%x save=%x goal=%x.\n",
 			(unsigned) INL (nc_temp),
-			(unsigned) np->header.savep,
-			(unsigned) np->header.goalp);
+			(unsigned) np->ncb_dma->header.savep,
+			(unsigned) np->ncb_dma->header.goalp);
 		break;
 
 /*--------------------------------------------------------------------
@@ -7154,7 +7215,7 @@ static	void ncr_alloc_ccb (ncb_p np, u_long target, u_long lun)
 		**	initialize it.
 		*/
 		tp->jump_tcb.l_cmd   = (SCR_JUMP^IFFALSE (DATA (0x80 + target)));
-		tp->jump_tcb.l_paddr = np->jump_tcb.l_paddr;
+		tp->jump_tcb.l_paddr = np->ncb_dma->jump_tcb.l_paddr;
 
 		tp->getscr[0] =
 			(np->features & FE_PFEN)? SCR_COPY(1) : SCR_COPY_F(1);
@@ -7175,7 +7236,7 @@ static	void ncr_alloc_ccb (ncb_p np, u_long target, u_long lun)
 
 		tp->jump_lcb.l_cmd   = (SCR_JUMP);
 		tp->jump_lcb.l_paddr = NCB_SCRIPTH_PHYS (np, abort);
-		np->jump_tcb.l_paddr = vtophys (&tp->jump_tcb);
+		np->ncb_dma->jump_tcb.l_paddr = vtophys (&tp->jump_tcb);
 
 		tp->usrtags = SCSI_NCR_DFLT_TAGS;
 		ncr_setmaxtags (tp, tp->usrtags);
@@ -7638,7 +7699,7 @@ static	void ncb_profile (ncb_p np, ccb_p cp)
 
 	work = (st - co) - disc;
 
-	diff = (np->disc_phys - np->disc_ref) & 0xff;
+	diff = (np->ncb_dma->disc_phys - np->disc_ref) & 0xff;
 	np->disc_ref += diff;
 
 	np->profile.num_trans	+= 1;
