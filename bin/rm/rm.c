@@ -1,4 +1,4 @@
-/*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
+/*	$NetBSD: rm.c,v 1.20 1997/07/20 20:51:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1990, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $";
+__RCSID("$NetBSD: rm.c,v 1.20 1997/07/20 20:51:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,8 @@ static char rcsid[] = "$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <pwd.h>
+#include <grp.h>
 
 int dflag, eval, fflag, iflag, Pflag, Wflag, stdin_ok;
 
@@ -68,6 +70,7 @@ void	rm_file __P((char **));
 void	rm_overwrite __P((char *, struct stat *));
 void	rm_tree __P((char **));
 void	usage __P((void));
+int	main __P((int, char *[]));
 
 /*
  * rm --
@@ -159,8 +162,9 @@ rm_tree(argv)
 		flags |= FTS_NOSTAT;
 	if (Wflag)
 		flags |= FTS_WHITEOUT;
-	if (!(fts = fts_open(argv, flags, (int (*)())NULL)))
-		err(1, NULL);
+	if (!(fts = fts_open(argv, flags,
+		(int (*) __P((const FTSENT **, const FTSENT **)))NULL)))
+		err(1, "%s", "");
 	while ((p = fts_read(fts)) != NULL) {
 		switch (p->fts_info) {
 		case FTS_DNR:
@@ -212,20 +216,22 @@ rm_tree(argv)
 		switch (p->fts_info) {
 		case FTS_DP:
 		case FTS_DNR:
-			if (!rmdir(p->fts_accpath) || fflag && errno == ENOENT)
+			if (!rmdir(p->fts_accpath) ||
+			    (fflag && errno == ENOENT))
 				continue;
 			break;
 
 		case FTS_W:
 			if (!undelete(p->fts_accpath) ||
-			    fflag && errno == ENOENT)
+			    (fflag && errno == ENOENT))
 				continue;
 			break;
 
 		default:
 			if (Pflag)
 				rm_overwrite(p->fts_accpath, NULL);
-			if (!unlink(p->fts_accpath) || fflag && errno == ENOENT)
+			if (!unlink(p->fts_accpath) ||
+			    (fflag && errno == ENOENT))
 				continue;
 		}
 		warn("%s", p->fts_path);
@@ -385,7 +391,7 @@ check(path, name, sp)
  * Since POSIX.2 defines basename as the final portion of a path after
  * trailing slashes have been removed, we'll remove them here.
  */
-#define ISDOT(a)	((a)[0] == '.' && (!(a)[1] || (a)[1] == '.' && !(a)[2]))
+#define ISDOT(a) ((a)[0] == '.' && (!(a)[1] || ((a)[1] == '.' && !(a)[2])))
 void
 checkdot(argv)
 	char **argv;
