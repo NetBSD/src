@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.4 2003/01/17 23:36:18 thorpej Exp $ */
+/*	$NetBSD: svr4_machdep.c,v 1.5 2003/01/22 04:32:17 rafal Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -75,8 +75,8 @@
  * XXX This should be filled later 
  */
 int
-svr4_setmcontext(p, mc, flags)
-	struct proc *p;
+svr4_setmcontext(l, mc, flags)
+	struct lwp *l;
 	svr4_mcontext_t *mc;
 	unsigned long flags;
 {
@@ -85,8 +85,8 @@ svr4_setmcontext(p, mc, flags)
 }
 
 void *  
-svr4_getmcontext(p, mc, flags)
-	struct proc *p;
+svr4_getmcontext(l, mc, flags)
+	struct lwp *l;
 	svr4_mcontext_t *mc;
 	unsigned long *flags;
 {    
