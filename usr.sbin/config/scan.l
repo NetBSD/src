@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.40 2003/09/08 17:50:12 cl Exp $	*/
+/*	$NetBSD: scan.l,v 1.41 2003/11/18 18:47:36 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -148,15 +148,15 @@ with		return WITH;
 		return QSTRING;
 	}
 0[0-7]*	{
-		yylval.val = strtol(yytext, NULL, 8);
+		yylval.val = strtoll(yytext, NULL, 8);
 		return NUMBER;
 	}
 0[xX][0-9a-fA-F]+ {
-		yylval.val = strtoul(yytext + 2, NULL, 16);
+		yylval.val = strtoull(yytext + 2, NULL, 16);
 		return NUMBER;
 	}
 [1-9][0-9]* {
-		yylval.val = strtol(yytext, NULL, 10);
+		yylval.val = strtoll(yytext, NULL, 10);
 		return NUMBER;
 	}
 \n[ \t] {

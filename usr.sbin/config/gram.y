@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.44 2003/08/07 11:25:15 agc Exp $	*/
+/*	$NetBSD: gram.y,v 1.45 2003/11/18 18:47:36 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,7 @@
 #include "defs.h"
 #include "sem.h"
 
-#define	FORMAT(n) ((n) > -10 && (n) < 10 ? "%d" : "0x%x")
+#define	FORMAT(n) ((n) > -10 && (n) < 10 ? "%lld" : "0x%llx")
 
 #define	stop(s)	error(s), exit(1)
 
@@ -94,7 +94,7 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 	struct	deva *deva;
 	struct	nvlist *list;
 	const char *str;
-	int	val;
+	int64_t	val;
 }
 
 %token	AND AT ATTACH BUILD CINCLUDE COMPILE_WITH CONFIG DEFFS DEFINE DEFOPT 
