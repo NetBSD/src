@@ -1,11 +1,12 @@
-/*	$NetBSD: linux_misc.c,v 1.55 1999/05/13 01:00:50 thorpej Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.56 1999/05/13 23:42:34 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Frank van der Linden and Eric Haszlakiewicz.
+ * by Frank van der Linden and Eric Haszlakiewicz; by Jason R. Thorpe
+ * of the Numerical Aerospace Simulation Facility, NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -103,6 +104,7 @@
 #include <compat/linux/common/linux_dirent.h>
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_misc.h>
+#include <compat/linux/common/linux_sched.h>
 
 
 /* Local linux_misc.c functions: */
@@ -913,4 +915,46 @@ linux_sys___sysctl(p, v, retval)
 	SCARG(&bsa, newlen) = ls.newlen;
 
 	return sys___sysctl(p, &bsa, retval);
+}
+
+int
+linux_sys_clone(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_clone_args /* {
+		syscallarg(int) flags;
+		syscallarg(void *) stack;
+	} */ *uap = v;
+	int flags, sig;
+
+	/*
+	 * We don't support the Linux CLONE_PID or CLONE_PTRACE flags.
+	 */
+	if (SCARG(uap, flags) & (LINUX_CLONE_PID|LINUX_CLONE_PTRACE))
+		return (EINVAL);
+
+	flags = 0;
+
+	if (SCARG(uap, flags) & LINUX_CLONE_VM)
+		flags |= FORK_SHAREVM;
+	if (SCARG(uap, flags) & LINUX_CLONE_FS)
+		flags |= FORK_SHARECWD;
+	if (SCARG(uap, flags) & LINUX_CLONE_FILES)
+		flags |= FORK_SHAREFILES;
+	if (SCARG(uap, flags) & LINUX_CLONE_SIGHAND)
+		flags |= FORK_SHARESIGS;
+	if (SCARG(uap, flags) & LINUX_CLONE_VFORK)
+		flags |= FORK_PPWAIT;
+
+	sig = SCARG(uap, flags) & LINUX_CLONE_CSIGNAL;
+
+	/*
+	 * Note that Linux does not provide a portable way of specifying
+	 * the stack area; the caller must know if the stack grows up
+	 * or down.  So, we pass a stack size of 0, so that the code
+	 * that makes this adjustment is a noop.
+	 */
+	return (fork1(p, flags, sig, SCARG(uap, stack), 0, retval, NULL));
 }
