@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.alpha,v 1.49.4.1 1999/06/21 00:46:08 thorpej Exp $
+# $NetBSD: Makefile.alpha,v 1.49.4.2 1999/08/02 19:34:27 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -55,6 +55,8 @@ LOADADDRESS?=	fffffc0000300000
 LINKFLAGS=	-N -Ttext ${LOADADDRESS} -e __transfer -G 4
 STRIPFLAGS=	-g -X
 
+%INCLUDES
+
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
 .ifndef PROF
@@ -101,8 +103,9 @@ DEBUG?=
 .if ${DEBUG} == "-g"
 LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
-		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
-		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
+		echo mv -f $@ $@.gdb; mv -f $@ $@.gdb; \
+		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
+		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .else
 LINKFLAGS+=	-S
 .endif

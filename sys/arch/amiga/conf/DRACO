@@ -1,10 +1,10 @@
-# $NetBSD: DRACO,v 1.32.2.1.2.1 1999/06/21 00:46:39 thorpej Exp $
+# $NetBSD: DRACO,v 1.32.2.1.2.2 1999/08/02 19:36:40 thorpej Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
 # Created from: 
-#$ NetBSD: GENERIC,v 1.126 1999/06/18 05:58:25 is Exp $
+#$ NetBSD: GENERIC,v 1.127 1999/07/28 05:55:19 is Exp $
 
 include "arch/amiga/conf/std.amiga"
 
@@ -69,6 +69,7 @@ options 	COMPAT_09	# compatibility with NetBSD 0.9
 options 	COMPAT_10	# compatibility with NetBSD 1.0
 options 	COMPAT_12	# compatibility with NetBSD 1.2
 options 	COMPAT_13	# compatibility with NetBSD 1.3
+options 	COMPAT_14	# compatibility with NetBSD 1.4
 options 	COMPAT_SUNOS	# Support to run Sun (m68k) executables
 options 	COMPAT_SVR4	# Support to run SVR4 (m68k) executables
 options 	COMPAT_NOMID	# allow nonvalid machine id executables
@@ -184,9 +185,6 @@ es*		at zbus0		# CEI A4066 EthernetPLUS
 qn*		at zbus0		# Quicknet
 
 bah*		at zbus0		# C=/Ameristar A2060 / 560
-
-#Greater Valley Product Bus
-gvpbus* 	at zbus0
 
 drsc0		at mainbus0		# DraCo scsi
 scsibus*	at drsc0

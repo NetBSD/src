@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.26.2.1.2.1 1999/06/21 00:47:35 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.26.2.1.2.2 1999/08/02 19:40:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -1372,10 +1372,10 @@ void
 rpc_sa110_cc_setup(void)
 {
 	int loop;
-	vm_offset_t kaddr;
+	paddr_t kaddr;
 	pt_entry_t *pte;
 
-	kaddr = pmap_extract(kernel_pmap, KERNEL_TEXT_BASE);
+	(void) pmap_extract(kernel_pmap, KERNEL_TEXT_BASE, &kaddr);
 	for (loop = 0; loop < CPU_SA110_CACHE_CLEAN_SIZE; loop += NBPG) {
 		pte = pmap_pte(kernel_pmap, (sa110_cc_base + loop));
 		*pte = L2_PTE(kaddr, AP_KR);
