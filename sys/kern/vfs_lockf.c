@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.7 1996/02/04 02:18:21 christos Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.8 1996/10/10 22:46:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -578,7 +578,7 @@ lf_findoverlap(lf, lock, type, prev, overlap)
 			/* Case 0 */
 #ifdef LOCKF_DEBUG
 			if (lockf_debug & 2)
-				printf("no overlap\n");
+				kprintf("no overlap\n");
 #endif /* LOCKF_DEBUG */
 			if ((type & SELF) && end != -1 && lf->lf_start > end)
 				return (0);
@@ -590,7 +590,7 @@ lf_findoverlap(lf, lock, type, prev, overlap)
 			/* Case 1 */
 #ifdef LOCKF_DEBUG
 			if (lockf_debug & 2)
-				printf("overlap == lock\n");
+				kprintf("overlap == lock\n");
 #endif /* LOCKF_DEBUG */
 			return (1);
 		}
@@ -600,7 +600,7 @@ lf_findoverlap(lf, lock, type, prev, overlap)
 			/* Case 2 */
 #ifdef LOCKF_DEBUG
 			if (lockf_debug & 2)
-				printf("overlap contains lock\n");
+				kprintf("overlap contains lock\n");
 #endif /* LOCKF_DEBUG */
 			return (2);
 		}
@@ -610,7 +610,7 @@ lf_findoverlap(lf, lock, type, prev, overlap)
 			/* Case 3 */
 #ifdef LOCKF_DEBUG
 			if (lockf_debug & 2)
-				printf("lock contains overlap\n");
+				kprintf("lock contains overlap\n");
 #endif /* LOCKF_DEBUG */
 			return (3);
 		}
@@ -619,7 +619,7 @@ lf_findoverlap(lf, lock, type, prev, overlap)
 			/* Case 4 */
 #ifdef LOCKF_DEBUG
 			if (lockf_debug & 2)
-				printf("overlap starts before lock\n");
+				kprintf("overlap starts before lock\n");
 #endif /* LOCKF_DEBUG */
 			return (4);
 		}
@@ -629,7 +629,7 @@ lf_findoverlap(lf, lock, type, prev, overlap)
 			/* Case 5 */
 #ifdef LOCKF_DEBUG
 			if (lockf_debug & 2)
-				printf("overlap ends after lock\n");
+				kprintf("overlap ends after lock\n");
 #endif /* LOCKF_DEBUG */
 			return (5);
 		}
@@ -748,12 +748,12 @@ lf_print(tag, lock)
 	register struct lockf *lock;
 {
 	
-	printf("%s: lock %p for ", tag, lock);
+	kprintf("%s: lock %p for ", tag, lock);
 	if (lock->lf_flags & F_POSIX)
-		printf("proc %d", ((struct proc *)(lock->lf_id))->p_pid);
+		kprintf("proc %d", ((struct proc *)(lock->lf_id))->p_pid);
 	else
-		printf("id 0x%x", lock->lf_id);
-	printf(" in ino %d on dev <%d, %d>, %s, start %d, end %d",
+		kprintf("id 0x%x", lock->lf_id);
+	kprintf(" in ino %d on dev <%d, %d>, %s, start %d, end %d",
 		lock->lf_inode->i_number,
 		major(lock->lf_inode->i_dev),
 		minor(lock->lf_inode->i_dev),
@@ -762,9 +762,9 @@ lf_print(tag, lock)
 		lock->lf_type == F_UNLCK ? "unlock" :
 		"unknown", lock->lf_start, lock->lf_end);
 	if (lock->lf_block)
-		printf(" block %p\n", lock->lf_block);
+		kprintf(" block %p\n", lock->lf_block);
 	else
-		printf("\n");
+		kprintf("\n");
 }
 
 void
@@ -774,25 +774,25 @@ lf_printlist(tag, lock)
 {
 	register struct lockf *lf;
 
-	printf("%s: Lock list for ino %d on dev <%d, %d>:\n",
+	kprintf("%s: Lock list for ino %d on dev <%d, %d>:\n",
 		tag, lock->lf_inode->i_number,
 		major(lock->lf_inode->i_dev),
 		minor(lock->lf_inode->i_dev));
 	for (lf = lock->lf_inode->i_lockf; lf; lf = lf->lf_next) {
-		printf("\tlock %p for ", lf);
+		kprintf("\tlock %p for ", lf);
 		if (lf->lf_flags & F_POSIX)
-			printf("proc %d", ((struct proc *)(lf->lf_id))->p_pid);
+			kprintf("proc %d", ((struct proc *)(lf->lf_id))->p_pid);
 		else
-			printf("id 0x%x", lf->lf_id);
-		printf(", %s, start %d, end %d",
+			kprintf("id 0x%x", lf->lf_id);
+		kprintf(", %s, start %d, end %d",
 			lf->lf_type == F_RDLCK ? "shared" :
 			lf->lf_type == F_WRLCK ? "exclusive" :
 			lf->lf_type == F_UNLCK ? "unlock" :
 			"unknown", lf->lf_start, lf->lf_end);
 		if (lf->lf_block)
-			printf(" block %p\n", lf->lf_block);
+			kprintf(" block %p\n", lf->lf_block);
 		else
-			printf("\n");
+			kprintf("\n");
 	}
 }
 #endif /* LOCKF_DEBUG */

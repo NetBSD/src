@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.33 1996/09/07 12:41:21 mycroft Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.34 1996/10/10 22:54:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -1127,7 +1127,7 @@ union_link(v)
 
 #ifdef DIAGNOSTIC
 	if (!(ap->a_cnp->cn_flags & LOCKPARENT)) {
-		printf("union_link called without LOCKPARENT set!\n");
+		kprintf("union_link called without LOCKPARENT set!\n");
 		error = EIO; /* need some error code for "caller is a bozo" */
 	} else
 #endif
@@ -1695,7 +1695,7 @@ union_print(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	printf("\ttag VT_UNION, vp=%p, uppervp=%p, lowervp=%p\n",
+	kprintf("\ttag VT_UNION, vp=%p, uppervp=%p, lowervp=%p\n",
 	    vp, UPPERVP(vp), LOWERVP(vp));
 	if (UPPERVP(vp))
 		vprint("uppervp", UPPERVP(vp));

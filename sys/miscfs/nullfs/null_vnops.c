@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vnops.c,v 1.7 1996/05/10 22:51:01 jtk Exp $	*/
+/*	$NetBSD: null_vnops.c,v 1.8 1996/10/10 22:54:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -235,7 +235,7 @@ null_bypass(v)
 	int reles, i;
 
 	if (null_bug_bypass)
-		printf ("null_bypass: %s\n", descp->vdesc_name);
+		kprintf ("null_bypass: %s\n", descp->vdesc_name);
 
 #ifdef SAFETY
 	/*
@@ -424,16 +424,16 @@ null_print(v)
 	register struct vnode *vp = ap->a_vp;
 	register struct null_node *nn = VTONULL(vp);
 
-	printf ("\ttag VT_NULLFS, vp=%p, lowervp=%p\n", vp, NULLVPTOLOWERVP(vp));
+	kprintf ("\ttag VT_NULLFS, vp=%p, lowervp=%p\n", vp, NULLVPTOLOWERVP(vp));
 #ifdef DIAGNOSTIC
-	printf("%s%s owner pid %d retpc %p retret %p\n",
-	       (nn->null_flags & NULL_LOCKED) ? "(LOCKED) " : "",
-	       (nn->null_flags & NULL_LLOCK) ? "(LLOCK) " : "",
-	       nn->null_pid, nn->null_lockpc, nn->null_lockpc2);
+	kprintf("%s%s owner pid %d retpc %p retret %p\n",
+	    (nn->null_flags & NULL_LOCKED) ? "(LOCKED) " : "",
+	    (nn->null_flags & NULL_LLOCK) ? "(LLOCK) " : "",
+	    nn->null_pid, nn->null_lockpc, nn->null_lockpc2);
 #else
-	printf("%s%s\n",
-	       (nn->null_flags & NULL_LOCKED) ? "(LOCKED) " : "",
-	       (nn->null_flags & NULL_LLOCK) ? "(LLOCK) " : "");
+	kprintf("%s%s\n",
+	    (nn->null_flags & NULL_LOCKED) ? "(LOCKED) " : "",
+	    (nn->null_flags & NULL_LLOCK) ? "(LLOCK) " : "");
 #endif
 	vprint("nullfs lowervp", NULLVPTOLOWERVP(vp));
 	return (0);
@@ -512,9 +512,7 @@ null_lock(v)
 
 #ifdef NULLFS_DIAGNOSTIC
 	vprint("null_lock_e", ap->a_vp);
-	printf("retpc=%lx, retretpc=%lx\n",
-	       RETURN_PC(0),
-	       RETURN_PC(1));
+	kprintf("retpc=%lx, retretpc=%lx\n", RETURN_PC(0), RETURN_PC(1));
 #endif
 start:
 	while (vp->v_flag & VXLOCK) {
@@ -624,8 +622,8 @@ null_lookup(v)
 	int flags = ap->a_cnp->cn_flags;
 
 #ifdef NULLFS_DIAGNOSTIC
-	printf("null_lookup: dvp=%lx, name='%s'\n",
-	       ap->a_dvp, ap->a_cnp->cn_nameptr);
+	kprintf("null_lookup: dvp=%lx, name='%s'\n",
+	    ap->a_dvp, ap->a_cnp->cn_nameptr);
 #endif
 	/*
 	 * the starting dir (ap->a_dvp) comes in locked.

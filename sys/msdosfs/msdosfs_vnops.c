@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.52 1996/09/07 12:41:24 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.53 1996/10/10 22:54:04 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -116,7 +116,7 @@ msdosfs_create(v)
 	struct timespec ts;
 
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_create(cnp %08x, vap %08x\n", cnp, ap->a_vap);
+	kprintf("msdosfs_create(cnp %08x, vap %08x\n", cnp, ap->a_vap);
 #endif
 
 	/*
@@ -334,8 +334,8 @@ msdosfs_setattr(v)
 	struct ucred *cred = ap->a_cred;
 	
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_setattr(): vp %08x, vap %08x, cred %08x, p %08x\n",
-	       ap->a_vp, vap, cred, ap->a_p);
+	kprintf("msdosfs_setattr(): vp %08x, vap %08x, cred %08x, p %08x\n",
+	    ap->a_vp, vap, cred, ap->a_p);
 #endif
 	if ((vap->va_type != VNON) || (vap->va_nlink != VNOVAL) ||
 	    (vap->va_fsid != VNOVAL) || (vap->va_fileid != VNOVAL) ||
@@ -343,13 +343,13 @@ msdosfs_setattr(v)
 	    (vap->va_bytes != VNOVAL) || (vap->va_gen != VNOVAL) ||
 	    (vap->va_uid != VNOVAL) || (vap->va_gid != VNOVAL)) {
 #ifdef MSDOSFS_DEBUG
-		printf("msdosfs_setattr(): returning EINVAL\n");
-		printf("    va_type %d, va_nlink %x, va_fsid %x, va_fileid %x\n",
-		       vap->va_type, vap->va_nlink, vap->va_fsid, vap->va_fileid);
-		printf("    va_blocksize %x, va_rdev %x, va_bytes %x, va_gen %x\n",
-		       vap->va_blocksize, vap->va_rdev, vap->va_bytes, vap->va_gen);
-		printf("    va_uid %x, va_gid %x\n",
-		       vap->va_uid, vap->va_gid);
+		kprintf("msdosfs_setattr(): returning EINVAL\n");
+		kprintf("    va_type %d, va_nlink %x, va_fsid %x, va_fileid %x\n",
+		    vap->va_type, vap->va_nlink, vap->va_fsid, vap->va_fileid);
+		kprintf("    va_blocksize %x, va_rdev %x, va_bytes %x, va_gen %x\n",
+		    vap->va_blocksize, vap->va_rdev, vap->va_bytes, vap->va_gen);
+		kprintf("    va_uid %x, va_gid %x\n",
+		    vap->va_uid, vap->va_gid);
 #endif
 		return (EINVAL);
 	}
@@ -521,10 +521,10 @@ msdosfs_write(v)
 	struct ucred *cred = ap->a_cred;
 	
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_write(vp %08x, uio %08x, ioflag %08x, cred %08x\n",
-	       vp, uio, ioflag, cred);
-	printf("msdosfs_write(): diroff %d, dirclust %d, startcluster %d\n",
-	       dep->de_diroffset, dep->de_dirclust, dep->de_StartCluster);
+	kprintf("msdosfs_write(vp %08x, uio %08x, ioflag %08x, cred %08x\n",
+	    vp, uio, ioflag, cred);
+	kprintf("msdosfs_write(): diroff %d, dirclust %d, startcluster %d\n",
+	    dep->de_diroffset, dep->de_dirclust, dep->de_StartCluster);
 #endif
 
 	switch (vp->v_type) {
@@ -780,7 +780,7 @@ msdosfs_remove(v)
 
 	error = removede(ddep, dep);
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_remove(), dep %08x, v_usecount %d\n", dep, ap->a_vp->v_usecount);
+	kprintf("msdosfs_remove(), dep %08x, v_usecount %d\n", dep, ap->a_vp->v_usecount);
 #endif
 	if (ddep == dep)
 		vrele(ap->a_vp);
@@ -1415,8 +1415,8 @@ msdosfs_readdir(v)
 	int chksum = -1;
 	
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_readdir(): vp %08x, uio %08x, cred %08x, eofflagp %08x\n",
-	       ap->a_vp, uio, ap->a_cred, ap->a_eofflag);
+	kprintf("msdosfs_readdir(): vp %08x, uio %08x, cred %08x, eofflagp %08x\n",
+	    ap->a_vp, uio, ap->a_cred, ap->a_eofflag);
 #endif
 
 	/*
@@ -1457,10 +1457,10 @@ msdosfs_readdir(v)
 	 * read the first entry in the root directory that lives on disk.
 	 */
 	if (dep->de_StartCluster == MSDOSFSROOT) {
-		/*
-		 * printf("msdosfs_readdir(): going after . or .. in root dir, offset %d\n",
-		 *	  offset);
-		 */
+#if 0
+		kprintf("msdosfs_readdir(): going after . or .. in root dir, offset %d\n",
+		    offset);
+#endif
 		bias = 2 * sizeof(struct direntry);
 		if (offset < bias) {
 			for (n = (int)offset / sizeof(struct direntry);
@@ -1518,10 +1518,11 @@ msdosfs_readdir(v)
 		for (dentp = (struct direntry *)(bp->b_data + on);
 		     (char *)dentp < bp->b_data + on + n;
 		     dentp++, offset += sizeof(struct direntry)) {
-			/*
-			 * printf("rd: dentp %08x prev %08x crnt %08x deName %02x attr %02x\n",
-			 *	  dentp, prev, crnt, dentp->deName[0], dentp->deAttributes);
-			 */
+#if 0
+			
+			kprintf("rd: dentp %08x prev %08x crnt %08x deName %02x attr %02x\n",
+			    dentp, prev, crnt, dentp->deName[0], dentp->deAttributes);
+#endif
 			/*
 			 * If this is an unused entry, we can stop.
 			 */
@@ -1673,7 +1674,7 @@ start:
 	if (dep->de_lockholder != 0)
 		panic("lockholder (%d) != 0", dep->de_lockholder);
 	if (p && p->p_pid == 0)
-		printf("locking by process 0\n");
+		kprintf("locking by process 0\n");
 	if (p)
 		dep->de_lockholder = p->p_pid;
 	else
@@ -1829,18 +1830,18 @@ msdosfs_print(v)
 	} */ *ap = v;
 	struct denode *dep = VTODE(ap->a_vp);
 
-	printf(
+	kprintf(
 	    "tag VT_MSDOSFS, startcluster %d, dircluster %ld, diroffset %ld ",
 	    dep->de_StartCluster, dep->de_dirclust, dep->de_diroffset);
-	printf(" dev %d, %d, %s\n",
+	kprintf(" dev %d, %d, %s\n",
 	    major(dep->de_dev), minor(dep->de_dev),
 	    dep->de_flag & DE_LOCKED ? "(LOCKED)" : "");
 #ifdef DIAGNOSTIC
 	if (dep->de_lockholder) {
-		printf("    owner pid %d", dep->de_lockholder);
+		kprintf("    owner pid %d", dep->de_lockholder);
 		if (dep->de_lockwaiter)
-			printf(" waiting pid %d", dep->de_lockwaiter);
-		printf("\n");
+			kprintf(" waiting pid %d", dep->de_lockwaiter);
+		kprintf("\n");
 	}
 #endif
 	return (0);

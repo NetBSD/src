@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.15 1996/10/10 22:46:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -363,15 +363,15 @@ pgrpdump()
 
 	for (i = 0; i <= pgrphash; i++) {
 		if ((pgrp = pgrphashtbl[i].lh_first) != NULL) {
-			printf("\tindx %d\n", i);
+			kprintf("\tindx %d\n", i);
 			for (; pgrp != 0; pgrp = pgrp->pg_hash.le_next) {
-				printf("\tpgrp %p, pgid %d, sess %p, sesscnt %d, mem %p\n",
+				kprintf("\tpgrp %p, pgid %d, sess %p, sesscnt %d, mem %p\n",
 				    pgrp, pgrp->pg_id, pgrp->pg_session,
 				    pgrp->pg_session->s_count,
 				    pgrp->pg_members.lh_first);
 				for (p = pgrp->pg_members.lh_first; p != 0;
 				    p = p->p_pglist.le_next) {
-					printf("\t\tpid %d addr %p pgrp %p\n", 
+					kprintf("\t\tpid %d addr %p pgrp %p\n", 
 					    p->p_pid, p, p->p_pgrp);
 				}
 			}

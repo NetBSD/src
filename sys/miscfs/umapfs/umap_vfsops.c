@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.9 1996/02/09 22:41:05 christos Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.10 1996/10/10 22:54:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -87,7 +87,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	int error;
 
 #ifdef UMAPFS_DIAGNOSTIC
-	printf("umapfs_mount(mp = %x)\n", mp);
+	kprintf("umapfs_mount(mp = %x)\n", mp);
 #endif
 
 	/*
@@ -118,7 +118,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	 */
 	lowerrootvp = ndp->ni_vp;
 #ifdef UMAPFS_DIAGNOSTIC
-	printf("vp = %x, check for VDIR...\n", lowerrootvp);
+	kprintf("vp = %x, check for VDIR...\n", lowerrootvp);
 #endif
 	vrele(ndp->ni_dvp);
 	ndp->ni_dvp = 0;
@@ -129,7 +129,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	}
 
 #ifdef UMAPFS_DIAGNOSTIC
-	printf("mp = %x\n", mp);
+	kprintf("mp = %x\n", mp);
 #endif
 
 	amp = (struct umap_mount *) malloc(sizeof(struct umap_mount),
@@ -151,9 +151,9 @@ umapfs_mount(mp, path, data, ndp, p)
 		return (error);
 
 #ifdef UMAP_DIAGNOSTIC
-	printf("umap_mount:nentries %d\n",args.nentries);
+	kprintf("umap_mount:nentries %d\n",args.nentries);
 	for (i = 0; i < args.nentries; i++)
-		printf("   %d maps to %d\n", amp->info_mapdata[i][0],
+		kprintf("   %d maps to %d\n", amp->info_mapdata[i][0],
 	 	    amp->info_mapdata[i][1]);
 #endif
 
@@ -163,9 +163,9 @@ umapfs_mount(mp, path, data, ndp, p)
 		return (error);
 
 #ifdef UMAP_DIAGNOSTIC
-	printf("umap_mount:gnentries %d\n",args.gnentries);
+	kprintf("umap_mount:gnentries %d\n",args.gnentries);
 	for (i = 0; i < args.gnentries; i++)
-		printf("	group %d maps to %d\n", 
+		kprintf("\tgroup %d maps to %d\n", 
 		    amp->info_gmapdata[i][0],
 	 	    amp->info_gmapdata[i][1]);
 #endif
@@ -207,7 +207,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	    &size);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
 #ifdef UMAPFS_DIAGNOSTIC
-	printf("umapfs_mount: lower %s, alias at %s\n",
+	kprintf("umapfs_mount: lower %s, alias at %s\n",
 		mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname);
 #endif
 	return (0);
@@ -244,7 +244,7 @@ umapfs_unmount(mp, mntflags, p)
 	extern int doforce;
 
 #ifdef UMAPFS_DIAGNOSTIC
-	printf("umapfs_unmount(mp = %x)\n", mp);
+	kprintf("umapfs_unmount(mp = %x)\n", mp);
 #endif
 
 	if (mntflags & MNT_FORCE) {
@@ -296,10 +296,9 @@ umapfs_root(mp, vpp)
 	struct vnode *vp;
 
 #ifdef UMAPFS_DIAGNOSTIC
-	printf("umapfs_root(mp = %x, vp = %x->%x)\n", mp,
-			MOUNTTOUMAPMOUNT(mp)->umapm_rootvp,
-			UMAPVPTOLOWERVP(MOUNTTOUMAPMOUNT(mp)->umapm_rootvp)
-			);
+	kprintf("umapfs_root(mp = %x, vp = %x->%x)\n", mp,
+	    MOUNTTOUMAPMOUNT(mp)->umapm_rootvp,
+	    UMAPVPTOLOWERVP(MOUNTTOUMAPMOUNT(mp)->umapm_rootvp));
 #endif
 
 	/*
@@ -334,10 +333,9 @@ umapfs_statfs(mp, sbp, p)
 	struct statfs mstat;
 
 #ifdef UMAPFS_DIAGNOSTIC
-	printf("umapfs_statfs(mp = %x, vp = %x->%x)\n", mp,
-			MOUNTTOUMAPMOUNT(mp)->umapm_rootvp,
-			UMAPVPTOLOWERVP(MOUNTTOUMAPMOUNT(mp)->umapm_rootvp)
-			);
+	kprintf("umapfs_statfs(mp = %x, vp = %x->%x)\n", mp,
+	    MOUNTTOUMAPMOUNT(mp)->umapm_rootvp,
+	    UMAPVPTOLOWERVP(MOUNTTOUMAPMOUNT(mp)->umapm_rootvp));
 #endif
 
 	bzero(&mstat, sizeof(mstat));

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.6 1996/02/09 19:00:58 christos Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.7 1996/10/10 22:46:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -130,7 +130,7 @@ vfs_opv_init_explicit(vfs_opv_desc)
 		    vfs_opv_numops * sizeof(PFI), M_VNODE, M_WAITOK);
 		bzero(opv_desc_vector, vfs_opv_numops * sizeof(PFI));
 		*(vfs_opv_desc->opv_desc_vector_p) = opv_desc_vector;
-		DODEBUG(printf("vector at %p allocated\n",
+		DODEBUG(kprintf("vector at %p allocated\n",
 		    opv_desc_vector_p));
 	}
 
@@ -156,7 +156,7 @@ vfs_opv_init_explicit(vfs_opv_desc)
 		 */
 		if (opve_descp->opve_op->vdesc_offset == 0 &&
 		    opve_descp->opve_op->vdesc_offset != VOFFSET(vop_default)) {
-			printf("operation %s not listed in %s.\n",
+			kprintf("operation %s not listed in %s.\n",
 			    opve_descp->opve_op->vdesc_name, "vfs_op_descs");
 			panic ("vfs_opv_init: bad operation");
 		}
@@ -217,7 +217,7 @@ vfs_op_init()
 {
 	int i;
 
-	DODEBUG(printf("Vnode_interface_init.\n"));
+	DODEBUG(kprintf("Vnode_interface_init.\n"));
 	/*
 	 * Set all vnode vectors to a well known value.
 	 */
@@ -231,7 +231,7 @@ vfs_op_init()
 		vfs_op_descs[i]->vdesc_offset = vfs_opv_numops;
 		vfs_opv_numops++;
 	}
-	DODEBUG(printf ("vfs_opv_numops=%d\n", vfs_opv_numops));
+	DODEBUG(kprintf ("vfs_opv_numops=%d\n", vfs_opv_numops));
 }
 
 /*
