@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.12 2002/10/03 16:13:26 uwe Exp $	*/
+/*	$NetBSD: sunms.c,v 1.13 2003/01/19 16:53:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.12 2002/10/03 16:13:26 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.13 2003/01/19 16:53:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,13 +165,10 @@ sunmsiopen(dev, flags)
 {
 	struct ms_softc *ms = (void *) dev;
 	struct tty *tp = (struct tty *)ms->ms_cs;
-	struct proc *p = curproc;
+	struct proc *p = curproc ? curproc : &proc0;
 	struct termios t;
 	const struct cdevsw *cdev;
 	int error;
-
-	if (p == NULL)
-		p = &proc0;
 
 	cdev = cdevsw_lookup(tp->t_dev);
 	if (cdev == NULL)
