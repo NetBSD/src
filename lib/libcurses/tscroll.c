@@ -1,4 +1,4 @@
-/*	$NetBSD: tscroll.c,v 1.6 2000/04/12 21:37:15 jdc Exp $	*/
+/*	$NetBSD: tscroll.c,v 1.7 2000/04/15 23:01:47 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)tscroll.c	8.4 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: tscroll.c,v 1.6 2000/04/12 21:37:15 jdc Exp $");
+__RCSID("$NetBSD: tscroll.c,v 1.7 2000/04/15 23:01:47 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -50,9 +50,7 @@ __RCSID("$NetBSD: tscroll.c,v 1.6 2000/04/12 21:37:15 jdc Exp $");
 #define	MAXRETURNSIZE	64
 
 char   *
-__tscroll(cap, n1, n2)
-	const char *cap;
-	int     n1, n2;
+__tscroll(const char *cap, int n1, int n2)
 {
 	return (__parse_cap(cap, n1, n2));
 }
