@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)csh.c	5.26 (Berkeley) 6/8/91";*/
-static char rcsid[] = "$Id: csh.c,v 1.5 1993/11/12 15:58:14 cgd Exp $";
+static char rcsid[] = "$Id: csh.c,v 1.6 1994/02/12 07:13:32 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -802,20 +802,15 @@ phup(sig)
 int sig;
 {
 	struct process *pp, *np;
-	int foregnd;
 
 	rechist();
 
 	/*
-	 * the following adopted from tcsh with light mods
-	 *
 	 * We kill the last foreground process group. It then becomes
 	 * responsible to propagate the SIGHUP to its progeny.
 	 */
 	for (pp = proclist.p_next; pp; pp = pp->p_next) {
 		np = pp;
-		foregnd = 0;
-
 		/*
 		 * Find if this job is in the foreground. It could be that
 		 * the process leader has exited and the foreground flag
