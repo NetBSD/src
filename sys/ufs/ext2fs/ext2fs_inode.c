@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.41 2004/08/14 01:08:02 mycroft Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.42 2004/08/14 14:32:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.41 2004/08/14 01:08:02 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.42 2004/08/14 14:32:04 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,8 +127,7 @@ ext2fs_inactive(v)
 		VOP_VFREE(vp, ip->i_number, ip->i_e2fs_mode);
 		vn_finished_write(mp, V_LOWER);
 	}
-	if (ip->i_flag &
-	    (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY | IN_MODIFIED | IN_ACCESSED)) {
+	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
 		vn_start_write(vp, &mp, V_WAIT | V_LOWER);
 		VOP_UPDATE(vp, NULL, NULL, 0);
 		vn_finished_write(mp, V_LOWER);

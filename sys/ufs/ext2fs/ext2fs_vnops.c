@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.53 2004/05/22 23:24:23 kleink Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.54 2004/08/14 14:32:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.53 2004/05/22 23:24:23 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.54 2004/08/14 14:32:04 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1455,27 +1455,13 @@ ext2fs_reclaim(v)
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct inode *ip;
+	struct inode *ip = VTOI(vp);
+	int error;
 
-	if (prtactive && vp->v_usecount != 0) 
-		vprint("ext2fs_reclaim: pushing active", vp);
-	/*
-	 * Remove the inode from its hash chain.
-	 */
-	ip = VTOI(vp);
-	ufs_ihashrem(ip);
-	/*
-	 * Purge old data structures associated with the inode.
-	 */
-	cache_purge(vp);
-	if (ip->i_devvp) {
-		vrele(ip->i_devvp);
-		ip->i_devvp = 0;
-	}
-
+	if ((error = ufs_reclaim(vp, ap->a_p)) != 0)
+		return (error);
 	if (ip->i_din.e2fs_din != NULL)
 		pool_put(&ext2fs_dinode_pool, ip->i_din.e2fs_din);
-
 	pool_put(&ext2fs_inode_pool, vp->v_data);
 	vp->v_data = NULL;
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.73 2004/08/14 01:08:03 mycroft Exp $	*/
+/*	$NetBSD: lfs.h,v 1.74 2004/08/14 14:32:04 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -326,7 +326,10 @@ struct lfid {
 			(ip)->i_ffs1_ctime = (cre)->tv_sec;		\
 			(ip)->i_ffs1_ctimensec = (cre)->tv_nsec;	\
 		}							\
-		LFS_SET_UINO(ip, IN_MODIFIED);				\
+		if ((ip)->i_flag & (IN_CHANGE | IN_UPDATE))		\
+			LFS_SET_UINO(ip, IN_MODIFIED);			\
+		if ((ip)->i_flag & IN_MODIFY)				\
+			LFS_SET_UINO(ip, IN_ACCESSED);			\
 	}								\
 	(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY);\
 } while (0)
