@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.68.2.7 2000/10/18 16:31:32 tv Exp $ */
+/*	$NetBSD: machdep.c,v 1.68.2.8 2001/05/15 22:04:56 he Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1550,6 +1550,9 @@ static int	sparc_bus_map __P(( bus_space_tag_t, bus_type_t, bus_addr_t,
 				    bus_space_handle_t *));
 static int	sparc_bus_unmap __P((bus_space_tag_t, bus_space_handle_t,
 				     bus_size_t));
+static int	sparc_bus_subregion __P((bus_space_tag_t, bus_space_handle_t,
+					 bus_size_t, bus_size_t,
+					 bus_space_handle_t *));
 static int	sparc_bus_mmap __P((bus_space_tag_t, bus_type_t,
 				    bus_addr_t, int, bus_space_handle_t *));
 static void	*sparc_mainbus_intr_establish __P((bus_space_tag_t, int, int,
@@ -1638,6 +1641,18 @@ sparc_bus_map(t, iospace, addr, size, flags, vaddr, hp)
 		v += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);
+	return (0);
+}
+
+int
+sparc_bus_subregion(tag, handle, offset, size, nhandlep)
+	bus_space_tag_t		tag;
+	bus_space_handle_t	handle;
+	bus_size_t		offset;
+	bus_size_t		size;
+	bus_space_handle_t	*nhandlep;
+{
+	*nhandlep = handle + offset;
 	return (0);
 }
 
@@ -1748,7 +1763,7 @@ struct sparc_bus_space_tag mainbus_space_tag = {
 	UPA_BUS_SPACE,			/* type */
 	sparc_bus_map,			/* bus_space_map */
 	sparc_bus_unmap,		/* bus_space_unmap */
-	NULL,				/* bus_space_subregion */
+	sparc_bus_subregion,		/* bus_space_subregion */
 	sparc_bus_barrier,		/* bus_space_barrier */
 	sparc_bus_mmap,			/* bus_space_mmap */
 	sparc_mainbus_intr_establish	/* bus_intr_establish */
