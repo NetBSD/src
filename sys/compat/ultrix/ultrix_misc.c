@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.8 1994/11/23 22:34:58 dean Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.9 1995/01/18 06:56:34 mellon Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -681,7 +681,7 @@ sun_fchroot(p, uap, retval)
 /*
  * XXX: This needs cleaning up.
  */
-sun_auditsys(...)
+sun_auditsys()
 {
 	return 0;
 }
