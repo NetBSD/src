@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Michael Fischbein.
@@ -36,26 +36,28 @@
 
 #ifndef lint
 static char copyright[] =
-"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
+"@(#) Copyright (c) 1989, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)ls.c	5.69 (Berkeley) 10/17/92";*/
-static char rcsid[] = "$Id: ls.c,v 1.11 1994/04/08 02:06:45 jtc Exp $";
+/*static char sccsid[] = "from: @(#)ls.c	8.5 (Berkeley) 4/2/94";*/
+static char *rcsid = "$Id: ls.c,v 1.12 1994/09/23 06:14:51 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+
 #include <dirent.h>
-#include <unistd.h>
+#include <err.h>
+#include <errno.h>
 #include <fts.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <stdio.h>
-#include <err.h>
+#include <unistd.h>
+
 #include "ls.h"
 #include "extern.h"
 
@@ -63,15 +65,14 @@ char	*group_from_gid __P((u_int, int));
 char	*user_from_uid __P((u_int, int));
 
 static void	 display __P((FTSENT *, FTSENT *));
-static char	*flags_from_fid __P((u_long));
 static int	 mastercmp __P((const FTSENT **, const FTSENT **));
 static void	 traverse __P((int, char **, int));
 
 static void (*printfcn) __P((DISPLAY *));
 static int (*sortfcn) __P((const FTSENT *, const FTSENT *));
 
-#define	BY_NAME	0
-#define	BY_SIZE	1
+#define	BY_NAME 0
+#define	BY_SIZE 1
 #define	BY_TIME	2
 
 long blocksize;			/* block size units */
@@ -113,7 +114,7 @@ main(argc, argv)
 	if (isatty(STDOUT_FILENO)) {
 		if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) == -1 ||
 		    !win.ws_col) {
-			if (p = getenv("COLUMNS"))
+			if ((p = getenv("COLUMNS")) != NULL)
 				termwidth = atoi(p);
 		}
 		else
@@ -127,7 +128,7 @@ main(argc, argv)
 		f_listdot = 1;
 
 	fts_options = FTS_PHYSICAL;
-	while ((ch = getopt(argc, argv, "1ACFLRSTacdfgikloqrstu")) != EOF) {
+	while ((ch = getopt(argc, argv, "1ACFLRSTacdfgikloqrstu")) != -1) {
 		switch (ch) {
 		/*
 		 * The -1, -C and -l options all override each other so shell
@@ -252,7 +253,7 @@ main(argc, argv)
 				sortfcn = revacccmp;
 			else if (f_statustime)
 				sortfcn = revstatcmp;
-			else
+			else /* Use modification time. */
 				sortfcn = revmodcmp;
 			break;
 		}
@@ -269,7 +270,7 @@ main(argc, argv)
 				sortfcn = acccmp;
 			else if (f_statustime)
 				sortfcn = statcmp;
-			else
+			else /* Use modification time. */
 				sortfcn = modcmp;
 			break;
 		}
@@ -303,8 +304,8 @@ traverse(argc, argv, options)
 	int argc, options;
 	char *argv[];
 {
-	register FTS *ftsp;
-	register FTSENT *p;
+	FTS *ftsp;
+	FTSENT *p, *chp;
 	int ch_options;
 
 	if ((ftsp =
@@ -321,10 +322,14 @@ traverse(argc, argv, options)
 	 */
 	ch_options = !f_recursive && options & FTS_NOSTAT ? FTS_NAMEONLY : 0;
 
-	while (p = fts_read(ftsp))
-		switch(p->fts_info) {
+	while ((p = fts_read(ftsp)) != NULL)
+		switch (p->fts_info) {
 		case FTS_DC:
 			warnx("%s: directory causes a cycle", p->fts_name);
+			break;
+		case FTS_DNR:
+		case FTS_ERR:
+			warnx("%s: %s", p->fts_name, strerror(p->fts_errno));
 			break;
 		case FTS_D:
 			if (p->fts_level != FTS_ROOTLEVEL &&
@@ -343,13 +348,15 @@ traverse(argc, argv, options)
 				output = 1;
 			}
 
-			display(p, fts_children(ftsp, ch_options));
+			chp = fts_children(ftsp, ch_options);
+			display(p, chp);
 
-			if (!f_recursive)
+			if (!f_recursive && chp != NULL)
 				(void)fts_set(ftsp, p, FTS_SKIP);
 			break;
 		}
-	(void)fts_close(ftsp);
+	if (errno)
+		err(1, "fts_read");
 }
 
 /*
@@ -359,15 +366,14 @@ traverse(argc, argv, options)
  */
 static void
 display(p, list)
-	register FTSENT *p;
-	FTSENT *list;
+	FTSENT *p, *list;
 {
-	register FTSENT *cur;
 	struct stat *sp;
 	DISPLAY d;
+	FTSENT *cur;
 	NAMES *np;
+	u_quad_t maxsize;
 	u_long btotal, maxblock, maxinode, maxlen, maxnlink;
-	off_t maxsize;
 	int bcfile, flen, glen, ulen, maxflags, maxgroup, maxuser;
 	int entries, needstats;
 	char *user, *group, *flags, buf[20];	/* 32 bits == 10 digits */
@@ -375,17 +381,12 @@ display(p, list)
 	/*
 	 * If list is NULL there are two possibilities: that the parent
 	 * directory p has no children, or that fts_children() returned an
-	 * error.  
+	 * error.  We ignore the error case since it will be replicated
+	 * on the next call to fts_read() on the post-order visit to the
+	 * directory p, and will be signalled in traverse().
 	 */
-	if (list == NULL) {
-		/*
-		 * We don't have to check if p == NULL, since it will
-		 * never be if list is NULL.
-		 */
-		if (errno)
-			warnx("%s: %s", p->fts_name, strerror(errno));
+	if (list == NULL)
 		return;
-	}
 
 	needstats = f_inode || f_longform || f_size;
 	flen = 0;
@@ -395,8 +396,8 @@ display(p, list)
 	maxsize = 0;
 	for (cur = list, entries = 0; cur; cur = cur->fts_link) {
 		if (cur->fts_info == FTS_ERR || cur->fts_info == FTS_NS) {
-			warnx("%s: %s", cur->fts_name,
-			    strerror(cur->fts_errno));
+			warnx("%s: %s",
+			    cur->fts_name, strerror(cur->fts_errno));
 			cur->fts_number = NO_PRINT;
 			continue;
 		}
@@ -442,7 +443,8 @@ display(p, list)
 				if ((glen = strlen(group)) > maxgroup)
 					maxgroup = glen;
 				if (f_flags) {
-					flags = flags_from_fid(sp->st_flags);
+					flags =
+					    flags_to_string(sp->st_flags, "-");
 					if ((flen = strlen(flags)) > maxflags)
 						maxflags = flen;
 				} else
@@ -511,7 +513,7 @@ static int
 mastercmp(a, b)
 	const FTSENT **a, **b;
 {
-	register int a_info, b_info;
+	int a_info, b_info;
 
 	a_info = (*a)->fts_info;
 	if (a_info == FTS_ERR)
@@ -535,38 +537,4 @@ mastercmp(a, b)
 			return (sortfcn(*a, *b));
 	else
 		return (sortfcn(*a, *b));
-}
-
-static char *
-flags_from_fid(flags)
-	u_long flags;
-{
-	static char buf[20];
-	register int comma;
-	register char *p;
-
-	p = buf;
-#ifdef notyet
-	if (flags & ARCHIVED) {
-		(void)strcpy(p, "arch");
-		p += sizeof("arch") - 1;
-		comma = 1;
-	} else
-		comma = 0;
-	if (flags & NODUMP) {
-		if (comma++)
-			*p++ = ',';
-		(void)strcpy(p, "nodump");
-		p += sizeof("nodump") - 1;
-	}
-	if (flags & IMMUTABLE) {
-		if (comma++)
-			*p++ = ',';
-		(void)strcpy(p, "nochg");
-		p += sizeof("nochg") - 1;
-	}
-	if (!comma)
-#endif
-		(void)strcpy(p, "-");
-	return (buf);
 }
