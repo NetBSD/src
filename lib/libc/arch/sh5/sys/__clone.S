@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.3 2003/03/24 14:29:34 scw Exp $	*/
+/*	$NetBSD: __clone.S,v 1.4 2003/08/10 20:39:15 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -44,22 +44,21 @@ WEAK_ALIAS(clone,__clone)
 
 /*
  * int clone(int (*fn)(void *), void *stack, int flags, void *arg);
+ *                 r2                 r3         r4           r5
  */
 ENTRY(__clone)
 	pta/u	1f, tr0		/* Preload error path */
 	beq/u	r2, r63, tr0	/* Bomb if fn is NULL */
 	beq/u	r3, r63, tr0	/* Bomb if stack is NULL */
-	or	r2, r63, r6	/* Preserve "fn" in r6 (syscall won't trash) */
-	or	r3, r63, r2	/* Shuffle syscall args: stack */
-	or	r4, r63, r3	/* Shuffle syscall args: flags */
-	SYSTRAP(__clone)
+	ptabs/u	r2, tr1 	/* Preserve "fn" in tr1 (syscall won't trash) */
+	or	r4, r63, r2	/* Shuffle syscall args: flags */
+	SYSTRAP(__clone)	/*         syscall args: stack already in r3 */
 	pta/u	2f, tr0
-	bne/u	r0, r63, tr0
+	bne/u	r0, r63, tr0	/* Bail on error */
 	ptabs/l	r18, tr0
-	bne/l	r2, r63, tr0	/* If parent, just return. */
-	ptabs/l	r6, tr0		/* Clone's "fn" was safe in r6 */
+	beq/l	r3, r63, tr0	/* If parent, just return. */
 	or	r5, r63, r2	/* Clone's "arg" was safe in r5 */
-	blink	tr0, r18	/* Invoke the clone */
+	blink	tr1, r18	/* Invoke the clone */
 	PIC_PROLOGUE
 	PIC_PTAL(_C_LABEL(_exit), r0, tr0)
 	blink	tr0, r63	/* If clone returns, invoke _exit(3) */
