@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 1997/06/23 05:24:19 mrg Exp $
+#	$NetBSD: Makefile,v 1.15 1997/06/23 09:07:49 veego Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
 .if	(${MACHINE} != "arm32")  && \
@@ -33,4 +33,12 @@ MLINKS+=kvm_read.3 kvm_write.3
 MLINKS+=kvm_dump.3 kvm_dump_mkheader.3 kvm_dump.3 kvm_dump_wrtheader.3
 MLINKS+=kvm_dump.3 kvm_dump_inval.3
 
+.if	(${MACHINE} != "arm32")  && \
+	(${MACHINE} != "i386")   && \
+	(${MACHINE} != "pica")   && \
+	(${MACHINE} != "pmax")   && \
+	(${MACHINE} != "x68k")
 .include <bsd.lib.mk>
+.else
+.include <bsd.man.mk>
+.endif
