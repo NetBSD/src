@@ -1,4 +1,4 @@
-/*	$NetBSD: randomid.c,v 1.7 2003/09/15 23:38:20 itojun Exp $	*/
+/*	$NetBSD: randomid.c,v 1.8 2003/09/16 07:56:51 simonb Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 /*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 
@@ -88,7 +88,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: randomid.c,v 1.7 2003/09/15 23:38:20 itojun Exp $");
+__RCSID("$NetBSD: randomid.c,v 1.8 2003/09/16 07:56:51 simonb Exp $");
 #endif
 
 #include "namespace.h"
@@ -314,7 +314,7 @@ randomid(struct randomid_ctx *p)
 
 	for (i = 0; i <= n; i++) {
 		/* Linear Congruential Generator */
-		p->ru_x = ((u_int64_t)p->ru_a * p->ru_x + p->ru_b) % p->ru_m;
+		p->ru_x = (u_int32_t)(((u_int64_t)p->ru_a * p->ru_x + p->ru_b) % p->ru_m);
 	}
 
 	p->ru_counter += i;
