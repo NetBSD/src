@@ -231,6 +231,7 @@ static struct option long_options[] =
   {"no-wildcards", no_argument, 0, NO_WILDCARDS_OPTION},
   {"no-wildcards-match-slash", no_argument, 0, NO_WILDCARDS_MATCH_SLASH_OPTION},
   {"no-recursion", no_argument, &recursion_option, 0},
+  {"norecurse", no_argument, &recursion_option, 0},
   {"no-same-owner", no_argument, &same_owner_option, -1},
   {"no-same-permissions", no_argument, &same_permissions_option, -1},
   {"numeric-owner", no_argument, &numeric_owner_option, 1},
@@ -266,6 +267,7 @@ static struct option long_options[] =
   {"touch", no_argument, 0, 'm'},
   {"uncompress", no_argument, 0, 'Z'},
   {"ungzip", no_argument, 0, 'z'},
+  {"unlink", no_argument, 0, 'U'},
   {"unlink-first", no_argument, 0, 'U'},
   {"update", no_argument, 0, 'u'},
   {"use-compress-program", required_argument, 0, USE_COMPRESS_PROGRAM_OPTION},
@@ -326,7 +328,8 @@ Operation modifiers:\n\
   -k, --keep-old-files       don't replace existing files when extracting\n\
       --overwrite            overwrite existing files when extracting\n\
       --overwrite-dir        overwrite directory metadata when extracting\n\
-  -U, --unlink-first         remove each file prior to extracting over it\n\
+  -U, --unlink-first, --unlink\n\
+                             remove each file prior to extracting over it\n\
       --recursive-unlink     empty hierarchies prior to extracting directory\n\
   -S, --sparse               handle sparse files efficiently\n\
   -O, --to-stdout            extract files to standard output\n\
@@ -404,7 +407,8 @@ Local file selection:\n\
       --no-wildcards-match-slash exclude pattern wildcards do not match '/'\n\
   -P, --absolute-names         don't strip leading `/'s from file names\n\
   -h, --dereference            dump instead the files symlinks point to\n\
-      --no-recursion           avoid descending automatically in directories\n\
+      --no-recursion, --norecurse\n\
+                               avoid descending automatically in directories\n\
   -l, --one-file-system        stay in local file system when creating archive\n\
   -K, --starting-file=NAME     begin at file NAME in the archive\n"),
 	     stdout);
