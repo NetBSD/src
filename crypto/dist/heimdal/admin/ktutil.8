@@ -1,12 +1,11 @@
-.\" $Id: ktutil.8,v 1.2 2001/06/05 10:13:54 wiz Exp $
+.\" $Id: ktutil.8,v 1.3 2001/06/19 22:39:52 assar Exp $
 .\"
 .Dd December 16, 2000
 .Dt KTUTIL 8
 .Os
 .Sh NAME
 .Nm ktutil
-.Nd
-manage Kerberos keytabs
+.Nd manage Kerberos keytabs
 .Sh SYNOPSIS
 .Nm
 .Oo Fl k Ar keytab \*(Ba Xo
@@ -64,6 +63,10 @@ to
 .It get Xo
 .Op Fl p Ar admin principal
 .Op Fl -principal= Ns Ar admin principal
+.Oo Fl e Ar enctype \*(Ba Xo
+.Fl -enctypes= Ns Ar enctype
+.Xc
+.Oc
 .Op Fl r Ar realm
 .Op Fl -realm= Ns Ar realm
 .Op Fl a Ar admin server

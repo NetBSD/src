@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: copy_ccache.c,v 1.1.1.2 2001/06/19 22:08:14 assar Exp $");
+RCSID("$Id: copy_ccache.c,v 1.2 2001/06/19 22:39:57 assar Exp $");
 
 OM_uint32
 gss_krb5_copy_ccache(OM_uint32 *minor,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include<config.h>
-RCSID("$Id: pam.c,v 1.3 2001/02/11 14:13:10 assar Exp $");
+RCSID("$Id: pam.c,v 1.4 2001/06/19 22:39:56 assar Exp $");
 #endif
 
 #include <stdio.h>
@@ -65,7 +65,7 @@ psyslog(int level, const char *format, ...)
   va_list args;
   va_start(args, format);
   openlog("pam_krb4", LOG_PID, LOG_AUTH);
-  vsyslog(level | LOG_AUTH, format, args);
+  vsyslog(level, format, args);
   va_end(args);
   closelog();
 }

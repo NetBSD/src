@@ -36,7 +36,7 @@
 #include <sys/wait.h>
 #endif
 
-RCSID("$Id: kadm_conn.c,v 1.5 2001/04/07 21:29:23 thorpej Exp $");
+RCSID("$Id: kadm_conn.c,v 1.6 2001/06/19 22:39:55 assar Exp $");
 
 struct kadm_port {
     char *port;
@@ -137,14 +137,14 @@ spawn_child(krb5_context context, int *socks, int num_socks, int this_sock)
 	krb5_warn(context, errno, "accept");
 	return 1;
     }
-    e = krb5_sockaddr2address(sa, &addr);
+    e = krb5_sockaddr2address(context, sa, &addr);
     if(e)
 	krb5_warn(context, e, "krb5_sockaddr2address");
     else {
 	e = krb5_print_address (&addr, buf, sizeof(buf), 
 				&buf_len);
 	if(e) 
-	    krb5_warn(context, e, "krb5_sockaddr2address");
+	    krb5_warn(context, e, "krb5_print_address");
 	else
 	    krb5_warnx(context, "connection from %s", buf);
 	krb5_free_address(context, &addr);
@@ -243,7 +243,8 @@ start_server(krb5_context context)
 	}
 
 	if(e) {
-	    krb5_warn(context, krb5_eai_to_heim_errno(e), "%s", portstr);
+	    krb5_warn(context, krb5_eai_to_heim_errno(e, errno),
+		      "%s", portstr);
 	    continue;
 	}
 	i = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: com_err.c,v 1.2 2000/10/05 14:16:10 sommerfeld Exp $");
+RCSID("$Id: com_err.c,v 1.3 2001/06/19 22:39:57 assar Exp $");
 #endif
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,6 +69,10 @@ init_error_table(const char **msgs, long base, int count)
     return 0;
 }
 
+static void
+default_proc (const char *whoami, long code, const char *fmt, va_list args)
+    __attribute__((__format__(__printf__, 3, 0)));
+ 
 static void
 default_proc (const char *whoami, long code, const char *fmt, va_list args)
 {
@@ -151,4 +155,18 @@ error_table_name(int num)
     }
     *p = '\0';
     return(buf);
+}
+
+void
+add_to_error_table(struct et_list *new_table)
+{
+    struct et_list *et;
+
+    for (et = _et_list; et; et = et->next) {
+	if (et->table->base == new_table->table->base)
+	    return;
+    }
+
+    new_table->next = _et_list;
+    _et_list = new_table;
 }
