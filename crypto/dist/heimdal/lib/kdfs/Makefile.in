@@ -113,13 +113,13 @@ dpagaix_CFLAGS = @dpagaix_CFLAGS@
 dpagaix_LDADD = @dpagaix_LDADD@
 install_sh = @install_sh@
 
-# $Id: Makefile.in,v 1.1.1.2 2001/02/11 13:51:43 assar Exp $
+# $Id: Makefile.in,v 1.2 2001/04/07 21:29:25 thorpej Exp $
 
 
-# $Id: Makefile.in,v 1.1.1.2 2001/02/11 13:51:43 assar Exp $
+# $Id: Makefile.in,v 1.2 2001/04/07 21:29:25 thorpej Exp $
 
 
-# $Id: Makefile.in,v 1.1.1.2 2001/02/11 13:51:43 assar Exp $
+# $Id: Makefile.in,v 1.2 2001/04/07 21:29:25 thorpej Exp $
 
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
