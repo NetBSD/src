@@ -1,5 +1,5 @@
 /*
- *	$Id: ld.h,v 1.9 1994/04/07 19:41:21 pk Exp $
+ *	$Id: ld.h,v 1.10 1994/04/22 07:57:56 pk Exp $
  */
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -623,7 +623,6 @@ void	fatal __P((char *, ...));
 void	error __P((char *, ...));
 void	padfile __P((int,int));
 char	*concat __P((const char *, const char *, const char *));
-int	parse __P((char *, char *, char *));
 
 /* In symbol.c: */
 void	symtab_init __P((int));
