@@ -1,4 +1,4 @@
-/*	$NetBSD: power.h,v 1.2 2003/04/20 20:48:27 thorpej Exp $	*/
+/*	$NetBSD: power.h,v 1.3 2004/05/03 07:41:47 kochi Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -84,9 +84,12 @@
 #define	PSWITCH_TYPE_SLEEP	1	/* sleep button */
 #define	PSWITCH_TYPE_LID	2	/* lid switch */
 #define	PSWITCH_TYPE_RESET	3	/* reset button */
+#define	PSWITCH_TYPE_ACADAPTER	4	/* AC adapter presence */
 
-#define	PSWITCH_EVENT_PRESSED	0	/* button pressed */
-#define	PSWITCH_EVENT_RELEASED	1	/* button released */
+#define	PSWITCH_EVENT_PRESSED	0	/* button pressed, lid closed,
+					   AC adapter online */
+#define	PSWITCH_EVENT_RELEASED	1	/* button released, lid open,
+					   AC adapter offline */
 
 #define	PSWITCH_STATE_PRESSED	0	/* button pressed/lid closed */
 #define	PSWITCH_STATE_RELEASED	1	/* button released/lid open */
