@@ -1,11 +1,11 @@
-/*	$NetBSD: sched.h,v 1.1 2001/07/17 03:04:16 thorpej Exp $	*/
+/*	$NetBSD: sched.h,v 1.2 2003/01/18 18:05:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Nathan J. Williams.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,17 +36,49 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_SCHED_H_
-#define	_SCHED_H_
+#ifndef _SCHED_H_
+#define _SCHED_H_
 
+#include <sys/cdefs.h>
 #include <sys/sched.h>
+
+/* Required by POSIX 1003.1, section 13.1, lines 12-13. */
+#include <time.h>	
+
+/* Functions */
+
+__BEGIN_DECLS
+/* 
+ * These are permitted to fail and return ENOSYS if
+ * _POSIX_PRIORITY_SCHEDULING is not defined.
+ */
+int	sched_setparam(pid_t pid, const struct sched_param *param);
+int	sched_getparam(pid_t pid, struct sched_param *param);
+int	sched_setscheduler(pid_t pid, int policy,
+	    const struct sched_param *param);
+int	sched_getscheduler(pid_t pid);
+int	sched_get_priority_max(int policy);
+int	sched_get_priority_min(int policy);
+int	sched_rr_get_interval(pid_t pid, struct timespec *interval);
+
+
+/* Not optional in the presence of _POSIX_THREADS */
+int	sched_yield(void);
+__END_DECLS
 
 #if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE) && \
     !defined(_ANSI_SOURCE)
 
-pid_t	clone __P((int (*)(void *), void *, int, void *));
-pid_t	__clone __P((int (*)(void *), void *, int, void *)); 
+/*
+ * Stuff that for historical reasons is in <sched.h>, but not defined
+ * by any standard.
+ */
+
+__BEGIN_DECLS
+pid_t	 clone __P((int (*)(void *), void *, int, void *));
+pid_t	__clone __P((int (*)(void *), void *, int, void *));
+__END_DECLS
 
 #endif /* !_POSIX_SOURCE && !_XOPEN_SOURCE && !_ANSI_SOURCE */
 
-#endif	/* _SCHED_H_ */
+#endif /* _SCHED_H_ */
