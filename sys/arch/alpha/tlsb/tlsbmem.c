@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsbmem.c,v 1.2 1997/03/12 21:11:05 cgd Exp $	*/
+/* $NetBSD: tlsbmem.c,v 1.3 1997/04/06 20:09:17 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -34,6 +34,8 @@
  * Dummy Node for TLSB Memory Modules found on
  * AlphaServer 8200 and 8400 systems.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/systm.h>

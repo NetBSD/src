@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.3 1996/09/15 17:15:26 cgd Exp $ */
+/* $NetBSD: event.c,v 1.4 1997/04/06 20:09:04 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,6 +47,8 @@
 /*
  * Internal `Firm_event' interface for the keyboard and mouse drivers.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/fcntl.h>

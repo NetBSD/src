@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.3 1996/11/13 21:13:39 cgd Exp $ */
+/* $NetBSD: kbd.c,v 1.4 1997/04/06 20:09:05 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,6 +49,8 @@
  * [yet?]).  Translates incoming bytes to ASCII or to `firm_events' and
  * passes them up to the appropriate reader.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/conf.h>
