@@ -1,4 +1,4 @@
-/*	$NetBSD: enc-proto.h,v 1.6 2005/02/06 05:48:23 perry Exp $	*/
+/*	$NetBSD: enc-proto.h,v 1.7 2005/02/06 05:52:25 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -53,7 +53,6 @@
 
 #ifdef	ENCRYPTION
 #include <sys/cdefs.h>
-#define P __P
 
 Encryptions *findencryption(int);
 Encryptions *finddecryption(int);
