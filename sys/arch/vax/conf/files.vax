@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.71 2000/06/19 04:22:16 matt Exp $
+#       $NetBSD: files.vax,v 1.72 2000/07/06 17:43:38 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -124,7 +124,7 @@ attach	mem at bi with mem_bi
 include	"dev/xmi/files.xmi"
 
 attach	xmi at mainbus with xmi_mainbus
-file	arch/vax/vax/xmi.c		xmi_mainbus
+file	arch/vax/vax/xmi_mainbus.c	xmi_mainbus
 
 # VAX CPUs at XMI, do not belong in MI code.
 attach	cpu at xmi with cpu_xmi
