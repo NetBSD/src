@@ -164,38 +164,39 @@
 #               about  content  filters  is  in  the  Postfix  FIL-
 #               TER_README file.
 # 
-#               Note:  this action currently affects all recipients
-#               of the message.
+#               Note:   this  action  overrides  the  main.cf  con-
+#               tent_filter  setting,  and  currently  affects  all
+#               recipients of the message.
 # 
 #        restriction...
 #               Apply the named UCE restriction(s) (permit, reject,
 #               reject_unauth_destination, and so on).
 # 
 # REGULAR EXPRESSION TABLES
-#        This  section  describes how the table lookups change when
+#        This section describes how the table lookups  change  when
 #        the table is given in the form of regular expressions. For
-#        a  description  of regular expression lookup table syntax,
+#        a description of regular expression lookup  table  syntax,
 #        see regexp_table(5) or pcre_table(5).
 # 
-#        Each pattern is a regular expression that  is  applied  to
+#        Each  pattern  is  a regular expression that is applied to
 #        the entire string being looked up. Depending on the appli-
-#        cation, that string  is  an  entire  client  hostname,  an
+#        cation,  that  string  is  an  entire  client hostname, an
 #        entire client IP address, or an entire mail address. Thus,
 #        no  parent  domain  or  parent  network  search  is  done,
-#        user@domain  mail  addresses  are not broken up into their
+#        user@domain mail addresses are not broken  up  into  their
 #        user@ and domain constituent parts, nor is user+foo broken
 #        up into user and foo.
 # 
-#        Patterns  are  applied  in  the  order as specified in the
-#        table, until a pattern is found that  matches  the  search
+#        Patterns are applied in the  order  as  specified  in  the
+#        table,  until  a  pattern is found that matches the search
 #        string.
 # 
-#        Actions  are  the  same as with indexed file lookups, with
-#        the additional feature that parenthesized substrings  from
+#        Actions are the same as with indexed  file  lookups,  with
+#        the  additional feature that parenthesized substrings from
 #        the pattern can be interpolated as $1, $2 and so on.
 # 
 # BUGS
-#        The  table format does not understand quoting conventions.
+#        The table format does not understand quoting  conventions.
 # 
 # SEE ALSO
 #        postmap(1) create mapping table
@@ -204,7 +205,7 @@
 #        regexp_table(5) format of POSIX regular expression tables
 # 
 # LICENSE
-#        The Secure Mailer license must be  distributed  with  this
+#        The  Secure  Mailer  license must be distributed with this
 #        software.
 # 
 # AUTHOR(S)

@@ -20,7 +20,7 @@ file lookups of the address local part only.
 
 This delivery agent only delivers mail.  Other features such as
 mail forwarding, out-of-office notifications, etc., must be
-configured via virtual maps or via similar lookup mechanisms.
+configured via virtual_alias maps or via similar lookup mechanisms.
 .SH MAILBOX LOCATION
 .na
 .nf
@@ -157,6 +157,9 @@ to this path.
 For security reasons, regular expression maps are allowed but
 regular expression substitution of $1 etc. is disallowed,
 because that would open a security hole.
+
+For security reasons, proxied table lookup is not allowed,
+because that would open a security hole.
 .IP \fBvirtual_mailbox_domains\fR
 The list of domains that should be delivered via the Postfix virtual
 delivery agent. This uses the same syntax as the \fBmydestination\fR
@@ -180,6 +183,9 @@ specific \fIuser@domain.tld\fR entry.
 For security reasons, regular expression maps are allowed but
 regular expression substitution of $1 etc. is disallowed,
 because that would open a security hole.
+
+For security reasons, proxied table lookup is not allowed,
+because that would open a security hole.
 .IP \fBvirtual_gid_maps\fR
 Recipients are looked up in these maps to determine the group ID to be
 used when writing to the target mailbox.
@@ -193,6 +199,9 @@ specific \fIuser@domain.tld\fR entry.
 
 For security reasons, regular expression maps are allowed but
 regular expression substitution of $1 etc. is disallowed,
+because that would open a security hole.
+
+For security reasons, proxied table lookup is not allowed,
 because that would open a security hole.
 .SH "Locking controls"
 .ad

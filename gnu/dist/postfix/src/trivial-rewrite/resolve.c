@@ -400,12 +400,13 @@ void    resolve_addr(char *addr, VSTRING *channel, VSTRING *nexthop,
 	 */
 	if (virt_alias_doms
 	    && string_list_match(virt_alias_doms, rcpt_domain)) {
-	    if (var_helpful_warnings
-		&& virt_mailbox_doms
-		&& string_list_match(virt_mailbox_doms, rcpt_domain))
-		msg_warn("do not list domain %s in BOTH %s and %s",
-			 rcpt_domain, VAR_VIRT_ALIAS_DOMS,
-			 VAR_VIRT_MAILBOX_DOMS);
+	    if (var_helpful_warnings) {
+		if (virt_mailbox_doms
+		    && string_list_match(virt_mailbox_doms, rcpt_domain))
+		    msg_warn("do not list domain %s in BOTH %s and %s",
+			     rcpt_domain, VAR_VIRT_ALIAS_DOMS,
+			     VAR_VIRT_MAILBOX_DOMS);
+	    }
 	    vstring_strcpy(channel, MAIL_SERVICE_ERROR);
 	    vstring_sprintf(nexthop, "User unknown%s",
 			    var_show_unk_rcpt_table ?

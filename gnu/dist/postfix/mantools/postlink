@@ -13,7 +13,7 @@ exec sed '
 	s/[<bB>]*cleanup[</bB>]*(8)/<a href="cleanup.8.html">&<\/a>/
 	s/[<bB>]*defer[</bB>]*(8)/<a href="defer.8.html">&<\/a>/
 	s/[<bB>]*error[</bB>]*(8)/<a href="error.8.html">&<\/a>/
-	s/[<bB>]*flush[</bB>]*(8)/<a href="flushd.8.html">&<\/a>/
+	s/[<bB>]*flush[</bB>]*(8)/<a href="flush.8.html">&<\/a>/
 	s/[<bB>]*local[</bB>]*(8)/<a href="local.8.html">&<\/a>/
 	s/[<bB>]*mas[-</bB>]*\n*[ <bB>]*ter[</bB>]*(8)/<a href="master.8.html">&<\/a>/
 	s/[<bB>]*pickup[</bB>]*(8)/<a href="pickup.8.html">&<\/a>/
@@ -44,6 +44,7 @@ exec sed '
 	s/[<bB>]*canonical[</bB>]*(5)/<a href="canonical.5.html">&<\/a>/
 	s/[<bB>]*etrn[</bB>]*(5)/<a href="etrn.5.html">&<\/a>/
 	s/[<bB>]*pcre[</bBiI>]*_[</iIbB>]*table[</bB>]*(5)/<a href="pcre_table.5.html">&<\/a>/
+	s/[<bB>]*proxymap[</bB>]*(8)/<a href="proxymap.8.html">&<\/a>/
 	s/[<bB>]*reg[-</bB>]*\n*[ <bB>]*exp[</bBiI>]*_[</iIbB>]*table[</bB>]*(5)/<a href="regexp_table.5.html">&<\/a>/
 	s/[<bB>]*relocated[</bB>]*(5)/<a href="relocated.5.html">&<\/a>/
 	s/[<bB>]*trans[-</bB>]*\n*[ <bB>]*port[</bB>]*(5)/<a href="transport.5.html">&<\/a>/

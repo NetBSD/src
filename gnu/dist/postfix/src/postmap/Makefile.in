@@ -93,6 +93,7 @@ postmap.o: ../../include/split_at.h
 postmap.o: ../../include/vstring_vstream.h
 postmap.o: ../../include/set_eugid.h
 postmap.o: ../../include/mail_conf.h
+postmap.o: ../../include/mail_dict.h
 postmap.o: ../../include/mail_params.h
 postmap.o: ../../include/mkmap.h
 postmap.o: ../../include/dict.h
