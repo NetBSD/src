@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.51 2004/07/15 06:48:45 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.52 2004/07/15 06:50:34 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.51 2004/07/15 06:48:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.52 2004/07/15 06:50:34 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1898,17 +1898,17 @@ atw_write_bssid(struct atw_softc *sc)
 
 	bssid = ic->ic_bss->ni_bssid;
 
-	ATW_WRITE(sc, ATW_ABDA1,
-	    (ATW_READ(sc, ATW_ABDA1) &
-	    ~(ATW_ABDA1_BSSIDB4_MASK|ATW_ABDA1_BSSIDB5_MASK)) |
-	    LSHIFT(bssid[4], ATW_ABDA1_BSSIDB4_MASK) |
-	    LSHIFT(bssid[5], ATW_ABDA1_BSSIDB5_MASK));
-
 	ATW_WRITE(sc, ATW_BSSID0,
 	    LSHIFT(bssid[0], ATW_BSSID0_BSSIDB0_MASK) |
 	    LSHIFT(bssid[1], ATW_BSSID0_BSSIDB1_MASK) |
 	    LSHIFT(bssid[2], ATW_BSSID0_BSSIDB2_MASK) |
 	    LSHIFT(bssid[3], ATW_BSSID0_BSSIDB3_MASK));
+
+	ATW_WRITE(sc, ATW_ABDA1,
+	    (ATW_READ(sc, ATW_ABDA1) &
+	    ~(ATW_ABDA1_BSSIDB4_MASK|ATW_ABDA1_BSSIDB5_MASK)) |
+	    LSHIFT(bssid[4], ATW_ABDA1_BSSIDB4_MASK) |
+	    LSHIFT(bssid[5], ATW_ABDA1_BSSIDB5_MASK));
 
 	DPRINTF(sc, ("%s: BSSID %s -> ", sc->sc_dev.dv_xname,
 	    ether_sprintf(sc->sc_bssid)));
