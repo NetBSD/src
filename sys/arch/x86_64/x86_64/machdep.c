@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2002/05/28 23:11:39 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 2002/06/03 18:23:17 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -558,9 +558,9 @@ sendsig(catcher, sig, mask, code)
 	/*
 	 * Build context to run handler in.
 	 */
+#if 0
 	__asm("movl %0,%%gs" : : "r" (GSEL(GUDATA_SEL, SEL_UPL)));
 	__asm("movl %0,%%fs" : : "r" (GSEL(GUDATA_SEL, SEL_UPL)));
-#if 0
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 #endif
@@ -985,9 +985,9 @@ setregs(p, pack, stack)
 	pcb->pcb_savefpu.fx_fcw = __NetBSD_NPXCW__;
 
 	tf = p->p_md.md_regs;
+#if 0
 	__asm("movl %0,%%gs" : : "r" (LSEL(LUDATA_SEL, SEL_UPL)));
 	__asm("movl %0,%%fs" : : "r" (LSEL(LUDATA_SEL, SEL_UPL)));
-#if 0
 	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
 #endif
@@ -1087,6 +1087,7 @@ set_sys_segment(sd, base, limit, type, dpl, gran)
 #define	IDTVEC(name)	__CONCAT(X, name)
 typedef void (vector) __P((void));
 extern vector IDTVEC(syscall);
+extern vector IDTVEC(syscall32);
 extern vector IDTVEC(osyscall);
 extern vector IDTVEC(oosyscall);
 extern vector *IDTVEC(exceptions)[];
@@ -1527,7 +1528,12 @@ init_x86_64(first_avail)
 	    ((uint64_t)GSEL(GCODE_SEL, SEL_KPL) << 32) |
 	    ((uint64_t)LSEL(LSYSRETBASE_SEL, SEL_UPL) << 48));
 	wrmsr(MSR_LSTAR, (uint64_t)IDTVEC(syscall));
-	wrmsr(MSR_SFMASK, PSL_NT|PSL_T|PSL_I);
+	wrmsr(MSR_CSTAR, (uint64_t)IDTVEC(syscall32));
+	wrmsr(MSR_SFMASK, PSL_NT|PSL_T|PSL_I|PSL_C);
+
+	wrmsr(MSR_FSBASE, 0);
+	wrmsr(MSR_GSBASE, (u_int64_t)&cpu_info_store);
+	wrmsr(MSR_KERNELGSBASE, 0);
 
 	setregion(&region, gdtstore, DYNSEL_START - 1);
 	lgdt(&region);

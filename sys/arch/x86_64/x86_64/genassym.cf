@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.4 2002/05/28 23:11:39 fvdl Exp $
+#	$NetBSD: genassym.cf,v 1.5 2002/06/03 18:23:17 fvdl Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -94,6 +94,7 @@ include <uvm/uvm.h>
 include <machine/trap.h>
 include <machine/pmap.h>
 include <machine/vmparam.h>
+include <machine/cpu.h>
 
 if defined(COMPAT_NETBSD32)
 include <machine/netbsd32_machdep.h>
@@ -131,7 +132,7 @@ define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
 define	P_MD_FLAGS		offsetof(struct proc, p_md.md_flags)
 
 define	P_SYSTEM		P_SYSTEM
-define	MDP_SYSCALL		MDP_SYSCALL
+define	P_32			P_32
 
 define	M_DATA			offsetof(struct mbuf, m_data)
 define	M_LEN			offsetof(struct mbuf, m_len)
@@ -146,6 +147,7 @@ define	V_INTR			offsetof(struct uvmexp, intrs)
 define	PCB_CR3			offsetof(struct pcb, pcb_cr3)
 define	PCB_RBP			offsetof(struct pcb, pcb_rbp)
 define	PCB_RSP			offsetof(struct pcb, pcb_rsp)
+define	PCB_USERSP		offsetof(struct pcb, pcb_usersp)
 define	PCB_RSP0		offsetof(struct pcb, pcb_tss.tss_rsp0)
 define	PCB_CR0			offsetof(struct pcb, pcb_cr0)
 define	PCB_LDT_SEL		offsetof(struct pcb, pcb_ldt_sel)
@@ -153,6 +155,8 @@ define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 
 define	TF_CS			offsetof(struct trapframe, tf_cs)
 define	TF_RIP			offsetof(struct trapframe, tf_rip)
+define	TF_RSP			offsetof(struct trapframe, tf_rsp)
+define	TF_SS			offsetof(struct trapframe, tf_ss)
 define	TF_ERR			offsetof(struct trapframe, tf_err)
 define	TF_TRAPNO		offsetof(struct trapframe, tf_trapno)
 define	TF_RFLAGS		offsetof(struct trapframe, tf_rflags)
@@ -168,12 +172,12 @@ define	SC_FS			offsetof(struct sigcontext, sc_fs)
 define	SC_GS			offsetof(struct sigcontext, sc_gs)
 define	SC_RFLAGS		offsetof(struct sigcontext, sc_rflags)
 
+define	CPU_INFO_SCRATCH	offsetof(struct cpu_info, ci_scratch)
+
 define	IH_FUN			offsetof(struct intrhand, ih_fun)
 define	IH_ARG			offsetof(struct intrhand, ih_arg)
 define	IH_COUNT		offsetof(struct intrhand, ih_count)
 define	IH_NEXT			offsetof(struct intrhand, ih_next)
-
-define	CPRIV_SCRATCH_R15	offsetof(struct cpu_privdata, cpriv_regs.tf_r15)
 
 ifdef COMPAT_NETBSD32
 define	SIGF_HANDLER32		offsetof(struct netbsd32_sigframe, sf_handler)
