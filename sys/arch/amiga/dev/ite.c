@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.31 1995/09/16 16:11:20 chopps Exp $	*/
+/*	$NetBSD: ite.c,v 1.32 1995/10/09 15:20:30 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,6 +62,7 @@
 #include <amiga/amiga/kdassert.h>
 #include <amiga/amiga/color.h>	/* DEBUG */
 #include <amiga/amiga/device.h>
+#include <amiga/amiga/isr.h>
 #include <amiga/dev/iteioctl.h>
 #include <amiga/dev/itevar.h>
 #include <amiga/dev/kbdmap.h>
@@ -112,6 +113,7 @@ static char sample[20] = {
 
 static char *index __P((const char *, char));
 static int inline atoi __P((const char *));
+static void ite_sifilter __P((void *, void *));
 void iteputchar __P((int c, struct ite_softc *ip));
 void ite_putstr __P((const char * s, int len, dev_t dev));
 void iteattach __P((struct device *, struct device *, void *));
@@ -824,6 +826,14 @@ ite_cnfilter(c, caller)
 static u_char last_char;
 static u_char tout_pending;
 
+
+static void
+ite_sifilter(void *arg1, void *arg2)
+{
+	ite_filter((u_char)arg1, (enum caller)arg2);
+}
+
+
 /*ARGSUSED*/
 static void
 repeat_handler(arg)
@@ -831,7 +841,8 @@ repeat_handler(arg)
 {
 	tout_pending = 0;
 	if (last_char) 
-		add_sicallback(ite_filter, last_char, ITEFILT_REPEATER);
+		add_sicallback(ite_sifilter, (void *)last_char,
+		    (void *)ITEFILT_REPEATER);
 }
 
 void

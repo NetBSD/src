@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.11 1995/10/09 14:05:24 chopps Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.12 1995/10/09 15:20:25 chopps Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -1010,7 +1010,7 @@ bah_tint(sc)
 
 #ifdef BAHSOFTCOPY
 	/* schedule soft int to fill a new buffer for us */
-	add_sicallback(callstart, sc, NULL);
+	add_sicallback((sifunc_t)callstart, sc, NULL);
 #else
 	/* call it directly */
 	callstart(sc, NULL);
@@ -1122,7 +1122,7 @@ bahintr(sc)
 
 #ifdef BAHSOFTCOPY
 		/* this one starts a soft int to copy out of the hw */
-		add_sicallback(bah_srint, sc,NULL);
+		add_sicallback((sifunc_t)bah_srint, sc,NULL);
 #else
 		/* this one does the copy here */
 		bah_srint(sc,NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mgnsc.c,v 1.14 1995/09/16 16:11:22 chopps Exp $	*/
+/*	$NetBSD: mgnsc.c,v 1.15 1995/10/09 15:20:36 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -185,7 +185,7 @@ mgnsc_dmaintr(sc)
 	rp->siop_sien = 0;
 	rp->siop_dien = 0;
 	sc->sc_flags |= SIOP_INTDEFER | SIOP_INTSOFF;
-	add_sicallback (siopintr, sc, NULL);
+	add_sicallback((sifunc_t)siopintr, sc, NULL);
 	return (1);
 }
 
