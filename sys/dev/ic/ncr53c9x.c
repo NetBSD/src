@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.112 2004/09/10 23:44:29 bouyer Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.113 2005/02/21 00:29:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.112 2004/09/10 23:44:29 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.113 2005/02/21 00:29:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.112 2004/09/10 23:44:29 bouyer Exp $"
 #include <sys/pool.h>
 #include <sys/scsiio.h>
 
+#include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
@@ -1161,19 +1162,19 @@ ncr53c9x_sense(sc, ecb)
 	struct scsipi_xfer *xs = ecb->xs;
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[periph->periph_target];
-	struct scsipi_sense *ss = (void *)&ecb->cmd.cmd;
+	struct scsi_request_sense *ss = (void *)&ecb->cmd.cmd;
 	struct ncr53c9x_linfo *li;
 	int lun = periph->periph_lun;
 
 	NCR_TRACE(("requesting sense "));
 	/* Next, setup a request sense command block */
 	memset(ss, 0, sizeof(*ss));
-	ss->opcode = REQUEST_SENSE;
+	ss->opcode = SCSI_REQUEST_SENSE;
 	ss->byte2 = periph->periph_lun << SCSI_CMD_LUN_SHIFT;
-	ss->length = sizeof(struct scsipi_sense_data);
+	ss->length = sizeof(struct scsi_sense_data);
 	ecb->clen = sizeof(*ss);
 	ecb->daddr = (char *)&xs->sense.scsi_sense;
-	ecb->dleft = sizeof(struct scsipi_sense_data);
+	ecb->dleft = sizeof(struct scsi_sense_data);
 	ecb->flags |= ECB_SENSE;
 	ecb->timeout = NCR_SENSE_TIMEOUT;
 	ti->senses++;
@@ -1243,7 +1244,7 @@ ncr53c9x_done(sc, ecb)
 			printf("resid=%d ", xs->resid);
 		if (xs->error == XS_SENSE)
 			printf("sense=0x%02x\n",
-			    xs->sense.scsi_sense.error_code);
+			    xs->sense.scsi_sense.response_code);
 		else
 			printf("error=%d\n", xs->error);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.45 2004/12/07 14:50:56 thorpej Exp $	*/
+/*	$NetBSD: aha.c,v 1.46 2005/02/21 00:29:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.45 2004/12/07 14:50:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.46 2005/02/21 00:29:07 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -666,7 +666,7 @@ static void
 aha_done(struct aha_softc *sc, struct aha_ccb *ccb)
 {
 	bus_dma_tag_t dmat = sc->sc_dmat;
-	struct scsipi_sense_data *s1, *s2;
+	struct scsi_sense_data *s1, *s2;
 	struct scsipi_xfer *xs = ccb->xs;
 
 	SC_DEBUG(xs->xs_periph, SCSIPI_DB2, ("aha_done\n"));
@@ -714,7 +714,7 @@ aha_done(struct aha_softc *sc, struct aha_ccb *ccb)
 		} else if (ccb->target_stat != SCSI_OK) {
 			switch (ccb->target_stat) {
 			case SCSI_CHECK:
-				s1 = (struct scsipi_sense_data *) (((char *) (&ccb->scsi_cmd)) +
+				s1 = (struct scsi_sense_data *) (((char *) (&ccb->scsi_cmd)) +
 				    ccb->scsi_cmd_length);
 				s2 = &xs->sense.scsi_sense;
 				*s2 = *s1;

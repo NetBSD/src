@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.16 2005/01/02 12:10:34 tsutsui Exp $	*/
+/*	$NetBSD: trm.c,v 1.17 2005/02/21 00:29:07 thorpej Exp $	*/
 /*
  * Device Driver for Tekram DC395U/UW/F, DC315/U
  * PCI SCSI Bus Master Host Adapter
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.16 2005/01/02 12:10:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.17 2005/02/21 00:29:07 thorpej Exp $");
 
 /* #define TRM_DEBUG */
 #ifdef TRM_DEBUG
@@ -65,6 +65,7 @@ int trm_debug = 1;
 
 #include <uvm/uvm_extern.h>
 
+#include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsi_message.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -2246,7 +2247,7 @@ trm_request_sense(struct trm_softc *sc, struct trm_srb *srb)
 	struct scsipi_periph *periph;
 	struct trm_tinfo *ti;
 	struct trm_linfo *li;
-	struct scsipi_sense *ss = (struct scsipi_sense *)srb->cmd;
+	struct scsi_request_sense *ss = (struct scsi_request_sense *)srb->cmd;
 	int error;
 
 	DPRINTF(("trm_request_sense...\n"));
@@ -2260,16 +2261,15 @@ trm_request_sense(struct trm_softc *sc, struct trm_srb *srb)
 	srb->hastat = 0;
 	srb->tastat = 0;
 
-	ss->opcode = REQUEST_SENSE;
+	memset(ss, 0, sizeof(*ss));
+	ss->opcode = SCSI_REQUEST_SENSE;
 	ss->byte2 = periph->periph_lun << SCSI_CMD_LUN_SHIFT;
-	ss->unused[0] = ss->unused[1] = 0;
-	ss->length = sizeof(struct scsipi_sense_data);
-	ss->control = 0;
+	ss->length = sizeof(struct scsi_sense_data);
 
-	srb->buflen = sizeof(struct scsipi_sense_data);
+	srb->buflen = sizeof(struct scsi_sense_data);
 	srb->sgcnt = 1;
 	srb->sgindex = 0;
-	srb->cmdlen = sizeof(struct scsipi_sense);
+	srb->cmdlen = sizeof(struct scsi_request_sense);
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, srb->dmap,
 	    &xs->sense.scsi_sense, srb->buflen, NULL,
@@ -2280,7 +2280,7 @@ trm_request_sense(struct trm_softc *sc, struct trm_srb *srb)
 	    srb->buflen, BUS_DMASYNC_PREREAD);
 
 	srb->sgentry[0].address = htole32(srb->dmap->dm_segs[0].ds_addr);
-	srb->sgentry[0].length = htole32(sizeof(struct scsipi_sense_data));
+	srb->sgentry[0].length = htole32(sizeof(struct scsi_sense_data));
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, srb->sgoffset,
 	    TRM_SG_SIZE, BUS_DMASYNC_PREWRITE);
 
