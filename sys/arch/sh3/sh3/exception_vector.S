@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.10 2003/01/18 06:33:43 thorpej Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.11 2003/11/24 03:06:01 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -70,12 +70,15 @@ _C_LABEL(sh_vector_generic):
 	/* Get curlwp */
 	mov.l	3f,	r1
 	mov.l	@r1,	r4	/* 1st arg */
+	/* Get TEA */
+	MOV	(TEA,	r1)
+	mov.l	@r1,	r6	/* 3rd arg */
 	/* Check TLB exception or not */
 	mov.l	_L.TLB_PROT_ST, r1
 	cmp/hi	r1,	r0
 	bt	1f
-	MOV	(TEA,	r0)
-	mov.l	@r0,	r6	/* 3rd arg */
+
+	/* tlb_exception(curlwp, trapframe, trunc_page(TEA)); */
 	mov.l	_L.VPN_MASK, r1
 	and	r1,	r6	/* va = trunc_page(va) */
 	__EXCEPTION_UNBLOCK(r0, r1)
@@ -84,6 +87,8 @@ _C_LABEL(sh_vector_generic):
 	 mov	r14,	r5	/* 2nd arg */
 	bra	2f
 	 nop
+
+	/* general_exception(curlwp, trapframe, TEA); */
 1:	mov	r4,	r8
 #ifdef DDB
 	mov	#0,	r2
@@ -94,7 +99,7 @@ _C_LABEL(sh_vector_generic):
 	__EXCEPTION_UNBLOCK(r0, r1)
 	mov.l	_L.general, r0
 	jsr	@r0
-	 mov	r14,	r5
+	 mov	r14,	r5	/* 2nd arg */
 
 	/* Check for ASTs on exit to user mode. */
 	mov	r8,	r4
