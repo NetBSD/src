@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.5 2001/09/15 00:24:59 thorpej Exp $	*/
+/*	$NetBSD: agp.c,v 1.6 2001/09/15 00:52:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -822,10 +822,9 @@ agpmmap(dev_t dev, off_t offset, int prot)
 
 	if (offset > AGP_GET_APERTURE(sc))
 		return -1;
-	/*
-	 * XXX can't really use bus_dmamem_mmap here.
-	 */
-	return (sc->as_apaddr + offset) / PAGE_SIZE;
+
+	return (bus_space_mmap(sc->as_apt, sc->as_apaddr, offset, prot,
+	    BUS_SPACE_MAP_LINEAR));
 }
 
 /* Implementation of the kernel api */
