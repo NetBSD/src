@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.29 2003/10/30 01:58:17 simonb Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.30 2003/10/30 10:02:16 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.29 2003/10/30 01:58:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.30 2003/10/30 10:02:16 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1020,8 +1020,6 @@ static void
 emuxki_channel_set_bufparms(struct emuxki_channel *chan,
 			     u_int32_t start, u_int32_t end)
 {
-	struct emuxki_voice *voice = chan->voice;
-
 	chan->loop.start = start & EMU_CHAN_PSST_LOOPSTARTADDR_MASK;
 	chan->loop.end = end & EMU_CHAN_DSL_LOOPENDADDR_MASK;
 }
