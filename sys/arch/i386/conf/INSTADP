@@ -1,4 +1,4 @@
-#	$NetBSD: INSTADP,v 1.23 1996/09/09 16:37:11 mycroft Exp $
+#	$NetBSD: INSTADP,v 1.24 1996/09/09 17:18:50 mycroft Exp $
 #
 #	INSTADP -- like GENERICADP.  This supports only Adaptec SCSI
 #                     adapters.  This kernel is GENERICADP with lines
@@ -203,7 +203,7 @@ fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
 
-include	"GENERIC.local"
+include	"arch/i386/conf/GENERIC.local"
 
 pseudo-device	loop	1		# network loopback
 #pseudo-device	bpfilter 8		# packet filter
