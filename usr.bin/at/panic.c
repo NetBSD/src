@@ -1,4 +1,4 @@
-/*	$NetBSD: panic.c,v 1.7 2000/10/04 19:14:53 mjl Exp $	*/
+/*	$NetBSD: panic.c,v 1.8 2000/10/04 19:24:59 mjl Exp $	*/
 
 /*
  * panic.c - terminate fast in case of error
@@ -45,7 +45,7 @@
 #if 0
 static char rcsid[] = "$OpenBSD: panic.c,v 1.4 1997/03/01 23:40:09 millert Exp $";
 #else
-__RCSID("$NetBSD: panic.c,v 1.7 2000/10/04 19:14:53 mjl Exp $");
+__RCSID("$NetBSD: panic.c,v 1.8 2000/10/04 19:24:59 mjl Exp $");
 #endif
 #endif
 
@@ -54,8 +54,7 @@ __RCSID("$NetBSD: panic.c,v 1.7 2000/10/04 19:14:53 mjl Exp $");
 /* Global functions */
 
 void
-panic(a)
-	char *a;
+panic(char *a)
 {
 
 	/*
@@ -71,8 +70,7 @@ panic(a)
 }
 
 void
-perr(a)
-	char *a;
+perr(char *a)
 {
 
 	/*
@@ -89,8 +87,7 @@ perr(a)
 }
 
 void 
-perr2(a, b)
-	char *a, *b;
+perr2(char *a, char *b)
 {
 
 	(void)fputs(a, stderr);
@@ -98,7 +95,7 @@ perr2(a, b)
 }
 
 void
-usage()
+usage(void)
 {
 
 	/* Print usage and exit.  */
