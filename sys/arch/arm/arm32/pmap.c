@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.120 2002/11/11 09:34:44 chris Exp $	*/
+/*	$NetBSD: pmap.c,v 1.121 2002/11/11 20:34:03 chris Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.120 2002/11/11 09:34:44 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.121 2002/11/11 20:34:03 chris Exp $");
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
@@ -263,27 +263,27 @@ static vaddr_t pv_cachedva;		/* cached VA for later use */
  * local prototypes
  */
 
-static struct pv_entry	*pmap_add_pvpage __P((struct pv_page *, boolean_t));
-static struct pv_entry	*pmap_alloc_pv __P((struct pmap *, int)); /* see codes below */
+static struct pv_entry	*pmap_add_pvpage(struct pv_page *, boolean_t);
+static struct pv_entry	*pmap_alloc_pv(struct pmap *, int); /* see codes below */
 #define ALLOCPV_NEED	0	/* need PV now */
 #define ALLOCPV_TRY	1	/* just try to allocate, don't steal */
 #define ALLOCPV_NONEED	2	/* don't need PV, just growing cache */
-static struct pv_entry	*pmap_alloc_pvpage __P((struct pmap *, int));
-static void		 pmap_enter_pv __P((struct vm_page *,
-					    struct pv_entry *, struct pmap *,
-					    vaddr_t, struct vm_page *, int));
-static void		 pmap_free_pv __P((struct pmap *, struct pv_entry *));
-static void		 pmap_free_pvs __P((struct pmap *, struct pv_entry *));
-static void		 pmap_free_pv_doit __P((struct pv_entry *));
-static void		 pmap_free_pvpage __P((void));
-static boolean_t	 pmap_is_curpmap __P((struct pmap *));
-static struct pv_entry	*pmap_remove_pv __P((struct vm_page *, struct pmap *, 
-			vaddr_t));
+static struct pv_entry	*pmap_alloc_pvpage(struct pmap *, int);
+static void		 pmap_enter_pv(struct vm_page *,
+				       struct pv_entry *, struct pmap *,
+				       vaddr_t, struct vm_page *, int);
+static void		 pmap_free_pv(struct pmap *, struct pv_entry *);
+static void		 pmap_free_pvs(struct pmap *, struct pv_entry *);
+static void		 pmap_free_pv_doit(struct pv_entry *);
+static void		 pmap_free_pvpage(void);
+static boolean_t	 pmap_is_curpmap(struct pmap *);
+static struct pv_entry	*pmap_remove_pv(struct vm_page *, struct pmap *, 
+					vaddr_t);
 #define PMAP_REMOVE_ALL		0	/* remove all mappings */
 #define PMAP_REMOVE_SKIPWIRED	1	/* skip wired mappings */
 
-static u_int pmap_modify_pv __P((struct pmap *, vaddr_t, struct vm_page *,
-	u_int, u_int));
+static u_int pmap_modify_pv(struct pmap *, vaddr_t, struct vm_page *,
+			    u_int, u_int);
 
 /*
  * Structure that describes and L1 table.
@@ -298,14 +298,14 @@ struct l1pt {
 #define	PTFLAG_KPT		0x02		/* Kernel pt's are mapped */
 #define	PTFLAG_CLEAN		0x04		/* L1 is clean */
 
-static void pmap_free_l1pt __P((struct l1pt *));
-static int pmap_allocpagedir __P((struct pmap *));
-static int pmap_clean_page __P((struct pv_entry *, boolean_t));
-static void pmap_page_remove __P((struct vm_page *));
+static void	pmap_free_l1pt(struct l1pt *);
+static int	pmap_allocpagedir(struct pmap *);
+static int	pmap_clean_page(struct pv_entry *, boolean_t);
+static void	pmap_page_remove(struct vm_page *);
 
-static struct vm_page	*pmap_alloc_ptp __P((struct pmap *, vaddr_t));
-static struct vm_page	*pmap_get_ptp __P((struct pmap *, vaddr_t));
-__inline static void pmap_clearbit __P((struct vm_page *, unsigned int));
+static struct vm_page	*pmap_alloc_ptp(struct pmap *, vaddr_t);
+static struct vm_page	*pmap_get_ptp(struct pmap *, vaddr_t);
+__inline static void 	 pmap_clearbit(struct vm_page *, unsigned int);
 
 extern paddr_t physical_start;
 extern paddr_t physical_end;
@@ -332,26 +332,26 @@ static int l1pt_create_count;		    /* stat - L1's create count */
 static int l1pt_reuse_count;		    /* stat - L1's reused count */
 
 /* Local function prototypes (not used outside this file) */
-void pmap_pinit __P((struct pmap *));
-void pmap_freepagedir __P((struct pmap *));
+void pmap_pinit(struct pmap *);
+void pmap_freepagedir(struct pmap *);
 
 /* Other function prototypes */
-extern void bzero_page __P((vaddr_t));
-extern void bcopy_page __P((vaddr_t, vaddr_t));
+extern void bzero_page(vaddr_t);
+extern void bcopy_page(vaddr_t, vaddr_t);
 
-struct l1pt *pmap_alloc_l1pt __P((void));
-static __inline void pmap_map_in_l1 __P((struct pmap *pmap, vaddr_t va,
-     vaddr_t l2pa, int));
+struct l1pt *pmap_alloc_l1pt(void);
+static __inline void pmap_map_in_l1(struct pmap *pmap, vaddr_t va,
+     				    vaddr_t l2pa, int);
 
-static pt_entry_t *pmap_map_ptes __P((struct pmap *));
-static void pmap_unmap_ptes __P((struct pmap *));
+static pt_entry_t *pmap_map_ptes(struct pmap *);
+static void 	   pmap_unmap_ptes(struct pmap *);
 
-__inline static void pmap_vac_me_harder __P((struct pmap *, struct vm_page *,
-    pt_entry_t *, boolean_t));
-static void pmap_vac_me_kpmap __P((struct pmap *, struct vm_page *,
-    pt_entry_t *, boolean_t));
-static void pmap_vac_me_user __P((struct pmap *, struct vm_page *,
-    pt_entry_t *, boolean_t));
+__inline static void pmap_vac_me_harder(struct pmap *, struct vm_page *,
+					pt_entry_t *, boolean_t);
+static void pmap_vac_me_kpmap(struct pmap *, struct vm_page *,
+			      pt_entry_t *, boolean_t);
+static void pmap_vac_me_user(struct pmap *, struct vm_page *,
+			     pt_entry_t *, boolean_t);
 
 /*
  * real definition of pv_entry.
