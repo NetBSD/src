@@ -1,4 +1,4 @@
-/*	$NetBSD: memchr.c,v 1.6 2003/08/07 16:32:09 agc Exp $	*/
+/*	$NetBSD: memchr.c,v 1.7 2004/07/01 19:04:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)memchr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: memchr.c,v 1.6 2003/08/07 16:32:09 agc Exp $");
+__RCSID("$NetBSD: memchr.c,v 1.7 2004/07/01 19:04:14 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,7 +59,7 @@ memchr(s, c, n)
 
 		do {
 			if (*p++ == c)
-				return ((void *)(p - 1));
+				return __UNCONST(p - 1);
 		} while (--n != 0);
 	}
 	return (NULL);
