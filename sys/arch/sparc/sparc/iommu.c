@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.40 2000/05/10 11:17:50 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.41 2000/05/23 11:39:58 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -105,7 +105,7 @@ int	iommu_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 			int nsegs, size_t size, caddr_t *kvap, int flags));
 int	iommu_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 			int nsegs, int off, int prot, int flags));
-int	iommu_dvma_alloc(bus_dmamap_t, vaddr_t, bus_size_t, bus_size_t, int,
+int	iommu_dvma_alloc(bus_dmamap_t, vaddr_t, bus_size_t, int,
 			bus_addr_t *, bus_size_t *);
 
 
@@ -436,14 +436,13 @@ if ((int)sc->sc_dvmacur + len > 0)
 
 
 /*
- * Common routine to allocate space in the IOMMU map.
+ * Internal routine to allocate space in the IOMMU map.
  */
 int
-iommu_dvma_alloc(map, va, len, boundary, flags, dvap, sgsizep)
+iommu_dvma_alloc(map, va, len, flags, dvap, sgsizep)
 	bus_dmamap_t map;
 	vaddr_t va;
 	bus_size_t len;
-	bus_size_t boundary;
 	int flags;
 	bus_addr_t *dvap;
 	bus_size_t *sgsizep;
@@ -452,21 +451,20 @@ iommu_dvma_alloc(map, va, len, boundary, flags, dvap, sgsizep)
 	u_long align, voff;
 	u_long ex_start, ex_end;
 	int s, error;
+	int pagesz = PAGE_SIZE;
 
 	/*
 	 * Remember page offset, then truncate the buffer address to
 	 * a page boundary.
 	 */
-	voff = va & PGOFSET;
-	va &= ~PGOFSET;
+	voff = va & (pagesz - 1);
+	va &= -pagesz;
 
 	if (len > map->_dm_size)
 		return (EINVAL);
 
-	sgsize = (len + voff + PGOFSET) & ~PGOFSET;
-	align = dvma_cachealign ? dvma_cachealign : NBPG;
-	if (boundary == 0)
-		boundary = map->_dm_boundary;
+	sgsize = (len + voff + pagesz - 1) & -pagesz;
+	align = dvma_cachealign ? dvma_cachealign : pagesz;
 
 	s = splhigh();
 
@@ -480,7 +478,8 @@ iommu_dvma_alloc(map, va, len, boundary, flags, dvap, sgsizep)
 	}
 	error = extent_alloc_subregion1(iommu_dvmamap,
 					ex_start, ex_end,
-					sgsize, align, va & (align-1), boundary,
+					sgsize, align, va & (align-1),
+					map->_dm_boundary,
 					(flags & BUS_DMA_NOWAIT) == 0
 						? EX_WAITOK : EX_NOWAIT,
 					(u_long *)dvap);
@@ -505,6 +504,7 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 	bus_size_t sgsize;
 	bus_addr_t dva;
 	vaddr_t va = (vaddr_t)buf;
+	int pagesz = PAGE_SIZE;
 	pmap_t pmap;
 	int error;
 
@@ -514,7 +514,7 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 	map->dm_nsegs = 0;
 
 	/* Allocate IOMMU resources */
-	if ((error = iommu_dvma_alloc(map, va, buflen, 0, flags,
+	if ((error = iommu_dvma_alloc(map, va, buflen, flags,
 					&dva, &sgsize)) != 0)
 		return (error);
 
@@ -525,8 +525,9 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 	 */
 	map->dm_mapsize = buflen;
 	map->dm_nsegs = 1;
-	map->dm_segs[0].ds_addr = dva + (va & PGOFSET);
+	map->dm_segs[0].ds_addr = dva + (va & (pagesz - 1));
 	map->dm_segs[0].ds_len = buflen;
+	map->dm_segs[0]._ds_sgsize = sgsize;
 
 	if (p != NULL)
 		pmap = p->p_vmspace->vm_map.pmap;
@@ -542,9 +543,9 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 
 		iommu_enter(dva, pa);
 
-		dva += PAGE_SIZE;
-		va += PAGE_SIZE;
-		sgsize -= PAGE_SIZE;
+		dva += pagesz;
+		va += pagesz;
+		sgsize -= pagesz;
 	}
 
 	return (0);
@@ -561,7 +562,7 @@ iommu_dmamap_load_mbuf(t, map, m, flags)
 	int flags;
 {
 
-	panic("_bus_dmamap_load: not implemented");
+	panic("_bus_dmamap_load_mbuf: not implemented");
 }
 
 /*
@@ -601,17 +602,8 @@ iommu_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 
 	map->dm_nsegs = 0;
 
-#ifdef DIAGNOSTIC
-	/* XXX - unhelpful since we can't reset these in map_unload() */
-	if (segs[0].ds_addr != 0 || segs[0].ds_len != 0)
-		panic("iommu_dmamap_load_raw: segment already loaded: "
-			"addr 0x%lx, size 0x%lx",
-			segs[0].ds_addr, segs[0].ds_len);
-#endif
-
 	/* Allocate IOMMU resources */
 	if ((error = iommu_dvma_alloc(map, segs[0]._ds_va, size,
-				      segs[0]._ds_boundary,
 				      flags, &dva, &sgsize)) != 0)
 		return (error);
 
@@ -625,6 +617,7 @@ iommu_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 
 	map->dm_segs[0].ds_addr = dva;
 	map->dm_segs[0].ds_len = size;
+	map->dm_segs[0]._ds_sgsize = sgsize;
 
 	/* Map physical pages into IOMMU */
 	mlist = segs[0]._ds_mlist;
@@ -658,10 +651,8 @@ iommu_dmamap_unload(t, map)
 	int i, s, error;
 
 	for (i = 0; i < nsegs; i++) {
-		dva = segs[i].ds_addr;
-		len = segs[i].ds_len;
-		len = ((dva & PGOFSET) + len + PGOFSET) & ~PGOFSET;
-		dva &= ~PGOFSET;
+		dva = segs[i].ds_addr & -PAGE_SIZE;
+		len = segs[i]._ds_sgsize;
 
 		iommu_remove(dva, len);
 		s = splhigh();

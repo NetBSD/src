@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.18 2000/05/09 22:39:35 pk Exp $	*/
+/*	$NetBSD: bus.h,v 1.19 2000/05/23 11:39:57 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -933,10 +933,9 @@ typedef struct sparc_bus_dmamap		*bus_dmamap_t;
 struct sparc_bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DVMA address */
 	bus_size_t	ds_len;		/* length of transfer */
+	bus_size_t	_ds_sgsize;	/* size of allocated DVMA segment */
 	void		*_ds_mlist;	/* page list when dmamem_alloc'ed */
 	vaddr_t		_ds_va;		/* VA when dmamem_map'ed */
-	bus_size_t	_ds_alignment;	/* dmamem_alloc() alignment */
-	bus_size_t	_ds_boundary;	/* dmamem_alloc() boundary */
 };
 typedef struct sparc_bus_dma_segment	bus_dma_segment_t;
 
