@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.42 2004/11/30 04:25:43 christos Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.43 2005/02/12 23:14:03 christos Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.42 2004/11/30 04:25:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.43 2005/02/12 23:14:03 christos Exp $");
 
 #include "opt_systrace.h"
 
@@ -572,7 +572,7 @@ systraceopen(dev_t dev, int flag, int mode, struct proc *p)
 	fst->p_ruid = p->p_cred->p_ruid;
 	fst->p_rgid = p->p_cred->p_rgid;
 
-	return fdclone(p, fp, fd, &systracefops, fst);
+	return fdclone(p, fp, fd, flag, &systracefops, fst);
 }
 
 void
