@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.1 1999/01/10 18:21:24 christos Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.2 1999/02/12 17:15:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,9 +40,9 @@
 
 	.text
 	.align	4
-	.globl	_rtld_start
+	.globl	.rtld_start
 	.type	.rtld_start@function
-_rtld_start:
+.rtld_start:
 	subl	$8,%esp			# make room of obj_main and exit proc
 	movl	%esp,%eax		# save stack pointer for _rtld
 	pushl	%ebx			# save ps_strings
