@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.32 2000/05/12 15:22:33 tsutsui Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.33 2000/05/12 16:44:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -124,7 +124,6 @@ static void ex_init_txdescs __P((struct ex_softc *));
 static void ex_shutdown __P((void *));
 static void ex_start __P((struct ifnet *));
 static void ex_txstat __P((struct ex_softc *));
-static u_int16_t ex_mchash __P((u_char *));
 
 int ex_mii_readreg __P((struct device *, int, int));
 void ex_mii_writereg __P((struct device *, int, int, int));
@@ -668,35 +667,7 @@ ex_init(sc)
 	callout_reset(&sc->ex_mii_callout, hz, ex_tick, sc);
 }
 
-/*
- * Multicast hash filter according to the 3Com spec.
- */
-static u_int16_t
-ex_mchash(addr)
-	u_char *addr;
-{
-	u_int32_t crc, carry;
-	int i, j;
-	u_char c;
-
-	/* Compute CRC for the address value. */
-	crc = 0xffffffff; /* initial value */
-
-	for (i = 0; i < 6; i++) {
-		c = addr[i];
-		for (j = 0; j < 8; j++) {
-			carry = ((crc & 0x80000000) ? 1 : 0) ^ (c & 0x01);
-			crc <<= 1;
-			c >>= 1;
-			if (carry)
-				crc = (crc ^ 0x04c11db6) | carry;
-		}
-	}
-
-	/* Return the filter bit position. */
-	return(crc & 0x000000ff);
-}
-
+#define	ex_mchash(addr)	(ether_crc32_be((addr), ETHER_ADDR_LEN) & 0xff)
 
 /*
  * Set multicast receive filter. Also take care of promiscuous mode
