@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.59 2003/10/03 19:55:34 wiz Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.60 2003/10/06 00:44:15 grant Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.59 2003/10/03 19:55:34 wiz Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.60 2003/10/06 00:44:15 grant Exp $");
 #endif
 
 /*-
@@ -861,13 +861,11 @@ http_extract_fn(char *input, char *outbuf, size_t outbuflen)
 					state = ST_TAGAX;
 					found = 1;
 					break;
-				}
-				else {
+				} else {
 					/* copy one more char */
 					tempbuf[tempbuffill++] = p;
 				}
-			}
-			else {
+			} else {
 				/* leaving double quotes */
 				if (p == '\"')
 					dqflag = 0;
