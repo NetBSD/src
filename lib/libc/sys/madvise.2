@@ -1,4 +1,4 @@
-.\"	$NetBSD: madvise.2,v 1.16 2002/02/08 01:28:19 ross Exp $
+.\"	$NetBSD: madvise.2,v 1.17 2002/08/11 13:17:35 yamt Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)madvise.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd June 9, 1993
+.Dd August 11, 2002
 .Dt MADVISE 2
 .Os
 .Sh NAME
@@ -62,6 +62,12 @@ The known behaviors are given in
 #define	MADV_SPACEAVAIL	5	/* ensure that resources are reserved */
 #define	MADV_FREE	6	/* pages are empty, free them */
 .Ed
+.Sh RETURN VALUES
+Upon successful completion,
+a value of 0 is returned.
+Otherwise, a value of -1 is returned and
+.Va errno
+is set to indicate the error.
 .Sh SEE ALSO
 .Xr mincore 2 ,
 .Xr mprotect 2 ,
