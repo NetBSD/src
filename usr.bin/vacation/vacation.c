@@ -1,4 +1,4 @@
-/*	$NetBSD: vacation.c,v 1.20 2003/02/18 19:21:33 perry Exp $	*/
+/*	$NetBSD: vacation.c,v 1.21 2003/04/20 01:58:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-__RCSID("$NetBSD: vacation.c,v 1.20 2003/02/18 19:21:33 perry Exp $");
+__RCSID("$NetBSD: vacation.c,v 1.21 2003/04/20 01:58:00 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -210,6 +210,7 @@ readheaders(void)
 	while (fgets(buf, sizeof(buf), stdin) && *buf != '\n')
 		switch(*buf) {
 		case 'F':		/* "From " */
+			/* XXX should instead consider Return-Path: and Sender: */
 			cont = 0;
 			if (!strncmp(buf, "From ", 5)) {
 				for (p = buf + 5; *p && *p != ' '; ++p);
@@ -244,6 +245,16 @@ readheaders(void)
 			goto findme;
 		case 'T':		/* "To:" */
 			if (strncmp(buf, "To:", 3))
+				break;
+			cont = 1;
+			goto findme;
+		case 'A':
+			if (strncmp(buf, "Apparently-To:", 3))
+				break;
+			cont = 1;
+			goto findme;
+		case 'D':
+			if (strncmp(buf, "Delivered-To:", 3))
 				break;
 			cont = 1;
 			goto findme;
