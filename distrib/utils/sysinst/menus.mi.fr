@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.fr,v 1.42 2002/10/16 08:04:27 itojun Exp $	*/
+/*	$NetBSD: menus.mi.fr,v 1.43 2003/01/22 05:59:07 jhawk Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -420,3 +420,9 @@ menu ip6autoconf, title "Faire la configuration automatique IPv6 ?";
 menu dhcpautoconf, title "Exécutez la configuration automatique de DHCP?";
         option "Yes", exit, action  {yesno = 1;};
         option "No",  exit, action  {yesno = 0;};
+
+menu extract, title "Methode d'indication de l'extraction d'ensemble ?";
+	option "Thermometre (recommendeé)", exit, action  { yesno = 1; };
+	option "Silencieux", exit, action  { yesno = 0; };
+	option "Liste verbeuse des fichiers (lent)", exit, action
+	    { yesno = 2; };
