@@ -1,4 +1,4 @@
-/*	$NetBSD: getpar.h,v 1.9 2004/01/27 20:30:31 jsm Exp $	*/
+/*	$NetBSD: getpar.h,v 1.10 2005/02/15 12:54:50 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,6 +39,9 @@ struct cvntab		/* used for getcodpar() parameter list */
 	cmdfun	value;
 	int	value2;
 };
+
+extern const struct cvntab	Skitab[];
+extern const struct cvntab	Lentab[];
 
 int getintpar(const  char *);
 double getfltpar(const char *);
