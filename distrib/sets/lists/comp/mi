@@ -102,9 +102,9 @@
 ./usr/include/dev/pci/pcireg.h
 ./usr/include/dev/pci/pcivar.h
 ./usr/include/dev/rcons
-./usr/include/dev/rcons/gallant19.h
 ./usr/include/dev/rcons/raster.h
 ./usr/include/dev/rcons/rcons.h
+./usr/include/dev/rcons/rcons_subr.h
 ./usr/include/dev/vndioctl.h
 ./usr/include/dirent.h
 ./usr/include/disktab.h
