@@ -35,9 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: cons.c 1.1 90/07/09
- *	from: @(#)cons.c	7.6 (Berkeley) 5/4/91
- *	$Id: cons.c,v 1.3 1993/09/02 18:05:30 mw Exp $
+ * from: Utah $Hdr: cons.c 1.1 90/07/09$
+ *
+ *	@(#)cons.c	7.6 (Berkeley) 5/4/91
  */
 
 #include "sys/param.h"
