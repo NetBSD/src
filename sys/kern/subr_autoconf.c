@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_autoconf.c,v 1.35 1998/11/18 18:40:08 thorpej Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.36 1998/11/18 18:40:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -387,7 +387,7 @@ config_detach(dev, flags)
 #ifdef DIAGNOSTIC
 	struct device *d;
 #endif
-	int rv, i;
+	int rv = 0, i;
 
 	cf = dev->dv_cfdata;
 #ifdef DIAGNOSTIC
