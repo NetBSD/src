@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 1993 Charles Hannum
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -34,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.13.2.8 1993/10/09 09:45:30 mycroft Exp $
+ *	$Id: clock.c,v 1.13.2.9 1993/10/09 10:13:12 mycroft Exp $
  */
 /* 
  * Mach Operating System
@@ -92,6 +93,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "kernel.h"
 #include "sys/device.h"
 #include "machine/cpu.h"
+#include "machine/cpufunc.h"
 #include "i386/isa/icu.h"
 #include "i386/isa/isavar.h"
 #include "i386/isa/nvram.h"
