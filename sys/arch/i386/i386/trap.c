@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.191 2003/10/25 19:37:47 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.192 2003/10/25 19:38:18 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.191 2003/10/25 19:37:47 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.192 2003/10/25 19:38:18 mycroft Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -220,9 +220,9 @@ trap(frame)
 		    resume_iret[], resume_pop_ds[], resume_pop_es[],
 		    resume_pop_fs[], resume_pop_gs[],
 		    IDTVEC(osyscall)[];
-	struct trapframe *vframe = NULL;
+	struct trapframe *vframe;
 	ksiginfo_t ksi;
-	int resume = 0;
+	int resume;
 	caddr_t onfault;
 	int error;
 	uint32_t cr2;
