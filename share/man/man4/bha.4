@@ -44,6 +44,12 @@ driver supports the following Buslogic SCSI adapters:
 .El
 .Sh BUGS
 The Buslogic BT-930 is not supported in this driver.
+.Pp
+The Buslogic BT-445S has a problem in early hardware and firmware
+revisions which prevents proper operation on a system with more than
+16MB of RAM.  Hardware revision D and firmware revision 3.37 should
+be considered minimum requirements for using this board on systems
+configured in this manner.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr sd 4 ,
