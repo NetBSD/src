@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.2 2003/05/23 05:42:05 briggs Exp $	*/
+/*	$NetBSD: obio.c,v 1.3 2003/05/23 05:47:11 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -94,6 +94,7 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 
 	obio_found = 1;
 
+	aprint_naive("\n");
 	aprint_normal("\n");
 
 	/*
