@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.19 1995/05/08 22:39:24 cgd Exp $	*/
+/*	$NetBSD: print.c,v 1.20 1995/05/18 15:27:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$NetBSD: print.c,v 1.19 1995/05/08 22:39:24 cgd Exp $";
+static char rcsid[] = "$NetBSD: print.c,v 1.20 1995/05/18 15:27:32 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -102,44 +102,31 @@ command(k, ve)
 {
 	VAR *v;
 	int left;
-	char *cp, *vis_env, *vis_args;
-
-	if ((vis_args = malloc(strlen(k->ki_args) * 4 + 1)) == NULL)
-		err(1, NULL);
-	strvis(vis_args, k->ki_args, VIS_TAB | VIS_NL | VIS_NOSLASH);
-	if (k->ki_env) {
-		if ((vis_env = malloc(strlen(k->ki_env) * 4 + 1)) == NULL)
-			err(1, NULL);
-		strvis(vis_env, k->ki_env, VIS_TAB | VIS_NL | VIS_NOSLASH);
-	} else
-		vis_env = NULL;
+	char *cp;
 
 	v = ve->var;
 	if (ve->next == NULL) {
 		/* last field */
 		if (termwidth == UNLIMITED) {
-			if (vis_env)
-				(void)printf("%s ", vis_env);
-			(void)printf("%s", vis_args);
+			if (k->ki_env)
+				(void)printf("%s ", k->ki_env);
+			(void)printf("%s", k->ki_args);
 		} else {
 			left = termwidth - (totwidth - v->width);
 			if (left < 1) /* already wrapped, just use std width */
 				left = v->width;
-			if ((cp = vis_env) != NULL) {
+			if ((cp = k->ki_env) != NULL) {
 				while (--left >= 0 && *cp)
 					(void)putchar(*cp++);
 				if (--left >= 0)
 					putchar(' ');
 			}
-			for (cp = vis_args; --left >= 0 && *cp != '\0';)
+			for (cp = k->ki_args; --left >= 0 && *cp != '\0';)
 				(void)putchar(*cp++);
 		}
 	} else
 		/* XXX env? */
-		(void)printf("%-*.*s", v->width, v->width, vis_args);
-	free(vis_args);
-	if (vis_env != NULL)
-		free(vis_env);
+		(void)printf("%-*.*s", v->width, v->width, k->ki_args);
 }
 
 void
