@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.225 2005/03/29 20:10:16 yamt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.226 2005/04/03 05:02:46 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -150,7 +150,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.225 2005/03/29 20:10:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.226 2005/04/03 05:02:46 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2246,9 +2246,7 @@ after_listen:
 		 * If the window gives us less than ssthresh packets
 		 * in flight, open exponentially (segsz per packet).
 		 * Otherwise open linearly: segsz per window
-		 * (segsz^2 / cwnd per packet), plus a constant
-		 * fraction of a packet (segsz/8) to help larger windows
-		 * open quickly enough.
+		 * (segsz^2 / cwnd per packet).
 		 *
 		 * If we are still in fast recovery (meaning we are using
 		 * NewReno and we have only received partial acks), do not
