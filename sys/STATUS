@@ -23,7 +23,7 @@ sea			compiles
 si			compiles
 siop			OK (i386, sparc64, alpha)
 uha			compiles
-umass			compiles
+umass			compiles, scsibus at umass OK.
 usscanner		compiles
 wds			compiles
 
@@ -90,7 +90,7 @@ pmax		compiles		xasc works, asc,sii,xsii untested
 
 prep		compiles
 
-sandpoint	
+sandpoint	non-scsi issues
 
 sgimips
 
