@@ -41,7 +41,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.26.2.3 2000/07/23 05:38:53 thorpej Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.26.2.4 2000/07/27 00:13:59 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -2269,26 +2269,16 @@ void script_write_params (client, prefix, lease)
 int script_go (client)
 	struct client_state *client;
 {
-	static char *client_path;
 	int rval;
 	char *scriptName;
 	char *argv [2];
 	char **envp;
 	char *epp [3];
 	char reason [] = "REASON=NBI";
+	static char client_path [] = CLIENT_PATH;
 	int i;
 	struct string_list *sp, *next;
 	int pid, wpid, wstatus;
-
-	if (client_path == NULL) {
-		client_path = dmalloc (strlen(CLIENT_PATH) +
-		    strlen("PATH=") + 1, MDL);
-		if (!client_path) {
-			log_error ("No memory for PATH environment variable.");
-			return 0;
-		}
-		sprintf (client_path, "PATH=%s", CLIENT_PATH);
-	}
 
 	if (client) {
 		scriptName = client -> config -> script_name;
