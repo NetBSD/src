@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.10.2.2 1997/01/19 19:30:58 thorpej Exp $	*/
+/*	$NetBSD: sem.c,v 1.10.2.3 1997/01/20 05:45:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,6 +90,7 @@ static int split __P((const char *, size_t, char *, size_t, int *));
 static void selectbase __P((struct devbase *, struct deva *));
 static int onlist __P((struct nvlist *, void *));
 static const char **fixloc __P((const char *, struct attr *, struct nvlist *));
+static const char *makedevstr __P((int, int));
 
 void
 initsem()
@@ -554,6 +555,28 @@ exclude(nv, name, what)
 }
 
 /*
+ * Make a string description of the device at maj/min.
+ */
+static const char *
+makedevstr(maj, min)
+	int maj, min;
+{
+	struct devbase *dev;
+	char buf[32];
+
+	for (dev = allbases; dev != NULL; dev = dev->d_next)
+		if (dev->d_major == maj)
+			break;
+	if (dev == NULL)
+		(void)sprintf(buf, "<%d/%d>", maj, min);
+	else
+		(void)sprintf(buf, "%s%d%c", dev->d_name,
+		    min / maxpartitions, (min % maxpartitions) + 'a');
+
+	return (intern(buf));
+}
+
+/*
  * Map things like "ra0b" => makedev(major("ra"), 0*maxpartitions + 'b'-'a').
  * Handle the case where the device number is given but there is no
  * corresponding name, and map NULL to the default.
@@ -585,8 +608,10 @@ resolve(nvp, name, what, dflt, part)
 			maj = major(dflt->nv_int);
 			min = (minor(dflt->nv_int) / maxpartitions) + part;
 			d = makedev(maj, min);
-		}
-		*nvp = nv = newnv(NULL, NULL, NULL, d, NULL);
+			cp = makedevstr(maj, min);
+		} else
+			cp = NULL;
+		*nvp = nv = newnv(NULL, cp, NULL, d, NULL);
 	}
 	if (nv->nv_int != NODEV) {
 		/*
@@ -595,15 +620,7 @@ resolve(nvp, name, what, dflt, part)
 		 */
 		maj = major(nv->nv_int);
 		min = minor(nv->nv_int);
-		for (dev = allbases; dev != NULL; dev = dev->d_next)
-			if (dev->d_major == maj)
-				break;
-		if (dev == NULL)
-			(void)sprintf(buf, "<%d/%d>", maj, min);
-		else
-			(void)sprintf(buf, "%s%d%c", dev->d_name,
-			    min / maxpartitions, (min % maxpartitions) + 'a');
-		nv->nv_str = intern(buf);
+		nv->nv_str = makedevstr(maj, min);
 		return (0);
 	}
 
