@@ -1,3 +1,5 @@
+/*      $NetBSD: md-mips.c,v 1.2 1995/09/05 02:51:06 tls Exp $      */
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +34,11 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)md-nop.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: md-mips.c,v 1.2 1995/09/05 02:51:06 tls Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
