@@ -1,4 +1,4 @@
-/*	$NetBSD: cy_pci.c,v 1.16 2002/10/02 16:51:08 thorpej Exp $	*/
+/*	$NetBSD: cy_pci.c,v 1.17 2003/01/31 00:07:41 thorpej Exp $	*/
 
 /*
  * cy_pci.c
@@ -10,7 +10,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy_pci.c,v 1.16 2002/10/02 16:51:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy_pci.c,v 1.17 2003/01/31 00:07:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,30 +100,33 @@ cy_pci_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr;
 	int plx_ver;
 
+	aprint_naive(": Multi-port serial controller\n");
+
 	sc->sc_bustype = CY_BUSTYPE_PCI;
 
 	cp = cy_pci_lookup(pa);
 	if (cp == NULL)
 		panic("cy_pci_attach: impossible");
 
-	printf(": Cyclades-Y multiport serial\n");
+	aprint_normal(": Cyclades-Y multiport serial\n");
 
 	if (pci_mapreg_map(pa, 0x14, PCI_MAPREG_TYPE_IO, 0,
 	    &psc->sc_iot, &psc->sc_ioh, NULL, NULL) != 0) {
-		printf("%s: unable to map PLX registers\n",
+		aprint_error("%s: unable to map PLX registers\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
 
 	if (pci_mapreg_map(pa, 0x18, cp->cp_memtype, 0,
 	    &sc->sc_memt, &sc->sc_bsh, NULL, NULL) != 0) {
-		printf("%s: unable to map device registers\n",
+		aprint_error("%s: unable to map device registers\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
 
 	if (cy_find(sc) == 0) {
-		printf("%s: unable to find CD1400s\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: unable to find CD1400s\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -135,19 +138,19 @@ cy_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih) != 0) {
-		printf(": unable to map interrupt\n");
+		aprint_error(": unable to map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_TTY, cy_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf(": unable to establish interrupt");
+		aprint_error(": unable to establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	cy_attach(sc);
 

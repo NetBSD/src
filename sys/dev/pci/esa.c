@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.18 2002/12/23 02:58:36 tsutsui Exp $ */
+/* $NetBSD: esa.c,v 1.19 2003/01/31 00:07:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -1017,9 +1017,11 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	int revision, len;
 	int i;
 
+	aprint_naive(": Audio controller\n");
+
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	revision = PCI_REVISION(pa->pa_class);
-	printf(": %s (rev. 0x%02x)\n", devinfo, revision);
+	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, revision);
 
 	for (card = esa_card_types; card->pci_vendor_id; card++)
 		if (PCI_VENDOR(pa->pa_id) == card->pci_vendor_id &&
@@ -1038,7 +1040,7 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	/* Map I/O register */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, &sc->sc_iob, &sc->sc_ios)) {
-		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -1049,26 +1051,27 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map and establish an interrupt */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: can't map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: can't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, esa_intr, self);
 	if (sc->sc_ih == NULL) {
-		printf("%s: can't establish interrupt", sc->sc_dev.dv_xname);
+		aprint_error("%s: can't establish interrupt",
+		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	/* Power up chip */
 	esa_power(sc, PCI_PMCSR_STATE_D0);
 
 	/* Init chip */
 	if (esa_init(sc) == -1) {
-		printf("%s: esa_attach: unable to initialize the card\n",
+		aprint_error("%s: esa_attach: unable to initialize the card\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
@@ -1078,7 +1081,7 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	    + ESA_REV_B_DATA_MEMORY_LENGTH + 1);
 	sc->savemem = (u_int16_t *)malloc(len, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->savemem == NULL) {
-		printf("%s: unable to allocate suspend buffer\n",
+		aprint_error("%s: unable to allocate suspend buffer\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
@@ -1131,7 +1134,7 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->powerhook = powerhook_establish(esa_powerhook, sc);
 	if (sc->powerhook == NULL)
-		printf("%s: WARNING: unable to establish powerhook\n",
+		aprint_error("%s: WARNING: unable to establish powerhook\n",
 		    sc->sc_dev.dv_xname);
 
 	return;

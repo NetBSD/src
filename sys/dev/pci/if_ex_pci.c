@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.31 2003/01/16 01:02:06 gendalia Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.32 2003/01/31 00:07:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.31 2003/01/16 01:02:06 gendalia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.32 2003/01/31 00:07:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,9 +227,11 @@ ex_pci_attach(parent, self, aux)
 	int rev, pmreg;
 	pcireg_t reg;
 
+	aprint_naive(": Ethernet controller\n");
+
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
-		printf(": can't map i/o space\n");
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 
@@ -240,7 +242,7 @@ ex_pci_attach(parent, self, aux)
 	}
 
 	rev = PCI_REVISION(pci_conf_read(pc, pa->pa_tag, PCI_CLASS_REG));
-	printf(": 3Com %s (rev. 0x%x)\n", epp->epp_name, rev);
+	aprint_normal(": 3Com %s (rev. 0x%x)\n", epp->epp_name, rev);
 
 	sc->sc_dmat = pa->pa_dmat;
 
@@ -265,7 +267,8 @@ ex_pci_attach(parent, self, aux)
 		/* Map PCI function status window. */
 		if (pci_mapreg_map(pa, PCI_FUNCMEM, PCI_MAPREG_TYPE_MEM, 0,
 		    &psc->sc_funct, &psc->sc_funch, NULL, NULL)) {
-			printf("%s: unable to map function status window\n",
+			aprint_error(
+			    "%s: unable to map function status window\n",
 			    sc->sc_dev.dv_xname);
 			return;
 		}
@@ -295,12 +298,13 @@ ex_pci_attach(parent, self, aux)
 			 * The card has lost all configuration data in
 			 * this state, so punt.
 			 */
-			printf("%s: unable to wake up from power state D3\n",
+			aprint_error(
+			    "%s: unable to wake up from power state D3\n",
 			    sc->sc_dev.dv_xname);
 			return;
 		case PCI_PMCSR_STATE_D1:
 		case PCI_PMCSR_STATE_D2:
-			printf("%s: waking up from power state D%d\n",
+			aprint_normal("%s: waking up from power state D%d\n",
 			    sc->sc_dev.dv_xname, reg);
 			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
 			    (reg & ~PCI_PMCSR_STATE_MASK) | PCI_PMCSR_STATE_D0);
@@ -312,21 +316,22 @@ ex_pci_attach(parent, self, aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: couldn't map interrupt\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, ex_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
+		aprint_error("%s: couldn't establish interrupt",
 		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	ex_config(sc);
 

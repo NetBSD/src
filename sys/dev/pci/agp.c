@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.23 2002/12/13 11:32:50 scw Exp $	*/
+/*	$NetBSD: agp.c,v 1.24 2003/01/31 00:07:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.23 2002/12/13 11:32:50 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.24 2003/01/31 00:07:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,6 +259,8 @@ agpattach(struct device *parent, struct device *self, void *aux)
 		panic("agpattach: impossible");
 	}
 
+	aprint_naive(": AGP controller\n");
+
 	sc->as_dmat = pa->pa_dmat;
 	sc->as_pc = pa->pa_pc;
 	sc->as_tag = pa->pa_tag;
@@ -287,7 +289,7 @@ agpattach(struct device *parent, struct device *self, void *aux)
 
 	ret = (*ap->ap_attach)(parent, self, pa);
 	if (ret == 0)
-		printf(": aperture at 0x%lx, size 0x%lx\n",
+		aprint_normal(": aperture at 0x%lx, size 0x%lx\n",
 		    (unsigned long)sc->as_apaddr,
 		    (unsigned long)AGP_GET_APERTURE(sc));
 	else

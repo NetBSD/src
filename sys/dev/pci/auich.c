@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.34 2003/01/28 02:09:34 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.35 2003/01/31 00:07:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.34 2003/01/28 02:09:34 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.35 2003/01/31 00:07:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -384,6 +384,8 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	const struct auich_devtype *d;
 	u_int32_t status;
 
+	aprint_naive(": Audio controller\n");
+
 	d = auich_lookup(pa);
 	if (d == NULL)
 		panic("auich_attach: impossible");
@@ -392,17 +394,18 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pt = pa->pa_tag;
 #endif
-	printf(": %s\n", d->name);
+
+	aprint_normal(": %s\n", d->name);
 
 	if (pci_mapreg_map(pa, ICH_NAMBAR, PCI_MAPREG_TYPE_IO, 0,
 			   &sc->iot, &sc->mix_ioh, NULL, &mix_size)) {
-		printf("%s: can't map codec i/o space\n",
+		aprint_error("%s: can't map codec i/o space\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
 	if (pci_mapreg_map(pa, ICH_NABMBAR, PCI_MAPREG_TYPE_IO, 0,
 			   &sc->iot, &sc->aud_ioh, NULL, &aud_size)) {
-		printf("%s: can't map device i/o space\n",
+		aprint_error("%s: can't map device i/o space\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
@@ -415,20 +418,21 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: can't map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: can't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO,
 	    auich_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: can't establish interrupt", sc->sc_dev.dv_xname);
+		aprint_error("%s: can't establish interrupt",
+		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	sprintf(sc->sc_audev.name, "%s AC97", d->shortname);
 	sprintf(sc->sc_audev.version, "0x%02x", PCI_REVISION(pa->pa_class));
@@ -477,11 +481,14 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	}
 	/* Print capabilities though there are no supports for now */
 	if ((status & ICH_SAMPLE_CAP) == ICH_POM20)
-		printf("%s: 20 bit precision support\n", sc->sc_dev.dv_xname);
+		aprint_normal("%s: 20 bit precision support\n",
+		    sc->sc_dev.dv_xname);
 	if ((status & ICH_CHAN_CAP) == ICH_PCM4)
-		printf("%s: 4ch PCM output support\n", sc->sc_dev.dv_xname);
+		aprint_normal("%s: 4ch PCM output support\n",
+		    sc->sc_dev.dv_xname);
 	if ((status & ICH_CHAN_CAP) == ICH_PCM6)
-		printf("%s: 6ch PCM output support\n", sc->sc_dev.dv_xname);
+		aprint_normal("%s: 6ch PCM output support\n",
+		    sc->sc_dev.dv_xname);
 
 	sc->host_if.arg = sc;
 	sc->host_if.attach = auich_attach_codec;

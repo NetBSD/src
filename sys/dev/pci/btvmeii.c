@@ -1,4 +1,4 @@
-/* $NetBSD: btvmeii.c,v 1.8 2002/10/02 16:51:04 thorpej Exp $ */
+/* $NetBSD: btvmeii.c,v 1.9 2003/01/31 00:07:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.8 2002/10/02 16:51:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.9 2003/01/31 00:07:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,8 @@ b3_2706_attach(parent, self, aux)
 
 	struct vmebus_attach_args vaa;
 
-	printf("\n");
+	aprint_naive(": VME bus adapter\n");
+	aprint_normal("\n");
 
 	secbus = PPB_BUSINFO_SECONDARY(pci_conf_read(pc, pa->pa_tag,
 						     PPB_REG_BUSINFO));
@@ -219,7 +220,7 @@ b3_2706_attach(parent, self, aux)
 
 	if (univ_pci_attach(&sc->univdata, &aa, self->dv_xname,
 			    b3_2706_vmeint, sc)) {
-		printf("%s: error initializing universe chip\n",
+		aprint_error("%s: error initializing universe chip\n",
 		       self->dv_xname);
 		return;
 	}
@@ -234,7 +235,8 @@ b3_2706_attach(parent, self, aux)
 			    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
 			    &swappbase, 0, 0) ||
 	    bus_space_map(sc->swapt, swappbase, 4, 0, &sc->swaph)) {
-		printf("%s: can't map byteswap register\n", self->dv_xname);
+		aprint_error("%s: can't map byteswap register\n",
+		    self->dv_xname);
 		return;
 	}
 	/*
@@ -250,11 +252,12 @@ b3_2706_attach(parent, self, aux)
 	if (pci_mapreg_info(pc, tag, 0x14,
 			    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
 			    &sc->vmepbase, 0, 0)) {
-		printf("%s: VME range not assigned\n", self->dv_xname);
+		aprint_error("%s: VME range not assigned\n", self->dv_xname);
 		return;
 	}
 #ifdef BIT3DEBUG
-	printf("%s: VME window @%lx\n", self->dv_xname, (long)sc->vmepbase);
+	aprint_debug("%s: VME window @%lx\n", self->dv_xname,
+	    (long)sc->vmepbase);
 #endif
 
 	for (i = 0; i < 8; i++) {

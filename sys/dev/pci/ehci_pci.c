@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.12 2002/10/02 16:51:11 thorpej Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.13 2003/01/31 00:07:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.12 2002/10/02 16:51:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.13 2003/01/31 00:07:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,13 +110,16 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	int ncomp;
 	struct usb_pci *up;
 
+	aprint_naive(": USB controller\n");
+
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
+	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
+	    PCI_REVISION(pa->pa_class));
 
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBMEM, PCI_MAPREG_TYPE_MEM, 0,
 			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size)) {
-		printf("%s: can't map memory space\n", devname);
+		aprint_error("%s: can't map memory space\n", devname);
 		return;
 	}
 
@@ -136,26 +139,26 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", devname);
+		aprint_error("%s: couldn't map interrupt\n", devname);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_USB, ehci_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt", devname);
+		aprint_error("%s: couldn't establish interrupt", devname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", devname, intrstr);
+	aprint_normal("%s: interrupting at %s\n", devname, intrstr);
 
 	switch(pci_conf_read(pc, tag, PCI_USBREV) & PCI_USBREV_MASK) {
 	case PCI_USBREV_PRE_1_0:
 	case PCI_USBREV_1_0:
 	case PCI_USBREV_1_1:
 		sc->sc.sc_bus.usbrev = USBREV_UNKNOWN;
-		printf("%s: pre-2.0 USB rev\n", devname);
+		aprint_normal("%s: pre-2.0 USB rev\n", devname);
 		return;
 	case PCI_USBREV_2_0:
 		sc->sc.sc_bus.usbrev = USBREV_2_0;
@@ -193,7 +196,7 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	r = ehci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
-		printf("%s: init failed, error=%d\n", devname, r);
+		aprint_error("%s: init failed, error=%d\n", devname, r);
 		return;
 	}
 
