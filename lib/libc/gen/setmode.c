@@ -1,4 +1,4 @@
-/*	$NetBSD: setmode.c,v 1.14 1996/12/20 19:38:57 cgd Exp $	*/
+/*	$NetBSD: setmode.c,v 1.15 1997/02/07 22:21:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$NetBSD: setmode.c,v 1.14 1996/12/20 19:38:57 cgd Exp $";
+static char rcsid[] = "$NetBSD: setmode.c,v 1.15 1997/02/07 22:21:06 christos Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -260,13 +260,19 @@ getop:		if ((op = *p++) != '+' && op != '-' && op != '=') {
 				perm |= S_IRUSR|S_IRGRP|S_IROTH;
 				break;
 			case 's':
-				/* If only "other" bits ignore set-id. */
-				if (who & ~S_IRWXO)
+				/*
+				 * If specific bits where requested and 
+				 * only "other" bits ignore set-id. 
+				 */
+				if (who == 0 || (who & ~S_IRWXO))
 					perm |= S_ISUID|S_ISGID;
 				break;
 			case 't':
-				/* If only "other" bits ignore sticky. */
-				if (who & ~S_IRWXO) {
+				/*
+				 * If specific bits where requested and 
+				 * only "other" bits ignore set-id. 
+				 */
+				if (who == 0 || (who & ~S_IRWXO)) {
 					who |= S_ISTXT;
 					perm |= S_ISTXT;
 				}
