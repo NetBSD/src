@@ -4,6 +4,7 @@
 ./usr/include/machine/iteioctl.h
 ./usr/include/machine/kbd.h
 ./usr/include/machine/kbio.h
+./usr/include/machine/kcore.h
 ./usr/include/machine/opmbellio.h
 ./usr/include/machine/pci_machdep.h
 ./usr/include/machine/powioctl.h
