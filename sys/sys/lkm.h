@@ -1,4 +1,4 @@
-/*	$NetBSD: lkm.h,v 1.7 1994/06/29 06:44:31 cgd Exp $	*/
+/*	$NetBSD: lkm.h,v 1.7.2.1 1994/07/24 03:10:49 cgd Exp $	*/
 
 /*
  * Header file used by loadable kernel modules and loadable kernel module
@@ -80,9 +80,6 @@ struct lkm_vfs {
 	int	lkm_ver;
 	char	*lkm_name;
 	u_long	lkm_offset;
-#if 0
-	u_long	lkm_flags;
-#endif
 	struct vfsops	*lkm_vfsops;
 };
 
@@ -218,13 +215,12 @@ struct lkm_table {
 		sysentp				\
 	};
 
-#define	MOD_VFS(name,vfsslot,flags,vfsopsp)	\
+#define	MOD_VFS(name,vfsslot,vfsopsp)		\
 	static struct lkm_vfs _module = {	\
 		LM_VFS,				\
 		LKM_VERSION,			\
 		name,				\
 		vfsslot,			\
-		flags,				\
 		vfsopsp				\
 	};
 
