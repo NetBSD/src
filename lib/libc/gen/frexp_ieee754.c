@@ -1,4 +1,4 @@
-/*	$NetBSD: frexp_ieee754.c,v 1.1 2003/05/12 15:15:15 kleink Exp $	&/
+/*	$NetBSD: frexp_ieee754.c,v 1.2 2003/05/12 20:10:22 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "@(#)frexp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: frexp_ieee754.c,v 1.1 2003/05/12 15:15:15 kleink Exp $");
+__RCSID("$NetBSD: frexp_ieee754.c,v 1.2 2003/05/12 20:10:22 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
