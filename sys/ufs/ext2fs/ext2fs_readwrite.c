@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.14 2000/11/27 08:39:53 chs Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.15 2000/12/01 07:02:40 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -314,9 +314,8 @@ ext2fs_write(v)
 			flags |= B_CLRBUF;
 		else
 			flags &= ~B_CLRBUF;
-		error = VOP_BALLOC(vp, lblktosize(fs, lbn),
-				   blkoffset + xfersize, ap->a_cred, flags,
-				   &bp);
+		error = ext2fs_balloc(ip,
+		    lbn, blkoffset + xfersize, ap->a_cred, &bp, flags);
 		if (error)
 			break;
 		if (ip->i_e2fs_size < uio->uio_offset + xfersize) {
