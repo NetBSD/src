@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.10 1998/10/19 03:09:33 matt Exp $	*/
+/*	$NetBSD: md.c,v 1.11 1998/10/23 00:51:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -174,11 +174,18 @@ int		first;
 	if (first) {
 		sp->mask = 0x0101;		/* NOP NOP */
 		sp->insn[0] = 0x01;		/* nop */
-		sp->insn[1] = 0x17;		/* jsb */
+		sp->insn[1] = 0x17;		/* jmp */
 	} else {
+#ifdef RTLD
+		sp->mask = *(u_int16_t *) addr;
+		sp->insn[0] = 0x01;		/* nop */
+		sp->insn[1] = 0x17;		/* jmp */
+		fudge += 2;			/* skip entry mask */
+#else
 		sp->mask = 0x0000;
 		sp->insn[0] = 0xfa;		/* callg */
 		sp->insn[1] = 0x6c;		/* (ap) */
+#endif
 	}
 	sp->insn[2] = 0xef;			/* L^(pc) */
 	sp->insn[3] = (fudge >>  0) & 0xff;
