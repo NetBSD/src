@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus_bus.c,v 1.1 1999/06/04 13:29:13 mrg Exp $	*/
+/*	$NetBSD: ebus_bus.c,v 1.2 1999/06/07 05:28:03 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -394,10 +394,7 @@ ebus_intr_establish(t, level, flags, handler, arg)
 	ih->ih_number = ino;
 	ih->ih_pil = ino_to_ipl_table[ino];
 	DPRINTF(EDB_INTR, ("; installing handler %p with ino %u pil %u\n", handler, (u_int)ino, (u_int)ih->ih_pil));
-	if ((flags & BUS_INTR_ESTABLISH_FASTTRAP) != 0)
-		intr_fasttrap(ih->ih_pil, (void (*)__P((void)))handler);
-	else
-		intr_establish(ih->ih_pil, ih);
+	intr_establish(ih->ih_pil, ih);
 	return (ih);
 #else
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.14 1999/05/30 07:36:28 mrg Exp $ */
+/*	$NetBSD: intr.c,v 1.15 1999/06/07 05:28:04 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -281,51 +281,3 @@ intr_establish(level, ih)
 	splx(s);
 }
 
-/*
- * Like intr_establish, but wires a fast trap vector.  Only one such fast
- * trap is legal for any interrupt, and it must be a hardware interrupt.
- */
-void
-intr_fasttrap(level, vec)
-	int level;
-	void (*vec) __P((void));
-{
-	register struct trapvec *tv;
-	register u_long hi22, lo10;
-#ifdef DIAGNOSTIC
-	register int displ;	/* suspenders, belt, and buttons too */
-#endif
-	int s;
-
-	printf("trying to establish a level %d fast interrupt!", level);
-	panic("intr_fasttrap");
-
-	tv = &trapbase[T_L1INT - 1 + level];
-	hi22 = ((u_long)vec) >> 10;
-	lo10 = ((u_long)vec) & 0x3ff;
-	s = splhigh();
-	if ((fastvec & (1 << level)) != 0 || intrhand[level] != NULL)
-		panic("intr_fasttrap: already handling level %d interrupts",
-		    level);
-#ifdef DIAGNOSTIC
-	displ = &sparc_interrupt[0] - &tv->tv_instr[1];
-
-	/* has to be `mov level,%l3; ba _sparc_interrupt; rdpsr %l0' */
-	if (tv->tv_instr[0] != I_MOVi(I_L3, level) ||
-	    tv->tv_instr[1] != I_BA(0, displ) ||
-	    tv->tv_instr[2] != I_RDPSR(I_L0))
-		panic("intr_fasttrap(%d, %p)\n%x %x %x != %x %x %x",
-		    level, vec,
-		    tv->tv_instr[0], tv->tv_instr[1], tv->tv_instr[2],
-		    I_MOVi(I_L3, level), I_BA(0, displ), I_RDPSR(I_L0));
-#endif
-	/* kernel text is write protected -- let us in for a moment */
-	pmap_changeprot(pmap_kernel(), (vaddr_t)tv,
-	    VM_PROT_READ|VM_PROT_WRITE, 1);
-	tv->tv_instr[0] = I_SETHI(I_L3, hi22);	/* sethi %hi(vec),%l3 */
-	tv->tv_instr[1] = I_JMPLri(I_G0, I_L3, lo10);/* jmpl %l3+%lo(vec),%g0 */
-	tv->tv_instr[2] = I_RDPSR(I_L0);	/* mov %psr, %l0 */
-	pmap_changeprot(pmap_kernel(), (vaddr_t)tv, VM_PROT_READ, 1);
-	fastvec |= 1 << level;
-	splx(s);
-}

@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.7 1999/06/05 05:05:11 mrg Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.8 1999/06/07 05:28:03 eeh Exp $ */
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -157,7 +157,7 @@ bwtwomatch(parent, cf, aux)
 	/*
 	 * Make sure there's hardware there.
 	 */
-	if (probeget(ASI_PRIMARY, ra->ra_vaddr, 4) == -1)
+	if (probeget(ra->ra_vaddr, ASI_PRIMARY, 4) == -1)
 		return (0);
 
 #if defined(SUN4)

@@ -1,6 +1,6 @@
-/*	$NetBSD: pmap.c,v 1.37 1999/05/31 00:14:01 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.38 1999/06/07 05:28:04 eeh Exp $	*/
 /* #define NO_VCACHE */ /* Don't forget the locked TLB in dostart */
-#define HWREF
+#define HWREF 1
 /* #define BOOT_DEBUG */
 /* #define BOOT1_DEBUG */
 /*
@@ -166,7 +166,7 @@ typedef struct pv_entry {
 #define PV_MASK		(0x01fLL)
 #define PV_VAMASK	(~(NBPG-1))
 #define PV_MATCH(pv,va)	(!((((pv)->pv_va)^(va))&PV_VAMASK))
-#define PV_SETVA(pv,va) ((pv)->pv_va = ((va)&PV_VAMASK)|(((pv)->pv_va)&PV_MASK))
+#define PV_SETVA(pv,va) ((pv)->pv_va = (((va)&PV_VAMASK)|(((pv)->pv_va)&PV_MASK)))
 
 pv_entry_t	pv_table;	/* array of entries, one per page */
 extern void	pmap_remove_pv __P((struct pmap *pm, vaddr_t va, paddr_t pa));
@@ -1621,25 +1621,26 @@ pmap_enter(pm, va, pa, prot, wired, access_type)
 			    va, (int)(pa>>32), (int)pa, (int)va_to_seg(va), (int)va_to_pte(va));
 #endif
 	/*
+	 * If a mapping at this address already exists, remove it.
+	 */
+	if ((tte.data.data = pseg_get(pm, va))<0) {
+		pmap_remove(pm, va, va+NBPG-1);
+	}		
+	/*
 	 * Construct the TTE.
 	 */
 	if (IS_VM_PHYSADDR(pa)) {
 		pv = pa_to_pvh(pa);
 		aliased = (pv->pv_va&(PV_ALIAS|PV_NVC));
-		if ((tte.data.data = pseg_get(pm, va))<0 &&
-		    ((tte.data.data^pa)&TLB_PA_MASK)) {
-			vaddr_t entry;
-			
-			/* different mapping for this page exists -- remove it. */
-			entry = (tte.data.data&TLB_PA_MASK);
-			pmap_remove_pv(pm, va, entry);
-		}		
-#ifndef HWREF
-		/* If we don't have the traphandler do it set the ref/mod bits now */
-		pv->pv_va |= PV_REF;
-		if (VM_PROT_WRITE & prot)
-			pv->pv_va |= PV_MOD;
+#ifdef DIAGNOSTIC
+		if (access_type & ~prot)
+			panic("pmap_enter: access_type exceeds prot");
 #endif
+		/* If we don't have the traphandler do it set the ref/mod bits now */
+		if (access_type & VM_PROT_ALL)
+			pv->pv_va |= PV_REF;
+		if (access_type & VM_PROT_WRITE)
+			pv->pv_va |= PV_MOD;
 #ifdef DEBUG
 		enter_stats.managed ++;
 #endif
@@ -1657,18 +1658,10 @@ pmap_enter(pm, va, pa, prot, wired, access_type)
 	enter_stats.ci ++;
 #endif
 	tte.tag.tag = TSB_TAG(0,pm->pm_ctx,va);
-#ifndef HWREF
 	tte.data.data = TSB_DATA(0, size, pa, pm == pmap_kernel(),
-				 (VM_PROT_WRITE & prot),
+				 (access_type & VM_PROT_WRITE),
 				 (!(pa & PMAP_NC)),aliased,1,(pa & PMAP_LITTLE));
-	if (VM_PROT_WRITE & prot) tte.data.data |= TLB_REAL_W; /* HWREF -- XXXX */
-#else
-	/* Force dmmu_write_fault to be executed */
-	tte.data.data = TSB_DATA(0, size, pa, pm == pmap_kernel(),
-				 0/*(VM_PROT_WRITE & prot)*/,
-				 (!(pa & PMAP_NC)),aliased,1,(pa & PMAP_LITTLE));
-	if (VM_PROT_WRITE & prot) tte.data.data |= TLB_REAL_W; /* HWREF -- XXXX */
-#endif
+	if (prot & VM_PROT_WRITE) tte.data.data |= TLB_REAL_W;
 	if (wired) tte.data.data |= TLB_TSB_LOCK;
 	ASSERT((tte.data.data & TLB_NFO) == 0);
 	pg = NULL;
@@ -2146,6 +2139,7 @@ pmap_map(va, pa, endpa, prot)
 }
 #endif
 
+#if 0
 /*
  * Really change page protections -- used by device drivers
  */
@@ -2215,6 +2209,7 @@ int size;
 	}
 	pv_check();
 }
+#endif
 
 /*
  * Return the number bytes that pmap_dumpmmu() will dump.
@@ -2446,6 +2441,8 @@ pmap_clear_modify(pa)
 		pv_check();
 #if defined(PMAP_NEW)
 		/* We always return 1 for I/O mappings */
+		printf("pmap_clear_modify(%p): page unmanaged\n", pa);
+		Debugger();
 		return (1);
 #else
 		return;
@@ -2551,6 +2548,8 @@ pmap_clear_reference(pa)
 	if (!IS_VM_PHYSADDR(pa)) {
 		pv_check();
 #if defined(PMAP_NEW)
+		printf("pmap_clear_reference(%p): page unmanaged\n", pa);
+		Debugger();
 		return (1);
 #else
 		return;
@@ -2655,7 +2654,7 @@ pmap_is_modified(pa)
 #if defined(PMAP_NEW)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 #endif
-	int i, s;
+	int i=0, s;
 	register pv_entry_t pv, npv;
 
 	if (!IS_VM_PHYSADDR(pa)) {
@@ -2666,7 +2665,7 @@ pmap_is_modified(pa)
 	s = splimp();
 	pv = pa_to_pvh(pa);
 #ifdef HWREF
-	i = (pv->pv_va&PV_MOD);
+	if (pv->pv_va&PV_MOD) i = 1;
 #ifdef DEBUG	
 	if (pv->pv_next && !pv->pv_pmap) {
 		printf("pmap_is_modified: npv but no pmap for pv %p\n", pv);
@@ -2678,7 +2677,10 @@ pmap_is_modified(pa)
 			int64_t data;
 			
 			data = pseg_get(npv->pv_pmap, npv->pv_va&PV_VAMASK);
-			i = i || (data & (TLB_MODIFY|TLB_W));
+			if (data & (TLB_MODIFY|TLB_W)) i = 1;
+			/* Migrate modify info to head pv */
+			if (npv->pv_va & PV_MOD) i = 1;
+			npv->pv_va &= ~PV_MOD;
 		}
 	/* Save modify info */
 	if (i) pv->pv_va |= PV_MOD;
@@ -2686,7 +2688,7 @@ pmap_is_modified(pa)
 	if (i) pv->pv_va |= PV_WE;
 #endif
 #else
-	i = (pv->pv_va&PV_MOD);
+	if (pv->pv_va&PV_MOD) i = 1;
 #endif
 	splx(s);
 
@@ -2713,7 +2715,7 @@ pmap_is_referenced(pa)
 #if defined(PMAP_NEW)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 #endif
-	int i, s;
+	int i=0, s;
 	register pv_entry_t pv, npv;
 
 	if (!IS_VM_PHYSADDR(pa))
@@ -2723,7 +2725,7 @@ pmap_is_referenced(pa)
 	s = splimp();
 	pv = pa_to_pvh(pa);
 #ifdef HWREF 
-	i = (pv->pv_va&PV_REF);
+	if (pv->pv_va&PV_REF) i = 1;
 #ifdef DEBUG	
 	if (pv->pv_next && !pv->pv_pmap) {
 		printf("pmap_is_referenced: npv but no pmap for pv %p\n", pv);
@@ -2735,11 +2737,15 @@ pmap_is_referenced(pa)
 			int64_t data;
 			
 			data = pseg_get(npv->pv_pmap, npv->pv_va&PV_VAMASK);
-			i = i || (data & TLB_ACCESS);
+			if (data & TLB_ACCESS) i = 1;
+			/* Migrate modify info to head pv */
+			if (npv->pv_va & PV_REF) i = 1;
+			npv->pv_va &= ~PV_REF;
 		}
+	/* Save ref info */
 	if (i) pv->pv_va |= PV_REF;
 #else
-	i = (pv->pv_va&PV_REF);
+	if (pv->pv_va&PV_REF) i = 1;
 #endif
 	splx(s);
 
@@ -2784,7 +2790,7 @@ pmap_change_wiring(pmap, va, wired)
 	 * Is this part of the permanent 4MB mapping?
 	 */
 	if( pmap == pmap_kernel() && va >= ksegv && va < ksegv+4*MEG ) {
-		prom_printf("pmap_changeprot: va=%08x in locked TLB\r\n", va);
+		prom_printf("pmap_change_wiring: va=%08x in locked TLB\r\n", va);
 		OF_enter();
 		return;
 	}
@@ -2850,11 +2856,11 @@ pmap_page_protect(pa, prot)
 
 		set = TLB_V;
 		clear = TLB_REAL_W|TLB_W;
-		if(VM_PROT_EXECUTE & prot)
+		if (VM_PROT_EXECUTE & prot)
 			set |= TLB_EXEC;
 		else
 			clear |= TLB_EXEC;
-		if(VM_PROT_EXECUTE == prot)
+		if (VM_PROT_EXECUTE == prot)
 			set |= TLB_EXEC_ONLY;
 
 		pv = pa_to_pvh(pa);
@@ -3184,7 +3190,7 @@ pmap_remove_pv(pmap, va, pa)
 		} else {
 			pv->pv_pmap = NULL;
 			pv->pv_next = NULL;
-			pv->pv_va &= PV_MASK; /* Only save ref/mod bits */
+			pv->pv_va &= (PV_REF|PV_MOD); /* Only save ref/mod bits */
 		}
 #ifdef DEBUG
 		remove_stats.pvfirst++;

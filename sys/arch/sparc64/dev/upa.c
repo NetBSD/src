@@ -1,4 +1,4 @@
-/*	$NetBSD: upa.c,v 1.4 1998/09/05 23:57:25 eeh Exp $ */
+/*	$NetBSD: upa.c,v 1.5 1999/06/07 05:28:04 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -810,10 +810,7 @@ upa_intr_establish(t, level, flags, handler, arg)
 
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
-	if ((flags & BUS_INTR_ESTABLISH_FASTTRAP) != 0)
-		intr_fasttrap(ipl, (void (*)__P((void)))handler);
-	else
-		intr_establish(ipl, ih);
+	intr_establish(ipl, ih);
 	return (ih);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.9 1999/06/05 21:58:18 eeh Exp $ */
+/*	$NetBSD: cpu.h,v 1.10 1999/06/07 05:28:04 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -154,15 +154,6 @@ extern struct intrhand *intrhand[15];
 extern struct intrhand *intrlev[MAXINTNUM];
 
 void	intr_establish __P((int level, struct intrhand *));
-
-/*
- * intr_fasttrap() is a lot like intr_establish, but is used for ``fast''
- * interrupt vectors (vectors that are not shared and are handled in the
- * trap window).  Such functions must be written in assembly.
- *
- * This should be removed for sun4u.
- */
-void	intr_fasttrap __P((int level, void (*vec)(void)));
 
 /* disksubr.c */
 struct dkbad;
