@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.9 2000/06/08 22:10:46 tsubai Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.9.2.1 2001/04/01 16:59:18 he Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -979,7 +979,7 @@ pm_adb_op(buffer, compRout, data, command)
 	int i;
 	int s;
 	int rval;
-	int delay;
+	int timo;
 	PMData pmdata;
 	struct adbCommand packet;
 
@@ -1040,13 +1040,15 @@ pm_adb_op(buffer, compRout, data, command)
 		return 1;
 	}
 
+	delay(10000);
+
 	adbWaiting = 1;
 	adbWaitingCmd = command;
 
 	PM_VIA_INTR_ENABLE();
 
 	/* wait until the PM interrupt is occured */
-	delay = 0x80000;
+	timo = 0x80000;
 	while (adbWaiting == 1) {
 		if (read_via_reg(VIA1, vIFR) & 0x14)
 			pm_intr();
@@ -1057,7 +1059,7 @@ pm_adb_op(buffer, compRout, data, command)
 			(void)intr_dispatch(0x70);
 #endif
 #endif
-		if ((--delay) < 0) {
+		if ((--timo) < 0) {
 			splx(s);
 			return 1;
 		}
