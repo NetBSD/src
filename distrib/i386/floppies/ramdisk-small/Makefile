@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.18 2002/10/06 17:01:27 thorpej Exp $
+#	$NetBSD: Makefile,v 1.19 2002/10/16 04:00:54 lukem Exp $
 
 BOOTMODEL=	small
 IMAGE=		ramdisk-${BOOTMODEL}.fs
-IMAGESIZE=	1440k
+IMAGESIZE=	1600k
 USE_SYSINST=	yes
 
 .include "${.CURDIR}/../common/Makefile.ramdisk"

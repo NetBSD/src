@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/10/14 16:20:41 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2002/10/16 04:00:53 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -8,7 +8,6 @@
 RAMDISKS=	RAMDISK_B	ramdisk-big		\
 		RAMDISK_S	ramdisk-small		\
 		RAMDISK_T	ramdisk-tiny		\
-		RESCUE_S	ramdisk-rescuesmall	\
 		RESCUE_T	ramdisk-rescuetiny
 
 .for V F in ${RAMDISKS}
@@ -21,7 +20,6 @@ MDSETTARGETS=		INSTALL		${RAMDISK_B}	-	\
 			INSTALL_SMALL	${RAMDISK_S}	-	\
 			INSTALL_TINY	${RAMDISK_T}	-	\
 			INSTALL_PS2	${RAMDISK_S}	-	\
-			INSTALL_SMALL	${RESCUE_S}	netbsd.RESCUE_SMALL \
 			INSTALL_TINY	${RESCUE_T}	netbsd.RESCUE_TINY
 
 MDSET_RELEASEDIR=	binary/kernel
