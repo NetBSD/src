@@ -1,4 +1,6 @@
-#	Id: OpenBSD,v 8.7 1999/05/06 19:45:41 gshapiro Exp
+#	Id: OpenBSD,v 8.7.18.1 2001/01/09 17:24:55 ca Exp
 define(`confMAPDEF', `-DNEWDB -DNIS -DMAP_REGEX')
 define(`confENVDEF', ` -DNETISO')
 define(`confSTDIO_TYPE', `torek')
+define(`confMTLDOPTS', `-pthread')
+define(`confMTCCOPTS', `-pthread')

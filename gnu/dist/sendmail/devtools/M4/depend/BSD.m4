@@ -5,4 +5,4 @@ depend: ${BEFORE} ${LINKS}
 	@echo "# Do not edit or remove this line or anything below it." >> Makefile
 	mkdep -a -f Makefile ${COPTS} ${SRCS}
 
-#	End of $RCSfile: BSD.m4,v $
+#	End of RCSfile: BSD.m4,v
