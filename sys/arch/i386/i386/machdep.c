@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.188 1996/02/10 00:51:52 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.189 1996/02/12 21:11:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -1349,7 +1349,7 @@ pmap_next_page(addrp)
 	return TRUE;
 }
 
-u_int
+int
 pmap_page_index(pa)
 	vm_offset_t pa;
 {
