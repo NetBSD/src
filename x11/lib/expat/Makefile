@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:08 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/12 18:24:20 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -12,19 +12,15 @@ SRCS=	xmlparse.c xmlrole.c xmltok.c
 INCS=	expat.h
 INCSDIR=${X11INCDIR}
 
-MAJOR_VERSION=	1
-MINOR_VERSION=	95
-MICRO_VERSION=	2
+.include "Makefile.expatdefs"
 
-CPPFLAGS+=	-DVERSION=\"${MAJOR_VERSION}.${MINOR_VERSION}.${MICRO_VERSION}\"
-CPPFLAGS+=	-DXML_BYTE_ORDER=0
-CPPFLAGS+=	-I${DIST}
+CPPFLAGS+=	${EXPAT_FLAGS} -I${DIST}
 
 expat.h: expat.h.in
 	rm -f ${.TARGET}
-	sed -e 's/@EXPAT_MAJOR_VERSION@/${MAJOR_VERSION}/' \
-	    -e 's/@EXPAT_MINOR_VERSION@/${MINOR_VERSION}/' \
-	    -e 's/@EXPAT_EDIT@/${MICRO_VERSION}/' ${.ALLSRC} > ${.TARGET}
+	sed -e 's/@EXPAT_MAJOR_VERSION@/${EXPAT_MAJOR_VERSION}/' \
+	    -e 's/@EXPAT_MINOR_VERSION@/${EXPAT_MINOR_VERSION}/' \
+	    -e 's/@EXPAT_EDIT@/${EXPAT_MICRO_VERSION}/' ${.ALLSRC} > ${.TARGET}
 CLEANFILES+=	expat.h
 
 .include <bsd.lib.mk>
