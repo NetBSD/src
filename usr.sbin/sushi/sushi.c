@@ -1,4 +1,4 @@
-/*      $NetBSD: sushi.c,v 1.4 2001/01/09 09:41:41 garbled Exp $       */
+/*      $NetBSD: sushi.c,v 1.5 2001/01/10 03:05:48 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -126,7 +126,7 @@ main(int argc, char **argv)
 #endif
 
 	catclose(catalog);
-	exit(EXIT_SUCCESS);
+	return(EXIT_SUCCESS);
 }
 
 void
@@ -152,7 +152,6 @@ prepare_searchpath(void)
 		searchpaths[1] = "/usr/pkg/share/sushi";
 		searchpaths[2] = "/usr/X11R6/share/sushi";
 		searchpaths[3] = "/etc/sushi";
-		i++;
 	} else {
 		searchpaths = (char **)malloc(sizeof(char *));
 		if (searchpaths == NULL)
@@ -246,7 +245,7 @@ display_menu(cqm, title, basedir)
 	char *title;
 	char *basedir;
 {
-	CDKSCROLL *scroll;
+	CDKSCROLL *scrollp;
 	MTREE_ENTRY *mte;
 	char **menu;
 	int i, items, selection;
@@ -280,19 +279,19 @@ display_menu(cqm, title, basedir)
 
 	bottom_help(1);
 
-	scroll = newCDKScroll(cdkscreen, CENTER, TOP, RIGHT,
+	scrollp = newCDKScroll(cdkscreen, CENTER, TOP, RIGHT,
 		ws.ws_row-3, ws.ws_col, title, menu, items, FALSE, A_REVERSE,
 		TRUE, FALSE);
 
-	if (scroll == NULL)
+	if (scrollp == NULL)
 		bailout(catgets(catalog, 1, 16,
 		    "Cannot allocate scroll widget"));
 
-	bind_menu(scroll, basedir);
+	bind_menu(scrollp, basedir);
 
-	selection = activateCDKScroll(scroll, NULL);
+	selection = activateCDKScroll(scrollp, NULL);
 
-	destroyCDKScroll(scroll);
+	destroyCDKScroll(scrollp);
 
 	for(i=0; i<items; i++)
 		free(menu[i]);

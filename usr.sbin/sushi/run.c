@@ -1,4 +1,4 @@
-/*      $NetBSD: run.c,v 1.1 2001/01/05 01:28:37 garbled Exp $       */
+/*      $NetBSD: run.c,v 1.2 2001/01/10 03:05:48 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -86,12 +86,13 @@ launch_subwin(actionwin, args, win, display)
 	int display;
 {
 	int xcor,ycor;
-	int n, i, j, x, y;
+	int i, j, x, y;
 	int selectfailed, multiloop, cols;
 	int status, master, slave;
 	fd_set active_fd_set, read_fd_set;
 	int dataflow[2];
 	pid_t child, subchild, pid;
+	ssize_t n;
 	char ibuf[MAXBUF], obuf[MAXBUF];
 	char *command, *p, *argzero, **origargs;
 	struct termios rtt;
@@ -133,6 +134,8 @@ launch_subwin(actionwin, args, win, display)
 #endif
 		refresh();
 		bailout("fork: %s", strerror(errno));
+		/* NOTREACHED */
+		break;
 	case 0:
 		(void)close(STDIN_FILENO);
 		subchild = fork();
@@ -142,7 +145,7 @@ launch_subwin(actionwin, args, win, display)
 				n = read(master, obuf, sizeof(obuf));
 				if (n <= 0)
 					break;
-				write(dataflow[1], obuf, n);
+				write(dataflow[1], obuf, (size_t)n);
 			} /* while spinning */
 			_exit(EXIT_SUCCESS);
 		} /* subchild, child forks */
@@ -214,7 +217,7 @@ again:
 				if (n)
 					multiloop=0;
 				if (i == STDIN_FILENO)
-					(void)write(master, ibuf, n);
+					(void)write(master, ibuf, (size_t)n);
 				for (j=0; j < n; j++) {
 					if (display) {
 						cols++;
@@ -361,13 +364,13 @@ run_prog(int display, char **args)
 
 	win.ws_row -= 5;
 
-	wmove(statuswin, 0, 11 - strlen(catgets(catalog, 3, 2, "Status")));
+	wmove(statuswin, 0, 11 - (int)strlen(catgets(catalog, 3, 2, "Status")));
 	waddstr(statuswin, catgets(catalog, 3, 2, "Status"));
 	waddstr(statuswin, ": ");
 	wstandout(statuswin);
 	waddstr(statuswin, catgets(catalog, 3, 3, "Running"));
 	wstandend(statuswin);
-	wmove(statuswin, 1, 11 - strlen(catgets(catalog, 3, 4, "Command")));
+	wmove(statuswin, 1, 11 - (int)strlen(catgets(catalog, 3, 4, "Command")));
 	waddstr(statuswin, catgets(catalog, 3, 4, "Command"));
 	waddstr(statuswin, ": ");
 	wstandout(statuswin);
@@ -380,7 +383,7 @@ run_prog(int display, char **args)
 	waddstr(statuswin, command);
 	wstandend(statuswin);
 	mvwaddstr(statuswin, 0,
-	    win.ws_col-12-strlen(catgets(catalog, 3, 5, "Lines")),
+	    win.ws_col - 12 - (int)strlen(catgets(catalog, 3, 5, "Lines")),
 	    catgets(catalog, 3, 5, "Lines"));
 	waddstr(statuswin, " (   0/   0)");
 	wstandout(statuswin);
