@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.185 1999/12/31 00:12:41 hubertf Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.186 2000/01/05 11:32:44 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.180 1999/12/30 23:53:42 hubertf Exp 
+ *	NetBSD: pcidevs,v 1.181 2000/01/05 11:32:06 drochner Exp 
  */
 
 /*
@@ -146,6 +146,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3Com",
 	    "3c980 Server Adapter 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990TX97,
+	    0,
+	    "3Com",
+	    "3CR990-TX-97 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO,
@@ -1082,6 +1088,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "CMD Technology",
 	    "USB0673",
+	},
+	{
+	    PCI_VENDOR_CMEDIA, PCI_PRODUCT_CMEDIA_CMI8738,
+	    0,
+	    "C-Media Electronics Inc",
+	    "CMI8738/C3DX PCI Audio Device",
+	},
+	{
+	    PCI_VENDOR_CMEDIA, PCI_PRODUCT_CMEDIA_HSP56,
+	    0,
+	    "C-Media Electronics Inc",
+	    "HSP56 Audiomodem Riser",
 	},
 	{
 	    PCI_VENDOR_COGENT, PCI_PRODUCT_COGENT_EM110TX,
@@ -2812,6 +2830,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "85C503 or 5597/5598 ISA bridge",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_600PMC,
+	    0,
+	    "Silicon Integrated System",
+	    "600 Power Mngmt Controller",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_VGA,
 	    0,
 	    "Silicon Integrated System",
@@ -2828,6 +2852,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Silicon Integrated System",
 	    "85C496",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_530HB,
+	    0,
+	    "Silicon Integrated System",
+	    "530 Host to PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C601,
@@ -2852,6 +2882,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Silicon Integrated System",
 	    "5597/5598 host bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_530VGA,
+	    0,
+	    "Silicon Integrated System",
+	    "530 GUI Accelerator+3D",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_6326,
@@ -6487,6 +6523,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_SUNDANCETI, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Sundance Technology",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_CMEDIA, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "C-Media Electronics Inc",
 	    NULL,
 	},
 	{
