@@ -73,7 +73,8 @@ hcx9-distribution:
 distrib-dirs:
 	-mkdir ${DESTDIR}/dev ${DESTDIR}/etc ${DESTDIR}/kern ${DESTDIR}/root \
 	       ${DESTDIR}/tmp ${DESTDIR}/var
-	chmod 755 ${DESTDIR}/dev ${DESTDIR}/etc ${DESTDIR}/root ${DESTDIR}/var
+	chmod 755 ${DESTDIR}/dev ${DESTDIR}/etc ${DESTDIR}/kern \
+		  ${DESTDIR}/root ${DESTDIR}/var
 	chmod 1777 ${DESTDIR}/tmp
 	-mkdir ${DESTDIR}/etc/mtree ${DESTDIR}/etc/namedb
 	chmod 755 ${DESTDIR}/etc/mtree ${DESTDIR}/etc/namedb
@@ -87,8 +88,9 @@ distrib-dirs:
 	chmod 1777 ${DESTDIR}/var/tmp
 	-mkdir ${DESTDIR}/var/cron/tabs
 	chmod 700 ${DESTDIR}/var/cron/tabs
-	-mkdir ${DESTDIR}/var/spool/lock ${DESTDIR}/var/spool/mqueue \
-	       ${DESTDIR}/var/spool/uucp ${DESTDIR}/var/spool/uucppublic
+	-mkdir ${DESTDIR}/var/spool/lock ${DESTDIR}/var/spool/mqueue 
+	       ${DESTDIR}/var/spool/output ${DESTDIR}/var/spool/uucp \
+	       ${DESTDIR}/var/spool/uucppublic
 	chown uucp.dialer ${DESTDIR}/var/spool/lock
 	chmod 755 ${DESTDIR}/var/spool/lock ${DESTDIR}/var/spool/mqueue \
 		  ${DESTDIR}/var/spool/output ${DESTDIR}/var/spool/uucp \
