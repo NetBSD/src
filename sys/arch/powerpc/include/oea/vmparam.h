@@ -45,6 +45,14 @@
  * get the right thing to happen.
  */
 
+/*
+ * OEA processors have 4K pages.  Override the PAGE_* definitions
+ * to be compile-time constants.
+ */
+#define	PAGE_SHIFT	12
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SIZE - 1)
+
 #ifndef	USRSTACK
 #define	USRSTACK		VM_MAXUSER_ADDRESS
 #endif
