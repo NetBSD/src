@@ -1,4 +1,4 @@
-/*	$NetBSD: rc7500_machdep.c,v 1.29 2001/02/21 00:55:34 reinoud Exp $	*/
+/*	$NetBSD: rc7500_machdep.c,v 1.30 2001/02/25 17:17:55 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -469,6 +469,7 @@ initarm(prom_id)
 	videomemory.vidm_pbase = vdrambase;
 	videomemory.vidm_type = VIDEOMEM_TYPE_DRAM;
 	videomemory.vidm_size = videodram_size;
+	vidc_base             = (int *) VIDC_BASE;
 
 	kerneldatasize = bootconfig.kernsize + bootconfig.argsize;
 
