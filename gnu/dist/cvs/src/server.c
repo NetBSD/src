@@ -6151,7 +6151,7 @@ krb_encrypt_input (fnclosure, input, output, size)
     struct krb_encrypt_data *kd = (struct krb_encrypt_data *) fnclosure;
     int tcount;
 
-    des_cbc_encrypt ((C_Block *) input, (C_Block *) output,
+    des_cbc_encrypt ((char *) input, (char *) output,
 		     size, kd->sched, &kd->block, 0);
 
     /* SIZE is the size of the buffer, which is set by the encryption
@@ -6198,7 +6198,7 @@ krb_encrypt_output (fnclosure, input, output, size, translated)
        fail over a long network connection.  We trust krb_recvauth to
        guard against a replay attack.  */
 
-    des_cbc_encrypt ((C_Block *) input, (C_Block *) output, aligned,
+    des_cbc_encrypt ((char *) input, (char *) output, aligned,
 		     kd->sched, &kd->block, 1);
 
     *translated = aligned;
