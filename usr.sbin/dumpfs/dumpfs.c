@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.17 1998/07/27 00:52:01 mycroft Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.18 1998/08/27 20:31:00 ross Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.17 1998/07/27 00:52:01 mycroft Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.18 1998/08/27 20:31:00 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,7 @@ dumpfs(name)
 	if (read(fd, &afs, SBSIZE) != SBSIZE)
 		goto err;
 
- 	if (afs.fs_magic != FS_MAGIC)
+ 	if (afs.fs_magic != FS_MAGIC) {
 		if (afs.fs_magic == bswap32(FS_MAGIC)) {
 			ffs_sb_swap(&afs, &afs, 0);
 			needswap = 1;
@@ -136,6 +136,7 @@ dumpfs(name)
 			(void)close(fd);
  			return (1);
  		}
+ 	}
 #if BYTE_ORDER == LITTLE_ENDIAN
 	if (needswap)
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_sym.c,v 1.4 1998/08/27 18:03:43 ross Exp $	*/
+/*	$NetBSD: gsp_sym.c,v 1.5 1998/08/27 20:31:01 ross Exp $	*/
 /*
  * GSP assembler - symbol table
  *
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gsp_sym.c,v 1.4 1998/08/27 18:03:43 ross Exp $");
+__RCSID("$NetBSD: gsp_sym.c,v 1.5 1998/08/27 20:31:01 ross Exp $");
 #endif
 
 #include <stdio.h>
@@ -187,8 +187,8 @@ reset_numeric_labels()
 	struct numlab *nl;
 	int h;
 
-	for( h = 0; h < NHASH; ++h )
-		for( p = symbol_hash[h]; p != NULL; p = p->next )
+	for( h = 0; h < NHASH; ++h ) {
+		for( p = symbol_hash[h]; p != NULL; p = p->next ) {
 			if( (p->flags & NUMERIC_LABEL) != 0 ) {
 				if( (p->flags & DEFINED) != 0 ) {
 					/* a backward reference */
@@ -201,4 +201,6 @@ reset_numeric_labels()
 					p->lineno = nl->lineno;
 				}
 			}
+		}
+	}
 }

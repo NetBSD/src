@@ -1,4 +1,4 @@
-/*	$NetBSD: ypxfr.c,v 1.6 1997/10/13 03:15:30 lukem Exp $	*/
+/*	$NetBSD: ypxfr.c,v 1.7 1998/08/27 20:31:03 ross Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypxfr.c,v 1.6 1997/10/13 03:15:30 lukem Exp $");
+__RCSID("$NetBSD: ypxfr.c,v 1.7 1998/08/27 20:31:03 ross Exp $");
 #endif
 
 #include <sys/types.h>
@@ -375,11 +375,12 @@ get_remote_ordernum(client, domain, map, lordernum, rordernum)
 
 	status = yp_order_host(client, domain, map, (int *)rordernum);
 
-	if (status == 0)
+	if (status == 0) {
 		if (*rordernum <= lordernum)
 			status = YPPUSH_AGE;
 		else
 			status = YPPUSH_SUCC;
+	}
 
 	return status;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_true.c,v 1.4 1998/08/12 14:11:56 christos Exp $	*/
+/*	$NetBSD: refclock_true.c,v 1.5 1998/08/27 20:31:03 ross Exp $	*/
 
 /*
  * refclock_true - clock driver for the Kinemetrics Truetime receivers
@@ -226,7 +226,7 @@ true_debug(struct peer *peer, char *fmt, ...) {
 
 	want_debugging = (pp->sloppyclockflag & CLK_FLAG2) != 0;
 	now_debugging = (up->debug != NULL);
-	if (want_debugging != now_debugging)
+	if (want_debugging != now_debugging) {
 		if (want_debugging) {
 			char filename[20];
 
@@ -244,6 +244,7 @@ true_debug(struct peer *peer, char *fmt, ...) {
 			fclose(up->debug);
 			up->debug = NULL;
 		}
+	}
 
 	if (up->debug) {
 		fprintf(up->debug, "true%d: ", up->unit);
