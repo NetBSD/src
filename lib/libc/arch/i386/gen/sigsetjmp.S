@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.11 1998/07/01 01:28:48 thorpej Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.12 1999/02/08 18:56:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: sigsetjmp.S,v 1.11 1998/07/01 01:28:48 thorpej Exp $")
+	RCSID("$NetBSD: sigsetjmp.S,v 1.12 1999/02/08 18:56:48 christos Exp $")
 #endif
 
 ENTRY(sigsetjmp)
@@ -51,7 +51,9 @@ ENTRY(sigsetjmp)
 	jz	1f
 	pushl	$0
 #ifdef PIC
+	PIC_PROLOGUE
 	call	PIC_PLT(_C_LABEL(sigblock))
+	PIC_EPILOGUE
 #else
 	call	_C_LABEL(sigblock)
 #endif
@@ -74,7 +76,9 @@ ENTRY(siglongjmp)
 	jz	1f
 	pushl	24(%edx)
 #ifdef PIC
+	PIC_PROLOGUE
 	call	PIC_PLT(_C_LABEL(sigsetmask))
+	PIC_EPILOGUE
 #else
 	call	_C_LABEL(sigsetmask)
 #endif
