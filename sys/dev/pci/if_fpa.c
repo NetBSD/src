@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.40 2002/09/30 20:37:31 thorpej Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.41 2002/10/02 02:16:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.40 2002/09/30 20:37:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.41 2002/10/02 02:16:36 thorpej Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -128,7 +128,6 @@ extern struct cfdriver fpacd;
 #define	PDQ_PCI_UNIT_TO_SOFTC(unit)	((pdq_softc_t *)fpacd.cd_devs[unit])
 
 #elif defined(__NetBSD__)
-extern const struct cfattach fpa_ca;
 extern struct cfdriver fpa_cd;
 #define	PDQ_PCI_UNIT_TO_SOFTC(unit)	((pdq_softc_t *)fpa_cd.cd_devs[unit])
 #define	pdq_pci_ifwatchdog		NULL
