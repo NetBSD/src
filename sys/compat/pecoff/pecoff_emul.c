@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_emul.c,v 1.9 2003/12/20 18:22:19 manu Exp $	*/
+/*	$NetBSD: pecoff_emul.c,v 1.10 2003/12/20 19:01:30 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_emul.c,v 1.9 2003/12/20 18:22:19 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_emul.c,v 1.10 2003/12/20 19:01:30 fvdl Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -94,6 +94,7 @@ const struct emul emul_pecoff = {
 #endif
 	sendsig,
 	trapsignal,
+	NULL,
 	sigcode,
 	esigcode,
 	&emul_pecoff_object,
