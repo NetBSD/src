@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.1 2000/01/28 19:32:47 itojun Exp $	*/
+/*	$NetBSD: debug.c,v 1.2 2000/02/02 01:08:26 thorpej Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -311,72 +311,93 @@ dump_stat()
 			continue;
 #endif
 		fprintf(fp, " Mif=%d, PhyIF=%s\n", vifi, v->uv_name);
-		fprintf(fp, "\t%qu pim6 hello received\n", v->uv_in_pim6_hello);
+		fprintf(fp, "\t%qu pim6 hello received\n",
+			(unsigned long long)v->uv_in_pim6_hello);
 		fprintf(fp, "\t%qu pim6 join-prune received\n",
-			v->uv_in_pim6_join_prune);
+			(unsigned long long)v->uv_in_pim6_join_prune);
 		fprintf(fp, "\t%qu pim6 bootstrap received\n",
-			v->uv_in_pim6_bootsrap);
-		fprintf(fp, "\t%qu pim6 assert received\n", v->uv_in_pim6_assert);
+			(unsigned long long)v->uv_in_pim6_bootsrap);
+		fprintf(fp, "\t%qu pim6 assert received\n",
+			(unsigned long long)v->uv_in_pim6_assert);
 
-		fprintf(fp, "\t%qu pim6 hello sent\n", v->uv_out_pim6_hello);
+		fprintf(fp, "\t%qu pim6 hello sent\n",
+			(unsigned long long)v->uv_out_pim6_hello);
 		fprintf(fp, "\t%qu pim6 join-prune sent\n",
-			v->uv_out_pim6_join_prune);
+			(unsigned long long)v->uv_out_pim6_join_prune);
 		fprintf(fp, "\t%qu pim6 bootstrap sent\n",
-			v->uv_out_pim6_bootsrap);
-		fprintf(fp, "\t%qu pim6 assert sent\n", v->uv_out_pim6_assert);
+			(unsigned long long)v->uv_out_pim6_bootsrap);
+		fprintf(fp, "\t%qu pim6 assert sent\n",
+			(unsigned long long)v->uv_out_pim6_assert);
 
-		fprintf(fp, "\t%qu MLD query received\n", v->uv_in_mld_query);
-		fprintf(fp, "\t%qu MLD report received\n", v->uv_in_mld_report);
-		fprintf(fp, "\t%qu MLD done received\n", v->uv_in_mld_done);
+		fprintf(fp, "\t%qu MLD query received\n",
+			(unsigned long long)v->uv_in_mld_query);
+		fprintf(fp, "\t%qu MLD report received\n",
+			(unsigned long long)v->uv_in_mld_report);
+		fprintf(fp, "\t%qu MLD done received\n",
+			(unsigned long long)v->uv_in_mld_done);
 
-		fprintf(fp, "\t%qu MLD query sent\n", v->uv_out_mld_query);
-		fprintf(fp, "\t%qu MLD report sent\n", v->uv_out_mld_report);
-		fprintf(fp, "\t%qu MLD done sent\n", v->uv_out_mld_done);
+		fprintf(fp, "\t%qu MLD query sent\n",
+			(unsigned long long)v->uv_out_mld_query);
+		fprintf(fp, "\t%qu MLD report sent\n",
+			(unsigned long long)v->uv_out_mld_report);
+		fprintf(fp, "\t%qu MLD done sent\n",
+			(unsigned long long)v->uv_out_mld_done);
 
-		fprintf(fp, "\t%qu forwarding cache miss\n", v->uv_cache_miss);
+		fprintf(fp, "\t%qu forwarding cache miss\n",
+			(unsigned long long)v->uv_cache_miss);
 		fprintf(fp, "\t%qu forwarding cache miss and not created\n",
-			v->uv_cache_notcreated);
+			(unsigned long long)v->uv_cache_notcreated);
 
-		fprintf(fp, "\t%qu PIM neighbor timeouts\n", v->uv_pim6_nbr_timo);
-		fprintf(fp, "\t%qu MLD listener timeouts\n", v->uv_listener_timo);
-		fprintf(fp, "\t%qu out-I/F timeouts\n", v->uv_outif_timo);
+		fprintf(fp, "\t%qu PIM neighbor timeouts\n",
+			(unsigned long long)v->uv_pim6_nbr_timo);
+		fprintf(fp, "\t%qu MLD listener timeouts\n",
+			(unsigned long long)v->uv_listener_timo);
+		fprintf(fp, "\t%qu out-I/F timeouts\n",
+			(unsigned long long)v->uv_outif_timo);
 	}
 
 	fprintf(fp, "\npim6sd interface independent statistics\n");
 
-	fprintf(fp, "\t%qu pim6 register received\n", pim6dstat.in_pim6_register);
+	fprintf(fp, "\t%qu pim6 register received\n",
+		(unsigned long long)pim6dstat.in_pim6_register);
 	fprintf(fp, "\t%qu pim6 register-stop received\n",
-		pim6dstat.in_pim6_register_stop);
-	fprintf(fp, "\t%qu pim6 cand-RP received\n", pim6dstat.in_pim6_cand_rp);
-	fprintf(fp, "\t%qu pim6 graft received\n", pim6dstat.in_pim6_graft);
+		(unsigned long long)pim6dstat.in_pim6_register_stop);
+	fprintf(fp, "\t%qu pim6 cand-RP received\n",
+		(unsigned long long)pim6dstat.in_pim6_cand_rp);
+	fprintf(fp, "\t%qu pim6 graft received\n",
+		(unsigned long long)pim6dstat.in_pim6_graft);
 	fprintf(fp, "\t%qu pim6 graft ack received\n",
-		pim6dstat.in_pim6_graft_ack);
+		(unsigned long long)pim6dstat.in_pim6_graft_ack);
 
-	fprintf(fp, "\t%qu pim6 register sent\n", pim6dstat.out_pim6_register);
+	fprintf(fp, "\t%qu pim6 register sent\n",
+		(unsigned long long)pim6dstat.out_pim6_register);
 	fprintf(fp, "\t%qu pim6 register-stop sent\n",
-		pim6dstat.out_pim6_register_stop);
-	fprintf(fp, "\t%qu pim6 cand-RP sent\n", pim6dstat.out_pim6_cand_rp);
+		(unsigned long long)pim6dstat.out_pim6_register_stop);
+	fprintf(fp, "\t%qu pim6 cand-RP sent\n",
+		(unsigned long long)pim6dstat.out_pim6_cand_rp);
 
 	fprintf(fp, "\t%qu transitions of forwarder initiated SPT\n",
-		pim6dstat.pim6_trans_spt_forward);
+		(unsigned long long)pim6dstat.pim6_trans_spt_forward);
 	fprintf(fp, "\t%qu transitions of RP initiated SPT\n",
-		pim6dstat.pim6_trans_spt_rp);
+		(unsigned long long)pim6dstat.pim6_trans_spt_rp);
 
 	fprintf(fp, "\t%qu pim6 bootstrap timeouts\n",
-		pim6dstat.pim6_bootstrap_timo);
+		(unsigned long long)pim6dstat.pim6_bootstrap_timo);
 	fprintf(fp, "\t%qu pim6 RP group entry timeouts\n",
-		pim6dstat.pim6_rpgrp_timo);
+		(unsigned long long)pim6dstat.pim6_rpgrp_timo);
 	fprintf(fp, "\t%qu pim6 routing entry timeouts\n",
-		pim6dstat.pim6_rtentry_timo);
+		(unsigned long long)pim6dstat.pim6_rtentry_timo);
 
-	fprintf(fp, "\t%qu kernel cache additions\n", pim6dstat.kern_add_cache);
+	fprintf(fp, "\t%qu kernel cache additions\n",
+		(unsigned long long)pim6dstat.kern_add_cache);
 	fprintf(fp, "\t%qu kernel cache addition failures\n",
-		pim6dstat.kern_add_cache_fail);
-	fprintf(fp, "\t%qu kernel cache deletions\n", pim6dstat.kern_del_cache);
+		(unsigned long long)pim6dstat.kern_add_cache_fail);
+	fprintf(fp, "\t%qu kernel cache deletions\n",
+		(unsigned long long)pim6dstat.kern_del_cache);
 	fprintf(fp, "\t%qu kernel cache deletion failures\n",
-		pim6dstat.kern_del_cache_fail);
+		(unsigned long long)pim6dstat.kern_del_cache_fail);
 	fprintf(fp, "\t%qu failures of getting kernel cache\n",
-		pim6dstat.kern_sgcnt_fail);
+		(unsigned long long)pim6dstat.kern_sgcnt_fail);
 
 	fclose(fp);
 }
