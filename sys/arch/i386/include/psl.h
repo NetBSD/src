@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)psl.h	5.2 (Berkeley) 1/18/91
- *	$Id: psl.h,v 1.2.4.3 1993/09/30 17:31:15 mycroft Exp $
+ *	$Id: psl.h,v 1.2.4.4 1993/10/06 11:58:23 mycroft Exp $
  */
 
 /*
@@ -60,6 +60,7 @@
 #define	PSL_USERSET	(PSL_IOPL|PSL_I)
 #define	PSL_USERCLR	(PSL_NT)
 
+#if defined(KERNEL) && !defined(LOCORE)
 /*
  * Software-based interrupt masks
  */
@@ -89,3 +90,4 @@ int splstatclock __P((void));		/* XXXX */
 
 int splnone __P((void));
 int splx __P((int));
+#endif
