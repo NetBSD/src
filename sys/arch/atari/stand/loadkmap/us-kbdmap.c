@@ -1,6 +1,6 @@
-/*	$NetBSD: us-kbdmap.c,v 1.1.1.1 1995/07/03 20:49:40 leo Exp $	*/
+/*	$NetBSD: us-kbdmap.c,v 1.2 1995/07/24 05:44:43 leo Exp $	*/
 
-#include "kbdmap.h"
+#include "../../dev/kbdmap.h"
 
 /* mode shortcuts: */
 #define	S KBD_MODE_STRING
