@@ -1,4 +1,4 @@
-#	$NetBSD: COFFEE,v 1.12 1995/10/09 02:08:35 chopps Exp $
+#	$NetBSD: COFFEE,v 1.13 1996/01/28 19:37:42 chopps Exp $
 
 #
 # COFFEE - GENERIC but with GATEWAY and DEBUG
@@ -56,6 +56,8 @@ options		NULLFS		# Loopback filesystem
 options		FIFO		# FIFO operations on vnodes (Recommended)
 options		ADOSFS		# AmigaDOS file system
 options		"CD9660"	# ISO 9660 file system, with Rock Ridge
+options		UNION		# union file system
+options		UMAPFS		# uid/gid remapping filesystem
 #options	PORTAL		# Portal filesystem
 #options	MSDOSFS		# MS-DOS filesystem
 
