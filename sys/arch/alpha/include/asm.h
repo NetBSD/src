@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.25 2001/12/18 04:15:45 thorpej Exp $ */
+/* $NetBSD: asm.h,v 1.26 2001/12/18 17:12:32 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -611,19 +611,15 @@ label:	ASCIZ msg;						\
 	ldgp	gp, 0(reg)
 
 /*
- * WEAK_ALIAS: create a weak alias (ELF only).
+ * WEAK_ALIAS: create a weak alias.
  */
-#ifdef __ELF__
 #define WEAK_ALIAS(alias,sym)					\
 	.weak alias;						\
 	alias = sym
-#endif
 
 /*
- * WARN_REFERENCES: create a warning if the specified symbol is referenced
- * (ELF only).
+ * WARN_REFERENCES: create a warning if the specified symbol is referenced.
  */
-#ifdef __ELF__
 #ifdef __STDC__
 #define	WARN_REFERENCES(_sym,_msg)				\
 	.section .gnu.warning. ## _sym ; .ascii _msg ; .text
@@ -631,7 +627,6 @@ label:	ASCIZ msg;						\
 #define	WARN_REFERENCES(_sym,_msg)				\
 	.section .gnu.warning./**/_sym ; .ascii _msg ; .text
 #endif /* __STDC__ */
-#endif /* __ELF__ */
 
 /*
  * Kernel RCS ID tag and copyright macros
@@ -639,13 +634,8 @@ label:	ASCIZ msg;						\
 
 #ifdef _KERNEL
 
-#ifdef __ELF__
 #define	__KERNEL_SECTIONSTRING(_sec, _str)				\
 	.section _sec ; .asciz _str ; .text
-#else /* __ELF__ */
-#define	__KERNEL_SECTIONSTRING(_sec, _str)				\
-	.data ; .asciz _str ; .align 3 ; .text
-#endif /* __ELF__ */
 
 #define	__KERNEL_RCSID(_n, _s)		__KERNEL_SECTIONSTRING(.ident, _s)
 #define	__KERNEL_COPYRIGHT(_n, _s)	__KERNEL_SECTIONSTRING(.copyright, _s)
