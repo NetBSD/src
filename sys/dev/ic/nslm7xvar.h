@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7xvar.h,v 1.2 2000/03/07 18:39:14 groo Exp $ */
+/*	$NetBSD: nslm7xvar.h,v 1.2.4.1 2000/07/30 17:54:14 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -78,6 +78,8 @@ struct lm_softc {
 	struct	timeval lastread; /* only allow reads every 1.5 seconds */
 	struct	envsys_tre_data sensors[LM_NUM_SENSORS];
 	struct	envsys_basic_info info[LM_NUM_SENSORS];
+
+	struct sysmon_envsys sc_sysmon;
 };
 
 void lm_attach __P((struct lm_softc *));
