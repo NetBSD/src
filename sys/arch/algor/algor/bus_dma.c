@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.10 2004/11/28 17:34:45 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.11 2005/03/09 04:23:33 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.10 2004/11/28 17:34:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.11 2005/03/09 04:23:33 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	 * room for them in one shot.
 	 *
 	 * Note we don't preserve the WAITOK or NOWAIT flags.  Preservation
-	 * of ALLOCNOW notifes others that we've reserved these resources,
+	 * of ALLOCNOW notifies others that we've reserved these resources,
 	 * and they are not to be freed.
 	 *
 	 * The bus_dmamap_t includes one bus_dma_segment_t, hence
