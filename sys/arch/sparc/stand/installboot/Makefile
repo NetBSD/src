@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2001/10/31 22:13:03 thorpej Exp $
+#	$NetBSD: Makefile,v 1.19 2001/11/22 00:14:21 jmc Exp $
 
 .include <bsd.own.mk>
 
@@ -18,12 +18,12 @@ CPPFLAGS+=-I${.CURDIR}/..
 
 LDSTATIC?=	-static
 
-.if !make(obj)
+.if !make(obj) && !make(clean) && !make(cleandir)
 .BEGIN:
 	@([ -h machine ] || ln -s ${.CURDIR}/../../../${MACHINE}/include machine)
 	@([ -h sparc ] || ln -s ${.CURDIR}/../../../sparc/include sparc)
 .NOPATH: machine sparc
-CLEANFILES+= machine sparc
 .endif
+CLEANFILES+= machine sparc
 
 .include <bsd.prog.mk>
