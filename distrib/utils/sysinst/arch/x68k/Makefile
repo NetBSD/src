@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.8.2 2000/08/31 15:16:48 minoura Exp $
+#	$NetBSD: Makefile,v 1.1.8.3 2000/09/20 23:39:41 minoura Exp $
 #
 # Makefile for x68k
 #
@@ -10,6 +10,8 @@ SRCS=	menu_defs.c msg_defs.c main.c install.c upgrade.c \
 	label.c target.c md.c
 
 md.o:	menu_defs.h msg_defs.h
+
+CPPFLAGS+=-DINET6
 
 .include "../../Makefile.inc"
 
