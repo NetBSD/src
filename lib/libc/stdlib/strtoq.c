@@ -56,7 +56,7 @@ strtoq(nptr, endptr, base)
 {
 	register const char *s;
 	register quad_t acc, cutoff;
-	register unsigned int c;
+	register int c;
 	register int neg, any, cutlim;
 
 	/*
@@ -66,7 +66,7 @@ strtoq(nptr, endptr, base)
 	 */
 	s = nptr;
 	do {
-		c = *s++;
+		c = (unsigned char) *s++;
 	} while (isspace(c));
 	if (c == '-') {
 		neg = 1;
@@ -113,7 +113,7 @@ strtoq(nptr, endptr, base)
 		}
 		cutlim = -cutlim;
 	}
-	for (acc = 0, any = 0;; c = *s++) {
+	for (acc = 0, any = 0;; c = (unsigned char) *s++) {
 		if (isdigit(c))
 			c -= '0';
 		else if (isalpha(c))
