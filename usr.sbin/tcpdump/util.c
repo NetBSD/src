@@ -18,7 +18,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  * 
- * $Id: util.c,v 1.1 1993/11/14 21:21:15 deraadt Exp $
+ * $Id: util.c,v 1.2 1994/12/23 17:06:44 cgd Exp $
  */
 
 #ifndef lint
@@ -27,6 +27,7 @@ static char rcsid[] =
 #endif
 
 #include <stdio.h>
+#include <string.h>
 #ifdef __STDC__
 #include <stdlib.h>
 #endif

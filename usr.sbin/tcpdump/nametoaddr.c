@@ -21,7 +21,7 @@
  * Name to id translation routines used by the scanner.
  * These functions are not time critical.
  * 
- * $Id: nametoaddr.c,v 1.1 1993/11/14 21:20:22 deraadt Exp $
+ * $Id: nametoaddr.c,v 1.2 1994/12/23 17:06:02 cgd Exp $
  */
 
 #ifndef lint
@@ -30,6 +30,7 @@ static char rcsid[] =
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <ctype.h>
 #include <sys/types.h>
 #include <sys/socket.h>

@@ -18,7 +18,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  * 
- * $Id: print-tcp.c,v 1.3 1994/04/03 05:19:05 mycroft Exp $
+ * $Id: print-tcp.c,v 1.4 1994/12/23 17:06:36 cgd Exp $
  */
 
 #ifndef lint
@@ -26,8 +26,11 @@ static char rcsid[] =
     "@(#) Header: print-tcp.c,v 1.18 92/05/25 14:29:04 mccanne Exp (LBL)";
 #endif
 
+#include <stdlib.h>
+
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/queue.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>

@@ -20,7 +20,7 @@
  *
  *  Optimization module for tcpdump intermediate representation.
  * 
- * $Id: optimize.c,v 1.1 1993/11/14 21:20:26 deraadt Exp $
+ * $Id: optimize.c,v 1.2 1994/12/23 17:06:04 cgd Exp $
  */
 #ifndef lint
 static char rcsid[] =
@@ -28,6 +28,7 @@ static char rcsid[] =
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 
 #include <sys/time.h>

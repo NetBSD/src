@@ -18,7 +18,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  * 
- * $Id: print-ip.c,v 1.1 1993/11/14 21:20:43 deraadt Exp $
+ * $Id: print-ip.c,v 1.2 1994/12/23 17:06:18 cgd Exp $
  */
 
 #ifndef lint
@@ -28,6 +28,7 @@ static char rcsid[] =
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/queue.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>

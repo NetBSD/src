@@ -18,7 +18,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  * 
- * $Id: pcap.c,v 1.1 1993/11/14 21:20:31 deraadt Exp $
+ * $Id: pcap.c,v 1.2 1994/12/23 17:06:07 cgd Exp $
  */
 #ifndef lint
 static  char rcsid[] =
@@ -26,6 +26,7 @@ static  char rcsid[] =
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <netdb.h>
 #include <ctype.h>
 #include <signal.h>

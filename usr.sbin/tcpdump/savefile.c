@@ -18,7 +18,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  * 
- * $Id: savefile.c,v 1.1 1993/11/14 21:21:00 deraadt Exp $
+ * $Id: savefile.c,v 1.2 1994/12/23 17:06:41 cgd Exp $
  */
 #ifndef lint
 static char rcsid[] =
@@ -37,6 +37,7 @@ static char rcsid[] =
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <net/bpf.h>
