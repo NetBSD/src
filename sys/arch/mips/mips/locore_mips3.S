@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.45 2000/08/06 12:30:36 shin Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.46 2000/09/06 06:33:42 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -211,9 +211,6 @@ VECTOR(mips3_TLBMiss, unknown)
 	nop					# required for QED5230
 	tlbwr					# update TLB
 	nop
-	nop
-	nop
-	nop
 	eret
 4:
 	j	_C_LABEL(mips3_TLBMissException)
@@ -280,9 +277,6 @@ VECTOR(mips3_XTLBMiss, unknown)
 	nop
 	nop					# required for QED5230
 	tlbwr					# update TLB
-	nop
-	nop
-	nop
 	nop
 	eret
 4:
