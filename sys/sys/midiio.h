@@ -1,4 +1,4 @@
-/*	$NetBSD: midiio.h,v 1.8 2001/10/23 13:07:09 itohy Exp $	*/
+/*	$NetBSD: midiio.h,v 1.9 2003/04/26 13:31:37 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,15 +44,7 @@
  * for naming.
  */
 
-#ifndef _POSIX_SOURCE
-#define __MIDIIO_UNSET_POSIX_SOURCE
-#define _POSIX_SOURCE		/* make sure we don't get all the gunk */
-#endif
-#include <machine/endian.h>
-#ifdef __MIDIIO_UNSET_POSIX_SOURCE
-#undef _POSIX_SOURCE
-#undef __MIDIIO_UNSET_POSIX_SOURCE
-#endif
+#include <machine/endian_machdep.h>
 
 /*
  * ioctl() commands for /dev/midi##
@@ -255,7 +247,7 @@ struct synth_info {
     (e)->arr[3] = (chan), (e)->arr[4] = (p1), (e)->arr[5] = (p2),\
     *(short*)&(e)->arr[6] = (w14))
 
-#if _QUAD_LOWWORD == 1
+#if _BYTE_ORDER == _BIG_ENDIAN
 /* big endian */
 #define SEQ_PATCHKEY(id) (0xfd00|id)
 #else
