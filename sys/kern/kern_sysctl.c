@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.169 2004/03/27 04:26:23 atatat Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.169.2.1 2004/04/01 05:24:28 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.169 2004/03/27 04:26:23 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.169.2.1 2004/04/01 05:24:28 jmc Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -1255,6 +1255,9 @@ sysctl_destroy(SYSCTLFN_RWARGS)
 	 * the node is permanent (checked later) or
 	 * the tree itself is not writeable or
 	 * the entire sysctl system is not writeable
+	 *
+	 * note that we ignore whether setup is complete or not,
+	 * because these rules always apply.
 	 */
 	if (!(sysctl_rootof(rnode)->sysctl_flags & CTLFLAG_READWRITE) ||
 	    !(sysctl_root.sysctl_flags & CTLFLAG_READWRITE))
@@ -1674,16 +1677,24 @@ sysctl_describe(SYSCTLFN_ARGS)
 
 			/*
 			 * okay...some rules:
-			 * (1) no one can set a description on a
+			 * (1) if setup is done and the tree is
+			 *     read-only or the whole system is
+			 *     read-only
+			 * (2) no one can set a description on a
 			 *     permanent node (it must be set when
 			 *     using createv)
-			 * (2) processes cannot *change* a description
-			 * (3) processes *can*, however, set a
+			 * (3) processes cannot *change* a description
+			 * (4) processes *can*, however, set a
 			 *     description on a read-only node so that
 			 *     one can be created and then described
 			 *     in two steps
 			 * anything else come to mind?
 			 */
+			if ((sysctl_root.sysctl_flags & CTLFLAG_PERMANENT) &&
+			    (!(sysctl_rootof(node)->sysctl_flags &
+			       CTLFLAG_READWRITE) ||
+			     !(sysctl_root.sysctl_flags & CTLFLAG_READWRITE)))
+				return (EPERM);
 			if (node->sysctl_flags & CTLFLAG_PERMANENT)
 				return (EPERM);
 			if (l != NULL && node->sysctl_desc != NULL)
