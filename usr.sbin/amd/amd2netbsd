@@ -1,6 +1,6 @@
 #!/usr/pkg/bin/perl
 #
-#	$NetBSD: amd2netbsd,v 1.21 1999/09/04 22:38:15 christos Exp $
+#	$NetBSD: amd2netbsd,v 1.22 1999/09/04 23:08:44 christos Exp $
 #
 #  Perl script to convert a standard distribution directory for am-utils into
 #	a NetBSD source tree.
@@ -118,14 +118,10 @@ $version = "6.0.1s11";
 @wiretestef = ();
 
 
-<<<<<<< amd2netbsd
-@docf = ("am-utils.texi", "hlfsd.ps", "texinfo.tex", "version.texi");
-=======
 @docf = ("am-utils.texi", "hlfsd.ps", "version.texi", "am-utils.ps", 
-	 "am-utils.info-1", "am-utils.info-2", "am-utils.info-3",
-	 "am-utils.info-4", "am-utils.info-5", "am-utils.info-6",
-	 "am-utils.info-7");
->>>>>>> 1.1.1.5
+	 "am-utils.info", "am-utils.info-1", "am-utils.info-2",
+	 "am-utils.info-3", "am-utils.info-4", "am-utils.info-5",
+	 "am-utils.info-6", "am-utils.info-7");
 
 @docdf = ();
 
@@ -570,18 +566,10 @@ minor=0
 #
 cat << __EOF
 
-<<<<<<< amd2netbsd
-/* Define user name */
-#define USER_NAME "`whoami`"
-
-/* Define configuration date */
-#define CONFIG_DATE "`date`"
-=======
 /* Automatically generated file, do not edit! */
  
 /* Define name and version of host machine (eg. solaris2.5.1) */
 #define HOST_OS "`uname -s | tr '[A-Z]' '[a-z]'``uname -r`"
->>>>>>> 1.1.1.5
 
 /* Define only name of host machine OS (eg. solaris2) */
 #define HOST_OS_NAME "`uname -s | tr '[A-Z]' '[a-z]'``uname -r | cut -d. -f 1`"
