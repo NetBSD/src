@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.154 2004/08/07 02:40:56 mycroft Exp $
+# $NetBSD: GENERIC,v 1.155 2004/08/08 08:54:43 mycroft Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.154 $"
+#ident 		"GENERIC-$Revision: 1.155 $"
 
 maxusers	16
 
@@ -54,6 +54,8 @@ options 	MSGBUFSIZE=8192		# dmesg buffer size
 
 #options 	SCSIVERBOSE		# human readable SCSI error messages
 #options 	PCMCIAVERBOSE		# verbose PCMCIA configuration messages
+#options 	PCMCIADEBUG
+#options 	PCMCIACISDEBUG
 
 #options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	RTC_OFFSET=-540		# JST-9
@@ -503,7 +505,9 @@ ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
 sm*	at pcmcia? function ?		# Megahertz Ethernet
 wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
-xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
+xirc*	at pcmcia? function ?		# Xircom CreditCard Ethernet
+com*	at xirc?
+xi*	at xirc?
 awi*	at pcmcia? function ?		# WLI-PCM
 an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)
 mhzc*	at pcmcia? function ?
