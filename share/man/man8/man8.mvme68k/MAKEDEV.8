@@ -1,15 +1,18 @@
 .\" *** ------------------------------------------------------------------
 .\" *** This file was generated automatically
 .\" *** from src/etc/etc.mvme68k/MAKEDEV and
-.\" *** src/share/man/man8/man8.mvme68k/MAKEDEV.8.template
-.\" *** 
+.\" *** src/share/man/man8/MAKEDEV.8.template
+.\" ***
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\"	$NetBSD: MAKEDEV.8,v 1.4 2000/12/05 21:25:37 wrstuden Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.5 2001/04/16 08:11:19 wiz Exp $
 .\"
-.\" Copyright (c) 1991 The Regents of the University of California.
+.\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Thomas Klausner.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -21,53 +24,56 @@
 .\"    documentation and/or other materials provided with the distribution.
 .\" 3. All advertising materials mentioning features or use of this software
 .\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
-.\" 4. Neither the name of the University nor the names of its contributors
-.\"    may be used to endorse or promote products derived from this software
-.\"    without specific prior written permission.
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
-.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
-.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-.\" SUCH DAMAGE.
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	from: @(#)MAKEDEV.8	5.2 (Berkeley) 3/22/91
-.\"
-.Dd Septemper 14, 1999
+.Dd September 14, 1999
 .Dt MAKEDEV 8 mvme68k
 .Os
 .Sh NAME
-.Nm MAKEDEV ,
-.Nm makedev
+.Nm MAKEDEV
 .Nd create system and device special files
 .Sh SYNOPSIS
-.Nm MAKEDEV
-.Ar name
-.Op Ar ...
+.Nm
+.Ar special Op Ar ...
+
+.Nm
+.Ar device Op Ar ...
 .Sh DESCRIPTION
-The shell script
-.Nm MAKEDEV ,
-found in the
-.Pa /dev
-directory, is used to create
-the common special
-files.
-.\" See
-.\" .Xr special 8
-.\" for a more complete discussion of special files.
+.Nm
+is used to create system and device special files.
+As arguments it takes the names of known devices, like
+.Ar sd0 ,
+or of special targets, like
+.Pa all
+or
+.Pa std ,
+which create a collection of device special files.
 .Pp
-.Nm MAKEDEV
-takes any number of device names as arguments,
-where the names are the common abbreviation for
-the device.  The following device names are special:
+The script is in
+.Pa /dev/MAKEDEV
+and must be called from the
+.Pa /dev
+directory.
+.Pp
+The special targets supported on
+.Nx Ns / Ns mvme68k
+are:
 .Pp
 .\" @@@SPECIAL@@@
 .Bl -tag -width 01234567 -compact
@@ -79,10 +85,11 @@ Standard devices
 Configuration specific devices
 .El
 .Pp
-The Motorolla VME 68k port supports the following devices.
-Where a device name is followed by a hash
-sign ("#"), the hash sign must be replaced
-by a unit number.
+Please note that any hash marks
+.Pq Dq #
+in the following list of supported device targets must be replaced by
+digits when calling
+.Nm "" :
 .Pp
 .\" @@@DEVICES@@@
 .Bl -tag -width 01
@@ -90,46 +97,46 @@ by a unit number.
 . Bl -tag -width 0123456789 -compact
 . It Ar st#
 SCSI tapes, see
-.Xr st 4 
+.Xr st 4
 . El
 .It Disks:
 . Bl -tag -width 0123456789 -compact
 . It Ar sd#
 SCSI disks, see
-.Xr sd 4 
+.Xr sd 4
 . It Ar cd#
 SCSI CD-ROM, see
-.Xr cd 4 
+.Xr cd 4
 . It Ar vnd#
 ``file'' pseudo-disks, see
-.Xr vnd 4 
+.Xr vnd 4
 . It Ar md#
 Memory pseudo-disk devices, see
-.Xr md 4 
+.Xr md 4
 . It Ar ccd#
 Contatenated disk devices, see
-.Xr ccd 4 
+.Xr ccd 4
 . It Ar raid#
 RAIDframe disk devices, see
-.Xr raid 4 
+.Xr raid 4
 . El
 .It Serial ports:
 . Bl -tag -width 0123456789 -compact
 . It Ar tty#
 Onboard serial ports. On the mvme147 these are: ttyZ1, ttyZ2 and ttyZ3. On the mvme167, and '177: ttyC1, ttyC2 and ttyC3. Note that tty[CZ]0 is grabbed by the console device so is not created by default, see
-.Xr tty 4 
+.Xr tty 4
 . El
 .It Pseudo terminals:
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
-.Xr pty 4 
+.Xr pty 4
 . El
 .It Printers:
 . Bl -tag -width 0123456789 -compact
 . It Ar lpt#
 Stock lp, see
-.Xr lpt 4 
+.Xr lpt 4
 . It Ar lpa#
 Interruptless lp
 . El
@@ -139,39 +146,46 @@ Interruptless lp
 File descriptors
 . It Ar bpf#
 Packet filter, see
-.Xr bpf 4 
+.Xr bpf 4
 . It Ar lkm
 Loadable kernel modules interface, see
-.Xr lkm 4 
+.Xr lkm 4
 . It Ar tun#
 Network tunnel driver, see
-.Xr tun 4 
+.Xr tun 4
 . It Ar scsibus#
 SCSI busses, see
 .Xr scsictl 8 ,
-.Xr scsi 4 
+.Xr scsi 4
 . It Ar ss#
 SCSI scanner, see
-.Xr ss 4 
+.Xr ss 4
 . It Ar uk#
 SCSI unknown, see
-.Xr uk 4 
+.Xr uk 4
 . It Ar ch#
 SCSI changer, see
-.Xr ch 4 
+.Xr ch 4
 . It Ar ipl
 IP Filter device
 . It Ar random
 Random number generator
 . El
 .El
-.Pp
 .Sh FILES
-.Bl -tag -width /dev -compact
+.Bl -tag -width "/dev/MAKEDEV" -compact
 .It Pa /dev
-The special file directory.
+special device files directory
+.It Pa /dev/MAKEDEV
+script described in this man page
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr config 8 ,
 .Xr mknod 8
+.Sh BUGS
+This man page is generated automatically from the same sources
+as
+.Pa /dev/MAKEDEV ,
+in which the device files are not always sorted, which may result
+in an unusual (non-alphabetical) order.
