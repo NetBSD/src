@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.4 2003/04/02 04:27:20 thorpej Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.5 2003/05/08 11:04:38 fvdl Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -64,7 +64,6 @@
  * so that they are protected from being used to service page faults,
  * etc. (unless we've run out of memory elsewhere).
  */
-#define	ISA_DMA_BOUNCE_THRESHOLD	(16 * 1024 * 1024)
 extern struct arm32_dma_range *shark_isa_dma_ranges;
 extern int shark_isa_dma_nranges;
 
