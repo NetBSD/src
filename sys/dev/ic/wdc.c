@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.182 2004/07/31 21:26:42 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.183 2004/08/01 21:40:41 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.182 2004/07/31 21:26:42 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.183 2004/08/01 21:40:41 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -146,7 +146,6 @@ const struct ata_bustype wdc_ata_bustype = {
 static int	wdcprobe1(struct wdc_channel*, int);
 static void	__wdcerror(struct wdc_channel*, char *);
 static int	__wdcwait_reset(struct wdc_channel *, int, int);
-static void	__wdc_reset_channel(struct wdc_channel *, int);
 static void	__wdccommand_done(struct wdc_channel *, struct ata_xfer *);
 static void	__wdccommand_done_end(struct wdc_channel *, struct ata_xfer *);
 static void	__wdccommand_kill_xfer(struct wdc_channel *,
@@ -965,7 +964,7 @@ wdcintr(void *arg)
 
 /* Put all disk in RESET state */
 void
-wdc_reset_channel(struct ata_drive_datas *drvp, int flags)
+wdc_reset_drive(struct ata_drive_datas *drvp, int flags)
 {
 	struct wdc_channel *chp = drvp->chnl_softc;
 	struct wdc_softc *wdc = chp->ch_wdc;
@@ -974,13 +973,13 @@ wdc_reset_channel(struct ata_drive_datas *drvp, int flags)
 	    DEBUG_FUNCS);
 
 
-	__wdc_reset_channel(chp, flags);
+	wdc_reset_channel(chp, flags);
 }
 
-static void
-__wdc_reset_channel(struct wdc_channel *chp, int flags)
+void
+wdc_reset_channel(struct wdc_channel *chp, int flags)
 {
-	struct ata_xfer *xfer;
+	struct ata_xfer *xfer, *next_xfer;
 	int drive;
 
 	/*
@@ -994,15 +993,17 @@ __wdc_reset_channel(struct wdc_channel *chp, int flags)
 	if ((flags & AT_RST_NOCMD) == 0) {
 		xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer);
 		if (xfer && xfer->c_chp != chp)
-			__wdc_reset_channel(xfer->c_chp, flags);
+			wdc_reset_channel(xfer->c_chp, flags);
 		for (xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer);
-		    xfer != 0; ) {
+		    xfer != NULL; xfer = next_xfer) {
+			next_xfer = TAILQ_NEXT(xfer, c_xferchain);
 			if (xfer->c_chp != chp)
 				continue;
 			if ((flags & AT_RST_EMERG) == 0)
 				xfer->c_kill_xfer(chp, xfer, KILL_RESET);
 		}
 	}
+	chp->ch_flags &= ~(WDCF_IRQ_WAIT|WDCF_DMA_WAIT);
 	if ((flags & AT_POLL) == 0) {
 		if (chp->ch_flags & WDCF_TH_RESET) {
 			/* no need to schedule a reset more than one time */
@@ -1012,7 +1013,11 @@ __wdc_reset_channel(struct wdc_channel *chp, int flags)
 		wakeup(&chp->ch_thread);
 		return;
 	}
-	(void) wdcreset(chp, RESET_POLL);
+	if ((flags & AT_WAIT) == 0) {
+		(void) wdcreset(chp, RESET_POLL);
+	} else {
+		(void) wdcreset(chp, RESET_SLEEP);
+	}
 	for (drive = 0; drive < 2; drive++) {
 		chp->ch_drive[drive].state = 0;
 	}
@@ -1604,7 +1609,7 @@ wdc_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 	wdc->set_modes(chp);
 	wdc_print_modes(chp);
 	/* reset the channel, which will shedule all drives for setup */
-	wdc_reset_channel(drvp, flags | AT_RST_NOCMD);
+	wdc_reset_channel(chp, flags | AT_RST_NOCMD);
 	return 1;
 }
 

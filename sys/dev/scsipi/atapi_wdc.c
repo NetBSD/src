@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.71 2004/07/31 21:26:43 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.72 2004/08/01 21:40:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.71 2004/07/31 21:26:43 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.72 2004/08/01 21:40:41 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -175,10 +175,10 @@ wdc_atapi_kill_xfer(struct wdc_channel *chp, struct ata_xfer *xfer, int reason)
 
 	callout_stop(&chp->ch_callout);
 	/* remove this command from xfer queue */
-	wdc_free_xfer(chp, xfer);
 	switch (reason) {
 	case KILL_GONE:
 		sc_xfer->error = XS_DRIVER_STUFFUP;
+		wdc_free_xfer(chp, xfer);
 		scsipi_done(sc_xfer);
 		break;
 	case KILL_RESET:
