@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.25 1995/11/08 22:26:24 cgd Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.26 1995/12/01 00:47:33 pk Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -233,16 +233,15 @@ cd9660_getattr(ap)
 	return (0);
 }
 
-#if ISO_DEFAULT_BLOCK_SIZE >= NBPG
 #ifdef DEBUG
 extern int doclusterread;
 #else
 #define doclusterread 1
 #endif
-#else
+
 /* XXX until cluster routines can handle block sizes less than one page */
-#define doclusterread 0
-#endif
+#define cd9660_doclusterread \
+	(doclusterread && (ISO_DEFAULT_BLOCK_SIZE >= NBPG))
 
 /*
  * Vnode op for reading.
@@ -284,7 +283,7 @@ cd9660_read(ap)
 			n = diff;
 		size = blksize(imp, ip, lbn);
 		rablock = lbn + 1;
-		if (doclusterread) {
+		if (cd9660_doclusterread) {
 			if (lblktosize(imp, rablock) <= ip->i_size)
 				error = cluster_read(vp, (off_t)ip->i_size,
 						     lbn, size, NOCRED, &bp);
