@@ -101,6 +101,7 @@ pam_set_item(pam_handle_t *pamh,
 	}
 	*slot = tmp;
 	RETURNC(PAM_SUCCESS);
+	/*NOTREACHED*/
 }
 
 /*
