@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.61.4.1 2002/09/30 23:28:50 lukem Exp $
+#	$NetBSD: INSTALL,v 1.61.4.2 2002/11/03 13:20:10 he Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -43,6 +43,7 @@ options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
 options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 
 options 	WSEMUL_VT100	# VT100 / VT220 emulation
