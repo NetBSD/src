@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.18 2000/08/13 18:48:22 itojun Exp $	*/
+/*	$NetBSD: iso.c,v 1.19 2000/08/31 06:49:42 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)iso.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: iso.c,v 1.18 2000/08/13 18:48:22 itojun Exp $");
+__RCSID("$NetBSD: iso.c,v 1.19 2000/08/31 06:49:42 jhawk Exp $");
 #endif
 #endif /* not lint */
 
@@ -571,182 +571,265 @@ tp_stats(off, name)
 	tprintstat(&tp_stat, 8);
 }
 
+struct tpstatpr {
+	size_t off;
+	char *text;
+};
+
+#define o(f) offsetof(struct tp_stat, f)
+
+static struct tpstatpr	tpstatpr_r[] = {
+{ o(ts_param_ignored),	"\t%*s%ld variable parameter%s ignored\n"},
+{ o(ts_inv_pcode),	"\t%*s%ld invalid parameter code%s\n"},
+{ o(ts_inv_pval),	"\t%*s%ld invalid parameter value%s\n"},
+{ o(ts_inv_dutype),	"\t%*s%ld invalid dutype%s\n"},
+{ o(ts_negotfailed),	"\t%*s%ld negotiation failure%s\n"},
+{ o(ts_inv_dref),	"\t%*s%ld invalid destination reference%s\n"},
+{ o(ts_inv_sufx),	"\t%*s%ld invalid suffix parameter%s\n"},
+{ o(ts_inv_length),	"\t%*s%ld invalid length%s\n"},
+{ o(ts_bad_csum),	"\t%*s%ld invalid checksum%s\n"},
+{ o(ts_dt_ooo),		"\t%*s%ld DT%s out of order\n"},
+{ o(ts_dt_niw),		"\t%*s%ld DT%s not in window\n"},
+{ o(ts_dt_dup),		"\t%*s%ld duplicate DT%s\n"},
+{ o(ts_xpd_niw),	"\t%*s%ld XPD%s not in window\n"},
+{ o(ts_xpd_dup),	"\t%*s%ld XPD%s w/o credit to stash\n"},
+{ o(ts_lcdt_reduced),	"\t%*s%ld time%s local credit reneged\n"},
+{ o(ts_concat_rcvd),	"\t%*s%ld concatenated TPDU%s\n"},
+{ 0,			NULL }
+};
+
+static struct tpstatpr	tpstatpr_s[] = {
+{ o(ts_xpdmark_del),	"\t%*s%ld XPD mark%s discarded\n"},
+{ o(ts_xpd_intheway),	"\t%*sXPD stopped data flow %ld time%s\n"},
+{ o(ts_zfcdt),		"\t%*s%ld time%s foreign window closed\n"},
+{ 0,			NULL }
+};
+
+static struct tpstatpr	tpstatpr_m[] = {
+{ o(ts_mb_small),	"\t%*s%ld small mbuf%s\n"},
+{ o(ts_mb_cluster),	"\t%*s%ld cluster%s\n"},
+{ o(ts_quench),		"\t%*s%ld source quench%s\n"},
+{ o(ts_rcvdecbit),	"\t%*s%ld dec bit%s\n"},
+{ o(ts_eot_input),	"\t%*s%ld EOT%s rcvd\n"},
+{ o(ts_EOT_sent),	"\t%*s%ld EOT%s sent\n"},
+{ o(ts_eot_user),	"\t%*s%ld EOT indication%s\n"},
+{ 0,			NULL }
+};
+
+static struct tpstatpr	tpstatpr_c[] = {
+{ o(ts_xtd_fmt),	"\t%*s%ld connection%s used extended format\n"},
+{ o(ts_use_txpd),	"\t%*s%ld connection%s allowed transport expedited data\n"},
+{ o(ts_csum_off),	"\t%*s%ld connection%s turned off checksumming\n"},
+{ o(ts_conn_gaveup),	"\t%*s%ld connection%s dropped due to retrans limit\n"},
+{ o(ts_tp4_conn),	"\t%*s%ld tp 4 connection%s\n"},
+{ o(ts_tp0_conn),	"\t%*s%ld tp 0 connection%s\n"},
+{ 0,			NULL }
+};
+
+static struct tpstatpr	tpstatpr_p[] = {
+{ o(ts_zdebug),		"\t%*s%6ld CC%s sent to zero dref\n"},
+	/* SAME LINE AS ABOVE */
+{ o(ts_ydebug),		"\t%*s%6ld random DT%s dropped\n"},
+{ o(ts_vdebug),		"\t%*s%6ld illegally large XPD TPDU%s\n"},
+{ o(ts_ldebug),		"\t%*s%6ld faked reneging%s of cdt\n"},
+{ 0,			NULL }
+};
+
+static struct tpstatpr	tpstatpr_A[] = {
+{ o(ts_ackreason[_ACK_DONT_]),		"\t%*s%6ld not acked immediately%s\n"},
+{ o(ts_ackreason[_ACK_STRAT_EACH_]),	"\t%*s%6ld strategy==each%s\n"},
+{ o(ts_ackreason[_ACK_STRAT_FULLWIN_]),	"\t%*s%6ld strategy==fullwindow%s\n"},
+{ o(ts_ackreason[_ACK_DUP_]),		"\t%*s%6ld duplicate DT%s\n"},
+{ o(ts_ackreason[_ACK_EOT_]),		"\t%*s%6ld EOTSDU%s\n"},
+{ o(ts_ackreason[_ACK_REORDER_]),	"\t%*s%6ld reordered DT%s\n"},
+{ o(ts_ackreason[_ACK_USRRCV_]),	"\t%*s%6ld user rcvd%s\n"},
+{ o(ts_ackreason[_ACK_FCC_]),		"\t%*s%6ld fcc reqd%s\n"},
+{ 0,			NULL }
+};
+#undef o
+
 static void
 tprintstat(s, indent)
 	struct tp_stat *s;
 	int indent;
 {
-#define	p1(f, m) if (s->f || sflag <=1) \
-  fprintf(stdout, m, indent, " ", s->f)
-#define	p(f, m) if (s->f || sflag <=1) \
-  fprintf(stdout, m, indent, " ", s->f, plural(s->f))
+	int j, tpfirst, tpfirst2;
 
-	fprintf(stdout,
-		"%*sReceiving:\n",indent," ");
-	p(ts_param_ignored, "\t%*s%ld variable parameter%s ignored\n");
-	p(ts_inv_pcode, "\t%*s%ld invalid parameter code%s\n");
-	p(ts_inv_pval, "\t%*s%ld invalid parameter value%s\n");
-	p(ts_inv_dutype, "\t%*s%ld invalid dutype%s\n");
-	p(ts_negotfailed, "\t%*s%ld negotiation failure%s\n");
-	p(ts_inv_dref, "\t%*s%ld invalid destination reference%s\n");
-	p(ts_inv_sufx, "\t%*s%ld invalid suffix parameter%s\n");
-	p1(ts_inv_length, "\t%*s%ld invalid length\n");
-	p(ts_bad_csum, "\t%*s%ld invalid checksum%s\n");
-	p(ts_dt_ooo, "\t%*s%ld DT%s out of order\n");
-	p(ts_dt_niw, "\t%*s%ld DT%s not in window\n");
-	p(ts_dt_dup, "\t%*s%ld duplicate DT%s\n");
-	p(ts_xpd_niw, "\t%*s%ld XPD%s not in window\n");
-	p(ts_xpd_dup, "\t%*s%ld XPD%s w/o credit to stash\n");
-	p(ts_lcdt_reduced, "\t%*s%ld time%s local credit reneged\n");
-	p(ts_concat_rcvd, "\t%*s%ld concatenated TPDU%s\n");
-
-	fprintf(stdout, "%*sSending:\n", indent, " ");
-	p(ts_xpdmark_del, "\t%*s%ld XPD mark%s discarded\n");
-	p(ts_xpd_intheway, "\t%*sXPD stopped data flow %ld time%s\n");
-	p(ts_zfcdt, "\t%*s%ld time%s foreign window closed\n");
-
-	fprintf(stdout, "%*sMiscellaneous:\n", indent, " ");
-	p(ts_mb_small, "\t%*s%ld small mbuf%s\n");
-	p(ts_mb_cluster, "\t%*s%ld cluster%s\n");
-	p1(ts_quench, "\t%*s%ld source quench\n");
-	p(ts_rcvdecbit, "\t%*s%ld dec bit%s\n");
-
-	fprintf(stdout,
-	    "\t%*sM:L ( M mbuf chains of length L)\n", indent, " ");
-	{
-		int j;
-		
-		fprintf(stdout, "\t%*s%ld: over 16\n", indent, " ",
-		    s->ts_mb_len_distr[0]);
-		for( j=1; j<=8; j++) {
-			fprintf(stdout,
-			    "\t%*s%ld: %d\t\t%ld: %d\n", indent, " ",
-			    s->ts_mb_len_distr[j],j,
-			    s->ts_mb_len_distr[j<<1],j<<1
-			    );
-		}
-	}
-	p1(ts_eot_input, "\t%*s%ld EOT rcvd\n");
-	p1(ts_EOT_sent, "\t%*s%ld EOT sent\n");
-	p(ts_eot_user, "\t%*s%ld EOT indication%s\n");
-	
-	fprintf(stdout, "%*sConnections:\n", indent, " ");
-	p(ts_xtd_fmt, "\t%*s%ld connection%s used extended format\n");
-	p(ts_use_txpd, "\t%*s%ld connection%s allowed transport expedited data\n");
-	p(ts_csum_off, "\t%*s%ld connection%s turned off checksumming\n");
-	p(ts_conn_gaveup, "\t%*s%ld connection%s dropped due to retrans limit\n");
-	p(ts_tp4_conn, "\t%*s%ld tp 4 connection%s\n");
-	p(ts_tp0_conn, "\t%*s%ld tp 0 connection%s\n");
-	{
-		int j;
-		static char *name[]= {
-			"~LOCAL, PDN",
-			"~LOCAL,~PDN",
-			" LOCAL,~PDN",
-			" LOCAL, PDN"
+	static char *rttname[]= {
+		"~LOCAL, PDN",
+		"~LOCAL,~PDN",
+		" LOCAL,~PDN",
+		" LOCAL, PDN"
 		};
 
-		fprintf(stdout,
-			"\n%*sRound trip times, listed in ticks:\n", indent, " ");
-		fprintf(stdout,
-			"\t%*s%11.11s  %12.12s | %12.12s | %s\n", indent, " ",
-				"Category",
-				"Smoothed avg", "Deviation", "Deviation/Avg");
-		for (j = 0; j <= 3; j++) {
-			fprintf(stdout,
-				"\t%*s%11.11s: %-11d | %-11d | %-11d | %-11d\n", indent, " ",
-				name[j],
-				s->ts_rtt[j],
-				s->ts_rtt[j],
-				s->ts_rtv[j],
-				s->ts_rtv[j]);
+	/*
+	 * Loop through a struct tpstatpr; if any value is non-zero,
+	 * or sflag<=1, print the header if first, and then print the value.
+	 */
+#define pgroup(group, header) \
+for (j = 0, tpfirst=1; group[j].text; j++) \
+	if (*(u_long*)((paddr_t)s + group[j].off) || \
+	    sflag <=1) { \
+		if (tpfirst) { \
+			fprintf(stdout, \
+			    header,indent," "); \
+			tpfirst=0; \
+		} \
+		fprintf(stdout, group[j].text, indent, " ", \
+		    *(u_long*)((paddr_t)s + group[j].off), \
+		    plural(*(u_long*)((paddr_t)s + group[j].off))); \
+	}
+
+
+	pgroup(tpstatpr_r, "%*sReceived:\n"); 
+	pgroup(tpstatpr_s, "%*sSending:\n");
+
+	pgroup(tpstatpr_m, "%*sMiscellaneous:\n");
+	/* print the mbuf chain statistics under the Misc. header */
+	tpfirst2=1;
+	for( j=0, tpfirst2=1; j<=8; j++) {
+		if (s->ts_mb_len_distr[j] || s->ts_mb_len_distr[j<<1] ||
+		    sflag <=1) {
+			if (tpfirst) {
+				fprintf(stdout, "%*sMiscellaneous:\n",
+				    indent, " ");
+				tpfirst=0;
+			}
+			if (tpfirst2) {
+				fprintf(stdout,
+				    "\t%*sM:L ( M mbuf chains of length L)\n",
+				    indent, " ");
+				tpfirst2=0;
+			}
+			if (j==0)
+				fprintf(stdout, "\t%*s%ld: over 16\n",
+				    indent, " ", s->ts_mb_len_distr[0]);
+			else
+				fprintf(stdout,
+				    "\t%*s%ld: %d\t\t%ld: %d\n", indent, " ",
+				    s->ts_mb_len_distr[j],j,
+				    s->ts_mb_len_distr[j<<1],j<<1);
 		}
 	}
-	fprintf(stdout,
-"\n%*sTpdus RECVD [%ld valid, %3.6f %% of total (%ld); %ld dropped]\n",indent," ",
-		s->ts_tpdu_rcvd, 
-		((s->ts_pkt_rcvd > 0) ?
+
+	pgroup(tpstatpr_c, "%*sConnections:\n");
+
+	tpfirst=1;
+	for (j = 0; j <= 3; j++) {
+		if (s->ts_rtt[j] || s->ts_rtt[j] || s->ts_rtv[j] ||
+		    s->ts_rtv[j] || sflag<=1) {
+			if (tpfirst) {
+				fprintf(stdout,
+				    "\n%*sRound trip times, "
+				    "listed in ticks:\n"
+				    "\t%*s%11.11s  %12.12s | "
+				    "%12.12s | %s\n", indent, " ",
+				    indent, " ",
+				    "Category",
+				    "Smoothed avg", "Deviation",
+				    "Deviation/Avg");
+				tpfirst=0;
+			}
+			fprintf(stdout,
+			    "\t%*s%11.11s: %-11d | %-11d | %-11d | %-11d\n",
+			    indent, " ",
+			    rttname[j], s->ts_rtt[j],  s->ts_rtt[j],
+			    s->ts_rtv[j], s->ts_rtv[j]);
+		}
+	}
+	
+	
+	if (s->ts_tpdu_rcvd || s->ts_pkt_rcvd || s->ts_recv_drop ||
+	    s->ts_DT_rcvd || s->ts_AK_rcvd || s->ts_DR_rcvd || s->ts_CR_rcvd ||
+	    s->ts_XPD_rcvd || s->ts_XAK_rcvd || s->ts_DC_rcvd ||
+	    s->ts_CC_rcvd || s->ts_ER_rcvd || sflag<=1 ) {
+		fprintf(stdout, "\n%*sTpdus RECVD "
+		    "[%ld valid, %3.6f %% of total (%ld); %ld dropped]\n",
+		    indent," ", 	s->ts_tpdu_rcvd,
+		    ((s->ts_pkt_rcvd > 0) ?
 			((100 * (float)s->ts_tpdu_rcvd)/(float)s->ts_pkt_rcvd)
 			: 0),
-		s->ts_pkt_rcvd,
-		s->ts_recv_drop );
+		    s->ts_pkt_rcvd, s->ts_recv_drop );
+		fprintf(stdout,
+		    "\t%*sDT  %6ld   AK  %6ld   DR  %4ld   CR  %4ld \n",
+		    indent, " ", s->ts_DT_rcvd, s->ts_AK_rcvd, s->ts_DR_rcvd,
+		    s->ts_CR_rcvd);
+		fprintf(stdout, "\t%*sXPD %6ld   XAK %6ld   DC  %4ld   "
+		    "CC  %4ld   ER  %4ld\n", indent, " ", s->ts_XPD_rcvd,
+		    s->ts_XAK_rcvd, s->ts_DC_rcvd, s->ts_CC_rcvd,
+		    s->ts_ER_rcvd);
+	}
 
-	fprintf(stdout,
-		"\t%*sDT  %6ld   AK  %6ld   DR  %4ld   CR  %4ld \n", indent, " ",
-		s->ts_DT_rcvd, s->ts_AK_rcvd, s->ts_DR_rcvd, s->ts_CR_rcvd);
-	fprintf(stdout,
-		"\t%*sXPD %6ld   XAK %6ld   DC  %4ld   CC  %4ld   ER  %4ld\n",  indent, " ",
-		s->ts_XPD_rcvd, s->ts_XAK_rcvd, s->ts_DC_rcvd, s->ts_CC_rcvd,
-		s->ts_ER_rcvd);
-	fprintf(stdout,
-		"\n%*sTpdus SENT [%ld total, %ld dropped]\n",  indent, " ",
-		s->ts_tpdu_sent, s->ts_send_drop);
+	if (s->ts_tpdu_sent || s->ts_send_drop || s->ts_DT_sent ||
+	    s->ts_AK_sent || s->ts_DR_sent || s->ts_CR_sent ||
+	    s->ts_XPD_sent || s->ts_XAK_sent || s->ts_DC_sent ||
+	    s->ts_CC_sent || s->ts_ER_sent || sflag<=1 ) {
+		fprintf(stdout,
+		    "\n%*sTpdus SENT [%ld total, %ld dropped]\n",  indent, " ",
+		    s->ts_tpdu_sent, s->ts_send_drop);
+		fprintf(stdout,
+		    "\t%*sDT  %6ld   AK  %6ld   DR  %4ld   CR  %4ld \n",
+		    indent, " ", s->ts_DT_sent, s->ts_AK_sent, s->ts_DR_sent,
+		    s->ts_CR_sent);
+		fprintf(stdout, "\t%*sXPD %6ld   XAK %6ld   DC  %4ld   "
+		    "CC  %4ld   ER  %4ld\n",  indent, " ", s->ts_XPD_sent,
+		    s->ts_XAK_sent, s->ts_DC_sent, s->ts_CC_sent,
+		    s->ts_ER_sent);
+	}
 
-	fprintf(stdout,
-		"\t%*sDT  %6ld   AK  %6ld   DR  %4ld   CR  %4ld \n", indent, " ",
-		s->ts_DT_sent, s->ts_AK_sent, s->ts_DR_sent, s->ts_CR_sent);
-	fprintf(stdout,
-		"\t%*sXPD %6ld   XAK %6ld   DC  %4ld   CC  %4ld   ER  %4ld\n",  indent, " ",
-		s->ts_XPD_sent, s->ts_XAK_sent, s->ts_DC_sent, s->ts_CC_sent,
-		s->ts_ER_sent);
-
-	fprintf(stdout,
-		"\n%*sRetransmissions:\n", indent, " ");
+	if (s->ts_retrans_cr || s->ts_retrans_cc || s->ts_retrans_dr ||
+	    s->ts_retrans_dt || s->ts_retrans_xpd || sflag<=1) {
+		fprintf(stdout,
+		    "\n%*sRetransmissions:\n", indent, " ");
 #define PERCENT(X,Y) (((Y)>0)?((100 *(float)(X)) / (float) (Y)):0)
+		fprintf(stdout,
+		    "\t%*sCR  %6ld   CC  %6ld   DR  %6ld \n", indent, " ",
+		    s->ts_retrans_cr, s->ts_retrans_cc, s->ts_retrans_dr);
+		fprintf(stdout,
+		    "\t%*sDT  %6ld (%5.2f%%)\n", indent, " ",
+		    s->ts_retrans_dt,
+		    PERCENT(s->ts_retrans_dt, s->ts_DT_sent));
+		fprintf(stdout,
+		    "\t%*sXPD %6ld (%5.2f%%)\n",  indent, " ",
+		    s->ts_retrans_xpd,
+		    PERCENT(s->ts_retrans_xpd, s->ts_XPD_sent));
+#undef PERCENT
+	}
 
-	fprintf(stdout,
-	"\t%*sCR  %6ld   CC  %6ld   DR  %6ld \n", indent, " ",
-		s->ts_retrans_cr, s->ts_retrans_cc, s->ts_retrans_dr);
-	fprintf(stdout,
-	"\t%*sDT  %6ld (%5.2f%%)\n", indent, " ",
-		s->ts_retrans_dt,
-		PERCENT(s->ts_retrans_dt, s->ts_DT_sent));
-	fprintf(stdout,
-	"\t%*sXPD %6ld (%5.2f%%)\n",  indent, " ",
-		s->ts_retrans_xpd,
-		PERCENT(s->ts_retrans_xpd, s->ts_XPD_sent));
+	if (s->ts_Eticks || s->ts_Eset || s->ts_Eexpired || s->ts_Ecan_act ||
+	    sflag<=1) {
+		fprintf(stdout,
+		    "\n%*sE Timers: [%6ld ticks]\n", indent, " ",
+		    s->ts_Eticks);
+		fprintf(stdout,
+		    "%*s%6ld timer%s set \t%6ld timer%s expired "
+		    "\t%6ld timer%s cancelled\n", indent, " ",
+		    s->ts_Eset, plural(s->ts_Eset),
+		    s->ts_Eexpired, plural(s->ts_Eexpired),
+		    s->ts_Ecan_act, plural(s->ts_Ecan_act));
+	}
 
+	if (s->ts_Cset || s->ts_Cexpired || s->ts_Ccan_act ||
+	    s->ts_Ccan_inact || sflag<=1) {
+		fprintf(stdout,
+		    "\n%*sC Timers: [%6ld ticks]\n",  indent, " ",
+		    s->ts_Cticks);
+		fprintf(stdout,
+		    "%*s%6ld timer%s set \t%6ld timer%s expired "
+		    "\t%6ld timer%s cancelled\n",
+		    indent, " ",
+		    s->ts_Cset, plural(s->ts_Cset),
+		    s->ts_Cexpired, plural(s->ts_Cexpired),
+		    s->ts_Ccan_act, plural(s->ts_Ccan_act));
+		fprintf(stdout,
+		    "%*s%6ld inactive timer%s cancelled\n", indent, " ",
+		    s->ts_Ccan_inact, plural(s->ts_Ccan_inact));
+	}
 
-	fprintf(stdout,
-		"\n%*sE Timers: [%6ld ticks]\n", indent, " ", s->ts_Eticks);
-	fprintf(stdout,
-		"%*s%6ld timer%s set \t%6ld timer%s expired \t%6ld timer%s cancelled\n",indent, " ",
-		s->ts_Eset, plural(s->ts_Eset),
-		s->ts_Eexpired, plural(s->ts_Eexpired),
-		s->ts_Ecan_act, plural(s->ts_Ecan_act));
+	pgroup(tpstatpr_p, "\n%*sPathological debugging activity:\n");
 
-	fprintf(stdout,
-		"\n%*sC Timers: [%6ld ticks]\n",  indent, " ",s->ts_Cticks);
-	fprintf(stdout,
-	"%*s%6ld timer%s set \t%6ld timer%s expired \t%6ld timer%s cancelled\n",
-		indent, " ",
-		s->ts_Cset, plural(s->ts_Cset),
-		s->ts_Cexpired, plural(s->ts_Cexpired),
-		s->ts_Ccan_act, plural(s->ts_Ccan_act));
-	fprintf(stdout,
-		"%*s%6ld inactive timer%s cancelled\n", indent, " ",
-		s->ts_Ccan_inact, plural(s->ts_Ccan_inact));
-
-	fprintf(stdout,
-		"\n%*sPathological debugging activity:\n", indent, " ");
-	p(ts_zdebug, "\t%*s%6ld CC%s sent to zero dref\n");
-	/* SAME LINE AS ABOVE */
-	p(ts_ydebug, "\t%*s%6ld random DT%s dropped\n");
-	p(ts_vdebug, "\t%*s%6ld illegally large XPD TPDU%s\n");
-	p1(ts_ldebug, "\t%*s%6ld faked reneging of cdt\n");
-
-	fprintf(stdout, "\n%*sACK reasons:\n", indent, " ");
-	p1(ts_ackreason[_ACK_DONT_], "\t%*s%6ld not acked immediately\n");
-	p1(ts_ackreason[_ACK_STRAT_EACH_], "\t%*s%6ld strategy==each\n");
-	p1(ts_ackreason[_ACK_STRAT_FULLWIN_],
-	    "\t%*s%6ld strategy==fullwindow\n");
-	p1(ts_ackreason[_ACK_DUP_], "\t%*s%6ld duplicate DT\n");
-	p1(ts_ackreason[_ACK_EOT_], "\t%*s%6ld EOTSDU\n");
-	p1(ts_ackreason[_ACK_REORDER_], "\t%*s%6ld reordered DT\n");
-	p1(ts_ackreason[_ACK_USRRCV_], "\t%*s%6ld user rcvd\n");
-	p1(ts_ackreason[_ACK_FCC_], "\t%*s%6ld fcc reqd\n");
-#undef p1
-#undef p
+	pgroup(tpstatpr_A, "\n%*sACK reasons:\n");
+#undef pgroup
 }
 #ifndef SSEL
 #define SSEL(s) ((s)->siso_tlen + TSEL(s))
