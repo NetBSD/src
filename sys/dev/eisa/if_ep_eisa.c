@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.19 1998/11/04 00:29:55 fvdl Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.20 1999/04/13 22:34:05 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -53,8 +53,10 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *      This product includes software developed by Herb Peyerl.
- * 4. The name of Herb Peyerl may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *      This product includes software developed by Jonathan Stone.
+ * 4. The name of Herb Peyerl or Jonathan Stone may not be used to endorse
+ *    or promote products derived from this software without specific
+ *    prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -234,7 +236,7 @@ ep_eisa_attach(parent, self, aux)
 		panic("ep_eisa_attach: impossible");
 	}
 
-	printf(": 3Com %s\n", eep->eep_name);
+	printf(": %s\n", eep->eep_name);
 
 	sc->enable = NULL;
 	sc->disable = NULL;
