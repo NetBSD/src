@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.35 2000/06/30 17:32:43 jwise Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.36 2000/06/30 18:03:50 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.35 2000/06/30 17:32:43 jwise Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.36 2000/06/30 18:03:50 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -192,7 +192,7 @@ int	Initialized = 0;	/* set when we have initialized ourselves */
 int	MarkInterval = 20 * 60;	/* interval between marks in seconds */
 int	MarkSeq = 0;		/* mark sequence number */
 int	SecureMode = 0;		/* listen only on unix domain socks */
-int	NoNetMode = 0;		/* send+listen only on unix domain socks */
+int	NumForwards = 0;	/* number of forwarding actions in conf file */
 char	**LogPaths;		/* array of pathnames to read messages from */
 
 void	cfline __P((char *, struct filed *));
@@ -228,7 +228,7 @@ main(argc, argv)
 	char *p, *line, **pp;
 	struct pollfd *readfds;
 
-	while ((ch = getopt(argc, argv, "dsSf:m:p:P:")) != -1)
+	while ((ch = getopt(argc, argv, "dsf:m:p:P:")) != -1)
 		switch(ch) {
 		case 'd':		/* debug */
 			Debug++;
@@ -249,9 +249,6 @@ main(argc, argv)
 			break;
 		case 's':		/* no network listen mode */
 			SecureMode++;
-			break;
-		case 'S':		/* no network at all mode */
-			NoNetMode++;
 			break;
 		case '?':
 		default:
@@ -323,6 +320,7 @@ main(argc, argv)
 		dprintf("listening on unix dgram socket %s\n", *pp);
 	}
 
+	init(0);
 	finet = socksetup(PF_UNSPEC);
 	if (finet) {
 		if (SecureMode) {
@@ -349,7 +347,6 @@ main(argc, argv)
 
 	dprintf("off & running....\n");
 
-	init(0);
 	(void)signal(SIGHUP, init);
 
 	/* setup pollfd set. */
@@ -452,7 +449,7 @@ usage()
 	extern char *__progname;
 
 	(void)fprintf(stderr,
-"usage: %s [-dsS] [-f conffile] [-m markinterval] [-P logpathfile] [-p logpath1] [-p logpath2 ..]\n",
+"usage: %s [-ds] [-f conffile] [-m markinterval] [-P logpathfile] [-p logpath1] [-p logpath2 ..]\n",
 	    __progname);
 	exit(1);
 }
@@ -1232,8 +1229,6 @@ cfline(line, f)
 	switch (*p)
 	{
 	case '@':
-		if (!finet)
-			break;
 		(void)strcpy(f->f_un.f_forw.f_hname, ++p);
 		memset(&hints, 0, sizeof(hints));
 		hints.ai_family = AF_UNSPEC;
@@ -1247,6 +1242,7 @@ cfline(line, f)
 		}
 		f->f_un.f_forw.f_addr = res;
 		f->f_type = F_FORW;
+		NumForwards++;
 		break;
 
 	case '/':
@@ -1341,7 +1337,7 @@ socksetup(af)
 	struct addrinfo hints, *res, *r;
 	int error, maxs, *s, *socks;
 
-	if(NoNetMode)
+	if(SecureMode && !NumForwards)
 		return(NULL);
 
 	memset(&hints, 0, sizeof(hints));
