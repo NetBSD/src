@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.12 1997/01/05 18:57:04 mark Exp $ */
+/* $NetBSD: autoconf.c,v 1.12.2.1 1997/01/14 21:24:54 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -94,7 +94,7 @@ struct {
 #if NCD > 0
 	{ "cd", 0x1a },
 #endif
-#ifdef NFSCLIENT
+#ifdef NFS
 	{ "nfs", 0x01 },	/* This is the fake swap device so never valid */
 #endif
 	{ NULL, 0x00 },
@@ -254,9 +254,9 @@ set_boot_devs()
 	set_root_device();
 #ifdef GENERIC
 	set_swap_device();
-#ifdef NFSCLIENT
+#ifdef NFS
 	if (major(rootdev) != 1)
-#endif	/* NFSCLIENT */
+#endif	/* NFS */
 	{
 		if (swdevt[0].sw_dev == NODEV && minor(rootdev) < (MAXPARTITIONS - 2))
 			swdevt[0].sw_dev = makedev(major(rootdev), minor(rootdev) + 1);

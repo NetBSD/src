@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.22 1996/12/22 10:10:41 cgd Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.22.2.1 1997/01/14 21:27:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -44,6 +44,7 @@
 #include <sys/socket.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
+#include <sys/device.h>
 #include <sys/mbuf.h>
 #include <sys/file.h>
 #include <sys/disklabel.h>
@@ -76,6 +77,7 @@ struct vfsops ffs_vfsops = {
 	ffs_fhtovp,
 	ffs_vptofh,
 	ffs_init,
+	ffs_mountroot,
 };
 
 extern u_long nextgennumber;
@@ -97,7 +99,10 @@ ffs_mountroot()
 	struct ufsmount *ump;
 	size_t size;
 	int error;
-	
+
+	if (root_device->dv_class != DV_DISK)
+		return (ENODEV);
+
 	/*
 	 * Get vnodes for swapdev and rootdev.
 	 */

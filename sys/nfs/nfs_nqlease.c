@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.16 1996/10/13 01:39:06 christos Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.16.2.1 1997/01/14 21:27:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -811,7 +811,7 @@ nfsmout:
 }
 #endif /* NFSSERVER */
 
-#ifdef NFSCLIENT
+#ifdef NFS
 /*
  * Client get lease rpc function.
  */
@@ -1168,7 +1168,7 @@ nqnfs_clientlease(nmp, np, rwflag, cachable, expiry, frev)
 		CIRCLEQ_INSERT_AFTER(&nmp->nm_timerhead, tp, np, n_timer);
 	}
 }
-#endif /* NFSCLIENT */
+#endif /* NFS */
 
 /*
  * Adjust all timer queue expiry times when the time of day clock is changed.

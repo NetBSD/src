@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.7 1997/01/11 11:20:32 ragge Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.7.2.1 1997/01/14 21:26:35 thorpej Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -943,9 +943,9 @@ rasize(dev)
 }
 
 int
-ra_getdev(adaptor, controller, unit, uname)
+ra_getdev(adaptor, controller, unit, devpp)
 	int adaptor, controller, unit;
-	char **uname;
+	struct device **devpp;
 {
 	struct mscp_softc *mi;
 	struct ra_softc *ra;
@@ -958,7 +958,7 @@ ra_getdev(adaptor, controller, unit, uname)
 		mi = (void *)ra->ra_dev.dv_parent;
 		if (mi->mi_ctlrnr == controller && mi->mi_adapnr == adaptor &&
 		    ra->ra_hwunit == unit) {
-			*uname = ra->ra_dev.dv_xname;
+			*devpp = &ra->ra_dev;
 			return i;
 		}
 	}

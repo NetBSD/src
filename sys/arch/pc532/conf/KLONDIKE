@@ -1,4 +1,4 @@
-#	$NetBSD: KLONDIKE,v 1.9 1996/12/23 08:36:37 matthias Exp $
+#	$NetBSD: KLONDIKE,v 1.9.2.1 1997/01/14 21:25:44 thorpej Exp $
 #
 # KLONDIKE: Matthias Pfaller's pc532
 #
@@ -13,7 +13,6 @@ options		DDB			# kernel debugger; recommended
 options		KTRACE			# system call tracing, a la ktrace(1)
 
 #options	ACCOUNTING		# process accounting
-options		FIFO			# fifos; recommended
 #options	SYSVSHM			# System V shared memory; broken
 #options	SHMMAXPGS=1024
 options		LKM			# loadable kernel modules
@@ -23,15 +22,17 @@ options		INSECURE		# allow lkms in multiuser mode
 options		COMPAT_43		# 4.3 system calls
 
 # file system options
-#options	QUOTA			# file system quotas
-options		FFS			# Berkeley fast file system
-#options	LFS			# log-structered file system
-options		MFS			# memory file system; uses RAM and swap
-options		FDESC			# /dev/fd
-options		KERNFS			# /kern
-options		PROCFS			# /proc
+file-system 	FFS			# Berkeley fast file system
+#file-system	LFS			# log-structered file system
+file-system 	MFS			# memory file system; uses RAM and swap
+file-system 	FDESC			# /dev/fd
+file-system 	KERNFS			# /kern
+file-system 	PROCFS			# /proc
+file-system 	NFS			# Network File System client
+
+options		FIFO			# fifos; recommended
 options		NFSSERVER		# Network File System server
-options		NFSCLIENT		# Network File System client
+#options	QUOTA			# file system quotas
 
 # networking options
 #options	GATEWAY			# packet forwarding
@@ -50,7 +51,7 @@ options		NS381			# FPU installed
 options		PLIP			# PLIP driver in dev/lpt.c
 options		DEV_RTC			# RTC driver in pc532/mem.c
 
-config		netbsd root on sd0a swap on sd0b and sd1b
+config		netbsd root on sd0a type ffs swap on sd0b and sd1b
 
 sd0 at scsibus0 target 0 lun 0		# Quantum LP52S
 sd1 at scsibus0 target 1 lun 0		# Micropolis 4110

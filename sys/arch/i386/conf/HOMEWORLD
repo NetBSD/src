@@ -1,4 +1,4 @@
-#	$NetBSD: HOMEWORLD,v 1.8 1996/12/07 00:26:08 thorpej Exp $
+#	$NetBSD: HOMEWORLD,v 1.8.2.1 1997/01/14 21:25:17 thorpej Exp $
 #
 #	HOMEWORLD - Mail, CVS, and GNATS server
 #
@@ -53,24 +53,23 @@ options		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 #options	USER_LDT	# user-settable LDT; used by WINE
 #options	LKM		# loadable kernel modules
 
-options		FFS		# UFS
+file-system 	FFS		# UFS
+file-system 	NFS		# Network File System client
+#file-system 	LFS		# log-structured file system
+file-system 	MFS		# memory file system
+file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+#file-system 	MSDOSFS		# MS-DOS file system
+file-system 	FDESC		# /dev/fd
+file-system 	KERNFS		# /kern
+#file-system 	NULLFS		# loopback file system
+#file-system 	PORTAL		# portal filesystem (still experimental)
+file-system 	PROCFS		# /proc
+#file-system 	UMAPFS		# NULLFS + uid and gid remapping
+#file-system 	UNION		# union file system
+
 #options	QUOTA		# UFS quotas
-#options	LFS		# log-structured file system
-options		MFS		# memory file system
-
-options		NFSCLIENT	# Network File System client
 options		NFSSERVER	# Network File System server
-
-options		CD9660		# ISO 9660 + Rock Ridge file system
-#options	MSDOSFS		# MS-DOS file system
-options		FDESC		# /dev/fd
 options		FIFO		# FIFOs; RECOMMENDED
-options		KERNFS		# /kern
-#options	NULLFS		# loopback file system
-#options	PORTAL		# portal filesystem (still experimental)
-options		PROCFS		# /proc
-#options	UMAPFS		# NULLFS + uid and gid remapping
-#options	UNION		# union file system
 
 #options	GATEWAY		# packet forwarding
 options		INET		# IP + ICMP + TCP + UDP
@@ -85,7 +84,7 @@ options		INET		# IP + ICMP + TCP + UDP
 options 	NKMEMCLUSTERS=2048	# slots in kmem_map
 options 	NMBCLUSTERS=1024	# slots in mb_map
 
-config		netbsd root on sd0a swap on sd0b and sd1b
+config		netbsd root on sd0a type ffs swap on sd0b and sd1b
 #options	GENERIC
 #options	COMCONSOLE=0,CONADDR=0x3f8,CONUNIT=0,CONSPEED=9600
 

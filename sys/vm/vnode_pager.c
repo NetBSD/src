@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_pager.c,v 1.21 1996/10/12 21:50:16 christos Exp $	*/
+/*	$NetBSD: vnode_pager.c,v 1.21.4.1 1997/01/14 21:27:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -466,7 +466,7 @@ vnode_pager_uncache(vp)
 		return (TRUE);
 #ifdef DEBUG
 	if (!VOP_ISLOCKED(vp)) {
-#ifdef NFSCLIENT
+#ifdef NFS
 		extern int (**nfsv2_vnodeop_p) __P((void *));
 		extern int (**spec_nfsv2nodeop_p) __P((void *));
 #ifdef FIFO

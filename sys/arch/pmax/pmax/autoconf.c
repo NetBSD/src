@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18 1996/10/13 03:39:44 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18.2.1 1997/01/14 21:26:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,8 +65,7 @@
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/turbochannel.h>
 
-void setroot __P((void));
-void swapconf __P((void));
+void findroot __P((void));
 void dumpconf __P((void)); 	/* XXX */
 
 void xconsinit __P((void));	/* XXX console-init continuation */
@@ -102,6 +101,16 @@ int cputype;
 extern int initcpu __P((void));		/*XXX*/
 void configure_scsi __P((void));
 
+void	findroot __P((struct device **, int *));
+
+struct devnametobdevmaj pmax_nam2blk[] = {
+	{ "rz",		21 },
+#ifdef notyet
+	{ "md",		XXX },
+#endif
+	{ NULL,		0 },
+};
+
 /*
  * Determine mass storage and memory configuration for a machine.
  * Print cpu type, and then iterate over an array of devices
@@ -112,7 +121,8 @@ void configure_scsi __P((void));
 void
 configure()
 {
-	int s;
+	struct device *booted_device;
+	int booted_partition, s;
 
 	/*
 	 * Set CPU type for new-style config. 
@@ -164,152 +174,60 @@ configure()
 	printf("Beginning old-style SCSI device autoconfiguration\n");
 	configure_scsi();
 
-#ifdef GENERIC
-	if ((boothowto & RB_ASKNAME) == 0)
-		setroot();
-	setconf();
-#else
-	setroot();
-#endif
+	findroot(&booted_device, &booted_partition);
+
+	printf("boot device: %s\n",
+	    booted_device ? booted_device->dv_xname : "<unknown>");
+
+	setroot(booted_device, booted_partition, pmax_nam2blk);
+
 	swapconf();
+	dumpconf();
 	cold = 0;
 }
 
-/*
- * Configure swap space and related parameters.
- */
-void
-swapconf()
-{
-	register struct swdevt *swp;
-	register int nblks;
-
-	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
-		int maj = major(swp->sw_dev);
-
-		if (maj > nblkdev)
-			break;
-		if (bdevsw[maj].d_psize) {
-			nblks = (*bdevsw[maj].d_psize)(swp->sw_dev);
-			if (nblks != -1 &&
-			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
-				swp->sw_nblks = nblks;
-			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
-		}
-	}
-	dumpconf();
-}
-
-#define	DOSWAP			/* Change swdevt and dumpdev too */
 u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
-
-static	char devname[][2] = {
-	{  0,  0  },	/*  0 = 4.4bsd rz */
-	{  0,  0  },	/*  1 = vax ht */
-	{  0,  0  },	/*  2 = ?? */
-	{ 'r','k' },	/*  3 = rk */
-	{  0,  0  },	/*  4 = sw */
-	{ 't','m' },	/*  5 = tm */
-	{ 't','s' },	/*  6 = ts */
-	{ 'm','t' },	/*  7 = mt */
-	{ 'r','t' },	/*  8 = rt*/
-	{  0,  0  },	/*  9 = ?? */
-	{ 'u','t' },	/* 10 = ut */
-	{ 'i','d' },	/* 11 = 11/725 idc */
-	{ 'r','x' },	/* 12 = rx */
-	{ 'u','u' },	/* 13 = uu */
-	{ 'r','l' },	/* 14 = rl */
-	{ 't','u' },	/* 15 = tmscp */
-	{ 'c','s' },	/* 16 = cs */
-	{ 'm','d' },	/* 17 = md */
-	{ 's','t' },	/* 18 = st */
-	{ 's','d' },	/* 19 = sd */
-	{ 't','z' },	/* 20 = tz */
-	{ 'r','z' },	/* 21 = rz */
-	{  0,  0  },	/* 22 = ?? */
-	{ 'r','a' },	/* 23 = ra */
-};
-
-#define	PARTITIONMASK	0x7
-#define	PARTITIONSHIFT	3
 
 /*
  * Attempt to find the device from which we were booted.
- * If we can do so, and not instructed not to do so,
- * change rootdev to correspond to the load device.
  */
 void
-setroot()
+findroot(devpp, partp)
+	struct device **devpp;
+	int *partp;
 {
-	int  majdev, mindev, unit, part, controller;
-	dev_t  orootdev;
-	struct swdevt *swp;
-	register struct pmax_scsi_device *dp;
+	int i, majdev, unit, part, controller;
+	struct device *dv;
+	struct pmax_scsi_device *dp;
 
-#ifdef DOSWAP
-	dev_t temp;
-#endif
+	/*
+	 * Default to "not found".
+	 */
+	*devpp = NULL;
+	*partp = 0;
 
-	if (boothowto & RB_DFLTROOT ||
-	    (bootdev & B_MAGICMASK) != B_DEVMAGIC)
+	if ((bootdev & B_MAGICMASK) != B_DEVMAGIC)
 		return;
+
 	majdev = B_TYPE(bootdev);
-	if (majdev >= sizeof(devname) / sizeof(devname[0]))
-		return;
+	for (i = 0; pmax_nam2blk[i].d_name != NULL; i++)
+		if (majdev == pmax_nam2blk[i].d_maj)
+			break;
+
 	controller = B_CONTROLLER(bootdev);
 	part = B_PARTITION(bootdev);
 	unit = B_UNIT(bootdev);
 
-	for (dp = scsi_dinit; ; dp++) {
-		if (dp->sd_driver == 0)
-			return;
+	for (dp = scsi_dinit; dp->sd_driver != NULL; dp++) {
 		if (dp->sd_alive && dp->sd_drive == unit &&
 		    dp->sd_ctlr == controller &&
-		    dp->sd_driver->d_name[0] == devname[majdev][0] &&
-		    dp->sd_driver->d_name[1] == devname[majdev][1]) {
-			mindev = dp->sd_unit;
-		    	break;
+		    dp->sd_driver->d_name[0] == pmax_nam2blk[i].d_name[0] &&
+		    dp->sd_driver->d_name[1] == pmax_nam2blk[i].d_name[1]) {
+			*devpp = sd->sd_devp;
+			*partp = part;
+			return;
 		}
 	}
-	/*
-	 * Form a new rootdev
-	 */
-	mindev = (mindev << PARTITIONSHIFT) + part;
-	orootdev = rootdev;
-	rootdev = makedev(majdev, mindev);
-	/*
-	 * If the original rootdev is the same as the one
-	 * just calculated, don't need to adjust the swap configuration.
-	 */
-	if (rootdev == orootdev)
-		return;
-
-	printf("Changing root device to %c%c%d%c\n",
-		devname[majdev][0], devname[majdev][1],
-		mindev >> PARTITIONSHIFT, part + 'a');
-
-#ifdef DOSWAP
-	mindev &= ~PARTITIONMASK;
-	temp = 0;
-	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
-		if (majdev == major(swp->sw_dev) &&
-		    mindev == (minor(swp->sw_dev) & ~PARTITIONMASK)) {
-			temp = swdevt[0].sw_dev;
-			swdevt[0].sw_dev = swp->sw_dev;
-			swp->sw_dev = temp;
-			break;
-		}
-	}
-	if (swp->sw_dev == NODEV)
-		return;
-
-	/*
-	 * If dumpdev was the same as the old primary swap
-	 * device, move it to the new primary swap device.
-	 */
-	if (temp == dumpdev)
-		dumpdev = swdevt[0].sw_dev;
-#endif
 }
 
 /*
