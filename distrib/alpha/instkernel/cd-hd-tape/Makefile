@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1999/03/22 08:44:57 ross Exp $
+#	$NetBSD: Makefile,v 1.4 1999/04/07 06:47:50 cgd Exp $
 
 IMAGE=		cdhdtape
 IMAGESIZE=	5760
@@ -18,7 +18,7 @@ KERN?=		netbsd-xxx
 MDEC=		${DESTDIR}/usr/mdec
 FSTMP=		ustar.tmp
 
-PRIMARYBOOT=	${DESTDIR}/usr/mdec/bootxx
+PRIMARYBOOT=	${DESTDIR}/usr/mdec/bootxx.old
 SECONDARYBOOT=	${DESTDIR}/usr/mdec/boot
 
 DISKTYPE=	floppy
@@ -45,7 +45,7 @@ all:	netbsd
 	@echo not really doing rm ${FSTMP}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
 	@echo "installing new bootblocks"
-	${MDEC}/installboot -b 17 -v	\
+	${MDEC}/installboot.old -b 17 -v	\
 		${SECONDARYBOOT} ${PRIMARYBOOT} ${VND_CRDEV}
 	vnconfig -u ${VND_CDEV}
 

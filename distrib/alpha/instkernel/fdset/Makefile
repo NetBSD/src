@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1998/10/29 00:37:07 ross Exp $
+#	$NetBSD: Makefile,v 1.3 1999/04/07 06:47:50 cgd Exp $
 
 IMAGE1=		disk1of2
 IMAGE2=		disk2of2
@@ -17,7 +17,7 @@ KERN?=		netbsd-xxx
 MDEC=		${DESTDIR}/usr/mdec
 FSTMP=		ustar.tmp
 
-PRIMARYBOOT=	${DESTDIR}/usr/mdec/bootxx
+PRIMARYBOOT=	${DESTDIR}/usr/mdec/bootxx.old
 SECONDARYBOOT=	${DESTDIR}/usr/mdec/boot
 
 DISKTYPE=	floppy
@@ -38,7 +38,7 @@ all:	netbsd
 	dd bs=8k seek=1 count=179 if=${FSTMP} of=${VND_CDEV}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
 	@echo "installing new bootblocks"
-	${MDEC}/installboot -b 17 -v	\
+	${MDEC}/installboot.old -b 17 -v	\
 		${SECONDARYBOOT} ${PRIMARYBOOT} ${VND_CRDEV}
 	vnconfig -u ${VND_CDEV}
 	@echo Making disk number two.
