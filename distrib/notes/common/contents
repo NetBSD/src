@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.72 2002/07/22 17:53:26 lukem Exp $
+.\"	$NetBSD: contents,v 1.73 2002/07/24 02:50:22 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -772,6 +772,7 @@ Binary sets for the X Window System are distributed with
 .Nx .
 The sets are:
 .(tag xcontrib
+.
 .It Sy xbase
 The basic files needed for a complete X
 client environment.
@@ -787,7 +788,7 @@ This does not include the X servers.
 .if \n[mipseb] .setsize 4 12
 .if \n[mipsel] .setsize 4 12
 .if \n[ns32k] .setsize -unknown- -unknown-
-.if \n[powerpc] .setsize -unknown- -unknown-
+.if \n[powerpc] .setsize 3 9
 .if \n[sh3eb] .setsize -unknown- -unknown-
 .if \n[sh3el] .setsize -unknown- -unknown-
 .if \n[sparc] .setsize -unknown- -unknown-
@@ -808,7 +809,7 @@ The extra libraries and include files needed to compile X source code.
 .if \n[mipseb] .setsize 3 10
 .if \n[mipsel] .setsize 3 10
 .if \n[ns32k] .setsize -unknown- -unknown-
-.if \n[powerpc] .setsize -unknown- -unknown-
+.if \n[powerpc] .setsize 2 9
 .if \n[sh3eb] .setsize -unknown- -unknown-
 .if \n[sh3el] .setsize -unknown- -unknown-
 .if \n[sparc] .setsize -unknown- -unknown-
@@ -890,7 +891,7 @@ server with man pages.
 .It Sy xserver
 The Xmacppc
 server which supports 256 colors with man pages.
-.showsize -unknown- -unknown-
+.showsize 2 5
 .\}
 .
 .if \n[pmax] \{\
