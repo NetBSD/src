@@ -1,4 +1,4 @@
-/*	$NetBSD: siopreg.h,v 1.3 2000/04/27 14:06:58 bouyer Exp $	*/
+/*	$NetBSD: siopreg.h,v 1.4 2000/05/02 19:03:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -69,9 +69,33 @@
 #define SCNTL3_ULTRA	0x80	/* 875 only */
 #define SCNTL3_SCF_SHIFT 4
 #define SCNTL3_SCF_MASK	0x70
-#define SCNTL3_EWS	0x04	/* 875 only */
+#define SCNTL3_EWS	0x08	/* 875 only */
 #define SCNTL3_CCF_SHIFT 0
 #define SCNTL3_MASK	0x07
+
+/* periods for various SCF values, assume transfer period of 4 */
+struct scf_period {
+	int clock; /* clock period (ns * 10) */
+	int period; /* scsi period, as set in the SDTR message */
+	int scf; /* scf value to use */
+	char *rate; /* the resulting rate */
+};
+
+static struct scf_period scf_period[] = {
+	{250, 25, 1, "10.0"},
+	{250, 37, 2, "6.67"},
+	{250, 50, 3, "5.0"},
+	{250, 75, 4, "3.33"},
+	{125, 12, 1, "20.0"},
+	{125, 18, 2, "13.33"},
+	{125, 25, 3, "10.0"},
+	{125, 37, 4, "6.67"},
+	{125, 50, 5, "5.0"},
+	{ 62, 10, 1, "40.0"},
+	{ 62, 12, 3, "20.0"},
+	{ 62, 18, 4, "13.3"},
+	{ 62, 25, 5, "10.0"},
+};
 
 #define SIOP_SCID	0x04 /* SCSI chip ID R/W */
 #define SCID_RRE	0x40
@@ -83,7 +107,7 @@
 #define SCXFER_TP_SHIFT	 5
 #define SCXFER_TP_MASK	0xe0
 #define SCXFER_MO_SHIFT  0
-#define SCXFER_MO_MASK  0x0f
+#define SCXFER_MO_MASK  0x1f
 
 #define SIOP_SDID	0x06 /* SCSI destiation ID, R/W */
 #define SDID_ENCID_SHIFT 0
@@ -313,6 +337,15 @@
 
 #define SIOP_STEST3	0x4F /* SCSI test 3, RO, RW on 875 */
 #define STEST3_TE	0x80
+#define STEST3_HSC	0x20
+
+#define SIOP_STEST4	0x52 /* SCSI test 4, 895 only */
+#define STEST4_MODE_MASK 0xc0
+#define STEST4_MODE_DIF	0x40
+#define STEST4_MODE_SE	0x80
+#define STEST4_MODE_LVD	0xc0
+#define STEST4_LOCK	0x20
+#define STEST4_
 
 #define SIOP_SIDL	0x50 /* SCSI input data latch, RO */
 
