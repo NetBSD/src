@@ -1,4 +1,4 @@
-/*	$NetBSD: bill.c,v 1.4 1996/05/22 00:34:35 mrg Exp $	*/
+/*	$NetBSD: bill.c,v 1.5 1997/10/18 20:03:06 christos Exp $	 */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)bill.c	5.2 (Berkeley) 5/28/91";
 #else
-static char rcsid[] = "$NetBSD: bill.c,v 1.4 1996/05/22 00:34:35 mrg Exp $";
+__RCSID("$NetBSD: bill.c,v 1.5 1997/10/18 20:03:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,6 +49,7 @@ static char rcsid[] = "$NetBSD: bill.c,v 1.4 1996/05/22 00:34:35 mrg Exp $";
 #include <stdio.h>
 #include <unistd.h>
 #include "header.h"
+#include "extern.h"
 
 /* bill.c		 Larn is copyrighted 1986 by Noah Morgan. */
 
@@ -116,17 +118,17 @@ char *mail[] = {
 };
 
 /*
- *	function to mail the letters to the player if a winner
+ * function to mail the letters to the player if a winner
  */
 
 void
 mailbill()
 {
-	register int i;
-	char fname[32];
-	char buf[128];
+	int    i;
+	char   fname[32];
+	char   buf[128];
 	char **cp;
-	int fd;
+	int    fd;
 
 	wait(0);
 	if (fork() == 0) {
@@ -135,15 +137,15 @@ mailbill()
 		sprintf(fname, "/tmp/#%dlarnmail", getpid());
 		for (i = 0; i < 6; i++) {
 			if ((fd = open(fname, O_WRONLY | O_TRUNC | O_CREAT,
-			    0666)) == -1)
+				       0666)) == -1)
 				exit(0);
 			while (*cp != NULL) {
 				if (*cp[0] == '1') {
-					sprintf(buf, "\n%d gold pieces back with you from your journey.  As the",
-					    (long)c[GOLD]);
+					sprintf(buf, "\n%ld gold pieces back with you from your journey.  As the",
+						(long) c[GOLD]);
 					write(fd, buf, strlen(buf));
 				} else if (*cp[0] == '2') {
-					sprintf(buf, "\nin preparing your tax bill.  You owe %d gold pieces as", (long)c[GOLD]*TAXRATE);
+					sprintf(buf, "\nin preparing your tax bill.  You owe %ld gold pieces as", (long) c[GOLD] * TAXRATE);
 					write(fd, buf, strlen(buf));
 				} else
 					write(fd, *cp, strlen(*cp));
@@ -153,7 +155,7 @@ mailbill()
 
 			close(fd);
 			sprintf(buf, "mail -I %s < %s > /dev/null",
-			    loginname, fname);
+				loginname, fname);
 			system(buf);
 			unlink(fname);
 		}
