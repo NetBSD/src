@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)interface.h	5.6 (Berkeley) 6/1/90
- *	$Id: interface.h,v 1.4 1993/08/01 18:24:36 mycroft Exp $
+ *	$Id: interface.h,v 1.5 1993/12/11 01:47:28 cgd Exp $
  */
 
 /*
@@ -79,6 +79,8 @@ struct interface {
 #define	IFF_DEBUG	0x4		/* turn on debugging */
 #define	IFF_LOOPBACK	0x8		/* software loopback net */
 #define	IFF_POINTOPOINT	0x10		/* interface is point-to-point link */
+
+#define	IFF_FLAGMASK	0x1f		/* mask for relevant int_flags bits */
 
 #define	IFF_SUBNET	0x1000		/* interface on subnetted network */
 #define	IFF_PASSIVE	0x2000		/* can't tell if up/down */
