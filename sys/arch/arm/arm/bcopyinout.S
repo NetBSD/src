@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.9 2002/10/13 14:54:47 bjh21 Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.10 2003/05/24 05:31:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: bcopyinout.S,v 1.9 2002/10/13 14:54:47 bjh21 Exp $")	
+RCSID("$NetBSD: bcopyinout.S,v 1.10 2003/05/24 05:31:04 thorpej Exp $")	
 
 	.text
 	.align	0
@@ -63,7 +63,7 @@ RCSID("$NetBSD: bcopyinout.S,v 1.9 2002/10/13 14:54:47 bjh21 Exp $")
 #define RESTORE_REGS	ldmfd	sp!, {r4-r11, r14}
 #endif
 		
-#if 0 && defined(__XSCALE__)
+#if defined(__XSCALE__)
 #define HELLOCPP #
 #define PREFETCH(rx,o)	pld	[ rx , HELLOCPP (o) ]
 #else
