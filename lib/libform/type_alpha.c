@@ -1,4 +1,4 @@
-/*	$NetBSD: type_alpha.c,v 1.3 2001/01/20 14:48:55 augustss Exp $	*/
+/*	$NetBSD: type_alpha.c,v 1.4 2001/01/21 11:42:14 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -133,9 +133,13 @@ alpha_check_field(FIELD *field, char *args)
 	if ((new = (char *) malloc(sizeof(char) * (end - start))) == NULL)
 		return FALSE;
 
-	strncpy(new, &buf[start], end - start - 1);
-	new[end] = '\0';
-
+	if ((end - start) >= 1) {
+		strncpy(new, &buf[start], (unsigned) end - start - 1);
+		new[end] = '\0';
+	} else
+		new[0] = '\0';
+	
+		
 	set_field_buffer(field, 0, new);
 	free(new);
 	
