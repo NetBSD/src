@@ -1,4 +1,4 @@
-/*	$NetBSD: write.c,v 1.19 2001/01/03 13:25:11 mjl Exp $	*/
+/*	$NetBSD: write.c,v 1.20 2002/08/02 01:59:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: write.c,v 1.19 2001/01/03 13:25:11 mjl Exp $");
+__RCSID("$NetBSD: write.c,v 1.20 2002/08/02 01:59:44 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,8 +63,9 @@ __RCSID("$NetBSD: write.c,v 1.19 2001/01/03 13:25:11 mjl Exp $");
 #include <paths.h>
 #include <pwd.h>
 #include <unistd.h>
-#include <utmp.h>
 #include <err.h>
+
+#include "utmpentry.h"
 
 void done(int);
 void do_write(const char *, const char *, const uid_t);
@@ -143,20 +144,13 @@ main(int argc, char **argv)
 int
 utmp_chk(const char *user, const char *tty)
 {
-	struct utmp u;
-	int ufd;
+	struct utmpentry *ep;
 
-	if ((ufd = open(_PATH_UTMP, O_RDONLY)) < 0)
-		return(0);	/* ignore error, shouldn't happen anyway */
+	(void)getutentries(NULL, &ep);
 
-	while (read(ufd, (char *) &u, sizeof(u)) == sizeof(u))
-		if (strncmp(user, u.ut_name, sizeof(u.ut_name)) == 0 &&
-		    strncmp(tty, u.ut_line, sizeof(u.ut_line)) == 0) {
-			(void)close(ufd);
+	for (; ep; ep = ep->next)
+		if (strcmp(user, ep->name) == 0 && strcmp(tty, ep->line) == 0)
 			return(0);
-		}
-
-	(void)close(ufd);
 	return(1);
 }
 
@@ -174,39 +168,34 @@ utmp_chk(const char *user, const char *tty)
 void
 search_utmp(char *user, char *tty, char *mytty, uid_t myuid, int ttylen)
 {
-	struct utmp u;
 	time_t bestatime, atime;
-	int ufd, nloggedttys, nttys, msgsok, user_is_me;
-	char atty[UT_LINESIZE + 1];
+	int nloggedttys, nttys, msgsok, user_is_me;
+	struct utmpentry *ep;
 
-	if ((ufd = open(_PATH_UTMP, O_RDONLY)) < 0)
-		err(1, "%s", _PATH_UTMP);
+	(void)getutentries(NULL, &ep);
 
 	nloggedttys = nttys = 0;
 	bestatime = 0;
 	user_is_me = 0;
-	while (read(ufd, (char *) &u, sizeof(u)) == sizeof(u))
-		if (strncmp(user, u.ut_name, sizeof(u.ut_name)) == 0) {
+	for (; ep; ep = ep->next)
+		if (strcmp(user, ep->name) == 0) {
 			++nloggedttys;
-			(void)strncpy(atty, u.ut_line, UT_LINESIZE);
-			atty[UT_LINESIZE] = '\0';
-			if (term_chk(atty, &msgsok, &atime, 0))
+			if (term_chk(ep->line, &msgsok, &atime, 0))
 				continue;	/* bad term? skip */
 			if (myuid && !msgsok)
 				continue;	/* skip ttys with msgs off */
-			if (strcmp(atty, mytty) == 0) {
+			if (strcmp(ep->line, mytty) == 0) {
 				user_is_me = 1;
 				continue;	/* don't write to yourself */
 			}
 			++nttys;
 			if (atime > bestatime) {
 				bestatime = atime;
-				(void)strncpy(tty, atty, ttylen - 1);
+				(void)strncpy(tty, ep->line, ttylen - 1);
 				tty[ttylen - 1] = '\0';
 			}
 		}
 
-	(void)close(ufd);
 	if (nloggedttys == 0)
 		errx(1, "%s is not logged in", user);
 	if (nttys == 0) {
