@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.5.2.1 2000/07/26 23:59:21 mycroft Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.5.2.2 2000/08/07 01:31:42 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -241,7 +241,7 @@ fpu_ftoi(fe, fp)
  * of the SPARC instruction set).
  */
 u_int
-fpu_ftoxi(fe, fp, res)
+fpu_ftox(fe, fp, res)
 	struct fpemu *fe;
 	register struct fpn *fp;
 	u_int *res;
@@ -436,7 +436,7 @@ done:
  * so we can avoid a small bit of work.
  */
 u_int
-fpu_ftox(fe, fp, res)
+fpu_ftoq(fe, fp, res)
 	struct fpemu *fe;
 	register struct fpn *fp;
 	u_int *res;
@@ -507,7 +507,7 @@ fpu_implode(fe, fp, type, space)
 
 #ifdef SUN4U
 	case FTYPE_LNG:
-		space[0] = fpu_ftoxi(fe, fp, space);
+		space[0] = fpu_ftox(fe, fp, space);
 		break;
 #endif /* SUN4U */
 
@@ -525,7 +525,7 @@ fpu_implode(fe, fp, type, space)
 
 	case FTYPE_EXT:
 		/* funky rounding precision options ?? */
-		space[0] = fpu_ftox(fe, fp, space);
+		space[0] = fpu_ftoq(fe, fp, space);
 		break;
 
 	default:
