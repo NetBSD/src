@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.71.2.16 2002/01/29 22:46:19 he Exp $
+.\"	$NetBSD: hardware,v 1.71.2.17 2002/02/06 14:18:40 he Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
@@ -27,6 +27,8 @@ MFM, ESDI, IDE, and RLL hard disk controllers.
 There is complete support (including IDE DMA or Ultra-DMA) for the following
 PCI controllers
 .(bullet -compact
+Acard ATA-850 and 860 based IDE Controllers
+.It
 Acer labs M5229 IDE Controller
 .It
 Advanced Micro Devices AMD-756 and 766 IDE Controllers
