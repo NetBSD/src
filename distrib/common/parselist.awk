@@ -1,4 +1,4 @@
-#	$NetBSD: parselist.awk,v 1.10 2002/04/10 02:01:43 lukem Exp $
+#	$NetBSD: parselist.awk,v 1.10.2.1 2002/05/29 04:52:13 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -75,11 +75,13 @@
 #
 #	P	CMD	arg1 [...]	run CMD as a shell command
 #
-#	M P	COPY	src dest [mode]	copy src to dest
+#	M P	COPY	src dest [perm]	copy src to dest. perm defaults to 0444
 #
 #	M P	COPYDIR	src dest	recursively copy files under src to
 #					dest.  for M, dest is listed first,
 #					followed by the subdirectories in src.
+#					copied directories have mode 0755.
+#					copied files have mode 0444.
 #
 #	C	LIBS	libspec ...	as per crunchgen(1) `libs'
 #
@@ -153,7 +155,7 @@ BEGIN \
 $1 == "COPY" \
 {
 	if (NF < 3 || NF > 4)
-		err("Usage: COPY src dest [mode]");
+		err("Usage: COPY src dest [perm]");
 	if (mode == "populate" || mode == "mtree")
 		copy($2, $3, $4);
 	next;
@@ -212,7 +214,7 @@ $1 == "PROG" \
 			if (crunchprog == "") {
 				crunchprog = $i;
 				copy(ENVIRON["OBJDIR"] "/" ENVIRON["CRUNCHBIN"],
-				    crunchprog);
+				    crunchprog, 555);
 				continue;
 			}
 			link(crunchprog, $i);
@@ -262,7 +264,7 @@ $1 == "CMD" \
 		printf("(cd %s;", ENVIRON["TARGETDIR"]);
 		for (i = 2; i <= NF; i++)
 			printf(" %s", $i);
-		print ")";
+		print ") || exit 1";
 	}
 	next;
 }
@@ -292,14 +294,14 @@ function basename (file) \
 
 function copy (src, dest, perm) \
 {
+	if (perm == "")
+		perm = 444;
 	if (mode == "mtree") {
-		printf("./%s%s\n", dest, perm != "" ? " mode=" perm : "");
+		printf("./%s mode=%s\n", dest, perm);
 	} else {
 		printf("rm -rf %s/%s\n", ENVIRON["TARGETDIR"], dest);
 		printf("cp %s %s/%s\n", src, ENVIRON["TARGETDIR"], dest);
-		if (perm != "")
-			printf("chmod %s %s/%s\n", perm,
-			    ENVIRON["TARGETDIR"], dest);
+		printf("chmod %s %s/%s\n", perm, ENVIRON["TARGETDIR"], dest);
 	}
 }
 
@@ -309,7 +311,8 @@ function link (src, dest) \
 		printf("./%s\n", dest);
 	} else {
 		printf("rm -rf %s/%s\n", ENVIRON["TARGETDIR"], dest);
-		printf("(cd %s; ln %s %s)\n", ENVIRON["TARGETDIR"], src, dest);
+		printf("(cd %s; ln %s %s) || exit 1\n",
+		    ENVIRON["TARGETDIR"], src, dest);
 	}
 }
 
@@ -319,8 +322,8 @@ function symlink (src, dest) \
 		printf("./%s type=link link=%s\n", dest, src);
 	} else {
 		printf("rm -rf %s/%s\n", ENVIRON["TARGETDIR"], dest);
-		printf("(cd %s; ln -s %s %s)\n", ENVIRON["TARGETDIR"],
-		    src, dest);
+		printf("(cd %s; ln -s %s %s) || exit 1\n",
+		    ENVIRON["TARGETDIR"], src, dest);
 	}
 }
 
