@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.11 1996/11/20 18:57:18 gwr Exp $	*/
+/*	$NetBSD: pte.h,v 1.12 1997/01/18 19:27:17 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -85,5 +85,18 @@
 #define VA_PTE_NUM(va) ((va & VA_PTE_NUM_MASK) >> VA_PTE_NUM_SHIFT)
 
 #define PA_PGNUM(pa) ((unsigned)pa >> PGSHIFT)
+
+/*
+ * Mach derived conversion macros
+ */
+#define sun3_round_seg(x)	((((unsigned)(x)) + SEGOFSET) & ~SEGOFSET)
+#define sun3_trunc_seg(x)	((unsigned)(x) & ~SEGOFSET)
+#define sun3_btos(x)		((unsigned)(x) >> SEGSHIFT)
+#define sun3_stob(x)		((unsigned)(x) << SEGSHIFT)
+
+#define sun3_round_page(x)	((((unsigned)(x)) + PGOFSET) & ~PGOFSET)
+#define sun3_trunc_page(x)	((unsigned)(x) & ~PGOFSET)
+#define sun3_btop(x)		((unsigned)(x) >> PGSHIFT)
+#define sun3_ptob(x)		((unsigned)(x) << PGSHIFT)
 
 #endif /* !_MACHINE_PTE_H*/
