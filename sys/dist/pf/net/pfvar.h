@@ -1,4 +1,4 @@
-/*	$NetBSD: pfvar.h,v 1.6 2004/11/14 11:12:16 yamt Exp $	*/
+/*	$NetBSD: pfvar.h,v 1.7 2004/12/04 10:35:54 yamt Exp $	*/
 /*	$OpenBSD: pfvar.h,v 1.202 2004/07/12 00:50:22 itojun Exp $ */
 
 /*
@@ -843,7 +843,7 @@ struct pfi_kif {
 	int				 pfik_states;
 	int				 pfik_rules;
 #ifdef __NetBSD__
-	struct hook_desc_head		*pfik_ifaddrhooks;
+	struct hook_desc_head		 pfik_ifaddrhooks;
 #endif
 };
 #define pfik_name	pfik_if.pfif_name
