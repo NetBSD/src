@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.7 1999/12/24 17:03:34 minoura Exp $
+#	$NetBSD: Makefile.inc,v 1.7.4.1 2000/07/14 15:44:20 minoura Exp $
 #
 #	etc.x68k/Makefile.inc -- x68k-specific etc Makefile targets
 #
 
 # Set this for any kernels beyond GENERIC you want to include
 # in the distribution.
-EXTRA_KERNELS+= SMALL
 BUILD_KERNELS+=	INSTALL INSTALL_SMALL
 
 LOCALTIME=	Japan
