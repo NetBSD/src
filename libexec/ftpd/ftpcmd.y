@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.13 1997/06/18 19:05:49 christos Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.14 1997/06/24 08:49:27 hannken Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.13 1997/06/18 19:05:49 christos Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.14 1997/06/24 08:49:27 hannken Exp $");
 #endif
 #endif /* not lint */
 
@@ -734,10 +734,11 @@ check_modify
 			if (logged_in)  {
 				if (curclass.modify) {
 					$$ = 1;
-				} else
+				} else {
 					reply(502,
 					"No permission to use this command.");
 					$$ = 0;
+				}
 			} else {
 				reply(530, "Please login with USER and PASS.");
 				$$ = 0;
