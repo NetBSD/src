@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)reg.h	5.5 (Berkeley) 1/18/91
- *	$Id: reg.h,v 1.2 1993/05/22 08:00:36 cgd Exp $
+ *	$Id: reg.h,v 1.3 1993/05/24 11:37:21 cgd Exp $
  */
 
 /*
@@ -91,4 +91,6 @@
 #define	NIPCREG 14
 int ipcreg[NIPCREG] =
   { tES,tDS,tEDI,tESI,tEBP,tEBX,tEDX,tECX,tEAX,tEIP,tCS,tEFLAGS,tESP,tSS };
+int sipcreg[NIPCREG] =	/* Should we define a structure with all regs? XXX */
+  { 0,  0,  sEDI,sESI,sEBP,sEBX,sEDX,sECX,sEAX,sEIP,sCS,sEFLAGS,sESP,sSS };
 #endif
