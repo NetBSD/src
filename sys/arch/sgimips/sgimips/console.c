@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.25 2004/04/10 20:15:12 pooka Exp $	*/
+/*	$NetBSD: console.c,v 1.26 2004/04/10 21:47:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.25 2004/04/10 20:15:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.26 2004/04/10 21:47:33 pooka Exp $");
 
 #include "opt_kgdb.h"
 
@@ -86,7 +86,6 @@ consinit()
 	speed = strtoul(dbaud, NULL, 10);
 
 	switch (mach_type) {
-	case MACH_SGI_IP20:
 	case MACH_SGI_IP22:
 #if (NGIO > 0) && (NPCKBC > 0) 
 		if (strcmp(consdev, "video()") == 0) {
@@ -105,6 +104,7 @@ consinit()
 		}
 #endif
 	case MACH_SGI_IP12:
+	case MACH_SGI_IP20:
 #if (NZSC > 0)
 		if ((strlen(consdev) == 9) &&
 		    (!strncmp(consdev, "serial", 6)) &&
