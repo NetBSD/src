@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.h,v 1.8 1998/08/13 09:59:52 kleink Exp $	*/
+/*	$NetBSD: genfs.h,v 1.8.8.1 1999/07/04 01:44:43 chs Exp $	*/
 
 int	genfs_badop	__P((void *));
 int	genfs_nullop	__P((void *));
@@ -16,3 +16,6 @@ int	genfs_seek	__P((void *));
 int	genfs_abortop	__P((void *));
 int	genfs_revoke	__P((void *));
 int	genfs_lease_check __P((void *));
+
+int	genfs_getpages __P((void *));
+int	genfs_putpages __P((void *));
