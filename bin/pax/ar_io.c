@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.29 2002/12/10 18:33:26 christos Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.30 2002/12/12 05:00:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.29 2002/12/10 18:33:26 christos Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.30 2002/12/12 05:00:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -230,7 +230,7 @@ ar_open(const char *name)
 		case EXTRACT:
 			return -1;
 		case APPND:
-			act = ARCHIVE;
+			act = -ARCHIVE;
 			return -1;
 		case ARCHIVE:
 			break;
