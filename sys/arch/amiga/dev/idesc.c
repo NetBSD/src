@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.38 1999/04/01 16:22:57 mhitch Exp $	*/
+/*	$NetBSD: idesc.c,v 1.39 1999/04/16 03:29:49 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -458,7 +458,7 @@ idescattach(pdp, dp, auxp)
 				continue;
 			}
 			if (idecommand(&sc->sc_ide[i], 0, 0, 0,
-			    sizeof(struct ataparams), ATAPI_IDENTIFY) != 0 ||
+			    DEV_BSIZE, ATAPI_IDENTIFY) != 0 ||
 			    wait_for_drq(sc) != 0) {
 #ifdef DEBUG_ATAPI
 				printf("\nATAPI_IDENTIFY failed for drive %d",
@@ -466,10 +466,10 @@ idescattach(pdp, dp, auxp)
 #endif
 				continue;
 			}
-			len = rp->ide_cyl_lo + rp->ide_cyl_hi * 256;
+			len = DEV_BSIZE;
 #ifdef DEBUG_ATAPI
 			printf("\nATAPI_IDENTIFY returned %d/%d bytes",
-			    len, sizeof(struct ataparams));
+			    rp->ide_cyl_lo + rp->ide_cyl_hi * 256, DEV_BSIZE);
 #endif
 			while (len) {
 				if (p < (u_short *)(&id + 1))
