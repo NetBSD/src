@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.16 2000/02/06 12:49:43 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.17 2000/02/07 05:42:59 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -754,6 +754,7 @@ in6_control(so, cmd, data, ifp, p)
 		if ((ifp->if_flags & IFF_POINTOPOINT) &&
 		    (ifra->ifra_dstaddr.sin6_family == AF_INET6)) {
 			in6_ifscrub(ifp, ia);
+			oldaddr = ia->ia_dstaddr;
 			ia->ia_dstaddr = ifra->ifra_dstaddr;
 			/* link-local index check: should be a separate function? */
 			if (IN6_IS_ADDR_LINKLOCAL(&ia->ia_dstaddr.sin6_addr)) {
