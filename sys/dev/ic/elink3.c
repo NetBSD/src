@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.25 1997/04/23 08:15:03 cjs Exp $	*/
+/*	$NetBSD: elink3.c,v 1.26 1997/04/24 02:24:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -1311,8 +1311,12 @@ epget(sc, totlen)
 		}
 		if (totlen >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
-			if (m->m_flags & M_EXT)
-				len = MCLBYTES;
+			if ((m->m_flags & M_EXT) == 0)
+				splx(sh);
+				m_freem(top);
+				return 0;
+			}
+			len = MCLBYTES;
 		}
 		if (top == 0)  {
 			/* align the struct ip header */
