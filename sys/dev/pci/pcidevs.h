@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.372 2001/10/25 11:57:44 augustss Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.373 2001/11/07 18:55:29 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.367 2001/10/25 11:57:15 augustss Exp 
+ *	NetBSD: pcidevs,v 1.368 2001/11/07 18:53:51 thorpej Exp 
  */
 
 /*
@@ -1024,6 +1024,9 @@
 #define	PCI_PRODUCT_CYCLADES_CYCLOM8Y_2	0x0105		/* Cyclom-8Y above 1M */
 #define	PCI_PRODUCT_CYCLADES_CYCLOMZ_1	0x0200		/* Cyclom-Z below 1M */
 #define	PCI_PRODUCT_CYCLADES_CYCLOMZ_2	0x0201		/* Cyclom-Z above 1M */
+
+/* Cyclone Microsystems products */
+#define	PCI_PRODUCT_CYCLONE_PCI_700	0x0700		/* IQ80310 (PCI-700) */
 
 /* Cyrix (now National) products */
 #define	PCI_PRODUCT_CYRIX_MEDIAGX_PCHB	0x0001		/* MediaGX Built-in PCI Host Controller */
