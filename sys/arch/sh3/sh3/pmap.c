@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13 2001/01/14 03:25:46 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.14 2001/02/02 02:28:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -395,6 +395,8 @@ static void		pmap_unmap_ptes __P((struct pmap *));
 
 void			pmap_pinit __P((pmap_t));
 void			pmap_release __P((pmap_t));
+void			pmap_changebit(struct pv_head *, pt_entry_t,
+			    pt_entry_t);
 
 /*
  * p m a p   i n l i n e   h e l p e r   f u n c t i o n s
@@ -2318,7 +2320,7 @@ pmap_page_remove(pg)
 /*
  * pmap_test_attrs: test a page's attributes
  *
- * => we set pv_head => pmap locking
+ * => no need for any locking here
  */
 
 boolean_t
@@ -2326,11 +2328,7 @@ pmap_test_attrs(pg, testbits)
 	struct vm_page *pg;
 	int testbits;
 {
-	int bank, off;
-	char *myattrs;
-	struct pv_head *pvh;
-	struct pv_entry *pve;
-	pt_entry_t *ptes, pte;
+	int bank, off, attr;
 
 	/* XXX: vm_page should either contain pv_head or have a pointer to it */
 	bank = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), &off);
@@ -2339,68 +2337,30 @@ pmap_test_attrs(pg, testbits)
 		return(FALSE);
 	}
 
-	/*
-	 * before locking: see if attributes are already set and if so,
-	 * return!
-	 */
+	attr = vm_physmem[bank].pmseg.attrs[off];
 
-	myattrs = &vm_physmem[bank].pmseg.attrs[off];
-	if (*myattrs & testbits)
-		return(TRUE);
-
-	/* test to see if there is a list before bothering to lock */
-	pvh = &vm_physmem[bank].pmseg.pvhead[off];
-	if (pvh->pvh_list == NULL) {
-		return(FALSE);
-	}
-
-	/* nope, gonna have to do it the hard way */
-	PMAP_HEAD_TO_MAP_LOCK();
-	/* XXX: needed if we hold head->map lock? */
-	simple_lock(&pvh->pvh_lock);
-
-	for (pve = pvh->pvh_list; pve != NULL && (*myattrs & testbits) == 0;
-	     pve = pve->pv_next) {
-		ptes = pmap_map_ptes(pve->pv_pmap);
-		pte = ptes[sh3_btop(pve->pv_va)];
-		pmap_unmap_ptes(pve->pv_pmap);
-		*myattrs |= pte;
-	}
-
-	/*
-	 * note that we will exit the for loop with a non-null pve if
-	 * we have found the bits we are testing for.
-	 */
-
-	simple_unlock(&pvh->pvh_lock);
-	PMAP_HEAD_TO_MAP_UNLOCK();
-	return((*myattrs & testbits) != 0);
+	return ((attr & testbits) != 0 ? TRUE : FALSE);
 }
 
 /*
- * pmap_change_attrs: change a page's attributes
+ * pmap_clear_modify: clear the "modified" attribute on a page.
  *
  * => we set pv_head => pmap locking
- * => we return TRUE if we cleared one of the bits we were asked to
+ * => we return TRUE if the page was marked "modified".
  */
 
 boolean_t
-pmap_change_attrs(pg, setbits, clearbits)
-	struct vm_page *pg;
-	int setbits, clearbits;
+pmap_clear_modify(vm_page_t pg)
 {
-	u_int32_t result;
 	int bank, off;
 	struct pv_head *pvh;
-	struct pv_entry *pve;
-	pt_entry_t *ptes, npte;
-	char *myattrs;
+	boolean_t rv;
 
 	/* XXX: vm_page should either contain pv_head or have a pointer to it */
 	bank = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), &off);
 	if (bank == -1) {
-		printf("pmap_change_attrs: unmanaged page?\n");
-		return(FALSE);
+		printf("pmap_clear_modify: unmanged page?\n");
+		return (FALSE);
 	}
 
 	PMAP_HEAD_TO_MAP_LOCK();
@@ -2408,24 +2368,87 @@ pmap_change_attrs(pg, setbits, clearbits)
 	/* XXX: needed if we hold head->map lock? */
 	simple_lock(&pvh->pvh_lock);
 
-	myattrs = &vm_physmem[bank].pmseg.attrs[off];
-	result = *myattrs & clearbits;
-	*myattrs = (*myattrs | setbits) & ~clearbits;
+	if (vm_physmem[bank].pmseg.attrs[off] & PGA_MODIFIED) {
+		rv = TRUE;
+		pmap_changebit(pvh, 0, ~PG_M);
+		vm_physmem[bank].pmseg.attrs[off] &= ~PGA_MODIFIED;
+	} else
+		rv = FALSE;
+
+	simple_unlock(&pvh->pvh_lock);
+	PMAP_HEAD_TO_MAP_UNLOCK();
+
+	return (rv);
+}
+
+/*
+ * pmap_clear_reference: clear the "referenced" attribute on a page.
+ *
+ * => we set pv_head => pmap locking
+ * => we return TRUE if the page was marked "modified".
+ * => XXX Note, referenced emulation isn't complete.
+ */
+
+boolean_t
+pmap_clear_reference(vm_page_t pg)
+{
+	int bank, off;
+	struct pv_head *pvh;
+	boolean_t rv;
+
+	/* XXX: vm_page should either contain pv_head or have a pointer to it */
+	bank = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), &off);
+	if (bank == -1) {
+		printf("pmap_clear_modify: unmanged page?\n");
+		return (FALSE);
+	}
+
+	PMAP_HEAD_TO_MAP_LOCK();
+	pvh = &vm_physmem[bank].pmseg.pvhead[off];
+	/* XXX: needed if we hold head->map lock? */
+	simple_lock(&pvh->pvh_lock);
+
+	if (vm_physmem[bank].pmseg.attrs[off] & PGA_REFERENCED) {
+		rv = TRUE;
+#if 0 /* XXX notyet */
+		pmap_changebit(pvh, 0, ~PG_V);
+#endif
+		vm_physmem[bank].pmseg.attrs[off] &= ~PGA_REFERENCED;
+	} else
+		rv = FALSE;
+
+	simple_unlock(&pvh->pvh_lock);
+	PMAP_HEAD_TO_MAP_UNLOCK();
+
+	return (rv);
+}
+
+/*
+ * pmap_changebit: set or clear the specified PTEL bits for all
+ *	mappings on the specified page.
+ *
+ * => We expect the pv_head -> map lock to be held
+ */
+
+void
+pmap_changebit(struct pv_head *pvh, pt_entry_t set, pt_entry_t mask)
+{
+	struct pv_entry *pve;
+	pt_entry_t *ptes, npte;
 
 	for (pve = pvh->pvh_list; pve != NULL; pve = pve->pv_next) {
-#ifdef DIAGNOSTIC
-		if (pve->pv_va >= uvm.pager_sva && pve->pv_va < uvm.pager_eva) {
-			printf("pmap_change_attrs: found pager VA on pv_list\n");
+		/*
+		 * XXX Don't write protect pager mappings.
+		 */
+		if (pve->pv_pmap == pmap_kernel() &&
+/* XXX */	    (mask == ~(PG_RW))) {
+			if (pve->pv_va >= uvm.pager_sva &&
+			    pve->pv_va < uvm.pager_eva)
+				continue;
 		}
-		if (!pmap_valid_entry(pve->pv_pmap->pm_pdir[pdei(pve->pv_va)]))
-			panic("pmap_change_attrs: mapping without PTP "
-			      "detected");
-#endif
 
 		ptes = pmap_map_ptes(pve->pv_pmap);		/* locks pmap */
-		npte = ptes[sh3_btop(pve->pv_va)];
-		result |= (npte & clearbits);
-		npte = (npte | setbits) & ~clearbits;
+		npte = (ptes[sh3_btop(pve->pv_va)] | set) & mask;
 		if (ptes[sh3_btop(pve->pv_va)] != npte) {
 			ptes[sh3_btop(pve->pv_va)] = npte;	/* zap! */
 
@@ -2435,11 +2458,6 @@ pmap_change_attrs(pg, setbits, clearbits)
 		}
 		pmap_unmap_ptes(pve->pv_pmap);		/* unlocks pmap */
 	}
-
-	simple_unlock(&pvh->pvh_lock);
-	PMAP_HEAD_TO_MAP_UNLOCK();
-
-	return(result != 0);
 }
 
 /*
@@ -2449,9 +2467,36 @@ pmap_change_attrs(pg, setbits, clearbits)
 /*
  * pmap_page_protect: change the protection of all recorded mappings
  *	of a managed page
- *
- * => NOTE: this is an inline function in pmap.h
  */
+
+void
+pmap_page_protect(vm_page_t pg, vm_prot_t prot)
+{
+	int bank, off;
+	struct pv_head *pvh;
+
+	if ((prot & VM_PROT_WRITE) == 0) {
+		if (prot & VM_PROT_ALL) {
+			bank = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), &off);
+			if (bank == -1) {
+				printf("pmap_page_protect: unmanged page?\n");
+				return;
+			}
+
+			PMAP_HEAD_TO_MAP_LOCK();
+			pvh = &vm_physmem[bank].pmseg.pvhead[off];
+			/* XXX: needed if we hold head->map lock? */
+			simple_lock(&pvh->pvh_lock);
+
+			pmap_changebit(pvh, 0, ~PG_RW);
+
+			simple_unlock(&pvh->pvh_lock);
+			PMAP_HEAD_TO_MAP_UNLOCK();
+		} else {
+			pmap_page_remove(pg);
+		}
+	}
+}
 
 /* see pmap.h */
 
@@ -3270,20 +3315,49 @@ enter_now:
 	 */
 
 	npte = pa | protection_codes[prot] | PG_V | PG_N | PG_4K;
-	if (pvh)
+	if (pvh) {
+		/*
+		 * Page is managed.  Deal with modified/referenced
+		 * attributes.
+		 *
+		 * XXX Referenced emulation could be improved.
+		 */
+		int attrs;
+
+		simple_lock(&pvh->pvh_lock);
+		if (flags & VM_PROT_WRITE)
+			vm_physmem[bank].pmseg.attrs[off] |=
+			    (PGA_REFERENCED|PGA_MODIFIED);
+		else if (flags & VM_PROT_ALL)
+			vm_physmem[bank].pmseg.attrs[off] |=
+			    PGA_REFERENCED;
+		attrs = vm_physmem[bank].pmseg.attrs[off];
+		simple_unlock(&pvh->pvh_lock);
+
+		/*
+		 * If the page is dirty, don't fault on write.
+		 */
+		if (attrs & PGA_MODIFIED)
+			npte |= PG_M;
+
+		/*
+		 * Mapping was entered on the PV list.
+		 */
 		npte |= PG_PVLIST;
+	} else {
+		/*
+		 * Non-managed page -- mark it "dirty" anyway.
+		 */
+		npte |= PG_M;
+	}
 	if (wired)
 		npte |= PG_W;
 	if (va < VM_MAXUSER_ADDRESS)
 		npte |= PG_u;
 	else if (va < VM_MAX_ADDRESS)
 		npte |= (PG_u | PG_RW);	/* XXXCDC: no longer needed? */
-	if (pmap == pmap_kernel()) {
+	if (pmap == pmap_kernel())
 		npte |= pmap_pg_g;
-		npte |= PG_M;		/* XXX */
-	}
-	if (flags & VM_PROT_WRITE)
-		npte |= PG_M;
 
 	ptes[sh3_btop(va)] = npte;		/* zap! */
 
@@ -3446,23 +3520,52 @@ pmap_emulate_reference(p, va, user, write)
 	vaddr_t va;
 	int user, write;
 {
-	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
-	pt_entry_t *ptes;
+	struct pmap *pmap;
+	pt_entry_t *ptes, pte;
+	paddr_t pa;
+	struct pv_head *pvh;
+	int bank, off;
 
-	if (pmap_valid_entry(pmap->pm_pdir[pdei(va)])) {
-		ptes = pmap_map_ptes(pmap);		/* locks pmap */
+	/*
+	 * Convert process and virtual address to physical address.
+	 */
+	if (user)
+		pmap = p->p_vmspace->vm_map.pmap;
+	else
+		pmap = pmap_kernel();
 
-		if (!pmap_valid_entry(ptes[sh3_btop(va)]))
-			panic("pmap_set_modify: invalid (unmapped) va");
-		ptes[sh3_btop(va)] |= PG_M;
-		pmap_update_pg(va);
-		pmap_unmap_ptes(pmap);		/* unlocks map */
-	}
-#ifdef DIAGNOSTIC
-	else {
-		panic("pmap_emulate_reference: invalid PDE");
-	}
-#endif
+	ptes = pmap_map_ptes(pmap);		/* locks pmap */
+	pte = ptes[sh3_btop(va)];
+	if (pmap_valid_entry(pte) == FALSE)
+		panic("pmap_emulate_reference: invalid pte");
+	pa = pte & PG_FRAME;
+	pmap_unmap_ptes(pmap);			/* unlocks pmap */
+
+	/*
+	 * Twiddle the appropriate bits to reflect the reference
+	 * and/or modification.
+	 *
+	 * The rules:
+	 *	(1) always mark the page as referenced, and
+	 *	(2) if it was a write fault, mark page as modified.
+	 */
+
+	bank = vm_physseg_find(sh3_btop(pa), &off);
+	if (bank == -1)
+		panic("pmap_emulate_reference: unmanaged page?");
+	pvh = &vm_physmem[bank].pmseg.pvhead[off];
+
+	pte = PG_V;	/* referenced */
+	if (write)
+		pte |= PG_M;
+
+	PMAP_HEAD_TO_MAP_LOCK();
+	simple_lock(&pvh->pvh_lock);
+
+	pmap_changebit(pvh, pte, ~0);
+
+	simple_unlock(&pvh->pvh_lock);
+	PMAP_HEAD_TO_MAP_UNLOCK();
 }
 
 paddr_t
