@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.38 2000/09/21 10:27:34 ad Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.39 2001/03/18 16:34:08 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.38 2000/09/21 10:27:34 ad Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.39 2001/03/18 16:34:08 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -138,7 +138,7 @@ main(int argc, char **argv)
 	char *p, *cfile;
 	int c, needroot, i, force;
 	size_t lineno;
-	
+
 	force = 0;
 	needroot = 1;
 	cfile = _PATH_NEWSYSLOGCONF;
@@ -467,7 +467,8 @@ log_examine(struct conf_entry *log, int force)
 		trim = 1;
 		reason = "log size > size";
 	} else if (log->trimat != (time_t)-1 && now >= log->trimat &&
-		   age > 1 && difftime(now, log->trimat) < 60 * 60) {
+		   (age == -1 || age > 1) &&
+		   difftime(now, log->trimat) < 60 * 60) {
 		trim = 1;
 		reason = "specific trim time";
 	} else {
