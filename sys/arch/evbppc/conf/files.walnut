@@ -1,4 +1,4 @@
-#	$NetBSD: files.walnut,v 1.6 2004/03/13 17:31:33 bjh21 Exp $
+#	$NetBSD: files.walnut,v 1.7 2004/03/30 00:54:34 simonb Exp $
 #
 # walnut-specific configuration info
 
@@ -58,15 +58,3 @@ file	arch/evbppc/walnut/dev/ds1743.c		ds1743rtc
 include "dev/pckbport/files.pckbport"
 attach	pckbc at pbus with pckbc_pbus
 file	arch/evbppc/walnut/dev/pckbc_pbus.c	pckbc_pbus
-
-#
-# Machine-independent CardBus drivers
-#
-
-# XXX dev/pcmcia needs fdc
-device fdc {drive = -1}
-
-include "dev/cardbus/files.cardbus"
-include "dev/pcmcia/files.pcmcia"
-
-file arch/macppc/macppc/rbus_machdep.c		cardbus
