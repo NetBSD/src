@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.11 2000/01/13 08:54:20 joda Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.12 2000/01/13 09:01:17 joda Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -2353,6 +2353,9 @@ pccbb_pcmcia_do_mem_map(ph, win)
   u_int8_t mem_window;
   int reg;
 
+  int kind = ph->mem[win].kind & ~PCMCIA_WIDTH_MEM_MASK;
+  int mem8 = (ph->mem[win].kind & PCMCIA_WIDTH_MEM_MASK) == PCMCIA_WIDTH_MEM8;
+
   regbase_win = 0x10 + win*0x08;
 
   phys_addr = ph->mem[win].addr;
@@ -2367,7 +2370,7 @@ pccbb_pcmcia_do_mem_map(ph, win)
 
   start_low = (phys_addr >> PCIC_MEMREG_LSB_SHIFT) & 0xff; /* bit 19:12 */
   start_high = ((phys_addr >> PCIC_MEMREG_MSB_SHIFT) & 0x0f) /* bit 23:20 */
-    | PCIC_SYSMEM_ADDRX_START_MSB_DATASIZE_16BIT; /* bit 7 on */
+      | mem8 ? 0 : PCIC_SYSMEM_ADDRX_START_MSB_DATASIZE_16BIT; /* bit 7 on */
  /* bit 31:24, for 32-bit address */
   mem_window = (phys_addr >> PCIC_MEMREG_WIN_SHIFT) & 0xff; /* bit 31:24 */
 
@@ -2396,7 +2399,7 @@ pccbb_pcmcia_do_mem_map(ph, win)
   off_low = (ph->mem[win].offset >> PCIC_CARDMEM_ADDRX_SHIFT) & 0xff;
   off_high = ((ph->mem[win].offset >> (PCIC_CARDMEM_ADDRX_SHIFT + 8))
 	      & PCIC_CARDMEM_ADDRX_MSB_ADDR_MASK)
-    | ((ph->mem[win].kind == PCMCIA_MEM_ATTR) ?
+    | ((kind == PCMCIA_MEM_ATTR) ?
        PCIC_CARDMEM_ADDRX_MSB_REGACTIVE_ATTR : 0);
 
   Pcic_write(ph, regbase_win + PCIC_CMA_LOW, off_low);
