@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #if !defined(lint) && !defined(SCCSID)
 #if 0
 static char sccsid[] = "@(#)test.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD";
+__RCSID("$NetBSD: test.c,v 1.4 1997/10/23 06:35:42 lukem Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -69,8 +69,12 @@ static char rcsid[] = "$NetBSD";
 static int continuation = 0;
 static EditLine *el = NULL;
 
+static	u_char	complete __P((EditLine *, int));
+	int	main __P((int, char **));
+static	char   *prompt __P((EditLine *));
+static	void	sig __P((int));
+
 static char *
-/*ARGSUSED*/
 prompt(el)
     EditLine *el;
 {
@@ -88,7 +92,6 @@ sig(i)
 }
 
 static unsigned char
-/*ARGSUSED*/
 complete(el, ch)
     EditLine *el;
     int ch;
@@ -123,7 +126,6 @@ complete(el, ch)
 }
 
 int
-/*ARGSUSED*/
 main(argc, argv)
     int argc;
     char *argv[];
@@ -132,6 +134,7 @@ main(argc, argv)
     const char *buf;
     Tokenizer *tok;
     History *hist;
+    HistEvent ev;
 
     (void) signal(SIGINT, sig);
     (void) signal(SIGQUIT, sig);
@@ -139,7 +142,7 @@ main(argc, argv)
     (void) signal(SIGTERM, sig);
 
     hist = history_init();		/* Init the builtin history	*/
-    history(hist, H_EVENT, 100);	/* Remember 100 events		*/
+    history(hist, &ev, H_SETMAXSIZE, 100);	/* Remember 100 events	*/
 
     tok  = tok_init(NULL);		/* Initialize the tokenizer	*/
 
@@ -179,37 +182,37 @@ main(argc, argv)
 	    continue;
 
 	if (tok_line(tok, buf, &ac, &av) > 0) {
-	    history(hist, continuation ? H_ADD : H_ENTER, buf);
+	    history(hist, &ev, continuation ? H_ADD : H_ENTER, buf);
 	    continuation = 1;
 	    continue;
 	}
 
-	history(hist, continuation ? H_ADD : H_ENTER, buf);
+	history(hist, &ev, continuation ? H_ADD : H_ENTER, buf);
 
 	continuation = 0;
 
 	if (strcmp(av[0], "history") == 0) {
-	    const struct HistEvent *he;
+	    int rv;
 
 	    switch (ac) {
 	    case 1:
-		for (he = history(hist, H_LAST); he;
-		     he = history(hist, H_PREV))
-		    (void) fprintf(stdout, "%4d %s", he->num, he->str);
+		for (rv = history(hist, &ev, H_LAST); rv != -1;
+		     rv = history(hist, &ev, H_PREV))
+		    (void) fprintf(stdout, "%4d %s", ev.num, ev.str);
 		break;
 
 	    case 2:
 		if (strcmp(av[1], "clear") == 0)
-		     history(hist, H_CLEAR);
+		     history(hist, &ev, H_CLEAR);
 		else
 		     goto badhist;
 		break;
 
 	    case 3:
 		if (strcmp(av[1], "load") == 0)
-		     history(hist, H_LOAD, av[2]);
+		     history(hist, &ev, H_LOAD, av[2]);
 		else if (strcmp(av[1], "save") == 0)
-		     history(hist, H_SAVE, av[2]);
+		     history(hist, &ev, H_SAVE, av[2]);
 		break;
 
 	    badhist:
