@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vfsops.c	7.31 (Berkeley) 5/6/91
- *	$Id: nfs_vfsops.c,v 1.12 1994/03/31 05:44:49 glass Exp $
+ *	$Id: nfs_vfsops.c,v 1.13 1994/04/10 01:22:23 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -500,6 +500,7 @@ nfs_unmount(mp, mntflags, p)
 	 */
 	vrele(vp);
 	vput(vp);
+	vgone(vp);
 	nfs_disconnect(nmp);
 	m_freem(nmp->nm_nam);
 	free((caddr_t)nmp, M_NFSMNT);
