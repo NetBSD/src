@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.12 1994/10/14 16:01:54 mycroft Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.13 1995/03/21 07:48:14 glass Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -37,6 +37,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
@@ -129,7 +130,7 @@ tcp_usrreq(so, req, m, nam, control)
 		if (error)
 			break;
 		if ((so->so_options & SO_LINGER) && so->so_linger == 0)
-			so->so_linger = TCP_LINGERTIME;
+			so->so_linger = TCP_LINGERTIME * hz;
 		tp = sototcpcb(so);
 		break;
 
