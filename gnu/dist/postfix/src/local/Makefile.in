@@ -139,6 +139,7 @@ delivered.o: ../../include/record.h
 delivered.o: ../../include/rec_type.h
 delivered.o: ../../include/is_header.h
 delivered.o: ../../include/quote_822_local.h
+delivered.o: ../../include/quote_flags.h
 delivered.o: ../../include/header_opts.h
 delivered.o: local.h
 delivered.o: ../../include/been_here.h

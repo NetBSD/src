@@ -254,31 +254,52 @@ static void cleanup_rewrite_recip(CLEANUP_STATE *state, HEADER_OPTS *hdr_opts)
 	cleanup_fold_header(state);
 }
 
-/* cleanup_check_reject - parse and match header/body REJECT line */
+/* cleanup_act - act upon a header/body match */
 
-static int cleanup_check_reject(CLEANUP_STATE *state, const char *value)
+static int cleanup_act(CLEANUP_STATE *state, char *context, char *buf,
+		               const char *value, const char *map_class)
 {
-    const char *reason = value + strcspn(value, " \t");
+    const char *optional_text = value + strcspn(value, " \t");
+    int     command_len = optional_text - value;
 
-    /*
-     * See if they spelled REJECT right.
-     * 
-     * XXX The reason should be set only if we have a more severe error than
-     * anything that was found before. This calls for a cleanup_set_error()
-     * routine that takes an error code and an optional text.
-     */
-    if (strncasecmp(value, "REJECT", reason - value) == 0) {
-	if (state->reason == 0) {
-	    while (*reason && ISSPACE(*reason))
-		reason++;
-	    state->reason = mystrdup(*reason ? reason :
+    while (*optional_text && ISSPACE(*optional_text))
+	optional_text++;
+
+#define STREQUAL(x,y,l) (strncasecmp((x), (y), (l)) == 0 && (y)[l] == 0)
+#define CLEANUP_ACT_KEEP 1
+#define CLEANUP_ACT_DROP 0
+
+    if (STREQUAL(value, "REJECT", command_len)) {
+	if (state->reason == 0)
+	    state->reason = mystrdup(*optional_text ? optional_text :
 				     cleanup_strerror(CLEANUP_STAT_CONT));
-	}
 	state->errs |= CLEANUP_STAT_CONT;
-	return (1);
-    } else {
-	return (0);
+	msg_info("%s: reject: %s %.200s; from=<%s> to=<%s>: %s",
+		 state->queue_id, context, buf, state->sender,
+		 state->recip ? state->recip : "unknown",
+		 state->reason);
+	return (CLEANUP_ACT_KEEP);
     }
+    if (STREQUAL(value, "WARN", command_len)) {
+	msg_info("%s: warning: %s %.200s; from=<%s> to=<%s>: %s",
+		 state->queue_id, context, buf, state->sender,
+		 state->recip ? state->recip : "unknown",
+		 *optional_text ? optional_text :
+		 cleanup_strerror(CLEANUP_STAT_CONT));
+	return (CLEANUP_ACT_KEEP);
+    }
+    if (*optional_text)
+	msg_warn("unexpected text after command in %s map: %s",
+		 map_class, value);
+
+    if (STREQUAL(value, "IGNORE", command_len))
+	return (CLEANUP_ACT_DROP);
+
+    if (STREQUAL(value, "OK", command_len))
+	return (CLEANUP_ACT_KEEP);
+
+    msg_warn("unknown command in %s map: %s", map_class, value);
+    return (CLEANUP_ACT_KEEP);
 }
 
 /* cleanup_header - process one complete header line */
@@ -296,18 +317,9 @@ static void cleanup_header(CLEANUP_STATE *state)
 	const char *value;
 
 	if ((value = maps_find(cleanup_header_checks, header, 0)) != 0) {
-	    if (cleanup_check_reject(state, value) != 0) {
-		msg_info("%s: reject: header %.200s; from=<%s> to=<%s>: %s",
-			 state->queue_id, header, state->sender,
-			 state->recip ? state->recip : "unknown",
-			 state->reason);
-	    } else if (strcasecmp(value, "IGNORE") == 0) {
+	    if (cleanup_act(state, "header", header, value, VAR_HEADER_CHECKS)
+		== CLEANUP_ACT_DROP)
 		return;
-	    } else if (strcasecmp(value, "WARN") == 0) {
-		msg_info("%s: warning: header %.200s; from=<%s> to=<%s>",
-			 state->queue_id, header, state->sender,
-			 state->recip ? state->recip : "unknown");
-	    }
 	}
     }
 
@@ -506,23 +518,36 @@ static void cleanup_message_header(CLEANUP_STATE *state, int type, char *buf, in
 
     /*
      * First, deal with header information that we have accumulated from
-     * previous input records. A whole record that starts with whitespace is
-     * a continuation of previous data.
+     * previous input records.
      * 
-     * XXX Silently switch to body processing when some message header requires
-     * an unreasonable amount of storage, or when a message header record
-     * does not fit in a REC_TYPE_NORM type record.
+     * If a physical header line exceeds the capacity of a Postfix queue file
+     * record, reconstruct the long line from multiple records (up to the
+     * header size limit), and break the long line up into multiple Postfix
+     * records upon output to the queue file. Discard text that does not fit
+     * in a header buffer, so as to avoid breaking MIME formatting.
+     * 
+     * It is left up to delivery agents to glue long lines back together and to
+     * enforce an appropriate output line length limit.
      */
     if (VSTRING_LEN(state->header_buf) > 0) {
-	if ((VSTRING_LEN(state->header_buf) >= var_header_limit
-	     || type == REC_TYPE_CONT)) {
-	    state->errs |= CLEANUP_STAT_HOVFL;
-	} else if (type == REC_TYPE_NORM && ISSPACE(*buf)) {
-	    VSTRING_ADDCH(state->header_buf, '\n');
-	    vstring_strcat(state->header_buf, buf);
-	    return;
-	} else {
-	     /* Body record or end of message segment. */ ;
+	if (type != REC_TYPE_XTRA) {
+	    if (state->long_header) {
+		if (VSTRING_LEN(state->header_buf) < var_header_limit)
+		    vstring_strcat(state->header_buf, buf);
+		else
+		    state->errs |= CLEANUP_STAT_HOVFL;
+		state->long_header = (type == REC_TYPE_CONT);
+		return;
+	    }
+	    if (ISSPACE(*buf)) {
+		if (VSTRING_LEN(state->header_buf) < var_header_limit) {
+		    VSTRING_ADDCH(state->header_buf, '\n');
+		    vstring_strcat(state->header_buf, buf);
+		} else
+		    state->errs |= CLEANUP_STAT_HOVFL;
+		state->long_header = (type == REC_TYPE_CONT);
+		return;
+	    }
 	}
 
 	/*
@@ -535,14 +560,11 @@ static void cleanup_message_header(CLEANUP_STATE *state, int type, char *buf, in
     }
 
     /*
-     * Switch to body processing if this is not a header or if the saved
-     * header would require an unreasonable amount of storage. Generate
-     * missing headers. Add one blank line when the message headers are
-     * immediately followed by a non-empty message body.
+     * Switch to body processing if this is not a header. Generate missing
+     * headers. Add one blank line when the message headers are immediately
+     * followed by a non-empty message body.
      */
-    if (((state->errs & CLEANUP_STAT_HOVFL)
-	 || type != REC_TYPE_NORM
-	 || !is_header(buf))) {
+    if (type == REC_TYPE_XTRA || !is_header(buf)) {
 	cleanup_missing_headers(state);
 	if (type != REC_TYPE_XTRA && *buf)	/* output blank line */
 	    cleanup_out_string(state, REC_TYPE_NORM, "");
@@ -555,6 +577,7 @@ static void cleanup_message_header(CLEANUP_STATE *state, int type, char *buf, in
      */
     else {
 	vstring_strcpy(state->header_buf, buf);
+	state->long_header = (type == REC_TYPE_CONT);
     }
 }
 
@@ -580,18 +603,9 @@ static void cleanup_message_body(CLEANUP_STATE *state, int type, char *buf, int 
 	    const char *value;
 
 	    if ((value = maps_find(cleanup_body_checks, buf, 0)) != 0) {
-		if (cleanup_check_reject(state, value) != 0) {
-		    msg_info("%s: reject: body %.200s; from=<%s> to=<%s>: %s",
-			     state->queue_id, buf, state->sender,
-			     state->recip ? state->recip : "unknown",
-			     state->reason);
-		} else if (strcasecmp(value, "IGNORE") == 0) {
+		if (cleanup_act(state, "body", buf, value, VAR_BODY_CHECKS)
+		    == CLEANUP_ACT_DROP)
 		    return;
-		} else if (strcasecmp(value, "WARN") == 0) {
-		    msg_info("%s: warning: body %.200s; from=<%s> to=<%s>",
-			     state->queue_id, buf, state->sender,
-			     state->recip ? state->recip : "unknown");
-		}
 	    }
 	}
 	cleanup_out(state, type, buf, len);

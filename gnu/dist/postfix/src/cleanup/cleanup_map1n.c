@@ -112,7 +112,8 @@ ARGV   *cleanup_map1n_internal(CLEANUP_STATE *state, char *addr,
 			 state->queue_id, maps->title, addr);
 		break;
 	    }
-	    if ((lookup = mail_addr_map(maps, argv->argv[arg], propagate)) != 0) {
+	    quote_822_local(state->temp1, argv->argv[arg]);
+	    if ((lookup = mail_addr_map(maps, STR(state->temp1), propagate)) != 0) {
 		saved_lhs = mystrdup(argv->argv[arg]);
 		for (i = 0; i < lookup->argc; i++) {
 		    unquote_822_local(state->temp1, lookup->argv[i]);

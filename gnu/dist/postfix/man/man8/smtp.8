@@ -113,8 +113,8 @@ Always send EHLO at the start of a connection.
 Never send EHLO at the start of a connection.
 .IP \fBsmtp_bind_address\fR
 Numerical source network address to bind to when making a connection.
-.IP \fBsmtp_break_lines\fR
-Break lines > \fB$line_length_limit\fR into multiple shorter lines.
+.IP \fBsmtp_line_length_limit\fR
+Length limit for SMTP message content lines. Zero means no limit.
 Some SMTP servers misbehave on long lines.
 .IP \fBsmtp_skip_4xx_greeting\fR
 Skip servers that greet us with a 4xx status code.
@@ -129,7 +129,7 @@ around the CISCO PIX firewall <CR><LF>.<CR><LF> bug.
 The time a message must be queued before the CISCO PIX firewall
 <CR><LF>.<CR><LF> bug workaround is turned on.
 .SH "Authentication controls"
-.IP \fBsmtp_enable_sasl_auth\fR
+.IP \fBsmtp_sasl_auth_enable\fR
 Enable per-session authentication as per RFC 2554 (SASL).
 By default, Postfix is built without SASL support.
 .IP \fBsmtp_sasl_password_maps\fR

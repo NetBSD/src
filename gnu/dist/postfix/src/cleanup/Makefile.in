@@ -184,6 +184,7 @@ cleanup_map11.o: ../../include/cleanup_user.h
 cleanup_map11.o: ../../include/mail_addr_map.h
 cleanup_map11.o: ../../include/maps.h
 cleanup_map11.o: ../../include/quote_822_local.h
+cleanup_map11.o: ../../include/quote_flags.h
 cleanup_map11.o: cleanup.h
 cleanup_map11.o: ../../include/tok822.h
 cleanup_map11.o: ../../include/resolve_clnt.h
@@ -203,6 +204,7 @@ cleanup_map1n.o: ../../include/mail_addr_map.h
 cleanup_map1n.o: ../../include/maps.h
 cleanup_map1n.o: ../../include/cleanup_user.h
 cleanup_map1n.o: ../../include/quote_822_local.h
+cleanup_map1n.o: ../../include/quote_flags.h
 cleanup_map1n.o: ../../include/been_here.h
 cleanup_map1n.o: cleanup.h
 cleanup_map1n.o: ../../include/tok822.h
@@ -222,6 +224,7 @@ cleanup_masquerade.o: ../../include/mail_params.h
 cleanup_masquerade.o: ../../include/tok822.h
 cleanup_masquerade.o: ../../include/resolve_clnt.h
 cleanup_masquerade.o: ../../include/quote_822_local.h
+cleanup_masquerade.o: ../../include/quote_flags.h
 cleanup_masquerade.o: cleanup.h
 cleanup_masquerade.o: ../../include/vstream.h
 cleanup_masquerade.o: ../../include/maps.h
@@ -245,6 +248,7 @@ cleanup_message.o: ../../include/tok822.h
 cleanup_message.o: ../../include/resolve_clnt.h
 cleanup_message.o: ../../include/header_opts.h
 cleanup_message.o: ../../include/quote_822_local.h
+cleanup_message.o: ../../include/quote_flags.h
 cleanup_message.o: ../../include/mail_params.h
 cleanup_message.o: ../../include/mail_date.h
 cleanup_message.o: ../../include/mail_addr.h
@@ -265,6 +269,7 @@ cleanup_out.o: ../../include/vstream.h
 cleanup_out.o: ../../include/record.h
 cleanup_out.o: ../../include/rec_type.h
 cleanup_out.o: ../../include/cleanup_user.h
+cleanup_out.o: ../../include/mail_params.h
 cleanup_out.o: cleanup.h
 cleanup_out.o: ../../include/argv.h
 cleanup_out.o: ../../include/maps.h
@@ -300,6 +305,7 @@ cleanup_rewrite.o: ../../include/tok822.h
 cleanup_rewrite.o: ../../include/resolve_clnt.h
 cleanup_rewrite.o: ../../include/rewrite_clnt.h
 cleanup_rewrite.o: ../../include/quote_822_local.h
+cleanup_rewrite.o: ../../include/quote_flags.h
 cleanup_rewrite.o: cleanup.h
 cleanup_rewrite.o: ../../include/vstream.h
 cleanup_rewrite.o: ../../include/argv.h
