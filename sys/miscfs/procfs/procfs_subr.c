@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.60 2004/08/21 15:59:32 jdolecek Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.61 2004/08/27 07:02:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.60 2004/08/21 15:59:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.61 2004/08/27 07:02:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,7 +336,7 @@ procfs_rw(v)
 		return (procfs_dostatus(curp, l, pfs, uio));
 
 	case PFSstat:
-		return (procfs_do_pid_stat(curp, p, l, pfs, uio));
+		return (procfs_do_pid_stat(curp, l, pfs, uio));
 
 	case PFSmap:
 		return (procfs_domap(curp, p, pfs, uio, 0));
