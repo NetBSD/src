@@ -1,6 +1,121 @@
-In order to receive mail via UUCP, your system needs to have an
-rmail command installed. A minimal rmail command can be found in
-the "auxiliary/rmail" directory. Install the command, mode 755, in
-a place that can be found by the UUCP "uuxqt" command.
+PPoossttffiixx aanndd UUUUCCPP
 
-In order to send mail via UUCP, see html/faq.html.
+-------------------------------------------------------------------------------
+
+UUssiinngg UUUUCCPP oovveerr TTCCPP
+
+Despite a serious lack of sex-appeal, email via UUCP over TCP is a practical
+option for sites without permanent Internet connection, and for sites without a
+fixed IP address. For first-hand information, see the following guides:
+
+  * Jim Seymour's guide for using UUCP over TCP at http://jimsun.LinxNet.com/
+    jdp/uucp_over_tcp/index.html,
+  * Craig Sanders's guide for SSL-encrypted UUCP over TCP using stunnel at
+    http://taz.net.au/postfix/uucp/.
+
+Here's a graphical description of what this document is about:
+
+                        LAN to                 Internet
+    Local network <--->  UUCP   <--- UUCP ---> to UUCP  <---> Internet
+                        Gateway                Gateway
+
+And here's the table of contents of this document:
+
+  * Setting up a Postfix Internet to UUCP gateway
+  * Setting up a Postfix LAN to UUCP gateway
+
+SSeettttiinngg uupp aa PPoossttffiixx IInntteerrnneett ttoo UUUUCCPP ggaatteewwaayy
+
+Here is how to set up a machine that sits on the Internet and that forwards
+mail to a LAN that is connected via UUCP. See the LAN to UUCP gateway section
+for the other side of the story.
+
+  * You need an rrmmaaiill program that extracts the sender address from mail that
+    arrives via UUCP, and that feeds the mail into the Postfix sseennddmmaaiill
+    command. Most UNIX systems come with an rrmmaaiill utility. If you're in a
+    pinch, try the one bundled with the Postfix source code in the aauuxxiilliiaarryy//
+    rrmmaaiill directory.
+
+  * Define a pipe(8) based mail delivery transport for delivery via UUCP:
+
+    /etc/postfix/master.cf:
+        uucp      unix  -       n       n       -       -       pipe
+          flags=F user=uucp argv=uux -r -n -z -a$sender - $nexthop!rmail
+    ($recipient)
+
+    This runs the uuuuxx command to place outgoing mail into the UUCP queue after
+    replacing $nexthop by the next-hop hostname (the receiving UUCP host) and
+    after replacing $recipient by the recipients. The pipe(8) delivery agent
+    executes the uuuuxx command without assistance from the shell, so there are no
+    problems with shell meta characters in command-line parameters.
+
+  * Specify that mail for example.com, should be delivered via UUCP, to a host
+    named uucp-host:
+
+    /etc/postfix/transport:
+        example.com     uucp:uucp-host
+        .example.com    uucp:uucp-host
+
+    See the transport(5) manual page for more details.
+
+  * Execute the command "ppoossttmmaapp //eettcc//ppoossttffiixx//ttrraannssppoorrtt" whenever you change
+    the ttrraannssppoorrtt file.
+
+  * Enable ttrraannssppoorrtt table lookups:
+
+    /etc/postfix/main.cf:
+        transport_maps = hash:/etc/postfix/transport
+
+    Specify ddbbmm instead of hhaasshh if your system uses ddbbmm files instead of ddbb
+    files. To find out what map types Postfix supports, use the command
+    "ppoossttccoonnff --mm".
+
+  * Add example.com to the list of domains that your site is willing to relay
+    mail for.
+
+    /etc/postfix/main.cf:
+        relay_domains = example.com ...other relay domains...
+
+    See the relay_domains configuration parameter description for details.
+
+  * Execute the command "ppoossttffiixx rreellooaadd" to make the changes effective.
+
+SSeettttiinngg uupp aa PPoossttffiixx LLAANN ttoo UUUUCCPP ggaatteewwaayy
+
+Here is how to relay mail from a LAN via UUCP to the Internet. See the Internet
+to UUCP gateway section for the other side of the story.
+
+  * You need an rrmmaaiill program that extracts the sender address from mail that
+    arrives via UUCP, and that feeds the mail into the Postfix sseennddmmaaiill
+    command. Most UNIX systems come with an rrmmaaiill utility. If you're in a
+    pinch, try the one bundled with the Postfix source code in the aauuxxiilliiaarryy//
+    rrmmaaiill directory.
+
+  * Specify that all remote mail must be sent via the uuuuccpp mail transport to
+    your UUCP gateway host, say, uucp-gateway:
+
+    /etc/postfix/main.cf:
+        relayhost = uucp-gateway
+        default_transport = uucp
+
+    Postfix 2.0 and later also allows the following more succinct form:
+
+    /etc/postfix/main.cf:
+        default_transport = uucp:uucp-gateway
+
+  * Define a pipe(8) based message delivery transport for mail delivery via
+    UUCP:
+
+    /etc/postfix/master.cf:
+        uucp      unix  -       n       n       -       -       pipe
+          flags=F user=uucp argv=uux -r -n -z -a$sender - $nexthop!rmail
+    ($recipient)
+
+    This runs the uuuuxx command to place outgoing mail into the UUCP queue. It
+    substitutes the next-hop hostname (uucp-gateway, or whatever you specified)
+    and the recipients before executing the command. The uuuuxx command is
+    executed without assistance from the shell, so there are no problems with
+    shell meta characters.
+
+  * Execute the command "ppoossttffiixx rreellooaadd" to make the changes effective.
+

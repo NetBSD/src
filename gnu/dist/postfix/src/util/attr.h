@@ -28,7 +28,10 @@
 #define ATTR_TYPE_NUM		1	/* Unsigned integer */
 #define ATTR_TYPE_STR		2	/* Character string */
 #define ATTR_TYPE_HASH		3	/* Hash table */
+#define ATTR_TYPE_NV		3	/* Name-value table */
 #define ATTR_TYPE_LONG		4	/* Unsigned long */
+
+#define ATTR_HASH_LIMIT		1024	/* Size of hash table */
 
  /*
   * Flags that control processing. See attr_scan(3) for documentation.
@@ -69,6 +72,19 @@ extern int attr_vprint0(VSTREAM *, int, va_list);
   */
 extern int attr_scan0(VSTREAM *, int,...);
 extern int attr_vscan0(VSTREAM *, int, va_list);
+
+ /*
+  * attr_scan_plain.c.
+  */
+extern int attr_print_plain(VSTREAM *, int,...);
+extern int attr_vprint_plain(VSTREAM *, int, va_list);
+
+ /*
+  * attr_print_plain.c.
+  */
+extern int attr_scan_plain(VSTREAM *, int,...);
+extern int attr_vscan_plain(VSTREAM *, int, va_list);
+
 
  /*
   * Attribute names for testing the compatibility of the read and write

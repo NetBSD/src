@@ -47,7 +47,7 @@
 /*	void	(*action)(dict_name, dict_handle, context)
 /*	char	*context;
 /*
-/*	int	dict_changed()
+/*	const char *dict_changed_name()
 /* AUXILIARY FUNCTIONS
 /*	void	dict_load_file(dict_name, path)
 /*	const char *dict_name;
@@ -130,8 +130,9 @@
 /* .IP "char *context"
 /*	Application context from the caller.
 /* .PP
-/*	dict_changed() returns non-zero when any dictionary needs to
+/*	dict_changed_name() returns non-zero when any dictionary needs to
 /*	be re-opened because it has changed or because it was unlinked.
+/*	A non-zero result is the name of a changed dictionary.
 /*
 /*	dict_load_file() reads name-value entries from the named file.
 /*	Lines that begin with whitespace are concatenated to the preceding
@@ -172,6 +173,7 @@
 #include <fcntl.h>
 #include <ctype.h>
 #include <string.h>
+#include <time.h>
 
 /* Utility library. */
 
@@ -183,6 +185,7 @@
 #include "readlline.h"
 #include "mac_parse.h"
 #include "stringops.h"
+#include "iostuff.h"
 #include "dict.h"
 #include "dict_ht.h"
 
@@ -360,12 +363,29 @@ int     dict_sequence(const char *dict_name, const int func,
 void    dict_load_file(const char *dict_name, const char *path)
 {
     VSTREAM *fp;
+    struct stat st;
+    time_t  before;
+    time_t  after;
 
-    if ((fp = vstream_fopen(path, O_RDONLY, 0)) == 0)
-	msg_fatal("open %s: %m", path);
-    dict_load_fp(dict_name, fp);
-    if (vstream_ferror(fp) || vstream_fclose(fp))
-	msg_fatal("read %s: %m", path);
+    /*
+     * Read the file again if it is hot. This may result in reading a partial
+     * parameter name when a file changes in the middle of a read.
+     */
+    for (before = time((time_t *) 0); /* see below */ ; before = after) {
+	if ((fp = vstream_fopen(path, O_RDONLY, 0)) == 0)
+	    msg_fatal("open %s: %m", path);
+	dict_load_fp(dict_name, fp);
+	if (fstat(vstream_fileno(fp), &st) < 0)
+	    msg_fatal("fstat %s: %m", path);
+	if (vstream_ferror(fp) || vstream_fclose(fp))
+	    msg_fatal("read %s: %m", path);
+	after = time((time_t *) 0);
+	if (st.st_mtime < before - 1 || st.st_mtime > after)
+	    break;
+	if (msg_verbose)
+	    msg_info("pausing to let %s cool down", path);
+	doze(300000);
+    }
 }
 
 /* dict_load_fp - read entries from open stream */
@@ -493,16 +513,16 @@ void    dict_walk(DICT_WALK_ACTION action, char *ptr)
     myfree((char *) ht_info_list);
 }
 
-/* dict_changed - see if any dictionary has changed */
+/* dict_changed_name - see if any dictionary has changed */
 
-int     dict_changed(void)
+const char *dict_changed_name(void)
 {
-    char   *myname = "dict_changed";
+    char   *myname = "dict_changed_name";
     struct stat st;
     HTABLE_INFO **ht_info_list;
     HTABLE_INFO **ht;
     HTABLE_INFO *h;
-    int     status;
+    const char *status;
     DICT   *dict;
 
     ht_info_list = htable_list(dict_table);
@@ -514,8 +534,16 @@ int     dict_changed(void)
 	    msg_warn("%s: table %s: null time stamp", myname, h->key);
 	if (fstat(dict->stat_fd, &st) < 0)
 	    msg_fatal("%s: fstat: %m", myname);
-	status = (st.st_mtime != dict->mtime || st.st_nlink == 0);
+	if (st.st_mtime != dict->mtime || st.st_nlink == 0)
+	    status = h->key;
     }
     myfree((char *) ht_info_list);
     return (status);
+}
+
+/* dict_changed - backwards compatibility */
+
+int     dict_changed(void)
+{
+    return (dict_changed_name() != 0);
 }

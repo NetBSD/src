@@ -1,11 +1,11 @@
-.TH SMTP-SOURCE 8 
+.TH SMTP-SOURCE 1 
 .ad
 .fi
 .SH NAME
 smtp-source
 \-
-multi-threaded SMTP test generator
-.SH SYNOPSIS
+multi-threaded SMTP/LMTP test generator
+.SH "SYNOPSIS"
 .na
 .nf
 .fi
@@ -15,7 +15,7 @@ multi-threaded SMTP test generator
 .SH DESCRIPTION
 .ad
 .fi
-smtp-source connects to the named \fIhost\fR and TCP \fIport\fR
+\fBsmtp-source\fR connects to the named \fIhost\fR and TCP \fIport\fR
 (default: port 25)
 and sends one or more messages to it, either sequentially
 or in parallel. The program speaks either SMTP (default) or
@@ -70,13 +70,17 @@ Connect to the UNIX-domain socket at \fIpathname\fR.
 .ad
 .fi
 No SMTP command pipelining support.
-.SH LICENSE
+.SH "SEE ALSO"
+.na
+.nf
+smtp-sink(1), SMTP/LMTP message dump
+.SH "LICENSE"
 .na
 .nf
 .ad
 .fi
 The Secure Mailer license must be distributed with this software.
-.SH AUTHOR(S)
+.SH "AUTHOR(S)"
 .na
 .nf
 Wietse Venema

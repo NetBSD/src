@@ -107,6 +107,13 @@ int     deliver_command(LOCAL_STATE state, USER_ATTR usr_attr, const char *comma
 	return (0);
 
     /*
+     * Don't deliver a trace-only request.
+     */
+    if (DEL_REQ_TRACE_ONLY(state.request->flags))
+	return (sent(BOUNCE_FLAGS(state.request), SENT_ATTR(state.msg_attr),
+		     "delivers to command: %s", command));
+
+    /*
      * DELIVERY RIGHTS
      * 
      * Choose a default uid and gid when none have been selected (i.e. values
@@ -185,15 +192,17 @@ int     deliver_command(LOCAL_STATE state, USER_ATTR usr_attr, const char *comma
      */
     switch (cmd_status) {
     case PIPE_STAT_OK:
-	deliver_status = sent(SENT_ATTR(state.msg_attr), "\"|%s\"", command);
+	deliver_status = sent(BOUNCE_FLAGS(state.request),
+			      SENT_ATTR(state.msg_attr),
+			      "delivered to command: %s", command);
 	break;
     case PIPE_STAT_BOUNCE:
-	deliver_status = bounce_append(BOUNCE_FLAG_KEEP,
+	deliver_status = bounce_append(BOUNCE_FLAGS(state.request),
 				       BOUNCE_ATTR(state.msg_attr),
 				       "%s", vstring_str(why));
 	break;
     case PIPE_STAT_DEFER:
-	deliver_status = defer_append(BOUNCE_FLAG_KEEP,
+	deliver_status = defer_append(BOUNCE_FLAGS(state.request),
 				      BOUNCE_ATTR(state.msg_attr),
 				      "%s", vstring_str(why));
 	break;

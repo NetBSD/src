@@ -1,0 +1,219 @@
+.TH PGSQL_TABLE 5 
+.ad
+.fi
+.SH NAME
+pgsql_table
+\-
+Postfix PostgreSQL client configuration
+.SH "SYNOPSIS"
+.na
+.nf
+\fBpostmap -q "\fIstring\fB" pgsql:/etc/postfix/filename\fR
+
+\fBpostmap -q - pgsql:/etc/postfix/\fIfilename\fR <\fIinputfile\fR
+.SH DESCRIPTION
+.ad
+.fi
+The Postfix mail system uses optional tables for address
+rewriting or mail routing. These tables are usually in
+\fBdbm\fR or \fBdb\fR format.
+
+Alternatively, lookup tables can be specified as PostgreSQL
+databases.  In order to use PostgreSQL lookups, define a
+PostgreSQL source as a lookup table in main.cf, for example:
+.ti +4
+alias_maps = pgsql:/etc/pgsql-aliases.cf
+
+The file /etc/postfix/pgsql-aliases.cf has the same format as
+the Postfix main.cf file, and can specify the parameters
+described below.
+.SH "ALTERNATIVE CONFIGURATION"
+.na
+.nf
+.ad
+.fi
+For compatibility with other Postfix lookup tables, PostgreSQL
+parameters can also be defined in main.cf.  In order to do
+that, specify as PostgreSQL source a name that doesn't begin
+with a slash or a dot.  The PostgreSQL parameters will then
+be accessible as the name you've given the source in its
+definition, an underscore, and the name of the parameter.  For
+example, if the map is specified as "pgsql:\fIpgsqlname\fR",
+the parameter "hosts" below would be defined in main.cf as
+"\fIpgsqlname\fR_hosts".
+
+Note: with this form, the passwords for the PostgreSQL sources
+are written in main.cf, which is normally world-readable.
+Support for this form will be removed in a future Postfix
+version.
+.SH "LIST MEMBERSHIP"
+.na
+.nf
+.ad
+.fi
+When using SQL to store lists such as $mynetworks,
+$mydestination, $relay_domains, $local_recipient_maps,
+etc., it is important to understand that the table must
+store each list member as a separate key. The table lookup
+verifies the *existence* of the key. See "Postfix lists
+versus tables" in the DATABASE_README document for a
+discussion.
+
+Do NOT create tables that return the full list of domains
+in $mydestination or $relay_domains etc., or IP addresses
+in $mynetworks.
+
+DO create tables with each matching item as a key and with
+an arbitrary value. With SQL databases it is not uncommon to
+return the key itself or a constant value.
+.SH "PGSQL PARAMETERS"
+.na
+.nf
+.ad
+.fi
+.IP "\fBhosts\fR"
+The hosts that Postfix will try to connect to and query from.
+Specify \fIunix:\fR for UNIX-domain sockets, \fIinet:\fR for TCP
+connections (default).  Example:
+.ti +4
+hosts = host1.some.domain host2.some.domain
+.ti +4
+hosts = unix:/file/name
+
+The hosts are tried in random order, with all connections over
+UNIX domain sockets being tried before those over TCP.  The
+connections are automatically closed after being idle for about
+1 minute, and are re-opened as necessary.
+
+NOTE: the \fIunix:\fR and \fIinet:\fR prefixes are accepted for
+backwards compatibility reasons, but are actually ignored.
+The PostgreSQL client library will always try to connect to an
+UNIX socket if the name starts with a slash, and will try a TCP
+connection otherwise.
+.IP "\fBuser, password\fR"
+The user name and password to log into the pgsql server.
+Example:
+.in +4
+user = someone
+.br
+password = some_password
+.in -4
+.IP "\fBdbname\fR"
+The database name on the servers. Example:
+.ti +4
+dbname = customer_database
+.PP
+The following parameters can be used to fill in a SELECT
+template statement of the form:
+.ti +4
+select [\fBselect_field\fR] from [\fBtable\fR] where
+.ti +8
+[\fBwhere_field\fR] = '$lookup' [\fBadditional_conditions\fR]
+
+$lookup contains the search string, and is escaped so if
+it contains single quotes or other odd characters, it will
+not cause a parse error, or worse, a security problem.
+.IP "\fBselect_field\fR"
+The SQL "select" parameter. Example:
+.ti +4
+select_field = forw_addr
+.IP "\fBtable\fR"
+The SQL "select .. from" table name. Example:
+.ti +4
+table = mxaliases
+.IP "\fBwhere_field\fR
+The SQL "select .. where" parameter. Example:
+.ti +4
+where_field = alias
+.IP "\fBadditional_conditions\fR
+Additional conditions to the SQL query. Example:
+.ti +4
+additional_conditions = and status = 'paid'
+.PP
+The following parameters provide ways to override the default
+SELECT statement.  Setting them will instruct Postfix to ignore
+the above \fBtable\fR, \fBselect_field\fR, \fBwhere_field\fR and
+\fBadditional_conditions\fR parameters:
+.IP "\fBquery\fR"
+This parameter specifies a complete SQL query. Example:
+.ti +4
+query = select forw_addr from mxaliases where
+.ti +8
+alias = '%s' and status = 'paid'
+
+This parameter supports the following '%' expansions:
+.RS
+.IP "\fB\fB%s\fR\fR"
+This is replaced by the input key. Quoting is used to make sure
+that the input key does not add unexpected metacharacters.
+.IP "\fB\fB%u\fR\fR"
+When the input key is an address of the form user@domain,
+\fB%u\fR is replaced by the quoted local part of the address.
+If no domain is specified, \fB%u\fR is replaced by the entire
+search string.
+.IP "\fB\fB%d\fR\fR"
+When the input key is an address of the form user@domain,
+\fB%d\fR is replaced by the quoted domain part of the address.
+When the input key has no domain qualifier, \fB%d\fR is replaced
+by the entire search string.
+.RE
+.IP "\fBselect_function\fR"
+This parameter specifies a database function name. Example:
+.ti +4
+select_function = my_lookup_user_alias
+
+This is equivalent to:
+.ti +4
+query = select my_lookup_user_alias('%s')
+
+and overrides both the \fBquery\fR parameter and the table-related
+fields above.
+
+As of June 2002, if the function returns a single row and
+a single column AND that value is NULL, then the result
+will be treated as if the key was not in the dictionary.
+
+Future versions will allow functions to return result sets.
+.SH "SEE ALSO"
+.na
+.nf
+postmap(1), Postfix lookup table manager
+postconf(5), configuration parameters
+ldap_table(5), LDAP lookup tables
+mysql_table(5), MySQL lookup tables
+.SH "README FILES"
+.na
+.nf
+.ad
+.fi
+Use "\fBpostconf readme_directory\fR" or
+"\fBpostconf html_directory\fR" to locate this information.
+.na
+.nf
+DATABASE_README, Postfix lookup table overview
+PGSQL_README, Postfix PostgreSQL client guide
+.SH "LICENSE"
+.na
+.nf
+.ad
+.fi
+The Secure Mailer license must be distributed with this software.
+.SH "HISTORY"
+.na
+.nf
+PgSQL support was introduced with Postfix version 2.1.
+.SH "AUTHOR(S)"
+.na
+.nf
+Based on the MySQL client by:
+Scott Cotton, Joshua Marcus
+IC Group, Inc.
+
+Ported to PostgreSQL by:
+Aaron Sethman
+
+Further enhanced by:
+Liviu Daia
+Institute of Mathematics of the Romanian Academy
+P.O. BOX 1-764
+RO-014700 Bucharest, ROMANIA

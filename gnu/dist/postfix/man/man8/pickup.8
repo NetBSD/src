@@ -5,7 +5,7 @@
 pickup
 \-
 Postfix local mail pickup
-.SH SYNOPSIS
+.SH "SYNOPSIS"
 .na
 .nf
 \fBpickup\fR [generic Postfix daemon options]
@@ -18,13 +18,13 @@ dropped into the \fBmaildrop\fR directory, and feeds it into the
 Ill-formatted files are deleted without notifying the originator.
 This program expects to be run from the \fBmaster\fR(8) process
 manager.
-.SH STANDARDS
+.SH "STANDARDS"
 .na
 .nf
 .ad
 .fi
 None. The \fBpickup\fR daemon does not interact with the outside world.
-.SH SECURITY
+.SH "SECURITY"
 .na
 .nf
 .ad
@@ -46,42 +46,78 @@ The \fBpickup\fR daemon copies mail from file to the \fBcleanup\fR(8)
 daemon.  It could avoid message copying overhead by sending a file
 descriptor instead of file data, but then the already complex
 \fBcleanup\fR(8) daemon would have to deal with unfiltered user data.
-.SH CONFIGURATION PARAMETERS
+.SH "CONFIGURATION PARAMETERS"
 .na
 .nf
 .ad
 .fi
-The following \fBmain.cf\fR parameters are especially relevant to
-this program. See the Postfix \fBmain.cf\fR file for syntax details
-and for default values. Use the \fBpostfix reload\fR command after
-a configuration change.
-.SH "Content inspection controls"
-.IP \fBcontent_filter\fR
-The name of a mail delivery transport that filters mail and that
-either bounces mail or re-injects the result back into Postfix.
-This parameter uses the same syntax as the right-hand side of
-a Postfix transport table.
-.SH Miscellaneous
-.ad
-.fi
-.IP \fBalways_bcc\fR
-Address to send a copy of each message that enters the system.
-.IP \fBqueue_directory\fR
-Top-level directory of the Postfix queue.
-.SH SEE ALSO
+As the pickup daemon is a relatively long-running process, up
+to an hour may pass before a \fBmain.cf\fR change takes effect.
+Use the command "\fBpostfix reload\fR" command to speed up a change.
+
+The text below provides only a parameter summary. See
+postconf(5) for more details including examples.
+.SH "CONTENT INSPECTION CONTROLS"
 .na
 .nf
-cleanup(8) message canonicalization
-master(8) process manager
-sendmail(1), postdrop(8) mail posting agent
-syslogd(8) system logging
-.SH LICENSE
+.ad
+.fi
+.IP "\fBcontent_filter (empty)\fR"
+The name of a mail delivery transport that filters mail after
+it is queued.
+.IP "\fBreceive_override_options (empty)\fR"
+Enable or disable recipient validation, built-in content
+filtering, or address rewriting.
+.SH "MISCELLANEOUS CONTROLS"
+.na
+.nf
+.ad
+.fi
+.IP "\fBconfig_directory (see 'postconf -d' output)\fR"
+The default location of the Postfix main.cf and master.cf
+configuration files.
+.IP "\fBdaemon_timeout (18000s)\fR"
+How much time a Postfix daemon process may take to handle a
+request before it is terminated by a built-in watchdog timer.
+.IP "\fBipc_timeout (3600s)\fR"
+The time limit for sending or receiving information over an internal
+communication channel.
+.IP "\fBline_length_limit (2048)\fR"
+Upon input, long lines are chopped up into pieces of at most
+this length; upon delivery, long lines are reconstructed.
+.IP "\fBmax_idle (100s)\fR"
+The maximum amount of time that an idle Postfix daemon process
+waits for the next service request before exiting.
+.IP "\fBmax_use (100)\fR"
+The maximal number of connection requests before a Postfix daemon
+process terminates.
+.IP "\fBprocess_id (read-only)\fR"
+The process ID of a Postfix command or daemon process.
+.IP "\fBprocess_name (read-only)\fR"
+The process name of a Postfix command or daemon process.
+.IP "\fBqueue_directory (see 'postconf -d' output)\fR"
+The location of the Postfix top-level queue directory.
+.IP "\fBsyslog_facility (mail)\fR"
+The syslog facility of Postfix logging.
+.IP "\fBsyslog_name (postfix)\fR"
+The mail system name that is prepended to the process name in syslog
+records, so that "smtpd" becomes, for example, "postfix/smtpd".
+.SH "SEE ALSO"
+.na
+.nf
+cleanup(8), message canonicalization
+sendmail(1), Sendmail-compatible interface
+postdrop(1), mail posting agent
+postconf(5), configuration parameters
+master(8), process manager
+syslogd(8), system logging
+.SH "LICENSE"
 .na
 .nf
 .ad
 .fi
 The Secure Mailer license must be distributed with this software.
-.SH AUTHOR(S)
+.SH "AUTHOR(S)"
 .na
 .nf
 Wietse Venema

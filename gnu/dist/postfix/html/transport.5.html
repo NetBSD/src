@@ -1,15 +1,20 @@
-<html> <head> </head> <body> <pre>
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html> <head>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<title> Postfix manual - transport(5) </title>
+</head> <body> <pre>
 TRANSPORT(5)                                         TRANSPORT(5)
 
 <b>NAME</b>
        transport - format of Postfix transport table
 
 <b>SYNOPSIS</b>
-       <b>postmap</b> <b>/etc/postfix/transport</b>
+       <b>postmap /etc/postfix/transport</b>
 
-       <b>postmap</b> <b>-q</b> <b>"</b><i>string</i><b>"</b> <b>/etc/postfix/transport</b>
+       <b>postmap -q "</b><i>string</i><b>" /etc/postfix/transport</b>
 
-       <b>postmap</b> <b>-q</b> <b>-</b> <b>/etc/postfix/transport</b> &lt;<i>inputfile</i>
+       <b>postmap -q - /etc/postfix/transport</b> &lt;<i>inputfile</i>
 
 <b>DESCRIPTION</b>
        The  optional  <b>transport</b>  table  specifies  a mapping from
@@ -20,43 +25,45 @@ TRANSPORT(5)                                         TRANSPORT(5)
        This mapping overrides the default routing that  is  built
        into Postfix:
 
-       <b>mydestination</b>
+       <b><a href="postconf.5.html#mydestination">mydestination</a></b>
               A  list of domains that is by default delivered via
-              <b>$local</b><i>_</i><b>transport</b>.
+              <b>$<a href="postconf.5.html#local_transport">local_transport</a></b>. This also includes  domains  that
+              match <b>$<a href="postconf.5.html#inet_interfaces">inet_interfaces</a></b> or <b>$<a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a></b>.
 
-       <b>virtual</b><i>_</i><b>mailbox</b><i>_</i><b>domains</b>
+       <b><a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a></b>
+              A  list of domains that is by default delivered via
+              <b>$<a href="postconf.5.html#virtual_transport">virtual_transport</a></b>.
+
+       <b><a href="postconf.5.html#relay_domains">relay_domains</a></b>
               A list of domains that is by default delivered  via
-              <b>$virtual</b><i>_</i><b>transport</b>.
-
-       <b>relay</b><i>_</i><b>domains</b>
-              A  list of domains that is by default delivered via
-              <b>$relay</b><i>_</i><b>transport</b>.
+              <b>$<a href="postconf.5.html#relay_transport">relay_transport</a></b>.
 
        any other destination
               Mail for any other destination is by default deliv-
-              ered via <b>$default</b><i>_</i><b>transport</b>.
+              ered via <b>$<a href="postconf.5.html#default_transport">default_transport</a></b>.
 
-       Normally,  the <b>transport</b> table is specified as a text file
-       that serves as  input  to  the  <a href="postmap.1.html"><b>postmap</b>(1)</a>  command.   The
-       result,  an  indexed file in <b>dbm</b> or <b>db</b> format, is used for
-       fast searching by the mail  system.  Execute  the  command
-       <b>postmap</b>  <b>/etc/postfix/transport</b>  in  order  to rebuild the
+       Normally, the <b>transport</b> table is specified as a text  file
+       that  serves  as  input  to  the  <a href="postmap.1.html"><b>postmap</b>(1)</a> command.  The
+       result, an indexed file in <b>dbm</b> or <b>db</b> format, is  used  for
+       fast  searching  by  the  mail system. Execute the command
+       <b>postmap /etc/postfix/transport</b> in  order  to  rebuild  the
        indexed file after changing the transport table.
 
-       When the table is provided via other means  such  as  NIS,
-       LDAP  or  SQL,  the  same lookups are done as for ordinary
+       When  the  table  is provided via other means such as NIS,
+       LDAP or SQL, the same lookups are  done  as  for  ordinary
        indexed files.
 
-       Alternatively, the table can be  provided  as  a  regular-
+       Alternatively,  the  table  can  be provided as a regular-
        expression map where patterns are given as regular expres-
-       sions. In that case, the lookups are done  in  a  slightly
-       different  way as described in section "REGULAR EXPRESSION
-       TABLES".
+       sions,  or lookups can be directed to TCP-based server. In
+       that case, the lookups are done in  a  slightly  different
+       way  as  described below under "REGULAR EXPRESSION TABLES"
+       and "TCP-BASED TABLES".
 
-<b>TABLE</b> <b>FORMAT</b>
+<b>TABLE FORMAT</b>
        The input format for the <a href="postmap.1.html"><b>postmap</b>(1)</a> command is as follows:
 
-       <i>pattern</i> <i>result</i>
+       <i>pattern result</i>
               When  <i>pattern</i>  matches  the  recipient  address  or
               domain, use the corresponding <i>result</i>.
 
@@ -74,34 +81,32 @@ TRANSPORT(5)                                         TRANSPORT(5)
        a  domain  name  hierarchy, as described in section "TABLE
        LOOKUP".
 
-       The <i>result</i> is of the form <i>transport</i><b>:</b><i>nexthop</i>.   The  <i>trans-</i>
-       <i>port</i>  field  specifies  a  mail delivery transport such as
-       <b>smtp</b> or <b>local</b>. The <i>nexthop</i> field specifies where  and  how
-       to deliver mail. More details are given in section "RESULT
-       FORMAT".
+       The <i>result</i> is of the form <i>transport:nexthop</i> and  specifies
+       how or where to deliver mail. This is described in section
+       "RESULT FORMAT".
 
-<b>TABLE</b> <b>LOOKUP</b>
+<b>TABLE LOOKUP</b>
        With lookups from indexed files such as DB or DBM, or from
        networked  tables  such  as NIS, LDAP or SQL, patterns are
        tried in the order as listed below:
 
-       <i>user+extension@domain</i> <i>transport</i>:<i>nexthop</i>
+       <i>user+extension@domain transport</i>:<i>nexthop</i>
               Mail for <i>user+extension@domain</i> is delivered through
               <i>transport</i> to <i>nexthop</i>.
 
-       <i>user@domain</i> <i>transport</i>:<i>nexthop</i>
+       <i>user@domain transport</i>:<i>nexthop</i>
               Mail for <i>user@domain</i> is delivered through <i>transport</i>
               to <i>nexthop</i>.
 
-       <i>domain</i> <i>transport</i>:<i>nexthop</i>
+       <i>domain transport</i>:<i>nexthop</i>
               Mail for <i>domain</i> is delivered through  <i>transport</i>  to
               <i>nexthop</i>.
 
-       <i>.domain</i> <i>transport</i>:<i>nexthop</i>
+       <i>.domain transport</i>:<i>nexthop</i>
               Mail  for  any  subdomain  of  <i>domain</i>  is delivered
               through <i>transport</i> to  <i>nexthop</i>.  This  applies  only
-              when the string <b>transport</b><i>_</i><b>maps</b> is not listed in the
-              <b>parent</b><i>_</i><b>domain</b><i>_</i><b>matches</b><i>_</i><b>subdomains</b> configuration set-
+              when the string <b><a href="postconf.5.html#transport_maps">transport_maps</a></b> is not listed in the
+              <b><a href="postconf.5.html#parent_domain_matches_subdomains">parent_domain_matches_subdomains</a></b> configuration set-
               ting.   Otherwise, a domain name matches itself and
               its subdomains.
 
@@ -109,129 +114,151 @@ TRANSPORT(5)                                         TRANSPORT(5)
        it functions as the wild-card pattern).
 
        Note  2:  the  null  recipient  address  is  looked  up as
-       <b>$empty</b><i>_</i><b>address</b><i>_</i><b>recipient</b>@<b>$myhostname</b> (default: mailer-dae-
+       <b>$<a href="postconf.5.html#empty_address_recipient">empty_address_recipient</a></b>@<b>$<a href="postconf.5.html#myhostname">myhostname</a></b> (default: mailer-dae-
        mon@hostname).
 
-<b>RESULT</b> <b>FORMAT</b>
-       The  transport field specifies the name of a mail delivery
+<b>RESULT FORMAT</b>
+       The  lookup  result is of the form <i>transport</i><b>:</b><i>nexthop</i>.  The
+       <i>transport</i> field specifies a mail delivery  transport  such
+       as  <b>smtp</b>  or  <b>local</b>. The <i>nexthop</i> field specifies where and
+       how to deliver mail.
+
+       The transport field specifies the name of a mail  delivery
        transport (the first name of a mail delivery service entry
        in the Postfix <b>master.cf</b> file).
 
-       The  interpretation  of  the  nexthop  field  is transport
-       dependent. In the case of SMTP, specify <i>host</i>:<i>service</i> for a
-       non-default  server port, and use [<i>host</i>] or [<i>host</i>]:<i>port</i> in
-       order to disable MX (mail exchanger) DNS lookups.  The  []
+       The interpretation  of  the  nexthop  field  is  transport
+       dependent.  In  the  case  of SMTP, specify a service on a
+       non-default port as <i>host</i>:<i>service</i>,  and  disable  MX  (mail
+       exchanger)  DNS lookups with [<i>host</i>] or [<i>host</i>]:<i>port</i>. The []
        form is required when you specify an IP address instead of
        a hostname.
 
-       A null <i>transport</i> and null <i>nexthop</i>  result  means  "do  not
-       change":  use  the delivery transport and nexthop informa-
-       tion that would be used when the  entire  transport  table
+       A  null  <i>transport</i>  and  null <i>nexthop</i> result means "do not
+       change": use the delivery transport and  nexthop  informa-
+       tion  that  would  be used when the entire transport table
        did not exist.
 
-       A  non-null  <i>transport</i>  field  with  a  null <i>nexthop</i> field
+       A non-null <i>transport</i>  field  with  a  null  <i>nexthop</i>  field
        resets the nexthop information to the recipient domain.
 
-       A null <i>transport</i> field with non-null  <i>nexthop</i>  field  does
+       A  null  <i>transport</i>  field with non-null <i>nexthop</i> field does
        not modify the transport information.
 
 <b>EXAMPLES</b>
-       In  order to deliver internal mail directly, while using a
-       mail relay for all other mail, specify a  null  entry  for
-       internal  destinations  (do not change the delivery trans-
-       port or the nexthop information) and  specify  a  wildcard
+       In order to deliver internal mail directly, while using  a
+       mail  relay  for  all other mail, specify a null entry for
+       internal destinations (do not change the  delivery  trans-
+       port  or  the  nexthop information) and specify a wildcard
        for all other destinations.
 
-            <b>my.domain</b>    <b>:</b>
-            <b>.my.domain</b>   <b>:</b>
-            <b>*</b>            <b>smtp:outbound-relay.my.domain</b>
+            <b>my.domain    :</b>
+            <b>.my.domain   :</b>
+            <b>*         <a href="smtp.8.html">smtp</a>:outbound-relay.my.domain</b>
 
-       In  order  to send mail for <b>foo.org</b> and its subdomains via
-       the <b>uucp</b> transport to the UUCP host named <b>foo</b>:
+       In order to send mail for <b>example.com</b> and  its  subdomains
+       via the <b>uucp</b> transport to the UUCP host named <b>example</b>:
 
-            <b>foo.org</b>      <b>uucp:foo</b>
-            <b>.foo.org</b>     <b>uucp:foo</b>
+            <b>example.com      uucp:example</b>
+            <b>.example.com     uucp:example</b>
 
-       When no nexthop host name is  specified,  the  destination
-       domain  name  is  used instead. For example, the following
-       directs mail for <i>user</i>@<b>foo.org</b> via the <b>slow</b> transport to  a
-       mail  exchanger  for <b>foo.org</b>.  The <b>slow</b> transport could be
-       something that runs at most  one  delivery  process  at  a
-       time:
+       When  no  nexthop  host name is specified, the destination
+       domain name is used instead. For  example,  the  following
+       directs  mail  for <i>user</i>@<b>example.com</b> via the <b>slow</b> transport
+       to a mail exchanger for <b>example.com</b>.  The  <b>slow</b>  transport
+       could be configured to run at most one delivery process at
+       a time:
 
-            <b>foo.org</b>      <b>slow:</b>
+            <b>example.com      slow:</b>
 
        When no transport is specified, Postfix uses the transport
-       that matches the address domain class (see TRANSPORT FIELD
-       discussion  above).   The  following  sends  all  mail for
-       <b>foo.org</b> and its subdomains to host <b>gateway.foo.org</b>:
+       that  matches  the  address  domain class (see DESCRIPTION
+       above).  The following sends all mail for <b>example.com</b>  and
+       its subdomains to host <b>gateway.example.com</b>:
 
-            <b>foo.org</b>      <b>:[gateway.foo.org]</b>
-            <b>.foo.org</b>     <b>:[gateway.foo.org]</b>
+            <b>example.com      :[gateway.example.com]</b>
+            <b>.example.com     :[gateway.example.com]</b>
 
-       In the above example, the  []  are  used  to  suppress  MX
-       lookups.   The  result  would  likely  point to your local
-       machine.
+       In  the  above  example, the [] suppress MX lookups.  This
+       prevents mail routing loops when your machine  is  primary
+       MX host for <b>example.com</b>.
 
-       In the case of delivery via SMTP, one  may  specify  <i>host-</i>
+       In  the  case  of delivery via SMTP, one may specify <i>host-</i>
        <i>name</i>:<i>service</i> instead of just a host:
 
-            <b>foo.org</b>      <b>smtp:bar.org:2025</b>
+            <b>example.com      <a href="smtp.8.html">smtp</a>:bar.example:2025</b>
 
-       This  directs  mail  for <i>user</i>@<b>foo.org</b> to host <b>bar.org</b> port
-       <b>2025</b>. Instead of a numerical port a symbolic name  may  be
-       used.  Specify  [] around the hostname in order to disable
-       MX lookups.
+       This directs mail for <i>user</i>@<b>example.com</b> to host <b>bar.example</b>
+       port <b>2025</b>. Instead of a numerical port a symbolic name may
+       be used. Specify [] around the hostname if MX lookups must
+       be disabled.
 
        The error mailer can be used to bounce mail:
 
-            <b>.foo.org</b>      <b>error:mail</b> <b>for</b> <b>*.foo.org</b> <b>is</b> <b>not</b>  <b>deliv-</b>
-       <b>erable</b>
+            <b>.example.com      <a href="error.8.html">error</a>:mail for *.example.com is not</b>
+       <b>deliverable</b>
 
-       This  causes  all  mail  for  <i>user</i>@<i>anything</i><b>.foo.org</b>  to be
+       This causes all mail for <i>user</i>@<i>anything</i><b>.example.com</b>  to  be
        bounced.
 
-<b>REGULAR</b> <b>EXPRESSION</b> <b>TABLES</b>
-       This section describes how the table lookups  change  when
+<b>REGULAR EXPRESSION TABLES</b>
+       This  section  describes how the table lookups change when
        the table is given in the form of regular expressions. For
-       a description of regular expression lookup  table  syntax,
-       see <a href="regexp_table.5.html"><b>regexp</b><i>_</i><b>table</b>(5)</a> or <a href="pcre_table.5.html"><b>pcre</b><i>_</i><b>table</b>(5)</a>.
+       a  description  of regular expression lookup table syntax,
+       see <a href="regexp_table.5.html"><b>regexp_table</b>(5)</a> or <a href="pcre_table.5.html"><b>pcre_table</b>(5)</a>.
 
-       Each  pattern  is  a regular expression that is applied to
-       the entire domain being looked up. Thus, <i>some.domain.hier-</i>
-       <i>archy</i> is not broken up into parent domains.
+       Each pattern is a regular expression that  is  applied  to
+       the    entire    address    being    looked    up.   Thus,
+       <i>some.domain.hierarchy</i> is not  looked  up  via  its  parent
+       domains,  nor is <i>user+foo@domain</i> looked up as <i>user@domain</i>.
 
-       Patterns  are  applied  in  the  order as specified in the
-       table, until a pattern is found that  matches  the  search
+       Patterns are applied in the  order  as  specified  in  the
+       table,  until  a  pattern is found that matches the search
        string.
 
-       Results  are  the  same as with indexed file lookups, with
-       the additional feature that parenthesized substrings  from
+       Results are the same as with indexed  file  lookups,  with
+       the  additional feature that parenthesized substrings from
        the pattern can be interpolated as <b>$1</b>, <b>$2</b> and so on.
 
-<b>CONFIGURATION</b> <b>PARAMETERS</b>
-       The  following  <b>main.cf</b> parameters are especially relevant
-       to this topic. See the Postfix  <b>main.cf</b>  file  for  syntax
-       details  and  for  default  values. Use the <b>postfix</b> <b>reload</b>
-       command after a configuration change.
+<b>TCP-BASED TABLES</b>
+       This section describes how the table lookups  change  when
+       lookups are directed to a TCP-based server. For a descrip-
+       tion  of  the  TCP  client/server  lookup  protocol,   see
+       <b>tcp_table</b>(5).   This  feature  is not available in Postfix
+       version 2.1.
 
-       <b>empty</b><i>_</i><b>address</b><i>_</i><b>recipient</b>
-              The address that is looked up instead of  the  null
+       Each lookup operation uses the  entire  recipient  address
+       once.   Thus,  <i>some.domain.hierarchy</i>  is not looked up via
+       its parent domains, nor is <i>user+foo@domain</i>  looked  up  as
+       <i>user@domain</i>.
+
+       Results are the same as with indexed file lookups.
+
+<b>CONFIGURATION PARAMETERS</b>
+       The  following <b>main.cf</b> parameters are especially relevant.
+       The text below provides  only  a  parameter  summary.  See
+       <a href="postconf.5.html">postconf(5)</a> for more details including examples.
+
+       <b><a href="postconf.5.html#empty_address_recipient">empty_address_recipient</a></b>
+              The  address  that is looked up instead of the null
               sender address.
 
-       <b>parent</b><i>_</i><b>domain</b><i>_</i><b>matches</b><i>_</i><b>subdomains</b>
-              List  of  Postfix features that use <i>domain.tld</i> pat-
-              terns  to  match  <i>sub.domain.tld</i>  (as  opposed   to
+       <b><a href="postconf.5.html#parent_domain_matches_subdomains">parent_domain_matches_subdomains</a></b>
+              List of Postfix features that use  <i>domain.tld</i>  pat-
+              terns   to  match  <i>sub.domain.tld</i>  (as  opposed  to
               requiring <i>.domain.tld</i> patterns).
 
-       <b>transport</b><i>_</i><b>maps</b>
+       <b><a href="postconf.5.html#transport_maps">transport_maps</a></b>
               List of transport lookup tables.
 
-<b>SEE</b> <b>ALSO</b>
-       <a href="postmap.1.html">postmap(1)</a> create mapping table
-       <a href="trivial-rewrite.8.html">trivial-rewrite(8)</a> rewrite and resolve addresses
-       <a href="pcre_table.5.html">pcre_table(5)</a> format of PCRE tables
-       <a href="regexp_table.5.html">regexp_table(5)</a> format of POSIX regular expression tables
+<b>SEE ALSO</b>
+       <a href="trivial-rewrite.8.html">trivial-rewrite(8)</a>, rewrite and resolve addresses
+       <a href="postconf.5.html">postconf(5)</a>, configuration parameters
+       <a href="postmap.1.html">postmap(1)</a>, Postfix lookup table manager
+
+<b>README FILES</b>
+       <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
+       <a href="FILTER_README.html">FILTER_README</a>, external content filter
 
 <b>LICENSE</b>
        The  Secure  Mailer  license must be distributed with this

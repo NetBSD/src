@@ -3,223 +3,268 @@ transport  local
 nexthop    MYHOSTNAME
 recipient  MAILER-DAEMON@MYHOSTNAME
 flags      CLASS_LOCAL 
+
 address    @
 transport  local
 nexthop    MYHOSTNAME
 recipient  MAILER-DAEMON@MYHOSTNAME
 flags      CLASS_LOCAL 
+
 address    @@
 transport  local
 nexthop    MYHOSTNAME
 recipient  MAILER-DAEMON@MYHOSTNAME
 flags      CLASS_LOCAL 
+
 address    @a.
 transport  smtp
 nexthop    RELAYHOST
 recipient  @a
 flags      CLASS_DEFAULT 
+
 address    @..
 transport  smtp
 nexthop    RELAYHOST
 recipient  @..
 flags      FLAG_ERROR CLASS_DEFAULT 
+
 address    @.@.
-transport  local
-nexthop    MYHOSTNAME
-recipient  MAILER-DAEMON@MYHOSTNAME
-flags      CLASS_LOCAL 
+transport  smtp
+nexthop    RELAYHOST
+recipient  @.@.
+flags      FLAG_ROUTED FLAG_ERROR CLASS_DEFAULT 
+
 address    !
 transport  local
 nexthop    MYHOSTNAME
 recipient  MAILER-DAEMON@MYHOSTNAME
 flags      CLASS_LOCAL 
+
 address    a!
 transport  smtp
 nexthop    RELAYHOST
 recipient  @a.MYDOMAIN
 flags      CLASS_DEFAULT 
+
 address    !b
 transport  local
 nexthop    MYHOSTNAME
 recipient  b@MYHOSTNAME
 flags      CLASS_LOCAL 
+
 address    a!b
 transport  smtp
 nexthop    RELAYHOST
 recipient  b@a.MYDOMAIN
 flags      CLASS_DEFAULT 
+
 address    !@
 transport  local
 nexthop    MYHOSTNAME
 recipient  MAILER-DAEMON@MYHOSTNAME
 flags      CLASS_LOCAL 
+
 address    a!@
 transport  smtp
 nexthop    RELAYHOST
 recipient  @a.MYDOMAIN
 flags      CLASS_DEFAULT 
+
 address    !b@
 transport  local
 nexthop    MYHOSTNAME
 recipient  b@MYHOSTNAME
 flags      CLASS_LOCAL 
+
 address    a!b@
 transport  smtp
 nexthop    RELAYHOST
 recipient  b@a.MYDOMAIN
 flags      CLASS_DEFAULT 
+
 address    %
 transport  local
 nexthop    MYHOSTNAME
 recipient  MAILER-DAEMON@MYHOSTNAME
 flags      CLASS_LOCAL 
+
 address    a%
 transport  local
 nexthop    MYHOSTNAME
 recipient  a@MYHOSTNAME
 flags      CLASS_LOCAL 
+
 address    %b
 transport  smtp
 nexthop    RELAYHOST
 recipient  @b.MYDOMAIN
 flags      CLASS_DEFAULT 
+
 address    a%b
 transport  smtp
 nexthop    RELAYHOST
 recipient  a@b.MYDOMAIN
 flags      CLASS_DEFAULT 
+
 address    %@
 transport  local
 nexthop    MYHOSTNAME
 recipient  MAILER-DAEMON@MYHOSTNAME
 flags      CLASS_LOCAL 
+
 address    a%@
 transport  local
 nexthop    MYHOSTNAME
 recipient  a@MYHOSTNAME
 flags      CLASS_LOCAL 
+
 address    %b@
 transport  smtp
 nexthop    RELAYHOST
 recipient  @b.MYDOMAIN
 flags      CLASS_DEFAULT 
+
 address    @@
 transport  local
 nexthop    MYHOSTNAME
 recipient  MAILER-DAEMON@MYHOSTNAME
 flags      CLASS_LOCAL 
+
 address    a@@
 transport  local
 nexthop    MYHOSTNAME
 recipient  a@MYHOSTNAME
 flags      CLASS_LOCAL 
+
 address    @b@
 transport  smtp
 nexthop    RELAYHOST
 recipient  @b.MYDOMAIN
 flags      CLASS_DEFAULT 
+
 address    a@b@
 transport  smtp
 nexthop    RELAYHOST
 recipient  a@b.MYDOMAIN
 flags      CLASS_DEFAULT 
+
 address    a%b@
 transport  smtp
 nexthop    RELAYHOST
 recipient  a@b.MYDOMAIN
 flags      CLASS_DEFAULT 
+
 address    a%b@MYHOSTNAME
 transport  smtp
 nexthop    RELAYHOST
 recipient  a@b.MYDOMAIN
 flags      CLASS_DEFAULT 
+
 address    a!b@MYHOSTNAME
 transport  smtp
 nexthop    RELAYHOST
 recipient  b@a.MYDOMAIN
 flags      CLASS_DEFAULT 
+
 address    a@b@MYHOSTNAME
 transport  smtp
 nexthop    RELAYHOST
 recipient  a@b.MYDOMAIN
 flags      CLASS_DEFAULT 
+
 address    a[b]@MYHOSTNAME@MYHOSTNAME
 transport  local
 nexthop    MYHOSTNAME
 recipient  a[b]@MYHOSTNAME
 flags      CLASS_LOCAL 
+
 address    a[b]%MYHOSTNAME@MYHOSTNAME
 transport  local
 nexthop    MYHOSTNAME
 recipient  a[b]@MYHOSTNAME
 flags      CLASS_LOCAL 
+
 address    a[b]%MYHOSTNAME%MYHOSTNAME
 transport  local
 nexthop    MYHOSTNAME
 recipient  a[b]@MYHOSTNAME
 flags      CLASS_LOCAL 
+
 address    MYHOSTNAME!a[b]@MYHOSTNAME
 transport  local
 nexthop    MYHOSTNAME
 recipient  a [b]@MYHOSTNAME
 flags      CLASS_LOCAL 
+
 address    MYHOSTNAME!a[b]%MYHOSTNAME
 transport  local
 nexthop    MYHOSTNAME
 recipient  a [b]@MYHOSTNAME
 flags      CLASS_LOCAL 
+
 address    MYHOSTNAME!MYHOSTNAME!a[b]
 transport  local
 nexthop    MYHOSTNAME
 recipient  a [b]@MYHOSTNAME
 flags      CLASS_LOCAL 
+
 address    user@dom.ain1@dom.ain2
 transport  smtp
 nexthop    RELAYHOST
 recipient  user@dom.ain1@dom.ain2
 flags      FLAG_ROUTED CLASS_DEFAULT 
+
 address    user%dom.ain1@dom.ain2
 transport  smtp
 nexthop    RELAYHOST
 recipient  user%dom.ain1@dom.ain2
 flags      FLAG_ROUTED CLASS_DEFAULT 
+
 address    dom.ain1!user@dom.ain2
 transport  smtp
 nexthop    RELAYHOST
 recipient  dom.ain1!user@dom.ain2
 flags      FLAG_ROUTED CLASS_DEFAULT 
+
 address    user@[1.2.3.4]@dom.ain2
 transport  smtp
 nexthop    RELAYHOST
 recipient  user@[1.2.3.4]@dom.ain2
 flags      FLAG_ROUTED CLASS_DEFAULT 
+
 address    user%[1.2.3.4]@dom.ain2
 transport  smtp
 nexthop    RELAYHOST
 recipient  user%[1.2.3.4]@dom.ain2
 flags      FLAG_ROUTED CLASS_DEFAULT 
+
 address    [1.2.3.4]!user@dom.ain2
 transport  smtp
 nexthop    RELAYHOST
 recipient  [1.2.3.4]!user@dom.ain2
 flags      FLAG_ROUTED CLASS_DEFAULT 
+
 address    user@localhost.MYDOMAIN
 transport  local
 nexthop    MYHOSTNAME
 recipient  user@localhost.MYDOMAIN
 flags      CLASS_LOCAL 
+
 address    user@[321.1.2.3]
 transport  smtp
 nexthop    RELAYHOST
 recipient  user@[321.1.2.3]
 flags      FLAG_ERROR CLASS_DEFAULT 
+
 address    user@1.2.3
 transport  smtp
 nexthop    RELAYHOST
 recipient  user@1.2.3
 flags      CLASS_DEFAULT 
+
 address    user@host:port
 transport  smtp
 nexthop    RELAYHOST
 recipient  user@host:port
 flags      FLAG_ERROR CLASS_DEFAULT 
+

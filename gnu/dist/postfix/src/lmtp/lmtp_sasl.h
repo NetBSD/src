@@ -14,7 +14,7 @@
 extern void lmtp_sasl_initialize(void);
 extern void lmtp_sasl_connect(LMTP_STATE *);
 extern int lmtp_sasl_passwd_lookup(LMTP_STATE *);
-extern void lmtp_sasl_start(LMTP_STATE *);
+extern void lmtp_sasl_start(LMTP_STATE *, const char *, const char *);
 extern int lmtp_sasl_authenticate(LMTP_STATE *, VSTRING *);
 extern void lmtp_sasl_cleanup(LMTP_STATE *);
 

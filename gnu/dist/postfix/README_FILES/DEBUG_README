@@ -1,48 +1,168 @@
-1 - Purpose of this document
-============================
+PPoossttffiixx DDeebbuuggggiinngg HHoowwttoo
 
-This document describes how to debug parts of the Postfix mail
-system, either by making the software log a lot of detail to the
-syslog daemon, or by running some daemon processes under control
-of an interactive debugger.
+-------------------------------------------------------------------------------
 
-2 - Verbose logging for specific SMTP connections
-=================================================
+PPuurrppoossee ooff tthhiiss ddooccuummeenntt
 
-In /etc/postfix/main.cf, list the remote site name or address in
-the "debug_peer_list" parameter. For example, in order to make the
-software log a lot of information to the syslog daemon for connections
-from or to the loopback interface:
+This document describes how to debug parts of the Postfix mail system when
+things do not work according to expectation. The methods vary from making
+Postfix log a lot of detail, to running some daemon processes under control of
+a call tracer or debugger.
 
-    debug_peer_list = 127.0.0.1
+The text assumes that the Postfix main.cf and master.cf configuration files are
+stored in directory /etc/postfix. You can use the command "ppoossttccoonnff
+ccoonnffiigg__ddiirreeccttoorryy" to find out the actual location of this directory on your
+machine.
 
-You can specify one or more hosts, domains, addresses or net/masks.
+Listed in order of increasing invasiveness, the debugging techniques are as
+follows:
 
-2b - Record the SMTP connection with a sniffer
-==============================================
+  * Look for obvious signs of trouble
+  * Debugging Postfix from inside
+  * Try turning off chroot operation in master.cf
+  * Verbose logging for specific SMTP connections
+  * Record the SMTP session with a network sniffer
+  * Making Postfix daemon programs more verbose
+  * Manually tracing a Postfix daemon process
+  * Automatically tracing a Postfix daemon process
+  * Running daemon programs with the interactive xxgdb debugger
+  * Running daemon programs under a non-interactive debugger
+  * Unreasonable behavior
+  * Reporting problems to postfix-users@postfix.org
 
-This example uses tcpdump. In order to record a conversation you
-need to specify a large enough buffer or else you will miss some
+LLooookk ffoorr oobbvviioouuss ssiiggnnss ooff ttrroouubbllee
+
+Postfix logs all failed and successful deliveries to a logfile. The file is
+usually called /var/log/maillog or /var/log/mail; the exact pathname is defined
+in the /etc/syslog.conf file.
+
+When Postfix does not receive or deliver mail, the first order of business is
+to look for errors that prevent Postfix from working properly:
+
+    % egrep '(warning|error|fatal|panic):' /some/log/file | more
+
+Note: the most important message is near the BEGINNING of the output. Error
+messages that come later are less useful.
+
+The nature of each problem is indicated as follows:
+
+  * "ppaanniicc" indicates a problem in the software itself that only a programmer
+    can fix. Postfix cannot proceed until this is fixed.
+
+  * "ffaattaall" is the result of missing files, incorrect permissions, incorrect
+    configuration file settings that you can fix. Postfix cannot proceed until
+    this is fixed.
+
+  * "eerrrroorr" reports a fatal or non-fatal error condition. Postfix cannot
+    proceed until this is fixed.
+
+  * "wwaarrnniinngg" indicates a non-fatal error. These are problems that you may not
+    be able to fix (such as a broken DNS server elsewhere on the network) but
+    may also indicate local configuration errors that could become a problem
+    later.
+
+DDeebbuuggggiinngg PPoossttffiixx ffrroomm iinnssiiddee
+
+With Postfix version 2.1 and later you can ask Postfix to produce mail delivery
+reports for debugging purposes. These reports not only show sender/recipient
+addresses after address rewriting and alias expansion or forwarding, they also
+show information about delivery to mailbox, delivery to non-Postfix command,
+responses from remote SMTP servers, and so on.
+
+Postfix can produce two types of mail delivery reports for debugging:
+
+  * What-if: report what would happen, but do not actually deliver mail. This
+    mode of operation is requested with:
+
+    $ //uussrr//ssbbiinn//sseennddmmaaiill --bbvv aaddddrreessss......
+    Mail Delivery Status Report will be mailed to <your login name>.
+
+  * What happened: deliver mail and report successes and/or failures, including
+    replies from remote SMTP servers. This mode of operation is requested with:
+
+    $ //uussrr//ssbbiinn//sseennddmmaaiill --vv aaddddrreessss......
+    Mail Delivery Status Report will be mailed to <your login name>.
+
+These reports contain information that is generated by Postfix delivery agents.
+Since these run as daemon processes and do not interact with users directly,
+the result is sent as mail to the sender of the test message. The format of
+these reports is practically identical to that of ordinary non-delivery
+notifications.
+
+For a detailed example of a mail delivery status report, see the debugging
+section at the end of the ADDRESS_REWRITING_README document.
+
+TTrryy ttuurrnniinngg ooffff cchhrroooott ooppeerraattiioonn iinn mmaasstteerr..ccff
+
+A common mistake is to turn on chroot operation in the master.cf file without
+going through all the necessary steps to set up a chroot environment. This
+causes Postfix daemon processes to fail due to all kinds of missing files.
+
+The example below shows an SMTP server that is configured with chroot turned
+off:
+
+    /etc/postfix/master.cf:
+        # =============================================================
+        # service type  private unpriv  cchhrroooott  wakeup  maxproc command
+        #               (yes)   (yes)   ((yyeess))   (never) (100)
+        # =============================================================
+        smtp      inet  n       -       nn       -       -       smtpd
+
+Inspect master.cf for any processes that have chroot operation not turned off.
+If you find any, save a copy of the master.cf file, and edit the entries in
+question. After executing the command "ppoossttffiixx rreellooaadd", see if the problem has
+gone away.
+
+If turning off chrooted operation made the problem go away, then
+congratulations. Leaving Postfix running in this way is adequate for most
+sites. If you prefer chrooted operation, see the Postfix
+BASIC_CONFIGURATION_README file for information about how to prepare Postfix
+for chrooted operation.
+
+VVeerrbboossee llooggggiinngg ffoorr ssppeecciiffiicc SSMMTTPP ccoonnnneeccttiioonnss
+
+In /etc/postfix/main.cf, list the remote site name or address in the
+debug_peer_list parameter. For example, in order to make the software log a lot
+of information to the syslog daemon for connections from or to the loopback
+interface:
+
+    /etc/postfix/main.cf:
+        debug_peer_list = 127.0.0.1
+
+You can specify one or more hosts, domains, addresses or net/masks. To make the
+change effective immediately, execute the command "ppoossttffiixx rreellooaadd".
+
+RReeccoorrdd tthhee SSMMTTPP sseessssiioonn wwiitthh aa nneettwwoorrkk ssnniiffffeerr
+
+This example uses ttccppdduummpp. In order to record a conversation you need to
+specify a large enough buffer with the "-s" option or else you will miss some
 or all of the packet payload.
 
-    tcpdump -w /file/name -s 2000 host hostname and port 25
+    # tcpdump -w /file/name -s 2000 host example.com and port 25
 
-Run this for a while, stop with Ctrl-C when done. To view the data
-use a binary viewer, or use my tcpdumpx utility that is available
-from ftp://ftp.porcupine.org/pub/debugging.
+Run this for a while, stop with Ctrl-C when done. To view the data use a binary
+viewer, or eetthheerreeaall, or use my ttccppdduummppxx utility that is available from ftp://
+ftp.porcupine.org/pub/debugging/.
 
-3 - Making Postfix daemon programs more verbose
-===============================================
+MMaakkiinngg PPoossttffiixx ddaaeemmoonn pprrooggrraammss mmoorree vveerrbboossee
 
-Append one or more -v options to selected daemon definitions in
-/etc/postfix/master.cf and type "postfix reload". This will cause
-a lot of activity to be logged to the syslog daemon.
+Append one or more "--vv" options to selected daemon definitions in /etc/postfix/
+master.cf and type "ppoossttffiixx rreellooaadd". This will cause a lot of activity to be
+logged to the syslog daemon. Example:
 
-4 - Manually tracing a Postfix daemon process
-=============================================
+    /etc/postfix/master.cf:
+        smtp      inet  n       -       n       -       -       smtpd -v
 
-Some systems allow you to inspect a running process with a system
-call tracer. For example:
+This makes the Postfix SMTP server more verbose. To diagnose problems with
+address rewriting one would specify a "--vv" option for the cleanup(8) and/or
+trivial-rewrite(8) daemon, and to diagnose problems with mail delivery one
+would specify a "--vv" option for the qmgr(8) or oqmgr(8) queue manager, or for
+the lmtp(8), local(8), pipe(8), smtp(8), or virtual(8) delivery agent.
+
+MMaannuuaallllyy ttrraacciinngg aa PPoossttffiixx ddaaeemmoonn pprroocceessss
+
+Many systems allow you to inspect a running process with a system call tracer.
+For example:
 
     # trace -p process-id (SunOS 4)
     # strace -p process-id (Linux and many others)
@@ -56,130 +176,132 @@ Even more informative are traces of system library calls. Examples:
 
 See your system documentation for details.
 
-Tracing a running process can give valuable information about what
-a process is attempting to do. This is as much information as you
-can get without running an interactive debugger program, as described
-in a later section.
+Tracing a running process can give valuable information about what a process is
+attempting to do. This is as much information as you can get without running an
+interactive debugger program, as described in a later section.
 
-5 - Automatically tracing a Postfix daemon process
-==================================================
+AAuuttoommaattiiccaallllyy ttrraacciinngg aa PPoossttffiixx ddaaeemmoonn pprroocceessss
 
-Postfix can attach a call tracer whenever a daemon process starts.
-Call tracers come in several kinds. 
+Postfix can attach a call tracer whenever a daemon process starts. Call tracers
+come in several kinds.
 
-1) System call tracers such as trace, truss, strace, or ktrace.
-   These show the communication between the process and the kernel.
+ 1. System call tracers such as ttrraaccee, ttrruussss, ssttrraaccee, or kkttrraaccee. These show the
+    communication between the process and the kernel.
 
-2) Library call tracers such as sotruss and ltrace. These show
-   calls of library routines, and give a better idea of what is
-   going on within the process.
+ 2. Library call tracers such as ssoottrruussss and llttrraaccee. These show calls of
+    library routines, and give a better idea of what is going on within the
+    process.
 
-Append a -D option to the suspect command in /etc/postfix/master.cf,
+Append a --DD option to the suspect command in /etc/postfix/master.cf, for
+example:
+
+    /etc/postfix/master.cf:
+        smtp      inet  n       -       n       -       -       smtpd -D
+
+Edit the debugger_command definition in /etc/postfix/main.cf so that it invokes
+the call tracer of your choice, for example:
+
+    /etc/postfix/main.cf:
+        debugger_command =
+             PATH=/bin:/usr/bin:/usr/local/bin;
+             (truss -p $process_id 2>&1 | logger -p mail.info) & sleep 5
+
+Type "ppoossttffiixx rreellooaadd" and watch the logfile.
+
+RRuunnnniinngg ddaaeemmoonn pprrooggrraammss wwiitthh tthhee iinntteerraaccttiivvee xxxxggddbb ddeebbuuggggeerr
+
+If you have X Windows installed on the Postfix machine, then an interactive
+debugger such as xxxxggddbb can be convenient.
+
+Edit the debugger_command definition in /etc/postfix/main.cf so that it invokes
+xxxxggddbb:
+
+    /etc/postfix/main.cf:
+        debugger_command =
+             PATH=/bin:/usr/bin:/usr/local/bin:/usr/X11R6/bin
+             xxgdb $daemon_directory/$process_name $process_id & sleep 5
+
+Be sure that ggddbb is in the command search path, and export XXAAUUTTHHOORRIITTYY so that X
+access control works, for example:
+
+    % setenv XAUTHORITY ~/.Xauthority (csh syntax)
+    $ export XAUTHORITY=$HOME/.Xauthority (sh syntax)
+
+Append a --DD option to the suspect daemon definition in /etc/postfix/master.cf,
 for example:
 
-    smtp      inet  n       -       n       -       -       smtpd -D
+    /etc/postfix/master.cf:
+        smtp      inet  n       -       n       -       -       smtpd -D
 
-Edit the debugger_command definition in /etc/postfix/main.cf so
-that it invokes the call tracer of your choice, for example:
+Stop and start the Postfix system. This is necessary so that Postfix runs with
+the proper XXAAUUTTHHOORRIITTYY and DDIISSPPLLAAYY settings.
 
-    debugger_command =
-         PATH=/bin:/usr/bin:/usr/local/bin;
-         (truss -p $process_id 2>&1 | logger -p mail.info) & sleep 5
+Whenever the suspect daemon process is started, a debugger window pops up and
+you can watch in detail what happens.
 
-Type "postfix reload" and watch the logfile.
+RRuunnnniinngg ddaaeemmoonn pprrooggrraammss uunnddeerr aa nnoonn--iinntteerraaccttiivvee ddeebbuuggggeerr
 
-6 - Running daemon programs under a debugger
-============================================
+If you do not have X Windows installed on the Postfix machine, or if you are
+not familiar with interactive debuggers, then you can try to run ggddbb in non-
+interactive mode, and have it print a stack trace when the process crashes.
 
-Append a -D option to the suspect command in /etc/postfix/master.cf,
-for example:
+Edit the debugger_command definition in /etc/postfix/main.cf so that it invokes
+the ggddbb debugger:
 
-    smtp      inet  n       -       n       -       -       smtpd -D
+    /etc/postfix/main.cf:
+        debugger_command =
+            PATH=/bin:/usr/bin:/usr/local/bin; export PATH; (echo cont;
+            echo where) | gdb $daemon_directory/$process_name $process_id 2>&1
+            >$config_directory/$process_name.$process_id.log & sleep 5
 
-Edit the debugger_command definition in /etc/postfix/main.cf so
-that it invokes the debugger of your choice.
+Append a --DD option to the suspect daemon in /etc/postfix/master.cf, for
+example:
 
-Two choices are described in detail:
+    /etc/postfix/master.cf:
+        smtp      inet  n       -       n       -       -       smtpd -D
 
-1) If you do not have X Windows installed on the Postfix machine,
-   or if you are not familiar with interactive debuggers, then you
-   can try to run gdb in non-interactive mode:
+Type "ppoossttffiixx rreellooaadd" to make the configuration changes effective.
 
-   /etc/postfix/main.cf:
-   --------------------
-    debugger_command =
-	PATH=/bin:/usr/bin:/usr/local/bin; export PATH; (echo cont;
-	echo where) | gdb $daemon_directory/$process_name $process_id 2>&1
-	>$config_directory/$process_name.$process_id.log & sleep 5
+Whenever a suspect daemon process is started, an output file is created, named
+after the daemon and process ID (for example, smtpd.12345.log). When the
+process crashes, a stack trace (with output from the "wwhheerree" command) is
+written to its logfile.
 
-   Type "postfix reload" to make the configuration changes effective.
+UUnnrreeaassoonnaabbllee bbeehhaavviioorr
 
-   Whenever a suspect daemon process is started, an output file
-   is created, named after the daemon and process ID (for example,
-   smtpd.12345.log). When the process crashes, a stack trace (with
-   output from the "where" command) is written to its logfile.
+Sometimes the behavior exhibited by Postfix just does not match the source
+code. Why can a program deviate from the instructions given by its author?
+There are two possibilities.
 
-2) If you have X Windows installed on the Postfix machine, then
-   an interactive debugger such as xxgdb can be convenient.
+  * The compiler has erred. This rarely happens.
 
-   /etc/postfix/main.cf:
-   --------------------
-    debugger_command =
-         PATH=/bin:/usr/bin:/usr/local/bin:/usr/X11R6/bin
-         xxgdb $daemon_directory/$process_name $process_id & sleep 5
+  * The hardware has erred. Does the machine have ECC memory?
 
-   Be sure that gdb is in the command search path, and export
-   XAUTHORITY so that X access control works, for example:
-
-    % setenv XAUTHORITY ~/.Xauthority
-
-   Stop and start the Postfix system.  This is necessary so that
-   Postfix runs with the proper XAUTHORITY and DISPLAY settings.
-
-   Whenever the suspect daemon process is started, a debugger window
-   pops up and you can watch in detail what happens (when using
-   xxgdb) or a file is created (if using gdb in non-interactive
-   mode).
-
-7 - Unreasonable behavior
-=========================
-
-Sometimes the behavior exhibit by Postfix just does not match the
-source code. Why can a program deviate from the instructions given
-by its author? There are two possibilities.
-
-1 - The compiler has messed up.
-
-2 - The hardware has messed up.
-
-In both cases, the program being executed is not the program that
-was supposed to be executed, so anything can happen.
+In both cases, the program being executed is not the program that was supposed
+to be executed, so anything could happen.
 
 There is a third possibility:
 
-3 - Bugs in system software (kernel or libraries).
+  * Bugs in system software (kernel or libraries).
 
-Hardware-related failures happen erratically, and they usually do
-not reproduce after power cycling and rebooting the system.  There's
-little I can do about bad hardware.  Be sure to use hardware that
-at the very least can detect memory errors. Otherwise, Postfix will
-just be a sitting duck waiting to be hit by a bit error. Critical
-systems deserve real hardware.
+Hardware-related failures usually do not reproduce in exactly the same way
+after power cycling and rebooting the system. There's little Postfix can do
+about bad hardware. Be sure to use hardware that at the very least can detect
+memory errors. Otherwise, Postfix will just be waiting to be hit by a bit
+error. Critical systems deserve real hardware.
 
-When a compiler messes up, the problem can be reproduced whenever
-the resulting program is run. Compiler errors are most likely to
-happen in the code optimizer. If a problem is reproducible across
-power cycles and system reboots, it can be worthwhile to rebuild
-Postfix with optimization disabled, and to see if optimization
-makes a difference.
+When a compiler makes an error, the problem can be reproduced whenever the
+resulting program is run. Compiler errors are most likely to happen in the code
+optimizer. If a problem is reproducible across power cycles and system reboots,
+it can be worthwhile to rebuild Postfix with optimization disabled, and to see
+if optimization makes a difference.
 
 In order to compile Postfix with optimizations turned off:
 
     % make tidy
     % make makefiles OPT=
 
-This produces a set of Makefiles that do not request compiler
-optimization. 
+This produces a set of Makefiles that do not request compiler optimization.
 
 Once the makefiles are set up, build the software:
 
@@ -187,5 +309,40 @@ Once the makefiles are set up, build the software:
     % su
     # make install
 
-And see if the problem reproduces. If the problem goes away, talk
-to your vendor.
+If the problem goes away, then it is time to ask your vendor for help.
+
+RReeppoorrttiinngg pprroobblleemmss ttoo ppoossttffiixx--uusseerrss@@ppoossttffiixx..oorrgg
+
+The people who participate on the postfix-users@postfix.org are very helpful,
+especially if YOU provide them with sufficient information. Remember, these
+volunteers are willing to help, but their time is limited.
+
+When reporting a problem, be sure to include the following information.
+
+  * A summary of the problem. Please do not just send some logging without
+    explanation of what YOU believe is wrong.
+
+  * Consider using a test email address so that you don't have to reveal email
+    addresses of innocent people.
+
+  * If you can't use a test email address, please anonymize information
+    consistently. Replace each letter by "A", each digit by "D" so that the
+    helpers can still recognize syntactical errors.
+
+  * Complete error messages. Please use cut-and-paste, or use attachments,
+    instead of reciting information from memory.
+
+  * Postfix logging. See the text at the top of the DEBUG_README document to
+    find out where logging is stored. Please do not frustrate the helpers by
+    word wrapping the logging.
+
+  * Output from "postconf -n". Please do not send your main.cf file. Or better,
+    provide output from the "postfinger" tool.
+
+  * If the problem is about too much mail in the queue, consider including
+    output from the qshape tool, as described in the QSHAPE_README file.
+
+  * If the problem is protocol related (connections time out or an SMTP server
+    complains about syntax errors etc.) consider recording a session with
+    tcpdump, as described in the DEBUG_README document.
+

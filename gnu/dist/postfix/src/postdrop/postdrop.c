@@ -10,7 +10,7 @@
 /*	directory and copies its standard input to the file.
 /*
 /*	Options:
-/* .IP \fB-c \fIconfig_dir\fR
+/* .IP "\fB-c \fIconfig_dir\fR"
 /*	The \fBmain.cf\fR configuration file is in the named directory
 /*	instead of the default configuration directory. See also the
 /*	MAIL_CONFIG environment setting below.
@@ -37,32 +37,48 @@
 /* .fi
 /* .IP MAIL_CONFIG
 /*	Directory with the \fBmain.cf\fR file. In order to avoid exploitation
-/*	of set-group ID privileges, it is not possible to specify arbitrary
-/*	directory names.
-/*
-/*	A non-standard directory is allowed only if the name is listed in the
-/*	standard \fBmain.cf\fR file, in the \fBalternate_config_directories\fR
-/*	configuration parameter value.
-/*
-/*	Only the superuser is allowed to specify arbitrary directory names.
-/* FILES
-/*	/var/spool/postfix, mail queue
-/*	/etc/postfix, configuration files
+/*	of set-group ID privileges, a non-standard directory is allowed only
+/*	if:
+/* .RS
+/* .IP \(bu
+/*	The name is listed in the standard \fBmain.cf\fR file with the
+/*	\fBalternate_config_directories\fR configuration parameter.
+/* .IP \(bu
+/*	The command is invoked by the super-user.
+/* .RE
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
-/*	See the Postfix \fBmain.cf\fR file for syntax details and for
-/*	default values. Use the \fBpostfix reload\fR command after a
-/*	configuration change.
-/* .IP \fBimport_environment\fR
-/*	List of names of environment parameters that can be imported
-/*	from non-Postfix processes.
-/* .IP \fBqueue_directory\fR
-/*	Top-level directory of the Postfix queue. This is also the root
-/*	directory of Postfix daemons that run chrooted.
+/*	The following \fBmain.cf\fR parameters are especially relevant to
+/*	this program.
+/*	The text below provides only a parameter summary. See
+/*	postconf(5) for more details including examples.
+/* .IP "\fBalternate_config_directories (empty)\fR"
+/*	A list of non-default Postfix configuration directories that may
+/*	be specified with "-c config_directory" on the command line, or
+/*	via the MAIL_CONFIG environment parameter.
+/* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
+/*	The default location of the Postfix main.cf and master.cf
+/*	configuration files.
+/* .IP "\fBimport_environment (see 'postconf -d' output)\fR"
+/*	The list of environment parameters that a Postfix process will
+/*	import from a non-Postfix parent process.
+/* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
+/*	The location of the Postfix top-level queue directory.
+/* .IP "\fBsyslog_facility (mail)\fR"
+/*	The syslog facility of Postfix logging.
+/* .IP "\fBsyslog_name (postfix)\fR"
+/*	The mail system name that is prepended to the process name in syslog
+/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
+/* .IP "\fBtrigger_timeout (10s)\fR"
+/*	The time limit for sending a trigger to a Postfix daemon (for
+/*	example, the pickup(8) or qmgr(8) daemon).
+/* FILES
+/*	/var/spool/postfix/maildrop, maildrop queue
 /* SEE ALSO
-/*	sendmail(1) compatibility interface
-/*	syslogd(8) system logging
+/*	sendmail(1), compatibility interface
+/*	postconf(5), configuration parameters
+/*	syslogd(8), system logging
 /* LICENSE
 /* .ad
 /* .fi
@@ -97,6 +113,7 @@
 #include <msg_syslog.h>
 #include <argv.h>
 #include <iostuff.h>
+#include <stringops.h>
 
 /* Global library. */
 
@@ -183,6 +200,9 @@ int     main(int argc, char **argv)
     char  **expected;
     uid_t   uid = getuid();
     ARGV   *import_env;
+    const char *error_text;
+    char   *attr_name;
+    char   *attr_value;
 
     /*
      * Be consistent with file permissions.
@@ -266,7 +286,8 @@ int     main(int argc, char **argv)
     signal(SIGPIPE, SIG_IGN);
     signal(SIGXFSZ, SIG_IGN);
 
-    signal(SIGHUP, postdrop_sig);
+    if (signal(SIGHUP, SIG_IGN) == SIG_DFL)
+	signal(SIGHUP, postdrop_sig);
     signal(SIGINT, postdrop_sig);
     signal(SIGQUIT, postdrop_sig);
     signal(SIGTERM, postdrop_sig);
@@ -297,6 +318,9 @@ int     main(int argc, char **argv)
      * 
      * If something goes wrong, slurp up the input before responding to the
      * client, otherwise the client will give up after detecting SIGPIPE.
+     * 
+     * Allow attribute records if the attribute specifies the MIME body type
+     * (sendmail -B).
      */
     vstream_control(VSTREAM_IN, VSTREAM_CTL_PATH, "stdin", VSTREAM_CTL_END);
     buf = vstring_alloc(100);
@@ -319,6 +343,28 @@ int     main(int argc, char **argv)
 	    msg_fatal("uid=%ld: unexpected record type: %d", (long) uid, rec_type);
 	if (rec_type == **expected)
 	    expected++;
+	if (rec_type == REC_TYPE_ATTR) {
+	    if ((error_text = split_nameval(vstring_str(buf), &attr_name,
+					    &attr_value)) != 0) {
+		msg_warn("uid=%ld: ignoring malformed record: %s: %.200s",
+			 (long) uid, error_text, vstring_str(buf));
+		continue;
+	    }
+#define STREQ(x,y) (strcmp(x,y) == 0)
+
+	    if ((STREQ(attr_name, MAIL_ATTR_ENCODING)
+		 && (STREQ(attr_value, MAIL_ATTR_ENC_7BIT)
+		     || STREQ(attr_value, MAIL_ATTR_ENC_8BIT)
+		     || STREQ(attr_value, MAIL_ATTR_ENC_NONE)))
+		|| STREQ(attr_name, MAIL_ATTR_TRACE_FLAGS)) {	/* XXX */
+		rec_fprintf(dst->stream, REC_TYPE_ATTR, "%s=%s",
+			    attr_name, attr_value);
+	    } else {
+		msg_warn("uid=%ld: ignoring attribute record: %.200s=%.200s",
+			 (long) uid, attr_name, attr_value);
+	    }
+	    continue;
+	}
 	if (REC_PUT_BUF(dst->stream, rec_type, buf) < 0) {
 	    while ((rec_type = rec_get(VSTREAM_IN, buf, var_line_limit)) > 0
 		   && rec_type != REC_TYPE_END)

@@ -35,64 +35,108 @@
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
-/*	The following \fBmain.cf\fR parameters are especially relevant to
-/*	this program. See the Postfix \fBmain.cf\fR file for syntax details
-/*	and for default values. Use the \fBpostfix reload\fR command after
-/*	a configuration change.
-/* .SH Miscellaneous
+/*	Changes to \fBmain.cf\fR are picked up automatically, as qmqpd(8)
+/*	processes run for only a limited amount of time. Use the command
+/*	"\fBpostfix reload\fR" to speed up a change.
+/*
+/*	The text below provides only a parameter summary. See
+/*	postconf(5) for more details including examples.
+/* CONTENT INSPECTION CONTROLS
 /* .ad
 /* .fi
-/* .IP \fBalways_bcc\fR
-/*	Address to send a copy of each message that enters the system.
-/* .IP \fBdebug_peer_level\fR
-/*	Increment in verbose logging level when a remote host matches a
-/*	pattern in the \fBdebug_peer_list\fR parameter.
-/* .IP \fBdebug_peer_list\fR
-/*	List of domain or network patterns. When a remote host matches
-/*	a pattern, increase the verbose logging level by the amount
-/*	specified in the \fBdebug_peer_level\fR parameter.
-/* .IP \fBhopcount_limit\fR
-/*	Limit the number of \fBReceived:\fR message headers.
-/* .IP \fBqmqpd_authorized_clients\fR
-/*      A list of domain or network patterns that specifies what
-/*	clients are allowed to use the service.
-/* .IP \fBqmqpd_timeout\fR
-/*	Limit the time to send a server response and to receive a client
-/*	request.
-/* .IP \fBsoft_bounce\fR
-/*	Change hard (D) reject responses into soft (Z) reject responses.
-/*	This can be useful for testing purposes.
-/* .SH "Content inspection controls"
-/* .IP \fBcontent_filter\fR
-/*	The name of a mail delivery transport that filters mail and that
-/*	either bounces mail or re-injects the result back into Postfix.
-/*	This parameter uses the same syntax as the right-hand side of
-/*	a Postfix transport table.
-/* .SH "Resource controls"
+/* .IP "\fBcontent_filter (empty)\fR"
+/*	The name of a mail delivery transport that filters mail after
+/*	it is queued.
+/* .IP "\fBreceive_override_options (empty)\fR"
+/*	Enable or disable recipient validation, built-in content
+/*	filtering, or address rewriting.
+/* RESOURCE AND RATE CONTROLS
 /* .ad
 /* .fi
-/* .IP \fBline_length_limit\fR
-/*	Limit the amount of memory in bytes used for the handling of
-/*	partial input lines, and the length of sender and recipient
-/*	addresses that are received from client.
-/* .IP \fBmessage_size_limit\fR
-/*	Limit the total size in bytes of a message, including on-disk
-/*	storage for sender and recipient address information.
-/* .SH Tarpitting
+/* .IP "\fBline_length_limit (2048)\fR"
+/*	Upon input, long lines are chopped up into pieces of at most
+/*	this length; upon delivery, long lines are reconstructed.
+/* .IP "\fBhopcount_limit (50)\fR"
+/*	The maximal number of Received:  message headers that is allowed
+/*	in the primary message headers.
+/* .IP "\fBmessage_size_limit (10240000)\fR"
+/*	The maximal size in bytes of a message, including envelope information.
+/* .IP "\fBqmqpd_timeout (300s)\fR"
+/*	The time limit for sending or receiving information over the network.
+/* TROUBLE SHOOTING CONTROLS
 /* .ad
 /* .fi
-/* .IP \fBqmqpd_error_delay\fR
-/*	Time to wait in seconds before informing the client of
-/*	a problem. This slows down run-away errors.
+/* .IP "\fBdebug_peer_level (2)\fR"
+/*	The increment in verbose logging level when a remote client or
+/*	server matches a pattern in the debug_peer_list parameter.
+/* .IP "\fBdebug_peer_list (empty)\fR"
+/*	Optional list of remote client or server hostname or network
+/*	address patterns that cause the verbose logging level to increase
+/*	by the amount specified in $debug_peer_level.
+/* .IP "\fBsoft_bounce (no)\fR"
+/*	Safety net to keep mail queued that would otherwise be returned to
+/*	the sender.
+/* TARPIT CONTROLS
+/* .ad
+/* .fi
+/* .IP "\fBqmqpd_error_delay (1s)\fR"
+/*	How long the QMQP server will pause before sending a negative reply
+/*	to the client.
+/* MISCELLANEOUS CONTROLS
+/* .ad
+/* .fi
+/* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
+/*	The default location of the Postfix main.cf and master.cf
+/*	configuration files.
+/* .IP "\fBdaemon_timeout (18000s)\fR"
+/*	How much time a Postfix daemon process may take to handle a
+/*	request before it is terminated by a built-in watchdog timer.
+/* .IP "\fBipc_timeout (3600s)\fR"
+/*	The time limit for sending or receiving information over an internal
+/*	communication channel.
+/* .IP "\fBmax_idle (100s)\fR"
+/*	The maximum amount of time that an idle Postfix daemon process
+/*	waits for the next service request before exiting.
+/* .IP "\fBmax_use (100)\fR"
+/*	The maximal number of connection requests before a Postfix daemon
+/*	process terminates.
+/* .IP "\fBprocess_id (read-only)\fR"
+/*	The process ID of a Postfix command or daemon process.
+/* .IP "\fBprocess_name (read-only)\fR"
+/*	The process name of a Postfix command or daemon process.
+/* .IP "\fBqmqpd_authorized_clients (empty)\fR"
+/*	What clients are allowed to connect to the QMQP server port.
+/* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
+/*	The location of the Postfix top-level queue directory.
+/* .IP "\fBsyslog_facility (mail)\fR"
+/*	The syslog facility of Postfix logging.
+/* .IP "\fBsyslog_name (postfix)\fR"
+/*	The mail system name that is prepended to the process name in syslog
+/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
+/* .IP "\fBverp_delimiter_filter (-=+)\fR"
+/*	The characters Postfix accepts as VERP delimiter characters on the
+/*	Postfix sendmail(1) command line and in SMTP commands.
 /* SEE ALSO
 /*	http://cr.yp.to/proto/qmqp.html, QMQP protocol
-/*	cleanup(8) message canonicalization
-/*	master(8) process manager
-/*	syslogd(8) system logging
+/*	cleanup(8), message canonicalization
+/*	master(8), process manager
+/*	syslogd(8), system logging
+/* README FILES
+/* .ad
+/* .fi
+/*	Use "\fBpostconf readme_directory\fR" or
+/*	"\fBpostconf html_directory\fR" to locate this information.
+/* .na
+/* .nf
+/*	QMQP_README, Postfix ezmlm-idx howto.
 /* LICENSE
 /* .ad
 /* .fi
 /*	The Secure Mailer license must be distributed with this software.
+/* HISTORY
+/* .ad
+/* .fi
+/*	The qmqpd service was introduced with Postfix version 1.1.
 /* AUTHOR(S)
 /*	Wietse Venema
 /*	IBM T.J. Watson Research
@@ -138,6 +182,7 @@
 #include <match_parent_style.h>
 #include <lex_822.h>
 #include <verp_sender.h>
+#include <input_transp.h>
 
 /* Single-threaded server skeleton. */
 
@@ -155,9 +200,9 @@
   */
 int     var_qmqpd_timeout;
 int     var_qmqpd_err_sleep;
-char   *var_always_bcc;
 char   *var_filter_xport;
 char   *var_qmqpd_clients;
+char   *var_input_transp;
 
  /*
   * Silly little macros.
@@ -174,18 +219,31 @@ char   *var_qmqpd_clients;
   */
 static NAMADR_LIST *qmqpd_clients;
 
+ /*
+  * Transparency: before mail is queued, do we allow address mapping,
+  * automatic bcc, header/body checks?
+  */
+int     qmqpd_input_transp_mask;
+
 /* qmqpd_open_file - open a queue file */
 
 static void qmqpd_open_file(QMQPD_STATE *state)
 {
+    int     cleanup_flags;
 
     /*
      * Connect to the cleanup server. Log client name/address with queue ID.
      */
+    cleanup_flags = CLEANUP_FLAG_MASK_EXTERNAL;
+    if (qmqpd_input_transp_mask & INPUT_TRANSP_ADDRESS_MAPPING)
+	cleanup_flags &= ~(CLEANUP_FLAG_BCC_OK | CLEANUP_FLAG_MAP_OK);
+    if (qmqpd_input_transp_mask & INPUT_TRANSP_HEADER_BODY)
+	cleanup_flags &= ~CLEANUP_FLAG_FILTER;
+
     state->dest = mail_stream_service(MAIL_CLASS_PUBLIC, var_cleanup_service);
     if (state->dest == 0
 	|| attr_print(state->dest->stream, ATTR_FLAG_NONE,
-		      ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, CLEANUP_FLAG_FILTER,
+		      ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, cleanup_flags,
 		      ATTR_TYPE_END) != 0)
 	msg_fatal("unable to connect to the %s %s service",
 		  MAIL_CLASS_PUBLIC, var_cleanup_service);
@@ -260,12 +318,15 @@ static void qmqpd_copy_sender(QMQPD_STATE *state)
 
 static void qmqpd_write_attributes(QMQPD_STATE *state)
 {
-    rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
-		MAIL_ATTR_CLIENT_NAME, state->name);
-    rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
-		MAIL_ATTR_CLIENT_ADDR, state->addr);
-    rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
-		MAIL_ATTR_ORIGIN, state->namaddr);
+    if (IS_AVAIL_CLIENT_NAME(state->name))
+	rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
+		    MAIL_ATTR_CLIENT_NAME, state->name);
+    if (IS_AVAIL_CLIENT_ADDR(state->addr))
+	rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
+		    MAIL_ATTR_CLIENT_ADDR, state->addr);
+    if (IS_AVAIL_CLIENT_NAMADDR(state->namaddr))
+	rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
+		    MAIL_ATTR_ORIGIN, state->namaddr);
     rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
 		MAIL_ATTR_PROTO_NAME, state->protocol);
 }
@@ -295,14 +356,6 @@ static void qmqpd_copy_recipients(QMQPD_STATE *state)
 	if (state->recipient == 0)
 	    state->recipient = mystrndup(STR(state->buf), LEN(state->buf));
     }
-
-    /*
-     * Append the optional recipient who is copied on all mail.
-     */
-    if (state->err == CLEANUP_STAT_OK
-	&& *var_always_bcc
-	&& rec_fputs(state->cleanup, REC_TYPE_RCPT, var_always_bcc) < 0)
-	state->err = CLEANUP_STAT_WRITE;
 }
 
 /* qmqpd_next_line - get line from buffer, return last char, newline, or -1 */
@@ -662,8 +715,10 @@ static void qmqpd_service(VSTREAM *stream, char *unused_service, char **argv)
 
 static void pre_accept(char *unused_name, char **unused_argv)
 {
-    if (dict_changed()) {
-	msg_info("lookup table has changed -- exiting");
+    const char *table;
+
+    if ((table = dict_changed_name()) != 0) {
+	msg_info("table %s has changed -- restarting", table);
 	exit(0);
     }
 }
@@ -678,6 +733,19 @@ static void pre_jail_init(char *unused_name, char **unused_argv)
 			 var_qmqpd_clients);
 }
 
+/* post_jail_init - post-jail initialization */
+
+static void post_jail_init(char *unused_name, char **unused_argv)
+{
+
+    /*
+     * Initialize the receive transparency options: do we want unknown
+     * recipient checks, do we want address mapping.
+     */
+    qmqpd_input_transp_mask =
+    input_transp_mask(VAR_INPUT_TRANSP, var_input_transp);
+}
+
 /* main - the main program */
 
 int     main(int argc, char **argv)
@@ -688,9 +756,9 @@ int     main(int argc, char **argv)
 	0,
     };
     static CONFIG_STR_TABLE str_table[] = {
-	VAR_ALWAYS_BCC, DEF_ALWAYS_BCC, &var_always_bcc, 0, 0,
 	VAR_FILTER_XPORT, DEF_FILTER_XPORT, &var_filter_xport, 0, 0,
 	VAR_QMQPD_CLIENTS, DEF_QMQPD_CLIENTS, &var_qmqpd_clients, 0, 0,
+	VAR_INPUT_TRANSP, DEF_INPUT_TRANSP, &var_input_transp, 0, 0,
 	0,
     };
 
@@ -702,5 +770,6 @@ int     main(int argc, char **argv)
 		       MAIL_SERVER_STR_TABLE, str_table,
 		       MAIL_SERVER_PRE_INIT, pre_jail_init,
 		       MAIL_SERVER_PRE_ACCEPT, pre_accept,
+		       MAIL_SERVER_POST_INIT, post_jail_init,
 		       0);
 }

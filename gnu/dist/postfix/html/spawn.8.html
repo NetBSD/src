@@ -1,4 +1,9 @@
-<html> <head> </head> <body> <pre>
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html> <head>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<title> Postfix manual - spawn(8) </title>
+</head> <body> <pre>
 SPAWN(8)                                                 SPAWN(8)
 
 <b>NAME</b>
@@ -20,7 +25,7 @@ SPAWN(8)                                                 SPAWN(8)
        This daemon expects to be run from the  <a href="master.8.html"><b>master</b>(8)</a>  process
        manager.
 
-<b>COMMAND</b> <b>ATTRIBUTE</b> <b>SYNTAX</b>
+<b>COMMAND ATTRIBUTE SYNTAX</b>
        The external command attributes are given in the <b>master.cf</b>
        file at the end of a service definition.  The syntax is as
        follows:
@@ -60,32 +65,77 @@ SPAWN(8)                                                 SPAWN(8)
        talk to the external command and thus is not vulnerable to
        data-driven attacks.
 
-<b>CONFIGURATION</b> <b>PARAMETERS</b>
-       The  following  <b>main.cf</b> parameters are especially relevant
-       to this program. See the Postfix <b>main.cf</b> file  for  syntax
-       details  and  for  default  values. Use the <b>postfix</b> <b>reload</b>
-       command after a configuration change.
+<b>CONFIGURATION PARAMETERS</b>
+       Changes to <b>main.cf</b> are picked up automatically as <a href="smtpd.8.html">smtpd(8)</a>
+       processes run for only a limited amount of time.  Use  the
+       command "<b>postfix reload</b>" to speed up a change.
 
-<b>Miscellaneous</b>
-       <b>export</b><i>_</i><b>environment</b>
-              List of names of environment parameters that can be
-              exported to non-Postfix processes.
+       The  text  below  provides  only  a parameter summary. See
+       <a href="postconf.5.html">postconf(5)</a> for more details including examples.
 
-       <b>mail</b><i>_</i><b>owner</b>
-              The  process  privileges  used while not running an
-              external command.
+       In the text below, <i>transport</i> is the  first  field  of  the
+       entry in the <b>master.cf</b> file.
 
-<b>Resource</b> <b>control</b>
-       <i>service_</i><b>time</b><i>_</i><b>limit</b>
-              The amount of time the command is  allowed  to  run
-              before  it  is  killed  with  force. <i>service</i> is the
-              first field of the entry in the <b>master.cf</b> file. The
-              default  time  limit  is  given  by the global <b>com-</b>
-              <b>mand</b><i>_</i><b>time</b><i>_</i><b>limit</b> configuration parameter.
+<b>RESOURCE AND RATE CONTROL</b>
+       <i>transport</i><b>_time_limit ($<a href="postconf.5.html#command_time_limit">command_time_limit</a>)</b>
+              The  amount  of  time the command is allowed to run
+              before it is terminated.
 
-<b>SEE</b> <b>ALSO</b>
-       <a href="master.8.html">master(8)</a> process manager
-       syslogd(8) system logging
+<b>MISCELLANEOUS</b>
+       <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
+              The default location of  the  Postfix  main.cf  and
+              master.cf configuration files.
+
+       <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
+              How  much time a Postfix daemon process may take to
+              handle a request  before  it  is  terminated  by  a
+              built-in watchdog timer.
+
+       <b><a href="postconf.5.html#export_environment">export_environment</a> (see 'postconf -d' output)</b>
+              The  list  of  environment variables that a Postfix
+              process will export to non-Postfix processes.
+
+       <b><a href="postconf.5.html#ipc_timeout">ipc_timeout</a> (3600s)</b>
+              The time limit for sending or receiving information
+              over an internal communication channel.
+
+       <b><a href="postconf.5.html#mail_owner">mail_owner</a> (postfix)</b>
+              The UNIX system account that owns the Postfix queue
+              and most Postfix daemon processes.
+
+       <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
+              The maximum amount of time  that  an  idle  Postfix
+              daemon  process  waits for the next service request
+              before exiting.
+
+       <b><a href="postconf.5.html#max_use">max_use</a> (100)</b>
+              The maximal number of connection requests before  a
+              Postfix daemon process terminates.
+
+       <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
+              The  process ID of a Postfix command or daemon pro-
+              cess.
+
+       <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
+              The process name of a  Postfix  command  or  daemon
+              process.
+
+       <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
+              The  location of the Postfix top-level queue direc-
+              tory.
+
+       <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
+              The syslog facility of Postfix logging.
+
+       <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
+              The mail system name that is prepended to the  pro-
+              cess  name  in  syslog  records,  so  that  "smtpd"
+              becomes, for example, "postfix/smtpd".
+
+<b>SEE ALSO</b>
+       <a href="postconf.5.html">postconf(5)</a>, configuration parameters
+       <a href="master.8.html">master(8)</a>, process manager
+       syslogd(8), system logging
 
 <b>LICENSE</b>
        The Secure Mailer license must be  distributed  with  this

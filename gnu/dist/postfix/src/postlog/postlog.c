@@ -30,12 +30,35 @@
 /*	\fBerror\fR, \fBfatal\fR, or \fBpanic\fR.
 /* .IP "\fB-t \fItag\fR"
 /*	Specifies the logging tag, that is, the identifying name that
-/*	appears at the beginning of each logging record.
+/*	appears at the beginning of each logging record. A default tag
+/*	is used when none is specified.
 /* .IP \fB-v\fR
 /*	Enable verbose logging for debugging purposes. Multiple \fB-v\fR
 /*	options make the software increasingly verbose.
+/* ENVIRONMENT
+/* .ad
+/* .fi
+/* .IP MAIL_CONFIG
+/*	Directory with the \fBmain.cf\fR file. 
+/* CONFIGURATION PARAMETERS
+/* .ad
+/* .fi
+/*	The following \fBmain.cf\fR parameters are especially relevant to
+/*	this program.
+/*
+/*	The text below provides only a parameter summary. See
+/*	postconf(5) for more details including examples.
+/* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
+/*	The default location of the Postfix main.cf and master.cf
+/*	configuration files.
+/* .IP "\fBsyslog_facility (mail)\fR"
+/*	The syslog facility of Postfix logging.
+/* .IP "\fBsyslog_name (postfix)\fR"
+/*	The mail system name that is prepended to the process name in syslog
+/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
 /* SEE ALSO
-/*	syslogd(8) syslog daemon.
+/*	postconf(5), configuration parameters
+/*	syslogd(8), syslog daemon
 /* LICENSE
 /* .ad
 /* .fi
@@ -75,6 +98,7 @@
 
 #include <mail_params.h>		/* XXX right place for LOG_FACILITY? */
 #include <mail_conf.h>
+#include <mail_task.h>
 
 /* Application-specific. */
 
@@ -144,7 +168,7 @@ int     main(int argc, char **argv)
     char   *slash;
     int     fd;
     int     ch;
-    char   *tag;
+    const char *tag;
     int     log_flags = 0;
     int     level = MSG_INFO;
 
@@ -166,10 +190,10 @@ int     main(int argc, char **argv)
     /*
      * Set up diagnostics.
      */
-    if ((slash = strrchr(argv[0], '/')) != 0)
-	tag = slash + 1;
+    if ((slash = strrchr(argv[0], '/')) != 0 && slash[1])
+	tag = mail_task(slash + 1);
     else
-	tag = argv[0];
+	tag = mail_task(argv[0]);
     if (isatty(STDERR_FILENO))
 	msg_vstream_init(tag, VSTREAM_ERR);
     msg_syslog_init(tag, LOG_PID, LOG_FACILITY);

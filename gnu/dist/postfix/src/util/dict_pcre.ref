@@ -2,6 +2,8 @@
 ./dict_open: warning: pcre map dict_pcre.map, line 5: ignoring extra text after ENDIF
 ./dict_open: warning: pcre map dict_pcre.map, line 8: unknown regexp option "!": skipping this rule
 ./dict_open: warning: dict_pcre.map, line 9: no replacement text: using empty string
+./dict_open: warning: pcre map dict_pcre.map, line 17: $number found in negative match replacement text: skipping this rule
+./dict_open: warning: pcre map dict_pcre.map, line 22: no regexp: skipping this rule
 true: not found
 true1=1
 true2: not found
@@ -12,3 +14,7 @@ c=
 d: not found
 1234=(1)(2)(3)(4)
 123=(1)(2)(3)
+bar/find: not found
+bar/whynot=Don't have a liquor license
+bar/elbereth=(elbereth)
+say/elbereth: not found

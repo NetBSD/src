@@ -55,6 +55,7 @@
 #include <mail_params.h>
 #include <rec_type.h>
 #include <ext_prop.h>
+#include <cleanup_user.h>
 
 /* Application-specific. */
 
@@ -69,13 +70,20 @@ void    cleanup_out_recipient(CLEANUP_STATE *state, const char *orcpt,
     char  **cpp;
 
     /*
+     * XXX Not elegant, but eliminates complexity in the record reading loop.
+     */
+    if (!var_enable_orcpt)
+	orcpt = "";
+
+    /*
      * Distinguish between different original recipient addresses that map
      * onto the same mailbox. The recipient will use our original recipient
      * message header to figure things out.
      */
 #define STREQ(x, y) (strcmp((x), (y)) == 0)
 
-    if (cleanup_virt_alias_maps == 0) {
+    if ((state->flags & CLEANUP_FLAG_MAP_OK) == 0
+	|| cleanup_virt_alias_maps == 0) {
 	if ((STREQ(orcpt, recip) ? been_here(state->dups, "%s", orcpt) :
 	     been_here(state->dups, "%s\n%s", orcpt, recip)) == 0) {
 	    cleanup_out_string(state, REC_TYPE_ORCP, orcpt);

@@ -35,28 +35,60 @@
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
-/*	The following \fBmain.cf\fR parameters are especially relevant to
-/*	this program. See the Postfix \fBmain.cf\fR file for syntax details
-/*	and for default values. Use the \fBpostfix reload\fR command after
-/*	a configuration change.
-/* .SH "Content inspection controls"
-/* .IP \fBcontent_filter\fR
-/*	The name of a mail delivery transport that filters mail and that
-/*	either bounces mail or re-injects the result back into Postfix.
-/*	This parameter uses the same syntax as the right-hand side of
-/*	a Postfix transport table.
-/* .SH Miscellaneous
+/*	As the pickup daemon is a relatively long-running process, up
+/*	to an hour may pass before a \fBmain.cf\fR change takes effect.
+/*	Use the command "\fBpostfix reload\fR" command to speed up a change.
+/*
+/*	The text below provides only a parameter summary. See
+/*	postconf(5) for more details including examples.
+/* CONTENT INSPECTION CONTROLS
 /* .ad
 /* .fi
-/* .IP \fBalways_bcc\fR
-/*	Address to send a copy of each message that enters the system.
-/* .IP \fBqueue_directory\fR
-/*	Top-level directory of the Postfix queue.
+/* .IP "\fBcontent_filter (empty)\fR"
+/*	The name of a mail delivery transport that filters mail after
+/*	it is queued.
+/* .IP "\fBreceive_override_options (empty)\fR"
+/*	Enable or disable recipient validation, built-in content
+/*	filtering, or address rewriting.
+/* MISCELLANEOUS CONTROLS
+/* .ad
+/* .fi
+/* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
+/*	The default location of the Postfix main.cf and master.cf
+/*	configuration files.
+/* .IP "\fBdaemon_timeout (18000s)\fR"
+/*	How much time a Postfix daemon process may take to handle a
+/*	request before it is terminated by a built-in watchdog timer.
+/* .IP "\fBipc_timeout (3600s)\fR"
+/*	The time limit for sending or receiving information over an internal
+/*	communication channel.
+/* .IP "\fBline_length_limit (2048)\fR"
+/*	Upon input, long lines are chopped up into pieces of at most
+/*	this length; upon delivery, long lines are reconstructed.
+/* .IP "\fBmax_idle (100s)\fR"
+/*	The maximum amount of time that an idle Postfix daemon process
+/*	waits for the next service request before exiting.
+/* .IP "\fBmax_use (100)\fR"
+/*	The maximal number of connection requests before a Postfix daemon
+/*	process terminates.
+/* .IP "\fBprocess_id (read-only)\fR"
+/*	The process ID of a Postfix command or daemon process.
+/* .IP "\fBprocess_name (read-only)\fR"
+/*	The process name of a Postfix command or daemon process.
+/* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
+/*	The location of the Postfix top-level queue directory.
+/* .IP "\fBsyslog_facility (mail)\fR"
+/*	The syslog facility of Postfix logging.
+/* .IP "\fBsyslog_name (postfix)\fR"
+/*	The mail system name that is prepended to the process name in syslog
+/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
 /* SEE ALSO
-/*	cleanup(8) message canonicalization
-/*	master(8) process manager
-/*	sendmail(1), postdrop(8) mail posting agent
-/*	syslogd(8) system logging
+/*	cleanup(8), message canonicalization
+/*	sendmail(1), Sendmail-compatible interface
+/*	postdrop(1), mail posting agent
+/*	postconf(5), configuration parameters
+/*	master(8), process manager
+/*	syslogd(8), system logging
 /* LICENSE
 /* .ad
 /* .fi
@@ -90,7 +122,6 @@
 #include <set_ugid.h>
 #include <safe_open.h>
 #include <watchdog.h>
-#include <stringops.h>
 
 /* Global library. */
 
@@ -105,6 +136,7 @@
 #include <record.h>
 #include <rec_type.h>
 #include <lex_822.h>
+#include <input_transp.h>
 
 /* Single-threaded server skeleton. */
 
@@ -112,8 +144,8 @@
 
 /* Application-specific. */
 
-char   *var_always_bcc;
 char   *var_filter_xport;
+char   *var_input_transp;
 
  /*
   * Structure to bundle a bunch of information about a queue file.
@@ -123,7 +155,6 @@ typedef struct {
     struct stat st;			/* queue file status */
     char   *path;			/* name for open/remove */
     char   *sender;			/* sender address */
-    char   *rcpt;			/* recipient address */
 } PICKUP_INFO;
 
  /*
@@ -133,6 +164,12 @@ typedef struct {
   */
 #define REMOVE_MESSAGE_FILE	1
 #define KEEP_MESSAGE_FILE	2
+
+ /*
+  * Transparency: before mail is queued, do we allow address mapping,
+  * automatic bcc, header/body checks?
+  */
+int     pickup_input_transp_mask;
 
 /* file_read_error - handle error while reading queue file */
 
@@ -159,9 +196,6 @@ static int copy_segment(VSTREAM *qfile, VSTREAM *cleanup, PICKUP_INFO *info,
 {
     int     type;
     int     check_first = (*expected == REC_TYPE_CONTENT[0]);
-    const char *error_text;
-    char   *attr_name;
-    char   *attr_value;
 
     /*
      * Limit the input record size. All front-end programs should protect the
@@ -186,48 +220,8 @@ static int copy_segment(VSTREAM *qfile, VSTREAM *cleanup, PICKUP_INFO *info,
 	if (type == REC_TYPE_FROM)
 	    if (info->sender == 0)
 		info->sender = mystrdup(vstring_str(buf));
-	if (type == REC_TYPE_ORCP)
-	    if (info->st.st_uid != var_owner_uid) {
-		msg_warn("uid=%ld: ignoring original recipient record: %.200s",
-			 (long) info->st.st_uid, vstring_str(buf));
-		continue;
-	    }
-	if (type == REC_TYPE_RCPT)
-	    if (info->rcpt == 0)
-		info->rcpt = mystrdup(vstring_str(buf));
 	if (type == REC_TYPE_TIME)
-	    continue;
-	if (type == REC_TYPE_SIZE)
-	    continue;
-	if (type == REC_TYPE_ATTR) {
-	    if ((error_text = split_nameval(vstring_str(buf), &attr_name,
-					    &attr_value)) != 0) {
-		msg_warn("uid=%ld: malformed attribute record: %s: %.200s",
-		      (long) info->st.st_uid, error_text, vstring_str(buf));
-		continue;
-	    }
-#define STREQ(x,y) (strcmp(x,y) == 0)
-
-	    if (STREQ(attr_name, MAIL_ATTR_ENCODING)
-		&& (STREQ(attr_value, MAIL_ATTR_ENC_7BIT)
-		    || STREQ(attr_value, MAIL_ATTR_ENC_8BIT)
-		    || STREQ(attr_value, MAIL_ATTR_ENC_NONE))) {
-		rec_fprintf(cleanup, REC_TYPE_ATTR, "%s=%s",
-			    attr_name, attr_value);
-	    } else if (info->st.st_uid != var_owner_uid) {
-		msg_warn("uid=%ld: ignoring attribute record: %.200s=%.200s",
-			 (long) info->st.st_uid, attr_name, attr_value);
-	    }
-	    continue;
-	}
-	if (type == REC_TYPE_RRTO)
-	    /* Use message header extracted information instead. */
-	    continue;
-	if (type == REC_TYPE_ERTO)
-	    /* Use message header extracted information instead. */
-	    continue;
-	if (type == REC_TYPE_INSP)
-	    /* Use current content inspection settings instead. */
+	    /* Use our own arrival time record instead. */
 	    continue;
 
 	/*
@@ -235,23 +229,22 @@ static int copy_segment(VSTREAM *qfile, VSTREAM *cleanup, PICKUP_INFO *info,
 	 * (used in message content).
 	 */
 	if (type == REC_TYPE_FILT && *expected != REC_TYPE_CONTENT[0])
-	    /* Use current content filter settings instead. */
+	    /* Use our own content filter settings instead. */
 	    continue;
-	else {
 
-	    /*
-	     * XXX Force an empty record when the queue file content begins
-	     * with whitespace, so that it won't be considered as being part
-	     * of our own Received: header. What an ugly Kluge.
-	     */
-	    if (check_first) {
-		check_first = 0;
-		if (VSTRING_LEN(buf) > 0 && IS_SPACE_TAB(vstring_str(buf)[0]))
-		    rec_put(cleanup, REC_TYPE_NORM, "", 0);
-	    }
-	    if ((REC_PUT_BUF(cleanup, type, buf)) < 0)
-		return (cleanup_service_error(info, CLEANUP_STAT_WRITE));
+	/*
+	 * XXX Force an empty record when the queue file content begins with
+	 * whitespace, so that it won't be considered as being part of our
+	 * own Received: header. What an ugly Kluge.
+	 */
+	if (check_first
+	    && (type == REC_TYPE_NORM || type == REC_TYPE_CONT)) {
+	    check_first = 0;
+	    if (VSTRING_LEN(buf) > 0 && IS_SPACE_TAB(vstring_str(buf)[0]))
+		rec_put(cleanup, REC_TYPE_NORM, "", 0);
 	}
+	if ((REC_PUT_BUF(cleanup, type, buf)) < 0)
+	    return (cleanup_service_error(info, CLEANUP_STAT_WRITE));
     }
     return (0);
 }
@@ -263,6 +256,7 @@ static int pickup_copy(VSTREAM *qfile, VSTREAM *cleanup,
 {
     time_t  now = time((time_t *) 0);
     int     status;
+    char   *name;
 
     /*
      * Protect against time-warped time stamps. Warn about mail that has been
@@ -303,9 +297,6 @@ static int pickup_copy(VSTREAM *qfile, VSTREAM *cleanup,
      * Copy the message envelope segment. Allow only those records that we
      * expect to see in the envelope section. The envelope segment must
      * contain an envelope sender address.
-     * 
-     * If the segment contains a recipient address, include the optional
-     * always_bcc recipient.
      */
     if ((status = copy_segment(qfile, cleanup, info, buf, REC_TYPE_ENVELOPE)) != 0)
 	return (status);
@@ -314,12 +305,19 @@ static int pickup_copy(VSTREAM *qfile, VSTREAM *cleanup,
 		 info->id, (long) info->st.st_uid);
 	return (REMOVE_MESSAGE_FILE);
     }
-    msg_info("%s: uid=%d from=<%s>", info->id,
-	     (int) info->st.st_uid, info->sender);
 
-    if (info->rcpt) {
-	if (*var_always_bcc)
-	    rec_fputs(cleanup, REC_TYPE_RCPT, var_always_bcc);
+    /*
+     * For messages belonging to $mail_owner also log the maildrop queue id.
+     * This supports message tracking for mail requeued via "postsuper -r".
+     */
+    if (info->st.st_uid == var_owner_uid) {
+	msg_info("%s: uid=%d from=<%s> orig_id=%s", info->id,
+		 (int) info->st.st_uid, info->sender,
+		 ((name = strrchr(info->path, '/')) ?
+		  name + 1 : info->path));
+    } else {
+	msg_info("%s: uid=%d from=<%s>", info->id,
+		 (int) info->st.st_uid, info->sender);
     }
 
     /*
@@ -382,6 +380,7 @@ static int pickup_file(PICKUP_INFO *info)
     int     status;
     VSTREAM *qfile;
     VSTREAM *cleanup;
+    int     cleanup_flags;
 
     /*
      * Open the submitted file. If we cannot open it, and we're not having a
@@ -412,14 +411,18 @@ static int pickup_file(PICKUP_INFO *info)
      * easier to implement the many possible error exits without forgetting
      * to close files, or to release memory.
      */
-#define PICKUP_CLEANUP_FLAGS	(CLEANUP_FLAG_BOUNCE | CLEANUP_FLAG_FILTER)
+    cleanup_flags = (CLEANUP_FLAG_BOUNCE | CLEANUP_FLAG_MASK_EXTERNAL);
+    if (pickup_input_transp_mask & INPUT_TRANSP_ADDRESS_MAPPING)
+	cleanup_flags &= ~(CLEANUP_FLAG_BCC_OK | CLEANUP_FLAG_MAP_OK);
+    if (pickup_input_transp_mask & INPUT_TRANSP_HEADER_BODY)
+	cleanup_flags &= ~CLEANUP_FLAG_FILTER;
 
     cleanup = mail_connect_wait(MAIL_CLASS_PUBLIC, var_cleanup_service);
     if (attr_scan(cleanup, ATTR_FLAG_STRICT,
 		  ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, buf,
 		  ATTR_TYPE_END) != 1
 	|| attr_print(cleanup, ATTR_FLAG_NONE,
-		      ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, PICKUP_CLEANUP_FLAGS,
+		      ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, cleanup_flags,
 		      ATTR_TYPE_END) != 0) {
 	status = KEEP_MESSAGE_FILE;
     } else {
@@ -439,7 +442,6 @@ static void pickup_init(PICKUP_INFO *info)
     info->id = 0;
     info->path = 0;
     info->sender = 0;
-    info->rcpt = 0;
 }
 
 /* pickup_free - wipe info structure */
@@ -451,7 +453,6 @@ static void pickup_free(PICKUP_INFO *info)
     SAFE_FREE(info->id);
     SAFE_FREE(info->path);
     SAFE_FREE(info->sender);
-    SAFE_FREE(info->rcpt);
 }
 
 /* pickup_service - service client */
@@ -504,9 +505,9 @@ static void pickup_service(char *unused_buf, int unused_len,
     } while (file_count);
 }
 
-/* drop_privileges - drop privileges */
+/* post_jail_init - drop privileges */
 
-static void drop_privileges(char *unused_name, char **unused_argv)
+static void post_jail_init(char *unused_name, char **unused_argv)
 {
 
     /*
@@ -514,6 +515,13 @@ static void drop_privileges(char *unused_name, char **unused_argv)
      */
     if (getuid() != var_owner_uid)
 	set_ugid(var_owner_uid, var_owner_gid);
+
+    /*
+     * Initialize the receive transparency options: do we want unknown
+     * recipient checks, do we want address mapping.
+     */
+    pickup_input_transp_mask =
+	input_transp_mask(VAR_INPUT_TRANSP, var_input_transp);
 }
 
 /* main - pass control to the multi-threaded server skeleton */
@@ -521,8 +529,8 @@ static void drop_privileges(char *unused_name, char **unused_argv)
 int     main(int argc, char **argv)
 {
     static CONFIG_STR_TABLE str_table[] = {
-	VAR_ALWAYS_BCC, DEF_ALWAYS_BCC, &var_always_bcc, 0, 0,
 	VAR_FILTER_XPORT, DEF_FILTER_XPORT, &var_filter_xport, 0, 0,
+	VAR_INPUT_TRANSP, DEF_INPUT_TRANSP, &var_input_transp, 0, 0,
 	0,
     };
 
@@ -532,7 +540,7 @@ int     main(int argc, char **argv)
      */
     trigger_server_main(argc, argv, pickup_service,
 			MAIL_SERVER_STR_TABLE, str_table,
-			MAIL_SERVER_POST_INIT, drop_privileges,
+			MAIL_SERVER_POST_INIT, post_jail_init,
 			MAIL_SERVER_SOLITARY,
 			0);
 }

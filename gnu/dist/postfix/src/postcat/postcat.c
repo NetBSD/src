@@ -19,6 +19,8 @@
 /* .IP \fB-q\fR
 /*	Search the Postfix queue for the named \fIfiles\fR instead
 /*	of taking the names literally.
+/*
+/*	Available in Postfix version 2.0 and later.
 /* .IP \fB-v\fR
 /*	Enable verbose logging for debugging purposes. Multiple \fB-v\fR
 /*	options make the software increasingly verbose.
@@ -32,12 +34,20 @@
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
-/*	See the Postfix \fBmain.cf\fR file for syntax details and for
-/*	default values. Use the \fBpostfix reload\fR command after a
-/*	configuration change.
-/* .IP \fBqueue_directory\fR
-/*	Top-level directory of the Postfix queue. This is also the root
-/*	directory of Postfix daemons that run chrooted.
+/*	The following \fBmain.cf\fR parameters are especially relevant to
+/*	this program.
+/*
+/*	The text below provides only a parameter summary. See
+/*	postconf(5) for more details including examples.
+/* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
+/*	The default location of the Postfix main.cf and master.cf
+/*	configuration files.
+/* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
+/*	The location of the Postfix top-level queue directory.
+/* FILES
+/*	/var/spool/postfix, Postfix queue directory
+/* SEE ALSO
+/*	postconf(5), Postfix configuration
 /* LICENSE
 /* .ad
 /* .fi
@@ -77,9 +87,10 @@
 
 /* Application-specific. */
 
-#define PC_FLAG_QUEUE (1<<0)		/* search queue */
+#define PC_FLAG_QUEUE	(1<<0)		/* search queue */
 
 #define STR	vstring_str
+#define LEN	VSTRING_LEN
 
 /* postcat - visualize Postfix queue file contents */
 
@@ -92,7 +103,7 @@ static void postcat(VSTREAM *fp, VSTRING *buffer)
     int     ch;
 
 #define TEXT_RECORD(rec_type) \
-		(rec_type == REC_TYPE_CONT || rec_type == REC_TYPE_NORM)
+	    (rec_type == REC_TYPE_CONT || rec_type == REC_TYPE_NORM)
 
     /*
      * See if this is a plausible file.
@@ -113,7 +124,7 @@ static void postcat(VSTREAM *fp, VSTRING *buffer)
 	if (rec_type == REC_TYPE_ERROR)
 	    msg_fatal("record read error");
 	if (rec_type == REC_TYPE_EOF)
-	    return;
+	    break;
 	if (first == 1) {
 	    vstream_printf("*** ENVELOPE RECORDS %s ***\n", VSTREAM_PATH(fp));
 	    first = 0;
@@ -121,28 +132,24 @@ static void postcat(VSTREAM *fp, VSTRING *buffer)
 	if (prev_type == REC_TYPE_CONT && !TEXT_RECORD(rec_type))
 	    VSTREAM_PUTCHAR('\n');
 	switch (rec_type) {
-	case REC_TYPE_SIZE:
-	    vstream_printf("message_size: %s\n", STR(buffer));
-	    break;
 	case REC_TYPE_TIME:
-	    time = atol(STR(buffer));
-	    vstream_printf("arrival_time: %s", asctime(localtime(&time)));
-	    break;
 	case REC_TYPE_WARN:
 	    time = atol(STR(buffer));
-	    vstream_printf("defer_warn_time: %s", asctime(localtime(&time)));
+	    vstream_printf("%s: %s", rec_type_name(rec_type),
+			   asctime(localtime(&time)));
 	    break;
 	case REC_TYPE_CONT:
 	    if (msg_verbose)
-		vstream_printf("non-final line fragment: %s\n", STR(buffer));
-	    else
-		vstream_printf("%s", STR(buffer));
+		vstream_printf("%s: ", rec_type_name(rec_type));
+	    vstream_fwrite(VSTREAM_OUT, STR(buffer), LEN(buffer));
+	    if (msg_verbose)
+		VSTREAM_PUTCHAR('\n');
 	    break;
 	case REC_TYPE_NORM:
 	    if (msg_verbose)
-		vstream_printf("final line fragment: %s\n", STR(buffer));
-	    else
-		vstream_printf("%s\n", STR(buffer));
+		vstream_printf("%s: ", rec_type_name(rec_type));
+	    vstream_fwrite(VSTREAM_OUT, STR(buffer), LEN(buffer));
+	    VSTREAM_PUTCHAR('\n');
 	    break;
 	case REC_TYPE_MESG:
 	    vstream_printf("*** MESSAGE CONTENTS %s ***\n", VSTREAM_PATH(fp));
@@ -158,6 +165,10 @@ static void postcat(VSTREAM *fp, VSTRING *buffer)
 	    break;
 	}
 	prev_type = rec_type;
+
+	/*
+	 * In case the next record is broken.
+	 */
 	vstream_fflush(VSTREAM_OUT);
     }
 }
@@ -278,6 +289,10 @@ int     main(int argc, char **argv)
 	    optind++;
 	}
     }
+
+    /*
+     * Clean up.
+     */
     vstring_free(buffer);
     exit(0);
 }

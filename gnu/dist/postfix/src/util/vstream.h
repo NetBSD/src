@@ -18,6 +18,7 @@
 #include <fcntl.h>
 #include <stdarg.h>
 #include <setjmp.h>
+#include <unistd.h>
 
  /*
   * Utility library.
@@ -37,7 +38,7 @@ typedef struct VSTREAM {
     VSTREAM_FN read_fn;			/* buffer fill action */
     VSTREAM_FN write_fn;		/* buffer fill action */
     void   *context;			/* application context */
-    long    offset;			/* cached seek info */
+    off_t   offset;			/* cached seek info */
     char   *path;			/* give it at least try */
     int     read_fd;			/* read channel (double-buffered) */
     int     write_fd;			/* write channel (double-buffered) */
@@ -72,8 +73,8 @@ extern VSTREAM vstream_fstd[];		/* pre-defined streams */
 
 extern VSTREAM *vstream_fopen(const char *, int, int);
 extern int vstream_fclose(VSTREAM *);
-extern long vstream_fseek(VSTREAM *, long, int);
-extern long vstream_ftell(VSTREAM *);
+extern off_t vstream_fseek(VSTREAM *, off_t, int);
+extern off_t vstream_ftell(VSTREAM *);
 extern int vstream_fflush(VSTREAM *);
 extern int vstream_fputs(const char *, VSTREAM *);
 extern VSTREAM *vstream_fdopen(int, int);

@@ -1,35 +1,60 @@
-<html> <head> </head> <body> <pre>
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html> <head>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<title> Postfix manual - regexp_table(5) </title>
+</head> <body> <pre>
 REGEXP_TABLE(5)                                   REGEXP_TABLE(5)
 
 <b>NAME</b>
        regexp_table - format of Postfix regular expression tables
 
 <b>SYNOPSIS</b>
-       <b>regexp:/etc/postfix/</b><i>filename</i>
+       <b>postmap -fq "</b><i>string</i><b>" <a href="regexp_table.5.html">regexp</a>:/etc/postfix/</b><i>filename</i>
 
-       <b>postmap</b> <b>-q</b> <b>"</b><i>string</i><b>"</b> <b>regexp:/etc/postfix/</b><i>filename</i>
-
-       <b>postmap</b> <b>-q</b> <b>-</b> <b>regexp:/etc/postfix/</b><i>filename</i> &lt;<i>inputfile</i>
+       <b>postmap -fq - <a href="regexp_table.5.html">regexp</a>:/etc/postfix/</b><i>filename</i> &lt;<i>inputfile</i>
 
 <b>DESCRIPTION</b>
        The Postfix mail system uses optional tables  for  address
        rewriting or mail routing. These tables are usually in <b>dbm</b>
-       or <b>db</b> format. Alternatively, lookup tables can  be  speci-
-       fied in POSIX regular expression form.
+       or <b>db</b> format.
+
+       Alternatively, lookup tables can  be  specified  in  POSIX
+       regular  expression form. In this case, each input is com-
+       pared against a list of patterns,  and  when  a  match  is
+       found the corresponding result is returned.
 
        To  find out what types of lookup tables your Postfix sys-
-       tem supports use the <b>postconf</b> <b>-m</b> command.
+       tem supports use the <b>postconf -m</b> command.
 
-       To  test  lookup  tables,  use  the  <b>postmap</b>  command   as
+       To test lookup tables, use  the  <b>postmap  -fq</b>  command  as
        described in the SYNOPSIS above.
 
+<b>TABLE FORMAT</b>
        The general form of a Postfix regular expression table is:
 
-       <b>/</b><i>pattern</i><b>/</b><i>flags</i> <i>result</i>
+       <b>/</b><i>pattern</i><b>/</b><i>flags result</i>
+              When <i>pattern</i> matches the input string, use the cor-
+              responding <i>result</i> value.
 
-       <b>!/</b><i>pattern</i><b>/</b><i>flags</i> <i>result</i>
-              When <i>pattern</i> matches  (does  not  match)  a  search
-              string, use the corresponding <i>result</i> value.
+       <b>!/</b><i>pattern</i><b>/</b><i>flags result</i>
+              When  <i>pattern</i>  does <b>not</b> match the input string, use
+              the corresponding <i>result</i> value.
+
+       <b>if /</b><i>pattern</i><b>/</b><i>flags</i>
+
+       <b>endif</b>  Match the input string against the patterns between
+              <b>if</b> and <b>endif</b>, if and only if that same input string
+              also matches <i>pattern</i>. The <b>if</b>..<b>endif</b> can nest.
+
+              Note: do not prepend whitespace to patterns  inside
+              <b>if</b>..<b>endif</b>.
+
+       <b>if !/</b><i>pattern</i><b>/</b><i>flags</i>
+
+       <b>endif</b>  Match the input string against the patterns between
+              <b>if</b> and <b>endif</b>, if and only if that same input string
+              does <b>not</b> match <i>pattern</i>. The <b>if</b>..<b>endif</b> can nest.
 
        blank lines and comments
               Empty  lines and whitespace-only lines are ignored,
@@ -41,32 +66,44 @@ REGEXP_TABLE(5)                                   REGEXP_TABLE(5)
               line that starts with whitespace continues a  logi-
               cal line.
 
-       <b>if</b> <b>/</b><i>pattern</i><b>/</b><i>flags</i>
+       Each  pattern  is a POSIX regular expression enclosed by a
+       pair of delimiters. The regular expression syntax is docu-
+       mented  in  re_format(7)  with 4.4BSD, in regcomp(3C) with
+       Solaris, and in regex(7) with Linux. Other systems may use
+       other document names.
 
-       <b>if</b> <b>!/</b><i>pattern</i><b>/</b><i>flags</i>
+       The  expression  delimiter  can  be  any character, except
+       whitespace or characters that have special meaning (tradi-
+       tionally  the  forward slash is used). The regular expres-
+       sion can contain whitespace.
 
-       <b>endif</b>  Match   the  search  string  against  the  patterns
-              between <b>if</b> and <b>endif</b>, if and  only  if  the  search
-              string   matches  (does  not  match)  <i>pattern</i>.  The
-              <b>if</b>..<b>endif</b> can nest.
+       By default, matching is case-insensitive, and newlines are
+       not  treated  as  special characters. The behavior is con-
+       trolled by flags, which are toggled by  appending  one  or
+       more of the following characters after the pattern:
 
-              Note: do not prepend whitespace to patterns  inside
-              <b>if</b>..<b>endif</b>.
+       <b>i</b> (default: on)
+              Toggles  the  case  sensitivity  flag.  By default,
+              matching is case insensitive.
 
-       Each pattern is a regular expression enclosed by a pair of
-       delimiters.  The regular expression syntax is described in
-       <i>re_format</i>(7).  The expression delimiter can be any charac-
-       ter, except whitespace or  characters  that  have  special
-       meaning  (traditionally  the  forward  slash is used). The
-       regular expression can contain whitespace.
+       <b>x</b> (default: on)
+              Toggles the extended  expression  syntax  flag.  By
+              default,  support for extended expression syntax is
+              enabled.
 
-       By default, matching is case-insensitive, although follow-
-       ing  the  second slash with an `i' flag will reverse this.
-       Other flags are `x' (disable extended expression  syntax),
-       and  `m'  (enable  multi-line mode, that is, treat newline
-       characters as special).
+       <b>m</b> (default: off)
+              Toggle the multi-line mode flag. When this flag  is
+              on,  the  <b>^</b>  and <b>$</b> metacharacters match immediately
+              after and immediately before a  newline  character,
+              respectively,  in addition to matching at the start
+              and end of the input string.
 
-       Each pattern is applied to the entire lookup  key  string.
+<b>TABLE SEARCH ORDER</b>
+       Patterns are applied in the  order  as  specified  in  the
+       table,  until  a  pattern  is found that matches the input
+       string.
+
+       Each pattern  is  applied  to  the  entire  input  string.
        Depending  on  the  application,  that string is an entire
        client hostname, an entire client IP address, or an entire
        mail  address.   Thus,  no parent domain or parent network
@@ -74,16 +111,17 @@ REGEXP_TABLE(5)                                   REGEXP_TABLE(5)
        broken  up  into  their <i>user</i> and <i>domain</i> constituent parts,
        nor is <i>user+foo</i> broken up into <i>user</i> and <i>foo</i>.
 
-       Patterns are applied in the  order  as  specified  in  the
-       table,  until  a  pattern is found that matches the search
-       string.
-
+<b>TEXT SUBSTITUTION</b>
        Substitution of substrings  from  the  matched  expression
        into the result string is possible using $1, $2, etc.. The
        macros in the result string may need to be written as ${n}
        or $(n) if they aren't followed by whitespace.
 
-<b>EXAMPLE</b> <b>SMTPD</b> <b>ACCESS</b> <b>MAP</b>
+       Note:  since negated patterns (those preceded by <b>!</b>) return
+       a result when the expression does not match, substitutions
+       are not available for negated patterns.
+
+<b>EXAMPLE SMTPD ACCESS MAP</b>
        # Disallow sender-specified routing. This is a must if you relay mail
        # for other domains.
        /[%!@].*[%!@]/       550 Sender-specified routing rejected
@@ -97,19 +135,24 @@ REGEXP_TABLE(5)                                   REGEXP_TABLE(5)
        /^(.*)-outgoing@(.*)$/   550 Use ${1}@${2} instead
        endif
 
-<b>EXAMPLE</b> <b>HEADER</b> <b>FILTER</b> <b>MAP</b>
+<b>EXAMPLE HEADER FILTER MAP</b>
        # These were once common in junk mail.
        /^Subject: make money fast/     REJECT
        /^To: friend@public\.com/       REJECT
 
-<b>EXAMPLE</b> <b>BODY</b> <b>FILTER</b> <b>MAP</b>
+<b>EXAMPLE BODY FILTER MAP</b>
        # First skip over base 64 encoded text to save CPU cycles.
        ~^[[:alnum:]+/]{60,}$~          OK
 
        # Put your own body patterns here.
 
-<b>SEE</b> <b>ALSO</b>
-       <a href="pcre_table.5.html">pcre_table(5)</a> format of PCRE tables
+<b>SEE ALSO</b>
+       <a href="postmap.1.html">postmap(1)</a>, Postfix lookup table manager
+       <a href="pcre_table.5.html">pcre_table(5)</a>, format of PCRE tables
+       <a href="cidr_table.5.html">cidr_table(5)</a>, format of CIDR tables
+
+<b>README FILES</b>
+       <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
 
 <b>AUTHOR(S)</b>
        The regexp table lookup code was originally written by:

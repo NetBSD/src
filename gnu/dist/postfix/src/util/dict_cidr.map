@@ -1,0 +1,9 @@
+172.16.0.0/21		554 match bad netblock 172.16.0.0/21
+172.16.8.0/21		554 match bad netblock 172.16.8.0/21
+172.16.0.0/16		554 match bad netblock 172.16.0.0/16
+172.17.1.1		554 match bad naked address
+172.16.1.3/21		whatever
+172.16.1.3/33		whatever
+172.999.0.0/21		whatever
+172.16.1.999		whatever
+172.16.1.4

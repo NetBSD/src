@@ -8,19 +8,17 @@
 /*
 /*	int	qmgr_queue_count;
 /*
-/*	QMGR_QUEUE *qmgr_queue_create(transport, site)
+/*	QMGR_QUEUE *qmgr_queue_create(transport, name, nexthop)
 /*	QMGR_TRANSPORT *transport;
-/*	const char *site;
+/*	const char *name;
+/*	const char *nexthop;
 /*
 /*	void	qmgr_queue_done(queue)
 /*	QMGR_QUEUE *queue;
 /*
-/*	QMGR_QUEUE *qmgr_queue_find(transport, site)
+/*	QMGR_QUEUE *qmgr_queue_find(transport, name)
 /*	QMGR_TRANSPORT *transport;
-/*	const char *site;
-/*
-/*	QMGR_QUEUE *qmgr_queue_select(transport)
-/*	QMGR_TRANSPORT *transport;
+/*	const char *name;
 /*
 /*	void	qmgr_queue_throttle(queue, reason)
 /*	QMGR_QUEUE *queue;
@@ -37,7 +35,7 @@
 /*	qmgr_queue_count is a global counter for the total number
 /*	of in-core queue structures.
 /*
-/*	qmgr_queue_create() creates an empty queue for the named
+/*	qmgr_queue_create() creates an empty named queue for the named
 /*	transport and destination. The queue is given an initial
 /*	concurrency limit as specified with the
 /*	\fIinitial_destination_concurrency\fR configuration parameter,
@@ -48,13 +46,8 @@
 /*	its entries have been taken care of. It is an error to dispose
 /*	of a dead queue.
 /*
-/*	qmgr_queue_find() looks up the queue for the named destination
-/*	for the named transport. A null result means that the queue
-/*	was not found.
-/*
-/*	qmgr_queue_select() uses a round-robin strategy to select
-/*	from the named transport one per-destination queue with a
-/*	non-empty `todo' list.
+/*	qmgr_queue_find() looks up the named queue for the named
+/*	transport. A null result means that the queue was not found.
 /*
 /*	qmgr_queue_throttle() handles a delivery error, and decrements the
 /*	concurrency limit for the destination. When the concurrency limit
@@ -67,7 +60,7 @@
 /*	limit specified for the transport. This routine implements
 /*	"slow open" mode, and eliminates the "thundering herd" problem.
 /* DIAGNOSTICS
-/*	None
+/*	Panic: consistency check failure.
 /* LICENSE
 /* .ad
 /* .fi
@@ -77,6 +70,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Scheduler enhancements:
+/*	Patrik Rak
+/*	Modra 6
+/*	155 00, Prague, Czech Republic
 /*--*/
 
 /* System library. */
@@ -148,7 +146,7 @@ void    qmgr_queue_unthrottle(QMGR_QUEUE *queue)
      */
     if (transport->dest_concurrency_limit == 0
 	|| transport->dest_concurrency_limit > queue->window)
-	if (queue->window <= queue->busy_refcount + transport->init_dest_concurrency)
+	if (queue->window < queue->busy_refcount + transport->init_dest_concurrency)
 	    queue->window++;
 }
 
@@ -186,27 +184,6 @@ void    qmgr_queue_throttle(QMGR_QUEUE *queue, const char *reason)
     }
 }
 
-/* qmgr_queue_select - select in-core queue for delivery */
-
-QMGR_QUEUE *qmgr_queue_select(QMGR_TRANSPORT *transport)
-{
-    QMGR_QUEUE *queue;
-
-    /*
-     * If we find a suitable site, rotate the list to enforce round-robin
-     * selection. See similar selection code in qmgr_transport_select().
-     */
-    for (queue = transport->queue_list.next; queue; queue = queue->peers.next) {
-	if (queue->window > queue->busy_refcount && queue->todo.next != 0) {
-	    QMGR_LIST_ROTATE(transport->queue_list, queue);
-	    if (msg_verbose)
-		msg_info("qmgr_queue_select: %s", queue->name);
-	    return (queue);
-	}
-    }
-    return (0);
-}
-
 /* qmgr_queue_done - delete in-core queue for site */
 
 void    qmgr_queue_done(QMGR_QUEUE *queue)
@@ -232,16 +209,18 @@ void    qmgr_queue_done(QMGR_QUEUE *queue)
     /*
      * Clean up this in-core queue.
      */
-    QMGR_LIST_UNLINK(transport->queue_list, QMGR_QUEUE *, queue);
+    QMGR_LIST_UNLINK(transport->queue_list, QMGR_QUEUE *, queue, peers);
     htable_delete(transport->queue_byname, queue->name, (void (*) (char *)) 0);
     myfree(queue->name);
+    myfree(queue->nexthop);
     qmgr_queue_count--;
     myfree((char *) queue);
 }
 
 /* qmgr_queue_create - create in-core queue for site */
 
-QMGR_QUEUE *qmgr_queue_create(QMGR_TRANSPORT *transport, const char *site)
+QMGR_QUEUE *qmgr_queue_create(QMGR_TRANSPORT *transport, const char *name,
+			              const char *nexthop)
 {
     QMGR_QUEUE *queue;
 
@@ -252,7 +231,8 @@ QMGR_QUEUE *qmgr_queue_create(QMGR_TRANSPORT *transport, const char *site)
 
     queue = (QMGR_QUEUE *) mymalloc(sizeof(QMGR_QUEUE));
     qmgr_queue_count++;
-    queue->name = mystrdup(site);
+    queue->name = mystrdup(name);
+    queue->nexthop = mystrdup(nexthop);
     queue->todo_refcount = 0;
     queue->busy_refcount = 0;
     queue->transport = transport;
@@ -261,14 +241,15 @@ QMGR_QUEUE *qmgr_queue_create(QMGR_TRANSPORT *transport, const char *site)
     QMGR_LIST_INIT(queue->busy);
     queue->reason = 0;
     queue->clog_time_to_warn = 0;
-    QMGR_LIST_PREPEND(transport->queue_list, queue);
-    htable_enter(transport->queue_byname, site, (char *) queue);
+    queue->blocker_tag = 0;
+    QMGR_LIST_APPEND(transport->queue_list, queue, peers);
+    htable_enter(transport->queue_byname, name, (char *) queue);
     return (queue);
 }
 
-/* qmgr_queue_find - find in-core queue for site */
+/* qmgr_queue_find - find in-core named queue */
 
-QMGR_QUEUE *qmgr_queue_find(QMGR_TRANSPORT *transport, const char *site)
+QMGR_QUEUE *qmgr_queue_find(QMGR_TRANSPORT *transport, const char *name)
 {
-    return ((QMGR_QUEUE *) htable_find(transport->queue_byname, site));
+    return ((QMGR_QUEUE *) htable_find(transport->queue_byname, name));
 }

@@ -1,4 +1,9 @@
-<html> <head> </head> <body> <pre>
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html> <head>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<title> Postfix manual - pickup(8) </title>
+</head> <body> <pre>
 PICKUP(8)                                               PICKUP(8)
 
 <b>NAME</b>
@@ -37,33 +42,79 @@ PICKUP(8)                                               PICKUP(8)
        already  complex <a href="cleanup.8.html"><b>cleanup</b>(8)</a> daemon would have to deal with
        unfiltered user data.
 
-<b>CONFIGURATION</b> <b>PARAMETERS</b>
-       The following <b>main.cf</b> parameters are  especially  relevant
-       to  this  program. See the Postfix <b>main.cf</b> file for syntax
-       details and for default values.  Use  the  <b>postfix</b>  <b>reload</b>
-       command after a configuration change.
+<b>CONFIGURATION PARAMETERS</b>
+       As the pickup daemon is a relatively long-running process,
+       up  to  an  hour  may  pass  before a <b>main.cf</b> change takes
+       effect.  Use the command "<b>postfix reload</b>" command to speed
+       up a change.
 
-<b>Content</b> <b>inspection</b> <b>controls</b>
-       <b>content</b><i>_</i><b>filter</b>
-              The  name of a mail delivery transport that filters
-              mail and that either bounces mail or re-injects the
-              result  back into Postfix.  This parameter uses the
-              same syntax as the right-hand  side  of  a  Postfix
-              transport table.
+       The  text  below  provides  only  a parameter summary. See
+       <a href="postconf.5.html">postconf(5)</a> for more details including examples.
 
-<b>Miscellaneous</b>
-       <b>always</b><i>_</i><b>bcc</b>
-              Address  to send a copy of each message that enters
-              the system.
+<b>CONTENT INSPECTION CONTROLS</b>
+       <b><a href="postconf.5.html#content_filter">content_filter</a> (empty)</b>
+              The name of a mail delivery transport that  filters
+              mail after it is queued.
 
-       <b>queue</b><i>_</i><b>directory</b>
-              Top-level directory of the Postfix queue.
+       <b><a href="postconf.5.html#receive_override_options">receive_override_options</a> (empty)</b>
+              Enable  or  disable  recipient validation, built-in
+              content filtering, or address rewriting.
 
-<b>SEE</b> <b>ALSO</b>
-       <a href="cleanup.8.html">cleanup(8)</a> message canonicalization
-       <a href="master.8.html">master(8)</a> process manager
-       <a href="sendmail.1.html">sendmail(1)</a>, postdrop(8) mail posting agent
-       syslogd(8) system logging
+<b>MISCELLANEOUS CONTROLS</b>
+       <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
+              The default location of  the  Postfix  main.cf  and
+              master.cf configuration files.
+
+       <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
+              How  much time a Postfix daemon process may take to
+              handle a request  before  it  is  terminated  by  a
+              built-in watchdog timer.
+
+       <b><a href="postconf.5.html#ipc_timeout">ipc_timeout</a> (3600s)</b>
+              The time limit for sending or receiving information
+              over an internal communication channel.
+
+       <b><a href="postconf.5.html#line_length_limit">line_length_limit</a> (2048)</b>
+              Upon input, long lines are chopped up  into  pieces
+              of  at  most this length; upon delivery, long lines
+              are reconstructed.
+
+       <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
+              The maximum amount of time  that  an  idle  Postfix
+              daemon  process  waits for the next service request
+              before exiting.
+
+       <b><a href="postconf.5.html#max_use">max_use</a> (100)</b>
+              The maximal number of connection requests before  a
+              Postfix daemon process terminates.
+
+       <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
+              The  process ID of a Postfix command or daemon pro-
+              cess.
+
+       <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
+              The process name of a  Postfix  command  or  daemon
+              process.
+
+       <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
+              The  location of the Postfix top-level queue direc-
+              tory.
+
+       <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
+              The syslog facility of Postfix logging.
+
+       <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
+              The mail system name that is prepended to the  pro-
+              cess  name  in  syslog  records,  so  that  "smtpd"
+              becomes, for example, "postfix/smtpd".
+
+<b>SEE ALSO</b>
+       <a href="cleanup.8.html">cleanup(8)</a>, message canonicalization
+       <a href="sendmail.1.html">sendmail(1)</a>, Sendmail-compatible interface
+       <a href="postdrop.1.html">postdrop(1)</a>, mail posting agent
+       <a href="postconf.5.html">postconf(5)</a>, configuration parameters
+       <a href="master.8.html">master(8)</a>, process manager
+       syslogd(8), system logging
 
 <b>LICENSE</b>
        The Secure Mailer license must be  distributed  with  this

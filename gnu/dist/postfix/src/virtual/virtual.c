@@ -6,8 +6,8 @@
 /* SYNOPSIS
 /*	\fBvirtual\fR [generic Postfix daemon options]
 /* DESCRIPTION
-/*	The \fBvirtual\fR delivery agent is designed for virtual mail
-/*	hosting services. Originally based on the Postfix local delivery
+/*	The \fBvirtual\fR(8) delivery agent is designed for virtual mail
+/*	hosting services. Originally based on the Postfix local(8) delivery
 /*	agent, this agent looks up recipients with map lookups of their
 /*	full recipient address, instead of using hard-coded unix password
 /*	file lookups of the address local part only.
@@ -20,8 +20,8 @@
 /* .fi
 /*	The mailbox location is controlled by the \fBvirtual_mailbox_base\fR
 /*	and \fBvirtual_mailbox_maps\fR configuration parameters (see below).
-/*	The \fBvirtual_mailbox_maps\fR table is indexed by the full recipient
-/*	address.
+/*	The \fBvirtual_mailbox_maps\fR table is indexed by the recipient
+/*	address as described under TABLE SEARCH ORDER below.
 /*
 /*	The mailbox pathname is constructed as follows:
 /*
@@ -61,8 +61,8 @@
 /*	given to Postfix, and prepends a
 /*	\fBReturn-Path:\fR message header with the envelope sender address.
 /*
-/*	By definition, \fBmaildir\fR format does not require file locking
-/*	during mail delivery or retrieval.
+/*	By definition, \fBmaildir\fR format does not require application-level
+/*	file locking during mail delivery or retrieval.
 /* MAILBOX OWNERSHIP
 /* .ad
 /* .fi
@@ -74,6 +74,35 @@
 /*	The \fBvirtual_minimum_uid\fR parameter imposes a lower bound on
 /*	numerical user ID values that may be specified in any
 /*	\fBvirtual_uid_maps\fR.
+/* TABLE SEARCH ORDER
+/* .ad
+/* .fi
+/*	Normally, a lookup table is specified as a text file that
+/*	serves as input to the \fBpostmap\fR(1) command. The result, an
+/*	indexed file in \fBdbm\fR or \fBdb\fR format, is used for fast
+/*	searching by the mail system.
+/*
+/*	The search order is as follows. The search stops
+/*	upon the first successful lookup.
+/* .IP \(bu
+/*	When the recipient has an optional address extension the
+/*	\fIuser+extension@domain.tld\fR address is looked up first.
+/* .sp
+/*	With Postfix versions before 2.1, the optional address extension
+/*	is always ignored.
+/* .IP \(bu
+/*	The \fIuser@domain.tld\fR address, without address extension,
+/*	is looked up next.
+/* .IP \(bu
+/*	Finally, the recipient \fI@domain\fR is looked up.
+/* .PP
+/*	When the table is provided via other means such as NIS, LDAP
+/*	or SQL, the same lookups are done as for ordinary indexed files.
+/*
+/*	Alternatively, a table can be provided as a regular-expression
+/*	map where patterns are given as regular expressions. In that case,
+/*	only the full recipient address is given to the regular-expression
+/*	map.
 /* SECURITY
 /* .ad
 /* .fi
@@ -94,7 +123,9 @@
 /*	Depending on the setting of the \fBnotify_classes\fR parameter,
 /*	the postmaster is notified of bounces and of other trouble.
 /* BUGS
-/*	This delivery agent silently ignores address extensions.
+/*	This delivery agent supports address extensions in email
+/*	addresses and in lookup table keys, but does not propagate
+/*	address extension information to the result of table lookup.
 /*
 /*	Postfix should have lookup tables that can return multiple result
 /*	attributes. In order to avoid the inconvenience of maintaining
@@ -102,148 +133,119 @@
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
-/*	The following \fBmain.cf\fR parameters are especially relevant to
-/*	this program. See the Postfix \fBmain.cf\fR file for syntax details
-/*	and for default values. Use the \fBpostfix reload\fR command after
-/*	a configuration change.
-/* .SH Mailbox delivery
+/*	Changes to \fBmain.cf\fR are picked up automatically, as virtual(8)
+/*	processes run for only a limited amount of time. Use the command
+/*	"\fBpostfix reload\fR" to speed up a change.
+/*
+/*	The text below provides only a parameter summary. See
+/*	postconf(5) for more details including examples.
+/* MAILBOX DELIVERY CONTROLS
 /* .ad
 /* .fi
-/* .IP \fBvirtual_mailbox_base\fR
-/*	Specifies a path that is prepended to all mailbox or maildir paths.
-/*	This is a safety measure to ensure that an out of control map in
-/*	\fBvirtual_mailbox_maps\fR doesn't litter the filesystem with mailboxes.
-/*	While it could be set to "/", this setting isn't recommended.
-/* .IP \fBvirtual_mailbox_maps\fR
-/*	Recipients are looked up in these maps to determine the path to
-/*	their mailbox or maildir. If the returned path ends in a slash
-/*	("/"), maildir-style delivery is carried out, otherwise the
-/*	path is assumed to specify a UNIX-style mailbox file.
-/*
-/*	While searching a lookup table, an address extension
-/*	(\fIuser+foo@domain.tld\fR) is ignored.
-/*
-/*	In a lookup table, specify a left-hand side of \fI@domain.tld\fR
-/*	to match any user in the specified domain that does not have a
-/*	specific \fIuser@domain.tld\fR entry.
-/*
-/*	Note that \fBvirtual_mailbox_base\fR is unconditionally prepended
-/*	to this path.
-/*
-/*	For security reasons, regular expression maps are allowed but
-/*	regular expression substitution of $1 etc. is disallowed,
-/*	because that would open a security hole.
-/*
-/*	For security reasons, proxied table lookup is not allowed,
-/*	because that would open a security hole.
-/* .IP \fBvirtual_mailbox_domains\fR
-/*	The list of domains that should be delivered via the Postfix virtual
-/*	delivery agent. This uses the same syntax as the \fBmydestination\fR
-/*	configuration parameter.
-/* .IP \fBvirtual_minimum_uid\fR
-/*	Specifies a minimum uid that will be accepted as a return from
-/*	a \fBvirtual_uid_maps\fR lookup.
-/*	Returned values less than this will be rejected, and the message
-/*	will be deferred.
-/* .IP \fBvirtual_uid_maps\fR
-/*	Recipients are looked up in these maps to determine the user ID to be
-/*	used when writing to the target mailbox.
-/*
-/*	While searching a lookup table, an address extension
-/*	(\fIuser+foo@domain.tld\fR) is ignored.
-/*
-/*	In a lookup table, specify a left-hand side of \fI@domain.tld\fR
-/*	to match any user in the specified domain that does not have a
-/*	specific \fIuser@domain.tld\fR entry.
-/*
-/*	For security reasons, regular expression maps are allowed but
-/*	regular expression substitution of $1 etc. is disallowed,
-/*	because that would open a security hole.
-/*
-/*	For security reasons, proxied table lookup is not allowed,
-/*	because that would open a security hole.
-/* .IP \fBvirtual_gid_maps\fR
-/*	Recipients are looked up in these maps to determine the group ID to be
-/*	used when writing to the target mailbox.
-/*
-/*	While searching a lookup table, an address extension
-/*	(\fIuser+foo@domain.tld\fR) is ignored.
-/*
-/*	In a lookup table, specify a left-hand side of \fI@domain.tld\fR
-/*	to match any user in the specified domain that does not have a
-/*	specific \fIuser@domain.tld\fR entry.
-/*
-/*	For security reasons, regular expression maps are allowed but
-/*	regular expression substitution of $1 etc. is disallowed,
-/*	because that would open a security hole.
-/*
-/*	For security reasons, proxied table lookup is not allowed,
-/*	because that would open a security hole.
-/* .SH "Locking controls"
+/* .IP "\fBvirtual_mailbox_base (empty)\fR"
+/*	A prefix that the virtual(8) delivery agent prepends to all pathname
+/*	results from $virtual_mailbox_maps table lookups.
+/* .IP "\fBvirtual_mailbox_maps (empty)\fR"
+/*	Optional lookup tables with all valid addresses in the domains that
+/*	match $virtual_mailbox_domains.
+/* .IP "\fBvirtual_minimum_uid (100)\fR"
+/*	The minimum user ID value that the virtual(8) delivery agent accepts
+/*	as a result from \fB$virtual_uid_maps\fR table lookup.
+/* .IP "\fBvirtual_uid_maps (empty)\fR"
+/*	Lookup tables with the per-recipient user ID that the virtual(8)
+/*	delivery agent uses while writing to the recipient's mailbox.
+/* .IP "\fBvirtual_gid_maps (empty)\fR"
+/*	Lookup tables with the per-recipient group ID for virtual(8) mailbox
+/*	delivery.
+/* .PP
+/*	Available in Postfix version 2.0 and later:
+/* .IP "\fBvirtual_mailbox_domains ($virtual_mailbox_maps)\fR"
+/*	The list of domains that are delivered via the $virtual_transport
+/*	mail delivery transport.
+/* .IP "\fBvirtual_transport (virtual)\fR"
+/*	The default mail delivery transport for domains that match the
+/*	$virtual_mailbox_domains parameter value.
+/* LOCKING CONTROLS
 /* .ad
 /* .fi
-/* .IP \fBvirtual_mailbox_lock\fR
-/*	How to lock UNIX-style mailboxes: one or more of \fBflock\fR,
-/*	\fBfcntl\fR or \fBdotlock\fR. The \fBdotlock\fR method requires
-/*	that the recipient UID or GID has write access to the parent
-/*	directory of the mailbox file.
-/*
-/*	This setting is ignored with \fBmaildir\fR style delivery,
-/*	because such deliveries are safe without explicit locks.
-/*
-/*	Use the command \fBpostconf -l\fR to find out what locking methods
-/*	are available on your system.
-/* .IP \fBdeliver_lock_attempts\fR
-/*	Limit the number of attempts to acquire an exclusive lock
-/*	on a UNIX-style mailbox file.
-/* .IP \fBdeliver_lock_delay\fR
-/*	Time (default: seconds) between successive attempts to acquire
-/*	an exclusive lock on a UNIX-style mailbox file. The actual delay
-/*	is slightly randomized.
-/* .IP \fBstale_lock_time\fR
-/*	Limit the time after which a stale lockfile is removed (applicable
-/*	to UNIX-style mailboxes only).
-/* .SH "Resource controls"
+/* .IP "\fBvirtual_mailbox_lock (see 'postconf -d' output)\fR"
+/*	How to lock a UNIX-style virtual(8) mailbox before attempting
+/*	delivery.
+/* .IP "\fBdeliver_lock_attempts (20)\fR"
+/*	The maximal number of attempts to acquire an exclusive lock on a
+/*	mailbox file or bounce(8) logfile.
+/* .IP "\fBdeliver_lock_delay (1s)\fR"
+/*	The time between attempts to acquire an exclusive lock on a mailbox
+/*	file or bounce(8) logfile.
+/* .IP "\fBstale_lock_time (500s)\fR"
+/*	The time after which a stale exclusive mailbox lockfile is removed.
+/* RESOURCE AND RATE CONTROLS
 /* .ad
 /* .fi
-/* .IP \fBvirtual_destination_concurrency_limit\fR
-/*	Limit the number of parallel deliveries to the same domain
-/*	via the \fBvirtual\fR delivery agent.
-/*	The default limit is taken from the
-/*	\fBdefault_destination_concurrency_limit\fR parameter.
-/*	The limit is enforced by the Postfix queue manager.
-/* .IP \fBvirtual_destination_recipient_limit\fR
-/*	Limit the number of recipients per message delivery
-/*	via the \fBvirtual\fR delivery agent.
-/*	The default limit is taken from the
-/*	\fBdefault_destination_recipient_limit\fR parameter.
-/*	The limit is enforced by the Postfix queue manager.
-/* .IP \fBvirtual_mailbox_limit\fR
-/*	The maximal size in bytes of a mailbox or maildir file.
-/*	Set to zero to disable the limit.
-/* HISTORY
+/* .IP "\fBvirtual_destination_concurrency_limit ($default_destination_concurrency_limit)\fR"
+/*	The maximal number of parallel deliveries to the same destination
+/*	via the virtual message delivery transport.
+/* .IP "\fBvirtual_destination_recipient_limit ($default_destination_recipient_limit)\fR"
+/*	The maximal number of recipients per delivery via the virtual
+/*	message delivery transport.
+/* .IP "\fBvirtual_mailbox_limit (51200000)\fR"
+/*	The maximal size in bytes of an individual mailbox or maildir file,
+/*	or zero (no limit).
+/* MISCELLANEOUS CONTROLS
 /* .ad
 /* .fi
-/*	This agent was originally based on the Postfix local delivery
-/*	agent. Modifications mainly consisted of removing code that either
-/*	was not applicable or that was not safe in this context: aliases,
-/*	~user/.forward files, delivery to "|command" or to /file/name.
-/*
-/*	The \fBDelivered-To:\fR header appears in the \fBqmail\fR system
-/*	by Daniel Bernstein.
-/*
-/*	The \fBmaildir\fR structure appears in the \fBqmail\fR system
-/*	by Daniel Bernstein.
+/* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
+/*	The default location of the Postfix main.cf and master.cf
+/*	configuration files.
+/* .IP "\fBdaemon_timeout (18000s)\fR"
+/*	How much time a Postfix daemon process may take to handle a
+/*	request before it is terminated by a built-in watchdog timer.
+/* .IP "\fBipc_timeout (3600s)\fR"
+/*	The time limit for sending or receiving information over an internal
+/*	communication channel.
+/* .IP "\fBmax_idle (100s)\fR"
+/*	The maximum amount of time that an idle Postfix daemon process
+/*	waits for the next service request before exiting.
+/* .IP "\fBmax_use (100)\fR"
+/*	The maximal number of connection requests before a Postfix daemon
+/*	process terminates.
+/* .IP "\fBprocess_id (read-only)\fR"
+/*	The process ID of a Postfix command or daemon process.
+/* .IP "\fBprocess_name (read-only)\fR"
+/*	The process name of a Postfix command or daemon process.
+/* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
+/*	The location of the Postfix top-level queue directory.
+/* .IP "\fBsyslog_facility (mail)\fR"
+/*	The syslog facility of Postfix logging.
+/* .IP "\fBsyslog_name (postfix)\fR"
+/*	The mail system name that is prepended to the process name in syslog
+/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
 /* SEE ALSO
-/*	regexp_table(5) POSIX regular expression table format
-/*	pcre_table(5) Perl Compatible Regular Expression table format
-/*	bounce(8) non-delivery status reports
-/*	syslogd(8) system logging
-/*	qmgr(8) queue manager
+/*	qmgr(8), queue manager
+/*	bounce(8), delivery status reports
+/*	postconf(5), configuration parameters
+/*	syslogd(8), system logging
+/* README_FILES
+/*	Use "\fBpostconf readme_directory\fR" or
+/*	"\fBpostconf html_directory\fR" to locate this information.
+/*	VIRTUAL_README, domain hosting howto
 /* LICENSE
 /* .ad
 /* .fi
 /*	The Secure Mailer license must be distributed with this software.
+/* HISTORY
+/* .ad
+/* .fi
+/*	This delivery agent was originally based on the Postfix local delivery
+/*	agent. Modifications mainly consisted of removing code that either
+/*	was not applicable or that was not safe in this context: aliases,
+/*	~user/.forward files, delivery to "|command" or to /file/name.
+/*
+/*	The \fBDelivered-To:\fR message header appears in the \fBqmail\fR
+/*	system by Daniel Bernstein.
+/*
+/*	The \fBmaildir\fR structure appears in the \fBqmail\fR system
+/*	by Daniel Bernstein.
 /* AUTHOR(S)
 /*	Wietse Venema
 /*	IBM T.J. Watson Research
@@ -283,7 +285,8 @@
 #include <mail_params.h>
 #include <mail_conf.h>
 #include <mail_params.h>
-#include <virtual8_maps.h>
+#include <mail_addr_find.h>
+#include <flush_clnt.h>
 
 /* Single server skeleton. */
 
@@ -356,6 +359,7 @@ static int local_deliver(DELIVER_REQUEST *rqst, char *service)
     for (msg_stat = 0, rcpt = rqst->rcpt_list.info; rcpt < rcpt_end; rcpt++) {
 	state.msg_attr.orig_rcpt = rcpt->orig_addr;
 	state.msg_attr.recipient = rcpt->address;
+	state.msg_attr.rcpt_offset = rcpt->offset;
 	rcpt_stat = deliver_recipient(state, usr_attr);
 	if (rcpt_stat == 0)
 	    deliver_completed(state.msg_attr.fp, rcpt->offset);
@@ -395,8 +399,10 @@ static void local_service(VSTREAM *stream, char *service, char **argv)
 
 static void pre_accept(char *unused_name, char **unused_argv)
 {
-    if (dict_changed()) {
-	msg_info("table has changed -- exiting");
+    const char *table;
+
+    if ((table = dict_changed_name()) != 0) {
+	msg_info("table %s has changed -- restarting", table);
 	exit(0);
     }
 }
@@ -412,16 +418,16 @@ static void post_init(char *unused_name, char **unused_argv)
     set_eugid(var_owner_uid, var_owner_gid);
 
     virtual_mailbox_maps =
-	virtual8_maps_create(VAR_VIRT_MAILBOX_MAPS, var_virt_mailbox_maps,
-			     DICT_FLAG_LOCK | DICT_FLAG_PARANOID);
+	maps_create(VAR_VIRT_MAILBOX_MAPS, var_virt_mailbox_maps,
+		    DICT_FLAG_LOCK | DICT_FLAG_PARANOID);
 
     virtual_uid_maps =
-	virtual8_maps_create(VAR_VIRT_UID_MAPS, var_virt_uid_maps,
-			     DICT_FLAG_LOCK | DICT_FLAG_PARANOID);
+	maps_create(VAR_VIRT_UID_MAPS, var_virt_uid_maps,
+		    DICT_FLAG_LOCK | DICT_FLAG_PARANOID);
 
     virtual_gid_maps =
-	virtual8_maps_create(VAR_VIRT_GID_MAPS, var_virt_gid_maps,
-			     DICT_FLAG_LOCK | DICT_FLAG_PARANOID);
+	maps_create(VAR_VIRT_GID_MAPS, var_virt_gid_maps,
+		    DICT_FLAG_LOCK | DICT_FLAG_PARANOID);
 
     virtual_mbox_lock_mask = mbox_lock_mask(var_virt_mailbox_lock);
 }
@@ -445,6 +451,11 @@ static void pre_init(char *unused_name, char **unused_argv)
 		      VAR_VIRT_MAILBOX_LIMIT, VAR_MESSAGE_LIMIT);
 	set_file_limit(var_virt_mailbox_limit);
     }
+
+    /*
+     * flush client.
+     */
+    flush_init();
 }
 
 /* main - pass control to the single-threaded skeleton */

@@ -6,7 +6,7 @@
 /* SYNOPSIS
 /*	#include <attr.h>
 /*
-/*	int	attr_print0(fp, flags, type, name, ...)
+/*	int	attr_print0(fp, flags, type, name, ..., ATTR_TYPE_END)
 /*	VSTREAM	fp;
 /*	int	flags;
 /*	int	type;
@@ -18,9 +18,8 @@
 /*	va_list	ap;
 /* DESCRIPTION
 /*	attr_print0() takes zero or more (name, value) simple attributes
-/*	or (name, count, value) list attributes, and converts its input
-/*	to a byte stream that can be recovered with attr_scan0(). The stream
-/*	is not flushed.
+/*	and converts its input to a byte stream that can be recovered with
+/*	attr_scan0(). The stream is not flushed.
 /*
 /*	attr_vprint0() provides an alternate interface that is convenient
 /*	for calling from within variadoc functions.
@@ -53,8 +52,9 @@
 /*	This argument is followed by an attribute name and a null-terminated
 /*	string.
 /* .IP "ATTR_TYPE_HASH (HTABLE *)"
-/*	The content of the hash table is sent as a sequence of string-valued
-/*	attributes with names equal to the hash table lookup key.
+/* .IP "ATTR_TYPE_NAMEVAL (NVTABLE *)"
+/*	The content of the table is sent as a sequence of string-valued
+/*	attributes with names equal to the table lookup keys.
 /* .IP ATTR_TYPE_END
 /*	This terminates the attribute list.
 /* .RE

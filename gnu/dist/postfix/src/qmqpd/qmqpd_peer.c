@@ -105,8 +105,8 @@ void    qmqpd_peer_init(QMQPD_STATE *state)
      * If peer went away, give up.
      */
     if (errno == ECONNRESET || errno == ECONNABORTED) {
-	state->name = mystrdup("unknown");
-	state->addr = mystrdup("unknown");
+	state->name = mystrdup(CLIENT_ATTR_UNKNOWN);
+	state->addr = mystrdup(CLIENT_ATTR_UNKNOWN);
     }
 
     /*
@@ -117,9 +117,9 @@ void    qmqpd_peer_init(QMQPD_STATE *state)
 	hp = gethostbyaddr((char *) &(sin.sin_addr),
 			   sizeof(sin.sin_addr), AF_INET);
 	if (hp == 0) {
-	    state->name = mystrdup("unknown");
+	    state->name = mystrdup(CLIENT_ATTR_UNKNOWN);
 	} else if (!valid_hostname(hp->h_name, DONT_GRIPE)) {
-	    state->name = mystrdup("unknown");
+	    state->name = mystrdup(CLIENT_ATTR_UNKNOWN);
 	} else {
 	    state->name = mystrdup(hp->h_name);	/* hp->name is clobbered!! */
 
@@ -128,7 +128,7 @@ void    qmqpd_peer_init(QMQPD_STATE *state)
 	     */
 #define REJECT_PEER_NAME(state) { \
 	myfree(state->name); \
-	state->name = mystrdup("unknown"); \
+	state->name = mystrdup(CLIENT_ATTR_UNKNOWN); \
     }
 
 	    hp = gethostbyname(state->name);	/* clobbers hp->name!! */
