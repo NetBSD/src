@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.71 1998/12/17 11:34:10 pk Exp $	*/
+/*	$NetBSD: rtld.c,v 1.72 1999/01/28 23:58:49 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -367,6 +367,13 @@ rtld(version, crtp, dp)
 	LM_PRIVATE(smp)->spd_refcount++;
 	LM_PRIVATE(smp)->spd_flags |= _RTLD_RTLD;
 
+	/* Fill in some field in main's __DYNAMIC structure */
+	if (version >= CRT_VERSION_BSD_4)
+		crtp->crt_ldentry = &ld_entry;
+	else
+		crtp->crt_dp->d_entry = &ld_entry;
+
+
 	/* Handle LD_PRELOAD's here */
 	ld_preload_path = getenv("LD_PRELOAD");
 	if (ld_preload_path != NULL)
@@ -381,12 +388,6 @@ rtld(version, crtp, dp)
 	}
 
 	init_maps(link_map_head);
-
-	/* Fill in some field in main's __DYNAMIC structure */
-	if (version >= CRT_VERSION_BSD_4)
-		crtp->crt_ldentry = &ld_entry;
-	else
-		crtp->crt_dp->d_entry = &ld_entry;
 
 	crtp->crt_dp->d_un.d_sdt->sdt_loaded = link_map_head->som_next;
 
