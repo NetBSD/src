@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.9.6.1 2002/06/21 06:26:55 lukem Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.9.6.2 2002/11/22 17:37:26 tron Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@ struct sbus_softc {
 	bus_dma_tag_t		sc_dmatag;
 	int			sc_clockfreq;	/* clock frequency (in Hz) */
 	struct sbusdev		*sc_sbdev;	/* list of all children */
-	struct sbus_range	*sc_range;
+	struct openprom_range	*sc_range;
 	int			sc_nrange;
 	int			sc_burst;	/* burst transfer sizes supported */
 	int			*sc_intr2ipl;	/* Interrupt level translation */
