@@ -1,9 +1,10 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.11 1994/08/09 17:51:29 ws Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.12 1994/08/21 18:44:04 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
  * Copyright (C) 1994 TooLs GmbH.
  * All rights reserved.
+ * Original code by Paul Popelka (paulp@uts.amdahl.com) (see below).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
