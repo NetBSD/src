@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcireg.h,v 1.2 1998/07/26 00:40:59 augustss Exp $	*/
+/*	$NetBSD: ohcireg.h,v 1.3 1998/08/06 12:23:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -105,8 +105,8 @@
 #define OHCI_LS_THRESHOLD	0x44
 #define OHCI_RH_DESCRIPTOR_A	0x48
 #define  OHCI_GET_NDP(s)	((s) & 0xff)
-#define  OHCI_NPS		0x0100
-#define  OHCI_PSM		0x0200
+#define  OHCI_PSM		0x0100     /* Power Switching Mode */
+#define  OHCI_NPS		0x0200	   /* No Power Switching */
 #define  OHCI_GET_POTPGT(s)	((s) >> 24)
 #define OHCI_RH_DESCRIPTOR_B	0x4c
 #define OHCI_RH_STATUS		0x50
