@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.77 2003/06/23 11:02:16 martin Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.78 2003/06/26 17:32:22 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.77 2003/06/23 11:02:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.78 2003/06/26 17:32:22 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -161,7 +161,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.77 2003/06/23 11:02:16 martin Exp $
  */
 extern	char *tcpstates[];
 
-static int tcp_sysctl_ident(void *, size_t *, void *, size_t);
+static int tcp_sysctl_ident(int *, u_int, void *, size_t *, void *, size_t);
 
 /*
  * Process a TCP user request for TCP tb.  If this is a send request
@@ -946,12 +946,13 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 {
 	int error, saved_value = 0;
 
+	if (name[0] == TCPCTL_IDENT)
+		return tcp_sysctl_ident(&name[1], namelen - 1, oldp, oldlenp,
+		    newp, newlen);
+
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
-
-	if (name[0] == TCPCTL_IDENT)
-		return tcp_sysctl_ident(oldp, oldlenp, newp, newlen);
 
 	if (name[0] < sizeof(tcp_ctlvars)/sizeof(tcp_ctlvars[0])
 	    && tcp_ctlvars[name[0]].valid) {
@@ -985,29 +986,30 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 
 
 static int 
-tcp_sysctl_ident(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
+tcp_sysctl_ident(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen)
 {
-	struct sysctl_tcp_ident_args args;
-	struct socket *sockp;
 	struct inpcb *inb;
+	struct in_addr laddr, raddr;
+	u_int lport, rport;
 	uid_t uid;
 	int error;
 
-	if (newlen != sizeof(args))
-		return EINVAL;
-	if (!newp)
-		return EFAULT;
 	if (*oldlenp != sizeof(uid_t))
 		return ENOMEM;
 	if (!oldp || *oldlenp != sizeof(uid_t))
 		return ENOMEM;
-	if ((error = copyin(newp, &args, newlen)) != 0)
-		return error;
-	
-	inb = in_pcblookup_connect(&tcbtable, args.raddr, args.rport,
-	    args.laddr, args.lport);
+	if (namelen != 4)
+		return EINVAL;
+
+	raddr.s_addr = (uint32_t)name[0];
+	rport = (u_int)name[1];
+	laddr.s_addr = (uint32_t)name[2];
+	lport = (u_int)name[3];
+
+	inb = in_pcblookup_connect(&tcbtable, raddr, rport, laddr, lport);
 	if (inb) {
-		sockp = inb->inp_socket;
+		struct socket *sockp = inb->inp_socket;
 		if (sockp)
 			uid = sockp->so_uid;
 		else
