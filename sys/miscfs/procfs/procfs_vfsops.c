@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.33 2000/03/16 18:08:27 jdolecek Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.34 2000/06/10 18:27:03 assar Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -108,7 +108,7 @@ procfs_mount(mp, path, data, ndp, p)
 	    M_UFSMNT, M_WAITOK);   /* XXX need new malloc type */
 
 	mp->mnt_data = (qaddr_t)pmnt;
-	vfs_getnewfsid(mp, MOUNT_PROCFS);
+	vfs_getnewfsid(mp);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN, &size);
 	memset(mp->mnt_stat.f_mntonname + size, 0, MNAMELEN - size);

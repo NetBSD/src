@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.76 2000/05/28 04:13:57 mycroft Exp $	*/
+/*	$NetBSD: vnode.h,v 1.77 2000/06/10 18:27:05 assar Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -488,7 +488,7 @@ int 	cdevvp __P((dev_t dev, struct vnode **vpp));
 int 	getnewvnode __P((enum vtagtype tag, struct mount *mp,
 			 int (**vops) __P((void *)), struct vnode **vpp));
 int	getvnode __P((struct filedesc *fdp, int fd, struct file **fpp));
-void	vfs_getnewfsid __P((struct mount *, char *));
+void	vfs_getnewfsid __P((struct mount *));
 int	speedup_syncer __P((void));
 void 	vattr_null __P((struct vattr *vap));
 int 	vcount __P((struct vnode *vp));

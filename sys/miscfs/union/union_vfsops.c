@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.24 2000/03/16 18:08:27 jdolecek Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.25 2000/06/10 18:27:04 assar Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -216,7 +216,7 @@ union_mount(mp, path, data, ndp, p)
 	mp->mnt_flag |= (um->um_uppervp->v_mount->mnt_flag & MNT_RDONLY);
 
 	mp->mnt_data = (qaddr_t)um;
-	vfs_getnewfsid(mp, MOUNT_UNION);
+	vfs_getnewfsid(mp);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	memset(mp->mnt_stat.f_mntonname + size, 0, MNAMELEN - size);

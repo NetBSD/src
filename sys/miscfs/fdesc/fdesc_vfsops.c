@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.30 2000/03/30 02:16:22 simonb Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.31 2000/06/10 18:27:02 assar Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -110,7 +110,7 @@ fdesc_mount(mp, path, data, ndp, p)
 	fmp->f_root = rvp;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = (qaddr_t)fmp;
-	vfs_getnewfsid(mp, MOUNT_FDESC);
+	vfs_getnewfsid(mp);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	memset(mp->mnt_stat.f_mntonname + size, 0, MNAMELEN - size);
