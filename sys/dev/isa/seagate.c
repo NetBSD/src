@@ -270,7 +270,6 @@ static const char *bases[] = {
 int seaintr __P((void *));
 int sea_scsi_cmd __P((struct scsi_xfer *));
 void sea_timeout __P((void *));
-void seaminphys __P((struct buf *));
 void sea_done __P((struct sea_softc *, struct sea_scb *));
 struct sea_scb *sea_get_scb __P((struct sea_softc *, int));
 void sea_free_scb __P((struct sea_softc *, struct sea_scb *, int));
@@ -287,7 +286,7 @@ int sea_abort __P((struct sea_softc *, struct sea_scb *scb));
 
 struct scsi_adapter sea_switch = {
 	sea_scsi_cmd,
-	seaminphys,
+	minphys,	/* no special minphys(), since driver uses PIO */
 	0,
 	0,
 };
@@ -516,14 +515,6 @@ sea_init(sea)
 	for (i = 0; i < SCB_TABLE_SIZE; i++) {
 		TAILQ_INSERT_TAIL(&sea->free_list, &sea->scb[i], chain);
 	}
-}
-
-void
-seaminphys(bp)
-	struct buf *bp;
-{
-
-	/* No need for a max since we're doing PIO. */
 }
 
 /*
