@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.66 2001/07/29 21:22:58 christos Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.67 2001/07/29 21:24:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@ ELFNAME(copyargs)(struct exec_package *pack, struct ps_strings *arginfo,
 	len = (a - ai) * sizeof(AuxInfo);
 	if ((error = copyout(ai, *stackp, len)) != 0)
 		return error;
-	*stackp = *stackp + len;
+	*stackp += len;
 
 	return 0;
 }
