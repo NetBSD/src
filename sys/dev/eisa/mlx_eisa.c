@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_eisa.c,v 1.2 2001/05/06 20:34:41 ad Exp $	*/
+/*	$NetBSD: mlx_eisa.c,v 1.3 2001/05/10 09:41:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -179,6 +179,7 @@ mlx_eisa_attach(struct device *parent, struct device *self, void *aux)
 	mlx->mlx_reset = mlx_v1_reset;
 #endif
 
+	printf(": Mylex RAID\n");
 	mlx_init(mlx, intrstr);
 }
 
