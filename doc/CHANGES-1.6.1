@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.102 2003/02/08 07:57:05 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.103 2003/02/09 09:22:54 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3488,85 +3488,31 @@ sys/sys/param.h					patched by hand
 
 	(Moved tags for RC1 on these 2 files)
 
-sys/net/if_spppsubr.c				1.47
+sys/net/if_spppsubr.c				1.47,1.49-1.51,1.56-1.62
 
-	don't panic on invalid CONF_ACK from remote (in general, issueing panic
+	Don't panic on invalid CONF_ACK from remote (in general, issueing panic
 	on remote input is bad practice)
-	[martin, ticket #1152]
-
-sys/net/if_spppsubr.c				1.49-1.50
-
-	don't access freed memory.
-	[martin, ticket #1152]
-
-sys/net/if_spppsubr.c				1.51
-
+	Don't access freed memory.
 	Use "mono_time" instead of "time" for timeout calculations.
-	[martin, ticket #1152]
-
-sys/net/if_spppsubr.c				1.56
-
 	Fix async map handling.
-	[martin, ticket #1152]
-
-sys/net/if_spppsubr.c				1.57
-
 	If the peer did not answer LCP echo requests in-time, but we got user
 	data through within the last LCP keepalive interval, do not count this
 	as a keepalive failure.
-
-	Addresses parts of kern/17723.
-	[martin, ticket #1152]
-
-sys/net/if_spppsubr.c				1.58-1.59
-
 	KNF
-	[martin, ticket #1152]
-
-sys/net/if_spppsubr.c				1.60
-
 	license clarification from the author, via openbsd
 	BSD-style license from Serge Vakulenko <vak@cronyx.ru>
-	[martin, ticket #1152]
-
-sys/net/if_spppsubr.c				1.61
-
 	Restore the system priority level in case of errors.
-	[martin, ticket #1152]
-
-sys/net/if_spppsubr.c				1.62
-
 	Remove a break after a goto.
 	[martin, ticket #1152]
 
-sys/net/if_pppoe.c				1.25-1.28
+sys/net/if_pppoe.c				1.25-1.37,1.39
 
 	Code cleanup.
-	[martin, ticket #1152]
-
-sys/net/if_pppoe.c				1.29-1.30
-
 	Do not require PPPoE control packet to be put into a single mbuf.
-	[martin, ticket #1152]
-
-sys/net/if_pppoe.c				1.31
-
 	Fix loop condition. (don't skip last tag)
-	[martin, ticket #1152]
-
-sys/net/if_pppoe.c				1.32
-
-	- free buf when unneeded.
-	- pass a consistent type to free(9).
-	[martin, ticket #1152]
-
-sys/net/if_pppoe.c				1.33
-
+	Free buf when unneeded.
+	Pass a consistent type to free(9).
 	Fix typo in a comment.
-	[martin, ticket #1152]
-
-sys/net/if_pppoe.c				1.34
-
 	Add an option PPPOE_TERM_UNKNOWN_SESSIONS to forcefully disconnect
 	sessions we don't know anything about with a PADT packet.
 	Use with care, this is pretty dangerous and will kill all userland
@@ -3575,70 +3521,33 @@ sys/net/if_pppoe.c				1.34
 	But it is highly usefull if you have a fixed IP, an ISP that does not
 	use LCP echo requests for link monitoring and you want to recover
 	quickly after a crash or otherwise ungracefull disconnect.
-	[martin, ticket #1152]
-
-sys/net/if_pppoe.c				1.35
-
 	Remove a test that has been obsoleted by the authentication failure
 	counter - enter slow retry mode always, not only if we already
 	transfered data successfully (the test was designed to disable
 	retries when the initial authentication setting was not correct, the
 	auth failure counter does this job better).
-	[martin, ticket #1152]
-
-sys/net/if_pppoe.c				1.36
-
 	In do not call pppoe_abort_connect if we fail to send the initial PADI
 	packet - there is nothing to abort.
 	In pppoe_abort_connect rearange state handling slightly to avoid calls
 	to the PPP LCP state machine get into an infinite recursion.
 	This should fix the symptoms of PR kern/19500, but does not touch the
 	real cause for the lossage described there.
-	[martin, ticket #1152]
-
-sys/net/if_pppoe.c				1.37
-
 	Fix broken error handling in case M_PREPEND fails.
-	[martin, ticket #1152]
-
-sys/net/if_pppoe.c				1.39
-
 	PADT is always send with ethertype PPPOE_DISCOVERY, no matter if we
 	have reached session state or not.
 	Fixes PR kern/20203 by Shoichi Miyake.
 	[martin, ticket #1152]
 
-share/man/man4/pppoe.4				1.10
+share/man/man4/pppoe.4				1.10-1.15
 
 	Add a paragraph about MSS clamping (refer
-	        http://www.netbsd.org/Documentation/network/pppoe/ ).
-	Some minor fixes.
-	[martin, ticket #1152]
-
-share/man/man4/pppoe.4				1.11
-
+		http://www.netbsd.org/Documentation/network/pppoe/ ).
 	Punctuation/casing fixes, and don't repeat too verbosely how to set
 	sysctl()s.
-	[martin, ticket #1152]
-
-share/man/man4/pppoe.4				1.12
-
 	Document "options PPPOE_TERM_UNKNOWN_SESSIONS".
-	[martin, ticket #1152]
-
-share/man/man4/pppoe.4				1.13
-
 	Fix a couple spell-o's.
-	[martin, ticket #1152]
-
-share/man/man4/pppoe.4				1.14
-
 	No trailing space. Also, new sentences need two spaces after the dot.
 	Bump date for last changes.
-	[martin, ticket #1152]
-
-share/man/man4/pppoe.4				1.15
-
 	Fix two grammar errors reported by Damon Brodie in PR 20192.
 	[martin, ticket #1152]
 
