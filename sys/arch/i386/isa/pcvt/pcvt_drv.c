@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_drv.c,v 1.15 1995/04/19 19:12:13 mycroft Exp $	*/
+/*	$NetBSD: pcvt_drv.c,v 1.16 1995/04/21 07:56:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore,
@@ -268,7 +268,7 @@ pcattach(struct isa_device *dev)
 
 #if PCVT_NETBSD > 9
 	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_TTY,
-	    pcintr, sc);
+	    pcintr, 0);
 #else
 	return 1;
 #endif
@@ -812,9 +812,6 @@ pccngetc(Dev_t dev)
 void
 pccnpollc(Dev_t dev, int on)
 {
-#if PCVT_NETBSD
-	struct vt_softc *sc = vtcd.cd_devs[0];	/* XXX */
-#endif
 
 	kbd_polling = on;
 	if (!on) {
@@ -826,11 +823,7 @@ pccnpollc(Dev_t dev, int on)
 		 * won't get any further interrupts.
 		 */
 		s = spltty();
-#if PCVT_NETBSD
-		pcintr(sc);
-#else
-		pcintr((void *)0);
-#endif
+		pcintr(0);
 		splx(s);
 	}
 }
