@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.40 1999/09/15 20:12:18 is Exp $	*/
+/*	$NetBSD: route.c,v 1.41 1999/11/22 14:13:54 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.40 1999/09/15 20:12:18 is Exp $");
+__RCSID("$NetBSD: route.c,v 1.41 1999/11/22 14:13:54 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -177,7 +177,7 @@ routepr(rtree)
 			} else if (af == AF_UNSPEC || af == i) {
 				pr_family(i);
 				do_rtent = 1;
-				pr_rthdr();
+				pr_rthdr(af);
 				p_tree(head.rnh_treetop);
 			}
 		}
@@ -226,25 +226,27 @@ pr_family(af)
 
 /* column widths; each followed by one space */
 #ifndef INET6
-#define	WID_DST		18	/* width of destination column */
-#define	WID_GW		18	/* width of gateway column */
+#define	WID_DST(af)	18	/* width of destination column */
+#define	WID_GW(af)	18	/* width of gateway column */
 #else
-#define	WID_DST	(nflag ? 28 : 18)	/* width of destination column */
-#define	WID_GW	(nflag ? 26 : 18)	/* width of gateway column */
+/* width of destination/gateway column */
+#define	WID_DST(af)	((af) == AF_INET6 ? (nflag ? 28 : 18) : 18)
+#define	WID_GW(af)	((af) == AF_INET6 ? (nflag ? 26 : 18) : 18)
 #endif /* INET6 */
 
 /*
  * Print header for routing table columns.
  */
 void
-pr_rthdr()
+pr_rthdr(af)
+	int af;
 {
 
 	if (Aflag)
 		printf("%-8.8s ","Address");
 	printf("%-*.*s %-*.*s %-6.6s  %6.6s%8.8s %6.6s  %s\n",
-		WID_DST, WID_DST, "Destination",
-		WID_GW, WID_GW, "Gateway",
+		WID_DST(af), WID_DST(af), "Destination",
+		WID_GW(af), WID_GW(af), "Gateway",
 		"Flags", "Refs", "Use", "Mtu", "Interface");
 }
 
@@ -563,6 +565,7 @@ p_rtentry(rt)
 	static struct ifnet ifnet, *lastif;
 	union sockaddr_union addr_un, mask_un;
 	struct sockaddr *addr, *mask;
+	int af;
 
 	if (Lflag && (rt->rt_flags & RTF_LLINFO))
 		return;
@@ -570,12 +573,13 @@ p_rtentry(rt)
 	memset(&addr_un, 0, sizeof(addr_un));
 	memset(&mask_un, 0, sizeof(mask_un));
 	addr = sockcopy(kgetsa(rt_key(rt)), &addr_un);
+	af = addr->sa_family;
 	if (rt_mask(rt))
 		mask = sockcopy(kgetsa(rt_mask(rt)), &mask_un);
 	else
 		mask = sockcopy(NULL, &mask_un);
-	p_sockaddr(addr, mask, rt->rt_flags, WID_DST);
-	p_sockaddr(kgetsa(rt->rt_gateway), NULL, RTF_HOST, WID_GW);
+	p_sockaddr(addr, mask, rt->rt_flags, WID_DST(af));
+	p_sockaddr(kgetsa(rt->rt_gateway), NULL, RTF_HOST, WID_GW(af));
 	p_flags(rt->rt_flags, "%-6.6s ");
 	printf("%6d %8lu ", rt->rt_refcnt, rt->rt_use);
 	if (rt->rt_rmx.rmx_mtu)

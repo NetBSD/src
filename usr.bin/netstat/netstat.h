@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.15 1999/09/15 20:12:18 is Exp $	*/
+/*	$NetBSD: netstat.h,v 1.16 1999/11/22 14:13:53 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -100,7 +100,7 @@ void	impstats __P((u_long, u_long));
 
 void	intpr __P((int, u_long));
 
-void	pr_rthdr __P((void));
+void	pr_rthdr __P((int));
 void	pr_family __P((int));
 void	rt_stats __P((u_long));
 char	*ns_phost __P((struct sockaddr *));
