@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.11 2004/01/01 02:58:36 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.12 2004/01/01 05:28:44 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.11 2004/01/01 02:58:36 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.12 2004/01/01 05:28:44 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -163,6 +163,7 @@ static const struct option longopts[] = {
 	{ "ascii",		no_argument,		0,	'a' },
 	{ "license",		no_argument,		0,	'L' },
 #endif
+	{ NULL,			no_argument,		0,	0 },
 };
 #endif
 
@@ -199,10 +200,6 @@ main(int argc, char **argv)
 		case 'f':
 			fflag = 1;
 			break;
-		case 'h':
-		case 'H':
-			usage();
-			/* NOTREACHED */
 		case 'l':
 			lflag = 1;
 			tflag = 1;
@@ -242,6 +239,9 @@ main(int argc, char **argv)
 			gzipflags[1] = (char)ch;
 			gzipflags[2] = '\0';
 			break;
+		default:
+			usage();
+			/* NOTREACHED */
 		}
 	argv += optind;
 	argc -= optind;
