@@ -1,7 +1,7 @@
-/*	$NetBSD: apci.c,v 1.2 1997/10/04 17:20:15 thorpej Exp $	*/
+/*	$NetBSD: apci.c,v 1.3 1999/07/31 21:17:08 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -95,30 +95,15 @@ apciprobe(cp)
 {
 	struct apciregs *apci = apcicnaddr =
 	    (struct apciregs *)IIOV(FRODO_BASE + FRODO_APCI_OFFSET(1));
-	struct dcadevice *dca = (struct dcadevice *)sctoaddr(9);
 
 	cp->cn_pri = CN_DEAD;
 
-	/* Only 400-series machines can have this. */
-	switch (machineid) {
-	case HP_400:
-	case HP_425:
-	case HP_433:
-		break;
-	default:
+	/*
+	 * Only a 425e can have an APCI console.  On all other 4xx models,
+	 * the "first" serial port is mapped to the DCA at select code 9.
+	 */
+	if (machineid != HP_425 || mmuid != MMUID_425_E)
 		return;
-	}
-
-	/* Make sure there's not a DCA in the way. */
-	if (badaddr((caddr_t)dca) == 0) {
-		switch (dca->dca_id) {
-		case DCAID0:
-		case DCAID1:
-		case DCAREMID0:
-		case DCAREMID1:
-			return;
-		}
-	}
 
 #ifdef FORCEAPCICONSOLE
 	cp->cn_pri = CN_REMOTE;
