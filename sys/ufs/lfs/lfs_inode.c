@@ -1,5 +1,40 @@
-/*	$NetBSD: lfs_inode.c,v 1.17 1999/03/05 21:09:50 mycroft Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.18 1999/03/10 00:20:00 perseant Exp $	*/
 
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Konrad E. Schroder <perseant@hhhh.org>.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by the NetBSD
+ *      Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Copyright (c) 1986, 1989, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -68,11 +103,11 @@ lfs_ifind(fs, ino, dip)
 {
 	register int cnt;
 	register struct dinode *ldip;
-
+	
 	for (cnt = INOPB(fs), ldip = dip + (cnt - 1); cnt--; --ldip)
 		if (ldip->di_inumber == ino)
 			return (ldip);
-
+	
 	panic("lfs_ifind: dinode %u not found", ino);
 	/* NOTREACHED */
 }
@@ -82,29 +117,42 @@ lfs_update(v)
 	void *v;
 {
 	struct vop_update_args /* {
-		struct vnode *a_vp;
-		struct timespec *a_access;
-		struct timespec *a_modify;
-		int a_waitfor;
-	} */ *ap = v;
+				  struct vnode *a_vp;
+				  struct timespec *a_access;
+				  struct timespec *a_modify;
+				  int a_waitfor;
+				  } */ *ap = v;
 	struct inode *ip;
 	struct vnode *vp = ap->a_vp;
-	int mod;
+	int mod, oflag;
 	struct timespec ts;
-
+	
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		return (0);
 	ip = VTOI(vp);
-	mod = ip->i_flag & IN_MODIFIED;
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	FFS_ITIMES(ip,
-	    ap->a_access ? ap->a_access : &ts,
-	    ap->a_modify ? ap->a_modify : &ts, &ts);
-	if (!mod && ip->i_flag & IN_MODIFIED)
-		ip->i_lfs->lfs_uinodes++;
-	if ((ip->i_flag & IN_MODIFIED) == 0)
-		return (0);
 
+	/*
+	 * If we are called from vinvalbuf, and the file's blocks have
+	 * already been scheduled for writing, but the writes have not
+	 * yet completed, lfs_vflush will not be called, and vinvalbuf
+	 * will cause a panic.  So, we must wait until any pending write
+	 * for our inode completes, if we are called with LFS_SYNC set.
+	 */
+	while((ap->a_waitfor & LFS_SYNC) && WRITEINPROG(vp)) {
+		tsleep(vp, (PRIBIO+1), "lfs_update", 0);
+	}
+	mod = ip->i_flag & IN_MODIFIED;
+	oflag = ip->i_flag;
+	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	LFS_ITIMES(ip,
+		   ap->a_access ? ap->a_access : &ts,
+		   ap->a_modify ? ap->a_modify : &ts, &ts);
+	if (!mod && (ip->i_flag & IN_MODIFIED))
+		ip->i_lfs->lfs_uinodes++;
+	if ((ip->i_flag & (IN_MODIFIED|IN_CLEANING)) == 0) {
+		return (0);
+	}
+	
 	/* If sync, push back the vnode and any dirty blocks it may have. */
 	return (ap->a_waitfor & LFS_SYNC ? lfs_vflush(vp) : 0);
 }
@@ -113,9 +161,11 @@ lfs_update(v)
 #define UPDATE_SEGUSE \
 	if (lastseg != -1) { \
 		LFS_SEGENTRY(sup, fs, lastseg, sup_bp); \
-		if (num > sup->su_nbytes) \
+		if (num > sup->su_nbytes) { \
 			panic("lfs_truncate: negative bytes in segment %d\n", \
-			    lastseg); \
+			      lastseg); \
+		      sup->su_nbytes = 0; \
+		} else \
 		sup->su_nbytes -= num; \
 		e1 = VOP_BWRITE(sup_bp); \
 		fragsreleased += numfrags(fs, num); \
@@ -163,8 +213,9 @@ lfs_truncate(v)
 	ufs_daddr_t oldsize_lastblock, oldsize_newlast, newsize;
 	long off, a_released, fragsreleased, i_released;
 	int e1, e2, depth, lastseg, num, offset, seg, freesize;
-
+	
 	ip = VTOI(vp);
+
 	if (vp->v_type == VLNK && vp->v_mount->mnt_maxsymlinklen > 0) {
 #ifdef DIAGNOSTIC
 		if (length != 0)
@@ -180,15 +231,26 @@ lfs_truncate(v)
 #else
 	vnode_pager_setsize(vp, length);
 #endif
-
+	
 	fs = ip->i_lfs;
-
+	lfs_imtime(fs);
+	
 	/* If length is larger than the file, just update the times. */
 	if (ip->i_ffs_size <= length) {
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (VOP_UPDATE(vp, NULL, NULL, 0));
 	}
 
+#if 0
+	/*
+	 * Make sure no writes happen while we're truncating
+	 * XXX KS - I don't remember why....
+	 */
+	while(fs->lfs_seglock) {
+		tsleep(&fs->lfs_seglock, (PRIBIO+1), "lfs_truncate", 0);
+	}
+#endif
+	
 	/*
 	 * Calculate index into inode's block list of last direct and indirect
 	 * blocks (if any) which we want to keep.  Lastblock is 0 when the
@@ -218,6 +280,7 @@ lfs_truncate(v)
 			return (e1);
 #endif	
 		if ((e1 = bread(vp, lbn, oldsize_newlast, NOCRED, &bp)) != 0) {
+			printf("lfs_truncate: bread: %d\n",e1);
 			brelse(bp);
 			return (e1);
 		}
@@ -229,9 +292,18 @@ lfs_truncate(v)
 #endif
 		newsize = blksize(fs, ip, lbn);
 		bzero((char *)bp->b_data + offset, (u_int)(newsize - offset));
-		allocbuf(bp, newsize);
-		if ((e1 = VOP_BWRITE(bp)) != 0)
+#ifdef DEBUG
+		if(bp->b_flags & B_CALL)
+		    panic("Can't allocbuf malloced buffer!");
+		else
+#endif
+			allocbuf(bp, newsize);
+		if(oldsize_newlast > newsize)
+			ip->i_ffs_blocks -= btodb(oldsize_newlast - newsize);
+		if ((e1 = VOP_BWRITE(bp)) != 0) {
+			printf("lfs_truncate: bwrite: %d\n",e1);
 			return (e1);
+		}
 	}
 	/*
 	 * Modify sup->su_nbyte counters for each deleted block; keep track
@@ -251,33 +323,33 @@ lfs_truncate(v)
 		} else 
 			freesize = fs->lfs_bsize;
 		switch (depth) {
-		case 0:				/* Direct block. */
+		case 0:		/* Direct block. */
 			daddr = ip->i_ffs_db[lbn];
 			SEGDEC(freesize);
 			ip->i_ffs_db[lbn] = 0;
 			--lbn;
 			break;
 #ifdef DIAGNOSTIC
-		case 1:				/* An indirect block. */
+		case 1:		/* An indirect block. */
 			panic("lfs_truncate: ufs_bmaparray returned depth 1");
 			/* NOTREACHED */
 #endif
-		default:			/* Chain of indirect blocks. */
+		default:	/* Chain of indirect blocks. */
 			inp = a + --depth;
 			if (inp->in_off > 0 && lbn != lastblock) {
 				lbn -= inp->in_off < lbn - lastblock ?
-				    inp->in_off : lbn - lastblock;
+					inp->in_off : lbn - lastblock;
 				break;
 			}
 			for (; depth && (inp->in_off == 0 || lbn == lastblock);
-			    --inp, --depth) {
+			     --inp, --depth) {
 				if (bread(vp,
-				    inp->in_lbn, fs->lfs_bsize, NOCRED, &bp))
+					  inp->in_lbn, fs->lfs_bsize, NOCRED, &bp))
 					panic("lfs_truncate: bread bno %d",
-					    inp->in_lbn);
+					      inp->in_lbn);
 				daddrp = (ufs_daddr_t *)bp->b_data + inp->in_off;
 				for (i = inp->in_off;
-				    i++ <= a_end[depth].in_off;) {
+				     i++ <= a_end[depth].in_off;) {
 					daddr = *daddrp++;
 					SEGDEC(freesize);
 				}
@@ -286,10 +358,12 @@ lfs_truncate(v)
 					brelse (bp);
 				else {
 					bzero((ufs_daddr_t *)bp->b_data +
-					    inp->in_off, fs->lfs_bsize - 
-					    inp->in_off * sizeof(ufs_daddr_t));
-					if ((e1 = VOP_BWRITE(bp)) != 0)
+					      inp->in_off, fs->lfs_bsize - 
+					      inp->in_off * sizeof(ufs_daddr_t));
+					if ((e1 = VOP_BWRITE(bp)) != 0) {
+						printf("lfs_truncate: indir bwrite: %d\n",e1);
 						return (e1);
+					}
 				}
 			}
 			if (depth == 0 && a[1].in_off == 0) {
@@ -308,19 +382,19 @@ lfs_truncate(v)
 		}
 	}
 	UPDATE_SEGUSE;
-
+	
 	/* If truncating the file to 0, update the version number. */
 	if (length == 0) {
 		LFS_IENTRY(ifp, fs, ip->i_number, bp);
 		++ifp->if_version;
 		(void) VOP_BWRITE(bp);
 	}
-
 #ifdef DIAGNOSTIC
 	if (ip->i_ffs_blocks < fragstodb(fs, fragsreleased)) {
-		printf("lfs_truncate: frag count < 0\n");
+		panic("lfs_truncate: frag count < 0 (%d<%ld), ino %d\n",
+			    ip->i_ffs_blocks, fragstodb(fs, fragsreleased),
+			    ip->i_number);
 		fragsreleased = dbtofrags(fs, ip->i_ffs_blocks);
-		panic("lfs_truncate: frag count < 0\n");
 	}
 #endif
 	ip->i_ffs_blocks -= fragstodb(fs, fragsreleased);
@@ -333,7 +407,7 @@ lfs_truncate(v)
 	 */
 	a_released = 0;
 	i_released = 0;
-	for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = bp->b_vnbufs.le_next)
+	for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = bp->b_vnbufs.le_next) {
 		if (bp->b_flags & B_LOCKED) {
 			a_released += numfrags(fs, bp->b_bcount);
 			/*
@@ -347,28 +421,37 @@ lfs_truncate(v)
 			 * block number in which case, we'll get an overcounting
 			 * here.
 			 */
-			if (bp->b_blkno == bp->b_lblkno)
+			if (bp->b_blkno == bp->b_lblkno) {
 				i_released += numfrags(fs, bp->b_bcount);
+			}
 		}
+	}
 	fragsreleased = i_released;
 #ifdef DIAGNOSTIC
 	if (fragsreleased > dbtofrags(fs, ip->i_ffs_blocks)) {
+		printf("lfs_inode: %ld frags released > %d in inode %d\n",
+		       fragsreleased, dbtofrags(fs, ip->i_ffs_blocks),
+		       ip->i_number);
 		fragsreleased = dbtofrags(fs, ip->i_ffs_blocks);
-		panic("lfs_inode: more frags released than in inode");
 	}
 #endif
 	fs->lfs_bfree += fragstodb(fs, fragsreleased);
 	ip->i_ffs_blocks -= fragstodb(fs, fragsreleased);
 #ifdef DIAGNOSTIC
 	if (length == 0 && ip->i_ffs_blocks != 0) {
-		printf("lfs_inode: trunc to zero, but %d blocks left on inode",
-			ip->i_ffs_blocks);
-		panic("lfs_inode");
+		printf("lfs_inode: trunc to zero, but %d blocks left on inode %d\n",
+		       ip->i_ffs_blocks, ip->i_number);
+		panic("lfs_inode\n");
 	}
 #endif
 	fs->lfs_avail += fragstodb(fs, a_released);
 	e1 = vinvalbuf(vp, (length > 0) ? V_SAVE : 0, ap->a_cred, ap->a_p,
-	    0, 0); 
+		       0, 0); 
 	e2 = VOP_UPDATE(vp, NULL, NULL, 0);
+	if(e1)
+		printf("lfs_truncate: vinvalbuf: %d\n",e1);
+	if(e2)
+		printf("lfs_truncate: update: %d\n",e2);
+
 	return (e1 ? e1 : e2 ? e2 : 0);
 }
