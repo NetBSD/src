@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.13 1995/04/05 21:26:40 mycroft Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.14 1995/08/16 00:29:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -320,7 +320,6 @@ int
 unp_attach(so)
 	struct socket *so;
 {
-	register struct mbuf *m;
 	register struct unpcb *unp;
 	int error;
 	
@@ -341,12 +340,12 @@ unp_attach(so)
 		if (error)
 			return (error);
 	}
-	m = m_getclr(M_DONTWAIT, MT_PCB);
-	if (m == NULL)
+	unp = malloc(sizeof(*unp), M_PCB, M_NOWAIT);
+	if (unp == NULL)
 		return (ENOBUFS);
-	unp = mtod(m, struct unpcb *);
-	so->so_pcb = (caddr_t)unp;
+	bzero((caddr_t)unp, sizeof(*unp));
 	unp->unp_socket = so;
+	so->so_pcb = (caddr_t)unp;
 	return (0);
 }
 
@@ -367,7 +366,6 @@ unp_detach(unp)
 	soisdisconnected(unp->unp_socket);
 	unp->unp_socket->so_pcb = 0;
 	m_freem(unp->unp_addr);
-	(void) m_free(dtom(unp));
 	if (unp_rights) {
 		/*
 		 * Normally the receive buffer is flushed later,
@@ -377,8 +375,10 @@ unp_detach(unp)
 		 * gets them (resulting in a "panic: closef: count < 0").
 		 */
 		sorflush(unp->unp_socket);
+		free(unp, M_PCB);
 		unp_gc();
-	}
+	} else
+		free(unp, M_PCB);
 }
 
 int
@@ -584,10 +584,10 @@ unp_drop(unp, errno)
 	so->so_error = errno;
 	unp_disconnect(unp);
 	if (so->so_head) {
-		so->so_pcb = (caddr_t) 0;
-		m_freem(unp->unp_addr);
-		(void) m_free(dtom(unp));
+		so->so_pcb = (caddr_t)0;
 		sofree(so);
+		m_freem(unp->unp_addr);
+		free(unp, M_PCB);
 	}
 }
 
