@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.27 1999/04/01 16:11:45 tsubai Exp $
+#	$NetBSD: GENERIC,v 1.28 1999/05/06 19:28:20 wrstuden Exp $
 #
 # POWERMAC config file
 #
@@ -116,6 +116,7 @@ adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 ahc*	at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
 pcscp*	at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
 ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
+pciide*	at pci? dev ? function ?
 #macofcons0 at pci? dev ? function ?	# OpenFirmware console (for debugging)
 obio0	at pci? dev ? function ?
 
@@ -151,6 +152,7 @@ ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 wdc*	at obio? flags 0x0
+wd*	at pciide? channel ? drive ?
 wd*	at wdc? channel ? drive ? flags 0x0000
 
 atapibus* at wdc? channel ?
