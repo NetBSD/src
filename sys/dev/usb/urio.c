@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.5 2000/10/24 14:53:59 augustss Exp $	*/
+/*	$NetBSD: urio.c,v 1.5.6.1 2001/09/08 18:28:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -564,6 +564,13 @@ int
 uriopoll(dev_t dev, int events, struct proc *p)
 {
 	return (0);
+}
+
+int
+uriokqfilter(dev_t dev, struct knote *kn)
+{
+
+	return (1);
 }
 
 #if defined(__FreeBSD__)
