@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.98 2004/07/18 11:37:38 yamt Exp $	*/
+/*	$NetBSD: in.c,v 1.99 2004/07/26 13:43:14 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.98 2004/07/18 11:37:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.99 2004/07/26 13:43:14 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -512,6 +512,11 @@ in_control(so, cmd, data, ifp, p)
 		if ((ifp->if_flags & IFF_BROADCAST) &&
 		    (ifra->ifra_broadaddr.sin_family == AF_INET))
 			ia->ia_broadaddr = ifra->ifra_broadaddr;
+#ifdef PFIL_HOOKS
+		if (!error)
+			(void)pfil_run_hooks(&if_pfil,
+			    (struct mbuf **)SIOCAIFADDR, ifp, PFIL_IFADDR);
+#endif
 		return (error);
 
 	case SIOCGIFALIAS:
@@ -525,10 +530,6 @@ in_control(so, cmd, data, ifp, p)
 		else
 			bzero(&ifra->ifra_broadaddr,
 			      sizeof(ifra->ifra_broadaddr));
-#ifdef PFIL_HOOKS
-		(void)pfil_run_hooks(&if_pfil,
-		    (struct mbuf **)SIOCGIFALIAS, ifp, PFIL_IFADDR);
-#endif
 		return 0;
 
 	case SIOCDIFADDR:
