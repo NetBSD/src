@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3max.c,v 1.6.2.9 1999/06/11 00:53:34 nisimura Exp $ */
+/*	$NetBSD: dec_3max.c,v 1.6.2.10 1999/06/11 00:59:59 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.9 1999/06/11 00:53:34 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.10 1999/06/11 00:59:59 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,12 +111,11 @@ extern void kn02_wbflush __P((void));
 extern unsigned nullclkread __P((void));
 extern unsigned (*clkread) __P((void));
 
-extern volatile struct chiptime *mcclock_addr;	/* XXX */
 extern char cpu_model[];
 
 int _splraise_kn02 __P((int));
 int _spllower_kn02 __P((int));
-int _splx_kn02 __P((int));
+int _splrestore_kn02 __P((int));
 
 struct splsw spl_3max = {
 	{ _spllower_kn02,	0 },
@@ -124,13 +123,12 @@ struct splsw spl_3max = {
 	{ _splraise_kn02,	IPL_NET },
 	{ _splraise_kn02,	IPL_TTY },
 	{ _splraise_kn02,	IPL_IMP },
-	{ _splraise_kn02,	IPL_CLOCK },
-	{ _splx_kn02,		0 },
+	{ _splraise,		MIPS_SPL_0_1 },
+	{ _splrestore_kn02,	0 },
 };
 
-/*
- * Fill in platform struct. 
- */
+extern volatile struct chiptime *mcclock_addr;	/* XXX */
+
 void
 dec_3max_init()
 {
@@ -141,7 +139,6 @@ dec_3max_init()
 	platform.cons_init = dec_3max_cons_init;
 	platform.device_register = dec_3max_device_register;
 
-	/* clear any memory errors from new-config probes */
 	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
 	kn02_wbflush();
 
@@ -155,6 +152,7 @@ dec_3max_init()
 	csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
 	csr &= ~(KN02_CSR_WRESERVED|KN02_CSR_IOINTEN|KN02_CSR_CORRECT|0xff);
 	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) = csr;
+	kn02_wbflush();
 
 #ifdef NEWSPL
 	__spl = &spl_3max;
@@ -181,10 +179,6 @@ dec_3max_init()
 void
 dec_3max_bus_reset()
 {
-	/*
-	 * Reset interrupts, clear any errors from newconf probes
-	 */
-
 	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
 	kn02_wbflush();
 
@@ -236,6 +230,7 @@ dec_3max_device_register(dev, aux)
 {
 	panic("dec_3max_device_register unimplemented");
 }
+
 
 #define	CALLINTR(slot) do {					\
 		ifound = 1;					\
@@ -410,7 +405,7 @@ found:
 	csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) & 0x00ffff00;
 	csr |= (kn02intrs[i].intrbit << 16);
 	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) = csr;
-	tc_mb();
+	kn02_wbflush();
 }
 
 void
@@ -466,38 +461,40 @@ int
 _splraise_kn02(lvl)
 	int lvl;
 {
-	u_int32_t new;
-	u_int32_t *p = (void *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
+	u_int32_t csr;
 
-	new = oldiplmask[lvl] = *p;
-	new &= ~iplmask[lvl];
-	*p = new;
+	csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
+	oldiplmask[lvl] = csr;
+	csr &= ~iplmask[lvl];
+	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) = csr; 
 	kn02_wbflush();
-	return lvl | _splraise(MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1);
+	return lvl;
 }
 
 int
-_spllower_kn02(mask)
-	int mask;
-{
-	u_int32_t *p = (void *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
-
-	oldiplmask[IPL_NONE] = *p;	/* save current CSR */
-	*p = iplmask[IPL_HIGH];		/* enable all of established devices */
-	kn02_wbflush();
-	return IPL_NONE | _spllower(mask);
-}
-
-int
-_splx_kn02(lvl)
+_spllower_kn02(lvl)
 	int lvl;
 {
-	u_int32_t *p = (void *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
+	u_int32_t csr;
 
-	if (lvl & 0xff) {
-		*p = oldiplmask[lvl & 0xff];
+	csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
+	oldiplmask[lvl] = csr;
+	csr = iplmask[IPL_HIGH] &~ iplmask[lvl];
+	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) = csr; 
+	kn02_wbflush();
+	return lvl;
+}
+
+int
+_splrestore_kn02(lvl)
+	int lvl;
+{
+	if (lvl > IPL_HIGH) 
+		_splset(MIPS_SR_INT_IE | lvl);
+	else {
+		*(u_int32_t *)
+		    MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) = oldiplmask[lvl];
 		kn02_wbflush();
 	}
-	(void)_splset(lvl & MIPS_INT_MASK);
-	return 0;
+	return lvl;
 }
