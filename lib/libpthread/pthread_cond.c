@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.11 2003/04/23 19:36:12 nathanw Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.12 2003/11/21 22:08:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.11 2003/04/23 19:36:12 nathanw Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.12 2003/11/21 22:08:00 nathanw Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -118,6 +118,14 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 		return pthread_cond_wait_nothread(self, mutex, NULL);
 
 	pthread_spinlock(self, &cond->ptc_lock);
+	SDPRINTF(("(cond wait %p) Waiting on %p, mutex %p\n",
+	    self, cond, mutex));
+	pthread_spinlock(self, &self->pt_statelock);
+	if (__predict_false(self->pt_cancel)) {
+		pthread_spinunlock(self, &self->pt_statelock);
+		pthread_spinunlock(self, &cond->ptc_lock);
+		pthread_exit(PTHREAD_CANCELED);
+	}
 #ifdef ERRORCHECK
 	if (cond->ptc_mutex == NULL)
 		cond->ptc_mutex = mutex;
@@ -126,28 +134,27 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 		    "Multiple mutexes used for condition wait", 
 		    cond->ptc_mutex == mutex);
 #endif
-
-	SDPRINTF(("(cond wait %p) Waiting on %p, mutex %p\n",
-	    self, cond, mutex));
-	pthread_spinlock(self, &self->pt_statelock);
-	if (self->pt_cancel) {
-		pthread_spinunlock(self, &self->pt_statelock);
-		pthread_spinunlock(self, &cond->ptc_lock);
-		pthread_exit(PTHREAD_CANCELED);
-	}
 	self->pt_state = PT_STATE_BLOCKED_QUEUE;
 	self->pt_sleepobj = cond;
 	self->pt_sleepq = &cond->ptc_waiters;
 	self->pt_sleeplock = &cond->ptc_lock;
 	pthread_spinunlock(self, &self->pt_statelock);
-
 	PTQ_INSERT_HEAD(&cond->ptc_waiters, self, pt_sleep);
 	pthread_mutex_unlock(mutex);
 
 	pthread__block(self, &cond->ptc_lock);
 	/* Spinlock is unlocked on return */
 	pthread_mutex_lock(mutex);
-	pthread__testcancel(self);
+	if (__predict_false(self->pt_cancel)) {
+#ifdef ERRORCHECK
+		pthread_spinlock(self, &cond->ptc_lock);
+		if (PTQ_EMPTY(&cond->ptc_waiters))
+			cond->ptc_mutex = NULL;
+		pthread_spinunlock(self, &cond->ptc_lock);
+#endif		
+		pthread_exit(PTHREAD_CANCELED);
+	}
+
 	SDPRINTF(("(cond wait %p) Woke up on %p, mutex %p\n",
 	    self, cond, mutex));
 
@@ -187,6 +194,18 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 		return pthread_cond_wait_nothread(self, mutex, abstime);
 
 	pthread_spinlock(self, &cond->ptc_lock);
+	wait.ptw_thread = self;
+	wait.ptw_cond = cond;
+	retval = 0;
+	SDPRINTF(("(cond timed wait %p) Waiting on %p until %d.%06ld\n",
+	    self, cond, abstime->tv_sec, abstime->tv_nsec/1000));
+
+	pthread_spinlock(self, &self->pt_statelock);
+	if (__predict_false(self->pt_cancel)) {
+		pthread_spinunlock(self, &self->pt_statelock);
+		pthread_spinunlock(self, &cond->ptc_lock);
+		pthread_exit(PTHREAD_CANCELED);
+	}
 #ifdef ERRORCHECK
 	if (cond->ptc_mutex == NULL)
 		cond->ptc_mutex = mutex;
@@ -196,18 +215,6 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 		    cond->ptc_mutex == mutex);
 #endif
 	
-	wait.ptw_thread = self;
-	wait.ptw_cond = cond;
-	retval = 0;
-	SDPRINTF(("(cond timed wait %p) Waiting on %p until %d.%06ld\n",
-	    self, cond, abstime->tv_sec, abstime->tv_nsec/1000));
-
-	pthread_spinlock(self, &self->pt_statelock);
-	if (self->pt_cancel) {
-		pthread_spinunlock(self, &self->pt_statelock);
-		pthread_spinunlock(self, &cond->ptc_lock);
-		pthread_exit(PTHREAD_CANCELED);
-	}
 	pthread__alarm_add(self, &alarm, abstime, pthread_cond_wait__callback,
 	    &wait);
 	self->pt_state = PT_STATE_BLOCKED_QUEUE;
@@ -229,7 +236,15 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	SDPRINTF(("(cond timed wait %p) %s\n",
 	    self, (retval == ETIMEDOUT) ? "(timed out)" : ""));
 	pthread_mutex_lock(mutex);
-	pthread__testcancel(self);
+	if (__predict_false(self->pt_cancel)) {
+#ifdef ERRORCHECK
+		pthread_spinlock(self, &cond->ptc_lock);
+		if (PTQ_EMPTY(&cond->ptc_waiters))
+			cond->ptc_mutex = NULL;
+		pthread_spinunlock(self, &cond->ptc_lock);
+#endif		
+		pthread_exit(PTHREAD_CANCELED);
+	}
 
 	return retval;
 }
