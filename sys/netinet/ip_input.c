@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.132 2001/04/13 23:30:22 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.133 2001/04/16 17:03:33 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -212,7 +212,7 @@ struct pfil_head inet_pfil_hook;
 struct ipqhead ipq;
 int	ipq_locked;
 int	ip_nfragpackets = 0;
-int	ip_maxfragpackets = -1;
+int	ip_maxfragpackets = 200;
 
 static __inline int ipq_lock_try __P((void));
 static __inline void ipq_unlock __P((void));
