@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.22 2003/01/18 06:37:05 thorpej Exp $	*/
+/*	$NetBSD: ofw.c,v 1.23 2003/04/02 04:27:20 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -875,7 +875,7 @@ ofw_configmem(void)
 	/* XXX Please kill this code dead. */
 	for (i = 0; i < bootconfig.dramblocks; i++) {
 		paddr_t start = (paddr_t)bootconfig.dram[i].address;
-		paddr_t end = start + (bootconfig.dram[i].pages * NBPG);
+		paddr_t end = start + (bootconfig.dram[i].pages * PAGE_SIZE);
 #if NISADMA > 0
 		paddr_t istart, isize;
 #endif
@@ -1050,7 +1050,7 @@ ofw_callbackhandler(v)
 			int npages = size >> PGSHIFT;
 
 			ap_bits >>= 10;
-			for (; npages > 0; pte++, pa += NBPG, npages--)
+			for (; npages > 0; pte++, pa += PAGE_SIZE, npages--)
 				*pte = (pa | L2_AP(ap_bits) | L2_TYPE_S |
 				    cb_bits);
 			PTE_SYNC_RANGE(vtopte(va), size >> PGSHIFT);
@@ -1221,7 +1221,7 @@ ofw_callbackhandler(v)
 		/* Allocate size bytes with specified alignment. */
 		size = (vm_size_t)args_n_results[0];
 		align = (vm_offset_t)args_n_results[1];
-		if (align % NBPG != 0) {
+		if (align % PAGE_SIZE != 0) {
 			args_n_results[nargs + 1] = -1;
 			args->nreturns = 2;
 			return;
@@ -1285,7 +1285,7 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 
 	/* Set-up the system page. */
 	KASSERT(vector_page == 0);	/* XXX for now */
-	systempage.pv_va = ofw_claimvirt(vector_page, NBPG, 0);
+	systempage.pv_va = ofw_claimvirt(vector_page, PAGE_SIZE, 0);
 	if (systempage.pv_va == -1) {
 		/* Something was already mapped to vector_page's VA. */
 		systempage.pv_va = vector_page;
@@ -1295,17 +1295,17 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	} else {
 		/* We were just allocated the page-length range at VA 0. */
 		if (systempage.pv_va != vector_page)
-			panic("bogus result from claimvirt(vector_page, NBPG, 0)");
+			panic("bogus result from claimvirt(vector_page, PAGE_SIZE, 0)");
 
 		/* Now allocate a physical page, and establish the mapping. */
-		systempage.pv_pa = ofw_claimphys(0, NBPG, NBPG);
+		systempage.pv_pa = ofw_claimphys(0, PAGE_SIZE, PAGE_SIZE);
 		if (systempage.pv_pa == -1)
-			panic("bogus result from claimphys(0, NBPG, NBPG)");
+			panic("bogus result from claimphys(0, PAGE_SIZE, PAGE_SIZE)");
 		ofw_settranslation(systempage.pv_va, systempage.pv_pa,
-		    NBPG, -1);	/* XXX - mode? -JJK */
+		    PAGE_SIZE, -1);	/* XXX - mode? -JJK */
 
 		/* Zero the memory. */
-		bzero((char *)systempage.pv_va, NBPG);
+		bzero((char *)systempage.pv_va, PAGE_SIZE);
 	}
 
 	/* Allocate/initialize space for the proc0, NetBSD-managed */
@@ -1324,11 +1324,11 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 
 	/* Allocate/initialize space for stacks. */
 #ifndef	OFWGENCFG
-	ofw_claimpages(&virt_freeptr, &irqstack, NBPG);
+	ofw_claimpages(&virt_freeptr, &irqstack, PAGE_SIZE);
 #endif
-	ofw_claimpages(&virt_freeptr, &undstack, NBPG);
-	ofw_claimpages(&virt_freeptr, &abtstack, NBPG);
-	ofw_claimpages(&virt_freeptr, &kernelstack, UPAGES * NBPG);
+	ofw_claimpages(&virt_freeptr, &undstack, PAGE_SIZE);
+	ofw_claimpages(&virt_freeptr, &abtstack, PAGE_SIZE);
+	ofw_claimpages(&virt_freeptr, &kernelstack, UPAGES * PAGE_SIZE);
 
 	/* Allocate/initialize space for msgbuf area. */
 	ofw_claimpages(&virt_freeptr, &msgbuf, MSGBUFSIZE);
@@ -1365,15 +1365,15 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	    oft++, tp++) {
 
 		vm_offset_t va, pa;
-		int npages = tp->size / NBPG;
+		int npages = tp->size / PAGE_SIZE;
 
 		/* Size must be an integral number of pages. */
-		if (npages == 0 || tp->size % NBPG != 0)
+		if (npages == 0 || tp->size % PAGE_SIZE != 0)
 			panic("illegal ofw translation (size)");
 
 		/* Make an entry for each page in the appropriate table. */
 		for (va = tp->virt, pa = tp->phys; npages > 0;
-		    va += NBPG, pa += NBPG, npages--) {
+		    va += PAGE_SIZE, pa += PAGE_SIZE, npages--) {
 			/*
 			 * Map the top bits to the appropriate L2 pagetable.
 			 * The only allowable regions are page0, the
@@ -1451,10 +1451,10 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	 */
 	pmap_map_entry(L1pagetable, proc0_pt_pte.pv_va,
 	    proc0_pt_pte.pv_pa, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-	for (i = 0; i < (L1_TABLE_SIZE / NBPG); ++i)
+	for (i = 0; i < (L1_TABLE_SIZE / PAGE_SIZE); ++i)
 		pmap_map_entry(L1pagetable,
-		    proc0_pagedir.pv_va + NBPG * i,
-		    proc0_pagedir.pv_pa + NBPG * i,
+		    proc0_pagedir.pv_va + PAGE_SIZE * i,
+		    proc0_pagedir.pv_pa + PAGE_SIZE * i,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	/*
@@ -1570,9 +1570,9 @@ ofw_getphysmeminfo()
 			struct mem_region *mp1;
 
 			/* Page-align start of the block. */
-			s = mp->start % NBPG;
+			s = mp->start % PAGE_SIZE;
 			if (s != 0) {
-				s = (NBPG - s);
+				s = (PAGE_SIZE - s);
 
 				if (mp->size >= s) {
 					mp->start += s;
@@ -1581,7 +1581,7 @@ ofw_getphysmeminfo()
 			}
 
 			/* Page-align the size. */
-			mp->size -= mp->size % NBPG;
+			mp->size -= mp->size % PAGE_SIZE;
 
 			/* Handle empty block. */
 			if (mp->size == 0) {
@@ -1919,7 +1919,7 @@ ofw_malloc(size)
 			(*ppLeftover)->size  = newSize;
 		}
 	} else {
-		claim_size = (size + NBPG - 1) & ~(NBPG - 1);
+		claim_size = (size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 		ofw_claimpages(&virt_freeptr, &new, claim_size);
 		if ((size + sizeof(LEFTOVER)) <= claim_size) {
 			pLeft = (PLEFTOVER)(new.pv_va + size);
@@ -1953,7 +1953,7 @@ ofw_free(addr, size)
 #endif
 
 /*
- *  Allocate and zero round(size)/NBPG pages of memory.
+ *  Allocate and zero round(size)/PAGE_SIZE pages of memory.
  *  We guarantee that the allocated memory will be
  *  aligned to a boundary equal to the smallest power of
  *  2 greater than or equal to size.
@@ -1970,7 +1970,7 @@ ofw_claimpages(free_pp, pv_p, size)
 	vm_size_t size;
 {
 	/* round-up to page boundary */
-	vm_size_t alloc_size = (size + NBPG - 1) & ~(NBPG - 1);
+	vm_size_t alloc_size = (size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 	vm_size_t aligned_size;
 	vm_offset_t va, pa;
 
@@ -2010,14 +2010,14 @@ ofw_discardmappings(L2pagetable, va, size)
 	vm_size_t size;
 {
 	/* round-up to page boundary */
-	vm_size_t alloc_size = (size + NBPG - 1) & ~(NBPG - 1);
-	int npages = alloc_size / NBPG;
+	vm_size_t alloc_size = (size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+	int npages = alloc_size / PAGE_SIZE;
 
 	if (npages == 0)
 		panic("ofw_discardmappings zero");
 
 	/* Discard each mapping. */
-	for (; npages > 0; va += NBPG, npages--) {
+	for (; npages > 0; va += PAGE_SIZE, npages--) {
 		/* Sanity. The current entry should be non-null. */
 		if (ReadWord(L2pagetable + ((va >> 10) & 0x00000FFC)) == 0)
 			panic("ofw_discardmappings zero entry");
