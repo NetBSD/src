@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.20 1995/04/26 23:19:16 gwr Exp $	*/
+/*	$NetBSD: if_le.c,v 1.21 1995/05/24 20:49:38 gwr Exp $	*/
 
 /*
  * LANCE Ethernet driver
@@ -167,7 +167,11 @@ le_attach(parent, self, aux)
 	ifp->if_ioctl = leioctl;
 	ifp->if_watchdog = lewatchdog;
 	ifp->if_flags =
-	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
+#ifndef	LANCE_REVC_BUG
+	/* XXX - Must be a better way... */
+	ifp->if_flags |= IFF_MULTICAST;
+#endif
 
 	/* Attach the interface. */
 	if_attach(ifp);
@@ -665,26 +669,30 @@ leread(sc, buf, len)
 	if (len <= 0)
 		return;
 
-#ifdef	LANCE_REVC_BUG
+#ifdef	LANCE_REVC_BUG	/* XXX - Must be a better way... */
 	/*
 	 * Check for unreported packet errors.  Rev C of the LANCE chip
 	 * has a bug which can cause "random" bytes to be prepended to
 	 * the start of the packet.  The work-around is to make sure that
 	 * the Ethernet destination address in the packet matches our
-	 * address (or the broadcast address).  XXX - Multicasts?
+	 * address (or the broadcast address).
 	 */
 	{
 		register short *pp, *ea;
+
 		pp = (short *) buf;
 		ea = (short *) &sc->sc_enaddr;
-		if (((pp[0] != ea[0]) || (pp[1] != ea[1]) || (pp[2] != ea[2])) &&
-			((pp[0] != -1)    || (pp[1] != -1)    || (pp[2] != -1)   ))
-		{
-			sc->sc_if.if_ierrors++;
-			printf("%s: LANCE Rev C Extra Byte(s) bug; Packet punted\n",
-				   sc->sc_dev.dv_xname);
-			return;
-		}
+		if ((pp[0] == ea[0]) && (pp[1] == ea[1]) && (pp[2] == ea[2]))
+			goto ok;
+		if ((pp[0] == -1) && (pp[1] == -1) && (pp[2] == -1))
+			goto ok;
+		/* XXX - Multicast packets? */
+
+		sc->sc_if.if_ierrors++;
+		log(LOG_ERR, "%s: LANCE Rev C Extra Byte(s) bug; Packet punted\n",
+			   sc->sc_dev.dv_xname);
+		return;
+	ok:
 	}
 #endif	/* LANCE_REVC_BUG */
 
