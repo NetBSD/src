@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.20 1997/02/05 05:10:25 scottr Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.21 1998/04/13 02:51:32 scottr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -124,8 +124,8 @@ static void stacktop __P((db_regs_t *, struct stackpos *));
 
 static void
 stacktop(regs, sp)
-	register db_regs_t *regs;
-	register struct stackpos *sp;
+	db_regs_t *regs;
+	struct stackpos *sp;
 {
 	int i;
 
@@ -183,7 +183,7 @@ struct nlist *	funcsym = 0;
 
 static int
 nextframe(sp, kerneltrace)
-	register struct stackpos *sp;
+	struct stackpos *sp;
 	int kerneltrace;
 {
 	int		i;
@@ -259,7 +259,7 @@ nextframe(sp, kerneltrace)
 
 static void
 findentry(sp)
-	register struct stackpos *sp;
+	struct stackpos *sp;
 { 
 	/* 
 	 * Set the k_nargs and k_entry fields in the stackpos structure.  This
@@ -267,8 +267,8 @@ findentry(sp)
 	 * an addq or addl or addw to sp just after we return to pop off our
 	 * arguments.  Find that instruction and extract the value.
 	 */
-	register	instruc;
-	register	val;
+	int		instruc;
+	int		val;
 	db_addr_t	addr, nextword;
 	label_t		db_jmpbuf;
 	label_t		*savejmp;
@@ -404,10 +404,10 @@ findentry(sp)
  */
 static void
 findregs(sp, addr)
-	register struct stackpos *sp;
-	register db_addr_t addr;
+	struct stackpos *sp;
+	db_addr_t addr;
 {
-	register long instruc, val, i;
+	long instruc, val, i;
 	int  regp;
 
 	regp = 0;
@@ -481,8 +481,8 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	boolean_t	kernel_only = TRUE;
 
 	{
-		register char *cp = modif;
-		register char c;
+		char *cp = modif;
+		char c;
 
 		while ((c = *cp++) != 0)
 			if (c == 'u')
@@ -500,8 +500,8 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		/*
 		 * Only have user register state.
 		 */
-		register pcb_t	t_pcb;
-		register db_regs_t *user_regs;
+		pcb_t	t_pcb;
+		db_regs_t *user_regs;
 		
 		t_pcb = (pcb_t) get(&th->pcb, 0);
 		user_regs = (db_regs_t *)
