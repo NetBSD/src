@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.8 2004/03/22 23:10:55 uwe Exp $	*/
+/*	$NetBSD: kloader.c,v 1.9 2004/03/23 03:39:11 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,12 +34,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.8 2004/03/22 23:10:55 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.9 2004/03/23 03:39:11 uwe Exp $");
 
 #include "debug_kloader.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/namei.h>
@@ -80,13 +81,16 @@ struct kloader {
 #define KLOADER_PROC	(&proc0)
 STATIC struct kloader kloader;
 
+#define ROUND4(x)	(((x) + 3) & ~3)
+
+
 STATIC int kloader_load(void);
 
 STATIC int kloader_alloc_memory(size_t);
 STATIC struct kloader_page_tag *kloader_get_tag(vaddr_t);
-STATIC ssize_t kloader_from_file(vaddr_t, off_t, size_t);
-STATIC ssize_t kloader_copy(vaddr_t, void *, size_t);
-STATIC ssize_t kloader_zero(vaddr_t, size_t);
+STATIC void kloader_from_file(vaddr_t, off_t, size_t);
+STATIC void kloader_copy(vaddr_t, const void *, size_t);
+STATIC void kloader_zero(vaddr_t, size_t);
 
 STATIC void kloader_load_segment(Elf_Phdr *);
 
@@ -175,8 +179,12 @@ kloader_load()
 	Elf_Ehdr eh;
 	Elf_Phdr ph[16], *p;
 	Elf_Shdr sh[16];
+	Elf_Addr entry;
 	vaddr_t kv;
 	size_t sz;
+	size_t shstrsz;
+	char *shstrtab;
+	int symndx, strndx;
 	size_t ksymsz;
 	struct kloader_bootinfo nbi; /* new boot info */
 	char *oldbuf, *newbuf;
@@ -200,6 +208,21 @@ kloader_load()
 	/* read section headers */
 	kloader_read(eh.e_shoff, eh.e_shentsize * eh.e_shnum, sh);
 
+	/* read section names */
+	shstrsz = ROUND4(sh[eh.e_shstrndx].sh_size);
+	shstrtab = malloc(shstrsz, M_TEMP, M_NOWAIT);
+	if (shstrtab == NULL) {
+		PRINTF("unable to allocate memory for .shstrtab\n");
+		return (1);
+	}
+	DPRINTF("reading 0x%x bytes of .shstrtab at 0x%x\n",
+		sh[eh.e_shstrndx].sh_size, sh[eh.e_shstrndx].sh_offset);
+	kloader_read(sh[eh.e_shstrndx].sh_offset, sh[eh.e_shstrndx].sh_size,
+		     shstrtab);
+
+	/* save entry point, code to construct symbol table overwrites it */
+	entry = eh.e_entry;
+
 
 	/*
 	 * Calcurate memory size
@@ -209,7 +232,7 @@ kloader_load()
 	/* loadable segments */
 	for (i = 0; i < eh.e_phnum; i++) {
 		if (ph[i].p_type == PT_LOAD) {
-			DPRINTF("alloc [%d] file 0x%x memory 0x%x\n",
+			DPRINTF("segment %d size = file 0x%x memory 0x%x\n",
 				i, ph[i].p_filesz, ph[i].p_memsz);
 #ifdef KLOADER_ZERO_BSS
 			sz += round_page(ph[i].p_memsz);
@@ -218,14 +241,37 @@ kloader_load()
 #endif
 		}
 	}
-	DPRINTF("entry: 0x%08x\n", eh.e_entry);
 
 	if (sz == 0)		/* nothing to load? */
 		return (1);
 
-	/* XXX: ksysm placeholder */
-	ksymsz = SELFMAG;
-	sz += ksymsz;
+	/* symbols/strings sections */
+	symndx = strndx = -1;
+	for (i = 0; i < eh.e_shnum; i++) {
+	    if (strcmp(shstrtab + sh[i].sh_name, ".symtab") == 0)
+		    symndx = i;
+	    else if (strcmp(shstrtab + sh[i].sh_name, ".strtab") == 0)
+		    strndx = i;
+	    else if (i != eh.e_shstrndx)
+		    /* while here, mark all other sections as unused */
+		    sh[i].sh_type = SHT_NULL;
+	}
+
+	if (symndx < 0 || strndx < 0) {
+		if (symndx < 0)
+			PRINTF("no .symtab section\n");
+		if (strndx < 0)
+			PRINTF("no .strtab section\n");
+		ksymsz = SELFMAG; /* just a bad magic */
+	} else {
+		ksymsz = sizeof(Elf_Ehdr)
+			+ eh.e_shentsize * eh.e_shnum
+			+ shstrsz		/* rounded to 4 bytes */
+			+ sh[symndx].sh_size
+			+ sh[strndx].sh_size;
+		DPRINTF("ksyms size = 0x%x\n", ksymsz);
+	}
+	sz += ROUND4(ksymsz);
 
 	/* boot info for the new kernel */
 	sz += sizeof(struct kloader_bootinfo);
@@ -246,12 +292,60 @@ kloader_load()
 		}
 	}
 
-	/*
-	 * XXX: ksyms placeholder
-	 */
-	kloader_zero(kv, SELFMAG);
-	kv += SELFMAG;
 
+	/*
+	 * Construct symbol table for ksyms.
+	 */
+	if (symndx < 0 || strndx < 0) {
+		kloader_zero(kv, SELFMAG);
+		kv += SELFMAG;
+	} else {
+		Elf_Off eoff;
+		off_t symoff, stroff;
+
+		/* save offsets of .symtab and .strtab before we change them */
+		symoff = sh[symndx].sh_offset;
+		stroff = sh[strndx].sh_offset;
+
+		/* no loadable segments */
+		eh.e_entry = 0;
+		eh.e_phnum = 0;
+		eh.e_phoff = 0;
+
+		/* change offsets to reflect new layout */
+		eoff = sizeof(Elf_Ehdr);
+		eh.e_shoff = eoff;
+
+		eoff += eh.e_shentsize * eh.e_shnum;
+		sh[eh.e_shstrndx].sh_offset = eoff;
+
+		eoff += shstrsz;
+		sh[symndx].sh_offset = eoff;
+
+		eoff += sh[symndx].sh_size;
+		sh[strndx].sh_offset = eoff;
+
+		/* local copies massaged, can serve them now */
+		DPRINTF("ksyms ELF header\n");
+		kloader_copy(kv, &eh, sizeof(Elf_Ehdr));
+		kv += sizeof(Elf_Ehdr);
+
+		DPRINTF("ksyms section headers\n");
+		kloader_copy(kv, sh, eh.e_shentsize * eh.e_shnum);
+		kv += eh.e_shentsize * eh.e_shnum;
+
+		DPRINTF("ksyms .shstrtab\n");
+		kloader_copy(kv, shstrtab, shstrsz);
+		kv += shstrsz;
+
+		DPRINTF("ksyms .symtab\n");
+		kloader_from_file(kv, symoff, sh[symndx].sh_size);
+		kv += sh[symndx].sh_size;
+
+		DPRINTF("ksyms .strtab\n");
+		kloader_from_file(kv, stroff, ROUND4(sh[strndx].sh_size));
+		kv += ROUND4(sh[strndx].sh_size);
+	}
 
 	/*
 	 * Create boot info to pass to the new kernel.
@@ -263,7 +357,7 @@ kloader_load()
 	       sizeof(struct kloader_bootinfo));
 
 	/* new kernel entry point */
-	nbi.entry = eh.e_entry;
+	nbi.entry = entry;
 
 	/* where args currently are, see kloader_bootinfo_set() */
 	oldbuf = &kloader.bootinfo->_argbuf[0];
@@ -272,7 +366,7 @@ kloader_load()
 	newbuf = (char *)(void *)kv
 		+ offsetof(struct kloader_bootinfo, _argbuf);
 
-	DPRINTF("argbuf: old %p -> new %p\n", oldbuf, newbuf);
+	DPRINTF("argv: old %p -> new %p\n", oldbuf, newbuf);
 
 	/* not a valid pointer in this kernel! */
 	nbi.argv = (void *)newbuf;
@@ -281,19 +375,19 @@ kloader_load()
 	ap = (char **)(void *)nbi._argbuf;
 
 	for (i = 0; i < kloader.bootinfo->argc; ++i) {
-		DPRINTFN(1, "[%d]: %p -> ", i, kloader.bootinfo->argv[i]);
+		DPRINTFN(1, " [%d]: %p -> ", i, kloader.bootinfo->argv[i]);
 		ap[i] = newbuf +
 			(kloader.bootinfo->argv[i] - oldbuf);
 		_DPRINTFN(1, "%p\n", ap[i]);
 	}
 
 	/* arrange for the new bootinfo to get copied */
+	DPRINTF("bootinfo\n");
 	kloader_copy(kv, &nbi, sizeof(struct kloader_bootinfo));
 
 	/* will be valid by the time the new kernel starts */
 	kloader.rebootinfo = (void *)kv;
-
-	kv += sizeof(struct kloader_bootinfo);
+	/* kv += sizeof(struct kloader_bootinfo); */
 
 
 	/*
@@ -306,8 +400,8 @@ kloader_load()
 	/* loader stack starts at the bottom of that page */
 	kloader.loader_sp = (vaddr_t)kloader.loader + PAGE_SIZE;
 
-	DPRINTF("[loader] addr=%p sp=0x%08lx\n",
-		kloader.loader, kloader.loader_sp);
+	DPRINTF("[loader] addr=%p sp=%p [kernel] entry=%p\n",
+		kloader.loader, (void *)kloader.loader_sp, (void *)nbi.entry);
 
 	return (0);
 }
@@ -344,15 +438,13 @@ kloader_get_tag(vaddr_t dst)
 	vaddr_t addr;
 	struct kloader_page_tag *tag;
 
-	DPRINTFN(1, "%x ", (uint32_t)dst);
-
 	tag = kloader.cur_tag;
 	if (tag != NULL		/* has tag */
 	    && tag->sz < BUCKET_SIZE /* that has free space */
 	    && tag->dst + tag->sz == dst) /* and new data are contiguous */
 	{
-		_DPRINTFN(1, "- curtag %x/%x ok\n", tag->dst, tag->sz);
-		return (tag);		/* current tag is ok */
+		DPRINTFN(1, "current tag %x/%x ok\n", tag->dst, tag->sz);
+		return (tag);
 	}
 
 	pg = kloader.cur_pg;
@@ -377,85 +469,88 @@ kloader_get_tag(vaddr_t dst)
  * Operations to populate kloader_page_tag's with data.
  */
 
-/* common prologue */
-#define KLOADER_PREPARE_OP(_tag, _dst, _sz) do {	\
-	size_t freesz;					\
-							\
-	_tag = kloader_get_tag(_dst);			\
-	KDASSERT(_tag != NULL);				\
-							\
-	DPRINTFN(1, "sz %x", _sz);			\
-	freesz = BUCKET_SIZE - tag->sz;			\
-	if (_sz > freesz)				\
-		_sz = freesz;				\
-	_DPRINTFN(1, "-> %x\n", _sz);			\
-} while (/* CONSTCOND */0)
-
-
-ssize_t
+void
 kloader_from_file(vaddr_t dst, off_t ofs, size_t sz)
 {
 	struct kloader_page_tag *tag;
-	KLOADER_PREPARE_OP(tag, dst, sz);
+	size_t freesz;
 
-	kloader_read(ofs, sz, (void *)(tag->src + tag->sz));
-	tag->sz += sz;
-	return (sz);
+	while (sz > 0) {
+		tag = kloader_get_tag(dst);
+		KDASSERT(tag != NULL);
+		freesz = BUCKET_SIZE - tag->sz;
+		if (freesz > sz)
+			freesz = sz;
+
+		DPRINTFN(1, "0x%08lx + 0x%x <- 0x%lx\n", dst, freesz,
+			 (unsigned long)ofs);
+		kloader_read(ofs, freesz, (void *)(tag->src + tag->sz));
+
+		tag->sz += freesz;
+		sz -= freesz;
+		ofs += freesz;
+		dst += freesz;
+	}
 }
 
-ssize_t
-kloader_copy(vaddr_t dst, void *src, size_t sz)
+
+void
+kloader_copy(vaddr_t dst, const void *src, size_t sz)
 {
 	struct kloader_page_tag *tag;
-	KLOADER_PREPARE_OP(tag, dst, sz);
+	size_t freesz;
 
-	memcpy((void *)(tag->src + tag->sz), src, sz);
-	tag->sz += sz;
-	return (sz);
+	while (sz > 0) {
+		tag = kloader_get_tag(dst);
+		KDASSERT(tag != NULL);
+		freesz = BUCKET_SIZE - tag->sz;
+		if (freesz > sz)
+			freesz = sz;
+
+		DPRINTFN(1, "0x%08lx + 0x%x <- %p\n", dst, freesz, src);
+		memcpy((void *)(tag->src + tag->sz), src, freesz);
+
+		tag->sz += freesz;
+		sz -= freesz;
+		src = (char *)src + freesz;
+		dst += freesz;
+	}
 }
 
-ssize_t
+
+void
 kloader_zero(vaddr_t dst, size_t sz)
 {
 	struct kloader_page_tag *tag;
-	KLOADER_PREPARE_OP(tag, dst, sz);
+	size_t freesz;
 
-	memset((void *)(tag->src + tag->sz), 0, sz);
-	tag->sz += sz;
-	return (sz);
+	while (sz > 0) {
+		tag = kloader_get_tag(dst);
+		KDASSERT(tag != NULL);
+		freesz = BUCKET_SIZE - tag->sz;
+		if (freesz > sz)
+			freesz = sz;
+
+		DPRINTFN(1, "0x%08lx + 0x%x\n", dst, freesz);
+		memset((void *)(tag->src + tag->sz), 0, freesz);
+
+		tag->sz += freesz;
+		sz -= freesz;
+		dst += freesz;
+	}
 }
 
 
 void
 kloader_load_segment(Elf_Phdr *p)
 {
-	vaddr_t kv = p->p_vaddr;
-	off_t fileofs = p->p_offset;
-	size_t filesz = p->p_filesz;
-#ifdef KLOADER_ZERO_BSS
-	size_t zerosz;
-#endif
-	ssize_t n;
 
 	DPRINTF("memory 0x%08x 0x%x <- file 0x%x 0x%x\n",
 		p->p_vaddr, p->p_memsz, p->p_offset, p->p_filesz);
 
-	while (filesz > 0) {
-		n = kloader_from_file(kv, fileofs, filesz);
-		KDASSERT(n > 0);
-		kv += n;
-		fileofs += n;
-		filesz -= n;
-	}
-
+	kloader_from_file(p->p_vaddr, p->p_offset, p->p_filesz);
 #ifdef KLOADER_ZERO_BSS
-	zerosz = p->p_memsz - p->p_filesz;
-	while (zerosz > 0) {
-		n = kloader_zero(kv, zerosz);
-		KDASSERT(n > 0);
-		kv += n;
-		zerosz -= n;
-	}
+	kloader_zero(p->p_vaddr + p->p_filesz, p->p_memsz - p->p_filesz);
 #endif
 }
 
