@@ -157,6 +157,10 @@ int pmsattach(struct isa_device *dvp)
 
 	/* Disable mouse interrupts */
 
+	pms_command(ioport, PMS_DISABLE);
+	pms_command(ioport, PMS_INT_DISABLE);
+	pms_write(ioport, PMS_DEV_DISABLE);
+
 	pms_write(ioport, PMS_SET_RES);
 	pms_write(ioport, 0x03);	/* 8 counts/mm */
 	pms_write(ioport, PMS_SET_SCALE);
