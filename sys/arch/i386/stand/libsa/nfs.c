@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.4 2003/03/11 14:38:45 drochner Exp $	*/
+/*	$NetBSD: nfs.c,v 1.5 2003/03/12 12:23:06 drochner Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -113,11 +113,11 @@ ssize_t	nfs_readdata __P((struct nfs_iodesc *, off_t, void *, size_t));
  */
 int
 nfs_getrootfh(d, path, fhp)
-	register struct iodesc *d;
+	struct iodesc *d;
 	char *path;
 	u_char *fhp;
 {
-	register int len;
+	int len;
 	struct args {
 		n_long	len;
 		char	path[FNAME_SIZE];
@@ -176,7 +176,7 @@ nfs_lookupfh(d, name, newfd)
 	char *name;
 	struct nfs_iodesc *newfd;
 {
-	register int len, rlen;
+	int len, rlen;
 	struct args {
 		u_char	fh[NFS_FHSIZE];
 		n_long	len;
@@ -353,11 +353,12 @@ nfs_open(path, f)
 	static struct nfs_iodesc nfs_root_node;
 	struct iodesc *desc;
 	struct nfs_iodesc *currfd;
+	char *cp;
 #ifndef NFS_NOSYMLINK
 	struct nfs_iodesc *newfd;
 	struct nfsv2_fattrs *fa;
-	register char *cp, *ncp;
-	register int c;
+	char *ncp;
+	int c;
 	char namebuf[NFS_MAXPATHLEN + 1];
 	char linkbuf[NFS_MAXPATHLEN + 1];
 	int nlinks = 0;
@@ -420,7 +421,7 @@ nfs_open(path, f)
 		 * Get next component of path name.
 		 */
 		{
-			register int len = 0;
+			int len = 0;
 			
 			ncp = cp;
 			while ((c = *cp) != '\0' && c != '/') {
@@ -495,7 +496,16 @@ out:
         currfd->iodesc = desc;
         currfd->off = 0;
 
-        error = nfs_lookupfh(&nfs_root_node, path, currfd);
+	cp = path;
+	/*
+	 * Remove extra separators
+	 */
+	while (*cp == '/')
+		cp++;
+
+	/* XXX: Check for empty path here? */
+
+        error = nfs_lookupfh(&nfs_root_node, cp, currfd);
 #endif
 	if (!error) {
 		f->f_fsdata = (void *)currfd;
@@ -519,7 +529,7 @@ int
 nfs_close(f)
 	struct open_file *f;
 {
-	register struct nfs_iodesc *fp = (struct nfs_iodesc *)f->f_fsdata;
+	struct nfs_iodesc *fp = (struct nfs_iodesc *)f->f_fsdata;
 
 #ifdef NFS_DEBUG
 	if (debug)
@@ -543,17 +553,19 @@ nfs_read(f, buf, size, resid)
 	size_t size;
 	size_t *resid;	/* out */
 {
-	register struct nfs_iodesc *fp = (struct nfs_iodesc *)f->f_fsdata;
-	register ssize_t cc;
-	register char *addr = buf;
+	struct nfs_iodesc *fp = (struct nfs_iodesc *)f->f_fsdata;
+	ssize_t cc;
+	char *addr = buf;
 	
 #ifdef NFS_DEBUG
 	if (debug)
 		printf("nfs_read: size=%lu off=%d\n", (u_long)size,
-		       (int)fp->off);
+		    (int)fp->off);
 #endif
 	while ((int)size > 0) {
+#if !defined(LIBSA_NO_TWIDDLE)
 		twiddle();
+#endif
 		cc = nfs_readdata(fp, fp->off, (void *)addr, size);
 		/* XXX maybe should retry on certain errors */
 		if (cc == -1) {
@@ -600,7 +612,7 @@ nfs_seek(f, offset, where)
 	off_t offset;
 	int where;
 {
-	register struct nfs_iodesc *d = (struct nfs_iodesc *)f->f_fsdata;
+	struct nfs_iodesc *d = (struct nfs_iodesc *)f->f_fsdata;
 	n_long size = ntohl(d->fa.fa_size);
 
 	switch (where) {
@@ -630,7 +642,7 @@ nfs_stat(f, sb)
 	struct stat *sb;
 {
 	struct nfs_iodesc *fp = (struct nfs_iodesc *)f->f_fsdata;
-	register n_long ftype, mode;
+	n_long ftype, mode;
 
 	ftype = ntohl(fp->fa.fa_type);
 	mode  = ntohl(fp->fa.fa_mode);
