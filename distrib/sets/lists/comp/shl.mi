@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.42 2005/01/03 06:00:13 lukem Exp $
+# $NetBSD: shl.mi,v 1.43 2005/01/08 10:04:35 lukem Exp $
 ./usr/lib/libasn1_pic.a				comp-c-piclib		kerberos
 ./usr/lib/libbsdmalloc_pic.a			comp-c-piclib
 ./usr/lib/libbz2_pic.a				comp-c-piclib
@@ -39,6 +39,7 @@
 ./usr/lib/libpthread_pic.a			comp-c-piclib
 ./usr/lib/libresolv_pic.a			comp-c-piclib
 ./usr/lib/libroken_pic.a			comp-c-piclib		kerberos
+./usr/lib/librpcsvc_pic.a			comp-c-piclib
 ./usr/lib/librt_pic.a				comp-c-piclib
 ./usr/lib/libskey_pic.a				comp-c-piclib		skey
 ./usr/lib/libsl_pic.a				comp-c-piclib		kerberos
