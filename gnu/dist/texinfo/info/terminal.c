@@ -1,5 +1,5 @@
 /* terminal.c -- How to handle the physical terminal for Info.
-   $Id: terminal.c,v 1.4 2001/07/25 16:46:19 assar Exp $
+   $Id: terminal.c,v 1.5 2001/09/02 21:50:55 wiz Exp $
 
    Copyright (C) 1988, 89, 90, 91, 92, 93, 96, 97, 98, 99
    Free Software Foundation, Inc.
@@ -548,8 +548,6 @@ terminal_initialize_terminal (terminal_name)
     term_buffer = xmalloc (2048);
 
   buffer = term_string_buffer;
-
-  term_clrpag = term_cr = term_clreol = (char *)NULL;
 
   term_clrpag = term_cr = term_clreol = NULL;
 
