@@ -1,4 +1,4 @@
-#	$NetBSD: ALPHA,v 1.9 1996/04/12 01:20:40 cgd Exp $
+#	$NetBSD: ALPHA,v 1.10 1996/04/17 22:01:30 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -98,7 +98,7 @@ tc*	at	tcasic?
 
 # TurboChannel devices
 ioasic0	at	tc? slot ? offset ?
-clock0	at	ioasic? offset ?
+mcclock0 at	ioasic? offset ?
 le0	at	ioasic? offset ?
 scc0	at	ioasic? offset ?
 scc1	at	ioasic? offset ?
@@ -133,7 +133,7 @@ eisa*	at	pceb?
 isa*	at	sio?
 
 # ISA devices
-clock0	at	isa? port 0x70
+mcclock0 at	isa? port 0x70
 pckbd0	at	isa? port 0x60 irq 1		# PC-ish ISA keyboard
 pms0	at	isa? port 0x60 irq 12		# PS/2 auxiliary
 com0	at	isa? port 0x3f8 irq 4		# standard serial ports

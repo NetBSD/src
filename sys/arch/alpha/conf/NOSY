@@ -1,4 +1,4 @@
-#	$NetBSD: NOSY,v 1.1 1996/04/12 01:21:44 cgd Exp $
+#	$NetBSD: NOSY,v 1.2 1996/04/17 22:01:47 cgd Exp $
 #
 # Jason's DEC 3000/400 in the lab...
 #
@@ -51,7 +51,7 @@ tc*	at	tcasic?
 
 # TurboChannel devices
 ioasic0	at	tc? slot ? offset ?
-clock0	at	ioasic? offset ?
+mcclock0 at	ioasic? offset ?
 le0	at	ioasic? offset ?
 scc0	at	ioasic? offset ?
 scc1	at	ioasic? offset ?
