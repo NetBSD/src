@@ -1,3 +1,5 @@
+#undef DEBUG
+#define DEBUG
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.45 1994/05/23 02:28:21 cgd Exp $
+ *	$Id: trap.c,v 1.46 1994/05/27 13:01:47 mycroft Exp $
  */
 
 /*
@@ -137,6 +139,10 @@ char	*trap_type[] = {
 };
 int	trap_types = sizeof trap_type / sizeof trap_type[0];
 
+#ifdef DEBUG
+int	trapdebug = 0;
+#endif
+
 /*
  * trap(frame):
  *	Exception, fault, and trap interface to BSD kernel. This
@@ -158,11 +164,13 @@ trap(frame)
 
 	cnt.v_trap++;
 
-#if defined(DEBUG) && defined(notdef)
-	printf("trap type %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
-	    frame.tf_trapno, frame.tf_err, frame.tf_eip, frame.tf_cs,
-	    frame.tf_eflags, rcr2(), cpl);
-	printf("curproc %x\n", curproc);
+#ifdef DEBUG
+	if (trapdebug) {
+		printf("trap %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
+		    frame.tf_trapno, frame.tf_err, frame.tf_eip, frame.tf_cs,
+		    frame.tf_eflags, rcr2(), cpl);
+		printf("curproc %x\n", curproc);
+	}
 #endif
 
 	frame.tf_eflags &= ~PSL_NT;	/* clear nested trap XXX */
