@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.18 1995/04/13 06:27:03 cgd Exp $	*/
+/*	$NetBSD: in.c,v 1.19 1995/05/31 21:50:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -49,6 +49,7 @@
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/if_ether.h>
+#include <netinet/ip_mroute.h>
 
 #include "ether.h"
 
@@ -370,6 +371,12 @@ in_control(so, cmd, data, ifp)
 		}
 		IFAFREE((&oia->ia_ifa));
 		break;
+
+#ifdef MROUTING
+	case SIOCGETVIFCNT:
+	case SIOCGETSGCNT:
+		return (mrt_ioctl(cmd, data));
+#endif /* MROUTING */
 
 	default:
 		if (ifp == 0 || ifp->if_ioctl == 0)

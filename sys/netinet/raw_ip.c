@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.17 1995/04/13 06:36:21 cgd Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.18 1995/05/31 21:50:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -208,25 +208,30 @@ rip_ctloutput(op, so, level, optname, m)
 		}
 		break;
 
-	case DVMRP_INIT:
-	case DVMRP_DONE:
-	case DVMRP_ADD_VIF:
-	case DVMRP_DEL_VIF:
-	case DVMRP_ADD_LGRP:
-	case DVMRP_DEL_LGRP:
-	case DVMRP_ADD_MRT:
-	case DVMRP_DEL_MRT:
+	case MRT_INIT:
+	case MRT_DONE:
+	case MRT_ADD_VIF:
+	case MRT_DEL_VIF:
+	case MRT_ADD_MFC:
+	case MRT_DEL_MFC:
+	case MRT_VERSION:
+	case MRT_ASSERT:
 #ifdef MROUTING
-		if (op == PRCO_SETOPT) {
-			error = ip_mrouter_cmd(optname, so, *m);
-			if (*m)
-				(void)m_free(*m);
-		} else
+		switch (op) {
+		case PRCO_SETOPT:
+			error = ip_mrouter_set(optname, so, m);
+			break;
+		case PRCO_GETOPT:
+			error = ip_mrouter_get(optname, so, m);
+			break;
+		default:
 			error = EINVAL;
+			break;
+		}
 		return (error);
 #else
 		if (op == PRCO_SETOPT && *m)
-			(void)m_free(*m);
+			m_free(*m);
 		return (EOPNOTSUPP);
 #endif
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.12 1995/05/15 01:25:21 cgd Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.13 1995/05/31 21:50:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -286,6 +286,8 @@ icmp_input(m, hlen)
 			icmpstat.icps_badlen++;
 			goto freeit;
 		}
+		if (IN_MULTICAST(ntohl(icp->icmp_ip.ip_dst.s_addr)))
+			goto badcode;
 		NTOHS(icp->icmp_ip.ip_len);
 #ifdef ICMPPRINTFS
 		if (icmpprintfs)
