@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.421 2001/02/08 16:48:01 itojun Exp $
+#	$NetBSD: files,v 1.422 2001/02/13 01:56:28 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -518,6 +518,10 @@ file	dev/ic/mk48txx.c		mk48txx
 # Intersil 7170 time-of-day clock
 define	intersil7170
 file	dev/ic/intersil7170.c		intersil7170
+
+# D-Link DL10019/10022 NE2000-compatible network interface subroutines
+define	dl10019
+file	dev/ic/dl10019.c		dl10019
 
 # Definitions for wscons
 # device attributes: display, display with emulator, keyboard, and mouse
