@@ -140,6 +140,7 @@ main(int argc, char **argv)
 	for (i=0; i<nprocs; i++) {
 		printf("reap %d: ", i);
 		fflush(stdout);
+		kill(pid[i], SIGINT);
 		waitpid(pid[i], &status, 0);
 		printf(" status %d\n", status);
 	}
