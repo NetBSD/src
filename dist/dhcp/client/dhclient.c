@@ -41,7 +41,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.2 2001/08/03 13:07:03 drochner Exp $ Copyright (c) 1995-2001 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.3 2001/12/14 15:20:17 wiz Exp $ Copyright (c) 1995-2001 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -198,8 +198,6 @@ int main (argc, argv, envp)
 		} else if (!strcmp (argv [i], "-w")) {
 			/* do not exit if there are no broadcast interfaces. */
 			persist = 1;
- 		} else if (argv [i][0] == '-') {
- 		    usage ();
 		} else if (!strcmp (argv [i], "-e")) {
 			struct string_list *tmp;
 			if (++i == argc)
@@ -216,6 +214,8 @@ int main (argc, argv, envp)
 			exit (0);
 		} else if (!strcmp (argv [i], "-nw")) {
 			nowait = 1;
+ 		} else if (argv [i][0] == '-') {
+ 		    usage ();
  		} else {
  		    struct interface_info *tmp = (struct interface_info *)0;
 		    status = interface_allocate (&tmp, MDL);
