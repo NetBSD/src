@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.10 2000/10/04 16:24:49 sommerfeld Exp $	*/
+/*	$NetBSD: options.c,v 1.11 2002/05/24 05:38:20 itojun Exp $	*/
 
  /*
   * General skeleton for adding options to the access control language. The
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#) options.c 1.17 96/02/11 17:01:31";
 #else
-__RCSID("$NetBSD: options.c,v 1.10 2000/10/04 16:24:49 sommerfeld Exp $");
+__RCSID("$NetBSD: options.c,v 1.11 2002/05/24 05:38:20 itojun Exp $");
 #endif
 #endif
 
@@ -56,10 +56,6 @@ __RCSID("$NetBSD: options.c,v 1.10 2000/10/04 16:24:49 sommerfeld Exp $");
 #include <ctype.h>
 #include <setjmp.h>
 #include <string.h>
-
-#ifndef MAXPATHNAMELEN
-#define MAXPATHNAMELEN  BUFSIZ
-#endif
 
 /* Local stuff. */
 
@@ -246,7 +242,7 @@ static void banners_option(value, request)
 char   *value;
 struct request_info *request;
 {
-    char    path[MAXPATHNAMELEN];
+    char    path[MAXPATHLEN];
     char    ibuf[BUFSIZ];
     char    obuf[2 * BUFSIZ];
     struct stat st;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpd.h,v 1.11 2001/03/27 22:46:55 kleink Exp $	*/
+/*	$NetBSD: tcpd.h,v 1.12 2002/05/24 05:38:20 itojun Exp $	*/
  /*
   * @(#) tcpd.h 1.5 96/03/19 16:22:24
   * 
@@ -71,12 +71,7 @@ __END_DECLS
 /* Global functions. */
 
 __BEGIN_DECLS
-#if defined(TLI) || defined(PTX) || defined(TLI_SEQUENT)
-extern void fromhost			/* get/validate client host info */
-		__P((struct request_info *));
-#else
 #define fromhost sock_host		/* no TLI support needed */
-#endif
 
 extern int hosts_access			/* access control */
 		__P((struct request_info *));
@@ -216,41 +211,4 @@ extern void process_options		/* execute options */
 extern int dry_run;			/* verification flag */
 extern void fix_options			/* get rid of IP-level socket options */
 		__P((struct request_info *));
-/* Bug workarounds. */
-
-#ifdef INET_ADDR_BUG			/* inet_addr() returns struct */
-#define inet_addr fix_inet_addr
-extern long fix_inet_addr __P((char *));
-#endif
-
-#ifdef BROKEN_FGETS			/* partial reads from sockets */
-#define fgets fix_fgets
-extern char *fix_fgets __P((char *, int, FILE *));
-#endif
-
-#ifdef RECVFROM_BUG			/* no address family info */
-#define recvfrom fix_recvfrom
-extern int fix_recvfrom __P((int, char *, int, int, struct sockaddr *, int *));
-#endif
-
-#ifdef GETPEERNAME_BUG			/* claims success with UDP */
-#include <sys/socket.h>			/* XXX serious hack! */
-#define getpeername fix_getpeername
-extern int fix_getpeername __P((int, struct sockaddr *, int *));
-#endif
-
-#ifdef SOLARIS_24_GETHOSTBYNAME_BUG	/* lists addresses as aliases */
-#define gethostbyname fix_gethostbyname
-extern struct hostent *fix_gethostbyname __P((char *));
-#endif
-
-#ifdef USE_STRSEP			/* libc calls strtok() */
-#define strtok	fix_strtok
-extern char *fix_strtok __P((char *, char *));
-#endif
-
-#ifdef LIBC_CALLS_STRTOK		/* libc calls strtok() */
-#define strtok	my_strtok
-extern char *my_strtok __P((char *, char *));
-#endif
 __END_DECLS
