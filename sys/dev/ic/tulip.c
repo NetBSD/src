@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.104 2002/03/14 04:44:34 chs Exp $	*/
+/*	$NetBSD: tulip.c,v 1.105 2002/03/16 17:38:35 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.104 2002/03/14 04:44:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.105 2002/03/16 17:38:35 chs Exp $");
 
 #include "bpfilter.h"
 
@@ -3538,21 +3538,19 @@ tlp_21142_reset(sc)
 {
 	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
 	struct tulip_21x4x_media *tm = ife->ifm_aux;
-	const u_int8_t *ncp;
+	const u_int8_t *cp;
 	int i;
 
-	ncp = &sc->sc_srom[tm->tm_reset_offset];
-	for (i = 0; i < tm->tm_reset_length; i++, ncp += 2) {
+	cp = &sc->sc_srom[tm->tm_reset_offset];
+	for (i = 0; i < tm->tm_reset_length; i++, cp += 2) {
 		delay(10);
-		TULIP_WRITE(sc, CSR_SIAGEN,
-		    TULIP_ROM_GETW(ncp, 0) << 16);
+		TULIP_WRITE(sc, CSR_SIAGEN, TULIP_ROM_GETW(cp, 0) << 16);
 	}
 
-	ncp = &sc->sc_srom[tm->tm_gp_offset];
-	for (i = 0; i < tm->tm_gp_length; i++, ncp += 2) {
+	cp = &sc->sc_srom[tm->tm_gp_offset];
+	for (i = 0; i < tm->tm_gp_length; i++, cp += 2) {
 		delay(10);
-		TULIP_WRITE(sc, CSR_SIAGEN,
-		    TULIP_ROM_GETW(ncp, 0) << 16);
+		TULIP_WRITE(sc, CSR_SIAGEN, TULIP_ROM_GETW(cp, 0) << 16);
 	}
 
 	/* If there were no sequences, just lower the pins. */
@@ -4802,18 +4800,18 @@ tlp_2114x_isv_tmsw_init(sc)
 			 * it and issue the selection sequence.
 			 */
 
-			ncp = &sc->sc_srom[tm->tm_reset_offset];
-			for (i = 0; i < tm->tm_reset_length; i++, ncp += 2) {
+			cp = &sc->sc_srom[tm->tm_reset_offset];
+			for (i = 0; i < tm->tm_reset_length; i++, cp += 2) {
 				delay(10);
 				TULIP_WRITE(sc, CSR_SIAGEN,
-				    TULIP_ROM_GETW(ncp, 0) << 16);
+				    TULIP_ROM_GETW(cp, 0) << 16);
 			}
 
-			ncp = &sc->sc_srom[tm->tm_gp_offset];
-			for (i = 0; i < tm->tm_gp_length; i++, ncp += 2) {
+			cp = &sc->sc_srom[tm->tm_gp_offset];
+			for (i = 0; i < tm->tm_gp_length; i++, cp += 2) {
 				delay(10);
 				TULIP_WRITE(sc, CSR_SIAGEN,
-				    TULIP_ROM_GETW(ncp, 0) << 16);
+				    TULIP_ROM_GETW(cp, 0) << 16);
 			}
 
 			/* If there were no sequences, just lower the pins. */
