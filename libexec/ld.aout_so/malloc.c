@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.6 1999/06/17 21:11:42 thorpej Exp $	*/
+/*	$NetBSD: malloc.c,v 1.6.8.1 2001/04/06 09:39:23 he Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "from: @(#)malloc.c	5.11 (Berkeley) 2/23/91";
 #else
-__RCSID("$NetBSD: malloc.c,v 1.6 1999/06/17 21:11:42 thorpej Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.6.8.1 2001/04/06 09:39:23 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -138,7 +138,8 @@ static	u_int nmalloc[NBUCKETS];
 #if defined(DEBUG) || defined(RCHECK)
 #define	ASSERT(p)   if (!(p)) botch("p")
 #include <stdio.h>
-static
+static void botch __P((char *));
+static void
 botch(s)
 	char *s;
 {
