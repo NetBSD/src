@@ -1,4 +1,4 @@
-/*	$NetBSD: rd94.h,v 1.6 2002/12/09 13:36:28 tsutsui Exp $	*/
+/*	$NetBSD: rd94.h,v 1.7 2003/01/19 03:36:58 tsutsui Exp $	*/
 /*	$OpenBSD: pica.h,v 1.4 1996/09/14 15:58:28 pefo Exp $ */
 
 /*
@@ -102,11 +102,11 @@
 #define	RD94_V_PCI_MEM		0xe3000000
 #define	RD94_S_PCI_MEM		0x40000000
 
-#define	RD94_P_EISA_IO		0x90000000	/* PCI I/O control */
+#define	RD94_P_EISA_IO		0x90000000	/* EISA I/O control */
 #define	RD94_V_EISA_IO		0xe2000000
 #define	RD94_S_EISA_IO		0x01000000
 
-#define	RD94_P_EISA_MEM		0x100000000LL	/* PCI Memory control */
+#define	RD94_P_EISA_MEM		0x100000000LL	/* EISA Memory control */
 #define	RD94_V_EISA_MEM		0xe3000000
 #define	RD94_S_EISA_MEM		0x40000000
 
