@@ -193,7 +193,7 @@ __start(sp, cleanup, obj, ps_strings)
 		 * XXX If we were loaded by that loader, just abort
 		 * XXX the rtld setup.
 		 */
-		if (&_DYNAMIC != NULL && cleanup != NULL /*&& obj != NULL*/)
+		if (&_DYNAMIC != NULL && cleanup != NULL && obj != NULL)
 			rtld_setup(cleanup, obj);
 #endif
 	}
