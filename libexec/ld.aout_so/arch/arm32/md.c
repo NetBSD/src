@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.10 1998/12/17 20:14:44 pk Exp $	*/
+/*	$NetBSD: md.c,v 1.11 1999/02/27 03:34:05 tv Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -56,6 +56,8 @@
 #endif
 
 #ifdef RTLD
+__inline void iflush __P((void *addr, int len));
+
 /*
  * Flush the instruction cache of the specified address
  * Some processors have separate instruction caches and
@@ -423,7 +425,9 @@ md_swapin_reloc(r, n)
 	struct relocation_info *r;
 	int n;
 {
+#ifdef NEED_SWAP
 	int	bits;
+#endif
 
 	for (; n; n--, r++) {
 #ifdef NEED_SWAP
@@ -456,7 +460,9 @@ md_swapout_reloc(r, n)
 	struct relocation_info *r;
 	int n;
 {
+#ifdef NEED_SWAP
 	int	bits;
+#endif
 
 	for (; n; n--, r++) {
 		/* Look for jmptable relocation */
