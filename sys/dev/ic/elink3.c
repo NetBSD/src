@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.87 2001/02/21 21:39:54 jdolecek Exp $	*/
+/*	$NetBSD: elink3.c,v 1.88 2001/03/22 12:00:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -204,7 +204,8 @@ void	ep_509_probemedia __P((struct ep_softc *sc));
 
 static void eptxstat __P((struct ep_softc *));
 static int epstatus __P((struct ep_softc *));
-void	epinit __P((struct ep_softc *));
+int	epinit __P((struct ifnet *));
+void	epstop __P((struct ifnet *, int));
 int	epioctl __P((struct ifnet *, u_long, caddr_t));
 void	epstart __P((struct ifnet *));
 void	epwatchdog __P((struct ifnet *));
@@ -430,6 +431,8 @@ epconfig(sc, chipset, enaddr)
 	ifp->if_start = epstart;
 	ifp->if_ioctl = epioctl;
 	ifp->if_watchdog = epwatchdog;
+	ifp->if_init = epinit;
+	ifp->if_stop = epstop;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
@@ -749,22 +752,25 @@ ep_tick(arg)
  * The order in here seems important. Otherwise we may not receive
  * interrupts. ?!
  */
-void
-epinit(sc)
-	struct ep_softc *sc;
+int
+epinit(ifp)
+	struct ifnet *ifp;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ep_softc *sc = ifp->if_softc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	int i;
+	int i, error;
 
-	/* Make sure any pending reset has completed before touching board. */
+	if (!sc->enabled && (error = epenable(sc)) != 0)
+		return (error);
+
+	/* Make sure any pending reset has completed before touching board */
 	ep_finish_reset(iot, ioh);
 
 	/*
-	 * Cance any pending I/O.
+	 * Cancel any pending I/O.
 	 */
-	epstop(sc);
+	epstop(ifp, 0);
 
 	if (sc->bustype != ELINK_BUS_PCI && sc->bustype != ELINK_BUS_EISA) {
 		GO_WINDOW(0);
@@ -796,7 +802,7 @@ epinit(sc)
 	for (i = 0; i < 31; i++)
 		bus_space_read_1(iot, ioh, ep_w1_reg(sc, ELINK_W1_TX_STATUS));
 
-	/* Set threshhold for for Tx-space avaiable interrupt. */
+	/* Set threshold for Tx-space available interrupt. */
 	bus_space_write_2(iot, ioh, ELINK_COMMAND,
 	    SET_TX_AVAIL_THRESH | (1600 >> sc->ep_pktlenshift));
 
@@ -862,6 +868,8 @@ epinit(sc)
 
 	/* Attempt to start output, if any. */
 	epstart(ifp);
+
+	return (0);
 }
 
 
@@ -1191,7 +1199,7 @@ startagain:
 	 * interrupt from another device won't cause a FIFO underrun.
 	 * We choose splsched() since that blocks essentially everything
 	 * except for interrupts from serial devices (which typically
-	 * lose data of their interrupt isn't serviced fast enough).
+	 * lose data if their interrupt isn't serviced fast enough).
 	 *
 	 * XXX THIS CAN CAUSE CLOCK DRIFT!
 	 */
@@ -1419,8 +1427,8 @@ epintr(arg)
 			       S_RX_COMPLETE | S_CARD_FAILURE)) == 0) {
 			if ((status & S_INTR_LATCH) == 0) {
 #if 0
-				printf("%s: intr latch cleared\n",
-				       sc->sc_dev.dv_xname);
+				printf("%s: intr latch cleared %d\n",
+				       sc->sc_dev.dv_xname, status);
 #endif
 				break;
 			}
@@ -1467,7 +1475,7 @@ epintr(arg)
 			printf("%s: adapter failure (%x)\n",
 			    sc->sc_dev.dv_xname, status);
 #if 1
-			epinit(sc);
+			epinit(ifp);
 #else
 			epreset(sc);
 #endif
@@ -1754,7 +1762,6 @@ epioctl(ifp, cmd, data)
 	caddr_t data;
 {
 	struct ep_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -1762,72 +1769,9 @@ epioctl(ifp, cmd, data)
 
 	switch (cmd) {
 
-	case SIOCSIFADDR:
-		if ((error = epenable(sc)) != 0)
-			break;
-		/* epinit is called just below */
-		ifp->if_flags |= IFF_UP;
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			epinit(sc);
-			arp_ifinit(&sc->sc_ethercom.ec_if, ifa);
-			break;
-#endif
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)
-				    LLADDR(ifp->if_sadl);
-			else
-				bcopy(ina->x_host.c_host,
-				    LLADDR(ifp->if_sadl),
-				    ifp->if_addrlen);
-			/* Set new address. */
-			epinit(sc);
-			break;
-		    }
-#endif
-		default:
-			epinit(sc);
-			break;
-		}
-		break;
-
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-		break;
-
-	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
-			/*
-			 * If interface is marked down and it is running, then
-			 * stop it.
-			 */
-			epstop(sc);
-			ifp->if_flags &= ~IFF_RUNNING;
-			epdisable(sc);
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-			   (ifp->if_flags & IFF_RUNNING) == 0) {
-			/*
-			 * If interface is marked up and it is stopped, then
-			 * start it.
-			 */
-			if ((error = epenable(sc)) != 0)
-				break;
-			epinit(sc);
-		} else if ((ifp->if_flags & IFF_UP) != 0) {
-			/*
-			 * deal with flags changes:
-			 * IFF_MULTICAST, IFF_PROMISC.
-			 */
-			epsetfilter(sc);
-		}
 		break;
 
 	case SIOCADDMULTI:
@@ -1837,9 +1781,8 @@ epioctl(ifp, cmd, data)
 			break;
 		}
 
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
+	default:
+		error = ether_ioctl(ifp, cmd, data);
 
 		if (error == ENETRESET) {
 			/*
@@ -1849,10 +1792,6 @@ epioctl(ifp, cmd, data)
 			epreset(sc);
 			error = 0;
 		}
-		break;
-
-	default:
-		error = EINVAL;
 		break;
 	}
 
@@ -1867,7 +1806,7 @@ epreset(sc)
 	int s;
 
 	s = splnet();
-	epinit(sc);
+	epinit(&sc->sc_ethercom.ec_if);
 	splx(s);
 }
 
@@ -1884,9 +1823,11 @@ epwatchdog(ifp)
 }
 
 void
-epstop(sc)
-	struct ep_softc *sc;
+epstop(ifp, disable)
+	struct ifnet *ifp;
+	int disable;
 {
+	struct ep_softc *sc = ifp->if_softc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
@@ -1923,6 +1864,11 @@ epstop(sc)
 	bus_space_write_2(iot, ioh, ELINK_COMMAND, SET_RX_FILTER);
 
 	epmbufempty(sc);
+
+	if (disable)
+		epdisable(sc);
+
+	ifp->if_flags &= ~IFF_RUNNING;
 }
 
 
@@ -1937,7 +1883,7 @@ epshutdown(arg)
 	int s = splnet(); 
 
 	if (sc->enabled) {
-		epstop(sc);
+		epstop(&sc->sc_ethercom.ec_if, 1);
 		ep_reset_cmd(sc, ELINK_COMMAND, GLOBAL_RESET);
 		sc->enabled = 0;
 	}
