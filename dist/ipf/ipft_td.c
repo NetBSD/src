@@ -1,4 +1,4 @@
-/*	$NetBSD: ipft_td.c,v 1.4 2002/03/14 12:32:38 martti Exp $	*/
+/*	$NetBSD: ipft_td.c,v 1.5 2002/04/09 02:32:52 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -62,8 +62,10 @@ tcpdump -nqte
 #include "ipt.h"
 
 #if !defined(lint)
-static const char sccsid[] = "@(#)ipft_td.c	1.8 2/4/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipft_td.c,v 2.2.2.2 2002/02/22 15:32:54 darrenr Exp";
+static const char sccsid[] __attribute__((__unused__)) =
+    "@(#)ipft_td.c	1.8 2/4/96 (C)1995 Darren Reed";
+static const char rcsid[] __attribute__((__unused__)) =
+    "@(#)Id: ipft_td.c,v 2.2.2.2 2002/02/22 15:32:54 darrenr Exp";
 #endif
 
 static	int	tcpd_open __P((char *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfs.c,v 1.5 2002/01/24 08:21:33 martti Exp $	*/
+/*	$NetBSD: ipfs.c,v 1.6 2002/04/09 02:32:52 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1999-2001 by Darren Reed.
@@ -47,7 +47,8 @@
 #include "ipf.h"
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ipfs.c,v 2.6.2.8 2001/09/14 18:52:21 darrenr Exp";
+static const char rcsid[] __attribute__((__unused__)) =
+    "@(#)Id: ipfs.c,v 2.6.2.8 2001/09/14 18:52:21 darrenr Exp";
 #endif
 
 #ifndef	IPF_SAVEDIR

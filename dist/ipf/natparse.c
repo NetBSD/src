@@ -1,4 +1,4 @@
-/*	$NetBSD: natparse.c,v 1.7 2002/03/14 21:47:20 martin Exp $	*/
+/*	$NetBSD: natparse.c,v 1.8 2002/04/09 02:32:53 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1993-2002 by Darren Reed.
@@ -57,8 +57,10 @@ extern	char	*sys_errlist[];
 #endif
 
 #if !defined(lint)
-static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id: natparse.c,v 1.17.2.23 2002/02/22 15:32:55 darrenr Exp";
+static const char sccsid[] __attribute__((__unused__)) = 
+    "@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
+static const char rcsid[] __attribute__((__unused__)) =
+    "@(#)Id: natparse.c,v 1.17.2.23 2002/02/22 15:32:55 darrenr Exp";
 #endif
 
 

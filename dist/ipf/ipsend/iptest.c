@@ -1,4 +1,4 @@
-/*	$NetBSD: iptest.c,v 1.4 2002/03/14 12:32:40 martti Exp $	*/
+/*	$NetBSD: iptest.c,v 1.5 2002/04/09 02:32:54 thorpej Exp $	*/
 
 /*
  * ipsend.c (C) 1995-1998 Darren Reed
@@ -38,8 +38,10 @@
 #include "ipsend.h"
 
 #if !defined(lint)
-static const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: iptest.c,v 2.2.2.3 2002/02/22 15:32:58 darrenr Exp";
+static const char sccsid[] __attribute__((__unused__)) =
+    "%W% %G% (C)1995 Darren Reed";
+static const char rcsid[] __attribute__((__unused__)) =
+    "@(#)Id: iptest.c,v 2.2.2.3 2002/02/22 15:32:58 darrenr Exp";
 #endif
 
 
