@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2002/08/31 10:46:41 itojun Exp $
+#	$NetBSD: Makefile,v 1.26 2002/09/27 21:37:53 thorpej Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -17,6 +17,7 @@
 #
 
 .include <bsd.own.mk>
+.include <bsd.shlib.mk>
 
 # XXX There's a bit of work to do before we can enable warnings.
 WARNS=0

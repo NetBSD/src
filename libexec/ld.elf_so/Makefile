@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.56 2002/09/26 14:30:47 mycroft Exp $
+#	$NetBSD: Makefile,v 1.57 2002/09/27 21:37:50 thorpej Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
+.include <bsd.shlib.mk>			# for SHLINKINSTALLDIR definition
 
 ARCHSUBDIR= ${MACHINE_CPU}
 M= ${.CURDIR}/arch/${ARCHSUBDIR}
@@ -32,7 +33,7 @@ CLIBOBJ!=	cd ${NETBSDSRCDIR}/lib/libc && ${PRINTOBJDIR}
 SRCS+=	rtld.c reloc.c symbol.c malloc.c xmalloc.c xprintf.c debug.c \
 	map_object.c load.c search.c headers.c paths.c
 
-BINDIR=${SHLINKDIR}
+BINDIR=${SHLINKINSTALLDIR}
 
 CPPFLAGS+= -DLIBDIR=\"${LIBDIR}\" -D_PATH_RTLD=\"${BINDIR}/${PROG}\"
 CPPFLAGS+= -I${.CURDIR}
@@ -62,8 +63,8 @@ STRIPFLAG=
 ${PROG}: ${OBJS} ${DPADD}
 	${LD} ${LDFLAGS} -o ${PROG} ${OBJS} ${LDADD}
 
-.if ${SHLINKDIR} != "/usr/libexec"
-SYMLINKS+=	${SHLINKDIR}/${PROG} /usr/libexec/${PROG}
+.if ${SHLINKINSTALLDIR} != "/usr/libexec"
+SYMLINKS+=	${SHLINKINSTALLDIR}/${PROG} /usr/libexec/${PROG}
 .endif
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.105 2002/09/26 13:05:55 itojun Exp $
+#	$NetBSD: bsd.README,v 1.106 2002/09/27 21:37:55 thorpej Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -246,15 +246,6 @@ LDSTATIC	Control program linking; if set blank, link everything
 
 LIBDIR		Base path for library installation. [/usr/lib]
 
-SHLIBDIR	If ${USE_SHLIBDIR} is "yes", use ${SHLIBDIR} instead of
-		${LIBDIR} as the base path for shared library installation.
-		[/lib]
-
-_LIBSODIR	Set to ${SHLIBDIR} if ${USE_SHLIBDIR} is "yes",
-		otherwise set to ${LIBDIR}
-
-SHLINKDIR	Base path for shared linker. [/libexec]
-
 LINTLIBDIR	Base path for lint(1) library installation. [/usr/libdata/lint]
 
 LIBGRP		Library group. [${BINGRP}]
@@ -405,9 +396,36 @@ they use the same default owners etc. as the rest of the tree.
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+The include file <bsd.shlib.mk> computes parameters for shared library
+installation and use.  It defines no targets.  <bsd.own.mk> MUST be
+included before bsd.shlib.mk.
+
+bsd.own.mk sets the following variables, if they are not already defined
+(defaults are in brackets):
+
+SHLIBINSTALLDIR	If ${USE_SHLIBDIR} is "yes", use ${SHLIBINSTALLDIR} instead of
+		${LIBDIR} as the base path for shared library installation.
+		[/lib]
+
+SHLIBDIR	The path to USE_SHLIBDIR shared libraries to use when building
+		a program.  [/lib for programs in /bin and /sbin, /usr/lib
+		for all others.]
+
+_LIBSODIR	Set to ${SHLIBINSTALLDIR} if ${USE_SHLIBDIR} is "yes",
+		otherwise set to ${LIBDIR}
+
+SHLINKINSTALLDIR Base path for shared linker. [/libexec]
+
+SHLINKDIR	Path to use for shared linker when building a program.
+		[/libexec for programs in /bin and /sbin, /usr/libexec for
+		all others.]
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 The include file <bsd.prog.mk> handles building programs from one or
 more source files, along with their manual pages.  It has a limited number
-of suffixes, consistent with the current needs of the BSD tree.
+of suffixes, consistent with the current needs of the BSD tree.  bsd.prog.mk
+includes <bsd.shlib.mk> to get shared library parameters.
 
 It has eight targets:
 
@@ -585,7 +603,8 @@ FILES		A list of files to install. The installation is controlled
 		by the FILESNAME, FILESOWN, FILESGRP, FILESMODE, FILESDIR
 		variables that can be further specialized by FILES<VAR>_<file>
 
-SHLINKDIR	Target directory for shared linker.
+SHLINKDIR	Target directory for shared linker.  See description of
+		<bsd.own.mk> for additional information about this variable.
 
 The include file <bsd.prog.mk> includes the file named "../Makefile.inc"
 if it exists, as well as the include file <bsd.man.mk>.
@@ -708,7 +727,8 @@ the same eight targets as <bsd.prog.mk>: all, clean, cleandir, depend,
 includes, install, lint, and tags.  Additionally, it has a checkver target
 which checks for installed shared object libraries whose version is greater
 that the version of the source. It has a limited number of suffixes,
-consistent with the current needs of the BSD tree.
+consistent with the current needs of the BSD tree.  bsd.lib.mk includes
+<bsd.shlib.mk> to get shared library parameters.
 
 It sets/uses the following variables:
 
@@ -716,10 +736,10 @@ LIB		The name of the library to build.
 
 LIBDIR		Target directory for libraries.
 
-SHLIBDIR	Target directory for shared libraries if ${USE_SHLIBDIR}
+SHLIBINSTALLDIR	Target directory for shared libraries if ${USE_SHLIBDIR}
 		is "yes".
 
-USE_SHLIBDIR	If "yes", use ${SHLIBDIR} instead of ${LIBDIR}
+USE_SHLIBDIR	If "yes", use ${SHLIBINSTALLDIR} instead of ${LIBDIR}
 		as the path to install shared libraries to.
 		USE_SHLIBDIR must be defined before <bsd.own.mk> is included.
 

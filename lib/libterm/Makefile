@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2002/08/19 14:55:17 lukem Exp $
+#	$NetBSD: Makefile,v 1.28 2002/09/27 21:37:54 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -17,6 +17,7 @@ INCS=	termcap.h
 INCSDIR=/usr/include
 
 .include <bsd.own.mk>
+.include <bsd.shlib.mk>
 
 .if ${MKLINKLIB} != "no"
 SYMLINKS+=	libtermcap.a ${LIBDIR}/libtermlib.a

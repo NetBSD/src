@@ -1,7 +1,8 @@
-#	$NetBSD: bsd.prog.mk,v 1.158 2002/09/26 13:05:56 itojun Exp $
+#	$NetBSD: bsd.prog.mk,v 1.159 2002/09/27 21:37:58 thorpej Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
+.include <bsd.shlib.mk>
 
 ##### Basic targets
 .PHONY:		cleanextra cleanobjs cleanprog proginstall scriptsinstall
@@ -110,6 +111,9 @@ _PROGLDOPTS+=	-Wl,-dynamic-linker=${_SHLINKER}
 _PROGLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBDIR}:${DESTDIR}/usr/lib \
 		-Wl,-rpath,${SHLIBDIR}:/usr/lib \
 		-L${DESTDIR}${SHLIBDIR}
+.elif ${SHLIBINSTALLDIR} != ${LIBDIR}
+_PROGLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBINSTALLDIR}:${DESTDIR}/usr/lib \
+		-L${DESTDIR}${SHLIBINSTALLDIR}
 .endif
 
 .if defined(PROG_CXX)

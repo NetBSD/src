@@ -1,7 +1,8 @@
-#	$NetBSD: bsd.lib.mk,v 1.206 2002/09/14 16:56:10 thorpej Exp $
+#	$NetBSD: bsd.lib.mk,v 1.207 2002/09/27 21:37:56 thorpej Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
+.include <bsd.shlib.mk>
 
 ##### Basic targets
 .PHONY:		checkver cleanlib libinstall
