@@ -1,7 +1,7 @@
-/*	$NetBSD: mkbootimage.c,v 1.8 2003/10/27 00:12:42 lukem Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.9 2003/12/04 13:05:17 keihan Exp $	*/
 
 /*-
- * Copyright (C) 1999, 2000 NONAKA Kimihiro (nonaka@netbsd.org)
+ * Copyright (C) 1999, 2000 NONAKA Kimihiro (nonaka@NetBSD.org)
  * Copyright (C) 1996, 1997, 1998, 1999 Cort Dougan (cort@fsmlasb.com)
  * Copyright (C) 1996, 1997, 1998, 1999 Paul Mackeras (paulus@linuxcare.com)
  * All rights reserved.

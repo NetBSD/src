@@ -1,9 +1,9 @@
-/* $NetBSD: bus_dma.c,v 1.8 2003/06/29 22:28:29 fvdl Exp $ */
+/* $NetBSD: bus_dma.c,v 1.9 2003/12/04 13:05:16 keihan Exp $ */
 
 /*
  * This file was taken from from alpha/common/bus_dma.c
  * should probably be re-synced when needed.
- * Darrin B. Jewell <dbj@netbsd.org> Sat Jul 31 06:11:33 UTC 1999
+ * Darrin B. Jewell <dbj@NetBSD.org> Sat Jul 31 06:11:33 UTC 1999
  * original cvs id: NetBSD: bus_dma.c,v 1.31 1999/07/08 18:05:23 thorpej Exp 
  */
 
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.8 2003/06/29 22:28:29 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.9 2003/12/04 13:05:16 keihan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,7 +1,7 @@
-/*	$NetBSD: fd.c,v 1.4 2001/08/31 04:44:58 simonb Exp $	*/
+/*	$NetBSD: fd.c,v 1.5 2003/12/04 13:05:15 keihan Exp $	*/
 
 /*-
- * Copyright (C) 1997-1998 Kazuki Sakamoto (sakamoto@netbsd.org)
+ * Copyright (C) 1997-1998 Kazuki Sakamoto (sakamoto@NetBSD.org)
  * All rights reserved.
  *
  * Floppy Disk Drive standalone device driver

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.27 2003/07/15 02:43:31 lukem Exp $	*/
+/*	$NetBSD: zs.c,v 1.28 2003/12/04 13:05:16 keihan Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -44,7 +44,7 @@
  * With NetBSD 1.1, port-mac68k started using a port of the port-sparc
  * (port-sun3?) zs.c driver (which was in turn based on code in the
  * Berkeley 4.4 Lite release). Bill Studenmund did the port, with
- * help from Allen Briggs and Gordon Ross <gwr@netbsd.org>. Noud de
+ * help from Allen Briggs and Gordon Ross <gwr@NetBSD.org>. Noud de
  * Brouwer field-tested the driver at a local ISP.
  *
  * Bill Studenmund and Gordon Ross then ported the machine-independant
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.27 2003/07/15 02:43:31 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.28 2003/12/04 13:05:16 keihan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

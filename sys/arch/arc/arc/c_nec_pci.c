@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_pci.c,v 1.8 2003/10/29 18:17:49 tsutsui Exp $	*/
+/*	$NetBSD: c_nec_pci.c,v 1.9 2003/12/04 13:05:15 keihan Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_nec_pci.c,v 1.8 2003/10/29 18:17:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_nec_pci.c,v 1.9 2003/12/04 13:05:15 keihan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,7 +238,7 @@ c_nec_pci_init()
 	 * increase this value by a option like below:
 	 *     options KSEG2IOBUFSIZE=0x1b000000 # 432MB consumes 432KB
 	 * If you met this symptom, please report it to
-	 * port-arc-maintainer@netbsd.org.
+	 * port-arc-maintainer@NetBSD.org.
 	 *
 	 * kseg2iobufsize will be refered from pmap_bootstrap().
 	 */

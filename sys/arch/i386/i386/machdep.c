@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.543 2003/10/28 22:52:53 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.544 2003/12/04 13:05:16 keihan Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.543 2003/10/28 22:52:53 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.544 2003/12/04 13:05:16 keihan Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -353,7 +353,7 @@ cpu_startup()
 	 * XXX autoconfiguration completes!!
 	 *
 	 * XXX This is a hack, and needs to be replaced with a better
-	 * XXX solution!  --thorpej@netbsd.org, December 6, 1997
+	 * XXX solution!  --thorpej@NetBSD.org, December 6, 1997
 	 */
 
 	/*

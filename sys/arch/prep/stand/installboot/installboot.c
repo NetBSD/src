@@ -1,7 +1,7 @@
-/*	$NetBSD: installboot.c,v 1.5 2003/10/08 04:25:46 lukem Exp $	*/
+/*	$NetBSD: installboot.c,v 1.6 2003/12/04 13:05:17 keihan Exp $	*/
 
 /*
- * Copyright (c) 2000 NONAKA Kimihiro (nonaka@netbsd.org).
+ * Copyright (c) 2000 NONAKA Kimihiro (nonaka@NetBSD.org).
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

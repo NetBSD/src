@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.7 2003/10/25 21:34:07 christos Exp $	*/
+/*	$NetBSD: elan520.c,v 1.8 2003/12/04 13:05:16 keihan Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.7 2003/10/25 21:34:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.8 2003/12/04 13:05:16 keihan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,7 +249,7 @@ elansc_attach(struct device *parent, struct device *self, void *aux)
 	 *
 	 * XXX The step 1.1 (B1?) in my Soekris net4501 also has this
 	 * XXX problem, so we'll just enable it for all Elan SC520s
-	 * XXX for now.  --thorpej@netbsd.org
+	 * XXX for now.  --thorpej@NetBSD.org
 	 */
 	if (1 || rev == ((PRODID_ELAN_SC520 << REVID_PRODID_SHIFT) |
 		    (0 << REVID_MAJSTEP_SHIFT) | (1)))

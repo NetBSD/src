@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.35 2003/07/15 02:59:32 lukem Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.36 2003/12/04 13:05:17 keihan Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextdma.c,v 1.35 2003/07/15 02:59:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextdma.c,v 1.36 2003/12/04 13:05:17 keihan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -583,7 +583,7 @@ nextdma_enet_intr(arg)
 #ifdef DIAGNOSTIC
 	{
 		char sbuf[256];
-		printf("DMA: please send this output to port-next68k-maintainer@netbsd.org:\n");
+		printf("DMA: please send this output to port-next68k-maintainer@NetBSD.org:\n");
 		bitmask_snprintf(state, DMACSR_BITS, sbuf, sizeof(sbuf));
 		printf("DMA: state 0x%s\n",sbuf);
 		nextdma_print(nsc);

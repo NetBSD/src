@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 2003/12/01 00:00:07 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 2003/12/04 13:05:15 keihan Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2003/12/01 00:00:07 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2003/12/04 13:05:15 keihan Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -292,7 +292,7 @@ cpu_startup()
 	 * XXX autoconfiguration completes!!
 	 *
 	 * XXX This is a hack, and needs to be replaced with a better
-	 * XXX solution!  --thorpej@netbsd.org, December 6, 1997
+	 * XXX solution!  --thorpej@NetBSD.org, December 6, 1997
 	 */
 
 	/*

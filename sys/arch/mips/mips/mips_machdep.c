@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.169 2003/11/26 08:36:49 he Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.170 2003/12/04 13:05:16 keihan Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.169 2003/11/26 08:36:49 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.170 2003/12/04 13:05:16 keihan Exp $");
 
 #include "opt_cputype.h"
 
@@ -1017,7 +1017,7 @@ cpu_identify(void)
 	    MIPS_PRID_RSVD(cpu_id) != 0) {
 		printf("%s: NOTE: top 8 bits of prehistoric PRID not 0!\n",
 		    label);
-		printf("%s: Please mail port-mips@netbsd.org with cpu0 "
+		printf("%s: Please mail port-mips@NetBSD.org with cpu0 "
 		    "dmesg lines.\n", label);
 	}
 

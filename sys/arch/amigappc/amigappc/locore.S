@@ -1,4 +1,4 @@
-/*      $NetBSD: locore.S,v 1.9 2003/06/23 11:01:06 martin Exp $   */
+/*      $NetBSD: locore.S,v 1.10 2003/12/04 13:05:15 keihan Exp $   */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -330,7 +330,7 @@ ENTRY(switchexit)
  * void cpu_switch(struct proc *p)
  * Find a runnable process and switch to it.
  */
-/* XXX noprofile?  --thorpej@netbsd.org */
+/* XXX noprofile?  --thorpej@NetBSD.org */
 ENTRY(cpu_switch)
 	mflr	0			/* save lr */
 	stw	0,4(1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.46 2003/09/27 20:16:59 cl Exp $	*/
+/*	$NetBSD: esp.c,v 1.47 2003/12/04 13:05:17 keihan Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,11 +78,11 @@
 
 /*
  * Grabbed from the sparc port at revision 1.73 for the NeXT.
- * Darrin B. Jewell <dbj@netbsd.org>  Sat Jul  4 15:41:32 1998
+ * Darrin B. Jewell <dbj@NetBSD.org>  Sat Jul  4 15:41:32 1998
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.46 2003/09/27 20:16:59 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.47 2003/12/04 13:05:17 keihan Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

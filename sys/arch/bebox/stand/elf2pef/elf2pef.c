@@ -1,7 +1,7 @@
-/*	$NetBSD: elf2pef.c,v 1.8 2001/07/22 14:34:37 wiz Exp $	*/
+/*	$NetBSD: elf2pef.c,v 1.9 2003/12/04 13:05:15 keihan Exp $	*/
 
 /*-
- * Copyright (C) 1997-1998 Kazuki Sakamoto (sakamoto@netbsd.org)
+ * Copyright (C) 1997-1998 Kazuki Sakamoto (sakamoto@NetBSD.org)
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
  * All rights reserved.
  *
