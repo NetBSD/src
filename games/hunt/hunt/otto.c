@@ -1,3 +1,4 @@
+/*	$NetBSD: otto.c,v 1.2 1997/10/10 16:32:39 lukem Exp $	*/
 # ifdef OTTO
 /*
  *	otto	- a hunt otto-matic player
@@ -7,15 +8,21 @@
  *	automatic players to link to.  If you write your own "otto"
  *	please let us know what subroutines you would expect in the
  *	subroutine library.
- *
- *	$Id: otto.c,v 1.1.1.1 1997/10/04 09:00:14 mrg Exp $
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: otto.c,v 1.2 1997/10/10 16:32:39 lukem Exp $");
+#endif /* not lint */
+
+# include	<sys/time.h>
 # include	<curses.h>
 # include	<ctype.h>
-# include	"hunt.h"
-# include	<sys/time.h>
 # include	<signal.h>
+# include	<stdlib.h>
+# include	<unistd.h>
+# include	"hunt.h"
+
 # undef		WALL
 # undef		NORTH
 # undef		SOUTH
@@ -106,24 +113,28 @@ STATIC	int		num_turns;		/* for wandering */
 STATIC	char		been_there[HEIGHT][WIDTH2];
 STATIC	struct itimerval	pause_time	= { { 0, 0 }, { 0, 55000 }};
 
-STATIC	int		stop_look();
-STATIC	int		look_around();
-STATIC	int		face_and_move_direction();
-STATIC	int		attack();
-STATIC	int		duck();
-STATIC	int		go_for_ammo();
-STATIC	int		wander();
+STATIC	void		attack __P((int, struct item *));
+STATIC	void		duck __P((int));
+STATIC	void		face_and_move_direction __P((int, int));
+STATIC	int		go_for_ammo __P((char));
+STATIC	void		ottolook __P((int, struct item *));
+STATIC	void		look_around __P((void));
+STATIC	SIGNAL_TYPE	nothing __P((int));
+STATIC	int		stop_look __P((struct item *, char, int, int));
+STATIC	void		wander __P((void));
 
 STATIC SIGNAL_TYPE
-nothing()
+nothing(dummy)
+	int dummy;
 {
 }
 
+void
 otto(y, x, face)
 	int	y, x;
 	char	face;
 {
-	register int	i;
+	int		i;
 	extern	int	Otto_count;
 	int		old_mask;
 
@@ -190,7 +201,7 @@ done:
 
 # define	direction(abs,rel)	(((abs) + (rel)) % NUMDIRECTIONS)
 
-STATIC
+STATIC int
 stop_look(itemp, c, dist, side)
 	struct	item	*itemp;
 	char	c;
@@ -265,13 +276,15 @@ stop_look(itemp, c, dist, side)
 	}
 }
 
-look(rel_dir, itemp)
+STATIC void
+ottolook(rel_dir, itemp)
 	int		rel_dir;
 	struct	item	*itemp;
 {
-	register int		r, c;
-	register char		ch;
+	int		r, c;
+	char		ch;
 
+	r = 0;
 	itemp->what = 0;
 	itemp->distance = -1;
 	itemp->flags = DEADEND|BEEN;		/* true until proven false */
@@ -325,7 +338,7 @@ look(rel_dir, itemp)
 			for (r = row - 1; r < row + 2; r++) {
 				ch = SCREEN(r, c);
 				if (stop_look(itemp, ch, col - c, row - r))
-					goto cont_east;
+					goto cont_west;
 				if (r == row && !been_there[r][c])
 					itemp->flags &= ~BEEN;
 			}
@@ -363,15 +376,15 @@ look(rel_dir, itemp)
 	}
 }
 
-STATIC
+STATIC void
 look_around()
 {
-	register int	i;
+	int	i;
 
 	for (i = 0; i < NUMDIRECTIONS; i++) {
-		look(i, &flbr[i]);
+		ottolook(i, &flbr[i]);
 # ifdef	DEBUG
-		fprintf(debug, " look(%c)=%c(%d)(0x%x)",
+		fprintf(debug, " ottolook(%c)=%c(%d)(0x%x)",
 			RELCHARS[i], flbr[i].what, flbr[i].distance, flbr[i].flags);
 # endif
 	}
@@ -381,23 +394,23 @@ look_around()
  *	as a side effect modifies facing and location (row, col)
  */
 
-STATIC
+STATIC void
 face_and_move_direction(rel_dir, distance)
 	int	rel_dir, distance;
 {
-	register int	old_facing;
-	register char	cmd;
+	int	old_facing;
+	char	cmd;
 
 	old_facing = facing;
 	cmd = DIRKEYS[facing = direction(facing, rel_dir)];
 
 	if (rel_dir != FRONT) {
-		register int	i;
+		int	i;
 		struct	item	items[NUMDIRECTIONS];
 
 		command[comlen++] = toupper(cmd);
 		if (distance == 0) {
-			/* rotate look's to be in right position */
+			/* rotate ottolook's to be in right position */
 			for (i = 0; i < NUMDIRECTIONS; i++)
 				items[i] =
 					flbr[(i + old_facing) % NUMDIRECTIONS];
@@ -418,7 +431,7 @@ face_and_move_direction(rel_dir, distance)
 	}
 }
 
-STATIC
+STATIC void
 attack(rel_dir, itemp)
 	int		rel_dir;
 	struct	item	*itemp;
@@ -446,7 +459,7 @@ attack(rel_dir, itemp)
 	}
 }
 
-STATIC
+STATIC void
 duck(rel_dir)
 	int	rel_dir;
 {
@@ -496,11 +509,11 @@ duck(rel_dir)
  *	go for the closest mine if possible
  */
 
-STATIC
+STATIC int
 go_for_ammo(mine)
 	char	mine;
 {
-	register int	i, rel_dir, dist;
+	int	i, rel_dir, dist;
 
 	rel_dir = -1;
 	dist = WIDTH;
@@ -523,10 +536,10 @@ go_for_ammo(mine)
 	return TRUE;
 }
 
-STATIC
+STATIC void
 wander()
 {
-	register int	i, j, rel_dir, dir_mask, dir_count;
+	int	i, j, rel_dir, dir_mask, dir_count;
 
 	for (i = 0; i < NUMDIRECTIONS; i++)
 		if (!(flbr[i].flags & BEEN) || flbr[i].distance <= 1)

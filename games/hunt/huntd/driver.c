@@ -1,14 +1,24 @@
+/*	$NetBSD: driver.c,v 1.2 1997/10/10 16:33:08 lukem Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
  *  San Francisco, California
  */
 
-# include	"hunt.h"
-# include	<signal.h>
-# include	<errno.h>
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: driver.c,v 1.2 1997/10/10 16:33:08 lukem Exp $");
+#endif /* not lint */
+
 # include	<sys/ioctl.h>
+# include	<sys/stat.h>
 # include	<sys/time.h>
+# include	<err.h>
+# include	<errno.h>
+# include	<signal.h>
+# include	<stdlib.h>
+# include	<unistd.h>
+# include	"hunt.h"
 
 # ifndef pdp11
 # define	RN	(((Seed = Seed * 11109 + 13849) >> 16) & 0xffff)
@@ -33,26 +43,33 @@ u_short	stat_port;		/* port # of statistics tcp socket */
 # define	DAEMON_SIZE	(sizeof Daemon - 1)
 # endif
 
-extern SIGNAL_TYPE	cleanup();
+static	void	clear_scores __P((void));
+static	int	havechar __P((PLAYER *));
+static	void	init __P((void));
+	int	main __P((int, char *[], char *[]));
+static	void	makeboots __P((void));
+static	void	send_stats __P((void));
+static	void	zap __P((PLAYER *, FLAG));
+
 
 /*
  * main:
  *	The main program.
  */
+int
 main(ac, av, ep)
-int	ac;
-char	**av, **ep;
+	int	ac;
+	char	**av, **ep;
 {
-	register PLAYER	*pp;
-	register int	had_char;
+	PLAYER	*pp;
+	int	had_char;
 # ifdef INTERNET
-	register long	test_mask;
-	u_short		msg;
-	short		port_num, reply;
-	int		namelen;
-	SOCKET		test;
+	u_short	msg;
+	short	port_num, reply;
+	int	namelen;
+	SOCKET	test;
 # endif
-	static long	read_fds;
+	static fd_set	read_fds;
 	static FLAG	first = TRUE;
 	static FLAG	server = FALSE;
 	extern int	optind;
@@ -67,7 +84,7 @@ char	**av, **ep;
 		ep++;
 	Last_arg = ep[-1] + strlen(ep[-1]);
 
-	while ((c = getopt(ac, av, "sp:")) != EOF) {
+	while ((c = getopt(ac, av, "sp:")) != -1) {
 		switch (c) {
 		  case 's':
 			server = TRUE;
@@ -88,19 +105,13 @@ erred:
 		goto erred;
 
 	init();
-	Sock_mask = (1 << Socket);
-	Stat_mask = (1 << Status);
-# ifdef INTERNET
-	test_mask = (1 << Test_socket);
-# endif
 
 
 again:
 	do {
 		read_fds = Fds_mask;
 		errno = 0;
-		while (select(Num_fds, &read_fds, (int *) NULL,
-		    (int *) NULL, (struct timeval *) NULL) < 0)
+		while (select(Num_fds, &read_fds, NULL, NULL, NULL) < 0)
 		{
 			if (errno != EINTR)
 # ifdef LOG
@@ -112,7 +123,7 @@ again:
 		}
 		Have_inp = read_fds;
 # ifdef INTERNET
-		if (read_fds & test_mask) {
+		if (FD_ISSET(Test_socket, &read_fds)) {
 			namelen = DAEMON_SIZE;
 			port_num = htons(sock_port);
 			(void) recvfrom(Test_socket, (char *) &msg, sizeof msg,
@@ -176,7 +187,7 @@ again:
 					pp++;
 # endif
 		}
-		if (read_fds & Sock_mask)
+		if (FD_ISSET(Socket, &read_fds))
 			if (answer()) {
 # ifdef INTERNET
 				if (first && standard_port)
@@ -184,17 +195,17 @@ again:
 # endif
 				first = FALSE;
 			}
-		if (read_fds & Stat_mask)
+		if (FD_ISSET(Status, &read_fds))
 			send_stats();
 		for (pp = Player; pp < End_player; pp++) {
-			if (read_fds & pp->p_mask)
+			if (FD_ISSET(pp->p_fd, &read_fds))
 				sendcom(pp, READY, pp->p_nexec);
 			pp->p_nexec = 0;
 			(void) fflush(pp->p_output);
 		}
 # ifdef MONITOR
 		for (pp = Monitor; pp < End_monitor; pp++) {
-			if (read_fds & pp->p_mask)
+			if (FD_ISSET(pp->p_fd, &read_fds))
 				sendcom(pp, READY, pp->p_nexec);
 			pp->p_nexec = 0;
 			(void) fflush(pp->p_output);
@@ -203,8 +214,7 @@ again:
 	} while (Nplayer > 0);
 
 	read_fds = Fds_mask;
-	if (select(Num_fds, &read_fds, (int *) NULL, (int *) NULL,
-		   &linger) > 0) {
+	if (select(Num_fds, &read_fds, NULL, NULL, &linger) > 0) {
 		goto again;
 	}
 	if (server) {
@@ -223,19 +233,22 @@ again:
 		zap(pp, FALSE);
 # endif
 	cleanup(0);
+	/* NOTREACHED */
+	return(0);
 }
 
 /*
  * init:
  *	Initialize the global parameters.
  */
+static void
 init()
 {
-	register int	i;
+	int	i;
 # ifdef	INTERNET
-	auto SOCKET	test_port;
-	auto int	msg;
-	auto int	len;
+	SOCKET	test_port;
+	int	msg;
+	int	len;
 # endif
 
 # ifndef DEBUG
@@ -354,7 +367,8 @@ init()
 	/*
 	 * Initialize minimal select mask
 	 */
-	Fds_mask = (1 << Socket) | (1 << Status);
+	FD_SET(Socket, &Fds_mask);
+	FD_SET(Status, &Fds_mask);
 	Num_fds = ((Socket > Status) ? Socket : Status) + 1;
 
 # ifdef INTERNET
@@ -384,7 +398,7 @@ init()
 		(void) listen(Test_socket, 5);
 	}
 
-	Fds_mask |= (1 << Test_socket);
+	FD_SET(Test_socket, &Fds_mask);
 	if (Test_socket + 1 > Num_fds)
 		Num_fds = Test_socket + 1;
 # endif
@@ -413,10 +427,11 @@ init()
  * makeboots:
  *	Put the boots in the maze
  */
+static void
 makeboots()
 {
-	register int	x, y;
-	register PLAYER	*pp;
+	int	x, y;
+	PLAYER	*pp;
 
 	do {
 		x = rand_num(WIDTH - 1) + 1;
@@ -433,13 +448,14 @@ makeboots()
  * checkdam:
  *	Check the damage to the given player, and see if s/he is killed
  */
+void
 checkdam(ouch, gotcha, credit, amt, shot_type)
-register PLAYER	*ouch, *gotcha;
-register IDENT	*credit;
-int		amt;
-char		shot_type;
+	PLAYER	*ouch, *gotcha;
+	IDENT	*credit;
+	int	amt;
+	char	shot_type;
 {
-	register char	*cp;
+	char	*cp;
 
 	if (ouch->p_death[0] != '\0')
 		return;
@@ -566,15 +582,16 @@ char		shot_type;
  * zap:
  *	Kill off a player and take him out of the game.
  */
+static void
 zap(pp, was_player)
-register PLAYER	*pp;
-FLAG		was_player;
+	PLAYER	*pp;
+	FLAG	was_player;
 {
-	register int	i, len;
-	register BULLET	*bp;
-	register PLAYER	*np;
-	register int	x, y;
-	int		savefd, savemask;
+	int	i, len;
+	BULLET	*bp;
+	PLAYER	*np;
+	int	x, y;
+	int	savefd;
 
 	if (was_player) {
 		if (pp->p_undershot)
@@ -598,7 +615,6 @@ FLAG		was_player;
 	cgoto(pp, HEIGHT, 0);
 
 	savefd = pp->p_fd;
-	savemask = pp->p_mask;
 
 # ifdef MONITOR
 	if (was_player) {
@@ -653,7 +669,7 @@ FLAG		was_player;
 					if (np->p_flying < 0)
 						break;
 				if (np >= &Boot[NBOOTS])
-					abort(1, "Too many boots");
+					err(1, "Too many boots");
 				np->p_undershot = FALSE;
 				np->p_x = pp->p_x;
 				np->p_y = pp->p_y;
@@ -776,7 +792,7 @@ FLAG		was_player;
 	}
 # endif
 
-	Fds_mask &= ~savemask;
+	FD_CLR(savefd, &Fds_mask);
 	if (Num_fds == savefd + 1) {
 		Num_fds = Socket;
 # ifdef INTERNET
@@ -799,8 +815,9 @@ FLAG		was_player;
  * rand_num:
  *	Return a random number in a given range.
  */
+int
 rand_num(range)
-int	range;
+	int	range;
 {
 	return (range == 0 ? 0 : RN % range);
 }
@@ -811,16 +828,16 @@ int	range;
  *	we do, read them, stash them away, and return TRUE; else return
  *	FALSE.
  */
+static int
 havechar(pp)
-register PLAYER	*pp;
+	PLAYER	*pp;
 {
-	extern int	errno;
 
 	if (pp->p_ncount < pp->p_nchar)
 		return TRUE;
-	if (!(Have_inp & pp->p_mask))
+	if (!FD_ISSET(pp->p_fd, &Have_inp))
 		return FALSE;
-	Have_inp &= ~pp->p_mask;
+	FD_CLR(pp->p_fd, &Have_inp);
 check_again:
 	errno = 0;
 	if ((pp->p_nchar = read(pp->p_fd, pp->p_cbuf, sizeof pp->p_cbuf)) <= 0)
@@ -839,9 +856,9 @@ check_again:
  */
 SIGNAL_TYPE
 cleanup(eval)
-int	eval;
+	int	eval;
 {
-	register PLAYER	*pp;
+	PLAYER	*pp;
 
 	for (pp = Player; pp < End_player; pp++) {
 		cgoto(pp, HEIGHT, 0);
@@ -869,13 +886,14 @@ int	eval;
  * send_stats:
  *	Print stats to requestor
  */
+static void
 send_stats()
 {
-	register IDENT	*ip;
-	register FILE	*fp;
-	int		s;
-	SOCKET		sockstruct;
-	int		socklen;
+	IDENT	*ip;
+	FILE	*fp;
+	int	s;
+	SOCKET	sockstruct;
+	int	socklen;
 
 	/*
 	 * Get the output stream ready
@@ -944,9 +962,10 @@ send_stats()
  * clear_scores:
  *	Clear out the scores so the next session start clean
  */
+static void
 clear_scores()
 {
-	register IDENT	*ip, *nextip;
+	IDENT	*ip, *nextip;
 
 	for (ip = Scores; ip != NULL; ip = nextip) {
 		nextip = ip->i_next;

@@ -1,3 +1,4 @@
+/*	$NetBSD: ctl.c,v 1.2 1997/10/10 16:32:54 lukem Exp $	*/
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.  The Berkeley software License Agreement
@@ -8,9 +9,14 @@
 
 #if	defined(TALK_43) || defined(TALK_42) 
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)ctl.c	5.2 (Berkeley) 3/13/86";
+#else
+__RCSID("$NetBSD: ctl.c,v 1.2 1997/10/10 16:32:54 lukem Exp $");
 #endif
+#endif /* not lint */
 
 /*
  * This file handles haggling with the various talk daemons to
@@ -18,6 +24,7 @@ static char sccsid[] = "@(#)ctl.c	5.2 (Berkeley) 3/13/86";
  * the progress
  */
 
+#include "hunt.h"
 #include "talk_ctl.h"
 
 struct	sockaddr_in daemon_addr = { AF_INET };
@@ -34,6 +41,7 @@ int	ctl_sockt;
 CTL_MSG msg;
 
 /* open the ctl socket */
+void
 open_ctl() 
 {
 	int length;

@@ -1,25 +1,49 @@
+/*	$NetBSD: shots.c,v 1.2 1997/10/10 16:33:54 lukem Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
  *  San Francisco, California
  */
 
-# include	"hunt.h"
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: shots.c,v 1.2 1997/10/10 16:33:54 lukem Exp $");
+#endif /* not lint */
+
 # include	<signal.h>
+# include	<stdlib.h>
+# include	"hunt.h"
 
 # define	PLUS_DELTA(x, max)	if (x < max) x++; else x--
 # define	MINUS_DELTA(x, min)	if (x > min) x--; else x++
+
+static	void	chkshot __P((BULLET *, BULLET *));
+static	void	chkslime __P((BULLET *, BULLET *));
+static	void	explshot __P((BULLET *, int, int));
+static	void	find_under __P((BULLET *, BULLET *));
+static	int	iswall __P((int, int));
+static	void	mark_boot __P((BULLET *));
+static	void	mark_player __P((BULLET *));
+#ifdef DRONE
+static	void	move_drone __P((BULLET *));
+#endif
+static	void	move_flyer __P((PLAYER *));
+static	int	move_normal_shot __P((BULLET *));
+static	void	move_slime __P((BULLET *, int, BULLET *));
+static	void	save_bullet __P((BULLET *));
+static	void	zapshot __P((BULLET *, BULLET *));
 
 /*
  * moveshots:
  *	Move the shots already in the air, taking explosions into account
  */
+void
 moveshots()
 {
-	register BULLET	*bp, *next;
-	register PLAYER	*pp;
-	register int	x, y;
-	register BULLET	*blist;
+	BULLET	*bp, *next;
+	PLAYER	*pp;
+	int	x, y;
+	BULLET	*blist;
 
 	rollexpl();
 	if (Bullets == NULL)
@@ -132,11 +156,12 @@ ret:
  * move_normal_shot:
  *	Move a normal shot along its trajectory
  */
+static int
 move_normal_shot(bp)
-register BULLET	*bp;
+	BULLET	*bp;
 {
-	register int	i, x, y;
-	register PLAYER	*pp;
+	int	i, x, y;
+	PLAYER	*pp;
 
 	for (i = 0; i < BULSPD; i++) {
 		if (bp->b_expl)
@@ -318,12 +343,13 @@ register BULLET	*bp;
  * move_drone:
  *	Move the drone to the next square
  */
+static void
 move_drone(bp)
-register BULLET	*bp;
+	BULLET	*bp;
 {
-	register int	mask, count;
-	register int	n, dir;
-	register PLAYER	*pp;
+	int	mask, count;
+	int	n, dir;
+	PLAYER	*pp;
 
 	/*
 	 * See if we can give someone a blast
@@ -461,8 +487,9 @@ drone_move:
  * save_bullet:
  *	Put this bullet back onto the bullet list
  */
+static void
 save_bullet(bp)
-register BULLET	*bp;
+	BULLET	*bp;
 {
 	bp->b_over = Maze[bp->b_y][bp->b_x];
 	switch (bp->b_over) {
@@ -512,10 +539,11 @@ register BULLET	*bp;
  * move_flyer:
  *	Update the position of a player in flight
  */
+static void
 move_flyer(pp)
-register PLAYER	*pp;
+	PLAYER	*pp;
 {
-	register int	x, y;
+	int	x, y;
 
 	if (pp->p_undershot) {
 		fixshots(pp->p_y, pp->p_x, pp->p_over);
@@ -602,16 +630,18 @@ again:
  * chkshot
  *	Handle explosions
  */
+static void
 chkshot(bp, next)
-register BULLET	*bp;
-BULLET		*next;
+	BULLET	*bp;
+	BULLET	*next;
 {
-	register int	y, x;
-	register int	dy, dx, absdy;
-	register int	delta, damage;
-	register char	expl;
-	register PLAYER	*pp;
+	int	y, x;
+	int	dy, dx, absdy;
+	int	delta, damage;
+	char	expl;
+	PLAYER	*pp;
 
+	delta = 0;
 	switch (bp->b_type) {
 	  case SHOT:
 	  case MINE:
@@ -694,11 +724,12 @@ BULLET		*next;
  * chkslime:
  *	handle slime shot exploding
  */
+static void
 chkslime(bp, next)
-register BULLET	*bp;
-BULLET		*next;
+	BULLET	*bp;
+	BULLET	*next;
 {
-	register BULLET	*nbp;
+	BULLET	*nbp;
 
 	switch (Maze[bp->b_y][bp->b_x]) {
 	  case WALL1:
@@ -741,14 +772,15 @@ BULLET		*next;
  *	move the given slime shot speed times and add it back if
  *	it hasn't fizzled yet
  */
+void
 move_slime(bp, speed, next)
-register BULLET	*bp;
-register int	speed;
-BULLET		*next;
+	BULLET	*bp;
+	int	speed;
+	BULLET	*next;
 {
-	register int	i, j, dirmask, count;
-	register PLAYER	*pp;
-	register BULLET	*nbp;
+	int	i, j, dirmask, count;
+	PLAYER	*pp;
+	BULLET	*nbp;
 
 	if (speed == 0) {
 		if (bp->b_charge <= 0)
@@ -900,8 +932,9 @@ BULLET		*next;
  * iswall:
  *	returns whether the given location is a wall
  */
+static int
 iswall(y, x)
-register int	y, x;
+	int	y, x;
 {
 	if (y < 0 || x < 0 || y >= HEIGHT || x >= WIDTH)
 		return TRUE;
@@ -932,11 +965,12 @@ register int	y, x;
  * zapshot:
  *	Take a shot out of the air.
  */
+static void
 zapshot(blist, obp)
-register BULLET	*blist, *obp;
+	BULLET	*blist, *obp;
 {
-	register BULLET	*bp;
-	register FLAG	explode;
+	BULLET	*bp;
+	FLAG	explode;
 
 	explode = FALSE;
 	for (bp = blist; bp != NULL; bp = bp->b_next) {
@@ -956,11 +990,12 @@ register BULLET	*blist, *obp;
  * explshot -
  *	Make all shots at this location blow up
  */
+void
 explshot(blist, y, x)
-register BULLET	*blist;
-register int	y, x;
+	BULLET	*blist;
+	int	y, x;
 {
-	register BULLET	*bp;
+	BULLET	*bp;
 
 	for (bp = blist; bp != NULL; bp = bp->b_next)
 		if (bp->b_x == x && bp->b_y == y) {
@@ -976,9 +1011,9 @@ register int	y, x;
  */
 PLAYER *
 play_at(y, x)
-register int	y, x;
+	int	y, x;
 {
-	register PLAYER	*pp;
+	PLAYER	*pp;
 
 	for (pp = Player; pp < End_player; pp++)
 		if (pp->p_x == x && pp->p_y == y)
@@ -993,9 +1028,10 @@ register int	y, x;
  *	Return TRUE if the bullet direction faces the opposite direction
  *	of the player in the maze
  */
+int
 opposite(face, dir)
-int	face;
-char	dir;
+	int	face;
+	char	dir;
 {
 	switch (face) {
 	  case LEFTS:
@@ -1018,9 +1054,9 @@ char	dir;
  */
 BULLET *
 is_bullet(y, x)
-register int	y, x;
+	int	y, x;
 {
-	register BULLET	*bp;
+	BULLET	*bp;
 
 	for (bp = Bullets; bp != NULL; bp = bp->b_next)
 		if (bp->b_y == y && bp->b_x == x)
@@ -1033,11 +1069,12 @@ register int	y, x;
  *	change the underlying character of the shots at a location
  *	to the given character.
  */
+void
 fixshots(y, x, over)
-register int	y, x;
-char		over;
+	int	y, x;
+	char	over;
 {
-	register BULLET	*bp;
+	BULLET	*bp;
 
 	for (bp = Bullets; bp != NULL; bp = bp->b_next)
 		if (bp->b_y == y && bp->b_x == x)
@@ -1049,10 +1086,11 @@ char		over;
  *	find the underlying character for a bullet when it lands
  *	on another bullet.
  */
+static void
 find_under(blist, bp)
-register BULLET	*blist, *bp;
+	BULLET	*blist, *bp;
 {
-	register BULLET	*nbp;
+	BULLET	*nbp;
 
 	for (nbp = blist; nbp != NULL; nbp = nbp->b_next)
 		if (bp->b_y == nbp->b_y && bp->b_x == nbp->b_x) {
@@ -1065,10 +1103,11 @@ register BULLET	*blist, *bp;
  * mark_player:
  *	mark a player as under a shot
  */
+static void
 mark_player(bp)
-register BULLET	*bp;
+	BULLET	*bp;
 {
-	register PLAYER	*pp;
+	PLAYER	*pp;
 
 	for (pp = Player; pp < End_player; pp++)
 		if (pp->p_y == bp->b_y && pp->p_x == bp->b_x) {
@@ -1082,10 +1121,11 @@ register BULLET	*bp;
  * mark_boot:
  *	mark a boot as under a shot
  */
+static void
 mark_boot(bp)
-register BULLET	*bp;
+	BULLET	*bp;
 {
-	register PLAYER	*pp;
+	PLAYER	*pp;
 
 	for (pp = Boot; pp < &Boot[NBOOTS]; pp++)
 		if (pp->p_y == bp->b_y && pp->p_x == bp->b_x) {

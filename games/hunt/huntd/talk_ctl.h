@@ -62,8 +62,6 @@ typedef struct ctl_msg {
 #include <syslog.h>
 #endif
 
-extern	int errno;
-
 extern	struct sockaddr_in daemon_addr;
 extern	struct sockaddr_in ctl_addr;
 extern	struct sockaddr_in my_addr;
@@ -78,3 +76,5 @@ extern	CTL_MSG msg;
 #else
 #define	p_error(str)	perror(str)
 #endif
+
+void	ctl_transact __P((struct in_addr, CTL_MSG, int, CTL_RESPONSE *));
