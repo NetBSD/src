@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_pcmcia.c,v 1.13 2004/08/10 18:43:49 mycroft Exp $	*/
+/*	$NetBSD: fdc_pcmcia.c,v 1.14 2004/08/10 19:54:30 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_pcmcia.c,v 1.13 2004/08/10 18:43:49 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_pcmcia.c,v 1.14 2004/08/10 19:54:30 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,24 +53,31 @@ __KERNEL_RCSID(0, "$NetBSD: fdc_pcmcia.c,v 1.13 2004/08/10 18:43:49 mycroft Exp 
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciadevs.h>
 
-#include <dev/ic/fdcreg.h>
-#include <dev/ic/fdcvar.h>
+#include <dev/isa/isavar.h>
+
+#include <dev/isa/fdreg.h>
+#include <dev/isa/fdcvar.h>
 
 struct fdc_pcmcia_softc {
 	struct fdc_softc sc_fdc;		/* real "fdc" softc */
 
-	/* PCMCIA-specific goo. */
-	struct pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o space info */
-	int sc_io_window;			/* our i/o window */
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 };
 
-int fdc_pcmcia_probe __P((struct device *, struct cfdata *, void *));
+int fdc_pcmcia_match __P((struct device *, struct cfdata *, void *));
+int fdc_pcmcia_validate_config __P((struct pcmcia_config_entry *));
 void fdc_pcmcia_attach __P((struct device *, struct device *, void *));
 static void fdc_conf __P((struct fdc_softc *));
 
 CFATTACH_DECL(fdc_pcmcia, sizeof(struct fdc_pcmcia_softc),
-    fdc_pcmcia_probe, fdc_pcmcia_attach, NULL, NULL);
+    fdc_pcmcia_match, fdc_pcmcia_attach, NULL, NULL);
+
+const struct pcmcia_product fdc_pcmcia_products[] = {
+	{ PCMCIA_VENDOR_YEDATA, PCMCIA_PRODUCT_YEDATA_EXTERNAL_FDD,
+	  PCMCIA_CIS_YEDATA_EXTERNAL_FDD },
+};
+const size_t fdc_pcmcia_nproducts =
+    sizeof(fdc_pcmcia_products) / sizeof(fdc_pcmcia_products[0]);
 
 static void
 fdc_conf(fdc)
@@ -127,23 +134,18 @@ fdc_conf(fdc)
 }
 
 int
-fdc_pcmcia_probe(parent, match, aux)
+fdc_pcmcia_match(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
 	void *aux;
 {
 	struct pcmcia_attach_args *pa = aux;
-	struct pcmcia_card *card = pa->card;
-	char *cis[4] = PCMCIA_CIS_YEDATA_EXTERNAL_FDD;
 
-	/* For this card the manufacturer and product are -1 */
-	if (strcmp(cis[0], card->cis1_info[0]) == 0 &&
-	    strcmp(cis[1], card->cis1_info[1]) == 0)
-		return 1;
-
-	return 0;
+	if (pcmcia_product_lookup(pa, fdc_pcmcia_products, fdc_pcmcia_nproducts,
+	    sizeof(fdc_pcmcia_products[0]), NULL))
+		return (1);
+	return (0);
 }
-
 
 void
 fdc_pcmcia_attach(parent, self, aux)
@@ -156,56 +158,37 @@ fdc_pcmcia_attach(parent, self, aux)
 	struct pcmcia_config_entry *cfe;
 	struct pcmcia_function *pf = pa->pf;
 	struct fdc_attach_args fa;
+	int error;
 
 	psc->sc_pf = pf;
 
-	SIMPLEQ_FOREACH(cfe, &pf->cfe_head, cfe_list) {
-		if (cfe->num_memspace != 0 ||
-		    cfe->num_iospace != 1)
-			continue;
+	error = pcmcia_function_configure(pf, fdc_pcmcia_validate_config);
+        if (error) {
+                aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
+                    error);
+                return;
+        }
 
-		if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
-		    cfe->iospace[0].length, cfe->iospace[0].length,
-		    &psc->sc_pcioh) == 0)
-			break;
-	}
+	cfe = pf->cfe;
+	fdc->sc_iot = cfe->iospace[0].handle.iot;
+	fdc->sc_iot = cfe->iospace[0].handle.ioh;
 
-	if (cfe == 0) {
-		printf("%s: can't alloc i/o space\n", self->dv_xname);
-		return;
-	}
-
-	/* Enable the card. */
-	pcmcia_function_init(pf, cfe);
-	if (pcmcia_function_enable(pf)) {
-		printf("%s: function enable failed\n", self->dv_xname);
-		return;
-	}
-
-	/* Map in the io space */
-	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, &psc->sc_pcioh,
-	    &psc->sc_io_window)) {
-		printf("%s: can't map i/o space\n", self->dv_xname);
-		return;
-	}
-
-	fdc->sc_iot = psc->sc_pcioh.iot;
-	fdc->sc_ioh = psc->sc_pcioh.ioh;
+	if (pcmcia_function_enable(pf))
+		goto fail;
 
 	fdc->sc_flags = FDC_HEADSETTLE;
 	fdc->sc_state = DEVIDLE;
 	TAILQ_INIT(&fdc->sc_drives);
 
 	if (!fdcfind(fdc->sc_iot, fdc->sc_ioh, 1))
-		printf("%s: coundn't find fdc\n", self->dv_xname);
+		aprint_error("%s: coundn't find fdc\n", self->dv_xname);
 
 	fdc_conf(fdc);
 
 	/* Establish the interrupt handler. */
 	fdc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_BIO, fdchwintr, fdc);
-	if (fdc->sc_ih == NULL)
-		printf("%s: couldn't establish interrupt\n",
-		    fdc->sc_dev.dv_xname);
+	if (!fdc->sc_ih)
+		goto fail;
 
 	/* physical limit: four drives per controller. */
 	for (fa.fa_drive = 0; fa.fa_drive < 4; fa.fa_drive++) {
@@ -215,4 +198,9 @@ fdc_pcmcia_attach(parent, self, aux)
 			fa.fa_deftype = NULL;		/* unknown */
 		(void)config_found(self, (void *)&fa, fdprint);
 	}
+
+	return;
+
+fail:
+	pcmcia_function_unconfigure(pf);
 }
