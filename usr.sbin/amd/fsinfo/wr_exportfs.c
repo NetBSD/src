@@ -1,8 +1,9 @@
 /*
+ * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
- * Copyright (c) 1989, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1989 The Regents of the University of California.
+ * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jan-Simon Pendry at Imperial College, London.
@@ -17,8 +18,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ *      This product includes software developed by the University of
+ *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -35,66 +36,73 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)wr_exportfs.c	8.1 (Berkeley) 6/6/93
+ *      %W% (Berkeley) %G%
  *
- * $Id: wr_exportfs.c,v 1.1.1.1 1994/06/13 19:53:45 mycroft Exp $
+ * $Id: wr_exportfs.c,v 1.1.1.2 1997/07/24 21:23:38 christos Exp $
  *
  */
 
-#include "../fsinfo/fsinfo.h"
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif /* HAVE_CONFIG_H */
+#include <am_defs.h>
+#include <fsi_data.h>
+#include <fsinfo.h>
 
-static int write_export_info(ef, q, errors)
-FILE *ef;
-qelem *q;
-int errors;
+
+static int
+write_export_info(FILE *ef, qelem *q, int errors)
 {
-	mount *mp;
+  fsi_mount *mp;
 
-	ITER(mp, mount, q) {
-		if (mp->m_mask & (1<<DM_EXPORTFS))
-			fprintf(ef, "%s\t%s\n", mp->m_volname, mp->m_exportfs);
-		if (mp->m_mount)
-			errors += write_export_info(ef, mp->m_mount, 0);
-	}
+  ITER(mp, fsi_mount, q) {
+    if (mp->m_mask & (1 << DM_EXPORTFS))
+      fprintf(ef, "%s\t%s\n", mp->m_volname, mp->m_exportfs);
+    if (mp->m_mount)
+      errors += write_export_info(ef, mp->m_mount, 0);
+  }
 
-	return errors;
+  return errors;
 }
 
-static int write_dkexports(ef, q)
-FILE *ef;
-qelem *q;
-{
-	int errors = 0;
-	disk_fs *dp;
 
-	ITER(dp, disk_fs, q) {
-		if (dp->d_mount)
-			errors += write_export_info(ef, dp->d_mount, 0);
-	}
-	return errors;
+static int
+write_dkexports(FILE *ef, qelem *q)
+{
+  int errors = 0;
+  disk_fs *dp;
+
+  ITER(dp, disk_fs, q) {
+    if (dp->d_mount)
+      errors += write_export_info(ef, dp->d_mount, 0);
+  }
+
+  return errors;
 }
 
-int write_exportfs(q)
-qelem *q;
+
+int
+write_exportfs(qelem *q)
 {
-	int errors = 0;
+  int errors = 0;
 
-	if (exportfs_pref) {
-		host *hp;
-		show_area_being_processed("write exportfs", "");
-		ITER(hp, host, q) {
-			if (hp->h_disk_fs) {
-				FILE *ef = pref_open(exportfs_pref, hp->h_hostname, gen_hdr, hp->h_hostname);
-				if (ef) {
-					show_new(hp->h_hostname);
-					errors += write_dkexports(ef, hp->h_disk_fs);
-					errors += pref_close(ef);
-				} else {
-					errors++;
-				}
-			}
-		}
+  if (exportfs_pref) {
+    host *hp;
+
+    show_area_being_processed("write exportfs", 0);
+    ITER(hp, host, q) {
+      if (hp->h_disk_fs) {
+	FILE *ef = pref_open(exportfs_pref, hp->h_hostname, gen_hdr, hp->h_hostname);
+	if (ef) {
+	  show_new(hp->h_hostname);
+	  errors += write_dkexports(ef, hp->h_disk_fs);
+	  errors += pref_close(ef);
+	} else {
+	  errors++;
 	}
+      }
+    }
+  }
 
-	return errors;
+  return errors;
 }
