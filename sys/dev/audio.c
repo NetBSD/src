@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.184.2.20 2005/01/01 13:29:29 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.184.2.21 2005/01/01 16:18:26 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.20 2005/01/01 13:29:29 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.21 2005/01/01 16:18:26 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -191,6 +191,7 @@ typedef struct uio_fetcher {
 	stream_fetcher_t base;
 	struct uio *uio;
 	int usedhigh;
+	int last_used;
 } uio_fetcher_t;
 
 static void	uio_fetcher_ctor(uio_fetcher_t *, struct uio *, int);
@@ -879,6 +880,7 @@ audio_init_ringbuffer(struct audio_softc *sc, struct audio_ringbuffer *rp)
 	rp->s.end = rp->s.start + nblks * blksize;
 	rp->s.outp = rp->s.inp = rp->s.start;
 	rp->stamp = 0;
+	rp->fstamp = 0;
 	rp->drops = 0;
 	rp->pause = FALSE;
 	rp->copying = FALSE;
@@ -1496,6 +1498,7 @@ uio_fetcher_fetch_to(stream_fetcher_t *self, audio_stream_t *p,
 			return error;
 		p->inp = p->start + size - stream_space;
 	}
+	this->last_used = audio_stream_get_used(p);
 	return 0;
 }
 
@@ -1520,7 +1523,7 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 	struct audio_ringbuffer *cb = &sc->sc_pr;
 	uint8_t *inp, *einp;
 	int saveerror, error, s, n, cc, used;
-	stream_fetcher_t *last_fetcher;
+	stream_fetcher_t *fetcher;
 	uio_fetcher_t ufetcher;
 	stream_filter_t *filter;
 	audio_stream_t tmp_stream;
@@ -1562,11 +1565,11 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 	 * setup filter pipeline
 	 */
 	uio_fetcher_ctor(&ufetcher, uio, cb->usedhigh);
-	last_fetcher = &ufetcher.base;
+	fetcher = &ufetcher.base;
 	if (sc->sc_npfilters > 0) {
 		filter = sc->sc_pfilters[0];
 		filter->set_fetcher(filter, &ufetcher.base);
-		last_fetcher = &sc->sc_pfilters[sc->sc_npfilters - 1]->base;
+		fetcher = &sc->sc_pfilters[sc->sc_npfilters - 1]->base;
 	}
 
 	error = 0;
@@ -1601,8 +1604,12 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 		 */
 		tmp_stream = cb->s;
 		cc = tmp_stream.end - tmp_stream.start;
-		error = last_fetcher->fetch_to(last_fetcher, &tmp_stream, cc);
+		error = fetcher->fetch_to(fetcher, &tmp_stream, cc);
 		s = splaudio();
+		if (sc->sc_npfilters > 0) {
+			cb->fstamp += audio_stream_get_used(sc->sc_pustream)
+				- ufetcher.last_used;
+		}
 		cb->s = tmp_stream;
 		einp = cb->s.inp;
 
@@ -1713,7 +1720,8 @@ audio_ioctl(struct audio_softc *sc, u_long cmd, caddr_t addr, int flag,
 		ao = (struct audio_offset *)addr;
 		s = splaudio();
 		/* figure out where next DMA will start */
-		stamp = sc->sc_rr.stamp;
+		stamp = sc->sc_rustream == &sc->sc_rr.s
+			? sc->sc_rr.stamp : sc->sc_rr.fstamp;
 		offs = sc->sc_rustream->inp - sc->sc_rustream->start;
 		splx(s);
 		ao->samples = stamp;
@@ -1728,7 +1736,8 @@ audio_ioctl(struct audio_softc *sc, u_long cmd, caddr_t addr, int flag,
 		ao = (struct audio_offset *)addr;
 		s = splaudio();
 		/* figure out where next DMA will start */
-		stamp = sc->sc_pr.stamp;
+		stamp = sc->sc_pustream == &sc->sc_pr.s
+			? sc->sc_pr.stamp : sc->sc_pr.fstamp;
 		offs = sc->sc_pustream->outp - sc->sc_pustream->start
 			+ sc->sc_pr.blksize;
 		splx(s);
@@ -2198,8 +2207,10 @@ audio_pint(void *v)
 		fetcher = &sc->sc_pfilters[sc->sc_npfilters - 1]->base;
 		sc->sc_pfilters[0]->set_fetcher(sc->sc_pfilters[0],
 						&null_fetcher);
+		used = audio_stream_get_used(sc->sc_pustream);
 		cc = cb->s.end - cb->s.start;
 		fetcher->fetch_to(fetcher, &cb->s, cc);
+		cb->fstamp += audio_stream_get_used(sc->sc_pustream) - used;
 		used = audio_stream_get_used(&cb->s);
 	}
 	if (used < blksize) {
@@ -2340,9 +2351,11 @@ audio_rint(void *v)
 		last_fetcher = &sc->sc_rfilters[sc->sc_nrfilters - 1]->base;
 		sc->sc_rfilters[0]->set_fetcher(sc->sc_rfilters[0],
 						&null_fetcher);
+		used = audio_stream_get_used(sc->sc_rustream);
 		cc = sc->sc_rustream->end - sc->sc_rustream->start;
 		error = last_fetcher->fetch_to
 			(last_fetcher, sc->sc_rustream, cc);
+		cb->fstamp += audio_stream_get_used(sc->sc_rustream) - used;
 		/* XXX what should do for error? */
 	}
 	used = audio_stream_get_used(&sc->sc_rr.s);
@@ -3206,8 +3219,14 @@ audiogetinfo(struct audio_softc *sc, struct audio_info *ai)
 		? &sc->sc_rstreams[sc->sc_nrfilters - 1] : &sc->sc_rr.s;
 	r->seek = audio_stream_get_used(stream);
 
-	p->samples = sc->sc_pr.stamp - sc->sc_pr.drops;
-	r->samples = sc->sc_rr.stamp - sc->sc_rr.drops;
+	/*
+	 * XXX samples should be a value for userland data.
+	 * But drops is a value for HW data.
+	 */
+	p->samples = (sc->sc_pustream == &sc->sc_pr.s
+		      ? sc->sc_pr.stamp : sc->sc_pr.fstamp) - sc->sc_pr.drops;
+	r->samples = (sc->sc_rustream == &sc->sc_rr.s
+		      ? sc->sc_rr.stamp : sc->sc_rr.fstamp) - sc->sc_rr.drops;
 
 	p->eof = sc->sc_eof;
 	r->eof = 0;
