@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.4 2000/05/04 06:14:05 takemura Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.5 2000/06/13 05:59:55 matt Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -36,6 +36,8 @@
 #include <dev/wscons/wsmousevar.h>
 
 #include <machine/bus.h>
+#include <machine/platid.h>
+#include <machine/platid_mask.h>
 
 #include <hpcmips/dev/tpcalibvar.h>
 #include <hpcmips/vr/vripvar.h>
@@ -156,18 +158,35 @@ vrpiuattach(parent, self, aux)
 	 * XXX, calibrate parameters
 	 */
 	{
-		static struct wsmouse_calibcoords D = {
-			/* samples got on my MC-R500 */
-			0, 0, 639, 239,
-			5,
-			{ { 502, 486, 320, 120 },
-			  {  55, 109,   0,   0 },
-			  {  54, 913,   0, 239 },
-			  { 973, 924, 639, 239 },
-			  { 975, 123, 639,   0 } }
+		int i;
+		static const struct {
+			platid_mask_t *mask;
+			struct wsmouse_calibcoords coords;
+		} calibrations[] = {
+			{ &platid_mask_MACH_NEC_MCR_700A,
+				{ 0, 0, 799, 599,
+				  4,
+				{ { 115,  80,   0,   0 },
+				  { 115, 966,   0, 599 },
+				  { 912,  80, 799,   0 },
+				  { 912, 966, 799, 599 } } } },
+
+			{ NULL,		/* samples got on my MC-R500 */
+				{ 0, 0, 639, 239,
+				5,
+				{ { 502, 486, 320, 120 },
+				  {  55, 109,   0,   0 },
+				  {  54, 913,   0, 239 },
+				  { 973, 924, 639, 239 },
+				  { 975, 123, 639,   0 } } } },
 		};
+		for (i = 0; ; i++) {
+			if (calibrations[i].mask == NULL
+			    || platid_match(&platid, calibrations[i].mask))
+				break;
+		}
 		tpcalib_ioctl(&sc->sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
-			      (caddr_t)&D, 0, 0);
+			      (caddr_t)&calibrations[i].coords, 0, 0);
 	}
 #endif
 
