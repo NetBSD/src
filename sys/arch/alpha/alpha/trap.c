@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.92.2.1 2004/05/22 15:20:48 he Exp $ */
+/* $NetBSD: trap.c,v 1.92.2.2 2004/07/17 16:46:13 he Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.92.2.1 2004/05/22 15:20:48 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.92.2.2 2004/07/17 16:46:13 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,6 +243,8 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 #if defined(DDB)
 	int call_debugger = 1;
 #endif
+
+	uvmexp.traps++;
 
 	l = curlwp;
 
