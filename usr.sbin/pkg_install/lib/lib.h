@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.7 1998/08/27 23:37:36 hubertf Exp $ */
+/* $NetBSD: lib.h,v 1.8 1998/10/01 21:16:27 hubertf Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -113,6 +113,8 @@ char		*make_playpen(char *, size_t);
 char		*where_playpen(void);
 void		leave_playpen(char *);
 off_t		min_free(char *);
+void            save_dirs(char **c, char **p);
+void            restore_dirs(char *c, char *p);
 
 /* String */
 char 		*get_dash_string(char **);

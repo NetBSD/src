@@ -1,11 +1,11 @@
-/*	$NetBSD: pen.c,v 1.7 1998/07/08 07:17:30 hubertf Exp $	*/
+/*	$NetBSD: pen.c,v 1.8 1998/10/01 21:16:27 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pen.c,v 1.25 1997/10/08 07:48:12 charnier Exp";
 #else
-__RCSID("$NetBSD: pen.c,v 1.7 1998/07/08 07:17:30 hubertf Exp $");
+__RCSID("$NetBSD: pen.c,v 1.8 1998/10/01 21:16:27 hubertf Exp $");
 #endif
 #endif
 
@@ -38,6 +38,28 @@ __RCSID("$NetBSD: pen.c,v 1.7 1998/07/08 07:17:30 hubertf Exp $");
 /* For keeping track of where we are */
 static char Current[FILENAME_MAX];
 static char Previous[FILENAME_MAX];
+
+/* Backup Current and Previous into temp. strings that are later
+ * restored & freed by restore_dirs
+ * This is to make nested calls to makeplaypen/leave_playpen work
+ */
+void
+save_dirs(char **c, char **p)
+{
+    *c=strdup(Current);
+    *p=strdup(Previous);
+}
+
+/* Restore Current and Previous from temp strings that were created
+ * by safe_dirs.
+ * This is to make nested calls to makeplaypen/leave_playpen work
+ */
+void
+restore_dirs(char *c, char *p)
+{
+    strcpy(Current, c);  free(c);
+    strcpy(Previous, p); free(p);
+}
 
 char *
 where_playpen(void)
