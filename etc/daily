@@ -59,6 +59,8 @@ echo ""
 echo "Deleted files:"
 egrep -v '\.core' $TMP
 
+rm -f $TMP
+
 msgs -c
 
 if [ -f /etc/news.expire ]; then
