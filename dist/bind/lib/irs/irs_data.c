@@ -1,4 +1,4 @@
-/*	$NetBSD: irs_data.c,v 1.1.1.1.2.4 2000/12/13 23:57:44 he Exp $	*/
+/*	$NetBSD: irs_data.c,v 1.1.1.1.2.5 2001/01/28 17:09:28 he Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: irs_data.c,v 1.14 1999/10/13 16:39:31 vixie Exp";
+static const char rcsid[] = "Id: irs_data.c,v 1.15 2000/12/23 08:14:54 vixie Exp";
 #endif
 
 #include "port_before.h"
@@ -57,7 +57,7 @@ static struct net_data	*net_data;
 #endif
 
 void
-irs_destroy() {
+irs_destroy(void) {
 #ifndef DO_PTHREADS
 	if (net_data != NULL)
 		net_data_destroy(net_data);
@@ -69,7 +69,6 @@ void
 net_data_destroy(void *p) {
 	struct net_data *net_data = p;
 
-	
 	res_nclose(net_data->res);
 	if (net_data->gr != NULL) {
 		(*net_data->gr->close)(net_data->gr);
