@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: trap.c 1.32 91/04/06
  *	from: @(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.17 1994/05/13 00:57:41 mycroft Exp $
+ *	$Id: trap.c,v 1.18 1994/05/17 10:34:00 cgd Exp $
  */
 
 #include "param.h"
@@ -114,7 +114,7 @@ static inline void
 userret(p, pc, oticks)
 	register struct proc *p;
 	int pc;
-	struct timeval oticks;
+	u_quad_t oticks;
 {
 	int sig;
 	int s;
@@ -144,21 +144,11 @@ userret(p, pc, oticks)
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
 	 */
-	if (p->p_stats->p_prof.pr_scale) {
-		int ticks;
-		struct timeval *tv = &p->p_stime;
+	if (p->p_flag & P_PROFIL) { 
+		extern int psratio;
 
-		ticks = ((tv->tv_sec - oticks.tv_sec) * 1000 +
-			(tv->tv_usec - oticks.tv_usec) / 1000) / (tick / 1000);
-		if (ticks) {
-#ifdef PROFTIMER
-			extern int profscale;
-			addupc(pc, &p->p_stats->p_prof, ticks * profscale);
-#else
-			addupc(pc, &p->p_stats->p_prof, ticks);
-#endif
-		}
-	}
+		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio); 
+	}        
 
 	curpriority = p->p_priority;
 }
@@ -178,14 +168,14 @@ trap(type, code, v, frame)
 	register struct proc *p;
 	register int i;
 	u_int ucode;
-	struct timeval sticks;
+	u_quad_t sticks;
 
 	cnt.v_trap++;
 	p = curproc;
 	ucode = 0;
 	if (USERMODE(frame.f_sr)) {
 		type |= T_USER;
-		sticks = p->p_stime;
+		sticks = p->p_sticks;
 		p->p_md.md_regs = frame.f_regs;
 	}
 
@@ -489,7 +479,7 @@ syscall(code, frame)
 		int i[8];
 	} args;
 	int rval[2];
-	struct timeval sticks;
+	u_quad_t sticks;
 #ifdef COMPAT_HPUX
 	extern struct sysent hpux_sysent[];
 	extern int nhpux_sysent, notimp();
@@ -499,7 +489,7 @@ syscall(code, frame)
 	if (!USERMODE(frame.f_sr))
 		panic("syscall");
 	p = curproc;
-	sticks = p->p_stime;
+	sticks = p->p_sticks;
 	p->p_md.md_regs = frame.f_regs;
 	opc = frame.f_pc;
 #ifdef COMPAT_HPUX
