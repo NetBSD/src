@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.47 1999/12/04 21:20:09 ragge Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.48 2000/01/20 22:18:55 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -96,12 +96,20 @@ pt_entry_t *pmap_pte	__P((pmap_t, vm_offset_t));
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
- * Copy and update the kernel stack and pcb, making the child
- * ready to run, and marking it so that it can return differently
- * than the parent.  Returns 1 in the child process, 0 in the parent.
- * We currently double-map the user area so that the stack is at the same
- * address in each process; in the future we will probably relocate
- * the frame pointers on the stack after copying.
+ * Copy and update the pcb and trap frame, making the child ready to run.
+ * 
+ * Rig the child's kernel stack so that it will start out in
+ * proc_trampoline() and call child_return() with p2 as an
+ * argument. This causes the newly-created child process to go
+ * directly to user level with an apparent return value of 0 from
+ * fork(), while the parent process returns normally.
+ *
+ * p1 is the process being forked; if p1 == &proc0, we are creating
+ * a kernel thread, and the return path will later be changed in cpu_set_kpc.
+ *
+ * If an alternate user-level stack is requested (with non-zero values
+ * in both the stack and stacksize args), set up the user stack pointer
+ * accordingly.
  */
 
 void
