@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.469 2002/02/01 15:17:04 wiz Exp $
+# $NetBSD: GENERIC,v 1.470 2002/02/06 19:58:02 wiz Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.469 $"
+#ident 		"GENERIC-$Revision: 1.470 $"
 
 maxusers	32		# estimated number of users
 
@@ -78,7 +78,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
