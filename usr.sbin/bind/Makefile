@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1999/11/20 19:47:10 veego Exp $
+#	$NetBSD: Makefile,v 1.3 1999/11/21 16:55:23 veego Exp $
 
 SUBDIR=	lib dig dnskeygen dnsquery host named named-bootconf named-xfer \
 	ndc nslookup nsupdate reload restart
@@ -10,6 +10,7 @@ depend-dig depend-dnskeygen depend-dnsquery depend-host depend-named \
 
 # depend on named/pathname.h
 depend-named-xfer depend-ndc: depend-named
+all-named-xfer all-ndc: all-named
 
 VER= 8.2.2-P5
 
