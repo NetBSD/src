@@ -1,4 +1,4 @@
-/*	$NetBSD: ashrdi3.s,v 1.3 1999/02/16 23:34:11 is Exp $ */
+/*	$NetBSD: ashrdi3.s,v 1.4 2001/02/26 14:58:36 is Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,10 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-	.text
-	.even
-	.globl	___ashrdi3
-___ashrdi3:
+#include <machine/asm.h>
+
+ENTRY_NOPROFILE(__ashrdi3)
 	movl d2,sp@-		| 0 reg, 1 pc, 2..4 parameters
 	movml sp@(8),d0-d2
 	jra L2
