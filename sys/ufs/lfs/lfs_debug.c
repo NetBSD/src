@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.18 2003/01/25 23:00:09 kleink Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.19 2003/01/29 13:14:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 #ifdef DEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.18 2003/01/25 23:00:09 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.19 2003/01/29 13:14:34 yamt Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
@@ -215,7 +215,7 @@ lfs_check_segsum(struct lfs *fs, struct segment *sp, char *file, int line)
 	if ((actual = i = 1) == 1)
 		return; /* XXXX not checking this anymore, really */
 	
-	if (sp->sum_bytes_left >= sizeof(FINFO) - sizeof(daddr_t)
+	if (sp->sum_bytes_left >= FINFOSIZE
 	   && sp->fip->fi_nblocks > 512) {
 		printf("%s:%d: fi_nblocks = %d\n",file,line,sp->fip->fi_nblocks);
 #ifdef DDB
@@ -233,7 +233,7 @@ lfs_check_segsum(struct lfs *fs, struct segment *sp, char *file, int line)
 		/* amount taken up by FINFOs */
 		- ((char *)&(sp->fip->fi_blocks[sp->fip->fi_nblocks]) - (char *)(sp->segsum))
 			/* amount taken up by inode blocks */
-			- sizeof(daddr_t)*((sp->ninodes+INOPB(fs)-1) / INOPB(fs));
+			- sizeof(int32_t)*((sp->ninodes+INOPB(fs)-1) / INOPB(fs));
 #if 0
 	if (actual - sp->sum_bytes_left < offset) 
 	{  
@@ -252,7 +252,7 @@ lfs_check_segsum(struct lfs *fs, struct segment *sp, char *file, int line)
 #endif
 	if (sp->sum_bytes_left > 0
 	   && ((char *)(sp->segsum))[fs->lfs_sumsize
-				     - sizeof(daddr_t) * ((sp->ninodes+INOPB(fs)-1) / INOPB(fs))
+				     - sizeof(int32_t) * ((sp->ninodes+INOPB(fs)-1) / INOPB(fs))
 				     - sp->sum_bytes_left] != '\0') {
 		printf("%s:%d: warning: segsum overwrite at %d (-%d => %d)\n",
 		       file, line, sp->sum_bytes_left,

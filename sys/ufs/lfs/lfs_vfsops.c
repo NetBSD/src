@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.89 2003/01/27 23:17:57 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.90 2003/01/29 13:14:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.89 2003/01/27 23:17:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.90 2003/01/29 13:14:36 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -658,9 +658,8 @@ check_segsum(struct lfs *fs, daddr_t offset,
 			if (fip->fi_nblocks <= 0)
 				break;
 			/* XXX ondisk32 */
-			fip = (FINFO *)(((char *)fip) + sizeof(FINFO) +
-					(fip->fi_nblocks - 1) *
-					sizeof(int32_t));
+			fip = (FINFO *)(((char *)fip) + FINFOSIZE +
+					(fip->fi_nblocks * sizeof(int32_t)));
 		}
 		nblocks += ninos;
 		/* Create the sum array */
@@ -724,8 +723,8 @@ check_segsum(struct lfs *fs, daddr_t offset,
 			offset += btofsb(fs, size);
 		}
 		/* XXX ondisk32 */
-		fip = (FINFO *)(((char *)fip) + sizeof(FINFO)
-				+ (fip->fi_nblocks - 1) * sizeof(int32_t));
+		fip = (FINFO *)(((char *)fip) + FINFOSIZE
+				+ fip->fi_nblocks * sizeof(int32_t));
 	}
 	/* Checksum the array, compare */
 	if ((flags & CHECK_CKSUM) &&

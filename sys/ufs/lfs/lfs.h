@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.44 2003/01/27 23:17:56 yamt Exp $	*/
+/*	$NetBSD: lfs.h,v 1.45 2003/01/29 13:14:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -284,6 +284,8 @@ struct finfo {
 	int32_t   fi_blocks[1];		/* array of logical block numbers */
 };
 
+/* sizeof FINFO except fi_blocks */
+#define	FINFOSIZE	(sizeof(FINFO) - sizeof(int32_t))
 
 /* On-disk super block. */
 struct dlfs {

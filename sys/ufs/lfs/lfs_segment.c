@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.97 2003/01/29 03:09:32 simonb Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.98 2003/01/29 13:14:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.97 2003/01/29 03:09:32 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.98 2003/01/29 13:14:34 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -714,7 +714,7 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 	    sp->sum_bytes_left < sizeof(struct finfo))
 		(void) lfs_writeseg(fs, sp);
 	
-	sp->sum_bytes_left -= sizeof(struct finfo) - sizeof(daddr_t);
+	sp->sum_bytes_left -= FINFOSIZE;
 	++((SEGSUM *)(sp->segsum))->ss_nfinfo;
 
 	if (vp->v_flag & VDIROP)
@@ -776,11 +776,11 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 	}
 	fip = sp->fip;
 	if (fip->fi_nblocks != 0) {
-		sp->fip = (FINFO*)((caddr_t)fip + sizeof(struct finfo) +
-				   sizeof(daddr_t) * (fip->fi_nblocks-1));
+		sp->fip = (FINFO*)((caddr_t)fip + FINFOSIZE +
+				   sizeof(int32_t) * (fip->fi_nblocks));
 		sp->start_lbp = &sp->fip->fi_blocks[0];
 	} else {
-		sp->sum_bytes_left += sizeof(FINFO) - sizeof(daddr_t);
+		sp->sum_bytes_left += FINFOSIZE;
 		--((SEGSUM *)(sp->segsum))->ss_nfinfo;
 	}
 }
@@ -807,7 +807,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	if ((ip->i_number != LFS_IFILE_INUM || sp->idp == NULL) && sp->ibp == NULL) {
 		/* Allocate a new segment if necessary. */
 		if (sp->seg_bytes_left < fs->lfs_ibsize ||
-		    sp->sum_bytes_left < sizeof(daddr_t))
+		    sp->sum_bytes_left < sizeof(int32_t))
 			(void) lfs_writeseg(fs, sp);
 
 		/* Get next inode block. */
@@ -826,11 +826,10 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 		fs->lfs_avail -= btofsb(fs, fs->lfs_ibsize);
 		/* Set remaining space counters. */
 		sp->seg_bytes_left -= fs->lfs_ibsize;
-		sp->sum_bytes_left -= sizeof(daddr_t);
-		ndx = fs->lfs_sumsize / sizeof(daddr_t) -
+		sp->sum_bytes_left -= sizeof(int32_t);
+		ndx = fs->lfs_sumsize / sizeof(int32_t) -
 			sp->ninodes / INOPB(fs) - 1;
-		/* fvdl -- not on disk, should be ok */
-		((daddr_t *)(sp->segsum))[ndx] = daddr;
+		((int32_t *)(sp->segsum))[ndx] = daddr;
 	}
 
 	/* Update the inode times and copy the inode onto the inode page. */
@@ -1011,7 +1010,7 @@ lfs_gatherblock(struct segment *sp, struct buf *bp, int *sptr)
 		panic ("lfs_gatherblock: Null vp in segment");
 #endif
 	fs = sp->fs;
-	if (sp->sum_bytes_left < sizeof(daddr_t) ||
+	if (sp->sum_bytes_left < sizeof(int32_t) ||
 	    sp->seg_bytes_left < bp->b_bcount) {
 		if (sptr)
 			splx(*sptr);
@@ -1024,8 +1023,7 @@ lfs_gatherblock(struct segment *sp, struct buf *bp, int *sptr)
 		sp->fip->fi_ino = VTOI(sp->vp)->i_number;
 		/* Add the current file to the segment summary. */
 		++((SEGSUM *)(sp->segsum))->ss_nfinfo;
-		sp->sum_bytes_left -= 
-			sizeof(struct finfo) - sizeof(daddr_t);
+		sp->sum_bytes_left -= FINFOSIZE;
 		
 		if (sptr)
 			*sptr = splbio();
@@ -1047,7 +1045,7 @@ lfs_gatherblock(struct segment *sp, struct buf *bp, int *sptr)
 	*sp->cbpp++ = bp;
 	sp->fip->fi_blocks[sp->fip->fi_nblocks++] = bp->b_lblkno;
 	
-	sp->sum_bytes_left -= sizeof(daddr_t);
+	sp->sum_bytes_left -= sizeof(int32_t);
 	sp->seg_bytes_left -= bp->b_bcount;
 	return (0);
 }
