@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 2001/01/21 18:33:53 uch Exp $	*/
+/*	$NetBSD: conf.c,v 1.3 2001/02/09 19:54:11 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -127,8 +127,8 @@ cdev_decl(wsmux);
 
 /* SH specific */
 #define scicnpollc	nullcnpollc
-#define scifcnpollc	nullcnpollc
 cons_decl(sci);
+#define scifcnpollc	nullcnpollc
 cons_decl(scif);
 cons_decl(com);
 
@@ -136,6 +136,11 @@ cons_decl(com);
 cdev_decl(sci);
 #include "scif.h"
 cdev_decl(scif);
+
+#include "biconsdev.h"
+cdev_decl(biconsdev);
+#define biconscnpollc	nullcnpollc
+cons_decl(bicons);
 
 struct bdevsw bdevsw[] =
 {
@@ -189,6 +194,8 @@ struct cdevsw cdevsw[] =
 	cdev_rnd_init(NRND,rnd),	/* 30: random source pseudo-device */
 	cdev_tty_init(NSCIF,scif),	/* 31: SH internal serial with FIFO */
 	cdev_tty_init(NSCI,sci),	/* 32: SH internal serial */
+	cdev_tty_init(NBICONSDEV,
+		      biconsdev),	/* 34: bicons pseudo-dev */
 };
 
 static int chrtoblktbl[] =  {
@@ -238,6 +245,9 @@ static int chrtoblktbl[] =  {
 };
 
 struct consdev constab[] = {
+#if NBICONSDEV > 0
+	cons_init(bicons),
+#endif
 #if NSCI > 0
 	cons_init(sci),
 #endif
