@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.12 2001/03/04 14:26:26 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.13 2001/03/10 20:15:46 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -174,7 +174,6 @@ identify_master_cpu(cpu_number, dev_name)
 {
 	u_int fpsr;
 
-	cpus[cpu_number].cpu_class = CPU_CLASS_ARM;
 	cpus[cpu_number].cpu_ctrl = cpuctrl;
 
 	/* Get the cpu ID from coprocessor 15 */
@@ -184,14 +183,13 @@ identify_master_cpu(cpu_number, dev_name)
 	identify_arm_cpu(cpu_number);
 	strcpy(cpu_model, cpus[cpu_number].cpu_model);
 
-	if (cpus[CPU_MASTER].cpu_class == CPU_CLASS_SARM
+	if (cpus[CPU_MASTER].cpu_class == CPU_CLASS_SA1
 	    && (cpus[CPU_MASTER].cpu_id & CPU_ID_REVISION_MASK) < 3) {
 		printf("%s: SA-110 with bugged STM^ instruction\n", dev_name);
 	}
 
 #ifdef CPU_ARM8
-	if (cpus[CPU_MASTER].cpu_class == CPU_CLASS_ARM
-	    && (cpus[CPU_MASTER].cpu_id & CPU_ID_CPU_MASK) == CPU_ID_ARM810) {
+	if ((cpus[CPU_MASTER].cpu_id & CPU_ID_CPU_MASK) == CPU_ID_ARM810) {
 		int clock = arm8_clock_config(0, 0);
 		char *fclk;
 		printf("%s: ARM810 cp15=%02x", dev_name, clock);
@@ -280,39 +278,59 @@ identify_master_cpu(cpu_number, dev_name)
 
 struct cpuidtab {
 	u_int32_t	cpuid;
+	enum		cpu_class cpu_class;
 	char *		cpu_name;
 };
 
 const struct cpuidtab cpuids[] = {
-	{ CPU_ID_ARM2,		"ARM2" },
-	{ CPU_ID_ARM250,	"ARM2as" },
-	{ CPU_ID_ARM3,		"ARM3" },
-	{ CPU_ID_ARM600,	"ARM600" },
-	{ CPU_ID_ARM610,	"ARM610" },
-	{ CPU_ID_ARM620,	"ARM620" },
-	{ CPU_ID_ARM700,	"ARM700" },
-	{ CPU_ID_ARM710,	"ARM710" },
-	{ CPU_ID_ARM7500,	"ARM7500" },
-	{ CPU_ID_ARM710A,	"ARM710a" },
-	{ CPU_ID_ARM7500FE,	"ARM7500FE" },
-	{ CPU_ID_ARM710T,	"ARM710T" },
-	{ CPU_ID_ARM720T,	"ARM720T" },
-	{ CPU_ID_ARM740T8K,	"ARM740T (8 KB cache)" },
-	{ CPU_ID_ARM740T4K,	"ARM740T (4 KB cache)" },
-	{ CPU_ID_ARM810,	"ARM810" },
-	{ CPU_ID_ARM920T,	"ARM920T" },
-	{ CPU_ID_ARM922T,	"ARM922T" },
-	{ CPU_ID_ARM940T,	"ARM940T" },
-	{ CPU_ID_ARM946ES,	"ARM946E-S" },
-	{ CPU_ID_ARM966ES,	"ARM966E-S" },
-	{ CPU_ID_ARM966ESR1,	"ARM966E-S (Rev 1)" },
-	{ CPU_ID_SA110,		"SA-110" },
-	{ CPU_ID_SA1100,	"SA-1100" },
-	{ CPU_ID_SA1110,	"SA-1110" },
-	{ CPU_ID_I80200,	"80200" },
-	{ 0, NULL }
+	{ CPU_ID_ARM2,		CPU_CLASS_ARM2,		"ARM2" },
+	{ CPU_ID_ARM250,	CPU_CLASS_ARM2AS,	"ARM250" },
+	{ CPU_ID_ARM3,		CPU_CLASS_ARM3,		"ARM3" },
+	{ CPU_ID_ARM600,	CPU_CLASS_ARM6,		"ARM600" },
+	{ CPU_ID_ARM610,	CPU_CLASS_ARM6,		"ARM610" },
+	{ CPU_ID_ARM620,	CPU_CLASS_ARM6,		"ARM620" },
+	{ CPU_ID_ARM700,	CPU_CLASS_ARM7,		"ARM700" },
+	{ CPU_ID_ARM710,	CPU_CLASS_ARM7,		"ARM710" },
+	{ CPU_ID_ARM7500,	CPU_CLASS_ARM7,		"ARM7500" },
+	{ CPU_ID_ARM710A,	CPU_CLASS_ARM7,		"ARM710a" },
+	{ CPU_ID_ARM7500FE,	CPU_CLASS_ARM7,		"ARM7500FE" },
+	{ CPU_ID_ARM710T,	CPU_CLASS_ARM7TDMI,	"ARM710T" },
+	{ CPU_ID_ARM720T,	CPU_CLASS_ARM7TDMI,	"ARM720T" },
+	{ CPU_ID_ARM740T8K,	CPU_CLASS_ARM7TDMI, "ARM740T (8 KB cache)" },
+	{ CPU_ID_ARM740T4K,	CPU_CLASS_ARM7TDMI, "ARM740T (4 KB cache)" },
+	{ CPU_ID_ARM810,	CPU_CLASS_ARM8,		"ARM810" },
+	{ CPU_ID_ARM920T,	CPU_CLASS_ARM9TDMI,	"ARM920T" },
+	{ CPU_ID_ARM922T,	CPU_CLASS_ARM9TDMI,	"ARM922T" },
+	{ CPU_ID_ARM940T,	CPU_CLASS_ARM9TDMI,	"ARM940T" },
+	{ CPU_ID_ARM946ES,	CPU_CLASS_ARM9ES,	"ARM946E-S" },
+	{ CPU_ID_ARM966ES,	CPU_CLASS_ARM9ES,	"ARM966E-S" },
+	{ CPU_ID_ARM966ESR1,	CPU_CLASS_ARM9ES,	"ARM966E-S (Rev 1)" },
+	{ CPU_ID_SA110,		CPU_CLASS_SA1,		"SA-110" },
+	{ CPU_ID_SA1100,	CPU_CLASS_SA1,		"SA-1100" },
+	{ CPU_ID_SA1110,	CPU_CLASS_SA1,		"SA-1110" },
+	{ CPU_ID_I80200,	CPU_CLASS_XSCALE,	"80200" },
+	{ 0, CPU_CLASS_NONE, NULL }
 };
 
+struct cpu_classtab {
+	char	*class_name;
+	char	*class_option;
+};
+
+const struct cpu_classtab cpu_classes[] = {
+	{ "unknown",	NULL },		/* CPU_CLASS_NONE */
+	{ "ARM2",	"CPU_ARM2" },	/* CPU_CLASS_ARM2 */
+	{ "ARM2as",	"CPU_ARM250" },	/* CPU_CLASS_ARM2AS */
+	{ "ARM3",	"CPU_ARM3" },	/* CPU_CLASS_ARM3 */
+	{ "ARM6",	"CPU_ARM6" },	/* CPU_CLASS_ARM6 */
+	{ "ARM7",	"CPU_ARM7" },	/* CPU_CLASS_ARM7 */
+	{ "ARM7TDMI",	NULL },		/* CPU_CLASS_ARM7TDMI */
+	{ "ARM8",	"CPU_ARM8" },	/* CPU_CLASS_ARM8 */
+	{ "ARM9TDMI",	NULL },		/* CPU_CLASS_ARM9TDMI */
+	{ "ARM9E-S",	NULL },		/* CPU_CLASS_ARM9ES */
+	{ "SA-1",	"CPU_SA110" },	/* CPU_CLASS_SA1 */
+	{ "Xscale",	NULL },		/* CPU_CLASS_XSCALE */
+};
 
 /*
  * Report the type of the specifed arm processor. This uses the generic and
@@ -329,10 +347,6 @@ identify_arm_cpu(cpu_number)
 	int i;
 
 	cpu = &cpus[cpu_number];
-	if (cpu->cpu_class != CPU_CLASS_ARM && cpu->cpu_class != CPU_CLASS_SARM) {
-		printf("identify_arm_cpu: Can only identify ARM CPU's\n");
-		return;
-	}
 	cpuid = cpu->cpu_id;
 
 	if (cpuid == 0) {
@@ -342,27 +356,26 @@ identify_arm_cpu(cpu_number)
 
 	for (i = 0; cpuids[i].cpuid != 0; i++)
 		if (cpuids[i].cpuid == (cpuid & CPU_ID_CPU_MASK)) {
-			sprintf(cpu->cpu_model, "%s rev %d",
-			    cpuids[i].cpu_name, cpuid & CPU_ID_REVISION_MASK);
+			cpu->cpu_class = cpuids[i].cpu_class;
+			sprintf(cpu->cpu_model, "%s rev %d (%s core)",
+			    cpuids[i].cpu_name, cpuid & CPU_ID_REVISION_MASK,
+			    cpu_classes[cpu->cpu_class].class_name);
 			break;
 		}
 
 	if (cpuids[i].cpuid == 0)
 		sprintf(cpu->cpu_model, "unknown CPU (ID = 0x%x)", cpuid);
 
-	switch (cpuid & CPU_ID_CPU_MASK) {
-	case CPU_ID_SA110:
-	case CPU_ID_SA1100:
-	case CPU_ID_SA1110:
-		cpu->cpu_class = CPU_CLASS_SARM;
-	}
-
-	if (cpu->cpu_class == CPU_CLASS_ARM) {
+	switch (cpu->cpu_class) {
+	case CPU_CLASS_ARM6:
+	case CPU_CLASS_ARM7:
+	case CPU_CLASS_ARM8:
 		if ((cpu->cpu_ctrl & CPU_CONTROL_IDC_ENABLE) == 0)
 			strcat(cpu->cpu_model, " IDC disabled");
 		else
 			strcat(cpu->cpu_model, " IDC enabled");
-	} else if (cpu->cpu_class == CPU_CLASS_SARM) {
+		break;
+	case CPU_CLASS_SA1:
 		if ((cpu->cpu_ctrl & CPU_CONTROL_DC_ENABLE) == 0)
 			strcat(cpu->cpu_model, " DC disabled");
 		else
@@ -371,6 +384,7 @@ identify_arm_cpu(cpu_number)
 			strcat(cpu->cpu_model, " IC disabled");
 		else
 			strcat(cpu->cpu_model, " IC enabled");
+		break;
 	}
 	if ((cpu->cpu_ctrl & CPU_CONTROL_WBUF_ENABLE) == 0)
 		strcat(cpu->cpu_model, " WB disabled");
@@ -404,10 +418,6 @@ identify_arm_fpu(cpu_number)
 	cpu_t *cpu;
 
 	cpu = &cpus[cpu_number];
-	if (cpu->cpu_class != CPU_CLASS_ARM && cpu->cpu_class != CPU_CLASS_SARM) {
-		printf("identify_arm_cpu: Can only identify ARM hosted FPUs\n");
-		return;
-	}
 
 	/* Now for the FP info */
 
