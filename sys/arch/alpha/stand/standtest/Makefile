@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 1999/04/11 03:38:51 cgd Exp $
+# $NetBSD: Makefile,v 1.2 2000/07/21 21:25:19 jdolecek Exp $
 
 PROG=	test
 BINDIR=	/stand
@@ -9,7 +9,7 @@ RELOC = ${STANDPROG_LOAD_ADDRESS}
 
 CPPFLAGS += ${STANDPROG_CPPFLAGS}
 
-CLEANFILES+= vers.c vers.o ${PROG}.sym
+CLEANFILES+= ${PROG}.sym
 
 # XXX HACK!
 ${PROG}: ${PROG}.sym
@@ -20,7 +20,5 @@ SAMISCMAKEFLAGS= SA_INCLUDE_NET=no SA_USE_CREAD=no
 .include "../Makefile.bootprogs"
 
 ${PROG}.sym: ${OBJS} ${LIBSA} ${LIBKERN}
-	sh ${.CURDIR}/../common/newvers.sh ${.CURDIR}/version
-	${COMPILE.c} vers.c
 	${LD} -Ttext ${RELOC} -N -e start -o ${PROG}.sym \
-	    ${OBJS} vers.o ${LIBSA} ${LIBKERN}
+	    ${OBJS} ${LIBSA} ${LIBKERN}
