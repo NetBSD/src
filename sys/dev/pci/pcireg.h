@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.15 1998/05/18 17:17:04 cgd Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.16 1998/06/01 17:48:13 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -280,7 +280,7 @@ typedef u_int8_t pci_revision_t;
 	    ((mr) & PCI_MAPREG_IO_ADDR_MASK)
 #define	PCI_MAPREG_IO_SIZE(mr)						\
 	    (PCI_MAPREG_IO_ADDR(mr) & -PCI_MAPREG_IO_ADDR(mr))
-#define	PCI_MAPREG_IO_ADDR_MASK			0xfffffffe
+#define	PCI_MAPREG_IO_ADDR_MASK			0xfffffffc
 
 /*
  * Interrupt Configuration Register; contains interrupt pin and line.
