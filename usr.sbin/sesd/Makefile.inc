@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.2 2000/02/21 08:40:54 mjacob Exp $
+# $NetBSD: Makefile.inc,v 1.3 2000/02/22 01:16:48 erh Exp $
 # $OpenBSD: $
 # $FreeBSD: $
 #
@@ -37,11 +37,11 @@
 SYS	!=	uname -s
 
 .if ${SYS} == OpenBSD
-COPTS	+=	-I/usr/include/scsi -DSESINC="<ses.h>"
+COPTS	+=	-I${DESTDIR}/usr/include/scsi -DSESINC="<ses.h>"
 .elif	${SYS} == NetBSD
-COPTS	+=	-I/usr/include/dev/scsipi -DSESINC="<ses.h>"
+COPTS	+=	-I${DESTDIR}/usr/include/dev/scsipi -DSESINC="<ses.h>"
 .else
-COPTS	+=	-I/usr/include/cam/scsi -DSESINC="<scsi_ses.h>"
+COPTS	+=	-I${DESTDIR}/usr/include/cam/scsi -DSESINC="<scsi_ses.h>"
 .endif
 BINDIR	?=	${DESTDIR}/usr/sbin
 
