@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2000/05/11 00:56:48 deberg Exp $
+#	$NetBSD: Makefile,v 1.12 2000/06/17 17:59:35 tsutsui Exp $
 #
 
 .include <bsd.own.mk>
@@ -10,6 +10,8 @@ TARGET_ARCH ?=	mips
 TARGET_ARCH ?=	${MACHINE_ARCH}
 .endif
 
+.if (${MACHINE_ARCH} != "m68k" && ${MACHINE_ARCH} != "ns32k") ||	\
+    (${OBJECT_FMT} == "ELF")
 PROG=		as
 MAN=		as.1
 SRCS=		app.c as.c atof-generic.c bignum-copy.c cond.c depend.c \
@@ -18,6 +20,9 @@ SRCS=		app.c as.c atof-generic.c bignum-copy.c cond.c depend.c \
 		literal.c messages.c output-file.c read.c subsegs.c symbols.c \
 		write.c listing.c stabs.c sb.c macro.c
 SRCS+=		${TARG_CPU_C} ${OBJ_FORMAT_C} ${ATOF_TARG_C}
+.else
+NOPROG=
+.endif
 
 CPPFLAGS+=	-I${.CURDIR}/arch/${TARGET_ARCH} \
 		-I${DIST}/gas -I${DIST}/gas/config -I${BFDOBJ} \
