@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48 2002/05/17 06:44:04 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.49 2002/05/20 17:55:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -90,8 +90,8 @@
 
 /* Is zs configured in? */
 #include "zsc.h"
-#if ZSC
-#include <next68/dev/zs_cons.h>
+#if (NZSC > 0)
+#include <next68k/dev/zs_cons.h>
 #endif
 #endif
 
@@ -254,7 +254,7 @@ consinit()
 
 	if (!init) {
 		cninit();
-#if defined(KGDB) && ZSC
+#if defined(KGDB) && (NZSC > 0)
 		zs_kgdb_init();
 #endif
 #ifdef  DDB
