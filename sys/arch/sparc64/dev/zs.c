@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.47 2003/07/15 03:36:07 lukem Exp $	*/
+/*	$NetBSD: zs.c,v 1.48 2003/10/31 20:06:54 petrov Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.47 2003/07/15 03:36:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.48 2003/10/31 20:06:54 petrov Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -158,18 +158,14 @@ struct consdev zs_consdev = {
  ****************************************************************/
 
 /* Definition of the driver for autoconfig. */
-static int  zs_match_mainbus __P((struct device *, struct cfdata *, void *));
-static void zs_attach_mainbus __P((struct device *, struct device *, void *));
+static int  zs_match_sbus __P((struct device *, struct cfdata *, void *));
+static void zs_attach_sbus __P((struct device *, struct device *, void *));
 
 static void zs_attach __P((struct zsc_softc *, struct zsdevice *, int));
 static int  zs_print __P((void *, const char *name));
 
-/* Do we really need this ? */
 CFATTACH_DECL(zs, sizeof(struct zsc_softc),
-    zs_match_mainbus, zs_attach_mainbus, NULL, NULL);
-
-CFATTACH_DECL(zs_mainbus, sizeof(struct zsc_softc),
-    zs_match_mainbus, zs_attach_mainbus, NULL, NULL);
+    zs_match_sbus, zs_attach_sbus, NULL, NULL);
 
 extern struct cfdriver zs_cd;
 extern int stdinnode;
@@ -193,7 +189,7 @@ void zs_disable __P((struct zs_chanstate *));
  * Is the zs chip present?
  */
 static int
-zs_match_mainbus(parent, cf, aux)
+zs_match_sbus(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
@@ -207,7 +203,7 @@ zs_match_mainbus(parent, cf, aux)
 }
 
 static void
-zs_attach_mainbus(parent, self, aux)
+zs_attach_sbus(parent, self, aux)
 	struct device *parent;
 	struct device *self;
 	void *aux;
