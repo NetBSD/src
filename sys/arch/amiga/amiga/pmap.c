@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.111.4.2 2005/01/31 12:16:29 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.111.4.3 2005/02/18 14:38:28 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.111.4.2 2005/01/31 12:16:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.111.4.3 2005/02/18 14:38:28 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2212,14 +2212,9 @@ pmap_remove_mapping(pmap, va, pte, flags)
 				    printf("remove: free stab %p\n",
 					    ptpmap->pm_stab);
 #endif
-				pmap_remove(pmap_kernel(),
-				    (vaddr_t)ptpmap->pm_stab,
-				    (vaddr_t)ptpmap->pm_stab + AMIGA_STSIZE);
-				uvm_pagefree(PHYS_TO_VM_PAGE((paddr_t)
-							     ptpmap->pm_stpa));
 				uvm_km_free(kernel_map,
 				    (vaddr_t)ptpmap->pm_stab, AMIGA_STSIZE,
-				    UVM_KMF_VAONLY);
+				    UVM_KMF_WIRED);
 				ptpmap->pm_stab = Segtabzero;
 				ptpmap->pm_stpa = Segtabzeropa;
 #if defined(M68040) || defined(M68060)
