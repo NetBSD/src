@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	8.2 (Berkeley) 4/18/94
-.\"	$NetBSD: su.1,v 1.38 2004/04/27 10:26:22 kleink Exp $
+.\"	$NetBSD: su.1,v 1.39 2005/02/01 22:54:33 christos Exp $
 .\"
 .Dd August 20, 2003
 .Dt SU 1
@@ -207,12 +207,16 @@ If defined, it changes the default group that is allowed to become
 from
 .Dq wheel
 to the specified string.
+.\" For pam this can be done by adding a line to /etc/pam.d/su such as:
+.\" auth requisite pam_group.so no_warn group=groupname root_only fail_safe
 .It SU_ROOTAUTH
 If defined, it specifies a group whose members are allowed to become
 .Dq root
 by supplying their own password instead of the
 .Dq root
 one.
+.\" For pam this can be done by adding a line to /etc/pam.d/su such as
+.\" auth sufficient pam_group.so no_warn group=rootauth root_only fail_safe authenticate
 .It SU_INDIRECT_GROUP
 If defined, the
 .Ar SU_GROUP
@@ -220,6 +224,7 @@ and
 .Ar SU_ROOTAUTH
 groups are treated as indirect groups.
 The group members of those two groups are treated as groups themselves.
+.\" This option is not supported under pam.
 .Sh EXIT STATUS
 .Nm
 returns the exit status of the executed subshell, or 1 if any error
