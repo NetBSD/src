@@ -1,4 +1,4 @@
-/*  $NetBSD: procfs_ops.c,v 1.1 1999/03/26 22:36:02 bgrayson Exp $ */
+/*  $NetBSD: procfs_ops.c,v 1.2 1999/03/27 15:22:17 tron Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,8 +65,8 @@
 	}				\
 }
 
-static int
-parsekinfo(const char *, struct kinfo_proc *);
+static int		parsekinfo __P((const char *, struct kinfo_proc *));
+struct kinfo_proc *	procfs_getprocs __P((int, int, int *));
 
 static int
 parsekinfo (path, kp)
