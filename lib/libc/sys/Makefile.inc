@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.11 (Berkeley) 6/23/91
-#	$Id: Makefile.inc,v 1.26 1994/06/13 00:13:48 cgd Exp $
+#	$Id: Makefile.inc,v 1.27 1994/06/14 03:55:59 jtc Exp $
 
 # sys sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/sys ${.CURDIR}/sys
@@ -16,7 +16,7 @@ SRCS+=  ftruncate.c lseek.c mmap.c truncate.c
 ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	chown.o chroot.o close.o connect.o dup.o dup2.o execve.o fchdir.o \
 	fchflags.o fchmod.o fchown.o fcntl.o flock.o fpathconf.o fstat.o \
-	fstatfs.o fsync.o getdirentries.o getdtablesize.o getegid.o \
+	fstatfs.o fsync.o getdirentries.o getegid.o \
 	geteuid.o getfh.o getfsstat.o getgid.o getgroups.o getitimer.o \
 	getpeername.o getpgrp.o getpid.o getppid.o getpriority.o \
 	getrlimit.o getrusage.o getsockname.o getsockopt.o gettimeofday.o \
@@ -84,7 +84,7 @@ ${PSEUDO}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 MAN2+=	accept.0 access.0 acct.0 adjtime.0 bind.0 brk.0 \
 	chdir.0 chflags.0 chmod.0 chown.0 chroot.0 close.0 connect.0 \
 	dup.0 execve.0 _exit.0 fcntl.0 flock.0 fork.0 fsync.0 \
-	getdirentries.0 getdtablesize.0 getfh.0 getfsstat.0 \
+	getdirentries.0 getfh.0 getfsstat.0 \
 	getgid.0 getgroups.0 getitimer.0 getlogin.0 \
 	getpeername.0 getpgrp.0 getpid.0 getpriority.0 \
 	getrlimit.0 getrusage.0 getsockname.0 getsockopt.0 \
