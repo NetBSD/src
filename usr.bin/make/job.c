@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.31 2000/01/19 23:39:37 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.32 2000/01/21 17:08:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.31 2000/01/19 23:39:37 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.32 2000/01/21 17:08:35 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.31 2000/01/19 23:39:37 christos Exp $");
+__RCSID("$NetBSD: job.c,v 1.32 2000/01/21 17:08:35 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -131,8 +131,6 @@ __RCSID("$NetBSD: job.c,v 1.31 2000/01/19 23:39:37 christos Exp $");
 #else
 # define STATIC static
 #endif
-
-extern int  errno;
 
 /*
  * error handling variables
@@ -1605,7 +1603,6 @@ JobRestart(job)
 	     * resume it.
 	     */
 	    Boolean error;
-	    extern int errno;
 	    int status;
 
 #ifdef RMT_WANTS_SIGNALS

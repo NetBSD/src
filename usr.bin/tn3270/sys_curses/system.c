@@ -1,4 +1,4 @@
-/*	$NetBSD: system.c,v 1.13 1999/09/30 12:35:53 soren Exp $	*/
+/*	$NetBSD: system.c,v 1.14 2000/01/21 17:08:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)system.c	4.5 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: system.c,v 1.13 1999/09/30 12:35:53 soren Exp $");
+__RCSID("$NetBSD: system.c,v 1.14 2000/01/21 17:08:36 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,8 +80,6 @@ extern char *getenv();
 
 
 #include <errno.h>
-extern int errno;
-
 #include <netdb.h>
 #include <signal.h>
 #include <stdio.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdate.c,v 1.7 1998/08/12 14:11:51 christos Exp $	*/
+/*	$NetBSD: ntpdate.c,v 1.8 2000/01/21 17:08:39 mycroft Exp $	*/
 
 /*
  * ntpdate - set the time of day by polling one or more NTP servers
@@ -184,9 +184,9 @@ int verbose = 0;
 int always_step = 0;
 int never_step = 0;
 
-#ifndef SYS_WINNT
+#ifdef NEED_DECLARATION_ERRNO
 extern int errno;
-#endif /* SYS_WINNT */
+#endif /* NEED_DECLARATION_ERRNO */
 
 static	void	transmit	P((struct server *));
 static	void	receive		P((struct recvbuf *));

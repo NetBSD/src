@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.13 1999/02/09 04:51:30 dean Exp $	*/
+/*	$NetBSD: lex.c,v 1.14 2000/01/21 17:08:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.13 1999/02/09 04:51:30 dean Exp $");
+__RCSID("$NetBSD: lex.c,v 1.14 2000/01/21 17:08:35 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,6 @@ setfile(name)
 	char *who = name[1] ? name + 1 : myname;
 	static int shudclob;
 	extern char *tempMesg;
-	extern int errno;
 
 	if ((name = expand(name)) == NOSTR)
 		return -1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: workarounds.c,v 1.5 1999/08/31 13:58:58 itojun Exp $	*/
+/*	$NetBSD: workarounds.c,v 1.6 2000/01/21 17:08:34 mycroft Exp $	*/
 
  /*
   * Workarounds for known system software bugs. This module provides wrappers
@@ -14,7 +14,7 @@
 #if 0
 char    sccsid[] = "@(#) workarounds.c 1.6 96/03/19 16:22:25";
 #else
-__RCSID("$NetBSD: workarounds.c,v 1.5 1999/08/31 13:58:58 itojun Exp $");
+__RCSID("$NetBSD: workarounds.c,v 1.6 2000/01/21 17:08:34 mycroft Exp $");
 #endif
 #endif
 
@@ -28,8 +28,6 @@ __RCSID("$NetBSD: workarounds.c,v 1.5 1999/08/31 13:58:58 itojun Exp $");
 #include <stdio.h>
 #include <syslog.h>
 #include <string.h>
-
-extern int errno;
 
 #include "tcpd.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: timedc.h,v 1.5 1997/10/17 14:20:22 lukem Exp $	*/
+/*	$NetBSD: timedc.h,v 1.6 2000/01/21 17:08:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -47,8 +47,6 @@
 #include <errno.h>
 #include <netdb.h>
 #include <stdio.h>
-
-extern int errno;
 
 #define ON		1
 #define OFF		0

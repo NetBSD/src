@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_filegen.c,v 1.3 1998/03/06 18:17:21 christos Exp $	*/
+/*	$NetBSD: ntp_filegen.c,v 1.4 2000/01/21 17:08:40 mycroft Exp $	*/
 
 /*
  * ntp_filegen.c,v 3.12 1994/01/25 19:06:11 kardel Exp
@@ -44,9 +44,9 @@
 /*
  * to check reason on open failure
  */
-#ifndef SYS_WINNT
+#ifdef NEED_DECLARATION_ERRNO
 extern int errno;
-#endif /* SYS_WINNT */
+#endif /* NEED_DECLARATION_ERRNO */
 
 /*
  * imported from timer
