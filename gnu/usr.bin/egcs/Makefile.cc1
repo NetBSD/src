@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cc1,v 1.8 1998/10/14 16:55:52 tv Exp $
+#	$NetBSD: Makefile.cc1,v 1.9 1998/10/14 16:58:18 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -21,7 +21,7 @@ c-lex.o: c-parse.h
 
 .NOPATH: c-parse.c c-parse.h parse.c parse.h objc-parse.c objc-parse.h
 .BEGIN: 
-        @rm -f ${DIST}/c-parse.c ${DIST}/c-parse.h \
+	@rm -f ${DIST}/c-parse.c ${DIST}/c-parse.h \
 		${DIST}/cp/parse.c ${DIST}/cp/parse.h \
 		${DIST}/objc/objc-parse.c ${DIST}/objc/objc-parse.h
 
