@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.38 1998/11/12 22:27:17 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.39 1998/11/18 07:24:26 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.38 1998/11/12 22:27:17 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.39 1998/11/18 07:24:26 itohy Exp $");
 #endif /* not lint */
 
 /*
@@ -532,14 +532,8 @@ url_get(url, proxyenv, outfile)
 						&parsed))) {
 					parsed.tm_isdst = -1;
 					if (*t == '\0')
-						mtime = mktime(&parsed);
+						mtime = mkgmtime(&parsed);
 					if (debug && mtime != -1) {
-#ifndef __SVR4
-							/* conv. local -> GMT */
-						mtime += parsed.tm_gmtoff;	
-#else
-						mtime -= timezone;
-#endif
 						fprintf(ttyout,
 						    "parsed date as: %s",
 						    ctime(&mtime));
