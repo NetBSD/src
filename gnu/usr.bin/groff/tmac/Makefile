@@ -1,3 +1,5 @@
+# $NetBSD: Makefile,v 1.15 2003/06/30 18:47:57 wiz Exp $
+
 # $FreeBSD: src/gnu/usr.bin/groff/tmac/Makefile,v 1.41 2003/05/01 13:22:21 ru Exp $
 
 TMACOWN?=	${BINOWN}
