@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vme.c,v 1.7 1998/12/09 07:33:59 leo Exp $	*/
+/*	$NetBSD: if_le_vme.c,v 1.8 1998/12/09 08:51:12 leo Exp $	*/
 
 /*-
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -85,11 +85,16 @@ struct le_addresses {
 	int	irq;
 	int	reg_size;
 	int	mem_size;
+	int	type_hint;
 } lestd[] = {
-	{ 0xfe00fff0, 0xfe010000, IRQUNK, 16, 64*1024 }, /* Riebl	*/
-	{ 0xffcffff0, 0xffcf0000,      5, 16, 64*1024 }, /* PAM		*/
-	{ 0xfecffff0, 0xfecf0000,      5, 16, 64*1024 }, /* Rhotron	*/
-	{ 0xfeff4100, 0xfe000000,      4,  8, VMECF_MEMSIZ_DEFAULT } /*BVME410*/
+	{ 0xfe00fff0, 0xfe010000, IRQUNK, 16, 64*1024,
+				LE_OLD_RIEBL|LE_NEW_RIEBL }, /* Riebl	*/
+	{ 0xffcffff0, 0xffcf0000,      5, 16, 64*1024,
+				LE_PAM },		     /* PAM	*/
+	{ 0xfecffff0, 0xfecf0000,      5, 16, 64*1024,
+				LE_ROTHRON },		     /* Rhotron	*/
+	{ 0xfeff4100, 0xfe000000,      4,  8, VMECF_MEMSIZ_DEFAULT,
+				LE_BVME410 }		     /* BVME410 */
 };
 
 #define	NLESTD	(sizeof(lestd) / sizeof(lestd[0]))
@@ -224,6 +229,7 @@ le_vme_match(parent, cfp, aux)
 			va->va_iosize = le_ap->reg_size;
 			va->va_maddr  = le_ap->mem_addr;
 			va->va_msize  = le_ap->mem_size;
+			va->va_aux    = le_ap;
 			if (va->va_irq == IRQUNK)
 				va->va_irq = le_ap->irq;
 			return 1;
@@ -326,6 +332,7 @@ le_vme_attach(parent, self, aux)
 	struct vme_attach_args	*va = aux;
 	bus_space_handle_t	ioh;
 	bus_space_handle_t	memh;
+	struct le_addresses	*le_ap;
 	int			i;
 
 	printf("\n%s: ", sc->sc_dev.dv_xname);
@@ -340,20 +347,23 @@ le_vme_attach(parent, self, aux)
 	lesc->sc_memt   = va->va_memt;
 	lesc->sc_memh   = memh;
 	lesc->sc_splval = (va->va_irq << 8) | PSL_S; /* XXX */
+	le_ap           = (struct le_addresses *)va->va_aux;
 
 	/*
 	 * Go on to find board type
 	 */
-	if (bus_space_peek_1(va->va_iot, ioh, LER_EEPROM)) {
+	if ((le_ap->type_hint & LE_PAM)
+		&& bus_space_peek_1(va->va_iot, ioh, LER_EEPROM)) {
 		printf("PAM card");
 		lesc->sc_type = LE_PAM;
 		bus_space_read_1(va->va_iot, ioh, LER_MEME);
 	}
-	else if (bus_space_peek_2(va->va_iot, ioh, BVME410_IVEC)) {
+	else if((le_ap->type_hint & LE_BVME410)
+		&& bus_space_peek_2(va->va_iot, ioh, BVME410_IVEC)) {
 		printf("BVME410");
 		lesc->sc_type = LE_BVME410;
 	}
-	else {
+	else if (le_ap->type_hint & (LE_NEW_RIEBL|LE_OLD_RIEBL)) {
 		printf("Riebl card");
 		if(bus_space_read_4(va->va_memt, memh, RIEBL_MAGIC_ADDR)
 								== RIEBL_MAGIC)
@@ -363,6 +373,7 @@ le_vme_attach(parent, self, aux)
 			lesc->sc_type = LE_OLD_RIEBL;
 		}
 	}
+	else printf("le_vme_attach: Unsupported card!");
 
 	switch (lesc->sc_type) {
 	    case LE_BVME410:
