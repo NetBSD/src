@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.8 1999/11/19 01:12:42 enami Exp $
+.\"	$NetBSD: mbuf.9,v 1.9 2000/08/14 17:34:12 tv Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -212,7 +212,9 @@ the record:
 sent/received as link-level broadcast
 .It Dv M_MCAST
 sent/received as link-level multicast
-.It Dv M_LINK0 , M_LINK1, MLINK2
+.It Dv M_LINK0 ,
+.It Dv M_LINK1 ,
+.It Dv M_LINK2
 three link-level specific flags.
 .El
 .Pp
