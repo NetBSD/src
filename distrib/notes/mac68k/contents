@@ -39,7 +39,7 @@ subdirectory of the NetBSD 1.0 distribution tree, and are as follows:
 		set).  This set also includes the manual pages for all
 		of the utilities it contains, as well as the system
 		call and library manual pages.
-		[ 4.1M gzipped, 12.8M uncompressed ]
+		[ 4.0M gzipped, 12.7M uncompressed ]
 
 	etc10	This distribution set contains the system
 		configuration files that reside in /etc and in several
