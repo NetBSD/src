@@ -1,5 +1,5 @@
 REM > BtNetBSD
-REM $NetBSD: BtNetBSD,v 1.4 2002/03/10 01:28:19 reinoud Exp $
+REM $NetBSD: BtNetBSD,v 1.5 2002/03/24 21:59:48 reinoud Exp $
 REM
 REM Copyright (c) 2000, 2001, 2002 Reinoud Zandijk
 REM Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -51,6 +51,7 @@ REM SDRAM_ADDR_START% = &18000000
 
 REM set pretty screen for printing without scrolling
 SYS "XWimp_CommandWindow", -1: VDU 26
+SYS "XHourglass_Smash"
 MODE MODE
 COLOUR 128+4:CLS
 scwidth% = FNvdu_var(256): scheigth% = FNvdu_var(257)
@@ -59,7 +60,7 @@ VDU 4, 28, (scwidth%-width%)/2, (scheigth%+heigth%)/2, (scwidth%+width%)/2, (sch
 COLOUR 128:CLS
 
 PRINT''
-PROCcenter("BtNetBSD 0.99")
+PROCcenter("BtNetBSD 0.99a")
 PROCcenter("booting NetBSD/acorn32 on a RiscPC/A7000/NC")
 PRINT''
 
@@ -87,9 +88,9 @@ ENDIF
 
 
 REM Get some space to mess with
-REM   Declare a large array ... and then wipe it/map it in in the OS_Mem loop
-REM   the difference is that RO4 won't map it in by default and
-REM   that could trigger a OS_Memory bug ...
+REM Declare a large array ... and then wipe it/map it in in the OS_Mem loop
+REM the difference is that RO4 won't map it in by default and
+REM that could trigger a OS_Memory bug ...
 SYS "OS_Memory", 6 TO ,memorytablesize%, nbpp% : REM get tablesize%
 memory_image_size% = HIMEM-512*1024            : REM keep a 512 Kb for vars
 DIM memory_image% memory_image_size%           : REM claim the space
@@ -882,19 +883,25 @@ DEF PROCassemble_relocate_code(virtaddress%, physaddress%, entry%, L1pages_phys%
 
         ; determine if its a StrongARM
         MOV   r14, #1                          ; r14 flags if its a StrongARM ... assume one
-        MOV   r0,     #&FF000000               ; get processor discr. mask in r0
-        ADD   r0, r0, #&0000F000               ;
-
-        MOV   r1,     #&41000000               ; check for 0x41xxx7xx => ARM7
-        ADD   r1, r1, #&00007000
-        AND   r2, r13, r0                      ; mask with discr. mask
-        CMP   r2, r1                           ; is it a ARM7 ?
-        MOVEQ r14, #0                          ; ifso ... then its a v3
  
+        ; detecting an ARM6 needs a special mask
+        MOV   r0,     #&FF000000               ; get processor discr. mask in r0
+        ADD   r0, r0, #&00000F00               ;
+
         MOV   r1,     #&41000000               ; check for 0x41xxx6xx => ARM6
         ADD   r1, r1, #&00000600
         AND   r2, r13, r0                      ; mask with discr. mask
         CMP   r2, r1                           ; is it a ARM6 ?
+        MOVEQ r14, #0                          ; ifso ... then its a v3
+ 
+        ; newer ARMs need a different mask
+        MOV   r0,     #&FF000000               ; get processor discr. mask in r0
+        ADD   r0, r0, #&0000F000               ;
+
+        MOV   r1,     #&41000000               ; check for 0x41xx7xxx => ARM7
+        ADD   r1, r1, #&00007000
+        AND   r2, r13, r0                      ; mask with discr. mask
+        CMP   r2, r1                           ; is it a ARM7 ?
         MOVEQ r14, #0                          ; ifso ... then its a v3
  
 ;        MOV   r1,     #&44000000               ; check for 0x44xxaxxx => Strong ARM
