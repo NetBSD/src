@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.11 1997/10/19 08:13:50 mrg Exp $	*/
+/*	$NetBSD: util.c,v 1.12 1998/07/26 21:35:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: util.c,v 1.11 1997/10/19 08:13:50 mrg Exp $");
+__RCSID("$NetBSD: util.c,v 1.12 1998/07/26 21:35:29 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,20 +74,21 @@ match(pw, user)
 	struct passwd *pw;
 	char *user;
 {
-	char *p, *t;
-	char name[1024];
+	char *p;
+	char *bp, name[1024];
 
 	if (!strcasecmp(pw->pw_name, user))
 		return(1);
 
-	(void)strncpy(p = tbuf, pw->pw_gecos, sizeof(tbuf));
+	(void)strncpy(bp = tbuf, pw->pw_gecos, sizeof(tbuf));
 
 	/* Ampersands get replaced by the login name. */
-	if ((p = strtok(p, ",")) == NULL)
+	if (!(p = strsep(&bp, ",")))
 		return(0);
 
 	expandusername(p, pw->pw_name, name, sizeof(name));
-	for (t = name; (p = strtok(t, "\t ")) != NULL; t = NULL)
+	bp = name;
+	while ((p = strsep(&bp, "\t ")))
 		if (!strcasecmp(p, user))
 			return(1);
 	return(0);
@@ -96,12 +97,13 @@ match(pw, user)
 /* inspired by usr.sbin/sendmail/util.c::buildfname */
 void
 expandusername(gecos, login, buf, buflen)
-	char *gecos;
-	char *login;
+	const char *gecos;
+	const char *login;
 	char *buf;
 	int buflen;
 {
-	char *p, *bp;
+	const char *p;
+	char *bp;
 
 	/* why do we skip asterisks!?!? */
 	if (*gecos == '*')
@@ -210,7 +212,7 @@ enter_person(pw)
 		err(1, NULL);
 #endif
 
-	key.data = pw->pw_name;
+	key.data = (char *)pw->pw_name;
 	key.size = strlen(pw->pw_name);
 
 	switch ((*db->get)(db, &key, &data, 0)) {
