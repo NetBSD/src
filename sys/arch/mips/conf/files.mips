@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.31 2001/09/23 19:45:42 manu Exp $
+#	$NetBSD: files.mips,v 1.31.2.1 2001/10/24 17:37:03 thorpej Exp $
 #
 
 defopt 	opt_cputype.h		NOTYET	# MIPS1	MIPS2 MIPS3 MIPS4 MIPS5
@@ -12,6 +12,13 @@ defopt 	opt_cputype.h		NOTYET	# MIPS1	MIPS2 MIPS3 MIPS4 MIPS5
 defopt	opt_mips_cache.h		MIPS3_L2CACHE_ABSENT
 					MIPS3_L2CACHE_PRESENT
 					MIPS3_NO_PV_UNCACHED
+
+file	arch/mips/mips/cache.c
+file	arch/mips/mips/cache_r3k.c	mips1
+file	arch/mips/mips/cache_r3k_subr.S	mips1
+file	arch/mips/mips/cache_r4k.c	mips3
+file	arch/mips/mips/cache_r5k.c	mips3
+
 file	arch/mips/mips/db_disasm.c	ddb
 file	arch/mips/mips/db_interface.c	ddb | kgdb
 file	arch/mips/mips/db_trace.c	ddb
