@@ -1,4 +1,4 @@
-.\"	$NetBSD: rpcgen.1,v 1.12 2002/09/30 11:09:10 grant Exp $
+.\"	$NetBSD: rpcgen.1,v 1.13 2003/01/05 19:28:13 sommerfeld Exp $
 .\" from: @(#)rpcgen.new.1	1.1 90/11/09 TIRPC 1.0; from 40.10 of 10/10/89
 .\" Copyright (c) 1988,1990 Sun Microsystems, Inc. - All Rights Reserved.
 .Dd April 3, 2001
@@ -17,6 +17,8 @@
 .Op Fl K Ar secs
 .Ar infile
 .Nm ""
+.Op Fl b
+.Op Fl I
 .Op Fl L
 .Op Fl M
 .Fl c Li |
@@ -286,8 +288,15 @@ For such servers,
 .Nm
 should be used with
 .Dq Fl K No -1 .
+.It Fl b
+Compile stubs in "backwards compatible" mode, disabling support for
+transport-independant RPC.
 .It Fl l
 Compile into client-side stubs.
+.Xr inetd 8 .  
+.It Fl I
+Compile stubs meant for use in programs started by 
+.Xr inetd 8 .  
 .It Fl L
 Server errors will be sent to syslog instead of stderr.
 .It Fl m
@@ -462,6 +471,7 @@ $ rpcgen -n tcp -o prot_svc.c prot.x
 .Ed
 .Sh SEE ALSO
 .Xr cpp 1
+.Xr inetd 8
 .Sh HISTORY
 The
 .Fl M
