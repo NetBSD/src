@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.49 2002/11/15 03:57:48 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.50 2002/11/16 16:59:58 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.49 2002/11/15 03:57:48 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.50 2002/11/16 16:59:58 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -233,11 +233,14 @@ FreeReconDesc(reconDesc)
 	RF_RaidReconDesc_t *reconDesc;
 {
 #if RF_RECON_STATS > 0
-	printf("RAIDframe: %lu recon event waits, %lu recon delays\n",
-	    (long) reconDesc->numReconEventWaits, (long) reconDesc->numReconExecDelays);
+	printf("raid%d: %lu recon event waits, %lu recon delays\n",
+	       reconDesc->raidPtr->raidid,
+	       (long) reconDesc->numReconEventWaits, 
+	       (long) reconDesc->numReconExecDelays);
 #endif				/* RF_RECON_STATS > 0 */
-	printf("RAIDframe: %lu max exec ticks\n",
-	    (long) reconDesc->maxReconExecTicks);
+	printf("raid%d: %lu max exec ticks\n",
+	       reconDesc->raidPtr->raidid,
+	       (long) reconDesc->maxReconExecTicks);
 #if (RF_RECON_STATS > 0) || defined(KERNEL)
 	printf("\n");
 #endif				/* (RF_RECON_STATS > 0) || KERNEL */
