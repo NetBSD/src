@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.1 2003/08/13 20:06:50 jonathan Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.2 2003/09/12 11:20:58 itojun Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.1 2003/08/13 20:06:50 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.2 2003/09/12 11:20:58 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -70,9 +70,9 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.1 2003/08/13 20:06:50 jonathan Ex
 
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
-#include <netipsec/key.h>
-#include <netipsec/keydb.h>
-#include <netipsec/key_debug.h>
+#include <netkey/key.h>
+#include <netkey/keydb.h>
+#include <netkey/key_debug.h>
 #include <netipsec/ah_var.h>
 #endif
 
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.1 2003/08/13 20:06:50 jonathan Ex
 
 
 
-#include <netipsec/key.h>
+#include <netkey/key.h>
 
 /* assumes that ip header and ah header are contiguous on mbuf */
 void *
