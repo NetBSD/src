@@ -1247,6 +1247,7 @@
 ./usr/share/man/cat2/fchmod.0
 ./usr/share/man/cat2/fchown.0
 ./usr/share/man/cat2/fcntl.0
+./usr/share/man/cat2/fdatasync.0
 ./usr/share/man/cat2/flock.0
 ./usr/share/man/cat2/fork.0
 ./usr/share/man/cat2/fpathconf.0
@@ -2221,6 +2222,7 @@
 ./usr/share/man/man2/fchmod.2
 ./usr/share/man/man2/fchown.2
 ./usr/share/man/man2/fcntl.2
+./usr/share/man/man2/fdatasync.2
 ./usr/share/man/man2/flock.2
 ./usr/share/man/man2/fork.2
 ./usr/share/man/man2/fpathconf.2
