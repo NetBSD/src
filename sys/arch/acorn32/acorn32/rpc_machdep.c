@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.12 2002/01/31 22:46:40 reinoud Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.13 2002/02/11 08:28:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -916,7 +916,7 @@ initarm_new_bootloader(bootconf)
 #endif
 
 	/* Talk to the user */
-	printf("NetBSD/arm32 booting ... \n");
+	printf("NetBSD/acorn32 booting ... \n");
 
 	/* Tell the user if his boot loader is too old */
 	if (bootconfig.magic > BOOTCONFIG_MAGIC) {
