@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.h,v 1.3 2002/11/17 02:46:24 manu Exp $ */
+/*	$NetBSD: mach_vm.h,v 1.4 2002/11/24 17:22:59 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -87,6 +87,7 @@ typedef struct {
 } mach_vm_map_reply_t;
 
 /* vm_allocate */
+#define MACH_VM_FLAGS_ANYWHERE 1
 typedef struct {
 	mach_msg_header_t req_msgh;
 	mach_ndr_record_t req_ndr;

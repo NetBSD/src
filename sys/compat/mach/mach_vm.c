@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.11 2002/11/24 11:49:36 manu Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.12 2002/11/24 17:22:59 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.11 2002/11/24 11:49:36 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.12 2002/11/24 17:22:59 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -114,38 +114,46 @@ mach_vm_allocate(p, msgh)
 	mach_vm_allocate_request_t req;
 	mach_vm_allocate_reply_t rep;
 	struct sys_mmap_args cup;
+	vaddr_t addr;
+	quad_t endaddr;
+	size_t size;
 	int error;
 
 	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
 		return error;
 
-	DPRINTF(("mach_vm_allocate(addr = %p, size = 0x%08x);\n",
-	    (void *)req.req_address, req.req_size));
+	addr = req.req_address;
+	size = req.req_size;
+
+	DPRINTF(("mach_vm_allocate(addr = %p, size = 0x%08x);\n", 
+	    (void *)addr, size));
+
+	size = round_page(size);
+	if (req.req_flags & MACH_VM_FLAGS_ANYWHERE)
+		addr = vm_map_min(&p->p_vmspace->vm_map);
+	else
+		addr = trunc_page(addr);
+
+	endaddr = (quad_t)addr;
+	if ((endaddr + size) > vm_map_max(&p->p_vmspace->vm_map))
+		addr = vm_map_min(&p->p_vmspace->vm_map);
 
 	bzero(&rep, sizeof(rep));
+	if (size == 0)
+		goto out;
 
-	SCARG(&cup, addr) = (caddr_t)req.req_address;
-	SCARG(&cup, len) = req.req_size;
+	SCARG(&cup, addr) = (caddr_t)addr;
+	SCARG(&cup, len) = size;
 	SCARG(&cup, prot) = PROT_READ | PROT_WRITE;
 	SCARG(&cup, flags) = MAP_ANON;
-	if (req.req_flags)
-		SCARG(&cup, flags) |= MAP_FIXED;
 	SCARG(&cup, fd) = -1;
 	SCARG(&cup, pos) = 0;
 
-	if ((error = sys_mmap(p, &cup, &rep.rep_address)) != 0) {
-		DPRINTF(("vm_allocate: failed, error = %d, retry.\n", error));
-		if ((uvm_map_findspace(&p->p_vmspace->vm_map,
-		    (u_long)NULL, req.req_size,
-		    (void *)&SCARG(&cup, addr), NULL, 0, PAGE_SIZE, 
-		    0)) != NULL) {
-			error = sys_mmap(p, &cup, &rep.rep_address);
-		}
-		if (error != 0)
-			return MACH_MSG_ERROR(msgh, &req, &rep, error);
-	}
+	if ((error = sys_mmap(p, &cup, &rep.rep_address)) != 0) 
+		return MACH_MSG_ERROR(msgh, &req, &rep, error);
 	DPRINTF(("vm_allocate: success at %p\n", (void *)rep.rep_address));
 
+out:
 	rep.rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
 	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
