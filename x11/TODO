@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.1.1.1 2003/09/12 07:47:26 lukem Exp $
+$NetBSD: TODO,v 1.2 2003/09/12 16:27:27 lukem Exp $
 
 
 clean up XTODO issues
@@ -21,6 +21,3 @@ to
 
 consider symlinking various dirs in lib/X11 -> /etc/X11, and only
 install the files on "distribution" ?
-
-
-MKSHARE=no support for fonts (et al)
