@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.120 2003/09/10 16:44:13 christos Exp $ */
+/* $NetBSD: syscallargs.h,v 1.121 2003/09/11 14:00:22 christos Exp $ */
 
 /*
  * System call argument lists.
@@ -114,6 +114,9 @@ struct compat_43_sys_lseek_args {
 	syscallarg(long) offset;
 	syscallarg(int) whence;
 };
+#ifdef COMPAT_43
+#else
+#endif
 
 struct sys_mount_args {
 	syscallarg(const char *) type;
@@ -130,6 +133,9 @@ struct sys_unmount_args {
 struct sys_setuid_args {
 	syscallarg(uid_t) uid;
 };
+#ifdef COMPAT_43
+#else
+#endif
 
 struct sys_ptrace_args {
 	syscallarg(int) req;
@@ -217,6 +223,7 @@ struct sys_profil_args {
 	syscallarg(u_long) offset;
 	syscallarg(u_int) scale;
 };
+#if defined(KTRACE) || !defined(_KERNEL)
 
 struct sys_ktrace_args {
 	syscallarg(const char *) fname;
@@ -224,12 +231,17 @@ struct sys_ktrace_args {
 	syscallarg(int) facs;
 	syscallarg(int) pid;
 };
+#else
+#endif
 
 struct compat_13_sys_sigaction_args {
 	syscallarg(int) signum;
 	syscallarg(const struct sigaction13 *) nsa;
 	syscallarg(struct sigaction13 *) osa;
 };
+#ifdef COMPAT_43
+#else
+#endif
 
 struct compat_13_sys_sigprocmask_args {
 	syscallarg(int) how;
@@ -685,11 +697,14 @@ struct compat_43_sys_getsockname_args {
 	syscallarg(caddr_t) asa;
 	syscallarg(int *) alen;
 };
+#if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
 
 struct sys_nfssvc_args {
 	syscallarg(int) flag;
 	syscallarg(void *) argp;
 };
+#else
+#endif
 
 struct compat_43_sys_getdirentries_args {
 	syscallarg(int) fd;
@@ -731,6 +746,7 @@ struct sys_sysarch_args {
 	syscallarg(int) op;
 	syscallarg(void *) parms;
 };
+#if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(_LP64)
 
 struct compat_10_sys_semsys_args {
 	syscallarg(int) which;
@@ -739,6 +755,9 @@ struct compat_10_sys_semsys_args {
 	syscallarg(int) a4;
 	syscallarg(int) a5;
 };
+#else
+#endif
+#if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(_LP64)
 
 struct compat_10_sys_msgsys_args {
 	syscallarg(int) which;
@@ -748,6 +767,9 @@ struct compat_10_sys_msgsys_args {
 	syscallarg(int) a5;
 	syscallarg(int) a6;
 };
+#else
+#endif
+#if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(_LP64)
 
 struct compat_10_sys_shmsys_args {
 	syscallarg(int) which;
@@ -755,6 +777,8 @@ struct compat_10_sys_shmsys_args {
 	syscallarg(int) a3;
 	syscallarg(int) a4;
 };
+#else
+#endif
 
 struct sys_pread_args {
 	syscallarg(int) fd;
@@ -775,10 +799,13 @@ struct sys_pwrite_args {
 struct sys_ntp_gettime_args {
 	syscallarg(struct ntptimeval *) ntvp;
 };
+#if defined(NTP) || !defined(_KERNEL)
 
 struct sys_ntp_adjtime_args {
 	syscallarg(struct timex *) tp;
 };
+#else
+#endif
 
 struct sys_setgid_args {
 	syscallarg(gid_t) gid;
@@ -791,6 +818,7 @@ struct sys_setegid_args {
 struct sys_seteuid_args {
 	syscallarg(uid_t) euid;
 };
+#if defined(LFS) || !defined(_KERNEL)
 
 struct sys_lfs_bmapv_args {
 	syscallarg(fsid_t *) fsidp;
@@ -813,6 +841,8 @@ struct sys_lfs_segwait_args {
 	syscallarg(fsid_t *) fsidp;
 	syscallarg(struct timeval *) tv;
 };
+#else
+#endif
 
 struct compat_12_sys_stat_args {
 	syscallarg(const char *) path;
@@ -927,6 +957,10 @@ struct sys_poll_args {
 	syscallarg(u_int) nfds;
 	syscallarg(int) timeout;
 };
+#if defined(LKM) || !defined(_KERNEL)
+#else	/* !LKM */
+#endif	/* !LKM */
+#if defined(SYSVSEM) || !defined(_KERNEL)
 
 struct compat_14_sys___semctl_args {
 	syscallarg(int) semid;
@@ -950,6 +984,9 @@ struct sys_semop_args {
 struct sys_semconfig_args {
 	syscallarg(int) flag;
 };
+#else
+#endif
+#if defined(SYSVMSG) || !defined(_KERNEL)
 
 struct compat_14_sys_msgctl_args {
 	syscallarg(int) msqid;
@@ -976,6 +1013,9 @@ struct sys_msgrcv_args {
 	syscallarg(long) msgtyp;
 	syscallarg(int) msgflg;
 };
+#else
+#endif
+#if defined(SYSVSHM) || !defined(_KERNEL)
 
 struct sys_shmat_args {
 	syscallarg(int) shmid;
@@ -998,6 +1038,8 @@ struct sys_shmget_args {
 	syscallarg(size_t) size;
 	syscallarg(int) shmflg;
 };
+#else
+#endif
 
 struct sys_clock_gettime_args {
 	syscallarg(clockid_t) clock_id;
@@ -1058,6 +1100,7 @@ struct sys___sigtimedwait_args {
 	syscallarg(siginfo_t *) info;
 	syscallarg(struct timespec *) timeout;
 };
+#if defined(P1003_1B_SEMAPHORE) || !defined(_KERNEL)
 
 struct sys__ksem_init_args {
 	syscallarg(unsigned int) value;
@@ -1100,6 +1143,8 @@ struct sys__ksem_getvalue_args {
 struct sys__ksem_destroy_args {
 	syscallarg(semid_t) id;
 };
+#else
+#endif
 
 struct sys___posix_rename_args {
 	syscallarg(const char *) from;
@@ -1192,6 +1237,7 @@ struct sys___clone_args {
 	syscallarg(int) flags;
 	syscallarg(void *) stack;
 };
+#if defined(KTRACE) || !defined(_KERNEL)
 
 struct sys_fktrace_args {
 	syscallarg(const int) fd;
@@ -1199,6 +1245,8 @@ struct sys_fktrace_args {
 	syscallarg(int) facs;
 	syscallarg(int) pid;
 };
+#else
+#endif
 
 struct sys_preadv_args {
 	syscallarg(int) fd;
@@ -1235,14 +1283,17 @@ struct sys___sigprocmask14_args {
 struct sys___sigsuspend14_args {
 	syscallarg(const sigset_t *) set;
 };
+#if defined(__HAVE_SIGINFO)
 
 struct compat_16_sys___sigreturn14_args {
 	syscallarg(struct sigcontext *) sigcntxp;
 };
+#else
 
 struct sys___sigreturn14_args {
 	syscallarg(struct sigcontext *) sigcntxp;
 };
+#endif
 
 struct sys___getcwd_args {
 	syscallarg(char *) bufp;
@@ -1267,6 +1318,7 @@ struct sys_fhstatfs_args {
 	syscallarg(const fhandle_t *) fhp;
 	syscallarg(struct statfs *) buf;
 };
+#if defined(SYSVSEM) || !defined(_KERNEL)
 
 struct sys_____semctl13_args {
 	syscallarg(int) semid;
@@ -1274,18 +1326,26 @@ struct sys_____semctl13_args {
 	syscallarg(int) cmd;
 	syscallarg(union __semun *) arg;
 };
+#else
+#endif
+#if defined(SYSVMSG) || !defined(_KERNEL)
 
 struct sys___msgctl13_args {
 	syscallarg(int) msqid;
 	syscallarg(int) cmd;
 	syscallarg(struct msqid_ds *) buf;
 };
+#else
+#endif
+#if defined(SYSVSHM) || !defined(_KERNEL)
 
 struct sys___shmctl13_args {
 	syscallarg(int) shmid;
 	syscallarg(int) cmd;
 	syscallarg(struct shmid_ds *) buf;
 };
+#else
+#endif
 
 struct sys_lchflags_args {
 	syscallarg(const char *) path;
