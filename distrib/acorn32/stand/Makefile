@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2002/05/11 15:56:03 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.2.2.1 2002/07/15 17:22:16 thorpej Exp $
 #
 
 # we use compressed tar, SparkPlug doesn't handle gzipped tar
@@ -17,6 +17,8 @@ tmp/BtNetBSD:
 	rm -rf tmp
 	mkdir tmp
 	cp -R ${.CURDIR}/BtNetBSD tmp/
+	cp ${KERNOBJDIR}/INSTALL/netbsd tmp/BtNetBSD/InstKern
+	${MDSETIMAGE} tmp/BtNetBSD/InstKern ${.OBJDIR}/../ramdisk/ramdisk.fs
 	find tmp -path '*/CVS/*' -type f -exec rm -rf {} \;
 	find tmp -name CVS -type d | xargs rmdir
 	find tmp -name '*.uue' | while read filename; do \
@@ -33,3 +35,5 @@ clean:
 .include <bsd.subdir.mk>
 
 .include <bsd.obj.mk>
+.include <bsd.kernobj.mk>
+

@@ -1,5 +1,5 @@
 REM > bb_NetBSD
-REM $NetBSD: bb_netbsd,v 1.1.1.1 2002/05/09 20:03:57 jdolecek Exp $
+REM $NetBSD: bb_netbsd,v 1.1.1.1.2.1 2002/07/15 17:22:17 thorpej Exp $
 REM
 REM Copyright (c) 1995 Mark Brinicombe
 REM All rights reserved
@@ -74,18 +74,19 @@ PRINT "Old boot block saved in <Wimp$ScrapDir>.OldBB"
 REM Get the byte size of the filecore partition and the number
 REM of bytes per cylinder
 
-size%=buf%!&1d0
-clsize%=buf%?&1c2 * buf%?&1c1 * (1 << buf%?&1c0)
+size=buf%!&1d0
+clsize=buf%?&1c2 * buf%?&1c1 * (1 << buf%?&1c0)
 
 REM A bit of info to the user
 
-PRINT "Filecore partition size = ";~size%;" bytes"
+PRINT "Filecore partition size = ";~size;" bytes"
 
 REM Convert the size into cylinders
 
-size% = (size% + clsize% - 1) / clsize%
+size = (size + clsize - 1) / clsize
+size = INT(size+0.5)
 
-PRINT "Filecore partition size = ";size%; " cylinders (0-";size%-1;")"
+PRINT "Filecore partition size = ";size; " cylinders (0-";size-1;")"
 
 REM We should be clever about here and read the real geometry
 REM of the disc so that we know the maximum cylinder number
@@ -96,8 +97,8 @@ INPUT "NetBSD Starting Cyl "c%
 
 REM Make sure it is after the filecore partition
 
-IF (c% < size%) THEN
-  PRINT "Filecore occupies cylinders upto ";size%-1
+IF (c% < size) THEN
+  PRINT "Filecore occupies cylinders upto ";size-1
   INPUT "Are you sure you mean this value "a$
   IF (a$ <> "yes" AND a$ <> "YES") THEN END
   PRINT "This will allow NetBSD to overwrite part of the ADFS partition"

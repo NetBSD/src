@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2002/05/09 20:22:26 jdolecek Exp $
+# $NetBSD: Makefile,v 1.15.2.1 2002/07/15 17:22:14 thorpej Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -9,7 +9,5 @@ TARGETS+=	release
 release: check_RELEASEDIR
 	${RELEASE_INSTALL} ${DISTRIBDIR}/notes/acorn32/prep.RISCOS \
 		    ${RELEASEDIR}/
-	uudecode < ${.CURDIR}/gzip_ff8.bin.uue && \
-		mv -f gzip_ff8.bin ${RELEASEDIR}/installation/misc/
 
 .include <bsd.subdir.mk>
