@@ -1,4 +1,4 @@
-#	$NetBSD: disktab,v 1.9 2002/04/09 12:40:41 tron Exp $
+#	$NetBSD: disktab,v 1.10 2002/04/09 14:11:29 tron Exp $
 #
 #	from: @(#)disktab	8.1 (Berkeley) 6/9/93
 #
@@ -234,10 +234,3 @@ fu2624fa|FU2624FA|Fujitsu 2624FA:\
         :pf#432132:of#583680:bf#8192:ff#1024:\
         :pg#851972:og#163840:bg#8192:fg#1024:\
         :ph#0:oh#0:bh#8192:fh#1024:
-
-# This entry is required for the FFS regression test.
-floppy288|2.88MB 3.5in Extra High Density Floppy:\
-	:ty=floppy:se#512:nt#2:rm#300:ns#36:nc#80:\
-	:pa#5760:oa#0:ba#4096:fa#512:ta=4.2BSD:\
-	:pb#5760:ob#0:\
-	:pc#5760:oc#0:
