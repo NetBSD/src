@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.45 2001/06/08 04:16:28 mrg Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.46 2001/07/01 16:23:42 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.45 2001/06/08 04:16:28 mrg Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.46 2001/07/01 16:23:42 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,6 +109,13 @@ __RCSID("$NetBSD: syslogd.c,v 1.45 2001/06/08 04:16:28 mrg Exp $");
 
 #define SYSLOG_NAMES
 #include <sys/syslog.h>
+
+#ifdef LIBWRAP
+#include <tcpd.h>
+
+int allow_severity = LOG_AUTH|LOG_INFO;
+int deny_severity = LOG_AUTH|LOG_WARNING;
+#endif
 
 char	*ConfFile = _PATH_LOGCONF;
 char	ctty[] = _PATH_CONSOLE;
@@ -420,17 +427,37 @@ main(argc, argv)
 			for (j = 0; j < *finet; j++) {
 		    		if (readfds[nfinetix[j]].revents &
 				    (POLLIN | POLLPRI)) {
+#ifdef LIBWRAP
+					struct request_info req;
+#endif
+					int reject = 0;
+
 					dprintf("inet socket active\n");
+
+#ifdef LIBWRAP
+					request_init(&req, RQ_DAEMON, "syslogd",
+					    RQ_FILE, finet[j + 1], NULL);
+					fromhost(&req);
+					reject = !hosts_access(&req);
+					if (reject)
+						dprintf("access denied\n");
+#endif
+
 					len = sizeof(frominet);
 					i = recvfrom(finet[j+1], line, MAXLINE,
 					    0, (struct sockaddr *)&frominet,
 					    &len);
-					if (i > 0) {
-						line[i] = '\0';
+					if (i == 0 || (i < 0 && errno == EINTR))
+						continue;
+					else if (i < 0) {
+						logerror("recvfrom inet");
+						continue;
+					}
+
+					line[i] = '\0';
+					if (!reject)
 						printline(cvthname(&frominet),
 						    line);
-					} else if (i < 0 && errno != EINTR)
-						logerror("recvfrom inet");
 				}
 			}
 		}
