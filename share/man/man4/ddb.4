@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.71 2003/09/20 15:15:39 thorpej Exp $
+.\"	$NetBSD: ddb.4,v 1.72 2003/09/21 15:18:33 wiz Exp $
 .\"
 .\" Copyright (c) 1997 - 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,7 +63,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd July 2, 2003
+.Dd September 20, 2003
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -669,7 +669,7 @@ For each run queue that has an LWP, the run queue index and the list
 of LWPs will be shown.
 If the run queue has LWPs, but the sched_whichqs bit is not set for that
 queue, the queue index will be prefixed with a
-.Sq ! .
+.Sq \&! .
 .It Ic "show uvmexp"
 Print a selection of UVM counters and statistics.
 .It Xo
