@@ -1,4 +1,4 @@
-/*	$NetBSD: supio.h,v 1.1.2.2 1997/09/01 20:06:42 thorpej Exp $ */
+/*	$NetBSD: supio.h,v 1.1.2.3 1997/09/22 06:30:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Ignatios Souvatzis
@@ -39,4 +39,6 @@ struct supio_attach_args {
 	bus_space_tag_t	 supio_iot;
 	char		*supio_name;
 	int		 supio_iobase;
+	int		 supio_ipl;
+	int		 supio_arg;
 };

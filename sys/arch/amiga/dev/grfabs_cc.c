@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_cc.c,v 1.16 1997/06/10 18:30:28 veego Exp $	*/
+/*	$NetBSD: grfabs_cc.c,v 1.16.4.1 1997/09/22 06:30:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -76,6 +76,7 @@ dmdata_t paga_mode_data;
 cop_t *paga_frames[F_TOTAL];
 dmode_t *paga_this;
 dmdata_t *paga_this_data;
+
 #  endif /* GRF_AGA */
 
 dmode_t pal_hires_lace_mode;
@@ -113,6 +114,15 @@ dmdata_t aga_mode_data;
 cop_t *aga_frames[F_TOTAL];
 dmode_t *aga_this;
 dmdata_t *aga_this_data;
+
+#if defined (GRF_SUPER72)
+dmode_t super72_mode;
+dmdata_t super72_mode_data;
+cop_t *super72_frames[F_LACE_TOTAL];
+dmode_t *super72_this;
+dmdata_t *super72_this_data;
+#endif /* GRF_SUPER72 */
+
 #  endif /* GRF_AGA */
 
 dmode_t hires_lace_mode;
@@ -370,6 +380,9 @@ dmode_t *(*mode_init_funcs[]) (void) = {
 	cc_init_ntsc_hires,
 #if defined (GRF_AGA)
 	cc_init_ntsc_aga,
+#if defined (GRF_SUPER72)
+	cc_init_super72,
+#endif /* GRF_SUPER72 */
 #endif /* GRF_AGA */
 #endif /* GRF_NTSC */
 #if defined (GRF_PAL)
@@ -2103,6 +2116,295 @@ display_aga_view(v)
 		aga_enable |= AGA_TRACE2;	/* XXXX */
 #endif
 }
+
+/*
+ * SUPER72 Mode
+ */
+
+#if defined (GRF_SUPER72)
+dmode_t *
+cc_init_super72()
+{
+	/* this function should only be called once. */
+	if (!super72_this && (custom.deniseid & 0xff) == 0xf8) {
+		u_short len = aga_copper_list_len;
+
+		super72_this = &super72_mode;
+		super72_this_data = &super72_mode_data;
+		bzero(super72_this, sizeof(dmode_t));
+		bzero(super72_this_data, sizeof(dmdata_t));
+
+		super72_this->name = "super72: superhires interlace";
+		super72_this->nominal_size.width = 800;
+		super72_this->nominal_size.height = 600;
+		super72_this_data->max_size.width = 848;
+		super72_this_data->max_size.height = 614;
+		super72_this_data->min_size.width = 320;
+		super72_this_data->min_size.height = 484;
+		super72_this_data->min_depth = 1;
+		super72_this_data->max_depth = 8;
+		super72_this->data = super72_this_data;
+
+		super72_this->get_monitor = cc_get_monitor;
+		super72_this->alloc_view = cc_alloc_view;
+		super72_this->get_current_view = cc_get_current_view;
+
+		super72_this_data->use_colormap = cc_use_aga_colormap;
+		super72_this_data->get_colormap = cc_get_colormap;
+		super72_this_data->alloc_colormap = cc_alloc_aga_colormap;
+		super72_this_data->display_view = display_super72_view;
+		super72_this_data->monitor = cc_monitor;
+
+		super72_this_data->flags |= DMF_INTERLACE;
+
+		super72_this_data->frames = super72_frames;	/* MAY NEED TO CHANGE COPLIST */
+		super72_this_data->frames[F_LACE_LONG] =
+		    alloc_chipmem(aga_copper_list_size * F_LACE_TOTAL);
+		if (!super72_this_data->frames[F_LACE_LONG]) {
+			panic("couldn't get chipmem for copper list");
+		}
+		super72_this_data->frames[F_LACE_SHORT] =
+		    &super72_this_data->frames[F_LACE_LONG][len];
+		super72_this_data->frames[F_LACE_STORE_LONG] =
+		    &super72_this_data->frames[F_LACE_SHORT][len];
+		super72_this_data->frames[F_LACE_STORE_SHORT] =
+		    &super72_this_data->frames[F_LACE_STORE_LONG][len];
+
+		bcopy(aga_copper_list,
+		    super72_this_data->frames[F_LACE_STORE_LONG],
+		    aga_copper_list_size);
+		bcopy(aga_copper_list,
+		    super72_this_data->frames[F_LACE_STORE_SHORT],
+		    aga_copper_list_size);
+		bcopy(aga_copper_list,
+		    super72_this_data->frames[F_LACE_LONG],
+		    aga_copper_list_size);
+		bcopy(aga_copper_list,
+		    super72_this_data->frames[F_LACE_SHORT],
+		    aga_copper_list_size);
+
+		super72_this_data->bplcon0 = 0x0244 | USE_CON3;	/* color
+								 * composite enable,
+								 * shres
+								 * lace. */
+#if 0	/* patchable variables for testing */
+		super72_this_data->std_start_x = 0x6c;
+		super72_this_data->std_start_y = 0x1b;
+#endif
+		super72_this_data->vbl_handler =
+		    (vbl_handler_func *) cc_lace_mode_vbl_handler;
+		super72_this_data->beamcon0 = (SPECIAL_BEAMCON ^ VSYNCTRUE) |
+		    DISPLAYPAL | 0x4000;
+		super72_this_data->beamcon0 = 0x5bb0;
+
+		LIST_INSERT_HEAD(&MDATA(cc_monitor)->modes, super72_this, link);
+	}
+	return (super72_this);
+}
+
+/* Super72 83Hz hack monitor values */
+/*int	super72_htotal = 0x083;
+int	super72_hsstrt = 0x00d;
+int	super72_hsstop = 0x01b;
+int	super72_hbstrt = 0x001;
+int	super72_hbstop = 0x021;
+int	super72_vtotal = 0x148;
+int	super72_vsstrt = 0x2d5;
+int	super72_vsstop = 0x3ca;
+int	super72_vbstrt = 0x000;
+int	super72_vbstop = 0xfdc;
+int	super72_hcenter = 0x04e;
+*/
+
+/* Super72 standard monitor values */
+int	super72_htotal = 154;	/* 0x099*/
+int	super72_hsstrt = 17;	/* 0x01c*/
+int	super72_hsstop = 27;	/* 0x038*/
+int	super72_hbstrt = 154;	/* 0x008*/
+int	super72_hbstop = 55;	/* 0x01e*/
+int	super72_vtotal = 328;	/* 0x147*/
+int	super72_vsstrt = 11;	/* 0x030*/
+int	super72_vsstop = 18;	/* 0x033*/
+int	super72_vbstrt = 327;	/* 0x000*/
+int	super72_vbstop = 27;	/* 0x019*/
+int	super72_hcenter = 94;	/* 0x057*/
+int	super72_startx = 100;
+int	super72_starty = 27;
+
+void
+display_super72_view(v)
+	view_t *v;
+{
+	if (super72_this_data->current_view != v) {
+		vdata_t *vd = VDATA(v);
+		cop_t  *cp = super72_this_data->frames[F_LACE_STORE_LONG], *tmp;
+		int     depth = v->bitmap->depth, i;
+		int     hstart, hstop, vstart, vstop, j;
+		int     x, y, w = v->display.width, h = v->display.height;
+		u_short ddfstart, ddfwidth, con1;
+
+		/* round down to nearest even width */
+		/* w &= 0xfffe; */
+
+		/* calculate datafetch width. */
+		ddfwidth = ((v->bitmap->bytes_per_row >> 1) - 4) << 1;
+
+		/* This will center any overscanned display */
+		/* and allow user to modify. */
+		x = (v->display.x >> 1) + super72_startx - ((w - 800) >> 3);
+		y = v->display.y + super72_starty - ((h - 600) >> 2);
+
+		hstart = x;
+		hstop = x + (w >> 2);
+		vstart = y;
+		vstop = y + (h >> 1);
+		ddfstart = (hstart >> 1) - 16;
+
+		ddfstart = (hstart << 2) - 4;
+		con1 = ddfstart & 63;
+		ddfstart = (ddfstart & -64) - 64;
+		ddfwidth = ((w + 64 - 1) & -64) - 64;
+		ddfwidth = ddfwidth >> 3;
+		ddfstart = ddfstart >> 3;
+		super72_hbstrt = ((x << 2) + w + 4) >> 3;
+		super72_hbstop = (hstart + 1) >> 1;
+		super72_vbstrt = vstop;
+		super72_vbstop = vstart - 2;
+
+		if ((hstop >> 1) > super72_htotal) {
+			int     d;
+
+			d = (hstop >> 1) - super72_htotal;
+			ddfstart -= d;
+			hstart -= d << 1;
+			hstop -= d << 1;
+		}
+		if (vstop >= super72_vtotal) {
+			int	d;
+			d = (vstop - super72_vtotal + 1);
+			vstart -= d;
+			vstop -= d;
+		}
+		con1 = ((con1 >> 2) & 0x000f) |		/* PF1H2-PF1H5 */
+		       ((con1 << 8) & 0x0300) |		/* PF1H0-PF1H2 */
+		       ((con1 << 4) & 0x0c00);		/* PF1H6-PF1H7 */
+		con1 |= con1 << 4;			/* PF2H2-PF2H7 */
+
+		if (super72_this_data->current_view) {
+			VDATA(super72_this_data->current_view)->flags &=
+			    ~VF_DISPLAY;	/* mark as no longer */
+						/* displayed. */
+		}
+		super72_this_data->current_view = v;
+
+		cp = super72_this_data->frames[F_LACE_STORE_LONG];
+		tmp = find_copper_inst(cp, CI_MOVE(R_FMODE));
+		tmp->cp.inst.operand = 0x8003;
+		tmp = find_copper_inst(cp, CI_MOVE(R_HTOTAL));
+		tmp->cp.inst.operand = super72_htotal; 
+		tmp = find_copper_inst(cp, CI_MOVE(R_HBSTRT));
+		tmp->cp.inst.operand = super72_hbstrt; 
+		tmp = find_copper_inst(cp, CI_MOVE(R_HSSTRT));
+		tmp->cp.inst.operand = super72_hsstrt; 
+		tmp = find_copper_inst(cp, CI_MOVE(R_HSSTOP));
+		tmp->cp.inst.operand = super72_hsstop; 
+		tmp = find_copper_inst(cp, CI_MOVE(R_HBSTOP));
+		tmp->cp.inst.operand = super72_hbstop; 
+		tmp = find_copper_inst(cp, CI_MOVE(R_HCENTER));
+		tmp->cp.inst.operand = super72_hcenter;
+		tmp = find_copper_inst(cp, CI_MOVE(R_VBSTRT));
+		tmp->cp.inst.operand = super72_vbstrt; 
+		tmp = find_copper_inst(cp, CI_MOVE(R_VSSTRT));
+		tmp->cp.inst.operand = super72_vsstrt; 
+		tmp = find_copper_inst(cp, CI_MOVE(R_VSSTOP));
+		tmp->cp.inst.operand = super72_vsstop; 
+		tmp = find_copper_inst(cp, CI_MOVE(R_VBSTOP));
+		tmp->cp.inst.operand = super72_vbstop; 
+		tmp = find_copper_inst(cp, CI_MOVE(R_VTOTAL));
+		tmp->cp.inst.operand = super72_vtotal;
+
+		tmp = find_copper_inst(cp, CI_MOVE(R_BEAMCON0));
+		tmp->cp.inst.operand = super72_this_data->beamcon0;
+		tmp = find_copper_inst(cp, CI_MOVE(R_DIWHIGH));
+		tmp->cp.inst.operand =
+		    CALC_DIWHIGH(hstart, vstart, hstop, vstop);
+		tmp = find_copper_inst(cp, CI_MOVE(R_BPLCON0));
+		tmp->cp.inst.operand = super72_this_data->bplcon0 |
+		    ((depth & 0x7) << 12) | ((depth & 0x8) << 1);
+		tmp = find_copper_inst(cp, CI_MOVE(R_BPLCON1));
+		tmp->cp.inst.operand = con1;
+		tmp = find_copper_inst(cp, CI_MOVE(R_DIWSTART));
+		tmp->cp.inst.operand = ((vstart & 0xff) << 8) | (hstart & 0xff);
+		tmp = find_copper_inst(cp, CI_MOVE(R_DIWSTOP));
+		tmp->cp.inst.operand = ((vstop & 0xff) << 8) | (hstop & 0xff);
+		tmp = find_copper_inst(cp, CI_MOVE(R_DDFSTART));
+		tmp->cp.inst.operand = ddfstart;
+		tmp = find_copper_inst(cp, CI_MOVE(R_DDFSTOP));
+		tmp->cp.inst.operand = ddfstart + ddfwidth;
+
+		tmp = find_copper_inst(cp, CI_MOVE(R_BPL0PTH));
+		for (i = 0, j = 0; i < depth; j += 2, i++) {
+			/* update the plane pointers */
+			tmp[j].cp.inst.operand =
+			    HIADDR(PREP_DMA_MEM(v->bitmap->plane[i]));
+			tmp[j + 1].cp.inst.operand =
+			    LOADDR(PREP_DMA_MEM(v->bitmap->plane[i]));
+		}
+
+		/* set mods correctly. */
+		tmp = find_copper_inst(cp, CI_MOVE(R_BPL1MOD));
+		tmp[0].cp.inst.operand = v->bitmap->bytes_per_row +
+		    v->bitmap->row_mod;
+		tmp[1].cp.inst.operand = v->bitmap->bytes_per_row +
+		    v->bitmap->row_mod;
+
+		/* set next pointers correctly */
+		tmp = find_copper_inst(cp, CI_MOVE(R_COP1LCH));
+		tmp[0].cp.inst.operand =
+		    HIADDR(PREP_DMA_MEM(super72_this_data->frames[F_LACE_STORE_SHORT]));
+		tmp[1].cp.inst.operand =
+		    LOADDR(PREP_DMA_MEM(super72_this_data->frames[F_LACE_STORE_SHORT]));
+
+		bcopy(super72_this_data->frames[F_LACE_STORE_LONG],
+		    super72_this_data->frames[F_LACE_STORE_SHORT],
+		    aga_copper_list_size);
+
+		/* these are the only ones that are different from long frame. */
+		cp = super72_this_data->frames[F_LACE_STORE_SHORT];
+		tmp = find_copper_inst(cp, CI_MOVE(R_BPL0PTH));
+		for (i = 0, j = 0; i < depth; j += 2, i++) {
+			u_short mod = v->bitmap->bytes_per_row +
+			    v->bitmap->row_mod;
+			/* update plane pointers. high and low. */
+			tmp[j].cp.inst.operand =
+			    HIADDR(PREP_DMA_MEM(&v->bitmap->plane[i][mod]));
+			tmp[j + 1].cp.inst.operand =
+			    LOADDR(PREP_DMA_MEM(&v->bitmap->plane[i][mod]));
+		}
+
+		/* set next pointers correctly */
+		tmp = find_copper_inst(cp, CI_MOVE(R_COP1LCH));
+		tmp[0].cp.inst.operand =
+		    HIADDR(PREP_DMA_MEM(super72_this_data->frames[F_LACE_STORE_LONG]));
+		tmp[1].cp.inst.operand =
+		     LOADDR(PREP_DMA_MEM(super72_this_data->frames[F_LACE_STORE_LONG]));
+
+		cp = super72_this_data->frames[F_LACE_LONG];
+		super72_this_data->frames[F_LACE_LONG] =
+		    super72_this_data->frames[F_LACE_STORE_LONG];
+		super72_this_data->frames[F_LACE_STORE_LONG] = cp;
+
+		cp = super72_this_data->frames[F_LACE_SHORT];
+		super72_this_data->frames[F_LACE_SHORT] =
+		    super72_this_data->frames[F_LACE_STORE_SHORT];
+		super72_this_data->frames[F_LACE_STORE_SHORT] = cp;
+
+		vd->flags |= VF_DISPLAY;
+		cc_use_aga_colormap(v, vd->colormap);
+	}
+	cc_load_mode(super72_this);
+}
+#endif /* GRF_SUPER72 */
 
 #endif /* GRF_AGA */
 #endif /* GRF_NTSC */

@@ -1,4 +1,4 @@
-/* $NetBSD: db_instruction.h,v 1.1.2.2 1997/09/06 17:59:39 thorpej Exp $ */
+/* $NetBSD: db_instruction.h,v 1.1.2.3 1997/09/22 06:29:58 thorpej Exp $ */
 
 /* 
  * Mach Operating System
@@ -159,9 +159,11 @@ typedef union {
 					/* 1..7 reserved */
 #define	op_lda		0x08
 #define	op_ldah		0x09
-					/* reserved */
+#define	op_ldbu		0x0a
 #define	op_ldq_u	0x0b
-					/* c..e reserved */
+#define	op_ldwu		0x0c
+#define	op_stw		0x0d
+#define	op_stb		0x0e
 #define	op_stq_u	0x0f
 
 #define	op_arit		0x10		/* see ARIT sub-table */
@@ -177,7 +179,7 @@ typedef union {
 #define	op_pal19	0x19		/* reserved for pal code */
 #define	op_j		0x1a		/* see JUMP sub-table */
 #define	op_pal1b	0x1b		/* reserved for pal code */
-					/* reserved */
+#define	op_intmisc	0x1c		/* see INTMISC sub-table */
 #define	op_pal1d	0x1d		/* reserved for pal code */
 #define	op_pal1e	0x1e		/* reserved for pal code */
 #define	op_pal1f	0x1f		/* reserved for pal code */
@@ -222,38 +224,7 @@ typedef union {
  * that we probably have to support for compat reasons.
  */
 
-#define	op_bpt		0x0080
-#define	op_chmk		0x0083
-#define	op_imb		0x0086
-#define	op_rei		0x0092
-
-/*
- * Privileged ones
- */
-
-#define	op_halt		0x0000
-#define	op_ldqp		0x0003
-#define	op_stqp		0x0004
-#define	op_swpctxt	0x0005
-/*#define op_swppal	0x000a */
-#define	op_mtpr_fen	0x000c
-#define	op_mtpr_ipir	0x000d
-#define	op_mfpr_ipl	0x000e
-#define	op_mtpr_ipl	0x000f
-#define	op_mfpr_mces	0x0010
-#define	op_mtpr_mces	0x0011
-#define	op_mfpr_prbr	0x0013
-#define	op_mtpr_prbr	0x0014
-#define	op_mfpr_ptbr	0x0015
-#define	op_mtpr_scbb	0x0017
-#define	op_mtpr_sirr	0x0018
-#define	op_mtpr_tbia	0x001b
-#define	op_mtpr_tbiap	0x001c
-#define	op_mtpr_tbis	0x001d
-#define	op_mfpr_usp	0x0022
-#define	op_mtpr_usp	0x0023
-#define	op_mfpr_whami	0x003f
-
+/* See <machine/pal.h> */
 
 		/* ARIT, "function" opcodes (bits 5..11)  */
 
@@ -295,8 +266,10 @@ typedef union {
 #define	op_cmovlt	0x44
 #define	op_cmovge	0x46
 #define	op_xornot	0x48	/* eqv */
+#define	op_amask	0x61
 #define	op_cmovle	0x64
 #define	op_cmovgt	0x66
+#define	op_implver	0x6c
 
 		/* BIT, "function" opcodes (bits 5..11)  */
 
@@ -353,6 +326,28 @@ typedef union {
 #define	op_ret		0x2
 #define	op_jcr		0x3
 
+		/* INTMISC, "function" opcodes (operate format) */
+
+#define	op_sextb	0x00
+#define	op_sextw	0x01
+#define	op_ctpop	0x30
+#define	op_perr		0x31
+#define	op_ctlz		0x32
+#define	op_cttz		0x33
+#define	op_unpkbw	0x34
+#define	op_unpkbl	0x35
+#define	op_pkwb		0x36
+#define	op_pklb		0x37
+#define	op_minsb8	0x38
+#define	op_minsw4	0x39
+#define	op_minub8	0x3a
+#define	op_minuw4	0x3b
+#define	op_maxub8	0x3c
+#define	op_maxuw4	0x3d
+#define	op_maxsb8	0x3e
+#define	op_maxsw4	0x3f
+#define	op_ftoit	0x70
+#define	op_ftois	0x78
 
 /*
  *

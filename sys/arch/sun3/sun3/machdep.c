@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.95.2.2 1997/09/16 03:49:32 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.95.2.3 1997/09/22 06:32:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -106,8 +106,7 @@ extern char etext[];
 
 int	physmem;
 int	fputype;
-int	msgbufmapped;
-struct msgbuf *msgbufp;
+caddr_t	msgbufaddr;
 
 vm_offset_t vmmap;
 
@@ -252,8 +251,8 @@ cpu_startup()
 	 * Also, offset some to avoid PROM scribbles.
 	 */
 	v = (caddr_t) KERNBASE;
-	msgbufp = (struct msgbuf *)(v + 0x1000);
-	msgbufmapped = 1;
+	msgbufaddr = (caddr_t)(v + 0x1000);
+	initmsgbuf(msgbufaddr, MSGBUFSIZE);
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
@@ -412,7 +411,6 @@ setregs(p, pack, stack)
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
 	if (fputype)
 		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
-
 	p->p_md.md_flags = 0;
 }
 

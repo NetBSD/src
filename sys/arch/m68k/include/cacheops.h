@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops.h,v 1.1 1997/06/02 20:26:37 leo Exp $	*/
+/*	$NetBSD: cacheops.h,v 1.1.4.1 1997/09/22 06:31:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@
 #define	DCIU()		DCIU_40()
 #define	DCIAS(va)	DCIAS_40((va))
 #define	PCIA()		PCIA_40()
+#define	DCFA()		DCFA_40()
 #define	ICPL(va)	ICPL_40((va))
 #define	ICPP(va)	ICPP_40((va))
 #define	DCPL(va)	DCPL_40((va))
@@ -106,6 +107,7 @@
 #define	DCIU()		DCIU_60()
 #define	DCIAS(va)	DCIAS_60((va))
 #define	PCIA()		PCIA_60()
+#define	DCFA()		DCFA_60()
 #define	ICPL(va)	ICPL_60((va))
 #define	ICPP(va)	ICPP_60((va))
 #define	DCPL(va)	DCPL_60((va))

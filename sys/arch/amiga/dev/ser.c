@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.39 1996/12/23 09:10:29 veego Exp $	*/
+/*	$NetBSD: ser.c,v 1.39.10.1 1997/09/22 06:30:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -340,6 +340,7 @@ serclose(dev, flag, mode, p)
 {
 	struct tty *tp;
 	int unit;
+	int closebits;
 
 	unit = SERUNIT(dev);
 
@@ -356,14 +357,21 @@ serclose(dev, flag, mode, p)
 	custom.intreq = INTF_RBF | INTF_TBE;		/* clear intr request */
 
 	/*
-	 * If the device is closed, it's close, no matter whether we deal with
-	 * modem control signals nor not.
+	 * If HUPCL is not set, leave DTR unchanged.
 	 */
-#if 0
-	if (tp->t_cflag & HUPCL || tp->t_state & TS_WOPEN ||
-	    (tp->t_state & TS_ISOPEN) == 0)
-#endif
-		(void) sermctl(dev, 0, DMSET);
+	if (tp->t_cflag & HUPCL)
+		closebits = 0;
+	else
+		closebits = sermctl(dev, 0, DMGET) & TIOCM_DTR;
+
+	(void) sermctl(dev, closebits, DMSET);
+
+	/*
+	 * Idea from dev/isa/com.c: 
+	 * sleep a bit so that other side will notice, even if we reopen
+	 * immediately.
+	 */
+	(void) tsleep(tp, TTIPRI, ttclos, hz);
 	ttyclose(tp);
 #if not_yet
 	if (tp != &ser_cons) {
@@ -440,15 +448,15 @@ ser_fastint()
 	if (ints == 0)
 		return;
 
-	/* 
-	 * clear interrupt 
-	 */
-	custom.intreq = ints;
-
 	/*
 	 * this register contains both data and status bits!
 	 */
 	code = custom.serdatr;
+
+	/* 
+	 * clear interrupt 
+	 */
+	custom.intreq = ints;
 
 	/*
 	 * check for buffer overflow.

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.12.2.1 1997/09/16 03:49:03 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.12.2.2 1997/09/22 06:32:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -282,6 +282,7 @@ copyfault:
 		break;
 
 	case T_COPERR:		/* kernel coprocessor violation */
+#endif
 	case T_FMTERR|T_USER:	/* do all RTE errors come in as T_USER? */
 	case T_FMTERR:		/* ...just in case... */
 	/*

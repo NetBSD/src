@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.81.2.4 1997/09/16 03:48:11 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.81.2.5 1997/09/22 06:30:29 thorpej Exp $
 
 #
 # GENERIC AMIGA
@@ -138,6 +138,7 @@ options 	GRF_NTSC	# NTSC
 options 	GRF_PAL		# PAL
 options 	GRF_A2024	# Support for the A2024
 options 	GRF_AGA		# AGA Chip Set
+options 	GRF_SUPER72	# AGA Super-72
 #options 	KFONT_8X11	# 8x11 font
 
 # This is how you would tell the kernel the A2410 oscillator frequencies:

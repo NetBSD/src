@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.9.2.2 1997/09/04 00:53:07 thorpej Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.9.2.3 1997/09/22 06:30:15 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -108,6 +108,17 @@ struct alpha_pcb {
 /* Convenience constants: what must be set/clear in user mode */
 #define	ALPHA_PSL_USERSET	ALPHA_PSL_USERMODE
 #define	ALPHA_PSL_USERCLR	(ALPHA_PSL_MUST_BE_ZERO | ALPHA_PSL_IPL_MASK)
+
+/*
+ * Interrupt Type Code Definitions [OSF/1 PALcode Specific]
+ */
+ 
+#define	ALPHA_INTR_XPROC	0	/* interprocessor interrupt */
+#define	ALPHA_INTR_CLOCK	1	/* clock interrupt */
+#define	ALPHA_INTR_ERROR	2	/* correctable error or mcheck */
+#define	ALPHA_INTR_DEVICE	3	/* device interrupt */
+#define	ALPHA_INTR_PERF		4	/* performance counter */
+#define	ALPHA_INTR_PASSIVE	5	/* passive release */
 
 /*
  * Machine Check Error Summary Register definitions [OSF/1 PALcode Specific]
@@ -253,11 +264,36 @@ typedef unsigned long alpha_pt_entry_t;
 #define	ALPHA_TBIS(va)	alpha_pal_tbi(3, (va))		/* all for va */
 
 /*
+ * Bits used in the amask instruction [EV56 and later]
+ */
+
+#define	ALPHA_AMASK_BWX		0x0001		/* byte/word extension */
+#define	ALPHA_AMASK_CIX		0x0002		/* count extension */
+#define	ALPHA_AMASK_MAX		0x0100		/* multimedia extension */
+
+/*
+ * Chip family IDs returned by implver instruction
+ */
+
+#define	ALPHA_IMPLVER_EV4	0		/* LCA/EV4/EV45 */
+#define	ALPHA_IMPLVER_EV5	1		/* EV5/EV56/PCA56 */
+#define	ALPHA_IMPLVER_EV6	2		/* EV6 */
+
+/*
  * Stubs for Alpha instructions normally inaccessible from C.
  */
+unsigned long	alpha_amask __P((unsigned long));
+unsigned long	alpha_implver __P((void));
 unsigned long	alpha_rpcc __P((void));
 void		alpha_mb __P((void));
 void		alpha_wmb __P((void));
+
+u_int8_t	alpha_ldbu __P((volatile u_int8_t *));
+u_int16_t	alpha_ldwu __P((volatile u_int16_t *));
+void		alpha_stb __P((volatile u_int8_t *, u_int8_t));
+void		alpha_stw __P((volatile u_int16_t *, u_int16_t));
+u_int8_t	alpha_sextb __P((u_int8_t));
+u_int16_t	alpha_sextw __P((u_int16_t));
 
 /*
  * Stubs for OSF/1 PALcode operations.

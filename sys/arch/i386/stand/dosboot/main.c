@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5.2.1 1997/08/23 07:09:26 thorpej Exp $	 */
+/*	$NetBSD: main.c,v 1.5.2.2 1997/09/22 06:31:17 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -46,8 +46,11 @@
 extern void ls  __P((char *));
 extern int getopt __P((int, char **, const char *));
 
+#ifdef SUPPORT_LYNX
+extern int exec_lynx __P((const char*, int));
+#endif
+
 int             errno;
-static char    *consdev;
 
 extern	char bootprog_name[], bootprog_rev[], bootprog_date[],
 	bootprog_maker[];
@@ -59,13 +62,29 @@ static char    *default_devname;
 static int      default_unit, default_partition;
 static char    *default_filename;
 
+void	command_help __P((char *));
+void	command_ls __P((char *));
+void	command_quit __P((char *));
+void	command_boot __P((char *));
+void	command_mode __P((char *));
+
+struct bootblk_command commands[] = {
+	{ "help",	command_help },
+	{ "?",		command_help },
+	{ "ls",		command_ls },
+	{ "quit",	command_quit },
+	{ "boot",	command_boot },
+	{ "mode",	command_mode },
+	{ NULL,		NULL },
+};
+
 int
 parsebootfile(fname, fsmode, devname, unit, partition, file)
 	const char     *fname;
-	char          **fsmode;
-	char          **devname;/* out */
-	unsigned int   *unit, *partition;	/* out */
-	const char    **file;	/* out */
+	char          **fsmode; /* out */
+	char          **devname; /* out */
+	unsigned int   *unit, *partition; /* out */
+	const char    **file; /* out */
 {
 	const char     *col, *help;
 
@@ -75,7 +94,7 @@ parsebootfile(fname, fsmode, devname, unit, partition, file)
 	*partition = default_partition;
 	*file = default_filename;
 
-	if (!fname)
+	if (fname == NULL)
 		return (0);
 
 	if ((col = strchr(fname, ':'))) {	/* device given */
@@ -106,6 +125,7 @@ parsebootfile(fname, fsmode, devname, unit, partition, file)
 				u += fname[i++] - '0';
 			} while (isnum(fname[i]));
 		}
+
 #define isvalidpart(c) ((c) >= 'a' && (c) <= 'z')
 		if (i < devlen) {
 			if (!isvalidpart(fname[i]))
@@ -128,23 +148,25 @@ parsebootfile(fname, fsmode, devname, unit, partition, file)
 	return (0);
 }
 
-static void
-print_bootsel(filename)
-	char           *filename;
+char *sprint_bootsel(filename)
+const char *filename;
 {
-	char           *fsname;
-	char           *devname;
-	int             unit, partition;
-	const char     *file;
-
-	if (!parsebootfile(filename, &fsname, &devname, &unit,
-	    &partition, &file)) {
+	char *fsname, *devname;
+	int unit, partition;
+	const char *file;
+	static char buf[80];
+	
+	if (parsebootfile(filename, &fsname, &devname, &unit,
+			  &partition, &file) == 0) {
 		if (!strcmp(fsname, "dos"))
-			printf("booting %s\n", file);
+			sprintf(buf, "dos:%s", file);
 		else if (!strcmp(fsname, "ufs"))
-			printf("booting %s%d%c:%s\n", devname, unit,
-			       'a' + partition, file);
+			sprintf(buf, "%s%d%c:%s", devname, unit, 'a' + partition, file);
+		else goto bad;
+		return(buf);
 	}
+bad:
+	return("(invalid)");
 }
 
 static void
@@ -152,181 +174,32 @@ bootit(filename, howto, tell)
 	const char     *filename;
 	int             howto, tell;
 {
-	if (tell)
-		print_bootsel(filename);
-
-	if (exec_netbsd(filename, 0, howto, 0, consdev) < 0)
-		printf("boot: %s\n", strerror(errno));
+	if (tell) {
+		printf("booting %s", sprint_bootsel(filename));
+		if (howto)
+			printf(" (howto 0x%x)", howto);
+		printf("\n");
+	}
+#ifdef SUPPORT_LYNX
+	if(exec_netbsd(filename, 0, howto) < 0)
+		printf("boot netbsd: %s: %s\n", sprint_bootsel(filename),
+		       strerror(errno));
+	else {
+		printf("boot netbsd returned\n");
+		return;
+	}
+	if (exec_lynx(filename, 0) < 0)
+		printf("boot lynx: %s: %s\n", sprint_bootsel(filename),
+		       strerror(errno));
+	else
+		printf("boot lynx returned\n");
+#else
+	if (exec_netbsd(filename, 0, howto) < 0)
+		printf("boot: %s: %s\n", sprint_bootsel(filename),
+		       strerror(errno));
 	else
 		printf("boot returned\n");
-}
-
-static void 
-helpme()
-{
-	printf("commands are:\n"
-	       "boot [xdNx:][filename] [-adrs]\n"
-	       "     (ex. \"sd0a:netbsd.old -s\"\n"
-	       "ls [path]\n"
-	       "mode ufs|dos\n"
-	       "help|?\n"
-	       "quit\n");
-}
-
-/*
- * chops the head from the arguments and returns the arguments if any,
- * or possibly an empty string.
- */
-static char    *
-gettrailer(arg)
-	char           *arg;
-{
-	char           *options;
-
-	if ((options = strchr(arg, ' ')) == NULL)
-		options = "";
-	else
-		*options++ = '\0';
-	/* trim leading blanks */
-	while (*options && *options == ' ')
-		options++;
-
-	return (options);
-}
-
-static int
-parseopts(opts, howto)
-	char           *opts;
-	int            *howto;
-{
-	int             tmpopt = 0;
-
-	opts++;			/* skip - */
-	while (*opts && *opts != ' ') {
-		tmpopt |= netbsd_opt(*opts);
-		if (tmpopt == -1) {
-			printf("-%c: unknown flag\n", *opts);
-			helpme();
-			return (0);
-		}
-		opts++;
-	}
-	*howto = tmpopt;
-	return (1);
-}
-
-static int
-parseboot(arg, filename, howto)
-	char           *arg;
-	char          **filename;
-	int            *howto;
-{
-	char           *opts = NULL;
-
-	*filename = 0;
-	*howto = 0;
-
-	/* if there were no arguments */
-	if (!*arg)
-		return (1);
-
-	/* format is... */
-	/* [[xxNx:]filename] [-adrs] */
-
-	/* check for just args */
-	if (arg[0] == '-') {
-		opts = arg;
-	} else {		/* at least a file name */
-		*filename = arg;
-
-		opts = gettrailer(arg);
-		if (!*opts)
-			opts = NULL;
-		else if (*opts != '-') {
-			printf("invalid arguments\n");
-			helpme();
-			return (0);
-		}
-	}
-	/* at this point, we have dealt with filenames. */
-
-	/* now, deal with options */
-	if (opts) {
-		if (!parseopts(opts, howto))
-			return (0);
-	}
-	return (1);
-}
-
-static void
-parsemode(arg, mode)
-	char           *arg;
-	char          **mode;
-{
-	if (!strcmp("dos", arg))
-		*mode = "dos";
-	else if (!strcmp("ufs", arg))
-		*mode = "ufs";
-	else
-		printf("invalid mode\n");
-}
-
-static void
-docommand(arg)
-	char           *arg;
-{
-	char           *options;
-
-	options = gettrailer(arg);
-
-	if ((strcmp("help", arg) == 0) ||
-	    (strcmp("?", arg) == 0)) {
-		helpme();
-		return;
-	}
-	if (strcmp("ls", arg) == 0) {
-		char           *help = default_filename;
-		if (strcmp(current_fsmode, "ufs")) {
-			printf("UFS only\n");
-			return;
-		}
-		default_filename = "/";
-		ls(options);
-		default_filename = help;
-		return;
-	}
-	if (strcmp("quit", arg) == 0) {
-		printf("Exiting... goodbye...\n");
-		exit(0);
-	}
-	if (strcmp("boot", arg) == 0) {
-		char           *filename;
-		int             howto;
-		if (parseboot(options, &filename, &howto))
-			bootit(filename, howto, 1);
-		return;
-	}
-	if (strcmp("mode", arg) == 0) {
-		parsemode(options, &current_fsmode);
-		return;
-	}
-	printf("unknown command\n");
-	helpme();
-}
-
-void 
-bootmenu()
-{
-	printf("\ntype \"?\" or \"help\" for help.\n");
-	for (;;) {
-		char            input[80];
-
-		input[0] = '\0';
-		printf("> ");
-		gets(input);
-
-		docommand(input);
-	}
+#endif
 }
 
 static void
@@ -365,7 +238,7 @@ main(argc, argv)
 	extern char    *optarg;
 	extern int      optind;
 
-	consdev = initio(CONSDEV_PC);
+	initio(CONSDEV_PC);
 	gateA20();
 
 	print_banner();
@@ -394,8 +267,10 @@ main(argc, argv)
 		}
 	}
 
-	if (interactive)
+	if (interactive) {
+		printf("type \"?\" or \"help\" for help.\n");
 		bootmenu();
+	}
 
 	argc -= optind;
 	argv += optind;
@@ -410,4 +285,64 @@ main(argc, argv)
 
 	bootit((argc > 0 ? argv[0] : "netbsd"), howto, 1);
 	return (1);
+}
+
+/* ARGSUSED */
+void
+command_help(arg)
+	char *arg;
+{
+	printf("commands are:\n"
+	       "boot [xdNx:][filename] [-adrs]\n"
+	       "     (ex. \"sd0a:netbsd.old -s\"\n"
+	       "ls [path]\n"
+	       "mode ufs|dos\n"
+	       "help|?\n"
+	       "quit\n");
+}
+
+void
+command_ls(arg)
+	char *arg;
+{
+	char *help = default_filename;
+	if (strcmp(current_fsmode, "ufs")) {
+		printf("UFS only\n");
+		return;
+	}
+	default_filename = "/";
+	ls(arg);
+	default_filename = help;
+}
+
+/* ARGSUSED */
+void
+command_quit(arg)
+	char *arg;
+{
+	printf("Exiting... goodbye...\n");
+	exit(0);
+}
+
+void
+command_boot(arg)
+	char *arg;
+{
+	char *filename;
+	int howto;
+
+	if (parseboot(arg, &filename, &howto))
+		bootit(filename, howto, 1);
+}
+
+void
+command_mode(arg)
+	char *arg;
+{
+	if (!strcmp("dos", arg))
+		current_fsmode = "dos";
+	else if (!strcmp("ufs", arg))
+		current_fsmode = "ufs";
+	else
+		printf("invalid mode\n");
 }

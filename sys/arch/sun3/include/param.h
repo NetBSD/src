@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.43 1997/07/10 08:23:30 veego Exp $	*/
+/*	$NetBSD: param.h,v 1.43.2.1 1997/09/22 06:32:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -65,6 +65,8 @@
 #define	KERN_END	0x0FE00000	/* end of kernel virtual */
 
 #define	UPAGES		2		/* pages of u-area */
+
+#define MSGBUFSIZE	(4096 - 4 * sizeof(long))
 
 #include <m68k/param.h>
 

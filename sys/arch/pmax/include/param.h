@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.21.2.1 1997/08/23 07:11:51 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.21.2.2 1997/09/22 06:32:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -67,7 +67,6 @@
 
 #define	CLSIZE		1
 #define	CLSIZELOG2	0
-
 
 /*
  * Constants related to network buffer management.

@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.21.6.2 1997/09/04 00:53:26 thorpej Exp $ */
+/* $NetBSD: cia.c,v 1.21.6.3 1997/09/22 06:30:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.21.6.2 1997/09/04 00:53:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.21.6.3 1997/09/22 06:30:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,6 +104,15 @@ cia_init(ccp, mallocsafe)
 
 	ccp->cc_hae_mem = REGVAL(CIA_CSR_HAE_MEM);
 	ccp->cc_hae_io = REGVAL(CIA_CSR_HAE_IO);
+	ccp->cc_rev = REGVAL(CIA_CSR_REV);
+
+	/*
+	 * Revisions >= 2 have the CNFG register.
+	 */
+	if (ccp->cc_rev >= 2)
+		ccp->cc_cnfg = REGVAL(CIA_CSR_CNFG);
+	else
+		ccp->cc_cnfg = 0;
 
 	if (!ccp->cc_initted) {
 		/* don't do these twice since they set up extents */
@@ -139,8 +148,14 @@ ciaattach(parent, self, aux)
 	ccp = sc->sc_ccp = &cia_configuration;
 	cia_init(ccp, 1);
 
-	/* XXX print chipset information */
-	printf("\n");
+	printf(": DECchip 21171/21172 Core Logic chipset rev. %d\n",
+	    ccp->cc_rev);
+	
+	/*
+	 * XXX Should we print any more?  We only care about BWX right now.
+	 */
+	if (ccp->cc_cnfg & CNFG_BWEN)
+		printf("%s: EV56 BWX enabled\n", self->dv_xname);
 
 	switch (hwrpb->rpb_type) {
 #ifdef DEC_KN20AA

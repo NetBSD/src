@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.2 1997/03/22 09:06:18 thorpej Exp $	 */
+/*	$NetBSD: devopen.c,v 1.2.4.1 1997/09/22 06:31:16 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -33,11 +33,16 @@
 
 
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 #include <lib/libsa/ufs.h>
 
 #include <libi386.h>
 #include <biosdisk.h>
 #include <dosfile.h>
+#include <bootinfo.h>
+
+extern int parsebootfile __P((const char *, char**, char**, unsigned int*,
+			      unsigned int*, const char**));
 
 struct devsw devsw[] = {
 	{"disk", biosdiskstrategy, biosdiskopen, biosdiskclose, biosdiskioctl},
@@ -93,6 +98,8 @@ dev2bios(devname, unit, biosdev)
 	return (ENXIO);
 }
 
+struct btinfo_bootpath bibp;
+
 int
 devopen(f, fname, file)
 	struct open_file *f;
@@ -120,6 +127,10 @@ devopen(f, fname, file)
 		file_system[0] = ufsfs;	/* structure assignment! */
 		dp = &devsw[0];	/* must be biosdisk */
 		f->f_dev = dp;
+
+		strncpy(bibp.bootpath, *file, sizeof(bibp.bootpath));
+		BI_ADD(&bibp, BTINFO_BOOTPATH, sizeof(bibp));
+
 		return (biosdiskopen(f, biosdev, partition));
 	} else {
 		printf("no file system\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.33.4.3 1997/09/06 18:18:34 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.33.4.4 1997/09/22 06:32:04 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -41,7 +41,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/msgbuf.h>
 #include <sys/reboot.h>
 
 #include <vm/vm.h>
@@ -101,10 +100,10 @@ extern caddr_t	ROMBase;
  *
  *	CADDR1, CADDR2:	pmap zero/copy operations
  *	vmmap:		/dev/mem, crash dumps, parity error checking
- *	msgbufp:	kernel message buffer
+ *	msgbufaddr:	kernel message buffer
  */
 caddr_t		CADDR1, CADDR2, vmmap;
-struct msgbuf	*msgbufp;
+extern caddr_t	msgbufaddr;
 
 /*
  * Bootstrap the VM system.
@@ -463,8 +462,8 @@ pmap_bootstrap(nextpa, firstpa)
 		}
 	}
 	physmem = m68k_btop(avail_remaining + nextpa - firstpa);
-	avail_remaining -= m68k_round_page(sizeof(struct msgbuf));
-	high[numranges - 1] -= m68k_round_page(sizeof(struct msgbuf));
+	avail_remaining -= m68k_round_page(MSGBUFSIZE);
+	high[numranges - 1] -= m68k_round_page(MSGBUFSIZE);
 
 	/* XXX -- this doesn't look correct to me. */
 	while (high[numranges - 1] < low[numranges - 1]) {
@@ -546,8 +545,8 @@ pmap_bootstrap(nextpa, firstpa)
 		va += NBPG;
 		vmmap = (caddr_t)va;
 		va += NBPG;
-		msgbufp = (struct msgbuf *)va;
-		va += NBPG;
+		msgbufaddr = (caddr_t)va;
+		va += m68k_round_page(MSGBUFSIZE);
 		virtual_avail = reserve_dumppages(va);
 	}
 }

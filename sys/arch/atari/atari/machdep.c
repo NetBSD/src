@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.50.2.1 1997/09/16 03:48:17 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.50.2.2 1997/09/22 06:30:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -111,7 +111,8 @@ int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
 #endif
-int	msgbufmapped;		/* set when safe to use msgbuf */
+caddr_t	msgbufaddr;
+
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -176,10 +177,10 @@ cpu_startup()
 	pmapdebug = 0;
 #endif
 	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
-	for(i = 0; i < btoc(sizeof (struct msgbuf)); i++)
-		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufp, 
-		    avail_end + i * NBPG, VM_PROT_ALL, TRUE);
-	msgbufmapped = 1;
+	for (i = 0; i < btoc(MSGBUFSIZE); i++)
+		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + i * NBPG,
+			avail_end + i * NBPG, VM_PROT_ALL, TRUE);
+	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 
 	/*
 	 * Good {morning,afternoon,evening,night}.

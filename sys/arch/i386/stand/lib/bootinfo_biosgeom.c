@@ -1,7 +1,7 @@
-/*	$NetBSD: nfswrapper.c,v 1.4 1997/07/15 12:45:24 drochner Exp $	 */
+/*	$NetBSD: bootinfo_biosgeom.c,v 1.1.2.2 1997/09/22 06:31:25 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1996
+ * Copyright (c) 1997
  *	Matthias Drochner.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,43 +29,52 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- * Makes the (filesystem dependant) mount part of open. Necessary for
- * interoperation with tftp filesystem on same net device layer.
- * Assumes:
- *  - socket descriptor (int) at open_file->f_devdata
- *  - server host IP in global rootip
- *  - path to mount in globel rootpath
+ *
  */
 
 #include <sys/types.h>
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
+#include <machine/disklabel.h>
 
-#include "stand.h"
-#include "net.h"
-#include "nfs.h"
+#include <lib/libkern/libkern.h>
+#include <lib/libsa/stand.h>
 
-#include "nfswrapper.h"
+#include "libi386.h"
+#include "biosdisk_ll.h"
+#include "bootinfo.h"
 
-int 
-nfs_mountandopen(path, f)
-	char           *path;
-	struct open_file *f;
+void bi_getbiosgeom()
 {
-	int             sock;
+	unsigned char nhd;
+	struct btinfo_biosgeom *bibg;
+	int i;
 
-	if (!rootpath[0]) {
-		printf("no rootpath, no nfs\n");
-		return (ENXIO);
-	}
-	sock = *(int *) (f->f_devdata);
+	pvbcopy(0x400 + 0x75, &nhd, 1); /* from BIOS data area */
+	if(nhd == 0 || nhd > 4 /* ??? */ )
+		return;
 
-	if (nfs_mount(sock, rootip, rootpath)) {
-		printf("mount failed\n");
-		return (ENXIO);
+	bibg = alloc(sizeof(struct btinfo_biosgeom)
+		     + (nhd - 1) * sizeof(struct bi_biosgeom_entry));
+	if(!bibg) return;
+
+	bibg->num = nhd;
+
+	for(i = 0; i < nhd; i++) {
+		struct biosdisk_ll d;
+		char buf[BIOSDISK_SECSIZE];
+
+		d.dev = 0x80 + i;
+		set_geometry(&d);
+		bibg->disk[i].spc = d.spc;
+		bibg->disk[i].spt = d.spt;
+
+		bzero(bibg->disk[i].dosparts,
+		      sizeof(bibg->disk[i].dosparts));
+		if(readsects(&d, 0, 1, buf, 0))
+			continue;
+		bcopy(&buf[DOSPARTOFF], bibg->disk[i].dosparts,
+		      sizeof(bibg->disk[i].dosparts));
 	}
-	return (nfs_open(path, f));
+
+	BI_ADD(bibg, BTINFO_BIOSGEOM, sizeof(struct btinfo_biosgeom)
+	       + (nhd - 1) * sizeof(struct bi_biosgeom_entry));
 }

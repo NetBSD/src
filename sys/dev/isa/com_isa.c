@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isa.c,v 1.2.4.2 1997/08/27 23:31:29 thorpej Exp $	*/
+/*	$NetBSD: com_isa.c,v 1.2.4.3 1997/09/22 06:33:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -124,6 +124,8 @@ com_isa_attach(parent, self, aux)
 	if(!com_is_console(iot, iobase, &sc->sc_ioh)
 		&& bus_space_map(iot, iobase, COM_NPORTS, 0, &sc->sc_ioh))
 			panic("comattach: io mapping failed");
+
+	sc->sc_frequency = COM_FREQ;
 	irq = ia->ia_irq;
 
 	com_attach_subr(sc);

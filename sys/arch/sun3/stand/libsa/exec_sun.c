@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_sun.c,v 1.6 1996/06/20 03:59:41 gwr Exp $ */
+/*	$NetBSD: exec_sun.c,v 1.6.12.1 1997/09/22 06:32:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -41,6 +41,7 @@
 
 #include "stand.h"
 
+extern void ICIA();
 extern int debug;
 int errno;
 
@@ -166,6 +167,7 @@ exec_sun(file, loadaddr)
 
 	printf("Starting program at 0x%x\n", (int)entry);
 	asm("_exec_sun_call_entry:");
+	ICIA();
 	(*entry)();
 	panic("exec returned");
 

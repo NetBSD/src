@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21.4.1 1997/09/16 03:49:02 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21.4.2 1997/09/22 06:32:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -114,7 +114,7 @@ int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
 #endif
-int	msgbufmapped;		/* set when safe to use msgbuf */
+caddr_t	msgbufaddr;
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
 
@@ -317,10 +317,10 @@ cpu_startup()
 	 * Initialize error message buffer (at end of core).
 	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
 	 */
-	for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
-		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufp,
-		    avail_end + i * NBPG, VM_PROT_ALL, TRUE);
-	msgbufmapped = 1;
+	for (i = 0; i < btoc(MSGBUFSIZE); i++)
+		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + i * NBPG,
+				avail_end + i * NBPG, VM_PROT_ALL, TRUE);
+	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
@@ -808,14 +808,14 @@ cpu_init_kcore_hdr()
 
 	/*
 	 * The mvme68k has one contiguous memory segment.  Note,
-	 * RAM size is physmem + 1 to account for the msgbuf
-	 * page.
+	 * RAM size is physmem + btoc(MSGBUFSIZE) to account for the msgbuf
+	 * pages.
 	 *
 	 * XXX We'll have to change this a bit when we support
 	 * XXX adding VME memory cards.
 	 */
 	m->ram_segs[0].start = lowram;
-	m->ram_segs[0].size  = ctob(physmem + 1);
+	m->ram_segs[0].size  = ctob(physmem + btoc(MSGBUFSIZE));
 }
 
 /*

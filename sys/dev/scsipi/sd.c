@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.116.2.2 1997/08/27 23:33:32 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.116.2.3 1997/09/22 06:33:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -70,7 +70,9 @@
 #include <dev/scsipi/scsipi_disk.h>
 #include <dev/scsipi/scsiconf.h>
 
+#ifndef	SDOUTSTANDING
 #define	SDOUTSTANDING	4
+#endif
 #define	SDRETRIES	4
 
 #define	SDUNIT(dev)			DISKUNIT(dev)

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiio.h,v 1.3.16.1 1997/08/28 00:23:50 thorpej Exp $	*/
+/*	$NetBSD: scsiio.h,v 1.3.16.2 1997/09/22 06:34:21 thorpej Exp $	*/
 
 #ifndef _SYS_SCSIIO_H_
 #define _SYS_SCSIIO_H_
@@ -48,25 +48,29 @@ typedef struct	scsireq {
 #define SC_DB_DMA	0x00000008	/* show DMA segments etc	*/
 #define SCIOCDEBUG	_IOW('Q', 2, int)	/* from 0 to 15 */
 
+struct	oscsi_addr {
+	int	scbus;		/* -1 if wildcard */
+	int	target;		/* -1 if wildcard */
+	int	lun;		/* -1 if wildcard */
+};
+
 struct	scsi_addr {
 	int type;       /* bus type */
 #define TYPE_SCSI 0
 #define TYPE_ATAPI 1
 	union {
-		struct _scsi {
-			int	scbus;		/* -1 if wildcard */
-			int	target;		/* -1 if wildcard */
-			int	lun;		/* -1 if wildcard */
-		} scsi;
+		struct oscsi_addr scsi;
 		struct _atapi {
 			int atbus;  /* -1 if wildcard */
 			int drive;  /* -1 if wildcard */
 		} atapi;
 	} addr;
-} ;
+};
 
 #define SCIOCREPROBE	_IOW('Q', 3, struct scsi_addr) /* look for new devs */
+#define  OSCIOCREPROBE	_IOW('Q', 3, struct oscsi_addr)
 #define SCIOCIDENTIFY	_IOR('Q', 4, struct scsi_addr) /* where are you? */
+#define  OSCIOCIDENTIFY	_IOR('Q', 4, struct oscsi_addr)
 #define SCIOCDECONFIG	_IO('Q', 5)	/* please dissappear */
 #define SCIOCRECONFIG	_IO('Q', 6)	/* please check again */
 #define SCIOCRESET	_IO('Q', 7)	/* reset the device */

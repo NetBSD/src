@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.8 1997/07/06 05:29:22 thorpej Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.8.2.1 1997/09/22 06:34:14 thorpej Exp $	*/
 
 /*
  * (C)opyright 1995 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "Id: ip_state.c,v 2.0.2.17 1997/06/22 05:16:30 darrenr Exp";
+static	char	rcsid[] = "Id: ip_state.c,v 2.0.2.20 1997/08/20 16:27:20 darrenr Exp ";
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -112,7 +112,8 @@ int mode;
 		break;
 	case FIONREAD :
 #ifdef	IPFILTER_LOG
-		*(int *)data = iplused[IPL_LOGSTATE];
+		IWCOPY((caddr_t)&iplused[IPL_LOGSTATE], (caddr_t)data,
+		       sizeof(iplused[IPL_LOGSTATE]));
 #endif
 		break;
 	default :
@@ -272,12 +273,12 @@ u_short sport;
 		seqskew = seq - is->is_seq;
 		ackskew = ack - is->is_ack;
 	} else {
-		ackskew = seq - is->is_ack;
 		if (!is->is_ack)
 			/*
 			 * Must be a SYN-ACK in reply to a SYN.
 			 */
 			is->is_ack = seq;
+		ackskew = seq - is->is_ack;
 		seqskew = ack - is->is_seq;
 	}
 
@@ -592,21 +593,10 @@ struct ipstate *is;
 u_short type;
 {
 	struct	ipslog	ipsl;
+	void *items[1];
+	size_t sizes[1];
+	int types[1];
 
-	if (iplused[IPL_LOGSTATE] + sizeof(ipsl) > IPLLOGSIZE) {
-		ips_stats.iss_logfail++;
-		return;
-	}
-
-        if (iplh[IPL_LOGSTATE] == iplbuf[IPL_LOGSTATE] + IPLLOGSIZE)
-                iplh[IPL_LOGSTATE] = iplbuf[IPL_LOGSTATE];
-
-# ifdef	sun
-	uniqtime(&ipsl.isl_tv);
-# endif
-# if BSD >= 199306 || defined(__FreeBSD__)
-	microtime((struct timeval *)&ipsl);
-# endif
 	ipsl.isl_pkts = is->is_pkts;
 	ipsl.isl_bytes = is->is_bytes;
 	ipsl.isl_src = is->is_src;
@@ -623,12 +613,10 @@ u_short type;
 		ipsl.isl_ps.isl_filler[0] = 0;
 		ipsl.isl_ps.isl_filler[1] = 0;
 	}
+	items[0] = &ipsl;
+	sizes[0] = sizeof(ipsl);
+	types[0] = 0;
 
-	if (!fr_copytolog(IPL_LOGSTATE, (char *)&ipsl, sizeof(ipsl))) {
-		iplused[IPL_LOGSTATE] += sizeof(ipsl);
-		ips_stats.iss_logged++;
-	} else
-		ips_stats.iss_logfail++;
-	wakeup(iplbuf[IPL_LOGSTATE]);
+	(void) ipllog(IPL_LOGSTATE, 0, items, sizes, types, 1);
 }
 #endif

@@ -1,4 +1,4 @@
-/* $NetBSD: cia_pci.c,v 1.11.2.3 1997/09/16 03:48:05 thorpej Exp $ */
+/* $NetBSD: cia_pci.c,v 1.11.2.4 1997/09/22 06:30:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.11.2.3 1997/09/16 03:48:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.11.2.4 1997/09/22 06:30:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,8 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.11.2.3 1997/09/16 03:48:05 thorpej Exp
 #include <dev/pci/pcivar.h>
 #include <alpha/pci/ciareg.h>
 #include <alpha/pci/ciavar.h>
-
-#include <machine/rpb.h>	/* XXX for eb164 CIA firmware workarounds. */
 
 void		cia_attach_hook __P((struct device *, struct device *,
 		    struct pcibus_attach_args *));
@@ -118,25 +116,24 @@ cia_conf_read(cpv, tag, offset)
 	pcireg_t *datap, data;
 	int s, secondary, ba;
 	int32_t old_haxr2;					/* XXX */
+	u_int32_t errbits;
 
 #ifdef DIAGNOSTIC
 	s = 0;					/* XXX gcc -Wuninitialized */
 	old_haxr2 = 0;				/* XXX gcc -Wuninitialized */
 #endif
 
-	/*
 	 * Some (apparently-common) revisions of EB164 and AlphaStation
-	 * firmware do the Wrong thing with PCI master aborts, which are
-	 * caused by accesing the configuration space of devices that
-	 * don't exist (for example).
+	 * firmware do the Wrong thing with PCI master and target aborts,
+	 * which are caused by accesing the configuration space of devices
+	 * that don't exist (for example).
 	 *
 	 * To work around this, we clear the CIA error register's PCI
-	 * master abort bit before touching PCI configuration space and
-	 * check it afterwards.  If it indicates a master abort,
-	 * the device wasn't there so we return 0xffffffff.
+	 * master and target abort bits before touching PCI configuration
+	 * space and check it afterwards.  If it indicates a master or target
+	 * abort, the device wasn't there so we return 0xffffffff.
 	 */
-	/* clear the PCI master abort bit in CIA error register */
-	REGVAL(CIA_CSR_CIA_ERR) = 0x00000080;		/* XXX */
+	REGVAL(CIA_CSR_CIA_ERR) = CIA_ERR_RCVD_MAS_ABT|CIA_ERR_RCVD_TAR_ABT;
 	alpha_mb();
 	alpha_pal_draina();	
 
@@ -167,10 +164,17 @@ cia_conf_read(cpv, tag, offset)
 	}
 
 	alpha_pal_draina();	
-	/* check CIA error register for PCI master abort */
-	if (REGVAL(CIA_CSR_CIA_ERR) & 0x00000080) {	/* XXX */
+	alpha_mb();
+	errbits = REGVAL(CIA_CSR_CIA_ERR);
+	if (errbits & (CIA_ERR_RCVD_MAS_ABT|CIA_ERR_RCVD_TAR_ABT)) {
 		ba = 1;
 		data = 0xffffffff;
+	}
+
+	if (errbits) {
+		REGVAL(CIA_CSR_CIA_ERR) = errbits;
+		alpha_mb();
+		alpha_pal_draina();
 	}
 
 #if 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.155.2.3 1997/09/16 03:48:51 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.155.2.4 1997/09/22 06:32:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -197,7 +197,7 @@ int     bufpages = BUFPAGES;
 int     bufpages = 0;
 #endif
 
-int     msgbufmapped;		/* set when safe to use msgbuf */
+caddr_t msgbufaddr;
 int     maxmem;			/* max memory per process */
 int     physmem = MAXMEM;	/* max supported memory, changes to actual */
 
@@ -265,7 +265,7 @@ consinit(void)
 		mac68k_calibrate_delay();
 }
 
-#define CURRENTBOOTERVER	108
+#define CURRENTBOOTERVER	111
 
 /*
  * cpu_startup: allocate memory for variable-sized tables,
@@ -291,10 +291,10 @@ cpu_startup(void)
 	 * Initialize error message buffer (at end of core).
 	 * high[numranges-1] was decremented in pmap_bootstrap.
 	 */
-	for (i = 0; i < btoc(sizeof(struct msgbuf)); i++)
-		pmap_enter(pmap_kernel(), (vm_offset_t) msgbufp,
+	for (i = 0; i < btoc(MSGBUFSIZE); i++)
+		pmap_enter(pmap_kernel(), (vm_offset_t) msgbufaddr + i * NBPG,
 		    high[numranges - 1] + i * NBPG, VM_PROT_ALL, TRUE);
-	msgbufmapped = 1;
+	initmsgbuf(msgbufaddr, atari_round_page(MSGBUFSIZE));
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
@@ -1158,7 +1158,7 @@ getenvvars(flag, buf)
 	extern u_long macos_boottime, MacOSROMBase;
 	extern long macos_gmtbias;
 	extern char end[];
-	int     root_scsi_id;
+	int root_scsi_id;
 
 	/*
          * If flag & 0x80000000 == 0, then we're booting with the old booter
@@ -1168,16 +1168,6 @@ getenvvars(flag, buf)
 		/* Freak out; print something if that becomes available */
 	} else
 		envbuf = buf;
-
-	root_scsi_id = getenv("ROOT_SCSI_ID");
-	/*
-         * For now, we assume that the boot device is off the first controller.
-         */
-	if (bootdev == 0)
-		bootdev = MAKEBOOTDEV(4, 0, 0, root_scsi_id, 0);
-
-	if (boothowto == 0)
-		boothowto = getenv("SINGLE_USER");
 
 	/* These next two should give us mapped video & serial */
 	/* We need these for pre-mapping graybars & echo, but probably */
@@ -1210,8 +1200,20 @@ getenvvars(flag, buf)
 	mac68k_machine.print_flags = getenv("SERIAL_PRINT_FLAGS");
 	mac68k_machine.print_cts_clk = getenv("SERIAL_PRINT_HSKICLK");
 	mac68k_machine.print_dcd_clk = getenv("SERIAL_PRINT_GPICLK");
-	/* Should probably check this and fail if old */
 	mac68k_machine.booter_version = getenv("BOOTERVER");
+
+	/*
+         * For now, we assume that the boot device is off the first controller.
+	 * Booter versions 1.11.0 and later set a flag to tell us to construct
+	 * bootdev using the SCSI ID passed in via the environment.
+         */
+	root_scsi_id = getenv("ROOT_SCSI_ID");
+	if (((mac68k_machine.booter_version < CURRENTBOOTERVER) ||
+	    (flag & 0x40000)) && bootdev == 0)
+		bootdev = MAKEBOOTDEV(4, 0, 0, root_scsi_id, 0);
+
+	if (boothowto == 0)
+		boothowto = getenv("SINGLE_USER");
 
 	/*
          * Get end of symbols for kernel debugging
@@ -2335,6 +2337,11 @@ mac68k_set_io_offsets(base)
 		SCSIBase = base;
 		break;
 	case MACH_CLASSIIfx:
+		/*
+		 * Note that sccA base address is based on having
+		 * the serial port in `compatible' mode (set in
+		 * the Serial Switch control panel before booting).
+		 */
 		Via1Base = (volatile u_char *) base;
 		sccA = (volatile u_char *) base + 0x4020;
 		SCSIBase = base;

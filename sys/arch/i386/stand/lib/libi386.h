@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.3.4.1 1997/08/23 07:09:42 thorpej Exp $	*/
+/*	$NetBSD: libi386.h,v 1.3.4.2 1997/09/22 06:31:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -43,7 +43,7 @@ physaddr_t vtophys __P((void*));
 int pread __P((int, physaddr_t, int));
 void startprog __P((physaddr_t, int, unsigned long*, physaddr_t));
 
-int exec_netbsd __P((const char*, physaddr_t, int, char*, char*));
+int exec_netbsd __P((const char*, physaddr_t, int));
 int netbsd_opt __P((char));
 
 void delay __P((int));
@@ -58,16 +58,18 @@ int getextmem1 __P((void));
 void reboot __P((void));
 void gateA20 __P((void));
 
-char *initio __P((int));
+void initio __P((int));
 #define CONSDEV_PC 0
 #define CONSDEV_COM0 1
 #define CONSDEV_COM1 2
+#define CONSDEV_COM2 3
+#define CONSDEV_COM3 4
 #define CONSDEV_AUTO (-1)
 int iskey __P((void));
+char awaitkey __P((int, int));
 
 #ifdef COMPAT_OLDBOOT
 int biosdisk_gettype __P((struct open_file*));
-
 /* this is in "user code"! */
 int parsebootfile __P((const char *, char**, char**, unsigned int*,
 		       unsigned int*, const char**));
@@ -78,3 +80,20 @@ physaddr_t ppbcopy __P((physaddr_t, physaddr_t, int));
 int checkxms __P((void));
 physaddr_t xmsalloc __P((int));
 #endif
+
+/* parseutils.c */
+char *gettrailer __P((char*));
+int parseopts __P((char*, int*));
+int parseboot __P((char*, char**, int*));
+
+/* menuutils.c */
+struct bootblk_command {
+	const char *c_name;
+	void (*c_fn) __P((char *));
+};
+void bootmenu __P((void));
+void docommand __P((char*));
+
+/* in "user code": */
+void command_help __P((char *));
+extern struct bootblk_command commands[];

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.81.2.3 1997/09/16 03:48:03 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.81.2.4 1997/09/22 06:30:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81.2.3 1997/09/16 03:48:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81.2.4 1997/09/22 06:30:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,8 @@ int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
 #endif
-int	msgbufmapped = 0;	/* set when safe to use msgbuf */
+caddr_t msgbufaddr;
+
 int	maxmem;			/* max memory per process */
 
 int	totalphysmem;		/* total amount of physical memory in system */
@@ -376,6 +377,15 @@ alpha_init(pfn, ptb, bim, bip)
 	}
 	if (totalphysmem == 0)
 		panic("can't happen: system seems to have no memory!");
+#ifdef        LIMITMEM
+	if (totalphysmem >= btoc(LIMITMEM << 20)) {
+		u_int64_t ovf = totalphysmem - btoc(LIMITMEM << 20);
+		printf("********LIMITING MEMORY TO %dMB**********\n", LIMITMEM);
+		physmem = totalphysmem = btoc(LIMITMEM << 20);
+		unusedmem += ovf;
+		lastusablepage = firstusablepage + physmem - 1;
+	}
+#endif
 	maxmem = physmem;
 
 #if 0
@@ -493,10 +503,10 @@ unknown_cputype:
 	/*
 	 * Initialize error message buffer (at end of core).
 	 */
-	lastusablepage -= btoc(sizeof (struct msgbuf));
-	msgbufp =
-	    (struct msgbuf *)ALPHA_PHYS_TO_K0SEG(ctob(lastusablepage + 1));
-	msgbufmapped = 1;
+	lastusablepage -= btoc(MSGBUFSIZE);
+	msgbufaddr = (caddr_t) ALPHA_PHYS_TO_K0SEG(ctob(lastusablepage + 1));
+	initmsgbuf(msgbufaddr, alpha_round_page(MSGBUFSIZE));
+	
 
 	/*
 	 * Allocate space for system data structures.
@@ -725,7 +735,7 @@ cpu_startup()
 	 */
 	printf(version);
 	identifycpu();
-	printf("real mem = %d (%d reserved for PROM, %d used by NetBSD)\n",
+	printf("real mem = %u (%u reserved for PROM, %u used by NetBSD)\n",
 	    ctob(totalphysmem), ctob(resvmem), ctob(physmem));
 	if (unusedmem)
 		printf("WARNING: unused memory = %d bytes\n", ctob(unusedmem));

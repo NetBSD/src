@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.83.2.1 1997/09/16 03:49:17 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.83.2.2 1997/09/22 06:32:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -110,9 +110,7 @@ int	bufpages = 0;
 
 int	physmem;
 
-extern struct msgbuf msgbuf;
-struct	msgbuf *msgbufp = &msgbuf;
-int	msgbufmapped = 0;	/* not mapped until pmap_bootstrap */
+extern	caddr_t msgbufaddr;
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -288,9 +286,9 @@ cpu_startup()
 
 	pmap_enter(pmap_kernel(), MSGBUF_VA, 0x0, VM_PROT_READ|VM_PROT_WRITE, 1);
 	if (CPU_ISSUN4)
-		msgbufp = (struct msgbuf *)(MSGBUF_VA + 4096);
+		msgbufaddr = (caddr_t)(MSGBUF_VA + 4096);
 	else
-		msgbufp = (struct msgbuf *)MSGBUF_VA;
+		msgbufaddr = (caddr_t)MSGBUF_VA;
 	pmap_redzone();
 }
 
@@ -715,7 +713,7 @@ cpu_dumpconf()
 
 	nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 
-	dumpblks = ctod(physmem) + ctod(pmap_dumpsize());
+	dumpblks = ctod(physmem) + pmap_dumpsize();
 	if (dumpblks > (nblks - ctod(1)))
 		/*
 		 * dump size is too big for the partition.
@@ -788,7 +786,7 @@ dumpsys()
 	dump = bdevsw[major(dumpdev)].d_dump;
 
 	error = pmap_dumpmmu(dump, blkno);
-	blkno += ctod(pmap_dumpsize());
+	blkno += pmap_dumpsize();
 
 	for (mp = pmemarr, nmem = npmemarr; --nmem >= 0 && error == 0; mp++) {
 		register unsigned i = 0, n;

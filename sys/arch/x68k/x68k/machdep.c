@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13.4.1 1997/09/16 03:49:41 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13.4.2 1997/09/22 06:33:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -123,7 +123,7 @@ int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
 #endif
-int	msgbufmapped;		/* set when safe to use msgbuf */
+caddr_t	msgbufaddr;
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
 /*
@@ -198,15 +198,15 @@ cpu_startup()
 	 * Initialize error message buffer (at end of core).
 	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
 	 */
-	for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
+	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 #ifdef MACHINE_NONCONTIG
-		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufp,
+		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + i * NBPG,
 		    high[numranges - 1] + i * NBPG, VM_PROT_ALL, TRUE);
 #else
-		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufp,
+		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + i * NBPG,
 		    avail_end + i * NBPG, VM_PROT_ALL, TRUE);
 #endif
-	msgbufmapped = 1;
+	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 
 	/*
 	 * Good {morning,afternoon,evening,night}.

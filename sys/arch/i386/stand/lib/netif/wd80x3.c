@@ -1,4 +1,4 @@
-/*	$NetBSD: wd80x3.c,v 1.2 1997/06/21 14:43:11 drochner Exp $	*/
+/*	$NetBSD: wd80x3.c,v 1.2.4.1 1997/09/22 06:31:42 thorpej Exp $	*/
 
 /* stripped down from netbsd:sys/arch/i386/netboot/wd8x13.c */
 
@@ -13,9 +13,12 @@
 
 #include <sys/types.h>
 #include <machine/pio.h>
+
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 
 #include <libi386.h>
+#include <bootinfo.h>
 
 #include "etherdrv.h"
 #include "dp8390.h"
@@ -24,8 +27,6 @@
 #define BASEREG 0x240
 #define BASEMEM 0xd0000
 #endif
-
-char etherdev[20];
 
 static int ourbasereg, ourbasemem;
 
@@ -78,6 +79,8 @@ static u_char eth_myaddr[6];
 
 static int boardid;
 static dpconf_t dpc;
+
+static struct btinfo_netif bi_netif;
 
 /*
  * Determine whether wd8003 hardware performs register aliasing
@@ -195,6 +198,7 @@ char *myadr;
 {
   unsigned sum;
   int memsize;
+  int i;
 
   ourbasereg = BASEREG;
   ourbasemem = BASEMEM;
@@ -230,12 +234,8 @@ char *myadr;
     outb(WD_BASEREG + WD_REG5, WD_LAAR_A19|WD_LAAR_LAN16E);
 
   /* get ethernet address */
-  eth_myaddr[0] = myadr[0]= inb(WD_BASEREG + WD_EA0);
-  eth_myaddr[1] = myadr[1]= inb(WD_BASEREG + WD_EA1);
-  eth_myaddr[2] = myadr[2]= inb(WD_BASEREG + WD_EA2);
-  eth_myaddr[3] = myadr[3]= inb(WD_BASEREG + WD_EA3);
-  eth_myaddr[4] = myadr[4]= inb(WD_BASEREG + WD_EA4);
-  eth_myaddr[5] = myadr[5]= inb(WD_BASEREG + WD_EA5);
+  for(i = 0; i < 6; i++)
+	  eth_myaddr[i] = myadr[i]= inb(WD_BASEREG + WD_EA0 + i);
 
   /* save settings for future use */
   dpc.dc_reg = WD_BASEREG + WD_DP8390;
@@ -253,7 +253,13 @@ char *myadr;
   outb(WD_BASEREG + 5, 0x80);
   outb(WD_BASEREG + 6, 0x1);
 #endif
-  sprintf(etherdev, "ed@isa,0x%x", ourbasereg);
+
+  strncpy(bi_netif.ifname, "ed", sizeof(bi_netif.ifname));
+  bi_netif.bus = BI_BUS_ISA;
+  bi_netif.addr.iobase = WD_BASEREG;
+
+  BI_ADD(&bi_netif, BTINFO_NETIF, sizeof(bi_netif));
+
   return 1;
 }
 

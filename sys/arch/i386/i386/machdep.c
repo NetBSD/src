@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.241.2.4 1997/09/16 03:48:37 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.241.2.5 1997/09/22 06:31:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -131,6 +131,7 @@
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/specialreg.h>
+#include <machine/bootinfo.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -184,6 +185,8 @@ extern struct proc *npxproc;
 char machine[] = "i386";		/* cpu "architecture" */
 char machine_arch[] = "i386";		/* machine == machine_arch */
 
+char bootinfo[BOOTINFO_MAXSIZE];
+
 /*
  * Declare these as initialized data so we can patch them.
  */
@@ -205,21 +208,9 @@ int	dumpmem_high;
 int	boothowto;
 int	cpu_class;
 
-struct	msgbuf *msgbufp;
-int	msgbufmapped;
+caddr_t	msgbufaddr;
 
 vm_map_t buffer_map;
-
-#ifndef CONSDEVNAME
-#define CONSDEVNAME "pc"
-#endif
-char consdevname[] = CONSDEVNAME;
-#ifdef KGDB
-#ifndef KGDB_DEVNAME
-#define KGDB_DEVNAME "com"
-#endif
-char kgdb_devname[] = KGDB_DEVNAME;
-#endif
 
 extern	int biosbasemem, biosextmem;
 extern	vm_offset_t avail_start, avail_end;
@@ -248,38 +239,49 @@ caddr_t	allocsys __P((caddr_t));
 void	dumpsys __P((void));
 void	identifycpu __P((void));
 void	init386 __P((vm_offset_t));
-#if (NCOM > 0)
+
+#ifndef CONSDEVNAME
+#define CONSDEVNAME "pc"
+#endif
 #ifndef CONADDR
 #define CONADDR 0x3f8
 #endif
-int comcnaddr;
 #ifndef CONSPEED
 #define CONSPEED TTYDEF_SPEED
 #endif
-int comcnrate;
 #ifndef CONMODE
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #endif
-int comcnmode;
-#endif /* NCOM */
+struct btinfo_console default_consinfo = {
+	{0, 0},
+	CONSDEVNAME,
+	CONADDR, CONSPEED
+};
+int comcnmode = CONMODE;
 void	consinit __P((void));
+
 #ifdef KGDB
+#ifndef KGDB_DEVNAME
+#define KGDB_DEVNAME "com"
+#endif
+char kgdb_devname[] = KGDB_DEVNAME;
 #if (NCOM > 0)
 #ifndef KGDBADDR
 #define KGDBADDR 0x3f8
 #endif
-int comkgdbaddr;
+int comkgdbaddr = KGDBADDR;
 #ifndef KGDBRATE
 #define KGDBRATE TTYDEF_SPEED
 #endif
-int comkgdbrate;
+int comkgdbrate = KGDBRATE;
 #ifndef KGDBMODE
 #define KGDBMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #endif
-int comkgdbmode;
+int comkgdbmode = KGDBMODE;
 #endif /* NCOM */
 void kgdb_port_init __P((void));
 #endif /* KGDB */
+
 #ifdef COMPAT_NOMID
 static int exec_nomid	__P((struct proc *, struct exec_package *));
 #endif
@@ -310,11 +312,10 @@ cpu_startup()
 	 * Initialize error message buffer (at end of core).
 	 */
 	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
-	for (i = 0; i < btoc(sizeof(struct msgbuf)); i++)
-		pmap_enter(pmap_kernel(),
-		    (vm_offset_t)((caddr_t)msgbufp + i * NBPG),
-		    avail_end + i * NBPG, VM_PROT_ALL, TRUE);
-	msgbufmapped = 1;
+	for (i = 0; i < btoc(MSGBUFSIZE); i++)
+		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + i * NBPG,
+			avail_end + i * NBPG, VM_PROT_ALL, TRUE);
+	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
 	printf(version);
 	identifycpu();
@@ -813,6 +814,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	struct proc *p;
 {
 	dev_t consdev;
+	struct btinfo_bootpath *bibp;
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
@@ -835,6 +837,12 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	case CPU_NKPDE:
 		return (sysctl_rdint(oldp, oldlenp, newp, nkpde));
+
+	case CPU_BOOTED_KERNEL:
+	        bibp = lookup_bootinfo(BTINFO_BOOTPATH);
+	        if(!bibp)
+			return(ENOENT); /* ??? */
+		return (sysctl_rdstring(oldp, oldlenp, newp, bibp->bootpath));
 
 	default:
 		return (EOPNOTSUPP);
@@ -1721,6 +1729,21 @@ pmap_page_index(pa)
 	return -1;
 }
 
+void *
+lookup_bootinfo(type)
+int type;
+{
+	struct btinfo_common *help;
+	int n = *(int*)bootinfo;
+	help = (struct btinfo_common *)(bootinfo + sizeof(int));
+	while(n--) {
+		if(help->type == type)
+			return(help);
+		help = (struct btinfo_common *)((char*)help + help->len);
+	}
+	return(0);
+}
+
 /*
  * consinit:
  * initialize the system console.
@@ -1730,33 +1753,37 @@ pmap_page_index(pa)
 void
 consinit()
 {
+	struct btinfo_console *consinfo;
 	static int initted;
 
 	if (initted)
 		return;
 	initted = 1;
 
+#ifndef CONS_OVERRIDE
+	consinfo = lookup_bootinfo(BTINFO_CONSOLE);
+	if(!consinfo)
+#endif
+		consinfo = &default_consinfo;
+
 #if (NPC > 0) || (NVT > 0)
-	if(!strcmp(consdevname, "pc")) {
+	if(!strcmp(consinfo->devname, "pc")) {
 		pccnattach();
 		return;
 	}
 #endif
 #if (NCOM > 0)
-	if(!strcmp(consdevname, "com")) {
+	if(!strcmp(consinfo->devname, "com")) {
 		bus_space_tag_t tag = I386_BUS_SPACE_IO;
 
-		comcnaddr = CONADDR;
-		comcnrate = CONSPEED;
-		comcnmode = CONMODE;
-
-		if(comcnattach(tag, comcnaddr, comcnrate, comcnmode))
-			panic("can't init serial console @%x", comcnaddr);
+		if(comcnattach(tag, consinfo->addr, consinfo->speed,
+			       COM_FREQ, CONMODE))
+			panic("can't init serial console @%x", consinfo->addr);
 
 		return;
 	}
 #endif
-	panic("invalid console device %s", consdevname);
+	panic("invalid console device %s", consinfo->devname);
 }
 
 #ifdef KGDB
@@ -1767,11 +1794,8 @@ kgdb_port_init()
 	if(!strcmp(kgdb_devname, "com")) {
 		bus_space_tag_t tag = I386_BUS_SPACE_IO;
 
-		comkgdbaddr = KGDBADDR;
-		comkgdbrate = KGDBRATE;
-		comkgdbmode = KGDBMODE;
-
-		com_kgdb_attach(tag, comkgdbaddr, comkgdbrate, comkgdbmode);
+		com_kgdb_attach(tag, comkgdbaddr, comkgdbrate, COM_FREQ, 
+		    comkgdbmode);
 	}
 #endif
 }

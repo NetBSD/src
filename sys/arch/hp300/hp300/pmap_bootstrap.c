@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.13 1997/06/10 18:56:50 veego Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.13.4.1 1997/09/22 06:30:58 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -40,7 +40,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/msgbuf.h>
 #include <sys/proc.h>
 
 #include <machine/frame.h>
@@ -81,10 +80,10 @@ void	pmap_bootstrap __P((vm_offset_t, vm_offset_t));
  *	CADDR1, CADDR2:	pmap zero/copy operations
  *	vmmap:		/dev/mem, crash dumps, parity error checking
  *	ledbase:	SPU LEDs
- *	msgbufp:	kernel message buffer
+ *	msgbufaddr:	kernel message buffer
  */
 caddr_t		CADDR1, CADDR2, vmmap, ledbase;
-struct msgbuf	*msgbufp;
+extern caddr_t	msgbufaddr;
 
 /*
  * Bootstrap the VM system.
@@ -437,7 +436,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 */
 	RELOC(avail_start, vm_offset_t) = nextpa;
 	RELOC(avail_end, vm_offset_t) = m68k_ptob(RELOC(maxmem, int)) -
-	    (m68k_round_page(sizeof(struct msgbuf)) + m68k_ptob(1));
+	    (m68k_round_page(MSGBUFSIZE) + m68k_ptob(1));
 	RELOC(mem_size, vm_size_t) = m68k_ptob(RELOC(physmem, int));
 	RELOC(virtual_avail, vm_offset_t) =
 		VM_MIN_KERNEL_ADDRESS + (nextpa - firstpa);
@@ -522,8 +521,8 @@ pmap_bootstrap(nextpa, firstpa)
 		va += NBPG;
 		RELOC(ledbase, caddr_t) = (caddr_t)va;
 		va += NBPG;
-		RELOC(msgbufp, struct msgbuf *) = (struct msgbuf *)va;
-		va += NBPG;
+		RELOC(msgbufaddr, caddr_t) = (caddr_t)va;
+		va += m68k_round_page(MSGBUFSIZE);
 		RELOC(virtual_avail, vm_offset_t) = va;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.72.2.1 1997/09/16 03:49:14 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.72.2.2 1997/09/22 06:32:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -267,8 +267,8 @@ sun4_notsup:
  * kernel space we remap it in configure() to another location and
  * invalidate the mapping at KERNBASE.
  */
-	.globl _msgbuf
-_msgbuf = KERNBASE
+	.globl _msgbufaddr
+_msgbufaddr = KERNBASE
 
 /*
  * Each trap has room for four instructions, of which one perforce must

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnet_isapnp.c,v 1.2 1997/03/15 22:20:56 perry Exp $	*/
+/*	$NetBSD: pcnet_isapnp.c,v 1.2.4.1 1997/09/22 06:31:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -35,10 +35,14 @@
 
 #include <sys/types.h>
 #include <machine/pio.h>
-#include <lib/libsa/stand.h>
 
+#include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
+
+#include <libi386.h>
 #include <isapnpvar.h>
 #include <isadmavar.h>
+#include <bootinfo.h>
 
 #include "etherdrv.h"
 #include "lance.h"
@@ -47,14 +51,14 @@
 #define ISAPNPID 0x516e0010 /* TKN0010 */
 #endif
 
-char etherdev[20];
-
 int lance_rap, lance_rdp;
 
 u_char eth_myaddr[6];
 
 extern void am7990_init __P((void));
 extern void am7990_stop __P((void));
+
+static struct btinfo_netif bi_netif;
 
 int EtherInit(myadr)
 char *myadr;
@@ -75,12 +79,17 @@ char *myadr;
   am7990_stop();
 
   for(i=0; i<6; i++)
-    myadr[i] = eth_myaddr[i] = inb(iobase + i);
+	  myadr[i] = eth_myaddr[i] = inb(iobase + i);
 
   isa_dmacascade(dmachan);
 
   am7990_init();
 
-  sprintf(etherdev. "le@isapnp,0x%x", iobase);
+  strncpy(bi_netif.ifname, "le", sizeof(bi_netif.ifname));
+  bi_netif.bus = BI_BUS_ISA;
+  bi_netif.addr.iobase = iobase;
+
+  BI_ADD(&bi_netif, BTINFO_NETIF, sizeof(bi_netif));
+
   return(1);
 }

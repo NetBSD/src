@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.88.2.3 1997/09/16 03:50:53 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.88.2.4 1997/09/22 06:33:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -471,6 +471,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "MAXTOR  ", "LXT-200S        ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
+	 "MEGADRV ", "EV1000",           ""},     SDEV_NOMODESENSE},
+	{{T_DIRECT, T_FIXED,
 	 "MST     ", "SnapLink        ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "NEC     ", "D3847           ", "0307"}, SDEV_NOLUNS},
@@ -494,6 +496,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "SEAGATE ", "ST296N          ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "SEAGATE ", "ST19171FC       ", ""},     SDEV_NOMODESENSE},
+	{{T_DIRECT, T_FIXED,
+	 "SEAGATE ", "ST34501FC       ", ""},     SDEV_NOMODESENSE},
 	{{T_DIRECT, T_FIXED,
 	 "TOSHIBA ", "MK538FB         ", "6027"}, SDEV_NOLUNS},
 	{{T_DIRECT, T_REMOV,

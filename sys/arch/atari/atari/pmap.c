@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.20 1997/06/10 18:41:13 veego Exp $	*/
+/*	$NetBSD: pmap.c,v 1.20.4.1 1997/09/22 06:30:49 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -79,7 +79,6 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
-#include <sys/msgbuf.h>
 #include <vm/vm.h>
 #include <sys/user.h>
 #include <vm/vm_kern.h>
@@ -243,6 +242,8 @@ static int	pmap_ishift;	/* segment table index shift */
 int		protostfree;	/* prototype (default) free ST map */
 #endif
 
+extern	caddr_t	msgbufaddr;
+
 #ifdef MACHINE_NONCONTIG
 static	vm_offset_t	avail_next;
 static	vm_size_t	avail_remaining;
@@ -308,7 +309,7 @@ u_int		hw_addr, hw_pages;
 	for (i = 0; usable_segs[i+1].start; i++)
 		;
 	/* XXX: allow for msgbuf */
-	usable_segs[i].end -= m68k_round_page(sizeof(struct msgbuf));
+	usable_segs[i].end -= m68k_round_page(MSGBUFSIZE);
 
 	avail_start = usable_segs[0].start;
 	avail_end   = usable_segs[i].end;
@@ -359,10 +360,10 @@ u_int		hw_addr, hw_pages;
 	va = virtual_avail;
 	pte = pmap_pte(pmap_kernel(), va);
 
-	SYSMAP(caddr_t		,CMAP1		,CADDR1		,1	)
-	SYSMAP(caddr_t		,CMAP2		,CADDR2		,1	)
-	SYSMAP(caddr_t		,vmpte		,vmmap		,1	)
-	SYSMAP(struct msgbuf *	,msgbufmap	,msgbufp	,1	)
+	SYSMAP(caddr_t	,CMAP1	   ,CADDR1	,1		    )
+	SYSMAP(caddr_t	,CMAP2	   ,CADDR2	,1		    )
+	SYSMAP(caddr_t	,vmpte	   ,vmmap	,1		    )
+	SYSMAP(caddr_t	,msgbufmap ,msgbufaddr	,btoc(MSGBUFSIZE)   )
 
 	virtual_avail = reserve_dumppages(va);
 }

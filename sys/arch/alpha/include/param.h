@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.19 1997/05/15 17:27:15 mjacob Exp $ */
+/* $NetBSD: param.h,v 1.19.4.1 1997/09/22 06:30:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -97,6 +97,10 @@
 
 #define	UPAGES		2			/* pages of u-area */
 #define	USPACE		(UPAGES * NBPG)		/* total size of u-area */
+
+#ifndef MSGBUFSIZE
+#define MSGBUFSIZE	NBPG		/* default message buffer size */
+#endif
 
 /*
  * Constants related to network buffer management.
