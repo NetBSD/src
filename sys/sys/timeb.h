@@ -1,4 +1,4 @@
-/*	$NetBSD: timeb.h,v 1.8 1994/09/16 02:16:42 jtc Exp $	*/
+/*	$NetBSD: timeb.h,v 1.9 1994/09/18 04:44:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -51,4 +51,4 @@ struct timeb {
 	short	dstflag;		/* DST == non-zero */
 };
 
-#endif
+#endif /* !_SYS_TIMEB_H_ */
