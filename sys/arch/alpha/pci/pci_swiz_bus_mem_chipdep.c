@@ -1,4 +1,4 @@
-/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.22 1997/09/06 05:21:15 thorpej Exp $ */
+/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.23 1997/09/06 05:44:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -160,13 +160,13 @@ void		__C(CHIP,_mem_set_region_8) __P((void *, bus_space_handle_t,
 		    bus_size_t, u_int64_t, bus_size_t));
 
 /* copy */
-void		__C(CHIP,_mem_copy_1) __P((void *, bus_space_handle_t,
+void		__C(CHIP,_mem_copy_region_1) __P((void *, bus_space_handle_t,
 		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
-void		__C(CHIP,_mem_copy_2) __P((void *, bus_space_handle_t,
+void		__C(CHIP,_mem_copy_region_2) __P((void *, bus_space_handle_t,
 		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
-void		__C(CHIP,_mem_copy_4) __P((void *, bus_space_handle_t,
+void		__C(CHIP,_mem_copy_region_4) __P((void *, bus_space_handle_t,
 		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
-void		__C(CHIP,_mem_copy_8) __P((void *, bus_space_handle_t,
+void		__C(CHIP,_mem_copy_region_8) __P((void *, bus_space_handle_t,
 		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
 
 #ifndef	CHIP_D_MEM_EX_STORE
@@ -258,10 +258,10 @@ __C(CHIP,_bus_mem_init)(t, v)
 	t->abs_sr_8 =		__C(CHIP,_mem_set_region_8);
 
 	/* copy */
-	t->abs_c_1 =		__C(CHIP,_mem_copy_1);
-	t->abs_c_2 =		__C(CHIP,_mem_copy_2);
-	t->abs_c_4 =		__C(CHIP,_mem_copy_4);
-	t->abs_c_8 =		__C(CHIP,_mem_copy_8);
+	t->abs_c_1 =		__C(CHIP,_mem_copy_region_1);
+	t->abs_c_2 =		__C(CHIP,_mem_copy_region_2);
+	t->abs_c_4 =		__C(CHIP,_mem_copy_region_4);
+	t->abs_c_8 =		__C(CHIP,_mem_copy_region_8);
 
 	/* XXX WE WANT EXTENT_NOCOALESCE, BUT WE CAN'T USE IT. XXX */
 	dex = extent_create(__S(__C(CHIP,_bus_dmem)), 0x0UL,
@@ -461,15 +461,21 @@ __C(CHIP,_xlate_sparse_handle_to_addr)(v, memh, memaddrp)
 }
 
 int
-__C(CHIP,_mem_map)(v, memaddr, memsize, cacheable, memhp)
+__C(CHIP,_mem_map)(v, memaddr, memsize, flags, memhp)
 	void *v;
 	bus_addr_t memaddr;
 	bus_size_t memsize;
-	int cacheable;
+	int flags;
 	bus_space_handle_t *memhp;
 {
 	bus_space_handle_t dh = 0, sh = 0;	/* XXX -Wuninitialized */
 	int didd, dids, errord, errors, mustd, musts;
+	int cacheable = flags & BUS_SPACE_MAP_CACHEABLE;
+	int linear = flags & BUS_SPACE_MAP_LINEAR;
+
+	/* Requests for linear uncacheable space can't be satisfied. */
+	if (linear && !cacheable)
+		return (EOPNOTSUPP);
 
 	mustd = 1;
 	musts = (cacheable == 0);
@@ -648,12 +654,12 @@ __C(CHIP,_mem_subregion)(v, memh, offset, size, nmemh)
 }
 
 int
-__C(CHIP,_mem_alloc)(v, rstart, rend, size, align, boundary, cacheable,
+__C(CHIP,_mem_alloc)(v, rstart, rend, size, align, boundary, flags,
     addrp, bshp)
 	void *v;
 	bus_addr_t rstart, rend, *addrp;
 	bus_size_t size, align, boundary;
-	int cacheable;
+	int flags;
 	bus_space_handle_t *bshp;
 {
 
@@ -985,9 +991,9 @@ CHIP_mem_set_region_N(2,u_int16_t)
 CHIP_mem_set_region_N(4,u_int32_t)
 CHIP_mem_set_region_N(8,u_int64_t)
 
-#define	CHIP_mem_copy_N(BYTES)						\
+#define	CHIP_mem_copy_region_N(BYTES)						\
 void									\
-__C(__C(CHIP,_mem_copy_),BYTES)(v, h1, o1, h2, o2, c)			\
+__C(__C(CHIP,_mem_copy_region_),BYTES)(v, h1, o1, h2, o2, c)			\
 	void *v;							\
 	bus_space_handle_t h1, h2;					\
 	bus_size_t o1, o2, c;						\
@@ -1003,7 +1009,7 @@ __C(__C(CHIP,_mem_copy_),BYTES)(v, h1, o1, h2, o2, c)			\
 		__C(__C(CHIP,_mem_write_),BYTES)(v, h2, o2 + o,		\
 		    __C(__C(CHIP,_mem_read_),BYTES)(v, h1, o1 + o));	\
 }
-CHIP_mem_copy_N(1)
-CHIP_mem_copy_N(2)
-CHIP_mem_copy_N(4)
-CHIP_mem_copy_N(8)
+CHIP_mem_copy_region_N(1)
+CHIP_mem_copy_region_N(2)
+CHIP_mem_copy_region_N(4)
+CHIP_mem_copy_region_N(8)
