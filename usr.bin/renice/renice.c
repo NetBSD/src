@@ -1,4 +1,4 @@
-/*	$NetBSD: renice.c,v 1.11 2001/09/01 01:59:42 simonb Exp $	*/
+/*	$NetBSD: renice.c,v 1.12 2003/04/18 03:21:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)renice.c	8.1 (Berkeley) 6/9/93";*/
-__RCSID("$NetBSD: renice.c,v 1.11 2001/09/01 01:59:42 simonb Exp $");
+__RCSID("$NetBSD: renice.c,v 1.12 2003/04/18 03:21:01 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/resource.h>
@@ -123,6 +123,7 @@ getnum(const char *com, const char *str, int *val)
 	long v;
 	char *ep;
 
+	errno = 0;
 	v = strtol(str, &ep, NULL);
 
 	if (*ep) {

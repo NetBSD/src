@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.40 2003/02/26 06:31:21 matt Exp $	*/
+/*	$NetBSD: main.c,v 1.41 2003/04/18 03:21:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.40 2003/02/26 06:31:21 matt Exp $");
+__RCSID("$NetBSD: main.c,v 1.41 2003/04/18 03:21:01 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -450,6 +450,7 @@ main(argc, argv)
 			numeric_addr = numeric_port = 1;
 			break;
 		case 'P':
+			errno = 0;
 			pcbaddr = strtoul(optarg, &cp, 16);
 			if (*cp != '\0' || errno == ERANGE)
 				errx(1, "invalid PCB address %s",
