@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.41 2002/10/04 18:53:31 elric Exp $
+#	$NetBSD: MAKEDEV,v 1.42 2002/10/14 06:31:37 takemura Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -104,6 +104,7 @@
 #	ucbsnd	UCB1200 (TX39) audio device. 22.154kHz mono 16bit
 #	audio*	audio devices
 #	systrace syscall tracer
+#	apm	power management device
 #
 
 dialin=0
@@ -147,6 +148,7 @@ all)
 	makedev clockctl
 	makedev audio
 	makedev systrace
+	makedev apm
 #	makedev local
 	;;
 
@@ -653,6 +655,13 @@ systrace)
 	rm -f systrace
 	mknod systrace c 49 0
 	chmod 644 systrace
+	;;
+
+apm*)
+	rm -f apm apmctl
+	mknod apm c 51 0
+	mknod apmctl c 51 8
+	chmod 644 apm apmctl
 	;;
 
 local)
