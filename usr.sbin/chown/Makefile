@@ -1,8 +1,8 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$NetBSD: Makefile,v 1.6 1997/03/06 06:26:07 mikel Exp $
+#	$NetBSD: Makefile,v 1.7 1997/10/23 06:31:59 lukem Exp $
 
 PROG=	chown
-CFLAGS+=-DSUPPORT_DOT
+CPPFLAGS+=-DSUPPORT_DOT
 MAN=	chgrp.1 chown.8
 LINKS=	${BINDIR}/chown /usr/bin/chgrp
 
