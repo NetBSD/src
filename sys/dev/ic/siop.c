@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.37.2.9 2001/03/12 13:30:31 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.37.2.10 2001/03/14 15:03:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -1322,7 +1322,7 @@ siop_scsipi_request(chan, req, arg)
 		error = bus_dmamap_load(sc->sc_dmat, siop_cmd->dmamap_cmd,
 		    xs->cmd, xs->cmdlen, NULL, BUS_DMA_NOWAIT);
 		if (error) {
-			printf("%s: unable to load data DMA map: %d\n",
+			printf("%s: unable to load cmd DMA map: %d\n",
 			    sc->sc_dev.dv_xname, error);
 			xs->error = XS_DRIVER_STUFFUP;
 			scsipi_done(xs);
@@ -1332,7 +1332,7 @@ siop_scsipi_request(chan, req, arg)
 		if (xs->xs_control & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) {
 			error = bus_dmamap_load(sc->sc_dmat,
 			    siop_cmd->dmamap_data, xs->data, xs->datalen,
-			    NULL, BUS_DMA_NOWAIT);
+			    NULL, BUS_DMA_NOWAIT | BUS_DMA_STREAMING);
 			if (error) {
 				printf("%s: unable to load cmd DMA map: %d",
 				    sc->sc_dev.dv_xname, error);
@@ -1431,12 +1431,11 @@ siop_start(sc)
 	/*
 	 * If the instruction is 0x80000000 (JUMP foo, IF FALSE) the slot is
 	 * free. As this is the last used slot, all previous slots are free,
-	 * we can restart from 1.
-	 * slot 0 is reserved for request sense commands.
+	 * we can restart from 0.
 	 */
 	if (siop_script_read(sc, (Ent_script_sched_slot0 / 4) + slot * 2) ==
 	    0x80000000) {
-		slot = sc->sc_currschedslot = 1;
+		slot = sc->sc_currschedslot = 0;
 	} else {
 		slot++;
 	}
@@ -1472,30 +1471,21 @@ again:
 		}
 		siop_cmd->tag = tag;
 		/*
-		 * find a free scheduler slot and load it. If it's a request
-		 * sense we need to use slot 0.
+		 * find a free scheduler slot and load it.
 		 */
-		if (siop_cmd->status != CMDST_SENSE) {
-			for (; slot < SIOP_NSLOTS; slot++) {
-				/*
-				 * If cmd if 0x80000000 the slot is free
-				 */
-				if (siop_script_read(sc,
-				    (Ent_script_sched_slot0 / 4) + slot * 2) ==
-				    0x80000000)
-					break;
-			}
-			/* no more free slot, no need to continue */
-			if (slot == SIOP_NSLOTS) {
-				goto end;
-			}
-		} else {
-			slot = 0;
-			if (siop_script_read(sc, Ent_script_sched_slot0 / 4)
-			    != 0x80000000) 
-				goto end;
+		for (; slot < SIOP_NSLOTS; slot++) {
+			/*
+			 * If cmd if 0x80000000 the slot is free
+			 */
+			if (siop_script_read(sc,
+			    (Ent_script_sched_slot0 / 4) + slot * 2) ==
+			    0x80000000)
+				break;
 		}
-
+		/* no more free slot, no need to continue */
+		if (slot == SIOP_NSLOTS) {
+			goto end;
+		}
 #ifdef SIOP_DEBUG_SCHED
 		printf("using slot %d for DSA 0x%lx\n", slot,
 		    (u_long)siop_cmd->dsa);
@@ -1562,9 +1552,6 @@ again:
 		 */
 		siop_script_write(sc, (Ent_script_sched_slot0 / 4) + slot * 2,
 		    0x80080000);
-		/* if we're using the request sense slot, stop here */
-		if (slot == 0)
-			goto end;
 		sc->sc_currschedslot = slot;
 		slot++;
 	}
