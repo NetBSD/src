@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2000/06/11 13:01:29 fredb Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2000/12/07 10:57:18 toddpw Exp $
 #
 #	mac68k-specific release building goo
 #
@@ -8,8 +8,8 @@
 # simply its corresponding config with "ncrscsi" commented out,
 # and "sbc" uncommented.
 #
-BUILD_KERNELS?=	INSTALL	# INSTALLSBC
-EXTRA_KERNELS?=		# GENERICSBC
+BUILD_KERNELS?=	INSTALL	INSTALLSBC
+EXTRA_KERNELS?=		GENERICSBC
 
 INSTALLATION_DIRS+=	installation/instkernel
 
@@ -22,8 +22,21 @@ snap_md_post:
 	cd ${.CURDIR}/../distrib/mac68k/instkernel/instkernel && ${MAKE} ${MAKEFLAGS} clean
 .endif
 .for k in ${BUILD_KERNELS}
+.ifndef UPDATE
 	cd ${.CURDIR}/../distrib/mac68k/instkernel/instkernel && \
-		${MAKE} ${MAKEFLAGS} INSTALL_KERNEL=${k} && ${MAKE} ${MAKEFLAGS} release INSTALL_KERNEL=${k}
+		${MAKE} clean
+.endif
+	cd ${.CURDIR}/../distrib/mac68k/instkernel/instkernel && \
+		${MAKE} ${MAKEFLAGS} INSTALL_KERNEL=${k} && \
+		${MAKE} ${MAKEFLAGS} INSTALL_KERNEL=${k} release
 .endfor
-	cd ${.CURDIR}/../distrib/notes && ${MAKE} ${MAKEFLAGS} && ${MAKE} ${MAKEFLAGS} release
+	cd ${KERNOBJDIR}/GENERICSBC &&	\
+		tar cf - netbsd |\
+		gzip -c -9 > ${RELEASEDIR}/binary/sets/kern_sbc.tgz
+.ifndef UPDATE
+	cd ${.CURDIR}/../distrib/notes && ${MAKE} clean
+.endif
+	cd ${.CURDIR}/../distrib/notes && \
+		${MAKE} ${MAKEFLAGS} && \
+		${MAKE} ${MAKEFLAGS} release
 	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/instkernel
