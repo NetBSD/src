@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.8 2002/05/09 12:28:08 uch Exp $	*/
+/*	$NetBSD: pte.h,v 1.9 2003/08/10 02:03:31 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 /*
  * Hardware bits
  */
-#define	PG_PPN			0x1ffff000	/* Phisical page number mask */
+#define	PG_PPN			0x1ffff000	/* Physical page number mask */
 #define	PG_V			0x00000100	/* Valid */
 #define	PG_PR_MASK		0x00000060	/* Page protection mask */
 #define	PG_PR_URW		0x00000060	/* kernel/user read/write */
