@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.5 1999/02/15 19:31:34 pk Exp $
+#	$NetBSD: Makefile.buildboot,v 1.6 1999/04/28 15:22:25 christos Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -37,6 +37,7 @@ LIBZ=		${ZLIB}
 
 ### find out what to use for libsa
 SA_AS=		library
+SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
