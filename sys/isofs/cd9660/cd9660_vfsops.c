@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.63 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.64 2002/09/21 18:12:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.63 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.64 2002/09/21 18:12:43 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -179,6 +179,15 @@ cd9660_mount(mp, path, data, ndp, p)
 	int error;
 	struct iso_mnt *imp = NULL;
 	
+	if (mp->mnt_flag & MNT_GETARGS) {
+		imp = VFSTOISOFS(mp);
+		if (imp == NULL)
+			return EIO;
+		args.fspec = NULL;
+		args.flags = imp->im_flags;
+		vfs_showexport(mp, &args.export, &imp->im_export);
+		return copyout(&args, data, sizeof(args));
+	}
 	error = copyin(data, (caddr_t)&args, sizeof (struct iso_args));
 	if (error)
 		return (error);

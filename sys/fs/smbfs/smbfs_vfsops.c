@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.3 2002/07/30 07:40:08 soren Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.4 2002/09/21 18:11:56 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -144,6 +144,12 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 	if (data == NULL) {
 		printf("missing data argument\n");
 		return EINVAL;
+	}
+	if (mp->mnt_flag & MNT_GETARGS) {
+		smp = VFSTOSMBFS(mp);
+		if (smp == NULL)
+			return EIO;
+		return copyout(&smp->sm_args, data, sizeof(smp->sm_args));
 	}
 	if (mp->mnt_flag & MNT_UPDATE) {
 		printf("MNT_UPDATE not implemented");

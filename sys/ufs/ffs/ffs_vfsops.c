@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.101 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.102 2002/09/21 18:14:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.101 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.102 2002/09/21 18:14:50 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -190,6 +190,14 @@ ffs_mount(mp, path, data, ndp, p)
 	int error, flags, update;
 	mode_t accessmode;
 
+	if (mp->mnt_flag & MNT_GETARGS) {
+		ump = VFSTOUFS(mp);
+		if (ump == NULL)
+			return EIO;
+		args.fspec = NULL;
+		vfs_showexport(mp, &args.export, &ump->um_export);
+		return copyout(&args, data, sizeof(args));
+	}
 	error = copyin(data, (caddr_t)&args, sizeof (struct ufs_args));
 	if (error)
 		return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.80 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.81 2002/09/21 18:14:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.80 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.81 2002/09/21 18:14:50 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -243,6 +243,14 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 	int error;
 	mode_t accessmode;
 
+	if (mp->mnt_flag & MNT_GETARGS) {
+		ump = VFSTOUFS(mp);
+		if (ump == NULL)
+			return EIO;
+		args.fspec = NULL;
+		vfs_showexport(mp, &args.export, &ump->um_export);
+		return copyout(&args, data, sizeof(args));
+	}
 	error = copyin(data, (caddr_t)&args, sizeof (struct ufs_args));
 	if (error)
 		return (error);

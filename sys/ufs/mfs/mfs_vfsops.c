@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.40 2002/07/21 15:32:20 hannken Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.41 2002/09/21 18:14:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.40 2002/07/21 15:32:20 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.41 2002/09/21 18:14:51 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -237,6 +237,28 @@ mfs_mount(mp, path, data, ndp, p)
 	size_t size;
 	int flags, error;
 
+	if (mp->mnt_flag & MNT_GETARGS) {
+		struct vnode *vp;
+		struct mfsnode *mfsp;
+
+		ump = VFSTOUFS(mp);
+		if (ump == NULL)
+			return EIO;
+
+		vp = ump->um_devvp;
+		if (vp == NULL)
+			return EIO;
+
+		mfsp = VTOMFS(vp);
+		if (mfsp == NULL)
+			return EIO;
+
+		args.fspec = NULL;
+		vfs_showexport(mp, &args.export, &ump->um_export);
+		args.base = mfsp->mfs_baseoff;
+		args.size = mfsp->mfs_size;
+		return copyout(&args, data, sizeof(args));
+	}
 	/*
 	 * XXX turn off async to avoid hangs when writing lots of data.
 	 * the problem is that MFS needs to allocate pages to clean pages,

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_mount.h,v 1.5 2000/07/15 21:40:44 jdolecek Exp $	*/
+/*	$NetBSD: cd9660_mount.h,v 1.6 2002/09/21 18:12:43 christos Exp $	*/
 /*
  * Copyright (c) 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -53,3 +53,7 @@ struct iso_args {
 #define	ISOFSMNT_NOJOLIET	0x00000008 /* disable Joliet extensions */
 #define	ISOFSMNT_NOCASETRANS	0x00000010 /* do not make names lower case */
 #define	ISOFSMNT_RRCASEINS	0x00000020 /* case insensitive Rock Ridge */
+
+#define ISOFSMNT_BITS "\177\20" \
+    "b\00norrip\0b\01gens\0b\02extatt\0b\03nojoliet\0" \
+    "b\04nocasetrans\0b\05rrcaseins"
