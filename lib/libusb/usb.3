@@ -1,4 +1,4 @@
-.\"	$NetBSD: usb.3,v 1.4 1999/05/12 00:14:58 augustss Exp $
+.\"	$NetBSD: usb.3,v 1.5 1999/05/17 23:47:27 augustss Exp $
 .\"
 .\" Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
 .\" All rights reserved.
@@ -29,26 +29,26 @@
 .Os
 .Sh NAME
 .Nm usb ,
-.Nm get_report_desc ,
-.Nm dispose_report_desc ,
+.Nm hid_get_report_desc ,
+.Nm hid_dispose_report_desc ,
 .Nm hid_start_parse ,
 .Nm hid_end_parse ,
 .Nm hid_get_item ,
 .Nm hid_report_size ,
-.Nm usage_page ,
-.Nm usage_in_page ,
-.Nm init_hid ,
-.Nm get_data ,
-.Nm set_data
+.Nm hid_usage_page ,
+.Nm hid_usage_in_page ,
+.Nm hid_init ,
+.Nm hid_get_data ,
+.Nm hid_set_data
 .Nd USB HID access routines
 .Sh LIBRARY
 .Lb libusb
 .Sh SYNOPSIS
 .Fd #include <usb.h>
 .Ft report_desc_t
-.Fn get_report_desc "int file"
+.Fn hid_get_report_desc "int file"
 .Ft void
-.Fn dispose_report_desc "report_desc_t d"
+.Fn hid_dispose_report_desc "report_desc_t d"
 .Ft hid_data_t
 .Fn hid_start_parse "report_desc_t d" "int kindset"
 .Ft void
@@ -60,15 +60,15 @@
 .Ft int
 .Fn hid_locate "report_desc_t d" "u_int usage" "hid_kind_t k" "hid_item_t *h"
 .Ft char *
-.Fn usage_page "int i"
+.Fn hid_usage_page "int i"
 .Ft char *
-.Fn usage_in_page "u_int u"
+.Fn hid_usage_in_page "u_int u"
 .Ft void
-.Fn init_hid "char *file"
+.Fn hid_init "char *file"
 .Ft int
-.Fn get_data "void *data" "hid_item_t *h"
+.Fn hid_get_data "void *data" "hid_item_t *h"
 .Ft void
-.Fn set_data "void *data" "hid_item_t *h" "u_int data"
+.Fn hid_set_data "void *data" "hid_item_t *h" "u_int data"
 .Sh DESCRIPTION
 The
 .Nm
@@ -86,13 +86,13 @@ parsing of the descriptor, translating to/from symbolic names, and
 data manipulation.
 .Sh DESCRIPTOR FUNCTIONS
 A report descriptor can be obtained by calling
-.Fn get_report_desc
+.Fn hid_get_report_desc
 with a file descriptor obtained by opening a
 .Xr uhid 4
 device.
 When the report descriptor is no longer needed it should be freed
 by calling
-.Fn dispose_report_desc .
+.Fn hid_dispose_report_desc .
 The type 
 .Fa report_desc_t
 is opaque and should be used when calling the parsing functions.
@@ -147,24 +147,24 @@ non-zero if the item was found.
 .Pp
 .Sh NAME TRANSLATION FUNCTIONS
 The function
-.Fn usage_page
+.Fn hid_usage_page
 will return the symbolic name of a usage page, and the function
-.Fn usage_in_page
+.Fn hid_usage_in_page
 will return the symbolic name of the usage within the page.
 Both these functions may return a pointer to static data.
 Before either of these functions can be called the usage table
 must be parse, this is done by calling
-.Fn init_hid
+.Fn hid_init
 with the name of the table.  Passing
 .Fa NULL
 to this function will cause it to use the default table.
 .Sh DATA EXTRACTION FUNCTIONS
 Given the data obtained from a HID device and an item in the
 report descriptor the
-.Fn get_data
+.Fn hid_get_data
 function extracts the value of the item.
 Conversely
-.Fn set_data
+.Fn hid_set_data
 can be used to put data into a report (which must be zeroed first).
 .Sh EXAMPLE
 Not yet.
