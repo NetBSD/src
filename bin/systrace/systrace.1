@@ -1,4 +1,4 @@
-.\"	$NetBSD: systrace.1,v 1.1 2002/06/17 16:29:11 christos Exp $
+.\"	$NetBSD: systrace.1,v 1.2 2002/06/17 17:06:08 wiz Exp $
 .\"	$OpenBSD: systrace.1,v 1.16 2002/06/13 00:15:00 provos Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -85,7 +85,6 @@ The full path name of the corresponding binary has to be specified
 as
 .Ar command .
 .El
-.Pp
 .Sh POLICY
 The policy is specified via the following grammar:
 .Bd -literal -offset 4
@@ -128,7 +127,7 @@ Evaluates to true if file name globbing according to
 .Xr fnmatch 3
 succeeds.
 .It eq
-Evaluates to true if the system call argument matches 
+Evaluates to true if the system call argument matches
 .Va cmdstring
 exactly.
 .It neq
@@ -152,6 +151,15 @@ Predicates have the following format:
 .Pp
 A rule is added to the configured policy only if its predicate
 evaluates to true.
+.Sh FILES
+.Bl -tag -width xHOME/xsystrace -compact
+.It Pa /dev/systrace
+systrace device
+.It Pa /etc/systrace
+global systrace policies
+.It Pa $HOME/.systrace
+user specified policies
+.El
 .Sh EXAMPLES
 An excerpt from a sample
 .Xr ls 1
@@ -169,15 +177,6 @@ Policy: /bin/ls, Emulation: native
 [...]
 	native-open: filename eq "/etc" then deny[eperm], if group != wheel
 .Ed
-.Sh FILES
-.Bl -tag -width xHOME/xsystrace -compact
-.It Pa /dev/systrace
-systrace device
-.It Pa /etc/systrace
-global systrace policies
-.It Pa $HOME/.systrace
-user specified policies
-.El
 .Sh SEE ALSO
 .Xr systrace 4
 .Sh AUTHORS
