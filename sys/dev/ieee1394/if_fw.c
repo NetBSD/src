@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fw.c,v 1.5 2001/03/03 02:21:26 onoe Exp $	*/
+/*	$NetBSD: if_fw.c,v 1.6 2001/05/01 04:18:29 jmc Exp $	*/
 
 /* XXX ALTQ XXX */
 
@@ -74,13 +74,10 @@
 #include <machine/bus.h>
 
 #include <dev/ieee1394/ieee1394reg.h>
-#include <dev/ieee1394/fwohcireg.h>
-
 #include <dev/ieee1394/ieee1394var.h>
-#include <dev/ieee1394/fwohcivar.h>
 
 struct fw_softc {
-	struct device sc_dev;
+	struct ieee1394_softc sc_sc1394;
 	struct ieee1394com sc_ic;
 
 	int sc_flags;
@@ -144,7 +141,7 @@ fw_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_hwaddr.iha_maxrec = i;
 	if (i < 8) {
 		printf("%s: maximum receive packet (%d) is too small\n",
-		    sc->sc_dev.dv_xname, psc->sc1394_max_receive);
+		    sc->sc_sc1394.sc1394_dev.dv_xname, psc->sc1394_max_receive);
 		splx(s);
 		return;
 	}
@@ -154,7 +151,7 @@ fw_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_hwaddr.iha_offset[3] = (FW_FIFO_LO >> 16) & 0xff;
 	sc->sc_ic.ic_hwaddr.iha_offset[4] = (FW_FIFO_LO >>  8) & 0xff;
 	sc->sc_ic.ic_hwaddr.iha_offset[5] = FW_FIFO_LO & 0xff;
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strcpy(ifp->if_xname, sc->sc_sc1394.sc1394_dev.dv_xname);
 	ifp->if_softc = sc;
 #if __NetBSD_Version__ >= 105080000
 	ifp->if_init = fw_init;
@@ -174,7 +171,7 @@ fw_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ieee1394_ifattach(ifp, &sc->sc_ic.ic_hwaddr);
 	(*psc->sc1394_ifinreg)
-	    (sc->sc_dev.dv_parent, FW_FIFO_HI, FW_FIFO_LO, fw_input);
+	    (sc->sc_sc1394.sc1394_dev.dv_parent, FW_FIFO_HI, FW_FIFO_LO, fw_input);
 
 	sc->sc_flags |= FWF_ATTACHED;
 
@@ -243,7 +240,7 @@ fw_start(struct ifnet *ifp)
 {
 	struct fw_softc *sc = (struct fw_softc *)ifp->if_softc;
 	struct ieee1394_softc *psc =
-	    (struct ieee1394_softc *)sc->sc_dev.dv_parent;
+	    (struct ieee1394_softc *)sc->sc_sc1394.sc1394_dev.dv_parent;
 	struct mbuf *m0;
 	int error;
 
@@ -254,7 +251,7 @@ fw_start(struct ifnet *ifp)
 		if (m0 == NULL)
 			break;
 		error = (*psc->sc1394_ifoutput)
-		    (sc->sc_dev.dv_parent, m0, fw_txint);
+		    (sc->sc_sc1394.sc1394_dev.dv_parent, m0, fw_txint);
 		if (error)
 			break;
 		ifp->if_flags |= IFF_OACTIVE;
