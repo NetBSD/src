@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.14 2000/08/14 22:37:08 lukem Exp $	*/
+/*	$NetBSD: interact.c,v 1.15 2000/09/04 02:09:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.14 2000/08/14 22:37:08 lukem Exp $");
+__RCSID("$NetBSD: interact.c,v 1.15 2000/09/04 02:09:26 lukem Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -408,11 +408,12 @@ cmd_name(lp, s, fd)
 	int fd;
 {
 	char line[BUFSIZ];
+	char def[BUFSIZ];
 	int i;
 
-	snprintf(line, sizeof(line), "%.*s",
+	snprintf(def, sizeof(def), "%.*s",
 	    (int) sizeof(lp->d_packname), lp->d_packname);
-	i = getinput(":", "Label name", lp->d_packname, line);
+	i = getinput(":", "Label name", def, line);
 	if (i <= 0)
 		return;
 	(void) strncpy(lp->d_packname, line, sizeof(lp->d_packname));
