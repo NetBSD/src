@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.14 1997/01/31 22:22:47 ghudson Exp $	*/
+/*	$NetBSD: su.c,v 1.15 1997/02/11 08:39:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -43,7 +43,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-static char rcsid[] = "$NetBSD: su.c,v 1.14 1997/01/31 22:22:47 ghudson Exp $";
+static char rcsid[] = "$NetBSD: su.c,v 1.15 1997/02/11 08:39:23 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -148,7 +148,8 @@ main(argc, argv)
 	username = strdup(pwd->pw_name);
 	if (asme)
 		if (pwd->pw_shell && *pwd->pw_shell)
-			shell = strcpy(shellbuf,  pwd->pw_shell);
+			shell = strncpy(shellbuf, pwd->pw_shell,
+			    sizeof(shellbuf) + 1);
 		else {
 			shell = _PATH_BSHELL;
 			iscsh = NO;
@@ -262,12 +263,12 @@ badlogin:
 
 	if (asthem) {
 		avshellbuf[0] = '-';
-		strcpy(avshellbuf+1, avshell);
+		(void)strncpy(avshellbuf+1, avshell, sizeof(avshellbuf) - 2);
 		avshell = avshellbuf;
 	} else if (iscsh == YES) {
 		/* csh strips the first character... */
 		avshellbuf[0] = '_';
-		strcpy(avshellbuf+1, avshell);
+		(void)strncpy(avshellbuf+1, avshell, sizeof(avshellbuf) - 2);
 		avshell = avshellbuf;
 	}
 	*np = avshell;
@@ -303,7 +304,7 @@ ontty()
 
 	buf[0] = 0;
 	if (p = ttyname(STDERR_FILENO))
-		sprintf(buf, " on %s", p);
+		(void)snprintf(buf, sizeof buf, " on %s", p);
 	return (buf);
 }
 
@@ -329,7 +330,8 @@ kerberos(username, user, uid)
 		warnx("kerberos: not in %s's ACL.", user);
 		return (1);
 	}
-	(void)sprintf(krbtkfile, "%s_%s_%d", TKT_ROOT, user, getuid());
+	(void)(void)snprintf(krbtkfile, sizeof krbtkfile, "%s_%s_%d", TKT_ROOT,
+	    user, getuid());
 
 	(void)setenv("KRBTKFILE", krbtkfile, 1);
 	(void)krb_set_tkt_string(krbtkfile);
@@ -432,10 +434,10 @@ koktologin(name, realm, toname)
 
 	kdata = &kdata_st;
 	memset((char *)kdata, 0, sizeof(*kdata));
-	(void)strcpy(kdata->pname, name);
-	(void)strcpy(kdata->pinst,
-	    ((strcmp(toname, "root") == 0) ? "root" : ""));
-	(void)strcpy(kdata->prealm, realm);
+	(void)strncpy(kdata->pname, name, sizeof(kdata->pname) - 1);
+	(void)strcnpy(kdata->pinst,
+	    ((strcmp(toname, "root") == 0) ? "root" : ""), sizeof(kdata->pinst) - 1);
+	(void)strcnpy(kdata->prealm, realm, sizeof(kdata->prealm) - 1);
 	return (kuserok(kdata, toname));
 }
 #endif
