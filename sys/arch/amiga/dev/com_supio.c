@@ -1,4 +1,4 @@
-/*	$NetBSD: com_supio.c,v 1.11 1998/08/15 17:47:15 mycroft Exp $	*/
+/*	$NetBSD: com_supio.c,v 1.12 1998/09/16 21:30:58 is Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -133,16 +133,7 @@ com_supio_match(parent, match, aux)
 
 	if (strcmp(supa->supio_name,"com"))
 		return 0;
-#if 0
-	/* if it's in use as console, it's there. */
-	if (iobase != comconsaddr || comconsattached) {
-		if (bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh)) {
-			return 0;
-		}
-		rv = comprobe1(iot, ioh, iobase);
-		bus_space_unmap(iot, ioh, COM_NPORTS);
-	}
-#endif
+
 	return (rv);
 }
 
