@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.h,v 1.6 2002/09/21 21:14:57 manu Exp $ */
+/*	$NetBSD: irix_prctl.h,v 1.7 2002/10/05 23:15:58 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -159,4 +159,4 @@ struct irix_prda {
 	} usr_prda;
 };
 
-#endif /* _IRIX_IRIX_PRCTL_H_ */
+#endif /* _IRIX_PRCTL_H_ */
