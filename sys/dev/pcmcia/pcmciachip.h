@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciachip.h,v 1.1.2.9 1997/10/14 05:09:07 thorpej Exp $	*/
+/*	$NetBSD: pcmciachip.h,v 1.1.2.10 1997/10/16 09:15:32 enami Exp $	*/
 
 #ifndef _PCMCIA_PCMCIACHIP_H_
 #define	_PCMCIA_PCMCIACHIP_H_
@@ -18,6 +18,7 @@ typedef int pcmcia_mem_handle_t;
 #define	PCMCIA_MEM_ATTR		1
 #define	PCMCIA_MEM_COMMON	2
 
+#define	PCMCIA_WIDTH_AUTO	0
 #define	PCMCIA_WIDTH_IO8	1
 #define	PCMCIA_WIDTH_IO16	2
 
