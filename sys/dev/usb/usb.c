@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.60 2001/12/31 12:15:22 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.61 2001/12/31 15:55:51 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.60 2001/12/31 12:15:22 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.61 2001/12/31 15:55:51 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,14 +290,12 @@ usb_event_thread(void *arg)
 
 	DPRINTF(("usb_event_thread: start\n"));
 
-#if 0
 	/*
 	 * In case this controller is a companion controller to an
 	 * EHCI controller we need to wait until the EHCI controller
 	 * has grabbed the port.
 	 */
-	usb_delay_ms(sc->sc_bus, 250);
-#endif
+	usb_delay_ms(sc->sc_bus, 500);
 
 	/* Make sure first discover does something. */
 	sc->sc_bus->needs_explore = 1;
