@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.4.18.1 2000/06/30 16:27:41 simonb Exp $ */
+/*	$NetBSD: cgsix.c,v 1.4.18.2 2000/09/09 17:30:54 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -569,9 +569,9 @@ cg6_unblank(dev)
 #define	CG6_USER_DHC	0x80000000
 
 struct mmo {
-	u_int	mo_uaddr;	/* user (virtual) address */
-	u_int	mo_size;	/* size, or 0 for video ram size */
-	u_int	mo_physoff;	/* offset from sc_physadr */
+	u_long	mo_uaddr;	/* user (virtual) address */
+	u_long	mo_size;	/* size, or 0 for video ram size */
+	u_long	mo_physoff;	/* offset from sc_physadr */
 };
 
 /*
@@ -614,7 +614,7 @@ cgsixmmap(dev, off, prot)
 	 * one byte is as good as one page.
 	 */
 	for (mo = mmo; mo < &mmo[NMMO]; mo++) {
-		if ((u_int)off < mo->mo_uaddr)
+		if ((u_long)off < mo->mo_uaddr)
 			continue;
 		u = off - mo->mo_uaddr;
 		sz = mo->mo_size ? mo->mo_size : sc->sc_fb.fb_type.fb_size;

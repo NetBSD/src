@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsixreg.h,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $ */
+/*	$NetBSD: cgsixreg.h,v 1.1.1.1.24.1 2000/09/09 17:30:54 eeh Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -167,7 +167,7 @@ struct cg6_tec_xxx {
 struct cg6_layout {
 	/* ROM at 0 */
 	union {
-		long un_id;		/* ID = ?? */
+		int  un_id;		/* ID = ?? */
 		char un_rom[65536];	/* 64K rom */
 		char un_pad[0x200000];
 	} cg6_rom_un;
