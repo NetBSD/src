@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.126 2004/12/06 08:07:28 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.127 2005/01/11 01:30:17 itojun Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.126 2004/12/06 08:07:28 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.127 2005/01/11 01:30:17 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -4275,6 +4275,7 @@ key_sockaddrcmp(sa1, sa2, port)
 		    satosin6(sa1)->sin6_port != satosin6(sa2)->sin6_port) {
 			return 1;
 		}
+		break;
 	default:
 		if (bcmp(sa1, sa2, sa1->sa_len) != 0)
 			return 1;
