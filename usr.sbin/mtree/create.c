@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.19 1998/11/03 15:14:40 christos Exp $	*/
+/*	$NetBSD: create.c,v 1.20 1998/12/19 15:38:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.19 1998/11/03 15:14:40 christos Exp $");
+__RCSID("$NetBSD: create.c,v 1.20 1998/12/19 15:38:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -268,23 +268,23 @@ statd(t, parent, puid, pgid, pmode, pflags)
 	}
 	(void)printf("/set type=file");
 	if (keys & F_GID)
-		(void)printf(" gid=%u", savegid);
+		(void)printf(" gid=%lu", (u_long)savegid);
 	if (keys & F_GNAME) {
 		if ((gr = getgrgid(savegid)) != NULL)
 			(void)printf(" gname=%s", gr->gr_name);
 		else
-			(void)printf(" gid=%u", savegid);
+			(void)printf(" gid=%lu", (u_long)savegid);
 	}
 	if (keys & F_UNAME) {
 		if ((pw = getpwuid(saveuid)) != NULL)
 			(void)printf(" uname=%s", pw->pw_name);
 		else
-			(void)printf(" uid=%u", saveuid);
+			(void)printf(" uid=%lu", (u_long)saveuid);
 	}
 	if (keys & F_UID)
-		(void)printf(" uid=%u", saveuid);
+		(void)printf(" uid=%lu", (u_long)saveuid);
 	if (keys & F_MODE)
-		(void)printf(" mode=%#o", savemode);
+		(void)printf(" mode=%#lo", (u_long)savemode);
 	if (keys & F_NLINK)
 		(void)printf(" nlink=1");
 	if (keys & F_FLAGS && saveflags)
