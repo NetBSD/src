@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.12 1996/02/11 22:31:47 briggs Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.13 1996/02/14 14:20:54 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -204,7 +204,6 @@ setRoot(part, lp, slot)
 	lp->d_partitions[slot].p_size = part->pmPartBlkCnt;
 	lp->d_partitions[slot].p_offset = part->pmPyPartStart;
 	lp->d_partitions[slot].p_fstype = FS_BSDFFS;
-	lp->d_npartitions++;
 
 #if PRINT_DISKLABELS
 	printf("%c: Root '%s' at %d size %d\n", slot + 'a',
@@ -225,7 +224,6 @@ setSwap(part, lp, slot)
 	lp->d_partitions[slot].p_size = part->pmPartBlkCnt;
 	lp->d_partitions[slot].p_offset = part->pmPyPartStart;
 	lp->d_partitions[slot].p_fstype = FS_SWAP;
-	lp->d_npartitions++;
 
 #if PRINT_DISKLABELS
 	printf("%c: Swap '%s' at %d size %d\n", slot + 'a',
@@ -246,7 +244,6 @@ setUfs(part, lp, slot)
 	lp->d_partitions[slot].p_size = part->pmPartBlkCnt;
 	lp->d_partitions[slot].p_offset = part->pmPyPartStart;
 	lp->d_partitions[slot].p_fstype = FS_BSDFFS;
-	lp->d_npartitions++;
 
 #if PRINT_DISKLABELS
 	printf("%c: Usr '%s' at %d size %d\n", slot + 'a',
@@ -267,7 +264,6 @@ setHfs(part, lp, slot)
 	lp->d_partitions[slot].p_size = part->pmPartBlkCnt;
 	lp->d_partitions[slot].p_offset = part->pmPyPartStart;
 	lp->d_partitions[slot].p_fstype = FS_HFS;
-	lp->d_npartitions++;
 
 #if PRINT_DISKLABELS
 	printf("%c: HFS_PART '%s' at %d size %d\n", slot + 'a',
@@ -288,7 +284,6 @@ setScratch(part, lp, slot)
 	lp->d_partitions[slot].p_size = part->pmPartBlkCnt;
 	lp->d_partitions[slot].p_offset = part->pmPyPartStart;
 	lp->d_partitions[slot].p_fstype = FS_OTHER;
-	lp->d_npartitions++;
 
 #if PRINT_DISKLABELS
 	printf("%c: Other (%s) '%s' at %d size %d\n", slot + 'a',
@@ -302,11 +297,12 @@ setScratch(part, lp, slot)
 }
 
 int 
-getNamedType(part, num_parts, lp, type, alt)
+getNamedType(part, num_parts, lp, type, alt, maxslot)
 	struct partmapentry *part;
 	int num_parts;
 	struct disklabel *lp;
 	int type, alt;
+	int *maxslot;
 {
 	struct blockzeroblock *bzb;
 	int i = 0;
@@ -327,9 +323,11 @@ getNamedType(part, num_parts, lp, type, alt)
 				if (alt >= 0 && alt != bzb->bzbCluster)
 					goto skip;
 				setUfs(&(part[i]), lp, 6);
+				if (*maxslot < 6) *maxslot = 6;
 				break;
 			case SWAP_PART:
 				setSwap(&(part[i]), lp, 1);
+				if (*maxslot < 1) *maxslot = 1;
 				break;
 			default:
 				printf("disksubr.c: can't do type \n", type);
@@ -376,7 +374,7 @@ read_mac_label(dev, strat, lp, osdep)
 {
 	struct buf *bp;
 	char *msg = NULL;
-	int i = 0, num_parts = 0;
+	int i = 0, num_parts = 0, maxslot = 0;
 	struct partmapentry pmap[NUM_PARTS_PROBED];
 
 	bp = geteblk((int) lp->d_secsize * NUM_PARTS_PROBED);
@@ -393,11 +391,11 @@ read_mac_label(dev, strat, lp, osdep)
 
 	lp->d_npartitions = 1;	/* one for 'c' */
 	fixPartTable(pmap, lp->d_secsize, bp->b_un.b_addr, &num_parts);
-	if (getNamedType(pmap, num_parts, lp, ROOT_PART, 0))
-		getNamedType(pmap, num_parts, lp, ROOT_PART, -1);
-	if (getNamedType(pmap, num_parts, lp, UFS_PART, 0))
-		getNamedType(pmap, num_parts, lp, UFS_PART, -1);
-	getNamedType(pmap, num_parts, lp, SWAP_PART, -1);
+	if (getNamedType(pmap, num_parts, lp, ROOT_PART, 0, &maxslot))
+		getNamedType(pmap, num_parts, lp, ROOT_PART, -1, &maxslot);
+	if (getNamedType(pmap, num_parts, lp, UFS_PART, 0, &maxslot))
+		getNamedType(pmap, num_parts, lp, UFS_PART, -1, &maxslot);
+	getNamedType(pmap, num_parts, lp, SWAP_PART, -1, &maxslot);
 	for (i = 0; i < num_parts; i++) {
 		int partType;
 		int slot;
@@ -417,21 +415,25 @@ read_mac_label(dev, strat, lp, osdep)
 		 */
 		case UFS_PART:
 			setUfs(&(pmap[i]), lp, slot);
+			if (slot > maxslot) maxslot = slot;
 			break;
 		case SWAP_PART:
 			setSwap(&(pmap[i]), lp, slot);
+			if (slot > maxslot) maxslot = slot;
 			break;
 		case HFS_PART:
 			setHfs(&(pmap[i]), lp, slot);
+			if (slot > maxslot) maxslot = slot;
 			break;
 		case SCRATCH_PART:
 			setScratch(&(pmap[i]), lp, slot);
+			if (slot > maxslot) maxslot = slot;
 			break;
 		default:
 			break;
-
 		}
 	}
+	lp->d_npartitions = maxslot+1;
 
 done:
 	bp->b_flags = B_INVAL | B_AGE | B_READ;
