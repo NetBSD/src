@@ -15,7 +15,7 @@
 .\"
 .\"	@(#)ref.me	6.4 (Berkeley) 7/17/89
 .\"
-.\" Modified by jjc@jclark.uucp for groff.
+.\" Modified by jjc@jclark.com for groff.
 .\"UC 7
 .ll 6.5i
 .lt 6.5i
@@ -738,9 +738,9 @@ centered blocks have no default initial or trailing space.
 The vertical spacing of all displays except quotes
 and centered blocks
 is stored in register
-.NR ($R
+.NR ($V
 instead of
-.NR ($r .
+.NR ($v .
 .TL
 .b .(l
 .i m
@@ -1128,11 +1128,11 @@ The pointsize is set to
 and the line spacing is set proportionally.
 The line spacing as a percentage of the pointsize expressed in units
 is stored in
-.NR ($r .
+.NR ($v .
 The percentage used internally
 by displays and annotations
 is stored in
-.NR ($R
+.NR ($V
 (although this is not used by
 .b .sz ).
 This size is
@@ -1963,7 +1963,7 @@ NAME	TYPE	DESCRIPTION
 \&.$6	M\(dg	invoked before printing depth 6 section
 \&.$C	M\(dg	called at beginning of chapter
 \&.$H	M\(dg	text header
-\en($R	R\(dd	relative vertical spacing in displays
+\en($V	R\(dd	relative vertical spacing in displays
 \en($c	R	current column number
 \&.$c	M\(dd	print chapter title
 \en($d	R	delayed text number
@@ -1976,9 +1976,9 @@ NAME	TYPE	DESCRIPTION
 \e*($n	S	section name
 \en($p	R	numbered paragraph number
 \&.$p	M\(dd	print section heading (internal macro)
-\en($r	R\(dd	relative vertical spacing in text
 \en($s	R	column indent
 \&.$s	M\(dd	footnote separator (from text)
+\en($v	R\(dd	relative vertical spacing in text
 \en%	R\(sc	current page number
 \e&	F\(sc	zero width character, useful for hiding controls
 \e(\fI\&xx\fP	F\(sc	interpolate special character \fI\&xx\fP
