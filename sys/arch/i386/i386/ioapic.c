@@ -1,4 +1,4 @@
-/* $NetBSD: ioapic.c,v 1.1.2.6 2000/08/18 13:54:25 sommerfeld Exp $ */
+/* $NetBSD: ioapic.c,v 1.1.2.7 2000/08/30 14:20:30 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -395,7 +395,9 @@ apic_vectorset (sc, irq, level)
 			 * need to double-up an existing vector
 			 * and install a slightly different handler.
 			 */
-			panic("apic_vectorset: no free vectors");
+			panic("%s: can't alloc vector "
+			    "for pin %d at level %x",
+			    sc->sc_dev.dv_xname, irq, level);
 		}
 		handler = apichandler[(nvector & 0xf) +
 		    ((level > IPL_HIGH) ? 0x10 : 0)];
