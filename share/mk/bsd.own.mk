@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.103 1998/11/24 15:24:53 tsubai Exp $
+#	$NetBSD: bsd.own.mk,v 1.104 1998/11/25 04:04:13 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -86,6 +86,12 @@ UVM?=		yes
 	(${MACHINE} == "pc532") || \
 	(${MACHINE} == "vax")
 PMAP_NEW?=	yes
+.endif
+
+# The sparc64 port is incomplete.
+.if (${MACHINE_ARCH} == "sparc64")
+NOPROFILE=
+NOPIC=
 .endif
 
 # The PowerPC port is incomplete.
