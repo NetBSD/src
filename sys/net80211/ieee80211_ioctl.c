@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.3 2003/09/14 01:14:55 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.4 2003/09/28 02:40:14 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.4 2003/07/20 21:36:08 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.3 2003/09/14 01:14:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.4 2003/09/28 02:40:14 dyoung Exp $");
 #endif
 
 /*
@@ -48,18 +48,25 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.3 2003/09/14 01:14:55 dyoung E
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
  
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <net/if_media.h>
 #ifdef __FreeBSD__
 #include <net/ethernet.h>
+#else
+#include <net/if_ether.h>
 #endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_ioctl.h>
 
+#ifdef __FreeBSD__
 #include <dev/wi/if_wavelan_ieee.h>
+#else
+#include <dev/ic/wi_ieee.h>
+#endif
 
 /*
  * XXX
@@ -78,9 +85,13 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct wi_apinfo *ap;
 	struct ieee80211_node *ni;
 	struct ieee80211_rateset *rs;
+#ifdef WICACHE
 	struct wi_sigcache wsc;
+#endif /* WICACHE */
+#if 0 /* TBD */
 	struct wi_scan_p2_hdr *p2;
 	struct wi_scan_res *res;
+#endif
 
 	error = copyin(ifr->ifr_data, &wreq, sizeof(wreq));
 	if (error)
@@ -233,7 +244,7 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case WI_RID_DEFLT_CRYPT_KEYS:
 		keys = (struct wi_ltv_keys *)&wreq;
 		/* do not show keys to non-root user */
-		error = suser(curthread);
+		error = suser(curproc->p_ucred, &curproc->p_acflag);
 		if (error) {
 			memset(keys, 0, sizeof(*keys));
 			error = 0;
@@ -301,6 +312,7 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 		memcpy(wreq.wi_val, &i, sizeof(i));
 		wreq.wi_len = (sizeof(int) + sizeof(*ap) * i) / 2;
 		break;
+#if 0
 	case WI_RID_PRISM2:
 		wreq.wi_val[0] = 1;	/* XXX lie so SCAN_RES can give rates */
 		wreq.wi_len = sizeof(u_int16_t) / 2;
@@ -339,6 +351,8 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 		p2->wi_reason = i;
 		wreq.wi_len = (sizeof(*p2) + sizeof(*res) * i) / 2;
 		break;
+#endif /* 0 */
+#ifdef WICACHE
 	case WI_RID_READ_CACHE:
 		i = 0;
 		TAILQ_FOREACH(ni, &ic->ic_node, ni_list) {
@@ -355,6 +369,7 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		wreq.wi_len = sizeof(wsc) * i / 2;
 		break;
+#endif /* WICACHE */
 	case WI_RID_SCAN_APS:
 		error = EINVAL;
 		break;
@@ -783,7 +798,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			}
 			len = (u_int) ic->ic_nw_keys[kid].wk_len;
 			/* NB: only root can read WEP keys */
-			if (suser(curthread)) {
+			if (suser(curproc->p_ucred, &curproc->p_acflag)) {
 				bcopy(ic->ic_nw_keys[kid].wk_key, tmpkey, len);
 			} else {
 				bzero(tmpkey, len);
@@ -838,7 +853,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	case SIOCS80211:
-		error = suser(curthread);
+		error = suser(curproc->p_ucred, &curproc->p_acflag);
 		if (error)
 			break;
 		ireq = (struct ieee80211req *) data;
@@ -983,7 +998,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ieee80211_cfgget(ifp, cmd, data);
 		break;
 	case SIOCSIFGENERIC:
-		error = suser(curthread);
+		error = suser(curproc->p_ucred, &curproc->p_acflag);
 		if (error)
 			break;
 		error = ieee80211_cfgset(ifp, cmd, data);
@@ -1048,7 +1063,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCS80211NWKEY:
 		nwkey = (struct ieee80211_nwkey *)data;
-		if ((ic->ic_flags & IEEE80211_F_HASWEP) == 0 &&
+		if ((ic->ic_flags & IEEE80211_C_WEP) == 0 &&
 		    nwkey->i_wepon != IEEE80211_NWKEY_OPEN) {
 			error = EINVAL;
 			break;
@@ -1120,7 +1135,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		power = (struct ieee80211_power *)data;
 		ic->ic_lintval = power->i_maxsleep;
 		if (power->i_enabled != 0) {
-			if ((ic->ic_flags & IEEE80211_F_HASPMGT) == 0)
+			if ((ic->ic_flags & IEEE80211_C_PMGT) == 0)
 				error = EINVAL;
 			else if ((ic->ic_flags & IEEE80211_F_PMGTON) == 0) {
 				ic->ic_flags |= IEEE80211_F_PMGTON;
@@ -1190,7 +1205,8 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = EINVAL;
 			break;
 		} else
-			ic->ic_ibss_chan = ic->ic_des_chan = chanreq->i_channel;
+			ic->ic_ibss_chan = ic->ic_des_chan =
+			    &ic->ic_channels[chanreq->i_channel];
 		switch (ic->ic_state) {
 		case IEEE80211_S_INIT:
 		case IEEE80211_S_SCAN:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.h,v 1.3 2003/09/14 01:14:55 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.h,v 1.4 2003/09/28 02:40:14 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -131,16 +131,18 @@ struct ieee80211_auth {
 #define	SIOCS80211AUTH		 _IOW('i', 236, struct ieee80211_auth)
 #define	SIOCG80211AUTH		_IOWR('i', 237, struct ieee80211_auth)
 
-struct ieee80211_channel {
+struct ieee80211chanreq {
 	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
 	u_int16_t	i_channel;
 };
 
+#if 0
 #define	IEEE80211_CHAN_ANY	0xffff
 #define	IEEE80211_CHAN_ANYC	IEEE80211_CHAN_ANY /* XXX make NULL */
+#endif
 
-#define	SIOCS80211CHANNEL	 _IOW('i', 238, struct ieee80211_channel)
-#define	SIOCG80211CHANNEL	_IOWR('i', 239, struct ieee80211_channel)
+#define	SIOCS80211CHANNEL	 _IOW('i', 238, struct ieee80211chanreq)
+#define	SIOCG80211CHANNEL	_IOWR('i', 239, struct ieee80211chanreq)
 
 struct ieee80211_bssid {
 	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
