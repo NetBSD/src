@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.83 2004/05/06 22:20:30 pk Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.84 2004/05/13 17:43:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.83 2004/05/06 22:20:30 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.84 2004/05/13 17:43:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -534,9 +534,9 @@ void
 limfree(lim)
 	struct plimit *lim;
 {
-
+	int n;
 	simple_lock(&lim->p_slock);
-	int n = --lim->p_refcnt;
+	n = --lim->p_refcnt;
 	simple_unlock(&lim->p_slock);
 	if (n > 0)
 		return;
@@ -960,6 +960,9 @@ chgproccnt(uid_t uid, int diff)
 int
 chgsbsize(uid_t uid, u_long *hiwat, u_long to, rlim_t max)
 {
+	*hiwat = to;
+	return 1;
+#ifdef notyet
 	struct uidinfo *uip;
 	rlim_t nsb;
 	int rv = 0;
@@ -977,4 +980,5 @@ done:
 	if (uip->ui_sbsize == 0 && uip->ui_proccnt == 0)
 		freeuidinfo(uip);
 	return rv;
+#endif
 }
