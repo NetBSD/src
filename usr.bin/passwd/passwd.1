@@ -1,4 +1,4 @@
-.\"	$NetBSD: passwd.1,v 1.21 2003/08/07 11:15:26 agc Exp $
+.\"	$NetBSD: passwd.1,v 1.22 2005/02/22 01:08:43 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)passwd.1    8.1 (Berkeley) 6/6/93
 .\"
-.Dd April  5, 2003
+.Dd February  21, 2005
 .Dt PASSWD 1
 .Os
 .Sh NAME
@@ -40,6 +40,11 @@
 .Sh SYNOPSIS
 .Nm passwd
 .Op Fl l
+.Op Ar user
+.Nm passwd
+.Op Fl p
+.Op Fl d Ar ypdomain
+.Op Fl s Ar ypserver
 .Op Ar user
 .Nm passwd
 .Op Fl y
@@ -72,7 +77,7 @@
 .Op Ar user
 .Sh DESCRIPTION
 .Nm
-changes the user's local, YP, or Kerberos password.
+changes the user's local, PAM, YP, or Kerberos password.
 First, the user is
 prompted for their current password.
 If the current password is correctly typed, a new password is

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2005/01/11 22:42:30 christos Exp $
+#	$NetBSD: Makefile,v 1.37 2005/02/22 01:08:43 christos Exp $
 #	from: @(#)Makefile    8.3 (Berkeley) 4/2/94
 
 .include <bsd.own.mk>
@@ -31,6 +31,13 @@ DPADD+=	${LIBKRB5} ${LIBCRYPTO} ${LIBASN1} ${LIBCOM_ERR} ${LIBROKEN} ${LIBCRYPT}
 LDADD+=	-lkrb5 -lcrypto -lasn1 -lcom_err -lroken -lcrypt
 LINKS+=	${BINDIR}/passwd ${BINDIR}/kpasswd
 MLINKS+=	passwd.1 kpasswd.1
+.endif
+
+.if (${USE_PAM} != "no")
+CPPFLAGS+=-DUSE_PAM
+SRCS+= pam_passwd.c
+LDADD+=-lpam
+DPADD+=${LIBPAM}
 .endif
 
 .include <bsd.prog.mk>
