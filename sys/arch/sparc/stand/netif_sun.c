@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.1 1995/09/16 23:20:34 pk Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.2 1995/09/18 21:31:48 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -85,6 +85,7 @@ netif_open(machdep_hint)
 #ifdef	DEBUG
 		printf("netif_open: device busy\n");
 #endif
+		errno = ENFILE;
 		return (-1);
 	}
 	bzero(io, sizeof(*io));

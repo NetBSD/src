@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 1995/09/16 23:20:28 pk Exp $ */
+/*	$NetBSD: conf.c,v 1.2 1995/09/18 21:31:45 pk Exp $ */
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -33,6 +33,7 @@
 
 #include <stand.h>
 #include <ufs.h>
+#include <netinet/in.h>
 #include <nfs.h>
  
 struct fs_ops file_system_ufs[] = {

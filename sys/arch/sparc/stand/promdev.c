@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.12 1995/09/17 00:50:58 pk Exp $ */
+/*	$NetBSD: promdev.c,v 1.13 1995/09/18 21:31:49 pk Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -150,7 +150,6 @@ devopen(f, fname, file)
 	const char *fname;
 	char **file;
 {
-	char	*cp;
 	int	error = 0, fd;
 	struct	promdata *pd;
 
@@ -496,7 +495,7 @@ prom_getether(fd, ea)
 		}
 		bcopy(sun4_idprom.id_ether, ea, 6);
 	} else if (promvec->pv_romvec_vers < 2) {
-		(void)(*promvec->pv_enaddr)(fd, ea);
+		(void)(*promvec->pv_enaddr)(fd, (char *)ea);
 	} else {
 		char buf[64];
 		sprintf(buf, "%x mac-address drop swap 6 cmove", ea);
@@ -597,7 +596,6 @@ getpropstring(node, name)
  */
 
 #include <machine/pte.h>
-#include <machine/ctlreg.h>
 
 struct saioreq prom_si;
 static int promdev_inuse;
@@ -610,7 +608,6 @@ prom0_iopen(pd)
 	struct om_boottable *ops;
 	struct devinfo *dip;
 	struct saioreq *si;
-	char	*p;
 	int	error;
 
 	if (promdev_inuse)
