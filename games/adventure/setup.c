@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.7 1999/07/14 17:21:03 hubertf Exp $	*/
+/* $NetBSD: setup.c,v 1.8 2000/07/31 11:25:50 simonb Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,17 +36,14 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
-#endif				/* not lint */
+static char copyright[] = "@(#) Copyright (c) 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 
-#ifndef lint
 #if 0
 static char sccsid[] = "@(#)setup.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: setup.c,v 1.7 1999/07/14 17:21:03 hubertf Exp $");
+static char rcsid[] = "$NetBSD: setup.c,v 1.8 2000/07/31 11:25:50 simonb Exp $";
 #endif
 #endif				/* not lint */
 
@@ -64,8 +61,9 @@ __RCSID("$NetBSD: setup.c,v 1.7 1999/07/14 17:21:03 hubertf Exp $");
 #define SIG2 " *      Sterday, 6 Thrimidge S.R. 1993, 15:24"
 
 #include <stdio.h>
+#include <errno.h>
+#include <string.h>
 #include <stdlib.h>
-#include <err.h>
 #include "hdr.h"		/* SEED lives in there; keep them coordinated. */
 
 #define USAGE "Usage: setup file > data.c (file is typically glorkz)"
@@ -75,7 +73,7 @@ __RCSID("$NetBSD: setup.c,v 1.7 1999/07/14 17:21:03 hubertf Exp $");
 
 #define LINE 10			/* How many values do we get on a line? */
 
-int main __P((int, char *[]));
+int main(int, char *[]);
 
 int
 main(argc, argv)
@@ -85,11 +83,16 @@ main(argc, argv)
 	FILE   *infile;
 	int     c, count, linestart;
 
-	if (argc != 2)
-		errx(1, USAGE);
+	if (argc != 2) {
+		fprintf(stderr, USAGE);
+		exit(1);
+	}
 
-	if ((infile = fopen(argv[1], "r")) == NULL)
-		err(1, "Can't read file %s", argv[1]);
+	if ((infile = fopen(argv[1], "r")) == NULL) {
+		fprintf(stderr, "Can't read file %s: %s\n", argv[1],
+		    strerror(errno));
+		exit(1);
+	}
 	puts("/*\n * data.c: created by setup from the ascii data file.");
 	puts(SIG1);
 	puts(SIG2);
@@ -122,7 +125,9 @@ main(argc, argv)
 	puts("\n\t0\n};");
 	fclose(infile);
 	fflush(stdout);
-	if (ferror(stdout))
-		err(1, "writing standard output");
+	if (ferror(stdout)) {
+		perror("error writing standard output");
+		exit(1);
+	}
 	exit(0);
 }
