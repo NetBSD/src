@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.22 1997/01/31 02:00:58 thorpej Exp $	*/
+/*	$NetBSD: rz.c,v 1.23 1997/02/04 05:24:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -99,16 +99,6 @@ struct	size {
  * (including the boot area).
  */
 static struct size rzdefaultpart[MAXPARTITIONS] = {
-#ifdef GENERIC	/* greedy machines have 64 meg of swap */
-	{       0,   32768 },	/* A */
-	{   32768,  131072 },	/* B */
-	{       0,       0 },	/* C */
-	{   17408,       0 },	/* D */
-	{  115712,       0 },	/* E */
-	{  218112,       0 },	/* F */
-	{  163840,       0 },	/* G */
-	{  115712,       0 }	/* H */
-#else
 	{       0,   16384 },	/* A */
 	{   16384,   65536 },	/* B */
 	{       0,       0 },	/* C */
@@ -117,7 +107,6 @@ static struct size rzdefaultpart[MAXPARTITIONS] = {
 	{  218112,       0 },	/* F */
 	{   81920,       0 },	/* G */
 	{  115712,       0 }	/* H */
-#endif
 };
 
 extern char *
