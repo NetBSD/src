@@ -26,7 +26,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char uulog_rcsid[] = "$Id: uulog.c,v 1.3 1995/08/24 05:23:22 jtc Exp $";
+const char uulog_rcsid[] = "$Id: uulog.c,v 1.4 2004/11/05 20:37:28 dsl Exp $";
 #endif
 
 #include <ctype.h>
@@ -107,7 +107,7 @@ main (argc, argv)
      passing the arguments to getopt.  */
   for (i = 0; i < argc; i++)
     {
-      if (argv[i][0] == '-' && isdigit (argv[i][1]))
+      if (argv[i][0] == '-' && isdigit ((unsigned char)argv[i][1]))
 	{
 	  size_t clen;
 	  char *znew;
