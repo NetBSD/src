@@ -1,7 +1,5 @@
+MAILSTATS(8)                                         MAILSTATS(8)
 
-
-
-MAILSTATS(1)                                         MAILSTATS(1)
 
 
 NNAAMMEE
@@ -29,9 +27,9 @@ DDEESSCCRRIIPPTTIIOONN
               MMaaiilleerr      The name of the mailer.
 
        After  this display, a line totaling the values for all of
-       the mailers is displayed (preceeded with a  ``T''),  sepa-
+       the mailers is displayed (preceded with  a  ``T''),  sepa-
        rated  from  the previous information by a line containing
-       only equals (``='') characters.   Another  line  preceeded
+       only equals (``='')  characters.   Another  line  preceded
        with a ``C'' lists the number of connections.
 
        The options are as follows:
@@ -57,76 +55,9 @@ FFIILLEESS
        /etc/mail/statistics     The default  sseennddmmaaiill  statistics
                                 file.
 
-
-
-
-
-                   Date: 2000/12/29 18:12:20                 1
-
-
-
-
-
-MAILSTATS(1)                                         MAILSTATS(1)
-
-
 SSEEEE AALLSSOO
        mailq(1), sendmail(8)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                   Date: 2000/12/29 18:12:20                 2
-
-
+                   Date: 2001/05/07 22:06:38      MAILSTATS(8)
