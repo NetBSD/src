@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2001/01/15 17:57:44 itojun Exp $
+#	$NetBSD: Makefile,v 1.15 2001/02/28 04:16:04 itojun Exp $
 #	install these sources in /usr/share/sendmail/cf
 
 DIST=		${.CURDIR}/../../../../dist
@@ -33,10 +33,6 @@ OTHERS=		${FILES:S/Makefile//:C/netbsd-proto.*//:S/.mc/.cf/g}
 realall: ${ALL}
 
 afterinstall:
-	sed 's,../../../../usr.sbin/sendmail/cf/cf/,,g' \
-		<${DESTDIR}${FILESDIR}/netbsd-proto.mc \
-		>${DESTDIR}${FILESDIR}/netbsd-proto.mc.new
-	mv ${DESTDIR}${FILESDIR}/netbsd-proto.mc.new ${DESTDIR}${FILESDIR}/netbsd-proto.mc
 	${CHMOD} ${ROMODE} ${DESTDIR}${FILESDIR}/netbsd-proto.mc
 
 # XXX not friendly with "make obj"
