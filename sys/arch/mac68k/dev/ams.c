@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.4.2.1 1999/03/05 08:24:24 scottr Exp $	*/
+/*	$NetBSD: ams.c,v 1.4.2.2 1999/11/15 23:33:43 scottr Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -549,7 +549,7 @@ ms_processevent(event, amsc)
 				((event->bytes[0] & 0x40) ? 64 : 0);
 
 #if NAED > 0
-	aed_input(&new_event);
+	(void)aed_input(&new_event);
 #endif
 }
 
