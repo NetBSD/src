@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_hb.c,v 1.12 2003/05/09 13:36:41 tsutsui Exp $	*/
+/*	$NetBSD: zs_hb.c,v 1.13 2003/05/09 17:39:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -313,10 +313,6 @@ zs_hb_attach(parent, self, aux)
 	splx(s);
 }
 
-/*
- * Our ZS chips all share a common, autovectored interrupt,
- * so we have to look at all of them on each interrupt.
- */
 static int
 zshard_hb(arg)
 	void *arg;
