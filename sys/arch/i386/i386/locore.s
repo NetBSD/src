@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.87 1994/10/25 14:46:50 mycroft Exp $
+ *	$Id: locore.s,v 1.88 1994/10/25 15:13:44 mycroft Exp $
  */
 
 /*
@@ -1513,28 +1513,25 @@ ENTRY(setrunqueue)
  * Remove a process from its queue.  Should be called at splclock().
  */
 ENTRY(remrq)
-	pushl	%esi
-	movl	8(%esp),%esi
+	movl	4(%esp),%ecx
+	movzbl	P_PRIORITY(%ecx),%eax
 #ifdef DIAGNOSTIC
-	movzbl	P_PRIORITY(%esi),%eax
 	shrl	$2,%eax
 	btl	%eax,_whichqs
 	jnc	1f
 #endif /* DIAGNOSTIC */
-	movl	P_FORW(%esi),%ecx	# unlink process
-	movl	P_BACK(%esi),%edx
+	movl	P_BACK(%ecx),%edx	# unlink process
+	movl	$0,P_BACK(%ecx)		# zap reverse link to indicate off list
+	movl	P_FORW(%ecx),%ecx
 	movl	%ecx,P_FORW(%edx)
 	movl	%edx,P_BACK(%ecx)
-	movl	$0,P_BACK(%esi)		# zap reverse link to indicate off list
-	cmpl	%edx,%ecx		# q still has something?
+	cmpl	%ecx,%edx		# q still has something?
 	jne	2f
 #ifndef DIAGNOSTIC
-	movzbl	P_PRIORITY(%esi),%eax
 	shrl	$2,%eax
 #endif
 	btrl	%eax,_whichqs		# no; clear bit
-2:	popl	%esi
-	ret
+2:	ret
 #ifdef DIAGNOSTIC
 1:	pushl	$3f
 	call	_panic
