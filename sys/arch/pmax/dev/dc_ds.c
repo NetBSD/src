@@ -1,4 +1,4 @@
-/*	$NetBSD: dc_ds.c,v 1.7 1998/01/12 20:12:31 thorpej Exp $	*/
+/*	$NetBSD: dc_ds.c,v 1.8 1998/04/19 10:44:41 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -21,7 +21,10 @@
 #include <sys/device.h>
 #include <sys/tty.h>
 #include <machine/autoconf.h>
+#include <machine/intr.h>
 #include <machine/dc7085cons.h>		/* XXX */
+
+#include <pmax/ibus/ibusvar.h>
 #include <pmax/dev/dcvar.h>
 #include <pmax/dev/dc_ds_cons.h>
 #include <pmax/pmax/kn01.h>
@@ -65,14 +68,15 @@ dc_ds_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct ibus_attach_args *iba = aux;
 
-	if (strcmp(ca->ca_name, "dc") != 0 &&
-	    strcmp(ca->ca_name, "mdc") != 0 &&
-	    strcmp(ca->ca_name, "dc7085") != 0)
+
+	if (strcmp(iba->ia_name, "dc") != 0 &&
+	    strcmp(iba->ia_name, "mdc") != 0 &&
+	    strcmp(iba->ia_name, "dc7085") != 0)
 		return (0);
 
-	if (badaddr((caddr_t)ca->ca_addr, 2))
+	if (badaddr((caddr_t)iba->ia_addr, 2))
 		return (0);
 
 	return (1);
@@ -85,12 +89,12 @@ dc_ds_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	register struct confargs *ca = aux;
+	register struct ibus_attach_args *iba = aux;
 	caddr_t dcaddr;
 	struct dc_softc *sc = (void*) self;
 
 
-	dcaddr = (caddr_t)ca->ca_addr;
+	dcaddr = (caddr_t)iba->ia_addr;
 	(void) dcattach(sc, (void*)MIPS_PHYS_TO_KSEG1(dcaddr),
 			/* dtr/dsr mask: comm port only */
 			1 << DCCOMM_PORT,
@@ -98,7 +102,6 @@ dc_ds_attach(parent, self, aux)
 			0x0,
 			0, DCCOMM_PORT);
 
-	/* tie pseudo-slot to device */
-	BUS_INTR_ESTABLISH(ca, dcintr, self);
+	ibus_intr_establish((void*)iba->ia_cookie, IPL_TTY, dcintr, sc);
 	printf("\n");
 }
