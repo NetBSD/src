@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.7 1998/09/21 20:25:52 mark Exp $
+$NetBSD: isapnpdevs,v 1.8 1998/10/04 18:30:50 christos Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -130,6 +130,7 @@ devlogic	sb	CTL0042		SB AWE64 Value
 devlogic	sb	CTL0044		SB AWE64 Gold
 devlogic	sb	CTL0045		SB AWE64 Value
 devlogic	sb	OPT9250		Televideo card, Opti
+devlogic	sb	@X@0001		CMI8330. Audio Adapter
 devcompat	sb	PNPB000		Generic SB 1.5
 devcompat	sb	PNPB001		Generic SB 2.0
 devcompat	sb	PNPB002		Generic SB Pro
