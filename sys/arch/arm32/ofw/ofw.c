@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.14 1998/08/27 04:00:55 mark Exp $	*/
+/*	$NetBSD: ofw.c,v 1.15 1998/08/28 02:52:37 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,7 +102,7 @@ extern void map_pagetable   __P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa)
 extern void map_entry	    __P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 extern void map_entry_nc    __P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 extern void map_entry_ro    __P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
-extern void pmap_bootstrap  __P((vm_offset_t kernel_l1pt, pt_entry_t kernel_ptpt));
+extern void pmap_bootstrap  __P((vm_offset_t kernel_l1pt, pv_addr_t kernel_ptpt));
 extern void dump_spl_masks  __P((void));
 extern void dumpsys	    __P((void));
 extern void dotickgrovelling __P((vm_offset_t));
@@ -214,7 +214,7 @@ static ofw_handle_t ofw_client_services_handle;
 
 
 static void ofw_callbackhandler __P((struct ofw_cbargs *));
-static void ofw_construct_proc0_addrspace __P((vm_offset_t *, vm_offset_t *));
+static void ofw_construct_proc0_addrspace __P((pv_addr_t *, pv_addr_t *));
 static void ofw_getphysmeminfo __P((void));
 static void ofw_getvirttranslations __P((void));
 static void *ofw_malloc(vm_size_t size);
@@ -753,8 +753,8 @@ ofw_configisadma(pdma)
 void
 ofw_configmem(void)
 {
-	vm_offset_t proc0_ttbbase;
-	vm_offset_t proc0_ptpt;
+	pv_addr_t proc0_ttbbase;
+	pv_addr_t proc0_ptpt;
 
 	/* Set-up proc0 address space. */
 	ofw_construct_proc0_addrspace(&proc0_ttbbase, &proc0_ptpt);
@@ -778,7 +778,7 @@ ofw_configmem(void)
 	OF_set_callback((void(*)())ofw_callbackhandler);
 
 	/* Switch to the proc0 pagetables. */
-	setttb(proc0_ttbbase);
+	setttb(proc0_ttbbase.physical);
 
 	/* Aaaaaaaah, running in the proc0 address space! */
 	/* I feel good... */
@@ -870,8 +870,7 @@ ofw_configmem(void)
 	}
 
 	/* Initialize pmap module. */
-	pmap_bootstrap(PAGE_DIRS_BASE, proc0_ptpt);
-	cpu_cache_syncI();		/* XXX - Is this really needed */
+	pmap_bootstrap(proc0_ttbbase.virtual, proc0_ptpt);
 }
 
 
@@ -1194,21 +1193,23 @@ ofw_callbackhandler(args)
 	}
 }
 
+#define	KERNEL_VMDATA_PTS	8
+#define	KERNEL_OFW_PTS		4
+#define	KERNEL_IO_PTS		4
 
 static void
 ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
-	vm_offset_t *proc0_ttbbase;
-	vm_offset_t *proc0_ptpt;
+	pv_addr_t *proc0_ttbbase;
+	pv_addr_t *proc0_ptpt;
 {
 	int i, oft;
 	pv_addr_t proc0_pagedir;
-	pv_addr_t proc0_pt_pde;
 	pv_addr_t proc0_pt_pte;
 	pv_addr_t proc0_pt_sys;
 	pv_addr_t proc0_pt_kernel;
-	pv_addr_t proc0_pt_vmdata[8];
-	pv_addr_t proc0_pt_ofw[4];
-	pv_addr_t proc0_pt_io[4];
+	pv_addr_t proc0_pt_vmdata[KERNEL_VMDATA_PTS];
+	pv_addr_t proc0_pt_ofw[KERNEL_OFW_PTS];
+	pv_addr_t proc0_pt_io[KERNEL_IO_PTS];
 	pv_addr_t msgbuf;
 	vm_offset_t L1pagetable;
 	vm_offset_t L2pagetable;
@@ -1241,15 +1242,14 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	/* Allocate/initialize space for the proc0, NetBSD-managed */
 	/* page tables that we will be switching to soon. */
 	ofw_claimpages(&virt_freeptr, &proc0_pagedir, PD_SIZE);
-	ofw_claimpages(&virt_freeptr, &proc0_pt_pde, PT_SIZE);
 	ofw_claimpages(&virt_freeptr, &proc0_pt_pte, PT_SIZE);
 	ofw_claimpages(&virt_freeptr, &proc0_pt_sys, PT_SIZE);
 	ofw_claimpages(&virt_freeptr, &proc0_pt_kernel, PT_SIZE);
-	for (i = 0; i < 8; i++)
+	for (i = 0; i < KERNEL_VMDATA_PTS; i++)
 		ofw_claimpages(&virt_freeptr, &proc0_pt_vmdata[i], PT_SIZE);
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < KERNEL_OFW_PTS; i++)
 		ofw_claimpages(&virt_freeptr, &proc0_pt_ofw[i], PT_SIZE);
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < KERNEL_IO_PTS; i++)
 		ofw_claimpages(&virt_freeptr, &proc0_pt_io[i], PT_SIZE);
 
 	/* Allocate/initialize space for stacks. */
@@ -1352,22 +1352,18 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	 */
 
 	ofw_discardmappings(proc0_pt_kernel.virtual,
-	    proc0_pagedir.virtual, PD_SIZE);
-	ofw_discardmappings(proc0_pt_kernel.virtual,
-	    proc0_pt_pde.virtual, PT_SIZE);
-	ofw_discardmappings(proc0_pt_kernel.virtual,
 	    proc0_pt_pte.virtual, PT_SIZE);
 	ofw_discardmappings(proc0_pt_kernel.virtual,
 	    proc0_pt_sys.virtual, PT_SIZE);
 	ofw_discardmappings(proc0_pt_kernel.virtual,
 	    proc0_pt_kernel.virtual, PT_SIZE);
-	for (i = 0; i < 8; i++)
+	for (i = 0; i < KERNEL_VMDATA_PTS; i++)
 		ofw_discardmappings(proc0_pt_kernel.virtual,
 		    proc0_pt_vmdata[i].virtual, PT_SIZE);
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < KERNEL_OFW_PTS; i++)
 		ofw_discardmappings(proc0_pt_kernel.virtual,
 		    proc0_pt_ofw[i].virtual, PT_SIZE);
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < KERNEL_IO_PTS; i++)
 		ofw_discardmappings(proc0_pt_kernel.virtual,
 		    proc0_pt_io[i].virtual, PT_SIZE);
 	ofw_discardmappings(proc0_pt_kernel.virtual,
@@ -1376,14 +1372,7 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 
 	/*
 	 * Construct the proc0 L2 pagetables that map page tables.
-	 * Map entries in the L2pagetable used to map L1PTs.
 	 */
-	L2pagetable = proc0_pt_pde.virtual;
-	for (i = 0; i < 4; i++) {
-		u_int offset = i * NBPG;
-		map_entry_nc(L2pagetable, 0x00000000 + offset,
-		    proc0_pagedir.physical + offset);
-	}
 
 	/* Map entries in the L2pagetable used to map L2PTs. */
 	L2pagetable = proc0_pt_pte.virtual;
@@ -1391,20 +1380,18 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	    proc0_pt_sys.physical);
 	map_entry_nc(L2pagetable, (KERNEL_BASE >> (PGSHIFT-2)),
 	    proc0_pt_kernel.physical);
-	map_entry_nc(L2pagetable, (PAGE_DIRS_BASE >> (PGSHIFT-2)),
-	    proc0_pt_pde.physical);
 	map_entry_nc(L2pagetable, (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)),
 	    proc0_pt_pte.physical);
-	for (i = 0; i < 8; i++)
+	for (i = 0; i < KERNEL_VMDATA_PTS; i++)
 		map_entry_nc(L2pagetable, ((KERNEL_VM_BASE + i * 0x00400000)
 		    >> (PGSHIFT-2)), proc0_pt_vmdata[i].physical);
 	for (i = 0; i < 4; i++)
-		map_entry_nc(L2pagetable, ((0xf5000000 + i * 0x00400000)
+		map_entry_nc(L2pagetable, ((CURRENT_PAGEDIR_HOLE + i * 0x00400000)
 		    >> (PGSHIFT-2)), proc0_pagedir.physical + i * NBPG);
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < KERNEL_OFW_PTS; i++)
 		map_entry_nc(L2pagetable, ((OFW_VIRT_BASE + i * 0x00400000)
 		    >> (PGSHIFT-2)), proc0_pt_ofw[i].physical);
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < KERNEL_IO_PTS; i++)
 		map_entry_nc(L2pagetable, ((IO_VIRT_BASE + i * 0x00400000)
 		    >> (PGSHIFT-2)), proc0_pt_io[i].physical);
 
@@ -1413,16 +1400,15 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 
 	map_pagetable(L1pagetable, 0x0, proc0_pt_sys.physical);
 	map_pagetable(L1pagetable, KERNEL_BASE, proc0_pt_kernel.physical);
-	map_pagetable(L1pagetable, PAGE_DIRS_BASE, proc0_pt_pde.physical);
 	map_pagetable(L1pagetable, PROCESS_PAGE_TBLS_BASE,
 	    proc0_pt_pte.physical);
-	for (i = 0; i < 8; i++)
+	for (i = 0; i < KERNEL_VMDATA_PTS; i++)
 		map_pagetable(L1pagetable, KERNEL_VM_BASE + i * 0x00400000,
 		    proc0_pt_vmdata[i].physical);
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < KERNEL_OFW_PTS; i++)
 		map_pagetable(L1pagetable, OFW_VIRT_BASE + i * 0x00400000,
 		    proc0_pt_ofw[i].physical);
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < KERNEL_IO_PTS; i++)
 		map_pagetable(L1pagetable, IO_VIRT_BASE + i * 0x00400000,
 		    proc0_pt_io[i].physical);
 
@@ -1455,8 +1441,8 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	} /* END for */
 
 	/* OUT parameters are the new ttbbase and the pt which maps pts. */
-	*proc0_ttbbase = proc0_pagedir.physical;
-	*proc0_ptpt = proc0_pt_pte.physical;
+	*proc0_ttbbase = proc0_pagedir;
+	*proc0_ptpt = proc0_pt_pte;
 }
 
 
