@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.101 2004/05/15 21:48:09 dsl Exp $	*/
+/*	$NetBSD: net.c,v 1.102 2004/06/05 21:19:00 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -177,30 +177,24 @@ url_encode(char *dst, const char *src, size_t len,
 {
 	char *p = dst;
 	char *ep = dst + len;
+	int ch;
 
-	/*
-	 * If encoding of a leading slash was desired, and there was in
-	 * fact one or more leading slashes, encode one in the output string.
-	 */
-	if (encode_leading_slash && *src == '/') {
-		if (ep - p < 3)
-			goto done;
-		snprintf(p, ep - p, "%%%02X", '/');
-		src++;
-		p += 3;
-	}
-
-	while (ep - p > 1 && *src != '\0') {
+	for (; ep - p > 1; src++) {
+		ch = *src & 0xff;
+		if (ch == 0)
+			break;
 		if (safe_chars != NULL &&
-		    (isalnum(*src) || strchr(safe_chars, *src))) {
-			*p++ = *src++;
+		    (ch != '/' || !encode_leading_slash) &&
+		    (isalnum(ch) || strchr(safe_chars, ch))) {
+			*p++ = ch;
 		} else {
 			/* encode this char */
 			if (ep - p < 3)
 				break;
-			snprintf(p, ep - p, "%%%02X", *src++);
+			snprintf(p, ep - p, "%%%02X", ch);
 			p += 3;
 		}
+		encode_leading_slash = 0;
 	}
 done:
 	*p = '\0';
@@ -368,7 +362,7 @@ get_ifinterface_info(void)
 #endif
 
 	/* Check host (and domain?) name */
-	if (gethostname(hostname, sizeof(hostname)) == 0) {
+	if (gethostname(hostname, sizeof(hostname)) == 0 && hostname[0] != 0) {
 		hostname[sizeof(hostname) - 1] = 0;
 		/* check for a . */
 		dot = strchr(hostname, '.');
@@ -470,6 +464,7 @@ config_network(void)
 	int  octet0;
 	int  pass, dhcp_config;
 	int l;
+	char dhcp_host[STRSIZE];
 #ifdef INET6
 	int v6config = 1;
 #endif
@@ -553,9 +548,12 @@ again:
 			net_dhcpconf |= DHCPCONF_DOMAIN;
 
 		/* pull hostname out of leases file */
-		get_dhcp_value(net_host, sizeof(net_host), "hostname");
-		if (net_host[0] != '\0')
+		dhcp_host[0] = 0;
+		get_dhcp_value(dhcp_host, sizeof(net_host), "hostname");
+		if (dhcp_host[0] != '\0') {
 			net_dhcpconf |= DHCPCONF_HOST;
+			strlcpy(net_host, dhcp_host, sizeof net_host);
+		}
 	}
 
 	msg_prompt_add(MSG_net_domain, net_domain, net_domain,
@@ -581,16 +579,17 @@ again:
 		    sizeof net_mask);
 		msg_prompt_add(MSG_net_defroute, net_defroute, net_defroute,
 		    sizeof net_defroute);
+	}
+	if (!dhcp_config || net_namesvr[0] == 0)
 		msg_prompt_add(MSG_net_namesrv, net_namesvr, net_namesvr,
 		    sizeof net_namesvr);
-	}
 
 #ifdef INET6
 	/* IPv6 autoconfiguration */
 	if (!is_v6kernel())
 		v6config = 0;
 	else if (v6config) {
-		process_menu(MENU_ip6autoconf, NULL);
+		process_menu(MENU_yesno, deconst(MSG_Perform_IPv6_autoconfiguration));
 		v6config = yesno ? 1 : 0;
 		net_ip6conf |= yesno ? IP6CONF_AUTOHOST : 0;
 	}
@@ -616,7 +615,7 @@ again:
 			(v6config ? "yes" : "no"),
 		     *net_namesvr6 == '\0' ? "<none>" : net_namesvr6);
 #endif
-	process_menu(MENU_yesno, NULL);
+	process_menu(MENU_yesno, deconst(MSG_netok_ok));
 	if (!yesno)
 		msg_display(MSG_netagain);
 	pass++;
@@ -757,10 +756,12 @@ get_via_ftp(void)
 {
 	distinfo *list;
 	char ftp_user_encoded[STRSIZE];
-	char ftp_pass_encoded[STRSIZE];
 	char ftp_dir_encoded[STRSIZE];
-	char filename[SSTRSIZE];
 	int  ret;
+	int got_one = 0;
+	char *cp;
+	const char *ftp_opt;
+	int cwd;
 
 	while ((ret = config_network()) <= 0) {
 		if (ret < 0)
@@ -776,6 +777,7 @@ get_via_ftp(void)
 		}
 	}
 
+	cwd = open(".", O_RDONLY);
 	cd_dist_dir("ftp");
 
 	process_menu(MENU_ftpsource, NULL);
@@ -786,8 +788,6 @@ get_via_ftp(void)
 			list++;
 			continue;
 		}
-		(void)snprintf(filename, sizeof filename, "%s%s", list->name,
-		    dist_postfix);
 		/*
 		 * Invoke ftp to fetch the file.
 		 *
@@ -798,46 +798,57 @@ get_via_ftp(void)
 		 * example, ftp_dir could easily contain '~', which is
 		 * unsafe by a strict reading of RFC 1738).
 		 */
-		if (strcmp("ftp", ftp_user) == 0 && ftp_pass[0] == 0)
-			ret = run_program(RUN_DISPLAY | RUN_PROGRESS, 
-			    "/usr/bin/ftp -a ftp://%s/%s/%s",
-			    ftp_host,
-			    url_encode(ftp_dir_encoded, ftp_dir,
-					sizeof ftp_dir_encoded,
-					RFC1738_SAFE_LESS_SHELL_PLUS_SLASH, 1),
-			    filename);
-		else {
-			ret = run_program(RUN_DISPLAY | RUN_PROGRESS, 
-			    "/usr/bin/ftp ftp://%s:%s@%s/%s/%s",
-			    url_encode(ftp_user_encoded, ftp_user,
-					sizeof ftp_user_encoded,
-					RFC1738_SAFE_LESS_SHELL, 0),
-			    url_encode(ftp_pass_encoded, ftp_pass,
-					sizeof ftp_pass_encoded,
-					NULL, 0),
-			    ftp_host,
-			    url_encode(ftp_dir_encoded, ftp_dir,
-					sizeof ftp_dir_encoded,
-					RFC1738_SAFE_LESS_SHELL_PLUS_SLASH, 1),
-			    filename);
+		if (strcmp("ftp", ftp_user) == 0 && ftp_pass[0] == 0) {
+			/* do anon ftp */
+			ftp_opt = "-a ";
+			ftp_user_encoded[0] = 0;
+		} else {
+			ftp_opt = "";
+			url_encode(ftp_user_encoded, ftp_user,
+				    sizeof ftp_user_encoded / 2 - 1,
+				    RFC1738_SAFE_LESS_SHELL, 0),
+			cp = strchr(ftp_user_encoded, 0);
+			*cp++ = ':';
+			url_encode(cp, ftp_pass,
+				    sizeof ftp_user_encoded / 2 - 1,
+				    NULL, 0),
+			cp = strchr(cp, 0);
+			*cp++ = '@';
+			*cp = 0;
 		}
-		if (ret) {
+
+		url_encode(ftp_dir_encoded, ftp_dir,
+			    sizeof ftp_dir_encoded - 1,
+			    RFC1738_SAFE_LESS_SHELL_PLUS_SLASH, 1),
+		cp = strchr(ftp_dir_encoded, 0);
+		if (set_dir[0] != '/')
+			*cp++ = '/';
+		url_encode(cp, set_dir,
+			    ftp_dir_encoded + sizeof ftp_dir_encoded - cp,
+			    RFC1738_SAFE_LESS_SHELL_PLUS_SLASH, 0),
+
+		ret = run_program(RUN_DISPLAY | RUN_PROGRESS, 
+			    "/usr/bin/ftp %sftp://%s%s/%s/%s%s",
+			    ftp_opt, ftp_user_encoded, ftp_host,
+			    ftp_dir_encoded, list->name, dist_postfix);
+
+		if (ret == 0) {
+			got_one = 1;
+		} else {
 			/* Error getting the file.  Bad host name ... ? */
-			msg_display(MSG_ftperror_cont);
-			getchar();
-			wrefresh(curscr);
-			wmove(stdscr, 0, 0);
-			touchwin(stdscr);
-			wclear(stdscr);
-			wrefresh(stdscr);
-			msg_display(MSG_ftperror);
-			process_menu(MENU_yesno, NULL);
-			if (yesno)
+			process_menu(MENU_yesno, deconst(MSG_ftperror));
+			if (yesno) {
 				process_menu(MENU_ftpsource, NULL);
-			else
+				continue;
+			}
+			if (got_one == 0) {
+				fchdir(cwd);	/* back to current real root */
+				close(cwd);
 				return 0;
-		} else
-			list++;
+			}
+			/* Continue without this set... */
+		}
+		list++;
 
 	}
 	wrefresh(curscr);
@@ -845,9 +856,9 @@ get_via_ftp(void)
 	touchwin(stdscr);
 	wclear(stdscr);
 	wrefresh(stdscr);
-#ifndef DEBUG
-	chdir("/");	/* back to current real root */
-#endif
+
+	fchdir(cwd);	/* back to current real root */
+	close(cwd);
 	return (1);
 }
 
@@ -870,9 +881,9 @@ get_via_nfs(void)
 		}
         }
 
+again:
 	/* Get server and filepath */
 	process_menu(MENU_nfssource, NULL);
-again:
 
 	umount_mnt2();
 
@@ -888,9 +899,11 @@ again:
 	}
 	mnt2_mounted = 1;
 
+	snprintf(ext_dir, sizeof ext_dir, "/mnt2/%s", set_dir);
+
 	/* Verify distribution files exist.  */
-	if (distribution_sets_exist_p("/mnt2") == 0) {
-		msg_display(MSG_badsetdir, "/mnt2");
+	if (distribution_sets_exist_p(ext_dir) == 0) {
+		msg_display(MSG_badsetdir, ext_dir);
 		process_menu (MENU_nfsbadmount, NULL);
 		if (!yesno)
 			return (0);
@@ -899,7 +912,6 @@ again:
 	}
 
 	/* return location, don't clean... */
-	strlcpy(ext_dir, "/mnt2", sizeof(ext_dir));
 	clean_dist_dir = 0;
 	return 1;
 }
@@ -939,8 +951,8 @@ mnt_net_config(void)
 
 	if (!network_up)
 		return;
-	msg_prompt(MSG_mntnetconfig, yes, ans, sizeof ans);
-	if (strcmp(ans, yes) != 0)
+	process_menu(MENU_yesno, deconst(MSG_mntnetconfig));
+	if (!yesno)
 		return;
 
 	/* Write hostname to /etc/rc.conf */
@@ -1054,7 +1066,7 @@ config_dhcp(char *inter)
 
 	if (!file_mode_match(DHCLIENT_EX, S_IFREG))
 		return 0;
-	process_menu(MENU_dhcpautoconf, NULL);
+	process_menu(MENU_yesno, deconst(MSG_Perform_DHCP_autoconfiguration));
 	if (yesno) {
 		/* spawn off dhclient and wait for parent to exit */
 		dhcpautoconf = run_program(RUN_DISPLAY | RUN_PROGRESS,
