@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.67 2002/09/23 23:56:48 mycroft Exp $	 */
+/*	$NetBSD: rtld.c,v 1.68 2002/09/24 00:33:39 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -898,15 +898,11 @@ _rtld_linkmap_add(obj)
 	struct link_map *prev;
 
 	obj->linkmap.l_name = obj->path;
-	obj->linkmap.l_addr = obj->mapbase;
+	obj->linkmap.l_addr = obj->relocbase;
 	obj->linkmap.l_ld = obj->dynamic;
 #ifdef __mips__
 	/* GDB needs load offset on MIPS to use the symbols */
 	obj->linkmap.l_offs = obj->relocbase;
-#endif
-#ifdef __vax__
-	/* VAX shared libaries don't start at a vaddr of 0 */
-	obj->linkmap.l_addr -= obj->vaddrbase;
 #endif
 
 	if (_rtld_debug.r_map == NULL) {
