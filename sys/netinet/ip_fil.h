@@ -1,3 +1,5 @@
+/*	$NetBSD: ip_fil.h,v 1.1.1.2 1997/03/27 15:14:12 darrenr Exp $	*/
+
 /*
  * (C)opyright 1993-1996 by Darren Reed.
  *
@@ -6,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * $Id: ip_fil.h,v 1.1.1.1 1997/03/27 14:51:14 darrenr Exp $
+ * $Id: ip_fil.h,v 1.1.1.2 1997/03/27 15:14:12 darrenr Exp $
  */
 
 #ifndef	__IP_FIL_H__

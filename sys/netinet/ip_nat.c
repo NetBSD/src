@@ -1,3 +1,5 @@
+/*	$NetBSD: ip_nat.c,v 1.1.1.2 1997/03/27 15:14:08 darrenr Exp $	*/
+
 /*
  * (C)opyright 1995-1996 by Darren Reed.
  *
@@ -9,7 +11,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static	char	rcsid[] = "$Id: ip_nat.c,v 1.1.1.1 1997/03/27 14:51:18 darrenr Exp $";
+static	char	rcsid[] = "$Id: ip_nat.c,v 1.1.1.2 1997/03/27 15:14:08 darrenr Exp $";
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -57,10 +59,10 @@ extern struct ifnet vpnif;
 #include <netinet/udp.h>
 #include <netinet/tcpip.h>
 #include <netinet/ip_icmp.h>
-#include "ip_compat.h"
-#include "ip_fil.h"
-#include "ip_nat.h"
-#include "ip_state.h"
+#include <netinet/ip_compat.h>
+#include <netinet/ip_fil.h>
+#include <netinet/ip_nat.h>
+#include <netinet/ip_state.h>
 #ifndef	MIN
 #define	MIN(a,b)	(((a)<(b))?(a):(b))
 #endif

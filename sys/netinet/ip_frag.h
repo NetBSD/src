@@ -1,3 +1,5 @@
+/*	$NetBSD: ip_frag.h,v 1.1.1.2 1997/03/27 15:14:15 darrenr Exp $	*/
+
 /*
  * (C)opyright 1993, 1994, 1995 by Darren Reed.
  *
@@ -6,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_frag.h	1.5 3/24/96
- * $Id: ip_frag.h,v 1.1.1.1 1997/03/27 14:51:25 darrenr Exp $
+ * $Id: ip_frag.h,v 1.1.1.2 1997/03/27 15:14:15 darrenr Exp $
  */
 
 #ifndef	__IP_FRAG_H_

@@ -1,3 +1,5 @@
+/*	$NetBSD: ip_compat.h,v 1.1.1.2 1997/03/27 15:14:14 darrenr Exp $	*/
+
 /*
  * (C)opyright 1993, 1994, 1995 by Darren Reed.
  *
@@ -6,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_compat.h	1.8 1/14/96
- * $Id: ip_compat.h,v 1.1.1.1 1997/03/27 14:51:22 darrenr Exp $
+ * $Id: ip_compat.h,v 1.1.1.2 1997/03/27 15:14:14 darrenr Exp $
  */
 
 #ifndef	__IP_COMPAT_H_
