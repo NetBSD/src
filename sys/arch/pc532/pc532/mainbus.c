@@ -64,22 +64,24 @@ mbattach(parent, self, aux)
  	void *aux;
 {
 	int clk, net;
+	static u_char icu_table[] = {
+		/*
+		 * The ICU is initialized by the Monitor as follows:
+		 *	CCTL=0x15 MCTL=0 LCSV=13 IPS=0 PDIR=0xfe PDAT=0xfe
+		 *
+		 * G0 is used SWAP RAM/ROM, G1-G6 for interrupts and
+		 * G7 to select between the ncr or the aic SCSI controller.
+		 */
+		IPS,	0x7e,	/* 0=i/o, 1=int_req */
+		PDIR,	0x7e,	/* 1=in, 0=out */
+		PDAT,	0xfe,	/* keep ROM at high mem */
+		0xff
+	};
 
 	printf("\n");
-	/*
-	 * The ICU is initialized by the Monitor as follows:
-	 *	CCTL=0x15 MCTL=0 LCSV=13 IPS=0 PDIR=0xfe PDAT=0xfe
-	 */
+	icu_init(icu_table);
 
-	/*
-	 * G0 is used SWAP RAM/ROM, G1-G6 for interrupts and
-	 * G7 to select between the ncr or the aic SCSI controller.
-	 */
-	ICUB(IPS)  = 0x7e;	/* 0=i/o, 1=int_req */
-	ICUB(PDIR) = 0x7e;	/* 1=in, 0=out */
-	ICUB(PDAT) = 0xfe;	/* keep ROM at high mem */
-
-	/* Set up the ICU. */
+	/* Set up the interrupt system. */
 	intr_init();
 
 	/* Allocate softclock at IPL_NET as splnet() has to block softclock. */
@@ -134,4 +136,16 @@ mbsearch(parent, cf, aux)
 			break;
 	}
 	return (0);
+}
+
+void
+icu_init(p)
+	u_char *p;
+{
+	di();
+	while (*p != 0xff) {
+		ICUB(p[0]) = p[1];
+		p += 2;
+	}
+	ei();
 }
