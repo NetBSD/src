@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.7 2002/05/26 00:23:50 fvdl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.8 2002/07/04 10:38:26 fvdl Exp $	*/
 
 /*
  *
@@ -405,6 +405,7 @@ struct pool pmap_pmap_pool;
 
 struct pool pmap_pdp_pool;
 struct pool_cache pmap_pdp_cache;
+u_int pmap_pdp_cache_generation;
 
 int	pmap_pdp_ctor(void *, void *, int);
 
@@ -976,7 +977,8 @@ pmap_bootstrap(kva_start)
 	virtual_avail += PAGE_SIZE; pte++;
 
 	msgbuf_vaddr = virtual_avail;			/* don't need pte */
-	virtual_avail += round_page(MSGBUFSIZE); pte++;
+	virtual_avail += round_page(MSGBUFSIZE);
+	pte += x86_64_btop(round_page(MSGBUFSIZE));
 
 	idt_vaddr = virtual_avail;			/* don't need pte */
 	virtual_avail += 2 * PAGE_SIZE; pte += 2;
@@ -1055,7 +1057,7 @@ pmap_init()
 		npages += (vm_physmem[lcv].end - vm_physmem[lcv].start);
 	s = (vsize_t) (sizeof(struct pv_head) * npages +
 		       sizeof(char) * npages);
-	s = round_page(s); /* round up */
+	s = round_page(s);
 	addr = (vaddr_t) uvm_km_zalloc(kernel_map, s);
 	if (addr == 0)
 		panic("pmap_init: unable to allocate pv_heads");
@@ -1142,18 +1144,15 @@ pmap_alloc_pv(pmap, mode)
 
 	simple_lock(&pvalloc_lock);
 
-	if (pv_freepages.tqh_first != NULL) {
-		pvpage = pv_freepages.tqh_first;
+	pvpage = TAILQ_FIRST(&pv_freepages);
+	if (pvpage != NULL) {
 		pvpage->pvinfo.pvpi_nfree--;
 		if (pvpage->pvinfo.pvpi_nfree == 0) {
 			/* nothing left in this one? */
 			TAILQ_REMOVE(&pv_freepages, pvpage, pvinfo.pvpi_list);
 		}
 		pv = pvpage->pvinfo.pvpi_pvfree;
-#ifdef DIAGNOSTIC
-		if (pv == NULL)
-			panic("pmap_alloc_pv: pvpi_nfree off");
-#endif
+		KASSERT(pv);
 		pvpage->pvinfo.pvpi_pvfree = pv->pv_next;
 		pv_nfpvents--;  /* took one from pool */
 	} else {
@@ -1203,20 +1202,17 @@ pmap_alloc_pvpage(pmap, mode)
 	 * if we need_entry and we've got unused pv_pages, allocate from there
 	 */
 
-	if (mode != ALLOCPV_NONEED && pv_unusedpgs.tqh_first != NULL) {
+	pvpage = TAILQ_FIRST(&pv_unusedpgs);
+	if (mode != ALLOCPV_NONEED && pvpage != NULL) {
 
 		/* move it to pv_freepages list */
-		pvpage = pv_unusedpgs.tqh_first;
 		TAILQ_REMOVE(&pv_unusedpgs, pvpage, pvinfo.pvpi_list);
 		TAILQ_INSERT_HEAD(&pv_freepages, pvpage, pvinfo.pvpi_list);
 
 		/* allocate a pv_entry */
 		pvpage->pvinfo.pvpi_nfree--;	/* can't go to zero */
 		pv = pvpage->pvinfo.pvpi_pvfree;
-#ifdef DIAGNOSTIC
-		if (pv == NULL)
-			panic("pmap_alloc_pvpage: pvpi_nfree off");
-#endif
+		KASSERT(pv);
 		pvpage->pvinfo.pvpi_pvfree = pv->pv_next;
 
 		pv_nfpvents--;  /* took one from pool */
@@ -1244,9 +1240,9 @@ pmap_alloc_pvpage(pmap, mode)
 
 	pg = uvm_pagealloc(NULL, pv_cachedva - vm_map_min(kernel_map), NULL,
 	    UVM_PGA_USERESERVE);
-	if (pg)
-		pg->flags &= ~PG_BUSY;	/* never busy */
-	splx(s);
+	if (pg == NULL)
+		return NULL;
+	pg->flags &= ~PG_BUSY;	/* never busy */
 
 	if (pg == NULL)
 		return (NULL);
@@ -1258,7 +1254,8 @@ pmap_alloc_pvpage(pmap, mode)
 	 * pmap is already locked!  (...but entering the mapping is safe...)
 	 */
 
-	pmap_kenter_pa(pv_cachedva, VM_PAGE_TO_PHYS(pg), VM_PROT_ALL);
+	pmap_kenter_pa(pv_cachedva, VM_PAGE_TO_PHYS(pg),
+	    VM_PROT_READ | VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 	pvpage = (struct pv_page *)pv_cachedva;
 	pv_cachedva = 0;
@@ -1352,7 +1349,7 @@ pmap_free_pv(pmap, pv)
 	 * Can't free the PV page if the PV entries were associated with
 	 * the kernel pmap; the pmap is already locked.
 	 */
-	if (pv_nfpvents > PVE_HIWAT && pv_unusedpgs.tqh_first != NULL &&
+	if (pv_nfpvents > PVE_HIWAT && TAILQ_FIRST(&pv_unusedpgs) != NULL &&
 	    pmap != pmap_kernel())
 		pmap_free_pvpage();
 
@@ -1383,7 +1380,7 @@ pmap_free_pvs(pmap, pvs)
 	 * Can't free the PV page if the PV entries were associated with
 	 * the kernel pmap; the pmap is already locked.
 	 */
-	if (pv_nfpvents > PVE_HIWAT && pv_unusedpgs.tqh_first != NULL &&
+	if (pv_nfpvents > PVE_HIWAT && TAILQ_FIRST(&pv_unusedpgs) != NULL &&
 	    pmap != pmap_kernel())
 		pmap_free_pvpage();
 
@@ -1537,7 +1534,7 @@ pmap_freepage(struct pmap *pmap, struct vm_page *ptp, int level)
 
 	pmap->pm_stats.resident_count--;
 	if (pmap->pm_ptphint[lidx] == ptp)
-		pmap->pm_ptphint[lidx] = pmap->pm_obj[lidx].memq.tqh_first;
+		pmap->pm_ptphint[lidx] = TAILQ_FIRST(&pmap->pm_obj[lidx].memq);
 	ptp->wire_count = 0;
 	uvm_pagefree(ptp);
 }
@@ -1727,6 +1724,7 @@ pmap_create()
 {
 	struct pmap *pmap;
 	int i;
+	u_int gen;
 
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
 
@@ -1756,10 +1754,21 @@ pmap_create()
 	 * malloc since malloc allocates out of a submap and we should
 	 * have already allocated kernel PTPs to cover the range...
 	 *
-	 * NOTE: WE MUST NOT BLOCK WHILE HOLDING THE `pmap_lock'!
+	 * NOTE: WE MUST NOT BLOCK WHILE HOLDING THE `pmap_lock', nor
+	 * ust we call pmap_growkernel() while holding it!
 	 */
 
+try_again:
+	gen = pmap_pdp_cache_generation;
+	pmap->pm_pdir = pool_cache_get(&pmap_pdp_cache, PR_WAITOK);
+
 	simple_lock(&pmaps_lock);
+
+	if (gen != pmap_pdp_cache_generation) {
+		simple_unlock(&pmaps_lock);
+		pool_cache_destruct_object(&pmap_pdp_cache, pmap->pm_pdir);
+		goto try_again;
+	}
 
 	/* XXX Need a generic "I want memory" wchan */
 	while ((pmap->pm_pdir =
@@ -1816,14 +1825,8 @@ pmap_destroy(pmap)
 	 */
 
 	for (i = 0; i < PTP_LEVELS - 1; i++) {
-		while (pmap->pm_obj[i].memq.tqh_first != NULL) {
-			pg = pmap->pm_obj[i].memq.tqh_first;
-#ifdef DIAGNOSTIC
-			if (pg->flags & PG_BUSY)
-				panic("pmap_release: busy page table page");
-#endif
-			/* pmap_page_protect?  currently no need for it. */
-
+		while ((pg = TAILQ_FIRST(&pmap->pm_obj[i].memq)) != NULL) {
+			KASSERT((pg->flags & PG_BUSY) == 0);
 			pg->wire_count = 0;
 			uvm_pagefree(pg);
 		}
@@ -3365,8 +3368,7 @@ pmap_growkernel(maxkvaddr)
 	if (needed_kptp[PTP_LEVELS - 1] != 0) {
 		newpdes = nkptp[PTP_LEVELS - 1] - old;
 		simple_lock(&pmaps_lock);
-		for (pm = pmaps.lh_first; pm != NULL;
-		     pm = pm->pm_list.le_next) {
+		LIST_FOREACH(pm, &pmaps, pm_list) {
 			memcpy(&pm->pm_pdir[PDIR_SLOT_KERN + old],
 			       &kpm->pm_pdir[PDIR_SLOT_KERN + old],
 			       newpdes * sizeof (pd_entry_t));
@@ -3374,6 +3376,7 @@ pmap_growkernel(maxkvaddr)
 
 		/* Invalidate the PDP cache. */
 		pool_cache_invalidate(&pmap_pdp_cache);
+		pmap_pdp_cache_generation++;
 
 		simple_unlock(&pmaps_lock);
 	}
