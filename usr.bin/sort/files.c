@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.17 2001/05/15 11:18:23 jdolecek Exp $	*/
+/*	$NetBSD: files.c,v 1.18 2002/12/24 15:09:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: files.c,v 1.17 2001/05/15 11:18:23 jdolecek Exp $");
+__RCSID("$NetBSD: files.c,v 1.18 2002/12/24 15:09:27 jdolecek Exp $");
 __SCCSID("@(#)files.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ getnext(binno, infl0, filelist, nfiles, pos, end, dummy)
 					+= sizeof(nleft) + nleft;
 			else if (binno == maxb) {
 				if (binno != fstack[infl0].lastb) {
-					fseek(fp, fstack[infl0+
+					fseeko(fp, fstack[infl0+
 						cnt].max_o, SEEK_SET);
 					fread(&nleft, sizeof(nleft), 1, fp);
 				}

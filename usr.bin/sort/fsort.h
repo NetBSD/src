@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.h,v 1.9 2001/05/14 21:45:20 jdolecek Exp $	*/
+/*	$NetBSD: fsort.h,v 1.10 2002/12/24 15:09:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -72,6 +72,6 @@ struct tempfile {
 	FILE *fp;
 	u_char maxb;
 	u_char lastb;
-	int max_o;
+	off_t max_o;
 };
 extern struct tempfile fstack[MAXFCT];
