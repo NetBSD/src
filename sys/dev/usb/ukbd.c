@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.8 1998/08/02 14:22:25 drochner Exp $        */
+/*      $NetBSD: ukbd.c,v 1.9 1998/08/02 22:27:01 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -162,7 +162,8 @@ struct ukbd_softc {
 	struct ukbd_data sc_ndata;
 	struct ukbd_data sc_odata;
 
-	int sc_disconnected;		/* device is gone */
+	char sc_enabled;
+	char sc_disconnected;		/* device is gone */
 
 	int sc_leds;
 	struct device *sc_wskbddev;
@@ -303,18 +304,6 @@ bLength=%d bDescriptorType=%d bEndpointAddress=%d-%s bmAttributes=%d wMaxPacketS
 	a.accesscookie = sc;
 
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
-
-	/* Set up interrupt pipe. */
-	r = usbd_open_pipe_intr(sc->sc_iface, sc->sc_ep_addr, 
-				USBD_SHORT_XFER_OK,
-				&sc->sc_intrpipe, sc, &sc->sc_ndata, 
-				sizeof(sc->sc_ndata), ukbd_intr);
-	if (r != USBD_NORMAL_COMPLETION) {
-		printf("%s: usbd_open_pipe_intr failed, error=%d\n",
-		       sc->sc_dev.dv_xname, r);
-		return;
-	}
-	usbd_set_disco(sc->sc_intrpipe, ukbd_disco, sc);
 }
 
 void
@@ -333,6 +322,30 @@ ukbd_enable(v, on)
 	void *v;
 	int on;
 {
+	struct ukbd_softc *sc = v;
+	usbd_status r;
+
+	if (on) {
+		/* Set up interrupt pipe. */
+		if (sc->sc_enabled)
+			return EBUSY;
+		
+		sc->sc_enabled = 1;
+		r = usbd_open_pipe_intr(sc->sc_iface, sc->sc_ep_addr, 
+					USBD_SHORT_XFER_OK,
+					&sc->sc_intrpipe, sc, &sc->sc_ndata, 
+					sizeof(sc->sc_ndata), ukbd_intr);
+		if (r != USBD_NORMAL_COMPLETION)
+			return (EIO);
+		usbd_set_disco(sc->sc_intrpipe, ukbd_disco, sc);
+	} else {
+		/* Disable interrupts. */
+		usbd_abort_pipe(sc->sc_intrpipe);
+		usbd_close_pipe(sc->sc_intrpipe);
+
+		sc->sc_enabled = 0;
+	}
+
 	return (0);
 }
 
