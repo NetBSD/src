@@ -1,8 +1,8 @@
-#	$NetBSD: README.files,v 1.2.6.1 2005/03/30 05:44:15 jmc Exp $
+#	$NetBSD: README.files,v 1.2.6.2 2005/03/30 05:44:40 jmc Exp $
 
 What's in this directory:
 
-CHANGES-3	Changes between the initial 3.0 branch and final release of 3.0.
+CHANGES-3.0	Changes between the initial 3.0 branch and final release of 3.0.
 
 CHANGES		Changes between the 2.0 and 3.0 releases.
 
