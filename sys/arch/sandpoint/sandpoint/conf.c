@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.7 2002/03/16 16:55:57 martin Exp $	*/
+/*	$NetBSD: conf.c,v 1.8 2002/04/19 02:16:00 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -149,9 +149,7 @@ cdev_decl(spkr);
 /* #include "mms.h"
 cdev_decl(mms);
 #include "lms.h"
-cdev_decl(lms);
-#include "pms.h"
-cdev_decl(pms); */
+cdev_decl(lms); */
 #include "cy.h"
 cdev_decl(cy);
 cdev_decl(mcd);
