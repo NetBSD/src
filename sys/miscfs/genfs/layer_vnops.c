@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.17 2004/06/07 17:36:38 yamt Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.18 2004/06/11 12:34:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -67,7 +67,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.17 2004/06/07 17:36:38 yamt Exp $
+ *	$Id: layer_vnops.c,v 1.18 2004/06/11 12:34:13 yamt Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -232,7 +232,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.17 2004/06/07 17:36:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.18 2004/06/11 12:34:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -434,6 +434,7 @@ layer_lookup(v)
 	ap->a_dvp = ldvp;
 	error = VCALL(ldvp, ap->a_desc->vdesc_offset, ap);
 	vp = *ap->a_vpp;
+	*ap->a_vpp = NULL;
 
 	if (error == EJUSTRETURN && (flags & ISLASTCN) &&
 	    (dvp->v_mount->mnt_flag & MNT_RDONLY) &&
