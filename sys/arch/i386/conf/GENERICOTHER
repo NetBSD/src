@@ -1,4 +1,4 @@
-#	$NetBSD: GENERICOTHER,v 1.25 1996/08/31 20:43:57 mycroft Exp $
+#	$NetBSD: GENERICOTHER,v 1.26 1996/09/09 16:33:21 mycroft Exp $
 #
 #	GENERICOTHER -- everything that's currently supported, except
 #	             Adaptec SCSI controllers.
@@ -44,7 +44,7 @@ options		COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
 options		COMPAT_09	# NetBSD 0.9,
 options		COMPAT_10	# NetBSD 1.0,
 options		COMPAT_11	# NetBSD 1.1,
-options 	COMPAT_12
+options 	COMPAT_12	# NetBSD 1.2,
 options		COMPAT_43	# and 4.3BSD
 options		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 
@@ -78,6 +78,7 @@ options		UNION		# union file system
 #options	GATEWAY		# packet forwarding
 options		INET		# IP + ICMP + TCP + UDP
 options		NS		# XNS
+#options	NSIP		# XNS tunneling over IP
 options		ISO,TPIP	# OSI
 options		EON		# OSI tunneling over IP
 options		CCITT,LLC,HDLC	# X.25
@@ -89,7 +90,9 @@ mainbus0 at root
 
 isa0	at mainbus0
 eisa0	at mainbus0
-pci0	at mainbus0
+pci0	at mainbus0 bus ?
+
+apm0	at mainbus0			# Advanced power management
 
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 pci*	at ppb? bus ?
@@ -122,6 +125,17 @@ mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 mms1	at isa? port 0x238 irq 5
 #pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
 
+#aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
+#aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
+#scsibus* at aha?
+#ahb*	at eisa? slot ?			# Adaptec 174[024] SCSI controllers
+#scsibus* at ahb?
+#ahc0	at isa? port ? irq ?		# Adaptec 284x SCSI controllers
+#ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI controllers
+#ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI controllers
+#scsibus* at ahc?
+#aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
+#scsibus* at aic?
 bha0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 bha1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 bha*	at eisa? slot ?
@@ -143,6 +157,8 @@ sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 ch*	at scsibus? target ? lun ?	# SCSI autochangers
+ss*	at scsibus? target ? lun ?	# SCSI scanners
+uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 #fdc1	at isa? port 0x370 irq ? drq ?
