@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.11 2001/09/26 20:53:08 eeh Exp $ */
+/*	$NetBSD: promlib.c,v 1.12 2001/12/04 00:05:08 darrenr Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
  * OPENPROM functions.  These are here mainly to hide the OPENPROM interface
  * from the rest of the kernel.
  */
+#include "opt_sparc_arch.h"
 
 #include <sys/errno.h>
 #include <sys/param.h>
