@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.20 1999/08/06 12:00:23 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.21 1999/08/09 09:43:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -573,7 +573,6 @@ wdc_ata_bio_done(chp, xfer)
 	struct wdc_xfer *xfer;
 {
 	struct ata_bio *ata_bio = xfer->cmd;
-	int need_done = xfer->c_flags & C_NEEDDONE;
 	int drive = xfer->drive;
 	struct ata_drive_datas *drvp = &chp->ch_drive[drive];
 
@@ -596,7 +595,7 @@ wdc_ata_bio_done(chp, xfer)
 	wdc_free_xfer(chp, xfer);
 
 	ata_bio->flags |= ATA_ITSDONE;
-	if (need_done) {
+	if ((ata_bio->flags & ATA_POLL) == 0) {
 		WDCDEBUG_PRINT(("wdc_ata_done: wddone\n"), DEBUG_XFERS);
 		wddone(chp->ch_drive[drive].drv_softc);
 	}
