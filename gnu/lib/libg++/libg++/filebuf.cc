@@ -134,7 +134,7 @@ streambuf*  filebuf::open(int  filedesc, io_mode m)
 {
   int open_arg = open_cmd_arg(m, a_use);
   if (open_arg == -1) return 0;
-  fd = ::open(name, open_arg, 0666);
+  fd = ::open(name(), open_arg, 0666);
   if (opened = (fd >= 0))
   {
     allocate();
