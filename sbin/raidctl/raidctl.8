@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.18 2000/05/29 03:40:43 oster Exp $
+.\"     $NetBSD: raidctl.8,v 1.19 2000/06/02 04:11:46 oster Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -221,8 +221,8 @@ Fails the specified
 .Ar component , 
 if necessary, and immediately begins a reconstruction back to 
 .Ar component .
-This is another mechanism for starting the reconstruction process if a
-component has a hardware failure.
+This is useful for reconstructing back onto a component after
+it has been replaced following a failure.
 .It Fl s Ar dev
 Display the status of the RAIDframe device for each of the components
 and spares.  
