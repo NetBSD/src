@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.1 1996/09/30 16:34:20 ws Exp $	*/
+/*	$NetBSD: asm.h,v 1.2 1996/11/30 02:49:04 jtc Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -64,7 +64,7 @@
 #define _ENTRY(x) \
 	.text; .align 2; .globl x; .type x,@function; x:
 
-#ifdef PROF
+#ifdef GPROF
 # define _PROF_PROLOGUE	XXX
 #else
 # define _PROF_PROLOGUE
