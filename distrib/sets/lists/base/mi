@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.147 2000/02/20 06:19:37 mycroft Exp $
+# $NetBSD: mi,v 1.148 2000/02/20 06:58:47 mycroft Exp $
 .
 ./altroot
 ./bin
@@ -139,7 +139,6 @@
 ./usr
 ./usr/bin
 ./usr/bin/Mail
-./usr/bin/addr2line
 ./usr/bin/apply
 ./usr/bin/apropos
 ./usr/bin/at
@@ -323,14 +322,12 @@
 ./usr/bin/shlock
 ./usr/bin/showmount
 ./usr/bin/shuffle
-./usr/bin/size
 ./usr/bin/skey
 ./usr/bin/skeyaudit
 ./usr/bin/skeyinfo
 ./usr/bin/skeyinit
 ./usr/bin/sort
 ./usr/bin/split
-./usr/bin/strings
 ./usr/bin/su
 ./usr/bin/sum
 ./usr/bin/sysstat
