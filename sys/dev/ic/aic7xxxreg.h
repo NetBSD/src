@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxxreg.h,v 1.2 1996/05/20 00:58:10 thorpej Exp $	*/
+/*	$NetBSD: aic7xxxreg.h,v 1.3 1996/07/10 22:50:46 explorer Exp $	*/
 
 /*
  * Aic7xxx register and scratch ram definitions.
@@ -29,6 +29,8 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * from	Id: aic7xxx_reg.h,v 1.12 1996/06/09 17:29:12 gibbs Exp
  */
 
 /*
@@ -434,6 +436,11 @@
 						 * when we were expecting
 						 * another msgin byte.
 						 */
+#define			DATA_OVERRUN	0xe1	/*
+						 * Target attempted to write
+						 * beyond the bounds of its
+						 * command.
+						 */
 #define 	BRKADRINT 0x08
 #define		SCSIINT	  0x04
 #define		CMDCMPLT  0x02
@@ -739,6 +746,8 @@
 
 #define SAVED_LINKPTR		0x050
 #define SAVED_SCBPTR		0x051
+#define ULTRA_ENB		0x052
+#define ULTRA_ENB_B		0x053
 
 #define SCSICONF		0x05a
 #define		RESET_SCSI	0x40

@@ -1,3 +1,5 @@
+/*	$NetBSD: smc93cx6var.h,v 1.2 1996/07/10 22:50:50 explorer Exp $	*/
+
 /*
  * Interface to the 93C46 serial EEPROM that is used to store BIOS
  * settings for the aic7xxx based adaptec SCSI controllers.  It can
@@ -20,7 +22,7 @@
  * 4. Modifications may be freely made to this file if the above conditions
  *    are met.
  *
- *      $Id: smc93cx6var.h,v 1.1 1996/05/16 03:59:11 mycroft Exp $
+ * from	Id: 93cx6.h,v 1.3 1996/05/30 07:19:55 gibbs Exp
  */
 
 #include <sys/param.h>
@@ -59,6 +61,17 @@ struct seeprom_descriptor {
  *
  *  A failed read attempt returns 0, and a successful read returns 1.
  */
+
+#if defined(__FreeBSD__)
+#define	SEEPROM_INB(sd)		inb(sd->sd_iobase)
+#define	SEEPROM_OUTB(sd, value)	outb(sd->sd_iobase, value)
+#elif defined(__NetBSD__)
+#define	SEEPROM_INB(sd) \
+	bus_io_read_1(sd->sd_bc, sd->sd_ioh, sd->sd_offset)
+#define	SEEPROM_OUTB(sd, value) \
+	bus_io_write_1(sd->sd_bc, sd->sd_ioh, sd->sd_offset, value)
+#endif
+
 #if defined(__FreeBSD__)
 int read_seeprom __P((struct seeprom_descriptor *sd,
     u_int16_t *buf, u_int start_addr, int count));
@@ -66,5 +79,3 @@ int read_seeprom __P((struct seeprom_descriptor *sd,
 int read_seeprom __P((struct seeprom_descriptor *sd,
     u_int16_t *buf, bus_io_size_t start_addr, bus_io_size_t count));
 #endif
-int acquire_seeprom __P((struct seeprom_descriptor *sd));
-void release_seeprom __P((struct seeprom_descriptor *sd));
