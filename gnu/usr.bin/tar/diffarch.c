@@ -59,7 +59,6 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #endif
 
 extern int errno;			/* From libc.a */
-extern char *valloc();			/* From libc.a */
 
 #include "tar.h"
 #include "port.h"
