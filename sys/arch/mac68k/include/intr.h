@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.14 1999/06/15 15:26:34 kleink Exp $	*/
+/*	$NetBSD: intr.h,v 1.15 1999/08/04 16:01:48 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -74,23 +74,28 @@
 #define spl6()  _spl(PSL_S|PSL_IPL6)
 #define spl7()  _spl(PSL_S|PSL_IPL7)
 
+/*
+ * This array contains the appropriate PSL_S|PSL_IPL? values
+ * to raise interrupt priority to the requested level.
+ */
+extern unsigned short mac68k_ipls[];
+
+#define	MAC68K_IPL_SOFT		0
+#define	MAC68K_IPL_BIO		1
+#define	MAC68K_IPL_NET		2
+#define	MAC68K_IPL_TTY		3
+#define	MAC68K_IPL_IMP		4
+#define	MAC68K_IPL_AUDIO	5
+#define	MAC68K_IPL_SERIAL	6
+#define	MAC68K_IPL_CLOCK	7
+#define	MAC68K_IPL_STATCLOCK	8
+#define	MAC68K_IPL_SCHED	9
+#define	MAC68K_IPL_HIGH		10
+#define	MAC68K_NIPLS		11
+
 /* These spl calls are _not_ to be used by machine-independent code. */
 #define	spladb()	splhigh()
 #define	splzs()		splserial()
-#define	splsoft()	spl1()
-
-/*
- * splnet must block hardware network interrupts
- * splimp must be > spltty
- */
-extern u_short	mac68k_ttyipl;
-extern u_short	mac68k_bioipl;
-extern u_short	mac68k_netipl;
-extern u_short	mac68k_impipl;
-extern u_short	mac68k_audioipl;
-extern u_short	mac68k_clockipl;
-extern u_short	mac68k_statclockipl;
-extern u_short	mac68k_schedipl;
 
 /*
  * These should be used for:
@@ -101,17 +106,17 @@ extern u_short	mac68k_schedipl;
  * everything at spl2, and everything but the panic switch and
  * power at spl4.
  */
-#define	splsoftclock()	splsoft()
-#define	splsoftnet()	splsoft()
-#define	spltty()	_splraise(mac68k_ttyipl)
-#define	splbio()	_splraise(mac68k_bioipl)
-#define	splnet()	_splraise(mac68k_netipl)
-#define	splimp()	_splraise(mac68k_impipl)
-#define	splaudio()	_splraise(mac68k_audioipl)
-#define	splclock()	_splraise(mac68k_clockipl)
-#define	splstatclock()	_splraise(mac68k_statclockipl)
-#define	splsched()	_splraise(mac68k_schedipl)
-#define	splserial()	spl4()
+#define	splsoftclock()	spl1()
+#define	splsoftnet()	_splraise(mac68k_ipls[MAC68K_IPL_SOFT])
+#define	spltty()	_splraise(mac68k_ipls[MAC68K_IPL_TTY])
+#define	splbio()	_splraise(mac68k_ipls[MAC68K_IPL_BIO])
+#define	splnet()	_splraise(mac68k_ipls[MAC68K_IPL_NET])
+#define	splimp()	_splraise(mac68k_ipls[MAC68K_IPL_IMP])
+#define	splaudio()	_splraise(mac68k_ipls[MAC68K_IPL_AUDIO])
+#define	splclock()	_splraise(mac68k_ipls[MAC68K_IPL_CLOCK])
+#define	splstatclock()	_splraise(mac68k_ipls[MAC68K_IPL_STATCLOCK])
+#define	splsched()	_splraise(mac68k_ipls[MAC68K_IPL_SCHED])
+#define	splserial()	_splraise(mac68k_ipls[MAC68K_IPL_SERIAL])
 #define	splhigh()	spl7()
 
 /* watch out for side effects */
