@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: sendmail2netbsd,v 1.1 2000/05/03 10:49:10 itojun Exp $
+#	$NetBSD: sendmail2netbsd,v 1.2 2000/06/13 17:13:17 itojun Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -57,3 +57,5 @@ done
 
 ### remove *.ps
 (cd doc/op; make clean)
+
+echo "please edit sendmail/helpfile by hand."
