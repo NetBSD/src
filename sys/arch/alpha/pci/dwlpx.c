@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx.c,v 1.16 1998/06/06 01:33:23 thorpej Exp $ */
+/* $NetBSD: dwlpx.c,v 1.17 1998/06/06 23:11:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.16 1998/06/06 01:33:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.17 1998/06/06 23:11:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,24 +118,15 @@ dwlpxattach(parent, self, aux)
 	dwlpx_dma_init(ccp);
 
 	pcia_present = REGVAL(PCIA_PRESENT + ccp->cc_sysbase);
-	printf(": PCIA rev. %d, STD I/O %spresent, %s DMA maps.\n",
+	printf(": PCIA rev. %d, STD I/O %spresent, %dK S/G entries\n",
 	    (pcia_present >> PCIA_PRESENT_REVSHIFT) & PCIA_PRESENT_REVMASK,
 	    (pcia_present & PCIA_PRESENT_STDIO) == 0 ? "not " : "",
-#ifdef	MSS3_DEBUG_SG
-	    (sc->dwlpx_sgmapsz == DWLPX_SG128K)? "128K S/G" : "32K S/G");
-#else
-	    (physmem <= btoc(2048LL << 20LL))? "Direct" :
-	        (sc->dwlpx_sgmapsz == DWLPX_SG128K)? "128K S/G" : "32K S/G");
-#endif
+	    sc->dwlpx_sgmapsz == DWLPX_SG128K ? 128 : 32);
 
-
-#if	0
+#if 0
 	{
 		int hpc, slot, slotval;
 		const char *str;
-		printf("%s: %sK Scatter/Gather RAM Entries Available.\n",
-			sc->dwlpx_dev.dv_xname,
-			sc->dwlpx_sgmapsz == DWLPX_SG32K?  "32" : "128");
 		for (hpc = 0; hpc < sc->dwlpx_nhpc; hpc++) {
 			for (slot = 0; slot < 4; slot++) {
 				slotval = (pcia_present >>
@@ -237,7 +228,7 @@ dwlpx_init(sc)
 	ctl = REGVAL(PCIA_PRESENT + ccp->cc_sysbase);
 	if (sc->dwlpx_nhpc == 2) {
 		sc->dwlpx_sgmapsz = DWLPX_SG32K;
-#if	0
+#if 0
 	/*
 	 * As of 2/25/98- When I enable SG128K, and then have to flip
 	 * TBIT below, I get bad SGRAM errors. We'll fix this later
