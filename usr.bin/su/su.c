@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.40 2000/07/10 01:45:24 assar Exp $	*/
+/*	$NetBSD: su.c,v 1.41 2000/07/10 02:09:15 assar Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.40 2000/07/10 01:45:24 assar Exp $");
+__RCSID("$NetBSD: su.c,v 1.41 2000/07/10 02:09:15 assar Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,16 +72,27 @@ __RCSID("$NetBSD: su.c,v 1.40 2000/07/10 01:45:24 assar Exp $");
 #endif
 
 #ifdef KERBEROS
-#include <kerberosIV/des.h>
-#include <kerberosIV/krb.h>
+#include <des.h>
+#include <krb.h>
 #include <netdb.h>
+
+static int kerberos __P((char *, char *, int));
+static int koktologin __P((char *, char *, char *));
+
+#endif
+
+#ifdef KERBEROS5
+#include <krb5.h>
+
+static int kerberos5 __P((char *, char *, int));
+
+#endif
+
+#if defined(KERBEROS) || defined(KERBEROS5)
 
 #define	ARGSTRX	"-Kflm"
 
 int use_kerberos = 1;
-
-static int kerberos __P((char *, char *, int));
-static int koktologin __P((char *, char *, char *));
 
 #else
 #define	ARGSTRX	"-flm"
@@ -131,7 +142,7 @@ main(argc, argv)
 	shell = class = NULL;
 	while ((ch = getopt(argc, argv, ARGSTR)) != -1)
 		switch((char)ch) {
-#ifdef KERBEROS
+#if defined(KERBEROS) || defined(KERBEROS5)
 		case 'K':
 			use_kerberos = 0;
 			break;
@@ -216,6 +227,9 @@ main(argc, argv)
 #endif
 
 	if (ruid
+#ifdef KERBEROS5
+	    && (!use_kerberos || kerberos5(username, user, pwd->pw_uid))
+#endif
 #ifdef KERBEROS
 	    && (!use_kerberos || kerberos(username, user, pwd->pw_uid))
 #endif
@@ -437,6 +451,82 @@ ontty()
 		(void)snprintf(buf, sizeof buf, " on %s", p);
 	return (buf);
 }
+
+#ifdef KERBEROS5
+static int
+kerberos5(username, user, uid)
+	char *username, *user;
+	int uid;
+{
+	krb5_error_code ret;
+	krb5_context context;
+	krb5_principal princ = NULL;
+	krb5_ccache ccache, ccache2;
+	char *cc_name;
+
+	ret = krb5_init_context(&context);
+	if (ret)
+		return (1);
+
+	if (strcmp (user, "root") == 0)
+		ret = krb5_make_principal(context, &princ,
+					  NULL, username, "root", NULL);
+	else
+		ret = krb5_make_principal(context, &princ,
+					  user, NULL);
+	if (ret)
+		goto fail;
+	if (!krb5_kuserok(context, princ, user) && !uid) {
+		warnx ("kerberos5: not in %s's ACL.", user);
+		goto fail;
+	}
+	ret = krb5_cc_gen_new(context, &krb5_mcc_ops, &ccache);
+	if (ret)
+		goto fail;
+	ret = krb5_verify_user_lrealm(context, princ, ccache, NULL, TRUE,
+				      NULL);
+	if (ret) {
+		krb5_cc_destroy(context, ccache);
+		switch (ret) {
+		case KRB5_LIBOS_PWDINTR :
+			break;
+		case KRB5KRB_AP_ERR_BAD_INTEGRITY:
+		case KRB5KRB_AP_ERR_MODIFIED:
+			krb5_warnx(context, "Password incorrect");
+			break;
+		default :
+			krb5_warn(context, ret, "krb5_verify_user");
+			break;
+		}
+		goto fail;
+	}
+	ret = krb5_cc_gen_new(context, &krb5_fcc_ops, &ccache2);
+	if (ret) {
+		krb5_cc_destroy(context, ccache);
+		goto fail;
+	}
+	ret = krb5_cc_copy_cache(context, ccache, ccache2);
+	if (ret) {
+		krb5_cc_destroy(context, ccache);
+		krb5_cc_destroy(context, ccache2);
+		goto fail;
+	}
+
+	asprintf(&cc_name, "%s:%s", krb5_cc_get_type(context, ccache2),
+		 krb5_cc_get_name(context, ccache2));
+	setenv("KRB5CCNAME", cc_name, 1);
+	free(cc_name);
+	krb5_cc_close(context, ccache2);
+	krb5_cc_destroy(context, ccache);
+	return 0;
+
+ fail:
+	if (princ != NULL)
+		krb5_free_principal (context, princ);
+	krb5_free_context (context);
+	return (1);
+}
+#endif
 
 #ifdef KERBEROS
 static int
