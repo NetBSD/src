@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.29 1997/10/12 15:05:26 mycroft Exp $	*/
+/*	$NetBSD: login.c,v 1.30 1997/10/12 15:11:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.29 1997/10/12 15:05:26 mycroft Exp $");
+__RCSID("$NetBSD: login.c,v 1.30 1997/10/12 15:11:24 mycroft Exp $");
 #endif /* not lint */
 
 /*
@@ -400,16 +400,6 @@ main(argc, argv)
 
 	if (pwd->pw_change || pwd->pw_expire)
 		(void)gettimeofday(&tp, (struct timezone *)NULL);
-	if (pwd->pw_change)
-		if (pwd->pw_change == _PASSWORD_CHGNOW)
-			need_chpass = 1;
-		else if (tp.tv_sec >= pwd->pw_change) {
-			(void)printf("Sorry -- your password has expired.\n");
-			sleepexit(1);
-		} else if (pwd->pw_change - tp.tv_sec <
-		    _PASSWORD_WARNDAYS * SECSPERDAY && !quietlog)
-			(void)printf("Warning: your password expires on %s",
-			    ctime(&pwd->pw_change));
 	if (pwd->pw_expire)
 		if (tp.tv_sec >= pwd->pw_expire) {
 			(void)printf("Sorry -- your account has expired.\n");
@@ -418,6 +408,15 @@ main(argc, argv)
 		    _PASSWORD_WARNDAYS * SECSPERDAY && !quietlog)
 			(void)printf("Warning: your account expires on %s",
 			    ctime(&pwd->pw_expire));
+	if (pwd->pw_change)
+		if (pwd->pw_change == _PASSWORD_CHGNOW)
+			need_chpass = 1;
+		else if (tp.tv_sec >= pwd->pw_change)
+			need_chpass = 1;
+		else if (pwd->pw_change - tp.tv_sec <
+		    _PASSWORD_WARNDAYS * SECSPERDAY && !quietlog)
+			(void)printf("Warning: your password expires on %s",
+			    ctime(&pwd->pw_change));
 
 	/* Nothing else left to fail -- really log in. */
 	memset((void *)&utmp, 0, sizeof(utmp));
