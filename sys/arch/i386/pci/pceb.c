@@ -1,4 +1,4 @@
-/*	$NetBSD: pceb.c,v 1.4 1998/06/09 18:49:47 thorpej Exp $	*/
+/*	$NetBSD: pceb.c,v 1.5 1998/08/05 02:11:00 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@ pceb_callback(self)
 	/*
 	 * Attach the EISA bus behind this bridge.
 	 */
-	bzero(&ea, sizeof(ea));
+	memset(&ea, 0, sizeof(ea));
 	ea.ea_eba.eba_busname = "eisa";
 	ea.ea_eba.eba_iot = I386_BUS_SPACE_IO;
 	ea.ea_eba.eba_memt = I386_BUS_SPACE_MEM;
@@ -135,7 +135,7 @@ pceb_callback(self)
 	/*
 	 * Attach the ISA bus behind this bridge.
 	 */
-	bzero(&ea, sizeof(ea));
+	memset(&ea, 0, sizeof(ea));
 	ea.ea_iba.iba_busname = "isa";
 	ea.ea_iba.iba_iot = I386_BUS_SPACE_IO;
 	ea.ea_iba.iba_memt = I386_BUS_SPACE_MEM;
