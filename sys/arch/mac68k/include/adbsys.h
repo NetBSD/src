@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.h,v 1.9 1997/10/02 15:12:49 briggs Exp $	*/
+/*	$NetBSD: adbsys.h,v 1.9.2.1 1997/11/07 22:51:59 mellon Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994	Allen K. Briggs, Chris P. Caputo,
@@ -102,6 +102,7 @@ typedef struct adb_dev_s{
 	/* Interesting keyboard handler IDs */
 #define ADB_STDKBD	1
 #define ADB_EXTKBD	2
+#define ADB_ISOKBD	4
 #define ADB_EXTISOKBD	5
 #define ADB_KBDII	8
 #define ADB_ISOKBDII	9
