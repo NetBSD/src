@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslog.conf.5,v 1.11.4.1 2004/11/14 23:04:18 thorpej Exp $
+.\"	$NetBSD: syslog.conf.5,v 1.11.4.2 2004/11/15 00:17:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -190,7 +190,7 @@ The
 field of each line specifies the action to be taken when the
 .Em selector
 field selects a message.
-There are four forms:
+There are five forms:
 .Bl -bullet
 .It
 A pathname (beginning with a leading slash).
@@ -209,6 +209,45 @@ if they are logged in.
 .It
 An asterisk.
 Selected messages are written to all logged-in users.
+.It
+A vertical bar
+.Pq Sq |
+followed by a command to which to pipe the selected messages.
+The command string is passed to
+.Pa /bin/sh
+for evaluation, so the usual shell metacharacters or input/output
+redirection can occur.
+(Note that redirecting
+.Xr stdio 3
+buffered output from the invoked command can cause additional delays,
+or even lost output data in case a logging subprocess exits with a
+signal.)
+The command itself runs with
+.Em stdout
+and
+.Em stderr
+redirected to
+.Pa /dev/null .
+Upon receipt of a
+.Dv SIGHUP ,
+.Xr syslogd 8
+will close the pipe to the process.
+If the process does not exit voluntarily, it will be sent a
+.Dv SIGTERM
+signal after a grace period of up to 40 seconds.
+.Pp
+The command will only be started once data arrives that should be
+piped to it.
+If the command exits, it will be restarted as necessary.
+.Pp
+Unless the command is a full pipeline, it may be useful to
+start the command with
+.Em exec
+so that the invoking shell process does not wait for the command to
+complete.
+Note that the command is started with the UID of the
+.Xr syslogd 8
+process, normally the superuser.
 .El
 .Pp
 Blank lines and lines whose first non-blank character is a hash
@@ -251,6 +290,9 @@ mail.*							/var/log/maillog
 # Save mail and news errors of level err and higher in a
 # special file.
 mail,news.err						/var/log/spoolerr
+
+# Pipe all authentication messages to a filter.
+auth.*					|exec /usr/local/sbin/authfilter
 
 # Save ftpd transactions along with mail and news
 !ftpd
