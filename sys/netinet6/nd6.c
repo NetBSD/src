@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.45 2001/03/30 11:08:58 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.46 2001/05/24 08:17:22 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.137 2001/03/21 21:52:06 jinmei Exp $	*/
 
 /*
@@ -1216,10 +1216,12 @@ nd6_rtrequest(req, rt, info)
 				llsol.s6_addr32[2] = htonl(1);
 				llsol.s6_addr8[12] = 0xff;
 
-				(void)in6_addmulti(&llsol, ifp, &error);
-				if (error)
-					printf(
-"nd6_rtrequest: could not join solicited node multicast (errno=%d)\n", error);
+				if (!in6_addmulti(&llsol, ifp, &error)) {
+					nd6log((LOG_ERR, "%s: "
+					    "failed to join %s (errno=%d)\n",
+					    if_name(ifp), ip6_sprintf(&llsol),
+					    error));
+				}
 			}
 		}
 		break;
