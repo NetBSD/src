@@ -1,4 +1,4 @@
-.\"	$NetBSD: socket.2,v 1.29 2004/03/31 16:42:19 pooka Exp $
+.\"	$NetBSD: socket.2,v 1.30 2004/05/13 10:20:58 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -153,7 +153,7 @@ peer protocol has buffer space cannot be successfully transmitted
 within a reasonable length of time, then
 the connection is considered broken and calls
 will indicate an error with
--1 returns and with
+\-1 returns and with
 .Er ETIMEDOUT
 as the specific code
 in the global variable
@@ -213,7 +213,7 @@ and
 .Xr getsockopt 2
 system calls are used to set and get options, respectively.
 .Sh RETURN VALUES
-A -1 is returned if an error occurs, otherwise the return
+A \-1 is returned if an error occurs, otherwise the return
 value is a descriptor referencing the socket.
 .Sh ERRORS
 The

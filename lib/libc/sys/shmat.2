@@ -1,4 +1,4 @@
-.\"	$NetBSD: shmat.2,v 1.16 2003/04/16 13:34:56 wiz Exp $
+.\"	$NetBSD: shmat.2,v 1.17 2004/05/13 10:20:58 wiz Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -93,7 +93,7 @@ returns the address at which the shared memory segment has been mapped into
 the calling process' address space when successful,
 .Fn shmdt
 returns 0 on successful completion.
-Otherwise, a value of -1 is returned, and the global variable
+Otherwise, a value of \-1 is returned, and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS

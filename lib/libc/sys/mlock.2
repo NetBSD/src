@@ -1,4 +1,4 @@
-.\"	$NetBSD: mlock.2,v 1.17 2004/01/02 17:06:21 jmmv Exp $
+.\"	$NetBSD: mlock.2,v 1.18 2004/05/13 10:20:58 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -102,7 +102,7 @@ resource limit.
 .Sh RETURN VALUES
 A return value of 0 indicates that the call
 succeeded and all pages in the range have either been locked or unlocked.
-A return value of -1 indicates an error occurred and the locked
+A return value of \-1 indicates an error occurred and the locked
 status of all pages in the range remains unchanged.
 In this case, the global location
 .Va errno

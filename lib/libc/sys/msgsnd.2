@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgsnd.2,v 1.14 2003/04/16 13:34:55 wiz Exp $
+.\"	$NetBSD: msgsnd.2,v 1.15 2004/05/13 10:20:58 wiz Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -94,7 +94,7 @@ set in it, the call will block until:
 The condition which caused the call to block no longer exists.
 The message was sent.
 .It
-The message queue is removed, in which case -1 will be returned and
+The message queue is removed, in which case \-1 will be returned and
 .Va errno
 set to
 .Er EINVAL .
@@ -121,7 +121,7 @@ is set to the current time.
 .El
 .Sh RETURN VALUES
 Upon successful completion, 0 is returned.
-Otherwise, -1 is returned and
+Otherwise, \-1 is returned and
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
