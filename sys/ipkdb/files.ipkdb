@@ -1,8 +1,0 @@
-#	$NetBSD: files.ipkdb,v 1.2 2002/10/11 00:50:30 thorpej Exp $
-
-defflag opt_ipkdb.h		IPKDB
-defflag opt_ipkdb.h		IPKDBSECURE
-defparam opt_ipkdb.h		IPKDBKEY
-
-file	ipkdb/ipkdb_ipkdb.c		ipkdb
-file	ipkdb/ipkdb_if.c		ipkdb

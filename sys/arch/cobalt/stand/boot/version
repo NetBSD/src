@@ -1,7 +1,0 @@
-$NetBSD: version,v 1.1 2003/06/25 17:25:05 cdi Exp $
-
-NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
-file is important - make sure the entries are appended on end, last item
-is taken as the current.
-
-0.1:	Initial revision, only booting from the harddrive is supported
