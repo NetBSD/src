@@ -1,3240 +1,632 @@
-#	$NetBSD: NetBSD.dist,v 1.167 2001/09/02 22:55:08 wiz Exp $
+#	$NetBSD: NetBSD.dist,v 1.168 2001/10/05 16:09:38 lukem Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
-# .
+
 .
-
-# ./altroot
-altroot
-# ./altroot
-..
-
-# ./bin
-bin
-# ./bin
-..
-
-# ./dev
-dev
-
-# ./dev/altq
-altq
-# ./dev/altq
-..
-
-# ./dev/fd
-fd
-# ./dev/fd
-..
-
-# ./dev
-..
-
-# ./etc
-etc
-
-# ./etc/defaults
-defaults
-# ./etc/defaults
-..
-
-# ./etc/kerberosIV
-kerberosIV
-# ./etc/kerberosIV
-..
-
-# ./etc/kerberosV
-kerberosV
-# ./etc/kerberosV
-..
-
-# ./etc/mail
-mail
-# ./etc/mail
-..
-
-# ./etc/mtree
-mtree
-# ./etc/mtree
-..
-
-# ./etc/namedb
-namedb
-# ./etc/namedb
-..
-
-# ./etc/openssl
-openssl
-
-# ./etc/openssl/certs
-certs
-# ./etc/openssl/certs
-..
-
-# ./etc/openssl/misc
-misc
-# ./etc/openssl/misc
-..
-
-# ./etc/openssl/private
-private
-# ./etc/openssl/private
-..
-
-# ./etc/openssl
-..
-
-# ./etc/postfix
-postfix
-# ./etc/postfix
-..
-
-# ./etc/racoon
-racoon
-# ./etc/racoon
-..
-
-# ./etc/rc.d
-rc.d
-# ./etc/rc.d
-..
-
-# ./etc/rc.conf.d
-rc.conf.d
-# ./etc/rc.conf.d
-..
-
-# ./etc/sliphome
-sliphome
-# ./etc/sliphome
-..
-
-# ./etc/skel
-skel
-# ./etc/skel
-..
-
-# ./etc/uucp
-uucp
-# ./etc/uucp
-..
-
-# ./etc
-..
-
-# ./home
-home
-# ./home
-..
-
-# ./mnt
-mnt
-# ./mnt
-..
-
-# ./root
-root
-# ./root
-..
-
-# ./sbin
-sbin
-# ./sbin
-..
-
-# ./stand
-stand
-# ./stand
-..
-
-# ./tmp
-tmp		mode=01777
-# ./tmp
-..
-
-# ./usr
-usr
-
-# ./usr/bin
-bin
-# ./usr/bin
-..
-
-# ./usr/games
-games
-
-# ./usr/games/hide
-hide		uname=root gname=games mode=0750
-# ./usr/games/hide
-..
-
-# ./usr/games
-..
-
-# ./usr/include
-include
-
-# ./usr/include/arpa
-arpa
-# ./usr/include/arpa
-..
-
-# ./usr/include/cdk
-cdk
-# ./usr/include/cdk
-..
-
-# ./usr/include/g++
-g++
-
-# ./usr/include/g++/std
-std
-# ./usr/include/g++/std
-..
-
-# ./usr/include/g++
-..
-
-# ./usr/include/objc
-objc
-# ./usr/include/objc
-..
-
-# ./usr/include/kerberosIV
-kerberosIV
-# ./usr/include/kerberosIV
-..
-
-# ./usr/include/krb5
-krb5
-# ./usr/include/krb5
-..
-
-# ./usr/include/gssapi
-gssapi
-
-# ./usr/include/gssapi
-..
-
-# ./usr/include/kadm5
-kadm5
-# ./usr/include/kadm5
-..
-
-# ./usr/include/openssl
-openssl
-# ./usr/include/openssl
-..
-
-# ./usr/include/protocols
-protocols
-# ./usr/include/protocols
-..
-
-# ./usr/include/readline
-readline
-# ./usr/include/readline
-..
-
-# ./usr/include/rpc
-rpc
-# ./usr/include/rpc
-..
-
-# ./usr/include/rpcsvc
-rpcsvc
-# ./usr/include/rpcsvc
-..
-
-# ./usr/include
-..
-
-# ./usr/lib
-lib
-
-# ./usr/lib/runemodule
-runemodule
-# ./usr/lib/runemodule
-..
-
-# ./usr/lib
-..
-
-# ./usr/libdata
-libdata
-
-# ./usr/libdata/lint
-lint
-# ./usr/libdata/lint
-..
-
-# ./usr/libdata
-..
-
-# ./usr/libexec
-libexec
-
-# ./usr/libexec/lpr
-lpr
-# ./usr/libexec/lpr
-..
-
-# ./usr/libexec/postfix
-postfix
-# ./usr/libexec/postfix
-..
-
-# ./usr/libexec/sendmail
-sendmail
-# ./usr/libexec/sendmail
-..
-
-# ./usr/libexec/sm.bin
-sm.bin
-# ./usr/libexec/sm.bin
-..
-
-# ./usr/libexec/uucp
-uucp
-# ./usr/libexec/uucp
-..
-
-# ./usr/libexec
-..
-
-# ./usr/lkm
-lkm
-# ./usr/lkm
-..
-
-# ./usr/local
-local
-
-# ./usr/local/bin
-bin
-# ./usr/local/bin
-..
-
-# ./usr/local/lib
-lib
-# ./usr/local/lib
-..
-
-# ./usr/local/libdata
-libdata
-# ./usr/local/libdata
-..
-
-# ./usr/local/libexec
-libexec
-# ./usr/local/libexec
-..
-
-# ./usr/local/man
-man
-
-# ./usr/local/man/cat1
-cat1
-# ./usr/local/man/cat1
-..
-
-# ./usr/local/man/cat2
-cat2
-# ./usr/local/man/cat2
-..
-
-# ./usr/local/man/cat3
-cat3
-# ./usr/local/man/cat3
-..
-
-# ./usr/local/man/cat4
-cat4
-# ./usr/local/man/cat4
-..
-
-# ./usr/local/man/cat5
-cat5
-# ./usr/local/man/cat5
-..
-
-# ./usr/local/man/cat6
-cat6
-# ./usr/local/man/cat6
-..
-
-# ./usr/local/man/cat7
-cat7
-# ./usr/local/man/cat7
-..
-
-# ./usr/local/man/cat8
-cat8
-# ./usr/local/man/cat8
-..
-
-# ./usr/local/man/cat9
-cat9
-# ./usr/local/man/cat9
-..
-
-# ./usr/local/man/man1
-man1
-# ./usr/local/man/man1
-..
-
-# ./usr/local/man/man2
-man2
-# ./usr/local/man/man2
-..
-
-# ./usr/local/man/man3
-man3
-# ./usr/local/man/man3
-..
-
-# ./usr/local/man/man4
-man4
-# ./usr/local/man/man4
-..
-
-# ./usr/local/man/man5
-man5
-# ./usr/local/man/man5
-..
-
-# ./usr/local/man/man6
-man6
-# ./usr/local/man/man6
-..
-
-# ./usr/local/man/man7
-man7
-# ./usr/local/man/man7
-..
-
-# ./usr/local/man/man8
-man8
-# ./usr/local/man/man8
-..
-
-# ./usr/local/man/man9
-man9
-# ./usr/local/man/man9
-..
-
-# ./usr/local/man
-..
-
-# ./usr/local/sbin
-sbin
-# ./usr/local/sbin
-..
-
-# ./usr/local
-..
-
-# ./usr/mdec
-mdec
-# ./usr/mdec
-..
-
-# ./usr/pkg
-pkg			ignore optional
-# ./usr/pkg
-..
-
-# ./usr/sbin
-sbin
-# ./usr/sbin
-..
-
-# ./usr/share
-share
-
-# ./usr/share/calendar
-calendar
-# ./usr/share/calendar
-..
-
-# ./usr/share/dict
-dict
-
-# ./usr/share/dict/papers
-papers
-# ./usr/share/dict/papers
-..
-
-# ./usr/share/dict/special
-special
-# ./usr/share/dict/special
-..
-
-# ./usr/share/dict
-..
-
-# ./usr/share/doc
-doc
-
-# ./usr/share/doc/html
-html
-
-# ./usr/share/doc/html/bzip2
-bzip2
-# ./usr/share/doc/html
-..
-
-# ./usr/share/doc/html/ntp
-ntp
-# ./usr/share/doc/html/ntp/hints
-hints
-# ./usr/share/doc/html/ntp
-..
-
-# ./usr/share/doc/html
-..
-
-# ./usr/share/doc
-..
-
-# ./usr/share/doc/psd
-psd
-
-# ./usr/share/doc/psd/01.cacm
-01.cacm
-# ./usr/share/doc/psd/01.cacm
-..
-
-# ./usr/share/doc/psd/02.implement
-02.implement
-# ./usr/share/doc/psd/02.implement
-..
-
-# ./usr/share/doc/psd/03.iosys
-03.iosys
-# ./usr/share/doc/psd/03.iosys
-..
-
-# ./usr/share/doc/psd/04.uprog
-04.uprog
-# ./usr/share/doc/psd/04.uprog
-..
-
-# ./usr/share/doc/psd/05.sysman
-05.sysman
-# ./usr/share/doc/psd/05.sysman
-..
-
-# ./usr/share/doc/psd/06.Clang
-06.Clang
-# ./usr/share/doc/psd/06.Clang
-..
-
-# ./usr/share/doc/psd/07.pascal
-07.pascal
-# ./usr/share/doc/psd/07.pascal
-..
-
-# ./usr/share/doc/psd/08.f77
-08.f77
-# ./usr/share/doc/psd/08.f77
-..
-
-# ./usr/share/doc/psd/09.f77io
-09.f77io
-# ./usr/share/doc/psd/09.f77io
-..
-
-# ./usr/share/doc/psd/10.gdb
-10.gdb
-# ./usr/share/doc/psd/10.gdb
-..
-
-# ./usr/share/doc/psd/11.adb
-11.adb
-# ./usr/share/doc/psd/11.adb
-..
-
-# ./usr/share/doc/psd/12.make
-12.make
-# ./usr/share/doc/psd/12.make
-..
-
-# ./usr/share/doc/psd/13.rcs
-13.rcs
-# ./usr/share/doc/psd/13.rcs
-..
-
-# ./usr/share/doc/psd/14.sccs
-14.sccs
-# ./usr/share/doc/psd/14.sccs
-..
-
-# ./usr/share/doc/psd/15.yacc
-15.yacc
-# ./usr/share/doc/psd/15.yacc
-..
-
-# ./usr/share/doc/psd/16.lex
-16.lex
-# ./usr/share/doc/psd/16.lex
-..
-
-# ./usr/share/doc/psd/17.m4
-17.m4
-# ./usr/share/doc/psd/17.m4
-..
-
-# ./usr/share/doc/psd/18.gprof
-18.gprof
-# ./usr/share/doc/psd/18.gprof
-..
-
-# ./usr/share/doc/psd/19.curses
-19.curses
-# ./usr/share/doc/psd/19.curses
-..
-
-# ./usr/share/doc/psd/20.ipctut
-20.ipctut
-# ./usr/share/doc/psd/20.ipctut
-..
-
-# ./usr/share/doc/psd/21.ipc
-21.ipc
-# ./usr/share/doc/psd/21.ipc
-..
-
-# ./usr/share/doc/psd
-..
-
-# ./usr/share/doc/smm
-smm
-
-# ./usr/share/doc/smm/01.setup
-01.setup
-# ./usr/share/doc/smm/01.setup
-..
-
-# ./usr/share/doc/smm/02.config
-02.config
-# ./usr/share/doc/smm/02.config
-..
-
-# ./usr/share/doc/smm/03.fsck_ffs
-03.fsck_ffs
-# ./usr/share/doc/smm/03.fsck_ffs
-..
-
-# ./usr/share/doc/smm/04.quotas
-04.quotas
-# ./usr/share/doc/smm/04.quotas
-..
-
-# ./usr/share/doc/smm/05.fastfs
-05.fastfs
-# ./usr/share/doc/smm/05.fastfs
-..
-
-# ./usr/share/doc/smm/06.nfs
-06.nfs
-# ./usr/share/doc/smm/06.nfs
-..
-
-# ./usr/share/doc/smm/07.lpd
-07.lpd
-# ./usr/share/doc/smm/07.lpd
-..
-
-# ./usr/share/doc/smm/08.sendmailop
-08.sendmailop
-# ./usr/share/doc/smm/08.sendmailop
-..
-
-# ./usr/share/doc/smm/09.sendmail
-09.sendmail
-# ./usr/share/doc/smm/09.sendmail
-..
-
-# ./usr/share/doc/smm/10.named
-10.named
-# ./usr/share/doc/smm/10.named
-..
-
-# ./usr/share/doc/smm/11.timedop
-11.timedop
-# ./usr/share/doc/smm/11.timedop
-..
-
-# ./usr/share/doc/smm/12.timed
-12.timed
-# ./usr/share/doc/smm/12.timed
-..
-
-# ./usr/share/doc/smm/13.amd
-13.amd
-# ./usr/share/doc/smm/13.amd
-..
-
-# ./usr/share/doc/smm/14.uucpimpl
-14.uucpimpl
-# ./usr/share/doc/smm/14.uucpimpl
-..
-
-# ./usr/share/doc/smm/15.uucpnet
-15.uucpnet
-# ./usr/share/doc/smm/15.uucpnet
-..
-
-# ./usr/share/doc/smm/16.security
-16.security
-# ./usr/share/doc/smm/16.security
-..
-
-# ./usr/share/doc/smm/17.password
-17.password
-# ./usr/share/doc/smm/17.password
-..
-
-# ./usr/share/doc/smm/18.net
-18.net
-# ./usr/share/doc/smm/18.net
-..
-
-# ./usr/share/doc/smm
-..
-
-# ./usr/share/doc/usd
-usd
-
-# ./usr/share/doc/usd/01.begin
-01.begin
-# ./usr/share/doc/usd/01.begin
-..
-
-# ./usr/share/doc/usd/02.learn
-02.learn
-# ./usr/share/doc/usd/02.learn
-..
-
-# ./usr/share/doc/usd/03.shell
-03.shell
-# ./usr/share/doc/usd/03.shell
-..
-
-# ./usr/share/doc/usd/04.csh
-04.csh
-# ./usr/share/doc/usd/04.csh
-..
-
-# ./usr/share/doc/usd/05.dc
-05.dc
-# ./usr/share/doc/usd/05.dc
-..
-
-# ./usr/share/doc/usd/06.bc
-06.bc
-# ./usr/share/doc/usd/06.bc
-..
-
-# ./usr/share/doc/usd/07.mail
-07.mail
-# ./usr/share/doc/usd/07.mail
-..
-
-# ./usr/share/doc/usd/08.mh
-08.mh
-# ./usr/share/doc/usd/08.mh
-..
-
-# ./usr/share/doc/usd/09.edtut
-09.edtut
-# ./usr/share/doc/usd/09.edtut
-..
-
-# ./usr/share/doc/usd/10.edadv
-10.edadv
-# ./usr/share/doc/usd/10.edadv
-..
-
-# ./usr/share/doc/usd/11.edit
-11.edit
-# ./usr/share/doc/usd/11.edit
-..
-
-# ./usr/share/doc/usd/12.ex
-12.ex
-# ./usr/share/doc/usd/12.ex
-..
-
-# ./usr/share/doc/usd/12.vi
-12.vi
-# ./usr/share/doc/usd/12.vi
-..
-
-# ./usr/share/doc/usd/13.viref
-13.viref
-# ./usr/share/doc/usd/13.viref
-..
-
-# ./usr/share/doc/usd/14.jove
-14.jove
-# ./usr/share/doc/usd/14.jove
-..
-
-# ./usr/share/doc/usd/15.sed
-15.sed
-# ./usr/share/doc/usd/15.sed
-..
-
-# ./usr/share/doc/usd/16.awk
-16.awk
-# ./usr/share/doc/usd/16.awk
-..
-
-# ./usr/share/doc/usd/17.msmacros
-17.msmacros
-# ./usr/share/doc/usd/17.msmacros
-..
-
-# ./usr/share/doc/usd/18.msdiffs
-18.msdiffs
-# ./usr/share/doc/usd/18.msdiffs
-..
-
-# ./usr/share/doc/usd/19.memacros
-19.memacros
-# ./usr/share/doc/usd/19.memacros
-..
-
-# ./usr/share/doc/usd/20.meref
-20.meref
-# ./usr/share/doc/usd/20.meref
-..
-
-# ./usr/share/doc/usd/21.troff
-21.troff
-# ./usr/share/doc/usd/21.troff
-..
-
-# ./usr/share/doc/usd/22.trofftut
-22.trofftut
-# ./usr/share/doc/usd/22.trofftut
-..
-
-# ./usr/share/doc/usd/23.eqn
-23.eqn
-# ./usr/share/doc/usd/23.eqn
-..
-
-# ./usr/share/doc/usd/24.eqnguide
-24.eqnguide
-# ./usr/share/doc/usd/24.eqnguide
-..
-
-# ./usr/share/doc/usd/25.tbl
-25.tbl
-# ./usr/share/doc/usd/25.tbl
-..
-
-# ./usr/share/doc/usd/26.refer
-26.refer
-# ./usr/share/doc/usd/26.refer
-..
-
-# ./usr/share/doc/usd/27.invert
-27.invert
-# ./usr/share/doc/usd/27.invert
-..
-
-# ./usr/share/doc/usd/28.bib
-28.bib
-# ./usr/share/doc/usd/28.bib
-..
-
-# ./usr/share/doc/usd/29.diction
-29.diction
-# ./usr/share/doc/usd/29.diction
-..
-
-# ./usr/share/doc/usd/30.rogue
-30.rogue
-# ./usr/share/doc/usd/30.rogue
-..
-
-# ./usr/share/doc/usd/31.trek
-31.trek
-# ./usr/share/doc/usd/31.trek
-..
-
-# ./usr/share/doc/usd
-..
-
-# ./usr/share/doc
-..
-
-# ./usr/share/examples
-examples
-
-# ./usr/share/examples/amd
-amd
-# ./usr/share/examples/amd
-..
-
-# ./usr/share/examples/apm
-apm
-# ./usr/share/examples/apm
-..
-
-# ./usr/share/examples/dhcp
-dhcp
-# ./usr/share/examples/dhcp
-..
-
-# ./usr/share/examples/emul
-emul
-
-# ./usr/share/examples/emul/svr4
-svr4
-
-# ./usr/share/examples/emul/svr4/etc
-etc
-# ./usr/share/examples/emul/svr4/etc
-..
-
-# ./usr/share/examples/emul/svr4
-..
-
-# ./usr/share/examples/emul/ultrix
-ultrix
-
-# ./usr/share/examples/emul/ultrix/etc
-etc
-# ./usr/share/examples/emul/ultrix/etc
-..
-
-# ./usr/share/examples/emul/ultrix
-..
-
-# ./usr/share/examples/emul
-..
-
-# ./usr/share/examples/ftpd
-ftpd
-# ./usr/share/examples/ftpd
-..
-
-# ./usr/share/examples/ipf
-ipf
-# ./usr/share/examples/ipf
-..
-
-# ./usr/share/examples/isdn
-isdn
-# ./usr/share/examples/isdn
-..
-
-# ./usr/share/examples/kerberos
-kerberos
-# ./usr/share/examples/kerberos
-..
-
-# ./usr/share/examples/mount_portal
-mount_portal
-# ./usr/share/examples/mount_portal
-..
-
-# ./usr/share/examples/named
-named
-# ./usr/share/examples/named
-..
-
-# ./usr/share/examples/openssl
-openssl
-# ./usr/share/examples/openssl
-..
-
-# ./usr/share/examples/postfix
-postfix
-# ./usr/share/examples/postfix
-..
-
-# ./usr/share/examples/racoon
-racoon
-# ./usr/share/examples/racoon
-..
-
-# ./usr/share/examples/rtadvd
-rtadvd
-# ./usr/share/examples/rtadvd
-..
-
-# ./usr/share/examples/supfiles
-supfiles
-# ./usr/share/examples/supfiles
-..
-
-# ./usr/share/examples/syslogd
-syslogd
-# ./usr/share/examples/syslogd
-..
-
-# ./usr/share/examples
-..
-
-# ./usr/share/games
-games
-
-# ./usr/share/games/atc
-atc
-# ./usr/share/games/atc
-..
-
-# ./usr/share/games/boggle
-boggle
-# ./usr/share/games/boggle
-..
-
-# ./usr/share/games/ching
-# ching
-# ./usr/share/games/ching
-# ..
-
-# ./usr/share/games/fortune
-fortune
-# ./usr/share/games/fortune
-..
-
-# ./usr/share/games/larn
-larn
-# ./usr/share/games/larn
-..
-
-# ./usr/share/games/quiz.db
-quiz.db
-# ./usr/share/games/quiz.db
-..
-
-# ./usr/share/games
-..
-
-# ./usr/share/gnats
-gnats
-# ./usr/share/gnats
-..
-
-# ./usr/share/groff_font
-groff_font
-
-# ./usr/share/groff_font/devX100
-devX100
-# ./usr/share/groff_font/devX100
-..
-
-# ./usr/share/groff_font/devX100-12
-devX100-12
-# ./usr/share/groff_font/devX100-12
-..
-
-# ./usr/share/groff_font/devX75
-devX75
-# ./usr/share/groff_font/devX75
-..
-
-# ./usr/share/groff_font/devX75-12
-devX75-12
-# ./usr/share/groff_font/devX75-12
-..
-
-# ./usr/share/groff_font/devascii
-devascii
-# ./usr/share/groff_font/devascii
-..
-
-# ./usr/share/groff_font/devdvi
-devdvi
-
-# ./usr/share/groff_font/devdvi/generate
-generate
-# ./usr/share/groff_font/devdvi/generate
-..
-
-# ./usr/share/groff_font/devdvi
-..
-
-# ./usr/share/groff_font/devhtml
-devhtml
-# ./usr/share/groff_font/devhtml
-..
-
-# ./usr/share/groff_font/devlatin1
-devlatin1
-# ./usr/share/groff_font/devlatin1
-..
-
-# ./usr/share/groff_font/devlbp
-devlbp
-# ./usr/share/groff_font/devlbp
-..
-
-# ./usr/share/groff_font/devlj4
-devlj4
-
-# ./usr/share/groff_font/devlj4/generate
-generate
-# ./usr/share/groff_font/devlj4/generate
-..
-
-# ./usr/share/groff_font/devlj4
-..
-
-# ./usr/share/groff_font/devps
-devps
-
-# ./usr/share/groff_font/devps/generate
-generate
-# ./usr/share/groff_font/devps/generate
-..
-
-# ./usr/share/groff_font/devps
-..
-
-# ./usr/share/groff_font/devutf8
-devutf8
-# ./usr/share/groff_font/devutf8
-..
-
-# ./usr/share/groff_font
-..
-
-# ./usr/share/info
-info
-# ./usr/share/info
-..
-
-# ./usr/share/keymaps
-keymaps
-
-# ./usr/share/keymaps/amiga
-amiga
-# ./usr/share/keymaps/amiga
-..
-
-# ./usr/share/keymaps/atari
-atari
-# ./usr/share/keymaps/atari
-..
-
-# ./usr/share/keymaps/x68k
-x68k
-# ./usr/share/keymaps/x68k
-..
-
-# ./usr/share/keymaps
-..
-
-# ./usr/share/ldscripts
-ldscripts
-# ./usr/share/ldscripts
-..
-
-# ./usr/share/locale
-locale
-
-# ./usr/share/locale/cs
-cs
-
-# ./usr/share/locale/cs/LC_MESSAGES
-LC_MESSAGES
-# ./usr/share/locale/cs/LC_MESSAGES
-..
-
-# ./usr/share/locale/cs
-..
-
-# ./usr/share/locale/cs_CZ.ISO8859-2
-cs_CZ.ISO8859-2
-# ./usr/share/locale/cs_CZ.ISO8859-2
-..
-
-# ./usr/share/locale/da
-da
-
-# ./usr/share/locale/da/LC_MESSAGES
-LC_MESSAGES
-# ./usr/share/locale/da/LC_MESSAGES
-..
-
-# ./usr/share/locale/da
-..
-
-# ./usr/share/locale/da_DK.ISO8859-1
-da_DK.ISO8859-1
-# ./usr/share/locale/da_DK.ISO8859-1
-..
-
-# ./usr/share/locale/da_DK.ISO8859-15
-da_DK.ISO8859-15
-# ./usr/share/locale/da_DK.ISO8859-15
-..
-
-# ./usr/share/locale/de
-de
-
-# ./usr/share/locale/de/LC_MESSAGES
-LC_MESSAGES
-# ./usr/share/locale/de/LC_MESSAGES
-..
-
-# ./usr/share/locale/de
-..
-
-# ./usr/share/locale/de_AT
-de_AT
-
-# ./usr/share/locale/de_AT/LC_MESSAGES
-LC_MESSAGES
-# ./usr/share/locale/de_AT/LC_MESSAGES
-..
-
-# ./usr/share/locale/de_AT
-..
-
-# ./usr/share/locale/de_AT.ISO8859-1
-de_AT.ISO8859-1
-# ./usr/share/locale/de_AT.ISO8859-1
-..
-
-# ./usr/share/locale/de_AT.ISO8859-15
-de_AT.ISO8859-15
-# ./usr/share/locale/de_AT.ISO8859-15
-..
-
-# ./usr/share/locale/de_CH.ISO8859-1
-de_CH.ISO8859-1
-# ./usr/share/locale/de_CH.ISO8859-1
-..
-
-# ./usr/share/locale/de_CH.ISO8859-15
-de_CH.ISO8859-15
-# ./usr/share/locale/de_CH.ISO8859-15
-..
-
-# ./usr/share/locale/de_DE.ISO8859-1
-de_DE.ISO8859-1
-# ./usr/share/locale/de_DE.ISO8859-1
-..
-
-# ./usr/share/locale/de_DE.ISO8859-15
-de_DE.ISO8859-15
-# ./usr/share/locale/de_DE.ISO8859-15
-..
-
-# ./usr/share/locale/el
-el
-
-# ./usr/share/locale/el/LC_MESSAGES
-LC_MESSAGES
-# ./usr/share/locale/el/LC_MESSAGES
-..
-
-# ./usr/share/locale/el
-..
-
-# ./usr/share/locale/en_AU.ISO8859-1
-en_AU.ISO8859-1
-# ./usr/share/locale/en_AU.ISO8859-1
-..
-
-# ./usr/share/locale/en_AU.ISO8859-15
-en_AU.ISO8859-15
-# ./usr/share/locale/en_AU.ISO8859-15
-..
-
-# ./usr/share/locale/en_CA.ISO8859-1
-en_CA.ISO8859-1
-# ./usr/share/locale/en_CA.ISO8859-1
-..
-
-# ./usr/share/locale/en_CA.ISO8859-15
-en_CA.ISO8859-15
-# ./usr/share/locale/en_CA.ISO8859-15
-..
-
-# ./usr/share/locale/en_GB.ISO8859-1
-en_GB.ISO8859-1
-# ./usr/share/locale/en_GB.ISO8859-1
-..
-
-# ./usr/share/locale/en_GB.ISO8859-15
-en_GB.ISO8859-15
-# ./usr/share/locale/en_GB.ISO8859-15
-..
-
-# ./usr/share/locale/en_US.ISO8859-1
-en_US.ISO8859-1
-# ./usr/share/locale/en_US.ISO8859-1
-..
-
-# ./usr/share/locale/en_US.ISO8859-15
-en_US.ISO8859-15
-# ./usr/share/locale/en_US.ISO8859-15
-..
-
-# ./usr/share/locale/en_US.UTF-8
-en_US.UTF-8
-# ./usr/share/locale/en_US.UTF-8
-..
-
-# ./usr/share/locale/eo
-eo
-
-# ./usr/share/locale/eo/LC_MESSAGES
-LC_MESSAGES
-# ./usr/share/locale/eo/LC_MESSAGES
-..
-
-# ./usr/share/locale/eo
-..
-
-# ./usr/share/locale/es
-es
-
-# ./usr/share/locale/es/LC_MESSAGES
-LC_MESSAGES
-# ./usr/share/locale/es/LC_MESSAGES
-..
-
-# ./usr/share/locale/es
-..
-
-# ./usr/share/locale/es_ES.ISO8859-1
-es_ES.ISO8859-1
-# ./usr/share/locale/es_ES.ISO8859-1
-..
-
-# ./usr/share/locale/es_ES.ISO8859-15
-es_ES.ISO8859-15
-# ./usr/share/locale/es_ES.ISO8859-15
-..
-
-# ./usr/share/locale/fi_FI.ISO8859-1
-fi_FI.ISO8859-1
-# ./usr/share/locale/fi_FI.ISO8859-1
-..
-
-# ./usr/share/locale/fi_FI.ISO8859-15
-fi_FI.ISO8859-15
-# ./usr/share/locale/fi_FI.ISO8859-15
-..
-
-# ./usr/share/locale/fr
-fr
-
-# ./usr/share/locale/fr/LC_MESSAGES
-LC_MESSAGES
-# ./usr/share/locale/fr/LC_MESSAGES
-..
-
-# ./usr/share/locale/fr
-..
-
-# ./usr/share/locale/fr_BE.ISO8859-1
-fr_BE.ISO8859-1
-# ./usr/share/locale/fr_BE.ISO8859-1
-..
-
-# ./usr/share/locale/fr_BE.ISO8859-15
-fr_BE.ISO8859-15
-# ./usr/share/locale/fr_BE.ISO8859-15
-..
-
-# ./usr/share/locale/fr_CA.ISO8859-1
-fr_CA.ISO8859-1
-# ./usr/share/locale/fr_CA.ISO8859-1
-..
-
-# ./usr/share/locale/fr_CA.ISO8859-15
-fr_CA.ISO8859-15
-# ./usr/share/locale/fr_CA.ISO8859-15
-..
-
-# ./usr/share/locale/fr_CH.ISO8859-1
-fr_CH.ISO8859-1
-# ./usr/share/locale/fr_CH.ISO8859-1
-..
-
-# ./usr/share/locale/fr_CH.ISO8859-15
-fr_CH.ISO8859-15
-# ./usr/share/locale/fr_CH.ISO8859-15
-..
-
-# ./usr/share/locale/fr_FR.ISO8859-1
-fr_FR.ISO8859-1
-# ./usr/share/locale/fr_FR.ISO8859-1
-..
-
-# ./usr/share/locale/fr_FR.ISO8859-15
-fr_FR.ISO8859-15
-# ./usr/share/locale/fr_FR.ISO8859-15
-..
-
-# ./usr/share/locale/hr_HR.ISO8859-2
-hr_HR.ISO8859-2
-# ./usr/share/locale/hr_HR.ISO8859-2
-..
-
-# ./usr/share/locale/hu_HU.ISO8859-2
-hu_HU.ISO8859-2
-# ./usr/share/locale/hu_HU.ISO8859-2
-..
-
-# ./usr/share/locale/is_IS.ISO8859-1
-is_IS.ISO8859-1
-# ./usr/share/locale/is_IS.ISO8859-1
-..
-
-# ./usr/share/locale/is_IS.ISO8859-15
-is_IS.ISO8859-15
-# ./usr/share/locale/is_IS.ISO8859-15
-..
-
-# ./usr/share/locale/it_CH.ISO8859-1
-it_CH.ISO8859-1
-# ./usr/share/locale/it_CH.ISO8859-1
-..
-
-# ./usr/share/locale/it_CH.ISO8859-15
-it_CH.ISO8859-15
-# ./usr/share/locale/it_CH.ISO8859-15
-..
-
-# ./usr/share/locale/it_IT.ISO8859-1
-it_IT.ISO8859-1
-# ./usr/share/locale/it_IT.ISO8859-1
-..
-
-# ./usr/share/locale/it_IT.ISO8859-15
-it_IT.ISO8859-15
-# ./usr/share/locale/it_IT.ISO8859-15
-..
-
-# ./usr/share/locale/ja_JP.ISO2022-JP
-ja_JP.ISO2022-JP
-# ./usr/share/locale/ja_JP.ISO2022-JP
-..
-
-# ./usr/share/locale/ja_JP.ISO2022-JP2
-ja_JP.ISO2022-JP2
-# ./usr/share/locale/ja_JP.ISO2022-JP2
-..
-
-# ./usr/share/locale/ja_JP.SJIS
-ja_JP.SJIS
-# ./usr/share/locale/ja_JP.SJIS
-..
-
-# ./usr/share/locale/ja_JP.ct
-ja_JP.ct
-# ./usr/share/locale/ja_JP.ct
-..
-
-# ./usr/share/locale/ja_JP.eucJP
-ja_JP.eucJP
-# ./usr/share/locale/ja_JP.eucJP
-..
-
-# ./usr/share/locale/ko
-ko
-
-# ./usr/share/locale/ko/LC_MESSAGES
-LC_MESSAGES
-# ./usr/share/locale/ko/LC_MESSAGES
-..
-
-# ./usr/share/locale/ko
-..
-
-# ./usr/share/locale/ko_KR.eucKR
-ko_KR.eucKR
-# ./usr/share/locale/ko_KR.eucKR
-..
-
-# ./usr/share/locale/lt_LT.ISO8859-4
-lt_LT.ISO8859-4
-# ./usr/share/locale/lt_LT.ISO8859-4
-..
-
-# ./usr/share/locale/nl
-nl
-
-# ./usr/share/locale/nl/LC_MESSAGES
-LC_MESSAGES
-# ./usr/share/locale/nl/LC_MESSAGES
-..
-
-# ./usr/share/locale/nl
-..
-
-# ./usr/share/locale/nl_BE.ISO8859-1
-nl_BE.ISO8859-1
-# ./usr/share/locale/nl_BE.ISO8859-1
-..
-
-# ./usr/share/locale/nl_BE.ISO8859-15
-nl_BE.ISO8859-15
-# ./usr/share/locale/nl_BE.ISO8859-15
-..
-
-# ./usr/share/locale/nl_NL.ISO8859-1
-nl_NL.ISO8859-1
-# ./usr/share/locale/nl_NL.ISO8859-1
-..
-
-# ./usr/share/locale/nl_NL.ISO8859-15
-nl_NL.ISO8859-15
-# ./usr/share/locale/nl_NL.ISO8859-15
-..
-
-# ./usr/share/locale/no
-no
-
-# ./usr/share/locale/no/LC_MESSAGES
-LC_MESSAGES
-# ./usr/share/locale/no/LC_MESSAGES
-..
-
-# ./usr/share/locale/no
-..
-
-# ./usr/share/locale/no@nynorsk
-no@nynorsk
-
-# ./usr/share/locale/no@nynorsk/LC_MESSAGES
-LC_MESSAGES
-# ./usr/share/locale/no@nynorsk/LC_MESSAGES
-..
-
-# ./usr/share/locale/no@nynorsk
-..
-
-# ./usr/share/locale/no_NO.ISO8859-1
-no_NO.ISO8859-1
-# ./usr/share/locale/no_NO.ISO8859-1
-..
-
-# ./usr/share/locale/no_NO.ISO8859-15
-no_NO.ISO8859-15
-# ./usr/share/locale/no_NO.ISO8859-15
-..
-
-# ./usr/share/locale/pl
-pl
-
-# ./usr/share/locale/pl/LC_MESSAGES
-LC_MESSAGES
-# ./usr/share/locale/pl/LC_MESSAGES
-..
-
-# ./usr/share/locale/pl
-..
-
-# ./usr/share/locale/pl_PL.ISO8859-2
-pl_PL.ISO8859-2
-# ./usr/share/locale/pl_PL.ISO8859-2
-..
-
-# ./usr/share/locale/pt
-pt
-
-# ./usr/share/locale/pt/LC_MESSAGES
-LC_MESSAGES
-# ./usr/share/locale/pt/LC_MESSAGES
-..
-
-# ./usr/share/locale/pt
-..
-
-# ./usr/share/locale/pt_BR
-pt_BR
-
-# ./usr/share/locale/pt_BR/LC_MESSAGES
-LC_MESSAGES
-# ./usr/share/locale/pt_BR/LC_MESSAGES
-..
-
-# ./usr/share/locale/pt_BR
-..
-
-# ./usr/share/locale/pt_PT.ISO8859-1
-pt_PT.ISO8859-1
-# ./usr/share/locale/pt_PT.ISO8859-1
-..
-
-# ./usr/share/locale/pt_PT.ISO8859-15
-pt_PT.ISO8859-15
-# ./usr/share/locale/pt_PT.ISO8859-15
-..
-
-# ./usr/share/locale/ru
-ru
-
-# ./usr/share/locale/ru/LC_MESSAGES
-LC_MESSAGES
-# ./usr/share/locale/ru/LC_MESSAGES
-..
-
-# ./usr/share/locale/ru
-..
-
-# ./usr/share/locale/ru_RU.CP866
-ru_RU.CP866
-# ./usr/share/locale/ru_RU.CP866
-..
-
-# ./usr/share/locale/ru_RU.ISO8859-5
-ru_RU.ISO8859-5
-# ./usr/share/locale/ru_RU.ISO8859-5
-..
-
-# ./usr/share/locale/ru_RU.KOI8-R
-ru_RU.KOI8-R
-# ./usr/share/locale/ru_RU.KOI8-R
-..
-
-# ./usr/share/locale/sl
-sl
-
-# ./usr/share/locale/sl/LC_MESSAGES
-LC_MESSAGES
-# ./usr/share/locale/sl/LC_MESSAGES
-..
-
-# ./usr/share/locale/sl
-..
-
-# ./usr/share/locale/sl_SI.ISO8859-2
-sl_SI.ISO8859-2
-# ./usr/share/locale/sl_SI.ISO8859-2
-..
-
-# ./usr/share/locale/sv
-sv
-
-# ./usr/share/locale/sv/LC_MESSAGES
-LC_MESSAGES
-# ./usr/share/locale/sv/LC_MESSAGES
-..
-
-# ./usr/share/locale/sv
-..
-
-# ./usr/share/locale/sv_SE.ISO8859-1
-sv_SE.ISO8859-1
-# ./usr/share/locale/sv_SE.ISO8859-1
-..
-
-# ./usr/share/locale/sv_SE.ISO8859-15
-sv_SE.ISO8859-15
-# ./usr/share/locale/sv_SE.ISO8859-15
-..
-
-# ./usr/share/locale/uk_UA.KOI8-U
-uk_UA.KOI8-U
-# ./usr/share/locale/uk_UA.KOI8-U
-..
-
-# ./usr/share/locale/zh_CN.eucCN
-zh_CN.eucCN
-# ./usr/share/locale/zh_CN.eucCN
-..
-
-# ./usr/share/locale/zh_TW.Big5
-zh_TW.Big5
-# ./usr/share/locale/zh_TW.Big5
-..
-
-# ./usr/share/locale/zh_TW.BIG5
-zh_TW.BIG5
-# ./usr/share/locale/zh_TW.BIG5
-..
-
-# ./usr/share/locale/zh_TW.eucTW
-zh_TW.eucTW
-# ./usr/share/locale/zh_TW.eucTW
-..
-
-# ./usr/share/locale
-..
-
-# ./usr/share/man
-man
-
-# ./usr/share/man/cat1
-cat1
-
-# ./usr/share/man/cat1/atari
-atari
-# ./usr/share/man/cat1/atari
-..
-
-# ./usr/share/man/cat1/x68k
-x68k
-# ./usr/share/man/cat1/x68k
-..
-
-# ./usr/share/man/cat1
-..
-
-# ./usr/share/man/cat2
-cat2
-# ./usr/share/man/cat2
-..
-
-# ./usr/share/man/cat3
-cat3
-# ./usr/share/man/cat3
-..
-
-# ./usr/share/man/cat3f
-cat3f
-# ./usr/share/man/cat3f
-..
-
-# ./usr/share/man/cat4
-cat4
-
-# ./usr/share/man/cat4/alpha
-alpha
-# ./usr/share/man/cat4/alpha
-..
-
-# ./usr/share/man/cat4/amiga
-amiga
-# ./usr/share/man/cat4/amiga
-..
-
-# ./usr/share/man/cat4/arm26
-arm26
-# ./usr/share/man/cat4/arm26
-..
-
-# ./usr/share/man/cat4/arm32
-arm32
-# ./usr/share/man/cat4/arm32
-..
-
-# ./usr/share/man/cat4/atari
-atari
-# ./usr/share/man/cat4/atari
-..
-
-# ./usr/share/man/cat4/hp300
-hp300
-# ./usr/share/man/cat4/hp300
-..
-
-# ./usr/share/man/cat4/i386
-i386
-# ./usr/share/man/cat4/i386
-..
-
-# ./usr/share/man/cat4/mac68k
-mac68k
-# ./usr/share/man/cat4/mac68k
-..
-
-# ./usr/share/man/cat4/macppc
-macppc
-# ./usr/share/man/cat4/macppc
-..
-
-# ./usr/share/man/cat4/mvme68k
-mvme68k
-# ./usr/share/man/cat4/mvme68k
-..
-
-# ./usr/share/man/cat4/pc532
-pc532
-# ./usr/share/man/cat4/pc532
-..
-
-# ./usr/share/man/cat4/pmax
-pmax
-# ./usr/share/man/cat4/pmax
-..
-
-# ./usr/share/man/cat4/sparc
-sparc
-# ./usr/share/man/cat4/sparc
-..
-
-# ./usr/share/man/cat4/sun2
-sun2
-# ./usr/share/man/cat4/sun2
-..
-
-# ./usr/share/man/cat4/sun3
-sun3
-# ./usr/share/man/cat4/sun3
-..
-
-# ./usr/share/man/cat4/vax
-vax
-# ./usr/share/man/cat4/vax
-..
-
-# ./usr/share/man/cat4/x68k
-x68k
-# ./usr/share/man/cat4/x68k
-..
-
-# ./usr/share/man/cat4
-..
-
-# ./usr/share/man/cat5
-cat5
-# ./usr/share/man/cat5
-..
-
-# ./usr/share/man/cat6
-cat6
-# ./usr/share/man/cat6
-..
-
-# ./usr/share/man/cat7
-cat7
-# ./usr/share/man/cat7
-..
-
-# ./usr/share/man/cat8
-cat8
-
-# ./usr/share/man/cat8/alpha
-alpha
-# ./usr/share/man/cat8/alpha
-..
-
-# ./usr/share/man/cat8/amiga
-amiga
-# ./usr/share/man/cat8/amiga
-..
-
-# ./usr/share/man/cat8/arc
-arc
-# ./usr/share/man/cat8/arc
-..
-
-# ./usr/share/man/cat8/arm26
-arm26
-# ./usr/share/man/cat8/arm26
-..
-
-# ./usr/share/man/cat8/arm32
-arm32
-# ./usr/share/man/cat8/arm32
-..
-
-# ./usr/share/man/cat8/atari
-atari
-# ./usr/share/man/cat8/atari
-..
-
-# ./usr/share/man/cat8/bebox
-bebox
-# ./usr/share/man/cat8/bebox
-..
-
-# ./usr/share/man/cat8/cobalt
-cobalt
-# ./usr/share/man/cat8/cobalt
-..
-
-# ./usr/share/man/cat8/dreamcast
-dreamcast
-# ./usr/share/man/cat8/dreamcast
-..
-
-# ./usr/share/man/cat8/hp300
-hp300
-# ./usr/share/man/cat8/hp300
-..
-
-# ./usr/share/man/cat8/hpcmips
-hpcmips
-# ./usr/share/man/cat8/hpcmips
-..
-
-# ./usr/share/man/cat8/hpcsh
-hpcsh
-# ./usr/share/man/cat8/hpcsh
-..
-
-# ./usr/share/man/cat8/i386
-i386
-# ./usr/share/man/cat8/i386
-..
-
-# ./usr/share/man/cat8/luna68k
-luna68k
-# ./usr/share/man/cat8/luna68k
-..
-
-# ./usr/share/man/cat8/mac68k
-mac68k
-# ./usr/share/man/cat8/mac68k
-..
-
-# ./usr/share/man/cat8/macppc
-macppc
-# ./usr/share/man/cat8/macppc
-..
-
-# ./usr/share/man/cat8/mipsco
-mipsco
-# ./usr/share/man/cat8/mipsco
-..
-
-# ./usr/share/man/cat8/mmeye
-mmeye
-# ./usr/share/man/cat8/mmeye
-..
-
-# ./usr/share/man/cat8/mvme68k
-mvme68k
-# ./usr/share/man/cat8/mvme68k
-..
-
-# ./usr/share/man/cat8/netwinder
-netwinder
-# ./usr/share/man/cat8/netwinder
-..
-
-# ./usr/share/man/cat8/news68k
-news68k
-# ./usr/share/man/cat8/news68k
-..
-
-# ./usr/share/man/cat8/newsmips
-newsmips
-# ./usr/share/man/cat8/newsmips
-..
-
-# ./usr/share/man/cat8/next68k
-next68k
-# ./usr/share/man/cat8/next68k
-..
-
-# ./usr/share/man/cat8/pc532
-pc532
-# ./usr/share/man/cat8/pc532
-..
-
-# ./usr/share/man/cat8/pmax
-pmax
-# ./usr/share/man/cat8/pmax
-..
-
-# ./usr/share/man/cat8/prep
-prep
-# ./usr/share/man/cat8/prep
-..
-
-# ./usr/share/man/cat8/sandpoint
-sandpoint
-# ./usr/share/man/cat8/sandpoint
-..
-
-# ./usr/share/man/cat8/sgimips
-sgimips
-# ./usr/share/man/cat8/sgimips
-..
-
-# ./usr/share/man/cat8/sparc
-sparc
-# ./usr/share/man/cat8/sparc
-..
-
-# ./usr/share/man/cat8/sparc64
-sparc64
-# ./usr/share/man/cat8/sparc64
-..
-
-# ./usr/share/man/cat8/sun2
-sun2
-# ./usr/share/man/cat8/sun2
-..
-
-# ./usr/share/man/cat8/sun3
-sun3
-# ./usr/share/man/cat8/sun3
-..
-
-# ./usr/share/man/cat8/vax
-vax
-# ./usr/share/man/cat8/vax
-..
-
-# ./usr/share/man/cat8/walnut
-walnut
-# ./usr/share/man/cat8/walnut
-..
-
-# ./usr/share/man/cat8/x68k
-x68k
-# ./usr/share/man/cat8/x68k
-..
-
-# ./usr/share/man/cat8
-..
-
-# ./usr/share/man/cat9
-cat9
-
-# ./usr/share/man/cat9/alpha
-alpha
-# ./usr/share/man/cat9/alpha
-..
-
-# ./usr/share/man/cat9/amiga
-amiga
-# ./usr/share/man/cat9/amiga
-..
-
-# ./usr/share/man/cat9/arm26
-arm26
-# ./usr/share/man/cat9/arm26
-..
-
-# ./usr/share/man/cat9/arm32
-arm32
-# ./usr/share/man/cat9/arm32
-..
-
-# ./usr/share/man/cat9/atari
-atari
-# ./usr/share/man/cat9/atari
-..
-
-# ./usr/share/man/cat9/hp300
-hp300
-# ./usr/share/man/cat9/hp300
-..
-
-# ./usr/share/man/cat9/i386
-i386
-# ./usr/share/man/cat9/i386
-..
-
-# ./usr/share/man/cat9/mac68k
-mac68k
-# ./usr/share/man/cat9/mac68k
-..
-
-# ./usr/share/man/cat9/pc532
-pc532
-# ./usr/share/man/cat9/pc532
-..
-
-# ./usr/share/man/cat9/pmax
-pmax
-# ./usr/share/man/cat9/pmax
-..
-
-# ./usr/share/man/cat9/sparc
-sparc
-# ./usr/share/man/cat9/sparc
-..
-
-# ./usr/share/man/cat9/sun3
-sun3
-# ./usr/share/man/cat9/sun3
-..
-
-# ./usr/share/man/cat9/vax
-vax
-# ./usr/share/man/cat9/vax
-..
-
-# ./usr/share/man/cat9/x68k
-x68k
-# ./usr/share/man/cat9/x68k
-..
-
-# ./usr/share/man/cat9
-..
-
-# ./usr/share/man/man1
-man1
-
-# ./usr/share/man/man1/atari
-atari
-# ./usr/share/man/man1/atari
-..
-
-# ./usr/share/man/man1/x68k
-x68k
-# ./usr/share/man/man1/x68k
-..
-
-# ./usr/share/man/man1
-..
-
-# ./usr/share/man/man2
-man2
-# ./usr/share/man/man2
-..
-
-# ./usr/share/man/man3
-man3
-# ./usr/share/man/man3
-..
-
-# ./usr/share/man/man3f
-man3f
-# ./usr/share/man/man3f
-..
-
-# ./usr/share/man/man4
-man4
-
-# ./usr/share/man/man4/alpha
-alpha
-# ./usr/share/man/man4/alpha
-..
-
-# ./usr/share/man/man4/amiga
-amiga
-# ./usr/share/man/man4/amiga
-..
-
-# ./usr/share/man/man4/arm26
-arm26
-# ./usr/share/man/man4/arm26
-..
-
-# ./usr/share/man/man4/arm32
-arm32
-# ./usr/share/man/man4/arm32
-..
-
-# ./usr/share/man/man4/atari
-atari
-# ./usr/share/man/man4/atari
-..
-
-# ./usr/share/man/man4/hp300
-hp300
-# ./usr/share/man/man4/hp300
-..
-
-# ./usr/share/man/man4/i386
-i386
-# ./usr/share/man/man4/i386
-..
-
-# ./usr/share/man/man4/mac68k
-mac68k
-# ./usr/share/man/man4/mac68k
-..
-
-# ./usr/share/man/man4/macppc
-macppc
-# ./usr/share/man/man4/macppc
-..
-
-# ./usr/share/man/man4/mvme68k
-mvme68k
-# ./usr/share/man/man4/mvme68k
-..
-
-# ./usr/share/man/man4/pc532
-pc532
-# ./usr/share/man/man4/pc532
-..
-
-# ./usr/share/man/man4/pmax
-pmax
-# ./usr/share/man/man4/pmax
-..
-
-# ./usr/share/man/man4/sparc
-sparc
-# ./usr/share/man/man4/sparc
-..
-
-# ./usr/share/man/man4/sun2
-sun2
-# ./usr/share/man/man4/sun2
-..
-
-# ./usr/share/man/man4/sun3
-sun3
-# ./usr/share/man/man4/sun3
-..
-
-# ./usr/share/man/man4/vax
-vax
-# ./usr/share/man/man4/vax
-..
-
-# ./usr/share/man/man4/x68k
-x68k
-# ./usr/share/man/man4/x68k
-..
-
-# ./usr/share/man/man4
-..
-
-# ./usr/share/man/man5
-man5
-# ./usr/share/man/man5
-..
-
-# ./usr/share/man/man6
-man6
-# ./usr/share/man/man6
-..
-
-# ./usr/share/man/man7
-man7
-# ./usr/share/man/man7
-..
-
-# ./usr/share/man/man8
-man8
-
-# ./usr/share/man/man8/alpha
-alpha
-# ./usr/share/man/man8/alpha
-..
-
-# ./usr/share/man/man8/amiga
-amiga
-# ./usr/share/man/man8/amiga
-..
-
-# ./usr/share/man/man8/arc
-arc
-# ./usr/share/man/man8/arc
-..
-
-# ./usr/share/man/man8/arm26
-arm26
-# ./usr/share/man/man8/arm26
-..
-
-# ./usr/share/man/man8/arm32
-arm32
-# ./usr/share/man/man8/arm32
-..
-
-# ./usr/share/man/man8/atari
-atari
-# ./usr/share/man/man8/atari
-..
-
-# ./usr/share/man/man8/bebox
-bebox
-# ./usr/share/man/man8/bebox
-..
-
-# ./usr/share/man/man8/cobalt
-cobalt
-# ./usr/share/man/man8/cobalt
-..
-
-# ./usr/share/man/man8/dreamcast
-dreamcast
-# ./usr/share/man/man8/dreamcast
-..
-
-# ./usr/share/man/man8/hp300
-hp300
-# ./usr/share/man/man8/hp300
-..
-
-# ./usr/share/man/man8/hpcmips
-hpcmips
-# ./usr/share/man/man8/hpcmips
-..
-
-# ./usr/share/man/man8/hpcsh
-hpcsh
-# ./usr/share/man/man8/hpcsh
-..
-
-# ./usr/share/man/man8/i386
-i386
-# ./usr/share/man/man8/i386
-..
-
-# ./usr/share/man/man8/luna68k
-luna68k
-# ./usr/share/man/man8/luna68k
-..
-
-# ./usr/share/man/man8/mac68k
-mac68k
-# ./usr/share/man/man8/mac68k
-..
-
-# ./usr/share/man/man8/macppc
-macppc
-# ./usr/share/man/man8/macppc
-..
-
-# ./usr/share/man/man8/mipsco
-mipsco
-# ./usr/share/man/man8/mipsco
-..
-
-# ./usr/share/man/man8/mmeye
-mmeye
-# ./usr/share/man/man8/mmeye
-..
-
-# ./usr/share/man/man8/mvme68k
-mvme68k
-# ./usr/share/man/man8/mvme68k
-..
-
-# ./usr/share/man/man8/netwinder
-netwinder
-# ./usr/share/man/man8/netwinder
-..
-
-# ./usr/share/man/man8/news68k
-news68k
-# ./usr/share/man/man8/news68k
-..
-
-# ./usr/share/man/man8/newsmips
-newsmips
-# ./usr/share/man/man8/newsmips
-..
-
-# ./usr/share/man/man8/next68k
-next68k
-# ./usr/share/man/man8/next68k
-..
-
-# ./usr/share/man/man8/pc532
-pc532
-# ./usr/share/man/man8/pc532
-..
-
-# ./usr/share/man/man8/pmax
-pmax
-# ./usr/share/man/man8/pmax
-..
-
-# ./usr/share/man/man8/prep
-prep
-# ./usr/share/man/man8/prep
-..
-
-# ./usr/share/man/man8/sandpoint
-sandpoint
-# ./usr/share/man/man8/sandpoint
-..
-
-# ./usr/share/man/man8/sgimips
-sgimips
-# ./usr/share/man/man8/sgimips
-..
-
-# ./usr/share/man/man8/sparc
-sparc
-# ./usr/share/man/man8/sparc
-..
-
-# ./usr/share/man/man8/sparc64
-sparc64
-# ./usr/share/man/man8/sparc64
-..
-
-# ./usr/share/man/man8/sun2
-sun2
-# ./usr/share/man/man8/sun2
-..
-
-# ./usr/share/man/man8/sun3
-sun3
-# ./usr/share/man/man8/sun3
-..
-
-# ./usr/share/man/man8/vax
-vax
-# ./usr/share/man/man8/vax
-..
-
-# ./usr/share/man/man8/walnut
-walnut
-# ./usr/share/man/man8/walnut
-..
-
-# ./usr/share/man/man8/x68k
-x68k
-# ./usr/share/man/man8/x68k
-..
-
-# ./usr/share/man/man8
-..
-
-# ./usr/share/man/man9
-man9
-
-# ./usr/share/man/man9/alpha
-alpha
-# ./usr/share/man/man9/alpha
-..
-
-# ./usr/share/man/man9/amiga
-amiga
-# ./usr/share/man/man9/amiga
-..
-
-# ./usr/share/man/man9/arm26
-arm26
-# ./usr/share/man/man9/arm26
-..
-
-# ./usr/share/man/man9/arm32
-arm32
-# ./usr/share/man/man9/arm32
-..
-
-# ./usr/share/man/man9/atari
-atari
-# ./usr/share/man/man9/atari
-..
-
-# ./usr/share/man/man9/hp300
-hp300
-# ./usr/share/man/man9/hp300
-..
-
-# ./usr/share/man/man9/i386
-i386
-# ./usr/share/man/man9/i386
-..
-
-# ./usr/share/man/man9/mac68k
-mac68k
-# ./usr/share/man/man9/mac68k
-..
-
-# ./usr/share/man/man9/pc532
-pc532
-# ./usr/share/man/man9/pc532
-..
-
-# ./usr/share/man/man9/pmax
-pmax
-# ./usr/share/man/man9/pmax
-..
-
-# ./usr/share/man/man9/sparc
-sparc
-# ./usr/share/man/man9/sparc
-..
-
-# ./usr/share/man/man9/sun3
-sun3
-# ./usr/share/man/man9/sun3
-..
-
-# ./usr/share/man/man9/vax
-vax
-# ./usr/share/man/man9/vax
-..
-
-# ./usr/share/man/man9/x68k
-x68k
-# ./usr/share/man/man9/x68k
-..
-
-# ./usr/share/man/man9
-..
-
-# ./usr/share/man
-..
-
-# ./usr/share/me
-me
-# ./usr/share/me
-..
-
-# ./usr/share/misc
-misc
-# ./usr/share/misc
-..
-
-# ./usr/share/mk
-mk
-# ./usr/share/mk
-..
-
-# ./usr/share/ms
-ms
-# ./usr/share/ms
-..
-
-# ./usr/share/nls
-nls
-# ./usr/share/nls
-..
-
-# ./usr/share/sendmail
-sendmail
-
-# ./usr/share/sendmail/cf
-cf
-# ./usr/share/sendmail/cf
-..
-
-# ./usr/share/sendmail/domain
-domain
-# ./usr/share/sendmail/domain
-..
-
-# ./usr/share/sendmail/feature
-feature
-# ./usr/share/sendmail/feature
-..
-
-# ./usr/share/sendmail/hack
-hack
-# ./usr/share/sendmail/hack
-..
-
-# ./usr/share/sendmail/m4
-m4
-# ./usr/share/sendmail/m4
-..
-
-# ./usr/share/sendmail/mailer
-mailer
-# ./usr/share/sendmail/mailer
-..
-
-# ./usr/share/sendmail/ostype
-ostype
-# ./usr/share/sendmail/ostype
-..
-
-# ./usr/share/sendmail/sh
-sh
-# ./usr/share/sendmail/sh
-..
-
-# ./usr/share/sendmail/siteconfig
-siteconfig
-# ./usr/share/sendmail/siteconfig
-..
-
-# ./usr/share/sendmail
-..
-
-# ./usr/share/sushi
-sushi
-
-# ./usr/share/sushi/info
-info
-
-# ./usr/share/sushi/info/programming
-programming
-
-# ./usr/share/sushi/info/programming/helpapi
-helpapi
-# ./usr/share/sushi/info/programming/helpapi
-..
-
-# ./usr/share/sushi/info/programming/formapi
-formapi
-# ./usr/share/sushi/info/programming/formapi
-..
-
-# ./usr/share/sushi/info/programming/execapi
-execapi
-# ./usr/share/sushi/info/programming/execapi
-..
-
-# ./usr/share/sushi/info/programming/basics
-basics
-# ./usr/share/sushi/info/programming/basics
-..
-
-# ./usr/share/sushi/info/programming/i18n
-i18n
-# ./usr/share/sushi/info/programming/i18n
-..
-
-# ./usr/share/sushi/info/programming/scriptapi
-scriptapi
-# ./usr/share/sushi/info/programming/scriptapi
-..
-
-# ./usr/share/sushi/info/programming/searchpaths
-searchpaths
-# ./usr/share/sushi/info/programming/searchpaths
-..
-
-# ./usr/share/sushi/info/programming/indexapi
-indexapi
-# ./usr/share/sushi/info/programming/indexapi
-..
-
-# ./usr/share/sushi/info/programming
-..
-
-# ./usr/share/sushi/info/
-..
-
-# ./usr/share/sushi/install
-install
-
-# ./usr/share/sushi/install/remove
-remove
-# ./usr/share/sushi/install/remove
-..
-
-# ./usr/share/sushi/install/install
-install
-# ./usr/share/sushi/install/install
-..
-
-# ./usr/share/sushi/install/installb
-installb
-# ./usr/share/sushi/install/installb
-..
-
-# ./usr/share/sushi/install/list
-list
-# ./usr/share/sushi/install/list
-..
-
-# ./usr/share/sushi/install
-..
-
-# ./usr/share/sushi/network
-network
-
-# ./usr/share/sushi/network/routing
-routing
-
-# ./usr/share/sushi/network/routing/ipv4table
-ipv4table
-# ./usr/share/sushi/network/routing/ipv4table
-..
-
-# ./usr/share/sushi/network/routing/default
-default
-# ./usr/share/sushi/network/routing/default
-..
-
-# ./usr/share/sushi/network/routing
-..
-
-# ./usr/share/sushi/network/hosts
-hosts
-
-# ./usr/share/sushi/network/hosts/addhost
-addhost
-# ./usr/share/sushi/network/hosts/addhost
-..
-
-# ./usr/share/sushi/network/hosts/delhost
-delhost
-# ./usr/share/sushi/network/hosts/delhost
-..
-
-# ./usr/share/sushi/network/hosts/modhost
-modhost
-# ./usr/share/sushi/network/hosts/modhost
-..
-
-# ./usr/share/sushi/network/hosts/addv6host
-addv6host
-# ./usr/share/sushi/network/hosts/addv6host
-..
-
-# ./usr/share/sushi/network/hosts/modv6host
-modv6host
-# ./usr/share/sushi/network/hosts/modv6host
-..
-
-# ./usr/share/sushi/hosts
-..
-
-# ./usr/share/sushi/network/interfaces
-interfaces
-
-# ./usr/share/sushi/network/interfaces/interface
-interface
-# ./usr/share/sushi/network/interfaces/interface
-..
-
-# ./usr/share/sushi/network/interfaces/listif
-listif
-# ./usr/share/sushi/network/interfaces/listif
-..
-
-# ./usr/share/sushi/network/interfaces
-..
-
-# ./usr/share/sushi/network/hostname
-hostname
-# ./usr/share/sushi/network/hostname
-..
-
-# ./usr/share/sushi/network/yp
-yp
-
-# ./usr/share/sushi/network/yp/domainname
-domainname
-# ./usr/share/sushi/network/yp/domainname
-..
-
-# ./usr/share/sushi/network/yp/client
-client
-# ./usr/share/sushi/network/yp/client
-..
-
-# ./usr/share/sushi/network/yp/slave
-slave
-# ./usr/share/sushi/network/yp/slave
-..
-
-# ./usr/share/sushi/network/yp/master
-master
-# ./usr/share/sushi/network/yp/master
-..
-
-# ./usr/share/sushi/network/yp
-..
-
-# ./usr/share/sushi/network/exports
-exports
-
-# ./usr/share/sushi/network/exports/addexport
-addexport
-# ./usr/share/sushi/network/exports/addexport
-..
-
-# ./usr/share/sushi/network/exports/delexport
-delexport
-# ./usr/share/sushi/network/exports/delexport
-..
-
-# ./usr/share/sushi/network/exports
-..
-
-# ./usr/share/sushi/network
-..
-
-# ./usr/share/sushi/procs
-procs
-
-# ./usr/share/sushi/procs/showprocs
-showprocs
-# ./usr/share/sushi/procs/showprocs
-..
-
-# ./usr/share/sushi/procs/startprocs
-startprocs
-# ./usr/share/sushi/procs/startprocs
-..
-
-# ./usr/share/sushi/procs/stopprocs
-stopprocs
-# ./usr/share/sushi/procs/stopprocs
-..
-
-# ./usr/share/sushi/procs/restartprocs
-restartprocs
-# ./usr/share/sushi/procs/restartprocs
-..
-
-# ./usr/share/sushi/procs/restartallprocs
-restartallprocs
-# ./usr/share/sushi/procs/restartallprocs
-..
-
-# ./usr/share/sushi/procs/showallprocs
-showallprocs
-# ./usr/share/sushi/procs/showallprocs
-..
-
-# ./usr/share/sushi/procs/startallprocs
-startallprocs
-# ./usr/share/sushi/procs/startallprocs
-..
-
-# ./usr/share/sushi/procs/stopallprocs
-stopallprocs
-# ./usr/share/sushi/procs/stopallprocs
-..
-
-# ./usr/share/sushi/procs/topmem
-topmem
-# ./usr/share/sushi/procs/topmem
-..
-
-# ./usr/share/sushi/procs/topcpu
-topcpu
-# ./usr/share/sushi/procs/topcpu
-..
-
-# ./usr/share/sushi/procs/toptime
-toptime
-# ./usr/share/sushi/procs/toptime
-..
-
-# ./usr/share/sushi/procs
-..
-
-# ./usr/share/sushi/util
-util
-
-# ./usr/share/sushi/util/scripting
-scripting
-# ./usr/share/sushi/util/scripting
-..
-
-# ./usr/share/sushi/util/logging
-logging
-# ./usr/share/sushi/util/logging
-..
-
-# ./usr/share/sushi/util
-..
-
-# ./usr/share/sushi/system
-system
-
-# ./usr/share/sushi/system/localtime
-localtime
-# ./usr/share/sushi/system/localtime
-..
-
-# ./usr/share/sushi/system/rcconf
-rcconf
-# ./usr/share/sushi/system/rcconf
-..
-
-# ./usr/share/sushi/system/dailyconf
-dailyconf
-# ./usr/share/sushi/system/dailyconf
-..
-
-# ./usr/share/sushi/system/weeklyconf
-weeklyconf
-# ./usr/share/sushi/system/weeklyconf
-..
-
-# ./usr/share/sushi/system/securityconf
-securityconf
-# ./usr/share/sushi/system/securityconf
-..
-
-# ./usr/share/sushi/system/sshdconf
-sshdconf
-# ./usr/share/sushi/system/sshdconf
-..
-
-# ./usr/share/sushi/system/sysctl
-sysctl
-# ./usr/share/sushi/system/sysctl
-..
-
-# ./usr/share/sushi/system/usermgmtconf
-usermgmtconf
-# ./usr/share/sushi/system/usermgmtconf
-..
-
-# ./usr/share/sushi/system/mailerconf
-mailerconf
-# ./usr/share/sushi/system/mailerconf
-..
-
-# ./usr/share/sushi/system/inetdconf
-inetdconf
-# ./usr/share/sushi/system/inetdconf
-..
-
-# ./usr/share/sushi/system
-..
-
-# ./usr/share/sushi/users
-users
-
-# ./usr/share/sushi/users/listuser
-listuser
-# ./usr/share/sushi/users/listuser
-..
-
-# ./usr/share/sushi/users/deluser
-deluser
-# ./usr/share/sushi/users/deluser
-..
-
-# ./usr/share/sushi/users/disuser
-disuser
-# ./usr/share/sushi/users/disuser
-..
-
-# ./usr/share/sushi/users/adduser
-adduser
-# ./usr/share/sushi/users/adduser
-..
-
-# ./usr/share/sushi/users
-..
-
-# ./usr/share/sushi
-..
-
-# ./usr/share/tabset
-tabset
-# ./usr/share/tabset
-..
-
-# ./usr/share/tmac
-tmac
-
-# ./usr/share/tmac/mm
-mm
-# ./usr/share/tmac/mm
-..
-
-# ./usr/share/tmac
-..
-
-# ./usr/share/vi
-vi
-
-# ./usr/share/vi/catalog
-catalog
-# ./usr/share/vi/catalog
-..
-
-# ./usr/share/vi
-..
-
-# ./usr/share/wscons
-wscons
-# ./usr/share/wscons/fonts
-fonts
-..
-# ./usr/share/wscons/keymaps
-keymaps
-..
-# ./usr/share/wscons
-..
-
-# ./usr/share/zoneinfo
-zoneinfo
-# ./usr/share/zoneinfo
-..
-
-# ./usr/share
-..
-
-# ./usr
-..
-
-# ./var
-var
-
-# ./var/account
-account
-# ./var/account
-..
-
-# ./var/at
-at
-
-# ./var/at/jobs
-jobs		mode=0700
-# ./var/at/jobs
-..
-
-# ./var/at/spool
-spool		mode=0700
-# ./var/at/spool
-..
-
-# ./var/at
-..
-
-# ./var/backups
-backups
-# ./var/backups
-..
-
-# ./var/crash
-crash		mode=0770
-# ./var/crash
-..
-
-# ./var/cron
-cron
-
-# ./var/cron/tabs
-tabs		mode=0700
-# ./var/cron/tabs
-..
-
-# ./var/cron
-..
-
-# ./var/db
-db
-
-# ./var/db/ns
-ns
-# ./var/db/ns
-..
-
-# ./var/db
-..
-
-# ./var/games
-games		uname=games gname=games mode=0775
-
-# ./var/games/hackdir
-hackdir		uname=games gname=games mode=0775
-
-# ./var/games/hackdir/save
-save		uname=games gname=games mode=0770
-# ./var/games/hackdir/save
-..
-
-# ./var/games/hackdir
-..
-
-# ./var/games/larn
-larn		uname=games gname=games mode=0775
-# ./var/games/larn
-..
-
-# ./var/games/phantasia
-phantasia	uname=games gname=games mode=0775
-# ./var/games/phantasia
-..
-
-# ./var/games/sail
-sail		uname=games gname=games mode=0775
-# ./var/games/sail
-..
-
-# ./var/games
-..
-
-# ./var/heimdal
-heimdal
-# ./var/heimdal
-..
-
-# ./var/log
-log
-
-# ./var/log/rdist
-rdist
-# ./var/log/rdist
-..
-
-# ./var/log
-..
-
-# ./var/mail
-mail		mode=1777
-# ./var/mail
-..
-
-# ./var/msgs
-msgs		uname=daemon
-# ./var/msgs
-..
-
-# ./var/named
-named
-
-# ./var/named/dev
-dev
-
-# ./var/named/dev
-..
-
-# ./var/named/etc
-etc
-
-# ./var/named/etc/namedb
-namedb
-
-# ./var/named/etc/namedb/cache
-cache		mode=0775 uname=named gname=named
-..
-
-# ./var/named/etc/namedb
-..
-
-# ./var/named/etc
-..
-
-
-# ./var/named/usr
-usr
-
-# ./var/named/usr/libexec
-libexec
-# ./var/named/usr/libexec
-..
-
-# ./var/named/usr
-..
-
-# ./var/named/var
-var
-
-# ./var/named/var/run
-run		mode=0775 gname=named
-# ./var/named/var/run
-..
-
-# ./var/named/var/tmp
-tmp		mode=01775 gname=named
-# ./var/named/var/tmp
-..
-
-# ./var/named/var
-..
-
-# ./var/named
-..
-
-# ./var/obj				XXX
-#obj
-# ./var/obj				XXX
-#..
-
-# ./var/preserve
-preserve
-# ./var/preserve
-..
-
-# ./var/quotas
-quotas		gname=operator mode=0750
-# ./var/quotas
-..
-
-# ./var/run
-run
-# ./var/run
-..
-
-# ./var/rwho
-rwho
-# ./var/rwho
-..
-
-# ./var/spool
-spool
-
-# ./var/spool/ftp
-ftp
-
-# ./var/spool/ftp/bin
-bin
-# ./var/spool/ftp/bin
-..
-
-# ./var/spool/ftp/etc
-etc
-# ./var/spool/ftp/etc
-..
-
-# ./var/spool/ftp/hidden
-hidden		mode=0111
-# ./var/spool/ftp/hidden
-..
-
-# ./var/spool/ftp/pub			XXX
-#pub		mode=0777
-# ./var/spool/ftp/pub			XXX
-#..
-
-# ./var/spool/ftp
-..
-
-# ./var/spool/lock
-lock		uname=uucp gname=daemon
-# ./var/spool/lock
-..
-
-# ./var/spool/mqueue
-mqueue
-# ./var/spool/mqueue
-..
-
-# ./var/spool/output
-output
-# ./var/spool/output
-..
-
-# ./var/spool/postfix
-postfix
-
-# ./var/spool/postfix/etc
-etc
-# ./var/spool/postfix/etc
-..
-
-# ./var/spool/postfix
-..
-
-# ./var/spool/sockets
-sockets		mode=0777
-# ./var/spool/sockets
-..
-
-# ./var/spool/uucp
-uucp		uname=uucp gname=daemon
-# ./var/spool/uucp
-..
-
-# ./var/spool/uucppublic
-uucppublic	uname=uucp gname=daemon mode=01777
-# ./var/spool/uucppublic
-..
-
-# ./var/spool
-..
-
-# ./var/tmp
-tmp		mode=01777
-
-# ./var/tmp/vi.recover
-vi.recover	mode=01777
-# ./var/tmp/vi.recover
-..
-
-# ./var/tmp
-..
-
-# ./var/yp
-yp
-
-# ./var/yp/binding
-binding
-# ./var/yp/binding
-..
-
-# ./var/yp
-..
-
-# ./var
-..
+./altroot
+./bin
+./dev
+./dev/altq
+./dev/fd
+./etc
+./etc/defaults
+./etc/kerberosIV
+./etc/kerberosV
+./etc/mail
+./etc/mtree
+./etc/namedb
+./etc/openssl
+./etc/openssl/certs
+./etc/openssl/misc
+./etc/openssl/private
+./etc/postfix
+./etc/racoon
+./etc/rc.conf.d
+./etc/rc.d
+./etc/skel
+./etc/sliphome
+./etc/uucp
+./home
+./mnt
+./root
+./sbin
+./stand
+./tmp				mode=01777
+./usr
+./usr/bin
+./usr/games
+./usr/games/hide		uname=root gname=games mode=0750
+./usr/include
+./usr/include/arpa
+./usr/include/cdk
+./usr/include/g++
+./usr/include/g++/std
+./usr/include/gssapi
+./usr/include/kadm5
+./usr/include/kerberosIV
+./usr/include/krb5
+./usr/include/objc
+./usr/include/openssl
+./usr/include/protocols
+./usr/include/readline
+./usr/include/rpc
+./usr/include/rpcsvc
+./usr/lib
+./usr/lib/runemodule
+./usr/libdata
+./usr/libdata/lint
+./usr/libexec
+./usr/libexec/lpr
+./usr/libexec/postfix
+./usr/libexec/sendmail
+./usr/libexec/sm.bin
+./usr/libexec/uucp
+./usr/lkm
+./usr/local
+./usr/local/bin
+./usr/local/lib
+./usr/local/libdata
+./usr/local/libexec
+./usr/local/man
+./usr/local/man/cat1
+./usr/local/man/cat2
+./usr/local/man/cat3
+./usr/local/man/cat4
+./usr/local/man/cat5
+./usr/local/man/cat6
+./usr/local/man/cat7
+./usr/local/man/cat8
+./usr/local/man/cat9
+./usr/local/man/man1
+./usr/local/man/man2
+./usr/local/man/man3
+./usr/local/man/man4
+./usr/local/man/man5
+./usr/local/man/man6
+./usr/local/man/man7
+./usr/local/man/man8
+./usr/local/man/man9
+./usr/local/sbin
+./usr/mdec
+./usr/pkg			ignore optional
+./usr/sbin
+./usr/share
+./usr/share/calendar
+./usr/share/dict
+./usr/share/dict/papers
+./usr/share/dict/special
+./usr/share/doc
+./usr/share/doc/html
+./usr/share/doc/html/bzip2
+./usr/share/doc/html/ntp
+./usr/share/doc/html/ntp/hints
+./usr/share/doc/psd
+./usr/share/doc/psd/01.cacm
+./usr/share/doc/psd/02.implement
+./usr/share/doc/psd/03.iosys
+./usr/share/doc/psd/04.uprog
+./usr/share/doc/psd/05.sysman
+./usr/share/doc/psd/06.Clang
+./usr/share/doc/psd/07.pascal
+./usr/share/doc/psd/08.f77
+./usr/share/doc/psd/09.f77io
+./usr/share/doc/psd/10.gdb
+./usr/share/doc/psd/11.adb
+./usr/share/doc/psd/12.make
+./usr/share/doc/psd/13.rcs
+./usr/share/doc/psd/14.sccs
+./usr/share/doc/psd/15.yacc
+./usr/share/doc/psd/16.lex
+./usr/share/doc/psd/17.m4
+./usr/share/doc/psd/18.gprof
+./usr/share/doc/psd/19.curses
+./usr/share/doc/psd/20.ipctut
+./usr/share/doc/psd/21.ipc
+./usr/share/doc/smm
+./usr/share/doc/smm/01.setup
+./usr/share/doc/smm/02.config
+./usr/share/doc/smm/03.fsck_ffs
+./usr/share/doc/smm/04.quotas
+./usr/share/doc/smm/05.fastfs
+./usr/share/doc/smm/06.nfs
+./usr/share/doc/smm/07.lpd
+./usr/share/doc/smm/08.sendmailop
+./usr/share/doc/smm/09.sendmail
+./usr/share/doc/smm/10.named
+./usr/share/doc/smm/11.timedop
+./usr/share/doc/smm/12.timed
+./usr/share/doc/smm/13.amd
+./usr/share/doc/smm/14.uucpimpl
+./usr/share/doc/smm/15.uucpnet
+./usr/share/doc/smm/16.security
+./usr/share/doc/smm/17.password
+./usr/share/doc/smm/18.net
+./usr/share/doc/usd
+./usr/share/doc/usd/01.begin
+./usr/share/doc/usd/02.learn
+./usr/share/doc/usd/03.shell
+./usr/share/doc/usd/04.csh
+./usr/share/doc/usd/05.dc
+./usr/share/doc/usd/06.bc
+./usr/share/doc/usd/07.mail
+./usr/share/doc/usd/08.mh
+./usr/share/doc/usd/09.edtut
+./usr/share/doc/usd/10.edadv
+./usr/share/doc/usd/11.edit
+./usr/share/doc/usd/12.ex
+./usr/share/doc/usd/12.vi
+./usr/share/doc/usd/13.viref
+./usr/share/doc/usd/14.jove
+./usr/share/doc/usd/15.sed
+./usr/share/doc/usd/16.awk
+./usr/share/doc/usd/17.msmacros
+./usr/share/doc/usd/18.msdiffs
+./usr/share/doc/usd/19.memacros
+./usr/share/doc/usd/20.meref
+./usr/share/doc/usd/21.troff
+./usr/share/doc/usd/22.trofftut
+./usr/share/doc/usd/23.eqn
+./usr/share/doc/usd/24.eqnguide
+./usr/share/doc/usd/25.tbl
+./usr/share/doc/usd/26.refer
+./usr/share/doc/usd/27.invert
+./usr/share/doc/usd/28.bib
+./usr/share/doc/usd/29.diction
+./usr/share/doc/usd/30.rogue
+./usr/share/doc/usd/31.trek
+./usr/share/examples
+./usr/share/examples/amd
+./usr/share/examples/apm
+./usr/share/examples/dhcp
+./usr/share/examples/emul
+./usr/share/examples/emul/svr4
+./usr/share/examples/emul/svr4/etc
+./usr/share/examples/emul/ultrix
+./usr/share/examples/emul/ultrix/etc
+./usr/share/examples/ftpd
+./usr/share/examples/ipf
+./usr/share/examples/isdn
+./usr/share/examples/kerberos
+./usr/share/examples/mount_portal
+./usr/share/examples/named
+./usr/share/examples/openssl
+./usr/share/examples/postfix
+./usr/share/examples/racoon
+./usr/share/examples/rtadvd
+./usr/share/examples/supfiles
+./usr/share/examples/syslogd
+./usr/share/games
+./usr/share/games/atc
+./usr/share/games/boggle
+./usr/share/games/fortune
+./usr/share/games/larn
+./usr/share/games/quiz.db
+./usr/share/gnats
+./usr/share/groff_font
+./usr/share/groff_font/devX100
+./usr/share/groff_font/devX100-12
+./usr/share/groff_font/devX75
+./usr/share/groff_font/devX75-12
+./usr/share/groff_font/devascii
+./usr/share/groff_font/devdvi
+./usr/share/groff_font/devdvi/generate
+./usr/share/groff_font/devhtml
+./usr/share/groff_font/devlatin1
+./usr/share/groff_font/devlbp
+./usr/share/groff_font/devlj4
+./usr/share/groff_font/devlj4/generate
+./usr/share/groff_font/devps
+./usr/share/groff_font/devps/generate
+./usr/share/groff_font/devutf8
+./usr/share/info
+./usr/share/keymaps
+./usr/share/keymaps/amiga
+./usr/share/keymaps/atari
+./usr/share/keymaps/x68k
+./usr/share/ldscripts
+./usr/share/locale
+./usr/share/locale/cs
+./usr/share/locale/cs/LC_MESSAGES
+./usr/share/locale/cs_CZ.ISO8859-2
+./usr/share/locale/da
+./usr/share/locale/da/LC_MESSAGES
+./usr/share/locale/da_DK.ISO8859-1
+./usr/share/locale/da_DK.ISO8859-15
+./usr/share/locale/de
+./usr/share/locale/de/LC_MESSAGES
+./usr/share/locale/de_AT
+./usr/share/locale/de_AT.ISO8859-1
+./usr/share/locale/de_AT.ISO8859-15
+./usr/share/locale/de_AT/LC_MESSAGES
+./usr/share/locale/de_CH.ISO8859-1
+./usr/share/locale/de_CH.ISO8859-15
+./usr/share/locale/de_DE.ISO8859-1
+./usr/share/locale/de_DE.ISO8859-15
+./usr/share/locale/el
+./usr/share/locale/el/LC_MESSAGES
+./usr/share/locale/en_AU.ISO8859-1
+./usr/share/locale/en_AU.ISO8859-15
+./usr/share/locale/en_CA.ISO8859-1
+./usr/share/locale/en_CA.ISO8859-15
+./usr/share/locale/en_GB.ISO8859-1
+./usr/share/locale/en_GB.ISO8859-15
+./usr/share/locale/en_US.ISO8859-1
+./usr/share/locale/en_US.ISO8859-15
+./usr/share/locale/en_US.UTF-8
+./usr/share/locale/eo
+./usr/share/locale/eo/LC_MESSAGES
+./usr/share/locale/es
+./usr/share/locale/es/LC_MESSAGES
+./usr/share/locale/es_ES.ISO8859-1
+./usr/share/locale/es_ES.ISO8859-15
+./usr/share/locale/fi_FI.ISO8859-1
+./usr/share/locale/fi_FI.ISO8859-15
+./usr/share/locale/fr
+./usr/share/locale/fr/LC_MESSAGES
+./usr/share/locale/fr_BE.ISO8859-1
+./usr/share/locale/fr_BE.ISO8859-15
+./usr/share/locale/fr_CA.ISO8859-1
+./usr/share/locale/fr_CA.ISO8859-15
+./usr/share/locale/fr_CH.ISO8859-1
+./usr/share/locale/fr_CH.ISO8859-15
+./usr/share/locale/fr_FR.ISO8859-1
+./usr/share/locale/fr_FR.ISO8859-15
+./usr/share/locale/hr_HR.ISO8859-2
+./usr/share/locale/hu_HU.ISO8859-2
+./usr/share/locale/is_IS.ISO8859-1
+./usr/share/locale/is_IS.ISO8859-15
+./usr/share/locale/it_CH.ISO8859-1
+./usr/share/locale/it_CH.ISO8859-15
+./usr/share/locale/it_IT.ISO8859-1
+./usr/share/locale/it_IT.ISO8859-15
+./usr/share/locale/ja_JP.ISO2022-JP
+./usr/share/locale/ja_JP.ISO2022-JP2
+./usr/share/locale/ja_JP.SJIS
+./usr/share/locale/ja_JP.ct
+./usr/share/locale/ja_JP.eucJP
+./usr/share/locale/ko
+./usr/share/locale/ko/LC_MESSAGES
+./usr/share/locale/ko_KR.eucKR
+./usr/share/locale/lt_LT.ISO8859-4
+./usr/share/locale/nl
+./usr/share/locale/nl/LC_MESSAGES
+./usr/share/locale/nl_BE.ISO8859-1
+./usr/share/locale/nl_BE.ISO8859-15
+./usr/share/locale/nl_NL.ISO8859-1
+./usr/share/locale/nl_NL.ISO8859-15
+./usr/share/locale/no
+./usr/share/locale/no/LC_MESSAGES
+./usr/share/locale/no@nynorsk
+./usr/share/locale/no@nynorsk/LC_MESSAGES
+./usr/share/locale/no_NO.ISO8859-1
+./usr/share/locale/no_NO.ISO8859-15
+./usr/share/locale/pl
+./usr/share/locale/pl/LC_MESSAGES
+./usr/share/locale/pl_PL.ISO8859-2
+./usr/share/locale/pt
+./usr/share/locale/pt/LC_MESSAGES
+./usr/share/locale/pt_BR
+./usr/share/locale/pt_BR/LC_MESSAGES
+./usr/share/locale/pt_PT.ISO8859-1
+./usr/share/locale/pt_PT.ISO8859-15
+./usr/share/locale/ru
+./usr/share/locale/ru/LC_MESSAGES
+./usr/share/locale/ru_RU.CP866
+./usr/share/locale/ru_RU.ISO8859-5
+./usr/share/locale/ru_RU.KOI8-R
+./usr/share/locale/sl
+./usr/share/locale/sl/LC_MESSAGES
+./usr/share/locale/sl_SI.ISO8859-2
+./usr/share/locale/sv
+./usr/share/locale/sv/LC_MESSAGES
+./usr/share/locale/sv_SE.ISO8859-1
+./usr/share/locale/sv_SE.ISO8859-15
+./usr/share/locale/uk_UA.KOI8-U
+./usr/share/locale/zh_CN.eucCN
+./usr/share/locale/zh_TW.BIG5
+./usr/share/locale/zh_TW.Big5
+./usr/share/locale/zh_TW.eucTW
+./usr/share/man
+./usr/share/man/cat1
+./usr/share/man/cat1/atari
+./usr/share/man/cat1/x68k
+./usr/share/man/cat2
+./usr/share/man/cat3
+./usr/share/man/cat3f
+./usr/share/man/cat4
+./usr/share/man/cat4/alpha
+./usr/share/man/cat4/amiga
+./usr/share/man/cat4/arm26
+./usr/share/man/cat4/arm32
+./usr/share/man/cat4/atari
+./usr/share/man/cat4/hp300
+./usr/share/man/cat4/i386
+./usr/share/man/cat4/mac68k
+./usr/share/man/cat4/macppc
+./usr/share/man/cat4/mvme68k
+./usr/share/man/cat4/pc532
+./usr/share/man/cat4/pmax
+./usr/share/man/cat4/sparc
+./usr/share/man/cat4/sun2
+./usr/share/man/cat4/sun3
+./usr/share/man/cat4/vax
+./usr/share/man/cat4/x68k
+./usr/share/man/cat5
+./usr/share/man/cat6
+./usr/share/man/cat7
+./usr/share/man/cat8
+./usr/share/man/cat8/alpha
+./usr/share/man/cat8/amiga
+./usr/share/man/cat8/arc
+./usr/share/man/cat8/arm26
+./usr/share/man/cat8/arm32
+./usr/share/man/cat8/atari
+./usr/share/man/cat8/bebox
+./usr/share/man/cat8/cobalt
+./usr/share/man/cat8/dreamcast
+./usr/share/man/cat8/hp300
+./usr/share/man/cat8/hpcmips
+./usr/share/man/cat8/hpcsh
+./usr/share/man/cat8/i386
+./usr/share/man/cat8/luna68k
+./usr/share/man/cat8/mac68k
+./usr/share/man/cat8/macppc
+./usr/share/man/cat8/mipsco
+./usr/share/man/cat8/mmeye
+./usr/share/man/cat8/mvme68k
+./usr/share/man/cat8/netwinder
+./usr/share/man/cat8/news68k
+./usr/share/man/cat8/newsmips
+./usr/share/man/cat8/next68k
+./usr/share/man/cat8/pc532
+./usr/share/man/cat8/pmax
+./usr/share/man/cat8/prep
+./usr/share/man/cat8/sandpoint
+./usr/share/man/cat8/sgimips
+./usr/share/man/cat8/sparc
+./usr/share/man/cat8/sparc64
+./usr/share/man/cat8/sun2
+./usr/share/man/cat8/sun3
+./usr/share/man/cat8/vax
+./usr/share/man/cat8/walnut
+./usr/share/man/cat8/x68k
+./usr/share/man/cat9
+./usr/share/man/cat9/alpha
+./usr/share/man/cat9/amiga
+./usr/share/man/cat9/arm26
+./usr/share/man/cat9/arm32
+./usr/share/man/cat9/atari
+./usr/share/man/cat9/hp300
+./usr/share/man/cat9/i386
+./usr/share/man/cat9/mac68k
+./usr/share/man/cat9/pc532
+./usr/share/man/cat9/pmax
+./usr/share/man/cat9/sparc
+./usr/share/man/cat9/sun3
+./usr/share/man/cat9/vax
+./usr/share/man/cat9/x68k
+./usr/share/man/man1
+./usr/share/man/man1/atari
+./usr/share/man/man1/x68k
+./usr/share/man/man2
+./usr/share/man/man3
+./usr/share/man/man3f
+./usr/share/man/man4
+./usr/share/man/man4/alpha
+./usr/share/man/man4/amiga
+./usr/share/man/man4/arm26
+./usr/share/man/man4/arm32
+./usr/share/man/man4/atari
+./usr/share/man/man4/hp300
+./usr/share/man/man4/i386
+./usr/share/man/man4/mac68k
+./usr/share/man/man4/macppc
+./usr/share/man/man4/mvme68k
+./usr/share/man/man4/pc532
+./usr/share/man/man4/pmax
+./usr/share/man/man4/sparc
+./usr/share/man/man4/sun2
+./usr/share/man/man4/sun3
+./usr/share/man/man4/vax
+./usr/share/man/man4/x68k
+./usr/share/man/man5
+./usr/share/man/man6
+./usr/share/man/man7
+./usr/share/man/man8
+./usr/share/man/man8/alpha
+./usr/share/man/man8/amiga
+./usr/share/man/man8/arc
+./usr/share/man/man8/arm26
+./usr/share/man/man8/arm32
+./usr/share/man/man8/atari
+./usr/share/man/man8/bebox
+./usr/share/man/man8/cobalt
+./usr/share/man/man8/dreamcast
+./usr/share/man/man8/hp300
+./usr/share/man/man8/hpcmips
+./usr/share/man/man8/hpcsh
+./usr/share/man/man8/i386
+./usr/share/man/man8/luna68k
+./usr/share/man/man8/mac68k
+./usr/share/man/man8/macppc
+./usr/share/man/man8/mipsco
+./usr/share/man/man8/mmeye
+./usr/share/man/man8/mvme68k
+./usr/share/man/man8/netwinder
+./usr/share/man/man8/news68k
+./usr/share/man/man8/newsmips
+./usr/share/man/man8/next68k
+./usr/share/man/man8/pc532
+./usr/share/man/man8/pmax
+./usr/share/man/man8/prep
+./usr/share/man/man8/sandpoint
+./usr/share/man/man8/sgimips
+./usr/share/man/man8/sparc
+./usr/share/man/man8/sparc64
+./usr/share/man/man8/sun2
+./usr/share/man/man8/sun3
+./usr/share/man/man8/vax
+./usr/share/man/man8/walnut
+./usr/share/man/man8/x68k
+./usr/share/man/man9
+./usr/share/man/man9/alpha
+./usr/share/man/man9/amiga
+./usr/share/man/man9/arm26
+./usr/share/man/man9/arm32
+./usr/share/man/man9/atari
+./usr/share/man/man9/hp300
+./usr/share/man/man9/i386
+./usr/share/man/man9/mac68k
+./usr/share/man/man9/pc532
+./usr/share/man/man9/pmax
+./usr/share/man/man9/sparc
+./usr/share/man/man9/sun3
+./usr/share/man/man9/vax
+./usr/share/man/man9/x68k
+./usr/share/me
+./usr/share/misc
+./usr/share/mk
+./usr/share/ms
+./usr/share/nls
+./usr/share/sendmail
+./usr/share/sendmail/cf
+./usr/share/sendmail/domain
+./usr/share/sendmail/feature
+./usr/share/sendmail/hack
+./usr/share/sendmail/m4
+./usr/share/sendmail/mailer
+./usr/share/sendmail/ostype
+./usr/share/sendmail/sh
+./usr/share/sendmail/siteconfig
+./usr/share/sushi
+./usr/share/sushi/info
+./usr/share/sushi/info/programming
+./usr/share/sushi/info/programming/basics
+./usr/share/sushi/info/programming/execapi
+./usr/share/sushi/info/programming/formapi
+./usr/share/sushi/info/programming/helpapi
+./usr/share/sushi/info/programming/i18n
+./usr/share/sushi/info/programming/indexapi
+./usr/share/sushi/info/programming/scriptapi
+./usr/share/sushi/info/programming/searchpaths
+./usr/share/sushi/install
+./usr/share/sushi/install/install
+./usr/share/sushi/install/installb
+./usr/share/sushi/install/list
+./usr/share/sushi/install/remove
+./usr/share/sushi/network
+./usr/share/sushi/network/exports
+./usr/share/sushi/network/exports/addexport
+./usr/share/sushi/network/exports/delexport
+./usr/share/sushi/network/hostname
+./usr/share/sushi/network/hosts
+./usr/share/sushi/network/hosts/addhost
+./usr/share/sushi/network/hosts/addv6host
+./usr/share/sushi/network/hosts/delhost
+./usr/share/sushi/network/hosts/modhost
+./usr/share/sushi/network/hosts/modv6host
+./usr/share/sushi/network/interfaces
+./usr/share/sushi/network/interfaces/interface
+./usr/share/sushi/network/interfaces/listif
+./usr/share/sushi/network/routing
+./usr/share/sushi/network/routing/default
+./usr/share/sushi/network/routing/ipv4table
+./usr/share/sushi/network/yp
+./usr/share/sushi/network/yp/client
+./usr/share/sushi/network/yp/domainname
+./usr/share/sushi/network/yp/master
+./usr/share/sushi/network/yp/slave
+./usr/share/sushi/procs
+./usr/share/sushi/procs/restartallprocs
+./usr/share/sushi/procs/restartprocs
+./usr/share/sushi/procs/showallprocs
+./usr/share/sushi/procs/showprocs
+./usr/share/sushi/procs/startallprocs
+./usr/share/sushi/procs/startprocs
+./usr/share/sushi/procs/stopallprocs
+./usr/share/sushi/procs/stopprocs
+./usr/share/sushi/procs/topcpu
+./usr/share/sushi/procs/topmem
+./usr/share/sushi/procs/toptime
+./usr/share/sushi/system
+./usr/share/sushi/system/dailyconf
+./usr/share/sushi/system/inetdconf
+./usr/share/sushi/system/localtime
+./usr/share/sushi/system/mailerconf
+./usr/share/sushi/system/rcconf
+./usr/share/sushi/system/securityconf
+./usr/share/sushi/system/sshdconf
+./usr/share/sushi/system/sysctl
+./usr/share/sushi/system/usermgmtconf
+./usr/share/sushi/system/weeklyconf
+./usr/share/sushi/users
+./usr/share/sushi/users/adduser
+./usr/share/sushi/users/deluser
+./usr/share/sushi/users/disuser
+./usr/share/sushi/users/listuser
+./usr/share/sushi/util
+./usr/share/sushi/util/logging
+./usr/share/sushi/util/scripting
+./usr/share/tabset
+./usr/share/tmac
+./usr/share/tmac/mm
+./usr/share/vi
+./usr/share/vi/catalog
+./usr/share/wscons
+./usr/share/wscons/fonts
+./usr/share/wscons/keymaps
+./usr/share/zoneinfo
+./var
+./var/account
+./var/at
+./var/at/jobs			mode=0700
+./var/at/spool			mode=0700
+./var/backups
+./var/crash			mode=0770
+./var/cron
+./var/cron/tabs			mode=0700
+./var/db
+./var/db/ns
+./var/games			uname=games gname=games mode=0775
+./var/games/hackdir		uname=games gname=games mode=0775
+./var/games/hackdir/save	uname=games gname=games mode=0770
+./var/games/larn		uname=games gname=games mode=0775
+./var/games/phantasia		uname=games gname=games mode=0775
+./var/games/sail		uname=games gname=games mode=0775
+./var/heimdal
+./var/log
+./var/log/rdist
+./var/mail			mode=1777
+./var/msgs			uname=daemon
+./var/named
+./var/named/dev
+./var/named/etc
+./var/named/etc/namedb
+./var/named/etc/namedb/cache	mode=0775 uname=named gname=named
+./var/named/usr
+./var/named/usr/libexec
+./var/named/var
+./var/named/var/run		mode=0775 gname=named
+./var/named/var/tmp		mode=01775 gname=named
+./var/preserve
+./var/quotas			gname=operator mode=0750
+./var/run
+./var/rwho
+./var/spool
+./var/spool/ftp
+./var/spool/ftp/bin
+./var/spool/ftp/etc
+./var/spool/ftp/hidden		mode=0111
+./var/spool/lock		uname=uucp gname=daemon
+./var/spool/mqueue
+./var/spool/output
+./var/spool/postfix
+./var/spool/postfix/etc
+./var/spool/sockets		mode=0777
+./var/spool/uucp		uname=uucp gname=daemon
+./var/spool/uucppublic		uname=uucp gname=daemon mode=01777
+./var/tmp			mode=01777
+./var/tmp/vi.recover		mode=01777
+./var/yp
+./var/yp/binding
