@@ -1,4 +1,4 @@
-/*	$NetBSD: openprom.c,v 1.8 2002/10/23 09:12:16 jdolecek Exp $ */
+/*	$NetBSD: openprom.c,v 1.9 2003/05/17 01:38:40 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -179,7 +179,7 @@ openpromioctl(dev, cmd, data, flags, p)
 			break;
 		value = malloc(len, M_TEMP, M_WAITOK);
 		s = splhigh();
-		error = PROM_getprop(node, name, 1, &len, (void **)&value);
+		error = PROM_getprop(node, name, 1, &len, (void *)&value);
 		splx(s);
 		if (error != 0)
 			break;
