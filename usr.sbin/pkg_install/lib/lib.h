@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.56 2003/09/03 12:44:01 jlam Exp $ */
+/* $NetBSD: lib.h,v 1.57 2003/09/17 13:27:42 agc Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -199,8 +199,8 @@ char   *make_playpen(char *, size_t, size_t);
 char   *where_playpen(void);
 void    leave_playpen(char *);
 uint64_t min_free(char *);
-void    save_dirs(char **c, char **p);
-void    restore_dirs(char *c, char *p);
+void    save_dirs(char **, char **);
+void    restore_dirs(char *, char *);
 void    show_version(void);
 int	fexec(const char *, ...);
 int	fcexec(const char *, const char *, ...);
@@ -215,8 +215,8 @@ int     pmatch(const char *, const char *);
 int     findmatchingname(const char *, const char *, matchfn, void *); /* doesn't really belong to "strings" */
 char   *findbestmatchingname(const char *, const char *);	/* neither */
 int     ispkgpattern(const char *);
-char   *strnncpy(char *to, size_t tosize, char *from, size_t cc);
-void	strip_txz(char *buf, char *sfx, const char *fname);
+char   *strnncpy(char *, size_t, char *, size_t);
+void	strip_txz(char *, char *, const char *);
 
 /* callback functions for findmatchingname */
 int     findbestmatchingname_fn(const char *, void *);	/* neither */
@@ -247,24 +247,24 @@ int     unpack(const char *, const char *);
 void    format_cmd(char *, size_t, char *, char *, char *);
 
 /* ftpio.c: FTP handling */
-int	expandURL(char *expandedurl, const char *wildcardurl);
-int	unpackURL(const char *url, const char *dir);
-int	ftp_cmd(const char *cmd, const char *expectstr);
-int	ftp_start(char *base);
+int	expandURL(char *, const char *);
+int	unpackURL(const char *, const char *);
+int	ftp_cmd(const char *, const char *);
+int	ftp_start(char *);
 void	ftp_stop(void);
 
 /* Packing list */
 plist_t *new_plist_entry(void);
 plist_t *last_plist(package_t *);
 plist_t *find_plist(package_t *, pl_ent_t);
-char   *find_plist_option(package_t *, char *name);
+char   *find_plist_option(package_t *, char *);
 void    plist_delete(package_t *, Boolean, pl_ent_t, char *);
 void    free_plist(package_t *);
 void    mark_plist(package_t *);
 void    csum_plist_entry(char *, plist_t *);
 void    add_plist(package_t *, pl_ent_t, const char *);
 void    add_plist_top(package_t *, pl_ent_t, const char *);
-void    delete_plist(package_t *pkg, Boolean all, pl_ent_t type, char *name);
+void    delete_plist(package_t *, Boolean, pl_ent_t, char *);
 void    write_plist(package_t *, FILE *, char *);
 void    read_plist(package_t *, FILE *);
 int     plist_cmd(char *, char **);
