@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.15 2002/10/21 21:14:53 christos Exp $ */
+/* $NetBSD: lint1.h,v 1.16 2002/10/21 22:44:08 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -139,7 +139,7 @@ typedef	struct type {
 	u_int	t_const : 1;	/* const modifier */
 	u_int	t_volatile : 1;	/* volatile modifier */
 	u_int	t_proto : 1;	/* function prototype (t_args valid) */
-	u_int	t_vararg : 1;	/* protoype with ... */
+	u_int	t_vararg : 1;	/* prototype with ... */
 	u_int	t_typedef : 1;	/* type defined with typedef */
 	u_int	t_isfield : 1;	/* type is bitfield */
 	u_int	t_isenum : 1;	/* type is (or was) enum (t_enum valid) */
