@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.8.2.10 2000/03/01 14:06:34 he Exp $
+.\"	$NetBSD: contents,v 1.8.2.11 2000/09/11 21:21:27 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -419,7 +419,7 @@ everything described below.
 .if r_arm32 .Em 13.1M gzipped, 33.5M uncompressed
 .if r_atari .Em 10.3M gzipped, 29.0M uncompressed
 .if r_hp300 .Em 10.7M gzipped, 29.7M uncompressed
-.if r_i386 .Em 11.5M gzipped, 28.8M uncompressed
+.if r_i386 .Em 11.7M gzipped, 29.2M uncompressed
 .if r_mac68k .Em 10.2M gzipped, 28.9M uncompressed
 .if r_macppc .Em 11.1M gzipped, 30.5M uncompressed
 .if r_next68k .Em 12.9M gzipped, 40.1M uncompressed
@@ -445,7 +445,7 @@ system call and library manual pages.
 .if r_arm32 .Em 9.2M gzipped, 30.5M uncompressed
 .if r_atari .Em 8.1M gzipped, 27.2M uncompressed
 .if r_hp300 .Em 8.2M gzipped, 28M uncompressed
-.if r_i386 .Em 8.9M gzipped, 28.9M uncompressed
+.if r_i386 .Em 8.9M gzipped, 29.1M uncompressed
 .if r_mac68k .Em 8.1M gzipped, 26.6M uncompressed
 .if r_macppc .Em 8.5M gzipped, 32.3M uncompressed
 .if r_next68k .Em 13M gzipped, 50M uncompressed
@@ -515,7 +515,7 @@ install this distribution set.
 .if r_amiga .Em 894k gzipped, 1.9M uncompressed
 .if r_arm32 .Em 857k gzipped, 1.8M uncompressed
 .if r_hp300 .Em 563k gzipped, 1.2M uncompressed
-.if r_i386 .Em 1.5M gzipped, 3.1M uncompressed
+.if r_i386 .Em 1.6M gzipped, 3.3M uncompressed
 .if r_macppc .Em 846k gzipped, 1.9M uncompressed
 .if r_next68k .Em 532k gzipped, 1.1M uncompressed
 .if r_pc532 .Em 457k gzipped, 910k uncompressed
@@ -562,7 +562,7 @@ that are included in the other sets.
 .if r_arm32 .Em 4M gzipped, 15.9M uncompressed
 .if r_atari .Em 4M gzipped, 15.9M uncompressed
 .if r_hp300 .Em 4.2M gzipped, 16.6M uncompressed
-.if r_i386 .Em 4.2M gzipped, 16.7M uncompressed
+.if r_i386 .Em 4.2M gzipped, 16.9M uncompressed
 .if r_macppc .Em 3.8M gzipped, 15.2M uncompressed
 .if r_next68k .Em 3.9M gzipped, 15.6M uncompressed
 .if r_pc532 .Em 4.1M gzipped, 16.8M uncompressed
@@ -583,7 +583,7 @@ the typesettable document set, and other files from
 .if r_arm32 .Em 2.2M gzipped, 8.4M uncompressed
 .if r_atari .Em 2.2M gzipped, 8.4M uncompressed
 .if r_hp300 .Em 2.2M gzipped, 8.3M uncompressed
-.if r_i386 .Em 2.1M gzipped, 8.1M uncompressed
+.if r_i386 .Em 2.1M gzipped, 8.2M uncompressed
 .if r_macppc .Em 2.2M gzipped, 8.5M uncompressed
 .if r_next68k .Em 2.2M gzipped, 8.5M uncompressed
 .if r_pc532 .Em 2.2M gzipped, 8.5M uncompressed
