@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.49.2.1 1997/08/01 18:35:25 cjs Exp $
+#	$NetBSD: bsd.own.mk,v 1.49.2.2 1997/08/01 18:38:06 cjs Exp $
 
 # This file may be included multiple times without harm.
 
