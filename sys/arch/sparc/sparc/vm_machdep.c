@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.44.4.2 1999/08/02 20:09:15 thorpej Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.44.4.3 1999/08/11 05:47:05 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -119,7 +119,7 @@ vmapbuf(bp, len)
 	 * segment boundary to avoid VAC problems!
 	 */
 	bp->b_saveaddr = bp->b_data;
-	uva = trunc_page(bp->b_data);
+	uva = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - uva;
 	len = round_page(off + len);
 	kva = uvm_km_valloc_wait(kernel_map, len);
@@ -161,7 +161,7 @@ vunmapbuf(bp, len)
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
 
-	kva = trunc_page(bp->b_data);
+	kva = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - kva;
 	len = round_page(off + len);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.19.4.6 1999/08/09 00:05:56 chs Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.19.4.7 1999/08/11 05:47:06 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -379,8 +379,11 @@ sys_mmap(p, v, retval)
 		 * not fixed: make sure we skip over the largest possible heap.
 		 * we will refine our guess later (e.g. to account for VAC, etc)
 		 */
-		if (addr < round_page(p->p_vmspace->vm_daddr + MAXDSIZ))
-			addr = round_page(p->p_vmspace->vm_daddr + MAXDSIZ);
+
+		if (addr < round_page((vaddr_t)p->p_vmspace->vm_daddr +
+				      MAXDSIZ))
+			addr = round_page((vaddr_t)p->p_vmspace->vm_daddr +
+					  MAXDSIZ);
 	}
 
 	/*
