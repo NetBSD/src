@@ -1,10 +1,10 @@
-/* $NetBSD: plist.c,v 1.2 1997/06/05 12:59:53 agc Exp $ */
+/* $NetBSD: plist.c,v 1.3 1997/10/16 00:32:28 hubertf Exp $ */
 
 #ifndef lint
 #if 0
-static const char *rcsid = "from FreeBSD Id: plist.c,v 1.19 1997/02/22 16:09:51 peter Exp";
+static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-static const char *rcsid = "$NetBSD: plist.c,v 1.2 1997/06/05 12:59:53 agc Exp $";
+static const char *rcsid = "$NetBSD: plist.c,v 1.3 1997/10/16 00:32:28 hubertf Exp $";
 #endif
 #endif
 
@@ -29,6 +29,7 @@ static const char *rcsid = "$NetBSD: plist.c,v 1.2 1997/06/05 12:59:53 agc Exp $
  */
 
 #include "lib.h"
+#include <err.h>
 #include <md5.h>
 
 /* Add an item to a packing list */
@@ -255,7 +256,7 @@ read_plist(Package *pkg, FILE *fp)
 	if (pline[0] == CMD_CHAR) {
 	    cmd = plist_cmd(pline + 1, &cp);
 	    if (cmd == FAIL)
-		barf("Bad command '%s'", pline);
+		cleanup(0), errx(2, "bad command '%s'", pline);
 	    if (*cp == '\0')
 		cp = NULL;
 	}
@@ -339,7 +340,8 @@ write_plist(Package *pkg, FILE *fp)
 	    break;
 
 	default:
-	    barf("Unknown command type %d (%s)\n", plist->type, plist->name);
+	    cleanup(0);
+	    errx(2, "unknown command type %d (%s)", plist->type, plist->name);
 	    break;
 	}
 	plist = plist->next;
@@ -377,7 +379,7 @@ delete_package(Boolean ign_err, Boolean nukedirs, Package *pkg)
 	    if (Verbose)
 		printf("Execute `%s'\n", tmp);
 	    if (!Fake && system(tmp)) {
-		whinge("unexec command for `%s' failed.", tmp);
+		warnx("unexec command for `%s' failed", tmp);
 		fail = FAIL;
 	    }
 	    break;
@@ -385,8 +387,8 @@ delete_package(Boolean ign_err, Boolean nukedirs, Package *pkg)
 	case PLIST_FILE:
 	    sprintf(tmp, "%s/%s", Where, p->name);
 	    if (isdir(tmp)) {
-		whinge("Attempting to delete directory `%s' as a file\n"
-		       "This packing list is incorrect - ignoring delete request.\n", tmp);
+		warnx("attempting to delete directory `%s' as a file\n"
+	   "this packing list is incorrect - ignoring delete request", tmp);
 	    }
 	    else {
 		if (p->next && p->next->type == PLIST_COMMENT && !strncmp(p->next->name, "MD5:", 4)) {
@@ -409,7 +411,7 @@ delete_package(Boolean ign_err, Boolean nukedirs, Package *pkg)
 		    printf("Delete file %s\n", tmp);
 
 		if (!Fake && delete_hierarchy(tmp, ign_err, nukedirs)) {
-		    whinge("Unable to completely remove file '%s'", tmp);
+		    warn("preserve: unable to completely remove file '%s'", tmp);
 		    fail = FAIL;
 		}
 	    }
@@ -419,14 +421,14 @@ delete_package(Boolean ign_err, Boolean nukedirs, Package *pkg)
 	case PLIST_DIR_RM:
 	    sprintf(tmp, "%s/%s", Where, p->name);
 	    if (!isdir(tmp)) {
-		whinge("Attempting to delete file `%s' as a directory\n"
-		       "This packing list is incorrect - ignoring delete request.\n", tmp);
+		warnx("attempting to delete file `%s' as a directory\n"
+	"this packing list is incorrect - ignoring delete request", tmp);
 	    }
 	    else {
 		if (Verbose)
 		    printf("Delete directory %s\n", tmp);
 		if (!Fake && delete_hierarchy(tmp, ign_err, FALSE)) {
-		    whinge("Unable to completely remove directory '%s'", tmp);
+		    warnx("unable to completely remove directory '%s'", tmp);
 		    fail = FAIL;
 		}
 	    }
@@ -454,14 +456,19 @@ delete_hierarchy(char *dir, Boolean ign_err, Boolean nukedirs)
     cp1 = cp2 = dir;
     if (!fexists(dir)) {
 	if (!ign_err)
-	    whinge("%s `%s' doesn't really exist.", isdir(dir) ? "Directory" : "File", dir);
-    } else if (nukedirs) {
+	    warnx("%s `%s' doesn't really exist",
+		isdir(dir) ? "directory" : "file", dir);
+	return !ign_err;
+    }
+    else if (nukedirs) {
 	if (vsystem("%s -r%s %s", REMOVE_CMD, (ign_err ? "f" : ""), dir))
 	    return 1;
-    } else if (isdir(dir)) {
+    }
+    else if (isdir(dir)) {
 	if (RMDIR(dir) && !ign_err)
 	    return 1;
-    } else {
+    }
+    else {
 	if (REMOVE(dir, ign_err))
 	    return 1;
     }
@@ -475,7 +482,7 @@ delete_hierarchy(char *dir, Boolean ign_err, Boolean nukedirs)
 	    return 0;
 	if (RMDIR(dir) && !ign_err)
 	    if (!fexists(dir))
-		whinge("Directory `%s' doesn't really exist.", dir);
+		warnx("directory `%s' doesn't really exist", dir);
 	    else
 		return 1;
 	/* back up the pathname one component */

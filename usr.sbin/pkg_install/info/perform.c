@@ -1,10 +1,10 @@
-/* $NetBSD: perform.c,v 1.2 1997/06/05 12:59:40 agc Exp $ */
+/* $NetBSD: perform.c,v 1.3 1997/10/16 00:32:09 hubertf Exp $ */
 
 #ifndef lint
 #if 0
-static const char *rcsid = "from FreeBSD Id: perform.c,v 1.21 1997/02/22 16:09:42 peter Exp";
+static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-static const char *rcsid = "$NetBSD: perform.c,v 1.2 1997/06/05 12:59:40 agc Exp $";
+static const char *rcsid = "$NetBSD: perform.c,v 1.3 1997/10/16 00:32:09 hubertf Exp $";
 #endif
 #endif
 
@@ -118,13 +118,13 @@ pkg_do(char *pkg)
 	 * be very optimistic.
 	 */
 	if (stat(fname, &sb) == FAIL) {
-	    whinge("Can't stat package file '%s'.", fname);
+	    warnx("can't stat package file '%s'", fname);
 	    code = 1;
 	    goto bail;
 	}
 	Home = make_playpen(PlayPen, sb.st_size / 2);
 	if (unpack(fname, "+*")) {
-	    whinge("Error during unpacking, no info for '%s' available.", pkg);
+	    warnx("error during unpacking, no info for '%s' available", pkg);
 	    code = 1;
 	    goto bail;
 	}
@@ -136,11 +136,11 @@ pkg_do(char *pkg)
 	sprintf(log_dir, "%s/%s", (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
 		pkg);
 	if (!fexists(log_dir)) {
-	    whinge("Can't find package `%s' installed or in a file!", pkg);
+	    warnx("can't find package `%s' installed or in a file!", pkg);
 	    return 1;
 	}
 	if (chdir(log_dir) == FAIL) {
-	    whinge("Can't change directory to '%s'!", log_dir);
+	    warnx("can't change directory to '%s'!", log_dir);
 	    return 1;
 	}
 	installed = TRUE;
@@ -150,7 +150,7 @@ pkg_do(char *pkg)
     plist.head = plist.tail = NULL;
     fp = fopen(CONTENTS_FNAME, "r");
     if (!fp) {
-	whinge("Unable to open %s file.", CONTENTS_FNAME);
+	warnx("unable to open %s file", CONTENTS_FNAME);
 	code = 1;
 	goto bail;
     }
@@ -207,4 +207,5 @@ void
 cleanup(int sig)
 {
     leave_playpen(Home);
+    exit(1);
 }
