@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpip.h,v 1.1.1.1 1997/09/21 16:49:15 veego Exp $	*/
+/*	$NetBSD: tcpip.h,v 1.1.1.2 1997/10/30 05:30:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)tcpip.h	8.1 (Berkeley) 6/10/93
- * Id: tcpip.h,v 2.0.2.2 1997/05/28 13:49:45 darrenr Exp 
+ * Id: tcpip.h,v 2.0.2.3 1997/09/17 10:55:58 darrenr Exp 
  */
 
 #ifndef _NETINET_TCPIP_H_
@@ -44,7 +44,11 @@
  */
 struct tcpiphdr {
 	struct 	ipovly ti_i;		/* overlaid ip structure */
+#ifdef	linux
+	tcphdr_t	ti_t;
+#else
 	struct	tcphdr ti_t;		/* tcp header */
+#endif
 };
 #ifdef notyet
 /*

@@ -1,7 +1,7 @@
-/*	$NetBSD: misc.c,v 1.1.1.6 1997/09/21 16:48:11 veego Exp $	*/
+/*	$NetBSD: misc.c,v 1.1.1.7 1997/10/30 05:28:07 mrg Exp $	*/
 
 /*
- * (C)opyright 1993,1994,1995 by Darren Reed.
+ * Copyright (C) 1993-1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -10,12 +10,12 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
+#include <sys/types.h>
 #if !defined(__SVR4) && !defined(__svr4__)
 #include <strings.h>
 #else
 #include <sys/byteorder.h>
 #endif
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <stdlib.h>
@@ -41,9 +41,9 @@
 #include "ipf.h"
 #include "ipt.h"
 
-#if !defined(lint) && defined(LIBC_SCCS)
-static	char	sccsid[] = "@(#)misc.c	1.3 2/4/96 (C) 1995 Darren Reed";
-static	char	rcsid[] = "Id: misc.c,v 2.0.2.6 1997/04/30 13:54:24 darrenr Exp ";
+#if !defined(lint)
+static const char sccsid[] = "@(#)misc.c	1.3 2/4/96 (C) 1995 Darren Reed";
+static const char rcsid[] = "@(#)Id: misc.c,v 2.0.2.8 1997/10/19 15:39:28 darrenr Exp ";
 #endif
 
 extern	int	opts;

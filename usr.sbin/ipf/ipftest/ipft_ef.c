@@ -1,7 +1,7 @@
-/*	$NetBSD: ipft_ef.c,v 1.1.1.6 1997/09/21 16:48:07 veego Exp $	*/
+/*	$NetBSD: ipft_ef.c,v 1.1.1.7 1997/10/30 05:27:56 mrg Exp $	*/
 
 /*
- * (C)opyright 1993,1994,1995 by Darren Reed.
+ * Copyright (C) 1993-1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -37,21 +37,28 @@ etherfind -n -t
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netinet/in_systm.h>
+#ifndef	linux
 #include <netinet/ip_var.h>
+#endif
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
+#ifndef	linux
 #include <netinet/tcpip.h>
+#endif
 #include <net/if.h>
 #include <netdb.h>
 #include <netinet/ip_compat.h>
 #include "ipf.h"
 #include "ipt.h"
+#ifdef linux
+#include "tcpip.h"
+#endif
 
-#if !defined(lint) && defined(LIBC_SCCS)
-static char sccsid[] = "@(#)ipft_ef.c	1.6 2/4/96 (C)1995 Darren Reed";
-static	char	rcsid[] = "Id: ipft_ef.c,v 2.0.2.4 1997/04/30 13:55:06 darrenr Exp ";
+#if !defined(lint)
+static const char sccsid[] = "@(#)ipft_ef.c	1.6 2/4/96 (C)1995 Darren Reed";
+static const char rcsid[] = "@(#)Id: ipft_ef.c,v 2.0.2.7 1997/09/28 07:11:50 darrenr Exp ";
 #endif
 
 static	int	etherf_open __P((char *));
@@ -92,7 +99,7 @@ char	*buf, **ifn;
 int	cnt, *dir;
 {
 	struct	tcpiphdr pkt;
-	struct	ip	*ip = (struct ip *)&pkt;
+	ip_t	*ip = (ip_t *)&pkt;
 	struct	protoent *p = NULL;
 	char	src[16], dst[16], sprt[16], dprt[16];
 	char	lbuf[128], len[8], prot[8], time[8], *s;
@@ -145,7 +152,7 @@ int	cnt, *dir;
 	(void) inet_aton(src, &ip->ip_src);
 	(void) inet_aton(dst, &ip->ip_dst);
 	ip->ip_len = atoi(len);
-	ip->ip_hl = sizeof(struct ip);
+	ip->ip_hl = sizeof(ip_t);
 
 	slen = ip->ip_hl + extra;
 	i = MIN(cnt, slen);
