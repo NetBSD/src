@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.2 1997/12/18 09:08:00 sakamoto Exp $	*/
+/*	$NetBSD: pmap.c,v 1.3 1998/01/02 22:17:18 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,6 +32,8 @@
  */
 #include <sys/param.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
+#include <sys/user.h>    
 #include <sys/queue.h>
 #include <sys/systm.h>
 
@@ -1330,4 +1332,66 @@ pmap_page_protect(pa, prot)
 		}
 	}
 	splx(s);
+}
+
+/*
+ * Activate the address space for the specified process.  If the process
+ * is the current process, load the new MMU context.
+ */
+void
+pmap_activate(p)
+	struct proc *p;
+{
+	struct pcb *pcb = &p->p_addr->u_pcb;
+	pmap_t pmap = p->p_vmspace->vm_map.pmap, rpm;
+	int psl, i, ksr, seg;
+
+	/*
+	 * XXX Normally performed in cpu_fork().
+	 */
+	if (pcb->pcb_pm != pmap) {
+		pcb->pcb_pm = pmap;
+		pcb->pcb_pmreal = (struct pmap *)pmap_extract(pmap_kernel(),
+		    (vm_offset_t)pcb->pcb_pm);
+	}
+
+	if (p == curproc) {
+		/* Disable interrupts while switching. */
+		__asm __volatile("mfmsr %0" : "=r"(psl) :);
+		psl &= ~PSL_EE;
+		__asm __volatile("mtmsr %0" :: "r"(psl));
+
+		/* Store pointer to new current pmap. */
+		curpm = pcb->pcb_pmreal;
+
+		/* Save kernel SR. */
+		__asm __volatile("mfsr %0,14" : "=r"(ksr) :);
+
+		/*
+		 * Set new segment registers.  We use the pmap's real
+		 * address to avoid accessibility problems.
+		 */
+		rpm = pcb->pcb_pmreal;
+		for (i = 0; i < 16; i++) {
+			seg = rpm->pm_sr[i];
+			__asm __volatile("mtsrin %0,%1"
+			    :: "r"(seg), "r"(i << ADDR_SR_SHFT));
+		}
+
+		/* Restore kernel SR. */
+		__asm __volatile("mtsr 14,%0" :: "r"(ksr));
+
+		/* Interrupts are OK again. */
+		psl |= PSL_EE;
+		__asm __volatile("mtmsr %0" :: "r"(psl));
+	}
+}
+
+/*
+ * Deactivate the specified process's address space.
+ */
+void
+pmap_deactivate(p)
+	struct proc *p;
+{
 }
