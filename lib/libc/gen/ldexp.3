@@ -1,4 +1,4 @@
-.\"	$NetBSD: ldexp.3,v 1.5 1998/02/05 18:47:27 perry Exp $
+.\"	$NetBSD: ldexp.3,v 1.6 1999/08/29 18:52:18 mycroft Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -62,14 +62,26 @@ function returns the value of
 times 2 raised to the power
 .Fa exp .
 .Pp
-If the resultant value would cause an overflow,
+If the input
+.Va x
+is a NaN, infinity, or 0.0, it is returned unchanged.
+.Pp
+If the result would cause an overflow,
 the global variable
 .Va errno
 is set to
 .Er ERANGE
 and the value
-.Dv HUGE
-is returned.
+.Dv HUGE_VAL
+is returned, with the same sign as
+.Fa x .
+.Pp
+If the result would cause underflow to 0.0,
+the global variable
+.Va errno
+is set to
+.Er ERANGE
+and the value 0.0 is returned.
 .Sh SEE ALSO
 .Xr frexp 3 ,
 .Xr modf 3 ,
