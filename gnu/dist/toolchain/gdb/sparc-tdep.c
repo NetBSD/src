@@ -254,6 +254,8 @@ sparc_init_extra_frame_info (fromleaf, fi)
 #ifdef GDB_TARGET_IS_SPARC64
 	  if (fi->frame & 1)
 	    fi->frame += 2047;
+	  else
+	    fi->frame &= 0x0ffffffffL;
 #endif
 
 	}
@@ -295,6 +297,8 @@ sparc_init_extra_frame_info (fromleaf, fi)
 #ifdef GDB_TARGET_IS_SPARC64
 	      if (fi->frame & 1)
 		fi->frame += 2047;
+	      else
+		fi->frame &= 0x0ffffffffL;
 #endif
 	      /* Record where the fp got saved.  */
 	      fi->fp_addr = fi->frame + fi->sp_offset + X_SIMM13 (insn);
@@ -1163,6 +1167,8 @@ sparc_pop_frame ()
 #ifdef GDB_TARGET_IS_SPARC64
       if (sp & 1)
 	sp += 2047;
+      else
+	sp &= 0x0ffffffffL;
 #endif
       read_memory (sp, reg_temp, SPARC_INTREG_SIZE * 16);
 
@@ -1984,6 +1990,8 @@ sparc64_read_sp ()
 
   if (sp & 1)
     sp += 2047;
+  else
+    sp &= 0x0ffffffffL;
   return sp;
 }
 
@@ -1994,6 +2002,8 @@ sparc64_read_fp ()
 
   if (fp & 1)
     fp += 2047;
+  else
+    fp &= 0x0ffffffffL;
   return fp;
 }
 
