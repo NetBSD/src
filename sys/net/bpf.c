@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.80 2003/06/28 14:22:06 darrenr Exp $	*/
+/*	$NetBSD: bpf.c,v 1.81 2003/06/28 17:33:02 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.80 2003/06/28 14:22:06 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.81 2003/06/28 17:33:02 darrenr Exp $");
 
 #include "bpfilter.h"
 
@@ -1249,12 +1249,6 @@ catchpacket(d, pkt, pktlen, snaplen, cpfn)
 		bpf_wakeup(d);
 		curlen = 0;
 	}
-	else if (d->bd_immediate)
-		/*
-		 * Immediate mode is set.  A packet arrived so any
-		 * reads should be woken up.
-		 */
-		bpf_wakeup(d);
 
 	/*
 	 * Append the bpf header.
@@ -1268,6 +1262,14 @@ catchpacket(d, pkt, pktlen, snaplen, cpfn)
 	 */
 	(*cpfn)((u_char *)hp + hdrlen, pkt, (hp->bh_caplen = totlen - hdrlen));
 	d->bd_slen = curlen + totlen;
+
+	if (d->bd_immediate) {
+		/*
+		 * Immediate mode is set.  A packet arrived so any
+		 * reads should be woken up.
+		 */
+		bpf_wakeup(d);
+	}
 }
 
 /*
