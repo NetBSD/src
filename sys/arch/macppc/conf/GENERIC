@@ -1,9 +1,11 @@
-#	$NetBSD: GENERIC,v 1.47 2000/01/20 19:12:32 wrstuden Exp $
+#	$NetBSD: GENERIC,v 1.48 2000/01/23 23:46:14 hubertf Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
+
+#ident 		"GENERIC-$Revision: 1.48 $"
 
 maxusers	32
 

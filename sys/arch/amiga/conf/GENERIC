@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.134 2000/01/23 21:29:55 aymeric Exp $
+#	$NetBSD: GENERIC,v 1.135 2000/01/23 23:46:06 hubertf Exp $
 
 #
 #if 0
@@ -14,6 +14,8 @@
 #
 
 include "arch/amiga/conf/std.amiga"
+
+#ident 		"GENERIC-$Revision: 1.135 $"
 
 maxusers	8
 options 	RTC_OFFSET=0

@@ -1,6 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.95 2000/01/20 19:12:35 wrstuden Exp $
+# 	$NetBSD: GENERIC,v 1.96 2000/01/23 23:46:18 hubertf Exp $
 
 include "arch/sparc/conf/std.sparc"
+
+#ident 		"GENERIC-$Revision: 1.96 $"
 
 maxusers	32
 

@@ -1,12 +1,13 @@
-#	$NetBSD: GENERIC,v 1.61 2000/01/20 19:12:29 wrstuden Exp $
+#	$NetBSD: GENERIC,v 1.62 2000/01/23 23:46:07 hubertf Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include	"arch/arm32/conf/std.arm32"
 
-# estimated number of users
+#ident 		"GENERIC-$Revision: 1.62 $"
 
+# estimated number of users
 maxusers	32
 
 # Standard system options

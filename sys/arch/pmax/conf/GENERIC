@@ -1,9 +1,11 @@
 #
-# 	$NetBSD: GENERIC,v 1.63 2000/01/20 19:12:35 wrstuden Exp $
+# 	$NetBSD: GENERIC,v 1.64 2000/01/23 23:46:17 hubertf Exp $
 #
 # Distribution kernel (any model) kernel config file
 #
 include		"arch/pmax/conf/std.pmax"
+
+#ident 		"GENERIC-$Revision: 1.64 $"
 
 maxusers	64
 

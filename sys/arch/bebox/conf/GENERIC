@@ -1,9 +1,11 @@
-#	$NetBSD: GENERIC,v 1.22 2000/01/20 19:12:30 wrstuden Exp $
+#	$NetBSD: GENERIC,v 1.23 2000/01/23 23:46:08 hubertf Exp $
 #
 # First try for BEBOX config file
 #
 
 include "arch/bebox/conf/std.bebox"
+
+#ident 		"GENERIC-$Revision: 1.23 $"
 
 maxusers	32
 
