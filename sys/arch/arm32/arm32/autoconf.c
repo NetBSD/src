@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.25 1998/10/09 00:17:20 mark Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.26 1998/10/10 19:15:32 scw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -72,6 +72,7 @@ static	struct device *booted_device;
 static	int booted_partition;
 
 extern dev_t dumpdev;
+extern int cold;
 
 void	dumpconf __P(());
 void isa_intr_init __P((void));
@@ -224,6 +225,7 @@ configure()
 
 	/* Time to start taking interrupts so lets open the flood gates .... */
 	(void)spl0();
+	cold = 0;
 }
 
 /* End of autoconf.c */
