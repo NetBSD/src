@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321reg.h,v 1.12 2003/10/06 16:06:05 thorpej Exp $	*/
+/*	$NetBSD: i80321reg.h,v 1.13 2003/12/16 00:04:09 gavan Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -316,10 +316,10 @@
  *	INTSTR	cp6 c4,0	0xffffe7d4
  *	IINTSRC	cp6 c8,0	0xffffe7d8
  *	FINTSRC	cp6 c9,0	0xffffe7dc
- *	PIRSR			0xffffe2ec
+ *	PIRSR			0xffffe1ec
  */
 
-#define	ICU_PIRSR		0x02ec
+#define	ICU_PIRSR		0x01ec
 #define	ICU_GPOE		0x07c4
 #define	ICU_GPID		0x07c8
 #define	ICU_GPOD		0x07cc
