@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ecn.h,v 1.5 1999/07/09 23:41:17 thorpej Exp $	*/
+/*	$NetBSD: ip_ecn.h,v 1.6 1999/07/31 18:41:15 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -35,9 +35,11 @@
  * http://www.aciri.org/floyd/papers/draft-ipsec-ecn-00.txt
  */
 
-#if defined(_KERNEL) && !defined(_LKM)             
+#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_inet.h"
-#endif                                             
+#endif
+#endif
 
 #define ECN_ALLOWED	1	/* ECN allowed */
 #define ECN_FORBIDDEN	0	/* ECN forbidden */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.64 1999/07/22 12:56:56 itojun Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.65 1999/07/31 18:41:15 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-98
@@ -117,9 +117,9 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #ifndef _NETINET_TCP_VAR_H_
 #define _NETINET_TCP_VAR_H_
 
-#if defined(_KERNEL) && !defined(_LKM)             
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_inet.h"
-#endif                                             
+#endif
 
 /*
  * Kernel variables for tcp.

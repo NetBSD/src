@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp.h,v 1.4 1999/07/09 23:41:17 thorpej Exp $	*/
+/*	$NetBSD: ipcomp.h,v 1.5 1999/07/31 18:41:16 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -36,9 +36,11 @@
 #ifndef _NETINET6_IPCOMP_H_
 #define _NETINET6_IPCOMP_H_
 
-#if defined(_KERNEL) && !defined(_LKM)             
+#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_inet.h"
-#endif                                             
+#endif
+#endif
 
 struct ipcomp {
 	u_int8_t comp_nxt;	/* Next Header */
