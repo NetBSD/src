@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.7 1999/04/16 13:28:22 simonb Exp $
+#	$NetBSD: list,v 1.8 1999/06/05 20:17:41 bouyer Exp $
 
 # pmax extra's: mountpoint for kernfs
 SPECIAL mkdir			kern
@@ -96,3 +96,6 @@ LINK	instbin				sbin/sysinst
 
 # and a spare .profile
 COPY	${DESTDIR}/.profile		tmp/.hdprofile
+
+#the lists of obsolete files used by sysinst  
+SPECIAL sh ${CURDIR}/../../../../distrib/sets/makeobsolete -b -s ${CURDIR}/../../../distrib/sets -t ./dist
