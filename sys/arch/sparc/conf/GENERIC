@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.36 1996/12/06 22:02:32 pk Exp $
+# 	$NetBSD: GENERIC,v 1.37 1997/01/06 07:35:39 mrg Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -21,12 +21,12 @@ options		LKM		# loadable kernel modules
 #options	UCONSOLE	# allow anyone to steal the virtual console
 
 # Debugging options
-#options	DDB		# kernel dynamic debugger
-#options	DEBUG		# kernel debugging code
-#options	DIAGNOSTIC	# extra kernel sanity checking
-#options	KGDB		# support for kernel gdb
-#options	KGDBDEV=0xc01	# kgdb device number (dev_t)
-#options	KGDBRATE=38400	# baud rate
+#options 	DDB		# kernel dynamic debugger
+#options 	DEBUG		# kernel debugging code
+#options 	DIAGNOSTIC	# extra kernel sanity checking
+#options 	KGDB		# support for kernel gdb
+#options 	KGDBDEV=0xc01	# kgdb device number (dev_t)
+#options 	KGDBRATE=38400	# baud rate
 
 # Compatibility options
 options		COMPAT_43	# 4.3BSD system interfaces
@@ -61,6 +61,7 @@ options		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 #options	ISO,TPIP	# OSI networking
 #options	EON		# OSI tunneling over IP
 #options	CCITT,LLC,HDLC	# X.25
+#options 	PFIL_HOOKS	# pfil(9) packet filter hooks.
 
 # Options for SPARCstation hardware
 options		RASTERCONSOLE	# fast rasterop console
@@ -288,3 +289,4 @@ pseudo-device	bpfilter 16	# Berkeley Packet Filter
 pseudo-device	vnd	4	# disk-like interface to files
 pseudo-device	ccd	4	# concatenated and striped disks
 #pseudo-device	strip	1	# radio clock
+#pseudo-device	ipl		# ip filter
