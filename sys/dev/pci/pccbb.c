@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.2 1999/10/15 06:42:39 haya Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.3 1999/10/15 10:59:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -29,7 +29,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $Id: pccbb.c,v 1.2 1999/10/15 06:42:39 haya Exp $ */
+/* $Id: pccbb.c,v 1.3 1999/10/15 10:59:58 augustss Exp $ */
 
 /*
 #define CBB_DEBUG
@@ -684,9 +684,8 @@ pccbb_chipinit(sc)
       pci_lscp |= (0x20 << PCI_CB_LATENCY_SHIFT);
       pci_conf_write(pc, tag, PCI_CB_LSCP_REG, pci_lscp);
     }
-    DPRINTF(("CardBus latency time 0x%x\n", PCI_CB_LATENCY(pci_lscp)));
-    printf("CardBus latency timer 0x%x (%x)\n", PCI_CB_LATENCY(pci_lscp),
-	   pci_conf_read(pc, tag, PCI_CB_LSCP_REG));
+    DPRINTF(("CardBus latency timer 0x%x (%x)\n", PCI_CB_LATENCY(pci_lscp),
+	     pci_conf_read(pc, tag, PCI_CB_LSCP_REG)));
   }
 
   /*
@@ -699,9 +698,8 @@ pccbb_chipinit(sc)
       pci_bhlc |= (0x10 << PCI_LATTIMER_SHIFT);
       pci_conf_write(pc, tag, PCI_BHLC_REG, pci_bhlc);
     }
-    DPRINTF(("PCI latency time 0x%x\n", PCI_LATTIMER(pci_bhlc)));
-    printf("PCI latency timer 0x%x (%x)\n", PCI_LATTIMER(pci_bhlc),
-	   pci_conf_read(pc, tag, PCI_BHLC_REG));
+    DPRINTF(("PCI latency timer 0x%x (%x)\n", PCI_LATTIMER(pci_bhlc),
+	     pci_conf_read(pc, tag, PCI_BHLC_REG)));
   }
 
   /* disable Legacy IO */
@@ -2797,8 +2795,8 @@ pccbb_open_win(sc, bst, addr, size, bsh, flags)
   if (sc->sc_memt == bst) {
     top = &sc->sc_memwindow;
     align = 0x1000;
-    printf("using memory window, %x %x %x\n\n",
-	   sc->sc_iot, sc->sc_memt, bst);
+    DPRINTF(("using memory window, %x %x %x\n\n",
+	     sc->sc_iot, sc->sc_memt, bst));
   }
 
   if (pccbb_winlist_insert(top, addr, size, bsh, flags)) {
