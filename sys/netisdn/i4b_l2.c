@@ -27,7 +27,7 @@
  *      i4b_l2.c - ISDN layer 2 (Q.921)
  *	-------------------------------
  *
- *	$Id: i4b_l2.c,v 1.1.1.1 2001/01/05 12:50:07 martin Exp $ 
+ *	$Id: i4b_l2.c,v 1.2 2001/01/07 21:47:29 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -340,7 +340,7 @@ i4b_mph_status_ind(int unit, int status, int parm)
  *---------------------------------------------------------------------------*/
 int i4b_mdl_command_req(int unit, int command, void * parm)
 {
-	NDBGL2(L2_PRIM, "unit %d, command=%d, parm=%d", unit, command, (unsigned int)parm);
+	NDBGL2(L2_PRIM, "unit %d, command=%d, parm=%p", unit, command, parm);
 
 	switch(command)
 	{
