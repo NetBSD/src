@@ -1,7 +1,7 @@
-/*	$NetBSD: if.h,v 1.69 2001/05/30 12:04:53 mrg Exp $	*/
+/*	$NetBSD: if.h,v 1.70 2001/06/02 16:17:08 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -277,6 +277,14 @@ struct ifnet {				/* and the entries */
 	void	*if_bridge;		/* bridge glue */
 	int	if_dlt;			/* data link type (<net/dlt.h>) */
 	struct pfil_head if_pfil;	/* filtering point */
+	uint64_t if_capabilities;	/* interface capabilities */
+	uint64_t if_capenable;		/* capabilities enabled */
+
+	/*
+	 * These are pre-computed based on an interfaces enabled
+	 * capabilities, for speed elsewhere.
+	 */
+	int	if_csum_flags;		/* M_CSUM_* flags */
 };
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type
@@ -298,18 +306,18 @@ struct ifnet {				/* and the entries */
 #define	if_noproto	if_data.ifi_noproto
 #define	if_lastchange	if_data.ifi_lastchange
 
-#define	IFF_UP		0x1		/* interface is up */
-#define	IFF_BROADCAST	0x2		/* broadcast address valid */
-#define	IFF_DEBUG	0x4		/* turn on debugging */
-#define	IFF_LOOPBACK	0x8		/* is a loopback net */
-#define	IFF_POINTOPOINT	0x10		/* interface is point-to-point link */
-#define	IFF_NOTRAILERS	0x20		/* avoid use of trailers */
-#define	IFF_RUNNING	0x40		/* resources allocated */
-#define	IFF_NOARP	0x80		/* no address resolution protocol */
-#define	IFF_PROMISC	0x100		/* receive all packets */
-#define	IFF_ALLMULTI	0x200		/* receive all multicast packets */
-#define	IFF_OACTIVE	0x400		/* transmission in progress */
-#define	IFF_SIMPLEX	0x800		/* can't hear own transmissions */
+#define	IFF_UP		0x0001		/* interface is up */
+#define	IFF_BROADCAST	0x0002		/* broadcast address valid */
+#define	IFF_DEBUG	0x0004		/* turn on debugging */
+#define	IFF_LOOPBACK	0x0008		/* is a loopback net */
+#define	IFF_POINTOPOINT	0x0010		/* interface is point-to-point link */
+#define	IFF_NOTRAILERS	0x0020		/* avoid use of trailers */
+#define	IFF_RUNNING	0x0040		/* resources allocated */
+#define	IFF_NOARP	0x0080		/* no address resolution protocol */
+#define	IFF_PROMISC	0x0100		/* receive all packets */
+#define	IFF_ALLMULTI	0x0200		/* receive all multicast packets */
+#define	IFF_OACTIVE	0x0400		/* transmission in progress */
+#define	IFF_SIMPLEX	0x0800		/* can't hear own transmissions */
 #define	IFF_LINK0	0x1000		/* per link layer defined bit */
 #define	IFF_LINK1	0x2000		/* per link layer defined bit */
 #define	IFF_LINK2	0x4000		/* per link layer defined bit */
@@ -327,6 +335,13 @@ struct ifnet {				/* and the entries */
 #define	IF_Kbps(x)	((x) * 1000)		/* kilobits/sec. */
 #define	IF_Mbps(x)	(IF_Kbps((x) * 1000))	/* megabits/sec. */
 #define	IF_Gbps(x)	(IF_Mbps((x) * 1000))	/* gigabits/sec. */
+
+/* Capabilities that interfaces can advertise. */
+#define	IFCAP_CSUM_IPv4		0x0001	/* can do IPv4 header checksums */
+#define	IFCAP_CSUM_TCPv4	0x0002	/* can do IPv4/TCP checksums */
+#define	IFCAP_CSUM_UDPv4	0x0004	/* can do IPv4/UDP checksums */
+#define	IFCAP_CSUM_TCPv6	0x0008	/* can do IPv6/TCP checksums */
+#define	IFCAP_CSUM_UDPv6	0x0010	/* can do IPv6/UDP checksums */
 
 /*
  * Output queues (ifp->if_snd) and internetwork datagram level (pup level 1)
@@ -509,6 +524,12 @@ struct	ifreq {
 #define	ifr_value	ifr_ifru.ifru_value	/* generic value */
 #define	ifr_media	ifr_ifru.ifru_metric	/* media options (overload) */
 #define	ifr_data	ifr_ifru.ifru_data	/* for use by interface */
+};
+
+struct ifcapreq {
+	char		ifcr_name[IFNAMSIZ];	/* if name, e.g. "en0" */
+	uint64_t	ifcr_capabilities;	/* supported capabiliites */
+	uint64_t	ifcr_capenable;		/* capabilities enabled */
 };
 
 struct ifaliasreq {
