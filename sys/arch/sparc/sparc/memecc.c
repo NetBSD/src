@@ -1,4 +1,4 @@
-/*	$NetBSD: memecc.c,v 1.1 1998/09/18 20:18:10 pk Exp $	*/
+/*	$NetBSD: memecc.c,v 1.2 1998/09/19 16:50:31 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,9 +61,9 @@ static void	memecc_attach __P((struct device *, struct device *, void *));
 static int	memecc_match  __P((struct device *, struct cfdata *, void *));
 static int	memecc_error  __P((void));
 
-extern int	(*memerr_handler) __P((void));
+int	(*memerr_handler) __P((void));
 
-struct cfattach memecc_ca = {
+struct cfattach eccmemctl_ca = {
 	sizeof(struct memecc_softc), memecc_match, memecc_attach
 };
 
