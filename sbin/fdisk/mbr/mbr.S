@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.S,v 1.3 1999/02/08 21:52:43 ws Exp $	*/
+/*	$NetBSD: mbr.S,v 1.3.2.1 1999/05/02 21:30:36 perry Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -41,6 +41,48 @@
 
 #define	BOOTADDR	0x7c00
 
+/*
+ * XXX should be in an include file
+ */
+/*
+ * Register values used in the i386 instruction set
+ */
+#define AL      0
+#define BL      3
+#define CL      1
+#define DL      2
+#define AH      4
+#define BH      7
+#define CH      5
+#define DH      6
+
+#define AX      0
+#define BX      3
+#define CX      1
+#define DX      2
+#define SP      4
+#define BP      5
+#define SI      6
+#define DI      7
+
+#define SI_INDEX        4
+#define DI_INDEX        5
+#define BP_INDEX        6
+#define BX_INDEX        7
+
+#define cmpw_reg_iregoff(reg,ireg,off)	\
+	.byte 0x39 ; .byte (0x40 + ireg) | (reg << 3) ; .byte off
+
+#define movb_ireg0_reg(ireg,reg) .byte 0x8a ; .byte (reg << 3) | ireg
+
+#define movb_reg_mem(reg,mem) \
+	.byte 0x88 ; .byte 0x6 | (reg << 3) ; .word mem
+#define movb_mem_reg(mem,reg) \
+	.byte 0x8a ; .byte 0x6 | (reg << 3) ; .word mem
+
+#define MINDRV	0x80
+#define MAXDRV	0x87
+
 	.text
 /*
  * Move ourselves out of the way first
@@ -67,6 +109,14 @@ ENTRY(start)
 	.word	0
 #endif
 1:
+	cmpb    $MINDRV,%dl
+	jl	2f
+	cmpb    $MAXDRV,%dl
+	jle	3f
+2:
+	movb $0x80,%dl
+3:
+	movb_reg_mem(DL,drvno)
 /*
  * Now look for the active partition
  */
@@ -100,11 +150,52 @@ invpart:
  * Active partition pointed to by si.
  * Read the first sector.
  *
- * First determine whether we have int13-extensions.
+ * First:
+ * - see what the total number of sectors is that we can address through the
+ *   normal CHS interface
+ * - if this partition needs more, determine whether we have int13-extensions.
+ *
+ * Why this extra check? Well, some BIOSes apparently report that they do
+ * int13 extensions, but fail if you actually use them (oh, great). So we
+ * try to avoid them unless really necessary.
  */
 boot:
+	movb_mem_reg(drvno, DL);
+	data32
+	xorl	%ecx,%ecx
+	data32
+	xorl	%eax,%eax
+	movb	$8,%ah
+	int	$0x13
+
+	shrl	$8,%edx
+	incl	%edx			/* dx now has #heads */
+
+	movl	%ecx,%eax
+	andl	$0x3f,%eax		/* ax has #sectors */
+
+	movl	%ecx,%ebx
+	shrl	$8,%ecx
+	andl	$0xc0,%ebx
+	shll	$2,%ebx
+	orl	%ebx,%ecx
+	incl	%ecx			/* cx has #cylinders */
+
+	mull	%edx			/* h * s (will fit in 16 bits) */
+	data32
+	mull	%ecx			/* %eax = c * h * s */
+
+	movb_mem_reg(drvno, DL)
+
+	data32
 	addr32
-	movb	0(%esi), %dl		% get drive identifier
+	movl	8(%esi), %ebx
+	data32
+	cmpl	%eax, %ebx
+	data32
+	jl	noext			/* total # chs sectors > part. start */
+
+tryext:
 	data32
 	push	%esi
 	push	%edx
@@ -203,6 +294,7 @@ ok:
 	movl	$0xaa55, %ebx
 	cmpl	%eax, %ebx
 	jnz	out
+	movb_mem_reg(drvno, DL)
 #ifdef	ASSEMBLE_16BIT
 	jmp	0:BOOTADDR
 #else
@@ -211,6 +303,8 @@ ok:
 	.word	0
 #endif
 
+drvno:
+	.byte 0x80
 msinvp:
 	.asciz	"Invalid partition table"
 noos:
