@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.35.4.3 2001/11/25 10:36:03 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.35.4.4 2001/12/17 21:34:44 nathanw Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -216,7 +216,7 @@ again:
 
 	/* Invoke any pending upcalls. */
 	if (l->l_flag & L_SA_UPCALL)
-		cpu_upcall(l);
+		sa_upcall_userret(l);
 
 	/*
 	 * If profiling, charge system time to the trapped pc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.19.4.3 2001/11/25 10:36:03 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.19.4.4 2001/12/17 21:34:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -195,7 +195,7 @@ again:
 
 	/* Invoke any pending upcalls. */
 	if (l->l_flag & L_SA_UPCALL)
-		cpu_upcall(l);
+		sa_upcall_userret(l);
 
 	/*
 	 * If profiling, charge system time to the trapped pc.
