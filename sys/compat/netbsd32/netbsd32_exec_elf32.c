@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_elf32.c,v 1.12 2002/08/29 13:48:42 christos Exp $	*/
+/*	$NetBSD: netbsd32_exec_elf32.c,v 1.13 2002/08/29 14:02:50 martin Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.12 2002/08/29 13:48:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.13 2002/08/29 14:02:50 martin Exp $");
 
 #define	ELFSIZE		32
 
@@ -168,7 +168,7 @@ netbsd32_elf32_copyargs(struct proc *p, struct exec_package *pack,
 		a++;
 
 		a->a_type = AT_RUID;
-		a->a_v = p->p_cred->ruid;
+		a->a_v = p->p_cred->p_ruid;
 		a++;
 
 		a->a_type = AT_EGID;
@@ -176,7 +176,7 @@ netbsd32_elf32_copyargs(struct proc *p, struct exec_package *pack,
 		a++;
 
 		a->a_type = AT_RGID;
-		a->a_v = p->p_cred->rgid;
+		a->a_v = p->p_cred->p_rgid;
 		a++;
 
 		free((char *)ap, M_TEMP);
