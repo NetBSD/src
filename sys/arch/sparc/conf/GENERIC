@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.93 1999/11/15 19:10:57 fvdl Exp $
+# 	$NetBSD: GENERIC,v 1.94 1999/11/21 14:00:43 itojun Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -150,8 +150,25 @@ options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	SOFTDEP         # FFS soft updates support.
 
+# Pull in config fragments for kernel crypto.  This is required for
+# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
+# one of these, based on whether you use crypto-us or crypto-intl, and
+# adjust the prefixes as necessary.
+
+#prefix ../crypto-us/sys
+#cinclude "conf/files.crypto-us"
+#prefix
+
+#prefix ../crypto-intl/sys
+#cinclude "conf/files.crypto-intl"
+#prefix
+
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# packet forwarding ("router switch")
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	DIRECTED_BROADCAST	# allow broadcasts through routers
@@ -472,6 +489,9 @@ pseudo-device	bpfilter	8
 ## one example of the use of the IP Filter.
 pseudo-device	ipfilter
 
+## for IPv6
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 
 #### Audio and video devices
 
