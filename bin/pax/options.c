@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.78 2004/09/26 23:46:00 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.79 2004/10/10 22:05:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.78 2004/09/26 23:46:00 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.79 2004/10/10 22:05:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1153,6 +1153,10 @@ tar_options(int argc, char **argv)
 							dirisnext = 1;
 							continue;
 						}
+						if (strncmp(str, "-C ", 3) == 0) {
+							dir = str + 3;
+							continue;
+						}
 						if (pat_add(str, dir) < 0)
 							tar_usage();
 						sawpat = 1;
@@ -1238,6 +1242,11 @@ tar_options(int argc, char **argv)
 					}
 					if (strcmp(str, "-C") == 0) {
 						dirisnext = 1;
+						continue;
+					}
+					if (strncmp(str, "-C ", 3) == 0) {
+						if (ftree_add(str + 3, 1) < 0)
+							tar_usage();
 						continue;
 					}
 					if (ftree_add(str, 0) < 0)
