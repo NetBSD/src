@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 1999/03/26 13:12:43 sommerfe Exp $
+#	$NetBSD: Makefile,v 1.25 2000/01/23 22:21:26 mycroft Exp $
 
 .include <bsd.own.mk>
 
@@ -52,7 +52,7 @@ MAN=		send-pr.1
 
 CLEANFILES=	send-pr send-pr.1 send-pr.el install-sid
 
-all:		send-pr send-pr.1 send-pr.el install-sid
+realall:	send-pr send-pr.1 send-pr.el install-sid
 
 send-pr:	send-pr.sh Makefile
 	sed -e 's,xVERSIONx,$(VERSION),' \
