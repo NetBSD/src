@@ -1,7 +1,7 @@
 #
 # SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
-#	$Id: SUN_LAMP,v 1.26 1993/09/13 14:22:53 brezak Exp $
+#	$Id: SUN_LAMP,v 1.27 1993/09/13 18:19:28 brezak Exp $
 #
 machine		"i386"
 cpu		"I486_CPU"
@@ -21,7 +21,6 @@ options		"COMPAT_NOMID"
 options		"MACHINE_NONCONTIG"
 
 options		DDB
-options		"SYMTAB_SPACE=72000"
 
 config		netbsd	root on sd0 swap on sd0 and sd1 and sd2
 

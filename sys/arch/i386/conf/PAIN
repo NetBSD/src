@@ -1,7 +1,7 @@
 #
 # PAIN -- kernel for another of cgd's 486/50 EISA boxes...
 #
-#	$Id: PAIN,v 1.14 1993/09/13 14:22:51 brezak Exp $
+#	$Id: PAIN,v 1.15 1993/09/13 18:19:27 brezak Exp $
 #
 machine         "i386"
 cpu             "I486_CPU"
@@ -25,7 +25,6 @@ options		"COMPAT_NOMID"
 options		"MACHINE_NONCONTIG"
 
 options		DDB
-options		"SYMTAB_SPACE=70000"
 
 config          netbsd        root on sd0 swap on sd0
 
