@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.22 1998/09/13 01:43:17 thorpej Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.23 2000/11/29 21:53:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,9 @@
  *	@(#)machdep.c	7.4 (Berkeley) 6/3/91
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_vm86.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_ioctl.c,v 1.14 2000/03/30 11:27:21 augustss Exp $ */
+/*	$NetBSD: ultrix_ioctl.c,v 1.15 2000/11/29 22:05:38 jdolecek Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
 /*
@@ -27,8 +27,10 @@
  * loosely from: Header: sunos_ioctl.c,v 1.7 93/05/28 04:40:43 torek Exp 
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_compat_ultrix.h"
 #include "opt_compat_sunos.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -49,7 +51,7 @@
 
 #include <compat/sunos/sunos.h>
 
-#include "ultrix_tty.h"
+#include <compat/ultrix/ultrix_tty.h>
 
 #define emul_termio	ultrix_termio
 #define emul_termios	ultrix_termios
