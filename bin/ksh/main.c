@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 1998/07/28 05:31:25 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.5 1998/08/19 01:43:23 thorpej Exp $	*/
 
 /*
  * startup, main loop, enviroments and error handling
@@ -566,11 +566,12 @@ shell(s, toplevel)
 		if (trap)
 			runtraps(0);
 
-		if (s->next == NULL)
+		if (s->next == NULL) {
 			if (Flag(FVERBOSE))
 				s->flags |= SF_ECHO;
 			else
 				s->flags &= ~SF_ECHO;
+		}
 
 		if (interactive) {
 			j_notify();

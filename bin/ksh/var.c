@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.3 1997/07/20 17:42:09 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.4 1998/08/19 01:43:23 thorpej Exp $	*/
 
 #include "sh.h"
 #include "ksh_time.h"
@@ -63,12 +63,14 @@ popblock()
 	register int i;
 
 	e->loc = l->next;	/* pop block */
-	for (i = l->vars.size; --i >= 0; )
-		if ((vp = *vpp++) != NULL && (vp->flag&SPECIAL))
+	for (i = l->vars.size; --i >= 0; ) {
+		if ((vp = *vpp++) != NULL && (vp->flag&SPECIAL)) {
 			if ((vq = global(vp->name))->flag & ISSET)
 				setspec(vq);
 			else
 				unsetspec(vq);
+		}
+	}
 	afreeall(&l->area);
 	afree(l, ATEMP);
 }
@@ -212,11 +214,12 @@ global(n)
 	}
 	for (l = e->loc; ; l = l->next) {
 		vp = tsearch(&l->vars, n, h);
-		if (vp != NULL)
+		if (vp != NULL) {
 			if (array)
 				return arraysearch(vp, val);
 			else
 				return vp;
+		}
 		if (l->next == NULL)
 			break;
 	}
