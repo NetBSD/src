@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.40 2003/07/06 08:40:00 dyoung Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.41 2003/07/06 20:01:18 dyoung Exp $	*/
 /*	$FreeBSD: src/sys/net/if_ieee80211subr.c,v 1.4 2003/01/21 08:55:59 alfred Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.40 2003/07/06 08:40:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.41 2003/07/06 20:01:18 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -136,7 +136,8 @@ void
 ieee80211_ifattach(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
-	int i, rate;
+	int i, rate, mword;
+	struct ifmediareq imr;
 
 	ether_ifattach(ifp, ic->ic_myaddr);
 #if NBPFILTER > 0
@@ -155,6 +156,10 @@ ieee80211_ifattach(struct ifnet *ifp)
 			}
 		}
 	}
+	/* ic->ic_bss.ni_chan must always be a valid channel */
+	if (isclr(ic->ic_chan_active, ic->ic_bss.ni_chan))
+		ic->ic_bss.ni_chan = ic->ic_ibss_chan;
+
 	ic->ic_des_chan = IEEE80211_CHAN_ANY;
 	ic->ic_fixed_rate = -1;
 	if (ic->ic_lintval == 0)
@@ -212,6 +217,45 @@ ieee80211_ifattach(struct ifnet *ifp)
 	    >> IEEE80211_FC0_SUBTYPE_SHIFT] = ieee80211_send_asresp;
 	ic->ic_send_mgmt[IEEE80211_FC0_SUBTYPE_DISASSOC
 	    >> IEEE80211_FC0_SUBTYPE_SHIFT] = ieee80211_send_disassoc;
+
+#define	ADD(s, o)	ifmedia_add(&ic->ic_media, \
+	IFM_MAKEWORD(IFM_IEEE80211, (s), (o), 0), 0, NULL)
+
+	ifmedia_init(&ic->ic_media, 0, ieee80211_media_change,
+	    ieee80211_media_status);
+	printf("%s: supported rates: ", ic->ic_if.if_xname);
+	ADD(IFM_AUTO, 0);			/* infrastructure */
+	if (ic->ic_flags & IEEE80211_F_HASAHDEMO)
+		ADD(IFM_AUTO, IFM_IEEE80211_ADHOC | IFM_FLAG0);
+	if (ic->ic_flags & IEEE80211_F_HASHOSTAP)
+		ADD(IFM_AUTO, IFM_IEEE80211_HOSTAP);
+	if (ic->ic_flags & IEEE80211_F_HASIBSS)
+		ADD(IFM_AUTO, IFM_IEEE80211_ADHOC);
+	if (ic->ic_flags & IEEE80211_F_HASMONITOR)
+		ADD(IFM_AUTO, IFM_IEEE80211_MONITOR);
+
+	for (i = 0; i < IEEE80211_RATE_SIZE; i++) {
+		rate = ic->ic_sup_rates[i];
+		mword = ieee80211_rate2media(rate, ic->ic_phytype);
+		if (mword == 0)
+			continue;
+		printf("%s%d%sMbps", (i != 0 ? " " : ""),
+		    (rate & IEEE80211_RATE_VAL) / 2,
+		    ((rate & 0x1) != 0 ? ".5" : ""));
+		ADD(mword, 0);			/* infrastructure */
+		if (ic->ic_flags & IEEE80211_F_HASAHDEMO)
+			ADD(mword, IFM_IEEE80211_ADHOC | IFM_FLAG0);
+		if (ic->ic_flags & IEEE80211_F_HASHOSTAP)
+			ADD(mword, IFM_IEEE80211_HOSTAP);
+		if (ic->ic_flags & IEEE80211_F_HASIBSS)
+			ADD(mword, IFM_IEEE80211_ADHOC);
+		if (ic->ic_flags & IEEE80211_F_HASMONITOR)
+			ADD(mword, IFM_IEEE80211_MONITOR);
+	}
+	printf("\n");
+	(*ic->ic_media.ifm_status)(ifp, &imr);
+	ifmedia_set(&ic->ic_media, imr.ifm_active);
+#undef	ADD
 }
 
 void
@@ -228,6 +272,10 @@ ieee80211_ifdetach(struct ifnet *ifp)
 		ic->ic_wep_ctx = NULL;
 	}
 	ieee80211_free_allnodes(ic);
+	ifmedia_delete_instance(&ic->ic_media, IFM_INST_ANY);
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
 	ether_ifdetach(ifp);
 	splx(s);
 }
