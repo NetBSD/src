@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.30 2002/06/22 11:46:16 itojun Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.31 2002/06/22 16:56:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.30 2002/06/22 11:46:16 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.31 2002/06/22 16:56:11 yamt Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -430,7 +430,7 @@ static void pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 	tag = 0;
 	len = 0;
 	sc = NULL;
-	while (off + sizeof(*pt) < m->m_pkthdr.len) {
+	while (off + sizeof(*pt) <= m->m_pkthdr.len) {
 		n = m_pulldown(m, off, sizeof(*pt), &noff);
 		if (!n) {
 			printf("%s: parse error\n",
