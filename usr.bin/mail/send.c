@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.11 2000/02/10 12:34:44 tron Exp $	*/
+/*	$NetBSD: send.c,v 1.12 2000/09/19 01:12:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: send.c,v 1.11 2000/02/10 12:34:44 tron Exp $");
+__RCSID("$NetBSD: send.c,v 1.12 2000/09/19 01:12:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -328,6 +328,8 @@ mail1(hp, printheaders)
 		}
 	}
 	if (fsize(mtf) == 0) {
+		if (value("dontsendempty") != NOSTR)
+			goto out;
 		if (hp->h_subject == NOSTR)
 			printf("No message, no subject; hope that's ok\n");
 		else
