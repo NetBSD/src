@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.102 2001/08/20 12:20:08 wiz Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.103 2001/09/07 00:50:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -218,7 +218,9 @@ uvm_mapent_alloc(map)
 		simple_unlock(&uvm.kentry_lock);
 		splx(s);
 		if (!me)
-	panic("mapent_alloc: out of static map entries, check MAX_KMAPENT");
+			panic(
+    "mapent_alloc: out of static map entries, check MAX_KMAPENT (currently %d)",
+	MAX_KMAPENT);
 		me->flags = UVM_MAP_STATIC;
 	}
 
