@@ -99,7 +99,7 @@ const struct CMD cmds[] = {
 	{ NULL,			-1}
 };
 
-void
+static void
 help(void)
 {
 	printf("Available commands:\n");
@@ -127,7 +127,7 @@ help(void)
 	printf("!                             Escape to local shell\n");
 }
 
-void
+static void
 local_do_shell(const char *args)
 {
 	int ret, status;
@@ -164,7 +164,7 @@ local_do_shell(const char *args)
 		error("Shell exited with status %d", WEXITSTATUS(status));
 }
 
-void
+static void
 local_do_ls(const char *args)
 {
 	if (!args || !*args)
@@ -178,7 +178,7 @@ local_do_ls(const char *args)
 	}
 }
 
-char *
+static char *
 make_absolute(char *p, char *pwd)
 {
 	char buf[2048];
@@ -193,7 +193,7 @@ make_absolute(char *p, char *pwd)
 	return(p);
 }
 
-int
+static int
 parse_getput_flags(const char **cpp, int *pflag)
 {
 	const char *cp = *cpp;
@@ -215,7 +215,7 @@ parse_getput_flags(const char **cpp, int *pflag)
 	return(0);
 }
 
-int
+static int
 get_pathname(const char **cpp, char **path)
 {
 	const char *cp = *cpp, *end;
@@ -269,7 +269,7 @@ get_pathname(const char **cpp, char **path)
 	return (-1);
 }
 
-int
+static int
 infer_path(const char *p, char **ifp)
 {
 	char *cp;
@@ -292,7 +292,7 @@ infer_path(const char *p, char **ifp)
 	return(0);
 }
 
-int
+static int
 parse_args(const char **cpp, int *pflag, unsigned long *n_arg,
     char **path1, char **path2)
 {
@@ -432,7 +432,7 @@ parse_args(const char **cpp, int *pflag, unsigned long *n_arg,
 	return(cmdnum);
 }
 
-int
+static int
 parse_dispatch_command(int in, int out, const char *cmd, char **pwd)
 {
 	char *path1, *path2, *tmp;

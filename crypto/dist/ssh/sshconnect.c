@@ -44,7 +44,7 @@ extern int IPv4or6;
 /*
  * Connect to the given ssh server using a proxy command.
  */
-int
+static int
 ssh_proxy_connect(const char *host, u_short port, uid_t original_real_uid,
 		  const char *proxy_command)
 {
@@ -144,7 +144,7 @@ ssh_proxy_connect(const char *host, u_short port, uid_t original_real_uid,
 /*
  * Creates a (possibly privileged) socket for use as the ssh connection.
  */
-int
+static int
 ssh_create_socket(uid_t original_real_uid, int privileged, int family)
 {
 	int sock;
@@ -317,8 +317,8 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
  * Waits for the server identification string, and sends our own
  * identification string.
  */
-void
-ssh_exchange_identification()
+static void
+ssh_exchange_identification(void)
 {
 	char buf[256], remote_version[256];	/* must be same size! */
 	int remote_major, remote_minor, i, mismatch;
@@ -329,7 +329,7 @@ ssh_exchange_identification()
 	/* Read other side\'s version identification. */
 	for (;;) {
 		for (i = 0; i < sizeof(buf) - 1; i++) {
-			int len = atomicio(read, connection_in, &buf[i], 1);
+			int len = atomic_read(connection_in, &buf[i], 1);
 			if (len < 0)
 				fatal("ssh_exchange_identification: read: %.100s", strerror(errno));
 			if (len != 1)
@@ -409,7 +409,7 @@ ssh_exchange_identification()
 	    compat20 ? PROTOCOL_MAJOR_2 : PROTOCOL_MAJOR_1,
 	    compat20 ? PROTOCOL_MINOR_2 : minor1,
 	    SSH_VERSION);
-	if (atomicio(write, connection_out, buf, strlen(buf)) != strlen(buf))
+	if (atomic_write(connection_out, buf, strlen(buf)) != strlen(buf))
 		fatal("write: %.100s", strerror(errno));
 	client_version_string = xstrdup(buf);
 	chop(client_version_string);
@@ -417,7 +417,7 @@ ssh_exchange_identification()
 	debug("Local version string %.100s", client_version_string);
 }
 
-int
+static int
 read_yes_or_no(const char *prompt, int defval)
 {
 	char buf[1024];
@@ -427,7 +427,7 @@ read_yes_or_no(const char *prompt, int defval)
 	if (isatty(STDIN_FILENO))
 		f = stdin;
 	else
-		f = fopen("/dev/tty", "rw");
+		f = fopen(_PATH_TTY, "rw");
 
 	if (f == NULL)
 		return 0;

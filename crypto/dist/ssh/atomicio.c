@@ -29,21 +29,35 @@ RCSID("$OpenBSD: atomicio.c,v 1.8 2001/01/21 19:05:40 markus Exp $");
 #include "xmalloc.h"
 #include "atomicio.h"
 
-/*
- * ensure all of data on socket comes through. f==read || f==write
- */
 ssize_t
-atomicio(f, fd, _s, n)
-	ssize_t (*f) ();
-	int fd;
-	void *_s;
-	size_t n;
+atomic_read(int fd, void *v, size_t n)
 {
-	char *s = _s;
+	char *s = v;
 	ssize_t res, pos = 0;
 
 	while (n > pos) {
-		res = (f) (fd, s + pos, n - pos);
+		res = read(fd, s + pos, n - pos);
+		switch (res) {
+		case -1:
+			if (errno == EINTR || errno == EAGAIN)
+				continue;
+		case 0:
+			return (res);
+		default:
+			pos += res;
+		}
+	}
+	return (pos);
+}
+
+ssize_t
+atomic_write(int fd, const void *v, size_t n)
+{
+	const char *s = v;
+	ssize_t res, pos = 0;
+
+	while (n > pos) {
+		res = write(fd, s + pos, n - pos);
 		switch (res) {
 		case -1:
 			if (errno == EINTR || errno == EAGAIN)
