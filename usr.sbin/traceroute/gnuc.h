@@ -1,15 +1,6 @@
-/*	$NetBSD: gnuc.h,v 1.1.1.1 1997/10/03 22:25:19 christos Exp $	*/
+/*	$NetBSD: gnuc.h,v 1.2 2002/07/06 21:51:49 wiz Exp $	*/
 
 /* @(#) Header: gnuc.h,v 1.3 95/10/09 02:47:01 leres Exp  (LBL) */
-
-/* Define __P() macro, if necessary */
-#ifndef __P
-#if __STDC__
-#define __P(protos) protos
-#else
-#define __P(protos) ()
-#endif
-#endif
 
 /* inline foo */
 #ifdef __GNUC__
