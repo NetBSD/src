@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.26 1996/11/06 20:19:38 cgd Exp $	*/
+/*	$NetBSD: locore.S,v 1.27 1996/12/23 15:27:47 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -168,7 +168,9 @@
 #define START_FRAME	((4 * 4) + 4 + 4)
 
 	.globl	start
+	.globl	_C_LABEL(kernel_text)
 start:
+_C_LABEL(kernel_text):
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
 	li	t1, MACH_CACHED_MEMORY_ADDR	# invalid address
 	mtc0	t1, MACH_COP_0_TLB_HI		# Mark entry high as invalid
