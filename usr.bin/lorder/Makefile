@@ -1,4 +1,4 @@
-#	@(#)Makefile	5.3 (Berkeley) 5/18/90
+#	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 MAN1=	lorder.0
 
