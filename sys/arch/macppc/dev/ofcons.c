@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.3 2000/03/06 21:36:09 thorpej Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.4 2000/03/23 06:40:34 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -239,7 +239,7 @@ ofcstart(tp)
 	tp->t_state &= ~TS_BUSY;
 	if (cl->c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		timeout(ttrstrt, (void *)tp, 1);
+		callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
 	}
 	if (cl->c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {

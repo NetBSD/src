@@ -1,4 +1,4 @@
-/* $NetBSD: scif.c,v 1.7 2000/02/22 01:37:11 msaitoh Exp $ */
+/* $NetBSD: scif.c,v 1.8 2000/03/23 06:43:52 thorpej Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -141,6 +141,8 @@ struct scif_softc {
 	struct tty *sc_tty;
 	void *sc_ih;
 
+	struct callout sc_diag_ch;
+
 #if 0
 	bus_space_tag_t sc_iot;		/* ISA i/o space identifier */
 	bus_space_handle_t   sc_ioh;	/* ISA io handle */
@@ -250,6 +252,7 @@ unsigned int scifcn_speed = 9600;
 #ifndef __GENERIC_SOFT_INTERRUPTS
 #ifdef __NO_SOFT_SERIAL_INTERRUPT
 volatile int	scif_softintr_scheduled;
+struct callout scif_soft_ch = CALLOUT_INITIALIZER;
 #endif
 #endif
 
@@ -515,6 +518,8 @@ scif_attach(parent, self, aux)
 
 	SET(sc->sc_hwflags, SCIF_HW_DEV_OK);
 	SET(sc->sc_hwflags, SCIF_HW_CONSOLE);
+
+	callout_init(&sc->sc_diag_ch);
 
 #if 0
 	if (irq != IRQUNK) {
@@ -1028,7 +1033,7 @@ scif_schedrx(sc)
 #else
 	if (!scif_softintr_scheduled) {
 		scif_softintr_scheduled = 1;
-		timeout(scifsoft, NULL, 1);
+		callout_reset(&scif_soft_ch, 1, scifsoft, NULL);
 	}
 #endif
 #endif
@@ -1126,7 +1131,7 @@ scif_rxsoft(sc, tp)
 	if (cc == scif_rbuf_size) {
 		sc->sc_floods++;
 		if (sc->sc_errors++ == 0)
-			timeout(scifdiag, sc, 60 * hz);
+			callout(&sc->sc_diag_ch, 60 * hz, scifdiag, sc);
 	}
 
 	while (cc) {
@@ -1532,7 +1537,7 @@ scifintr(arg)
 #else
 	if (!scif_softintr_scheduled) {
 		scif_softintr_scheduled = 1;
-		timeout(scifsoft, NULL, 1);
+		callout_reset(&scif_soft_ch, 1, scifsoft, NULL);
 	}
 #endif
 #endif

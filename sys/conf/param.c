@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.32 1999/12/04 10:55:11 ragge Exp $	*/
+/*	$NetBSD: param.c,v 1.33 2000/03/23 06:48:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -80,23 +80,31 @@
 #ifdef TIMEZONE
 #error TIMEZONE is an obsolete kernel option.
 #endif
+
 #ifdef DST
 #error DST is an obsolete kernel option.
 #endif
+
 #ifndef RTC_OFFSET
 #define RTC_OFFSET 0
 #endif
+
 #ifndef HZ
 #define	HZ 100
 #endif
+
+#ifndef MAXFILES
+#define	MAXFILES	(3 * (NPROC + MAXUSERS) + 80)
+#endif
+
 int	hz = HZ;
 int	tick = 1000000 / HZ;
 int	tickadj = 240000 / (60 * HZ);		/* can adjust 240ms in 60s */
 int	rtc_offset = RTC_OFFSET;
 int	maxproc = NPROC;
 int	desiredvnodes = NVNODE;
-int	maxfiles = 3 * (NPROC + MAXUSERS) + 80;
-int	ncallout = 16 + NPROC;
+int	maxfiles = MAXFILES;
+int	ncallout = 16 + NPROC;	/* size of callwheel (rounded to ^2) */
 u_long	sb_max = SB_MAX;	/* maximum socket buffer size */
 int	fscale = FSCALE;	/* kernel uses `FSCALE', user uses `fscale' */
 
@@ -173,7 +181,6 @@ struct	msginfo msginfo = {
  * them here forces loader errors if this file is omitted
  * (if they've been externed everywhere else; hah!).
  */
-struct 	callout *callout;
 struct	buf *buf;
 char	*buffers;
 
