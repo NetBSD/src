@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.pmax,v 1.56.2.6 1998/10/26 10:52:53 nisimura Exp $
+#	$NetBSD: files.pmax,v 1.56.2.7 1998/10/30 01:04:52 nisimura Exp $
 #
 # DECstation-specific configuration info
 
@@ -133,23 +133,23 @@ include "dev/wscons/files.wscons"
 
 device	cfb: wsemuldisplaydev, wsrasteremulops
 attach	cfb at tc
-file	arch/pmax/tc/cfb.c		cfb needs-flag
+file	dev/tc/cfb.c			cfb needs-flag
 
 device	sfb: wsemuldisplaydev, wsrasteremulops
 attach	sfb at tc
-file	arch/pmax/tc/sfb.c		sfb needs-flag
+file	dev/tc/sfb.c			sfb needs-flag
 
 device	mfb: wsemuldisplaydev, wsrasteremulops
 attach	mfb at tc
-file	arch/pmax/tc/mfb.c		mfb needs-flag
+file	dev/tc/mfb.c			mfb needs-flag
 
 device	tfb: wsemuldisplaydev, wsrasteremulops
 attach	tfb at tc
-file	arch/pmax/tc/tfb.c		tfb needs-flag
+file	dev/tc/tfb.c			tfb needs-flag
 
 device	xcfb: wsemuldisplaydev, wsrasteremulops
 attach	xcfb at tc
-file	arch/pmax/tc/xcfb.c 		xcfb needs-flag
+file	dev/tc/xcfb.c	 		xcfb needs-flag
 
 device	pm: wsemuldisplaydev, wsrasteremulops
 attach	pm at ibus
