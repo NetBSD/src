@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.156 2003/08/07 09:46:39 agc Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.157 2003/12/10 01:18:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.156 2003/08/07 09:46:39 agc Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.157 2003/12/10 01:18:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -195,6 +195,9 @@ static struct utmpx utmpx;	/* for utmpx */
 
 static const char *anondir = NULL;
 static const char *confdir = _DEFAULT_CONFDIR;
+
+static char	*curname;		/* current USER name */
+static size_t	curname_len;		/* length of curname (include NUL) */
 
 #if defined(KERBEROS) || defined(KERBEROS5)
 int	has_ccache = 0;
@@ -413,6 +416,23 @@ main(int argc, char *argv[])
 	if (EMPTYSTR(confdir))
 		confdir = _DEFAULT_CONFDIR;
 
+	errno = 0;
+	l = sysconf(_SC_LOGIN_NAME_MAX);
+	if (l == -1 && errno != 0) {
+		syslog(LOG_ERR, "sysconf _SC_LOGIN_NAME_MAX: %m");
+		exit(1);
+	} else if (l <= 0) {
+		syslog(LOG_WARNING, "using conservative LOGIN_NAME_MAX value");
+		curname_len = _POSIX_LOGIN_NAME_MAX;
+	} else 
+		curname_len = (size_t)l;
+	curname = malloc(curname_len);
+	if (curname == NULL) {
+		syslog(LOG_ERR, "malloc: %m");
+		exit(1);
+	}
+	curname[0] = '\0';
+
 	memset((char *)&his_addr, 0, sizeof(his_addr));
 	addrlen = sizeof(his_addr.si_su);
 	if (getpeername(0, (struct sockaddr *)&his_addr.si_su, &addrlen) < 0) {
@@ -609,7 +629,6 @@ sgetpwnam(const char *name)
 static int	login_attempts;	/* number of failed login attempts */
 static int	askpasswd;	/* had USER command, ask for PASSwd */
 static int	permitted;	/* USER permitted */
-static char	curname[LOGIN_NAME_MAX];	/* current USER name */
 
 /*
  * USER command.
@@ -683,7 +702,7 @@ user(const char *name)
 	} else
 		pw = sgetpwnam(name);
 
-	strlcpy(curname, name, sizeof(curname));
+	strlcpy(curname, name, curname_len);
 
 			/* check user in /etc/ftpusers, and setup class */
 	permitted = checkuser(_PATH_FTPUSERS, curname, 1, 0, &class);
