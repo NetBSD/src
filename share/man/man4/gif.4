@@ -1,4 +1,4 @@
-.\"	$NetBSD: gif.4,v 1.16 2001/05/14 13:35:20 itojun Exp $
+.\"	$NetBSD: gif.4,v 1.17 2001/09/19 01:03:43 wiz Exp $
 .\"	$KAME: gif.4,v 1.24 2001/02/20 12:54:01 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -81,7 +81,6 @@ interface.
 can be configured to be ECN friendly.
 This can be configured by
 .Dv IFF_LINK1 .
-.Pp
 .Ss ECN friendly behavior
 .Nm
 can be configured to be ECN friendly, as described in
@@ -134,7 +133,6 @@ enable ECN CE bit on the inner.
 .Pp
 Note that the ECN friendly behavior violates RFC2893.
 This should be used in mutual agreement with the peer.
-.Pp
 .Ss Security
 Malicious party may try to circumvent security filters by using
 tunnelled packets.

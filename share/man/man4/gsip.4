@@ -1,4 +1,4 @@
-.\"	$NetBSD: gsip.4,v 1.6 2001/09/11 00:08:27 wiz Exp $
+.\"	$NetBSD: gsip.4,v 1.7 2001/09/19 01:03:44 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -80,21 +80,21 @@ name.
 .Xr mii 4 ,
 .Xr netintro 4 ,
 .Xr pci 4 ,
-.Xr ifconfig 8 ,
-.Xr vlan 4
+.Xr vlan 4 ,
+.Xr ifconfig 8
 .Sh HISTORY
 The
 .Nm
 driver first appeared in
 .Nx 1.6 .
-.Sh BUGS
-The
-.Nm
-driver does not support the 10-bit interface, which is required in
-order to support fiber-optic media.
 .Sh AUTHORS
 The
 .Nm
 driver was written by
 .An Jason R. Thorpe
 .Aq thorpej@netbsd.org .
+.Sh BUGS
+The
+.Nm
+driver does not support the 10-bit interface, which is required in
+order to support fiber-optic media.
