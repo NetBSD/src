@@ -1,4 +1,4 @@
-/*	$NetBSD: find.h,v 1.14 2001/12/02 12:46:39 kleink Exp $	*/
+/*	$NetBSD: find.h,v 1.15 2002/09/27 15:56:26 provos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -44,9 +44,9 @@
 enum ntype {
 	N_AND = 1, 				/* must start > 0 */
 	N_AMIN, N_ANEWER, N_ATIME, N_CLOSEPAREN, N_CMIN, N_CNEWER, N_CTIME,
-	N_DEPTH,
-	N_EXEC, N_EXPR, N_FLAGS, N_FOLLOW, N_FSTYPE, N_GROUP, N_INUM, N_IREGEX,
-	N_LINKS, N_LS,
+	N_DEPTH, N_EMPTY,
+	N_EXEC, N_EXECDIR, N_EXPR, N_FLAGS, N_FOLLOW, N_FSTYPE, N_GROUP,
+	N_INUM, N_IREGEX, N_LINKS, N_LS, N_MINDEPTH, N_MAXDEPTH,
 	N_MMIN, N_MTIME, N_NAME, N_NEWER, N_NOGROUP, N_NOT, N_NOUSER, N_OK,
 	N_OPENPAREN, N_OR, N_PATH, N_PERM, N_PRINT, N_PRINT0, N_PRINTX,
 	N_PRUNE, N_REGEX, N_SIZE, N_TYPE, N_USER, N_XDEV,
@@ -84,6 +84,8 @@ typedef struct _plandata {
 		} ex;
 		char *_a_data[2];		/* array of char pointers */
 		char *_c_data;			/* char pointer */
+		int _max_data;			/* tree depth */
+		int _min_data;			/* tree depth */
 		regex_t _regexp_data;		/* compiled regexp */
 	} p_un;
 } PLAN;
@@ -102,6 +104,8 @@ typedef struct _plandata {
 #define	e_argv	p_un.ex._e_argv
 #define	e_orig	p_un.ex._e_orig
 #define	e_len	p_un.ex._e_len
+#define	max_data p_un._max_data
+#define	min_data p_un._min_data
 #define	regexp_data p_un._regexp_data
 
 typedef struct _option {

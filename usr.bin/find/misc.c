@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.8 2001/09/21 07:11:33 enami Exp $	*/
+/*	$NetBSD: misc.c,v 1.9 2002/09/27 15:56:27 provos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)misc.c	8.2 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: misc.c,v 1.8 2001/09/21 07:11:33 enami Exp $");
+__RCSID("$NetBSD: misc.c,v 1.9 2002/09/27 15:56:27 provos Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: misc.c,v 1.8 2001/09/21 07:11:33 enami Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "find.h"
  
@@ -143,4 +144,20 @@ emalloc(len)
 	if ((p = malloc(len)) == NULL)
 		err(1, "malloc");
 	return (p);
+}
+
+/*
+ * show_path --
+ *	called on SIGINFO
+ */
+/* ARGSUSED */
+void
+show_path(sig)
+	int sig;
+{
+	extern FTSENT *entry;
+
+	write(STDERR_FILENO, "find path: ", 11);
+	write(STDERR_FILENO, entry->fts_path, entry->fts_pathlen);
+	write(STDERR_FILENO, "\n", 1);
 }
