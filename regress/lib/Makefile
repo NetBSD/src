@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.6 2000/07/06 22:35:57 mjl Exp $
+#	$NetBSD: Makefile,v 1.7 2000/10/03 15:13:21 itojun Exp $
 
-SUBDIR+= libc libposix libskey
+SUBDIR+= libc libcrypto libposix libskey
 
 .include <bsd.subdir.mk>
