@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.15 2002/09/06 15:17:59 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.16 2002/09/12 20:21:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -80,6 +80,8 @@
 
 #include "debug.h"
 #include "rtld.h"
+
+void _rtld_bind_start(void);
 
 void
 _rtld_setup_pltgot(const Obj_Entry *obj)
