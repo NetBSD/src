@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.107 2003/01/02 00:22:32 jschauma Exp $
+.\"	$NetBSD: sysctl.3,v 1.108 2003/02/02 20:33:07 kleink Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd December 19, 2002
+.Dd February 2, 2003
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -271,7 +271,7 @@ The types of data currently available are process information,
 system vnodes, the open file entries, routing table entries,
 virtual memory statistics, load average history, and clock rate
 information.
-.Bl -column "KERNXCHOWNXRESTRICTEDXXX" "struct clockrateXXX" -offset indent
+.Bl -column "KERNXCHOWNXRESTRICTEDXXXXXX" "struct clockrateXXX" -offset indent
 .It Sy Pa Second level name	Type	Changeable
 .It KERN\_ARGMAX	integer	no
 .It KERN\_AUTONICETIME	integer	yes
@@ -313,6 +313,12 @@ information.
 .It KERN\_OSREV	integer	no
 .It KERN\_OSTYPE	string	no
 .It KERN\_POSIX1	integer	no
+.It KERN\_POSIX\_BARRIERS	integer	no
+.It KERN\_POSIX\_READER\_WRITER\_LOCKS	integer	no
+.It KERN\_POSIX\_SEMAPHORES	integer	no
+.It KERN\_POSIX\_SPIN\_LOCKS	integer	no
+.It KERN\_POSIX\_THREADS	integer	no
+.It KERN\_POSIX\_TIMERS	integer	no
 .It KERN\_PROC	struct kinfo_proc	no
 .It KERN\_PROC2	struct kinfo_proc2	no
 .It KERN\_PROC\_ARGS	string	no
@@ -525,6 +531,48 @@ The maximum number of bytes in a pathname.
 .It Li KERN_POSIX1
 The version of ISO/IEC 9945 (POSIX 1003.1) with which the system
 attempts to comply.
+.It Li KERN_POSIX_BARRIERS
+The version of
+.St -p1003.1
+and its
+Barriers
+option to which the system attempts to conform,
+otherwise 0.
+.It Li KERN_POSIX_READER_WRITER_LOCKS
+The version of
+.St -p1003.1
+and its
+Read-Write Locks
+option to which the system attempts to conform,
+otherwise 0.
+.It Li KERN_POSIX_SEMAPHORES
+The version of
+.St -p1003.1
+and its
+Semaphores
+option to which the system attempts to conform,
+otherwise 0.
+.It Li KERN_POSIX_SPIN_LOCKS
+The version of
+.St -p1003.1
+and its
+Spin Locks
+option to which the system attempts to conform,
+otherwise 0.
+.It Li KERN_POSIX_THREADS
+The version of
+.St -p1003.1
+and its
+Threads
+option to which the system attempts to conform,
+otherwise 0.
+.It Li KERN_POSIX_TIMERS
+The version of
+.St -p1003.1
+and its
+Timers
+option to which the system attempts to conform,
+otherwise 0.
 .It Li KERN_PROC
 Return the entire process table, or a subset of it.
 An array of

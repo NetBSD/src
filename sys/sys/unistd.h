@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.24 2003/01/31 11:54:48 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.25 2003/02/02 20:33:08 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -95,7 +95,7 @@
 #define	_POSIX_TIMERS		200112L
 				/* spin locks */
 #define	_POSIX_SPIN_LOCKS	200112L
-				/* reader/writer locks */
+				/* read/write locks */
 #define	_POSIX_READER_WRITER_LOCKS	200112L
 				/* XPG4.2 shared memory */
 #define	_XOPEN_SHM		0
@@ -173,6 +173,12 @@
 #define	_SC_MONOTONIC_CLOCK	38
 #define	_SC_CLK_TCK		39 /* New, variable version */
 #define	_SC_ATEXIT_MAX		40
+#define	_SC_THREADS		41
+#define	_SC_SEMAPHORES		42
+#define	_SC_BARRIERS		43
+#define	_SC_TIMERS		44
+#define	_SC_SPIN_LOCKS		45
+#define	_SC_READER_WRITER_LOCKS	46
 
 /* configurable system strings */
 #define	_CS_PATH		 1
