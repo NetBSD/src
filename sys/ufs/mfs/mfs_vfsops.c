@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.45 2003/04/02 10:39:43 fvdl Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.46 2003/04/16 21:44:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.45 2003/04/02 10:39:43 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.46 2003/04/16 21:44:28 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -236,7 +236,6 @@ mfs_mount(mp, path, data, ndp, p)
 	struct ufsmount *ump;
 	struct fs *fs;
 	struct mfsnode *mfsp;
-	size_t size;
 	int flags, error;
 
 	if (mp->mnt_flag & MNT_GETARGS) {
@@ -319,13 +318,11 @@ mfs_mount(mp, path, data, ndp, p)
 	}
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
-	(void) copyinstr(path, fs->fs_fsmnt, sizeof(fs->fs_fsmnt) - 1, &size);
-	memset(fs->fs_fsmnt + size, 0, sizeof(fs->fs_fsmnt) - size);
-	memcpy(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN);
-	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
-	    &size);
-	memset(mp->mnt_stat.f_mntfromname + size, 0, MNAMELEN - size);
-	return (0);
+	error = set_statfs_info(path, UIO_USERSPACE, args.fspec,
+	    UIO_USERSPACE, mp, p);
+	(void)memcpy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname,
+	    sizeof(fs->fs_fsmnt));
+	return error;
 }
 
 int	mfs_pri = PWAIT | PCATCH;		/* XXX prob. temp */

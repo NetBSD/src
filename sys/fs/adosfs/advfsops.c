@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.3 2003/03/21 23:11:24 dsl Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.4 2003/04/16 21:44:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.3 2003/03/21 23:11:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.4 2003/04/16 21:44:18 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -103,7 +103,6 @@ adosfs_mount(mp, path, data, ndp, p)
 	struct vnode *devvp;
 	struct adosfs_args args;
 	struct adosfsmount *amp;
-	size_t size;
 	int error;
 	mode_t accessmode;
 
@@ -175,12 +174,8 @@ adosfs_mount(mp, path, data, ndp, p)
 	amp->uid = args.uid;
 	amp->gid = args.gid;
 	amp->mask = args.mask;
-	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
-	memset(mp->mnt_stat.f_mntonname + size, 0, MNAMELEN - size);
-	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
-	    &size);
-	memset(mp->mnt_stat.f_mntfromname + size, 0, MNAMELEN - size);
-	return (0);
+	return set_statfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
+	    mp, p);
 }
 
 int
@@ -381,11 +376,7 @@ adosfs_statfs(mp, sbp, p)
 	sbp->f_bavail = amp->freeblks;
 	sbp->f_files = 0;		/* who knows */
 	sbp->f_ffree = 0;		/* " " */
-	if (sbp != &mp->mnt_stat) {
-		memcpy(sbp->f_mntonname, mp->mnt_stat.f_mntonname, MNAMELEN);
-		memcpy(sbp->f_mntfromname, mp->mnt_stat.f_mntfromname, MNAMELEN);
-	}
-	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
+	copy_statfs_info(sbp, mp);
 	return (0);
 }
 

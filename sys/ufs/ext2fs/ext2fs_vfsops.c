@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.56 2003/04/05 14:01:56 fvdl Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.57 2003/04/16 21:44:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.56 2003/04/05 14:01:56 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.57 2003/04/16 21:44:26 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -342,8 +342,10 @@ ext2fs_mount(mp, path, data, ndp, p)
 	}
 	ump = VFSTOUFS(mp);
 	fs = ump->um_e2fs;
-	(void) copyinstr(path, fs->e2fs_fsmnt, sizeof(fs->e2fs_fsmnt) - 1,
-	    &size);
+	error = set_statfs_info(path, UIO_USERSPACE, args.fspec,
+	    UIO_USERSPACE, mp, p);
+	(void) copystr(mp->mnt_stat.f_mntonname, fs->e2fs_fsmnt,
+	    sizeof(fs->e2fs_fsmnt) - 1, &size);
 	memset(fs->e2fs_fsmnt + size, 0, sizeof(fs->e2fs_fsmnt) - size);
 	if (fs->e2fs.e2fs_rev > E2FS_REV0) {
 		(void) copystr(mp->mnt_stat.f_mntonname, fs->e2fs.e2fs_fsmnt,
@@ -351,10 +353,6 @@ ext2fs_mount(mp, path, data, ndp, p)
 		memset(fs->e2fs.e2fs_fsmnt, 0,
 		    sizeof(fs->e2fs.e2fs_fsmnt) - size);
 	}
-	memcpy(mp->mnt_stat.f_mntonname, fs->e2fs_fsmnt, MNAMELEN);
-	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1, 
-		&size);
-	memset(mp->mnt_stat.f_mntfromname + size, 0, MNAMELEN - size);
 	if (fs->e2fs_fmod != 0) {	/* XXX */
 		fs->e2fs_fmod = 0;
 		if (fs->e2fs.e2fs_state == 0)
@@ -364,7 +362,7 @@ ext2fs_mount(mp, path, data, ndp, p)
 				mp->mnt_stat.f_mntfromname);
 		(void) ext2fs_cgupdate(ump, MNT_WAIT);
 	}
-	return (0);
+	return error;
 }
 
 /*
@@ -757,11 +755,7 @@ ext2fs_statfs(mp, sbp, p)
 	sbp->f_bavail = sbp->f_bfree - fs->e2fs.e2fs_rbcount;
 	sbp->f_files =  fs->e2fs.e2fs_icount;
 	sbp->f_ffree = fs->e2fs.e2fs_ficount;
-	if (sbp != &mp->mnt_stat) {
-		memcpy(sbp->f_mntonname, mp->mnt_stat.f_mntonname, MNAMELEN);
-		memcpy(sbp->f_mntfromname, mp->mnt_stat.f_mntfromname, MNAMELEN);
-	}
-	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
+	copy_statfs_info(sbp, mp);
 	return (0);
 }
 
