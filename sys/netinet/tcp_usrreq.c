@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.19 1996/01/31 05:42:37 mycroft Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -45,6 +45,10 @@
 #include <sys/protosw.h>
 #include <sys/errno.h>
 #include <sys/stat.h>
+#include <sys/proc.h>
+#include <sys/ucred.h>
+#include <vm/vm.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -81,7 +85,7 @@ tcp_usrreq(so, req, m, nam, control)
 	struct mbuf *m, *nam, *control;
 {
 	register struct inpcb *inp;
-	register struct tcpcb *tp;
+	register struct tcpcb *tp = NULL;
 	int s;
 	int error = 0;
 	int ostate;

@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.19 1996/01/16 04:17:30 thorpej Exp $	*/
+/*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -91,7 +91,7 @@ struct in_addr {
  * on these macros not doing byte-swapping.
  */
 #ifdef _KERNEL
-#define	__IPADDR(x)	htonl((u_int32_t)(x))
+#define	__IPADDR(x)	((u_int32_t) htonl((u_int32_t)(x)))
 #else
 #define	__IPADDR(x)	((u_int32_t)(x))
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.27 1995/07/01 03:44:55 cgd Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -42,6 +42,7 @@
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/systm.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -57,6 +58,8 @@
 #include <machine/mtpr.h>
 #endif
 
+#include <machine/stdarg.h>
+
 static struct mbuf *ip_insertoptions __P((struct mbuf *, struct mbuf *, int *));
 static void ip_mloopback
 	__P((struct ifnet *, struct mbuf *, struct sockaddr_in *));
@@ -68,12 +71,13 @@ static void ip_mloopback
  * The mbuf opt, if present, will not be freed.
  */
 int
-ip_output(m0, opt, ro, flags, imo)
+#if __STDC__
+ip_output(struct mbuf *m0, ...)
+#else
+ip_output(m0, va_alist)
 	struct mbuf *m0;
-	struct mbuf *opt;
-	struct route *ro;
-	int flags;
-	struct ip_moptions *imo;
+	va_dcl
+#endif
 {
 	register struct ip *ip, *mhip;
 	register struct ifnet *ifp;
@@ -83,6 +87,20 @@ ip_output(m0, opt, ro, flags, imo)
 	struct route iproute;
 	struct sockaddr_in *dst;
 	struct in_ifaddr *ia;
+	struct mbuf *opt;
+	struct route *ro;
+	int flags;
+	struct ip_moptions *imo;
+	va_list ap;
+
+	va_start(ap, m0);
+	opt = va_arg(ap, struct mbuf *);
+	ro = va_arg(ap, struct route *);
+	flags = va_arg(ap, int);
+	imo = va_arg(ap, struct ip_moptions *);
+	va_end(ap);
+
+
 
 #ifdef	DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)
@@ -481,7 +499,7 @@ ip_ctloutput(op, so, level, optname, mp)
 {
 	register struct inpcb *inp = sotoinpcb(so);
 	register struct mbuf *m = *mp;
-	register int optval;
+	register int optval = 0;
 	int error = 0;
 
 	if (level != IPPROTO_IP) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.27 1995/08/12 23:59:29 mycroft Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.28 1996/02/13 23:40:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -53,6 +53,7 @@
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
+#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -100,6 +101,19 @@ static struct	in_addr myip, srv_ip;
 static int	myip_initialized = 0;
 static int	revarp_in_progress = 0;
 static struct	ifnet *myip_ifp = NULL;
+
+static void arptimer __P((void *));
+static void arprequest __P((struct arpcom *, u_int32_t *, u_int32_t *,
+			    u_int8_t *));
+static void in_arpinput __P((struct mbuf *));
+static void arptfree __P((struct llinfo_arp *));
+static struct llinfo_arp *arplookup __P((u_int32_t, int, int ));
+#ifdef DDB
+static void db_print_sa __P((struct sockaddr *));
+static void db_print_ifa __P((struct ifaddr *));
+static void db_print_llinfo __P((caddr_t));
+static int db_show_radix_node __P((struct radix_node *, void *));
+#endif
 
 /*
  * Timeout routine.  Age arp_tab entries periodically.
@@ -330,7 +344,7 @@ arpresolve(ac, rt, m, dst, desten)
 	if (rt)
 		la = (struct llinfo_arp *)rt->rt_llinfo;
 	else {
-		if (la = arplookup(SIN(dst)->sin_addr.s_addr, 1, 0))
+		if ((la = arplookup(SIN(dst)->sin_addr.s_addr, 1, 0)) != NULL)
 			rt = la->la_rt;
 	}
 	if (la == 0 || rt == 0) {
@@ -615,7 +629,6 @@ revarpinput(m)
 	struct mbuf *m;
 {
 	struct arphdr *ar;
-	int op, s;
 
 	if (m->m_len < sizeof(struct arphdr))
 		goto out;
@@ -649,12 +662,13 @@ out:
  *
  * Note: also supports ARP via RARP packets, per the RFC.
  */
+void
 in_revarpinput(m)
 	struct mbuf *m;
 {
 	struct ifnet *ifp;
 	struct ether_arp *ar;
-	int op, s;
+	int op;
 
 	ar = mtod(m, struct ether_arp *);
 	op = ntohs(ar->arp_op);
@@ -773,6 +787,10 @@ revarpwhoami(in, ifp)
 
 
 #ifdef DDB
+
+#include <machine/db_machdep.h>
+#include <ddb/db_interface.h>
+#include <ddb/db_output.h>
 static void
 db_print_sa(sa)
 	struct sockaddr *sa;
@@ -868,6 +886,7 @@ db_show_radix_node(rn, w)
  * Function to print all the route trees.
  * Use this from ddb:  "call db_show_arptab"
  */
+int
 db_show_arptab()
 {
 	struct radix_node_head *rnh;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_debug.c,v 1.9 1995/04/13 06:36:32 cgd Exp $	*/
+/*	$NetBSD: tcp_debug.c,v 1.10 1996/02/13 23:43:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -80,8 +80,10 @@ tcp_trace(act, ostate, tp, ti, req)
 	struct tcpiphdr *ti;
 	int req;
 {
+#ifdef TCPDEBUG
 	tcp_seq seq, ack;
 	int len, flags;
+#endif
 	struct tcp_debug *td = &tcp_debug[tcp_debx++];
 
 	if (tcp_debx == TCP_NDEBUG)

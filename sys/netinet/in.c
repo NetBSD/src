@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.25 1995/08/12 23:59:32 mycroft Exp $	*/
+/*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -41,6 +41,7 @@
 #include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/systm.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -50,6 +51,7 @@
 #include <netinet/in_var.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip_mroute.h>
+#include <netinet/igmp_var.h>
 
 #include "ether.h"
 
@@ -138,7 +140,6 @@ in_control(so, cmd, data, ifp)
 {
 	register struct ifreq *ifr = (struct ifreq *)data;
 	register struct in_ifaddr *ia = 0;
-	register struct ifaddr *ifa;
 	struct in_aliasreq *ifra = (struct in_aliasreq *)data;
 	struct sockaddr_in oldaddr;
 	int error, hostIsNew, maskIsNew;
@@ -348,7 +349,7 @@ in_ifinit(ifp, ia, sin, scrub)
 {
 	register u_int32_t i = sin->sin_addr.s_addr;
 	struct sockaddr_in oldaddr;
-	int s = splimp(), flags = RTF_UP, error, ether_output();
+	int s = splimp(), flags = RTF_UP, error;
 
 	oldaddr = ia->ia_addr;
 	ia->ia_addr = *sin;
@@ -525,7 +526,7 @@ in_addmulti(ap, ifp)
 /*
  * Delete a multicast address record.
  */
-int
+void
 in_delmulti(inm)
 	register struct in_multi *inm;
 {

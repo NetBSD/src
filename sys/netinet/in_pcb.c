@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.24 1996/01/31 03:49:23 mycroft Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -74,10 +74,11 @@ in_pcbinit(table, hashsize)
 }
 
 int
-in_pcballoc(so, table)
+in_pcballoc(so, v)
 	struct socket *so;
-	struct inpcbtable *table;
+	void *v;
 {
+	struct inpcbtable *table = v;
 	register struct inpcb *inp;
 	int s;
 
@@ -97,10 +98,11 @@ in_pcballoc(so, table)
 }
 
 int
-in_pcbbind(inp, nam)
-	register struct inpcb *inp;
+in_pcbbind(v, nam)
+	register void *v;
 	struct mbuf *nam;
 {
+	register struct inpcb *inp = v;
 	register struct socket *so = inp->inp_socket;
 	register struct inpcbtable *table = inp->inp_table;
 	register struct sockaddr_in *sin;
@@ -179,12 +181,13 @@ in_pcbbind(inp, nam)
  * then pick one.
  */
 int
-in_pcbconnect(inp, nam)
-	register struct inpcb *inp;
+in_pcbconnect(v, nam)
+	register void *v;
 	struct mbuf *nam;
 {
+	register struct inpcb *inp = v;
 	struct in_ifaddr *ia;
-	struct sockaddr_in *ifaddr;
+	struct sockaddr_in *ifaddr = NULL;
 	register struct sockaddr_in *sin = mtod(nam, struct sockaddr_in *);
 
 	if (nam->m_len != sizeof (*sin))
@@ -291,10 +294,11 @@ in_pcbconnect(inp, nam)
 	return (0);
 }
 
-int
-in_pcbdisconnect(inp)
-	struct inpcb *inp;
+void
+in_pcbdisconnect(v)
+	void *v;
 {
+	struct inpcb *inp = v;
 
 	inp->inp_faddr.s_addr = INADDR_ANY;
 	inp->inp_fport = 0;
@@ -303,10 +307,11 @@ in_pcbdisconnect(inp)
 		in_pcbdetach(inp);
 }
 
-int
-in_pcbdetach(inp)
-	struct inpcb *inp;
+void
+in_pcbdetach(v)
+	void *v;
 {
+	struct inpcb *inp = v;
 	struct socket *so = inp->inp_socket;
 	int s;
 
@@ -324,7 +329,7 @@ in_pcbdetach(inp)
 	FREE(inp, M_PCB);
 }
 
-int
+void
 in_setsockaddr(inp, nam)
 	register struct inpcb *inp;
 	struct mbuf *nam;
@@ -340,7 +345,7 @@ in_setsockaddr(inp, nam)
 	sin->sin_addr = inp->inp_laddr;
 }
 
-int
+void
 in_setpeeraddr(inp, nam)
 	struct inpcb *inp;
 	struct mbuf *nam;
@@ -439,7 +444,7 @@ in_pcbnotifyall(table, dst, errno, notify)
  * routing information.  If the route was created dynamically
  * (by a redirect), time to try a default gateway again.
  */
-int
+void
 in_losing(inp)
 	struct inpcb *inp;
 {

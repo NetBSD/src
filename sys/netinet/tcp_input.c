@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.22 1996/01/31 05:56:56 mycroft Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -60,6 +60,8 @@
 #include <netinet/tcp_var.h>
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
+
+#include <machine/stdarg.h>
 
 int	tcprexmtthresh = 3;
 struct	tcpiphdr tcp_saveti;
@@ -233,26 +235,35 @@ present:
  * protocol specification dated September, 1981 very closely.
  */
 void
-tcp_input(m, iphlen)
+#if __STDC__
+tcp_input(struct mbuf *m, ...)
+#else
+tcp_input(m, va_alist)
 	register struct mbuf *m;
-	int iphlen;
+#endif
 {
 	register struct tcpiphdr *ti;
 	register struct inpcb *inp;
 	caddr_t optp = NULL;
-	int optlen;
+	int optlen = 0;
 	int len, tlen, off;
 	register struct tcpcb *tp = 0;
 	register int tiflags;
-	struct socket *so;
+	struct socket *so = NULL;
 	int todrop, acked, ourfinisacked, needoutput = 0;
-	short ostate;
+	short ostate = 0;
 	struct in_addr laddr;
 	int dropsocket = 0;
 	int iss = 0;
 	u_long tiwin;
 	u_int32_t ts_val, ts_ecr;
 	int ts_present = 0;
+	int iphlen;
+	va_list ap;
+
+	va_start(ap, m);
+	iphlen = va_arg(ap, int);
+	va_end(ap);
 
 	tcpstat.tcps_rcvtotal++;
 	/*
@@ -278,7 +289,7 @@ tcp_input(m, iphlen)
 	bzero(ti->ti_x1, sizeof ti->ti_x1);
 	ti->ti_len = (u_int16_t)tlen;
 	HTONS(ti->ti_len);
-	if (ti->ti_sum = in_cksum(m, len)) {
+	if ((ti->ti_sum = in_cksum(m, len)) != 0) {
 		tcpstat.tcps_rcvbadsum++;
 		goto drop;
 	}
@@ -1122,10 +1133,9 @@ step6:
 	 * Update window information.
 	 * Don't look at window if no ACK: TAC's send garbage on first SYN.
 	 */
-	if ((tiflags & TH_ACK) &&
-	    (SEQ_LT(tp->snd_wl1, ti->ti_seq) || tp->snd_wl1 == ti->ti_seq &&
-	    (SEQ_LT(tp->snd_wl2, ti->ti_ack) ||
-	     tp->snd_wl2 == ti->ti_ack && tiwin > tp->snd_wnd))) {
+	if (((tiflags & TH_ACK) && SEQ_LT(tp->snd_wl1, ti->ti_seq)) ||
+	    (tp->snd_wl1 == ti->ti_seq && SEQ_LT(tp->snd_wl2, ti->ti_ack)) ||
+	    (tp->snd_wl2 == ti->ti_ack && tiwin > tp->snd_wnd)) {
 		/* keep track of pure window updates */
 		if (ti->ti_len == 0 &&
 		    tp->snd_wl2 == ti->ti_ack && tiwin > tp->snd_wnd)
@@ -1183,7 +1193,7 @@ step6:
 		 * but if two URG's are pending at once, some out-of-band
 		 * data may creep in... ick.
 		 */
-		if (ti->ti_urp <= ti->ti_len
+		if (ti->ti_urp <= (u_int16_t) ti->ti_len
 #ifdef SO_OOBINLINE
 		     && (so->so_options & SO_OOBINLINE) == 0
 #endif
@@ -1572,7 +1582,7 @@ tcp_mss(tp, offer)
 			/* default variation is +- 1 rtt */
 			tp->t_rttvar =
 			    tp->t_srtt * TCP_RTTVAR_SCALE / TCP_RTT_SCALE;
-		TCPT_RANGESET(tp->t_rxtcur,
+		TCPT_RANGESET((long) tp->t_rxtcur,
 		    ((tp->t_srtt >> 2) + tp->t_rttvar) >> 1,
 		    tp->t_rttmin, TCPTV_REXMTMAX);
 	}
