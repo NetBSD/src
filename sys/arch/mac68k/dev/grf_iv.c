@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_iv.c,v 1.28 1998/01/12 19:22:05 thorpej Exp $	*/
+/*	$NetBSD: grf_iv.c,v 1.29 1998/01/13 19:24:53 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -96,7 +96,7 @@ grfiv_match(parent, cf, aux)
 			panic("failed to map space for DAFB regs.\n");
 		}
 
-		if (bus_probe(oa->oa_tag, bsh, 0x1C, 4) == 0) {
+		if (mac68k_bus_space_probe(oa->oa_tag, bsh, 0x1C, 4) == 0) {
 			bus_space_unmap(oa->oa_tag, bsh, 0x1000);
 			found = 0;
 			goto nodafb;
