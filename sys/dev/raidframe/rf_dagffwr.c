@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffwr.c,v 1.19 2004/03/05 03:22:05 oster Exp $	*/
+/*	$NetBSD: rf_dagffwr.c,v 1.20 2004/03/06 23:34:27 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.19 2004/03/05 03:22:05 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.20 2004/03/06 23:34:27 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -209,12 +209,16 @@ rf_CommonCreateLargeWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	i += 1;
 	termNode = &nodes[i];
 	i += 1;
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 	if (nfaults == 2) {
 		wnqNode = &nodes[i];
 		i += 1;
 	} else {
+#endif
 		wnqNode = NULL;
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 	}
+#endif
 	rf_MapUnaccessedPortionOfStripe(raidPtr, layoutPtr, asmap, dag_h, 
 					new_asm_h, &nRodNodes, &sosBuffer, 
 					&eosBuffer, allocList);
@@ -339,6 +343,7 @@ rf_CommonCreateLargeWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	/* parityInfo must describe entire parity unit */
 	RF_ASSERT(asmap->parityInfo->next == NULL);
 
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 	if (nfaults == 2) {
 		/*
 	         * We never try to recycle a buffer for the Q calcuation
@@ -359,6 +364,7 @@ rf_CommonCreateLargeWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		/* parityInfo must describe entire parity unit */
 		RF_ASSERT(asmap->parityInfo->next == NULL);
 	}
+#endif
 	/*
          * Connect nodes to form graph.
          */
@@ -411,12 +417,14 @@ rf_CommonCreateLargeWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	commitNode->succedents[nWndNodes] = wnpNode;
 	wnpNode->antecedents[0] = commitNode;
 	wnpNode->antType[0] = rf_trueData;
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 	if (nfaults == 2) {
 		RF_ASSERT(wnqNode->numAntecedents == 1);
 		commitNode->succedents[nWndNodes + 1] = wnqNode;
 		wnqNode->antecedents[0] = commitNode;
 		wnqNode->antType[0] = rf_trueData;
 	}
+#endif
 	/* connect the write nodes to the term node */
 	RF_ASSERT(termNode->numAntecedents == nWndNodes + nfaults);
 	RF_ASSERT(termNode->numSuccedents == 0);
@@ -430,12 +438,14 @@ rf_CommonCreateLargeWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	wnpNode->succedents[0] = termNode;
 	termNode->antecedents[nWndNodes] = wnpNode;
 	termNode->antType[nWndNodes] = rf_control;
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 	if (nfaults == 2) {
 		RF_ASSERT(wnqNode->numSuccedents == 1);
 		wnqNode->succedents[0] = termNode;
 		termNode->antecedents[nWndNodes + 1] = wnqNode;
 		termNode->antType[nWndNodes + 1] = rf_control;
 	}
+#endif
 }
 /******************************************************************************
  *
@@ -553,6 +563,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	termNode = &nodes[i];
 	i += 1;
 
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 	if (nfaults == 2) {
 		readQNodes = &nodes[i];
 		i += numParityNodes;
@@ -561,8 +572,11 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		qNodes = &nodes[i];
 		i += numParityNodes;
 	} else {
+#endif
 		readQNodes = writeQNodes = qNodes = NULL;
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 	}
+#endif
 	RF_ASSERT(i == totalNumNodes);
 
 	/*
@@ -627,6 +641,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		}
 	}
 
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 	/* initialize nodes which read old Q (Roq) */
 	if (nfaults == 2) {
 		pda = asmap->qInfo;
@@ -650,6 +665,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			}
 		}
 	}
+#endif
 	/* initialize nodes which write new data (Wnd) */
 	pda = asmap->physInfo;
 	for (i = 0; i < numDataNodes; i++) {
@@ -726,6 +742,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			xorNodes[i].params[6].p = raidPtr;
 			/* use old parity buf as target buf */
 			xorNodes[i].results[0] = readParityNodes[i].params[1].p;
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 			if (nfaults == 2) {
 				/* note: no wakeup func for qor */
 				rf_InitNode(&qNodes[i], rf_wait, RF_FALSE, 
@@ -742,6 +759,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 				/* use old Q buf as target buf */
 				qNodes[i].results[0] = readQNodes[i].params[1].p;
 			}
+#endif
 		}
 	} else {
 		/* there is only one xor node in this case */
@@ -765,6 +783,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		/* xor node needs to get at RAID information */
 		xorNodes[0].params[2 * (numDataNodes + numDataNodes + 1)].p = raidPtr;
 		xorNodes[0].results[0] = readParityNodes[0].params[1].p;
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 		if (nfaults == 2) {
 			rf_InitNode(&qNodes[0], rf_wait, RF_FALSE, qfunc, 
 				    undoFunc, NULL, 1,
@@ -792,6 +811,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			qNodes[0].params[2 * (numDataNodes + numDataNodes + 1)].p = raidPtr;
 			qNodes[0].results[0] = readQNodes[0].params[1].p;
 		}
+#endif
 	}
 
 	/* initialize nodes which write new parity (Wnp) */
@@ -813,6 +833,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		pda = pda->next;
 	}
 
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 	/* initialize nodes which write new Q (Wnq) */
 	if (nfaults == 2) {
 		pda = asmap->qInfo;
@@ -833,6 +854,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			pda = pda->next;
 		}
 	}
+#endif
 	/*
          * Step 4. connect the nodes.
          */
@@ -857,6 +879,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		readParityNodes[i].antType[0] = rf_control;
 	}
 
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 	/* connect block node to read old Q nodes */
 	if (nfaults == 2) {
 		for (i = 0; i < numParityNodes; i++) {
@@ -866,6 +889,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			readQNodes[i].antType[0] = rf_control;
 		}
 	}
+#endif
 	/* connect read old data nodes to xor nodes */
 	for (i = 0; i < numDataNodes; i++) {
 		RF_ASSERT(readDataNodes[i].numSuccedents == (nfaults * numParityNodes));
@@ -877,6 +901,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		}
 	}
 
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 	/* connect read old data nodes to q nodes */
 	if (nfaults == 2) {
 		for (i = 0; i < numDataNodes; i++) {
@@ -888,6 +913,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			}
 		}
 	}
+#endif
 	/* connect read old parity nodes to xor nodes */
 	for (i = 0; i < numParityNodes; i++) {
 		RF_ASSERT(readParityNodes[i].numSuccedents == numParityNodes);
@@ -898,6 +924,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		}
 	}
 
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 	/* connect read old q nodes to q nodes */
 	if (nfaults == 2) {
 		for (i = 0; i < numParityNodes; i++) {
@@ -909,6 +936,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			}
 		}
 	}
+#endif
 	/* connect xor nodes to commit node */
 	RF_ASSERT(commitNode->numAntecedents == (nfaults * numParityNodes));
 	for (i = 0; i < numParityNodes; i++) {
@@ -918,6 +946,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		commitNode->antType[i] = rf_control;
 	}
 
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 	/* connect q nodes to commit node */
 	if (nfaults == 2) {
 		for (i = 0; i < numParityNodes; i++) {
@@ -927,6 +956,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			commitNode->antType[i + numParityNodes] = rf_control;
 		}
 	}
+#endif
 	/* connect commit node to write nodes */
 	RF_ASSERT(commitNode->numSuccedents == (numDataNodes + (nfaults * numParityNodes)));
 	for (i = 0; i < numDataNodes; i++) {
@@ -941,6 +971,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		writeParityNodes[i].antecedents[0] = commitNode;
 		writeParityNodes[i].antType[0] = rf_trueData;
 	}
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 	if (nfaults == 2) {
 		for (i = 0; i < numParityNodes; i++) {
 			RF_ASSERT(writeQNodes[i].numAntecedents == 1);
@@ -949,6 +980,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			writeQNodes[i].antType[0] = rf_trueData;
 		}
 	}
+#endif
 	RF_ASSERT(termNode->numAntecedents == (numDataNodes + (nfaults * numParityNodes)));
 	RF_ASSERT(termNode->numSuccedents == 0);
 	for (i = 0; i < numDataNodes; i++) {
@@ -967,6 +999,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		termNode->antType[numDataNodes + i] = rf_control;
 	}
 
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 	if (nfaults == 2) {
 		for (i = 0; i < numParityNodes; i++) {
 			RF_ASSERT(writeQNodes[i].numSuccedents == 1);
@@ -975,6 +1008,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			termNode->antType[numDataNodes + numParityNodes + i] = rf_control;
 		}
 	}
+#endif
 }
 
 
