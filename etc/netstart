@@ -3,8 +3,9 @@
 #	@(#)netstart	5.9 (Berkeley) 3/30/91
 
 # set these to "NO" to turn them off.  otherwise, they're used as flags
-routedflags=-q
-timedflags=
+routed_flags=-q
+sendmail_flags="-bd -q30m"
+timed_flags=
 
 # set the following to "YES" to turn them on
 rwhod=NO
@@ -13,6 +14,10 @@ nfs_client=NO
 name_server=NO
 gated=NO
 kerberos_server=NO
+
+# miscellaneous other flags
+# gated_flags only used if gated == YES
+gated_flags=
 
 # /etc/myname contains my symbolic name
 #

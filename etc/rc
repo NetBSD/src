@@ -77,10 +77,10 @@ echo -n 'starting system logger'
 rm -f /dev/log
 syslogd
 
-# $timedflags is imported from /etc/netstart;
-# if $timedflags == NO, timed isn't run.
-if [ X${timedflags} != X"NO" ]; then
-	echo -n ', time daemon'; timed $timedflags
+# $timed_flags is imported from /etc/netstart;
+# if $timed_flags == NO, timed isn't run.
+if [ X${timed_flags} != X"NO" ]; then
+	echo -n ', time daemon'; timed $timed_flags
 fi
 echo '.'
 
@@ -132,15 +132,17 @@ echo '.'
 
 echo -n starting network daemons:
 
-# $gated and $routedflags are imported from /etc/netstart.
+# $gated and $routed_flags are imported from /etc/netstart.
 # If $gated == YES, gated is used; otherwise routed.
-# If $routedflags == NO, routed isn't run.
+# If $routed_flags == NO, routed isn't run.
 if [ X${gated} = X"YES" -a -r /etc/gated.conf ]; then
-	echo -n ' gated';	gated $gatedflags
-elif [ X${routedflags} != X"NO" ]; then
-	echo -n ' routed';	routed $routedflags
+	echo -n ' gated';	gated $gated_flags
+elif [ X${routed_flags} != X"NO" ]; then
+	echo -n ' routed';	routed $routed_flags
 fi
 
+# $name_server is imported from /etc/netstart;
+# if $name_server == YES, named is run.
 if [ X${name_server} = X"YES" -a -r /etc/named.boot ]; then
 	echo -n ' named';		named
 fi
@@ -155,6 +157,7 @@ echo -n ' printer';		lpd
 
 echo -n ' portmap';		portmap
 
+# $nfs_server is imported from /etc/netstart;
 # if $nfs_server == YES, the machine is setup for being an nfs server
 if [ X${nfs_server} = X"YES" -a -r /etc/exports ]; then
 	rm -f /var/db/mountdtab	
@@ -162,12 +165,18 @@ if [ X${nfs_server} = X"YES" -a -r /etc/exports ]; then
 	echo -n ' nfsd';		nfsd -u 0,0,4 -t 0,0
 fi
 
+# $nfs_client is imported from /etc/netstart;
 # if $nfs_client == YES, the machine is setup for being an nfs client
 if [ X${nfs_client} = X"YES" ]; then
 	echo -n ' nfsiod';		nfsiod 4
 fi
 
-echo -n ' sendmail';		sendmail -bd -q30m
+# $sendmail_flags is imported from /etc/netstart;
+# If $sendmail_flags == NO, routed isn't run.
+if [ X${sendmail_flags} != X"NO" ]; then
+	echo -n ' sendmail';		sendmail ${sendmail_flags}
+fi
+
 echo -n ' inetd';		inetd
 echo '.'
 
