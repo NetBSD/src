@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16 1997/07/09 19:27:54 matthias Exp $	*/
+/*	$NetBSD: pmap.h,v 1.17 1998/01/02 22:43:31 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -155,8 +155,9 @@ struct pv_entry		*pv_table;	/* array of entries, one per page */
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_update()			tlbflush()
 
-struct pcb;
-void pmap_activate __P((pmap_t, struct pcb *));
+struct proc;
+void pmap_activate __P((struct proc *));
+void pmap_deactivate __P((struct proc *));
 void pmap_bootstrap __P((vm_offset_t start));
 pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
 boolean_t pmap_testbit __P((vm_offset_t, int));
