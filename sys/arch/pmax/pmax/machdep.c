@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.108 1998/03/25 03:57:55 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.109 1998/03/25 06:22:20 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.108 1998/03/25 03:57:55 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109 1998/03/25 06:22:20 jonathan Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -85,6 +85,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.108 1998/03/25 03:57:55 jonathan Exp $
 
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
+#include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicvar.h>
+
+
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
@@ -124,6 +128,14 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.108 1998/03/25 03:57:55 jonathan Exp $
 #include "dtop.h"
 #include "scc.h"
 #include "le_ioasic.h"
+
+/* XXX clock hacks */
+#include "opt_dec_3maxplus.h"
+#include "opt_dec_maxine.h"
+#if defined(DEC_3MAXPLUS) || defined(DEC_MAXINE)
+static	u_long	clkread __P((void));	/* get usec-resolution clock */
+#endif
+
 
 /* Motherboard or system-specific initialization vector */
 void		unimpl_os_init __P((void));
@@ -183,19 +195,16 @@ u_long	le_iomem;		/* 128K for lance chip via. ASIC */
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
-extern void	(*tc_enable_interrupt)  __P ((u_int slotno,
-					      int (*handler) __P((void *sc)),
-					      void *sc, int onoff)); 
-void	(*tc_enable_interrupt) __P ((u_int slotno,
-				     int (*handler) __P ((void *sc)),
-				     void *sc, int onoff));
+/* Old 4.4bsd/pmax-derived interrupt-enable method */
 
-#ifdef DS5100 /* mipsmate */
-# include <pmax/pmax/kn230var.h>   /* kn230_establish_intr(), kn230_intr() */
-#endif
+void	(*tc_enable_interrupt)
+     __P ((u_int slotno, int (*handler) __P((void *sc)),
+          void *sc, int onoff)); 
 
 
 /*
+ * pmax still doesnt have code to build spl masks for both CPU hard-interrupt
+ * register and baseboard interrupt-control registers at runtime.
  * Instead, we declare the standard splXXX names as function pointers,
  * and initialie them to point to the above functions to match
  * the way a specific motherboard is  wired up.
@@ -209,12 +218,9 @@ int	(*Mach_splstatclock)__P((void)) = splhigh;
 volatile struct chiptime *mcclock_addr;
 
 
-tc_option_t tc_slot_info[TC_MAX_LOGICAL_SLOTS];
-
-
 /*XXXjrs*/
-u_long	ioasic_base;		/* Base address of I/O asic */
 const	struct callback *callv;	/* pointer to PROM entry points */
+
 
 
 /*
@@ -223,11 +229,7 @@ const	struct callback *callv;	/* pointer to PROM entry points */
 extern	int	atoi __P((const char *cp));
 int	initcpu __P((void));
 
-void	asic_init __P((int isa_maxine));	/* XXXjrs */
 
-#if defined(DS5000_240) || defined(DS5000_25)
-static	u_long	clkread __P((void));	/* get usec-resolution clock */
-#endif
 
 /* initialize bss, etc. from kernel start, before main() is called. */
 extern	void
@@ -405,7 +407,7 @@ mach_init(argc, argv, code, cv)
 		}
 	}
 
-	/* check for MIPS based platform */
+	/* Check for MIPS based platform */
 	/* 0x82 -> MIPS1, 0x84 -> MIPS3 */
 	if (((i >> 24) & 0xFF) != 0x82 && ((i >> 24) & 0xff) != 0x84) {
 		printf("Unknown System type '%s' 0x%x\n", cp, i);
@@ -414,7 +416,7 @@ mach_init(argc, argv, code, cv)
 
 	/*
 	 * Initialize physmem_boardmax; assume no SIMM-bank limits.
-	 * Adjst later in model-specific code if necessary.
+	 * Adjust later in model-specific code if necessary.
 	 */
 	physmem_boardmax = MIPS_MAX_MEM_ADDR;
 
@@ -662,8 +664,10 @@ cpu_startup()
 	initcpu();
 
 	/*
-	 * XXX THE FOLLOWING  SECTION NEEDS TO BE REPLACED
+	 * XXX THE FOLLOWING SECTION NEEDS TO BE REPLACED
 	 * XXX WITH BUS_DMA(9).
+	 * XXXXXX Huh?  BUS_DMA(9)  doesnt support  gap16 lance copy buffers.
+	 * XXXXXX We use the copy suport  in am7990 instead.
 	 */
 
 #if NLE_IOASIC > 0
@@ -834,9 +838,10 @@ haltsys:
  * the current microsecond offset from time-of-day.
  */
 
-#if !defined(DS5000_240) && !defined(DS5000_25)
+#if !(defined(DEC_3MAXPLUS) || defined(DEC_MAXINE))
+static	u_long	clkread __P((void));	/* get usec-resolution clock */
 # define clkread() (0)
-#else
+#else /* (defined(DEC_3MAXPLUS) || defined(DEC_MAXINE)) */
 
 
 /*
@@ -860,17 +865,17 @@ static inline u_long
 clkread()
 {
 
-#ifdef DS5000_240
+#ifdef DEC_3MAXPLUS
 	register u_long usec, cycles;	/* really 32 bits? */
 #endif
 
-#ifdef DS5000_25
+#ifdef DEC_MAXINE
 	if (systype == DS_MAXINE)
 		return (*(u_long*)(MIPS_PHYS_TO_KSEG1(XINE_REG_FCTR)) -
 		    latched_cycle_cnt);
 	else
 #endif
-#ifdef DS5000_240
+#ifdef DEC_3MAXPLUS
 	if (systype == DS_3MAXPLUS)
 		/* 5k/240 TC bus counter */
 		cycles = *(u_long*)IOASIC_REG_CTR(ioasic_base);
@@ -878,7 +883,7 @@ clkread()
 #endif
 		return (0);
 
-#ifdef DS5000_240
+#ifdef DEC_3MAXPLUS
 	/* Compute difference in cycle count from last hardclock() to now */
 #if 1
 	/* my code, using u_ints */
@@ -907,17 +912,17 @@ clkread()
 	}
 #endif /*CLOCK_DEBUG*/
 	return usec;
-#endif /*DS5000_240*/
+#endif /* DEC_3MAXPLUS */
 }
 
 #if 0
 void
 microset()
 {
-		latched_cycle_cnt = *(u_long*)(IOASIC_REG_CTR(ioasic_base));
+	latched_cycle_cnt = *(u_long*)(IOASIC_REG_CTR(ioasic_base));
 }
-#endif
-#endif /*DS5000_240 || DS5000_25*/
+#endif	/* 0 */
+#endif	/* (defined(DEC_3MAXPLUS) || defined(DEC_MAXINE)) */
 
 
 /*
@@ -1118,31 +1123,3 @@ unimpl_errintr()
 {
 	panic("sysconf.init didnt set errintr_name\n");	
 }
-
-
-/*
- ************************************************************************
- *
- * XXX belons in ioasic bus layer 
- *
- ************************************************************************
- */
-
-/*
- * Initialize the I/O asic
- */
-void
-asic_init(isa_maxine)
-	int isa_maxine;
-{
-	volatile u_int *decoder;
-
-	/* These are common between 3min and maxine */
-	decoder = (volatile u_int *)IOASIC_REG_LANCE_DECODE(ioasic_base);
-	*decoder = KMIN_LANCE_CONFIG;
-
-	/* set the SCSI DMA configuration map */
-	decoder = (volatile u_int *) IOASIC_REG_SCSI_DECODE(ioasic_base);
-	(*decoder) = 0x00000000e;
-}
-

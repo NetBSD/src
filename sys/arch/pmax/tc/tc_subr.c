@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_subr.c,v 1.16 1998/03/25 03:57:56 jonathan Exp $	*/
+/*	$NetBSD: tc_subr.c,v 1.17 1998/03/25 06:22:21 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.16 1998/03/25 03:57:56 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.17 1998/03/25 06:22:21 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>			/* printf() */
@@ -27,7 +27,7 @@ extern int pmax_boardtype;
 
 
 /* Return the appropriate tcbus_attach_args for a given cputype */
-extern struct tcbus_attach_args *  cpu_tcdesc __P ((int cputype));
+extern struct tcbus_attach_args *  cpu_tcdesc __P ((int systype));
 
 
 /* Definition of the driver for autoconfig. */
@@ -40,7 +40,7 @@ void	tc_ds_intr_establish __P((struct device *, void *, tc_intrlevel_t,
 void	tc_intr_disestablish __P((struct device *dev, void *cookie));
 caddr_t	tc_cvtaddr __P((struct confargs *));
 
-extern int cputype;
+extern int systype;
 extern int tc_findconsole __P((int prom_slot));
 
 /* Forward declarations */
@@ -67,6 +67,12 @@ static int tc_consprobeslot __P((tc_addr_t slotaddr));
 #include <pmax/dev/mfbvar.h>
 #include <pmax/dev/sfbvar.h>
 #include <pmax/dev/xcfbvar.h>
+
+#include "opt_dec_3max.h"
+#include "opt_dec_3min.h"
+#include "opt_dec_3maxplus.h"
+#include "opt_dec_maxine.h"
+
 
 
 /* Which TC framebuffers have drivers, for configuring a console device. */
@@ -277,33 +283,33 @@ cpu_tcdesc(cpu)
     int cpu;
 {
 	if (cpu == DS_3MAXPLUS) {
-#ifdef DS5000_240
+#ifdef DEC_3MAXPLUS
 		tc_enable_interrupt = dec_3maxplus_enable_intr;
 		return &kn03_tc_desc;
 #else
 		return (0);
-#endif /* DS5000_240 */
+#endif /* DEC_3MAXPLUS */
 	} else if (cpu == DS_3MAX) {
-#ifdef DS5000_200
+#ifdef DEC_3MAX
 		tc_enable_interrupt = dec_3max_enable_intr;
 		return &kn02_tc_desc;
 #else
 		return (0);
-#endif /* DS5000_240 */
+#endif /* DEC_3MAX */
 	} else if (cpu == DS_3MIN) {
-#ifdef DS5000_100
+#ifdef DEC_3MIN
 		tc_enable_interrupt = dec_3min_enable_intr;
 		return &kmin_tc_desc;
 #else
 		return (0);
-#endif /*DS5000_100*/
+#endif /*DEC_3MIN*/
 	} else if (cpu == DS_MAXINE) {
-#ifdef DS5000_25
+#ifdef DEC_MAXINE
 		tc_enable_interrupt = dec_maxine_enable_intr;
 		return &xine_tc_desc;
 #else
 		return (0);
-#endif /*DS5000_25*/
+#endif /*DEC_MAXINE*/
 	} else if (cpu == DS_PMAX) {
 #ifdef DIAGNOSTIC
 		printf("tcattach: PMAX, no turbochannel\n");
@@ -321,9 +327,9 @@ cpu_tcdesc(cpu)
  * We have a TurboChannel bus.  Configure it.
  */
 void
-config_tcbus(parent, cputype, printfn)
+config_tcbus(parent, systype, printfn)
      	struct device *parent;
-	int cputype;
+	int systype;
 	int	printfn __P((void *, const char *));
 
 {
@@ -446,7 +452,7 @@ tc_consprobeslot(tc_slotaddr)
 }
 
 /*
- * Estabish an interrupt handler, but on what bus -- TC or ioctl asic?
+ * Establish an interrupt handler, but on what bus -- TC or ioctl asic?
  */
 void
 tc_ds_intr_establish(dev, cookie, level, handler, val)
@@ -487,7 +493,7 @@ tc_ds_ioasic_intr_setup ()
 
 
 /*
- * establish an interrupt handler for an ioasic device.
+ * Establish an interrupt handler for an ioasic device.
  * On NetBSD/pmax, there is currently a single, merged interrupt handler for
  * both TC and ioasic.  Just use the tc interrupt-establish function.
 */
