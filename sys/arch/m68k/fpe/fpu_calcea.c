@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_calcea.c,v 1.3 1996/02/04 02:17:38 briggs Exp $	*/
+/*	$NetBSD: fpu_calcea.c,v 1.4 1996/04/30 11:52:11 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -33,6 +33,7 @@
 
 #include <sys/param.h>
 #include <sys/signal.h>
+#include <sys/systm.h>
 #include <machine/frame.h>
 
 #include "fpu_emulate.h"
@@ -47,6 +48,8 @@ static int fetch_immed __P((struct frame *frame, struct instruction *insn,
 static int fetch_disp __P((struct frame *frame, struct instruction *insn,
 			   int size, int *res));
 static int calc_ea __P((struct insn_ea *ea, char *ptr, char **eaddr));
+
+int fusword __P((void *));
 
 /*
  * Helper routines for dealing with "effective address" values.
@@ -63,7 +66,7 @@ fpu_decode_ea(frame, insn, ea, modreg)
      struct insn_ea *ea;
      int modreg;
 {
-    int data, sig;
+    int sig;
 
 #ifdef DEBUG
     if (insn->is_datasize < 0) {
@@ -188,12 +191,12 @@ decode_ea6(frame, insn, ea, modreg)
      struct insn_ea *ea;
      int modreg;
 {
-    int word, extword, idx;
+    int extword, idx;
     int basedisp, outerdisp;
     int bd_size, od_size;
     int sig;
 
-    extword = fusword(frame->f_pc + insn->is_advance);
+    extword = fusword((void *) (frame->f_pc + insn->is_advance));
     if (extword < 0) {
 	return SIGSEGV;
     }
@@ -291,7 +294,7 @@ fpu_load_ea(frame, insn, ea, dst)
     int *reg;
     char *src;
     int len, step;
-    int data, word, sig;
+    int sig;
 
 #ifdef	DIAGNOSTIC
     if (ea->ea_regnum & ~0xF) {
@@ -300,7 +303,7 @@ fpu_load_ea(frame, insn, ea, dst)
 #endif
 
     if (fpu_debug_level & DL_LOADEA) {
-	printf("  load_ea: frame at %08x\n", frame);
+	printf("  load_ea: frame at %p\n", frame);
     }
     /* The dst is always int or larger. */
     len = insn->is_datasize;
@@ -331,7 +334,7 @@ fpu_load_ea(frame, insn, ea, dst)
 	    }
 	}
 	if (fpu_debug_level & DL_LOADEA) {
-	    printf("  load_ea: src 0x%08x\n", src);
+	    printf("  load_ea: src %p\n", src);
 	}
 	bcopy(src, dst, len);
     } else if (ea->ea_flags & EA_IMMED) {
@@ -363,7 +366,7 @@ fpu_load_ea(frame, insn, ea, dst)
 	       extention word from the opcode */
 	    src = (char *)frame->f_pc + 4;
 	    if (fpu_debug_level & DL_LOADEA) {
-		printf("  load_ea: pc relative pc+4 = 0x%08x\n", src);
+		printf("  load_ea: pc relative pc+4 = %p\n", src);
 	    }
 	} else /* not PC relative */ {
 	    if (fpu_debug_level & DL_LOADEA) {
@@ -384,7 +387,7 @@ fpu_load_ea(frame, insn, ea, dst)
 	    /* Grab the register contents. */
 	    src = (char *)*reg;
 	    if (fpu_debug_level & DL_LOADEA) {
-		printf("  load_ea: reg indirect reg = 0x%08x\n", src);
+		printf("  load_ea: reg indirect reg = %p\n", src);
 	    }
 	}
 
@@ -429,7 +432,7 @@ fpu_store_ea(frame, insn, ea, src)
     int *reg;
     char *dst;
     int len, step;
-    int data, word, sig;
+    int sig;
 
 #ifdef	DIAGNOSTIC
     if (ea->ea_regnum & ~0xF) {
@@ -446,7 +449,7 @@ fpu_store_ea(frame, insn, ea, src)
     }
 
     if (fpu_debug_level & DL_STOREEA) {
-	printf("  store_ea: frame at %08x\n", frame);
+	printf("  store_ea: frame at %p\n", frame);
     }
     /* The src is always int or larger. */
     len = insn->is_datasize;
@@ -484,7 +487,7 @@ fpu_store_ea(frame, insn, ea, src)
 	    }
 	}
 	if (fpu_debug_level & DL_STOREEA) {
-	    printf("  store_ea: dst 0x%08x\n", dst);
+	    printf("  store_ea: dst %p\n", dst);
 	}
 	bcopy(src, dst, len);
     } else /* One of MANY indirect forms... */ {
@@ -510,7 +513,7 @@ fpu_store_ea(frame, insn, ea, src)
 	    return sig;
 
 	if (fpu_debug_level & DL_STOREEA) {
-	    printf("  store_ea: dst addr=0x%08x+%d\n", dst, ea->ea_tdisp);
+	    printf("  store_ea: dst addr=%p+%d\n", dst, ea->ea_tdisp);
 	}
 	copyout(src, dst + ea->ea_tdisp, len);
 
@@ -543,7 +546,7 @@ fetch_immed(frame, insn, dst)
     ext_bytes = insn->is_datasize;
 
     if (0 < ext_bytes) {
-	data = fusword(frame->f_pc + insn->is_advance);
+	data = fusword((void *) (frame->f_pc + insn->is_advance));
 	if (data < 0) {
 	    return SIGSEGV;
 	}
@@ -564,7 +567,7 @@ fetch_immed(frame, insn, dst)
 	dst[0] = data;
     }
     if (2 < ext_bytes) {
-	data = fusword(frame->f_pc + insn->is_advance);
+	data = fusword((void *) (frame->f_pc + insn->is_advance));
 	if (data < 0) {
 	    return SIGSEGV;
 	}
@@ -573,12 +576,12 @@ fetch_immed(frame, insn, dst)
 	dst[0] |= data;
     }
     if (4 < ext_bytes) {
-	data = fusword(frame->f_pc + insn->is_advance);
+	data = fusword((void *) (frame->f_pc + insn->is_advance));
 	if (data < 0) {
 	    return SIGSEGV;
 	}
 	dst[1] = data << 16;
-	data = fusword(frame->f_pc + insn->is_advance + 2);
+	data = fusword((void *) (frame->f_pc + insn->is_advance + 2));
 	if (data < 0) {
 	    return SIGSEGV;
 	}
@@ -586,12 +589,12 @@ fetch_immed(frame, insn, dst)
 	dst[1] |= data;
     }
     if (8 < ext_bytes) {
-	data = fusword(frame->f_pc + insn->is_advance);
+	data = fusword((void *) (frame->f_pc + insn->is_advance));
 	if (data < 0) {
 	    return SIGSEGV;
 	}
 	dst[2] = data << 16;
-	data = fusword(frame->f_pc + insn->is_advance + 2);
+	data = fusword((void *) (frame->f_pc + insn->is_advance + 2));
 	if (data < 0) {
 	    return SIGSEGV;
 	}
@@ -614,7 +617,7 @@ fetch_disp(frame, insn, size, res)
     int disp, word;
 
     if (size == 1) {
-	word = fusword(frame->f_pc + insn->is_advance);
+	word = fusword((void *) (frame->f_pc + insn->is_advance));
 	if (word < 0) {
 	    return SIGSEGV;
 	}
@@ -625,12 +628,12 @@ fetch_disp(frame, insn, size, res)
 	}
 	insn->is_advance += 2;
     } else if (size == 2) {
-	word = fusword(frame->f_pc + insn->is_advance);
+	word = fusword((void *) (frame->f_pc + insn->is_advance));
 	if (word < 0) {
 	    return SIGSEGV;
 	}
 	disp = word << 16;
-	word = fusword(frame->f_pc + insn->is_advance + 2);
+	word = fusword((void *) (frame->f_pc + insn->is_advance + 2));
 	if (word < 0) {
 	    return SIGSEGV;
 	}
@@ -655,10 +658,10 @@ calc_ea(ea, ptr, eaddr)
      char *ptr;		/* base address (usually a register content) */
      char **eaddr;	/* pointer to result pointer */
 {
-    int data, word, sig;
+    int data, word;
 
     if (fpu_debug_level & DL_EA) {
-	printf("  calc_ea: reg indirect (reg) = 0x%08x\n", ptr);
+	printf("  calc_ea: reg indirect (reg) = %p\n", ptr);
     }
 
     if (ea->ea_flags & EA_OFFSET) {
@@ -683,7 +686,7 @@ calc_ea(ea, ptr, eaddr)
 	    if (fpu_debug_level & DL_EA) {
 		printf("  calc_ea: mem indir mode: basedisp=%08x, outerdisp=%08x\n",
 		       ea->ea_basedisp, ea->ea_outerdisp);
-		printf("  calc_ea: addr fetched from 0x%08x\n", ptr);
+		printf("  calc_ea: addr fetched from %p\n", ptr);
 	    }
 	    /* memory indirect modes */
 	    word = fusword(ptr);

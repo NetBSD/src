@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_rem.c,v 1.1 1995/11/03 04:47:17 briggs Exp $	*/
+/*	$NetBSD: fpu_rem.c,v 1.2 1996/04/30 11:52:36 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -92,7 +92,7 @@ __fpu_modrem(fe, modrem)
     static struct fpn X, Y;
     struct fpn *x, *y, *r;
     u_int signX, signY, signQ;
-    int i, j, k, l, q;
+    int j, k, l, q;
     int Last_Subtract;
 
     CPYFPN(&X, &fe->fe_f1);
@@ -152,8 +152,6 @@ __fpu_modrem(fe, modrem)
 	    q += q;
 	    r->fp_exp++;
 	}
-	/* Step 9 */
-	
     }
  Step4:
     Last_Subtract = 0;
@@ -165,9 +163,9 @@ __fpu_modrem(fe, modrem)
      */
     /* Step 5.1 */
     if (r->fp_exp + 1 < y->fp_exp ||
-	r->fp_exp + 1 == y->fp_exp &&
-	(r->fp_mant[0] < y->fp_mant[0] || r->fp_mant[1] < y->fp_mant[1] ||
-	 r->fp_mant[2] < y->fp_mant[3] || r->fp_mant[4] < y->fp_mant[4]))
+	(r->fp_exp + 1 == y->fp_exp &&
+	 (r->fp_mant[0] < y->fp_mant[0] || r->fp_mant[1] < y->fp_mant[1] ||
+	  r->fp_mant[2] < y->fp_mant[3] || r->fp_mant[4] < y->fp_mant[4])))
 	/* if r < y/2 */
 	goto Step6;
     /* Step 5.2 */
@@ -208,16 +206,6 @@ __fpu_modrem(fe, modrem)
 	fe->fe_fpsr =
 	    (fe->fe_fpsr & ~FPSR_QTT) | (q << 16);
     return r;
-
- Step9:
-    fe->fe_f1.fp_class = FPC_ZERO;
-    q++;
-    q &= 0x7f;
-    q |= (signQ << 7);
-    fe->fe_fpframe->fpf_fpsr =
-	fe->fe_fpsr =
-	    (fe->fe_fpsr & ~FPSR_QTT) | (q << 16);
-    return &fe->fe_f1;
 }
 
 struct fpn *
