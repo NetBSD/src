@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.49 2004/07/22 21:56:58 mycroft Exp $	*/
+/*	$NetBSD: wivar.h,v 1.50 2004/08/05 22:57:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -37,8 +37,8 @@
 #define WI_RX_RADIOTAP_PRESENT	((1 << IEEE80211_RADIOTAP_FLAGS) | \
 				 (1 << IEEE80211_RADIOTAP_RATE) | \
 				 (1 << IEEE80211_RADIOTAP_CHANNEL) | \
-				 (1 << IEEE80211_RADIOTAP_DBM_ANTSIGNAL) | \
-				 (1 << IEEE80211_RADIOTAP_DBM_ANTNOISE))
+				 (1 << IEEE80211_RADIOTAP_DB_ANTSIGNAL) | \
+				 (1 << IEEE80211_RADIOTAP_DB_ANTNOISE))
 
 struct wi_rx_radiotap_header {
 	struct ieee80211_radiotap_header	wr_ihdr;
@@ -177,8 +177,6 @@ struct wi_node {
 #define	WI_PRISM_DBM_OFFSET	100	/* XXX */
 
 #define	WI_LUCENT_DBM_OFFSET	149
-
-#define	WI_RSSI_TO_DBM(sc, rssi) ((rssi) - (sc)->sc_dbm_offset)
 
 #define	WI_SCAN_INQWAIT			3	/* wait sec before inquire */
 #define	WI_SCAN_WAIT			5	/* maximum scan wait */
