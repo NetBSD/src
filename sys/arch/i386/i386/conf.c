@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.56 1994/12/16 04:19:13 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.57 1995/01/25 04:48:16 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -101,7 +101,7 @@ int	lkmenodev();
 #include "st.h"
 #include "cd.h"
 #include "mcd.h"
-#include "vn.h"
+#include "vnd.h"
 
 bdev_decl(wd);
 #define	fdopen	Fdopen	/* conflicts with fdopen() in kern_descrip.c */
@@ -114,7 +114,7 @@ bdev_decl(sd);
 bdev_decl(st);
 bdev_decl(cd);
 bdev_decl(mcd);
-bdev_decl(vn);
+bdev_decl(vnd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -136,7 +136,7 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(), /* 11 */
 	bdev_lkm_dummy(), /* 12 */
 	bdev_lkm_dummy(), /* 13 */
-	bdev_disk_init(NVN,vn),		/* 14: vnode disk driver */
+	bdev_disk_init(NVND,vnd),	/* 14: vnode disk driver */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -310,7 +310,7 @@ cdev_decl(sd);
 cdev_decl(st);
 cdev_decl(cd);
 cdev_decl(mcd);
-cdev_decl(vn);
+cdev_decl(vnd);
 
 #include "pc.h"
 #include "vt.h"
@@ -418,7 +418,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NCY,cy),		/* 38: Cyclom serial port */
 	cdev_disk_init(NMCD,mcd),	/* 39: Mitsumi CD-ROM */
 	cdev_tun_init(NTUN,tun),	/* 40: network tunnel */
-	cdev_disk_init(NVN,vn),		/* 41: vnode disk driver */
+	cdev_disk_init(NVND,vnd),	/* 41: vnode disk driver */
 	cdev_audio_init(NAUDIO,audio),	/* 42: generic audio I/O */
 #ifdef COMPAT_SVR4
 	cdev_svr4_net_init(1,svr4_net),	/* 43: svr4 net pseudo-device */

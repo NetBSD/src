@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.17 1995/01/21 05:31:17 briggs Exp $	*/
+/*	$NetBSD: conf.c,v 1.18 1995/01/25 04:48:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -160,12 +160,12 @@ bdev_decl(no);	/* dummy declarations */
 #include "sd.h"
 #include "cd.h"
 #include "ch.h"
-#include "vn.h"
+#include "vnd.h"
 
 bdev_decl(st);
 bdev_decl(sd);
 bdev_decl(cd);
-bdev_decl(vn);
+bdev_decl(vnd);
 
 #ifdef LKM
 int	lkmenodev();
@@ -180,22 +180,22 @@ int	lkmenodev();
 
 struct bdevsw	bdevsw[] =
 {
-	bdev_notdef(),         	/* 0: */
-	bdev_notdef(),		/* 1: */
-	bdev_notdef(),         	/* 2: */
-	bdev_swap_init(),	/* 3: swap pseudo-device */
-	bdev_disk_init(NSD,sd),	/* 4: scsi disk */
-	bdev_tape_init(NST,st),	/* 5: scsi tape */
-	bdev_cd_init(NCD,cd),	/* 6: scsi CD driver */
-	bdev_notdef(),         	/* 7: */
-	bdev_disk_init(NVN,vn),	/* 8: vnode disk driver. */
-	bdev_notdef(),		/* 9: */
-	LKM_BDEV(),		/* 10: Empty slot for LKM */
-	LKM_BDEV(),		/* 11: Empty slot for LKM */
-	LKM_BDEV(),		/* 12: Empty slot for LKM */
-	LKM_BDEV(),		/* 13: Empty slot for LKM */
-	LKM_BDEV(),		/* 14: Empty slot for LKM */
-	LKM_BDEV(),		/* 15: Empty slot for LKM */
+	bdev_notdef(),         		/* 0: */
+	bdev_notdef(),			/* 1: */
+	bdev_notdef(),         		/* 2: */
+	bdev_swap_init(),		/* 3: swap pseudo-device */
+	bdev_disk_init(NSD,sd),		/* 4: scsi disk */
+	bdev_tape_init(NST,st),		/* 5: scsi tape */
+	bdev_cd_init(NCD,cd),		/* 6: scsi CD driver */
+	bdev_notdef(),        	 	/* 7: */
+	bdev_disk_init(NVND,vnd),	/* 8: vnode disk driver. */
+	bdev_notdef(),			/* 9: */
+	LKM_BDEV(),			/* 10: Empty slot for LKM */
+	LKM_BDEV(),			/* 11: Empty slot for LKM */
+	LKM_BDEV(),			/* 12: Empty slot for LKM */
+	LKM_BDEV(),			/* 13: Empty slot for LKM */
+	LKM_BDEV(),			/* 14: Empty slot for LKM */
+	LKM_BDEV(),			/* 15: Empty slot for LKM */
 };
 
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
@@ -436,9 +436,9 @@ cdev_decl(clock);
 	dev_init(c,n,map), \
 	0 }
 
-cdev_decl(vn);
+cdev_decl(vnd);
 /* open, read, write, ioctl -- XXX should be a disk */
-#define	cdev_vn_init(c,n) { \
+#define	cdev_vnd_init(c,n) { \
 	dev_init(c,n,open), \
 	(dev_type_close((*))) nullop, \
 	dev_init(c,n,read), \
@@ -551,7 +551,7 @@ struct cdevsw	cdevsw[] =
 /*	cdev_disk_init(NCH,ch),		 17: scsi changer device */
 	cdev_notdef(),			/* 17: until we find chstrategy... */
 	cdev_clock_init(NCLOCK,clock),	/* 18: mapped clock */
-	cdev_vn_init(NVN,vn),		/* 19: vnode disk */
+	cdev_vnd_init(NVND,vnd),	/* 19: vnode disk */
 	cdev_tape_init(NST,st),		/* 20: exabyte tape */
 	cdev_fd_init(1,fd),		/* 21: file descriptor pseudo-dev */
 	cdev_bpf_init(NBPFILTER,bpf),	/* 22: berkeley packet filter */
