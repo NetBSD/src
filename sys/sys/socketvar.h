@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.28 1998/03/01 02:24:14 fvdl Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.29 1998/04/25 17:32:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -40,6 +40,10 @@
 
 #include <sys/select.h>			/* for struct selinfo */
 #include <sys/queue.h>
+
+#ifndef _KERNEL
+struct uio;
+#endif
 
 TAILQ_HEAD(soqhead, socket);
 
@@ -99,11 +103,19 @@ struct socket {
 #define	SB_WAIT		0x04		/* someone is waiting for data/space */
 #define	SB_SEL		0x08		/* someone is selecting */
 #define	SB_ASYNC	0x10		/* ASYNC I/O, need signals */
+#define	SB_UPCALL	0x20		/* someone wants an upcall */
 #define	SB_NOINTR	0x40		/* operations not interruptible */
 
 	void	*so_internal;		/* Space for svr4 stream data */
 	void	(*so_upcall) __P((struct socket *so, caddr_t arg, int waitf));
 	caddr_t	so_upcallarg;		/* Arg for above */
+	int	(*so_send) __P((struct socket *so, struct mbuf *addr,
+				struct uio *uio, struct mbuf *top,
+				struct mbuf *control, int flags));
+	int	(*so_receive) __P((struct socket *so, struct mbuf **paddr,
+				   struct uio *uio, struct mbuf **mp0,
+				   struct mbuf **controlp, int *flagsp));
+
 };
 
 /*
@@ -129,7 +141,7 @@ struct socket {
 /*
  * Do we need to notify the other side when I/O is possible?
  */
-#define	sb_notify(sb)	(((sb)->sb_flags & (SB_WAIT|SB_SEL|SB_ASYNC)) != 0)
+#define	sb_notify(sb)	(((sb)->sb_flags & (SB_WAIT|SB_SEL|SB_ASYNC|SB_UPCALL)) != 0)
 
 /*
  * How much space is there in a socket buffer (so->so_snd or so->so_rcv)?
@@ -193,12 +205,15 @@ struct socket {
 	} \
 }
 
-#define	sorwakeup(so)	{ sowakeup((so), &(so)->so_rcv); \
-			  if ((so)->so_upcall) \
-			    (*((so)->so_upcall))((so), (so)->so_upcallarg, M_DONTWAIT); \
-			}
+#define	sorwakeup(so)	do { \
+			  if (sb_notify(&(so)->so_rcv)) \
+			    sowakeup((so), &(so)->so_rcv); \
+			} while (0)
 
-#define	sowwakeup(so)	sowakeup((so), &(so)->so_snd)
+#define	sowwakeup(so)	do { \
+			  if (sb_notify(&(so)->so_snd)) \
+			    sowakeup((so), &(so)->so_snd); \
+			} while (0)
 
 #ifdef _KERNEL
 u_long	sb_max;
