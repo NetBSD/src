@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.109 1999/01/11 21:04:38 jwise Exp $
+#	$NetBSD: rc,v 1.110 1999/01/12 04:58:37 jwise Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -367,7 +367,9 @@ echo -n standard daemons:
 if checkyesno update; then
 	echo -n ' update';		update $update_flags
 fi
-echo -n ' cron';		cron
+if checkyesno cron; then
+	echo -n ' cron';		cron
+fi
 echo '.'
 
 # now start all the other daemons
