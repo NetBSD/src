@@ -40,7 +40,7 @@ __COPYRIGHT(
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";*/
-__RCSID("$Id: portmap.c,v 1.8 1997/08/25 22:44:43 lukem Exp $");
+__RCSID("$Id: portmap.c,v 1.9 1997/09/24 13:22:06 pk Exp $");
 #endif /* not lint */
 
 /*
@@ -562,7 +562,7 @@ reap(dummy)
 {
 	int save_errno = errno;
 
-	while (wait3(NULL, WNOHANG, NULL) != -1)
+	while (wait3(NULL, WNOHANG, NULL) > 0)
 		;
 	errno = save_errno;
 }
