@@ -1,4 +1,4 @@
-/*	$NetBSD: tms320av110.c,v 1.3 1997/10/19 20:21:49 is Exp $	*/
+/*	$NetBSD: tms320av110.c,v 1.4 1997/10/19 20:46:32 is Exp $	*/
 
 /*-
  * Copyright (c) 1997 Ignatios Souvatzis. All rights reserved.
@@ -165,7 +165,7 @@ tms320av110_intr(p)
 struct audio_encoding tav_encodings[] = {
 	{0, AudioEmpeg_l2_stream, AUDIO_ENCODING_MPEG_L2_STREAM, 1, 0,},
 	{1, AudioEmpeg_l2_packets, AUDIO_ENCODING_MPEG_L2_PACKETS, 1, 0,},
-	{2, AudioEmpeg_l2_stream, AUDIO_ENCODING_MPEG_L2_SYSTEM, 1, 0,},
+	{2, AudioEmpeg_l2_system, AUDIO_ENCODING_MPEG_L2_SYSTEM, 1, 0,},
 	{3, AudioEslinear_be, AUDIO_ENCODING_SLINEAR_BE, 16, 0,},
 };
 
