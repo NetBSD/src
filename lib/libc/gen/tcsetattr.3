@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)tcsetattr.3	5.2 (Berkeley) 3/4/92
-.\"	$Id: tcsetattr.3,v 1.2 1993/07/30 08:39:39 mycroft Exp $
+.\"	$Id: tcsetattr.3,v 1.3 1993/11/30 00:50:58 jtc Exp $
 .\"
 .Dd "March 4, 1992"
 .Dt TCSETATTR 3
@@ -259,7 +259,8 @@ the output baud rate.
 If
 .Nm tcsetattr
 is unable able to make any of the requested changes, it returns -1 and
-sets errno.
+sets 
+.Va errno .
 Otherwise, it makes all of the requested changes it can.
 If the specified input and output baud rates differ and are a combination
 that is not supported, neither baud rate is changed.
