@@ -1,4 +1,4 @@
-/*	$NetBSD: bim.c,v 1.7 1997/11/16 07:35:52 phil Exp $	*/
+/*	$NetBSD: bim.c,v 1.8 1998/11/12 16:19:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Philip A. Nelson.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bim.c,v 1.7 1997/11/16 07:35:52 phil Exp $");
+__RCSID("$NetBSD: bim.c,v 1.8 1998/11/12 16:19:47 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: bim.c,v 1.7 1997/11/16 07:35:52 phil Exp $");
 #include <stdio.h>
 #include <string.h>
 
-#define DKTYPENAMES
+#define FSTYPENAMES
 #include <sys/disklabel.h>
 #include "images.h"
 

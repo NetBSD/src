@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.7 1997/10/13 09:53:29 bouyer Exp $	*/
+/*	$NetBSD: interact.c,v 1.8 1998/11/12 16:19:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.7 1997/10/13 09:53:29 bouyer Exp $");
+__RCSID("$NetBSD: interact.c,v 1.8 1998/11/12 16:19:48 christos Exp $");
 #endif /* lint */
 
 #include <stdio.h>
@@ -40,7 +40,7 @@ __RCSID("$NetBSD: interact.c,v 1.7 1997/10/13 09:53:29 bouyer Exp $");
 #include <util.h>
 #include <sys/types.h>
 #include <sys/param.h>
-#define DKTYPENAMES
+#define FSTYPENAMES
 #include <sys/disklabel.h>
 
 #include "extern.h"

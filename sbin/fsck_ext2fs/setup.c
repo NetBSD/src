@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.7 1998/07/26 20:27:20 mycroft Exp $	*/
+/*	$NetBSD: setup.c,v 1.8 1998/11/12 16:19:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,11 +39,11 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-__RCSID("$NetBSD: setup.c,v 1.7 1998/07/26 20:27:20 mycroft Exp $");
+__RCSID("$NetBSD: setup.c,v 1.8 1998/11/12 16:19:48 christos Exp $");
 #endif
 #endif /* not lint */
 
-#define DKTYPENAMES
+#define FSTYPENAMES
 #include <sys/param.h>
 #include <sys/time.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.19 1998/08/25 19:18:14 ross Exp $	*/
+/*	$NetBSD: fsck.c,v 1.20 1998/11/12 16:19:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -40,14 +40,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.19 1998/08/25 19:18:14 ross Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.20 1998/11/12 16:19:48 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/queue.h>
 #include <sys/wait.h>
-#define DKTYPENAMES
+#define FSTYPENAMES
+#define FSCKNAMES
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
 
