@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.3 2002/07/30 16:29:29 itojun Exp $	*/
+/*	$NetBSD: systrace.h,v 1.4 2002/10/05 08:00:52 tsutsui Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -35,6 +35,7 @@
 
 #include <sys/select.h>
 #include <sys/ioccom.h>
+#include <sys/lock.h>
 
 #define SYSTR_EMULEN	8	/* sync with sys proc */
 
