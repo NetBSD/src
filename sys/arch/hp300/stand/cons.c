@@ -38,11 +38,11 @@
  * from: Utah Hdr: cons.c 1.7 92/02/28
  * from: @(#)cons.c	8.1 (Berkeley) 6/10/93
  *
- * $Id: cons.c,v 1.4 1994/01/26 02:38:22 brezak Exp $
+ * $Id: cons.c,v 1.5 1994/02/19 17:55:20 hpeyerl Exp $
  */
 
 #include <sys/param.h>
-#include <hp300/hp300/cons.h>
+#include <dev/cons.h>
 #include "samachdep.h"
 
 #ifdef ITECONSOLE

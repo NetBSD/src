@@ -37,18 +37,18 @@
  *
  *	from: Utah Hdr: ite_rb.c 1.5 89/02/20
  *	from: @(#)ite_rb.c	7.2 (Berkeley) 12/16/90
- *	$Id: ite_rb.c,v 1.4 1994/01/26 02:38:44 brezak Exp $
+ *	$Id: ite_rb.c,v 1.5 1994/02/19 17:55:15 hpeyerl Exp $
  */
 
 #include "samachdep.h"
 
 #ifdef ITECONSOLE
 
-#include "sys/param.h"
-#include "../dev/itevar.h"
-#include "../dev/itereg.h"
-#include "../dev/grfvar.h"
-#include "../dev/grf_rbreg.h"
+#include <sys/param.h>
+#include <hp300/dev/itevar.h>
+#include <hp300/dev/itereg.h>
+#include <hp300/dev/grfvar.h>
+#include <hp300/dev/grf_rbreg.h>
 
 #define REGBASE		((struct rboxfb *)(ip->regbase))
 #define WINDOWMOVER	rbox_windowmove

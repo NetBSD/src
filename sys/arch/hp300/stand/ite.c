@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: ite.c 1.20 91/01/21
  *	from: @(#)ite.c	7.3 (Berkeley) 5/7/91
- *	$Id: ite.c,v 1.4 1994/01/26 02:38:38 brezak Exp $
+ *	$Id: ite.c,v 1.5 1994/02/19 17:55:17 hpeyerl Exp $
  */
 
 /*
@@ -47,11 +47,11 @@
 
 #ifdef ITECONSOLE
 
-#include "sys/param.h"
-#include "../hp300/cons.h"
-#include "../dev/device.h"
-#include "../dev/itevar.h"
-#include "../dev/grfvar.h"
+#include <sys/param.h>
+#include <dev/cons.h>
+#include <hp300/dev/device.h>
+#include <hp300/dev/itevar.h>
+#include <hp300/dev/grfvar.h>
 
 int nodev();
 

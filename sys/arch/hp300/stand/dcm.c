@@ -37,12 +37,12 @@
  *
  * from: @(#)dcm.c	8.1 (Berkeley) 6/10/93
  *
- * $Id: dcm.c,v 1.3 1994/01/26 02:38:28 brezak Exp $
+ * $Id: dcm.c,v 1.4 1994/02/19 17:55:19 hpeyerl Exp $
  */
 
 #ifdef DCMCONSOLE
 #include <sys/param.h>
-#include <hp300/hp300/cons.h>
+#include <dev/cons.h>
 #include <hp300/dev/device.h>
 #include <hp300/dev/dcmreg.h>
 

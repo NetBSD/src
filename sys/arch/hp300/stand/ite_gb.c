@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: ite_gb.c 1.8 89/02/23
  *	from: @(#)ite_gb.c	7.2 (Berkeley) 12/16/90
- *	$Id: ite_gb.c,v 1.4 1994/01/26 02:38:43 brezak Exp $
+ *	$Id: ite_gb.c,v 1.5 1994/02/19 17:55:14 hpeyerl Exp $
  */
 
 #include "samachdep.h"
@@ -46,10 +46,10 @@
 
 #include "sys/param.h"
 
-#include "../dev/itevar.h"
-#include "../dev/itereg.h"
-#include "../dev/grfvar.h"
-#include "../dev/grf_gbreg.h"
+#include <hp300/dev/itevar.h>
+#include <hp300/dev/itereg.h>
+#include <hp300/dev/grfvar.h>
+#include <hp300/dev/grf_gbreg.h>
 
 #define REGBASE		((struct gboxfb *)(ip->regbase))
 #define WINDOWMOVER	gatorbox_windowmove
