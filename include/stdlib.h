@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.27 1997/07/14 00:30:28 mikel Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.28 1997/10/16 23:24:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@ int	 cgetstr __P((char *, char *, char **));
 int	 cgetustr __P((char *, char *, char **));
 
 int	 daemon __P((int, int));
-char	*devname __P((int, int));
+char	*devname __P((dev_t, mode_t));
 int	 getloadavg __P((double [], int));
 
 long	 a64l __P((const char *));
