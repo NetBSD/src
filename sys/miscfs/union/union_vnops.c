@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.41 1998/04/11 08:51:12 veego Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.42 1998/06/05 19:53:00 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995 Jan-Simon Pendry.
@@ -1040,7 +1040,7 @@ union_fsync(v)
 			vn_lock(targetvp, LK_EXCLUSIVE | LK_RETRY);
 		else
 			FIXUP(VTOUNION(ap->a_vp));
-		error = VOP_FSYNC(targetvp, ap->a_cred, ap->a_waitfor, p);
+		error = VOP_FSYNC(targetvp, ap->a_cred, ap->a_flags, p);
 		if (dolock)
 			VOP_UNLOCK(targetvp, 0);
 	}

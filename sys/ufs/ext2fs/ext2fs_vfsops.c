@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.11 1998/03/18 15:57:26 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.12 1998/06/05 19:53:02 kleink Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -814,7 +814,8 @@ loop:
 			if (error == ENOENT)
 				goto loop;
 		}
-		if ((error = VOP_FSYNC(vp, cred, waitfor, p)) != 0)
+		if ((error = VOP_FSYNC(vp, cred,
+		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, p)) != 0)
 			allerror = error;
 		VOP_UNLOCK(vp, 0);
 		vrele(vp);
@@ -824,7 +825,8 @@ loop:
 	/*
 	 * Force stale file system control information to be flushed.
 	 */
-	if ((error = VOP_FSYNC(ump->um_devvp, cred, waitfor, p)) != 0)
+	if ((error = VOP_FSYNC(ump->um_devvp, cred,
+	    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, p)) != 0)
 		allerror = error;
 	/*
 	 * Write back modified superblock.
