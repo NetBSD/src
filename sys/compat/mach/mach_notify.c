@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_notify.c,v 1.9 2003/11/25 23:17:40 manu Exp $ */
+/*	$NetBSD: mach_notify.c,v 1.10 2003/12/03 18:40:07 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.9 2003/11/25 23:17:40 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.10 2003/12/03 18:40:07 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -58,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.9 2003/11/25 23:17:40 manu Exp $")
 #include <compat/mach/mach_message.h>
 #include <compat/mach/mach_services.h>
 
+#include <machine/mach_machdep.h>
+
 static void mach_siginfo_to_exception(const struct ksiginfo *, int *);
 
 void
@@ -72,9 +74,9 @@ mach_notify_port_destroyed(l, mr)
 		return;
 	mp = mr->mr_notify_destroyed->mr_port;
 
-#ifdef DEBUG_MACH
-	if (mp == NULL) {
-		printf("Warning: notification right without a port\n");
+#ifdef DIAGNOSTIC
+	if ((mp == NULL) || (mp->mp_recv == NULL)) {
+		printf("mach_notify_port_destroyed: bad port or receiver\n");
 		return;
 	}
 #endif
@@ -114,9 +116,11 @@ mach_notify_port_no_senders(l, mr)
 		return;
 	mp = mr->mr_notify_no_senders->mr_port;
 
-#ifdef DEBUG_MACH
-	if ((mp == NULL) || (mp->mp_datatype != MACH_MP_NOTIFY_SYNC)) {
-		printf("Warning: notification right without a port\n");
+#ifdef DIAGNOSTIC
+	if ((mp == NULL) || 
+	    (mp->mp_recv == NULL) ||
+	    (mp->mp_datatype != MACH_MP_NOTIFY_SYNC)) {
+		printf("mach_notify_port_no_senders: bad port or reciever\n");
 		return;
 	}
 #endif
@@ -157,9 +161,9 @@ mach_notify_port_dead_name(l, mr)
 		return;
 	mp = mr->mr_notify_no_senders->mr_port;
 
-#ifdef DEBUG_MACH
-	if (mp == NULL) {
-		printf("Warning: notification right without a port\n");
+#ifdef DIAGNOSTIC
+	if ((mp == NULL) || (mp->mp_recv)) {
+		printf("mach_notify_port_dead_name: bad port or reciever\n");
 		return;
 	}
 #endif
@@ -191,10 +195,9 @@ mach_notify_port_dead_name(l, mr)
 
 /* 
  * Exception handler 
- * Mach does not use signals, so mach_trapsignal will not try to send
- * any signal. But systems based on Mach (e.g.: Darwin), can use both 
- * Mach exceptions and UNIX signals. In order to allow the Mach layer 
- * to intercept the exception and inhibit UNIX signals, we have 
+ * Mach does not use signals. But systems based on Mach (e.g.: Darwin), 
+ * can use both Mach exceptions and UNIX signals. In order to allow the 
+ * Mach layer to intercept the exception and inhibit UNIX signals, we have 
  * mach_trapsignal1 returning an error. If it returns 0, then the 
  * exception was intercepted at the Mach level, and no signal should 
  * be produced. Else, a signal might be sent. darwin_trapinfo calls
@@ -205,7 +208,8 @@ mach_trapsignal(l, ksi)
 	struct lwp *l;
 	const struct ksiginfo *ksi;
 {
-	(void)mach_trapsignal1(l, ksi);
+	if (mach_trapsignal1(l, ksi) != 0)
+		trapsignal(l, ksi);
 	return;
 }
 
@@ -218,6 +222,10 @@ mach_trapsignal1(l, ksi)
 	struct mach_emuldata *med;
 	int exc_no;
 	int code[2];
+
+	/* Don't inhinbit non maskable signals */
+	if (sigprop[ksi->ksi_signo] & SA_CANTMASK)
+		return EINVAL;
 
 	med = (struct mach_emuldata *)p->p_emuldata;
 
@@ -264,9 +272,38 @@ mach_exception(l, exc, code)
 	struct mach_port *exc_port;
 	int error;
 
+	/* 
+	 * No exception if there is no exception port or if it has no receiver
+	 */
 	med = l->l_proc->p_emuldata;
-	if ((exc_port = med->med_exc[exc]) == NULL)
+	if (((exc_port = med->med_exc[exc]) == NULL) ||
+	    (exc_port->mp_recv == NULL))
 		return EINVAL;
+
+	/* 
+	 * XXX Avoid a nasty deadlock because process in TX state 
+	 * (traced and suspended) are invulnerable to kill -9. 
+	 *
+	 * The scenario:
+	 * - the parent gets Child's signals though Mach exceptions
+	 * - the parent is killed. Before calling the emulation hook
+	 *   mach_exit(), it will wait for the child
+	 * - the child receives SIGHUP, which is turned into a Mach
+	 *   exception. The child sleeps awaiting for the parent
+	 *   to tell it to continue. 
+	 *   For some reason I do not understand, it goes in the
+	 *   suspended state instead of the sleeping state.
+	 * - Parents waits for the child, child is suspended, we
+	 *   are stuck.
+	 *
+	 * By preventing exception to traced processes with
+	 * a dying parent, a signal is sent instead of the 
+	 * notification, this fixes the problem.
+	 */
+	if ((l->l_proc->p_flag & P_TRACED) &&
+	    (l->l_proc->p_pptr->p_flag & P_WEXIT)) {
+		return EINVAL;
+	}
 
 #ifdef DIAGNOSTIC
 	if (exc_port->mp_datatype != MACH_MP_EXC_FLAGS)
