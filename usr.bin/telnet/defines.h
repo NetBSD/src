@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)defines.h	5.1 (Berkeley) 9/14/90
- *	$Id: defines.h,v 1.2 1993/08/01 18:07:32 mycroft Exp $
+ *	from: @(#)defines.h	8.1 (Berkeley) 6/6/93
+ *	$Id: defines.h,v 1.3 1994/02/25 03:00:24 cgd Exp $
  */
 
 #define	settimer(x)	clocks.x = clocks.system++
