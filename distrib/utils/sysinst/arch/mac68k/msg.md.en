@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.14 2002/09/03 00:35:53 rnestor Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.15 2002/10/20 22:06:18 rnestor Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -60,8 +60,9 @@ partition structure with any disk formatter.  Partitions do not
 have to be defined as A/UX types; the NetBSD install process will
 allow you to redefine them as necessary.
 
-* Allow sysinst to initialize the Disk Partition Map for you. This
-will make the disk unbootable and/or unusable under MacOS.
+* Allow sysinst to initialize the Disk Partition Map for you. The
+disk will not be MacOS bootable and may not be usable by MacOS unless
+MacOS drivers are installed with a MacOS compatible disk formatter.
 
 }
 
@@ -92,9 +93,7 @@ the entire disk will delete the partition and may make the disk unusable
 under MacOS.  You should consider creating a single small MacOS HFS
 partition to insure that the disk can be mounted under MacOS.  This
 would be a good place to keep a copy of the NetBSD/mac68k Booter
-application used to boot NetBSD from MacOS.  Also, insuring that the
-disk can be mounted by MacOS may be useful for accessing the NetBSD
-portions of the disk from MacOS with applications like the (old) Installer.
+application used to boot NetBSD from MacOS.
 
 Are you really sure you want to overwrite the MacOS HFS partition(s)?
 }
@@ -109,10 +108,10 @@ The partition table currently looks like:
 message split_part
 {The disk partition you have selected will be split into two partitions.
 One will be an Apple_Scratch type partition and the other an Apple_Free
-type partition.  If the Apple_Free part is physically adjacent to another
+type partition.  You may then change either of the partitions into one of
+another type.  If the Apple_Free part is physically adjacent to another
 partition which is also an Apple_Free type, the two will be automatically
-merged into a single Apple_Free type partition.  You may then change
-either of the partitions into one of another type.
+merged into a single Apple_Free type partition. 
 
 There are %d disk blocks in the selected partition. Enter the number
 of disk blocks you would like allocated to the Apple_Scratch partition.
@@ -162,7 +161,8 @@ message label_error
 Any attempt to proceed will most likely result in damage to any pre-existing
 disk partitions. However your new Disk Partition Map has been written to
 the disk and will be available the next time NetBSD is booted. Please
-reboot immediately and restart the Installation Process.\n}
+reboot immediately and restart the Installation Process.
+}
  
 message mapdebug
 {Partition Map:
