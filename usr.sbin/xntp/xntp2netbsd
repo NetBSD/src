@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: xntp2netbsd,v 1.5 1997/04/20 21:53:19 christos Exp $
+#	$NetBSD: xntp2netbsd,v 1.6 1997/04/21 03:07:30 christos Exp $
 #
 #  Perl script to convert a standard distribution directory for xntp into
 #	a NetBSD source tree.
@@ -249,8 +249,8 @@ SUBDIR= ntpdate ntpq ntptrace xntpd xntpdc
 %% file usr.sbin/xntp/Makefile.inc
 %% NetBSD #
 CFLAGS += -I${.CURDIR}/../include -DHAVE_CONFIG_H
-LDADD += -lntp -lkvm
-DPADD += ${LIBNTP} ${LIBKVM}
+LDADD += -lntp
+DPADD += ${LIBNTP}
 BINDIR = /usr/sbin
 %% file usr.sbin/xntp/xntpd/Makefile
 %% NetBSD #
