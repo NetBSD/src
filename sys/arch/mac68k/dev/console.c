@@ -33,7 +33,7 @@
  */
 /*
  * The console device driver for Alice.
- * $Id: console.c,v 1.2 1993/11/29 00:32:25 briggs Exp $
+ * $Id: console.c,v 1.3 1993/12/06 04:27:52 briggs Exp $
  *
  * April 11th, 1992 LK
  *  Original
@@ -81,8 +81,8 @@ char serial_boot_echo=0;
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include "device.h"
-#include "../mac/cons.h"
-#include "../mac/myframe.h"
+#include "../mac68k/cons.h"
+#include "../mac68k/myframe.h"
 #include "../dev/serreg.h"
 #include "console.h"
 
@@ -788,7 +788,7 @@ static scrollup(int vtnum)
         case 9: CL; case 8: CL; case 7: CL;
         case 6: CL; case 5: CL; case 4: CL;
 	case 3: CL; case 2: CL; case 1: CL;
-	default:
+	default:;
       }
     }
     to += j;
@@ -922,7 +922,7 @@ static scrolldown(int vtnum)
         case 9: CL; case 8: CL; case 7: CL;
         case 6: CL; case 5: CL; case 4: CL;
 	case 3: CL; case 2: CL; case 1: CL;
-	default:
+	default:;
       }
     }
     to -= j;
