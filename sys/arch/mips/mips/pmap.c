@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.21 1997/06/17 01:38:21 jonathan Exp $	*/
+/*	$NetBSD: pmap.c,v 1.22 1997/06/19 06:30:47 mhitch Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -1545,7 +1545,7 @@ pmap_enter_pv(pmap, va, pa)
 					/*
 					 * Check cache aliasing incompatibility
 					 */
-					if((npv->pv_va & machCacheAliasMask) != (va & machCacheAliasMask)) {
+					if((npv->pv_va & mips_CacheAliasMask) != (va & mips_CacheAliasMask)) {
 						pmap_page_cache(pa,PV_UNCACHED);
 						MachFlushDCache(pv->pv_va, PAGE_SIZE);
 						*npte = (*npte & ~MIPS3_PG_CACHEMODE) | MIPS3_PG_UNCACHED;
