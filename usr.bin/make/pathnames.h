@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.9 2002/04/27 15:14:30 bjh21 Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.10 2002/09/14 15:23:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -35,7 +35,11 @@
  *	from: @(#)pathnames.h	5.2 (Berkeley) 6/1/90
  */
 
-#ifndef MAKE_BOOTSTRAP
+#ifdef MAKE_BOOTSTRAP
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+#else
 #include <paths.h>
 #endif
 
