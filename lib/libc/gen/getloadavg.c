@@ -1,4 +1,4 @@
-/*	$NetBSD: getloadavg.c,v 1.10 2000/01/22 22:19:10 mycroft Exp $	*/
+/*	$NetBSD: getloadavg.c,v 1.11 2000/06/26 15:37:28 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getloadavg.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getloadavg.c,v 1.10 2000/01/22 22:19:10 mycroft Exp $");
+__RCSID("$NetBSD: getloadavg.c,v 1.11 2000/06/26 15:37:28 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: getloadavg.c,v 1.10 2000/01/22 22:19:10 mycroft Exp $");
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/sysctl.h>
-#include <vm/vm_param.h>
+#include <uvm/uvm_param.h>
 
 #include <assert.h>
 #include <errno.h>
