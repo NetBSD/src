@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.96 2005/02/27 00:27:33 perry Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.97 2005/03/05 05:05:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.96 2005/02/27 00:27:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.97 2005/03/05 05:05:43 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -276,13 +276,6 @@ struct wm_softc {
 	struct evcnt sc_ev_rxtusum;	/* TCP/UDP cksums checked in-bound */
 	struct evcnt sc_ev_txipsum;	/* IP checksums comp. out-bound */
 	struct evcnt sc_ev_txtusum;	/* TCP/UDP cksums comp. out-bound */
-
-			/* m_pullup() needed for Tx offload */
-	struct evcnt sc_ev_txpullup_needed;
-			/* ...failed due to no memory */
-	struct evcnt sc_ev_txpullup_nomem;
-			/* ...failed due to lack of space in first mbuf */
-	struct evcnt sc_ev_txpullup_fail;
 
 	struct evcnt sc_ev_txseg[WM_NTXSEGS]; /* Tx packets w/ N segments */
 	struct evcnt sc_ev_txdrop;	/* Tx packets dropped (too many segs) */
@@ -1256,13 +1249,6 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	    NULL, sc->sc_dev.dv_xname, "txipsum");
 	evcnt_attach_dynamic(&sc->sc_ev_txtusum, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "txtusum");
-
-	evcnt_attach_dynamic(&sc->sc_ev_txpullup_needed, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txpullup needed");
-	evcnt_attach_dynamic(&sc->sc_ev_txpullup_nomem, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txpullup nomem");
-	evcnt_attach_dynamic(&sc->sc_ev_txpullup_fail, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txpullup fail");
 
 	for (i = 0; i < WM_NTXSEGS; i++) {
 		sprintf(wm_txseg_evcnt_names[i], "txseg%d", i);
