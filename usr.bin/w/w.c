@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.50 2002/08/22 14:52:55 christos Exp $	*/
+/*	$NetBSD: w.c,v 1.51 2002/09/16 01:49:06 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.50 2002/08/22 14:52:55 christos Exp $");
+__RCSID("$NetBSD: w.c,v 1.51 2002/09/16 01:49:06 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -197,14 +197,13 @@ main(int argc, char **argv)
 		errx(1, "%s", errbuf);
 
 	(void)time(&now);
-	if (wcmd) {
-#ifdef SUPPORT_UTMP
-		setutent();
+
+#ifdef SUPPORT_UTMPX
+	setutxent();
 #endif
 #ifdef SUPPORT_UTMP
-		setutxent();
+	setutent();
 #endif
-	}
 
 	if (*argv)
 		sel_user = *argv;
@@ -267,15 +266,12 @@ main(int argc, char **argv)
 	}
 #endif
 
-	if (wcmd) {
 #ifdef SUPPORT_UTMPX
-		endutxent();
+	endutxent();
 #endif
 #ifdef SUPPORT_UTMP
-		endutent();
+	endutent();
 #endif
-	} else
-		nusers = 1;
 
 	if (header || wcmd == 0) {
 		pr_header(&now, nusers);
