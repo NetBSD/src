@@ -159,7 +159,7 @@ chklerr2:
 	move.w	FPTEMP_EX(a6),d0
 	and.w	#$7FFF,d0	;ignore sign bit
 	cmp.w	#$4000,d0
-	bhs.w	store_max	;exponent out of range
+	bcc.w	store_max	;exponent out of range
 
 	move.l	FPTEMP_LO(a6),d0
 	and.l	#$7FFF0000,d0	;look for all 1's on bits 30-16
