@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.c,v 1.2 2000/04/22 15:49:32 simonb Exp $	*/
+/*	$NetBSD: ntp_config.c,v 1.3 2001/09/16 07:51:54 manu Exp $	*/
 
 /*
  * ntp_config.c - read and apply configuration information
@@ -477,7 +477,11 @@ int	config_priority_override = 0;
 int	config_priority;
 #endif
 
+#ifndef HAVE_CLOCKCTL
 static const char *ntp_options = "aAbc:dD:f:gk:l:Lmnp:P:r:s:t:v:V:x";
+#else
+static const char *ntp_options = "aAbc:dD:f:gi:k:l:Lmnp:P:r:s:t:u:v:V:x";
+#endif 
 
 #ifdef HAVE_NETINFO
 /*
@@ -676,6 +680,9 @@ getstartup(
 #if defined(HAVE_SCHED_SETSCHEDULER)
 		(void) fprintf(stderr, "\t\t[ -P fixed_process_priority ]\n");
 #endif
+#ifdef HAVE_CLOCKCTL
+		(void) fprintf(stderr, "\t\t[ -u user[:group] ] [ -i chrootdir ]\n");
+#endif
 		exit(2);
 	}
 	ntp_optind = 0;	/* reset ntp_optind to restart ntp_getopt */
@@ -830,7 +837,14 @@ getconfig(
 		    case 'g':
 			correct_any = TRUE;
 			break;
-
+#ifdef HAVE_CLOCKCTL
+		    case 'i':
+			if (!ntp_optarg)
+				errflg++;
+			else
+				chrootdir = ntp_optarg;
+			break;
+#endif
 		    case 'k':
 			getauthkeys(ntp_optarg);
 			break;
@@ -892,7 +906,17 @@ getconfig(
 				}
 			} while (0);
 			break;
-
+#ifdef HAVE_CLOCKCTL
+		    case 'u':
+			user = malloc(strlen(ntp_optarg) + 1);
+			if ((user == NULL) || (ntp_optarg == NULL))
+				errflg++;
+			(void) strncpy (user, ntp_optarg, strlen(ntp_optarg));
+			group = rindex (user, ':');
+			if (group)
+				*group++ = '\0'; /* get rid of the ':' */
+			break;
+#endif
 		    case 'v':
 		    case 'V':
 			set_sys_var(ntp_optarg, strlen(ntp_optarg)+1,
@@ -1979,6 +2003,7 @@ getconfig(
 		 */
 		do_resolve_internal();
 	}
+
 }
 
 

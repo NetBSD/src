@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.h,v 1.1.1.2 2000/04/22 14:52:45 simonb Exp $	*/
+/*	$NetBSD: ntpd.h,v 1.2 2001/09/16 07:51:54 manu Exp $	*/
 
 /*
  * ntpd.h - Prototypes for ntpd.
@@ -384,6 +384,11 @@ extern int	stats_control;		/* write stats to fileset? */
 extern volatile int debug;		/* debugging flag */
 extern int	nofork;			/* no-fork flag */
 extern int 	initializing;		/* initializing flag */
+#ifdef HAVE_CLOCKCTL
+extern char *user;			/* user to switch to */
+extern char *group;			/* group to switch to */
+extern char *chrootdir;			/* directory to chroot to */
+#endif
 
 /* refclock_conf.c */
 #ifdef REFCLOCK

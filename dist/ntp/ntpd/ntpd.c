@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.c,v 1.1.1.2 2000/04/22 14:53:23 simonb Exp $	*/
+/*	$NetBSD: ntpd.c,v 1.2 2001/09/16 07:51:55 manu Exp $	*/
 
 /*
  * ntpd.c - main program for the fixed point NTP daemon
@@ -94,6 +94,12 @@
 # include <sys/ci/ciioctl.h>
 #endif
 
+#ifdef HAVE_CLOCKCTL
+#include <ctype.h>
+#include <grp.h>
+#include <pwd.h>
+#endif 
+
 #ifdef PUBKEY
 #include "ntp_crypto.h"
 #endif /* PUBKEY */
@@ -139,6 +145,17 @@ volatile int debug;
  * No-fork flag.  If set, we do not become a background daemon.
  */
 int nofork;
+
+#ifdef HAVE_CLOCKCTL
+char *user = NULL;		/* User to switch to */
+char *group = NULL;		/* group to switch to */
+char *chrootdir = NULL;		/* directory to chroot to */
+int sw_uid;
+int sw_gid;
+char *endp;
+struct group *gr;
+struct passwd *pw;
+#endif /* HAVE_CLOCKCTL */
 
 /*
  * Initializing flag.  All async routines watch this and only do their
@@ -779,7 +796,64 @@ service_main(
 	}
 # endif  
 #endif
-
+#ifdef HAVE_CLOCKCTL
+	/* 
+	 * Drop super-user privileges and chroot  now on OSes that support 
+	 * non root users to set the clock. Currently only NetBSD.
+	 */
+	if (user != NULL) {
+	        if (isdigit((unsigned char)*user)) {
+	                sw_uid = (uid_t)strtoul(user, &endp, 0);
+	                if (*endp != '\0') 
+	                        goto getuser;
+	        } else {
+getuser:	
+	                if ((pw = getpwnam(user)) != NULL) {
+	                        sw_uid = pw->pw_uid;
+	                } else {
+	                        errno = 0;
+	                        msyslog(LOG_ERR, "Cannot find user `%s'", user);
+									exit (-1);
+	                }
+	        }
+	}
+	if (group != NULL) {
+	        if (isdigit((unsigned char)*group)) {
+	                sw_gid = (gid_t)strtoul(group, &endp, 0);
+	                if (*endp != '\0') 
+	                        goto getgroup;
+	        } else {
+getgroup:	
+	                if ((gr = getgrnam(group)) != NULL) {
+	                        sw_gid = pw->pw_gid;
+	                } else {
+	                        errno = 0;
+	                        msyslog(LOG_ERR, "Cannot find group `%s'", group);
+									exit (-1);
+	                }
+	        }
+	}
+	if (chrootdir && chroot(chrootdir)) {
+		msyslog(LOG_ERR, "Cannot chroot to `%s': %m", chrootdir);
+		exit (-1);
+	}
+	if (group && setgid(sw_gid)) {
+		msyslog(LOG_ERR, "Cannot setgid() to group `%s': %m", group);
+		exit (-1);
+	}
+	if (group && setegid(sw_gid)) {
+		msyslog(LOG_ERR, "Cannot setegid() to group `%s': %m", group);
+		exit (-1);
+	}
+	if (user && setuid(sw_uid)) {
+		msyslog(LOG_ERR, "Cannot setuid() to user `%s': %m", user);
+		exit (-1);
+	}
+	if (user && seteuid(sw_uid)) {
+		msyslog(LOG_ERR, "Cannot seteuid() to user `%s': %m", user);
+		exit (-1);
+	}
+#endif
 	/*
 	 * Report that we're up to any trappers
 	 */
