@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.12 2002/01/31 19:16:34 tv Exp $	*/
+/*	$NetBSD: dir.h,v 1.13 2002/02/06 15:44:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -76,8 +76,9 @@
  * Entries other than the first in a directory do not normally have
  * dp->d_ino set to 0.
  */
-#define DIRBLKSIZ	DEV_BSIZE
-#undef MAXNAMLEN
+#undef	DIRBLKSIZ
+#define	DIRBLKSIZ	DEV_BSIZE
+#undef	MAXNAMLEN
 #define	MAXNAMLEN	255
 
 struct	direct {
