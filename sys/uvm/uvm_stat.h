@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.34 2004/11/23 04:57:17 yamt Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.35 2004/11/23 05:08:33 yamt Exp $	*/
 
 /*
  *
@@ -155,7 +155,7 @@ do { \
 	int _i_, _s_ = splhigh(); \
 	simple_lock(&(NAME).l); \
 	_i_ = (NAME).f; \
-	(NAME).f = (_i_ + 1) % (NAME).n; \
+	(NAME).f = (_i_ + 1 < (NAME).n) ? _i_ + 1 : 0; \
 	simple_unlock(&(NAME).l); \
 	splx(_s_); \
 	if (!cold) \
