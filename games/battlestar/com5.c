@@ -1,4 +1,4 @@
-/*	$NetBSD: com5.c,v 1.15 2000/09/23 19:51:02 jsm Exp $	*/
+/*	$NetBSD: com5.c,v 1.16 2000/09/24 14:20:23 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com5.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com5.c,v 1.15 2000/09/23 19:51:02 jsm Exp $");
+__RCSID("$NetBSD: com5.c,v 1.16 2000/09/24 14:20:23 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -47,7 +47,8 @@ __RCSID("$NetBSD: com5.c,v 1.15 2000/09/23 19:51:02 jsm Exp $");
 void
 kiss()
 {
-	while (wordtype[++wordnumber] != NOUNS && wordnumber <= wordcount);
+	while (wordtype[++wordnumber] != NOUNS && wordnumber <= wordcount)
+		continue;
 	/* The goddess must be "taken" first if bathing. */
 	if (wordtype[wordnumber] == NOUNS && wordvalue[wordnumber] == NORMGOD
 	    && testbit(location[position].objects, BATHGOD)) {
@@ -99,7 +100,8 @@ love()
 {
 	int     n;
 
-	while (wordtype[++wordnumber] != NOUNS && wordnumber <= wordcount);
+	while (wordtype[++wordnumber] != NOUNS && wordnumber <= wordcount)
+		continue;
 	if (wordtype[wordnumber] == NOUNS) {
 		if ((testbit(location[position].objects, BATHGOD) ||
 		    testbit(location[position].objects, NORMGOD)) &&
@@ -266,7 +268,8 @@ give()
 
 	last1 = last2 = 0;
 	firstnumber = wordnumber;
-	while (wordtype[++wordnumber] != OBJECT && wordvalue[wordnumber] != AMULET && wordvalue[wordnumber] != MEDALION && wordvalue[wordnumber] != TALISMAN && wordnumber <= wordcount);
+	while (wordtype[++wordnumber] != OBJECT && wordvalue[wordnumber] != AMULET && wordvalue[wordnumber] != MEDALION && wordvalue[wordnumber] != TALISMAN && wordnumber <= wordcount)
+		continue;
 	if (wordnumber <= wordcount) {
 		obj = wordvalue[wordnumber];
 		if (obj == EVERYTHING)

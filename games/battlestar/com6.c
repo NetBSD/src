@@ -1,4 +1,4 @@
-/*	$NetBSD: com6.c,v 1.19 2000/09/22 08:19:21 jsm Exp $	*/
+/*	$NetBSD: com6.c,v 1.20 2000/09/24 14:20:24 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com6.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com6.c,v 1.19 2000/09/22 08:19:21 jsm Exp $");
+__RCSID("$NetBSD: com6.c,v 1.20 2000/09/24 14:20:24 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -206,7 +206,8 @@ ride()
 		puts("You climb onto the stallion and kick it in the guts.  The stupid steed launches");
 		puts("forward through bush and fern.  You are thrown and the horse gallops off.");
 		clearbit(location[position].objects, HORSE);
-		while (!(position = rnd(NUMOFROOMS + 1)) || !OUTSIDE || !beenthere[position] || location[position].flyhere);
+		while (!(position = rnd(NUMOFROOMS + 1)) || !OUTSIDE || !beenthere[position] || location[position].flyhere)
+			continue;
 		setbit(location[position].objects, HORSE);
 		if (location[position].north)
 			position = location[position].north;

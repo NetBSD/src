@@ -1,4 +1,4 @@
-/*	$NetBSD: com2.c,v 1.17 2000/09/24 09:46:57 jsm Exp $	*/
+/*	$NetBSD: com2.c,v 1.18 2000/09/24 14:20:23 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com2.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com2.c,v 1.17 2000/09/24 09:46:57 jsm Exp $");
+__RCSID("$NetBSD: com2.c,v 1.18 2000/09/24 14:20:23 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -273,7 +273,8 @@ murder()
 void
 ravage()
 {
-	while (wordtype[++wordnumber] != NOUNS && wordnumber <= wordcount);
+	while (wordtype[++wordnumber] != NOUNS && wordnumber <= wordcount)
+		continue;
 	if (wordtype[wordnumber] == NOUNS && (testbit(location[position].objects, wordvalue[wordnumber])
 	    || (wordvalue[wordnumber] == NORMGOD && testbit(location[position].objects, BATHGOD)))) {
 		ourtime++;
