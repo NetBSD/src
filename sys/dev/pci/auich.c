@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.19 2002/08/16 11:22:13 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.20 2002/08/28 10:51:03 dsainty Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.19 2002/08/16 11:22:13 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.20 2002/08/28 10:51:03 dsainty Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -696,7 +696,8 @@ auich_set_rate(struct auich_softc *sc, int mode, uint srate)
 
 	auich_write_codec(sc, AC97_REG_POWER, val);
 
-	rvalue = rate * sc->sc_ac97rate / FIXED_RATE;
+	/* Cast to avoid integer overflow */
+	rvalue = (u_int32_t)rate * sc->sc_ac97rate / FIXED_RATE;
 	return rvalue;
 }
 
