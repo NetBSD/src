@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.146 2001/12/04 18:38:09 christos Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.147 2001/12/08 04:10:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.146 2001/12/04 18:38:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.147 2001/12/08 04:10:00 lukem Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.146 2001/12/04 18:38:09 christos Exp
 #include <sys/vnode.h>
 #include <sys/dirent.h>
 #include <sys/fcntl.h>
+#include <sys/hash.h>
 #include <sys/lockf.h>
 #include <sys/stat.h>
 #include <sys/unistd.h>
@@ -2377,7 +2378,6 @@ nfs_readdirplusrpc(vp, uiop, cred)
 	struct componentname *cnp = &ndp->ni_cnd;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	struct nfsnode *dnp = VTONFS(vp), *np;
-	const unsigned char *hcp;
 	nfsfh_t *fhp;
 	u_quad_t fileno;
 	int error = 0, tlen, more_dirs = 1, blksiz = 0, doit, bigenough = 1, i;
@@ -2522,14 +2522,15 @@ nfs_readdirplusrpc(vp, uiop, cred)
 					newvp = NFSTOV(np);
 				}
 				if (!error) {
+				    const char *cp;
+
 				    nfs_loadattrcache(&newvp, &fattr, 0);
 				    dp->d_type =
 				        IFTODT(VTTOIF(np->n_vattr->va_type));
 				    ndp->ni_vp = newvp;
-				    cnp->cn_hash = 0;
-				    for (hcp = cnp->cn_nameptr, i = 1; i <= len;
-				        i++, hcp++)
-				        cnp->cn_hash += *hcp * i;
+				    cp = cnp->cn_nameptr + cnp->cn_namelen;
+				    cnp->cn_hash =
+					namei_hash(cnp->cn_nameptr, &cp);
 				    if (cnp->cn_namelen <= NCHNAMLEN)
 				        cache_enter(ndp->ni_dvp, ndp->ni_vp,
 						    cnp);

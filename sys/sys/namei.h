@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.24 2001/12/06 04:02:22 lukem Exp $	*/
+/*	$NetBSD: namei.h,v 1.25 2001/12/08 04:10:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -184,6 +184,7 @@ extern struct pool_cache pnbuf_cache;	/* pathname buffer cache */
 #define	PNBUF_PUT(pnb)	pool_cache_put(&pnbuf_cache, (pnb))
 
 int	namei __P((struct nameidata *ndp));
+uint32_t namei_hash __P((const char *, const char **));
 int	lookup __P((struct nameidata *ndp));
 int	relookup __P((struct vnode *dvp, struct vnode **vpp,
 		      struct componentname *cnp));
