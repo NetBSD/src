@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.28 1998/01/18 14:23:38 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.29 1998/01/18 22:09:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.28 1998/01/18 14:23:38 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.29 1998/01/18 22:09:42 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,7 @@ main(argc, argv)
 	cp = getenv("FTPSERVERPORT");
 	if (cp != NULL) {
 		port = strtol(cp, &ep, 10);
-		if (port < 1 || port > USHRT_MAX || *ep != '\0')
+		if (port < 1 || port > MAX_IN_PORT_T || *ep != '\0')
 			warnx("bad FTPSERVERPORT port number: %s (ignored)",
 			    cp);
 		else
@@ -194,7 +194,7 @@ main(argc, argv)
 
 		case 'P':
 			port = strtol(optarg, &ep, 10);
-			if (port < 1 || port > USHRT_MAX || *ep != '\0')
+			if (port < 1 || port > MAX_IN_PORT_T || *ep != '\0')
 				warnx("bad port number: %s (ignored)", optarg);
 			else
 				ftpport = htons((in_port_t)port);
