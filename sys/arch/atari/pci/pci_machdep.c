@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.24 2000/06/29 08:28:25 mrg Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.25 2000/09/28 06:32:10 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -65,7 +65,7 @@
  */
 #define PCI_MEM_START   0x00100000      /*   1 MByte */
 #define PCI_IO_START    0x00004000      /*  16 kByte (some PCI cards allow only
-					    I/O adresses up to 0xffff) */
+					    I/O addresses up to 0xffff) */
 
 /*
  * PCI memory and IO should be aligned acording to this masks
@@ -410,7 +410,7 @@ enable_pci_devices()
      * second step: calculate the memory and I/O adresses beginning from
      * PCI_MEM_START and PCI_IO_START. Care about already mapped areas.
      *
-     * beginn with memory list
+     * begin with memory list
      */
 
     address = PCI_MEM_START;
