@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.42 2003/11/19 18:06:13 christos Exp $	*/
+/*	$NetBSD: scan.l,v 1.43 2003/11/24 21:44:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -215,7 +215,7 @@ curdir_push(const char *fname)
 		sprintf(p, "%s/%s", cwd, d);
 	}
 	free(f);
-	pf = emalloc(sizeof(*pf));
+	pf = ecalloc(1, sizeof(*pf));
 	pf->pf_prefix = p;
 	SLIST_INSERT_HEAD(&curdirs, pf, pf_next);
 
@@ -332,7 +332,7 @@ include(const char *fname, int ateof, int conditional, int direct)
 		free(s);
 		return (-1);
 	}
-	in = emalloc(sizeof *in);
+	in = ecalloc(1, sizeof *in);
 	in->in_prev = incl;
 	in->in_buf = YY_CURRENT_BUFFER;
 	in->in_fname = yyfile;

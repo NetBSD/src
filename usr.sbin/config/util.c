@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.18 2003/09/19 06:19:56 itojun Exp $	*/
+/*	$NetBSD: util.c,v 1.19 2003/11/24 21:44:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,6 +58,19 @@ static void vxmsg(const char *fname, int line, const char *class,
      __attribute__((__format__(__printf__, 4, 0)));
 
 /*
+ * Calloc, with abort on error.
+ */
+void *
+ecalloc(size_t nelem, size_t size)
+{
+	void *p;
+
+	if ((p = calloc(nelem, size)) == NULL)
+		nomem();
+	return (p);
+}
+
+/*
  * Malloc, with abort on error.
  */
 void *
@@ -114,7 +127,7 @@ prefix_push(const char *path)
 	struct prefix *pf;
 	char *cp;
 
-	pf = emalloc(sizeof(struct prefix));
+	pf = ecalloc(1, sizeof(struct prefix));
 
 	if (! SLIST_EMPTY(&prefixes) && *path != '/') {
 		cp = emalloc(strlen(SLIST_FIRST(&prefixes)->pf_prefix) + 1 +
@@ -187,7 +200,7 @@ newnv(const char *name, const char *str, void *ptr, int i, struct nvlist *next)
 	struct nvlist *nv;
 
 	if ((nv = nvfreelist) == NULL)
-		nv = emalloc(sizeof(*nv));
+		nv = ecalloc(1, sizeof(*nv));
 	else
 		nvfreelist = nv->nv_next;
 	nv->nv_next = next;
