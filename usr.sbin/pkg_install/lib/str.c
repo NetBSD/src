@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.14.2.1 1999/04/12 02:55:47 hubertf Exp $	*/
+/*	$NetBSD: str.c,v 1.14.2.2 1999/08/22 18:19:47 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.14.2.1 1999/04/12 02:55:47 hubertf Exp $");
+__RCSID("$NetBSD: str.c,v 1.14.2.2 1999/08/22 18:19:47 he Exp $");
 #endif
 #endif
 
@@ -254,7 +254,7 @@ findmatchingname(const char *dir, const char *pattern, matchfn match, char *data
 		    strcmp(dp->d_name, "..") == 0)
 			continue;
 		
-		snprintf(tmp, FILENAME_MAX, "%s/%s", dir, dp->d_name);
+		(void) snprintf(tmp, sizeof(tmp), "%s/%s", dir, dp->d_name);
 		if (isfile(tmp)) /* pkgdb, ... */
 		    continue;
 		
