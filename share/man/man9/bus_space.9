@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_space.9,v 1.7 1998/02/06 06:16:20 perry Exp $
+.\" $NetBSD: bus_space.9,v 1.8 1998/07/07 06:40:34 ross Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -742,7 +742,7 @@ explicitly by drivers when necessary.  The
 function provides that ability.
 .Pp
 .Bl -ohang -compact
-.It Fn bus_space_barrier "space" "handle" "offset" "length" "count"
+.It Fn bus_space_barrier "space" "handle" "offset" "length" "flags"
 .Pp
 The
 .Fn bus_space_barrier
