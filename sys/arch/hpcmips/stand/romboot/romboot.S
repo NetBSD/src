@@ -1,4 +1,4 @@
-/*	$NetBSD: romboot.S,v 1.4 2002/02/11 19:10:30 uch Exp $	*/
+/*	$NetBSD: romboot.S,v 1.5 2002/02/13 12:02:49 shin Exp $	*/
 
 /*-
  * Copyright (c) 2001 Takao Shinohara.
@@ -93,6 +93,7 @@ _start:
 	bltu	a1, t2, 2b
 	addu	a1, 4			# BDSLOT
 
+	li	sp, KERNEL_LOADADDR	# initialize stack pointer
 	li	a0, 1			# argc = 1
 	addu	a1, sp, -16		# argv
 	la	t0, argv0
