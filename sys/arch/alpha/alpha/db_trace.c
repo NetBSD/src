@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.2 1999/05/31 20:42:15 ross Exp $ */
+/* $NetBSD: db_trace.c,v 1.3 1999/07/11 22:28:15 ross Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -7,6 +7,9 @@
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
  * NASA Ames Research Center.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Ross Harvey.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,10 +42,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.2 1999/05/31 20:42:15 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.3 1999/07/11 22:28:15 ross Exp $");
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/user.h>
 #include <machine/db_machdep.h>
 
 #include <alpha/alpha/db_instruction.h>
@@ -74,39 +79,28 @@ struct prologue_info {
  *		XentSys
  *		XentUna
  */
+
+extern void XentArith __P((void)), XentIF __P((void)), XentInt __P((void)),
+		XentMM __P((void)), XentSys __P((void)), XentUna __P((void)),
+		XentRestart __P((void));
+
 static struct special_symbol {
-	const char *ss_name;
-	db_addr_t ss_val;
+	void (*ss_val) __P((void));
+	const char *ss_note;
 } special_symbols[] = {
-	{ "XentArith",		0 },
-	{ "XentIF",		0 },
-	{ "XentInt",		0 },
-	{ "XentMM",		0 },
-	{ "XentSys",		0 },
-	{ "XentUna",		0 },
+	{ &XentArith,	"arithmetic trap" },
+	{ &XentIF,	"instruction fault" },
+	{ &XentInt,	"interrupt" },
+	{ &XentMM,	"memory management fault" },
+	{ &XentSys,	"syscall" },
+	{ &XentUna,	"unaligned access fault" },
+	{ &XentRestart,	"console restart" },
+	{ NULL }
 };
 
-#define	SYM_XentArith		0
-#define	SYM_XentIF		1
-#define	SYM_XentInt		2
-#define	SYM_XentMM		3
-#define	SYM_XentSys		4
-#define	SYM_XentUna		5
-#define	SYM_COUNT		6
-
-#define	SYM_IS_TRAPSYMBOL(v)						\
-	((v) == special_symbols[SYM_XentArith].ss_val ||		\
-	 (v) == special_symbols[SYM_XentIF].ss_val ||			\
-	 (v) == special_symbols[SYM_XentInt].ss_val ||			\
-	 (v) == special_symbols[SYM_XentMM].ss_val ||			\
-	 (v) == special_symbols[SYM_XentSys].ss_val ||			\
-	 (v) == special_symbols[SYM_XentUna].ss_val)
-
-static void init_special_symbols __P((void));
 static void decode_prologue __P((db_addr_t, db_addr_t, struct prologue_info *));
-
-static boolean_t special_symbols_initted;
-static boolean_t can_trace;
+static void decode_syscall(int, struct proc *);
+static int sym_is_trapsymbol __P((void *));
 
 void
 db_stack_trace_cmd(addr, have_addr, count, modif)
@@ -115,40 +109,70 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	struct prologue_info pi;
 	db_addr_t callpc, frame, symval;
+	struct prologue_info pi;
+	void *symval_f;
 	db_expr_t diff;
 	db_sym_t sym;
+	int i;
+	u_long tfps;
 	char *symname;
+	struct pcb *pcbp;
+	char c, *cp = modif;
 	struct trapframe *tf;
 	boolean_t ra_from_tf;
+	boolean_t ra_from_pcb;
+	u_long last_ipl = ~0L;
+	struct proc *p = NULL;
+	boolean_t trace_thread = FALSE;
+	boolean_t have_trapframe = FALSE;
 
-	if (special_symbols_initted == FALSE)
-		init_special_symbols();
-
-	if (can_trace == FALSE) {
-		db_printf("unable to perform back trace\n");
-		return;
-	}
-
+	while ((c = *cp++) != 0)
+		trace_thread |= c == 't';
 	if (count == -1)
 		count = 65535;
 
-	if (!have_addr)
+	if (!have_addr) {
+		p = curproc;
 		addr = DDB_REGS->tf_regs[FRAME_SP] - FRAME_SIZE * 8;
-	tf = (struct trapframe *)addr;
-
- have_trapframe:
-	frame = (db_addr_t)tf + FRAME_SIZE * 8;
-	callpc = tf->tf_regs[FRAME_PC];
-	ra_from_tf = TRUE;		/* get initial RA from here */
+		tf = (struct trapframe *)addr;
+		have_trapframe = 1;
+	} else {
+		if (trace_thread) {
+			db_printf ("trace: pid %d ", (int)addr);
+			p = pfind(addr);
+			if (p == NULL) {
+				db_printf("not found\n");
+				return;
+			}	
+			if ((p->p_flag & P_INMEM) == 0) {
+				db_printf("swapped out\n");
+				return;
+			}
+			pcbp = &p->p_addr->u_pcb;
+			addr = (db_expr_t)pcbp->pcb_hw.apcb_ksp;
+			callpc = pcbp->pcb_context[7];
+			db_printf("at 0x%lx\n", addr);
+		} else {
+			db_printf("alpha trace requires known PC =eject=\n");
+			return;
+		}
+		frame = addr;
+	}
 
 	while (count--) {
+		if (have_trapframe) {
+			frame = (db_addr_t)tf + FRAME_SIZE * 8;
+			callpc = tf->tf_regs[FRAME_PC];
+			ra_from_tf = TRUE;
+			have_trapframe = 0;
+		}
 		sym = db_search_symbol(callpc, DB_STGY_ANY, &diff);
 		if (sym == DB_SYM_NULL)
 			break;
 
 		db_symbol_values(sym, &symname, (db_expr_t *)&symval);
+		symval_f = (void *)symval;
 
 		if (callpc < symval) {
 			db_printf("symbol botch: callpc 0x%lx < "
@@ -191,41 +215,29 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		 * If we are in a trap vector, frame points to a
 		 * trapframe.
 		 */
-		if (SYM_IS_TRAPSYMBOL(symval)) {
+		if (sym_is_trapsymbol(symval_f)) {
 			tf = (struct trapframe *)frame;
 
-			if (symval == special_symbols[SYM_XentArith].ss_val)
-				db_printf("--- arithmetic trap ---\n");
+			for (i = 0; special_symbols[i].ss_val != NULL; ++i)
+				if (symval_f == special_symbols[i].ss_val)
+					db_printf("--- %s",
+					    special_symbols[i].ss_note);
 
-			if (symval == special_symbols[SYM_XentIF].ss_val)
-				db_printf("--- instruction fault ---\n");
-
-			if (symval == special_symbols[SYM_XentInt].ss_val)
-				db_printf("--- interrupt ---\n");
-
-			if (symval == special_symbols[SYM_XentMM].ss_val)
-				db_printf("--- memory management fault ---\n");
-
-			if (symval == special_symbols[SYM_XentSys].ss_val) {
-				/* Syscall number is in v0. */
-				db_printf("--- syscall (number %ld) ---\n",
-				    tf->tf_regs[FRAME_V0]);
+			tfps = tf->tf_regs[FRAME_PS];
+			if (symval_f == &XentSys)
+				decode_syscall(tf->tf_regs[FRAME_V0], p);
+			if ((tfps & ALPHA_PSL_IPL_MASK) != last_ipl) {
+				last_ipl = tfps & ALPHA_PSL_IPL_MASK;
+				if (symval_f != &XentSys)
+					db_printf(" (from ipl %ld)", last_ipl);
 			}
-
-			if (symval == special_symbols[SYM_XentUna].ss_val)
-				db_printf("--- unaligned access fault ---\n");
-
-			/*
-			 * Terminate the search if this frame returns to
-			 * usermode (i.e. this is the top of the kernel
-			 * stack).
-			 */
-			if (tf->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) {
+			db_printf(" ---\n");
+			if (tfps & ALPHA_PSL_USERMODE) {
 				db_printf("--- user mode ---\n");
-				break;
+				break;	/* Terminate search.  */
 			}
-
-			goto have_trapframe;
+			have_trapframe = 1;
+			continue;
 		}
 
 		/*
@@ -242,14 +254,15 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 			 * in a leaf call).  If not, we've found the
 			 * root of the call graph.
 			 */
-			if (ra_from_tf == FALSE) {
+			if (ra_from_tf)
+				callpc = tf->tf_regs[FRAME_RA];
+			else {
 				db_printf("--- root of call graph ---\n");
 				break;
 			}
-			callpc = tf->tf_regs[FRAME_RA];
 		} else
 			callpc = *(u_long *)(frame + pi.pi_reg_offset[26]);
-		ra_from_tf = FALSE;
+		ra_from_tf = ra_from_pcb = FALSE;
 #if 0
 		/*
 		 * The call was actually made at RA - 4; the PC is
@@ -325,26 +338,41 @@ do {									\
 	}
 }
 
-/*
- * Initialize the special symbols table.
- */
-static void
-init_special_symbols()
+static int
+sym_is_trapsymbol(v)
+	void *v;
 {
-	db_sym_t sym;
 	int i;
 
-	special_symbols_initted = TRUE;
-
-	for (i = 0; i < SYM_COUNT; i++) {
-		sym = db_lookup((char *)special_symbols[i].ss_name);
-		if (sym == DB_SYM_NULL)
-			break;
-		db_symbol_values(sym, NULL,
-		    (db_expr_t *)&special_symbols[i].ss_val);
-	}
-
-	/* Found all symbols, back traces are possible. */
-	can_trace = TRUE;
+	for (i = 0; special_symbols[i].ss_val != NULL; ++i)
+		if (v == special_symbols[i].ss_val)
+			return 1;
+	return 0;
 }
 
+static void
+decode_syscall(number, p)
+	int number;
+	struct proc *p;
+{
+	db_sym_t sym;
+	db_expr_t diff;
+	char *symname, *ename;
+	int (*f) __P((struct proc *, void *, register_t *));
+
+	db_printf(" (%d", number); /* ) */
+	if (!p)
+		goto out;
+	if (0 <= number && number <= p->p_emul->e_nsysent) {
+		ename = p->p_emul->e_name;
+		f = p->p_emul->e_sysent[number].sy_call;
+		sym = db_search_symbol((db_addr_t)f, DB_STGY_ANY, &diff);
+		if (sym == DB_SYM_NULL || diff != 0)
+			goto out;
+		db_symbol_values(sym, &symname, NULL);
+		db_printf(", %s.%s", ename, symname);
+	}
+out:
+	db_printf(")");
+	return;
+}
