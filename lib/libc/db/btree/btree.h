@@ -1,4 +1,4 @@
-/*	$NetBSD: btree.h,v 1.9 1996/05/03 21:51:00 cgd Exp $	*/
+/*	$NetBSD: btree.h,v 1.10 1998/11/06 19:42:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -107,7 +107,7 @@ typedef struct _page {
  * be manipulated without copying.  (This presumes that 32 bit items can be
  * manipulated on this system.)
  */
-#define	LALIGN(n)	(((n) + sizeof(pgno_t) - 1) & ~(sizeof(pgno_t) - 1))
+#define	BTLALIGN(n)	(((n) + sizeof(pgno_t) - 1) & ~(sizeof(pgno_t) - 1))
 #define	NOVFLSIZE	(sizeof(pgno_t) + sizeof(u_int32_t))
 
 /*
@@ -134,7 +134,7 @@ typedef struct _binternal {
 
 /* Get the number of bytes in the entry. */
 #define NBINTERNAL(len)							\
-	LALIGN(sizeof(u_int32_t) + sizeof(pgno_t) + sizeof(u_char) + (len))
+	BTLALIGN(sizeof(u_int32_t) + sizeof(pgno_t) + sizeof(u_char) + (len))
 
 /* Copy a BINTERNAL entry to the page. */
 #define	WR_BINTERNAL(p, size, pgno, flags) {				\
@@ -161,7 +161,7 @@ typedef struct _rinternal {
 
 /* Get the number of bytes in the entry. */
 #define NRINTERNAL							\
-	LALIGN(sizeof(recno_t) + sizeof(pgno_t))
+	BTLALIGN(sizeof(recno_t) + sizeof(pgno_t))
 
 /* Copy a RINTERAL entry to the page. */
 #define	WR_RINTERNAL(p, nrecs, pgno) {					\
@@ -187,7 +187,7 @@ typedef struct _bleaf {
 
 /* Get the number of bytes in the user's key/data pair. */
 #define NBLEAFDBT(ksize, dsize)						\
-	LALIGN(sizeof(u_int32_t) + sizeof(u_int32_t) + sizeof(u_char) +	\
+	BTLALIGN(sizeof(u_int32_t) + sizeof(u_int32_t) + sizeof(u_char) +	\
 	    (ksize) + (dsize))
 
 /* Copy a BLEAF entry to the page. */
@@ -219,7 +219,7 @@ typedef struct _rleaf {
 
 /* Get the number of bytes from the user's data. */
 #define	NRLEAFDBT(dsize)						\
-	LALIGN(sizeof(u_int32_t) + sizeof(u_char) + (dsize))
+	BTLALIGN(sizeof(u_int32_t) + sizeof(u_char) + (dsize))
 
 /* Copy a RLEAF entry to the page. */
 #define	WR_RLEAF(p, data, flags) {					\
