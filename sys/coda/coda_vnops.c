@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.11 1999/08/03 20:19:18 wrstuden Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.12 1999/09/18 05:31:42 matt Exp $	*/
 
 /*
  * 
@@ -56,6 +56,9 @@ symlink
 /*
  * HISTORY
  * $Log: coda_vnops.c,v $
+ * Revision 1.12  1999/09/18 05:31:42  matt
+ * Make this compile on alpha again.
+ *
  * Revision 1.11  1999/08/03 20:19:18  wrstuden
  * Add support for fcntl(2) to generate VOP_FCNTL calls. Any fcntl
  * call with F_FSCTL set and F_SETFL calls generate calls to a new
@@ -624,9 +627,10 @@ coda_rdwr(vp, uiop, rw, ioflag, cred, p)
 
     MARK_ENTRY(CODA_RDWR_STATS);
 
-    CODADEBUG(CODA_RDWR, myprintf(("coda_rdwr(%d, %p, %d, %qd, %d)\n", rw, 
-			      uiop->uio_iov->iov_base, uiop->uio_resid, 
-			      uiop->uio_offset, uiop->uio_segflg)); )
+    CODADEBUG(CODA_RDWR, myprintf(("coda_rdwr(%d, %p, %lu, %lld, %d)\n", rw, 
+			      uiop->uio_iov->iov_base,
+			      (unsigned long) uiop->uio_resid, 
+			      (long long) uiop->uio_offset, uiop->uio_segflg)); )
 	
     /* Check for rdwr of control object. */
     if (IS_CTL_VP(vp)) {
@@ -1927,7 +1931,7 @@ coda_readdir(v)
 
     MARK_ENTRY(CODA_READDIR_STATS);
 
-    CODADEBUG(CODA_READDIR, myprintf(("coda_readdir(%p, %d, %qd, %d)\n", uiop->uio_iov->iov_base, uiop->uio_resid, uiop->uio_offset, uiop->uio_segflg)); )
+    CODADEBUG(CODA_READDIR, myprintf(("coda_readdir(%p, %lu, %lld, %d)\n", uiop->uio_iov->iov_base, (unsigned long) uiop->uio_resid, (long long) uiop->uio_offset, uiop->uio_segflg)); )
 	
     /* Check for readdir of control object. */
     if (IS_CTL_VP(vp)) {
