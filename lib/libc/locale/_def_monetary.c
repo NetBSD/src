@@ -1,4 +1,4 @@
-/*	$NetBSD: _def_monetary.c,v 1.5 2001/01/02 10:53:25 kleink Exp $	*/
+/*	$NetBSD: _def_monetary.c,v 1.6 2001/02/09 10:55:48 wiz Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
@@ -18,20 +18,20 @@ const _MonetaryLocale _DefaultMonetaryLocale =
 	"",
 	"",
 	"",
-	CHAR_MAX,
-	CHAR_MAX,
-	CHAR_MAX,
-	CHAR_MAX,
-	CHAR_MAX,
-	CHAR_MAX,
-	CHAR_MAX,
-	CHAR_MAX,
-	CHAR_MAX,
-	CHAR_MAX,
-	CHAR_MAX,
-	CHAR_MAX,
-	CHAR_MAX,
-	CHAR_MAX
+	(char)CHAR_MAX,
+	(char)CHAR_MAX,
+	(char)CHAR_MAX,
+	(char)CHAR_MAX,
+	(char)CHAR_MAX,
+	(char)CHAR_MAX,
+	(char)CHAR_MAX,
+	(char)CHAR_MAX,
+	(char)CHAR_MAX,
+	(char)CHAR_MAX,
+	(char)CHAR_MAX,
+	(char)CHAR_MAX,
+	(char)CHAR_MAX,
+	(char)CHAR_MAX
 };
 
 const _MonetaryLocale *_CurrentMonetaryLocale = &_DefaultMonetaryLocale;
