@@ -1,4 +1,4 @@
-#	$NetBSD: COFFEE,v 1.8 1995/08/20 15:13:19 chopps Exp $
+#	$NetBSD: COFFEE,v 1.9 1995/09/30 01:54:00 chopps Exp $
 
 #
 # COFFEE - GENERIC but with GATEWAY and DEBUG
@@ -149,6 +149,7 @@ ite2		at grf2			# terminal emulators for grf's
 ite3		at grf3			# terminal emulators for grf's
 ite4		at grf4			# terminal emulators for grf's
 
+msc0		at zbus0		# A2232 MSC multiport serial.
 mfc0		at zbus0		# MultiFaceCard I/O board
 mfcs0		at mfc0 unit 0		# MFC serial
 mfcs1		at mfc0 unit 1		# MFC serial
