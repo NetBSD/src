@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1998/08/27 23:32:33 tv Exp $
+#	$NetBSD: Makefile,v 1.4 1999/01/07 05:56:30 itohy Exp $
 
 .if (${MACHINE_ARCH} != "powerpc")
 PROG=	strip
@@ -14,5 +14,7 @@ MAN=	strip.1
 STRIPFLAG:=
 realinstall: __installstrip
 __installstrip:
-	${STRIPPROG} ${DESTDIR}/${BINDIR}/strip
+	chmod 755 ${DESTDIR}${BINDIR}/strip
+	${STRIPPROG} ${DESTDIR}${BINDIR}/strip
+	chmod ${BINMODE} ${DESTDIR}${BINDIR}/strip
 .endif
