@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.5 1998/06/26 21:05:20 drochner Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.6 1998/07/24 16:12:18 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -58,10 +58,10 @@ pcdisplay_cursor(id, on, row, col)
 	if (scr->active) {
 		if (!on) {
 			/* XXX disable cursor how??? */
-			row = col = -1;
-		}
-
-		pos = row * scr->type->ncols + col;
+			pos = -1;
+		} else
+			pos = scr->dispoffset / 2
+				+ row * scr->type->ncols + col;
 
 		pcdisplay_6845_write(scr->hdl, cursorh, pos >> 8);
 		pcdisplay_6845_write(scr->hdl, cursorl, pos);
@@ -97,7 +97,7 @@ pcdisplay_putchar(id, row, col, c, attr)
 	off = row * scr->type->ncols + col;
 
 	if (scr->active)
-		bus_space_write_2(memt, memh, off * 2,
+		bus_space_write_2(memt, memh, scr->dispoffset + off * 2,
 				  c | (attr << 8));
 	else
 		scr->mem[off] = c | (attr << 8);
@@ -118,8 +118,10 @@ pcdisplay_copycols(id, row, srccol, dstcol, ncols)
 	dstoff += dstcol;
 
 	if (scr->active)
-		bus_space_copy_region_2(memt, memh, srcoff * 2,
-					memh, dstoff * 2, ncols);
+		bus_space_copy_region_2(memt, memh,
+					scr->dispoffset + srcoff * 2,
+					memh, scr->dispoffset + dstoff * 2,
+					ncols);
 	else
 		bcopy(&scr->mem[srcoff], &scr->mem[dstoff], ncols * 2);
 }
@@ -142,7 +144,8 @@ pcdisplay_erasecols(id, row, startcol, ncols, fillattr)
 	val = (fillattr << 8) | ' ';
 
 	if (scr->active)
-		bus_space_set_region_2(memt, memh, off * 2, val, ncols);
+		bus_space_set_region_2(memt, memh, scr->dispoffset + off * 2,
+				       val, ncols);
 	else
 		for (i = 0; i < ncols; i++)
 			scr->mem[off + i] = val;
@@ -163,8 +166,10 @@ pcdisplay_copyrows(id, srcrow, dstrow, nrows)
 	dstoff = dstrow * ncols + 0;
 
 	if (scr->active)
-		bus_space_copy_region_2(memt, memh, srcoff * 2,
-					memh, dstoff * 2, nrows * ncols);
+		bus_space_copy_region_2(memt, memh,
+					scr->dispoffset + srcoff * 2,
+					memh, scr->dispoffset + dstoff * 2,
+					nrows * ncols);
 	else
 		bcopy(&scr->mem[srcoff], &scr->mem[dstoff],
 		      nrows * ncols * 2);
@@ -189,7 +194,8 @@ pcdisplay_eraserows(id, startrow, nrows, fillattr)
 	val = (fillattr << 8) | ' ';
 
 	if (scr->active)
-		bus_space_set_region_2(memt, memh, off * 2, val, count);
+		bus_space_set_region_2(memt, memh, scr->dispoffset + off * 2,
+				       val, count);
 	else
 		for (i = 0; i < count; i++)
 			scr->mem[off + i] = val;
