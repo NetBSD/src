@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.51 1999/10/11 10:05:47 pk Exp $
+#	$NetBSD: termcap.src,v 1.52 2000/02/14 05:41:11 jun Exp $
 #
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
@@ -11774,6 +11774,22 @@ beterm|ANSI BeOS Terminal:\
 	:u6=\E[%i%d;%dR:u7=\E[6n:u8=\E[?6c:u9=\E[c:ue=\E[24m:\
 	:up=\E[A:us=\E[4m:vb=200\E[?5h\E[?5l:ve=\E[?25h:\
 	:vi=\E[?25l:
+# mgterm -- MGL/MGL2, MobileGear Graphic Library
+# for PocketBSD,PocketLinux,NetBSD/{hpcmips,mac68k}
+mgterm:\
+	:al=\E[L:am:bs:NP:cd=\E[J:ce=\E[K:cl=\E[H\E[J:cm=\E[%i%d;%dH:co#80:\
+	:dc=\E[P:dl=\E[M:do=\E[B:bt=\E[Z:ho=\E[H:ic=\E[@:li#18:cb=\E[1K:\
+	:ms:nd=\E[C:pt:rs=\E[x\E[m\Ec:so=\E[7m:se=\E[m:up=\E[A:\
+	:pa#64:Co#8:Sf=\E[3%dm:Sb=\E[4%dm:op=\E[x:\
+	:k1=\E[M:k2=\E[N:k3=\E[O:k4=\E[P:k5=\E[Q:k6=\E[R:k7=\E[S:k8=\E[T:\
+	:k9=\E[U:k;=\E[V:F1=\E[W:F2=\E[X:K2=\E[E:nw=\E[E:ec=\E[%dX:\
+	:kb=^H:kh=\E[H:ku=\E[A:kd=\E[B:kl=\E[D:kr=\E[C:le=^H:eo:\
+	:sf=\E[S:sr=\E[T:\
+	:kN=\E[G:kP=\E[I:@7=\E[F:kI=\E[L:kD=\177:kB=\E[Z:\
+	:IC=\E[%d@:DC=\E[%dP:SF=\E[%dS:SR=\E[%dT:AL=\E[%dL:DL=\E[%dM:\
+	:DO=\E[%dB:LE=\E[%dD:RI=\E[%dC:UP=\E[%dA:cv=\E[%i%dd:ch=\E[%i%d`:bw:\
+	:mb=\E[5m:md=\E[1m:mh=\E[30;1m:mr=\E[7m:me=\E[m:bl=^G:ut:it#8:km:\
+	:sc=\E7:rc=\E8:cs=\E[%i%d;%dr:
 
 ######## ICH/ICH1 VERSUS RMIR/SMIR
 #
