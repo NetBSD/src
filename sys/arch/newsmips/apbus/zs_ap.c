@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_ap.c,v 1.3 1999/12/26 09:05:38 tsubai Exp $	*/
+/*	$NetBSD: zs_ap.c,v 1.4 2000/03/06 21:36:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -422,7 +422,8 @@ struct consdev consdev_zs_ap = {
 	zscninit,
 	zscngetc,
 	zscnputc,
-	zscnpollc
+	zscnpollc,
+	NULL,
 };
 
 void

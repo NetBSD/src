@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.1 1999/05/23 02:46:35 eeh Exp $	*/
+/*	$NetBSD: consinit.c,v 1.2 2000/03/06 21:36:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -81,6 +81,7 @@ struct consdev consdev_prom = {
 	prom_cngetc,
 	prom_cnputc,
 	nullcnpollc,
+	NULL,
 };
 
 /*

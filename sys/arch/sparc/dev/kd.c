@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.5 1999/08/05 18:08:13 thorpej Exp $	*/
+/*	$NetBSD: kd.c,v 1.6 2000/03/06 21:36:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -486,6 +486,7 @@ struct consdev consdev_kd = {
 	kdcngetc,
 	kdcnputc,
 	kdcnpollc,
+	NULL,
 };
 
 /* We never call this. */

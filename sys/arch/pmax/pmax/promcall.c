@@ -1,4 +1,4 @@
-/*	$NetBSD: promcall.c,v 1.5 2000/01/10 03:24:40 simonb Exp $	*/
+/*	$NetBSD: promcall.c,v 1.6 2000/03/06 21:36:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.5 2000/01/10 03:24:40 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.6 2000/03/06 21:36:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -71,6 +71,7 @@ struct consdev promcd = {
 	romgetc,	/* getc */
 	romputc,	/* putc */
 	nullcnpollc,	/* pollc */
+	NULL,		/* bell */
 	makedev(0, 0),
 	CN_DEAD,
 };
