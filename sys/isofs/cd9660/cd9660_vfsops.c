@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.61 2002/05/27 16:44:37 drochner Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.62 2002/07/30 07:40:08 soren Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.61 2002/05/27 16:44:37 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.62 2002/07/30 07:40:08 soren Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -414,7 +414,7 @@ iso_mountfs(devvp, mp, p, argp)
 	brelse(pribp);
 	pribp = NULL;
 	
-	mp->mnt_data = (qaddr_t)isomp;
+	mp->mnt_data = isomp;
 	mp->mnt_stat.f_fsid.val[0] = (long)dev;
 	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_CD9660);
 	mp->mnt_maxsymlinklen = 0;
@@ -510,7 +510,7 @@ out:
 	}
 	if (isomp) {
 		free((caddr_t)isomp, M_ISOFSMNT);
-		mp->mnt_data = (qaddr_t)0;
+		mp->mnt_data = NULL;
 	}
 	return error;
 }
@@ -565,7 +565,7 @@ cd9660_unmount(mp, mntflags, p)
 	error = VOP_CLOSE(isomp->im_devvp, FREAD, NOCRED, p);
 	vput(isomp->im_devvp);
 	free((caddr_t)isomp, M_ISOFSMNT);
-	mp->mnt_data = (qaddr_t)0;
+	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	return (error);
 }
