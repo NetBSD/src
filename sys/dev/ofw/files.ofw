@@ -1,11 +1,14 @@
-#	$NetBSD: files.ofw,v 1.8 1998/02/24 05:44:39 mycroft Exp $
+#	$NetBSD: files.ofw,v 1.9 1998/07/22 22:04:14 thorpej Exp $
 #
 # First cut on Openfirmware interface
 #
 
 define	ofbus {}
+define	of_network_dev
 
 file	dev/ofw/ofw_subr.c		ofbus
+
+file	dev/ofw/ofw_network_subr.c	of_network_dev
 
 # Generic disk support
 device	ofdisk: disk
