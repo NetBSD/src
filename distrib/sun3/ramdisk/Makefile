@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1999/03/04 20:32:21 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.7.2.1 1999/06/21 03:19:34 perry Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -13,31 +13,30 @@ TREE=	${TOP}/common/${IMAGE}.tree
 LISTS=	${TOP}/common/${CBIN}.list \
 	${TOP}/common/${IMAGE}.list
 
-KERNEL3 = ${SRCSYSDIR}/arch/sun3/compile/RAMDISK/netbsd
-KERNEL3X= ${SRCSYSDIR}/arch/sun3/compile/RAMDISK3X/netbsd
+KERNEL3  = ${KERNOBJDIR}/RAMDISK/netbsd
+KERNEL3X = ${KERNOBJDIR}/RAMDISK3X/netbsd
 
-MOUNT_POINT=	/mnt
-#BDEV=		/dev/md0
-#CDEV=		/dev/md0
-BDEV=		/dev/sd1b
-CDEV=		/dev/rsd1b
+MOUNT_POINT?=	/mnt
+BDEV?=		/dev/sd1b
+CDEV?=		/dev/rsd1b
 
-# These are all the parameters for the root fs: (256K)
+# These are all the parameters for the root fs: (320K)
 DISKTYPE=	rdroot
-NBLKS=		512
-# old format, minfree, opt, b/i  trks, sects, cpg
-NEWFSARGS= -O -m 0 -o space -i 2048 -t 2 -u 16 -c 16
+NBLKS=		640
+# bigendian, old format, minfree, opt, b/i  trks, sects, cpg
+NEWFSARGS= -B be -O -m 0 -o space -i 2048 -t 2 -u 16 -c 16
 
-CLEANFILES= netbsd-rd.sun3 netbsd-rd.sun3x rdsetroot ${IMAGE}.fs
+KERNELS= netbsd-RAMDISK netbsd-RAMDISK3X
+CLEANFILES= $(KERNELS) rdsetroot ${IMAGE}.fs
 
-all: netbsd-rd.sun3 netbsd-rd.sun3x
+all: $(KERNELS)
 
-netbsd-rd.sun3 : rdsetroot ${IMAGE}.fs
+netbsd-RAMDISK : rdsetroot ${IMAGE}.fs
 	cp ${KERNEL3} netbsd-tmp
 	./rdsetroot  netbsd-tmp < ${IMAGE}.fs
 	-mv -f netbsd-tmp $@
 
-netbsd-rd.sun3x : rdsetroot ${IMAGE}.fs
+netbsd-RAMDISK3X : rdsetroot ${IMAGE}.fs
 	cp ${KERNEL3X} netbsd-tmp
 	./rdsetroot  netbsd-tmp < ${IMAGE}.fs
 	-mv -f netbsd-tmp $@
@@ -46,7 +45,7 @@ rdsetroot: ${TOP}/common/rdsetroot.c
 	$(CC) -o $@ -DDEBUG ${TOP}/common/rdsetroot.c
 
 ${IMAGE}.fs: ${TREE} ${LISTS} ${CBIN}
-	-newfs -B be ${NEWFSARGS} -s ${NBLKS} ${CDEV} ${DISKTYPE}
+	-newfs ${NEWFSARGS} -s ${NBLKS} ${CDEV} ${DISKTYPE}
 	mount ${BDEV} ${MOUNT_POINT}
 	mtree -def ${TREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} \
@@ -79,3 +78,15 @@ clean cleandir distclean:
 
 # Standard rules needed by the above...
 .include <bsd.obj.mk>
+
+.if !defined(RELEASEDIR)
+release:
+	@echo setenv RELEASEDIR before doing that!
+	@false
+.else	# RELEASEDIR
+release: $(KERNELS)
+.for x in ${KERNELS}
+	gzip -c -9 < ${x} > \
+	 ${RELEASEDIR}/binary/kernel/${x}.gz
+.endfor # KERNELS
+.endif	# RELEASEDIR
