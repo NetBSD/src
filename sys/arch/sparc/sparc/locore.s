@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.117 1999/04/30 09:26:17 christos Exp $	*/
+/*	$NetBSD: locore.s,v 1.118 1999/05/02 14:47:33 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -3379,14 +3379,15 @@ dostart:
 	 * We use the magic number passed as the sixth argument to
 	 * distinguish bootblock versions.
 	 */
-	mov	%g0, %l4
 	set	KERNBASE, %l4
 
 	set	0x44444232, %l3		! bootinfo magic
 	cmp	%o5, %l3
 	bne	1f
-	!	1st word is esym
-	ld	[%o4], %l3
+	 nop
+
+	/* The loader has passed to us a `bootinfo' structure */
+	ld	[%o4], %l3		! 1st word is esym
 	add	%l3, %l4, %o5		! relocate
 	sethi	%hi(_C_LABEL(esym) - KERNBASE), %l3	! store esym
 	st	%o5, [%l3 + %lo(_C_LABEL(esym) - KERNBASE)]
@@ -3396,16 +3397,19 @@ dostart:
 	add	%l3, %l4, %o5		! relocate
 	sethi	%hi(_C_LABEL(bootinfo) - KERNBASE), %l3	! store bootinfo
 	st	%o5, [%l3 + %lo(_C_LABEL(bootinfo) - KERNBASE)]
-	b	3f
+	b,a	3f
 
+1:
 	set	0x44444231, %l3		! ddb magic
 	cmp	%o5, %l3
-	be	2f
+	be,a	2f
+	 clr	%l4			! if DDB_MAGIC1, clear %l4
 
 	set	0x44444230, %l3		! compat magic
 	cmp	%o5, %l3
 	bne	3f
 
+					! note: %l4 set to KERNBASE above.
 	set	0xf8000000, %l5		! compute correction term:
 	sub	%l5, %l4, %l4		!  old KERNBASE (0xf8000000 ) - KERNBASE
 
