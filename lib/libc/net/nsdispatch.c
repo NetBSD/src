@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.20 2004/05/24 16:16:26 christos Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.21 2004/07/16 16:11:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsdispatch.c,v 1.20 2004/05/24 16:16:26 christos Exp $");
+__RCSID("$NetBSD: nsdispatch.c,v 1.21 2004/07/16 16:11:43 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: nsdispatch.c,v 1.20 2004/05/24 16:16:26 christos Exp $");
 #include <threadlib.h>
 
 extern	FILE 	*_nsyyin;
-extern	int	 _nsyyparse __P((void));
+extern	int	 _nsyyparse(void);
 
 
 #ifdef __weak_alias
@@ -95,13 +95,8 @@ static 	mutex_t			 _nsmutex = MUTEX_INITIALIZER;
 #define NSELEMSPERCHUNK		8
 
 
-int	_nscmp __P((const void *, const void *));
-
-
-int
-_nscmp(a, b)
-	const void *a;
-	const void *b;
+static int
+_nscmp(const void *a, const void *b)
 {
 	return (strcasecmp(((const ns_dbt *)a)->name,
 	    ((const ns_dbt *)b)->name));
@@ -109,9 +104,7 @@ _nscmp(a, b)
 
 
 int
-_nsdbtaddsrc(dbt, src)
-	ns_dbt		*dbt;
-	const ns_src	*src;
+_nsdbtaddsrc(ns_dbt *dbt, const ns_src *src)
 {
 
 	_DIAGASSERT(dbt != NULL);
@@ -132,8 +125,7 @@ _nsdbtaddsrc(dbt, src)
 
 
 void
-_nsdbtdump(dbt)
-	const ns_dbt *dbt;
+_nsdbtdump(const ns_dbt *dbt)
 {
 	int i;
 
@@ -163,8 +155,7 @@ _nsdbtdump(dbt)
 
 
 const ns_dbt *
-_nsdbtget(name)
-	const char	*name;
+_nsdbtget(const char *name)
 {
 	static	time_t	 confmod;
 
@@ -222,8 +213,7 @@ _nsdbtget(name)
 
 
 int
-_nsdbtput(dbt)
-	const ns_dbt *dbt;
+_nsdbtput(const ns_dbt *dbt)
 {
 	int	i;
 
