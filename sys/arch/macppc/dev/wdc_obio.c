@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.10 2000/06/29 08:10:45 mrg Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.11 2000/11/08 17:50:44 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -204,6 +204,8 @@ wdc_obio_attach(parent, self, aux)
 	/* modify DMA access timings */
 	if (use_dma)
 		adjust_timing(chp);
+
+	wdc_print_modes(chp);
 }
 
 /* Multiword DMA transfer timings */
