@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1999/03/04 20:32:20 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 2000/02/22 22:39:09 he Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -50,6 +50,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c libhack.o
 	make -f ${CBIN}.mk all
 
+NOLIBHACKOPENDIR=1
 HACKSRC=${TOP}/../../utils/libhack
 .include "${HACKSRC}/Makefile.inc"
 
