@@ -1,6 +1,8 @@
+.\"     $NetBSD: tmac.e,v 1.2 1997/07/07 19:19:37 phil Exp $
+.\"
 .nr _0 \n(.c
-.\" Copyright (c) 1988 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1988, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -30,7 +32,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)tmac.e	2.35 (Berkeley) 4/17/91
+.\"	@(#)tmac.e	8.1 (Berkeley) 6/5/93
 .\"
 .\"	%beginstrip%
 .\"
@@ -47,7 +49,7 @@
 .\"*		1919 Addison Street Suite 105				*
 .\"*		Berkeley, California  94704				*
 .\"*									*
-.\"*	VERSION 2.35	First Release: 11 Sept 1978			*
+.\"*	VERSION 8.1	First Release: 11 Sept 1978			*
 .\"*	See file \*(||/revisions for revision history			*
 .\"*									*
 .\"*	Documentation is available.					*
@@ -63,7 +65,7 @@
 .\"		---	an internal macro.
 .\"
 .\" library directory for sourced files:
-.ds || /usr/share/me
+.ds || /usr/old/lib/me
 .if \n@>0 .ds || .
 .\"
 .if !\n(.V .tm You are using the wrong version of NROFF/TROFF!!
@@ -199,10 +201,10 @@
 .rr ?H
 .nr ?c \\n(?C
 .rr ?C
-.rn |4 |0
-.rn |5 |1
-.rn |6 |2
-.rn |7 |3
+.if !"\\*(|4"" .rn |4 |0
+.if !"\\*(|5"" .rn |5 |1
+.if !"\\*(|6"" .rn |6 |2
+.if !"\\*(|7"" .rn |7 |3
 .nr _w 0			\" reset max footnote width
 .nr ?W 0			\" no wide floats this page (yet)
 .nr ?I 1
