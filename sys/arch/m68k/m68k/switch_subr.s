@@ -1,6 +1,7 @@
-/*	$NetBSD: switch_subr.s,v 1.10 2004/03/04 19:53:44 nathanw Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.11 2004/03/24 15:38:41 wiz Exp $	*/
 
 /*
+ * Copyright (c) 2001 The NetBSD Foundation.
  * Copyright (c) 1980, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -36,7 +37,6 @@
  */
 
 /*
- * Copyright (c) 2001 The NetBSD Foundation.
  * Copyright (c) 1988 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
