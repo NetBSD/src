@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2002/03/29 20:20:24 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2002/04/12 22:10:21 thorpej Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -6,7 +6,8 @@
 KERNEL_SETS=		INTEGRATOR IQ80310 IQ80321
 KERNEL_SUFFIXES=	bin srec
 
-INSTALLATION_DIRS+=	binary/gzimg
+INSTALLATION_DIRS+=	binary/gzimg				\
+			installation/instkernel
 
 snap_md_post:
 .ifndef UPDATE
