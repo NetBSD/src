@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.113 2002/08/24 02:16:31 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.114 2002/08/24 02:50:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.113 2002/08/24 02:16:31 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.114 2002/08/24 02:50:53 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -1634,9 +1634,11 @@ pmap_destroy(struct pmap *pmap)
 	simple_lock(&pmap->pm_obj.vmobjlock);
 	while ((page = TAILQ_FIRST(&pmap->pm_obj.memq)) != NULL) {
 		KASSERT((page->flags & PG_BUSY) == 0);
-		/* XXXJRT Clean this up. */
-		cpu_dcache_inv_range(trunc_page((vaddr_t)vtopte(page->offset)),
-		    PAGE_SIZE);
+
+		/* Freeing a PT page?  The contents are a throw-away. */
+		KASSERT((page->offset & PD_OFFSET) == 0);/* XXX KDASSERT */
+		cpu_dcache_inv_range((vaddr_t)vtopte(page->offset), PAGE_SIZE);
+
 		page->wire_count = 0;
 		uvm_pagefree(page);
 	}
@@ -2747,7 +2749,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		KASSERT(pmap != pmap_kernel());
 
 		/* if failure is allowed then don't try too hard */
-		ptp = pmap_get_ptp(pmap, va & L1_S_FRAME);
+		ptp = pmap_get_ptp(pmap, va & PD_FRAME);
 		if (ptp == NULL) {
 			if (flags & PMAP_CANFAIL) {
 				error = ENOMEM;
@@ -3595,6 +3597,8 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va)
 {
 	struct vm_page *ptp;
 
+	KASSERT((va & PD_OFFSET) == 0);		/* XXX KDASSERT */
+
 	if (pmap_pde_page(pmap_pde(pmap, va))) {
 
 		/* valid... check hint (saves us a PA->PG lookup) */
@@ -3612,7 +3616,7 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va)
 	}
 
 	/* allocate a new PTP (updates ptphint) */
-	return(pmap_alloc_ptp(pmap, va));
+	return (pmap_alloc_ptp(pmap, va));
 }
 
 /*
@@ -3628,6 +3632,8 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va)
 pmap_alloc_ptp(struct pmap *pmap, vaddr_t va)
 {
 	struct vm_page *ptp;
+
+	KASSERT((va & PD_OFFSET) == 0);		/* XXX KDASSERT */
 
 	ptp = uvm_pagealloc(&pmap->pm_obj, va, NULL,
 		UVM_PGA_USERESERVE|UVM_PGA_ZERO);
