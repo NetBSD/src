@@ -1,4 +1,4 @@
-/* $NetBSD: blkdev.c,v 1.1 2002/11/09 06:20:39 cgd Exp $ */
+/* $NetBSD: blkdev.c,v 1.2 2003/04/05 19:00:59 he Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -167,7 +167,9 @@ blkdevstrategy(devdata, rw, bn, reqcnt, addrvoid, cnt)
 	char *addr = addrvoid;
 	int res;
 
+#if !defined(LIBSA_NO_TWIDDLE)
 	twiddle();
+#endif
 
 	/* Partial-block transfers not handled. */
 	if (reqcnt & (DEV_BSIZE - 1)) {
