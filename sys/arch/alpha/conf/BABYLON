@@ -1,4 +1,4 @@
-# $NetBSD: BABYLON,v 1.4 1998/03/25 02:16:41 ross Exp $
+# $NetBSD: BABYLON,v 1.5 1998/04/15 21:19:21 drochner Exp $
 #
 #	BABYLON -- babylon.netbsd.org, the new mail server
 #
@@ -187,9 +187,9 @@ isa*	at	sio?
 
 # ISA devices
 mcclock* at	isa? port 0x70
-pcppi*	at	isa?				# PC prog. periph. interface
-#pckbd*	at	pcppi?				# PC keyboard (kbd port)
-#pms*	at	pcppi?				# PS/2-style mouse (aux port)
+pckbc*	at	isa?				# PC keyboard controller
+#pckbd*	at	pckbc?				# PC keyboard (kbd port)
+#psm*	at	pckbc?				# PS/2-style mouse (aux port)
 com0	at	isa? port 0x3f8 irq 4		# standard serial ports
 com1	at	isa? port 0x2f8 irq 3
 #ep*	at	isa? port ? irq ?		# 3COM 3c509 Ethernet
@@ -252,10 +252,10 @@ uk*	at	scsibus? target ? lun ?		# SCSI unknown
 #cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
 
 # Workstation Console attachments
-#wscons* at	cfb?
-#wscons*	at	vga?
-#wscons* at	sfb?
-#wscons*	at	tga?
+#wsdisplay* at	cfb?
+#wsdisplay*	at	vga?
+#wsdisplay* at	sfb?
+#wsdisplay*	at	tga?
 
 pseudo-device	bpfilter	16
 pseudo-device	ccd		4

@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.70 1998/04/15 00:47:21 mjacob Exp $
+# $NetBSD: ALPHA,v 1.71 1998/04/15 21:19:21 drochner Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -106,6 +106,9 @@ options 	PCIVERBOSE		# recognize "unknown" PCI devices
 options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 
+# WS console uses SUN terminal emulation
+options 	WSEMUL_SUN
+
 config		netbsd	root on ? type ?
 #config		netbsd	root on sd0 type ffs
 #config		netbsd	root on ? type nfs
@@ -188,9 +191,11 @@ isa*	at	sio?
 
 # ISA devices
 mcclock* at	isa? port 0x70
-pcppi*	at	isa?				# PC prog. periph. interface
-pckbd*	at	pcppi?				# PC keyboard (kbd port)
-pms*	at	pcppi?				# PS/2-style mouse (aux port)
+pckbc*	at	isa?				# PC keyboard controller
+pckbd*	at	pckbc?				# PC keyboard (kbd port)
+psm*	at	pckbc?				# PS/2-style mouse (aux port)
+pcppi*		at	isa?				# PC prog. periph. interface
+spkr0		at	pcppi?				# IBM BASIC emulation
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 ep*	at	isa? port ? irq ?		# 3COM 3c509 Ethernet
@@ -248,10 +253,12 @@ sd*	at	atapibus? drive ?		# ATAPI disk devices
 cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
 
 # Workstation Console attachments
-#wscons* at	cfb?
-wscons*	at	vga?
-#wscons* at	sfb?
-wscons*	at	tga?
+#wsdisplay* at	cfb?
+wsdisplay*	at	vga?
+#wsdisplay* at	sfb?
+wsdisplay*	at	tga?
+wskbd*	at	pckbd?
+wsmouse*	at	psm?
 
 pseudo-device	bpfilter	16
 pseudo-device	ccd		4
