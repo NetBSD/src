@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.c,v 1.2 1996/04/03 09:05:35 mycroft Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.3 1996/04/05 00:01:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -60,6 +60,16 @@ static int linux_spmasks[] = {
 	LINUX_B2400, LINUX_B4800, LINUX_B9600, LINUX_B19200, LINUX_B38400,
 	LINUX_B57600, LINUX_B115200, LINUX_B230400
 };
+
+
+static void linux_termio_to_bsd_termios __P((struct linux_termio *,
+					     struct termios *));
+static void bsd_termios_to_linux_termio __P((struct termios *,
+					     struct linux_termio *));
+static void linux_termios_to_bsd_termios __P((struct linux_termios *,
+					      struct termios *));
+static void bsd_termios_to_linux_termios __P((struct termios *,
+					      struct linux_termios *));
 
 /*
  * Deal with termio ioctl cruft. This doesn't look very good..
