@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.46 1995/02/08 23:38:29 cgd Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.47 1995/02/09 05:19:18 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -87,7 +87,7 @@ ptrace(p, uap, retval)
 	struct proc *t;				/* target process */
 	struct uio uio;
 	struct iovec iov;
-	int error, step, write;
+	int error, write;
 
 	/* "A foolish consistency..." XXX */
 	if (SCARG(uap, req) == PT_TRACE_ME)
@@ -178,7 +178,7 @@ ptrace(p, uap, retval)
 	FIX_SSTEP(t);
 
 	/* Now do the operation. */
-	step = write = 0;
+	write = 0;
 	*retval = 0;
 
 	switch (SCARG(uap, req)) {
@@ -214,7 +214,6 @@ ptrace(p, uap, retval)
 		 * as soon as possible after execution of at least one
 		 * instruction, execution stops again. [ ... ]"
 		 */
-		step = 1;
 #endif
 	case  PT_CONTINUE:
 	case  PT_DETACH:
@@ -229,17 +228,18 @@ ptrace(p, uap, retval)
 		 * the stop.  If addr is (int *)1 then execution continues
 		 * from where it stopped."
 		 */
-		/* step = 0 done above. */
 
 		/* Check that the data is a valid signal number or zero. */
 		if (SCARG(uap, data) < 0 || SCARG(uap, data) >= NSIG)
 			return (EINVAL);
 
+#ifdef PT_STEP
 		/*
 		 * Arrange for a single-step, if that's requested and possible.
 		 */
-		if (error = process_sstep(t, step))
+		if (error = process_sstep(t, SCARG(uap, req) == PT_STEP))
 			return (error);
+#endif
 
 		/* If the address paramter is not (int *)1, set the pc. */
 		if ((int *)SCARG(uap, addr) != (int *)1)
