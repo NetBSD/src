@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.37 1996/05/20 23:24:00 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.38 1996/06/17 07:55:13 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1280,8 +1280,6 @@ GetBranchDest(InstPtr)
 	return ((unsigned)InstPtr + 4 + ((short)InstPtr->IType.imm << 2));
 }
 
-#ifdef DEBUG
-
 /*
  * This routine is called by procxmt() to single step one instruction.
  * We do this by storing a break instruction after the current instruction,
@@ -1394,6 +1392,7 @@ cpu_singlestep(p)
 	return (0);
 }
 
+#ifdef DEBUG
 int
 kdbpeek(addr)
 {
