@@ -38,16 +38,16 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)strcpy.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: strcpy.S,v 1.1 1993/11/25 23:38:33 paulus Exp $"
+	.asciz "$Id: strcpy.S,v 1.2 1995/02/08 18:33:24 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
 
 ENTRY(strcpy)
-	movl	sp@(8),a0		/* a0 = fromaddr */
-	movl	sp@(4),d0		/* return value is toaddr */
-	movl	d0,a1			/* a1 = toaddr */
+	movl	sp@(8),a0		| a0 = fromaddr
+	movl	sp@(4),d0		| return value is toaddr
+	movl	d0,a1			| a1 = toaddr
 scloop:
-	movb	a0@+,a1@+		/* copy a byte */
-	jne	scloop			/* copied non-null, keep going */
+	movb	a0@+,a1@+		| copy a byte
+	bne	scloop			| copied non-null, keep going
 	rts

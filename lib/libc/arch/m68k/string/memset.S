@@ -38,7 +38,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)bzero.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: memset.S,v 1.3 1993/12/07 06:58:35 mycroft Exp $"
+	.asciz "$Id: memset.S,v 1.4 1995/02/08 18:33:19 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
@@ -54,20 +54,20 @@
  */
 ENTRY(memset)
 	movl	d2,sp@-
-	movl	sp@(8),a0	/* destination */
-	movl	sp@(16),d0	/* count */
-	jeq	bzdone		/* nothing to do */
-	movb	sp@(15),d2	/* character */
+	movl	sp@(8),a0		| destination
+	movl	sp@(16),d0		| count
+	beq	bzdone			| nothing to do
+	movb	sp@(15),d2		| character
 	movl	a0,d1
-	btst	#0,d1		/* address odd? */
-	jeq	bzeven		/* no, skip alignment */
-	movb	d2,a0@+		/* set one byte */
-	subql	#1,d0		/* adjust count */
-	jeq	bzdone		/* if zero, all done */
+	btst	#0,d1			| address odd?
+	beq	bzeven			| no, skip alignment
+	movb	d2,a0@+			| set one byte
+	subql	#1,d0			| adjust count
+	beq	bzdone			| if zero, all done
 bzeven:
 	cmpl	#15,d0
-	jle	bzbloop		/* too small to be worthwhile */
-	clrl	d1		/* replicate byte to fill longword */
+	ble	bzbloop			| too small to be worthwhile
+	clrl	d1			| replicate byte to fill longword
 	movb	d2,d1
 	movl	d1,d2
 	lsll	#8,d1
@@ -76,7 +76,7 @@ bzeven:
 	orl	d1,d2
 	lsll	#8,d1
 	orl	d1,d2
-	movl	d0,d1		/* convert to longword count */
+	movl	d0,d1			| convert to longword count
 	lsrl	#2,d1
 #ifdef DEBUG
 	moveml	#0xffff,sp@-
@@ -90,17 +90,17 @@ bzeven:
 	moveml	sp@+,#0xffff
 #endif
 bzlloop:
-	movl	d2,a0@+		/* set one longword */
-	subql	#1,d1		/* adjust count */
-	jne	bzlloop		/* still more, keep going */
-	andl	#3,d0		/* what remains */
-	jeq	bzdone		/* nothing, all done */
+	movl	d2,a0@+			| set one longword
+	subql	#1,d1			| adjust count
+	bne	bzlloop			| still more, keep going
+	andl	#3,d0			| what remains
+	beq	bzdone			| nothing, all done
 bzbloop:
-	movb	d2,a0@+		/* set one byte */
-	subql	#1,d0		/* adjust count */
-	jne	bzbloop		/* still more, keep going */
+	movb	d2,a0@+			| set one byte
+	subql	#1,d0			| adjust count
+	bne	bzbloop			| still more, keep going
 bzdone:
-	movl	sp@(8),d0	/* return destination */
+	movl	sp@(8),d0		| return destination
 	movl	sp@+,d2
 	rts
 

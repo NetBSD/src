@@ -38,26 +38,26 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)strncpy.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: strncpy.S,v 1.1 1993/11/25 23:38:36 paulus Exp $"
+	.asciz "$Id: strncpy.S,v 1.2 1995/02/08 18:33:28 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
 
 ENTRY(strncpy)
-	movl	sp@(4),d0	/* return value is toaddr */
-	movl	sp@(12),d1	/* count */
-	jeq	scdone		/* nothing to do */
-	movl	sp@(8),a0	/* a0 = fromaddr */
-	movl	d0,a1		/* a1 = toaddr */
+	movl	sp@(4),d0		| return value is toaddr
+	movl	sp@(12),d1		| count
+	beq	scdone			| nothing to do
+	movl	sp@(8),a0		| a0 = fromaddr
+	movl	d0,a1			| a1 = toaddr
 scloop:
-	movb	a0@+,a1@+	/* copy a byte */
-	jeq	scploop		/* copied null, go pad if necessary */
-	subql	#1,d1		/* adjust count */
-	jne	scloop		/* more room, keep going */
+	movb	a0@+,a1@+		| copy a byte
+	beq	scploop			| copied null, go pad if necessary
+	subql	#1,d1			| adjust count
+	bne	scloop			| more room, keep going
 scdone:
 	rts
 scploop:
-	subql	#1,d1		/* adjust count */
-	jeq	scdone		/* no more room, all done */
-	clrb	a1@+		/* clear a byte */
-	jra	scploop		/* keep going */
+	subql	#1,d1			| adjust count
+	beq	scdone			| no more room, all done
+	clrb	a1@+			| clear a byte
+	jra	scploop			| keep going
