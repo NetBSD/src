@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN32,v 1.6 2001/02/02 07:33:42 mrg Exp $
+# 	$NetBSD: POWEROFSEVEN32,v 1.7 2001/02/05 12:49:11 mrg Exp $
 #
 # Configuration for Ultra5/Ultra10
 
@@ -33,8 +33,8 @@ options		__ELF__		# we use elf
 config		netbsd	root on ? type ?
 
 ## UVM options.
-options 	UVM_PAGE_TRKOWN
-options 	UVMHIST
+#options 	UVM_PAGE_TRKOWN
+#options 	UVMHIST
 #options 	UVMHIST_PRINT	# Loud!
 
 ## System call tracing (see ktrace(1)).
@@ -52,7 +52,7 @@ options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 ## Loadable kernel module support; still under development.
-#options 	LKM
+options 	LKM
 
 ## NFS boot options; default on sparc is the bootparam protocol
 options 	NFS_BOOT_BOOTPARAM
@@ -81,7 +81,7 @@ options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 ## Compile the kernel with debugging symbols (`netbsd.gdb' is the debug file),
 ## such that gdb(1) can be used on a kernel coredump.
 
-#makeoptions 	DEBUG="-g"
+makeoptions 	DEBUG="-g"
 
 
 ## Adds code to the kernel that does internal consistency checks, and will
