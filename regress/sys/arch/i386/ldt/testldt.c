@@ -1,4 +1,4 @@
-/*	$NetBSD: testldt.c,v 1.9 2002/07/20 08:36:25 grant Exp $	*/
+/*	$NetBSD: testldt.c,v 1.10 2003/08/11 13:30:16 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@ static void
 gated_call(void)
 {
 	printf("Called from call gate...");
+	__asm__ __volatile__("movl %ebp,%esp");
 	__asm__ __volatile__("popl %ebp");
 	__asm__ __volatile__(".byte 0xcb");
 }
