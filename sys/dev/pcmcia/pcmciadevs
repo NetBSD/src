@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.26 1998/12/19 23:47:51 nathanw Exp $
+$NetBSD: pcmciadevs,v 1.27 1998/12/20 03:52:40 nathanw Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,6 +89,7 @@ product MOTOROLA PM100C		0x0302 Motorola Personal Messenger 100C CDPD Modem
 /* IBM Products */
 product IBM INFOMOVER		0x0002 National Semiconductor InfoMover
 product IBM HOME_AND_AWAY	0x002e IBM Home and Away Modem
+product IBM WIRELESS_LAN_ENTRY	0x0032 Wireless LAN Entry 
 
 /* I-O DATA */
 product IODATA PCLAT		0x2216 I-O DATA PCLA/T
@@ -121,7 +122,8 @@ product TDK LAK_CD021BX		0x0200 TDK LAK-CD021BX Ethernet
 product TDK DFL9610		0x0d0a TDK DFL9610 Ethernet & Digital Cellular
 
 /* TDK Vendor ID also used by Xircom! */
-product TDK XIR_CE		0x0108 Xircom CreditCard Ethernet
+product TDK XIR_CE_10		0x0108 Xircom CreditCard Ethernet
+product TDK XIR_CEM_10		0x110a Xircom CreditCard Ethernet + Modem
 product TDK XIR_PS_CE2_10	0x010b Xircom CreditCard CE2 Ethernet
 
 /* NewMedia Products */
