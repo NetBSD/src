@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.21 1995/05/30 10:28:15 mycroft Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.22 1995/05/30 18:11:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -1165,6 +1165,8 @@ union_rmdir(ap)
 		vput(ap->a_vp);
 	}
 
+	if (!error)
+		union_diruncache(un);
 	return (error);
 }
 
@@ -1288,7 +1290,6 @@ union_inactive(ap)
 	} */ *ap;
 {
 	struct union_node *un = VTOUNION(ap->a_vp);
-	struct vnode **vpp;
 
 	/*
 	 * Do nothing (and _don't_ bypass).
@@ -1310,12 +1311,7 @@ union_inactive(ap)
 		panic("union: inactivating w/locked upper node");
 #endif
 
-	if (un->un_dircache != 0) {
-		for (vpp = un->un_dircache; *vpp != NULLVP; vpp++)
-			vrele(*vpp);
-		free(un->un_dircache, M_TEMP);
-		un->un_dircache = 0;
-	}
+	union_diruncache(un);
 
 	if ((un->un_flags & UN_CACHED) == 0)
 		vgone(ap->a_vp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.12 1995/05/30 09:37:02 mycroft Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.13 1995/05/30 18:11:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -1073,4 +1073,18 @@ union_dircache(vp)
 	VTOUNION(nvp)->un_dircache = dircache;
 
 	return (nvp);
+}
+
+void
+union_diruncache(un)
+	struct union_node *un;
+{
+	struct vnode **vpp;
+
+	if (un->un_dircache != 0) {
+		for (vpp = un->un_dircache; *vpp != NULLVP; vpp++)
+			vrele(*vpp);
+		free(un->un_dircache, M_TEMP);
+		un->un_dircache = 0;
+	}
 }
