@@ -1,4 +1,4 @@
-/*	$NetBSD: ldef.h,v 1.2 2000/12/22 01:31:48 itojun Exp $	*/
+/*	$NetBSD: ldef.h,v 1.2.2.1 2004/07/23 14:33:14 tron Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,14 +42,14 @@
  * This should look a LOT like a _RuneEntry
  */
 typedef struct rune_list {
-    rune_t		min;
-    rune_t 		max;
-    rune_t 		map;
+    __nbrune_t		min;
+    __nbrune_t 		max;
+    __nbrune_t 		map;
     u_int32_t		*types;
     struct rune_list	*next;
 } rune_list;
 
 typedef struct rune_map {
-    u_int32_t		map[_CACHED_RUNES];
+    u_int32_t		map[_NB_CACHED_RUNES];
     rune_list		*root;
 } rune_map;

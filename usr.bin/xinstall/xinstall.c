@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.71 2002/04/10 06:12:04 lukem Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.71.2.1 2004/07/23 14:33:15 tron Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -50,7 +50,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.71 2002/04/10 06:12:04 lukem Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.71.2.1 2004/07/23 14:33:15 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -721,7 +721,7 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 			    == MAP_FAILED) {
 				goto mmap_failed;
 			}
-#ifdef MADV_SEQUENTIAL
+#if defined(MADV_SEQUENTIAL) && !defined(__APPLE__)
 			if (madvise(p, (size_t)size, MADV_SEQUENTIAL) == -1
 			    && errno != EOPNOTSUPP)
 				warnx("madvise: %s", strerror(errno));

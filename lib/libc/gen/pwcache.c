@@ -1,4 +1,4 @@
-/*	$NetBSD: pwcache.c,v 1.21 2002/02/26 22:29:40 tv Exp $	*/
+/*	$NetBSD: pwcache.c,v 1.21.2.1 2004/07/23 14:33:14 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -70,12 +70,23 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+/*
+ * XXX Undefine the renames of these functions so that we don't
+ * XXX rename the versions found in the host's <pwd.h> by mistake!
+ */
+#undef group_from_gid
+#undef user_from_uid
+#endif
+
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pwcache.c,v 1.21 2002/02/26 22:29:40 tv Exp $");
+__RCSID("$NetBSD: pwcache.c,v 1.21.2.1 2004/07/23 14:33:14 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -92,6 +103,12 @@ __RCSID("$NetBSD: pwcache.c,v 1.21 2002/02/26 22:29:40 tv Exp $");
 #include <string.h>
 #include <unistd.h>
 
+#if HAVE_CONFIG_H
+/* XXX Now, re-apply the renaming that we undid above. */
+#define	group_from_gid	__nbcompat_group_from_gid
+#define	user_from_uid	__nbcompat_user_from_uid
+#endif
+
 #ifdef __weak_alias
 __weak_alias(user_from_uid,_user_from_uid)
 __weak_alias(group_from_gid,_group_from_gid)
@@ -99,7 +116,7 @@ __weak_alias(pwcache_userdb,_pwcache_userdb)
 __weak_alias(pwcache_groupdb,_pwcache_groupdb)
 #endif
 
-#if !HAVE_PWCACHE_USERDB
+#if !HAVE_PWCACHE_USERDB || HAVE_CONFIG_H
 #include "pwcache.h"
 
 /*

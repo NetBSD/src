@@ -1,4 +1,4 @@
-/*	$NetBSD: runetype.h,v 1.9 2002/03/18 22:58:44 tshiozak Exp $	*/
+/*	$NetBSD: runetype.h,v 1.9.2.1 2004/07/23 14:33:14 tron Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,25 +38,19 @@
  *	@(#)runetype.h	8.1 (Berkeley) 6/2/93
  */
 
-#ifndef	_RUNETYPE_H_
-#define	_RUNETYPE_H_
+#ifndef	_NB_RUNETYPE_H_
+#define	_NB_RUNETYPE_H_
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
-#ifdef _BSD_RUNE_T_
-typedef	_BSD_RUNE_T_	rune_t;
-#undef _BSD_RUNE_T_
-#endif
-
+typedef int32_t		__nbrune_t;
 typedef uint64_t	__runepad_t;
 
-extern size_t __mb_len_max_runtime;
-#define __MB_LEN_MAX_RUNTIME	__mb_len_max_runtime
+#define	_NB_CACHED_RUNES	(1 << 8)	/* Must be a power of 2 */
+#define _NB_RUNE_ISCACHED(c)	((c)>=0 && (c)<_CACHED_RUNES)
 
-
-#define	_CACHED_RUNES	(1 << 8)	/* Must be a power of 2 */
-
+#define _NB_DEFAULT_INVALID_RUNE ((__nbrune_t)-3)
 
 /*
  * The lower 8 bits of runetype[] contain the digit value of the rune.
@@ -112,9 +106,9 @@ typedef struct {
 	int32_t		frl_invalid_rune;
 	uint32_t	frl_pad3;	/* backward compatibility */
 
-	_RuneType	frl_runetype[_CACHED_RUNES];
-	int32_t		frl_maplower[_CACHED_RUNES];
-	int32_t		frl_mapupper[_CACHED_RUNES];
+	_RuneType	frl_runetype[_NB_CACHED_RUNES];
+	int32_t		frl_maplower[_NB_CACHED_RUNES];
+	int32_t		frl_mapupper[_NB_CACHED_RUNES];
 
 	/*
 	 * The following are to deal with Runes larger than _CACHED_RUNES - 1.
@@ -137,36 +131,36 @@ typedef struct {
  * expanded rune locale declaration.  local to the host.  host endian.
  */
 typedef struct {
-	rune_t		re_min;		/* First rune of the range */
-	rune_t		re_max;		/* Last rune (inclusive) of the range */
-	rune_t		re_map;		/* What first maps to in maps */
+	__nbrune_t	re_min;		/* First rune of the range */
+	__nbrune_t	re_max;		/* Last rune (inclusive) of the range */
+	__nbrune_t	re_map;		/* What first maps to in maps */
 	_RuneType	*re_rune_types;	/* Array of types in range */
-} _RuneEntry;
+} _NBRuneEntry;
 
 
 typedef struct {
 	uint32_t	rr_nranges;	/* Number of ranges stored */
-	_RuneEntry	*rr_rune_ranges;
-} _RuneRange;
+	_NBRuneEntry	*rr_rune_ranges;
+} _NBRuneRange;
 
 
 /*
  * ctype stuffs
  */
 
-typedef struct _RuneLocale {
+typedef struct _NBRuneLocale {
 	/*
 	 * copied from _FileRuneLocale
 	 */
 	char		rl_magic[8];	/* Magic saying what version we are */
 	char		rl_encoding[32];/* ASCII name of this encoding */
-	rune_t		rl_invalid_rune;
-	_RuneType	rl_runetype[_CACHED_RUNES];
-	rune_t		rl_maplower[_CACHED_RUNES];
-	rune_t		rl_mapupper[_CACHED_RUNES];
-	_RuneRange	rl_runetype_ext;
-	_RuneRange	rl_maplower_ext;
-	_RuneRange	rl_mapupper_ext;
+	__nbrune_t	rl_invalid_rune;
+	_RuneType	rl_runetype[_NB_CACHED_RUNES];
+	__nbrune_t	rl_maplower[_NB_CACHED_RUNES];
+	__nbrune_t	rl_mapupper[_NB_CACHED_RUNES];
+	_NBRuneRange	rl_runetype_ext;
+	_NBRuneRange	rl_maplower_ext;
+	_NBRuneRange	rl_mapupper_ext;
 
 	void		*rl_variable;
 	size_t		rl_variable_len;
@@ -176,21 +170,16 @@ typedef struct _RuneLocale {
 	 */
 	char				*rl_codeset;
 	struct _citrus_ctype_rec	*rl_citrus_ctype;
-} _RuneLocale;
+} _NBRuneLocale;
 
 
 /* magic number for LC_CTYPE (rune)locale declaration */
-#define	_RUNE_MAGIC_1	"RuneCT10"	/* Indicates version 0 of RuneLocale */
+#define	_NB_RUNE_MAGIC_1 "RuneCT10"	/* Indicates version 0 of RuneLocale */
 
 /* magic string for dynamic link module - type should be like "LC_CTYPE" */
-#define	_RUNE_MODULE_1(type)	"RuneModule10." type
+#define	_NB_RUNE_MODULE_1(type)	"RuneModule10." type
 
 /* codeset tag */
-#define _RUNE_CODESET "CODESET="
+#define _NB_RUNE_CODESET "CODESET="
 
-extern _RuneLocale _DefaultRuneLocale;
-extern _RuneLocale *_CurrentRuneLocale;
-extern void **_StreamStateTable;
-extern char *_PathLocale;
-
-#endif	/* !_RUNETYPE_H_ */
+#endif	/* !_NB_RUNETYPE_H_ */
