@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.22 2002/10/12 11:53:40 chris Exp $
+#	$NetBSD: files.cats,v 1.23 2002/10/26 13:50:24 jdolecek Exp $
 #
 # CATS-specific configuration info
 #
@@ -48,8 +48,6 @@ file	dev/md_root.c				md & memory_disk_hooks
 #
 
 include "dev/scsipi/files.scsipi"
-
-file	arch/arm/arm32/conf.c
 
 # Generic MD files
 file	arch/cats/cats/autoconf.c

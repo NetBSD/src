@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.53 2002/10/13 14:43:19 wiz Exp $
+#	$NetBSD: files.macppc,v 1.54 2002/10/26 13:50:33 jdolecek Exp $
 #
 # macppc-specific configuration info
 
@@ -12,7 +12,6 @@ include "arch/powerpc/conf/files.ofw"
 file arch/macppc/macppc/autoconf.c
 file arch/macppc/macppc/bus_dma.c
 file arch/macppc/macppc/clock.c
-file arch/macppc/macppc/conf.c
 file arch/macppc/macppc/disksubr.c		disk
 file arch/macppc/macppc/extintr.c
 file arch/macppc/macppc/machdep.c

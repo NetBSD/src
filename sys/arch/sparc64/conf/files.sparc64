@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.69 2002/10/15 15:11:07 thorpej Exp $
+#	$NetBSD: files.sparc64,v 1.70 2002/10/26 13:50:46 jdolecek Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -175,7 +175,6 @@ file	arch/sparc/fpu/fpu_sqrt.c
 file	arch/sparc/fpu/fpu_subr.c
 
 file	arch/sparc64/sparc64/autoconf.c
-file	arch/sparc64/sparc64/conf.c
 file	arch/sparc64/sparc64/emul.c
 file	arch/sparc64/sparc64/in_cksum.S
 file	arch/sparc64/sparc64/in4_cksum.c	inet

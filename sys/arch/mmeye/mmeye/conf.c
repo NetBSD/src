@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.10 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: conf.c,v 1.11 2002/10/26 13:50:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -33,17 +33,6 @@
 #include <sys/conf.h>
 
 #include "com.h"
-
-/*
- * Returns true if dev is /dev/mem or /dev/kmem.
- */
-int
-iskmemdev(dev)
-	dev_t dev;
-{
-
-	return (major(dev) == mem_no && (minor(dev) < 2 || minor(dev) == 14));
-}
 
 #include <dev/cons.h>
 
