@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 1998/03/18 17:22:38 bouyer Exp $
+#	$NetBSD: Makefile,v 1.15 1998/03/20 07:43:22 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 PROG=	quotacheck
@@ -7,6 +7,6 @@ MAN=	quotacheck.8
 DPADD=	${LIBUTIL}
 LDADD+=	-lutil
 CPPFLAGS+=-I${.CURDIR}/../../sbin/fsck
-.PATH:	${.CURDIR}/../../sbin/fsck ../../sys/ufs/ffs
+.PATH:	${.CURDIR}/../../sbin/fsck ${.CURDIR}/../../sys/ufs/ffs
 
 .include <bsd.prog.mk>
