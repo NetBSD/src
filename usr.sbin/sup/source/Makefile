@@ -40,15 +40,22 @@
 # If you have crypt/crypt.c and /usr/lib/libcrypt.a, you will be building
 # a system that uses the SUP crypt mechanism by default.
 #
+# If building on non 4.4BSD systems, you'll need the vis(3) and the daemon(3)
+# functions from libc and libutil
+
+#SITE			= SUNOS
+#SITE			= SOLARIS
 SITE			= NETBSD
 #SITE			= CMUCS
+
 NETBSD_DEFINES		= -UMACH -DVAR_TMP -DHAS_DAEMON -DHAS_POSIX_DIR
+SOLARIS_DEFINES		= -UMACH -DVAR_TMP -DHAS_POSIX_DIR -DNEED_VSNPRINTF
 AFS_DEFINES		= -DAFS -I/usr/afsws/include
 OSF_DEFINES		= -UMACH -DOSF -D_BSD -noshrlib -g -DNEED_VSNPRINTF -DVAR_TMP
+SUNOS_DEFINES		= -UMACH -D_BSD -DNEED_VSNPRINTF -DVAR_TMP -DHAS_POSIX_DIR -DHAS_DAEMON -DNEED_DAEMON
 CMUCS_DEFINES		= -DMACH -DDOPRINT_VA -DNEED_VPRINTF
 NON_MACH_DEFINES	= -UMACH
-#DEFS			= -UCMUCS -UCMU  ${${SITE}_DEFINES}
-DEFS			= -UCMUCS -UCMU  ${NETBSD_DEFINES}
+
 
 #INSTALLATION PARAMETERS
 NETBSD_BINDIR		= /usr/local/sbin
@@ -60,8 +67,9 @@ CFLAGS			= ${DEFS} -O -I.
 SUPCL			= supcmain.o supcvers.o supcparse.o supcname.o \
 			  supcmisc.o supcmeat.o
 SUPS			= scm.o scmio.o stree.o log.o supmsg.o netcrypt.o
-EXTRA			= atoo.o errmsg.o expand.o ffilecopy.o filecopy.o nxtarg.o  \
-			  path.o quit.o run.o salloc.o skipto.o  vprintf.o
+EXTRA			= atoo.o errmsg.o expand.o ffilecopy.o filecopy.o \
+			  nxtarg.o path.o quit.o run.o salloc.o skipto.o \
+			  vprintf.o
 
 
 PROGRAMS		= sup supscan supfilesrv
@@ -78,12 +86,18 @@ USE_CRYPT		= yes
 NETBSD_LIBS		= -lcrypt -lutil
 CMUCS_LIBS		= -lsys
 OSF_LIBS		= -lbsd
-LIBS			= libextra.a
+EXTRALIBS		= libextra.a
 sup_OFILES		= ${SUPCL} ${SUPS}
 supfilesrv_OFILES	= supfilesrv.o scan.o ${SUPS}
 supfilesrv_LIBS		= libextra.a 
 supscan_OFILES		= supscan.o stree.o scan.o
+SOLARIS_LIBS		= -lsocket -lnsl
+SUNOS_LIBS		= 
 
+.for i in ${SITE}
+DEFS			= -UCMUCS -UCMU  ${${i}_DEFINES}
+LIBS			= ${EXTRALIBS} ${${i}_LIBS}
+.endfor
 
 all: ${PROGRAMS}
 .if defined(USE_CRYPT)
@@ -92,13 +106,13 @@ all: ${PROGRAMS}
 .endif
 
 sup: ${sup_OFILES} ${LIBS}
-	${CC} ${CFLAGS} -o sup ${sup_OFILES} ${LIBS} ${NETBSD_LIBS}
+	${CC} ${CFLAGS} -o sup ${sup_OFILES} ${LIBS} ${LIBS}
 
 supfilesrv: ${supfilesrv_OFILES} ${supfilesrv_LIBS}
-	${CC} ${CFLAGS} -o supfilesrv ${supfilesrv_OFILES} ${supfilesrv_LIBS} ${NETBSD_LIBS}
+	${CC} ${CFLAGS} -o supfilesrv ${supfilesrv_OFILES} ${supfilesrv_LIBS} ${LIBS}
 
 supscan:  ${supscan_OFILES} ${LIBS}
-	${CC} ${CFLAGS} -o supscan ${supscan_OFILES} ${LIBS} ${NETBSD_LIBS}
+	${CC} ${CFLAGS} -o supscan ${supscan_OFILES} ${LIBS}
 
 libextra.a: ${EXTRA}
 	ar r libextra.a $?

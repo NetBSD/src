@@ -28,6 +28,23 @@
  **********************************************************************
  * HISTORY
  * $Log: vprintf.c,v $
+ * Revision 1.2  1996/09/05 16:50:13  christos
+ * - for portability make sure that we never use "" as a pathname, always convert
+ *   it to "."
+ * - include sockio.h if needed to define SIOCGIFCONF (for svr4)
+ * - use POSIX signals and wait macros
+ * - add -S silent flag, so that the client does not print messages unless there
+ *   is something wrong
+ * - use flock or lockf as appropriate
+ * - use fstatfs or fstatvfs to find out if a filesystem is mounted over nfs,
+ *   don't depend on the major() = 255 hack; it only works on legacy systems.
+ * - use gzip -cf to make sure that gzip compresses the file even when the file
+ *   would expand.
+ * - punt on defining vsnprintf if _IOSTRG is not defined; use sprintf...
+ *
+ * To compile sup on systems other than NetBSD, you'll need a copy of daemon.c,
+ * vis.c, vis.h and sys/cdefs.h. Maybe we should keep those in the distribution?
+ *
  * Revision 1.1.1.1  1993/05/21 14:52:19  cgd
  * initial import of CMU's SUP to NetBSD
  *
@@ -113,6 +130,7 @@ vsnprintf(s, n, fmt, args)
 	char *s, *fmt;
 	va_list args;
 {
+#ifdef _IOSTRG
 	FILE fakebuf;
 
 	fakebuf._flag = _IOSTRG+_IOWRT;	/* no _IOWRT: avoid stdio bug */
@@ -124,5 +142,9 @@ vsnprintf(s, n, fmt, args)
 	if (fakebuf._cnt<0)
 	    fakebuf._cnt = 0;
 	return (n-fakebuf._cnt-1);
+#else
+	/* Will blow up. */
+	vsprintf(s, fmt, args);
+#endif
 }
 #endif	/* NEED_VPRINTF || NEED_VSNPRINTF */
