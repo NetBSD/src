@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.51 2000/08/15 22:41:54 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.52 2000/08/15 23:20:04 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -1193,3 +1193,8 @@ sys/nfs/nfs_vnops.c				patch
 
   Be careful about data consistency across operations which may
   block.  Should fix some reported nfs_lookup panics.
+
+distrib/utils/Makefile				patch
+
+  Don't build libhack in its own directory; build it where it's
+  used instead.
