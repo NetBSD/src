@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.13 2002/01/21 21:51:31 manu Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.14 2002/02/02 19:27:18 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.13 2002/01/21 21:51:31 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.14 2002/02/02 19:27:18 manu Exp $");
 
 #include "opt_ddb.h"
 
@@ -216,6 +216,7 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 	struct vnode *vp;
 	struct vm_map_entry *ret;
 	struct exec_vmcmd *vcp;
+	Elf_Addr relocation = IRIX_MAPELF_RELOCATE;
 
 	vcset.evs_cnt = 0;
 	vcset.evs_used = 0;
@@ -238,8 +239,8 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 			error = ENOEXEC;
 			goto bad;
 		}
-#ifdef DEBUG_IRIX
-		printf("section %d: type=%d offset=0x%x vaddr=%p paddr=%p filesz=0x%08x memsz=0x%08x flags=0x%08lx align=0x%08x\n", i, pht->p_type, pht->p_offset, (void *)pht->p_vaddr, (void *)pht->p_paddr, pht->p_filesz, pht->p_memsz, (long)pht->p_flags, pht->p_align);
+#ifdef DEBUG_IRIX_MAPELF
+		printf("mapelf: section %d: type=%d offset=0x%x vaddr=%p paddr=%p filesz=0x%08x memsz=0x%08x flags=0x%08lx align=0x%08x\n", i, pht->p_type, pht->p_offset, (void *)pht->p_vaddr, (void *)pht->p_paddr, pht->p_filesz, pht->p_memsz, (long)pht->p_flags, pht->p_align);
 #endif
 		pht++;
 	}
@@ -258,12 +259,12 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 	pht = kph;
 	for (i = 0; i < count; i++) {
 retry:
-#ifdef DEBUG_IRIX
+#ifdef DEBUG_IRIX_MAPELF
 		printf("mapelf: loading section %d, addr=%p, len=0x%08lx\n", 
 		    i, (void *)pht->p_vaddr, (long)pht->p_memsz);
 #endif
 		kill_vmcmds(&vcset);
-		uaddr = ELFDEFNNAME(NO_ADDR);
+		uaddr = pht->p_vaddr;
 		size = 0;
 		prot = 0;
 		flags = VMCMD_BASE;
@@ -271,7 +272,7 @@ retry:
 		ELFNAME(load_psection)(&vcset, vp, pht, &uaddr, 
 		    &size, &prot, flags);
 
-#ifdef DEBUG_IRIX
+#ifdef DEBUG_IRIX_MAPELF
 		printf("mapelf: vmcmd to run = %d\n", vcset.evs_used);
 #endif
 		for (j = 0; j < vcset.evs_used && !error; j++) {
@@ -282,30 +283,56 @@ retry:
 				   
 				vcp->ev_addr += base_vcp->ev_addr;
 			}
-#ifdef DEBUG_IRIX
+#ifdef DEBUG_IRIX_MAPELF
 			printf("mapelf: attempt to run vmcmd %d (addr %p)\n",
 			    j, (void *)vcp->ev_addr);
 #endif
 			error = (*vcp->ev_proc)(p, vcp);
 			if (error) {
+				/* 
+				 * Section load failed, probably because the 
+				 * requested area was already allocated. We 
+				 * try to relocate the section to a free place.
+				 */
+				relocation = (relocation & ~(pht->p_align - 1))
+				    + pht->p_align;
 				ret = uvm_map_findspace(&p->p_vmspace->vm_map, 
-				    IRIX_MAPELF_RELOCATE, vcp->ev_len, 
-				    (void *)&pht->p_vaddr, NULL, 0, 
-				    pht->p_align , 0);
+				    relocation, vcp->ev_len, 
+				    (void *)&pht->p_vaddr, 
+				    NULL, 0, pht->p_align, 0);
 				if (ret == NULL) {
-#ifdef DEBUG_IRIX
+#ifdef DEBUG_IRIX_MAPELF
 					printf("mapelf: failure\n");
 #endif
 					goto bad;
 				}
-#ifdef DEBUG_IRIX
+
+				/* 
+				 * XXX this is a hack to get libX11 laoding 
+				 *
+				 * We have to use it since uvm_map_findspace()
+				 * insist on proposing addresses that are
+				 * pht->p_align far away from the first 
+				 * addresses availlable after "relocation".
+				 * It seems to be a NetBSD round up vs IRIX 
+				 * round down issue.
+				 */
+				if (relocation == ((u_long)pht->p_vaddr 
+				    - pht->p_align)) {
+					pht->p_vaddr = (Elf_Addr)relocation;
+#ifdef DEBUG_IRIX_MAPELF
+					printf("mapelf: relocation hack\n");
+#endif
+				}
+#ifdef DEBUG_IRIX_MAPELF
 				printf("mapelf: relocating at %p\n", 
 				    (void *)pht->p_vaddr);
 #endif
+				relocation = pht->p_vaddr + vcp->ev_len;
 				error = 0;
 				goto retry;
 			}
-#ifdef DEBUG_IRIX
+#ifdef DEBUG_IRIX_MAPELF
 			printf("mapelf: success\n");
 #endif
 		}
