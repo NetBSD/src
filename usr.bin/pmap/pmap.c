@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.4 2002/09/17 19:54:28 atatat Exp $ */
+/*	$NetBSD: pmap.c,v 1.5 2002/09/19 02:43:51 atatat Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.4 2002/09/17 19:54:28 atatat Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.5 2002/09/19 02:43:51 atatat Exp $");
 #endif
 
 #include <sys/types.h>
@@ -104,6 +104,7 @@ LIST_HEAD(cache_head, cache_entry) lcache;
 LIST_HEAD(nchashhead, namecache) *nchashtbl = NULL;
 void *uvm_vnodeops, *uvm_deviceops, *aobj_pager, *ubc_pager;
 void *kernel_floor;
+struct vm_map *kmem_map, *mb_map, *phys_map, *exec_map, *pager_map;
 u_long nchash_addr, nchashtbl_addr, kernel_map_addr;
 int debug, verbose, recurse;
 int print_all, print_map, print_maps, print_solaris, print_ddb;
@@ -184,6 +185,16 @@ struct nlist nl[] = {
 #define NL_NCHASH		7
 	{ "_kernel_text" },
 #define NL_KENTER		8
+	{ "_kmem_map" },
+#define NL_KMEM_MAP		9
+	{ "_mb_map" },
+#define NL_MB_MAP		10
+	{ "_phys_map" },
+#define NL_PHYS_MAP		11
+	{ "_exec_map" },
+#define NL_EXEC_MAP		12
+	{ "_pager_map" },
+#define NL_PAGER_MAP		13
 	{ NULL }
 };
 
@@ -406,6 +417,17 @@ load_symbols(kvm_t *kd)
 	       sizeof(nchashtbl_addr));
 	_KDEREF(kd, nl[NL_KERNEL_MAP].n_value, &kernel_map_addr,
 		sizeof(kernel_map_addr));
+
+	_KDEREF(kd, nl[NL_KMEM_MAP].n_value, &kmem_map,
+		sizeof(kmem_map));
+	_KDEREF(kd, nl[NL_MB_MAP].n_value, &mb_map,
+		sizeof(mb_map));
+	_KDEREF(kd, nl[NL_PHYS_MAP].n_value, &phys_map,
+		sizeof(phys_map));
+	_KDEREF(kd, nl[NL_EXEC_MAP].n_value, &exec_map,
+		sizeof(exec_map));
+	_KDEREF(kd, nl[NL_PAGER_MAP].n_value, &pager_map,
+		sizeof(pager_map));
 }
 
 void
@@ -451,6 +473,23 @@ dump_vm_map(kvm_t *kd, struct kbit *vmspace, struct kbit *vm_map,
 		printf(" timestamp = %u }\n", D(vm_map, vm_map)->timestamp);
 	}
 	if (print_ddb) {
+		char *name;
+
+		if (A(vm_map) == kernel_map_addr)
+			name = "kernel_map";
+		else if (P(vm_map) == kmem_map)
+			name = "kmem_map";
+		else if (P(vm_map) == mb_map)
+			name = "mb_map";
+		else if (P(vm_map) == phys_map)
+			name = "phys_map";
+		else if (P(vm_map) == exec_map)
+			name = "exec_map";
+		else if (P(vm_map) == pager_map)
+			name = "pager_map";
+		else
+			name = NULL;
+
 		printf("%*s%s %p: [0x%lx->0x%lx]\n", indent(2), "",
 		       recurse < 2 ? "MAP" : "SUBMAP", P(vm_map),
 		       D(vm_map, vm_map)->min_offset,
@@ -461,6 +500,8 @@ dump_vm_map(kvm_t *kd, struct kbit *vmspace, struct kbit *vm_map,
 		       D(vm_map, vm_map)->timestamp, D(vm_map, vm_map)->flags);
 		printf("\t%*spmap=%p(resident=<unknown>)\n", indent(2), "",
 		       D(vm_map, vm_map)->pmap);
+		if (verbose && name != NULL)
+			printf("\t%*s([ %s ])\n", indent(2), "", name);
 	}
 
 	A(header) = A(vm_map) + offsetof(struct vm_map, header);
