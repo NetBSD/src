@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.10 1997/01/30 09:52:26 tls Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.11 1997/04/04 14:21:32 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -100,6 +100,8 @@ READ(v)
 	fs = ip->I_FS;
 	if ((u_int64_t)uio->uio_offset > fs->fs_maxfilesize)
 		return (EFBIG);
+	if (uio->uio_resid == 0)
+		return (0);
 
 	for (error = 0, bp = NULL; uio->uio_resid > 0; bp = NULL) {
 		if ((bytesinfile = ip->i_size - uio->uio_offset) <= 0)
