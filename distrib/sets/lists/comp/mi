@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.497 2002/10/21 13:36:04 blymn Exp $
+#	$NetBSD: mi,v 1.498 2002/10/23 06:18:29 gmcgarry Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3918,6 +3918,7 @@
 ./usr/share/man/cat9/vfsops.0		comp-sys-catman
 ./usr/share/man/cat9/vget.0		comp-sys-catman
 ./usr/share/man/cat9/vgone.0		comp-sys-catman
+./usr/share/man/cat9/vgonel.0		comp-sys-catman
 ./usr/share/man/cat9/vhold.0		comp-sys-catman
 ./usr/share/man/cat9/vinvalbuf.0		comp-sys-catman
 ./usr/share/man/cat9/vme.0		comp-sys-catman
@@ -6898,6 +6899,7 @@
 ./usr/share/man/man9/vfsops.9		comp-sys-man
 ./usr/share/man/man9/vget.9		comp-sys-man
 ./usr/share/man/man9/vgone.9		comp-sys-man
+./usr/share/man/man9/vgonel.9		comp-sys-man
 ./usr/share/man/man9/vhold.9		comp-sys-man
 ./usr/share/man/man9/vinvalbuf.9		comp-sys-man
 ./usr/share/man/man9/vme.9		comp-sys-man
