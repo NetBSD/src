@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: context.c,v 1.3 2000/08/02 20:08:33 assar Exp $");
+RCSID("$Id: context.c,v 1.4 2000/08/06 17:58:53 thorpej Exp $");
 
 #define INIT_FIELD(C, T, E, D, F)					\
     (C)->E = krb5_config_get_ ## T ## _default ((C), NULL, (D), 	\
@@ -188,8 +188,10 @@ krb5_init_context(krb5_context *context)
     }
 
     ret = init_context_from_config_file(p);
-    if(ret)
+    if(ret) {
+	free(p);
 	return ret;
+    }
 
     *context = p;
     return 0;
