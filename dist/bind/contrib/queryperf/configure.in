@@ -36,9 +36,31 @@ AC_DEFUN(AC_TYPE_SOCKLEN_T,
   fi
 ])
 
-AC_SEARCH_LIBS(res_mkquery, resolv bind);
+AC_DEFUN(AC_SA_LEN,
+[AC_CACHE_CHECK([for sa_len], ac_cv_sa_len,
+[
+  AC_TRY_COMPILE(
+  [#include <sys/types.h>
+   #include <sys/socket.h>],
+  [struct sockaddr sa; sa.sa_len = 0;],
+  ac_cv_sa_len=yes,
+  ac_cv_sa_len=no)
+])
+  if test $ac_cv_sa_len = yes; then
+    AC_DEFINE(HAVE_SA_LEN)
+  fi
+])
+
+AC_SEARCH_LIBS(res_mkquery, resolv bind)
 AC_CHECK_LIB(socket, socket)
 AC_CHECK_LIB(nsl, inet_ntoa)
+AC_CHECK_FUNCS(gethostbyname2)
+AC_CHECK_FUNC(getaddrinfo,
+    AC_DEFINE(HAVE_GETADDRINFO), AC_LIBOBJ(getaddrinfo))
+AC_CHECK_FUNC(getnameinfo,
+    AC_DEFINE(HAVE_GETNAMEINFO), AC_LIBOBJ(getnameinfo))
+
 AC_TYPE_SOCKLEN_T
+AC_SA_LEN
 
 AC_OUTPUT(Makefile)

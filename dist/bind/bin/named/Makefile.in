@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.74.12.7 2004/03/08 04:04:18 marka Exp
+# Id: Makefile.in,v 1.74.12.10 2004/08/21 06:22:40 marka Exp
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -85,9 +85,9 @@ SRCS =		aclconf.c builtin.c client.c config.c control.c \
 		lwdgnba.c lwdgrbn.c lwdnoop.c lwsearch.c \
 		$(DBDRIVER_SRCS)
 
-MANPAGES =	named.8 lwresd.8
+MANPAGES =	named.8 lwresd.8 named.conf.5
 
-HTMLPAGES =	named.html lwresd.html
+HTMLPAGES =	named.html lwresd.html named.conf.html
 
 MANOBJS =	${MANPAGES} ${HTMLPAGES}
 
@@ -106,7 +106,7 @@ config.@O@: config.c
 		-c ${srcdir}/config.c
 
 named@EXEEXT@: ${OBJS} ${UOBJS} ${DEPLIBS}
-	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} -o $@ \
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
 	${OBJS} ${UOBJS} ${LIBS}
 
 lwresd@EXEEXT@: named@EXEEXT@
@@ -126,6 +126,6 @@ installdirs:
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${mandir}/man8
 
 install:: named@EXEEXT@ lwresd@EXEEXT@ installdirs
-	${LIBTOO_MODE_INSTALL} ${INSTALL_PROGRAM} named@EXEEXT@ ${DESTDIR}${sbindir}
+	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} named@EXEEXT@ ${DESTDIR}${sbindir}
 	(cd ${DESTDIR}${sbindir}; rm -f lwresd@EXEEXT@; @LN@ named@EXEEXT@ lwresd@EXEEXT@)
 	for m in ${MANPAGES}; do ${INSTALL_DATA} ${srcdir}/$$m ${DESTDIR}${mandir}/man8; done

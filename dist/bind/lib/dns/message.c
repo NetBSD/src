@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.1.1.1 2004/05/17 23:44:51 christos Exp $	*/
+/*	$NetBSD: message.c,v 1.1.1.2 2004/11/06 23:55:38 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: message.c,v 1.194.2.10.2.16 2004/03/10 00:48:49 marka Exp */
+/* Id: message.c,v 1.194.2.10.2.17 2004/05/05 01:32:16 marka Exp */
 
 /***
  *** Imports
@@ -1290,18 +1290,16 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 		if (result != ISC_R_SUCCESS)
 			goto cleanup;
 		rdata->rdclass = rdclass;
+		issigzero = ISC_FALSE;
 		if (rdtype == dns_rdatatype_rrsig  &&
 		    rdata->flags == 0) {
 			covers = dns_rdata_covers(rdata);
 			if (covers == 0)
 				DO_FORMERR;
-		} else
-			covers = 0;
-
-		issigzero = ISC_FALSE;
-		if (rdtype == dns_rdatatype_sig /* SIG(0) */ &&
-		    rdata->flags == 0) {
-			if (dns_rdata_covers(rdata) == 0) {
+		} else if (rdtype == dns_rdatatype_sig /* SIG(0) */ &&
+			   rdata->flags == 0) {
+			covers = dns_rdata_covers(rdata);
+			if (covers == 0) {
 				if (sectionid != DNS_SECTION_ADDITIONAL ||
 				    count != msg->counts[sectionid]  - 1)
 					DO_FORMERR;
@@ -1310,7 +1308,8 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 				skip_type_search = ISC_TRUE;
 				issigzero = ISC_TRUE;
 			}
-		}
+		} else
+			covers = 0;
 
 		/*
 		 * If we are doing a dynamic update or this is a meta-type,

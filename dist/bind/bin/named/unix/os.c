@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.1.1.1 2004/05/17 23:43:25 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.1.1.2 2004/11/06 23:53:37 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: os.c,v 1.46.2.4.8.15 2004/04/15 05:34:57 marka Exp */
+/* Id: os.c,v 1.46.2.4.8.16 2004/05/04 03:19:42 marka Exp */
 
 #include <config.h>
 #include <stdarg.h>
@@ -618,7 +618,7 @@ ns_os_shutdownmsg(char *command, isc_buffer_t *text) {
 
 	n = snprintf((char *)isc_buffer_used(text),
 		     isc_buffer_availablelength(text),
-		     "pid: %d", pid);
+		     "pid: %ld", (long)pid);
 	/* Only send a message if it is complete. */
 	if (n < isc_buffer_availablelength(text))
 		isc_buffer_add(text, n);

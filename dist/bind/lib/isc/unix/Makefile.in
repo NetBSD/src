@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.35.2.1.10.1 2004/03/06 08:14:57 marka Exp
+# Id: Makefile.in,v 1.35.2.1.10.2 2004/06/22 02:48:36 marka Exp
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -46,3 +46,6 @@ SUBDIRS =	include
 TARGETS =	${OBJS}
 
 @BIND9_MAKE_RULES@
+
+interfaceiter.@O@: interfaceiter.c ifiter_ioctl.c ifiter_sysctl.c ifiter_getifaddrs.c
+

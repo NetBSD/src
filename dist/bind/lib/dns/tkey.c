@@ -1,4 +1,4 @@
-/*	$NetBSD: tkey.c,v 1.1.1.1 2004/05/17 23:44:55 christos Exp $	*/
+/*	$NetBSD: tkey.c,v 1.1.1.2 2004/11/06 23:55:42 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: tkey.c,v 1.71.2.1.10.4 2004/03/08 02:07:58 marka Exp
+ * Id: tkey.c,v 1.71.2.1.10.5 2004/06/11 00:30:54 marka Exp
  */
 
 #include <config.h>
@@ -287,7 +287,7 @@ process_dhtkey(dns_message_t *msg, dns_name_t *signer, dns_name_t *name,
 		keyname = NULL;
 		dns_message_currentname(msg, DNS_SECTION_ADDITIONAL, &keyname);
 		keyset = NULL;
-		result = dns_message_findtype(keyname, dns_rdatatype_dnskey, 0,
+		result = dns_message_findtype(keyname, dns_rdatatype_key, 0,
 					      &keyset);
 		if (result != ISC_R_SUCCESS)
 			continue;
@@ -335,7 +335,7 @@ process_dhtkey(dns_message_t *msg, dns_name_t *signer, dns_name_t *name,
 	RETERR(dst_key_todns(tctx->dhkey, &ourkeybuf));
 	isc_buffer_usedregion(&ourkeybuf, &ourkeyr);
 	dns_rdata_fromregion(&ourkeyrdata, dns_rdataclass_any,
-			     dns_rdatatype_dnskey, &ourkeyr);
+			     dns_rdatatype_key, &ourkeyr);
 
 	dns_name_init(&ourname, NULL);
 	dns_name_clone(dst_key_name(tctx->dhkey), &ourname);
@@ -879,7 +879,7 @@ dns_tkey_builddhquery(dns_message_t *msg, dst_key_t *key, dns_name_t *name,
 	RETERR(dst_key_todns(key, dynbuf));
 	isc_buffer_usedregion(dynbuf, &r);
 	dns_rdata_fromregion(rdata, dns_rdataclass_any,
-			     dns_rdatatype_dnskey, &r);
+			     dns_rdatatype_key, &r);
 	dns_message_takebuffer(msg, &dynbuf);
 
 	dns_name_init(&keyname, NULL);
@@ -1051,7 +1051,7 @@ dns_tkey_processdhresponse(dns_message_t *qmsg, dns_message_t *rmsg,
 	ourkeyname = NULL;
 	ourkeyset = NULL;
 	RETERR(dns_message_findname(rmsg, DNS_SECTION_ANSWER, &keyname,
-				    dns_rdatatype_dnskey, 0, &ourkeyname,
+				    dns_rdatatype_key, 0, &ourkeyname,
 				    &ourkeyset));
 
 	result = dns_message_firstname(rmsg, DNS_SECTION_ANSWER);
@@ -1062,7 +1062,7 @@ dns_tkey_processdhresponse(dns_message_t *qmsg, dns_message_t *rmsg,
 		if (dns_name_equal(theirkeyname, ourkeyname))
 			goto next;
 		theirkeyset = NULL;
-		result = dns_message_findtype(theirkeyname, dns_rdatatype_dnskey,
+		result = dns_message_findtype(theirkeyname, dns_rdatatype_key,
 					      0, &theirkeyset);
 		if (result == ISC_R_SUCCESS) {
 			RETERR(dns_rdataset_first(theirkeyset));

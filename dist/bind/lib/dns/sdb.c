@@ -1,4 +1,4 @@
-/*	$NetBSD: sdb.c,v 1.1.1.1 2004/05/17 23:44:54 christos Exp $	*/
+/*	$NetBSD: sdb.c,v 1.1.1.2 2004/11/06 23:55:42 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sdb.c,v 1.35.12.7 2004/03/08 21:06:27 marka Exp */
+/* Id: sdb.c,v 1.35.12.8 2004/07/22 04:01:58 marka Exp */
 
 #include <config.h>
 
@@ -631,10 +631,10 @@ attachversion(dns_db_t *db, dns_dbversion_t *source,
 	      dns_dbversion_t **targetp)
 {
 	REQUIRE(source != NULL && source == (void *) &dummy);
+	REQUIRE(targetp != NULL && *targetp == NULL);
 
 	UNUSED(db);
-	UNUSED(source);
-	UNUSED(targetp);
+	*targetp = source;
 	return;
 }
 

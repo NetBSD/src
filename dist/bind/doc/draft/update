@@ -1,4 +1,5 @@
 #!/bin/sh
+commit=
 for i
 do
 	z=`expr "$i" : 'http://www.ietf.org/internet-drafts/\(.*\)'`
@@ -34,9 +35,12 @@ do
 		then
 			rm $old
 			cvs delete $old
-		else
-			old=
+			commit="$commit $old"
 		fi
-		cvs commit -m "new draft" $i $old
+		commit="$commit $i"
 	fi
 done
+if test -n "$commit"
+then
+	cvs commit -m "new draft" $commit
+fi

@@ -15,16 +15,16 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: nsupdate.html,v 1.9.2.3.2.4 2004/03/08 04:04:23 marka Exp -->
+<!-- Id: nsupdate.html,v 1.9.2.3.2.5 2004/08/22 23:38:59 marka Exp -->
 
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML
 ><HEAD
 ><TITLE
 >nsupdate</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.73
-"></HEAD
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -35,8 +35,8 @@ ALINK="#0000FF"
 ><H1
 ><A
 NAME="AEN1"
->nsupdate</A
-></H1
+></A
+>nsupdate</H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
@@ -56,52 +56,42 @@ NAME="AEN11"
 ><B
 CLASS="COMMAND"
 >nsupdate</B
->  [<TT
+>  [<VAR
 CLASS="OPTION"
->-d</TT
->] [<TT
+>-d</VAR
+>] [<VAR
 CLASS="OPTION"
->-y <TT
+>-y <VAR
 CLASS="REPLACEABLE"
-><I
->keyname:secret</I
-></TT
-></TT
-> | <TT
+>keyname:secret</VAR
+></VAR
+> | <VAR
 CLASS="OPTION"
->-k <TT
+>-k <VAR
 CLASS="REPLACEABLE"
-><I
->keyfile</I
-></TT
-></TT
->] [<TT
+>keyfile</VAR
+></VAR
+>] [<VAR
 CLASS="OPTION"
->-t <TT
+>-t <VAR
 CLASS="REPLACEABLE"
-><I
->timeout</I
-></TT
-></TT
->] [<TT
+>timeout</VAR
+></VAR
+>] [<VAR
 CLASS="OPTION"
->-u <TT
+>-u <VAR
 CLASS="REPLACEABLE"
-><I
->udptimeout</I
-></TT
-></TT
->] [<TT
+>udptimeout</VAR
+></VAR
+>] [<VAR
 CLASS="OPTION"
->-r <TT
+>-r <VAR
 CLASS="REPLACEABLE"
-><I
->udpretries</I
-></TT
-></TT
->] [<TT
+>udpretries</VAR
+></VAR
+>] [<VAR
 CLASS="OPTION"
->-v</TT
+>-v</VAR
 >] [filename]</P
 ></DIV
 ><DIV
@@ -142,9 +132,9 @@ Requests are sent to the zone's master server.
 This is identified by the MNAME field of the zone's SOA record.</P
 ><P
 >The
-<TT
+<VAR
 CLASS="OPTION"
->-d</TT
+>-d</VAR
 >
 option makes
 <B
@@ -204,22 +194,22 @@ CLASS="COMMAND"
 >nsupdate</B
 >
 uses the
-<TT
+<VAR
 CLASS="OPTION"
->-y</TT
+>-y</VAR
 >
 or
-<TT
+<VAR
 CLASS="OPTION"
->-k</TT
+>-k</VAR
 >
 option (with an HMAC-MD5 key) to provide the shared secret needed to generate
 a TSIG record for authenticating Dynamic DNS update requests.
 These options are mutually exclusive.
 With the
-<TT
+<VAR
 CLASS="OPTION"
->-k</TT
+>-k</VAR
 >
 option,
 <B
@@ -227,11 +217,9 @@ CLASS="COMMAND"
 >nsupdate</B
 >
 reads the shared secret from the file
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->keyfile</I
-></TT
+>keyfile</VAR
 >,
 whose name is of the form 
 <TT
@@ -245,36 +233,30 @@ CLASS="FILENAME"
 >K{name}.+157.+{random}.key</TT
 >
 must also be present.  When the
-<TT
+<VAR
 CLASS="OPTION"
->-y</TT
+>-y</VAR
 >
 option is used, a signature is generated from
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->keyname:secret.</I
-></TT
+>keyname:secret.</VAR
 >
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->keyname</I
-></TT
+>keyname</VAR
 >
 is the name of the key,
 and
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->secret</I
-></TT
+>secret</VAR
 >
 is the base64 encoded shared secret.
 Use of the
-<TT
+<VAR
 CLASS="OPTION"
->-y</TT
+>-y</VAR
 >
 option is discouraged because the shared secret is supplied as a command
 line argument in clear text.
@@ -288,9 +270,9 @@ CLASS="REFENTRYTITLE"
 >
 or in a history file maintained by the user's shell.</P
 ><P
->The <TT
+>The <VAR
 CLASS="OPTION"
->-k</TT
+>-k</VAR
 > may also be used to specify a SIG(0) key used
 to authenticate Dynamic DNS update requests.  In this case, the key
 specified is not an HMAC-MD5 key.</P
@@ -303,9 +285,9 @@ CLASS="COMMAND"
 uses UDP to send update requests to the name server unless they are too
 large to fit in a UDP request in which case TCP will be used.
 The
-<TT
+<VAR
 CLASS="OPTION"
->-v</TT
+>-v</VAR
 >
 option makes
 <B
@@ -315,23 +297,23 @@ CLASS="COMMAND"
 use a TCP connection.
 This may be preferable when a batch of update requests is made.</P
 ><P
->The <TT
+>The <VAR
 CLASS="OPTION"
->-t</TT
+>-t</VAR
 > option sets the maximum time a update request can
 take before it is aborted.  The default is 300 seconds.  Zero can be used
 to disable the timeout.</P
 ><P
->The <TT
+>The <VAR
 CLASS="OPTION"
->-u</TT
+>-u</VAR
 > option sets the UDP retry interval.  The default is
 3 seconds.  If zero the interval will be computed from the timeout interval
 and number of UDP retries.</P
 ><P
->The <TT
+>The <VAR
 CLASS="OPTION"
->-r</TT
+>-r</VAR
 > option sets the number of UDP retries. The default is
 3.  If zero only one update request will be made.</P
 ></DIV
@@ -348,11 +330,9 @@ CLASS="COMMAND"
 >nsupdate</B
 >
 reads input from
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->filename</I
-></TT
+>filename</VAR
 >
 or standard input.
 Each command is supplied on exactly one line of input.
@@ -391,11 +371,9 @@ CLASS="COMMAND"
 ><DD
 ><P
 >Sends all dynamic update requests to the name server
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->servername</I
-></TT
+>servername</VAR
 >.
 When no server statement is provided,
 <B
@@ -405,18 +383,14 @@ CLASS="COMMAND"
 will send updates to the master server of the correct zone.
 The MNAME field of that zone's SOA record will identify the master
 server for that zone.
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->port</I
-></TT
+>port</VAR
 >
 is the port number on
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->servername</I
-></TT
+>servername</VAR
 >
 where the dynamic update requests get sent.
 If no port number is specified, the default DNS port number of 53 is
@@ -432,11 +406,9 @@ CLASS="COMMAND"
 ><DD
 ><P
 >Sends all dynamic update requests using the local
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->address</I
-></TT
+>address</VAR
 >.
 
 When no local statement is provided,
@@ -445,11 +417,9 @@ CLASS="COMMAND"
 >nsupdate</B
 >
 will send updates using an address and port chosen by the system.
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->port</I
-></TT
+>port</VAR
 >
 can additionally be used to make requests come from a specific port.
 If no port number is specified, the system will assign one.&#13;</P
@@ -464,18 +434,14 @@ CLASS="COMMAND"
 ><DD
 ><P
 >Specifies that all updates are to be made to the zone
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->zonename</I
-></TT
+>zonename</VAR
 >.
 If no
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->zone</I
-></TT
+>zone</VAR
 >
 statement is provided,
 <B
@@ -494,17 +460,13 @@ CLASS="COMMAND"
 ><DD
 ><P
 >Specify the default class.
-If no <TT
+If no <VAR
 CLASS="PARAMETER"
-><I
->class</I
-></TT
+>class</VAR
 > is specified the default class is
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->IN</I
-></TT
+>IN</VAR
 >.</P
 ></DD
 ><DT
@@ -517,28 +479,24 @@ CLASS="COMMAND"
 ><DD
 ><P
 >Specifies that all updates are to be TSIG signed using the
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->keyname</I
-></TT
-> <TT
+>keyname</VAR
+> <VAR
 CLASS="PARAMETER"
-><I
->keysecret</I
-></TT
+>keysecret</VAR
 > pair.
 The <B
 CLASS="COMMAND"
 >key</B
 > command
 overrides any key specified on the command line via
-<TT
+<VAR
 CLASS="OPTION"
->-y</TT
-> or <TT
+>-y</VAR
+> or <VAR
 CLASS="OPTION"
->-k</TT
+>-k</VAR
 >.</P
 ></DD
 ><DT
@@ -551,11 +509,9 @@ CLASS="COMMAND"
 ><DD
 ><P
 >Requires that no resource record of any type exists with name
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->domain-name</I
-></TT
+>domain-name</VAR
 >.</P
 ></DD
 ><DT
@@ -568,11 +524,9 @@ CLASS="COMMAND"
 ><DD
 ><P
 >Requires that
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->domain-name</I
-></TT
+>domain-name</VAR
 >
 exists (has as at least one resource record, of any type).</P
 ></DD
@@ -586,31 +540,23 @@ CLASS="COMMAND"
 ><DD
 ><P
 >Requires that no resource record exists of the specified
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->type</I
-></TT
+>type</VAR
 >,
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->class</I
-></TT
+>class</VAR
 >
 and
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->domain-name</I
-></TT
+>domain-name</VAR
 >.
 If
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->class</I
-></TT
+>class</VAR
 >
 is omitted, IN (internet) is assumed.</P
 ></DD
@@ -624,32 +570,24 @@ CLASS="COMMAND"
 ><DD
 ><P
 >This requires that a resource record of the specified
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->type</I
-></TT
+>type</VAR
 >,
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->class</I
-></TT
+>class</VAR
 >
 and
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->domain-name</I
-></TT
+>domain-name</VAR
 >
 must exist.
 If
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->class</I
-></TT
+>class</VAR
 >
 is omitted, IN (internet) is assumed.</P
 ></DD
@@ -663,61 +601,45 @@ CLASS="COMMAND"
 ><DD
 ><P
 >The
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->data</I
-></TT
+>data</VAR
 >
 from each set of prerequisites of this form
 sharing a common
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->type</I
-></TT
+>type</VAR
 >,
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->class</I
-></TT
+>class</VAR
 >,
 and 
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->domain-name</I
-></TT
+>domain-name</VAR
 >
 are combined to form a set of RRs.  This set of RRs must
 exactly match the set of RRs existing in the zone at the
 given 
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->type</I
-></TT
+>type</VAR
 >,
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->class</I
-></TT
+>class</VAR
 >,
 and 
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->domain-name</I
-></TT
+>domain-name</VAR
 >.
 The
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->data</I
-></TT
+>data</VAR
 >
 are written in the standard text representation of the resource record's
 RDATA.</P
@@ -732,40 +654,30 @@ CLASS="COMMAND"
 ><DD
 ><P
 >Deletes any resource records named
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->domain-name</I
-></TT
+>domain-name</VAR
 >.
 If
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->type</I
-></TT
+>type</VAR
 >
 and
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->data</I
-></TT
+>data</VAR
 >
 is provided, only matching resource records will be removed.
 The internet class is assumed if
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->class</I
-></TT
+>class</VAR
 >
 is not supplied.  The
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->ttl</I
-></TT
+>ttl</VAR
 >
 is ignored, and is only allowed for compatibility.</P
 ></DD
@@ -779,24 +691,18 @@ CLASS="COMMAND"
 ><DD
 ><P
 >Adds a new resource record with the specified
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->ttl</I
-></TT
+>ttl</VAR
 >,
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->class</I
-></TT
+>class</VAR
 >
 and
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->data</I
-></TT
+>data</VAR
 >.</P
 ></DD
 ><DT
@@ -923,18 +829,18 @@ NAME="AEN268"
 CLASS="VARIABLELIST"
 ><DL
 ><DT
-><TT
+><CODE
 CLASS="CONSTANT"
->/etc/resolv.conf</TT
+>/etc/resolv.conf</CODE
 ></DT
 ><DD
 ><P
 >used to identify default name server</P
 ></DD
 ><DT
-><TT
+><CODE
 CLASS="CONSTANT"
->K{name}.+157.+{random}.key</TT
+>K{name}.+157.+{random}.key</CODE
 ></DT
 ><DD
 ><P
@@ -948,9 +854,9 @@ CLASS="REFENTRYTITLE"
 >.</P
 ></DD
 ><DT
-><TT
+><CODE
 CLASS="CONSTANT"
->K{name}.+157.+{random}.private</TT
+>K{name}.+157.+{random}.private</CODE
 ></DT
 ><DD
 ><P
