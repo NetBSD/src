@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.569 2003/05/20 09:49:06 agc Exp $
+#	$NetBSD: mi,v 1.570 2003/05/21 06:46:53 jdc Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -2624,6 +2624,7 @@
 ./usr/share/man/cat3/mvgetnstr.0		comp-c-catman
 ./usr/share/man/cat3/mvgetstr.0		comp-c-catman
 ./usr/share/man/cat3/mvhline.0		comp-c-catman
+./usr/share/man/cat3/mvprintw.0		comp-c-catman
 ./usr/share/man/cat3/mvvline.0		comp-c-catman
 ./usr/share/man/cat3/mvwaddch.0		comp-c-catman
 ./usr/share/man/cat3/mvwaddnstr.0	comp-c-catman
@@ -2632,6 +2633,7 @@
 ./usr/share/man/cat3/mvwgetstr.0		comp-c-catman
 ./usr/share/man/cat3/mvwhline.0		comp-c-catman
 ./usr/share/man/cat3/mvwin.0		comp-c-catman
+./usr/share/man/cat3/mvwprintw.0	comp-c-catman
 ./usr/share/man/cat3/mvwvline.0		comp-c-catman
 ./usr/share/man/cat3/napms.0		comp-c-catman
 ./usr/share/man/cat3/nc_perror.0	comp-c-catman
@@ -5758,6 +5760,7 @@
 ./usr/share/man/man3/mvgetnstr.3		comp-c-man
 ./usr/share/man/man3/mvgetstr.3		comp-c-man
 ./usr/share/man/man3/mvhline.3		comp-c-man
+./usr/share/man/man3/mvprintw.3		comp-c-man
 ./usr/share/man/man3/mvvline.3		comp-c-man
 ./usr/share/man/man3/mvwaddch.3		comp-c-man
 ./usr/share/man/man3/mvwaddnstr.3	comp-c-man
@@ -5766,6 +5769,7 @@
 ./usr/share/man/man3/mvwgetnstr.3		comp-c-man
 ./usr/share/man/man3/mvwgetstr.3		comp-c-man
 ./usr/share/man/man3/mvwhline.3		comp-c-man
+./usr/share/man/man3/mvwprintw.3	comp-c-man
 ./usr/share/man/man3/mvwvline.3		comp-c-man
 ./usr/share/man/man3/napms.3		comp-c-man
 ./usr/share/man/man3/nc_perror.3	comp-c-man
