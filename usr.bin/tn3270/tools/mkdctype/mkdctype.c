@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdctype.c,v 1.3 1997/01/09 20:22:57 tls Exp $	*/
+/*	$NetBSD: mkdctype.c,v 1.4 1998/03/04 13:16:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,26 +33,33 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-char copyright[] =
+__COPYRIGHT(
 "@(#) Copyright (c) 1988 The Regents of the University of California.\n\
- All rights reserved.\n";
+ All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)mkdctype.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$NetBSD: mkdctype.c,v 1.3 1997/01/09 20:22:57 tls Exp $";
+#if 0
+static char sccsid[] = "@(#)mkdctype.c	4.2 (Berkeley) 4/26/91";
+#else
+__RCSID("$NetBSD: mkdctype.c,v 1.4 1998/03/04 13:16:13 christos Exp $");
+#endif
 #endif /* not lint */
 
+#include <stdio.h>
 #include "../api/ebc_disp.h"
 #include "ectype.h"
 
 
-extern unsigned char ectype[256];
+int main __P((int, char *[]));
 
 
-void
-main()
+int
+main(argc, argv)
+    int argc;
+    char *argv[];
 {
     static unsigned char dctype[192] = { 0 };
     int i;
@@ -99,4 +106,5 @@ main()
 	}
 	printf(",\n");
     }
+    return 0;
 }

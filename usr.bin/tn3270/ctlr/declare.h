@@ -1,4 +1,4 @@
-/*	$NetBSD: declare.h,v 1.3 1997/01/09 20:22:06 tls Exp $	*/
+/*	$NetBSD: declare.h,v 1.4 1998/03/04 13:16:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,24 +33,29 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)declare.h	4.2 (Berkeley) 4/26/91
- *	$NetBSD: declare.h,v 1.3 1997/01/09 20:22:06 tls Exp $
  */
 
 /*
  * Declarations of routines from the controller.
  */
 
-extern void
-	AddHost(),
-	DoReadModified(),
-	DoReadBuffer(),
-	OptInit(),
-	SendToIBM(),
-	SendTransparent();
 
-extern int
-	DataFrom3270(),
-	DataFromNetwork(),
-	OptOrder(),
-	OutputClock,
-	TransparentClock;
+/* outbound.c */
+void init_ctlr __P((void));
+int FieldInc __P((int));
+int FieldDec __P((int));
+void Clear3270 __P((void));
+void AddHost __P((int, int));
+int DataFromNetwork __P((char *, int, int));
+void Init3270 __P((void));
+void Stop3270 __P((void));
+
+/* inbound.c */
+void init_inbound __P((void));
+void ModifyMdt __P((int, int));
+void DoReadModified __P((int));
+void DoReadBuffer __P((void));
+void SendTransparent __P((char *, int));
+void SendToIBM __P((void));
+int AcceptKeystroke __P((unsigned int, unsigned int ));
+int DataFrom3270 __P((unsigned char *, int));

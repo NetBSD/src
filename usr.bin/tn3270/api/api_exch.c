@@ -1,4 +1,4 @@
-/*	$NetBSD: api_exch.c,v 1.3 1997/01/09 20:21:44 tls Exp $	*/
+/*	$NetBSD: api_exch.c,v 1.4 1998/03/04 13:16:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,12 +33,21 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "from: @(#)api_exch.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$NetBSD: api_exch.c,v 1.3 1997/01/09 20:21:44 tls Exp $";
+#if 0
+static char sccsid[] = "@(#)api_exch.c	4.2 (Berkeley) 4/26/91";
+#else
+__RCSID("$NetBSD: api_exch.c,v 1.4 1998/03/04 13:16:04 christos Exp $");
+#endif
 #endif /* not lint */
 
 #include <stdio.h>
+#ifdef __STDC__
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#endif
 
 #include "../general/general.h"
 
@@ -72,6 +81,14 @@ char obuffer[4000], *obuf_next;
 #define	OBUFRESET()		obuf_next = obuffer
 #define	OBUFROOM()		(obuffer+sizeof obuffer-obuf_next)
 
+
+static int outflush __P((void));
+static int iget __P((char *, int));
+static char *exch_to_ascii __P((int));
+static int send_state __P((void));
+static int receive_state __P((void));
+static int enter_receive __P((void));
+static int enter_send __P((void));
 
 static int
 outflush()
@@ -236,6 +253,8 @@ enter_receive()
 	    return -1;
 	}
 	break;
+    case RECEIVE:
+	abort();	/* Unhandled case; remove abort if we die here */
     }
     conversation = RECEIVE;
     return 0;
@@ -260,6 +279,8 @@ enter_send()
 	    fprintf(stderr, "Conversation error - both sides in SEND state.\n");
 	    return -1;
 	}
+    case SEND:
+	abort();	/* Unhandled case; remove abort if we die here */
     }
     conversation = SEND;
     return 0;
@@ -416,8 +437,6 @@ api_exch_init(sock_number, ourname)
 int sock_number;
 char *ourname;
 {
-    extern char *strcpy();
-
     sock = sock_number;
     (void) strcpy(whoarewe, ourname);		/* For error messages */
 

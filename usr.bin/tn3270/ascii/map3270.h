@@ -1,4 +1,4 @@
-/*	$NetBSD: map3270.h,v 1.3 1997/01/09 20:21:58 tls Exp $	*/
+/*	$NetBSD: map3270.h,v 1.4 1998/03/04 13:16:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,12 +33,15 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)map3270.h	4.2 (Berkeley) 4/26/91
- *	$NetBSD: map3270.h,v 1.3 1997/01/09 20:21:58 tls Exp $
  */
 
 /*
  * Declaration for map3270.c.
  */
 
-extern state
-    *InitControl();
+/* map3270.c */
+char *uncontrol __P((int));
+int ustrcmp __P((char *, char *));
+int Position __P((char *, char *));
+char *strsave __P((char *));
+state *InitControl __P((char *, int, int (*)(char *)));

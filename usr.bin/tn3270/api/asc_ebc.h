@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_ebc.h,v 1.3 1997/01/09 20:21:49 tls Exp $	*/
+/*	$NetBSD: asc_ebc.h,v 1.4 1998/03/04 13:16:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)asc_ebc.h	4.2 (Berkeley) 4/26/91
- *	$NetBSD: asc_ebc.h,v 1.3 1997/01/09 20:21:49 tls Exp $
  */
 
 /*

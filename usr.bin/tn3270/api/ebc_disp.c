@@ -1,4 +1,4 @@
-/*	$NetBSD: ebc_disp.c,v 1.3 1997/01/09 20:21:55 tls Exp $	*/
+/*	$NetBSD: ebc_disp.c,v 1.4 1998/03/04 13:16:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,9 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "from: @(#)ebc_disp.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$NetBSD: ebc_disp.c,v 1.3 1997/01/09 20:21:55 tls Exp $";
+#if 0
+static char sccsid[] = "@(#)ebc_disp.c	4.2 (Berkeley) 4/26/91";
+#else
+__RCSID("$NetBSD: ebc_disp.c,v 1.4 1998/03/04 13:16:05 christos Exp $");
+#endif
 #endif /* not lint */
 
 /*

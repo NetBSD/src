@@ -1,4 +1,4 @@
-/*	$NetBSD: general.h,v 1.5 1997/01/09 20:22:21 tls Exp $	*/
+/*	$NetBSD: general.h,v 1.6 1998/03/04 13:16:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)general.h	4.2 (Berkeley) 4/26/91
- *	$NetBSD: general.h,v 1.5 1997/01/09 20:22:21 tls Exp $
  */
 
 /*
@@ -58,8 +57,8 @@
 #define	memset(s,c,n)		if (c == 0) { \
 				    bzero(s,n); \
 				} else { \
-				    register char *src = s; \
-				    register int count = n; \
+				    char *src = s; \
+				    int count = n; \
 					\
 				    while (count--) { \
 					*src++ = c; \
@@ -69,3 +68,8 @@
 #else /* !(defined(unix) && !defined(__NetBSD__)) */
 #include <string.h>
 #endif	/* !(defined(unix) && !defined(__NetBSD__)) */
+
+/* genbsubs.c */
+int bunequal __P((char *, char *, int));
+int bskip __P((char *, int, int));
+unsigned char *memNSchr __P((char *, int, unsigned int, int, int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.3 1997/01/09 20:22:14 tls Exp $	*/
+/*	$NetBSD: options.c,v 1.4 1998/03/04 13:16:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,9 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "from: @(#)options.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$NetBSD: options.c,v 1.3 1997/01/09 20:22:14 tls Exp $";
+#if 0
+static char sccsid[] = "@(#)options.c	4.2 (Berkeley) 4/26/91";
+#else
+__RCSID("$NetBSD: options.c,v 1.4 1998/03/04 13:16:08 christos Exp $");
+#endif
 #endif /* not lint */
 
 /*
@@ -51,7 +55,7 @@ static char rcsid[] = "$NetBSD: options.c,v 1.3 1997/01/09 20:22:14 tls Exp $";
 void
 OptInit()
 {
-    register int i;
+    int i;
 
     OptAPLmode = 0;
     OptNullProcessing = 1;		/* improved null processing */
@@ -68,6 +72,7 @@ OptInit()
     OptWordWrap = 0;
 }
 
+int
 OptOrder(pointer, count, control)
 unsigned char *pointer;
 int count;

@@ -1,4 +1,4 @@
-/*	$NetBSD: api.h,v 1.3 1997/01/09 20:22:05 tls Exp $	*/
+/*	$NetBSD: api.h,v 1.4 1998/03/04 13:16:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)api.h	4.4 (Berkeley) 4/26/91
- *	$NetBSD: api.h,v 1.3 1997/01/09 20:22:05 tls Exp $
  */
 
 /*
@@ -404,3 +403,11 @@ struct SREGS {
 	ss;
 };
 #endif	/* defined(MSDOS) (else section) */
+
+/* Interface */
+int api_close_api __P((void));
+int api_open_api __P((char *));
+int api_exch_api __P((union REGS *, struct SREGS *, char *, int));
+
+/* api.c */
+void handle_api __P((union REGS *, struct SREGS *));

@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.28 1998/02/28 12:38:58 veego Exp $
+#	$NetBSD: Makefile,v 1.29 1998/03/04 13:16:10 christos Exp $
 
-CPPFLAGS+=-I${.CURDIR}/../../../lib
+CPPFLAGS+=-I${.CURDIR}/../../../lib -I${.CURDIR}/../../telnet
 LDADD+=	-lcurses -lcrypt
 DPADD+=	${LIBCURSES} ${LIBCRYPT}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.h,v 1.3 1997/01/09 20:22:22 tls Exp $	*/
+/*	$NetBSD: globals.h,v 1.4 1998/03/04 13:16:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)globals.h	4.2 (Berkeley) 4/26/91
- *	$NetBSD: globals.h,v 1.3 1997/01/09 20:22:22 tls Exp $
  */
 
 /*
@@ -121,6 +120,8 @@ EXTERN int AidByte;
 
 #if	defined(INCLUDED_STATE)
 #endif
+
+void init_system __P((void));
 
 #if	defined(INCLUDED_OIA)
 

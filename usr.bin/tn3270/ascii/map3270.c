@@ -1,4 +1,4 @@
-/*	$NetBSD: map3270.c,v 1.5 1998/02/04 21:32:23 thorpej Exp $	*/
+/*	$NetBSD: map3270.c,v 1.6 1998/03/04 13:16:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,9 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "from: @(#)map3270.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$NetBSD: map3270.c,v 1.5 1998/02/04 21:32:23 thorpej Exp $";
+#if 0
+static char sccsid[] = "@(#)map3270.c	4.2 (Berkeley) 4/26/91";
+#else
+__RCSID("$NetBSD: map3270.c,v 1.6 1998/03/04 13:16:06 christos Exp $");
+#endif
 #endif /* not lint */
 
 /*	This program reads a description file, somewhat like /etc/termcap,
@@ -61,6 +65,13 @@ static char rcsid[] = "$NetBSD: map3270.c,v 1.5 1998/02/04 21:32:23 thorpej Exp 
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#ifdef __STDC__
+#include <stdlib.h>
+#else
+extern char *malloc();
+extern void free();
+extern char *getenv();
+#endif
 
 #define	IsPrint(c)	((isprint(c) && !isspace(c)) || ((c) == ' '))
 
@@ -105,7 +116,7 @@ static state *headOfQueue = &firstentry;
 static int debug = 0;		/* debug flag (for debuggin tables) */
 #endif	/* DEBUG */
 
-static int (*GetTc)();
+static int (*GetTc) __P((char *));
 static int doPaste = 1;		/* should we have side effects */
 static int picky = 0;		/* do we complain of unknown functions? */
 static char usePointer = 0;	/* use pointer, or file */
@@ -123,9 +134,37 @@ static char *keysgeneric[] = {
 
 static	int	Empty = 1,		/* is the unget lifo empty? */
 		Full = 0;		/* is the unget lifo full? */
-static	lexicon	lifo[200] = { 0 };	/* character stack for parser */
+static	lexicon	lifo[200];		/* character stack for parser */
 static	int	rp = 0,			/* read pointer into lifo */
 		wp = 0;			/* write pointer into lifo */
+
+static int GetC __P((void));
+static lexicon Get __P((void));
+static void UnGet __P((lexicon));
+static stringWithLength *GetQuotedString __P((void));
+#ifdef NOTUSED
+static stringWithLength *GetCharString __P((void));
+#endif
+static int GetCharacter __P((int));
+#ifdef NOTUSED
+static int GetString __P((char *));
+#endif
+static stringWithLength *GetAlphaMericString __P((void));
+static lexicon EatToNL __P((void));
+static void GetWS __P((void));
+static void FreeState __P((state *));
+static state *GetState __P((void));
+static state *FindMatchAtThisLevel __P((state *, int));
+static state *PasteEntry __P((state *, char *, int, char *));
+static int GetInput __P((int, char *));
+static int GetDefinition __P((void));
+static int GetDefinitions __P((void));
+static int GetBegin __P((void));
+static int GetEnd __P((void));
+static int GetName __P((void));
+static int GetNames __P((void));
+static int GetEntry0 __P((void));
+static int GetEntry __P((void));
 
 static int
 GetC()
@@ -141,7 +180,6 @@ GetC()
 	    if (whichkey == 0) {
 		static char suffix = 'A';	/* From environment */
 		char envname[9];
-		extern char *getenv();
 
 		(void) sprintf(envname, "MAP3270%c", suffix++);
 		environPointer = getenv(envname);
@@ -165,8 +203,8 @@ static lexicon
 Get()
 {
     lexicon c;
-    register lexicon *pC = &c;
-    register int character;
+    lexicon *pC = &c;
+    int character;
 
     if (!Empty) {
 	*pC = lifo[rp];
@@ -262,7 +300,7 @@ lexicon c;			/* character to unget */
  */
 char *
 uncontrol(c)
-	register int c;
+	int c;
 {
 	static char buf[3];
 
@@ -284,11 +322,12 @@ uncontrol(c)
 
 /* compare two strings, ignoring case */
 
+int
 ustrcmp(string1, string2)
-register char *string1;
-register char *string2;
+char *string1;
+char *string2;
 {
-    register int c1, c2;
+    int c1, c2;
 
     while ((c1 = (unsigned char) *string1++) != 0) {
 	if (isupper(c1)) {
@@ -365,7 +404,7 @@ GetCharString()
 }
 #endif	/* NOTUSED */
 
-static
+static int
 GetCharacter(character)
 int	character;		/* desired character */
 {
@@ -381,7 +420,7 @@ int	character;		/* desired character */
 }
 
 #ifdef	NOTUSED
-static
+static int
 GetString(string)
 char	*string;		/* string to get */
 {
@@ -472,8 +511,6 @@ static void
 FreeState(pState)
 state *pState;
 {
-    extern int free();
-
     free((char *)pState);
 }
 
@@ -482,7 +519,6 @@ static state *
 GetState()
 {
     state *pState;
-    extern char *malloc();
 
     pState = (state *) malloc(sizeof (state));
 
@@ -554,7 +590,7 @@ char			*identifier;	/* for error messages */
     return(PasteEntry(other, string+1, count-1, identifier));
 }
 
-static
+static int
 GetInput(tc, identifier)
 int tc;
 char *identifier;		/* entry being parsed (for error messages) */
@@ -606,7 +642,7 @@ char *identifier;		/* entry being parsed (for error messages) */
     }
 }
 
-static
+static int
 GetDefinition()
 {
     stringWithLength *string;
@@ -671,7 +707,7 @@ GetDefinition()
 }
 
 
-static
+static int
 GetDefinitions()
 {
     if (!GetDefinition()) {
@@ -684,7 +720,7 @@ GetDefinitions()
     return(1);
 }
 
-static
+static int
 GetBegin()
 {
     GetWS();
@@ -694,7 +730,7 @@ GetBegin()
     return(1);
 }
 
-static
+static int
 GetEnd()
 {
     GetWS();
@@ -704,7 +740,7 @@ GetEnd()
     return(1);
 }
 
-static
+static int
 GetName()
 {
     if (!GetAlphaMericString()) {
@@ -717,7 +753,7 @@ GetName()
     return(1);
 }
 
-static
+static int
 GetNames()
 {
     GetWS();
@@ -735,7 +771,7 @@ GetNames()
     return(1);
 }
 
-static
+static int
 GetEntry0()
 {
     if (!GetBegin()) {
@@ -754,7 +790,7 @@ GetEntry0()
 }
 
 
-static
+static int
 GetEntry()
 {
     if (!GetNames()) {
@@ -769,6 +805,7 @@ GetEntry()
  *	KEYBD (or TERM) variable
  */
 
+int
 Position(filename, keybdPointer)
 char *filename;
 char *keybdPointer;
@@ -828,7 +865,6 @@ strsave(string)
 char *string;
 {
     char *p;
-    extern char *malloc();
 
     p = malloc((unsigned int)strlen(string)+1);
     if (p != 0) {
@@ -848,9 +884,8 @@ state *
 InitControl(keybdPointer, pickyarg, translator)
 char	*keybdPointer;
 int	pickyarg;		/* Should we be picky? */
-int	(*translator)();	/* Translates ascii string to integer */
+int	(*translator) __P((char *));	/* Translates ascii string to integer */
 {
-    extern char *getenv();
     int GotIt;
 
     picky = pickyarg;

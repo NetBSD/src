@@ -1,4 +1,4 @@
-/*	$NetBSD: astosc.h,v 1.3 1997/01/09 20:21:50 tls Exp $	*/
+/*	$NetBSD: astosc.h,v 1.4 1998/03/04 13:16:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)astosc.h	4.2 (Berkeley) 4/26/91
- *	$NetBSD: astosc.h,v 1.3 1997/01/09 20:21:50 tls Exp $
  */
 
 /*
@@ -56,6 +55,6 @@ struct astosc {
     char *name;			/* Name of this function */
 };
 
-int ascii_to_index();		/* Function to feed InitControl() */
+int ascii_to_index __P((char *));	/* Function to feed InitControl() */
 
 extern struct astosc astosc[256];

@@ -1,4 +1,4 @@
-/*	$NetBSD: options.h,v 1.3 1997/01/09 20:22:15 tls Exp $	*/
+/*	$NetBSD: options.h,v 1.4 1998/03/04 13:16:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)options.h	4.2 (Berkeley) 4/26/91
- *	$NetBSD: options.h,v 1.3 1997/01/09 20:22:15 tls Exp $
  */
 
 /*
@@ -42,3 +41,6 @@
  */
 
 #define	INCLUDED_OPTIONS
+
+void OptInit __P((void));
+int OptOrder __P((unsigned char *, int, int));

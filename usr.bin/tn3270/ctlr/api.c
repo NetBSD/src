@@ -1,4 +1,4 @@
-/*	$NetBSD: api.c,v 1.3 1997/01/09 20:22:03 tls Exp $	*/
+/*	$NetBSD: api.c,v 1.4 1998/03/04 13:16:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,9 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "from: @(#)api.c	4.5 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$NetBSD: api.c,v 1.3 1997/01/09 20:22:03 tls Exp $";
+#if 0
+static char sccsid[] = "@(#)api.c	4.5 (Berkeley) 4/26/91";
+#else
+__RCSID("$NetBSD: api.c,v 1.4 1998/03/04 13:16:06 christos Exp $");
+#endif
 #endif /* not lint */
 
 /*
@@ -52,6 +56,9 @@ static char rcsid[] = "$NetBSD: api.c,v 1.3 1997/01/09 20:22:03 tls Exp $";
 #include "screen.h"
 #include "hostctlr.h"
 #include "oia.h"
+#include "declare.h"
+
+#include "externs.h"
 
 #include "../general/globals.h"
 
@@ -64,16 +71,34 @@ int apitrace = 0;
 #define	PS_SESSION_ID	23
 #define	BUF_SESSION_ID	0
 
+
+/* api.c */
+#if	defined(MSDOS)
+static void movetous __P((char *, int, int , int));
+static void movetothem __P((int, int , char *, int));
+#else
+#include "../sys_curses/telextrn.h"
+#endif
+static void name_resolution __P((union REGS *, struct SREGS *));
+static void query_session_id __P((union REGS *, struct SREGS *));
+static void query_session_parameters __P((union REGS *, struct SREGS *));
+static void query_session_cursor __P((union REGS *, struct SREGS *));
+static void connect_to_keyboard __P((union REGS *, struct SREGS *));
+static void disconnect_from_keyboard __P((union REGS *, struct SREGS *));
+static void write_keystroke __P((union REGS *, struct SREGS *));
+static void disable_input __P((union REGS *, struct SREGS *));
+static void enable_input __P((union REGS *, struct SREGS *));
+static void copy_subroutine __P((BufferDescriptor *, BufferDescriptor *,
+    CopyStringParms *, int, int ));
+static void copy_string __P((union REGS *, struct SREGS *));
+static void read_oia_group __P((union REGS *, struct SREGS *));
+static void unknown_op __P((union REGS *, struct SREGS *));
+
 /*
  * General utility routines.
  */
 
 #if	defined(MSDOS)
-
-#if	defined(LINT_ARGS)
-static void movetous(char *, int, int, int);
-static void movetothem(int, int, char *, int);
-#endif	/* defined(LINT_ARGS) */
 
 #define	access_api(foo,length,copyin)	(foo)
 #define	unaccess_api(foo,goo,length,copyout)
@@ -106,12 +131,6 @@ int length;
     }
 }
 #endif	/* defined(MSDOS) */
-
-#if	defined(unix)
-extern char *access_api();
-extern void movetous(), movetothem(), unaccess_api();
-#endif	/* defined(unix) */
-
 
 /*
  * Supervisor Services.
@@ -415,7 +434,7 @@ struct SREGS *sregs;
  * Copy Services.
  */
 
-static
+static void
 copy_subroutine(target, source, parms, what_is_user, length)
 BufferDescriptor *target, *source;
 CopyStringParms *parms;
@@ -430,7 +449,7 @@ int what_is_user;
 #define	NO_FIELD_ATTRIBUTES	16
     int needtodo = 0;
     int access_length;
-    char far *input;
+    unsigned char far *input;
     char far *output;
     char far *access_pointer;
 
@@ -457,7 +476,7 @@ int what_is_user;
 	if (target->characteristics&CHARACTERISTIC_EAB) {
 	    access_length *= 2;
 	}
-	input = (char far *) &Host[source->begin];
+	input = (unsigned char far *) &Host[source->begin];
 	access_pointer = target->buffer;
 	output = access_api(target->buffer, access_length, 0);
     } else {
@@ -465,7 +484,8 @@ int what_is_user;
 	    access_length *= 2;
 	}
 	access_pointer = source->buffer;
-	input = access_api(source->buffer, access_length, 1);
+	input = (unsigned char far *)
+	    access_api(source->buffer, access_length, 1);
 	output = (char far *) &Host[target->begin];
     }
     while (length--) {
@@ -477,6 +497,7 @@ int what_is_user;
 	    *output++ = *input++;
 	}
 	if (needtodo&TARGET_NO_EAB) {
+	    /* XXX: So why are we doing this? (bug) */
 	    input++;
 	} else if (needtodo&SOURCE_NO_EAB) {
 	    *output++ = 0;		/* Should figure out good EAB? */
@@ -621,6 +642,7 @@ struct SREGS *sregs;
 }
 
 
+void
 handle_api(regs, sregs)
 union REGS *regs;
 struct SREGS *sregs;

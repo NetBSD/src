@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile.inc,v 1.9 1997/10/24 12:14:57 veego Exp $
+#	$NetBSD: Makefile.inc,v 1.10 1998/03/04 13:16:04 christos Exp $
 
-WARNS=	0
 CPPFLAGS+=-DTERMCAP -DSRCRT -DKLUDGELINEMODE -DUSE_TERMIO -DTN3270 -Dunix
 CPPFLAGS+=-I${.CURDIR} -I.
 KBD=	unix.kbd
