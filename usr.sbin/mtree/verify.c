@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.28 2002/02/04 05:16:41 lukem Exp $	*/
+/*	$NetBSD: verify.c,v 1.29 2002/02/04 07:17:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: verify.c,v 1.28 2002/02/04 05:16:41 lukem Exp $");
+__RCSID("$NetBSD: verify.c,v 1.29 2002/02/04 07:17:14 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -191,19 +191,19 @@ miss(NODE *p, char *tail)
 
 		create = 0;
 		if (!(p->flags & F_VISIT) && uflag) {
-			if (Wflag)
-				goto makeit;
+			if (Wflag || p->type == F_LINK)
+				goto createit;
 			if (!(p->flags & (F_UID | F_UNAME)))
 			    printf(
 				" (%s not created: user not specified)", type);
 			else if (!(p->flags & (F_GID | F_GNAME)))
 			    printf(
 				" (%s not created: group not specified)", type);
-			else if (!(p->flags & F_MODE) && p->type != F_LINK)
+			else if (!(p->flags & F_MODE))
 			    printf(
 				" (%s not created: mode not specified)", type);
 			else
- makeit:
+ createit:
 			switch (p->type) {
 			case F_BLOCK:
 			case F_CHAR:
@@ -219,65 +219,57 @@ miss(NODE *p, char *tail)
 					printf(" (%s not created: %s)\n",
 					    type, strerror(errno));
 				else
-					printf(" (created)\n");
-				if (chown(path, p->st_uid, p->st_gid))
-					printf(
-					    "%s: user/group not modified: %s\n",
-					    path, strerror(errno));
-				if (chmod(path, p->st_mode))
-					printf("%s: permissions not set: %s\n",
-					    path, strerror(errno));
-				continue;
+					create = 1;
+				break;
 			case F_LINK:
-				if (!(p->flags & F_LINK))
+				if (!(p->flags & F_SLINK))
 					printf(
-					" (%s not created: link not specified)",
+				    " (%s not created: link not specified)\n",
 					    type);
 				else if (symlink(p->slink, path))
 					printf(
 					    " (%s not created: %s)\n",
 					    type, strerror(errno));
 				else
-					printf(" (created)\n");
-				if (!Wflag &&
-				    lchown(path, p->st_uid, p->st_gid))
-					printf(
-					    "%s: user/group not modified: %s\n",
-					    path, strerror(errno));
-				continue;
+					create = 1;
+				break;
 			case F_DIR:
 				if (mkdir(path, S_IRWXU))
 					printf(" (not created: %s)",
 					    strerror(errno));
-				else {
+				else
 					create = 1;
-					printf(" (created)");
-				}
 				break;
 			default:
 				mtree_err("can't create create %s",
 				    nodetype(p->type));
 			}
 		}
-		if (!(p->flags & F_VISIT))
+		if (create)
+			printf(" (created)");
+		if (p->type == F_DIR) {
+			if (!(p->flags & F_VISIT))
+				putchar('\n');
+			for (tp = tail; *tp; ++tp)
+				continue;
+			*tp = '/';
+			miss(p->child, tp + 1);
+			*tp = '\0';
+		} else
 			putchar('\n');
-
-		for (tp = tail; *tp; ++tp)
-			continue;
-		*tp = '/';
-		miss(p->child, tp + 1);
-		*tp = '\0';
 
 		if (!create || Wflag)
 			continue;
-		if (chown(path, p->st_uid, p->st_gid)) {
+		if ((p->flags & (F_UID | F_UNAME)) &&
+		    (p->flags & (F_GID | F_GNAME)) &&
+		    (lchown(path, p->st_uid, p->st_gid))) {
 			printf("%s: user/group/mode not modified: %s\n",
 			    path, strerror(errno));
 			printf("%s: warning: file mode %snot set\n", path,
 			    (p->flags & F_FLAGS) ? "and file flags " : "");
 			continue;
 		}
-		if (chmod(path, p->st_mode))
+		if ((p->flags & F_MODE) && lchmod(path, p->st_mode))
 			printf("%s: permissions not set: %s\n",
 			    path, strerror(errno));
 #if HAVE_STRUCT_STAT_ST_FLAGS
@@ -286,7 +278,7 @@ miss(NODE *p, char *tail)
 				flags = p->st_flags;
 			else
 				flags = p->st_flags & ~SP_FLGS;
-			if (chflags(path, flags))
+			if (lchflags(path, flags))
 				printf("%s: file flags not set: %s\n",
 				    path, strerror(errno));
 		}

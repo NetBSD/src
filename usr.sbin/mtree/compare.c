@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.38 2002/01/31 19:37:15 tv Exp $	*/
+/*	$NetBSD: compare.c,v 1.39 2002/02/04 07:17:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.38 2002/01/31 19:37:15 tv Exp $");
+__RCSID("$NetBSD: compare.c,v 1.39 2002/02/04 07:17:14 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,7 @@ do {									\
 			printf("%sflags (\"%s\"", tab,			\
 			    flags_to_string(p->fts_statp->st_flags, "none")); \
 		}							\
-		if (chflags(path, flags)) {				\
+		if (lchflags(path, flags)) {				\
 			label++;					\
 			printf(", not modified: %s)\n",			\
 			    strerror(errno));				\
@@ -96,7 +96,7 @@ do {									\
 /* SETFLAGS:
  * given pflags, additionally set those flags specified in sflags and
  * selected by mask (the other flags are left unchanged). oflags is
- * passed as reference to check if chflags is necessary.
+ * passed as reference to check if lchflags is necessary.
  */
 #define SETFLAGS(path, sflags, pflags, oflags, mask)			\
 do {									\
@@ -107,7 +107,7 @@ do {									\
 /* CLEARFLAGS:
  * given pflags, reset the flags specified in sflags and selected by mask
  * (the other flags are left unchanged). oflags is
- * passed as reference to check if chflags is necessary.
+ * passed as reference to check if lchflags is necessary.
  */
 #define CLEARFLAGS(path, sflags, pflags, oflags, mask)			\
 do {									\
@@ -190,7 +190,7 @@ compare(NODE *s, FTSENT *p)
 			    (mknod(p->fts_accpath,
 			      s->st_mode | nodetoino(s->type),
 			      s->st_rdev) == -1) ||
-			    (chown(p->fts_accpath, p->fts_statp->st_uid,
+			    (lchown(p->fts_accpath, p->fts_statp->st_uid,
 			      p->fts_statp->st_gid) == -1) )
 				printf(", not modified: %s)\n",
 				    strerror(errno));
@@ -206,7 +206,7 @@ compare(NODE *s, FTSENT *p)
 		printf("%suser (%lu, %lu",
 		    tab, (u_long)s->st_uid, (u_long)p->fts_statp->st_uid);
 		if (uflag) {
-			if (chown(p->fts_accpath, s->st_uid, -1))
+			if (lchown(p->fts_accpath, s->st_uid, -1))
 				printf(", not modified: %s)\n",
 				    strerror(errno));
 			else
@@ -220,7 +220,7 @@ compare(NODE *s, FTSENT *p)
 		printf("%sgid (%lu, %lu",
 		    tab, (u_long)s->st_gid, (u_long)p->fts_statp->st_gid);
 		if (uflag) {
-			if (chown(p->fts_accpath, -1, s->st_gid))
+			if (lchown(p->fts_accpath, -1, s->st_gid))
 				printf(", not modified: %s)\n",
 				    strerror(errno));
 			else
@@ -253,7 +253,7 @@ compare(NODE *s, FTSENT *p)
 		    tab, (u_long)s->st_mode,
 		    (u_long)p->fts_statp->st_mode & MBITS);
 		if (uflag) {
-			if (chmod(p->fts_accpath, s->st_mode))
+			if (lchmod(p->fts_accpath, s->st_mode))
 				printf(", not modified: %s)\n",
 				    strerror(errno));
 			else
@@ -326,7 +326,7 @@ compare(NODE *s, FTSENT *p)
 #if HAVE_STRUCT_STAT_ST_FLAGS
 	/*
 	 * XXX
-	 * since chflags(2) will reset file times, the utimes() above
+	 * since lchflags(2) will reset file times, the utimes() above
 	 * may have been useless!  oh well, we'd rather have correct
 	 * flags, rather than times?
 	 */
