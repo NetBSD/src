@@ -60,9 +60,7 @@ file isofs/isofs_rrip.c		isofs
 file isofs/isofs_util.c	 	isofs
 file isofs/isofs_vfsops.c	isofs
 file isofs/isofs_vnops.c	isofs
-file kern/dead_vnops.c	
 file kern/exec_aout.c
-file kern/fifo_vnops.c	 	fifo
 file kern/init_main.c
 file kern/init_sysent.c
 file kern/kern_acct.c
@@ -84,7 +82,6 @@ file kern/kern_subr.c
 file kern/kern_synch.c
 file kern/kern_time.c
 file kern/kern_xxx.c
-file kern/spec_vnops.c
 file kern/subr_autoconf.c
 file kern/subr_log.c
 file kern/subr_mcount.c	 	profiling-routine
@@ -117,10 +114,13 @@ file kern/vfs_lookup.c
 file kern/vfs_subr.c
 file kern/vfs_syscalls.c
 file kern/vfs_vnops.c
-file miscfs/fdesc/fdesc_vfsops.c	 fdesc
-file miscfs/fdesc/fdesc_vnops.c		 fdesc
-file miscfs/kernfs/kernfs_vfsops.c	 kernfs
-file miscfs/kernfs/kernfs_vnops.c	 kernfs
+file miscfs/deadfs/dead_vnops.c
+file miscfs/fdesc/fdesc_vfsops.c	fdesc
+file miscfs/fdesc/fdesc_vnops.c		fdesc
+file miscfs/fifofs/fifo_vnops.c		fifo
+file miscfs/kernfs/kernfs_vfsops.c	kernfs
+file miscfs/kernfs/kernfs_vnops.c	kernfs
+file miscfs/specfs/spec_vnops.c
 file net/bpf.c		 	bpfilter needs-count
 file net/bpf_filter.c	 	bpfilter 
 file net/if.c
