@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ramdisk.list,v 1.1 2002/04/22 21:17:58 fredette Exp $
+#	$NetBSD: list,v 1.1 2002/04/26 03:15:16 lukem Exp $
 #
 # ramdisk/list - packing list for the ramdisk.
 #
@@ -81,16 +81,13 @@ PROG		bin/rcmd
 
 LIBS libhack.o -lrmt -lutil -lz
 
-SPECIAL init srcdir distrib/utils/init_s
-SPECIAL ls srcdir distrib/utils/tls
-SPECIAL ssh srcdir distrib/utils/ssh
-
 # These are built with special flags to save a little space.
-SPECIAL dd srcdir distrib/utils/x_dd
-SPECIAL ifconfig srcdir distrib/utils/x_ifconfig
-SPECIAL mount srcdir distrib/utils/x_mount
-SPECIAL route srcdir distrib/utils/x_route
-SPECIAL umount srcdir distrib/utils/x_umount
+SPECIAL ls		srcdir	distrib/utils/tls
+SPECIAL ssh		srcdir	distrib/utils/ssh
+SPECIAL ifconfig	srcdir	distrib/utils/x_ifconfig
+SPECIAL mount		srcdir	distrib/utils/x_mount
+SPECIAL route		srcdir	distrib/utils/x_route
+SPECIAL umount		srcdir	distrib/utils/x_umount
 
 # various files that we need in /etc for the install
 COPY	${TOPDIR}/common/rd.disktab	etc/disktab
@@ -101,7 +98,7 @@ COPY	${TOPDIR}/common/rd.passwd	etc/passwd
 COPY	${TOPDIR}/common/rd.sshrc	.sshrc
 COPY	${TOPDIR}/common/rd.welcome	.welcome
 
-COPY	${DESTDIR}/etc/netconfig	etc/netconfig
+COPY	${_SRC_TOP_}/etc/netconfig	etc/netconfig
 
 # Fake /usr
 SYMLINK . usr
