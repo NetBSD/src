@@ -1,4 +1,4 @@
-/*	$NetBSD: srvr_nfs.c,v 1.12 1999/04/07 11:21:49 bouyer Exp $	*/
+/*	$NetBSD: srvr_nfs.c,v 1.13 1999/04/14 09:07:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Erez Zadok
@@ -755,14 +755,16 @@ find_nfs_srvr(mntfs *mf)
 #endif /* not HAVE_FS_NFS3 */
   }
 
-  /*    
-   * XXX RPC or SunOS 4.1.4 bug ? the last call to nfs_get_version() must  
-   * be done with the used version and proto  
-   */  
-  (void)get_nfs_version(host, ip, nfs_version, nfs_proto);  
-
   if (!nfs_proto)
     nfs_proto = "udp";
+
+  if (ip) {
+    /*    
+     * XXX RPC or SunOS 4.1.4 bug ? the last call to nfs_get_version() must  
+     * be done with the used version and proto  
+     */  
+    (void)get_nfs_version(host, ip, nfs_version, nfs_proto);  
+  }
 
   plog(XLOG_INFO, "Using NFS version %d, protocol %s on host %s",
        (int) nfs_version, nfs_proto, host);
