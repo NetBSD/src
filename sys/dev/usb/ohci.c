@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.40 1999/09/04 22:26:11 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.41 1999/09/05 21:22:38 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -539,7 +539,7 @@ ohci_power(why, v)
 #ifdef USB_DEBUG
 	ohci_softc_t *sc = v;
 
-	printf("ohci_power: sc=%p, why=%d\n", sc, why);
+	DPRINTF(("ohci_power: sc=%p, why=%d\n", sc, why));
 	/* XXX should suspend/resume */
 	ohci_dumpregs(sc);
 #endif
@@ -554,40 +554,40 @@ void
 ohci_dumpregs(sc)
 	ohci_softc_t *sc;
 {
-	printf("ohci_dumpregs: rev=0x%08x control=0x%08x command=0x%08x\n",
-	       OREAD4(sc, OHCI_REVISION),
-	       OREAD4(sc, OHCI_CONTROL),
-	       OREAD4(sc, OHCI_COMMAND_STATUS));
-	printf("               intrstat=0x%08x intre=0x%08x intrd=0x%08x\n",
-	       OREAD4(sc, OHCI_INTERRUPT_STATUS),
-	       OREAD4(sc, OHCI_INTERRUPT_ENABLE),
-	       OREAD4(sc, OHCI_INTERRUPT_DISABLE));
-	printf("               hcca=0x%08x percur=0x%08x ctrlhd=0x%08x\n",
-	       OREAD4(sc, OHCI_HCCA),
-	       OREAD4(sc, OHCI_PERIOD_CURRENT_ED),
-	       OREAD4(sc, OHCI_CONTROL_HEAD_ED));
-	printf("               ctrlcur=0x%08x bulkhd=0x%08x bulkcur=0x%08x\n",
-	       OREAD4(sc, OHCI_CONTROL_CURRENT_ED),
-	       OREAD4(sc, OHCI_BULK_HEAD_ED),
-	       OREAD4(sc, OHCI_BULK_CURRENT_ED));
-	printf("               done=0x%08x fmival=0x%08x fmrem=0x%08x\n",
-	       OREAD4(sc, OHCI_DONE_HEAD),
-	       OREAD4(sc, OHCI_FM_INTERVAL),
-	       OREAD4(sc, OHCI_FM_REMAINING));
-	printf("               fmnum=0x%08x perst=0x%08x lsthrs=0x%08x\n",
-	       OREAD4(sc, OHCI_FM_NUMBER),
-	       OREAD4(sc, OHCI_PERIODIC_START),
-	       OREAD4(sc, OHCI_LS_THRESHOLD));
-	printf("               desca=0x%08x descb=0x%08x stat=0x%08x\n",
-	       OREAD4(sc, OHCI_RH_DESCRIPTOR_A),
-	       OREAD4(sc, OHCI_RH_DESCRIPTOR_B),
-	       OREAD4(sc, OHCI_RH_STATUS));
-	printf("               port1=0x%08x port2=0x%08x\n",
-	       OREAD4(sc, OHCI_RH_PORT_STATUS(1)),
-	       OREAD4(sc, OHCI_RH_PORT_STATUS(2)));
-	printf("         HCCA: frame_number=0x%04x done_head=0x%08x\n",
-	       LE(sc->sc_hcca->hcca_frame_number),
-	       LE(sc->sc_hcca->hcca_done_head));
+	DPRINTF(("ohci_dumpregs: rev=0x%08x control=0x%08x command=0x%08x\n",
+		 OREAD4(sc, OHCI_REVISION),
+		 OREAD4(sc, OHCI_CONTROL),
+		 OREAD4(sc, OHCI_COMMAND_STATUS)));
+	DPRINTF(("               intrstat=0x%08x intre=0x%08x intrd=0x%08x\n",
+		 OREAD4(sc, OHCI_INTERRUPT_STATUS),
+		 OREAD4(sc, OHCI_INTERRUPT_ENABLE),
+		 OREAD4(sc, OHCI_INTERRUPT_DISABLE)));
+	DPRINTF(("               hcca=0x%08x percur=0x%08x ctrlhd=0x%08x\n",
+		 OREAD4(sc, OHCI_HCCA),
+		 OREAD4(sc, OHCI_PERIOD_CURRENT_ED),
+		 OREAD4(sc, OHCI_CONTROL_HEAD_ED)));
+	DPRINTF(("               ctrlcur=0x%08x bulkhd=0x%08x bulkcur=0x%08x\n",
+		 OREAD4(sc, OHCI_CONTROL_CURRENT_ED),
+		 OREAD4(sc, OHCI_BULK_HEAD_ED),
+		 OREAD4(sc, OHCI_BULK_CURRENT_ED)));
+	DPRINTF(("               done=0x%08x fmival=0x%08x fmrem=0x%08x\n",
+		 OREAD4(sc, OHCI_DONE_HEAD),
+		 OREAD4(sc, OHCI_FM_INTERVAL),
+		 OREAD4(sc, OHCI_FM_REMAINING)));
+	DPRINTF(("               fmnum=0x%08x perst=0x%08x lsthrs=0x%08x\n",
+		 OREAD4(sc, OHCI_FM_NUMBER),
+		 OREAD4(sc, OHCI_PERIODIC_START),
+		 OREAD4(sc, OHCI_LS_THRESHOLD)));
+	DPRINTF(("               desca=0x%08x descb=0x%08x stat=0x%08x\n",
+		 OREAD4(sc, OHCI_RH_DESCRIPTOR_A),
+		 OREAD4(sc, OHCI_RH_DESCRIPTOR_B),
+		 OREAD4(sc, OHCI_RH_STATUS)));
+	DPRINTF(("               port1=0x%08x port2=0x%08x\n",
+		 OREAD4(sc, OHCI_RH_PORT_STATUS(1)),
+		 OREAD4(sc, OHCI_RH_PORT_STATUS(2))));
+	DPRINTF(("         HCCA: frame_number=0x%04x done_head=0x%08x\n",
+		 LE(sc->sc_hcca->hcca_frame_number),
+		 LE(sc->sc_hcca->hcca_done_head)));
 }
 #endif
 
@@ -720,7 +720,7 @@ ohci_process_done(sc, done)
 
 #ifdef USB_DEBUG
 	if (ohcidebug > 10) {
-		printf("ohci_process_done: TD done:\n");
+		DPRINTF(("ohci_process_done: TD done:\n"));
 		ohci_dump_tds(sdone);
 	}
 #endif
@@ -1079,7 +1079,7 @@ ohci_device_request(reqh)
 
 #if USB_DEBUG
 	if (ohcidebug > 5) {
-		printf("ohci_device_request:\n");
+		DPRINTF(("ohci_device_request:\n"));
 		ohci_dump_ed(sed);
 		ohci_dump_tds(setup);
 	}
@@ -1103,8 +1103,8 @@ ohci_device_request(reqh)
 #if USB_DEBUG
 	if (ohcidebug > 5) {
 		delay(5000);
-		printf("ohci_device_request: status=%x\n",
-		       OREAD4(sc, OHCI_COMMAND_STATUS));
+		DPRINTF(("ohci_device_request: status=%x\n",
+			 OREAD4(sc, OHCI_COMMAND_STATUS)));
 		ohci_dump_ed(sed);
 		ohci_dump_tds(setup);
 	}
@@ -1225,33 +1225,33 @@ void
 ohci_dump_td(std)
 	ohci_soft_td_t *std;
 {
-	printf("TD(%p) at %08lx: %b delay=%d ec=%d cc=%d\ncbp=0x%08lx "
-	       "nexttd=0x%08lx be=0x%08lx\n", 
-	       std, (u_long)std->physaddr,
-	       (int)LE(std->td.td_flags),
-	       "\20\23R\24OUT\25IN\31TOG1\32SETTOGGLE",
-	       OHCI_TD_GET_DI(LE(std->td.td_flags)),
-	       OHCI_TD_GET_EC(LE(std->td.td_flags)),
-	       OHCI_TD_GET_CC(LE(std->td.td_flags)),
-	       (u_long)LE(std->td.td_cbp),
-	       (u_long)LE(std->td.td_nexttd), (u_long)LE(std->td.td_be));
+	DPRINTF(("TD(%p) at %08lx: %b delay=%d ec=%d cc=%d\ncbp=0x%08lx "
+		 "nexttd=0x%08lx be=0x%08lx\n", 
+		 std, (u_long)std->physaddr,
+		 (int)LE(std->td.td_flags),
+		 "\20\23R\24OUT\25IN\31TOG1\32SETTOGGLE",
+		 OHCI_TD_GET_DI(LE(std->td.td_flags)),
+		 OHCI_TD_GET_EC(LE(std->td.td_flags)),
+		 OHCI_TD_GET_CC(LE(std->td.td_flags)),
+		 (u_long)LE(std->td.td_cbp),
+		 (u_long)LE(std->td.td_nexttd), (u_long)LE(std->td.td_be)));
 }
 
 void
 ohci_dump_ed(sed)
 	ohci_soft_ed_t *sed;
 {
-	printf("ED(%p) at %08lx: addr=%d endpt=%d maxp=%d %b\ntailp=0x%08lx "
-	       "headp=%b nexted=0x%08lx\n",
-	       sed, (u_long)sed->physaddr, 
-	       OHCI_ED_GET_FA(LE(sed->ed.ed_flags)),
-	       OHCI_ED_GET_EN(LE(sed->ed.ed_flags)),
-	       OHCI_ED_GET_MAXP(LE(sed->ed.ed_flags)),
-	       (int)LE(sed->ed.ed_flags),
-	       "\20\14OUT\15IN\16LOWSPEED\17SKIP\20ISO",
-	       (u_long)LE(sed->ed.ed_tailp),
-	       (u_long)LE(sed->ed.ed_headp), "\20\1HALT\2CARRY",
-	       (u_long)LE(sed->ed.ed_nexted));
+	DPRINTF(("ED(%p) at %08lx: addr=%d endpt=%d maxp=%d %b\ntailp=0x%08lx "
+		 "headp=%b nexted=0x%08lx\n",
+		 sed, (u_long)sed->physaddr, 
+		 OHCI_ED_GET_FA(LE(sed->ed.ed_flags)),
+		 OHCI_ED_GET_EN(LE(sed->ed.ed_flags)),
+		 OHCI_ED_GET_MAXP(LE(sed->ed.ed_flags)),
+		 (int)LE(sed->ed.ed_flags),
+		 "\20\14OUT\15IN\16LOWSPEED\17SKIP\20ISO",
+		 (u_long)LE(sed->ed.ed_tailp),
+		 (u_long)LE(sed->ed.ed_headp), "\20\1HALT\2CARRY",
+		 (u_long)LE(sed->ed.ed_nexted)));
 }
 #endif
 
@@ -2110,8 +2110,8 @@ ohci_device_bulk_start(reqh)
 #ifdef USB_DEBUG
 	if (ohcidebug > 5) {
 		delay(5000);
-		printf("ohci_device_intr_transfer: status=%x\n",
-		       OREAD4(sc, OHCI_COMMAND_STATUS));
+		DPRINTF(("ohci_device_intr_transfer: status=%x\n",
+			 OREAD4(sc, OHCI_COMMAND_STATUS)));
 		ohci_dump_ed(sed);
 		ohci_dump_tds(xfer);
 	}
@@ -2220,7 +2220,7 @@ ohci_device_intr_start(reqh)
 
 #if USB_DEBUG
 	if (ohcidebug > 5) {
-		printf("ohci_device_intr_transfer:\n");
+		DPRINTF(("ohci_device_intr_transfer:\n"));
 		ohci_dump_ed(sed);
 		ohci_dump_tds(xfer);
 	}
@@ -2236,8 +2236,8 @@ ohci_device_intr_start(reqh)
 #ifdef USB_DEBUG
 	if (ohcidebug > 5) {
 		delay(5000);
-		printf("ohci_device_intr_transfer: status=%x\n",
-		       OREAD4(sc, OHCI_COMMAND_STATUS));
+		DPRINTF(("ohci_device_intr_transfer: status=%x\n",
+			 OREAD4(sc, OHCI_COMMAND_STATUS)));
 		ohci_dump_ed(sed);
 		ohci_dump_tds(xfer);
 	}

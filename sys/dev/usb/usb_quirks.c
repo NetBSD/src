@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.11 1999/06/26 00:09:15 augustss Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.12 1999/09/05 21:22:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,9 +85,9 @@ usbd_find_quirk(d)
 	}
 #ifdef USB_DEBUG
 	if (usbdebug && t->quirks.uq_flags)
-		printf("usbd_find_quirk 0x%04x/0x%04x/%x: %d\n", 
-		       UGETW(d->idVendor), UGETW(d->idProduct),
-		       UGETW(d->bcdDevice), t->quirks.uq_flags);
+		logprintf("usbd_find_quirk 0x%04x/0x%04x/%x: %d\n", 
+			  UGETW(d->idVendor), UGETW(d->idProduct),
+			  UGETW(d->bcdDevice), t->quirks.uq_flags);
 #endif
 	return (&t->quirks);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.34 1999/09/05 19:32:19 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.35 1999/09/05 21:22:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -765,13 +765,13 @@ usbd_do_request_flags(dev, req, data, flags, actlen)
 	r = usbd_sync_transfer(reqh);
 #if defined(USB_DEBUG) || defined(DIAGNOSTIC)
 	if (reqh->actlen > reqh->length)
-		printf("usbd_do_request: overrun addr=%d type=0x%02x req=0x"
-		       "%02x val=%d index=%d rlen=%d length=%d actlen=%d\n",
-		       dev->address, reqh->request.bmRequestType,
-		       reqh->request.bRequest, UGETW(reqh->request.wValue),
-		       UGETW(reqh->request.wIndex), 
-		       UGETW(reqh->request.wLength), 
-		       reqh->length, reqh->actlen);
+		DPRINTF(("usbd_do_request: overrun addr=%d type=0x%02x req=0x"
+			 "%02x val=%d index=%d rlen=%d length=%d actlen=%d\n",
+			 dev->address, reqh->request.bmRequestType,
+			 reqh->request.bRequest, UGETW(reqh->request.wValue),
+			 UGETW(reqh->request.wIndex), 
+			 UGETW(reqh->request.wLength), 
+			 reqh->length, reqh->actlen));
 #endif
 	if (actlen)
 		*actlen = reqh->actlen;
@@ -831,14 +831,14 @@ usbd_do_request_async_cb(reqh, priv, status)
 {
 #if defined(USB_DEBUG) || defined(DIAGNOSTIC)
 	if (reqh->actlen > reqh->length)
-		printf("usbd_do_request: overrun addr=%d type=0x%02x req=0x"
-		       "%02x val=%d index=%d rlen=%d length=%d actlen=%d\n",
-		       reqh->pipe->device->address, 
-		       reqh->request.bmRequestType,
-		       reqh->request.bRequest, UGETW(reqh->request.wValue),
-		       UGETW(reqh->request.wIndex), 
-		       UGETW(reqh->request.wLength), 
-		       reqh->length, reqh->actlen);
+		DPRINTF(("usbd_do_request: overrun addr=%d type=0x%02x req=0x"
+			 "%02x val=%d index=%d rlen=%d length=%d actlen=%d\n",
+			 reqh->pipe->device->address, 
+			 reqh->request.bmRequestType,
+			 reqh->request.bRequest, UGETW(reqh->request.wValue),
+			 UGETW(reqh->request.wIndex), 
+			 UGETW(reqh->request.wLength), 
+			 reqh->length, reqh->actlen));
 #endif
 	usbd_free_request(reqh);
 }
