@@ -1,5 +1,5 @@
-/*	$NetBSD: setkey.c,v 1.4 2001/05/07 14:51:47 kleink Exp $	*/
-/*	$KAME: setkey.c,v 1.15 2000/08/31 06:09:27 sakane Exp $	*/
+/*	$NetBSD: setkey.c,v 1.5 2001/09/07 04:12:10 itojun Exp $	*/
+/*	$KAME: setkey.c,v 1.25 2001/08/17 06:33:58 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -53,16 +53,18 @@
 
 #include "libpfkey.h"
 
-void Usage __P((void));
+void usage __P((void));
 int main __P((int, char **));
 int get_supported __P((void));
 void sendkeyshort __P((u_int));
 void promisc __P((void));
-int sendkeymsg __P((void));
+int sendkeymsg __P((char *, size_t));
 int postproc __P((struct sadb_msg *, int));
 const char *numstr __P((int));
 void shortdump_hdr __P((void));
 void shortdump __P((struct sadb_msg *));
+static void printdate __P((void));
+static int32_t gmt2local __P((time_t));
 
 #define MODE_SCRIPT	1
 #define MODE_CMDDUMP	2
@@ -73,30 +75,27 @@ int so;
 
 int f_forever = 0;
 int f_all = 0;
-int f_debug = 0;
 int f_verbose = 0;
 int f_mode = 0;
 int f_cmddump = 0;
 int f_policy = 0;
 int f_hexdump = 0;
-char *pname;
-
-u_char m_buf[BUFSIZ];
-u_int m_len;
+int f_tflag = 0;
+static time_t thiszone;
 
 extern int lineno;
 
 extern int parse __P((FILE **));
 
 void
-Usage()
+usage()
 {
-	printf("Usage:\t%s [-dv] -c\n", pname);
-	printf("\t%s [-dv] -f (file)\n", pname);
-	printf("\t%s [-Padlv] -D\n", pname);
-	printf("\t%s [-Pdv] -F\n", pname);
-	printf("\t%s [-h] -x\n", pname);
-	pfkey_close(so);
+
+	printf("usage: setkey [-v] -c\n");
+	printf("       setkey [-v] -f filename\n");
+	printf("       setkey [-Palv] -D\n");
+	printf("       setkey [-Pv] -F\n");
+	printf("       setkey [-h] -x\n");
 	exit(1);
 }
 
@@ -108,9 +107,12 @@ main(ac, av)
 	FILE *fp = stdin;
 	int c;
 
-	pname = *av;
+	if (ac == 1) {
+		usage();
+		/* NOTREACHED */
+	}
 
-	if (ac == 1) Usage();
+	thiszone = gmt2local(0);
 
 	while ((c = getopt(ac, av, "acdf:hlvxDFP")) != -1) {
 		switch (c) {
@@ -142,20 +144,24 @@ main(ac, av)
 			break;
 		case 'x':
 			f_mode = MODE_PROMISC;
+			f_tflag++;
 			break;
 		case 'P':
 			f_policy = 1;
-			break;
-		case 'd':
-			f_debug = 1;
 			break;
 		case 'v':
 			f_verbose = 1;
 			break;
 		default:
-			Usage();
+			usage();
 			/*NOTREACHED*/
 		}
+	}
+
+	so = pfkey_open();
+	if (so < 0) {
+		perror("pfkey_open");
+		exit(1);
 	}
 
 	switch (f_mode) {
@@ -164,7 +170,6 @@ main(ac, av)
 		break;
 	case MODE_CMDFLUSH:
 		sendkeyshort(f_policy ? SADB_X_SPDFLUSH: SADB_FLUSH);
-		pfkey_close(so);
 		break;
 	case MODE_SCRIPT:
 		if (get_supported() < 0) {
@@ -178,7 +183,7 @@ main(ac, av)
 		promisc();
 		/*NOTREACHED*/
 	default:
-		Usage();
+		usage();
 		/*NOTREACHED*/
 	}
 
@@ -188,16 +193,6 @@ main(ac, av)
 int
 get_supported()
 {
-	int so;
-
-	if ((so = pfkey_open()) < 0) {
-		perror("pfkey_open");
-		return -1;
-	}
-
-	/* debug mode ? */
-	if (f_debug)
-		return 0;
 
 	if (pfkey_send_register(so, SADB_SATYPE_UNSPEC) < 0)
 		return -1;
@@ -212,20 +207,18 @@ void
 sendkeyshort(type)
         u_int type;
 {
-	struct sadb_msg *m_msg = (struct sadb_msg *)m_buf;
+	struct sadb_msg msg;
 
-	m_len = sizeof(struct sadb_msg);
+	msg.sadb_msg_version = PF_KEY_V2;
+	msg.sadb_msg_type = type;
+	msg.sadb_msg_errno = 0;
+	msg.sadb_msg_satype = SADB_SATYPE_UNSPEC;
+	msg.sadb_msg_len = PFKEY_UNIT64(sizeof(msg));
+	msg.sadb_msg_reserved = 0;
+	msg.sadb_msg_seq = 0;
+	msg.sadb_msg_pid = getpid();
 
-	m_msg->sadb_msg_version = PF_KEY_V2;
-	m_msg->sadb_msg_type = type;
-	m_msg->sadb_msg_errno = 0;
-	m_msg->sadb_msg_satype = SADB_SATYPE_UNSPEC;
-	m_msg->sadb_msg_len = PFKEY_UNIT64(m_len);
-	m_msg->sadb_msg_reserved = 0;
-	m_msg->sadb_msg_seq = 0;
-	m_msg->sadb_msg_pid = getpid();
-
-	sendkeymsg();
+	sendkeymsg((char *)&msg, sizeof(msg));
 
 	return;
 }
@@ -233,27 +226,20 @@ sendkeyshort(type)
 void
 promisc()
 {
-	struct sadb_msg *m_msg = (struct sadb_msg *)m_buf;
+	struct sadb_msg msg;
 	u_char rbuf[1024 * 32];	/* XXX: Enough ? Should I do MSG_PEEK ? */
-	int so, len;
+	ssize_t l;
 
-	m_len = sizeof(struct sadb_msg);
+	msg.sadb_msg_version = PF_KEY_V2;
+	msg.sadb_msg_type = SADB_X_PROMISC;
+	msg.sadb_msg_errno = 0;
+	msg.sadb_msg_satype = 1;
+	msg.sadb_msg_len = PFKEY_UNIT64(sizeof(msg));
+	msg.sadb_msg_reserved = 0;
+	msg.sadb_msg_seq = 0;
+	msg.sadb_msg_pid = getpid();
 
-	m_msg->sadb_msg_version = PF_KEY_V2;
-	m_msg->sadb_msg_type = SADB_X_PROMISC;
-	m_msg->sadb_msg_errno = 0;
-	m_msg->sadb_msg_satype = 1;
-	m_msg->sadb_msg_len = PFKEY_UNIT64(m_len);
-	m_msg->sadb_msg_reserved = 0;
-	m_msg->sadb_msg_seq = 0;
-	m_msg->sadb_msg_pid = getpid();
-
-	if ((so = socket(PF_KEY, SOCK_RAW, PF_KEY_V2)) < 0) {
-		err(1, "socket(PF_KEY)");
-		/*NOTREACHED*/
-	}
-
-	if ((len = send(so, m_buf, m_len, 0)) < 0) {
+	if ((l = send(so, &msg, sizeof(msg), 0)) < 0) {
 		err(1, "send");
 		/*NOTREACHED*/
 	}
@@ -261,35 +247,36 @@ promisc()
 	while (1) {
 		struct sadb_msg *base;
 
-		if ((len = recv(so, rbuf, sizeof(*base), MSG_PEEK)) < 0) {
+		if ((l = recv(so, rbuf, sizeof(*base), MSG_PEEK)) < 0) {
 			err(1, "recv");
 			/*NOTREACHED*/
 		}
 
-		if (len != sizeof(*base))
+		if (l != sizeof(*base))
 			continue;
 
 		base = (struct sadb_msg *)rbuf;
-		if ((len = recv(so, rbuf, PFKEY_UNUNIT64(base->sadb_msg_len),
+		if ((l = recv(so, rbuf, PFKEY_UNUNIT64(base->sadb_msg_len),
 				0)) < 0) {
 			err(1, "recv");
 			/*NOTREACHED*/
 		}
+		printdate();
 		if (f_hexdump) {
 			int i;
-			for (i = 0; i < len; i++) {
+			for (i = 0; i < l; i++) {
 				if (i % 16 == 0)
 					printf("%08x: ", i);
 				printf("%02x ", rbuf[i] & 0xff);
 				if (i % 16 == 15)
 					printf("\n");
 			}
-			if (len % 16)
+			if (l % 16)
 				printf("\n");
 		}
 		/* adjust base pointer for promisc mode */
 		if (base->sadb_msg_type == SADB_X_PROMISC) {
-			if (sizeof(*base) < len)
+			if (sizeof(*base) < l)
 				base++;
 			else
 				base = NULL;
@@ -303,18 +290,13 @@ promisc()
 }
 
 int
-sendkeymsg()
+sendkeymsg(buf, len)
+	char *buf;
+	size_t len;
 {
-	int so;
-
 	u_char rbuf[1024 * 32];	/* XXX: Enough ? Should I do MSG_PEEK ? */
-	int len;
+	ssize_t l;
 	struct sadb_msg *msg;
-
-	if ((so = pfkey_open()) < 0) {
-		perror("pfkey_open");
-		return -1;
-	}
 
     {
 	struct timeval tv;
@@ -330,23 +312,23 @@ sendkeymsg()
 		shortdump_hdr();
 again:
 	if (f_verbose) {
-		kdebug_sadb((struct sadb_msg *)m_buf);
+		kdebug_sadb((struct sadb_msg *)buf);
 		printf("\n");
 	}
 
-	if ((len = send(so, m_buf, m_len, 0)) < 0) {
+	if ((l = send(so, buf, len, 0)) < 0) {
 		perror("send");
 		goto end;
 	}
 
 	msg = (struct sadb_msg *)rbuf;
 	do {
-		if ((len = recv(so, rbuf, sizeof(rbuf), 0)) < 0) {
+		if ((l = recv(so, rbuf, sizeof(rbuf), 0)) < 0) {
 			perror("recv");
 			goto end;
 		}
 
-		if (PFKEY_UNUNIT64(msg->sadb_msg_len) != len) {
+		if (PFKEY_UNUNIT64(msg->sadb_msg_len) != l) {
 			warnx("invalid keymsg length");
 			break;
 		}
@@ -355,7 +337,7 @@ again:
 			kdebug_sadb((struct sadb_msg *)rbuf);
 			printf("\n");
 		}
-		if (postproc(msg, len) < 0)
+		if (postproc(msg, l) < 0)
 			break;
 	} while (msg->sadb_msg_errno || msg->sadb_msg_seq);
 
@@ -366,7 +348,6 @@ again:
 	}
 
 end:
-	pfkey_close(so);
 	return(0);
 }
 
@@ -378,7 +359,7 @@ postproc(msg, len)
 
 	if (msg->sadb_msg_errno != 0) {
 		char inf[80];
-		char *errmsg = NULL;
+		const char *errmsg = NULL;
 
 		if (f_mode == MODE_SCRIPT)
 			snprintf(inf, sizeof(inf), "The result of line %d: ", lineno);
@@ -453,13 +434,13 @@ postproc(msg, len)
 }
 
 /*------------------------------------------------------------*/
-static char *satype[] = {
+static const char *satype[] = {
 	NULL, NULL, "ah", "esp"
 };
-static char *sastate[] = {
+static const char *sastate[] = {
 	"L", "M", "D", "d"
 };
-static char *ipproto[] = {
+static const char *ipproto[] = {
 /*0*/	"ip", "icmp", "igmp", "ggp", "ip4",
 	NULL, "tcp", NULL, "egp", NULL,
 /*10*/	NULL, NULL, NULL, NULL, NULL,
@@ -529,14 +510,14 @@ shortdump(msg)
 		else
 			t = (u_long)(cur - ltc->sadb_lifetime_addtime);
 		if (t >= 1000)
-			strcpy(buf, " big/");
+			strlcpy(buf, " big/", sizeof(buf));
 		else
 			snprintf(buf, sizeof(buf), " %3lu/", (u_long)t);
 		printf("%s", buf);
 
 		t = (u_long)lth->sadb_lifetime_addtime;
 		if (t >= 1000)
-			strcpy(buf, "big");
+			strlcpy(buf, "big", sizeof(buf));
 		else
 			snprintf(buf, sizeof(buf), "%-3lu", (u_long)t);
 		printf("%s", buf);
@@ -575,4 +556,65 @@ shortdump(msg)
 		printf("?");
 
 	printf("\n");
+}
+
+/* From: tcpdump(1):gmt2local.c and util.c */
+/*
+ * Print the timestamp
+ */
+static void
+printdate()
+{
+	struct timeval tp;
+	int s;
+
+	if (gettimeofday(&tp, NULL) == -1) {
+		perror("gettimeofday");
+		return;
+	}
+
+	if (f_tflag == 1) {
+		/* Default */
+		s = (tp.tv_sec + thiszone ) % 86400;
+		(void)printf("%02d:%02d:%02d.%06u ",
+		    s / 3600, (s % 3600) / 60, s % 60, (u_int32_t)tp.tv_usec);
+	} else if (f_tflag > 1) {
+		/* Unix timeval style */
+		(void)printf("%u.%06u ",
+		    (u_int32_t)tp.tv_sec, (u_int32_t)tp.tv_usec);
+	}
+
+	printf("\n");
+}
+
+/*
+ * Returns the difference between gmt and local time in seconds.
+ * Use gmtime() and localtime() to keep things simple.
+ */
+int32_t
+gmt2local(time_t t)
+{
+	register int dt, dir;
+	register struct tm *gmt, *loc;
+	struct tm sgmt;
+
+	if (t == 0)
+		t = time(NULL);
+	gmt = &sgmt;
+	*gmt = *gmtime(&t);
+	loc = localtime(&t);
+	dt = (loc->tm_hour - gmt->tm_hour) * 60 * 60 +
+	    (loc->tm_min - gmt->tm_min) * 60;
+
+	/*
+	 * If the year or julian day is different, we span 00:00 GMT
+	 * and must add or subtract a day. Check the year first to
+	 * avoid problems when the julian day wraps.
+	 */
+	dir = loc->tm_year - gmt->tm_year;
+	if (dir == 0)
+		dir = loc->tm_yday - gmt->tm_yday;
+	dt += dir * 24 * 60 * 60;
+
+	return (dt);
 }
