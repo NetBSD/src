@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.1 1999/09/13 10:30:26 itojun Exp $	*/
+/*	$NetBSD: locore.s,v 1.2 1999/09/14 11:21:27 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -222,23 +222,22 @@
 /*
  * PTmap is recursive pagemap at top of virtual address space.
  * Within PTmap, the page directory can be found (third indirection).
+ *
+ * XXX 4 == sizeof pde
  */
-	.globl	_PTmap,_PTD,_PTDpde,_Sysmap
-
-	.set	_PTmap,(PTDPTDI << PDSHIFT)
-	.set	_PTD,(_PTmap + PTDPTDI * NBPG)
-	.set	_PTDpde,(_PTD + PTDPTDI * 4)	/* XXX 4 == sizeof pde */
-	.set	_Sysmap,(_PTmap + KPTDI * NBPG)
-
+	.set	_C_LABEL(PTmap), (PDSLOT_PTE << PDSHIFT)
+	.set	_C_LABEL(PTD), (_C_LABEL(PTmap) + PDSLOT_PTE * NBPG)
+	.set	_C_LABEL(PTDpde), (_C_LABEL(PTD) + PDSLOT_PTE * 4)
 
 /*
  * APTmap, APTD is the alternate recursive pagemap.
  * It's used when modifying another process's page tables.
+ *
+ * XXX 4 == sizeof pde
  */
-	.globl	_APTmap,_APTD,_APTDpde
-	.set	_APTmap,(APTDPTDI << PDSHIFT)
-	.set	_APTD,(_APTmap + APTDPTDI * NBPG)
-	.set	_APTDpde,(_PTD + APTDPTDI * 4)	/* XXX 4 == sizeof pde */
+	.set	_C_LABEL(APTmap),(PDSLOT_APTE << PDSHIFT)
+	.set	_C_LABEL(APTD),(_C_LABEL(APTmap) + PDSLOT_APTE * NBPG)
+	.set	_C_LABEL(APTDpde),(_C_LABEL(PTD) + PDSLOT_APTE * 4)
 
 /*
  * Initialization
