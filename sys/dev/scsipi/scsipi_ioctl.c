@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.11 1994/12/01 11:53:56 mycroft Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.12 1994/12/01 12:04:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -47,8 +47,6 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 #include <sys/scsiio.h>
-
-void scsierr __P((struct buf *, int));
 
 struct scsi_ioctl {
 	LIST_ENTRY(scsi_ioctl) si_list;
@@ -167,8 +165,6 @@ scsi_user_done(xs)
 		break;
 	}
 	biodone(bp); 	/* we're waiting on it in scsi_strategy() */
-
-	si_free(si);
 }
 
 
@@ -201,16 +197,16 @@ scsistrategy(bp)
 	si = si_find(bp);
 	if (!si) {
 		printf("user_strat: No ioctl\n");
-		scsierr(bp, EINVAL);
-		return;
+		error = EINVAL;
+		goto bad;
 	}
 	screq = &si->si_screq;
 
 	sc_link = si->si_sc_link;
 	if (!sc_link) {
 		printf("user_strat: No link pointer\n");
-		scsierr(bp, EINVAL);
-		return;
+		error = EINVAL;
+		goto bad;
 	}
 	SC_DEBUG(sc_link, SDEV_DB2, ("user_strategy\n"));
 
@@ -220,20 +216,20 @@ scsistrategy(bp)
 	if (bp->b_bcount != screq->datalen) {
 		sc_print_addr(sc_link);
 		printf("physio split the request.. cannot proceed\n");
-		scsierr(bp, EIO);
-		return;
+		error = EIO;
+		goto bad;
 	}
 
 	if (screq->timeout == 0) {
-		scsierr(bp, EINVAL);
-		return;
+		error = EINVAL;
+		goto bad;
 	}
 
 	if (screq->cmdlen > sizeof(struct scsi_generic)) {
 		sc_print_addr(sc_link);
 		printf("cmdlen too big\n");
-		scsierr(bp, EFAULT);
-		return;
+		error = EFAULT;
+		goto bad;
 	}
 
 	if (screq->flags & SCCMD_READ)
@@ -251,16 +247,22 @@ scsistrategy(bp)
 	    screq->timeout, bp, flags | SCSI_USER);
 
 	/* because there is a bp, scsi_scsi_cmd will return immediatly */
-	if (error) {
-		scsierr(bp, error);
-		return;
-	}
+	if (error)
+		goto bad;
+
 	SC_DEBUG(sc_link, SDEV_DB3, ("about to sleep\n"));
 	s = splbio();
-	while (!(bp->b_flags & B_DONE))
+	while ((bp->b_flags & B_DONE) == 0)
 		tsleep(bp, PRIBIO, "scistr", 0);
 	splx(s);
 	SC_DEBUG(sc_link, SDEV_DB3, ("back from sleep\n"));
+
+	return;
+
+bad:
+	bp->b_flags |= B_ERROR;
+	bp->b_error = error;
+	biodone(bp);
 }
 
 /*
@@ -362,15 +364,4 @@ scsi_do_ioctl(sc_link, dev, cmd, addr, f)
 #ifdef DIAGNOSTIC
 	panic("scsi_do_ioctl: impossible");
 #endif
-}
-
-void
-scsierr(bp, error)
-	struct buf *bp;
-	int error;
-{
-
-	bp->b_flags |= B_ERROR;
-	bp->b_error = error;
-	biodone(bp);
 }
