@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.c,v 1.2 1995/04/25 14:14:24 ragge Exp $ */
+/*	$NetBSD: consio.c,v 1.3 1995/09/16 15:48:49 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,15 +42,20 @@
 putchar(ch)
         int     ch;
 {
-        while((mfpr(PR_TXCS)&GC_RDY)==0); /* Wait until xmit ready */
-        mtpr(ch,PR_TXDB);       /* xmit character */
-        if(ch==10)
+        while ((mfpr(PR_TXCS) & GC_RDY) == 0); /* Wait until xmit ready */
+        mtpr(ch, PR_TXDB);       /* xmit character */
+        if (ch == 10)
                 putchar(13); /* CR/LF */
 
 }
 
 getchar()
 {
-        while((mfpr(PR_RXCS)&GC_DON)==0); /* Receive chr */
-        return mfpr(PR_RXDB);
+	int ch;
+
+	do {
+		while ((mfpr(PR_RXCS) & GC_DON) == 0);	/* wait for char */
+		ch = mfpr(PR_RXDB);			/* now get it */
+	} while (ch == 17 || ch == 19);
+	return ch;
 }
