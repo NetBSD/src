@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.h,v 1.4 1997/05/25 12:40:20 darrenr Exp $	*/
+/*	$NetBSD: ip_state.h,v 1.5 1997/05/28 00:17:25 thorpej Exp $	*/
 
 /*
  * (C)opyright 1995-1997 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
- * $Id: ip_state.h,v 1.4 1997/05/25 12:40:20 darrenr Exp $
+ * Id: ip_state.h,v 2.0.2.9 1997/05/24 07:35:11 darrenr Exp 
  */
 #ifndef	__IP_STATE_H__
 #define	__IP_STATE_H__
