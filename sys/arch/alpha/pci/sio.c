@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.25 1998/06/08 23:49:05 thorpej Exp $ */
+/* $NetBSD: sio.c,v 1.26 1998/06/09 18:49:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.25 1998/06/08 23:49:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.26 1998/06/09 18:49:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ void	sio_eisa_attach_hook __P((struct device *, struct device *,
 int	sio_eisa_maxslots __P((void *));
 int	sio_eisa_intr_map __P((void *, u_int, eisa_intr_handle_t *));
 
-void	sio_bridge_callback __P((void *));
+void	sio_bridge_callback __P((struct device *));
 
 int
 siomatch(parent, match, aux)
@@ -154,14 +154,14 @@ sioattach(parent, self, aux)
 	evcnt_attach(&sc->sc_dv, "intr", &sio_intr_evcnt);
 #endif
 
-	set_pci_isa_bridge_callback(sio_bridge_callback, sc);
+	config_defer(self, sio_bridge_callback);
 }
 
 void
-sio_bridge_callback(v)
-	void *v;
+sio_bridge_callback(self)
+	struct device *self;
 {
-	struct sio_softc *sc = v;
+	struct sio_softc *sc = (struct sio_softc *)self;
 	struct alpha_eisa_chipset ec;
 	union sio_attach_args sa;
 
