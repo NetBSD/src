@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.5 1997/05/08 13:39:02 matthias Exp $	*/
+/*	$NetBSD: brk.S,v 1.6 1999/01/14 22:48:21 kleink Exp $	*/
 
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
@@ -24,21 +24,21 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: brk.S,v 1.5 1997/05/08 13:39:02 matthias Exp $")
+	RCSID("$NetBSD: brk.S,v 1.6 1999/01/14 22:48:21 kleink Exp $")
 #endif
 
-ASDATA_D(minbrk, _C_LABEL(end))
+DATA_D(__minbrk, _C_LABEL(end))
 
 ENTRY(brk)
 	PIC_PROLOGUE
-	cmpd	PIC_S_ARG0,PIC_GOT(_ASM_LABEL(minbrk))
+	cmpd	PIC_S_ARG0,PIC_GOT(_C_LABEL(__minbrk))
 	bge	0f
-	movd	PIC_GOT(_ASM_LABEL(minbrk)),PIC_S_ARG0
+	movd	PIC_GOT(_C_LABEL(__minbrk)),PIC_S_ARG0
 0:	PIC_EPILOGUE
 	SYSTRAP(break)
 	bcs	_ASM_LABEL(cerror)
 	PIC_PROLOGUE
-	movd	PIC_S_ARG0,PIC_GOT(_C_LABEL(curbrk))
+	movd	PIC_S_ARG0,PIC_GOT(_ASM_LABEL(curbrk))
 	movqd	0,r0
 	PIC_EPILOGUE
 	ret	0

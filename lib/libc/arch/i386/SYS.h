@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
- *	$NetBSD: SYS.h,v 1.11 1997/05/02 18:15:19 kleink Exp $
+ *	$NetBSD: SYS.h,v 1.12 1999/01/14 22:48:19 kleink Exp $
  */
 
 #include <machine/asm.h>
@@ -46,6 +46,13 @@
 #define SYSTRAP(x)	movl $(SYS_/**/x),%eax; int $0x80
 #endif
 
+#ifdef __ELF__
+#define CERROR		_C_LABEL(__cerror)
+#define CURBRK		_C_LABEL(__curbrk)
+#else
+#define CERROR		_ASM_LABEL(cerror)
+#define CURBRK		_ASM_LABEL(curbrk)
+#endif
 
 #define _SYSCALL_NOERROR(x,y)						\
 	ENTRY(x);							\
@@ -53,7 +60,7 @@
 
 #define _SYSCALL(x,y)							\
 	.text; .align 2;						\
-	2: jmp PIC_PLT(cerror);						\
+	2: jmp PIC_PLT(CERROR);						\
 	_SYSCALL_NOERROR(x,y);						\
 	jc 2b
 
@@ -78,4 +85,4 @@
 	PSEUDO(x,x)
 
 
-	.globl	cerror
+	.globl	CERROR

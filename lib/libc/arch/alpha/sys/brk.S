@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.4 1996/10/17 03:08:15 cgd Exp $	*/
+/*	$NetBSD: brk.S,v 1.5 1999/01/14 22:48:19 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -30,21 +30,21 @@
 #include "SYS.h"
 
 	.globl	_end
-IMPORT(curbrk, 8)
+IMPORT(__curbrk, 8)
 
 	.data
-EXPORT(minbrk)
+EXPORT(__minbrk)
 	.quad	_end
 
 	.text
 LEAF(brk, 1)
 	br	pv, L1				/* XXX profiling */
 L1:	LDGP(pv)
-	ldq	v0, minbrk
+	ldq	v0, __minbrk
 	cmpult  a0, v0, t0
 	cmovne  t0, v0, a0
 	CALLSYS_ERROR(break)
-	stq	a0, curbrk
+	stq	a0, __curbrk
 	mov	zero, v0
 	RET
 END(brk)

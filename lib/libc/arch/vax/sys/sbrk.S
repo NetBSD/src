@@ -33,18 +33,19 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)sbrk.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: sbrk.S,v 1.2 1997/02/04 18:38:20 ragge Exp $"
+	.asciz "$NetBSD: sbrk.S,v 1.3 1999/01/14 22:48:22 kleink Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
 
 	.globl	_end
-	.globl	minbrk
+	.globl	___minbrk
 	.globl	curbrk
 
 	.data
-minbrk: .long	_end
+___minbrk:
+	.long	_end
 curbrk:	.long	_end
 	.text
 
