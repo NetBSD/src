@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 1995/12/16 20:10:12 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.8 1995/12/19 03:33:06 cgd Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char rcsid[] =
-	"@(#) $NetBSD: main.c,v 1.7 1995/12/16 20:10:12 thorpej Exp $";
+	"@(#) $NetBSD: main.c,v 1.8 1995/12/19 03:33:06 cgd Exp $";
 #endif
 
 extern char *configfilename;
@@ -675,6 +675,7 @@ log(int severity, int syserr, char *format, ...)
     char tbuf[20];
     struct timeval now;
     struct tm *thyme;
+    time_t t;
 
     va_start(ap, format);
 #else
@@ -691,6 +692,7 @@ log(severity, syserr, format, va_alist)
     char tbuf[20];
     struct timeval now;
     struct tm *thyme;
+    time_t t;
 
     va_start(ap);
 #endif
@@ -704,7 +706,8 @@ log(severity, syserr, format, va_alist)
 	case 2: if (severity > LOG_INFO  ) break;
 	default:
 	    gettimeofday(&now,NULL);
-	    thyme = localtime(&now.tv_sec);
+	    t = now.tv_sec;
+	    thyme = localtime(&t);
 	    strftime(tbuf, sizeof(tbuf), "%X.%%03d ", thyme);
 	    fprintf(stderr, tbuf, now.tv_usec / 1000);
 	    fprintf(stderr, "%s", msg);
