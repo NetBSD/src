@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.44 2000/01/19 23:28:28 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.45 2000/01/25 12:09:19 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.44 2000/01/19 23:28:28 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.45 2000/01/25 12:09:19 hubertf Exp $");
 #endif
 #endif
 
@@ -129,26 +129,16 @@ pkg_do(char *pkg)
 			char *tmppkg = pkg;
 
 			if (ispkgpattern(pkg)) {
-#if 0
-				warnx("patterns not supported in URLs, "
-				    "please install %s manually!", pkg);
-				/* ... until we come up with a better solution :-/  - HF */
-				
-				goto bomb;
-#else
-				{
-					/* Handle wildcard wildcard depends */
- 
-					char *s;
-					s=fileFindByPath(NULL, pkg);
-					if (s == NULL) {
-						warnx("no pkg found for '%s', sorry.", pkg);
-						return 1;
-					}
-					strcpy(buf, s);
-					tmppkg = buf;
-				} 
-#endif
+				/* Handle wildcard depends */
+
+				char *s;
+				s=fileFindByPath(NULL, pkg);
+				if (s == NULL) {
+					warnx("no pkg found for '%s', sorry.", pkg);
+					return 1;
+				}
+				strcpy(buf, s);
+				tmppkg = buf;
 			}
 			
 			if (!(Home = fileGetURL(NULL, tmppkg))) {
@@ -411,26 +401,18 @@ pkg_do(char *pkg)
 					new_name = p->name;
 
 					if (ispkgpattern(p->name)) {
-#if 0
-						warnx("can't install dependent pkg '%s' via FTP, "
-						    "please install manually!", p->name);
-						/* ... until we come up with a better solution - HF */
- 
-						goto bomb;
-#else
-						{
-							/* Might hack stuff for wildcard depends in here - HF */
-							
-							char *s;
-							s=fileFindByPath(pkg, p->name);
+						/* Handle wildcard depends here */
+
+						char *s;
+						s=fileFindByPath(pkg, p->name);
+						if (Verbose) {
 							printf("HF: pkg='%s'\n", pkg);
 							printf("HF: s='%s'\n", s);
+						}
 
-							/* adjust new_pkg and new_name */
-							new_pkg = NULL;
-							new_name = s;
-						}						
-#endif
+						/* adjust new_pkg and new_name */
+						new_pkg = NULL;
+						new_name = s;
 					}
 
 					/* makeplaypen() and leave_playpen() clobber Current and

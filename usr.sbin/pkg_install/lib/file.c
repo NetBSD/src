@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.36 2000/01/19 23:28:32 hubertf Exp $	*/
+/*	$NetBSD: file.c,v 1.37 2000/01/25 12:09:20 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.36 2000/01/19 23:28:32 hubertf Exp $");
+__RCSID("$NetBSD: file.c,v 1.37 2000/01/25 12:09:20 hubertf Exp $");
 #endif
 #endif
 
@@ -39,54 +39,6 @@ __RCSID("$NetBSD: file.c,v 1.36 2000/01/19 23:28:32 hubertf Exp $");
 #include <pwd.h>
 #include <time.h>
 #include <fcntl.h>
-
-#if 0
-/*
- * This is as ftpGetURL from FreeBSD's ftpio.c, except that it uses
- * NetBSD's ftp command to do all FTP, which will DTRT for proxies,
- * etc.
- */
-static FILE *
-ftpGetURL(char *url, int *retcode)
-{
-	FILE   *ftp;
-	pid_t   pid_ftp;
-	int     p[2];
-
-	*retcode = 0;
-
-	if (pipe(p) < 0) {
-		*retcode = 1;
-		return NULL;
-	}
-
-	pid_ftp = fork();
-	if (pid_ftp < 0) {
-		*retcode = 1;
-		return NULL;
-	}
-	if (pid_ftp == 0) {
-		/* child */
-		dup2(p[1], 1);
-		close(p[1]);
-
-		execl("/usr/bin/ftp", "ftp", "-V", "-o", "-", url, NULL);
-		exit(1);
-	} else {
-		/* parent */
-		ftp = fdopen(p[0], "r");
-
-		close(p[1]);
-
-		if (ftp == (FILE *) NULL) {
-			*retcode = 1;
-			return NULL;
-		}
-	}
-	return ftp;
-
-}
-#endif
 
 
 /*
@@ -339,36 +291,6 @@ fileGetURL(char *base, char *spec)
 	if (Verbose)
 		printf("Trying to fetch %s.\n", fname);
 	
-#if 0
-	ftp = ftpGetURL(fname, &status);
-	if (ftp) {
-		pen[0] = '\0';
-		if ((rp = make_playpen(pen, sizeof(pen), 0)) != NULL) {
-			rp = strdup(pen);	/* be safe for nested calls */
-			if (Verbose)
-				printf("Extracting from FTP connection into %s\n", pen);
-			tpid = fork();
-			if (!tpid) {
-				dup2(fileno(ftp), 0);
-				i = execl(TAR_FULLPATHNAME, TAR_CMD, Verbose ? "-xzvf" : "-xzf", "-", 0);
-				err(i, TAR_FULLPATHNAME " failed");
-			} else {
-				int     pstat;
-
-				fclose(ftp);
-				tpid = waitpid(tpid, &pstat, 0);
-				if (Verbose)
-					printf("%s command returns %d status\n", TAR_CMD, WEXITSTATUS(pstat));
-			}
-		} else
-			printf("Error: Unable to construct a new playpen for FTP!\n");
-		fclose(ftp);
-	} else
-		printf("Error: FTP Unable to get %s: %s\n",
-		    fname,
-		    status ? "Error while performing FTP" :
-		    hstrerror(h_errno));
-#else
 	pen[0] = '\0';
 	rp = make_playpen(pen, sizeof(pen), 0);
 	if (rp == NULL) {
@@ -377,7 +299,6 @@ fileGetURL(char *base, char *spec)
 	}
 
 	rp = strdup(pen);
-/*	printf("fileGetURL: fname='%s', pen='%s'\n", fname, pen); *//*HF*/
 	rc = unpackURL(fname, pen);
 	if (rc < 0) {
 		leave_playpen(rp); /* Don't leave dir hang around! */
@@ -385,7 +306,6 @@ fileGetURL(char *base, char *spec)
 		printf("Error on unpackURL('%s', '%s')\n", fname, pen);
 		return NULL;
 	}
-#endif
 	return rp;
 }
 
