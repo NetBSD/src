@@ -1,4 +1,4 @@
-/* $NetBSD: systfloat.c,v 1.4 2001/03/22 12:00:06 ross Exp $ */
+/* $NetBSD: systfloat.c,v 1.5 2001/03/22 12:22:18 ross Exp $ */
 
 /* This is a derivative work. */
 
@@ -64,7 +64,7 @@ this code that are retained.
 
 #include <sys/cdefs.h>
 #ifndef __lint
-__RCSID("$NetBSD: systfloat.c,v 1.4 2001/03/22 12:00:06 ross Exp $");
+__RCSID("$NetBSD: systfloat.c,v 1.5 2001/03/22 12:22:18 ross Exp $");
 #endif
 
 #include <math.h>
@@ -78,7 +78,8 @@ __RCSID("$NetBSD: systfloat.c,v 1.4 2001/03/22 12:00:06 ross Exp $");
 fp_except
 syst_float_flags_clear(void)
 {
-    return fpsetsticky(0) & ~FP_X_DNML;
+    return fpsetsticky(0)
+	& (FP_X_IMP | FP_X_UFL | FP_X_OFL | FP_X_DZ | FP_X_INV);
 }
 
 void
