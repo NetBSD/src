@@ -1,4 +1,4 @@
-/* $NetBSD: avalon_a12.c,v 1.7 2002/09/06 13:18:43 gehenna Exp $ */
+/* $NetBSD: avalon_a12.c,v 1.8 2002/09/26 19:04:59 thorpej Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -64,7 +64,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: avalon_a12.c,v 1.7 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: avalon_a12.c,v 1.8 2002/09/26 19:04:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,7 @@ avalon_a12_device_register(dev, aux)
 	struct bootdev_data *b = bootdev_data;
 	struct device *parent = dev->dv_parent;
 	struct cfdata *cf = dev->dv_cfdata;
-	struct cfdriver *cd = cf->cf_driver;
+	const char *name = cf->cf_driver->cd_name;
 
 	if (found)
 		return;
@@ -171,7 +171,7 @@ avalon_a12_device_register(dev, aux)
 	}
 
 	if (pcidev == NULL) {
-		if (strcmp(cd->cd_name, "pci"))
+		if (strcmp(name, "pci"))
 			return;
 		else {
 			struct pcibus_attach_args *pba = aux;
@@ -207,9 +207,9 @@ avalon_a12_device_register(dev, aux)
 	}
 
 	if (scsiboot &&
-	    (!strcmp(cd->cd_name, "sd") ||
-	     !strcmp(cd->cd_name, "st") ||
-	     !strcmp(cd->cd_name, "cd"))) {
+	    (!strcmp(name, "sd") ||
+	     !strcmp(name, "st") ||
+	     !strcmp(name, "cd"))) {
 		struct scsipibus_attach_args *sa = aux;
 
 		if (parent->dv_parent != scsidev)
@@ -222,12 +222,12 @@ avalon_a12_device_register(dev, aux)
 
 		switch (b->boot_dev_type) {
 		case 0:
-			if (strcmp(cd->cd_name, "sd") &&
-			    strcmp(cd->cd_name, "cd"))
+			if (strcmp(name, "sd") &&
+			    strcmp(name, "cd"))
 				return;
 			break;
 		case 1:
-			if (strcmp(cd->cd_name, "st"))
+			if (strcmp(name, "st"))
 				return;
 			break;
 		default:

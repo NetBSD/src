@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3000_500.c,v 1.35 2002/09/24 13:30:39 ad Exp $ */
+/* $NetBSD: dec_3000_500.c,v 1.36 2002/09/26 19:05:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.35 2002/09/24 13:30:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.36 2002/09/26 19:05:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ dec_3000_500_device_register(dev, aux)
 	struct bootdev_data *b = bootdev_data;
 	struct device *parent = dev->dv_parent;
 	struct cfdata *cf = dev->dv_cfdata;
-	struct cfdriver *cd = cf->cf_driver;
+	const char *name = cf->cf_driver->cd_name;
 
 	if (found)
 		return;
@@ -194,7 +194,7 @@ dec_3000_500_device_register(dev, aux)
 	 * as the right channel.  then we find the actual scsi
 	 * device we came from.  note: no SCSI LUN support (yet).
 	 */
-	if (scsiboot && (strcmp(cd->cd_name, "tcds") == 0)) {
+	if (scsiboot && (strcmp(name, "tcds") == 0)) {
 		struct tc_attach_args *tcargs = aux;
 
 		if (b->slot != tcargs->ta_slot)
@@ -206,7 +206,7 @@ dec_3000_500_device_register(dev, aux)
 #endif
 	}
 	if (scsiboot && tcdsdev &&
-	    (strcmp(cd->cd_name, "asc") == 0)) {
+	    (strcmp(name, "asc") == 0)) {
 		struct tcdsdev_attach_args *ta = aux;
 
 		if (parent != (struct device *)tcdsdev)
@@ -222,9 +222,9 @@ dec_3000_500_device_register(dev, aux)
 	}
 
 	if (scsiboot && scsidev &&
-	    (strcmp(cd->cd_name, "sd") == 0 ||
-	     strcmp(cd->cd_name, "st") == 0 ||
-	     strcmp(cd->cd_name, "cd") == 0)) {
+	    (strcmp(name, "sd") == 0 ||
+	     strcmp(name, "st") == 0 ||
+	     strcmp(name, "cd") == 0)) {
 		struct scsipibus_attach_args *sa = aux;
 
 		if (parent->dv_parent != scsidev)
@@ -237,12 +237,12 @@ dec_3000_500_device_register(dev, aux)
 
 		switch (b->boot_dev_type) {
 		case 0:
-			if (strcmp(cd->cd_name, "sd") &&
-			    strcmp(cd->cd_name, "cd"))
+			if (strcmp(name, "sd") &&
+			    strcmp(name, "cd"))
 				return;
 			break;
 		case 1:
-			if (strcmp(cd->cd_name, "st"))
+			if (strcmp(name, "st"))
 				return;
 			break;
 		default:
@@ -258,7 +258,7 @@ dec_3000_500_device_register(dev, aux)
 	}
 
 	if (netboot) {
-                if (b->slot == 7 && strcmp(cd->cd_name, "le") == 0 &&
+                if (b->slot == 7 && strcmp(name, "le") == 0 &&
 		    strcmp(parent->dv_cfdata->cf_driver->cd_name, "ioasic")
 		     == 0) {
 			/*
