@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.38 2003/10/02 19:32:41 itojun Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.39 2003/10/03 04:30:31 itojun Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.38 2003/10/02 19:32:41 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.39 2003/10/03 04:30:31 itojun Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
@@ -374,7 +374,11 @@ ip6_forward(m, srcrt)
 	 * [draft-ietf-ipngwg-icmp-v3-00.txt, Section 3.1]
 	 */
 	if (in6_addr2scopeid(m->m_pkthdr.rcvif, &ip6->ip6_src) !=
-	    in6_addr2scopeid(rt->rt_ifp, &ip6->ip6_src)) {
+	    in6_addr2scopeid(rt->rt_ifp, &ip6->ip6_src)
+#ifdef IPSEC
+	    && !ipsecrt
+#endif
+	    ) {
 		ip6stat.ip6s_cantforward++;
 		ip6stat.ip6s_badscope++;
 		in6_ifstat_inc(rt->rt_ifp, ifs6_in_discard);
