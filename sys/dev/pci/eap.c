@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.9 1998/08/09 20:32:34 mycroft Exp $	*/
+/*	$NetBSD: eap.c,v 1.10 1998/08/09 22:11:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -758,10 +758,11 @@ eap_trigger_output(addr, start, end, blksize, intr, arg, param)
 #ifdef DIAGNOSTIC
 	if (sc->sc_prun)
 		panic("eap_trigger_output: already running");
+	sc->sc_prun = 1;
 #endif
 
-	DPRINTFN(1, ("eap_trigger_output: sc=%p start=%p end=%d blksize=%d intr=%p(%p)\n", 
-		    addr, start, end, blksize, intr, arg));
+	DPRINTFN(1, ("eap_trigger_output: sc=%p start=%p end=%p blksize=%d intr=%p(%p)\n", 
+	    addr, start, end, blksize, intr, arg));
 	sc->sc_pintr = intr;
 	sc->sc_parg = arg;
 
@@ -798,10 +799,6 @@ eap_trigger_output(addr, start, end, blksize, intr, arg, param)
 	EWRITE4(sc, EAP_ICSC, mode);
 	DPRINTFN(1, ("eap_trigger_output: set ICSC = 0x%08x\n", mode));
 
-#ifdef DIAGNOSTIC
-	sc->sc_prun = 1;
-#endif
-
 	return (0);
 }
 
@@ -822,10 +819,11 @@ eap_trigger_input(addr, start, end, blksize, intr, arg, param)
 #ifdef DIAGNOSTIC
 	if (sc->sc_rrun)
 		panic("eap_trigger_input: already running");
+	sc->sc_rrun = 1;
 #endif
 
-	DPRINTFN(1, ("eap_trigger_input: sc=%p start=%p end=%d blksize=%d intr=%p(%p)\n", 
-		    addr, start, end, blksize, intr, arg));
+	DPRINTFN(1, ("eap_trigger_input: sc=%p start=%p end=%p blksize=%d intr=%p(%p)\n", 
+	    addr, start, end, blksize, intr, arg));
 	sc->sc_rintr = intr;
 	sc->sc_rarg = arg;
 
@@ -860,10 +858,6 @@ eap_trigger_input(addr, start, end, blksize, intr, arg, param)
 	mode |= EAP_ADC_EN;
 	EWRITE4(sc, EAP_ICSC, mode);
 	DPRINTFN(1, ("eap_trigger_input: set ICSC = 0x%08x\n", mode));
-
-#ifdef DIAGNOSTIC
-	sc->sc_rrun = 1;
-#endif
 
 	return (0);
 }
