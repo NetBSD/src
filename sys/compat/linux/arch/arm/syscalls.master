@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.7 2002/02/15 16:47:59 christos Exp $
+	$NetBSD: syscalls.master,v 1.8 2002/02/17 22:29:46 bjh21 Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -146,9 +146,9 @@
 73	STD		{ int linux_sys_sigpending(linux_old_sigset_t *set); }
 74	NOARGS		{ int compat_43_sys_sethostname(char *hostname, \
 			    u_int len);}
-75	NOARGS		{ int compat_43_sys_setrlimit(u_int which, \
+75	STD		{ int linux_sys_setrlimit(u_int which, \
 			    struct orlimit *rlp); }
-76	NOARGS		{ int compat_43_sys_getrlimit(u_int which, \
+76	STD		{ int linux_sys_getrlimit(u_int which, \
 			    struct orlimit *rlp); }
 77	NOARGS		{ int sys_getrusage(int who, struct rusage *rusage); }
 78	STD		{ int linux_sys_gettimeofday(struct timeval *tp, \
