@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.93 1999/02/18 20:39:04 thorpej Exp $
+# $NetBSD: ALPHA,v 1.94 1999/02/22 07:44:50 fvdl Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -209,6 +209,7 @@ ohci*	at	pci? dev ? function ?		# USB Open Host Controller
 #audio*	at	eap?
 
 # MII/PHY support
+exphy*	at	mii? phy ?
 inphy*	at	mii? phy ?
 nsphy*	at	mii? phy ?
 qsphy*	at	mii? phy ? 
