@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.34 2002/01/13 17:24:29 christos Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.35 2003/01/27 18:21:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,6 +77,8 @@ struct channel_softc { /* Per channel data */
 	struct device *atapibus;
 	struct scsipi_channel ch_atapi_channel;
 
+	struct device *ata_drives[2];
+
 	/*
 	 * channel queues. May be the same for all channels, if hw channels
 	 * are not independants
@@ -103,6 +105,7 @@ struct wdc_softc { /* Per controller state */
 #define WDC_CAPABILITY_SINGLE_DRIVE 0x0800 /* Don't probe second drive */
 #define WDC_CAPABILITY_NOIRQ  0x1000	/* Controller never interrupts */
 #define WDC_CAPABILITY_SELECT  0x2000	/* Controller selects target */
+#define	WDC_CAPABILITY_RAID   0x4000	/* Controller "supports" RAID */
 	u_int8_t      PIO_cap; /* highest PIO mode supported */
 	u_int8_t      DMA_cap; /* highest DMA mode supported */
 	u_int8_t      UDMA_cap; /* highest UDMA mode supported */

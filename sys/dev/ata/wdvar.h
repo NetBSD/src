@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.12 2002/04/23 20:41:14 bouyer Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.13 2003/01/27 18:21:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -96,5 +96,55 @@ struct ata_device {
 	int adev_openings;
 	struct ata_drive_datas *adev_drv_data;
 };
+
+#ifdef __ATA_DISK_PRIVATE
+
+struct wd_softc {
+	/* General disk infos */
+	struct device sc_dev;
+	struct disk sc_dk;
+	struct bufq_state sc_q;
+	struct callout sc_restart_ch;
+	/* IDE disk soft states */
+	struct ata_bio sc_wdc_bio; /* current transfer */
+	struct buf *sc_bp; /* buf being transfered */
+	void *wdc_softc;   /* pointer to our parent */
+	struct ata_drive_datas *drvp; /* Our controller's infos */
+	const struct ata_bustype *atabus;
+	int openings;
+	struct ataparams sc_params;/* drive characteistics found */
+	int sc_flags;	  
+#define	WDF_LOCKED	0x001
+#define	WDF_WANTED	0x002
+#define	WDF_WLABEL	0x004 /* label is writable */
+#define	WDF_LABELLING	0x008 /* writing label */
+/*
+ * XXX Nothing resets this yet, but disk change sensing will when ATA-4 is
+ * more fully implemented.
+ */
+#define WDF_LOADED	0x010 /* parameters loaded */
+#define WDF_WAIT	0x020 /* waiting for resources */
+#define WDF_LBA		0x040 /* using LBA mode */
+#define WDF_KLABEL	0x080 /* retain label after 'full' close */
+#define WDF_LBA48	0x100 /* using 48-bit LBA mode */
+	int sc_capacity;
+	int cyl; /* actual drive parameters */
+	int heads;
+	int sectors;
+	int retries; /* number of xfer retry */
+
+	void *sc_sdhook;		/* our shutdown hook */
+
+#if NRND > 0
+	rndsource_element_t	rnd_source;
+#endif
+};
+
+#define sc_drive sc_wdc_bio.drive
+#define sc_mode sc_wdc_bio.mode
+#define sc_multi sc_wdc_bio.multi
+#define sc_badsect sc_wdc_bio.badsect
+
+#endif /* __ATA_DISK_PRIVATE */
 
 void wddone __P((void *));
