@@ -20,7 +20,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: lms.c,v 1.6.2.13 1993/10/17 05:33:34 mycroft Exp $
+ *	$Id: lms.c,v 1.6.2.14 1993/10/31 16:55:28 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -102,14 +102,16 @@ lmsprobe(parent, cf, aux)
 	if (inb(iobase + LMS_SIGN) != 0x50)
 		return 0;
 
+	/* disable interrupts */
+	outb(iobase + LMS_CNTRL, 0x10);
+
 	if (ia->ia_irq == IRQUNK) {
 		ia->ia_irq = isa_discoverintr(lmsforceintr, aux);
 		if (ia->ia_irq == IRQNONE)
 			return 0;
+		/* disable interrupts */
+		outb(iobase + LMS_CNTRL, 0x10);
 	}
-
-	/* disable interrupts */
-	outb(iobase + LMS_CNTRL, 0x10);
 
 	ia->ia_iosize = LMS_NPORTS;
 	ia->ia_drq = DRQUNK;
