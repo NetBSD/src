@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.12 2002/09/10 12:15:39 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.13 2002/09/22 20:31:20 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -92,11 +92,6 @@
 
 #ifdef DDB
 #include <machine/db_machdep.h>
-#endif
-
-#ifdef DIAGNOSTIC
-static void dump_trapframe(struct trapframe *);
-static void print_a_reg(const char *, register_t, int);
 #endif
 
 
@@ -205,7 +200,7 @@ trap(struct proc *p, struct trapframe *tf)
 		kdb_trap(traptype, tf);
 #else
 #ifdef DIAGNOSTIC
-		dump_trapframe(tf);
+		dump_trapframe(printf, "\n", tf);
 #endif
 #endif
 		panic("trap");
@@ -363,6 +358,11 @@ trap(struct proc *p, struct trapframe *tf)
 	case T_FPUEXC|T_USER:
 		sig = SIGFPE;
 		ucode = vaddr;	/* XXX: "code" should probably be FPSCR */
+#ifdef DEBUG
+		sh5_fpsave((u_int)tf->tf_state.sf_usr, &p->p_addr->u_pcb);
+		printf("trap: FPUEXC - fpscr = 0x%x\n",
+		    (u_int)p->p_addr->u_pcb.pcb_ctx.sf_fpregs.fpscr);
+#endif
 		break;
 
 	case T_AST|T_USER:
@@ -373,14 +373,16 @@ trap(struct proc *p, struct trapframe *tf)
 		userret(p);
 		return;
 
-#ifdef DDB
 	case T_NMI:
 	case T_NMI|T_USER:
 		printf("trap: NMI detected\n");
-		if (kdb_trap(traptype, tf))
+		sh5_nmi_clear();
+#ifdef DDB
+		if (kdb_trap(traptype, tf)) {
 			return;
-		goto dopanic;
+		}
 #endif
+		goto dopanic;
 	}
 
 	trapsignal(p, sig, ucode);
@@ -435,10 +437,10 @@ trapa_panic:
 			    p->p_pid, p->p_comm, (uintptr_t)tf->tf_caller.r15);
 		else
 			printf("curproc == NULL ");
-		printf("trapa: SPC=0x%lx, SSR=0x%x, TRA=0x%x\n\n",
+		printf("trapa: SPC=0x%lx, SSR=0x%x, TRA=0x%x\n",
 		    (uintptr_t)tf->tf_state.sf_spc,
 		    (u_int)tf->tf_state.sf_ssr, (u_int)tf->tf_state.sf_tra);
-		dump_trapframe(tf);
+		dump_trapframe(printf, "\n", tf);
 		panic(pstr);
 		/*NOTREACHED*/
 	}
@@ -557,10 +559,10 @@ panic_trap(struct trapframe *tf, register_t ssr, register_t spc,
 	printf("   SPC: 0x%08x%08x\n",
 	    (u_int)(excf.es_spc >> 32), (u_int)excf.es_spc);
 	printf("   SSR: 0x%08x\n", (u_int)excf.es_ssr);
-	printf("   USR: 0x%04x\n\n", (u_int)excf.es_usr);
+	printf("   USR: 0x%04x\n", (u_int)excf.es_usr);
 
 #ifdef DIAGNOSTIC
-	dump_trapframe(tf);
+	dump_trapframe(printf, "\n", tf);
 #endif
 #ifdef DDB
 	kdb_trap(0, tf);
@@ -618,10 +620,10 @@ panic_critical_fault(struct trapframe *tf, struct exc_scratch_frame *es,
 		printf("   SSR: 0x%08x\n", (u_int)excf.es_ssr);
 		printf("   USR: 0x%04x\n\n", (u_int)excf.es_usr);
 	} else
-		printf("exit.\nNot much to show.\n\n");
+		printf("exit.\nNot much to show.\n");
 
 #ifdef DIAGNOSTIC
-	dump_trapframe(tf);
+	dump_trapframe(printf, "\n", tf);
 #endif
 #ifdef DDB
 	kdb_trap(0, tf);
@@ -710,10 +712,19 @@ trap_type(int traptype)
 	return (t);
 }
 
-#ifdef DIAGNOSTIC
-static void
-dump_trapframe(struct trapframe *tf)
+#if defined(DIAGNOSTIC) || defined(DDB)
+void
+dump_trapframe(void (*pr)(const char *, ...), const char *prefix,
+    struct trapframe *tf)
 {
+	const char fmt[] = "%s=0x%08x%08x%s";
+	const char comma[] = ", ";
+
+	(*pr)(prefix);
+
+#define	print_a_reg(reg, v, nl) (*pr)(fmt, (reg), \
+	    (u_int)((v) >> 32), (u_int)(v), (nl) ? prefix : comma)
+
 	print_a_reg(" r0", tf->tf_caller.r0, 0);
 	print_a_reg(" r1", tf->tf_caller.r1, 0);
 	print_a_reg(" r2", tf->tf_caller.r2, 1);
@@ -746,21 +757,24 @@ dump_trapframe(struct trapframe *tf)
 	print_a_reg("r22", tf->tf_caller.r22, 0);
 	print_a_reg("r23", tf->tf_caller.r23, 1);
 
-	print_a_reg("r24", 0, 0);
+	print_a_reg("r24", (register_t)0, 0);
 	print_a_reg("r25", tf->tf_caller.r25, 0);
 	print_a_reg("r26", tf->tf_caller.r26, 1);
 
 	print_a_reg("r27", tf->tf_caller.r27, 0);
-	print_a_reg("r28", tf->tf_callee.r28, 0);
-	print_a_reg("r29", tf->tf_callee.r29, 1);
+	if (tf->tf_state.sf_flags & SF_FLAGS_CALLEE_SAVED) {
+		print_a_reg("r28", tf->tf_callee.r28, 0);
+		print_a_reg("r29", tf->tf_callee.r29, 1);
 
-	print_a_reg("r30", tf->tf_callee.r30, 0);
-	print_a_reg("r31", tf->tf_callee.r31, 0);
-	print_a_reg("r32", tf->tf_callee.r32, 1);
+		print_a_reg("r30", tf->tf_callee.r30, 0);
+		print_a_reg("r31", tf->tf_callee.r31, 0);
+		print_a_reg("r32", tf->tf_callee.r32, 1);
 
-	print_a_reg("r33", tf->tf_callee.r33, 0);
-	print_a_reg("r34", tf->tf_callee.r34, 0);
-	print_a_reg("r35", tf->tf_callee.r35, 1);
+		print_a_reg("r33", tf->tf_callee.r33, 0);
+		print_a_reg("r34", tf->tf_callee.r34, 0);
+		print_a_reg("r35", tf->tf_callee.r35, 1);
+	} else
+		(*pr)(prefix);
 
 	print_a_reg("r36", tf->tf_caller.r36, 0);
 	print_a_reg("r37", tf->tf_caller.r37, 0);
@@ -772,51 +786,57 @@ dump_trapframe(struct trapframe *tf)
 
 	print_a_reg("r42", tf->tf_caller.r42, 0);
 	print_a_reg("r43", tf->tf_caller.r43, 0);
-	print_a_reg("r44", tf->tf_callee.r44, 1);
+	if (tf->tf_state.sf_flags & SF_FLAGS_CALLEE_SAVED) {
+		print_a_reg("r44", tf->tf_callee.r44, 1);
 
-	print_a_reg("r45", tf->tf_callee.r45, 0);
-	print_a_reg("r46", tf->tf_callee.r46, 0);
-	print_a_reg("r47", tf->tf_callee.r47, 1);
+		print_a_reg("r45", tf->tf_callee.r45, 0);
+		print_a_reg("r46", tf->tf_callee.r46, 0);
+		print_a_reg("r47", tf->tf_callee.r47, 1);
 
-	print_a_reg("r48", tf->tf_callee.r48, 0);
-	print_a_reg("r49", tf->tf_callee.r49, 0);
-	print_a_reg("r50", tf->tf_callee.r50, 1);
+		print_a_reg("r48", tf->tf_callee.r48, 0);
+		print_a_reg("r49", tf->tf_callee.r49, 0);
+		print_a_reg("r50", tf->tf_callee.r50, 1);
 
-	print_a_reg("r51", tf->tf_callee.r51, 0);
-	print_a_reg("r52", tf->tf_callee.r52, 0);
-	print_a_reg("r53", tf->tf_callee.r53, 1);
+		print_a_reg("r51", tf->tf_callee.r51, 0);
+		print_a_reg("r52", tf->tf_callee.r52, 0);
+		print_a_reg("r53", tf->tf_callee.r53, 1);
 
-	print_a_reg("r54", tf->tf_callee.r54, 0);
-	print_a_reg("r55", tf->tf_callee.r55, 0);
-	print_a_reg("r56", tf->tf_callee.r56, 1);
+		print_a_reg("r54", tf->tf_callee.r54, 0);
+		print_a_reg("r55", tf->tf_callee.r55, 0);
+		print_a_reg("r56", tf->tf_callee.r56, 1);
 
-	print_a_reg("r57", tf->tf_callee.r57, 0);
-	print_a_reg("r58", tf->tf_callee.r58, 0);
-	print_a_reg("r59", tf->tf_callee.r59, 1);
+		print_a_reg("r57", tf->tf_callee.r57, 0);
+		print_a_reg("r58", tf->tf_callee.r58, 0);
+		print_a_reg("r59", tf->tf_callee.r59, 1);
+	} else
+		(*pr)(prefix);
 
 	print_a_reg("r60", tf->tf_caller.r60, 0);
 	print_a_reg("r61", tf->tf_caller.r61, 0);
 	print_a_reg("r62", tf->tf_caller.r62, 1);
 
-	print_a_reg("\ntr0", tf->tf_caller.tr0, 0);
+	(*pr)(prefix);
+
+	print_a_reg("tr0", tf->tf_caller.tr0, 0);
 	print_a_reg("tr1", tf->tf_caller.tr1, 0);
 	print_a_reg("tr2", tf->tf_caller.tr2, 1);
 
 	print_a_reg("tr3", tf->tf_caller.tr3, 0);
 	print_a_reg("tr4", tf->tf_caller.tr4, 0);
-	print_a_reg("tr5", tf->tf_callee.tr5, 1);
+	if (tf->tf_state.sf_flags & SF_FLAGS_CALLEE_SAVED) {
+		print_a_reg("tr5", tf->tf_callee.tr5, 1);
 
-	print_a_reg("tr6", tf->tf_callee.tr6, 0);
-	print_a_reg("tr7", tf->tf_callee.tr7, 1);
+		print_a_reg("tr6", tf->tf_callee.tr6, 0);
+		print_a_reg("tr7", tf->tf_callee.tr7, 0);
+	}
+
+	(*pr)("\n");
+#undef print_a_reg
 }
+#endif
 
-static void
-print_a_reg(const char *reg, register_t v, int nl)
-{
-	printf("%s=0x%08x%08x%s", reg,
-	    (u_int)(v >> 32), (u_int)v, nl ? "\n" : ", ");
-}
 
+#ifdef DIAGNOSTIC
 /*
  * Called from Ltrapexit in exception.S just before we restore the
  * trapframe in order to verify that the trapframe is valid enough
@@ -884,7 +904,7 @@ validate_trapframe(struct trapframe *tf)
 
 boom:
 	printf("oops: current trapframe address: %p\n", tf);
-	dump_trapframe(tf);
+	dump_trapframe(printf, "\n", tf);
 #ifdef DDB
 	kdb_trap(0, tf);
 #endif
