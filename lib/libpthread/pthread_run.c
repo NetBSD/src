@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.15 2004/01/02 14:13:16 cl Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.16 2004/01/16 15:23:31 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_run.c,v 1.15 2004/01/02 14:13:16 cl Exp $");
+__RCSID("$NetBSD: pthread_run.c,v 1.16 2004/01/16 15:23:31 cl Exp $");
 
 #include <ucontext.h>
 #include <errno.h>
@@ -222,7 +222,8 @@ pthread__sched_idle2(pthread_t self)
 	while (idlethread != NULL) {
 		SDPRINTF(("(sched_idle2 %p) reidling %p\n", self, idlethread));
 		next = PTQ_NEXT(idlethread, pt_runq);
-		if (idlethread->pt_next == NULL) {
+		if ((idlethread->pt_next == NULL) &&
+		    (idlethread->pt_blockgen == idlethread->pt_unblockgen)) {
 			PTQ_REMOVE(&pthread__reidlequeue, idlethread, pt_runq);
 			idlethread->pt_next = qhead;
 			qhead = idlethread;
@@ -251,6 +252,8 @@ pthread__sched_bulk(pthread_t self, pthread_t qhead)
 		next = qhead->pt_next;
 		pthread__assert(qhead->pt_spinlocks == 0);
 		pthread__assert(qhead->pt_type != PT_THREAD_UPCALL);
+		if (qhead->pt_unblockgen & 1)
+			qhead->pt_unblockgen++;
 		if (qhead->pt_type == PT_THREAD_NORMAL) {
 			qhead->pt_state = PT_STATE_RUNNABLE;
 			qhead->pt_next = NULL;

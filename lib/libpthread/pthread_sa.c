@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.26 2004/01/02 19:14:00 cl Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.27 2004/01/16 15:23:31 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.26 2004/01/02 19:14:00 cl Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.27 2004/01/16 15:23:31 cl Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -104,19 +104,7 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 	SDPRINTF(("(up %p) type %d LWP %d ev %d intr %d\n", self, 
 	    type, sas[0]->sa_id, ev, intr));
 
-	if (type == SA_UPCALL_BLOCKED) {
-		/* Don't handle this SA in the usual processing. */
-		t = pthread__sa_id(sas[1]);
-		pthread__assert(self->pt_spinlocks == 0);
-		if (t->pt_type == PT_THREAD_IDLE) {
-			pthread_spinlock(self, &pthread__deadqueue_lock);
-			if (t->pt_flags & PT_FLAG_IDLED) {
-				PTQ_REMOVE(&pthread__reidlequeue, t, pt_runq);
-				t->pt_flags &= PT_FLAG_IDLED;
-			}
-			pthread_spinunlock(self, &pthread__deadqueue_lock);
-		}
-	} else {
+	if (type != SA_UPCALL_BLOCKED) {
 		/*
 		 * Do per-thread work, including saving the context.
 		 * Briefly run any threads that were in a critical section.
@@ -132,8 +120,6 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 			pthread__sched_bulk(self, intqueue);
 		if (schedqueue != self)
 			pthread__sched_bulk(self, schedqueue);
-
-		pthread__sched_idle2(self);
 	}
 
 	switch (type) {
@@ -144,7 +130,7 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 			     sas[1]->sa_id, t, t->pt_type));
 		t->pt_blockuc = sas[1]->sa_context;
 		t->pt_blockedlwp = sas[1]->sa_id;
-		t->pt_blockgen++;
+		t->pt_blockgen += 2;
 		if (t->pt_cancel)
 			_lwp_wakeup(t->pt_blockedlwp);
 #ifdef PTHREAD__DEBUG
@@ -159,7 +145,6 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		break;
 	case SA_UPCALL_UNBLOCKED:
 		PTHREADD_ADD(PTHREADD_UP_UNBLOCK);
-		schedqueue = NULL;
 		for (i = 0; i < ev; i++) {
 			t = pthread__sa_id(sas[1 + i]);
 			/*
@@ -169,11 +154,12 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 			pthread_spinlock(self, &t->pt_flaglock);
 			flags = t->pt_flags;
 			pthread_spinunlock(self, &t->pt_flaglock);
+			if (t->pt_type == PT_THREAD_IDLE &&
+			    (flags & PT_FLAG_IDLED))
+				t->pt_unblockgen++;
 			if (flags & PT_FLAG_SIGDEFERRED)
 				pthread__signal_deferred(self, t);
 		}
-		if (schedqueue != NULL)
-			pthread__sched_bulk(self, schedqueue);
 		break;
 	case SA_UPCALL_SIGNAL:
 		PTHREADD_ADD(PTHREADD_UP_SIGNAL);
@@ -216,6 +202,9 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 	default:
 		pthread__abort();
 	}
+
+	if (type != SA_UPCALL_BLOCKED)
+		pthread__sched_idle2(self);
 
 	/*
 	 * At this point everything on our list should be scheduled
@@ -268,11 +257,10 @@ pthread__find_interrupted(int type, struct sa_t *sas[], int ev, int intr,
 		if (type == SA_UPCALL_UNBLOCKED && i < ev) {
 			victim->pt_unblockgen++;
 #ifdef PTHREAD__DEBUG
-			if (victim->pt_blockgen != victim->pt_unblockgen) {
+			if (victim->pt_blockgen != victim->pt_unblockgen + 1) {
 				SDPRINTF((" unblock before block"));
 			} else if (victim->pt_type == PT_THREAD_UPCALL ||
-				victim->pt_spinlocks > 0 ||
-				victim->pt_next) {
+			    victim->pt_spinlocks > 0 || victim->pt_next) {
 				SDPRINTF((" critical"));
 			} else {
 				SDPRINTF((" event"));
