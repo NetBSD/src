@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_nfs.8,v 1.24 2004/01/15 03:33:20 grant Exp $
+.\"	$NetBSD: mount_nfs.8,v 1.25 2004/05/05 00:21:00 fair Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mount_nfs.8	8.3 (Berkeley) 3/29/95
 .\"
-.Dd January 12, 1999
+.Dd May 4, 2004
 .Dt MOUNT_NFS 8
 .Os
 .Sh NAME
@@ -80,11 +80,12 @@
 .Sh DESCRIPTION
 The
 .Nm
-command
-calls the
+command calls the
 .Xr mount 2
-system call to prepare and graft a remote NFS file system (rhost:path)
-on to the file system tree at the point
+system call to prepare and graft a remote
+.Tn NFS
+file system (rhost:path)
+on to the file system tree at the mount point
 .Ar node .
 This command is normally executed by
 .Xr mount 8 .
@@ -95,13 +96,19 @@ Appendix I.
 The options are:
 .Bl -tag -width indent
 .It Fl 2
-Use the NFS Version 2 protocol.
+Use the
+.Tn NFS
+Version 2 protocol.
 .It Fl 3
-Use the NFS Version 3 protocol.
+Use the
+.Tn NFS
+Version 3 protocol.
 The default is to try version 3 first, and
 fall back to version 2 if the mount fails.
 .It Fl D
-Used with NQNFS to set the
+Used with
+.Tn NQNFS
+to set the
 .Dq "dead server threshold"
 to the specified number of round trip timeout intervals.
 After a
@@ -116,16 +123,25 @@ feature.
 .It Fl I
 Set the readdir read size to the specified value.
 The value should normally
-be a multiple of DIRBLKSIZ that is \*[Le] the read size for the mount.
+be a multiple of
+.Dv DIRBLKSIZ
+that is \*[Le] the read size for the mount.
 .It Fl K
-Pass Kerberos authenticators to the server for client-to-server
-user-credential mapping.
-This requires that the kernel be built with the NFSKERB option.
-(Refer to the Internet-draft titled
+Pass
+.Tn Kerberos
+authenticators to the server for client-to-server user-credential mapping.
+This requires that the
+.Nx
+kernel be built with the
+.Dv NFSKERB
+.Xr option 4 .
+Refer to RFC 2695,
 .%T "Authentication Mechanisms for ONC RPC" ,
-for more information.)
+for more information.
 .It Fl L
-Used with NQNFS to set the lease term to the specified number of seconds.
+Used with
+.Tn NQNFS
+to set the lease term to the specified number of seconds.
 Only use this argument for mounts with a large round trip delay.
 Values are normally in the 10-30 second range.
 .It Fl P
@@ -135,19 +151,29 @@ for backwards compatibility purposes only.
 .It Fl R
 Set the retry count for doing the mount to the specified value.
 .It Fl T
-Use TCP transport instead of UDP.
+Use
+.Tn TCP
+transport instead of
+.Tn UDP .
 This is recommended for servers that are not on the same physical network as
 the client.
-Not all NFS servers, especially not old ones, support this.
+Not all
+.Tn NFS
+servers, especially not old ones, support this.
 .It Fl U
-Force the mount protocol to use UDP transport, even for TCP NFS mounts.
-(Necessary for some old
+Force the mount protocol to use
+.Tn UDP
+transport, even for
+.Tn TCP
+.Tn NFS
+mounts.
+This is necessary for some old
 .Bx
-servers.)
+servers.
 .It Fl X
 Perform 32 \*[Lt]-\*[Gt] 64 bit directory cookie translation for version 3 mounts.
 This may be need in the case of a server using the upper 32 bits of
-v3 directory cookies, and when you are running emulated binaries
+version 3 directory cookies, and when you are running emulated binaries
 that access such a filesystem.
 Native
 .Nx
@@ -166,22 +192,33 @@ Useful for
 .Xr fstab 5 ,
 where the filesystem mount is not critical to multiuser operation.
 .It Fl c
-For UDP mount points, do not do a
+For
+.Tn UDP
+mount points, do not do a
 .Xr connect 2 .
-This flag is deprecated and connectionless UDP mounts are the default.
+This flag is deprecated and connectionless
+.Tn UDP
+mounts are the default.
 .It Fl C
-For UDP mount points, do a
+For
+.Tn UDP
+mount points, do a
 .Xr connect 2 .
-Although this flag increases the efficiency of UDP mounts it cannot
+Although this flag increases the efficiency of
+.Tn UDP
+mounts it cannot
 be used for servers that do not reply to requests from the
-standard NFS port number 2049, or for servers with multiple network
-interfaces.
+standard
+.Tn NFS
+port number 2049, or for servers with multiple network interfaces.
 In these cases if the socket is connected and the server
 replies from a different port number or a different network interface
 the client will get ICMP port unreachable and the mount will hang.
 .It Fl d
 Turn off the dynamic retransmit timeout estimator.
-This may be useful for UDP mounts that exhibit high retry rates,
+This may be useful for
+.Tn UDP
+mounts that exhibit high retry rates,
 since it is possible that the dynamically estimated timeout interval is too
 short.
 .It Fl g
@@ -198,16 +235,26 @@ are delayed due to an unresponsive server will fail with
 when a
 termination signal is posted for the process.
 .It Fl l
-Used with NQNFS and NFSv3 to specify that the ReaddirPlus RPC should
-be used.
-This option reduces RPC traffic for cases such as
-.Dq "ls -l" ,
+Used with
+.Tn NQNFS
+and
+.Tn NFS
+Version 3 to specify that the
+.Fn ReaddirPlus
+.Tn RPC
+should be used.
+This option reduces
+.Tn RPC
+traffic for cases such as
+.Ic "ls -l" ,
 but tends to flood the attribute and name caches with prefetched entries.
 Try this option and see whether performance improves or degrades.
 Probably most useful for client to server network
 interconnects with a large bandwidth times delay product.
 .It Fl m
-Set the Kerberos realm to the string argument.
+Set the
+.Tn Kerberos
+realm to the string argument.
 Used with the
 .Fl K
 option for mounts to other realms.
@@ -223,35 +270,49 @@ Do not use a reserved port number for RPCs.
 This option is provided only to be able to mimic the old
 default behavior of not using a reserved port, and should rarely be useful.
 .It Fl q
-Use the leasing extensions to the NFS Version 3 protocol
+Use the leasing extensions to the
+.Tn NFS
+Version 3 protocol
 to maintain cache consistency.
-This protocol version 2 revision to Not Quite Nfs (NQNFS)
-is only supported by this updated release of NFS code.
-It is not backwards compatible with the version 1 NQNFS protocol
-that was part of the first release of
+This protocol version 2 revision to Not Quite
+.Tn NFS
+.Pq Tn NQNFS
+is only supported by this updated release of
+.Tn NFS
+code.
+It is not backwards compatible with the version 1
+.Tn NQNFS
+protocol that was part of the first release of
 .Bx 4.4 Lite .
 To interoperate with a first release
 .Bx 4.4 Lite
-NFS system you will have to avoid this option until you have had
-an opportunity to upgrade the NFS code to release 2 of
+.Tn NFS
+system you will have to avoid this option until you have had
+an opportunity to upgrade the
+.Tn NFS
+code to release 2 of
 .Bx 4.4 Lite
 on all your systems.
 .It Fl r
-Set the read data size to the specified value.
+Set the read data size to the specified value in bytes.
 It should normally be a power of 2 greater than or equal to 1024.
-This should be used for UDP mounts when the
+.Pp
+This should be used for
+.Tn UDP
+mounts when the
 .Dq "fragments dropped after timeout"
 value is getting large while actively using a mount point.
-(Use
+Use
 .Xr netstat 1
 with the
 .Fl s
 option to see what the
 .Dq "fragments dropped after timeout"
-value is.)
+value is.
 See the
+.Nm
 .Fl w
-option as well.
+option also.
 .It Fl s
 A soft mount, which implies that file system calls will fail
 after
@@ -259,28 +320,36 @@ after
 round trip timeout intervals.
 .It Fl t
 Set the initial retransmit timeout to the specified value.
-May be useful for fine tuning UDP mounts over internetworks
+May be useful for fine tuning
+.Tn UDP
+mounts over internetworks
 with high packet loss rates or an overloaded server.
 Try increasing the interval if
 .Xr nfsstat 1
 shows high retransmit rates while the file system is active or reducing the
 value if there is a low retransmit rate but long response delay observed.
-(Normally, the -d option should be specified when using this option to manually
+Normally, the -d option should be specified when using this option to manually
 tune the timeout
-interval.)
+interval.
 .It Fl w
-Set the write data size to the specified value.
-Ditto the comments with respect to the
+Set the write data size to the specified value in bytes.
+.Pp
+The same logic applies for use of this option as with the
+.Nm
 .Fl r
 option, but using the
 .Dq "fragments dropped after timeout"
-value on the server instead of the client.
+value on the
+.Tn NFS
+server instead of the client.
 Note that both the
 .Fl r
 and
 .Fl w
 options should only be used as a last ditch effort at improving performance
-when mounting servers that do not support TCP mounts.
+when mounting servers that do not support
+.Tn TCP
+mounts.
 .It Fl x
 Set the retransmit timeout count for soft mounts to the specified value.
 .El
@@ -300,7 +369,9 @@ by using a line like:
 .Dl "remotehost:/home /home nfs rw 0 0
 .Sh PERFORMANCE
 As can be derived from the comments accompanying the options, performance
-tuning of NFS can be a non-trivial task.
+tuning of
+.Tn NFS
+can be a non-trivial task.
 Here are some common points
 to watch:
 .Bl -bullet -offset indent
@@ -309,38 +380,68 @@ Increasing the read and write size with the
 .Fl r
 and
 .Fl w
-options respectively will increase throughput if the hardware can handle
-the larger packet sizes.
-The default size for version 2 is 8k when
-using UDP, 64k when using TCP.
-The default size for v3 is platform dependent:
-on i386, the default is 32k, for other platforms it is 8k.
-Values over
-32k are only supported for TCP, where 64k is the maximum.
-Any value
-over 32k is unlikely to get you more performance, unless you have
-a very fast network.
+options respectively will increase throughput if the network
+interface can handle the larger packet sizes.
+.Pp
+The default size for
+.Tn NFS
+version 2 is 8K when
+using
+.Tn UDP ,
+64K when using
+.Tn TCP .
+.Pp
+The default size for
+.Tn NFS
+version 3 is platform dependent:
+on
+.Nx Ns /i386 ,
+the default is 32K, for other platforms it is 8K.
+Values over 32K are only supported for
+.Tn TCP ,
+where 64K is the maximum.
+.Pp
+Any value over 32K is unlikely to get you more performance, unless
+you have a very fast network.
 .It
-If the hardware can not handle larger packet sizes, you may see low
-performance figures or even temporary hangups during NFS activity.
-This can especially happen with older ethernet cards.
-What happens
-is that either the buffer on the card on the client side is overflowing,
-or that similar events occur on the server, leading to a lot
-of dropped packets.
-In this case, decreasing the read and write size,
-using TCP, or a combination of both will usually lead to better throughput.
-Should you need to decrease the read and write size for all your NFS mounts
-because of a slow ethernet card, you can use
+If the network interface cannot handle larger packet sizes or a
+long train of back to back packets, you may see low performance
+figures or even temporary hangups during
+.Tn NFS
+activity.
+.Pp
+This can especially happen with older
+.Tn Ethernet
+network interfaces.
+What happens is that either the receive buffer on the network
+interface on the client side is overflowing, or that similar events
+occur on the server, leading to a lot of dropped packets.
+.Pp
+In this case, decreasing the read and write size, using
+.Tn TCP ,
+or a combination of both will usually lead to better throughput.
+Should you need to decrease the read and write size for all your
+.Tn NFS
+mounts because of a slow
+.Tn Ethernet
+network interface
+.Pq e.g. a USB 1.1 to 10/100 Tn Ethernet network interface ,
+you can use
+.Pp
 .Bl -ohang -compact
 .It Cd options NFS_RSIZE=value
 .It Cd options NFS_WSIZE=value
 .El
-in your kernel config file to avoid having do specify the
-sizes for all mounts.
+.Pp
+in your kernel
+.Xr config 8
+file to avoid having do specify the sizes for all mounts.
 .It
-For connections that are not on the same LAN, and/or may experience
-packet loss, using TCP is strongly recommended.
+For connections that are not on the same
+.Tn LAN ,
+and/or may experience packet loss, using
+.Tn TCP
+is strongly recommended.
 .El
 .Sh ERRORS
 Some common problems with
@@ -355,8 +456,10 @@ If you believe the remote host is indeed exporting a filesystem to you,
 make sure the
 .Xr exports 5
 file is exporting the proper directories.
+.Pp
 A common mistake is that
-mountd will not export a filesystem with the
+.Xr mountd 8
+will not export a filesystem with the
 .Fl alldirs
 option, unless it
 is a mount point on the exporting host.
@@ -392,12 +495,36 @@ The error:
 .Pp
 .Dl "mount_nfs: can't get net id for host
 .Pp
-indicates that mount_nfs cannot resolve the name of the remote host.
+indicates that
+.Nm
+cannot resolve the name of the remote host.
 .Sh SEE ALSO
+.Xr nfsstat 1 ,
 .Xr mount 2 ,
 .Xr unmount 2 ,
+.Xr options 4 ,
 .Xr exports 5 ,
 .Xr fstab 5 ,
 .Xr mount 8 ,
 .Xr mountd 8 ,
 .Xr rpcinfo 8
+.Rs
+.%R RFC 1094
+.%D March 1989
+.%T "NFS: Network File System Protocol specification"
+.Re
+.Rs
+.%R RFC 2623
+.%D June 1999
+.%T "NFS Version 2 and Version 3 Security Issues and the NFS Protocol's Use of RPCSEC_GCC and Kerberos V5"
+.Re
+.Rs
+.%R RFC 2624
+.%D June 1999
+.%T "NFS Version 4 Design Considerations"
+.Re
+.Rs
+.%R RFC 2695
+.%D September 1999
+.%T "Authentication Mechanisms for ONC RPC"
+.Re
