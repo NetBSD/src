@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.28 2000/07/31 22:48:49 briggs Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.29 2000/08/06 00:19:04 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -260,7 +260,7 @@ smc91cxx_attach(sc, myea)
 	memsize *= 256 * mult;
 
 	format_bytes(pbuf, sizeof(pbuf), memsize);
-	printf("%s\n", pbuf);
+	printf("buffer size: %s\n", pbuf);
 
 	/* Read the station address from the chip. */
 	SMC_SELECT_BANK(sc, 1);
