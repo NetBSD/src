@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrouplist.c,v 1.15 2000/01/22 22:19:10 mycroft Exp $	*/
+/*	$NetBSD: getgrouplist.c,v 1.16 2003/02/16 01:22:44 elric Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrouplist.c	8.2 (Berkeley) 12/8/94";
 #else
-__RCSID("$NetBSD: getgrouplist.c,v 1.15 2000/01/22 22:19:10 mycroft Exp $");
+__RCSID("$NetBSD: getgrouplist.c,v 1.16 2003/02/16 01:22:44 elric Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,6 +56,13 @@ __RCSID("$NetBSD: getgrouplist.c,v 1.15 2000/01/22 22:19:10 mycroft Exp $");
 #ifdef __weak_alias
 __weak_alias(getgrouplist,_getgrouplist)
 #endif
+
+/*
+ * _getgrent_user() is a libc-private function defined in getgrent.c which
+ * use because certain name service types such as Hesiod lookup grouplists
+ * by username rather than just iterating over the list of groups.
+ */
+struct group *_getgrent_user(const char *);
 
 int
 getgrouplist(uname, agroup, groups, grpcnt)
@@ -90,23 +97,18 @@ getgrouplist(uname, agroup, groups, grpcnt)
 	 */
 	setgrent();
  nextgroup:
-	while ((grp = getgrent()) != NULL) {
+	while ((grp = _getgrent_user(uname)) != NULL) {
 		if (grp->gr_gid == agroup)
 			continue;
-		for (i = 0; grp->gr_mem[i]; i++) {
-			if (!strcmp(grp->gr_mem[i], uname)) {
-				for (i = 0; i < MIN(ngroups, maxgroups); i++) {
-					if (grp->gr_gid == groups[i])
-						goto nextgroup;
-				}
-				if (ngroups < maxgroups)
-					groups[ngroups] = grp->gr_gid;
-				else
-					ret = -1;
-				ngroups++;
-				break;
-			}
+		for (i = 0; i < MIN(ngroups, maxgroups); i++) {
+			if (grp->gr_gid == groups[i])
+				goto nextgroup;
 		}
+		if (ngroups < maxgroups)
+			groups[ngroups] = grp->gr_gid;
+		else
+			ret = -1;
+		ngroups++;
 	}
 	endgrent();
 	*grpcnt = ngroups;

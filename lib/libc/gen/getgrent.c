@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.44 2003/02/03 04:22:20 elric Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.45 2003/02/16 01:22:44 elric Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.44 2003/02/03 04:22:20 elric Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.45 2003/02/16 01:22:44 elric Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,6 +72,8 @@ __RCSID("$NetBSD: getgrent.c,v 1.44 2003/02/03 04:22:20 elric Exp $");
 #define _GROUP_COMPAT
 #endif
 
+struct group *_getgrent_user(const char *);
+
 #ifdef __weak_alias
 __weak_alias(endgrent,_endgrent)
 __weak_alias(getgrent,_getgrent)
@@ -87,9 +89,9 @@ static int		_gr_stayopen;
 static int		_gr_filesdone;
 
 static void grcleanup(void);
-static int grscan(int, gid_t, const char *);
+static int grscan(int, gid_t, const char *, const char *);
 static int grstart(void);
-static int grmatchline(int, gid_t, const char *);
+static int grmatchline(int, gid_t, const char *, const char *);
 
 #define	MAXGRP		200
 #define	MAXLINELENGTH	1024
@@ -104,7 +106,10 @@ static int	 _gr_ypdone;
 #endif
 
 #ifdef HESIOD
-static int	_gr_hesnum;
+static int		 _gr_hesnum;
+static struct group	*_gr_hesgrplist = NULL;
+static int		 _gr_hesgrplistnum;
+static int		 _gr_hesgrplistmax;
 #endif
 
 #ifdef _GROUP_COMPAT
@@ -116,7 +121,22 @@ struct group *
 getgrent(void)
 {
 
-	if ((!_gr_fp && !grstart()) || !grscan(0, 0, NULL))
+	if ((!_gr_fp && !grstart()) || !grscan(0, 0, NULL, NULL))
+ 		return (NULL);
+	return &_gr_group;
+}
+
+/*
+ * _getgrent_user() is desgined only to be called by getgrouplist(3) and
+ * hence makes no guarantees about filling the entire structure that it
+ * returns.  It may only fill in the group name and gid fields.
+ */
+
+struct group *
+_getgrent_user(const char *user)
+{
+
+	if ((!_gr_fp && !grstart()) || !grscan(0, 0, NULL, user))
  		return (NULL);
 	return &_gr_group;
 }
@@ -130,7 +150,7 @@ getgrnam(const char *name)
 
 	if (!grstart())
 		return NULL;
-	rval = grscan(1, 0, name);
+	rval = grscan(1, 0, name, NULL);
 	if (!_gr_stayopen)
 		endgrent();
 	return (rval) ? &_gr_group : NULL;
@@ -143,7 +163,7 @@ getgrgid(gid_t gid)
 
 	if (!grstart())
 		return NULL;
-	rval = grscan(1, gid, NULL);
+	rval = grscan(1, gid, NULL, NULL);
 	if (!_gr_stayopen)
 		endgrent();
 	return (rval) ? &_gr_group : NULL;
@@ -162,6 +182,11 @@ grcleanup(void)
 #endif
 #ifdef HESIOD
 	_gr_hesnum = 0;
+	if (!_gr_hesgrplist)
+		free(_gr_hesgrplist);
+	_gr_hesgrplist = NULL;
+	_gr_hesgrplistnum = -1;
+	_gr_hesgrplistmax = 0;
 #endif
 #ifdef _GROUP_COMPAT
 	__grmode = GRMODE_NONE;
@@ -218,6 +243,7 @@ _local_grscan(void *rv, void *cb_data, va_list ap)
 	int		 search = va_arg(ap, int);
 	gid_t		 gid = va_arg(ap, gid_t);
 	const char	*name = va_arg(ap, const char *);
+	const char	*user = va_arg(ap, const char *);
 
 	if (_gr_filesdone)
 		return NS_NOTFOUND;
@@ -235,7 +261,7 @@ _local_grscan(void *rv, void *cb_data, va_list ap)
 				;
 			continue;
 		}
-		if (grmatchline(search, gid, name))
+		if (grmatchline(search, gid, name, user))
 			return NS_SUCCESS;
 	}
 	/* NOTREACHED */
@@ -243,6 +269,7 @@ _local_grscan(void *rv, void *cb_data, va_list ap)
 
 #ifdef HESIOD
 static int _dns_grscan(void *, void *, va_list);
+static int _dns_grplist(const char *);
 
 /*ARGSUSED*/
 static int
@@ -251,12 +278,23 @@ _dns_grscan(void *rv, void *cb_data, va_list ap)
 	int		 search = va_arg(ap, int);
 	gid_t		 gid = va_arg(ap, gid_t);
 	const char	*name = va_arg(ap, const char *);
+	const char	*user = va_arg(ap, const char *);
 
 	char		**hp;
 	void		 *context;
 	int		  r;
 
 	r = NS_UNAVAIL;
+	if (!search && user && _gr_hesgrplistmax != -1) {
+		r = _dns_grplist(user);
+		/* if we did not find user.grplist, just iterate */
+		if (!_gr_hesgrplist) {
+			_gr_hesgrplistmax = -1;
+			if (r != NS_NOTFOUND)
+				return r;
+		} else
+			return r;
+	}
 	if (!search && _gr_hesnum == -1)
 		return NS_NOTFOUND;
 	if (hesiod_init(&context) == -1)
@@ -294,7 +332,7 @@ _dns_grscan(void *rv, void *cb_data, va_list ap)
 						/* only check first elem */
 		strlcpy(line, hp[0], sizeof(line));
 		hesiod_free_list(context, hp);
-		if (grmatchline(search, gid, name)) {
+		if (grmatchline(search, gid, name, user)) {
 			r = NS_SUCCESS;
 			break;
 		} else if (search) {
@@ -304,6 +342,88 @@ _dns_grscan(void *rv, void *cb_data, va_list ap)
 	}
 	hesiod_end(context);
 	return (r);
+}
+
+static int
+_dns_grplist(const char *user)
+{
+	void	 *context;
+	int	  r;
+	char	**hp;
+	char	 *cp;
+
+	r = NS_UNAVAIL;
+	if (!_gr_hesgrplist) {
+		if (hesiod_init(&context) == -1)
+			return r;
+
+		_gr_hesgrplistnum = -1;
+		hp = hesiod_resolve(context, user, "grplist");
+		if (!hp) {
+			if (errno == ENOENT)
+				r = NS_NOTFOUND;
+			hesiod_end(context);
+			return r;
+		}
+
+		strlcpy(line, hp[0], sizeof(line));
+		hesiod_free_list(context, hp);
+
+		_gr_hesgrplistmax = 0;
+		for (cp=line; *cp; cp++)
+			if (*cp == ':')
+				_gr_hesgrplistmax++;
+		_gr_hesgrplistmax /= 2;
+		_gr_hesgrplistmax++;
+
+		_gr_hesgrplist = malloc(_gr_hesgrplistmax *
+		    sizeof(*_gr_hesgrplist));
+		if (!_gr_hesgrplist) {
+			hesiod_end(context);
+			return NS_UNAVAIL;
+		}
+
+		cp = line;
+		_gr_hesgrplistmax = 0;
+		for (;;) {
+			char	*name;
+			char	*num;
+			gid_t	 gid;
+			char	*ep;
+
+			/* XXXrcd: error handling */
+			if (!(name = strsep(&cp, ":")))
+				break;
+			if (!(num = strsep(&cp, ":")))
+				break;
+			gid = (gid_t) strtoul(num, &ep, 10);
+			if (gid > GID_MAX || *ep != '\0')
+				break;
+			
+			_gr_hesgrplist[_gr_hesgrplistmax].gr_name = name;
+			_gr_hesgrplist[_gr_hesgrplistmax].gr_gid  = gid;
+			_gr_hesgrplistmax++;
+		}
+
+		hesiod_end(context);
+	}
+
+	/* we assume that _gr_hesgrplist is now defined */
+	if (++_gr_hesgrplistnum >= _gr_hesgrplistmax)
+		return NS_NOTFOUND;
+
+	/*
+	 * Now we copy the relevant information into _gr_group, so that
+	 * it can be returned.  Note that we only fill in the bare necessities
+	 * as this will be used exclusively by getgrouplist(3) and we do
+	 * not want to have to look up all of the information.
+	 */
+	_gr_group.gr_name   = _gr_hesgrplist[_gr_hesgrplistnum].gr_name;
+	_gr_group.gr_passwd = NULL;
+	_gr_group.gr_gid    = _gr_hesgrplist[_gr_hesgrplistnum].gr_gid;
+	_gr_group.gr_mem    = NULL;
+
+	return NS_SUCCESS;
 }
 #endif	/* HESIOD */
 
@@ -317,6 +437,7 @@ _nis_grscan(void *rv, void *cb_data, va_list ap)
 	int		 search = va_arg(ap, int);
 	gid_t		 gid = va_arg(ap, gid_t);
 	const char	*name = va_arg(ap, const char *);
+	const char	*user = va_arg(ap, const char *);
 
 	char	*key, *data;
 	int	 keylen, datalen;
@@ -357,7 +478,7 @@ _nis_grscan(void *rv, void *cb_data, va_list ap)
 		data[datalen] = '\0';			/* clear trailing \n */
 		strlcpy(line, data, sizeof(line));
 		free(data);
-		if (grmatchline(search, gid, name))
+		if (grmatchline(search, gid, name, user))
 			return NS_SUCCESS;
 		else
 			return NS_NOTFOUND;
@@ -406,7 +527,7 @@ _nis_grscan(void *rv, void *cb_data, va_list ap)
 		data[datalen] = '\0';			/* clear trailing \n */
 		strlcpy(line, data, sizeof(line));
 		free(data);
-		if (grmatchline(search, gid, name))
+		if (grmatchline(search, gid, name, user))
 			return NS_SUCCESS;
 	}
 	/* NOTREACHED */
@@ -442,10 +563,10 @@ _bad_grscan(void *rv, void *cb_data, va_list ap)
  * sense to lookup compat names from 'files' or 'compat'
  */
 
-static int __grscancompat(int, gid_t, const char *);
+static int __grscancompat(int, gid_t, const char *, const char *);
 
 static int
-__grscancompat(int search, gid_t gid, const char *name)
+__grscancompat(int search, gid_t gid, const char *name, const char *user)
 {
 	static const ns_dtab dtab[] = {
 		NS_FILES_CB(_bad_grscan, "files")
@@ -462,7 +583,7 @@ __grscancompat(int search, gid_t gid, const char *name)
 	_DIAGASSERT(name != NULL);
 
 	return (nsdispatch(NULL, dtab, NSDB_GROUP_COMPAT, "grscancompat",
-	    defaultnis, search, gid, name));
+	    defaultnis, search, gid, name, user));
 }
 #endif	/* GROUP_COMPAT */
 
@@ -476,6 +597,7 @@ _compat_grscan(void *rv, void *cb_data, va_list ap)
 	int		 search = va_arg(ap, int);
 	gid_t		 gid = va_arg(ap, gid_t);
 	const char	*name = va_arg(ap, const char *);
+	const char	*user = va_arg(ap, const char *);
 
 #ifdef _GROUP_COMPAT
 	static char	*grname = NULL;
@@ -488,7 +610,7 @@ _compat_grscan(void *rv, void *cb_data, va_list ap)
 
 			switch(__grmode) {
 			case GRMODE_FULL:
-				r = __grscancompat(search, gid, name);
+				r = __grscancompat(search, gid, name, user);
 				if (r == NS_SUCCESS)
 					return r;
 				__grmode = GRMODE_NONE;
@@ -498,7 +620,7 @@ _compat_grscan(void *rv, void *cb_data, va_list ap)
 					__grmode = GRMODE_NONE;
 					break;
 				}
-				r = __grscancompat(1, 0, grname);
+				r = __grscancompat(1, 0, grname, user);
 				free(grname);
 				grname = (char *)NULL;
 				if (r != NS_SUCCESS)
@@ -551,14 +673,14 @@ _compat_grscan(void *rv, void *cb_data, va_list ap)
 			continue;
 		}
 #endif	/* _GROUP_COMPAT */
-		if (grmatchline(search, gid, name))
+		if (grmatchline(search, gid, name, user))
 			return NS_SUCCESS;
 	}
 	/* NOTREACHED */
 }
 
 static int
-grscan(int search, gid_t gid, const char *name)
+grscan(int search, gid_t gid, const char *name, const char *user)
 {
 	int		r;
 	static const ns_dtab dtab[] = {
@@ -576,12 +698,12 @@ grscan(int search, gid_t gid, const char *name)
 	/* name may be NULL if search is nonzero */
 
 	r = nsdispatch(NULL, dtab, NSDB_GROUP, "grscan", compatsrc,
-	    search, gid, name);
+	    search, gid, name, user);
 	return (r == NS_SUCCESS) ? 1 : 0;
 }
 
 static int
-grmatchline(int search, gid_t gid, const char *name)
+grmatchline(int search, gid_t gid, const char *name, const char *user)
 {
 	unsigned long	id;
 	__aconst char	**m;
@@ -626,5 +748,11 @@ grmatchline(int search, gid_t gid, const char *name)
 			cp = bp;
 	}
 	*m = NULL;
+	if (user) {
+		for (m = members; *m; m++)
+			if (!strcmp(user, *m))
+				return 1;
+		return 0;
+	}
 	return 1;
 }
