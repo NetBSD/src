@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rlogin.c	5.33 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$Id: rlogin.c,v 1.2 1993/08/01 18:09:30 mycroft Exp $";
+static char rcsid[] = "$Id: rlogin.c,v 1.3 1993/09/05 19:05:01 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -101,7 +101,7 @@ u_char escapechar = '~';
 
 char *speeds[] = {
 	"0", "50", "75", "110", "134", "150", "200", "300", "600", "1200",
-	"1800", "2400", "4800", "9600", "19200", "38400"
+	"1800", "2400", "4800", "9600", "19200", "38400", "57600", "115200"
 };
 
 #ifdef sun
