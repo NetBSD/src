@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.49 1998/09/04 16:04:26 kenh Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.50 1998/09/08 08:21:12 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -1251,7 +1251,7 @@ ufs_mkdir(v)
 	    UFS_MPNEEDSWAP(dvp->v_mount));
 	dirtemplate.dotdot_reclen = ufs_rw16(dirtemplate.dotdot_reclen,
 	    UFS_MPNEEDSWAP(dvp->v_mount));
-	if (dvp->v_mount->mnt_maxsymlinklen == 0) {
+	if (dvp->v_mount->mnt_maxsymlinklen <= 0) {
 #if BYTE_ORDER == LITTLE_ENDIAN
 		if (UFS_MPNEEDSWAP(dvp->v_mount) == 0) {
 #else
