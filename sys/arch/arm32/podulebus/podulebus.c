@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.37 2001/03/17 20:34:45 bjh21 Exp $ */
+/* $NetBSD: podulebus.c,v 1.38 2001/03/17 23:58:43 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -699,6 +699,21 @@ netslot_ea(buffer)
 	buffer[3] = bootconfig.machine_id[2] + 0x10;
 	buffer[4] = bootconfig.machine_id[1];
 	buffer[5] = bootconfig.machine_id[0];
+}
+
+void *
+podulebus_irq_establish(self, slot, ipl, func, arg, ev)
+	struct device *self;
+	int slot;
+	int ipl;
+	int (*func) __P((void *));
+	void *arg;
+	struct evcnt *ev;
+{
+
+	/* XXX We don't actually use the evcnt supplied, just its name. */
+	return intr_claim(podules[slot].interrupt, ipl, ev->ev_group, func,
+	    arg);
 }
 
 /* End of podulebus.c */
