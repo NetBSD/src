@@ -1,5 +1,5 @@
-.\" Copyright (c) 1983, 1991 Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1983, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)directory.3	6.7 (Berkeley) 4/19/91
+.\"     @(#)directory.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd April 19, 1991
+.Dd June 4, 1993
 .Dt DIRECTORY 3
 .Os BSD 4.2
 .Sh NAME
@@ -48,7 +48,7 @@
 .Fd #include <dirent.h>
 .Ft DIR *
 .Fn opendir "const char *filename"
-.Ft struct direct
+.Ft struct dirent *
 .Fn readdir "DIR *dirp"
 .Ft long
 .Fn telldir "const DIR *dirp"
@@ -155,7 +155,7 @@ Sample code which searchs a directory for entry ``name'' is:
 .Bd -literal -offset indent
 len = strlen(name);
 dirp = opendir(".");
-for (dp = readdir(dirp); dp != NULL; dp = readdir(dirp))
+while ((dp = readdir(dirp)) != NULL)
 	if (dp->d_namlen == len && !strcmp(dp->d_name, name)) {
 		(void)closedir(dirp);
 		return FOUND;
