@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.18 1998/01/20 20:53:32 mycroft Exp $	*/
+/*	$NetBSD: touch.c,v 1.19 1998/01/20 21:04:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.18 1998/01/20 20:53:32 mycroft Exp $");
+__RCSID("$NetBSD: touch.c,v 1.19 1998/01/20 21:04:04 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: touch.c,v 1.18 1998/01/20 20:53:32 mycroft Exp $");
 #include <string.h>
 #include <locale.h>
 #include <time.h>
+#include <tzfile.h>
 #include <unistd.h>
 
 int	main __P((int, char **));
