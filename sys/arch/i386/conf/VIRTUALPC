@@ -1,4 +1,4 @@
-# $NetBSD: VIRTUALPC,v 1.4 2004/06/14 01:28:00 lukem Exp $
+# $NetBSD: VIRTUALPC,v 1.5 2004/06/20 03:24:04 thorpej Exp $
 #
 # VIRTUALPC machine description file --
 #
@@ -11,7 +11,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VIRTUALPC-$Revision: 1.4 $"
+#ident 		"VIRTUALPC-$Revision: 1.5 $"
 
 maxusers	32		# estimated number of users
 
@@ -109,6 +109,7 @@ options 	COMPAT_13	# NetBSD 1.3, 386BSD, and BSDI
 options 	COMPAT_14	# NetBSD 1.4
 options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
+options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
