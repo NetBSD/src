@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.12 1995/09/04 05:05:11 briggs Exp $	*/
+/*	$NetBSD: macrom.c,v 1.13 1995/09/14 02:43:51 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -682,22 +682,16 @@ mrg_initadbintr()
 
         if ( (HwCfgFlags == 0) && (HwCfgFlags2 == 0) && (HwCfgFlags3 == 0) ){
 
+		printf("Caution: No HwCfgFlags from Booter, please "
+			"use at least booter version 1.8.\n");
+
 		if (current_mac_model->class == MACH_CLASSIIsi) {
-			printf("Caution: No HwCfgFlags from Booter, using "
-				"defaults for IIsi.\n");
+			printf("     ...  Using defaults for IIsi.\n");
 
 			/* Egret and ADBReInit look into these HwCfgFlags */
 			HwCfgFlags = 0xfc00;	
 			HwCfgFlags2 = 0x0000773F;
 			HwCfgFlags3 = 0x000001a6;
-		} else if (current_mac_model->class == MACH_CLASSQ) {
-			printf("Caution: No HwCfgFlags from Booter, using "
-				"defaults for Q700.\n");
-
-			/* ADBReInit looks into these HwCfgFlags */
-			HwCfgFlags = 0xfc00;	
-			HwCfgFlags2 = 0x05A0183F;
-			HwCfgFlags3 = 0x00000900;
 		}
 
 		printf("Using HwCfgFlags: 0x%4x, 0x%8x, 0x%8x\n",
