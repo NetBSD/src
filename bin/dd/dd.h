@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.h,v 1.11 2003/08/07 09:05:10 agc Exp $	*/
+/*	$NetBSD: dd.h,v 1.12 2004/01/17 20:48:57 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -61,6 +61,7 @@ typedef struct {
 	uint64_t	out_part;	/* # of partial output blocks */
 	uint64_t	trunc;		/* # of truncated records */
 	uint64_t	swab;		/* # of odd-length swab blocks */
+	uint64_t	sparse;		/* # of sparse output blocks */
 	uint64_t	bytes;		/* # of bytes written */
 	struct timeval	start;		/* start time of dd */
 } STAT;
@@ -87,3 +88,4 @@ typedef struct {
 #define	C_UCASE		0x40000
 #define	C_UNBLOCK	0x80000
 #define	C_OSYNC		0x100000
+#define	C_SPARSE	0x200000

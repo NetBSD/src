@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.35 2003/11/15 14:55:32 dsainty Exp $	*/
+/*	$NetBSD: dd.c,v 1.36 2004/01/17 20:48:57 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.35 2003/11/15 14:55:32 dsainty Exp $");
+__RCSID("$NetBSD: dd.c,v 1.36 2004/01/17 20:48:57 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,6 +78,7 @@ IO		in, out;		/* input/output state */
 STAT		st;			/* statistics */
 void		(*cfunc)(void);		/* conversion function */
 uint64_t	cpy_cnt;		/* # of blocks to copy */
+static off_t	pending = 0;		/* pending seek if sparse */
 u_int		ddflags;		/* conversion options */
 uint64_t	cbsz;			/* conversion block size */
 u_int		files_cnt = 1;		/* # of files to copy */
@@ -407,6 +408,14 @@ dd_close(void)
 		(void)memset(out.dbp, 0, out.dbsz - out.dbcnt);
 		out.dbcnt = out.dbsz;
 	}
+	/* If there are pending sparse blocks, make sure
+	 * to write out the final block un-sparse
+	 */
+	if ((out.dbcnt == 0) && pending) {
+		memset(out.db, 0, out.dbsz);
+		out.dbcnt = out.dbsz;
+		pending -= out.dbsz;
+	}
 	if (out.dbcnt)
 		dd_out(1);
 
@@ -454,6 +463,27 @@ dd_out(int force)
 	for (n = force ? out.dbcnt : out.dbsz;; n = out.dbsz) {
 		for (cnt = n;; cnt -= nw) {
 
+			if (!force && ddflags & C_SPARSE) {
+				int sparse, i;
+				sparse = 1;	/* Is buffer sparse? */
+				for (i = 0; i < cnt; i++)
+					if (outp[i] != 0) {
+						sparse = 0;
+						break;
+					}
+				if (sparse) {
+					pending += cnt;
+					outp += cnt;
+					nw = 0;
+					break;
+				}
+			}
+			if (pending != 0) {
+				if (lseek(out.fd, pending, SEEK_CUR) ==
+				    -1)
+					err(EXIT_FAILURE, "%s: seek error creating sparse file",
+					    out.name);
+			}
 			nw = bwrite(out.fd, outp, cnt);
 			if (nw <= 0) {
 				if (nw == 0)
@@ -464,6 +494,12 @@ dd_out(int force)
 					err(EXIT_FAILURE, "%s", out.name);
 					/* NOTREACHED */
 				nw = 0;
+			}
+			if (pending) {
+				st.bytes += pending;
+				st.sparse += pending/out.dbsz;
+				st.out_full += pending/out.dbsz;
+				pending = 0;
 			}
 			outp += nw;
 			st.bytes += nw;

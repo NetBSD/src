@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.18 2004/01/04 16:04:18 jschauma Exp $	*/
+/*	$NetBSD: misc.c,v 1.19 2004/01/17 20:48:57 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: misc.c,v 1.18 2004/01/04 16:04:18 jschauma Exp $");
+__RCSID("$NetBSD: misc.c,v 1.19 2004/01/17 20:48:57 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,6 +88,12 @@ summary(void)
 		(void)snprintf(buf, sizeof(buf), "%llu truncated %s\n",
 		    (unsigned long long)st.trunc,
 		    (st.trunc == 1) ? "block" : "blocks");
+		(void)write(STDERR_FILENO, buf, strlen(buf));
+	}
+	if (st.sparse) {
+		(void)snprintf(buf, sizeof(buf), "%llu sparse output %s\n",
+		    (unsigned long long)st.sparse,
+		    (st.sparse == 1) ? "block" : "blocks");
 		(void)write(STDERR_FILENO, buf, strlen(buf));
 	}
 	(void)snprintf(buf, sizeof(buf),
