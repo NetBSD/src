@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.181 2003/09/26 14:08:45 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.182 2003/10/25 08:48:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.181 2003/09/26 14:08:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.182 2003/10/25 08:48:11 christos Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -1259,7 +1259,7 @@ nfs_writerpc(vp, uiop, iomode, pageprotected, stalewriteverfp)
 	struct nfsnode *np = VTONFS(vp);
 	struct nfs_writerpc_context ctx;
 	int s;
-	struct lwp *l;
+	struct lwp *l = NULL;
 	size_t origresid;
 
 	simple_lock_init(&ctx.nwc_slock);
