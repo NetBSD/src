@@ -38,7 +38,7 @@
  * from: Utah $Hdr: cpu.h 1.16 91/03/25$
  *
  *	@(#)cpu.h	7.7 (Berkeley) 6/27/91
- *	$Id: cpu.h,v 1.10 1994/05/04 07:35:54 chopps Exp $
+ *	$Id: cpu.h,v 1.11 1994/05/08 05:53:56 chopps Exp $
  */
 #ifndef _MACHINE_CPU_H_
 #define _MACHINE_CPU_H_
@@ -75,40 +75,41 @@
  * which is now in this format.  note if m68k/frame.h
  * changes this may need too also.
  */
-typedef struct intrframe {
-	int	ps;
-	int	pc;
-} clockframe;
+struct clockframe {
+	int     ps;
+	int     pc;
+};
+
 
 #define	CLKF_USERMODE(framep)	(((framep)->ps & PSL_S) == 0)
 #define	CLKF_BASEPRI(framep)	(((framep)->ps & PSL_IPL7) == 0)
 #define	CLKF_PC(framep)		((framep)->pc)
-
+#define CLKF_INTR(framep)	(0)	/* XXXX*/
 
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-#define	need_resched()	{ want_resched++; aston(); }
+#define	need_resched()	{want_resched = 1; setsoftast();}
 
 /*
  * Give a profiling tick to the current process from the softclock
  * interrupt.  On hp300, request an ast to send us through trap(),
  * marking the proc as needing a profiling tick.
  */
-#define	profile_tick(p, framep)	{ (p)->p_flag |= P_OWEUPC; aston(); }
+#define	profile_tick(p, framep)	((p)->p_flag |= P_OWEUPC, setsoftast())
+#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, setsoftast())
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)	aston()
+#define	signotify(p)	setsoftast()
 
-#define aston() (astpending++)
+#define setsoftast()	(astpending = 1)
 
-int	astpending;		/* need to trap before returning to user mode */
+int	astpending;		/* need trap before returning to user mode */
 int	want_resched;		/* resched() was called */
-
 
 /*
  * simulated software interrupt register
@@ -185,9 +186,6 @@ extern	int machineid, mmutype, cpu040;
 /* zorro2 really starts at 0x00E00000, but starting mapping at D8 also
    includes the clock and scsi space on the A3000, as well as the 
    normal custom chip area on any amiga. That's nice :-)) */
-#define ZORRO2BASE	(0x00D80000)
-#define ZORRO2TOP	(0x00F80000)
-#define ZORRO2SIZE	btoc(ZORRO2TOP-ZORRO2BASE)
 #define CUSTOMBASE	(0x00DFF000)	/* now just offset rel to zorro2 */
 #endif
 
@@ -207,7 +205,7 @@ extern	int machineid, mmutype, cpu040;
  *
  * 0x00000000	chipmembase	- 0x00200000	chipmemlimit	CHIP MEM
  * 0x00be0000	ciabase		- 0x00c00000	cialimit	CIA-B/CIA-A
- * 0x00d80000	customchipbase	- 0x00f00000	customchiplimit	CUSTOM/ZORRO2
+ * 0x00d80000	customchipbase	- 0x00f00000	customchiplimit	CUSTOM/ZTWO
  */
 #define ISCHIPMEM(va) \
 	((char *)(va) >= chipmembase && (char *)(va) < chipmemlimit)
