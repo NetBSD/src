@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_pci.c,v 1.6 1996/10/08 03:04:08 gibbs Exp $	*/
+/*	$NetBSD: ahc_pci.c,v 1.7 1996/10/10 19:55:48 christos Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -302,10 +302,10 @@ ahc_pci_attach(parent, self, aux)
 {
 #if defined(__FreeBSD__)
 	u_long io_port;
+	int unit = ahc->sc_dev.dv_unit;
 #elif defined(__NetBSD__)
 	struct pci_attach_args *pa = aux;
 	struct ahc_data *ahc = (void *)self;
-	int unit = ahc->sc_dev.dv_unit;
 	bus_io_addr_t iobase;
 	bus_io_size_t iosize;
 	bus_io_handle_t ioh;
@@ -398,7 +398,7 @@ ahc_pci_attach(parent, self, aux)
 #if defined(__FreeBSD__)
 	ahc_reset(io_port);
 #elif defined(__NetBSD__)
-	printf("\n");
+	kprintf("\n");
 	ahc_reset(ahc->sc_dev.dv_xname, pa->pa_bc, ioh);
 #endif
 
@@ -453,7 +453,7 @@ ahc_pci_attach(parent, self, aux)
 
 	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 			 pa->pa_intrline, &ih)) {
-		printf("%s: couldn't map interrupt\n", ahc->sc_dev.dv_xname);
+		kprintf("%s: couldn't map interrupt\n", ahc->sc_dev.dv_xname);
 		ahc_free(ahc);
 		return;
 	}
@@ -465,16 +465,16 @@ ahc_pci_attach(parent, self, aux)
 	ahc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, ahc_intr, ahc);
 #endif
 	if (ahc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
+		kprintf("%s: couldn't establish interrupt",
 		       ahc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			kprintf(" at %s", intrstr);
+		kprintf("\n");
 		ahc_free(ahc);
 		return;
 	}
 	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", ahc->sc_dev.dv_xname,
+		kprintf("%s: interrupting at %s\n", ahc->sc_dev.dv_xname,
 		       intrstr);
 #endif
 	/*
@@ -526,7 +526,7 @@ ahc_pci_attach(parent, self, aux)
 		   }
 		   default:
 		   {
-			printf("ahc: Unknown controller type.  Ignoring.\n");
+			kprintf("ahc: Unknown controller type.  Ignoring.\n");
 			ahc_free(ahc);
 			splx(opri);
 			return;
@@ -568,7 +568,7 @@ ahc_pci_attach(parent, self, aux)
 				}
 			}
 			if((i != 0x60) && (our_id != 0)) {
-				printf("%s: Using left over BIOS settings\n",
+				kprintf("%s: Using left over BIOS settings\n",
 					ahc_name(ahc));
 				ahc->flags &= ~AHC_USEDEFAULTS;
 			}
@@ -589,7 +589,7 @@ ahc_pci_attach(parent, self, aux)
 			}
 		}
 
-		printf("%s: %s", ahc_name(ahc), id_string);
+		kprintf("%s: %s", ahc_name(ahc), id_string);
 	}
 
 	if(ahc_init(ahc)){
@@ -632,7 +632,7 @@ load_seeprom(ahc)
 	sd.sd_DI = SEEDI;
 
 	if(bootverbose) 
-		printf("%s: Reading SEEPROM...", ahc_name(ahc));
+		kprintf("%s: Reading SEEPROM...", ahc_name(ahc));
 	have_seeprom = acquire_seeprom(&sd);
 	if (have_seeprom) {
 		have_seeprom = read_seeprom(&sd,
@@ -648,16 +648,16 @@ load_seeprom(ahc)
 				checksum = checksum + scarray[i];
 			if (checksum != sc.checksum) {
 				if(bootverbose)
-					printf ("checksum error");
+					kprintf ("checksum error");
 				have_seeprom = 0;
 			}
 			else if(bootverbose)
-				printf("done.\n");
+				kprintf("done.\n");
 		}
 	}
 	if (!have_seeprom) {
 		if(bootverbose)
-			printf("\n%s: No SEEPROM availible\n", ahc_name(ahc));
+			kprintf("\n%s: No SEEPROM availible\n", ahc_name(ahc));
 		ahc->flags |= AHC_USEDEFAULTS;
 	}
 	else {
