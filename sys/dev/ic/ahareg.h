@@ -1,4 +1,4 @@
-/*	$NetBSD: ahareg.h,v 1.9 1999/04/15 23:51:45 mjl Exp $	*/
+/*	$NetBSD: ahareg.h,v 1.10 2004/12/07 14:50:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997-99 The NetBSD Foundation, Inc.
@@ -180,7 +180,7 @@ struct aha_ccb {
 	u_char host_stat;
 	u_char target_stat;
 	u_char reserved[2];
-	struct scsi_generic scsi_cmd;
+	u_char scsi_cmd[12];
 	struct scsipi_sense_data scsi_sense;
 	struct aha_scat_gath scat_gath[AHA_NSEG];
 	/*----------------------------------------------------------------*/

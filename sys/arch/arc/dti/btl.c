@@ -1,4 +1,4 @@
-/*	$NetBSD: btl.c,v 1.14 2003/07/15 00:04:46 lukem Exp $	*/
+/*	$NetBSD: btl.c,v 1.15 2004/12/07 14:50:56 thorpej Exp $	*/
 /*	NetBSD: bt.c,v 1.10 1996/05/12 23:51:54 mycroft Exp 	*/
 
 #undef BTDIAG
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btl.c,v 1.14 2003/07/15 00:04:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btl.c,v 1.15 2004/12/07 14:50:56 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1276,6 +1276,13 @@ bt_scsi_cmd(xs)
 		ccb->scsi_cmd_length = 0;
 	} else {
 		/* can't use S/G if zero length */
+		if (xs->cmdlen > sizeof(ccb->scsi_cmd)) {
+			printf("%s: cmdlen %d too large for CCB\n",
+			    sc->sc_dev.dv_xname, xs->cmdlen);
+			xs->error = XS_DRIVER_STUFFUP;
+			bt_free_ccb(sc, ccb);
+			return COMPLETE;
+		}
 		ccb->opcode = (xs->datalen ? BT_INIT_SCAT_GATH_CCB
 					   : BT_INITIATOR_CCB);
 		bcopy(xs->cmd, &ccb->scsi_cmd,
