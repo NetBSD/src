@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.60 2003/05/14 23:36:32 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.61 2003/07/12 13:39:23 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.60 2003/05/14 23:36:32 itojun Exp $");
+__RCSID("$NetBSD: route.c,v 1.61 2003/07/12 13:39:23 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -493,7 +493,7 @@ p_sockaddr(sa, mask, flags, width)
 	case AF_LINK:
 		if (getnameinfo(sa, sa->sa_len, workbuf, sizeof(workbuf),
 		    NULL, 0, NI_NUMERICHOST) != 0)
-			strncpy(workbuf, "invalid", sizeof(workbuf));
+			strlcpy(workbuf, "invalid", sizeof(workbuf));
 		cp = workbuf;
 		break;
 
@@ -665,10 +665,9 @@ routename(in)
 			cp = hp->h_name;
 		}
 	}
-	if (cp) {
-		strncpy(line, cp, sizeof(line) - 1);
-		line[sizeof(line) - 1] = '\0';
-	} else {
+	if (cp)
+		strlcpy(line, cp, sizeof(line));
+	else {
 #define C(x)	((x) & 0xff)
 		in = ntohl(in);
 		snprintf(line, sizeof line, "%u.%u.%u.%u",
@@ -777,7 +776,7 @@ netname(in, mask)
 			cp = np->n_name;
 	}
 	if (cp)
-		strncpy(line, cp, sizeof(line) - 1);
+		strlcpy(line, cp, sizeof(line));
 	else if ((i & 0xffffff) == 0)
 		(void)snprintf(line, sizeof line, "%u", C(i >> 24));
 	else if ((i & 0xffff) == 0)

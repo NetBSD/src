@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 2003/06/11 01:44:32 briggs Exp $	*/
+/*	$NetBSD: main.c,v 1.16 2003/07/12 13:38:10 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.15 2003/06/11 01:44:32 briggs Exp $");
+__RCSID("$NetBSD: main.c,v 1.16 2003/07/12 13:38:10 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -279,11 +279,10 @@ setpeer0(host, port)
 		/* res->ai_addr <= sizeof(peeraddr) is guaranteed */
 		memcpy(&peeraddr, res->ai_addr, res->ai_addrlen);
 		if (res->ai_canonname) {
-			(void) strncpy(hostname, res->ai_canonname,
-				sizeof(hostname));
+			(void) strlcpy(hostname, res->ai_canonname,
+			    sizeof(hostname));
 		} else
-			(void) strncpy(hostname, host, sizeof(hostname));
-		hostname[sizeof(hostname)-1] = 0;
+			(void) strlcpy(hostname, host, sizeof(hostname));
 		connected = 1;
 	}
 

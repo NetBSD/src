@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.55 2003/03/22 15:18:36 jdolecek Exp $	*/
+/*	$NetBSD: inet.c,v 1.56 2003/07/12 13:39:23 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.55 2003/03/22 15:18:36 jdolecek Exp $");
+__RCSID("$NetBSD: inet.c,v 1.56 2003/07/12 13:39:23 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -637,9 +637,9 @@ inetname(inp)
 		}
 	}
 	if (inp->s_addr == INADDR_ANY)
-		strncpy(line, "*", sizeof line);
+		strlcpy(line, "*", sizeof line);
 	else if (cp)
-		strncpy(line, cp, sizeof line);
+		strlcpy(line, cp, sizeof line);
 	else {
 		inp->s_addr = ntohl(inp->s_addr);
 #define C(x)	((x) & 0xff)
@@ -648,7 +648,6 @@ inetname(inp)
 		    C(inp->s_addr >> 8), C(inp->s_addr));
 #undef C
 	}
-	line[sizeof(line) - 1] = '\0';
 	return (line);
 }
 
