@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.415 2001/10/27 06:29:42 jmc Exp $
+# $NetBSD: mi,v 1.416 2001/10/29 23:29:12 augustss Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1416,6 +1416,7 @@
 ./usr/share/man/cat8/mount_umap.0		man-miscfs-catman
 ./usr/share/man/cat8/mount_union.0		man-miscfs-catman
 ./usr/share/man/cat8/mountd.0			man-nfsserver-catman
+./usr/share/man/cat8/moused.0			man-sysutil-catman
 ./usr/share/man/cat8/mrinfo.0			man-netutil-catman
 ./usr/share/man/cat8/mrouted.0			man-router-catman
 ./usr/share/man/cat8/mtrace.0			man-netutil-catman
@@ -3050,6 +3051,7 @@
 ./usr/share/man/man8/mount_umap.8		man-miscfs-man
 ./usr/share/man/man8/mount_union.8		man-miscfs-man
 ./usr/share/man/man8/mountd.8			man-nfsserver-man
+./usr/share/man/man8/moused.8			man-sysutil-man
 ./usr/share/man/man8/mrinfo.8			man-netutil-man
 ./usr/share/man/man8/mrouted.8			man-router-man
 ./usr/share/man/man8/mtrace.8			man-netutil-man
