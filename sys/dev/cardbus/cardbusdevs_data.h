@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs_data.h,v 1.15 2001/05/15 04:25:12 kanaoka Exp $	*/
+/*	$NetBSD: cardbusdevs_data.h,v 1.16 2001/06/20 05:39:36 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.17 2001/03/14 01:41:09 christos Exp 
+ *	NetBSD: cardbusdevs,v 1.19 2001/06/20 05:39:17 ichiro Exp 
  */
 
 /*
@@ -114,6 +114,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    0,
 	    "Realtek Semiconductor",
 	    "8138 Ethernet",
+	},
+	{
+	    CARDBUS_VENDOR_REALTEK, CARDBUS_PRODUCT_REALTEK_RT8139,
+	    0,
+	    "Realtek Semiconductor",
+	    "8139 Ethernet",
 	},
 	{
 	    CARDBUS_VENDOR_IODATA, CARDBUS_PRODUCT_IODATA_CBIDE2,
