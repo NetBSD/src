@@ -1,4 +1,4 @@
-/*	$NetBSD: ah.h,v 1.17 2001/10/15 03:55:37 itojun Exp $	*/
+/*	$NetBSD: ah.h,v 1.18 2002/09/11 03:45:44 itojun Exp $	*/
 /*	$KAME: ah.h,v 1.16 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -73,8 +73,8 @@ struct ah_algorithm {
 	int keymax;	/* in bits */
 	const char *name;
 	int (*init) __P((struct ah_algorithm_state *, struct secasvar *));
-	void (*update) __P((struct ah_algorithm_state *, caddr_t, size_t));
-	void (*result) __P((struct ah_algorithm_state *, caddr_t));
+	void (*update) __P((struct ah_algorithm_state *, u_int8_t *, size_t));
+	void (*result) __P((struct ah_algorithm_state *, u_int8_t *));
 };
 
 #define	AH_MAXSUMSIZE	16
@@ -87,7 +87,7 @@ extern int ah_hdrlen __P((struct secasvar *));
 extern size_t ah_hdrsiz __P((struct ipsecrequest *));
 extern void ah4_input __P((struct mbuf *, ...));
 extern int ah4_output __P((struct mbuf *, struct ipsecrequest *));
-extern int ah4_calccksum __P((struct mbuf *, caddr_t, size_t,
+extern int ah4_calccksum __P((struct mbuf *, u_int8_t *, size_t,
 	const struct ah_algorithm *, struct secasvar *));
 
 extern void *ah4_ctlinput __P((int, struct sockaddr *, void *));
@@ -96,7 +96,7 @@ extern void *ah4_ctlinput __P((int, struct sockaddr *, void *));
 extern int ah6_input __P((struct mbuf **, int *, int));
 extern int ah6_output __P((struct mbuf *, u_char *, struct mbuf *,
 	struct ipsecrequest *));
-extern int ah6_calccksum __P((struct mbuf *, caddr_t, size_t,
+extern int ah6_calccksum __P((struct mbuf *, u_int8_t *, size_t,
 	const struct ah_algorithm *, struct secasvar *));
 
 extern void ah6_ctlinput __P((int, struct sockaddr *, void *));
