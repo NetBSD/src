@@ -43,9 +43,34 @@ Installation floppy:
 	sets.  There is enough on this file system to allow you to
 	make a slip connection, configure an ethernet, mount an NFS
 	file system or ftp.  You can also load distribution sets from
-	a SCSI tape or from one of your existing TOS partitions.
+	a SCSI tape or from one of your existing GEMDOS partitions.
 
 	These floppies are named "miniroot-_SVER_S.fs.1" and "miniroot-_SVER_S.fs.2".
+
+There are also TOS utilities in the "atari/utils.tos" subdirectory, which
+you will need to get NetBSD/Atari 'up-and-running'.
+
+	The "gzip.ttp" program allows you to uncompress .gz images.  The
+	usage is "gzip.ttp -d filename.gz".
+
+	The "rawwrite.ttp" program allows you to create the installation 
+	floppy disks from the files in the "atari/floppies" directory.
+
+	The "aptck.ttp" program reads the partition tables present on a
+	given disk and tries to interpret then the same way the NetBSD
+	kernel does.  If you have a disk on which GEMDOS and NetBSD are
+	to co-exist, It is a good idea to run this before you begin the
+	NetBSD/Atari installation just to check that the kernel's view
+	of the partition tables agree with GEMDOS's view.  If you have
+	more than 3 partitions defined on a disk you will notice that
+	the NetBSD/Atari partition starts one sector after the GEMDOS
+	partition.  This is to allow space for the auxilliary root for
+	the 4th and subsequent partitions.
+
+	The "loadbsd.ttp" program loads the NetBSD/Atari kernel from TOS
+	(or MiNT, MultiTOS, etc.).
+
+The NetBSD/Atari kernels are in the "atari/kernels" subdirectory.
 
 The NetBSD/atari binary distribution sets contain the binaries which
 comprise the NetBSD _VER release for the atari.  There are seven binary
