@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.33 1998/02/16 03:59:56 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.34 1998/02/18 01:44:32 cgd Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.33 1998/02/16 03:59:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.34 1998/02/18 01:44:32 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -710,32 +710,6 @@ pmap_init()
 		    ptoa(vm_physmem[bank].avail_end));
 	}
 #endif
-}
-
-/*
- *	Used to map a range of physical addresses into kernel
- *	virtual address space.
- *
- *	For now, VM is already on, we only need to map the
- *	specified memory.
- */
-vm_offset_t
-pmap_map(virt, start, end, prot)
-	vm_offset_t	virt;
-	vm_offset_t	start;
-	vm_offset_t	end;
-	int		prot;
-{
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_map(%lx, %lx, %lx, %x)\n", virt, start, end, prot);
-#endif
-	while (start < end) {
-		pmap_enter(pmap_kernel(), virt, start, prot, FALSE);
-		virt += PAGE_SIZE;
-		start += PAGE_SIZE;
-	}
-	return(virt);
 }
 
 /*
