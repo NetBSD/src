@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2001/12/12 00:51:01 tv Exp $
+#	$NetBSD: Makefile,v 1.7 2002/03/15 01:50:40 mjl Exp $
 
 LIB=		bz2
 NOMAN=		# defined
@@ -19,6 +19,7 @@ bzip2.texi: manual.texi
 	    -e 's/@parskip.*//' \
 	    -e 's/@node Overview, Implementation, Top, Top/@node Overview, (dir), Top, (dir)/' \
 	    -e 's/@itemize$$/@itemize @bullet/' \
+	    -e 's/@bf{\(.*\)}/\1/' \
 	    <$> >$@
 
 .include <bsd.own.mk>
