@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.231.2.16 2001/04/24 22:40:52 he Exp $
+#	$NetBSD: mi,v 1.231.2.17 2001/05/15 19:53:56 he Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -4653,12 +4653,12 @@
 ./usr/share/man/man9/ioctl.9		comp-kern-man
 ./usr/share/man/man9/kernacc.9		comp-kern-man
 ./usr/share/man/man9/kprintf.9		comp-kern-man
-./usr/share/man/man9/log.9		comp-kern-man
 ./usr/share/man/man9/lock.9		comp-kern-man
 ./usr/share/man/man9/lockinit.9		comp-kern-man
 ./usr/share/man/man9/lockmgr.9		comp-kern-man
 ./usr/share/man/man9/lockmgr_printinfo.9	comp-kern-man
 ./usr/share/man/man9/lockstatus.9	comp-kern-man
+./usr/share/man/man9/log.9		comp-kern-man
 ./usr/share/man/man9/m_adj.9		comp-kern-man
 ./usr/share/man/man9/m_cat.9		comp-kern-man
 ./usr/share/man/man9/m_copyback.9		comp-kern-man
