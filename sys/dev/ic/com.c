@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.147 1998/09/09 05:17:53 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.148 1998/09/16 21:30:58 is Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -273,10 +273,9 @@ comstatus(sc, str)
 #endif
 
 int
-comprobe1(iot, ioh, iobase)
+comprobe1(iot, ioh)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	int iobase;
 {
 
 	/* force access to id reg */

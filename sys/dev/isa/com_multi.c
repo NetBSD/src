@@ -1,4 +1,4 @@
-/*	$NetBSD: com_multi.c,v 1.10 1998/08/15 17:47:17 mycroft Exp $	*/
+/*	$NetBSD: com_multi.c,v 1.11 1998/09/16 21:30:58 is Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@ com_multi_probe(parent, match, aux)
 	if (com_is_console(ca->ca_iot, iobase, 0))
 		return 1;
 
-	return comprobe1(ca->ca_iot, ca->ca_ioh, iobase);
+	return comprobe1(ca->ca_iot, ca->ca_ioh);
 }
 
 void
