@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostlib.mk,v 1.2 2002/01/03 22:45:25 tv Exp $
+#	$NetBSD: bsd.hostlib.mk,v 1.3 2002/09/17 23:18:29 thorpej Exp $
 
 .include <bsd.init.mk>
 .include <bsd.sys.mk>
@@ -14,7 +14,7 @@ HOST_MKDEP?=	CC=${HOST_CC:Q} mkdep
 # Override these:
 MKDEP:=		${HOST_MKDEP}
 
-.if defined(USE_NEW_TOOLCHAIN)
+.if ${TOOLCHAIN_MISSING} != "yes" || defined(EXTERNAL_TOOLCHAIN)
 OBJHOSTMACHINE=	# set
 .endif
 
