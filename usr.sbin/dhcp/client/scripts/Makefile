@@ -30,11 +30,8 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-MAN=
-SCRIPT= netbsd
-
-realinstall:
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-		${.CURDIR}/${SCRIPT} ${DESTDIR}/etc/dhclient-script
+SCRIPTS=netbsd
+SCRIPTSNAME_netbsd=dhclient-script
+SCRIPTSDIR=/etc
 
 .include <bsd.prog.mk>
