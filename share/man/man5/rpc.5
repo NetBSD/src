@@ -1,4 +1,4 @@
-.\" $NetBSD: rpc.5,v 1.5 2001/09/08 01:29:08 wiz Exp $
+.\" $NetBSD: rpc.5,v 1.6 2001/09/11 01:01:58 wiz Exp $
 .\" @(#)rpc.4 1.17 93/08/30 SMI; from SVr4
 .\" Copyright 1989 AT&T
 .Dd December 10, 1991
@@ -26,6 +26,8 @@ A hash
 indicates the beginning of a comment;
 characters up to the end of the line are not interpreted
 by routines which search the file.
+.Sh FILES
+.Nm /etc/nsswitch.conf
 .Sh EXAMPLES
 .Pp
 Below is an example of an RPC database:
@@ -48,5 +50,3 @@ keyserv		100029	keyserver
 .Ed
 .Sh SEE ALSO
 .Xr getrpcent 3
-.Sh FILES
-.Nm /etc/nsswitch.conf

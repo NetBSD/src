@@ -1,4 +1,4 @@
-.\"	$NetBSD: link.5,v 1.12 2001/09/10 23:38:45 wiz Exp $
+.\"	$NetBSD: link.5,v 1.13 2001/09/11 01:01:57 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -112,7 +112,6 @@ This is most notably used by the start-up module,
 .Em crt0 .
 The _DYNAMIC structure is conventionally located at the start of the data
 segment of the image to which it pertains.
-.Pp
 .Sh DATA STRUCTURES
 The data structures supporting dynamic linking and run-time relocation
 reside both in the text and data segments of the image they apply to.
@@ -482,7 +481,7 @@ struct ld_entry {
 	void	(*dlexit) __P((void));
 };
 .Ed
-
+.Pp
 The
 .Fa crt_ldso
 structure defines the interface between ld.so and the start-up code in crt0.
