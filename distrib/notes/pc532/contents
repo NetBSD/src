@@ -8,6 +8,7 @@ the files as follows:
 	CKSUM			output of "cksum *.gz"
 	inst-11.fs.gz		Installation file system.
 	download.c.gz		Source for a pc532 ROM compat download pgm
+	netbsd.default.gz	Upgrade kernel
 	base.tar.gz		base distribution
 	comp.tar.gz		compiler tools & libraries
 	etc.tar.gz		files for /etc
@@ -93,3 +94,9 @@ is supported by the following files:
 				   inst-11.fs into memory via the
 				   pc532 ROM monitor.
 
+
+The upgrade process is supported by having a copy of a 1.1 kernel
+available.  This file is:
+
+	netbsd.default.gz	-- a kernel produced from the DEFAULT
+				   configuration file in pc532/conf.
