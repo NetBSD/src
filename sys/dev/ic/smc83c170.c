@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.15.2.2 2000/02/08 22:04:45 he Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.15.2.3 2000/05/22 21:23:34 he Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1240,7 +1240,7 @@ epic_set_mchash(sc)
 
 	/*
 	 * Set up the multicast address filter by passing all multicast
-	 * addresses through a CRC generator, and then using the high-order
+	 * addresses through a CRC generator, and then using the low-order
 	 * 6 bits as an index into the 64 bit multicast hash table (only
 	 * the lower 16 bits of each 32 bit multicast hash register are
 	 * valid).  The high order bit selects the register, while the
@@ -1278,8 +1278,8 @@ epic_set_mchash(sc)
 			crc = (crc >> 4) ^ crctab[crc & 0xf];
 			crc = (crc >> 4) ^ crctab[crc & 0xf];
 		}
-		/* Just want the 6 most significant bits. */
-		crc >>= 26;
+		/* Just want the 6 least significant bits. */
+		crc &= 0x3f;
 
 		/* Set the corresponding bit in the hash table. */
 		mchash[crc >> 4] |= 1 << (crc & 0xf);
