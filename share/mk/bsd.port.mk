@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.23 1997/12/03 08:32:01 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.24 1997/12/13 21:28:24 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -283,6 +283,12 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 # NEVER override the "regular" targets unless you want to open
 # a major can of worms.
 
+# Get the architecture
+ARCH!=	uname -m
+
+# Get the operating system type
+OPSYS!=	uname -s
+
 .if defined(ONLY_FOR_ARCHS)
 .for __ARCH in ${ONLY_FOR_ARCHS}
 .if ${MACHINE_ARCH} == "${__ARCH}"
@@ -300,12 +306,6 @@ fetch fetch-list extract patch configure build install reinstall package describ
 	@echo "This port is only for ${ONLY_FOR_ARCHS},"
 	@echo "and you are running ${MACHINE_ARCH}."
 .else
-
-# Get the architecture
-ARCH!=	uname -m
-
-# Get the operating system type
-OPSYS!=	uname -s
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -1834,7 +1834,7 @@ tags:
 .endif
 
 
-# generate ${PLIST} from ${PKGDIR}/PLIST, by
+# generate ${PLIST} from ${PLIST_SRC} by:
 #  - fixing list of man-pages according to MANCOMPRESSED/MANZ
 #    (we don't regard MANCOMPRESSED as many ports seem to have .gz pages in
 #     PLIST even when they install manpages without compressing them)
@@ -1861,7 +1861,7 @@ PLIST_SRC=
 ${PLIST}: ${PLIST_SRC}
 	@if [ -z "${PLIST_SRC}" ] ; then \
 		${ECHO} "No ${PKGDIR}/PLIST, and no ${PKGDIR}/PLIST-{mi,md.shared,md.static}" ; \
-		${ECHO} "Package must care for making ${PLIST}!" ; \
+		${ECHO} "Package must care for making ${PLIST} by setting PLIST_SRC!" ; \
 	fi
 .if defined(MANZ)
 	@if [ ! -z "${PLIST_SRC}" ] ; then \
