@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 19:57:58 $
- * $Revision: 1.1.1.1 $
+ * $Date: 2001/01/04 20:15:31 $
+ * $Revision: 1.2 $
  */
 
 /*
@@ -314,7 +314,7 @@ int injectCDKScale (CDKSCALE *scale, chtype input)
 		 scale->current = scale->high;
 		 break;
 
-	    case KEY_RETURN : case TAB : case KEY_ENTER :
+	    case KEY_RETURN : case TAB : case KEY_ENTER : case KEY_CR :
 		 scale->exitType = vNORMAL;
 		 return (scale->current);
 
