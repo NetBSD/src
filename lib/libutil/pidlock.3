@@ -1,4 +1,4 @@
-.\"	$NetBSD: pidlock.3,v 1.6 2003/02/14 16:29:13 grant Exp $
+.\"	$NetBSD: pidlock.3,v 1.7 2003/03/31 18:49:45 perry Exp $
 .\"
 .\" Copyright 1996, 1997 by Curt Sampson <cjs@NetBSD.org>
 .\"
@@ -153,7 +153,7 @@ directory, and read access to the current lockfile, if it exists.
 A component of a specified pathname did not exist, or the pathname
 was an empty string.
 .It Bq Er EWOULBLOCK
-Another runnning process has a lock and the
+Another running process has a lock and the
 .Dv PIDLOCK_NONBLOCK
 flag was specified.
 .It Bq Er ENAMETOOLONG
