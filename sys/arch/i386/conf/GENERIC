@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.196 1998/10/25 18:40:17 christos Exp $
+#	$NetBSD: GENERIC,v 1.197 1998/10/30 13:47:02 lukem Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -20,7 +20,7 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 # eliminate delay no-ops in I/O; recommended on all but very old machines
 #options 	DUMMY_NOPS
 
-# delay between "rebooting ..." message and hardware reset, in milieconds
+# delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
 
 # Misc. i386-specific options
