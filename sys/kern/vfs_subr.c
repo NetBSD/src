@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.32 1994/06/29 06:33:59 cgd Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.33 1994/07/02 04:51:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -198,7 +198,7 @@ getnewfsid(mp, mtype)
 	mp->mnt_stat.f_fsid.val[1] = mtype;
 	if (xxxfs_mntid == 0)
 		++xxxfs_mntid;
-	tfsid.val[0] = makedev(nblkdev + mtype, xxxfs_mntid);
+	tfsid.val[0] = makedev((nblkdev + mtype) & 0xff, xxxfs_mntid);
 	tfsid.val[1] = mtype;
 	if (mountlist.tqh_first != NULL) {
 		while (getvfs(&tfsid)) {
