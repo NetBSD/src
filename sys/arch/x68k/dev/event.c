@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.4 1996/11/27 14:40:46 oki Exp $ */
+/*	$NetBSD: event.c,v 1.4.44.1 2001/09/09 18:48:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -164,4 +164,62 @@ ev_poll(ev, events, p)
 
 	splx(s);
 	return (revents);
+}
+
+static void
+filt_evrdetach(struct knote *kn)
+{
+	struct evvar *ev = (void *) kn->kn_hook;
+	int s;
+
+	s = splev();
+	SLIST_REMOVE(&ev->ev_sel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_evread(struct knote *kn, long hint)
+{
+	struct evvar *ev = (void *) kn->kn_hook;
+
+	if (ev->ev_get == ev->ev_put)
+		return (0);
+
+	if (ev->ev_get < ev->ev_put)
+		kn->kn_data = ev->ev_put - ev->ev_get;
+	else
+		kn->kn_data = (EV_QSIZE - ev->ev_get) +
+		    ev->ev_put;
+
+	kn->kn_data *= sizeof(struct firm_event);
+
+	return (1);
+}
+
+static const struct filterops ev_filtops =
+	{ 1, NULL, filt_evrdetach, filt_evread };
+
+int
+ev_kqfilter(struct evvar *ev, struct knote *kn)
+{
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &ev->ev_sel.si_klist;
+		kn->kn_fop = &wsevent_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = (void *) ev;
+
+	s = splev();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
 }
