@@ -220,6 +220,8 @@ extern boolean _bfd_nocore_core_file_matches_executable_p
   _bfd_slurp_extended_name_table
 extern boolean _bfd_archive_bsd_construct_extended_name_table
   PARAMS ((bfd *, char **, bfd_size_type *, const char **));
+extern boolean _bfd_archive_bsd44_construct_extended_name_table
+  PARAMS ((bfd *, char **, bfd_size_type *, const char **));
 #define _bfd_archive_bsd_truncate_arname bfd_bsd_truncate_arname
 #define _bfd_archive_bsd_write_armap bsd_write_armap
 #define _bfd_archive_bsd_read_ar_hdr _bfd_generic_read_ar_hdr
@@ -520,7 +522,7 @@ extern bfd *bfd_last_cache;
 
 /* List of supported target vectors, and the default vector (if
    bfd_default_vector[0] is NULL, there is no default).  */
-extern const bfd_target * const bfd_target_vector[];
+extern const bfd_target * const *bfd_target_vector;
 extern const bfd_target *bfd_default_vector[];
 
 /* Functions shared by the ECOFF and MIPS ELF backends, which have no
