@@ -1,4 +1,4 @@
-/*	$NetBSD: iic.c,v 1.7 2003/01/01 00:46:14 thorpej Exp $	*/
+/*	$NetBSD: iic.c,v 1.7.2.1 2003/07/03 00:40:23 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -298,11 +298,11 @@ iicsearch(parent, cf, aux)
  */
 
 int
-iicopen(dev, flag, mode, p)
+iicopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct iic_softc *sc;
 	int unit = minor(dev);
@@ -323,11 +323,11 @@ iicopen(dev, flag, mode, p)
 
 
 int
-iicclose(dev, flag, mode, p)
+iicclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = minor(dev);
 	struct iic_softc *sc = iic_cd.cd_devs[unit];

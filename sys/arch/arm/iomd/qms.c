@@ -1,4 +1,4 @@
-/*	$NetBSD: qms.c,v 1.4 2002/11/26 19:50:22 christos Exp $	*/
+/*	$NetBSD: qms.c,v 1.4.6.1 2003/07/03 00:40:24 wrstuden Exp $	*/
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -116,11 +116,11 @@ qmsattach(sc)
 }
 
 int
-qmsopen(dev, flag, mode, p)
+qmsopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct qms_softc *sc;
 	int unit = minor(dev);
@@ -137,7 +137,7 @@ qmsopen(dev, flag, mode, p)
 	if (sc->sc_state & QMOUSE_OPEN) return(EBUSY);
 
 	/* update softc */
-	sc->sc_proc = p;
+	sc->sc_proc = l->l_proc;
     
 	sc->lastx = -1;
 	sc->lasty = -1;
@@ -159,11 +159,11 @@ qmsopen(dev, flag, mode, p)
 
 
 int
-qmsclose(dev, flag, mode, p)
+qmsclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = minor(dev);
 	struct qms_softc *sc = qms_cd.cd_devs[unit];
@@ -244,12 +244,12 @@ qmsread(dev, uio, flag)
 
 
 int
-qmsioctl(dev, cmd, data, flag, p)
+qmsioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct qms_softc *sc = qms_cd.cd_devs[minor(dev)];
 
@@ -427,10 +427,10 @@ qmsintr(arg)
 
 
 int
-qmspoll(dev, events, p)
+qmspoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct qms_softc *sc = qms_cd.cd_devs[minor(dev)];
 	int revents = 0;
@@ -440,7 +440,7 @@ qmspoll(dev, events, p)
 		if (sc->sc_buffer.c_cc > 0)
 			revents |= events & (POLLIN | POLLRDNORM);
 		else
-			selrecord(p, &sc->sc_rsel);
+			selrecord(l, &sc->sc_rsel);
 	}
 
 	(void)splx(s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.4 2002/11/26 19:50:22 christos Exp $	*/
+/*	$NetBSD: opms.c,v 1.4.6.1 2003/07/03 00:40:24 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -41,7 +41,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: opms.c,v 1.4 2002/11/26 19:50:22 christos Exp $");
+__RCSID("$NetBSD: opms.c,v 1.4.6.1 2003/07/03 00:40:24 wrstuden Exp $");
 
 #include <sys/kernel.h>
 #include <sys/systm.h>
@@ -274,11 +274,11 @@ opmsinit(sc)
  * device open routine
  */
 int
-opmsopen(dev, flag, mode, p)
+opmsopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = PMSUNIT(dev);
 	struct opms_softc *sc;
@@ -299,7 +299,7 @@ opmsopen(dev, flag, mode, p)
 		return ENOMEM;
 
 	/* set up the softc structure */
-	sc->sc_proc = p;
+	sc->sc_proc = l->l_proc;
 	sc->sc_mode = MOUSEMODE_ABS;
 	sc->sc_state |= PMS_OPEN;
 	sc->sc_status = 0;
@@ -322,11 +322,11 @@ opmsopen(dev, flag, mode, p)
  * driver close function
  */
 int
-opmsclose(dev, flag, mode, p)
+opmsclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
 
@@ -394,12 +394,12 @@ opmsread(dev, uio, flag)
 }
 
 int
-opmsioctl(dev, cmd, addr, flag, p)
+opmsioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
 	struct mouseinfo info;
@@ -638,10 +638,10 @@ opmsintr(arg)
 
 
 int
-opmspoll(dev, events, p)
+opmspoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
 	int revents = 0;
@@ -651,7 +651,7 @@ opmspoll(dev, events, p)
 		if (sc->sc_q.c_cc > 0)
 			revents |= events & (POLLIN | POLLRDNORM);
 		else
-			selrecord(p, &sc->sc_rsel);
+			selrecord(l, &sc->sc_rsel);
 	}
 
 	(void)splx(s);
