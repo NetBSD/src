@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.31 1995/08/02 06:44:54 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.32 1995/08/10 05:17:07 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -105,17 +105,14 @@
 #include <le.h>
 #include <asc.h>
 
-#if NDC > 0
-extern int dcGetc(), dcparam();
-extern void dcPutc();
-#endif
+#include <pmax/dev/sccvar.h>
+#include <pmax/dev/dcvar.h>
+
 #if NDTOP > 0
 extern int dtopKBDGetc();
 #endif
-#if NSCC > 0
-extern int sccGetc(), sccparam();
-extern void sccPutc();
-#endif
+
+
 extern int KBDGetc();
 extern void fbPutc();
 extern struct consdev cn_tab;
@@ -160,9 +157,13 @@ u_long	asc_iomem;		/* and 7 * 8K buffers for the scsi */
 u_long	asic_base;		/* Base address of I/O asic */
 const	struct callback *callv;	/* pointer to PROM entry points */
 
-void	(*tc_enable_interrupt)();
+extern void	(*tc_enable_interrupt)  __P ((u_int slotno,
+					      void (*handler)(int unit),
+					      int unit, int onoff)); 
+void	(*tc_enable_interrupt) __P ((u_int slotno, void (*handler)(int unit),
+				     int unit, int onoff));
 extern	int (*pmax_hardware_intr)();
-void	pmax_slot_hand_fill();
+
 int	kn02_intr(), kmin_intr(), xine_intr(), pmax_intr();
 #ifdef DS5000_240
 int	kn03_intr();
@@ -183,15 +184,34 @@ u_long	kn03_tc3_imask;
 tc_option_t tc_slot_info[TC_MAX_LOGICAL_SLOTS];
 static	void asic_init();
 extern	void RemconsInit();
+
 #ifdef DS5000
-void	kn02_enable_intr(), kn02_slot_hand_fill(),
-	kmin_enable_intr(), kmin_slot_hand_fill(),
-	xine_enable_intr(), xine_slot_hand_fill(),
-	tc_find_all_options();
+
+#if 1 /*def DS5000_200*/
+void	kn02_enable_intr  __P ((u_int slotno, void (*handler)(),
+				int unit, int onoff));
+#endif /*def DS5000_200*/
+
+#ifdef DS5000_100
+void kmin_enable_intr  __P ((u_int slotno, void (*handler)(),
+			     int unit, int onoff));
+void kmin_slot_hand_fill __P((tc_option_t *slot));
+#endif /*DS5000_100*/
+
+#ifdef DS5000_25
+void xine_enable_intr __P ((u_int slotno, void (*handler)(),
+			    int unit, int onoff));
+void xine_slot_hand_fill  __P((tc_option_t *slot));
+#endif /*DS5000_25*/
+
 #ifdef DS5000_240
-void	kn03_enable_intr(), kn03_slot_hand_fill();
-#endif
+void	kn03_enable_intr __P ((u_int slotno, void (*handler)(),
+			       int unit, int onoff));
+#endif /*DS5000_240*/
+
+volatile u_int *Mach_reset_addr;
 #endif /* DS5000 */
+
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -362,6 +382,7 @@ mach_init(argc, argv, code, cv)
 
 	/* check what model platform we are running on */
 	pmax_boardtype = ((i >> 16) & 0xff);
+
 	switch (pmax_boardtype) {
 	case DS_PMAX:	/* DS3100 Pmax */
 		/*
@@ -376,7 +397,6 @@ mach_init(argc, argv, code, cv)
 		Mach_splstatclock = Mach_spl3;
 		Mach_clock_addr = (volatile struct chiptime *)
 			MACH_PHYS_TO_UNCACHED(KN01_SYS_CLOCK);
-		pmax_slot_hand_fill();
 		strcpy(cpu_model, "3100");
 		break;
 
@@ -386,6 +406,11 @@ mach_init(argc, argv, code, cv)
 		volatile int *csr_addr =
 			(volatile int *)MACH_PHYS_TO_UNCACHED(KN02_SYS_CSR);
 
+		Mach_reset_addr =
+		    (unsigned *)MACH_PHYS_TO_UNCACHED(KN02_SYS_ERRADR);
+		/* clear any memory errors from new-config probes */
+		*Mach_reset_addr = 0;
+
 		/*
 		 * Enable ECC memory correction, turn off LEDs, and
 		 * disable all TURBOchannel interrupts.
@@ -393,8 +418,6 @@ mach_init(argc, argv, code, cv)
 		i = *csr_addr;
 		*csr_addr = (i & ~(KN02_CSR_WRESERVED | KN02_CSR_IOINTEN)) |
 			KN02_CSR_CORRECT | 0xff;
-
-		tc_slot_hand_fill = kn02_slot_hand_fill;
 		pmax_hardware_intr = kn02_intr;
 		tc_enable_interrupt = kn02_enable_intr;
 		Mach_splnet = Mach_spl0;
@@ -406,17 +429,11 @@ mach_init(argc, argv, code, cv)
 		Mach_clock_addr = (volatile struct chiptime *)
 			MACH_PHYS_TO_UNCACHED(KN02_SYS_CLOCK);
 
-		/*
-		 * Probe the TURBOchannel to see what controllers are present.
-		 */
-		tc_find_all_options();
-
-		/* clear any memory errors from probes */
-		*(unsigned *)MACH_PHYS_TO_UNCACHED(KN02_SYS_ERRADR) = 0;
 		}
 		strcpy(cpu_model, "5000/200");
 		break;
 
+#ifdef DS5000_100
 	case DS_3MIN:	/* DS5000/1xx 3min */
 		tc_max_slot = KMIN_TC_MAX;
 		tc_min_slot = KMIN_TC_MIN;
@@ -445,21 +462,24 @@ mach_init(argc, argv, code, cv)
 		Mach_clock_addr = (volatile struct chiptime *)
 			MACH_PHYS_TO_UNCACHED(KMIN_SYS_CLOCK);
 
-		/*
-		 * Probe the TURBOchannel to see what controllers are present.
-		 */
-		tc_find_all_options();
 
 		/*
 		 * Initialize interrupts.
 		 */
 		*(u_int *)ASIC_REG_IMSK(asic_base) = KMIN_IM0;
 		*(u_int *)ASIC_REG_INTR(asic_base) = 0;
+
 		/* clear any memory errors from probes */
-		*(unsigned *)MACH_PHYS_TO_UNCACHED(KMIN_REG_TIMEOUT) = 0;
+		Mach_reset_addr =
+		    (u_int*)MACH_PHYS_TO_UNCACHED(KMIN_REG_TIMEOUT);
+		(*Mach_reset_addr) = 0;
+
 		strcpy(cpu_model, "5000/1xx");
 		break;
 
+#endif /* ds5000_100 */
+
+#ifdef DS5000_25
 	case DS_MAXINE:	/* DS5000/xx maxine */
 		tc_max_slot = XINE_TC_MAX;
 		tc_min_slot = XINE_TC_MIN;
@@ -479,32 +499,35 @@ mach_init(argc, argv, code, cv)
 			MACH_PHYS_TO_UNCACHED(XINE_SYS_CLOCK);
 
 		/*
-		 * Probe the TURBOchannel to see what controllers are present.
-		 */
-		tc_find_all_options();
-
-		/*
 		 * Initialize interrupts.
 		 */
 		*(u_int *)ASIC_REG_IMSK(asic_base) = XINE_IM0;
 		*(u_int *)ASIC_REG_INTR(asic_base) = 0;
 		/* clear any memory errors from probes */
-		*(unsigned *)MACH_PHYS_TO_UNCACHED(XINE_REG_TIMEOUT) = 0;
+		Mach_reset_addr =
+		    (u_int*)MACH_PHYS_TO_UNCACHED(XINE_REG_TIMEOUT);
+		(*Mach_reset_addr) = 0;
 		strcpy(cpu_model, "5000/25");
 		break;
+#endif /*DS5000_25*/
 
 #ifdef DS5000_240
-	case DS_3MAXPLUS:	/* DS5000/240 3max+ UNTESTED!! */
+	case DS_3MAXPLUS:	/* DS5000/240 3max+ */
 		tc_max_slot = KN03_TC_MAX;
 		tc_min_slot = KN03_TC_MIN;
 		tc_slot_phys_base[0] = KN03_PHYS_TC_0_START;
 		tc_slot_phys_base[1] = KN03_PHYS_TC_1_START;
 		tc_slot_phys_base[2] = KN03_PHYS_TC_2_START;
 		asic_base = MACH_PHYS_TO_UNCACHED(KN03_SYS_ASIC);
-		tc_slot_hand_fill = kn03_slot_hand_fill;
 		pmax_hardware_intr = kn03_intr;
 		tc_enable_interrupt = kn03_enable_intr;
-		kn03_tc3_imask = KN03_INTR_PSWARN;
+		Mach_reset_addr =
+		    (u_int *)MACH_PHYS_TO_UNCACHED(KN03_SYS_ERRADR);
+		*Mach_reset_addr = 0;
+
+		/*
+		 * Reset interrupts, clear any errors from newconf probes
+		 */
 
 		Mach_splnet = Mach_spl0;
 		Mach_splbio = Mach_spl0;
@@ -516,19 +539,15 @@ mach_init(argc, argv, code, cv)
 			MACH_PHYS_TO_UNCACHED(KN03_SYS_CLOCK);
 
 		/*
-		 * Probe the TURBOchannel to see what controllers are present.
-		 */
-		tc_find_all_options();
-
-		/*
 		 * Initialize interrupts.
 		 */
 		kn03_tc3_imask = KN03_IM0 &
 			~(KN03_INTR_TC_0|KN03_INTR_TC_1|KN03_INTR_TC_2);
 		*(u_int *)ASIC_REG_IMSK(asic_base) = kn03_tc3_imask;
 		*(u_int *)ASIC_REG_INTR(asic_base) = 0;
+
 		/* clear any memory errors from probes */
-		*(unsigned *)MACH_PHYS_TO_UNCACHED(KN03_SYS_ERRADR) = 0;
+		*Mach_reset_addr = 0;
 		strcpy(cpu_model, "5000/240");
 		break;
 #endif /* DS5000_240 */
@@ -543,7 +562,7 @@ mach_init(argc, argv, code, cv)
 	 * Find out how much memory is available.
 	 * Be careful to save and restore the original contents for msgbuf.
 	 */
-	physmem = btoc(v - KERNBASE);
+	physmem = btoc((vm_offset_t)v - KERNBASE);
 	cp = (char *)MACH_PHYS_TO_UNCACHED(physmem << PGSHIFT);
 	while (cp < (char *)MACH_MAX_MEM_ADDR) {
 		if (badaddr(cp, 4))
@@ -653,7 +672,27 @@ mach_init(argc, argv, code, cv)
 	 * Initialize the virtual memory system.
 	 */
 	pmap_bootstrap((vm_offset_t)v);
+
 }
+
+/*
+ * Gross hack for identifying slots with potential
+ * console devices.
+ */
+
+int framebuffer_in[15];
+
+void
+framebuffer_in_slot(slot)
+	int slot;
+{
+	if (slot > 15) 
+	    panic("Framebuffer in slot %d: impossible\n", slot);
+	framebuffer_in[slot] = 1;
+}
+
+int kbd, crt;
+char *oscon;
 
 /*
  * Console initialization: called early on from main,
@@ -662,9 +701,6 @@ mach_init(argc, argv, code, cv)
  */
 consinit()
 {
-	register int kbd, crt;
-	register char *oscon;
-
 	/*
 	 * First get the "osconsole" environment variable.
 	 */
@@ -684,6 +720,19 @@ consinit()
 			}
 		}
 	}
+	/* we can't do anything until auto-configuration
+	 * has run, and that requires kmalloc(), which
+	 * hasn't been initialized yet.  Just keep using
+	 * whatever the PROM vector gave us.
+	 */
+}
+
+/*
+ * Do console initialization
+ */
+xconsinit()
+{
+
 	if (pmax_boardtype == DS_PMAX && kbd == 1)
 		cn_tab.cn_screen = 1;
 	/*
@@ -764,30 +813,9 @@ consinit()
 	    /*
 	     * Check for a suitable turbochannel frame buffer.
 	     */
-	    if (tc_slot_info[crt].driver_name) {
-#if NMFB > 0
-		if (strcmp(tc_slot_info[crt].driver_name, "mfb") == 0 &&
-		    mfbinit(tc_slot_info[crt].k1seg_address)) {
+	if (framebuffer_in[crt]) {
 			cn_tab.cn_disabled = 0;
 			return;
-		}
-#endif /* NMFB */
-#if NSFB > 0
-		if (strcmp(tc_slot_info[crt].driver_name, "sfb") == 0 &&
-		    sfbinit(tc_slot_info[crt].k1seg_address)) {
-			cn_tab.cn_disabled = 0;
-			return;
-		}
-#endif /* NSFB */
-#if NCFB > 0
-		if (strcmp(tc_slot_info[crt].driver_name, "cfb") == 0 &&
-		    cfbinit(tc_slot_info[crt].k1seg_address)) {
-			cn_tab.cn_disabled = 0;
-			return;
-		}
-#endif /* NCFB */
-		printf("crt: %s not supported as console device\n",
-			tc_slot_info[crt].driver_name);
 	    } else
 		printf("No crt console device in slot %d\n", crt);
 	}
@@ -926,15 +954,16 @@ cpu_startup()
 	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
-	/*
-	 * Set up CPU-specific registers, cache, etc.
-	 */
-	initcpu();
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
+
+	/*
+	 * Set up CPU-specific registers, cache, etc.
+	 */
+	initcpu();
 
 	/*
 	 * Configure the system.
@@ -1337,12 +1366,41 @@ initcpu()
 	register volatile struct chiptime *c;
 	int i;
 
+	/* Reset after bus errors during probe */
+	if (Mach_reset_addr) {
+		*Mach_reset_addr = 0;
+		MachEmptyWriteBuffer();
+	}
+
+	/* clear any pending interrupts */
+	switch (pmax_boardtype) {
+	case DS_3MAXPLUS:
+	case DS_3MIN:
+	case DS_MAXINE:
+		*(u_int *)ASIC_REG_INTR(asic_base) = 0;
+		break;
+	case DS_3MAX:
+		*(u_int *)MACH_PHYS_TO_UNCACHED(KN02_SYS_CHKSYN) = 0;
+		MachEmptyWriteBuffer();
+		break;
+	default:
+		printf("Unknown system type in initcpu()\n");
+		break;
+	}
+
+	/*
+	 * With newconf, this should be  done elswhere, but without it
+	 * we hang (?)
+	 */
+#if 1 /*XXX*/
 	/* disable clock interrupts (until startrtclock()) */
+	if (Mach_clock_addr) {
 	c = Mach_clock_addr;
 	c->regb = REGB_DATA_MODE | REGB_HOURS_FORMAT;
 	i = c->regc;
-	spl0();		/* safe to turn interrupts on now */
+	}
 	return (i);
+#endif
 }
 
 /*
@@ -1406,43 +1464,6 @@ out:
 	return val;	
 }
 
-/*
- * Fill in the pmax addresses by hand.
- */
-static struct pmax_address {
-	char	*pmax_name;
-	char	*pmax_addr;
-	int	pmax_pri;
-} pmax_addresses[] = {
-	{ "pm",	(char *)MACH_PHYS_TO_CACHED(KN01_PHYS_FBUF_START),	3 },
-	{ "dc",	(char *)MACH_PHYS_TO_UNCACHED(KN01_SYS_DZ),		2 },
-	{ "le",	(char *)MACH_PHYS_TO_UNCACHED(KN01_SYS_LANCE),		1 },
-	{ "sii",(char *)MACH_PHYS_TO_UNCACHED(KN01_SYS_SII),		0 },
-	{ (char *)0, },
-};
-
-void
-pmax_slot_hand_fill()
-{
-	register struct pmax_ctlr *cp;
-	register struct driver *drp;
-	register struct pmax_address *pmap;
-
-	/*
-	 * Find the device driver entry and fill in the address.
-	 */
-	for (cp = pmax_cinit; drp = cp->pmax_driver; cp++) {
-		for (pmap = pmax_addresses; pmap->pmax_name; pmap++) {
-			if (strcmp(drp->d_name, pmap->pmax_name))
-				continue;
-			if (cp->pmax_addr == (char *)QUES) {
-				cp->pmax_addr = pmap->pmax_addr;
-				cp->pmax_pri = pmap->pmax_pri;
-				continue;
-			}
-		}
-	}
-}
 
 #ifdef DS5000
 /* 
@@ -1596,100 +1617,6 @@ tc_identify_option(addr, slot, complain)
 	return (1);
 }
 
-/*
- * TURBOchannel autoconf procedure.  Finds in one sweep what is
- * hanging on the bus and fills in the tc_slot_info array.
- * This is only the first part of the autoconf scheme, at this
- * time we are basically only looking for a graphics board to
- * use as system console (all workstations).
- */
-
-void
-tc_find_all_options()
-{
-	register int i;
-	u_long addr;
-	int found;
-	register tc_option_t *sl;
-	struct drivers_map *map;
-	register struct pmax_ctlr *cp;
-	register struct driver *drp;
-
-	/*
-	 * Take a look at the bus
-	 */
-	bzero(tc_slot_info, sizeof(tc_slot_info));
-	for (i = tc_max_slot; i >= tc_min_slot;) {
-		addr = MACH_PHYS_TO_UNCACHED(tc_slot_phys_base[i]);
-		found = tc_probe_slot(addr, &tc_slot_info[i]);
-
-		if (found) {
-			/*
-			 * Found a slot, make a note of it 
-			 */
-			tc_slot_info[i].present = 1;
-			tc_slot_info[i].k1seg_address = addr;
-		}
-
-		i -= tc_slot_info[i].slot_size;
-	}
-
-	/*
-	 * Some slots (e.g. the system slot on 3max) might require
-	 * hand-filling.  If so, do it now. 
-	 */
-	if (tc_slot_hand_fill)
-		(*tc_slot_hand_fill) (tc_slot_info);
-
-	/*
-	 * Now for each alive slot see if we have a device driver that
-	 * handles it.  This is done in "priority order", meaning that
-	 * always present devices are at higher slot numbers on all
-	 * current TC machines, and option slots are at lowest numbers.
-	 */
-	for (i = TC_MAX_LOGICAL_SLOTS - 1; i >= 0; i--) {
-		sl = &tc_slot_info[i];
-		if (!sl->present)
-			continue;
-		found = FALSE;
-		for (map = tc_drivers_map; map->driver_name; map++) {
-			if (bcmp(sl->module_name, map->module_name, TC_ROM_LLEN))
-				continue;
-			sl->driver_name = map->driver_name;
-			found = TRUE;
-			break;
-		}
-		if (!found) {
-			printf("%s %s %s\n",
-				"Cannot associate a device driver to",
-				sl->module_name, ". Will (try to) ignore it.");
-			sl->present = 0;
-			continue;
-		}
-
-		/*
-		 * Find the device driver entry and fill in the address.
-		 */
-		for (cp = pmax_cinit; drp = cp->pmax_driver; cp++) {
-			if (strcmp(drp->d_name, map->driver_name))
-				continue;
-			if (cp->pmax_alive)
-				continue;
-			if (cp->pmax_addr == (char *)QUES) {
-				cp->pmax_addr = (char *)sl->k1seg_address;
-				cp->pmax_pri = i;
-				cp->pmax_alive = 1;
-				break;
-			}
-			if (cp->pmax_addr != (char *)sl->k1seg_address) {
-				cp->pmax_addr = (char *)QUES;
-				printf("%s: device not at configured address (expected at %x, found at %x)\n",
-					drp->d_name,
-					cp->pmax_addr, sl->k1seg_address);
-			}
-		}
-	}
-}
 
 /*
  * Probe a slot in the TURBOchannel. Return TRUE if a valid option
@@ -1726,14 +1653,32 @@ tc_probe_slot(addr, slot)
  * Enable/Disable interrupts for a TURBOchannel slot.
  */
 void
-kn02_enable_intr(slotno, on)
-	register int slotno;
-	int on;
+kn02_enable_intr(slotno, handler, unit, on)
+	register u_int slotno;
+	void (*handler)();
+	int unit, on;
 {
 	register volatile int *p_csr =
 		(volatile int *)MACH_PHYS_TO_UNCACHED(KN02_SYS_CSR);
 	int csr;
 	int s;
+
+#if 0
+	printf("3MAX enable_intr: imask %x, %sabling slot %d, unit %d\n",
+	       kn03_tc3_imask, (on? "en" : "dis"), slotno, unit);
+#endif
+
+	if (slotno > TC_MAX_LOGICAL_SLOTS)
+		panic("kn02_enable_intr: bogus slot %d\n", slotno);
+
+	if (on)  {
+		/*printf("kn02: slot %d handler 0x%x\n", slotno, handler);*/
+		tc_slot_info[slotno].intr = handler;
+		tc_slot_info[slotno].unit = unit;
+	} else {
+		tc_slot_info[slotno].intr = 0;
+		tc_slot_info[slotno].unit = 0;
+	}
 
 	slotno = 1 << (slotno + KN02_CSR_IOINTEN_SHIFT);
 	s = Mach_spl0();
@@ -1756,9 +1701,10 @@ kn02_enable_intr(slotno, on)
  *	slots 3-7 (see kmin_slot_hand_fill).
  */
 void
-kmin_enable_intr(slotno, on)
+kmin_enable_intr(slotno, handler, unit, on)
 	register unsigned int slotno;
-	int on;
+	void (*handler)();
+	int unit, on;
 {
 	register unsigned mask;
 
@@ -1805,9 +1751,10 @@ kmin_enable_intr(slotno, on)
  *	Note that all these interrupts come in via the IMR.
  */
 void
-xine_enable_intr(slotno, on)
+xine_enable_intr(slotno, handler, unit, on)
 	register unsigned int slotno;
-	int on;
+	void (*handler)();
+	int unit, on;
 {
 	register unsigned mask;
 
@@ -1851,8 +1798,18 @@ xine_enable_intr(slotno, on)
 }
 
 #ifdef DS5000_240
+void
+kn03_tc_reset()
+{
 /*
- * UNTESTED!!
+	 * Reset interrupts, clear any errors from newconf probes
+	 */
+	*(u_int *)ASIC_REG_INTR(asic_base) = 0;
+	*(unsigned *)MACH_PHYS_TO_UNCACHED(KN03_SYS_ERRADR) = 0;
+}
+
+
+/*
  *	Object:
  *		kn03_enable_intr		EXPORTED function
  *
@@ -1863,15 +1820,16 @@ xine_enable_intr(slotno, on)
  *	slots 3-7 (see kn03_slot_hand_fill).
  */
 void
-kn03_enable_intr(slotno, on)
+kn03_enable_intr(slotno, handler, unit, on)
 	register unsigned int slotno;
-	int on;
+	void (*handler)();
+	int unit, on;
 {
 	register unsigned mask;
 
-#ifdef	DIAGNOSTIC
-	printf("3MAX+ intr: mask %x, setting slot %d to %d\n",
-	       kn03_tc3_imask, slotno, on);
+#if 0
+	printf("3MAXPLUS: imask %x, %sabling slot %d, unit %d addr 0x%x\n",
+	       kn03_tc3_imask, (on? "en" : "dis"), slotno, unit, handler);
 #endif
 
 	switch (slotno) {
@@ -1901,44 +1859,24 @@ kn03_enable_intr(slotno, on)
 		mask = KN03_INTR_ASIC;
 		break;
 	default:
-#ifdef DEBUG
+#ifdef DIAGNOSTIC
 		printf("warning: enabling unknown intr %x\n", slotno);
 #endif
 		goto done;
 	}
-	if (on)
+	if (on) {
 		kn03_tc3_imask |= mask;
-	else
+		tc_slot_info[slotno].intr = handler;
+		tc_slot_info[slotno].unit = unit;
+
+	} else {
 		kn03_tc3_imask &= ~mask;
+		tc_slot_info[slotno].intr = 0;
+	}
 done:
 	*(u_int *)ASIC_REG_IMSK(asic_base) = kn03_tc3_imask;
 }
 #endif /* DS5000_240 */
-
-/*
- *	Object:
- *		kn02_slot_hand_fill		EXPORTED function
- *
- *	Fill in by hand the info for TC slots that are non-standard.
- *	This is basically just the system slot on a 3max, it does not
- *	look to me like it follows the TC rules although some of the
- *	required info is indeed there.
- *
- */
-void
-kn02_slot_hand_fill(slot)
-	tc_option_t *slot;
-{
-	slot[7].present = 1;
-	slot[7].slot_size = 1;
-	slot[7].rom_width = 1;
-#if unsafe
-	bcopy(0xbffc0410, slot[7].module_name, TC_ROM_LLEN+1);
-#endif
-	bcopy("KN02    ", slot[7].module_name, TC_ROM_LLEN+1);
-	bcopy("DEC xxxx", slot[7].module_id, TC_ROM_LLEN+1);
-	slot[7].k1seg_address = MACH_PHYS_TO_UNCACHED(KN02_SYS_DZ);
-}
 
 /*
  *	Object:
@@ -1992,7 +1930,7 @@ kmin_slot_hand_fill(slot)
 	 * Explicitly enable interrupts from on-motherboard `options'.
 	 */
 	for (i = KMIN_SCC0_SLOT; i >= KMIN_SCSI_SLOT; i--)
-		kmin_enable_intr(i, 1);
+		kmin_enable_intr(i, 0, slot[i].unit, 1);
 }
 
 /*
@@ -2068,60 +2006,9 @@ xine_slot_hand_fill(slot)
 	 * Explicitly enable interrupts from on-motherboard `options'.
 	 */
 	for (i = XINE_DTOP_SLOT ; i >= XINE_SCSI_SLOT; i--)
-		xine_enable_intr(i, 1);
+		xine_enable_intr(i, 0, slot[i].unit, 1);
 }
 
-#ifdef DS5000_240
-/*
- * UNTESTED!!
- *	Object:
- *		kn03_slot_hand_fill		EXPORTED function
- *
- *	Fill in by hand the info for TC slots that are non-standard.
- *	This is the system slot on a 3max+, which we think of as a
- *	set of non-regular size TC slots.
- *
- */
-void
-kn03_slot_hand_fill(slot)
-	tc_option_t *slot;
-{
-	register int i;
-
-	for (i = KN03_SCSI_SLOT; i < KN03_ASIC_SLOT+1; i++) {
-		slot[i].present = 1;
-		slot[i].slot_size = 1;
-		slot[i].rom_width = 1;
-		slot[i].unit = 0;
-		bcopy("DEC KN03", slot[i].module_id, TC_ROM_LLEN+1);
-	}
-
-	/* scsi */
-	bcopy("PMAZ-AA ", slot[KN03_SCSI_SLOT].module_name, TC_ROM_LLEN+1);
-	slot[KN03_SCSI_SLOT].k1seg_address =
-		MACH_PHYS_TO_UNCACHED(KN03_SYS_SCSI);
-
-	/* lance */
-	bcopy("PMAD-AA ", slot[KN03_LANCE_SLOT].module_name, TC_ROM_LLEN+1);
-	slot[KN03_LANCE_SLOT].k1seg_address = 0;
-
-	/* scc */
-	bcopy("Z8530   ", slot[KN03_SCC0_SLOT].module_name, TC_ROM_LLEN+1);
-	slot[KN03_SCC0_SLOT].k1seg_address =
-		MACH_PHYS_TO_UNCACHED(KN03_SYS_SCC_0);
-
-	slot[KN03_SCC1_SLOT].unit = 1;
-	bcopy("Z8530   ", slot[KN03_SCC1_SLOT].module_name, TC_ROM_LLEN+1);
-	slot[KN03_SCC1_SLOT].k1seg_address =
-		MACH_PHYS_TO_UNCACHED(KN03_SYS_SCC_1);
-
-	/* asic */
-	bcopy("ASIC    ", slot[KN03_ASIC_SLOT].module_name, TC_ROM_LLEN+1);
-	slot[KN03_ASIC_SLOT].k1seg_address =
-		MACH_PHYS_TO_UNCACHED(KN03_SYS_ASIC);
-	asic_init(0);
-}
-#endif /* DS5000_240 */
 
 /*
  * Initialize the I/O asic
