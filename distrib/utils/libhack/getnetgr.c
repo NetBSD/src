@@ -1,17 +1,20 @@
-/*	$NetBSD: getnetgr.c,v 1.1.1.1 1995/10/08 23:08:48 gwr Exp $	*/
+/*	$NetBSD: getnetgr.c,v 1.2 1995/10/13 18:10:26 gwr Exp $	*/
+
+/*
+ * Just stub these out, so it looks like
+ * we are not in any any netgroups.
+ */
 
 void
 endnetgrent()
 {
 }
 
-
 void
 setnetgrent(ng)
 	const char	*ng;
 {
 }
-
 
 int
 getnetgrent(host, user, domain)
@@ -21,7 +24,6 @@ getnetgrent(host, user, domain)
 {
 	return 0;
 }
-
 
 int
 innetgr(grp, host, user, domain)

@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.1.1.1 1995/10/08 23:08:48 gwr Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.2 1995/10/13 18:10:27 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -54,8 +54,8 @@ static struct passwd pw_ent;
 struct passwd *
 getpwent()
 {
-	register char *p;
 	char *fv[MAXFIELD];
+	char *p;
 	int   fc;
 
 	/* Open passwd file if not already. */
@@ -65,8 +65,8 @@ getpwent()
 	if (pw_fp == NULL)
 		return PWNULL;
 
-	/* Read the next line... */
 readnext:
+	/* Read the next line... */
 	if (fgets(pw_line, sizeof(pw_line), pw_fp) == NULL)
 		return PWNULL;
 
@@ -74,29 +74,11 @@ readnext:
 	p = pw_line;
 	fc = 0;
 	while (fc < MAXFIELD) {
-		/* end of line? */
-		if (*p == '\n') {
-			*p = '\0';
+		fv[fc] = strsep(&p, ":\n");
+		if (fv[fc] == NULL)
 			break;
-		}
-		if (*p == '\0')
-			break;
-		/* save start of field */
-		fv[fc++] = p;
-		/* find end of field */
-		while (*p) {
-			if (*p == '\n') {
-				*p = '\0';
-				goto eol;
-			}
-			if (*p == ':') {
-				*p++ = '\0';
-				break;
-			}
-			p++;
-		}
+		fc++;
 	}
- eol:
 
 	/* Need at least 0..5 */
 	if (fc < 6)
@@ -104,7 +86,7 @@ readnext:
 	while (fc < MAXFIELD)
 		fv[fc++] = "";
 
-	/* Build the pw entrt... */
+	/* Build the pw entry... */
 	pw_ent.pw_name   = fv[0];
 	pw_ent.pw_passwd = fv[1];
 	pw_ent.pw_uid = atoi(fv[2]);
@@ -136,8 +118,10 @@ setpwent()
 void
 endpwent()
 {
-	if (pw_fp)
+	if (pw_fp) {
 		fclose(pw_fp);
+		pw_fp = NULL;
+	}
 }
 
 struct passwd *
@@ -174,7 +158,7 @@ getpwuid(uid)
 main() {
 	struct passwd *pw;
 
-	printf("name, password, uid, gid, comment, dir, shell\n");
+	printf("#name, password, uid, gid, comment, dir, shell\n");
 
 	while ((pw = getpwent()) != NULL) {
 		printf("%s:%s:", pw->pw_name, pw->pw_passwd);
