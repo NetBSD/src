@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.15 1999/04/26 04:25:38 ad Exp $
+# 	$NetBSD: GENERIC,v 1.16 1999/06/05 20:38:24 eeh Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -65,7 +65,7 @@ options 	NFS_BOOT_BOOTPARAM
 ## intercept.  DDB_HISTORY_SIZE adds up/down arrow command history.
 # we enable DDB in GENERIC for now.
 options 	DDB			# kernel dynamic debugger
-#options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
+options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	DDB_ONPANIC		# see also sysctl(8): `ddb.onpanic'
 
 ## You may also use gdb, on another computer connected to this machine over
@@ -94,6 +94,7 @@ options 	DDB			# kernel dynamic debugger
 
 ## Make SCSI error messages more verbose when explaining their meanings.
 options 	SCSIVERBOSE
+options 	PCIVERBOSE
 
 ## `INSECURE' turns off the kernel security level (securelevel = 0 always).
 ## This allows writing to /dev/mem, loading kernel modules while multi-user,
@@ -181,8 +182,11 @@ cpu0	at mainbus0
 
 sbus0	at mainbus0				# Ultra 1
 #upa0	at mainbus0				# Ultra 1E, Ultra 2, Ex0000
-#pci0	at mainbus0				# Darwin
-#ebus*	at pci?					# ebus devices
+psycho*	at mainbus0				# Darwin, Ultra5
+pci*	at psycho?
+pci*	at simba?
+simba*	at pci? dev ? function ?		# `APB' support.
+ebus*	at pci?					# ebus devices
 
 #### Standard system devices -- all required for a given architecture
 
@@ -193,11 +197,12 @@ sbus0	at mainbus0				# Ultra 1
 # We also need:
 # bpp0 at sbus0					# parallel port
 # ecpp0 at pci0					# parallel port ?
+lpt*	at ebus?				# parallel port
 
 ## Mostek clock found on 4/300, sun4c, sun4m and sun4u systems.
 ## The Mostek clock NVRAM is the "eeprom" on sun4/300 systems.
 clock0	at sbus0 slot ? offset ?
-#clock0	at pci0
+clock0	at ebus?
 
 ## Timer chip found on 4/300, sun4c, sun4m and sun4u systems.
 timer0	at mainbus0				# sun4c
@@ -215,16 +220,21 @@ kbd0	at zs1 channel 0	# keyboard
 ms0	at zs1 channel 1	# mouse
 
 ## PCI machines apparently have serial ports
-## called `se' and `su'
-
-## Part of a PC87332VLJ?
-#se0	at ebus?		# 
-#kbd0	at su1 channel 0	# keyboard
-#ms0	at su1 channel 1	# mouse
+##	Siemens SAB82532 controller: ttya and ttyb (sab)
+##	Part of NS PC87332VLJ Super I/O controller: kbd/mouse (com)
 
 ## These are two SAB82532 controllers
-#su0	at ebus?		# ttya
-#su1	at ebus?		# ttyb
+#sab0	at ebus?			# ttya/ttyb
+#sabtty0	at sab0 channel 0	# ttya
+#sabtty1	at sab0 channel 1	# ttyb
+
+## Part of a PC87332VLJ?
+#ucom0	at ebus? addr 0x3083f8		# `com' driver
+#ucom1	at ebus? addr 0x3062f8		# 
+#ucom0	at ebus?			# `com' driver
+#ucom1	at ebus?			# 
+#kbd0	at ucom0 channel 0		# keyboard
+#ms0	at ucom1 channel 1		# mouse
 
 #### Disk controllers and disks
 
@@ -269,6 +279,15 @@ cd*	at scsibus? target ? lun ?		# SCSI CD-ROMs
 ch*	at scsibus? target ? lun ?		# SCSI changer devices
 ss*	at scsibus? target ? lun ?		# SCSI scanners
 uk*	at scsibus? target ? lun ?		# unknown SCSI
+
+# PCI IDE.
+pciide* at pci ? dev ? function ? flags 0x0000
+wd*     at pciide? channel ? drive ? flags 0x0000
+atapibus* at pciide? channel ?
+
+cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
+sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 ## Floppy controller and drive found on SPARCstations.
 

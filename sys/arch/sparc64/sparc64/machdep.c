@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44 1999/06/05 05:35:41 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.45 1999/06/05 20:38:25 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -163,19 +163,19 @@ void	stackdump __P((void));
 /*
  * Bypass access 
  */
-int bus_type_asi[LAST_BUS_SPACE+1] = {
+int bus_type_asi[] = {
 	ASI_PHYS_NON_CACHED,			/* UPA */
 	ASI_PHYS_NON_CACHED,			/* SBUS */
 	ASI_PHYS_NON_CACHED_LITTLE,		/* PCI configuration space */
 	ASI_PHYS_NON_CACHED_LITTLE,		/* PCI memory space */
-	ASI_PHYS_CACHED_LITTLE,			/* PCI I/O space */
+	ASI_PHYS_NON_CACHED_LITTLE,			/* PCI I/O space */
 	0
 };
 #else
 /*
  * MMU access - we want to use the MMU for all this..
  */
-int bus_type_asi[LAST_BUS_SPACE+1] = {
+int bus_type_asi[] = {
 	ASI_PRIMARY,
 	ASI_PRIMARY,
 	ASI_PRIMARY,
