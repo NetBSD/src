@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.490 2004/10/08 03:04:27 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.491 2004/10/08 03:05:52 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7756,3 +7756,10 @@ dist/ipf/tools/ipnat_y.y			1.6
 	Actually add a token to generate the value IPNY_TCPUDP as expected by 
 	the grammar. PR#25972
 	[grant, ticket #891]
+
+sys/kern/uipc_mbuf.c				1.89
+
+	Some code likes to mix MT_HEADER and MT_DATA. Revert this assertion 
+	until the usage of MT_HEADER vs. MT_DATA is better defined and 
+	implemented.
+	[is, ticket #895]
