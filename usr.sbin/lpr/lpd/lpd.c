@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.46 2003/08/07 11:25:27 agc Exp $	*/
+/*	$NetBSD: lpd.c,v 1.47 2003/09/01 00:21:08 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.46 2003/08/07 11:25:27 agc Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.47 2003/09/01 00:21:08 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -569,15 +569,22 @@ ckqueue(char *cap)
 
 	if (cgetstr(cap, "sd", &spooldir) == -1)
 		spooldir = _PATH_DEFSPOOL;
-	if ((dirp = opendir(spooldir)) == NULL)
+	if ((dirp = opendir(spooldir)) == NULL) {
+		if (spooldir != _PATH_DEFSPOOL)
+			free(spooldir);
 		return (-1);
+	}
 	while ((d = readdir(dirp)) != NULL) {
 		if (d->d_name[0] != 'c' || d->d_name[1] != 'f')
 			continue;	/* daemon control files only */
 		closedir(dirp);
+		if (spooldir != _PATH_DEFSPOOL)
+			free(spooldir);
 		return (1);		/* found something */
 	}
 	closedir(dirp);
+	if (spooldir != _PATH_DEFSPOOL)
+		free(spooldir);
 	return (0);
 }
 
