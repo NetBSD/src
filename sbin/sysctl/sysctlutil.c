@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlutil.c,v 1.1 2003/12/04 19:49:39 atatat Exp $ */
+/*	$NetBSD: sysctlutil.c,v 1.2 2003/12/04 20:07:59 atatat Exp $ */
 
 #include <sys/param.h>
 #define __USE_NEW_SYSCTL
@@ -36,6 +36,8 @@ static int compar(const void *, const void *);
 int learn_tree(int *, u_int, struct sysctlnode *);
 static void free_children(struct sysctlnode *);
 static void relearnhead(void);
+int sysctlnametomib(const char *, int *, u_int *,
+		    char *, size_t *, struct sysctlnode **);
 
 /*
  * for ordering nodes -- a query may or may not be given them in
