@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2003/04/26 11:05:12 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10 2003/07/04 02:21:50 thorpej Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -109,11 +109,6 @@
 #if defined(DDB)
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
-#endif
-
-#include "com.h"
-#if NCOM > 0
-#include <dev/ic/comreg.h>	/* For COM_FREQ */
 #endif
 
 /*
@@ -493,14 +488,6 @@ cpu_startup(void)
 	if (board_info_set("processor-frequency", &board_data.processor_speed, 
 		sizeof(&board_data.processor_speed), PROP_CONST, 0))
 		panic("setting processor-frequency");
-#if NCOM > 0
-	{
-		unsigned int comfreq = COM_FREQ * 6;
-		if (board_info_set("com-opb-frequency", &comfreq,
-			sizeof(&comfreq), 0, 0))
-			panic("setting com-opb-frequency");
-	}
-#endif
 }
 
 
