@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_pager.c,v 1.29 1997/02/23 08:56:57 mrg Exp $	*/
+/*	$NetBSD: vnode_pager.c,v 1.30 1997/02/26 02:26:19 tls Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -62,6 +62,7 @@
 
 struct pagerlst		vnode_pager_list;	/* list of managed vnodes */
 simple_lock_data_t	vnode_pager_list_lock;
+lock_data_t		vnode_pager_sync_lock;
 
 #ifdef DEBUG
 int	vpagerdebug = 0x00;
@@ -107,6 +108,8 @@ vnode_pager_init()
 		printf("vnode_pager_init()\n");
 #endif
 	TAILQ_INIT(&vnode_pager_list);
+	simple_lock_init(&vnode_pager_list_lock);
+	lock_init(&vnode_pager_sync_lock, TRUE);
 }
 
 /*
@@ -459,6 +462,8 @@ vnode_pager_sync(mp)
 	vm_object_t object, next_object;
 	struct object_q object_list;
 
+	lock_write(&vnode_pager_sync_lock);
+
 	/*
 	 * We do this in two passes:
 	 * 1) We run through the list of pagers, making a list of the objects
@@ -501,6 +506,8 @@ vnode_pager_sync(mp)
 		vm_object_unlock(object);
 		vm_object_deallocate(object);
 	}
+
+	lock_write_done(&vnode_pager_sync_lock);
 }
 
 /*
