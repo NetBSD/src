@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.292 2001/12/10 17:27:05 martin Exp $
+# $NetBSD: mi,v 1.293 2001/12/17 13:10:54 wiz Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -647,6 +647,7 @@
 ./usr/sbin/ipresend		base-netutil-bin
 ./usr/sbin/ipsend		base-netutil-bin
 ./usr/sbin/iptest		base-netutil-bin
+./usr/sbin/irdaattach		base-sysutil-bin
 ./usr/sbin/isdnd		base-isdn-bin
 ./usr/sbin/isdnmonitor		base-isdn-bin
 ./usr/sbin/isdntel		base-isdn-bin
