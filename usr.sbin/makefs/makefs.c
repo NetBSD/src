@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.17 2003/03/30 00:05:07 lukem Exp $	*/
+/*	$NetBSD: makefs.c,v 1.18 2003/04/02 10:39:48 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.17 2003/03/30 00:05:07 lukem Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.18 2003/04/02 10:39:48 fvdl Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -98,17 +98,13 @@ main(int argc, char *argv[])
 	fsoptions.fsize= -1;
 	fsoptions.cpg= -1;
 	fsoptions.density= -1;
-	fsoptions.ntracks= -1;
-	fsoptions.nsectors= -1;
-	fsoptions.rpm= -1;
 	fsoptions.minfree= -1;
 	fsoptions.optimization= -1;
 	fsoptions.maxcontig= -1;
-	fsoptions.rotdelay= -1;
 	fsoptions.maxbpg= -1;
-	fsoptions.nrpos= -1;
 	fsoptions.avgfilesize= -1;
 	fsoptions.avgfpdir= -1;
+	fsoptions.version = 1;
 
 	specfile = NULL;
 	if (gettimeofday(&start, NULL) == -1)

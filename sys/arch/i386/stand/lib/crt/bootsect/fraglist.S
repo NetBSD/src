@@ -1,4 +1,4 @@
-/*	$NetBSD: fraglist.S,v 1.2 1999/01/22 22:43:44 thorpej Exp $	*/
+/*	$NetBSD: fraglist.S,v 1.3 2003/04/02 10:39:33 fvdl Exp $	*/
 	
 /*
  * Copyright (c) 1996
@@ -42,10 +42,10 @@
 
 	.text
 
-	.globl _C_LABEL(fraglist)
-_C_LABEL(fraglist):
+	.globl _C_LABEL(fraglist64)
+_C_LABEL(fraglist64):
 	.long FRAGLISTMAGIC
 	.long PRIM_LOADSZ  /* blocks already in memory */
 	.long 0
 	.long MAXFLENTRIES
-	. = . + 2 * MAXFLENTRIES * 4
+	. = . + MAXFLENTRIES * (8 + 4)

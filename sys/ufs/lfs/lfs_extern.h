@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.46 2003/03/20 14:11:46 yamt Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.47 2003/04/02 10:39:40 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ struct timeval;
 struct inode;
 struct uio;
 struct mbuf;
-struct dinode;
+struct ufs1_dinode;
 struct buf;
 struct vnode;
 struct dlfs;
@@ -118,7 +118,8 @@ struct ucred;
 struct block_info;
 
 extern int lfs_allclean_wakeup;
-extern struct pool lfs_inode_pool;	/* memory pool for inodes */
+extern struct pool lfs_inode_pool;		/* memory pool for inodes */
+extern struct pool lfs_dinode_pool;		/* memory pool for dinodes */
 extern struct pool lfs_inoext_pool;	/* memory pool for inode extension */
 
 __BEGIN_DECLS
@@ -146,13 +147,13 @@ u_int32_t lfs_sb_cksum(struct dlfs *);
 int lfs_bwrite_log(struct buf *, char *, int);
 void lfs_dumplog(void);
 void lfs_dump_super(struct lfs *);
-void lfs_dump_dinode(struct dinode *);
+void lfs_dump_dinode(struct ufs1_dinode *);
 void lfs_check_bpp(struct lfs *, struct segment *, char *, int);
 void lfs_check_segsum(struct lfs *, struct segment *, char *, int);
 #endif /* DEBUG */
 
 /* lfs_inode.c */
-struct dinode *lfs_ifind(struct lfs *, ino_t, struct buf *);
+struct ufs1_dinode *lfs_ifind(struct lfs *, ino_t, struct buf *);
 
 /* lfs_segment.c */
 void lfs_imtime(struct lfs *);
@@ -191,7 +192,7 @@ int lfs_seglock(struct lfs *, unsigned long);
 void lfs_segunlock(struct lfs *);
 
 /* lfs_syscalls.c */
-int lfs_fastvget(struct mount *, ino_t, daddr_t, struct vnode **, struct dinode *);
+int lfs_fastvget(struct mount *, ino_t, daddr_t, struct vnode **, struct ufs1_dinode *);
 struct buf *lfs_fakebuf(struct lfs *, struct vnode *, int, size_t, caddr_t);
 int lfs_do_segclean(struct lfs *, unsigned long);
 void lfs_fakebuf_iodone(struct buf *);

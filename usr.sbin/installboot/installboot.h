@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.16 2003/01/15 06:33:58 mhitch Exp $	*/
+/*	$NetBSD: installboot.h,v 1.17 2003/04/02 10:39:48 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -74,13 +74,13 @@ typedef struct {
 	const char	*stage1;	/* name of stage1 bootstrap */
 	int		 s1fd;		/*  open fd to stage1 */
 	struct stat	 s1stat;	/*  fstat(2) of s1fd */
-	uint32_t	 s1start;	/*  start block of stage1 */
+	uint64_t	 s1start;	/*  start block of stage1 */
 	const char	*stage2;	/* name of stage2 bootstrap */
-	uint32_t	 s2start;	/*  start block of stage2 */
+	uint64_t	 s2start;	/*  start block of stage2 */
 } ib_params;
 
 typedef struct {
-	uint32_t	block;
+	uint64_t	block;
 	uint32_t	blocksize;
 } ib_block;
 
@@ -99,6 +99,7 @@ struct ib_fs {
 		/* run time fs specific parameters */
 	uint32_t	 blocksize;
 	uint32_t	 needswap;
+	off_t		sblockloc;	/* location of superblock */
 };
 
 typedef enum {

@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.16 2003/03/28 08:09:53 perseant Exp $	 */
+/* $NetBSD: inode.c,v 1.17 2003/04/02 10:39:27 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1997, 1998
@@ -74,7 +74,7 @@ int lfs_maxino(void);
  * Get a dinode of a given inum.
  * XXX combine this function with vget.
  */
-struct dinode *
+struct ufs1_dinode *
 ginode(ino_t ino)
 {
 	struct uvnode *vp;
@@ -88,21 +88,21 @@ ginode(ino_t ino)
 	if (din_table[ino] == 0x0) {
 		LFS_IENTRY(ifp, fs, ino, bp);
 		din_table[ino] = ifp->if_daddr;
-		seg_table[dtosn(fs, ifp->if_daddr)].su_nbytes += DINODE_SIZE;
+		seg_table[dtosn(fs, ifp->if_daddr)].su_nbytes += DINODE1_SIZE;
 		brelse(bp);
 	}
-	return &(VTOI(vp)->i_din.ffs_din);
+	return (VTOI(vp)->i_din.ffs1_din);
 }
 
 /*
  * Check validity of held blocks in an inode, recursing through all blocks.
  */
 int
-ckinode(struct dinode *dp, struct inodesc *idesc)
+ckinode(struct ufs1_dinode *dp, struct inodesc *idesc)
 {
 	ufs_daddr_t *ap, lbn;
 	long ret, n, ndb, offset;
-	struct dinode dino;
+	struct ufs1_dinode dino;
 	u_int64_t remsize, sizepb;
 	mode_t mode;
 	char pathbuf[MAXPATHLEN + 1];
@@ -266,7 +266,7 @@ iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 				    pathbuf);
 				if (reply("ADJUST LENGTH") == 1) {
 					vp = vget(fs, idesc->id_number);
-					VTOI(vp)->i_ffs_size -= isize;
+					VTOI(vp)->i_ffs1_size -= isize;
 					isize = 0;
 					printf(
 					    "YOU MUST RERUN FSCK AFTERWARDS\n");
@@ -317,7 +317,7 @@ chkrange(daddr_t blk, int cnt)
  * Enter inodes into the cache.
  */
 void
-cacheino(struct dinode * dp, ino_t inumber)
+cacheino(struct ufs1_dinode * dp, ino_t inumber)
 {
 	struct inoinfo *inp;
 	struct inoinfo **inpp;
@@ -404,7 +404,7 @@ clri(struct inodesc * idesc, char *type, int flag)
 	vp = vget(fs, idesc->id_number);
 	if (flag == 1) {
 		pwarn("%s %s", type,
-		      (VTOI(vp)->i_ffs_mode & IFMT) == IFDIR ? "DIR" : "FILE");
+		      (VTOI(vp)->i_ffs1_mode & IFMT) == IFDIR ? "DIR" : "FILE");
 		pinode(idesc->id_number);
 	}
 	if (flag == 2 || preen || reply("CLEAR") == 1) {
@@ -456,7 +456,7 @@ findino(struct inodesc * idesc)
 void
 pinode(ino_t ino)
 {
-	register struct dinode *dp;
+	register struct ufs1_dinode *dp;
 	register char *p;
 	struct passwd *pw;
 	time_t t;
@@ -517,7 +517,7 @@ ino_t
 allocino(ino_t request, int type)
 {
 	ino_t ino;
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 	time_t t;
 	struct uvnode *vp;
 	struct ubuf *bp;
@@ -543,7 +543,7 @@ allocino(ino_t request, int type)
 		return (0);
 	}
 	vp = vget(fs, ino);
-	dp = &(VTOI(vp)->i_din.ffs_din);
+	dp = (VTOI(vp)->i_din.ffs1_din);
 	bp = getblk(vp, 0, fs->lfs_fsize);
 	VOP_BWRITE(bp);
 	dp->di_mode = type;
@@ -572,7 +572,7 @@ freeino(ino_t ino)
 	idesc.id_number = ino;
 	vp = vget(fs, ino);
 	(void) ckinode(VTOD(vp), &idesc);
-	clearinode(&VTOI(vp)->i_din.ffs_din);
+	clearinode(VTOI(vp)->i_din.ffs1_din);
 	inodirty(VTOI(vp));
 	statemap[ino] = USTATE;
 

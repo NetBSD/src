@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.10 2003/02/23 23:17:42 simonb Exp $ */
+/* $NetBSD: lfs.c,v 1.11 2003/04/02 10:39:33 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1993
@@ -148,7 +148,7 @@ struct fs {
 struct file {
 	off_t		f_seekp;	/* seek pointer */
 	struct fs	*f_fs;		/* pointer to super-block */
-	struct dinode	f_di;		/* copy of on-disk inode */
+	struct ufs1_dinode	f_di;		/* copy of on-disk inode */
 	unsigned int	f_nindir[NIADDR];
 					/* number of blocks mapped by
 					   indirect block at level i */
@@ -213,7 +213,7 @@ read_inode(inumber, f)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
 	struct fs *fs = fp->f_fs;
-	struct dinode *dip;
+	struct ufs1_dinode *dip;
 	daddr_t inode_sector;
 	size_t rsize;
 	char *buf;
@@ -243,7 +243,7 @@ read_inode(inumber, f)
 
 	rc = EINVAL;
 	cnt = INOPB(fs);
-        for (dip = (struct dinode *)buf + (cnt - 1); cnt--; --dip) {
+        for (dip = (struct ufs1_dinode *)buf + (cnt - 1); cnt--; --dip) {
                 if (dip->di_inumber == inumber) {
                         rc = 0;
 			break;
@@ -641,7 +641,7 @@ lfs_open(path, f)
 			bcopy(cp, &namebuf[link_len], len + 1);
 
 			if (link_len < fs->fs_maxsymlinklen) {
-				bcopy(fp->f_di.di_shortlink, namebuf,
+				bcopy(fp->f_di.di_db, namebuf,
 				      (unsigned) link_len);
 			} else {
 				/*

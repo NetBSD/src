@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.35 2003/03/27 13:56:46 lukem Exp $	*/
+/*	$NetBSD: dump.h,v 1.36 2003/04/02 10:39:24 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -37,9 +37,12 @@
 
 #include <machine/bswap.h>
 
-#define MAXINOPB	(MAXBSIZE / sizeof(struct dinode))
-/* XXX ondisk32 */
-#define MAXNINDIR	(MAXBSIZE / sizeof(int32_t))
+union dinode {
+	struct ufs1_dinode dp1;
+	struct ufs2_dinode dp2;
+};
+#define DIP(dp, field) \
+	(is_ufs2 ? (dp)->dp2.di_##field : (dp)->dp1.di_##field)
 
 /*
  * Filestore-independent UFS data, so code can be more easily shared
@@ -66,9 +69,9 @@ struct ufsi {
 #define ufs_blkoff(u,loc)   /* calculates (loc % u->ufs_bsize) */ \
 	((loc) & (u)->ufs_qbmask)
 #define ufs_dblksize(u,d,b) \
-	((((b) >= NDADDR || (d)->di_size >= ((b)+1) << (u)->ufs_bshift \
+	((((b) >= NDADDR || DIP((d), size) >= ((b)+1) << (u)->ufs_bshift \
 		? (u)->ufs_bsize \
-		: (ufs_fragroundup((u), ufs_blkoff(u, (d)->di_size))))))
+		: (ufs_fragroundup((u), ufs_blkoff(u, DIP((d), size)))))))
 struct ufsi *ufsib;
 
 /*
@@ -105,7 +108,7 @@ int	tapefd;		/* tape file descriptor */
 int	pipeout;	/* true => output to standard output */
 ino_t	curino;		/* current inumber; used globally */
 int	newtape;	/* new tape flag */
-long	tapesize;	/* estimated tape size, blocks */
+u_int64_t	tapesize;	/* estimated tape size, blocks */
 long	tsize;		/* tape size in 0.1" units */
 long	asize;		/* number of 0.1" units written on current tape */
 int	etapes;		/* estimated number of tapes */
@@ -117,6 +120,7 @@ extern int	notify;		/* notify operator flag */
 extern int	timestamp;	/* timestamp messages */
 extern int	blockswritten;	/* number of blocks written on current tape */
 extern int	tapeno;		/* current tape number */
+extern int	is_ufs2;
 
 time_t	tstart_writing;	/* when started writing the first tape block */
 int	xferrate;	/* averaged transfer rate of all volumes */
@@ -158,6 +162,7 @@ static __inline u_int64_t iswap64(u_int64_t x)
 int	fs_read_sblock(char *);
 struct ufsi *fs_parametrize(void);
 ino_t	fs_maxino(void);
+void	fs_mapinodes(ino_t, u_int64_t *, int *);
 
 /* operator interface functions */
 void	broadcast(char *);
@@ -172,16 +177,16 @@ void	timeest(void);
 time_t	unctime(char *);
 
 /* mapping routines */
-struct	dinode;
-long	blockest(struct dinode *);
-void	mapfileino(ino_t, long *, int *);
-int	mapfiles(ino_t, long *, char *, char * const *);
-int	mapdirs(ino_t, long *);
+union	dinode;
+int64_t	blockest(union dinode *);
+void	mapfileino(ino_t, u_int64_t *, int *);
+int	mapfiles(ino_t, u_int64_t *, char *, char * const *);
+int	mapdirs(ino_t, u_int64_t *);
 
 /* file dumping routines */
-/* XXX ondisk32 */
-void	blksout(int32_t *, int, ino_t);
-void	dumpino(struct dinode *, ino_t);
+void	blksout32(int32_t *, int, ino_t);
+void	blksout64(int64_t *, int, ino_t);
+void	dumpino(union dinode *, ino_t);
 void	dumpmap(char *, int, ino_t);
 void	writeheader(ino_t);
 
@@ -204,7 +209,7 @@ void	dumpabort(int);
 void	getfstab(void);
 
 char	*rawname(char *);
-struct	dinode *getino(ino_t);
+union	dinode *getino(ino_t);
 
 void	*xcalloc(size_t, size_t);
 void	*xmalloc(size_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.41 2002/05/03 00:27:45 eeh Exp $	*/
+/*	$NetBSD: stat.h,v 1.42 2003/04/02 10:39:34 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -135,18 +135,30 @@ struct stat {
 	blksize_t st_blksize;		/* optimal blocksize for I/O */
 	u_int32_t st_flags;		/* user defined flags for file */
 	u_int32_t st_gen;		/* file generation number */
-	int64_t	  st_qspare[2];
+	u_int32_t st_spare0;
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+	struct timespec st_birthtimespec;
+#else
+	time_t	  st_birthtime;
+	__STATPAD(__pad4)
+	long	  st_birthtimensec;
+#endif
+#if !defined(_LP64)
+	int	__pad5;
+#endif
 };
 
 #undef __STATPAD
 
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
-#define	st_atime	st_atimespec.tv_sec
-#define	st_atimensec	st_atimespec.tv_nsec
-#define	st_mtime	st_mtimespec.tv_sec
-#define	st_mtimensec	st_mtimespec.tv_nsec
-#define	st_ctime	st_ctimespec.tv_sec
-#define	st_ctimensec	st_ctimespec.tv_nsec
+#define	st_atime		st_atimespec.tv_sec
+#define	st_atimensec		st_atimespec.tv_nsec
+#define	st_mtime		st_mtimespec.tv_sec
+#define	st_mtimensec		st_mtimespec.tv_nsec
+#define	st_ctime		st_ctimespec.tv_sec
+#define	st_ctimensec		st_ctimespec.tv_nsec
+#define st_birthtime		st_birthtimespec.tv_sec
+#define st_birthtimensec	st_birthtimespec.tv_nsec
 #endif
 
 #define	S_ISUID	0004000			/* set user id on execution */

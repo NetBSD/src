@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.61 2003/02/02 02:35:58 christos Exp $	*/
+/*	$NetBSD: fstat.c,v 1.62 2003/04/02 10:39:46 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.61 2003/02/02 02:35:58 christos Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.62 2003/04/02 10:39:46 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -543,16 +543,37 @@ ufs_filestat(vp, fsp)
 	struct filestat *fsp;
 {
 	struct inode inode;
+	union dinode {
+		struct ufs1_dinode dp1;
+		struct ufs2_dinode dp2;
+	} dip;
 
 	if (!KVM_READ(VTOI(vp), &inode, sizeof (inode))) {
 		dprintf("can't read inode at %p for pid %d", VTOI(vp), Pid);
 		return 0;
 	}
+
+	if (!KVM_READ(inode.i_din.ffs1_din, &dip, sizeof(struct ufs1_dinode))) {
+		dprintf("can't read dinode at %p for pid %d",
+		    inode.i_din.ffs1_din, Pid);
+		return 0;
+	}
+	if (inode.i_size == dip.dp1.di_size)
+		fsp->rdev = dip.dp1.di_rdev;
+	else {
+		if (!KVM_READ(inode.i_din.ffs1_din, &dip,
+		    sizeof(struct ufs2_dinode))) {
+			dprintf("can't read dinode at %p for pid %d",
+			    inode.i_din.ffs1_din, Pid);
+			return 0;
+		}
+		fsp->rdev = dip.dp2.di_rdev;
+	}
+
 	fsp->fsid = inode.i_dev & 0xffff;
 	fsp->fileid = (long)inode.i_number;
-	fsp->mode = (mode_t)inode.i_ffs_mode;
-	fsp->size = inode.i_ffs_size;
-	fsp->rdev = inode.i_ffs_rdev;
+	fsp->mode = (mode_t)inode.i_mode;
+	fsp->size = inode.i_size;
 
 	return 1;
 }

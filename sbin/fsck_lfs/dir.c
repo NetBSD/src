@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.8 2003/03/28 08:09:52 perseant Exp $	 */
+/* $NetBSD: dir.c,v 1.9 2003/04/02 10:39:27 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -69,7 +69,7 @@ struct odirtemplate odirhead = {
 	0, DIRBLKSIZ - 12, 2, ".."
 };
 
-static int expanddir(struct uvnode *, struct dinode *, char *);
+static int expanddir(struct uvnode *, struct ufs1_dinode *, char *);
 static void freedir(ino_t, ino_t);
 static struct direct *fsck_readdir(struct uvnode *, struct inodesc *);
 static int lftempname(char *, ino_t);
@@ -304,7 +304,7 @@ fileerror(ino_t cwd, ino_t ino, char *errmesg)
 	else {
 		if (ftypeok(VTOD(vp)))
 			pfatal("%s=%s\n",
-			    (ip->i_ffs_mode & IFMT) == IFDIR ?
+			    (ip->i_ffs1_mode & IFMT) == IFDIR ?
 			    "DIR" : "FILE", pathbuf);
 		else
 			pfatal("NAME=%s\n", pathbuf);
@@ -315,7 +315,7 @@ void
 adjust(struct inodesc *idesc, short lcnt)
 {
 	struct uvnode *vp;
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 
 	vp = vget(fs, idesc->id_number);
 	dp = VTOD(vp);
@@ -383,7 +383,7 @@ chgino(struct inodesc *idesc)
 int
 linkup(ino_t orphan, ino_t parentdir)
 {
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 	int lostdir;
 	ino_t oldlfdir;
 	struct inodesc idesc;
@@ -473,7 +473,7 @@ linkup(ino_t orphan, ino_t parentdir)
 		    parentdir != (ino_t) - 1)
 			(void) makeentry(orphan, lfdir, "..");
 		vp = vget(fs, lfdir);
-		VTOI(vp)->i_ffs_nlink++;
+		VTOI(vp)->i_ffs1_nlink++;
 		inodirty(VTOI(vp));
 		lncntp[lfdir]++;
 		pwarn("DIR I=%u CONNECTED. ", orphan);
@@ -510,7 +510,7 @@ changeino(ino_t dir, char *name, ino_t newnum)
 int
 makeentry(ino_t parent, ino_t ino, char *name)
 {
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 	struct inodesc idesc;
 	char pathbuf[MAXPATHLEN + 1];
 	struct uvnode *vp;
@@ -545,7 +545,7 @@ makeentry(ino_t parent, ino_t ino, char *name)
  * Attempt to expand the size of a directory
  */
 static int
-expanddir(struct uvnode *vp, struct dinode *dp, char *name)
+expanddir(struct uvnode *vp, struct ufs1_dinode *dp, char *name)
 {
 	daddr_t lastbn, newblk;
 	struct ubuf *bp;
@@ -604,7 +604,7 @@ allocdir(ino_t parent, ino_t request, int mode)
 {
 	ino_t ino;
 	char *cp;
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 	struct ubuf *bp;
 	struct dirtemplate *dirp;
 	struct uvnode *vp;
@@ -661,7 +661,7 @@ freedir(ino_t ino, ino_t parent)
 
 	if (ino != parent) {
 		vp = vget(fs, parent);
-		VTOI(vp)->i_ffs_nlink--;
+		VTOI(vp)->i_ffs1_nlink--;
 		inodirty(VTOI(vp));
 	}
 	freeino(ino);
