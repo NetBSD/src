@@ -1,11 +1,11 @@
-/*	$NetBSD: pen.c,v 1.5.2.2 1998/08/29 03:37:19 mellon Exp $	*/
+/*	$NetBSD: pen.c,v 1.5.2.3 1998/11/06 20:41:40 cgd Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pen.c,v 1.25 1997/10/08 07:48:12 charnier Exp";
 #else
-__RCSID("$NetBSD: pen.c,v 1.5.2.2 1998/08/29 03:37:19 mellon Exp $");
+__RCSID("$NetBSD: pen.c,v 1.5.2.3 1998/11/06 20:41:40 cgd Exp $");
 #endif
 #endif
 
@@ -39,6 +39,28 @@ __RCSID("$NetBSD: pen.c,v 1.5.2.2 1998/08/29 03:37:19 mellon Exp $");
 static char Current[FILENAME_MAX];
 static char Previous[FILENAME_MAX];
 
+/* Backup Current and Previous into temp. strings that are later
+ * restored & freed by restore_dirs
+ * This is to make nested calls to makeplaypen/leave_playpen work
+ */
+void
+save_dirs(char **c, char **p)
+{
+    *c=strdup(Current);
+    *p=strdup(Previous);
+}
+
+/* Restore Current and Previous from temp strings that were created
+ * by safe_dirs.
+ * This is to make nested calls to makeplaypen/leave_playpen work
+ */
+void
+restore_dirs(char *c, char *p)
+{
+    strcpy(Current, c);  free(c);
+    strcpy(Previous, p); free(p);
+}
+
 char *
 where_playpen(void)
 {
@@ -47,7 +69,7 @@ where_playpen(void)
 
 /* Find a good place to play. */
 static char *
-find_play_pen(char *pen, size_t sz)
+find_play_pen(char *pen, size_t pensize, size_t sz)
 {
     char *cp;
     struct stat sb;
@@ -55,9 +77,9 @@ find_play_pen(char *pen, size_t sz)
     if (pen[0] && stat(pen, &sb) != FAIL && (min_free(pen) >= sz))
 	return pen;
     else if ((cp = getenv("PKG_TMPDIR")) != NULL && stat(cp, &sb) != FAIL && (min_free(cp) >= sz))
-	sprintf(pen, "%s/instmp.XXXXXX", cp);
+	(void) snprintf(pen, pensize, "%s/instmp.XXXXXX", cp);
     else if ((cp = getenv("TMPDIR")) != NULL && stat(cp, &sb) != FAIL && (min_free(cp) >= sz))
-	sprintf(pen, "%s/instmp.XXXXXX", cp);
+	(void) snprintf(pen, pensize, "%s/instmp.XXXXXX", cp);
     else if (stat("/var/tmp", &sb) != FAIL && min_free("/var/tmp") >= sz)
 	strcpy(pen, "/var/tmp/instmp.XXXXXX");
     else if (stat("/tmp", &sb) != FAIL && min_free("/tmp") >= sz)
@@ -80,9 +102,9 @@ find_play_pen(char *pen, size_t sz)
  * pathname of previous working directory.
  */
 char *
-make_playpen(char *pen, size_t sz)
+make_playpen(char *pen, size_t pensize, size_t sz)
 {
-    if (!find_play_pen(pen, sz))
+    if (!find_play_pen(pen, pensize, sz))
 	return NULL;
 
     if (!mktemp(pen)) {
@@ -107,8 +129,8 @@ make_playpen(char *pen, size_t sz)
     if (Current[0])
 	strcpy(Previous, Current);
     else if (!getcwd(Previous, FILENAME_MAX)) {
-	upchuck("getcwd");
-	return NULL;
+	cleanup(0);
+	err(1, "fatal error during execution: getcwd");
     }
     if (chdir(pen) == FAIL) {
 	cleanup(0);
@@ -124,8 +146,8 @@ leave_playpen(char *save)
 {
     void (*oldsig)(int);
 
-    /* Don't interrupt while we're cleaning up */
-    oldsig = signal(SIGINT, SIG_IGN);
+    /* Make us interruptable while we're cleaning up - just in case... */
+    oldsig = signal(SIGINT, SIG_DFL);
     if (Previous[0] && chdir(Previous) == FAIL) {
 	cleanup(0);
 	errx(2, "can't chdir back to '%s'", Previous);
@@ -134,6 +156,7 @@ leave_playpen(char *save)
             fprintf(stderr,"PANIC: About to rm -rf / (not doing so, aborting)\n");
             abort();
         }
+	warnx("[Info]: about to perform \"rm -rf '%s'\"\n", Current);
 	if (vsystem("rm -rf %s", Current))
 	    warnx("couldn't remove temporary dir '%s'", Current);
 	strcpy(Current, Previous);
