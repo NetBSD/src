@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
+/*	$NetBSD: lm75.c,v 1.2 2004/08/03 13:40:20 scw Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -49,6 +49,7 @@ struct lmtemp_softc {
 	struct device sc_dev;
 	i2c_tag_t sc_tag;
 	int sc_address;
+	int sc_is_ds75;
 
 	struct envsys_tre_data sc_sensor[1];
 	struct envsys_basic_info sc_info[1];
@@ -73,6 +74,8 @@ static const struct envsys_range lmtemp_ranges[] = {
 };
 
 static int lmtemp_config_write(struct lmtemp_softc *, uint8_t);
+static uint32_t lmtemp_decode_lm75(const uint8_t *);
+static uint32_t lmtemp_decode_ds75(const uint8_t *);
 
 static int
 lmtemp_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -94,9 +97,11 @@ lmtemp_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_address = ia->ia_addr;
+	sc->sc_is_ds75 = sc->sc_dev.dv_cfdata->cf_flags & 1;
 
 	aprint_naive(": Temperature Sensor\n");
-	aprint_normal(": LM75 Temperature Sensor\n");
+	aprint_normal(": %s Temperature Sensor\n",
+	    (sc->sc_is_ds75) ? "DS75" : "LM75");
 
 	/* Set the configuration of the LM75 to defaults. */
 	iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
@@ -153,8 +158,7 @@ lmtemp_config_write(struct lmtemp_softc *sc, uint8_t val)
 static int
 lmtemp_temp_read(struct lmtemp_softc *sc, uint8_t which, uint32_t *valp)
 {
-	int error, neg, temp;
-	uint32_t val;
+	int error;
 	uint8_t cmdbuf[1];
 	uint8_t buf[LM75_TEMP_LEN];
 
@@ -165,24 +169,10 @@ lmtemp_temp_read(struct lmtemp_softc *sc, uint8_t which, uint32_t *valp)
 	if (error)
 		return (error);
 
-	if (buf[0] & 1) {
-		/* Below 0C */
-		temp = ~buf[1] + 1;
-		neg = 1;
-	} else {
-		temp = buf[1];
-		neg = 0;
-	}
-
-	/* Temp is given in 1/2 deg. C, we convert to uK. */
-	val = ((neg ? -temp : temp) / 2) * 1000000 + 273150000;
-	if (temp & 1) {
-		if (neg)
-			val -= 500000;
-		else
-			val += 500000;
-	}
-	*valp = val;
+	if (sc->sc_is_ds75)
+		*valp = lmtemp_decode_ds75(buf);
+	else
+		*valp = lmtemp_decode_lm75(buf);
 
 	return (0);
 }
@@ -240,3 +230,49 @@ lmtemp_streinfo(struct sysmon_envsys *sme, struct envsys_basic_info *binfo)
 
 	return (0);
 }
+
+static uint32_t
+lmtemp_decode_lm75(const uint8_t *buf)
+{
+	int neg, temp;
+	uint32_t val;
+
+	if (buf[0] & 1) {
+		/* Below 0C */
+		temp = ~buf[1] + 1;
+		neg = 1;
+	} else {
+		temp = buf[1];
+		neg = 0;
+	}
+
+	/* Temp is given in 1/2 deg. C, we convert to uK. */
+	val = ((neg ? -temp : temp) / 2) * 1000000 + 273150000;
+	if (temp & 1) {
+		if (neg)
+			val -= 500000;
+		else
+			val += 500000;
+	}
+
+	return (val);
+}
+
+static uint32_t
+lmtemp_decode_ds75(const uint8_t *buf)
+{
+	int temp;
+
+	/*
+	 * Sign-extend the MSB byte, and add in the fractions of a
+	 * degree contained in the LSB (prescision 1/16th DegC).
+	 */
+	temp = (int8_t)buf[0];
+	temp = (temp << 4) | ((buf[1] >> 4) & 0xf);
+
+	/*
+	 * Conversion to uK is simple.
+	 */
+	return (temp * 62500 + 273150000);
+}
+
