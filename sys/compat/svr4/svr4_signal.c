@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.21 1996/02/09 23:12:18 christos Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.22 1996/03/16 23:20:30 christos Exp $	 */
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
@@ -56,13 +56,13 @@
 #define	svr4_sigismember(s, n)	((s)->bits[svr4_sigword(n)] & svr4_sigmask(n))
 #define	svr4_sigaddset(s, n)	((s)->bits[svr4_sigword(n)] |= svr4_sigmask(n))
 
-static __inline int svr4_sigfillset __P((svr4_sigset_t *));
+static __inline void svr4_sigfillset __P((svr4_sigset_t *));
 void svr4_to_bsd_sigaction __P((const struct svr4_sigaction *,
 				struct sigaction *));
 void bsd_to_svr4_sigaction __P((const struct sigaction *,
 				struct svr4_sigaction *));
 
-static __inline int
+static __inline void
 svr4_sigfillset(s)
 	svr4_sigset_t *s;
 {
