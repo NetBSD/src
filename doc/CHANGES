@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.360 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.361 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -8,8 +8,6 @@ containing just the word `help' to `majordomo@NetBSD.org'.]
 
 
 Changes from NetBSD 2.0 to NetBSD 2.1:
-	kernel: Add IPv4 PIM support, submitted by Pavlin Radoslavov.
-		[manu 20040905]
 	which(1): Replaced by a C program that only checks the path.
 		[christos 20040401]
 	heimdal: import version 0.6.1.  [lha 20040402]
@@ -113,3 +111,5 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 		Damien Bergamini.  [lukem 20040823]
 	crtstuff: Switch to GCC-supplied crtbegin.o / crtend.o on GCC 3.3
 		platforms.  [thorpej 20040827]
+	kernel: Add IPv4 PIM support, submitted by Pavlin Radoslavov.
+		[manu 20040905]
