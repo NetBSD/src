@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.1 1997/09/22 23:37:20 scottr Exp $
+#	$NetBSD: dot.profile,v 1.2 1997/09/23 06:12:21 scottr Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -50,7 +50,7 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	# get the terminal type
 	_forceloop=""
 	while [ "X${_forceloop}" = X"" ]; do
-		# eval `tset -s -m ":?$TERM"`
+		eval `tset -s -m ":?$TERM"`
 		if [ "X${TERM}" != X"unknown" ]; then
 			_forceloop="done"
 		fi
