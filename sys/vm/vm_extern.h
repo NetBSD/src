@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_extern.h,v 1.27 1997/08/27 02:35:38 mrg Exp $	*/
+/*	$NetBSD: vm_extern.h,v 1.28 1997/12/31 07:47:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -132,6 +132,7 @@ void		 vm_set_page_size __P((void));
 void		 vmmeter __P((void));
 struct vmspace	*vmspace_alloc __P((vm_offset_t, vm_offset_t, int));
 struct vmspace	*vmspace_fork __P((struct vmspace *));
+void		 vmspace_exec __P((struct proc *));
 void		 vmspace_free __P((struct vmspace *));
 void		 vmtotal __P((struct vmtotal *));
 void		 vnode_pager_setsize __P((struct vnode *, u_quad_t));
