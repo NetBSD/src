@@ -1,3 +1,5 @@
+/*	$NetBSD: zic.c,v 1.2 1995/03/10 18:12:44 jtc Exp $	*/
+
 #ifndef lint
 #ifndef NOID
 static char	elsieid[] = "@(#)zic.c	7.50";

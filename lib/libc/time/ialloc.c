@@ -1,3 +1,5 @@
+/*	$NetBSD: ialloc.c,v 1.2 1995/03/10 18:12:38 jtc Exp $	*/
+
 #ifndef lint
 #ifndef NOID
 static char	elsieid[] = "@(#)ialloc.c	8.28";

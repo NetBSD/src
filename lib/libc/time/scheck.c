@@ -1,3 +1,5 @@
+/*	$NetBSD: scheck.c,v 1.2 1995/03/10 18:12:42 jtc Exp $	*/
+
 #ifndef lint
 #ifndef NOID
 static char	elsieid[] = "@(#)scheck.c	8.12";
