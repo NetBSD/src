@@ -1,7 +1,31 @@
-/* $NetBSD: sbic.c,v 1.26 2001/07/22 13:34:03 wiz Exp $ */
+/* $NetBSD: sbic.c,v 1.27 2001/08/14 22:58:17 rearnsha Exp $ */
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
+ * All rights reserved.
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the company nor the name of the author may be used to
+ *    endorse or promote products derived from this software without specific
+ *    prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ *
  * Copyright (c) 1994 Christian E. Hopps
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -47,7 +71,7 @@
 #if 0
 /*
  * The UPROTECTED_CSR code is bogus.  It can read the csr (SCSI Status 
- * register at times when an interrupt may be pending.  Doing this will
+ * register) at times when an interrupt may be pending.  Doing this will
  * clear the interrupt, so we won't see it at times when we really need
  * to.
  */
@@ -70,17 +94,12 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 #include <uvm/uvm_extern.h>
+
 #include <machine/io.h>
 #include <machine/irqhandler.h>
 #include <arm32/podulebus/podulebus.h>
 #include <arm32/podulebus/sbicreg.h>
 #include <arm32/podulebus/sbicvar.h>
-#include <arm32/podulebus/ascreg.h>
-
-/* These are for bounce buffers */
-
-/* Since I can't find this in any other header files */
-#define SCSI_PHASE(reg)	(reg & 0x07)
 
 /*
  * SCSI delays
@@ -92,14 +111,10 @@
 
 #define SBIC_WAIT(regs, until, timeo) sbicwait(regs, until, timeo, __LINE__)
 
-extern u_int kvtop();
-
 static int  sbicicmd		(struct sbic_softc *, int, int,
 				 struct sbic_acb *);
 static int  sbicgo		(struct sbic_softc *, struct scsipi_xfer *);
-static int  sbicdmaok		(struct sbic_softc *, struct scsipi_xfer *);
 static int  sbicwait		(sbic_regmap_p, char, int , int);
-static int  sbiccheckdmap	(void *, u_long, u_long);
 static int  sbicselectbus	(struct sbic_softc *, sbic_regmap_p, u_char,
 				 u_char, u_char);
 static int  sbicxfstart		(sbic_regmap_p, int, u_char, int);
@@ -116,8 +131,7 @@ static void sbicerror		(struct sbic_softc *, sbic_regmap_p, u_char);
 static void sbicreset		(struct sbic_softc *);
 static void sbic_scsidone	(struct sbic_acb *, int);
 static void sbic_sched		(struct sbic_softc *);
-static void sbic_save_ptrs	(struct sbic_softc *, sbic_regmap_p, int, int);
-static void sbic_load_ptrs	(struct sbic_softc *, sbic_regmap_p, int, int);
+static void sbic_save_ptrs	(struct sbic_softc *, sbic_regmap_p);
 
 /*
  * Synch xfer parameters, and timing conversions
@@ -142,9 +156,6 @@ int sbic_parallel_operations = 1;
 #ifdef DEBUG
 sbic_regmap_p debug_sbic_regs;
 int	sbicdma_ops = 0;	/* total DMA operations */
-int	sbicdma_bounces = 0;	/* number operations using bounce buffer */
-int	sbicdma_hits = 0;	/* number of DMA chains that were contiguous */
-int	sbicdma_misses = 0;	/* number of DMA chains that were not contiguous */
 int     sbicdma_saves = 0;
 #define QPRINTF(a)	if (sbic_debug > 1) printf a
 #define DBGPRINTF(x,p)	if (p) printf x
@@ -166,9 +177,7 @@ void sbic_dump_acb	(struct sbic_acb *);
 	int s = splbio(); \
 	csr_trace[csr_traceptr].whr = (w); csr_trace[csr_traceptr].csr = (c); \
 	csr_trace[csr_traceptr].asr = (a); csr_trace[csr_traceptr].xtn = (x); \
-/*	dma_cachectl(&csr_trace[csr_traceptr], sizeof(csr_trace[0]));*/ \
 	csr_traceptr = (csr_traceptr + 1) & (CSR_TRACE_SIZE - 1); \
-/*	dma_cachectl(&csr_traceptr, sizeof(csr_traceptr));*/ \
 	splx(s); \
 } while (0)
 int csr_traceptr;
@@ -191,10 +200,7 @@ struct {
 	sbic_trace[sbic_traceptr].line = __LINE__; \
 	sbic_trace[sbic_traceptr].sr = s; \
 	sbic_trace[sbic_traceptr].csr = csr_traceptr; \
-/*	dma_cachectl(&sbic_trace[sbic_traceptr], sizeof(sbic_trace[0]));*/ \
 	sbic_traceptr = (sbic_traceptr + 1) & (SBIC_TRACE_SIZE - 1); \
-/*	dma_cachectl(&sbic_traceptr, sizeof(sbic_traceptr));*/ \
-/*	if (dev) dma_cachectl(dev, sizeof(*dev));*/ \
 	splx(s); \
 } while (0)
 int sbic_traceptr;
@@ -237,20 +243,22 @@ sbic_minphys(struct buf *bp)
  * Save DMA pointers.  Take into account partial transfer. Shut down DMA.
  */
 static void
-sbic_save_ptrs(struct sbic_softc *dev, sbic_regmap_p regs, int target, int lun)
+sbic_save_ptrs(struct sbic_softc *dev, sbic_regmap_p regs)
 {
 	int count, asr, s;
 	struct sbic_acb* acb;
 
 	SBIC_TRACE(dev);
-	if (!dev->sc_cur)
-		return;
 	if (!(dev->sc_flags & SBICF_INDMA))
 		return; /* DMA not active */
 
 	s = splbio();
 
 	acb = dev->sc_nexus;
+	if (acb == NULL) {
+		splx(s);
+		return;
+	}
 	count = -1;
 	do {
 		GET_SBIC_asr(regs, asr);
@@ -264,102 +272,33 @@ sbic_save_ptrs(struct sbic_softc *dev, sbic_regmap_p regs, int target, int lun)
 
 	/* Save important state */
 	/* must be done before dmastop */
-	acb->sc_dmacmd = dev->sc_dmacmd;
 	SBIC_TC_GET(regs, count);
 
 	/* Shut down DMA ====CAREFUL==== */
-	dev->sc_dmastop(dev);
+	dev->sc_dmastop(dev->sc_dmah, dev->sc_dmat, acb);
 	dev->sc_flags &= ~SBICF_INDMA;
+#ifdef DIAGNOSTIC
+	{
+		int count2;
+
+		SBIC_TC_GET(regs, count2);
+		if (count2 != count)
+			panic("sbic_save_ptrs: DMA was still active(%d,%d)",
+			    count, count2);
+	}
+#endif
+	/* Note where we got to before stopping.  We need this to resume
+	   later. */
+	acb->offset += acb->sc_tcnt - count;
 	SBIC_TC_PUT(regs, 0);
 
-	DBGPRINTF(("%dcount0", target), !count && sbic_debug);
-	DBGPRINTF(("SBIC saving target %d data pointers from "
-	    "(%p,%x)%xASR:%02x",
-	    target, dev->sc_cur->dc_addr, dev->sc_cur->dc_count,
-	    acb->sc_dmacmd, asr), data_pointer_debug == -1);
+	DBGPRINTF(("SBIC saving tgt %d data pointers: Offset now %d ASR:%02x",
+	    dev->target, acb->offset, asr), data_pointer_debug >= 1);
 
-	/* Fixup partial xfers */
-	acb->data += (dev->sc_tcnt - count);
-	acb->datalen -= (dev->sc_tcnt - count);
-	acb->sc_pa.dc_addr += (dev->sc_tcnt - count);
-	acb->sc_pa.dc_count -= ((dev->sc_tcnt - count)>>1);
+	acb->sc_tcnt = 0;
 
-	acb->sc_tcnt = dev->sc_tcnt = count;
-
-	DBGPRINTF((" at (%p,%x):%x\n",
-	    dev->sc_cur->dc_addr, dev->sc_cur->dc_count,count),
-	    data_pointer_debug);
 	DBG(sbicdma_saves++);
-
 	splx(s);
-	SBIC_TRACE(dev);
-}
-
-
-/*
- * DOES NOT RESTART DMA!!!
- */
-static void
-sbic_load_ptrs(struct sbic_softc *dev, sbic_regmap_p regs, int target, int lun)
-{
-	int s, count;
-	char* vaddr;
-	struct sbic_acb *acb;
-
-	SBIC_TRACE(dev);
-	acb = dev->sc_nexus;
-	if (!acb->datalen) {
-		/* No data to xfer */
-		SBIC_TRACE(dev);
-		return;
-	}
-
-	s = splbio();
-
-	dev->sc_last = dev->sc_cur = &acb->sc_pa;
-	dev->sc_tcnt = acb->sc_tcnt;
-	dev->sc_dmacmd = acb->sc_dmacmd;
-
-	DBG(sbicdma_ops++);
-
-	if (!dev->sc_tcnt) {
-		/* sc_tcnt == 0 implies end of segment */
-
-		/* do kvm to pa mappings */
-#if 0 /* mark */
-		paddr = acb->sc_pa.dc_addr =
-			(char *) kvtop(acb->data);
-#endif
-		vaddr = acb->data;
-		count = acb->datalen;
-#if 0 /* mark */
-		for (count = (NBPG - ((int)vaddr & PGOFSET));
-		    count < acb->datalen
-		    && (char*)kvtop(vaddr + count + 4) == paddr + count + 4;
-		    count += NBPG);
-#endif
-		/* If it's all contiguous... */
-		if (count > acb->datalen) {
-			count = acb->datalen;
-
-			DBG(sbicdma_hits++);
-		} else {
-			DBG(sbicdma_misses++);
-		}
-		acb->sc_tcnt = count;
-		acb->sc_pa.dc_count = count >> 1;
-
-		DBGPRINTF(("DMA recalc:kv(%p,%x)pa(%p,%lx)\n",
-		    acb->data, acb->datalen,
-		    acb->sc_pa.dc_addr, acb->sc_tcnt),
-		    data_pointer_debug);
-	}
-	splx(s);
-
-	DBGPRINTF(("SBIC restoring target %d data pointers at (%p,%x)%x\n",
-	    target, dev->sc_cur->dc_addr, dev->sc_cur->dc_count,
-	    dev->sc_dmacmd), data_pointer_debug);
-
 	SBIC_TRACE(dev);
 }
 
@@ -420,6 +359,9 @@ sbic_scsi_request(struct scsipi_channel *chan,
 		acb->data = xs->data;
 		acb->datalen = xs->datalen;
 
+		QPRINTF(("sbic_scsi_request: Cmd %02x (len %d), Data %p(%d)\n",
+		    (unsigned) acb->cmd.opcode, acb->clen, xs->data,
+		    xs->datalen));
 		if (flags & XS_CTL_POLL) {
 			s = splbio();
 			/*
@@ -498,7 +440,6 @@ sbic_sched(struct sbic_softc *dev)
 			periph = acb->xs->xs_periph;
 			ti = &dev->sc_tinfo[periph->periph_target];
 			ti->lubusy |= (1 << periph->periph_lun);
-			acb->sc_pa.dc_addr = acb->pa_addr;	/* XXXX check */
 			break;
 		}
 	}
@@ -516,12 +457,19 @@ sbic_sched(struct sbic_softc *dev)
 
 	DBGPRINTF(("sbic_sched(%d,%d)\n", periph->periph_target,
 	    periph->periph_lun), data_pointer_debug > 1);
-
+	DBG(if (data_pointer_debug > 1) sbic_dump_acb(acb));
 	dev->sc_stat[0] = -1;
 	dev->target = periph->periph_target;
 	dev->lun = periph->periph_lun;
+
+	/* Decide if we can use DMA for this transfer.  */
+	if ((flags & XS_CTL_POLL) == 0
+	    && !sbic_no_dma
+	    && dev->sc_dmaok(dev->sc_dmah, dev->sc_dmat, acb))
+		acb->flags |= ACB_DMA;
+
 	if ((flags & XS_CTL_POLL) ||
-	    (!sbic_parallel_operations && (sbicdmaok(dev, xs) == 0)))
+	    (!sbic_parallel_operations && (acb->flags & ACB_DMA) == 0))
 		stat = sbicicmd(dev, periph->periph_target,
 		    periph->periph_lun, acb);
 	else if (sbicgo(dev, xs) == 0 && xs->error != XS_SELTIMEOUT) {
@@ -558,9 +506,9 @@ sbic_scsidone(struct sbic_acb *acb, int stat)
 	}
 #endif
 
-	DBGPRINTF(("scsidone: (%d,%d)->(%d,%d)%02x\n",
+	DBGPRINTF(("scsidone: (%d,%d)->(%d,%d)%02x acbfl=%x\n",
 	    periph->periph_target, periph->periph_lun,
-	    dev->target,  dev->lun,  stat),
+	    dev->target,  dev->lun,  stat, acb->flags),
 	    data_pointer_debug > 1);
 	DBG(if (xs->xs_periph->periph_target == dev->sc_channel.chan_id)
 	    panic("target == hostid"));
@@ -622,50 +570,6 @@ sbic_scsidone(struct sbic_acb *acb, int stat)
 		sbic_sched(dev);
 	SBIC_TRACE(dev);
 }
-
-static int
-sbicdmaok(struct sbic_softc *dev, struct scsipi_xfer *xs)
-{
-	if (sbic_no_dma || !xs->datalen || (xs->datalen & 0x1) ||
-	    ((u_int)xs->data & 0x3))
-		return 0;
-	/*
-	 * controller supports dma to any addresses?
-	 */
-	else if ((dev->sc_flags & SBICF_BADDMA) == 0)
-		return 1;
-	/*
-	 * this address is ok for dma?
-	 */
-	else if (sbiccheckdmap(xs->data, xs->datalen, dev->sc_dmamask) == 0)
-		return 1;
-	/*
-	 * we have a bounce buffer?
-	 */
-	else if (dev->sc_tinfo[xs->xs_periph->periph_target].bounce)
-		return 1;
-	/*
-	 * try to get one
-	 */
-	else
-		panic("sbic: cannot do DMA\n");
-#if 0
-	else if (dev->sc_tinfo[xs->xs_periph->periph_target].bounce
-		 = (char *)alloc_z2mem(MAXPHYS)) {
-		if (isztwomem(dev->sc_tinfo[xs->xs_periph->periph_target].bounce))
-			printf("alloc ZII target %d bounce pa 0x%x\n",
-			       xs->xs_periph->periph_target,
-			       kvtop(dev->sc_tinfo[xs->xs_periph->periph_target].bounce));
-		else if (dev->sc_tinfo[xs->xs_periph->periph_target].bounce)
-			printf("alloc CHIP target %d bounce pa 0x%x\n",
-			       xs->xs_periph->periph_target,
-			       PREP_DMA_MEM(dev->sc_tinfo[xs->xs_periph->periph_target].bounce));
-		return 1;
-	}
-#endif
-	return 0;
-}
-
 
 static int
 sbicwait(sbic_regmap_p regs, char until, int timeo, int line)
@@ -772,7 +676,7 @@ sbicabort(struct sbic_softc *dev, sbic_regmap_p regs, char *where)
  * Initialize driver-private structures
  */
 
-void
+int
 sbicinit(struct sbic_softc *dev)
 {
 	sbic_regmap_p regs;
@@ -835,6 +739,7 @@ sbicinit(struct sbic_softc *dev)
 	SBIC_DEBUG(printf("sbicinit: %d\n", __LINE__));
 
 	sbicreset(dev);
+	return 0;
 }
 
 static void
@@ -898,7 +803,7 @@ sbicreset(struct sbic_softc *dev)
 	 * Set up various chip parameters
 	 */
 	SET_SBIC_control(regs, SBIC_CTL_EDI | SBIC_CTL_IDI /* | SBIC_CTL_HSP */
-	    | SBIC_MACHINE_DMA_MODE);
+	    | dev->sc_dmamode);
 	/*
 	 * don't allow (re)selection (SBIC_RID_ES)
 	 * until we can handle target mode!!
@@ -1334,10 +1239,7 @@ sbicicmd(struct sbic_softc *dev, int target, int lun, struct sbic_acb *acb)
 	SBIC_TRACE(dev);
 	regs = &dev->sc_sbicp;
 
-	/* Make sure pointers are OK */
-	dev->sc_last = dev->sc_cur = &acb->sc_pa;
-	dev->sc_tcnt = acb->sc_tcnt = 0;
-	acb->sc_pa.dc_count = 0; /* No DMA */
+	acb->sc_tcnt = 0;
 
 	DBG(routine = 3);
 	DBG(debug_sbic_regs = regs); /* store this to allow debug calls */
@@ -1592,10 +1494,12 @@ sbicxfdone(struct sbic_softc *dev, sbic_regmap_p regs, int target)
 static int
 sbicgo(struct sbic_softc *dev, struct scsipi_xfer *xs)
 {
-	int i, dmaflags, count, usedma;
+	int i, usedma;
+/*	int dmaflags, count; */
 /*	int wait;*/
 /*	u_char cmd;*/
-	u_char *addr, asr = 0, csr = 0;
+	u_char asr = 0, csr = 0;
+/*	u_char *addr; */
 	sbic_regmap_p regs;
 	struct sbic_acb *acb;
 
@@ -1605,7 +1509,7 @@ sbicgo(struct sbic_softc *dev, struct scsipi_xfer *xs)
 	acb = dev->sc_nexus;
 	regs = &dev->sc_sbicp;
 
-	usedma = sbicdmaok(dev, xs);
+	usedma = acb->flags & ACB_DMA;
 
 	DBG(routine = 1);
 	DBG(debug_sbic_regs = regs); /* store this to allow debug calls */
@@ -1617,7 +1521,7 @@ sbicgo(struct sbic_softc *dev, struct scsipi_xfer *xs)
 	 */
 	if (usedma)
 		SET_SBIC_control(regs,
-		    SBIC_CTL_EDI | SBIC_CTL_IDI | SBIC_MACHINE_DMA_MODE);
+		    SBIC_CTL_EDI | SBIC_CTL_IDI | dev->sc_dmamode);
 	else
 		SET_SBIC_control(regs, SBIC_CTL_EDI | SBIC_CTL_IDI);
 
@@ -1629,136 +1533,39 @@ sbicgo(struct sbic_softc *dev, struct scsipi_xfer *xs)
 	    dev->sc_scsiaddr)) {
 /*		printf("sbicgo: Trying to select busy bus!\n"); */
 		SBIC_TRACE(dev);
-		return 0; /* Not done: needs to be rescheduled */
+		/* Not done: may need to be rescheduled */
+		return 0;
 	}
 	dev->sc_stat[0] = 0xff;
 
 	/*
-	 * Calculate DMA chains now
-	 */
-
-	dmaflags = 0;
-	if (acb->flags & ACB_DATAIN)
-		dmaflags |= DMAGO_READ;
-
-
-	/*
-	 * Deal w/bounce buffers.
-	 */
-
-	addr = acb->data;
-	count = acb->datalen;
-#if 0 /* mark */
-	if (count && (char *)kvtop(addr) != acb->sc_pa.dc_addr)	{ /* XXXX check */
-		printf("sbic: DMA buffer mapping changed %x->%x\n",
-		    acb->sc_pa.dc_addr, kvtop(addr));
-#ifdef DDB
-		Debugger();
-#endif
-	}
-#endif
-
-	DBG(++sbicdma_ops);		/* count total DMA operations */
-
-	if (usedma)
-		panic("sbic: Cannot use DMA\n");
-#if 0
-	if (count && usedma && dev->sc_flags & SBICF_BADDMA &&
-	    sbiccheckdmap(addr, count, dev->sc_dmamask)) {
-		/*
-		 * need to bounce the dma.
-		 */
-		if (dmaflags & DMAGO_READ) {
-			acb->flags |= ACB_BBUF;
-			acb->sc_dmausrbuf = addr;
-			acb->sc_dmausrlen = count;
-			acb->sc_usrbufpa = (u_char *)kvtop(addr);
-			if (!dev->sc_tinfo[dev->target].bounce) {
-				printf("sbicgo: HELP! no bounce allocated for %d\n",
-				       dev->target);
-				printf("xfer: (%p->%p,%lx)\n", acb->sc_dmausrbuf,
-				       acb->sc_usrbufpa, acb->sc_dmausrlen);
-				dev->sc_tinfo[xs->xs_periph->periph_target].bounce
-					= (char *)alloc_z2mem(MAXPHYS);
-				if (isztwomem(dev->sc_tinfo[xs->xs_periph->periph_target].bounce))
-					printf("alloc ZII target %d bounce pa 0x%x\n",
-					       xs->xs_periph->periph_target,
-					       kvtop(dev->sc_tinfo[xs->xs_periph->periph_target].bounce));
-				else if (dev->sc_tinfo[xs->xs_periph->periph_target].bounce)
-					printf("alloc CHIP target %d bounce pa 0x%x\n",
-					       xs->xs_periph->periph_target,
-					       PREP_DMA_MEM(dev->sc_tinfo[xs->xs_periph->periph_target].bounce));
-
-				printf("Allocating %d bounce at %x\n",
-				       dev->target,
-				       kvtop(dev->sc_tinfo[dev->target].bounce));
-			}
-		} else {	/* write: copy to dma buffer */
-			DBGPRINTF(("sbicgo: copying %x bytes to target %d bounce %x\n",
-			    count, dev->target,
-			    kvtop(dev->sc_tinfo[dev->target].bounce)),
-			    data_pointer_debug);
-
-			memcpy(dev->sc_tinfo[dev->target].bounce, addr, count);
-		}
-		addr = dev->sc_tinfo[dev->target].bounce;/* and use dma buffer */
-		acb->data = addr;
-
-		DBG(++sbicdma_bounces);		/* count number of bounced */
-	}
-#endif
-	/*
 	 * Allocate the DMA chain
 	 */
 
-	/* Set start KVM addresses */
-#if 0
-	acb->data = addr;
-	acb->datalen = count;
-#endif
-
 	/* Mark end of segment */
-	acb->sc_tcnt = dev->sc_tcnt = 0;
-	acb->sc_pa.dc_count = 0;
+	acb->sc_tcnt = 0;
 
-	sbic_load_ptrs(dev, regs, dev->target, dev->lun);
 	SBIC_TRACE(dev);
-	/* Enable interrupts but don't do any DMA */
+	/* Enable interrupts */
 	dev->sc_enintr(dev);
 	if (usedma) {
-		dev->sc_tcnt = dev->sc_dmago(dev, acb->sc_pa.dc_addr,
-		    acb->sc_pa.dc_count,
-		    dmaflags);
+		int tcnt;
 
-		DBG(dev->sc_dmatimo = dev->sc_tcnt ? 1 : 0);
-        } else
-		dev->sc_dmacmd = 0; /* Don't use DMA */
-	dev->sc_flags |= SBICF_INDMA;
-/*	SBIC_TC_PUT(regs, dev->sc_tcnt);*/ /* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
-	SBIC_TRACE(dev);
-	sbic_save_ptrs(dev, regs, dev->target, dev->lun);
+		acb->offset = 0;
+		acb->sc_tcnt = 0;
+		/* Note, this does not start DMA */
+		tcnt = dev->sc_dmasetup(dev->sc_dmah, dev->sc_dmat, acb,
+		    (acb->flags & ACB_DATAIN) != 0);
 
-#if 0
-	/* XXX - This code was used on the 68040. This is left as a
-	 * reminder that consideration needs to be given to this when
-	 * DMA support is implemented
-	 */
-	/*
-	 * push the data cache ( I think this won't work (EH))
-	 */
-	if (usedma && count) {
-		dma_cachectl(addr, count);
-		if (((u_int)addr & 0xF) || (((u_int)addr + count) & 0xF))
-			dev->sc_flags |= SBICF_DCFLUSH;
+		DBG(dev->sc_dmatimo = tcnt ? 1 : 0);
+		DBG(++sbicdma_ops);	/* count total DMA operations */
 	}
-#endif
+
+	SBIC_TRACE(dev);
 
 	/*
 	 * enintr() also enables interrupts for the sbic
 	 */
-	DBGPRINTF(("sbicgo dmago:%d(%p:%lx)\n",
-	    dev->target,dev->sc_cur->dc_addr,dev->sc_tcnt),
-	    data_pointer_debug > 1);
 	DBG(debug_asr = asr);
 	DBG(debug_csr = csr);
 
@@ -1805,7 +1612,6 @@ int
 sbicintr(struct sbic_softc *dev)
 {
 	sbic_regmap_p regs;
-/*	struct dma_chain *df, *dl;*/
 	u_char asr, csr;
 /*	u_char *tmpaddr;*/
 /*	struct sbic_acb *acb;*/
@@ -1932,7 +1738,7 @@ sbicmsgin(struct sbic_softc *dev)
 
 	DBGPRINTF(("sbicmsgin asr=%02x\n", asr), reselect_debug > 1);
 
-	sbic_save_ptrs(dev, regs, dev->target, dev->lun);
+	sbic_save_ptrs(dev, regs);
 
 	GET_SBIC_selid (regs, csr);
 	SET_SBIC_selid (regs, csr | SBIC_SID_FROM_SCSI);
@@ -2001,9 +1807,7 @@ sbicmsgin(struct sbic_softc *dev)
 					CSR_TRACE('e', csr, asr, dev->target);
 					if ((csr & 0x07) != MESG_OUT_PHASE) {
 						sbicnextstate(dev, csr, asr);
-						sbic_save_ptrs(dev, regs,
-							       dev->target,
-							       dev->lun);
+						sbic_save_ptrs(dev, regs);
 					}
 				}
 				/* Should be msg out by now */
@@ -2041,10 +1845,6 @@ sbicmsgin(struct sbic_softc *dev)
 		 */
 		if (MSG_ISIDENTIFY(dev->sc_msg[0])) {
 			QPRINTF(("IFFY"));
-#if 0
-			/* There is an implied load-ptrs here */
-			sbic_load_ptrs(dev, regs, dev->target, dev->lun);
-#endif
 			/* Got IFFY msg -- ack it */
 		} else if (dev->sc_msg[0] == MSG_REJECT
 			   && dev->sc_sync[dev->target].state == SYNC_SENT) {
@@ -2191,7 +1991,6 @@ static int
 sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 {
 	sbic_regmap_p regs;
-/*	struct dma_chain *df, *dl;*/
 	struct sbic_acb *acb;
 /*	int i;*/
 	int newtarget, newlun, wait;
@@ -2208,7 +2007,7 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 	case SBIC_CSR_MIS     | CMD_PHASE:
 	case SBIC_CSR_MIS_1   | CMD_PHASE:
 	case SBIC_CSR_MIS_2   | CMD_PHASE:
-		sbic_save_ptrs(dev, regs, dev->target, dev->lun);
+		sbic_save_ptrs(dev, regs);
 		if (sbicxfstart(regs, acb->clen, CMD_PHASE, sbic_cmd_wait))
 			if (sbicxfout(regs, acb->clen,
 				      &acb->cmd, CMD_PHASE))
@@ -2225,41 +2024,14 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 		 * device driver look at what happened.
 		 */
 		sbicxfdone(dev,regs,dev->target);
-		/*
-		 * check for overlapping cache line, flush if so
-		 */
-#if 0
-		if (dev->sc_flags & SBICF_DCFLUSH) {
-			/* XXX - This check was used on the 68040. This is
-			 * left as a reminder that consideration needs to
-			 * be given to this when DMA support is implemented
-	 		 */
+
+		if (acb->flags & ACB_DMA) {
+			DBG(dev->sc_dmatimo = 0);
+
+			dev->sc_dmafinish(dev->sc_dmah, dev->sc_dmat, acb);
+
+			dev->sc_flags &= ~SBICF_INDMA;
 		}
-#endif
-
-		DBGPRINTF(("next dmastop: %d(%p:%lx)\n",
-		    dev->target,dev->sc_cur->dc_addr,dev->sc_tcnt),
-		    data_pointer_debug > 1);
-		DBG(dev->sc_dmatimo = 0);
-
-		dev->sc_dmastop(dev); /* was dmafree */
-		if (acb->flags & ACB_BBUF) {
-			if ((u_char *)kvtop(acb->sc_dmausrbuf) != acb->sc_usrbufpa)
-				printf("%s: WARNING - buffer mapping changed %p->%x\n",
-				    dev->sc_dev.dv_xname, acb->sc_usrbufpa,
-				    kvtop(acb->sc_dmausrbuf));
-
-			DBGPRINTF(("sbicgo:copying %lx bytes from target %d bounce %x\n",
-			    acb->sc_dmausrlen,
-			    dev->target,
-			    kvtop(dev->sc_tinfo[dev->target].bounce)),
-			    data_pointer_debug);
-
-			memcpy(acb->sc_dmausrbuf,
-			    dev->sc_tinfo[dev->target].bounce,
-			    acb->sc_dmausrlen);
-		}
-		dev->sc_flags &= ~(SBICF_INDMA | SBICF_DCFLUSH);
 		sbic_scsidone(acb, dev->sc_stat[0]);
 		SBIC_TRACE(dev);
 		return SBIC_STATE_DONE;
@@ -2277,7 +2049,7 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 
 		if ((acb->xs->xs_control & XS_CTL_POLL) ||
 		    (dev->sc_flags & SBICF_ICMD) ||
-		    acb->sc_dmacmd == 0) {
+		    (acb->flags & ACB_DMA) == 0) {
 			/* Do PIO */
 			SET_SBIC_control(regs, SBIC_CTL_EDI | SBIC_CTL_IDI);
 			if (acb->datalen <= 0) {
@@ -2299,37 +2071,34 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 			acb->data += acb->datalen - i;
 			acb->datalen = i;
 		} else {
-			if (acb->datalen <= 0) {
-				printf("sbicnextstate:xfer count %d asr%x csr%x\n",
-				       acb->datalen, asr, csr);
-				goto abort;
-			}
+			/* Transfer = using DMA */
 			/*
 			 * do scatter-gather dma
 			 * hacking the controller chip, ouch..
 			 */
 			SET_SBIC_control(regs,
-			    SBIC_CTL_EDI | SBIC_CTL_IDI | SBIC_MACHINE_DMA_MODE);
+			    SBIC_CTL_EDI | SBIC_CTL_IDI | dev->sc_dmamode);
 			/*
 			 * set next dma addr and dec count
 			 */
-#if 0
-			SBIC_TC_GET(regs, tcnt);
-			dev->sc_cur->dc_count -= ((dev->sc_tcnt - tcnt) >> 1);
-			dev->sc_cur->dc_addr += (dev->sc_tcnt - tcnt);
-			dev->sc_tcnt = acb->sc_tcnt = tcnt;
-#else
-			sbic_save_ptrs(dev, regs, dev->target, dev->lun);
-			sbic_load_ptrs(dev, regs, dev->target, dev->lun);
-#endif
+			sbic_save_ptrs(dev, regs);
 
-			DBGPRINTF(("next dmanext: %d(%p:%lx)\n",
-			    dev->target, dev->sc_cur->dc_addr,
-			    dev->sc_tcnt), data_pointer_debug > 1);
+			if (acb->offset >= acb->datalen) {
+				printf("sbicnextstate:xfer offset %d asr%x csr%x\n",
+				    acb->offset, asr, csr);
+				goto abort;
+			}
+			DBGPRINTF(("next dmanext: %d(offset %d)\n",
+			    dev->target, acb->offset),
+			    data_pointer_debug > 1);
 			DBG(dev->sc_dmatimo = 1);
 
-			dev->sc_tcnt = dev->sc_dmanext(dev);
-			SBIC_TC_PUT(regs, (unsigned)dev->sc_tcnt);
+			acb->sc_tcnt =
+			    dev->sc_dmanext(dev->sc_dmah, dev->sc_dmat,
+				acb, acb->offset);
+			DBGPRINTF(("dmanext transfering %ld bytes\n",
+			    acb->sc_tcnt), data_pointer_debug);
+			SBIC_TC_PUT(regs, (unsigned)acb->sc_tcnt);
 			SET_SBIC_cmd(regs, SBIC_CMD_XFER_INFO);
 			dev->sc_flags |= SBICF_INDMA;
 		}
@@ -2355,10 +2124,10 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 
 		DBGPRINTF(("sending REJECT msg to last msg.\n"), sync_debug);
 
-		sbic_save_ptrs(dev, regs, dev->target, dev->lun);
+		sbic_save_ptrs(dev, regs);
 		/*
-		 * should only get here on reject, since it's always
-		 * US that initiate a sync transfer
+		 * Should only get here on reject, since it's always
+		 * US that initiate a sync transfer.
 		 */
 		SEND_BYTE(regs, MSG_REJECT);
 		WAIT_CIP(regs);
@@ -2489,75 +2258,23 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 #ifdef DDB
 		Debugger();
 #endif
-
-		DBGPRINTF(("next dmastop: %d(%p:%lx)\n",
-		    dev->target,dev->sc_cur->dc_addr,dev->sc_tcnt), 
-		    data_pointer_debug > 1);
 		DBG(dev->sc_dmatimo = 0);
 
-		dev->sc_dmastop(dev);
+		if (dev->sc_flags & SBICF_INDMA) {
+			dev->sc_dmafinish(dev->sc_dmah, dev->sc_dmat, acb);
+			dev->sc_flags &= ~SBICF_INDMA;
+			DBG(dev->sc_dmatimo = 0);
+		}
 		SET_SBIC_control(regs, SBIC_CTL_EDI | SBIC_CTL_IDI);
 		sbicerror(dev, regs, csr);
 		sbicabort(dev, regs, "next");
-		if (dev->sc_flags & SBICF_INDMA) {
-			/*
-			 * check for overlapping cache line, flush if so
-			 */
-#if 0
-			if (dev->sc_flags & SBICF_DCFLUSH) {
-				/* XXX - This check was used on the 68040.
-				 * This is left as a reminder that
-				 * consideration needs to be given to this
-				 * when DMA support is implemented
-		 		 */
-			}
-#endif
-			dev->sc_flags &=
-				~(SBICF_INDMA | SBICF_DCFLUSH);
-
-			DBGPRINTF(("next dmastop: %d(%p:%lx)\n",
-			    dev->target,dev->sc_cur->dc_addr,dev->sc_tcnt),
-			    data_pointer_debug > 1);
-			DBG(dev->sc_dmatimo = 0);
-
-			dev->sc_dmastop(dev);
-			sbic_scsidone(acb, -1);
-		}
+		sbic_scsidone(acb, -1);
 		SBIC_TRACE(dev);
                 return SBIC_STATE_ERROR;
 	}
 
 	SBIC_TRACE(dev);
 	return SBIC_STATE_RUNNING;
-}
-
-
-/*
- * Check if DMA can not be used with specified buffer
- */
-
-static int
-sbiccheckdmap(void *bp, u_long len, u_long mask)
-{
-	u_char *buffer;
-	u_long phy_buf;
-	u_long phy_len;
-
-	buffer = bp;
-
-	if (len == 0)
-		return 0;
-
-	while (len) {
-		phy_buf = kvtop(buffer);
-		if (len < (phy_len = NBPG - ((int) buffer & PGOFSET)))
-			phy_len = len;
-		if (phy_buf & mask)
-			return 1;
-		buffer += phy_len;
-		len -= phy_len;
-	}
-	return 0;
 }
 
 static int
@@ -2572,8 +2289,8 @@ sbictoscsiperiod(struct sbic_softc *dev, sbic_regmap_p regs, int a)
 	 */
 
 	GET_SBIC_myid(regs,fs);
-	fs = (fs >>6) + 2;		/* DIV */
-	fs = (fs * 10000) / (dev->sc_clkfreq<<1);	/* Cycle, in ns */
+	fs = (fs >> 6) + 2;		/* DIV */
+	fs = (fs * 10000) / (dev->sc_clkfreq << 1);	/* Cycle, in ns */
 	if (a < 2)
 		a = 8;		/* map to Cycles */
 	return (fs * a) >> 2;		/* in 4 ns units */
@@ -2586,9 +2303,9 @@ sbicfromscsiperiod(struct sbic_softc *dev, sbic_regmap_p regs, int p)
 
 	/* Just the inverse of the above */
 
-	GET_SBIC_myid(regs,fs);
-	fs = (fs >>6) + 2;		/* DIV */
-	fs = (fs * 10000) / (dev->sc_clkfreq<<1);   /* Cycle, in ns */
+	GET_SBIC_myid(regs, fs);
+	fs = (fs >> 6) + 2;		/* DIV */
+	fs = (fs * 10000) / (dev->sc_clkfreq << 1);   /* Cycle, in ns */
 
 	ret = p << 2;			/* in ns units */
 	ret = ret / fs;			/* in Cycles */
@@ -2664,9 +2381,7 @@ sbic_dump_acb(struct sbic_acb *acb)
 	printf("\n");
 	printf("  xs: %8p data %8p:%04x ", acb->xs, acb->xs->data,
 	    acb->xs->datalen);
-	printf("va %8p:%04x ", acb->data, acb->datalen);
-	printf("pa %8p:%04x tcnt %lx\n", acb->sc_pa.dc_addr,
-	    acb->sc_pa.dc_count, acb->sc_tcnt);
+	printf("tcnt %lx\n", acb->sc_tcnt);
 }
 
 void
@@ -2814,9 +2529,8 @@ sbic_dump(struct sbic_softc *dev)
 		printf("nexus:\n");
 		sbic_dump_acb(dev->sc_nexus);
 	}
-	printf("targ %d lun %d flags %x tcnt %lx dmacmd %x mask %lx\n",
-	    dev->target, dev->lun, dev->sc_flags, dev->sc_tcnt,
-	    dev->sc_dmacmd, dev->sc_dmamask);
+	printf("targ %d lun %d flags %x\n",
+	    dev->target, dev->lun, dev->sc_flags);
 	for (i = 0; i < 8; ++i) {
 		if (dev->sc_tinfo[i].cmds > 2) {
 			printf("tgt %d: cmds %d disc %d lubusy %x\n",
