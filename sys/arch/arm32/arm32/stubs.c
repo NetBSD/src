@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.23 1998/04/10 20:29:02 cgd Exp $	*/
+/*	$NetBSD: stubs.c,v 1.24 1998/07/07 17:51:54 mark Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -47,25 +47,14 @@
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/proc.h>
-#include <sys/types.h>
-#include <sys/device.h>
-#include <sys/buf.h>
-#include <sys/exec.h>
-#include <sys/vnode.h>
-#include <sys/conf.h> 
-#include <sys/reboot.h> 
+#include <sys/conf.h>
 #include <sys/msgbuf.h>
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
-#include <dev/md.h>
-#include <machine/param.h>
-#include <machine/vmparam.h>
 #include <machine/cpu.h>
 #include <machine/irqhandler.h>
 #include <machine/bootconfig.h>
-#include <machine/katelib.h>
-#include <machine/psl.h>
 #include <machine/pcb.h>
 
 #ifdef HYDRA

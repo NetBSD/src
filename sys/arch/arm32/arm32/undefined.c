@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.13 1998/07/04 22:18:18 jonathan Exp $	*/
+/*	$NetBSD: undefined.c,v 1.14 1998/07/07 17:51:55 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -48,12 +48,10 @@
 #include "opt_ddb.h"
 #include "opt_uvm.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/vmmeter.h>
 #ifdef FAST_FPE
@@ -69,7 +67,6 @@
 #include <machine/frame.h>
 #include <machine/katelib.h>
 #include <machine/undefined.h>
-#include <machine/irqhandler.h>
 #include <machine/trap.h>
 
 #include <arm32/arm32/disassem.h>
