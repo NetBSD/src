@@ -36,11 +36,13 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)atexit.c	5.2 (Berkeley) 11/14/90";*/
-static char *rcsid = "$Id: atexit.c,v 1.4 1995/02/28 01:46:28 jtc Exp $";
+static char *rcsid = "$Id: atexit.c,v 1.5 1995/06/14 05:17:53 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
 #include "atexit.h"
+
+struct atexit *__atexit;
 
 /*
  * Register a function to be performed at exit.
