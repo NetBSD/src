@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1980, 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)char.h	5.6 (Berkeley) 6/4/91
- *	$Id: char.h,v 1.4 1993/08/01 19:00:58 mycroft Exp $
+ *	from: @(#)char.h	8.1 (Berkeley) 5/31/93
+ *	$Id: char.h,v 1.5 1994/09/21 00:10:28 mycroft Exp $
  */
 
 #include <ctype.h>
@@ -43,8 +43,8 @@ extern unsigned char _cmap_lower[], _cmap_upper[];
 
 #endif
 
-#define	_Q	0x0001		/* '" */
-#define	_Q1	0x0002		/* ` */
+#define	_QF	0x0001		/* '" (Forward quotes) */
+#define	_QB	0x0002		/* ` (Backquote) */
 #define	_SP	0x0004		/* space and tab */
 #define	_NL	0x0008		/* \n */
 #define	_META	0x0010		/* lex meta characters, sp #'`";&<>()|\t\n */

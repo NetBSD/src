@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)const.c	5.2 (Berkeley) 6/7/91";*/
-static char rcsid[] = "$Id: const.c,v 1.4 1993/08/01 19:00:51 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)const.c	8.1 (Berkeley) 5/31/93";*/
+static char *rcsid = "$Id: const.c,v 1.5 1994/09/21 00:10:29 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -60,7 +60,6 @@ Char STRspRparen[]	= { ' ', ')', '\0' };
 Char STRTERM[]		= { 'T', 'E', 'R', 'M', '\0' };
 Char STRUSER[]		= { 'U', 'S', 'E', 'R', '\0' };
 Char STRalias[]         = { 'a', 'l', 'i', 'a', 's', '\0' };
-Char STRampm[]		= { 'a', 'm', 'p', 'm', '\0' };
 Char STRand[]		= { '&', '\0' };
 Char STRand2[]		= { '&', '&', '\0' };
 Char STRaout[]          = { 'a', '.', 'o', 'u', 't', '\0' };
@@ -90,8 +89,9 @@ Char STRfignore[]	= { 'f', 'i', 'g', 'n', 'o', 'r', 'e', '\0' };
 Char STRfilec[] = { 'f', 'i', 'l', 'e', 'c', '\0' };
 #endif /* FILEC */
 Char STRhistchars[]	= { 'h', 'i', 's', 't', 'c', 'h', 'a', 'r', 's', '\0' };
-Char STRhistfile[]      = { '~', '/', '.', 'h', 'i', 's', 't', 'o', 'r', 
+Char STRtildothist[]    = { '~', '/', '.', 'h', 'i', 's', 't', 'o', 'r', 
 		            'y', '\0' };
+Char STRhistfile[]	= { 'h', 'i', 's', 't', 'f', 'i', 'l', 'e', '\0' };
 Char STRhistory[] 	= { 'h', 'i', 's', 't', 'o', 'r', 'y', '\0' };
 Char STRhome[]          = { 'h', 'o', 'm', 'e', '\0' };
 Char STRignore_symlinks[] = { 'i', 'g', 'n', 'o', 'r', 'e', '_', 's', 'y', 'm',
@@ -108,6 +108,8 @@ Char STRml[]		= { '-', 'l', '\0' };
 Char STRmn[]		= { '-', 'n', '\0' };
 Char STRmquestion[]     = { '?' | QUOTE, ' ', '\0' };
 Char STRnice[]		= { 'n', 'i', 'c', 'e', '\0' };
+Char STRnoambiguous[]	= { 'n', 'o', 'a', 'm', 'b', 'i', 'g', 'u', 'o', 'u', 
+			    's', '\0' };
 Char STRnobeep[]	= { 'n', 'o', 'b', 'e', 'e', 'p', '\0' };
 Char STRnoclobber[]	= { 'n', 'o', 'c', 'l', 'o', 'b', 'b', 'e', 'r', '\0' };
 Char STRnoglob[]	= { 'n', 'o', 'g', 'l', 'o', 'b', '\0' };
@@ -124,6 +126,7 @@ Char STRprompt[]        = { 'p', 'r', 'o', 'm', 'p', 't', '\0' };
 Char STRprompt2[]       = { 'p', 'r', 'o', 'm', 'p', 't', '2', '\0' };
 Char STRpushdsilent[]	= { 'p', 'u', 's', 'h', 'd', 's', 'i', 'l', 'e', 'n',
 			    't', '\0' };
+Char STRret[]		= { '\n', '\0' };
 Char STRsavehist[]      = { 's', 'a', 'v', 'e', 'h', 'i', 's', 't', '\0' };
 Char STRsemisp[]	= { ';', ' ', '\0' };
 Char STRshell[]         = { 's', 'h', 'e', 'l', 'l', '\0' };

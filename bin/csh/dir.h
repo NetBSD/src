@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1980, 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dir.h	5.4 (Berkeley) 6/4/91
- *	$Id: dir.h,v 1.4 1993/08/01 19:00:56 mycroft Exp $
+ *	from: @(#)dir.h	8.1 (Berkeley) 5/31/93
+ *	$Id: dir.h,v 1.5 1994/09/21 00:10:44 mycroft Exp $
  */
 
 /*

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1980, 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +32,17 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)exp.c	5.11 (Berkeley) 6/8/91";*/
-static char rcsid[] = "$Id: exp.c,v 1.4 1993/08/01 19:00:46 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)exp.c	8.1 (Berkeley) 5/31/93";*/
+static char *rcsid = "$Id: exp.c,v 1.5 1994/09/21 00:10:50 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <unistd.h>
+#ifndef SHORT_STRINGS
+#include <string.h>
+#endif /* SHORT_STRINGS */
 #if __STDC__
 # include <stdarg.h>
 #else
@@ -86,7 +89,7 @@ static void	etraci	__P((char *, int, Char ***));
 #endif
 
 int
-exp(vp)
+expr(vp)
     register Char ***vp;
 {
     return (exp0(vp, 0));
@@ -219,7 +222,7 @@ exp2c(vp, ignore)
 #ifdef EDEBUG
     etracc("exp2c p1", p1, vp);
 #endif
-    if (i = isa(**vp, EQOP)) {
+    if ((i = isa(**vp, EQOP)) != 0) {
 	(*vp)++;
 	if (i == EQMATCH || i == NOTEQMATCH)
 	    ignore |= NOGLOB;
@@ -267,7 +270,7 @@ exp3(vp, ignore)
 #ifdef EDEBUG
     etracc("exp3 p1", p1, vp);
 #endif
-    if (i = isa(**vp, RELOP)) {
+    if ((i = isa(**vp, RELOP)) != 0) {
 	(*vp)++;
 	if (**vp && eq(**vp, STRequal))
 	    i |= 1, (*vp)++;
@@ -692,9 +695,9 @@ etraci(str, i, vp)
     int     i;
     Char ***vp;
 {
-    xprintf("%s=%d\t", str, i);
-    blkpr(*vp);
-    xprintf("\n");
+    (void) fprintf(csherr, "%s=%d\t", str, i);
+    blkpr(csherr, *vp);
+    (void) fprintf(csherr, "\n");
 }
 static void
 etracc(str, cp, vp)
@@ -702,8 +705,8 @@ etracc(str, cp, vp)
     Char   *cp;
     Char ***vp;
 {
-    xprintf("%s=%s\t", str, cp);
-    blkpr(*vp);
-    xprintf("\n");
+    (void) fprintf(csherr, "%s=%s\t", str, vis_str(cp));
+    blkpr(csherr, *vp);
+    (void) fprintf(csherr, "\n");
 }
 #endif

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1980, 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +32,14 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1991 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1980, 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)csh.c	5.26 (Berkeley) 6/8/91";*/
-static char rcsid[] = "$Id: csh.c,v 1.6 1994/02/12 07:13:32 cgd Exp $";
+/*static char sccsid[] = "from: @(#)csh.c	8.2 (Berkeley) 10/12/93";*/
+static char *rcsid = "$Id: csh.c,v 1.7 1994/09/21 00:10:35 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -52,6 +52,7 @@ static char rcsid[] = "$Id: csh.c,v 1.6 1994/02/12 07:13:32 cgd Exp $";
 #include <string.h>
 #include <locale.h>
 #include <unistd.h>
+#include <vis.h>
 #if __STDC__
 # include <stdarg.h>
 #else
@@ -59,9 +60,9 @@ static char rcsid[] = "$Id: csh.c,v 1.6 1994/02/12 07:13:32 cgd Exp $";
 #endif
 
 #include "csh.h"
+#include "proc.h"
 #include "extern.h"
 #include "pathnames.h"
-#include "proc.h"
 
 extern bool MapsAreInited;
 extern bool NLSMapsAreInited;
@@ -80,7 +81,7 @@ extern bool NLSMapsAreInited;
  */
 
 Char   *dumphist[] = {STRhistory, STRmh, 0, 0};
-Char   *loadhist[] = {STRsource, STRmh, STRhistfile, 0};
+Char   *loadhist[] = {STRsource, STRmh, STRtildothist, 0};
 
 int     nofile = 0;
 bool    reenter = 0;
@@ -96,6 +97,10 @@ bool    tellwhat = 0;
 
 extern char **environ;
 
+static int	readf __P((void *, char *, int));
+static fpos_t	seekf __P((void *, fpos_t, int));
+static int	writef __P((void *, const char *, int));
+static int	closef __P((void *));
 static int	srccat __P((Char *, Char *));
 static int	srcfile __P((char *, bool, bool));
 static void	phup __P((int));
@@ -114,6 +119,9 @@ main(argc, argv)
     register char **tempv;
     struct sigvec osv;
 
+    cshin = stdin;
+    cshout = stdout;
+    csherr = stderr;
 
     settimes();			/* Immed. estab. timing base */
 
@@ -139,6 +147,8 @@ main(argc, argv)
 	quitit = 1;
     uid = getuid();
     gid = getgid();
+    euid = geteuid();
+    egid = getegid();
     /*
      * We are a login shell if: 1. we were invoked as -<something> and we had
      * no arguments 2. or we were invoked only with the -l flag
@@ -154,7 +164,8 @@ main(argc, argv)
 	tempv[1][0] = '\0';
 	tempv[1][1] = '\0';
 	tempv[1] = NULL;
-	for (tcp = *tempv; *tcp++;);
+	for (tcp = *tempv; *tcp++;)
+	    continue;
 	for (tcp--; tcp >= *tempv; tcp--)
 	    tcp[1] = tcp[0];
 	*++tcp = '-';
@@ -169,7 +180,8 @@ main(argc, argv)
     {
 	int     k;
 
-	for (k = 0200; k <= 0377 && !Isprint(k); k++);
+	for (k = 0200; k <= 0377 && !Isprint(k); k++)
+	    continue;
 	AsciiOnly = k > 0377;
     }
 #else
@@ -182,6 +194,30 @@ main(argc, argv)
      * prefer to use these.
      */
     initdesc();
+    /*
+     * XXX: This is to keep programs that use stdio happy.
+     *	    what we really want is freunopen() ....
+     *	    Closing cshin cshout and csherr (which are really stdin stdout
+     *	    and stderr at this point and then reopening them in the same order
+     *	    gives us again stdin == cshin stdout == cshout and stderr == csherr.
+     *	    If that was not the case builtins like printf that use stdio
+     *	    would break. But in any case we could fix that with memcpy and
+     *	    a bit of pointer manipulation...
+     *	    Fortunately this is not needed under the current implementation
+     *	    of stdio.
+     */
+    (void) fclose(cshin);
+    (void) fclose(cshout);
+    (void) fclose(csherr);
+    if (!(cshin  = funopen((void *) &SHIN,  readf, writef, seekf, closef)))
+	exit(1);
+    if (!(cshout = funopen((void *) &SHOUT, readf, writef, seekf, closef)))
+	exit(1);
+    if (!(csherr = funopen((void *) &SHERR, readf, writef, seekf, closef)))
+	exit(1);
+    (void) setvbuf(cshin,  NULL, _IOLBF, 0);
+    (void) setvbuf(cshout, NULL, _IOLBF, 0);
+    (void) setvbuf(csherr, NULL, _IOLBF, 0);
 
     /*
      * Initialize the shell variables. ARGV and PROMPT are initialized later.
@@ -243,13 +279,13 @@ main(argc, argv)
 
     /*
      * Process the arguments.
-     * 
+     *
      * Note that processing of -v/-x is actually delayed till after script
      * processing.
-     * 
-     * We set the first character of our name to be '-' if we are a shell running
-     * interruptible commands.  Many programs which examine ps'es use this to
-     * filter such shells out.
+     *
+     * We set the first character of our name to be '-' if we are a shell
+     * running interruptible commands.  Many programs which examine ps'es
+     * use this to filter such shells out.
      */
     argc--, tempv++;
     while (argc > 0 && (tcp = tempv[0])[0] == '-' && *++tcp != '\0' && !batch) {
@@ -345,12 +381,12 @@ main(argc, argv)
 	    stderror(ERR_SYSTEM, tempv[0], strerror(errno));
 	}
 	ffile = SAVE(tempv[0]);
-	/* 
+	/*
 	 * Replace FSHIN. Handle /dev/std{in,out,err} specially
 	 * since once they are closed we cannot open them again.
 	 * In that case we use our own saved descriptors
 	 */
-	if ((SHIN = dmove(nofile, FSHIN)) < 0) 
+	if ((SHIN = dmove(nofile, FSHIN)) < 0)
 	    switch(nofile) {
 	    case 0:
 		SHIN = FSHIN;
@@ -359,7 +395,7 @@ main(argc, argv)
 		SHIN = FSHOUT;
 		break;
 	    case 2:
-		SHIN = FSHDIAG;
+		SHIN = FSHERR;
 		break;
 	    default:
 		stderror(ERR_SYSTEM, tempv[0], strerror(errno));
@@ -369,10 +405,11 @@ main(argc, argv)
 	prompt = 0;
 	 /* argc not used any more */ tempv++;
     }
+
     intty = isatty(SHIN);
     intty |= intact;
     if (intty || (intact && isatty(SHOUT))) {
-	if (!batch && (uid != geteuid() || gid != getegid())) {
+	if (!batch && (uid != euid || gid != egid)) {
 	    errno = EACCES;
 	    child = 1;		/* So this doesn't return */
 	    stderror(ERR_SYSTEM, "csh", strerror(errno));
@@ -385,7 +422,7 @@ main(argc, argv)
      * Note that in only the login shell is it likely that parent may have set
      * signals to be ignored
      */
-    if (loginsh || intact || intty && isatty(SHOUT))
+    if (loginsh || intact || (intty && isatty(SHOUT)))
 	setintr = 1;
     settell();
     /*
@@ -423,8 +460,8 @@ main(argc, argv)
 	     * Wait till in foreground, in case someone stupidly runs csh &
 	     * dont want to try to grab away the tty.
 	     */
-	    if (isatty(FSHDIAG))
-		f = FSHDIAG;
+	    if (isatty(FSHERR))
+		f = FSHERR;
 	    else if (isatty(FSHOUT))
 		f = FSHOUT;
 	    else if (isatty(OLDSTD))
@@ -443,7 +480,7 @@ main(argc, argv)
 		shpgrp = getpid();
 		tpgrp = shpgrp;
 		/*
-		 * Setpgid will fail if we are a session leader and 
+		 * Setpgid will fail if we are a session leader and
 		 * mypid == mypgrp (POSIX 4.3.3)
 		 */
 		if (opgrp != shpgrp)
@@ -460,8 +497,9 @@ main(argc, argv)
 	    }
 	    if (tpgrp == -1) {
 notty:
-		xprintf("Warning: no access to tty (%s).\n", strerror(errno));
-		xprintf("Thus no job control in this shell.\n");
+		(void) fprintf(csherr, "Warning: no access to tty (%s).\n",
+			       strerror(errno));
+		(void) fprintf(csherr, "Thus no job control in this shell.\n");
 	    }
 	}
     }
@@ -479,28 +517,36 @@ notty:
 	/* Will have value(STRhome) here because set fast if don't */
 	{
 	    int     osetintr = setintr;
+	    sig_t   oparintr = parintr;
 	    sigset_t omask = sigblock(sigmask(SIGINT));
 
 	    setintr = 0;
+	    parintr = SIG_IGN;	/* Disable onintr */
 #ifdef _PATH_DOTCSHRC
 	    (void) srcfile(_PATH_DOTCSHRC, 0, 0);
 #endif
 	    if (!fast && !arginp && !onelflg)
-		dohash();
+		dohash(NULL, NULL);
 #ifdef _PATH_DOTLOGIN
 	    if (loginsh)
 		(void) srcfile(_PATH_DOTLOGIN, 0, 0);
 #endif
 	    (void) sigsetmask(omask);
 	    setintr = osetintr;
+	    parintr = oparintr;
 	}
 	(void) srccat(value(STRhome), STRsldotcshrc);
 
 	if (!fast && !arginp && !onelflg && !havhash)
-	    dohash();
+	    dohash(NULL, NULL);
+	/*
+	 * Source history before .login so that it is available in .login
+	 */
+	if ((cp = value(STRhistfile)) != STRNULL)
+	    loadhist[2] = cp;
+	dosource(loadhist, NULL);
         if (loginsh)
 	      (void) srccat(value(STRhome), STRsldotlogin);
-	dosource(loadhist);
     }
 
     /*
@@ -524,13 +570,13 @@ notty:
      */
     if (intty) {
 	if (loginsh) {
-	    xprintf("logout\n");
+	    (void) fprintf(cshout, "logout\n");
 	    (void) close(SHIN);
 	    child = 1;
 	    goodbye();
 	}
 	else {
-	    xprintf("exit\n");
+	    (void) fprintf(cshout, "exit\n");
 	}
     }
     rechist();
@@ -570,6 +616,9 @@ importpath(cp)
 	for (;;) {
 	    if ((c = *dp) == ':' || c == 0) {
 		*dp = 0;
+		if ((*cp != '/' || *cp == '\0') && (euid == 0 || uid == 0)) 
+		    (void) fprintf(csherr,
+	    "Warning: imported path contains relative components\n");
 		pv[i++] = Strsave(*cp ? cp : STRdot);
 		if (c) {
 		    cp = dp + 1;
@@ -639,7 +688,7 @@ srcunit(unit, onlyown, hflg)
     bool    otell = cantell;
 
     struct Bin saveB;
-    sigset_t omask;
+    volatile sigset_t omask;
     jmp_buf oldexit;
 
     /* The (few) real local variables */
@@ -663,7 +712,7 @@ srcunit(unit, onlyown, hflg)
      * stream since we have stuff in different structures. If we weren't
      * careful an interrupt could corrupt SHIN's Bin structure and kill the
      * shell.
-     * 
+     *
      * We could avoid the critical region by grouping all the stuff in a single
      * structure and pointing at it to move it all at once.  This is less
      * efficient globally on many variable references however.
@@ -733,26 +782,42 @@ srcunit(unit, onlyown, hflg)
 void
 rechist()
 {
-    Char    buf[BUFSIZ];
+    Char    buf[BUFSIZ], hbuf[BUFSIZ], *hfile;
     int     fp, ftmp, oldidfds;
+    struct  varent *shist;
 
     if (!fast) {
-	if (value(STRsavehist)[0] == '\0')
-	    return;
-	(void) Strcpy(buf, value(STRhome));
-	(void) Strcat(buf, STRsldthist);
-	fp = creat(short2str(buf), 0600);
-	if (fp == -1)
-	    return;
+	/*
+	 * If $savehist is just set, we use the value of $history
+	 * else we use the value in $savehist
+	 */
+	if ((shist = adrof(STRsavehist)) != NULL) {
+	    if (shist->vec[0][0] != '\0')
+		(void) Strcpy(hbuf, shist->vec[0]);
+	    else if ((shist = adrof(STRhistory)) && shist->vec[0][0] != '\0')
+		(void) Strcpy(hbuf, shist->vec[0]);
+	    else
+		return;
+	}
+	else
+  	    return;
+
+  	if ((hfile = value(STRhistfile)) == STRNULL) {
+  	    hfile = Strcpy(buf, value(STRhome));
+  	    (void) Strcat(buf, STRsldthist);
+  	}
+
+  	if ((fp = creat(short2str(hfile), 0600)) == -1) 
+  	    return;
+
 	oldidfds = didfds;
 	didfds = 0;
 	ftmp = SHOUT;
 	SHOUT = fp;
-	(void) Strcpy(buf, value(STRsavehist));
-	dumphist[2] = buf;
-	dohist(dumphist);
-	(void) close(fp);
+	dumphist[2] = hbuf;
+	dohist(dumphist, NULL);
 	SHOUT = ftmp;
+	(void) close(fp);
 	didfds = oldidfds;
     }
 }
@@ -781,7 +846,7 @@ goodbye()
 void
 exitstat()
 {
-
+    Char *s;
 #ifdef PROF
     monitor(0);
 #endif
@@ -791,7 +856,8 @@ exitstat()
      * unwarrantedly (sic).
      */
     child = 1;
-    xexit(getn(value(STRstatus)));
+    s = value(STRstatus);
+    xexit(s ? getn(s) : 0);
 }
 
 /*
@@ -801,39 +867,39 @@ static void
 phup(sig)
 int sig;
 {
+    rechist();
+
+    /*
+     * We kill the last foreground process group. It then becomes
+     * responsible to propagate the SIGHUP to its progeny. 
+     */
+    {
 	struct process *pp, *np;
 
-	rechist();
-
-	/*
-	 * We kill the last foreground process group. It then becomes
-	 * responsible to propagate the SIGHUP to its progeny.
-	 */
 	for (pp = proclist.p_next; pp; pp = pp->p_next) {
-		np = pp;
+	    np = pp;
+	    /* 
+	     * Find if this job is in the foreground. It could be that
+	     * the process leader has exited and the foreground flag
+	     * is cleared for it.
+	     */
+	    do
 		/*
-		 * Find if this job is in the foreground. It could be that
-		 * the process leader has exited and the foreground flag
-		 * is cleared for it.
+		 * If a process is in the foreground; we try to kill
+		 * it's process group. If we succeed, then the 
+		 * whole job is gone. Otherwise we keep going...
+		 * But avoid sending HUP to the shell again.
 		 */
-		do {
-			/*
-			 * If a process is in the foreground; we try to kill
-			 * it's process group. If we succeed, then the
-			 * whole job is gone. Otherwise we keep going...
-			 * But avoid sending HUP to the shell again.
-			 */
-			if ((np->p_flags & PFOREGND) != 0 &&
-			    np->p_jobid != shpgrp &&
-			    killpg(np->p_jobid, SIGHUP) != -1) {
-				/* In case the job was suspended... */
-				(void) killpg(np->p_jobid, SIGCONT);
-				break;
-			}
-		} while ((np = np->p_friends) != pp);
-        }
-
-	xexit(sig);
+		if ((np->p_flags & PFOREGND) != 0 && np->p_jobid != shpgrp &&
+		    killpg(np->p_jobid, SIGHUP) != -1) {
+		    /* In case the job was suspended... */
+		    (void) killpg(np->p_jobid, SIGCONT);
+		    break;
+		}
+	    while ((np = np->p_friends) != pp);
+	}
+    }
+    xexit(sig);
 }
 
 Char   *jobargv[2] = {STRjobs, 0};
@@ -857,7 +923,7 @@ void
 pintr1(wantnl)
     bool    wantnl;
 {
-    register Char **v;
+    Char **v;
     sigset_t omask;
 
     omask = sigblock((sigset_t) 0);
@@ -865,13 +931,13 @@ pintr1(wantnl)
 	(void) sigsetmask(omask & ~sigmask(SIGINT));
 	if (pjobs) {
 	    pjobs = 0;
-	    xprintf("\n");
-	    dojobs(jobargv);
+	    (void) fprintf(cshout, "\n");
+	    dojobs(jobargv, NULL);
 	    stderror(ERR_NAME | ERR_INTR);
 	}
     }
     (void) sigsetmask(omask & ~sigmask(SIGCHLD));
-    draino();
+    (void) fpurge(cshout);
     (void) endpwent();
 
     /*
@@ -880,17 +946,17 @@ pintr1(wantnl)
      * about that here.
      */
     if (gointr) {
-	search(T_GOTO, 0, gointr);
+	gotolab(gointr);
 	timflg = 0;
-	if (v = pargv)
+	if ((v = pargv) != NULL)
 	    pargv = 0, blkfree(v);
-	if (v = gargv)
+	if ((v = gargv) != NULL)
 	    gargv = 0, blkfree(v);
 	reset();
     }
     else if (intty && wantnl) {
-	(void) putraw('\r');
-	(void) putraw('\n');
+	(void) fputc('\r', cshout);
+	(void) fputc('\n', cshout);
     }
     stderror(ERR_SILENT);
 }
@@ -909,19 +975,20 @@ pintr1(wantnl)
  * Note that if catch is not set then we will unwind on any error.
  * If an end-of-file occurs, we return.
  */
+static struct command *savet = NULL;
 void
 process(catch)
     bool    catch;
 {
     jmp_buf osetexit;
-    struct command *t;
+    struct command *t = savet;
 
+    savet = NULL;
     getexit(osetexit);
     for (;;) {
 	pendjob();
 	paraml.next = paraml.prev = &paraml;
 	paraml.word = STRNULL;
-	t = 0;
 	(void) setexit();
 	justpr = enterhist;	/* execute if not entering history */
 
@@ -935,14 +1002,15 @@ process(catch)
 	 * For the sake of reset()
 	 */
 	freelex(&paraml);
-	freesyn(t);
-	t = 0;
+	if (savet)
+	    freesyn(savet), savet = NULL;
 
 	if (haderr) {
 	    if (!catch) {
 		/* unwind */
 		doneinp = 0;
 		resexit(osetexit);
+		savet = t;
 		reset();
 	    }
 	    haderr = 0;
@@ -971,9 +1039,9 @@ process(catch)
 	     * read fresh stuff. Otherwise, we are rereading input and don't
 	     * need or want to prompt.
 	     */
-	    if (fseekp == feobp)
+	    if (aret == F_SEEK && fseekp == feobp)
 		printprompt();
-	    flush();
+	    (void) fflush(cshout);
 	}
 	if (seterr) {
 	    xfree((ptr_t) seterr);
@@ -984,10 +1052,8 @@ process(catch)
 	 * Echo not only on VERBOSE, but also with history expansion. If there
 	 * is a lexical error then we forego history echo.
 	 */
-	if (lex(&paraml) && !seterr && intty || adrof(STRverbose)) {
-	    haderr = 1;
-	    prlex(&paraml);
-	    haderr = 0;
+	if ((lex(&paraml) && !seterr && intty) || adrof(STRverbose)) {
+	    prlex(csherr, &paraml);
 	}
 
 	/*
@@ -999,11 +1065,11 @@ process(catch)
 	/*
 	 * Save input text on the history list if reading in old history, or it
 	 * is from the terminal at the top level and not in a loop.
-	 * 
+	 *
 	 * PWP: entry of items in the history list while in a while loop is done
 	 * elsewhere...
 	 */
-	if (enterhist || catch && intty && !whyles)
+	if (enterhist || (catch && intty && !whyles))
 	    savehist(&paraml);
 
 	/*
@@ -1024,36 +1090,40 @@ process(catch)
 	/*
 	 * Parse the words of the input into a parse tree.
 	 */
-	t = syntax(paraml.next, &paraml, 0);
+	savet = syntax(paraml.next, &paraml, 0);
 	if (seterr)
 	    stderror(ERR_OLD);
 
-	execute(t, (tpgrp > 0 ? tpgrp : -1), NULL, NULL);
+	execute(savet, (tpgrp > 0 ? tpgrp : -1), NULL, NULL);
 
 	/*
 	 * Made it!
 	 */
 	freelex(&paraml);
-	freesyn(t);
+	freesyn((struct command *) savet), savet = NULL;
     }
     resexit(osetexit);
+    savet = t;
 }
 
 void
-dosource(t)
-    register Char **t;
+/*ARGSUSED*/
+dosource(v, t)
+    Char **v;
+    struct command *t;
+
 {
     register Char *f;
     bool    hflg = 0;
     Char    buf[BUFSIZ];
 
-    t++;
-    if (*t && eq(*t, STRmh)) {
-	if (*++t == NULL)
+    v++;
+    if (*v && eq(*v, STRmh)) {
+	if (*++v == NULL)
 	    stderror(ERR_NAME | ERR_HFLAG);
 	hflg++;
     }
-    (void) Strcpy(buf, *t);
+    (void) Strcpy(buf, *v);
     f = globone(buf, G_ERROR);
     (void) strcpy((char *) buf, short2str(f));
     xfree((ptr_t) f);
@@ -1097,12 +1167,13 @@ mailchk()
 	new = stb.st_mtime > time0.tv_sec;
 	if (stb.st_size == 0 || stb.st_atime > stb.st_mtime ||
 	    (stb.st_atime < chktim && stb.st_mtime < chktim) ||
-	    loginsh && !new)
+	    (loginsh && !new))
 	    continue;
 	if (cnt == 1)
-	    xprintf("You have %smail.\n", new ? "new " : "");
+	    (void) fprintf(cshout, "You have %smail.\n", new ? "new " : "");
 	else
-	    xprintf("%s in %s.\n", new ? "New mail" : "Mail", short2str(*vp));
+	    (void) fprintf(cshout, "%s in %s.\n", new ? "New mail" : "Mail",
+			   vis_str(*vp));
     }
     chktim = t;
 }
@@ -1124,7 +1195,7 @@ gethdir(home)
      * Is it us?
      */
     if (*home == '\0') {
-	if (h = value(STRhome)) {
+	if ((h = value(STRhome)) != NULL) {
 	    (void) Strcpy(home, h);
 	    return 0;
 	}
@@ -1132,12 +1203,76 @@ gethdir(home)
 	    return 1;
     }
 
-    if (pw = getpwnam(short2str(home))) {
+    if ((pw = getpwnam(short2str(home))) != NULL) {
 	(void) Strcpy(home, str2short(pw->pw_dir));
 	return 0;
     }
     else
 	return 1;
+}
+
+/*
+ * When didfds is set, we do I/O from 0, 1, 2 otherwise from 15, 16, 17
+ * We also check if the shell has already changed the decriptor to point to
+ * 0, 1, 2 when didfds is set.
+ */
+#define DESC(a) (*((int *) (a)) - (didfds && *((int *) a) >= FSHIN ? FSHIN : 0))
+
+static int
+readf(oreo, buf, siz)
+    void *oreo;
+    char *buf;
+    int siz;
+{
+    return read(DESC(oreo), buf, siz);
+}
+
+
+static int
+writef(oreo, buf, siz)
+    void *oreo;
+    const char *buf;
+    int siz;
+{
+    return write(DESC(oreo), buf, siz);
+}
+
+static fpos_t
+seekf(oreo, off, whence)
+    void *oreo;
+    fpos_t off;
+    int whence;
+{
+    return lseek(DESC(oreo), off, whence);
+}
+
+
+static int
+closef(oreo)
+    void *oreo;
+{
+    return close(DESC(oreo));
+}
+
+
+/*
+ * Print the visible version of a string.
+ */
+int
+vis_fputc(ch, fp)
+    int ch;
+    FILE *fp;
+{
+    char uenc[5];	/* 4 + NULL */
+
+    if (ch & QUOTE) 
+	return fputc(ch & TRIM, fp);
+    /* 
+     * XXX: When we are in AsciiOnly we want all characters >= 0200 to
+     * be encoded, but currently there is no way in vis to do that.
+     */
+    (void) vis(uenc, ch & TRIM, VIS_NOSLASH, 0);
+    return fputs(uenc, fp);
 }
 
 /*
@@ -1151,7 +1286,7 @@ initdesc()
     didfds = 0;			/* 0, 1, 2 aren't set up */
     (void) ioctl(SHIN = dcopy(0, FSHIN), FIOCLEX, NULL);
     (void) ioctl(SHOUT = dcopy(1, FSHOUT), FIOCLEX, NULL);
-    (void) ioctl(SHDIAG = dcopy(2, FSHDIAG), FIOCLEX, NULL);
+    (void) ioctl(SHERR = dcopy(2, FSHERR), FIOCLEX, NULL);
     (void) ioctl(OLDSTD = dcopy(SHIN, FOLDSTD), FIOCLEX, NULL);
     closem();
 }
@@ -1187,7 +1322,8 @@ defaultpath()
 
 #undef DIRAPPEND
 
-    *blkp++ = Strsave(STRdot);
+    if (euid != 0 && uid != 0)
+	*blkp++ = Strsave(STRdot);
     *blkp = NULL;
     return (blk);
 }
@@ -1200,17 +1336,17 @@ printprompt()
     if (!whyles) {
 	for (cp = value(STRprompt); *cp; cp++)
 	    if (*cp == HIST)
-		xprintf("%d", eventno + 1);
+		(void) fprintf(cshout, "%d", eventno + 1);
 	    else {
 		if (*cp == '\\' && cp[1] == HIST)
 		    cp++;
-		xputchar(*cp | QUOTE);
+		(void) vis_fputc(*cp | QUOTE, cshout);
 	    }
     }
     else
 	/*
 	 * Prompt for forward reading loop body content.
 	 */
-	xprintf("? ");
-    flush();
+	(void) fprintf(cshout, "? ");
+    (void) fflush(cshout);
 }

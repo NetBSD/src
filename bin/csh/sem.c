@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1980, 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)sem.c	5.17 (Berkeley) 6/17/91";*/
-static char rcsid[] = "$Id: sem.c,v 1.4 1993/08/01 19:00:31 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)sem.c	8.1 (Berkeley) 5/31/93";*/
+static char *rcsid = "$Id: sem.c,v 1.5 1994/09/21 00:11:14 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -54,9 +54,10 @@ static char rcsid[] = "$Id: sem.c,v 1.4 1993/08/01 19:00:31 mycroft Exp $";
 #include "proc.h"
 #include "extern.h"
 
-static void	vffree __P((int));
-static void	doio __P((struct command *t, int *, int *));
-static void	chkclob __P((char *));
+static void	 vffree __P((int));
+static Char	*splicepipe __P((struct command *t, Char *));
+static void	 doio __P((struct command *t, int *, int *));
+static void	 chkclob __P((char *));
 
 void
 execute(t, wanttty, pipein, pipeout)
@@ -73,6 +74,10 @@ execute(t, wanttty, pipein, pipeout)
     static sigset_t ocsigmask;
     static int onosigchld = 0;
     static int nosigchld = 0;
+
+    UNREGISTER(forked);
+    UNREGISTER(bifunc);
+    UNREGISTER(wanttty);
 
     if (t == 0)
 	return;
@@ -103,8 +108,6 @@ execute(t, wanttty, pipein, pipeout)
 	    if (noexec)
 		(void) close(0);
 	}
-	if (noexec)
-	    break;
 
 	set(STRstatus, Strsave(STR0));
 
@@ -151,15 +154,29 @@ execute(t, wanttty, pipein, pipeout)
 	    else
 		break;
 
-	/* is t a command */
+	/* is it a command */
 	if (t->t_dtyp == NODE_COMMAND) {
 	    /*
 	     * Check if we have a builtin function and remember which one.
 	     */
 	    bifunc = isbfunc(t);
+ 	    if (noexec) {
+		/*
+		 * Continue for builtins that are part of the scripting language
+		 */
+		if (bifunc->bfunct != dobreak   && bifunc->bfunct != docontin &&
+		    bifunc->bfunct != doelse    && bifunc->bfunct != doend    &&
+		    bifunc->bfunct != doforeach && bifunc->bfunct != dogoto   &&
+		    bifunc->bfunct != doif      && bifunc->bfunct != dorepeat &&
+		    bifunc->bfunct != doswbrk   && bifunc->bfunct != doswitch &&
+		    bifunc->bfunct != dowhile   && bifunc->bfunct != dozip)
+		    break;
+	    }
 	}
 	else {			/* not a command */
 	    bifunc = NULL;
+	    if (noexec)
+		break;
 	}
 
 	/*
@@ -176,13 +193,13 @@ execute(t, wanttty, pipein, pipeout)
 		       bifunc->bfunct == dopushd ||
 		       bifunc->bfunct == dopopd))
 	    t->t_dflg &= ~(F_NICE);
-	if (((t->t_dflg & F_TIME) || (t->t_dflg & F_NOFORK) == 0 &&
+	if (((t->t_dflg & F_TIME) || ((t->t_dflg & F_NOFORK) == 0 &&
 	     (!bifunc || t->t_dflg &
-	      (F_PIPEOUT | F_AMPERSAND | F_NICE | F_NOHUP))) ||
+	      (F_PIPEOUT | F_AMPERSAND | F_NICE | F_NOHUP)))) ||
 	/*
 	 * We have to fork for eval too.
 	 */
-	    (bifunc && (t->t_dflg & F_PIPEIN) != 0 &&
+	    (bifunc && (t->t_dflg & (F_PIPEIN | F_PIPEOUT)) != 0 &&
 	     bifunc->bfunct == doeval))
 	    if (t->t_dtyp == NODE_PAREN ||
 		t->t_dflg & (F_REPEAT | F_AMPERSAND) || bifunc) {
@@ -201,10 +218,13 @@ execute(t, wanttty, pipein, pipeout)
 		    (void) sigsetmask(csigmask);
 		    nosigchld = 0;
 		}
+		else if (pid != 0 && (t->t_dflg & F_AMPERSAND))
+		    backpid = pid;
+
 	    }
 	    else {
 		int     ochild, osetintr, ohaderr, odidfds;
-		int     oSHIN, oSHOUT, oSHDIAG, oOLDSTD, otpgrp;
+		int     oSHIN, oSHOUT, oSHERR, oOLDSTD, otpgrp;
 		sigset_t omask;
 
 		/*
@@ -226,7 +246,7 @@ execute(t, wanttty, pipein, pipeout)
 		odidfds = didfds;
 		oSHIN = SHIN;
 		oSHOUT = SHOUT;
-		oSHDIAG = SHDIAG;
+		oSHERR = SHERR;
 		oOLDSTD = OLDSTD;
 		otpgrp = tpgrp;
 		ocsigmask = csigmask;
@@ -248,7 +268,7 @@ execute(t, wanttty, pipein, pipeout)
 		    didfds = odidfds;
 		    SHIN = oSHIN;
 		    SHOUT = oSHOUT;
-		    SHDIAG = oSHDIAG;
+		    SHERR = oSHERR;
 		    OLDSTD = oOLDSTD;
 		    tpgrp = otpgrp;
 		    csigmask = ocsigmask;
@@ -280,7 +300,7 @@ execute(t, wanttty, pipein, pipeout)
 			ignint =
 			    (tpgrp == -1 &&
 			     (t->t_dflg & F_NOINTERRUPT))
-			    || gointr && eq(gointr, STRminus);
+			    || (gointr && eq(gointr, STRminus));
 		    pgrp = pcurrjob ? pcurrjob->p_jobid : getpid();
 		    child++;
 		    if (setintr) {
@@ -353,7 +373,7 @@ execute(t, wanttty, pipein, pipeout)
 	    break;
 	}
 	if (t->t_dtyp != NODE_PAREN) {
-	    doexec(t);
+	    doexec(NULL, t);
 	    /* NOTREACHED */
 	}
 	/*
@@ -361,7 +381,7 @@ execute(t, wanttty, pipein, pipeout)
 	 */
 	OLDSTD = dcopy(0, FOLDSTD);
 	SHOUT = dcopy(1, FSHOUT);
-	SHDIAG = dcopy(2, FSHDIAG);
+	SHERR = dcopy(2, FSHERR);
 	(void) close(SHIN);
 	SHIN = -1;
 	didfds = 0;
@@ -432,15 +452,69 @@ int i;
 {
     register Char **v;
 
-    if (v = gargv) {
+    if ((v = gargv) != NULL) {
 	gargv = 0;
 	xfree((ptr_t) v);
     }
-    if (v = pargv) {
+    if ((v = pargv) != NULL) {
 	pargv = 0;
 	xfree((ptr_t) v);
     }
     _exit(i);
+}
+
+/*
+ * Expand and glob the words after an i/o redirection.
+ * If more than one word is generated, then update the command vector.
+ *
+ * This is done differently in all the shells:
+ * 1. in the bourne shell and ksh globbing is not performed
+ * 2. Bash/csh say ambiguous
+ * 3. zsh does i/o to/from all the files
+ * 4. itcsh concatenates the words.
+ *
+ * I don't know what is best to do. I think that Ambiguous is better
+ * than restructuring the command vector, because the user can get
+ * unexpected results. In any case, the command vector restructuring 
+ * code is present and the user can choose it by setting noambiguous
+ */
+static Char *
+splicepipe(t, cp)
+    register struct command *t;
+    Char *cp;	/* word after < or > */
+{
+    Char *blk[2];
+
+    if (adrof(STRnoambiguous)) {
+	Char **pv;
+
+	blk[0] = Dfix1(cp); /* expand $ */
+	blk[1] = NULL;
+
+	gflag = 0, tglob(blk);
+	if (gflag) {
+	    pv = globall(blk);
+	    if (pv == NULL) {
+		setname(vis_str(blk[0]));
+		xfree((ptr_t) blk[0]);
+		stderror(ERR_NAME | ERR_NOMATCH);
+	    }
+	    gargv = NULL;
+	    if (pv[1] != NULL) { /* we need to fix the command vector */
+		Char **av = blkspl(t->t_dcom, &pv[1]);
+		xfree((ptr_t) t->t_dcom);
+		t->t_dcom = av;
+	    }
+	    xfree((ptr_t) blk[0]);
+	    blk[0] = pv[0];
+	    xfree((ptr_t) pv);
+	}
+    }
+    else {
+	blk[0] = globone(blk[1] = Dfix1(cp), G_ERROR);
+	xfree((ptr_t) blk[1]);
+    }
+    return(blk[0]);
 }
 
 /*
@@ -459,7 +533,7 @@ doio(t, pipein, pipeout)
     if (didfds || (flags & F_REPEAT))
 	return;
     if ((flags & F_READ) == 0) {/* F_READ already done */
-	if (cp = t->t_dlef) {
+	if (t->t_dlef) {
 	    char    tmp[MAXPATHLEN+1];
 
 	    /*
@@ -467,8 +541,8 @@ doio(t, pipein, pipeout)
 	     */
 	    (void) dcopy(SHIN, 0);
 	    (void) dcopy(SHOUT, 1);
-	    (void) dcopy(SHDIAG, 2);
-	    cp = globone(Dfix1(cp), G_IGNORE);
+	    (void) dcopy(SHERR, 2);
+	    cp = splicepipe(t, t->t_dlef);
 	    (void) strncpy(tmp, short2str(cp), MAXPATHLEN);
 	    tmp[MAXPATHLEN] = '\0';
 	    xfree((ptr_t) cp);
@@ -492,10 +566,10 @@ doio(t, pipein, pipeout)
 	    (void) ioctl(0, FIONCLEX, NULL);
 	}
     }
-    if (cp = t->t_drit) {
+    if (t->t_drit) {
 	char    tmp[MAXPATHLEN+1];
 
-	cp = globone(Dfix1(cp), G_IGNORE);
+	cp = splicepipe(t, t->t_drit);
 	(void) strncpy(tmp, short2str(cp), MAXPATHLEN);
 	tmp[MAXPATHLEN] = '\0';
 	xfree((ptr_t) cp);
@@ -503,7 +577,7 @@ doio(t, pipein, pipeout)
 	 * so > /dev/std{out,err} work
 	 */
 	(void) dcopy(SHOUT, 1);
-	(void) dcopy(SHDIAG, 2);
+	(void) dcopy(SHERR, 2);
 	if ((flags & F_APPEND) &&
 #ifdef O_APPEND
 	    (fd = open(tmp, O_WRONLY | O_APPEND)) >= 0);
@@ -537,7 +611,7 @@ doio(t, pipein, pipeout)
 	(void) dup(1);
     }
     else {
-	(void) dup(SHDIAG);
+	(void) dup(SHERR);
 	(void) ioctl(2, FIONCLEX, NULL);
     }
     didfds = 1;
@@ -566,7 +640,7 @@ chkclob(cp)
 
     if (stat(cp, &stb) < 0)
 	return;
-    if ((stb.st_mode & S_IFMT) == S_IFCHR)
+    if (S_ISCHR(stb.st_mode))
 	return;
     stderror(ERR_EXISTS, cp);
 }
