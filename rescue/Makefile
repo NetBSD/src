@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2004/08/19 23:12:15 christos Exp $
+#	$NetBSD: Makefile,v 1.11 2004/08/20 11:01:03 tron Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -27,12 +27,6 @@ PARSELISTENV+=	LDD_CMD=ldd_elf
 .else
 PARSELISTENV+=	LDD_CMD=ldd_aout
 .endif
-
-LIBOVERRIDE=	liboverride.o
-${LIBOVERRIDE}: ${OVERRIDEOBJS}
-	${LD} -r -o $@ ${OVERRIDEOBJS}
-
-${CRUNCHBIN}:	${LIBOVERRIDE}
 
 CLEANFILES+=	rescue.unstripped
 
