@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.22 2003/06/29 22:29:42 fvdl Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.23 2003/08/08 18:57:07 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.22 2003/06/29 22:29:42 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.23 2003/08/08 18:57:07 christos Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -71,7 +71,6 @@ void pecoff_load_section (struct exec_vmcmd_set *vcset, struct vnode *vp,
 int exec_pecoff_makecmds (struct proc *p, struct exec_package *epp);
 int exec_pecoff_coff_makecmds (struct proc *p, struct exec_package *epp,
 			       struct coff_filehdr *fp, int peofs);
-int exec_pecoff_setup_stack (struct proc *p, struct exec_package *epp);
 int exec_pecoff_prep_omagic (struct proc *p, struct exec_package *epp,
 			     struct coff_filehdr *fp,
 			     struct coff_aouthdr *ap, int peofs);
@@ -399,24 +398,6 @@ exec_pecoff_coff_makecmds(p, epp, fp, peofs)
 	return error;
 }
 
-int
-exec_pecoff_setup_stack(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
-	epp->ep_minsaddr = USRSTACK;
-	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
-		  ((epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr),
-		  epp->ep_maxsaddr, NULLVP, 0, VM_PROT_NONE);
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
-		  (epp->ep_minsaddr - epp->ep_ssize), NULLVP, 0,
-		  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-
-	return 0;
-}
-
 /*
  */
 int
@@ -543,5 +524,5 @@ exec_pecoff_prep_zmagic(p, epp, fp, ap, peofs)
 #endif
 
 	free(sh, M_TEMP);
-	return exec_pecoff_setup_stack(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(p, epp);
 }
