@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.35 2003/01/10 11:55:45 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.36 2003/04/11 19:57:06 grant Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.35 2003/01/10 11:55:45 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.36 2003/04/11 19:57:06 grant Exp $");
 #endif
 #endif
 
@@ -80,7 +80,7 @@ make_dist(const char *home, const char *pkg, const char *suffix, const package_t
 	args[nargs] = NULL;
 
 	if (Verbose)
-		printf("Creating gzip'd %s ball in '%s'\n", TAR_CMD, tball);
+		printf("Creating binary pkg '%s'\n", tball);
 
 	/* Set up a pipe for passing the filenames, and fork off a tar process. */
 	if (pipe(pipefds) == -1) {
