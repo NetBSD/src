@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.204 2000/03/16 23:41:31 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.205 2000/03/21 18:51:43 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.199 2000/03/16 23:36:44 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.200 2000/03/21 18:51:08 joda Exp 
  */
 
 /*
@@ -3586,6 +3586,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "V96DPC i960 (Dual) Host-PCI Bridge",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8371_HB,
+	    0,
+	    "VIA Technologies",
+	    "VT8371 (Apollo KX133) Host Bridge",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C505,
 	    0,
 	    "VIA Technologies",
@@ -3728,6 +3734,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT86C100A (Rhine-II) 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8371_PPB,
+	    0,
+	    "VIA Technologies",
+	    "VT8371 (Apollo KX133) PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C597AGP,

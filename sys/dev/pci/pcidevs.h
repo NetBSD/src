@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.206 2000/03/16 23:41:30 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.207 2000/03/21 18:51:43 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.199 2000/03/16 23:36:44 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.200 2000/03/21 18:51:08 joda Exp 
  */
 
 /*
@@ -1419,6 +1419,7 @@
 #define	PCI_PRODUCT_V3_V96DPC	0xC960		/* V96DPC i960 (Dual) Host-PCI Bridge */
 
 /* VIA Technologies products, from http://www.via.com.tw/ */
+#define	PCI_PRODUCT_VIATECH_VT8371_HB	0x0391		/* VT8371 (Apollo KX133) Host Bridge */
 #define	PCI_PRODUCT_VIATECH_VT82C505	0x0505		/* VT82C505 (Pluto) */
 #define	PCI_PRODUCT_VIATECH_VT82C561	0x0561		/* VT82C561 */
 #define	PCI_PRODUCT_VIATECH_VT82C586A_IDE	0x0571		/* VT82C586A IDE Controller */
@@ -1443,6 +1444,7 @@
 #define	PCI_PRODUCT_VIATECH_VT82C686A_SMB	0x3057		/* VT82C686A (Apollo KX133) SMBus Controller */
 #define	PCI_PRODUCT_VIATECH_VT82C686A_AUD	0x3058		/* VT82C686A (Apollo KX133) AC-97 Audio Controller */
 #define	PCI_PRODUCT_VIATECH_VT86C100A	0x6100		/* VT86C100A (Rhine-II) 10/100 Ethernet */
+#define	PCI_PRODUCT_VIATECH_VT8371_PPB	0x8391		/* VT8371 (Apollo KX133) PCI-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT82C597AGP	0x8597		/* VT82C597 (Apollo VP3) PCI-AGP */
 #define	PCI_PRODUCT_VIATECH_VT82C598AGP	0x8598		/* VT82C598 (Apollo MVP3) PCI-AGP */
 
