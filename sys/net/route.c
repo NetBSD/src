@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.34 2000/03/22 16:51:03 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.35 2000/03/23 07:03:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -105,6 +105,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
@@ -133,6 +134,8 @@ struct	sockaddr wildcard;	/* zero valued cookie for wildcard searches */
 
 struct pool rtentry_pool;	/* pool for rtentry structures */
 struct pool rttimer_pool;	/* pool for rttimer structures */
+
+struct callout rt_timer_ch; /* callout for rt_timer_timer() */
 
 void
 rtable_init(table)
@@ -675,7 +678,8 @@ rt_timer_init()
 	    0, NULL, NULL, M_RTABLE);
 
 	LIST_INIT(&rttimer_queue_head);
-	timeout(rt_timer_timer, NULL, hz);  /* every second */
+	callout_init(&rt_timer_ch);
+	callout_reset(&rt_timer_ch, hz, rt_timer_timer, NULL);
 	rt_init_done = 1;
 }
 
@@ -815,5 +819,5 @@ rt_timer_timer(arg)
 	}
 	splx(s);
 
-	timeout(rt_timer_timer, NULL, hz);  /* every second */
+	callout_reset(&rt_timer_ch, hz, rt_timer_timer, NULL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6var.h,v 1.4 1999/02/16 23:34:13 is Exp $	*/
+/*	$NetBSD: smc90cx6var.h,v 1.5 2000/03/23 07:01:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -52,6 +52,8 @@
 #ifndef _SMC90CX6VAR_H_
 #define _SMC90CX6VAR_H_
 
+#include <sys/callout.h>
+
 struct bah_softc {
 	struct	device		sc_dev;
 	struct	arccom		sc_arccom;	/* Common arcnet structures */
@@ -60,6 +62,7 @@ struct bah_softc {
 	void 	(*sc_reset)(struct bah_softc *, int);
 	void 	*sc_rxcookie;		/* softcallback cookies */
 	void	*sc_txcookie;
+	struct callout sc_recon_ch;
 	u_long	sc_recontime;		/* seconds only, I'm lazy */
 	u_long	sc_reconcount;		/* for the above */
 	u_long	sc_reconcount_excessive; /* for the above */

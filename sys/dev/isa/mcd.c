@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.65 2000/02/07 20:16:56 thorpej Exp $	*/
+/*	$NetBSD: mcd.c,v 1.66 2000/03/23 07:01:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -58,6 +58,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
@@ -119,6 +120,8 @@ struct mcd_softc {
 	struct	device sc_dev;
 	struct	disk sc_dk;
 	void *sc_ih;
+
+	struct callout sc_pintr_ch;
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
@@ -247,6 +250,7 @@ mcdattach(parent, self, aux)
 	}
 
 	BUFQ_INIT(&sc->buf_queue);
+	callout_init(&sc->sc_pintr_ch);
 
 	/*
 	 * Initialize and attach the disk structure.
@@ -1181,7 +1185,7 @@ mcdintr(arg)
 		mbx->state = MCD_S_WAITMODE;
 
 	case MCD_S_WAITMODE:
-		untimeout(mcd_pseudointr, sc);
+		callout_stop(&sc->sc_pintr_ch);
 		for (i = 20; i; i--) {
 			x = bus_space_read_1(iot, ioh, MCD_XFER);
 			if ((x & MCD_XF_STATUSUNAVAIL) == 0)
@@ -1219,7 +1223,7 @@ mcdintr(arg)
 		mbx->state = MCD_S_WAITREAD;
 
 	case MCD_S_WAITREAD:
-		untimeout(mcd_pseudointr, sc);
+		callout_stop(&sc->sc_pintr_ch);
 	nextblock:
 	loop:
 		for (i = 20; i; i--) {
@@ -1277,7 +1281,8 @@ mcdintr(arg)
 		printf("%s: sleep in state %d\n", sc->sc_dev.dv_xname,
 		    mbx->state);
 #endif
-		timeout(mcd_pseudointr, sc, hz / 100);
+		callout_reset(&sc->sc_pintr_ch, hz / 100,
+		    mcd_pseudointr, sc);
 		return -1;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.25 2000/02/12 19:12:52 thorpej Exp $	*/
+/*	$NetBSD: aha.c,v 1.26 2000/03/23 07:01:28 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -64,6 +64,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
@@ -384,7 +385,7 @@ AGAIN:
 			goto next;
 		}
 
-		untimeout(aha_timeout, ccb);
+		callout_stop(&ccb->xs->xs_callout);
 		aha_done(sc, ccb);
 
 	next:
@@ -491,6 +492,8 @@ aha_init_ccb(sc, ccb)
 {
 	bus_dma_tag_t dmat = sc->sc_dmat;
 	int hashnum, error;
+
+	callout_init(&ccb->xs->xs_callout);
 
 	/*
 	 * Create the DMA map for this CCB.
@@ -696,7 +699,8 @@ aha_start_ccbs(sc)
 		bus_space_write_1(iot, ioh, AHA_CMD_PORT, AHA_START_SCSI);
 
 		if ((ccb->xs->xs_control & XS_CTL_POLL) == 0)
-			timeout(aha_timeout, ccb, (ccb->timeout * hz) / 1000);
+			callout_reset(&ccb->xs->xs_callout,
+			    (ccb->timeout * hz) / 1000, aha_timeout, ccb);
 
 		++sc->sc_mbofull;
 		aha_nextmbx(wmbo, wmbx, mbo);

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365var.h,v 1.14 2000/02/26 17:24:44 thorpej Exp $	*/
+/*	$NetBSD: i82365var.h,v 1.15 2000/03/23 07:01:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,6 +30,7 @@
  */
 
 #include <sys/device.h>
+#include <sys/callout.h>
 #include <sys/lock.h>
 
 #include <dev/pcmcia/pcmciareg.h>
@@ -117,6 +118,9 @@ struct pcic_softc {
 	bus_space_handle_t memh;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
+
+	struct callout poll_ch;
+	int poll_established;
 
 	pcmcia_chipset_tag_t pct;
 

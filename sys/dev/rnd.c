@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.16 1999/06/12 10:58:47 pk Exp $	*/
+/*	$NetBSD: rnd.c,v 1.17 2000/03/23 07:01:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 #include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/rnd.h>
 #include <sys/vnode.h>
 #include <sys/pool.h>
@@ -135,6 +136,8 @@ static rndsource_t rnd_source_no_collect = {
 	(RND_FLAG_NO_COLLECT | RND_FLAG_NO_ESTIMATE | RND_TYPE_UNKNOWN),
 	NULL
 };
+
+struct callout rnd_callout = CALLOUT_INITIALIZER;
 
 void	rndattach __P((int));
 int	rndopen __P((dev_t, int, int, struct proc *));
@@ -861,7 +864,7 @@ rnd_add_uint32(rs, val)
 
 	if (rnd_timeout_pending == 0) {
 		rnd_timeout_pending = 1;
-		timeout(rnd_timeout, NULL, 1);
+		callout_reset(&rnd_callout, 1, rnd_timeout, NULL);
 	}
 
 	splx(s);

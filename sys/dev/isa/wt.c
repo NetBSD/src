@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.48 2000/02/08 18:40:51 thorpej Exp $	*/
+/*	$NetBSD: wt.c,v 1.49 2000/03/23 07:01:36 thorpej Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -52,6 +52,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/fcntl.h>
@@ -123,6 +124,8 @@ struct wt_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	isa_chipset_tag_t	sc_ic;
+
+	struct callout		sc_timer_ch;
 
 	enum wttype type;	/* type of controller */
 	int chan;		/* dma channel number, 1..3 */
@@ -241,6 +244,8 @@ wtattach(parent, self, aux)
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 	sc->sc_ic = ia->ia_ic;
+
+	callout_init(&sc->sc_timer_ch);
 
 	/* Try Wangtek. */
 	if (wtreset(iot, ioh, &wtregs)) {
@@ -972,7 +977,8 @@ wtclock(sc)
 	 * Some controllers seem to lose dma interrupts too often.  To make the
 	 * tape stream we need 1 tick timeout.
 	 */
-	timeout(wttimer, sc, (sc->flags & TPACTIVE) ? 1 : hz);
+	callout_reset(&sc->sc_timer_ch, (sc->flags & TPACTIVE) ? 1 : hz,
+	    wttimer, sc);
 }
 
 /*

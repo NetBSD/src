@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170var.h,v 1.3 1999/02/12 05:55:27 thorpej Exp $	*/
+/*	$NetBSD: smc83c170var.h,v 1.4 2000/03/23 07:01:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -39,6 +39,8 @@
 
 #ifndef _DEV_IC_SMC83C170VAR_H_
 #define _DEV_IC_SMC83C170VAR_H_
+
+#include <sys/callout.h>
 
 /*
  * Misc. definitions for the Standard Microsystems Corp. 83C170
@@ -106,6 +108,7 @@ struct epic_softc {
 	void *sc_sdhook;		/* shutdown hook */
 
 	struct mii_data sc_mii;		/* MII/media information */
+	struct callout sc_mii_callout;	/* MII callout */
 
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
 #define	sc_cddma	sc_cddmamap->dm_segs[0].ds_addr

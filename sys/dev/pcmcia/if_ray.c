@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.16 2000/03/10 05:47:42 onoe Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.17 2000/03/23 07:01:42 thorpej Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -54,6 +54,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -158,6 +159,12 @@ struct ray_softc {
 	void				*sc_pwrhook;
 	int				sc_resumeinit;
 	int				sc_resetloop;
+
+	struct callout			sc_check_ccs_ch;
+	struct callout			sc_check_scheduled_ch;
+	struct callout			sc_reset_resetloop_ch;
+	struct callout			sc_disable_ch;
+	struct callout			sc_start_join_timo_ch;
 
 	struct ray_ecf_startup		sc_ecf_startup;
 	struct ray_startup_params_head	sc_startup;
@@ -569,6 +576,12 @@ ray_attach(parent, self, aux)
 	sc->sc_countrycode = sc->sc_dcountrycode = RAY_PID_COUNTRY_CODE_DEFAULT;
 	sc->sc_resumeinit = 0;
 
+	callout_init(&sc->sc_check_ccs_ch);
+	callout_init(&sc->sc_check_scheduled_ch);
+	callout_init(&sc->sc_reset_resetloop_ch);
+	callout_init(&sc->sc_disable_ch);
+	callout_init(&sc->sc_start_join_timo_ch);
+
 	/*
 	 * attach the interface
 	 */
@@ -823,10 +836,10 @@ ray_stop(sc)
 {
 	RAY_DPRINTF(("%s: stop\n", sc->sc_xname));
 
-	untimeout(ray_check_ccs, sc);
+	callout_stop(&sc->sc_check_ccs_ch);
 	sc->sc_timocheck = 0;
 
-	untimeout(ray_check_scheduled, sc);
+	callout_stop(&sc->sc_check_scheduled_ch);
 	sc->sc_timoneed = 0;
 
 	if (sc->sc_repreq) {
@@ -853,15 +866,17 @@ ray_reset(sc)
 		if (sc->sc_resetloop == RAY_MAX_RESETS) {
 			printf("%s: unable to correct, disabling\n",
 			    sc->sc_xname);
-			untimeout(ray_reset_resetloop, sc);
-			timeout((void (*)(void *))ray_disable, sc, 1);
+			callout_stop(&sc->sc_reset_resetloop_ch);
+			callout_reset(&sc->sc_disable_ch, 1,
+			    (void (*)(void *))ray_disable, sc);
 		}
 	} else {
 		printf("%s: unexpected failure resetting hw [%d more]\n",
 		    sc->sc_xname, RAY_MAX_RESETS - sc->sc_resetloop);
-		untimeout(ray_reset_resetloop, sc);
+		callout_stop(&sc->sc_reset_resetloop_ch);
 		ray_init(sc);
-		timeout(ray_reset_resetloop, sc, 30 * hz);
+		callout_reset(&sc->sc_reset_resetloop_ch, 30 * hz,
+		    ray_reset_resetloop, sc);
 	}
 }
 
@@ -1663,7 +1678,7 @@ ray_check_scheduled(arg)
 	    sc->sc_xname, sc->sc_scheduled, sc->sc_running, RAY_ECF_READY(sc)));
 
 	if (sc->sc_timoneed) {
-		untimeout(ray_check_scheduled, sc);
+		callout_stop(&sc->sc_check_scheduled_ch);
 		sc->sc_timoneed = 0;
 	}
 
@@ -1743,13 +1758,15 @@ breakout:
 			/* give a chance for the interrupt to occur */
 			sc->sc_ccsinuse[i] = 2;
 			if (!sc->sc_timocheck) {
-				timeout(ray_check_ccs, sc, 1);
+				callout_reset(&sc->sc_check_ccs_ch, 1,
+				    ray_check_ccs, sc);
 				sc->sc_timocheck = 1;
 			}
 		} else if ((fp = ray_ccs_done(sc, ccs)))
 			(*fp)(sc);
 	} else {
-		timeout(ray_check_ccs, sc, RAY_CHECK_CCS_TIMEOUT);
+		callout_reset(&sc->sc_check_ccs_ch, RAY_CHECK_CCS_TIMEOUT,
+		    ray_check_ccs, sc);
 		sc->sc_timocheck = 1;
 	}
 	splx(s);
@@ -2102,7 +2119,8 @@ ray_set_pending(sc, cmdf)
 	sc->sc_scheduled |= cmdf;
 	if (!sc->sc_timoneed) {
 		RAY_DPRINTF(("%s: ray_set_pending new timo\n", sc->sc_xname));
-		timeout(ray_check_scheduled, sc, RAY_CHECK_SCHED_TIMEOUT);
+		callout_reset(&sc->sc_check_scheduled_ch,
+		    RAY_CHECK_SCHED_TIMEOUT, ray_check_scheduled, sc);
 		sc->sc_timoneed = 1;
 	}
 }
@@ -2158,7 +2176,7 @@ ray_cmd_cancel(sc, cmdf)
 
 	/* if nothing else needed cancel the timer */
 	if (sc->sc_scheduled == 0 && sc->sc_timoneed) {
-		untimeout(ray_check_scheduled, sc);
+		callout_stop(&sc->sc_check_scheduled_ch);
 		sc->sc_timoneed = 0;
 	}
 }
@@ -2179,7 +2197,8 @@ ray_cmd_ran(sc, cmdf)
 		sc->sc_running |= cmdf;
 
 	if ((cmdf & SCP_TIMOCHECK_CMD_MASK) && !sc->sc_timocheck) {
-		timeout(ray_check_ccs, sc, RAY_CHECK_CCS_TIMEOUT);
+		callout_reset(&sc->sc_check_ccs_ch, RAY_CHECK_CCS_TIMEOUT,
+		    ray_check_ccs, sc);
 		sc->sc_timocheck = 1;
 	}
 }
@@ -2214,7 +2233,7 @@ ray_cmd_done(sc, cmdf)
 			ray_cmd_schedule(sc, sc->sc_scheduled & SCP_UPD_MASK);
 	}
 	if ((sc->sc_running & SCP_TIMOCHECK_CMD_MASK) == 0 && sc->sc_timocheck){
-		untimeout(ray_check_ccs, sc);
+		callout_stop(&sc->sc_check_ccs_ch);
 		sc->sc_timocheck = 0;
 	}
 }
@@ -2591,7 +2610,8 @@ ray_start_join_net(sc)
 		SRAM_WRITE_FIELD_1(sc, ccs, ray_cmd_net, c_upd_param, 1);
 	}
 	if (ray_issue_cmd(sc, ccs, SCP_UPD_STARTJOIN))
-		timeout(ray_start_join_timo, sc, RAY_START_TIMEOUT);
+		callout_reset(&sc->sc_start_join_timo_ch, RAY_START_TIMEOUT,
+		    ray_start_join_timo, sc);
 }
 
 static void
@@ -2623,7 +2643,7 @@ ray_start_join_net_done(sc, cmd, ccs, stat)
 {
 	struct ray_net_params np;
 
-	untimeout(ray_start_join_timo, sc);
+	callout_stop(&sc->sc_start_join_timo_ch);
 	ray_cmd_done(sc, SCP_UPD_STARTJOIN);
 
 	if (stat == RAY_CCS_STATUS_FAIL) {
@@ -2633,7 +2653,8 @@ ray_start_join_net_done(sc, cmd, ccs, stat)
 	}
 	if (stat == RAY_CCS_STATUS_BUSY || stat == RAY_CCS_STATUS_FREE) {
 		/* handle the timeout condition */
-		timeout(ray_start_join_timo, sc, RAY_START_TIMEOUT);
+		callout_reset(&sc->sc_start_join_timo_ch, RAY_START_TIMEOUT,
+		    ray_start_join_timo, sc);
 
 		/* be safe -- not a lot occurs with no net though */
 		if (!RAY_ECF_READY(sc))

@@ -1,4 +1,4 @@
-/*	$NetBSD: essvar.h,v 1.16 2000/02/07 22:07:31 thorpej Exp $	*/
+/*	$NetBSD: essvar.h,v 1.17 2000/03/23 07:01:34 thorpej Exp $	*/
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 /*
-** @(#) $RCSfile: essvar.h,v $ $Revision: 1.16 $ (SHARK) $Date: 2000/02/07 22:07:31 $
+** @(#) $RCSfile: essvar.h,v $ $Revision: 1.17 $ (SHARK) $Date: 2000/03/23 07:01:34 $
 **
 **++
 **
@@ -62,6 +62,9 @@
 **
 **--
 */
+
+#include <sys/callout.h>
+
 #define ESS_DAC_PLAY_VOL	0
 #define ESS_MIC_PLAY_VOL	1
 #define ESS_LINE_PLAY_VOL	2
@@ -124,6 +127,9 @@ struct ess_softc
 	isa_chipset_tag_t sc_ic;
 	bus_space_tag_t sc_iot;		/* tag */
 	bus_space_handle_t sc_ioh;	/* handle */
+
+	struct callout sc_poll1_ch;	/* audio1 poll */
+	struct callout sc_poll2_ch;	/* audio2 poll */
 
 	int	sc_iobase;		/* I/O port base address */
 
