@@ -1,12 +1,11 @@
-/*	$NetBSD: uirda.c,v 1.5 2001/12/14 12:08:14 augustss Exp $	*/
+/*	$NetBSD: uirda.c,v 1.6 2001/12/14 13:07:33 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (lennart@augustsson.net) at
- * Carlstedt Research & Technology.
+ * by Lennart Augustsson (lennart@augustsson.net).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.5 2001/12/14 12:08:14 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.6 2001/12/14 13:07:33 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,6 +212,7 @@ struct uirda_softc {
 	int			sc_wr_addr;
 	usbd_xfer_handle	sc_wr_xfer;
 	usbd_pipe_handle	sc_wr_pipe;
+	int			sc_wr_hdr;
 
 	struct device		*sc_child;
 	struct irda_params	sc_params;
@@ -478,7 +478,11 @@ uirda_open(void *h, int flag, int mode, struct proc *p)
 	sc->sc_rd_err = 0;
 	sc->sc_params.speed = 0;
 	sc->sc_params.ebofs = 0;
-	sc->sc_params.maxsize = 0;
+	sc->sc_params.maxsize = IRDA_MAX_FRAME_SIZE;
+	sc->sc_wr_hdr = -1;
+
+	err = uirda_start_read(sc);
+	/* XXX check err */
 
 	return (0);
 
@@ -638,7 +642,7 @@ uirda_write(void *h, struct uio *uio, int flag)
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 
-	DPRINTF(("%s: sc=%p done\n", __FUNCTION__, sc));
+	DPRINTFN(1,("%s: sc=%p done\n", __FUNCTION__, sc));
 	return (error);
 }
 
@@ -698,10 +702,11 @@ uirda_set_params(void *h, struct irda_params *p)
 		/* no good value found */
 		return (EINVAL);
 	found1:
+		DPRINTF(("uirda_set_params: ebofs hdr=0x%02x\n", hdr));
 		;
 				
 	}
-	if (p->speed != sc->sc_params.speed) {
+	if (hdr != 0 || p->speed != sc->sc_params.speed) {
 		/* find speed */
 		mask = UGETW(sc->sc_irdadesc.wBaudRate);
 		for (i = 0; i < UIRDA_NSPEEDS; i++) {
@@ -714,6 +719,7 @@ uirda_set_params(void *h, struct irda_params *p)
 		/* no good value found */
 		return (EINVAL);
 	found2:
+		DPRINTF(("uirda_set_params: speed hdr=0x%02x\n", hdr));
 		;
 	}
 	if (p->maxsize != sc->sc_params.maxsize) {
@@ -751,25 +757,27 @@ uirda_set_params(void *h, struct irda_params *p)
 		lockmgr(&sc->sc_rd_buf_lk, LK_RELEASE, NULL);
 #endif
 	}
-	if (hdr != 0) {
+	if (hdr != 0 && hdr != sc->sc_wr_hdr) {
 		/* 
 		 * A change has occurred, transmit a 0 length frame with
 		 * the new settings.  The 0 length frame is not sent to the
 		 * device.
 		 */
-		DPRINTFN(1,("%s: sc=%p setting speed\n", __FUNCTION__, sc));
+		DPRINTF(("%s: sc=%p setting header 0x%02x\n",
+			 __FUNCTION__, sc, hdr));
+		sc->sc_wr_hdr = hdr;
 		lockmgr(&sc->sc_wr_buf_lk, LK_EXCLUSIVE, NULL);
 		sc->sc_wr_buf[0] = hdr;
 		n = 1;
 		err = usbd_bulk_transfer(sc->sc_wr_xfer, sc->sc_wr_pipe,
 			  USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
 			  UIRDA_WR_TIMEOUT, sc->sc_wr_buf, &n, "uirdast");
-		lockmgr(&sc->sc_wr_buf_lk, LK_RELEASE, NULL);
 		if (err) {
 			printf("%s: set failed, err=%d\n",
 			    USBDEVNAME(sc->sc_dev), err);
 			usbd_clear_endpoint_stall(sc->sc_wr_pipe);
 		}
+		lockmgr(&sc->sc_wr_buf_lk, LK_RELEASE, NULL);
 	}
 
 	sc->sc_params = *p;
