@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.73 2002/11/24 16:39:13 yamt Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.74 2002/12/17 14:37:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.73 2002/11/24 16:39:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.74 2002/12/17 14:37:49 yamt Exp $");
 
 #define LFS		/* for prototypes in syscallargs.h */
 
@@ -93,15 +93,11 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.73 2002/11/24 16:39:13 yamt Exp $
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
 
-/* Flags for return from lfs_fastvget */
-#define FVG_UNLOCK 0x01	  /* Needs to be unlocked */
-#define FVG_PUT	   0x02	  /* Needs to be vput() */
-
 /* Max block count for lfs_markv() */
 #define MARKV_MAXBLKCNT		65536
 
 struct buf *lfs_fakebuf(struct lfs *, struct vnode *, int, size_t, caddr_t);
-int lfs_fasthashget(dev_t, ino_t, int *, struct vnode **);
+int lfs_fasthashget(dev_t, ino_t, struct vnode **);
 
 int debug_cleaner = 0; 
 int clean_vnlocked = 0;
@@ -253,13 +249,13 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 #endif
 	ino_t lastino;
 	ufs_daddr_t b_daddr, v_daddr;
-	int cnt, error, lfs_fastvget_unlock;
+	int cnt, error;
 	int do_again = 0;
 	int s;
 #ifdef CHECK_COPYIN
 	int i;
 #endif /* CHECK_COPYIN */
-	int numlocked = 0, numrefed = 0;
+	int numrefed = 0;
 	ino_t maxino;
 	size_t obsize;
 
@@ -329,10 +325,6 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 				if (ip->i_flag & (IN_MODIFIED|IN_CLEANING))
 					iwritten++;
 #endif
-				if (lfs_fastvget_unlock) {
-					VOP_UNLOCK(vp, 0);
-					numlocked--;
-				}
 				lfs_vunref(vp);
 				numrefed--;
 			}
@@ -366,10 +358,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 					   &vp,
 					   (blkp->bi_lbn == LFS_UNUSED_LBN
 					    ? blkp->bi_bp
-					    : NULL),
-					   &lfs_fastvget_unlock);
-			if (lfs_fastvget_unlock)
-				numlocked++;
+					    : NULL));
 
 			if (!error) {
 				numrefed++;
@@ -522,13 +511,16 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		if (ip->i_flag & (IN_MODIFIED|IN_CLEANING))
 			iwritten++;
 #endif
-		if (lfs_fastvget_unlock) {
-			VOP_UNLOCK(vp, 0);
-			numlocked--;
-		}
 		lfs_vunref(vp);
 		numrefed--;
 	}
+	
+#ifdef DEBUG_LFS
+	printf("%d]",iwritten);
+	if (numrefed != 0) {
+		panic("lfs_markv: numrefed=%d", numrefed);
+	}
+#endif
 	
 	/*
 	 * The last write has to be SEGM_SYNC, because of calling semantics.
@@ -540,13 +532,6 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	
 	lfs_segunlock(fs);
 
-#ifdef DEBUG_LFS
-	printf("%d]",iwritten);
-	if (numlocked != 0 || numrefed != 0) {
-		panic("lfs_markv: numlocked=%d numrefed=%d", numlocked, numrefed);
-	}
-#endif
-	
 	vfs_unbusy(mntp);
 	if (error)
 		return (error);
@@ -557,10 +542,6 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	
  err2:
 	printf("lfs_markv err2\n");
-	if (lfs_fastvget_unlock) {
-		VOP_UNLOCK(vp, 0);
-		--numlocked;
-	}
 	lfs_vunref(vp);
 	--numrefed;
 
@@ -588,8 +569,8 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	lfs_segunlock(fs);
 	vfs_unbusy(mntp);
 #ifdef DEBUG_LFS
-	if (numlocked != 0 || numrefed != 0) {
-		panic("lfs_markv: numlocked=%d numrefed=%d", numlocked, numrefed);
+	if (numrefed != 0) {
+		panic("lfs_markv: numrefed=%d", numrefed);
 	}
 #endif
 
@@ -710,8 +691,8 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	struct vnode *vp;
 	ino_t lastino;
 	ufs_daddr_t v_daddr;
-	int cnt, error, need_unlock = 0;
-	int numlocked = 0, numrefed = 0;
+	int cnt, error;
+	int numrefed = 0;
 
 	lfs_cleaner_pid = p->p_pid;
 	
@@ -744,10 +725,6 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			 * v_daddr.
 			 */
 			if (v_daddr != LFS_UNUSED_DADDR) {
-				if (need_unlock) {
-					VOP_UNLOCK(vp, 0);
-					numlocked--;
-				}
 				lfs_vunref(vp);
 				numrefed--;
 			}
@@ -776,24 +753,9 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 				ip = VTOI(vp);
 				if (lfs_vref(vp)) {
 					v_daddr = LFS_UNUSED_DADDR;
-					need_unlock = 0;
 					continue;
 				}
 				numrefed++;
-				if (VOP_ISLOCKED(vp)) {
-#ifdef DEBUG_LFS
-					printf("lfs_bmapv: inode %d inlocked\n",ip->i_number);
-#endif
-					v_daddr = LFS_UNUSED_DADDR;
-					need_unlock = 0;
-					lfs_vunref(vp);
-					--numrefed;
-					continue;
-				} else {
-					vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-					need_unlock = FVG_UNLOCK;
-					numlocked++;
-				}
 			} else {
 				error = VFS_VGET(mntp, blkp->bi_inode, &vp);
 				if (error) {
@@ -801,11 +763,10 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 					printf("lfs_bmapv: vget of ino %d failed with %d",blkp->bi_inode,error);
 #endif
 					v_daddr = LFS_UNUSED_DADDR;
-					need_unlock = 0;
 					continue;
 				} else {
-					need_unlock = FVG_PUT;
-					numlocked++;
+					KASSERT(VOP_ISLOCKED(vp));
+					VOP_UNLOCK(vp, 0);
 					numrefed++;
 				}
 			}
@@ -855,18 +816,15 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	 * of a usable vnode in vp is signaled by a valid v_daddr.
 	 */
 	if (v_daddr != LFS_UNUSED_DADDR) {
-		if (need_unlock) {
-			VOP_UNLOCK(vp, 0);
-			numlocked--;
-		}
 		lfs_vunref(vp);
 		numrefed--;
 	}
 	
-	if (numlocked != 0 || numrefed != 0) {
-		panic("lfs_bmapv: numlocked=%d numrefed=%d", numlocked,
-		      numrefed);
+#ifdef DEBUG_LFS
+	if (numrefed != 0) {
+		panic("lfs_bmapv: numrefed=%d", numrefed);
 	}
+#endif
 	
 	vfs_unbusy(mntp);
 	
@@ -1037,19 +995,13 @@ sys_lfs_segwait(struct proc *p, void *v, register_t *retval)
  * processing IINFO structures, it may have the ondisk inode already, so
  * don't go retrieving it again.
  *
- * If we find the vnode on the hash chain, then it may be locked by another
- * process; so we set (*need_unlock) to zero.
- *
- * If we don't, we call ufs_ihashins, which locks the inode, and we set
- * (*need_unlock) to non-zero.
- *
- * In either case we lfs_vref, and it is the caller's responsibility to
- * lfs_vunref and VOP_UNLOCK (if necessary) when finished.
+ * we lfs_vref, and it is the caller's responsibility to lfs_vunref
+ * when finished.
  */
 extern struct lock ufs_hashlock;
 
 int
-lfs_fasthashget(dev_t dev, ino_t ino, int *need_unlock, struct vnode **vpp)
+lfs_fasthashget(dev_t dev, ino_t ino, struct vnode **vpp)
 {
 	struct inode *ip;
 
@@ -1072,20 +1024,6 @@ lfs_fasthashget(dev_t dev, ino_t ino, int *need_unlock, struct vnode **vpp)
 			clean_inlocked++;
 			return EAGAIN;
 		}
-		if (VOP_ISLOCKED(*vpp)) {
-#ifdef DEBUG_LFS
-			printf("lfs_fastvget: ino %d inlocked by pid %d\n",
-			       ip->i_number, (*vpp)->v_lock.lk_lockholder);
-#endif
-			clean_inlocked++;
-#ifdef LFS_EAGAIN_FAIL
-			lfs_vunref(*vpp);
-			return EAGAIN;
-#endif /* LFS_EAGAIN_FAIL */
-		} else {
-			vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
-			*need_unlock |= FVG_UNLOCK;
-		}
 	} else
 		*vpp = NULL;
 
@@ -1093,7 +1031,7 @@ lfs_fasthashget(dev_t dev, ino_t ino, int *need_unlock, struct vnode **vpp)
 }
 
 int
-lfs_fastvget(struct mount *mp, ino_t ino, ufs_daddr_t daddr, struct vnode **vpp, struct dinode *dinp, int *need_unlock)
+lfs_fastvget(struct mount *mp, ino_t ino, ufs_daddr_t daddr, struct vnode **vpp, struct dinode *dinp)
 {
 	struct inode *ip;
 	struct dinode *dip;
@@ -1107,7 +1045,6 @@ lfs_fastvget(struct mount *mp, ino_t ino, ufs_daddr_t daddr, struct vnode **vpp,
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
 	fs = ump->um_lfs;
-	*need_unlock = 0;
 
 	/*
 	 * Wait until the filesystem is fully mounted before allowing vget
@@ -1122,7 +1059,7 @@ lfs_fastvget(struct mount *mp, ino_t ino, ufs_daddr_t daddr, struct vnode **vpp,
 	 * if we trash something.
 	 */
 
-	error = lfs_fasthashget(dev, ino, need_unlock, vpp);
+	error = lfs_fasthashget(dev, ino, vpp);
 	if (error != 0 || *vpp != NULL)
 		return (error);
 
@@ -1132,7 +1069,7 @@ lfs_fastvget(struct mount *mp, ino_t ino, ufs_daddr_t daddr, struct vnode **vpp,
 	}
 
 	do {
-		error = lfs_fasthashget(dev, ino, need_unlock, vpp);
+		error = lfs_fasthashget(dev, ino, vpp);
 		if (error != 0 || *vpp != NULL) {
 			ungetnewvnode(vp);
 			return (error);
@@ -1242,7 +1179,8 @@ lfs_fastvget(struct mount *mp, ino_t ino, ufs_daddr_t daddr, struct vnode **vpp,
 	ip->i_devvp = ump->um_devvp;
 	VREF(ip->i_devvp);
 	*vpp = vp;
-	*need_unlock |= FVG_PUT;
+	KASSERT(VOP_ISLOCKED(vp));
+	VOP_UNLOCK(vp, 0);
 
 	uvm_vnp_setsize(vp, ip->i_ffs_size);
 
