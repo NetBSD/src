@@ -1,4 +1,4 @@
-/*	$NetBSD: ascmagic.c,v 1.19 2002/07/09 14:59:53 pooka Exp $	*/
+/*	$NetBSD: ascmagic.c,v 1.20 2002/07/10 16:15:53 pooka Exp $	*/
 
 /*
  * ASCII magic -- file types that we know based on keywords
@@ -51,12 +51,9 @@
 #if 0
 FILE_RCSID("@(#)Id: ascmagic.c,v 1.32 2002/07/03 18:26:37 christos Exp ")
 #else
-__RCSID("$NetBSD: ascmagic.c,v 1.19 2002/07/09 14:59:53 pooka Exp $");
+__RCSID("$NetBSD: ascmagic.c,v 1.20 2002/07/10 16:15:53 pooka Exp $");
 #endif
 #endif	/* lint */
-
-			/* an optimisation over plain strcmp() */
-#define	STREQ(a, b)	(*(a) == *(b) && strcmp((a), (b)) == 0)
 
 typedef unsigned long unichar;
 
