@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.21 2001/06/18 13:47:18 onoe Exp $	*/
+/*	$NetBSD: lance.c,v 1.22 2001/06/19 07:19:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -580,12 +580,16 @@ lance_ioctl(ifp, cmd, data)
 
 #if defined(CCITT) && defined(LLC)
 	case SIOCSIFCONF_X25:
+	    {
+		struct ifaddr *ifa = (struct ifaddr *) data;
+
 		ifp->if_flags |= IFF_UP;
 		ifa->ifa_rtrequest = cons_rtrequest; /* XXX */
 		error = x25_llcglue(PRC_IFUP, ifa->ifa_addr);
 		if (error == 0)
 			lance_init(&sc->sc_ethercom.ec_if);
 		break;
+	    }
 #endif /* CCITT && LLC */
 
 	case SIOCADDMULTI:
