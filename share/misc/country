@@ -1,4 +1,4 @@
-# $NetBSD: country,v 1.8 2002/02/26 13:20:22 kleink Exp $
+# $NetBSD: country,v 1.8.2.1 2002/12/07 22:08:17 he Exp $
 #
 # ISO 3166-1 Country Codes
 #
@@ -8,7 +8,7 @@
 # Further information can be found at the ISO 3166 Maintenance Agency
 # (ISO 3166/MA) web site,
 # <http://www.iso.org/iso/en/prods-services/iso3166ma/index.html>.
-# This list is up-to-date as of 2002-02-20.
+# This list is up-to-date as of 2002-05-20.
 #
 Afghanistan	AF	AFG	004
 Albania	AL	ALB	008
@@ -71,7 +71,7 @@ Denmark	DK	DNK	208
 Djibouti	DJ	DJI	262
 Dominica	DM	DMA	212
 Dominican Republic	DO	DOM	214
-East Timor	TP	TMP	626
+East Timor	TL	TLS	626
 Ecuador	EC	ECU	218
 Egypt	EG	EGY	818
 El Salvador	SV	SLV	222
@@ -136,7 +136,7 @@ Libyan Arab Jamahiriya	LY	LBY	434
 Liechtenstein	LI	LIE	438
 Lithuania	LT	LTU	440
 Luxembourg	LU	LUX	442
-Macau	MO	MAC	446
+Macao	MO	MAC	446
 Macedonia, the Former Yugoslav Republic of	MK	MKD	807
 Madagascar	MG	MDG	450
 Malawi	MW	MWI	454
