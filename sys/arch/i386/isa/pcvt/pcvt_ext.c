@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_ext.c,v 1.9 1995/06/23 01:33:43 jtc Exp $	*/
+/*	$NetBSD: pcvt_ext.c,v 1.10 1995/08/27 20:59:00 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Hellmuth Michaelis and Joerg Wunsch
@@ -2312,7 +2312,6 @@ usl_vt_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		case VT_FALSE:
 			/* process refuses to release screen; abort */
 			if(vt_switch_pending
-			   && vt_switch_pending - 1 == current_video_screen
 			   && (vsp->vt_status & VT_WAIT_REL)) {
 				vsp->vt_status &= ~VT_WAIT_REL;
 				vt_switch_pending = 0;
