@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vnode.h	7.39 (Berkeley) 6/27/91
- *	$Id: vnode.h,v 1.20 1994/05/18 05:12:55 cgd Exp $
+ *	$Id: vnode.h,v 1.21 1994/05/20 06:38:11 cgd Exp $
  */
 
 #ifndef _SYS_VNODE_H_
@@ -302,6 +302,15 @@ struct vnodeops {
 extern	struct vnode *rootvnode;	/* root (i.e. "/") vnode */
 extern	long desiredvnodes;		/* number of vnodes desired */
 extern	struct vattr va_null;		/* predefined null vattr structure */
+
+/*
+ * Macro/function to check for client cache inconsistency w.r.t. leasing.
+ * XXX Just no-ops for now.
+ */
+#define	LEASE_READ	0x1		/* Check lease for readers */
+#define	LEASE_WRITE	0x2		/* Check lease for modifiers */
+#define	LEASE_CHECK(vp, p, cred, flag)
+#define	LEASE_UPDATETIME(dt)
 
 int 	bdevvp __P((int dev, struct vnode **vpp));
 int 	cdevvp __P((int dev, struct vnode **vpp));
