@@ -1,4 +1,4 @@
-/* $NetBSD: semaphore.h,v 1.1 2003/01/20 20:09:50 christos Exp $ */
+/* $NetBSD: semaphore.h,v 1.2 2003/01/21 12:27:11 kleink Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #ifndef _SEMAPHORE_H_
 #define _SEMAPHORE_H_
 
@@ -45,6 +46,8 @@ typedef	struct _sem_st *sem_t;
 
 #define	SEM_FAILED	((sem_t *)0)
 #define	SEM_VALUE_MAX	(~0U)
+
+#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 int	 sem_close(sem_t *);
