@@ -1,4 +1,4 @@
-/*	$NetBSD: curs_set.c,v 1.1 2000/04/22 13:29:01 blymn Exp $	*/
+/*	$NetBSD: curs_set.c,v 1.2 2000/04/23 14:17:32 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -32,7 +32,7 @@
 #include "curses.h"
 #include "curses_private.h"
 
-static int old_mode = 1; /* assume cursor normal on start */
+static int old_mode = 2; /* cursor is set to high vis on start */
 
 /*
  * curs_set --
