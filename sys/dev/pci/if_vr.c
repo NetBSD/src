@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.36 2000/09/13 14:00:48 tron Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.37 2000/09/13 16:40:15 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -159,7 +159,7 @@ static struct vr_type {
 } vr_devs[] = {
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3043,
 		"VIA VT3043 (Rhine) 10/100" },
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100A,
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6102,
 		"VIA VT6102 (Rhine II) 10/100" },
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100A,
 		"VIA VT86C100A (Rhine-II) 10/100" },
