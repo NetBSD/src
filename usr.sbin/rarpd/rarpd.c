@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.41 2001/01/11 01:43:25 lukem Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.42 2001/01/11 13:06:28 enami Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.41 2001/01/11 01:43:25 lukem Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.42 2001/01/11 13:06:28 enami Exp $");
 #endif
 
 
@@ -137,8 +137,6 @@ main(argc, argv)
 	int     argc;
 	char  **argv;
 {
-	extern char *__progname;
-
 	int     op;
 	char   *ifname, *hostname;
 
