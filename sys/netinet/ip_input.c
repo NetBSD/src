@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.60 1998/04/29 03:44:11 kml Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.61 1998/04/29 03:45:52 kml Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
 #define IPMTUDISC	0
 #endif
 #ifndef IPMTUDISCTIMEOUT
-#define IPMTUDISCTIMEOUT (1 * 60)	/* experimental short timeout value! */
+#define IPMTUDISCTIMEOUT (10 * 60)	/* as per RFC 1191 */
 #endif
 
 /*
