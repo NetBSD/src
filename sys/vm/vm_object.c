@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.c,v 1.50 1997/09/08 21:23:22 pk Exp $	*/
+/*	$NetBSD: vm_object.c,v 1.51 1997/09/10 18:26:33 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 Charles M. Hannum.  All rights reserved.
@@ -1343,7 +1343,6 @@ RetryRename:
 			 * Call the pager to retrieve the data, if any.
 			 */
 			cnt.v_pageins++;
-			/* XXX - Again, we keep `object' locked here. */
 			rv = vm_pager_get(backing_object->pager, backing_page,
 			    TRUE);
 
