@@ -1,4 +1,4 @@
-/* $NetBSD: if_skreg.h,v 1.1 2003/08/26 21:11:00 jdolecek Exp $ */
+/* $NetBSD: if_skreg.h,v 1.2 2003/08/26 21:14:08 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
  * $FreeBSD: /c/ncvs/src/sys/pci/if_skreg.h,v 1.9 2000/04/22 02:16:37 wpaul Exp $
+ * $FreeBSD: /c/ncvs/src/sys/pci/xmaciireg.h,v 1.3 2000/04/22 02:16:37 wpaul Exp $
  */
 
 /*
