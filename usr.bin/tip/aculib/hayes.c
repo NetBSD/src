@@ -1,6 +1,8 @@
+/*	$NetBSD: hayes.c,v 1.3 1994/12/08 09:31:42 jtc Exp $	*/
+
 /*
- * Copyright (c) 1983 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,10 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)hayes.c	5.4 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: hayes.c,v 1.2 1993/08/01 18:06:57 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)hayes.c	8.1 (Berkeley) 6/6/93";
+#endif
+static char rcsid[] = "$NetBSD: hayes.c,v 1.3 1994/12/08 09:31:42 jtc Exp $";
 #endif /* not lint */
 
 /*

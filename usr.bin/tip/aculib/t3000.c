@@ -1,3 +1,5 @@
+/*	$NetBSD: t3000.c,v 1.2 1994/12/08 09:31:45 jtc Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +34,10 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)t3000.c	8.1 (Berkeley) 6/6/93";
+#endif
+static char rcsid[] = "$NetBSD: t3000.c,v 1.2 1994/12/08 09:31:45 jtc Exp $";
 #endif /* not lint */
 
 /*

@@ -1,6 +1,8 @@
+/*	$NetBSD: time.c,v 1.5 1994/12/08 09:36:59 jtc Exp $	*/
+
 /*
- * Copyright (c) 1987, 1988 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1987, 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +34,16 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1987, 1988 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1987, 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)time.c	4.9 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: time.c,v 1.4 1993/08/27 22:30:47 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 6/6/93";
+#endif
+static char rcsid[] = "$NetBSD: time.c,v 1.5 1994/12/08 09:36:59 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
