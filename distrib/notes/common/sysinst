@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.13 2000/11/02 08:14:56 mbw Exp $
+.\"	$NetBSD: sysinst,v 1.14 2000/11/02 16:40:45 mbw Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@ for the installation and as such covers many details to be completed.
 Do not let this discourage you, the install program is not hard
 to use.
 .
-.if !\n[news68k]:\n[pmax]:\n[sparc]:\n[x68k] \{\
+.if !\n[macppc]:\n[news68k]:\n[pmax]:\n[sparc]:\n[x68k] \{\
 .It
 .Em Possible Tn PCMCIA Em issues
 .Pp
@@ -221,7 +221,7 @@ We hope to provide a more elegant solution to this problem in a future
 .Nx
 release.
 .\} \" r_i386
-.\} \" ! \[news68k]:\n[pmax]:\n[x68k]
+.\} \" ! \n[macppc]:\[news68k]:\n[pmax]:\n[x68k]
 .It
 .Em General
 .Pp
@@ -427,14 +427,14 @@ Further information can be found on
 .Em Booting NetBSD
 .
 .
-.if !\n[news68k]:\n[pmax]:\n[sparc]:\n[x68k] \{\
+.if !\n[macppc]:\n[news68k]:\n[pmax]:\n[sparc]:\n[x68k] \{\
 .(pcmcia
 Unplug your
 .Tn PCMCIA
 devices, so that they won't be found by
 .Nx .
 .pcmcia)
-.\} \" !\n[news68k]:\n[pmax]:\n[sparc]:\n[x68k]
+.\} \" !\n[macppc]:\n[news68k]:\n[pmax]:\n[sparc]:\n[x68k]
 .ie \n[macppc]:\n[pmax]:\n[sparc] \{\
 .Pp
 Boot the system as desribed in the previous section.
@@ -550,12 +550,12 @@ you will be presented with a welcome message and a main menu.
 It will also include instructions for using the menus.
 .It
 .Em Network configuration
-.if !\n[news68k]:\n[pmax]:\n[sparc]:\n[x68k] \{\
+.if !\n[macppc]:\n[news68k]:\n[pmax]:\n[sparc]:\n[x68k] \{\
 .(pcmcia
 You can skip this section, as you will only get data
 from floppy in the first part of the install.
 .pcmcia)
-.\} \" ! \n[news68k]:\n[pmax]:\n[sparc]:\n[x68k]
+.\} \" ! \n[macppc]:\n[news68k]:\n[pmax]:\n[sparc]:\n[x68k]
 .Pp
 If you will not use network operation during the installation,
 but you do want your machine to be configured for networking once
