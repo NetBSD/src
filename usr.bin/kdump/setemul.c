@@ -1,4 +1,4 @@
-/*	$NetBSD: setemul.c,v 1.16 2003/10/19 07:34:38 christos Exp $	*/
+/*	$NetBSD: setemul.c,v 1.17 2003/11/15 23:10:31 manu Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: setemul.c,v 1.16 2003/10/19 07:34:38 christos Exp $");
+__RCSID("$NetBSD: setemul.c,v 1.17 2003/11/15 23:10:31 manu Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -139,6 +139,11 @@ __RCSID("$NetBSD: setemul.c,v 1.16 2003/10/19 07:34:38 christos Exp $");
 /* irix uses svr4 */
 #include "../../sys/compat/osf1/osf1_signo.c"
 #include "../../sys/compat/linux/common/linux_signo.c"
+
+/* For Mach services names in MMSG traces */
+#ifndef LETS_GET_SMALL
+#include "../../sys/compat/mach/mach_services_names.c"
+#endif
 
 #define NELEM(a) (sizeof(a) / sizeof(a[0]))
 
@@ -392,6 +397,29 @@ mach_lookup_emul(void)
 		if (strcmp("mach ppccalls", emul_idx->name) == 0)
 			mach_ppccalls = emul_idx;
 	}
-	if (mach == NULL || mach_fasttraps == NULL || mach_ppccalls == NULL)
+	if (mach == NULL || mach_fasttraps == NULL || mach_ppccalls == NULL) {
 		errx(1, "Cannot load mach emulations");
+		exit(1);
+	}
+	return;
+}
+
+/* 
+ * Find the name of the Mach service responsible to a given message Id
+ */
+const char *
+mach_service_name(id)
+	int id;
+{
+	const char *retval = NULL;
+#ifndef LETS_GET_SMALL
+	struct mach_service_name *srv;	
+
+	for (srv = mach_services_names; srv->srv_id; srv++)
+		if (srv->srv_id == id)
+			break;
+	retval = srv->srv_name;
+#endif /* LETS_GET_SMALL */
+
+	return retval;
 }
