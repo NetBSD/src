@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\"	$NetBSD: MAKEDEV.8,v 1.9 2000/12/05 21:25:36 wrstuden Exp $
+.\"	$NetBSD: MAKEDEV.8,v 1.10 2001/01/08 06:22:43 martin Exp $
 .\"
 .\" Copyright (c) 1995 Leo Weppelman
 .\" All rights reserved.
@@ -79,6 +79,8 @@ Devices needed for install floppies
 Standard devices
 .It Ar local
 Configuration specific devices
+.It Ar isdn
+Make ISDN devices
 .El
 .Pp
 The Atari supports the following devices.
@@ -149,6 +151,19 @@ UART on first 68901 (formerly mdm01)
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
 .Xr pty 4 
+. El
+.It ISDN devices:
+. Bl -tag -width 0123456789 -compact
+. It Ar i4b
+Comunication between userland isdnd and kernel
+. It Ar i4bctl
+Control device
+. It Ar i4brbch#
+Raw b-channel access
+. It Ar i4btel#
+Telephonie device
+. It Ar i4btrc#
+Trace device
 . El
 .It Special purpose devices:
 . Bl -tag -width 0123456789 -compact
