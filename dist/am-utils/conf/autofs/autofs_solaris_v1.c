@@ -1,8 +1,8 @@
-/*	$NetBSD: autofs_solaris_v1.c,v 1.1.1.2 2003/03/09 01:13:20 christos Exp $	*/
+/*	$NetBSD: autofs_solaris_v1.c,v 1.1.1.3 2004/11/27 01:00:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Ion Badulescu
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: autofs_solaris_v1.c,v 1.13 2002/12/27 22:43:54 ezk Exp
+ * Id: autofs_solaris_v1.c,v 1.22 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -53,6 +53,8 @@
 #endif /* HAVE_CONFIG_H */
 #include <am_defs.h>
 #include <amd.h>
+
+#ifdef HAVE_FS_AUTOFS
 
 /*
  * MACROS:
@@ -82,8 +84,8 @@ bool_t xdr_umntrequest(XDR *xdrs, umntrequest *objp);
 # ifndef HAVE_XDR_UMNTRES
 bool_t xdr_umntres(XDR *xdrs, umntres *objp);
 # endif /* not HAVE_XDR_UMNTRES */
-static int autofs_mount_1_req(struct mntrequest *mr, struct mntres *result, struct authunix_parms *cred);
-static int autofs_unmount_1_req(struct umntrequest *ur, struct umntres *result, struct authunix_parms *cred);
+static int autofs_mount_1_req(struct mntrequest *mr, struct mntres *result, struct authunix_parms *cred, SVCXPRT *transp);
+static int autofs_unmount_1_req(struct umntrequest *ur, struct umntres *result, struct authunix_parms *cred, SVCXPRT *transp);
 
 /****************************************************************************
  *** VARIABLES                                                            ***
@@ -183,14 +185,15 @@ xdr_umntres(XDR *xdrs, umntres *objp)
 static int
 autofs_mount_1_req(struct mntrequest *m,
 		   struct mntres *res,
-		   struct authunix_parms *cred)
+		   struct authunix_parms *cred,
+		   SVCXPRT *transp)
 {
   int err = 0;
   int isdirect = 0;
   am_node *mp, *ap;
   mntfs *mf;
 
-  dlog("MOUNT REQUEST: name=%s map=%s opts=%s path=%s\n",
+  dlog("MOUNT REQUEST: name=%s map=%s opts=%s path=%s",
        m->name, m->map, m->opts, m->path);
 
   /* find the effective uid/gid from RPC request */
@@ -230,7 +233,7 @@ out:
     }
   }
 
-  dlog("MOUNT REPLY: status=%d (%s)\n", err, strerror(err));
+  dlog("MOUNT REPLY: status=%d (%s)", err, strerror(err));
 
   res->status = err;
   return 0;
@@ -240,11 +243,13 @@ out:
 static int
 autofs_unmount_1_req(struct umntrequest *ul,
 		     struct umntres *res,
-		     struct authunix_parms *cred)
+		     struct authunix_parms *cred,
+		     SVCXPRT *transp)
 {
-  int i, err;
+  int mapno, err;
+  am_node *mp = NULL;
 
-  dlog("UNMOUNT REQUEST: dev=%lx rdev=%lx %s\n",
+  dlog("UNMOUNT REQUEST: dev=%lx rdev=%lx %s",
        (u_long) ul->devid,
        (u_long) ul->rdevid,
        ul->isdirect ? "direct" : "indirect");
@@ -252,30 +257,35 @@ autofs_unmount_1_req(struct umntrequest *ul,
   /* by default, and if not found, succeed */
   res->status = 0;
 
-  for (i = 0; i <= last_used_map; i++) {
-    am_node *mp = exported_ap[i];
-    if (mp && mp->am_dev == ul->devid &&
-	(ul->rdevid == 0 || mp->am_rdev == ul->rdevid)) {
-
-      /* save RPC context */
-      if (!mp->am_transp && current_transp) {
-	mp->am_transp = (SVCXPRT *) xmalloc(sizeof(SVCXPRT));
-	*(mp->am_transp) = *current_transp;
-      }
-
-      err = unmount_mp(mp);
-
-      if (err)
-	/* backgrounded, don't reply yet */
-	return 1;
-
-      if (exported_ap[i])
-	/* unmounting failed, tell the kernel */
-	res->status = 1;
-    }
+  for (mapno = 0; ; mapno++) {
+    mp = get_exported_ap(mapno);
+    if (!mp)
+      break;
+    if (mp->am_dev == ul->devid &&
+	(ul->rdevid == 0 || mp->am_rdev == ul->rdevid))
+      break;
   }
 
-  dlog("UNMOUNT REPLY: status=%d\n", res->status);
+  if (mp) {
+    /* save RPC context */
+    if (!mp->am_transp && transp) {
+      mp->am_transp = (SVCXPRT *) xmalloc(sizeof(SVCXPRT));
+      *(mp->am_transp) = *transp;
+    }
+
+    mapno = mp->am_mapno;
+    err = unmount_mp(mp);
+
+    if (err)
+      /* backgrounded, don't reply yet */
+      return 1;
+
+    if (get_exported_ap(mapno))
+      /* unmounting failed, tell the kernel */
+      res->status = 1;
+  }
+
+  dlog("UNMOUNT REPLY: status=%d", res->status);
   return 0;
 }
 
@@ -338,7 +348,7 @@ autofs_program_1(struct svc_req *rqstp, SVCXPRT *transp)
   }
 
   memset((char *)&result, 0, sizeof (result));
-  ret = (*local) (&argument, &result, rqstp);
+  ret = (*local) (&argument, &result, rqstp, transp);
 
   current_transp = NULL;
 
@@ -359,7 +369,7 @@ autofs_program_1(struct svc_req *rqstp, SVCXPRT *transp)
 }
 
 
-autofs_fh_t *
+int
 autofs_get_fh(am_node *mp)
 {
   autofs_fh_t *fh;
@@ -392,7 +402,8 @@ autofs_get_fh(am_node *mp)
   fh->opts = "";		/* XXX: arbitrary */
   fh->map = mp->am_path;	/* this is what we get back in readdir */
 
-  return fh;
+  mp->am_autofs_fh = fh;
+  return 0;
 }
 
 
@@ -400,19 +411,33 @@ void
 autofs_mounted(am_node *mp)
 {
   /* We don't want any timeouts on autofs nodes */
-  mp->am_ttl = NEVER;
+  mp->am_autofs_ttl = NEVER;
 }
 
 
 void
-autofs_release_fh(autofs_fh_t *fh)
+autofs_release_fh(am_node *mp)
 {
-  if (fh) {
+  autofs_fh_t *fh = mp->am_autofs_fh;
 #ifdef HAVE_AUTOFS_ARGS_T_ADDR
-    free(fh->addr.buf);
+  free(fh->addr.buf);
 #endif /* HAVE_AUTOFS_ARGS_T_ADDR */
-    XFREE(fh);
-  }
+  XFREE(fh);
+  mp->am_autofs_fh = NULL;
+}
+
+
+void
+autofs_get_mp(am_node *mp)
+{
+  /* nothing to do */
+}
+
+
+void
+autofs_release_mp(am_node *mp)
+{
+  /* nothing to do */
 }
 
 
@@ -421,6 +446,7 @@ autofs_add_fdset(fd_set *readfds)
 {
   /* nothing to do */
 }
+
 
 int
 autofs_handle_fdset(fd_set *readfds, int nsel)
@@ -450,17 +476,82 @@ destroy_autofs_service(void)
 
 
 int
-autofs_link_mount(am_node *mp)
+autofs_mount_fs(am_node *mp, mntfs *mf)
 {
-  int err;
-  mntfs *mf = mp->am_mnt;
+  int err = 0;
+  char *target, *target2 = NULL;
+  char *space_hack = autofs_strdup_space_hack(mp->am_path);
+  struct stat buf;
 
-  plog(XLOG_INFO, "autofs: converting from link to lofs (%s -> %s)", mp->am_path, mp->am_link);
-  if ((err = mkdirs(mf->mf_real_mount, 0555)))
+  if (mf->mf_flags & MFF_ON_AUTOFS) {
+    if ((err = mkdir(space_hack, 0555)))
+      goto out;
+  }
+
+  /*
+   * For sublinks, we could end up here with an already mounted f/s.
+   * Don't do anything in that case.
+   */
+  if (!(mf->mf_flags & MFF_MOUNTED))
+    err = mf->mf_ops->mount_fs(mp, mf);
+
+  if (err) {
+    if (mf->mf_flags & MFF_ON_AUTOFS)
+      rmdir(space_hack);
+    errno = err;
     goto out;
-  err = lofs_ops.mount_fs(mp, mf);
+  }
 
-out:
+  /*
+   * Autofs v1 doesn't support symlinks,
+   * so we ignore the CFM_AUTOFS_USE_LOFS flag
+   */
+  if (mf->mf_flags & MFF_ON_AUTOFS)
+    /* Nothing to do */
+    goto out;
+
+  if (mp->am_link)
+    target = mp->am_link;
+  else
+    target = mf->mf_mount;
+
+  if (target[0] != '/')
+    target2 = str3cat(NULL, mp->am_parent->am_path, "/", target);
+  else
+    target2 = strdup(target);
+
+  plog(XLOG_INFO, "autofs: converting from link to lofs (%s -> %s)", mp->am_path, target2);
+  /*
+   * we need to stat() the destination, because the bind mount does not
+   * follow symlinks and/or allow for non-existent destinations.
+   *
+   * WARNING: we will deadlock if this function is called from the master
+   * amd process and it happens to trigger another auto mount. Therefore,
+   * this function should be called only from a child amd process, or
+   * at the very least it should not be called from the parent unless we
+   * know for sure that it won't cause a recursive mount. We refuse to
+   * cause the recursive mount anyway if called from the parent amd.
+   */
+  if (!foreground) {
+    if ((err = stat(target2, &buf)))
+      goto out;
+  }
+  if ((err = lstat(target2, &buf)))
+    goto out;
+
+  if ((err = mkdir(space_hack, 0555)))
+    goto out;
+
+  if ((err = mount_lofs(mp->am_path, target2, mf->mf_mopts, 1))) {
+    errno = err;
+    goto out;
+  }
+
+ out:
+  free(space_hack);
+  if (target2)
+    free(target2);
+
   if (err)
     return errno;
   return 0;
@@ -468,10 +559,37 @@ out:
 
 
 int
-autofs_link_umount(am_node *mp)
+autofs_umount_fs(am_node *mp, mntfs *mf)
 {
-  mntfs *mf = mp->am_mnt;
-  return lofs_ops.umount_fs(mp, mf);
+  int err = 0;
+  char *space_hack = autofs_strdup_space_hack(mp->am_path);
+
+  /*
+   * Autofs v1 doesn't support symlinks,
+   * so we ignore the CFM_AUTOFS_USE_LOFS flag
+   */
+  if (!(mf->mf_flags & MFF_ON_AUTOFS)) {
+    err = UMOUNT_FS(mp->am_path, mnttab_file_name, 1);
+    if (err)
+      goto out;
+    rmdir(space_hack);
+  }
+
+  /*
+   * Multiple sublinks could reference this f/s.
+   * Don't actually unmount it unless we're holding the last reference.
+   */
+  if (mf->mf_refc == 1) {
+    if ((err = mf->mf_ops->umount_fs(mp, mf)))
+      goto out;
+
+    if (mf->mf_flags & MFF_ON_AUTOFS)
+      rmdir(space_hack);
+  }
+
+ out:
+  free(space_hack);
+  return err;
 }
 
 
@@ -527,6 +645,7 @@ autofs_mount_succeeded(am_node *mp)
 {
   SVCXPRT *transp = mp->am_transp;
   struct stat stb;
+  char *space_hack;
 
   if (transp) {
     /* this was a mount request */
@@ -543,17 +662,14 @@ autofs_mount_succeeded(am_node *mp)
     mp->am_transp = NULL;
   }
 
-  /*
-   * Store dev and rdev -- but not for symlinks
-   */
-  if (!mp->am_link) {
-    if (!lstat(mp->am_mnt->mf_real_mount, &stb)) {
-      mp->am_dev = stb.st_dev;
-      mp->am_rdev = stb.st_rdev;
-    }
-    /* don't expire the entries -- the kernel will do it for us */
-    mp->am_flags |= AMF_NOTIMEOUT;
+  space_hack = autofs_strdup_space_hack(mp->am_path);
+  if (!lstat(space_hack, &stb)) {
+    mp->am_dev = stb.st_dev;
+    mp->am_rdev = stb.st_rdev;
   }
+  free(space_hack);
+  /* don't expire the entries -- the kernel will do it for us */
+  mp->am_flags |= AMF_NOTIMEOUT;
 
   plog(XLOG_INFO, "autofs: mounting %s succeeded", mp->am_path);
 }
@@ -602,5 +718,7 @@ autofs_compute_mount_flags(mntent_t *mntp)
 void autofs_timeout_mp(am_node *mp)
 {
   /* We don't want any timeouts on autofs nodes */
-  mp->am_ttl = NEVER;
+  mp->am_autofs_ttl = NEVER;
 }
+
+#endif /* HAVE_FS_AUTOFS */

@@ -53,14 +53,4 @@
 @am_utils_nfs_hn_dref@
 /* End of included NFS_HN_DREF macro definition file */
 
-/*
- * The next line is a literal inclusion of a file which defines
- * necessary structures and functions for this system's flavor
- * of kernel-based autofs.
- * If it defines the wrong entry, check the AC_CHECK_AUTOFS_STYLE m4 macro
- * in $srcdir/m4/macros.
- */
-@am_utils_autofs_style@
-/* End of included AUTOFS_STYLE macro definition file */
-
 #endif /* not _AUX_CONF_H */

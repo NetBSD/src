@@ -1,7 +1,7 @@
-/*	$NetBSD: ops_pcfs.c,v 1.1.1.6 2003/03/09 01:13:16 christos Exp $	*/
+/*	$NetBSD: ops_pcfs.c,v 1.1.1.7 2004/11/27 01:00:40 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: ops_pcfs.c,v 1.13 2002/12/27 22:43:51 ezk Exp
+ * Id: ops_pcfs.c,v 1.18 2004/07/30 18:13:10 ezk Exp
  *
  */
 
@@ -74,7 +74,8 @@ am_ops pcfs_ops =
   0,				/* pcfs_readlink */
   0,				/* pcfs_mounted */
   0,				/* pcfs_umounted */
-  find_amfs_auto_srvr,
+  amfs_generic_find_srvr,
+  0,				/* pcfs_get_wchan */
   FS_MKMNT | FS_UBACKGROUND | FS_AMQINFO,	/* nfs_fs_flags */
 #ifdef HAVE_FS_AUTOFS
   AUTOFS_PCFS_FS_FLAGS,
@@ -103,7 +104,7 @@ pcfs_match(am_opts *fo)
 
 
 static int
-mount_pcfs(char *mntdir, char *real_mntdir, char *fs_name, char *opts, int on_autofs)
+mount_pcfs(char *mntdir, char *fs_name, char *opts, int on_autofs)
 {
   pcfs_args_t pcfs_args;
   mntent_t mnt;
@@ -139,6 +140,10 @@ mount_pcfs(char *mntdir, char *real_mntdir, char *fs_name, char *opts, int on_au
   pcfs_args.mask = 0777;	/* this may be the msdos file modes */
 #endif /* HAVE_PCFS_ARGS_T_MASK */
 
+#ifdef HAVE_PCFS_ARGS_T_DIRMASK
+  pcfs_args.dirmask = 0777;    /* this may be the msdos dir modes */
+#endif /* HAVE_PCFS_ARGS_T_DIRMASK */
+
 #ifdef HAVE_PCFS_ARGS_T_UID
   pcfs_args.uid = 0;		/* root */
 #endif /* HAVE_PCFS_ARGS_T_UID */
@@ -157,17 +162,17 @@ mount_pcfs(char *mntdir, char *real_mntdir, char *fs_name, char *opts, int on_au
   /*
    * Call generic mount routine
    */
-  return mount_fs2(&mnt, real_mntdir, flags, (caddr_t) & pcfs_args, 0, type, 0, NULL, mnttab_file_name);
+  return mount_fs(&mnt, flags, (caddr_t) & pcfs_args, 0, type, 0, NULL, mnttab_file_name, on_autofs);
 }
 
 
 static int
 pcfs_mount(am_node *am, mntfs *mf)
 {
+  int on_autofs = mf->mf_flags & MFF_ON_AUTOFS;
   int error;
 
-  error = mount_pcfs(mf->mf_mount, mf->mf_real_mount, mf->mf_info, mf->mf_mopts,
-		     am->am_flags & AMF_AUTOFS);
+  error = mount_pcfs(mf->mf_mount, mf->mf_info, mf->mf_mopts, on_autofs);
   if (error) {
     errno = error;
     plog(XLOG_ERROR, "mount_pcfs: %m");
@@ -181,5 +186,6 @@ pcfs_mount(am_node *am, mntfs *mf)
 static int
 pcfs_umount(am_node *am, mntfs *mf)
 {
-  return UMOUNT_FS(mf->mf_mount, mf->mf_real_mount, mnttab_file_name);
+  int on_autofs = mf->mf_flags & MFF_ON_AUTOFS;
+  return UMOUNT_FS(mf->mf_mount, mnttab_file_name, on_autofs);
 }

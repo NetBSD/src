@@ -1,4 +1,155 @@
-# -*- text -*-
+*** Notes specific to am-utils version 6.1b5pre
+
+- minor new ports:
+	i386-pc-linux-fc2 (Fedora Core 2).
+	i386-pc-linux-suse8.2
+	i386-pc-linux-suse9.1
+	i386-pc-solaris2.10
+	i386-unknown-freebsd4.10
+	i386-unknown-freebsd4.8
+	i386-unknown-freebsd4.9
+	i386-unknown-freebsd5.1 (5.1-RELEASE)
+	i386-unknown-freebsd5.2 (5.2-RELEASE)
+	i386-unknown-freebsd5.2.1 (5.2.1-RELEASE)
+	mipsel-unknown-linux-rhPS2 (Linux on Sony PlayStation 2)
+	sparc-sun-solaris2.10
+	sparc64-unknown-linux-deb3.0
+	x86_64-unknown-linux-rh2.9.5AS
+
+- new amd.conf parameter "nfs_allow_insecure_port".  Used to work around
+  bugs in certain kernels, which cause them to try and talk to amd from
+  unprivileged ports.
+
+- new amd.conf parameter: localhost_address.  Used to override the localhost
+  (often 127.0.0.1) address Amd uses to connect to for the local NFS server
+  and RPC server.
+
+- fully support WebNFS as per RFC 2054.  It now tries v3/TCP first, falling
+  back to v2/UDP if this doesn't work.  The "webnfs" pseudo-mount options
+  has been renamed (again) to "public" to match Solaris 2.
+
+- restructured the restarting of already-mounted filesystems, in the process
+  also fixing a problem with restarting nfsx components
+
+- support escaped slashes, needed for SMB mounts.  Use '\\\/\\\/' in a
+  string to get a double slash.
+
+- bugs fixed:
+	* various memory management problems (leaks, etc)
+	* fixed nfsx support
+	* fixed a race involving late replies to network queries which
+	  arrive after the file system has already been mounted
+	* recognize pcfs_args_t fields in FreeBSD 5
+	* recognize other mount types in pawd: host, linkx, and nfsx
+	* allow exactly one of umount and unmount in type:=program
+	* race condition between calls to mntctl() on AIX
+
+*** Notes specific to am-utils version 6.1b4
+
+- minor new ports:
+	i686-apple-darwin6.6
+
+- speed up the recovery of inherited (restarted) filesystems by using the
+  proper waiting channels
+
+- added support for mounting webnfs filesystems, see entry below. It doesn't
+  do any probing currently, so it will default to v2/UDP unless another
+  version and/or protocol are explicitly specified.
+
+- pseudo-mount option "ignore_portmapper" renamed to "webnfs"
+
+- bugs fixed:
+	* properly time out autofs filesystems on Linux
+	* link mounts with relative targets weren't working on autofs
+	* the link side of the nfsl file system wasn't working on autofs
+	* umount code was accidentally turning all symlinks into directories
+	  during attempted umounts, causing stale filehandles
+	* various minor build fixes for "impossible" configurations
+	* prevent ldap code from dereferencing a null pointer
+
+*** Notes specific to am-utils version 6.1b3
+
+- new amd.conf option autofs_use_lofs, set by default to "yes".  "yes" means
+  using in-place mounts (lofs, bind mounts, etc.), thus utilizing one of
+  Autofs's main advantages.  "no" means using symlinks instead, which has
+  the "/bin/pwd" problem and certain efficiency issues on Solaris 2.6+ and
+  is also not supported on Solaris Autofs v1 and derivatives; however, the
+  autofs code that uses symlinks is simpler and more thoroughly tested.
+
+- new amd.conf option map_default (can be used in [global] and overwritten
+  in the per-map section).  This will overwrite the /defaults entry of the
+  map itself, to allow people to set defaults in amd.conf (useful when you
+  cannot control your amd maps, or you'd rather not modify them globally).
+
+- for type:=program, you can use either unmount:=XXX or umount:=XXX (but not
+  both).  This new 'unmount' name is an alias for convenience.
+
+- fixed the "multiple matching sub-entries in a map entry" semantics to try
+  mounting those sub-entries one by one, until either one succeeds or all
+  fail.  The old semantics of trying to mount everything in parallel and use
+  the one that mounted fastest hasn't worked in a long time; in fact, 6.0
+  currently simply ignores all but the first matching sub-entry.
+
+- made amd fail much faster (instantly, in fact) if the remote server
+  doesn't have a functional portmapper or NFS service.  Also reduced the
+  total timeout to 3 seconds for a completely downed server.
+
+- new pseudo-mount option "ignore_portmapper"; not very useful currently,
+  will make more sense when we also accept hard-coded ports for mountd and
+  nfsd.
+
+- amd will no longer query the portmapper for all possible NFS versions and
+  protocols if the user requested to use specific ones.
+
+- increased the major number for the library, so that 6.0 and 6.1 can't
+  share libraries anymore.
+
+- support tcpd/libwrap tcpwrappers.  If your system supports libwrap, then
+  you can use /etc/hosts.allow and /etc/hosts.deny to control remote Amq
+  access to Amd.  The new amd.conf parameter use_tcpwrappers is set to "yes"
+  by default.
+
+- support NULL entries in Hesiod maps, if they start with a ".".
+
+- code reorganization
+
+- documentation cleanup, corrections, and general updates.  Better
+  references to all man pages.  Support newer texi2html.  Proper building of
+  DVI and PSI files.  Allow building of am-utils manual in one long Web
+  page.
+
+- minor new ports:
+
+	ia64-unknown-linux-rh2.1AS (Red Hat Itanium Advanced Server)
+	i386-unknown-freebsd5.0 (5.0-RELEASE)
+	sparc64-unknown-linux-suse7.3
+	i386-unknown-netbsdelf1.6.1
+	i386-unknown-openbsd3.3
+	i386-pc-solaris2.9
+
+- bugs fixed:
+
+	* autofs mode on Linux was segfaulting on a silly error (and noone
+	  complained, which proves that I'm probably the only one testing
+	  these beta releases, tsk tsk).
+	* fixed handling of host entries over autofs.
+	* fixed handling of nfsl entries over autofs.
+	* the matching in find_mntfs() was causing problems for inherited
+	  filesystems, so make an exception for them. Tighten the
+	  matching even more, to take into account the f/s type as well.
+	* recognize xlatecookie mnttab option on netbsd
+	* document Solaris lex bug (use flex)
+	* document AIX 5.x NFS bug (need patch)
+	* document Solaris 8 autofs version change (need to fix system
+	  header file)
+	* ensure lex doesn't run out of output slots
+	* support GNU flex-2.5.31+
+	* force version.texi to be rebuilt unconditionally
+	* mk-amd-map open db file exclusively (security)
+	* turn off maintainer-only rules in distros
+	* don't core dump if log_file is NULL (Solaris)
+	* don't include malloc.h if stdlib.h exists
+	* recognize file system failures (EIO) upon reading file maps
 
 *** Notes specific to am-utils version 6.1b2
 
@@ -26,7 +177,7 @@
 - bugs fixed:
 
 	* redundancy mode (multiple servers for the same share) wasn't working
-	* non-autofs mode had some rather nasty hangs on downed fileservers
+	* non-autofs mode had some rather nasty hangs on downed file servers
 	* double-free'ing problem in assign_error_mntfs and free_continuation
 	* free'ing non-malloc'ed memory in amfs_auto_mount
 	* late server ping replies were not ignored
@@ -525,7 +676,7 @@ the functions compute_nfs_args() and compute_automounter_nfs_args().
 - bugs fixed:
 	mnttab name ufs/cdfs/pcfs/etc filesystems corrected
 	use pmap_ping for amq (a must for secure portmappers, bsdi2/3)
-	test for xfs (irix) as a disk-based filesystem
+	test for xfs (irix) as a disk-based file system
 	set correct nfs_prot headers for Solaris 2.5
 	removed stale code from lostaltmail.in
 	lostaltmail will look for conf file in multiple locations
@@ -942,11 +1093,11 @@ used anywhere were removed.
 	--enable-libs[=ARG]
 		configure/compile with ARG (-L/-l) library flags
 
-- filesystem, mount table entries, and mount type tests can now look in
+- file system, mount table entries, and mount type tests can now look in
 /lib/modules and /proc/filesystems for statically/dyadically loadable kernel
 modules (linux)
 
-- prefer vfat over msdos/pc/etc filesystem for PCFS.
+- prefer vfat over msdos/pc/etc file system for PCFS.
 
 - moved all fixed headers to include/am_defs.  Left only #define/#undef
 entries in aux/acconfig.h.

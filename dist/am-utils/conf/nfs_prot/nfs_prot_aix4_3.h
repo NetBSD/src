@@ -1,7 +1,7 @@
-/*	$NetBSD: nfs_prot_aix4_3.h,v 1.1.1.6 2003/03/09 01:13:24 christos Exp $	*/
+/*	$NetBSD: nfs_prot_aix4_3.h,v 1.1.1.7 2004/11/27 01:00:54 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: nfs_prot_aix4_3.h,v 1.9 2002/12/27 22:43:58 ezk Exp
+ * Id: nfs_prot_aix4_3.h,v 1.11 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -225,18 +225,6 @@ typedef writeargs	nfswriteargs;
  */
 #ifdef MNT_NFS3
 
-#define FHSIZE3 64		/* size in bytes of a file handle (v3) */
-#define	NFS3_FHSIZE 64
-#define	MOUNTVERS3 ((unsigned long)(3))
-#define	NFS_V3 ((unsigned long)(3))
-
-#if 0
-struct nfs_fh3 {
-  u_int len;
-  char val[64];			/* !!! */
-};
-#endif
-
 struct aix42_nfs_args {
   struct sockaddr_in addr;	/* server address and port */
   caddr_t u0;			/* ??? UNKNOWN ??? */
@@ -285,53 +273,6 @@ struct aix42_nfs_args_bis {
   unsigned long u14;		/* ??? UNKNOWN ??? */
   struct pathcnf *pathconf;	/* pathconf */
 };
-
-typedef struct {
-  u_int fhandle3_len;
-  char *fhandle3_val;
-} fhandle3;
-
-enum mountstat3 {
-  MNT3_OK = 0,
-  MNT3ERR_PERM = 1,
-  MNT3ERR_NOENT = 2,
-  MNT3ERR_IO = 5,
-  MNT3ERR_ACCES = 13,
-  MNT3ERR_NOTDIR = 20,
-  MNT3ERR_INVAL = 22,
-  MNT3ERR_NAMETOOLONG = 63,
-  MNT3ERR_NOTSUPP = 10004,
-  MNT3ERR_SERVERFAULT = 10006
-};
-typedef enum mountstat3 mountstat3;
-
-struct mountres3_ok {
-  fhandle3 fhandle;
-  struct {
-    u_int auth_flavors_len;
-    int *auth_flavors_val;
-  } auth_flavors;
-};
-typedef struct mountres3_ok mountres3_ok;
-
-struct mountres3 {
-  mountstat3 fhs_status;
-  union {
-    mountres3_ok mountinfo;
-  } mountres3_u;
-};
-typedef struct mountres3 mountres3;
-
-struct nfs_fh3 {
-  u_int fh3_length;
-  union nfs_fh3_u {
-    struct nfs_fh3_i {
-      fhandle_t fh3_i;
-    } nfs_fh3_i;
-    char data[NFS3_FHSIZE];
-  } fh3_u;
-};
-typedef struct nfs_fh3 nfs_fh3;
 
 #endif /* MNT_NFS3 */
 

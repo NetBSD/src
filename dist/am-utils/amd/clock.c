@@ -1,7 +1,7 @@
-/*	$NetBSD: clock.c,v 1.1.1.6 2003/03/09 01:13:09 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.1.1.7 2004/11/27 01:00:39 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: clock.c,v 1.10 2002/12/27 22:43:48 ezk Exp
+ * Id: clock.c,v 1.13 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -65,8 +65,8 @@ void reschedule_timeouts(time_t now, time_t then);
 typedef struct callout callout;
 struct callout {
   callout *c_next;		/* List of callouts */
-  void (*c_fn) (voidp);		/* Function to call */
-  voidp c_closure;		/* Closure to pass to call */
+  callout_fun *c_fn;		/* Function to call */
+  opaque_t c_arg;		/* Argument to pass to call */
   time_t c_time;		/* Time of call */
   int c_id;			/* Unique identifier */
 };
@@ -87,7 +87,7 @@ time_t next_softclock;		/* Time of next call to softclock() */
 /*
  * Global assumption: valid id's are non-zero.
  */
-#define	CID_ALLOC(struct )	(++callout_id)
+#define	CID_ALLOC()		(++callout_id)
 #define	CID_UNDEF		(0)
 
 
@@ -121,10 +121,10 @@ free_callout(callout *cp)
 /*
  * Schedule a callout.
  *
- * (*fn)(closure) will be called at clocktime() + secs
+ * (*fn)(fn_arg) will be called at clocktime() + secs
  */
 int
-timeout(u_int secs, void (*fn) (voidp), voidp closure)
+timeout(u_int secs, callout_fun *fn, opaque_t fn_arg)
 {
   callout *cp, *cp2;
   time_t t = clocktime() + secs;
@@ -133,10 +133,10 @@ timeout(u_int secs, void (*fn) (voidp), voidp closure)
    * Allocate and fill in a new callout structure
    */
   callout *cpnew = alloc_callout();
-  cpnew->c_closure = closure;
+  cpnew->c_arg = fn_arg;
   cpnew->c_fn = fn;
   cpnew->c_time = t;
-  cpnew->c_id = CID_ALLOC(struct );
+  cpnew->c_id = CID_ALLOC();
 
   if (t < next_softclock)
     next_softclock = t;
@@ -217,7 +217,7 @@ softclock(void)
      */
     while ((cp = callouts.c_next) && cp->c_time <= now) {
       /*
-       * Extract first from list, save fn & closure and
+       * Extract first from list, save fn & fn_arg and
        * unlink callout from list and free.
        * Finally call function.
        *
@@ -226,12 +226,12 @@ softclock(void)
        * function will call timeout()
        * and try to allocate a callout
        */
-      void (*fn) (voidp) = cp->c_fn;
-      voidp closure = cp->c_closure;
+      callout_fun *fn = cp->c_fn;
+      opaque_t fn_arg = cp->c_arg;
 
       callouts.c_next = cp->c_next;
       free_callout(cp);
-      (*fn) (closure);
+      (*fn) (fn_arg);
     }
 
   } while (task_notify_todo);
