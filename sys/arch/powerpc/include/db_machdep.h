@@ -1,5 +1,5 @@
 /*	$OpenBSD: db_machdep.h,v 1.2 1997/03/21 00:48:48 niklas Exp $	*/
-/*	$NetBSD: db_machdep.h,v 1.14 2002/12/20 15:23:13 scw Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.15 2003/01/22 21:44:54 kleink Exp $	*/
 
 /* 
  * Mach Operating System
@@ -54,6 +54,7 @@ struct powerpc_saved_state {
 	u_int32_t	ctr;
 	u_int32_t	cr;
 	u_int32_t	xer;
+	u_int32_t	mq;
 	u_int32_t	dear;
 	u_int32_t	esr;
 	u_int32_t	pid;

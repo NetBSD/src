@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.8 2003/01/19 02:43:12 matt Exp $
+#	$NetBSD: genassym.cf,v 1.9 2003/01/22 21:44:55 kleink Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -59,6 +59,7 @@ define	FRAME_DAR	offsetof(struct trapframe, dar)
 define	FRAME_DSISR	offsetof(struct trapframe, dsisr)
 define	FRAME_EXC	offsetof(struct trapframe, exc)
 define	FRAME_VRSAVE	offsetof(struct trapframe, vrsave)
+define	FRAME_MQ	offsetof(struct trapframe, mq)
 
 define	IFRAMELEN		IFRAMELEN
 define	IFRAME_R1		offsetof(struct intrframe, r1)
