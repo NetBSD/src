@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.27 2003/03/18 16:40:19 matt Exp $	*/
+/*	$NetBSD: bus.h,v 1.28 2003/07/28 07:58:49 scw Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -104,8 +104,6 @@
 #ifndef _BEBOX_BUS_H_
 #define _BEBOX_BUS_H_
 
-#include <powerpc/bus.h>
-
 /*
  * Values for the Be bus space tag, not to be used directly by MI code.
  */
@@ -126,5 +124,7 @@ extern struct powerpc_bus_space bebox_mem_bs_tag;
 extern struct powerpc_bus_space bebox_isa_io_bs_tag;
 extern struct powerpc_bus_space bebox_isa_mem_bs_tag;
 #endif
+
+#include <powerpc/bus.h>
 
 #endif /* _BEBOX_BUS_H_ */
