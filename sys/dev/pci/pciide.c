@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.14 1998/11/09 09:21:09 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.15 1998/11/11 19:38:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -172,6 +172,7 @@ int  pciide_dma_table_setup __P((struct pciide_softc*, int, int));
 int  pciide_dma_init __P((void*, int, int, void *, size_t, int));
 void pciide_dma_start __P((void*, int, int, int));
 int  pciide_dma_finish __P((void*, int, int, int));
+void pciide_print_modes __P((struct pciide_softc *));
 
 struct pciide_product_desc {
     u_int32_t ide_product;
@@ -499,8 +500,11 @@ pciide_attach(parent, self, aux)
 				sc->sc_wdcdev.dma_finish = pciide_dma_finish;
 			}
 		}
-		printf("\n");
+	} else {
+		printf("%s: pciide0: hardware does not support DMA",
+		    sc->sc_wdcdev.sc_dev.dv_xname);
 	}
+	printf("\n");
 	sc->sc_pp->setup_cap(sc);
 	sc->sc_wdcdev.channels = sc->wdc_channels;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
@@ -814,15 +818,14 @@ default_setup_chip(sc, pc, tag)
 			if (pciide_dma_table_setup(sc, channel, drive) != 0) {
 				/* Abort DMA setup */
 				printf("%s:%d:%d: can't allocate DMA maps, "
-				    "using PIO transferts\n",
+				    "using PIO transfers\n",
 				    sc->sc_wdcdev.sc_dev.dv_xname,
 				    channel, drive);
 				drvp->drive_flags &= ~DRIVE_DMA;
 			}
-			printf("%s:%d:%d: using DMA mode %d\n",
+			printf("%s:%d:%d: using DMA data tranferts\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname,
-			    channel, drive,
-			    drvp->DMA_mode);
+			    channel, drive);
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 		}
 		if (idedma_ctl != 0) {
@@ -1002,15 +1005,8 @@ end:		/*
 			if ((drvp[drive].drive_flags & DRIVE) == 0)
 				continue;
 			idetim |= piix_setup_idetim_drvs(&drvp[drive]);
-			printf("%s(%s:%d:%d): using PIO mode %d",
-			    drvp[drive].drv_softc->dv_xname,
-			    sc->sc_wdcdev.sc_dev.dv_xname,
-			    channel, drive, drvp[drive].PIO_mode);
-			if (drvp[drive].drive_flags & DRIVE_DMA) {
+			if (drvp[drive].drive_flags & DRIVE_DMA)
 				idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
-				printf(", DMA mode %d", drvp[drive].DMA_mode);
-			}
-			printf("\n");
 		}
 		if (idedma_ctl != 0) {
 			/* Add software bits in status register */
@@ -1019,6 +1015,7 @@ end:		/*
 			    idedma_ctl);
 		}
 	}
+	pciide_print_modes(sc);
 	WDCDEBUG_PRINT(("piix_setup_chip: idetim=0x%x, sidetim=0x%x\n",
 	    idetim, sidetim), DEBUG_PROBE);
 	pci_conf_write(pc, tag, PIIX_IDETIM, idetim);
@@ -1110,15 +1107,6 @@ pio:			/* use PIO mode */
 				idetim =PIIX_IDETIM_SET(idetim,
 				    PIIX_IDETIM_SITRE, channel);
 			}
-			printf("%s(%s:%d:%d): using PIO mode %d",
-			    drvp->drv_softc->dv_xname,
-			    sc->sc_wdcdev.sc_dev.dv_xname,
-			    channel, drive, drvp->PIO_mode);
-			if (drvp->drive_flags & DRIVE_DMA)
-			    printf(", DMA mode %d", drvp->DMA_mode);
-			if (drvp->drive_flags & DRIVE_UDMA)
-			    printf(", UDMA mode %d", drvp->UDMA_mode);
-			printf("\n");
 		}
 		if (idedma_ctl != 0) {
 			/* Add software bits in status register */
@@ -1128,6 +1116,7 @@ pio:			/* use PIO mode */
 		}
 	}
 
+	pciide_print_modes(sc);
 	WDCDEBUG_PRINT(("piix3_4_setup_chip: idetim=0x%x, sidetim=0x%x",
 	    idetim, sidetim), DEBUG_PROBE);
 	if (sc->sc_wdcdev.cap & WDC_CAPABILITY_UDMA) {
@@ -1341,15 +1330,6 @@ pio:			/* setup PIO mode */
 				apollo_pio_rec[mode]);
 			drvp->PIO_mode = mode;
 			drvp->DMA_mode = mode - 2;
-			printf("%s(%s:%d:%d): using PIO mode %d",
-			    drvp->drv_softc->dv_xname,
-			    sc->sc_wdcdev.sc_dev.dv_xname,
-			    channel, drive, drvp->PIO_mode);
-			if (drvp[drive].drive_flags & DRIVE_DMA)
-			    printf(", DMA mode %d", drvp->DMA_mode);
-			if (drvp->drive_flags & DRIVE_UDMA)
-			    printf(", UDMA mode %d", drvp->UDMA_mode);
-			printf("\n");
 		}
 		if (idedma_ctl != 0) {
 			/* Add software bits in status register */
@@ -1358,6 +1338,7 @@ pio:			/* setup PIO mode */
 			    idedma_ctl);
 		}
 	}
+	pciide_print_modes(sc);
 	WDCDEBUG_PRINT(("apollo_setup_chip: APO_DATATIM=0x%x, APO_UDMA=0x%x\n",
 	    datatim_reg, udmatim_reg), DEBUG_PROBE);
 	pci_conf_write(pc, tag, APO_DATATIM, datatim_reg);
@@ -1737,4 +1718,33 @@ pciide_dma_finish(v, channel, drive, flags)
 	}
 
 	return 0;
+}
+
+void
+pciide_print_modes(sc)
+	struct pciide_softc *sc;
+{
+	int channel, drive;
+	struct channel_softc *chp;
+	struct ata_drive_datas *drvp;
+
+	for (channel = 0; channel < PCIIDE_NUM_CHANNELS; channel++) {
+		chp = &sc->wdc_channels[channel];
+		for (drive = 0; drive < 2; drive++) {
+			drvp = &chp->ch_drive[drive];
+			if ((drvp->drive_flags & DRIVE) == 0)
+				continue;
+			printf("%s(%s:%d:%d): using PIO mode %d",
+			    drvp->drv_softc->dv_xname,
+			    sc->sc_wdcdev.sc_dev.dv_xname,
+			    channel, drive, drvp->PIO_mode);
+			if (drvp->drive_flags & DRIVE_DMA)
+				printf(", DMA mode %d", drvp->DMA_mode);
+			if (drvp->drive_flags & DRIVE_UDMA)
+				printf(", Ultra-DMA mode %d", drvp->UDMA_mode);
+			if (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA))
+				printf(" (using DMA data transfers)");
+			printf("\n");
+		}
+	}
 }

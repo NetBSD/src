@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.6 1998/10/13 15:18:46 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.7 1998/11/11 19:38:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -426,11 +426,11 @@ wdc_ata_bio_intr(chp, xfer)
 			 * IDE drives deassert WDCS_BSY before trasfert is
 			 * complete when using DMA. Polling for DRQ to deassert
 			 * is not enouth DRQ is not required to be
-			 * asserted for DMA transferts, so poll for DRDY.
+			 * asserted for DMA transfers, so poll for DRDY.
 			 */
 			if (wdcwait(chp, WDCS_DRDY | WDCS_DRQ, WDCS_DRDY,
 			    ATA_DELAY) < 0) {
-				printf("%s:%d:%d: polled transfert timed out "
+				printf("%s:%d:%d: polled transfer timed out "
 				    "(st=0x%x)\n", chp->wdc->sc_dev.dv_xname,
 				    chp->channel, xfer->drive, chp->ch_status);
 				ata_bio->error = TIMEOUT;
