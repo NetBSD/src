@@ -1,4 +1,4 @@
-.\" $NetBSD: compat_osf1.8,v 1.9 2003/03/30 21:32:37 wiz Exp $
+.\" $NetBSD: compat_osf1.8,v 1.10 2003/05/01 14:01:39 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,7 +46,8 @@ supports running OSF/1 (a.k.a Digital Unix, a.k.a. Tru64) binaries on
 .Nx Ns Tn /alpha
 systems.
 Most programs should work, including the ones that use the shared object
-libraries. Programs that make direct MACH system calls will not work.
+libraries.
+Programs that make direct MACH system calls will not work.
 The OSF/1 compatibility feature is active for kernels compiled with the
 .Dv COMPAT_OSF1
 option enabled (see
@@ -71,7 +72,8 @@ and if that file does not exist it will then try
 Shared libraries and configuration specific to OSF/1 should be installed
 in the shadow tree.
 .Ss Setting up /emul/osf1
-The simple technique is to install pkgsrc/emulators/osf1_lib. (You may
+The simple technique is to install pkgsrc/emulators/osf1_lib.
+(You may
 also want to install pkgsrc/www/navigator and/or pkgsrc/www/communicator.)
 .Pp
 Alternatively, if you have access to an OSF/1 machine and if the licensing
@@ -114,7 +116,8 @@ your
 .Xr resolv.conf 5
 must contain a
 .Li search
-line. Without one of those, the OSF/1 resolver will die and no hostname
+line.
+Without one of those, the OSF/1 resolver will die and no hostname
 resolution will be possible.
 .Pp
 Certain values in
@@ -123,4 +126,5 @@ can cause programs to fail with
 .Dq Bad system call .
 .Pp
 Pathnames pointed to by symbolic links are not looked up in the
-shadow root when running a OSF/1 executable. This is not consistent.
+shadow root when running an OSF/1 executable.
+This is not consistent.
