@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.19.2.4 1998/05/08 17:19:29 mycroft Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.19.2.5 1998/09/28 01:17:05 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -301,6 +301,7 @@ zstty_attach(parent, self, aux)
 	printf("\n");
 
 	tp = ttymalloc();
+	tp->t_dev = dev;
 	tp->t_oproc = zsstart;
 	tp->t_param = zsparam;
 	tp->t_hwiflow = zshwiflow;
