@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: linkfarm.sh,v 1.1.2.5 2003/07/14 13:49:58 jlam Exp $
+# $NetBSD: linkfarm.sh,v 1.1.2.6 2003/07/14 22:54:51 jlam Exp $
 
 #
 # Copyright (c) 2002 Alistair G. Crooks.  All rights reserved.
@@ -120,10 +120,9 @@ yes)
 		if [ -e $target/$newf ]; then
 			ignore=no
 			for i in $ignorefiles; do
-				if [ $i = $newf ]; then
-					ignore=yes
-					break
-				fi
+				case $newf in
+				$i)	ignore=yes; break ;;
+				esac
 			done
 			case $ignore in
 			no)	
@@ -143,10 +142,9 @@ yes)
 		newf=`echo $f | $sedprog -e 's|^\./||'`
 		ignore=no
 		for i in $ignorefiles; do
-			if [ $i = $newf ]; then
-				ignore=yes
-				break
-			fi
+			case $newf in
+			$i)	ignore=yes; break ;;
+			esac
 		done
 		case $ignore in
 		no)	
@@ -183,10 +181,9 @@ yes)
 		newf=`echo $f | $sedprog -e 's|^\./||'`
 		ignore=no
 		for i in $ignorefiles; do
-			if [ $i = $newf ]; then
-				ignore=yes
-				break
-			fi
+			case $newf in
+			$i)	ignore=yes; break ;;
+			esac
 		done
 		case $ignore in
 		no)

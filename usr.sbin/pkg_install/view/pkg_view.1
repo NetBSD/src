@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_view.1,v 1.1.2.3 2003/07/14 22:53:13 jlam Exp $
+.\"	$NetBSD: pkg_view.1,v 1.1.2.4 2003/07/14 22:54:51 jlam Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -120,12 +120,13 @@ can be overridden by specifying an alternative directory in the
 .Ev PKG_DBDIR
 environment variable.
 .It Ev PLIST_IGNORE_FILES
-This can be used to specify the files in
+This can be used to specify shell glob patterns to match files in
 .Ar package
 that should ignored when adding or removing the package from
 .Ar view .
 .Ev PLIST_IGNORE_FILES
-is a space-separated list of pathnames relative to the
+is a space-separated list of shell glob patterns that match files relative
+to the
 .Ar package
 directory.
 .It Ev PKG_VIEW
