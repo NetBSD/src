@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: podulelist2h.awk,v 1.2 1998/01/05 21:10:18 perry Exp $
+#	$NetBSD: podulelist2h.awk,v 1.3 1998/01/08 01:04:44 thorpej Exp $
 #	from: devlist2h.awk,v 1.2 1996/01/22 21:08:09 cgd Exp
 #
 # Copyright (c) 1996 Mark Brinicombe
@@ -44,7 +44,6 @@ NR == 1 {
 	printf(" * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.\n") \
 	    > dfile
 	printf(" *\n") > dfile
-	printf(" * \$NetBSD\$\n") > dfile
 	printf(" * generated from:\n") > dfile
 	printf(" *\t%s\n", VERSION) > dfile
 	printf(" */\n") > dfile
@@ -53,7 +52,6 @@ NR == 1 {
 	printf(" * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.\n") \
 	    > hfile
 	printf(" *\n") > hfile
-	printf(" * \$NetBSD\$\n") > hfile
 	printf(" * generated from:\n") > hfile
 	printf(" *\t%s\n", VERSION) > hfile
 	printf(" */\n") > hfile
