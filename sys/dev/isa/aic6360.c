@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.18 1994/11/29 21:29:56 mycroft Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.19 1994/11/29 21:35:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -2159,9 +2159,10 @@ aicintr(aic)
 			 */
 			if (aic->state == AIC_SELECTING) {
 				AIC_MISC(("backoff selector  "));
+				AIC_ASSERT(aic->nexus != NULL);
+				acb = aic->nexus;
 				aic->nexus = NULL;
-				TAILQ_INSERT_HEAD(&aic->ready_list, aic->nexus,
-				    chain);
+				TAILQ_INSERT_HEAD(&aic->ready_list, acb, chain);
 			}
 
 			/*
