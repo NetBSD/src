@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.8 1998/02/22 15:40:39 christos Exp $	*/
+/*	$NetBSD: externs1.h,v 1.9 2000/07/06 01:09:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -49,6 +49,7 @@ extern	int	tflag;
 extern	int	uflag;
 extern	int	vflag;
 extern	int	yflag;
+extern	int	wflag;
 extern	int	zflag;
 
 extern	void	norecover __P((void));
@@ -113,6 +114,7 @@ extern	int	nerr;
 extern	int	sytxerr;
 extern	const	char *msgs[];
 
+extern	void	msglist __P((void));
 extern	void	error __P((int, ...));
 extern	void	warning __P((int, ...));
 extern	void	message __P((int, ...));
