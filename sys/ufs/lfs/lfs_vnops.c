@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_vnops.c,v 1.43 2000/07/05 22:25:44 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.44 2000/09/09 04:49:55 perseant Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -331,6 +331,12 @@ static int lfs_set_dirop(vp)
 	int error;
 
 	fs = VTOI(vp)->i_lfs;
+	/*
+	 * We might need one directory block plus supporting indirect blocks,
+	 * plus an inode block and ifile page for the new vnode.
+	 */
+	if ((error = lfs_reserve(fs, vp, fsbtodb(fs, NIADDR + 3))) != 0)
+		return (error);
 	if (fs->lfs_dirops == 0)
 		lfs_check(vp, LFS_UNUSED_LBN, 0);
 	while (fs->lfs_writer || lfs_dirvcount > LFS_MAXDIROP) {
@@ -345,10 +351,15 @@ static int lfs_set_dirop(vp)
 
 		if(lfs_dirvcount > LFS_MAXDIROP) {		
 #ifdef DEBUG_LFS
-			printf("lfs_set_dirop: sleeping with dirops=%d, dirvcount=%d\n",fs->lfs_dirops,lfs_dirvcount); 
+			printf("lfs_set_dirop: sleeping with dirops=%d, "
+			       "dirvcount=%d\n", fs->lfs_dirops,
+			       lfs_dirvcount); 
 #endif
-			if((error = tsleep(&lfs_dirvcount, PCATCH|PUSER, "lfs_maxdirop", 0)) !=0)
+			if((error = tsleep(&lfs_dirvcount, PCATCH|PUSER,
+					   "lfs_maxdirop", 0)) !=0) {
+				lfs_reserve(fs, vp, -fsbtodb(fs, NIADDR + 3));
 				return error;
+			}
 		}							
 	}								
 	++fs->lfs_dirops;						
@@ -367,6 +378,7 @@ static int lfs_set_dirop(vp)
 		wakeup(&(fs)->lfs_writer);				\
 		lfs_check((vp),LFS_UNUSED_LBN,0);			\
 	}								\
+	lfs_reserve(fs, vp, -fsbtodb(fs, NIADDR + 3)); /* XXX */	\
 }
 
 #define	MARK_VNODE(dvp)  do {                                           \

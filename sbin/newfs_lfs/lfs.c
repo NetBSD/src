@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.16 2000/07/04 22:35:05 perseant Exp $	*/
+/*	$NetBSD: lfs.c,v 1.17 2000/09/09 04:49:56 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.16 2000/07/04 22:35:05 perseant Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.17 2000/09/09 04:49:56 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -313,6 +313,7 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size, minfreeseg)
 	lfsp->lfs_size = partp->p_size >> lfsp->lfs_fsbtodb;
 	lfsp->lfs_dsize = lfsp->lfs_size - (LFS_LABELPAD >> lfsp->lfs_bshift);
 	lfsp->lfs_nseg = lfsp->lfs_dsize / lfsp->lfs_ssize;
+
 	lfsp->lfs_nclean = lfsp->lfs_nseg - 1;
 	lfsp->lfs_maxfilesize = maxtable[lfsp->lfs_bshift] << lfsp->lfs_bshift;
 	if (minfreeseg == 0)
@@ -326,18 +327,21 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size, minfreeseg)
 	   || lfsp->lfs_nseg < LFS_MIN_SBINTERVAL + 1)
 	{
 		if(seg_size == 0 && ssize > (bsize<<1)) {
-			if(!warned_segtoobig)
-				fprintf(stderr,"Segment size %d is too large; trying smaller sizes...\n", ssize);
+			if(!warned_segtoobig) {
+				fprintf(stderr,"Segment size %d is too large; trying smaller sizes.\n", ssize);
+				if (ssize == (bsize << 16)) {
+					fprintf(stderr, "(Did you perhaps accidentally leave \"16\" in the disklabel's sgs field?)\n");
+				}
+			}
 			++warned_segtoobig;
 			ssize >>= 1;
 			goto tryagain;
 		}
-		fatal("Could not allocate enough segments with segment size %d and block size %d; please decrease the segment size.\n",
+		fatal("Could not allocate enough segments with segment size %d and block size %d;\nplease decrease the segment size.\n",
 			ssize, lfsp->lfs_bsize);
 	}
-	/* Inform them of success */
-	if(warned_segtoobig)
-		fprintf(stderr,"Using segment size %d\n", ssize);
+
+	printf("Using %d segments of size %d\n", lfsp->lfs_nseg, ssize);
 
 	/* 
 	 * The number of free blocks is set from the number of segments
@@ -347,12 +351,11 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size, minfreeseg)
 	 * and segment usage table, and half a block per segment that can't
 	 * be written due to fragmentation.
 	 */
-	lfsp->lfs_dsize = fsbtodb(lfsp, (lfsp->lfs_nseg -
-					 lfsp->lfs_minfreeseg) *
-				  lfsp->lfs_ssize);
-	lfsp->lfs_dsize -= fsbtodb(lfsp, lfsp->lfs_nseg / 2);
+	lfsp->lfs_dsize = (lfsp->lfs_nseg - lfsp->lfs_minfreeseg) *
+		fsbtodb(lfsp, lfsp->lfs_ssize);
 
 	lfsp->lfs_bfree = lfsp->lfs_dsize;
+	lfsp->lfs_bfree -= fsbtodb(lfsp, lfsp->lfs_nseg / 2);
 	lfsp->lfs_segtabsz = SEGTABSIZE_SU(lfsp);
 	lfsp->lfs_cleansz = CLEANSIZE_SU(lfsp);
 	if ((lfsp->lfs_tstamp = time(NULL)) == -1)
@@ -372,7 +375,8 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size, minfreeseg)
 	 */
 
 	/* Figure out where the superblocks are going to live */
-	lfsp->lfs_sboffs[0] = LFS_LABELPAD/lp->d_secsize;
+	lfsp->lfs_sboffs[0] = btodb(LFS_LABELPAD);
+	lfsp->lfs_dsize -= btodb(LFS_SBPAD);
 	for (i = 1; i < LFS_MAXNUMSB; i++) {
 		sb_addr = ((i * sb_interval) << 
 		    (lfsp->lfs_segshift - lfsp->lfs_bshift + lfsp->lfs_fsbtodb))
@@ -380,6 +384,7 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size, minfreeseg)
 		if (sb_addr > partp->p_size)
 			break;
 		lfsp->lfs_sboffs[i] = sb_addr;
+		lfsp->lfs_dsize -= btodb(LFS_SBPAD);
 	}
 
 	/* We need >= 2 superblocks */
@@ -417,7 +422,8 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size, minfreeseg)
 	segp->su_nsums = 1;	/* 1 summary blocks */
 	segp->su_ninos = 1;	/* 1 inode block */
 	segp->su_flags = SEGUSE_SUPERBLOCK | SEGUSE_DIRTY;
-	lfsp->lfs_bfree -= LFS_SUMMARY_SIZE / lp->d_secsize;
+
+	lfsp->lfs_bfree -= btodb(LFS_SUMMARY_SIZE);
 	lfsp->lfs_bfree -=
 	     fsbtodb(lfsp, lfsp->lfs_cleansz + lfsp->lfs_segtabsz + 4);
 
@@ -433,6 +439,7 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size, minfreeseg)
 		if ((i % sb_interval) == 0 && j < LFS_MAXNUMSB) {
 			segp->su_flags = SEGUSE_SUPERBLOCK;
 			lfsp->lfs_bfree -= (LFS_SBPAD / lp->d_secsize);
+			++j;
 		} else
 			segp->su_flags = 0;
 		segp->su_lastmod = 0;
@@ -444,7 +451,6 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size, minfreeseg)
 	/* 
 	 * Initialize dynamic accounting.
 	 */
-	lfsp->lfs_avail = lfsp->lfs_bfree;
 	lfsp->lfs_uinodes = 0;
 
 	/*
@@ -588,7 +594,17 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size, minfreeseg)
 
 	/* Write Superblock */
 	lfsp->lfs_offset = off / lp->d_secsize;
+	lfsp->lfs_avail = lfsp->lfs_dsize -
+		(fsbtodb(lfsp, lfsp->lfs_ssize) - btodb(LFS_SBPAD) -
+		 (sntoda(lfsp, 1) - lfsp->lfs_offset));
+
+	lfsp->lfs_bfree = lfsp->lfs_avail; /* XXX */
+	/* Slop for an imperfect cleaner */
+	lfsp->lfs_avail += (lfsp->lfs_minfreeseg / 2) *
+		fsbtodb(lfsp, lfsp->lfs_ssize);
+
 	lfsp->lfs_cksum = lfs_sb_cksum(&(lfsp->lfs_dlfs));
+
 	put(fd, (off_t)LFS_LABELPAD, &(lfsp->lfs_dlfs), sizeof(struct dlfs));
 
 	/* 

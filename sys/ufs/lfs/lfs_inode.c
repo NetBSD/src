@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_inode.c,v 1.43 2000/09/09 03:47:05 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.44 2000/09/09 04:49:55 perseant Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -202,6 +202,7 @@ lfs_update(v)
  * Truncate the inode oip to at most length size, freeing the
  * disk blocks.
  */
+/* VOP_BWRITE 1 + NIADDR + VOP_BALLOC == 2 + 2*NIADDR times */
 int
 lfs_truncate(v)
 	void *v;
@@ -276,17 +277,23 @@ lfs_truncate(v)
 		aflags = B_CLRBUF;
 		if (ap->a_flags & IO_SYNC)
 			aflags |= B_SYNC;
+		error = lfs_reserve(fs, ovp, fsbtodb(fs, NIADDR + 2));
+		if (error)
+			return (error);
 		error = VOP_BALLOC(ovp, length - 1, 1, ap->a_cred, aflags, &bp);
+		lfs_reserve(fs, ovp, -fsbtodb(fs, NIADDR + 2));
 		if (error)
 			return (error);
 		oip->i_ffs_size = length;
 		uvm_vnp_setsize(ovp, length);
 		(void) uvm_vnp_uncache(ovp);
-		VOP_BWRITE(bp);
+		(void) VOP_BWRITE(bp);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (VOP_UPDATE(ovp, NULL, NULL, 0));
 	}
 
+	if ((error = lfs_reserve(fs, ovp, fsbtodb(fs, 2 * NIADDR + 3))) != 0)
+		return (error);
 	/*
 	 * Make sure no writes to this inode can happen while we're
 	 * truncating.  Otherwise, blocks which are accounted for on the
@@ -321,8 +328,10 @@ lfs_truncate(v)
 		if (ap->a_flags & IO_SYNC)
 			aflags |= B_SYNC;
 		error = VOP_BALLOC(ovp, length - 1, 1, ap->a_cred, aflags, &bp);
-		if (error)
+		if (error) {
+			lfs_reserve(fs, ovp, -fsbtodb(fs, 2 * NIADDR + 3));
 			return (error);
+		}
 		oip->i_ffs_size = length;
 		size = blksize(fs, oip, lbn);
 		(void) uvm_vnp_uncache(ovp);
@@ -330,7 +339,7 @@ lfs_truncate(v)
 			memset((char *)bp->b_data + offset, 0,
 			       (u_int)(size - offset));
 		allocbuf(bp, size);
-		VOP_BWRITE(bp);
+		(void) VOP_BWRITE(bp);
 	}
 	uvm_vnp_setsize(ovp, length);
 	/*
@@ -473,6 +482,7 @@ done:
 #ifdef QUOTA
 	(void) chkdq(oip, -blocksreleased, NOCRED, 0);
 #endif
+	lfs_reserve(fs, ovp, -fsbtodb(fs, 2 * NIADDR + 3));
 	return (allerror);
 }
 
@@ -515,7 +525,7 @@ lfs_update_seguse(struct lfs *fs, long lastseg, size_t num)
 		sup->su_nbytes = num;
 	}
 	sup->su_nbytes -= num;
-	return (VOP_BWRITE(bp));
+	return (VOP_BWRITE(bp)); /* Ifile */
 }
 
 /*

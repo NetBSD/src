@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.26 2000/05/27 00:19:55 perseant Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.27 2000/09/09 04:49:55 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -271,7 +271,11 @@ WRITE(v)
 		error =
 		    uiomove((char *)bp->b_data + blkoffset, (int)xfersize, uio);
 #ifdef LFS_READWRITE
+		if (!error)
+			error = lfs_reserve(fs, vp, fsbtodb(fs, NIADDR + 1));
 		(void)VOP_BWRITE(bp);
+		if (!error)
+			lfs_reserve(fs, vp, fsbtodb(fs, -(NIADDR + 1)));
 #else
 		if (ioflag & IO_SYNC)
 			(void)bwrite(bp);

@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs.h,v 1.30 2000/09/09 04:18:28 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.31 2000/09/09 04:49:54 perseant Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -181,6 +181,7 @@ struct segusage {
 #define	SEGUSE_ACTIVE		0x01	/* segment is currently being written */
 #define	SEGUSE_DIRTY		0x02	/* segment has data in it */
 #define	SEGUSE_SUPERBLOCK	0x04	/* segment contains a superblock */
+#define SEGUSE_ERROR            0x08    /* cleaner: do not clean segment */
 	u_int32_t su_flags;
 };
 
@@ -262,7 +263,7 @@ struct dlfs {
 	u_char	  dlfs_fsmnt[MNAMELEN];	 /* 232: name mounted on */
 	/* XXX this is 2 bytes only to pad to a quad boundary */
 	u_int16_t dlfs_clean;     /* 322: file system is clean flag */
-	int32_t dlfs_dmeta;       /* 324: total number of dirty summaries */
+	int32_t   dlfs_dmeta;     /* 324: total number of dirty summaries */
 	u_int32_t dlfs_minfreeseg; /* 328: segs reserved for cleaner */
         int8_t    dlfs_pad[176];  /* 332: round to 512 bytes */
 /* Checksum -- last valid disk field. */
@@ -353,6 +354,7 @@ struct lfs {
 	struct lock lfs_freelock;
 	pid_t lfs_rfpid;		/* Process ID of roll-forward agent */
 	int       lfs_nadirop;		/* number of active dirop nodes */
+	long      lfs_ravail;           /* blocks pre-reserved for writing */
 };
 
 /*
@@ -397,7 +399,7 @@ typedef struct _cleanerinfo {
 	u_int32_t clean;		/* number of clean segments */
 	u_int32_t dirty;		/* number of dirty segments */
 	u_int32_t bfree;		/* disk blocks free */
-	int32_t avail;			/* disk blocks available */
+	int32_t   avail;		/* disk blocks available */
 } CLEANERINFO;
 
 #define	CLEANSIZE_SU(fs)						\

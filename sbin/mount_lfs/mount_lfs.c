@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_lfs.c,v 1.9 1999/12/08 22:39:25 perseant Exp $	*/
+/*	$NetBSD: mount_lfs.c,v 1.10 2000/09/09 04:49:56 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_lfs.c,v 1.9 1999/12/08 22:39:25 perseant Exp $");
+__RCSID("$NetBSD: mount_lfs.c,v 1.10 2000/09/09 04:49:56 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,8 @@ int	main __P((int, char *[]));
 void	invoke_cleaner __P((char *));
 void	usage __P((void));
 
-int short_rds, cleaner_debug;
+int short_rds, cleaner_debug, cleaner_bytes;
+char *nsegs;
 
 int
 main(argc, argv)
@@ -85,14 +86,22 @@ main(argc, argv)
 	const char *errcause;
 
 	options = NULL;
+	nsegs = "4";
 	mntflags = noclean = 0;
-	while ((ch = getopt(argc, argv, "dno:s")) != -1)
+	cleaner_bytes = 1;
+	while ((ch = getopt(argc, argv, "dN:no:s")) != -1)
 		switch (ch) {
+		case 'b':
+			cleaner_bytes = !cleaner_bytes;
+			break;
 		case 'd':
 			cleaner_debug = 1;
 			break;
 		case 'n':
 			noclean = 1;
+			break;
+		case 'N':
+			nsegs = optarg;
 			break;
 		case 'o':
 			getmntopts(optarg, mopts, &mntflags, 0);
@@ -155,6 +164,12 @@ invoke_cleaner(name)
 
 	/* Build the argument list. */
 	*ap++ = _PATH_LFS_CLEANERD;
+	if (cleaner_bytes)
+		*ap++ = "-b";
+	if (nsegs) {
+		*ap++ = "-n";
+		*ap++ = nsegs;
+	}
 	if (short_rds)
 		*ap++ = "-s";
 	if (cleaner_debug)

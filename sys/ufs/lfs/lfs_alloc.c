@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.42 2000/07/05 22:25:43 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.43 2000/09/09 04:49:54 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -97,6 +97,7 @@ extern struct lock ufs_hashlock;
 
 /* Allocate a new inode. */
 /* ARGSUSED */
+/* VOP_BWRITE 2i times */
 int
 lfs_valloc(v)
 	void *v;
@@ -160,7 +161,7 @@ lfs_valloc(v)
 	new_gen = ifp->if_version; /* version was updated by vfree */
 #ifdef LFS_DEBUG_NEXTFREE
 	ifp->if_nextfree = 0;
-	VOP_BWRITE(bp);
+	(void) VOP_BWRITE(bp); /* Ifile */
 #else
 	brelse(bp);
 #endif
@@ -199,7 +200,7 @@ lfs_valloc(v)
 		}
 		ifp--;
 		ifp->if_nextfree = LFS_UNUSED_INUM;
-		VOP_BWRITE(bp);
+		(void) VOP_BWRITE(bp); /* Ifile */
 		lfs_vunref(vp);
 	}
 #ifdef DIAGNOSTIC
@@ -261,7 +262,7 @@ lfs_valloc(v)
 	ifp->if_daddr = LFS_UNUSED_DADDR;
 	ifp->if_nextfree = fs->lfs_free;
 	fs->lfs_free = new_ino;
-	VOP_BWRITE(bp);
+	(void) VOP_BWRITE(bp); /* Ifile */
 
 	return (error);
 }
@@ -306,6 +307,7 @@ lfs_vcreate(mp, ino, vp)
 
 /* Free an inode. */
 /* ARGUSED */
+/* VOP_BWRITE 2i times */
 int
 lfs_vfree(v)
 	void *v;
@@ -367,7 +369,7 @@ lfs_vfree(v)
 	++ifp->if_version;
 	ifp->if_nextfree = fs->lfs_free;
 	fs->lfs_free = ino;
-	(void) VOP_BWRITE(bp);
+	(void) VOP_BWRITE(bp); /* Ifile */
 #ifdef DIAGNOSTIC
 	if(fs->lfs_free == LFS_UNUSED_INUM) {
 		panic("inode 0 freed");
@@ -377,13 +379,16 @@ lfs_vfree(v)
 		LFS_SEGENTRY(sup, fs, datosn(fs, old_iaddr), bp);
 #ifdef DIAGNOSTIC
 		if (sup->su_nbytes < DINODE_SIZE) {
-			printf("lfs_vfree: negative byte count (segment %d short by %d)\n", datosn(fs, old_iaddr), (int)DINODE_SIZE - sup->su_nbytes);
+			printf("lfs_vfree: negative byte count"
+			       " (segment %d short by %d)\n",
+			       datosn(fs, old_iaddr),
+			       (int)DINODE_SIZE - sup->su_nbytes);
 			panic("lfs_vfree: negative byte count");
 			sup->su_nbytes = DINODE_SIZE;
 		}
 #endif
 		sup->su_nbytes -= DINODE_SIZE;
-		(void) VOP_BWRITE(bp);
+		(void) VOP_BWRITE(bp); /* Ifile */
 	}
 	
 	/* Set superblock modified bit and decrement file count. */

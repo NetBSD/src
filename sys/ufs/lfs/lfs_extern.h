@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_extern.h,v 1.20 2000/07/05 22:25:43 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.21 2000/09/09 04:49:55 perseant Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -119,6 +119,7 @@ void lfs_flush __P((struct lfs *, int));
 int lfs_check __P((struct vnode *, ufs_daddr_t, int));
 void lfs_freebuf __P((struct buf *));
 void lfs_countlocked __P((int *, long *));
+int lfs_reserve __P((struct lfs *, struct vnode *, int));
 
 /* lfs_cksum.c */
 u_long cksum __P((void *, size_t));
