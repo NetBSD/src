@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wivar.h,v 1.9.4.2 2000/07/21 18:52:11 onoe Exp $	*/
+/*	$NetBSD: if_wivar.h,v 1.9.4.3 2001/01/25 17:47:55 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -76,7 +76,7 @@ struct wi_softc	{
 	struct ieee80211_nwid	wi_netid;
 	struct ieee80211_nwid	wi_ibssid;
 
-	u_int8_t		wi_txbuf[1596];
+	u_int16_t		wi_txbuf[1596 / 2];
 	int                     wi_has_wep;
 	int                     wi_use_wep;
 	int                     wi_tx_key;
