@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.19 1999/01/19 17:02:01 hubertf Exp $ */
+/* $NetBSD: lib.h,v 1.20 1999/03/09 11:10:40 agc Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -54,6 +54,16 @@
 
 /* Usually "rm", but often "echo" during debugging! */
 #define RMDIR_CMD	"rmdir"
+
+/* define tar as a string, in case it's called gtar or something */
+#ifndef TAR_CMD
+#define TAR_CMD	"tar"
+#endif
+
+/* full path name of TAR_CMD */
+#ifndef TAR_FULLPATHNAME
+#define TAR_FULLPATHNAME	"/usr/bin/tar"
+#endif
 
 /* Where we put logging information by default, else ${PKG_DBDIR} if set */
 #define DEF_LOG_DIR		"/var/db/pkg"
