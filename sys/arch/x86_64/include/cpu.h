@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.3 2002/05/28 23:11:38 fvdl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.4 2002/06/03 18:23:16 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -65,6 +65,7 @@ struct cpu_info {
 	u_long ci_spin_locks;		/* # of spin locks held */
 	u_long ci_simple_locks;		/* # of simple locks held */
 #endif
+	u_int64_t ci_scratch;
 };
 
 #ifdef _KERNEL
@@ -72,15 +73,6 @@ extern struct cpu_info cpu_info_store;
 
 #define	curcpu()			(&cpu_info_store)
 
-/*
- * per-CPU private data. Present in kernel image, but remapped privately
- * for non-boot CPUs.
- */
-struct cpu_privdata {
-	struct trapframe cpriv_regs;	/* scratch storage for registers */
-};
-
-extern struct cpu_privdata cpu_privata;
 #endif
 
 /*

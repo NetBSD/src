@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.2 2002/05/26 12:08:49 fvdl Exp $	*/
+/*	$NetBSD: pcb.h,v 1.3 2002/06/03 18:23:16 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -103,6 +103,7 @@ struct pcb {
 	u_int64_t pcb_cr3;
 	u_int64_t pcb_rsp;
 	u_int64_t pcb_rbp;
+	u_int64_t pcb_usersp;
 	u_int64_t pcb_ldt_sel;
 	int	pcb_cr0;		/* saved image of CR0 */
 	struct	fxsave64 pcb_savefpu;	/* floating point state */
