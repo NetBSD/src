@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.13 2004/03/11 15:40:13 christos Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.14 2004/06/26 21:48:30 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.13 2004/03/11 15:40:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.14 2004/06/26 21:48:30 kleink Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -200,6 +200,7 @@ struct cpu_info cpu_info[1];
 #endif
 
 int cpu_altivec;
+int cpu_psluserset, cpu_pslusermod;
 char cpu_model[80];
 
 void
