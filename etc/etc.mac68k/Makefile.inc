@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 1999/12/17 20:54:31 fredb Exp $
+#	$NetBSD: Makefile.inc,v 1.2 1999/12/24 15:14:29 fredb Exp $
 #
 #	mac68k-specific release building goo
 #
@@ -13,16 +13,16 @@
 #  2) if we include GENERIC here without also setting
 #     UPDATE, we'll end up building GENERIC twice.
 #
-#EXTRA_KERNELS+= 	GENERIC GENERICSBC
+#EXTRA_KERNELS+= 		GENERIC GENERICSBC
+EXTRA_INSTALL_KERNELS+= 	INSTALL
 
-INST_KERNELS+= 		INSTALL
-INSTALLATION_DIRS+=	installation/instkernel
+INSTALLATION_DIRS+=		installation/instkernel
 
 snap_md_post:
 #
 # Build the install kernels...
 #
-.for k in ${INST_KERNELS}
+.for k in ${EXTRA_INSTALL_KERNELS}
 	cd ${KERNCONFDIR} && config \
 		-b ${KERNOBJDIR}/${k} -s ${KERNSRCDIR} ${k}
 .ifndef UPDATE
@@ -42,12 +42,12 @@ snap_md_post:
 #
 # and put them all together.
 #
-.for k in ${INST_KERNELS}
+.for k in ${EXTRA_INSTALL_KERNELS}
 .ifndef UPDATE
 	cd ${.CURDIR}/../distrib/mac68k/instkernel/instkernel && \
 		${MAKE} clean
 .endif
 	cd ${.CURDIR}/../distrib/mac68k/instkernel/instkernel && \
-		${MAKE} INSTALL_KERNEL=${k} && ${MAKE} release
+		${MAKE} INSTALL_KERNEL=${k} && ${MAKE} release INSTALL_KERNEL=${k}
 .endfor
 	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/instkernel
