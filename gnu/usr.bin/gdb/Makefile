@@ -1,7 +1,11 @@
-#	$NetBSD: Makefile,v 1.29 1999/03/13 10:57:38 drochner Exp $
+#	$NetBSD: Makefile,v 1.30 1999/03/17 00:46:35 thorpej Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
+
+.if (${OBJECT_FMT} == "ELF") || defined(BOOTSTRAP_ELF)
+ELF_PLEASE=
+.endif
 
 PROG=		gdb
 MAN=		gdb.1
@@ -14,7 +18,7 @@ CPPFLAGS+=	-I. -I${.CURDIR} -I${DIST}/gdb/config -I${DIST}/gdb \
 		-I${BFDOBJ} -I${DIST}/bfd -I${DIST}/include \
 		-DHOST_NAME=\"${MACHINE_GNU_ARCH}--netbsd\" \
 		-DTARGET_NAME=\"${MACHINE_GNU_ARCH}--netbsd\"
-.if (${OBJECT_FMT} == "ELF")
+.if defined(ELF_PLEASE)
 CPPFLAGS+=	-DSVR4_SHARED_LIBS
 .endif
 

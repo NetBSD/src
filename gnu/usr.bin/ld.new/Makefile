@@ -1,14 +1,18 @@
-#	$NetBSD: Makefile,v 1.10 1999/03/05 07:25:00 mycroft Exp $
+#	$NetBSD: Makefile,v 1.11 1999/03/17 00:46:36 thorpej Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
 
+.if (${OBJECT_FMT} == "ELF") || defined(BOOTSTRAP_ELF)
+ELF_PLEASE=
+.endif
+
 .if (${MACHINE_ARCH} == "alpha") || \
-    (${MACHINE_ARCH} == "i386" && ${OBJECT_FMT} == "ELF") || \
+    (${MACHINE_ARCH} == "i386" && defined(ELF_PLEASE)) || \
     (${MACHINE_ARCH} == "mipseb") || \
     (${MACHINE_ARCH} == "mipsel") || \
     (${MACHINE_ARCH} == "powerpc") || \
-    (${MACHINE_ARCH} == "sparc" && ${OBJECT_FMT} == "ELF") || \
+    (${MACHINE_ARCH} == "sparc" && defined(ELF_PLEASE)) || \
     (${MACHINE_ARCH} == "sparc64")
 PROG=		ld
 MAN=		ld.1
@@ -41,7 +45,7 @@ DEFAULT_EMUL.alpha=	elf64alpha
 
 ##### i386 #####
 EMULS.i386=		i386nbsd elf_i386
-.if ${OBJECT_FMT} == "ELF"
+.if defined(ELF_PLEASE)
 DEFAULT_EMUL.i386=	elf_i386
 .else
 DEFAULT_EMUL.i386=	i386nbsd
@@ -61,7 +65,7 @@ DEFAULT_EMUL.powerpc=	elf32ppc
 
 ##### sparc #####
 EMULS.sparc=		sparcnbsd elf32_sparc sun4
-.if ${OBJECT_FMT} == "ELF"
+.if defined(ELF_PLEASE)
 DEFAULT_EMUL.sparc=	elf32_sparc
 .else
 DEFAULT_EMUL.sparc=	sparcnbsd
