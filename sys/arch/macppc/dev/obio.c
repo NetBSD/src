@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.4 1998/11/03 12:15:57 tsubai Exp $	*/
+/*	$NetBSD: obio.c,v 1.5 1998/12/22 19:46:28 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -137,6 +137,10 @@ obio_attach(parent, self, aux)
 		ca.ca_nreg  = OF_getprop(child, "reg", reg, sizeof(reg));
 		ca.ca_nintr = OF_getprop(child, "AAPL,interrupts", intr,
 				sizeof(intr));
+		if (ca.ca_nintr == -1)
+			ca.ca_nintr = OF_getprop(child, "interrupts", intr,
+					sizeof(intr));
+
 		ca.ca_reg = reg;
 		ca.ca_intr = intr;
 
