@@ -19,6 +19,7 @@ struct aic_softc {
     struct pcmcia_io_handle sc_pcioh;
 #define	sc_iot	sc_pcioh.iot
 #define	sc_ioh	sc_pcioh.ioh
+    struct pcmcia_function *sc_pf;
 };
 
 #ifdef __BROKEN_INDIRECT_CONFIG
@@ -61,14 +62,17 @@ aic_pcmcia_attach(parent, self, aux)
      struct device *parent, *self;
      void *aux;
 {
-/*     struct aic_softc *sc = (void *) self; */
+    struct aic_pcmcia_softc *sc = (void *) self;
     struct pcmcia_attach_args *pa = aux;
     struct pcmcia_config_entry *cfe;
+    struct pcmcia_function *pf = pa->pa_pf;
 
-    cfe = pa->pf->cfe_head.sqh_first;
+    sc->sc_pf = pf;
+    cfe = pf->cfe_head.sqh_first;
 
     /* Enable the card. */
-    if (pcmcia_enable_function(pa->pf, parent, cfe)) {
+    pcmcia_function_init(pf, cfe);
+    if (pcmcia_function_enable(pf)) {
 	printf(": function enable failed\n");
 	return;
     }

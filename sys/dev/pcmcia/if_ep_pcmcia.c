@@ -62,6 +62,7 @@ struct ep_pcmcia_softc {
 	/* PCMCIA-specific goo */
 	struct pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o space info */
 	int sc_io_window;			/* our i/o window */
+	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 };
 
 struct cfattach ep_pcmcia_ca = {
@@ -107,10 +108,12 @@ ep_pcmcia_attach(parent, self, aux)
     u_int8_t *enaddr;
     char *model;
 
+    psc->sc_pf = pa->pf;
     cfe = pa->pf->cfe_head.sqh_first;
 
     /* Enable the card. */
-    if (pcmcia_enable_function(pa->pf, parent, cfe))
+    pcmcia_function_init(pa->pf, cfe);
+    if (pcmcia_function_enable(pa->pf))
 	printf(": function enable failed\n");
 
     /* turn off the bit which disables the modem */

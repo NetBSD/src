@@ -34,6 +34,7 @@ struct ed_pcmcia_softc {
 	struct pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o information */
 	int sc_asic_io_window;			/* i/o window for ASIC */
 	int sc_nic_io_window;			/* i/o window for NIC */
+	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 };
 
 struct cfattach ed_pcmcia_ca = {
@@ -215,6 +216,7 @@ ed_pcmcia_attach(parent, self, aux)
     bus_addr_t offset;
     int i, mwindow;
 
+    psc->sc_pf = pa->pf;
     cfe = pa->pf->cfe_head.sqh_first;
 
 #if 0
@@ -265,7 +267,8 @@ ed_pcmcia_attach(parent, self, aux)
     sc->sc_ioh = psc->sc_pcioh.ioh;
 
     /* Enable the card. */
-    if (pcmcia_enable_function(pa->pf, parent, cfe)) {
+    pcmcia_function_init(pa->pf, cfe);
+    if (pcmcia_function_enable(pa->pf)) {
 	printf(": function enable failed\n");
 	return;
     }
