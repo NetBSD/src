@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.114 2002/05/18 07:23:05 matt Exp $
+#	$NetBSD: DEVNAMES,v 1.115 2002/05/31 00:27:00 augustss Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -195,6 +195,10 @@ com			MI
 commulti		MI		Attribute
 cosc			arm32
 cprofb			MI
+cpc			MI
+cpcbus			MI		Attribute
+cpciic			MI
+cpctim			MI
 cpu			acorn26
 cpu			algor
 cpu			alpha
@@ -366,6 +370,7 @@ fddi			MI		Attribute
 fea			MI		
 fhpib			hp300
 fiq			acorn26		Attribute
+flash			pmppc
 flsc			amiga
 flsc			amigappc
 fms			MI		
@@ -923,6 +928,7 @@ rtc			acorn26
 rtc			arm32
 rtc			hp300
 rtc			pc532
+rtc			pmppc
 rtc			sparc
 rtc			x68k
 rtfps			MI		
