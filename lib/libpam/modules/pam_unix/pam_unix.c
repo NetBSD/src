@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_unix.c,v 1.4 2005/01/12 03:36:12 christos Exp $	*/
+/*	$NetBSD: pam_unix.c,v 1.5 2005/02/26 02:57:32 thorpej Exp $	*/
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -40,7 +40,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_unix/pam_unix.c,v 1.49 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_unix.c,v 1.4 2005/01/12 03:36:12 christos Exp $");
+__RCSID("$NetBSD: pam_unix.c,v 1.5 2005/02/26 02:57:32 thorpej Exp $");
 #endif
 
 
@@ -289,6 +289,7 @@ yp_set_password(pam_handle_t *pamh, struct passwd *opwd,
 	 * Fill in the yppasswd structure for yppasswdd.
 	 */
 	memset(&yppwd, 0, sizeof(yppwd));
+	yppwd.oldpass = strdup(old_pass);
 	if ((yppwd.newpw.pw_passwd = strdup(pwd->pw_passwd)) == NULL)
 		goto malloc_failure;
 	if ((yppwd.newpw.pw_name = strdup(pwd->pw_name)) == NULL)
@@ -325,6 +326,8 @@ yp_set_password(pam_handle_t *pamh, struct passwd *opwd,
 	}
 
  out:
+	if (yppwd.oldpass != NULL)
+		free(yppwd.oldpass);
 	if (yppwd.newpw.pw_passwd != NULL)
 		free(yppwd.newpw.pw_passwd);
 	if (yppwd.newpw.pw_name != NULL)
