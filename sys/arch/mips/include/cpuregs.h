@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.9 1997/06/16 05:37:32 jonathan Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.10 1997/06/16 07:41:08 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,8 +57,8 @@
  *	v 9.1 89/09/18 17:33:00 shirriff Exp  SPRITE (DECWRL)
  */
 
-#ifndef _MACHCONST
-#define _MACHCONST
+#ifndef _MIPS_CPUREGS_H_
+#define _MIPS_CPUREGS_H_
 
 #define MACH_KUSEG_ADDR			0x0
 #define MACH_CACHED_MEMORY_ADDR		0x80000000
@@ -538,4 +538,4 @@
 #define VMMACH_TLB_FOUND_WITH_PATCH	2
 #define VMMACH_TLB_PROBE_ERROR		3
 
-#endif /* _MACHCONST */
+#endif /* _MIPS_CPUREGS_H_ */
