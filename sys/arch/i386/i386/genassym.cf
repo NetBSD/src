@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.16 1999/03/24 11:23:45 tron Exp $
+#	$NetBSD: genassym.cf,v 1.17 1999/06/17 00:12:11 thorpej Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,6 @@
 #	@(#)genassym.c	5.11 (Berkeley) 5/10/91
 #
 
-include "opt_pmap_new.h"
 include "opt_compat_svr4.h"
 include "opt_compat_freebsd.h"
 include "opt_compat_linux.h"
@@ -120,20 +119,11 @@ endif
 
 define	SRUN			SRUN
 
-ifdef PMAP_NEW
 define	PDSLOT_PTE		PDSLOT_PTE
 define	PDSLOT_APTE		PDSLOT_APTE
 define	PDSLOT_KERN		PDSLOT_KERN
 define	NKPTP_MIN		NKPTP_MIN
 define	NKPTP_MAX		NKPTP_MAX
-else
-define	PTDPTDI			PTDPTDI
-define	KPTDI			KPTDI
-define	NKPDE_BASE		NKPDE_BASE
-define	NKPDE_MAX		NKPDE_MAX
-define	NKPDE_SCALE		NKPDE_SCALE
-define	APTDPTDI		APTDPTDI
-endif
 
 define	VM_MAXUSER_ADDRESS	(int)VM_MAXUSER_ADDRESS
 

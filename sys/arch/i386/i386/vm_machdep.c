@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.80 1999/05/26 22:19:35 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.81 1999/06/17 00:12:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -46,7 +46,6 @@
  */
 
 #include "opt_user_ldt.h"
-#include "opt_pmap_new.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,7 +288,6 @@ setredzone(pte, vaddr)
 }
 #endif
 
-#if defined(PMAP_NEW)
 /*
  * Move pages from one kernel virtual address to another.
  * Both addresses are assumed to reside in the Sysmap,
@@ -329,33 +327,6 @@ pagemove(from, to, size)
 		pmap_update();
 #endif
 }
-#else /* PMAP_NEW */
-/*
- * Move pages from one kernel virtual address to another.
- * Both addresses are assumed to reside in the Sysmap,
- * and size must be a multiple of CLSIZE.
- */
-void
-pagemove(from, to, size)
-	register caddr_t from, to;
-	size_t size;
-{
-	register pt_entry_t *fpte, *tpte;
-
-	if (size % CLBYTES)
-		panic("pagemove");
-	fpte = kvtopte(from);
-	tpte = kvtopte(to);
-	while (size > 0) {
-		*tpte++ = *fpte;
-		*fpte++ = 0;
-		from += NBPG;
-		to += NBPG;
-		size -= NBPG;
-	}
-	pmap_update();
-}
-#endif /* PMAP_NEW */
 
 /*
  * Convert kernel VA to physical address
@@ -379,7 +350,6 @@ extern vm_map_t phys_map;
  * Note: the pages are already locked by uvm_vslock(), so we
  * do not need to pass an access_type to pmap_enter().   
  */
-#if defined(PMAP_NEW)
 void
 vmapbuf(bp, len)
 	struct buf *bp;
@@ -417,35 +387,6 @@ vmapbuf(bp, len)
 		len -= PAGE_SIZE;
 	}
 }
-#else /* PMAP_NEW */
-void
-vmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
-{
-	vaddr_t faddr, taddr, off;
-	pt_entry_t *fpte, *tpte;
-	pt_entry_t *pmap_pte __P((pmap_t, vaddr_t));
-
-	if ((bp->b_flags & B_PHYS) == 0)
-		panic("vmapbuf");
-	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
-	off = (vaddr_t)bp->b_data - faddr;
-	len = round_page(off + len);
-	taddr = uvm_km_valloc_wait(phys_map, len);
-	bp->b_data = (caddr_t)(taddr + off);
-	/*
-	 * The region is locked, so we expect that pmap_pte() will return
-	 * non-NULL.
-	 */
-	fpte = pmap_pte(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map), faddr);
-	tpte = pmap_pte(vm_map_pmap(phys_map), taddr);
-	do {
-		*tpte++ = *fpte++;
-		len -= PAGE_SIZE;
-	} while (len);
-}
-#endif /* PMAP_NEW */
 
 /*
  * Unmap a previously-mapped user I/O request.
