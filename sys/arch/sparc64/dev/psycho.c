@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.25 2000/10/19 05:38:35 mrg Exp $	*/
+/*	$NetBSD: psycho.c,v 1.26 2000/11/18 03:49:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -911,10 +911,6 @@ static int pci_ino_to_ipl_table[] = {
 	14,		/* power management */
 };
 
-#ifdef NOT_DEBUG
-static struct psycho_pbm *ppbm;
-#endif
-
 int
 psycho_intr_map(tag, pin, line, ihp)
 	pcitag_t tag;
@@ -949,10 +945,6 @@ psycho_intr_establish(t, ihandle, level, flags, handler, arg)
 	int ino;
 	long vec = ihandle; 
 
-#ifdef NOT_DEBUG
-	if (!ppbm)
-		ppbm = pp;
-#endif
 	ih = (struct intrhand *)
 		malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
 	if (ih == NULL)
@@ -1165,46 +1157,3 @@ psycho_dmamem_unmap(t, kva, size)
 
 	iommu_dvmamem_unmap(t, sc->sc_is, kva, size);
 }
-
-#ifdef NOT_DEBUG
-void
-psycho_print_intr_state(void)
-{
-	pcitag_t tag;
-	bus_space_handle_t bh;
-	u_int64_t data, diag;
-	struct psycho_softc *sc = ppbm->pp_sc;
-
-	if (!ppbm) {
-		printf("psycho_print_intr_state: no ppbm configured\n");
-		return;
-	}
-	printf("psycho_print_intr_state: ");
-
-	bh = sc->sc_basepaddr;
-	bh = (bus_space_handle_t)(u_long)sc->sc_regs;
-	diag = bus_space_read_8(sc->sc_configtag, bh, 0xa800);
-	printf("all PCI diags is %qx\n", diag);
-#if 0
-	for (tag = 0xc00; tag < 0xc40; tag += 0x8) {
-		data = bus_space_read_8(sc->sc_configtag, bh, tag);
-		
-		printf(" - PCI slot at %qx reads as %qx", bh + tag, data);
-		printf(": diag %x\n", (int)(diag & 0xff));
-		diag >>= 8;
-	}
-#endif
-
-	diag = bus_space_read_8(sc->sc_configtag, bh, 0xa808);
-	printf("\t\tall OBIO diags is %qx\n", diag);
-#define START_TAG	0x1000	/* 0x1000 */
-#define END_TAG		0x1018	/* 0x1088 */
-	for (tag = START_TAG; tag < END_TAG; tag += 0x8) {
-		data = bus_space_read_8(sc->sc_configtag, bh + tag, 0);
-		
-		printf(" - OBIO slot at %qx reads as %qx", bh + tag, data);
-		printf(": diag %x\n", (int)(diag & 0x3));
-		diag >>= 2;
-	}
-}
-#endif
