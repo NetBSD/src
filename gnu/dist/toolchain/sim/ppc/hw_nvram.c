@@ -140,7 +140,7 @@ hw_nvram_init_address(device *me)
     nvram->memory = zalloc(nvram->sizeof_memory);
   }
   else
-    memset(nvram->memory, nvram->sizeof_memory, 0);
+    memset(nvram->memory, 0, nvram->sizeof_memory);
   
   if (device_find_property(me, "timezone") == NULL)
     nvram->timezone = 0;
