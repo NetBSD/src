@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $	*/
+/*	$NetBSD: md_root.c,v 1.2 2000/04/06 13:39:26 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,9 +46,22 @@
 
 #include <dev/md.h>
 
+#include "opt_mdsize.h"
+
 extern int boothowto;
 
-int	(*md_read_image) __P((size_t *, caddr_t *));
+#ifndef MINIROOTSIZE
+#define MINIROOTSIZE 512
+#endif
+
+#define ROOTBYTES (MINIROOTSIZE << DEV_BSHIFT)
+
+/*
+ * This array will be patched to contain a file-system image.
+ * See the program:  src/distrib/sun3/common/rdsetroot.c
+ */
+int md_root_size = ROOTBYTES;
+char md_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
 
 /*
  * This is called during autoconfig.
@@ -58,12 +71,12 @@ md_attach_hook(unit, md)
 	int unit;
 	struct md_conf *md;
 {
-	if (unit == 0 && md_read_image != NULL) {
+	if (unit == 0) {
 		/* Setup root ramdisk */
-		if ((*md_read_image)(&md->md_size, &md->md_addr) != 0)
-			panic("md_attach");
+		md->md_addr = (caddr_t)md_root_image;
+		md->md_size = (size_t)md_root_size;
 		md->md_type = MD_KMEM_FIXED;
-		printf("md0: fixed, %d blocks", md->md_size >> DEV_BSHIFT);
+		printf("md0: fixed, %d blocks", MINIROOTSIZE);
 	}
 }
 
@@ -80,52 +93,3 @@ md_open_hook(unit, md)
 		boothowto |= RB_SINGLE;
 	}
 }
-
-#if 0
-int
-md_read_image (dev, addr)
-	dev_t dev;
-	caddr_t addr;
-{
-	off_t offset;
-	int error;
-	extern struct proc proc0;
-	struct buf fishtank;
-	struct buf *bp = &fishtank;
-
-	error = (*bdevsw[major(dev)].d_open)(dev, 0, S_IFCHR, &proc0);
-	if (error)
-		panic("md_read_image: open: error %d", error);
-
-	bzero(bp, sizeof(*bp));
-	offset = 0;
-
-	for (;;) {
-		iovec.iov_base = addr;
-		iovec.iov_len = DEV_BSIZE;
-
-		uio.uio_iov = &iovec;
-		uio.uio_iovcnt = 1;
-		uio.uio_offset = offset;
-		uio.uio_resid = DEV_BSIZE;
-		uio.uio_segflg = UIO_SYSSPACE;
-		uio.uio_rw = UIO_READ;
-		uio.uio_procp = &proc0;
-		error = (*cdevsw[major(dev)].d_read)(dev, &uio, 0);
-		if (error)
-			panic("md_read_image: read: error %d", error);
-
-		if (uio.uio_resid != 0)
-			break;
-
-		addr += DEV_BSIZE;
-		offset += DEV_BSIZE;
-		md_root_size += DEV_BSIZE;
-		if (offset + DEV_BSIZE > md_root_size)
-			break;
-	}
-	(void)(*bdevsw[major(dev)].d_close)(dev, 0, S_IFCHR, &proc0);
-	md_root_size = offset;
-	return 0;
-}
-#endif
