@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcvar.h,v 1.1.2.2 1997/11/12 02:12:24 mellon Exp $	*/
+/*	$NetBSD: if_mcvar.h,v 1.1.2.3 1997/12/09 20:07:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -87,7 +87,6 @@ struct mc_softc {
 
 int	mcsetup __P((struct mc_softc *, u_int8_t *));
 void	mcintr __P((void *arg));
-integrate void	mc_tint __P((struct mc_softc *sc));
-integrate void	mc_rint __P((struct mc_softc *sc));
+void	mc_rint __P((struct mc_softc *sc));
 u_char	mc_get_enaddr __P((bus_space_tag_t t, bus_space_handle_t h,
 	    vm_offset_t o, u_char *dst));
