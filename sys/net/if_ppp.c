@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.40 1997/06/16 17:01:36 christos Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -383,7 +383,7 @@ pppioctl(sc, cmd, data, flag, p)
 	    return (error);
 	if (sc->sc_comp) {
 	    s = splsoftnet();
-	    sl_compress_init(sc->sc_comp);
+	    sl_compress_setup(sc->sc_comp, *(int *)data);
 	    splx(s);
 	}
 	break;
