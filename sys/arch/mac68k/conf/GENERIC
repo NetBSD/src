@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.85.2.9 1999/11/15 23:31:11 scottr Exp $
+#	$NetBSD: GENERIC,v 1.85.2.10 1999/11/20 08:40:02 scottr Exp $
 #
 # GENERIC
 
@@ -108,7 +108,6 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 # wscons options
 #options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
-options 	WSDISPLAY_COMPAT_GRF	# grf interface compatibility
 options 	WSDISPLAY_COMPAT_ITE	# ite compatibility
 options 	WSDISPLAY_COMPAT_ITEFONT # use ite font (6x10)
 
