@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.58 2005/02/22 15:13:57 christos Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.59 2005/02/26 22:12:34 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.58 2005/02/22 15:13:57 christos Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.59 2005/02/26 22:12:34 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -85,7 +85,7 @@ static void putfloat(double, int, int, int, int, int);
 static int ucount(void);
 
 static	char buf[26];
-static	u_int64_t t;
+static	u_int64_t temp;
 static	double etime;
 static	float hertz;
 static	int nintr;
@@ -391,10 +391,10 @@ labelvmstat(void)
 	}
 }
 
-#define X(fld)	{t=s.fld[i]; s.fld[i]-=s1.fld[i]; if(state==TIME) s1.fld[i]=t;}
-#define Y(fld)	{t = s.fld; s.fld -= s1.fld; if(state == TIME) s1.fld = t;}
-#define Z(fld)	{t = s.nchstats.fld; s.nchstats.fld -= s1.nchstats.fld; \
-	if(state == TIME) s1.nchstats.fld = t;}
+#define X(fld)	{temp=s.fld[i]; s.fld[i]-=s1.fld[i]; if(state==TIME) s1.fld[i]=temp;}
+#define Y(fld)	{temp = s.fld; s.fld -= s1.fld; if(state == TIME) s1.fld = temp;}
+#define Z(fld)	{temp = s.nchstats.fld; s.nchstats.fld -= s1.nchstats.fld; \
+	if(state == TIME) s1.nchstats.fld = temp;}
 #define PUTRATE(fld, l, c, w) {Y(fld); putint((int)((float)s.fld/etime + 0.5), l, c, w);}
 #define MAXFAIL 5
 
@@ -410,6 +410,7 @@ showvmstat(void)
 	static int failcnt = 0;
 	static int relabel = 0;
 	static int last_disks = 0;
+	static char pigs[] = "pigs";
 
 	if (relabel) {
 		labelvmstat();
@@ -430,7 +431,7 @@ showvmstat(void)
 			refresh();
 			failcnt = 0;
 			sleep(5);
-			command("pigs");
+			command(pigs);
 			return;
 		}
 	} else
@@ -723,42 +724,42 @@ putfloat(double f, int l, int c, int w, int d, int nz)
 }
 
 static void
-getinfo(struct Info *s, enum state st)
+getinfo(struct Info *stats, enum state st)
 {
 	int mib[2];
 	size_t size;
 	int i;
 
 	dkreadstats();
-	NREAD(X_NCHSTATS, &s->nchstats, sizeof s->nchstats);
-	NREAD(X_INTRCNT, s->intrcnt, nintr * LONG);
+	NREAD(X_NCHSTATS, &stats->nchstats, sizeof stats->nchstats);
+	NREAD(X_INTRCNT, stats->intrcnt, nintr * LONG);
 	for (i = 0; i < nevcnt; i++)
-		KREAD(ie_head[i].ie_count, &s->evcnt[i], sizeof s->evcnt[i]);
-	size = sizeof(s->uvmexp);
+		KREAD(ie_head[i].ie_count, &stats->evcnt[i], sizeof stats->evcnt[i]);
+	size = sizeof(stats->uvmexp);
 	mib[0] = CTL_VM;
 	mib[1] = VM_UVMEXP2;
-	if (sysctl(mib, 2, &s->uvmexp, &size, NULL, 0) < 0) {
+	if (sysctl(mib, 2, &stats->uvmexp, &size, NULL, 0) < 0) {
 		error("can't get uvmexp: %s\n", strerror(errno));
-		memset(&s->uvmexp, 0, sizeof(s->uvmexp));
+		memset(&stats->uvmexp, 0, sizeof(stats->uvmexp));
 	}
-	size = sizeof(s->Total);
+	size = sizeof(stats->Total);
 	mib[0] = CTL_VM;
 	mib[1] = VM_METER;
-	if (sysctl(mib, 2, &s->Total, &size, NULL, 0) < 0) {
+	if (sysctl(mib, 2, &stats->Total, &size, NULL, 0) < 0) {
 		error("Can't get kernel info: %s\n", strerror(errno));
-		memset(&s->Total, 0, sizeof(s->Total));
+		memset(&stats->Total, 0, sizeof(stats->Total));
 	}
 }
 
 static void
-allocinfo(struct Info *s)
+allocinfo(struct Info *stats)
 {
 
-	if ((s->intrcnt = calloc(nintr, sizeof(long))) == NULL) {
+	if ((stats->intrcnt = calloc(nintr, sizeof(long))) == NULL) {
 		error("calloc failed");
 		die(0);
 	}
-	if ((s->evcnt = calloc(nevcnt, sizeof(u_int64_t))) == NULL) {
+	if ((stats->evcnt = calloc(nevcnt, sizeof(u_int64_t))) == NULL) {
 		error("calloc failed");
 		die(0);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: pigs.c,v 1.27 2004/02/13 11:36:24 wiz Exp $	*/
+/*	$NetBSD: pigs.c,v 1.28 2005/02/26 22:12:33 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-__RCSID("$NetBSD: pigs.c,v 1.27 2004/02/13 11:36:24 wiz Exp $");
+__RCSID("$NetBSD: pigs.c,v 1.28 2005/02/26 22:12:33 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -179,10 +179,9 @@ void
 fetchpigs(void)
 {
 	int i;
-	float time;
 	float *pctp;
 	struct kinfo_proc2 *kpp, *k;
-	u_int64_t ctime[CPUSTATES];
+	u_int64_t cputime[CPUSTATES];
 	double t;
 	static int lastnproc = 0;
 
@@ -210,28 +209,27 @@ fetchpigs(void)
 	for (i = 0; i < nproc; i++) {
 		pt[i].pt_kp = k = &kpp[i];
 		pctp = &pt[i].pt_pctcpu;
-		time = k->p_swtime;
 		/* XXX - I don't like this */
 		if (k->p_swtime == 0 || (k->p_flag & L_INMEM) == 0 ||
 		    k->p_stat == SZOMB)
 			*pctp = 0;
 		else
 			*pctp = ((double) k->p_pctcpu / 
-					fscale) / (1.0 - exp(time * lccpu));
+				    fscale) / (1.0 - exp(k->p_swtime * lccpu));
 	}
 	/*
 	 * and for the imaginary "idle" process
 	 */
-	(void) fetch_cptime(ctime);
+	(void) fetch_cptime(cputime);
 	t = 0;
 	for (i = 0; i < CPUSTATES; i++)
-		t += ctime[i] - stime[i];
+		t += cputime[i] - stime[i];
 	if (t == 0.0)
 		t = 1.0;
 	pt[nproc].pt_kp = NULL;
-	pt[nproc].pt_pctcpu = (ctime[CP_IDLE] - stime[CP_IDLE]) / t;
+	pt[nproc].pt_pctcpu = (cputime[CP_IDLE] - stime[CP_IDLE]) / t;
 	for (i = 0; i < CPUSTATES; i++)
-		stime[i] = ctime[i];
+		stime[i] = cputime[i];
 }
 
 void
@@ -245,6 +243,6 @@ labelpigs(void)
 int
 compare_pctcpu(const void *a, const void *b)
 {
-	return (((struct p_times *) a)->pt_pctcpu >
-		((struct p_times *) b)->pt_pctcpu)? -1: 1;
+	return (((const struct p_times *) a)->pt_pctcpu >
+		((const struct p_times *) b)->pt_pctcpu)? -1: 1;
 }

@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.25 2004/01/11 19:15:50 jdolecek Exp $  */
+/*      $NetBSD: ps.c,v 1.26 2005/02/26 22:12:33 dsl Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.25 2004/01/11 19:15:50 jdolecek Exp $");
+__RCSID("$NetBSD: ps.c,v 1.26 2005/02/26 22:12:33 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -94,7 +94,7 @@ void
 showps(void)
 {
 	int i, k, y, vsz, rss;
-	const char *user, *comm, *state, *tty, *start, *time;
+	const char *user, *comm, *state, *tty, *start, *time_str;
 	pid_t pid;
 	double pctcpu, pctmem;
 	struct kinfo_proc2 *kp;
@@ -123,7 +123,7 @@ showps(void)
 		tty = tty2str(pt[k].pt_kp);
 		state = state2str(pt[k].pt_kp);
 		start = start2str(pt[k].pt_kp);
-		time = time2str(pt[k].pt_kp);
+		time_str = time2str(pt[k].pt_kp);
 		comm = comm2str(pt[k].pt_kp);
 		/*comm = pt[k].pt_kp->kp_proc.p_comm; */
 
@@ -131,7 +131,8 @@ showps(void)
 		wclrtoeol(wnd);
 		mvwprintw(wnd, y++, 0,
 		    "%-8.8s%5d %4.1f %4.1f %6d %5d %-3s %-4s %7s %10.10s %s",
-		    user, pid, pctcpu, pctmem, vsz, rss, tty, state, start, time, comm);
+		    user, pid, pctcpu, pctmem, vsz, rss, tty, state, start,
+		    time_str, comm);
 		i--;
 	}
 	wmove(wnd, y, 0);
@@ -141,14 +142,14 @@ showps(void)
 int
 compare_pctcpu_noidle(const void *a, const void *b)
 {
-	if (((struct p_times *) a)->pt_kp == NULL)
+	if (((const struct p_times *) a)->pt_kp == NULL)
 		return 1;
 
-	if (((struct p_times *) b)->pt_kp == NULL)
+	if (((const struct p_times *) b)->pt_kp == NULL)
 	 	return -1;
 
-	return (((struct p_times *) a)->pt_pctcpu >
-		((struct p_times *) b)->pt_pctcpu)? -1: 1;
+	return (((const struct p_times *) a)->pt_pctcpu >
+		((const struct p_times *) b)->pt_pctcpu)? -1: 1;
 }
 
 /* from here down adapted from .../src/usr.bin/ps/print.c .  Any mistakes are my own, however. */
@@ -223,16 +224,16 @@ char *
 tty2str(struct kinfo_proc2 *kp)
 {
 	static char ttystr[4];
-	char *ttyname;
+	char *tty_name;
 
 	if (kp->p_tdev == NODEV ||
-	    (ttyname = devname(kp->p_tdev, S_IFCHR)) == NULL)
+	    (tty_name = devname(kp->p_tdev, S_IFCHR)) == NULL)
 		strlcpy(ttystr, "??", sizeof(ttystr));
 	else {
-		if (strncmp(ttyname, "tty", 3) == 0 ||
-		    strncmp(ttyname, "dty", 3) == 0)
-			ttyname += 3;
-		snprintf(ttystr, sizeof(ttystr), "%s%c", ttyname,
+		if (strncmp(tty_name, "tty", 3) == 0 ||
+		    strncmp(tty_name, "dty", 3) == 0)
+			tty_name += 3;
+		snprintf(ttystr, sizeof(ttystr), "%s%c", tty_name,
 		    kp->p_eflag & EPROC_CTTY ? ' ' : '-');
 	}
 
@@ -265,16 +266,16 @@ rss2int(struct kinfo_proc2 *kp)
 char *
 comm2str(struct kinfo_proc2 *kp)
 {
-	char **argv, **pt;
+	char **argv;
 	static char commstr[41];
 
 	commstr[0]='\0';
 
 	argv = kvm_getargv2(kd, kp, 40);
-	if ((pt = argv) != NULL) {
-		while (*pt) {
-			strlcat(commstr, *pt, sizeof(commstr));
-			pt++;
+	if (argv != NULL) {
+		while (*argv) {
+			strlcat(commstr, *argv, sizeof(commstr));
+			argv++;
 			strlcat(commstr, " ", sizeof(commstr));
 		}
 	} else
@@ -375,9 +376,7 @@ ps_user(char *args)
 {
 	uid_t uid;
 
-	if (args == NULL)
-		args = "";
-	if (strcmp(args, "+") == 0) {
+	if (args == NULL || *args == 0 || strcmp(args, "+") == 0) {
 		uid = SHOWUSER_ANY;
 	} else if (uid_from_user(args, &uid) != 0) {
 		error("%s: unknown user", args);

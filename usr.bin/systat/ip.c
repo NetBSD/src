@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.c,v 1.11 2003/02/24 10:10:00 dsl Exp $	*/
+/*	$NetBSD: ip.c,v 1.12 2005/02/26 22:12:33 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ip.c,v 1.11 2003/02/24 10:10:00 dsl Exp $");
+__RCSID("$NetBSD: ip.c,v 1.12 2005/02/26 22:12:33 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -42,7 +42,6 @@ __RCSID("$NetBSD: ip.c,v 1.11 2003/02/24 10:10:00 dsl Exp $");
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
 
-#include <kvm.h>
 #include <string.h>
 
 #include "systat.h"

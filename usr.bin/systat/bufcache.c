@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.c,v 1.18 2004/11/23 03:11:33 simonb Exp $	*/
+/*	$NetBSD: bufcache.c,v 1.19 2005/02/26 22:12:33 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bufcache.c,v 1.18 2004/11/23 03:11:33 simonb Exp $");
+__RCSID("$NetBSD: bufcache.c,v 1.19 2005/02/26 22:12:33 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -52,9 +52,7 @@ __RCSID("$NetBSD: bufcache.c,v 1.18 2004/11/23 03:11:33 simonb Exp $");
 #include <err.h>
 #include <errno.h>
 #include <inttypes.h>
-#include <kvm.h>
 #include <math.h>
-#include <nlist.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -190,7 +188,7 @@ showbufcache(void)
 	for (i = lastrow, ml = LIST_FIRST(&mount_list); ml != NULL;
 	    i++, ml = LIST_NEXT(ml, ml_entries)) {
 
-		int c = ml->ml_count;
+		int cnt = ml->ml_count;
 		double v = ml->ml_valid;
 		double s = ml->ml_size;
 
@@ -200,7 +198,7 @@ showbufcache(void)
 			    "NULL" : ml->ml_mount.mnt_stat.f_mntonname);
 			wprintw(wnd,
 			    "    %6d %3d    %8ld %3.0f    %8ld %3.0f     %3.0f",
-			    c, (100 * c) / nbuf,
+			    cnt, (100 * cnt) / nbuf,
 			    (long)(v/1024), 100 * v / bufmem,
 			    (long)(s/1024), 100 * s / bufmem,
 			    100 * v / s);
@@ -209,7 +207,7 @@ showbufcache(void)
 		}
 
 		/* Update statistics. */
-		tbuf += c;
+		tbuf += cnt;
 		tvalid += v;
 		tsize += s;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: netcmds.c,v 1.20 2004/11/04 07:18:47 dsl Exp $	*/
+/*	$NetBSD: netcmds.c,v 1.21 2005/02/26 22:12:33 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)netcmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netcmds.c,v 1.20 2004/11/04 07:18:47 dsl Exp $");
+__RCSID("$NetBSD: netcmds.c,v 1.21 2005/02/26 22:12:33 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -74,7 +74,7 @@ static	struct hitem {
 int nports, nhosts, protos;
 
 static void changeitems(char *, int);
-static void selectproto(char *);
+static void selectproto(const char *);
 static void showprotos(void);
 static int selectport(long, int);
 static void showports(void);
@@ -177,7 +177,7 @@ changeitems(char *args, int onoff)
 }
 
 static void
-selectproto(char *proto)
+selectproto(const char *proto)
 {
 
 	if (proto == 0 || streq(proto, "all"))
@@ -342,15 +342,15 @@ int
 checkhost(struct inpcb *inp)
 {
 	struct hitem *p;
-	struct sockaddr_in *sin;
+	struct sockaddr_in *s_in;
 
 	if (hosts)
 		for (p = hosts; p < hosts+nhosts; p++) {
 			if (((struct sockaddr *)&p->addr)->sa_family != AF_INET)
 				continue;
-			sin = (struct sockaddr_in *)&p->addr;
-			if (sin->sin_addr.s_addr == inp->inp_laddr.s_addr ||
-			    sin->sin_addr.s_addr == inp->inp_faddr.s_addr)
+			s_in = (struct sockaddr_in *)&p->addr;
+			if (s_in->sin_addr.s_addr == inp->inp_laddr.s_addr ||
+			    s_in->sin_addr.s_addr == inp->inp_faddr.s_addr)
 				return (p->onoff);
 		}
 	return (1);
