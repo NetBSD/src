@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.26 1994/06/29 06:42:26 cgd Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.27 1994/07/03 09:24:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -493,6 +493,8 @@ mountnfs(argp, mp, nam, pth, hst, vpp)
 #else
 	mp->mnt_stat.f_type = 0;
 #endif
+	strncpy(&mp->mnt_stat.f_fstypename[0], mp->mnt_op->vfs_name, MFSNAMELEN);
+	mp->mnt_stat.f_fstypename[MFSNAMELEN] = '\0';
 	bcopy(hst, mp->mnt_stat.f_mntfromname, MNAMELEN);
 	bcopy(pth, mp->mnt_stat.f_mntonname, MNAMELEN);
 	nmp->nm_nam = nam;
