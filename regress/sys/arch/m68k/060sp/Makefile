@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1997/10/26 21:51:07 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 1998/06/16 19:06:31 is Exp $
 
 NOMAN=notyet
 PROG=dotest
@@ -17,7 +17,8 @@ CLEANFILES+=itest.S ftest.S
 depend dotestsubs.o: itest.S ftest.S
 
 regress: ${PROG}
-	@./${PROG} | tee /dev/tty | cmp -s - ${.CURDIR}/goodoutput
+	@/usr/sbin/sysctl hw.model | grep -v -q 68060 || \
+		./${PROG} | tee /dev/tty | cmp -s - ${.CURDIR}/goodoutput
 
 
 .include <bsd.prog.mk>
