@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.21 1997/10/14 09:54:36 mark Exp $	*/
+/*	$NetBSD: locore.S,v 1.22 1998/02/22 00:05:00 mark Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -213,12 +213,15 @@ Wfiq:
 Lcpufuncs:	
 	.word	_cpufuncs
 
-ENTRY(boot0)
+ENTRY(cpu_reset)
 	mrs     r2, cpsr_all
 	bic	r2, r2, #(PSR_MODE)
 	orr     r2, r2, #(PSR_SVC32_MODE)
 	orr	r2, r2, #(I32_bit | F32_bit)
 	msr     cpsr_all, r2
+
+	ldr	r4, Lcpu_reset_address
+	ldr	r4, [r4]
 
 	ldr	r0, Lcpufuncs
 	add	lr, pc, #Lboot_cache_purged - . - 8
@@ -232,8 +235,16 @@ Lboot_cache_purged:
 	 */
 	mov	r0, #(CPU_CONTROL_32BP_ENABLE | CPU_CONTROL_32BD_ENABLE)
 	mcr     15, 0, r0, c1, c0, 0
- 	mov	pc, #0
+	mov     pc, r4
 
+	/*
+	 * _cpu_reset_address contains the address to branch to, to complete
+	 * the cpu reset after turning the MMU off
+	 * This variable is provided by the hardware specific code
+	 */
+
+Lcpu_reset_address:
+	.word	_cpu_reset_address
 
 /* Debug routine to print trace back information from stack */
 
