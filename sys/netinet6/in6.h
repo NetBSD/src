@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.15 2000/06/08 19:01:44 danw Exp $	*/
+/*	$NetBSD: in6.h,v 1.16 2000/06/26 15:48:20 kleink Exp $	*/
 /*	$KAME: in6.h,v 1.44 2000/05/24 08:50:17 itojun Exp $	*/
 
 /*
@@ -144,7 +144,7 @@ struct in6_addr {
 #endif
 struct sockaddr_in6 {
 	u_int8_t	sin6_len;	/* length of this struct(sa_family_t)*/
-	u_int8_t	sin6_family;	/* AF_INET6 (sa_family_t) */
+	sa_family_t	sin6_family;	/* AF_INET6 (sa_family_t) */
 	u_int16_t	sin6_port;	/* Transport layer port # (in_port_t)*/
 	u_int32_t	sin6_flowinfo;	/* IP6 flow information */
 	struct in6_addr	sin6_addr;	/* IP6 address */
