@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.14 2003/01/31 02:05:41 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.15 2003/04/19 19:55:07 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1536,7 +1536,8 @@ fdformat(dev, finfo, p)
 	bp->b_data = (caddr_t)finfo;
 
 #ifdef DEBUG
-	printf("fdformat: blkno %x count %lx\n", bp->b_blkno, bp->b_bcount);
+	printf("fdformat: blkno %llx count %lx\n",
+	    (unsigned long long)bp->b_blkno, bp->b_bcount);
 #endif
 
 	/* now do the format */
