@@ -170,9 +170,7 @@
 ./usr/bin/dc
 ./usr/bin/diff
 ./usr/bin/diff3
-./usr/bin/dig
 ./usr/bin/dirname
-./usr/bin/dnsquery
 ./usr/bin/du
 ./usr/bin/egrep
 ./usr/bin/eject
@@ -205,7 +203,6 @@
 ./usr/bin/head
 ./usr/bin/hesinfo
 ./usr/bin/hexdump
-./usr/bin/host
 ./usr/bin/id
 ./usr/bin/ident
 ./usr/bin/indent
@@ -265,8 +262,6 @@
 ./usr/bin/nl
 ./usr/bin/nm
 ./usr/bin/nohup
-./usr/bin/nslookup
-./usr/bin/nsupdate
 ./usr/bin/objdump
 ./usr/bin/od
 ./usr/bin/page
@@ -274,7 +269,6 @@
 ./usr/bin/passwd
 ./usr/bin/paste
 ./usr/bin/patch
-./usr/bin/pawd
 ./usr/bin/pr
 ./usr/bin/printenv
 ./usr/bin/printf
@@ -512,7 +506,9 @@
 ./usr/sbin/dev_mkdb
 ./usr/sbin/dhcpd
 ./usr/sbin/dhcrelay
+./usr/sbin/dig
 ./usr/sbin/diskpart
+./usr/sbin/dnsquery
 ./usr/sbin/dumpfs
 ./usr/sbin/dumplfs
 ./usr/sbin/edquota
@@ -521,6 +517,7 @@
 ./usr/sbin/fsinfo
 ./usr/sbin/greconfig
 ./usr/sbin/hlfsd
+./usr/sbin/host
 ./usr/sbin/inetd
 ./usr/sbin/iostat
 ./usr/sbin/ipfstat
@@ -564,11 +561,14 @@
 ./usr/sbin/netgroup_mkdb
 ./usr/sbin/nfsd
 ./usr/sbin/nfsiod
+./usr/sbin/nslookup
+./usr/sbin/nsupdate
 ./usr/sbin/ntpdate
 ./usr/sbin/ntpq
 ./usr/sbin/ntptime
 ./usr/sbin/ntptrace
 ./usr/sbin/pac
+./usr/sbin/pawd
 ./usr/sbin/pkg_add
 ./usr/sbin/pkg_admin
 ./usr/sbin/pkg_create
