@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.32 1999/03/10 05:22:18 erh Exp $
+.\"	$NetBSD: make.1,v 1.33 1999/07/11 02:06:57 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -981,6 +981,8 @@ The sources are directories which are to be searched for files not
 found in the current directory.
 If no sources are specified, any previously specified directories are
 deleted.
+If the source is the special .Ic .DOTLAST target, then the current working
+directory is searched last.
 .It Ic .PHONY
 Apply the
 .Ic .PHONY
