@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.82 2000/05/27 20:29:14 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.83 2000/05/28 00:48:31 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -780,6 +780,7 @@ raidioctl(dev, cmd, data, flag, p)
 	RF_SingleComponent_t *sparePtr,*componentPtr;
 	RF_SingleComponent_t hot_spare;
 	RF_SingleComponent_t component;
+	RF_ProgressInfo_t progressInfo, **progressInfoPtr;
 	int i, j, d;
 
 	if (unit >= numraid)
@@ -817,6 +818,7 @@ raidioctl(dev, cmd, data, flag, p)
 	case RAIDFRAME_FAIL_DISK:
 	case RAIDFRAME_COPYBACK:
 	case RAIDFRAME_CHECK_RECON_STATUS:
+	case RAIDFRAME_CHECK_RECON_STATUS_EXT:
 	case RAIDFRAME_GET_COMPONENT_LABEL:
 	case RAIDFRAME_SET_COMPONENT_LABEL:
 	case RAIDFRAME_ADD_HOT_SPARE:
@@ -825,7 +827,9 @@ raidioctl(dev, cmd, data, flag, p)
 	case RAIDFRAME_REBUILD_IN_PLACE:
 	case RAIDFRAME_CHECK_PARITY:
 	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS:
+	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT:
 	case RAIDFRAME_CHECK_COPYBACK_STATUS:
+	case RAIDFRAME_CHECK_COPYBACK_STATUS_EXT:
 	case RAIDFRAME_SET_AUTOCONFIG:
 	case RAIDFRAME_SET_ROOT:
 	case RAIDFRAME_DELETE_COMPONENT:
@@ -1277,6 +1281,25 @@ raidioctl(dev, cmd, data, flag, p)
 		else
 			*(int *) data = raidPtr->reconControl[row]->percentComplete;
 		return (0);
+	case RAIDFRAME_CHECK_RECON_STATUS_EXT:
+		progressInfoPtr = (RF_ProgressInfo_t **) data;
+		row = 0; /* XXX we only consider a single row... */
+		if (raidPtr->status[row] != rf_rs_reconstructing) {
+			progressInfo.remaining = 0;
+			progressInfo.completed = 100;
+			progressInfo.total = 100;
+		} else {
+			progressInfo.total = 
+				raidPtr->reconControl[row]->numRUsTotal;
+			progressInfo.completed = 
+				raidPtr->reconControl[row]->numRUsComplete;
+			progressInfo.remaining = progressInfo.total -
+				progressInfo.completed;
+		}
+		retcode = copyout((caddr_t) &progressInfo,
+				  (caddr_t) *progressInfoPtr,
+				  sizeof(RF_ProgressInfo_t));
+		return (retcode);
 
 	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS:
 		if (raidPtr->Layout.map->faultsTolerated == 0) {
@@ -1286,16 +1309,37 @@ raidioctl(dev, cmd, data, flag, p)
 			return(0);
 		}
 		if (raidPtr->parity_rewrite_in_progress == 1) {
-			*(int *) data = 100 * raidPtr->parity_rewrite_stripes_done / raidPtr->Layout.numStripe;
+			*(int *) data = 100 * 
+				raidPtr->parity_rewrite_stripes_done / 
+				raidPtr->Layout.numStripe;
 		} else {
 			*(int *) data = 100;
 		}
 		return (0);
 
+	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT:
+		progressInfoPtr = (RF_ProgressInfo_t **) data;
+		if (raidPtr->parity_rewrite_in_progress == 1) {
+			progressInfo.total = raidPtr->Layout.numStripe;
+			progressInfo.completed = 
+				raidPtr->parity_rewrite_stripes_done;
+			progressInfo.remaining = progressInfo.total -
+				progressInfo.completed;
+		} else {
+			progressInfo.remaining = 0;
+			progressInfo.completed = 100;
+			progressInfo.total = 100;
+		}
+		retcode = copyout((caddr_t) &progressInfo,
+				  (caddr_t) *progressInfoPtr,
+				  sizeof(RF_ProgressInfo_t));
+		return (retcode);
+
 	case RAIDFRAME_CHECK_COPYBACK_STATUS:
 		if (raidPtr->Layout.map->faultsTolerated == 0) {
 			/* This makes no sense on a RAID 0 */
-			return(EINVAL);
+			*(int *) data = 100;
+			return(0);
 		}
 		if (raidPtr->copyback_in_progress == 1) {
 			*(int *) data = 100 * raidPtr->copyback_stripes_done /
@@ -1305,6 +1349,22 @@ raidioctl(dev, cmd, data, flag, p)
 		}
 		return (0);
 
+	case RAIDFRAME_CHECK_COPYBACK_STATUS_EXT:
+		if (raidPtr->copyback_in_progress == 1) {
+			progressInfo.total = raidPtr->Layout.numStripe;
+			progressInfo.completed = 
+				raidPtr->parity_rewrite_stripes_done;
+			progressInfo.remaining = progressInfo.total -
+				progressInfo.completed;
+		} else {
+			progressInfo.remaining = 0;
+			progressInfo.completed = 100;
+			progressInfo.total = 100;
+		}
+		retcode = copyout((caddr_t) &progressInfo,
+				  (caddr_t) *progressInfoPtr,
+				  sizeof(RF_ProgressInfo_t));
+		return (retcode);
 
 		/* the sparetable daemon calls this to wait for the kernel to
 		 * need a spare table. this ioctl does not return until a
