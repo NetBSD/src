@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.29 1993/09/11 00:12:56 jtc Exp $
+ *	$Id: locore.s,v 1.30 1993/09/16 03:24:19 brezak Exp $
  */
 
 
@@ -1972,7 +1972,7 @@ calltrap:
 	 * Return through doreti to handle ASTs.  Have to change trap frame
 	 * to interrupt frame.
 	 */
-	movl	$T_ASTFLT,4+4+32(%esp)	/* new trap type (err code not used) */
+	movl	$T_ASTFLT,TF_TRAPNO(%esp)	/* new trap type (err code not used) */
 	pushl	_cpl
 	pushl	$0			/* dummy unit */
 	jmp	doreti
@@ -1988,8 +1988,8 @@ bpttraps:
 #ifdef I386_CPU
 	nop
 #endif
-	pushl	%es
 	pushl	%ds
+	pushl	%es
 	movl	$KDSEL,%eax
 	movl	%ax,%ds
 	movl	%ax,%es
@@ -2006,44 +2006,26 @@ bpttraps:
 
 	SUPERALIGN_TEXT
 IDTVEC(syscall)
-	pushfl	# only for stupid carry bit and more stupid wait3 cc kludge
-		# XXX - also for direction flag (bzero, etc. clear it)
-	pushal	# only need eax,ecx,edx - trap resaves others
-#ifdef I386_CPU
-	nop
-#endif
-	movl	$KDSEL,%eax		# switch to kernel segments
-	movl	%ax,%ds
-	movl	%ax,%es
-	incl	_cnt+V_SYSCALL  # kml 3/25/93
-	call	_syscall
-	/*
-	 * Return through doreti to handle ASTs.  Have to change syscall frame
-	 * to interrupt frame.
-	 *
-	 * XXX - we should have set up the frame earlier to avoid the
-	 * following popal/pushal (not much can be done to avoid shuffling
-	 * the flags).  Consistent frames would simplify things all over.
-	 */
-	movl	32+0(%esp),%eax	/* old flags, shuffle to above cs:eip */
-	movl	32+4(%esp),%ebx	/* `int' frame should have been ef, eip, cs */
-	movl	32+8(%esp),%ecx
-	movl	%ebx,32+0(%esp)
-	movl	%ecx,32+4(%esp)
-	movl	%eax,32+8(%esp)
-	popal
-#ifdef I386_CPU
-	nop
-#endif
-	pushl	$0		/* dummy error code */
-	pushl	$T_ASTFLT
+	pushfl		# Room for tf_err
+	pushfl		# Room for tf_trapno
 	pushal
 #ifdef I386_CPU
 	nop
 #endif
-	movl	__udatasel,%eax	/* switch back to user segments */
-	push	%eax		/* XXX - better to preserve originals? */
-	push	%eax
+	pushl	%ds
+	pushl	%es
+	movl	$KDSEL,%eax		# switch to kernel segments
+	movl	%ax,%ds
+	movl	%ax,%es
+	movl	TF_ERR(%esp),%eax	# copy eflags from tf_err to fs_eflags
+	movl	%eax,TF_EFLAGS(%esp)
+	movl	$0,TF_ERR(%esp)		# zero tf_err
+	incl	_cnt+V_SYSCALL  # kml 3/25/93
+	call	_syscall
+	/*
+	 * Return through doreti to handle ASTs.
+	 */
+	movl	$T_ASTFLT,TF_TRAPNO(%esp)	# new trap type (err code not used)
 	pushl	_cpl
 	pushl	$0
 	jmp	doreti
