@@ -65,7 +65,7 @@
  */
 /*-
  *      from: @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.6 1994/07/08 07:57:50 lkestel Exp $
+ *	$Id: conf.c,v 1.7 1994/07/09 06:36:13 briggs Exp $
  */
 /*
    ALICE
@@ -84,6 +84,7 @@
 #include <sys/tty.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
+#include <dev/cons.h>
 
 int	rawread		__P((dev_t, struct uio *, int));
 int	rawwrite	__P((dev_t, struct uio *, int));
@@ -97,7 +98,7 @@ int	ttselect	__P((dev_t, int, struct proc *));
 	int n __P((dev_t, int, caddr_t, int, struct proc *))
 
 /* bdevsw-specific types */
-#define	dev_type_dump(n)	int n __P((dev_t))
+#define	dev_type_dump(n)	int n ()
 #define	dev_type_size(n)	int n __P((dev_t))
 
 #define	dev_decl(n,t)	__CONCAT(dev_type_,t)(__CONCAT(n,t))
@@ -451,3 +452,11 @@ chrtoblk(dev)
 		return NODEV;
 	return (makedev(blkmaj, minor(dev)));
 }
+
+int	itecnprobe(), itecninit(), itecngetc(), itecnputc();
+int	sercnprobe(), sercninit(), sercngetc(), sercnputc();
+
+struct	consdev constab[] = {
+	{ itecnprobe,	itecninit,	itecngetc,	itecnputc },
+	{ 0 },
+};
