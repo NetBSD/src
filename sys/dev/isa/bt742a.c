@@ -1,4 +1,4 @@
-/*	$NetBSD: bt742a.c,v 1.46 1995/08/12 23:00:47 mycroft Exp $	*/
+/*	$NetBSD: bt742a.c,v 1.47 1995/09/14 20:43:14 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -387,8 +387,9 @@ struct scsi_device bt_dev = {
 	NULL,			/* Use default 'done' routine */
 };
 
-int btprobe __P((struct device *, void *, void *));
-void btattach __P((struct device *, struct device *, void *));
+int	btprobe __P((struct device *, void *, void *));
+void	btattach __P((struct device *, struct device *, void *));
+int	btprint __P((void *, char *));
 
 struct cfdriver btcd = {
 	NULL, "bt", btprobe, btattach, DV_DULL, sizeof(struct bt_softc)
@@ -572,9 +573,14 @@ btprobe(parent, match, aux)
 	return 1;
 }
 
-btprint()
+int
+btprint(aux, name)
+	void *aux;
+	char *name;
 {
-
+	if (name != NULL)       
+		printf("%s: scsibus ", name);
+	return UNCONF;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.33 1995/08/12 20:31:24 mycroft Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.34 1995/09/14 20:43:12 pk Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -574,6 +574,7 @@ int aic_debug = 0x00; /* AIC_SHOWSTART|AIC_SHOWMISC|AIC_SHOWTRACE; /**/
 
 int	aicprobe	__P((struct device *, void *, void *));
 void	aicattach	__P((struct device *, struct device *, void *));
+int	aicprint	__P((void *, char *));
 void	aic_minphys	__P((struct buf *));
 int	aicintr		__P((void *));
 void 	aic_init	__P((struct aic_softc *));
@@ -729,9 +730,13 @@ aic_find(sc)
 }
 
 int
-aicprint()
+aicprint(aux, name)
+	void *aux;
+	char *name;
 {
-
+	if (name != NULL)
+		printf("%s: scsibus ", name);
+	return UNCONF;
 }
 
 /*
