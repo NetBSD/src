@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.21 1999/02/28 09:59:33 mark Exp $ */
+/* $NetBSD: if_ie.c,v 1.22 1999/03/25 23:11:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -116,9 +116,6 @@
 #define IE_RXBUF_SIZE (256) 	/* receive buf size */
 #define NTXBUF  (2)		/* number of transmit buffers to allocate */
 #define IE_TXBUF_SIZE (1522) 	/* size of tx buffer */
-
-#define ETHER_MIN_LEN  (64)
-#define ETHER_MAX_LEN  (1518)
 
 #define PWriteShort(a,b)	WriteWord(a,(b)<<16|(b))
 
