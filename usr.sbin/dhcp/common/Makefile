@@ -38,7 +38,7 @@ NOPROFILE=
 NOPIC=
 NOLINT=
 
-# only needed during build
-libinstall::
+# this library is used only for the build
+NOINSTALL=1
 
 .include <bsd.lib.mk>

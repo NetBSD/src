@@ -1,10 +1,13 @@
-#	$NetBSD: Makefile,v 1.3 1997/05/07 16:20:39 mycroft Exp $
+#	$NetBSD: Makefile,v 1.4 1997/05/30 13:43:28 cjs Exp $
 
 LIB=	sa
 
 NOPIC=
 NOPROFILE=
 OBJMACHINE=
+
+# this library is used only for the build
+NOINSTALL=1
 
 CPPFLAGS+=	${DEFS} ${INCL}
 CFLAGS+=	-fomit-frame-pointer -Wall
@@ -49,8 +52,5 @@ S_KERN=${S}/lib/libkern
 S_MACHSA=${S}/arch/atari/stand/libsa
 
 .PATH:  ${S_SA} ${S_KERN}
-
-# only needed during build
-libinstall::
 
 .include <bsd.lib.mk>
