@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.62 1996/11/27 21:24:20 pk Exp $	*/
+/*	$NetBSD: esp.c,v 1.63 1996/11/27 21:34:59 pk Exp $	*/
 
 #ifdef __sparc__
 #define	SPARC_DRIVER
@@ -2086,7 +2086,12 @@ esp_abort(sc, ecb)
 		 */
 		if (sc->sc_state == ESP_CONNECTED)
 			esp_sched_msgout(SEND_ABORT);
-		/* Reschedule timeout */
+
+		/*
+		 * Reschedule timeout. First, cancel a queued timeout (if any)
+		 * in case someone decides to call esp_abort() from elsewhere.
+		 */
+		untimeout(esp_timeout, ecb);
 		timeout(esp_timeout, ecb, (ecb->timeout * hz) / 1000);
 	} else {
 		esp_dequeue(sc, ecb);
