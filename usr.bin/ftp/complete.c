@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.3 1997/03/13 06:23:13 lukem Exp $	*/
+/*	$NetBSD: complete.c,v 1.4 1997/03/13 22:38:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,8 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef SMALLFTP
 #ifndef lint
-static char rcsid[] = "$NetBSD: complete.c,v 1.3 1997/03/13 06:23:13 lukem Exp $";
+static char rcsid[] = "$NetBSD: complete.c,v 1.4 1997/03/13 22:38:40 christos Exp $";
 #endif /* not lint */
 
 /*
@@ -374,3 +375,4 @@ complete(el, ch)
 
 	return CC_ERROR;
 }
+#endif
