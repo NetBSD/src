@@ -1,4 +1,4 @@
-# $NetBSD: md.arm32,v 1.30 2000/04/29 03:46:26 thorpej Exp $
+# $NetBSD: md.arm32,v 1.31 2000/06/26 15:49:46 kleink Exp $
 ./usr/include/arm32		comp-c-include
 ./usr/include/arm32/_G_config.h		comp-c-include
 ./usr/include/arm32/ansi.h		comp-c-include
@@ -25,6 +25,7 @@
 ./usr/include/arm32/ieee.h		comp-c-include
 ./usr/include/arm32/ieeefp.h		comp-c-include
 ./usr/include/arm32/iic.h		comp-c-include
+./usr/include/arm32/int_types.h		comp-c-include
 ./usr/include/arm32/intr.h		comp-c-include
 ./usr/include/arm32/io.h		comp-c-include
 ./usr/include/arm32/ipkdb.h		comp-c-include

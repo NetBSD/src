@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.5 2000/04/29 03:46:30 thorpej Exp $
+# $NetBSD: md.sparc64,v 1.6 2000/06/26 15:50:01 kleink Exp $
 ./usr/include/sparc64/_G_config.h	comp-c-include
 ./usr/include/sparc64/ansi.h	comp-c-include
 ./usr/include/sparc64/aout_machdep.h	comp-c-include
@@ -28,6 +28,7 @@
 ./usr/include/sparc64/ieee.h	comp-c-include
 ./usr/include/sparc64/ieeefp.h	comp-c-include
 ./usr/include/sparc64/instr.h	comp-c-include
+./usr/include/sparc64/int_types.h	comp-c-include
 ./usr/include/sparc64/kbd.h	comp-c-include
 ./usr/include/sparc64/kbio.h	comp-c-include
 ./usr/include/sparc64/kcore.h	comp-c-include
