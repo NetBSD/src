@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.136 2004/10/04 01:24:18 enami Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.137 2004/11/13 19:16:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.136 2004/10/04 01:24:18 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.137 2004/11/13 19:16:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1466,6 +1466,7 @@ buf_syncwait(void)
 				bawrite(bp);
 				if (dcount-- <= 0) {
 					printf("softdep ");
+					splx(s);
 					goto fail;
 				}
 				simple_lock(&bqueue_slock);
@@ -1493,12 +1494,14 @@ buf_syncwait(void)
 fail:;
 #if defined(DEBUG) || defined(DEBUG_HALT_BUSY)
 		printf("giving up\nPrinting vnodes for busy buffers\n");
+		s = splbio();
 		for (ihash = 0; ihash < bufhash+1; ihash++) {
 		    LIST_FOREACH(bp, &bufhashtbl[ihash], b_hash) {
 			if ((bp->b_flags & (B_BUSY|B_INVAL|B_READ)) == B_BUSY)
 				vprint(NULL, bp->b_vp);
 		    }
 		}
+		splx(s);
 #endif
 	}
 
