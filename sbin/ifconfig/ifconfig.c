@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "@(#)ifconfig.c	5.1 (Berkeley) 2/28/91";
-static char rcsid[] = "$Header: /cvsroot/src/sbin/ifconfig/ifconfig.c,v 1.4 1993/03/23 00:28:32 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sbin/ifconfig/ifconfig.c,v 1.5 1993/05/04 09:26:54 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -180,6 +180,7 @@ main(argc, argv)
 {
 	int af = AF_INET;
 	register struct afswtch *rafp;
+	int all = 0;
 
 	if (argc < 2) {
 		fprintf(stderr, "usage: ifconfig interface\n%s%s%s%s%s",
@@ -191,8 +192,12 @@ main(argc, argv)
 		exit(1);
 	}
 	argc--, argv++;
-	strncpy(name, *argv, sizeof(name));
-	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	if(strcmp(*argv, "-a")==0)
+		all = 1;
+	else {
+		strncpy(name, *argv, sizeof(name));
+		strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	}
 	argc--, argv++;
 	if (argc > 0) {
 		for (afp = rafp = afs; rafp->af_name; rafp++)
@@ -208,20 +213,26 @@ main(argc, argv)
 		perror("ifconfig: socket");
 		exit(1);
 	}
+	if(all) {
+		printall(af);
+		exit(0);
+	}
 	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifr) < 0) {
 		Perror("ioctl (SIOCGIFFLAGS)");
 		exit(1);
 	}
+	if(argc==0) {
+		handle_ifreq(&ifr);
+		exit(0);
+	}
+	
 	strncpy(ifr.ifr_name, name, sizeof ifr.ifr_name);
 	flags = ifr.ifr_flags;
 	if (ioctl(s, SIOCGIFMETRIC, (caddr_t)&ifr) < 0)
 		perror("ioctl (SIOCGIFMETRIC)");
 	else
 		metric = ifr.ifr_metric;
-	if (argc == 0) {
-		status();
-		exit(0);
-	}
+
 	while (argc > 0) {
 		register struct cmd *p;
 
@@ -268,8 +279,67 @@ main(argc, argv)
 		if (ioctl(s, rafp->af_aifaddr, rafp->af_addreq) < 0)
 			Perror("ioctl (SIOCAIFADDR)");
 	}
+
 	exit(0);
 }
+
+printall()
+{
+	char inbuf[8192];
+	struct ifconf ifc;
+	struct ifreq ifreq, *ifr;
+	struct in_addr in;
+	int i, len;
+
+	ifc.ifc_len = sizeof inbuf;
+	ifc.ifc_buf = inbuf;
+	if( ioctl(s, SIOCGIFCONF, &ifc) < 0) {
+		perror("ioctl(SIOCGIFCONF)");
+		return -1;
+	}
+	ifr = ifc.ifc_req;
+	ifreq.ifr_name[0] = '\0';
+	for(i=0; i<ifc.ifc_len; i+=len, ifr=(struct ifreq *)((caddr_t)ifr+len)) {
+		len = sizeof ifr->ifr_name + ifr->ifr_addr.sa_len;
+		ifreq = *ifr;
+		if( ioctl(s, SIOCGIFFLAGS, &ifreq) < 0) {
+			perror("ioctl(SIOCGIFFLAGS)");
+			continue;
+		}
+		handle_ifreq(&ifreq);
+	}
+}
+
+struct ifseen {
+	struct ifseen *next;
+	char *name;
+} *ifshead;
+
+handle_ifreq(ifr)
+struct ifreq *ifr;
+{
+	struct ifseen *ifs;
+
+	for(ifs=ifshead; ifs; ifs=ifs->next)
+		if(strcmp(ifs->name, ifr->ifr_name)==0)
+			return;
+
+	strncpy(name, ifr->ifr_name, sizeof ifr->ifr_name);
+	flags = ifr->ifr_flags;
+
+	if (ioctl(s, SIOCGIFMETRIC, (caddr_t)ifr) < 0) {
+		perror("ioctl (SIOCGIFMETRIC)");
+		metric = 0;
+	} else
+		metric = ifr->ifr_metric;
+	status();
+	
+	ifs = (struct ifseen *)malloc(sizeof *ifs);
+	ifs->name = strdup(ifr->ifr_name);
+	ifs->next = ifshead;
+	ifshead = ifs;
+}
+
 #define RIDADDR 0
 #define ADDR	1
 #define MASK	2
