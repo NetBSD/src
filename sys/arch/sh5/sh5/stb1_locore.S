@@ -1,4 +1,4 @@
-/*	$NetBSD: stb1_locore.S,v 1.10 2003/03/13 13:44:20 scw Exp $	*/
+/*	$NetBSD: stb1_locore.S,v 1.11 2003/03/28 09:48:07 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -680,7 +680,13 @@ Lstb1_cacheop_switch_asid:
 	/*
 	 * Next, prime SSR and SPC with the correct ASID and cacheop
 	 * handler address.
+	 *
+	 * NOTE: It is **IMPERATIVE** that we preserve the current SSR/SPC
+	 * values as we could be called as a result of a TLB miss (via the
+	 * pmap_pte_spill() function). In this case, SSR/SPC are *live*.
 	 */
+	getcon	ssr, r36		/* Save SSR in caller-saved r36 */
+	getcon	spc, r37		/* Save SPC in caller-saved r37 */
 	LDC32(SH5_CONREG_SR_ASID_MASK << SH5_CONREG_SR_ASID_SHIFT, r1)
 	andc	r0, r1, r0		/* Clear the current ASID */
 	LDC32(PMAP_ASID_CACHEOPS << SH5_CONREG_SR_ASID_SHIFT, r1)
@@ -762,8 +768,10 @@ Lstb1_cacheops_return:
 	putcfg	r1, 1, r23			/* Restore Insn PTEL */
 
 	/*
-	 * Restore the original SR, and return to the original caller.
+	 * Restore the original SR/SSR/SPC, and return to the original caller.
 	 */
+	putcon	r36, pssr
+	putcon	r37, pspc
 	putcon	r19, ssr
 	putcon	r18, spc
 	synco
