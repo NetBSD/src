@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.135 2003/09/05 19:16:20 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.136 2003/09/05 21:49:10 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1467,4 +1467,11 @@ libexec/ld.elf_so/symbol.c			1.16 (via patch)
 	occasionally by a signal. In general, _rtld_bind() should not modify
 	ANY internal state.
 	[dmcmahill, ticket #1395]
+
+sys/netinet6/ah_input.c				1.41
+sys/netinet6/esp_input.c			1.33
+
+	m_cat may free mbuf on 2nd arg, so m_pkthdr manipulation has to happen
+	before m_cat call.  from Julian Coleman via kame.
+	[itojun, ticket #1401]
 
