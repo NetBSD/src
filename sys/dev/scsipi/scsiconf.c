@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.175 2001/12/29 13:55:02 augustss Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.176 2001/12/29 14:06:18 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.175 2001/12/29 13:55:02 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.176 2001/12/29 14:06:18 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -470,8 +470,6 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "VMware", "Virtual",            "1.0"},
 				PQUIRK_NOSTARTUNIT|PQUIRK_NODOORLOCK},
-	{{T_CDROM, T_REMOV,
-	 "LITE-ON", "LTR-12101B",        "LS38"}, PQUIRK_ONLYBIG},
 
 	{{T_DIRECT, T_FIXED,
 	 "MICROP  ", "1588-15MBSUN0669", ""},     PQUIRK_AUTOSAVE},
@@ -585,14 +583,6 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	/* Letting the motor run kills floppy drives and disks quite fast. */
 	{{T_DIRECT, T_REMOV,
 	 "TEAC", "FC-1",		 ""},	  PQUIRK_NOSTARTUNIT},
-
-	{{T_DIRECT, T_REMOV,
-	 "Y-E DATA", "USB-FDU",          "3.04"}, PQUIRK_NOMODESENSE},
-	{{T_DIRECT, T_REMOV,
-	 "TEAC", "FD-05PUB",             "1026"}, PQUIRK_NOMODESENSE},
-	{{T_DIRECT, T_REMOV,
-	 "M-Sys", "DiskOnKey",           "2.01"}, PQUIRK_NOMODESENSE
-	      | PQUIRK_NODOORLOCK | PQUIRK_NOBIGMODESENSE},
 	{{T_DIRECT, T_REMOV,
 	 "INSITE", "I325VM",             ""},
 				PQUIRK_NOLUNS|PQUIRK_NODOORLOCK},
