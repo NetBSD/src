@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.7 2000/04/28 23:37:11 mycroft Exp $	*/
+/*	$NetBSD: attributes.c,v 1.8 2000/05/11 22:44:45 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: attributes.c,v 1.7 2000/04/28 23:37:11 mycroft Exp $");
+__RCSID("$NetBSD: attributes.c,v 1.8 2000/05/11 22:44:45 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: attributes.c,v 1.7 2000/04/28 23:37:11 mycroft Exp $");
 
 #ifndef _CURSES_USE_MACROS
 /*
- * attron
+ * attron --
  *	Test and set attributes on stdscr
  */
 
@@ -57,7 +57,7 @@ attron(int attr)
 }
 
 /*
- * attroff
+ * attroff --
  *	Test and unset attributes on stdscr.
  */
 int
@@ -67,7 +67,7 @@ attroff(int attr)
 }
 
 /*
- * attrset
+ * attrset --
  *	Set specific attribute modes.
  *	Unset others.  On stdscr.
  */
@@ -80,7 +80,7 @@ attrset(int attr)
 #endif
 
 /*
- * wattron
+ * wattron --
  *	Test and set attributes.
  *
  *	Modes are blinking, bold (extra bright), dim (half-bright),
@@ -91,7 +91,7 @@ int
 wattron(WINDOW *win, int attr)
 {
 #ifdef DEBUG
-	__CTRACE ("wattron: %08x, %08x\n", attr, __nca);
+	__CTRACE ("wattron: win %0.2o, attr %08x\n", win, attr);
 #endif
 	/* If can enter modes, set the relevent attribute bits. */
 	if (ME != NULL) {
@@ -128,7 +128,7 @@ wattron(WINDOW *win, int attr)
 }
 
 /*
- * wattroff
+ * wattroff --
  *	Test and unset attributes.
  *
  *	Note that the 'me' sequence unsets all attributes.  We handle
@@ -138,7 +138,7 @@ int
 wattroff(WINDOW *win, int attr)
 {
 #ifdef DEBUG
-	__CTRACE ("wattroff: %08x\n", attr);
+	__CTRACE ("wattroff: win %0.2o, attr %08x\n", win, attr);
 #endif
 	/* If can do exit modes, unset the relevent attribute bits. */
 	if (ME != NULL) {
@@ -167,7 +167,7 @@ wattroff(WINDOW *win, int attr)
 }
 
 /*
- * wattrset
+ * wattrset --
  *	Set specific attribute modes.
  *	Unset others.
  */
@@ -175,9 +175,22 @@ int
 wattrset(WINDOW *win, int attr)
 {
 #ifdef DEBUG
-	__CTRACE ("wattrset: %08x\n", attr, __nca);
+	__CTRACE ("wattrset: win %0.2o, attr %08x\n", win, attr);
 #endif
 	wattron(win, attr);
 	wattroff(win, (~attr & ~__COLOR) | ((attr & __COLOR) ? 0 : __COLOR));
 	return (OK);
+}
+
+/*
+ * getattrs --
+ * Get window attributes.
+ */
+chtype
+getattrs(WINDOW *win)
+{
+#ifdef DEBUG
+	__CTRACE ("getattrs: win %0.2o\n", win);
+#endif
+	return((chtype) win->wattr);
 }
