@@ -32,35 +32,20 @@ divert(-1)
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
+#	This ostype file is suitable for use on Solaris 2.x systems that
+#	have mail.local installed.  It is my understanding that this is
+#	standard as of Solaris 2.5.
+#
 
 divert(0)
-VERSIONID(`@(#)bestmx_is_local.m4	8.4 (Berkeley) 10/23/96')
+VERSIONID(`@(#)solaris2.ml.m4	8.2 (Berkeley) 9/25/96')
 divert(-1)
 
-LOCAL_CONFIG
-# turn on bestMX lookup table
-Kbestmx bestmx
-
-# limit bestmx to these domains
-CB`'_ARG_
-
-LOCAL_NET_CONFIG
-
-# If we are the best MX for a site, then we want to accept
-# its mail as local.  We assume we've already weeded out mail to
-# UUCP sites which are connected to us, which should also have
-# listed us as their best MX.
-#
-# Warning: this may generate a lot of extra DNS traffic -- a
-# lower cost method is to list all the expected best MX hosts
-# in $=w.  This should be fine (and easier to administer) for
-# low to medium traffic hosts.  If you use the limited bestmx
-# by passing in a set of possible domains it will improve things.
-
-ifelse(_ARG_, `', `', `#')dnl		unlimited bestmx
-R$* < @ $* > $*			$: $1 < @ $2 @@ $(bestmx $2 $) > $3
-ifelse(_ARG_, `', `#', `')dnl		limit bestmx to $=B
-R$* < @ $* $=B > $*		$: $1 < @ $2 $3 @@ $(bestmx $2 $3 $) > $4
-R$* $=O $* < @ $* @@ $=w . > $*	$@ $>97 $1 $2 $3
-R$* < @ $* @@ $=w . > $*	$#local $: $1
-R$* < @ $* @@ $* > $*		$: $1 < @ $2 > $4
+define(`ALIAS_FILE', /etc/mail/aliases)
+ifdef(`HELP_FILE',, `define(`HELP_FILE', /etc/mail/sendmail.hf)')
+ifdef(`STATUS_FILE',, `define(`STATUS_FILE', /etc/mail/sendmail.st)')
+ifdef(`LOCAL_MAILER_PATH',, `define(`LOCAL_MAILER_PATH', `/usr/lib/mail.local')')
+ifdef(`LOCAL_MAILER_FLAGS',, `define(`LOCAL_MAILER_FLAGS', `fSmn9')')
+ifdef(`LOCAL_MAILER_ARGS',, `define(`LOCAL_MAILER_ARGS', `mail.local -d $u')')
+ifdef(`UUCP_MAILER_ARGS',, `define(`UUCP_MAILER_ARGS', `uux - -r -a$g $h!rmail ($u)')')
+define(`confCW_FILE', /etc/mail/sendmail.cw)
