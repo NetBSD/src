@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.35 2004/02/29 12:19:15 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.36 2004/03/20 18:41:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.35 2004/02/29 12:19:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.36 2004/03/20 18:41:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,9 +297,31 @@ smbfs_close(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
+	int error;
+	struct vnode *vp = ap->a_vp;
+	struct smbnode *np = VTOSMB(vp);
 
 	/* Flush all file data */
-	return smbfs_vinvalbuf(ap->a_vp, V_SAVE, ap->a_cred, ap->a_p, 1);
+	error = smbfs_vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_p, 1);
+	if (error)
+		return (error);
+
+	/*
+	 * We must close the directory lookup context now, so that
+	 * later directory changes would be properly detected.
+	 * Ideally, the lookup routines should handle such case, and
+	 * the context would be removed only in smbfs_inactive().
+	 */
+	if (vp->v_type == VDIR && (np->n_flag & NOPEN) != 0 &&
+	    np->n_dirseq != NULL) {
+		struct smb_cred scred;
+
+		smb_makescred(&scred, ap->a_p, ap->a_cred);
+		smbfs_findclose(np->n_dirseq, &scred);
+		np->n_dirseq = NULL;
+	}
+
+	return (0);
 }
 
 /*
