@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.94 1998/06/16 11:03:28 drochner Exp $	*/
+/*	$NetBSD: conf.c,v 1.95 1998/06/26 00:08:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -28,6 +28,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_compat_svr4.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

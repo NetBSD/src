@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.83 1998/02/22 15:25:28 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.84 1998/06/26 00:08:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -51,6 +51,7 @@
  */
 
 #include "opt_uvm.h"
+#include "opt_compat_svr4.h"
 
 #include "assym.h"
 #include <machine/param.h>

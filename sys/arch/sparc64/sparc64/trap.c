@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.2 1998/06/25 21:19:19 thorpej Exp $ */
+/*	$NetBSD: trap.c,v 1.3 1998/06/26 00:08:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -50,6 +50,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_uvm.h"
+#include "opt_compat_svr4.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
