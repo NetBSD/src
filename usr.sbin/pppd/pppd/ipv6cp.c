@@ -1,4 +1,4 @@
-/*	$NetBSD: ipv6cp.c,v 1.5 2000/04/17 06:13:18 itojun Exp $	*/
+/*	$NetBSD: ipv6cp.c,v 1.6 2000/04/17 08:55:33 itojun Exp $	*/
 
 /*
  * ipv6cp.c - PPP IPV6 Control Protocol.
@@ -35,7 +35,7 @@
 #if 0
 #define RCSID	"Id: ipv6cp.c,v 1.3 1999/08/24 05:31:09 paulus Exp "
 #else
-__RCSID("$NetBSD: ipv6cp.c,v 1.5 2000/04/17 06:13:18 itojun Exp $");
+__RCSID("$NetBSD: ipv6cp.c,v 1.6 2000/04/17 08:55:33 itojun Exp $");
 #endif
 #endif
 
@@ -255,6 +255,7 @@ setifaceid(arg)
 	wo->opt_remote = 1;
     }
 
+    ipv6cp_protent.enabled_flag = 1;
     return 1;
 }
 
@@ -936,6 +937,9 @@ static void
 ipv6_check_options()
 {
     ipv6cp_options *wo = &ipv6cp_wantoptions[0];
+
+    if (!ipv6cp_protent.enabled_flag)
+	return;
 
     if (!wo->opt_local) {	/* init interface identifier */
 	if (wo->use_ip && eui64_iszero(wo->ourid)) {
