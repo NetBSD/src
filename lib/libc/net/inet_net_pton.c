@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_net_pton.c,v 1.14 2000/07/07 08:03:39 itohy Exp $	*/
+/*	$NetBSD: inet_net_pton.c,v 1.15 2001/12/01 04:43:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_net_pton.c,v 8.3 1996/11/11 06:36:52 vixie Exp ";
 #else
-__RCSID("$NetBSD: inet_net_pton.c,v 1.14 2000/07/07 08:03:39 itohy Exp $");
+__RCSID("$NetBSD: inet_net_pton.c,v 1.15 2001/12/01 04:43:24 lukem Exp $");
 #endif
 #endif
 
@@ -43,14 +43,7 @@ __RCSID("$NetBSD: inet_net_pton.c,v 1.14 2000/07/07 08:03:39 itohy Exp $");
 __weak_alias(inet_net_pton,_inet_net_pton)
 #endif
 
-#ifdef SPRINTF_CHAR
-# define SPRINTF(x) strlen(sprintf/**/x)
-#else
-# define SPRINTF(x) ((size_t)sprintf x)
-#endif
-
-static int	inet_net_pton_ipv4 __P((const char *src, u_char *dst,
-					size_t size));
+static int	inet_net_pton_ipv4(const char *src, u_char *dst, size_t size);
 
 /*
  * static int
@@ -66,11 +59,7 @@ static int	inet_net_pton_ipv4 __P((const char *src, u_char *dst,
  *	Paul Vixie (ISC), June 1996
  */
 int
-inet_net_pton(af, src, dst, size)
-	int af;
-	const char *src;
-	void *dst;
-	size_t size;
+inet_net_pton(int af, const char *src, void *dst, size_t size)
 {
 
 	_DIAGASSERT(src != NULL);
@@ -102,10 +91,7 @@ inet_net_pton(af, src, dst, size)
  *	Paul Vixie (ISC), June 1996
  */
 static int
-inet_net_pton_ipv4(src, dst, size)
-	const char *src;
-	u_char *dst;
-	size_t size;
+inet_net_pton_ipv4(const char *src, u_char *dst, size_t size)
 {
 	static const char
 		xdigits[] = "0123456789abcdef",
