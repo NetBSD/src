@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.17 1996/03/01 04:35:27 mycroft Exp $	*/
+/*	$NetBSD: isadma.c,v 1.18 1996/03/31 20:51:43 mycroft Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -24,8 +24,9 @@ static char bounced[8];		/* XXX */
 static u_int8_t dma_finished;
 
 /* high byte of address is stored in this port for i-th dma channel */
-static int dmapageport[8] = {
-	0x87, 0x83, 0x81, 0x82, 0x8f, 0x8b, 0x89, 0x8a
+static int dmapageport[2][4] = {
+	{0x87, 0x83, 0x81, 0x82},
+	{0x8f, 0x8b, 0x89, 0x8a}
 };
 
 static u_int8_t dmamode[4] = {
@@ -113,7 +114,7 @@ isa_dmastart(flags, addr, nbytes, chan)
 
 		/* send start address */
 		waport = DMA1_CHN(chan);
-		outb(dmapageport[chan], phys>>16);
+		outb(dmapageport[0][chan], phys>>16);
 		outb(waport, phys);
 		outb(waport, phys>>8);
 
@@ -136,7 +137,7 @@ isa_dmastart(flags, addr, nbytes, chan)
 
 		/* send start address */
 		waport = DMA2_CHN(chan);
-		outb(dmapageport[chan], phys>>16);
+		outb(dmapageport[1][chan], phys>>16);
 		phys >>= 1;
 		outb(waport, phys);
 		outb(waport, phys>>8);
