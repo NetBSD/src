@@ -1,9 +1,12 @@
-/*	$NetBSD: tcpd.h,v 1.4 1999/01/18 19:54:20 christos Exp $	*/
+/*	$NetBSD: tcpd.h,v 1.4.2.1 2002/03/07 21:15:23 he Exp $	*/
  /*
   * @(#) tcpd.h 1.5 96/03/19 16:22:24
   * 
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
+
+#include <sys/cdefs.h>
+#include <stdio.h>
 
 /* Structure to describe one communications endpoint. */
 
@@ -56,8 +59,10 @@ struct request_info {
 #define STRING_UNKNOWN	"unknown"	/* lookup failed */
 #define STRING_PARANOID	"paranoid"	/* hostname conflict */
 
+__BEGIN_DECLS
 extern char unknown[];
 extern char paranoid[];
+__END_DECLS
 
 #define HOSTNAME_KNOWN(s) (STR_NE((s),unknown) && STR_NE((s),paranoid))
 
@@ -65,6 +70,7 @@ extern char paranoid[];
 
 /* Global functions. */
 
+__BEGIN_DECLS
 #if defined(TLI) || defined(PTX) || defined(TLI_SEQUENT)
 extern void fromhost			/* get/validate client host info */
 		__P((struct request_info *));
@@ -174,12 +180,15 @@ extern void tcpd_warn			/* report problem and proceed */
 		__P((char *, ...));
 extern void tcpd_jump			/* report problem and jump */
 		__P((char *, ...));
+__END_DECLS
 
 struct tcpd_context {
     char   *file;			/* current file */
     int     line;			/* current line */
 };
+__BEGIN_DECLS
 extern struct tcpd_context tcpd_context;
+__END_DECLS
 
  /*
   * While processing access control rules, error conditions are handled by
@@ -199,6 +208,7 @@ extern struct tcpd_context tcpd_context;
   * behavior.
   */
 
+__BEGIN_DECLS
 extern void process_options		/* execute options */
 		__P((char *, struct request_info *));
 extern int dry_run;			/* verification flag */
@@ -241,3 +251,4 @@ extern char *fix_strtok __P((char *, char *));
 #define strtok	my_strtok
 extern char *my_strtok __P((char *, char *));
 #endif
+__END_DECLS
