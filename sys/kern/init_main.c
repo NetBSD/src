@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.118 1998/03/01 02:22:27 fvdl Exp $	*/
+/*	$NetBSD: init_main.c,v 1.119 1998/03/22 18:22:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -399,7 +399,7 @@ main(framep)
 	cpu_set_kpc(p2, start_init);
 
 	/* Create process 2 (the pageout daemon). */
-	if (fork1(p, 0, NULL, &p2))
+	if (fork1(p, FORK_SHAREVM, NULL, &p2))
 		panic("fork pager");
 	cpu_set_kpc(p2, start_pagedaemon);
 
