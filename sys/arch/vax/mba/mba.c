@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.11 1998/01/12 20:52:39 thorpej Exp $ */
+/*	$NetBSD: mba.c,v 1.12 1998/01/18 22:09:15 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -85,7 +85,7 @@ struct	cfattach mba_sbi_ca = {
 	sizeof(struct mba_softc), mbamatch, mbaattach
 };
 
-extern cfdriver mba_cd;
+extern	struct cfdriver mba_cd;
 
 /*
  * Look if this is a massbuss adapter.

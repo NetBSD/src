@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.30 1998/01/12 20:52:50 thorpej Exp $	   */
+/*	$NetBSD: uba.c,v 1.31 1998/01/18 22:09:14 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -832,6 +832,7 @@ uba_attach(sc, iopagephys)
 	vm_offset_t	mini, maxi;
 	extern	struct	ivec_dsp idsptch;
 
+	uba_cd.cd_indirect = 1; /* XXX */
 	/*
 	 * Set last free interrupt vector for devices with
 	 * programmable interrupt vectors.  Use is to decrement
