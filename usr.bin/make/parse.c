@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.37 1998/03/23 08:52:48 fair Exp $	*/
+/*	$NetBSD: parse.c,v 1.38 1998/08/06 13:42:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.37 1998/03/23 08:52:48 fair Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.38 1998/08/06 13:42:22 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.37 1998/03/23 08:52:48 fair Exp $");
+__RCSID("$NetBSD: parse.c,v 1.38 1998/08/06 13:42:22 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -241,6 +241,8 @@ static struct {
 { ".WAIT",	  Wait, 	0 },
 };
 
+static void ParseErrorInternal __P((char *, size_t, int, char *, ...));
+static void ParseVErrorInternal __P((char *, size_t, int, char *, va_list));
 static int ParseFindKeyword __P((char *));
 static int ParseLinkSrc __P((ClientData, ClientData));
 static int ParseDoOp __P((ClientData, ClientData));
@@ -303,7 +305,7 @@ ParseFindKeyword (str)
 }
 
 /*-
- * Parse_Error  --
+ * ParseVErrorInternal  --
  *	Error message abort function for parsing. Prints out the context
  *	of the error (line number and file) as well as the message with
  *	two optional arguments.
@@ -313,6 +315,77 @@ ParseFindKeyword (str)
  *
  * Side Effects:
  *	"fatals" is incremented if the level is PARSE_FATAL.
+ */
+/* VARARGS */
+static void
+#ifdef __STDC__
+ParseVErrorInternal(char *cfname, size_t clineno, int type, char *fmt,
+    va_list ap)
+#else
+ParseVErrorInternal(va_alist)
+	va_dcl
+#endif
+{
+	(void)fprintf(stderr, "\"%s\", line %d: ", cfname, (int) clineno);
+	if (type == PARSE_WARNING)
+		(void)fprintf(stderr, "warning: ");
+	(void)vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	(void)fprintf(stderr, "\n");
+	(void)fflush(stderr);
+	if (type == PARSE_FATAL)
+		fatals += 1;
+}
+
+/*-
+ * ParseErrorInternal  --
+ *	Error function
+ *
+ * Results:
+ *	None
+ *
+ * Side Effects:
+ *	None
+ */
+/* VARARGS */
+static void
+#ifdef __STDC__
+ParseErrorInternal(char *cfname, size_t clineno, int type, char *fmt, ...)
+#else
+ParseErrorInternal(va_alist)
+	va_dcl
+#endif
+{
+	va_list ap;
+#ifdef __STDC__
+	va_start(ap, fmt);
+#else
+	int type;		/* Error type (PARSE_WARNING, PARSE_FATAL) */
+	char *fmt;
+	char *cfname;
+	size_t clineno;
+
+	va_start(ap);
+	cfname = va_arg(ap, char *);
+	clineno = va_arg(ap, size_t);
+	type = va_arg(ap, int);
+	fmt = va_arg(ap, char *);
+#endif
+
+	ParseVErrorInternal(cfname, clineno, type, fmt, ap);
+	va_end(ap);
+}
+
+/*-
+ * Parse_Error  --
+ *	External interface to ParseErrorInternal; uses the default filename
+ *	Line number.
+ *
+ * Results:
+ *	None
+ *
+ * Side Effects:
+ *	None
  */
 /* VARARGS */
 void
@@ -334,16 +407,8 @@ Parse_Error(va_alist)
 	type = va_arg(ap, int);
 	fmt = va_arg(ap, char *);
 #endif
-
-	(void)fprintf(stderr, "\"%s\", line %d: ", fname, lineno);
-	if (type == PARSE_WARNING)
-		(void)fprintf(stderr, "warning: ");
-	(void)vfprintf(stderr, fmt, ap);
+	ParseVErrorInternal(fname, lineno, type, fmt, ap);
 	va_end(ap);
-	(void)fprintf(stderr, "\n");
-	(void)fflush(stderr);
-	if (type == PARSE_FATAL)
-		fatals += 1;
 }
 
 /*-
@@ -1568,7 +1633,7 @@ Parse_AddIncludeDir (dir)
  * ParseDoInclude  --
  *	Push to another file.
  *
- *	The input is the line minus the #include. A file spec is a string
+ *	The input is the line minus the `.'. A file spec is a string
  *	enclosed in <> or "". The former is looked for only in sysIncPath.
  *	The latter in . and the directories specified by -I command line
  *	options
@@ -1582,14 +1647,16 @@ Parse_AddIncludeDir (dir)
  *---------------------------------------------------------------------
  */
 static void
-ParseDoInclude (file)
-    char          *file;	/* file specification */
+ParseDoInclude (line)
+    char          *line;
 {
     char          *fullname;	/* full pathname of file */
     IFile         *oldFile;	/* state associated with current file */
     char          endc;	    	/* the character which ends the file spec */
     char          *cp;		/* current position in file spec */
     Boolean 	  isSystem; 	/* TRUE if makefile is a system makefile */
+    int		  silent = (*line != 'i') ? 1 : 0;
+    char	  *file = &line[7 + silent];
 
     /*
      * Skip to delimiter character so we know where to look
@@ -1702,7 +1769,8 @@ ParseDoInclude (file)
 
     if (fullname == (char *) NULL) {
 	*cp = endc;
-	Parse_Error (PARSE_FATAL, "Could not find %s", file);
+	if (!silent)
+	    Parse_Error (PARSE_FATAL, "Could not find %s", file);
 	return;
     }
 
@@ -1736,7 +1804,8 @@ ParseDoInclude (file)
     curFILE = fopen (fullname, "r");
     curPTR = NULL;
     if (curFILE == (FILE * ) NULL) {
-	Parse_Error (PARSE_FATAL, "Cannot open %s", fullname);
+	if (!silent)
+	    Parse_Error (PARSE_FATAL, "Cannot open %s", fullname);
 	/*
 	 * Pop to previous file
 	 */
@@ -1789,8 +1858,8 @@ Parse_FromString(str)
  * ParseTraditionalInclude  --
  *	Push to another file.
  *
- *	The input is the line minus the "include".  The file name is
- *	the string following the "include".
+ *	The input is the current line. The file name(s) are
+ *	following the "include".
  *
  * Results:
  *	None
@@ -1801,20 +1870,25 @@ Parse_FromString(str)
  *---------------------------------------------------------------------
  */
 static void
-ParseTraditionalInclude (file)
-    char          *file;	/* file specification */
+ParseTraditionalInclude (line)
+    char          *line;
 {
     char          *fullname;	/* full pathname of file */
     IFile         *oldFile;	/* state associated with current file */
     char          *cp;		/* current position in file spec */
     char	  *prefEnd;
+    int		   done = 0;
+    int		   silent = (line[0] != 'i') ? 1 : 0;
+    char	  *file = &line[silent + 7];
+    char	  *cfname = fname;
+    size_t	   clineno = lineno;
+
 
     /*
      * Skip over whitespace
      */
-    while ((*file == ' ') || (*file == '\t')) {
+    while (isspace((unsigned char)*file))
 	file++;
-    }
 
     if (*file == '\0') {
 	Parse_Error (PARSE_FATAL,
@@ -1822,107 +1896,118 @@ ParseTraditionalInclude (file)
 	return;
     }
 
-    /*
-     * Skip to end of line or next whitespace
-     */
-    for (cp = file; *cp && *cp != '\n' && *cp != '\t' && *cp != ' '; cp++) {
-	continue;
-    }
+    for (; !done; file = cp + 1) {
+	/*
+	 * Skip to end of line or next whitespace
+	 */
+	for (cp = file; *cp && !isspace((unsigned char) *cp); cp++)
+	    continue;
 
-    *cp = '\0';
+	if (*cp)
+	    *cp = '\0';
+	else
+	    done = 1;
 
-    /*
-     * Substitute for any variables in the file name before trying to
-     * find the thing.
-     */
-    file = Var_Subst (NULL, file, VAR_CMD, FALSE);
+	/*
+	 * Substitute for any variables in the file name before trying to
+	 * find the thing.
+	 */
+	file = Var_Subst(NULL, file, VAR_CMD, FALSE);
 
-    /*
-     * Now we know the file's name, we attempt to find the durn thing.
-     * A return of NULL indicates the file don't exist.
-     *
-     * Include files are first searched for relative to the including
-     * file's location. We don't want to cd there, of course, so we
-     * just tack on the old file's leading path components and call
-     * Dir_FindFile to see if we can locate the beast.
-     * XXX - this *does* search in the current directory, right?
-     */
+	/*
+	 * Now we know the file's name, we attempt to find the durn thing.
+	 * A return of NULL indicates the file don't exist.
+	 *
+	 * Include files are first searched for relative to the including
+	 * file's location. We don't want to cd there, of course, so we
+	 * just tack on the old file's leading path components and call
+	 * Dir_FindFile to see if we can locate the beast.
+	 * XXX - this *does* search in the current directory, right?
+	 */
 
-    prefEnd = strrchr (fname, '/');
-    if (prefEnd != (char *)NULL) {
-	char  	*newName;
+	prefEnd = strrchr(cfname, '/');
+	if (prefEnd != NULL) {
+	    char  	*newName;
 
-	*prefEnd = '\0';
-	newName = str_concat (fname, file, STR_ADDSLASH);
-	fullname = Dir_FindFile (newName, parseIncPath);
-	if (fullname == (char *)NULL) {
-	    fullname = Dir_FindFile(newName, dirSearchPath);
+	    *prefEnd = '\0';
+	    newName = str_concat(cfname, file, STR_ADDSLASH);
+	    fullname = Dir_FindFile(newName, parseIncPath);
+	    if (fullname == NULL) {
+		fullname = Dir_FindFile(newName, dirSearchPath);
+	    }
+	    free (newName);
+	    *prefEnd = '/';
+	} else {
+	    fullname = NULL;
 	}
-	free (newName);
-	*prefEnd = '/';
-    } else {
-	fullname = (char *)NULL;
-    }
 
-    if (fullname == (char *)NULL) {
-	/*
-	 * System makefile or makefile wasn't found in same directory as
-	 * included makefile. Search for it first on the -I search path,
-	 * then on the .PATH search path, if not found in a -I directory.
-	 * XXX: Suffix specific?
-	 */
-	fullname = Dir_FindFile (file, parseIncPath);
-	if (fullname == (char *)NULL) {
-	    fullname = Dir_FindFile(file, dirSearchPath);
+	if (fullname == NULL) {
+	    /*
+	     * System makefile or makefile wasn't found in same directory as
+	     * included makefile. Search for it first on the -I search path,
+	     * then on the .PATH search path, if not found in a
+	     * -I directory. XXX: Suffix specific?
+	     */
+	    fullname = Dir_FindFile(file, parseIncPath);
+	    if (fullname == NULL) {
+		fullname = Dir_FindFile(file, dirSearchPath);
+	    }
 	}
-    }
 
-    if (fullname == (char *)NULL) {
+	if (fullname == NULL) {
+	    /*
+	     * Still haven't found the makefile. Look for it on the system
+	     * path as a last resort.
+	     */
+	    fullname = Dir_FindFile(file, sysIncPath);
+	}
+
+	if (fullname == NULL) {
+	    if (!silent)
+		ParseErrorInternal(cfname, clineno, PARSE_FATAL,
+		    "Could not find %s", file);
+	    free(file);
+	    continue;
+	}
+
+	free(file);
+
 	/*
-	 * Still haven't found the makefile. Look for it on the system
-	 * path as a last resort.
+	 * Once we find the absolute path to the file, we get to save all
+	 * the state from the current file before we can start reading this
+	 * include file. The state is stored in an IFile structure which
+	 * is placed on a list with other IFile structures. The list makes
+	 * a very nice stack to track how we got here...
 	 */
-	fullname = Dir_FindFile(file, sysIncPath);
-    }
+	oldFile = (IFile *) emalloc(sizeof(IFile));
+	oldFile->fname = fname;
 
-    if (fullname == (char *) NULL) {
-	Parse_Error (PARSE_FATAL, "Could not find %s", file);
-	return;
-    }
+	oldFile->F = curFILE;
+	oldFile->p = curPTR;
+	oldFile->lineno = lineno;
 
-    /*
-     * Once we find the absolute path to the file, we get to save all the
-     * state from the current file before we can start reading this
-     * include file. The state is stored in an IFile structure which
-     * is placed on a list with other IFile structures. The list makes
-     * a very nice stack to track how we got here...
-     */
-    oldFile = (IFile *) emalloc (sizeof (IFile));
-    oldFile->fname = fname;
+	(void) Lst_AtFront(includes, (ClientData)oldFile);
 
-    oldFile->F = curFILE;
-    oldFile->p = curPTR;
-    oldFile->lineno = lineno;
-
-    (void) Lst_AtFront (includes, (ClientData)oldFile);
-
-    /*
-     * Once the previous state has been saved, we can get down to reading
-     * the new file. We set up the name of the file to be the absolute
-     * name of the include file so error messages refer to the right
-     * place. Naturally enough, we start reading at line number 0.
-     */
-    fname = fullname;
-    lineno = 0;
-
-    curFILE = fopen (fullname, "r");
-    curPTR = NULL;
-    if (curFILE == (FILE * ) NULL) {
-	Parse_Error (PARSE_FATAL, "Cannot open %s", fullname);
 	/*
-	 * Pop to previous file
+	 * Once the previous state has been saved, we can get down to
+	 * reading the new file. We set up the name of the file to be the
+	 * absolute name of the include file so error messages refer to the
+	 * right place. Naturally enough, we start reading at line number 0.
 	 */
-	(void) ParseEOF(1);
+	fname = fullname;
+	lineno = 0;
+
+	curFILE = fopen(fullname, "r");
+	curPTR = NULL;
+	if (curFILE == NULL) {
+	    if (!silent)
+		ParseErrorInternal(cfname, clineno, PARSE_FATAL,
+		    "Cannot open %s", fullname);
+	    /*
+	     * Pop to previous file
+	     */
+	    (void) ParseEOF(1);
+	}
     }
 }
 #endif
@@ -2393,8 +2478,10 @@ Parse_File(name, stream)
 		for (cp = line + 1; isspace (*cp); cp++) {
 		    continue;
 		}
-		if (strncmp (cp, "include", 7) == 0) {
-		    ParseDoInclude (cp + 7);
+		if (strncmp(cp, "include", 7) == 0 ||
+	    	    ((cp[0] == 's' || cp[0] == '-') &&
+		    strncmp(&line[1], "include", 7) == 0)) {
+		    ParseDoInclude (cp);
 		    goto nextLine;
 		} else if (strncmp(cp, "undef", 5) == 0) {
 		    char *cp2;
@@ -2446,13 +2533,16 @@ Parse_File(name, stream)
 		    }
 		}
 #ifdef SYSVINCLUDE
-	    } else if (strncmp (line, "include", 7) == 0 &&
-		       isspace((unsigned char) line[7]) &&
-		       strchr(line, ':') == NULL) {
+	    } else if (((strncmp(line, "include", 7) == 0 &&
+	        isspace((unsigned char) line[7])) ||
+	        ((line[0] == 's' || line[0] == '-') &&
+	        strncmp(&line[1], "include", 7) == 0 &&
+	        isspace((unsigned char) line[8]))) &&
+	        strchr(line, ':') == NULL) {
 		/*
 		 * It's an S3/S5-style "include".
 		 */
-		ParseTraditionalInclude (line + 7);
+		ParseTraditionalInclude (line);
 		goto nextLine;
 #endif
 	    } else if (Parse_IsVar (line)) {
