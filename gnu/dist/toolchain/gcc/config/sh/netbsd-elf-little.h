@@ -48,3 +48,6 @@ Boston, MA 02111-1307, USA.  */
      %{rdynamic:-export-dynamic} \
      %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.elf_so}} \
    %{static:-static}}"
+
+#undef TARGET_DEFAULT
+#define TARGET_DEFAULT  LITTLE_ENDIAN_BIT
