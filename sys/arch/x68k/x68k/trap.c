@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.70 2003/11/02 14:06:05 isaki Exp $	*/
+/*	$NetBSD: trap.c,v 1.71 2003/11/08 12:17:25 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.70 2003/11/02 14:06:05 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.71 2003/11/08 12:17:25 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -324,7 +324,6 @@ trap(type, code, v, frame)
 	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_trap = type & ~T_USER;
 
-	/* I have verified that this DOES happen! -gwr */
 	if (l == NULL)
 		l = &lwp0;
 	p = l->l_proc;
