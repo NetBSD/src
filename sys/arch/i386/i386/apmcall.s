@@ -1,4 +1,4 @@
-/*	$NetBSD: apmcall.s,v 1.7 1999/12/08 16:46:33 joda Exp $ */
+/*	$NetBSD: apmcall.s,v 1.8 2001/05/21 06:13:12 perry Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
 
 #include "opt_apm.h"
 
+/* LINTSTUB: include <machine/bioscall.h> */
+/* LINTSTUB: include <machine/apmvar.h> */
+
 /*
  * int apmcall(int function, struct bioscallregs *regs):
  * 	call the APM protected mode bios function FUNCTION for BIOS selection
@@ -58,6 +61,7 @@ apmstatus:	.long 0
 #endif
 _C_LABEL(apm_disable_interrupts):	.long APM_DISABLE_INTERRUPTS
 	.text
+/* LINTSTUB: Func: int apmcall(int function, struct bioscallregs *regs) */
 NENTRY(apmcall)
 	pushl	%ebp
 	movl	%esp,%ebp
