@@ -1,4 +1,7 @@
-$NetBSD: README.dynamic,v 1.1 1995/02/13 21:39:01 cgd Exp $
+$NetBSD: README.dynamic,v 1.2 1999/04/27 06:39:49 cgd Exp $
+
+XXX As of right now, dynamically linked programs are supported, and
+XXX this document is out of date.  I'll update it when i get the chance.
 
 Currently, the NetBSD OSF/1 emulation code only supports statically
 linked OSF/1 binaries.  This document is meant to be a quick
