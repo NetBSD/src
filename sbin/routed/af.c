@@ -1,4 +1,4 @@
-/*	$NetBSD: af.c,v 1.10 1995/06/20 22:26:27 christos Exp $	*/
+/*	$NetBSD: af.c,v 1.11 1995/07/13 10:43:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)af.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: af.c,v 1.10 1995/06/20 22:26:27 christos Exp $";
+static char rcsid[] = "$NetBSD: af.c,v 1.11 1995/07/13 10:43:23 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -232,7 +232,7 @@ inet_get(what, pck, sa)
 
 	sin->sin_family = n->rip_family;
 #if BSD >= 198810
-	sin->sin_len = sizeof(sin);
+	sin->sin_len = sizeof(*sin);
 #endif
 	return 1;
 }
