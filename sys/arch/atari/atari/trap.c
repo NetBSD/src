@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.13 1996/04/18 08:51:20 leo Exp $	*/
+/*	$NetBSD: trap.c,v 1.14 1996/04/29 20:55:44 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,6 +65,9 @@
 #include <machine/reg.h>
 #include <machine/mtpr.h>
 #include <machine/pte.h>
+#ifdef DDB
+#include <machine/db_machdep.h>
+#endif
 
 #ifdef COMPAT_SUNOS
 #include <compat/sunos/sunos_syscall.h>
@@ -488,7 +491,7 @@ trap(type, code, v, frame)
 
 #ifdef DDB
 	if (type == T_TRACE || type == T_BREAKPOINT) {
-		if (kdb_trap(type, &frame))
+		if (kdb_trap(type, (struct mc68020_saved_state *)&frame))
 			return;
 	}
 #endif
