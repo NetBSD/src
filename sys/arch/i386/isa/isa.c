@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.28.2.12 1993/10/16 03:44:55 mycroft Exp $
+ *	$Id: isa.c,v 1.28.2.13 1993/10/16 04:00:59 mycroft Exp $
  */
 
 /*
@@ -210,10 +210,12 @@ isaprint(aux, isaname)
 	return QUIET;	/* actually, our return value is irrelevant. */
 }
 
+/*
 int isa_portcheck __P((u_int, u_int));
 int isa_memcheck __P((u_int, u_int));
 void isa_portalloc __P((u_int, u_int));
 void isa_memalloc __P((u_int, u_int));
+*/
 
 int	intrmask[NIRQ];
 struct	intrhand *intrhand[NIRQ];
@@ -235,10 +237,6 @@ intr_establish(intr, handler, class)
 		panic("intr_establish: weird irq");
 #endif
 
-	handler->ih_count = 0;
-	handler->ih_next = intrhand[irqnum];
-	intrhand[irqnum] = handler;
-
 	switch (class) {
 	    case DV_DULL:
 		break;
@@ -256,6 +254,12 @@ intr_establish(intr, handler, class)
 	    default:
 		panic("intrhand: weird devclass");
 	}
+
+	handler->ih_count = 0;
+	handler->ih_next = intrhand[irqnum];
+	intrhand[irqnum] = handler;
+
+	intr_enable(intr);
 }
 
 /*

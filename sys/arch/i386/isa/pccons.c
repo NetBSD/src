@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.31.2.8 1993/10/12 23:39:42 mycroft Exp $
+ *	$Id: pccons.c,v 1.31.2.9 1993/10/16 04:01:03 mycroft Exp $
  */
 
 /*
@@ -72,7 +72,7 @@
 #define BEEP_FREQ 1500
 #endif
 #ifndef BEEP_TIME
-#define BEEP_TIME (hz/4)
+#define BEEP_TIME (hz/5)
 #endif
 
 #define MONO_BASE	0x3B4
