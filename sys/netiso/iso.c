@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.16 1996/09/08 14:28:13 mycroft Exp $	*/
+/*	$NetBSD: iso.c,v 1.17 1996/10/10 23:22:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -112,11 +112,11 @@ iso_addrmatch1(isoaa, isoab)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ROUTE]) {
-		printf("iso_addrmatch1: comparing lengths: %d to %d\n", isoaa->isoa_len,
-		       isoab->isoa_len);
-		printf("a:\n");
+		kprintf("iso_addrmatch1: comparing lengths: %d to %d\n", isoaa->isoa_len,
+		    isoab->isoa_len);
+		kprintf("a:\n");
 		dump_buf(isoaa->isoa_genaddr, isoaa->isoa_len);
-		printf("b:\n");
+		kprintf("b:\n");
 		dump_buf(isoab->isoa_genaddr, isoab->isoa_len);
 	}
 #endif
@@ -124,7 +124,7 @@ iso_addrmatch1(isoaa, isoab)
 	if ((compare_len = isoaa->isoa_len) != isoab->isoa_len) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ROUTE]) {
-			printf("iso_addrmatch1: returning false because of lengths\n");
+			kprintf("iso_addrmatch1: returning false because of lengths\n");
 		}
 #endif
 		return 0;
@@ -149,14 +149,14 @@ iso_addrmatch1(isoaa, isoab)
 		b = isoab->isoa_genaddr;
 
 		for (i = 0; i < compare_len; i++) {
-			printf("<%x=%x>", a[i] & 0xff, b[i] & 0xff);
+			kprintf("<%x=%x>", a[i] & 0xff, b[i] & 0xff);
 			if (a[i] != b[i]) {
-				printf("\naddrs are not equal at byte %d\n", i);
+				kprintf("\naddrs are not equal at byte %d\n", i);
 				return (0);
 			}
 		}
-		printf("\n");
-		printf("addrs are equal\n");
+		kprintf("\n");
+		kprintf("addrs are equal\n");
 		return (1);
 	}
 #endif
@@ -206,10 +206,10 @@ iso_netmatch(sisoa, sisob)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ROUTE]) {
-		printf("iso_netmatch: comparing lengths: %d to %d\n", lena, lenb);
-		printf("a:\n");
+		kprintf("iso_netmatch: comparing lengths: %d to %d\n", lena, lenb);
+		kprintf("a:\n");
 		dump_buf(bufa, lena);
-		printf("b:\n");
+		kprintf("b:\n");
 		dump_buf(bufb, lenb);
 	}
 #endif
@@ -253,7 +253,7 @@ iso_hashchar(buf, len)
 				l |= buf[i] << 24;
 				break;
 			default:
-				printf("iso_hashchar: unexpected value x%x\n", len - i);
+				kprintf("iso_hashchar: unexpected value x%x\n", len - i);
 				break;
 			}
 		} else {
@@ -300,7 +300,7 @@ iso_hash(siso, hp)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ROUTE]) {
-		printf("iso_hash: iso_netof: bufsize = %d\n", bufsize);
+		kprintf("iso_hash: iso_netof: bufsize = %d\n", bufsize);
 	}
 #endif
 
@@ -309,9 +309,9 @@ iso_hash(siso, hp)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ROUTE]) {
-		printf("iso_hash: %s: nethash = x%x, hosthash = x%x\n",
-		       clnp_iso_addrp(&siso->siso_addr), hp->afh_nethash,
-		       hp->afh_hosthash);
+		kprintf("iso_hash: %s: nethash = x%x, hosthash = x%x\n",
+		    clnp_iso_addrp(&siso->siso_addr), hp->afh_nethash,
+		    hp->afh_hosthash);
 	}
 #endif
 }
@@ -386,10 +386,10 @@ iso_netof(isoa, buf)
 
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_ROUTE]) {
-					printf("iso_netof: isoa ");
+					kprintf("iso_netof: isoa ");
 					dump_buf(isoa, sizeof(*isoa));
-					printf("iso_netof: inetaddr 0x%x ",
-					        inetaddr);
+					kprintf("iso_netof: inetaddr 0x%x ",
+					    inetaddr);
 				}
 #endif
 
@@ -401,21 +401,21 @@ iso_netof(isoa, buf)
 					len += 4 - IN_CLASSA_NSHIFT / 8;
 #ifdef ARGO_DEBUG
 					if (argo_debug[D_ROUTE]) {
-						printf("iso_netof: class A net len is now %d\n", len);
+						kprintf("iso_netof: class A net len is now %d\n", len);
 					}
 #endif
 				} else if (IN_CLASSB(o986->o986_inetaddr)) {
 					len += 4 - IN_CLASSB_NSHIFT / 8;
 #ifdef ARGO_DEBUG
 					if (argo_debug[D_ROUTE]) {
-						printf("iso_netof: class B net len is now %d\n", len);
+						kprintf("iso_netof: class B net len is now %d\n", len);
 					}
 #endif
 				} else {
 					len += 4 - IN_CLASSC_NSHIFT / 8;
 #ifdef ARGO_DEBUG
 					if (argo_debug[D_ROUTE]) {
-						printf("iso_netof: class C net len is now %d\n", len);
+						kprintf("iso_netof: class C net len is now %d\n", len);
 					}
 #endif
 				}
@@ -430,9 +430,9 @@ iso_netof(isoa, buf)
 	bcopy((caddr_t) isoa, buf, len);
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ROUTE]) {
-		printf("iso_netof: isoa ");
+		kprintf("iso_netof: isoa ");
 		dump_buf(isoa, len);
-		printf("iso_netof: net ");
+		kprintf("iso_netof: net ");
 		dump_buf(buf, len);
 	}
 #endif
@@ -682,22 +682,22 @@ iso_ifwithidi(addr)
 		return (0);
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ROUTE]) {
-		printf(">>> iso_ifwithidi addr\n");
+		kprintf(">>> iso_ifwithidi addr\n");
 		dump_isoaddr(satosiso(addr));
-		printf("\n");
+		kprintf("\n");
 	}
 #endif
 	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ROUTE]) {
-			printf("iso_ifwithidi ifnet %s\n", ifp->if_name);
+			kprintf("iso_ifwithidi ifnet %s\n", ifp->if_name);
 		}
 #endif
 		for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
 		     ifa = ifa->ifa_list.tqe_next) {
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_ROUTE]) {
-				printf("iso_ifwithidi address ");
+				kprintf("iso_ifwithidi address ");
 				dump_isoaddr(satosiso(ifa->ifa_addr));
 			}
 #endif
@@ -706,10 +706,10 @@ iso_ifwithidi(addr)
 
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_ROUTE]) {
-				printf(" af same, args to iso_eqtype:\n");
-				printf("0x%x ", satosiso(ifa->ifa_addr)->siso_addr);
-				printf(" 0x%x\n",
-				       &satosiso(addr)->siso_addr));
+				kprintf(" af same, args to iso_eqtype:\n");
+				kprintf("0x%x ", satosiso(ifa->ifa_addr)->siso_addr);
+				kprintf(" 0x%x\n",
+				    &satosiso(addr)->siso_addr));
 			}
 #endif
 
@@ -717,14 +717,14 @@ iso_ifwithidi(addr)
 				       &satosiso(addr)->siso_addr)) {
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_ROUTE]) {
-					printf("ifa_ifwithidi: ifa found\n");
+					kprintf("ifa_ifwithidi: ifa found\n");
 				}
 #endif
 				return (ifa);
 			}
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_ROUTE]) {
-				printf(" iso_eqtype failed\n");
+				kprintf(" iso_eqtype failed\n");
 			}
 #endif
 		}
@@ -868,8 +868,8 @@ iso_nlctloutput(cmd, optname, pcb, m)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
-		printf("iso_nlctloutput: cmd %x, opt %x, pcb %p, m %p\n",
-		       cmd, optname, pcb, m);
+		kprintf("iso_nlctloutput: cmd %x, opt %x, pcb %p, m %p\n",
+		    cmd, optname, pcb, m);
 	}
 #endif
 
@@ -881,7 +881,7 @@ iso_nlctloutput(cmd, optname, pcb, m)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
-		printf("iso_nlctloutput: data is:\n");
+		kprintf("iso_nlctloutput: data is:\n");
 		dump_buf(data, data_len);
 	}
 #endif
@@ -900,7 +900,7 @@ iso_nlctloutput(cmd, optname, pcb, m)
 		}
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ISO]) {
-			printf("iso_nlctloutput: setting x25 crud\n");
+			kprintf("iso_nlctloutput: setting x25 crud\n");
 		}
 #endif
 
@@ -933,13 +933,13 @@ dump_isoaddr(s)
 	struct sockaddr_iso *s;
 {
 	if (s->siso_family == AF_ISO) {
-		printf("ISO address: suffixlen %d, %s\n",
+		kprintf("ISO address: suffixlen %d, %s\n",
 		       s->siso_tlen, clnp_saddr_isop(s));
 	} else if (s->siso_family == AF_INET) {
 		/* hack */
 		struct sockaddr_in *sin = satosin(s);
 
-		printf("%d.%d.%d.%d: %d",
+		kprintf("%d.%d.%d.%d: %d",
 		       (sin->sin_addr.s_addr >> 24) & 0xff,
 		       (sin->sin_addr.s_addr >> 16) & 0xff,
 		       (sin->sin_addr.s_addr >> 8) & 0xff,

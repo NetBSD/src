@@ -1,4 +1,4 @@
-/*	$NetBSD: tuba_usrreq.c,v 1.10 1996/09/08 14:28:15 mycroft Exp $	*/
+/*	$NetBSD: tuba_usrreq.c,v 1.11 1996/10/10 23:22:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,6 +68,7 @@
 #include <netiso/iso_pcb.h>
 #include <netiso/iso_var.h>
 #include <netiso/tuba_table.h>
+#include <netiso/tp_var.h>
 /*
  * TCP protocol interface to socket abstraction.
  */

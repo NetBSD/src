@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_er.c,v 1.8 1996/04/13 01:34:20 cgd Exp $	*/
+/*	$NetBSD: clnp_er.c,v 1.9 1996/10/10 23:21:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -115,8 +115,8 @@ clnp_er_input(m, src, reason)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CTLINPUT]) {
-		printf("clnp_er_input: m %p, src %s, reason x%x\n",
-		       m, clnp_iso_addrp(src), reason);
+		kprintf("clnp_er_input: m %p, src %s, reason x%x\n",
+		    m, clnp_iso_addrp(src), reason);
 	}
 #endif
 
@@ -202,7 +202,7 @@ clnp_discard(m, reason)
 {
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_DISCARD]) {
-		printf("clnp_discard: m %p, reason x%x\n", m, reason);
+		kprintf("clnp_discard: m %p, reason x%x\n", m, reason);
 	}
 #endif
 
@@ -256,7 +256,7 @@ clnp_emit_er(m, reason)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_DISCARD]) {
-		printf("clnp_emit_er: m %p, hdr len %d\n",
+		kprintf("clnp_emit_er: m %p, hdr len %d\n",
 		       m, clnp->cnf_hdr_len);
 	}
 #endif
@@ -313,15 +313,15 @@ clnp_emit_er(m, reason)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_DISCARD]) {
-		printf("clnp_emit_er: to %s", clnp_iso_addrp(&src));
-		printf(" from %s\n", clnp_iso_addrp(our_addr));
+		kprintf("clnp_emit_er: to %s", clnp_iso_addrp(&src));
+		kprintf(" from %s\n", clnp_iso_addrp(our_addr));
 	}
 #endif
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_DISCARD]) {
-		printf("clnp_emit_er: packet routed to %s\n",
-		       clnp_iso_addrp(&satosiso(first_hop)->siso_addr));
+		kprintf("clnp_emit_er: packet routed to %s\n",
+		    clnp_iso_addrp(&satosiso(first_hop)->siso_addr));
 	}
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.14 1996/05/22 13:56:00 mycroft Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.15 1996/10/10 23:22:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -175,7 +175,7 @@ llc_rtrequest(req, rt, sa)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_SNPA]) {
-		printf("llc_rtrequest(%d, %p, %p)\n", req, rt, sa);
+		kprintf("llc_rtrequest(%d, %p, %p)\n", req, rt, sa);
 	}
 #endif
 	if (rt->rt_flags & RTF_GATEWAY)
@@ -270,8 +270,8 @@ iso_setmcasts(ifp, req)
 		if (ifp->if_reset)
 			(*ifp->if_reset) (ifp);
 		else
-			printf("iso_setmcasts: %s needs reseting to receive iso mcasts\n",
-			       ifp->if_xname);
+			kprintf("iso_setmcasts: %s needs reseting to receive iso mcasts\n",
+			    ifp->if_xname);
 	}
 }
 
@@ -318,7 +318,7 @@ iso_snparesolve(ifp, dest, snpa, snpa_len)
 		 */
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_SNPA]) {
-			printf("iso_snparesolve: return SN address\n");
+			kprintf("iso_snparesolve: return SN address\n");
 		}
 #endif
 		addrlen = dest->siso_nlen - 1;	/* subtract size of AFI */
@@ -413,15 +413,15 @@ snpac_add(ifp, nsap, snpa, type, ht, nsellength)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_SNPA]) {
-		printf("snpac_add(%p, %p, %p, %x, %x, %x)\n",
-		       ifp, nsap, snpa, type, ht, nsellength);
+		kprintf("snpac_add(%p, %p, %p, %x, %x, %x)\n",
+		    ifp, nsap, snpa, type, ht, nsellength);
 	}
 #endif
 	zap_isoaddr(dst, nsap);
 	rt = rtalloc1(sisotosa(&dst), 0);
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_SNPA]) {
-		printf("snpac_add: rtalloc1 returns %p\n", rt);
+		kprintf("snpac_add: rtalloc1 returns %p\n", rt);
 	}
 #endif
 	if (rt == 0) {
@@ -528,10 +528,10 @@ snpac_ioctl(so, cmd, data, p)
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_IOCTL]) {
 		if (cmd == SIOCSSTYPE)
-			printf("snpac_ioctl: cmd set, type x%x, ht %d, ct %d\n",
-			       rq->sr_type, rq->sr_holdt, rq->sr_configt);
+			kprintf("snpac_ioctl: cmd set, type x%x, ht %d, ct %d\n",
+			    rq->sr_type, rq->sr_holdt, rq->sr_configt);
 		else
-			printf("snpac_ioctl: cmd get\n");
+			kprintf("snpac_ioctl: cmd get\n");
 	}
 #endif
 
@@ -714,15 +714,15 @@ snpac_rtrequest(req, host, gateway, netmask, flags, ret_nrt)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_SNPA]) {
-		printf("snpac_rtrequest: ");
+		kprintf("snpac_rtrequest: ");
 		if (req == RTM_ADD)
-			printf("add");
+			kprintf("add");
 		else if (req == RTM_DELETE)
-			printf("delete");
+			kprintf("delete");
 		else
-			printf("unknown command");
-		printf(" dst: %s\n", clnp_iso_addrp(host));
-		printf("\tgateway: %s\n", clnp_iso_addrp(gateway));
+			kprintf("unknown command");
+		kprintf(" dst: %s\n", clnp_iso_addrp(host));
+		kprintf("\tgateway: %s\n", clnp_iso_addrp(gateway));
 	}
 #endif
 

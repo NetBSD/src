@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_subr.c,v 1.8 1996/04/13 01:34:35 cgd Exp $	*/
+/*	$NetBSD: clnp_subr.c,v 1.9 1996/10/10 23:21:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -211,8 +211,8 @@ clnp_ours(dst)
 	for (ia = iso_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ROUTE]) {
-			printf("clnp_ours: ia_sis %p, dst %p\n", 
-			       &ia->ia_addr, dst);
+			kprintf("clnp_ours: ia_sis %p, dst %p\n", 
+			    &ia->ia_addr, dst);
 		}
 #endif
 		/*
@@ -274,7 +274,7 @@ clnp_forward(m, len, dst, oidx, seg_off, inbound_shp)
 	if ((inbound_shp) && (IS_MULTICAST(inbound_shp->snh_dhost))) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_FORWARD]) {
-			printf("clnp_forward: dropping multicast packet\n");
+			kprintf("clnp_forward: dropping multicast packet\n");
 		}
 #endif
 		clnp->cnf_type &= ~CNF_ERR_OK;	/* so we don't generate an ER */
@@ -284,7 +284,7 @@ clnp_forward(m, len, dst, oidx, seg_off, inbound_shp)
 	}
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_FORWARD]) {
-		printf("clnp_forward: %d bytes, to %s, options %p\n", len,
+		kprintf("clnp_forward: %d bytes, to %s, options %p\n", len,
 		       clnp_iso_addrp(dst), oidx);
 	}
 #endif
@@ -296,7 +296,7 @@ clnp_forward(m, len, dst, oidx, seg_off, inbound_shp)
 	if ((clnp->cnf_ttl == 0) || (--clnp->cnf_ttl == 0)) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_FORWARD]) {
-			printf("clnp_forward: discarding datagram because ttl is zero\n");
+			kprintf("clnp_forward: discarding datagram because ttl is zero\n");
 		}
 #endif
 		INCSTAT(cns_ttlexpired);
@@ -319,7 +319,7 @@ clnp_forward(m, len, dst, oidx, seg_off, inbound_shp)
 	if (error || ia == 0) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_FORWARD]) {
-			printf("clnp_forward: can't route packet (errno %d)\n", error);
+			kprintf("clnp_forward: can't route packet (errno %d)\n", error);
 		}
 #endif
 		clnp_discard(m, ADDR_DESTUNREACH);
@@ -330,7 +330,7 @@ clnp_forward(m, len, dst, oidx, seg_off, inbound_shp)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_FORWARD]) {
-		printf("clnp_forward: packet routed to %s\n",
+		kprintf("clnp_forward: packet routed to %s\n",
 		       clnp_iso_addrp(&satosiso(next_hop)->siso_addr));
 	}
 #endif
@@ -367,7 +367,7 @@ clnp_forward(m, len, dst, oidx, seg_off, inbound_shp)
 		 */
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_FORWARD]) {
-			printf("clnp_forward: congestion experienced\n");
+			kprintf("clnp_forward: congestion experienced\n");
 		}
 #endif
 		if ((oidx) && (oidx->cni_qos_formatp)) {
@@ -375,7 +375,7 @@ clnp_forward(m, len, dst, oidx, seg_off, inbound_shp)
 			u_char          qos = *qosp;
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_FORWARD]) {
-				printf("clnp_forward: setting congestion bit (qos x%x)\n", qos);
+				kprintf("clnp_forward: setting congestion bit (qos x%x)\n", qos);
 			}
 #endif
 			if ((qos & CLNPOVAL_GLOBAL) == CLNPOVAL_GLOBAL) {
@@ -494,10 +494,10 @@ clnp_route(dst, ro, flags, first_hop, ifa)
 	  (Bcmp(ro->ro_dst.siso_data, dst->isoa_genaddr, dst->isoa_len)))) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ROUTE]) {
-			printf("clnp_route: freeing old route: ro->ro_rt %p\n",
-			       ro->ro_rt);
-			printf("clnp_route: old route refcnt: 0x%x\n",
-			       ro->ro_rt->rt_refcnt);
+			kprintf("clnp_route: freeing old route: ro->ro_rt %p\n",
+			    ro->ro_rt);
+			kprintf("clnp_route: old route refcnt: 0x%x\n",
+			    ro->ro_rt->rt_refcnt);
 		}
 #endif
 
@@ -507,7 +507,7 @@ clnp_route(dst, ro, flags, first_hop, ifa)
 	} else {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ROUTE]) {
-			printf("clnp_route: OK route exists\n");
+			kprintf("clnp_route: OK route exists\n");
 		}
 #endif
 	}
@@ -521,8 +521,8 @@ clnp_route(dst, ro, flags, first_hop, ifa)
 		/* allocate new route */
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ROUTE]) {
-			printf("clnp_route: allocating new route to %s\n",
-			       clnp_iso_addrp(dst));
+			kprintf("clnp_route: allocating new route to %s\n",
+			    clnp_iso_addrp(dst));
 		}
 #endif
 		rtalloc((struct route *) ro);
@@ -602,7 +602,7 @@ clnp_srcroute(options, oidx, ro, first_hop, ifa, final_dst)
 	    (!iso_addrmatch1(&satosiso(*first_hop)->siso_addr, &dst))) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_OPTIONS]) {
-			printf("clnp_srcroute: complete src route failed\n");
+			kprintf("clnp_srcroute: complete src route failed\n");
 		}
 #endif
 		return EHOSTUNREACH;	/* RAH? would like ESRCRTFAILED */
@@ -645,7 +645,7 @@ clnp_echoreply(ec_m, ec_len, ec_src, ec_dst, ec_oidxp)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_OUTPUT]) {
-		printf("clnp_echoreply: output returns %d\n", ret);
+		kprintf("clnp_echoreply: output returns %d\n", ret);
 	}
 #endif
 	return ret;
@@ -667,10 +667,10 @@ clnp_badmtu(ifp, rt, line, file)
 	int             line;	/* where the dirty deed occured */
 	char           *file;	/* where the dirty deed occured */
 {
-	printf("sending on route %p with no mtu, line %d of file %s\n",
-	       rt, line, file);
+	kprintf("sending on route %p with no mtu, line %d of file %s\n",
+	    rt, line, file);
 #ifdef ARGO_DEBUG
-	printf("route dst is ");
+	kprintf("route dst is ");
 	dump_isoaddr((struct sockaddr_iso *) rt_key(rt));
 #endif
 	return ifp->if_mtu;
