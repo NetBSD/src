@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.33.2.6 1997/10/14 10:23:27 thorpej Exp $
+#	$NetBSD: files.isa,v 1.33.2.7 1997/10/16 00:48:57 thorpej Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -43,7 +43,6 @@ file	dev/isa/rtfps.c			rtfps
 # Serial and parallel drivers
 #
 
-# 8250/16[45]50-based "com" ports
 attach	com at isa with com_isa
 file	dev/isa/com_isa.c		com_isa
 
