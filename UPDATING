@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.3 2000/08/20 19:51:24 itojun Exp $
+$NetBSD: UPDATING,v 1.4 2000/10/02 06:19:17 itojun Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,13 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20000929:
+	The following make directives are obsoleted.
+	MKCRYPTO_RSA NOCRYPTO_RSA NOCRYPTO_RC5 NOCRYPTO_IDEA 
+	By default, RSA is built into libcrypto.  IDEA and RC5 will not be
+	bulit into libcrypto.  By using MKCRYPTO_{RC5,IDEA}, you can build
+	additional library libcrypto_{idea,rc5}.
 
 20000623:
 	MKCRYPTO and friends added to share/mk/bsd.own.mk.
@@ -132,3 +139,9 @@ Fix:	Rebuild usr.bin/lex
 
 Symptom:
 Fix:	rm /usr/lib/libbfd.a
+
+Symptom:Obsolete intermediate files are used during compilation
+Fix:	Try the following sequence of commands in the directory in question.
+	make cleandir; rm `make print-objdir`; make cleandir; make obj
+	(If you built the tree without "make obj" in the past, obsolete files
+	may remain.  The command tries to clean everything up)
