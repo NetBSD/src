@@ -1,4 +1,4 @@
-/*	$NetBSD: bonitoreg.h,v 1.1 2001/06/01 20:29:33 thorpej Exp $	*/
+/*	$NetBSD: bonitoreg.h,v 1.2 2001/06/22 03:58:03 thorpej Exp $	*/
 
 /*
  * Bonito Register Map 
@@ -20,19 +20,9 @@
 
 #ifndef _BONITO_H_
 
-#ifdef __ASSEMBLER__
+#define BONITO(x)	(BONITO_REG_BASE + (x))
 
-/* offsets from base register */
-#define BONITO(x)	(x)
-
-#else /* !__ASSEMBLER */
-
-/* offsets from base pointer, this construct allows optimisation */
-/* static char * const _bonito = PA_TO_KVA1(BONITO_BASE); */
-#define BONITO(x)		*(volatile unsigned long *)(_bonito + (x))
-
-#endif /* __ASSEMBLER__ */
-
+#define	REGVAL(x)	*((__volatile u_int32_t *) MIPS_PHYS_TO_KSEG1(x))
 
 #define BONITO_BOOT_BASE		0x1fc00000
 #define BONITO_BOOT_SIZE		0x00100000
@@ -364,6 +354,10 @@
 #define BONITO_PCIMEMBASECFG_ASHIFT	23
 #define BONITO_PCIMEMBASECFGSIZE(WIN,SIZE)	(((~((SIZE)-1))>>(BONITO_PCIMEMBASECFG_ASHIFT-BONITO_PCIMEMBASECFG_MEMBASE##WIN##_MASK_SHIFT)) & BONITO_PCIMEMBASECFG_MEMBASE##WIN##_MASK)
 #define BONITO_PCIMEMBASECFGBASE(WIN,BASE)	(((BASE)>>(BONITO_PCIMEMBASECFG_ASHIFT-BONITO_PCIMEMBASECFG_MEMBASE##WIN##_TRANS_SHIFT)) & BONITO_PCIMEMBASECFG_MEMBASE##WIN##_TRANS)
+
+/* PCIMAP Cfg */
+
+#define	BONITO_PCIMAPCFG_TYPE1		0x00010000
 
 /* PCICmd */
 
