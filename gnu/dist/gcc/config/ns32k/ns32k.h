@@ -566,14 +566,12 @@ enum reg_class
      because the library is compiled with the Unix compiler.
    Use of RET is a selectable option, since it is incompatible with
    standard Unix calling sequences.  If the option is not selected,
-   the caller must always pop the args.  */
+   the caller must always pop the args.
 
-#define RETURN_POPS_ARGS(FUNDECL,FUNTYPE,SIZE)   \
-  ((TARGET_RTD && (!(FUNDECL) || TREE_CODE (FUNDECL) != IDENTIFIER_NODE)	\
-    && (TYPE_ARG_TYPES (FUNTYPE) == 0				\
-	|| (TREE_VALUE (tree_last (TYPE_ARG_TYPES (FUNTYPE)))	\
-	    == void_type_node)))				\
-   ? (SIZE) : 0)
+   The attribute stdcall is equivalent to RTD on a per module basis.  */
+
+#define RETURN_POPS_ARGS(FUNDECL,FUNTYPE,SIZE) \
+  (ns32k_return_pops_args (FUNDECL, FUNTYPE, SIZE))
 
 /* Define how to find the value returned by a function.
    VALTYPE is the data type of the value (as a tree).
@@ -1248,7 +1246,7 @@ __transfer_from_trampoline ()		\
 extern int current_function_uses_pic_offset_table, flag_pic;
 #define LEGITIMATE_PIC_OPERAND_P(X) \
   (((! current_function_uses_pic_offset_table			\
-     && global_symbolic_reference_mentioned_p (X, 1))?		\
+     && symbolic_reference_mentioned_p (X))?			\
       (current_function_uses_pic_offset_table = 1):0		\
    ), (! SYMBOLIC_CONST (X)					\
    || GET_CODE (X) == SYMBOL_REF || GET_CODE (X) == LABEL_REF))
@@ -1289,6 +1287,33 @@ while (0)
 #define GO_IF_MODE_DEPENDENT_ADDRESS(ADDR,LABEL)	\
  { if (GET_CODE (ADDR) == POST_INC || GET_CODE (ADDR) == PRE_DEC)	\
      goto LABEL;}
+
+/* If defined, a C expression whose value is nonzero if IDENTIFIER
+   with arguments ARGS is a valid machine specific attribute for DECL.
+   The attributes in ATTRIBUTES have previously been assigned to DECL.  */
+
+#define VALID_MACHINE_DECL_ATTRIBUTE(DECL, ATTRIBUTES, NAME, ARGS) \
+  (ns32k_valid_decl_attribute_p (DECL, ATTRIBUTES, NAME, ARGS))
+
+/* If defined, a C expression whose value is nonzero if IDENTIFIER
+   with arguments ARGS is a valid machine specific attribute for TYPE.
+   The attributes in ATTRIBUTES have previously been assigned to TYPE.  */
+
+#define VALID_MACHINE_TYPE_ATTRIBUTE(TYPE, ATTRIBUTES, NAME, ARGS) \
+  (ns32k_valid_type_attribute_p (TYPE, ATTRIBUTES, NAME, ARGS))
+
+/* If defined, a C expression whose value is zero if the attributes on
+   TYPE1 and TYPE2 are incompatible, one if they are compatible, and
+   two if they are nearly compatible (which causes a warning to be
+   generated).  */
+
+#define COMP_TYPE_ATTRIBUTES(TYPE1, TYPE2) \
+  (ns32k_comp_type_attributes (TYPE1, TYPE2))
+
+/* If defined, a C statement that assigns default attributes to newly
+   defined TYPE.  */
+
+/* #define SET_DEFAULT_TYPE_ATTRIBUTES (TYPE) */
 
 /* Specify the machine mode that this machine uses
    for the index in the tablejump instruction.
@@ -1675,13 +1700,19 @@ int reg_or_mem_operand NS32K_PROTO((register rtx op, enum machine_mode mode));
 
 void split_di NS32K_PROTO((rtx operands[], int num, rtx lo_half[], hi_half[]));
 
-char * output_move_double NS32K_PROTO((rtx *operands));
 void expand_block_move NS32K_PROTO((rtx operands[]));
 int global_symbolic_reference_mentioned_p NS32K_PROTO((rtx op, int f));
+int ns32k_comp_type_attributes NS32K_PROTO((tree type1, tree type2));
+int ns32k_return_pops_args NS32K_PROTO((tree fundecl, tree funtype, int size));
+int ns32k_valid_decl_attribute_p NS32K_PROTO((tree decl, tree attributes,
+						tree identifier, tree args));
+int ns32k_valid_type_attribute_p NS32K_PROTO((tree decl, tree attributes,
+						tree identifier, tree args));
 void print_operand NS32K_PROTO((FILE *file, rtx x, char code));
 void print_operand_address NS32K_PROTO((register FILE *file, register rtx addr));
-char *output_shift_insn NS32K_PROTO((rtx *operands));
 char *output_move_dconst NS32K_PROTO((int n, char *s));
+char *output_move_double NS32K_PROTO((rtx *operands));
+char *output_shift_insn NS32K_PROTO((rtx *operands));
 
 extern unsigned int ns32k_reg_class_contents[N_REG_CLASSES];
 extern char *ns32k_out_reg_names[];
