@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_cmi.c,v 1.5 2000/06/04 17:59:50 ragge Exp $	   */
+/*	$NetBSD: uba_cmi.c,v 1.6 2001/05/13 15:24:18 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -112,6 +112,7 @@ dw750_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	sc->uv_sc.uh_iot = &vax_mem_bus_space;
 	sc->uv_sc.uh_dmat = &sc->uv_dmat;
+	sc->uv_sc.uh_type = UBA_UBA;
 
 	/*
 	 * Fill in variables used by the sgmap system.

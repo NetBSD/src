@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_sbi.c,v 1.11 2001/04/12 19:16:56 thorpej Exp $	   */
+/*	$NetBSD: uba_sbi.c,v 1.12 2001/05/13 15:24:18 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -148,6 +148,7 @@ dw780_attach(struct device *parent, struct device *self, void *aux)
 	sc->uv_sc.uh_dmat = &sc->uv_dmat;
 	sc->uv_uba = (void *)sa->sa_ioh;
 	sc->uh_ibase = VAX_NBPG + ubaddr * VAX_NBPG;
+	sc->uv_sc.uh_type = UBA_UBA;
 
 	/*
 	 * Set up dispatch vectors for DW780.
