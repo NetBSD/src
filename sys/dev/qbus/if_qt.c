@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qt.c,v 1.3 2003/08/29 14:39:28 ragge Exp $	*/
+/*	$NetBSD: if_qt.c,v 1.4 2003/08/31 11:13:43 ragge Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.3 2003/08/29 14:39:28 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.4 2003/08/31 11:13:43 ragge Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -120,9 +120,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.3 2003/08/29 14:39:28 ragge Exp $");
 #endif
 
 #include <machine/bus.h>
-#ifdef __vax__
-#include <machine/scb.h>
-#endif
 
 #include <dev/qbus/ubavar.h>
 #include <dev/qbus/if_uba.h>
@@ -134,6 +131,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.3 2003/08/29 14:39:28 ragge Exp $");
 	hardware requires these sizes.
 #endif
  
+/*
+ * Control data structures, must be in DMA-friendly memory.
+ */
 struct	qt_cdata {
 	struct	qt_init qc_init;	/* Init block			*/
 	struct	qt_rring qc_r[NRCV];	/* Receive descriptor ring	*/
@@ -149,21 +149,22 @@ struct	qt_softc {
 	bus_space_tag_t	sc_iot;
 	bus_addr_t	sc_ioh;
 
-	struct	ubinfo	sc_ui;		/* init block address desc	*/
-	struct	qt_cdata *sc_ib;	/* virt address of init block	*/
-	struct	qt_cdata *sc_pib;	/* phys address of init block	*/
+	struct	ubinfo	sc_ui;		/* control block address desc	*/
+	struct	qt_cdata *sc_ib;	/* virt address of ctrl block	*/
+	struct	qt_cdata *sc_pib;	/* phys address of ctrl block	*/
 
 	struct	ifubinfo sc_ifuba;	/* UNIBUS resources */
 	struct	ifrw sc_ifr[NRCV];	/* UNIBUS receive buffer maps */
 	struct	ifxmt sc_ifw[NXMT];	/* UNIBUS receive buffer maps */
 
-	char	rindex;			/* Receive Completed Index	*/
-	char	nxtrcv;			/* Next Receive Index		*/
-	char	nrcv;			/* Number of Receives active	*/
+	int	rindex;			/* Receive Completed Index	*/
+	int	nxtrcv;			/* Next Receive Index		*/
+	int	nrcv;			/* Number of Receives active	*/
 
 	int	xnext;			/* Next descriptor to transmit	*/
 	int	xlast;			/* Last descriptor transmitted	*/
 	int	nxmit;			/* # packets in send queue	*/
+
 	short	vector;			/* Interrupt vector assigned	*/
 };
 
@@ -174,6 +175,7 @@ static	int qtinit(struct ifnet *);
 static	int qtioctl(struct ifnet *, u_long, caddr_t);
 static	int qtturbo(struct qt_softc *);
 static	void qtstart(struct ifnet *ifp);
+static	void qtstop(struct ifnet *ifp, int disable);
 static	void qtsrr(struct qt_softc *, int);
 static	void qtrint(struct qt_softc *sc);
 static	void qttint(struct qt_softc *sc);
@@ -210,14 +212,31 @@ qtmatch(struct device *parent, struct cfdata *cf, void *aux)
 	struct	qt_softc *sc = &ssc;
 	struct	uba_attach_args *ua = aux;
 	struct	uba_softc *ubasc = (struct uba_softc *)parent;
-
+	struct	qt_init *qi;
+	struct ubinfo ui;
 
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_ioh = ua->ua_ioh;
 	if (qtturbo(sc) == 0)
-		return 0;
+		return 0; /* Not a turbo card */
 
-	scb_fake((ubasc->uh_lastiv-4) + VAX_NBPG, 0x16); /* XXX */
+	/* Force the card to interrupt */
+	ui.ui_size = sizeof(struct qt_init);
+	if (ubmemalloc((void *)parent, &ui, 0))
+		return 0; /* Failed */
+	qi = (struct qt_init *)ui.ui_vaddr;
+	memset(qi, 0, sizeof(struct qt_init));
+	qi->vector = ubasc->uh_lastiv - 4;
+	qi->options = INIT_OPTIONS_INT;
+	
+	QT_WCSR(CSR_IBAL, loint(ui.ui_baddr));
+	QT_WCSR(CSR_IBAH, hiint(ui.ui_baddr));
+	QT_WCSR(CSR_SRQR, 2);
+	delay(100000); /* Wait some time for interrupt */
+	QT_WCSR(CSR_SRQR, 3); /* Stop card */
+
+	ubmemfree((void *)parent, &ui);
+
 	return 10;
 }
 
@@ -267,11 +286,11 @@ qtattach(struct device *parent, struct device *self, void *aux)
 
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
-	ifp->if_flags = IFF_BROADCAST;
+	ifp->if_flags = IFF_BROADCAST|IFF_MULTICAST;
 	ifp->if_ioctl = qtioctl;
 	ifp->if_start = qtstart;
 	ifp->if_init = qtinit;
-/*	ifp->if_stop = qtstop;	*/
+	ifp->if_stop = qtstop;
 	IFQ_SET_READY(&ifp->if_snd);
  
 	printf("\n%s: delqa-plus in Turbo mode, hardware address %s\n",
@@ -377,6 +396,8 @@ qtinit(struct ifnet *ifp)
 		iniblk->tx_lo = loint(&sc->sc_pib->qc_t);
 		iniblk->tx_hi = hiint(&sc->sc_pib->qc_t);
 	}
+	iniblk = &sc->sc_ib->qc_init;
+	iniblk->mode = ifp->if_flags & IFF_PROMISC ? INIT_MODE_PRO : 0;
 
 
 /*
@@ -474,6 +495,7 @@ void
 qtintr(void *arg)
 	{
 	struct qt_softc *sc = arg;
+	struct ifnet *ifp = &sc->is_if;
 	short status;
 
  
@@ -481,6 +503,8 @@ qtintr(void *arg)
 	if	(status < 0)
 		/* should we reset the device after a bunch of these errs? */
 		qtsrr(sc, status);
+	if ((ifp->if_flags & IFF_UP) == 0)
+		return; /* Unwanted interrupt */
 	qtrint(sc);
 	qttint(sc);
 	qtstart(&sc->is_ec.ec_if);
@@ -592,12 +616,16 @@ qtioctl(ifp, cmd, data)
 	u_long	cmd;
 	caddr_t	data;
 	{
-	int error;
+	int error, flags;
 	int s = splnet();
 
+	flags = ifp->if_flags & IFF_PROMISC;
 	error = ether_ioctl(ifp, cmd, data);
-	if (error == ENETRESET)
+	if (error == ENETRESET || (ifp->if_flags ^ flags)) {
+		qtstop(ifp, 1);
+		qtinit(ifp);
 		error = 0;
+	}
 	splx(s);
 	return (error);
 }
@@ -611,6 +639,34 @@ qtsrr(sc, srrbits)
 	bitmask_snprintf(srrbits, SRR_BITS, buf, sizeof buf);
 	printf("%s: srr=%s\n", sc->sc_dev.dv_xname, buf);
 	}
+
+/*
+ * Stop activity on the interface.
+ * Lose outstanding transmit requests. XXX - not good for multicast.
+ */
+void
+qtstop(struct ifnet *ifp, int disable)
+{
+	struct qt_softc *sc = ifp->if_softc;
+	int i;
+
+	QT_WCSR(CSR_SRQR, 3);
+	for (i = 0; i < 100; i++)
+		if ((QT_RCSR(CSR_SRR) & SRR_RESP) == 3)
+			break;
+	if (QT_RCSR(CSR_SRR) & SRR_FES)
+		qtsrr(sc, QT_RCSR(CSR_SRR));
+	/* Forget already queued transmit requests */
+	while (sc->nxmit > 0) {
+		if_ubaend(&sc->sc_ifuba, &sc->sc_ifw[sc->xlast]);
+		if (++sc->xlast >= NXMT)
+			sc->xlast = 0;
+		sc->nxmit--;
+	}
+	/* Handle late received packets */
+	qtrint(sc);
+	ifp->if_flags &= ~IFF_RUNNING;
+}
 
 #ifdef notyet
 /*
