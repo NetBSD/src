@@ -1,4 +1,4 @@
-/*	$NetBSD: mixerctl.c,v 1.2 1997/05/19 16:32:54 augustss Exp $	*/
+/*	$NetBSD: mixerctl.c,v 1.3 1997/05/19 17:32:07 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ void
 prfield(struct field *p, char *sep, int prvalset)
 {
 	mixer_ctrl_t *m;
-	int i, v;
+	int i, n;
 
 	if (sep)
 		fprintf(out, "%s%s", p->name, sep);
@@ -97,10 +97,10 @@ prfield(struct field *p, char *sep, int prvalset)
 		}
 		break;
 	case AUDIO_MIXER_SET:
-		for(i = 0, v = m->un.mask; v; i++, v >>= 1)
-			if (v & 1)
-				fprintf(out, "%s%s", p->infp->un.s.member[i].label.name,
-					v >> 1 ? "," : "");
+		for(n = i = 0; i < p->infp->un.s.num_mem; i++)
+			if (m->un.mask & p->infp->un.s.member[i].mask)
+				fprintf(out, "%s%s", n++ ? "," : "",
+					p->infp->un.s.member[i].label.name);
 		if (prvalset) {
 			fprintf(out, "  { ");
 			for(i = 0; i < p->infp->un.s.num_mem; i++)
@@ -138,7 +138,7 @@ rdfield(struct field *p, char *q, char *sep)
 			if (strcmp(p->infp->un.e.member[i].label.name, q) == 0)
 				break;
 		if (i < p->infp->un.e.num_mem)
-			m->un.ord = i;
+			m->un.ord = p->infp->un.e.member[i].ord;
 		else
 			warnx("Bad enum value %s", q);
 		break;
@@ -151,9 +151,9 @@ rdfield(struct field *p, char *q, char *sep)
 			for(i = 0; i < p->infp->un.s.num_mem; i++)
 				if (strcmp(p->infp->un.s.member[i].label.name, q) == 0)
 					break;
-			if (i < p->infp->un.s.num_mem)
-				m->un.mask |= 1 << i;
-			else
+			if (i < p->infp->un.s.num_mem) {
+				m->un.mask |= p->infp->un.s.member[i].mask;
+			} else
 				warnx("Bad set value %s", q);
 		}
 		break;
