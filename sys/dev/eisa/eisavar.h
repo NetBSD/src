@@ -1,4 +1,4 @@
-/*	$NetBSD: eisavar.h,v 1.5 1996/03/17 00:47:20 thorpej Exp $	*/
+/*	$NetBSD: eisavar.h,v 1.6 1996/03/22 02:43:54 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -85,12 +85,6 @@ struct eisa_attach_args {
 
 #define	EISA_UNKNOWN_SLOT	((eisa_slot_t)-1)
 
-/*
- * The EISA bus cfdriver, so that subdevices can more easily tell
- * what bus they're on.
- */
-
-extern struct cfdriver eisa_cd;
 
 /*
  * XXX interrupt attachment, etc., is done by using the ISA interfaces.
