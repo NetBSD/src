@@ -34,7 +34,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinumdaemon.c,v 1.2 2003/11/25 20:11:59 jdolecek Exp $
+ * $Id: vinumdaemon.c,v 1.3 2004/09/19 12:22:22 yamt Exp $
  * $FreeBSD$
  */
 
@@ -104,7 +104,7 @@ vinum_daemon(void)
 		    struct request *rq = request->info.rq;
 
 		    log(LOG_WARNING,
-			"vinum: recovering I/O request: %p\n%s dev %d.%d, offset 0x%llx, length %ld\n",
+			"vinum: recovering I/O request: %p\n%s dev %d.%d, offset 0x%llx, length %d\n",
 			rq,
 			rq->bp->b_flags & B_READ ? "Read" : "Write",
 			major(rq->bp->b_dev),
