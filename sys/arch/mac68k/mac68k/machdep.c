@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.257 2000/07/02 20:59:58 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.258 2000/09/13 15:00:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -422,7 +422,8 @@ cpu_startup(void)
 	 */
 	size = MAXBSIZE * nbuf;
 	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
-	    NULL, UVM_UNKNOWN_OFFSET, UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
+	    NULL, UVM_UNKNOWN_OFFSET, 0,
+	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 	    UVM_INH_NONE, UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
 		panic("startup: cannot allocate VM for buffers");
 	minaddr = (vaddr_t)buffers;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.58 2000/07/22 16:11:03 simonb Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.59 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -283,7 +283,7 @@ sys_shmat(p, v, retval)
 	shm_handle = shmseg->_shm_internal;
 	uao_reference(shm_handle->shm_object);
 	rv = uvm_map(&p->p_vmspace->vm_map, &attach_va, size,
-		     shm_handle->shm_object, 0,
+		     shm_handle->shm_object, 0, 0,
 		     UVM_MAPFLAG(prot, prot, UVM_INH_SHARE,
 				 UVM_ADV_RANDOM, 0));
 	if (rv != KERN_SUCCESS) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: gayle_pcmcia.c,v 1.4 2000/06/29 08:44:05 mrg Exp $	*/
+/*	$NetBSD: gayle_pcmcia.c,v 1.5 2000/09/13 15:00:16 thorpej Exp $	*/
 
 /* PCMCIA front-end driver for A1200's and A600's. */
 
@@ -126,8 +126,9 @@ pccard_attach(parent, myself, aux)
 
 	ret = uvm_map(kernel_map, &pcmcia_base,
 		GAYLE_PCMCIA_END - GAYLE_PCMCIA_START, NULL,
-		UVM_UNKNOWN_OFFSET, UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
-			UVM_INH_NONE, UVM_ADV_RANDOM, 0));
+		UVM_UNKNOWN_OFFSET, 0,
+		UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
+		UVM_INH_NONE, UVM_ADV_RANDOM, 0));
 	if (ret != KERN_SUCCESS) {
 		printf("attach failed (no virtual memory)\n");
 		return;

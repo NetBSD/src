@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_mmap.c,v 1.6 2000/06/28 15:39:34 mrg Exp $ */
+/* $NetBSD: osf1_mmap.c,v 1.7 2000/09/13 15:00:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -181,14 +181,14 @@ osf1_sys_mmap(p, v, retval)
 
 		/* if non-NULL address given, start looking there */
 		if (addr != 0 && uvm_map_findspace(&p->p_vmspace->vm_map,
-		    addr, size, &addr, NULL, 0, 0) != NULL) {
+		    addr, size, &addr, NULL, 0, 0, 0) != NULL) {
 			fixed = 1;
 			goto done;
 		}
 
 		/* didn't find anything.  take it again from the top. */
 		if (uvm_map_findspace(&p->p_vmspace->vm_map, NBPG, size, &addr,
-		    NULL, 0, 0) != NULL) {
+		    NULL, 0, 0, 0) != NULL) {
 			fixed = 1;
 			goto done;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.87 2000/09/11 22:34:02 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.88 2000/09/13 15:00:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -235,7 +235,7 @@ cpu_startup()
 
         /* allocate VM for buffers... area is not managed by VM system */
         if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
-                    NULL, UVM_UNKNOWN_OFFSET,
+                    NULL, UVM_UNKNOWN_OFFSET, 0,
                     UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
                                 UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
         	panic("cpu_startup: cannot allocate VM for buffers");
@@ -1437,7 +1437,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	 * our aligment requirements.
 	 */
 	oversize = size + align - PAGE_SIZE;
-	r = uvm_map(kernel_map, &sva, oversize, NULL, UVM_UNKNOWN_OFFSET,
+	r = uvm_map(kernel_map, &sva, oversize, NULL, UVM_UNKNOWN_OFFSET, 0,
 	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 	    UVM_ADV_NORMAL, 0));
 	if (r != KERN_SUCCESS)
