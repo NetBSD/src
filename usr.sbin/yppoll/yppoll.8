@@ -1,4 +1,4 @@
-.\"	$NetBSD: yppoll.8,v 1.4 1997/07/30 22:55:00 jtc Exp $
+.\"	$NetBSD: yppoll.8,v 1.5 1997/10/06 00:57:09 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,12 +41,12 @@
 .Nm yppoll
 .Nd ask version of YP map from YP server
 .Sh SYNOPSIS
-.Nm yppoll
+.Nm
 .Op Fl h Ar host
 .Op Fl d Ar domain
 .Ar mapname
 .Sh DESCRIPTION
-.Nm Yppoll
+.Nm
 asks a YP server process for the order number and which host is the master
 server for
 .Ar mapname .
@@ -70,11 +70,11 @@ instead of the default domain as returned by
 .El
 .Sh SEE ALSO
 .Xr domainname 1 ,
-.Xr ypbind 8 ,
 .Xr ypcat 1 ,
 .Xr ypmatch 1 ,
-.Xr ypset 8 ,
 .Xr ypwhich 1 ,
-.Xr yp 8
+.Xr yp 8 ,
+.Xr ypbind 8 ,
+.Xr ypset 8
 .Sh AUTHORS
-Theo De Raadt and John Brezak
+Theo de Raadt and John Brezak
