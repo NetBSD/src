@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.4 2003/06/11 21:36:49 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.4 2003/06/11 21:36:49 fvdl Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -210,8 +210,10 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	 * Allocate our cookie.
 	 */
 	if ((cookiestore = malloc(cookiesize, M_DMAMAP,
-	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
+	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL) {
 		error = ENOMEM;
+		goto out;
+	}
 	memset(cookiestore, 0, cookiesize);
 	cookie = (struct x86_bus_dma_cookie *)cookiestore;
 	cookie->id_flags = cookieflags;
@@ -219,11 +221,9 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 
 	error = _bus_dma_alloc_bouncebuf(t, map, size, flags);
  out:
-	if (error) {
-		if (map->_dm_cookie != NULL)
-			free(map->_dm_cookie, M_DMAMAP);
+	if (error)
 		_bus_dmamap_destroy(t, map);
-	}
+
 	return (error);
 }
 
