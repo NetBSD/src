@@ -1,6 +1,15 @@
-/*
- * Copyright (c) 1980,1990 Regents of the University of California.
- * All rights reserved.
+/* 
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This software was developed by the Computer Systems Engineering group
+ * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
+ * contributed to Berkeley.
+ *
+ * All advertising materials mentioning features or use of this software
+ * must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Lawrence Berkeley Laboratories.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,466 +38,331 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	from: @(#)mkmakefile.c	8.1 (Berkeley) 6/6/93
+ *	$Id: mkmakefile.c,v 1.25 1995/04/28 06:55:15 cgd Exp $
  */
 
-#ifndef lint
-/*static char sccsid[] = "from: @(#)mkmakefile.c	5.33 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: mkmakefile.c,v 1.24 1994/05/21 08:34:10 cgd Exp $";
-#endif /* not lint */
-
-/*
- * Build the makefile for the system, from
- * the information in the files files and the
- * additional files for the machine being compiled to.
- */
-
-#include <stdio.h>
+#include <sys/param.h>
 #include <ctype.h>
-#include <machine/param.h>
-#include "y.tab.h"
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "config.h"
-
-#define next_word(fp, wd) \
-	{ register char *word = get_word(fp); \
-	  if (word == (char *)EOF) \
-		return; \
-	  else \
-		wd = word; \
-	}
-#define next_quoted_word(fp, wd) \
-	{ register char *word = get_quoted_word(fp); \
-	  if (word == (char *)EOF) \
-		return; \
-	  else \
-		wd = word; \
-	}
-
-static	struct file_list *fcur;
-char *tail();
-
+#include "sem.h"
 /*
- * Lookup a file, by name.
+ * Make the Makefile.
  */
-struct file_list *
-fl_lookup(file)
-	register char *file;
+
+static int emitdefs __P((FILE *));
+static int emitobjs __P((FILE *));
+static int emitcfiles __P((FILE *));
+static int emitsfiles __P((FILE *));
+static int emitfiles __P((FILE *, int));
+static int emitrules __P((FILE *));
+static int emitload __P((FILE *));
+
+int
+mkmakefile()
 {
-	register struct file_list *fp;
+	register FILE *ifp, *ofp;
+	register int lineno;
+	register int (*fn) __P((FILE *));
+	register char *ofname;
+	char line[BUFSIZ], ifname[200];
 
-	for (fp = ftab ; fp != 0; fp = fp->f_next) {
-		if (eq(fp->f_fn, file))
-			return (fp);
+	(void)sprintf(ifname, "Makefile.%s", machine);
+	if ((ifp = fopen(ifname, "r")) == NULL) {
+		(void)fprintf(stderr, "config: cannot read %s: %s\n",
+		    ifname, strerror(errno));
+		return (1);
 	}
-	return (0);
-}
-
-/*
- * Lookup a file, by final component name.
- */
-struct file_list *
-fltail_lookup(file)
-	register char *file;
-{
-	register struct file_list *fp;
-
-	for (fp = ftab ; fp != 0; fp = fp->f_next) {
-		if (eq(tail(fp->f_fn), tail(file)))
-			return (fp);
+	ofname = path("Makefile");
+	if ((ofp = fopen(ofname, "w")) == NULL) {
+		(void)fprintf(stderr, "config: cannot write %s: %s\n",
+		    ofname, strerror(errno));
+		free(ofname);
+		return (1);
 	}
-	return (0);
-}
-
-/*
- * Make a new file list entry
- */
-struct file_list *
-new_fent()
-{
-	register struct file_list *fp;
-
-	fp = (struct file_list *) malloc(sizeof *fp);
-	bzero(fp, sizeof *fp);
-	if (fcur == 0)
-		fcur = ftab = fp;
-	else
-		fcur->f_next = fp;
-	fcur = fp;
-	return (fp);
-}
-
-static	struct users {
-	int	u_default;
-	int	u_min;
-	int	u_max;
-} users[] = {
-	{ 24, 8, 1024 },		/* MACHINE_VAX */
-	{ 4, 2, 128 },			/* MACHINE_TAHOE */
-	{ 8, 2, 64 },			/* MACHINE_HP300 */
-	{ 8, 2, 64 },			/* MACHINE_I386 */
-	{ 8, 2, 64 },			/* MACHINE_PC532 */
-	{ 8, 2, 64 },			/* MACHINE_PMAX */
-	{ 8, 2, 64 },			/* MACHINE_AMIGA */
-};
-#define	NUSERS	(sizeof (users) / sizeof (users[0]))
-
-/*
- * Build the makefile from the skeleton
- */
-makefile()
-{
-	FILE *ifp, *ofp;
-	char line[BUFSIZ];
-	struct opt *op;
-	struct users *up;
-
-	read_files();
-	strcpy(line, "Makefile.");
-	(void) strcat(line, machinename);
-	ifp = fopen(line, "r");
-	if (ifp == 0) {
-		perror(line);
-		exit(1);
-	}
-	ofp = fopen(path("Makefile"), "w");
-	if (ofp == 0) {
-		perror(path("Makefile"));
-		exit(1);
-	}
-	fprintf(ofp, "KERN_IDENT=%s\n", raisestr(ident));		/* 29 Jun 92*/
-	fprintf(ofp, "IDENT=-D%s", raisestr(ident));
-	if (profiling)
-		fprintf(ofp, " -DGPROF");
-	if (cputype == 0) {
-		printf("cpu type must be specified\n");
-		exit(1);
-	}
-	{ struct cputype *cp;
-	  for (cp = cputype; cp; cp = cp->cpu_next)
-		fprintf(ofp, " -D%s", cp->cpu_name);
-	}
-	for (op = opt; op; op = op->op_next)
-		if (op->op_value)
-			fprintf(ofp, " -D%s=\"%s\"", op->op_name, op->op_value);
-		else
-			fprintf(ofp, " -D%s", op->op_name);
-	fprintf(ofp, "\n");
-	if (hadtz == 0)
-		printf("timezone not specified; gmt assumed\n");
-	if ((unsigned)machine > NUSERS) {
-		printf("maxusers config info isn't present, using vax\n");
-		up = &users[MACHINE_VAX-1];
-	} else
-		up = &users[machine-1];
-	if (maxusers == 0) {
-		printf("maxusers not specified; %d assumed\n", up->u_default);
-		maxusers = up->u_default;
-	} else if (maxusers < up->u_min) {
-		printf("minimum of %d maxusers assumed\n", up->u_min);
-		maxusers = up->u_min;
-	} else if (maxusers > up->u_max)
-		printf("warning: maxusers > %d (%d)\n", up->u_max, maxusers);
-        fprintf(ofp, "PARAM=-DTIMEZONE=%d -DDST=%d -DMAXUSERS=%d\n",
-                zone, dst, maxusers);
-	if (loadaddress != -1) {
-                fprintf(ofp, "LOAD_ADDRESS=%X\n", loadaddress);
-        }
-	for (op = mkopt; op; op = op->op_next)
-		fprintf(ofp, "%s=%s\n", op->op_name, op->op_value);
-	if (debugging)
-		fprintf(ofp, "DEBUG=-g\n");
-	if (profiling)
-		fprintf(ofp, "PROF=-pg\n");
-	while (fgets(line, BUFSIZ, ifp) != 0) {
-		if (*line != '%') {
-			fprintf(ofp, "%s", line);
+	if (emitdefs(ofp) != 0)
+		goto wrerror;
+	lineno = 0;
+	while (fgets(line, sizeof(line), ifp) != NULL) {
+		lineno++;
+		if (line[0] != '%') {
+			if (fputs(line, ofp) < 0)
+				goto wrerror;
 			continue;
 		}
-		if (eq(line, "%OBJS\n"))
-			do_objs(ofp);
-		else if (eq(line, "%CFILES\n"))
-			do_cfiles(ofp);
-		else if (eq(line, "%RULES\n"))
-			do_rules(ofp);
-		else if (eq(line, "%LOAD\n"))
-			do_load(ofp);
-		else
-			fprintf(stderr,
-			    "Unknown %% construct in generic makefile: %s",
-			    line);
+		if (strcmp(line, "%OBJS\n") == 0)
+			fn = emitobjs;
+		else if (strcmp(line, "%CFILES\n") == 0)
+			fn = emitcfiles;
+		else if (strcmp(line, "%SFILES\n") == 0)
+			fn = emitsfiles;
+		else if (strcmp(line, "%RULES\n") == 0)
+			fn = emitrules;
+		else if (strcmp(line, "%LOAD\n") == 0)
+			fn = emitload;
+		else {
+			xerror(ifname, lineno,
+			    "unknown %% construct ignored: %s", line);
+			continue;
+		}
+		if ((*fn)(ofp))
+			goto wrerror;
 	}
-	(void) fclose(ifp);
-	(void) fclose(ofp);
+	if (ferror(ifp)) {
+		(void)fprintf(stderr,
+		    "config: error reading %s (at line %d): %s\n",
+		    ifname, lineno, strerror(errno));
+		goto bad;
+		/* (void)unlink(ofname); */
+		free(ofname);
+		return (1);
+	}
+	if (fclose(ofp)) {
+		ofp = NULL;
+		goto wrerror;
+	}
+	(void)fclose(ifp);
+	free(ofname);
+	return (0);
+wrerror:
+	(void)fprintf(stderr, "config: error writing %s: %s\n",
+	    ofname, strerror(errno));
+bad:
+	if (ofp != NULL)
+		(void)fclose(ofp);
+	/* (void)unlink(ofname); */
+	free(ofname);
+	return (1);
+}
+
+static int
+emitdefs(fp)
+	register FILE *fp;
+{
+	register struct nvlist *nv;
+	register char *sp;
+
+	if (fputs("IDENT=", fp) < 0)
+		return (1);
+	sp = "";
+	for (nv = options; nv != NULL; nv = nv->nv_next) {
+		if (fprintf(fp, "%s-D%s", sp, nv->nv_name) < 0)
+		    return 1;
+		if (nv->nv_str)
+		    if (fprintf(fp, "=\"%s\"", nv->nv_str) < 0)
+			return 1;
+		sp = " ";
+	}
+	if (putc('\n', fp) < 0)
+		return (1);
+	if (fprintf(fp, "PARAM=-DMAXUSERS=%d\n", maxusers) < 0)
+		return (1);
+	for (nv = mkoptions; nv != NULL; nv = nv->nv_next)
+		if (fprintf(fp, "%s=%s\n", nv->nv_name, nv->nv_str) < 0)
+			return (1);
+	return (0);
+}
+
+static int
+emitobjs(fp)
+	register FILE *fp;
+{
+	register struct files *fi;
+	register int lpos, len, sp;
+
+	if (fputs("OBJS=", fp) < 0)
+		return (1);
+	sp = '\t';
+	lpos = 7;
+	for (fi = allfiles; fi != NULL; fi = fi->fi_next) {
+		if ((fi->fi_flags & FI_SEL) == 0)
+			continue;
+		len = strlen(fi->fi_base) + 2;
+		if (lpos + len > 72) {
+			if (fputs(" \\\n", fp) < 0)
+				return (1);
+			sp = '\t';
+			lpos = 7;
+		}
+		if (fprintf(fp, "%c%s.o", sp, fi->fi_base) < 0)
+			return (1);
+		lpos += len + 1;
+		sp = ' ';
+	}
+	if (lpos != 7 && putc('\n', fp) < 0)
+		return (1);
+	return (0);
+}
+
+static int
+emitcfiles(fp)
+	FILE *fp;
+{
+
+	return (emitfiles(fp, 'c'));
+}
+
+static int
+emitsfiles(fp)
+	FILE *fp;
+{
+
+	return (emitfiles(fp, 's'));
+}
+
+static int
+emitfiles(fp, suffix)
+	register FILE *fp;
+	int suffix;
+{
+	register struct files *fi;
+	register struct config *cf;
+	register int lpos, len, sp;
+	char swapname[100];
+
+	if (fprintf(fp, "%cFILES=", toupper(suffix)) < 0)
+		return (1);
+	sp = '\t';
+	lpos = 7;
+	for (fi = allfiles; fi != NULL; fi = fi->fi_next) {
+		if ((fi->fi_flags & FI_SEL) == 0)
+			continue;
+		len = strlen(fi->fi_path);
+		if (fi->fi_path[len - 1] != suffix)
+			continue;
+		if (*fi->fi_path != '/')
+			len += 3;	/* "$S/" */
+		if (lpos + len > 72) {
+			if (fputs(" \\\n", fp) < 0)
+				return (1);
+			sp = '\t';
+			lpos = 7;
+		}
+		if (fprintf(fp, "%c%s%s", sp, *fi->fi_path != '/' ? "$S/" : "",
+		    fi->fi_path) < 0)
+			return (1);
+		lpos += len + 1;
+		sp = ' ';
+	}
+	/*
+	 * The allfiles list does not include the configuration-specific
+	 * C source files.  These files should be eliminated someday, but
+	 * for now, we have to add them to ${CFILES} (and only ${CFILES}).
+	 */
+	if (suffix == 'c') {
+		for (cf = allcf; cf != NULL; cf = cf->cf_next) {
+			if (cf->cf_root == NULL)
+				(void)sprintf(swapname,
+				    "$S/arch/%s/%s/swapgeneric.c",
+				    machine, machine);
+			else
+				(void)sprintf(swapname, "swap%s.c",
+				    cf->cf_name);
+			len = strlen(swapname);
+			if (lpos + len > 72) {
+				if (fputs(" \\\n", fp) < 0)
+					return (1);
+				sp = '\t';
+				lpos = 7;
+			}
+			if (fprintf(fp, "%c%s", sp, swapname) < 0)
+				return (1);
+			lpos += len + 1;
+			sp = ' ';
+		}
+	}
+	if (lpos != 7 && putc('\n', fp) < 0)
+		return (1);
+	return (0);
 }
 
 /*
- * Read in the information about files used in making the system.
- * Store it in the ftab linked list.
+ * Emit the make-rules.
  */
-read_files()
+static int
+emitrules(fp)
+	register FILE *fp;
 {
-	register struct file_list *fl;
-	char fname[32];
+	register struct files *fi;
+	register const char *cp;
+	int ch;
+	char buf[200];
 
-	ftab = 0;
-	(void) strcpy(fname, "../../../conf/files");
-	read_file(fname,1,0);
-	(void) sprintf(fname, "files.%s", machinename);
-	read_file(fname,1,0);
-	if (strcmp(machinearch, machinename)) {
-		(void) sprintf(fname, "../../%s/conf/files.%s", machinearch,
-		    machinearch);
-		read_file(fname,1,0);
-	}
-	(void) sprintf(fname, "files.%s", raisestr(ident));
-	read_file(fname,0,1);
-	(void) strcpy(fname, "../../../conf/options");
-	read_file(fname,0,0);
-	(void) sprintf(fname, "options.%s", machinename);
-	read_file(fname,0,0);
-	if (strcmp(machinearch, machinename)) {
-		(void) sprintf(fname, "../../%s/conf/options.%s", machinearch,
-		    machinearch);
-		read_file(fname,0,0);
-	}
-	(void) sprintf(fname, "options.%s", raisestr(ident));
-	read_file(fname,0,1);
-}
-
-opteq(cp, dp)
-	char *cp, *dp;
-{
-	char c, d;
-
-	for (; ; cp++, dp++) {
-		if (*cp != *dp) {
-			c = isupper(*cp) ? tolower(*cp) : *cp;
-			d = isupper(*dp) ? tolower(*dp) : *dp;
-			if (c != d)
-				return (0);
+	for (fi = allfiles; fi != NULL; fi = fi->fi_next) {
+		if ((fi->fi_flags & FI_SEL) == 0)
+			continue;
+		if (fprintf(fp, "%s.o: %s%s\n", fi->fi_base,
+		    *fi->fi_path != '/' ? "$S/" : "", fi->fi_path) < 0)
+			return (1);
+		if ((cp = fi->fi_mkrule) == NULL) {
+			cp = fi->fi_flags & FI_DRIVER ? "DRIVER" : "NORMAL";
+			ch = fi->fi_lastc;
+			if (islower(ch))
+				ch = toupper(ch);
+			(void)sprintf(buf, "${%s_%c%s}", cp, ch,
+			    fi->fi_flags & FI_CONFIGDEP ? "_C" : "");
+			cp = buf;
 		}
-		if (*cp == 0)
+		if (fprintf(fp, "\t%s\n\n", cp) < 0)
 			return (1);
 	}
-}
-
-do_objs(fp)
-	FILE *fp;
-{
-	register struct file_list *tp, *fl;
-	register int lpos, len;
-	register char *cp, och, *sp;
-	char swapname[32];
-
-	fprintf(fp, "OBJS=");
-	lpos = 6;
-	for (tp = ftab; tp != 0; tp = tp->f_next) {
-		if (tp->f_type == INVISIBLE)
-			continue;
-		if (tp->f_type == PROFILING && !profiling)
-			continue;
-		sp = tail(tp->f_fn);
-		for (fl = conf_list; fl; fl = fl->f_next) {
-			if (fl->f_type != SWAPSPEC)
-				continue;
-			(void) sprintf(swapname, "swap%s.c", fl->f_fn);
-			if (eq(sp, swapname))
-				goto cont;
-		}
-		cp = sp + (len = strlen(sp)) - 1;
-		och = *cp;
-		*cp = 'o';
-		if (len + lpos > 72) {
-			lpos = 8;
-			fprintf(fp, "\\\n\t");
-		}
-		fprintf(fp, "%s ", sp);
-		lpos += len + 1;
-		*cp = och;
-cont:
-		;
-	}
-	if (lpos != 8)
-		putc('\n', fp);
-}
-
-do_cfiles(fp)
-	FILE *fp;
-{
-	register struct file_list *tp, *fl;
-	register int lpos, len;
-	char swapname[32];
-
-	fputs("CFILES=", fp);
-	lpos = 8;
-	for (tp = ftab; tp; tp = tp->f_next) {
-		if (tp->f_type == INVISIBLE)
-			continue;
-		if (tp->f_type == PROFILING && !profiling)
-			continue;
-		len = strlen(tp->f_fn);
-		if (tp->f_fn[len - 1] != 'c')
-			continue;
-		if ((len = 3 + len) + lpos > 72) {
-			lpos = 8;
-			fputs("\\\n\t", fp);
-		}
-		fprintf(fp, "$S/%s ", tp->f_fn);
-		lpos += len + 1;
-	}
-	for (fl = conf_list; fl; fl = fl->f_next)
-		if (fl->f_type == SYSTEMSPEC) {
-			(void) sprintf(swapname, "swap%s.c", fl->f_fn);
-			if ((len = 3 + strlen(swapname)) + lpos > 72) {
-				lpos = 8;
-				fputs("\\\n\t", fp);
-			}
-			if (eq(fl->f_fn, "generic"))
-				fprintf(fp, "$S/arch/%s/%s/%s ",
-				    machinename, machinename, swapname);
-			else if (eq(fl->f_fn, "nfs"))
-				fprintf(fp, "$S/nfs/%s ", swapname);
-			else
-				fprintf(fp, "%s ", swapname);
-			lpos += len + 1;
-		}
-	if (lpos != 8)
-		putc('\n', fp);
-}
-
-char *
-tail(fn)
-	char *fn;
-{
-	register char *cp;
-
-	cp = rindex(fn, '/');
-	if (cp == 0)
-		return (fn);
-	return (cp+1);
+	return (0);
 }
 
 /*
- * Create the makerules for each file
- * which is part of the system.
- * Devices are processed with the special c2 option -i
- * which avoids any problem areas with i/o addressing
- * (e.g. for the VAX); assembler files are processed by as.
+ * Emit the load commands.
+ *
+ * This function is not to be called `spurt'.
  */
-do_rules(f)
-	FILE *f;
+static int
+emitload(fp)
+	register FILE *fp;
 {
-	register char *cp, *np, och, *tp;
-	register struct file_list *ftp;
-	char *special;
-
-	for (ftp = ftab; ftp != 0; ftp = ftp->f_next) {
-		if (ftp->f_type == INVISIBLE)
-			continue;
-		if (ftp->f_type == PROFILING && !profiling)
-			continue;
-		cp = (np = ftp->f_fn) + strlen(ftp->f_fn) - 1;
-		och = *cp;
-		*cp = '\0';
-		if (och == 'o') {
-			fprintf(f, "%so:\n\t-cp $S/%so .\n\n", tail(np), np);
-			continue;
-		}
-		fprintf(f, "%so: $S/%s%c\n", tail(np), np, och);
-		tp = tail(np);
-		special = ftp->f_special;
-		if (special == 0) {
-			char *ftype;
-			static char cmd[128];
-
-			switch (ftp->f_type) {
-
-			case NORMAL:
-				ftype = "NORMAL";
-				break;
-
-			case DRIVER:
-				ftype = "DRIVER";
-				break;
-
-			case PROFILING:
-				ftype = "PROFILE";
-				break;
-
-			default:
-				printf("config: don't know rules for %s\n", np);
-				break;
-			}
-			(void)sprintf(cmd, "${%s_%c%s}", ftype, toupper(och),
-				      ftp->f_flags & CONFIGDEP? "_C" : "");
-			special = cmd;
-		}
-		*cp = och;
-		fprintf(f, "\t%s\n\n", special);
-	}
-}
-
-/*
- * Create the load strings
- */
-do_load(f)
-	register FILE *f;
-{
-	register struct file_list *fl;
-	register int first;
-	struct file_list *do_systemspec();
-
-	for (first = 1, fl = conf_list; fl; first = 0)
-		fl = fl->f_type == SYSTEMSPEC ?
-			do_systemspec(f, fl, first) : fl->f_next;
-	fputs("all:", f);
-	for (fl = conf_list; fl; fl = fl->f_next)
-		if (fl->f_type == SYSTEMSPEC)
-			fprintf(f, " %s", fl->f_needs->name);
-	putc('\n', f);
-}
-
-struct file_list *
-do_systemspec(f, fl, first)
-	FILE *f;
-	register struct file_list *fl;
+	register struct config *cf;
+	register const char *nm, *swname;
 	int first;
-{
-	fprintf(f, "SYSTEM_SWAP_DEP+= swap%s.o\n", fl->f_fn);
-	fprintf(f, "%s: ${SYSTEM_DEP} swap%s.o vers.o", fl->f_needs->name, fl->f_fn);
-	fprintf(f, "\n\t${SYSTEM_LD_HEAD}\n");
-	fprintf(f, "\t${SYSTEM_LD} swap%s.o\n", fl->f_fn);
-	fprintf(f, "\t${SYSTEM_LD_TAIL}\n\n");
-	do_swapspec(f, fl->f_fn);
-	for (fl = fl->f_next; fl && fl->f_type == SWAPSPEC; fl = fl->f_next)
-		;
-	return (fl);
-}
 
-do_swapspec(f, name)
-	FILE *f;
-	register char *name;
-{
-
-	if (eq(name, "generic"))
-		fprintf(f, "swapgeneric.o: ../../%s/swapgeneric.c\n",
-			machinename);
-	else if (eq(name, "nfs"))
-		fprintf(f, "swapnfs.o: ../../../../nfs/swapnfs.c\n");
-	else
-		fprintf(f, "swap%s.o: swap%s.c\n", name, name);
-	fprintf(f, "\t${NORMAL_C}\n\n");
-}
-
-char *
-raisestr(str)
-	register char *str;
-{
-	register char *cp = str;
-
-	while (*str) {
-		if (islower(*str))
-			*str = toupper(*str);
-		str++;
+	if (fputs("all:", fp) < 0)
+		return (1);
+	for (cf = allcf; cf != NULL; cf = cf->cf_next) {
+		if (fprintf(fp, " %s", cf->cf_name) < 0)
+			return (1);
 	}
-	return (cp);
+	if (fputs("\n\n", fp) < 0)
+		return (1);
+	for (first = 1, cf = allcf; cf != NULL; cf = cf->cf_next) {
+		nm = cf->cf_name;
+		swname =
+		    cf->cf_root != NULL ? cf->cf_name : "generic";
+		if (fprintf(fp, "%s: ${SYSTEM_DEP} swap%s.o", nm, swname) < 0)
+			return (1);
+		if (first) {
+			if (fputs(" newvers", fp) < 0)
+				return (1);
+			first = 0;
+		}
+		if (fprintf(fp, "\n\
+\t${SYSTEM_LD_HEAD}\n\
+\t${SYSTEM_LD} swap%s.o\n\
+\t${SYSTEM_LD_TAIL}\n\
+\n\
+swap%s.o: ", swname, swname) < 0)
+			return (1);
+		if (cf->cf_root != NULL) {
+			if (fprintf(fp, "swap%s.c\n", nm) < 0)
+				return (1);
+		} else {
+			if (fprintf(fp, "$S/arch/%s/%s/swapgeneric.c\n",
+			    machine, machine) < 0)
+				return (1);
+		}
+		if (fputs("\t${NORMAL_C}\n\n", fp) < 0)
+			return (1);
+	}
+	return (0);
 }

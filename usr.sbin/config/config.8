@@ -1,5 +1,5 @@
-.\" Copyright (c) 1980, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1980, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,144 +29,140 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)config.8	6.5 (Berkeley) 3/16/91
-.\"	$Id: config.8,v 1.6 1993/08/07 07:53:27 cgd Exp $
+.\"     from: @(#)config.8	8.2 (Berkeley) 4/19/94
+.\"	$Id: config.8,v 1.7 1995/04/28 06:55:00 cgd Exp $
 .\"
-.Dd March 16, 1991
+.Dd April 19, 1994
 .Dt CONFIG 8
 .Os BSD 4
 .Sh NAME
 .Nm config
-.Nd build system configuration files
+.Nd build kernel compilation directories
 .Sh SYNOPSIS
 .Nm config
-.Op Fl gkp
-.Ar SYSTEM_NAME
+.Op Fl p
+.Ar system-name
 .Sh DESCRIPTION
 .Pp
+This is the new version of the
+.Nm config
+program.
+.\"It understands the more modern autoconfiguration scheme
+.\"used on the SPARC and i386 platforms.
+.\"The old version of config is still used with the
+.\"HP300, DECstation, and derivative platforms.
+.\"Only the version of 
+.\".Nm config
+.\"applicable to the architecture that you are running
+.\"will be installed on your machine.
+.Pp
 .Nm Config
-builds a set of system configuration files from the file
-.Ar SYSTEM_NAME
+builds a set of configuration files from the file
+.Ar system-name ,
 which describes
 the system to configure.
-A second file
-tells
-.Nm config
-what files are needed to generate a system and
-can be augmented by configuration specific set of files
-that give alternate files for a specific machine.
-(see the
-.Sx FILES
-section below)
 .Pp
-Available option and operand:
+.Nm Config
+should run from the
+.Pa conf
+subdirectory of the top-level machine-specific directory
+of the system source (usually
+.Pa /sys/arch/MACHINE/conf ,
+where
+.Pa MACHINE
+is one of
+.Pa vax ,
+.Pa tahoe ,
+.Pa hp300 ,
+and so forth).
+.Nm Config
+assumes the directory
+.Pa ../compile
+exists; it places all output files in a subdirectory there,
+creating the subdirectory if necessary.
+The subdirectory name is taken from the
+.Ar system-name ;
+thus, configuring with
+.Dq Li config PICKLE
+will use the directory
+.Pa ../compile/PICKLE .
 .Pp
-.Bl -tag -width SYSTEM_NAME
-.It Fl g
-If the
-.Fl g
-option is supplied, 
-.Nm config
-will configure a system for debugging.
-.It Fl k
-If the
-.Fl k
-option is supplied, 
-.Nm config
-will not fail immediately on detection of a configuration error.
-.It Fl p
 If the
 .Fl p
-option is supplied, 
+option is supplied,
+.Pa .PROF
+is appended to the compilation directory name, and
 .Nm config
-will configure a system for profiling; for example,
+acts as if the lines
+.Dq Li makeoptions PROF="-pg"
+and
+.Dq Li options GPROF
+appeared in the configuration file.
+This will build a system that includes profiling code; see
 .Xr kgmon 8
 and
 .Xr gprof 1 .
-
-.It Ar SYSTEM_NAME
-specifies the name of the system configuration file
-containing device specifications, configuration options
-and other system parameters for one system configuration.
-.El
+The
+.Fl p
+flag is expected to be used for
+.Dq one-shot
+profiles of existing systems;
+for regular profiling,
+it is probably wiser to make a separate configuration
+containing the
+.Li makeoptions
+line.
 .Pp
-.Nm Config
-should be run from the
-.Pa conf
-subdirectory of the system source (usually
-.Pa /sys/arch/ARCH/conf ) .
-.Nm Config
-assumes the directory
-.Pa ../compile/SYSTEM_NAME
-exists and places all output files there.  
+The old undocumented
+.Fl g
+flag is no longer supported.
+Instead, use
+.Dq Li makeoptions DEBUG="-g"
+and (typically)
+.Dq Li options KGDB .
+.Pp
 The output of
 .Nm config
-consists of a number of files; for the
-.Tn i386 ,
-they are:
+consists of a number of files, principally
 .Pa ioconf.c ,
-a description
-of what I/O devices are attached to the system;
-.Pa vector.s ,
-a set of interrupt service routines for devices
-attached to the bus plus
-offsets into a structure used for counting per-device interrupts;
+a description of I/O devices that may be attached to the system; and a
 .Pa Makefile ,
 used by
 .Xr make 1
-in building the system;
-header files,
-definitions of
-the number of various devices that will be compiled into the system;
-swap configuration files,
-definitions for
-the disk areas to be used for swapping, the root file system,
-argument processing, and system dumps.
+in building the kernel.
 .Pp
 After running
 .Nm config ,
-it is necessary to run
+it is wise to run
 .Dq Li make depend
 in the directory where the new makefile
 was created.
 .Nm Config
 prints a reminder of this when it completes.
 .Pp
-If any other error messages are produced by
-.Nm config ,
-the problems in the configuration file should be corrected and
+If
+.Nm config
+stops due to errors, the problems reported should be corrected and
 .Nm config
 should be run again.
-Attempts to compile a system that had configuration errors
-are likely to fail.
-.Sh FILES
-.Bl -tag -width /sys/arch/i386/conf/Makefile.i386 -compact
-.It Pa /sys/arch/i386/conf/Makefile.i386
-generic makefile for the
-.Tn i386
-.It Pa /sys/conf/files
-list of common files system is built from
-.It Pa /sys/arch/i386/conf/files.i386
-list of
-.Tn i386
-specific files
-.It Pa /sys/arch/i386/conf/devices.i386
-name to major device mapping file for the
-.Tn i386
-.It Pa /sys/arch/i386/conf/files. Ns Em ERNIE
-list of files specific to
-.Em ERNIE
-system
-.El
+.Nm Config
+attempts to avoid changing the compilation directory
+if there are configuration errors,
+but this code is not well-tested,
+and some problems (such as running out of disk space)
+are unrecoverable.
 .Sh SEE ALSO
 The SYNOPSIS portion of each device in section 4.
 .Rs
-.%T "Building 4.3 BSD UNIX System with Config"
+.%T "Building 4.4 BSD Systems with Config"
+.\" .%T "Device Support in 4.4BSD"
 .Re
-.Sh BUGS
-The line numbers reported in error messages are usually off by one.
+.sp
+.Xr config 8
 .Sh HISTORY
 The
-.Nm
+.Nm config
 command appeared in
 .Bx 4.1 .
+It was completely revised in
+.Bx 4.4 .

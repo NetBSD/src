@@ -39,111 +39,103 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)mkheaders.c	8.1 (Berkeley) 6/6/93
- *	$Id: mkheaders.c,v 1.7 1995/04/28 06:55:12 cgd Exp $
+ *	from: @(#)mkswap.c	8.1 (Berkeley) 6/6/93
+ *	$Id: mkswap.c,v 1.1 1995/04/28 06:55:17 cgd Exp $
  */
 
 #include <sys/param.h>
-#include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "config.h"
+#include "sem.h"
 
-static int emitcnt __P((struct nvlist *));
-static int err __P((const char *, char *, FILE *));
-static char *cntname __P((const char *));
+static int mkoneswap __P((struct config *));
 
 /*
- * Make headers containing counts, as needed.
+ * Make the various swap*.c files.  Nothing to do for generic swap.
  */
 int
-mkheaders()
+mkswap()
 {
-	register struct files *fi;
+	register struct config *cf;
 
-	for (fi = allfiles; fi != NULL; fi = fi->fi_next) {
-		if (fi->fi_flags & FI_HIDDEN)
-			continue;
-		if (fi->fi_flags & (FI_NEEDSCOUNT | FI_NEEDSFLAG) &&
-		    emitcnt(fi->fi_opt))
+	for (cf = allcf; cf != NULL; cf = cf->cf_next)
+		if (cf->cf_root != NULL && mkoneswap(cf))
 			return (1);
-	}
 	return (0);
 }
 
+static char *
+mkdevstr(d)
+dev_t d;
+{
+	static char buf[32];
+
+	if (d == NODEV)
+		(void)sprintf(buf, "NODEV");
+	else
+		(void)sprintf(buf, "makedev(%d, %d)", major(d), minor(d));
+	return buf;
+}
+
 static int
-emitcnt(head)
-	register struct nvlist *head;
+mkoneswap(cf)
+	register struct config *cf;
 {
 	register struct nvlist *nv;
 	register FILE *fp;
 	register char *fname;
-	int cnt;
-	char nam[100];
-	char buf[BUFSIZ];
+	char buf[200];
+	char *mountroot;
 
-	(void)sprintf(buf, "%s.h", head->nv_name);
+	(void)sprintf(buf, "swap%s.c", cf->cf_name);
 	fname = path(buf);
-	if ((fp = fopen(fname, "r")) == NULL)
-		goto writeit;
-	nv = head;
-	while (fgets(buf, sizeof(buf), fp) != NULL) {
-		if (nv == NULL)
-			goto writeit;
-		if (sscanf(buf, "#define %s %d", nam, &cnt) != 2 ||
-		    strcmp(nam, cntname(nv->nv_name)) != 0 ||
-		    cnt != nv->nv_int)
-			goto writeit;
-		nv = nv->nv_next;
-	}
-	if (ferror(fp))
-		return (err("read", fname, fp));
-	(void)fclose(fp);
-	if (nv == NULL)
-		return (0);
-writeit:
 	if ((fp = fopen(fname, "w")) == NULL) {
 		(void)fprintf(stderr, "config: cannot write %s: %s\n",
 		    fname, strerror(errno));
 		return (1);
 	}
-	for (nv = head; nv != NULL; nv = nv->nv_next)
-		if (fprintf(fp, "#define\t%s\t%d\n",
-		    cntname(nv->nv_name), nv->nv_int) < 0)
-			return (err("writ", fname, fp));
-	if (fclose(fp))
-		return (err("writ", fname, NULL));
+	if (fputs("\
+#include <sys/param.h>\n\
+#include <sys/conf.h>\n\n", fp) < 0)
+		goto wrerror;
+	nv = cf->cf_root;
+	if (fprintf(fp, "dev_t\trootdev = %s;\t/* %s */\n",
+	    mkdevstr(nv->nv_int), nv->nv_str) < 0)
+		goto wrerror;
+	nv = cf->cf_dump;
+	if (fprintf(fp, "dev_t\tdumpdev = %s;\t/* %s */\n",
+	    mkdevstr(nv->nv_int), nv->nv_str) < 0)
+		goto wrerror;
+	if (fputs("\nstruct\tswdevt swdevt[] = {\n", fp) < 0)
+		goto wrerror;
+	for (nv = cf->cf_swap; nv != NULL; nv = nv->nv_next)
+		if (fprintf(fp, "\t{ %s,\t0,\t0 },\t/* %s */\n",
+		    mkdevstr(nv->nv_int), nv->nv_str) < 0)
+			goto wrerror;
+	if (fputs("\t{ NODEV, 0, 0 }\n};\n\n", fp) < 0)
+		goto wrerror;
+	mountroot =
+	    cf->cf_root->nv_str == s_nfs ? "nfs_mountroot" : "ffs_mountroot";
+	if (fprintf(fp, "extern int %s();\n", mountroot) < 0)
+		goto wrerror;
+	if (fprintf(fp, "int (*mountroot)() = %s;\n", mountroot) < 0)
+		goto wrerror;
+
+	if (fclose(fp)) {
+		fp = NULL;
+		goto wrerror;
+	}
+	free(fname);
 	return (0);
-}
-
-static int
-err(what, fname, fp)
-	const char *what;
-	char *fname;
-	FILE *fp;
-{
-
-	(void)fprintf(stderr, "config: error %sing %s: %s\n",
-	    what, fname, strerror(errno));
-	if (fp)
+wrerror:
+	(void)fprintf(stderr, "config: error writing %s: %s\n",
+	    fname, strerror(errno));
+	if (fp != NULL)
 		(void)fclose(fp);
+	/* (void)unlink(fname); */
 	free(fname);
 	return (1);
-}
-
-static char *
-cntname(src)
-	register const char *src;
-{
-	register char *dst, c;
-	static char buf[100];
-
-	dst = buf;
-	*dst++ = 'N';
-	while ((c = *src++) != 0)
-		*dst++ = islower(c) ? toupper(c) : c;
-	*dst = 0;
-	return (buf);
 }
