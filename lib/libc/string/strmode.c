@@ -1,8 +1,8 @@
-/*	$NetBSD: strmode.c,v 1.6 1997/10/16 23:09:09 christos Exp $	*/
+/*	$NetBSD: strmode.c,v 1.7 1998/01/30 23:38:36 perry Exp $	*/
 
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,9 +36,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char *sccsid = "@(#)strmode.c	5.3 (Berkeley) 5/18/90";
+static char sccsid[] = "@(#)strmode.c	8.3 (Berkeley) 8/15/94";
 #else
-__RCSID("$NetBSD: strmode.c,v 1.6 1997/10/16 23:09:09 christos Exp $");
+__RCSID("$NetBSD: strmode.c,v 1.7 1998/01/30 23:38:36 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

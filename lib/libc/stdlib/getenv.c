@@ -1,8 +1,8 @@
-/*	$NetBSD: getenv.c,v 1.8 1997/07/13 20:16:41 christos Exp $	*/
+/*	$NetBSD: getenv.c,v 1.9 1998/01/30 23:37:55 perry Exp $	*/
 
 /*
- * Copyright (c) 1987 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1987, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,9 +36,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char *sccsid = "from: @(#)getenv.c	5.8 (Berkeley) 2/23/91";
+static char sccsid[] = "@(#)getenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getenv.c,v 1.8 1997/07/13 20:16:41 christos Exp $");
+__RCSID("$NetBSD: getenv.c,v 1.9 1998/01/30 23:37:55 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,7 +56,7 @@ getenv(name)
 {
 	int offset;
 
-	return(__findenv(name, &offset));
+	return (__findenv(name, &offset));
 }
 
 /*
@@ -75,15 +75,18 @@ __findenv(name, offset)
 {
 	extern char **environ;
 	register int len;
-	register char **P, *C;
-	register const char *tmp;
+	register const char *np;
+	register char **p, *c;
 
-	for (tmp = name, len = 0; *tmp && *tmp != '='; ++tmp, ++len);
-	for (P = environ; *P; ++P)
-		if (!strncmp(*P, name, len))
-			if (*(C = *P + len) == '=') {
-				*offset = P - environ;
-				return(++C);
-			}
-	return(NULL);
+	if (name == NULL || environ == NULL)
+		return (NULL);
+	for (np = name; *np && *np != '='; ++np)
+		continue;
+	len = np - name;
+	for (p = environ; (c = *p) != NULL; ++p)
+		if (strncmp(c, name, len) == 0 && c[len] == '=') {
+			*offset = p - environ;
+			return (c + len + 1);
+		}
+	return (NULL);
 }

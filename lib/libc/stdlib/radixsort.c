@@ -1,4 +1,4 @@
-/*	$NetBSD: radixsort.c,v 1.9 1997/07/21 14:09:00 jtc Exp $	*/
+/*	$NetBSD: radixsort.c,v 1.10 1998/01/30 23:38:02 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -39,9 +39,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char sccsid[] = "from: @(#)radixsort.c	8.1 (Berkeley) 6/4/93";
+static char sccsid[] = "@(#)radixsort.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: radixsort.c,v 1.9 1997/07/21 14:09:00 jtc Exp $");
+__RCSID("$NetBSD: radixsort.c,v 1.10 1998/01/30 23:38:02 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -144,7 +144,7 @@ sradixsort(a, n, tab, endch)
 #define swap(a, b, t)	t = a, a = b, b = t
 
 /* Unstable, in-place sort. */
-void
+static void
 r_sort_a(a, n, i, tr, endch)
 	const u_char **a;
 	int n, i;
@@ -235,7 +235,7 @@ r_sort_a(a, n, i, tr, endch)
 }
 
 /* Stable sort, requiring additional memory. */
-void
+static void
 r_sort_b(a, ta, n, i, tr, endch)
 	const u_char **a, **ta;
 	int n, i;

@@ -1,8 +1,8 @@
-/*	$NetBSD: setenv.c,v 1.10 1997/07/21 14:09:04 jtc Exp $	*/
+/*	$NetBSD: setenv.c,v 1.11 1998/01/30 23:38:05 perry Exp $	*/
 
 /*
- * Copyright (c) 1987 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1987, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,9 +36,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char *sccsid = "from: @(#)setenv.c	5.6 (Berkeley) 6/4/91";
+static char sccsid[] = "@(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setenv.c,v 1.10 1997/07/21 14:09:04 jtc Exp $");
+__RCSID("$NetBSD: setenv.c,v 1.11 1998/01/30 23:38:05 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,24 +65,24 @@ setenv(name, value, rewrite)
 {
 	extern char **environ;
 	static int alloced;			/* if allocated space before */
-	register char *C;
+	register char *c;
 	int l_value, offset;
 
 	if (*value == '=')			/* no `=' in value */
 		++value;
 	l_value = strlen(value);
-	if ((C = __findenv(name, &offset))) {	/* find if already exists */
+	if ((c = __findenv(name, &offset))) {	/* find if already exists */
 		if (!rewrite)
 			return (0);
-		if (strlen(C) >= l_value) {	/* old larger; copy over */
-			while ((*C++ = *value++) != '\0');
+		if (strlen(c) >= l_value) {	/* old larger; copy over */
+			while ((*c++ = *value++) != '\0');
 			return (0);
 		}
 	} else {					/* create new slot */
-		register int	cnt;
-		register char	**P;
+		register int cnt;
+		register char **p;
 
-		for (P = environ, cnt = 0; *P; ++P, ++cnt);
+		for (p = environ, cnt = 0; *p; ++p, ++cnt);
 		if (alloced) {			/* just increase size */
 			environ = (char **)realloc((char *)environ,
 			    (size_t)(sizeof(char *) * (cnt + 2)));
@@ -91,24 +91,21 @@ setenv(name, value, rewrite)
 		}
 		else {				/* get new space */
 			alloced = 1;		/* copy old entries into it */
-			P = (char **)malloc((size_t)(sizeof(char *) *
-			    (cnt + 2)));
-			if (!P)
+			p = malloc((size_t)(sizeof(char *) * (cnt + 2)));
+			if (!p)
 				return (-1);
-			bcopy(environ, P, cnt * sizeof(char *));
-			environ = P;
+			bcopy(environ, p, cnt * sizeof(char *));
+			environ = p;
 		}
 		environ[cnt + 1] = NULL;
 		offset = cnt;
 	}
-	for (C = (char *)name; *C && *C != '='; ++C);	/* no `=' in name */
+	for (c = (char *)name; *c && *c != '='; ++c);	/* no `=' in name */
 	if (!(environ[offset] =			/* name + `=' + value */
-	    malloc((size_t)((int)(C - name) + l_value + 2))))
+	    malloc((size_t)((int)(c - name) + l_value + 2))))
 		return (-1);
-	for (C = environ[offset]; (*C = *name++) && *C != '='; ++C)
-		;
-	for (*C++ = '='; (*C++ = *value++) != '\0'; )
-		;
+	for (c = environ[offset]; (*c = *name++) && *c != '='; ++c);
+	for (*c++ = '='; (*c++ = *value++) != '\0'; );
 	return (0);
 }
 
@@ -118,14 +115,14 @@ setenv(name, value, rewrite)
  */
 void
 unsetenv(name)
-	const char	*name;
+	const char *name;
 {
 	extern char **environ;
-	register char **P;
+	register char **p;
 	int offset;
 
 	while (__findenv(name, &offset))	/* if set multiple times */
-		for (P = &environ[offset];; ++P)
-			if (!(*P = *(P + 1)))
+		for (p = &environ[offset];; ++p)
+			if (!(*p = *(p + 1)))
 				break;
 }

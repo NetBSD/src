@@ -1,8 +1,8 @@
-/*	$NetBSD: atexit.c,v 1.7 1997/07/13 20:16:35 christos Exp $	*/
+/*	$NetBSD: atexit.c,v 1.8 1998/01/30 23:37:45 perry Exp $	*/
 
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Chris Torek.
@@ -39,16 +39,16 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char *sccsid = "from: @(#)atexit.c	5.2 (Berkeley) 11/14/90";
+static char sccsid[] = "@(#)atexit.c	8.2 (Berkeley) 7/3/94";
 #else
-__RCSID("$NetBSD: atexit.c,v 1.7 1997/07/13 20:16:35 christos Exp $");
+__RCSID("$NetBSD: atexit.c,v 1.8 1998/01/30 23:37:45 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
 #include "atexit.h"
 
-struct atexit *__atexit;
+struct atexit *__atexit;	/* points to head of LIFO stack */
 
 /*
  * Register a function to be performed at exit.
