@@ -1,4 +1,4 @@
-/*	$NetBSD: login_cap.c,v 1.16 2004/04/18 18:21:43 matt Exp $	*/
+/*	$NetBSD: login_cap.c,v 1.17 2004/04/23 15:23:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: login_cap.c,v 1.16 2004/04/18 18:21:43 matt Exp $");
+__RCSID("$NetBSD: login_cap.c,v 1.17 2004/04/23 15:23:26 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
  
 #include <sys/types.h>
@@ -71,7 +71,7 @@ static int	isinfinite(const char *);
 login_cap_t *
 login_getclass(char *class)
 {
-	char *classfiles[2];
+	const char *classfiles[2];
 	login_cap_t *lc;
 	int res;
 
