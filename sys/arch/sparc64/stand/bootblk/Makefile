@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2000/01/23 21:05:02 eeh Exp $
+#	$NetBSD: Makefile,v 1.8 2000/07/24 01:55:59 mycroft Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -36,16 +36,16 @@ CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_LKM ${SVR4}
 machine:
 	ln -s ../../include machine
 
-assym.fth.h: ./genassym.sh genfth.cf machine
-	sh ./genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
-	    < genfth.cf > assym.fth.h
+assym.fth.h: ${.CURDIR}/genassym.sh genfth.cf machine
+	sh ${.CURDIR}/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	    < ${.CURDIR}/genfth.cf > assym.fth.h
 
 bootblk.text: bootblk.fth assym.fth.h
-	awk '/fload/ { print "#include \"" $$2 "\"" }; !/fload/' bootblk.fth | \
-	/usr/bin/cpp -P >bootblk.text
+	awk '/fload/ { print "#include \"" $$2 "\"" }; !/fload/' \
+	    ${.CURDIR}/bootblk.fth | /usr/bin/cpp -P >bootblk.text
 
 bootblk: bootblk.fth assym.fth.h
-	fgen -o bootblk bootblk.fth
+	fgen -o bootblk ${.CURDIR}/bootblk.fth
 
 #
 # The following are if you grab the fakeboot program from the Sun website
