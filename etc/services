@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.24 1997/10/04 13:22:54 mrg Exp $
+#	$NetBSD: services,v 1.25 1997/10/07 08:15:04 lukem Exp $
 #
 # Network services, Internet style
 #
@@ -144,6 +144,7 @@ remotefs	556/tcp		rfs_server rfs	# Brunhoff remote filesystem
 #
 webster		765/tcp				# Network dictionary
 webster		765/udp
+
 #
 # From ``Assigned Numbers'':
 #
@@ -165,7 +166,7 @@ prospero-np	1525/tcp		# Prospero non-privileged
 prospero-np	1525/udp
 rfe		5002/tcp		# Radio Free Ethernet
 rfe		5002/udp		# Actually uses UDP only
-#
+
 #
 # Kerberos (Project Athena/MIT) services
 # Note that these are for Kerberos v4, and are unofficial.
@@ -180,11 +181,13 @@ kerberos-master	751/tcp			# Kerberos admin server tcp
 krbupdate	760/tcp		kreg	# BSD Kerberos registration
 kpasswd		761/tcp		kpwd	# BSD Kerberos `passwd'
 eklogin		2105/tcp		# Kerberos encrypted `rlogin'
+
 #
 # Unofficial but necessary (for NetBSD) services
 #
 supfilesrv	871/tcp			# SUP server
 supfiledbg	1127/tcp		# SUP debugging
+
 #
 # other common ports
 #
@@ -193,3 +196,14 @@ nfs		2049/tcp	nfsd	# Sun NFS
 X11		6000/tcp		# X Window System
 ircd		6667/tcp		# Often used IRC port (also see 194)
 hunt		26740/udp		# multi-player/multi-host maze-wars
+
+#
+# Netatalk (in-kernel Appletalk) services
+# Note: The running kernel must be configured with "options NETATALK"
+# and software not included in NetBSD, such as Netatalk version 1.4b2
+# or later, must be used to take advantage of these services.
+#
+rtmp		1/ddp			# Routing Table Maintenance Protocol
+nbp		2/ddp			# Name Binding Protocol
+echo		4/ddp			# AppleTalk Echo Protocol
+zip		6/ddp			# Zone Information Protocol
