@@ -1,5 +1,5 @@
 /*
- *	$Id: i8042reg.h,v 1.3 1994/03/02 06:46:17 mycroft Exp $
+ *	$Id: i8042reg.h,v 1.4 1994/03/02 08:02:27 mycroft Exp $
  */
 
 #define	KBSTATP		0x64	/* kbd controller status port (I) */
@@ -16,12 +16,14 @@
 #define	KBDATAP		0x60	/* kbd data port (I) */
 #define	KBOUTP		0x60	/* kbd data port (O) */
 
+#define	K_RDCMDBYTE	0x20
 #define	K_LDCMDBYTE	0x60
 
 #define	KC8_TRANS	0x40	/* convert to old scan codes */
-#define	KC8_OLDPC	0x20	/* old 9bit codes instead of new 11bit */
-#define	KC8_DISABLE	0x10	/* disable keyboard */
+#define	KC8_MDISABLE	0x20	/* disable mouse */
+#define	KC8_KDISABLE	0x10	/* disable keyboard */
 #define	KC8_IGNSEC	0x08	/* ignore security lock */
 #define	KC8_CPU		0x04	/* exit from protected mode reset */
-#define	KC8_IEN		0x01	/* enable interrupt */
-#define	CMDBYTE	(KC8_IGNSEC|KC8_CPU|KC8_IEN)
+#define	KC8_MENABLE	0x02	/* enable mouse interrupt */
+#define	KC8_KENABLE	0x01	/* enable keyboard interrupt */
+#define	CMDBYTE		(KC8_TRANS|KC8_CPU|KC8_MENABLE|KC8_KENABLE)
