@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.47 1997/10/08 09:32:36 mycroft Exp $
+#	$NetBSD: DISKLESS,v 1.48 1997/10/08 10:09:36 mycroft Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -12,7 +12,8 @@ options 	I486_CPU
 options 	I586_CPU
 options 	I686_CPU
 options 	MATH_EMULATE	# floating point emulation
-#options 	VM86		# Virtual 8086 emulation
+#options 	VM86		# virtual 8086 emulation
+options 	USER_LDT	# user-settable LDT; used by WINE
 
 # The following options override the memory sizes passed in from the boot
 # block.  Use them *only* if the boot block is unable to determine the correct
@@ -58,7 +59,6 @@ options 	COMPAT_SVR4	# binary compatibility with SVR4
 
 options 	EXEC_ELF32	# 32-bit ELF executables (SVR4, Linux)
 
-options 	USER_LDT	# user-settable LDT; used by WINE
 options 	LKM		# loadable kernel modules
 
 #file-system	FFS		# UFS
