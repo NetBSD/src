@@ -1,4 +1,4 @@
-/*	$NetBSD: mv.c,v 1.11 1997/07/20 19:07:53 christos Exp $	*/
+/*	$NetBSD: mv.c,v 1.12 1997/07/20 19:20:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: mv.c,v 1.11 1997/07/20 19:07:53 christos Exp $");
+__RCSID("$NetBSD: mv.c,v 1.12 1997/07/20 19:20:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,8 @@ __RCSID("$NetBSD: mv.c,v 1.11 1997/07/20 19:07:53 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <pwd.h>
+#include <grp.h>
 
 #include "pathnames.h"
 
