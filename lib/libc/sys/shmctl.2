@@ -1,4 +1,4 @@
-.\"	$NetBSD: shmctl.2,v 1.5 1997/11/27 10:25:18 mikel Exp $	
+.\"	$NetBSD: shmctl.2,v 1.6 1998/04/28 22:28:31 fair Exp $	
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -114,7 +114,7 @@ The values are taken from the corresponding fields in the structure
 pointed to by
 .Fa buf .
 This operation can only be executed by the super-user, or a process that
-has an effective user id equal to either 
+has an effective user id equal to either
 .Va shm_perm.cuid
 or
 .Va shm_perm.uid
@@ -122,8 +122,8 @@ in the data structure associated with the shared memory segment.
 .It Dv IPC_RMID
 Remove the shared memory segment specified by
 .Fa shmid
-and destroy the data associated with it. Only the super-user or a process
-with an effective uid equal to the 
+and destroy the data associated with it.
+Only the super-user or a process with an effective uid equal to the
 .Va shm_perm.cuid
 or
 .Va shm_perm.uid
@@ -146,8 +146,8 @@ effective gid can match either
 or
 .Va shm_perm.gid .
 .Sh RETURN VALUES
-Upon successful completion, a value of 0 is returned. Otherwise, -1 is
-returned and the global variable
+Upon successful completion, a value of 0 is returned.
+Otherwise, -1 is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS

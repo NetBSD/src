@@ -1,4 +1,4 @@
-.\"	$NetBSD: semctl.2,v 1.4 1997/11/27 10:25:04 mikel Exp $	
+.\"	$NetBSD: semctl.2,v 1.5 1998/04/28 22:28:31 fair Exp $	
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -119,7 +119,7 @@ Return the number of processes waiting to acquire the semaphore.
 Return the number of processes waiting for the value of the semaphore to
 reach 0.
 .It Dv GETALL
-Return the values of all the semaphores associated with 
+Return the values of all the semaphores associated with
 .Fa semid .
 .It Dv SETALL
 Set the values of all the semaphores that are associated with the semaphore
@@ -146,7 +146,7 @@ The values are taken from the corresponding fields in the structure
 pointed to by
 .Fa arg.buf .
 This operation can only be executed by the super-user, or a process that
-has an effective user id equal to either 
+has an effective user id equal to either
 .Va sem_perm.cuid
 or
 .Va sem_perm.uid
@@ -155,7 +155,7 @@ in the data structure associated with the message queue.
 Remove the semaphores associated with
 .Fa semid
 from the system and destroy the data structures associated with it. Only the
-super-user or a process with an effective uid equal to the 
+super-user or a process with an effective uid equal to the
 .Va sem_perm.cuid
 or
 .Va sem_perm.uid
