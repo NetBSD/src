@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.22 1997/10/18 21:18:32 kml Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.23 1998/01/05 09:52:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -155,6 +155,8 @@ LIST_HEAD(ipqhead, ipq)	ipq;		/* ip reass. queue */
 u_int16_t  ip_id;			/* ip packet ctr, for ids */
 int        ip_defttl;			/* default IP ttl */
 extern int ip_mtudisc;			/* mtu discovery */
+extern int anonportmin;			/* minimum ephemeral port */
+extern int anonportmax;			/* maximum ephemeral port */
 
 struct	 inpcb;
 

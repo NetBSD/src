@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.53 1997/10/18 21:18:31 kml Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.54 1998/01/05 09:52:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -1249,6 +1249,8 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 {
 	extern int subnetsarelocal;
 
+	int error, old;
+
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
@@ -1283,8 +1285,32 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &subnetsarelocal));
 	case IPCTL_MTUDISC:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, 
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &ip_mtudisc));
+	case IPCTL_ANONPORTMIN:
+		old = anonportmin;
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &anonportmin);
+		if (anonportmin >= anonportmax || anonportmin > 65535
+#ifndef IPNOPRIVPORTS
+		    || anonportmin < IPPORT_RESERVED
+#endif
+		    ) {
+			anonportmin = old;
+			return (EINVAL);
+		}
+		return (error);
+	case IPCTL_ANONPORTMAX:
+		old = anonportmax;
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &anonportmax);
+		if (anonportmin >= anonportmax || anonportmax > 65535
+#ifndef IPNOPRIVPORTS
+		    || anonportmax < IPPORT_RESERVED
+#endif
+		    ) {
+			anonportmax = old;
+			return (EINVAL);
+		}
+		return (error);
 	default:
 		return (EOPNOTSUPP);
 	}

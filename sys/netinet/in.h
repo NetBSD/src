@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.30 1997/12/30 02:54:08 lukem Exp $	*/
+/*	$NetBSD: in.h,v 1.31 1998/01/05 09:52:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -69,11 +69,11 @@
 /*
  * Local port number conventions:
  * Ports < IPPORT_RESERVED are reserved for privileged processes (e.g. root).
- * IPPORT_USERLOW <= Ports <= IPPORT_USERHIGH are for dynamic connections.
+ * IPPORT_ANONMIN <= Ports <= IPPORT_ANONMAX are for dynamic connections.
  */
 #define	IPPORT_RESERVED		1024
-#define	IPPORT_USERLOW		49152
-#define	IPPORT_USERHIGH		65535
+#define	IPPORT_ANONMIN		49152
+#define	IPPORT_ANONMAX		65535
 
 /*
  * Internet address (a structure for historical reasons)
@@ -253,7 +253,9 @@ struct ip_mreq {
 #define	IPCTL_ALLOWSRCRT	7	/* allow/drop all source-routed pkts */
 #define	IPCTL_SUBNETSARELOCAL	8	/* treat subnets as local addresses */
 #define	IPCTL_MTUDISC		9	/* allow path MTU discovery */
-#define	IPCTL_MAXID	       10
+#define	IPCTL_ANONPORTMIN      10	/* minimum ephemeral port */
+#define	IPCTL_ANONPORTMAX      11	/* maximum ephemeral port */
+#define	IPCTL_MAXID	       12
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -266,6 +268,8 @@ struct ip_mreq {
 	{ "allowsrcrt", CTLTYPE_INT }, \
 	{ "subnetsarelocal", CTLTYPE_INT }, \
 	{ "mtudisc", CTLTYPE_INT }, \
+	{ "anonportmin", CTLTYPE_INT }, \
+	{ "anonportmax", CTLTYPE_INT }, \
 }
 
 
