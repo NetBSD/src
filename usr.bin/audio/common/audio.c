@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.15 2002/01/15 23:48:52 mrg Exp $	*/
+/*	$NetBSD: audio.c,v 1.16 2002/12/27 23:43:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -140,7 +140,7 @@ decode_int(arg, intp)
 	char	*ep;
 	int	ret;
 
-	ret = (int)strtoul(arg, &ep, 0);
+	ret = (int)strtoul(arg, &ep, 10);
 
 	if (ep[0] == '\0') {
 		*intp = ret;
@@ -174,8 +174,8 @@ decode_time(arg, tvp)
 		if ((colon = strchr(s, ':')) != NULL) {
 			*colon++ = '\0';
 			decode_int(s, &first);
-			tvp->tv_sec *= 60;
 			tvp->tv_sec += first;	/* minutes and hours */
+			tvp->tv_sec *= 60;
 			s = colon;
 		}
 	}
@@ -194,9 +194,6 @@ decode_time(arg, tvp)
 	}
 	decode_int(s, &first);
 	tvp->tv_sec += first;
-#if 0
-printf("tvp->tv_sec = %ld, tvp->tv_usec = %ld\n", tvp->tv_sec, tvp->tv_usec);
-#endif
 
 	free(copy);
 }
