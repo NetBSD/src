@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager_i.h,v 1.3 1998/02/07 11:09:31 mrg Exp $	*/
+/*	$NetBSD: uvm_pager_i.h,v 1.4 1998/02/10 02:34:58 perry Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -37,6 +37,10 @@
  *
  * from: Id: uvm_pager_i.h,v 1.1.2.2 1997/10/09 23:05:46 chuck Exp 
  */
+
+#ifndef _UVM_UVM_PAGER_I_H_
+#define _UVM_UVM_PAGER_I_H_
+
 /*
  * uvm_pager_i.h
  */
@@ -66,3 +70,5 @@ vm_offset_t kva;
 } 
 
 #endif /* defined(UVM_PAGER_INLINE) || defined(UVM_PAGER) */
+
+#endif /* _UVM_UVM_PAGER_I_H_ */

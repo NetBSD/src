@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map_i.h,v 1.3 1998/02/07 11:09:05 mrg Exp $	*/
+/*	$NetBSD: uvm_map_i.h,v 1.4 1998/02/10 02:34:48 perry Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -69,6 +69,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#ifndef _UVM_UVM_MAP_I_H_
+#define _UVM_UVM_MAP_I_H_
 
 /*
  * uvm_map_i.h
@@ -242,3 +245,5 @@ vm_map_t map;
 }
 
 #endif /* defined(UVM_MAP_INLINE) || defined(UVM_MAP) */
+
+#endif /* _UVM_UVM_MAP_I_H_ */

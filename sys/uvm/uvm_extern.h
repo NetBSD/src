@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.7 1998/02/09 13:08:22 mrg Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.8 1998/02/10 02:34:31 perry Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -38,8 +38,8 @@
  * from: Id: uvm_extern.h,v 1.1.2.21 1998/02/07 01:16:53 chs Exp
  */
 
-#ifndef UVM_UVM_EXTERN_H
-#define UVM_UVM_EXTERN_H
+#ifndef _UVM_UVM_EXTERN_H_
+#define _UVM_UVM_EXTERN_H_
 
 /*
  * uvm_extern.h: this file defines the external interface to the VM system.
@@ -373,4 +373,4 @@ void 			uvm_vnp_terminate __P((struct vnode *));
 boolean_t		uvm_vnp_uncache __P((struct vnode *));
 struct uvm_object	*uvn_attach __P((void *, vm_prot_t));
 
-#endif
+#endif /* _UVM_UVM_EXTERN_H_ */
