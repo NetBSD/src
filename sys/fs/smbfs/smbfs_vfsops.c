@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.9 2003/02/18 19:40:36 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.10 2003/02/23 18:47:10 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -55,12 +55,9 @@
 #include <fs/smbfs/smbfs_node.h>
 #include <fs/smbfs/smbfs_subr.h>
 
-int smbfs_debuglevel = 0;
-
 #ifndef __NetBSD__
 SYSCTL_NODE(_vfs, OID_AUTO, smbfs, CTLFLAG_RW, 0, "SMB/CIFS file system");
 SYSCTL_INT(_vfs_smbfs, OID_AUTO, version, CTLFLAG_RD, &smbfs_version, 0, "");
-SYSCTL_INT(_vfs_smbfs, OID_AUTO, debuglevel, CTLFLAG_RW, &smbfs_debuglevel, 0, "");
 #endif
 
 static MALLOC_DEFINE(M_SMBFSHASH, "SMBFS hash", "SMBFS hash table");
