@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_mem.c,v 1.11.10.1 1997/08/23 07:14:13 thorpej Exp $	*/
+/*	$NetBSD: procfs_mem.c,v 1.11.10.2 1997/08/28 00:21:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -207,8 +207,8 @@ procfs_rwmem(p, uio)
  */
 int
 procfs_domem(curp, p, pfs, uio)
-	struct proc *curp;
-	struct proc *p;
+	struct proc *curp;		/* tracer */
+	struct proc *p;			/* traced */
 	struct pfsnode *pfs;
 	struct uio *uio;
 {
@@ -245,9 +245,15 @@ procfs_findtextvp(p)
 	return (p->p_textvp);
 }
 
+/*
+ * Ensure that a process has permission to perform I/O on another.
+ * Arguments:
+ *	p	The process wishing to do the I/O (the tracer).
+ *	t	The process who's memory/registers will be read/written.
+ */
 int
-procfs_checkioperm(t, p)
-	struct proc *t, *p;
+procfs_checkioperm(p, t)
+	struct proc *p, *t;
 {
 	int error;
 
