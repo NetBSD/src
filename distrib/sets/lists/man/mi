@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.363 2001/06/07 15:27:52 mrg Exp $
+# $NetBSD: mi,v 1.364 2001/06/08 14:40:43 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1137,6 +1137,8 @@
 ./usr/share/man/cat8/cleanup.0			man-postfix-catman
 ./usr/share/man/cat8/clri.0			man-sysutil-catman
 ./usr/share/man/cat8/cnwctl.0			man-sysutil-catman
+./usr/share/man/cat8/cobalt/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/cobalt/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/compat_freebsd.0		man-sys-catman
 ./usr/share/man/cat8/compat_ibcs2.0		man-sys-catman
 ./usr/share/man/cat8/compat_linux.0		man-sys-catman
@@ -1212,6 +1214,8 @@
 ./usr/share/man/cat8/hpcmips/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/hpcmips/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/hpcmips/pbsdboot.0		man-sys-catman
+./usr/share/man/cat8/hpcsh/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/hpcsh/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/hprop.0			man-krb5-catman
 ./usr/share/man/cat8/hpropd.0			man-krb5-catman
 ./usr/share/man/cat8/i386/MAKEDEV.0		man-sysutil-catman
@@ -1242,7 +1246,6 @@
 ./usr/share/man/cat8/isdntelctl.0		man-isdn-catman
 ./usr/share/man/cat8/isdntrace.0		man-isdn-catman
 ./usr/share/man/cat8/ispppcontrol.0		man-isdn-catman
-./usr/share/man/cat8/pppoectl.0			man-isdn-catman
 ./usr/share/man/cat8/iteconfig.0		man-sysutil-catman
 ./usr/share/man/cat8/kadmin.0			man-krb5-catman
 ./usr/share/man/cat8/kadmind.0			man-krb5-catman
@@ -1263,6 +1266,8 @@
 ./usr/share/man/cat8/lockd.0			man-nfsserver-catman
 ./usr/share/man/cat8/lpc.0			man-lpr-catman
 ./usr/share/man/cat8/lpd.0			man-lpr-catman
+./usr/share/man/cat8/luna68k/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/luna68k/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/mac68k/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/mac68k/boot.0		man-sys-catman
 ./usr/share/man/cat8/mac68k/makedev.0		man-sysutil-catman
@@ -1286,8 +1291,12 @@
 ./usr/share/man/cat8/mkalias.0			man-nis-catman
 ./usr/share/man/cat8/mknetid.0			man-nis-catman
 ./usr/share/man/cat8/mknod.0			man-sysutil-catman
+./usr/share/man/cat8/mipsco/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/mipsco/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/mld6query.0		man-netutil-catman
 ./usr/share/man/cat8/mlxctl.0			man-sysutil-man
+./usr/share/man/cat8/mmeye/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/mmeye/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/modload.0			man-sysutil-catman
 ./usr/share/man/cat8/modstat.0			man-sysutil-catman
 ./usr/share/man/cat8/modunload.0		man-sysutil-catman
@@ -1334,6 +1343,10 @@
 ./usr/share/man/cat8/newfs.0			man-sysutil-catman
 ./usr/share/man/cat8/newfs_lfs.0		man-sysutil-catman
 ./usr/share/man/cat8/newfs_msdos.0		man-sysutil-catman
+./usr/share/man/cat8/news68k/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/news68k/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/newsmips/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/newsmips/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/newsyslog.0		man-sysutil-catman
 ./usr/share/man/cat8/next68k/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/next68k/boot.0		man-sys-catman
@@ -1365,6 +1378,7 @@
 ./usr/share/man/cat8/pmax/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/poweroff.0			man-sysutil-catman
 ./usr/share/man/cat8/pppd.0			man-ppp-catman
+./usr/share/man/cat8/pppoectl.0			man-isdn-catman
 ./usr/share/man/cat8/pppstats.0			man-ppp-catman
 ./usr/share/man/cat8/praliases.0		man-sendmail-catman
 ./usr/share/man/cat8/prep/MAKEDEV.0		man-sysutil-catman
@@ -1428,6 +1442,8 @@
 ./usr/share/man/cat8/rwalld.0			man-netutil-catman
 ./usr/share/man/cat8/rwhod.0			man-netutil-catman
 ./usr/share/man/cat8/sa.0			man-sysutil-catman
+./usr/share/man/cat8/sandpoint/MAKEDEV.0	man-sysutil-catman
+./usr/share/man/cat8/sandpoint/makedev.0	man-sysutil-catman
 ./usr/share/man/cat8/savecore.0			man-sysutil-catman
 ./usr/share/man/cat8/scsictl.0			man-sysutil-catman
 ./usr/share/man/cat8/sendmail.0			man-sendmail-catman
@@ -1436,6 +1452,8 @@
 ./usr/share/man/cat8/setkey.0			man-netutil-catman
 ./usr/share/man/cat8/setobjstat.0		man-sysutil-catman
 ./usr/share/man/cat8/sftp-server.0		man-secsh-catman
+./usr/share/man/cat8/sgimips/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/sgimips/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/showmount.0		man-nfsclient-catman
 ./usr/share/man/cat8/showq.0			man-postfix-catman
 ./usr/share/man/cat8/shutdown.0			man-sysutil-catman
@@ -1464,6 +1482,8 @@
 ./usr/share/man/cat8/sticky.0			man-sys-catman
 ./usr/share/man/cat8/strfile.0			man-sysutil-catman
 ./usr/share/man/cat8/string2key.0		man-krb5-catman
+./usr/share/man/cat8/sun2/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/sun2/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/sun3/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/sun3/boot.0		man-sys-catman
 ./usr/share/man/cat8/sun3/installboot.0		man-sysutil-catman
@@ -2649,6 +2669,8 @@
 ./usr/share/man/man8/cleanup.8			man-postfix-man
 ./usr/share/man/man8/clri.8			man-sysutil-man
 ./usr/share/man/man8/cnwctl.8			man-sysutil-man
+./usr/share/man/man8/cobalt/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/cobalt/makedev.8		man-sysutil-man
 ./usr/share/man/man8/compat_freebsd.8		man-sys-man
 ./usr/share/man/man8/compat_ibcs2.8		man-sys-man
 ./usr/share/man/man8/compat_linux.8		man-sys-man
@@ -2724,6 +2746,8 @@
 ./usr/share/man/man8/hpcmips/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/hpcmips/makedev.8		man-sysutil-man
 ./usr/share/man/man8/hpcmips/pbsdboot.8		man-sys-man
+./usr/share/man/man8/hpcsh/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/hpcsh/makedev.8		man-sysutil-man
 ./usr/share/man/man8/hprop.8			man-krb5-man
 ./usr/share/man/man8/hpropd.8			man-krb5-man
 ./usr/share/man/man8/i386/MAKEDEV.8		man-sysutil-man
@@ -2754,7 +2778,6 @@
 ./usr/share/man/man8/isdntelctl.8		man-isdn-man
 ./usr/share/man/man8/isdntrace.8		man-isdn-man
 ./usr/share/man/man8/ispppcontrol.8		man-isdn-man
-./usr/share/man/man8/pppoectl.8			man-isdn-man
 ./usr/share/man/man8/iteconfig.8		man-sysutil-man
 ./usr/share/man/man8/kadmin.8			man-krb5-man
 ./usr/share/man/man8/kadmind.8			man-krb5-man
@@ -2775,6 +2798,8 @@
 ./usr/share/man/man8/lockd.8			man-nfsserver-man
 ./usr/share/man/man8/lpc.8			man-lpr-man
 ./usr/share/man/man8/lpd.8			man-lpr-man
+./usr/share/man/man8/luna68k/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/luna68k/makedev.8		man-sysutil-man
 ./usr/share/man/man8/mac68k/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/mac68k/boot.8		man-sys-man
 ./usr/share/man/man8/mac68k/makedev.8		man-sysutil-man
@@ -2794,12 +2819,16 @@
 ./usr/share/man/man8/mdconfig.8			man-sysutil-man
 ./usr/share/man/man8/mdsetimage.8		man-sysutil-man
 ./usr/share/man/man8/mfs.8			man-sys-man
+./usr/share/man/man8/mipsco/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/mipsco/makedev.8		man-sysutil-man
 ./usr/share/man/man8/mk-amd-map.8		man-amd-man
 ./usr/share/man/man8/mkalias.8			man-nis-man
 ./usr/share/man/man8/mknetid.8			man-nis-man
 ./usr/share/man/man8/mknod.8			man-sysutil-man
 ./usr/share/man/man8/mld6query.8		man-netutil-man
 ./usr/share/man/man8/mlxctl.8			man-sysutil-man
+./usr/share/man/man8/mmeye/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/mmeye/makedev.8		man-sysutil-man
 ./usr/share/man/man8/modload.8			man-sysutil-man
 ./usr/share/man/man8/modstat.8			man-sysutil-man
 ./usr/share/man/man8/modunload.8		man-sysutil-man
@@ -2846,6 +2875,10 @@
 ./usr/share/man/man8/newfs.8			man-sysutil-man
 ./usr/share/man/man8/newfs_lfs.8		man-sysutil-man
 ./usr/share/man/man8/newfs_msdos.8		man-sysutil-man
+./usr/share/man/man8/news68k/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/news68k/makedev.8		man-sysutil-man
+./usr/share/man/man8/newsmips/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/newsmips/makedev.8		man-sysutil-man
 ./usr/share/man/man8/newsyslog.8		man-sysutil-man
 ./usr/share/man/man8/next68k/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/next68k/boot.8		man-sys-man
@@ -2877,6 +2910,7 @@
 ./usr/share/man/man8/pmax/makedev.8		man-sysutil-man
 ./usr/share/man/man8/poweroff.8			man-sysutil-man
 ./usr/share/man/man8/pppd.8			man-ppp-man
+./usr/share/man/man8/pppoectl.8			man-isdn-man
 ./usr/share/man/man8/pppstats.8			man-ppp-man
 ./usr/share/man/man8/praliases.8		man-sendmail-man
 ./usr/share/man/man8/prep/MAKEDEV.8		man-sysutil-man
@@ -2940,6 +2974,8 @@
 ./usr/share/man/man8/rwalld.8			man-netutil-man
 ./usr/share/man/man8/rwhod.8			man-netutil-man
 ./usr/share/man/man8/sa.8			man-sysutil-man
+./usr/share/man/man8/sandpoint/MAKEDEV.8	man-sysutil-man
+./usr/share/man/man8/sandpoint/makedev.8	man-sysutil-man
 ./usr/share/man/man8/savecore.8			man-sysutil-man
 ./usr/share/man/man8/scsictl.8			man-sysutil-man
 ./usr/share/man/man8/sendmail.8			man-sendmail-man
@@ -2948,6 +2984,8 @@
 ./usr/share/man/man8/setkey.8			man-netutil-man
 ./usr/share/man/man8/setobjstat.8		man-sysutil-man
 ./usr/share/man/man8/sftp-server.8		man-secsh-man
+./usr/share/man/man8/sgimips/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/sgimips/makedev.8		man-sysutil-man
 ./usr/share/man/man8/showmount.8		man-nfsclient-man
 ./usr/share/man/man8/showq.8			man-postfix-man
 ./usr/share/man/man8/shutdown.8			man-sysutil-man
@@ -2976,6 +3014,8 @@
 ./usr/share/man/man8/sticky.8			man-sys-man
 ./usr/share/man/man8/strfile.8			man-sysutil-man
 ./usr/share/man/man8/string2key.8		man-krb5-man
+./usr/share/man/man8/sun2/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/sun2/makedev.8		man-sysutil-man
 ./usr/share/man/man8/sun3/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/sun3/boot.8		man-sys-man
 ./usr/share/man/man8/sun3/installboot.8		man-sysutil-man
