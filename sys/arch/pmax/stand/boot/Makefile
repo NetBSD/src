@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1999/03/25 12:10:12 simonb Exp $
+#	$NetBSD: Makefile,v 1.2 1999/03/26 02:07:55 simonb Exp $
 #	@(#)Makefile	8.3 (Berkeley) 2/16/94
 
 RELOC_BOOT=80710000
@@ -7,6 +7,7 @@ S=	${.CURDIR}/../../../..
 
 PROG=	boot
 BINDIR=	/
+BINMODE=555
 SRCS=	start.S boot.c # bootinfo.c callvec.c conf.c \
 NEWVERSWHAT="Secondary Boot"
 CLEANFILES+=vers.c vers.o
