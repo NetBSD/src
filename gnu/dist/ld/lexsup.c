@@ -327,6 +327,8 @@ static const struct ld_option ld_options[] =
       TWO_DASHES },
   { {"whole-archive", no_argument, NULL, OPTION_WHOLE_ARCHIVE},
       '\0', NULL, "Include all objects from following archives", TWO_DASHES },
+  { {"Bforcearchive", no_argument, NULL, OPTION_WHOLE_ARCHIVE }, /* NetBSD. */
+      '\0', NULL, NULL, ONE_DASH },
   { {"wrap", required_argument, NULL, OPTION_WRAP},
       '\0', "SYMBOL", "Use wrapper functions for SYMBOL", TWO_DASHES }
 };

@@ -1,4 +1,3 @@
-/* $NetBSD: alpha-opc.c,v 1.3 1997/12/02 23:46:04 ross Exp $ */
 /* alpha-opc.c -- Alpha AXP opcode list
    Copyright 1996 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@tamu.edu>,
@@ -861,8 +860,7 @@ const struct alpha_opcode alpha_opcodes[] = {
   { "mult/um",		FP(0x16,0x162), BASE, ARG_FP },
   { "divt/um",		FP(0x16,0x163), BASE, ARG_FP },
   { "cvtts/um",		FP(0x16,0x16C), BASE, ARG_FPZ1 },
-  { "cvttq/um",		FP(0x16,0x16F), BASE, ARG_FPZ1 },
-  { "cvtqs/um",		FP(0x16,0x17C), BASE, ARG_FPZ1 },
+  { "cvttq/vm",		FP(0x16,0x16F), BASE, ARG_FPZ1 },
   { "adds/u",		FP(0x16,0x180), BASE, ARG_FP },
   { "subs/u",		FP(0x16,0x181), BASE, ARG_FP },
   { "muls/u",		FP(0x16,0x182), BASE, ARG_FP },
@@ -882,7 +880,7 @@ const struct alpha_opcode alpha_opcodes[] = {
   { "mult/ud",		FP(0x16,0x1E2), BASE, ARG_FP },
   { "divt/ud",		FP(0x16,0x1E3), BASE, ARG_FP },
   { "cvtts/ud",		FP(0x16,0x1EC), BASE, ARG_FPZ1 },
-  { "cvttq/ud",		FP(0x16,0x1EF), BASE, ARG_FPZ1 },
+  { "cvttq/vd",		FP(0x16,0x1EF), BASE, ARG_FPZ1 },
   { "cvtst",		FP(0x16,0x2AC), BASE, ARG_FPZ1 },
   { "adds/suc",		FP(0x16,0x500), BASE, ARG_FP },
   { "subs/suc",		FP(0x16,0x501), BASE, ARG_FP },
@@ -903,8 +901,7 @@ const struct alpha_opcode alpha_opcodes[] = {
   { "mult/sum",		FP(0x16,0x562), BASE, ARG_FP },
   { "divt/sum",		FP(0x16,0x563), BASE, ARG_FP },
   { "cvtts/sum",	FP(0x16,0x56C), BASE, ARG_FPZ1 },
-  { "cvttq/sum",	FP(0x16,0x56F), BASE, ARG_FPZ1 },
-  { "cvtqs/sum",	FP(0x16,0x57C), BASE, ARG_FPZ1 },
+  { "cvttq/svm",	FP(0x16,0x56F), BASE, ARG_FPZ1 },
   { "adds/su",		FP(0x16,0x580), BASE, ARG_FP },
   { "negs/su",		FP(0x16,0x581), BASE, ARG_FPZ1 },	/* pseudo */
   { "subs/su",		FP(0x16,0x581), BASE, ARG_FP },
@@ -930,7 +927,7 @@ const struct alpha_opcode alpha_opcodes[] = {
   { "mult/sud",		FP(0x16,0x5E2), BASE, ARG_FP },
   { "divt/sud",		FP(0x16,0x5E3), BASE, ARG_FP },
   { "cvtts/sud",	FP(0x16,0x5EC), BASE, ARG_FPZ1 },
-  { "cvttq/sud",	FP(0x16,0x5EF), BASE, ARG_FPZ1 },
+  { "cvttq/svd",	FP(0x16,0x5EF), BASE, ARG_FPZ1 },
   { "cvtst/s",		FP(0x16,0x6AC), BASE, ARG_FPZ1 },
   { "adds/suic",	FP(0x16,0x700), BASE, ARG_FP },
   { "subs/suic",	FP(0x16,0x701), BASE, ARG_FP },
@@ -953,7 +950,7 @@ const struct alpha_opcode alpha_opcodes[] = {
   { "mult/suim",	FP(0x16,0x762), BASE, ARG_FP },
   { "divt/suim",	FP(0x16,0x763), BASE, ARG_FP },
   { "cvtts/suim",	FP(0x16,0x76C), BASE, ARG_FPZ1 },
-  { "cvttq/suim",	FP(0x16,0x76F), BASE, ARG_FPZ1 },
+  { "cvttq/svim",	FP(0x16,0x76F), BASE, ARG_FPZ1 },
   { "cvtqs/suim",	FP(0x16,0x77C), BASE, ARG_FPZ1 },
   { "cvtqt/suim",	FP(0x16,0x77E), BASE, ARG_FPZ1 },
   { "adds/sui",		FP(0x16,0x780), BASE, ARG_FP },
@@ -979,7 +976,7 @@ const struct alpha_opcode alpha_opcodes[] = {
   { "mult/suid",	FP(0x16,0x7E2), BASE, ARG_FP },
   { "divt/suid",	FP(0x16,0x7E3), BASE, ARG_FP },
   { "cvtts/suid",	FP(0x16,0x7EC), BASE, ARG_FPZ1 },
-  { "cvttq/suid",	FP(0x16,0x7EF), BASE, ARG_FPZ1 },
+  { "cvttq/svid",	FP(0x16,0x7EF), BASE, ARG_FPZ1 },
   { "cvtqs/suid",	FP(0x16,0x7FC), BASE, ARG_FPZ1 },
   { "cvtqt/suid",	FP(0x16,0x7FE), BASE, ARG_FPZ1 },
 
