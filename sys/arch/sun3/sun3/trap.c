@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.72 1997/08/12 15:47:00 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.73 1997/12/02 23:41:30 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -147,7 +147,6 @@ int mmupid = -1;
 #define MDB_WBFOLLOW	2
 #define MDB_WBFAILED	4
 #define MDB_CPFAULT 	8
-static int curtrap = -1;
 #endif
 
 /*
@@ -234,16 +233,7 @@ trap(type, code, v, tf)
 		p->p_md.md_regs = tf.tf_regs;
 	} else {
 		sticks = 0;
-#ifdef	DEBUG
-		if (curtrap == -1)
-			curtrap = type;
-		else {
-			printf("trap %d recursion\n", curtrap);
-			/* Debugger may longjmp() */
-			curtrap = -1;
-			goto dopanic;
-		}
-#endif
+		/* XXX: Detect trap recursion? */
 	}
 
 	switch (type) {
@@ -561,9 +551,7 @@ douret:
 	userret(p, &tf, sticks);
 
 done:
-#ifdef	DEBUG
-	curtrap = -1;
-#endif
+	/* XXX: Detect trap recursion? */
 }
 
 /*
