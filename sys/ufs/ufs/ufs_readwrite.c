@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.22.4.3 1999/07/02 22:43:27 thorpej Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.22.4.4 1999/07/04 01:55:41 chs Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -141,15 +141,10 @@ READ(v)
 
 #ifdef LFS_READWRITE
 		(void)lfs_check(vp, lbn, 0);
-		error = cluster_read(vp, ip->i_ffs_size, lbn, size, NOCRED, &bp);
+		error = bread(vp, lbn, size, NOCRED, &bp);
 #else
 		if (lblktosize(fs, nextlbn) >= ip->i_ffs_size)
 			error = bread(vp, lbn, size, NOCRED, &bp);
-#if 0
-		else if (doclusterread)
-			error = cluster_read(vp,
-			    ip->i_ffs_size, lbn, size, NOCRED, &bp);
-#endif
 		else if (lbn - 1 == vp->v_lastr) {
 			int nextsize = BLKSIZE(fs, ip, nextlbn);
 			error = breadn(vp, lbn,
@@ -214,6 +209,8 @@ WRITE(v)
 	ufs_daddr_t lbn;
 	off_t osize;
 	int blkoffset, error, flags, ioflag, resid, size, xfersize;
+	void *win;
+	vsize_t bytelen;
 
 	ioflag = ap->a_ioflag;
 	uio = ap->a_uio;
@@ -262,21 +259,21 @@ WRITE(v)
 	osize = ip->i_ffs_size;
 	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 
-#ifndef LFS_READWRITE
 	if (vp->v_type == VREG) {
+
 		/*
 		 * make sure the range of file offsets to be written
 		 * is fully allocated.  updating of ip->i_ffs_size
 		 * is handled by ffs_balloc_range().
 		 */
-		if ((error = ffs_balloc_range(ip, uio->uio_offset,
+
+		if ((error = ufs_balloc_range(vp, uio->uio_offset,
 					      uio->uio_resid, ap->a_cred, 0))) {
+			/* XXX handle partial failures */
 			return error;
 		}
-
 		while (uio->uio_resid > 0) {
-			void *win;
-			vsize_t bytelen = uio->uio_resid;
+			bytelen = uio->uio_resid;
 /* XXX if file is mapped and this is the last block, limit len to a page */
 
 			win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset,
@@ -298,7 +295,6 @@ WRITE(v)
 		}
 		goto out;
 	}
-#endif /* ! LFS_READWRITE */
 
 	for (error = 0; uio->uio_resid > 0;) {
 		lbn = lblkno(fs, uio->uio_offset);
@@ -315,8 +311,8 @@ WRITE(v)
 		else
 			flags &= ~B_CLRBUF;
 
-		error = ffs_balloc(ip, lbn, blkoffset + xfersize, ap->a_cred,
-				   &bp, NULL, flags);
+		error = VOP_BALLOC(vp, uio->uio_offset, blkoffset + xfersize,
+				   ap->a_cred, flags, &bp);
 #endif
 		if (error)
 			break;
@@ -348,12 +344,7 @@ WRITE(v)
 		if (ioflag & IO_SYNC)
 			(void)bwrite(bp);
 		else if (xfersize + blkoffset == fs->fs_bsize)
-#if 0
-			if (doclusterwrite)
-				cluster_write(bp, ip->i_ffs_size);
-			else
-#endif
-				bawrite(bp);
+			bawrite(bp);
                 else
 			bdwrite(bp);
 #endif
@@ -367,9 +358,7 @@ WRITE(v)
 	 * we clear the setuid and setgid bits as a precaution against
 	 * tampering.
 	 */
-#ifndef LFS_READWRITE
- out:
-#endif
+out:
 	if (resid > uio->uio_resid && ap->a_cred && ap->a_cred->cr_uid != 0)
 		ip->i_ffs_mode &= ~(ISUID | ISGID);
 	if (error) {
