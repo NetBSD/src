@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.133 1997/08/03 20:33:58 leo Exp $
+#	$NetBSD: files,v 1.134 1997/08/19 23:49:55 augustss Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -14,12 +14,16 @@ define	disk
 define	tape
 define	ifnet
 define	tty
-define	audio
+define	audio { }
 define	scsi { [channel = -1] }
 
 # audio device attributes
 define	mulaw
 define	auconv
+
+# audio device, attaches to audio hardware driver
+device	audio
+attach	audio at audio
 
 # net device attributes - we have generic code for arc(net), ether(net),
 # fddi, and atm.

@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.44 1997/07/02 02:44:09 cjs Exp $
+#	$NetBSD: DISKLESS,v 1.45 1997/08/19 23:49:46 augustss Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -193,11 +193,16 @@ fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
 
 #pss0	at isa? port 0x220 irq 7 drq 6  # Personal Sound System
 #sp0	at pss0 port 0x530 irq 10 drq 0	# 	sound port driver
+#audio*	at sp0
 
 #sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
+#audio*	at sb0
 #wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
+#audio*	at wss0
 #pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
+#audio*	at pas0
 #gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis Ultra Sound (flags is record drq for full-duplex)
+#audio*	at gus0
 #spkr0	at pckbd? port 0x61
 
 # Joystick driver. Probe is a little strange; add only if you have one.

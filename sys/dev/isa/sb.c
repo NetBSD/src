@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.53 1997/07/31 22:33:34 augustss Exp $	*/
+/*	$NetBSD: sb.c,v 1.54 1997/08/19 23:50:05 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -245,16 +245,12 @@ void
 sbattach(sc)
 	struct sbdsp_softc *sc;
 {
-	int error;
-
 	sc->sc_ih = isa_intr_establish(sc->sc_ic, sc->sc_irq, IST_EDGE,
 	    IPL_AUDIO, sbdsp_intr, sc);
 
 	sbdsp_attach(sc);
 
-	if ((error = audio_hardware_attach(&sb_hw_if, sc, &sc->sc_dev)) != 0)
-		printf("%s: could not attach to audio device driver (%d)\n",
-		    sc->sc_dev.dv_xname, error);
+	audio_attach_mi(&sb_hw_if, 0, sc, &sc->sc_dev);
 }
 
 #ifdef NEWCONFIG

@@ -1,4 +1,4 @@
-/*	$NetBSD: amd7930.c,v 1.26 1997/07/31 22:33:14 augustss Exp $	*/
+/*	$NetBSD: amd7930.c,v 1.27 1997/08/19 23:49:54 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -112,18 +112,18 @@ static void init_amd __P((volatile struct amd7930 *));
 void	amd7930attach __P((struct device *, struct device *, void *));
 int	amd7930match __P((struct device *, struct cfdata *, void *));
 
-struct cfattach audio_ca = {
+struct cfattach audioamd_ca = {
 	sizeof(struct amd7930_softc), amd7930match, amd7930attach
 };
 
-struct	cfdriver audio_cd = {
-	NULL, "audio", DV_DULL
+struct	cfdriver audioamd_cd = {
+	NULL, "audioamd", DV_DULL
 };
 
 struct audio_device amd7930_device = {
 	"amd7930",
 	"x",
-	"audio"
+	"audioamd"
 };
 
 /* Write 16 bits of data from variable v to the data port of the audio chip */
@@ -325,8 +325,7 @@ amd7930attach(parent, self, args)
 
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 
-	if (audio_hardware_attach(&sa_hw_if, sc, &sc->sc_dev) != 0)
-		printf("audio: could not attach to audio pseudo-device driver\n");
+	audio_attach_mi(&sa_hw_if, 0, sc, &sc->sc_dev);
 }
 
 static void

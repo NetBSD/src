@@ -1,4 +1,4 @@
-#	$NetBSD: HOMEWORLD,v 1.17 1997/07/02 02:44:11 cjs Exp $
+#	$NetBSD: HOMEWORLD,v 1.18 1997/08/19 23:49:48 augustss Exp $
 #
 #	HOMEWORLD - Mail, CVS, and GNATS server
 #
@@ -204,11 +204,16 @@ ed0	at isa? port 0x300 irq 9	# NE2000 ethernet
 
 #pss0	at isa? port 0x220 irq 7 drq 6  # Personal Sound System
 #sp0	at pss0 port 0x530 irq 10 drq 0	# 	sound port driver
+#audio*	at sp0
 
 #sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
+#audio*	at sb0
 #wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
+#audio*	at wss0
 #pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
+#audio*	at pas0
 #gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis Ultra Sound (flags is record drq for full-duplex)
+#audio*	at gus0
 #spkr0	at pckbd? port 0x61
 
 # Joystick driver. Probe is a little strange; add only if you have one.
@@ -218,6 +223,7 @@ ed0	at isa? port 0x300 irq 9	# NE2000 ethernet
 #isapnp0	at isa? 
 #ep*	at isapnp?
 #sb*	at isapnp?
+#audio*	at sb?
 #joy*	at isapnp?
 
 #include	"arch/i386/conf/GENERIC.local"

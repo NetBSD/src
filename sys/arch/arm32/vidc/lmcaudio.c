@@ -1,4 +1,4 @@
-/* $NetBSD: lmcaudio.c,v 1.11 1997/07/31 22:33:11 augustss Exp $ */
+/* $NetBSD: lmcaudio.c,v 1.12 1997/08/19 23:49:44 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -108,7 +108,6 @@ void lmcaudio_dummy_routine	__P((void *arg));
 int lmcaudio_stereo	__P((int channel, int position));
 int lmcaudio_rate	__P((int rate));
 void lmcaudio_shutdown	__P((void));
-int lmcaudio_hw_attach	__P((struct lmcaudio_softc *sc));
 
 
 struct cfattach lmcaudio_ca = {
@@ -234,8 +233,7 @@ lmcaudio_attach(parent, self, aux)
 
 	lmcaudio_beep_generate();
 
-	lmcaudio_hw_attach(sc);
-
+	audio_attach_mi(&lmcaudio_hw_if, 0, sc, &sc->device);
 }
 
 int nauzero = 0;
@@ -610,13 +608,6 @@ void
 lmcaudio_dummy_routine(arg)
 	void *arg;
 {
-}
-
-int
-lmcaudio_hw_attach(sc)
-	struct lmcaudio_softc *sc;
-{
-	return(audio_hardware_attach(&lmcaudio_hw_if, sc, &sc->device));
 }
 
 int

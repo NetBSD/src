@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.81 1997/07/19 00:01:50 is Exp $
+#	$NetBSD: GENERIC,v 1.82 1997/08/19 23:49:37 augustss Exp $
 
 #
 # GENERIC AMIGA
@@ -199,6 +199,7 @@ drcom1		at mainbus0		# DraCo serial 1, normally mouse
 a2kbbc0 	at mainbus0		# A2000 battery backed clock
 a34kbbc0	at mainbus0		# A3000/A4000 battery backed clock
 aucc*		at mainbus0		# Amiga CC audio
+audio*		at aucc?
 
 # Ethernet cards:
 le*		at zbus0		# A2065, Ameristar, Ariadne
