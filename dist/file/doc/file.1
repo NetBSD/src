@@ -1,7 +1,7 @@
-.\"	$NetBSD: file.1,v 1.1.1.4 2003/10/27 16:14:19 pooka Exp $
+.\"	$NetBSD: file.1,v 1.1.1.5 2004/03/23 08:31:40 pooka Exp $
 .\"
 .TH FILE 1 "Copyright but distributable"
-.\" Id: file.man,v 1.52 2003/10/09 15:18:12 christos Exp
+.\" Id: file.man,v 1.54 2003/10/27 18:09:08 christos Exp
 .SH NAME
 file
 \- determine file type
@@ -31,7 +31,7 @@ file
 .B \-m 
 magicfile ]
 .SH DESCRIPTION
-This manual page documents version 4.06 of the
+This manual page documents version 4.08 of the
 .B file
 command.
 .PP
@@ -219,8 +219,8 @@ Don't pad filenames so that they align in the output.
 .B "\-p, \-\-preserve\-date"
 On systems that support
 .BR utime (2)
-or,
-.BR utimes(2)
+or
+.BR utimes(2),
 attempt to preserve the access time of files analyzed, to pretend that
 .BR file (2)
 never read them.
