@@ -1,4 +1,4 @@
-/*	$NetBSD: restore.h,v 1.10 1998/06/24 19:56:11 christos Exp $	*/
+/*	$NetBSD: restore.h,v 1.11 2001/08/24 10:24:46 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -46,7 +46,7 @@
 extern int	cvtflag;	/* convert from old to new tape format */
 extern int	bflag;		/* set input block size */
 extern int	dflag;		/* print out debugging info */
-extern int	hflag;		/* restore heirarchies */
+extern int	hflag;		/* restore hierarchies */
 extern int	mflag;		/* restore by name instead of inode number */
 extern int	Nflag;		/* do not write the disk */
 extern int	vflag;		/* print out actions taken */

@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.20 2001/01/04 23:05:55 lukem Exp $	*/
+/*	$NetBSD: server.c,v 1.21 2001/08/24 10:24:48 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: server.c,v 1.20 2001/01/04 23:05:55 lukem Exp $");
+__RCSID("$NetBSD: server.c,v 1.21 2001/08/24 10:24:48 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -273,7 +273,7 @@ install(src, dest, destdir, opts)
 		tp++;
 	/*
 	 * If we are renaming a directory and we want to preserve
-	 * the directory heirarchy (-w), we must strip off the leading
+	 * the directory hierarchy (-w), we must strip off the leading
 	 * directory name and preserve the rest.
 	 */
 	if (opts & WHOLE) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.46 2001/06/15 08:25:11 kleink Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.47 2001/08/24 10:24:48 wiz Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.46 2001/06/15 08:25:11 kleink Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.47 2001/08/24 10:24:48 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -644,7 +644,7 @@ backup(to_name)
 
 /*
  * install_dir --
- *	build directory heirarchy
+ *	build directory hierarchy
  */
 void
 install_dir(path)

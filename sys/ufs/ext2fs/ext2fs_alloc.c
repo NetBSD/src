@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.10 2001/07/05 08:38:27 toshii Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.11 2001/08/24 10:24:46 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -74,7 +74,7 @@ static ufs_daddr_t	ext2fs_mapsearch __P((struct m_ext2fs *, char *, ufs_daddr_t)
  *   3) allocate a block in the same cylinder group.
  *   4) quadradically rehash into other cylinder groups, until an
  *	  available block is located.
- * If no block preference is given the following heirarchy is used
+ * If no block preference is given the following hierarchy is used
  * to allocate a block:
  *   1) allocate a block in the cylinder group that contains the
  *	  inode for the file.
@@ -131,7 +131,7 @@ nospace:
  *   2) allocate an inode in the same cylinder group.
  *   3) quadradically rehash into other cylinder groups, until an
  *	  available inode is located.
- * If no inode preference is given the following heirarchy is used
+ * If no inode preference is given the following hierarchy is used
  * to allocate an inode:
  *   1) allocate an inode in cylinder group 0.
  *   2) quadradically rehash into other cylinder groups, until an
