@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1998/09/29 03:08:47 mark Exp $
+#	$NetBSD: Makefile,v 1.6 1998/10/05 00:17:56 mark Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -23,8 +23,8 @@ LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		mtree.conf
 
-DISKTYPE=	ramdisk
-RDSIZE=		3400
+DISKTYPE=	install-ramdisk
+RDSIZE=		3200
 
 install.sh: install.tmpl
 	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
