@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.16 2004/04/01 02:29:29 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.17 2004/04/01 02:32:41 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -177,3 +177,10 @@ usr.sbin/wsmoused/wsmoused.conf.5		1.8
 
 	Fix two typos. PR#22581
 	[jmmv, ticket #29]
+
+usr.sbin/apm/apm.8				1.17
+usr.sbin/apm/apm.c				1.15
+
+	Add missing m option in SYNOPSIS. 
+	Remove duplicate d in getopt(3) call. PR#24971
+	[tron, ticket #30]
