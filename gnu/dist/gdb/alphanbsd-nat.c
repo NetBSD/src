@@ -271,25 +271,38 @@ child_resume (pid, step, signal)
     perror_with_name ("ptrace");
 }
 
-#ifdef KERNEL_DEBUG
-
 #define	kread(addr, p, l) \
 	(target_read_memory((CORE_ADDR)(addr), (char *)(p), (l)))
-fetch_kcore_registers (proc, pcb)
-  struct proc *proc;
-  struct pcb *pcb;
+fetch_kcore_registers (pcbp)
+  struct pcb *pcbp;
 {
-  struct md_coredump fake_cpustate;
-  struct trapframe *tf;
+  int regno;
 
-  if (kread(&proc->p_md.md_tf, &tf, sizeof(tf)))
-    error("cannot read proc at %#x", &proc->p_md.md_tf);
-
-  if (kread(tf, &fake_cpustate.md_tf, sizeof(fake_cpustate.md_tf)))
-    error("cannot read trap frame at %#x", tf);
-
-  fake_cpustate.md_fpstate = pcb->pcb_fp;
-  fetch_core_registers ((char *) &fake_cpustate, sizeof(fake_cpustate), 0, 0);
+  for (regno = 0; regno < NUM_REGS; regno++)
+    {
+	switch (regno)
+	  {
+	    case SP_REGNUM:
+	      supply_register (regno, (char *)&pcbp->pcb_hw.apcb_ksp);
+	      break;
+	    case PC_REGNUM:
+	      supply_register (regno, (char *)&pcbp->pcb_context[7]);
+	      break;
+	    case S0_REGNUM:
+	    case S0_REGNUM+1:
+	    case S0_REGNUM+2:
+	    case S0_REGNUM+3:
+	    case S0_REGNUM+4:
+	    case S0_REGNUM+5:
+	    case S0_REGNUM+6:
+	      supply_register (regno,
+			       (char *)&pcbp->pcb_context[regno - S0_REGNUM]);
+	      break;
+	    default:
+	      supply_register (regno, zerobuf);
+	      break;
+	  }
+    }
 }
 
 void
@@ -300,8 +313,6 @@ clear_regs()
   for (regno = 0; regno < NUM_REGS; regno++)
     supply_register(regno, zerobuf);
 }
-
-#endif
 
 static struct core_fns alphanbsd_core_fns =
 {
