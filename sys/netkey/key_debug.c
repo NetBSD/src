@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 
-/* KAME @(#)$Id: key_debug.c,v 1.2 1999/07/01 08:12:59 itojun Exp $ */
+/* KAME @(#)$Id: key_debug.c,v 1.3 1999/07/01 20:10:27 itojun Exp $ */
 
 #ifdef _KERNEL
 # define KERNEL
@@ -315,8 +315,9 @@ kdebug_sadb_sa(ext)
 	if (ext == NULL)
 		panic("kdebug_sadb_sa: NULL pointer was passed.\n");
 
-	printf("sadb_sa{ spi=%lu replay=%u state=%u\n",
-	    ntohl(sa->sadb_sa_spi), sa->sadb_sa_replay, sa->sadb_sa_state);
+	printf("sadb_sa{ spi=%u replay=%u state=%u\n",
+	    (u_int32_t)ntohl(sa->sadb_sa_spi), sa->sadb_sa_replay,
+	    sa->sadb_sa_state);
 	printf("  auth=%u encrypt=%u flags=0x%08x }\n",
 	    sa->sadb_sa_auth, sa->sadb_sa_encrypt, sa->sadb_sa_flags);
 
