@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.296 2005/01/16 23:19:52 chs Exp $ */
+/*	$NetBSD: pmap.c,v 1.297 2005/01/19 12:01:52 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.296 2005/01/16 23:19:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.297 2005/01/19 12:01:52 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -6741,6 +6741,7 @@ pmap_unwire(pm, va)
 	}
 
 	pm->pm_stats.wired_count--;
+#if defined(SUN4) || defined(SUN4C)
 	if (CPU_HAS_SUNMMU && --sp->sg_nwired <= 0) {
 #ifdef DIAGNOSTIC
 		if (sp->sg_nwired > sp->sg_npte || sp->sg_nwired < 0)
@@ -6750,6 +6751,7 @@ pmap_unwire(pm, va)
 		if (sp->sg_pmeg != seginval)
 			mmu_pmeg_unlock(sp->sg_pmeg);
 	}
+#endif /* SUN4 || SUN4C */
 }
 
 /*
