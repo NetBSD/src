@@ -1,4 +1,4 @@
-.\"	$NetBSD: lpd.8,v 1.25 2002/08/12 18:03:41 itojun Exp $
+.\"	$NetBSD: lpd.8,v 1.26 2002/08/12 18:08:13 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Nm lpd
 .Nd line printer spooler daemon
 .Sh SYNOPSIS
-.Nm ""
+.Nm
 .Op Fl dlsrW
 .Op Fl b Ar bind-address
 .Op Fl n Ar maxchild
@@ -169,7 +169,7 @@ and
 are consulted as described in
 .Xr hosts_access 5
 with daemon name
-.Nm Ns .
+.Nm "" .
 Second, all requests must come from one of the machines listed in
 the file
 .Pa /etc/hosts.equiv
