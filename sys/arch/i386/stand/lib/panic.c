@@ -1,4 +1,4 @@
-/*	$NetBSD: panic.c,v 1.4 2001/09/20 22:11:30 wiz Exp $	 */
+/*	$NetBSD: panic.c,v 1.4.12.1 2002/07/14 17:48:03 gehenna Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -50,5 +50,5 @@ panic(const char *fmt,...)
 	printf("\n");
 	va_end(ap);
 
-	exit();
+	exit(0);
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.arm32,v 1.1.2.2 2002/05/30 07:14:42 gehenna Exp $
+#	$NetBSD: majors.arm32,v 1.1.2.3 2002/07/14 17:45:54 gehenna Exp $
 #
 # Device majors for arm32
 #
@@ -93,3 +93,4 @@ device-major	clockctl	char 94			clockctl
 device-major	irframe		char 95			irframedrv
 device-major	cir		char 96			cir
 device-major	radio		char 97			radio
+device-major	systrace	char 98			systrace

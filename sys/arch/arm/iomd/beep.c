@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.8.2.1 2002/05/17 15:41:03 gehenna Exp $	*/
+/*	$NetBSD: beep.c,v 1.8.2.2 2002/07/14 17:45:55 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.8.2.1 2002/05/17 15:41:03 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.8.2.2 2002/07/14 17:45:55 gehenna Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -71,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.8.2.1 2002/05/17 15:41:03 gehenna Exp $")
 struct beep_softc {
 	struct device sc_device;
 	irqhandler_t sc_ih;
-	int sc_iobase;
 	int sc_open;
 	int sc_count;
 	u_int sc_sound_cur0; 
@@ -82,10 +81,10 @@ struct beep_softc {
 	vaddr_t sc_buffer1;
 };
 
-int	beepprobe	__P((struct device *parent, struct cfdata *cf, void *aux));
-void	beepattach	__P((struct device *parent, struct device *self, void *aux));
-int	beepintr	__P((void *arg));
-void	beepdma		__P((struct beep_softc *sc, int buf));
+int	beepprobe	(struct device *, struct cfdata *, void *);
+void	beepattach	(struct device *, struct device *, void *);
+int	beepintr	(void *arg);
+void	beepdma		(struct beep_softc *sc, int buf);
 
 static int sdma_channel;
 
@@ -105,12 +104,8 @@ const struct cdevsw beep_cdevsw = {
 };
 
 int
-beepprobe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+beepprobe(struct device *parent, struct cfdata *cf, void *aux)
 {
-/*	struct mainbus_attach_args *mb = aux;*/
 	int id;
 
 	/* Make sure we have an IOMD we understand */
@@ -134,15 +129,10 @@ beepprobe(parent, cf, aux)
 
 
 void
-beepattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+beepattach(struct device *parent, struct device *self, void *aux)
 {
 	struct beep_softc *sc = (void *)self;
-	struct mainbus_attach_args *mb = aux;
     
-	sc->sc_iobase = mb->mb_iobase;
 	sc->sc_open = 0;
 	sc->sc_count = 0;
 
@@ -177,7 +167,8 @@ beepattach(parent, self, aux)
 	sc->sc_ih.ih_name = "dma snd ch 0";
 
 	if (irq_claim(sdma_channel, &sc->sc_ih))
-		panic("Cannot claim IRQ %d for beep%d\n", sdma_channel, parent->dv_unit);
+		panic("Cannot claim IRQ %d for beep%d\n",
+		    sdma_channel, parent->dv_unit);
 
 	disable_irq(sdma_channel);
 
@@ -203,11 +194,7 @@ beepattach(parent, self, aux)
 
 
 int
-beepopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
+beepopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct beep_softc *sc;
 	int unit = minor(dev);
@@ -234,11 +221,7 @@ beepopen(dev, flag, mode, p)
 
 
 int
-beepclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
+beepclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = minor(dev);
 	struct beep_softc *sc = beep_cd.cd_devs[unit];
@@ -279,12 +262,7 @@ beep_generate(void)
 
 
 int
-beepioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+beepioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct beep_softc *sc = beep_cd.cd_devs[minor(dev)];
 	int rate;
@@ -324,10 +302,10 @@ beepioctl(dev, cmd, data, flag, p)
 
 
 int
-beepintr(arg)
-	void *arg;
+beepintr(void *arg)
 {
 	struct beep_softc *sc = arg;
+
 /*	IOMD_WRITE_BYTE(IOMD_DMARQ, 0x10);*/
 	--sc->sc_count;
 	if (sc->sc_count <= 0) {
@@ -344,11 +322,10 @@ beepintr(arg)
 
 
 void
-beepdma(sc, buf)
-	struct beep_softc *sc;
-	int buf;
+beepdma(struct beep_softc *sc, int buf)
 {
 	int status;
+
 /*	printf("beep:dma %d", buf);    */
 	status = IOMD_READ_BYTE(IOMD_SD0ST);
 /*	printf("st=%02x\n", status);*/

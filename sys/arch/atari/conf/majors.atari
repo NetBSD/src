@@ -1,4 +1,4 @@
-#	$NetBSD: majors.atari,v 1.1.2.2 2002/05/30 07:14:42 gehenna Exp $
+#	$NetBSD: majors.atari,v 1.1.2.3 2002/07/14 17:46:01 gehenna Exp $
 #
 # Device majors for atari
 #
@@ -51,3 +51,4 @@ device-major	scsibus		char 49			scsibus
 device-major	raid		char 50  block 15	raid
 device-major	svr4_net	char 51			compat_svr4
 device-major	clockctl	char 52			clockctl
+device-major	systrace	char 53			systrace
