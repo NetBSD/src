@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.150 2003/08/22 22:27:07 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.151 2003/09/04 09:17:01 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.150 2003/08/22 22:27:07 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.151 2003/09/04 09:17:01 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -164,10 +164,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.150 2003/08/22 22:27:07 itojun Exp $"
 #endif
 #endif	/* FAST_IPSEC*/
 
-
-#ifdef INET6
-struct in6pcb tcb6;
-#endif
 
 struct	inpcbtable tcbtable;	/* head of queue of active tcpcb's */
 struct	tcpstat tcpstat;	/* tcp statistics */
@@ -314,9 +310,6 @@ tcp_init()
 	pool_init(&tcpcb_pool, sizeof(struct tcpcb), 0, 0, 0, "tcpcbpl",
 	    NULL);
 	in_pcbinit(&tcbtable, tcbhashsize, tcbhashsize);
-#ifdef INET6
-	tcb6.in6p_next = tcb6.in6p_prev = &tcb6;
-#endif
 
 	hlen = sizeof(struct ip) + sizeof(struct tcphdr);
 #ifdef INET6
@@ -1226,43 +1219,30 @@ tcp_freeq(tp)
 void
 tcp_drain()
 {
+	struct inpcb_hdr *inph;
 	struct inpcb *inp;
 	struct tcpcb *tp;
 
 	/*
 	 * Free the sequence queue of all TCP connections.
 	 */
-	inp = CIRCLEQ_FIRST(&tcbtable.inpt_queue);
+	inph = CIRCLEQ_FIRST(&tcbtable.inpt_queue);
 	if (inp)						/* XXX */
-	CIRCLEQ_FOREACH(inp, &tcbtable.inpt_queue, inp_queue) {
-		if ((tp = intotcpcb(inp)) != NULL) {
-			/*
-			 * We may be called from a device's interrupt
-			 * context.  If the tcpcb is already busy,
-			 * just bail out now.
-			 */
-			if (tcp_reass_lock_try(tp) == 0)
-				continue;
-			if (tcp_freeq(tp))
-				tcpstat.tcps_connsdrained++;
-			TCP_REASS_UNLOCK(tp);
-		}
-	}
-}
-
+	CIRCLEQ_FOREACH(inph, &tcbtable.inpt_queue, inph_queue) {
+		switch (inph->inph_af) {
+		case AF_INET:
+			tp = intotcpcb((struct inpcb *)inph);
+			break;
 #ifdef INET6
-void
-tcp6_drain()
-{
-	struct in6pcb *in6p;
-	struct tcpcb *tp;
-	struct in6pcb *head = &tcb6;
-
-	/*
-	 * Free the sequence queue of all TCP connections.
-	 */
-	for (in6p = head->in6p_next; in6p != head; in6p = in6p->in6p_next) {
-		if ((tp = in6totcpcb(in6p)) != NULL) {
+		case AF_INET6:
+			tp = in6totcpcb((struct in6pcb *)inph);
+			break;
+#endif
+		default:
+			tp = NULL;
+			break;
+		}
+		if (tp != NULL) {
 			/*
 			 * We may be called from a device's interrupt
 			 * context.  If the tcpcb is already busy,
@@ -1276,7 +1256,6 @@ tcp6_drain()
 		}
 	}
 }
-#endif
 
 /*
  * Notify a tcp user of an asynchronous error;
@@ -1413,7 +1392,7 @@ tcp6_ctlinput(cmd, sa, d)
 			 * corresponding to the address in the ICMPv6 message
 			 * payload.
 			 */
-			if (in6_pcblookup_connect(&tcb6, &sa6->sin6_addr,
+			if (in6_pcblookup_connect(&tcbtable, &sa6->sin6_addr,
 			    th.th_dport, (struct in6_addr *)&sa6_src->sin6_addr,
 			    th.th_sport, 0))
 				valid++;
@@ -1434,7 +1413,7 @@ tcp6_ctlinput(cmd, sa, d)
 			return;
 		}
 
-		nmatch = in6_pcbnotify(&tcb6, sa, th.th_dport,
+		nmatch = in6_pcbnotify(&tcbtable, sa, th.th_dport,
 		    (struct sockaddr *)sa6_src, th.th_sport, cmd, NULL, notify);
 		if (nmatch == 0 && syn_cache_count &&
 		    (inet6ctlerrmap[cmd] == EHOSTUNREACH ||
@@ -1443,8 +1422,8 @@ tcp6_ctlinput(cmd, sa, d)
 			syn_cache_unreach((struct sockaddr *)sa6_src,
 					  sa, &th);
 	} else {
-		(void) in6_pcbnotify(&tcb6, sa, 0, (struct sockaddr *)sa6_src,
-		    0, cmd, NULL, notify);
+		(void) in6_pcbnotify(&tcbtable, sa, 0,
+		    (struct sockaddr *)sa6_src, 0, cmd, NULL, notify);
 	}
 }
 #endif
@@ -1498,7 +1477,7 @@ tcp_ctlinput(cmd, sa, v)
 		    ip->ip_src, th->th_sport) != NULL)
 			;
 #ifdef INET6
-		else if (in6_pcblookup_connect(&tcb6, &dst6,
+		else if (in6_pcblookup_connect(&tcbtable, &dst6,
 		    th->th_dport, &src6, th->th_sport, 0) != NULL)
 			;
 #endif
@@ -1656,7 +1635,7 @@ tcp6_mtudisc_callback(faddr)
 	sin6.sin6_family = AF_INET6;
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
 	sin6.sin6_addr = *faddr;
-	(void) in6_pcbnotify(&tcb6, (struct sockaddr *)&sin6, 0,
+	(void) in6_pcbnotify(&tcbtable, (struct sockaddr *)&sin6, 0,
 	    (struct sockaddr *)&sa6_any, 0, PRC_MSGSIZE, NULL, tcp6_mtudisc);
 }
 

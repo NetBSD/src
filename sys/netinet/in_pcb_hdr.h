@@ -1,8 +1,7 @@
-/*	$NetBSD: udp6_var.h,v 1.15 2003/09/04 09:17:10 itojun Exp $	*/
-/*	$KAME: udp6_var.h,v 1.11 2000/06/05 00:14:31 itojun Exp $	*/
+/*	$NetBSD: in_pcb_hdr.h,v 1.1 2003/09/04 09:16:58 itojun Exp $	*/
 
 /*
- * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+ * Copyright (C) 2003 WIDE Project.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +30,7 @@
  */
 
 /*
- * Copyright (c) 1982, 1986, 1989, 1993
+ * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -58,55 +57,48 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)udp_var.h	8.1 (Berkeley) 6/10/93
+ *	@(#)in_pcb.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef _NETINET6_UDP6_VAR_H_
-#define _NETINET6_UDP6_VAR_H_
+#ifndef _NETINET_IN_PCB_HDR_H_
+#define _NETINET_IN_PCB_HDR_H_
+
+#include <sys/queue.h>
+
+struct inpcbpolicy;
 
 /*
- * UDP Kernel structures and variables.
+ * align it with inpcb and in6pcb!
  */
-struct	udp6stat {
-				/* input statistics: */
-	u_quad_t udp6s_ipackets;	/* total input packets */
-	u_quad_t udp6s_hdrops;		/* packet shorter than header */
-	u_quad_t udp6s_badsum;		/* checksum error */
-	u_quad_t udp6s_nosum;		/* no checksum */
-	u_quad_t udp6s_badlen;		/* data length larger than packet */
-	u_quad_t udp6s_noport;		/* no socket on port */
-	u_quad_t udp6s_noportmcast;	/* of above, arrived as broadcast */
-	u_quad_t udp6s_fullsock;	/* not delivered, input socket full */
-	u_quad_t udp6ps_pcbcachemiss;	/* input packets missing pcb cache */
-				/* output statistics: */
-	u_quad_t udp6s_opackets;	/* total output packets */
+struct inpcb_hdr {
+	LIST_ENTRY(inpcb_hdr) inph_hash;
+	CIRCLEQ_ENTRY(inpcb_hdr) inph_queue;
+	int	  inph_af;		/* address family - AF_INET */
+	caddr_t	  inph_ppcb;		/* pointer to per-protocol pcb */
+	int	  inph_state;		/* bind/connect state */
+	struct	  socket *inph_socket;	/* back pointer to socket */
+	struct	  inpcbtable *inph_table;
+#if 1 /* IPSEC */
+	struct	  inpcbpolicy *inph_sp;	/* security policy */
+#endif
 };
 
-/*
- * Names for UDP sysctl objects
- */
-#define UDP6CTL_SENDSPACE	1	/* default send buffer */
-#define UDP6CTL_RECVSPACE	2	/* default recv buffer */
-#define UDP6CTL_MAXID		3
+LIST_HEAD(inpcbhead, inpcb_hdr);
 
-#define UDP6CTL_NAMES { \
-	{ 0, 0 }, \
-	{ "sendspace", CTLTYPE_INT }, \
-	{ "recvspace", CTLTYPE_INT }, \
-}
+struct inpcbtable {
+	CIRCLEQ_HEAD(, inpcb_hdr) inpt_queue;
+	struct	  inpcbhead *inpt_bindhashtbl;
+	struct	  inpcbhead *inpt_connecthashtbl;
+	u_long	  inpt_bindhash;
+	u_long	  inpt_connecthash;
+	u_int16_t inpt_lastport;
+	u_int16_t inpt_lastlow;
+};
+#define inpt_lasthi inpt_lastport
 
-#ifdef _KERNEL
-extern	struct	udp6stat udp6stat;
+/* states in inp_state: */
+#define	INP_ATTACHED		0
+#define	INP_BOUND		1
+#define	INP_CONNECTED		2
 
-void	udp6_ctlinput __P((int, struct sockaddr *, void *));
-void	udp6_init __P((void));
-int	udp6_input __P((struct mbuf **, int *, int));
-int	udp6_output __P((struct in6pcb *, struct mbuf *, struct mbuf *,
-	struct mbuf *, struct proc *));
-int	udp6_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
-int	udp6_usrreq __P((struct socket *,
-			 int, struct mbuf *, struct mbuf *, struct mbuf *,
-			 struct proc *));
-#endif /* _KERNEL */
-
-#endif /* _NETINET6_UDP6_VAR_H_ */
+#endif /* _NETINET_IN_PCB_HDR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.100 2003/08/25 00:11:52 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.101 2003/09/04 09:17:05 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.100 2003/08/25 00:11:52 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.101 2003/09/04 09:17:05 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -112,7 +112,7 @@ extern struct domain inet6domain;
 
 struct icmp6stat icmp6stat;
 
-extern struct in6pcb rawin6pcb;
+extern struct inpcbtable raw6cbtable;
 extern int icmp6errppslim;
 static int icmp6errpps_count = 0;
 static struct timeval icmp6errppslim_last;
@@ -1895,6 +1895,7 @@ icmp6_rip6_input(mp, off)
 {
 	struct mbuf *m = *mp;
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
+	struct inpcb_hdr *inph;
 	struct in6pcb *in6p;
 	struct in6pcb *last = NULL;
 	struct sockaddr_in6 rip6src;
@@ -1913,9 +1914,10 @@ icmp6_rip6_input(mp, off)
 	/* KAME hack: recover scopeid */
 	(void)in6_recoverscope(&rip6src, &ip6->ip6_src, m->m_pkthdr.rcvif);
 
-	for (in6p = rawin6pcb.in6p_next;
-	     in6p != &rawin6pcb; in6p = in6p->in6p_next)
-	{
+	CIRCLEQ_FOREACH(inph, &raw6cbtable.inpt_queue, inph_queue) {
+		in6p = (struct in6pcb *)inph;
+		if (in6p->in6p_af != AF_INET6)
+			continue;
 		if (in6p->in6p_ip6.ip6_nxt != IPPROTO_ICMPV6)
 			continue;
 		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr) &&
