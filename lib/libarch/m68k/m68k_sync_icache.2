@@ -1,4 +1,4 @@
-.\" $NetBSD: m68k_sync_icache.2,v 1.7 2002/02/08 01:28:14 ross Exp $
+.\" $NetBSD: m68k_sync_icache.2,v 1.8 2002/10/01 15:58:39 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,8 @@ The affected address range starts at
 .Fa start
 and continues for
 .Fa size
-bytes. If
+bytes.
+If
 .Fa start
 is 0, all the address space of the current execution thread is affected.
 Addresses outside the specified region may be synchronized, too.

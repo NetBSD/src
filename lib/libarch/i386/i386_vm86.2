@@ -1,4 +1,4 @@
-.\"	$NetBSD: i386_vm86.2,v 1.8 2002/02/08 01:28:13 ross Exp $
+.\"	$NetBSD: i386_vm86.2,v 1.9 2002/10/01 15:58:39 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,12 +66,14 @@ The kernel keeps a pointer to the context, and uses the tables stored at
 .Ar vmcp-\*[Gt]int_byuser
 and
 .Ar vmcp-\*[Gt]int21_byuser
-for fast virtual interrupt handling.  If the
+for fast virtual interrupt handling.
+If the
 .Ar n th
-bit is clear in the first of
-these arrays, then the kernel may directly emulate the real-mode x86 INT
+bit is clear in the first of these arrays,
+then the kernel may directly emulate the real-mode x86 INT
 .Ar n
-instruction handling.  If the
+instruction handling.
+If the
 .Ar n
 th bit is set, then the process is
 delivered a signal when an INT instruction is executed.
@@ -89,7 +91,8 @@ register is
 .Ar k .
 .Sh RETURN VALUES
 This routine does not normally return: 32-bit mode will be restored by
-the delivery of a signal to the process.  In case of an error in setting
+the delivery of a signal to the process.
+In case of an error in setting
 the VM86 mode, a value of -1 is returned and the global variable
 .Va errno
 is set to indicate the error.
