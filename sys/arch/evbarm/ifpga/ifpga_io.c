@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_io.c,v 1.6 2003/07/15 00:24:59 lukem Exp $ */
+/*	$NetBSD: ifpga_io.c,v 1.6.10.1 2005/02/13 10:44:40 yamt Exp $ */
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_io.c,v 1.6 2003/07/15 00:24:59 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_io.c,v 1.6.10.1 2005/02/13 10:44:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,7 +187,7 @@ ifpga_mem_bs_map(t, bpa, size, cacheable, bshp)
 	endpa = round_page(bpa + size);
 
 	/* Get some VM.  */
-	va = uvm_km_valloc(kernel_map, endpa - startpa);
+	va = uvm_km_alloc(kernel_map, endpa - startpa, 0, UVM_KMF_VAONLY);
 	if (va == 0)
 		return ENOMEM;
 
@@ -243,7 +243,9 @@ ifpga_mem_bs_unmap(t, bsh, size)
 	startva = trunc_page(bsh);
 	endva = round_page(bsh + size);
 
-	uvm_km_free(kernel_map, startva, endva - startva);
+	pmap_remove(pmap_kernel(), startva, endva);
+	pmap_update(pmap_kernel());
+	uvm_km_free(kernel_map, startva, endva - startva, UVM_KMF_VAONLY);
 }
 
 void    
