@@ -1,4 +1,4 @@
-/*	$NetBSD: netif.c,v 1.17 2002/09/27 15:37:48 provos Exp $	*/
+/*	$NetBSD: netif.c,v 1.18 2003/03/12 14:49:19 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -44,7 +44,6 @@
 #include <netinet/in_systm.h>
 
 #include "stand.h"
-#include "net.h"
 #include "netif.h"
 
 struct iodesc sockets[SOPEN_MAX];
@@ -230,10 +229,8 @@ netif_get(desc, pkt, len, timo)
 	size_t len;
 	time_t timo;
 {
-#ifdef NETIF_DEBUG
 	struct netif *nif = desc->io_netif;
-#endif
-	struct netif_driver *drv = desc->io_netif->nif_driver;
+	struct netif_driver *drv = nif->nif_driver;
 	ssize_t rv;
 
 #ifdef NETIF_DEBUG
@@ -260,10 +257,8 @@ netif_put(desc, pkt, len)
 	void *pkt;
 	size_t len;
 {
-#ifdef NETIF_DEBUG
 	struct netif *nif = desc->io_netif;
-#endif
-	struct netif_driver *drv = desc->io_netif->nif_driver;
+	struct netif_driver *drv = nif->nif_driver;
 	ssize_t rv;
 
 #ifdef NETIF_DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: iodesc.h,v 1.4 1995/09/23 03:31:50 gwr Exp $	*/
+/*	$NetBSD: iodesc.h,v 1.5 2003/03/12 14:49:19 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass 
@@ -48,7 +48,11 @@ struct iodesc {
 	u_short	myport;			/* local port, net order */
 	u_long	xid;			/* transaction identification */
 	u_char	myea[6];		/* my ethernet address */
-	struct netif *io_netif;
+	void	*io_netif;
 };
+
+struct iodesc	*socktodesc __P((int));
+ssize_t		netif_get __P((struct iodesc *, void *, size_t, time_t));
+ssize_t		netif_put __P((struct iodesc *, void *, size_t));
 
 #endif /* __SYS_LIBNETBOOT_IODESC_H */
