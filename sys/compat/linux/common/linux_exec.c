@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.57 2002/03/16 20:43:53 christos Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.58 2002/04/02 20:23:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.57 2002/03/16 20:43:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.58 2002/04/02 20:23:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,6 +136,7 @@ const struct emul emul_linux = {
 #else
 	LINUX_SYSCALL_FUNCTION,
 #endif
+	linux_sysctl,
 };
 
 static void
