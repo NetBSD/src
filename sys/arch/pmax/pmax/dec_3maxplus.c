@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3maxplus.c,v 1.6 1998/03/29 01:12:15 jonathan Exp $	*/
+/*	$NetBSD: dec_3maxplus.c,v 1.7 1998/03/30 06:45:38 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.6 1998/03/29 01:12:15 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.7 1998/03/30 06:45:38 jonathan Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -145,10 +145,10 @@ dec_3maxplus_init()
 	platform.cons_init = dec_3maxplus_cons_init;
 	platform.device_register = dec_3maxplus_device_register;
 
+	dec_3maxplus_os_init();
+
 	sprintf(cpu_model, "DECstation 5000/2%c0 (3MAXPLUS)",
 	    CPUISMIPS3 ? '6' : '4');
-
-	dec_3maxplus_os_init();
 }
 
 
