@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.174 2001/07/11 03:37:41 augustss Exp $
+$NetBSD: usbdevs,v 1.175 2001/07/16 05:04:29 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -301,6 +301,7 @@ vendor MOTOROLA		0x1063	Motorola
 vendor PLX		0x10b5	PLX
 vendor BELKIN2		0x1293	Belkin Components (2nd)
 vendor SILICONPORTALS	0x1527	Silicon Portals Inc.
+vendor SOHOWARE		0x15e8	SOHOware
 vendor UMAX		0x1606	UMAX Data Systems, Inc.
 vendor INSIDEOUT	0x1608	Inside Out Networks
 vendor ENTREGA		0x1645	Entrega
@@ -873,6 +874,9 @@ product SMARTBRIDGES SMARTLINK	0x0001	SmartLink USB ethernet adapter
 /* SMC products */
 product SMC 2102USB		0x0100	10Mbps ethernet adapter
 product SMC 2202USB		0x0200	10/100 ethernet adapter
+
+/* SOHOware products */
+product SOHOWARE NUB100		0x9100	10/100 USB Ethernet
 
 /* SOLID YEAR products */
 product SOLIDYEAR KEYBOARD	0x2101	Solid Year USB keyboard
