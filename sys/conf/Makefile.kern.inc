@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile.kern.inc,v 1.30 2002/11/25 01:37:11 thorpej Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.31 2002/12/10 19:33:11 atatat Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
-# at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
-# many `MI' definitions that should end up in here, but they are not yet.
+# at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
 #
 # Each target in this file should be protected with `if !target(target)'
 # or `if !commands(target)' and each variable should only be conditionally
@@ -242,7 +241,7 @@ depend: .depend
 SRCS?=		${MD_SFILES} ${MD_CFILES} ${MI_CFILES} ${CFILES} ${SFILES}
 MKDEP_AFLAGS?=	${AFLAGS}
 MKDEP_CFLAGS?=	${CFLAGS}
-.depend: ${SRCS} assym.h
+.depend: ${SRCS} assym.h config_time.h
 	${MKDEP} ${MKDEP_AFLAGS} ${CPPFLAGS} ${MD_SFILES} ${SFILES}
 	${MKDEP} -a ${MKDEP_CFLAGS} ${CPPFLAGS} ${MD_CFILES} ${MI_CFILES} \
 	    ${CFILES}
