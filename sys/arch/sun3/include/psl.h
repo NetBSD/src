@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.16 2000/08/22 19:46:32 thorpej Exp $	*/
+/*	$NetBSD: psl.h,v 1.17 2001/01/14 02:00:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -92,12 +92,13 @@ _getsr(void)
 
 /*
  * Requirement: imp >= (highest network, tty, or disk IPL)
- * This is used mostly in the VM code. (Why not splvm?)
+ * This is used mostly in the VM code.
  * Note that the VM code runs at spl7 during kernel
  * initialization, and later at spl0, so we have to 
  * use splraise to avoid enabling interrupts early.
  */
 #define splimp()        _splraise(PSL_S|PSL_IPL4)
+#define splvm()         _splraise(PSL_S|PSL_IPL4)
 
 /* Intersil clock hardware interrupts (hard-wired at 5) */
 #define splclock()      splraise5()

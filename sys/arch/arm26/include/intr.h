@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.4 2000/08/25 16:43:47 bjh21 Exp $ */
+/* $NetBSD: intr.h,v 1.5 2001/01/14 02:00:38 thorpej Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -70,6 +70,7 @@
 #define spltty()	raisespl(IPL_TTY)
 #define spllpt()	raisespl(IPL_LPT)
 #define splimp()	raisespl(IPL_IMP)
+#define splvm()		raisespl(IPL_IMP)
 #define	splaudio()	raisespl(IPL_AUDIO)
 #define splserial()	raisespl(IPL_SERIAL)
 #define splclock()	raisespl(IPL_CLOCK)
