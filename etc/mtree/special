@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.19 1998/10/28 09:23:24 mycroft Exp $
+#	$NetBSD: special,v 1.20 1998/10/29 20:24:58 bad Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -54,6 +54,8 @@ rc		type=file mode=0644 uname=root gname=wheel
 rc.conf		type=file mode=0644 uname=root gname=wheel
 rc.lkm		type=file mode=0644 uname=root gname=wheel
 rc.local	type=file mode=0644 uname=root gname=wheel
+rc.shutdown	type=file mode=0644 uname=root gname=wheel
+rc.shutdown.local	type=file mode=0644 uname=root gname=wheel optional
 rc.subr		type=file mode=0644 uname=root gname=wheel
 resolv.conf	type=file mode=0644 uname=root gname=wheel optional
 rpc		type=file mode=0644 uname=root gname=wheel
