@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.10 2000/01/05 02:57:28 oster Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.11 2000/01/07 03:40:56 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -42,7 +42,6 @@
 #include <sys/time.h>
 #include <sys/buf.h>
 #include "rf_raid.h"
-#include "rf_threadid.h"
 #include "rf_mcpair.h"
 #include "rf_acctrace.h"
 #include "rf_etimer.h"
