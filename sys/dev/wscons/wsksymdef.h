@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.44 2002/03/24 05:43:12 uwe Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.45 2002/04/23 13:42:46 hannken Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -274,87 +274,6 @@
 #define	KS_dead_diaeresis 	0x0308
 #define	KS_dead_abovering 	0x030a
 #define	KS_dead_cedilla 	0x0327
-
-/*
- * Group Cyrillic (koi8-r)
- */
-
-#define KS_Cyrillic_A		0xe1
-#define KS_Cyrillic_BE		0xe2
-#define KS_Cyrillic_VE		0xf7
-#define KS_Cyrillic_GHE		0xe7
-#define KS_Cyrillic_DE		0xe4
-#define KS_Cyrillic_IE		0xe5
-#define KS_Cyrillic_IO		0xb3
-#define KS_Cyrillic_ZHE		0xf6
-#define KS_Cyrillic_ZE		0xfa
-#define KS_Cyrillic_I		0xe9
-#define KS_Cyrillic_SHORTI	0xea
-#define KS_Cyrillic_IUKR	0xb6
-#define KS_Cyrillic_YI		0xb7
-#define KS_Cyrillic_KA		0xeb
-#define KS_Cyrillic_EL		0xec
-#define KS_Cyrillic_EM		0xed
-#define KS_Cyrillic_EN		0xee
-#define KS_Cyrillic_O		0xef
-#define KS_Cyrillic_PE		0xf0
-#define KS_Cyrillic_ER		0xf2
-#define KS_Cyrillic_ES		0xf3
-#define KS_Cyrillic_TE		0xf4
-#define KS_Cyrillic_U		0xf5
-#define KS_Cyrillic_EF		0xe6
-#define KS_Cyrillic_HA		0xe8
-#define KS_Cyrillic_TSE		0xe3
-#define KS_Cyrillic_CHE		0xfe
-#define KS_Cyrillic_SHA		0xfb
-#define KS_Cyrillic_SHCHA	0xfd
-#define KS_Cyrillic_HARDSIGN	0xff
-#define KS_Cyrillic_YERU	0xf9
-#define KS_Cyrillic_SOFTSIGN	0xf8
-#define KS_Cyrillic_E		0xfc
-#define KS_Cyrillic_YU		0xe0
-#define KS_Cyrillic_YA		0xf1
-
-#define KS_Cyrillic_a		0xc1
-#define KS_Cyrillic_be		0xc2
-#define KS_Cyrillic_ve		0xd7
-#define KS_Cyrillic_ghe		0xc7
-#define KS_Cyrillic_de		0xc4
-#define KS_Cyrillic_ie		0xc5
-#define KS_Cyrillic_io		0xa3
-#define KS_Cyrillic_zhe		0xd6
-#define KS_Cyrillic_ze		0xda
-#define KS_Cyrillic_i		0xc9
-#define KS_Cyrillic_shorti	0xca
-#define KS_Cyrillic_iukr	0xa6
-#define KS_Cyrillic_yi		0xa7
-#define KS_Cyrillic_ka		0xcb
-#define KS_Cyrillic_el		0xcc
-#define KS_Cyrillic_em		0xcd
-#define KS_Cyrillic_en		0xce
-#define KS_Cyrillic_o		0xcf
-#define KS_Cyrillic_pe		0xd0
-#define KS_Cyrillic_er		0xd2
-#define KS_Cyrillic_es		0xd3
-#define KS_Cyrillic_te		0xd4
-#define KS_Cyrillic_u		0xd5
-#define KS_Cyrillic_ef		0xc6
-#define KS_Cyrillic_ha		0xc8
-#define KS_Cyrillic_tse		0xc3
-#define KS_Cyrillic_che		0xde
-#define KS_Cyrillic_sha		0xdb
-#define KS_Cyrillic_shcha	0xdd
-#define KS_Cyrillic_hardsign	0xdf
-#define KS_Cyrillic_yeru	0xd9
-#define KS_Cyrillic_softsign	0xd8
-#define KS_Cyrillic_e		0xdc
-#define KS_Cyrillic_yu		0xc0
-#define KS_Cyrillic_ya		0xd1
-
-#define KS_Cyrillic_gheukr	0xad
-#define KS_Cyrillic_GHEUKR	0xbd
-#define KS_Cyrillic_ieukr	0xa4
-#define KS_Cyrillic_IEUKR	0xb4
 
 /*
  * Group 1 (modifiers)
