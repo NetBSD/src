@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.39 2003/04/14 18:50:52 fvdl Exp $	*/
+/*	$NetBSD: utilities.c,v 1.40 2003/07/13 08:16:15 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.39 2003/04/14 18:50:52 fvdl Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.40 2003/07/13 08:16:15 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -473,8 +473,9 @@ freeblk(blkno, frags)
  * Find a pathname
  */
 void
-getpathname(namebuf, curdir, ino)
+getpathname(namebuf, namebuflen, curdir, ino)
 	char *namebuf;
+	size_t namebuflen;
 	ino_t curdir, ino;
 {
 	int len;
@@ -484,12 +485,12 @@ getpathname(namebuf, curdir, ino)
 	struct inostat *info;
 
 	if (curdir == ino && ino == ROOTINO) {
-		(void)strcpy(namebuf, "/");
+		(void)strlcpy(namebuf, "/", namebuflen);
 		return;
 	}
 	info = inoinfo(curdir);
 	if (busy || (info->ino_state != DSTATE && info->ino_state != DFOUND)) {
-		(void)strcpy(namebuf, "?");
+		(void)strlcpy(namebuf, "?", namebuflen);
 		return;
 	}
 	busy = 1;
