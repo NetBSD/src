@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.85 2002/02/23 17:18:55 scw Exp $ */
+/*	$NetBSD: clock.c,v 1.86 2002/02/25 16:18:19 kleink Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -372,7 +372,7 @@ oclockattach(parent, self, aux)
 #endif /* SUN4 */
 }
 
-/* We support only on eeprom device */
+/* We support only one eeprom device */
 static int eeprom_attached;
 
 /*
@@ -391,7 +391,7 @@ eeprom_match(parent, cf, aux)
 		return (0);
 
 	if (eeprom_attached)
-		/* We support only on eeprom device */
+		/* We support only one eeprom device */
 		return (0);
 
 	/* Only these sun4s have oclock */
