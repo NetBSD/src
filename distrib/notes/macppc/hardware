@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.3.4.11 2001/08/17 14:26:33 tv Exp $
+.\"$NetBSD: hardware,v 1.3.4.12 2002/02/06 14:19:07 he Exp $
 .
 Currently,
 .Nx*M
@@ -296,12 +296,11 @@ Promise Ultra66
 .Pq Em pciide
 (this, and other PC-based cards are not bootable on \*M)
 .It
+Acard ATP-850/860 based IDE controlers
+.Pq Em pciide
+(including the Acard AEC-6210/6260 and the Sonnet Tempo ATA/66 cards)
+.It
 Some other PCI IDE controllers should work, although no one has had much success
-.(Note
-The Sonnet Tempo ATA/66 card does not work with
-.Nx*M
-yet.
-.Note)
 .Pp
 .It
 Most IDE disk/CD-ROM/ATAPI devices should work
