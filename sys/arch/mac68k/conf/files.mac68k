@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.49 1996/06/19 03:21:08 scottr Exp $
+#	$NetBSD: files.mac68k,v 1.50 1996/08/05 01:00:15 scottr Exp $
 
 # mac68k-specific configuration info
 
@@ -48,7 +48,7 @@ attach	ae at nubus
 file	arch/mac68k/dev/if_ae.c		ae needs-flag
 
 device	ite
-attach	ite at obio
+attach	ite at grf
 file	arch/mac68k/dev/ite.c		ite needs-flag
 
 include "../../../scsi/files.scsi"
