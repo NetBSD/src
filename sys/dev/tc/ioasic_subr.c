@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasic_subr.c,v 1.5 2003/09/26 17:17:47 tsutsui Exp $	*/
+/*	$NetBSD: ioasic_subr.c,v 1.6 2003/09/27 17:42:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioasic_subr.c,v 1.5 2003/09/26 17:17:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic_subr.c,v 1.6 2003/09/27 17:42:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,9 +75,8 @@ ioasic_attach_devs(sc, ioasic_devs, ioasic_ndevs)
 	 * Try to configure each device.
 	 */
         for (i = 0; i < ioasic_ndevs; i++) {
-		strncpy(idev.iada_modname, ioasic_devs[i].iad_modname,
-			TC_ROM_LLEN);
-		idev.iada_modname[TC_ROM_LLEN] = '\0';
+		strlcpy(idev.iada_modname, ioasic_devs[i].iad_modname,
+		    sizeof(idev.iada_modname));
 		idev.iada_offset = ioasic_devs[i].iad_offset;
 		idev.iada_addr = sc->sc_base + ioasic_devs[i].iad_offset;
 		idev.iada_cookie = ioasic_devs[i].iad_cookie;
