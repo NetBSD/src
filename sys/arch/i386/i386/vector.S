@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.2 2002/11/27 21:59:55 fvdl Exp $	*/
+/*	$NetBSD: vector.S,v 1.3 2002/12/01 00:15:36 fvdl Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -520,7 +520,7 @@ IDTVEC(softserial)
 	movl	$IPL_SOFTSERIAL, CPUVAR(ILEVEL)
 	incl	CPUVAR(IDEPTH)
 #ifdef MULTIPROCESSOR
-	call	_C_LABEL(i386_intlock)
+	call	_C_LABEL(i386_softintlock)
 #endif
 	movl	CPUVAR(ISOURCES) + SIR_SERIAL * 4, %edi
 	addl	$1,IS_EVCNTLO(%edi)
@@ -529,7 +529,7 @@ IDTVEC(softserial)
 	call	_C_LABEL(softintr_dispatch)
 	addl	$4,%esp
 #ifdef MULTIPROCESSOR	
-	call	_C_LABEL(i386_intunlock)
+	call	_C_LABEL(i386_softintunlock)
 #endif
 	decl	CPUVAR(IDEPTH)
 	movl	%ebx,CPUVAR(ILEVEL)
@@ -539,7 +539,7 @@ IDTVEC(softnet)
 	movl	$IPL_SOFTNET, CPUVAR(ILEVEL)
 	incl	CPUVAR(IDEPTH)
 #ifdef MULTIPROCESSOR	
-	call	_C_LABEL(i386_intlock)
+	call	_C_LABEL(i386_softintlock)
 #endif
 	movl	CPUVAR(ISOURCES) + SIR_NET * 4, %edi
 	addl	$1,IS_EVCNTLO(%edi)
@@ -561,7 +561,7 @@ IDTVEC(softnet)
 	call	_C_LABEL(softintr_dispatch)
 	addl	$4,%esp
 #ifdef MULTIPROCESSOR	
-	call	_C_LABEL(i386_intunlock)	
+	call	_C_LABEL(i386_softintunlock)	
 #endif
 	decl	CPUVAR(IDEPTH)
 	movl	%ebx,CPUVAR(ILEVEL)
@@ -571,7 +571,7 @@ IDTVEC(softclock)
 	movl	$IPL_SOFTCLOCK, CPUVAR(ILEVEL)
 	incl	CPUVAR(IDEPTH)
 #ifdef MULTIPROCESSOR	
-	call	_C_LABEL(i386_intlock)
+	call	_C_LABEL(i386_softintlock)
 #endif
 	movl	CPUVAR(ISOURCES) + SIR_CLOCK * 4, %edi
 	addl	$1,IS_EVCNTLO(%edi)
@@ -581,7 +581,7 @@ IDTVEC(softclock)
 	call	_C_LABEL(softintr_dispatch)
 	addl	$4,%esp
 #ifdef MULTIPROCESSOR	
-	call	_C_LABEL(i386_intunlock)		
+	call	_C_LABEL(i386_softintunlock)		
 #endif
 	decl	CPUVAR(IDEPTH)
 	movl	%ebx,CPUVAR(ILEVEL)
