@@ -1,3 +1,5 @@
+.\"	$NetBSD: beyond43.ms,v 1.2 1998/01/09 06:40:54 perry Exp $
+.\"
 .\" Copyright (c) 1989 The Regents of the University of California.
 .\" All rights reserved.
 .\"
