@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/02/29 15:21:48 nonaka Exp $
+#	$NetBSD: Makefile,v 1.2 2000/07/21 21:57:23 jdolecek Exp $
 
 COMMON= ${.CURDIR}/../common
 .ifnmake(print-objdir)
@@ -17,7 +17,7 @@ NEWVERSWHAT=	"BOOT"
 SRCS= srt0.s
 SRCS+= boot.c clock.c com.c conf.c cons.c devopen.c fd.c
 SRCS+= filesystem.c inkernel.c io.c tgets.c prf.c monitor.c
-SRCS+= kbd.c ns16550.c vreset.c vga.c video.c
+SRCS+= kbd.c ns16550.c vers.c vreset.c vga.c video.c
 
 AFLAGS= -x assembler-with-cpp -traditional-cpp
 
@@ -41,7 +41,7 @@ RELOC= 0x800000
 HEAD_SIZE= `${OBJDUMP} -h ${.OBJDIR}/${PROG} | grep \.text | awk '{print $$6}'`
 KERN_OFFSET= `ls -l ${.OBJDIR}/${PROG} | awk '{print $$5}'`
 
-CLEANFILES+= vers.c vers.o machine powerpc
+CLEANFILES+= vers.c machine powerpc
 
 LIBS= ${L}/sa/libsa.a ${L}/kern/libkern.a ${L}/z/libz.a
 
@@ -57,9 +57,10 @@ powerpc::
 	-rm -f $@
 	ln -s ${S}/arch/powerpc/include $@
 
+vers.c: ${.CURDIR}/../boot/version
+	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/../boot/version "prep" ${NEWVERSWHAT}
+
 ${PROG}: ${OBJS} machine powerpc
-	sh ${.CURDIR}/../newvers.sh ${.CURDIR}/../boot/version ${NEWVERSWHAT}
-	${COMPILE.c} vers.c
 	${LD} -o ${PROG} -s -N -T ${.CURDIR}/../boot/ld.script \
 		-Ttext ${RELOC} ${OBJS} ${LIBS} vers.o
 	${COMPILE.c} -DKERN_OFFSET=${KERN_OFFSET} -DHEAD_SIZE=0x${HEAD_SIZE} \
