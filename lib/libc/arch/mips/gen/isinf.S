@@ -38,7 +38,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)isinf.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: isinf.S,v 1.2 1994/11/14 23:49:00 dean Exp $")
+	ASMSTR("$Id: isinf.S,v 1.3 1994/12/15 17:24:48 mycroft Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 
@@ -52,7 +52,7 @@
  *
  * Return true if x is a NAN.
  */
-LEAF(_isnan)
+LEAF(isnan)
 	mfc1	v1, $f13		# get MSW of x
 	mfc1	t3, $f12		# get LSW of x
 	sll	t1, v1, 1		# get x exponent
@@ -69,7 +69,7 @@ LEAF(_isnan)
 2:
 	j	ra
 	move	v0, zero		# x is NOT a NAN
-END(_isnan)
+END(isnan)
 
 /*
  * isinf(x)
@@ -77,7 +77,7 @@ END(_isnan)
  *
  * Return true if x is infinity.
  */
-LEAF(_isinf)
+LEAF(isinf)
 	mfc1	v1, $f13		# get MSW of x
 	mfc1	t3, $f12		# get LSW of x
 	sll	t1, v1, 1		# get x exponent
@@ -93,4 +93,4 @@ LEAF(_isinf)
 1:
 	j	ra
 	move	v0, zero		# x is NOT infinity
-END(_isinf)
+END(isinf)

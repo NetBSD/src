@@ -38,10 +38,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)strlen.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: strlen.s,v 1.2 1994/11/14 23:49:23 dean Exp $")
+	ASMSTR("$Id: strlen.s,v 1.3 1994/12/15 17:25:05 mycroft Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-LEAF(_strlen)
+LEAF(strlen)
 	addu	v1, a0, 1
 1:
 	lb	v0, 0(a0)		# get byte from string
@@ -49,4 +49,4 @@ LEAF(_strlen)
 	bne	v0, zero, 1b		# continue if not end
 	subu	v0, a0, v1		# compute length - 1 for '\0' char
 	j	ra
-END(_strlen)
+END(strlen)

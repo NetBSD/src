@@ -40,7 +40,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: setjmp.s,v 1.2 1994/11/14 23:34:42 dean Exp $")
+	ASMSTR("$Id: setjmp.s,v 1.3 1994/12/15 17:24:51 mycroft Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -56,18 +56,18 @@
 
 #define SETJMP_FRAME_SIZE	(STAND_FRAME_SIZE + 12)
 
-NON_LEAF(_setjmp, SETJMP_FRAME_SIZE, ra)
+NON_LEAF(setjmp, SETJMP_FRAME_SIZE, ra)
 	subu	sp, sp, SETJMP_FRAME_SIZE	# allocate stack frame
 	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
 	sw	ra, STAND_RA_OFFSET(sp)		# save state
 	sw	a0, SETJMP_FRAME_SIZE(sp)
 	move	a0, zero			# get current signal mask
-	jal	_sigblock
+	jal	_C_LABEL(sigblock)
 	lw	v1, SETJMP_FRAME_SIZE(sp)	# v1 = jmpbuf
 	sw	v0, (1 * 4)(v1)			# save sc_mask = sigblock(0)
 	move	a0, zero
 	addu	a1, sp, STAND_FRAME_SIZE	# pointer to struct sigaltstack
-	jal	_sigaltstack
+	jal	_C_LABEL(sigaltstack)
 	lw	a0, SETJMP_FRAME_SIZE(sp)	# restore jmpbuf
 	lw	v1, STAND_FRAME_SIZE+8(sp)	# get old ss_onstack
 	and	v1, v1, 1			# extract onstack flag
@@ -107,13 +107,13 @@ NON_LEAF(_setjmp, SETJMP_FRAME_SIZE, ra)
 	sw	v0, ((32 + 38) * 4)(a0)
 	move	v0, zero
 	j	ra
-END(_setjmp)
+END(setjmp)
 
-LEAF(_longjmp)
+LEAF(longjmp)
 	sw	a1, ((V0 + 3) * 4)(a0)	# save return value in sc_regs[V0]
 	li	v0, SYS_sigreturn
 	syscall
 botch:
-	jal	_longjmperror
-	jal	_abort
-END(_longjmp)
+	jal	_C_LABEL(longjmperror)
+	jal	_C_LABEL(abort)
+END(longjmp)

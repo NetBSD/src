@@ -38,12 +38,12 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)bzero.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: bzero.S,v 1.2 1994/11/14 23:49:18 dean Exp $")
+	ASMSTR("$Id: bzero.S,v 1.3 1994/12/15 17:24:58 mycroft Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /* bzero(s1, n) */
 
-LEAF(_bzero)
+LEAF(bzero)
 	.set	noreorder
 	blt	a1, 12, smallclr	# small amount to clear?
 	subu	a3, zero, a0		# compute # bytes to word align address
@@ -71,4 +71,4 @@ smallclr:
 2:
 	j	ra
 	nop
-END(_bzero)
+END(bzero)
