@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.34 1996/09/09 21:07:06 mycroft Exp $
+#	$NetBSD: Makefile.pmax,v 1.35 1996/09/25 20:35:16 jonathan Exp $
 
 # Makefile for NetBSD
 #
@@ -95,7 +95,7 @@ SYSTEM_LD_TAIL+=; \
 		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
 		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
 .else
-LINKFLAGS+=	-S
+LINKFLAGS+=	-x
 .endif
 
 SYSTEM_LD_TAIL+=;\
