@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.60 2003/05/26 15:42:34 thorpej Exp $
+# $NetBSD: makeflist,v 1.61 2003/06/23 09:18:45 dyoung Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
@@ -18,6 +18,8 @@ setd=`pwd`
 nlists="base comp etc games man misc text"
 xlists="xbase xcomp xcontrib xfont xserver xmisc"
 lists=$nlists
+
+. ./sets.subr
 
 # handle args
 while : ; do
@@ -101,80 +103,5 @@ lists=$_lists
 unset _lists
 
 for setname in $lists; do
-	cat $setd/lists/$setname/mi
-	if [ "$machine" != "$machine_arch" ]; then
-		# Prefer an ad.${machine_arch} over an ad.${machine_cpu},
-		# since the arch-specific one will be more specific than
-		# the cpu-specific one.
-		if [ -f $setd/lists/$setname/ad.${machine_arch} ]; then
-			cat $setd/lists/$setname/ad.${machine_arch}
-		elif [ -f $setd/lists/$setname/ad.${machine_cpu} ]; then
-			cat $setd/lists/$setname/ad.${machine_cpu}
-		fi
-		if [ "$shlib" != "no" -a \
-		     -f $setd/lists/$setname/ad.${machine_cpu}.shl ]; then
-			cat $setd/lists/$setname/ad.${machine_cpu}.shl
-		fi
-	fi
-	if [ -f $setd/lists/$setname/md.${machine}.${machine_arch} ]; then
-		cat $setd/lists/$setname/md.${machine}.${machine_arch}
-	elif [ -f $setd/lists/$setname/md.${machine} ]; then
-		cat $setd/lists/$setname/md.${machine}
-	fi
-	if [ -f $setd/lists/$setname/stl.mi ]; then
-		cat $setd/lists/$setname/stl.mi
-	fi
-	if [ -f $setd/lists/$setname/stl.${stlib} ]; then
-		cat $setd/lists/$setname/stl.${stlib}
-	fi
-	if [ "$shlib" != "no" ]; then
-		if [ -f $setd/lists/$setname/shl.mi ]; then
-			cat $setd/lists/$setname/shl.mi
-		fi
-		if [ -f $setd/lists/$setname/shl.${shlib} ]; then
-			cat $setd/lists/$setname/shl.${shlib}
-		fi
-	fi
-	if [ "$lkm" != "no" ]; then
-		if [ -f $setd/lists/$setname/lkm.mi ]; then
-			cat $setd/lists/$setname/lkm.mi
-		fi
-	fi
-	if [ "$lintlibs" != no ]; then
-		if [ -f $setd/lists/$setname/lint.mi ]; then
-			cat $setd/lists/$setname/lint.mi
-		fi
-	fi
-	if [ "$toolchain_missing" != "yes" ]; then
-		if [ -f $setd/lists/$setname/tc.mi ]; then
-			cat $setd/lists/$setname/tc.mi
-		fi
-		if [ "$shlib" != "no" ]; then
-			if [ -f $setd/lists/$setname/tc.shl ]; then
-				cat $setd/lists/$setname/tc.shl
-			fi
-		fi
-	fi
-
-	if [ -f $setd/lists/$setname/rescue.mi ]; then
-		cat $setd/lists/$setname/rescue.mi
-	fi
-	if [ -f $setd/lists/$setname/rescue.${machine} ]; then
-		cat $setd/lists/$setname/rescue.${machine}
-	fi
-	if [ "$machine" != "$machine_arch" ]; then
-		# Prefer a rescue.ad.${machine_arch} over a
-		# rescue.ad.${machine_cpu}, since the arch-
-		# specific one will be more specific than the
-		# cpu-specific one.
-		if [ -f $setd/lists/$setname/rescue.ad.${machine_arch} ]; then
-			cat $setd/lists/$setname/rescue.ad.${machine_arch}
-		elif [ -f $setd/lists/$setname/rescue.ad.${machine_cpu} ]; then
-			cat $setd/lists/$setname/rescue.ad.${machine_cpu}
-		fi
-		if [ "$shlib" != "no" -a -f \
-		     $setd/lists/$setname/rescue.ad.${machine_cpu}.shl ]; then
-			cat $setd/lists/$setname/rescue.ad.${machine_cpu}.shl
-		fi
-	fi
+	list_set_files $setname
 done | awk -- '/^[^#]/ {print $1}' | sort -u
