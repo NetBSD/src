@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.25 2000/11/30 11:04:44 simonb Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.26 2000/12/13 17:03:32 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -425,7 +425,7 @@ uvmpd_scan_inactive(pglst)
 				 uvmexp.wired + uvmexp.free) * 13 / 16;
 
 			if (free + uvmexp.paging >= uvmexp.freetarg << 2 ||
-			    dirtyreacts == UVMPD_NUMDIRTYREACTS) {
+			    vpgs > 0 || dirtyreacts == UVMPD_NUMDIRTYREACTS) {
 				if (vpgs <= 0) {
 					UVMHIST_LOG(pdhist,"  met free target: "
 						    "exit loop", 0, 0, 0, 0);
@@ -563,7 +563,8 @@ uvmpd_scan_inactive(pglst)
 			 * free target when all the current pageouts complete.
 			 */
 
-			if (free + uvmexp.paging > uvmexp.freetarg << 2) {
+			if (free + uvmexp.paging > uvmexp.freetarg << 2 &&
+			    !vnode_only) {
 				if (anon) {
 					simple_unlock(&anon->an_lock);
 				} else {
