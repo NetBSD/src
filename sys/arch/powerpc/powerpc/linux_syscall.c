@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.1 2002/10/30 06:37:38 manu Exp $ */
+/*	$NetBSD: linux_syscall.c,v 1.2 2002/10/30 07:39:40 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,12 +38,17 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.1 2002/10/30 06:37:38 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.2 2002/10/30 07:39:40 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/signal.h>
 #include <sys/types.h>
 #include <sys/proc.h>
+
+#include <machine/frame.h>
+
+void syscall_fancy __P((struct trapframe *frame));
+void linux_syscall_intern __P((struct proc *p));
 
 void
 linux_syscall_intern(struct proc *p)
