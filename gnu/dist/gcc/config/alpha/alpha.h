@@ -71,7 +71,9 @@ Boston, MA 02111-1307, USA.  */
 
 /* Define the location for the startup file on OSF/1 for Alpha.  */
 
+#if !defined(__NetBSD__)
 #define MD_STARTFILE_PREFIX "/usr/lib/cmplrs/cc/"
+#endif
 
 /* Run-time compilation parameters selecting different hardware subsets.  */
 
