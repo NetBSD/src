@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.152.2.2 2000/07/05 20:48:04 he Exp $
+#	$NetBSD: bsd.lib.mk,v 1.152.2.3 2000/07/06 16:54:37 he Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -246,7 +246,7 @@ lib${LIB}_pic.a:: ${SOBJS} __archivebuild
 
 lib${LIB}.so.${SHLIB_FULLVERSION}: lib${LIB}_pic.a ${DPADD} \
     ${SHLIB_LDSTARTFILE} ${SHLIB_LDENDFILE}
-	@echo building shared ${LIB} library \(version $SHLIB_FULLVERSION}\)
+	@echo building shared ${LIB} library \(version ${SHLIB_FULLVERSION}\)
 	@rm -f lib${LIB}.so.${SHLIB_FULLVERSION}
 .if defined(DESTDIR)
 	$(LD) -x -shared ${SHLIB_SHFLAGS} -o ${.TARGET} \
