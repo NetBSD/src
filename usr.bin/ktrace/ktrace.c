@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.c,v 1.31 2004/02/28 01:37:56 enami Exp $	*/
+/*	$NetBSD: ktrace.c,v 1.32 2004/02/28 01:43:07 enami Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ktrace.c,v 1.31 2004/02/28 01:37:56 enami Exp $");
+__RCSID("$NetBSD: ktrace.c,v 1.32 2004/02/28 01:43:07 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,7 +102,7 @@ main(argc, argv)
 #endif
 
 	while ((ch = getopt(argc, argv, OPTIONS)) != -1)
-		switch ((char)ch) {
+		switch (ch) {
 		case 'a':
 			append = 1;
 			break;
@@ -190,6 +190,9 @@ main(argc, argv)
 	}
 
 #ifdef KTRUSS
+	if (clear == CLEAR && outfile == NULL && pid == 0)
+		usage();
+
 	if (infile) {
 		dumpfile(infile, 0, trpoints);
 		exit(0);
@@ -299,7 +302,8 @@ do_ktrace(tracefile, ops, trpoints, pid)
 {
 	int ret;
 
-	if (!tracefile || strcmp(tracefile, "-") == 0) {
+	if (KTROP(ops) == KTROP_SET &&
+	    (!tracefile || strcmp(tracefile, "-") == 0)) {
 		int pi[2], dofork, fpid;
 
 		if (pipe(pi) < 0)
@@ -362,9 +366,13 @@ do_ktrace(tracefile, ops, trpoints, pid)
 #else
 		ret = fktrace(pi[1], ops, trpoints, pid);
 #endif
-	} else
+		if (ret == -1)
+			err(EXIT_FAILURE, "fd %d, pid %d", pi[1], pid);
+	} else {
 		ret = ktrace(ktracefile = tracefile, ops, trpoints, pid);
-	if (ret < 0)
-		err(1, "%s", tracefile);
+		if (ret == -1)
+			err(EXIT_FAILURE, "file %s, pid %d",
+			    tracefile != NULL ? tracefile : "NULL", pid);
+	}
 	return 1;
 }
