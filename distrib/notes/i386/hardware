@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.110 2002/08/23 16:31:09 bouyer Exp $
+.\"	$NetBSD: hardware,v 1.111 2002/08/30 22:16:30 wiz Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, MCA, PCI, and VL-bus systems
@@ -29,27 +29,27 @@ Acard ATA-850 and 860 based IDE Controllers
 .It
 Acer labs M5229 IDE Controller
 .It
-Advanced Micro Devices AMD-756, 766 and 768 IDE Controllers
+Advanced Micro Devices AMD-756, 766, and 768 IDE Controllers
 .It
-CMD Tech PCI0643, 0646, 0648 and 0649 IDE Controllers
+CMD Tech PCI0643, 0646, 0648, and 0649 IDE Controllers
 .It
 Contaq Microsystems/Cypress CY82C693 IDE Controller
 .It
-HighPoint HPT366, HPT370, HPT372 and HPT374.
+HighPoint HPT366, HPT370, HPT372, and HPT374.
 .It
 IBM ESDI Fixed Disk Controllers [m]
 .It
-Intel PIIX, PIIX3 and PIIX4 IDE Controllers
+Intel PIIX, PIIX3, and PIIX4 IDE Controllers
 .It
 Intel 82801 (ICH/ICH0/ICH2/ICH4) IDE Controllers
 .It
 Promise PDC20246 (Ultra/33), PDC20262 (Ultra/66), PDC20265/PDC20267 (Ultra/100),
-PDC20268 (Ultra/100TX2 and Ultra/100TX2v2) and Ultra/133, Ultra/133TX2
+PDC20268 (Ultra/100TX2 and Ultra/100TX2v2), Ultra/133, Ultra/133TX2,
 and Ultra/133TX2v2.
 .It
 Silicon Integrated System 5597/5598 IDE controller
 .It
-VIA Technologies VT82C586, VT82C586A, VT82C596A, VT82C686A and VT8233A IDE
+VIA Technologies VT82C586, VT82C586A, VT82C596A, VT82C686A, and VT8233A IDE
 Controllers
 .bullet)
 .Pp
@@ -84,11 +84,11 @@ Adaptec AHA-394x[U][W] cards [b]
 .It
 Adaptec AHA-3950U2 cards
 .It
-Adaptec AHA-3960, 19160 and 29160 Ultra-160 adapters
+Adaptec AHA-3960, 19160, and 29160 Ultra-160 adapters
 .It
 AdvanSys ABP-9x0[U][A] cards
 .It
-AdvanSys ABP-940UW[68], ABP-970UW[68], ASB3940UW-00 cards
+AdvanSys ABP-940UW[68], ABP-970UW[68], and ASB3940UW-00 cards
 .It
 AMD PCscsi-PCI (Am53c974) based SCSI adapters, including Tekram DC-390
 .It
