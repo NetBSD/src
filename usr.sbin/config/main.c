@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.88 2003/12/02 05:11:42 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.89 2004/06/04 04:38:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,6 +84,7 @@ extern int yydebug;
 static struct hashtab *mkopttab;
 static struct nvlist **nextopt;
 static struct nvlist **nextmkopt;
+static struct nvlist **nextappmkopt;
 static struct nvlist **nextfsopt;
 
 static	void	usage(void);
@@ -262,6 +263,7 @@ main(int argc, char **argv)
 	maxcdevm = 0;
 	nextopt = &options;
 	nextmkopt = &mkoptions;
+	nextappmkopt = &appmkoptions;
 	nextfsopt = &fsoptions;
 
 	/*
@@ -886,6 +888,19 @@ delmkoption(const char *name)
 }
 
 /*
+ * Add an appending "make" option.
+ */
+void
+appendmkoption(const char *name, const char *value)
+{
+	struct nvlist *nv;
+
+	nv = newnv(name, value, NULL, 0, NULL);
+	*nextappmkopt = nv;
+	nextappmkopt = &nv->nv_next;
+}
+
+/*
  * Add a name=value pair to an option list.  The value may be NULL.
  */
 static int
@@ -896,9 +911,9 @@ do_option(struct hashtab *ht, struct nvlist ***nppp, const char *name,
 
 	/*
 	 * If a defopt'ed or defflag'ed option was enabled but without
-	  * an explicit value (always the case for defflag), supply a
-	  * default value of 1, as for non-defopt options (where cc
-	  * treats -DBAR as -DBAR=1.) 
+	 * an explicit value (always the case for defflag), supply a
+	 * default value of 1, as for non-defopt options (where cc
+	 * treats -DBAR as -DBAR=1.) 
 	 */
 	if ((OPT_DEFOPT(name) || OPT_DEFFLAG(name)) && value == NULL)
 		value = "1";
