@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.14 1995/08/13 22:48:47 mycroft Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.15 1996/02/04 02:12:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -160,6 +160,9 @@ void	postsig __P((int sig));
 void	psignal __P((struct proc *p, int sig));
 void	siginit __P((struct proc *p));
 void	trapsignal __P((struct proc *p, int sig, u_long code));
+void	sigexit __P((struct proc *, int));
+void	setsigvec __P((struct proc *, int, struct sigaction *));
+int	killpg1 __P((struct proc *, int, int, int));
 
 /*
  * Machine-dependent functions:

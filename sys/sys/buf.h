@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.21 1995/08/12 20:31:53 mycroft Exp $	*/
+/*	$NetBSD: buf.h,v 1.22 1996/02/04 02:12:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -159,7 +159,7 @@ struct	buf bswlist;		/* Head of swap I/O buffer headers free list. */
 struct	buf *bclnlist;		/* Head of cleaned page list. */
 
 __BEGIN_DECLS
-int	allocbuf __P((struct buf *, int));
+void	allocbuf __P((struct buf *, int));
 void	bawrite __P((struct buf *));
 void	bdwrite __P((struct buf *));
 void	biodone __P((struct buf *));
