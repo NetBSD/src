@@ -1,6 +1,6 @@
-#	$NetBSD: std.sgimips,v 1.5 2000/12/03 05:30:31 matt Exp $
+#	$NetBSD: std.sgimips,v 1.6 2000/12/03 07:05:23 matt Exp $
 
-machine sgimips mipseb
+machine sgimips mips
 
 options	EXEC_ELF32	# exec ELF32 binaries
 options	EXEC_SCRIPT	# exec #! scripts
@@ -16,3 +16,4 @@ options TLP_MATCH_21140
 options TLP_MATCH_21142
 
 makeoptions	DEFTEXTADDR="0x80002000"
+makeoptions	ENDIAN="-EB"
