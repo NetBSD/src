@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.28 2000/12/14 00:32:22 simonb Exp $	*/
+/*	$NetBSD: dir.c,v 1.29 2001/01/09 05:51:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.28 2000/12/14 00:32:22 simonb Exp $");
+__RCSID("$NetBSD: dir.c,v 1.29 2001/01/09 05:51:14 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,38 +84,33 @@ static int mkentry __P((struct inodesc *));
  * Propagate connected state through the tree.
  */
 void
-propagate()
+propagate(inumber)
+	ino_t inumber;
 {
-	struct inoinfo **inpp, *inp, *pinp;
-	struct inoinfo **inpend;
+	struct inoinfo *inp;
 
-	/*
-	 * Create a list of children for each directory.
-	 */
-	inpend = &inpsort[inplast];
-	for (inpp = inpsort; inpp < inpend; inpp++) {
-		inp = *inpp;
-		inp->i_child = inp->i_sibling = inp->i_parentp = 0;
-		if (statemap[inp->i_number] == DFOUND)
-			statemap[inp->i_number] = DSTATE;
+	inp = getinoinfo(inumber);
+
+	for (;;) {
+		statemap[inp->i_number] = DMARK;
+		if (inp->i_child &&
+		    statemap[inp->i_child->i_number] != DMARK)
+			inp = inp->i_child;
+		else if (inp->i_number == inumber)
+			break;
+		else if (inp->i_sibling)
+			inp = inp->i_sibling;
+		else
+			inp = inp->i_parentp;
 	}
 
-	for (inpp = inpsort; inpp < inpend; inpp++) {
-		inp = *inpp;
-		if (inp->i_parent == 0 ||
-		    inp->i_number == ROOTINO)
-			continue;
-		pinp = getinoinfo(inp->i_parent);
-		inp->i_parentp = pinp;
-		inp->i_sibling = pinp->i_child;
-		pinp->i_child = inp;
-	}
-	inp = getinoinfo(ROOTINO);
-	while (inp) {
+	for (;;) {
 		statemap[inp->i_number] = DFOUND;
 		if (inp->i_child &&
-		    statemap[inp->i_child->i_number] == DSTATE)
+		    statemap[inp->i_child->i_number] != DFOUND)
 			inp = inp->i_child;
+		else if (inp->i_number == inumber)
+			break;
 		else if (inp->i_sibling)
 			inp = inp->i_sibling;
 		else
