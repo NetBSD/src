@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.43 2001/09/15 20:36:42 chs Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.44 2001/09/20 08:25:59 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -184,7 +184,6 @@ ffs_truncate(v)
 	if (length < 0)
 		return (EINVAL);
 	oip = VTOI(ovp);
-	KASSERT(ovp->v_type != VREG || ovp->v_size == oip->i_ffs_size);
 	if (ovp->v_type == VLNK &&
 	    (oip->i_ffs_size < ovp->v_mount->mnt_maxsymlinklen ||
 	     (ovp->v_mount->mnt_maxsymlinklen == 0 &&
@@ -426,6 +425,7 @@ done:
 #ifdef QUOTA
 	(void) chkdq(oip, -blocksreleased, NOCRED, 0);
 #endif
+	KASSERT(ovp->v_type != VREG || ovp->v_size == oip->i_ffs_size);
 	return (allerror);
 }
 
