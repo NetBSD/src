@@ -1,7 +1,7 @@
-/*	$NetBSD: ftpd.c,v 1.153 2003/02/24 19:26:49 erh Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.154 2003/02/26 12:27:04 lukem Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.153 2003/02/24 19:26:49 erh Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.154 2003/02/26 12:27:04 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -183,7 +183,8 @@ int	dataport;		/* use specific data port */
 int	dopidfile;		/* maintain pid file */
 int	doutmp;			/* update utmp file */
 int	dowtmp;			/* update wtmp file */
-int	doxferlog;		/* syslog wu-ftpd style xferlog entries */
+int	doxferlog;		/* syslog/write wu-ftpd style xferlog entries */
+int	xferlogfd;		/* fd to write wu-ftpd xferlog entries to */
 int	dropprivs;		/* if privileges should or have been dropped */
 int	mapped;			/* IPv4 connection on AF_INET6 socket */
 off_t	file_size;
@@ -269,6 +270,7 @@ main(int argc, char *argv[])
 	krb5_error_code	kerror;
 #endif
 	char		*p;
+	const char	*xferlogname = NULL;
 	long		l;
 
 	connections = 1;
@@ -281,6 +283,7 @@ main(int argc, char *argv[])
 	doutmp = 0;		/* default: Do NOT log to utmp */
 	dowtmp = 1;		/* default: DO log to wtmp */
 	doxferlog = 0;		/* default: Do NOT syslog xferlog */
+	xferlogfd = -1;		/* default: Do NOT write xferlog file */
 	dropprivs = 0;
 	mapped = 0;
 	usedefault = 1;
@@ -297,7 +300,7 @@ main(int argc, char *argv[])
 	 */
 	openlog("ftpd", LOG_PID | LOG_NDELAY, LOG_FTP);
 
-	while ((ch = getopt(argc, argv, "a:c:C:de:h:HlP:qQrst:T:uUvV:wWX"))
+	while ((ch = getopt(argc, argv, "a:c:C:de:h:HlL:P:qQrst:T:uUvV:wWX"))
 	    != -1) {
 		switch (ch) {
 		case 'a':
@@ -334,6 +337,10 @@ main(int argc, char *argv[])
 
 		case 'l':
 			logging++;	/* > 1 == extra logging */
+			break;
+
+		case 'L':
+			xferlogname = optarg;
 			break;
 
 		case 'P':
@@ -397,7 +404,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'X':
-			doxferlog = 1;
+			doxferlog |= 1;
 			break;
 
 		default:
@@ -548,6 +555,16 @@ main(int argc, char *argv[])
 		reply(220, "%s FTP server ready.", hostname);
 	else
 		reply(220, "%s FTP server (%s) ready.", hostname, version);
+
+	if (xferlogname != NULL) {
+		xferlogfd = open(xferlogname, O_WRONLY | O_APPEND | O_CREAT,
+		    0660);
+		if (xferlogfd == -1)
+			syslog(LOG_WARNING, "open xferlog `%s': %m",
+			    xferlogname);
+		else
+			doxferlog |= 2;
+	}
 
 	(void) setjmp(errcatch);
 	ftp_loop();
@@ -2448,6 +2465,8 @@ dologout(int status)
 #endif
 	}
 	/* beware of flushing buffers after a SIGPIPE */
+	if (xferlogfd != -1)
+		close(xferlogfd);
 	_exit(status);
 }
 
@@ -3073,7 +3092,7 @@ conffilename(const char *s)
  *	if error != NULL, append ": " + error
  *
  *	if doxferlog != 0, bytes != -1, and command is "get", "put",
- *	or "append", syslog a wu-ftpd style xferlog entry
+ *	or "append", syslog and/or write a wu-ftpd style xferlog entry
  */
 void
 logxfer(const char *command, off_t bytes, const char *file1, const char *file2,
@@ -3130,21 +3149,15 @@ logxfer(const char *command, off_t bytes, const char *file1, const char *file2,
 		return;
 
 	time(&now);
-	syslog(LOG_INFO,
-	    "xferlog%s: %.24s %ld %s " LLF " %s %c %s %c %c %s FTP 0 * %c",
+	len = snprintf(buf, sizeof(buf),
+	    "%.24s %ld %s " LLF " %s %c %s %c %c %s FTP 0 * %c\n",
 
 /*
- * XXX: wu-ftpd puts (send) or (recv) in the syslog message, and removes
+ * XXX: wu-ftpd puts ' (send)' or ' (recv)' in the syslog message, and removes
  *	the full date.  This may be problematic for accurate log parsing,
  *	given that syslog messages don't contain the full date.
  */
-#if 1		/* lukem's method; easier to convert to actual xferlog file */
-	    "",
 	    ctime(&now),
-#else		/* wu-ftpd's syslog method, with an extra unneeded space */
-	    (direction == 'i') ? " (recv)" : " (send)",
-	    "",
-#endif
 	    elapsed == NULL ? 0 : elapsed->tv_sec + (elapsed->tv_usec > 0),
 	    remotehost,
 	    (LLT) bytes,
@@ -3160,6 +3173,13 @@ logxfer(const char *command, off_t bytes, const char *file1, const char *file2,
 	    curclass.type == CLASS_GUEST ? pw->pw_passwd : pw->pw_name,
 	    error != NULL ? 'i' : 'c'
 	    );
+
+	if ((doxferlog & 2) && xferlogfd != -1)
+		write(xferlogfd, buf, len);
+	if ((doxferlog & 1)) {
+		buf[len-1] = '\n';	/* strip \n from syslog message */
+		syslog(LOG_INFO, "xferlog: %s", buf);
+	}
 }
 
 /*
