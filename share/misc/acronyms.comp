@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.22 2003/10/14 01:20:53 mycroft Exp $
+$NetBSD: acronyms.comp,v 1.23 2003/10/15 08:52:51 wennmach Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
@@ -105,6 +105,7 @@ NIS	network information service
 NUMA	non uniform memory access
 PAX	portable archive exchange
 PCI	peripheral component interconnect
+PCMCIA	Personal Computer Memory Card International Association
 PDP	page descriptor page
 PERL	practical extraction [and] report language
 PGP	pretty good privacy
