@@ -1,4 +1,4 @@
-.\"	$NetBSD: ne.4,v 1.1 1997/10/20 21:40:43 thorpej Exp $
+.\"	$NetBSD: ne.4,v 1.1.2.1 1997/11/11 05:12:27 thorpej Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,10 +56,11 @@ Media selection is not currently supported by this driver.  Any media
 selection must be performed either via card jumper settings or
 by vendor-supplied configuration programs.
 .Sh DIAGNOSTICS
-ne0: where did the card go?
-.in +4
+.Bl -diag
+.It "ne0: where did the card go?"
 The driver found the card, but was unable to make the card respond
 to complete the configuration sequence.
+.El
 .Sh SEE ALSO
 .Xr ifconfig 8 ,
 .Xr intro 4 ,
