@@ -72,7 +72,7 @@
  * from: Utah $Hdr: vmparam.h 1.16 91/01/18$
  *
  *	from: @(#)vmparam.h	7.3 (Berkeley) 5/7/91
- *	$Id: vmparam.h,v 1.3 1993/12/04 03:49:13 briggs Exp $
+ *	$Id: vmparam.h,v 1.4 1993/12/15 03:23:02 briggs Exp $
  */
 
 /*
@@ -80,7 +80,7 @@
    ALICE
 	BG -- Sat May 23 23:45:21 EDT 1992
 	You'd like to think that, wouldn't you?  Well it's NOT an hp300!  
-	 It's a macII!  And therefore I am changing it.
+	 It's a mac68k!  And therefore I am changing it.
  */
 
 /*
@@ -159,10 +159,8 @@
  * DIO-II) you could define a considerably smaller region.
  */
 /* 06/03/92,19:03:56 BG This needs to map IO area and NuBus areas. */
-#if BARFHEAD
 #ifndef EIOMAPSIZE
 #define EIOMAPSIZE	3584		/* 14mb */
-#endif
 #endif
 
 /*

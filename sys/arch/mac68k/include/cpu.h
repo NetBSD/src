@@ -57,13 +57,15 @@
  * from: Utah $Hdr: cpu.h 1.16 91/03/25$
  *
  *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
- *	$Id: cpu.h,v 1.2 1993/11/29 00:37:59 briggs Exp $
+ *	$Id: cpu.h,v 1.3 1993/12/15 03:22:56 briggs Exp $
  */
 
 /*
    ALICE
 	BG -- Sat May 23 23:58:23 EDT 1992
-	Exported defines and stuff unique to macII/68k.
+	Exported defines and stuff unique to mac68k.
+   A lot of this stuff is really specific to the m68k, not just the macs,
+   but there isn't time to do anything about that right now...
  */
 
 /*
@@ -145,12 +147,6 @@ extern unsigned char ssir;
 #define setsoftserial()	ssir |= SIR_SERIAL
 
 
-
-/*
- * The rest of this should probably be moved to ../macII/macIIcpu.h,
- * although some of it could probably be put into generic 68k headers.
- */
-
 /* values for machineid */
 /* BARF MF - some values from the thinkc gesalt include file */
 #define MACH_MAC2		6
@@ -183,10 +179,9 @@ extern	char *extiobase, *extiolimit;
 
 /* physical memory sections */
 #define	ROMBASE		(0x40000000)
-#define IOBASE		(0x50000000)
-#define INTIOBASE	IOBASE
-#define IOTOP		(0x51000000)	/* ~ 128 K */
-#define IOMAPSIZE	btoc(IOTOP - IOBASE)
+#define INTIOBASE	(0x50000000)
+#define INTIOTOP	(0x51000000)	/* ~ 128 K */
+#define IIOMAPSIZE	btoc(INTIOTOP - INTIOBASE)
 
 /* ALICE 05/23/92 BG -- These need to be changed. */
 #ifdef NO_SUPER_SPACE_YET

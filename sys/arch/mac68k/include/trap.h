@@ -39,7 +39,7 @@
  * from: Utah $Hdr: trap.h 1.1 90/07/09$
  *
  *	from: @(#)trap.h	7.5 (Berkeley) 5/9/91
- *	$Id: trap.h,v 1.2 1993/11/29 00:38:47 briggs Exp $
+ *	$Id: trap.h,v 1.3 1993/12/15 03:23:01 briggs Exp $
  */
 
 /*
@@ -61,6 +61,8 @@
 #define T_COPERR	12
 #define T_ASTFLT	13
 #define T_TRAP15	15
+#define T_BRKPT		T_TRAP15
+#define T_WATCHPOINT	16
 
 #define	T_USER		0x80		/* user-mode flag or'ed with type */
 
