@@ -1,4 +1,4 @@
-/*	$NetBSD: netif.c,v 1.7 1996/10/13 02:29:03 christos Exp $	*/
+/*	$NetBSD: netif.c,v 1.8 1997/06/13 14:29:51 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -226,7 +226,9 @@ netif_get(desc, pkt, len, timo)
 	size_t len;
 	time_t timo;
 {
+#ifdef NETIF_DEBUG
 	struct netif *nif = desc->io_netif;
+#endif
 	struct netif_driver *drv = desc->io_netif->nif_driver;
 	ssize_t rv;
 
@@ -254,7 +256,9 @@ netif_put(desc, pkt, len)
 	void *pkt;
 	size_t len;
 {
+#ifdef NETIF_DEBUG
 	struct netif *nif = desc->io_netif;
+#endif
 	struct netif_driver *drv = desc->io_netif->nif_driver;
 	ssize_t rv;
 
