@@ -4,6 +4,8 @@
 ./usr/include/pc532/ansi.h
 ./usr/include/pc532/aout_machdep.h
 ./usr/include/pc532/asm.h
+./usr/include/pc532/bswap.h
+./usr/include/pc532/byte_swap.h
 ./usr/include/pc532/autoconf.h
 ./usr/include/pc532/cdefs.h
 ./usr/include/pc532/conf.h

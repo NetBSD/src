@@ -6,6 +6,8 @@
 ./usr/include/i386/asm.h
 ./usr/include/i386/bioscall.h
 ./usr/include/i386/bootinfo.h
+./usr/include/i386/bswap.h
+./usr/include/i386/byte_swap.h
 ./usr/include/i386/bus.h
 ./usr/include/i386/cdefs.h
 ./usr/include/i386/conf.h

@@ -5,6 +5,7 @@
 ./usr/include/bebox/asm.h
 ./usr/include/bebox/bat.h
 ./usr/include/bebox/bootinfo.h
+./usr/include/bebox/bswap.h
 ./usr/include/bebox/bus.h
 ./usr/include/bebox/cdefs.h
 ./usr/include/bebox/conf.h
