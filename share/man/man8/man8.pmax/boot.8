@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.5 1998/03/23 03:47:18 jonathan Exp $
+.\"	$NetBSD: boot.8,v 1.5.2.1 1999/11/27 15:21:14 he Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -75,7 +75,7 @@ a triplet in the form (x,y,z), followed by a filename to load.
 Within the triplet, x is the controller (always 0), y is the SCSI id of
 the drive to
 boot from or 0 for net boots, and z is the partition to boot from
-(usually 0 for SCSI devices, always zero for network booting.
+(usually 0 for SCSI devices, always zero for network booting).
 For network boots, () may be specified instead of (0,0,0).
 .Pp
 The filename is optional for bootp/tftp and mop booting, since in
