@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tcp_timer.c	7.18 (Berkeley) 6/28/90
- *	$Id: tcp_timer.c,v 1.4 1993/12/18 00:42:09 mycroft Exp $
+ *	$Id: tcp_timer.c,v 1.5 1994/01/08 21:22:02 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -222,7 +222,7 @@ tcp_timers(tp, timer)
 		 * size increase exponentially with time.  If the
 		 * window is larger than the path can handle, this
 		 * exponential growth results in dropped packet(s)
-		 * almost immediately.  To get more time between 
+		 * almost immediately.  To get more time between
 		 * drops but still "push" the network to take advantage
 		 * of improving conditions, we switch from exponential
 		 * to linear window opening at some threshhold size.

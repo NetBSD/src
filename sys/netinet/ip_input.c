@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ip_input.c	7.19 (Berkeley) 5/25/91
- *	$Id: ip_input.c,v 1.5 1993/12/18 00:41:57 mycroft Exp $
+ *	$Id: ip_input.c,v 1.6 1994/01/08 21:21:47 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -876,7 +876,7 @@ ip_srcroute()
 	if (m == 0)
 		return ((struct mbuf *)0);
 
-#define OPTSIZ	(sizeof(ip_srcrt.nop) + sizeof(ip_srcrt.srcopt))
+#define	OPTSIZ	(sizeof(ip_srcrt.nop) + sizeof(ip_srcrt.srcopt))
 
 	/* length is (nhops+1)*sizeof(addr) + sizeof(nop + srcrt header) */
 	m->m_len = ip_nhops * sizeof(struct in_addr) + sizeof(struct in_addr) +

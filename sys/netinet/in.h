@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)in.h	7.11 (Berkeley) 4/20/91
- *	$Id: in.h,v 1.4 1993/12/06 05:46:37 hpeyerl Exp $
+ *	$Id: in.h,v 1.5 1994/01/08 21:21:38 mycroft Exp $
  */
 
 #ifndef _NETINET_IN_H_
@@ -47,7 +47,7 @@
  */
 #define	IPPROTO_IP		0		/* dummy for IP */
 #define	IPPROTO_ICMP		1		/* control message protocol */
-#define IPPROTO_IGMP		2		/* group control protocol */
+#define	IPPROTO_IGMP		2		/* group mgmt protocol */
 #define	IPPROTO_GGP		3		/* gateway^2 (deprecated) */
 #define	IPPROTO_TCP		6		/* tcp */
 #define	IPPROTO_EGP		8		/* exterior gateway protocol */
@@ -101,31 +101,31 @@ struct in_addr {
 #define	IN_CLASSC_HOST		0x000000ff
 
 #define	IN_CLASSD(i)		(((long)(i) & 0xf0000000) == 0xe0000000)
-#define IN_CLASSD_NET		0xf0000000	/* These ones aren't really */
-#define IN_CLASSD_NSHIFT	28		/* net and host fields, but */
-#define IN_CLASSD_HOST		0x0fffffff	/* routing needn't know. */
+#define	IN_CLASSD_NET		0xf0000000	/* These ones aren't really */
+#define	IN_CLASSD_NSHIFT	28		/* net and host fields, but */
+#define	IN_CLASSD_HOST		0x0fffffff	/* routing needn't know. */
 #define	IN_MULTICAST(i)		IN_CLASSD(i)
 
 #define	IN_EXPERIMENTAL(i)	(((long)(i) & 0xe0000000) == 0xe0000000)
 #define	IN_BADCLASS(i)		(((long)(i) & 0xf0000000) == 0xf0000000)
 
 #define	INADDR_ANY		(u_long)0x00000000
-#define INADDR_LOOPBACK		(u_long)0x7f000001
+#define	INADDR_LOOPBACK		(u_long)0x7f000001
 #define	INADDR_BROADCAST	(u_long)0xffffffff	/* must be masked */
 #ifndef KERNEL
 #define	INADDR_NONE		0xffffffff		/* -1 return */
 #endif
 
-#define INADDR_UNSPEC_GROUP	(u_long)0xe0000000	/* 224.0.0.0  */
-#define INADDR_ALLHOSTS_GROUP	(u_long)0xe0000001	/* 224.0.0.1  */
-#define INADDR_MAX_LOCAL_GROUP	(u_long)0xe00000ff	/* 224.0.0.255 */
+#define	INADDR_UNSPEC_GROUP	(u_long)0xe0000000	/* 224.0.0.0 */
+#define	INADDR_ALLHOSTS_GROUP	(u_long)0xe0000001	/* 224.0.0.1 */
+#define	INADDR_MAX_LOCAL_GROUP	(u_long)0xe00000ff	/* 224.0.0.255 */
 
 #define	IN_LOOPBACKNET		127			/* official! */
 
 /*
  * Define a macro to stuff the loopback address into an Internet address
  */
-#define IN_SET_LOOPBACK_ADDR(a) { \
+#define	IN_SET_LOOPBACK_ADDR(a) { \
 	(a)->sin_addr.s_addr = htonl(INADDR_LOOPBACK); \
 	(a)->sin_family = AF_INET; }
 /*
@@ -155,31 +155,30 @@ struct ip_opts {
  * Options for use with [gs]etsockopt at the IP level.
  * First word of comment is data type; bool is stored in int.
  */
-#define	IP_OPTIONS		1	/* buf/ip_opts; set/get IP per-packet options */
-#define IP_MULTICAST_IF		2	/* set/get IP multicast interface  */
-#define IP_MULTICAST_TTL	3	/* set/get IP multicast timetolive */
-#define IP_MULTICAST_LOOP	4	/* set/get IP multicast loopback   */
-#define IP_ADD_MEMBERSHIP	5	/* add  an IP group membership     */
-#define IP_DROP_MEMBERSHIP	6	/* drop an IP group membership     */
-
-#define	IP_HDRINCL		7	/* int; header is included with data (raw) */
-#define	IP_TOS			8	/* int; IP type of service and precedence */
+#define	IP_OPTIONS		1	/* buf/ip_opts; set/get IP options */
+#define	IP_MULTICAST_IF		2	/* u_char; set/get IP mcast i/f */
+#define	IP_MULTICAST_TTL	3	/* u_char; set/get IP mcast ttl */
+#define	IP_MULTICAST_LOOP	4	/* u_char; set/get IP mcast loopback */
+#define	IP_ADD_MEMBERSHIP	5	/* ip_mreq; add IP group membership */
+#define	IP_DROP_MEMBERSHIP	6	/* ip_mreq; drop IP group membership */
+#define	IP_HDRINCL		7	/* int; header is included with data */
+#define	IP_TOS			8	/* int; IP type of service and preced */
 #define	IP_TTL			9	/* int; IP time to live */
-#define	IP_RECVOPTS		10	/* bool; receive all IP options w/datagram */
-#define	IP_RECVRETOPTS		11	/* bool; receive IP options for response */
-#define	IP_RECVDSTADDR		12	/* bool; receive IP dst addr w/datagram */
-#define	IP_RETOPTS		13	/* ip_opts; set/get IP per-packet options */
+#define	IP_RECVOPTS		10	/* bool; receive all IP opts w/dgram */
+#define	IP_RECVRETOPTS		11	/* bool; receive IP opts for response */
+#define	IP_RECVDSTADDR		12	/* bool; receive IP dst addr w/dgram */
+#define	IP_RETOPTS		13	/* ip_opts; set/get IP options */
 
-#define IP_DEFAULT_MULTICAST_TTL   1    /* normally limit m'casts to 1 hop  */
-#define IP_DEFAULT_MULTICAST_LOOP  1    /* normally hear sends if a member  */
-#define IP_MAX_MEMBERSHIPS         20   /* per socket; must fit in one mbuf */
+#define	IP_DEFAULT_MULTICAST_TTL   1    /* normally limit m'casts to 1 hop  */
+#define	IP_DEFAULT_MULTICAST_LOOP  1    /* normally hear sends if a member  */
+#define	IP_MAX_MEMBERSHIPS         20   /* per socket; must fit in one mbuf */
 
 /*
  * Argument structure for IP_ADD_MEMBERSHIP and IP_DROP_MEMBERSHIP.
  */
 struct ip_mreq {
-        struct in_addr  imr_multiaddr;  /* IP multicast address of group */
-        struct in_addr  imr_interface;  /* local IP address of interface */
+	struct	in_addr imr_multiaddr;	/* IP multicast address of group */
+	struct	in_addr imr_interface;	/* local IP address of interface */
 };
 
 #ifdef KERNEL
