@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.73 2003/10/26 01:44:22 lukem Exp $
+.\"	$NetBSD: ddb.4,v 1.74 2003/11/18 18:26:18 dbj Exp $
 .\"
 .\" Copyright (c) 1997 - 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -626,6 +626,15 @@ Print the vm_map at
 If
 .Cm /f
 is specified, the complete map is printed.
+.It Xo
+.Ic "show mount" Ns Op Cm /f
+.Ar address
+.Xc
+Print the mount structure at
+.Ar address .
+If
+.Cm /f
+is specified, the complete vnode list is printed.
 .It Ic "show ncache" Ar address
 Dump the namecache list associated with vnode at
 .Ar address .

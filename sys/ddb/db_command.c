@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.73 2003/10/10 15:21:24 chs Exp $	*/
+/*	$NetBSD: db_command.c,v 1.74 2003/11/18 18:26:18 dbj Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.73 2003/10/10 15:21:24 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.74 2003/11/18 18:26:18 dbj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -118,6 +118,7 @@ static void	db_stack_trace_cmd(db_expr_t, int, db_expr_t, char *);
 static void	db_sync_cmd(db_expr_t, int, db_expr_t, char *);
 static void	db_uvmexp_print_cmd(db_expr_t, int, db_expr_t, char *);
 static void	db_vnode_print_cmd(db_expr_t, int, db_expr_t, char *);
+static void	db_mount_print_cmd(db_expr_t, int, db_expr_t, char *);
 
 /*
  * 'show' commands
@@ -139,6 +140,7 @@ static const struct db_command db_show_cmds[] = {
 	{ "event",	db_event_print_cmd,	0,	NULL },
 	{ "malloc",	db_malloc_print_cmd,	0,	NULL },
 	{ "map",	db_map_print_cmd,	0,	NULL },
+	{ "mount",	db_mount_print_cmd,	0,	NULL },
 	{ "ncache",	db_namecache_print_cmd,	0,	NULL },
 	{ "object",	db_object_print_cmd,	0,	NULL },
 	{ "page",	db_page_print_cmd,	0,	NULL },
@@ -569,6 +571,17 @@ db_vnode_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 		full = TRUE;
 
 	vfs_vnode_print((struct vnode *)(intptr_t) addr, full, db_printf);
+}
+
+static void
+db_mount_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+{
+	boolean_t full = FALSE;
+
+	if (modif[0] == 'f')
+		full = TRUE;
+
+	vfs_mount_print((struct mount *)(intptr_t) addr, full, db_printf);
 }
 
 /*ARGSUSED*/
