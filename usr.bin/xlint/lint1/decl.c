@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.6 1995/10/02 17:21:24 jpo Exp $	*/
+/*	$NetBSD: decl.c,v 1.7 1995/10/02 17:22:46 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: decl.c,v 1.6 1995/10/02 17:21:24 jpo Exp $";
+static char rcsid[] = "$NetBSD: decl.c,v 1.7 1995/10/02 17:22:46 jpo Exp $";
 #endif
 
 #include <sys/param.h>
@@ -648,6 +648,7 @@ clrtyp()
 	dcs->d_inline = 0;
 	dcs->d_mscl = dcs->d_terr = 0;
 	dcs->d_nedecl = 0;
+	dcs->d_notyp = 0;
 }
 
 /*
@@ -2160,7 +2161,8 @@ chkosdef(rdsym, dsym)
 
  end:
 	if (msg)
-		prevdecl(-1, rdsym);
+		/* old style definition */
+		prevdecl(300, rdsym);
 
 	return (msg);
 }
@@ -2528,9 +2530,16 @@ decl1loc(dsym, initflg)
 
 			/* no hflag, because its illegal! */
 			if (dcs->d_rdcsym->s_arg) {
-				/* declaration hides parameter: %s */
-				warning(91, dsym->s_name);
-				rmsym(dcs->d_rdcsym);
+				/*
+				 * if !tflag, a "redeclaration of %s" error
+				 * is produced below
+				 */
+				if (tflag) {
+					if (hflag)
+						/* decl. hides parameter: %s */
+						warning(91, dsym->s_name);
+					rmsym(dcs->d_rdcsym);
+				}
 			}
 
 		} else if (dcs->d_rdcsym->s_blklev < blklev) {
