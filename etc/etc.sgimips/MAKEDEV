@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.6 2001/06/08 01:34:36 rafal Exp $
+#	$NetBSD: MAKEDEV,v 1.7 2001/06/08 14:17:42 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -82,7 +82,7 @@
 #	fd	file descriptors (/dev/fd/*)
 #	ipl	IP filter
 #	random	Random number generator
-#	scsibus* SCSI busses, see scsictl(8), scsi(8)
+#	scsibus* SCSI busses, see scsictl(8), scsi(4)
 #	ss*	SCSI scanner
 #	tun*	network tunnel driver
 #	uk*	SCSI unknown
