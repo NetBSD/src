@@ -52,6 +52,7 @@
 	bt	$_UC_USER_BIT, %eax			; \
 	jnc	1f					; \
 							; \
+	FPLOAD(%ecx)					; \
 	movl	(UC_REGS + _REG_EDI * 4)(%ecx), %edi	; \
 	movl	(UC_REGS + _REG_ESI * 4)(%ecx), %esi	; \
 	movl	(UC_REGS + _REG_EBP * 4)(%ecx), %ebp	; \
