@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.208 2000/04/02 20:33:21 christos Exp $
+#	$NetBSD: mi,v 1.209 2000/04/02 20:34:18 christos Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -1802,6 +1802,7 @@
 ./usr/share/man/cat3/getnetent.0	comp-c-catman
 ./usr/share/man/cat3/getnetgrent.0	comp-c-catman
 ./usr/share/man/cat3/getopt.0	comp-c-catman
+./usr/share/man/cat3/getopt_long.0	comp-c-catman
 ./usr/share/man/cat3/getpagesize.0	comp-c-catman
 ./usr/share/man/cat3/getpass.0	comp-c-catman
 ./usr/share/man/cat3/getprotobyname.0	comp-c-catman
@@ -3310,6 +3311,7 @@
 ./usr/share/man/man3/getnetent.3		comp-c-man
 ./usr/share/man/man3/getnetgrent.3		comp-c-man
 ./usr/share/man/man3/getopt.3		comp-c-man
+./usr/share/man/man3/getopt_long.3		comp-c-man
 ./usr/share/man/man3/getpagesize.3		comp-c-man
 ./usr/share/man/man3/getpass.3		comp-c-man
 ./usr/share/man/man3/getprotobyname.3		comp-c-man
