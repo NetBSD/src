@@ -283,9 +283,6 @@ init532()
 
   /* Set up the ICU. */
   icu_init();
-
-  /* proc1 initialization */
-  calcszicode();
 } 
 
 
