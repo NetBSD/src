@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.4 1997/10/20 00:23:14 lukem Exp $	*/
+/*	$NetBSD: ctl.c,v 1.5 2000/03/02 17:37:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ctl.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: ctl.c,v 1.4 1997/10/20 00:23:14 lukem Exp $");
+__RCSID("$NetBSD: ctl.c,v 1.5 2000/03/02 17:37:46 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -72,6 +72,12 @@ open_sockt()
 {
 	int length;
 
+	
+	(void)memset(&my_addr, 0, sizeof(my_addr));
+	my_addr.sin_family = AF_INET;
+#ifdef BSD4_4
+	my_addr.sin_len = sizeof(my_addr);
+#endif
 	my_addr.sin_addr = my_machine_addr;
 	my_addr.sin_port = 0;
 	sockt = socket(AF_INET, SOCK_STREAM, 0);
@@ -90,6 +96,11 @@ open_ctl()
 {
 	int length;
 
+	(void)memset(&ctl_addr, 0, sizeof(ctl_addr));
+	ctl_addr.sin_family = AF_INET;
+#ifdef BSD4_4
+	ctl_addr.sin_len = sizeof(my_addr);
+#endif
 	ctl_addr.sin_port = 0;
 	ctl_addr.sin_addr = my_machine_addr;
 	ctl_sockt = socket(AF_INET, SOCK_DGRAM, 0);
