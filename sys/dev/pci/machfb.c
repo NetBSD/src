@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.18 2004/04/23 21:13:06 itojun Exp $	*/
+/*	$NetBSD: machfb.c,v 1.19 2005/01/09 16:29:20 martin Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machfb.c,v 1.18 2004/04/23 21:13:06 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machfb.c,v 1.19 2005/01/09 16:29:20 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: machfb.c,v 1.18 2004/04/23 21:13:06 itojun Exp $");
 #include <dev/wscons/wsconsio.h>
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
+
+#include "opt_wsemul.h"
 
 #define MACH64_REG_SIZE		1024
 #define MACH64_REG_OFF		0x7ffc00
@@ -119,6 +121,10 @@ struct mach64_softc {
 	struct callout switch_callout;
 	LIST_HEAD(, mach64screen) screens;
 	const struct wsscreen_descr *currenttype;
+	u_char sc_cmap_red[256];
+	u_char sc_cmap_green[256];
+	u_char sc_cmap_blue[256];	
+	int sc_dacw;
 };
 
 struct mach64screen {
@@ -205,6 +211,8 @@ struct videomode mach64_modes[] = {
 	  VID_NHSYNC | VID_NVSYNC }
 };
 
+/* Macallan: let the terminal emulator program the palette, it should be in the softc anyway */
+#if 1
 /* FIXME values are wrong! */
 const u_char mach64_cmap[16 * 3] = {
 	0x00, 0x00, 0x00, /* black */
@@ -214,7 +222,7 @@ const u_char mach64_cmap[16 * 3] = {
 	0x00, 0x00, 0x7f, /* blue */
 	0x7f, 0x00, 0x7f, /* magenta */
 	0x00, 0x7f, 0x7f, /* cyan */
-	0xff, 0xff, 0xff, /* white */
+	0xc8, 0xc8, 0xc8, /* white */
 
 	0x7f, 0x7f, 0x7f, /* black */
 	0xff, 0x00, 0x00, /* red */
@@ -225,6 +233,11 @@ const u_char mach64_cmap[16 * 3] = {
 	0x00, 0xff, 0xff, /* cyan */
 	0xff, 0xff, 0xff, /* white */
 };
+#endif
+
+#ifdef WSEMUL_VT100
+extern const u_char rasops_cmap[768];
+#endif
 
 int	mach64_match(struct device *, struct cfdata *, void *);
 void	mach64_attach(struct device *, struct device *, void *);
@@ -263,6 +276,15 @@ void	mach64_erasecols(void *, int, int, int, long);
 void	mach64_copyrows(void *, int, int, int);
 void	mach64_eraserows(void *, int, int, long);
 int	mach64_allocattr(void *, int, int, int, long *);
+
+void	mach64_scroll(void *, void *, int);
+
+int mach64_putcmap(struct mach64_softc *, struct wsdisplay_cmap *);
+int mach64_getcmap(struct mach64_softc *, struct wsdisplay_cmap *);
+int mach64_putpalreg(struct mach64_softc *, uint8_t, uint8_t, uint8_t, uint8_t);
+void mach64_bitblt(struct mach64_softc *, int, int, int, int, int, int, int, int) ;
+void mach64_rectfill(struct mach64_softc *, int, int, int, int, int);
+void mach64_showpal(struct mach64_softc *);
 
 #if 0
 const struct wsdisplay_emulops mach64_emulops = {
@@ -366,7 +388,13 @@ struct wsdisplay_accessops mach64_accessops = {
 	mach64_alloc_screen,
 	mach64_free_screen,
 	mach64_show_screen,
-	NULL
+	NULL,	/* load_font */
+	NULL,	/* polls */
+	NULL,	/* getwschar */
+	NULL,	/* putwschar */
+	NULL,	/* scroll */
+	NULL,	/* getborder */
+	NULL	/* setborder */
 };
 
 /*
@@ -397,6 +425,7 @@ regw(struct mach64_softc *sc, u_int32_t index, u_int32_t data)
 {
 
 	bus_space_write_4(sc->sc_regt, sc->sc_regh, index, data);
+	bus_space_barrier(sc->sc_regt, sc->sc_regh, index, 4, BUS_SPACE_BARRIER_WRITE);
 }
 
 static inline void
@@ -404,6 +433,7 @@ regwb(struct mach64_softc *sc, u_int32_t index, u_int8_t data)
 {
 
 	bus_space_write_1(sc->sc_regt, sc->sc_regh, index, data);
+	bus_space_barrier(sc->sc_regt, sc->sc_regh, index, 1, BUS_SPACE_BARRIER_WRITE);
 }
 
 static inline void
@@ -465,7 +495,7 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
-
+	sc->sc_dacw=-1;
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 
@@ -570,27 +600,49 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 	mach64_console_screen.ri.ri_width = default_mode.hdisplay;
 	mach64_console_screen.ri.ri_height = default_mode.vdisplay;
 	mach64_console_screen.ri.ri_stride = mach64_console_screen.ri.ri_width;
-	mach64_console_screen.ri.ri_flg = RI_CLEAR;
+
+	mach64_console_screen.ri.ri_flg = RI_CLEAR|RI_CENTER;
+
+#ifdef WSEMUL_SUN
+	mach64_console_screen.ri.ri_flg = RI_CLEAR|RI_CENTER|RI_FORCEMONO;
+#endif
 
 	rasops_init(&mach64_console_screen.ri, mach64_console_screen.ri.ri_height / 16,
-	    mach64_console_screen.ri.ri_width / 8);
+	    mach64_console_screen.ri.ri_width / 8);	/* XXX width/height are nonsense */
+	
+	/* enable acceleration */
+	mach64_console_screen.ri.ri_ops.copyrows=mach64_copyrows;
+	mach64_console_screen.ri.ri_ops.eraserows=mach64_eraserows;
+	mach64_console_screen.ri.ri_ops.copycols=mach64_copycols;
+	mach64_console_screen.ri.ri_ops.erasecols=mach64_erasecols;
 
 	mach64_defaultscreen.nrows = mach64_console_screen.ri.ri_rows;
 	mach64_defaultscreen.ncols = mach64_console_screen.ri.ri_cols;
 
 	mach64_console_screen.ri.ri_ops.allocattr(&mach64_console_screen.ri, 0, 0, 0,
 	    &defattr);
-
+		
+	/* really necessary? */
+	mach64_defaultscreen.capabilities=mach64_console_screen.ri.ri_caps;
+	mach64_defaultscreen.textops=&mach64_console_screen.ri.ri_ops;
+	
 	/* Initialize fonts */
+	/* XXX Macallan: shouldn't that happen /before/ we call rasops_init()? */
 	wsfont_init();
-
+	
 	if (console) {
 		mach64_init_screen(sc, &mach64_console_screen,
 		    &mach64_defaultscreen, 1, &defattr, setmode);
 		wsdisplay_cnattach(&mach64_defaultscreen, &mach64_console_screen.ri, 
 		    0, 0, defattr);
 	}
+	
+	mach64_init_lut(sc);
 
+#ifdef DEBUG
+	mach64_showpal(sc);
+	delay(4000000);
+#endif
 	aa.console = console;
 	aa.scrdata = &mach64_screenlist;
 	aa.accessops = &mach64_accessops;
@@ -902,7 +954,9 @@ mach64_init_engine(struct mach64_softc *sc)
 	case 8:
 		regw(sc, DP_PIX_WIDTH, HOST_8BPP | SRC_8BPP | DST_8BPP);
 		regw(sc, DP_CHAIN_MASK, DP_CHAIN_8BPP);
-		regw(sc, DAC_CNTL, regr(sc, DAC_CNTL) & ~DAC_8BIT_EN);
+		/* XXX Macallan: huh? We /want/ an 8 bit per channel palette! */
+		/*regw(sc, DAC_CNTL, regr(sc, DAC_CNTL) & ~DAC_8BIT_EN);*/
+		regw(sc, DAC_CNTL, regr(sc, DAC_CNTL) | DAC_8BIT_EN);
 		break;
 #if 0
 	case 32:
@@ -1060,15 +1114,103 @@ mach64_set_pll(struct mach64_softc *sc, int clock)
 void
 mach64_init_lut(struct mach64_softc *sc)
 {
-	int i;
-
-	regwb(sc, DAC_REGS, 0);
-
-	for (i = 0; i < 16; i++) {
-		regwb(sc, DAC_REGS + 1, mach64_cmap[i * 3]);
-		regwb(sc, DAC_REGS + 1, mach64_cmap[i * 3 + 1]);
-		regwb(sc, DAC_REGS + 1, mach64_cmap[i + 3 + 2]);
+	/* XXX this is pretty dodgy since it's perfectly possible that
+	   both terminal emulations are compiled into the kernel, in this
+	   case we'd install the VT100 colour map which may be wrong */
+#ifdef WSEMUL_SUN
+	mach64_putpalreg(sc,0,255,255,255);
+	mach64_putpalreg(sc,1,0,0,0);
+	mach64_putpalreg(sc,255,0,0,0);
+#endif
+#ifdef WSEMUL_VT100
+	{
+		int i,idx;
+		idx=0;
+		for(i=0;i<256;i++) {
+			mach64_putpalreg(sc,i,rasops_cmap[idx],rasops_cmap[idx+1],rasops_cmap[idx+2]);
+			idx+=3;
+		}
 	}
+#endif
+}
+
+int mach64_putpalreg(struct mach64_softc *sc, uint8_t index, uint8_t r, uint8_t g, uint8_t b)
+{
+	sc->sc_cmap_red[index]=r;
+	sc->sc_cmap_green[index]=g;
+	sc->sc_cmap_blue[index]=b;
+	/* writing the dac index takes a while, in theory we can poll some register
+	   to see when it's ready - but we better avoid writing it unnecessarily */
+	if(index!=sc->sc_dacw)
+	{
+		regwb(sc, DAC_MASK, 0xff);
+		regwb(sc, DAC_WINDEX, index);
+	}
+	sc->sc_dacw=index+1;
+	regwb(sc, DAC_DATA, r);
+	regwb(sc, DAC_DATA, g);
+	regwb(sc, DAC_DATA, b);
+	return 0;
+}
+
+int mach64_putcmap(struct mach64_softc *sc, struct wsdisplay_cmap *cm)
+{
+	u_int index = cm->index;
+	u_int count = cm->count;
+	int i, error;
+	u_char rbuf[256], gbuf[256], bbuf[256];
+	u_char *r, *g, *b;
+
+	printf("putcmap: %d %d\n",index, count);
+	if (cm->index >= 256 || cm->count > 256 ||
+	    (cm->index + cm->count) > 256)
+		return EINVAL;
+	error = copyin(cm->red, &rbuf[index], count);
+	if (error)
+		return error;
+	error = copyin(cm->green, &gbuf[index], count);
+	if (error)
+		return error;
+	error = copyin(cm->blue, &bbuf[index], count);
+	if (error)
+		return error;
+
+	memcpy(&sc->sc_cmap_red[index], &rbuf[index], count);
+	memcpy(&sc->sc_cmap_green[index], &gbuf[index], count);
+	memcpy(&sc->sc_cmap_blue[index], &bbuf[index], count);
+
+	r = &sc->sc_cmap_red[index];
+	g = &sc->sc_cmap_green[index];
+	b = &sc->sc_cmap_blue[index];
+	
+	for (i = 0; i < count; i++) {
+		mach64_putpalreg(sc,index,*r, *g, *b);
+		index++;
+		r++, g++, b++;
+	}
+	return 0;
+}
+
+int mach64_getcmap(struct mach64_softc *sc, struct wsdisplay_cmap *cm)
+{
+	u_int index = cm->index;
+	u_int count = cm->count;
+	int error;
+
+	if (index >= 255 || count > 256 || index + count > 256)
+		return EINVAL;
+	
+	error = copyout(&sc->sc_cmap_red[index],   cm->red,   count);
+	if (error)
+		return error;
+	error = copyout(&sc->sc_cmap_green[index], cm->green, count);
+	if (error)
+		return error;
+	error = copyout(&sc->sc_cmap_blue[index],  cm->blue,  count);
+	if (error)
+		return error;
+
+	return 0;
 }
 
 void
@@ -1097,8 +1239,9 @@ mach64_switch_screen(struct mach64_softc *sc)
 		return;
 
 #ifdef DIAGNOSTIC
-	if (scr->active)
-		panic("mach64_switch_screen: active");
+/* XXX Macallan: this one bites us at reboot */
+/*	if (scr->active)
+		panic("mach64_switch_screen: active");*/
 #endif
 
 	if (oldscr)
@@ -1188,37 +1331,141 @@ mach64_putchar(void *cookie, int row, int col, u_int c, long attr)
 {
 
 }
+#endif
 
 void
 mach64_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 {
-
+	struct rasops_info *ri=cookie;
+	struct mach64_softc *sc=ri->ri_hw;
+	int32_t xs,xd,y,width,height;
+	
+	xs=ri->ri_xorigin+ri->ri_font->fontwidth*srccol;
+	xd=ri->ri_xorigin+ri->ri_font->fontwidth*dstcol;
+	y=ri->ri_yorigin+ri->ri_font->fontheight*row;
+	width=ri->ri_font->fontwidth*ncols;
+	height=ri->ri_font->fontheight;		
+	mach64_bitblt(sc,xs,y,xd,y,width,height,MIX_SRC,0xff);
 }
 
 void
 mach64_erasecols(void *cookie, int row, int startcol, int ncols, long fillattr)
 {
+	struct rasops_info *ri=cookie;
+	struct mach64_softc *sc=ri->ri_hw;
+	int32_t x,y,width,height,fg,bg,ul;;
+	
+	x=ri->ri_xorigin+ri->ri_font->fontwidth*startcol;
+	y=ri->ri_yorigin+ri->ri_font->fontheight*row;
+	width=ri->ri_font->fontwidth*ncols;
+	height=ri->ri_font->fontheight;		
+	rasops_unpack_attr(fillattr,&fg,&bg,&ul);
+	
+	mach64_rectfill(sc,x,y,width,height,bg);
 
 }
 
 void
 mach64_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 {
-
+	struct rasops_info *ri=cookie;
+	struct mach64_softc *sc=ri->ri_hw;
+	int32_t x,ys,yd,width,height;
+	
+	x=ri->ri_xorigin;
+	ys=ri->ri_yorigin+ri->ri_font->fontheight*srcrow;
+	yd=ri->ri_yorigin+ri->ri_font->fontheight*dstrow;
+	width=ri->ri_emuwidth;
+	height=ri->ri_font->fontheight*nrows;		
+	mach64_bitblt(sc,x,ys,x,yd,width,height,MIX_SRC,0xff);
 }
 
+void mach64_bitblt(struct mach64_softc *sc, int xs, int ys, int xd, int yd, int width, int height, int rop,
+int mask) 
+{
+	uint32_t dest_ctl=0;
+	wait_for_idle(sc);	
+	regw(sc,DP_WRITE_MASK,mask);	/* XXX only good for 8 bit */
+	regw(sc,DP_PIX_WIDTH,DST_8BPP|SRC_8BPP|HOST_8BPP);
+	regw(sc,DP_SRC,FRGD_SRC_BLIT);
+	regw(sc,DP_MIX,(rop&0xffff)<<16);
+	regw(sc,CLR_CMP_CNTL,0);	/* no transparency */
+	if(yd<ys) {
+		dest_ctl=DST_Y_TOP_TO_BOTTOM;
+	} else {
+		ys+=height-1;
+		yd+=height-1;
+		dest_ctl=DST_Y_BOTTOM_TO_TOP;
+	}
+	if(xd<xs) {
+		dest_ctl|=DST_X_LEFT_TO_RIGHT;
+		regw(sc,SRC_CNTL,SRC_LINE_X_LEFT_TO_RIGHT);
+	} else {
+		dest_ctl|=DST_X_RIGHT_TO_LEFT;
+		xs+=width-1;
+		xd+=width-1;
+		regw(sc,SRC_CNTL,SRC_LINE_X_RIGHT_TO_LEFT);
+	}
+	regw(sc,DST_CNTL,dest_ctl);
+	
+	regw(sc,SRC_Y_X,(xs<<16)|ys);
+	regw(sc,SRC_WIDTH1,width);
+	regw(sc,DST_Y_X,(xd<<16)|yd);
+	regw(sc,DST_HEIGHT_WIDTH,(width<<16)|height);
+	/* as long as the other rasops* functions aren't aware of the blitter we must wait here
+	   or the blitter might not be done when someone else draws the next line */
+	wait_for_idle(sc);	
+}
+ 
+void mach64_rectfill(struct mach64_softc *sc, int x, int y, int width, int height, int colour) 
+{
+	wait_for_idle(sc);	
+	regw(sc,DP_WRITE_MASK,0xff);
+	regw(sc,DP_FRGD_CLR,colour);
+	regw(sc,DP_PIX_WIDTH,DST_8BPP|SRC_8BPP|HOST_8BPP);
+	regw(sc,DP_SRC,FRGD_SRC_FRGD_CLR);
+	regw(sc,DP_MIX,(MIX_SRC)<<16);
+	regw(sc,CLR_CMP_CNTL,0);	/* no transparency */
+	regw(sc,SRC_CNTL,SRC_LINE_X_LEFT_TO_RIGHT);
+	regw(sc,DST_CNTL,DST_X_LEFT_TO_RIGHT|DST_Y_TOP_TO_BOTTOM);
+	
+	regw(sc,SRC_Y_X,(x<<16)|y);
+	regw(sc,SRC_WIDTH1,width);
+	regw(sc,DST_Y_X,(x<<16)|y);
+	regw(sc,DST_HEIGHT_WIDTH,(width<<16)|height);
+	wait_for_idle(sc);	
+}
+
+void mach64_showpal(struct mach64_softc *sc) 
+{
+	int i,x=0;
+	for (i=0;i<16;i++) {
+		mach64_rectfill(sc,x,0,64,64,i);
+		x+=64;
+	}
+}
+	
 int
 mach64_allocattr(void *cookie, int fg, int bg, int flags, long *attrp)
 {
 
 	return 0;
 }
-#endif
 
 void
 mach64_eraserows(void *cookie, int row, int nrows, long fillattr)
 {
-
+	struct rasops_info *ri=cookie;
+	struct mach64_softc *sc=ri->ri_hw;
+	int32_t x,y,width,height,fg,bg,ul;
+	
+	x=ri->ri_xorigin;
+	y=ri->ri_yorigin+ri->ri_font->fontheight*row;
+	width=ri->ri_emuwidth;
+	height=ri->ri_font->fontheight*nrows;		
+	rasops_unpack_attr(fillattr,&fg,&bg,&ul);
+		   
+	mach64_rectfill(sc,x,y,width,height,bg);
 }
 
 /*
@@ -1228,14 +1475,67 @@ mach64_eraserows(void *cookie, int row, int nrows, long fillattr)
 int
 mach64_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
+	/* we'll probably need to add more stuff here */
+	struct mach64_softc *sc = v;
+	struct wsdisplay_fbinfo *wdf;
+	struct mach64screen *ms=sc->active;
+	switch (cmd) {
+		case WSDISPLAYIO_GTYPE:
+			*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;	/* XXX ? */
+			return 0;
 
-	return ENOTTY;
+		case WSDISPLAYIO_GINFO:
+			wdf = (void *)data;
+			wdf->height = ms->ri.ri_height;
+			wdf->width = ms->ri.ri_width;
+			wdf->depth = ms->ri.ri_depth;
+			wdf->cmsize = 256;
+			return 0;
+		case WSDISPLAYIO_GETCMAP:
+			return mach64_getcmap(sc, (struct wsdisplay_cmap *)data);
+
+		case WSDISPLAYIO_PUTCMAP:
+			return mach64_putcmap(sc, (struct wsdisplay_cmap *)data);
+		/* PCI config read/write passthrough. */
+		case PCI_IOC_CFGREAD:
+		case PCI_IOC_CFGWRITE:
+			return (pci_devioctl(sc->sc_pc, sc->sc_pcitag,
+			    cmd, data, flag, p));
+#ifdef notyet
+		case WSDISPLAYIO_SMODE:
+			{
+				int new_mode=*(int*)data;
+				if(new_mode!=sc->sc_mode)
+				{
+					sc->sc_mode=new_mode;
+					if(new_mode==WSDISPLAYIO_MODE_EMUL)
+					{
+						/* we'll probably want to reset the console into a known state here 
+						   just in case the Xserver crashed or didn't properly clean up after 
+						   itself for whetever reason */
+					}
+				}
+			}
+#endif
+	}
+	return EPASSTHROUGH;
 }
 
 paddr_t
 mach64_mmap(void *v, off_t offset, int prot)
 {
-
+	struct mach64_softc *sc = v;	
+	paddr_t pa;
+	/* 'regular' framebuffer mmap()ing */
+	if(offset<sc->sc_apersize) {
+		pa = bus_space_mmap(sc->sc_memt,sc->sc_aperbase+offset,0,prot,BUS_SPACE_MAP_LINEAR);	
+		return pa;
+	}
+	/* allow XFree86 to mmap() PCI space as if the BARs contain physical addresses */
+	if((offset>0x80000000) && (offset<=0xffffffff)) {
+		pa = bus_space_mmap(sc->sc_memt,offset,0,prot,BUS_SPACE_MAP_LINEAR);	
+		return pa;
+	}
 	return -1;
 }
 
