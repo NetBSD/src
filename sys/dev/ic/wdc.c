@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.108 2002/01/13 17:24:28 christos Exp $ */
+/*	$NetBSD: wdc.c,v 1.109 2002/01/14 21:51:35 bouyer Exp $ */
 
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.108 2002/01/13 17:24:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.109 2002/01/14 21:51:35 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -276,7 +276,7 @@ wdcprobe(chp)
 			    chp->channel, drive), DEBUG_PROBE);
 			break;
 		}
-		if (chp->wdc->cap & WDC_CAPABILITY_SELECT)
+		if (chp->wdc && chp->wdc->cap & WDC_CAPABILITY_SELECT)
 			chp->wdc->select(chp,drive);
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 		    WDSD_IBM | (drive << 4));
@@ -800,7 +800,7 @@ __wdcwait_reset(chp, drv_mask)
 #endif
 	/* wait for BSY to deassert */
 	for (timeout = 0; timeout < WDCNDELAY_RST;timeout++) {
-		if (chp->wdc->cap & WDC_CAPABILITY_SELECT)
+		if (chp->wdc && chp->wdc->cap & WDC_CAPABILITY_SELECT)
 			chp->wdc->select(chp,0);
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 		    WDSD_IBM); /* master */
@@ -812,7 +812,7 @@ __wdcwait_reset(chp, drv_mask)
 		cl0 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_lo);
 		ch0 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_hi);
 #endif
-		if (chp->wdc->cap & WDC_CAPABILITY_SELECT)
+		if (chp->wdc && chp->wdc->cap & WDC_CAPABILITY_SELECT)
 			chp->wdc->select(chp,1);
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 		    WDSD_IBM | 0x10); /* slave */
