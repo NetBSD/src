@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fmv.c,v 1.31 2002/10/02 02:09:18 thorpej Exp $	*/
+/*	$NetBSD: if_fmv.c,v 1.32 2002/10/02 03:10:47 thorpej Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fmv.c,v 1.31 2002/10/02 02:09:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fmv.c,v 1.32 2002/10/02 03:10:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ struct fmv_softc {
 };
 
 CFATTACH_DECL(fmv, sizeof(struct fmv_softc),
-	fmv_match, fmv_attach, NULL, NULL);
+    fmv_match, fmv_attach, NULL, NULL);
 
 struct fe_simple_probe_struct {
 	u_char port;	/* Offset from the base I/O address. */
