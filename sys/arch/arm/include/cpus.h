@@ -1,4 +1,4 @@
-/*	$NetBSD: cpus.h,v 1.12 2002/03/10 00:44:10 bjh21 Exp $	*/
+/*	$NetBSD: cpus.h,v 1.13 2002/03/10 11:32:01 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -66,7 +66,6 @@ typedef struct _cpu {
 
 	u_int	fpu_class;	/* The FPU class */
 	u_int	fpu_type;	/* The FPU type */
-	char	fpu_model[256];	/* Text description of FPU */
 
 } cpu_t;
 
