@@ -1,11 +1,11 @@
-#       $NetBSD: Makefile,v 1.1 2000/07/06 22:35:58 mjl Exp $
+#       $NetBSD: Makefile,v 1.2 2000/07/24 00:00:21 mycroft Exp $
 
 PROG=   skeytest
 NOMAN=  t
 
 .PATH:  ${.CURDIR}/..
 
-LDFLAGS += -lskey
+LDADD+=	-lskey
 
 regress: skeytest
 	@echo Testing S/Key hash algorithms
