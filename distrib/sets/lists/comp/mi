@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.577 2003/06/03 21:34:24 nathanw Exp $
+#	$NetBSD: mi,v 1.578 2003/06/04 22:50:19 matt Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -1099,6 +1099,7 @@
 ./usr/share/man/cat1/msg_prompt.0	comp-c-catman
 ./usr/share/man/cat1/msg_prompt_add.0	comp-c-catman
 ./usr/share/man/cat1/msg_prompt_noecho.0	comp-c-catman
+./usr/share/man/cat1/msg_prompt_win.0	comp-c-catman
 ./usr/share/man/cat1/msg_standend.0	comp-c-catman
 ./usr/share/man/cat1/msg_standout.0	comp-c-catman
 ./usr/share/man/cat1/msg_string.0	comp-c-catman
@@ -4424,6 +4425,7 @@
 ./usr/share/man/man1/msg_prompt.1	comp-c-man
 ./usr/share/man/man1/msg_prompt_add.1	comp-c-man
 ./usr/share/man/man1/msg_prompt_noecho.1	comp-c-man
+./usr/share/man/man1/msg_prompt_win.1	comp-c-man
 ./usr/share/man/man1/msg_standend.1	comp-c-man
 ./usr/share/man/man1/msg_standout.1	comp-c-man
 ./usr/share/man/man1/msg_string.1	comp-c-man
