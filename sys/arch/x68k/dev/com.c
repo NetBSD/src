@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.2.2.1 1996/06/05 18:06:34 oki Exp $	*/
+/*	$NetBSD: com.c,v 1.2.2.2 1996/07/16 22:29:57 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -842,8 +842,10 @@ comstart(tp)
 	int iobase = sc->sc_iobase;
 	int s;
 
+#ifdef DDB
 	if (comdebug)
 		Debugger();
+#endif
 	s = spltty();
 	if (ISSET(tp->t_state, TS_BUSY))
 		goto out;
