@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.12 2000/11/20 08:24:22 chs Exp $ */
+/*	$NetBSD: disksubr.c,v 1.13 2000/12/17 22:39:18 pk Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -86,10 +86,12 @@ readdisklabel(dev, strat, lp, clp)
 	/* minimal requirements for archtypal disk label */
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
-	lp->d_npartitions = 1;
-	if (lp->d_partitions[0].p_size == 0)
-		lp->d_partitions[0].p_size = 0x1fffffff;
-	lp->d_partitions[0].p_offset = 0;
+	if (lp->d_npartitions == 0) {
+		lp->d_npartitions = RAW_PART + 1;
+		if (lp->d_partitions[RAW_PART].p_size == 0)
+			lp->d_partitions[RAW_PART].p_size = 0x1fffffff;
+		lp->d_partitions[RAW_PART].p_offset = 0;
+	}
 
 	/* obtain buffer to probe drive with */
 	bp = geteblk((int)lp->d_secsize);
