@@ -1,4 +1,4 @@
-/*	$NetBSD: term.h,v 1.15 2003/09/14 21:48:55 christos Exp $	*/
+/*	$NetBSD: term.h,v 1.16 2005/03/15 00:10:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -115,6 +115,7 @@ protected void	term__flush(void);
 #define	EL_CAN_CEOL		(EL_FLAGS & TERM_CAN_CEOL)
 #define	EL_CAN_TAB		(EL_FLAGS & TERM_CAN_TAB)
 #define	EL_CAN_ME		(EL_FLAGS & TERM_CAN_ME)
+#define EL_CAN_UP		(EL_FLAGS & TERM_CAN_UP)
 #define	EL_HAS_META		(EL_FLAGS & TERM_HAS_META)
 #define	EL_HAS_AUTO_MARGINS	(EL_FLAGS & TERM_HAS_AUTO_MARGINS)
 #define	EL_HAS_MAGIC_MARGINS	(EL_FLAGS & TERM_HAS_MAGIC_MARGINS)
