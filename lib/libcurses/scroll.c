@@ -1,4 +1,4 @@
-/*	$NetBSD: scroll.c,v 1.16 2001/05/17 19:04:01 jdc Exp $	*/
+/*	$NetBSD: scroll.c,v 1.17 2003/02/17 11:07:21 dsl Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)scroll.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: scroll.c,v 1.16 2001/05/17 19:04:01 jdc Exp $");
+__RCSID("$NetBSD: scroll.c,v 1.17 2003/02/17 11:07:21 dsl Exp $");
 #endif
 #endif				/* not lint */
 
@@ -89,7 +89,7 @@ wscrl(WINDOW *win, int lines)
 	int     oy, ox;
 
 #ifdef DEBUG
-	__CTRACE("wscrl: (%0.2o) lines=%d\n", win, lines);
+	__CTRACE("wscrl: (%p) lines=%d\n", win, lines);
 #endif
 
 	if (!(win->flags & __SCROLLOK))

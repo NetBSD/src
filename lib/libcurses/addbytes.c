@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.24 2002/12/23 12:26:07 jdc Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.25 2003/02/17 11:07:19 dsl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.24 2002/12/23 12:26:07 jdc Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.25 2003/02/17 11:07:19 dsl Exp $");
 #endif
 #endif				/* not lint */
 
@@ -135,7 +135,7 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 
 		default:
 #ifdef DEBUG
-			__CTRACE("ADDBYTES(%0.2o, %d, %d)\n", win, y, x);
+			__CTRACE("ADDBYTES(%p, %d, %d)\n", win, y, x);
 #endif
 
 			lp = win->lines[y];
