@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.5 2004/05/10 02:36:56 thorpej Exp $ */
+/*	$NetBSD: if_dge.c,v 1.6 2004/09/21 21:57:30 yamt Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.5 2004/05/10 02:36:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.6 2004/09/21 21:57:30 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2129,6 +2129,7 @@ dge_add_rxbuf(struct dge_softc *sc, int idx)
 
 	m->m_len = m->m_pkthdr.len = DGE_BUFFER_SIZE;
 	MEXTADD(m, buf, DGE_BUFFER_SIZE, M_DEVBUF, dge_freebuf, sc);
+	m->m_flags |= M_EXT_RW;
 
 	if (rxs->rxs_mbuf != NULL)
 		bus_dmamap_unload(sc->sc_dmat, rxs->rxs_dmamap);
