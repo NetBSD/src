@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.21 1994/10/30 21:47:41 cgd Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.22 1994/12/24 13:25:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -461,6 +461,19 @@ lkmenodev(dev, oflags, devtype, p)
 {
 
 	return (enodev());
+}
+
+/*
+ * A placeholder function for load/unload/stat calls; simply returns zero.
+ * Used where people don't wnat tp specify a special function.
+ */
+int
+lkm_nofunc(lkmtp, cmd)
+	struct lkm_table *lkmtp;
+	int cmd;
+{
+
+	return (0);
 }
 
 int
