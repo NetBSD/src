@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.1 2004/09/22 11:32:03 yamt Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.2 2004/09/26 00:26:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -40,10 +40,6 @@
 
 #ifndef _CPU_DATA_H_
 #define	_CPU_DATA_H_
-
-#if defined(_KERNEL_OPT)
-#include "opt_multiprocessor.h"
-#endif
 
 struct lwp;
 #include <sys/sched.h>	/* for schedstate_percpu */
