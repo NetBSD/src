@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.169 2004/07/22 19:55:08 mycroft Exp $	*/
+/*	$NetBSD: wi.c,v 1.170 2004/07/22 19:56:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.169 2004/07/22 19:55:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.170 2004/07/22 19:56:55 mycroft Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -2230,46 +2230,46 @@ STATIC int
 wi_write_txrate(struct wi_softc *sc, int rate)
 {
 	u_int16_t hwrate;
-	int i;
 
-	rate = (rate & IEEE80211_RATE_VAL) / 2;
-
-	/* rate: 0, 1, 2, 5, 11 */
+	/* rate: 0, 2, 4, 11, 22 */
 	switch (sc->sc_firmware_type) {
 	case WI_LUCENT:
-		switch (rate) {
-		case 0:
-			hwrate = 3;	/* auto */
+		switch (rate & IEEE80211_RATE_VAL) {
+		case 2:
+			hwrate = 1;
 			break;
-		case 5:
-			hwrate = 4;
-			break;
-		case 11:
-			hwrate = 5;
+		case 4:
+			hwrate = 2;
 			break;
 		default:
-			hwrate = rate;
+			hwrate = 3;	/* auto */
+			break;
+		case 11:
+			hwrate = 4;
+			break;
+		case 22:
+			hwrate = 5;
 			break;
 		}
 		break;
 	default:
-		/* Choose a bit according to this table.
-		 *
-		 * bit | data rate
-		 * ----+-------------------
-		 * 0   | 1Mbps
-		 * 1   | 2Mbps
-		 * 2   | 5.5Mbps
-		 * 3   | 11Mbps
-		 */
-		for (i = 8; i > 0; i >>= 1) {
-			if (rate >= i)
-				break;
+		switch (rate & IEEE80211_RATE_VAL) {
+		case 2:
+			hwrate = 1;
+			break;
+		case 4:
+			hwrate = 2;
+			break;
+		case 11:
+			hwrate = 4;
+			break;
+		case 22:
+			hwrate = 8;
+			break;
+		default:
+			hwrate = 15;	/* auto */
+			break;
 		}
-		if (i == 0)
-			hwrate = 0xf;	/* auto */
-		else
-			hwrate = i;
 		break;
 	}
 
