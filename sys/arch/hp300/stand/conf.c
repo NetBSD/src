@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.9 1995/09/02 05:04:16 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.10 1995/09/23 17:28:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -39,7 +39,7 @@
 
 #include "stand.h"
 
-#ifdef NETBOOT
+#if defined(NETBOOT) || defined(SYS_INST)
 #include <sys/socket.h>
 #include <net/if.h>
 #include <netinet/in.h>
@@ -48,52 +48,55 @@
 
 #include "nfs.h"
 
-#else
+#endif /* NETBOOT || SYS_INST */
 
+#ifndef NETBOOT
 #include "ufs.h"
-
-#endif /* NETBOOT */
+#endif /* ! NETBOOT */
 
 int	debug = 0;	/* XXX */
 
 /*
  * Device configuration
  */
-#ifdef NETBOOT
-int	netstrategy __P((void *, int, daddr_t, u_int, char *, u_int *));
+#if defined(NETBOOT) || defined(SYS_INST)
+int	netstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
 int	netopen __P((struct open_file *, ...));
 int	netclose __P((struct open_file *));
 #define netioctl	noioctl
-#else
+#endif /* NETBOOT || SYS_INST */
+
+#ifndef NETBOOT
+/* XXX: no support for tapes in SYS_INST yet. */
 #ifdef TAPEBOOT
-int	ctstrategy __P((void *, int, daddr_t, u_int, char *, u_int *));
+int	ctstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
 int	ctopen __P((struct open_file *, ...));
 int	ctclose __P((struct open_file *));
 #else
 #define	ctstrategy	\
-	(int (*) __P((void *, int, daddr_t, u_int, char *, u_int *)))nullsys
+	(int (*) __P((void *, int, daddr_t, size_t, void *, size_t *)))nullsys
 #define	ctopen		(int (*) __P((struct open_file *, ...)))nodev
 #define	ctclose		(int (*) __P((struct open_file *)))nullsys
 #endif /* TAPEBOOT */
 
 #define	ctioctl		noioctl
 
-int	rdstrategy __P((void *, int, daddr_t, u_int, char *, u_int *));
+int	rdstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
 int	rdopen __P((struct open_file *, ...));
-#define rdclose		(int (*) __P((struct open_file *)))nullsys
+int	rdclose __P((struct open_file *));
 #define rdioctl		noioctl
 
-int	sdstrategy __P((void *, int, daddr_t, u_int, char *, u_int *));
+int	sdstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
 int	sdopen __P((struct open_file *, ...));
-#define sdclose		(int (*) __P((struct open_file *)))nullsys
+int	sdclose __P((struct open_file *));
 #define	sdioctl		noioctl
 
 #define xxstrategy	\
-	(int (*) __P((void *, int, daddr_t, u_int, char *, u_int *)))nullsys
+	(int (*) __P((void *, int, daddr_t, size_t, void *, size_t *)))nullsys
 #define xxopen		(int (*) __P((struct open_file *, ...)))nodev
 #define xxclose		(int (*) __P((struct open_file *)))nullsys
 
-#endif /* NETBOOT */
+#endif /* ! NETBOOT */
 
 struct devsw devsw[] = {
 #ifdef NETBOOT
@@ -104,6 +107,9 @@ struct devsw devsw[] = {
 	{ "rd",	rdstrategy,	rdopen,	rdclose,	rdioctl }, /*2*/
 	{ "??",	xxstrategy,	xxopen,	xxclose,	noioctl }, /*3*/
 	{ "sd",	sdstrategy,	sdopen,	sdclose,	sdioctl }, /*4*/
+#ifdef SYS_INST
+	{ "le", netstrategy,	netopen, netclose,	netioctl },
+#endif /* SYS_INST */
 #endif /* NETBOOT */
 };
 int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
@@ -112,16 +118,17 @@ int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
  * Filesystem configuration
  */
 struct fs_ops file_system[] = {
-#ifdef NETBOOT
-	{ nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat },
-#else
+#ifndef NETBOOT
 	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat },
-#endif /* NETBOOT */
+#endif /* ! NETBOOT */
+#if defined(NETBOOT) || defined(SYS_INST)
+	{ nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat },
+#endif /* NETBOOT || SYS_INST */
 };
 
 int nfsys = (sizeof(file_system) / sizeof(file_system[0]));
 
-#ifdef NETBOOT
+#if defined(NETBOOT) || defined(SYS_INST)
 extern struct netif_driver le_driver;
 
 struct netif_driver *netif_drivers[] = {
@@ -137,10 +144,11 @@ int n_netif_drivers = sizeof(netif_drivers)/sizeof(netif_drivers[0]);
  */
 void ctlrinit()
 {
-#ifdef NETBOOT
+#if defined(NETBOOT) || defined(SYS_INST)
 	leinit();
-#else
+#endif /* NETBOOT || SYS_INST */
+#ifndef NETBOOT
 	hpibinit();
 	scsiinit();
-#endif /* NETBOOT */
+#endif /* ! NETBOOT */
 }
