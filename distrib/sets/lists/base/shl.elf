@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.89 2004/08/12 16:07:07 lukem Exp $
+# $NetBSD: shl.elf,v 1.90 2004/11/24 11:59:11 blymn Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./lib/libc.so					base-sys-shlib
 ./lib/libc.so.12				base-sys-shlib
@@ -83,7 +83,7 @@
 ./usr/lib/libevent.so				base-sys-shlib
 ./usr/lib/libevent.so.0				base-sys-shlib
 ./usr/lib/libform.so				base-sys-shlib
-./usr/lib/libform.so.4				base-sys-shlib
+./usr/lib/libform.so.5				base-sys-shlib
 ./usr/lib/libgnumalloc.so			base-sys-shlib
 ./usr/lib/libgnumalloc.so.0			base-sys-shlib
 ./usr/lib/libgssapi.so				base-krb5-shlib		kerberos
