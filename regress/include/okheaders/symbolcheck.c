@@ -15,8 +15,11 @@
 #include <sys/buf.h>
 #include <sys/callout.h>
 #include <sys/cdefs.h>
-#include <sys/cdefs_aout.h>
+#ifdef __ELF__
 #include <sys/cdefs_elf.h>
+#else
+#include <sys/cdefs_aout.h>
+#endif
 #include <sys/cdio.h>
 #include <sys/chio.h>
 #include <sys/clockctl.h>
@@ -313,7 +316,9 @@
 #include <soundcard.h>
 #include <stab.h>
 #include <stdarg.h>
+#if __GNUC__ > 2
 #include <stdbool.h>
+#endif
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
