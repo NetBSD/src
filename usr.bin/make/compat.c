@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.12 1995/11/02 23:54:43 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.13 1995/11/22 17:40:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)compat.c	5.7 (Berkeley) 3/1/91";
 #else
-static char rcsid[] = "$NetBSD: compat.c,v 1.12 1995/11/02 23:54:43 christos Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.13 1995/11/22 17:40:00 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -155,7 +155,7 @@ CompatRunCommand (cmdp, gnp)
     register char *cp;
     Boolean 	  silent,   	/* Don't print command */
 		  errCheck; 	/* Check errors */
-    union wait 	  reason;   	/* Reason for child's death */
+    int 	  reason;   	/* Reason for child's death */
     int	    	  status;   	/* Description of child's death */
     int	    	  cpid;	    	/* Child actually found */
     ReturnStatus  stat;	    	/* Status of fork */
@@ -296,7 +296,7 @@ CompatRunCommand (cmdp, gnp)
      */
     while (1) {
 
-	while ((stat = wait((int *)&reason)) != cpid) {
+	while ((stat = wait(&reason)) != cpid) {
 	    if (stat == -1 && errno != EINTR) {
 		break;
 	    }
@@ -304,14 +304,14 @@ CompatRunCommand (cmdp, gnp)
 	
 	if (stat > -1) {
 	    if (WIFSTOPPED(reason)) {
-		status = reason.w_stopval;		/* stopped */
+		status = WSTOPSIG(reason);		/* stopped */
 	    } else if (WIFEXITED(reason)) {
-		status = reason.w_retcode;		/* exited */
+		status = WEXITSTATUS(reason);		/* exited */
 		if (status != 0) {
 		    printf ("*** Error code %d", status);
 		}
 	    } else {
-		status = reason.w_termsig;		/* signaled */
+		status = WTERMSIG(reason);		/* signaled */
 		printf ("*** Signal %d", status);
 	    } 
 

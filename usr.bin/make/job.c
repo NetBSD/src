@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.12 1995/11/02 23:54:48 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.13 1995/11/22 17:40:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	5.15 (Berkeley) 3/1/91";
 #else
-static char rcsid[] = "$NetBSD: job.c,v 1.12 1995/11/02 23:54:48 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.13 1995/11/22 17:40:09 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -270,6 +270,26 @@ STATIC Lst	stoppedJobs;	/* Lst of Job structures describing
 # endif
 #endif
 
+/* 
+ * Grmpf... There is no way to set bits of the wait structure
+ * anymore with the stupid W*() macros. I liked the union wait
+ * stuff much more. So, we devise our own macros... This is
+ * really ugly, use dramamine sparingly. You have been warned.
+ */
+#define W_SETMASKED(st, val, fun)				\
+	{							\
+		int sh = (int) ~0;				\
+		int mask = fun(sh);				\
+								\
+		for (sh = 0; ((mask >> sh) & 1) == 0; sh++)	\
+			continue;				\
+		*(st) = (*(st) & ~mask) | ((val) << sh);	\
+	}
+
+#define W_SETTERMSIG(st, val) W_SETMASKED(st, val, WTERMSIG)
+#define W_SETEXITSTATUS(st, val) W_SETMASKED(st, val, WEXITSTATUS)
+
+
 static int JobCondPassSig __P((ClientData, ClientData));
 static void JobPassSig __P((int));
 static int JobCmpPid __P((ClientData, ClientData));
@@ -282,7 +302,7 @@ static int JobCmpRmtID __P((Job *, int));
 static void JobLocalInput __P((int, Job *));
 # endif
 #else
-static void JobFinish __P((Job *, union wait *));
+static void JobFinish __P((Job *, int *));
 static void JobExec __P((Job *, char **));
 #endif
 static void JobMakeArgv __P((Job *, char **));
@@ -354,7 +374,7 @@ static void
 JobPassSig(signo)
     int	    signo;	/* The signal number we've received */
 {
-    int	    mask;
+    sigset_t nmask, omask;
     
     if (DEBUG(JOB)) {
 	(void) fprintf(stdout, "JobPassSig(%d) called.\n", signo);
@@ -386,8 +406,9 @@ JobPassSig(signo)
      * This ensures that all our jobs get continued when we wake up before
      * we take any other signal.
      */
-    mask = sigblock(0);
-    (void) sigsetmask(~0 & ~(1 << (signo-1)));
+    sigfillset(&nmask);
+    (void) sigprocmask(SIG_BLOCK, &nmask, &omask);
+
     if (DEBUG(JOB)) {
 	(void) fprintf(stdout,
 		       "JobPassSig passing signal to self, mask = %x.\n",
@@ -401,7 +422,7 @@ JobPassSig(signo)
     signo = SIGCONT;
     Lst_ForEach(jobs, JobCondPassSig, (ClientData) &signo);
 
-    (void) sigsetmask(mask);
+    (void) sigprocmask(SIG_SETMASK, &omask, NULL);
     (void) signal(signo, JobPassSig);
 
 }
@@ -710,10 +731,10 @@ JobClose(job)
 /*ARGSUSED*/
 static void
 JobFinish(job, status)
-    Job           *job;	      	  /* job to finish */
-    union wait	  *status;     	  /* sub-why job went away */
+    Job         *job;	      	  /* job to finish */
+    int	  	*status;     	  /* sub-why job went away */
 {
-    Boolean 	  done;
+    Boolean 	 done;
 
     if ((WIFEXITED(*status) &&
 	 (((WEXITSTATUS(*status) != 0) && !(job->flags & JOB_IGNERR)))) ||
@@ -799,7 +820,7 @@ JobFinish(job, status)
 			       (job->flags & JOB_IGNERR) ? "(ignored)" : "");
 
 		if (job->flags & JOB_IGNERR) {
-		    status->w_status = 0;
+		    *status = 0;
 		}
 	    } else if (DEBUG(JOB)) {
 		if (usePipes && job->node != lastNode) {
@@ -903,7 +924,7 @@ JobFinish(job, status)
 	    break;
 	case JOB_ERROR:
 	    done = TRUE;
-	    status->w_retcode = 1;
+	    W_SETEXITSTATUS(status, 1);
 	    break;
 	case JOB_FINISHED:
 	    /*
@@ -924,7 +945,7 @@ JobFinish(job, status)
     if (done &&
 	(aborting != ABORT_ERROR) &&
 	(aborting != ABORT_INTERRUPT) &&
-	(status->w_status == 0))
+	(*status == 0))
     {
 	/*
 	 * As long as we aren't aborting and the job didn't return a non-zero
@@ -940,7 +961,7 @@ JobFinish(job, status)
 	job->node->made = MADE;
 	Make_Update(job->node);
 	free((Address)job);
-    } else if (status->w_status) {
+    } else if (*status == 0) {
 	errors += 1;
 	free((Address)job);
     }
@@ -1558,7 +1579,7 @@ JobRestart(job)
 	     */
 	    Boolean error;
 	    extern int errno;
-	    union wait status;
+	    int status;
 	    
 #ifdef RMT_WANTS_SIGNALS
 	    if (job->flags & JOB_REMOTE) {
@@ -1573,7 +1594,7 @@ JobRestart(job)
 		 * actually put the thing in the job table.
 		 */
 		job->flags |= JOB_CONTINUING;
-		status.w_termsig = SIGCONT;
+		W_SETTERMSIG(&status, SIGCONT);
 		JobFinish(job, &status);
 		
 		job->flags &= ~(JOB_RESUME|JOB_CONTINUING);
@@ -1584,8 +1605,8 @@ JobRestart(job)
 	    } else {
 		Error("couldn't resume %s: %s",
 		    job->node->name, strerror(errno));
-		status.w_status = 0;
-		status.w_retcode = 1;
+		status = 0;
+		W_SETEXITSTATUS(&status, 1);
 		JobFinish(job, &status);
 	    }
 	} else {
@@ -2193,7 +2214,7 @@ Job_CatchChildren(block)
     int    	  pid;	    	/* pid of dead child */
     register Job  *job;	    	/* job descriptor for dead child */
     LstNode       jnode;    	/* list element for finding job */
-    union wait	  status;   	/* Exit/termination status */
+    int	  	  status;   	/* Exit/termination status */
 
     /*
      * Don't even bother if we know there's no one around.
@@ -2202,8 +2223,8 @@ Job_CatchChildren(block)
 	return;
     }
     
-    while ((pid = wait3((int *)&status, (block?0:WNOHANG)|WUNTRACED,
-			(struct rusage *)0)) > 0)
+    while ((pid = waitpid((pid_t) -1, &status,
+			  (block?0:WNOHANG)|WUNTRACED)) > 0)
     {
 	if (DEBUG(JOB)) {
 	    (void) fprintf(stdout, "Process %d exited or stopped.\n", pid);
@@ -2780,7 +2801,7 @@ JobInterrupt(runINTERRUPT, signo)
 		 * If couldn't kill the thing, finish it out now with an
 		 * error code, since no exit report will come in likely.
 		 */
-		union wait status;
+		int status;
 
 		status.w_status = 0;
 		status.w_retcode = 1;
@@ -2844,7 +2865,7 @@ JobInterrupt(runINTERRUPT, signo)
 		 * If couldn't kill the thing, finish it out now with an
 		 * error code, since no exit report will come in likely.
 		 */
-		union wait status;
+		int status;
 		status.w_status = 0;
 		status.w_retcode = 1;
 		JobFinish(job, &status);
@@ -2994,7 +3015,7 @@ Job_AbortAll()
     /*
      * Catch as many children as want to report in at first, then give up
      */
-    while (wait3(&foo, WNOHANG, (struct rusage *)0) > 0)
+    while (waitpid((pid_t) -1, &foo, WNOHANG) > 0)
 	continue;
     (void) eunlink(tfile);
 }
