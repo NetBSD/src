@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.60 2004/03/18 08:30:58 sekiya Exp $ */
+/* $NetBSD: wsconsio.h,v 1.61 2004/03/19 09:00:38 petrov Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -262,6 +262,10 @@ struct wsmouse_id {
 #define		WSDISPLAY_TYPE_SUN24	33	/* Sun 24 bit framebuffers */
 #define		WSDISPLAY_TYPE_NEWPORT	34	/* SGI Newport */
 #define		WSDISPLAY_TYPE_GR2	35	/* SGI GR2 */
+#define		WSDISPLAY_TYPE_SUNCG12	36	/* Sun cgtwelve */
+#define		WSDISPLAY_TYPE_SUNCG14	37	/* Sun cgfourteen */
+#define		WSDISPLAY_TYPE_SUNTCX	38	/* Sun TCX */
+#define		WSDISPLAY_TYPE_SUNFFB	39	/* Sun creator FFB */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
