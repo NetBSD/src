@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.12 1996/11/06 03:02:59 thorpej Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.13 1997/01/27 10:30:14 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -67,14 +67,16 @@ ffs_init()
 }
 
 /*
- * Update the access, modified, and inode change times as specified by the
- * IACCESS, IUPDATE, and ICHANGE flags respectively. The IMODIFIED flag is
- * used to specify that the inode needs to be updated but that the times have
- * already been set. The access and modified times are taken from the second
- * and third parameters; the inode change time is always taken from the current
- * time. If waitfor is set, then wait for the disk write of the inode to
+ * Update the access, modified, and inode change times as specified
+ * by the IN_ACCESS, IN_UPDATE, and IN_CHANGE flags respectively.
+ * The IN_MODIFIED flag is used to specify that the inode needs to be
+ * updated but that the times have already been set. The access
+ * and modified times are taken from the second and third parameters;
+ * the inode change time is always taken from the current time. If
+ * waitfor is set, then wait for the disk write of the inode to
  * complete.
  */
+
 int
 ffs_update(v)
 	void *v;
