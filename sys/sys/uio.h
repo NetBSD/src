@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.12 1996/02/09 18:25:45 christos Exp $	*/
+/*	$NetBSD: uio.h,v 1.13 1998/03/27 15:14:37 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -47,15 +47,17 @@ struct iovec {
 	size_t	 iov_len;	/* Length. */
 };
 
+#if !defined(_XOPEN_SOURCE)
 enum	uio_rw { UIO_READ, UIO_WRITE };
+#endif
 
+#ifdef _KERNEL
 /* Segment flag values. */
 enum uio_seg {
 	UIO_USERSPACE,		/* from user data space */
 	UIO_SYSSPACE		/* from system space */
 };
 
-#ifdef _KERNEL
 struct uio {
 	struct	iovec *uio_iov;
 	int	uio_iovcnt;
