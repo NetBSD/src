@@ -1,4 +1,4 @@
-/*	$NetBSD: tcvar.h,v 1.7 1996/10/22 21:37:31 cgd Exp $	*/
+/*	$NetBSD: tcvar.h,v 1.8 1997/07/17 01:12:42 jtk Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -153,14 +153,15 @@ void	tc_intr_establish __P((struct device *, void *, tc_intrlevel_t,
 	    int (*)(void *), void *));
 void	tc_intr_disestablish __P((struct device *, void *));
 
+#include "locators.h"
 /*
  * Easy to remember names for TurboChannel device locators.
  */
-#define	tccf_slot	cf_loc[0]		/* slot */
-#define	tccf_offset	cf_loc[1]		/* offset */
+#define	tccf_slot	cf_loc[TCCF_SLOT]		/* slot */
+#define	tccf_offset	cf_loc[TCCF_OFFSET]		/* offset */
 
-#define	TCCF_SLOT_UNKNOWN	-1
-#define	TCCF_OFFSET_UNKNOWN	-1
+#define	TCCF_SLOT_UNKNOWN	TCCF_SLOT_DEFAULT
+#define	TCCF_OFFSET_UNKNOWN	TCCF_OFFSET_DEFAULT
 
 /*
  * Miscellaneous definitions.
