@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.60 1999/11/12 00:26:13 augustss Exp $
+$NetBSD: usbdevs,v 1.61 1999/11/17 22:59:04 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -128,6 +128,7 @@ product KODAK DC240		0x0120	Digital Science DC240
 product KODAK DC280		0x0130	Digital Science DC280
 
 /* CATC products */
+product CATC CHIEF		0x000d	USB Chief Bus & Protocol Analyzer
 product CATC ANDROMEDA		0x1237	Andromeda hub
 
 /* Gravis products */
