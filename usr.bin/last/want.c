@@ -1,4 +1,4 @@
-/*	$NetBSD: want.c,v 1.4 2004/11/19 21:41:25 christos Exp $	*/
+/*	$NetBSD: want.c,v 1.5 2005/03/04 17:11:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -32,13 +32,14 @@ static struct utmp *buf;
 
 static void onintr(int);
 static int want(struct utmp *, int);
-static const char *gethost(struct utmp *, int);
+static const char *gethost(struct utmp *, const char *, int);
 
 static const char *
-gethost(struct utmp* ut, int numeric)
+/*ARGSUSED*/
+gethost(struct utmp *ut, const char *host, int numeric)
 {
 #if FIRSTVALID == 0
-	return numeric ? "" : ut->ut_host;
+	return numeric ? "" : host;
 #else
 	if (numeric) {
 		static char buf[512];
@@ -47,10 +48,17 @@ gethost(struct utmp* ut, int numeric)
 		    (struct sockaddr *)&ut->ut_ss);
 		return buf;
 	} else
-		return ut->ut_host;
+		return host;
 #endif
 }
 
+#define NULTERM(what) \
+	if (check ## what) \
+		(void)strlcpy(what ## p = what ## buf, bp->ut_ ## what, \
+		    sizeof(what ## buf)); \
+	else \
+		what ## p = bp->ut_ ## what
+	
 /*
  * wtmp --
  *	read through the wtmp file
@@ -66,6 +74,12 @@ wtmp(const char *file, int namesz, int linesz, int hostsz, int numeric)
 	int	bytes, wfd;
 	char	*ct, *crmsg;
 	size_t  len = sizeof(*buf) * MAXUTMP;
+	char namebuf[sizeof(bp->ut_name) + 1], *namep;
+	char linebuf[sizeof(bp->ut_line) + 1], *linep;
+	char hostbuf[sizeof(bp->ut_host) + 1], *hostp;
+	int checkname = namesz > sizeof(bp->ut_name);
+	int checkline = linesz > sizeof(bp->ut_line);
+	int checkhost = hostsz > sizeof(bp->ut_host);
 
 	if ((buf = malloc(len)) == NULL)
 		err(1, "Cannot allocate utmp buffer");
@@ -85,24 +99,27 @@ wtmp(const char *file, int namesz, int linesz, int hostsz, int numeric)
 		    (bytes = read(wfd, buf, len)) == -1)
 			err(1, "%s", file);
 		for (bp = &buf[bytes / sizeof(*buf) - 1]; bp >= buf; --bp) {
+			NULTERM(name);
+			NULTERM(line);
+			NULTERM(host);
 			/*
 			 * if the terminal line is '~', the machine stopped.
 			 * see utmp(5) for more info.
 			 */
-			if (bp->ut_line[0] == '~' && !bp->ut_line[1]) {
+			if (linep[0] == '~' && !linep[1]) {
 				/* everybody just logged out */
 				for (T = ttylist; T; T = T->next)
 					T->logout = -bp->ut_timefld;
 				currentout = -bp->ut_timefld;
-				crmsg = strncmp(bp->ut_name, "shutdown",
+				crmsg = strncmp(namep, "shutdown",
 				    namesz) ? "crash" : "shutdown";
 				if (want(bp, NO)) {
 					ct = fmttime(bp->ut_timefld, fulltime);
 					printf("%-*.*s  %-*.*s %-*.*s %s\n",
-					    namesz, namesz, bp->ut_name,
-					    linesz, linesz, bp->ut_line,
+					    namesz, namesz, namep,
+					    linesz, linesz, linep,
 					    hostsz, hostsz,
-					    gethost(bp, numeric), ct);
+					    gethost(bp, hostp, numeric), ct);
 					if (maxrec != -1 && !--maxrec)
 						return;
 				}
@@ -112,17 +129,14 @@ wtmp(const char *file, int namesz, int linesz, int hostsz, int numeric)
 			 * if the line is '{' or '|', date got set; see
 			 * utmp(5) for more info.
 			 */
-			if ((bp->ut_line[0] == '{' || bp->ut_line[0] == '|')
-			    && !bp->ut_line[1]) {
+			if ((linep[0] == '{' || linep[0] == '|') && !linep[1]) {
 				if (want(bp, NO)) {
 					ct = fmttime(bp->ut_timefld, fulltime);
 				printf("%-*.*s  %-*.*s %-*.*s %s\n",
-				    namesz, namesz,
-				    bp->ut_name,
-				    linesz, linesz,
-				    bp->ut_line,
+				    namesz, namesz, namep,
+				    linesz, linesz, linep,
 				    hostsz, hostsz,
-				    gethost(bp, numeric),
+				    gethost(bp, hostp, numeric),
 				    ct);
 					if (maxrec && !--maxrec)
 						return;
@@ -133,21 +147,21 @@ wtmp(const char *file, int namesz, int linesz, int hostsz, int numeric)
 			for (T = ttylist;; T = T->next) {
 				if (!T) {
 					/* add new one */
-					T = addtty(bp->ut_line);
+					T = addtty(linep);
 					break;
 				}
-				if (!strncmp(T->tty, bp->ut_line, LINESIZE))
+				if (!strncmp(T->tty, linep, LINESIZE))
 					break;
 			}
 			if (TYPE(bp) == SIGNATURE)
 				continue;
-			if (bp->ut_name[0] && want(bp, YES)) {
+			if (namep[0] && want(bp, YES)) {
 				ct = fmttime(bp->ut_timefld, fulltime);
 				printf("%-*.*s  %-*.*s %-*.*s %s ",
-				    namesz, namesz, bp->ut_name,
-				    linesz, linesz, bp->ut_line,
+				    namesz, namesz, namep,
+				    linesz, linesz, linep,
 				    hostsz, hostsz,
-				    gethost(bp, numeric),
+				    gethost(bp, hostp, numeric),
 				    ct);
 				if (!T->logout)
 					puts("  still logged in");
