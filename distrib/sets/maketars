@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.52 2004/02/19 02:54:51 dyoung Exp $
+# $NetBSD: maketars,v 1.53 2004/04/18 19:52:32 dsl Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -178,16 +178,18 @@ for setname in $lists; do
 		echo "Copying set $setname"
 		( cd $dest ; \
 		    ${PAX} -O -rwpe -d -N${etcdir} ${metalog:+-M} \
-		    ${installdir} < ${setlistdir}/set.${setname} )
+			${installdir} < ${setlistdir}/set.${setname} )
 	else
 		if [ -n "$metalog" -a $tars/$out -nt "$metalog" ]; then
 			echo "$out is up to date"
 			continue
 		fi
 		echo "Creating $out"
+		rm -f ${tars}/$out
 		( cd $dest ; \
 		    ${PAX} -O -w -d -z -N${etcdir} ${metalog:+-M} \
-		    < ${setlistdir}/set.${setname} ) > ${tars}/$out
+			< ${setlistdir}/set.${setname} ) > ${tars}/$out.tmp &&
+		mv ${tars}/$out.tmp ${tars}/$out
 	fi
 	es=$(($es + $?))
 done
