@@ -37,13 +37,13 @@
 
 #define KERNEL
 
-#include <cdefs.h>
-#include <types.h>
-#include <param.h>
-#include <cdefs.h>
-#include <errno.h>
-#include <proc.h>
-#include <vmmeter.h>
+#include <sys/cdefs.h>
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/cdefs.h>
+#include <sys/errno.h>
+#include <sys/proc.h>
+#include <sys/vmmeter.h>
 
 #include <vm/vm.h>
 

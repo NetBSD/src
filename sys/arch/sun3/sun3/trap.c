@@ -42,35 +42,35 @@
  *	trap.c,v 1.3 1993/07/07 07:08:47 cgd Exp
  */
 
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
-#include "acct.h"
-#include "kernel.h"
-#include "signalvar.h"
-#include "resourcevar.h"
-#include "syslog.h"
-#include "user.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/acct.h>
+#include <sys/kernel.h>
+#include <sys/signalvar.h>
+#include <sys/resourcevar.h>
+#include <sys/syslog.h>
+#include <sys/user.h>
 #ifdef KTRACE
-#include "ktrace.h"
+#include <sys/ktrace.h>
 #endif
 
-#include "machine/psl.h"
-#include "machine/trap.h"
-#include "machine/cpu.h"
-#include "machine/reg.h"
-#include "machine/mtpr.h"
+#include <machine/psl.h>
+#include <machine/trap.h>
+#include <machine/cpu.h>
+#include <machine/reg.h>
+#include <machine/mtpr.h>
 
-#include "vm/vm.h"
-#include "vm/pmap.h"
-#include "vmmeter.h"
+#include <vm/vm.h>
+#include <vm/pmap.h>
+#include <sys/vmmeter.h>
 
 #ifdef HPUXCOMPAT
-#include "../hpux/hpux.h"
+#include <../hpux/hpux.h>
 #endif
 
 #ifdef COMPAT_SUNOS
-#include "compat/sunos/sun_syscall.h"
+#include <compat/sunos/sun_syscall.h>
 #endif
 
 
@@ -523,8 +523,6 @@ syscall(code, frame)
 	int rval[2];
 	struct timeval syst;
 	struct sysent *systab;
-	extern char *syscallnames[];
-	char **sysnames;
 #ifdef HPUXCOMPAT
 	extern struct sysent hpuxsysent[];
 	extern int hpuxnsysent, notimp();
@@ -543,7 +541,6 @@ syscall(code, frame)
 
 	    systab = sun_sysent;
 	    numsys = nsun_sysent;
-	    sysnames = sun_syscallnames;
 	    /* SunOS passes the syscall-number on the stack, whereas
 	       BSD passes it in D0. So, we have to get the real "code"
 	       from the stack, and clean up the stack, as SunOS glue
@@ -567,15 +564,15 @@ syscall(code, frame)
 	case EMUL_HPUX: 
 		systab = hpuxsysent;
 		numsys = hpuxnsysent;
-	        sysnames = hpuxnsyscallnames;
 	    break;
 	    
 #endif
 	case EMUL_NETBSD:
-	default:
 	    systab = sysent;
 	    numsys = nsysent;
-	    sysnames = syscallnames;
+	    break;
+	default:
+	    panic("syscall: bad syscall emulation type");
 	}
 	params = (caddr_t)frame.f_regs[SP] + sizeof(int);
 	if (code == 0) {			/* indir */
@@ -594,12 +591,20 @@ syscall(code, frame)
 #endif
 		frame.f_regs[D0] = error;
 		frame.f_sr |= PSL_C;	/* carry bit */
+#ifdef SYSCALL_DEBUG
+		if (p->p_emul == EMUL_NETBSD) /* XXX */
+		    scdebug_call(p, code, callp->sy_narg, args.i);
+#endif
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSCALL))
 			ktrsyscall(p->p_tracep, code, callp->sy_narg, args.i);
 #endif
 		goto done;
 	}
+#ifdef SYSCALL_DEBUG
+	if (p->p_emul == EMUL_NETBSD) /* XXX */
+	    scdebug_call(p, code, callp->sy_narg, args.i);
+#endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
 		ktrsyscall(p->p_tracep, code, callp->sy_narg, args.i);
@@ -638,6 +643,11 @@ done:
 	 * if this is a child returning from fork syscall.
 	 */
 	p = curproc;
+#ifdef SYSCALL_DEBUG
+	if (p->p_emul == EMUL_NETBSD) /* XXX */
+	    scdebug_ret(p, code, error, rval[0]);
+#endif
+
 #ifdef COMPAT_SUNOS
 	/* need new p-value for this */
 	if (error == ERESTART && (p->p_md.md_flags & MDP_STACKADJ))

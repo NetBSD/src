@@ -28,11 +28,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/locore.s,v 1.15 1994/02/23 08:29:42 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/locore.s,v 1.16 1994/03/01 08:23:09 glass Exp $
  */
 #include "assym.s"
-#include "../include/asm.h"
-#include "syscall.h"
+#include <machine/asm.h>
+#include <sys/syscall.h>
 					| remember this is a fun project :)
 
 
@@ -142,8 +142,12 @@ post_main:
 	.text
 _icode:
 	clrl	sp@-
-	pea	pc@((argv-.)+2)
-	pea	pc@((init-.)+2)
+|	pea	pc@((argv-.)+2)
+       .word   0x487a  | pea <short>
+       .word   argv-.
+|	pea	pc@((init-.)+2)
+       .word   0x487a  | pea <short>
+       .word   init-.
 	clrl	sp@-
 	moveq	#SYS_execve,d0
 	trap	#0

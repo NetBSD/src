@@ -28,13 +28,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/control.c,v 1.5 1994/02/04 08:20:53 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/control.c,v 1.6 1994/03/01 08:23:04 glass Exp $
  */
-#include "sys/systm.h"
-#include "sys/types.h"
+#include <sys/systm.h>
+#include <sys/types.h>
 
-#include "../include/pte.h"
-#include "../include/control.h"
+#include <machine/pte.h>
+#include <machine/control.h>
 
 #define CONTROL_ALIGN(x) (x & CONTROL_ADDR_MASK)
 #define CONTROL_ADDR_BUILD(space, va) (CONTROL_ALIGN(va)|space)
@@ -61,7 +61,7 @@ vm_offset_t get_pte(va)
 	get_control_word((char *) CONTROL_ADDR_BUILD(PGMAP_BASE, va));
 }
 void set_pte(va, pte)
-     vm_offset_t va,pte;
+     vm_offset_t va, pte;
 {
     set_control_word((char *) CONTROL_ADDR_BUILD(PGMAP_BASE, va),
 		     (unsigned int) pte);

@@ -35,12 +35,12 @@
  *	disksubr.c,v 1.2 1993/05/22 07:59:47 cgd Exp
  */
 
-#include "param.h"
-#include "systm.h"
-#include "buf.h"
-#include "dkbad.h"
-#include "disklabel.h"
-#include "syslog.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/dkbad.h>
+#include <sys/disklabel.h>
+#include <sys/syslog.h>
 
 /* encoding of disk minor numbers, should be elsewhere... */
 #define dkunit(dev)		(minor(dev) >> 3)
