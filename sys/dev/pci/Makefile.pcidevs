@@ -1,4 +1,12 @@
-#	$NetBSD: Makefile.pcidevs,v 1.1 1998/06/12 23:22:53 cgd Exp $
+#	$NetBSD: Makefile.pcidevs,v 1.2 1999/03/16 22:41:56 mjacob Exp $
+#
+# As per tron@netbsd.org, the proper procedure is
+#
+# 1.) Change "src/sys/dev/pci/pcidevs".
+# 2.) Commit "src/sys/dev/pci/pcidevs".
+# 3.) Execute "make -f Makefile.pcidevs" in "src/sys/dev/pci".
+# 4.) Commit "src/sys/dev/pci/pcidevs.h" and "src/sys/dev/pci/pcidevs_data.h".
+
 
 AWK=	awk
 
