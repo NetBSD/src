@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.164 2001/06/19 01:37:44 fvdl Exp $
+#	$NetBSD: bsd.own.mk,v 1.165 2001/07/13 12:44:22 fredette Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -95,6 +95,13 @@ NOPROFILE=1
 NOLINT=1
 .endif
 
+# The m68000 port is incomplete.
+.if ${MACHINE_ARCH} == "m68000"
+NOLINT=1
+NOPROFILE=1
+NOPIC?=1
+.endif
+
 # Data-driven table using make variables to control how 
 # toolchain-dependent targets and shared libraries are built
 # for different platforms and object formats.
@@ -108,6 +115,7 @@ NOLINT=1
     ${MACHINE_ARCH} == "sparc64" || \
     ${MACHINE_ARCH} == "x86_64" || \
     ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "m68000" || \
     ${MACHINE} == "next68k" || \
     ${MACHINE} == "sun3" || \
     ${MACHINE} == "mvme68k" || \
@@ -160,7 +168,7 @@ MACHINE_GNU_PLATFORM?= netbsd
 .endif
 
 # CPU model, derived from MACHINE_ARCH
-MACHINE_CPU?=	${MACHINE_ARCH:C/mipse[bl]/mips/:S/arm26/arm/:S/arm32/arm/:C/sh3e[bl]/sh3/}
+MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:S/arm26/arm/:S/arm32/arm/:C/sh3e[bl]/sh3/:S/m68000/m68k/}
 
 .if ${MACHINE_ARCH} == "mips"
 .BEGIN:
