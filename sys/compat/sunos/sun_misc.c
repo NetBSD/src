@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sun_misc.c,v 1.9.2.10 1993/12/01 15:19:57 pk Exp $
+ * $Id: sun_misc.c,v 1.9.2.11 1994/01/23 00:05:21 deraadt Exp $
  */
 
 /*
@@ -722,6 +722,7 @@ sun_open(p, uap, retval)
 	return ret;
 }
 
+#ifdef NFSSERVER
 struct nfssvc_args {
 	int	fd;
 	caddr_t mskval;
@@ -757,6 +758,7 @@ sun_nfssvc(p, uap, retval)
 
 	return nfssvc(p, &outuap, retval);
 }
+#endif /* NFSSERVER */
 
 struct sun_ustat {
 	daddr_t	f_tfree;	/* total free */
