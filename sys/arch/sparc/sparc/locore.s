@@ -1319,7 +1319,6 @@ label:	b,a	1f; \
 1: \
 	CMP_PTE_USER_WRITE4_4C(pte); \
 2:
-
 #endif
 
 
@@ -3677,7 +3676,7 @@ Lgandul:	nop
 	b,a	2f
 
 1:
-	MUNGE(NOP_ON_4_1)
+	MUNGE(NOP_ON_4_4C_1)
 
 2:
 
@@ -5407,12 +5406,12 @@ ENTRY(loadfpstate)
 #if defined(SUN4M) && (defined(SUN4) || defined(SUN4C))
 ENTRY(ienab_bis)
 NOP_ON_4M_13:
-	b,a	_ienab_bis_4c
+	b,a	_ienab_bis_4_4c
 	b,a	_ienab_bis_4m
 
 ENTRY(ienab_bic)
 NOP_ON_4M_14:
-	b,a	_ienab_bic_4c
+	b,a	_ienab_bic_4_4c
 	b,a	_ienab_bic_4m
 #endif
 
@@ -5422,7 +5421,7 @@ NOP_ON_4M_14:
  * and one of the interrupts is nonmaskable, we must disable traps.
  */
 #if defined(SUN4M)
-ENTRY(ienab_bis_4c)
+ENTRY(ienab_bis_4_4c)
 #else
 ENTRY(ienab_bis)
 #endif
@@ -5440,7 +5439,7 @@ ENTRY(ienab_bis)
 	 nop
 
 #if defined(SUN4M)
-ENTRY(ienab_bic_4c)
+ENTRY(ienab_bic_4_4c)
 #else
 ENTRY(ienab_bic)
 #endif
@@ -5712,14 +5711,20 @@ ENTRY(lo_microtime)
 ENTRY(microtime)
 #endif
 	sethi	%hi(_time), %g2
+
+#if defined(SUN4M) && !(defined(SUN4C) || defined(SUN4))
+	sethi	%hi(TIMERREG_VA+4), %g3
+	or	%g3, %lo(TIMERREG_VA+4), %g3
+#elif (defined(SUN4C) || defined(SUN4)) && !defined(SUN4M)
 	sethi	%hi(TIMERREG_VA), %g3
 	or	%g3, %lo(TIMERREG_VA), %g3
-
-	/* sun4m has microsecond counter at a different location */
-NOP_ON_4_1:
+#else
+	sethi	%hi(TIMERREG_VA), %g3
+	or	%g3, %lo(TIMERREG_VA), %g3
+NOP_ON_4_4C_1:
 	 add	%g3, 4, %g3
+#endif
 
-2:
 	ldd	[%g2+%lo(_time)], %o2		! time.tv_sec & time.tv_usec
 	ld	[%g3], %o4			! usec counter
 	ldd	[%g2+%lo(_time)], %g4		! see if time values changed
