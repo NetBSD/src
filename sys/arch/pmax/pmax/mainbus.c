@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.25 1998/08/29 16:24:25 mrg Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.26 1998/09/05 04:11:04 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -43,11 +43,7 @@
 #include "pmaxtype.h"
 #include "nameglue.h"
 
-#include "tc.h"			/* Is Turbochannel configured? */
-
-#include "opt_dec_3100.h"	/* XXX ibus */
-#include "opt_dec_5100.h"	/* XXX ibus */
-
+#include "tc.h"			/* Is TURBOchannel configured? */
 
 struct mainbus_softc {
 	struct	device sc_dv;
@@ -59,10 +55,8 @@ static void	mbattach __P((struct device *, struct device *, void *));
 static int	mbprint __P((void *, const char *));
 
 struct cfattach mainbus_ca = {
-	sizeof (struct mainbus_softc), mbmatch, mbattach
+	sizeof(struct mainbus_softc), mbmatch, mbattach
 };
-
-extern struct cfdriver mainbus_cd;		/* XXX XXX XXX */
 
 void	mb_intr_establish __P((struct confargs *ca,
 			       int (*handler)(intr_arg_t),
