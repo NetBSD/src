@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.119 2004/09/18 18:29:00 mycroft Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.120 2004/09/18 18:49:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.119 2004/09/18 18:29:00 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.120 2004/09/18 18:49:50 mycroft Exp $");
 
 #include "opt_scsi.h"
 
@@ -1868,7 +1868,7 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 {
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct scsipi_channel *chan = periph->periph_channel;
-	int oasync, async, poll, retries, error, s;
+	int oasync, async, poll, error, s;
 
 	KASSERT(!cold);
 
@@ -1963,7 +1963,6 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 
 	async = (xs->xs_control & XS_CTL_ASYNC);
 	poll = (xs->xs_control & XS_CTL_POLL);
-	retries = xs->xs_retries;		/* for polling commands */
 
 #ifdef DIAGNOSTIC
 	if (oasync != 0 && xs->bp == NULL)
@@ -1974,7 +1973,6 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 	 * Enqueue the transfer.  If we're not polling for completion, this
 	 * should ALWAYS return `no error'.
 	 */
- try_again:
 	error = scsipi_enqueue(xs);
 	if (error) {
 		if (poll == 0) {
@@ -1985,14 +1983,7 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 		}
 		
 		scsipi_printaddr(periph);
-		printf("failed to enqueue polling command");
-		if (retries != 0) {
-			printf(", retrying...\n");
-			delay(1000000);
-			retries--;
-			goto try_again;
-		}
-		printf("\n");
+		printf("should have flushed queue?\n");
 		goto free_xs;
 	}
 
