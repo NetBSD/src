@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.29 1998/01/29 05:44:57 ross Exp $ */
+/* $NetBSD: pmap.old.c,v 1.30 1998/01/31 01:32:55 ross Exp $ */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -98,7 +98,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.29 1998/01/29 05:44:57 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.30 1998/01/31 01:32:55 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -882,10 +882,15 @@ pmap_page_protect(pa, prot)
 		else {
 			pv = pv->pv_next;
 #ifdef DEBUG
-			if (pmapdebug & PDB_PARANOIA)
+			if (pmapdebug & PDB_PARANOIA) {
 				printf("%s wired mapping for %lx not removed\n",
 				       "pmap_page_protect:", pa);
+				printf("vm wire count %d\n", 
+					PHYS_TO_VM_PAGE(pa)->wire_count);
+			}
 #endif
+			if (pv == NULL)
+				break;
 		}
 	}
 	splx(s);
