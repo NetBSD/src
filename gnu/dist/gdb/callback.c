@@ -248,7 +248,9 @@ os_time (p, t)
      host_callback *p;
      long *t;
 {
-  return wrap (p, time (t));
+  long rv = time ((time_t*)t);
+  p->last_errno = errno;
+  return rv;
 }
 
 
