@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.15 1999/04/24 08:10:38 simonb Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.16 1999/11/29 11:12:12 uch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -134,7 +134,11 @@
 #define VM_MAXUSER_ADDRESS	((vaddr_t)0x80000000)
 #define VM_MAX_ADDRESS		((vaddr_t)0x80000000)
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xC0000000)
+#ifdef ENABLE_MIPS_TX3900
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xFF000000)
+#else
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xFFFFC000)
+#endif
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
