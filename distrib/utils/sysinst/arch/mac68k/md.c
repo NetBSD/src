@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.40 2003/11/30 14:36:45 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.41 2004/03/26 20:02:22 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -974,7 +974,7 @@ md_make_bsd_partitions(void)
 	}
 
 	/* Build standard partitions */
-	emptylabel(bsdlabel);
+	memset(&bsdlabel, 0, sizeof bsdlabel);
 
 	/*
 	 * The mac68k port has a predefined partition for "c" which
