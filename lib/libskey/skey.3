@@ -1,4 +1,4 @@
-.\"     $NetBSD: skey.3,v 1.5 2003/01/03 21:34:49 mjl Exp $
+.\"     $NetBSD: skey.3,v 1.6 2003/01/03 23:01:01 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -129,36 +129,36 @@ If successful, the caller's skey structure
 .Fa mp
 is filled and 0 is returned.
 If unsuccessful (e.g. if name is unknown),
--1 is returned.
+\-1 is returned.
 .It Fn skeylookup "mp" "name"
 Find an entry for user
 .Fa name
 in the one-time password database.
 Returns 0 if the entry is found and 1 if the entry is not found.
-If an error occurs accessing the database, -1 is returned.
+If an error occurs accessing the database, \-1 is returned.
 .It Fn skeygetnext "mp"
 Get the next entry in the one-time password database.
 Returns 0 on success and the entry is stored in
 .Ar mp
 and 1 if no more entries are available.
-If an error occurs accessing the database, -1 is returned.
+If an error occurs accessing the database, \-1 is returned.
 .It Fn skeyverify "mp" "response"
 Verify response
 .Fa response
 to a S/Key challenge.
 Returns 0 if the verification is successful and 1 if the verification failed.
-If an error occurs accessing the database, -1 is returned.
+If an error occurs accessing the database, \-1 is returned.
 .It Fn skeyzero "mp" "response"
 Comment out user's entry in the S/Key database.
 Returns 0 on success and the database is updated,
-otherwise -1 is returned and the database remains unchanged.
+otherwise \-1 is returned and the database remains unchanged.
 .It Fn getskeyprompt "mp" "name" "prompt"
 Issue a S/Key challenge for user
 .Ar name .
 If successful, fill in the caller's skey structure
 .Fa mp
 and return 0.
-If unsuccessful (e.g. if name is unknown) -1 is returned.
+If unsuccessful (e.g. if name is unknown) \-1 is returned.
 .El
 .Pp
 The following lower-level functions are available:
@@ -174,7 +174,7 @@ Get current hash type.
 Returns 0 if the user
 .Fa username
 exists and 1 if the user doesn't exist.
-Returns -1 on file error.
+Returns \-1 on file error.
 .It Fn skey_keyinfo "username"
 Returns the current sequence number and seed for user
 .Ar username .
@@ -183,7 +183,7 @@ Check to see if answer is the correct one to the current challenge.
 .It Fn skey_authenticate "username"
 Used when calling program will allow input of the user's response to
 the challenge.
-Returns zero on success or -1 on failure.
+Returns zero on success or \-1 on failure.
 .El
 .Pp
 The following miscellaneous functions are available:
@@ -206,13 +206,13 @@ Convert 8-byte hex-ascii string
 .Fa in
 to binary array
 .Fa out .
-Returns 0 on success, -1 on error.
+Returns 0 on success, \-1 on error.
 .It Fn btoa8 "out" "in"
 Convert 8-byte binary array
 .Fa in
 to hex-ascii string
 .Fa out .
-Returns 0 on success, -1 on error.
+Returns 0 on success, \-1 on error.
 .It Fn htoi "int c"
 Convert hex digit to binary integer.
 .It Fn skipspace "cp"
@@ -234,7 +234,7 @@ Returns a pointer to a static buffer in
 .It Fn etob "out" "e"
 Convert English to binary.
 Returns 0 if the word is not in the database, 1 if all good words and
-parity is valid, -1 if badly formed input (i.e. \*[Gt] 4 char word)
+parity is valid, \-1 if badly formed input (i.e. \*[Gt] 4 char word)
 and -2 if words are valid but parity is wrong.
 .It Fn put8 "out" "s"
 Display 8 bytes
