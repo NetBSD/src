@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.5 1997/05/23 23:09:42 jtc Exp $	*/
+/*	$NetBSD: print.c,v 1.6 1997/10/12 00:54:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)print.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: print.c,v 1.5 1997/05/23 23:09:42 jtc Exp $";
+__RCSID("$NetBSD: print.c,v 1.6 1997/10/12 00:54:24 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,10 +51,11 @@ static char rcsid[] = "$NetBSD: print.c,v 1.5 1997/05/23 23:09:42 jtc Exp $";
 # define	COMP_STRT	20
 # define	CARD_STRT	2
 
-prboard() {
-
-	register PLAY	*pp;
-	register int	i, j, k, temp;
+void
+prboard()
+{
+	PLAY	*pp;
+	int	i, j, k, temp;
 
 	for (k = 0; k < 2; k++) {
 		pp = &Player[k];
@@ -68,8 +70,8 @@ prboard() {
 		show_card(14, temp, pp->battle, &pp->sh_battle);
 		show_card(16, temp, pp->speed, &pp->sh_speed);
 		for (i = C_25; i <= C_200; i++) {
-			register char	*name;
-			register int		end;
+			char	*name;
+			int	end;
 
 			if (pp->nummiles[i] == pp->sh_nummiles[i])
 				continue;
@@ -104,9 +106,10 @@ prboard() {
  * show_card:
  *	Show the given card if it is different from the last one shown
  */
+void
 show_card(y, x, c, lc)
-int		y, x;
-register CARD	c, *lc;
+	int	y, x;
+	CARD	c, *lc;
 {
 	if (c == *lc)
 		return;
@@ -117,12 +120,12 @@ register CARD	c, *lc;
 
 static char	Score_fmt[] = "%4d";
 
+void
 prscore(for_real)
-register bool	for_real; 
+	bool	for_real; 
 {
-
-	register PLAY	*pp;
-	register int	x;
+	PLAY	*pp;
+	int	x;
 
 	stdscr = Score;
 	for (pp = Player; pp < &Player[2]; pp++) {
@@ -164,9 +167,10 @@ register bool	for_real;
  *	Show a score value if it is different from the last time we
  *	showed it.
  */
+void
 show_score(y, x, s, ls)
-int		y, x;
-register int	s, *ls;
+	int	y, x;
+	int	s, *ls;
 {
 	if (s == *ls)
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.5 1997/05/23 23:09:40 jtc Exp $	*/
+/*	$NetBSD: misc.c,v 1.6 1997/10/12 00:54:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,16 +33,23 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: misc.c,v 1.5 1997/05/23 23:09:40 jtc Exp $";
+__RCSID("$NetBSD: misc.c,v 1.6 1997/10/12 00:54:16 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/file.h>
 #include <termios.h>
+
+#if __STDC__
+#include	<stdarg.h>
+#else
+#include	<varargs.h>
+#endif
 
 #include	"mille.h"
 #ifndef	unctrl
@@ -60,23 +67,35 @@ static char rcsid[] = "$NetBSD: misc.c,v 1.5 1997/05/23 23:09:40 jtc Exp $";
 
 #define	NUMSAFE	4
 
-/* VARARGS1 */
-error(str, arg)
-char	*str;
+bool
+#if __STDC__
+error(char *str, ...)
+#else
+error(str, va_alist)
+	char	*str;
+	va_dcl
+#endif
 {
-	stdscr = Score;
-	mvprintw(ERR_Y, ERR_X, str, arg);
+	va_list ap;
+
+#if __STDC__
+	va_start(ap, str);
+#else
+	va_start(ap);
+#endif
+	wmove(Score, ERR_Y, ERR_X);
+	vwprintw(Score, str, ap);
 	clrtoeol();
 	putchar('\07');
 	refresh();
-	stdscr = Board;
+	va_end(ap);
 	return FALSE;
 }
 
 CARD
 getcard()
 {
-	register int		c, c1;
+	int	c, c1;
 
 	for (;;) {
 		while ((c = readch()) == '\n' || c == '\r' || c == ' ')
@@ -122,8 +141,10 @@ cont:		;
 	}
 }
 
+int
 check_ext(forcomp)
-register bool	forcomp; {
+	bool	forcomp;
+{
 
 
 	if (End == 700)
@@ -142,8 +163,8 @@ done:
 			}
 		}
 		else {
-			register PLAY	*pp, *op;
-			register int	i, safe, miles;
+			PLAY	*pp, *op;
+			int	i, safe, miles;
 
 			pp = &Player[COMP];
 			op = &Player[PLAYER];
@@ -176,10 +197,11 @@ done:
  *	Get a yes or no answer to the given question.  Saves are
  * also allowed.  Return TRUE if the answer was yes, FALSE if no.
  */
+int
 getyn(promptno)
-register int	promptno;
+	int	promptno;
 {
-	register char	c;
+	char	c;
 
 	Saved = FALSE;
 	for (;;) {
@@ -220,8 +242,9 @@ register int	promptno;
  * came from a saved file, make sure that they don't want to restore
  * it.  Exit appropriately.
  */
-check_more() {
-
+void
+check_more()
+{
 	On_exit = TRUE;
 	if (Player[PLAYER].total >= 5000 || Player[COMP].total >= 5000)
 		if (getyn(ANOTHERGAMEPROMPT))
@@ -246,9 +269,10 @@ check_more() {
 	die(0);
 }
 
+int
 readch()
 {
-	register int	cnt;
+	int	cnt;
 	static char	c;
 
 	for (cnt = 0; read(0, &c, 1) <= 0; cnt++)

@@ -1,4 +1,4 @@
-/*	$NetBSD: comp.c,v 1.4 1995/03/24 05:01:11 cgd Exp $	*/
+/*	$NetBSD: comp.c,v 1.5 1997/10/12 00:53:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)comp.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: comp.c,v 1.4 1995/03/24 05:01:11 cgd Exp $";
+__RCSID("$NetBSD: comp.c,v 1.5 1997/10/12 00:53:45 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,17 +50,18 @@ static char rcsid[] = "$NetBSD: comp.c,v 1.4 1995/03/24 05:01:11 cgd Exp $";
 
 # define	V_VALUABLE	40
 
+void
 calcmove()
 {
-	register CARD		card;
-	register int		*value;
-	register PLAY		*pp, *op;
-	register bool		foundend, cango, canstop, foundlow;
-	register unsgn int	i, count200, badcount, nummin, nummax, diff;
-	register int		curmin, curmax;
-	register CARD		safe, oppos;
-	int			valbuf[HAND_SZ], count[NUM_CARDS];
-	bool			playit[HAND_SZ];
+	CARD		card;
+	int		*value;
+	PLAY		*pp, *op;
+	bool		foundend, cango, canstop, foundlow;
+	unsgn int	i, count200, badcount, nummin, nummax, diff;
+	int		curmin, curmax;
+	CARD		safe, oppos;
+	int		valbuf[HAND_SZ], count[NUM_CARDS];
+	bool		playit[HAND_SZ];
 
 	wmove(Score, ERR_Y, ERR_X);	/* get rid of error messages	*/
 	wclrtoeol(Score);
@@ -78,7 +80,7 @@ calcmove()
 		switch (card) {
 		  case C_STOP:	case C_CRASH:
 		  case C_FLAT:	case C_EMPTY:
-			if (playit[i] = canplay(pp, op, card))
+			if ((playit[i] = canplay(pp, op, card)) != 0)
 				canstop = TRUE;
 			goto norm;
 		  case C_LIMIT:
@@ -404,17 +406,18 @@ play_it:
 /*
  * Return true if the given player could conceivably win with his next card.
  */
+int
 onecard(pp)
-register PLAY	*pp;
+	PLAY	*pp;
 {
-	register CARD	bat, spd, card;
+	CARD	bat, spd, card;
 
 	bat = pp->battle;
 	spd = pp->speed;
 	card = -1;
 	if (pp->can_go || ((isrepair(bat) || bat == C_STOP || spd == C_LIMIT) &&
 			   Numseen[S_RIGHT_WAY] != 0) ||
-	    bat >= 0 && Numseen[safety(bat)] != 0)
+	    (bat >= 0 && Numseen[safety(bat)] != 0))
 		switch (End - pp->mileage) {
 		  case 200:
 			if (pp->nummiles[C_200] == 2)
@@ -436,9 +439,10 @@ register PLAY	*pp;
 	return FALSE;
 }
 
+int
 canplay(pp, op, card)
-register PLAY	*pp, *op;
-register CARD	card;
+	PLAY	*pp, *op;
+	CARD	card;
 {
 	switch (card) {
 	  case C_200:

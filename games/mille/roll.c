@@ -1,4 +1,4 @@
-/*	$NetBSD: roll.c,v 1.5 1997/05/23 23:09:42 jtc Exp $	*/
+/*	$NetBSD: roll.c,v 1.6 1997/10/12 00:54:28 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)roll.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: roll.c,v 1.5 1997/05/23 23:09:42 jtc Exp $";
+__RCSID("$NetBSD: roll.c,v 1.6 1997/10/12 00:54:28 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,12 +51,12 @@ static char rcsid[] = "$NetBSD: roll.c,v 1.5 1997/05/23 23:09:42 jtc Exp $";
  *
  */
 
+int
 roll(ndie, nsides)
-register int	ndie, nsides; 
+	int	ndie, nsides; 
 {
 
-	register int		tot;
-	extern unsigned int	random();
+	int		tot;
 
 	tot = 0;
 	while (ndie--)

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.c,v 1.4 1995/03/24 05:01:36 cgd Exp $	*/
+/*	$NetBSD: extern.c,v 1.5 1997/10/12 00:53:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)extern.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: extern.c,v 1.4 1995/03/24 05:01:36 cgd Exp $";
+__RCSID("$NetBSD: extern.c,v 1.5 1997/10/12 00:53:55 lukem Exp $");
 #endif
 #endif /* not lint */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.5 1997/05/23 23:09:43 jtc Exp $	*/
+/*	$NetBSD: save.c,v 1.6 1997/10/12 00:54:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,18 +33,15 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: save.c,v 1.5 1997/05/23 23:09:43 jtc Exp $";
+__RCSID("$NetBSD: save.c,v 1.6 1997/10/12 00:54:32 lukem Exp $");
 #endif
 #endif /* not lint */
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <string.h>
-#include <termios.h>
 #include "mille.h"
 
 #ifndef	unctrl
@@ -61,24 +58,22 @@ static char rcsid[] = "$NetBSD: save.c,v 1.5 1997/05/23 23:09:43 jtc Exp $";
 
 typedef	struct stat	STAT;
 
-char	*ctime();
-
-int	read(), write();
-
 /*
  *	This routine saves the current game for use at a later date
+ *	Returns FALSE if it couldn't be done.
  */
+bool
+save()
+{
+	char	*sp;
+	int	outf;
+	time_t	*tp;
+	char	buf[80];
+	time_t	tme;
+	STAT	junk;
+	bool	rv;
 
-save() {
-
-	extern int	errno;
-	register char	*sp;
-	register int	outf;
-	register time_t	*tp;
-	char		buf[80];
-	time_t		tme;
-	STAT		junk;
-
+	sp = NULL;
 	tp = &tme;
 	if (Fromfile && getyn(SAMEFILEPROMPT))
 		strcpy(buf, Fromfile);
@@ -130,16 +125,20 @@ over:
 	mvwaddstr(Score, ERR_Y, ERR_X, buf);
 	wrefresh(Score);
 	time(tp);			/* get current time		*/
-	strcpy(buf, ctime(tp));
-	for (sp = buf; *sp != '\n'; sp++)
-		continue;
-	*sp = '\0';
-	varpush(outf, write);
+	rv = varpush(outf, writev);
 	close(outf);
-	wprintw(Score, " [%s]", buf);
+	if (rv == FALSE) {
+		unlink(buf);
+	} else {
+		strcpy(buf, ctime(tp));
+		for (sp = buf; *sp != '\n'; sp++)
+			continue;
+		*sp = '\0';
+		wprintw(Score, " [%s]", buf);
+	}
 	wclrtoeol(Score);
 	wrefresh(Score);
-	return TRUE;
+	return rv;
 }
 
 /*
@@ -147,24 +146,25 @@ over:
  * backup was made on exiting, in which case certain things must
  * be cleaned up before the game starts.
  */
+bool
 rest_f(file)
-register char	*file;
+	char	*file;
 {
 
-	register char	*sp;
-	register int	inf;
-	char		buf[80];
-	STAT		sbuf;
+	char	*sp;
+	int	inf;
+	char	buf[80];
+	STAT	sbuf;
 
 	if ((inf = open(file, 0)) < 0) {
-		perror(file);
+		warn("%s", file);
 		exit(1);
 	}
 	if (fstat(inf, &sbuf) < 0) {		/* get file stats	*/
-		perror(file);
+		warn("%s", file);
 		exit(1);
 	}
-	varpush(inf, read);
+	varpush(inf, readv);
 	close(inf);
 	strcpy(buf, ctime(&sbuf.st_mtime));
 	for (sp = buf; *sp != '\n'; sp++)
@@ -177,4 +177,3 @@ register char	*file;
 	Fromfile = file;
 	return !On_exit;
 }
-

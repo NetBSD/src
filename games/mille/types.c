@@ -1,4 +1,4 @@
-/*	$NetBSD: types.c,v 1.5 1997/05/23 23:09:44 jtc Exp $	*/
+/*	$NetBSD: types.c,v 1.6 1997/10/12 00:54:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)types.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: types.c,v 1.5 1997/05/23 23:09:44 jtc Exp $";
+__RCSID("$NetBSD: types.c,v 1.6 1997/10/12 00:54:40 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,15 +48,18 @@ static char rcsid[] = "$NetBSD: types.c,v 1.5 1997/05/23 23:09:44 jtc Exp $";
  * @(#)types.c	1.1 (Berkeley) 4/1/82
  */
 
+int
 isrepair(card)
-register CARD	card; 
+	CARD	card; 
 {
 
-	return card == C_GAS || card == C_SPARE || card == C_REPAIRS || card == C_INIT;
+	return card == C_GAS || card == C_SPARE ||
+	    card == C_REPAIRS || card == C_INIT;
 }
 
+int
 safety(card)
-register CARD	card;
+	CARD	card;
 {
 	switch (card) {
 	  case C_EMPTY:
@@ -78,5 +82,5 @@ register CARD	card;
 		return C_RIGHT_WAY;
 	}
 	/* NOTREACHED */
+	return(0);
 }
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: mille.c,v 1.5 1997/05/23 23:09:38 jtc Exp $	*/
+/*	$NetBSD: mille.c,v 1.6 1997/10/12 00:54:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1982, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1982, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mille.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: mille.c,v 1.5 1997/05/23 23:09:38 jtc Exp $";
+__RCSID("$NetBSD: mille.c,v 1.6 1997/10/12 00:54:07 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,13 +57,12 @@ static char rcsid[] = "$NetBSD: mille.c,v 1.5 1997/05/23 23:09:38 jtc Exp $";
  * @(#)mille.c	1.3 (Berkeley) 5/10/83
  */
 
-void	rub();
-
+int
 main(ac, av)
-register int	ac;
-register char	*av[];
+	int	ac;
+	char	*av[];
 {
-	register bool	restore;
+	bool	restore;
 
 	/* run as the user */
 	setuid(getuid());
@@ -146,8 +145,9 @@ register char	*av[];
  * quit.
  */
 void
-rub() {
-
+rub(dummy)
+	int dummy;
+{
 	(void)signal(SIGINT, SIG_IGN);
 	if (getyn(REALLYPROMPT))
 		die(0);
@@ -157,8 +157,10 @@ rub() {
 /*
  *	Time to go beddy-by
  */
+void
 die(code)
-int code; {
+	int code;
+{
 
 	(void)signal(SIGINT, SIG_IGN);
 	if (outf)
