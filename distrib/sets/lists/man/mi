@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.625 2003/10/30 08:22:45 wiz Exp $
+# $NetBSD: mi,v 1.626 2003/11/01 01:44:14 abs Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -887,8 +887,6 @@
 ./usr/share/man/cat4/pci.0			man-sys-catman
 ./usr/share/man/cat4/pcic.0			man-sys-catman
 ./usr/share/man/cat4/pciide.0			man-sys-catman
-./usr/share/man/cat4/pdcide.0			man-sys-catman
-./usr/share/man/cat4/piixide.0			man-sys-catman
 ./usr/share/man/cat4/pckbc.0			man-sys-catman
 ./usr/share/man/cat4/pckbd.0			man-sys-catman
 ./usr/share/man/cat4/pcmcia.0			man-sys-catman
@@ -897,7 +895,9 @@
 ./usr/share/man/cat4/pcppi.0			man-sys-catman
 ./usr/share/man/cat4/pcscp.0			man-sys-catman
 ./usr/share/man/cat4/pcweasel.0			man-sys-catman
+./usr/share/man/cat4/pdcide.0			man-sys-catman
 ./usr/share/man/cat4/phy.0			man-sys-catman
+./usr/share/man/cat4/piixide.0			man-sys-catman
 ./usr/share/man/cat4/pmax/asc.0			man-sys-catman
 ./usr/share/man/cat4/pmax/autoconf.0		man-sys-catman
 ./usr/share/man/cat4/pmax/dc.0			man-sys-catman
@@ -1006,6 +1006,7 @@
 ./usr/share/man/cat4/ste.0			man-sys-catman
 ./usr/share/man/cat4/stf.0			man-sys-catman
 ./usr/share/man/cat4/stge.0			man-sys-catman
+./usr/share/man/cat4/stpcide.0			man-sys-catman
 ./usr/share/man/cat4/strip.0			man-sys-catman
 ./usr/share/man/cat4/sun2/autoconf.0		man-sys-catman
 ./usr/share/man/cat4/sun2/bwtwo.0		man-sys-catman
@@ -2623,8 +2624,8 @@
 ./usr/share/man/man4/ohci.4			man-sys-man
 ./usr/share/man/man4/oosiop.4			man-sys-man
 ./usr/share/man/man4/opl.4			man-sys-man
-./usr/share/man/man4/options.4			man-sys-man
 ./usr/share/man/man4/optiide.4			man-sys-man
+./usr/share/man/man4/options.4			man-sys-man
 ./usr/share/man/man4/osiop.4			man-sys-man
 ./usr/share/man/man4/pas.4			man-sys-man
 ./usr/share/man/man4/pc532/lpt.4		man-sys-man
@@ -2638,8 +2639,6 @@
 ./usr/share/man/man4/pcic.4			man-sys-man
 ./usr/share/man/man4/pciide.4			man-sys-man
 ./usr/share/man/man4/pciide.4			man-sys-man
-./usr/share/man/man4/pdcide.4			man-sys-man
-./usr/share/man/man4/piixide.4			man-sys-man
 ./usr/share/man/man4/pckbc.4			man-sys-man
 ./usr/share/man/man4/pckbd.4			man-sys-man
 ./usr/share/man/man4/pcmcia.4			man-sys-man
@@ -2648,7 +2647,9 @@
 ./usr/share/man/man4/pcppi.4			man-sys-man
 ./usr/share/man/man4/pcscp.4			man-sys-man
 ./usr/share/man/man4/pcweasel.4			man-sys-man
+./usr/share/man/man4/pdcide.4			man-sys-man
 ./usr/share/man/man4/phy.4			man-sys-man
+./usr/share/man/man4/piixide.4			man-sys-man
 ./usr/share/man/man4/pmax/asc.4			man-sys-man
 ./usr/share/man/man4/pmax/autoconf.4		man-sys-man
 ./usr/share/man/man4/pmax/dc.4			man-sys-man
@@ -2757,6 +2758,7 @@
 ./usr/share/man/man4/ste.4			man-sys-man
 ./usr/share/man/man4/stf.4			man-sys-man
 ./usr/share/man/man4/stge.4			man-sys-man
+./usr/share/man/man4/stpcide.4			man-sys-man
 ./usr/share/man/man4/strip.4			man-sys-man
 ./usr/share/man/man4/sun2/autoconf.4		man-sys-man
 ./usr/share/man/man4/sun2/bwtwo.4		man-sys-man
