@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.166 2002/12/06 16:04:12 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.167 2002/12/06 17:45:39 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4022,8 +4022,6 @@ Lgandul:	nop
 	MUNGE(NOP_ON_4M_10)
 	MUNGE(NOP_ON_4M_11)
 	MUNGE(NOP_ON_4M_12)
-	MUNGE(NOP_ON_4M_13)
-	MUNGE(NOP_ON_4M_14)
 	MUNGE(NOP_ON_4M_15)
 	b,a	2f
 
@@ -5969,31 +5967,15 @@ ENTRY(loadfpstate)
  * ienab_bis(bis) int bis;
  * ienab_bic(bic) int bic;
  *
- * Set and clear bits in the interrupt register.
+ * Set and clear bits in the sun4/sun4c interrupt register.
  */
-
-#if defined(SUN4M) && (defined(SUN4) || defined(SUN4C))
-ENTRY(ienab_bis)
-NOP_ON_4M_13:
-	b,a	_C_LABEL(ienab_bis_4_4c)
-	b,a	_C_LABEL(ienab_bis_4m)
-
-ENTRY(ienab_bic)
-NOP_ON_4M_14:
-	b,a	_C_LABEL(ienab_bic_4_4c)
-	b,a	_C_LABEL(ienab_bic_4m)
-#endif
 
 #if defined(SUN4) || defined(SUN4C)
 /*
  * Since there are no read-modify-write instructions for this,
  * and one of the interrupts is nonmaskable, we must disable traps.
  */
-#if defined(SUN4M)
-ENTRY(ienab_bis_4_4c)
-#else
 ENTRY(ienab_bis)
-#endif
 	! %o0 = bits to set
 	rd	%psr, %o2
 	wr	%o2, PSR_ET, %psr	! disable traps
@@ -6007,11 +5989,7 @@ ENTRY(ienab_bis)
 	retl
 	 nop
 
-#if defined(SUN4M)
-ENTRY(ienab_bic_4_4c)
-#else
 ENTRY(ienab_bic)
-#endif
 	! %o0 = bits to clear
 	rd	%psr, %o2
 	wr	%o2, PSR_ET, %psr	! disable traps
@@ -6024,30 +6002,9 @@ ENTRY(ienab_bic)
 	nop
 	retl
 	 nop
-#endif
+#endif	/* SUN4 || SUN4C */
 
 #if defined(SUN4M)
-/*
- * sun4m has separate registers for clearing/setting the interrupt mask.
- */
-#if defined(SUN4) || defined(SUN4C)
-ENTRY(ienab_bis_4m)
-#else
-ENTRY(ienab_bis)
-#endif
-	set	ICR_SI_SET, %o1
-	retl
-	 st	%o0, [%o1]
-
-#if defined(SUN4) || defined(SUN4C)
-ENTRY(ienab_bic_4m)
-#else
-ENTRY(ienab_bic)
-#endif
-	set	ICR_SI_CLR, %o1
-	retl
-	 st	%o0, [%o1]
-
 /*
  * raise(cpu, level)
  */

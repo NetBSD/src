@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4m.c,v 1.1 2002/08/25 16:10:35 thorpej Exp $	*/
+/*	$NetBSD: timer_sun4m.c,v 1.2 2002/12/06 17:45:40 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@ timer_init_4m(void)
 			continue;
 		cpi->counterreg_4m->t_limit = tmr_ustolim4m(statint);
 	}
-	ienab_bic(SINTR_T);
+	icr_si_bic(SINTR_T);
 }
 
 /*

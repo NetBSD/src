@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.183 2002/11/29 08:02:05 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.184 2002/12/06 17:45:39 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -402,7 +402,7 @@ bootstrap4m()
 	setpte4m(SI_INTR_VA, pte);
 
 	/* Now disable interrupts */
-	ienab_bis(SINTR_MA);
+	icr_si_bis(SINTR_MA);
 
 	/* Send all interrupts to primary processor */
 	*((u_int *)ICR_ITR) = 0;
@@ -952,7 +952,7 @@ cpu_configure()
 #if defined(SUN4M)
 #if !defined(MSIIEP)
 	if (CPU_ISSUN4M)
-		ienab_bic(SINTR_MA);
+		icr_si_bic(SINTR_MA);
 #else
 	if (CPU_ISSUN4M)
 		/* nothing for ms-IIep so far */;
