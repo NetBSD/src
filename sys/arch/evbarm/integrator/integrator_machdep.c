@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.41 2003/06/14 17:01:10 thorpej Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.42 2003/06/15 17:45:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -319,17 +319,8 @@ cpu_reboot(int howto, char *bootstr)
 	/*NOTREACHED*/
 }
 
-/*
- * Mapping table for core kernel memory. This memory is mapped at init
- * time with section mappings.
- */
-struct l1_sec_map {
-	vaddr_t	va;
-	vaddr_t	pa;
-	vsize_t	size;
-	vm_prot_t prot;
-	int cache;
-} l1_sec_table[] = {
+/* Statically mapped devices. */
+static const struct pmap_devmap integrator_devmap[] = {
 #if NPLCOM > 0 && defined(PLCONSOLE)
 	{
 		UART0_BOOT_BASE,
@@ -361,7 +352,8 @@ struct l1_sec_map {
 		IFPGA_PCI_CONF_BASE,
 		IFPGA_PCI_CONF_VSIZE,
 		VM_PROT_READ|VM_PROT_WRITE,
-		PTE_NOCACHE },
+		PTE_NOCACHE
+	},
 #endif
 
 	{
@@ -672,24 +664,9 @@ initarm(void *arg)
 	pmap_map_entry(l1pagetable, vector_page, systempage.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 #endif
-	/* Map the core memory needed before autoconfig */
-	loop = 0;
-	while (l1_sec_table[loop].size) {
-		vm_size_t sz;
 
-#ifdef VERBOSE_INIT_ARM
-		printf("%08lx -> %08lx @ %08lx\n", l1_sec_table[loop].pa,
-		    l1_sec_table[loop].pa + l1_sec_table[loop].size - 1,
-		    l1_sec_table[loop].va);
-#endif
-		for (sz = 0; sz < l1_sec_table[loop].size; sz += L1_S_SIZE)
-			pmap_map_section(l1pagetable,
-			    l1_sec_table[loop].va + sz,
-			    l1_sec_table[loop].pa + sz,
-			    l1_sec_table[loop].prot,
-			    l1_sec_table[loop].cache);
-		++loop;
-	}
+	/* Map the statically mapped devices. */
+	pmap_devmap_bootstrap(l1pagetable, integrator_devmap);
 
 	/*
 	 * Now we have the real page tables in place so we can switch to them.
