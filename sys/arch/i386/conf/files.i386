@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.74 1996/07/03 13:01:40 mycroft Exp $
+#	$NetBSD: files.i386,v 1.75 1996/07/09 09:23:03 mycroft Exp $
 #
 # new style config file for i386 architecture
 #
@@ -65,13 +65,6 @@ file	arch/i386/i386/mainbus.c	mainbus
 include "../../../dev/pci/files.pci"
 file	arch/i386/pci/pci_machdep.c	pci
 file	arch/i386/pci/pci_compat.c	pci	# XXX compatibility
-
-# XXX
-# define pcmciabus here until config issues are resolved
-device	pcmciabus {[port = -1], [size = 0],
-		   [iomem = -1], [iosiz = 0],
-		   [irq = -1], [drq = -1]}
-attach	pcmciabus at isabus
 
 #
 # ISA and mixed ISA+EISA or ISA+PCI drivers
@@ -147,16 +140,6 @@ file	arch/i386/isa/joy.c		joy needs-flag
 
 include "../../../dev/eisa/files.eisa"
 file	arch/i386/eisa/eisa_machdep.c	eisa
-
-#
-# PCMCIA-only drivers
-#
-
-include "../../../dev/pcmcia/files.pcmcia"
-
-device	pcic: pcmciabus
-attach	pcic at isa
-file	dev/isa/pcmcia_pcic.c		pcic
 
 #
 # Compatibility modules
