@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcompat.c,v 1.8 1998/02/02 06:26:43 perry Exp $	*/
+/*	$NetBSD: sigcompat.c,v 1.9 1998/09/26 23:44:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sigcompat.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: sigcompat.c,v 1.8 1998/02/02 06:26:43 perry Exp $");
+__RCSID("$NetBSD: sigcompat.c,v 1.9 1998/09/26 23:44:08 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,29 +68,41 @@ int
 sigsetmask(mask)
 	int mask;
 {
-	int omask, n;
+	sigset_t nmask, omask;
+	int n;
 
-	n = sigprocmask(SIG_SETMASK, (sigset_t *) &mask, (sigset_t *) &omask);
+	sigemptyset(&nmask);
+	nmask.__bits[0] = mask;
+
+	n = sigprocmask(SIG_SETMASK, &nmask, &omask);
 	if (n)
 		return (n);
-	return (omask);
+	return (omask.__bits[0]);
 }
 
 int
 sigblock(mask)
 	int mask;
 {
-	int omask, n;
+	sigset_t nmask, omask;
+	int n;
 
-	n = sigprocmask(SIG_BLOCK, (sigset_t *) &mask, (sigset_t *) &omask);
+	sigemptyset(&nmask);
+	nmask.__bits[0] = mask;
+
+	n = sigprocmask(SIG_BLOCK, &nmask, &omask);
 	if (n)
 		return (n);
-	return (omask);
+	return (omask.__bits[0]);
 }
 
 int
 sigpause(mask)
 	int mask;
 {
-	return (sigsuspend((sigset_t *)&mask));
+	sigset_t nmask;
+
+	sigemptyset(&nmask);
+	nmask.__bits[0] = mask;
+	return (sigsuspend(&nmask));
 }
