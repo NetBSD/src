@@ -48,8 +48,7 @@ do { \
   "%{shared:-shared} \
    %{!static: \
      %{rdynamic:-export-dynamic} \
-     %{!dynamic-linker:-dynamic-linker /lib/ld-linux.so.2} \
-     %{!rpath:-rpath /lib}} \
+     %{!dynamic-linker:-dynamic-linker /lib/ld-linux.so.2}} \
    %{static:-static}"
 
 /* The GNU C++ standard library requires that these macros be defined.  */
@@ -58,8 +57,10 @@ do { \
 
 #undef LIB_SPEC
 #define LIB_SPEC \
-  "%{shared: -lc} \
-   %{!shared: %{pthread:-lthread} \
+  "%{pthread:-lpthread} \
+   %{shared: -lc} \
+   %{!shared: \
+     %{mieee-fp:-lieee} \
      %{profile:-lc_p} %{!profile: -lc}}"
 
 #undef STARTFILE_SPEC
@@ -69,3 +70,6 @@ do { \
 		       %{!p:%{profile:gcrt1.o%s} \
 			 %{!profile:crt1.o%s}}}} \
    crti.o%s %{!shared:crtbegin.o%s} %{shared:crtbeginS.o%s}"
+
+#define LINK_GCC_C_SEQUENCE_SPEC \
+  "%{static:--start-group} %G %L %{static:--end-group}%{!static:%G}"

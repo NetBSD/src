@@ -1782,11 +1782,6 @@ i?86-*-sco
    Compilation with RCC is recommended.  Also, it may be a good idea to
 link with GNU malloc instead of the malloc that comes with the system.
 
-i?86-*-sco3.2v4
-===============
-
-   Use this configuration for SCO release 3.2 version 4.
-
 i?86-*-sco3.2v5*
 ================
 
@@ -1802,57 +1797,33 @@ maintain.  GCC now emits only DWARF 2 for this target.  This means you
 may use either the UDK debugger or GDB to debug programs built by this
 version of GCC.
 
-   Use of the `-march=pentiumpro' flag can result in unrecognized
-opcodes when using the native assembler on OS versions before 5.0.6.
-(Support for P6 opcodes was added to the native ELF assembler in that
-version.)  While it's rather rare to see these emitted by GCC yet,
-errors of the basic form:
+   GCC is now only supported on releases 5.0.4 and later, and requires
+that you install Support Level Supplement OSS646B or later, and the
+latest version of the Supplement Graphics, Web and X11 Libraries
+(GWXLIBS) package.  If you are using release 5.0.7 of OpenServer, you
+must have at least the first maintenance pack installed (this includes
+the relevant portions of OSS646 and GWXLIBS).  OSS646, also known as
+the "Execution Environment Update", provides updated link editors and
+assemblers, as well as updated standard C and math libraries.  The C
+startup modules are also updated to support the System V gABI draft,
+and GCC relies on that behavior.  GWXLIBS provides a collection of
+commonly used open source libraries, some of which GCC depends on (such
+as GNU gettext and zlib).  SCO OpenServer Release 5.0.7 has all of this
+built in by default, but GWXLIBS is significantly updated in
+Maintenance Pack 1.  Please visit ftp://ftp.sco.com/pub/openserver5 and
+ftp://ftp.sco.com/pub/openserver5/opensrc for the latest versions of
+these (and other potentially useful) supplements.
 
-       /usr/tmp/ccaNlqBc.s:22:unknown instruction: fcomip
-       /usr/tmp/ccaNlqBc.s:50:unknown instruction: fucomip
-
-   are symptoms of this problem.  You may work around this by not
-building affected files with that flag, by using the GNU assembler, or
-by using the assembler provided with the current version of the OS.
-Users of GNU assembler should see the note below for hazards on doing
-so.
-
-   The native SCO assembler that is provided with the OS at no charge
-is normally required.  If, however, you must be able to use the GNU
-assembler (perhaps you're compiling code with asms that require GAS
-syntax) you may configure this package using the flags `--with-gnu-as'.
-You must use a recent version of GNU binutils; versions past 2.9.1
-seem to work well.
-
-   In general, the `--with-gnu-as' option isn't as well tested as the
-native assembler.
-
-   Look in `gcc/config/i386/sco5.h' (search for "messy") for additional
-OpenServer-specific flags.
-
-   Systems based on OpenServer before 5.0.4 (`uname -X' will tell you
-what you're running) require TLS597 from ftp://stage.caldera.com/TLS/
-for C++ constructors and destructors to work right.
-
-   The system linker in (at least) 5.0.4 and 5.0.5 will sometimes do
-the wrong thing for a construct that GCC will emit for PIC code.  This
-can be seen as execution testsuite failures when using `-fPIC' on
-`921215-1.c', `931002-1.c', `nestfunc-1.c', and `gcov-1.c'.  For 5.0.5,
-an updated linker that will cure this problem is available.  You must
-install both ftp://ftp.sco.com/pub/openserver5/rs505a and OSS499A.
-
-   The dynamic linker in OpenServer 5.0.5 (earlier versions may show
-the same problem) aborts on certain G77-compiled programs.  It's
-particularly likely to be triggered by building Fortran code with the
-`-fPIC' flag.  Although it's conceivable that the error could be
-triggered by other code, only G77-compiled code has been observed to
-cause this abort.  If you are getting core dumps immediately upon
-execution of your G77 program--and especially if it's compiled with
-`-fPIC'--try applying `sco_osr5_g77.patch' to your `libf2c' and
-rebuilding GCC.  Affected faults, when analyzed in a debugger, will
-show a stack backtrace with a fault occurring in `rtld()' and the
-program running as `/usr/lib/ld.so.1'.  This problem has been reported
-to SCO engineering and will hopefully be addressed in later releases.
+   Although there is support for using the native assembler, it is
+recommended that you configure GCC to use the GNU assembler.  You do
+this by using the flags `--with-gnu-as'.  You should use a modern
+version of GNU binutils.  Version 2.14 was used for all testing.  In
+general, only the `--with-gnu-as' option is tested.  A modern bintuils
+(as well as a plethora of other development related GNU utilities) can
+be found in the GNU Development Tools package.  See the SCO web and ftp
+sites for details.  That package also contains the currently
+"officially supported" version of GCC, version 2.95.3.  It is useful
+for bootstrapping this version.
 
 i?86-*-udk
 ==========
@@ -3824,66 +3795,65 @@ Ref: *-*-linux-gnu73900
 Ref: ix86-*-linux*aout74892
 Ref: ix86-*-linux*75105
 Ref: ix86-*-sco75422
-Ref: ix86-*-sco3.2v475589
-Ref: ix86-*-sco3.2v5*75680
-Ref: ix86-*-udk78866
-Ref: ia64-*-linux80233
-Ref: ia64-*-hpux*81224
-Ref: *-lynx-lynxos81656
-Ref: *-ibm-aix*82136
-Ref: ip2k-*-elf87164
-Ref: m32r-*-elf87398
-Ref: m68000-hp-bsd87503
-Ref: m6811-elf87762
-Ref: m6812-elf87915
-Ref: m68k-att-sysv88068
-Ref: m68k-crds-unos88431
-Ref: m68k-hp-hpux89895
-Ref: m68k-ncr-*91911
-Ref: m68k-sun92309
-Ref: m68k-sun-sunos4.1.192573
-Ref: mips-*-*92740
-Ref: mips-sgi-irix593604
-Ref: mips-sgi-irix695588
-Ref: powerpc*-*-*99377
-Ref: powerpc-*-darwin*99525
-Ref: powerpc-*-elf100473
-Ref: powerpc-*-linux-gnu*100595
-Ref: powerpc-*-netbsd*100706
-Ref: powerpc-*-eabiaix100905
-Ref: powerpc-*-eabisim101032
-Ref: powerpc-*-eabi101161
-Ref: powerpcle-*-elf101240
-Ref: powerpcle-*-eabisim101373
-Ref: powerpcle-*-eabi101509
-Ref: s390-*-linux*101595
-Ref: s390x-*-linux*101666
-Ref: *-*-solaris2*101752
-Ref: sparc-sun-solaris2*104210
-Ref: sparc-sun-solaris2.7105546
-Ref: sparc-sun-sunos4*107619
-Ref: sparc-unknown-linux-gnulibc1108286
-Ref: sparc-*-linux*108487
-Ref: sparc64-*-solaris2*108715
-Ref: sparcv9-*-solaris2*109094
-Ref: #*-*-sysv*109182
-Ref: vax-dec-ultrix110146
-Ref: xtensa-*-elf110301
-Ref: xtensa-*-linux*110983
-Ref: windows111324
-Ref: os2111651
-Ref: older111977
-Ref: elf_targets114105
-Node: Old114366
-Node: Configurations117741
-Node: Cross-Compiler121941
-Node: Steps of Cross123698
-Node: Configure Cross124823
-Node: Tools and Libraries125467
-Node: Cross Headers127913
-Node: Build Cross129928
-Node: VMS Install130895
-Node: GNU Free Documentation License140435
-Node: Concept Index162848
+Ref: ix86-*-sco3.2v5*75589
+Ref: ix86-*-udk77837
+Ref: ia64-*-linux79204
+Ref: ia64-*-hpux*80195
+Ref: *-lynx-lynxos80627
+Ref: *-ibm-aix*81107
+Ref: ip2k-*-elf86135
+Ref: m32r-*-elf86369
+Ref: m68000-hp-bsd86474
+Ref: m6811-elf86733
+Ref: m6812-elf86886
+Ref: m68k-att-sysv87039
+Ref: m68k-crds-unos87402
+Ref: m68k-hp-hpux88866
+Ref: m68k-ncr-*90882
+Ref: m68k-sun91280
+Ref: m68k-sun-sunos4.1.191544
+Ref: mips-*-*91711
+Ref: mips-sgi-irix592575
+Ref: mips-sgi-irix694559
+Ref: powerpc*-*-*98348
+Ref: powerpc-*-darwin*98496
+Ref: powerpc-*-elf99444
+Ref: powerpc-*-linux-gnu*99566
+Ref: powerpc-*-netbsd*99677
+Ref: powerpc-*-eabiaix99876
+Ref: powerpc-*-eabisim100003
+Ref: powerpc-*-eabi100132
+Ref: powerpcle-*-elf100211
+Ref: powerpcle-*-eabisim100344
+Ref: powerpcle-*-eabi100480
+Ref: s390-*-linux*100566
+Ref: s390x-*-linux*100637
+Ref: *-*-solaris2*100723
+Ref: sparc-sun-solaris2*103181
+Ref: sparc-sun-solaris2.7104517
+Ref: sparc-sun-sunos4*106590
+Ref: sparc-unknown-linux-gnulibc1107257
+Ref: sparc-*-linux*107458
+Ref: sparc64-*-solaris2*107686
+Ref: sparcv9-*-solaris2*108065
+Ref: #*-*-sysv*108153
+Ref: vax-dec-ultrix109117
+Ref: xtensa-*-elf109272
+Ref: xtensa-*-linux*109954
+Ref: windows110295
+Ref: os2110622
+Ref: older110948
+Ref: elf_targets113076
+Node: Old113337
+Node: Configurations116712
+Node: Cross-Compiler120912
+Node: Steps of Cross122669
+Node: Configure Cross123794
+Node: Tools and Libraries124438
+Node: Cross Headers126884
+Node: Build Cross128899
+Node: VMS Install129866
+Node: GNU Free Documentation License139406
+Node: Concept Index161819
 
 End Tag Table

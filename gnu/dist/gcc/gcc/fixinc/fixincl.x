@@ -5,7 +5,7 @@
  * files which are fixed to work correctly with ANSI C and placed in a
  * directory that GNU C will search.
  *
- * This file contains 157 fixup descriptions.
+ * This file contains 162 fixup descriptions.
  *
  * See README for more information.
  *
@@ -342,14 +342,7 @@ tSCC zAab_Svr4_Replace_ByteorderList[] =
 /*
  *  Machine/OS name selection pattern
  */
-tSCC* apzAab_Svr4_Replace_ByteorderMachs[] = {
-        "*-*-sysv4*",
-        "i[34567]86-*-sysv5*",
-        "i[34567]86-*-udk*",
-        "i[34567]86-*-solaris2.[0-4]",
-        "powerpcle-*-solaris2.[0-4]",
-        "sparc-*-solaris2.[0-4]",
-        (const char*)NULL };
+#define apzAab_Svr4_Replace_ByteorderMachs (const char**)NULL
 #define AAB_SVR4_REPLACE_BYTEORDER_TEST_CT  0
 #define aAab_Svr4_Replace_ByteorderTests   (tTestDesc*)NULL
 
@@ -393,9 +386,7 @@ static __inline__ unsigned long\n\
 htonl (unsigned long __arg)\n\
 {\n\
   register unsigned long __result;\n\n\
-  __asm__ (\"xchg%B0 %b0,%h0\n\
-\tror%L0 $16,%0\n\
-\txchg%B0 %b0,%h0\" : \"=q\" (__result) : \"0\" (__arg));\n\
+  __asm__ (\"xchg%B0 %b0,%h0 ; ror%L0 $16,%0 ; xchg%B0 %b0,%h0\"     : \"=q\" (__result) : \"0\" (__arg));\n\
   return __result;\n\
 }\n\n\
 /* Convert a host short to a network short.  */\n\n\
@@ -914,6 +905,46 @@ static tTestDesc aAlpha_ParensTests[] = {
 static const char* apzAlpha_ParensPatch[] = {
     "format",
     "#ifndef __mips64",
+    (char*)NULL };
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * *
+ *
+ *  Description of Alpha_Pthread_Gcc fix
+ */
+tSCC zAlpha_Pthread_GccName[] =
+     "alpha_pthread_gcc";
+
+/*
+ *  File name selection pattern
+ */
+tSCC zAlpha_Pthread_GccList[] =
+  "|pthread.h|";
+/*
+ *  Machine/OS name selection pattern
+ */
+tSCC* apzAlpha_Pthread_GccMachs[] = {
+        "alpha*-dec-osf*",
+        (const char*)NULL };
+
+/*
+ *  content selection pattern - do fix if pattern found
+ */
+tSCC zAlpha_Pthread_GccSelect0[] =
+       "#else\n\
+# error <pthread.h>: unrecognized compiler.";
+
+#define    ALPHA_PTHREAD_GCC_TEST_CT  1
+static tTestDesc aAlpha_Pthread_GccTests[] = {
+  { TT_EGREP,    zAlpha_Pthread_GccSelect0, (regex_t*)NULL }, };
+
+/*
+ *  Fix Command Arguments for Alpha_Pthread_Gcc
+ */
+static const char* apzAlpha_Pthread_GccPatch[] = {
+    "format",
+    "#elif defined (__GNUC__)\n\
+# define _PTHREAD_ENV_GCC\n\
+%0",
     (char*)NULL };
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -2731,7 +2762,7 @@ tSCC zIrix_Stdio_Va_ListList[] =
  *  content selection pattern - do fix if pattern found
  */
 tSCC zIrix_Stdio_Va_ListSelect0[] =
-       "(printf\\(.*), /\\* va_list \\*/ char \\*";
+       "/\\* va_list \\*/ char \\*";
 
 #define    IRIX_STDIO_VA_LIST_TEST_CT  1
 static tTestDesc aIrix_Stdio_Va_ListTests[] = {
@@ -2742,7 +2773,7 @@ static tTestDesc aIrix_Stdio_Va_ListTests[] = {
  */
 static const char* apzIrix_Stdio_Va_ListPatch[] = {
     "format",
-    "%1, __gnuc_va_list",
+    "__gnuc_va_list",
     (char*)NULL };
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -4012,6 +4043,129 @@ static const char* apzRs6000_ParamPatch[] = {
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * *
  *
+ *  Description of Sco_Math fix
+ */
+tSCC zSco_MathName[] =
+     "sco_math";
+
+/*
+ *  File name selection pattern
+ */
+tSCC zSco_MathList[] =
+  "|math.h|posix/math.h|ansi/math.h|xpg4/math.h|xpg4v2/math.h|xpg4plus/math.h|ods_30_compat/math.h|oldstyle/math.h|";
+/*
+ *  Machine/OS name selection pattern
+ */
+#define apzSco_MathMachs (const char**)NULL
+
+/*
+ *  content selection pattern - do fix if pattern found
+ */
+tSCC zSco_MathSelect0[] =
+       "__builtin_generic";
+
+#define    SCO_MATH_TEST_CT  1
+static tTestDesc aSco_MathTests[] = {
+  { TT_EGREP,    zSco_MathSelect0, (regex_t*)NULL }, };
+
+/*
+ *  Fix Command Arguments for Sco_Math
+ */
+static const char* apzSco_MathPatch[] = { "sed",
+    "-e", "/#define.*__fp_class(a) \\\\/i\\\n\
+#ifndef __GNUC__\n",
+    "-e", "/.*__builtin_generic/a\\\n\
+#else\\\n\
+#define __fp_class(a) \\\\\\\n\
+  __builtin_choose_expr(__builtin_types_compatible_p(typeof(a),long double),\\\\\\\n\
+   __fpclassifyl(a), \\\\\\\n\
+    __builtin_choose_expr(__builtin_types_compatible_p(typeof(a), float), \\\\\\\n\
+      __fpclassifyf(a),__fpclassify(a)))\\\n\
+#endif",
+    "-e", "/extern \"C\\+\\+\"/N;/inline double abs/i\\\n\
+#ifndef __GNUC__\n",
+    "-e", "/inline long double trunc/N;/inline long double trunc.*}.*extern \"C\\+\\+\"/a\\\n\
+#endif /* ! __GNUC__ */",
+    (char*)NULL };
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * *
+ *
+ *  Description of Sco_Regset fix
+ */
+tSCC zSco_RegsetName[] =
+     "sco_regset";
+
+/*
+ *  File name selection pattern
+ */
+tSCC zSco_RegsetList[] =
+  "|sys/regset.h|";
+/*
+ *  Machine/OS name selection pattern
+ */
+tSCC* apzSco_RegsetMachs[] = {
+        "*-*-sco3.2v5*",
+        (const char*)NULL };
+
+/*
+ *  content selection pattern - do fix if pattern found
+ */
+tSCC zSco_RegsetSelect0[] =
+       "(struct[ \t]+_*)fpstate";
+
+#define    SCO_REGSET_TEST_CT  1
+static tTestDesc aSco_RegsetTests[] = {
+  { TT_EGREP,    zSco_RegsetSelect0, (regex_t*)NULL }, };
+
+/*
+ *  Fix Command Arguments for Sco_Regset
+ */
+static const char* apzSco_RegsetPatch[] = {
+    "format",
+    "%1rsfpstate",
+    (char*)NULL };
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * *
+ *
+ *  Description of Sco_String fix
+ */
+tSCC zSco_StringName[] =
+     "sco_string";
+
+/*
+ *  File name selection pattern
+ */
+tSCC zSco_StringList[] =
+  "|ansi/string.h|posix/string.h|xpg4/string.h|xpg4v2/string.h|xpg4plus/string.h|ods_30_compat/string.h|oldstyle/string.h|string.h|";
+/*
+ *  Machine/OS name selection pattern
+ */
+tSCC* apzSco_StringMachs[] = {
+        "*-*-sco3.2v5*",
+        (const char*)NULL };
+
+/*
+ *  content selection pattern - do fix if pattern found
+ */
+tSCC zSco_StringSelect0[] =
+       "inline char";
+
+#define    SCO_STRING_TEST_CT  1
+static tTestDesc aSco_StringTests[] = {
+  { TT_EGREP,    zSco_StringSelect0, (regex_t*)NULL }, };
+
+/*
+ *  Fix Command Arguments for Sco_String
+ */
+static const char* apzSco_StringPatch[] = { "sed",
+    "-e", "/extern \"C\\+\\+\"/N;/inline void.*memchr/i\\\n\
+#ifndef __GNUC__\n",
+    "-e", "/return.*strstr/N;/return.*strstr.*}/a\\\n\
+#endif /* ! __GNUC__ */",
+    (char*)NULL };
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * *
+ *
  *  Description of Sco_Static_Func fix
  */
 tSCC zSco_Static_FuncName[] =
@@ -4215,7 +4369,8 @@ tSCC zSolaris_WidecList[] =
  *  Machine/OS name selection pattern
  */
 tSCC* apzSolaris_WidecMachs[] = {
-        "*-*-solaris2.[0-5]*",
+        "*-*-solaris2.[0-5]",
+        "*-*-solaris2.[0-5].*",
         (const char*)NULL };
 
 /*
@@ -4348,7 +4503,6 @@ static tTestDesc aStdio_Va_ListTests[] = {
 static const char* apzStdio_Va_ListPatch[] = { "sed",
     "-e", "s@ va_list @ __gnuc_va_list @\n\
 s@ va_list)@ __gnuc_va_list)@\n\
-s@va_list _ap;@__gnuc_va_list _ap;@\n\
 s@(va_list)&@(__gnuc_va_list)\\&@\n\
 s@ _VA_LIST_));@ __gnuc_va_list));@\n\
 s@ __VA_LIST__));@ __gnuc_va_list));@\n\
@@ -4902,6 +5056,40 @@ static const char* apzSvr4__PPatch[] = {
     "#ifndef __P\n\
 %0\n\
 #endif",
+    (char*)NULL };
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * *
+ *
+ *  Description of Svr4_Disable_Opt fix
+ */
+tSCC zSvr4_Disable_OptName[] =
+     "svr4_disable_opt";
+
+/*
+ *  File name selection pattern
+ */
+tSCC zSvr4_Disable_OptList[] =
+  "|string.h|";
+/*
+ *  Machine/OS name selection pattern
+ */
+#define apzSvr4_Disable_OptMachs (const char**)NULL
+
+/*
+ *  content selection pattern - do fix if pattern found
+ */
+tSCC zSvr4_Disable_OptSelect0[] =
+       "#define.*__std_hdr_";
+
+#define    SVR4_DISABLE_OPT_TEST_CT  1
+static tTestDesc aSvr4_Disable_OptTests[] = {
+  { TT_EGREP,    zSvr4_Disable_OptSelect0, (regex_t*)NULL }, };
+
+/*
+ *  Fix Command Arguments for Svr4_Disable_Opt
+ */
+static const char* apzSvr4_Disable_OptPatch[] = { "sed",
+    "-e", "/#define.*__std_hdr_/d",
     (char*)NULL };
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -6186,9 +6374,9 @@ static const char* apzX11_SprintfPatch[] = {
  *
  *  List of all fixes
  */
-#define REGEX_COUNT          171
-#define MACH_LIST_SIZE_LIMIT 279
-#define FIX_COUNT            157
+#define REGEX_COUNT          176
+#define MACH_LIST_SIZE_LIMIT 261
+#define FIX_COUNT            162
 
 /*
  *  Enumerate the fixes
@@ -6214,6 +6402,7 @@ typedef enum {
     ALPHA_ASSERT_FIXIDX,
     ALPHA_GETOPT_FIXIDX,
     ALPHA_PARENS_FIXIDX,
+    ALPHA_PTHREAD_GCC_FIXIDX,
     ALPHA_SBRK_FIXIDX,
     ARM_NORCROFT_HINT_FIXIDX,
     ARM_WCHAR_FIXIDX,
@@ -6294,6 +6483,9 @@ typedef enum {
     RS6000_DOUBLE_FIXIDX,
     RS6000_FCHMOD_FIXIDX,
     RS6000_PARAM_FIXIDX,
+    SCO_MATH_FIXIDX,
+    SCO_REGSET_FIXIDX,
+    SCO_STRING_FIXIDX,
     SCO_STATIC_FUNC_FIXIDX,
     SCO_UTIME_FIXIDX,
     SOLARIS_MUTEX_INIT_1_FIXIDX,
@@ -6317,6 +6509,7 @@ typedef enum {
     SUNOS_MATHERR_DECL_FIXIDX,
     SUNOS_STRLEN_FIXIDX,
     SVR4__P_FIXIDX,
+    SVR4_DISABLE_OPT_FIXIDX,
     SVR4_GETCWD_FIXIDX,
     SVR4_PROFIL_FIXIDX,
     SYSV68_STRING_FIXIDX,
@@ -6453,6 +6646,11 @@ tFixDesc fixDescList[ FIX_COUNT ] = {
      apzAlpha_ParensMachs,
      ALPHA_PARENS_TEST_CT, FD_MACH_ONLY | FD_SUBROUTINE,
      aAlpha_ParensTests,   apzAlpha_ParensPatch, 0 },
+
+  {  zAlpha_Pthread_GccName,    zAlpha_Pthread_GccList,
+     apzAlpha_Pthread_GccMachs,
+     ALPHA_PTHREAD_GCC_TEST_CT, FD_MACH_ONLY | FD_SUBROUTINE,
+     aAlpha_Pthread_GccTests,   apzAlpha_Pthread_GccPatch, 0 },
 
   {  zAlpha_SbrkName,    zAlpha_SbrkList,
      apzAlpha_SbrkMachs,
@@ -6854,6 +7052,21 @@ tFixDesc fixDescList[ FIX_COUNT ] = {
      RS6000_PARAM_TEST_CT, FD_MACH_ONLY | FD_SUBROUTINE,
      aRs6000_ParamTests,   apzRs6000_ParamPatch, 0 },
 
+  {  zSco_MathName,    zSco_MathList,
+     apzSco_MathMachs,
+     SCO_MATH_TEST_CT, FD_MACH_ONLY,
+     aSco_MathTests,   apzSco_MathPatch, 0 },
+
+  {  zSco_RegsetName,    zSco_RegsetList,
+     apzSco_RegsetMachs,
+     SCO_REGSET_TEST_CT, FD_MACH_ONLY | FD_SUBROUTINE,
+     aSco_RegsetTests,   apzSco_RegsetPatch, 0 },
+
+  {  zSco_StringName,    zSco_StringList,
+     apzSco_StringMachs,
+     SCO_STRING_TEST_CT, FD_MACH_ONLY,
+     aSco_StringTests,   apzSco_StringPatch, 0 },
+
   {  zSco_Static_FuncName,    zSco_Static_FuncList,
      apzSco_Static_FuncMachs,
      SCO_STATIC_FUNC_TEST_CT, FD_MACH_ONLY,
@@ -6968,6 +7181,11 @@ tFixDesc fixDescList[ FIX_COUNT ] = {
      apzSvr4__PMachs,
      SVR4__P_TEST_CT, FD_MACH_ONLY | FD_SUBROUTINE,
      aSvr4__PTests,   apzSvr4__PPatch, 0 },
+
+  {  zSvr4_Disable_OptName,    zSvr4_Disable_OptList,
+     apzSvr4_Disable_OptMachs,
+     SVR4_DISABLE_OPT_TEST_CT, FD_MACH_ONLY,
+     aSvr4_Disable_OptTests,   apzSvr4_Disable_OptPatch, 0 },
 
   {  zSvr4_GetcwdName,    zSvr4_GetcwdList,
      apzSvr4_GetcwdMachs,

@@ -25,7 +25,7 @@ START-INFO-DIR-ENTRY
 * g77: (g77).                  The GNU Fortran compiler.
 END-INFO-DIR-ENTRY
    This file documents the use and the internals of the GNU Fortran
-(`g77') compiler.  It corresponds to the GCC-3.3.1 version of `g77'.
+(`g77') compiler.  It corresponds to the GCC-3.3.2 version of `g77'.
 
    Published by the Free Software Foundation 59 Temple Place - Suite 330
 Boston, MA 02111-1307 USA
@@ -62,7 +62,7 @@ Introduction
 
    This manual documents how to run, install and port `g77', as well as
 its new features and incompatibilities, and how to report bugs.  It
-corresponds to the GCC-3.3.1 version of `g77'.
+corresponds to the GCC-3.3.2 version of `g77'.
 
 * Menu:
 
@@ -2939,7 +2939,7 @@ clarify how they differ from other versions, though this can make
 getting a complete picture of what a particular `egcs' version contains
 somewhat more difficult.
 
-   For information on bugs in the GCC-3.3.1 version of `g77', see *Note
+   For information on bugs in the GCC-3.3.2 version of `g77', see *Note
 Known Bugs In GNU Fortran: Known Bugs.
 
    An online, "live" version of this document (derived directly from
@@ -4256,7 +4256,7 @@ clarify how they differ from other versions, though this can make
 getting a complete picture of what a particular `egcs' version contains
 somewhat more difficult.
 
-   For information on bugs in the GCC-3.3.1 version of `g77', see *Note
+   For information on bugs in the GCC-3.3.2 version of `g77', see *Note
 Known Bugs In GNU Fortran: Known Bugs.
 
    The following information was last updated on 2003-05-18:
@@ -19854,7 +19854,7 @@ Known Bugs In GNU Fortran
 =========================
 
    This section identifies bugs that `g77' _users_ might run into in
-the GCC-3.3.1 version of `g77'.  This includes bugs that are actually
+the GCC-3.3.2 version of `g77'.  This includes bugs that are actually
 in the `gcc' back end (GBE) or in `libf2c', because those sets of code
 are at least somewhat under the control of (and necessarily intertwined
 with) `g77', so it isn't worth separating them out.

@@ -1,6 +1,282 @@
-2003-08-04  Release Manager
+2003-10-16  Release Manager
 
-	* GCC 3.3.1 Released.
+	* GCC 3.3.2 Released.
+
+2003-10-15  Kriang Lerdsuwanakij  <lerdsuwa@users.sourceforge.net>
+
+	PR c++/12369
+	* g++.dg/template/friend25.C: New test.
+
+2003-10-15  Kriang Lerdsuwanakij  <lerdsuwa@users.sourceforge.net>
+
+	PR c++/7939
+	* g++.dg/template/crash11.C: New test.
+
+2003-10-14  Steven Bosscher  <steven@gcc.gnu.org>
+
+	* g++.dg/tls/init-2.C: Fix. Expect two warnings.
+
+2003-10-11  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	* gcc.c-torture/compile/20031011-1.c: New test.
+
+2003-10-09  Volker Reichelt  <reichelt@igpm.rwth-aachen.de>
+
+	* gcc.dg/20031009-1.c: New test.
+
+2003-10-09  Mark Mitchell  <mark@codesourcery.com>
+
+	* g++.dg/ext/attrib8.C: Only run it on x86 targets.
+
+2003-10-07  Mark Mitchell  <mark@codesourcery.com>
+
+	* g++.dg/template/ptrmem4.C: Revise in view of fixes for PR
+	c++/10147.
+
+2003-10-06  Bob Wilson  <bob.wilson@acm.org>
+
+	* g++.dg/template/spec10.C: Set exit value to zero on success.  Fix
+	indentation.
+
+2003-10-06  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/12337
+	* g++.dg/init/new9.C: New test.
+	
+	PR c++/12334, c++/12236, c++/8656
+	* g++.dg/ext/attrib8.C: New test.
+
+2003-10-06  Wolfgang Bangerth  <bangerth@ticam.utexas.edu>
+
+	* g++.dg/opt/cfg2.C: New test.
+
+2003-10-06  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	* g++.dg/opt/float1.C: New test.
+
+2003-10-04  Roger Sayle  <roger@eyesopen.com>
+
+	PR c++/11409
+	* g++.dg/overload/builtin3.C: New test case.
+
+2003-10-04  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	* gcc.dg/c90-array-lval-6.c: New test.
+	* gcc.dg/c99-array-lval-6.c: New test.
+
+2003-10-02  Mark Mitchell  <mark@codesourcery.com>
+
+	PR optimization/12180
+	* gcc.dg/20031002-1.c: New test.
+
+2003-10-02  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/12486
+	* g++.dg/inherit/error1.C: New test.
+	
+2003-10-02  Alexandre Oliva  <aoliva@redhat.com>
+
+	* g++.dg/parse/parameter-declaration-1.C: Fix line number of
+	expected error message.
+
+2003-10-02  Josef Zlomek  <zlomekj@suse.cz>
+
+	* gcc.c-torture/compile/20031002-1.c: New test.
+
+2003-10-02  Jakub Jelinek  <jakub@redhat.com>
+
+	* g++.dg/opt/cond1.C: New test.
+
+2003-09-29  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	* g++.dg/opt/unroll1.C: Change unsigned to __SIZE_TYPE__.
+
+2003-09-27  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	* g++.dg/opt/unroll1.C: New test.
+
+2003-09-24  Alexandre Oliva  <aoliva@redhat.com>
+
+	* gcc.dg/cpp/Wunknown-pragmas-1.c: New test.
+
+2003-09-23  Geoffrey Keating  <geoffk@apple.com>
+
+	* gcc.dg/darwin-abi-1.c: New file.
+
+2003-09-22  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	* g++.dg/opt/reg-stack2.C: New test.
+
+2003-09-21  Christian Ehrhardt  <ehrhardt@mathematik.uni-ulm.de>
+
+	* g++.dg/eh/delayslot1.C: New test.
+
+2003-09-19  Andrew Pinski  <pinskia@physics.uc.edu>
+
+	* g++.dg/init/array11.C: Change unsigned to __SIZE_TYPE__
+	so that it will not complain on LP64 targets.
+
+2003-09-18  Mark Mitchell  <mark@codesourcery.com>
+
+	PR target/11184
+	* gcc.dg/builtin-apply1.c: New test.
+
+2003-09-17  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/11991
+	* g++.dg/rtti/typeid3.C: New test.
+
+2003-09-17  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/12266
+	* g++.dg/overload/template1.C: New test.
+
+2003-09-17  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	* g++.dg/opt/cfg3.C: New test.
+
+2003-09-14  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/3907
+	* g++.dg/parse/template12.C: New test.
+
+2003-09-14  Mark Mitchell  <mark@codesourcery.com>
+
+	* g++.dg/abi/bitfield11.C: New test.
+	* g++.dg/abi/bitfield12.C: Likewise.
+
+2003-09-14  Alexandre Oliva  <aoliva@redhat.com>
+
+	* gcc.dg/cpp/separate-1.c: Adjust line of error.  Test for correct
+	non-expansion of functional macro name without arguments at EOL.
+	* gcc.dg/cpp/spacing1.c: Revert 2003-08-04's change.  Likewise.
+
+2003-09-10  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	* gcc.dg/ultrasp10.c: New test.
+
+2003-09-08  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/11786
+	* g++.dg/lookup/koenig2.C: New test.
+
+2003-09-08  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/5296
+	* g++.dg/rtti/typeid2.C: New test.
+
+2003-09-07  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	* g++.dg/opt/longbranch2.C: New test.
+
+2003-09-07  Andrew Pinski  <pinskia@physics.uc.edu>
+
+	PR middle-end/11665
+	* gcc.c-torture/compile/20030907-1.c: New test.
+	* g++.dg/init/array11.C: New test.
+
+2003-09-07  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/11852
+	* g++.dg/init/struct1.C: New test.
+
+2003-09-07  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/12181
+	* g++.dg/expr/comma1.C: New test.
+
+2003-09-07  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	* gcc.c-torture/execute/20030907-1.c: New test.
+
+2003-09-06  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/11867
+	* g++.dg/expr/static_cast5.C: New test.
+
+2003-09-05  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/12163
+	* g++.dg/expr/static_cast4.C: New test.
+
+	PR c++/12146
+	* g++.dg/template/crash9.C: New test.
+
+2003-09-04  Mark Mitchell  <mark@codesourcery.com>
+
+	Revert this patch:
+	* g++.dg/abi/layout4.C: New test.
+	
+2003-09-03  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/12053
+	* g++.dg/abi/layout4.C: New test.
+
+2003-09-01  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/12114
+	* g++.dg/init/ref9.C: New test.
+
+2003-08-29  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/11928
+	* g++.dg/inherit/conv1.C: New test.
+
+2003-08-26  Matt Kraai  <kraai@alumni.cmu.edu>
+
+	* gcc.dg/noncompile/20030818-1.c: Expect second line of error.
+
+2003-08-25  Ulrich Weigand  <uweigand@de.ibm.com>
+
+	* gcc.dg/20030702-1.c: New test.
+
+2003-08-23  Jakub Jelinek  <jakub@redhat.com>
+
+	* gcc.dg/20030815-1.c: New test.
+
+2003-08-22  Alexandre Oliva  <aoliva@redhat.com>
+
+	* gcc.dg/cpp/separate-1.c: New test.
+	* gcc.dg/cpp/spacing1.c: Update.
+
+2003-08-22  Mark Mitchell  <mark@codesourcery.com>
+
+	* gcc.misc-tests/linkage.exp: Treat all HP-UX platforms
+	identically.
+
+2003-08-22  Roger Sayle  <roger@eyesopen.com>
+	    Jim Wilson  <wilson@tuliptree.org>
+
+	* gcc.dg/uninit-C.c: Only test TImode on 64-bit platforms.
+
+2003-08-22  Mark Mitchell  <mark@codesourcery.com>
+
+	* g++.old-deja/g++.ext/attrib5.C: XFAIL on hppa2*-hp-hpux11*.
+
+	* gcc.dg/20020313-1.c: Add "-w" to dg-options.
+
+	* gcc.misc-tests/linkage.exp: Add logic for ia64-hp-hpux*.
+
+	* g++.dg/other/packed1.C: Add XFAIL marker for ia64-hp-hpux*.
+
+2003-08-21  Kazu Hirata  <kazu@cs.umass.edu>
+
+	PR target/11805
+	* gcc.c-torture/compile/20030821-1.c: New.
+
+2003-08-18  Matt Kraai  <kraai@alumni.cmu.edu>
+
+	* gcc.dg/noncompile/20030818-1.c: New.
+
+2003-08-08  Roger Sayle  <roger@eyesopen.com>
+
+	PR c/11370
+	* gcc.dg/Wunreachable-6.c: New testcase.
+	* gcc.dg/Wunreachable-7.c: New testcase.
+
+2003-07-26  Geoffrey Keating  <geoffk@apple.com>
+
+	* gcc.c-torture/compile/zero-strct-2.c: New test.
 
 2003-08-04  Release Manager
 
@@ -14813,3 +15089,4 @@ rlsruhe.de>
 	correspond to c-torture	1.11.
 
 	* New file.
+
