@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.41 2001/04/13 23:29:57 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.42 2001/04/14 00:45:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -212,7 +212,7 @@ extern u_int64_t ssir;
 #define	setsoft(x)	atomic_setbits_ulong(&ssir, 1 << (x))
 
 struct alpha_soft_intrhand {
-	LIST_ENTRY(alpha_soft_intrhand)
+	TAILQ_ENTRY(alpha_soft_intrhand)
 		sih_q;
 	struct alpha_soft_intr *sih_intrhead;
 	void	(*sih_fn)(void *);
@@ -221,12 +221,24 @@ struct alpha_soft_intrhand {
 };
 
 struct alpha_soft_intr {
-	LIST_HEAD(, alpha_soft_intrhand)
+	TAILQ_HEAD(, alpha_soft_intrhand)
 		softintr_q;
 	struct evcnt softintr_evcnt;
 	struct simplelock softintr_slock;
 	unsigned long softintr_ipl;
 };
+
+#define	alpha_softintr_lock(asi, s)					\
+do {									\
+	(s) = splhigh();						\
+	simple_lock(&(asi)->softintr_slock);				\
+} while (/*CONSTCOND*/0)
+
+#define	alpha_softintr_unlock(asi, s)					\
+do {									\
+	simple_unlock(&(asi)->softintr_slock);				\
+	splx((s));							\
+} while (/*CONSTCOND*/0)
 
 void	*softintr_establish(int, void (*)(void *), void *);
 void	softintr_disestablish(void *);
@@ -236,8 +248,16 @@ void	softintr_dispatch(void);
 #define	softintr_schedule(arg)						\
 do {									\
 	struct alpha_soft_intrhand *__sih = (arg);			\
-	__sih->sih_pending = 1;						\
-	setsoft(__sih->sih_intrhead->softintr_ipl);			\
+	struct alpha_soft_intr *__si = __sih->sih_intrhead;		\
+	int __s;							\
+									\
+	alpha_softintr_lock(__si, __s);					\
+	if (__sih->sih_pending == 0) {					\
+		TAILQ_INSERT_TAIL(&__si->softintr_q, __sih, sih_q);	\
+		__sih->sih_pending = 1;					\
+		setsoft(__si->softintr_ipl);				\
+	}								\
+	alpha_softintr_unlock(__si, __s);				\
 } while (0)
 
 /* XXX For legacy software interrupts. */
