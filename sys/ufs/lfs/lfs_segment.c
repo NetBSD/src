@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.60 2000/11/12 02:13:51 toshii Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.61 2000/11/12 07:58:36 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -466,10 +466,10 @@ lfs_segwrite(mp, flags)
 	struct segment *sp;
 	struct vnode *vp;
 	SEGUSE *segusep;
-	CLEANERINFO *cip;
 	ufs_daddr_t ibno;
-	int do_ckp, error, i;
+	int do_ckp, did_ckp, error, i;
 	int writer_set = 0;
+	int dirty;
 	
 	fs = VFSTOUFS(mp)->um_lfs;
 
@@ -478,15 +478,21 @@ lfs_segwrite(mp, flags)
 
 	lfs_imtime(fs);
 
+	/* printf("lfs_segwrite: ifile flags are 0x%lx\n",
+	       (long)(VTOI(fs->lfs_ivnode)->i_flag)); */
+
 #if 0	
 	/*
 	 * If we are not the cleaner, and there is no space available,
 	 * wait until cleaner writes.
 	 */
-	if(!(flags & SEGM_CLEAN)
-	   && (!fs->lfs_seglock || !(fs->lfs_sp->seg_flags & SEGM_CLEAN)))
+	if(!(flags & SEGM_CLEAN) && !(fs->lfs_seglock && fs->lfs_sp &&
+				      (fs->lfs_sp->seg_flags & SEGM_CLEAN)))
 	{
 		while (fs->lfs_avail <= 0) {
+			LFS_CLEANERINFO(cip, fs, bp);
+			LFS_SYNC_CLEANERINFO(cip, fs, bp, 0);
+	
 			wakeup(&lfs_allclean_wakeup);
 			wakeup(&fs->lfs_nextseg);
 			error = tsleep(&fs->lfs_avail, PRIBIO + 1, "lfs_av2",
@@ -497,14 +503,6 @@ lfs_segwrite(mp, flags)
 		}
 	}
 #endif
-	/*
-	 * Synchronize cleaner information
-	 */
-	LFS_CLEANERINFO(cip, fs, bp);
-	cip->bfree = fs->lfs_bfree;
-	cip->avail = fs->lfs_avail - fs->lfs_ravail;
-	(void) VOP_BWRITE(bp); /* Ifile */
-	
 	/*
 	 * Allocate a segment structure and enough space to hold pointers to
 	 * the maximum possible number of buffers which can be described in a
@@ -550,23 +548,34 @@ lfs_segwrite(mp, flags)
 	if (do_ckp) {
 		for (ibno = fs->lfs_cleansz + fs->lfs_segtabsz;
 		     --ibno >= fs->lfs_cleansz; ) {
+			dirty = 0;
 			if (bread(fs->lfs_ivnode, ibno, fs->lfs_bsize, NOCRED, &bp))
 
 				panic("lfs_segwrite: ifile read");
 			segusep = (SEGUSE *)bp->b_data;
-			for (i = fs->lfs_sepb; i--; segusep++)
-				segusep->su_flags &= ~SEGUSE_ACTIVE;
+			for (i = fs->lfs_sepb; i--; segusep++) {
+				if (segusep->su_flags & SEGUSE_ACTIVE) {
+					segusep->su_flags &= ~SEGUSE_ACTIVE;
+					++dirty;
+				}
+			}
 				
 			/* But the current segment is still ACTIVE */
 			segusep = (SEGUSE *)bp->b_data;
 			if (datosn(fs, fs->lfs_curseg) / fs->lfs_sepb ==
-			    (ibno-fs->lfs_cleansz))
+			    (ibno-fs->lfs_cleansz)) {
 				segusep[datosn(fs, fs->lfs_curseg) %
 					fs->lfs_sepb].su_flags |= SEGUSE_ACTIVE;
-			error = VOP_BWRITE(bp); /* Ifile */
+				--dirty;
+			}
+			if (dirty)
+				error = VOP_BWRITE(bp); /* Ifile */
+			else
+				brelse(bp);
 		}
 	}
-	
+
+	did_ckp = 0;
 	if (do_ckp || fs->lfs_doifile) {
 	redo:
 		vp = fs->lfs_ivnode;
@@ -576,12 +585,16 @@ lfs_segwrite(mp, flags)
 		ip = VTOI(vp);
 		if (vp->v_dirtyblkhd.lh_first != NULL)
 			lfs_writefile(fs, sp, vp);
-		(void)lfs_writeinode(fs, sp, ip);
+		if (ip->i_flag & IN_ALLMOD)
+			++did_ckp;
+		(void) lfs_writeinode(fs, sp, ip);
 
 		vput(vp);
 
 		if (lfs_writeseg(fs, sp) && do_ckp)
 			goto redo;
+		/* The ifile should now be all clear */
+		LFS_CLR_UINO(ip, IN_ALLMOD);
 	} else {
 		(void) lfs_writeseg(fs, sp);
 	}
@@ -594,7 +607,20 @@ lfs_segwrite(mp, flags)
 	fs->lfs_doifile = 0;
 	if(writer_set && --fs->lfs_writer==0)
 		wakeup(&fs->lfs_dirops);
-	
+
+	/*
+	 * If we didn't write the Ifile, we didn't really do anything.
+	 * That means that (1) there is a checkpoint on disk and (2)
+	 * nothing has changed since it was written.
+	 *
+	 * Take the flags off of the segment so that lfs_segunlock
+	 * doesn't have to write the superblock either.
+	 */
+	if (did_ckp == 0) {
+		sp->seg_flags &= ~(SEGM_SYNC|SEGM_CKP);
+		/* if(do_ckp) printf("lfs_segwrite: no checkpoint\n"); */
+	}
+
 	if(lfs_dostats) {
 		++lfs_stats.nwrites;
 		if (sp->seg_flags & SEGM_SYNC)
@@ -1225,7 +1251,7 @@ lfs_newseg(fs)
 	--cip->clean;
 	++cip->dirty;
 	fs->lfs_nclean = cip->clean;
-	(void) VOP_BWRITE(bp); /* Ifile */
+	LFS_SYNC_CLEANERINFO(cip, fs, bp, 1);
 	
 	fs->lfs_lastseg = fs->lfs_curseg;
 	fs->lfs_curseg = fs->lfs_nextseg;
