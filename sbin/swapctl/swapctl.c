@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.15 2000/07/07 12:29:10 itojun Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.16 2000/11/17 11:43:41 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999 Matthew R. Green
@@ -33,6 +33,7 @@
  *	-A		add all devices listed as `sw' in /etc/fstab (also
  *			(sets the dump device, if listed in fstab)
  *	-D <dev>	set dumpdev to <dev>
+ *	-z		show dumpdev
  *	-U		remove all devices listed as `sw' in /etc/fstab.
  *	-t [blk|noblk]	if -A or -U , add (remove) either all block device
  *			or all non-block devices
@@ -79,6 +80,7 @@ int	command;
 #define	CMD_d		0x20	/* delete a swap file/device */
 #define	CMD_l		0x40	/* list swap files/devices */
 #define	CMD_s		0x80	/* summary of swap files/devices */
+#define	CMD_z		0x100	/* show dump device */
 
 #define	SET_COMMAND(cmd) \
 do { \
@@ -92,7 +94,7 @@ do { \
  * line, and the ones which require that none exist.
  */
 #define	REQUIRE_PATH	(CMD_D | CMD_a | CMD_c | CMD_d)
-#define	REQUIRE_NOPATH	(CMD_A | CMD_U | CMD_l | CMD_s)
+#define	REQUIRE_NOPATH	(CMD_A | CMD_U | CMD_l | CMD_s | CMD_z)
 
 /*
  * Option flags, and the commands with which they are valid.
@@ -104,7 +106,7 @@ int	pflag;		/* priority was specified */
 #define	PFLAG_CMDS	(CMD_A | CMD_a | CMD_c)
 
 char	*tflag;		/* swap device type (blk or noblk) */
-#define	TFLAG_CMDS	(CMD_A | CMD_U )
+#define	TFLAG_CMDS	(CMD_A | CMD_U)
 
 int	pri;		/* uses 0 as default pri */
 
@@ -112,6 +114,7 @@ static	void change_priority __P((const char *));
 static	int  add_swap __P((const char *, int));
 static	int  delete_swap __P((const char *));
 static	void set_dumpdev __P((const char *));
+static	void get_dumpdev __P((void));
 	int  main __P((int, char *[]));
 static	void do_fstab __P((int));
 static	void usage __P((void));
@@ -141,7 +144,7 @@ main(argc, argv)
 	}
 #endif
 
-	while ((c = getopt(argc, argv, "ADUacdlkp:st:")) != -1) {
+	while ((c = getopt(argc, argv, "ADUacdlkp:st:z")) != -1) {
 		switch (c) {
 		case 'A':
 			SET_COMMAND(CMD_A);
@@ -189,6 +192,10 @@ main(argc, argv)
 			if (tflag != NULL)
 				usage();
 			tflag = optarg;
+			break;
+
+		case 'z':
+			SET_COMMAND(CMD_z);
 			break;
 
 		default:
@@ -262,6 +269,10 @@ main(argc, argv)
 
 	case CMD_D:
 		set_dumpdev(argv[0]);
+		break;
+
+	case CMD_z:
+		get_dumpdev();
 		break;
 
 	case CMD_U:
@@ -390,6 +401,24 @@ set_dumpdev(path)
 		warn("could not set dump device to %s", path);
 	else
 		printf("%s: setting dump device to %s\n", __progname, path);
+}
+
+static void
+get_dumpdev()
+{
+	dev_t	dev;
+	char 	*name;
+
+	if (swapctl(SWAP_GETDUMPDEV, &dev, NULL) == -1)
+		warn("could not get dump device");
+	else {
+		name = devname(dev, S_IFBLK);
+		printf("dump device is ");
+		if (name)
+			printf("%s\n", name);
+		else
+			printf("major %d minor %d\n", major(dev), minor(dev));
+	}
 }
 
 static void
