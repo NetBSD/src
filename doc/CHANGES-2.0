@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.89 2004/04/16 08:05:34 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.90 2004/04/16 22:30:16 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -939,3 +939,8 @@ sys/netinet/tcp_input.c				1.192
 	Spotted by Markus Friedl (markus at openbsd.org).
 	[ragge, ticket #140]
 
+
+sys/kern/kern_systrace.c			1.38
+
+	Check process flags.
+	[provos, ticket #151]
