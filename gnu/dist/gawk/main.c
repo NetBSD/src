@@ -24,7 +24,7 @@
  */
 
 #include "awk.h"
-#include "getopt.h"
+#include <getopt.h>
 #include "patchlevel.h"
 
 static void usage P((int exitval, FILE *fp));
