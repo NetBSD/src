@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.55 2002/05/23 06:35:18 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.56 2002/05/23 06:53:13 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.55 2002/05/23 06:35:18 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.56 2002/05/23 06:53:13 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -810,7 +810,6 @@ in6_control(so, cmd, data, ifp, p)
 		if (in6if_do_dad(ifp)) {
 			ia->ia6_flags |= IN6_IFF_TENTATIVE;
 			nd6_dad_start(&ia->ia_ifa, NULL);
-			break;
 		}
 
 		if (hostIsNew) {
