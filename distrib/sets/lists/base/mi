@@ -1,5 +1,5 @@
-# $NetBSD: mi,v 1.217 2001/01/25 09:49:53 wiz Exp $
-.
+# $NetBSD: mi,v 1.218 2001/01/26 01:33:17 jwise Exp $
+.			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
 ./bin/[			base-util-root
@@ -26,8 +26,8 @@
 ./bin/pax		base-util-root
 ./bin/ps		base-util-root
 ./bin/pwd		base-util-root
-./bin/rcmd		base-net-root
-./bin/rcp		base-net-root
+./bin/rcmd		base-netutil-root
+./bin/rcp		base-netutil-root
 ./bin/rm		base-util-root
 ./bin/rmail		base-uucp-root
 ./bin/rmdir		base-util-root
@@ -431,8 +431,8 @@
 ./usr/bin/zgrep		base-util-bin
 ./usr/bin/zmore		base-util-bin
 ./usr/bin/znew		base-util-bin
-./usr/games		base-root-usr
-./usr/games/hide	base-root-usr
+./usr/games		base-games-usr
+./usr/games/hide	base-games-usr
 ./usr/include		base-c-usr
 ./usr/include/arpa		base-c-usr
 ./usr/include/cdk		base-c-usr
@@ -1072,10 +1072,10 @@
 ./usr/share/locale/sv				base-locale-sv
 ./usr/share/locale/sv/LC_MESSAGES		base-locale-sv
 ./usr/share/locale/sv/LC_MESSAGES/grep.mo	base-util_locale-sv
-./usr/share/locale/sv_SE.ISO8859-1		base-locale-se
-./usr/share/locale/sv_SE.ISO8859-1/LC_CTYPE	base-locale-se
-./usr/share/locale/sv_SE.ISO8859-15		base-locale-se
-./usr/share/locale/sv_SE.ISO8859-15/LC_CTYPE	base-locale-se
+./usr/share/locale/sv_SE.ISO8859-1		base-locale-sv
+./usr/share/locale/sv_SE.ISO8859-1/LC_CTYPE	base-locale-sv
+./usr/share/locale/sv_SE.ISO8859-15		base-locale-sv
+./usr/share/locale/sv_SE.ISO8859-15/LC_CTYPE	base-locale-sv
 ./usr/share/locale/uk_UA.KOI8-U			base-locale-uk
 ./usr/share/locale/uk_UA.KOI8-U/LC_CTYPE	base-locale-uk
 ./usr/share/locale/zh_CN.eucCN			base-locale-zh
@@ -1283,18 +1283,18 @@
 ./usr/share/sendmail/ostype		base-sendmail-share
 ./usr/share/sendmail/sh			base-sendmail-share
 ./usr/share/sendmail/siteconfig		base-sendmail-share
-./usr/share/sushi			base-susutil-share
-./usr/share/sushi/help			base-susutil-share
-./usr/share/sushi/index			base-susutil-share
-./usr/share/sushi/info			base-susutil-share
-./usr/share/sushi/info/index			base-susutil-share
-./usr/share/sushi/info/programming			base-susutil-share
-./usr/share/sushi/info/programming/basics			base-susutil-share
-./usr/share/sushi/info/programming/basics/help			base-susutil-share
-./usr/share/sushi/info/programming/execapi			base-susutil-share
-./usr/share/sushi/info/programming/execapi/help			base-susutil-share
-./usr/share/sushi/info/programming/formapi			base-susutil-share
-./usr/share/sushi/info/programming/formapi/help			base-susutil-share
+./usr/share/sushi			base-sysutil-share
+./usr/share/sushi/help			base-sysutil-share
+./usr/share/sushi/index			base-sysutil-share
+./usr/share/sushi/info			base-sysutil-share
+./usr/share/sushi/info/index			base-sysutil-share
+./usr/share/sushi/info/programming			base-sysutil-share
+./usr/share/sushi/info/programming/basics			base-sysutil-share
+./usr/share/sushi/info/programming/basics/help			base-sysutil-share
+./usr/share/sushi/info/programming/execapi			base-sysutil-share
+./usr/share/sushi/info/programming/execapi/help			base-sysutil-share
+./usr/share/sushi/info/programming/formapi			base-sysutil-share
+./usr/share/sushi/info/programming/formapi/help			base-sysutil-share
 ./usr/share/sushi/info/programming/help		base-sysutil-share
 ./usr/share/sushi/info/programming/helpapi		base-sysutil-share
 ./usr/share/sushi/info/programming/helpapi/help		base-sysutil-share
