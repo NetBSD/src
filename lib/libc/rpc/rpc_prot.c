@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_prot.c,v 1.16 2000/06/02 23:11:13 fvdl Exp $	*/
+/*	$NetBSD: rpc_prot.c,v 1.17 2000/12/20 20:52:24 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)rpc_prot.c 1.36 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)rpc_prot.c	2.3 88/08/07 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rpc_prot.c,v 1.16 2000/06/02 23:11:13 fvdl Exp $");
+__RCSID("$NetBSD: rpc_prot.c,v 1.17 2000/12/20 20:52:24 christos Exp $");
 #endif
 #endif
 
@@ -73,8 +73,6 @@ static void accepted __P((enum accept_stat, struct rpc_err *));
 static void rejected __P((enum reject_stat, struct rpc_err *));
 
 /* * * * * * * * * * * * * * XDR Authentication * * * * * * * * * * * */
-
-extern struct opaque_auth _null_auth;
 
 /*
  * XDR an opaque authentication struct

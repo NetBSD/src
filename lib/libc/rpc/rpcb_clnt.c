@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_clnt.c,v 1.6 2000/07/16 06:41:43 itojun Exp $	*/
+/*	$NetBSD: rpcb_clnt.c,v 1.7 2000/12/20 20:52:24 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -84,8 +84,6 @@ __weak_alias(rpcb_uaddr2taddr,_rpcb_uaddr2taddr)
 
 static struct timeval tottimeout = { 60, 0 };
 static const struct timeval rmttimeout = { 3, 0 };
-
-extern bool_t xdr_wrapstring __P((XDR *, char **));
 
 static const char nullstring[] = "\000";
 

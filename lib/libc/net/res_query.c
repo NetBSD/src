@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.31 2000/08/09 14:41:05 itojun Exp $	*/
+/*	$NetBSD: res_query.c,v 1.32 2000/12/20 20:51:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_query.c,v 8.10 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_query.c,v 1.31 2000/08/09 14:41:05 itojun Exp $");
+__RCSID("$NetBSD: res_query.c,v 1.32 2000/12/20 20:51:08 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -92,7 +92,6 @@ __weak_alias(res_search,_res_search)
 #define MAXPACKET	1024
 #endif
 
-const char *__hostalias __P((const char *));
 int h_errno;
 
 /*

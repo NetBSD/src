@@ -1,4 +1,4 @@
-/*	$NetBSD: herror.c,v 1.15 2000/01/22 22:19:15 mycroft Exp $	*/
+/*	$NetBSD: herror.c,v 1.16 2000/12/20 20:51:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1987, 1993
@@ -59,7 +59,7 @@
 static char rcsid[] = "Id: herror.c,v 8.3 1996/08/05 08:31:35 vixie Exp ";
 static char sccsid[] = "@(#)herror.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: herror.c,v 1.15 2000/01/22 22:19:15 mycroft Exp $");
+__RCSID("$NetBSD: herror.c,v 1.16 2000/12/20 20:51:08 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -86,8 +86,6 @@ const char	*const h_errlist[] = {
 	"No address associated with name",	/* 4 NO_ADDRESS */
 };
 const int h_nerr = { sizeof h_errlist/sizeof h_errlist[0] };
-
-extern int	h_errno;
 
 /*
  * herror --

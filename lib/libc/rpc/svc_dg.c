@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_dg.c,v 1.4 2000/07/06 03:10:35 christos Exp $	*/
+/*	$NetBSD: svc_dg.c,v 1.5 2000/12/20 20:52:24 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -82,7 +82,6 @@ static void svc_dg_destroy __P((SVCXPRT *));
 static bool_t svc_dg_control __P((SVCXPRT *, const u_int, void *));
 static int cache_get __P((SVCXPRT *, struct rpc_msg *, char **, size_t *));
 static void cache_set __P((SVCXPRT *, size_t));
-int svc_dg_enablecache __P((SVCXPRT *, u_int));
 
 /*
  * Usage:
