@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.401 2001/11/10 06:46:04 gmcgarry Exp $
+#	$NetBSD: mi,v 1.402 2001/11/18 12:10:59 kleink Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -2902,6 +2902,7 @@
 ./usr/share/man/cat9/bus_space_copy_region_8.0		comp-sys-catman
 ./usr/share/man/cat9/bus_space_free.0		comp-sys-catman
 ./usr/share/man/cat9/bus_space_map.0		comp-sys-catman
+./usr/share/man/cat9/bus_space_mmap.0		comp-sys-catman
 ./usr/share/man/cat9/bus_space_read_1.0		comp-sys-catman
 ./usr/share/man/cat9/bus_space_read_2.0		comp-sys-catman
 ./usr/share/man/cat9/bus_space_read_4.0		comp-sys-catman
@@ -5337,6 +5338,7 @@
 ./usr/share/man/man9/bus_space_copy_region_8.9		comp-sys-man
 ./usr/share/man/man9/bus_space_free.9		comp-sys-man
 ./usr/share/man/man9/bus_space_map.9		comp-sys-man
+./usr/share/man/man9/bus_space_mmap.9		comp-sys-man
 ./usr/share/man/man9/bus_space_read_1.9		comp-sys-man
 ./usr/share/man/man9/bus_space_read_2.9		comp-sys-man
 ./usr/share/man/man9/bus_space_read_4.9		comp-sys-man
