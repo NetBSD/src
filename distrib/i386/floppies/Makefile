@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.9 1999/02/01 21:55:31 he Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 1999/07/06 23:50:32 perry Exp $
 
-SUBDIR=	ramdisk fdset bootfloppy-big bootfloppy-tiny
+SUBDIR=	ramdisk fdset bootfloppy bootfloppy-big bootfloppy-tiny
 
 .include <bsd.subdir.mk>
