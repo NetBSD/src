@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.206 1998/06/26 00:07:06 thorpej Exp $
+#	$NetBSD: files,v 1.207 1998/06/26 21:01:32 drochner Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -254,6 +254,7 @@ define	wsrasteremulops
 # common PC display functions
 define pcdisplayops
 file	dev/ic/pcdisplay_subr.c	pcdisplayops
+file	dev/ic/pcdisplay_chars.c	pcdisplayops
 # VGA graphics
 device	vga: wsemuldisplaydev, pcdisplayops
 file	dev/ic/vga.c		vga	needs-flag
