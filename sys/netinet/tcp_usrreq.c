@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.52 2000/06/28 03:01:17 mrg Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.53 2000/07/28 04:06:54 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -900,28 +900,6 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
-
-	/*
-	 * The sysctl specifies usec-between-RST, so we must
-	 * convert from/to a timeval.
-	 */
-	if (name[0] == TCPCTL_RSTRATELIMIT) {
-		int rate_usec, error, s;
-
-		rate_usec = (tcp_rst_ratelim.tv_sec * 1000000) +
-		    tcp_rst_ratelim.tv_usec;
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &rate_usec);
-		if (error)
-			return (error);
-		if (rate_usec < 0)
-			return (EINVAL);
-		s = splsoftnet();
-		tcp_rst_ratelim.tv_sec = rate_usec / 1000000;
-		tcp_rst_ratelim.tv_usec = rate_usec % 1000000;
-		splx(s);
-
-		return (0);
-	}
 
 	if (name[0] < sizeof(tcp_ctlvars)/sizeof(tcp_ctlvars[0])
 	    && tcp_ctlvars[name[0]].valid) {
