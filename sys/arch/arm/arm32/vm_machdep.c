@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.12 2002/01/25 19:19:25 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.13 2002/01/29 23:02:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -176,11 +176,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		tf->tf_usr_sp = (u_int)stack + stacksize;
 
 	sf = (struct switchframe *)tf - 1;
-#ifdef __NEWINTR
-	sf->sf_spl = cpu_sf_spl0();
-#else
-	sf->sf_spl = _SPL_0;
-#endif
+	sf->sf_spl = 0;		/* always equivalent to spl0() */
 	sf->sf_r4 = (u_int)func;
 	sf->sf_r5 = (u_int)arg;
 	sf->sf_pc = (u_int)proc_trampoline;
