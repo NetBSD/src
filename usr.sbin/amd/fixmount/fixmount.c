@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: fixmount.c,v 1.1.1.2 1997/09/26 16:08:10 christos Exp $
+ * $Id: fixmount.c,v 1.2 1997/10/17 00:07:35 lukem Exp $
  *
  */
 
@@ -287,7 +287,7 @@ main(int argc, char *argv[])
   register int rpcs = 0;
   struct timeval tv;
 
-  while ((ch = getopt(argc, argv, "adervAqfh:")) != EOF)
+  while ((ch = getopt(argc, argv, "adervAqfh:")) != -1)
     switch ((char) ch) {
 
     case 'a':
