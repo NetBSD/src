@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/08/29 01:00:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2003/08/29 03:54:46 tls Exp $
 
 LIB=	frtbegin
 
@@ -8,7 +8,7 @@ NOPIC=		# defined
 
 .include <bsd.own.mk>
 
-.include "${.CURDIR}/../arch/${MACHINE_ARCH}/defs.mk"
+.include "${.CURDIR}/../libg2c/arch/${MACHINE_ARCH}/defs.mk"
 
 DIST=		${NETBSDSRCDIR}/gnu/dist/gcc
 
