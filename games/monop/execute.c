@@ -1,4 +1,4 @@
-/*	$NetBSD: execute.c,v 1.7 1999/09/08 21:17:51 jsm Exp $	*/
+/*	$NetBSD: execute.c,v 1.8 2001/08/29 18:23:44 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)execute.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: execute.c,v 1.7 1999/09/08 21:17:51 jsm Exp $");
+__RCSID("$NetBSD: execute.c,v 1.8 2001/08/29 18:23:44 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: execute.c,v 1.7 1999/09/08 21:17:51 jsm Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <time.h>
 
 #define	SEGSIZE	8192
 
