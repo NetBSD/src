@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.2 1997/11/09 20:59:15 phil Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.3 1997/11/14 16:31:45 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,9 +41,10 @@
 #include <string.h>
 #include <ctype.h>
 
-#define REQ_EXECUTE   1000
-#define REQ_NEXT_ITEM 1001
-#define REQ_PREV_ITEM 1002
+#define REQ_EXECUTE    1000
+#define REQ_NEXT_ITEM  1001
+#define REQ_PREV_ITEM  1002
+#define REQ_REDISPLAY  1003
 
 #define KEYPAD_DOWN_ARROW 256
 #define KEYPAD_UP_ARROW   257
@@ -125,6 +126,8 @@ static int menucmd (WINDOW *w)
 		case '\020':
 		case KEYPAD_UP_ARROW:
 			return REQ_PREV_ITEM;
+		case '\014':
+		        return REQ_REDISPLAY;
 		}
 		
 		if (isalpha(ch))
@@ -222,6 +225,7 @@ static void process_req (struct menudesc *m, int req)
 	int hasexit = (m->mopt & NOEXITOPT ? 0 : 1 );
 	int hasbox = (m->mopt & NOBOX ? 0 : 1);
 	int tadd = strlen(m->title) ? 2 : 0;
+	int num;
 
 	if (req == REQ_EXECUTE)
 		return;
@@ -235,6 +239,14 @@ static void process_req (struct menudesc *m, int req)
 			m->cursel--;
 		else
 			mbeep();
+
+	} else if (req == REQ_REDISPLAY) {
+		wclear(stdscr);
+		wrefresh(stdscr);
+		process_item (&num, -2);
+		post_menu (m);
+		wrefresh (m->mw);
+
 	} else {
 		ch = tolower (req);
 		if (ch == 'x' && hasexit)
