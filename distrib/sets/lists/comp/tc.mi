@@ -1,5 +1,5 @@
-#	$NetBSD: tc.mi,v 1.8 2004/01/03 15:43:50 lukem Exp $
-./usr/bin/readelf				comp-util-bin
+#	$NetBSD: tc.mi,v 1.9 2004/01/11 08:55:56 lukem Exp $
+./usr/bin/readelf				comp-util-bin	bfd
 ./usr/bin/protoize				comp-c-bin
 ./usr/bin/unprotoize				comp-c-bin
 ./usr/include/g++/FlexLexer.h			comp-cxx-include
