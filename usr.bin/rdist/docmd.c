@@ -1,4 +1,4 @@
-/*	$NetBSD: docmd.c,v 1.9 1996/07/12 00:46:21 thorpej Exp $	*/
+/*	$NetBSD: docmd.c,v 1.10 1996/08/13 03:24:18 explorer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93";
 #else
-static char *rcsid = "$NetBSD: docmd.c,v 1.9 1996/07/12 00:46:21 thorpej Exp $";
+static char *rcsid = "$NetBSD: docmd.c,v 1.10 1996/08/13 03:24:18 explorer Exp $";
 #endif
 #endif /* not lint */
 
@@ -620,8 +620,11 @@ except(file)
 				(void) regerror(err, &s, ebuf, sizeof(ebuf));
 				error("%s: %s\n", nl->n_name, ebuf);
 			}
-			if (regexec(&s, file, 0, NULL, 0) == 0)
+			if (regexec(&s, file, 0, NULL, 0) == 0) {
+				regfree(&s);
 				return(1);
+			}
+			regfree(&s);
 		}
 	}
 	return(0);
