@@ -1,3 +1,5 @@
+/* $NetBSD: bdisp.c,v 1.2 1996/12/28 18:56:59 tls Exp $
+*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +37,11 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
+#else
+static char rcsid[] = "$NetBSD: bdisp.c,v 1.2 1996/12/28 18:56:59 tls Exp $";
+#endif
 #endif /* not lint */
 
 #include "gomoku.h"
