@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 1993, 1994 Charles Hannum.
  * Copyright (c) 1992, 1993 Erik Forsberg.
  * All rights reserved.
  *
@@ -19,11 +20,10 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mms.c,v 1.7 1993/12/20 09:06:28 mycroft Exp $
+ *	$Id: mms.c,v 1.8 1994/02/17 03:39:55 mycroft Exp $
  */
 
 #include "mms.h"
-#if NMMS > 0
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -33,279 +33,212 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/file.h>
-#ifdef NetBSD
 #include <sys/select.h>
-#endif
 #include <sys/proc.h>
 #include <sys/vnode.h>
+#include <sys/device.h>
 
-#include <machine/mouse.h>
+#include <machine/cpu.h>
 #include <machine/pio.h>
+#include <machine/mouse.h>
 
 #include <i386/isa/isa_device.h>
 
-#define ADDR	0	/* Offset for register select */
-#define DATA	1	/* Offset for InPort data */
-#define IDENT	2	/* Offset for identification register */
+#define	MMS_ADDR	0	/* offset for register select */
+#define	MMS_DATA	1	/* offset for InPort data */
+#define	MMS_IDENT	2	/* offset for identification register */
+#define	MMS_NPORTS	4
 
-#define MMSUNIT(dev)	(minor(dev) >> 1)
+#define	MMS_CHUNK	128	/* chunk size for read */
+#define	MMS_BSIZE	1020	/* buffer size */
 
-#ifndef min
-#define min(x,y) (x < y ? x : y)
-#endif  min
+struct mms_softc {		/* driver status information */
+	struct device sc_dev;
 
-int mmsprobe (struct isa_device *);
-int mmsattach (struct isa_device *);
-
-static int mmsaddr[NMMS];	/* Base I/O port addresses per unit */
-
-#define MSBSZ	1024		/* Output queue size (pwr of 2 is best) */
-
-struct ringbuf {
-	int count, first, last;
-	char queue[MSBSZ];
-};
-
-static struct mms_softc {	/* Driver status information */
-	struct ringbuf inq;	/* Input queue */
-#ifdef NetBSD
-	struct selinfo rsel;
-#else
-	pid_t	rsel;		/* Process selecting for Input */
-#endif
-	unsigned char state;	/* Mouse driver state */
-	unsigned char status;	/* Mouse button status */
-	int x, y;		/* accumulated motion in the X,Y axis */
+	struct clist sc_q;
+	struct selinfo sc_rsel;
+	u_short sc_iobase;	/* I/O port base */
+	u_char sc_state;	/* mouse driver state */
+#define	MMS_OPEN	0x01	/* device is open */
+#define	MMS_ASLP	0x02	/* waiting for mouse data */
+	u_char sc_status;	/* mouse button status */
+	int sc_x, sc_y;		/* accumulated motion in the X,Y axis */
 } mms_softc[NMMS];
 
-#define OPEN	1		/* Device is open */
-#define ASLP	2		/* Waiting for mouse data */
+int mmsprobe __P((struct isa_device *));
+int mmsattach __P((struct isa_device *));
+int mmsintr __P((int));
 
 struct isa_driver mmsdriver = { mmsprobe, mmsattach, "mms" };
 
-int mmsprobe(struct isa_device *dvp)
+#define	MMSUNIT(dev)	(minor(dev))
+
+int
+mmsprobe(isa_dev)
+	struct isa_device *isa_dev;
 {
-	int ioport = dvp->id_iobase;
+	u_short iobase = isa_dev->id_iobase;
 
 	/* Read identification register to see if present */
+	if (inb(iobase + MMS_IDENT) != 0xde)
+		return 0;
 
-	if (inb(ioport+IDENT) != 0xDE)
-		return(0);
+	/* Seems it was there; reset. */
+	outb(iobase + MMS_ADDR, 0x87);
 
-	/* Seems it was there; reset */
-
-	outb(ioport+ADDR, 0x87);
-	return(4);
+	return MMS_NPORTS;
 }
 
-int mmsattach(struct isa_device *dvp)
+int
+mmsattach(isa_dev)
+	struct isa_device *isa_dev;
 {
-	int unit = dvp->id_unit;
-	int ioport = dvp->id_iobase;
-	struct mms_softc *sc = &mms_softc[unit];
+	struct mms_softc *sc = &mms_softc[isa_dev->id_unit];
+	u_short iobase = isa_dev->id_iobase;
 
-	/* Save I/O base address */
+	/* Other initialization was done by mmsprobe. */
+	sc->sc_iobase = iobase;
+	sc->sc_state = 0;
 
-	mmsaddr[unit] = ioport;
-
-	/* Setup initial state */
-
-	sc->state = 0;
-
-	/* Done */
-
-	return(0);
+	/* XXX HACK */
+	sprintf(sc->sc_dev.dv_xname, "%s%d", mmsdriver.name, isa_dev->id_unit);
+	sc->sc_dev.dv_unit = isa_dev->id_unit;
 }
 
-int mmsopen(dev_t dev, int flag, int fmt, struct proc *p)
+int
+mmsopen(dev, flag)
+	dev_t dev;
+	int flag;
 {
 	int unit = MMSUNIT(dev);
 	struct mms_softc *sc;
-	int ioport;
-
-	/* Validate unit number */
 
 	if (unit >= NMMS)
-		return(ENXIO);
-
-	/* Get device data */
-
+		return ENXIO;
 	sc = &mms_softc[unit];
-	ioport = mmsaddr[unit];
+	if (!sc->sc_iobase)
+		return ENXIO;
 
-	/* If device does not exist */
+	if (sc->sc_state & MMS_OPEN)
+		return EBUSY;
 
-	if (ioport == 0)
-		return(ENXIO);
+	if (clalloc(&sc->sc_q, MMS_BSIZE, 0) == -1)
+		return ENOMEM;
 
-	/* Disallow multiple opens */
+	sc->sc_state |= MMS_OPEN;
+	sc->sc_status = 0;
+	sc->sc_x = sc->sc_y = 0;
 
-	if (sc->state & OPEN)
-		return(EBUSY);
+	/* Enable interrupts. */
+	outb(sc->sc_iobase + MMS_ADDR, 0x07);
+	outb(sc->sc_iobase + MMS_DATA, 0x09);
 
-	/* Initialize state */
-
-	sc->state |= OPEN;
-#ifdef NetBSD
-	sc->rsel.si_pid = 0;
-	sc->rsel.si_coll = 0;
-#else
-	sc->rsel = 0;
-#endif
-	sc->status = 0;
-	sc->x = 0;
-	sc->y = 0;
-
-	/* Allocate and initialize a ring buffer */
-
-	sc->inq.count = sc->inq.first = sc->inq.last = 0;
-
-	/* Setup Bus Mouse */
-
-	outb(ioport+ADDR, 7);
-	outb(ioport+DATA, 0x09);
-
-	/* Successful open */
-
-	return(0);
+	return 0;
 }
 
-int mmsclose(dev_t dev, int flag, int fmt, struct proc *p)
+int
+mmsclose(dev, flag)
+	dev_t dev;
+	int flag;
 {
-	int unit, ioport;
-	struct mms_softc *sc;
+	struct mms_softc *sc = &mms_softc[MMSUNIT(dev)];
 
-	/* Get unit and associated info */
+	/* Disable interrupts. */
+	outb(sc->sc_iobase + MMS_ADDR, 0x87);
 
-	unit = MMSUNIT(dev);
-	sc = &mms_softc[unit];
-	ioport = mmsaddr[unit];
+	sc->sc_state &= ~MMS_OPEN;
 
-	/* Reset Bus Mouse */
+	clfree(&sc->sc_q);
 
-	outb(ioport+ADDR, 0x87);
-
-	/* Complete the close */
-
-	sc->state &= ~OPEN;
-
-	/* close is almost always successful */
-
-	return(0);
+	return 0;
 }
 
-int mmsread(dev_t dev, struct uio *uio, int flag)
+int
+mmsread(dev, uio, flag)
+	dev_t dev;
+	struct uio *uio;
+	int flag;
 {
-	int s, error = 0;
-	unsigned length;
-	struct mms_softc *sc;
-	unsigned char buffer[100];
+	struct mms_softc *sc = &mms_softc[MMSUNIT(dev)];
+	int s;
+	int error;
+	size_t length;
+	u_char buffer[MMS_CHUNK];
 
-	/* Get device information */
-
-	sc = &mms_softc[MMSUNIT(dev)];
-
-	/* Block until mouse activity occured */
+	/* Block until mouse activity occured. */
 
 	s = spltty();
-	while (sc->inq.count == 0) {
-		if (minor(dev) & 0x1) {
+	while (sc->sc_q.c_cc == 0) {
+		if (flag & IO_NDELAY) {
 			splx(s);
-			return(EWOULDBLOCK);
+			return EWOULDBLOCK;
 		}
-		sc->state |= ASLP;
-		error = tsleep((caddr_t)sc, PZERO | PCATCH, "mmsrea", 0);
-		if (error != 0) {
+		sc->sc_state |= MMS_ASLP;
+		if (error = tsleep((caddr_t)sc, PZERO | PCATCH, "mmsrea", 0)) {
+			sc->sc_state &= ~MMS_ASLP;
 			splx(s);
-			return(error);
+			return error;
 		}
 	}
+	splx(s);
 
-	/* Transfer as many chunks as possible */
+	/* Transfer as many chunks as possible. */
 
-	while (sc->inq.count > 0 && uio->uio_resid > 0) {
-		length = min(sc->inq.count, uio->uio_resid);
+	while (sc->sc_q.c_cc > 0 && uio->uio_resid > 0) {
+		length = min(sc->sc_q.c_cc, uio->uio_resid);
 		if (length > sizeof(buffer))
 			length = sizeof(buffer);
 
-		/* Remove a small chunk from input queue */
+		/* Remove a small chunk from the input queue. */
+		(void) q_to_b(&sc->sc_q, buffer, length);
 
-		if (sc->inq.first + length >= MSBSZ) {
-			bcopy(&sc->inq.queue[sc->inq.first], 
-		 	      buffer, MSBSZ - sc->inq.first);
-			bcopy(sc->inq.queue, &buffer[MSBSZ-sc->inq.first], 
-			      length - (MSBSZ - sc->inq.first));
-		}
-		else
-			bcopy(&sc->inq.queue[sc->inq.first], buffer, length);
-	
-		sc->inq.first = (sc->inq.first + length) % MSBSZ;
-		sc->inq.count -= length;
-
-		/* Copy data to user process */
-
-		error = uiomove(buffer, length, uio);
-		if (error)
+		/* Copy the data to the user process. */
+		if (error = uiomove(buffer, length, uio))
 			break;
 	}
 
-	sc->x = sc->y = 0;
-
-	/* Allow interrupts again */
-
-	splx(s);
-	return(error);
+	return error;
 }
 
-int mmsioctl(dev_t dev, caddr_t addr, int cmd, int flag, struct proc *p)
+int
+mmsioctl(dev, cmd, addr, flag)
+	dev_t dev;
+	int cmd;
+	caddr_t addr;
+	int flag;
 {
-	struct mms_softc *sc;
+	struct mms_softc *sc = &mms_softc[MMSUNIT(dev)];
 	struct mouseinfo info;
-	int s, error;
-
-	/* Get device information */
-
-	sc = &mms_softc[MMSUNIT(dev)];
-
-	/* Perform IOCTL command */
+	int s;
+	int error;
 
 	switch (cmd) {
-
 	case MOUSEIOCREAD:
-
-		/* Don't modify info while calculating */
-
 		s = spltty();
 
-		/* Build mouse status octet */
-
-		info.status = sc->status;
-		if (sc->x || sc->y)
+		info.status = sc->sc_status;
+		if (sc->sc_x || sc->sc_y)
 			info.status |= MOVEMENT;
 
-		/* Encode X and Y motion as good as we can */
-
-		if (sc->x > 127)
+		if (sc->sc_x > 127)
 			info.xmotion = 127;
-		else if (sc->x < -128)
-			info.xmotion = -128;
+		else if (sc->sc_x < -127)
+			/* Bounding at -127 avoids a bug in XFree86. */
+			info.xmotion = -127;
 		else
-			info.xmotion = sc->x;
+			info.xmotion = sc->sc_x;
 
-		if (sc->y > 127)
+		if (sc->sc_y > 127)
 			info.ymotion = 127;
-		else if (sc->y < -128)
-			info.ymotion = -128;
+		else if (sc->sc_y < -127)
+			info.ymotion = -127;
 		else
-			info.ymotion = sc->y;
+			info.ymotion = sc->sc_y;
 
-		/* Reset historical information */
-
-		sc->x = 0;
-		sc->y = 0;
-		sc->status &= ~BUTCHNGMASK;
-
-		/* Allow interrupts and copy result buffer */
+		/* Reset historical information. */
+		sc->sc_x = sc->sc_y = 0;
+		sc->sc_status &= ~BUTCHNGMASK;
+		flushq(&sc->sc_q);
 
 		splx(s);
 		error = copyout(&info, addr, sizeof(struct mouseinfo));
@@ -314,109 +247,92 @@ int mmsioctl(dev_t dev, caddr_t addr, int cmd, int flag, struct proc *p)
 	default:
 		error = EINVAL;
 		break;
-		}
+	}
 
-	/* Return error code */
-
-	return(error);
+	return error;
 }
 
-void mmsintr(unit)
+int
+mmsintr(unit)
 	int unit;
 {
 	struct mms_softc *sc = &mms_softc[unit];
-	int ioport = mmsaddr[unit];
-	char dx, dy, status;
+	u_short iobase = sc->sc_iobase;
+	u_char buttons, changed, status;
+	char dx, dy;
+	u_char buffer[5];
 
-	/* Freeze InPort registers (disabling interrupts) */
+	if ((sc->sc_state & MMS_OPEN) == 0)
+		/* Interrupts are not expected. */
+		return 0;
 
-	outb(ioport+ADDR, 7);
-	outb(ioport+DATA, 0x29);
+	/* Freeze InPort registers (disabling interrupts). */
+	outb(iobase + MMS_ADDR, 0x07);
+	outb(iobase + MMS_DATA, 0x29);
 
-	/* Read mouse status */
-
-	outb(ioport+ADDR, 0);
-	status = inb(ioport+DATA);
-
-	/* Check if any movement detected */
+	outb(iobase + MMS_ADDR, 0x00);
+	status = inb(iobase + MMS_DATA);
 
 	if (status & 0x40) {
-		outb(ioport+ADDR, 1);
-		dx = inb(ioport+DATA);
-		outb(ioport+ADDR, 2);
-		dy = inb(ioport+DATA);
+		outb(iobase + MMS_ADDR, 1);
+		dx = inb(iobase + MMS_DATA);
+		dx = (dx == -128) ? -127 : dx;
+		outb(iobase + MMS_ADDR, 2);
+		dy = inb(iobase + MMS_DATA);
 		dy = (dy == -128) ? 127 : -dy;
-	}
-	else
+	} else
 		dx = dy = 0;
 
-	/* Unfreeze InPort Registers (re-enables interrupts) */
+	/* Unfreeze InPort registers (reenabling interrupts). */
+	outb(iobase + MMS_ADDR, 0x07);
+	outb(iobase + MMS_DATA, 0x09);
 
-	outb(ioport+ADDR, 7);
-	outb(ioport+DATA, 0x09);
+	buttons = status & BUTSTATMASK;
+	changed = status & BUTCHNGMASK;
+	sc->sc_status = buttons | (sc->sc_status & ~BUTSTATMASK) | changed;
 
-	/* Update accumulated movements */
+	if (dx || dy || changed) {
+		/* Update accumulated movements. */
+		sc->sc_x += dx;
+		sc->sc_y += dy;
 
-	sc->x += dx;
-	sc->y += dy;
+		/* Add this event to the queue. */
+		buffer[0] = 0x80 | (buttons ^ BUTSTATMASK);
+		buffer[1] = dx;
+		buffer[2] = dy;
+		buffer[3] = buffer[4] = 0;
+		(void) b_to_q(buffer, sizeof buffer, &sc->sc_q);
 
-	/* Inclusive OR status changes, but always save only last state */
-
-	sc->status |= status & BUTCHNGMASK;
-	sc->status = (sc->status & ~BUTSTATMASK) | (status & BUTSTATMASK);
-
-	/* If device in use and a change occurred... */
-
-	if (sc->state & OPEN && status & 0x78 && sc->inq.count < (MSBSZ-5)) {
-		status &= BUTSTATMASK;
-		sc->inq.queue[sc->inq.last++] = 0x80 | (status ^ BUTSTATMASK);
-		sc->inq.queue[sc->inq.last++ % MSBSZ] = dx;
-		sc->inq.queue[sc->inq.last++ % MSBSZ] = dy;
-		sc->inq.queue[sc->inq.last++ % MSBSZ] = 0;
-		sc->inq.queue[sc->inq.last++ % MSBSZ] = 0;
-		sc->inq.last = sc->inq.last % MSBSZ;
-		sc->inq.count += 5;
-
-		if (sc->state & ASLP) {
-			sc->state &= ~ASLP;
+		if (sc->sc_state & MMS_ASLP) {
+			sc->sc_state &= ~MMS_ASLP;
 			wakeup((caddr_t)sc);
 		}
-#ifdef NetBSD
-		selwakeup(&sc->rsel);
-#else
-		if (sc->rsel) {
-			selwakeup(sc->rsel, 0);
-			sc->rsel = 0;
-		}
-#endif
-		}
+		selwakeup(&sc->sc_rsel);
+	}
+
+	return 1;
 }
 
-int mmsselect(dev_t dev, int rw, struct proc *p)
+int
+mmsselect(dev, rw, p)
+	dev_t dev;
+	int rw;
+	struct proc *p;
 {
-	int s, ret;
 	struct mms_softc *sc = &mms_softc[MMSUNIT(dev)];
-
-	/* Silly to select for output */
+	int s;
+	int ret;
 
 	if (rw == FWRITE)
-		return(0);
-
-	/* Return true if a mouse event available */
+		return 0;
 
 	s = spltty();
-	if (sc->inq.count)
-		ret = 1;
-	else {
-#ifdef NetBSD
-		selrecord(p, &sc->rsel);
-#else
-		sc->rsel = p->p_pid;
-#endif
+	if (!sc->sc_q.c_cc) {
+		selrecord(p, &sc->sc_rsel);
 		ret = 0;
-	}
+	} else
+		ret = 1;
 	splx(s);
 
-	return(ret);
+	return ret;
 }
-#endif
