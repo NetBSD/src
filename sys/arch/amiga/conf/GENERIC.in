@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.25 2004/09/04 23:29:46 manu Exp $
+# $NetBSD: GENERIC.in,v 1.26 2004/11/10 17:25:21 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -56,7 +56,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.25 $"
+#ident 		"GENERIC-$Revision: 1.26 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -199,6 +199,7 @@ options 	COMPAT_NOMID	# allow nonvalid machine id executables
 
 options 	EXEC_AOUT	# 32-bit aout executables (NetBSD-1.5.x)
 options 	COMPAT_AOUT_M68K # actually make some system calls work.
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 m4_ifdef(`INSTALL_CONFIGURATION', `', `m4_dnl
 #

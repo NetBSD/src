@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.72 2004/10/23 14:00:52 augustss Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.73 2004/11/10 17:25:22 christos Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -99,6 +99,7 @@ options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS

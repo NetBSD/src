@@ -1,4 +1,4 @@
-# $NetBSD: VIRTUALPC,v 1.12 2004/10/23 14:00:52 augustss Exp $
+# $NetBSD: VIRTUALPC,v 1.13 2004/11/10 17:25:23 christos Exp $
 #
 # VIRTUALPC machine description file --
 #
@@ -11,7 +11,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VIRTUALPC-$Revision: 1.12 $"
+#ident 		"VIRTUALPC-$Revision: 1.13 $"
 
 maxusers	32		# estimated number of users
 
@@ -124,6 +124,7 @@ options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 #options 	COMPAT_DARWIN	# binary compatibility with Darwin binaries
 #options 	EXEC_MACHO	# exec MACH-O binaries
 #options 	COMPAT_PECOFF	# kernel support to run Win32 apps
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS

@@ -1,4 +1,4 @@
-# $NetBSD: NULL,v 1.15 2004/09/04 23:29:46 manu Exp $
+# $NetBSD: NULL,v 1.16 2004/11/10 17:25:21 christos Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -93,6 +93,7 @@ file-system 	FFS		# Berkeley fast file system
 #options 	COMPAT_NOMID	# allow nonvalid machine id executables
 #options 	COMPAT_LINUX	# Support to run Linux/m68k executables
 options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 #Support for System V IPC facilities.
 
