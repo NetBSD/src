@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.624 2004/05/27 11:10:45 abs Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.625 2004/05/27 20:21:12 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.626 2004/05/27 11:09:45 abs Exp 
+ *	NetBSD: pcidevs,v 1.627 2004/05/27 20:20:53 christos Exp 
  */
 
 /*
@@ -3002,6 +3002,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Creative Labs",
 	    "SBLive! EMU 10000",
+	},
+	{
+	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_AUDIGY,
+	    0,
+	    "Creative Labs",
+	    "SB Audigy EMU 10000",
 	},
 	{
 	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_SBLIVE2,
