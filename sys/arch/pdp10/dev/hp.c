@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.1.4.5 2004/11/02 07:50:46 skrll Exp $ */
+/*	$NetBSD: hp.c,v 1.1.4.6 2005/01/31 08:19:33 skrll Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -291,7 +291,7 @@ hpstart(struct	rh_device *md)
 }
 
 int
-hpopen(dev_t dev, int flag, int fmt, struct proc *p)
+hpopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct	hp_softc *sc;
 	int	unit, part;
@@ -324,7 +324,7 @@ hpopen(dev_t dev, int flag, int fmt, struct proc *p)
 }
 
 int
-hpclose(dev_t dev, int flag, int fmt, struct proc *p)
+hpclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct	hp_softc *sc;
 	int	unit, part;
@@ -350,7 +350,7 @@ hpclose(dev_t dev, int flag, int fmt, struct proc *p)
 }
 
 int
-hpioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+hpioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	struct	hp_softc *sc = hp_cd.cd_devs[DISKUNIT(dev)];
 	struct	disklabel *lp = sc->sc_disk.dk_label;
