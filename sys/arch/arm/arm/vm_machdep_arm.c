@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep_arm.c,v 1.1 2001/02/13 22:54:25 bjh21 Exp $	*/
+/*	$NetBSD: vm_machdep_arm.c,v 1.2 2001/02/27 00:16:48 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -37,7 +37,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep_arm.c,v 1.1 2001/02/13 22:54:25 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep_arm.c,v 1.2 2001/02/27 00:16:48 reinoud Exp $");
 
 #include <sys/core.h>
 #include <sys/exec.h>
@@ -48,6 +48,17 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep_arm.c,v 1.1 2001/02/13 22:54:25 bjh21 Exp
 #include <sys/vnode.h>
 
 #include <machine/reg.h>
+
+/*
+ * Since all ARM machines are single processors now, we'll implement
+ * cpu_wait() here now -> empty
+ */
+
+void
+cpu_wait(struct proc *p)
+{
+	/* nothing */
+};
 
 /*
  * Dump the machine specific segment at the start of a core dump.
