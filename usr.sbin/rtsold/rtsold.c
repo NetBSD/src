@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.c,v 1.22 2003/05/15 00:19:30 itojun Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.23 2003/05/15 14:44:57 itojun Exp $	*/
 /*	$KAME: rtsold.c,v 1.55 2002/09/08 01:26:03 itojun Exp $	*/
 
 /*
@@ -731,9 +731,6 @@ warnmsg(int priority, const char *func, const char *msg, ...)
 char **
 autoifprobe(void)
 {
-#ifndef HAVE_GETIFADDRS
-	errx(1, "-a is not available with the configuration");
-#else
 	static char **argv = NULL;
 	static int n = 0;
 	char **a;
@@ -806,5 +803,4 @@ autoifprobe(void)
 	}
 	freeifaddrs(ifap);
 	return argv;
-#endif
 }
