@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.30 2003/06/29 22:32:27 fvdl Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.31 2003/07/08 06:18:00 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -99,20 +99,20 @@ int	process_validfpregs __P((struct proc *));
 int	process_domem __P((struct proc *, struct proc *, struct uio *));
 int	process_checkioperm __P((struct proc *, struct proc *));
 
-void	proc_reparent __P((struct proc *child, struct proc *newparent));
+void	proc_reparent __P((struct proc *, struct proc *));
 #ifdef PT_GETFPREGS
-int	process_read_fpregs __P((struct lwp *l, struct fpreg *regs));
+int	process_read_fpregs __P((struct lwp *, struct fpreg *));
 #endif
 #ifdef PT_GETREGS
-int	process_read_regs __P((struct lwp *l, struct reg *regs));
+int	process_read_regs __P((struct lwp *, struct reg *));
 #endif
-int	process_set_pc __P((struct lwp *l, caddr_t addr));
-int	process_sstep __P((struct lwp *l, int sstep));
+int	process_set_pc __P((struct lwp *, caddr_t));
+int	process_sstep __P((struct lwp *, int));
 #ifdef PT_SETFPREGS
-int	process_write_fpregs __P((struct lwp *l, struct fpreg *regs));
+int	process_write_fpregs __P((struct lwp *, struct fpreg *));
 #endif
 #ifdef PT_SETREGS
-int	process_write_regs __P((struct lwp *l, struct reg *regs));
+int	process_write_regs __P((struct lwp *, struct reg *));
 #endif
 
 #ifdef __HAVE_PROCFS_MACHDEP

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.109 2003/06/30 22:20:04 christos Exp $	*/
+/*	$NetBSD: mount.h,v 1.110 2003/07/08 06:18:00 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -348,33 +348,29 @@ struct vnodeopv_desc;
 
 struct vfsops {
 	const char *vfs_name;
-	int	(*vfs_mount)	__P((struct mount *mp, const char *path,
-				    void *data, struct nameidata *ndp,
-				    struct proc *p));
-	int	(*vfs_start)	__P((struct mount *mp, int flags,
-				    struct proc *p));
-	int	(*vfs_unmount)	__P((struct mount *mp, int mntflags,
-				    struct proc *p));
-	int	(*vfs_root)	__P((struct mount *mp, struct vnode **vpp));
-	int	(*vfs_quotactl)	__P((struct mount *mp, int cmds, uid_t uid,
-				    caddr_t arg, struct proc *p));
-	int	(*vfs_statfs)	__P((struct mount *mp, struct statfs *sbp,
-				    struct proc *p));
-	int	(*vfs_sync)	__P((struct mount *mp, int waitfor,
-				    struct ucred *cred, struct proc *p));
-	int	(*vfs_vget)	__P((struct mount *mp, ino_t ino,
-				    struct vnode **vpp));
-	int	(*vfs_fhtovp)	__P((struct mount *mp, struct fid *fhp,
-				    struct vnode **vpp));
-	int	(*vfs_vptofh)	__P((struct vnode *vp, struct fid *fhp));
+	int	(*vfs_mount)	__P((struct mount *, const char *, void *,
+				    struct nameidata *, struct proc *));
+	int	(*vfs_start)	__P((struct mount *, int, struct proc *));
+	int	(*vfs_unmount)	__P((struct mount *, int, struct proc *));
+	int	(*vfs_root)	__P((struct mount *, struct vnode **));
+	int	(*vfs_quotactl)	__P((struct mount *, int, uid_t, caddr_t,
+				    struct proc *));
+	int	(*vfs_statfs)	__P((struct mount *, struct statfs *,
+				    struct proc *));
+	int	(*vfs_sync)	__P((struct mount *, int, struct ucred *,
+				    struct proc *));
+	int	(*vfs_vget)	__P((struct mount *, ino_t, struct vnode **));
+	int	(*vfs_fhtovp)	__P((struct mount *, struct fid *,
+				    struct vnode **));
+	int	(*vfs_vptofh)	__P((struct vnode *, struct fid *));
 	void	(*vfs_init)	__P((void));
 	void	(*vfs_reinit)	__P((void));
 	void	(*vfs_done)	__P((void));
 	int	(*vfs_sysctl)	__P((int *, u_int, void *, size_t *, void *,
 				    size_t, struct proc *));
 	int	(*vfs_mountroot) __P((void));
-	int	(*vfs_checkexp) __P((struct mount *mp, struct mbuf *nam,
-				    int *extflagsp, struct ucred **credanonp));
+	int	(*vfs_checkexp) __P((struct mount *, struct mbuf *, int *,
+				    struct ucred **));
 	const struct vnodeopv_desc * const *vfs_opv_descs;
 	int	vfs_refcount;
 	LIST_ENTRY(vfsops) vfs_list;
@@ -509,7 +505,7 @@ LIST_HEAD(vfs_list_head, vfsops);
 extern struct vfs_list_head vfs_list;
 
 int	set_statfs_info __P((const char *, int, const char *, int,
-    struct mount *, struct proc *p));
+    struct mount *, struct proc *));
 void	copy_statfs_info __P((struct statfs *, const struct mount *));
 
 
