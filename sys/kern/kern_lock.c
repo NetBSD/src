@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.17 1999/05/04 15:58:53 sommerfe Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.18 1999/07/19 03:21:11 chs Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -40,6 +40,7 @@
  */
 
 #include "opt_lockdebug.h"
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -58,47 +59,10 @@
 #define COUNT(p, x)
 #endif
 
-#if 0 /*#was defined(MULTIPROCESSOR)*/
-/*-
-
-This macro is Bad Style and it doesn't work either... [pk, 10-14-1998]
-
--*
- * For multiprocessor system, try spin lock first.
- *
- * This should be inline expanded below, but we cannot have #if
- * inside a multiline define.
- */
-
-int lock_wait_time = 100;
-#define PAUSE(lkp, wanted)						\
-		if (lock_wait_time > 0) {				\
-			int i;						\
-									\
-			simple_unlock(&lkp->lk_interlock);		\
-			for (i = lock_wait_time; i > 0; i--)		\
-				if (!(wanted))				\
-					break;				\
-			simple_lock(&lkp->lk_interlock);		\
-		}							\
-		if (!(wanted))						\
-			break;
-
-#else /* ! MULTIPROCESSOR */
-
-/*
- * It is an error to spin on a uniprocessor as nothing will ever cause
- * the simple lock to clear while we are executing.
- */
-#define PAUSE(lkp, wanted)
-
-#endif /* MULTIPROCESSOR */
-
 /*
  * Acquire a resource.
  */
 #define ACQUIRE(lkp, error, extflags, wanted)				\
-	PAUSE(lkp, wanted);						\
 	for (error = 0; wanted; ) {					\
 		(lkp)->lk_waitcount++;					\
 		simple_unlock(&(lkp)->lk_interlock);			\
@@ -409,9 +373,6 @@ lockmgr(lkp, flags, interlkp)
 			error = EBUSY;
 			break;
 		}
-		PAUSE(lkp, ((lkp->lk_flags &
-		     (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE)) ||
-		     lkp->lk_sharecount != 0 || lkp->lk_waitcount != 0));
 		for (error = 0; ((lkp->lk_flags &
 		     (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE)) ||
 		     lkp->lk_sharecount != 0 || lkp->lk_waitcount != 0); ) {
@@ -469,13 +430,8 @@ lockmgr_printinfo(lkp)
 }
 
 #if defined(LOCKDEBUG) && !defined(MULTIPROCESSOR)
-#include <sys/kernel.h>
-#include <vm/vm.h>
-#include <sys/sysctl.h>
-int lockpausetime = 0;
-struct ctldebug debug2 = { "lockpausetime", &lockpausetime };
-int simplelockrecurse;
 LIST_HEAD(slocklist, simplelock) slockdebuglist;
+int simple_lock_debugger = 0;
 
 /*
  * Simple lock functions so that the debugger can see from whence
@@ -501,8 +457,7 @@ _simple_lock(alp, id, l)
 {
 	int s;
 
-	if (simplelockrecurse)
-		return;
+	s = splhigh();
 	if (alp->lock_data == 1) {
 		printf("simple_lock: lock held\n");
 		printf("currently at: %s:%d\n", id, l);
@@ -510,30 +465,19 @@ _simple_lock(alp, id, l)
 		       alp->lock_file, alp->lock_line);
 		printf("last unlocked: %s:%d\n",
 		       alp->unlock_file, alp->unlock_line);
-		if (lockpausetime == -1)
-			panic("simple_lock: lock held");
-		if (lockpausetime == 1) {
-#ifdef BACKTRACE
-			BACKTRACE(curproc);
-#endif
-		} else if (lockpausetime > 1) {
-			printf("simple_lock: lock held, pausing...");
-			tsleep(&lockpausetime, PCATCH | PPAUSE, "slock",
-			    lockpausetime * hz);
-			printf(" continuing\n");
+		if (simple_lock_debugger) {
+			Debugger();
 		}
+		splx(s);
 		return;
 	}
-
-	s = splhigh();
 	LIST_INSERT_HEAD(&slockdebuglist, (struct simplelock *)alp, list);
-	splx(s);
-
 	alp->lock_data = 1;
 	alp->lock_file = id;
 	alp->lock_line = l;
 	if (curproc)
 		curproc->p_simple_locks++;
+	splx(s);
 }
 
 int
@@ -544,20 +488,29 @@ _simple_lock_try(alp, id, l)
 {
 	int s;
 
-	if (alp->lock_data)
+	s = splhigh();
+	if (alp->lock_data != 0) {
+		printf("simple_lock_try: lock held\n");
+		printf("currently at: %s:%d\n", id, l);
+		printf("last locked: %s:%d\n",
+		       alp->lock_file, alp->lock_line);
+		printf("last unlocked: %s:%d\n",
+		       alp->unlock_file, alp->unlock_line);
+		if (simple_lock_debugger) {
+			Debugger();
+		}
+		splx(s);
 		return (0);
-	if (simplelockrecurse)
-		return (1);
+	}
+
 	alp->lock_data = 1;
 	alp->lock_file = id;
 	alp->lock_line = l;
-
-	s = splhigh();
 	LIST_INSERT_HEAD(&slockdebuglist, (struct simplelock *)alp, list);
-	splx(s);
-
 	if (curproc)
 		curproc->p_simple_locks++;
+	splx(s);
+
 	return (1);
 }
 
@@ -569,8 +522,7 @@ _simple_unlock(alp, id, l)
 {
 	int s;
 
-	if (simplelockrecurse)
-		return;
+	s = splhigh();
 	if (alp->lock_data == 0) {
 		printf("simple_unlock: lock not held\n");
 		printf("currently at: %s:%d\n", id, l);
@@ -578,32 +530,22 @@ _simple_unlock(alp, id, l)
 		       alp->lock_file, alp->lock_line);
 		printf("last unlocked: %s:%d\n",
 		       alp->unlock_file, alp->unlock_line);
-		if (lockpausetime == -1)
-			panic("simple_unlock: lock not held");
-		if (lockpausetime == 1) {
-#ifdef BACKTRACE
-			BACKTRACE(curproc);
-#endif
-		} else if (lockpausetime > 1) {
-			printf("simple_unlock: lock not held, pausing...");
-			tsleep(&lockpausetime, PCATCH | PPAUSE, "sunlock",
-			    lockpausetime * hz);
-			printf(" continuing\n");
+		if (simple_lock_debugger) {
+			Debugger();
 		}
+		splx(s);
 		return;
 	}
 
-	s = splhigh();
 	LIST_REMOVE(alp, list);
 	alp->list.le_next = NULL;
 	alp->list.le_prev = NULL;
-	splx(s);
-
 	alp->lock_data = 0;
 	alp->unlock_file = id;
 	alp->unlock_line = l;
 	if (curproc)
 		curproc->p_simple_locks--;
+	splx(s);
 }
 
 void
