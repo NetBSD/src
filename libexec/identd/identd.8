@@ -1,4 +1,4 @@
-.\" $NetBSD: identd.8,v 1.17 2004/01/31 21:47:17 christos Exp $
+.\" $NetBSD: identd.8,v 1.18 2004/01/31 22:39:24 wiz Exp $
 .\"
 .\" This software is in the public domain.
 .\" Written by Peter Postma <peter@pointless.nl>
@@ -8,27 +8,18 @@
 .Os
 .Sh NAME
 .Nm identd
-.Nd TCP/IP Ident protocol server.
+.Nd TCP/IP Ident protocol server
 .Sh SYNOPSIS
 .Nm
-.Op Fl 4
-.Op Fl 6
+.Op Fl 46beIilNnr
 .Op Fl a Ar address
-.Op Fl b
 .Op Fl c Ar charset
-.Op Fl e
-.Op Fl f Ar fallback
 .Op Fl F Ar format
+.Op Fl f Ar fallback
 .Op Fl g Ar uid
-.Op Fl i
-.Op Fl I
-.Op Fl l
 .Op Fl L Ar username
-.Op Fl n
-.Op Fl N
 .Op Fl o Ar osname
 .Op Fl p Ar portno
-.Op Fl r
 .Op Fl t Ar seconds
 .Op Fl u Ar uid
 .Sh DESCRIPTION
@@ -42,13 +33,15 @@ information which may or may not be associated with the process owning
 the connection.
 .Pp
 The following options are available:
-.Bl -tag -width Ds
+.Bl -tag -width XXxXusernameXX
 .It Fl 4
-Bind to IPv4 addresses only. (flag
+Bind to IPv4 addresses only.
+(flag
 .Fl b
 only)
 .It Fl 6
-Bind to IPv6 addresses only. (flag
+Bind to IPv6 addresses only.
+(flag
 .Fl b
 only)
 .It Fl a Ar address
@@ -57,7 +50,8 @@ Bind to the specified
 This may be an IPv4 or IPv6 address or even a hostname.
 If a hostname is specified then
 .Nm
-will resolve it to an address (or addresses) and will bind this address. (flag
+will resolve it to an address (or addresses) and will bind this address.
+(flag
 .Fl b
 only)
 .It Fl b
@@ -75,37 +69,42 @@ instead of the usual
 .Dq NO-USER
 or
 .Dq INVALID-PORT
-error reply's.
-.It Fl f Ar fallback
-Specify a
-.Ar fallback
-username.
-If the lookup fails then this username will be returned.
-This can be useful for when running this service on a NAT host.
+error replies.
 .It Fl F Ar format
 Specify the format to display info.
 The allowed format specifiers are:
-.in +.5i
-.nf
+.Bd -literal
 %u	print user name
 %U	print user number
 %g	print (primary) group name
 %G	print (primary) group number
 %l	print list of all groups by name
 %L	print list of all groups by number
-.in -.5i
-.fi
+.Ed
 .Pp
 The lists of groups (%l, %L) are comma-separated, and start with the primary
 group which is not repeated.
 Any other characters (preceded by %, and those not preceded by it)
 are printed literally.
-The "default" format is %u, and you should not use
-anything else without using the flag
-.Ar -o OTHER .
+The
+.Dq default
+format is %u, and you should not use anything else without using the flag
+.Fl o Ar OTHER .
+.It Fl f Ar fallback
+Specify a
+.Ar fallback
+username.
+If the lookup fails then this username will be returned.
+This can be useful for when running this service on a NAT host.
 .It Fl g Ar gid
 Specify the group id number or name which the server should switch to after
 binding itself to the TCP/IP port.
+.It Fl I
+Same as
+.Fl i
+but without the restriction that the username in
+.Pa .ident
+must not match an existing user.
 .It Fl i
 If the
 .Pa .ident
@@ -114,21 +113,15 @@ found in that file instead of the real username.
 If the username found in
 .Pa .ident
 is that of an existing user, then the real username will be returned.
-.It Fl I
-Same as
-.Fl i
-but without the restriction that the username in
-.Pa .ident
-must not match an existing user.
-.It Fl l
-Use syslog for logging.
 .It Fl L Ar username
-Specify a 
+Specify a
 .Dq lie
 .Ar username .
 Return this name for all ident requests.
-.It Fl n
-Return numeric user IDs instead of usernames.
+.It Fl l
+Use
+.Xr syslogd 8
+for logging.
 .It Fl N
 Enable
 .Pa .noident
@@ -136,14 +129,17 @@ files.
 If this file exists in the home directory of the identified user then return
 .Dq HIDDEN-USER
 instead of the normal USERID response.
+.It Fl n
+Return numeric user IDs instead of usernames.
 .It Fl o Ar osname
 Return
 .Ar osname
 instead of the default
 .Dq UNIX .
 .It Fl p Ar portno
-Specify an alternative port number where the server should run under.
-The default is port 113. (flag
+Specify an alternative port number under which the server should run.
+The default is port 113.
+(flag
 .Fl b
 only)
 .It Fl r
@@ -155,9 +151,11 @@ flag is also enabled then a random number will be returned.
 Specify a timeout for the service.
 The default timeout is 30 seconds.
 .It Fl u Ar uid
-Specify the user id number or name which the server should switch to after
+Specify the user id number or name to which the server should switch after
 binding itself to the TCP/IP port.
 .El
+.Sh FILES
+.Pa /etc/inetd.conf
 .Sh EXAMPLES
 .Nm
 operates from
@@ -178,8 +176,6 @@ If you want to run
 as standalone daemon then please use the
 .Fl b
 flag (background).
-.Sh FILES
-/etc/inetd.conf
 .Sh SEE ALSO
-.Xr inetd 8 ,
-.Xr inetd.conf 5
+.Xr inetd.conf 5 ,
+.Xr inetd 8
