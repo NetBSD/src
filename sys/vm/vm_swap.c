@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.37.2.14 1997/05/11 13:28:45 mrg Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37.2.15 1997/05/11 13:52:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -549,16 +549,13 @@ swap_alloc(size)
 		     sdp = sdp->swd_next.cqe_next) {
 			/* if it's not enabled, then we can't swap from it */
 			if ((sdp->swd_flags & SWF_ENABLE) == 0 ||
+			    /* XXX IS THIS CORRECT ? */
+#if 0
+			    (sdp->swd_inuse + size > sdp->swd_nblks) ||
+#endif
 			    extent_alloc(sdp->swd_ex, size, EX_NOALIGN,
 					 EX_NOBOUNDARY, EX_MALLOCOK|EX_NOWAIT,
 					 &result) != 0) {
-				/*
-				 * XXX
-				 * do something smart to note this partition
-				 * as being full, yadda yadda yadda...
-				 *
-				 * perhaps check swd_nblks == swd_inuse ?
-				 */
 				continue;
 			}
 			CIRCLEQ_REMOVE(&spp->spi_swapdev, sdp, swd_next);
