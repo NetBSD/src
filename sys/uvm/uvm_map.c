@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.116 2001/12/31 20:34:01 chs Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.117 2001/12/31 22:34:40 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.116 2001/12/31 20:34:01 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.117 2001/12/31 22:34:40 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2140,7 +2140,7 @@ uvm_map_pageable(map, start, end, new_pageable, lockflags)
 
 			if (!UVM_ET_ISSUBMAP(entry)) {  /* not submap */
 				if (UVM_ET_ISNEEDSCOPY(entry) &&
-				    ((entry->protection & VM_PROT_WRITE) ||
+				    ((entry->max_protection & VM_PROT_WRITE) ||
 				     (entry->object.uvm_obj == NULL))) {
 					amap_copy(map, entry, M_WAITOK, TRUE,
 					    start, end);
@@ -2193,7 +2193,7 @@ uvm_map_pageable(map, start, end, new_pageable, lockflags)
 	while (entry != &map->header && entry->start < end) {
 		if (entry->wired_count == 1) {
 			rv = uvm_fault_wire(map, entry->start, entry->end,
-			    entry->protection);
+			    VM_FAULT_WIREMAX, entry->max_protection);
 			if (rv) {
 
 				/*
@@ -2404,7 +2404,7 @@ uvm_map_pageable_all(map, flags, limit)
 
 			if (!UVM_ET_ISSUBMAP(entry)) {	/* not submap */
 				if (UVM_ET_ISNEEDSCOPY(entry) &&
-				    ((entry->protection & VM_PROT_WRITE) ||
+				    ((entry->max_protection & VM_PROT_WRITE) ||
 				     (entry->object.uvm_obj == NULL))) {
 					amap_copy(map, entry, M_WAITOK, TRUE,
 					    entry->start, entry->end);
@@ -2430,7 +2430,7 @@ uvm_map_pageable_all(map, flags, limit)
 	     entry = entry->next) {
 		if (entry->wired_count == 1) {
 			rv = uvm_fault_wire(map, entry->start, entry->end,
-			     entry->protection);
+			    VM_FAULT_WIREMAX, entry->max_protection);
 			if (rv) {
 
 				/*
