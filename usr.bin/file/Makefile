@@ -1,8 +1,12 @@
-#	$NetBSD: Makefile,v 1.17 1998/09/20 15:36:46 christos Exp $
+#	$NetBSD: Makefile,v 1.18 1998/09/27 17:22:11 lukem Exp $
 
-FILESDIR=	/usr/share/misc
-FILES=		magic
+MFILESDIR=	/usr/share/misc
+MFILES=		magic
 MAGIC=		${FILESDIR}/${FILES}
+.if !defined(NOSHARE)
+FILESDIR=	${MFILESDIR}
+FILES=		${MFILES}
+.endif
 
 PROG=		file
 SRCS=		file.c apprentice.c fsmagic.c softmagic.c ascmagic.c is_tar.c \
@@ -20,7 +24,11 @@ MAGFILES=	$(.CURDIR)/Header \
 		$(.CURDIR)/magdir/netbsd \
 		${MAGDIRF}
 
+.if !defined(NOSHARE)
 magic:		$(MAGFILES)
 	cat $(MAGFILES) > $(.TARGET)
+.else
+magic:
+.endif
 
 .include <bsd.prog.mk>

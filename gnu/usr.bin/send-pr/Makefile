@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 1997/03/24 22:06:50 christos Exp $
+#	$NetBSD: Makefile,v 1.20 1998/09/27 17:22:06 lukem Exp $
 
 #
 # Makefile for building a standalone send-pr.
@@ -90,10 +90,13 @@ send-pr.1:	send-pr.man Makefile
 	    -e 's,xVERSIONx,$(VERSION),g' $(srcdir)/send-pr.man > $@-t
 	mv -f $@-t $@
 
-FILES=send-pr install-sid categories
-FILESDIR_categories=${LIBDIR}/gnats
-FILESNAME_categories=${GNATS_SITE}
+FILES=send-pr install-sid
 FILESMODE_send-pr=${BINMODE}
 FILESMODE_install-sid=${BINMODE}
+.if !defined(NOSHARE)
+FILES+=categories
+FILESDIR_categories=${LIBDIR}/gnats
+FILESNAME_categories=${GNATS_SITE}
+.endif
 
 .include <bsd.prog.mk>
