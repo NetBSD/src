@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.91 2004/04/10 23:31:51 darrenr Exp $	*/
+/*	$NetBSD: bpf.c,v 1.92 2004/04/11 01:41:01 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.91 2004/04/10 23:31:51 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.92 2004/04/11 01:41:01 darrenr Exp $");
 
 #include "bpfilter.h"
 
@@ -1083,10 +1083,10 @@ bpfpoll(dev, events, p)
 		 * An imitation of the FIONREAD ioctl code.
 		 */
 		if (d->bd_hlen != 0 ||
-		    ((d->bd_immediate || d->bd_state == BPF_TIMED_OUT) &&
-		     d->bd_slen != 0))
+		    ((d->bd_immediate && d->bd_slen != 0) ||
+		    d->bd_state == BPF_TIMED_OUT)) {
 			revents |= events & (POLLIN | POLLRDNORM);
-		else {
+		} else {
 			selrecord(p, &d->bd_sel);
 			/* Start the read timeout if necessary */
 			if (d->bd_rtout > 0 && d->bd_state == BPF_IDLE) {
