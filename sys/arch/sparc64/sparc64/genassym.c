@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.7 1998/09/17 04:41:06 thorpej Exp $ */
+/*	$NetBSD: genassym.c,v 1.8 1998/10/08 02:31:40 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -124,6 +124,9 @@ main()
 	off("P_VMSPACE", struct proc, p_vmspace);
 	off("P_PID", struct proc, p_pid);
 	def("SRUN", SRUN);
+
+	/* user struct stuff */
+	siz("USIZ", struct user); /* Needed for redzone calculations */
 
 	/* VM structure fields */
 	off("VM_PMAP", struct vmspace, vm_map.pmap);

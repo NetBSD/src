@@ -80,6 +80,9 @@
 #ifdef COMPAT_SVR4
 #include <compat/svr4/svr4_syscall.h>
 #endif
+#ifdef COMPAT_SPARC32
+#include <compat/sparc32/sparc32_syscall.h>
+#endif
 #include <machine/asm.h>
 
 /* Let us use same syntax as C code */
@@ -644,9 +647,17 @@ _C_LABEL(trapbase):
 	
 	mov %l0,%l5
 #ifdef NOT_DEBUG
-	set	u0, %o7			! Check for kernel stack overflow
-	cmp	%fp, %o7
-	bl	trap_enter
+	!! 
+	!! Check the sp redzone
+	!! 
+	sethi	KERNBASE, t1	
+	cmp	%sp, t1
+	blu,pt	%xcc, 7f
+	 sethi	%hi(_C_LABEL(redzone)), t1
+	ldx	[t1 + %lo(_C_LABEL(redzone))], t2
+	cmp	%sp, t2			! if sp >= t2, not in red zone
+	blu	panic_red		! and can continue normally
+7:
 #endif
 	mov %l0, %l6; mov %l0, %l7; mov %l0, %o0; mov %l0, %o1
 	
@@ -898,7 +909,19 @@ ktextfault:
 	rdpr %cleanwin, %o7		!	This handler is in-lined and cannot fault
 	inc %o7; mov %l0, %l3; mov %l0, %l4	!       Nucleus (trap&IRQ) code does not need clean windows
 	wrpr %g0, %o7, %cleanwin	!	Clear out %l0-%l8 and %o0-%o8 and inc %cleanwin and done
-	
+#ifdef NOT_DEBUG
+	!! 
+	!! Check the sp redzone
+	!! 
+	sethi	KERNBASE, t1	
+	cmp	%sp, t1
+	blu,pt	%xcc, 7f
+	 sethi	%hi(_C_LABEL(redzone)), t1
+	ldx	[t1 + %lo(_C_LABEL(redzone))], t2
+	cmp	%sp, t2			! if sp >= t2, not in red zone
+	blu	panic_red		! and can continue normally
+7:
+#endif
 	mov %l0, %l5; mov %l0, %l6; mov %l0, %l7
 	mov %l0, %o0; mov %l0, %o1; mov %l0, %o2; mov %l0, %o3
 	
@@ -1222,50 +1245,57 @@ pmap_screwup:
  * keeping a `red zone' pointer; if %sp becomes less than this, we panic.
  * This is expensive and is only enabled when debugging.
  */
-#define	REDSIZE	(8*96)		/* some room for bouncing */
+#define	REDSIZE	(USIZ)		/* Mark used portion of user structure out of bounds */
 #define	REDSTACK 2048		/* size of `panic: stack overflow' region */
 	.data
-_C_LABEL(redzone):
-	.word	_C_LABEL(idle_u) + REDSIZE
-_C_LABEL(redstack):
+	_ALIGN
+redzone:
+	.xword	_C_LABEL(idle_u) + REDSIZE
+redstack:
 	.space	REDSTACK
+eredstack:	
 	.text
 Lpanic_red:
-	.asciz	"stack overflow"
+	.asciz	"kernel stack overflow"
 	_ALIGN
 
 	/* set stack pointer redzone to base+minstack; alters base */
 #define	SET_SP_REDZONE(base, tmp) \
 	add	base, REDSIZE, base; \
 	sethi	%hi(_C_LABEL(redzone)), tmp; \
-	st	base, [tmp + %lo(_C_LABEL(redzone))]
+	stx	base, [tmp + %lo(_C_LABEL(redzone))]
 
 	/* variant with a constant */
 #define	SET_SP_REDZONE_CONST(const, tmp1, tmp2) \
 	set	(const) + REDSIZE, tmp1; \
 	sethi	%hi(_C_LABEL(redzone)), tmp2; \
-	st	tmp1, [tmp2 + %lo(_C_LABEL(redzone))]
+	stx	tmp1, [tmp2 + %lo(_C_LABEL(redzone))]
 
 	/* check stack pointer against redzone (uses two temps) */
 #define	CHECK_SP_REDZONE(t1, t2) \
-	sethi	%hi(_C_LABEL(redzone)), t1; \
-	ld	[t1 + %lo(_C_LABEL(redzone))], t2; \
+	sethi	KERNBASE, t1;	\
+	cmp	%sp, t1;	\
+	blu,pt	%xcc, 7f;	\	
+	 sethi	%hi(_C_LABEL(redzone)), t1; \
+	ldx	[t1 + %lo(_C_LABEL(redzone))], t2; \
 	cmp	%sp, t2;	/* if sp >= t2, not in red zone */ \
-	bgeu	7f; nop;	/* and can continue normally */ \
-	/* move to panic stack */ \
-	st	%g0, [t1 + %lo(_C_LABEL(redzone))]; \
-	set	_C_LABEL(redstack) + REDSTACK - 96, %sp; \
-	/* prevent panic() from lowering ipl */ \
-	sethi	%hi(_C_LABEL(panicstr)), t2; \
-	set	Lpanic_red, t2; \
-	st	t2, [t1 + %lo(_C_LABEL(panicstr))]; \
-	rdpr	%pil, t1;		/* t1 = splhigh() */ \
-	or	t1, PSR_PIL, t2; \
-	wrpr	t2, 0, %pil; \
-	save	%sp, -CCFSZ, %sp;	/* preserve current window */ \
-	sethi	%hi(Lpanic_red), %o0; \
-	call	_C_LABEL(panic); or %o0, %lo(Lpanic_red), %o0; \
-7:
+	blu	panic_red; nop;	/* and can continue normally */ \
+7:	
+	
+panic_red:
+	/* move to panic stack */ 
+	stx	%g0, [t1 + %lo(_C_LABEL(redzone))]; 
+	set	eredstack - BIAS, %sp; 
+	/* prevent panic() from lowering ipl */ 
+	sethi	%hi(_C_LABEL(panicstr)), t2; 
+	set	Lpanic_red, t2; 
+	st	t2, [t1 + %lo(_C_LABEL(panicstr))]; 
+	wrpr	g0, 15, %pil		/* t1 = splhigh() */ 
+	save	%sp, -CCF64SZ, %sp;	/* preserve current window */ 
+	sethi	%hi(Lpanic_red), %o0; 
+	call	_C_LABEL(panic); 
+	 or %o0, %lo(Lpanic_red), %o0; 
+
 
 #else
 
@@ -5505,11 +5535,11 @@ _C_LABEL(sigcode):
 	mov	%l7, %g7
 
 #ifdef _LP64
-	restore	%g0, sparc32_SYS_sigreturn, %g1	! get registers back & set syscall #
+	restore	%g0, sparc32_SYS_compat_sparc32_sigreturn, %g1	! get registers back & set syscall #
 	add	%sp, 64 + 16, %o0	! compute scp
 	t	ST_SYSCALL		! sigreturn(scp)
 	! sigreturn does not return unless it fails
-	mov	sparc32_SYS_exit, %g1		! exit(errno)
+	mov	sparc32_SYS_compat_sparc32_exit, %g1		! exit(errno)
 	t	ST_SYSCALL
 _C_LABEL(sparc32_esigcode):
 #else
