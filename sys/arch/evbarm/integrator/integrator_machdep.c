@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.36 2003/05/03 18:25:31 thorpej Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.37 2003/05/05 13:29:44 he Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -393,7 +393,6 @@ initarm(void *arg)
 	extern int etext asm ("_etext");
 	extern int end asm ("_end");
 	pv_addr_t kernel_l1pt;
-	pv_addr_t kernel_ptpt;
 	paddr_t memstart;
 	psize_t memsize;
 #if NPLCOM > 0 && defined(PLCONSOLE)
