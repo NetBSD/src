@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_subr.c,v 1.9 1999/08/26 22:53:41 thorpej Exp $ */
+/*	$NetBSD: bt_subr.c,v 1.10 2000/04/04 21:47:17 pk Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -48,6 +48,7 @@
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/errno.h>
+#include <sys/malloc.h>
 
 #include <vm/vm.h>
 
@@ -68,56 +69,127 @@
  * Implement an FBIOGETCMAP-like ioctl.
  */
 int
-bt_getcmap(p, cm, cmsize)
-	register struct fbcmap *p;
+bt_getcmap(p, cm, cmsize, uspace)
+	struct fbcmap *p;
 	union bt_cmap *cm;
 	int cmsize;
+	int uspace;
 {
-	register u_int i, start, count;
-	register u_char *cp;
+	u_int i, start, count;
+	int error = 0;
+	u_char *cp, *r, *g, *b;
+	u_char *cbuf = NULL;
 
 	start = p->index;
 	count = p->count;
 	if (start >= cmsize || start + count > cmsize)
 		return (EINVAL);
-	if (!uvm_useracc(p->red, count, B_WRITE) ||
-	    !uvm_useracc(p->green, count, B_WRITE) ||
-	    !uvm_useracc(p->blue, count, B_WRITE))
-		return (EFAULT);
-	for (cp = &cm->cm_map[start][0], i = 0; i < count; cp += 3, i++) {
-		p->red[i] = cp[0];
-		p->green[i] = cp[1];
-		p->blue[i] = cp[2];
+
+	if (uspace) {
+		/* Check user buffers for appropriate access */
+		if (!uvm_useracc(p->red, count, B_WRITE) ||
+		    !uvm_useracc(p->green, count, B_WRITE) ||
+		    !uvm_useracc(p->blue, count, B_WRITE))
+			return (EFAULT);
+
+		/* Allocate temporary buffer for color values */
+		cbuf = malloc(3*count*sizeof(char), M_TEMP, M_WAITOK);
+		r = cbuf;
+		g = r + count;
+		b = g + count;
+	} else {
+		/* Direct access in kernel space */
+		r = p->red;
+		g = p->green;
+		b = p->blue;
 	}
-	return (0);
+
+	/* Copy colors from BT map to fbcmap */
+	for (cp = &cm->cm_map[start][0], i = 0; i < count; cp += 3, i++) {
+		r[i] = cp[0];
+		g[i] = cp[1];
+		b[i] = cp[2];
+	}
+
+	if (uspace) {
+		error = copyout(r, p->red, count);
+		if (error)
+			goto out;
+		error = copyout(g, p->green, count);
+		if (error)
+			goto out;
+		error = copyout(b, p->blue, count);
+		if (error)
+			goto out;
+	}
+
+out:
+	if (cbuf != NULL)
+		free(cbuf, M_TEMP);
+
+	return (error);
 }
 
 /*
  * Implement the software portion of an FBIOPUTCMAP-like ioctl.
  */
 int
-bt_putcmap(p, cm, cmsize)
-	register struct fbcmap *p;
+bt_putcmap(p, cm, cmsize, uspace)
+	struct fbcmap *p;
 	union bt_cmap *cm;
 	int cmsize;
+	int uspace;
 {
-	register u_int i, start, count;
-	register u_char *cp;
+	u_int i, start, count;
+	int error = 0;
+	u_char *cp, *r, *g, *b;
+	u_char *cbuf = NULL;
 
 	start = p->index;
 	count = p->count;
 	if (start >= cmsize || start + count > cmsize)
 		return (EINVAL);
-	if (!uvm_useracc(p->red, count, B_READ) ||
-	    !uvm_useracc(p->green, count, B_READ) ||
-	    !uvm_useracc(p->blue, count, B_READ))
-		return (EFAULT);
-	for (cp = &cm->cm_map[start][0], i = 0; i < count; cp += 3, i++) {
-		cp[0] = p->red[i];
-		cp[1] = p->green[i];
-		cp[2] = p->blue[i];
+
+	if (uspace) {
+		/* Check user buffers for appropriate access */
+		if (!uvm_useracc(p->red, count, B_READ) ||
+		    !uvm_useracc(p->green, count, B_READ) ||
+		    !uvm_useracc(p->blue, count, B_READ))
+			return (EFAULT);
+
+		/* Allocate temporary buffer for color values */
+		cbuf = malloc(3*count*sizeof(char), M_TEMP, M_WAITOK);
+		r = cbuf;
+		g = r + count;
+		b = g + count;
+		error = copyin(p->red, r, count);
+		if (error)
+			goto out;
+		error = copyin(p->green, g, count);
+		if (error)
+			goto out;
+		error = copyin(p->blue, b, count);
+		if (error)
+			goto out;
+	} else {
+		/* Direct access in kernel space */
+		r = p->red;
+		g = p->green;
+		b = p->blue;
 	}
-	return (0);
+
+	/* Copy colors from fbcmap to BT map */
+	for (cp = &cm->cm_map[start][0], i = 0; i < count; cp += 3, i++) {
+		cp[0] = r[i];
+		cp[1] = g[i];
+		cp[2] = b[i];
+	}
+
+out:
+	if (cbuf != NULL)
+		free(cbuf, M_TEMP);
+
+	return (error);
 }
 
 /*
