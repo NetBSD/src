@@ -13,7 +13,7 @@
  * Currently supports the Western Digital/SMC 8003 and 8013 series, the 3Com
  * 3c503, the NE1000 and NE2000, and a variety of similar clones.
  *
- *	$Id: if_ed.c,v 1.26 1994/02/14 23:56:16 mycroft Exp $
+ *	$Id: if_ed.c,v 1.27 1994/02/15 19:37:12 mycroft Exp $
  */
 
 #include "ed.h"
@@ -26,6 +26,7 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/syslog.h>
+#include <sys/device.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -67,7 +68,9 @@
  * ed_softc: per line info and status
  */
 struct	ed_softc {
-	struct	arpcom arpcom;	/* ethernet common */
+	struct	device sc_dev;
+
+	struct	arpcom sc_arpcom;	/* ethernet common */
 
 	char	*type_str;	/* pointer to type string */
 	u_char	vendor;		/* interface vendor */
@@ -109,8 +112,8 @@ int ed_probe __P((struct isa_device *));
 int ed_attach __P((struct isa_device *));
 int edintr __P((int));
 int ed_ioctl __P((struct ifnet *, int, caddr_t));
-void ed_start __P((struct ifnet *));
-void ed_watchdog __P((short));
+int ed_start __P((struct ifnet *));
+int ed_watchdog __P((/* short */));
 void ed_reset __P((struct ed_softc *));
 void ed_init __P((struct ed_softc *));
 void ed_stop __P((struct ed_softc *));
@@ -120,7 +123,7 @@ void ed_getmcaf __P((struct arpcom *, u_long *));
 
 void ed_get_packet __P((/* struct ed_softc *, caddr_t, u_short */));
 static inline void ed_rint __P((struct ed_softc *));
-static inline void ed_xmit __P((struct ifnet *));
+static inline void ed_xmit __P((struct ed_softc *));
 static inline caddr_t ed_ring_copy __P((/* struct ed_Softc *, caddr_t, caddr_t,
 					u_short */));
 
@@ -179,15 +182,16 @@ ed_probe(isa_dev)
 	struct ed_softc *sc = &ed_softc[isa_dev->id_unit];
 	int nports;
 
+	/* XXX HACK */
+	sprintf(sc->sc_dev.dv_xname, "%s%d", eddriver.name, isa_dev->id_unit);
+	sc->sc_dev.dv_unit = isa_dev->id_unit;
+
 	if (nports = ed_probe_WD80x3(isa_dev))
 		return nports;
-
 	if (nports = ed_probe_3Com(isa_dev))
 		return nports;
-
 	if (nports = ed_probe_Novell(isa_dev))
 		return nports;
-
 	return 0;
 }
 
@@ -412,8 +416,8 @@ ed_probe_WD80x3(isa_dev)
 		 * correctness.
 		 */
 		if (ed_790_intr_mask[iptr] != isa_dev->id_irq) {
-			printf("ed%d: kernel configured irq %d doesn't match board configured irq %d\n",
-			    isa_dev->id_unit, ffs(isa_dev->id_irq) - 1,
+			printf("%s: kernel configured irq %d doesn't match board configured irq %d\n",
+			    sc->sc_dev.dv_xname, ffs(isa_dev->id_irq) - 1,
 			    ffs(ed_790_intr_mask[iptr]) - 1);
 			return 0;
 		}
@@ -428,8 +432,8 @@ ed_probe_WD80x3(isa_dev)
 		 * correctness.
 		 */
 		if (ed_intr_mask[iptr] != isa_dev->id_irq) {
-			printf("ed%d: kernel configured irq %d doesn't match board configured irq %d\n",
-			    isa_dev->id_unit, ffs(isa_dev->id_irq) - 1,
+			printf("%s: kernel configured irq %d doesn't match board configured irq %d\n",
+			    sc->sc_dev.dv_xname, ffs(isa_dev->id_irq) - 1,
 			    ffs(ed_intr_mask[iptr]) - 1);
 			return 0;
 		}
@@ -474,7 +478,8 @@ ed_probe_WD80x3(isa_dev)
 
 	/* Get station address from on-board ROM. */
 	for (i = 0; i < ETHER_ADDR_LEN; ++i)
-		sc->arpcom.ac_enaddr[i] = inb(sc->asic_addr + ED_WD_PROM + i);
+		sc->sc_arpcom.ac_enaddr[i] =
+		    inb(sc->asic_addr + ED_WD_PROM + i);
 
 	if (sc->mem_shared) {
 		/* Set address and enable interface shared memory. */
@@ -541,8 +546,9 @@ ed_probe_WD80x3(isa_dev)
 
 		for (i = 0; i < memsize; ++i)
 			if (sc->mem_start[i]) {
-				printf("ed%d: failed to clear shared memory at %x - check configuration\n",
-				    isa_dev->id_unit, kvtop(sc->mem_start + i));
+				printf("%s: failed to clear shared memory at %x - check configuration\n",
+				    sc->sc_dev.dv_xname,
+				    kvtop(sc->mem_start + i));
 
 				/* Disable 16 bit access to shared memory. */
 				if (isa16bit) {
@@ -696,7 +702,7 @@ ed_probe_3Com(isa_dev)
 	outb(sc->asic_addr + ED_3COM_CR, ED_3COM_CR_EALO | ED_3COM_CR_XSEL);
 
 	for (i = 0; i < ETHER_ADDR_LEN; ++i)
-		sc->arpcom.ac_enaddr[i] = inb(sc->nic_addr + i);
+		sc->sc_arpcom.ac_enaddr[i] = inb(sc->nic_addr + i);
 
 	/*
 	 * Unmap PROM - select NIC registers.  The proper setting of the
@@ -786,8 +792,8 @@ ed_probe_3Com(isa_dev)
 		outb(sc->asic_addr + ED_3COM_IDCFR, ED_3COM_IDCFR_IRQ5);
 		break;
 	default:
-		printf("ed%d: Invalid irq configuration (%d) must be 3-5 or 9 for 3c503\n",
-		    isa_dev->id_unit, ffs(isa_dev->id_irq) - 1);
+		printf("%s: invalid irq configuration (%d) must be 3-5 or 9 for 3c503\n",
+		    sc->sc_dev.dv_xname, ffs(isa_dev->id_irq) - 1);
 		return 0;
 	}
 
@@ -813,8 +819,8 @@ ed_probe_3Com(isa_dev)
 
 	for (i = 0; i < memsize; ++i)
 		if (sc->mem_start[i]) {
-			printf("ed%d: failed to clear shared memory at %x - check configuration\n",
-			    isa_dev->id_unit, kvtop(sc->mem_start + i));
+			printf("%s: failed to clear shared memory at %x - check configuration\n",
+			    sc->sc_dev.dv_xname, kvtop(sc->mem_start + i));
 			return 0;
 		}
 
@@ -971,7 +977,7 @@ ed_probe_Novell(isa_dev)
 
 	ed_pio_readmem(sc, 0, romdata, 16);
 	for (n = 0; n < ETHER_ADDR_LEN; n++)
-		sc->arpcom.ac_enaddr[n] = romdata[n*(sc->isa16bit+1)];
+		sc->sc_arpcom.ac_enaddr[n] = romdata[n*(sc->isa16bit+1)];
 
 	/* Clear any pending interrupts that might have occurred above. */
 	outb(sc->nic_addr + ED_P0_ISR, 0xff);
@@ -987,7 +993,7 @@ ed_attach(isa_dev)
 	struct isa_device *isa_dev;
 {
 	struct ed_softc *sc = &ed_softc[isa_dev->id_unit];
-	struct ifnet *ifp = &sc->arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
  
@@ -995,8 +1001,8 @@ ed_attach(isa_dev)
 	ed_stop(sc);
 
 	/* Initialize ifnet structure. */
-	ifp->if_unit = isa_dev->id_unit;
-	ifp->if_name = "ed";
+	ifp->if_unit = sc->sc_dev.dv_unit;
+	ifp->if_name = eddriver.name;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
 	ifp->if_start = ed_start;
@@ -1029,7 +1035,7 @@ ed_attach(isa_dev)
 			sdl->sdl_type = IFT_ETHER;
 			sdl->sdl_alen = ETHER_ADDR_LEN;
 			sdl->sdl_slen = 0;
-			bcopy(sc->arpcom.ac_enaddr, LLADDR(sdl),
+			bcopy(sc->sc_arpcom.ac_enaddr, LLADDR(sdl),
 			    ETHER_ADDR_LEN);
 			break;
 		} else
@@ -1037,8 +1043,8 @@ ed_attach(isa_dev)
 	}
 
 	/* Print additional info when attached. */
-	printf("ed%d: address %s, ", isa_dev->id_unit,
-	    ether_sprintf(sc->arpcom.ac_enaddr));
+	printf("%s: address %s, ", sc->sc_dev.dv_xname,
+	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	if (sc->type_str && (*sc->type_str != '\0'))
 		printf("type %s ", sc->type_str);
@@ -1095,14 +1101,14 @@ ed_stop(sc)
  * Device timeout/watchdog routine.  Entered if the device neglects to generate
  * an interrupt after a transmit has been started on it.
  */
-void
+int
 ed_watchdog(unit)
 	short unit;
 {
 	struct ed_softc *sc = &ed_softc[unit];
 
-	log(LOG_ERR, "ed%d: device timeout\n", unit);
-	++sc->arpcom.ac_if.if_oerrors;
+	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
+	++sc->sc_arpcom.ac_if.if_oerrors;
 
 	ed_reset(sc);
 }
@@ -1114,7 +1120,7 @@ void
 ed_init(sc)
 	struct ed_softc *sc;
 {
-	struct ifnet *ifp = &sc->arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int i, s;
 	u_char command;
 
@@ -1131,7 +1137,7 @@ ed_init(sc)
 
 	/* Reset transmitter flags. */
 	sc->xmit_busy = 0;
-	sc->arpcom.ac_if.if_timer = 0;
+	sc->sc_arpcom.ac_if.if_timer = 0;
 
 	sc->txb_inuse = 0;
 	sc->txb_new = 0;
@@ -1199,14 +1205,14 @@ ed_init(sc)
 
 	/* Copy out our station address. */
 	for (i = 0; i < ETHER_ADDR_LEN; ++i)
-		outb(sc->nic_addr + ED_P1_PAR0 + i, sc->arpcom.ac_enaddr[i]);
+		outb(sc->nic_addr + ED_P1_PAR0 + i, sc->sc_arpcom.ac_enaddr[i]);
 
 	/* Set up multicast addresses and filter modes if necessary. */
 	if (ifp->if_flags & (IFF_MULTICAST | IFF_PROMISC)) {
 		u_long mcaf[2];
 
 		/* Set multicast filter on chip. */
-		ed_getmcaf(&sc->arpcom, mcaf);
+		ed_getmcaf(&sc->sc_arpcom, mcaf);
 		for (i = 0; i < 8; i++)
 		      outb(sc->nic_addr + ED_P1_MAR0 + i, ((u_char *)mcaf)[i]);
 	}
@@ -1261,10 +1267,11 @@ ed_init(sc)
 /*
  * This routine actually starts the transmission on the interface.
  */
-static inline void ed_xmit(ifp)
-	struct ifnet *ifp;
+static inline void
+ed_xmit(sc)
+	struct ed_softc *sc;
 {
-	struct ed_softc *sc = &ed_softc[ifp->if_unit];
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	u_short len;
 
 	len = sc->txb_len[sc->txb_next_tx];
@@ -1303,7 +1310,7 @@ static inline void ed_xmit(ifp)
  *  2) that the IFF_OACTIVE flag is checked before this code is called
  *     (i.e. that the output part of the interface is idle)
  */
-void
+int
 ed_start(ifp)
 	struct ifnet *ifp;
 {
@@ -1318,9 +1325,9 @@ outloop:
 	 * should never happen at this point.
 	 */
 	if (sc->txb_inuse && (sc->xmit_busy == 0)) {
-		printf("ed%d: packets buffers, but transmitter idle\n",
-		    ifp->if_unit);
-		ed_xmit(ifp);
+		printf("%s: packets buffers, but transmitter idle\n",
+		    sc->sc_dev.dv_xname);
+		ed_xmit(sc);
 	}
 
 	/* See if there is room to put another packet in the buffer. */
@@ -1330,7 +1337,7 @@ outloop:
 		return;
 	}
 
-	IF_DEQUEUE(&sc->arpcom.ac_if.if_snd, m);
+	IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m);
 	if (m == 0) {
 		/*
 		 * We are using the !OACTIVE flag to indicate to the outside
@@ -1406,7 +1413,9 @@ outloop:
 		sc->txb_new = 0;
 
 	if (sc->xmit_busy == 0)
-		ed_xmit(ifp);
+		ed_xmit(sc);
+
+#if NBPFILTER > 0
 	/*
 	 * If there is BPF support in the configuration, tap off here.
 	 * The following has support for converting trailer packets back to
@@ -1414,7 +1423,6 @@ outloop:
 	 * XXX - Support for trailer packets in BPF should be moved into the
 	 * bpf code proper to avoid code duplication in all of the drivers.
 	 */
-#if NBPFILTER > 0
 	if (sc->bpf) {
 		u_short etype;
 		int off, datasize, resid;
@@ -1520,7 +1528,7 @@ ed_rint(sc)
 		if ((len >= ETHER_MIN_LEN) && (len <= ETHER_MAX_LEN)) {
 			/* Go get packet.  len - 4 removes CRC from length. */
 			ed_get_packet(sc, packet_ptr + 4, len - 4);
-			++sc->arpcom.ac_if.if_ipackets;
+			++sc->sc_arpcom.ac_if.if_ipackets;
 		} else {
 			/*
 			 * Really BAD...probably indicates that the ring
@@ -1529,9 +1537,9 @@ ed_rint(sc)
 			 * gets switched.
 			 */
 			log(LOG_ERR,
-			    "ed%d: NIC memory corrupt - invalid packet length %d\n",
-			    sc->arpcom.ac_if.if_unit, len);
-			++sc->arpcom.ac_if.if_ierrors;
+			    "%s: NIC memory corrupt - invalid packet length %d\n",
+			    sc->sc_dev.dv_xname, len);
+			++sc->sc_arpcom.ac_if.if_ierrors;
 			ed_reset(sc);
 			return;
 		}
@@ -1613,27 +1621,27 @@ edintr(unit)
 				}
 
 				/* Update output errors counter. */
-				++sc->arpcom.ac_if.if_oerrors;
+				++sc->sc_arpcom.ac_if.if_oerrors;
 			} else {
 				/*
 				 * Update total number of successfully
 				 * transmitted packets.
 				 */
-				++sc->arpcom.ac_if.if_opackets;
+				++sc->sc_arpcom.ac_if.if_opackets;
 			}
 
 			/* Reset TX busy and output active flags. */
 			sc->xmit_busy = 0;
-			sc->arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
+			sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
 
 			/* Clear watchdog timer. */
-			sc->arpcom.ac_if.if_timer = 0;
+			sc->sc_arpcom.ac_if.if_timer = 0;
 
 			/*
 			 * Add in total number of collisions on last
 			 * transmission.
 			 */
-			sc->arpcom.ac_if.if_collisions += collisions;
+			sc->sc_arpcom.ac_if.if_collisions += collisions;
 
 			/*
 			 * Decrement buffer in-use count if not zero (can only
@@ -1643,7 +1651,7 @@ edintr(unit)
 			 * otherwise defer until after handling receiver.
 			 */
 			if (sc->txb_inuse && --sc->txb_inuse)
-				ed_xmit(&sc->arpcom.ac_if);
+				ed_xmit(sc);
 		}
 
 		/* Handle receiver interrupts. */
@@ -1658,11 +1666,11 @@ edintr(unit)
 			 * fixed in later revs.  -DG
 			 */
 			if (isr & ED_ISR_OVW) {
-				++sc->arpcom.ac_if.if_ierrors;
+				++sc->sc_arpcom.ac_if.if_ierrors;
 #ifdef DIAGNOSTIC
 				log(LOG_WARNING,
-				    "ed%d: warning - receiver ring buffer overrun\n",
-				    unit);
+				    "%s: warning - receiver ring buffer overrun\n",
+				    sc->sc_dev.dv_xname);
 #endif
 				/* Stop/reset/re-init NIC. */
 				ed_reset(sc);
@@ -1673,9 +1681,10 @@ edintr(unit)
 				 * missed packet.
 				 */
 				if (isr & ED_ISR_RXE) {
-					++sc->arpcom.ac_if.if_ierrors;
+					++sc->sc_arpcom.ac_if.if_ierrors;
 #ifdef ED_DEBUG
-					printf("ed%d: receive error %x\n", unit,
+					printf("%s: receive error %x\n",
+					    sc->sc_dev.dv_xname,
 					    inb(sc->nic_addr + ED_P0_RSR));
 #endif
 				}
@@ -1716,8 +1725,8 @@ edintr(unit)
 		 * to start output on the interface.  This is done after
 		 * handling the receiver to give the receiver priority.
 		 */
-		if ((sc->arpcom.ac_if.if_flags & IFF_OACTIVE) == 0)
-			ed_start(&sc->arpcom.ac_if);
+		if ((sc->sc_arpcom.ac_if.if_flags & IFF_OACTIVE) == 0)
+			ed_start(&sc->sc_arpcom.ac_if);
 
 		/*
 		 * Return NIC CR to standard state: page 0, remote DMA
@@ -1749,8 +1758,8 @@ ed_ioctl(ifp, command, data)
 	int command;
 	caddr_t data;
 {
-	register struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ed_softc *sc = &ed_softc[ifp->if_unit];
+	register struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -1771,27 +1780,26 @@ ed_ioctl(ifp, command, data)
 			 * conflict exists, a message is sent to the
 			 * console.
 			 */
-			((struct arpcom *)ifp)->ac_ipaddr =
-			    IA_SIN(ifa)->sin_addr;
-			arpwhohas((struct arpcom *)ifp, &IA_SIN(ifa)->sin_addr);
+			sc->sc_arpcom.ac_ipaddr = IA_SIN(ifa)->sin_addr;
+			arpwhohas(&sc->sc_arpcom, &IA_SIN(ifa)->sin_addr);
 			break;
 #endif
 #ifdef NS
 		/* XXX - This code is probably wrong. */
 		case AF_NS:
 		    {
-			register struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
+			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
-				    *(union ns_host *)(sc->arpcom.ac_enaddr);
+				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
 			else {
 				/*
 				 *
 				 */
-				bcopy((caddr_t)ina->x_host.c_host,
-				    (caddr_t)sc->arpcom.ac_enaddr,
-				    sizeof(sc->arpcom.ac_enaddr));
+				bcopy(ina->x_host.c_host,
+				    sc->sc_arpcom.ac_enaddr,
+				    sizeof(sc->sc_arpcom.ac_enaddr));
 			}
 			/* Set new address. */
 			ed_init(sc);
@@ -1834,8 +1842,8 @@ ed_ioctl(ifp, command, data)
 	case SIOCDELMULTI:
 		/* Update our multicast list. */
 		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti((struct ifreq *)data, &sc->arpcom):
-		    ether_delmulti((struct ifreq *)data, &sc->arpcom);
+		    ether_addmulti(ifr, &sc->sc_arpcom) :
+		    ether_delmulti(ifr, &sc->sc_arpcom);
 
 		if (error == ENETRESET) {
 			/*
@@ -1885,7 +1893,7 @@ ed_get_packet(sc, buf, len)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		goto bad;
-	m->m_pkthdr.rcvif = &sc->arpcom.ac_if;
+	m->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
 	m->m_pkthdr.len = len;
 	m->m_len = 0;
 	head = m;
@@ -1978,9 +1986,9 @@ ed_get_packet(sc, buf, len)
 		 * there are no BPF listeners.  And if we are in promiscuous
 		 * mode, we have to check if this packet is really ours.
 		 */
-		if ((sc->arpcom.ac_if.if_flags & IFF_PROMISC) &&
+		if ((sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, sc->arpcom.ac_enaddr,
+		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
 			    sizeof(eh->ether_dhost)) != 0) {
 			m_freem(head);
 			return;
@@ -1990,7 +1998,7 @@ ed_get_packet(sc, buf, len)
 
 	/* Fix up data start offset in mbuf to point past ether header. */
 	m_adj(head, sizeof(struct ether_header));
-	ether_input(&sc->arpcom.ac_if, eh, head);
+	ether_input(&sc->sc_arpcom.ac_if, eh, head);
 	return;
 
 bad:	if (head)
@@ -2185,8 +2193,8 @@ ed_pio_write_mbufs(sc, m, dst)
 
 	if (!maxwait) {
 		log(LOG_WARNING,
-		    "ed%d: remote transmit DMA failed to complete\n",
-		    sc->arpcom.ac_if.if_unit);
+		    "%s: remote transmit DMA failed to complete\n",
+		    sc->sc_dev.dv_xname);
 		ed_reset(sc);
 	}
 
