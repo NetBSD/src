@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.64 2000/06/04 19:03:27 matt Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.65 2000/06/12 11:13:14 ragge Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -60,9 +60,7 @@
 
 #include <sys/syscallargs.h>
 
-#include "opt_vax46.h"
-#include "opt_vax48.h"
-#include "opt_vax49.h"
+#include "opt_cputype.h"
 
 /*
  * pagemove - moves pages at virtual address from to virtual address to,
