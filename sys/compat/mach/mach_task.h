@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.h,v 1.10 2003/11/17 01:52:14 manu Exp $ */
+/*	$NetBSD: mach_task.h,v 1.11 2003/11/24 14:31:40 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -217,5 +217,8 @@ typedef struct {
 	mach_kern_return_t rep_retval;
 	mach_msg_trailer_t rep_trailer;
 } mach_task_resume_reply_t;
+
+inline int mach_get_target_task(struct lwp *, mach_port_t, 
+    struct proc **, struct lwp **);
 
 #endif /* _MACH_TASK_H_ */
