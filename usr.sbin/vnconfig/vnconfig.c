@@ -53,8 +53,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define VN_CONFIG	0x01
-#define VN_UNCONFIG	0x02
+#define VN_CONFIG	1
+#define VN_UNCONFIG	2
 
 int verbose = 0;
 
@@ -65,39 +65,41 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	int i, rv, flags = 0;
+	int ch, rv, action = VN_CONFIG;
 
-	while ((i = getopt(argc, argv, "cuv")) != EOF)
-		switch (i) {
+	while ((ch = getopt(argc, argv, "cuv")) != -1) {
+		switch (ch) {
 		case 'c':
-			flags |= VN_CONFIG;
-			flags &= ~VN_UNCONFIG;
+			action = VN_CONFIG;
 			break;
 		case 'u':
-			flags |= VN_UNCONFIG;
-			flags &= ~VN_CONFIG;
+			action = VN_UNCONFIG;
 			break;
 		case 'v':
-			verbose++;
+			verbose = 1;
 			break;
 		default:
-			fprintf(stderr, "invalid option '%c'\n", optopt);
+		case '?':
 			usage();
 			/* NOTREACHED */
 		}
+	}
+	argc -= optind;
+	argv += optind;
 
-	if (flags == 0)
-		flags = VN_CONFIG;
-	if (argc < optind + 2)
+	if (action == VN_CONFIG && argc == 2)
+		rv = config(argv[0], argv[1], action);
+	else if (action == VN_UNCONFIG && argc == 1)
+		rv = config(argv[0], NULL, action);
+	else
 		usage();
-	rv = config(argv[optind], argv[optind + 1], flags);
 	exit(rv);
 }
 
-config(dev, file, flags)
+config(dev, file, action)
 	char *dev;
 	char *file;
-	int flags;
+	int action;
 {
 	struct vn_ioctl vnio;
 	FILE *f;
@@ -107,15 +109,15 @@ config(dev, file, flags)
 	rdev = rawdevice(dev);
 	f = fopen(rdev, "rw");
 	if (f == NULL) {
-		warn("opening file");
-		return(1);
+		warn(rdev);
+		return (1);
 	}
 	vnio.vn_file = file;
 
 	/*
 	 * Clear (un-configure) the device
 	 */
-	if (flags & VN_UNCONFIG) {
+	if (action == VN_UNCONFIG) {
 		rv = ioctl(fileno(f), VNIOCCLR, &vnio);
 		if (rv) {
 			if (errno == ENODEV) {
@@ -130,18 +132,17 @@ config(dev, file, flags)
 	/*
 	 * Configure the device
 	 */
-	if (flags & VN_CONFIG) {
+	if (action == VN_CONFIG) {
 		rv = ioctl(fileno(f), VNIOCSET, &vnio);
-		if (rv) {
+		if (rv)
 			warn("VNIOCSET");
-		} else if (verbose)
-			printf("%s: %d bytes on %s\n",
-			       dev, vnio.vn_size, file);
+		else if (verbose)
+			printf("%s: %d bytes on %s\n", dev, vnio.vn_size, file);
 	}
 done:
 	fclose(f);
 	fflush(stdout);
-	return(rv < 0);
+	return (rv < 0);
 }
 
 char *
@@ -169,6 +170,8 @@ rawdevice(dev)
 void
 usage()
 {
-	fprintf(stderr, "usage: vnconfig [-cuv] [special-device file]\n");
+
+	(void)fprintf(stderr, "usage: vnconfig -c [-v] special-file regular-file\n");
+	(void)fprintf(stderr, "       vnconfig -u [-v] special-file\n");
 	exit(1);
 }
