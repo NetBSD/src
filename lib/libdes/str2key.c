@@ -56,7 +56,6 @@
  * [including the GNU Public Licence.]
  */
 
-#include <openssl/crypto.h>
 #include "des_locl.h"
 
 void des_string_to_key(const char *str, des_cblock *key)
