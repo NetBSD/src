@@ -1,4 +1,4 @@
-/*	$NetBSD: getenv.c,v 1.7 1997/03/05 05:20:40 jonathan Exp $	*/
+/*	$NetBSD: getenv.c,v 1.7.8.1 1999/02/02 06:13:31 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  *	@(#)getenv.c	8.1 (Berkeley) 6/10/93
  */
 
-#include <arch/pmax/stand/dec_prom.h>
+#include <dec_prom.h>
 #undef getenv
 
 char *
