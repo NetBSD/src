@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.10 2002/03/23 02:22:59 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.11 2002/03/23 02:35:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -52,9 +52,9 @@
 
 /* Various constants used by the MD code*/
 #define	KERNEL_BASE		0xf0000000
-#define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0xc000)
-#define	APTE_BASE		0xf0c00000
-#define	KERNEL_VM_BASE		0xf1000000
+#define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x0000c000)
+#define	APTE_BASE		(KERNEL_BASE + 0x00c00000)
+#define	KERNEL_VM_BASE		(KERNEL_BASE + 0x01000000)
 /*
  * The Kernel VM Size varies depending on the machine depending on how
  * much space is needed (and where) for other mappings.
