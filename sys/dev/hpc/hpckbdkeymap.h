@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.20 2003/05/18 19:06:11 uwe Exp $ */
+/*	$NetBSD: hpckbdkeymap.h,v 1.21 2003/08/23 02:48:47 uwe Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -616,6 +616,33 @@ static const keysym_t jornada6x0_de_keydesc[] = {
     KC(46),  KS_c,           KS_C,          KS_cent,
 };
 
+#if 0 /* XXX: not yet: need to add platform id to hpcboot */
+/* French (ABF) */
+static const keysym_t jornada6x0_fr_keydesc[] = {
+/*  pos      normal          shifted        altgr	*/
+    KC(2),   KS_ampersand,   KS_1,          KS_plusminus,
+#if 0 /* XXX: no keysym for Euro yet */
+    KC(18),  KS_e,           KS_E,          KS_euro,
+#endif
+    KC(19),  KS_r,           KS_R,          KS_onequarter,
+    KC(20),  KS_t,           KS_T,          KS_onehalf,
+    KC(21),  KS_y,           KS_Y,          KS_threequarters,
+    KC(25),  KS_p,           KS_P,          KS_paragraph,
+    KC(30),  KS_q,           KS_Q,          KS_brokenbar,
+    KC(31),  KS_s,           KS_S,          KS_guillemotleft,
+    KC(32),  KS_d,           KS_D,          KS_guillemotright,
+    KC(40),  KS_ugrave,      KS_percent,    KS_dead_acute,
+    KC(41),  KS_twosuperior, KS_voidSymbol, KS_threesuperior,
+    KC(43),  KS_asterisk,    KS_mu,         KS_notsign,
+    KC(44),  KS_w,           KS_W,          KS_less,
+    KC(45),  KS_x,           KS_X,          KS_greater,
+    KC(46),  KS_c,           KS_C,          KS_cent,
+    KC(50),  KS_comma,       KS_question,   KS_mu,
+    KC(53),  KS_exclam,      KS_section,    KS_Eacute,
+    KC(184), KS_Mode_switch, KS_Multi_key,
+};
+#endif
+
 const int jornada6x0_special_keymap[] = {
 	[KEY_SPECIAL_OFF]	= 88,
 	[KEY_SPECIAL_LIGHT]	= -1
@@ -836,6 +863,19 @@ const struct hpckbd_keymap_table {
 		jornada6x0_special_keymap,
  		CMDMAP(jornada6x0_de_keydesc),
 		KB_DE },
+#if 0 /* XXX: not yet: need to add platform id to hpcboot */
+	/* French (ABF) */
+	{	&platid_mask_MACH_HP_JORNADA_680FR,
+		jornada6x0_intl_keytrans,
+		jornada6x0_special_keymap,
+		CMDMAP(jornada6x0_fr_keydesc),
+		KB_FR },
+	{	&platid_mask_MACH_HP_JORNADA_690FR,
+		jornada6x0_intl_keytrans,
+		jornada6x0_special_keymap,
+ 		CMDMAP(jornada6x0_fr_keydesc),
+		KB_FR },
+#endif
 	/*
 	 * HP 620LX
 	 */
