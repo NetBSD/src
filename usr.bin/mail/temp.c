@@ -1,4 +1,4 @@
-/*	$NetBSD: temp.c,v 1.10 2002/03/05 20:14:02 wiz Exp $	*/
+/*	$NetBSD: temp.c,v 1.11 2002/03/05 20:15:33 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)temp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: temp.c,v 1.10 2002/03/05 20:14:02 wiz Exp $");
+__RCSID("$NetBSD: temp.c,v 1.11 2002/03/05 20:15:33 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,11 +86,8 @@ tinit(void)
 	 * do a spreserve() after us.
 	 */
 	if (myname != NULL) {
-		if (getuserid(myname) < 0) {
-			printf("\"%s\" is not a user of this system\n",
-			    myname);
-			exit(1);
-		}
+		if (getuserid(myname) < 0)
+			errx(1, "\"%s\" is not a user of this system", myname);
 	} else {
 		if ((cp = username()) == NULL) {
 			myname = "nobody";
