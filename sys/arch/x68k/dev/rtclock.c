@@ -1,4 +1,4 @@
-/*	$NetBSD: rtclock.c,v 1.9 2001/01/15 07:04:41 itohy Exp $	*/
+/*	$NetBSD: rtclock.c,v 1.10 2001/05/26 21:32:30 minoura Exp $	*/
 
 /*
  * Copyright 1993, 1994 Masaru Oki
@@ -162,7 +162,7 @@ rtgettod()
 	range_test(dt.dt_year, RTC_BASE_YEAR, RTC_BASE_YEAR+100-1);
 #endif
   
-	return clock_ymdhms_to_secs (&dt);
+	return clock_ymdhms_to_secs (&dt) + rtc_offset * 60;
 }
 
 static int
@@ -177,7 +177,7 @@ rtsettod (tim)
 	u_char mon1, mon2;
 	u_char year1, year2;
 
-	clock_secs_to_ymdhms (tim, &dt);
+	clock_secs_to_ymdhms (tim - rtc_offset * 60, &dt);
 
 	/* prepare values to be written to clock */
 	sec1  = dt.dt_sec  / 10;
