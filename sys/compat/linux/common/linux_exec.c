@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.71 2004/08/08 09:40:50 jdolecek Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.72 2004/08/08 19:52:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.71 2004/08/08 09:40:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.72 2004/08/08 19:52:37 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,14 +159,14 @@ linux_e_proc_init(p, parent, forkflags)
 		MALLOC(e, void *, sizeof(struct linux_emuldata),
 			M_EMULDATA, M_WAITOK);
 	} else  {
-		e->s->refs++;
+		e->s->refs--;
 		if (e->s->refs == 0)
 			FREE(e->s, M_EMULDATA);
 	}
 
 	memset(e, '\0', sizeof(struct linux_emuldata));
 
-	if (forkflags & CLONE_VM) {
+	if (forkflags & FORK_SHAREVM) {
 		struct linux_emuldata *e2 = parent->p_emuldata;
 		s = e2->s;
 		s->refs++;
