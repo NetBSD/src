@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112.4.20 2002/12/03 15:49:06 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.112.4.21 2002/12/04 07:55:32 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -2063,7 +2063,7 @@ cpu_getmcontext(l, mcp, flags)
 
 	/* Save FP register context, if any. */
 	if (l->l_md.md_fpstate != NULL) {
-		struct fpstate fs, *fsp;
+		struct fpstate64 fs, *fsp;
 		__fpregset_t *fpr = &mcp->__fpregs;
 
 		/*
@@ -2125,7 +2125,7 @@ cpu_setmcontext(l, mcp, flags)
 		    ((gr[_REG_ASI] << TSTATE_ASI_SHIFT) & TSTATE_ASI);
 #else
 		tf->tf_tstate = (tf->tf_tstate & ~TSTATE_CCR) |
-		    PSRCC_TO_TSTATE(scp->sc_psr);
+		    PSRCC_TO_TSTATE(gr[_REG_PSR]);
 #endif
 		tf->tf_pc        = (u_int64_t)gr[_REG_PC];
 		tf->tf_npc       = (u_int64_t)gr[_REG_nPC];
@@ -2152,7 +2152,7 @@ cpu_setmcontext(l, mcp, flags)
 
 	/* Restore FP register context, if any. */
 	if ((flags & _UC_FPU) != 0 && mcp->__fpregs.__fpu_en != 0) {
-		struct fpstate *fsp;
+		struct fpstate64 *fsp;
 		const __fpregset_t *fpr = &mcp->__fpregs;
 
 		/*
