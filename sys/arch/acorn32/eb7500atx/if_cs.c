@@ -1,5 +1,29 @@
-/*	$NetBSD: if_cs.c,v 1.1 2004/01/03 14:31:28 chris Exp $	*/
+/*	$NetBSD: if_cs.c,v 1.2 2004/01/03 16:37:41 chris Exp $	*/
 
+/*
+ * Copyright (c) 2004 Christopher Gilbert
+ * All rights reserved.
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
@@ -34,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.1 2004/01/03 14:31:28 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.2 2004/01/03 16:37:41 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,10 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.1 2004/01/03 14:31:28 chris Exp $");
 
 #include <machine/bus.h>
 #include <machine/intr.h>
-
-#include <sys/queue.h>
-#include <uvm/uvm.h>
-#include <machine/pmap.h>
 
 #include <acorn32/eb7500atx/rsbus.h>
 
@@ -84,184 +104,41 @@ __KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.1 2004/01/03 14:31:28 chris Exp $");
  * xxxxR3R2
  * xxxxR5R4
  *
- * This makes access to single registers hard (which does happen on a reset,
- * as we've got to toggle the chip into 16bit mode)
+ * This works fine for 16bit accesses, but it makes access to single
+ * register hard (which does happen on a reset, as we've got to toggle
+ * the chip into 16bit mode)
  * 
  * Network DRQ is connected to DRQ5 
  */
 
 /*
- * make a private tag so that we can use mainbus's map/unmap
+ * make a private tag so that we can use rsbus's map/unmap
  */
 static struct bus_space cs_rsbus_bs_tag;
 
-int	cs_pioc_probe __P((struct device *, struct cfdata *, void *));
-void	cs_pioc_attach __P((struct device *, struct device *, void *));
+int	cs_rsbus_probe(struct device *, struct cfdata *, void *);
+void	cs_rsbus_attach(struct device *, struct device *, void *);
 
 static u_int8_t cs_rbus_read_1(struct cs_softc *, bus_size_t);
 
 CFATTACH_DECL(cs_rsbus, sizeof(struct cs_softc),
-	cs_pioc_probe, cs_pioc_attach, NULL, NULL);
+	cs_rsbus_probe, cs_rsbus_attach, NULL, NULL);
 
 /* Available media */
 int cs_rbus_media [] = {
-	IFM_ETHER|IFM_10_T,
-	IFM_ETHER|IFM_10_T|IFM_FDX
+	IFM_ETHER|IFM_10_T|IFM_FDX,
+	IFM_ETHER|IFM_10_T
 };
 
-
 int 
-cs_pioc_probe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+cs_rsbus_probe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	/* for now it'll always attach */
 	return 1;
 }
-#if 0
-	struct isa_attach_args *ia = aux;
-	bus_space_tag_t iot = ia->ia_iot;
-	bus_space_tag_t memt = ia->ia_memt;
-	bus_space_handle_t ioh, memh;
-	struct cs_softc sc;
-	int rv = 0, have_io = 0, have_mem = 0;
-	u_int16_t isa_cfg, isa_membase;
-	int maddr, irq;
 
-	if (ia->ia_nio < 1)
-		return (0);
-	if (ia->ia_nirq < 1)
-		return (0);
-
-	if (ISA_DIRECT_CONFIG(ia))
-		return (0);
-
-	/*
-	 * Disallow wildcarded I/O base.
-	 */
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
-		return (0);
-
-	if (ia->ia_niomem > 0)
-		maddr = ia->ia_iomem[0].ir_addr;
-	else
-		maddr = ISACF_IOMEM_DEFAULT;
-
-	/*
-	 * Map the I/O space.
-	 */
-	if (bus_space_map(ia->ia_iot, ia->ia_io[0].ir_addr, CS8900_IOSIZE,
-	    0, &ioh))
-		goto out;
-	have_io = 1;
-
-	memset(&sc, 0, sizeof sc);
-	sc.sc_iot = iot;
-	sc.sc_ioh = ioh;
-	/* Verify that it's a Crystal product. */
-	if (CS_READ_PACKET_PAGE_IO(&sc, PKTPG_EISA_NUM) !=
-	    EISA_NUM_CRYSTAL)
-		goto out;
-
-	/*
-	 * Verify that it's a supported chip.
-	 */
-	switch (CS_READ_PACKET_PAGE_IO(&sc, PKTPG_PRODUCT_ID) &
-	    PROD_ID_MASK) {
-	case PROD_ID_CS8900:
-#ifdef notyet
-	case PROD_ID_CS8920:
-	case PROD_ID_CS8920M:
-#endif
-		rv = 1;
-	}
-
-	/*
-	 * If the IRQ or memory address were not specified, read the
-	 * ISA_CFG EEPROM location.
-	 */
-	if (maddr == ISACF_IOMEM_DEFAULT ||
-	    ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT) {
-		if (cs_verify_eeprom(&sc) == CS_ERROR) {
-			printf("cs_isa_probe: EEPROM bad or missing\n");
-			goto out;
-		}
-		if (cs_read_eeprom(&sc, EEPROM_ISA_CFG, &isa_cfg)
-		    == CS_ERROR) {
-			printf("cs_isa_probe: unable to read ISA_CFG\n");
-			goto out;
-		}
-	}
-
-	/*
-	 * If the IRQ wasn't specified, get it from the EEPROM.
-	 */
-	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT) {
-		irq = isa_cfg & ISA_CFG_IRQ_MASK;
-		if (irq == 3)
-			irq = 5;
-		else
-			irq += 10;
-	} else
-		irq = ia->ia_irq[0].ir_irq;
-
-	/*
-	 * If the memory address wasn't specified, get it from the EEPROM.
-	 */
-	if (maddr == ISACF_IOMEM_DEFAULT) {
-		if ((isa_cfg & ISA_CFG_MEM_MODE) == 0) {
-			/* EEPROM says don't use memory mode. */
-			goto out;
-		}
-		if (cs_read_eeprom(&sc, EEPROM_MEM_BASE, &isa_membase)
-		    == CS_ERROR) {
-			printf("cs_isa_probe: unable to read MEM_BASE\n");
-			goto out;
-		}
-
-		isa_membase &= MEM_BASE_MASK;
-		maddr = (int)isa_membase << 8;
-	}
-
-	/*
-	 * We now have a valid mem address; attempt to map it.
-	 */
-	if (bus_space_map(ia->ia_memt, maddr, CS8900_MEMSIZE, 0, &memh)) {
-		/* Can't map it; fall back on i/o-only mode. */
-		printf("cs_isa_probe: unable to map memory space\n");
-		maddr = ISACF_IOMEM_DEFAULT;
-	} else
-		have_mem = 1;
-
- out:
-	if (have_io)
-		bus_space_unmap(iot, ioh, CS8900_IOSIZE);
-	if (have_mem)
-		bus_space_unmap(memt, memh, CS8900_MEMSIZE);
-
-	if (rv) {
-		ia->ia_nio = 1;
-		ia->ia_io[0].ir_size = CS8900_IOSIZE;
-
-		if (maddr == ISACF_IOMEM_DEFAULT)
-			ia->ia_niomem = 0;
-		else {
-			ia->ia_niomem = 1;
-			ia->ia_iomem[0].ir_addr = maddr;
-			ia->ia_iomem[0].ir_size = CS8900_MEMSIZE;
-		}
-
-		ia->ia_nirq = 1;
-		ia->ia_irq[0].ir_irq = irq;
-	}
-	return (rv);
-}
-#endif
 void 
-cs_pioc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+cs_rsbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cs_softc *sc = (struct cs_softc *)self;
 	struct rsbus_attach_args *rs = (void *)aux;
@@ -270,7 +147,7 @@ cs_pioc_attach(parent, self, aux)
 	/* member copy */
 	cs_rsbus_bs_tag = *rs->sa_iot;
 	
-	/* registers are 4 byte aligned */
+	/* registers are normally accessed in pairs, on a 4 byte aligned */
 	cs_rsbus_bs_tag.bs_cookie = (void *) 1;
 	
 	sc->sc_iot = sc->sc_memt = &cs_rsbus_bs_tag;
@@ -292,7 +169,6 @@ cs_pioc_attach(parent, self, aux)
 	 * Map the device.
 	 */
 	iobase = 0x03010600;
-	printf("mapping iobase=0x%08x, for 0x%08x\n", iobase, CS8900_IOSIZE * 4);
 	if (bus_space_map(sc->sc_iot, iobase, CS8900_IOSIZE * 4,
 	    0, &sc->sc_ioh)) {
 		printf("%s: unable to map i/o space\n", sc->sc_dev.dv_xname);
@@ -300,69 +176,17 @@ cs_pioc_attach(parent, self, aux)
 	}
 
 #if 0
-	bus_space_write_2((sc)->sc_iot, (sc)->sc_ioh, PORT_PKTPG_PTR, PKTPG_EISA_NUM);
-
-	productID = bus_space_read_2((sc)->sc_iot, (sc)->sc_ioh, PORT_PKTPG_DATA);
-
-	printf("Result ID = 0x%08x\n", productID);
-	printf("cookie = %p\n", sc->sc_iot->bs_cookie);
-	{
-		volatile uint32_t *ptr =  (void*) ((char *)((sc)->sc_ioh) + (PORT_PKTPG_PTR  << 1));
-		volatile uint32_t *data =(void *)((char *)((sc)->sc_ioh) + (PORT_PKTPG_DATA  << 1));
-		volatile char *pnplow = (char *)trunc_page((sc)->sc_ioh) + 0x4f1;
-		bus_space_handle_t tag2;
-		pt_entry_t *pte;
-		
-		printf("ioh = %p, ptr = %p, data = %p\n", (void*)(sc)->sc_ioh, ptr, data);
-		*ptr = PKTPG_EISA_NUM;
-		productID = *data;
-		printf("Result ID2 = 0x%08x\n", productID);
-
-		pte = vtopte(trunc_page((sc)->sc_ioh));
-		printf("pte = %p, *pte =  0x%08x\n", pte, *pte);
-		printf("pnplow = %p, *pnplow = 0x%02x\n", pnplow, *pnplow);
-
-		if (bus_space_map(sc->sc_iot, 0x03011000, 0x1000,
-					0, &tag2)) {
-		printf("%s: unable to map i/o space\n", sc->sc_dev.dv_xname);
-		return;
-		}
-		pnplow = (char *)trunc_page(tag2) + 0x4f1;
-		printf("pnplow = %p, *pnplow = 0x%02x\n", pnplow, *pnplow);
-
-		*pnplow = 0x3;
-
-		*ptr = PKTPG_EISA_NUM;
-		productID = *data;
-		printf("Result ID2 = 0x%08x\n", productID);
+	if (bus_space_map(sc->sc_memt, iobase + 0x3A00,
+				CS8900_MEMSIZE * 4, 0, &sc->sc_memh)) {
+		printf("%s: unable to map memory space\n",
+	    			sc->sc_dev.dv_xname);
+	} else {
+		sc->sc_cfgflags |= CFGFLG_MEM_MODE | CFGFLG_USE_SA;
+		sc->sc_pktpgaddr = 1<<23;
+		//(0x4000 >> 1)  |  (1<<23);
 	}
 #endif
-
-#if 0
-	/*
-	 * Map the memory space if it was specified.  If we can do this,
-	 * we set ourselves up to use memory mode forever.  Otherwise,
-	 * we fall back on I/O mode.
-	 */
-	if (ia->ia_iomem[0].ir_addr != ISACF_IOMEM_DEFAULT &&
-	    ia->ia_iomem[0].ir_size == CS8900_MEMSIZE &&
-	    CS8900_MEMBASE_ISVALID(ia->ia_iomem[0].ir_addr)) {
-#endif	
-#if 0
-	printf("mapping iobase=0x%08x, for 0x%08x\n", iobase + 0x3A00,
-			CS8900_MEMSIZE * 4);
-		if (bus_space_map(sc->sc_memt, iobase + 0x3A00,
-					CS8900_MEMSIZE * 4, 0, &sc->sc_memh)) {
-			printf("%s: unable to map memory space\n",
-			    sc->sc_dev.dv_xname);
-		} else {
-			sc->sc_cfgflags |= CFGFLG_MEM_MODE;
-			sc->sc_pktpgaddr = iobase + 0x3A00;
-		}
-#endif
-
-	printf("Claiming IRQ\n");
-		sc->sc_ih = intr_claim(0x0B, IPL_NET, "cs", cs_intr, sc);
+	sc->sc_ih = intr_claim(0x0B, IPL_NET, "cs", cs_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: unable to establish interrupt\n",
 		    sc->sc_dev.dv_xname);
@@ -374,34 +198,43 @@ cs_pioc_attach(parent, self, aux)
 	sc->sc_dma_attach = NULL;
 	sc->sc_dma_process_rx = NULL;
 
-	printf("Cs attach addr: 0x%04x\n", CS_READ_PACKET_PAGE(sc, PKTPG_IND_ADDR));
-
-	/* don't talk to the EEPROM, it seems that the cs driver doesn't use a
-	 * normal layout */
+	/* 
+	 * don't talk to the EEPROM, it seems that the cs driver doesn't
+	 * currently to the right thing for reading the EEPROM
+	 */
 	sc->sc_cfgflags |= CFGFLG_NOT_EEPROM;
 	sc->sc_io_read_1 = cs_rbus_read_1;
+
+	/* 
+	 * also provide media, otherwise it attempts to read the media from
+	 * the EEPROM, which again fails
+	 */
 	cs_attach(sc, NULL, cs_rbus_media, sizeof(cs_rbus_media) / sizeof(cs_rbus_media[0]),
 			IFM_ETHER|IFM_10_T|IFM_FDX);
 }
 
+/*
+ * Provide a function to correctly do reading from oddly numbered registers
+ * as you can't simply shift the register number
+ */
 static u_int8_t
 cs_rbus_read_1(struct cs_softc *sc, bus_size_t a)
 {
 	bus_size_t offset;
-	/* this is rather warped if it's an even address then just use the
-	 * bus_space_read_1
+	/* 
+	 * if it's an even address then just use the bus_space_read_1
 	 */
 	if ((a & 1) == 0)
 	{
 		return bus_space_read_1(sc->sc_iot, sc->sc_ioh, a);
 	}
-	/* otherwise we've get to work out the aligned address and then add
-	 * one */
-	/* first work out the offset */
+	/* 
+	 * otherwise we've get to work out the aligned address and then add
+	 * one
+	 */
 	offset = (a & ~1) << 1;
-	/* add the one */
 	offset++;
 
-	/* and read it, with no shift */
+	/* and read it, with no shift (cookie is 0) */
 	return sc->sc_iot->bs_r_1(0, (sc)->sc_ioh, offset);
 }
