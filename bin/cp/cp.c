@@ -1,4 +1,4 @@
-/*	$NetBSD: cp.c,v 1.27 1999/03/01 18:57:29 mjl Exp $	*/
+/*	$NetBSD: cp.c,v 1.28 1999/09/05 16:14:43 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.27 1999/03/01 18:57:29 mjl Exp $");
+__RCSID("$NetBSD: cp.c,v 1.28 1999/09/05 16:14:43 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,6 +72,7 @@ __RCSID("$NetBSD: cp.c,v 1.27 1999/03/01 18:57:29 mjl Exp $");
 #include <err.h>
 #include <errno.h>
 #include <fts.h>
+#include <locale.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -104,6 +105,8 @@ main(argc, argv)
 	enum op type;
 	int Hflag, Lflag, Pflag, ch, fts_options, r;
 	char *target;
+
+	(void)setlocale(LC_ALL, "");
 
 	Hflag = Lflag = Pflag = Rflag = 0;
 	while ((ch = getopt(argc, argv, "HLPRfipr")) != -1) 
