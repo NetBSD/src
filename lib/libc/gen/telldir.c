@@ -1,4 +1,4 @@
-/*	$NetBSD: telldir.c,v 1.7 1998/02/03 18:23:54 perry Exp $	*/
+/*	$NetBSD: telldir.c,v 1.8 1998/02/27 18:55:46 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)telldir.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: telldir.c,v 1.7 1998/02/03 18:23:54 perry Exp $");
+__RCSID("$NetBSD: telldir.c,v 1.8 1998/02/27 18:55:46 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,12 +68,12 @@ __weak_alias(telldir,_telldir);
 struct ddloc {
 	struct	ddloc *loc_next;/* next structure in list */
 	long	loc_index;	/* key associated with structure */
-	long	loc_seek;	/* magic cookie returned by getdirentries */
+	off_t	loc_seek;	/* magic cookie returned by getdirentries */
 	long	loc_loc;	/* offset of entry in buffer */
 };
 
 #define	NDIRHASH	32	/* Num of hash lists, must be a power of 2 */
-#define	LOCHASH(i)	((i)&(NDIRHASH-1))
+#define	LOCHASH(i)	(((int)i)&(NDIRHASH-1))
 
 static long	dd_loccnt;	/* Index of entry for sequential readdir's */
 static struct	ddloc *dd_hash[NDIRHASH];   /* Hash list heads for ddlocs */
@@ -85,7 +85,7 @@ long
 telldir(dirp)
 	const DIR *dirp;
 {
-	int index;
+	long index;
 	struct ddloc *lp;
 
 	if ((lp = (struct ddloc *)malloc(sizeof(struct ddloc))) == NULL)
@@ -135,6 +135,6 @@ __seekdir(dirp, loc)
 found:
 #ifdef SINGLEUSE
 	*prevlp = lp->loc_next;
-	free((caddr_t)lp);
+	free((void *)lp);
 #endif
 }
