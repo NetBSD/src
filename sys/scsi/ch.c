@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.11 1994/11/21 10:39:14 mycroft Exp $	*/
+/*	$NetBSD: ch.c,v 1.12 1994/11/21 11:28:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -57,8 +57,6 @@
 struct ch_data {
 	struct device sc_dev;
 
-	int flags;
-#define CHOPEN		0x01
 	struct scsi_link *sc_link;	/* all the inter level info */
 	u_int16 chmo;			/* Offset of first CHM */
 	u_int16 chms;			/* No. of CHM */
@@ -139,47 +137,56 @@ chopen(dev)
 	struct scsi_link *sc_link;
 
 	unit = CHUNIT(dev);
-	mode = CHMODE(dev);
-
 	if (unit >= chcd.cd_ndevs)
 		return ENXIO;
 	ch = chcd.cd_devs[unit];
 	if (!ch)
 		return ENXIO;
 
+	mode = CHMODE(dev);
 	sc_link = ch->sc_link;
-	SC_DEBUG(sc_link, SDEV_DB1, ("chopen: dev=0x%x (unit %d (of %d))\n",
-	    dev, unit, chcd.cd_ndevs));
 
-	if (ch->flags & CHOPEN)
+	SC_DEBUG(sc_link, SDEV_DB1,
+	    ("chopen: dev=0x%x (unit %d (of %d))\n", dev, unit, chcd.cd_ndevs));
+
+	/*
+	 * Only allow one at a time
+	 */
+	if (sc_link->flags & SDEV_OPEN) {
+		printf("%s: already open\n", ch->sc_dev.dv_xname);
 		return EBUSY;
+	}
 
 	/*
 	 * Catch any unit attention errors.
 	 */
 	scsi_test_unit_ready(sc_link, SCSI_SILENT);
 
-	sc_link->flags |= SDEV_OPEN;
 	/*
 	 * Check that it is still responding and ok.
 	 */
-	if (error = (scsi_test_unit_ready(sc_link, 0))) {
-		printf("%s: not ready\n", ch->sc_dev.dv_xname);
-		sc_link->flags &= ~SDEV_OPEN;
-		return error;
+	sc_link->flags |= SDEV_OPEN;
+	if (scsi_test_unit_ready(sc_link, 0)) {
+		SC_DEBUG(sc_link, SDEV_DB3, ("device not responding\n"));
+		error = ENXIO;
+		goto bad;
 	}
+	SC_DEBUG(sc_link, SDEV_DB3, ("device ok\n"));
 
 	/*
 	 * Make sure data is loaded
 	 */
 	if (error = (ch_mode_sense(ch, SCSI_NOSLEEP | SCSI_NOMASK))) {
 		printf("%s: offline\n", ch->sc_dev.dv_xname);
-		sc_link->flags &= ~SDEV_OPEN;
-		return error;
+		goto bad;
 	}
 
-	ch->flags |= CHOPEN;
+	SC_DEBUG(sc_link, SDEV_DB3, ("open complete\n"));
 	return 0;
+
+bad:
+	sc_link->flags &= ~SDEV_OPEN;
+	return error;
 }
 
 /*
@@ -190,18 +197,11 @@ int
 chclose(dev)
 	dev_t dev;
 {
-	int unit, mode;
-	struct ch_data *ch;
-	struct scsi_link *sc_link;
+	struct ch_data *ch = chcd.cd_devs[CHUNIT(dev)];
 
-	unit = CHUNIT(dev);
-	mode = CHMODE(dev);
-	ch = chcd.cd_devs[unit];
-	sc_link = ch->sc_link;
+	SC_DEBUG(ch->sc_link, SDEV_DB1, ("closing\n"));
+	ch->sc_link->flags &= ~SDEV_OPEN;
 
-	SC_DEBUG(sc_link, SDEV_DB1, ("closing"));
-	ch->flags &= ~CHOPEN;
-	sc_link->flags &= ~SDEV_OPEN;
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.10 1994/11/21 10:39:34 mycroft Exp $	*/
+/*	$NetBSD: uk.c,v 1.11 1994/11/21 11:28:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -105,7 +105,6 @@ ukopen(dev)
 	struct scsi_link *sc_link;
 
 	unit = UKUNIT(dev);
-
 	if (unit >= ukcd.cd_ndevs)
 		return ENXIO;
 	uk = ukcd.cd_devs[unit];
@@ -113,6 +112,9 @@ ukopen(dev)
 		return ENXIO;
 		
 	sc_link = uk->sc_link;
+
+	SC_DEBUG(sc_link, SDEV_DB1,
+	    ("ukopen: dev=0x%x (unit %d (of %d))\n", dev, unit, ukcd.cd_ndevs));
 
 	/*
 	 * Only allow one at a time
@@ -123,9 +125,8 @@ ukopen(dev)
 	}
 
 	sc_link->flags |= SDEV_OPEN;
-	SC_DEBUG(sc_link, SDEV_DB1,
-	    ("ukopen: dev=0x%x (unit %d (of %d))\n", unit, ukcd.cd_ndevs));
 
+	SC_DEBUG(sc_link, SDEV_DB3, ("open complete\n"));
 	return 0;
 }
 
@@ -137,13 +138,11 @@ int
 ukclose(dev)
 	dev_t dev;
 {
-	int unit;
-	struct uk_data *uk;
+	struct uk_data *uk = ukcd.cd_devs[UKUNIT(dev)];
 
-	unit = UKUNIT(dev);
-	uk = ukcd.cd_devs[unit];
+	SC_DEBUG(uk->sc_link, SDEV_DB1, ("closing\n"));
 	uk->sc_link->flags &= ~SDEV_OPEN;
-	SC_DEBUG(uk->sc_link, SDEV_DB1, ("closed\n"));
+
 	return 0;
 }
 
@@ -158,14 +157,7 @@ ukioctl(dev, cmd, addr, flag)
 	caddr_t addr;
 	int flag;
 {
-	int unit;
-	register struct uk_data *uk;
-	struct scsi_link *sc_link;
+	register struct uk_data *uk = ukcd.cd_devs[UKUNIT(dev)];
 
-	/*
-	 * Find the device that the user is talking about
-	 */
-	unit = UKUNIT(dev);
-	uk = ukcd.cd_devs[unit];
 	return scsi_do_ioctl(uk->sc_link, dev, cmd, addr, flag));
 }
