@@ -1,4 +1,4 @@
-/*	$NetBSD: wait.h,v 1.11 1996/04/09 20:55:51 cgd Exp $	*/
+/*	$NetBSD: wait.h,v 1.12 1996/10/12 22:20:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1994
@@ -90,7 +90,7 @@
 #define	WAIT_ANY	(-1)	/* any process */
 #define	WAIT_MYPGRP	0	/* any process in my process group */
 
-#include <machine/endian.h>
+#include <sys/types.h>
 
 /*
  * Deprecated:
@@ -145,7 +145,6 @@ union wait {
 #endif /* _POSIX_SOURCE */
 
 #ifndef _KERNEL
-#include <sys/types.h>
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
