@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.41 1997/04/29 21:01:46 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.42 1997/05/01 12:27:10 kleink Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -552,7 +552,7 @@ audio_open(dev, flags, ifmt, p)
 	 * us these values.
 	 */
 #ifdef DIAGNOSTIC
-	if (sc->rparams.precision == 0 || sc->sc_pparams.precision == 0) {
+	if (sc->sc_rparams.precision == 0 || sc->sc_pparams.precision == 0) {
 		printf("audio_open: 0 precision\n");
 		return EINVAL;
 	}
