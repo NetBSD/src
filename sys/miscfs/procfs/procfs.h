@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.16 1996/02/09 22:40:46 christos Exp $	*/
+/*	$NetBSD: procfs.h,v 1.17 1996/02/12 15:01:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -117,6 +117,8 @@ int procfs_dostatus __P((struct proc *, struct proc *, struct pfsnode *pfsp, str
 int procfs_validfile __P((struct proc *));
 int procfs_validfpregs __P((struct proc *));
 int procfs_validregs __P((struct proc *));
+
+int procfs_rw __P((void *));
 
 #define PROCFS_LOCKED	0x01
 #define PROCFS_WANT	0x02
