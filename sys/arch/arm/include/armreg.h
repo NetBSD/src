@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.27 2003/09/06 08:43:02 rearnsha Exp $	*/
+/*	$NetBSD: armreg.h,v 1.28 2003/10/31 16:30:15 scw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -325,6 +325,8 @@
 #define FAULT_DOMAIN_P  0x0b /* Domain -- Page */
 #define FAULT_PERM_S    0x0d /* Permission -- Section */
 #define FAULT_PERM_P    0x0f /* Permission -- Page */
+
+#define	FAULT_IMPRECISE	0x400	/* Imprecise exception (XSCALE) */
 
 /*
  * Address of the vector page, low and high versions.
