@@ -1,4 +1,4 @@
-.\"	$NetBSD: security.conf.5,v 1.8 2000/05/05 18:28:54 itojun Exp $
+.\"	$NetBSD: security.conf.5,v 1.9 2000/05/26 17:08:22 ad Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -120,8 +120,15 @@ is enabled, this determines the maximum permitted length of login names.
 .El
 .Pp
 .Sh FILES
+.Bl -tag -width /etc/security.local -compact
+.It Pa /etc/security
+daily security check script
+.It Pa /etc/security.conf
+daily security check configuration
+.It Pa /etc/security.local
+local site additions to
 .Pa /etc/security
-.Pa /etc/security.conf
+.El
 .Sh SEE ALSO
 .Xr daily.conf 5
 .Sh HISTORY
