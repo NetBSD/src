@@ -1,4 +1,4 @@
-/*	$NetBSD: local_passwd.c,v 1.16 1998/07/11 15:55:48 mrg Exp $	*/
+/*	$NetBSD: local_passwd.c,v 1.17 2000/01/12 05:04:41 mjl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: local_passwd.c,v 1.16 1998/07/11 15:55:48 mrg Exp $");
+__RCSID("$NetBSD: local_passwd.c,v 1.17 2000/01/12 05:04:41 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,10 +55,11 @@ __RCSID("$NetBSD: local_passwd.c,v 1.16 1998/07/11 15:55:48 mrg Exp $");
 #include <time.h>
 #include <unistd.h>
 #include <util.h>
+#include <login_cap.h>
 
 #include "extern.h"
 
-static	char   *getnewpasswd __P((struct passwd *));
+static	char   *getnewpasswd __P((struct passwd *, int));
 
 static uid_t uid;
 
@@ -80,13 +81,14 @@ to64(s, v, n)
 }
 
 static char *
-getnewpasswd(pw)
+getnewpasswd(pw, min_pw_len)
 	struct passwd *pw;
+	int min_pw_len;
 {
 	int tries;
 	char *p, *t;
 	char buf[_PASSWORD_LEN+1], salt[9];
-
+	
 	(void)printf("Changing local password for %s.\n", pw->pw_name);
 
 	if (uid && pw->pw_passwd[0] &&
@@ -101,6 +103,10 @@ getnewpasswd(pw)
 		if (!*p) {
 			(void)printf("Password unchanged.\n");
 			pw_error(NULL, 0, 0);
+		}
+		if (min_pw_len > 0 && strlen(p) < min_pw_len) {
+			(void) printf("Password is too short.\n");
+			continue;
 		}
 		if (strlen(p) <= 5 && ++tries < 2) {
 			(void)printf("Please enter a longer password.\n");
@@ -139,7 +145,10 @@ local_passwd(uname)
 	struct passwd *pw;
 	struct passwd old_pw;
 	int pfd, tfd;
-
+	int min_pw_len = 0;
+	int pw_expiry  = 0;
+	login_cap_t *lc;
+	
 	if (!(pw = getpwnam(uname))) {
 		warnx("unknown user %s", uname);
 		return (1);
@@ -155,12 +164,16 @@ local_passwd(uname)
 	old_pw = *pw;
 
 	/*
-	 * Get the new password.  Reset passwd change time to zero; when
-	 * classes are implemented, go and get the "offset" value for this
-	 * class and reset the timer.
+	 * Get class restrictions for this user, then get the new password. 
 	 */
-	pw->pw_passwd = getnewpasswd(pw);
-	pw->pw_change = 0;
+	if((lc = login_getclass(pw->pw_class))) {
+		min_pw_len = (int) login_getcapnum(lc, "minpasswordlen", 0, 0);
+		pw_expiry  = (int) login_getcaptime(lc, "passwordtime", 0, 0);
+		login_close(lc);
+	}
+
+	pw->pw_passwd = getnewpasswd(pw, min_pw_len);
+	pw->pw_change = pw_expiry ? pw_expiry + time(NULL) : 0;
 
 	/*
 	 * Now that the user has given us a new password, let us
