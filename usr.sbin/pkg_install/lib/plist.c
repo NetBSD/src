@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.26.4.2 2001/04/24 22:25:26 he Exp $	*/
+/*	$NetBSD: plist.c,v 1.26.4.3 2002/02/23 18:15:10 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.26.4.2 2001/04/24 22:25:26 he Exp $");
+__RCSID("$NetBSD: plist.c,v 1.26.4.3 2002/02/23 18:15:10 he Exp $");
 #endif
 #endif
 
@@ -39,29 +39,30 @@ typedef struct cmd_t {
 	char   *c_s;		/* string to recognise */
 	pl_ent_t c_type;	/* type of command */
 	int     c_argc;		/* # of arguments */
+	int     c_subst;	/* can substitute real prefix */
 }       cmd_t;
 
 /* Commands to recognise */
 static cmd_t cmdv[] = {
-	{"cwd", PLIST_CWD, 1},
-	{"src", PLIST_SRC, 1},
-	{"cd", PLIST_CWD, 1},
-	{"exec", PLIST_CMD, 1},
-	{"unexec", PLIST_UNEXEC, 1},
-	{"mode", PLIST_CHMOD, 1},
-	{"owner", PLIST_CHOWN, 1},
-	{"group", PLIST_CHGRP, 1},
-	{"comment", PLIST_COMMENT, 1},
-	{"ignore", PLIST_IGNORE, 0},
-	{"ignore_inst", PLIST_IGNORE_INST, 0},
-	{"name", PLIST_NAME, 1},
-	{"display", PLIST_DISPLAY, 1},
-	{"pkgdep", PLIST_PKGDEP, 1},
-	{"pkgcfl", PLIST_PKGCFL, 1},
-	{"mtree", PLIST_MTREE, 1},
-	{"dirrm", PLIST_DIR_RM, 1},
-	{"option", PLIST_OPTION, 1},
-	{NULL, FAIL, 0}
+	{"cwd", PLIST_CWD, 1, 1},
+	{"src", PLIST_SRC, 1, 1},
+	{"cd", PLIST_CWD, 1, 1},
+	{"exec", PLIST_CMD, 1, 0},
+	{"unexec", PLIST_UNEXEC, 1, 0},
+	{"mode", PLIST_CHMOD, 1, 0},
+	{"owner", PLIST_CHOWN, 1, 0},
+	{"group", PLIST_CHGRP, 1, 0},
+	{"comment", PLIST_COMMENT, 1, 0},
+	{"ignore", PLIST_IGNORE, 0, 0},
+	{"ignore_inst", PLIST_IGNORE_INST, 0, 0},
+	{"name", PLIST_NAME, 1, 0},
+	{"display", PLIST_DISPLAY, 1, 0},
+	{"pkgdep", PLIST_PKGDEP, 1, 0},
+	{"pkgcfl", PLIST_PKGCFL, 1, 0},
+	{"mtree", PLIST_MTREE, 1, 0},
+	{"dirrm", PLIST_DIR_RM, 1, 0},
+	{"option", PLIST_OPTION, 1, 0},
+	{NULL, FAIL, 0, 0}
 };
 
 /*
@@ -197,7 +198,7 @@ new_plist_entry(void)
 	plist_t *ret;
 
 	if ((ret = (plist_t *) malloc(sizeof(plist_t))) == (plist_t *) NULL) {
-		err(1, "can't allocate %ld bytes", (long) sizeof(plist_t));
+		err(EXIT_FAILURE, "can't allocate %ld bytes", (long) sizeof(plist_t));
 	}
 	memset(ret, 0, sizeof(plist_t));
 	return ret;
@@ -288,7 +289,7 @@ read_plist(package_t *pkg, FILE * fp)
  * Write a packing list to a file, converting commands to ASCII equivs
  */
 void
-write_plist(package_t *pkg, FILE * fp)
+write_plist(package_t *pkg, FILE * fp, char *realprefix)
 {
 	plist_t *p;
 	cmd_t  *cmdp;
@@ -305,6 +306,8 @@ write_plist(package_t *pkg, FILE * fp)
 			warnx("Unknown PLIST command type %d (%s)", p->type, p->name);
 		} else if (cmdp->c_argc == 0) {
 			(void) fprintf(fp, "%c%s\n", CMD_CHAR, cmdp->c_s);
+		} else if (cmdp->c_subst && realprefix) {
+			(void) fprintf(fp, "%c%s %s\n", CMD_CHAR, cmdp->c_s, realprefix);
 		} else {
 			(void) fprintf(fp, "%c%s %s\n", CMD_CHAR, cmdp->c_s,
 			    (p->name) ? p->name : "");
@@ -439,7 +442,7 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 				}
 			    }
 			} else {
-			    warnx("cannot remove non-existant directory `%s'\n"
+			    warnx("cannot remove non-existent directory `%s'\n"
 			            "this packing list is incorrect - ignoring delete request", tmp);
 			}
 			last_file = p->name;
