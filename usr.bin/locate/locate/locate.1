@@ -1,4 +1,4 @@
-.\"	$NetBSD: locate.1,v 1.5 1997/10/19 04:11:55 lukem Exp $
+.\"	$NetBSD: locate.1,v 1.6 1998/08/08 14:49:23 hubertf Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -62,12 +62,16 @@ including slashes (``/'').
 As a special case, a pattern containing no globbing characters (``foo'')
 is matched as though it were ``*foo*''.
 .Sh FILES
-.Bl -tag -width /var/db/locate.database -compact
+.Bl -tag -width /usr/libexec/locate.updatedb -compact
 .It Pa /var/db/locate.database
+Database
+.It /usr/libexec/locate.updatedb
+Script to update database.
 .El
 .Sh SEE ALSO
 .Xr find 1 ,
-.Xr fnmatch 3
+.Xr fnmatch 3 ,
+.Xr weekly.conf 5
 .Rs
 .%A Woods, James A.
 .%D 1983
