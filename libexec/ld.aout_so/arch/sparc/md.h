@@ -1,34 +1,70 @@
 /*
- * $Id: md.h,v 1.1 1993/10/16 21:54:35 pk Exp $		- SPARC machine dependent definitions
+ * Copyright (c) 1993 Paul Kranenburg
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Paul Kranenburg.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software withough specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ *	$Id: md.h,v 1.2 1993/10/19 21:42:38 pk Exp $
+ */
+
+/*
+ * SPARC machine dependent definitions
  */
 
 
-#ifdef sun
-#endif
-
 #define	MAX_ALIGNMENT	(sizeof (double))
 
-#ifndef EX_DYNAMIC
-#define EX_DYNAMIC		1
+#ifdef BSD
+#define PAGSIZ			__LDPGSZ
 #endif
+
+#ifdef sun
+/* Get the SunOS a.out and relocation nomenclature */
+
+#define EX_DYNAMIC		1
+
+#define N_IS_DYNAMIC(ex)	((ex).a_dynamic)
 
 #define N_SET_FLAG(ex, f) {			\
 	(ex).a_dynamic = ((f) & EX_DYNAMIC);	\
 }
 
-#define N_IS_DYNAMIC(ex)	((ex).a_dynamic)
-
-
-/* Sparc (Sun 4) macros */
-#undef relocation_info
+#undef  relocation_info
 #define relocation_info	                reloc_info_sparc
 #define r_symbolnum			r_index
+#endif /* sun */
+
+/* Sparc (Sun 4) macros */
 #define RELOC_ADDRESS(r)		((r)->r_address)
-#define RELOC_EXTERN_P(r)               ((r)->r_extern)
-#define RELOC_TYPE(r)                   ((r)->r_index)
-#define RELOC_SYMBOL(r)                 ((r)->r_index)
+#define RELOC_EXTERN_P(r)		((r)->r_extern)
+#define RELOC_TYPE(r)			((r)->r_symbolnum)
+#define RELOC_SYMBOL(r)			((r)->r_symbolnum)
 #define RELOC_MEMORY_SUB_P(r)		0
 #ifdef RTLD
+/* XXX - consider this making SUN_COMPAT --> repercussions on rrs.c */
 #define RELOC_MEMORY_ADD_P(r)		1
 #else
 #define RELOC_MEMORY_ADD_P(r)		0
@@ -38,10 +74,10 @@
 	(((r)->r_type >= RELOC_DISP8 && (r)->r_type <= RELOC_WDISP22) \
 	 || ((r)->r_type == RELOC_PC10 || (r)->r_type == RELOC_PC22)  \
 	 || (r)->r_type == RELOC_JMP_TBL)
-#define RELOC_VALUE_RIGHTSHIFT(r)       (reloc_target_rightshift[(r)->r_type])
-#define RELOC_TARGET_SIZE(r)            (reloc_target_size[(r)->r_type])
-#define RELOC_TARGET_BITPOS(r)          0
-#define RELOC_TARGET_BITSIZE(r)         (reloc_target_bitsize[(r)->r_type])
+#define RELOC_VALUE_RIGHTSHIFT(r)	(reloc_target_rightshift[(r)->r_type])
+#define RELOC_TARGET_SIZE(r)		(reloc_target_size[(r)->r_type])
+#define RELOC_TARGET_BITPOS(r)		0
+#define RELOC_TARGET_BITSIZE(r)		(reloc_target_bitsize[(r)->r_type])
 
 #define RELOC_JMPTAB_P(r)		((r)->r_type == RELOC_JMP_TBL)
 
@@ -68,14 +104,7 @@
 #define md_get_rt_segment_addend(r,a)	(0)
 #endif
 
-/*
-int reloc_target_rightshift[];
-int reloc_target_size[];
-int reloc_target_bitsize[];
-*/
-
 /* Width of a Global Offset Table entry */
-#define GOT_ENTRY_SIZE	4
 typedef long	got_t;
 
 typedef struct jmpslot {
