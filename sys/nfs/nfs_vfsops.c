@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.101 2001/02/12 20:02:30 fvdl Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.102 2001/04/28 16:11:47 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -564,7 +564,10 @@ nfs_mount(mp, path, data, ndp, p)
 	if (args.version != NFS_ARGSVERSION)
 		return (EPROGMISMATCH);
 #ifdef NFS_V2_ONLY
-	args.flags &= ~(NFSMNT_NFSV3 | NFSMNT_NQNFS);
+	if (args.flags & NFSMNT_NQNFS)
+		return (EPROGUNAVAIL);
+	if (args.flags & NFSMNT_NFSV3)
+		return (EPROGMISMATCH);
 #endif
 	if (mp->mnt_flag & MNT_UPDATE) {
 		struct nfsmount *nmp = VFSTONFS(mp);
