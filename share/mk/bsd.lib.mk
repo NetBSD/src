@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.142 1998/11/05 00:52:02 jonathan Exp $
+#	$NetBSD: bsd.lib.mk,v 1.143 1998/11/07 09:40:35 erh Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -11,13 +11,23 @@ __initialized__:
 .MAIN:		all
 .endif
 
-.PHONY:		cleanlib libinstall
-realinstall:	libinstall
+.PHONY:		checkver cleanlib libinstall
+realinstall:	checkver libinstall
 clean cleandir distclean: cleanlib
 
 .if exists(${.CURDIR}/shlib_version)
 SHLIB_MAJOR != . ${.CURDIR}/shlib_version ; echo $$major
 SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
+
+# Check for higher installed library versions.
+.if !defined(NOCHECKVER) && !defined(NOCHECKVER_${LIB})
+checkver:
+	@(cd ${.CURDIR} && ${BSDSRCDIR}/lib/checkver ${DESTDIR}${LIBDIR} ${LIB})
+.else
+checkver:
+.endif
+.else
+checkver:
 .endif
 
 # add additional suffixes not exported.

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.43 1998/09/15 14:56:37 agc Exp $
+#	$NetBSD: bsd.README,v 1.44 1998/11/07 09:40:35 erh Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -440,7 +440,9 @@ yacc that allow multiple lex and yacc targets to be built in parallel.
 
 The include file <bsd.lib.mk> has support for building libraries.  It has
 the same eight targets as <bsd.prog.mk>: all, clean, cleandir, depend,
-includes, install, lint, and tags.  It has a limited number of suffixes,
+includes, install, lint, and tags.  Additionally, it has a checkver target
+which checks for installed shared object libraries whose version is greater
+that the version of the source. It has a limited number of suffixes,
 consistent with the current needs of the BSD tree.
 
 It sets/uses the following variables:
@@ -460,6 +462,13 @@ LIBMODE		Library mode.
 LDADD		Additional loader objects.
 
 MAN		The manual pages to be installed (use a .1 - .9 suffix).
+
+NOCHECKVER_<library>
+NOCHECKVER	If set, disables checking for installed shared object
+		libraries with versions greater than the source.  A
+		particular library name, without the "lib" prefix, may
+		be appended to the variable name to disable the check for
+		only that library.
 
 SRCS		List of source files to build the library.  Suffix types
 		.s, .c, and .f are supported.  Note, .s files are preferred
