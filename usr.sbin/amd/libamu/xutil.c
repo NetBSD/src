@@ -1,4 +1,4 @@
-/*	$NetBSD: xutil.c,v 1.5 2000/01/15 15:51:54 bouyer Exp $	*/
+/*	$NetBSD: xutil.c,v 1.6 2000/07/04 20:27:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Erez Zadok
@@ -285,7 +285,9 @@ checkup_mem(void)
 static void
 expand_error(char *f, char *e, int maxlen)
 {
+#ifndef HAVE_STRERROR
   extern int sys_nerr;
+#endif
   char *p, *q;
   int error = errno;
   int len = 0;

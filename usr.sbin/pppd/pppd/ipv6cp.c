@@ -1,4 +1,4 @@
-/*	$NetBSD: ipv6cp.c,v 1.6 2000/04/17 08:55:33 itojun Exp $	*/
+/*	$NetBSD: ipv6cp.c,v 1.7 2000/07/04 20:27:39 matt Exp $	*/
 
 /*
  * ipv6cp.c - PPP IPV6 Control Protocol.
@@ -35,7 +35,7 @@
 #if 0
 #define RCSID	"Id: ipv6cp.c,v 1.3 1999/08/24 05:31:09 paulus Exp "
 #else
-__RCSID("$NetBSD: ipv6cp.c,v 1.6 2000/04/17 08:55:33 itojun Exp $");
+__RCSID("$NetBSD: ipv6cp.c,v 1.7 2000/07/04 20:27:39 matt Exp $");
 #endif
 #endif
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: ipv6cp.c,v 1.6 2000/04/17 08:55:33 itojun Exp $");
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <netdb.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1999/11/28 16:58:16 veego Exp $
+#	$NetBSD: Makefile,v 1.9 2000/07/04 20:27:36 matt Exp $
 
 .include "../Makefile.inc"
 .PATH:		${BIND_DIST_DIR}/bin/named \
@@ -14,7 +14,7 @@ SRCS=		db_dump.c db_load.c db_lookup.c db_save.c db_update.c \
 		ns_resp.c ns_stats.c ns_ncache.c ns_xfr.c ns_glue.c \
 		ns_udp.c ns_config.c ns_update.c ns_ixfr.c ns_signal.c \
 		ns_sort.c ns_notify.c tmp_version.c
-CPPFLAGS+=	${INCLUDE}
+CPPFLAGS+=	${INCLUDE} -I${BIND_DIST_DIR}/bin/named
 LDADD=		${LIBRARY}
 CLEANFILES+=	y.tab.h named-bootconf tmp_version.c pathnames.h
 MAN=		${PROG}.8 named.conf.5

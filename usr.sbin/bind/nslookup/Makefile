@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1999/11/20 19:48:00 veego Exp $
+#	$NetBSD: Makefile,v 1.6 2000/07/04 20:27:36 matt Exp $
 
 .include "../Makefile.inc"
 .PATH:	${BIND_DIST_DIR}/bin/nslookup \
@@ -7,7 +7,7 @@
 BINDIR=	/usr/bin
 PROG=	nslookup
 SRCS=	main.c getinfo.c debug.c send.c skip.c list.c subr.c commands.l
-CPPFLAGS+= ${INCLUDE}
+CPPFLAGS+= ${INCLUDE} -I${BIND_DIST_DIR}/bin/nslookup
 DPADD=	${LIBL}
 LDADD=	-ll ${LIBRARY}
 MAN=	${PROG}.8

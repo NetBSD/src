@@ -1,4 +1,4 @@
-/* $NetBSD: wsconscfg.c,v 1.5 1999/11/10 16:34:58 drochner Exp $ */
+/* $NetBSD: wsconscfg.c,v 1.6 2000/07/04 20:27:40 matt Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -33,6 +33,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/types.h>

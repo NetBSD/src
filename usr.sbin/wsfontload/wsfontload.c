@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontload.c,v 1.3 2000/01/25 01:04:07 ad Exp $ */
+/* $NetBSD: wsfontload.c,v 1.4 2000/07/04 20:27:40 matt Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -34,6 +34,7 @@
 
 #include <stdio.h>
 #include <fcntl.h>
+#include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.9 2000/06/20 22:23:02 itojun Exp $	*/
+/*	$NetBSD: ndp.c,v 1.10 2000/07/04 20:27:38 matt Exp $	*/
 /*	$KAME: ndp.c,v 1.40 2000/06/20 21:50:17 itojun Exp $	*/
 
 /*
@@ -551,7 +551,6 @@ dump(addr)
 	struct rt_msghdr *rtm;
 	struct sockaddr_in6 *sin;
 	struct sockaddr_dl *sdl;
-	extern int h_errno;
 	struct in6_nbrinfo *nbi;
 	struct timeval time;
 	int addrwidth;

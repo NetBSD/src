@@ -1,4 +1,4 @@
-/* $NetBSD: getencstat.c,v 1.2 2000/02/22 06:06:07 mjacob Exp $ */ 
+/* $NetBSD: getencstat.c,v 1.3 2000/07/04 20:27:40 matt Exp $ */ 
 /* $FreeBSD: $ */
 /* $OpenBSD: $ */
 /*
@@ -35,6 +35,7 @@
  */
 
 #include <unistd.h>
+#include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/ioctl.h>

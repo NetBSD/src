@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_stat.c,v 1.1 2000/06/02 23:15:41 fvdl Exp $	*/
+/*	$NetBSD: rpcb_stat.c,v 1.2 2000/07/04 20:27:40 matt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -46,6 +46,7 @@
 #include <rpc/pmap_prot.h>
 #endif
 #include <stdlib.h>
+#include <string.h>
 #include "rpcbind.h"
 
 static rpcb_stat_byvers inf;

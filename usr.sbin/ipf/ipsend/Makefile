@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2000/05/03 11:40:56 veego Exp $
+#	$NetBSD: Makefile,v 1.14 2000/07/04 20:27:37 matt Exp $
 
 PROG=	ipsend
 SRCS=	ipsend.c ip.c ipsopt.c iplang_l.l iplang_y.y sbpf.c sock.c 44arp.c
@@ -6,7 +6,9 @@ YHEADER=1
 LDADD=	-ll
 DPADD=	${LIBL}
 
-CPPFLAGS+=-I${.CURDIR}/../../../dist/ipf -I${.CURDIR}/../../../dist/ipf/ipsend -I.
+CPPFLAGS+= -I.  -I${.CURDIR}/../../../dist/ipf \
+		-I${.CURDIR}/../../../dist/ipf/ipsend \
+		-I${.CURDIR}/../../../dist/ipf/iplang
 
 MAN=	ipsend.1 ipsend.5
 
