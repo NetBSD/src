@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.27 2004/08/20 07:46:21 tron Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.28 2005/01/08 03:18:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.27 2004/08/20 07:46:21 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.28 2005/01/08 03:18:18 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -638,12 +638,12 @@ ieee1394_ifattach(struct ifnet *ifp, const struct ieee1394_hwaddr *hwaddr)
 	if_alloc_sadl(ifp);
 	memcpy(LLADDR(ifp->if_sadl), hwaddr, ifp->if_addrlen);
 
-	ifp->if_broadcastaddr = malloc(ifp->if_addrlen, M_DEVBUF, M_WAITOK);
-	baddr = (struct ieee1394_hwaddr *)ifp->if_broadcastaddr;
+	baddr = malloc(ifp->if_addrlen, M_DEVBUF, M_WAITOK);
 	memset(baddr->iha_uid, 0xff, IEEE1394_ADDR_LEN);
 	baddr->iha_speed = 0;	/*XXX: how to determine the speed for bcast? */
 	baddr->iha_maxrec = 512 << baddr->iha_speed;
 	memset(baddr->iha_offset, 0, sizeof(baddr->iha_offset));
+	ifp->if_broadcastaddr = (uint8_t *)baddr;
 	LIST_INIT(&ic->ic_reassq);
 #if NBPFILTER > 0
 	bpfattach(ifp, DLT_EN10MB, 14);	/* XXX */
@@ -657,7 +657,7 @@ ieee1394_ifdetach(struct ifnet *ifp)
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
-	free(ifp->if_broadcastaddr, M_DEVBUF);
+	free(__UNCONST(ifp->if_broadcastaddr), M_DEVBUF);
 	ifp->if_broadcastaddr = NULL;
 #if 0	/* done in if_detach() */
 	if_free_sadl(ifp);
