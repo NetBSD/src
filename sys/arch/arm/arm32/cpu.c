@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.22 2002/03/10 00:44:09 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.23 2002/03/10 11:06:01 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: cpu.c,v 1.22 2002/03/10 00:44:09 bjh21 Exp $");
+__RCSID("$NetBSD: cpu.c,v 1.23 2002/03/10 11:06:01 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -135,6 +135,8 @@ identify_master_cpu(struct device *dv, int cpu_number)
 {
 	u_int fpsr;
 	void *uh;
+
+	curcpu()->ci_dev = dv;
 
 	evcnt_attach_dynamic(&curcpu()->ci_arm700bugcount, EVCNT_TYPE_MISC,
 	    NULL, dv->dv_xname, "arm700swibug");
