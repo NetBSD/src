@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.27 2003/07/26 17:07:08 salo Exp $
+.\"	$NetBSD: install,v 1.28 2003/09/02 05:43:39 mbw Exp $
 .
 .Ss2 Open Firmware boot syntax
 .
@@ -26,7 +26,7 @@ of the bootloader (if using
 .Pp
 If the
 .Li boot-file
-is on the same device and (if it's a disk) partition as the
+is on the same device and partition (if it's a disk) as the
 .Li boot-device
 then you can just specify the kernel filename.
 Otherwise, you need to specify the full Open Firmware path to the kernel.
@@ -276,7 +276,7 @@ OFWBOOT .XCF 020 A75 D8F4
  ok
 .disp)
 You can see that this MS-DOS
-formatted floppy has a bunch of stuff, as well as the two important files:
+formatted disk has a bunch of stuff, as well as the two important files:
 .Pa NETBSD~1.GZ No and Pa OFWBOOT.XCF .
 Note that
 .Tn MacOS
@@ -312,34 +312,35 @@ to a PCI card which has Open Firmware support:
 .
 Here are some examples of the commands you might use to boot your system:
 .(bullet
-.To 2 "Booting off an MS-DOS floppy"
-.Em "Booting off an MS-DOS floppy"
+.To 2 "Booting the NetBSD/macppc install CD-R"
+.Em "Booting the NetBSD/\*M install CD-R"
 .br
 (Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x, Open
 Firmware 2.4)
-.(Note
-This is not a normal
-.Tn MacOS
-boot floppy -- you must enter Open Firmware and type a boot command.
-.Note)
 .Pp
-Use the Open Firmware
-.Ic dir
-command to get a listing of the files on the floppy.
-Typically you'll find filenames like
-.Li OFWBOOT.XCF No and Li NETBSD~1.GZ .
+Here are some examples of what you might use to boot from CD-ROM (Apple
+usually sets their CD-ROM drives to SCSI ID 3):
+.Pp
 .(disp
-.No 0 \*> Ic "boot fd:,\eOFWBOOT.XCF NETBSD~1.GZ"
+.No 0 \*> Ic "boot cd:0 NETBSD.MACPPC"
+.No 0 \*> Ic "boot scsi-int/sd@3:0 NETBSD.MACPPC"
+.No 0 \*> Ic "boot scsi/sd@3:0 NETBSD.MACPPC"
+.No 0 \*> Ic "boot scsi-ext/sd@3:0 NETBSD.MACPPC"
+.No 0 \*> Ic "boot ata/atapi-disk:0 NETBSD.MACPPC"
+.No 0 \*> Ic "boot ide1/disk@0:0 NETBSD.MACPPC"
 .disp)
 .Pp
-You can eject a floppy by typing:
+.It
+.Em "Booting the NetBSD/\*M install CD-R"
+.br
+(Open Firmware 3)
 .Pp
 .(disp
-.No 0 \*> Ic eject fd
+.No 0 \*> Ic "boot cd:,\eofwboot.xcf netbsd.macppc"
 .disp)
 .It
-.To 2 "Booting off the NetBSD install floppy"
-.Em "Booting off the NetBSD install floppy"
+.To 2 "Booting the NetBSD install floppies"
+.Em "Booting the NetBSD install floppies"
 .br
 (Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x, Open
 Firmware 2.4)
@@ -365,93 +366,53 @@ You can eject a floppy by typing:
 .No 0 \*> Ic eject fd
 .disp)
 .It
-.Em "Boot over the ethernet"
+.To 2 "Booting an IDE or SCSI drive with an HFS partition"
+.Em "Booting an IDE or SCSI drive with an HFS or HFS+ partition"
 .br
-(Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x, Open
-Firmware 2.4)
+(Open Firmware 2.4, Open Firmware 3)
 .Pp
-You can try the simple form (i.e. that you are booting from ethernet):
+.Tn MacOS
+drives have several system-level partitions reserved for
+.Tn MacOS
+drivers.
+You may find that your first HFS or HFS+ partition might be as high as
+partition 9.
+You may need to keep trying higher partition numbers until you find the one
+that has your bootloader.  You can use
+.Ic pdisk
+to print out your partition map:
+.Lk http://www.netbsd.org/Ports/macppc/partitioning.html#pdisk
 .Pp
-.(disp
-.No 0 \*> Ic "boot enet:,ofwboot.xcf"
-.disp)
+You should use the Open Firmware
+.Ic dir
+command to get a directory listing of the files on your hard drive.
 .Pp
-Or you may be more specific,
-specifying the bootloader filename and the kernel name:
+If bootloader is on a different partition from the
+.Nx
+kernel, you will need to specify where to find the kernel.
 .Pp
-.(disp
-.No 0 \*> Ic "boot enet:,ofwboot.xcf enet:,/netbsd-GENERIC_MD.gz"
-.disp)
-.(Note
-Some Open Firmware 1.0.5 machines have their MAC address stored
-incorrectly.
-Make sure that your netboot server is using the same MAC
-address that your \*M client is using.
-See the section on
-.Sx Setting up pre-Open Firmware 3 to boot NetBSD
-to figure out your MAC address.
-.Note)
-.(Note
-Some Open Firmware 1.0.5 machines, using
-.Li ofwboot.xcf
-version 1.2 cannot load compressed kernels.
-Uncompress them first.
-.Note)
-.It
-.Em "Boot over the ethernet"
-.br
-(Open Firmware 3)
+Remember, that SCSI Zip disks are usually ID 5 or 6.
+Internal hard drives are usually SCSI ID 0.
 .Pp
-You can try the simple form (i.e. that you are booting from ethernet):
+Here are some examples of what you might use to boot the installer kernel
+located on an HFS or HFS+ partition:
 .Pp
 .(disp
-.No 0 \*> Ic "boot enet:0"
-.disp)
-.Pp
-Or you may be more specific,
-specifying the bootloader filename and the kernel name:
-.Pp
-.(disp
-.No 0 \*> Ic "boot enet:0,ofwboot.xcf enet:0,/netbsd-GENERIC_MD.gz"
-.disp)
-.It
-.To 2 "Booting off the NetBSD/macppc install CD-R"
-.Em "Booting off the NetBSD/\*M install CD-R"
-.br
-(Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x, Open
-Firmware 2.4)
-.Pp
-Here are some examples of what you might use to boot from CD-ROM (Apple
-usually sets their CD-ROM drives to SCSI ID 3):
-.Pp
-.(disp
-.No 0 \*> Ic "boot scsi-int/sd@3:0 NETBSD.MACPPC"
-.No 0 \*> Ic "boot scsi/sd@3:0 NETBSD.MACPPC"
-.No 0 \*> Ic "boot scsi-ext/sd@3:0 NETBSD.MACPPC"
-.No 0 \*> Ic "boot ata/atapi-disk:0 NETBSD.MACPPC"
-.No 0 \*> Ic "boot ide1/disk@0:0 NETBSD.MACPPC"
-.No 0 \*> Ic "boot cd:0 NETBSD.MACPPC"
+.No 0 \*> Ic "boot hd:9,\eofwboot.xcf netbsd-GENERIC_MD.gz"
+.No 0 \*> Ic "boot scsi/sd@0:9,\eofwboot.xcf netbsd-GENERIC_MD.gz"
+.No 0 \*> Ic "boot ide0/disk@0:10,\eofwboot.xcf netbsd-GENERIC_MD.gz"
+.No 0 \*> Ic "boot ultra1:9,ofwboot.xcf netbsd-GENERIC_MD.gz"
 .disp)
 .Pp
 .It
-.To 2 "Booting off the NetBSD/\*M install CD-R"
-.Em "Booting off the NetBSD/\*M install CD-R"
-.br
-(Open Firmware 3)
-.Pp
-.(disp
-.No 0 \*> Ic "boot cd:,\eofwboot.xcf netbsd.macppc"
-.disp)
-.It
-.To 2 "Booting off a home-made CD-ROM ISO9660 or Hybrid"
-.Em "Booting off a home-made CD-ROM ISO9660 or Hybrid"
+.To 2 "Booting a custom CD-ROM"
+.Em "Booting a custom CD-ROM"
 .br
 (All Open Firmware versions)
 .Pp
 Open Firmware doesn't understand long filenames (created with the RockRidge
 and Joliet extensions), so you may need to figure out what your file is
-called.
-You should use the Open Firmware
+called.  You should use the Open Firmware
 .Ic dir
 command to get a listing of the files on your CD.
 .Pp
@@ -491,16 +452,91 @@ Here are some examples of what you might use to boot from CD-ROM
 (Apple usually sets their CD-ROM drives to SCSI ID 3):
 .Pp
 .(disp
+.No 0 \*> Ic "boot cd:,\eofwboot.xcf netbsd.gz"
 .No 0 \*> Ic "boot scsi-int/sd@3:,\eOFWBOOT.XCF NETBSD.GZ"
 .No 0 \*> Ic "boot scsi/sd@3:,\eOFWBOOT.XCF NETBSD.GZ"
 .No 0 \*> Ic "boot scsi-ext/sd@3:,\eOFWBOOT.XCF NETBSD.GZ"
 .No 0 \*> Ic "boot ata/atapi-disk:,\eOFWBOOT.XCF NETBSD.GZ"
 .No 0 \*> Ic "boot ide1/disk@0:,\eOFWBOOT.XCF NETBSD.GZ"
-.No 0 \*> Ic "boot cd:,\eofwboot.xcf netbsd.gz"
 .disp)
 .It
-.To 2 "Booting off an IDE or SCSI drive with 'partition zero'"
-.Em "Booting off an IDE or SCSI drive with a" Sq "partition zero" No Em bootloader
+.To 2 "Booting an MS-DOS floppy"
+.Em "Booting an MS-DOS floppy"
+.br
+(Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x, Open
+Firmware 2.4)
+.(Note
+This is not a normal
+.Tn MacOS
+boot floppy -- you must enter Open Firmware and type a boot command.
+.Note)
+.Pp
+Use the Open Firmware
+.Ic dir
+command to get a listing of the files on the floppy.
+Typically you'll find filenames like
+.Li OFWBOOT.XCF No and Li NETBSD~1.GZ .
+.(disp
+.No 0 \*> Ic "boot fd:,\eOFWBOOT.XCF NETBSD~1.GZ"
+.disp)
+.Pp
+You can eject a floppy by typing:
+.Pp
+.(disp
+.No 0 \*> Ic eject fd
+.disp)
+.It
+.To 2 "Booting over the ethernet"
+.Em "Booting over the ethernet"
+.br
+(Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x, Open
+Firmware 2.4)
+.Pp
+You can try the simple form (i.e. that you are booting from ethernet):
+.Pp
+.(disp
+.No 0 \*> Ic "boot enet:,ofwboot.xcf"
+.disp)
+.Pp
+Or you may be more specific,
+specifying the bootloader filename and the kernel name:
+.Pp
+.(disp
+.No 0 \*> Ic "boot enet:,ofwboot.xcf enet:,/netbsd-GENERIC_MD.gz"
+.disp)
+.(Note
+Some Open Firmware 1.0.5 machines have their MAC address stored
+incorrectly.
+Make sure that your netboot server is using the same MAC
+address that your \*M client is using.
+See the section on
+.Sx "Setting up Open Firmware 1 and 2 to boot NetBSD"
+to figure out your MAC address.
+.Note)
+.(Note
+Some machines cannot load compressed kernels over ethernet.
+Uncompress them first.
+.Note)
+.It
+.Em "Booting over the ethernet"
+.br
+(Open Firmware 3)
+.Pp
+You can try the simple form (i.e. that you are booting from ethernet):
+.Pp
+.(disp
+.No 0 \*> Ic "boot enet:0"
+.disp)
+.Pp
+Or you may be more specific,
+specifying the bootloader filename and the kernel name:
+.Pp
+.(disp
+.No 0 \*> Ic "boot enet:0,ofwboot.xcf enet:0,/netbsd-GENERIC_MD.gz"
+.disp)
+.It
+.To 2 "Booting an IDE or SCSI drive with 'partition zero'"
+.Em "Booting an IDE or SCSI drive with a" Sq "partition zero" No Em bootloader
 .br
 (Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x, Open
 Firmware 2.4)
@@ -519,53 +555,14 @@ Internal hard drives are usually SCSI ID 0.
 Here are some examples of what you might use to boot from such a drive:
 .Pp
 .(disp
+.No 0 \*> Ic "boot zip:0"
 .No 0 \*> Ic "boot scsi-int/sd@0:0"
 .No 0 \*> Ic "boot scsi/sd@0:0"
 .No 0 \*> Ic "boot scsi-ext/sd@0:0"
 .No 0 \*> Ic "boot ata/ata-disk@0:0"
 .No 0 \*> Ic "boot ata/ATA-Disk@0:0"
 .No 0 \*> Ic "boot ide0/disk@0:0"
-.No 0 \*> Ic "boot zip:0"
 .disp)
-.It
-.To 2 "Booting off an IDE or SCSI drive with an HFS partition"
-.Em "Booting off an IDE or SCSI drive with an HFS or HFS+ partition"
-.br
-(Open Firmware 2.4, Open Firmware 3)
-.Pp
-.Tn MacOS
-drives have several system-level partitions reserved for
-.Tn MacOS
-drivers.
-You may find that your first HFS or HFS+ partition might be as high as
-partition 9.
-You may need to keep trying higher partition numbers until you find the one
-that has your bootloader.  You can use
-.Ic pdisk
-to print out your partition map:
-.Lk http://www.NetBSD.org/Ports/macppc/partitioning.html#pdisk
-.Pp
-You should use the Open Firmware
-.Ic dir
-command to get a directory listing of the files on your hard drive.
-.Pp
-If bootloader is on a different partition from the
-.Nx
-kernel, you will need to specify where to find the kernel.
-.Pp
-Remember, that SCSI Zip disks are usually ID 5 or 6.
-Internal hard drives are usually SCSI ID 0.
-.Pp
-Here are some examples of what you might use to boot the installer kernel
-located on an HFS or HFS+ partition:
-.Pp
-.(disp
-.No 0 \*> Ic "boot scsi/sd@0:9,\eofwboot.xcf netbsd-GENERIC_MD.gz"
-.No 0 \*> Ic "boot ide0/disk@0:10,\eofwboot.xcf netbsd-GENERIC_MD.gz"
-.No 0 \*> Ic "boot hd:9,\eofwboot.xcf netbsd-GENERIC_MD.gz"
-.No 0 \*> Ic "boot ultra1:9,ofwboot.xcf netbsd-GENERIC_MD.gz"
-.disp)
-.Pp
 .bullet)
 .
 .Ss2 Example of a normal boot
@@ -640,7 +637,7 @@ Use the buttons to turn your brightness back up.
 .Pp
 Otherwise, you need a serial console.
 See the section entitled
-.Sx Getting to the Open Firmware Prompt on Older Models
+.Sx "Open Firmware 1 and 2 System Preparation"
 .It
 .To 2 "Grey screen with flashing question mark"
 Grey screen with flashing question mark
@@ -648,7 +645,7 @@ Grey screen with flashing question mark
 This means that your system is trying to boot
 .Tn MacOS .
 You might get to this state if you didn't properly enter Open Firmware, or if
-your Open Firmware boot command is misformed.
+your Open Firmware boot command has bad syntax.
 .Pp
 If you typed a bad boot command, Open Firmware tries to boot from the
 value stored in the
@@ -658,7 +655,8 @@ value stored in the
 The grey screen with the icon is generated by the MacOS ROM.
 A flashing question-mark or broken folder means that your machine
 is looking for a bootable MacOS file system, but can't find one.
-A happy face means it's trying to boot MacOS.
+A globe icon means that your machine is looking for a netboot server.
+A happy face or spinning disc means it's starting to boot MacOS.
 .Pp
 The boot floppy does not have a bootable MacOS file system, it has a
 bootable NetBSD file system.
@@ -677,7 +675,7 @@ Information on your screen seems garbled or out of sync
 If you have a PowerMacintosh 7300 through 8600, then you need to read the
 section on System Disk and the patches it applies.
 See the section entitled
-.Sx Getting to the Open Firmware Prompt on Older Models
+.Sx "Open Firmware 1 and 2 System Preparation"
 .Pp
 If you have a Twentieth Anniversary Macintosh, Open Firmware does not work
 with the internal display, you will need to set up a serial console.
@@ -712,11 +710,17 @@ First, make sure you have the Open Firmware variable
 set correctly.
 If your system is Open Firmware version 1.0.5, 1.1.22,
 2.0.x, or 2.4, see the section above on
-.Sx Setting up pre-Open Firmware 3 to boot NetBSD
+.Sx "Setting up Open Firmware 1 and 2 to boot NetBSD"
 .Pp
 Do not change
 .Li load-base
 on an Open Firmware 3 system.
+.Pp
+Reset your system and try using a different boot command (this is the 
+only way some people have gotten their Open Firmware 2.4 systems to work):
+.(disp
+.No 0 \*> Ic "0 bootr boot-device boot-file"
+.disp)
 .Pp
 If you tried one boot command and it failed, then you tried a second and
 got the
@@ -771,7 +775,7 @@ this probably means that your media (i.e. hard drive or CD-ROM) has an HFS
 file system on it (such as a hybrid CD-R or a hard drive with MacOS
 partitions).
 .It
-.To 2 "READ TIMEOUT@""
+.To 2 "READ TIMEOUT@"
 .Dq Li "READ TIMEOUT@"
 .Pp
 Open Firmware is having trouble reading your floppy disk.  Things to try:
@@ -802,6 +806,14 @@ You need to boot with a command like:
 .No 0 \*> Ic "boot enet:,ofwboot.xcf"
 .disp)
 .It
+.To 2 "enet:,/netbsd.ram.gz: Inappropriate file type or format"
+.Dq Li "enet:,/netbsd.ram.gz: Inappropriate file type or format"
+.Pp
+Some systems booting over ethernet can't load compressed 
+kernels.  Use 
+.Xr gunzip 1
+to uncompress the kernel before attempting to netboot.
+.It
 .To 2 "Bootloader hangs before the copyright notice"
 Bootloader hangs before the copyright notice and the kernel configuration
 .Pp
@@ -815,7 +827,7 @@ Make sure you have the Open Firmware variable
 set correctly.
 If your system is Open Firmware version 1.0.5, 1.1.22,
 2.0.x, or 2.4, see the section above on
-.Sx Setting up pre-Open Firmware 3 to boot NetBSD
+.Sx "Setting up Open Firmware 1 and 2 to boot NetBSD"
 .Pp
 Do not set
 .Li real-base
@@ -846,11 +858,50 @@ specific problems, so read everything because it applies to all models.
 .
 .so ../common/sysinst
 .
-Now, you can reboot to get to the Open Firmware prompt.
-Once there, you can set Open Firmware to always boot into
+.Ss2 "Finalizing Open Firmware settings"
+.
+Now, you can reboot to get to the Open Firmware prompt.  You still need 
+to figure out how to get Open Firmware to boot the operating system(s) of 
+your choice.  First, try to get 
+.Nx*M
+running.  Using the methods described in the section 
+.Sx "Examples of Open Firmware boot commands"
+figure out the boot command for your installation of
+.Nx .
+Try booting.  Once you've got the syntax worked out, decide which operating 
+systems you'll be using regularly.
+.(bullet
+.To 2 "Booting NetBSD exclusively"
+.Em "Booting NetBSD exclusively"
+.br
+If you'll only be using
 .Nx
-from the media of your choice.
-First, make sure you know what command you need to boot (see above).
+on your \*M system, then simply set the Open Firmware
+.Sq Li boot-device
+and
+.Sq Li boot-file
+variables to the values you just determined.  Also, you might want to 
+enable the system to always boot
+.Nx
+when powered on or reset.  Once you set up auto-booting you can get to 
+the Open Firmware prompt again by using the
+.Xr shutdown 8
+command to halt the system.
+.Pp
+If you are not using a
+.Sq "partition zero"
+style boot scheme (e.g. Open Firmware 3 models), then you would type 
+something like the following:
+.Pp
+.(disp
+.No 0 \*> Ic "setenv auto-boot? true"
+.No 0 \*> Ic "setenv boot-device ide0/disk@0:8,\eofwboot.xcf"
+.No 0 \*> Ic "setenv boot-file ide0/disk@0:13,/netbsd"
+.No 0 \*> Ic "reset-all"
+.disp)
+.Pp
+The last command resets the system so that these settings are stored.
+.Pp
 If you are using a
 .Sq "partition zero"
 style boot scheme, you would type something like the following:
@@ -862,7 +913,6 @@ style boot scheme, you would type something like the following:
 .No 0 \*> Ic "reset-all"
 .disp)
 .Pp
-The last command resets the system so that these settings are stored.
 Replace
 .Ic scsi/sd@0:0
 with the actual device you will be booting from.
@@ -873,15 +923,126 @@ spun up, you may need to also enter something like:
 .No 0 \*> Ic "setenv boot-command begin ['] boot catch 1000 ms cr again"
 .disp)
 .Pp
-If you are not using a
-.Sq "partition zero"
-style boot scheme, then you can still plug in all the information you
-need:
+.It
+.To 2 "Booting NetBSD and MacOS X or Darwin"
+.Em "Booting NetBSD and MacOS X or Darwin"
+.br
+Alas, this takes a little more work.  Usually, when you select a system 
+to boot in the
+.Dq "Startup Disk"
+panel of the 
+.Dq "System Preferences"
+application, it stores the Open Firmware path to that device in the
+.Sq Li boot-device
+variable.  So, instead of writing the 
+.Nx
+device path to Open Firmware, you'll store the paths to your operating 
+systems in NVRAM.  Open Firmware cannot deal with nested
+.Ic devalias
+entries.  You must, therefore, enter the 
+.Em entire
+path to your device.  See the
+.Nx*M 
+.Ic nvedit
+HOW-TO for more help:
+.Lk http://www.netbsd.org/Ports/macppc/nvedit.html
 .Pp
 .(disp
-.No 0 \*> Ic "setenv auto-boot? true"
-.No 0 \*> Ic "setenv boot-device ide0/disk@0:8,\eofwboot.xcf"
-.No 0 \*> Ic "setenv boot-file ide0/disk@0:13,/netbsd"
+.No 0 \*> Ic "printenv boot-device"
+boot-device /pci@f2000000/mac-io@17/ata-4@1f000/@0:10,\e\e:tbxi
+ ok
+.No 0 \*> Ic "nvalias osx /pci@f2000000/mac-io@17/ata-4@1f000/@0:10,\e\e:tbxi"
+.No 0 \*> Ic "nvalias bsd /pci@f2000000/mac-io@17/ata-4@1f000/@0:9,ofwboot.xcf"
+.No 0 \*> Ic "nvstore"
+.No 0 \*> Ic "setenv use-nvramrc? true"
 .No 0 \*> Ic "reset-all"
 .disp)
 .Pp
+Now, when the system is reset, it will stop at the Open Firmware prompt 
+and you can type one of the following to boot an operating system:
+.(disp
+.No 0 \*> Ic "boot osx"
+.No 0 \*> Ic "boot bsd"
+.disp)
+.It
+.To 2 "Booting NetBSD and MacOS 9 or earlier"
+.Em "Booting NetBSD and MacOS 9 or earlier"
+.br
+For Open Firmware 3 systems, the procedure is identical to the section 
+above on
+.Sx "Booting NetBSD and MacOS X or Darwin"
+.Pp
+For older systems, you're in for more hassle.  Booting an Open Firmware 
+1.0.5, 2.0.x, or 2.4 system into 
+.Tn MacOS
+9 or earlier will erase some or all of your Open Firmware settings.  Try 
+it and see which Open Firmware variables survive.  
+.Pp
+If only 
+.Sq Li real-base
+is lost, you can compile a kernel that does not require changing the
+.Sq Li real-base .
+Just build a kernel that is less than 4 MB uncompressed.  This is easy if
+you remove all of the USB devices from the config file.  Once you've got 
+a smaller kernel, just follow the procedure in the section above on
+.Sx "Booting NetBSD and MacOS X or Darwin"
+.Pp
+If everything is lost when you boot into 
+.Tn MacOS
+9 or earlier, you will need to make a custom BootVars 
+configuration that you run before trying to boot
+.Nx*M 
+since System Disk does not preserve enough information when it saves a 
+configuration.
+.(enum
+If your system supports System Disk, run it and click 
+.Dq Save
+to install the NVRAMRC patches.
+.It
+Run BootVars, click the 
+.Dq "All Variables"
+button.
+.It
+Fill in 
+.Sq Li real-base , 
+.Sq Li boot-device , 
+.Sq Li boot-file , 
+.Sq Li input-device , 
+and
+.Sq Li output-device .
+.It
+From the 
+.Dq File
+menu, pick 
+.Dq Save .
+When you run this file, it will load BootVars with all your settings.  To 
+boot
+.Nx
+click the
+.Dq "Write&reboot"
+button.
+.It
+Now your system will always boot
+.Nx .
+To boot
+.Tn MacOS ,
+use the
+.Xr shutdown 8
+command to halt the system at the Open Firmware prompt and use the
+Open Firmware
+.Dq Li bye
+or
+.Dq Li mac-boot
+command to boot
+.Tn MacOS .
+.enum)
+.It
+.To 2 "Other boot techniques"
+.Em "Other boot techniques"
+.br
+See the FAQ for some vague information on how to use the Linux
+.Ic yaboot
+system to boot
+.Nx .
+.Lk http://www.netbsd.org/Ports/macppc/faq.html#yaboot
+.bullet)
