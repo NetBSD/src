@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,19 +30,19 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)extern.h	5.2 (Berkeley) 5/24/91
- *	$Id: extern.h,v 1.3 1993/10/27 17:52:30 jtc Exp $
+ *	from: @(#)extern.h	8.1 (Berkeley) 6/6/93
+ *      $Id: extern.h,v 1.4 1993/12/30 21:15:18 jtc Exp $
  */
 
 #include <sys/cdefs.h>
 
 void	 brace_subst __P((char *, char **, char *, int));
 void	*emalloc __P((unsigned int));
-void	 err __P((const char *, ...));
 PLAN	*find_create __P((char ***));
 void	 find_execute __P((PLAN *, char **));
 PLAN	*find_formplan __P((char **));
 PLAN	*not_squish __P((PLAN *));
+OPTION	*option __P((char *));
 PLAN	*or_squish __P((PLAN *));
 PLAN	*paren_squish __P((PLAN *));
 struct stat;
@@ -63,6 +63,7 @@ PLAN	*c_name __P((char *));
 PLAN	*c_newer __P((char *));
 PLAN	*c_nogroup __P((void));
 PLAN	*c_nouser __P((void));
+PLAN	*c_path __P((char *));
 PLAN	*c_perm __P((char *));
 PLAN	*c_print __P((void));
 PLAN	*c_print0 __P((void));

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,18 +32,21 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)main.c	5.9 (Berkeley) 5/24/91";*/
-static char rcsid[] = "$Id: main.c,v 1.3 1993/12/29 22:00:13 jtc Exp $";
+/*static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";*/
+static char rcsid[] = "$Id: main.c,v 1.4 1993/12/30 21:15:27 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
-#include <time.h>
-#include <fts.h>
+
+#include <err.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <fts.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
+
 #include "find.h"
 
 time_t now;			/* time find was run */
@@ -54,29 +57,32 @@ int isdepth;			/* do directories on post-order visit */
 int isoutput;			/* user specified output operator */
 int isxargs;			/* don't permit xargs delimiting chars */
 
-static void usage();
+static void usage __P((void));
 
+int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	register char **p, **start;
-	PLAN *find_formplan();
 	int ch;
 
 	(void)time(&now);	/* initialize the time-of-day */
 
 	p = start = argv;
 	ftsoptions = FTS_NOSTAT|FTS_PHYSICAL;
-	while ((ch = getopt(argc, argv, "df:sXx")) != EOF)
+	while ((ch = getopt(argc, argv, "Hdf:hXx")) != EOF)
 		switch(ch) {
+		case 'H':
+			ftsoptions |= FTS_COMFOLLOW;
+			break;
 		case 'd':
 			isdepth = 1;
 			break;
 		case 'f':
 			*p++ = optarg;
 			break;
-		case 's':
+		case 'h':
 			ftsoptions &= ~FTS_PHYSICAL;
 			ftsoptions |= FTS_LOGICAL;
 			break;
@@ -111,15 +117,16 @@ main(argc, argv)
 	*p = NULL;
 
 	if ((dotfd = open(".", O_RDONLY, 0)) < 0)
-		err(".: %s", strerror(errno));
+		err(1, ".:");
 
 	find_execute(find_formplan(argv), start);
+	exit(0);
 }
 
 static void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: find [-dsXx] [-f file] [file ...] expression\n");
+	    "usage: find [-HdhXx] [-f file] [file ...] expression\n");
 	exit(1);
 }
