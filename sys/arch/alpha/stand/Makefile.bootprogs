@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.13 1999/04/11 03:36:21 cgd Exp $
+# $NetBSD: Makefile.bootprogs,v 1.14 1999/09/10 07:31:16 ross Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -87,7 +87,7 @@ SECONDARY_HEAP_LIMIT=	(${REGION1_START} + ${REGION1_SIZE})
 STANDPROG_LOAD_ADDRESS=	0xfffffc0000300000
 
 
-FILE_FORMAT_CPPFLAGS=	-DALPHA_BOOT_ECOFF -DALPHA_BOOT_ELF
+FILE_FORMAT_CPPFLAGS=	-DBOOT_ECOFF -DBOOT_ELF
 
 UNIFIED_CPPFLAGS=	-DUNIFIED_BOOTBLOCK \
 			-DHEAP_LIMIT="${UNIFIED_HEAP_LIMIT}" \
@@ -119,5 +119,6 @@ LIBZ=		${ZLIB}
 
 ### find out what to use for libsa
 SA_AS=		library
+SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
