@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.11 2000/07/01 06:38:53 matt Exp $	*/
+/*	$NetBSD: ansi.h,v 1.12 2000/07/17 02:52:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -51,10 +51,16 @@
  *
  * Thanks, ANSI!
  */
-#define	_BSD_CLOCK_T_		unsigned long	/* clock() */
+#define	_BSD_CLOCK_T_		unsigned long int /* clock() */
+#ifdef __ELF__
+#define	_BSD_PTRDIFF_T_		long int	/* ptr1 - ptr2 */
+#define	_BSD_SIZE_T_		unsigned long int /* sizeof() */
+#define	_BSD_SSIZE_T_		long int	/* byte count or error */
+#else
 #define	_BSD_PTRDIFF_T_		int		/* ptr1 - ptr2 */
 #define	_BSD_SIZE_T_		unsigned int	/* sizeof() */
 #define	_BSD_SSIZE_T_		int		/* byte count or error */
+#endif
 #define	_BSD_TIME_T_		long		/* time() */
 #if __GNUC_PREREQ__(2,96)
 #define	_BSD_VA_LIST_		__builtin_va_list /* va_list */
