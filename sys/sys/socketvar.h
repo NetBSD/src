@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.52 2002/07/03 19:06:54 thorpej Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.53 2002/07/03 21:36:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -277,7 +277,7 @@ int	uipc_usrreq(struct socket *, int , struct mbuf *,
 	    struct mbuf *, struct mbuf *, struct proc *);
 int	uipc_ctloutput(int, struct socket *, int, int, struct mbuf **);
 void	sbappend(struct sockbuf *sb, struct mbuf *m);
-void	sbappend_stream(struct sockbuf *sb, struct mbuf *m);
+void	sbappendstream(struct sockbuf *sb, struct mbuf *m);
 int	sbappendaddr(struct sockbuf *sb, struct sockaddr *asa,
 	    struct mbuf *m0, struct mbuf *control);
 int	sbappendcontrol(struct sockbuf *sb, struct mbuf *m0,

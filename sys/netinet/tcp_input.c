@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.147 2002/07/03 19:06:50 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.148 2002/07/03 21:36:58 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.147 2002/07/03 19:06:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.148 2002/07/03 21:36:58 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -664,7 +664,7 @@ present:
 	if (so->so_state & SS_CANTRCVMORE)
 		m_freem(q->ipqe_m);
 	else
-		sbappend_stream(&so->so_rcv, q->ipqe_m);
+		sbappendstream(&so->so_rcv, q->ipqe_m);
 	pool_put(&ipqent_pool, q);
 	sorwakeup(so);
 	return (pkt_flags);
@@ -1524,7 +1524,7 @@ after_listen:
 			 * to socket buffer.
 			 */
 			m_adj(m, toff + off);
-			sbappend_stream(&so->so_rcv, m);
+			sbappendstream(&so->so_rcv, m);
 			sorwakeup(so);
 			TCP_SETUP_ACK(tp, th);
 			if (tp->t_flags & TF_ACKNOW)
@@ -2263,7 +2263,7 @@ dodata:							/* XXX */
 			tcpstat.tcps_rcvbyte += tlen;
 			ND6_HINT(tp);
 			m_adj(m, hdroptlen);
-			sbappend_stream(&(so)->so_rcv, m);
+			sbappendstream(&(so)->so_rcv, m);
 			sorwakeup(so);
 		} else {
 			m_adj(m, hdroptlen);
