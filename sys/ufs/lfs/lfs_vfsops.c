@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.33 1999/05/04 00:35:37 scottr Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.34 1999/06/01 03:00:40 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -71,7 +71,6 @@
  */
 
 #if defined(_KERNEL) && !defined(_LKM)
-#include "opt_ddb.h"
 #include "opt_quota.h"
 #endif
 
@@ -395,6 +394,7 @@ lfs_mountfs(devvp, mp, p)
 	/* Set up the I/O information */
 	fs->lfs_iocount = 0;
 	fs->lfs_dirvcount = 0;
+	fs->lfs_diropwait = 0;
 	fs->lfs_activesb = 0;
 #ifdef LFS_CANNOT_ROLLFW
 	fs->lfs_sbactive = NULL;

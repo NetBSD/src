@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.10 1999/04/12 00:36:47 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.11 1999/06/01 03:00:40 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -267,6 +267,38 @@ lfs_bwrite_ext(bp, flags)
 	return (0);
 }
 
+void lfs_flush_fs(mp, flags)
+	struct mount *mp;
+	int flags;
+{
+	struct lfs *lfsp;
+
+	lfsp = ((struct ufsmount *)mp->mnt_data)->ufsmount_u.lfs;
+	if((mp->mnt_flag & MNT_RDONLY) == 0 &&
+	   lfsp->lfs_dirops==0)
+	{
+		/* disallow dirops during flush */
+		lfsp->lfs_writer++;
+
+		/*
+		 * We set the queue to 0 here because we
+		 * are about to write all the dirty
+		 * buffers we have.  If more come in
+		 * while we're writing the segment, they
+		 * may not get written, so we want the
+		 * count to reflect these new writes
+		 * after the segwrite completes.
+		 */
+		if(lfs_dostats)
+			++lfs_stats.flush_invoked;
+		lfs_segwrite(mp, flags);
+
+		/* XXX KS - allow dirops again */
+		if(--lfsp->lfs_writer==0)
+			wakeup(&lfsp->lfs_dirops);
+	}
+}
+
 /*
  * XXX
  * This routine flushes buffers out of the B_LOCKED queue when LFS has too
@@ -281,7 +313,6 @@ lfs_flush(fs, flags)
 	int flags;
 {
 	register struct mount *mp, *nmp;
-	struct lfs *lfsp;
 	
 	if(lfs_dostats) 
 		++lfs_stats.write_exceeded;
@@ -296,32 +327,7 @@ lfs_flush(fs, flags)
 			continue;
 		}
 		if (strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_LFS, MFSNAMELEN)==0)
-		{
-			lfsp = ((struct ufsmount *)mp->mnt_data)->ufsmount_u.lfs;
-			if((mp->mnt_flag & MNT_RDONLY) == 0 &&
-			   lfsp->lfs_dirops==0)
-			{
-				/* disallow dirops during flush */
-				lfsp->lfs_writer++;
-
-				/*
-				 * We set the queue to 0 here because we
-				 * are about to write all the dirty
-				 * buffers we have.  If more come in
-				 * while we're writing the segment, they
-				 * may not get written, so we want the
-				 * count to reflect these new writes
-				 * after the segwrite completes.
-				 */
-				if(lfs_dostats)
-					++lfs_stats.flush_invoked;
-				lfs_segwrite(mp, flags);
-
-				/* XXX KS - allow dirops again */
-				if(--lfsp->lfs_writer==0)
-					wakeup(&lfsp->lfs_dirops);
-			}
-		}
+			lfs_flush_fs(mp, flags);
 		simple_lock(&mountlist_slock);
 		nmp = mp->mnt_list.cqe_next;
 		vfs_unbusy(mp);
@@ -359,13 +365,15 @@ lfs_check(vp, blkno, flags)
 
 	if (locked_queue_count > LFS_MAX_BUFS
 	    || locked_queue_bytes > LFS_MAX_BYTES
-	    || fs->lfs_dirvcount > LFS_MAXDIROP)
+	    || fs->lfs_dirvcount > LFS_MAXDIROP
+	    || fs->lfs_diropwait > 0)
 	{
 		++fs->lfs_writer;
 		lfs_flush(fs, flags);
 		if(--fs->lfs_writer==0)
 			wakeup(&fs->lfs_dirops);
 	}
+
 	while  (locked_queue_count > LFS_WAIT_BUFS
 		|| locked_queue_bytes > LFS_WAIT_BYTES)
 	{
