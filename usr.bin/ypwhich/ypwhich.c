@@ -31,7 +31,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypwhich.c,v 1.3 1994/05/25 09:55:02 deraadt Exp $";
+static char rcsid[] = "$Id: ypwhich.c,v 1.4 1995/05/21 15:40:43 mycroft Exp $";
 #endif
 
 #include <sys/param.h>
@@ -129,8 +129,6 @@ char **argv;
 {
 	char *domainname, *master, *map;
 	struct ypmaplist *ypml, *y;
-	extern char *optarg;
-	extern int optind;
 	struct hostent *hent;
 	struct sockaddr_in sin;
 	int notrans, mode, getmap;
@@ -160,9 +158,11 @@ char **argv;
 		default:
 			usage();
 		}
+	argc -= optind;
+	argv += optind;
 
 	if(mode==0) {
-		switch(argc-optind) {
+		switch(argc) {
 		case 0:
 			bzero(&sin, sizeof sin);
 			sin.sin_family = AF_INET;
@@ -174,14 +174,14 @@ char **argv;
 		case 1:
 			bzero(&sin, sizeof sin);
 			sin.sin_family = AF_INET;
-			if( (sin.sin_addr.s_addr=inet_addr(argv[optind]))==-1) {
-				hent = gethostbyname(argv[optind]);
+			if (inet_aton(argv[0], &sin.sin_addr) == 0) {
+				hent = gethostbyname(argv[0]);
 				if(!hent) {
 					fprintf(stderr, "ypwhich: host %s unknown\n",
-						argv[optind]);
+					    argv[0]);
 					exit(1);
 				}
-				bcopy((char *)hent->h_addr_list[0],
+				bcopy((char *)hent->h_addr,
 					(char *)&sin.sin_addr, sizeof sin.sin_addr);
 			}
 			if(bind_host(domainname, &sin))
@@ -193,11 +193,11 @@ char **argv;
 		exit(0);
 	}
 
-	if( argc-optind > 1)
+	if( argc > 1)
 		usage();
 
-	if(argv[optind]) {
-		map = argv[optind];
+	if(argv[0]) {
+		map = argv[0];
 		for(i=0; (!notrans) && i<sizeof ypaliases/sizeof ypaliases[0]; i++)
 			if( strcmp(map, ypaliases[i].alias) == 0)
 				map = ypaliases[i].name;
