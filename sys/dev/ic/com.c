@@ -1,7 +1,7 @@
-/*	$NetBSD: com.c,v 1.227 2004/05/01 19:03:59 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.228 2004/07/04 08:09:03 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.227 2004/05/01 19:03:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.228 2004/07/04 08:09:03 mycroft Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -1346,13 +1346,7 @@ com_to_tiocm(struct com_softc *sc)
 	if (ISSET(combits, MSR_RI | MSR_TERI))
 		SET(ttybits, TIOCM_RI);
 
-#ifdef COM_PXA2X0
-	if (sc->sc_type == COM_TYPE_PXA2x0) {
-		if ((sc->sc_ier & 0x0f) != 0)
-			SET(ttybits, TIOCM_LE);
-	} else
-#endif
-	if ((sc->sc_ier & 0xbf) != 0)
+	if (ISSET(sc->sc_ier, IER_ERXRDY | IER_ETXRDY | IER_ERLS | IER_EMSC))
 		SET(ttybits, TIOCM_LE);
 
 	return (ttybits);
@@ -1519,7 +1513,7 @@ comparam(struct tty *tp, struct termios *t)
 	else if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
 		sc->sc_fifo = FIFO_ENABLE |
 		    (t->c_ospeed <= 1200 ? FIFO_TRIGGER_1 :
-		     t->c_ospeed <= 38400 ? FIFO_TRIGGER_8 : FIFO_TRIGGER_4);
+		     t->c_ospeed <= 38400 ? FIFO_TRIGGER_8 : FIFO_TRIGGER_14);
 	else
 		sc->sc_fifo = 0;
 
@@ -1757,6 +1751,7 @@ comstart(struct tty *tp)
 		bus_space_write_1(iot, ioh, com_ier, sc->sc_ier);
 	}
 
+#if 0
 	/* Output the first chunk of the contiguous buffer. */
 	if (!ISSET(sc->sc_hwflags, COM_HW_NO_TXPRELOAD)) {
 		u_int n;
@@ -1768,6 +1763,7 @@ comstart(struct tty *tp)
 		sc->sc_tbc -= n;
 		sc->sc_tba += n;
 	}
+#endif
 	COM_UNLOCK(sc);
 out:
 	splx(s);
@@ -2150,16 +2146,8 @@ again:	do {
 				    sc->sc_ier);
 			}
 		} else {
-			if ((iir & IIR_IMASK) == IIR_RXRDY) {
-#ifdef COM_PXA2X0
-				if (sc->sc_type == COM_TYPE_PXA2x0)
-					bus_space_write_1(iot, ioh, com_ier,
-					    IER_EUART);
-				else
-#endif
-					bus_space_write_1(iot, ioh, com_ier, 0);
-				delay(10);
-				bus_space_write_1(iot, ioh, com_ier,sc->sc_ier);
+			if ((iir & (IIR_RXRDY|IIR_TXRDY)) == IIR_RXRDY) {
+				(void) bus_space_read_1(iot, ioh, com_data);
 				continue;
 			}
 		}
@@ -2389,11 +2377,6 @@ com_common_putc(dev_t dev, bus_space_tag_t iot, bus_space_handle_t ioh, int c)
 
 	bus_space_write_1(iot, ioh, com_data, c);
 	COM_BARRIER(iot, ioh, BR | BW);
-
-	/* wait for this transmission to complete */
-	timo = 1500000;
-	while (!ISSET(bus_space_read_1(iot, ioh, com_lsr), LSR_TXRDY) && --timo)
-		continue;
 
 	splx(s);
 }
