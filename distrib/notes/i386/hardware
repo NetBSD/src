@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.66 2000/03/15 02:28:42 fvdl Exp $	
+.\"	$NetBSD: hardware,v 1.67 2000/03/15 14:08:44 tsutsui Exp $	
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors. It
@@ -269,8 +269,6 @@ about:
 .Bl -bullet
 .It
 Multiprocessor systems. (NetBSD will run, but only use one processor.)
-.It
-Adaptec AIC-7890 SCSI host adapters.
 .It
 PCI WD-7000 SCSI host adapters.
 .It
