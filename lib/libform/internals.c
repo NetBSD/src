@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.8 2001/01/30 06:44:42 blymn Exp $	*/
+/*	$NetBSD: internals.c,v 1.9 2001/02/03 12:38:47 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -62,10 +62,6 @@ static void
 _formi_do_validation(FIELD *field, FIELDTYPE *type, int *ret_val);
 static int
 _formi_join_line(FIELD *field, char *str, unsigned int pos, int direction);
-static int
-_formi_wrap_field(FIELD *field, unsigned int pos);
-static void
-_formi_redraw_field(FORM *form, int field);
 void
 _formi_hscroll_back(FIELD *field, unsigned int amt);
 void
@@ -206,7 +202,7 @@ find_cur_line(FIELD *cur)
 	start = 0;
 	end = 0;
 	
-	for (row = 0; row < cur->row_count; row++) {
+	for (row = 1; row < cur->row_count; row++) {
 		start = _formi_find_bol(str, start);
 		end = _formi_find_eol(str, end);
 		if ((pos >= start) && (pos <= end))
@@ -223,16 +219,13 @@ find_cur_line(FIELD *cur)
  * size is exceeded then the function will return E_OK, otherwise it
  * will return E_REQUEST_DENIED.
  */
-static int
+int
 _formi_wrap_field(FIELD *field, unsigned int pos)
 {
 	char *str, *new;
 	int width, length, allocated, row_count, sol, eol, wrapped;
 	size_t new_size;
 	
-	if ((field->opts & O_WRAP) != O_WRAP)
-		return E_REQUEST_DENIED;
-
 	wrapped = FALSE;
 	row_count = 0;
 	allocated = field->buffers[0].allocated;
@@ -243,7 +236,7 @@ _formi_wrap_field(FIELD *field, unsigned int pos)
 	strcpy(str,field->buffers[0].string);
 	
 	if ((field->opts & O_STATIC) == O_STATIC)
-		width = field->cols;
+		width = field->cols + 1;
 	else
 		width = field->dcols;
 
@@ -666,7 +659,7 @@ _formi_find_pages(FORM *form)
 /*
  * Completely redraw the field of the given form.
  */
-static void
+void
 _formi_redraw_field(FORM *form, int field)
 {
 	unsigned int pre, post, flen, slen, i, row, start, end, offset;
@@ -684,12 +677,12 @@ _formi_redraw_field(FORM *form, int field)
 	end = 0;
 
 	wmove(form->subwin, (int) cur->form_row, (int) cur->form_col);
-	for (row = 0; row <= cur->row_count; row++) {
+	for (row = 1; row <= cur->row_count; row++) {
 		if (str == NULL) {
 			start = end = 0;
 		} else {
 			if ((str[end] == '\0') || (str[end + 1] == '\0')
-			    || (row == 0))
+			    || (row == 1))
 				start = end;
 			else
 				start = end + 1;
@@ -870,7 +863,7 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 		field->start_char = 0;
 		field->start_line = 0;
 		field->hscroll = 0;
-		field->row_count = 0;
+		field->row_count = 1;
 		field->cursor_xpos = 0;
 		field->cursor_ypos = 0;
 	}
@@ -1266,7 +1259,7 @@ _formi_manipulate_field(FORM *form, int c)
 		start = cur->start_char + cur->cursor_xpos;
 		end = cur->buffers[0].length;
 		if (cur->buffers[0].string[start] == '\n') {
-			if (cur->row_count > 0) {
+			if (cur->row_count > 1) {
 				cur->row_count--;
 				_formi_join_line(cur, cur->buffers[0].string,
 						 start, JOIN_NEXT);
@@ -1317,7 +1310,7 @@ _formi_manipulate_field(FORM *form, int c)
 		bcopy(&cur->buffers[0].string[end + 1],
 		      &cur->buffers[0].string[start],
 		      (unsigned) cur->buffers[0].length - end + 1);
-		if (cur->row_count > 0)
+		if (cur->row_count > 1)
 			cur->row_count--;
 		break;
 		
@@ -1484,10 +1477,16 @@ _formi_validate_field(FORM *form)
 
 	bp = cur->buffers[0].string;
 	count = _formi_skip_blanks(bp, 0);
-	
-	if (((cur->opts & O_NULLOK) != O_NULLOK) &&
-	    (cur->buffers[0].string[count] == '\0'))
-		return E_INVALID_FIELD;
+
+	  /* check if we have a null field, depending on the nullok flag
+	   * this may be acceptable or not....
+	   */
+	if (cur->buffers[0].string[count] == '\0') {
+		if ((cur->opts & O_NULLOK) == O_NULLOK)
+			return E_OK;
+		else
+			return E_INVALID_FIELD;
+	}
 	
 	  /* if there is no type then just accept the field */
 	if (cur->type == NULL)
