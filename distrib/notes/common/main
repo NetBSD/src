@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.104 2001/02/07 10:59:08 tacha Exp $
+.\"	$NetBSD: main,v 1.105 2001/02/26 23:02:56 itojun Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -273,6 +273,13 @@ places where format strings were used in an
 unsafe way, allowing arbitrary data entered by (possibly) malicious
 users to overwrite application code, and leading from Denial of
 Service attacks to compromised system.
+.It
+.Xr sshd 8
+and
+.Xr ssh 1
+now require
+.Xr rnd 4
+kernel random number devices.
 .bullet)
 .
 .Ss2 System administration and user tools
