@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.11 2003/11/02 02:14:33 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.12 2003/11/16 09:02:42 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.11 2003/11/02 02:14:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.12 2003/11/16 09:02:42 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.11 2003/11/02 02:14:33 dyoung Exp $");
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_compat.h>
+#include <net80211/ieee80211_radiotap.h>
 
 #if NBPFILTER > 0 
 #include <net/bpf.h>
@@ -753,11 +754,9 @@ atw_attach(struct atw_softc *sc)
 	ieee80211_media_init(ifp, atw_media_change, atw_media_status);
 	callout_init(&sc->sc_scan_ch);
 
-#if 0
 #if NBPFILTER > 0
-	bpfattach2(ifp, DLT_IEEE802_11_RADIO, /* ??? */,
-		   &sc->sc_radiobpf);
-#endif
+	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
+	    sizeof(struct ieee80211_frame) + 64, &sc->sc_radiobpf);
 #endif
 
 	/*
@@ -776,6 +775,14 @@ atw_attach(struct atw_softc *sc)
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);
+
+	memset(&sc->sc_rxtapu, 0, sizeof(sc->sc_rxtapu));
+	sc->sc_rxtap.ar_ihdr.it_len = sizeof(sc->sc_rxtapu);
+	sc->sc_rxtap.ar_ihdr.it_present = ATW_RX_RADIOTAP_PRESENT;
+
+	memset(&sc->sc_txtapu, 0, sizeof(sc->sc_txtapu));
+	sc->sc_txtap.at_ihdr.it_len = sizeof(sc->sc_txtapu);
+	sc->sc_txtap.at_ihdr.it_present = ATW_TX_RADIOTAP_PRESENT;
 
 	return;
 
@@ -3047,15 +3054,29 @@ atw_rxintr(sc)
 		else
 			rate = rate_tbl[rate0];
 
-#if NBPFILTER > 0
-		/*
-		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack if it's for us.
-		 */
-		if (sc->sc_radiobpf) {
-			/* TBD capture DLT_IEEE802_11_RADIO */
-		}
-#endif /* NPBFILTER > 0 */
+ #if NBPFILTER > 0
+		/* Pass this up to any BPF listeners. */
+		if (sc->sc_radiobpf != NULL) {
+			struct mbuf mb;
+
+			struct atw_rx_radiotap_header *tap = &sc->sc_rxtap;
+
+			tap->ar_rate = rate;
+			tap->ar_chan_freq = ic->ic_bss->ni_chan->ic_freq;
+			tap->ar_chan_flags = ic->ic_bss->ni_chan->ic_flags;
+
+			/* TBD verify units are dB */
+			tap->ar_antsignal = rssi;
+			/* TBD tap->ar_flags */
+
+			M_COPY_PKTHDR(&mb, m);
+			mb.m_data = (caddr_t)tap;
+			mb.m_len = tap->ar_ihdr.it_len;
+			mb.m_next = m;
+			mb.m_pkthdr.len += mb.m_len;
+			bpf_mtap(sc->sc_radiobpf, &mb);
+ 		}
+ #endif /* NPBFILTER > 0 */
 
 		wh = mtod(m, struct ieee80211_frame *);
 		ni = ieee80211_find_rxnode(ic, wh);
@@ -3404,14 +3425,32 @@ atw_start(ifp)
 			}
 		}
 
+		rate = MAX(ieee80211_get_rate(ic), 2);
+
 #if NBPFILTER > 0
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
 		if (ic->ic_rawbpf != NULL)
 			bpf_mtap((caddr_t)ic->ic_rawbpf, m0);
-		if (sc->sc_radiobpf != NULL)
-			; /* TBD tap w/ radio header */
+
+		if (sc->sc_radiobpf != NULL) {
+			struct mbuf mb;
+			struct atw_tx_radiotap_header *tap = &sc->sc_txtap;
+
+			tap->at_rate = rate;
+			tap->at_chan_freq = ic->ic_bss->ni_chan->ic_freq;
+			tap->at_chan_flags = ic->ic_bss->ni_chan->ic_flags;
+
+			/* TBD tap->at_flags */
+
+			M_COPY_PKTHDR(&mb, m0);
+			mb.m_data = (caddr_t)tap;
+			mb.m_len = tap->at_ihdr.it_len;
+			mb.m_next = m0;
+			mb.m_pkthdr.len += mb.m_len;
+			bpf_mtap(sc->sc_radiobpf, &mb);
+		}
 #endif /* NBPFILTER > 0 */
 
 		M_PREPEND(m0, offsetof(struct atw_frame, atw_ihdr), M_DONTWAIT);
@@ -3453,8 +3492,6 @@ atw_start(ifp)
 
 		/* initialize remaining Tx parameters */
 		memset(&hh->u, 0, sizeof(hh->u));
-
-		rate = MAX(ieee80211_get_rate(ic), 2);
 
 		hh->atw_rate = rate * 5;
 		/* XXX this could be incorrect if M_FCS. _encap should
