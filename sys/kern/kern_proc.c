@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.39 2000/03/30 09:27:12 augustss Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.40 2000/05/08 20:07:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@ proclist_lock_read()
 	s = splclock();
 	error = spinlockmgr(&proclist_lock, LK_SHARED, NULL);
 #ifdef DIAGNOSTIC
-	if (error)
+	if (__predict_false(error != 0))
 		panic("proclist_lock_read: failed to acquire lock");
 #endif
 	splx(s);
@@ -236,7 +236,7 @@ proclist_lock_write()
 	s = splclock();
 	error = spinlockmgr(&proclist_lock, LK_EXCLUSIVE, NULL);
 #ifdef DIAGNOSTIC
-	if (error != 0)
+	if (__predict_false(error != 0))
 		panic("proclist_lock: failed to acquire lock");
 #endif
 	return (s);
@@ -351,9 +351,9 @@ enterpgrp(p, pgid, mksess)
 	struct pgrp *pgrp = pgfind(pgid);
 
 #ifdef DIAGNOSTIC
-	if (pgrp != NULL && mksess)	/* firewalls */
+	if (__predict_false(pgrp != NULL && mksess))	/* firewalls */
 		panic("enterpgrp: setsid into non-empty pgrp");
-	if (SESS_LEADER(p))
+	if (__predict_false(SESS_LEADER(p)))
 		panic("enterpgrp: session leader attempted setpgrp");
 #endif
 	if (pgrp == NULL) {
@@ -363,7 +363,7 @@ enterpgrp(p, pgid, mksess)
 		 * new process group
 		 */
 #ifdef DIAGNOSTIC
-		if (p->p_pid != pgid)
+		if (__predict_false(p->p_pid != pgid))
 			panic("enterpgrp: new pgrp and pid != pgid");
 #endif
 		pgrp = pool_get(&pgrp_pool, PR_WAITOK);
@@ -387,7 +387,7 @@ enterpgrp(p, pgid, mksess)
 			p->p_flag &= ~P_CONTROLT;
 			pgrp->pg_session = sess;
 #ifdef DIAGNOSTIC
-			if (p != curproc)
+			if (__predict_false(p != curproc))
 				panic("enterpgrp: mksession and p != curproc");
 #endif
 		} else {
