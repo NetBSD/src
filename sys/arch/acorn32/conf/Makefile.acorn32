@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.acorn32,v 1.7 2001/11/26 23:52:58 thorpej Exp $
+#	$NetBSD: Makefile.acorn32,v 1.8 2001/11/27 00:16:00 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -58,6 +58,8 @@ AFLAGS=		-x assembler-with-cpp -D_LOCORE
 LOADADDRESS=	0xF0000000
 LINKFLAGS=	-Ttext ${LOADADDRESS} -e start
 STRIPFLAGS=	-g
+
+GENASSYM_EXTRAS+= ${ACORN32}/acorn32/genassym.cf
 
 %INCLUDES
 
