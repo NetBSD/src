@@ -103,8 +103,13 @@ case "${targ}" in
     targ_selvecs=bfd_elf32_bigarc_vec
     ;;
 
+  arm-*-netbsdelf*)
+    targ_defvec=bfd_elf32_littlearm_vec
+    targ_selvecs=armnetbsd_vec
+    ;;
   arm-*-netbsd*)
     targ_defvec=armnetbsd_vec
+    targ_selvecs=bfd_elf32_littlearm_vec
     targ_underscore=yes
     ;;
   arm-*-riscix*)
@@ -881,10 +886,13 @@ case "${targ}" in
     targ_underscore=yes
     ;;
 #endif
-
+  vax-*-netbsdelf*)
+    targ_defvec=bfd_elf32_vax_vec
+    targ_selvecs="vaxnetbsd_vec vaxcoff_vec"
+    ;;
   vax-*-netbsd*)
     targ_defvec=vaxnetbsd_vec
-    targ_selvecs=vaxcoff_vec
+    targ_selvecs="bfd_elf32_vax_vec vaxcoff_vec"
     targ_underscore=yes
     ;;
   vax-*-sysv3)
