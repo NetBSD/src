@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.10 1999/08/25 12:56:38 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.11 1999/12/13 15:17:23 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -2069,7 +2069,9 @@ ipsec4_output(state, sp, flags)
 	struct ipsecrequest *isr = NULL;
 	int s;
 	int error;
+#ifdef IPSEC_SRCSEL
 	struct in_ifaddr *ia;
+#endif
 	struct sockaddr_in *dst4;
 
 	if (!state)
@@ -2226,12 +2228,19 @@ ipsec4_output(state, sp, flags)
 				goto bad;
 			}
 
+#ifdef IPSEC_SRCSEL
+			/*
+			 * Which address in SA or in routing table should I
+			 * select from ?  But I had set from SA at
+			 * ipsec4_encapsulate().
+			 */
 			ia = (struct in_ifaddr *)(state->ro->ro_rt->rt_ifa);
 			if (state->ro->ro_rt->rt_flags & RTF_GATEWAY) {
 				state->dst = (struct sockaddr *)state->ro->ro_rt->rt_gateway;
 				dst4 = (struct sockaddr_in *)state->dst;
 			}
 			ip->ip_src = IA_SIN(ia)->sin_addr;
+#endif
 		} else
 			splx(s);
 
@@ -2424,7 +2433,9 @@ ipsec6_output_tunnel(state, sp, flags)
 	struct ipsecrequest *isr = NULL;
 	int error = 0;
 	int plen;
+#ifdef IPSEC_SRCSEL
 	struct in6_addr *ia6;
+#endif
 	struct sockaddr_in6* dst6;
 	int s;
 
@@ -2580,12 +2591,14 @@ ipsec6_output_tunnel(state, sp, flags)
 				dst6 = (struct sockaddr_in6 *)state->dst;
 			}
 #endif
+#ifdef IPSEC_SELSRC
 			ia6 = in6_selectsrc(dst6, NULL, NULL,
 					    (struct route_in6 *)state->ro,
-					    &error);
+					    NULL, &error);
 			if (ia6 == NULL)
 				goto bad;
 			ip6->ip6_src = *ia6;
+#endif
 		} else
 			splx(s);
 

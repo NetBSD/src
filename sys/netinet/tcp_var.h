@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.70 1999/12/08 16:22:20 itojun Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.71 1999/12/13 15:17:21 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-98
@@ -621,8 +621,7 @@ void	 tcp_canceltimers __P((struct tcpcb *));
 struct tcpcb *
 	 tcp_close __P((struct tcpcb *));
 #if defined(INET6) && !defined(TCP6)
-void	 tcp6_ctlinput __P((int, struct sockaddr *, struct ip6_hdr *,
-		struct mbuf *, int));
+void	 tcp6_ctlinput __P((int, struct sockaddr *, void *));
 #endif
 void	 *tcp_ctlinput __P((int, struct sockaddr *, void *));
 int	 tcp_ctloutput __P((int, struct socket *, int, int, struct mbuf **));

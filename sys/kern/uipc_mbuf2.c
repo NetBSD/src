@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf2.c,v 1.1.2.1 1999/11/30 13:34:47 itojun Exp $	*/
+/*	$NetBSD: uipc_mbuf2.c,v 1.2 1999/12/13 15:17:18 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.

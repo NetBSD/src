@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.50 1999/10/12 04:53:45 matt Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.51 1999/12/13 15:17:19 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -264,13 +264,16 @@ ether_output(ifp, m0, dst, rt0)
 #endif
 #ifdef INET6
 	case AF_INET6:
-#ifdef NEWIP6OUTPUT
-		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)edst))
-			return(0); /* it must be impossible, but... */
-#else
+#ifdef OLDIP6OUTPUT
 		if (!nd6_resolve(ifp, rt, m, dst, (u_char *)edst))
 			return(0);	/* if not yet resolves */
-#endif /* NEWIP6OUTPUT */
+#else
+		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)edst)){
+			/* this must be impossible, so we bark */
+			printf("nd6_storelladdr failed\n");
+			return(0);
+		}
+#endif /* OLDIP6OUTPUT */
 		etype = htons(ETHERTYPE_IPV6);
 		break;
 #endif

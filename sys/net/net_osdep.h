@@ -1,3 +1,5 @@
+/*	$NetBSD: net_osdep.h,v 1.2 1999/12/13 15:17:19 itojun Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -74,7 +76,7 @@
  *	NetBSD, OpenBSD, BSDI [34], FreeBSD 2
  *		timeout() is a void function
  *	FreeBSD 3
- *		timeout() is non-void, must keep returned value for untimeuot()
+ *		timeout() is non-void, must keep returned value for untimeout()
  * - sysctl
  *	NetBSD, OpenBSD
  *		foo_sysctl()
