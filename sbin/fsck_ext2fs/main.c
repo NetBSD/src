@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 2005/01/13 15:22:35 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.20 2005/01/19 19:31:28 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.19 2005/01/13 15:22:35 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.20 2005/01/19 19:31:28 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,16 +92,13 @@ __RCSID("$NetBSD: main.c,v 1.19 2005/01/13 15:22:35 christos Exp $");
 
 int	returntosingle;
 
-int	main __P((int, char *[]));
 
-static int	argtoi __P((int, char *, char *, int));
-static int	checkfilesys __P((const char *, char *, long, int));
-static  void usage __P((void));
+static int	argtoi(int, char *, char *, int);
+static int	checkfilesys(const char *, char *, long, int);
+static void	usage(void);
 
 int
-main(argc, argv)
-	int	argc;
-	char	*argv[];
+main(int argc, char *argv[])
 {
 	int ch;
 	int ret = 0;
@@ -178,10 +175,7 @@ main(argc, argv)
 }
 
 static int
-argtoi(flag, req, str, base)
-	int flag;
-	char *req, *str;
-	int base;
+argtoi(int flag, char *req, char *str, int base)
 {
 	char *cp;
 	int ret;
@@ -197,11 +191,7 @@ argtoi(flag, req, str, base)
  */
 /* ARGSUSED */
 static int
-checkfilesys(filesys, mntpt, auxdata, child)
-	const char *filesys;
-	char *mntpt;
-	long auxdata;
-	int child;
+checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 {
 	daddr_t n_bfree;
 	struct dups *dp;
@@ -353,7 +343,7 @@ checkfilesys(filesys, mntpt, auxdata, child)
 }
 
 static void
-usage()
+usage(void)
 {
 
 	(void) fprintf(stderr,

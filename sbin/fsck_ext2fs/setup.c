@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.16 2004/10/29 17:37:30 dsl Exp $	*/
+/*	$NetBSD: setup.c,v 1.17 2005/01/19 19:31:28 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-__RCSID("$NetBSD: setup.c,v 1.16 2004/10/29 17:37:30 dsl Exp $");
+__RCSID("$NetBSD: setup.c,v 1.17 2005/01/19 19:31:28 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,14 +89,13 @@ __RCSID("$NetBSD: setup.c,v 1.16 2004/10/29 17:37:30 dsl Exp $");
 
 #define POWEROF2(num)	(((num) & ((num) - 1)) == 0)
 
-void badsb __P((int, char *));
-int calcsb __P((const char *, int, struct m_ext2fs *));
-static struct disklabel *getdisklabel __P((const char *, int));
-static int readsb __P((int));
+void badsb(int, char *);
+int calcsb(const char *, int, struct m_ext2fs *);
+static struct disklabel *getdisklabel(const char *, int);
+static int readsb(int);
 
 int
-setup(dev)
-	const char *dev;
+setup(const char *dev)
 {
 	long cg, asked, i;
 	long bmapsize;
@@ -286,8 +285,7 @@ badsblabel:
  * Read in the super block and its summary info, convert to host byte order.
  */
 static int
-readsb(listerr)
-	int listerr;
+readsb(int listerr)
 {
 	daddr_t super = bflag ? bflag : SBOFF / dev_bsize;
 
@@ -402,8 +400,7 @@ readsb(listerr)
 }
 
 void
-copyback_sb(bp)
-	struct bufarea *bp;
+copyback_sb(struct bufarea *bp)
 {
 	/* Copy the in-memory superblock back to buffer */
 	bp->b_un.b_fs->e2fs_icount = fs2h32(sblock.e2fs.e2fs_icount);
@@ -435,9 +432,7 @@ copyback_sb(bp)
 }
 
 void
-badsb(listerr, s)
-	int listerr;
-	char *s;
+badsb(int listerr, char *s)
 {
 
 	if (!listerr)
@@ -455,10 +450,7 @@ badsb(listerr, s)
  */
 
 int
-calcsb(dev, devfd, fs)
-	const char *dev;
-	int devfd;
-	struct m_ext2fs *fs;
+calcsb(const char *dev, int devfd, struct m_ext2fs *fs)
 {
 	struct disklabel *lp;
 	struct partition *pp;
@@ -501,9 +493,7 @@ calcsb(dev, devfd, fs)
 }
 
 static struct disklabel *
-getdisklabel(s, fd)
-	const char *s;
-	int	fd;
+getdisklabel(const char *s, int fd)
 {
 	static struct disklabel lab;
 
@@ -517,8 +507,7 @@ getdisklabel(s, fd)
 }
 
 daddr_t
-cgoverhead(c)
-	int c;
+cgoverhead(int c)
 {
 	int overh;
 	overh =	1 /* block bitmap */ +
