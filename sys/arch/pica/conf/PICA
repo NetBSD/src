@@ -1,7 +1,7 @@
-#	$NetBSD: PICA,v 1.4 1996/08/26 23:40:48 mrg Exp $
+#	$NetBSD: PICA,v 1.5 1996/11/21 03:23:42 jonathan Exp $
 #
 #
-include		"std.pica"
+include		"arch/pica/conf/std.pica"
 
 maxusers	8
 
@@ -10,14 +10,9 @@ options		TIMEZONE="8*60"		# minutes west of GMT (for)
 options		DST=1			# use daylight savings rules
 
 # Standard system options
-options		SWAPPAGER		# swap pager (anonymous and swap space)
-options		VNODEPAGER		# vnode pager (mapped files)
-options		DEVPAGER		# device pager (mapped devices)
 options		DIAGNOSTIC		# extra kernel debugging checks
 options		DEBUG			# extra kernel debugging support
 options		"COMPAT_43"		# compatibility with 4.3BSD binaries
-options 	COMPAT_11
-options 	COMPAT_12
 #options	KTRACE			# system call tracing support
 options		"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool
 #options	KGDB			# support for kernel gdb
