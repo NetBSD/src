@@ -1,13 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: LOGIN,v 1.6 2001/04/19 16:00:29 lukem Exp $
+# $NetBSD: LOGIN,v 1.7 2002/03/22 04:33:57 thorpej Exp $
 #
 
 # PROVIDE: LOGIN
 # REQUIRE: DAEMON
-# REQUIRE: apmd bootparams dhcpd dhcrelay local lpd mopd motd
-# REQUIRE: mrouted ntpd rarpd rbootd route6d routed rtadvd rtsold
-# REQUIRE: rwho screenblank timed wscons xfs yppasswdd
 
 #	This is a dummy dependency to ensure user services such as xdm,
 #	inetd, cron and kerberos are started after everything else, incase

@@ -1,10 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: savecore,v 1.4 2002/03/22 04:16:39 lukem Exp $
+# $NetBSD: savecore,v 1.5 2002/03/22 04:34:00 thorpej Exp $
 #
 
 # PROVIDE: savecore
 # REQUIRE: syslogd
+# BEFORE:  SERVERS
 
 . /etc/rc.subr
 

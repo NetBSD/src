@@ -1,10 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: accounting,v 1.6 2001/04/29 23:57:25 lukem Exp $
+# $NetBSD: accounting,v 1.7 2002/03/22 04:33:57 thorpej Exp $
 #
 
 # PROVIDE: accounting
 # REQUIRE: mountall
+# BEFORE:  DAEMON
 
 . /etc/rc.subr
 
