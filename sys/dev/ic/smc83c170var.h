@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170var.h,v 1.5 2001/05/17 17:32:47 drochner Exp $	*/
+/*	$NetBSD: smc83c170var.h,v 1.5.16.1 2003/01/26 16:14:44 he Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -117,6 +117,8 @@ struct epic_softc {
 
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
 #define	sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
+	bus_dmamap_t sc_nulldmamap;	/* DMA map for the pad buffer */
+#define sc_nulldma	sc_nulldmamap->dm_segs[0].ds_addr
 
 	/*
 	 * Software state for transmit and receive descriptors.
