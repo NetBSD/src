@@ -72,7 +72,7 @@
  * from: Utah $Hdr: autoconf.c 1.31 91/01/21$
  *
  *	from: from: @(#)autoconf.c	7.5 (Berkeley) 5/7/91
- *	$Id: autoconf.c,v 1.3 1993/12/15 03:27:50 briggs Exp $
+ *	$Id: autoconf.c,v 1.4 1994/01/11 00:16:13 briggs Exp $
  */
 
 /*
@@ -108,7 +108,6 @@ int root_scsi_id;           /* CPC: set in locore.s */
 #include "../include/param.h"  /* LAK: Added this for some constants */
 #include "../include/cpu.h"
 #include "machine/pte.h"
-#include "isr.h"
 #include "../dev/device.h"
 
 /*
@@ -118,7 +117,9 @@ int root_scsi_id;           /* CPC: set in locore.s */
  */
 int	cold;		    /* if 1, still working on cold-start */
 int	dkn;		    /* number of iostat dk numbers assigned so far */
+/*
 struct	isr isrqueue[NISR];
+*/
 struct	adb_hw adb_table[MAXADB];
 
 #ifdef DEBUG
@@ -132,47 +133,16 @@ configure()
 {
 	int found;
 
-#ifdef NEWCONFIG
 	VIA_initialize();
 
 	adb_init();		/* ADB device subsystem & driver */
 
-	isrinit();
+/*	isrinit(); */
 
 	startrtclock();
 
 	if (config_rootfound("mainbus", "mainbus") == 0)
 		panic("No main device!");
-#else
-
-	VIA_initialize();
-
-	/*
-	 * XXX: these should be consolidated into some kind of table
-	 */
-
-/* ALICE 05/23/92 BG -- I've taken the liberty of removing your horses brain. */
-
-	/* initialize ADB subsystem and re-number devices. */
-	adb_init();		/* ADB device subsystem & driver */
-	isrinit();
-
-/* BARF Allen's idea MF typing */
-/* what we think is happening is that via_init is BLOWING
-   away the clock that we started earlier, so restart the sucker */
-/* MF Allen was right, go figure*/
-	startrtclock();
-
-	/* Initialize the Nubus subsystem -- Find all cards present */
-	find_nubus();
-
-	/* Find all ADB devices */
-	find_adbs();
-
-	/* Ask each driver if they find their hardware and init it: */
-	find_devs();
-
-#endif
 	setroot(); /* Make root dev <== load dev */
 	swapconf();
 	cold = 0;
@@ -288,6 +258,7 @@ struct cfdriver cdcd =
       { NULL, "cd", dummy_match, dummy_attach,
 	DV_DISK, sizeof(struct device), NULL, 0 };
 
+/*
 isrinit()
 {
 	register int i;
@@ -308,6 +279,7 @@ isrlink(isr)
 	}
 	insque(isr, isrqueue[i].isr_back);
 }
+*/
 
 /*
  * Configure swap space and related parameters.
