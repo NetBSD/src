@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.82 2004/04/05 16:01:43 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.83 2004/04/09 16:41:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.82 2004/04/05 16:01:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.83 2004/04/09 16:41:23 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -275,7 +275,7 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 	 * If argv[1] isn't an environment string, try to use it to set the
 	 * boot device.
 	 */
-	if (strchr(argv[1], '=') != 0)
+	if (argc > 1 && strchr(argv[1], '=') != 0)
 		makebootdev(argv[1]);
 
 	boothowto = RB_SINGLE;
