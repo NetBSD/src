@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.23 1997/01/03 22:54:24 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.24 1997/01/04 00:06:21 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -90,7 +90,7 @@ extern u_int	Sysptsize, Sysseg_pa, proc0paddr;
 extern pt_entry_t *Sysptmap;
 extern st_entry_t *Sysseg;
 u_int		*Sysmap;
-int		machineid, mmutype, astpending;
+int		machineid, mmutype, cputype, astpending;
 char		*vmmap;
 pv_entry_t	pv_table;
 #if defined(M68040) || defined(M68060)
