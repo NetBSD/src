@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.493 2002/12/26 20:52:58 matt Exp $
+$NetBSD: pcidevs,v 1.494 2002/12/30 04:02:22 explorer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -562,6 +562,7 @@ vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor MYSON		0x1516	Myson-Century Technology
 vendor NDC		0x15e8	National Datacomm Corp.
 vendor ACTIONTEC	0x1668	Action Tec Electronics, Inc.
+vendor ATHEROS		0x168c	Atheros Communications, Inc.
 vendor GLOBALSUN	0x16ab	Global Sun Tech
 vendor ALTIMA		0x173b	Altima
 vendor FZJZEL		0x1796	FZ Juelich / ZEL
@@ -939,6 +940,9 @@ product AMCIRCUITS CAMAC	0x812d	FZJ/ZEL CAMAC controller
 product AMCIRCUITS VICBUS	0x812e	FZJ/ZEL VICBUS interface
 product AMCIRCUITS PCISYNC	0x812f	FZJ/ZEL Synchronisation module
 product AMCIRCUITS S5920	0x5920  S5920 PCI Target
+
+/* Atheros Communications, Inc. products */
+product ATHEROS AR5001 0x0012 AR5001 Wireless LAN Reference Card
 
 /* Atronics products */
 product ATRONICS IDE_2015PL	0x2015	IDE-2015PL
