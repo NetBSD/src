@@ -1,4 +1,4 @@
-/*	$NetBSD: tmu.c,v 1.3 2002/09/04 15:18:14 scw Exp $	*/
+/*	$NetBSD: tmu.c,v 1.4 2002/09/22 20:57:23 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,6 +112,7 @@ tmuattach(struct device *parent, struct device *self, void *args)
 {
 	struct pbridge_attach_args *pa = args;
 	struct tmu_softc *sc;
+	u_int32_t tcnt;
 	int i;
 
 	tmu_sc = sc = (struct tmu_softc *)self;
@@ -147,6 +148,25 @@ tmuattach(struct device *parent, struct device *self, void *args)
 
 	printf(": Timer Unit\n");
 	printf("%s: Tick period: %d nS\n", sc->sc_dev.dv_xname, sc->sc_period);
+
+	/*
+	 * Calculate the delay constant.
+	 */
+	_sh5_delay_constant = 1;
+	bus_space_write_4(sc->sc_bust, sc->sc_bush, TMU_REG_TCNT(0),
+	    0xffffffff);
+	bus_space_write_2(sc->sc_bust, sc->sc_bush, TMU_REG_TCR(0),
+	    TMU_TCR_TPSC_PDIV4);
+	bus_space_write_1(sc->sc_bust, sc->sc_bush, TMU_REG_TSTR, TMU_TSTR(0));
+	delay(100000);
+	tcnt = 0 - bus_space_read_4(sc->sc_bust, sc->sc_bush, TMU_REG_TCNT(0));
+	bus_space_write_1(sc->sc_bust, sc->sc_bush, TMU_REG_TSTR, 0);
+	/* How many nanoseconds per loop iteration */
+	tcnt = (tcnt * sc->sc_period) / 100000;
+	_sh5_delay_constant = 1000 / tcnt;
+
+	printf("%s: Delay constant: %d\n", sc->sc_dev.dv_xname,
+	    _sh5_delay_constant);
 
 	/*
 	 * Attach to the common clock back-end
