@@ -1,4 +1,4 @@
-/*	$NetBSD: findcons.c,v 1.3 1998/03/25 07:35:05 jonathan Exp $	*/
+/*	$NetBSD: findcons.c,v 1.4 1998/03/26 01:01:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.3 1998/03/25 07:35:05 jonathan Exp $$");
+__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.4 1998/03/26 01:01:13 thorpej Exp $$");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,7 @@ int	find_screen	__P((int prom_slot));
 int	find_serial	__P((int prom_slot));
 void	consinit	__P((void));
 
-
+extern int	systype;
 
 /*
  * Keyboard physically present and driver configured on 3100? 
