@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.43 2002/03/17 18:15:00 augustss Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.44 2002/03/24 05:43:12 uwe Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -282,14 +282,14 @@
 #define KS_Cyrillic_A		0xe1
 #define KS_Cyrillic_BE		0xe2
 #define KS_Cyrillic_VE		0xf7
-#define KS_Cyrillic_GE		0xe7
+#define KS_Cyrillic_GHE		0xe7
 #define KS_Cyrillic_DE		0xe4
 #define KS_Cyrillic_IE		0xe5
-#define KS_Cyrillic_YO		0xb3
+#define KS_Cyrillic_IO		0xb3
 #define KS_Cyrillic_ZHE		0xf6
 #define KS_Cyrillic_ZE		0xfa
 #define KS_Cyrillic_I		0xe9
-#define KS_Cyrillic_ISHORT	0xea
+#define KS_Cyrillic_SHORTI	0xea
 #define KS_Cyrillic_IUKR	0xb6
 #define KS_Cyrillic_YI		0xb7
 #define KS_Cyrillic_KA		0xeb
@@ -307,24 +307,25 @@
 #define KS_Cyrillic_TSE		0xe3
 #define KS_Cyrillic_CHE		0xfe
 #define KS_Cyrillic_SHA		0xfb
-#define KS_Cyrillic_SCHA	0xfd
-#define KS_Cyrillic_HSIGHN	0xff
+#define KS_Cyrillic_SHCHA	0xfd
+#define KS_Cyrillic_HARDSIGN	0xff
 #define KS_Cyrillic_YERU	0xf9
-#define KS_Cyrillic_SSIGHN	0xf8
+#define KS_Cyrillic_SOFTSIGN	0xf8
 #define KS_Cyrillic_E		0xfc
 #define KS_Cyrillic_YU		0xe0
 #define KS_Cyrillic_YA		0xf1
+
 #define KS_Cyrillic_a		0xc1
 #define KS_Cyrillic_be		0xc2
 #define KS_Cyrillic_ve		0xd7
-#define KS_Cyrillic_ge		0xc7
+#define KS_Cyrillic_ghe		0xc7
 #define KS_Cyrillic_de		0xc4
 #define KS_Cyrillic_ie		0xc5
-#define KS_Cyrillic_yo		0xa3
+#define KS_Cyrillic_io		0xa3
 #define KS_Cyrillic_zhe		0xd6
 #define KS_Cyrillic_ze		0xda
 #define KS_Cyrillic_i		0xc9
-#define KS_Cyrillic_ishort	0xca
+#define KS_Cyrillic_shorti	0xca
 #define KS_Cyrillic_iukr	0xa6
 #define KS_Cyrillic_yi		0xa7
 #define KS_Cyrillic_ka		0xcb
@@ -342,17 +343,18 @@
 #define KS_Cyrillic_tse		0xc3
 #define KS_Cyrillic_che		0xde
 #define KS_Cyrillic_sha		0xdb
-#define KS_Cyrillic_scha	0xdd
-#define KS_Cyrillic_hsighn	0xdf
+#define KS_Cyrillic_shcha	0xdd
+#define KS_Cyrillic_hardsign	0xdf
 #define KS_Cyrillic_yeru	0xd9
-#define KS_Cyrillic_ssighn	0xd8
+#define KS_Cyrillic_softsign	0xd8
 #define KS_Cyrillic_e		0xdc
 #define KS_Cyrillic_yu		0xc0
 #define KS_Cyrillic_ya		0xd1
+
 #define KS_Cyrillic_gheukr	0xad
 #define KS_Cyrillic_GHEUKR	0xbd
-#define KS_Cyrillic_yeukr	0xa4
-#define KS_Cyrillic_YEUKR	0xb4
+#define KS_Cyrillic_ieukr	0xa4
+#define KS_Cyrillic_IEUKR	0xb4
 
 /*
  * Group 1 (modifiers)
