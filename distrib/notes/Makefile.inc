@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.21 2001/12/01 17:54:11 jhawk Exp $
+#	$NetBSD: Makefile.inc,v 1.22 2001/12/10 05:27:59 jmc Exp $
 #
 
 # Ross Harvey <ross@netbsd.org>
@@ -23,11 +23,7 @@ SRCS=	${MAIN} whatis contents hardware xfer prep install\
 ICMD=	${INSTALL} ${RENAME} ${PRESERVE} ${COPY}	\
 	-o root -g wheel -m ${NONBINMODE} 
 
-.if defined(DESTDIR)
-PRESET=	${GFLAGS} -dM=${M} -dV=${V} -d.CURDIR=${.CURDIR} -r${M}=1 -M${DESTDIR}/usr/share/tmac
-.else
 PRESET=	${GFLAGS} -dM=${M} -dV=${V} -d.CURDIR=${.CURDIR} -r${M}=1
-.endif
 
 POST_PLAIN= -P-b -P-u -P-o
 
@@ -52,45 +48,45 @@ all: ${TARGS}
 .endif
 
 ${TARG}.ps: ${SRCS} ${TOCDEPS}
-	groff ${ARGS_PS}   -mdoc      ${MAIN} > $@
+	${GROFF} ${ARGS_PS}   -mdoc      ${MAIN} > $@
 
 ${TARG}.pdf: ${TARG}.ps
 	ps2pdf ${TARG}.ps $@
 
 ${TARG}.txt: ${SRCS} ${TOCDEPS}
-	groff ${ARGS_TXT}  -mdoc      ${MAIN} > $@
+	${GROFF} ${ARGS_TXT}  -mdoc      ${MAIN} > $@
 
 ${TARG}.html: ${SRCS} ${TOCDEPS}
-	groff ${ARGS_HTML} -mdoc2html ${MAIN} > $@
+	${GROFF} ${ARGS_HTML} -mdoc2html ${MAIN} > $@
 
 ${TARG}.more: ${SRCS} ${TOCDEPS}
-	groff ${ARGS_MORE} -mdoc      ${MAIN} > $@
+	${GROFF} ${ARGS_MORE} -mdoc      ${MAIN} > $@
 
 TOCPROC=	   2>&1 >/dev/null |\
            sed -n '/^\.Ti/{s/ \([A-Za-z]\)/ "\1/; s/ *$$/"/; p; }'
 
 ${TARG}.PostScript.toc: ${SRCS}
-	groff -dTOC=1 ${ARGS_PS} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	${GROFF} -dTOC=1 ${ARGS_PS} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
 	mv -f $@.tmp $@
-	groff -dTOC=1 ${ARGS_PS} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	${GROFF} -dTOC=1 ${ARGS_PS} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
 	mv -f $@.tmp $@
 
 ${TARG}.ASCII.toc: ${SRCS}
-	groff -dTOC=1 ${ARGS_TXT} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	${GROFF} -dTOC=1 ${ARGS_TXT} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
 	mv -f $@.tmp $@
-	groff -dTOC=1 ${ARGS_TXT} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	${GROFF} -dTOC=1 ${ARGS_TXT} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
 	mv -f $@.tmp $@
 
 ${TARG}.HTML.toc: ${SRCS}
-	groff -dTOC=1 ${ARGS_HTML} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	${GROFF} -dTOC=1 ${ARGS_HTML} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
 	mv -f $@.tmp $@
-	groff -dTOC=1 ${ARGS_HTML} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	${GROFF} -dTOC=1 ${ARGS_HTML} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
 	mv -f $@.tmp $@
 
 ${TARG}.more.toc: ${SRCS}
-	groff -dTOC=1 ${ARGS_MORE} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	${GROFF} -dTOC=1 ${ARGS_MORE} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
 	mv -f $@.tmp $@
-	groff -dTOC=1 ${ARGS_MORE} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	${GROFF} -dTOC=1 ${ARGS_MORE} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
 	mv -f $@.tmp $@
 
 echosrcs! ${SRCS}
