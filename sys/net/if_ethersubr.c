@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if_ethersubr.c	7.13 (Berkeley) 4/20/91
+ *	from: @(#)if_ethersubr.c	7.13 (Berkeley) 4/20/91
+ *	$Id: if_ethersubr.c,v 1.2 1993/05/20 03:05:59 cgd Exp $
  */
 
 #include "param.h"

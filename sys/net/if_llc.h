@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      @(#)if_llc.h	7.2 (Berkeley) 6/28/90
+ *      from: @(#)if_llc.h	7.2 (Berkeley) 6/28/90
+ *	$Id: if_llc.h,v 1.3 1993/05/20 03:06:00 cgd Exp $
  */
 
 #ifndef _NET_IF_LLC_H_

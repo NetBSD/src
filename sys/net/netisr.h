@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)netisr.h	7.8 (Berkeley) 5/7/91
+ *	from: @(#)netisr.h	7.8 (Berkeley) 5/7/91
+ *	$Id: netisr.h,v 1.3 1993/05/20 03:06:05 cgd Exp $
  */
 
 #ifndef _NET_NETISR_H_

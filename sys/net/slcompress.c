@@ -16,11 +16,9 @@
  *
  *    Van Jacobson (van@ee.lbl.gov), Dec 31, 1989:
  *    - Initial distribution.
+ *
+ *	$Id: slcompress.c,v 1.3 1993/05/20 03:06:12 cgd Exp $
  */
-#ifndef lint
-static char rcsid[] =
-	"@(#) $Header: /cvsroot/src/sys/net/slcompress.c,v 1.2 1993/03/25 00:28:01 cgd Exp $ (LBL)";
-#endif
   
 #include <sys/types.h>
 #include <sys/param.h>
