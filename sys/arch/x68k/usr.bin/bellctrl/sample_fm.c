@@ -1,3 +1,5 @@
+/*	$NetBSD: sample_fm.c,v 1.2 1996/08/30 17:46:07 thorpej Exp $	*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "../../dev/opmreg.h"

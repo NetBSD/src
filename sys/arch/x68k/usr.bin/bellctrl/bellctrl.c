@@ -1,3 +1,5 @@
+/*	$NetBSD: bellctrl.c,v 1.2 1996/08/30 17:46:06 thorpej Exp $	*/
+
 /*
  * bellctrl - OPM bell controller (for NetBSD/X680x0)
  * Copyright (c)1995 ussy.

@@ -1,3 +1,5 @@
+#	$NetBSD: Makefile,v 1.2 1996/08/30 17:46:03 thorpej Exp $
+#
 # Makefile for bellctrl
 
 all: bellctrl sample.fm
