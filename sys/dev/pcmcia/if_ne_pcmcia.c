@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.68 2001/02/12 18:49:05 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.69 2001/02/19 21:30:39 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -99,6 +99,11 @@ static const struct ne2000dev {
 #define	NE2000DVF_DL10019	0x0001		/* chip is D-Link DL10019 */
 #define	NE2000DVF_AX88190	0x0002		/* chip is ASIX AX88190 */
 } ne2000devs[] = {
+    { PCMCIA_STR_SYNERGY21_S21810,
+      PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_SYNERGY21_S21810,
+      0, -1, { 0x00, 0x47, 0x43 } },
+
     { PCMCIA_STR_AMBICOM_AMB8002T,
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_AMBICOM_AMB8002T,
