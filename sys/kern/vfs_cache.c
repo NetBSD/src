@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.17 1998/08/04 04:03:18 perry Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.18 1998/09/01 04:33:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,6 +43,7 @@
 #include <sys/namei.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 
 /*
  * Name caching works as follows:
@@ -70,6 +71,8 @@ u_long	nchash;				/* size of hash table - 1 */
 long	numcache;			/* number of cache entries allocated */
 TAILQ_HEAD(, namecache) nclruhead;		/* LRU chain */
 struct	nchstats nchstats;		/* cache effectiveness statistics */
+
+struct pool namecache_pool;
 
 int doingcache = 1;			/* 1 => enable the cache */
 
@@ -186,8 +189,7 @@ cache_enter(dvp, vp, cnp)
 	 * Free the cache slot at head of lru chain.
 	 */
 	if (numcache < desiredvnodes) {
-		ncp = (struct namecache *)
-			malloc((u_long)sizeof(*ncp), M_CACHE, M_WAITOK);
+		ncp = pool_get(&namecache_pool, PR_WAITOK);
 		memset((char *)ncp, 0, sizeof(*ncp));
 		numcache++;
 	} else if ((ncp = nclruhead.tqh_first) != NULL) {
@@ -228,6 +230,9 @@ nchinit()
 
 	TAILQ_INIT(&nclruhead);
 	nchashtbl = hashinit(desiredvnodes, M_CACHE, M_WAITOK, &nchash);
+	pool_init(&namecache_pool, sizeof(struct namecache), 0, 0, 0,
+	    "ncachepl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
+	    M_CACHE);
 }
 
 /*
