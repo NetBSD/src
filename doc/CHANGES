@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.23 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.24 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -136,3 +136,5 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 	auvia(4): Added support for VT8233/VT8235 [kent 20021005]
 	auvia(4): Enabled sampling rate conversion for fixed-rate AC'97 codec
 		[kent 20021008]
+	ubsa(4): Driver for Belkin serial adapters ported from FreeBSD
+		[augustss 20021008]
