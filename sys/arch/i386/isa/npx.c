@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)npx.c	7.2 (Berkeley) 5/12/91
- *	$Id: npx.c,v 1.9 1993/12/20 05:30:55 mycroft Exp $
+ *	$Id: npx.c,v 1.10 1993/12/20 09:06:31 mycroft Exp $
  */
 #include "npx.h"
 #if NNPX > 0
@@ -46,6 +46,7 @@
 #include <sys/vmmeter.h>
 
 #include <machine/cpu.h>
+#include <machine/pio.h>
 #include <machine/pcb.h>
 #include <machine/trap.h>
 #include <machine/specialreg.h>
