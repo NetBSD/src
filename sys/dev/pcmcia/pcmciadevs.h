@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.147 2001/11/19 05:25:22 imp Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.148 2001/11/26 04:19:12 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.147 2001/11/19 05:24:26 imp Exp 
+ *	NetBSD: pcmciadevs,v 1.148 2001/11/26 04:18:26 ichiro Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -196,6 +196,9 @@
 #define	PCMCIA_CIS_BUFFALO_WLI_PCM_S11	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_BUFFALO_WLI_PCM_S11	0x0305
 #define	PCMCIA_STR_BUFFALO_WLI_PCM_S11	"BUFFALO AirStation 11Mbps WLAN"
+#define	PCMCIA_CIS_BUFFALO_WLI_CF_S11G	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_BUFFALO_WLI_CF_S11G	0x030b
+#define	PCMCIA_STR_BUFFALO_WLI_CF_S11G	"BUFFALO AirStation 11Mbps CF WLAN"
 
 /* Compaq Products */
 #define	PCMCIA_CIS_COMPAQ_NC5004	{ NULL, NULL, NULL, NULL }
