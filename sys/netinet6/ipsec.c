@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.90 2004/01/13 23:01:08 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.91 2004/01/13 23:02:00 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.90 2004/01/13 23:01:08 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.91 2004/01/13 23:02:00 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -420,7 +420,7 @@ ipsec4_getpolicybysock(m, dir, so, error)
 	if (currsp == NULL)
 		panic("ipsec4_getpolicybysock: currsp is NULL.");
 
-	/* when privilieged socket */
+	/* when privileged socket */
 	if (pcbsp->priv) {
 		switch (currsp->policy) {
 		case IPSEC_POLICY_BYPASS:
@@ -463,7 +463,7 @@ ipsec4_getpolicybysock(m, dir, so, error)
 		/* NOTREACHED */
 	}
 
-	/* when non-privilieged socket */
+	/* when non-privileged socket */
 	/* look for a policy in SPD */
 	if (ipsec_setspidx_mbuf(&spidx, AF_INET, m, 1) == 0 &&
 	    (kernsp = key_allocsp(tag, &spidx, dir)) != NULL) {
@@ -480,7 +480,7 @@ ipsec4_getpolicybysock(m, dir, so, error)
 	switch (currsp->policy) {
 	case IPSEC_POLICY_BYPASS:
 		ipseclog((LOG_ERR, "ipsec4_getpolicybysock: "
-		       "Illegal policy for non-priviliged defined %d\n",
+		       "Illegal policy for non-privileged defined %d\n",
 			currsp->policy));
 		*error = EINVAL;
 		return NULL;
@@ -645,7 +645,7 @@ ipsec6_getpolicybysock(m, dir, so, error)
 	if (currsp == NULL)
 		panic("ipsec6_getpolicybysock: currsp is NULL.");
 
-	/* when privilieged socket */
+	/* when privileged socket */
 	if (pcbsp->priv) {
 		switch (currsp->policy) {
 		case IPSEC_POLICY_BYPASS:
@@ -688,7 +688,7 @@ ipsec6_getpolicybysock(m, dir, so, error)
 		/* NOTREACHED */
 	}
 
-	/* when non-privilieged socket */
+	/* when non-privileged socket */
 	/* look for a policy in SPD */
 	if (ipsec_setspidx_mbuf(&spidx, AF_INET6, m, 1) == 0 &&
 	    (kernsp = key_allocsp(tag, &spidx, dir)) != NULL) {
@@ -705,7 +705,7 @@ ipsec6_getpolicybysock(m, dir, so, error)
 	switch (currsp->policy) {
 	case IPSEC_POLICY_BYPASS:
 		ipseclog((LOG_ERR, "ipsec6_getpolicybysock: "
-		    "Illegal policy for non-priviliged defined %d\n",
+		    "Illegal policy for non-privileged defined %d\n",
 		    currsp->policy));
 		*error = EINVAL;
 		return NULL;
