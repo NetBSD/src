@@ -1,10 +1,10 @@
-#	$NetBSD: GENERIC,v 1.100 2000/04/19 06:50:32 itojun Exp $
+#	$NetBSD: GENERIC,v 1.101 2000/06/11 18:09:34 fredb Exp $
 #
 # GENERIC
 
 include	"arch/mac68k/conf/std.mac68k"
 
-#ident 		"GENERIC-$Revision: 1.100 $"
+#ident 		"GENERIC-$Revision: 1.101 $"
 
 maxusers	16		# estimated number of users
 
@@ -269,6 +269,6 @@ pseudo-device	ite		1	# ite emulation for wscons
 pseudo-device	pty		64	# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
 
-# rnd is EXPERIMENTAL at this point.
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+# random number generator pseudo-device
+pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
