@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.61 2002/02/11 02:47:29 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.62 2002/04/27 01:00:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.61 2002/02/11 02:47:29 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.62 2002/04/27 01:00:46 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,8 +298,8 @@ lfs_fsync(void *v)
 		return 0;
 
 	simple_lock(&vp->v_interlock);
-	error = VOP_PUTPAGES(vp, ap->a_offlo, ap->a_offhi,
-	    PGO_CLEANIT | PGO_SYNCIO);
+	error = VOP_PUTPAGES(vp, trunc_page(ap->a_offlo),
+                    round_page(ap->a_offhi), PGO_CLEANIT | PGO_SYNCIO);
 	if (error) {
 		return error;
 	}
