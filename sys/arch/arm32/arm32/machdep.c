@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.51 1998/09/13 11:57:59 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.52 1998/10/05 02:33:46 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -644,6 +644,7 @@ allocsys(v)
 	return(v);
 }
 
+#ifndef FOOTBRIDGE
 /*
  * Initialise the console
  */
@@ -659,7 +660,7 @@ consinit(void)
 	consinit_called = 1;
 	cninit();
 }
-
+#endif
 
 /*
  * Clear registers on exec
