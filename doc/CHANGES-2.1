@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.33 2005/03/16 16:48:14 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.34 2005/03/16 18:40:46 jmc Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -817,3 +817,16 @@ distrib/notes/sparc64/install			1.24-1.25
 	in PR port-sparc64/29703.
 	[martin, ticket #1322]
 
+
+sys/dev/ata/ata_wdc.c				1.55
+sys/dev/ata/atavar.h				1.43
+sys/dev/ic/wdc.c				1.180
+
+	Only downgrade modes due to an actual CRC error.  Downgrading on other 
+	errors is anti-social -- especially given that there's no way to 
+	upgrade again short of rebooting.
+
+	Also, downgrade UDMA modes more slowly.  It's entirely possible that 
+	they're using an 80-wire cable, but it's just too long for the higher 
+	modes, or there is minor crosstalk.
+	[mycroft, ticket #1018]
