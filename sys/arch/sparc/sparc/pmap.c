@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.156 2000/04/17 20:32:00 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.157 2000/04/20 13:59:02 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1915,11 +1915,21 @@ ctx_alloc(pm)
 
 		/* Do any cache flush needed on context switch */
 		(*cpuinfo.pure_vcache_flush)();
-#ifdef DEBUG
-		if (pm->pm_reg_ptps_pa[0] == 0)
-			panic("ctx_alloc: no region table in current pmap");
-#endif
-		/*setcontext(0); * paranoia? can we modify curr. ctx? */
+
+		/*
+		 * We need to flush the cache only when stealing a context
+		 * from another pmap. In that case it's Ok to switch the
+		 * context and leave it set, since it the context table
+		 * will have a valid region table entry for this context
+		 * number.
+		 *
+		 * Otherwise, we switch to the new context after loading
+		 * the context table entry with the new pmap's region.
+		 */
+		if (doflush) {
+			setcontext4m(cnum);
+			cache_flush_context();
+		}
 
 		/*
 		 * The context allocated to a process is the same on all CPUs.
@@ -1945,9 +1955,10 @@ ctx_alloc(pm)
 					SRMMU_TEPTD);
 		}
 
-		setcontext4m(cnum);
-		if (doflush)
-			cache_flush_context();
+		/* Set context if not yet done above to flush the cache */
+		if (!doflush)
+			setcontext4m(cnum);
+
 		tlb_flush_context(); /* remove any remnant garbage from tlb */
 #endif
 		splx(s);
@@ -3923,9 +3934,10 @@ pmap_release(pm)
 		n = 0;
 #endif
 		{
-			pool_put(&L1_pool, pm->pm_reg_ptps[n]);
+			int *pt = pm->pm_reg_ptps[n];
 			pm->pm_reg_ptps[n] = NULL;
 			pm->pm_reg_ptps_pa[n] = 0;
+			pool_put(&L1_pool, pt);
 		}
 	}
 #endif
@@ -4550,8 +4562,8 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 		if (pm->pm_ctx)
 			tlb_flush_segment(vr, vs); 	/* Paranoia? */
 		setpgt4m(&rp->rg_seg_ptps[vs], SRMMU_TEINVALID);
-		pool_put(&L23_pool, pte0);
 		sp->sg_pte = NULL;
+		pool_put(&L23_pool, pte0);
 
 		if (--rp->rg_nsegmap == 0) {
 			int n;
