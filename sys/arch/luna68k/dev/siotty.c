@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.13 2003/03/28 14:10:56 he Exp $ */
+/* $NetBSD: siotty.c,v 1.14 2004/04/25 06:23:41 matt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.13 2003/03/28 14:10:56 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.14 2004/04/25 06:23:41 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -71,7 +71,7 @@ static const u_int8_t ch0_regs[6] = {
 	WR5_TX8BIT | WR5_TXENBL | WR5_DTR | WR5_RTS, /* Tx */
 };
 
-static struct speedtab siospeedtab[] = {
+static const struct speedtab siospeedtab[] = {
 	{ 2400,	WR4_BAUD24, },
 	{ 4800,	WR4_BAUD48, },
 	{ 9600,	WR4_BAUD96, },

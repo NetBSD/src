@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.27 2003/08/07 16:26:42 agc Exp $ */
+/*	$NetBSD: msc.c,v 1.28 2004/04/25 06:23:41 matt Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.27 2003/08/07 16:26:42 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.28 2004/04/25 06:23:41 matt Exp $");
 
 #include "msc.h"
 
@@ -160,7 +160,7 @@ struct	tty *msc_tty[MSCTTYS];		/* ttys for all lines */
 
 struct	vbl_node msc_vbl_node[NMSC];	/* vbl interrupt node per board */
 
-struct speedtab mscspeedtab_normal[] = {
+const struct speedtab mscspeedtab_normal[] = {
 	{ 0,		0		},
 	{ 50,		MSCPARAM_B50	},
 	{ 75,		MSCPARAM_B75	},
@@ -181,7 +181,7 @@ struct speedtab mscspeedtab_normal[] = {
 	{ -1,		-1		}
 };
 
-struct speedtab mscspeedtab_turbo[] = {
+const struct speedtab mscspeedtab_turbo[] = {
 	{ 0,		0		},
 	{ 100,		MSCPARAM_B50	},
 	{ 150,		MSCPARAM_B75	},
@@ -202,7 +202,7 @@ struct speedtab mscspeedtab_turbo[] = {
 	{ -1,		-1		}
 };
 
-struct   speedtab *mscspeedtab;
+const struct   speedtab *mscspeedtab;
 
 int mscmctl(dev_t dev, int bits, int howto);
 void mscmint(register void *data);

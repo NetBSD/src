@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.83 2003/09/28 17:25:07 chs Exp $	*/
+/*	$NetBSD: scc.c,v 1.84 2004/04/25 06:23:41 matt Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.83 2003/09/28 17:25:07 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.84 2004/04/25 06:23:41 matt Exp $");
 
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
@@ -161,7 +161,7 @@ struct scc_softc {
  *
  * Speed selections with Pclk=7.3728Mhz, clock x16
  */
-struct speedtab sccspeedtab[] = {
+const struct speedtab sccspeedtab[] = {
 	{ 0,		0,	},
 	{ 50,		4606,	},
 	{ 75,		3070,	},

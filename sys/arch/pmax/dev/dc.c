@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.77 2003/10/31 03:32:19 simonb Exp $	*/
+/*	$NetBSD: dc.c,v 1.78 2004/04/25 06:23:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.77 2003/10/31 03:32:19 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.78 2004/04/25 06:23:41 matt Exp $");
 
 /*
  * devDC7085.c --
@@ -150,7 +150,7 @@ static int	dc_timer;		/* true if timer started */
  * Pdma structures for fast output code
  */
 
-struct speedtab dcspeedtab[] = {
+const struct speedtab dcspeedtab[] = {
 	{ 0,	0,	},
 	{ 50,	LPR_B50    },
 	{ 75,	LPR_B75    },

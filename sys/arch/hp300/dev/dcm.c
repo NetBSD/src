@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.63 2003/11/17 14:37:59 tsutsui Exp $	*/
+/*	$NetBSD: dcm.c,v 1.64 2004/04/25 06:23:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.63 2003/11/17 14:37:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.64 2004/04/25 06:23:41 matt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -152,7 +152,7 @@ __KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.63 2003/11/17 14:37:59 tsutsui Exp $");
 #define DEFAULT_BAUD_RATE 9600
 #endif
 
-struct speedtab dcmspeedtab[] = {
+const struct speedtab dcmspeedtab[] = {
 	{	0,	BR_0		},
 	{	50,	BR_50		},
 	{	75,	BR_75		},

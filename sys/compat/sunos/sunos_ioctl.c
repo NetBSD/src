@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.47 2003/06/29 22:29:44 fvdl Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.48 2004/04/25 06:23:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.47 2003/06/29 22:29:44 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.48 2004/04/25 06:23:40 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_execfmt.h"
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.47 2003/06/29 22:29:44 fvdl Exp $"
  * Support gets added as things turn up....
  */
 
-static struct speedtab sptab[] = {
+static const struct speedtab sptab[] = {
 	{ 0, 0 },
 	{ 50, 1 },
 	{ 75, 2 },
@@ -86,7 +86,7 @@ static struct speedtab sptab[] = {
 	{ -1, -1 }
 };
 
-static u_long s2btab[] = {
+static const u_long s2btab[] = {
 	0,
 	50,
 	75,
