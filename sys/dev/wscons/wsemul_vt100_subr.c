@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_subr.c,v 1.2 1998/06/26 21:20:34 drochner Exp $ */
+/* $NetBSD: wsemul_vt100_subr.c,v 1.3 1998/06/29 21:14:40 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -335,16 +335,17 @@ wsemul_vt100_handle_csi(edp, c)
 			break;
 		    case 2: /* tab stop report */
 			{
-			int i, n;
+			int i, n, ps = 0;
 			char buf[20];
 			KASSERT(edp->tabs != 0);
 			wsdisplay_emulinput(edp->cbcookie, "\033P2$u", 5);
 			for (i = 0; i < edp->ncols; i++)
 				if (edp->tabs[i]) {
 					n = sprintf(buf, "%s%d",
-						    (i ? "/" : ""), i + 1);
+						    (ps ? "/" : ""), i + 1);
 					wsdisplay_emulinput(edp->cbcookie,
 							    buf, n);
+					ps = 1;
 				}
 			}
 			wsdisplay_emulinput(edp->cbcookie, "\033\\", 2);
