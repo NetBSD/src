@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.41 2003/09/18 09:56:21 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.42 2003/09/19 17:44:53 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.41 2003/09/18 09:56:21 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.42 2003/09/19 17:44:53 wiz Exp $");
 #endif
 
 /*
@@ -186,7 +186,7 @@ add1pkg(const char *pkgdir)
 	char	       *PkgDBDir, *PkgName, *dirp;
 	char 		file[FILENAME_MAX];
 	char		dir[FILENAME_MAX];
-	int		cnt;
+	int		cnt = 0;
 
 	if (!pkgdb_open(ReadWrite))
 		err(EXIT_FAILURE, "cannot open pkgdb");
