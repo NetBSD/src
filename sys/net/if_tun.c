@@ -11,7 +11,7 @@
  * UCL. This driver is based much more on read/write/select mode of
  * operation though.
  * 
- * $Id: if_tun.c,v 1.11 1994/05/03 23:02:07 deraadt Exp $
+ * $Id: if_tun.c,v 1.12 1994/05/15 19:20:02 deraadt Exp $
  */
 
 #include "tun.h"
@@ -65,11 +65,12 @@ extern int ifqmaxlen;
 
 int	tunopen __P((dev_t, int, int, struct proc *));
 int	tunclose __P((dev_t, int));
-int	tunoutput __P((struct ifnet *, struct mbuf *, struct sockaddr *));
+int	tunoutput __P((struct ifnet *, struct mbuf *, struct sockaddr *,
+	    struct rtentry *rt));
 int	tunread __P((dev_t, struct uio *));
 int	tunwrite __P((dev_t, struct uio *));
-int	tuncioctl __P((dev_t, int, caddr_t, int));
-int	tunioctl __P((struct ifnet *, int, caddr_t, int));
+int	tuncioctl __P((dev_t, int, caddr_t, int, struct proc *));
+int	tunioctl __P((struct ifnet *, int, caddr_t));
 int	tunselect __P((dev_t, int));
 void	tunattach __P((int));
 
@@ -215,11 +216,10 @@ tuninit(unit)
  * Process an ioctl request.
  */
 int
-tunioctl(ifp, cmd, data, flag)
+tunioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	int	cmd;
 	caddr_t	data;
-	int	flag;
 {
 	struct tun_softc *tp = &tunctl[ifp->if_unit];
 	int		error = 0, s;
@@ -247,10 +247,11 @@ tunioctl(ifp, cmd, data, flag)
  * tunoutput - queue packets from higher level ready to put out.
  */
 int
-tunoutput(ifp, m0, dst)
+tunoutput(ifp, m0, dst, rt)
 	struct ifnet   *ifp;
 	struct mbuf    *m0;
 	struct sockaddr *dst;
+	struct rtentry *rt;
 {
 	struct tun_softc *tp = &tunctl[ifp->if_unit];
 	struct proc	*p;
@@ -324,11 +325,12 @@ tunoutput(ifp, m0, dst)
  * the cdevsw interface is now pretty minimal.
  */
 int
-tuncioctl(dev, cmd, data, flag)
+tuncioctl(dev, cmd, data, flag, p)
 	dev_t		dev;
 	int		cmd;
 	caddr_t		data;
 	int		flag;
+	struct proc	*p;
 {
 	int		unit = minor(dev), s;
 	struct tun_softc *tp = &tunctl[unit];
