@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.h,v 1.15 1999/12/12 00:00:42 tron Exp $	*/
+/*	$NetBSD: linux_syscall.h,v 1.16 2000/02/03 10:22:34 abs Exp $	*/
 
 /*
  * System call numbers.
@@ -346,6 +346,12 @@
 
 /* syscall: "personality" ret: "int" args: "int" */
 #define	LINUX_SYS_personality	136
+
+/* syscall: "setfsuid" ret: "int" args: "uid_t" */
+#define	LINUX_SYS_setfsuid	138
+
+/* syscall: "getfsuid" ret: "int" args: */
+#define	LINUX_SYS_getfsuid	139
 
 /* syscall: "llseek" ret: "int" args: "int" "u_int32_t" "u_int32_t" "caddr_t" "int" */
 #define	LINUX_SYS_llseek	140
