@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.9.4.12 2001/05/26 22:26:36 he Exp $
+.\"	$NetBSD: postinstall,v 1.9.4.13 2002/01/05 18:29:54 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -300,7 +300,7 @@ They are typically extracted into
 (though other locations work fine), with the commands:
 .Pp
 .Dl # Ic "mkdir /usr/pkgsrc"
-.Dl # Ic "( cd /usr/pkgsrc ; tar -zxpf - ) < pkgsrc.tar.gz"
+.Dl # Ic "( cd /usr/pkgsrc ; tar -zxpf - ) \*< pkgsrc.tar.gz"
 .Pp
 After extracting, then see the
 .Pa README
