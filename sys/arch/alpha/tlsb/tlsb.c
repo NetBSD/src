@@ -1,4 +1,4 @@
-/* $NetBSD: tlsb.c,v 1.8 1998/04/15 00:51:00 mjacob Exp $ */
+/* $NetBSD: tlsb.c,v 1.9 1998/05/13 23:23:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.8 1998/04/15 00:51:00 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.9 1998/05/13 23:23:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,14 +73,23 @@ static int	tlsbprint __P((void *, const char *));
 static int	tlsbsubmatch __P((struct device *, struct cfdata *, void *));
 static char	*tlsb_node_type_str __P((u_int32_t));
 
+/* There can be only one. */
+int	tlsb_found;
+
 static int
-tlsbprint(aux, cp)
+tlsbprint(aux, pnp)
 	void *aux;
-	const char *cp;
+	const char *pnp;
 {
 	struct tlsb_dev_attach_args *tap = aux;
-	printf(" node %d: %s", tap->ta_node,
-	    tlsb_node_type_str(tap->ta_dtype));
+
+	if (pnp)
+		printf("%s at %s node %d", tlsb_node_type_str(tap->ta_dtype),
+		    pnp, tap->ta_node);
+	else
+		printf(" node %d: %s", tap->ta_node,
+		    tlsb_node_type_str(tap->ta_dtype));
+
 	return (UNCONF);
 }
 
@@ -91,11 +100,11 @@ tlsbsubmatch(parent, cf, aux)
 	void *aux;
 {
 	struct tlsb_dev_attach_args *tap = aux;
-	if (tap->ta_name != tlsb_cd.cd_name)
-		return (0);
+
 	if (cf->cf_loc[TLSBCF_NODE] != TLSBCF_NODE_DEFAULT &&
 	    cf->cf_loc[TLSBCF_NODE] != tap->ta_node)
 		return (0);
+
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
 
@@ -116,7 +125,7 @@ tlsbmatch(parent, cf, aux)
 	 * and only available on 21000 processor type
 	 * platforms.
 	 */
-	if ((cputype != ST_DEC_21000) || (cf->cf_unit != 0))
+	if ((cputype != ST_DEC_21000) || tlsb_found)
 		return (0);
 
 	return (1);
@@ -136,6 +145,8 @@ tlsbattach(parent, self, aux)
 	struct cfdriver *cfd = &cpu_cd;
 
 	printf("\n");
+
+	tlsb_found = 1;
 
 	/*
 	 * Attempt to find all devices on the bus, including
@@ -164,7 +175,6 @@ tlsbattach(parent, self, aux)
 		}
 		if (TLDEV_ISIOPORT(tldev))
 			continue;	/* not interested right now */
-		ta.ta_name = tlsb_cd.cd_name;
 		ta.ta_node = node;
 		ta.ta_dtype = TLDEV_DTYPE(tldev);
 		ta.ta_swrev = TLDEV_SWREV(tldev);
@@ -202,7 +212,6 @@ tlsbattach(parent, self, aux)
 			continue;
 		}
 		if (TLDEV_ISIOPORT(tldev)) {
-			ta.ta_name = tlsb_cd.cd_name;
 			ta.ta_node = node;
 			ta.ta_dtype = TLDEV_DTYPE(tldev);
 			ta.ta_swrev = TLDEV_SWREV(tldev);
