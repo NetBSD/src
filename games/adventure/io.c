@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.14 2003/09/19 10:01:21 itojun Exp $	*/
+/*	$NetBSD: io.c,v 1.15 2003/09/19 10:01:53 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.14 2003/09/19 10:01:21 itojun Exp $");
+__RCSID("$NetBSD: io.c,v 1.15 2003/09/19 10:01:53 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -302,7 +302,7 @@ rdesc(sect)			/* read description-format msgs */
 				ptext[oldloc].txtlen = maystart - seekstart;
 				break;
 			case 6:/* random messages              */
-				if (oldloc > RTXSIZ) 
+				if (oldloc >= RTXSIZ) 
 					errx(1,"Too many random msgs");
 				rtext[oldloc].seekadr = seekhere;
 				rtext[oldloc].txtlen = maystart - seekstart;
