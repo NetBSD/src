@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.23 1998/01/13 12:52:32 mrg Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.24 1998/01/15 22:20:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -148,7 +148,7 @@
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
 
-#if defined(MACHINE_NEW_NONCONTIG)
+#define	MACHINE_NEW_NONCONTIG	/* VM <=> pmap interface modifier */
 
 #define VM_PHYSSEG_MAX		2	/* we only have one "hole" */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
@@ -157,14 +157,9 @@
 /*
  * pmap specific data stored in the vm_physmem[] array
  */
-
 struct pmap_physseg {
-  struct pv_entry *pvent;	/* pv_entry array */
-  char *attrs;			/* attrs array */
+	struct pv_entry *pvent;		/* pv_entry array */
+	char *attrs;			/* attrs array */
 };
 
-#else
-#define MACHINE_NONCONTIG	/* VM <=> pmap interface modifier */
-#endif
-
-#endif
+#endif /* _VMPARAM_H_ */
