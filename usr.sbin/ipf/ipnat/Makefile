@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2004/03/29 04:40:03 lukem Exp $
+#	$NetBSD: Makefile,v 1.21 2004/03/29 23:28:12 jmc Exp $
 
 PROG=		ipnat
 SRCS=		ipnat.c ipnat_y.c ipnat_l.c
@@ -6,6 +6,7 @@ MAN=		ipnat.8 ipnat.4 ipnat.5
 MLINKS=		ipnat.5 ipnat.conf.5
 DPADD+=		${LIBKVM}
 LDADD+=		-lkvm
+CPPFLAGS+=	-I.
 
 CLEANFILES+=	ipnat_y.c ipnat_y.h
 CLEANFILES+=	ipnat_l.c ipnat_l.h
