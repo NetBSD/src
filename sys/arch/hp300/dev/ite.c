@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.49 2001/12/08 03:34:39 gmcgarry Exp $	*/
+/*	$NetBSD: ite.c,v 1.50 2001/12/14 08:25:40 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -96,6 +96,7 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
+#include <machine/bus.h>
 
 #include <dev/cons.h>
 
@@ -120,8 +121,6 @@ cdev_decl(ite);
  */
 int	iteburst = 64;
 
-struct  ite_data *kbd_ite = NULL;
-
 int	itematch __P((struct device *, struct cfdata *, void *));
 void	iteattach __P((struct device *, struct device *, void *));
 
@@ -135,7 +134,18 @@ extern struct cfdriver ite_cd;
  * Terminal emulator state information, statically allocated
  * for the benefit of the console.
  */
-struct	ite_data ite_cn;
+static struct	ite_data ite_cn;
+
+/*
+ * console stuff
+ */
+static struct consdev ite_cons = {
+	NULL, NULL, itecngetc, itecnputc, nullcnpollc, NULL, NODEV, CN_NORMAL
+};
+static int console_kbd_attached;
+static int console_display_attached;
+static struct ite_kbdops *console_kbdops;
+static struct ite_kbdmap *console_kbdmap;
 
 void	iteinit __P((struct ite_data *));
 void	iteputchar __P((int, struct ite_data *));
@@ -248,12 +258,8 @@ iteon(ip, flag)
 	if (ip->flags & ITE_INGRF)
 		return(0);
 
-	if (kbd_ite == NULL || kbd_ite == ip) {
-		kbd_ite = ip;
-#if NHIL > 0
-		kbdenable(0);		/* XXX */
-#endif
-	}
+	if (console_kbdops != NULL)
+		(*console_kbdops->enable)(console_kbdops->arg);
 
 	iteinit(ip);
 	return(0);
@@ -539,16 +545,15 @@ void
 itefilter(stat, c)
 	char stat, c;
 {
-#if NHIL >0
 	static int capsmode = 0;
 	static int metamode = 0;
 	char code, *str;
 	struct tty *kbd_tty;
 
-	if (kbd_ite == NULL || kbd_ite->tty == NULL)
+	if (ite_cn.tty == NULL)
 		return;
 
-	kbd_tty = kbd_ite->tty;
+	kbd_tty = ite_cn.tty;
 
 	switch (c & 0xFF) {
 	case KBD_CAPSLOCK:
@@ -597,7 +602,6 @@ itefilter(stat, c)
 			code |= 0x80;
 		(*kbd_tty->t_linesw->l_rint)(code, kbd_tty);
 	}
-#endif
 }
 
 void
@@ -845,10 +849,8 @@ ignore:
 		break;
 
 	case CTRL('G'):
-		if (ip == kbd_ite)
-#if NHIL > 0
-			kbdbell(0);	/* XXX */
-#endif
+		if (console_kbdops != NULL)
+			(*console_kbdops->bell)(console_kbdops->arg);
 		break;
 
 	case ESC:
@@ -989,13 +991,15 @@ ite_major()
 	return (itemaj);
 }
 
+
+
 /*
  * Console functions.  Console probes are done by the individual
  * framebuffer drivers.
  */
 
 void
-itecninit(gp, isw)
+itedisplaycnattach(gp, isw)
 	struct grf_data *gp;
 	struct itesw *isw;
 {
@@ -1009,15 +1013,32 @@ itecninit(gp, isw)
 	ip->flags = ITE_ALIVE|ITE_CONSOLE|ITE_ACTIVE|ITE_ISCONS;
 	ip->attrbuf = ite_console_attributes;
 	iteinit(ip);
+	console_display_attached = 1;
 
-	/*
-	 * Initialize the console keyboard.
-	 */
-#if NHIL > 0
-	kbdcninit();
-#endif
+	if (console_kbd_attached && console_display_attached)
+		itecninit();
+}
 
-	kbd_ite = ip;		/* XXX */
+void
+itekbdcnattach(ops, map)
+	struct ite_kbdops *ops;
+	struct ite_kbdmap *map;
+{
+
+	console_kbdops = ops;
+	console_kbdmap = map;
+	console_kbd_attached = 1;
+
+	if (console_kbd_attached && console_display_attached)
+		itecninit();
+}
+
+void
+itecninit(void)
+{
+
+	cn_tab = &ite_cons;
+	cn_tab->cn_dev = makedev(ite_major(), 0);
 }
 
 /*ARGSUSED*/
@@ -1026,25 +1047,26 @@ itecngetc(dev)
 	dev_t dev;
 {
 	int c = 0;
-#if NHIL > 0
 	int stat;
 
-	c = kbdgetc(&stat);
+	if (console_kbdops == NULL)
+		return (-1);
+
+	c = (*console_kbdops->getc)(&stat);
 	switch ((stat >> KBD_SSHIFT) & KBD_SMASK) {
 	case KBD_SHIFT:
-		c = kbd_cn_shiftmap[c & KBD_CHARMASK];
+		c = console_kbdmap->shiftmap[c & KBD_CHARMASK];
 		break;
 	case KBD_CTRL:
-		c = kbd_cn_ctrlmap[c & KBD_CHARMASK];
+		c = console_kbdmap->ctrlmap[c & KBD_CHARMASK];
 		break;
 	case KBD_KEY:
-		c = kbd_cn_keymap[c & KBD_CHARMASK];
+		c = console_kbdmap->keymap[c & KBD_CHARMASK];
 		break;
 	default:
 		c = 0;
 		break;
 	}
-#endif
 	return(c);
 }
 
