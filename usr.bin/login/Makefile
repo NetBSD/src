@@ -2,6 +2,7 @@
 
 PROG=	login
 SRCS=	login.c
+CFLAGS+=-DDES
 DPADD=	${LIBUTIL}
 LDADD=	-lutil
 BINOWN=	root
