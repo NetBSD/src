@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.28 2003/10/26 00:02:02 kleink Exp $	*/
+/*	$NetBSD: math.h,v 1.29 2004/01/15 19:43:44 kleink Exp $	*/
 
 /*
  * ====================================================
@@ -39,6 +39,20 @@ union __long_double_u {
 #include <machine/math.h>		/* may use __float_u, __double_u,
 					   or __long_double_u */
 
+#ifdef __HAVE_LONG_DOUBLE
+#define	__fpmacro_unary_floating(__name, __arg0)			\
+	((sizeof (__arg0) == sizeof (float))				\
+	?	__ ## __name ## f (__arg0)				\
+	: (sizeof (__arg0) == sizeof (double))				\
+	?	__ ## __name ## d (__arg0)				\
+	:	__ ## __name ## l (__arg0))
+#else
+#define	__fpmacro_unary_floating(__name, __arg0)			\
+	((sizeof (__arg0) == sizeof (float))				\
+	?	__ ## __name ## f (__arg0)				\
+	:	__ ## __name ## d (__arg0))
+#endif /* __HAVE_LONG_DOUBLE
+
 /*
  * ANSI/POSIX
  */
@@ -74,6 +88,17 @@ extern __const union __long_double_u __infinityl;
 extern __const union __float_u __nanf;
 #define	NAN		__nanf.__val
 #endif /* __HAVE_NANF */
+
+/* 7.12#6 number classification macros */
+#define	FP_INFINITE	0x00
+#define	FP_NAN		0x01
+#define	FP_NORMAL	0x02
+#define	FP_SUBNORMAL	0x03
+#define	FP_ZERO		0x04
+/* NetBSD extensions */
+#define	_FP_LOMD	0x80		/* range for machine-specific classes */
+#define	_FP_HIMD	0xff
+
 #endif /* !_ANSI_SOURCE && ... */
 
 /*
@@ -211,6 +236,29 @@ double	scalb __P((double, double));
 #endif /* (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)*/
 #endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
 
+/*
+ * ISO C99
+ */
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE) || \
+    ((__STDC_VERSION__ - 0) >= 199901L) || \
+    ((_POSIX_C_SOURCE - 0) >= 200112L) || \
+    ((_XOPEN_SOURCE  - 0) >= 600) || \
+    defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
+/* 7.12.3.1 int fpclassify(real-floating x) */
+#define	fpclassify(__x)	__fpmacro_unary_floating(fpclassify, __x)
+
+/* 7.12.3.2 int isfinite(real-floating x) */
+#define	isfinite(__x)	__fpmacro_unary_floating(isfinite, __x)
+
+/* 7.12.3.5 int isnormal(real-floating x) */
+#define	isnormal(__x)	(fpclassify(__x) == FP_NORMAL)
+
+/* 7.12.3.6 int signbit(real-floating x) */
+#define	signbit(__x)	__fpmacro_unary_floating(signbit, __x)
+
+#endif /* !_ANSI_SOURCE && ... */
+
 #if defined(_NETBSD_SOURCE)
 #ifndef __cplusplus
 int	matherr __P((struct exception *));
@@ -340,6 +388,21 @@ float	gammaf_r __P((float, int *));
 float	lgammaf_r __P((float, int *));
 #endif /* !... || _REENTRANT */
 
+/*
+ * Library implementation
+ */
+int	__fpclassifyf __P((float));
+int	__fpclassifyd __P((double));
+int	__isfinitef __P((float));
+int	__isfinited __P((double));
+int	__signbitf __P((float));
+int	__signbitd __P((double));
+
+#ifdef __HAVE_LONG_DOUBLE
+int	__fpclassifyl __P((long double));
+int	__isfinitel __P((long double));
+int	__signbitl __P((long double));
+#endif
 __END_DECLS
 
 #endif /* _MATH_H_ */
