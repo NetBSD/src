@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.30 2002/05/06 03:17:43 lukem Exp $	*/
+/*	$NetBSD: pass2.c,v 1.31 2002/05/06 19:37:51 agc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass2.c,v 1.30 2002/05/06 03:17:43 lukem Exp $");
+__RCSID("$NetBSD: pass2.c,v 1.31 2002/05/06 19:37:51 agc Exp $");
 #endif
 #endif /* not lint */
 
@@ -144,8 +144,8 @@ pass2()
 	for (inpp = inpsort; inpp < inpend; inpp++) {
 		if (got_siginfo) {
 			fprintf(stderr,
-			    "%s: phase 2: dir %d of %d (%d%%)\n", cdevname(),
-			    inpp - inpsort, (int)inplast, 
+			    "%s: phase 2: dir %ld of %d (%d%%)\n", cdevname(),
+			    (long)(inpp - inpsort), (int)inplast, 
 			    (int)((inpp - inpsort) * 100 / inplast));
 			got_siginfo = 0;
 		}
