@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.13 1998/06/25 17:24:39 mark Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.14 1998/07/29 00:56:08 mark Exp $	*/
 
 /*
  * Copyright (c) 1995-1998 Mark Brinicombe.
@@ -111,9 +111,9 @@ ENTRY(copyout)
 	/* Do the actual copy */
 
 do_copyinout:
-	/* Quick exit if legnth is zero */	
+	/* Quick exit if length is zero */	
 	teq	r2, #0x00000000
-	moveq	r0, #0x000000000
+	moveq	r0, #0x00000000
 	moveq	pc, lr
 
 	stmfd	sp!, {r4}
@@ -173,7 +173,10 @@ Lcopyinoutfault:
 
 /* Source or Destination address was bad so fail */
 Lbadaddress:
-	mov	r0, #EFAULT
+	/* Don't return EFAULT if legnth was zero */
+	teq	r2, #0x00000000
+	moveq	r0, #0x00000000
+	movne	r0, #EFAULT
 	mov	pc, lr
 
 #ifdef DIAGNOSTIC
