@@ -1,4 +1,4 @@
-#	$NetBSD: TRINITY,v 1.96 2000/06/11 02:41:11 mycroft Exp $
+#	$NetBSD: TRINITY,v 1.97 2000/07/09 00:41:24 mycroft Exp $
 #	From: GENERIC,v 1.260 1999/09/28 18:07:29 thorpej Exp
 #
 #	TRINITY -- Mycroft's laptop
@@ -67,7 +67,7 @@ options 	DIAGNOSTIC	# cheap kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
-#options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
+options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	"KGDB_DEVNAME=\"com\"",KGDBADDR=0x3f8,KGDBRATE=9600
 #makeoptions	DEBUG="-g"	# compile full symbol table
