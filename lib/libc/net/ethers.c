@@ -1,4 +1,4 @@
-/*	$NetBSD: ethers.c,v 1.14 1998/11/13 15:46:53 christos Exp $	*/
+/*	$NetBSD: ethers.c,v 1.14.2.1 2000/10/19 18:34:33 he Exp $	*/
 
 /* 
  * ethers(3N) a la Sun.
@@ -184,13 +184,15 @@ ether_line(l, e, hostname)
 	char *hostname;
 {
 	u_int i[6];
-	static char buf[sizeof " %x:%x:%x:%x:%x:%x %s\\n" + 21];
-		/* XXX: 21 == strlen (ASCII representation of 2^64) */
 
-	if (! buf[0])
-		snprintf(buf, sizeof buf, " %%x:%%x:%%x:%%x:%%x:%%x %%%ds\\n",
-		    MAXHOSTNAMELEN);
-	if (sscanf(l, buf,
+#define S2(arg) #arg
+#define S1(arg) S2(arg)
+	const static char fmt[] = " %x:%x:%x:%x:%sx:%x"
+	    " %" S1(MAXHOSTNAMELEN) "s\n";
+#undef S2
+#undef S1
+
+	if (sscanf(l, fmt,
 	    &i[0], &i[1], &i[2], &i[3], &i[4], &i[5], hostname) == 7) {
 		e->ether_addr_octet[0] = (u_char)i[0];
 		e->ether_addr_octet[1] = (u_char)i[1];
