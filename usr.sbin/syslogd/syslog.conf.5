@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslog.conf.5,v 1.7 2000/04/12 16:38:58 kim Exp $
+.\"	$NetBSD: syslog.conf.5,v 1.7.4.1 2001/04/04 16:41:13 he Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -53,7 +53,7 @@ field which specifies the types of messages and priorities to which the
 line applies, and an
 .Em action
 field which specifies the action to be taken if a message
-.Xr syslogd
+.Xr syslogd 8
 receives matches the selection criteria.
 The
 .Em selector
@@ -98,7 +98,7 @@ These keywords correspond to the
 similar
 .Pq Dv LOG_
 values specified to the
-.Xr syslog
+.Xr syslog 3
 library routine.
 .Pp
 See
@@ -165,7 +165,7 @@ Selected messages are appended to the file.
 .It
 A hostname (preceded by an at (``@'') sign).
 Selected messages are forwarded to the
-.Xr syslogd
+.Xr syslogd 8
 program on the named host.
 .It
 A comma separated list of users.
