@@ -1,6 +1,6 @@
-/*	$NetBSD: bktr_tuner.c,v 1.6 2000/10/28 14:31:58 wiz Exp $	*/
+/*	$NetBSD: bktr_tuner.c,v 1.7 2000/12/30 16:52:37 wiz Exp $	*/
 
-/* FreeBSD: src/sys/dev/bktr/bktr_tuner.c,v 1.8 2000/10/15 14:18:06 phk Exp */
+/* FreeBSD: src/sys/dev/bktr/bktr_tuner.c,v 1.9 2000/10/19 07:33:28 roger Exp */
 
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
