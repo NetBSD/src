@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.53 2001/06/19 00:25:36 fvdl Exp $
+#  $NetBSD: Makefile,v 1.54 2001/11/05 15:22:23 lukem Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -44,6 +44,8 @@
 
 # require this for the value of I387_LIBM from mk.conf, if set.
 .include <bsd.own.mk>
+
+WARNS?=1
 
 .if (${MACHINE_ARCH} == "alpha")
 .PATH: ${.CURDIR}/arch/alpha
