@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.124.2.13 2002/04/17 00:06:29 nathanw Exp $	*/
+/*	$NetBSD: proc.h,v 1.124.2.14 2002/05/04 17:15:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -84,6 +84,7 @@ struct pgrp {
  */
 struct exec_package;
 struct ps_strings;
+struct lwp;
 
 struct emul {
 	const char	*e_name;	/* Symbolic name */
