@@ -33,7 +33,7 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)sbrk.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: sbrk.S,v 1.3 1999/01/14 22:48:22 kleink Exp $"
+	.asciz "$NetBSD: sbrk.S,v 1.3.10.1 2000/08/22 07:37:50 kleink Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -43,13 +43,17 @@
 	.globl	___minbrk
 	.globl	curbrk
 
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(sbrk, _sbrk)
+#endif
+
 	.data
 ___minbrk:
 	.long	_end
 curbrk:	.long	_end
 	.text
 
-ENTRY(sbrk, 0)
+ENTRY(_sbrk, 0)
 	addl3	curbrk,4(ap),-(sp)
 	pushl	$1
 	movl	ap,r3
