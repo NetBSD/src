@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.178 2003/01/24 05:51:04 thorpej Exp $	*/
+/*	$NetBSD: pciide.c,v 1.179 2003/01/25 04:45:24 thorpej Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.178 2003/01/24 05:51:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.179 2003/01/25 04:45:24 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -495,9 +495,19 @@ const struct pciide_product_desc pciide_promise_products[] =  {
 	  "Promise Ultra133TX2/ATA Bus Master IDE Accelerator",
 	  pdc202xx_chip_map,
 	},
+	{ PCI_PRODUCT_PROMISE_MBULTRA133,
+	  IDE_PCI_CLASS_OVERRIDE,
+	  "Promise Ultra133/ATA Bus Master IDE Accelerator (MB)",
+	  pdc202xx_chip_map,
+	},
 	{ PCI_PRODUCT_PROMISE_ULTRA133TX2v2,
 	  IDE_PCI_CLASS_OVERRIDE,
 	  "Promise Ultra133TX2v2/ATA Bus Master IDE Accelerator",
+	  pdc202xx_chip_map,
+	},
+	{ PCI_PRODUCT_PROMISE_FASTTRAK133LITE,
+	  IDE_PCI_CLASS_OVERRIDE,
+	  "Promise Fasttrak133 Lite Bus Master IDE Accelerator",
 	  pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_SATA150TX2PLUS,
@@ -3823,7 +3833,9 @@ hpt_pci_intr(arg)
 	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA100TX2v2 || \
 	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA133 ||	\
 	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA133TX2 ||	\
-	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA133TX2v2)
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_MBULTRA133 || \
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA133TX2v2 || \
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_FASTTRAK133LITE)
 #define PDC_IS_265(sc)							\
 	((sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA100 ||	\
 	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA100X ||	\
@@ -3831,17 +3843,23 @@ hpt_pci_intr(arg)
 	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA100TX2v2 || \
 	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA133 ||	\
 	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA133TX2 ||	\
-	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA133TX2v2)
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_MBULTRA133 || \
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA133TX2v2 || \
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_FASTTRAK133LITE)
 #define PDC_IS_268(sc)							\
 	((sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA100TX2 ||	\
 	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA100TX2v2 || \
 	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA133 ||	\
 	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA133TX2 ||	\
-	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA133TX2v2)
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_MBULTRA133 || \
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA133TX2v2 || \
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_FASTTRAK133LITE)
 #define PDC_IS_276(sc)							\
 	((sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA133 ||	\
 	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA133TX2 ||	\
-	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA133TX2v2)
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_MBULTRA133 || \
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA133TX2v2 || \
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_FASTTRAK133LITE)
 
 void
 pdc202xx_chip_map(sc, pa)
