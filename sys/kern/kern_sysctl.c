@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.148 2003/10/02 09:30:16 kleink Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.149 2003/10/03 15:33:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.148 2003/10/02 09:30:16 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.149 2003/10/03 15:33:42 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -295,19 +295,36 @@ static int
 sysctl_docptime(void *oldp, size_t *oldlenp, void *newp)
 {
 	u_int64_t cp_time[CPUSTATES];
-	int i;
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
+	int ncpus = sysctl_ncpus();
 
-	for (i = 0; i < CPUSTATES; i++)
-		cp_time[i] = 0;
+	if (*oldlenp == sizeof(cp_time)) {
+		size_t i;
 
-	for (CPU_INFO_FOREACH(cii, ci)) {
 		for (i = 0; i < CPUSTATES; i++)
-			cp_time[i] += ci->ci_schedstate.spc_cp_time[i];
-	}
-	return (sysctl_rdstruct(oldp, oldlenp, newp,
-	    cp_time, sizeof(cp_time)));
+			cp_time[i] = 0;
+
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			for (i = 0; i < CPUSTATES; i++)
+				cp_time[i] += ci->ci_schedstate.spc_cp_time[i];
+		}
+		return sysctl_rdstruct(oldp, oldlenp, newp,
+		    cp_time, sizeof(cp_time));
+	} else if (*oldlenp == sizeof(cp_time) * ncpus) {
+		int error;
+
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			if ((error = sysctl_rdstruct(oldp, oldlenp, newp,
+			    ci->ci_schedstate.spc_cp_time,
+			    sizeof(ci->ci_schedstate.spc_cp_time))) != 0)
+				return error;
+			oldp = ((char *)oldp) + sizeof(cp_time);
+		}
+		*oldlenp = ncpus * sizeof(cp_time);
+		return 0;
+	} else
+		return EINVAL;
 }
 
 static int
