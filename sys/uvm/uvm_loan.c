@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.21 2000/06/26 14:21:18 mrg Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.22 2000/06/27 17:29:25 mrg Exp $	*/
 
 /*
  *
@@ -44,8 +44,6 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/mman.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm.h>
 
