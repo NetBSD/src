@@ -1,4 +1,4 @@
-/*	$NetBSD: ed.h,v 1.25 1998/10/13 17:04:15 wsanchez Exp $	*/
+/*	$NetBSD: ed.h,v 1.26 1998/11/04 13:39:08 christos Exp $	*/
 
 /* ed.h: type and constant definitions for the ed editor. */
 /*
@@ -185,7 +185,7 @@ if ((i) > (n)) { \
 /* NEWLINE_TO_NUL: overwrite newlines with ASCII NULs */
 #define NEWLINE_TO_NUL(s, l) translit_text(s, l, '\n', '\0')
 
-#ifdef sun
+#if defined(sun) && !defined(__SVR4)
 # define strerror(n) sys_errlist[n]
 #endif
 
@@ -292,6 +292,6 @@ extern char errmsg[];
 extern long first_addr;
 extern int lineno;
 extern long second_addr;
-#ifdef sun
+#if defined(sun) && !defined(__SVR4)
 extern char *sys_errlist[];
 #endif
