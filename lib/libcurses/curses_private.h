@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.31 2003/06/26 17:17:10 dsl Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.32 2003/07/30 11:19:00 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -123,6 +123,7 @@ struct __window {		/* Window structure. */
 	wchar_t	bch;			/* Background character */
 	attr_t	battr;			/* Background attributes */
 	int	scr_t, scr_b;		/* Scrolling region top, bottom */
+	SCREEN	*screen;		/* Screen for this window */
 };
 
 /* Set of attributes unset by 'me' - 'mb', 'md', 'mh', 'mk', 'mp' and 'mr'. */
@@ -310,7 +311,6 @@ extern int		 __pfast;
 extern int		 __rawmode;
 extern int		 __noqch;
 extern attr_t		 __mask_op, __mask_me, __mask_ue, __mask_se;
-extern struct __winlist	*__winlistp;
 extern WINDOW		*__virtscr;
 extern int		 __using_color;
 extern attr_t		 __default_color;
