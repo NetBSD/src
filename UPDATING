@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.92 2003/07/03 15:29:15 wiz Exp $
+$NetBSD: UPDATING,v 1.93 2003/07/26 17:10:25 salo Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -71,7 +71,7 @@ Recent changes:
 	CVS repository layout was changed.  See the following for details
 	if you are using (anonymous) cvs to update your tree.
 
-	http://mail-index.netbsd.org/netbsd-announce/2002/12/19/0000.html
+	http://mail-index.NetBSD.org/netbsd-announce/2002/12/19/0000.html
 
 20021219:
 	install(1) had a '-N dbdir' option added, to specify an
@@ -135,12 +135,12 @@ Recent changes:
 	The only work-around for the problem is to recompile all of
 	the libraries on the system.  The easiest way to do this for
 	system libraries is to install a binary snapshot; they are
-	generally available on releng.netbsd.org.  Any packages you
+	generally available on releng.NetBSD.org.  Any packages you
 	have installed which supply libraries will have to be recompiled
 	if you wish to link new programs against those libraries.
 
 	If you have questions about this matter, please contact
-	port-arm@netbsd.org.
+	port-arm@NetBSD.org.
 
 20021011:
 	Systrace has been improved to support privilege elevation.

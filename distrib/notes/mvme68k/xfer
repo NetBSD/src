@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.14 2002/11/18 12:39:52 lukem Exp $
+.\"	$NetBSD: xfer,v 1.15 2003/07/26 17:07:12 salo Exp $
 .
 Installation is supported from several media types, including:
 .(bullet
@@ -182,12 +182,12 @@ automates the work required to configure the network interface and
 transfer the files.
 .Pp
 This method, of course, requires network access to an FTP server.
-This might be a local system, or it might even be ftp.netbsd.org itself.
-If you wish to use ftp.netbsd.org as your FTP file
+This might be a local system, or it might even be ftp.NetBSD.org itself.
+If you wish to use ftp.NetBSD.org as your FTP file
 server, you may want to keep the following information handy:
 .Pp
 .(disp
-No IP Address: ftp.netbsd.org
+No IP Address: ftp.NetBSD.org
 Login: anonymous
 Password: \*<your e-mail address\*>
 Server path: /pub/NetBSD/NetBSD-\*V/\*M/binary
@@ -195,5 +195,5 @@ Server path: /pub/NetBSD/NetBSD-\*V/\*M/binary
 .(Note
 If you're not using a nameserver during installation,
 you might find 204.152.184.75 handy; it's the IP address of
-ftp.netbsd.org as of October, 2000.
+ftp.NetBSD.org as of October, 2000.
 .Note)

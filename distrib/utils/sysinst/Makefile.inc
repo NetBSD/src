@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.26 2003/07/25 08:26:21 dsl Exp $
+#	$NetBSD: Makefile.inc,v 1.27 2003/07/26 17:07:38 salo Exp $
 #
 # Makefile for sysinst
 
@@ -32,7 +32,7 @@ CPPFLAGS+=-DINET6
 
 
 # Host to ftp from.  Default:
-#	"ftp.netbsd.org"
+#	"ftp.NetBSD.org"
 #
 .if defined(SYSINST_FTP_HOST)
 CPPFLAGS+=	-DSYSINST_FTP_HOST=\"${SYSINST_FTP_HOST}\"
