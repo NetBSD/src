@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.38 2001/07/12 23:35:42 thorpej Exp $ */
+/* $NetBSD: autoconf.c,v 1.38.14.1 2002/05/16 16:06:34 gehenna Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.38 2001/07/12 23:35:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.38.14.1 2002/05/16 16:06:34 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,13 +54,14 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.38 2001/07/12 23:35:42 thorpej Exp $"
 #include <sys/disklabel.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
+#include <sys/conf.h>
 #include <dev/cons.h>
 
 #include <machine/autoconf.h>
 #include <machine/alpha.h>
 #include <machine/cpu.h>
 #include <machine/prom.h>
-#include <machine/conf.h>
+#include <machine/cpuconf.h>
 #include <machine/intr.h>
 
 struct device		*booted_device;

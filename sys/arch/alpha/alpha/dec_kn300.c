@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn300.c,v 1.23 2001/08/20 12:20:04 wiz Exp $ */
+/* $NetBSD: dec_kn300.c,v 1.23.14.1 2002/05/16 16:06:36 gehenna Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -34,18 +34,18 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.23 2001/08/20 12:20:04 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.23.14.1 2002/05/16 16:06:36 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/termios.h>
+#include <sys/conf.h>
 #include <dev/cons.h>
 
 #include <machine/rpb.h>
 #include <machine/alpha.h>
 #include <machine/autoconf.h>
-#include <machine/conf.h>
 #include <machine/frame.h>
 #include <machine/cpuconf.h>
 
