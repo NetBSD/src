@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.49 2003/08/20 21:48:40 fvdl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.50 2003/10/27 14:11:47 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.49 2003/08/20 21:48:40 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.50 2003/10/27 14:11:47 junyoung Exp $");
 
 #include "opt_vm86.h"
 #include "npx.h"
@@ -301,7 +301,7 @@ process_write_regs(struct lwp *l, struct reg *regs)
 
 #ifdef VM86
 	if (regs->r_eflags & PSL_VM) {
-		void syscall_vm86 __P((struct trapframe *));
+		void syscall_vm86(struct trapframe *);
 
 		tf->tf_vm86_gs = regs->r_gs;
 		tf->tf_vm86_fs = regs->r_fs;
