@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.33 1996/02/04 02:16:02 christos Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.34 1996/02/09 18:59:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -53,6 +53,7 @@
 
 #include <vm/vm.h>
 
+void limfree __P((struct plimit *));
 /*
  * Resource controls and accounting.
  */

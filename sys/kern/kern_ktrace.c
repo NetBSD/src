@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.22 1996/02/04 02:15:39 christos Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -49,8 +49,6 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-
-#include <kern/kern_extern.h>
 
 struct ktr_header *ktrgetheader __P((int));
 int ktrops __P((struct proc *, struct proc *, int, int, struct vnode *));

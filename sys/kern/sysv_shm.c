@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.35 1996/02/04 02:17:10 christos Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.36 1996/02/09 19:00:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles Hannum.  All rights reserved.
@@ -49,8 +49,6 @@
 #include <vm/vm_map.h>
 #include <vm/vm_map.h>
 #include <vm/vm_kern.h>
-
-#include <kern/kern_extern.h>
 
 struct shmid_ds *shm_find_segment_by_shmid __P((int));
 void shmexit __P((struct proc *));

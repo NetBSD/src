@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.81 1996/02/04 02:15:09 christos Exp $	*/
+/*	$NetBSD: init_main.c,v 1.82 1996/02/09 18:59:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -62,6 +62,18 @@
 #include <sys/protosw.h>
 #include <sys/reboot.h>
 #include <sys/user.h>
+#include <sys/cpu.h>
+#ifdef SYSVSHM
+#include <sys/shm.h>
+#endif
+#ifdef SYSVSEM
+#include <sys/sem.h>
+#endif
+#ifdef SYSVMSG
+#include <sys/msg.h>
+#endif
+#include <sys/domain.h>
+#include <sys/mbuf.h>
 
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
@@ -72,8 +84,6 @@
 
 #include <vm/vm.h>
 #include <vm/vm_pageout.h>
-
-#include <kern/kern_extern.h>
 
 #include <net/if.h>
 #include <net/raw_cb.h>
@@ -143,7 +153,6 @@ main(framep)
 	void *framep;				/* XXX should go away */
 {
 	register struct proc *p;
-	register struct filedesc0 *fdp;
 	register struct pdevinit *pdev;
 	register int i;
 	int s;
@@ -388,7 +397,7 @@ start_init(p)
 	int options, i, error;
 	register_t retval[2];
 	char flags[4], *flagsp;
-	char **pathp, *path, *ucp, **uap, *arg0, *arg1;
+	char **pathp, *path, *ucp, **uap, *arg0, *arg1 = NULL;
 
 	/*
 	 * Now in process 1.

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.9 1996/02/04 02:16:46 christos Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.10 1996/02/09 19:00:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -40,13 +40,11 @@
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-
+#include <sys/cpu.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>
-
-#include <kern/kern_extern.h>
 
 #ifdef GPROF
 #include <sys/malloc.h>

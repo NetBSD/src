@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.52 1996/02/04 02:16:10 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.53 1996/02/09 18:59:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -59,6 +59,8 @@
 #include <sys/syslog.h>
 #include <sys/stat.h>
 #include <sys/core.h>
+#include <sys/ptrace.h>
+#include <sys/cpu.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -67,8 +69,6 @@
 
 #include <vm/vm.h>
 #include <sys/user.h>		/* for coredump */
-
-#include <kern/kern_extern.h>
 
 void stop __P((struct proc *p));
 void killproc __P((struct proc *, char *));

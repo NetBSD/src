@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.17 1996/02/04 20:32:15 pk Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -51,7 +51,6 @@
 #include <sys/stat.h>
 #include <sys/mbuf.h>
 
-#include <kern/kern_extern.h>
 /*
  * Unix communications domain.
  *
