@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.88 2004/01/15 09:14:54 jmmv Exp $
+.\"	$NetBSD: rc.conf.5,v 1.89 2004/07/15 03:29:55 atatat Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -316,6 +316,10 @@ Runs the
 utility.
 Passes
 .Sy savecore_flags .
+The directory where crash dumps are stored is specified by
+.Sy savecore_dir .
+The default setting is
+.Dq /var/crash .
 .It Sy tpctl
 .Sq YES
 or
