@@ -1,4 +1,4 @@
-.\"	$NetBSD: pciide.4,v 1.29 2001/05/11 10:05:37 bouyer Exp $
+.\"	$NetBSD: pciide.4,v 1.30 2001/06/12 11:26:21 wiz Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -20,8 +20,8 @@
 .\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 .\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
-.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,    
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
 .\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
 .\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
 .\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -76,7 +76,7 @@ Promise PDC20246 (Ultra/33), PDC20262 (Ultra/66), and PDC20265/PDC20267 (Ultra10
 Silicon Integrated System 5597/5598 IDE controller
 .It
 VIA Technologies VT82C586, VT82C586A, VT82C596A and VT82C686A IDE Controllers
-.El 
+.El
 Some of these controllers are only available in multifunction PCI chips.
 .Pp
 The 0x0001 flag forces the
@@ -109,8 +109,8 @@ per-drive basis with config flags, see
 The bug, if triggered, will cause a total system hang.
 .Pp
 The timings used for the PIO and DMA modes for controllers listed above
-are for a PCI bus running at 30 or 33 Mhz (except the OPTi controller,
-which supports both 25 and 33 Mhz PCI bus timings). This driver may not
+are for a PCI bus running at 30 or 33 MHz (except the OPTi controller,
+which supports both 25 and 33 MHz PCI bus timings). This driver may not
 work properly on overclocked systems.
 .Sh SEE ALSO
 .Xr intro 4 ,
