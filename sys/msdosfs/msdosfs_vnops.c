@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.48.4.1 1996/07/30 17:36:09 jtc Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.48.4.2 1996/12/10 08:27:45 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -61,7 +61,7 @@
 #include <sys/signalvar.h>
 #include <miscfs/specfs/specdev.h> /* XXX */	/* defines v_rdev */
 #include <sys/malloc.h>
-#include <sys/dir.h>		/* defines dirent structure */
+#include <sys/dirent.h>
 #include <sys/lockf.h>
 
 #include <vm/vm.h>
