@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.18 2002/11/01 11:31:56 mrg Exp $	*/
+/*	$NetBSD: ld.c,v 1.19 2003/01/27 02:43:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.18 2002/11/01 11:31:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.19 2003/01/27 02:43:30 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -117,21 +117,24 @@ ldattach(struct ld_softc *sc)
 	if (sc->sc_maxxfer > MAXPHYS)
 		sc->sc_maxxfer = MAXPHYS;
 
-	/* Build synthetic geometry. */
-	if (sc->sc_secperunit <= 528 * 2048)		/* 528MB */
-		sc->sc_nheads = 16;
-	else if (sc->sc_secperunit <= 1024 * 2048)	/* 1GB */
-		sc->sc_nheads = 32;
-	else if (sc->sc_secperunit <= 21504 * 2048)	/* 21GB */
-		sc->sc_nheads = 64;
-	else if (sc->sc_secperunit <= 43008 * 2048)	/* 42GB */
-		sc->sc_nheads = 128;
-	else
-		sc->sc_nheads = 255;
+	/* Build synthetic geometry if necessary. */
+	if (sc->sc_nheads == 0 || sc->sc_nsectors == 0 ||
+	    sc->sc_ncylinders == 0) {
+		if (sc->sc_secperunit <= 528 * 2048)		/* 528MB */
+			sc->sc_nheads = 16;
+		else if (sc->sc_secperunit <= 1024 * 2048)	/* 1GB */
+			sc->sc_nheads = 32;
+		else if (sc->sc_secperunit <= 21504 * 2048)	/* 21GB */
+			sc->sc_nheads = 64;
+		else if (sc->sc_secperunit <= 43008 * 2048)	/* 42GB */
+			sc->sc_nheads = 128;
+		else
+			sc->sc_nheads = 255;
 
-	sc->sc_nsectors = 63;
-	sc->sc_ncylinders = sc->sc_secperunit / 
-	    (sc->sc_nheads * sc->sc_nsectors);
+		sc->sc_nsectors = 63;
+		sc->sc_ncylinders = sc->sc_secperunit / 
+		    (sc->sc_nheads * sc->sc_nsectors);
+	}
 
 	format_bytes(buf, sizeof(buf), (u_int64_t)sc->sc_secperunit *
 	    sc->sc_secsize);
