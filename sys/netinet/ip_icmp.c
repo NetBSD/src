@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.67 2002/06/09 16:33:40 itojun Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.68 2002/06/13 16:25:54 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.67 2002/06/09 16:33:40 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.68 2002/06/13 16:25:54 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -172,7 +172,7 @@ extern int icmperrppslim;
 static int icmperrpps_count = 0;
 static struct timeval icmperrppslim_last;
 static int icmp_rediraccept = 1;
-static int icmp_redirtimeout = 0;
+static int icmp_redirtimeout = 600;
 static struct rttimer_queue *icmp_redirect_timeout_q = NULL;
 
 static void icmp_mtudisc_timeout __P((struct rtentry *, struct rttimer *));
