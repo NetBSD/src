@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.c,v 1.21.2.2 2001/09/21 22:35:21 nathanw Exp $ */
+/* $NetBSD: osf1_exec.c,v 1.21.2.3 2001/09/25 16:13:22 nathanw Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -34,6 +34,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
+#include <sys/exec.h>
 
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_syscall.h>
