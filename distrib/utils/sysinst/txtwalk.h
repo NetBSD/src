@@ -1,4 +1,4 @@
-/*	$NetBSD: txtwalk.h,v 1.2 1998/06/20 13:05:51 mrg Exp $	*/
+/*	$NetBSD: txtwalk.h,v 1.3 1998/09/17 05:57:28 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -60,7 +60,7 @@ struct lookfor {
 
 /*  Format string for the expected string:
  *  space => skip white space
- *  %i    => skip non-white space
+ *  %ic   => skip until you find char c, if c == space, matches any white space
  *  %d    => expect an integer
  *  %s    => expect a non-white space string
  *  \0    => ignore remainder of line
