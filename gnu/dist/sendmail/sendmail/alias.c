@@ -13,7 +13,7 @@
 #include <sendmail.h>
 
 #ifndef lint
-static char id[] = "@(#)Id: alias.c,v 8.142.4.1 2000/05/25 18:56:12 gshapiro Exp";
+static char id[] = "@(#)Id: alias.c,v 8.142.4.9 2000/11/08 20:58:42 geir Exp";
 #endif /* ! lint */
 
 # define SEPARATOR ':'
@@ -279,7 +279,7 @@ setalias(spec)
 		map = &s->s_map;
 		memset(map, '\0', sizeof *map);
 		map->map_mname = s->s_name;
-		p = strpbrk(p,ALIAS_SPEC_SEPARATORS);
+		p = strpbrk(p, ALIAS_SPEC_SEPARATORS);
 		if (p != NULL && *p == SEPARATOR)
 		{
 			/* map name */
@@ -732,7 +732,7 @@ readaliases(map, af, announcestats, logstats)
 			register char *nlp;
 
 			nlp = &p[strlen(p)];
-			if (nlp[-1] == '\n')
+			if (nlp > p && nlp[-1] == '\n')
 				*--nlp = '\0';
 
 			if (CheckAliases)
@@ -837,11 +837,11 @@ readaliases(map, af, announcestats, logstats)
 	CurEnv->e_to = NULL;
 	FileName = NULL;
 	if (Verbose || announcestats)
-		message("%s: %d aliases, longest %d bytes, %d bytes total",
+		message("%s: %ld aliases, longest %ld bytes, %ld bytes total",
 			map->map_file, naliases, longest, bytes);
 	if (LogLevel > 7 && logstats)
 		sm_syslog(LOG_INFO, NOQID,
-			"%s: %d aliases, longest %d bytes, %d bytes total",
+			"%s: %ld aliases, longest %ld bytes, %ld bytes total",
 			map->map_file, naliases, longest, bytes);
 }
 /*

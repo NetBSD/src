@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -13,7 +13,7 @@
 
 #ifndef lint
 static char copyright[] =
-"@(#) Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.\n\
+"@(#) Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.\n\
 	All rights reserved.\n\
      Copyright (c) 1983 Eric P. Allman.  All rights reserved.\n\
      Copyright (c) 1988, 1993\n\
@@ -21,7 +21,7 @@ static char copyright[] =
 #endif /* ! lint */
 
 #ifndef lint
-static char id[] = "@(#)Id: praliases.c,v 8.59.4.10 2000/07/18 05:41:39 gshapiro Exp";
+static char id[] = "@(#)Id: praliases.c,v 8.59.4.18 2001/01/22 19:00:18 gshapiro Exp";
 #endif /* ! lint */
 
 #include <sys/types.h>
@@ -56,6 +56,8 @@ BITMAP256 DontBlameSendmail;
 
 extern void	syserr __P((const char *, ...));
 
+# define DELIMITERS		" ,/"
+# define PATH_SEPARATOR		':'
 
 int
 main(argc, argv)
@@ -170,7 +172,7 @@ main(argc, argv)
 					break;
 				b = p;
 
-				p = strpbrk(p, " ,/");
+				p = strpbrk(p, DELIMITERS);
 
 				/* find end of spec */
 				if (p != NULL)
@@ -244,7 +246,7 @@ praliases(filename, argc, argv)
 	SMDB_DBPARAMS params;
 	SMDB_USER_INFO user_info;
 
-	colon = strchr(filename, ':');
+	colon = strchr(filename, PATH_SEPARATOR);
 	if (colon == NULL)
 	{
 		db_name = filename;
@@ -262,11 +264,27 @@ praliases(filename, argc, argv)
 	{
 		while (isascii(*db_name) && isspace(*db_name))
 			db_name++;
+
 		if (*db_name != '-')
 			break;
 		while (*db_name != '\0' &&
 		       !(isascii(*db_name) && isspace(*db_name)))
 			db_name++;
+	}
+
+	/* Skip non-file based DB types */
+	if (db_type != NULL && *db_type != '\0')
+	{
+		if (db_type != SMDB_TYPE_DEFAULT &&
+		    strcmp(db_type, "hash") != 0 &&
+		    strcmp(db_type, "btree") != 0 &&
+		    strcmp(db_type, "dbm") != 0)
+		{
+			fprintf(stderr,
+				"praliases: Skipping non-file based alias type %s\n",
+				db_type);
+			return;
+		}
 	}
 
 	if (*db_name == '\0' || (db_type != NULL && *db_type == '\0'))
@@ -313,20 +331,20 @@ praliases(filename, argc, argv)
 		{
 #if 0
 			/* skip magic @:@ entry */
-			if (db_key.data.size == 2 &&
-			    db_key.data.data[0] == '@' &&
-			    db_key.data.data[1] == '\0' &&
-			    db_value.data.size == 2 &&
-			    db_value.data.data[0] == '@' &&
-			    db_value.data.data[1] == '\0')
+			if (db_key.size == 2 &&
+			    db_key.data[0] == '@' &&
+			    db_key.data[1] == '\0' &&
+			    db_value.size == 2 &&
+			    db_value.data[0] == '@' &&
+			    db_value.data[1] == '\0')
 				continue;
 #endif /* 0 */
 
 			printf("%.*s:%.*s\n",
-			       (int) db_key.data.size,
-			       (char *) db_key.data.data,
-			       (int) db_value.data.size,
-			       (char *) db_value.data.data);
+			       (int) db_key.size,
+			       (char *) db_key.data,
+			       (int) db_value.size,
+			       (char *) db_value.data);
 		}
 
 		if (result != SMDBE_OK && result != SMDBE_LAST_ENTRY)
@@ -341,19 +359,19 @@ praliases(filename, argc, argv)
 	{
 		memset(&db_key, '\0', sizeof db_key);
 		memset(&db_value, '\0', sizeof db_value);
-		db_key.data.data = *argv;
-		db_key.data.size = strlen(*argv) + 1;
+		db_key.data = *argv;
+		db_key.size = strlen(*argv) + 1;
 		if (database->smdb_get(database, &db_key,
 				       &db_value, 0) == SMDBE_OK)
 		{
 			printf("%.*s:%.*s\n",
-			       (int) db_key.data.size,
-			       (char *) db_key.data.data,
-			       (int) db_value.data.size,
-			       (char *) db_value.data.data);
+			       (int) db_key.size,
+			       (char *) db_key.data,
+			       (int) db_value.size,
+			       (char *) db_value.data);
 		}
 		else
-			printf("%s: No such key\n", (char *) db_key.data.data);
+			printf("%s: No such key\n", (char *) db_key.data);
 	}
 
  fatal:
