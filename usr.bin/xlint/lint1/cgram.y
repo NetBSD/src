@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.32 2003/05/20 13:59:32 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.33 2003/05/24 22:17:46 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.32 2003/05/20 13:59:32 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.33 2003/05/24 22:17:46 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1316,14 +1316,17 @@ expr_stmnt_val:
 		expr($1, 0, 0, 0);
 		ftflg = 0;
 	  }
+	| non_expr_stmnt {
+		$$ = getnode();
+		$$->tn_type = gettyp(VOID);
+	}
 	;
 
 expr_stmnt_list:
 	  expr_stmnt_val
-	| non_expr_stmnt expr_stmnt_val {
+	| expr_stmnt_list expr_stmnt_val {
 		$$ = $2;
 	}
-	| expr_stmnt_list expr_stmnt_val
 	;
 
 selection_stmnt:
