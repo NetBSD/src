@@ -1,4 +1,4 @@
-.\" $NetBSD: ioctl.9,v 1.13 2002/02/13 08:18:42 ross Exp $
+.\" $NetBSD: ioctl.9,v 1.14 2002/04/22 08:44:05 enami Exp $
 .\"
 .\" Copyright (c) 1999  The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -244,30 +244,31 @@ In order for the new ioctl to be known to the system it is installed
 in either \*[Lt]sys/ioctl.h\*[Gt] or one of the files that are reached from
 \*[Lt]sys/ioctl.h\*[Gt].
 .Sh EXAMPLES
-.Bd -literal
-   #define FOOIOCTL	_IOWR('i',23,int)
+.Bd -literal -offset indent
+#define	FOOIOCTL	_IOWR('i', 23, int)
 
-   int a=3;
-   error =  ioctl(s,FOOICTL, \*[Am]a);
+int a = 3;
+error = ioctl(s, FOOICTL, \*[Am]a);
 .Ed
 .Pp
 Within the ioctl()-routine of the driver, it can be then accessed like
-.Bd -literal
-   driver_ioctl(..,cmd,data)
-                u_long cmd;
-                caddr_t data;
+.Bd -literal -offset indent
+driver_ioctl(..., u_long cmd, caddr_t data)
+{
+	...
+	switch (cmd) {
 
-   ...
-   switch(cmd) {
-       case FOOIOCTL:
-           int *a = (int *)data;
-	   printf(" Value passed: %d\n",a);
-   }
+	case FOOIOCTL:
+		int *a = (int *)data;
+		printf(" Value passed: %d\en", *a);
+		break;
+	}
+}
 .Ed
 .Sh NOTES
 Note that if you e.g. try to read information from e.g. a ethernet
 driver where the name of the card is included in the third argument
-(e.g. ioctl(s,READFROMETH,struct ifreq *)), then you have to use
+(e.g. ioctl(s, READFROMETH, struct ifreq *)), then you have to use
 the _IOWR() form not the _IOR(), as passing the name of the card to the
 kernel already consists of writing data.
 .Sh SEE ALSO
