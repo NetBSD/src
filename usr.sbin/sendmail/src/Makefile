@@ -22,7 +22,7 @@ SRCS=	alias.c arpadate.c clock.c collect.c conf.c convtime.c daemon.c \
 	stab.c stats.c sysexits.c trace.c udb.c usersmtp.c \
 	util.c version.c
 DPADD=	$(LIBUTIL)
-LDADD=	$(LIBUTIL)
+LDADD=	-lutil
 MAN1=	newaliases.0
 MAN5=	aliases.0
 MAN8=	sendmail.0 
