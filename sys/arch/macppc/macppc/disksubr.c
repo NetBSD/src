@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.26 2003/04/16 15:01:04 bouyer Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.27 2003/05/02 08:45:20 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -562,7 +562,7 @@ done:
  * If the first longword of the disk is a NetBSD disk label magic number,
  * then we assume that it's a real disklabel and return it.
  */
-char *
+const char *
 readdisklabel(dev, strat, lp, osdep)
 	dev_t dev;
 	void (*strat)(struct buf *);

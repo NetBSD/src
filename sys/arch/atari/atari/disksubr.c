@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.26 2003/04/03 17:49:22 he Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.27 2003/05/02 08:45:21 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -130,7 +130,7 @@ bounds_check_with_label(bp, lp, wlabel)
  * (e.g. sector size) must be filled in before calling us.
  * Returns NULL on success and an error string on failure.
  */
-char *
+const char *
 readdisklabel(dev, strat, lp, clp)
 	dev_t			dev;
 	void			(*strat)(struct buf *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.26 2003/04/02 20:53:13 he Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.27 2003/05/02 08:45:11 dsl Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -344,7 +344,7 @@ rdattach(struct device *parent, struct device *self, void *aux)
 	struct rdsoftc *rd = (void*)self;
 	struct hdc_attach_args *ha = aux;
 	struct disklabel *dl;
-	char *msg;
+	const char *msg;
 
 	rd->sc_drive = ha->ha_drive;
 	/*

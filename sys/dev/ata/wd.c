@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.250 2003/04/27 14:33:20 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.251 2003/05/02 08:45:25 dsl Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.250 2003/04/27 14:33:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.251 2003/05/02 08:45:25 dsl Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1082,7 +1082,7 @@ wdgetdisklabel(wd)
 	struct wd_softc *wd;
 {
 	struct disklabel *lp = wd->sc_dk.dk_label;
-	char *errstring;
+	const char *errstring;
 
 	WDCDEBUG_PRINT(("wdgetdisklabel\n"), DEBUG_FUNCS);
 

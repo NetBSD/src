@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.32 2003/01/18 07:10:34 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.33 2003/05/02 08:45:15 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -115,7 +115,7 @@ bad:
  * (e.g., sector size) must be filled in before calling us.
  * Returns null on success and an error string on failure.
  */
-char *
+const char *
 readdisklabel(dev_t dev, void (*strat)(struct buf *),
     struct disklabel *lp, struct cpu_disklabel *osdep)
 {
