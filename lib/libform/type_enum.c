@@ -1,4 +1,4 @@
-/*	$NetBSD: type_enum.c,v 1.7 2003/03/09 00:57:19 lukem Exp $	*/
+/*	$NetBSD: type_enum.c,v 1.8 2004/03/22 18:59:48 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,12 +30,19 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: type_enum.c,v 1.7 2003/03/09 00:57:19 lukem Exp $");
+__RCSID("$NetBSD: type_enum.c,v 1.8 2004/03/22 18:59:48 jdc Exp $");
 
+#include <ctype.h>
 #include <stdlib.h>
 #include <strings.h>
 #include "form.h"
 #include "internals.h"
+
+/*
+ * Prototypes.
+ */
+static int
+trim_blanks(char *field);
 
 /*
  * The enum type handling.
@@ -46,8 +53,29 @@ typedef struct
 	char **choices;
 	unsigned num_choices;
 	bool ignore_case;
-	bool no_blanks;
+	bool exact;
 } enum_args;
+
+/*
+ * Find the first non-blank character at the end of a field, return the
+ * index of that character.
+ */
+static int
+trim_blanks(char *field)
+{
+	int i;
+
+	i = strlen(field);
+	if (i > 0)
+		i--;
+	else
+		return 0;
+	
+	while ((i > 0) && isblank(field[i]))
+		i--;
+	
+	return i;
+}
 
 /*
  * Create the enum arguments structure from the given args.  Return NULL
@@ -64,14 +92,14 @@ create_enum_args(va_list *args)
 	if (new != NULL) {
 		new->choices = va_arg(*args, char **);
 		new->ignore_case = (va_arg(*args, int)) ? TRUE : FALSE;
-		new->no_blanks = (va_arg(*args, int)) ? TRUE : FALSE;
+		new->exact = (va_arg(*args, int)) ? TRUE : FALSE;
 
 #ifdef DEBUG
 		if (_formi_create_dbg_file() != E_OK)
 			return NULL;
 		fprintf(dbg,
 			"create_enum_args: ignore_case %d, no_blanks %d\n",
-			new->ignore_case, new->no_blanks);
+			new->ignore_case, new->exact);
 #endif
 		
 		  /* count the choices we have */
@@ -129,20 +157,32 @@ free_enum_args(char *args)
  */
 static bool
 match_enum(char **choices, unsigned num_choices, bool ignore_case,
-	   bool no_blanks, char *this, unsigned *match_num)
+	   bool exact, char *this, unsigned *match_num)
 {
-	unsigned i, start, enum_start, blen, elen, trailing;
+	unsigned i, start, end, enum_start, blen, elen, enum_end;
 	bool cur_match;
 
 	start = _formi_skip_blanks(this, 0);
-	blen = strlen(&this[start]);
+	end = trim_blanks(this);
+
+	if (end >= start)
+		blen = strlen(&this[start]) - strlen(&this[end]) + 1;
+	else
+		blen = 0;
 
 #ifdef DEBUG
 	fprintf(dbg, "match_enum: start %d, blen %d\n", start, blen);
 #endif
 	for (i = 0; i < num_choices; i++) {
 		enum_start = _formi_skip_blanks(choices[i], 0);
-		elen = strlen(&choices[i][enum_start]);
+		enum_end = trim_blanks(choices[i]);
+
+		if (enum_end >= enum_start)
+			elen = strlen(&choices[i][enum_start])
+				- strlen(&choices[i][enum_end]) + 1;
+		else
+			elen = 0;
+		
 #ifdef DEBUG
 		fprintf(dbg, "match_enum: checking choice \'%s\'\n",
 			choices[i]);
@@ -150,19 +190,28 @@ match_enum(char **choices, unsigned num_choices, bool ignore_case,
 			enum_start, elen);
 #endif
 		
-		  /* don't bother if blanks are significant and the
-		   * lengths don't match - no chance of a hit.
+		  /* don't bother if we are after an exact match
+		   * and the test length is not equal to the enum
+		   * in question - it will never match.
 		   */
-		if ((no_blanks == TRUE) && (blen > elen))
+		if ((exact == TRUE) && (blen != elen))
 			continue;
 
+		  /*
+		   * If the test length is longer than the enum
+		   * length then there is no chance of a match
+		   * so we skip.
+		   */
+		if ((exact != TRUE) && (blen > elen))
+			continue;
+		
 		if (ignore_case)
 			cur_match = (strncasecmp(&choices[i][enum_start],
-						 &this[start], elen) == 0) ?
+						 &this[start], blen) == 0) ?
 				TRUE : FALSE;
 		else
 			cur_match = (strncmp(&choices[i][enum_start],
-					     &this[start], elen) == 0) ?
+					     &this[start], blen) == 0) ?
 				TRUE : FALSE;
 
 #ifdef DEBUG
@@ -170,36 +219,11 @@ match_enum(char **choices, unsigned num_choices, bool ignore_case,
 			(cur_match == TRUE)? "TRUE" : "FALSE");
 #endif
 		
-		  /* if trailing blanks not allowed and we matched
-		   * and the buffer & enum element are the same size
-		   * then we have a match
-		   */
-		if (no_blanks && cur_match && (elen == blen)) {
-#ifdef DEBUG
-			fprintf(dbg,
-		"match_enum: no_blanks set and no trailing stuff\n");
-#endif
+		if (cur_match == TRUE) {
 			*match_num = i;
 			return TRUE;
 		}
 
-		  /*
-		   * If trailing blanks allowed and we matched then check
-		   * we only have trailing blanks, match if this is true.
-		   * Note that we continue on here to see if there is a
-		   * better match....
-		   */
-		if (!no_blanks && cur_match) {
-			trailing = _formi_skip_blanks(this, start + blen);
-			if (this[trailing] == '\0') {
-#ifdef DEBUG
-				fprintf(dbg,
-	"match_enum: no_blanks false and only trailing blanks found\n");
-#endif
-				*match_num = i;
-				return TRUE;
-			}
-		}
 	}
 
 #ifdef DEBUG
@@ -223,7 +247,7 @@ enum_check_field(FIELD *field, char *args)
 	ta = (enum_args *) (void *) field->args;
 	
 	if (match_enum(ta->choices, ta->num_choices, ta->ignore_case,
-		       ta->no_blanks, args, &match_num) == TRUE) {
+		       ta->exact, args, &match_num) == TRUE) {
 #ifdef DEBUG
 		fprintf(dbg, "enum_check_field: We matched, match_num %d\n",
 			match_num);
@@ -256,7 +280,7 @@ next_enum(FIELD *field, char *args)
 #endif
 
 	if (match_enum(ta->choices, ta->num_choices, ta->ignore_case,
-		       ta->no_blanks, args, &cur_choice) == FALSE) {
+		       ta->exact, args, &cur_choice) == FALSE) {
 #ifdef DEBUG
 		fprintf(dbg, "next_enum: match failed\n");
 #endif
@@ -300,7 +324,7 @@ prev_enum(FIELD *field, char *args)
 #endif
 
 	if (match_enum(ta->choices, ta->num_choices, ta->ignore_case,
-		       ta->no_blanks, args, &cur_choice) == FALSE) {
+		       ta->exact, args, &cur_choice) == FALSE) {
 #ifdef DEBUG
 		fprintf(dbg, "prev_enum: match failed\n");
 #endif
