@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.12 2002/07/18 12:05:11 kanaoka Exp $	*/
+/*	$NetBSD: acpi.c,v 1.13 2002/07/29 03:06:56 augustss Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.12 2002/07/18 12:05:11 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.13 2002/07/29 03:06:56 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,15 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.12 2002/07/18 12:05:11 kanaoka Exp $");
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_osd.h>
+
+#ifndef ACPI_PCI_FIXUP
+#define ACPI_PCI_FIXUP 1
+#endif
+
+#if ACPI_PCI_FIXUP
+#include <dev/acpi/acpica/Subsystem/acnamesp.h> /* AcpiNsGetNodeByPath() */
+#include <dev/pci/pcidevs.h>
+#endif
 
 #include <machine/acpi_machdep.h>
 
@@ -95,6 +104,10 @@ void		acpi_build_tree(struct acpi_softc *);
 ACPI_STATUS	acpi_make_devnode(ACPI_HANDLE, UINT32, void *, void **);
 
 void		acpi_enable_fixed_events(struct acpi_softc *);
+#if ACPI_PCI_FIXUP
+void		acpi_pci_fixup(struct acpi_softc *);
+ACPI_STATUS	acpi_allocate_resources(ACPI_HANDLE handle);
+#endif
 
 /*
  * acpi_probe:
@@ -265,6 +278,13 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	acpi_enable_fixed_events(sc);
 
+	/*
+	 * Fix up PCI devices.
+	 */
+#if ACPI_PCI_FIXUP
+	acpi_pci_fixup(sc);
+#endif
+ 
 	/*
 	 * Scan the namespace and build our device tree.
 	 */
@@ -791,3 +811,271 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 
 	return (ret);
 }
+
+#if ACPI_PCI_FIXUP
+ACPI_STATUS acpi_pci_fixup_bus(ACPI_HANDLE, UINT32, void *, void **);
+/*
+ * acpi_pci_fixup:
+ *
+ *	Set up PCI devices that BIOS didn't handle right.
+ *	Iterate through all devices and try to get the _PTR
+ *	(PCI Routing Table).  If it exists then make sure all
+ *	interrupt links that it uses are working.
+ */
+void
+acpi_pci_fixup(struct acpi_softc *sc)
+{
+	ACPI_HANDLE parent;
+
+#ifdef ACPI_DEBUG
+	printf("acpi_pci_fixup starts:\n");
+#endif
+	if (AcpiGetHandle(ACPI_ROOT_OBJECT, "\\_SB_", &parent) != AE_OK)
+		return;
+	sc->sc_pci_bus = 0;
+	AcpiWalkNamespace(ACPI_TYPE_DEVICE, parent, 100,
+	    acpi_pci_fixup_bus, sc, NULL);
+}
+
+static ACPI_HANDLE
+acpi_get_node(char *name)
+{
+	ACPI_NAMESPACE_NODE *ObjDesc;
+	ACPI_STATUS Status;
+
+	Status = AcpiNsGetNodeByPath(name, NULL, 0, &ObjDesc);
+	if (ACPI_FAILURE (Status)) {
+		printf("acpi_get_node: could not find: %s\n",
+		       AcpiFormatException (Status));
+		return NULL;
+	}
+	return ObjDesc;
+}
+
+static uint
+acpi_get_intr(ACPI_HANDLE handle)
+{
+	ACPI_BUFFER ret;
+	ACPI_STATUS rv;
+	ACPI_RESOURCE *res;
+	ACPI_RESOURCE_IRQ *irq;
+	uint intr;
+
+	intr = -1;
+	rv = acpi_get(handle, &ret, AcpiGetCurrentResources);
+	if (ACPI_FAILURE(rv))
+		return (intr);
+	for (res = ret.Pointer; res->Id != ACPI_RSTYPE_END_TAG;
+	     res = ACPI_NEXT_RESOURCE(res)) {
+		if (res->Id == ACPI_RSTYPE_IRQ) {
+			irq = (ACPI_RESOURCE_IRQ *)&res->Data;
+			if (irq->NumberOfInterrupts == 1)
+				intr = irq->Interrupts[0];
+			break;
+		}
+	}
+	free(ret.Pointer, M_DEVBUF);
+	return (intr);
+}
+
+static void
+acpi_pci_set_line(int bus, int dev, int pin, int line)
+{
+	ACPI_STATUS err;
+	ACPI_PCI_ID pid;
+	UINT32 intr, id, bhlc;
+	int func, nfunc;
+
+	pid.Bus = bus;
+	pid.Device = dev;
+	pid.Function = 0;
+	
+	err = AcpiOsReadPciConfiguration(&pid, PCI_BHLC_REG, &bhlc, 32);
+	if (err)
+		return;
+	if (PCI_HDRTYPE_MULTIFN(bhlc))
+		nfunc = 8;
+	else
+		nfunc = 1;
+
+	for (func = 0; func < nfunc; func++) {
+		pid.Function = func;
+
+		err = AcpiOsReadPciConfiguration(&pid, PCI_ID_REG, &id, 32);
+		if (err || PCI_VENDOR(id) == PCI_VENDOR_INVALID ||
+		    PCI_VENDOR(id) == 0)
+			continue;
+
+		err = AcpiOsReadPciConfiguration(&pid, PCI_INTERRUPT_REG,
+			  &intr, 32);
+		if (err) {
+			printf("AcpiOsReadPciConfiguration failed %d\n", err);
+			return;
+		}
+		if (pin == PCI_INTERRUPT_PIN(intr) &&
+		    line != PCI_INTERRUPT_LINE(intr)) {
+#ifdef ACPI_DEBUG
+			printf("acpi fixup pci intr: %d:%d:%d %c: %d -> %d\n",
+			       bus, dev, func,
+			       pin + '@', PCI_INTERRUPT_LINE(intr),
+			       line);
+#endif
+			intr &= ~(PCI_INTERRUPT_LINE_MASK <<
+				  PCI_INTERRUPT_LINE_SHIFT);
+			intr |= line << PCI_INTERRUPT_LINE_SHIFT;
+			err = AcpiOsWritePciConfiguration(&pid,
+				  PCI_INTERRUPT_REG, intr, 32);
+			if (err) {
+				printf("AcpiOsWritePciConfiguration failed"
+				       " %d\n", err);
+				return;
+			}
+		}
+	}
+}
+
+ACPI_STATUS
+acpi_pci_fixup_bus(ACPI_HANDLE handle, UINT32 level, void *context,
+		   void **status)
+{
+	struct acpi_softc *sc = context;
+	ACPI_STATUS rv;
+	ACPI_BUFFER buf;
+	UINT8 *Buffer;
+	ACPI_PCI_ROUTING_TABLE *PrtElement;
+	ACPI_HANDLE link;
+	uint line;
+
+	rv = acpi_get(handle, &buf, AcpiGetIrqRoutingTable);
+	if (ACPI_FAILURE(rv))
+		return (AE_OK);
+
+#ifdef ACPI_DEBUG
+	printf("%s: fixing up PCI\n", sc->sc_dev.dv_xname);
+#endif
+
+        for (Buffer = buf.Pointer; ; Buffer += PrtElement->Length) {
+		PrtElement = (ACPI_PCI_ROUTING_TABLE *)Buffer;
+		if (PrtElement->Length == 0)
+			break;
+		if (PrtElement->Source == NULL)
+			continue;
+
+		link = acpi_get_node(PrtElement->Source);
+		if (link == NULL)
+			continue;
+		line = acpi_get_intr(link);
+		if (line == -1) {
+#ifdef ACPI_DEBUG
+			printf("%s: fixing up link %s\n", sc->sc_dev.dv_xname,
+			    PrtElement->Source);
+#endif
+			rv = acpi_allocate_resources(link);
+			if (ACPI_FAILURE(rv)) {
+				printf("%s: interrupt allocation failed %s\n",
+				    sc->sc_dev.dv_xname, PrtElement->Source);
+				continue;
+			}
+			line = acpi_get_intr(link);
+			if (line == -1) {
+				printf("%s: get intr failed %s\n",
+				    sc->sc_dev.dv_xname, PrtElement->Source);
+				continue;
+			}
+		}
+
+		acpi_pci_set_line(sc->sc_pci_bus, PrtElement->Address >> 16,
+		    PrtElement->Pin + 1, line);
+	}
+
+	sc->sc_pci_bus++;
+
+	free(buf.Pointer, M_DEVBUF);
+	return (AE_OK);
+}
+
+/* XXX This very incomplete */
+ACPI_STATUS
+acpi_allocate_resources(ACPI_HANDLE handle)
+{
+	ACPI_BUFFER bufp, bufc, bufn;
+	ACPI_RESOURCE *resp, *resc, *resn;
+	ACPI_RESOURCE_IRQ *irq;
+	ACPI_STATUS rv;
+	uint delta;
+
+	rv = acpi_get(handle, &bufp, AcpiGetPossibleResources);
+	if (ACPI_FAILURE(rv))
+		goto out;
+	rv = acpi_get(handle, &bufc, AcpiGetCurrentResources);
+	if (ACPI_FAILURE(rv)) {
+		goto out1;
+	}
+
+	bufn.Length = 1000;
+	bufn.Pointer = resn = malloc(bufn.Length, M_DEVBUF, M_WAITOK);
+	resp = bufp.Pointer;
+	resc = bufc.Pointer;
+	while (resc->Id != ACPI_RSTYPE_END_TAG &&
+	       resp->Id != ACPI_RSTYPE_END_TAG) {
+		while (resc->Id != resp->Id && resp->Id != ACPI_RSTYPE_END_TAG)
+			resp = ACPI_NEXT_RESOURCE(resp);
+		if (resp->Id == ACPI_RSTYPE_END_TAG)
+			break;
+		/* Found identical Id */
+		resn->Id = resc->Id;
+		switch (resc->Id) {
+		case ACPI_RSTYPE_IRQ:
+			memcpy(&resn->Data, &resp->Data,
+			       sizeof(ACPI_RESOURCE_IRQ));
+			irq = (ACPI_RESOURCE_IRQ *)&resn->Data;
+			irq->Interrupts[0] =
+			    ((ACPI_RESOURCE_IRQ *)&resp->Data)->
+			        Interrupts[irq->NumberOfInterrupts-1];
+			irq->NumberOfInterrupts = 1;
+			resn->Length = ACPI_SIZEOF_RESOURCE(ACPI_RESOURCE_IRQ);
+			break;
+		case ACPI_RSTYPE_IO:
+			memcpy(&resn->Data, &resp->Data,
+			       sizeof(ACPI_RESOURCE_IO));
+			resn->Length = resp->Length;
+			break;
+		default:
+			printf("acpi_allocate_resources: res=%d\n", resc->Id);
+			rv = AE_BAD_DATA;
+			goto out2;
+		}
+		resc = ACPI_NEXT_RESOURCE(resc);
+		resn = ACPI_NEXT_RESOURCE(resn);
+		delta = (UINT8 *)resn - (UINT8 *)bufn.Pointer;
+		if (delta >= bufn.Length-ACPI_SIZEOF_RESOURCE(ACPI_RESOURCE_DATA)) {
+			bufn.Length *= 2;
+			bufn.Pointer = realloc(bufn.Pointer, bufn.Length,
+					       M_DEVBUF, M_WAITOK);
+			resn = (ACPI_RESOURCE *)((UINT8 *)bufn.Pointer + delta);
+		}
+	}
+	if (resc->Id != ACPI_RSTYPE_END_TAG) {
+		printf("acpi_allocate_resources: resc not exhausted\n");
+		rv = AE_BAD_DATA;
+		goto out3;
+	}
+
+	resn->Id = ACPI_RSTYPE_END_TAG;
+	rv = AcpiSetCurrentResources(handle, &bufn);
+	if (ACPI_FAILURE(rv)) {
+		printf("acpi_allocate_resources: AcpiSetCurrentResources %s\n",
+		       AcpiFormatException(rv));
+	}
+
+out3:
+	free(bufn.Pointer, M_DEVBUF);
+out2:
+	free(bufc.Pointer, M_DEVBUF);
+out1:
+	free(bufp.Pointer, M_DEVBUF);
+out:
+	return rv;
+}
+
+#endif
