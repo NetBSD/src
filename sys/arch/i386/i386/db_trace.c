@@ -23,7 +23,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- *	$Id: db_trace.c,v 1.14 1994/10/09 15:49:10 mycroft Exp $
+ *	$Id: db_trace.c,v 1.15 1994/10/09 16:09:27 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -239,10 +239,8 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		if (INKERNEL((int)frame) && name) {
 			if (!strcmp(name, "_trap")) {
 				is_trap = TRAP;
-				narg = 1;
 			} else if (!strcmp(name, "_syscall")) {
 				is_trap = SYSCALL;
-				narg = 1;
 			} else if (name[0] == '_' && name[1] == 'X') {
 				if (!strncmp(name, "_Xintr", 6) ||
 				    !strncmp(name, "_Xresume", 8) ||
@@ -252,11 +250,11 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 				    !strcmp(name, "_Xdoreti") ||
 				    !strncmp(name, "_Xsoft", 6)) {
 					is_trap = INTERRUPT;
-					narg = 0;
 				} else
 					goto normal;
 			} else
 				goto normal;
+			narg = 0;
 		} else {
 		normal:
 			is_trap = NONE;
