@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.20 1999/09/30 13:16:27 soren Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.21 1999/10/10 01:07:03 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.20 1999/09/30 13:16:27 soren Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.21 1999/10/10 01:07:03 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -519,7 +519,7 @@ cmdkre(cmd, args)
 static int
 ucount()
 {
-	int nusers = 0;
+	int nusers = 0, onusers = -1;
 
 	if (ut < 0)
 		return (0);
@@ -527,7 +527,14 @@ ucount()
 		if (utmp.ut_name[0] != '\0')
 			nusers++;
 
+	if (nusers != onusers) {
+		if (nusers == 1)
+			mvprintw(STATROW, STATCOL + 8, " ");
+		else
+			mvprintw(STATROW, STATCOL + 8, "s");
+	}
 	lseek(ut, (off_t)0, SEEK_SET);
+	onusers = nusers;
 	return (nusers);
 }
 
