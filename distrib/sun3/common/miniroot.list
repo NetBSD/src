@@ -1,5 +1,5 @@
 #
-# $NetBSD: miniroot.list,v 1.5 2000/06/10 04:05:50 tsutsui Exp $
+# $NetBSD: miniroot.list,v 1.6 2000/06/19 14:55:20 tsutsui Exp $
 #
 
 # These are scripts:
@@ -17,6 +17,7 @@ LINK		   usr/mdec/ufsboot	ufsboot
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/group		etc
 COPY	${DESTDIR}/etc/master.passwd	etc
+COPY	${DESTDIR}/etc/netconfig	etc
 COPY	${DESTDIR}/etc/passwd		etc
 COPY	${DESTDIR}/etc/protocols	etc
 COPY	${DESTDIR}/etc/pwd.db		etc
