@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.31 2002/01/27 14:29:26 is Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.32 2002/01/27 22:37:28 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -84,8 +84,10 @@ cachectl1(req, addr, len, p)
 		    || (req & CC_IPURGE)
 #endif
 #endif
-		    ((req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG))
+		    || ((req & ~CC_EXTPURGE) != CC_PURGE
+		        && len > 2*NBPG))
 			doall = 1;
+
 		if (!doall) {
 			end = addr + len;
 			if (len <= 1024) {
