@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee754_frexp.c,v 1.1 2002/02/19 13:08:13 simonb Exp $	*/
+/*	$NetBSD: ieee754_frexp.c,v 1.2 2002/02/19 13:42:04 enami Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "@(#)frexp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ieee754_frexp.c,v 1.1 2002/02/19 13:08:13 simonb Exp $");
+__RCSID("$NetBSD: ieee754_frexp.c,v 1.2 2002/02/19 13:42:04 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,7 +61,7 @@ double
 frexp(double value, int *eptr)
 {
 	union {
-                double v;
+		double v;
 		struct ieee_double s;
 	} u;
 
