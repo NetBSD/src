@@ -1,4 +1,4 @@
-/*	$NetBSD: bios_disk.S,v 1.5 1999/03/08 00:09:25 fvdl Exp $	*/
+/*	$NetBSD: bios_disk.S,v 1.6 1999/03/30 17:55:48 drochner Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -114,7 +114,8 @@ ENTRY(biosread)
 
 /*
 #
-# get_diskinfo():  takes a pointer to a biosdisk_ll struct, and fills it in.
+# get_diskinfo():  return a word that represents the
+#	max number of sectors, heads and cylinders for this device
 #
 */
 
@@ -128,9 +129,7 @@ ENTRY(get_diskinfo)
 	push	%esi
 	push	%edi
 
-	movl	8(%ebp), %esi		# diskinfo(drive #)
-	movb	(%esi), %dl
-	pushl	%esi
+	movb	8(%ebp), %dl		# diskinfo(drive #)
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
 
@@ -146,7 +145,7 @@ ENTRY(get_diskinfo)
 #	subb	%ah, %ah		# %ax = 0
 #	movb	%ah, %bh		# %bh = 0
 #	movb	$2, %bl			# %bl bits 0-3 = drive type, 2 = 1.2M
-#	movb	$79, %ch		# max track
+	movb	$79, %ch		# max track
 	movb	$15, %cl		# max sector
 	movb	$1, %dh			# max head
 #	movb	$1, %dl			# # floppy drives installed
@@ -154,23 +153,15 @@ ENTRY(get_diskinfo)
 	# carry = 0
 
 ok:
+	/* form a longword representing all this gunk */
+	shll	$8, %ecx
+	movb	%dh, %cl
+
 	data32
 	call	_C_LABEL(real_to_prot)	# back to protected mode
 
-	popl	%esi
-
-	movzbl	%dh, %eax
-	movl	%eax, 8(%esi)		# heads
-	movb	%cl, %al
-	andb	$0x3f, %al
-	movzbl	%al, %ebx
-	movl	%ebx, 4(%esi)		# sectors per track
-	xorl	%eax, %eax
-	movb	%ch, %al
-	andl	$0x0c0, %ecx
-	shll	$2, %ecx
-	orl	%ecx, %eax
-	movl	%eax, 12(%esi)		# cylinders
+	data32
+	movl	%ecx, %eax
 
 	pop	%edi
 	pop	%esi
