@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.6 1998/10/14 19:33:49 kleink Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.7 1998/10/15 10:22:23 kleink Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.6 1998/10/14 19:33:49 kleink Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.7 1998/10/15 10:22:23 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -423,7 +423,7 @@ getanswer(answer, anslen, qname, qtype)
 				cp += n;
 				continue;
 			}
-			bcopy(cp, *hap++ = bp, n);
+			(void)memcpy(*hap++ = bp, cp, (size_t)n);
 			bp += n;
 			buflen -= n;
 			cp += n;
@@ -592,7 +592,7 @@ gethostbyname2(name, af)
 				break;
 		}
 
-	bcopy(_res.lookups, lookups, sizeof lookups);
+	(void)memcpy(lookups, _res.lookups, sizeof lookups);
 	if (lookups[0] == '\0')
 		strncpy(lookups, "bf", sizeof lookups);
 
@@ -638,8 +638,8 @@ gethostbyaddr(addr, len, af)
 		return (_gethtbyaddr(addr, len, af));
 		
 	if (af == AF_INET6 && len == IN6ADDRSZ &&
-	    (!bcmp(uaddr, mapped, sizeof mapped) ||
-	     !bcmp(uaddr, tunnelled, sizeof tunnelled))) {
+	    (!memcmp(uaddr, mapped, sizeof mapped) ||
+	     !memcmp(uaddr, tunnelled, sizeof tunnelled))) {
 		/* Unmap. */
 		addr += sizeof mapped;
 		uaddr += sizeof mapped;
@@ -684,7 +684,7 @@ gethostbyaddr(addr, len, af)
 		abort();
 	}
 
-	bcopy(_res.lookups, lookups, sizeof lookups);
+	(void)memcpy(lookups, _res.lookups, sizeof lookups);
 	if (lookups[0] == '\0')
 		strncpy(lookups, "bf", sizeof lookups);
 
@@ -708,7 +708,7 @@ gethostbyaddr(addr, len, af)
 				break;
 			hp->h_addrtype = af;
 			hp->h_length = len;
-			bcopy(addr, host_addr, len);
+			(void)memcpy(host_addr, addr, (size_t)len);
 			h_addr_ptrs[0] = (char *)&host_addr;
 			h_addr_ptrs[1] = (char *)0;
 			if (af == AF_INET && (_res.options & RES_USE_INET6)) {
@@ -858,7 +858,8 @@ _gethtbyaddr(addr, len, af)
 
 	_sethtent(0);
 	while ((p = _gethtent()) != NULL)
-		if (p->h_addrtype == af && !bcmp(p->h_addr, addr, len))
+		if (p->h_addrtype == af && !memcmp(p->h_addr, addr,
+		    (size_t)len))
 			break;
 	_endhtent();
 	return (p);
@@ -874,14 +875,14 @@ map_v4v6_address(src, dst)
 	int i;
 
 	/* Stash a temporary copy so our caller can update in place. */
-	bcopy(src, tmp, INADDRSZ);
+	(void)memcpy(tmp, src, INADDRSZ);
 	/* Mark this ipv6 addr as a mapped ipv4. */
 	for (i = 0; i < 10; i++)
 		*p++ = 0x00;
 	*p++ = 0xff;
 	*p++ = 0xff;
 	/* Retrieve the saved copy and we're done. */
-	bcopy(tmp, (void*)p, INADDRSZ);
+	(void)memcpy((void *)p, tmp, INADDRSZ);
 }
 
 static void
