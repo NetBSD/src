@@ -1,7 +1,7 @@
-/*	$NetBSD: pch.c,v 1.7 1999/02/09 05:15:45 sommerfe Exp $	*/
+/*	$NetBSD: pch.c,v 1.7.10.1 2002/09/06 00:11:00 itojun Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pch.c,v 1.7 1999/02/09 05:15:45 sommerfe Exp $");
+__RCSID("$NetBSD: pch.c,v 1.7.10.1 2002/09/06 00:11:00 itojun Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -412,6 +412,30 @@ malformed ()
 		/* about as informative as "Syntax error" in C */
 }
 
+/*
+ * True if the line has been discarded (i.e. it is a line saying
+ *  "\ No newline at end of file".)
+ */
+static bool
+remove_special_line(void)
+{
+	int c;
+
+	c = fgetc(pfp);
+	if (c == '\\') {
+		do {
+			c = fgetc(pfp);
+		} while (c != EOF && c != '\n');
+
+		return TRUE;
+	}
+
+	if (c != EOF)
+		fseek(pfp, -1, SEEK_CUR);
+
+	return FALSE;
+}
+
 /* True if there is more of the current diff listing to process. */
 
 bool
@@ -619,6 +643,15 @@ another_hunk()
 		    p_end--;
 		    return FALSE;
 		}
+		if (p_end == p_ptrn_lines)
+		{
+			if (remove_special_line()) {
+				int len;
+
+				len = strlen(p_line[p_end]) - 1;
+				(p_line[p_end])[len] = 0;
+			}
+		}
 		break;
 	    case '\t': case '\n':	/* assume the 2 spaces got eaten */
 		if (repl_beginning && repl_could_be_missing &&
@@ -746,6 +779,14 @@ another_hunk()
 	    assert(fillsrc==p_end+1 || fillsrc==repl_beginning);
 	    assert(filldst==p_end+1 || filldst==repl_beginning);
 	}
+
+	if (p_line[p_end] != NULL)
+	{
+		if (remove_special_line()) {
+			p_len[p_end] -= 1;
+			(p_line[p_end])[p_len[p_end]] = 0;
+		}
+	}
     }
     else if (diff_type == UNI_DIFF) {
 	long line_beginning = ftell(pfp);
@@ -843,6 +884,12 @@ another_hunk()
 		p_char[fillsrc] = ch;
 		p_line[fillsrc] = s;
 		p_len[fillsrc++] = strlen(s);
+		if (fillsrc > p_ptrn_lines) {
+			if (remove_special_line()) {
+				p_len[fillsrc - 1] -= 1;
+				s[p_len[fillsrc - 1]] = 0;
+			}
+		}
 		break;
 	    case '=':
 		ch = ' ';
@@ -878,6 +925,12 @@ another_hunk()
 		p_char[filldst] = ch;
 		p_line[filldst] = s;
 		p_len[filldst++] = strlen(s);
+		if (fillsrc > p_ptrn_lines) {
+			if (remove_special_line()) {
+				p_len[filldst - 1] -= 1;
+				s[p_len[filldst - 1]] = 0;
+			}
+		}
 		break;
 	    default:
 		p_end = filldst;
@@ -953,6 +1006,12 @@ another_hunk()
 	    p_len[i] = strlen(p_line[i]);
 	    p_char[i] = '-';
 	}
+
+	if (remove_special_line()) {
+		p_len[i-1] -= 1;
+		(p_line[i-1])[p_len[i-1]] = 0;
+	}
+
 	if (hunk_type == 'c') {
 	    ret = pgets(buf, sizeof buf, pfp);
 	    p_input_line++;
@@ -984,6 +1043,11 @@ another_hunk()
 	    }
 	    p_len[i] = strlen(p_line[i]);
 	    p_char[i] = '+';
+	}
+
+	if (remove_special_line()) {
+		p_len[i-1] -= 1;
+		(p_line[i-1])[p_len[i-1]] = 0;
 	}
     }
     if (reverse)			/* backwards patch? */
