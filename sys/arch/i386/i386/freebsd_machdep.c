@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.18 1998/08/05 02:45:08 perry Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.19 1998/08/13 21:36:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -370,7 +370,7 @@ freebsd_ptrace_getregs(fregs, addr, datap)
 	caddr_t addr;
 	register_t *datap;
 {
-	vm_offset_t offset = (vm_offset_t)addr;
+	vaddr_t offset = (vaddr_t)addr;
 
 	if (offset == FREEBSD_U_AR0_OFFSET) {
 		*datap = FREEBSD_REGS_OFFSET + FREEBSD_USRSTACK;
@@ -379,7 +379,7 @@ freebsd_ptrace_getregs(fregs, addr, datap)
 		   offset <= FREEBSD_REGS_OFFSET + 
 		      sizeof(fregs->freebsd_ptrace_regs)-sizeof(register_t)) {
 		*datap = *(register_t *)&((caddr_t)&fregs->freebsd_ptrace_regs)
-			[(vm_offset_t) addr - FREEBSD_REGS_OFFSET];
+			[(vaddr_t) addr - FREEBSD_REGS_OFFSET];
 		return 0;
 	} else if (offset >= FREEBSD_U_SAVEFP_OFFSET &&
 		   offset <= FREEBSD_U_SAVEFP_OFFSET + 
@@ -400,7 +400,7 @@ freebsd_ptrace_setregs(fregs, addr, data)
 	caddr_t addr;
 	int data;
 {
-	vm_offset_t offset = (vm_offset_t)addr;
+	vaddr_t offset = (vaddr_t)addr;
 
 	if (offset >= FREEBSD_REGS_OFFSET &&
 	    offset <= FREEBSD_REGS_OFFSET +

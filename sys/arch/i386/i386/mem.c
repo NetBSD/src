@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.36 1998/08/05 02:45:09 perry Exp $	*/
+/*	$NetBSD: mem.c,v 1.37 1998/08/13 21:36:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -111,7 +111,7 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register vm_offset_t o, v;
+	register vaddr_t o, v;
 	register int c;
 	register struct iovec *iov;
 	int error = 0;
@@ -143,23 +143,23 @@ mmrw(dev, uio, flags)
 		case 0:
 #if defined(PMAP_NEW)
 			v = uio->uio_offset;
-			pmap_kenter_pa((vm_offset_t)vmmap, trunc_page(v),
+			pmap_kenter_pa((vaddr_t)vmmap, trunc_page(v),
 			    (uio->uio_rw == UIO_READ) ? VM_PROT_READ :
 			    VM_PROT_ALL);
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
-			pmap_kremove((vm_offset_t)vmmap, NBPG);
+			pmap_kremove((vaddr_t)vmmap, NBPG);
 #else /* PMAP_NEW */
 			v = uio->uio_offset;
-			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
+			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 			    trunc_page(v), uio->uio_rw == UIO_READ ?
 			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
-			pmap_remove(pmap_kernel(), (vm_offset_t)vmmap,
-			    (vm_offset_t)vmmap + NBPG);
+			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
+			    (vaddr_t)vmmap + NBPG);
 #endif /* PMAP_NEW */
 			break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.36 1998/02/18 03:04:41 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.37 1998/08/13 21:36:05 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -100,9 +100,9 @@ extern pt_entry_t	*Sysmap;
 
 extern u_long	PTDpaddr;	/* physical address of kernel PTD */
 
-void pmap_bootstrap __P((vm_offset_t start));
-boolean_t pmap_testbit __P((vm_offset_t, int));
-void pmap_changebit __P((vm_offset_t, int, int));
+void pmap_bootstrap __P((vaddr_t start));
+boolean_t pmap_testbit __P((paddr_t, int));
+void pmap_changebit __P((paddr_t, int, int));
 #endif
 
 /*
@@ -147,7 +147,7 @@ typedef struct pmap {
 struct pv_entry {
 	struct pv_entry	*pv_next;	/* next pv_entry */
 	pmap_t		pv_pmap;	/* pmap where mapping lies */
-	vm_offset_t	pv_va;		/* virtual address for mapping */
+	vaddr_t		pv_va;		/* virtual address for mapping */
 };
 
 struct pv_page;
@@ -177,45 +177,45 @@ extern struct pmap	kernel_pmap_store;
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_update()			tlbflush()
 
-vm_offset_t reserve_dumppages __P((vm_offset_t));
+vaddr_t reserve_dumppages __P((vaddr_t));
 
 static __inline void
-pmap_clear_modify(vm_offset_t pa)
+pmap_clear_modify(paddr_t pa)
 {
 	pmap_changebit(pa, 0, ~PG_M);
 }
 
 static __inline void
-pmap_clear_reference(vm_offset_t pa)
+pmap_clear_reference(paddr_t pa)
 {
 	pmap_changebit(pa, 0, ~PG_U);
 }
 
 static __inline void
-pmap_copy_on_write(vm_offset_t pa)
+pmap_copy_on_write(paddr_t pa)
 {
 	pmap_changebit(pa, PG_RO, ~PG_RW);
 }
 
 static __inline boolean_t
-pmap_is_modified(vm_offset_t pa)
+pmap_is_modified(paddr_t pa)
 {
 	return pmap_testbit(pa, PG_M);
 }
 
 static __inline boolean_t
-pmap_is_referenced(vm_offset_t pa)
+pmap_is_referenced(paddr_t pa)
 {
 	return pmap_testbit(pa, PG_U);
 }
 
-static __inline vm_offset_t
+static __inline paddr_t
 pmap_phys_address(int ppn)
 {
 	return i386_ptob(ppn);
 }
 
-vm_offset_t	pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
+vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
 
 #endif	/* _KERNEL */
 
