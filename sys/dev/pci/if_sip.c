@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.38 2001/07/07 17:37:39 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.39 2001/07/08 16:56:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -2568,8 +2568,7 @@ SIP_DECL(dp83815_set_filter)(struct sip_softc *sc)
 	if (enm == NULL)
 		goto setit;
 	while (enm != NULL) {
-		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
-		    ETHER_ADDR_LEN)) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/*
 			 * We must listen to a range of multicast addresses.
 			 * For now, just accept all multicasts, rather than
@@ -2612,7 +2611,7 @@ SIP_DECL(dp83815_set_filter)(struct sip_softc *sc)
 	bus_space_write_4(st, sh, SIP_RFCR, (addr));			\
 	delay(1);							\
 	bus_space_write_4(st, sh, SIP_RFDR, (data));			\
-	delay(1);
+	delay(1)
 
 	/*
 	 * Disable receive filter, and program the node address.
@@ -2626,9 +2625,10 @@ SIP_DECL(dp83815_set_filter)(struct sip_softc *sc)
 		/*
 		 * Program the multicast hash table.
 		 */
-		for (i = 0; i < MCHASH_NWORDS; i++)
+		for (i = 0; i < MCHASH_NWORDS; i++) {
 			FILTER_EMIT(RFCR_NS_RFADDR_FILTMEM + (i * 2),
 			    mchash[i]);
+		}
 	}
 #undef FILTER_EMIT
 #undef MCHASH_NWORDS
