@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.4 1999/01/13 07:30:07 ross Exp $	
+.\"	$NetBSD: xfer,v 1.5 1999/02/20 16:18:11 scw Exp $	
 .
 Installation is supported from several media types, including:
 .Bl -bullet -compact
@@ -13,7 +13,8 @@ CD-ROM
 FTP
 .El
 Note that installing on a "bare" machine requires either a bootable
-tape drive or an ethernet and RS232 connection to a compatible NFS server.
+tape drive or an ethernet to a compatible NFS server. MVME147 may
+also need to be booted over an RS232 connection.
 .Pp
 The procedure for transferring the distribution sets onto installation
 media depends on the type of media. Instructions for each type of media
@@ -78,7 +79,7 @@ manual page for guidelines on how to proceed with
 this. If the server runs another operating system, consult the
 documentation that came with it (i.e. add_client(8) on SunOS).
 .Pp
-Booting a VME147 from ethernet is not possible without first downloading
+Booting an MVME147 from ethernet is not possible without first downloading
 a small bootstrap program (sboot) via RS232. See the section entitiled
 "Installing from NFS" for details on how to accomplish this.
 .Pp
@@ -86,12 +87,16 @@ sboot expects to be able to download a second stage bootstrap
 program via TFTP after having acquired its IP address through RARP
 It will look for a filename derived from the machine's IP address
 expressed in hexadecimal, with an extension of ".147". For example,
-a VME147 with IP address 130.115.144.11 will make an TFTP request for
+an MVME147 with IP address 130.115.144.11 will make an TFTP request for
 `8273900B.147'. Normally, this file is just a symbolic link to the
 NetBSD/mvme68k "netboot" program, which should be located in a place
 where the TFTP daemon can find it (remember, many TFTP daemons run in
 a chroot'ed environment). The netboot program may be found in the
 install directory of this distribution.
+.Pp
+The MVME167 boot ROM has code builtin to boot over ethernet from a
+TFTP server. You should configure it to download the same "netboot"
+program as is used for MVME147.
 .Pp
 The netboot program will query a bootparamd server to find the NFS
 server address and path name for its root, and then load a kernel from
@@ -149,5 +154,5 @@ server, you may want to keep the following information handy:
 .(Note
 If you're not using a nameserver duing installation,
 you might find 204.152.184.75 handy; it's the IP address of
-ftp.NetBSD.ORG as of January 3, 1997.
+ftp.NetBSD.ORG as of January, 1999.
 .Note)
