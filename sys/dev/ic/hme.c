@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.40 2004/01/21 00:47:37 abs Exp $	*/
+/*	$NetBSD: hme.c,v 1.41 2004/06/28 20:50:52 heas Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.40 2004/01/21 00:47:37 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.41 2004/06/28 20:50:52 heas Exp $");
 
 /* #define HMEDEBUG */
 
@@ -254,6 +254,7 @@ hme_config(sc)
 	ifp->if_watchdog = hme_watchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	sc->sc_if_flags = ifp->if_flags;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Initialize ifmedia structures and MII info */
@@ -633,6 +634,7 @@ hme_init(sc)
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
+	sc->sc_if_flags = ifp->if_flags;
 	ifp->if_timer = 0;
 	hme_start(ifp);
 }
@@ -1221,6 +1223,7 @@ hme_mii_statchg(dev)
 		v &= ~HME_MAC_TXCFG_FULLDPLX;
 		sc->sc_ethercom.ec_if.if_flags &= ~IFF_SIMPLEX;
 	}
+	sc->sc_if_flags = sc->sc_ethercom.ec_if.if_flags;
 	bus_space_write_4(t, mac, HME_MACI_TXCFG, v);
 }
 
@@ -1294,12 +1297,15 @@ hme_ioctl(ifp, cmd, data)
 	switch (cmd) {
 
 	case SIOCSIFADDR:
-		ifp->if_flags |= IFF_UP;
-
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			hme_init(sc);
+			if (ifp->if_flags & IFF_UP)
+				hme_setladrf(sc);
+			else {
+				ifp->if_flags |= IFF_UP;
+				hme_init(sc);
+			}
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
@@ -1316,11 +1322,17 @@ hme_ioctl(ifp, cmd, data)
 				    ina->x_host.c_host, sizeof(sc->sc_enaddr));
 			}	
 			/* Set new address. */
-			hme_init(sc);
+			if (ifp->if_flags & IFF_UP)
+				hme_setladrf(sc);
+			else {
+				ifp->if_flags |= IFF_UP;
+				hme_init(sc);
+			}
 			break;
 		    }
 #endif
 		default:
+			ifp->if_flags |= IFF_UP;
 			hme_init(sc);
 			break;
 		}
@@ -1344,11 +1356,19 @@ hme_ioctl(ifp, cmd, data)
 			hme_init(sc);
 		} else if ((ifp->if_flags & IFF_UP) != 0) {
 			/*
-			 * Reset the interface to pick up changes in any other
-			 * flags that affect hardware registers.
+			 * If setting debug or promiscuous mode, do not reset
+			 * the chip; for everything else, call hme_init()
+			 * which will trigger a reset.
 			 */
-			/*hme_stop(sc);*/
-			hme_init(sc);
+#define RESETIGN (IFF_CANTCHANGE | IFF_DEBUG)
+			if (ifp->if_flags == sc->sc_if_flags)
+				break;
+			if ((ifp->if_flags & (~RESETIGN))
+			    == (sc->sc_if_flags & (~RESETIGN)))
+				hme_setladrf(sc);
+			else
+				hme_init(sc);
+#undef RESETIGN
 		}
 #ifdef HMEDEBUG
 		sc->sc_debug = (ifp->if_flags & IFF_DEBUG) != 0 ? 1 : 0;
@@ -1381,6 +1401,7 @@ hme_ioctl(ifp, cmd, data)
 		break;
 	}
 
+	sc->sc_if_flags = ifp->if_flags;
 	splx(s);
 	return (error);
 }
