@@ -1,4 +1,4 @@
-.\" $NetBSD: daic.4,v 1.7 2002/04/14 11:42:55 martin Exp $
+.\" $NetBSD: daic.4,v 1.7.2.1 2003/09/12 19:05:31 tron Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,7 +39,7 @@
 .Os
 .Sh NAME
 .Nm daic
-.Nd isdn4bsd driver for EICON.Diehl active isdn cards
+.Nd isdn4bsd driver for EICON.Diehl active ISDN cards
 .Sh SYNOPSIS
 .Cd "daic0 at isa? iomem 0xd8000 irq 10"
 .Sh DESCRIPTION
@@ -58,11 +58,11 @@ isdn4bsd system, which can be listed using the daicctl utility.
 .Pp
 The
 .Nm
-driver interfaces the isdn card to the ISDN4BSD kernel subsystem.
-All lower layer isdn control is handled by the card. This should
-allow you to run any national isdn protocol delivered by EICON.Diehl
+driver interfaces the ISDN card to the ISDN4BSD kernel subsystem.
+All lower layer ISDN control is handled by the card. This should
+allow you to run any national ISDN protocol delivered by EICON.Diehl
 for your card, but the driver has only been tested with the DSS1
-protocol and some parts of the cards interface are isdn protocol
+protocol and some parts of the cards interface are ISDN protocol
 dependent.
 .Pp
 The
@@ -81,7 +81,7 @@ to download the file
 to controller number 1. Use
 .Nm "daicctl -l"
 to list all available controllers (and ports). You have to select the
-correct isdn protocol file for your isdn interface, see the Diehl documentation
+correct ISDN protocol file for your ISDN interface, see the Diehl documentation
 for details.
 .Pp
 The cards bootstrap process involves another file, which is independent
