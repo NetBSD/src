@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.31 1999/12/15 15:09:37 ad Exp $ */
+/* $NetBSD: sfb.c,v 1.32 1999/12/16 15:07:00 ad Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.31 1999/12/15 15:09:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.32 1999/12/16 15:07:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,10 +310,6 @@ sfb_getdevconfig(dense_addr, dc)
 	dc->rinfo.ri_stride = dc->dc_rowbytes;
 	dc->rinfo.ri_hw = sfbasic;
 
-	/*
-	 * the accelerated sfb_putchar() needs LSbit left,
-	 * so we can't use the rasops default font
-	 */
 	wsfont_init();
 	/* prefer 8 pixel wide font */
 	if ((cookie = wsfont_find(NULL, 8, 0, 0)) <= 0)
@@ -322,6 +318,8 @@ sfb_getdevconfig(dense_addr, dc)
 		printf("sfb: font table is empty\n");
 		return;
 	}
+
+	/* the accelerated sfb_putchar() needs LSbit left */
 	if (wsfont_lock(cookie, &dc->rinfo.ri_font,
 			WSFONT_R2L, WSFONT_L2R) <= 0) {
 		printf("sfb: couldn't lock font\n");
