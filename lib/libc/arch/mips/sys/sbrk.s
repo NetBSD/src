@@ -38,7 +38,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)sbrk.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: sbrk.s,v 1.1 1994/05/24 07:13:18 glass Exp $")
+	ASMSTR("$Id: sbrk.s,v 1.2 1994/11/14 23:49:42 dean Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #define	SYS_brk		17
@@ -52,7 +52,7 @@ curbrk:
 	.word	end
 	.text
 
-LEAF(sbrk)
+LEAF(_sbrk)
 	lw	v1, curbrk
 	li	v0, SYS_brk
 	addu	a0, a0, v1	# compute current break
@@ -63,4 +63,4 @@ LEAF(sbrk)
 	j	ra
 1:
 	j	_cerror
-END(sbrk)
+END(_sbrk)

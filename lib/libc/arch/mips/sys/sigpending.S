@@ -38,10 +38,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)sigpending.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: sigpending.S,v 1.1 1994/05/24 07:13:21 glass Exp $")
+	ASMSTR("$Id: sigpending.S,v 1.2 1994/11/14 23:49:43 dean Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-LEAF(sigpending)
+LEAF(_sigpending)
 	li	v0, SYS_sigpending	# setlogin(name)
 	syscall
 	bne	a3, zero, 1f
@@ -50,4 +50,4 @@ LEAF(sigpending)
 	j	ra
 1:
 	j	_cerror
-END(sigpending)
+END(_sigpending)

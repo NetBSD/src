@@ -1,4 +1,4 @@
-/*	$NetBSD: start.s,v 1.4 1994/10/26 21:10:59 cgd Exp $	*/
+/*	$NetBSD: start.s,v 1.5 1994/11/14 23:50:57 dean Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,35 +95,35 @@ __main:
 	j	ra
 	nop
 
-LEAF(prom_restart)
+LEAF(_prom_restart)
 	li	v0, DEC_PROM_RESTART
 	j	v0
 	nop
-END(prom_restart)
+END(_prom_restart)
 
-LEAF(prom_open)
+LEAF(_prom_open)
 	li	v0, DEC_PROM_OPEN
 	j	v0
 	nop
-END(prom_open)
+END(_prom_open)
 
-LEAF(prom_lseek)
+LEAF(_prom_lseek)
 	li	v0, DEC_PROM_LSEEK
 	j	v0
 	nop
-END(prom_lseek)
+END(_prom_lseek)
 
-LEAF(prom_read)
+LEAF(_prom_read)
 	li	v0, DEC_PROM_READ
 	j	v0
 	nop
-END(prom_read)
+END(_prom_read)
 
-LEAF(printf)
+LEAF(_printf)
 	lw	v0, callv	# get pointer to call back vectors
 	sw	a1, 4(sp)	# store args on stack for printf
 	lw	v0, 48(v0)	# offset for callv->printf
 	sw	a2, 8(sp)
 	j	v0		# call PROM printf
 	sw	a3, 12(sp)
-END(printf)
+END(_printf)
