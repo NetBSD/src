@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.8 2004/05/25 14:54:56 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.9 2004/06/20 18:55:58 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.8 2004/05/25 14:54:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.9 2004/06/20 18:55:58 hannken Exp $");
 
 #include "fss.h"
 
@@ -141,7 +141,7 @@ static void fss_bs_thread(void *);
 static int fss_bmap(struct fss_softc *, off_t, int,
     struct vnode **, daddr_t *, int *);
 static int fss_bs_io(struct fss_softc *, fss_io_type,
-    u_int32_t, long, int, caddr_t);
+    u_int32_t, off_t, int, caddr_t);
 static u_int32_t *fss_bs_indir(struct fss_softc *, u_int32_t);
 
 const struct bdevsw fss_bdevsw = {
@@ -531,7 +531,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	if ((error = namei(&nd)) != 0)
 		return error;
 
-	if (nd.ni_vp->v_mount == sc->sc_mount) {
+	if (nd.ni_vp->v_type == VREG && nd.ni_vp->v_mount == sc->sc_mount) {
 		vrele(nd.ni_vp);
 		sc->sc_flags |= FSS_PERSISTENT;
 
@@ -540,8 +540,24 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 			return error;
 		sc->sc_bs_vp = nd.ni_vp;
 
+		fsbsize = sc->sc_bs_vp->v_mount->mnt_stat.f_iosize;
+		if (fsbsize & (fsbsize-1))	/* No power of two */
+			return EINVAL;
+		for (sc->sc_bs_bshift = 1; sc->sc_bs_bshift < 32;
+		    sc->sc_bs_bshift++)
+			if (FSS_FSBSIZE(sc) == fsbsize)
+				break;
+		if (sc->sc_bs_bshift >= 32)
+			return EINVAL;
+		sc->sc_bs_bmask = FSS_FSBSIZE(sc)-1;
+
+		sc->sc_clshift = 0;
+
 		error = VFS_SNAPSHOT(sc->sc_mount, sc->sc_bs_vp, &ts);
 		TIMESPEC_TO_TIMEVAL(&sc->sc_time, &ts);
+
+		VOP_UNLOCK(sc->sc_bs_vp, 0);
+
 		return error;
 	}
 	vrele(nd.ni_vp);
@@ -763,6 +779,7 @@ fss_delete_snapshot(struct fss_softc *sc, struct proc *p)
 /*
  * Get the block address and number of contiguous blocks.
  * If the file contains a hole, try to allocate.
+ * Backing store is locked by caller.
  */  
 static int
 fss_bmap(struct fss_softc *sc, off_t start, int len,
@@ -775,8 +792,6 @@ fss_bmap(struct fss_softc *sc, off_t start, int len,
 		bpp = &bp;
 	else
 		bpp = NULL;
-
-	vn_lock(sc->sc_bs_vp, LK_EXCLUSIVE|LK_RETRY);
 
 	error = VOP_BMAP(sc->sc_bs_vp, FSS_BTOFSB(sc, start), vpp, bnp, runp);
 	if ((error == 0 && *bnp != (daddr_t)-1) ||
@@ -816,8 +831,8 @@ fss_bmap(struct fss_softc *sc, off_t start, int len,
 
 out:
 
-	VOP_UNLOCK(sc->sc_bs_vp, 0);
-	if (error == 0 && *bnp == (daddr_t)-1)
+	if ((sc->sc_flags & FSS_PERSISTENT) == 0 &&
+	    error == 0 && *bnp == (daddr_t)-1)
 		error = ENOSPC;
 
 	return error;
@@ -979,7 +994,12 @@ fss_write_cluster(struct fss_cache *scp, u_int32_t cl)
 	addr = scp->fc_data;
 	todo = FSS_CLSIZE(sc);
 
-	while (todo > 0) {
+	vn_lock(sc->sc_bs_vp, LK_EXCLUSIVE|LK_RETRY);
+	simple_lock(&sc->sc_bs_vp->v_interlock);
+	error = VOP_PUTPAGES(sc->sc_bs_vp, trunc_page(pos),
+	    round_page(pos+todo), PGO_CLEANIT|PGO_SYNCIO|PGO_FREE);
+
+	while (error == 0 && todo > 0) {
 		error = fss_bmap(sc, pos, todo, &vp, &nbn, &nra);
 		if (error)
 			break;
@@ -1026,15 +1046,19 @@ fss_write_cluster(struct fss_cache *scp, u_int32_t cl)
 		ltsleep(&scp->fc_data, PRIBIO, "bswwait", 0, &sc->sc_slock);
 	FSS_UNLOCK(sc, s);
 
+	VOP_UNLOCK(sc->sc_bs_vp, 0);
+
 	return error;
 }
 
 /*
  * Read/write clusters from/to backing store.
+ * For persistent snapshots must be called with cl == 0. off is the
+ * offset into the snapshot.
  */
 static int
 fss_bs_io(struct fss_softc *sc, fss_io_type rw,
-    u_int32_t cl, long off, int len, caddr_t data)
+    u_int32_t cl, off_t off, int len, caddr_t data)
 {
 	int s, error, todo, count, nra;
 	off_t pos;
@@ -1046,7 +1070,12 @@ fss_bs_io(struct fss_softc *sc, fss_io_type rw,
 	pos = FSS_CLTOB(sc, cl)+off;
 	error = 0;
 
-	while (todo > 0) {
+	vn_lock(sc->sc_bs_vp, LK_EXCLUSIVE|LK_RETRY);
+	simple_lock(&sc->sc_bs_vp->v_interlock);
+	error = VOP_PUTPAGES(sc->sc_bs_vp, trunc_page(pos),
+	    round_page(pos+todo), PGO_CLEANIT|PGO_SYNCIO|PGO_FREE);
+
+	while (error == 0 && todo > 0) {
 		error = fss_bmap(sc, pos, todo, &vp, &nbn, &nra);
 		if (error)
 			break;
@@ -1054,6 +1083,14 @@ fss_bs_io(struct fss_softc *sc, fss_io_type rw,
 		count = FSS_FSBTOB(sc, nra+1)-FSS_FSBOFF(sc, pos);
 		if (count > todo)
 			count = todo;
+
+		if (nbn == (daddr_t)-1) {
+			bzero(data, count);
+			todo -= count;
+			data += count;
+			pos += count;
+			continue;
+		}
 
 		s = splbio();
 		bp = pool_get(&bufpool, PR_WAITOK);
@@ -1092,6 +1129,8 @@ fss_bs_io(struct fss_softc *sc, fss_io_type rw,
 		data += count;
 		pos += count;
 	}
+
+	VOP_UNLOCK(sc->sc_bs_vp, 0);
 
 	return error;           
 }
@@ -1209,11 +1248,9 @@ fss_bs_thread(void *arg)
 			if (FSS_ISVALID(sc)) {
 				FSS_UNLOCK(sc, s);
 
-				error = vn_rdwr(UIO_READ, sc->sc_bs_vp,
-				    bp->b_data, bp->b_bcount,
-				    dbtob(bp->b_blkno), UIO_SYSSPACE, IO_UNIT,
-				    sc->sc_bs_proc->p_ucred, NULL,
-				    sc->sc_bs_proc);
+				error = fss_bs_io(sc, FSS_READ, 0,
+				    dbtob(bp->b_blkno), bp->b_bcount,
+				    bp->b_data);
 
 				FSS_LOCK(sc, s);
 			} else
