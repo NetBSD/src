@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.34 1994/01/06 12:07:44 cgd Exp $
+#	$Id: ALL,v 1.35 1994/01/09 19:27:36 cgd Exp $
 #
 
 # architecture type and name of kernel; REQUIRED
@@ -202,6 +202,9 @@ device ed1 at isa? port 0x250 net irq 9 iomem 0xd8000 vector edintr
 device hp0 at isa? port 0x300 net irq 5 vector hpintr
 device is0 at isa? port 0x280 net irq 10 drq 7 vector isintr
 
+#sound-blaster
+device		sb0	at isa? port 0x220 bio irq 7 drq 1 vector sbintr
+
 # psuedo-terminals; REQUIRED for remote logins and many other things
 pseudo-device pty	64
 
@@ -232,3 +235,6 @@ pseudo-device speaker
 # tablet line discipline
 pseudo-device tb
 #pseudo-device tun	missing header files
+
+# /dev/audio
+pseudo-device audio
