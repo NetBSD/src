@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.3.4.3 2004/11/21 11:57:47 rtr Exp $
+#	$NetBSD: Makefile,v 1.3.4.4 2004/12/07 11:00:32 rtr Exp $
 
 .include "../Makefile.serverlib"
 
 PIXELSIZE=	8
 
-.if ${X11LOADABLE} != "no"
+.if ${MKX11LOADABLE} != "no"
 XMODULEDIR=	${X11USRLIBDIR}/modules
-SRCS=		cfbcmap.c cfbmodule.c
+SRCS=		cfbmodule.c
 .endif
 
 .include "../Makefile.servermod"

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13.2.2 2004/11/21 10:01:26 rtr Exp $
+#	$NetBSD: Makefile,v 1.13.2.3 2004/12/07 11:00:33 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ SUBDIR=	ddc doc dummy etc fbdevhw i2c int10 loader pcidata rac \
 	ramdac scanpci shadowfb vbe vgahw xaa xf1bpp xf24_32bpp \
 	xf4bpp xf86 xf86_os xf86config xf8_16bpp xf8_32bpp xloader
 
-.if ${X11LOADABLE} != "no"
+.if ${MKX11LOADABLE} != "no"
 SUBDIR+=drivers input
 .else
 SUBDIR+=driver idriver
