@@ -1,7 +1,7 @@
-/*	$NetBSD: it8368reg.h,v 1.2 1999/12/30 16:50:43 uch Exp $ */
+/*	$NetBSD: it8368reg.h,v 1.3 2000/03/12 15:35:29 uch Exp $ */
 
 /*
- * Copyright (c) 1999, by UCHIYAMA Yasushi
+ * Copyright (c) 1999, 2000 by UCHIYAMA Yasushi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -47,8 +47,8 @@
 #define IT8368_MFIONEGINTSTAT_REG	0x1e
 #define IT8368_CTRL_REG			0x20
 
-#define IT8368_GPIO_MAX		12
-#define IT8368_MFIO_MAX		10
+#define IT8368_GPIO_MAX			12
+#define IT8368_MFIO_MAX			10
 
 #define IT8368_GPIODATAOUT_MASK		0x1fff
 #define IT8368_MFIODATAOUT_MASK		0x07ff
@@ -102,4 +102,5 @@
 #define IT8368_PIN_CRDVPP_0V		0x0000
 #define IT8368_PIN_CRDVPP_CRDVCC	IT8368_PIN_CRDVPPON0
 #define IT8368_PIN_CRDVCC_12V		IT8368_PIN_CRDVPPON1
-#define IT8368_PIN_CRDVCC_HIZ		(IT8368_PIN_CRDVPPON0|IT8368_PIN_CRDVPPON1)
+#define IT8368_PIN_CRDVCC_HIZ		(IT8368_PIN_CRDVPPON0 |		\
+					IT8368_PIN_CRDVPPON1)
