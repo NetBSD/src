@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)exec.h	8.3 (Berkeley) 1/21/94
- *	$Id: exec.h,v 1.37 1994/05/21 07:47:40 cgd Exp $
+ *	$Id: exec.h,v 1.38 1994/05/27 08:44:12 mycroft Exp $
  */
 
 /*
@@ -125,7 +125,7 @@ struct ps_strings {
  * Arguments to the exec system call.
  */
 struct execve_args {
-	char	*fname;
+	char	*path;
 	char	**argp;
 	char	**envp;
 };
