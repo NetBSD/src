@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.14 1998/01/05 06:27:42 thorpej Exp $	*/
+/*	$NetBSD: queue.h,v 1.15 1998/05/15 12:22:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -39,8 +39,8 @@
 #define	_SYS_QUEUE_H_
 
 /*
- * This file defines three types of data structures: lists, tail queues,
- * and circular queues.
+ * This file defines foure types of data structures: lists, simple queues,
+ * tail queues, and circular queues.
  *
  * A list is headed by a single forward pointer (or an array of forward
  * pointers for a hash table header). The elements are doubly linked
