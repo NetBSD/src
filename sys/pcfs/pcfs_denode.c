@@ -15,8 +15,7 @@
  *
  *  October 1992
  *
- *	$Header: /cvsroot/src/sys/pcfs/Attic/pcfs_denode.c,v 1.3 1993/04/29 22:54:28 cgd Exp $
- *
+ *	$Id: pcfs_denode.c,v 1.4 1993/05/20 03:34:10 cgd Exp $
  */
 
 #include "param.h"
