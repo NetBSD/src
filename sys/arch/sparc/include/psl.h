@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.7 1995/08/13 00:29:56 mycroft Exp $ */
+/*	$NetBSD: psl.h,v 1.8 1996/02/01 22:32:32 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
 
 #define	PIL_CLOCK	10
 
-#if defined(_KERNEL) && !defined(LOCORE)
+#if defined(_KERNEL) && !defined(_LOCORE)
 /*
  * GCC pseudo-functions for manipulating PSR (primarily PIL field).
  */
@@ -190,6 +190,6 @@ static __inline void splx(int newipl) {
 	    "r" (psr & ~PSR_PIL), "rn" (newipl));
 	__asm __volatile("nop; nop; nop");
 }
-#endif /* KERNEL && !LOCORE */
+#endif /* KERNEL && !_LOCORE */
 
 #endif /* PSR_IMPL */

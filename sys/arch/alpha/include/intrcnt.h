@@ -63,6 +63,6 @@
 #define INTRCNT_KN20AA_IRQ	(INTRCNT_ISA_IRQ + INTRCNT_ISA_IRQ_LEN)
 #define INTRCNT_KN20AA_IRQ_LEN	32
 
-#ifndef LOCORE
+#ifndef _LOCORE
 extern long intrcnt[];
 #endif

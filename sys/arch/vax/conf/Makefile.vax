@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.12 1995/09/19 23:57:55 thorpej Exp $
+#	$NetBSD: Makefile.vax,v 1.13 1996/02/01 22:33:21 mycroft Exp $
 
 #	@(#)Makefile.vax	7.18 (Berkeley) 12/16/90
 #
@@ -51,7 +51,7 @@ LIBCOMPAT=      ${COMPATLIB_PROF}
 
 NORMAL_C= ${CC} -O -c ${CFLAGS} ${PROF} $<
 NORMAL_C_C= ${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
-NORMAL_S= ${CC} -x assembler-with-cpp -E -I. -DLOCORE ${COPTS} $< | \
+NORMAL_S= ${CC} -x assembler-with-cpp -E -I. -D_LOCORE ${COPTS} $< | \
 	${AS} ${ASFLAGS} -o $*.o
 DRIVER_C= ${CC} -c ${CFLAGS} ${PROF} $<
 DRIVER_C_C= ${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<

@@ -44,8 +44,8 @@
  */
 
 #ifndef AUDIO_C_HANDLER
-#ifndef LOCORE
-#define LOCORE
+#ifndef _LOCORE
+#define _LOCORE
 #endif
 #include "assym.s"
 #include <sparc/sparc/intreg.h>

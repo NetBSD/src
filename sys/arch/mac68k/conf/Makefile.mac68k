@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mac68k,v 1.27 1996/01/14 21:06:51 thorpej Exp $
+#	$NetBSD: Makefile.mac68k,v 1.28 1996/02/01 22:31:33 mycroft Exp $
 
 # Makefile for NetBSD for the mac
 #	Derived from makefile for hp300 from NetBSD
@@ -123,7 +123,7 @@ locore.o: assym.s ${MAC68K}/mac68k/vectors.s ${MAC68K}/mac68k/macglobals.s
 locore.o: ${MAC68K}/mac68k/locore.s 
 locore.o: ${MAC68K}/include/trap.h ${MAC68K}/include/psl.h
 locore.o: ${MAC68K}/include/pte.h ${MAC68K}/include/cpu.h
-	${CPP} -DLOCORE ${COPTS} ${MAC68K}/mac68k/locore.s | ${AS} -o locore.o
+	${CPP} -D_LOCORE ${COPTS} ${MAC68K}/mac68k/locore.s | ${AS} -o locore.o
 
 # the following is necessary because autoconf.o depends on #if GENERIC
 autoconf.o: Makefile

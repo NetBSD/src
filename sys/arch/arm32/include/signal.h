@@ -1,4 +1,4 @@
-/* $NetBSD: signal.h,v 1.1 1996/01/31 23:23:09 mark Exp $ */
+/* $NetBSD: signal.h,v 1.2 1996/02/01 22:29:44 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -43,13 +43,13 @@
  * Created      : 30/09/94
  * Last updated : 25/01/95
  *
- *    $Id: signal.h,v 1.1 1996/01/31 23:23:09 mark Exp $
+ *    $Id: signal.h,v 1.2 1996/02/01 22:29:44 mycroft Exp $
  */
 
 #ifndef _ARM32_SIGNAL_H_
 #define _ARM32_SIGNAL_H_
 
-#ifndef LOCORE
+#ifndef _LOCORE
 
 typedef int sig_atomic_t;
 

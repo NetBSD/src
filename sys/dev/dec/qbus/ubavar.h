@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.8 1995/12/01 19:23:01 ragge Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.9 1996/02/01 22:33:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -231,7 +231,7 @@ struct ubinfo {
 	(((bdp) << 28) | ((nmr) << 20) | ((mr) << 9) | (off))
 #endif
 
-#ifndef LOCORE
+#ifndef _LOCORE
 #ifdef _KERNEL
 #define	ubago(ui)	ubaqueue(ui, 0)
 
@@ -247,4 +247,4 @@ extern	struct cfdriver	ubacd;
 void	ubainit __P((struct uba_softc *));
 
 #endif /* _KERNEL */
-#endif !LOCORE
+#endif !_LOCORE

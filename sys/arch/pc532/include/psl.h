@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.14 1996/02/01 00:03:36 phil Exp $	*/
+/*	$NetBSD: psl.h,v 1.15 1996/02/01 22:32:00 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -89,7 +89,7 @@
 #define	SIR_NETMASK	((1 << SIR_NET) | SIR_CLOCKMASK)
 #define SIR_ALLMASK	0xffff0000
 
-#ifndef LOCORE
+#ifndef _LOCORE
 /*
  * Structure of the software interrupt table
  */
@@ -235,7 +235,7 @@ splx_di(register int ncpl)
 #define	setsoftclock()	softintr(SIR_CLOCK)
 #define	setsoftnet()	softintr(SIR_NET)
 
-#endif /* !LOCORE */
+#endif /* !_LOCORE */
 #endif /* _KERNEL */
 
 #endif /* _NS532_PSL_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.10 1995/12/20 00:08:43 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.11 1996/02/01 22:28:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -157,7 +157,7 @@
 #define	splhigh()               pal_swpipl(PSL_IPL_HIGH)
 
 #ifdef _KERNEL
-#ifndef LOCORE
+#ifndef _LOCORE
 
 /* This was calibrated empirically */
 extern	u_int64_t cycles_per_usec;

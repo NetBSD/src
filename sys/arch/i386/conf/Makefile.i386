@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.59 1995/10/10 05:58:00 mycroft Exp $
+#	$NetBSD: Makefile.i386,v 1.60 1996/02/01 22:30:32 mycroft Exp $
 # 	@(#)Makefile.hp300	8.2 (Berkeley) 1/23/94
 #
 # Makefile for NetBSD
@@ -70,8 +70,8 @@ PROFILE_C=	${CC} -S -c ${CFLAGS} $< ; \
 		${AS} -o $@; \
 		rm -f $*.s
 
-NORMAL_S=	${CPP} -DLOCORE ${COPTS} $< | ${AS} -o $@
-NORMAL_S_C=	${CPP} -DLOCORE ${COPTS} ${PARAM} $< | ${AS} -o $@
+NORMAL_S=	${CPP} -D_LOCORE ${COPTS} $< | ${AS} -o $@
+NORMAL_S_C=	${CPP} -D_LOCORE ${COPTS} ${PARAM} $< | ${AS} -o $@
 
 %OBJS
 
@@ -122,7 +122,7 @@ locore.o: assym.s ${I386}/i386/locore.s machine/trap.h machine/psl.h
 locore.o: machine/pte.h ${I386}/isa/vector.s ${I386}/isa/icu.s
 locore.o: $S/sys/errno.h machine/specialreg.h ${I386}/isa/debug.h
 locore.o: ${I386}/isa/icu.h $S/dev/isa/isareg.h $S/net/netisr.h
-	${CPP} -DLOCORE ${COPTS} ${I386}/i386/locore.s | ${AS} -o locore.o
+	${CPP} -D_LOCORE ${COPTS} ${I386}/i386/locore.s | ${AS} -o locore.o
 
 # the following is necessary because autoconf.o depends on #if GENERIC
 autoconf.o: Makefile

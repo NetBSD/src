@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.12 1995/07/05 17:53:41 pk Exp $ */
+/*	$NetBSD: pte.h,v 1.13 1996/02/01 22:32:34 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  * (Sun call them `Page Map Entries').
  */
 
-#ifndef LOCORE
+#ifndef _LOCORE
 /*
  * Segment maps contain `pmeg' (Page Map Entry Group) numbers.
  * A PMEG is simply an index that names a group of 32 (sun4) or

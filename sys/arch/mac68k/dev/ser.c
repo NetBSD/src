@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.34 1996/01/12 04:16:25 briggs Exp $	*/
+/*	$NetBSD: ser.c,v 1.35 1996/02/01 22:31:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -95,7 +95,7 @@
 
 #include <dev/cons.h>
 
-#undef LOCORE
+#undef _LOCORE
 #include "z8530reg.h"
 #include "zsvar.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_prom.h,v 1.6 1995/03/28 18:19:41 jtc Exp $	*/
+/*	$NetBSD: dec_prom.h,v 1.7 1996/02/01 22:32:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,7 +62,7 @@
  * by Digital Equipment Corporation.
  */
 
-#ifndef LOCORE
+#ifndef _LOCORE
 #include <sys/types.h>
 #include <sys/cdefs.h>
 
@@ -200,7 +200,7 @@ typedef struct {
 	int 	num;		/* Number of strings used. */
 } MachStringTable;
 
-#endif /* LOCORE */
+#endif /* _LOCORE */
 
 /*
  * The prom has a jump table at the beginning of it to get to its

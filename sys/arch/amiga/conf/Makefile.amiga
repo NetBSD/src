@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.32 1996/01/28 20:09:08 chopps Exp $
+#	$NetBSD: Makefile.amiga,v 1.33 1996/02/01 22:29:19 mycroft Exp $
 
 #	@(#)Makefile.hp300	7.10 (Berkeley) 6/27/91
 #
@@ -126,7 +126,7 @@ lint: /tmp param.c
 
 locore.o: assym.s ${AMIGA}/amiga/vectors.s ${AMIGA}/amiga/locore.s 
 locore.o: machine/trap.h machine/psl.h machine/pte.h machine/cpu.h
-	${CPP} -DLOCORE ${COPTS} ${AMIGA}/amiga/locore.s | ${AS} -o locore.o
+	${CPP} -D_LOCORE ${COPTS} ${AMIGA}/amiga/locore.s | ${AS} -o locore.o
 
 # the following is necessary because autoconf.o depends on #if GENERIC
 autoconf.o: Makefile

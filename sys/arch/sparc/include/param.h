@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.18 1995/12/11 12:25:22 pk Exp $ */
+/*	$NetBSD: param.h,v 1.19 1996/02/01 22:32:31 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -87,7 +87,7 @@
 #define	PGSHIFT		SUN4CM_PGSHIFT	/* log2(NBPG) */
 #endif
 #if defined(SUN4) && (defined(SUN4C) || defined(SUN4M))
-#if defined(_KERNEL) && !defined(LOCORE)
+#if defined(_KERNEL) && !defined(_LOCORE)
 extern int nbpg, pgofset, pgshift;
 #endif
 #define	NBPG		nbpg		/* bytes/page */
@@ -168,7 +168,7 @@ extern int nbpg, pgofset, pgshift;
  * in DVMA space.
  */
 #ifdef _KERNEL
-#ifndef LOCORE
+#ifndef _LOCORE
 extern vm_offset_t	dvma_base;
 extern vm_offset_t	dvma_end;
 extern struct map	*dvmamap;
@@ -187,13 +187,13 @@ extern void	dvma_free __P((caddr_t, size_t, void *));
 
 
 #ifdef _KERNEL
-#ifndef LOCORE
+#ifndef _LOCORE
 #define	DELAY(n)	delay(n)
 #endif
 #endif
 
 #ifdef _KERNEL
-#ifndef LOCORE
+#ifndef _LOCORE
 extern int cputyp;
 extern int cpumod;
 #endif
