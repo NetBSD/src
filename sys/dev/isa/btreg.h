@@ -53,6 +53,7 @@ typedef u_int8_t physlen[4];
 #define BT_INQUIRE_REVISION_3	0x84	/* Get 3rd firmware version byte */
 #define BT_INQUIRE_REVISION_4	0x85	/* Get 4th firmware version byte */
 #define BT_INQUIRE_MODEL	0x8b	/* Get hardware ID and revision */
+#define	BT_INQUIRE_PERIOD	0x8c	/* Get synchronous period */
 #define BT_INQUIRE_EXTENDED	0x8d	/* Adapter Setup Inquiry */
 #define	BT_ROUND_ROBIN		0x8f	/* Enable/Disable(default) round robin */
 
@@ -276,6 +277,16 @@ struct bt_setup {
 			u_char  valid:1;
 		} sync[8];
 		u_char  disc_sts;
+	} reply;
+};
+
+struct bt_period {
+	struct {
+		u_char	opcode;
+		u_char	len;
+	} cmd;
+	struct {
+		u_char	period[8];
 	} reply;
 };
 
