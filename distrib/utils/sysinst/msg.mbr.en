@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.en,v 1.4 2003/06/13 22:27:03 dsl Exp $	*/
+/*	$NetBSD: msg.mbr.en,v 1.5 2003/06/14 12:58:45 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -227,7 +227,7 @@ message installbootsel
 disk. Do you want to install a bootselector so that you can select
 which system to start up when your computer is (re)started?}
 
-message installmbr
+message installlbambr
 {The start of the NetBSD part of the disk lies outside of the range
 that the BIOS can address. The initial bootcode in the Master Boot
 Record needs to be able to use the extended BIOS interface to boot
@@ -241,6 +241,9 @@ already have a bootselector installed, no further action is needed.
 However, if no bootselector is installed, the normal bootcode must be
 used, or your system will not boot properly. Do you want to use the normal
 NetBSD bootcode?}
+
+message installmbr
+{Do you want to install the NetBSD bootcode into the Master Boot Record?}
 
 message configbootsel
 {Configure the different bootselection menu items. You can change the
