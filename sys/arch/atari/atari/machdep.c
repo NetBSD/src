@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.108 2001/04/24 04:30:55 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.109 2001/05/15 13:57:43 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,6 +44,7 @@
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
+#include "opt_mbtype.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +97,10 @@ static void identifycpu __P((void));
 static void netintr __P((void));
 void	straymfpint __P((int, u_short));
 void	straytrap __P((int, u_short));
+
+#ifdef _MILANHW_
+void	nmihandler __P((void));
+#endif
 
 vm_map_t exec_map = NULL;  
 vm_map_t mb_map = NULL;
@@ -976,3 +981,22 @@ cpu_exec_aout_makecmds(p, epp)
 #endif
 	return(error);
 }
+
+#ifdef _MILANHW_
+
+/*
+ * Currently the only source of NMI interrupts on the Milan is the PLX9080.
+ * On access errors to the PCI bus, an NMI is generated. This NMI is shorted
+ * in locore in case of a PCI config cycle to a non-existing address to allow
+ * for probes. On other occaisions, it ShouldNotHappen(TM).
+ * Note: The handler in locore clears the errors, to make further PCI access
+ * possible.
+ */
+void
+nmihandler()
+{
+	extern unsigned long	plx_status;
+
+	printf("nmihandler: plx_status = 0x%08lx\n", plx_status);
+}
+#endif
