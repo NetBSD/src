@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.87 2000/04/10 06:34:11 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.88 2000/04/11 06:30:28 matthias Exp $	*/
 
 /*
  *
@@ -2886,7 +2886,7 @@ pmap_unwire(pmap, va)
 			ptes[i386_btop(va)] &= ~PG_W;
 			pmap->pm_stats.wired_count--;
 		}
-#ifdef DIAGNOSITC
+#ifdef DIAGNOSTIC
 		else {
 			printf("pmap_unwire: wiring for pmap %p va 0x%lx "
 			       "didn't change!\n", pmap, va);
