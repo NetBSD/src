@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.80 2002/03/17 22:19:20 christos Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.80.4.1 2002/05/16 04:10:13 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.80 2002/03/17 22:19:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.80.4.1 2002/05/16 04:10:13 gehenna Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -111,8 +111,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.80 2002/03/17 22:19:20 christos Exp 
 #include <net/if.h>
 
 /* XXX these should eventually move to subr_autoconf.c */
-static int findblkmajor __P((const char *));
-const char *findblkname __P((int));
 static struct device *finddevice __P((const char *));
 static struct device *getdisk __P((char *, int, int, dev_t *, int));
 static struct device *parsedisk __P((char *, int, int, dev_t *));
@@ -821,7 +819,7 @@ setroot(bootdv, bootpartition)
 		 */
 		rootdv = bootdv;
 
-		majdev = findblkmajor(bootdv->dv_xname);
+		majdev = devsw_name2blk(bootdv->dv_xname, NULL, 0);
 		if (majdev >= 0) {
 			/*
 			 * Root is on a disk.  `bootpartition' is root.
@@ -845,7 +843,7 @@ setroot(bootdv, bootpartition)
 			goto haveroot;
 		}
 
-		rootdevname = findblkname(major(rootdev));
+		rootdevname = devsw_blk2name(major(rootdev));
 		if (rootdevname == NULL) {
 			printf("unknown device major 0x%x\n", rootdev);
 			boothowto |= RB_ASKNAME;
@@ -913,7 +911,7 @@ setroot(bootdv, bootpartition)
 			goto nodumpdev;
 		}
 
-		dumpdevname = findblkname(major(dumpdev));
+		dumpdevname = devsw_blk2name(major(dumpdev));
 		if (dumpdevname == NULL)
 			goto nodumpdev;
 		memset(buf, 0, sizeof(buf));
@@ -942,31 +940,6 @@ setroot(bootdv, bootpartition)
  nodumpdev:
 	dumpdev = NODEV;
 	printf("\n");
-}
-
-static int
-findblkmajor(name)
-	const char *name;
-{
-	int i;
-
-	for (i = 0; dev_name2blk[i].d_name != NULL; i++)
-		if (strncmp(name, dev_name2blk[i].d_name,
-		    strlen(dev_name2blk[i].d_name)) == 0)
-			return (dev_name2blk[i].d_maj);
-	return (-1);
-}
-
-const char *
-findblkname(maj)
-	int maj;
-{
-	int i;
-
-	for (i = 0; dev_name2blk[i].d_name != NULL; i++)
-		if (dev_name2blk[i].d_maj == maj)
-			return (dev_name2blk[i].d_name);
-	return (NULL);
 }
 
 static struct device *
@@ -1085,7 +1058,7 @@ parsedisk(str, len, defpart, devp)
 #ifdef MEMORY_DISK_HOOKS
  gotdisk:
 #endif
-			majdev = findblkmajor(dv->dv_xname);
+			majdev = devsw_name2blk(dv->dv_xname, NULL, 0);
 			if (majdev < 0)
 				panic("parsedisk");
 			*devp = MAKEDISKDEV(majdev, dv->dv_unit, part);
