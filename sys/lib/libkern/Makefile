@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46.2.1 1998/11/09 06:06:33 chs Exp $
+#	$NetBSD: Makefile,v 1.46.2.2 1999/02/25 03:48:33 chs Exp $
 
 LIB=	kern
 NOPIC=
@@ -55,7 +55,7 @@ SRCS+=	strchr.c
 SRCS+=	strrchr.c
 .endif
 
-POBJS+=	${OBJS:.o=.po} mcount.po
+POBJS+=	mcount.po
 
 # only needed during build
 libinstall::
