@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.50 2002/02/12 06:39:10 ross Exp $	*/
+/*	$NetBSD: parser.c,v 1.51 2002/02/12 20:32:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.50 2002/02/12 06:39:10 ross Exp $");
+__RCSID("$NetBSD: parser.c,v 1.51 2002/02/12 20:32:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,6 +76,8 @@ __RCSID("$NetBSD: parser.c,v 1.50 2002/02/12 06:39:10 ross Exp $");
 /* values returned by readtoken */
 #include "token.h"
 
+#define OPENBRACE '{'
+#define CLOSEBRACE '}'
 
 
 struct heredoc {
@@ -877,6 +879,21 @@ breakloop:
 #define PARSEBACKQNEW()	{oldstyle = 0; goto parsebackq; parsebackq_newreturn:;}
 #define	PARSEARITH()	{goto parsearith; parsearith_return:;}
 
+#define ISDBLQUOTE() ((varnest < 32) ? (dblquote & (1 << varnest)) : \
+    (dblquotep[varnest / 32] & (1 << (varnest % 32))))
+
+#define SETDBLQUOTE() \
+    if (varnest < 32) \
+	dblquote |= (1 << varnest); \
+    else \
+	dblquotep[varnest / 32] |= (1 << (varnest % 32))
+
+#define CLRDBLQUOTE() \
+    if (varnest < 32) \
+	dblquote &= ~(1 << varnest); \
+    else \
+	dblquotep[varnest / 32] &= ~(1 << (varnest % 32))
+
 STATIC int
 readtoken1(firstc, syntax, eofmark, striptabs)
 	int firstc;
@@ -890,6 +907,8 @@ readtoken1(firstc, syntax, eofmark, striptabs)
 	char line[EOFMARKLEN + 1];
 	struct nodelist *bqlist;
 	int quotef;
+	int *dblquotep = NULL;
+	size_t maxnest = 32;
 	int dblquote;
 	int varnest;	/* levels of variables expansion */
 	int arinest;	/* levels of arithmetic expansion */
@@ -898,6 +917,8 @@ readtoken1(firstc, syntax, eofmark, striptabs)
 	char const *prevsyntax;	/* syntax before arithmetic */
 #if __GNUC__
 	/* Avoid longjmp clobbering */
+	(void) &maxnest;
+	(void) &dblquotep;
 	(void) &out;
 	(void) &quotef;
 	(void) &dblquote;
@@ -911,11 +932,12 @@ readtoken1(firstc, syntax, eofmark, striptabs)
 
 	startlinno = plinno;
 	dblquote = 0;
-	if (syntax == DQSYNTAX)
-		dblquote = 1;
+	varnest = 0;
+	if (syntax == DQSYNTAX) {
+		SETDBLQUOTE();
+	}
 	quotef = 0;
 	bqlist = NULL;
-	varnest = 0;
 	arinest = 0;
 	parenlevel = 0;
 
@@ -950,7 +972,7 @@ readtoken1(firstc, syntax, eofmark, striptabs)
 				USTPUTC(c, out);
 				break;
 			case CCTL:
-				if (eofmark == NULL || dblquote)
+				if (eofmark == NULL || ISDBLQUOTE())
 					USTPUTC(CTLESC, out);
 				USTPUTC(c, out);
 				break;
@@ -965,8 +987,9 @@ readtoken1(firstc, syntax, eofmark, striptabs)
 					else
 						setprompt(0);
 				} else {
-					if (dblquote && c != '\\' && c != '`' && c != '$'
-							 && (c != '"' || eofmark != NULL))
+					if (ISDBLQUOTE() && c != '\\' &&
+					    c != '`' && c != '$' &&
+					    (c != '"' || eofmark != NULL))
 						USTPUTC('\\', out);
 					if (SQSYNTAX[c] == CCTL)
 						USTPUTC(CTLESC, out);
@@ -977,27 +1000,36 @@ readtoken1(firstc, syntax, eofmark, striptabs)
 				}
 				break;
 			case CSQUOTE:
-				if (eofmark == NULL)
-					USTPUTC(CTLQUOTEMARK, out);
-				syntax = SQSYNTAX;
-				break;
+				if (syntax != SQSYNTAX) {
+				    if (eofmark == NULL)
+					    USTPUTC(CTLQUOTEMARK, out);
+				    syntax = SQSYNTAX;
+				    break;
+				}
+				/* FALLTHROUGH */
 			case CDQUOTE:
-				if (eofmark == NULL)
-					USTPUTC(CTLQUOTEMARK, out);
-				syntax = DQSYNTAX;
-				dblquote = 1;
-				break;
-			case CENDQUOTE:
 				if (eofmark != NULL && arinest == 0 &&
 				    varnest == 0) {
 					USTPUTC(c, out);
 				} else {
 					if (arinest) {
-						syntax = ARISYNTAX;
-						dblquote = 0;
+						if (c != '"' || ISDBLQUOTE()) {
+							syntax = ARISYNTAX;
+							CLRDBLQUOTE();
+						} else {
+							syntax = DQSYNTAX;
+							SETDBLQUOTE();
+							USTPUTC(CTLQUOTEMARK, out);
+						}
 					} else if (eofmark == NULL) {
-						syntax = BASESYNTAX;
-						dblquote = 0;
+						if (c != '"' || ISDBLQUOTE()) {
+							syntax = BASESYNTAX;
+							CLRDBLQUOTE();
+						} else {
+							syntax = DQSYNTAX;
+							SETDBLQUOTE();
+							USTPUTC(CTLQUOTEMARK, out);
+						}
 					}
 					quotef++;
 				}
@@ -1005,8 +1037,8 @@ readtoken1(firstc, syntax, eofmark, striptabs)
 			case CVAR:	/* '$' */
 				PARSESUB();		/* parse substitution */
 				break;
-			case CENDVAR:	/* '}' */
-				if (varnest > 0) {
+			case CENDVAR:	/* CLOSEBRACE */
+				if (varnest > 0 && !ISDBLQUOTE()) {
 					varnest--;
 					USTPUTC(CTLENDVAR, out);
 				} else {
@@ -1027,9 +1059,9 @@ readtoken1(firstc, syntax, eofmark, striptabs)
 							USTPUTC(CTLENDARI, out);
 							syntax = prevsyntax;
 							if (syntax == DQSYNTAX)
-								dblquote = 1;
+								SETDBLQUOTE();
 							else
-								dblquote = 0;
+								CLRDBLQUOTE();
 						} else
 							USTPUTC(')', out);
 					} else {
@@ -1062,6 +1094,7 @@ endword:
 		synerror("Unterminated quoted string");
 	if (varnest != 0) {
 		startlinno = plinno;
+		/* { */
 		synerror("Missing '}'");
 	}
 	USTPUTC('\0', out);
@@ -1082,6 +1115,8 @@ endword:
 	backquotelist = bqlist;
 	grabstackblock(len);
 	wordtext = out;
+	if (dblquotep != NULL)
+	    ckfree(dblquotep);
 	return lasttoken = TWORD;
 /* end of readtoken routine */
 
@@ -1194,7 +1229,7 @@ parsesub: {
 	static const char types[] = "}-+?=";
 
 	c = pgetc();
-	if (c != '(' && c != '{' && !is_name(c) && !is_special(c)) {
+	if (c != '(' && c != OPENBRACE && !is_name(c) && !is_special(c)) {
 		USTPUTC('$', out);
 		pungetc();
 	} else if (c == '(') {	/* $(command) or $((arith)) */
@@ -1209,10 +1244,10 @@ parsesub: {
 		typeloc = out - stackblock();
 		USTPUTC(VSNORMAL, out);
 		subtype = VSNORMAL;
-		if (c == '{') {
+		if (c == OPENBRACE) {
 			c = pgetc();
 			if (c == '#') {
-				if ((c = pgetc()) == '}')
+				if ((c = pgetc()) == CLOSEBRACE)
 					c = '#';
 				else
 					subtype = VSLENGTH;
@@ -1269,11 +1304,19 @@ badsub:			synerror("Bad substitution");
 		} else {
 			pungetc();
 		}
-		if (dblquote || arinest)
+		if (ISDBLQUOTE() || arinest)
 			flags |= VSQUOTE;
 		*(stackblock() + typeloc) = subtype | flags;
-		if (subtype != VSNORMAL)
+		if (subtype != VSNORMAL) {
 			varnest++;
+			if (varnest >= maxnest) {
+				maxnest += 32;
+				dblquotep = ckrealloc(dblquotep, maxnest / 8);
+				if (maxnest == 64)
+					*dblquotep = dblquote;
+				dblquotep[(maxnest / 32) - 1] = 0;
+			}
+		}
 	}
 	goto parsesub_return;
 }
@@ -1353,7 +1396,7 @@ parsebackq: {
 					continue;
 				}
                                 if (pc != '\\' && pc != '`' && pc != '$'
-                                    && (!dblquote || pc != '"'))
+                                    && (!ISDBLQUOTE() || pc != '"'))
                                         STPUTC('\\', pout);
 				break;
 
@@ -1423,7 +1466,7 @@ done:
 	}
 	parsebackquote = savepbq;
 	handler = savehandler;
-	if (arinest || dblquote)
+	if (arinest || ISDBLQUOTE())
 		USTPUTC(CTLBACKQ | CTLQUOTE, out);
 	else
 		USTPUTC(CTLBACKQ, out);
@@ -1442,7 +1485,7 @@ parsearith: {
 		prevsyntax = syntax;
 		syntax = ARISYNTAX;
 		USTPUTC(CTLARI, out);
-		if (dblquote)
+		if (ISDBLQUOTE())
 			USTPUTC('"',out);
 		else
 			USTPUTC(' ',out);
