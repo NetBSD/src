@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.28 2002/10/22 00:06:46 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.29 2002/10/22 00:25:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.28 2002/10/22 00:06:46 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.29 2002/10/22 00:25:29 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -381,7 +381,6 @@ strmemb(tnode_t *tn, op_t op, sym_t *msym)
 	 */
 	if (msym->s_scl == NOSCL) {
 		/* undefined struct/union member: %s */
-		fprintf(stderr, "3. %s\n", msym->s_name);
 		error(101, msym->s_name);
 		rmsym(msym);
 		msym->s_kind = FMOS;
@@ -830,7 +829,9 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		if (!ln->tn_lvalue) {
 			if (ln->tn_op == CVT && ln->tn_cast &&
 			    ln->tn_left->tn_op == LOAD) {
-				/* a cast does not yield an lvalue */
+				/* a cast to non-ptr does not yield an lvalue */
+				if (ln->tn_type->t_tspec == PTR)
+					break;
 				error(163);
 			}
 			/* %soperand of %s must be lvalue */
@@ -848,7 +849,9 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		} else if (!ln->tn_lvalue) {
 			if (ln->tn_op == CVT && ln->tn_cast &&
 			    ln->tn_left->tn_op == LOAD) {
-				/* a cast does not yield an lvalue */
+				/* a cast to non-ptr does not yield an lvalue */
+				if (ln->tn_type->t_tspec == PTR)
+					break;
 				error(163);
 			}
 			/* %soperand of %s must be lvalue */
@@ -1100,7 +1103,9 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		if (!ln->tn_lvalue) {
 			if (ln->tn_op == CVT && ln->tn_cast &&
 			    ln->tn_left->tn_op == LOAD) {
-				/* a cast does not yield an lvalue */
+				/* a cast to non-ptr does not yield an lvalue */
+				if (ln->tn_type->t_tspec == PTR)
+					break;
 				error(163);
 			}
 			/* %soperand of %s must be lvalue */
