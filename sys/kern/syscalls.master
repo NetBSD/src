@@ -1,4 +1,4 @@
- 	$Id: syscalls.master,v 1.16 1994/04/29 04:29:14 cgd Exp $
+ 	$Id: syscalls.master,v 1.17 1994/05/01 05:02:24 cgd Exp $
 ;	from: @(#)syscalls.master	7.26 (Berkeley) 3/25/91
 ; System call name/number master file.
 ; Processed to created init_sysent.c, syscalls.c and syscall.h.
@@ -158,7 +158,11 @@
 116	STD	2 gettimeofday
 117	STD	2 getrusage
 118	STD	5 getsockopt
+#ifdef vax
+119	STD	1 resuba
+#else
 119	UNIMPL	0 nosys
+#endif
 120	STD	3 readv
 121	STD	3 writev
 122	STD	2 settimeofday
@@ -183,8 +187,8 @@
 141	COMPAT	3 getpeername
 142	STD	0 gethostid
 143	STD	1 sethostid
-144	STD	2 getrlimit
-145	STD	2 setrlimit
+144	COMPAT	2 getrlimit
+145	COMPAT	2 setrlimit
 146	COMPAT	2 killpg
 147	STD	0 setsid
 148	STD	4 quotactl
@@ -251,29 +255,35 @@
 181	STD	1 setgid
 182	STD	1 setegid
 183	STD	1 seteuid
+#ifdef LFS
+184	STD	3 lfs_bmapv
+185	STD	3 lfs_markv
+186	STD	2 lfs_segclean
+187	STD	2 lfs_segwait
+#else
 184	UNIMPL	0 nosys
 185	UNIMPL	0 nosys
 186	UNIMPL	0 nosys
 187	UNIMPL	0 nosys
+#endif
 188	STD	2 stat
 189	STD	2 fstat
 190	STD	2 lstat
 191	UNIMPL	0 nosys
 192	UNIMPL	0 nosys
 193	UNIMPL	0 nosys
-194	UNIMPL	0 nosys
-195	UNIMPL	0 nosys
+194	STD	2 getrlimit
+195	STD	2 setrlimit
 196	UNIMPL	0 nosys
 197	STD	8 mmap
 198	STD	0 nosys __syscall
 199	STD	5 lseek
 200	STD	4 truncate
 201	STD	4 ftruncate
-; XXX THE FOLLOWING FOUR ENTRIES ARE TEMPORARY
-202	COMPAT	8 nmmap
-203	COMPAT	5 nlseek
-204	COMPAT	4 ntruncate
-205	COMPAT	4 nftruncate
+202	UNIMPL	0 nosys
+203	UNIMPL	0 nosys
+204	UNIMPL	0 nosys
+205	UNIMPL	0 nosys
 206	UNIMPL	0 nosys
 207	UNIMPL	0 nosys
 208	UNIMPL	0 nosys
