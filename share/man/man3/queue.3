@@ -1,4 +1,4 @@
-.\"	$NetBSD: queue.3,v 1.7 1997/09/30 16:49:20 christos Exp $
+.\"	$NetBSD: queue.3,v 1.8 1998/01/05 06:28:04 thorpej Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
 .\" All rights reserved.
@@ -45,6 +45,8 @@
 .Nm LIST_INSERT_BEFORE ,
 .Nm LIST_INSERT_HEAD ,
 .Nm LIST_REMOVE ,
+.Nm LIST_FIRST ,
+.Nm LIST_NEXT ,
 .Nm SIMPLEQ_ENTRY ,
 .Nm SIMPLEQ_HEAD ,
 .Nm SIMPLEQ_HEAD_INITIALIZER ,
@@ -53,6 +55,8 @@
 .Nm SIMPLEQ_INSERT_TAIL ,
 .Nm SIMPLEQ_INSERT_AFTER ,
 .Nm SIMPLEQ_REMOVE_HEAD ,
+.Nm SIMPLEQ_FIRST ,
+.Nm SIMPLEQ_NEXT ,
 .Nm TAILQ_ENTRY ,
 .Nm TAILQ_HEAD ,
 .Nm TAILQ_HEAD_INITIALIZER ,
@@ -62,6 +66,8 @@
 .Nm TAILQ_INSERT_HEAD ,
 .Nm TAILQ_INSERT_TAIL ,
 .Nm TAILQ_REMOVE ,
+.Nm TAILQ_FIRST ,
+.Nm TAILQ_NEXT ,
 .Nm CIRCLEQ_ENTRY ,
 .Nm CIRCLEQ_HEAD ,
 .Nm CIRCLEQ_HEAD_INITIALIZER ,
@@ -70,8 +76,12 @@
 .Nm CIRCLEQ_INSERT_BEFORE ,
 .Nm CIRCLEQ_INSERT_HEAD ,
 .Nm CIRCLEQ_INSERT_TAIL ,
-.Nm CIRCLEQ_REMOVE
-.Nd implementations of lists, tail queues, and circular queues
+.Nm CIRCLEQ_REMOVE ,
+.Nm CIRCLEQ_FIRST ,
+.Nm CIRCLEQ_LAST ,
+.Nm CIRCLEQ_NEXT ,
+.Nm CIRCLEQ_PREV
+.Nd implementations of lists, simple queues, tail queues, and circular queues
 .Sh SYNOPSIS
 .Fd #include <sys/queue.h>
 .sp
@@ -83,6 +93,10 @@
 .Fn LIST_INSERT_BEFORE "TYPE *listelm" "TYPE *elm" "LIST_ENTRY NAME"
 .Fn LIST_INSERT_HEAD "LIST_HEAD *head" "TYPE *elm" "LIST_ENTRY NAME"
 .Fn LIST_REMOVE "TYPE *elm" "LIST_ENTRY NAME"
+.Ft TYPE *
+.Fn LIST_FIRST "LIST_HEAD *head"
+.Ft TYPE *
+.Fn LIST_NEXT "TYPE *elm" "LIST_ENTRY NAME"
 .sp
 .Fn SIMPLEQ_ENTRY "TYPE"
 .Fn SIMPLEQ_HEAD "HEADNAME" "TYPE"
@@ -92,6 +106,10 @@
 .Fn SIMPLEQ_INSERT_HEAD "SIMPLEQ_HEAD *head" "TYPE *elm" "SIMPLEQ_ENTRY NAME"
 .Fn SIMPLEQ_INSERT_TAIL "SIMPLEQ_HEAD *head" "TYPE *elm" "SIMPLEQ_ENTRY NAME"
 .Fn SIMPLEQ_REMOVE_HEAD "SIMPLEQ_HEAD *head" "TYPE *elm" "SIMPLEQ_ENTRY NAME"
+.Ft TYPE *
+.Fn SIMPLEQ_FIRST "SIMPLEQ_HEAD *head"
+.Ft TYPE *
+.Fn SIMPLEQ_NEXT "TYPE *elm" "SIMPLEQ_ENTRY NAME"
 .sp
 .Fn TAILQ_ENTRY "TYPE"
 .Fn TAILQ_HEAD "HEADNAME" "TYPE"
@@ -102,6 +120,10 @@
 .Fn TAILQ_INSERT_HEAD "TAILQ_HEAD *head" "TYPE *elm" "TAILQ_ENTRY NAME"
 .Fn TAILQ_INSERT_TAIL "TAILQ_HEAD *head" "TYPE *elm" "TAILQ_ENTRY NAME"
 .Fn TAILQ_REMOVE "TAILQ_HEAD *head" "TYPE *elm" "TAILQ_ENTRY NAME"
+.Ft TYPE *
+.Fn TAILQ_FIRST "TAILQ_HEAD *head"
+.Ft TYPE *
+.Fn TAILQ_NEXT "TYPE *elm" "TAILQ_ENTRY NAME"
 .sp
 .Fn CIRCLEQ_ENTRY "TYPE"
 .Fn CIRCLEQ_HEAD "HEADNAME" "TYPE"
@@ -112,6 +134,14 @@
 .Fn CIRCLEQ_INSERT_HEAD "CIRCLEQ_HEAD *head" "TYPE *elm" "CIRCLEQ_ENTRY NAME"
 .Fn CIRCLEQ_INSERT_TAIL "CIRCLEQ_HEAD *head" "TYPE *elm" "CIRCLEQ_ENTRY NAME"
 .Fn CIRCLEQ_REMOVE "CIRCLEQ_HEAD *head" "TYPE *elm" "CIRCLEQ_ENTRY NAME"
+.Ft TYPE *
+.Fn CIRCLEQ_FIRST "CIRCLEQ_HEAD *head"
+.Ft TYPE *
+.Fn CIRCLEQ_LAST "CIRCLEQ_HEAD *head"
+.Ft TYPE *
+.Fn CIRCLEQ_NEXT "TYPE *elm" "CIRCLEQ_ENTRY NAME"
+.Ft TYPE *
+.Fn CIRCLEQ_PREV "TYPE *elm" "CIRCLEQ_ENTRY NAME"
 .Sh DESCRIPTION
 These macros define and operate on four types of data structures:
 lists, simple queues, tail queues, and circular queues.
@@ -283,6 +313,16 @@ The macro
 removes the element
 .Fa elm
 from the list.
+.Pp
+The macro
+.Nm LIST_FIRST
+returns the first elemement of the list
+.Fa head .
+.Pp
+The macro
+.Nm LIST_NEXT
+returns the element after the element
+.Fa elm .
 .Sh LIST EXAMPLE
 .Bd -literal
 LIST_HEAD(listhead, entry) head;
@@ -304,11 +344,11 @@ LIST_INSERT_AFTER(n1, n2, entries);
 n2 = malloc(sizeof(struct entry));	/* Insert before. */
 LIST_INSERT_BEFORE(n1, n2, entries);
 					/* Forward traversal. */
-for (np = head.lh_first; np != NULL; np = np->entries.le_next)
+for (np = LIST_FIRST(&head); np != NULL; np = LIST_NEXT(np, entries))
 	np-> ...
-
-while (head.lh_first != NULL)		/* Delete. */
-	LIST_REMOVE(head.lh_first, entries);
+					/* Delete. */
+while (LIST_FIRST(&head) != NULL)
+	LIST_REMOVE(LIST_FIRST(&head), entries);
 .Ed
 .Sh SIMPLE QUEUES
 A simple queue is headed by a structure defined by the
@@ -386,6 +426,16 @@ after the element
 The macro
 .Nm SIMPLEQ_REMOVE_HEAD
 removes the first element from the simple queue.
+.Pp
+The macro
+.Nm SIMPLEQ_FIRST
+returns the first elemement of the simple queue
+.Fa head .
+.Pp
+The macro
+.Nm SIMPLEQ_NEXT
+returns the element after the element
+.Fa elm .
 .Sh SIMPLE QUEUE EXAMPLE
 .Bd -literal
 SIMPLEQ_HEAD(simplehead, entry) head;
@@ -406,13 +456,12 @@ SIMPLEQ_INSERT_TAIL(&head, n1, entries);
 
 n2 = malloc(sizeof(struct entry));	/* Insert after. */
 SIMPLEQ_INSERT_AFTER(&head, n1, n2, entries);
-
 					/* Forward traversal. */
-for (np = head.sqh_first; np != NULL; np = np->entries.sqe_next)
+for (np = SIMPLEQ_FIRST(&head); np != NULL; np = SIMPLEQ_NEXT(np, entries))
 	np-> ...
 					/* Delete. */
-while (head.sqh_first != NULL)
-	SIMPLEQ_REMOVE_HEAD(&head, head.sqh_first, entries);
+while (SIMPLEQ_FIRST(&head) != NULL)
+	SIMPLEQ_REMOVE_HEAD(&head, SIMPLEQ_FIRST(&head), entries);
 .Ed
 .Sh TAIL QUEUES
 A tail queue is headed by a structure defined by the
@@ -499,6 +548,16 @@ The macro
 removes the element
 .Fa elm
 from the tail queue.
+.Pp
+The macro
+.Nm TAILQ_FIRST
+returns the first elemement of the tail queue
+.Fa head .
+.Pp
+The macro
+.Nm TAILQ_NEXT
+returns the element after the element
+.Fa elm .
 .Sh TAIL QUEUE EXAMPLE
 .Bd -literal
 TAILQ_HEAD(tailhead, entry) head;
@@ -523,11 +582,11 @@ TAILQ_INSERT_AFTER(&head, n1, n2, entries);
 n2 = malloc(sizeof(struct entry));	/* Insert before. */
 TAILQ_INSERT_BEFORE(n1, n2, entries);
 					/* Forward traversal. */
-for (np = head.tqh_first; np != NULL; np = np->entries.tqe_next)
+for (np = TAILQ_FIRST(&head); np != NULL; np = TAILQ_NEXT(np, entries))
 	np-> ...
 					/* Delete. */
-while (head.tqh_first != NULL)
-	TAILQ_REMOVE(&head, head.tqh_first, entries);
+while (TAILQ_FIRST(&head) != NULL)
+	TAILQ_REMOVE(&head, TAILQ_FIRST(&head), entries);
 .Ed
 .Sh CIRCULAR QUEUES
 A circular queue is headed by a structure defined by the
@@ -614,6 +673,26 @@ The macro
 removes the element
 .Fa elm
 from the circular queue.
+.Pp
+The macro
+.Nm CIRCLEQ_FIRST
+returns the first elemement of the circular queue
+.Fa head .
+.Pp
+The macro
+.Nm CIRCLEQ_LAST
+returns the last element of the circular queue
+.Fa head .
+.Pp
+The macro
+.Nm CIRCLEQ_NEXT
+returns the element after the element
+.Fa elm .
+.Pp
+The macro
+.Nm CIRCLEQ_PREV
+returns the element before the element
+.Fa elm .
 .Sh CIRCULAR QUEUE EXAMPLE
 .Bd -literal
 CIRCLEQ_HEAD(circleq, entry) head;
@@ -638,14 +717,16 @@ CIRCLEQ_INSERT_AFTER(&head, n1, n2, entries);
 n2 = malloc(sizeof(struct entry));	/* Insert before. */
 CIRCLEQ_INSERT_BEFORE(&head, n1, n2, entries);
 					/* Forward traversal. */
-for (np = head.cqh_first; np != (void *)&head; np = np->entries.cqe_next)
+for (np = CIRCLEQ_FIRST(&head); np != (void *)&head;
+    np = CIRCLEQ_NEXT(np, entries))
 	np-> ...
 					/* Reverse traversal. */
-for (np = head.cqh_last; np != (void *)&head; np = np->entries.cqe_prev)
+for (np = CIRCLEQ_LAST(&head); np != (void *)&head;
+    np = CIRCLEQ_PREV(np, entries))
 	np-> ...
 					/* Delete. */
-while (head.cqh_first != (void *)&head)
-	CIRCLEQ_REMOVE(&head, head.cqh_first, entries);
+while (CIRCLEQ_HEAD(&head) != (void *)&head)
+	CIRCLEQ_REMOVE(&head, CIRCLEQ_HEAD(&head), entries);
 .Ed
 .Sh HISTORY
 The
