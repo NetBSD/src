@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_kern.c,v 1.7 1999/04/13 18:43:17 ad Exp $ */
+/*	$NetBSD: rcons_kern.c,v 1.8 1999/05/19 20:07:34 ad Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -190,9 +190,12 @@ rcons_init(rc)
 	rcons_init_ops(rc);
 	rc->rc_col = 0;
 	rc->rc_row = 0;
+#ifdef pmax
+	/* XXX remedies quirky behaviour with the px boards */
 	rcons_clear2eop(rc);
+#endif
 	rcons_cursor(rc);
-	
+
 	/* Initialization done; hook us up */
 	fbconstty->t_oproc = rcons_output;
 	/*fbconstty->t_stop = (void (*)()) nullop;*/

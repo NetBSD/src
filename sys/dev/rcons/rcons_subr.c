@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_subr.c,v 1.4 1999/04/22 00:46:36 ad Exp $ */
+/*	$NetBSD: rcons_subr.c,v 1.5 1999/05/19 20:07:34 ad Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -70,16 +70,13 @@ void
 rcons_init_ops(rc)
 	struct rconsole *rc;
 {
-	u_int ch;
 	long tmp;
-	int i;
+	int i, m;
 
-	i = (sizeof(rc->rc_charmap) / sizeof(rc->rc_charmap[0])) - 1;
+	m = sizeof(rc->rc_charmap) / sizeof(rc->rc_charmap[0]);
 	
-	for (; i >= 0; i--) {
-		rc->rc_ops->mapchar(rc->rc_cookie, i, &ch);
-		rc->rc_charmap[i] = ch;
-	}
+	for (i = 0; i < m; i++)
+		rc->rc_ops->mapchar(rc->rc_cookie, i, rc->rc_charmap + i);
 
 	/* Determine which attributes the device supports. */
 	rc->rc_fgcolor = RASTERCONSOLE_FGCOL;
@@ -104,7 +101,7 @@ void
 rcons_puts(rc, str, n)
 	struct rconsole *rc;
 	unsigned char *str;
-	int n;
+ 	int n;
 {
 	int c, i, j;
 	unsigned char *cp;
