@@ -1,4 +1,4 @@
-/*	$NetBSD: fpemu.c,v 1.4 2000/03/28 02:58:48 simonb Exp $ */
+/*	$NetBSD: fpemu.c,v 1.5 2000/03/28 03:11:27 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -64,7 +64,6 @@ void	bcemul_sw __P((u_int32_t inst, struct frame *frame, u_int32_t cause));
 void	bcemul_swl __P((u_int32_t inst, struct frame *frame, u_int32_t cause));
 void	bcemul_swr __P((u_int32_t inst, struct frame *frame, u_int32_t cause));
 
-extern struct proc *fpcurproc;
 vaddr_t MachEmulateBranch __P((struct frame *, vaddr_t, unsigned, int));
 
 static __inline void
