@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.13.4.2 2001/04/05 12:27:32 he Exp $ */
+/* $NetBSD: bus_dma.c,v 1.13.4.3 2001/06/16 20:30:09 he Exp $ */
 
 /*
  * This file was taken from from alpha/common/bus_dma.c
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.13.4.2 2001/04/05 12:27:32 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.13.4.3 2001/06/16 20:30:09 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -449,7 +449,6 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	int ops;
 {
 	/* flush/purge the cache.
-	 * assumes pointers are aligned
 	 * @@@ should probably be fixed to use offset and len args.
 	 */
 
@@ -458,6 +457,9 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 		for(i=0;i<map->dm_nsegs;i++) {
 			bus_addr_t p = map->dm_segs[i].ds_addr;
 			bus_addr_t e = p+map->dm_segs[i].ds_len;
+			/* If the pointers are unaligned, it's ok to flush surrounding cache line */
+			p -= p%16;
+			if (e % 16) e += 16-(e%16);
 #ifdef DIAGNOSTIC
 			if ((p % 16) || (e % 16)) {
 				panic("unaligned address in _bus_dmamap_sync while flushing.\n"
@@ -490,6 +492,14 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 		for(i=0;i<map->dm_nsegs;i++) {
 			bus_addr_t p = map->dm_segs[i].ds_addr;
 			bus_addr_t e = p+map->dm_segs[i].ds_len;
+			if (p % 16) {
+				p -= p%16;
+				DCFL(p);
+			}
+			if (e % 16) {
+				e += 16-(e%16);
+				DCFL(e-16);
+			}
 #ifdef DIAGNOSTIC
 			if ((p % 16) || (e % 16)) {
 				panic("unaligned address in _bus_dmamap_sync while purging.\n"
