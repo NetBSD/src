@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.60 2001/06/29 23:50:01 eeh Exp $
+#	$NetBSD: sys.mk,v 1.61 2001/07/23 17:08:18 matt Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -24,7 +24,8 @@ LINK.S?=	${CC} ${AFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
 CC?=		cc
 .if ${MACHINE_ARCH} == "alpha" || \
-    ${MACHINE_ARCH} == "arm26" || ${MACHINE_ARCH} == "arm32" || \
+    ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "arm26" || \
+		${MACHINE_ARCH} == "arm32" || \
     ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "m68k" || \
     ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb" || \
