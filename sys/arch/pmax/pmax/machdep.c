@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.37 1995/09/19 23:03:43 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38 1995/09/25 04:21:01 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -189,6 +189,7 @@ extern	volatile struct chiptime *Mach_clock_addr;
 u_long	kmin_tc3_imask, xine_tc3_imask;
 #ifdef DS5000_240
 u_long	kn03_tc3_imask;
+extern u_long latched_cycle_cnt;
 #endif
 tc_option_t tc_slot_info[TC_MAX_LOGICAL_SLOTS];
 static	void asic_init();
@@ -545,6 +546,7 @@ mach_init(argc, argv, code, cv)
 		Mach_clock_addr = (volatile struct chiptime *)
 			MACH_PHYS_TO_UNCACHED(KN03_SYS_CLOCK);
 
+		asic_init(0);
 		/*
 		 * Initialize interrupts.
 		 */
@@ -552,6 +554,9 @@ mach_init(argc, argv, code, cv)
 			~(KN03_INTR_TC_0|KN03_INTR_TC_1|KN03_INTR_TC_2);
 		*(u_int *)ASIC_REG_IMSK(asic_base) = kn03_tc3_imask;
 		*(u_int *)ASIC_REG_INTR(asic_base) = 0;
+		wbflush();
+		/* XXX hard-reset LANCE */
+		 *(u_int *)ASIC_REG_CSR(asic_base) |= 0x100;
 
 		/* clear any memory errors from probes */
 		*Mach_reset_addr = 0;
@@ -609,10 +614,11 @@ mach_init(argc, argv, code, cv)
 	 * do dma without these buffers, but it would require major
 	 * re-engineering of the asc driver.
 	 * They must be 8K in size and page aligned.
+	 * (now 16K, as that's how big clustered FFS reads/writes get).
 	 */
 	if (pmax_boardtype == DS_3MIN || pmax_boardtype == DS_MAXINE ||
 		pmax_boardtype == DS_3MAXPLUS) {
-		maxmem -= btoc(ASC_NCMD * 8192);
+		maxmem -= btoc(ASC_NCMD * (16 *1024));
 		asc_iomem = (maxmem << PGSHIFT);
 	}
 #endif /* NASC */
@@ -1162,6 +1168,8 @@ microtime(tvp)
 {
 	int s = splclock();
 	static struct timeval lasttime;
+	register long usec;
+
 
 	*tvp = time;
 #ifdef notdef
@@ -1171,6 +1179,36 @@ microtime(tvp)
 		tvp->tv_usec -= 1000000;
 	}
 #endif
+	/*
+	 * if there's a turbochannel cycle counter, use that to
+	 * interpolate micro-seconds since the  last RTC clock tick,
+	 * using the software copy of the bus cycle-counter taken by
+	 * the RTC interrupt handler.
+	 */
+#ifdef DS5000_240
+	if (pmax_boardtype == DS_3MAXPLUS) {
+		usec = *(u_int*)ASIC_REG_CTR(asic_base);
+		/* subtract cycle count a last  tick */
+		if (usec >= latched_cycle_cnt)
+			usec = usec - latched_cycle_cnt;
+		else
+			usec = latched_cycle_cnt - usec;
+
+		/*
+		 * scale from 40ns to microseconds.
+		 * avoid a kernel FP divide (by 25) using
+		 * an approximation 1/25 = 40/1000 =~ 41/ 1024.
+		 */
+		usec = usec + (usec << 3) + (usec << 5);
+		usec = usec >> 10;
+		tvp-> tv_usec += usec;
+		if (tvp->tv_usec >= 1000000) {
+			tvp->tv_usec -= 1000000;
+			tvp->tv_sec++;
+		}
+	}
+#endif
+
 	if (tvp->tv_sec == lasttime.tv_sec &&
 	    tvp->tv_usec <= lasttime.tv_usec &&
 	    (tvp->tv_usec = lasttime.tv_usec + 1) > 1000000) {
@@ -1578,6 +1616,7 @@ kn03_enable_intr(slotno, handler, sc, on)
 		break;
 	case KN03_LANCE_SLOT:
 		mask = KN03_INTR_LANCE;
+		mask |= ASIC_INTR_LANCE_READ_E;
 		break;
 	case KN03_SCC0_SLOT:
 		mask = KN03_INTR_SCC_0;
@@ -1606,6 +1645,7 @@ kn03_enable_intr(slotno, handler, sc, on)
 	}
 done:
 	*(u_int *)ASIC_REG_IMSK(asic_base) = kn03_tc3_imask;
+	wbflush();
 }
 #endif /* DS5000_240 */
 
@@ -1622,5 +1662,9 @@ asic_init(isa_maxine)
 	/* These are common between 3min and maxine */
 	decoder = (volatile u_int *)ASIC_REG_LANCE_DECODE(asic_base);
 	*decoder = KMIN_LANCE_CONFIG;
+
+	/* set the SCSI DMA configuration map */
+	decoder = (volatile u_int *) ASIC_REG_SCSI_DECODE(asic_base);
+	(*decoder) = 0x00000000e;
 }
 #endif /* DS5000 */
