@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.17 2000/01/22 22:19:19 mycroft Exp $	*/
+/*	$NetBSD: getopt.c,v 1.18 2000/12/20 15:59:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getopt.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getopt.c,v 1.17 2000/01/22 22:19:19 mycroft Exp $");
+__RCSID("$NetBSD: getopt.c,v 1.18 2000/12/20 15:59:51 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,6 +53,8 @@ __RCSID("$NetBSD: getopt.c,v 1.17 2000/01/22 22:19:19 mycroft Exp $");
 #ifdef __weak_alias
 __weak_alias(getopt,_getopt)
 #endif
+
+extern char *__progname;
 
 
 int	opterr = 1,		/* if error message should be printed */
@@ -75,7 +77,6 @@ getopt(nargc, nargv, ostr)
 	char * const nargv[];
 	const char *ostr;
 {
-	extern char *__progname;
 	static char *place = EMSG;		/* option letter processing */
 	char *oli;				/* option letter list index */
 
