@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.105 1996/10/21 22:40:45 thorpej Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.106 1996/11/17 04:11:18 mikel Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -1945,7 +1945,8 @@ edintr(arg)
 #ifdef ED_DEBUG
 					printf("%s: receive error %x\n",
 					    sc->sc_dev.dv_xname,
-					    NIC_GET(nicbase, ED_P0_RSR));
+					    NIC_GET(iot, ioh, nicbase,
+						ED_P0_RSR));
 #endif
 				}
 
