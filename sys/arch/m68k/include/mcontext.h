@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.1.2.1 2001/11/10 21:22:51 scw Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.1.2.2 2001/11/21 20:25:03 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -96,5 +96,8 @@ typedef struct {
 } mcontext_t;
 
 /* Note: no additional padding is to be performed in ucontext_t. */
+
+/* Machine-specific uc_flags value */
+#define _UC_M68K_FMT_VALID 0x00010000	/* `mc_frame' contents valid */
 
 #endif	/* !_M68K_MCONTEXT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.15.6.5 2001/11/17 22:12:39 thorpej Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.15.6.6 2001/11/21 20:25:04 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -567,10 +567,11 @@ cpu_getmcontext(l, mcp, flags)
 	gr[_REG_A7] = frame->f_regs[SP];
 	gr[_REG_PS] = frame->f_sr;
 	gr[_REG_PC] = frame->f_pc;
+	*flags |= _UC_CPU;
 
 	/* Save exception frame information. */
-	mcp->__mc_pad.mc_frame.format = format;
 	if (format >= FMT4) {
+		mcp->__mc_pad.mc_frame.format = format;
 		mcp->__mc_pad.mc_frame.vector = frame->f_vector;
 		(void)memcpy(&mcp->__mc_pad.mc_frame.exframe, &frame->F_u,
 		    (size_t)exframesize[format]);
@@ -578,17 +579,19 @@ cpu_getmcontext(l, mcp, flags)
 		/* Leave indicators, see above. */
 		frame->f_stackadj += exframesize[format];
 		frame->f_format = frame->f_vector = 0;
+		*flags |= _UC_M68K_FMT_VALID;
 	}
 
-	*flags |= _UC_CPU;
-
-	if (fputype != 0) {
+	if (fputype != FPU_NONE) {
 		/* Save FPU context. */
 		struct fpframe fpf;
 
+		/* At the very least, we need to save a null frame */
 		m68881_save(&fpf);
+		mcp->__mc_pad.mc_frame.fpf_u1 = fpf.FPF_u1;
+
 		/* If it's a null frame there's no need to save/convert. */
-		if (fpf.fpf_version != 0) {
+		if (!FPFRAME_IS_NULL(&fpf)) {
 			__fpregset_t *fpr = &mcp->__fpregs;
 
 			fpr->__fp_pcr    = fpf.fpf_fpcr;
@@ -596,11 +599,10 @@ cpu_getmcontext(l, mcp, flags)
 			fpr->__fp_piaddr = fpf.fpf_fpiar;
 			(void)memcpy(&fpr->__fp_fpregs, &fpf.fpf_regs,
 			    sizeof (fpr->__fp_fpregs));
-			mcp->__mc_pad.mc_frame.fpf_u1 = fpf.FPF_u1;
 			mcp->__mc_pad.mc_frame.fpf_u2 = fpf.FPF_u2;
-			
-			*flags |= _UC_FPU;
 		}
+
+		*flags |= _UC_FPU;
 	}
 }
 
@@ -614,33 +616,35 @@ cpu_setmcontext(l, mcp, flags)
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
 	unsigned int format = mcp->__mc_pad.mc_frame.format;
 	int sz;
-	
-	if ((flags & _UC_CPU) != 0) {
-		/* Validate it. */
-		if ((gr[_REG_PS] & (PSL_MBZ|PSL_IPL|PSL_S)) != 0 ||
-		    format > 0xf || (sz = exframesize[format]) < 0)
-			return (EINVAL);
 
-		/* Restore exception frame information. */
-		if (format >= FMT4) {
-			if (frame->f_stackadj == 0) {
-				reenter_syscall(frame, sz);
-				/* NOTREACHED */
-			}
+	/* Validate the supplied context */
+	if (((flags & _UC_CPU) != 0 &&
+	     (gr[_REG_PS] & (PSL_MBZ|PSL_IPL|PSL_S)) != 0) ||
+	    ((flags & _UC_M68K_FMT_VALID) != 0 &&
+	     (format > FMTB || (sz = exframesize[format]) < 0)))
+		return (EINVAL);
 
-#ifdef DIAGNOSTIC
-			if (sz != frame->f_stackadj)
-				panic("cpu_setmcontext: %d != %d",
-				    sz, frame->f_stackadj);
-#endif
-
-			frame->f_format = format;
-			frame->f_vector = mcp->__mc_pad.mc_frame.vector;
-			(void)memcpy(&frame->F_u,
-			    &mcp->__mc_pad.mc_frame.exframe, (size_t)sz);
-			frame->f_stackadj -= sz;
+	/* Restore exception frame information if necessary. */
+	if ((flags & _UC_M68K_FMT_VALID) != 0 && format >= FMT4) {
+		if (frame->f_stackadj == 0) {
+			reenter_syscall(frame, sz);
+			/* NOTREACHED */
 		}
 
+#ifdef DIAGNOSTIC
+		if (sz != frame->f_stackadj)
+			panic("cpu_setmcontext: %d != %d",
+			    sz, frame->f_stackadj);
+#endif
+
+		frame->f_format = format;
+		frame->f_vector = mcp->__mc_pad.mc_frame.vector;
+		(void)memcpy(&frame->F_u,
+		    &mcp->__mc_pad.mc_frame.exframe, (size_t)sz);
+		frame->f_stackadj -= sz;
+	}
+
+	if ((flags & _UC_CPU) != 0) {
 		/* Restore general registers. */
 		frame->f_regs[D0] = gr[_REG_D0];
 		frame->f_regs[D1] = gr[_REG_D1];
@@ -662,18 +666,23 @@ cpu_setmcontext(l, mcp, flags)
 		frame->f_pc       = gr[_REG_PC];
 	}
 
-	if ((flags & _UC_FPU) != 0 && fputype != 0) {
-		/* Restore FPU context. */
-		const __fpregset_t *fpr = &mcp->__fpregs;
+	if ((flags & _UC_FPU) != 0 && fputype != FPU_NONE) {
+		/* Restore Floating Point State */
 		struct fpframe fpf;
 
-		fpf.fpf_fpcr  = fpr->__fp_pcr;
-		fpf.fpf_fpsr  = fpr->__fp_psr;
-		fpf.fpf_fpiar = fpr->__fp_piaddr;
-		(void)memcpy(&fpf.fpf_regs, &fpr->__fp_fpregs,
-		    sizeof (fpf.fpf_regs));
+		/* Copy the first section of the FP frame */
 		fpf.FPF_u1 = mcp->__mc_pad.mc_frame.fpf_u1;
-		fpf.FPF_u2 = mcp->__mc_pad.mc_frame.fpf_u2;
+
+		/* Only copy the remainder if it's not a null frame */
+		if (!FPFRAME_IS_NULL(&fpf)) {
+			const __fpregset_t *fpr = &mcp->__fpregs;
+			fpf.fpf_fpcr  = fpr->__fp_pcr;
+			fpf.fpf_fpsr  = fpr->__fp_psr;
+			fpf.fpf_fpiar = fpr->__fp_piaddr;
+			(void)memcpy(&fpf.fpf_regs, &fpr->__fp_fpregs,
+			    sizeof (fpf.fpf_regs));
+			fpf.FPF_u2 = mcp->__mc_pad.mc_frame.fpf_u2;
+		}
 
 		m68881_restore(&fpf);
 	}
