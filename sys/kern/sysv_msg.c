@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.27 2000/03/30 09:27:13 augustss Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.28 2000/04/12 13:08:26 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -502,14 +502,7 @@ sys_msgsnd(p, v, retval)
 
 			if (msqptr->msg_qbytes == 0) {
 				MSG_PRINTF(("msqid deleted\n"));
-				/* The SVID says to return EIDRM. */
-#ifdef EIDRM
 				return (EIDRM);
-#else
-				/* Unfortunately, BSD doesn't define that code
-				   yet! */
-				return (EINVAL);
-#endif
 			}
 		} else {
 			MSG_PRINTF(("got all the resources that we need\n"));
@@ -641,13 +634,7 @@ sys_msgsnd(p, v, retval)
 	if (msqptr->msg_qbytes == 0) {
 		msg_freehdr(msghdr);
 		wakeup(msqptr);
-		/* The SVID says to return EIDRM. */
-#ifdef EIDRM
 		return (EIDRM);
-#else
-		/* Unfortunately, BSD doesn't define that code yet! */
-		return (EINVAL);
-#endif
 	}
 
 	/*
@@ -852,13 +839,7 @@ sys_msgrcv(p, v, retval)
 		if (msqptr->msg_qbytes == 0 ||
 		    msqptr->msg_perm._seq != IPCID_TO_SEQ(SCARG(uap, msqid))) {
 			MSG_PRINTF(("msqid deleted\n"));
-			/* The SVID says to return EIDRM. */
-#ifdef EIDRM
 			return (EIDRM);
-#else
-			/* Unfortunately, BSD doesn't define that code yet! */
-			return (EINVAL);
-#endif
 		}
 	}
 
