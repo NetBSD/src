@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1286.c,v 1.2 2001/11/18 08:16:16 thorpej Exp $	*/
+/*	$NetBSD: dsclock_hpc.c,v 1.1 2001/11/25 15:05:05 soren Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -48,17 +48,12 @@
 #include <sgimips/hpc/hpcvar.h>
 #include <sgimips/sgimips/clockvar.h>
 
-extern int mach_type;
-extern struct platform platform;
-void clockattach(struct device *, const struct clockfns *);
-
 struct dsclock_softc {
         struct device sc_dev;
 
 	/* RTC registers */
         bus_space_tag_t         sc_rtct;
         bus_space_handle_t      sc_rtch;
-
 };
 
 static void	dsclock_init(struct device *);
@@ -75,14 +70,10 @@ struct cfattach dsclock_ca = {
         sizeof(struct dsclock_softc), dsclock_match, dsclock_attach
 };
 
-#define IRIX_CLOCK_BASE	 1940
-
 #define	ds1286_write(dev, reg, datum)					\
     bus_space_write_1(dev->sc_rtct, dev->sc_rtch, reg, datum)
 #define	ds1286_read(dev, reg)						\
     (bus_space_read_1(dev->sc_rtct, dev->sc_rtch, reg))
-
-
 
 static int 
 dsclock_match(struct device *parent, struct cfdata *cf, void *aux)
