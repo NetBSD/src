@@ -1,4 +1,4 @@
-/* $NetBSD: context.c,v 1.1 2004/02/28 16:55:05 drochner Exp $ */
+/* $NetBSD: context.c,v 1.2 2004/03/01 12:04:18 drochner Exp $ */
 
 #include <malloc.h>
 #include <ucontext.h>
@@ -46,7 +46,6 @@ main()
 	res = setcontext(&uc[DEPTH-1]);
 	if (res)
 		err(1, "setcontext");
-	if (calls != DEPTH)
-		errx(3, "calls=%d", calls);
-	return (0);
+	/* NOTREACHED */
+	return (3);
 }
