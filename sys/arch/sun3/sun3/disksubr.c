@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993 Adam Glass
+ * Copyright (c) 1994 Gordon W. Ross (Sun3 changes)
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
  * All rights reserved.
  *
@@ -31,23 +31,37 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
- *	disksubr.c,v 1.2 1993/05/22 07:59:47 cgd Exp
+ *	from: i386/disksubr.c,v 1.4 1994/01/11 16:38:48 mycroft
+ *	$Id: disksubr.c,v 1.5 1994/05/13 21:24:57 gwr Exp $
  */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/dkbad.h>
 #include <sys/disklabel.h>
-#include <sys/syslog.h>
 
-/* encoding of disk minor numbers, should be elsewhere... */
-#define dkunit(dev)		(minor(dev) >> 3)
+#include <sys/device.h>
+#include <sys/disk.h>
+
+#include <machine/sun_disklabel.h>
+
+#ifdef	SCSIDEBUG
+#define STATIC /* not */
+#else
+#define STATIC static
+#endif
+
+/* XXX encoding of disk minor numbers, should be elsewhere... */
 #define dkpart(dev)		(minor(dev) & 7)
-#define dkminor(unit, part)	(((unit) << 3) | (part))
 
 #define	b_cylin	b_resid
+
+#if LABELSECTOR != 0
+#error	"Default value of LABELSECTOR no longer zero?"
+#endif
+
+STATIC int sun_disklabel_to_bsd  (caddr_t, struct disklabel *);
+STATIC int sun_disklabel_from_bsd(caddr_t, struct disklabel *);
 
 /*
  * Attempt to read a disk label from a device
@@ -57,39 +71,318 @@
  * operation in the driver's strategy/start routines
  * must be filled in before calling us.
  *
+ * Return buffer for use in signalling errors if requested.
+ *
  * Returns null on success and an error string on failure.
  */
 char *
-cpu_readdisklabel(dev, strat, lp, osdep)
+readdisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	int (*strat)();
+	void (*strat)();
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
-    return "No architecture-specific disklabel";
+	register struct buf *bp;
+	struct disklabel *dlp;
+	struct sun_disklabel *slp;
+	char *msg = NULL;
+
+	/* minimal requirements for archtypal disk label */
+	if (lp->d_secperunit == 0)
+		lp->d_secperunit = 0x1fffffff;
+	lp->d_npartitions = 1;
+	if (lp->d_partitions[0].p_size == 0)
+		lp->d_partitions[0].p_size = 0x1fffffff;
+	lp->d_partitions[0].p_offset = 0;
+
+	/* obtain buffer to probe drive with */
+	bp = geteblk((int)lp->d_secsize);
+
+	/* next, dig out disk label */
+	bp->b_dev = dev;
+	bp->b_blkno = LABELSECTOR;
+	bp->b_cylin = 0;
+	bp->b_bcount = lp->d_secsize;
+	bp->b_flags = B_BUSY | B_READ;
+	(*strat)(bp);
+
+	/* if successful, locate disk label within block and validate */
+	/* readdisklabel+0x9c */
+	if (biowait(bp)) {
+		msg = "disk label read error";
+		goto done;
+	}
+	/* readdisklabel+0xb2 */
+
+	slp = (struct sun_disklabel *) bp->b_un.b_addr;
+	if (slp->sl_magic == SUN_DKMAGIC) {
+		if (sun_disklabel_to_bsd(bp->b_un.b_addr, lp))
+			msg = "SunOS disk label corrupted";
+		goto done;
+	}
+
+	dlp = (struct disklabel *)(bp->b_un.b_addr + LABELOFFSET);
+	if (dlp->d_magic == DISKMAGIC) {
+		if (dkcksum(dlp)) {
+			msg = "NetBSD disk label corrupted";
+			goto done;
+		}
+		*lp = *dlp; 	/* struct assignment */
+		goto done;
+	}
+
+	msg = "no disk label";
+
+done:
+	bp->b_flags = B_INVAL | B_AGE | B_READ;
+	brelse(bp);
+	return (msg);
 }
 
 /*
  * Check new disk label for sensibility
  * before setting it.
  */
-int cpu_setdisklabel(olp, nlp, openmask, osdep)
+setdisklabel(olp, nlp, openmask, osdep)
 	register struct disklabel *olp, *nlp;
 	u_long openmask;
 	struct cpu_disklabel *osdep;
 {
-    return EINVAL;
+	register i;
+	register struct partition *opp, *npp;
+
+	/* sanity clause */
+	if (nlp->d_secpercyl == 0 || nlp->d_secsize == 0
+		|| (nlp->d_secsize % DEV_BSIZE) != 0)
+			return(EINVAL);
+
+	/* special case to allow disklabel to be invalidated */
+	if (nlp->d_magic == 0xffffffff) {
+		*olp = *nlp;
+		return (0);
+	}
+
+	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
+	    dkcksum(nlp) != 0)
+		return (EINVAL);
+
+	while ((i = ffs((long)openmask)) != 0) {
+		i--;
+		openmask &= ~(1 << i);
+		if (nlp->d_npartitions <= i)
+			return (EBUSY);
+		opp = &olp->d_partitions[i];
+		npp = &nlp->d_partitions[i];
+		if (npp->p_offset != opp->p_offset || npp->p_size < opp->p_size)
+			return (EBUSY);
+		/*
+		 * Copy internally-set partition information
+		 * if new label doesn't include it.		XXX
+		 */
+		if (npp->p_fstype == FS_UNUSED && opp->p_fstype != FS_UNUSED) {
+			npp->p_fstype = opp->p_fstype;
+			npp->p_fsize = opp->p_fsize;
+			npp->p_frag = opp->p_frag;
+			npp->p_cpg = opp->p_cpg;
+		}
+	}
+ 	nlp->d_checksum = 0;
+ 	nlp->d_checksum = dkcksum(nlp);
+	*olp = *nlp;
+	return (0);
 }
 
 
 /*
  * Write disk label back to device after modification.
  */
-int cpu_writedisklabel(dev, strat, lp, osdep)
+writedisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	int (*strat)();
+	void (*strat)();
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
-    return EINVAL;
+#if 0
+	struct buf *bp;
+	struct disklabel *dlp;
+	struct sun_disklabel *slp;
+	int error = 0, cyl, i;
+
+	bp = geteblk((int)lp->d_secsize);
+	bp->b_dev = dev;
+	bp->b_blkno = LABELSECTOR;
+	bp->b_cylin = 0;
+	bp->b_bcount = lp->d_secsize;
+	bp->b_flags = B_READ;		/* get current label */
+	(*strat)(bp);
+	if (error = biowait(bp))
+		goto done;
+
+	slp = (struct sun_disklabel *) bp->b_un.b_addr;
+	if (slp->sl_magic == SUN_DKMAGIC) {
+		error = sun_disklabel_from_bsd(bp->b_un.b_addr, lp);
+	} else {
+		dlp = (struct disklabel *)(bp->b_un.b_addr + LABELOFFSET);
+		*dlp = *lp; 	/* struct assignment */
+	}
+	bp->b_flags = B_WRITE;
+	(*strat)(bp);
+	error = biowait(bp);
+
+done:
+	brelse(bp);
+	return (error);
+#else
+	/* Not sure if the above is right yet... -gwr */
+	return ENODEV;
+#endif
+}
+
+/*
+ * Determine the size of the transfer, and make sure it is
+ * within the boundaries of the partition. Adjust transfer
+ * if needed, and signal errors or early completion.
+ */
+int
+bounds_check_with_label(struct buf *bp, struct disklabel *lp, int wlabel)
+{
+	struct partition *p = lp->d_partitions + dkpart(bp->b_dev);
+	int labelsect = lp->d_partitions[0].p_offset;
+	int maxsz = p->p_size;
+	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
+
+	/* overwriting disk label ? */
+	/* XXX should also protect bootstrap in first 8K */
+	if (bp->b_blkno + p->p_offset <= LABELSECTOR + labelsect &&
+	    (bp->b_flags & B_READ) == 0 && wlabel == 0)
+	{
+		bp->b_error = EROFS;
+		goto bad;
+	}
+
+	/* beyond partition? */
+	if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
+		/* if exactly at end of disk, return an EOF */
+		if (bp->b_blkno == maxsz) {
+			bp->b_resid = bp->b_bcount;
+			return(0);
+		}
+		/* or truncate if part of it fits */
+		sz = maxsz - bp->b_blkno;
+		if (sz <= 0) {
+			bp->b_error = EINVAL;
+			goto bad;
+		}
+		bp->b_bcount = sz << DEV_BSHIFT;
+	}
+
+	/* calculate cylinder for disksort to order transfers with */
+	bp->b_cylin = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
+	return(1);
+
+bad:
+	bp->b_flags |= B_ERROR;
+	return(-1);
+}
+
+
+/*
+ * The rest of this was taken from arch/sparc/scsi/sun_disklabel.c
+ */
+
+/*
+ * Take a sector (cp) containing a SunOS disk label and set lp to a
+ * BSD disk label.  Returns non-zero on error.
+ */
+STATIC int
+sun_disklabel_to_bsd(cp, lp)
+	register caddr_t cp;
+	register struct disklabel *lp;
+{
+	register u_short *sp;
+	register struct sun_disklabel *sl;
+	register int i, v;
+
+	sp = (u_short *)(cp + sizeof(struct sun_disklabel));
+	--sp;
+	v = 0;
+	while (sp >= (u_short *)cp)
+		v ^= *sp--;
+	if (v)
+		return v;
+	sl = (struct sun_disklabel *)cp;
+	lp->d_magic = 0;	/* denote as pseudo */
+	lp->d_ncylinders = sl->sl_ncylinders;
+	lp->d_acylinders = sl->sl_acylinders;
+	v = (lp->d_ntracks = sl->sl_ntracks) *
+	    (lp->d_nsectors = sl->sl_nsectors);
+	lp->d_secpercyl = v;
+	lp->d_npartitions = 8;
+	for (i = 0; i < 8; i++) {
+		lp->d_partitions[i].p_offset =
+		    sl->sl_part[i].sdkp_cyloffset * v;
+		lp->d_partitions[i].p_size = sl->sl_part[i].sdkp_nsectors;
+	}
+	return 0;
+}
+
+#if 0	/* XXX - Not yet. */
+int
+sun_dkioctl(dk, cmd, data, partition)
+	struct dkdevice *dk;
+	int cmd;
+	caddr_t data;
+	int partition;
+{
+	register struct partition *p;
+
+	switch (cmd) {
+
+	case DKIOCGGEOM:
+#define geom ((struct sun_dkgeom *)data)
+		bzero(data, sizeof(*geom));
+		geom->sdkc_ncylinders = dk->dk_label.d_ncylinders;
+		geom->sdkc_acylinders = dk->dk_label.d_acylinders;
+		geom->sdkc_ntracks = dk->dk_label.d_ntracks;
+		geom->sdkc_nsectors = dk->dk_label.d_nsectors;
+		geom->sdkc_interleave = dk->dk_label.d_interleave;
+		geom->sdkc_sparespercyl = dk->dk_label.d_sparespercyl;
+		geom->sdkc_rpm = dk->dk_label.d_rpm;
+		geom->sdkc_pcylinders =
+		    dk->dk_label.d_ncylinders + dk->dk_label.d_acylinders;
+#undef	geom
+		break;
+
+	case DKIOCINFO:
+		/* Homey don't do DKIOCINFO */
+		bzero(data, sizeof(struct sun_dkctlr));
+		break;
+
+	case DKIOCGPART:
+		if (dk->dk_label.d_secpercyl == 0)
+			return (ERANGE);	/* XXX */
+		p = &dk->dk_label.d_partitions[partition];
+		if (p->p_offset % dk->dk_label.d_secpercyl != 0)
+			return (ERANGE);	/* XXX */
+#define part ((struct sun_dkpart *)data)
+		part->sdkp_cyloffset = p->p_offset / dk->dk_label.d_secpercyl;
+		part->sdkp_nsectors = p->p_size;
+#undef	part
+		break;
+
+	default:
+		return (-1);
+	}
+	return (0);
+}
+#endif 0
+
+
+/* XXX - Where does this belong? */
+void
+dk_establish(dk, dev)
+	struct dkdevice *dk;
+	struct device *dev;
+{
+	/* XXX - Is this OK? -gwr */
 }
