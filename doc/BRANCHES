@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.26 2005/02/19 02:34:41 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.27 2005/02/19 21:51:17 matt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -606,6 +606,16 @@ Maintainer:	Jason Thorpe <thorpej@NetBSD.org>
 Scope:		kernel
 Notes:
 
+Branch:		matt-timespec
+Description:	Convert the kernel to struct timespec as its primary time
+		storage mechanism.
+Status:		Active
+Start Date:	2005-02-19
+End Date:
+Base Tag:	
+Maintainer:	Matt Thomas <matt@NetBSD.org>
+Scope:		kernel
+Notes:	
 
 Branch:		wrstuden-devbsize
 Description:	Modify buffer cache to deal with different devices having
