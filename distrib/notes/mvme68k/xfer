@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.9 2000/11/21 12:39:00 scw Exp $
+.\"	$NetBSD: xfer,v 1.10 2001/07/24 18:02:56 nra Exp $
 .
 Installation is supported from several media types, including:
 .(bullet
@@ -186,7 +186,7 @@ Password: \*<your e-mail address\*>
 Server path: /pub/NetBSD/NetBSD-\*V/\*M/binary
 .disp)
 .(Note
-If you're not using a nameserver duing installation,
+If you're not using a nameserver during installation,
 you might find 204.152.184.75 handy; it's the IP address of
 ftp.netbsd.org as of October, 2000.
 .Note)

@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.12 2000/11/21 12:38:59 scw Exp $
+.\"	$NetBSD: install,v 1.13 2001/07/24 18:02:56 nra Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -77,7 +77,7 @@ sd0 at scsibus0 targ 0 lun 0: \*<Maker, Disk, Foo\*> SCSI1 0/direct fixed
 sd0: 800 MB, 800 cyl, 16 head, 128 sec, 512 bytes/sect x 1638400 sectors
 .disp)
 .Pp
-The information of most interest is the number of sectors; for the ficticious
+The information of most interest is the number of sectors; for the fictitious
 disk above, it's 1638400. You will need this number when you come to create
 a disklabel for that drive.
 .Pp
@@ -91,7 +91,7 @@ Loading: Operating System
 Volume: NBSD
 
 IPL loaded at:  $003F0000
-\*>\*> BSD MVME147 tapeboot [$Revision: 1.12 $]
+\*>\*> BSD MVME147 tapeboot [$Revision: 1.13 $]
 578616+422344+55540+[46032+51284]=0x11a6e4
 Start @ 0x8000 ...
 Copyright (c) 1996, 1997, 1998, 1999, 2000
@@ -124,7 +124,7 @@ Finally, you will see the following "welcome" message:
         Welcome to the NetBSD/\*M RAMDISK root!
 
 This environment is designed to do only four things:
-  1:  Partititon your disk (use the command:  edlabel /dev/rsd0c)
+  1:  Partition your disk (use the command:  edlabel /dev/rsd0c)
   2:  Copy a miniroot image into the swap partition  (/dev/rsd0b)
   3:  Make that partition bootable (using 'installboot')
   4:  Reboot (using the swap partition, i.e. /dev/sd0b).
@@ -250,7 +250,7 @@ at the edlabel prompt, then enter the letter corresponding to the first
 .Dl modify subcommands:
 .Dl @   : modify disk parameters
 .Dl a-h : modify partition
-.Dl s   : standarize geometry
+.Dl s   : standardize geometry
 .Dl q   : quit this subcommand
 .Dl edlabel/modify\*> Ic a
 .Dl a (root)          0       (0/00/00)          0       (0/00/00)  unused
@@ -484,7 +484,7 @@ For all board types, the boot messages are very similar:
 .Pp
 .(disp
 Start @ 0x8000 ...
-\*>\*> BSD MVME147 netboot (via sboot) [$Revision: 1.12 $]
+\*>\*> BSD MVME147 netboot (via sboot) [$Revision: 1.13 $]
 device: le0 attached to 08:00:3e:20:cb:87
 boot: client IP address: 192.168.1.4
 boot: client name: soapy
