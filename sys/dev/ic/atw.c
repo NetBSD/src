@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.52 2004/07/15 06:50:34 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.53 2004/07/15 06:53:11 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.52 2004/07/15 06:50:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.53 2004/07/15 06:53:11 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2160,14 +2160,17 @@ static void
 atw_write_ssid(struct atw_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	/* 34 bytes are reserved in ADM8211 SRAM for the SSID */
+	/* 34 bytes are reserved in ADM8211 SRAM for the SSID, but
+	 * it only expects the element length, not its ID.
+	 */
 	u_int8_t buf[roundup(1 /* length */ + IEEE80211_NWID_LEN, 2)];
 
 	memset(buf, 0, sizeof(buf));
 	buf[0] = ic->ic_bss->ni_esslen;
 	memcpy(&buf[1], ic->ic_bss->ni_essid, ic->ic_bss->ni_esslen);
 
-	atw_write_sram(sc, ATW_SRAM_ADDR_SSID, buf, sizeof(buf));
+	atw_write_sram(sc, ATW_SRAM_ADDR_SSID, buf,
+	    roundup(1 + ic->ic_bss->ni_esslen, 2));
 }
 
 /* Write the supported rates in the ieee80211com to the SRAM of the ADM8211.
