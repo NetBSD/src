@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.5 2000/08/17 13:38:51 bjh21 Exp $
+# $NetBSD: FOURMEG,v 1.6 2000/09/18 18:30:01 bjh21 Exp $
 
 # GENERIC arm26 configuration -- everything I've implemented so far
 
@@ -12,12 +12,12 @@ options 	CPU_ARM250
 options 	CPU_ARM3
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC		# Cheap kernel consistency checks
-options		DEBUG			# More expensive checks and printfs
-options 	DDB			# kernel debugger
+#options 	DIAGNOSTIC		# Cheap kernel consistency checks
+#options 	DEBUG			# More expensive checks and printfs
+#options 	DDB			# kernel debugger
 #options 	SYSCALL_DEBUG		# trace syscall entry/exit
 #options 	SCSIDEBUG
-options 	UVMHIST
+#options 	UVMHIST
 
 ## Compile the kernel with debugging symbols (`netbsd.gdb' is the debug file),
 ## such that gdb(1) can be used on a kernel coredump.
@@ -95,6 +95,9 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 
 # Disable kernel security.
 #options 	INSECURE
+
+# Reduce kernel size a little
+options 	VNODE_OP_NOINLINE
 
 # NFS boot options
 options 	NFS_BOOT_DHCP		# superset of BOOTP
