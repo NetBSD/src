@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.67 2001/06/01 20:33:37 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.68 2001/06/09 05:22:47 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.67 2001/06/01 20:33:37 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.68 2001/06/09 05:22:47 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.67 2001/06/01 20:33:37 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.68 2001/06/09 05:22:47 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -393,7 +393,6 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 	 */
 	for (argv += optind, argc -= optind; *argv; ++argv, --argc)
 		if (Parse_IsVar(*argv)) {
-			Var_Append(MAKEFLAGS, *argv, VAR_GLOBAL);
 			Parse_DoVar(*argv, VAR_CMD);
 		} else {
 			if (!**argv)
@@ -511,7 +510,7 @@ main(argc, argv)
 	Lst targs;	/* target nodes to create -- passed to Make_Init */
 	Boolean outOfDate = TRUE; 	/* FALSE if all targets up to date */
 	struct stat sb, sa;
-	char *p, *p1, *path, *pathp, *pwd;
+	char *p1, *path, *pathp, *pwd;
 	char mdpath[MAXPATHLEN + 1];
 	char obpath[MAXPATHLEN + 1];
 	char cdpath[MAXPATHLEN + 1];
@@ -711,6 +710,7 @@ main(argc, argv)
 	Var_Set("MAKE", argv[0], VAR_GLOBAL);
 	Var_Set(".MAKE", argv[0], VAR_GLOBAL);
 	Var_Set(MAKEFLAGS, "", VAR_GLOBAL);
+	Var_Set(MAKEOVERRIDES, "", VAR_GLOBAL);
 	Var_Set("MFLAGS", "", VAR_GLOBAL);
 
 	/*
@@ -832,15 +832,7 @@ main(argc, argv)
 	    printf("job_pipe %d %d, maxjobs %d maxlocal %d compat %d\n", job_pipe[0], job_pipe[1], maxJobs,
 	           maxLocal, compatMake);
 
-	/* Install all the flags into the MAKE envariable. */
-	if (((p = Var_Value(MAKEFLAGS, VAR_GLOBAL, &p1)) != NULL) && *p)
-#ifdef POSIX
-		setenv("MAKEFLAGS", p, 1);
-#else
-		setenv("MAKE", p, 1);
-#endif
-	if (p1)
-	    free(p1);
+	ExportMAKEFLAGS(1);		/* initial export */
 
 	Check_Cwd_av(0, NULL, 0);	/* initialize it */
 	
@@ -1659,4 +1651,28 @@ PrintOnError(s)
     s = Var_Subst(NULL, tmp, VAR_GLOBAL, 0);
     if (s && *s)
 	printf("%s", s);
+}
+
+void
+ExportMAKEFLAGS(first)
+     int first;
+{
+    static int once = 1;
+    char tmp[64];
+    char *s;
+
+    if (once != first)
+	return;
+    once = 0;
+    
+    /* supress duplicates in MAKEOVERRIDES */
+    strncpy(tmp, "${.MAKEFLAGS} ${.MAKEOVERRIDES:O:u}", sizeof(tmp));
+    s = Var_Subst(NULL, tmp, VAR_GLOBAL, 0);
+    if (s && *s) {
+#ifdef POSIX
+	setenv("MAKEFLAGS", s, 1);
+#else
+	setenv("MAKE", s, 1);
+#endif
+    }
 }
