@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.1.2.3 2002/03/10 21:05:11 thorpej Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.1.2.4 2002/03/10 21:33:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.2.3 2002/03/10 21:05:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.2.4 2002/03/10 21:33:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -256,7 +256,7 @@ turnstile_exit(void *lp)
  *	Block a thread on a lock object.
  */
 int
-turnstile_block(struct turnstile *ts, int rw, void *lp)
+turnstile_block(struct turnstile *ts, int rw, int pri, void *lp)
 {
 	struct turnstile_chain *tc = TURNSTILE_CHAIN(lp);
 	struct proc *p = curproc;
@@ -305,7 +305,7 @@ turnstile_block(struct turnstile *ts, int rw, void *lp)
 	p->p_wchan = lp;
 	p->p_wmesg = turnstile_wmesg;
 	p->p_slptime = 0;
-	/* p->p_priority = XXXJRT */
+	p->p_priority = pri & PRIMASK;
 
 	ts->ts_waiters++;
 
