@@ -1,4 +1,4 @@
-/*	$NetBSD: zbusvar.h,v 1.2 1999/09/25 21:47:12 is Exp $	*/
+/*	$NetBSD: zbusvar.h,v 1.3 2000/09/20 19:05:53 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -53,9 +53,14 @@ u_int		ZBUSAVAIL;	/* bytes of Zorro bus I/O space left */
 /* 
  * maps a ztwo and/or A3000 builtin address into the mapped kva address
  */
+#if defined(__m68k__)
 #define ztwomap(pa) \
     ((volatile void *)((u_int)ZTWOROMADDR - ZTWOROMBASE + (u_int)(pa)))
 #define ztwopa(va) ((caddr_t)(ZTWOROMBASE + (u_int)(va) - (u_int)ZTWOROMADDR))
+#else
+#define ztwomap(pa) (volatile void *)(pa)
+#define ztwopa(va) (caddr_t)(va)
+#endif
 
 /*
  * tests whether the address lies in our zorro2 rom space
