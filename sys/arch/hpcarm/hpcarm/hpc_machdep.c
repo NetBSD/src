@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.42 2002/04/03 23:33:34 thorpej Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.43 2002/04/05 16:58:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -421,9 +421,9 @@ initarm(argc, argv, bi)
 	freemempos += (np) * NBPG;
 
 
-	valloc_pages(kernel_l1pt, PD_SIZE / NBPG);
+	valloc_pages(kernel_l1pt, L1_TABLE_SIZE / NBPG);
 	for (loop = 0; loop < NUM_KERNEL_PTS; ++loop) {
-		alloc_pages(kernel_pt_table[loop].pv_pa, PT_SIZE / NBPG);
+		alloc_pages(kernel_pt_table[loop].pv_pa, L2_TABLE_SIZE / NBPG);
 		kernel_pt_table[loop].pv_va = kernel_pt_table[loop].pv_pa;
 	}
 
@@ -435,7 +435,7 @@ initarm(argc, argv, bi)
 	valloc_pages(systempage, 1);
 
 	/* Allocate a page for the page table to map kernel page tables*/
-	valloc_pages(kernel_ptpt, PT_SIZE / NBPG);
+	valloc_pages(kernel_ptpt, L2_TABLE_SIZE / NBPG);
 
 	/* Allocate stacks for all modes */
 	valloc_pages(irqstack, IRQ_STACK_SIZE);
@@ -552,7 +552,7 @@ initarm(argc, argv, bi)
 	    UPAGES * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	pmap_map_chunk(l1pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
-	    PD_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/* Map the page table that maps the kernel pages */
 	pmap_map_entry(l1pagetable, kernel_ptpt.pv_va, kernel_ptpt.pv_pa,
