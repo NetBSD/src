@@ -8,7 +8,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)i386bsd-dep.c	6.10 (Berkeley) 6/26/91";*/
-static char rcsid[] = "$Id: i386bsd-dep.c,v 1.2 1993/08/01 18:48:24 mycroft Exp $";
+static char rcsid[] = "$Id: i386bsd-dep.c,v 1.3 1993/09/17 03:12:16 brezak Exp $";
 #endif /* not lint */
 
 /* Low level interface to ptrace, for GDB when running on the Intel 386.
@@ -1544,6 +1544,7 @@ static int trapmap[] =
 	tEIP, tEFLAGS, tCS, tSS,
 	tDS, tES, tES, tES		/* lies: no fs or gs */
 };
+#ifdef FM_TRAP
 static int syscallmap[] = 
 {
 	sEAX, sECX, sEDX, sEBX,
@@ -1551,6 +1552,7 @@ static int syscallmap[] =
 	sEIP, sEFLAGS, sCS, sSS,
 	sCS, sCS, sCS, sCS		/* lies: no ds, es, fs or gs */
 };
+#endif
 static int *regmap;
 
 static void
