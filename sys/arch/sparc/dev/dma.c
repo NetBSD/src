@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.54 1998/07/29 18:37:23 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.55 1998/07/30 22:42:05 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -228,6 +228,13 @@ dmaattach_sbus(parent, self, aux)
 
 		if (strcmp(bpname, self->dv_cfdata->cf_driver->cd_name) == 0)
 			bp = sa->sa_bp + 1;
+	}
+
+	/* Allocate a dmamap */
+	if (bus_dmamap_create(sc->sc_dmatag, 16*1024*1024, 1, 16*1024*1024,
+			  0, BUS_DMA_WAITOK, &sc->sc_dmamap) != 0) {
+		printf("%s: dma map create failed\n", self->dv_xname);
+		return;
 	}
 
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
@@ -491,18 +498,20 @@ dma_setup(sc, addr, len, datain, dmasize)
 	NCR_DMA(("dma_setup: dmasize = %d\n", sc->sc_dmasize));
 
 	/* Program the DMA address */
-	if (CPU_ISSUN4M && sc->sc_dmasize) {
-		/*
-		 * Use dvma mapin routines to map the buffer into DVMA space.
-		 */
+	if (sc->sc_dmasize) {
 		sc->sc_dvmaaddr = *sc->sc_dmaaddr;
-		sc->sc_dvmakaddr = kdvma_mapin(sc->sc_dvmaaddr,
-					       sc->sc_dmasize, 0);
-		if (sc->sc_dvmakaddr == NULL)
+		if (bus_dmamap_load(sc->sc_dmatag, sc->sc_dmamap,
+				*sc->sc_dmaaddr, sc->sc_dmasize,
+				NULL /* kernel address */,   
+				BUS_DMA_NOWAIT))
 			panic("dma: cannot allocate DVMA address");
-		DMADDR(sc) = sc->sc_dvmakaddr;
-	} else
-		DMADDR(sc) = *sc->sc_dmaaddr;
+		DMADDR(sc) = (caddr_t)sc->sc_dmamap->dm_segs[0].ds_addr;
+		bus_dmamap_sync(sc->sc_dmatag, sc->sc_dmamap,
+				(bus_addr_t)sc->sc_dvmaaddr, sc->sc_dmasize,
+				datain
+					? BUS_DMASYNC_PREREAD
+					: BUS_DMASYNC_PREWRITE);
+	}
 
 	if (sc->sc_rev == DMAREV_ESC) {
 		/* DMA ESC chip bug work-around */
@@ -635,11 +644,17 @@ espdmaintr(arg)
 		trans, resid));
 
 	if (csr & D_WRITE)
+		/*XXX - flush in dmamap_load() */
 		cpuinfo.cache_flush(*sc->sc_dmaaddr, trans);
 
-	if (CPU_ISSUN4M && sc->sc_dvmakaddr)
-		dvma_mapout((vm_offset_t)sc->sc_dvmakaddr,
-			    (vm_offset_t)sc->sc_dvmaaddr, sc->sc_dmasize);
+	if (sc->sc_dmamap->dm_nsegs > 0) {
+		bus_dmamap_sync(sc->sc_dmatag, sc->sc_dmamap,
+				(bus_addr_t)sc->sc_dvmaaddr, sc->sc_dmasize,
+				(csr & D_WRITE) != 0
+					? BUS_DMASYNC_POSTREAD
+					: BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmatag, sc->sc_dmamap);
+	}
 
 	*sc->sc_dmalen -= trans;
 	*sc->sc_dmaaddr += trans;
