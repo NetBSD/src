@@ -33,8 +33,6 @@
 ./etc/monthly.conf
 ./etc/motd
 ./etc/mrouted.conf
-./etc/mtree/BSD.pkg.dist
-./etc/mtree/BSD.x11.dist
 ./etc/mtree/NetBSD.dist
 ./etc/mtree/special
 ./etc/namedb/localhost.rev
