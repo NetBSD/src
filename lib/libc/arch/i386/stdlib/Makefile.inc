@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.2 1997/11/05 23:43:10 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2000/03/06 18:32:24 kleink Exp $
 
 # objects built from assembler sources (need lint stubs)
-SRCS+=	abs.S div.S labs.S ldiv.S
+SRCS+=	abs.S div.S labs.S ldiv.S llabs.S
 
-LSRCS+= Lint_abs.c Lint_div.c Lint_labs.c Lint_ldiv.c
-DPSRCS+= Lint_abs.c Lint_div.c Lint_labs.c Lint_ldiv.c
+LSRCS+= Lint_abs.c Lint_div.c Lint_labs.c Lint_ldiv.c Lint_llabs.c
+DPSRCS+= Lint_abs.c Lint_div.c Lint_labs.c Lint_ldiv.c Lint_llabs.c

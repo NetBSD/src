@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.44 2000/01/23 01:35:49 mycroft Exp $	*/
+/*	$NetBSD: namespace.h,v 1.45 2000/03/06 18:32:22 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,9 @@
 #define errx		_errx
 #define inet_aton	_inet_aton
 #define inet_pton	_inet_pton
+#define strtoll		_strtoll
 #define strtoq		_strtoq
+#define strtoull	_strtoull
 #define strtouq		_strtouq
 #define sys_errlist	_sys_errlist
 #define sys_nerr	_sys_nerr
@@ -76,6 +78,7 @@
 #define alarm			_alarm
 #define alphasort		_alphasort
 #define asctime_r		_asctime_r
+#define atoll			_atoll
 #define authnone_create		_authnone_create
 #define authunix_create		_authunix_create
 #define authunix_create_default _authunix_create_default
@@ -250,6 +253,8 @@
 #define l64a			_l64a
 #define l64a_r			_l64a_r
 #define lcong48			_lcong48
+#define llabs			_llabs
+#define lldiv			_lldiv
 #define localtime_r		_localtime_r
 #define lockf			_lockf
 #define lrand48			_lrand48

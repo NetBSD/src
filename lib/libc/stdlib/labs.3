@@ -1,4 +1,4 @@
-.\"	$NetBSD: labs.3,v 1.5 1998/02/05 18:49:59 perry Exp $
+.\"	$NetBSD: labs.3,v 1.6 2000/03/06 18:32:30 kleink Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,8 +47,8 @@
 .Lb libc
 .Sh SYNOPSIS
 .Fd #include <stdlib.h>
-.Ft long
-.Fn labs "long j"
+.Ft long int
+.Fn labs "long int j"
 .Sh DESCRIPTION
 The
 .Fn labs
@@ -57,6 +57,7 @@ returns the absolute value of the long integer
 .Ar j .
 .Sh SEE ALSO
 .Xr abs 3 ,
+.Xr llabs 3 ,
 .Xr floor 3 ,
 .Xr cabs 3 ,
 .Xr math 3
