@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.15 1997/07/20 18:55:03 pk Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.16 1998/07/26 23:29:58 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -98,6 +98,7 @@
 #define ASI_IDCACHELFU	0x14	/* [4m] flush i&d cache line (user) */
 #define ASI_BYPASS	0x20	/* [4m] sun ref mmu bypass,
 				        ie. direct phys access */
+#define ASI_HICACHECLR	0x31	/* [4m] hypersparc only: I-cache flash clear */
 #define ASI_ICACHECLR	0x36	/* [4m] ms1 only: I-cache flash clear */
 #define ASI_DCACHECLR	0x37	/* [4m] ms1 only: D-cache flash clear */
 #define ASI_DCACHEDIAG	0x39	/* [4m] data cache diagnostic register access */
