@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.328 2001/06/13 06:01:45 simonb Exp $
+$NetBSD: pcidevs,v 1.329 2001/06/17 19:50:33 tsubai Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -748,6 +748,11 @@ product APPLE UNINORTH2		0x001f	UniNorth Host-PCI Bridge
 product APPLE UNINORTH_AGP	0x0020	UniNorth AGP Interface
 product APPLE GMAC		0x0021	GMAC Ethernet
 product APPLE KEYLARGO		0x0022	MAC-IO I/O Controller (KeyLargo)
+product APPLE GMAC2		0x0024	GMAC Ethernet
+product APPLE PANGEA_MACIO	0x0025	MAC-IO I/O Controller (Pangea)
+product APPLE PANGEA_AGP	0x0027	Pangea AGP Interface
+product APPLE PANGEA_PCI1	0x0028	Pangea Host-PCI Bridge
+product APPLE PANGEA_PCI2	0x0029	Pangea Host-PCI Bridge
 
 /* ARC Logic products */
 product ARC 1000PV	0xa091	1000PV
