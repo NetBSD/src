@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.502 2002/11/27 13:31:23 tron Exp $
+#	$NetBSD: mi,v 1.503 2002/11/29 13:16:29 lukem Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -2860,6 +2860,8 @@
 ./usr/share/man/cat3/strsignal.0	comp-c-catman
 ./usr/share/man/cat3/strspn.0	comp-c-catman
 ./usr/share/man/cat3/strstr.0	comp-c-catman
+./usr/share/man/cat3/strsuftoll.0	comp-c-catman
+./usr/share/man/cat3/strsuftollx.0	comp-c-catman
 ./usr/share/man/cat3/strsvis.0	comp-c-catman
 ./usr/share/man/cat3/strsvisx.0	comp-c-catman
 ./usr/share/man/cat3/strtod.0	comp-c-catman
@@ -5841,6 +5843,8 @@
 ./usr/share/man/man3/strsignal.3		comp-c-man
 ./usr/share/man/man3/strspn.3		comp-c-man
 ./usr/share/man/man3/strstr.3		comp-c-man
+./usr/share/man/man3/strsuftoll.3		comp-c-man
+./usr/share/man/man3/strsuftollx.3		comp-c-man
 ./usr/share/man/man3/strsvis.3		comp-c-man
 ./usr/share/man/man3/strsvisx.3		comp-c-man
 ./usr/share/man/man3/strtod.3		comp-c-man
