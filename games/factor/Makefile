@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2004/02/08 13:16:25 jsm Exp $
+#	$NetBSD: Makefile,v 1.12 2005/03/09 03:11:21 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 # For MKCRYPTO
@@ -12,8 +12,8 @@ CPPFLAGS+=-I${PRIMES}
 
 .if (${MKCRYPTO} != "no")
 CPPFLAGS+=-DHAVE_OPENSSL
-LDADD+=	-lcrypto
-DPADD+=	${LIBCRYPTO}
+LDADD+=	-lcrypto -lcrypt
+DPADD+=	${LIBCRYPTO} ${LIBCRYPT}
 .endif
 
 MAN=	factor.6
