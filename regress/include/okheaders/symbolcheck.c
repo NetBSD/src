@@ -66,8 +66,10 @@
 #include <sys/ioctl_compat.h>
 #include <sys/ipc.h>
 #include <sys/kcore.h>
+#ifdef XXX
 #include <sys/kernel.h>
 #include <sys/kgdb.h>
+#endif
 #include <sys/ksem.h>
 #include <sys/ksyms.h>
 #include <sys/ktrace.h>
@@ -184,7 +186,9 @@
 #include <net/if_gre.h>		/* Needs <netinet> stuff */
 #include <net/if_hippi.h>
 #include <net/if_ieee1394.h>
+#ifdef XXX
 #include <net/if_ieee80211.h>
+#endif
 #include <net/if_llc.h>
 #include <net/if_media.h>
 #include <net/ppp_defs.h>	/* Moved */
@@ -280,7 +284,9 @@
 #include <pcap-namedb.h>
 #include <pcap.h>
 #include <pci.h>
+#ifdef XXX
 #include <pmc.h>
+#endif
 #include <poll.h>
 #include <pthread.h>
 #include <pthread_dbg.h>
