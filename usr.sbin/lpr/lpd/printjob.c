@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.22 1999/12/11 02:01:18 mrg Exp $	*/
+/*	$NetBSD: printjob.c,v 1.23 2000/08/24 02:03:54 itohy Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.22 1999/12/11 02:01:18 mrg Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.23 2000/08/24 02:03:54 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -1119,6 +1119,7 @@ sendmail(user, bombed)
 			cp = "NOACCT";
 			break;
 		case FILTERERR:
+			cp = "FILTERERR";
 			if (stat(tempfile, &stb) < 0 || stb.st_size == 0 ||
 			    (fp = fopen(tempfile, "r")) == NULL) {
 				printf("\nhad some errors and may not have printed\n");
@@ -1128,7 +1129,6 @@ sendmail(user, bombed)
 			while ((i = getc(fp)) != EOF)
 				putchar(i);
 			(void)fclose(fp);
-			cp = "FILTERERR";
 			break;
 		case ACCESS:
 			printf("\nwas not printed because it was not linked to the original file\n");
