@@ -1,4 +1,4 @@
-#	$NetBSD: EB7500ATX,v 1.1 2004/01/03 14:50:03 chris Exp $
+#	$NetBSD: EB7500ATX,v 1.2 2004/01/25 13:46:59 bjh21 Exp $
 #
 #	EB7500ATX kernel
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"EB7500ATX-$Revision: 1.1 $"
+#ident		"EB7500ATX-$Revision: 1.2 $"
 
 # estimated number of users
 maxusers	32
@@ -212,9 +212,6 @@ vt2	at vidc?
 vt3	at vidc?
 vt4	at vidc?
 vt5	at vidc?
-
-# Crude sound device
-#beep0	at vidc?
 
 # Audio device
 vidcaudio0	at vidc?
