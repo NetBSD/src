@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.25 2002/03/18 23:59:57 mjl Exp $	*/
+/*	$NetBSD: rshd.c,v 1.26 2002/09/18 20:44:38 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -73,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.25 2002/03/18 23:59:57 mjl Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.26 2002/09/18 20:44:38 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,6 +89,7 @@ __RCSID("$NetBSD: rshd.c,v 1.25 2002/03/18 23:59:57 mjl Exp $");
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <sys/socket.h>
+#include <sys/poll.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -224,8 +225,8 @@ doit(struct sockaddr *fromp)
 {
 	struct passwd *pwd;
 	in_port_t port;
-	fd_set ready, readfrom;
-	int cc, nfd, pv[2], pid, s = -1;	/* XXX gcc */
+	struct pollfd set[2];
+	int cc, pv[2], pid, s = -1;	/* XXX gcc */
 	int one = 1;
 	char *hostname, *errorstr, *errorhost = NULL;	/* XXX gcc */
 	const char *cp;
@@ -508,44 +509,37 @@ fail:
 			(void) close(2);
 			(void) close(pv[1]);
 
-			FD_ZERO(&readfrom);
-			FD_SET(s, &readfrom);
-			FD_SET(pv[0], &readfrom);
-			if (pv[0] > s)
-				nfd = pv[0];
-			else
-				nfd = s;
+			set[0].fd = s;
+			set[0].events = POLLIN;
+			set[1].fd = pv[0];
+			set[1].events = POLLIN;
 			ioctl(pv[0], FIONBIO, (char *)&one);
 
 			/* should set s nbio! */
-			nfd++;
 			do {
-				ready = readfrom;
-				if (select(nfd, &ready, (fd_set *)0,
-				    (fd_set *)0, (struct timeval *)0) < 0)
+				if (poll(set, 2, INFTIM) < 0)
 					break;
-				if (FD_ISSET(s, &ready)) {
+				if (set[0].revents & POLLIN) {
 					int	ret;
 
 					ret = read(s, &sig, 1);
 					if (ret <= 0)
-						FD_CLR(s, &readfrom);
+						set[0].events = 0;
 					else
 						killpg(pid, sig);
 				}
-				if (FD_ISSET(pv[0], &ready)) {
+				if (set[1].revents & POLLIN) {
 					errno = 0;
 					cc = read(pv[0], buf, sizeof(buf));
 					if (cc <= 0) {
 						shutdown(s, SHUT_RDWR);
-						FD_CLR(pv[0], &readfrom);
+						set[1].events = 0;
 					} else {
 						(void) write(s, buf, cc);
 					}
 				}
 
-			} while (FD_ISSET(s, &readfrom) ||
-			    FD_ISSET(pv[0], &readfrom));
+			} while ((set[0].revents | set[1].revents) & POLLIN);
 			exit(0);
 		}
 		setpgrp(0, getpid());
