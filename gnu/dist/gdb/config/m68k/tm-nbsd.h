@@ -20,10 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #ifndef TM_NBSD_H
 #define TM_NBSD_H
 
-/* Generic definitions.  */
-#include "m68k/tm-m68k.h"
-#include "tm-nbsd.h"
-
 /* NetBSD uses trap 15 for both user and kernel breakpoints. */
 #define BPT_VECTOR 0xf
 #define REMOTE_BPT_VECTOR 0xf
@@ -41,5 +37,9 @@ extern CORE_ADDR get_stack_end_addr();
 
 /* Offset to saved PC in sigcontext, from <machine/signal.h>.  */
 #define SIGCONTEXT_PC_OFFSET 20
+
+/* Generic definitions.  */
+#include "m68k/tm-m68k.h"
+#include "tm-nbsd.h"
 
 #endif /* TM_NBSD_H */
