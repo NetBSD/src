@@ -1,14 +1,15 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.13 1999/02/09 19:34:18 tv Exp $
+# $NetBSD: makeflist,v 1.14 1999/02/13 07:59:45 itohy Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
 #
 
 # set defaults
-machine=${MACHINE:-`printf 'xxx:\n\techo ${MACHINE}' | make -s -f-`}
-arch=${MACHINE_ARCH:-`printf 'xxx:\n\techo ${MACHINE_ARCH}' | make -s -f-`}
+: ${MAKE=make}
+machine=${MACHINE:-`printf 'xxx:\n\techo ${MACHINE}' | $MAKE -s -f-`}
+arch=${MACHINE_ARCH:-`printf 'xxx:\n\techo ${MACHINE_ARCH}' | $MAKE -s -f-`}
 arch=`echo $arch | sed s,^mipse.,mips,`
 setd=`pwd`
 nlists="base comp etc games man misc text"
