@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.215.2.30 2002/04/27 14:39:35 sommerfeld Exp $	*/
+/*	$NetBSD: locore.s,v 1.215.2.31 2002/04/27 20:24:46 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -794,10 +794,12 @@ begin:
 	call 	_C_LABEL(main)
 
 /*
- * XXX We need a comment here (lightly) explaining this. Probably a
- * detailed section 9 man page, too, explaining the proc_trampoline.
- * Almost every port has a proc_trampoline, so it needs documentation, IMHO.
- * -- Perry Metzger, May 7, 2001
+ * void proc_trampoline(void);
+ * This is a trampoline function pushed onto the stack of a newly created
+ * process in order to do some additional setup.  The trampoline is entered by
+ * cpu_switch()ing to the process, so we abuse the callee-saved registers used
+ * by cpu_switch() to store the information about the stub to call.
+ * NOTE: This function does not have a normal calling sequence!
  */
 /* LINTSTUB: Func: void proc_trampoline(void) */
 NENTRY(proc_trampoline)
@@ -813,11 +815,6 @@ NENTRY(proc_trampoline)
 
 /*****************************************************************************/
 
-/*
- * XXX No section 9 man page for sigcode or esigcode. IMHO,
- * Since it is part of the MI/MD interface, it needs documentation.
- * -- Perry Metzger, May 7, 2001
- */
 /*
  * Signal trampoline; copied to top of user stack.
  */
@@ -871,13 +868,6 @@ ENTRY(fillw)
 	popl	%edi
 	ret
 
-/*
- * XXX No section 9 man page for kcopy. IMHO,
- * Since it is part of the MI/MD interface, it needs documentation.
- * so far as I can tell it is used only in one function in the MI kernel,
- * but it still counts.
- * -- Perry Metzger, May 7, 2001
- */
 /*
  * int kcopy(const void *from, void *to, size_t len);
  * Copy len bytes, abort on fault.
@@ -1457,7 +1447,8 @@ ENTRY(fuswintr)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
 	ja	_C_LABEL(fusuaddrfault)
-	GET_CURPCB(%ecx)
+	movl	CPUVAR(CURPROC),%ecx
+	movl	P_ADDR(%ecx),%ecx
 	movl	$_C_LABEL(fusubail),PCB_ONFAULT(%ecx)
 	movzwl	(%edx),%eax
 	movl	$0,PCB_ONFAULT(%ecx)
@@ -1612,7 +1603,8 @@ ENTRY(suswintr)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
 	ja	_C_LABEL(fusuaddrfault)
-	GET_CURPCB(%ecx)
+	movl	CPUVAR(CURPROC),%ecx
+	movl	P_ADDR(%ecx),%ecx
 	movl	$_C_LABEL(fusubail),PCB_ONFAULT(%ecx)
 
 #if defined(I386_CPU)
@@ -1693,40 +1685,40 @@ ENTRY(subyte)
 
 /*
  * void lgdt(struct region_descriptor *rdp);
- * Change the global descriptor table.
- * XXX should there be an MD section 9 man page for this?
- *     or even just a better comment? --Perry, May 7, 2001
+ * Load a new GDT pointer (and do any necessary cleanup).
+ * XXX It's somewhat questionable whether reloading all the segment registers
+ * is necessary, since the actual descriptor data is not changed except by
+ * process creation and exit, both of which clean up via task switches.  OTOH,
+ * this only happens at run time when the GDT is resized.
  */
 /* LINTSTUB: Func: void lgdt(struct region_descriptor *rdp) */
 NENTRY(lgdt)
 	/* Reload the descriptor table. */
 	movl	4(%esp),%eax
 	lgdt	(%eax)
-	/* Flush the prefetch q. */
+	/* Flush the prefetch queue. */
 	jmp	1f
 	nop
 1:	/* Reload "stale" selectors. */
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
-	movl	%eax,%ds
-	movl	%eax,%es
-	movl	%eax,%gs	
-	movl	%eax,%ss
+	movw	%ax,%ds
+	movw	%ax,%es
+	movw	%ax,%gs
+	movw	%ax,%ss
 	movl	$GSEL(GCPU_SEL, SEL_KPL),%eax
-	movl	%eax,%fs
+	movw	%ax,%fs
 	/* Reload code selector by doing intersegment return. */
 	popl	%eax
 	pushl	$GSEL(GCODE_SEL, SEL_KPL)
 	pushl	%eax
 	lret
 
+/*****************************************************************************/
 
 /*
- * XXX We need a comment here (lightly) explaining this. Probably a
- * short section 9 man page, too, explaining how kernel setjmp differs
- * from userland.
- * Since it is part of the MI/MD interface, it needs documentation, IMHO.
- * -- Perry Metzger, May 7, 2001
+ * These functions are primarily used by DDB.
  */
+
 /* LINTSTUB: Func: int setjmp (label_t *l) */
 ENTRY(setjmp)
 	movl	4(%esp),%eax
@@ -1740,13 +1732,6 @@ ENTRY(setjmp)
 	xorl	%eax,%eax		# return (0);
 	ret
 
-/*
- * XXX We need a comment here (lightly) explaining this. Probably a
- * short section 9 man page, too, explaining how kernel longjmp differs
- * from userland.
- * Since it is part of the MI/MD interface, it needs documentation, IMHO.
- * -- Perry Metzger, May 7, 2001
- */
 /* LINTSTUB: Func: void longjmp (label_t *l) */
 ENTRY(longjmp)
 	movl	4(%esp),%eax
@@ -1928,8 +1913,8 @@ ENTRY(cpu_switch)
 	movl	P_ADDR(%ebx),%esi
 	movl	P_MD_TSS_SEL(%ebx),%edx
 #else
-	movl	%fs:CPU_INFO_IDLE_PCB,%esi
-	movl	%fs:CPU_INFO_IDLE_TSS_SEL,%edx
+	movl	CPUVAR(IDLE_PCB),%esi
+	movl	CPUVAR(IDLE_TSS_SEL),%edx
 #endif
 	movl	$0,CPUVAR(CURPROC)		/* In case we fault... */
 
@@ -1947,7 +1932,7 @@ ENTRY(cpu_switch)
 
 	/* Switch TSS. Reset "task busy" flag before loading. */
 #ifdef MULTIPROCESSOR
-	movl	%fs:CPU_INFO_GDT,%eax
+	movl	CPUVAR(GDT),%eax
 #else
 	movl	_C_LABEL(gdt),%eax
 #endif
@@ -2097,7 +2082,7 @@ switch_exited:
 #endif
 
 #ifdef MULTIPROCESSOR
-	movl	%fs:CPU_INFO_GDT,%eax
+	movl	CPUVAR(GDT),%eax
 #else	
 	/* Load TSS info. */
 	movl	_C_LABEL(gdt),%eax
@@ -2121,7 +2106,7 @@ switch_restored:
 	 * clear CR0_TS so we'll trap rather than reuse bogus state.
 	 */
 	movl	PCB_FPCPU(%esi),%ebx
-	cmpl	%fs:CPU_INFO_SELF,%ebx
+	cmpl	CPUVAR(SELF),%ebx
 	jz	1f
 	orl	$CR0_TS,%ecx
 1:	
@@ -2129,11 +2114,7 @@ switch_restored:
 	movl	%ecx,%cr0
 
 	/* Record new pcb. */
-#ifndef MULTIPROCESSOR
 	SET_CURPCB(%esi)
-#else
-	movl	%esi,%fs:CPU_INFO_CURPCB
-#endif
 
 	/* Interrupts are okay again. */
 	sti
@@ -2148,282 +2129,6 @@ switch_return:
 	popl	%esi
 	popl	%ebx
 	ret
-
-#if 0 /* old idle/cpu_switch code */
-#if NAPM > 0
-/* LINTSTUB: Func: void apm_cpu_busy (void) */
-/* LINTSTUB: Func: void apm_cpu_idle (void) */
-	.globl _C_LABEL(apm_cpu_idle),_C_LABEL(apm_cpu_busy)
-#endif
-/*
- * When no processes are on the runq, cpu_switch() branches to here to wait for
- * something to come ready.
- */
-/* LINTSTUB: Ignore */
-ENTRY(idle)
-	/*
-	 * When we get here, interrupts are off (via cli) and
-	 * sched_lock is held.
-	 */
-	movl	_C_LABEL(sched_whichqs),%ecx
-	testl	%ecx,%ecx
-	jnz	sw1
-#if defined(LOCKDEBUG)
-	call	_C_LABEL(sched_unlock_idle)
-#endif
-	sti
-
-	/* Try to zero some pages. */
-	movl	_C_LABEL(uvm)+UVM_PAGE_IDLE_ZERO,%ecx
-	testl	%ecx,%ecx
-	jz	1f
-	call	_C_LABEL(uvm_pageidlezero)
-1:
-#if NAPM > 0
-	call	_C_LABEL(apm_cpu_idle)
-	cli
-	movl	_C_LABEL(whichqs),%ecx
-	testl	%ecx,%ecx
-	jnz	sw2
-	sti
-#endif
-	hlt
-#if NAPM > 0
-sw2:	
-	sti
-	call	_C_LABEL(apm_cpu_busy)
-#endif
-	cli
-#if defined(LOCKDEBUG)
-	call	_C_LABEL(sched_lock_idle)
-#endif
-	jmp	_C_LABEL(idle)
-
-#ifdef DIAGNOSTIC
-/* LINTSTUB: Ignore */
-NENTRY(switch_error)
-	pushl	$1f
-	call	_C_LABEL(panic)
-	/* NOTREACHED */
-1:	.asciz	"cpu_switch"
-#endif /* DIAGNOSTIC */
-
-/*
- * void cpu_switch(struct proc *)
- * Find a runnable process and switch to it.  Wait if necessary.  If the new
- * process is the same as the old one, we short-circuit the context save and
- * restore.
- * see cpu_switch(9)
- */
-/* LINTSTUB: Func: void cpu_switch(struct proc *p) */
-ENTRY(cpu_switch)
-	pushl	%ebx
-	pushl	%esi
-	pushl	%edi
-	pushl	CPL
-
-	movl	CPUVAR(CURPROC),%esi
-
-	/*
-	 * Clear curproc so that we don't accumulate system time while idle.
-	 * This also insures that schedcpu() will move the old process to
-	 * the correct queue if it happens to get called from the spllower()
-	 * below and changes the priority.  (See corresponding comment in
-	 * userret()).
-	 */
-	movl	$0,CPUVAR(CURPROC)
-
-#if defined(LOCKDEBUG)
-	/* Release the sched_lock before processing interrupts. */
-	call	_C_LABEL(sched_unlock_idle)
-#endif
-
-	movl	$0,CPL			# spl0()
-	call	_C_LABEL(Xspllower)	# process pending interrupts
-
-switch_search:
-	/*
-	 * First phase: find new process.
-	 *
-	 * Registers:
-	 *   %eax - queue head, scratch, then zero
-	 *   %ebx - queue number
-	 *   %ecx - cached value of whichqs
-	 *   %edx - next process in queue
-	 *   %esi - old process
-	 *   %edi - new process
-	 */
-
-	/* Lock the scheduler. */
-	cli				# splhigh doesn't do a cli
-#if defined(LOCKDEBUG)
-	call	_C_LABEL(sched_lock_idle)
-#endif
-
-	/* Wait for new process. */
-	movl	_C_LABEL(sched_whichqs),%ecx
-
-sw1:	bsfl	%ecx,%ebx		# find a full q
-	jz	_C_LABEL(idle)		# if none, idle
-
-	leal	_C_LABEL(sched_qs)(,%ebx,8),%eax # select q
-
-	movl	P_FORW(%eax),%edi	# unlink from front of process q
-#ifdef	DIAGNOSTIC
-	cmpl	%edi,%eax		# linked to self (i.e. nothing queued)?
-	je	_C_LABEL(switch_error)	# not possible
-#endif /* DIAGNOSTIC */
-	movl	P_FORW(%edi),%edx
-	movl	%edx,P_FORW(%eax)
-	movl	%eax,P_BACK(%edx)
-
-	cmpl	%edx,%eax		# q empty?
-	jne	3f
-
-	btrl	%ebx,%ecx		# yes, clear to indicate empty
-	movl	%ecx,_C_LABEL(sched_whichqs) # update q status
-
-3:	/* We just did it. */
-	CLEAR_RESCHED(%ecx)
-
-#ifdef	DIAGNOSTIC
-	cmpl	%eax,P_WCHAN(%edi)	# Waiting for something?
-	jne	_C_LABEL(switch_error)	# Yes; shouldn't be queued.
-	cmpb	$SRUN,P_STAT(%edi)	# In run state?
-	jne	_C_LABEL(switch_error)	# No; shouldn't be queued.
-#endif /* DIAGNOSTIC */
-
-	/* Isolate process.  XXX Is this necessary? */
-	movl	%eax,P_BACK(%edi)
-
-#if defined(LOCKDEBUG)
-	/*
-	 * Unlock the sched_lock, but leave interrupts off, for now.
-	 */
-	call	_C_LABEL(sched_unlock_idle)
-#endif
-
-#if defined(MULTIPROCESSOR)
-	/*
-	 * p->p_cpu = curcpu()
-	 * XXXSMP
-	 */
-#endif
-
-	/* Record new process. */
-	movb	$SONPROC,P_STAT(%edi)	# p->p_stat = SONPROC
-	SET_CURPROC(%edi,%ecx)
-
-	/* It's okay to take interrupts here. */
-	sti
-
-	/* Skip context switch if same process. */
-	cmpl	%edi,%esi
-	je	switch_return
-
-	/* If old process exited, don't bother. */
-	testl	%esi,%esi
-	jz	switch_exited
-
-	/*
-	 * Second phase: save old context.
-	 *
-	 * Registers:
-	 *   %eax, %ecx - scratch
-	 *   %esi - old process, then old pcb
-	 *   %edi - new process
-	 */
-
-	movl	P_ADDR(%esi),%esi
-
-	/* Save stack pointers. */
-	movl	%esp,PCB_ESP(%esi)
-	movl	%ebp,PCB_EBP(%esi)
-
-switch_exited:
-	/*
-	 * Third phase: restore saved context.
-	 *
-	 * Registers:
-	 *   %eax, %ecx, %edx - scratch
-	 *   %esi - new pcb
-	 *   %edi - new process
-	 */
-
-	/* No interrupts while loading new state. */
-	cli
-	movl	P_ADDR(%edi),%esi
-
-	/* Restore stack pointers. */
-	movl	PCB_ESP(%esi),%esp
-	movl	PCB_EBP(%esi),%ebp
-
-#if 0
-	/* Don't bother with the rest if switching to a system process. */
-	testl	$P_SYSTEM,P_FLAG(%edi)
-	jnz	switch_restored
-#endif
-
-	/*
-	 * Activate the address space.  We're curproc, so %cr3 will
-	 * be reloaded, but we're not yet curpcb, so the LDT won't
-	 * be reloaded, although the PCB copy of the selector will
-	 * be refreshed from the pmap.
-	 */
-	pushl	%edi
-	call	_C_LABEL(pmap_activate)
-	addl	$4,%esp
-
-	/* Load TSS info. */
-#ifdef MULTIPROCESSOR
-	movl	%fs:CPU_INFO_GDT,%eax
-#else	
-	/* Load TSS info. */
-	movl	_C_LABEL(gdt),%eax
-#endif
-	movl	P_MD_TSS_SEL(%edi),%edx
-
-	/* Switch TSS. Reset "task busy" flag before loading */
-	andl	$~0x0200,4(%eax,%edx, 1)
-	ltr	%dx
-
-#ifdef USER_LDT
-	/*
-	 * Switch LDT.
-	 *
-	 * XXX
-	 * Always do this, because the LDT could have been swapped into a
-	 * different selector after a process exited.  (See gdt_compact().)
-	 */
-	movl	PCB_LDT_SEL(%esi),%edx
-	lldt	%dx
-#endif /* USER_LDT */
-
-	/* Restore segment registers. */
-switch_restored:
-	/* Restore cr0 (including FPU state). */
-	movl	PCB_CR0(%esi),%ecx
-	movl	%ecx,%cr0
-
-	/* Record new pcb. */
-	SET_CURPCB(%esi)
-
-	/* Interrupts are okay again. */
-	sti
-
-switch_return:
-	/*
-	 * Restore old cpl from stack.  Note that this is always an increase,
-	 * due to the spl0() on entry.
-	 */
-	popl	CPL
-
-	movl	%edi,%eax		# return (p);
-	popl	%edi
-	popl	%esi
-	popl	%ebx
-	ret
-#endif
 
 /*
  * void switch_exit(struct proc *p);
@@ -2445,8 +2150,8 @@ ENTRY(switch_exit)
 	movl	P_ADDR(%ebx),%esi
 	movl	P_MD_TSS_SEL(%ebx),%edx
 #else
-	movl	%fs:CPU_INFO_IDLE_PCB,%esi
-	movl	%fs:CPU_INFO_IDLE_TSS_SEL,%edx
+	movl	CPUVAR(IDLE_PCB),%esi
+	movl	CPUVAR(IDLE_TSS_SEL),%edx
 #endif
 	/* In case we fault... */
 	movl	$0,CPUVAR(CURPROC)
@@ -2460,7 +2165,7 @@ ENTRY(switch_exit)
 
 	/* Load TSS info. */
 #ifdef MULTIPROCESSOR
-	movl	%fs:CPU_INFO_GDT,%eax
+	movl	CPUVAR(GDT),%eax
 #else	
 	/* Load TSS info. */
 	movl	_C_LABEL(gdt),%eax
@@ -2523,9 +2228,6 @@ ENTRY(savectx)
  * (possibly the next clock tick).  Thus, we disable interrupt before checking,
  * and only enable them again on the final `iret' or before calling the AST
  * handler.
- *
- * XXX - debugger traps are now interrupt gates so at least bdb doesn't lose
- * control.  The sti's give the standard losing behaviour for ddb and kgdb.
  */ 
 
 /*
@@ -2793,7 +2495,6 @@ ipkdbrestore:
 	pushl	%ecx
 	ret
 
-/* XXX: Documentation! grrr! --Perry Metzger, May 7, 2001 */
 /* LINTSTUB: Func: int ipkdbfbyte(u_char *c) */
 NENTRY(ipkdbfbyte)
 	pushl	%ebp
@@ -2806,7 +2507,6 @@ faultexit:
 	popl	%ebp
 	ret
 
-/* XXX: Documentation! grrr! --Perry Metzger, May 7, 2001 */
 /* LINTSTUB: Func: int ipkdbsbyte(u_char *c, int i) */
 NENTRY(ipkdbsbyte)
 	pushl	%ebp
@@ -2830,7 +2530,6 @@ fault:
 /*
  * Old call gate entry for syscall
  */
-/* XXX Manually doing Xblah is wrong. Yuck. --Perry */
 /* LINTSTUB: Var: char Xosyscall[1]; */
 IDTVEC(osyscall)
 	/* Set eflags in trap frame. */
@@ -2842,7 +2541,6 @@ IDTVEC(osyscall)
 /*
  * Trap gate entry for syscall
  */
-/* XXX Manually doing Xblah is wrong. Yuck. --Perry */
 /* LINTSTUB: Var: char Xsyscall[1]; */
 IDTVEC(syscall)
 	pushl	$2		# size of instruction for restart

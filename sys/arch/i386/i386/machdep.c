@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376.2.34 2002/04/27 14:39:36 sommerfeld Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.35 2002/04/27 20:24:46 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.376.2.34 2002/04/27 14:39:36 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.376.2.35 2002/04/27 20:24:46 sommerfeld Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -932,7 +932,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		"Transmeta",
 		/* Family 4, Transmeta never had any of these */
 		{ {
-			CPUCLASS_486, 
+			CPUCLASS_486,
 			{
 				0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0,
@@ -1207,7 +1207,7 @@ u_int32_t longrun_modes[LONGRUN_MODE_MAX][3] = {
 	{	100,	100,		1},	/* LONGRUN_MODE_MAXFREQUENCY */
 };
 
-static u_int 
+static u_int
 tmx86_get_longrun_mode(void)
 {
 	u_long		eflags;
@@ -1235,7 +1235,7 @@ out:
 	return (mode);
 }
 
-static u_int 
+static u_int
 tmx86_get_longrun_status(u_int *frequency, u_int *voltage, u_int *percentage)
 {
 	u_long		eflags;
@@ -1253,7 +1253,7 @@ tmx86_get_longrun_status(u_int *frequency, u_int *voltage, u_int *percentage)
 	return (1);
 }
 
-static u_int 
+static u_int
 tmx86_set_longrun_mode(u_int mode)
 {
 	u_long		eflags;
@@ -1305,7 +1305,7 @@ transmeta_cpu_info(struct cpu_info *ci)
 	CPUID(0x80860000, eax, ebx, ecx, edx);
 	nreg = eax;
 	if (nreg >= 0x80860001) {
-		CPUID(0x80860001, eax, ebx, ecx, edx);		
+		CPUID(0x80860001, eax, ebx, ecx, edx);
 		printf("%s: Processor revision %u.%u.%u.%u\n",
 		    ci->ci_dev->dv_xname,
 		    (ebx >> 24) & 0xff,
@@ -1314,7 +1314,7 @@ transmeta_cpu_info(struct cpu_info *ci)
 		    ebx & 0xff);
 	}
 	if (nreg >= 0x80860002) {
-		CPUID(0x80860002, eax, ebx, ecx, edx);				
+		CPUID(0x80860002, eax, ebx, ecx, edx);
 		printf("%s: Code Morphing Software Rev: %u.%u.%u-%u-%u\n",
 		    ci->ci_dev->dv_xname, (ebx >> 24) & 0xff,
 		    (ebx >> 16) & 0xff,
@@ -1325,7 +1325,7 @@ transmeta_cpu_info(struct cpu_info *ci)
 	if (nreg >= 0x80860006) {
 		union {
 			char text[65];
-			struct 
+			struct
 			{
 				u_int eax;
 				u_int ebx;
@@ -1688,7 +1688,7 @@ identifycpu(struct cpu_info *ci)
 
 	if (ci->ci_info)
 		(*ci->ci_info)(ci);
-	
+
 	if (ci->ci_feature_flags) {
 		if ((ci->ci_feature_flags & CPUID_MASK1) != 0) {
 			bitmask_snprintf(ci->ci_feature_flags, CPUID_FLAGS1,
@@ -1697,6 +1697,11 @@ identifycpu(struct cpu_info *ci)
 		}
 		if ((ci->ci_feature_flags & CPUID_MASK2) != 0) {
 			bitmask_snprintf(ci->ci_feature_flags, CPUID_FLAGS2,
+			    buf, sizeof(buf));
+			printf("%s: features %s\n", cpuname, buf);
+		}
+		if ((ci->ci_feature_flags & CPUID_MASK3) != 0) {
+			bitmask_snprintf(ci->ci_feature_flags, CPUID_FLAGS3,
 			    buf, sizeof(buf));
 			printf("%s: features %s\n", cpuname, buf);
 		}
@@ -2212,7 +2217,7 @@ haltsys:
 /*
  * These variables are needed by /sbin/savecore
  */
-u_long	dumpmag = 0x8fca0101;	/* magic number */
+u_int32_t dumpmag = 0x8fca0101;	/* magic number */
 int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
 
@@ -2507,7 +2512,7 @@ setregs(p, pack, stack)
 	tf->tf_edi = 0;
 	tf->tf_esi = 0;
 	tf->tf_ebp = 0;
-	tf->tf_ebx = (int)PS_STRINGS;
+	tf->tf_ebx = (int)p->p_psstr;
 	tf->tf_edx = 0;
 	tf->tf_ecx = 0;
 	tf->tf_eax = 0;

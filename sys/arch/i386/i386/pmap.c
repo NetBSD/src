@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.47 2002/01/28 04:21:39 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.48 2002/04/27 20:24:47 sommerfeld Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83.2.47 2002/01/28 04:21:39 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83.2.48 2002/04/27 20:24:47 sommerfeld Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -475,8 +475,12 @@ static pt_entry_t	*pmap_tmpmap_pvepte __P((struct pv_entry *));
 static void		 pmap_tmpunmap_pa __P((void));
 static void		 pmap_tmpunmap_pvepte __P((struct pv_entry *));
 static void		pmap_unmap_ptes __P((struct pmap *));
-static void		pmap_tlb_pool_page_free(void *, unsigned long, int);
-static void		*pmap_tlb_pool_page_alloc(unsigned long, int, int);
+static void		pmap_tlb_pool_page_free(struct pool *, void *);
+static void		*pmap_tlb_pool_page_alloc(struct pool *, int);
+
+static struct pool_allocator pmap_allocator_tlb = {
+	pmap_tlb_pool_page_alloc, pmap_tlb_pool_page_free, 0,
+};
 
 /*
  * p m a p   i n l i n e   h e l p e r   f u n c t i o n s
@@ -965,6 +969,11 @@ pmap_bootstrap(kva_start)
 	virtual_avail += PAGE_SIZE; pte++;
 #endif
 
+	/*
+	 * Nothing after this point actually needs pte;
+	 */
+	pte = (void *)0xdeadbeef;
+
 	/* XXX: vmmap used by mem.c... should be uvm_map_reserve */
 	vmmap = (char *)virtual_avail;			/* don't need pte */
 	virtual_avail += PAGE_SIZE;
@@ -1007,7 +1016,7 @@ pmap_bootstrap(kva_start)
 	 */
 
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-		  0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+	    &pool_allocator_nointr);
 
 	/*
 	 * Initialize the TLB shootdown queues.
@@ -1016,10 +1025,9 @@ pmap_bootstrap(kva_start)
 	pool_init(&pmap_tlb_shootdown_job_pool,
 	    sizeof(struct pmap_tlb_shootdown_job),
 	    32,			/* cache-line align XXX magic number*/
-	    0,			/* ioff */
-	    PR_STATIC,
-	    "pmaptlbpl",
-	    0, pmap_tlb_pool_page_alloc, pmap_tlb_pool_page_free, M_VMPMAP);
+	    0, 0, "pmaptlbpl",
+	    &pmap_allocator_tlb);
+
 	for (i = 0; i < I386_MAXPROCS; i++) {
 		TAILQ_INIT(&pmap_tlb_shootdown_q[i].pq_head);
 		simple_lock_init(&pmap_tlb_shootdown_q[i].pq_slock);
@@ -1029,7 +1037,7 @@ pmap_bootstrap(kva_start)
 	 * initialize the PDE pool and cache.
 	 */
 	pool_init(&pmap_pdp_pool, PAGE_SIZE, 0, 0, 0, "pdppl",
-		  0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+		  &pool_allocator_nointr);
 	pool_cache_init(&pmap_pdp_cache, &pmap_pdp_pool,
 			pmap_pdp_ctor, NULL, NULL);
 
@@ -1128,7 +1136,9 @@ pmap_init()
 	 * Prime the TLB shootdown job pool.
 	 */
 	pj_nentries = pmap_tlb_shootdown_job_pool.pr_itemsperpage;
-	pj_nbytes =  pmap_tlb_shootdown_job_pool.pr_pagesz;
+	pj_nbytes =  pmap_allocator_tlb.pa_pagesz;
+	KASSERT(pj_nbytes != 0);
+	printf("pj_nbytes: %d\n", pj_nbytes);
 	pj_page = (void *)uvm_km_alloc (kernel_map, pj_nbytes);
 	if (pj_page == NULL)
 		panic("pmap_init: pj_page");
@@ -2910,6 +2920,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	struct pv_head *pvh;
 	struct pv_entry *pve;
 	int bank, off, error;
+	int ptpdelta, wireddelta, resdelta;
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 #ifdef DIAGNOSTIC
@@ -2955,15 +2966,19 @@ pmap_enter(pmap, va, pa, prot, flags)
 	if (pmap_valid_entry(opte)) {
 
 		/*
-		 * first, update pm_stats.  resident count will not
-		 * change since we are replacing/changing a valid
-		 * mapping.  wired count might change...
+		 * first, calculate pm_stats updates.  resident count will not
+		 * change since we are replacing/changing a valid mapping.
+		 * wired count might change...
 		 */
 
+		resdelta = 0;
 		if (wired && (opte & PG_W) == 0)
-			pmap->pm_stats.wired_count++;
+			wireddelta = 1;
 		else if (!wired && (opte & PG_W) != 0)
-			pmap->pm_stats.wired_count--;
+			wireddelta = -1;
+		else
+			wireddelta = 0;
+		ptpdelta = 0;
 
 		/*
 		 * is the currently mapped PA the same as the one we
@@ -3019,17 +3034,20 @@ pmap_enter(pmap, va, pa, prot, flags)
 		}
 	} else {	/* opte not valid */
 		pve = NULL;
-		pmap->pm_stats.resident_count++;
+		resdelta = 1;
 		if (wired)
-			pmap->pm_stats.wired_count++;
+			wireddelta = 1;
+		else
+			wireddelta = 0;
 		if (ptp)
-			ptp->wire_count++;      /* count # of valid entrys */
+			ptpdelta = 1;
+		else
+			ptpdelta = 0;
 	}
 
 	/*
-	 * at this point pm_stats has been updated.   pve is either NULL
-	 * or points to a now-free pv_entry structure (the latter case is
-	 * if we called pmap_remove_pv above).
+	 * pve is either NULL or points to a now-free pv_entry structure
+	 * (the latter case is if we called pmap_remove_pv above).
 	 *
 	 * if this entry is to be on a pvlist, enter it now.
 	 */
@@ -3062,6 +3080,10 @@ enter_now:
 	 * at this point pvh is !NULL if we want the PG_PVLIST bit set
 	 */
 
+	pmap->pm_stats.resident_count += resdelta;
+	pmap->pm_stats.wired_count += wireddelta;
+	if (ptp)
+		ptp->wire_count += ptpdelta;
 	npte = pa | protection_codes[prot] | PG_V;
 	if (pvh)
 		npte |= PG_PVLIST;
@@ -3301,13 +3323,13 @@ pmap_tlb_ipispin(void)
 #endif
 
 static void *
-pmap_tlb_pool_page_alloc(unsigned long len, int flags, int mtype)
+pmap_tlb_pool_page_alloc(struct pool *pool, int flags)
 {
 	void *r;
 
 #ifdef DIAGNOSTIC
+	KASSERT(pool == &pmap_tlb_shootdown_job_pool);
 	KASSERT(pj_page != NULL);
-	KASSERT(len == pj_nbytes);
 #endif
 	/* XXX locking */
 	r = pj_page;
@@ -3317,8 +3339,11 @@ pmap_tlb_pool_page_alloc(unsigned long len, int flags, int mtype)
 }
 
 static void
-pmap_tlb_pool_page_free(void *v, unsigned long sz, int mtype)
+pmap_tlb_pool_page_free(struct pool *pool, void *v)
 {
+#ifdef DIAGNOSTIC
+	KASSERT(pool == &pmap_tlb_shootdown_job_pool);
+#endif
 	panic("pmap_tlb_pool_page_free invoked");
 }
 
