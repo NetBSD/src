@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_misc.c,v 1.12 1997/09/11 23:02:30 mycroft Exp $	*/
+/*	$NetBSD: osf1_misc.c,v 1.13 1998/02/14 01:29:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -893,26 +893,6 @@ osf1_sys_ftruncate(p, v, retval)
 	SCARG(&a, length) = SCARG(uap, length);
 
 	return sys_ftruncate(p, &a, retval);
-}
-
-int
-osf1_sys_getsid(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sys_getsid_args /* {  
-		syscallarg(pid_t) pid;  
-	} */ *uap = v;
-	struct proc *t;
-
-	if (SCARG(uap, pid) == 0)
-		t = p;
-	else if ((t = pfind(SCARG(uap, pid))) == NULL)
-		return (ESRCH);
-
-	*retval = t->p_session->s_leader->p_pid;
-	return (0);
 }
 
 int
