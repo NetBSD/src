@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.80 2002/09/27 15:37:46 provos Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.81 2002/11/08 02:08:57 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.80 2002/09/27 15:37:46 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.81 2002/11/08 02:08:57 enami Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -1425,7 +1425,6 @@ pool_print1(struct pool *pp, const char *modif, void (*pr)(const char *, ...))
 			print_pagelist = 1;
 		if (c == 'c')
 			print_cache = 1;
-		modif++;
 	}
 
 	(*pr)("POOL %s: size %u, align %u, ioff %u, roflags 0x%08x\n",
