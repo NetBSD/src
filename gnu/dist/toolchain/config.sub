@@ -162,7 +162,7 @@ esac
 case $basic_machine in
 	# Recognize the basic CPU types without company name.
 	# Some are omitted here because they have special meanings below.
-	tahoe | i860 | m32r | m68k | m68000 | m88k | ns32k | arc | arm \
+	tahoe | i860 | m32r | m68k | m68000 | m88k | ns32k | arc | arm | armv2 \
 		| arme[lb] | pyramid | mn10200 | mn10300 \
 		| tron | a29k | 580 | i960 | h8300 \
 		| hppa | hppa1.0 | hppa1.1 | hppa2.0 | hppa2.0w | hppa2.0n \
@@ -170,7 +170,7 @@ case $basic_machine in
 		| we32k | ns16k | clipper | i370 | sh | powerpc | powerpcle \
 		| 1750a | dsp16xx | pdp11 \
 		| mips64 | mipsel | mips64el | mips64orion | mips64orionel \
-		| mipstx39 | mipstx39el \
+		| mipstx39 | mipstx39el | mipseb \
 		| sparc | sparclet | sparclite | sparc64 | sparcv9 | v850 | c4x)
 		basic_machine=$basic_machine-unknown
 		;;
@@ -208,7 +208,7 @@ case $basic_machine in
 		;;
 	# Recognize the basic CPU types with company name.
 	vax-* | tahoe-* | i[34567]86-* | i860-* | m32r-* | m68k-* | m68000-* \
-	      | m88k-* | sparc-* | ns32k-* | fx80-* | arc-* | arm-* | c[123]* \
+	      | m88k-* | sparc-* | ns32k-* | fx80-* | arc-* | arm-* | armv2-* | c[123]* \
 	      | mips-* | pyramid-* | tron-* | a29k-* | romp-* | rs6000-* \
 	      | power-* | none-* | 580-* | cray2-* | h8300-* | i960-* \
 	      | xmp-* | ymp-* \
@@ -220,7 +220,7 @@ case $basic_machine in
 	      | sparclite-* | pdp11-* | sh-* | powerpc-* | powerpcle-* \
 	      | sparc64-* | sparcv9-* | sparc86x-* | mips64-* | mipsel-* \
 	      | mips64el-* | mips64orion-* | mips64orionel-*  \
-	      | mipstx39-* | mipstx39el-* \
+	      | mipstx39-* | mipstx39el-* | mipseb-* \
 	      | f301-* | arm*-*)
 		;;
 	m88110-* | m680[01234]0-* | m683?2-* | m68360-* | z8k-* | h8500-* | d10v-*) # EGCS LOCAL
@@ -559,10 +559,6 @@ case $basic_machine in
 	ncr3000)
 		basic_machine=i486-ncr
 		os=-sysv4
-		;;
-	netbsd386)
-		basic_machine=i386-unknown		# EGCS LOCAL
-		os=-netbsd
 		;;
 	netwinder)
 		basic_machine=armv4l-corel
