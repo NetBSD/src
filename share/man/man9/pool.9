@@ -1,4 +1,4 @@
-.\"	$NetBSD: pool.9,v 1.21 2002/02/13 08:18:49 ross Exp $
+.\"	$NetBSD: pool.9,v 1.22 2002/08/11 11:20:48 soren Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,7 +45,6 @@
 .Nm pool_prime ,
 .Nm pool_sethiwat ,
 .Nm pool_setlowat
-.\".Nm POOL_STORAGE_SIZE
 .Nd resource-pool manager
 .Sh SYNOPSIS
 .Fd #include \*[Lt]sys/pool.h\*[Gt]
@@ -74,7 +73,6 @@
 .Fn pool_sethiwat "struct pool *pp" "int n"
 .Ft void
 .Fn pool_setlowat "struct pool *pp" "int n"
-.Fn POOL_STORAGE_SIZE "size" "nitems"
 .Sh DESCRIPTION
 These utility routines provide management of pools of fixed-sized
 areas of memory.
