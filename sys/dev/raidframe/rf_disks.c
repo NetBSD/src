@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.38.10.1 2003/10/20 05:25:38 cyber Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.38.10.2 2004/08/31 01:20:57 jmc Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.38.10.1 2003/10/20 05:25:38 cyber Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.38.10.2 2004/08/31 01:20:57 jmc Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -966,16 +966,19 @@ rf_CheckLabels( raidPtr, cfgPtr )
 		   the issue... */
 		hosed_row = -1;
 		hosed_column = -1;
+		fatal_error = 1;
 	}
 
 	if (num_ser > 2) {
 		printf("raid%d: Too many different serial numbers!\n", 
 		       raidPtr->raidid);
+		fatal_error = 1;
 	}
 
 	if (num_mod > 2) {
 		printf("raid%d: Too many different mod counters!\n", 
 		       raidPtr->raidid);
+		fatal_error = 1;
 	}
 
 	/* we start by assuming the parity will be good, and flee from
