@@ -1,4 +1,4 @@
-/*	$NetBSD: ebusreg.h,v 1.1 2001/12/11 00:24:03 uwe Exp $ */
+/*	$NetBSD: ebusreg.h,v 1.2 2001/12/11 05:54:56 uwe Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -126,8 +126,8 @@ struct ebus_dmac_reg {
 #define EBDMA_DRAIN		0x00000004 /* fifo's being drained to memory */
 /*				0x00000008  - reserved */
 #define EBDMA_INT_EN		0x00000010 /* enable interrupts */
-/*                      	0x00000020  - reserved */
-/*                      	0x00000040  - reserved */
+/*				0x00000020  - reserved */
+/*				0x00000040  - reserved */
 #define EBDMA_RESET		0x00000080 /* reset - write 0 to clear */
 #define EBDMA_WRITE		0x00000100 /* 0: mem->dev, 1: dev->mem */
 #define EBDMA_EN_DMA		0x00000200 /* enable DMA */
@@ -138,17 +138,17 @@ struct ebus_dmac_reg {
 #define EBDMA_EN_CNT		0x00002000 /* enable byte counter */
 #define EBDMA_TC		0x00004000 /* terminal count
 					      - write 1 to clear */
-/*                      	0x00008000  - reserved */
+/*				0x00008000  - reserved */
 #define EBDMA_DIS_CSR_DRN	0x00010000 /* disable fifo draining
 					      on slave writes to CSR */
-/*                      	0x00020000  - reserved */
+/*				0x00020000  - reserved */
 #define EBDMA_BURST_SIZE_MASK	0x000c0000 /* burst sizes: */
 #define EBDMA_BURST_SIZE_4	    0x00000000 /* 00 -  4 words */
 #define EBDMA_BURST_SIZE_8	    0x00040000 /* 01 -  8 words */
 #define EBDMA_BURST_SIZE_1	    0x00080000 /* 10 -  1 word  */
 #define EBDMA_BURST_SIZE_16	    0x000c0000 /* 11 - 16 words */
 #define EBDMA_DIAG_EN		0x00100000 /* enable diag mode */
-/*                      	0x00200000  - reserved */
+/*				0x00200000  - reserved */
 #define EBDMA_DIS_ERR_PEND	0x00400000 /* disable stop/interrupt
 					      on error pedning */
 #define EBDMA_TCI_DIS		0x00800000 /* disable interrupt on TC */
