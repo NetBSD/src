@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.20 2003/01/12 14:41:20 is Exp $
+#	$NetBSD: install.md,v 1.21 2003/01/13 20:34:05 is Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ __mount_kernfs() {
 
 md_makerootwritable() {
 	# Mount root rw for convenience of the tester ;-)
-	if cp /dev/null /tmp/.root_writable >/dev/null 2>&1; then : ; else
+	if ! cp /dev/null /tmp/.root_writable >/dev/null 2>&1; then
 		__mount_kernfs
 		# XXX: Use /kern/rootdev instead?
 		mount -t ffs -u /kern/rootdev / > /dev/null 2>&1
