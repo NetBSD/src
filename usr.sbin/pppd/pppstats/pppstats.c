@@ -1,4 +1,4 @@
-/*	$NetBSD: pppstats.c,v 1.22 1999/08/25 03:00:12 christos Exp $	*/
+/*	$NetBSD: pppstats.c,v 1.23 1999/08/25 03:15:00 christos Exp $	*/
 
 /*
  * print PPP statistics:
@@ -38,7 +38,8 @@
 #if 0
 static char rcsid[] = "Id: pppstats.c,v 1.27 1999/08/13 06:46:23 paulus Exp ";
 #else
-__RCSID("$NetBSD: pppstats.c,v 1.22 1999/08/25 03:00:12 christos Exp $");
+__RCSID("$NetBSD: pppstats.c,v 1.23 1999/08/25 03:15:00 christos Exp $");
+#endif
 #endif
 #ifndef __STDC__
 #define const
