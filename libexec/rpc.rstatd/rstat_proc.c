@@ -1,4 +1,4 @@
-/*	$NetBSD: rstat_proc.c,v 1.29 1999/03/25 08:07:47 bgrayson Exp $	*/
+/*	$NetBSD: rstat_proc.c,v 1.30 2000/05/29 11:30:30 simonb Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";
 static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rstat_proc.c,v 1.29 1999/03/25 08:07:47 bgrayson Exp $");
+__RCSID("$NetBSD: rstat_proc.c,v 1.30 2000/05/29 11:30:30 simonb Exp $");
 #endif
 #endif
 
@@ -279,8 +279,9 @@ updatestat(dummy)
 
 
 #ifdef DEBUG
-	syslog(LOG_DEBUG, "%d %d %d %d\n", stats_all.s3.cp_time[0],
-	    stats_all.s3.cp_time[1], stats_all.s3.cp_time[2], stats_all.s3.cp_time[3]);
+	syslog(LOG_DEBUG, "%d %d %d %d %d\n", stats_all.s3.cp_time[0],
+	    stats_all.s3.cp_time[1], stats_all.s3.cp_time[2],
+	    stats_all.s3.cp_time[3], stats_all.s3.cp_time[4]);
 #endif
 
 	mib[0] = CTL_VM;
