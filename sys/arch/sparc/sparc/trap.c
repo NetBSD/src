@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.72 1998/09/07 23:04:28 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.73 1998/09/20 20:01:15 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -191,7 +191,7 @@ static __inline void userret __P((struct proc *, int,  u_quad_t));
 void trap __P((unsigned, int, int, struct trapframe *));
 static __inline void share_fpu __P((struct proc *, struct trapframe *));
 void mem_access_fault __P((unsigned, int, u_int, int, int, struct trapframe *));
-void mem_access_fault4m __P((unsigned, u_int, u_int, u_int, u_int, struct trapframe *));
+void mem_access_fault4m __P((unsigned, u_int, u_int, struct trapframe *));
 void syscall __P((register_t, struct trapframe *, register_t));
 
 int ignore_bogus_traps = 0;
@@ -817,12 +817,10 @@ int dfdebug = 0;
 #endif
 
 void
-mem_access_fault4m(type, sfsr, sfva, afsr, afva, tf)
+mem_access_fault4m(type, sfsr, sfva, tf)
 	unsigned type;
 	u_int sfsr;
 	u_int sfva;
-	u_int afsr;
-	u_int afva;
 	struct trapframe *tf;
 {
 	int pc, psr;
@@ -855,13 +853,16 @@ mem_access_fault4m(type, sfsr, sfva, afsr, afva, tf)
 	 * the trap was T_STOREBUFFAULT, we pass it on to memerr4m.
 	 * If we have a data fault, but SFSR_FAV is not set in the sfsr,
 	 * then things are really bizarre, and we treat it as a hard
-	 * error and pass it on to memerr4m. See pg. 9-35 in the SuperSPARC
-	 * user's guide for more info, and for a possible solution which we
-	 * don't implement here.
+	 * error and pass it on to memerr4m. See section 8.12.4 in the
+	 * SuperSPARC user's guide for more info, and for a possible
+	 * solution which we don't implement here.
+	 * Note: store buffer faults may also lead to a level 15 interrupt
+	 * being posted to the module (see sun4m system architecture,
+	 * section B.I.9).
 	 */
-	if ((afsr & AFSR_AFO) != 0 || type == T_STOREBUFFAULT ||
-	    (type == T_DATAFAULT && !(sfsr & SFSR_FAV))) {
-		(*cpuinfo.memerr)(type, sfsr, sfva, afsr, afva, tf);
+	if (type == T_STOREBUFFAULT ||
+	    (type == T_DATAFAULT && (sfsr & SFSR_FAV) == 0)) {
+		(*cpuinfo.memerr)(type, sfsr, sfva, tf);
 		/*
 		 * If we get here, exit the trap handler and wait for the
 		 * trap to re-occur.
