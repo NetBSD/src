@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.5 2001/02/25 15:45:23 toshii Exp $
+#	$NetBSD: files.hpcarm,v 1.6 2001/02/25 18:28:28 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -8,9 +8,6 @@ maxusers 2 8 64
 
 # Floating point emulator
 defopt	ARMFPE
-
-# CPU types
-defopt	opt_cputypes.h CPU_SA110 CPU_SA1110
 
 # Maintain Interrupt statistics
 defopt	IRQSTATS
