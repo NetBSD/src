@@ -94,6 +94,9 @@
 0	belong&0377777777	042200507	NetBSD/ns32532 core
 >12	string			>\0		from '%s'
 
+0	belong&0377777777	045200507	NetBSD/powerpc core
+>12	string			>\0		from '%s'
+
 0	belong&0377777777	042400413	NetBSD/sparc demand paged
 >0	byte			&0x80		
 >>20	belong			<8192		shared library
