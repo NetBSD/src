@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.46 2002/11/01 15:20:03 simonb Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.47 2002/11/04 03:50:07 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.46 2002/11/01 15:20:03 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.47 2002/11/04 03:50:07 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.46 2002/11/01 15:20:03 simonb Exp $"
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/sysctl.h>
+#include <lib/libkern/libkern.h>
 
 /*
  * A global list of all disks attached to the system.  May grow or
@@ -405,7 +406,19 @@ sysctl_diskstats(int *name, u_int namelen, void *vwhere, size_t *sizep)
 	}
 
 	if (namelen == 0)
-		tocopy = sizeof(sdisk);
+		/*
+		 * The original hw.diskstats call was broken and did not
+		 * require the userland to pass in it's size of struct
+		 * disk_sysctl.  This was fixed after NetBSD 1.6 was
+		 * released, and any applications that do not pass in
+		 * the size are given an error only, unless we care about
+		 * 1.6 compatibility.
+		 */
+#ifdef COMPAT_16
+		tocopy = offsetof(struct disk_sysctl, dk_rxfer);
+#else
+		return (EINVAL);
+#endif
 	else
 		tocopy = name[0];
 
