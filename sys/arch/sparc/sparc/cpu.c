@@ -1,6 +1,8 @@
-/*	$NetBSD: cpu.c,v 1.17 1996/03/17 02:01:41 thorpej Exp $ */
+/*	$NetBSD: cpu.c,v 1.18 1996/03/31 23:00:53 pk Exp $ */
 
 /*
+ * Copyright (c) 1996
+ *	The President and Fellows of Harvard University. All rights reserved.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -10,12 +12,14 @@
  *
  * All advertising materials mentioning features or use of this software
  * must display the following acknowledgement:
+ *	This product includes software developed by Harvard University.
  *	This product includes software developed by the University of
  *	California, Lawrence Berkeley Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
@@ -23,6 +27,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
+ *	This product includes software developed by Aaron Brown and
+ *	Harvard University.
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -42,6 +48,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)cpu.c	8.5 (Berkeley) 11/23/93
+ *
  */
 
 #include <sys/param.h>
@@ -53,10 +60,12 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
+#include <machine/ctlreg.h>
 #include <machine/trap.h>
 #include <machine/pmap.h>
 
 #include <sparc/sparc/cache.h>
+#include <sparc/sparc/asm.h>
 
 /* This is declared here so that you must include a CPU for the cache code. */
 struct cacheinfo cacheinfo;
@@ -82,6 +91,10 @@ static char *fsrtoname __P((int, int, int, char *));
 
 #define	IU_IMPL(psr)	((u_int)(psr) >> 28)
 #define	IU_VERS(psr)	(((psr) >> 24) & 0xf)
+#if defined(SUN4M)
+#define SRMMU_IMPL(mmusr)	((u_int)(mmusr) >> 28)
+#define SRMMU_VERS(mmusr)	(((mmusr) >> 24) & 0xf)
+#endif
 
 #ifdef notdef
 /*
@@ -110,7 +123,7 @@ static char *iu_vendor[16] = {
 
 /*
  * 4/110 comment: the 4/110 chops off the top 4 bits of an OBIO address.
- *	this confuses autoconf.  for example, if you try and map 
+ *	this confuses autoconf.  for example, if you try and map
  *	0xfe000000 in obio space on a 4/110 it actually maps 0x0e000000.
  *	this is easy to verify with the PROM.   this causes problems
  *	with devices like "esp0 at obio0 addr 0xfa000000" because the
@@ -150,6 +163,7 @@ cpu_attach(parent, dev, aux)
 	struct confargs *ca = aux;
 	struct fpstate fpstate;
 	char iubuf[40], fpbuf[40];
+	char *sep;
 
 	/*
 	 * Get the FSR and clear any exceptions.  If we do not unload
@@ -174,8 +188,8 @@ cpu_attach(parent, dev, aux)
 
 	/* tell them what we have */
 	node = ca->ca_ra.ra_node;
-#ifdef SUN4
-	if (cputyp == CPU_SUN4) {
+
+	if (CPU_ISSUN4) {
 		clk = 0;
 		vactype = VAC_WRITEBACK;
 		switch (cpumod) {
@@ -212,29 +226,110 @@ cpu_attach(parent, dev, aux)
 		}
 		printf(": %s\n", cpu_model);
 	}
-#endif
-#if defined(SUN4C) || defined(SUN4M)
-	if (cputyp == CPU_SUN4C || cputyp == CPU_SUN4M) {
+
+
+	if (CPU_ISSUN4C || CPU_ISSUN4M) {
 		clk = getpropint(node, "clock-frequency", 0);
+		if (clk == 0) {
+			/*
+			 * Try to find it in the OpenPROM root...
+			 */
+			clk = getpropint(findroot(), "clock-frequency", 0);
+		}
 		sprintf(cpu_model, "%s (%s @ %s MHz, %s FPU)",
-		    getpropstring(node, "name"),
-		    psrtoname(impl, vers, fver, iubuf), clockfreq(clk), fpuname);
+			getpropstring(node, "name"),
+			psrtoname(impl, vers, fver, iubuf),
+			clockfreq(clk), fpuname);
 		printf(": %s\n", cpu_model);
 
 		/*
 		 * Fill in the cache info.  Note, vac-hwflush is spelled
 		 * with an underscore on 4/75s.
 		 */
-		cacheinfo.c_totalsize = getpropint(node, "vac-size", 65536);
-		cacheinfo.c_hwflush = getpropint(node, "vac_hwflush", 0) |
-		    getpropint(node, "vac-hwflush", 0);
-		cacheinfo.c_linesize = l = getpropint(node, "vac-linesize", 16);
-		for (i = 0; (1 << i) < l; i++)
-			/* void */;
-		if ((1 << i) != l)
-			panic("bad cache line size %d", l);
-		cacheinfo.c_l2linesize = i;
-		vactype = VAC_WRITETHROUGH;
+		/*bzero(&cacheinfo, sizeof(cacheinfo));*/
+#if defined(SUN4M)
+		if (node_has_property(node, "cache-physical?")) {
+			cacheinfo.c_physical = 1;
+			vactype = VAC_NONE;
+			/*
+			 * Sun4M physical caches are nice since we never
+			 * have to flush them. Unfortunately it is a pain
+			 * to determine what size they are, since they may
+			 * be split...
+			 */
+			switch (mmumod) {
+			    case SUN4M_MMU_SS:
+			    case SUN4M_MMU_MS1:
+				cacheinfo.c_split = 1;
+				cacheinfo.c_linesize = l = getpropint(node,
+						       "icache-line-size",0);
+				for (i = 0; (1 << i) < l && l; i++)
+				    /* void */;
+				if ((1 << i) != l && l)
+				    panic("bad icache line size %d", l);
+				cacheinfo.c_l2linesize = i;
+				cacheinfo.c_totalsize = getpropint(node,
+							"icache-nlines", 64)*l;
+
+				cacheinfo.dc_linesize = l = getpropint(node,
+						       "dcache-line-size",0);
+				for (i = 0; (1 << i) < l && l; i++)
+				    /* void */;
+				if ((1 << i) != l && l)
+				    panic("bad dcache line size %d", l);
+				cacheinfo.dc_l2linesize = i;
+				cacheinfo.dc_totalsize = getpropint(node,
+							"dcache-nlines",128)*l;
+
+				cacheinfo.ec_linesize = l = getpropint(node,
+						       "ecache-line-size",0);
+				for (i = 0; (1 << i) < l && l; i++)
+				    /* void */;
+				if ((1 << i) != l && l)
+				    panic("bad ecache line size %d", l);
+				cacheinfo.ec_l2linesize = i;
+				cacheinfo.ec_totalsize = getpropint(node,
+							"ecache-nlines", 32768)
+				    * l;
+				break;
+			    case SUN4M_MMU_HS:
+				printf("Warning, guessing on HyperSPARC cache...\n");
+				cacheinfo.c_split = 0;
+				i = lda(SRMMU_PCR, ASI_SRMMU);
+				if (i & SRMMU_PCR_CS)
+				    cacheinfo.c_totalsize = 256 * 1024;
+				else
+				    cacheinfo.c_totalsize = 128 * 1024;
+				cacheinfo.c_linesize=l=cacheinfo.c_totalsize /
+				    4096; /* manual says it has 4096 lines */
+				for (i = 0; (1 << i) < l; i++)
+				    /* void */;
+				if ((1 << i) != l)
+				    panic("bad cache line size %d", l);
+				cacheinfo.c_l2linesize = i;
+				break;
+			    default:
+				printf("warning: couldn't identify cache\n");
+				cacheinfo.c_totalsize = 0;
+			}
+		} else
+#endif	/* SUN4M */
+		{
+			cacheinfo.c_physical = 0;
+			cacheinfo.c_totalsize =
+			    getpropint(node, "vac-size", 65536);
+			cacheinfo.c_hwflush =
+			    getpropint(node, "vac_hwflush", 0) |
+				getpropint(node, "vac-hwflush", 0);
+			cacheinfo.c_linesize = l =
+			    getpropint(node, "vac-linesize", 16);
+			for (i = 0; (1 << i) < l; i++)
+			    /* void */;
+			if ((1 << i) != l)
+			    panic("bad cache line size %d", l);
+			cacheinfo.c_l2linesize = i;
+			vactype = VAC_WRITETHROUGH;
+		}
 
 		/*
 		 * Machines with "buserr-type" 1 have a bug in the cache
@@ -243,19 +338,48 @@ cpu_attach(parent, dev, aux)
 		 */
 		bug = (getpropint(node, "buserr-type", 0) == 1);
 	}
-#endif /* SUN4C || SUN4M */
+
 	if (bug) {
 		kvm_uncache((caddr_t)trapbase, 1);
 		printf("%s: cache chip bug; trap page uncached\n",
 		    dev->dv_xname);
 	}
 
-	if (cacheinfo.c_totalsize) {
+	if (cacheinfo.c_totalsize && !cacheinfo.c_physical) {
 		printf("%s: %d byte write-%s, %d bytes/line, %cw flush ",
 		    dev->dv_xname, cacheinfo.c_totalsize,
 		    (vactype == VAC_WRITETHROUGH) ? "through" : "back",
 		    cacheinfo.c_linesize,
 		    cacheinfo.c_hwflush ? 'h' : 's');
+		cache_enable();
+	}
+	if (cacheinfo.c_physical && cacheinfo.c_totalsize) {
+		sep = " ";
+		if (cacheinfo.c_split) {
+			printf("%s: physical", dev->dv_xname);
+			if (cacheinfo.c_totalsize > 0) {
+				printf("%s%d byte instruction (%d b/l)", sep,
+				    cacheinfo.c_totalsize,
+				    cacheinfo.c_linesize);
+				    sep = ", ";
+			}
+			if (cacheinfo.dc_totalsize > 0) {
+				printf("%s%d byte data (%d b/l)", sep,
+				    cacheinfo.dc_totalsize,
+				    cacheinfo.dc_linesize);
+				    sep = ", ";
+			}
+			if (cacheinfo.ec_totalsize > 0) {
+				printf("%s%d byte external (%d b/l)", sep,
+				    cacheinfo.ec_totalsize,
+				    cacheinfo.ec_linesize);
+			}
+			printf(" ");
+		} else
+		    printf("%s: physical %d byte combined cache (%d bytes/"
+			   "line) ", dev->dv_xname,
+			   cacheinfo.c_totalsize,
+			   cacheinfo.c_linesize);
 		cache_enable();
 	}
 }
@@ -288,7 +412,7 @@ static struct info iu_types[] = {
 	{ 1, 0x1, 0x3, ANY, "RT611" },
 	{ 1, 0x1, 0xf, ANY, "RT620" },
 	{ 1, 0x2, 0x0, ANY, "B5010" },
-	{ 1, 0x4, 0x0,   0, "TMS390Z50 v0" },
+	{ 1, 0x4, 0x0,   0, "TMS390Z50 v0 or TMS390Z55" },
 	{ 1, 0x4, 0x1,   0, "TMS390Z50 v1" },
 	{ 1, 0x4, 0x1,   4, "TMS390S10" },
 	{ 1, 0x5, 0x0, ANY, "MN10501" },
