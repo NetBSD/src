@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.23 1998/07/05 06:49:16 jonathan Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.24 1998/10/13 02:34:32 kim Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996
@@ -300,11 +300,11 @@ fddi_output(ifp, m0, dst, rt0)
 			llc.llc_control = LLC_UI;
 			bcopy(at_org_code, llc.llc_snap_org_code,
 			    sizeof(at_org_code));
-			llc.llc_snap_ether_type = htons(ETHERTYPE_AT);
+			llc.llc_snap_ether_type = htons(ETHERTYPE_ATALK);
 			bcopy(&llc, mtod(m, caddr_t), sizeof(struct llc));
 			etype = 0;
 		} else {
-			etype = htons(ETHERTYPE_AT);
+			etype = htons(ETHERTYPE_ATALK);
 		}
 		break;
 	}
@@ -588,7 +588,7 @@ fddi_input(ifp, fh, m)
 #ifdef NETATALK
 		if (Bcmp(&(l->llc_snap_org_code)[0], at_org_code,
 			 sizeof(at_org_code)) == 0 &&
-		 	ntohs(l->llc_snap_ether_type) == ETHERTYPE_AT) {
+		 	ntohs(l->llc_snap_ether_type) == ETHERTYPE_ATALK) {
 		    inq = &atintrq2;
 		    m_adj( m, sizeof( struct llc ));
 		    schednetisr(NETISR_ATALK);
@@ -647,7 +647,7 @@ fddi_input(ifp, fh, m)
 			break;
 #endif
 #ifdef NETATALK 
-		case ETHERTYPE_AT:
+		case ETHERTYPE_ATALK:
 	                schednetisr(NETISR_ATALK);
 			inq = &atintrq1;
 			break;
