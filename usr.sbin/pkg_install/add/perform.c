@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.30 1999/05/12 20:43:49 tron Exp $	*/
+/*	$NetBSD: perform.c,v 1.31 1999/06/15 06:32:00 cgd Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.30 1999/05/12 20:43:49 tron Exp $");
+__RCSID("$NetBSD: perform.c,v 1.31 1999/06/15 06:32:00 cgd Exp $");
 #endif
 #endif
 
@@ -117,7 +117,10 @@ pkg_do(char *pkg)
     }
     /* Nope - do it now */
     else {
-	/* Is it an ftp://foo.bar.baz/file.tgz specification? */
+	/*
+	 * Is it an ftp://foo.bar.baz/file.tgz or http://foo.bar.baz/file.tgz
+	 * specification?
+	 */
 	if (isURL(pkg)) {
 	    if (ispkgpattern(pkg)) {
 		warnx("patterns not allowed in URLs, "
