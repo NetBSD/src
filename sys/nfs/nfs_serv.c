@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.28 1997/01/31 09:09:43 fvdl Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.29 1997/01/31 16:12:26 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2804,8 +2804,8 @@ again:
 	dp = (struct dirent *)cpos;
 	cookiep = cookies;
 
-	while ((dp->d_fileno == 0 || dp->d_type == DT_WHT)
-	       && cpos < cend && ncookies > 0) {
+	while (cpos < cend && ncookies > 0 &&
+		(dp->d_fileno == 0 || dp->d_type == DT_WHT)) {
 		cpos += dp->d_reclen;
 		dp = (struct dirent *)cpos;
 		cookiep++;
