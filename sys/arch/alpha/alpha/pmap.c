@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.94 1999/05/17 16:22:57 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.95 1999/05/21 23:07:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.94 1999/05/17 16:22:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.95 1999/05/21 23:07:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,13 +267,10 @@ u_long		pmap_ncpuids;
 struct pv_head	*pv_table;
 int		pv_table_npages;
 
-int		pmap_npvppg;	/* number of PV entries per page */
-
-/*
- * Free list of pages for use by the physical->virtual entry memory allocator.
- */
-TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
-int		pv_nfree;
+#ifndef PMAP_PV_LOWAT
+#define	PMAP_PV_LOWAT	16
+#endif
+int		pmap_pv_lowat = PMAP_PV_LOWAT;
 
 /*
  * List of all pmaps, used to update them when e.g. additional kernel
@@ -287,6 +284,7 @@ LIST_HEAD(, pmap) pmap_all_pmaps;
 struct pool pmap_pmap_pool;
 struct pool pmap_asn_pool;
 struct pool pmap_asngen_pool;
+struct pool pmap_pv_pool;
 
 /*
  * Canonical names for PGU_* constants.
@@ -385,9 +383,6 @@ u_long	pmap_asn_generation[ALPHA_MAXPROCS]; /* current ASN generation */
  *	* pvh_slock (per-pv_head) - This lock protects the PV list
  *	  for a specified managed page.
  *
- *	* pmap_pvalloc_slock - This lock protects the data structures
- *	  which manage the PV entry allocator.
- *
  *	* pmap_all_pmaps_slock - This lock protects the global list of
  *	  all pmaps.
  *
@@ -400,7 +395,6 @@ u_long	pmap_asn_generation[ALPHA_MAXPROCS]; /* current ASN generation */
  *	an interface function).
  */
 struct lock pmap_main_lock;
-struct simplelock pmap_pvalloc_slock;
 struct simplelock pmap_all_pmaps_slock;
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
@@ -506,7 +500,8 @@ void	pmap_pv_enter __P((pmap_t, paddr_t, vaddr_t, boolean_t));
 void	pmap_pv_remove __P((pmap_t, paddr_t, vaddr_t, boolean_t));
 struct	pv_entry *pmap_pv_alloc __P((void));
 void	pmap_pv_free __P((struct pv_entry *));
-void	pmap_pv_collect __P((void));
+void	*pmap_pv_page_alloc __P((u_long, int, int));
+void	pmap_pv_page_free __P((void *, u_long, int));
 #ifdef DEBUG
 void	pmap_pv_dump __P((paddr_t));
 #endif
@@ -873,6 +868,9 @@ pmap_bootstrap(ptaddr, maxasn, ncpuids)
 	pool_init(&pmap_asngen_pool, pmap_ncpuids * sizeof(u_long), 0, 0, 0,
 	    "pmasngenpl",
 	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",
+	    0, pmap_pv_page_alloc, pmap_pv_page_free, M_VMPMAP);
+
 	LIST_INIT(&pmap_all_pmaps);
 
 	/*
@@ -888,7 +886,6 @@ pmap_bootstrap(ptaddr, maxasn, ncpuids)
 	 * Initialize the locks.
 	 */
 	lockinit(&pmap_main_lock, PVM, "pmaplk", 0, 0);
-	simple_lock_init(&pmap_pvalloc_slock);
 	simple_lock_init(&pmap_all_pmaps_slock);
 
 	/*
@@ -1061,13 +1058,6 @@ pmap_init()
                 printf("pmap_init()\n");
 #endif
 
-	/*
-	 * Compute how many PV entries will fit in a single
-	 * physical page of memory.
-	 */
-	pmap_npvppg = (PAGE_SIZE - sizeof(struct pv_page_info)) /
-	    sizeof(struct pv_entry);
-
 	/* initialize protection array */
 	alpha_protection_init();
 
@@ -1083,9 +1073,11 @@ pmap_init()
 	}
 
 	/*
-	 * Intialize the pv_page free list.
+	 * Set a low water mark on the pv_entry pool, so that we are
+	 * more likely to have these around even in extreme memory
+	 * starvation.
 	 */
-	TAILQ_INIT(&pv_page_freelist);
+	pool_setlowat(&pmap_pv_pool, pmap_pv_lowat);
 
 	/*
 	 * Now it is safe to enable pv entry recording.
@@ -2147,11 +2139,6 @@ pmap_collect(pmap)
 	 * all necessary locking.
 	 */
 	pmap_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS);
-
-#ifdef notyet
-	/* Go compact and garbage-collect the pv_table. */
-	pmap_pv_collect();
-#endif
 }
 
 /*
@@ -3090,41 +3077,16 @@ pmap_pv_remove(pmap, pa, va, dolock)
 struct pv_entry *
 pmap_pv_alloc()
 {
-	paddr_t pvppa;
-	struct pv_page *pvp;
 	struct pv_entry *pv;
-	int i;
 
-	simple_lock(&pmap_pvalloc_slock);
+	pv = pool_get(&pmap_pv_pool, PR_NOWAIT);
+	if (pv != NULL)
+		return (pv);
 
-	if (pv_nfree == 0) {
-		/*
-		 * No free pv_entry's; allocate a new pv_page.
-		 */
-		pvppa = pmap_physpage_alloc(PGU_PVENT);
-		pvp = (struct pv_page *)ALPHA_PHYS_TO_K0SEG(pvppa);
-		LIST_INIT(&pvp->pvp_pgi.pgi_freelist);
-		for (i = 0; i < pmap_npvppg; i++)
-			LIST_INSERT_HEAD(&pvp->pvp_pgi.pgi_freelist,
-			    &pvp->pvp_pv[i], pv_list);
-		pv_nfree += pvp->pvp_pgi.pgi_nfree = pmap_npvppg;
-		TAILQ_INSERT_HEAD(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
-	}
-
-	--pv_nfree;
-	pvp = TAILQ_FIRST(&pv_page_freelist);
-	if (--pvp->pvp_pgi.pgi_nfree == 0)
-		TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
-	pv = LIST_FIRST(&pvp->pvp_pgi.pgi_freelist);
-#ifdef DIAGNOSTIC
-	if (pv == NULL)
-		panic("pmap_pv_alloc: pgi_nfree inconsistent");
-#endif
-	LIST_REMOVE(pv, pv_list);
-
-	simple_unlock(&pmap_pvalloc_slock);
-
-	return (pv);
+	/*
+	 * XXX Should try to steal a pv_entry from another mapping.
+	 */
+	panic("pmap_pv_alloc: unable to allocate a pv_entry");
 }
 
 /*
@@ -3136,139 +3098,39 @@ void
 pmap_pv_free(pv)
 	struct pv_entry *pv;
 {
-	paddr_t pvppa;
-	struct pv_page *pvp;
-	int nfree;
 
-	simple_lock(&pmap_pvalloc_slock);
-
-	pvp = (struct pv_page *) trunc_page(pv);
-	nfree = ++pvp->pvp_pgi.pgi_nfree;
-
-	if (nfree == pmap_npvppg) {
-		/*
-		 * We've freed all of the pv_entry's in this pv_page.
-		 * Free the pv_page back to the system.
-		 */
-		pv_nfree -= pmap_npvppg - 1;
-		TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
-		pvppa = ALPHA_K0SEG_TO_PHYS((vaddr_t)pvp);
-		pmap_physpage_free(pvppa);
-	} else {
-		if (nfree == 1)
-			TAILQ_INSERT_TAIL(&pv_page_freelist, pvp,
-			    pvp_pgi.pgi_list);
-		LIST_INSERT_HEAD(&pvp->pvp_pgi.pgi_freelist, pv, pv_list);
-		++pv_nfree;
-	}
-
-	simple_unlock(&pmap_pvalloc_slock);
+	pool_put(&pmap_pv_pool, pv);
 }
 
 /*
- * pmap_pv_collect:
+ * pmap_pv_page_alloc:
  *
- *	Compact the pv_table and release any completely free
- *	pv_page's back to the system.
+ *	Allocate a page for the pv_entry pool.
+ */
+void *
+pmap_pv_page_alloc(size, flags, mtype)
+	u_long size;
+	int flags, mtype;
+{
+	paddr_t pg;
+
+	pg = pmap_physpage_alloc(PGU_PVENT);
+	return ((void *)ALPHA_PHYS_TO_K0SEG(pg));
+}
+
+/*
+ * pmap_pv_page_free:
+ *
+ *	Free a pv_entry pool page.
  */
 void
-pmap_pv_collect()
+pmap_pv_page_free(v, size, mtype)
+	void *v;
+	u_long size;
+	int mtype;
 {
-	struct pv_page_list pv_page_collectlist;
-	struct pv_page *pvp, *npvp;
-	struct pv_head *pvh;
-	struct pv_entry *pv, *nextpv, *newpv;
-	paddr_t pvppa;
-	int s;
 
-	TAILQ_INIT(&pv_page_collectlist);
-
-	simple_lock(&pmap_pvalloc_slock);
-
-	/*
-	 * Find pv_page's that have more than 1/3 of their pv_entry's free.
-	 * Remove them from the list of available pv_page's and place them
-	 * on the collection list.
-	 */
-	for (pvp = TAILQ_FIRST(&pv_page_freelist); pvp != NULL; pvp = npvp) {
-		/*
-		 * Abort if we can't allocate enough new pv_entry's
-		 * to clean up a pv_page.
-		 */
-		if (pv_nfree < pmap_npvppg)
-			break;
-		npvp = TAILQ_NEXT(pvp, pvp_pgi.pgi_list);
-		if (pvp->pvp_pgi.pgi_nfree > pmap_npvppg / 3) {
-			TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
-			TAILQ_INSERT_TAIL(&pv_page_collectlist, pvp,
-			    pvp_pgi.pgi_list);
-			pv_nfree -= pvp->pvp_pgi.pgi_nfree;
-			pvp->pvp_pgi.pgi_nfree = -1;
-		}
-	}
-
-	if (TAILQ_FIRST(&pv_page_collectlist) == NULL) {
-		simple_unlock(&pmap_pvalloc_slock);
-		return;
-	}
-
-	/*
-	 * Now, scan all pv_entry's, looking for ones which live in one
-	 * of the condemed pv_page's.
-	 */
-	for (pvh = &pv_table[pv_table_npages - 1]; pvh >= &pv_table[0]; pvh--) {
-		if (LIST_FIRST(&pvh->pvh_list) == NULL)
-			continue;
-		s = splimp();		/* XXX needed w/ PMAP_NEW? */
-		for (pv = LIST_FIRST(&pvh->pvh_list); pv != NULL;
-		     pv = nextpv) {
-			nextpv = LIST_NEXT(pv, pv_list);
-			pvp = (struct pv_page *) trunc_page(pv);
-			if (pvp->pvp_pgi.pgi_nfree == -1) {
-				/*
-				 * Found one!  Grab a new pv_entry from
-				 * an eligible pv_page.
-				 */
-				pvp = TAILQ_FIRST(&pv_page_freelist);
-				if (--pvp->pvp_pgi.pgi_nfree == 0) {
-					TAILQ_REMOVE(&pv_page_freelist, pvp,
-					    pvp_pgi.pgi_list);
-				}
-				newpv = LIST_FIRST(&pvp->pvp_pgi.pgi_freelist);
-				LIST_REMOVE(newpv, pv_list);
-#ifdef DIAGNOSTIC
-				if (newpv == NULL)
-					panic("pmap_pv_collect: pgi_nfree inconsistent");
-#endif
-				/*
-				 * Remove the doomed pv_entry from its
-				 * pv_list and copy its contents to
-				 * the new entry.
-				 */
-				LIST_REMOVE(pv, pv_list);
-				*newpv = *pv;
-
-				/*
-				 * Now insert the new pv_entry into
-				 * the list.
-				 */
-				LIST_INSERT_HEAD(&pvh->pvh_list, newpv,
-				    pv_list);
-			}
-		}
-		splx(s);
-	}
-
-	simple_unlock(&pmap_pvalloc_slock);
-
-	/*
-	 * Now free all of the pages we've collected.
-	 */
-	for (pvp = TAILQ_FIRST(&pv_page_collectlist); pvp != NULL; pvp = npvp) {
-		npvp = TAILQ_NEXT(pvp, pvp_pgi.pgi_list);
-		pvppa = ALPHA_K0SEG_TO_PHYS((vaddr_t)pvp);
-		pmap_physpage_free(pvppa);
-	}
+	pmap_physpage_free(ALPHA_K0SEG_TO_PHYS((vaddr_t)v));
 }
 
 /******************** misc. functions ********************/
