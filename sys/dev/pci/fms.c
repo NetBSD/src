@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.3 1999/11/02 17:48:01 augustss Exp $	*/
+/*	$NetBSD: fms.c,v 1.4 2000/04/08 03:50:48 tsarna Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -762,6 +762,7 @@ fms_malloc(addr, direction, size, pool, flags)
 	if (!p)
 		return 0;
 	
+	p->size = size;
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, size, NBPG, 0, &p->seg, 1, 
 				      &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: unable to allocate dma, error = %d\n", 
@@ -814,16 +815,21 @@ fms_free(addr, ptr, pool)
 	int pool;
 {
 	struct fms_softc *sc = addr;
-	struct fms_dma *p;
-	
-	for (p = sc->sc_dmas; p->addr != ptr; p = p->next)
-		if (p->next == NULL)
-			panic("fms_free: trying to free not allocated memory");
-	
-	bus_dmamap_unload(sc->sc_dmat, p->map);
-	bus_dmamap_destroy(sc->sc_dmat, p->map);
-	bus_dmamem_unmap(sc->sc_dmat, p->addr, p->size);
-	bus_dmamem_free(sc->sc_dmat, &p->seg, 1);
+	struct fms_dma **pp, *p;
+
+	for (pp = &(sc->sc_dmas); (p = *pp) != NULL; pp = &p->next)
+		if (p->addr == ptr) {
+			bus_dmamap_unload(sc->sc_dmat, p->map);
+			bus_dmamap_destroy(sc->sc_dmat, p->map);
+			bus_dmamem_unmap(sc->sc_dmat, p->addr, p->size);
+			bus_dmamem_free(sc->sc_dmat, &p->seg, 1);
+			
+			*pp = p->next;
+			free(p, pool);
+			return;
+		}
+
+	panic("fms_free: trying to free unallocated memory");
 }
 
 size_t
