@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.33.2.6 2002/07/20 02:29:52 lukem Exp $
+.\"	$NetBSD: postinstall,v 1.33.2.7 2002/07/20 02:53:49 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -142,7 +142,8 @@ leave the single-user shell and continue with the multi-user boot.
 Other values that need to be set in
 .Pa /etc/rc.conf
 for a networked environment are
-.Ar hostname No and possibly
+.Ar hostname
+and possibly
 .Ar defaultroute ,
 furthermore add an
 .Ar ifconfig_int
@@ -151,12 +152,19 @@ for your
 network interface,
 .ie r_mac68k \{\
 where your on-board, NuBus or PDS interface may be
-.Li ae0 , mc0 No or Li sn0 .
+.Li ae0 ,
+.Li mc0
+or
+.Li sn0 .
 For example:
 .\}
 .el .ie r_macppc \{\
 where your on-board interfaces may be one of
-.Li mc0 , bm0 , de0 No or Li gm0 .
+.Li mc0 ,
+.Li bm0 ,
+.Li de0
+or
+.Li gm0 .
 For example:
 .\}
 .el along the lines of
@@ -300,9 +308,10 @@ file for you.
 .(tag [Color_X]
 .It [Color_X]
 Some systems are capable of supporting a color X Server in either thousands
-or millions of colors.  The \*M port does not support resolution
-switching at this time.  If your system is capable of running the color
-X Server it can be installed at this point and the Booter options can be
+or millions of colors.
+The \*M port does not support resolution switching at this time.
+If your system is capable of running the color X Server it can be
+installed at this point and the Booter options can be
 modified to match the resolution depth.
 .tag)
 .\}
