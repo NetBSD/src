@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_amd_reg.h,v 1.1 2000/03/06 18:02:27 bouyer Exp $	*/
+/*	$NetBSD: pciide_amd_reg.h,v 1.1.4.1 2000/07/07 11:49:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 David Sainty.
@@ -37,6 +37,21 @@
  * Registers definitions for AMD 756 PCI IDE controller.  Documentation
  * available at: http://www.amd.com/products/cpg/athlon/techdocs/pdf/22548.pdf
  */
+
+/* Chip revisions */
+#define AMD756_CHIPREV_D2 3
+
+/* Chip revision tests */
+
+/*
+ * The AMD756 chip revision D2 has a bug affecting DMA (but not UDMA)
+ * modes.  The workaround documented by AMD is to not use DMA on any 
+ * drive which does not support UDMA modes.
+ * 
+ * See: http://www.amd.com/products/cpg/athlon/techdocs/pdf/22591.pdf
+ */
+#define AMD756_CHIPREV_DISABLEDMA(rev) ((rev) <= AMD756_CHIPREV_D2)
+
 
 /* Channel enable */
 #define AMD756_CHANSTATUS_EN		0x40
