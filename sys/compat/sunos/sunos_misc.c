@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sunos_misc.c,v 1.3 1993/10/13 02:31:47 deraadt Exp $
+ * $Id: sunos_misc.c,v 1.4 1993/10/15 11:28:29 deraadt Exp $
  */
 
 /*
@@ -54,7 +54,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/dirent.h>
+#include <ufs/dir.h>
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
@@ -72,9 +72,7 @@
 #include <sys/uio.h>
 #include <sys/wait.h>
 
-#ifdef XXX
-#include <miscfs/specfs/specdev.h>
-#endif
+#include <sys/specdev.h>
 
 #include <vm/vm.h>
 
@@ -230,6 +228,14 @@ sun_sigpending(p, uap, retval)
 	return (copyout((caddr_t)&mask, (caddr_t)uap->mask, sizeof(int)));
 }
 
+/* TDR: Temporary until sys/dir.h, include/dirent.h and sys/dirent.h are fixed */
+struct dirent {
+	u_long	d_fileno;		/* file number of entry */
+	u_short	d_reclen;		/* length of this record */
+	u_short	d_namlen;		/* length of string in d_name */
+	char	d_name[255 + 1];	/* name must be no longer than this */
+};
+
 /*
  * Here is the sun layout.  (Compare the BSD layout in <sys/dirent.h>.)
  * We can assume big-endian, so the BSD d_type field is just the high
@@ -260,7 +266,6 @@ sun_getdents(p, uap, retval)
 	register struct sun_getdents_args *uap;
 	int *retval;
 {
-#ifdef XXX
 	register struct vnode *vp;
 	register caddr_t inp, buf;	/* BSD-format */
 	register int len, reclen;	/* BSD-format */
@@ -300,7 +305,7 @@ again:
 	 * First we read into the malloc'ed buffer, then
 	 * we massage it into user space, one record at a time.
 	 */
-	if (error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag))
+	if (error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, NULL, 0))
 		goto out;
 	inp = buf;
 	outp = uap->buf;
@@ -327,7 +332,9 @@ again:
 		 * the copyout() call).
 		 */
 		BSD_DIRENT(inp)->d_reclen = SUN_RECLEN(reclen);
-		BSD_DIRENT(inp)->d_type = 0;
+#if notdef
+		BSD_DIRENT(inp)->d_type = 0; 	/* 4.4 specific */
+#endif
 		soff = off;
 		if ((error = copyout((caddr_t)&soff, outp, sizeof soff)) != 0 ||
 		    (error = copyout(inp, outp + sizeof soff, reclen)) != 0)
@@ -348,56 +355,26 @@ out:
 	VOP_UNLOCK(vp);
 	free(buf, M_TEMP);
 	return (error);
-#else
-	return ENOENT;
-#endif
 }
 
-#define	MAXDOMAINNAME	64
-char	sun_domainname[MAXDOMAINNAME];
-int	sun_domainnamelen = 1;
-
-struct sun_getdomainname_args {
-	char	*name;
-	int	namelen;
-};
-sun_getdomainname(p, uap, retval)
-	struct proc *p;
-	struct sun_getdomainname_args *uap;
-	int *retval;
-{
-	register int l = min(uap->namelen, sun_domainnamelen + 1);
-
-	return (copyout(sun_domainname, uap->name, l));
-}
-
-struct sun_setdomainname_args {
-	char	*name;
-	int	namelen;
-};
-sun_setdomainname(p, uap, retval)
-	struct proc *p;
-	struct sun_setdomainname_args *uap;
-	int *retval;
-{
-	register int l = uap->namelen, error;
-
-	if (l >= MAXDOMAINNAME)
-		return (EINVAL);	/* ??? ENAMETOOLONG? */
-	if (error = suser(p->p_ucred, &p->p_acflag))
-		return (error);
-	if (error = copyin(uap->name, sun_domainname, l))
-		return (error);
-	sun_domainname[l] = 0;
-	return (0);
-}
-
-#define	SUN_MMAP_MASK	0xf		/* mask for SHARED/PRIVATE */
-#define	SUN_MMAP_CANDO	0x80000000	/* if not, old mmap & cannot handle */
+/*
+ * The Sun bit-style arguments are not in the same order as the
+ * NetBSD ones. We must remap them the bits.
+ */
 
 #define	DEVZERO	makedev(3, 12)		/* major,minor of /dev/zero */
 
-#define	SUN_MMAP_SAME	(MAP_SHARED|MAP_PRIVATE|MAP_FIXED|MAP_INHERIT)
+#define SUN_PROT_READ	1
+#define SUN_PROT_WRITE	2
+#define SUN_PROT_EXEC	4
+#define SUN_PROT_UALL	(SUN_PROT_READ | SUN_PROT_WRITE | SUN_PROT_EXEC)
+
+#define	SUN__MAP_NEW	0x80000000	/* if not, old mmap & cannot handle */
+
+#define SUN_MAP_SHARED	1
+#define SUN_MAP_PRIVATE	2
+#define	SUN_MAP_TYPE	0xf
+#define SUN_MAP_FIXED	0x10
 
 struct sun_mmap_args {
 	caddr_t	addr;
@@ -405,31 +382,51 @@ struct sun_mmap_args {
 	int	prot;
 	int	flags;
 	int	fd;
-	long	off;		/* not off_t! */
-	quad_t	qoff;		/* created here and fed to mmap() */
+	off_t	off;
 };
 sun_mmap(p, uap, retval)
 	register struct proc *p;
 	register struct sun_mmap_args *uap;
 	int *retval;
 {
-	register int flags;
+	register int flags, prot, newflags, newprot;
 	register struct filedesc *fdp;
 	register struct file *fp;
 	register struct vnode *vp;
 
 	/*
-	 * Verify the arguments.
+	 * Verify and re-map the arguments.
 	 */
-	flags = uap->flags;
-	if ((flags & SUN_MMAP_CANDO) == 0)
+	prot = uap->prot;
+	newprot = 0;
+	if (uap->prot & ~SUN_PROT_UALL)
 		return (EINVAL);
-	if ((flags & SUN_MMAP_MASK) != MAP_SHARED &&
-	    (flags & SUN_MMAP_MASK) != MAP_PRIVATE)
-		return (EINVAL);
-	flags &= ~SUN_MMAP_CANDO;
+	if (uap->prot & SUN_PROT_READ)
+		newprot |= PROT_READ;
+	if (uap->prot & SUN_PROT_WRITE)
+		newprot |= PROT_WRITE;
+	if (uap->prot & SUN_PROT_EXEC)
+		newprot |= PROT_EXEC;
 
-#ifdef XXX
+	flags = uap->flags;
+	newflags = 0;
+	if ((flags & SUN__MAP_NEW) == 0)
+		return (EINVAL);
+
+	switch (flags & SUN_MAP_TYPE) {
+	case SUN_MAP_SHARED:
+		newflags |= MAP_SHARED;
+		break;
+	case SUN_MAP_PRIVATE:
+		newflags |= MAP_PRIVATE;
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	if (flags & SUN_MAP_FIXED)
+		newflags |= MAP_FIXED;
+
 	/*
 	 * Special case: if fd refers to /dev/zero, map as MAP_ANON.  (XXX)
 	 */
@@ -439,13 +436,14 @@ sun_mmap(p, uap, retval)
 	    fp->f_type == DTYPE_VNODE &&				/*XXX*/
 	    (vp = (struct vnode *)fp->f_data)->v_type == VCHR &&	/*XXX*/
 	    vp->v_rdev == DEVZERO) {					/*XXX*/
-		flags |= MAP_ANON;
+		newflags |= MAP_ANON;
 		uap->fd = -1;
-	}
-#endif
+	} else
+		newflags |= MAP_FILE;
+
 	/* All done, fix up fields and go. */
-	uap->flags = flags;
-	uap->qoff = (quad_t)uap->off;
+	uap->flags = newflags;
+	uap->prot = newprot;
 	return (smmap(p, uap, retval));
 }
 
