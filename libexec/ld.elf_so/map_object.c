@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.16 2002/09/23 23:56:47 mycroft Exp $	 */
+/*	$NetBSD: map_object.c,v 1.17 2002/09/24 09:22:51 junyoung Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -58,10 +58,8 @@ _rtld_map_object(path, fd, sb)
 	const struct stat *sb;
 {
 	Obj_Entry      *obj;
-	union {
-		Elf_Ehdr hdr;
-		char     buf[PAGESIZE];
-	} *u;
+	Elf_Ehdr       *ehdr;
+	void           *u;
 	Elf_Phdr       *phdr;
 	Elf_Phdr       *phlimit;
 	Elf_Phdr       *segs[2];
@@ -94,24 +92,25 @@ _rtld_map_object(path, fd, sb)
 		_rtld_error("%s: read error: %s", path, xstrerror(errno));
 		return NULL;
 	}
+	ehdr = (Elf_Ehdr *)u;
 	/* Make sure the file is valid */
-	if (memcmp(ELFMAG, u->hdr.e_ident, SELFMAG) != 0 ||
-	    u->hdr.e_ident[EI_CLASS] != ELFCLASS) {
+	if (memcmp(ELFMAG, ehdr->e_ident, SELFMAG) != 0 ||
+	    ehdr->e_ident[EI_CLASS] != ELFCLASS) {
 		_rtld_error("%s: unrecognized file format", path);
 		goto bad;
 	}
 	/* Elf_e_ident includes class */
-	if (u->hdr.e_ident[EI_VERSION] != EV_CURRENT ||
-	    u->hdr.e_version != EV_CURRENT ||
-	    u->hdr.e_ident[EI_DATA] != ELFDEFNNAME(MACHDEP_ENDIANNESS)) {
+	if (ehdr->e_ident[EI_VERSION] != EV_CURRENT ||
+	    ehdr->e_version != EV_CURRENT ||
+	    ehdr->e_ident[EI_DATA] != ELFDEFNNAME(MACHDEP_ENDIANNESS)) {
 		_rtld_error("%s: unsupported file version", path);
 		goto bad;
 	}
-	if (u->hdr.e_type != ET_EXEC && u->hdr.e_type != ET_DYN) {
+	if (ehdr->e_type != ET_EXEC && ehdr->e_type != ET_DYN) {
 		_rtld_error("%s: unsupported file type", path);
 		goto bad;
 	}
-	switch (u->hdr.e_machine) {
+	switch (ehdr->e_machine) {
 		ELFDEFNNAME(MACHDEP_ID_CASES)
 	default:
 		_rtld_error("%s: unsupported machine", path);
@@ -123,8 +122,8 @@ _rtld_map_object(path, fd, sb)
          * not strictly required by the ABI specification, but it seems to
          * always true in practice.  And, it simplifies things considerably.
          */
-	assert(u->hdr.e_phentsize == sizeof(Elf_Phdr));
-	assert(u->hdr.e_phoff + u->hdr.e_phnum * sizeof(Elf_Phdr) <= PAGESIZE);
+	assert(ehdr->e_phentsize == sizeof(Elf_Phdr));
+	assert(ehdr->e_phoff + ehdr->e_phnum * sizeof(Elf_Phdr) <= PAGESIZE);
 
 	/*
          * Scan the program header entries, and save key information.
@@ -132,8 +131,8 @@ _rtld_map_object(path, fd, sb)
          * We rely on there being exactly two load segments, text and data,
          * in that order.
          */
-	phdr = (Elf_Phdr *) (u->buf + u->hdr.e_phoff);
-	phlimit = phdr + u->hdr.e_phnum;
+	phdr = (Elf_Phdr *) ((caddr_t)ehdr + ehdr->e_phoff);
+	phlimit = phdr + ehdr->e_phnum;
 	nsegs = 0;
 	phdyn = phphdr = phinterp = NULL;
 	while (phdr < phlimit) {
@@ -188,7 +187,7 @@ _rtld_map_object(path, fd, sb)
 	mapsize = base_vlimit - base_vaddr;
 
 #ifdef RTLD_LOADER
-	base_addr = u->hdr.e_type == ET_EXEC ? (caddr_t) base_vaddr : NULL;
+	base_addr = ehdr->e_type == ET_EXEC ? (caddr_t) base_vaddr : NULL;
 #else
 	base_addr = NULL;
 #endif
@@ -260,8 +259,8 @@ _rtld_map_object(path, fd, sb)
 	obj->vaddrbase = base_vaddr;
 	obj->relocbase = mapbase - base_vaddr;
 	obj->dynamic = (Elf_Dyn *)(obj->relocbase + phdyn->p_vaddr);
-	if (u->hdr.e_entry != 0)
-		obj->entry = (caddr_t)(obj->relocbase + u->hdr.e_entry);
+	if (ehdr->e_entry != 0)
+		obj->entry = (caddr_t)(obj->relocbase + ehdr->e_entry);
 	if (phphdr != NULL) {
 		obj->phdr = (const Elf_Phdr *)
 		    (obj->relocbase + phphdr->p_vaddr);
@@ -269,7 +268,7 @@ _rtld_map_object(path, fd, sb)
 	}
 	if (phinterp != NULL)
 		obj->interp = (const char *) (obj->relocbase + phinterp->p_vaddr);
-	obj->isdynamic = u->hdr.e_type == ET_DYN;
+	obj->isdynamic = ehdr->e_type == ET_DYN;
 
 	return obj;
 
