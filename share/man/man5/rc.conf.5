@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.23 1999/03/24 17:29:07 mellon Exp $
+.\"	$NetBSD: rc.conf.5,v 1.24 1999/07/03 03:29:30 itojun Exp $
 .\"
 .\"  Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -289,6 +289,29 @@ and will call
 with the
 .Dq call Sy peer
 option.
+.It Sy ip6forwarding
+YES or NO.
+An IPv6 node can be a router
+.Pq nodes that forward packet for others
+or host
+.Pq nodes that do not forward .
+By setting
+.Sy ip6forwarding
+to YES, the node will become an IPv6 router.
+Note that this is orthogonal to IPv4 forwarding/routing.
+.It Sy rtsol
+YES or NO.
+Run
+.Xr rtsol 8 ,
+router solicitation command for IPv6 host.
+By setting this option to YES, your host will be autoconfigured
+based on the information advertised by adjacent IPv6 router.
+Passes
+.Sy rtsol_flags .
+This is only for IPv6 host, so set
+.Sy ip6forwarding
+to NO if you use
+.Sy rtsol .
 .El
 .Pp
 .Ss Daemons required by other daemons:
@@ -413,6 +436,13 @@ Runs
 the DVMRP multicast routing protocol daemon.
 Passes
 .Sy mrouted_flags .
+.It Sy route6d
+YES or NO.
+Runs
+.Xr route6d 8 ,
+the RIPng routing protocol daemon for IPv6.
+Passes
+.Sy route6d_flags .
 .El
 .Pp
 .Ss Daemons used to boot other hosts over a network:
@@ -471,6 +501,17 @@ and other
 machines.
 Passes
 .Sy mopd_flags .
+.It Sy rtadvd
+YES or NO.
+Runs
+.Xr rtadvd 8 ,
+the IPv6 router advertisement daemon, which is used to advertise
+information about the subnet to IPv6 end hosts.
+Passes
+.Sy rtadvd_flags .
+Should only be used on IPv6 router.
+If you use this make sure to check
+.Sy ip6forwarding .
 .El
 .Pp
 .Ss NIS (YP) daemons:
