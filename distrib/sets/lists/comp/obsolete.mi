@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.30 2000/11/08 16:28:01 itojun Exp $
+# $NetBSD: obsolete.mi,v 1.31 2000/12/11 09:18:04 jdolecek Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
@@ -371,3 +371,7 @@
 /usr/share/mk/bsd.crypto.mk
 /usr/share/mk/bsd.port.mk
 /usr/share/mk/bsd.port.subdir.mk
+/usr/share/lkm/vfs/Makefile
+/usr/share/lkm/vfs/README
+/usr/share/lkm/vfs/module/Makefile
+/usr/share/lkm/vfs/module/kernfsmod.c
