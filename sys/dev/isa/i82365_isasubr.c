@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.5 2000/02/01 22:39:52 chopps Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.6 2000/02/01 22:56:17 chopps Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -95,7 +95,7 @@ int	pcic_isa_alloc_iosize = PCIC_ISA_ALLOC_IOSIZE;
  */
 
 #ifndef PCIC_ISA_INTR_ALLOC_MASK
-#define	PCIC_ISA_INTR_ALLOC_MASK	0xfbff
+#define	PCIC_ISA_INTR_ALLOC_MASK	0xffff
 #endif
 
 int	pcic_isa_intr_alloc_mask = PCIC_ISA_INTR_ALLOC_MASK;
