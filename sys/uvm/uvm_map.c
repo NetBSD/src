@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.89 2001/01/28 23:30:44 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.90 2001/02/05 11:29:54 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1589,7 +1589,7 @@ uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
 		while (entry->start < end && entry != &srcmap->header) {
 			if (copy_ok) {
 				oldoffset = (entry->start + fudge) - start;
-				elen = min(end, entry->end) -
+				elen = MIN(end, entry->end) -
 				    (entry->start + fudge);
 				pmap_copy(dstmap->pmap, srcmap->pmap,
 				    dstaddr + oldoffset, elen,
@@ -2441,8 +2441,6 @@ uvm_map_pageable_all(map, flags, limit)
  * => we may sleep while cleaning if SYNCIO [with map read-locked]
  */
 
-int	amap_clean_works = 1;	/* XXX for now, just in case... */
-
 int
 uvm_map_clean(map, start, end, flags)
 	vm_map_t map;
@@ -2480,8 +2478,10 @@ uvm_map_clean(map, start, end, flags)
 			vm_map_unlock_read(map);
 			return (KERN_INVALID_ARGUMENT);
 		}
-		if (end > current->end && (current->next == &map->header ||
-		    current->end != current->next->start)) {
+		if (end <= current->end) {
+			break;
+		}
+		if (current->end != current->next->start) {
 			vm_map_unlock_read(map);
 			return (KERN_INVALID_ADDRESS);
 		}
@@ -2489,7 +2489,7 @@ uvm_map_clean(map, start, end, flags)
 
 	error = KERN_SUCCESS;
 
-	for (current = entry; current->start < end; current = current->next) {
+	for (current = entry; start < end; current = current->next) {
 		amap = current->aref.ar_amap;	/* top layer */
 		uobj = current->object.uvm_obj;	/* bottom layer */
 		KASSERT(start >= current->start);
@@ -2502,22 +2502,13 @@ uvm_map_clean(map, start, end, flags)
 		 *	(2) We're not deactivating or freeing pages.
 		 */
 
-		if (amap == NULL ||
-		    (flags & (PGO_DEACTIVATE|PGO_FREE)) == 0)
-			goto flush_object;
-
-		/* XXX for now, just in case... */
-		if (amap_clean_works == 0)
+		if (amap == NULL || (flags & (PGO_DEACTIVATE|PGO_FREE)) == 0)
 			goto flush_object;
 
 		amap_lock(amap);
-
 		offset = start - current->start;
-		size = (end <= current->end ? end : current->end) -
-		    start;
-
-		for (/* nothing */; size != 0; size -= PAGE_SIZE,
-		     offset += PAGE_SIZE) {
+		size = MIN(end, current->end) - start;
+		for ( ; size != 0; size -= PAGE_SIZE, offset += PAGE_SIZE) {
 			anon = amap_lookup(&current->aref, offset);
 			if (anon == NULL)
 				continue;
@@ -2599,11 +2590,7 @@ uvm_map_clean(map, start, end, flags)
 			default:
 				panic("uvm_map_clean: wierd flags");
 			}
-#ifdef DIAGNOSTIC
-			panic("uvm_map_clean: unreachable code");
-#endif
 		}
-
 		amap_unlock(amap);
 
  flush_object:
@@ -2612,8 +2599,7 @@ uvm_map_clean(map, start, end, flags)
 		 */
 
 		offset = current->offset + (start - current->start);
-		size = (end <= current->end ? end : current->end) - start;
-
+		size = MIN(end, current->end) - start;
 		if (uobj != NULL) {
 			simple_lock(&uobj->vmobjlock);
 			rv = uobj->pgops->pgo_flush(uobj, offset,
