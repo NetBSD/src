@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.2 2000/10/20 15:14:25 ad Exp $	*/
+/*	$NetBSD: twe.c,v 1.3 2000/11/08 19:23:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -98,11 +98,13 @@
 #define	TWE_OUTL(sc, port, val) \
     bus_space_write_4((sc)->sc_iot, (sc)->sc_ioh, port, val)
 
-#define	PCI_CBIO	0x10
-
-#if TWE_MAX_QUEUECNT > TWE_MAX_CMDS
-#error TWE_MAX_QUEUECNT > TWE_MAX_CMDS
+#if TWE_MAX_QUEUECNT == TWE_MAX_CMDS
+#define	TWE_REAL_MAX_QUEUECNT	TWE_MAX_CMDS
+#else
+#define	TWE_REAL_MAX_QUEUECNT	TWE_MAX_CMDS + 1
 #endif
+
+#define	PCI_CBIO	0x10
 
 static void	twe_aen_handler(struct twe_ccb *, int);
 static void	twe_attach(struct device *, struct device *, void *);
@@ -123,15 +125,22 @@ struct cfattach twe_ca = {
 };
 
 struct {
-	const u_int	aen;
+	const u_int	aen;		/* High byte non-zero if w/unit */
 	const char	*desc;
 } static const twe_aen_names[] = {
 	{ 0x0000, "queue empty" },
 	{ 0x0001, "soft reset" },
-	{ 0x0002, "degraded mirror" },
+	{ 0x0102, "degraded mirror" },
 	{ 0x0003, "controller error" },
-	{ 0x0004, "rebuild fail" },
-	{ 0x0005, "rebuild done" },
+	{ 0x0104, "rebuild fail" },
+	{ 0x0105, "rebuild done" },
+	{ 0x0106, "incompatible unit" },
+	{ 0x0107, "init done" },
+	{ 0x0108, "unclean shutdown" },
+	{ 0x0109, "aport timeout" },
+	{ 0x010a, "drive error" },
+	{ 0x010b, "rebuild started" },
+	{ 0x0015, "table undefined" },
 	{ 0x00ff, "aen queue full" },
 };
 
@@ -177,7 +186,7 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	SIMPLEQ_INIT(&sc->sc_ccb_queue);
 	SLIST_INIT(&sc->sc_ccb_freelist);
 
-	printf(": 3ware Escalade RAID controller\n");
+	printf(": 3ware Escalade\n");
 
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
@@ -211,7 +220,7 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Allocate and initialise the command blocks and CCBs.
 	 */
-        size = sizeof(struct twe_cmd) * TWE_MAX_QUEUECNT;
+        size = sizeof(struct twe_cmd) * TWE_REAL_MAX_QUEUECNT;
 
 	if ((rv = bus_dmamem_alloc(sc->sc_dmat, size, NBPG, 0, &seg, 1, 
 	    &rseg, BUS_DMA_NOWAIT)) != 0) {
@@ -245,7 +254,7 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_cmds_paddr = sc->sc_dmamap->dm_segs[0].ds_addr;
 	memset(sc->sc_cmds, 0, size);
 
-	ccb = malloc(sizeof(*ccb) * TWE_MAX_QUEUECNT, M_DEVBUF, M_WAITOK);
+	ccb = malloc(sizeof(*ccb) * TWE_REAL_MAX_QUEUECNT, M_DEVBUF, M_WAITOK);
 	if (ccb == NULL) {
 		printf("%s: unable to allocate CCBs\n", sc->sc_dv.dv_xname);
 		return;
@@ -254,7 +263,7 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ccbs = ccb;
 	tc = (struct twe_cmd *)sc->sc_cmds;
 
-	for (i = 0; i < TWE_MAX_QUEUECNT; i++, tc++, ccb++) {
+	for (i = 0; i < TWE_REAL_MAX_QUEUECNT; i++, tc++, ccb++) {
 		ccb->ccb_cmd = tc;
 		ccb->ccb_cmdid = i;
 		ccb->ccb_flags = 0;
@@ -263,11 +272,18 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 		    &ccb->ccb_dmamap_xfer);
 		if (rv != 0)
 			break;
-		SLIST_INSERT_HEAD(&sc->sc_ccb_freelist, ccb, ccb_chain.slist);
+		/* Save one CCB for parameter retrieval. */
+		if (i != 0)
+			SLIST_INSERT_HEAD(&sc->sc_ccb_freelist, ccb,
+			    ccb_chain.slist);
 	}
-	if (i != TWE_MAX_QUEUECNT)
-		printf("%s: %d/%d CCBs usable\n", sc->sc_dv.dv_xname, i,
-		    TWE_MAX_QUEUECNT);
+	if ((sc->sc_nccbs = i) <= TWE_MIN_QUEUECNT) {
+		printf("%s: too few CCBs available\n", sc->sc_dv.dv_xname);
+		return;
+	}
+	if (sc->sc_nccbs != TWE_REAL_MAX_QUEUECNT)
+		printf("%s: %d/%d CCBs usable\n", sc->sc_dv.dv_xname,
+		    sc->sc_nccbs, TWE_REAL_MAX_QUEUECNT);
 
 	/* Wait for the controller to become ready. */
 	if (twe_status_wait(sc, TWE_STS_MICROCONTROLLER_READY, 6)) {
@@ -283,23 +299,25 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/* Find attached drives.  XXX Magic numbers. */ 
-	if ((dtp = twe_param_get(sc, 3, 3, TWE_MAX_UNITS, NULL)) == NULL) {
+	/* Find attached units. */ 
+	dtp = twe_param_get(sc, TWE_PARAM_UNITSUMMARY,
+	    TWE_PARAM_UNITSUMMARY_Status, TWE_MAX_UNITS, NULL);
+	if (dtp == NULL) {
 		printf("%s: can't detect attached units\n",
 		    sc->sc_dv.dv_xname);
 		return;
 	}
 
 	/* For each detected unit, collect size and store in an array. */
-	for (i = 0; i < TWE_MAX_UNITS; i++) {
+	for (i = 0, sc->sc_nunits = 0; i < TWE_MAX_UNITS; i++) {
 		/* Unit present? */
-		if (dtp->tp_data[i] == 0) {
+		if ((dtp->tp_data[i] & TWE_PARAM_UNITSTATUS_Online) == 0) {
 			sc->sc_dsize[i] = 0;
 	   		continue;
 	   	}
 
-		ctp = twe_param_get(sc, TWE_UNIT_INFORMATION_TABLE_BASE + i,
-		    4, 4, NULL);
+		ctp = twe_param_get(sc, TWE_PARAM_UNITINFO + i,
+		    TWE_PARAM_UNITINFO_Capacity, 4, NULL);
 		if (ctp == NULL) {
 			printf("%s: error fetching capacity for unit %d\n",
 			    sc->sc_dv.dv_xname, i);
@@ -308,6 +326,7 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 
 		sc->sc_dsize[i] = le32toh(*(u_int32_t *)ctp->tp_data);
 		free(ctp, M_DEVBUF);
+		sc->sc_nunits++;
 	}
 	free(dtp, M_DEVBUF);
 
@@ -355,10 +374,11 @@ twe_reset(struct twe_softc *sc)
 
 	/* Pull AENs out of the controller; look for a soft reset AEN. */
 	for (got = 0;;) {
-		/* XXX Magic numbers. */
-		if ((tp = twe_param_get(sc, 0x401, 2, 2, NULL)) == NULL)
+		tp = twe_param_get(sc, TWE_PARAM_AEN, TWE_PARAM_AEN_UnitCode,
+		    2, NULL);
+		if (tp == NULL)
 			return (-1);
-		aen = le16toh(*(u_int16_t *)tp->tp_data);
+		aen = TWE_AEN_CODE(le16toh(*(u_int16_t *)tp->tp_data));
 		free(tp, M_DEVBUF);
 		if (aen == TWE_AEN_QUEUE_EMPTY)
 			break;
@@ -456,8 +476,8 @@ twe_intr(void *arg)
 	 * state change has occured.
 	 */
 	if ((status & TWE_STS_ATTN_INTR) != 0) {
-		/* XXX Magic numbers. */
-		twe_param_get(sc, 0x401, 2, 2, twe_aen_handler);
+		twe_param_get(sc, TWE_PARAM_AEN, TWE_PARAM_AEN_UnitCode, 2,
+		    twe_aen_handler);
 		TWE_OUTL(sc, TWE_REG_CTL, TWE_CTL_CLEAR_ATTN_INTR);
 		caught = 1;
 	}
@@ -494,40 +514,56 @@ twe_aen_handler(struct twe_ccb *ccb, int error)
 	struct twe_param *tp;
 	const char *str;
 	u_int aen;
-	int i;
+	int i, hu;
 
 	sc = (struct twe_softc *)ccb->ccb_tx.tx_dv;
 	tp = ccb->ccb_tx.tx_context;
 	twe_ccb_unmap(sc, ccb);
 
-	if (error)
+	if (error) {
 		printf("%s: error retrieving AEN\n", sc->sc_dv.dv_xname);
-	else {
+		aen = TWE_AEN_QUEUE_EMPTY;
+	} else
 		aen = le16toh(*(u_int16_t *)tp->tp_data);
-		str = "<unknown>";
-		i = 0;
-		while (i < sizeof(twe_aen_names) / sizeof(twe_aen_names[0])) {
-			if (twe_aen_names[i].aen == aen) {
-				str = twe_aen_names[i].desc;
-				break;
-			}
-			 i++;
-		}
-		printf("%s: AEN 0x%04x (%s) recieved\n", sc->sc_dv.dv_xname,
-		    aen, str);
-	}
-
 	free(tp, M_DEVBUF);
 	twe_ccb_free(sc, ccb);
+
+	if (TWE_AEN_CODE(aen) != TWE_AEN_QUEUE_EMPTY) {
+		str = "<unknown>";
+		i = 0;
+		hu = 0;
+		
+		while (i < sizeof(twe_aen_names) / sizeof(twe_aen_names[0])) {
+			if (TWE_AEN_CODE(twe_aen_names[i].aen) ==
+			    TWE_AEN_CODE(aen)) {
+				str = twe_aen_names[i].desc;
+				hu = (TWE_AEN_UNIT(twe_aen_names[i].aen) != 0);
+				break;
+			}
+			i++;
+		}
+		printf("%s: AEN 0x%04x (%s) received", sc->sc_dv.dv_xname,
+		    TWE_AEN_CODE(aen), str);
+		if (hu != 0)
+			printf(" for unit %d", TWE_AEN_UNIT(aen));
+		printf("\n");
+
+		/*
+		 * Chain another retrieval in case interrupts have been
+		 * coalesced.
+		 */
+		twe_param_get(sc, TWE_PARAM_AEN, TWE_PARAM_AEN_UnitCode, 2,
+		    twe_aen_handler);
+	}
 }
 
 /*
  * Execute a TWE_OP_GET_PARAM command.  If a callback function is provided,
  * it will be called with generated context when the command has completed. 
  * If no callback is provided, the command will be executed synchronously
- * and the data returned.
+ * and a pointer to a buffer containing the data returned.
  *
- * The caller or callback is responsible for freeing the data.
+ * The caller or callback is responsible for freeing the buffer.
  */
 static void *
 twe_param_get(struct twe_softc *sc, int table_id, int param_id, size_t size,
@@ -538,16 +574,13 @@ twe_param_get(struct twe_softc *sc, int table_id, int param_id, size_t size,
 	struct twe_param *tp;
 	int rv, s;
 
-	if (twe_ccb_alloc(sc, &ccb, 1) != 0) {
-		/* XXX */
+	if (twe_ccb_alloc(sc, &ccb, TWE_CCB_PARAM | TWE_CCB_DATA_IN |
+	    TWE_CCB_DATA_OUT) != 0)
 		return (NULL);
-	}
-
 	tp = malloc(TWE_SECTOR_SIZE, M_DEVBUF, M_NOWAIT);
 
 	ccb->ccb_data = tp;
 	ccb->ccb_datasize = TWE_SECTOR_SIZE;
-	ccb->ccb_flags = TWE_CCB_DATA_IN | TWE_CCB_DATA_OUT;
 	ccb->ccb_tx.tx_handler = func;
 	ccb->ccb_tx.tx_context = tp;
 	ccb->ccb_tx.tx_dv = &sc->sc_dv;
@@ -601,7 +634,7 @@ twe_init_connection(struct twe_softc *sc)
 	struct twe_cmd *tc;
 	int rv;
 
-	if ((rv = twe_ccb_alloc(sc, &ccb, 1)) != 0)
+	if ((rv = twe_ccb_alloc(sc, &ccb, 0)) != 0)
 		return (rv);
 
 	/* Build the command. */
@@ -609,7 +642,7 @@ twe_init_connection(struct twe_softc *sc)
 	tc->tc_size = 3;
 	tc->tc_opcode = TWE_OP_INIT_CONNECTION;
 	tc->tc_unit = 0;
-	tc->tc_count = htole16(TWE_INIT_MESSAGE_CREDITS);
+	tc->tc_count = htole16(TWE_MAX_CMDS);
 	tc->tc_args.init_connection.response_queue_pointer = 0;
 
 	/* Submit the command for immediate execution. */
@@ -642,7 +675,7 @@ twe_poll(struct twe_softc *sc)
 		found = 1;
 		cmdid = TWE_INL(sc, TWE_REG_RESP_QUEUE);
 		cmdid = (cmdid & TWE_RESP_MASK) >> TWE_RESP_SHIFT;
-		if (cmdid >= TWE_MAX_QUEUECNT) {
+		if (cmdid >= TWE_REAL_MAX_QUEUECNT) {
 			printf("%s: bad completion\n", sc->sc_dv.dv_xname);
 			continue;
 		}
@@ -717,54 +750,56 @@ twe_status_check(struct twe_softc *sc, u_int status)
  * Allocate and initialise a CCB.
  */
 int
-twe_ccb_alloc(struct twe_softc *sc, struct twe_ccb **ccbp, int nowait)
+twe_ccb_alloc(struct twe_softc *sc, struct twe_ccb **ccbp, int flags)
 {
 	struct twe_cmd *tc;
 	struct twe_ccb *ccb;
 	int s;
 
-	s = splbio();
-
-	/* Allocate a CCB and command block. */
-	if (SLIST_FIRST(&sc->sc_ccb_freelist) == NULL) {
-		if (nowait) {
+	if ((flags & TWE_CCB_PARAM) != 0)
+		ccb = sc->sc_ccbs;
+	else {
+		s = splbio();	
+		/* Allocate a CCB and command block. */
+		if (SLIST_FIRST(&sc->sc_ccb_freelist) == NULL) {
 			splx(s);
 			return (EAGAIN);
 		}
-		sc->sc_ccb_waitcnt++;
-		tsleep(&sc->sc_ccb_waitcnt, PRIBIO, "twepaqc", 0);
+		ccb = SLIST_FIRST(&sc->sc_ccb_freelist);
+		SLIST_REMOVE_HEAD(&sc->sc_ccb_freelist, ccb_chain.slist);
+		splx(s);
 	}
-	ccb = SLIST_FIRST(&sc->sc_ccb_freelist);
-	SLIST_REMOVE_HEAD(&sc->sc_ccb_freelist, ccb_chain.slist);
+
+#ifdef DIAGNOSTIC
+	if ((ccb->ccb_flags & TWE_CCB_ALLOCED) != 0)
+		panic("twe_ccb_alloc: CCB already allocated");
+	flags |= TWE_CCB_ALLOCED;
+#endif
 
 	/* Initialise some fields and return. */
 	ccb->ccb_tx.tx_handler = NULL;
+	ccb->ccb_flags = flags;
 	tc = ccb->ccb_cmd;
 	tc->tc_status = 0;
 	tc->tc_flags = 0;
 	tc->tc_cmdid = ccb->ccb_cmdid;
-
-	splx(s);
 	*ccbp = ccb;
+
 	return (0);
 }
 
 /*
- * Free a CCB.  Wake one process that's waiting for a free CCB, if any.
+ * Free a CCB.
  */
 void
 twe_ccb_free(struct twe_softc *sc, struct twe_ccb *ccb)
 {
 	int s;
 
-	ccb->ccb_flags = 0;
-
 	s = splbio();
-	SLIST_INSERT_HEAD(&sc->sc_ccb_freelist, ccb, ccb_chain.slist);
-	if (sc->sc_ccb_waitcnt != 0) {
-		sc->sc_ccb_waitcnt--;
-		wakeup_one(&sc->sc_ccb_waitcnt);
-	}
+	if ((ccb->ccb_flags & TWE_CCB_PARAM) == 0)
+		SLIST_INSERT_HEAD(&sc->sc_ccb_freelist, ccb, ccb_chain.slist);
+	ccb->ccb_flags = 0;
 	splx(s);
 }
 
