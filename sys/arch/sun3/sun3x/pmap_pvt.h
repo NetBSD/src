@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pvt.h,v 1.7 1997/12/17 16:20:33 jeremy Exp $	*/
+/*	$NetBSD: pmap_pvt.h,v 1.8 1999/09/19 19:06:19 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -187,7 +187,7 @@ void   pmap_remove_pte __P((mmu_short_pte_t *));
 void   pmap_enter_kernel __P((vm_offset_t, vm_offset_t, vm_prot_t));
 void   pmap_remove_kernel __P((vm_offset_t, vm_offset_t));
 void   pmap_protect_kernel __P((vm_offset_t, vm_offset_t, vm_prot_t));
-vm_offset_t pmap_extract_kernel __P((vm_offset_t));
+boolean_t pmap_extract_kernel __P((vaddr_t, paddr_t *));
 vm_offset_t pmap_get_pteinfo __P((u_int, pmap_t *, c_tmgr_t **));
 void   pmap_pinit __P((pmap_t));
 int    pmap_dereference __P((pmap_t));
