@@ -1,4 +1,4 @@
-.\"	$NetBSD: dump.8,v 1.33 1999/06/28 01:32:49 abs Exp $
+.\"	$NetBSD: dump.8,v 1.34 1999/07/01 19:18:47 abs Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	 Regents of the University of California.
@@ -410,9 +410,12 @@ on the remote machine.
 .Sh FILES
 .Bl -tag -width /etc/dumpdates -compact
 .It Pa /dev/nrst0
-default tape unit to dump to
+default tape unit to use. Taken from 
+.Dv _PATH_DEFTAPE
+in
+.Pa /usr/include/paths.h .
 .It Pa /dev/rst*
-Raw SCSI tape interface
+raw SCSI tape interface
 .It Pa /etc/dumpdates
 dump date records
 .It Pa /etc/fstab
