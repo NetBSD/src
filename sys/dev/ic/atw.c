@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.33 2004/06/23 08:05:01 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.34 2004/06/23 08:12:28 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.33 2004/06/23 08:05:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.34 2004/06/23 08:12:28 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -845,9 +845,6 @@ void
 atw_reset(struct atw_softc *sc)
 {
 	int i;
-
-	if (ATW_IS_ENABLED(sc) == 0)
-		return;
 
 	ATW_WRITE(sc, ATW_PAR, ATW_PAR_SWR);
 
