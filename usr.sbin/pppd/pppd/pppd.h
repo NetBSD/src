@@ -1,4 +1,4 @@
-/*	$NetBSD: pppd.h,v 1.14 1998/07/26 15:48:44 mycroft Exp $	*/
+/*	$NetBSD: pppd.h,v 1.15 1998/07/27 00:52:02 mycroft Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -191,7 +191,7 @@ void timeout __P((void (*func)(void *), void *arg, int t));
 				/* Call func(arg) after t seconds */
 void untimeout __P((void (*func)(void *), void *arg));
 				/* Cancel call to func(arg) */
-int run_program __P((char *prog, char **args, int must_exist));
+int run_program __P((const char *prog, const char **args, int must_exist));
 				/* Run program prog with args in child */
 void demuxprotrej __P((int, int));
 				/* Demultiplex a Protocol-Reject */

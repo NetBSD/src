@@ -1,4 +1,4 @@
-/*	$NetBSD: lpr.c,v 1.17 1998/07/06 07:03:28 mrg Exp $	*/
+/*	$NetBSD: lpr.c,v 1.18 1998/07/27 00:52:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpr.c,v 1.17 1998/07/06 07:03:28 mrg Exp $");
+__RCSID("$NetBSD: lpr.c,v 1.18 1998/07/27 00:52:01 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,7 @@ static char	*jobname;	/* job name on header page */
 static int	 mailflg;	/* send mail */
 static int	 nact;		/* number of jobs to act on */
 static int	 ncopies = 1;	/* # of copies to make */
-static char	*person;	/* user name */
+static const char *person;	/* user name */
 static int	 qflag;		/* q job, but don't exec daemon */
 static int	 rflag;		/* remove files upon completion */	
 static int	 sflag;		/* symbolic link flag */
@@ -104,7 +104,7 @@ static char	*width;		/* width for versatec printing */
 
 static struct stat statb;
 
-static void	 card __P((int, char *));
+static void	 card __P((int, const char *));
 static void	 chkprinter __P((char *));
 static void	 cleanup __P((int));
 static void	 copy __P((int, char []));
@@ -501,7 +501,7 @@ linked(file)
 static void
 card(c, p2)
 	int c;
-	char *p2;
+	const char *p2;
 {
 	char buf[BUFSIZ];
 	char *p1 = buf;
