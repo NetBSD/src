@@ -95,6 +95,15 @@ extern caddr_t CIAAbase, CIABbase;
 /* ciaa-prb is centronics interface */
 
 
+/* interrupt bits */
+#define CIA_ICR_TA	(1<<0)
+#define CIA_ICR_TB	(1<<1)
+#define CIA_ICR_ALARM	(1<<2)
+#define CIA_ICR_SP	(1<<3)
+#define CIA_ICR_FLG	(1<<4)
+#define CIA_ICR_IR_SC	(1<<7)
+
+
 /* since many CIA signals are low-active, these defines should make the
    code more readable */
 #define SETDCD(c) (c &= ~CIAB_PRA_CD)
@@ -116,5 +125,11 @@ extern caddr_t CIAAbase, CIABbase;
 #define SETDSR(c) (c &= ~CIAB_PRA_DSR)
 #define CLRDSR(c) (c |= CIAB_PRA_DSR)
 #define ISDSR(c)  (!(c & CIAB_PRA_DSR))
+
+/* functions defined in cia.c */
+extern void dispatch_cia_ints __P ((int which, int mask));
+extern void ciaa_intr ();
+extern void ciab_intr ();
+
 
 #endif _amiga_cia_

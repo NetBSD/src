@@ -58,6 +58,9 @@
 #include "vm/pmap.h"
 #include "vm/vm_prot.h"
 
+
+extern int kernel_reload_write(struct uio *uio);
+
 /*ARGSUSED*/
 mmrw(dev, uio, flags)
 	dev_t dev;
@@ -129,6 +132,17 @@ mmrw(dev, uio, flags)
 			}
 			c = MIN(iov->iov_len, CLBYTES);
 			error = uiomove(zbuf, (int)c, uio);
+			continue;
+
+/* minor device 20 (/dev/reload) represents magic memory
+   which you can write a kernel image to,
+   causing a reboot into that kernel.  */
+		case 20:
+			/* Reads simply get EOF.  */
+			if (uio->uio_rw == UIO_READ)
+				return 0;
+
+			error = kernel_reload_write(uio);
 			continue;
 
 		default:

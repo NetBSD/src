@@ -333,7 +333,11 @@ pmap_init(phys_start, phys_end)
 	 */
 	addr = (vm_offset_t) CHIPMEMADDR;
 	(void) vm_map_find(kernel_map, NULL, (vm_offset_t) 0,
+#if 0
 			   &addr, amiga_ptob(CHIPMEMSIZE + CIASIZE + CUSTOMSIZE + SCSISIZE), FALSE);
+#else
+			   &addr, amiga_ptob(CHIPMEMSIZE + CIASIZE + ZORRO2SIZE), FALSE);
+#endif
 	if (addr != (vm_offset_t)CHIPMEMADDR)
 		goto bogons;
 

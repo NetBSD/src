@@ -53,7 +53,11 @@
 #define DBL_MIN		2.225073858507201E-308
 #define DBL_MIN_10_EXP	-307
 #define DBL_MAX_EXP	1024
+#if 0
 #define DBL_MAX		1.797693134862316E+308
+#else
+#define DBL_MAX		(*(double *)((long []){0x7fefffff, 0xffffffff}))
+#endif
 #define DBL_MAX_10_EXP	308
 
 #define LDBL_MANT_DIG	DBL_MANT_DIG

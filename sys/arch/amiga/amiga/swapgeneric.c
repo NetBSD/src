@@ -77,6 +77,14 @@ setconf()
 	register char *cp;
 	int unit, swaponroot = 0;
 
+#ifdef DEBUG
+	extern int acdebug;
+
+	if (acdebug > 1)
+	  printf ("setconf: rootdev = 0x%x, swaponroot = %d\n", rootdev, swaponroot);
+#endif
+
+
 	if (rootdev != NODEV)
 		goto doswap;
 	unit = 0;
