@@ -395,6 +395,7 @@
 ./usr/share/man/cat8/fasthalt.0
 ./usr/share/man/cat8/fingerd.0
 ./usr/share/man/cat8/fsck.0
+./usr/share/man/cat8/fsdb.0
 ./usr/share/man/cat8/fsinfo.0
 ./usr/share/man/cat8/ftpd.0
 ./usr/share/man/cat8/gettable.0
