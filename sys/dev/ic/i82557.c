@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.77 2003/11/02 11:07:45 wiz Exp $	*/
+/*	$NetBSD: i82557.c,v 1.78 2003/12/06 11:27:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.77 2003/11/02 11:07:45 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.78 2003/12/06 11:27:28 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -390,14 +390,20 @@ fxp_attach(struct fxp_softc *sc)
 	ifp->if_stop = fxp_stop;
 	IFQ_SET_READY(&ifp->if_snd);
 
-	/*
-	 * XXX we should have separate IFCAP flags for transmit and receive.
-	 * XXX it isn't problem for this paticular driver, though.
-	 */
 	if (sc->sc_flags & FXPF_IPCB) {
 		KASSERT(sc->sc_flags & FXPF_EXT_RFA); /* we have both or none */
+		/*
+		 * IFCAP_CSUM_IPv4 seems to have a problem,
+		 * at least, on i82550 rev.12.
+		 * specifically, it doesn't calculate ipv4 checksum correctly
+		 * when sending 20 byte ipv4 header + 1 or 2 byte data.
+		 * FreeBSD driver has related comments.
+		 *
+		 * XXX we should have separate IFCAP flags
+		 * for transmit and receive.
+		 */
 		ifp->if_capabilities =
-		    IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+		    /*IFCAP_CSUM_IPv4 |*/ IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 	}
 
 	/*
