@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.30 2001/08/25 05:44:59 thorpej Exp $
+$NetBSD: miidevs,v 1.31 2001/08/25 05:55:19 thorpej Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -106,7 +106,6 @@ model ALTIMA AC101		0x0021 AC101 10/100 media interface
 /* Advanced Micro Devices PHYs */
 model xxAMD 79C873		0x0000 Am79C873 10/100 media interface
 model yyAMD 79C972_10T		0x0001 Am79C972 internal 10BASE-T interface
-model yyAMD 79c874		0x0021 Am79C874 10/100 media interface
 model yyAMD 79c973phy		0x0036 Am79C973 internal 10/100 media interface
 model yyAMD 79c901		0x0037 Am79C901 10BASE-T interface
 model yyAMD 79c901home		0x0039 Am79C901 HomePNA 1.0 interface
