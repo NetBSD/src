@@ -1,4 +1,4 @@
-/*	$NetBSD: skeleton.c,v 1.18 2000/06/07 23:54:17 explorer Exp $	*/
+/*	$NetBSD: skeleton.c,v 1.19 2001/01/23 15:35:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)skeleton.c	5.8 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: skeleton.c,v 1.18 2000/06/07 23:54:17 explorer Exp $");
+__RCSID("$NetBSD: skeleton.c,v 1.19 2001/01/23 15:35:01 jdolecek Exp $");
 #endif /* 0 */
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: skeleton.c,v 1.18 2000/06/07 23:54:17 explorer Exp $");
 /*  the body either are not useful outside of semantic actions or	*/
 /*  are conditional.							*/
 
-char *banner[] =
+const char * const banner[] =
 {
     "#include <sys/cdefs.h>",
     "#ifndef lint",
@@ -67,7 +67,7 @@ char *banner[] =
     "static char yysccsid[] = \"@(#)yaccpar	1.9 (Berkeley) 02/21/93\";",
     "#else",
     "#if defined(__NetBSD__) && defined(__IDSTRING)",
-    "__IDSTRING(yyrcsid, \"$NetBSD: skeleton.c,v 1.18 2000/06/07 23:54:17 explorer Exp $\");",
+    "__IDSTRING(yyrcsid, \"$NetBSD: skeleton.c,v 1.19 2001/01/23 15:35:01 jdolecek Exp $\");",
     "#endif /* __NetBSD__ && __IDSTRING */",
     "#endif /* 0 */",
     "#endif /* lint */",
@@ -84,7 +84,7 @@ char *banner[] =
 };
 
 
-char *tables[] =
+const char * const tables[] =
 {
     "extern short yylhs[];",
     "extern short yylen[];",
@@ -103,7 +103,7 @@ char *tables[] =
 };
 
 
-char *header[] =
+const char * const header[] =
 {
     "#ifdef YYSTACKSIZE",
     "#undef YYMAXDEPTH",
@@ -133,7 +133,7 @@ char *header[] =
 };
 
 
-char *body[] =
+const char * const body[] =
 {
     "/* allocate initial stack or double stack size, up to YYMAXDEPTH */",
     "int yyparse __P((void));",
@@ -306,7 +306,7 @@ char *body[] =
 };
 
 
-char *trailer[] =
+const char * const trailer[] =
 {
     "    }",
     "    yyssp -= yym;",
@@ -370,11 +370,11 @@ char *trailer[] =
 
 void
 write_section(section)
-char *section[];
+const char * const section[];
 {
     int c;
     int i;
-    char *s;
+    const char *s;
     FILE *f;
 
     f = code_file;
