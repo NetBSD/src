@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.130 1999/11/05 21:36:21 thorpej Exp $
+#	$NetBSD: INSTALL,v 1.131 1999/11/15 20:03:50 dante Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -286,6 +286,9 @@ com2	at isa? port 0x3e8 irq 5
 # PCI SCSI controllers
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 adw*	at pci? dev ? function ?	# AdvanSys 9xxUW SCSI
+#options 	ADW_WDTR_DISABLE	# 	disable Wide Data Tranfer
+#options 	ADW_SDTR_DISABLE	# 	disable Syncronous Data Transfer
+#options 	ADW_TAGQ_DISABLE	# 	disable Tag Queuing
 ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
