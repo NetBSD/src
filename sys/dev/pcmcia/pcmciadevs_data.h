@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.84 2000/03/22 21:41:48 mycroft Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.85 2000/03/26 10:24:52 itojun Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -659,6 +659,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Corega K.K.",
 	    "Corega FastEther PCC-TX"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCC_11,
+	    PCMCIA_CIS_COREGA_WIRELESS_LAN_PCC_11,
+	    0,
+	    "Corega K.K.",
+	    "Corega Wireless LAN PCC-11"	},
 	},
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_SVEC_COMBOCARD,
