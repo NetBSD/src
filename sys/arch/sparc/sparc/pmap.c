@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.163 2000/05/29 22:23:34 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.164 2000/05/31 05:28:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -3391,6 +3391,25 @@ srmmu_restore_prom_ctx()
 	tlb_flush_all();
 	sta(SRMMU_CXTPTR, ASI_SRMMU, prom_ctxreg);
 	tlb_flush_all();
+}
+
+/*
+ * Globalize the boot cpu's cpu_info structure.
+ */
+void
+pmap_globalize_boot_cpuinfo(cpi)
+	struct cpu_info *cpi;
+{
+	vaddr_t va;
+	vsize_t off;
+
+	for (va = (vaddr_t)cpi, sz = sizeof(*cpi);
+	     off < sizeof(*cpi); va += NBPG, off += NBPG) {
+		paddr_t pa = VA2PA((caddr_t)CPUINFO_VA + off);
+		pmap_enter(pmap_kernel(), va, pa,
+		    VM_PROT_READ|VM_PROT_WRITE,
+		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+	}
 }
 
 /*
