@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.16 1998/03/26 19:20:37 christos Exp $	*/
+/*	$NetBSD: str.c,v 1.17 1998/11/06 23:31:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: str.c,v 1.16 1998/03/26 19:20:37 christos Exp $";
+static char rcsid[] = "$NetBSD: str.c,v 1.17 1998/11/06 23:31:09 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: str.c,v 1.16 1998/03/26 19:20:37 christos Exp $");
+__RCSID("$NetBSD: str.c,v 1.17 1998/11/06 23:31:09 christos Exp $");
 #endif
 #endif				/* not lint */
 #endif
@@ -140,11 +140,12 @@ brk_string(str, store_argc, expand, buffer)
 		switch(ch = *p) {
 		case '"':
 		case '\'':
-			if (inquote)
+			if (inquote) {
 				if (inquote == ch)
 					inquote = '\0';
 				else
 					break;
+			}
 			else {
 				inquote = (char) ch;
 				/* Don't miss "" or '' */

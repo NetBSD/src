@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.29 1998/11/01 03:07:34 itohy Exp $	*/
+/*	$NetBSD: var.c,v 1.30 1998/11/06 23:31:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.29 1998/11/01 03:07:34 itohy Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.30 1998/11/06 23:31:09 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.29 1998/11/01 03:07:34 itohy Exp $");
+__RCSID("$NetBSD: var.c,v 1.30 1998/11/06 23:31:09 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1158,7 +1158,8 @@ VarRESubstitute(word, addSpace, buf, patternp)
 		Buf_AddByte(buf,rp[1]);
 		rp++;
 	    }
-	    else if ((*rp == '&') || ((*rp == '\\') && isdigit(rp[1]))) {
+	    else if ((*rp == '&') ||
+		((*rp == '\\') && isdigit((unsigned char)rp[1]))) {
 		int n;
 		char *subbuf;
 		int sublen;

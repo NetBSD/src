@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.23 1998/11/01 03:07:34 itohy Exp $	*/
+/*	$NetBSD: job.c,v 1.24 1998/11/06 23:31:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.23 1998/11/01 03:07:34 itohy Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.24 1998/11/06 23:31:09 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.23 1998/11/01 03:07:34 itohy Exp $");
+__RCSID("$NetBSD: job.c,v 1.24 1998/11/06 23:31:09 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2411,7 +2411,7 @@ Job_Init(maxproc, maxlocal)
 {
     GNode         *begin;     /* node for commands to do at the very start */
 
-    (void) sprintf(tfile, "/tmp/make%05d", getpid());
+    (void) sprintf(tfile, "/tmp/make%05ld", (unsigned long)getpid());
 
     jobs =  	  Lst_Init(FALSE);
     stoppedJobs = Lst_Init(FALSE);
@@ -2663,7 +2663,7 @@ Job_ParseShell(line)
     Shell   	  newShell;
     Boolean 	  fullSpec = FALSE;
 
-    while (isspace(*line)) {
+    while (isspace((unsigned char)*line)) {
 	line++;
     }
 

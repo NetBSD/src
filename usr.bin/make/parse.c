@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.39 1998/09/18 20:15:36 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.40 1998/11/06 23:31:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.39 1998/09/18 20:15:36 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.40 1998/11/06 23:31:09 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.39 1998/09/18 20:15:36 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.40 1998/11/06 23:31:09 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -597,7 +597,7 @@ ParseDoSrc (tOp, src, allsrc)
 {
     GNode	*gn = NULL;
 
-    if (*src == '.' && isupper (src[1])) {
+    if (*src == '.' && isupper ((unsigned char)src[1])) {
 	int keywd = ParseFindKeyword(src);
 	if (keywd != -1) {
 	    int op = parseKeywords[keywd].op;
@@ -823,7 +823,7 @@ ParseDoDependency (line)
 
     do {
 	for (cp = line;
-	     *cp && !isspace (*cp) &&
+	     *cp && !isspace ((unsigned char)*cp) &&
 	     (*cp != '!') && (*cp != ':') && (*cp != '(');
 	     cp++)
 	{
@@ -882,7 +882,7 @@ ParseDoDependency (line)
 	 * Have a word in line. See if it's a special target and set
 	 * specType to match it.
 	 */
-	if (*line == '.' && isupper (line[1])) {
+	if (*line == '.' && isupper ((unsigned char)line[1])) {
 	    /*
 	     * See if the target is a special target that must have it
 	     * or its sources handled specially.
@@ -1049,7 +1049,7 @@ ParseDoDependency (line)
 		Parse_Error(PARSE_WARNING, "Extra target ignored");
 	    }
 	} else {
-	    while (*cp && isspace (*cp)) {
+	    while (*cp && isspace ((unsigned char)*cp)) {
 		cp++;
 	    }
 	}
@@ -1107,7 +1107,7 @@ ParseDoDependency (line)
     /*
      * Get to the first source
      */
-    while (*cp && isspace (*cp)) {
+    while (*cp && isspace ((unsigned char)*cp)) {
 	cp++;
     }
     line = cp;
@@ -1192,7 +1192,7 @@ ParseDoDependency (line)
 	     * has no valid suffix.
 	     */
 	    char  savec;
-	    while (*cp && !isspace (*cp)) {
+	    while (*cp && !isspace ((unsigned char)*cp)) {
 		cp++;
 	    }
 	    savec = *cp;
@@ -1220,7 +1220,7 @@ ParseDoDependency (line)
 	    if (savec != '\0') {
 		cp++;
 	    }
-	    while (*cp && isspace (*cp)) {
+	    while (*cp && isspace ((unsigned char)*cp)) {
 		cp++;
 	    }
 	    line = cp;
@@ -1235,7 +1235,7 @@ ParseDoDependency (line)
 	     * specifications (i.e. things with left parentheses in them)
 	     * and handle them accordingly.
 	     */
-	    while (*cp && !isspace (*cp)) {
+	    while (*cp && !isspace ((unsigned char)*cp)) {
 		if ((*cp == '(') && (cp > line) && (cp[-1] != '$')) {
 		    /*
 		     * Only stop for a left parenthesis if it isn't at the
@@ -1273,7 +1273,7 @@ ParseDoDependency (line)
 
 		ParseDoSrc (tOp, line, curSrcs);
 	    }
-	    while (*cp && isspace (*cp)) {
+	    while (*cp && isspace ((unsigned char)*cp)) {
 		cp++;
 	    }
 	    line = cp;
@@ -1446,7 +1446,7 @@ Parse_DoVar (line, ctxt)
      * Skip to operator character, nulling out whitespace as we go
      */
     for (cp = line + 1; *cp != '='; cp++) {
-	if (isspace (*cp)) {
+	if (isspace ((unsigned char)*cp)) {
 	    *cp = '\0';
 	}
     }
@@ -1499,7 +1499,7 @@ Parse_DoVar (line, ctxt)
 	    break;
     }
 
-    while (isspace (*cp)) {
+    while (isspace ((unsigned char)*cp)) {
 	cp++;
     }
 
@@ -2474,7 +2474,7 @@ Parse_File(name, stream)
 		 * Lines that begin with the special character are either
 		 * include or undef directives.
 		 */
-		for (cp = line + 1; isspace (*cp); cp++) {
+		for (cp = line + 1; isspace ((unsigned char)*cp); cp++) {
 		    continue;
 		}
 		if (strncmp(cp, "include", 7) == 0 ||
@@ -2512,7 +2512,7 @@ Parse_File(name, stream)
 #ifndef POSIX
 	    shellCommand:
 #endif
-		for (cp = line + 1; isspace (*cp); cp++) {
+		for (cp = line + 1; isspace ((unsigned char)*cp); cp++) {
 		    continue;
 		}
 		if (*cp) {
