@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.1.2.1 1997/07/01 16:52:43 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.1.2.2 1997/07/01 23:32:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
 #ifndef	SCSI_BUSCONF_H
 #define SCSI_BUSCONF_H 1
 
-typedef	int			boolean;
+typedef	int	boolean;
 
 #include <sys/queue.h>
 #include <machine/cpu.h>
@@ -127,12 +127,11 @@ struct scsipi_device {
  * these statically allocated. 
  */
 struct scsipi_adapter {
-	int     (*scsipi_cmd) __P((struct scsipi_xfer *)); 
-	void        (*scsipi_minphys) __P((struct buf *));
-	int     (*open_target_lu) __P((void));
-	int     (*close_target_lu) __P((void)); 
-};    
-
+	int	(*scsipi_cmd) __P((struct scsipi_xfer *)); 
+	void	(*scsipi_minphys) __P((struct buf *));
+	int	(*open_target_lu) __P((void));
+	int	(*close_target_lu) __P((void)); 
+};
 
 /*
  * This structure describes the connection between an adapter driver and
@@ -157,40 +156,47 @@ struct scsipi_link {
 #define	SDEV_OPEN	 	0x08	/* at least 1 open session */
 #define	SDEV_DBX		0xf0	/* debuging flags (scsipi_debug.h) */
 	u_int16_t quirks;		/* per-device oddities */
-#define	SDEV_AUTOSAVE		0x0001	/* do implicit SAVEDATAPOINTER on disconnect */
+#define	SDEV_AUTOSAVE		0x0001	/* do implicit SAVEDATAPOINTER on
+					   disconnect */
 #define	SDEV_NOSYNCWIDE		0x0002	/* does not grok SDTR or WDTR */
-#define	SDEV_NOLUNS			0x0004	/* does not grok LUNs */
+#define	SDEV_NOLUNS		0x0004	/* does not grok LUNs */
 #define	SDEV_FORCELUNS		0x0008	/* prehistoric drive/ctlr groks LUNs */
 #define SDEV_NOMODESENSE	0x0010	/* removable media/optical drives */
-#define SDEV_NOSTARTUNIT	0x0020	/* do not issue start unit requests in sd.c */
-#define ADEV_CDROM			0x0100	/* device is a CD-ROM */  
+#define SDEV_NOSTARTUNIT	0x0020	/* do not issue start unit requests
+					   in sd.c */
+#define ADEV_CDROM		0x0100	/* device is a CD-ROM */  
 #define ADEV_LITTLETOC		0x0200	/* Audio TOC uses wrong byte order */  
 #define ADEV_NOCAPACITY		0x0400	/* no READ_CD_CAPACITY command */
-#define ADEV_NOTUR			0x0800	/* no TEST_UNIT_READY command */
+#define ADEV_NOTUR		0x0800	/* no TEST_UNIT_READY command */
 #define ADEV_NODOORLOCK		0x1000	/* device can't look door */
 
 
 	struct	scsipi_device *device;	/* device entry points etc. */
-	void	*device_softc;			/* needed for call to foo_start */
+	void	*device_softc;		/* needed for call to foo_start */
 	struct scsipi_adapter *adapter;	/* adapter entry points etc. */
-	void    *adapter_softc;			/* needed for call to foo_scsipi_cmd */
-	union {							/* needed for call to foo_scsipi_cmd */
+	void    *adapter_softc;		/* needed for call to foo_scsipi_cmd */
+	union {				/* needed for call to foo_scsipi_cmd */
 		struct scsi_link {
-			int  channel;			/* channel, i.e. bus # on controller */ 
+			int  channel;	/* channel, i.e. bus # on controller */ 
  
 			u_int8_t scsi_version;	/* SCSI-I, SCSI-II, etc. */
-			u_int8_t scsibus;		/* the Nth scsibus */
-			u_int8_t target;		/* targ of this dev */
-			u_int8_t lun;			/* lun of this dev */
-			u_int8_t adapter_target;	/* what are we on the scsi bus */
-			int max_target;			/* XXX max target supported by adapter */
+			u_int8_t scsibus;	/* the Nth scsibus */
+			u_int8_t target;	/* targ of this dev */
+			u_int8_t lun;		/* lun of this dev */
+			u_int8_t adapter_target;/* what are we on the scsi
+						   bus */
+			int max_target;		/* XXX max target supported
+						   by adapter */
 		} scsipi_scsi;
-		struct atascsipi_link {		/* XXX this must be in sync with wd_link */
-			u_int8_t type;			/* 0 = ATA, 1 = ATAPI, from wdlink.h */
-			u_int8_t channel;		/* channel, i.e. bus # on controller */
-			u_int8_t drive; 		/* drive number on the bus */
+		struct atascsipi_link {		/* XXX this must be in sync
+						   with wd_link */
+			u_int8_t type;		/* 0 = ATA, 1 = ATAPI, from
+						   wdlink.h */
+			u_int8_t channel;	/* channel, i.e. bus # on
+						   controller */
+			u_int8_t drive; 	/* drive number on the bus */
 			u_int8_t atapibus;
-			u_int8_t cap;			/* drive capability */
+			u_int8_t cap;		/* drive capability */
 #define ACAP_DRQ_MPROC      0x0000  /* microprocessor DRQ */
 #define ACAP_DRQ_INTR       0x0100  /* interrupt DRQ */ 
 #define ACAP_DRQ_ACCEL      0x0200  /* accelerated DRQ */
@@ -204,7 +210,6 @@ struct scsipi_link {
 				int flags));
 	int (*scsipi_interpret_sense) __P((struct scsipi_xfer *));
 	void (*sc_print_addr) __P((struct scsipi_link *sc_link));
-
 };
 #define scsipi_scsi _scsipi_link.scsipi_scsi
 #define scsipi_atapi _scsipi_link.scsipi_atapi
@@ -224,9 +229,9 @@ struct scsipi_xfer {
 	struct	scsipi_generic *cmd;	/* The scsipi command to execute */
 	int	cmdlen;			/* how long it is */
 	u_char	*data;			/* dma address OR a uio address */
-	int	datalen;		/* data len (blank if uio)    */
+	int	datalen;		/* data len (blank if uio) */
 	int	resid;			/* how much buffer was not touched */
-	int	error;			/* an error value	*/
+	int	error;			/* an error value */
 	struct	buf *bp;		/* If we need to associate with a buf */
 	union {
 		struct  scsipi_sense_data scsi_sense; /* 32 bytes */
@@ -238,7 +243,7 @@ struct scsipi_xfer {
 	 */
 	int	req_sense_length;	/* Explicit request sense length */
 	u_int8_t status;		/* SCSI status */
-	struct	scsipi_generic cmdstore;	/* stash the command in here */
+	struct	scsipi_generic cmdstore;/* stash the command in here */
 };
 
 /*
@@ -306,23 +311,25 @@ struct scsi_quirk_inquiry_pattern {
 };
 
 
-caddr_t scsipi_inqmatch __P((struct scsipi_inquiry_pattern *, caddr_t,
-	int, int, int *));
-char *scsipi_dtype __P((int));
-void scsipi_strvis __P((u_char *, u_char *, int));
-int scsipi_execute_xs __P((struct scsipi_xfer *));
-u_long scsipi_size __P((struct scsipi_link *, int));
-int scsipi_test_unit_ready __P((struct scsipi_link *, int));
-int scsipi_prevent __P((struct scsipi_link *, int, int));
-int scsipi_inquire __P((struct scsipi_link *, struct scsipi_inquiry_data *, int));
-int scsipi_start __P((struct scsipi_link *, int, int));
-void scsipi_done __P((struct scsipi_xfer *));
-void scsipi_user_done __P((struct scsipi_xfer *));
-int scsipi_do_ioctl __P((struct scsipi_link *, dev_t, u_long, caddr_t, int, struct proc *));
+caddr_t	scsipi_inqmatch __P((struct scsipi_inquiry_pattern *, caddr_t,
+	    int, int, int *));
+char	*scsipi_dtype __P((int));
+void	scsipi_strvis __P((u_char *, u_char *, int));
+int	scsipi_execute_xs __P((struct scsipi_xfer *));
+u_long	scsipi_size __P((struct scsipi_link *, int));
+int	scsipi_test_unit_ready __P((struct scsipi_link *, int));
+int	scsipi_prevent __P((struct scsipi_link *, int, int));
+int	scsipi_inquire __P((struct scsipi_link *,
+	    struct scsipi_inquiry_data *, int));
+int	scsipi_start __P((struct scsipi_link *, int, int));
+void	scsipi_done __P((struct scsipi_xfer *));
+void	scsipi_user_done __P((struct scsipi_xfer *));
+int	scsipi_do_ioctl __P((struct scsipi_link *, dev_t, u_long, caddr_t,
+	    int, struct proc *));
 
-void show_scsipi_xs __P((struct scsipi_xfer *));
-void show_scsipi_cmd __P((struct scsipi_xfer *));
-void show_mem __P((u_char *, int));
+void	show_scsipi_xs __P((struct scsipi_xfer *));
+void	show_scsipi_cmd __P((struct scsipi_xfer *));
+void	show_mem __P((u_char *, int));
 
 static __inline void _lto2b __P((u_int32_t val, u_int8_t *bytes));
 static __inline void _lto3b __P((u_int32_t val, u_int8_t *bytes));

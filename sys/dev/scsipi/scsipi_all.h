@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_all.h,v 1.1.2.1 1997/07/01 16:52:32 bouyer Exp $	*/
+/*	$NetBSD: scsipi_all.h,v 1.1.2.2 1997/07/01 23:32:47 thorpej Exp $	*/
 
 /*
  * SCSI and SCSI-like general interface description
@@ -38,7 +38,7 @@ struct scsipi_test_unit_ready {
 
 #define REQUEST_SENSE       0x03
 struct scsipi_sense {
-    u_int8_t opcode;
+	u_int8_t opcode;
 	u_int8_t byte2;
 	u_int8_t unused[2];
 	u_int8_t length;
