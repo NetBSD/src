@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.c,v 1.20 1999/10/28 06:37:32 lukem Exp $	*/
+/*	$NetBSD: db_output.c,v 1.21 2000/03/08 08:31:33 jdolecek Exp $	*/
 
 /* 
  * Mach Operating System
@@ -149,7 +149,7 @@ db_putchar(c)
 	    cnputc(c);
 	    db_output_position++;
 	    if (db_max_width >= DB_MIN_MAX_WIDTH
-		&& db_output_position >= db_max_width-1) {
+		&& db_output_position >= db_max_width) {
 		/* auto new line */
 		cnputc('\n');
 		db_output_position = 0;
