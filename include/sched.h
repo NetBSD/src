@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.1.2.5 2002/04/11 18:51:59 thorpej Exp $	*/
+/*	$NetBSD: sched.h,v 1.1.2.6 2002/10/29 01:26:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@ struct sched_param {
 
 /* Functions */
 
+__BEGIN_DECLS
 /* 
  * These are permitted to fail and return ENOSYS if
  * _POSIX_PRIORITY_SCHEDULING is not defined.
@@ -74,6 +75,7 @@ int	sched_rr_get_interval(pid_t pid, struct timespec *interval);
 
 /* Not optional in the presence of _POSIX_THREADS */
 int	sched_yield(void);
+__END_DECLS
 
 #if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE) && \
     !defined(_ANSI_SOURCE)
@@ -83,8 +85,10 @@ int	sched_yield(void);
  * by any standard.
  */
 
+__BEGIN_DECLS
 pid_t	 clone __P((int (*)(void *), void *, int, void *));
 pid_t	__clone __P((int (*)(void *), void *, int, void *));
+__END_DECLS
 
 #endif /* !_POSIX_SOURCE && !_XOPEN_SOURCE && !_ANSI_SOURCE */
 
