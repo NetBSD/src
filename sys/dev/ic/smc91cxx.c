@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.1.2.4 1997/08/24 15:25:40 thorpej Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.1.2.5 1997/08/24 22:24:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -516,7 +516,9 @@ smc91cxx_start(ifp)
 		delay(1);
 	} while (--timo);
 
-	if (timo == 0) {
+	packetno = bus_space_read_1(bst, bsh, ALLOC_RESULT_REG_B);
+
+	if (packetno & ARR_FAILED || timo == 0) {
 		/*
 		 * No transmit memory is available.  Record the number
 		 * of requestd pages and enable the allocation completion
@@ -532,15 +534,6 @@ smc91cxx_start(ifp)
 		ifp->if_flags |= IFF_OACTIVE;
 
 		return;
-	}
-
-	/*
-	 * Memory allocation is complete; sanity check it.
-	 */
-	packetno = bus_space_read_1(bst, bsh, ALLOC_RESULT_REG_B);
-	if (packetno & ARR_FAILED) {
-		printf("%s: memory allocation failed\n", sc->sc_dev.dv_xname);
-		goto again;
 	}
 
 	/*
@@ -645,11 +638,6 @@ smc91cxx_intr(arg)
 	u_int8_t mask, interrupts, status;
 	u_int16_t packetno, tx_status, card_stats;
 
-	/*
-	 * Clear the watchdog.
-	 */
-	ifp->if_timer = 0;
-
 	SMC_SELECT_BANK(sc, 2);
 
 	/*
@@ -710,11 +698,8 @@ smc91cxx_intr(arg)
 			/* XXX bound this loop! */ ;
 		bus_space_write_2(bst, bsh, MMU_CMD_REG_W, MMUCR_FREEPKT);
 
-		/*
-		 * Attempt to queue more packets for transmission.
-		 */
 		ifp->if_flags &= ~IFF_OACTIVE;
-		smc91cxx_start(ifp);
+		ifp->if_timer = 0;
 	}
 
 	/*
@@ -774,11 +759,7 @@ smc91cxx_intr(arg)
 			/* XXX bound this loop! */ ;
 		bus_space_write_2(bst, bsh, MMU_CMD_REG_W, MMUCR_FREEPKT);
 
-		/*
-		 * Attempt to queue more packets for transmission.
-		 */
-		ifp->if_flags &= ~IFF_OACTIVE;
-		smc91cxx_start(ifp);
+		ifp->if_timer = 0;
 	}
 
 	/*
@@ -802,11 +783,7 @@ smc91cxx_intr(arg)
 
 		SMC_SELECT_BANK(sc, 2);
 
-		/*
-		 * Attempt to queue more packets for transmission.
-		 */
-		ifp->if_flags &= ~IFF_OACTIVE;
-		smc91cxx_start(ifp);
+		ifp->if_timer = 0;
 	}
 
 	/*
@@ -816,6 +793,11 @@ smc91cxx_intr(arg)
 		smc91cxx_stop(sc);
 		smc91cxx_init(sc);
 	}
+
+	/*
+	 * Attempt to queue more packets for transmission.
+	 */
+	smc91cxx_start(ifp);
 
 	/*
 	 * Reenable the interrupts we wish to receive now that processing
@@ -1094,7 +1076,7 @@ smc91cxx_watchdog(ifp)
 {
 	struct smc91cxx_softc *sc = ifp->if_softc;
 
-	printf("%s: watchdog reset\n", sc->sc_dev.dv_xname);
+	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	ifp->if_oerrors++;
 	smc91cxx_reset(sc);
 }
