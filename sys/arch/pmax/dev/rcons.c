@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.21 1999/01/28 10:35:53 jonathan Exp $	*/
+/*	$NetBSD: rcons.c,v 1.22 1999/04/13 18:53:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -66,15 +66,14 @@
 
 #include <sys/device.h>
 #include <machine/fbio.h>
+#include <dev/wscons/wsdisplayvar.h>
 #include <dev/rcons/rcons.h>
-#include <dev/rcons/rcons_subr.h>
-#include <dev/rcons/raster.h>
+#include <dev/rasops/rasops.h>
 #include <machine/fbvar.h>
 
 #include <machine/pmioctl.h>
 #include <pmax/dev/fbreg.h>
 #include <pmax/dev/lk201var.h>
-
 
 
 /*
@@ -91,10 +90,10 @@ dev_t	cn_in_dev = NODEV;	/* console input device. */
 
 char rcons_maxcols [20];
 
-void	rcons_connect __P((struct fbinfo *info));
+static struct rconsole rc;
+
 void	rasterconsoleattach __P((int n));
 void	rcons_vputc __P ((dev_t dev, int c));
-
 
 void	rconsreset __P((struct tty *tp, int rw));
 void	rcons_input __P((dev_t dev, int ic));
@@ -113,8 +112,25 @@ void
 rcons_connect (info)
 	struct fbinfo *info;
 {
-	static struct rconsole rc;
-	static int row, col;
+	static struct rasops_info ri;
+
+	/* TC mfb has special needs; 8-bits per pel, but monochrome */
+	if (info->fi_type.fb_boardtype == PMAX_FBTYPE_MFB) {
+		ri.ri_depth = 8;
+		ri.ri_forcemono = 1;
+	} else
+		ri.ri_depth = info->fi_type.fb_depth;
+	
+	ri.ri_width = info->fi_type.fb_width;
+	ri.ri_height = info->fi_type.fb_height;
+	ri.ri_stride = info->fi_linebytes;
+	ri.ri_bits = (u_char *)info->fi_pixels;
+	
+	/* Get operations set and set framebugger colormap */
+	rasops_init(&ri, 0, 80, 1, 0);
+	
+	if (ri.ri_depth == 8 && info->fi_type.fb_boardtype != PMAX_FBTYPE_MFB)
+		info->fi_driver->fbd_putcmap(info, rasops_cmap, 0, 256);
 
 	fbconstty = &rcons_tty [0];
 	fbconstty->t_dev = makedev(85, 0);	/* /dev/console */
@@ -126,42 +142,51 @@ rcons_connect (info)
 	 * the part that rcons.h says
 	 * "This section must be filled in by the framebugger device"
 	 */
-	rc.rc_width = info->fi_type.fb_width;
-	rc.rc_height = info->fi_type.fb_height;
-	rc.rc_depth = info->fi_type.fb_depth;
-	rc.rc_pixels =info->fi_pixels;
-	rc.rc_linebytes = info->fi_linebytes;
-#define HW_FONT_WIDTH 8
-#define HW_FONT_HEIGHT 15
-	rc.rc_maxrow = rc.rc_height / HW_FONT_HEIGHT;
-	rc.rc_maxcol = 80;
+	rc.rc_ops = &ri.ri_ops;
+	rc.rc_cookie = &ri;
+	rc.rc_maxrow = ri.ri_rows;
+	rc.rc_maxcol = ri.ri_cols;
 	rc.rc_bell = lk_bell;
-
-	/* Initialize the state information. */
-	rc.rc_bits = 0;
-	rc.rc_ringing = 0;
-	rc.rc_belldepth = 0;
-	rc.rc_scroll = 0;
-	rc.rc_p0 = 0;
-	rc.rc_p1 = 0;
-
-	/* The following two items may optionally be left zero */
-	rc.rc_row = &row;
-	rc.rc_col = &col;
-
-	/* Initialize the rastercons font to something suitable for a qvss */
-	rcons_font(&rc);
-
-
-	row = (rc.rc_height / HW_FONT_HEIGHT) - 1;
-	col = 0;
-
-	rcons_init (&rc);
-
-
-	rc.rc_xorigin = 0;
-	rc.rc_yorigin = 0;
+	rc.rc_width = ri.ri_width;
+	rc.rc_height = ri.ri_height;
+	rcons_init(&rc);
 }
+
+
+/*
+ * Called by drivers which can provide a native 'struct wsdisplay_emulops'.
+ */
+void
+rcons_connect_native (ops, cookie, width, height, cols, rows)
+	struct wsdisplay_emulops *ops;
+	void *cookie;
+	int width, height, cols, rows;
+{
+	extern dev_t cn_in_dev;	/* XXX rcons hackery */
+
+	/* Do we really need this? - ad */
+	/*XXX*/ cn_in_dev = cn_tab->cn_dev; /*XXX*/ /* FIXME */
+
+	fbconstty = &rcons_tty [0];
+	fbconstty->t_dev = makedev(85, 0);	/* /dev/console */
+	fbconstty->t_ispeed = fbconstty->t_ospeed = TTYDEF_SPEED;
+	fbconstty->t_param = (int (*)(struct tty *, struct termios *))nullop;
+
+	/*
+	 * Connect the console geometry...
+	 * the part that rcons.h says
+	 * "This section must be filled in by the framebugger device"
+	 */
+	rc.rc_ops = ops;
+	rc.rc_cookie = cookie;
+	rc.rc_bell = lk_bell;
+	rc.rc_width = width;
+	rc.rc_height = width;
+	rc.rc_maxcol = cols;
+	rc.rc_maxrow = rows;
+	rcons_init(&rc);
+}
+
 
 /* 
  * Hack around the rcons putchar interface not taking a dev_t.
@@ -460,7 +485,7 @@ rcons_input (dev, ic)
 	int unit = minor (dev);
 
 #ifdef RCONS_DEBUG
-	printf("rcons_input: unit %d gives %c on \n", unit, ic);
+	printf("rcons_input: dev %d.%d gives %c on \n", major(dev), unit, ic);
 #endif
 
 	if (unit > NRASTERCONSOLE)
