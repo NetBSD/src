@@ -1,4 +1,4 @@
-#	$NetBSD: gettytab,v 1.11 1998/01/29 08:28:31 lukem Exp $
+#	$NetBSD: gettytab,v 1.12 1998/12/12 19:35:48 fair Exp $
 #	from: @(#)gettytab	8.2 (Berkeley) 4/20/94
 #
 # Most of the table entries here are just copies of the old getty table,
@@ -44,6 +44,31 @@ std.57600|57600-baud:\
 	:sp#57600:
 std.115200|115200-baud:\
 	:sp#115200:
+
+# PPP network link login
+#
+# these entries can be used by ISPs or others who want to be able
+# to offer both a "shell" and a PPP login on the same port. Setting
+# the "pp" attribute allows getty(8) to recognize a PPP link start
+# negotiation, and invoke the program listed, in addition to normal
+# login(1).
+#
+# N.B.: if PPP is recognized, this bypasses normal login/password
+# exchange; the expectation is that you'll configure pppd (or whatever)
+# to require a PAP or CHAP handshake for authentication after PPP is
+# started up.
+#
+# It is also recommended that you use hardware (CTS/RTS) flow control
+# on the port, and run the port as fast as possible, to allow modems
+# extra time to do data compression, if enabled.
+#
+ppp:np:ce:ck:pp=/usr/sbin/pppd:
+#
+ppp.19200|PPP-19200:sp#19200:tc=ppp:
+ppp.38400|PPP-38400:sp#38400:tc=ppp:
+ppp.57600|PPP-57600:sp#57600:tc=ppp:
+ppp.115200|PPP-115200:sp#115200:tc=ppp:
+ppp.230400|PPP-230400:sp#230400:tc=ppp:
 
 #
 # Dial in rotary tables, speed selection via 'break'
