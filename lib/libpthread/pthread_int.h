@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.26 2004/03/14 01:19:42 cl Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.27 2004/06/25 16:33:32 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -367,7 +367,9 @@ void	pthread__deliver_signal(pthread_t self, pthread_t t, siginfo_t *si);
 void	pthread__signal_deferred(pthread_t self, pthread_t t);
 
 void	pthread__destroy_tsd(pthread_t self);
-void	pthread__assertfunc(char *file, int line, char *function, char *expr);
-void	pthread__errorfunc(char *file, int line, char *function, char *msg);
+void	pthread__assertfunc(const char *file, int line, const char *function,
+		const char *expr);
+void	pthread__errorfunc(const char *file, int line, const char *function,
+		const char *msg);
 
 #endif /* _LIB_PTHREAD_INT_H */
