@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.624 2003/09/28 16:36:53 dsl Exp $
+#	$NetBSD: mi,v 1.625 2003/10/01 01:31:20 christos Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -773,7 +773,6 @@
 ./usr/include/sys/ioctl_compat.h	comp-c-include
 ./usr/include/sys/ipc.h			comp-c-include
 ./usr/include/sys/kcore.h		comp-c-include
-./usr/include/sys/kernel.h		comp-c-include
 ./usr/include/sys/kgdb.h		comp-c-include
 ./usr/include/sys/ksem.h		comp-c-include
 ./usr/include/sys/ksyms.h		comp-c-include
