@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.79 1996/02/29 20:58:07 cgd Exp $
+#	$NetBSD: files,v 1.80 1996/03/15 02:43:53 paulus Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -187,7 +187,7 @@ file msdosfs/msdosfs_lookup.c		msdosfs
 file msdosfs/msdosfs_vfsops.c		msdosfs
 file msdosfs/msdosfs_vnops.c		msdosfs
 file net/bpf.c				bpfilter		needs-count
-file net/bpf_filter.c			bpfilter
+file net/bpf_filter.c			bpfilter ppp
 file net/if.c
 file net/if_arcsubr.c			arc			needs-flag
 file net/if_ethersubr.c			ether fddi		needs-flag
@@ -197,6 +197,8 @@ file net/if_sl.c			sl			needs-count
 file net/if_ppp.c			ppp			needs-count
 file net/ppp_tty.c			ppp
 file net/bsd-comp.c			ppp
+file net/ppp-deflate.c			ppp
+file net/zlib.c				ppp
 file net/if_tun.c			tun			needs-count
 file net/radix.c
 file net/raw_cb.c
