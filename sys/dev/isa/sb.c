@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.61 1998/08/10 00:20:39 mycroft Exp $	*/
+/*	$NetBSD: sb.c,v 1.62 1998/08/12 18:15:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -349,8 +349,6 @@ sb_mpu401_close(addr)
 {
 	mpu401_close(SBMPU(addr));
 }
-
-
 
 void
 sb_mpu401_getinfo(addr, mi)
