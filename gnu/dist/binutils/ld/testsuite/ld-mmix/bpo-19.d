@@ -30,8 +30,6 @@ Contents of section \.text:
  0dd0 230bfcc0 230bfd00 230bfd40 230bfd80  .*
  0de0 230bfdc0 230bfe00 230bfe40 230bfe80  .*
  0df0 230bfec0                             .*
-Contents of section \.data:
-Contents of section \.sbss:
 Contents of section \.MMIX\.reg_contents:
  0100 00000000 00000000 00000000 00000100  .*
  0110 00000000 00000200 00000000 00000300  .*

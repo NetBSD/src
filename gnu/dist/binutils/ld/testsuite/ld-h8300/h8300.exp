@@ -1,5 +1,5 @@
 # Expect script for ld-h8300 tests
-# Copyright 2002 Free Software Foundation, Inc.
+# Copyright 2002, 2003, 2004 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,9 +24,15 @@ if ![istarget h8300-*-*] {
     return
 }
 
-set test_list [lsort [glob -nocomplain $srcdir/$subdir/*.d]]
-foreach test $test_list {
-    # We need to strip the ".d", but can leave the dirname.
-    verbose [file rootname $test]
-    run_dump_test [file rootname $test]
+run_dump_test relax
+
+if {[istarget *-elf]} {
+    run_dump_test relax-2
+    run_dump_test relax-3
+    run_dump_test relax-4
+    run_dump_test relax-5
+} else {
+    run_dump_test relax-3-coff
+    run_dump_test relax-4-coff
+    run_dump_test relax-5-coff
 }

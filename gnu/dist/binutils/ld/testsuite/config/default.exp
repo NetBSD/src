@@ -60,6 +60,22 @@ if {![file isdirectory tmpdir/gas]} then {
 }
 set gcc_gas_flag "-B[pwd]/tmpdir/gas/"
 
+# Make a symlink from tmpdir/ld to the linker in the build tree, so
+# that we can use a -B option to gcc to force it to use the newly
+# built linker. 
+if {![file isdirectory tmpdir/ld]} then {
+    catch "exec mkdir tmpdir/ld" status
+    catch "exec ln -s ../../ld-new tmpdir/ld/ld" status
+}
+set gcc_ld_flag "-B[pwd]/tmpdir/ld/"
+
+# load the linker path
+load_lib tmpdir/libpath.exp
+
+foreach dir $libpath {
+    set gcc_ld_flag "$gcc_ld_flag -L$dir"
+}
+
 # The mips64-*-linux-gnu compiler defaults to the N32 ABI after
 # installed, but to the O32 ABI in the build tree, because of some
 # specs-file hacks.  Make sure we use an ABI that is compatible with
