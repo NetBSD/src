@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_elf32.c,v 1.15 1999/09/20 04:39:03 lukem Exp $	*/
+/*	$NetBSD: nlist_elf32.c,v 1.16 1999/10/21 21:12:37 erh Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -55,12 +55,6 @@
 
 #if (defined(NLIST_ELF32) && (ELFSIZE == 32)) || \
     (defined(NLIST_ELF64) && (ELFSIZE == 64))
-
-#define	CONCAT(x,y)	__CONCAT(x,y)
-#define	ELFNAME(x)	CONCAT(elf,CONCAT(ELFSIZE,CONCAT(_,x)))
-#define	ELFNAME2(x,y)	CONCAT(x,CONCAT(_elf,CONCAT(ELFSIZE,CONCAT(_,y))))
-#define	ELFNAMEEND(x)	CONCAT(x,CONCAT(_elf,ELFSIZE))
-#define	ELFDEFNNAME(x)	CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
 
 /* No need to check for off < 0 because it is unsigned */
 #define	check(off, size)	(off + size > mappedsize)
