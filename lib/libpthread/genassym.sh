@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: genassym.sh,v 1.2 2003/01/18 10:34:14 thorpej Exp $
+#	$NetBSD: genassym.sh,v 1.3 2003/12/15 20:07:39 jmc Exp $
 
 #
 # Copyright (c) 1997 Matthias Pfaller.
@@ -44,7 +44,7 @@ else
 	ccode=0
 fi
 
-#trap "rm -f /tmp/$$.c /tmp/genassym.$$" 0 1 2 3 15
+trap "rm -f /tmp/$$.c /tmp/genassym.$$" 0 1 2 3 15
 
 $awk '
 BEGIN {
