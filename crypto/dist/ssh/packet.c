@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.c,v 1.2 2000/12/30 14:54:38 toshii Exp $	*/
+/*	$NetBSD: packet.c,v 1.3 2001/01/05 06:33:36 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: packet.c,v 1.2 2000/12/30 14:54:38 toshii Exp $");
+__RCSID("$NetBSD: packet.c,v 1.3 2001/01/05 06:33:36 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -1000,7 +1000,8 @@ packet_read_poll(int *payload_len_ptr)
 			case SSH2_MSG_DISCONNECT:
 				reason = packet_get_int();
 				msg = packet_get_string(NULL);
-				log("Received disconnect: %d: %.900s", reason, msg);
+				log("Received disconnect from %s: %d: %.400s", get_remote_ipaddr(),
+					reason, msg);
 				xfree(msg);
 				fatal_cleanup();
 				break;
@@ -1019,7 +1020,8 @@ packet_read_poll(int *payload_len_ptr)
 				break;
 			case SSH_MSG_DISCONNECT:
 				msg = packet_get_string(NULL);
-				log("Received disconnect: %.900s", msg);
+				log("Received disconnect from %s: %.400s", get_remote_ipaddr(),
+					msg);
 				fatal_cleanup();
 				xfree(msg);
 				break;
