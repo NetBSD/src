@@ -1,4 +1,4 @@
-/*	$NetBSD: find.c,v 1.15 2002/09/27 15:56:26 provos Exp $	*/
+/*	$NetBSD: find.c,v 1.16 2003/05/22 15:47:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)find.c	8.5 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: find.c,v 1.15 2002/09/27 15:56:26 provos Exp $");
+__RCSID("$NetBSD: find.c,v 1.16 2003/05/22 15:47:25 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -157,7 +157,7 @@ ftscompare(e1, e2)
 }
 
 FTS *tree;			/* pointer to top of FTS hierarchy */
-FTSENT *entry;			/* shared with SIGINFO handler */
+FTSENT *g_entry;		/* shared with SIGINFO handler */
 
 /*
  * find_execute --
@@ -175,8 +175,8 @@ find_execute(plan, paths)
 	if (!(tree = fts_open(paths, ftsoptions, issort ? ftscompare : NULL)))
 		err(1, "ftsopen");
 
-	for (rval = 0; (entry = fts_read(tree)) != NULL; ) {
-		switch (entry->fts_info) {
+	for (rval = 0; (g_entry = fts_read(tree)) != NULL; ) {
+		switch (g_entry->fts_info) {
 		case FTS_D:
 			if (isdepth)
 				continue;
@@ -190,7 +190,7 @@ find_execute(plan, paths)
 		case FTS_NS:
 			(void)fflush(stdout);
 			warnx("%s: %s",
-			    entry->fts_path, strerror(entry->fts_errno));
+			    g_entry->fts_path, strerror(g_entry->fts_errno));
 			rval = 1;
 			continue;
 #ifdef FTS_W
@@ -199,9 +199,9 @@ find_execute(plan, paths)
 #endif /* FTS_W */
 		}
 #define	BADCH	" \t\n\\'\""
-		if (isxargs && strpbrk(entry->fts_path, BADCH)) {
+		if (isxargs && strpbrk(g_entry->fts_path, BADCH)) {
 			(void)fflush(stdout);
-			warnx("%s: illegal path", entry->fts_path);
+			warnx("%s: illegal path", g_entry->fts_path);
 			rval = 1;
 			continue;
 		}
@@ -211,7 +211,7 @@ find_execute(plan, paths)
 		 * false or all have been executed.  This is where we do all
 		 * the work specified by the user on the command line.
 		 */
-		for (p = plan; p && (p->eval)(p, entry); p = p->next)
+		for (p = plan; p && (p->eval)(p, g_entry); p = p->next)
 			;
 	}
 	if (errno)
