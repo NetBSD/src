@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.16 2003/05/03 18:11:33 wiz Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.16.4.1 2004/09/22 20:58:21 jmc Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.16 2003/05/03 18:11:33 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.16.4.1 2004/09/22 20:58:21 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ int	cs4281_trigger_output(void *, void *, void *, int, void (*)(void *),
 int	cs4281_trigger_input(void *, void *, void *, int, void (*)(void *),
 			     void *, struct audio_params *);
 
-void    cs4281_reset_codec(void *);
+int     cs4281_reset_codec(void *);
 
 /* Internal functions */
 u_int8_t cs4281_sr2regval(int);
@@ -803,7 +803,7 @@ cs4281_power(why, v)
 }
 
 /* control AC97 codec */
-void
+int
 cs4281_reset_codec(void *addr)
 {
 	struct cs428x_softc *sc;
@@ -837,7 +837,7 @@ cs4281_reset_codec(void *addr)
 		delay(100);
 		if (++n > 1000) {
 			printf("reset_codec: AC97 codec ready timeout\n");
-			return;
+			return ETIMEDOUT;
 		}
 	}
 #if defined(ENABLE_SECONDARY_CODEC)
@@ -846,7 +846,7 @@ cs4281_reset_codec(void *addr)
 	while ((BA0READ4(sc, CS4281_ACSTS2) & ACSTS2_CRDY2) == 0) {
 		delay(100);
 		if (++n > 1000)
-			return;
+			return 0;
 	}
 #endif
 	/* Set the serial timing configuration */
@@ -860,7 +860,7 @@ cs4281_reset_codec(void *addr)
 		if (++n > 1000) {
 			printf("%s: timeout waiting for codec ready\n",
 			       sc->sc_dev.dv_xname);
-			return;
+			return ETIMEDOUT;
 		}
 		dat32 = BA0READ4(sc, CS428X_ACSTS) & ACSTS_CRDY;
 	} while (dat32 == 0);
@@ -875,7 +875,7 @@ cs4281_reset_codec(void *addr)
 		if (++n > 1000) {
 			printf("%s: timeout waiting for codec calibration\n",
 			       sc->sc_dev.dv_xname);
-			return ;
+			return ETIMEDOUT;
 		}
 		cs428x_read_codec(sc, AC97_REG_POWER, &data);
 	} while ((data & 0x0f) != 0x0f);
@@ -891,13 +891,14 @@ cs4281_reset_codec(void *addr)
 		if (++n > 1000) {
 			printf("%s: timeout waiting for sampled input slots as valid\n",
 			       sc->sc_dev.dv_xname);
-			return;
+			return ETIMEDOUT;
 		}
 		dat32 = BA0READ4(sc, CS428X_ACISV) & (ACISV_ISV3 | ACISV_ISV4) ;
 	} while (dat32 != (ACISV_ISV3 | ACISV_ISV4));
 	
 	/* Start digital data transfer of audio data to the codec */
 	BA0WRITE4(sc, CS428X_ACOSV, (ACOSV_SLV3 | ACOSV_SLV4));
+	return 0;
 }
 
 

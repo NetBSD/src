@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.18 2003/05/03 18:11:34 wiz Exp $	*/
+/*	$NetBSD: fms.c,v 1.18.4.1 2004/09/22 20:58:23 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.18 2003/05/03 18:11:34 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.18.4.1 2004/09/22 20:58:23 jmc Exp $");
 
 #include "mpu.h"
 
@@ -149,7 +149,7 @@ struct audio_hw_if fms_hw_if = {
 int	fms_attach_codec __P((void *, struct ac97_codec_if *));
 int	fms_read_codec __P((void *, u_int8_t, u_int16_t *));
 int	fms_write_codec __P((void *, u_int8_t, u_int16_t));
-void	fms_reset_codec __P((void *));
+int	fms_reset_codec __P((void *));
 
 int	fms_allocmem __P((struct fms_softc *, size_t, size_t,
 			  struct fms_dma *));
@@ -433,7 +433,7 @@ fms_attach_codec(addr, cif)
 }
 
 /* Cold Reset */
-void
+int
 fms_reset_codec(addr)
 	void *addr;
 {
@@ -442,6 +442,7 @@ fms_reset_codec(addr)
 	delay(2);
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_CODEC_CTL, 0x0000);
 	delay(1);
+	return 0;
 }
 
 int
