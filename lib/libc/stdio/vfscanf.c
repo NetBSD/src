@@ -1,4 +1,4 @@
-/*	$NetBSD: vfscanf.c,v 1.28 2001/04/28 15:41:29 kleink Exp $	*/
+/*	$NetBSD: vfscanf.c,v 1.29 2001/12/02 20:53:49 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vfscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vfscanf.c,v 1.28 2001/04/28 15:41:29 kleink Exp $");
+__RCSID("$NetBSD: vfscanf.c,v 1.29 2001/12/02 20:53:49 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -263,6 +263,7 @@ literal:
 
 #ifdef FLOATING_POINT
 		case 'E':
+		case 'F':
 		case 'G':
 		case 'e': 
 		case 'f': 
