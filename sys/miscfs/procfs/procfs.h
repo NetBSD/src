@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs.h,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs.h,v 1.3 1994/01/09 19:44:03 ws Exp $
+ *	$Id: procfs.h,v 1.4 1994/01/11 18:02:06 ws Exp $
  */
 
 /*
@@ -242,9 +242,9 @@ int	procfs_readdir __P((
 		int *eofflagp,
 		u_int *cookies,
 		int ncookies));
-int	procfs_readlink __P(( \
-		struct vnode *vp, \
-		struct uio *uio, \
+int	procfs_readlink __P((
+		struct vnode *vp,
+		struct uio *uio,
 		struct ucred *cred));
 int	procfs_abortop __P((
 		struct nameidata *ndp));
