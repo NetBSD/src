@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.38 2001/10/31 01:15:57 tv Exp $	*/
+/*	$NetBSD: make.h,v 1.39 2001/10/31 03:59:42 tv Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -417,5 +417,6 @@ char * Check_Cwd_Cmd __P((char *));
 void Check_Cwd __P((char **));
 void PrintOnError __P((char *));
 void Main_ExportMAKEFLAGS __P((Boolean));
+Boolean Main_SetObjdir __P((const char *));
 
 #endif /* _MAKE_H_ */
