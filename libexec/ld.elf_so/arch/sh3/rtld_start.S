@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.1 2002/02/03 23:34:43 thorpej Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.2 2002/02/04 18:18:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -49,14 +49,14 @@
 
 	mova	1f,r0
 	mov.l	@r0,r1
-	add	r1,r0	/* r0 = _GLOBAL_OFFSET_TABLE_ */
+	add	r1,r0		/* r0 = _GLOBAL_OFFSET_TABLE_ */
 
 	mov.l	2f,r1
-	add	r0,r1	/* r1 = GOT end */
+	add	r0,r1		/* r1 = GOT end */
 	mov.l	3f,r2
 	mov.l	@(r0,r2),r3	/* r3 = where the linker thinks GOT end is */
 	mov	r1,r2
-	sub	r3,r2	/* r2 = displacement */
+	sub	r3,r2		/* r2 = displacement */
 4:
 	mov.l	@r0+,r3		/* add displacement to all GOT entries */
 	cmp/hs	r1,r0
@@ -76,24 +76,24 @@
 
 			
 4:
-	add	#-8,r15			/* Make room for return args */
+	add	#-8,r15		/* Make room for return args */
 	mov	r15,r4
 	mov.l	1f,r0
 	add	#(1f-3f),r0
-	bsrf	r0			/* _rtld(sp) */
-	mov.l	r9,@-r15		/* save ps_strings */
+	bsrf	r0		/* _rtld(sp) */
+	mov.l	r9,@-r15	/* save ps_strings */
 3:
-	mov.l	@r15+,r9		/* restore ps_strings */
+	mov.l	@r15+,r9	/* restore ps_strings */
 	
-	mov.l	@r15+,r7		/* arg: cleanup */
-	mov.l	@r15+,r8		/* arg: obj */
+	mov.l	@r15+,r7	/* arg: cleanup */
+	mov.l	@r15+,r8	/* arg: obj */
 
-	mov.l	@r15,r4			/* restore argc */
+	mov.l	@r15,r4		/* restore argc */
 
-	mov	r15,r5			/* restore argv */
+	mov	r15,r5		/* restore argv */
 	add	#4,r5
 
-	mov	r4,r6			/* restore envp */
+	mov	r4,r6		/* restore envp */
 	shll2	r6
 	add	r15,r6
 	jmp	@r0
@@ -105,7 +105,7 @@
 	.align	2
 	.globl	_rtld_bind_start
 	.type	_rtld_bind_start,@function
-_rtld_bind_start:	/* r0 = flag, r1 = reloff, r2 = obj */
+_rtld_bind_start:		/* r0 = flag, r1 = reloff, r2 = obj */
 	mov.l	r3,@-r15	/* save registers */
 	mov.l	r4,@-r15
 	mov.l	r5,@-r15
