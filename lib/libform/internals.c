@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.5 2001/01/18 23:53:10 blymn Exp $	*/
+/*	$NetBSD: internals.c,v 1.6 2001/01/22 01:07:33 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -952,8 +952,17 @@ _formi_manipulate_field(FORM *form, int c)
 		"entry: xpos=%d, start_char=%d, length=%d, allocated=%d\n",
 		cur->cursor_xpos, cur->start_char, cur->buffers[0].length,
 		cur->buffers[0].allocated);
-	fprintf(dbg, "entry: string=\"%s\"\n", cur->buffers[0].string);
+	fprintf(dbg, "entry: string=");
+	if (cur->buffers[0].string == NULL)
+		fprintf(dbg, "(null)\n");
+	else
+		fprintf(dbg, "\"%s\"\n", cur->buffers[0].string);
 #endif
+
+	  /* Cannot manipulate a null string! */
+	if (cur->buffers[0].string == NULL)
+		return E_REQUEST_DENIED;
+	
 	switch (c) {
 	case REQ_NEXT_CHAR:
 		if ((cur->cursor_xpos + cur->start_char
