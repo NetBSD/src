@@ -1,4 +1,4 @@
-.\"     $NetBSD: isa.9,v 1.1 2001/07/01 04:11:14 gmcgarry Exp $
+.\"     $NetBSD: isa.9,v 1.2 2001/07/05 18:01:15 nathanw Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -127,9 +127,11 @@ widespread acceptance of the bus as a defacto standard has seen it
 appear on systems without Intel processors.
 .Pp
 The ISA bus has a 16-bit data bus, a 24-bit memory address bus, a
-10-bit I/O address bus and operates at 8MHz.  It provides 15 interrupt
-lines and 8 DMA channels supporting DMA transfers of 64KB or 128KB
-transfers depending on the width of the channel being used.
+16-bit I/O address bus, and operates at 8MHz.  It provides 15
+interrupt lines and 8 DMA channels supporting DMA transfers of 64KB or
+128KB transfers depending on the width of the channel being
+used. Historically, some devices only decoded the 10 lowest bits of
+the I/O address bus, preventing use of the full 16-bit address space.
 .Pp
 On newer machines, the ISA bus is no longer connected directly to the
 host bus, and is usually connected via a PCI-ISA bridge.  Either way,
