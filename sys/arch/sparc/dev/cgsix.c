@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.41 1998/03/31 21:05:05 pk Exp $ */
+/*	$NetBSD: cgsix.c,v 1.42 1998/04/07 20:18:18 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -625,11 +625,16 @@ cgsixmmap(dev, off, prot)
 			continue;
 		u = off - mo->mo_uaddr;
 		sz = mo->mo_size ? mo->mo_size : sc->sc_fb.fb_type.fb_size;
-		if (u < sz)
-			return (bus_space_mmap (sc->sc_bustag,
-						sc->sc_btype,
-						sc->sc_paddr+u+mo->mo_physoff,
-						BUS_SPACE_MAP_LINEAR));
+		if (u < sz) {
+			bus_space_handle_t bh;
+			if (bus_space_mmap(sc->sc_bustag,
+					   sc->sc_btype,
+					   sc->sc_paddr+u+mo->mo_physoff,
+					   BUS_SPACE_MAP_LINEAR, &bh))
+				return (-1);
+
+			return ((int)bh);
+		}
 	}
 
 #ifdef DEBUG

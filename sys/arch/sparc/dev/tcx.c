@@ -1,12 +1,12 @@
-/*	$NetBSD: tcx.c,v 1.11 1998/03/21 20:14:14 pk Exp $ */
+/*	$NetBSD: tcx.c,v 1.12 1998/04/07 20:18:18 pk Exp $ */
 
-/* 
- *  Copyright (c) 1996 The NetBSD Foundation, Inc.
+/*
+ *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
  *  All rights reserved.
- * 
+ *
  *  This code is derived from software contributed to The NetBSD Foundation
  *  by Paul Kranenburg.
- * 
+ *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
  *  are met:
@@ -22,7 +22,7 @@
  *  4. Neither the name of The NetBSD Foundation nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
- * 
+ *
  *  THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  *  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  *  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -34,7 +34,7 @@
  *  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
- */ 
+ */
 
 /*
  * color display (TCX) driver.
@@ -72,22 +72,6 @@
 #include <sparc/dev/btvar.h>
 #include <sparc/dev/tcxreg.h>
 #include <sparc/dev/sbusvar.h>
-
-#if 0
-union cursor_cmap {		/* colormap, like bt_cmap, but tiny */
-	u_char	cm_map[2][3];	/* 2 R/G/B entries */
-	u_int	cm_chip[2];	/* 2 chip equivalents */
-};
-
-struct tcx_cursor {		/* tcx hardware cursor status */
-	short	cc_enable;		/* cursor is enabled */
-	struct	fbcurpos cc_pos;	/* position */
-	struct	fbcurpos cc_hot;	/* hot-spot */
-	struct	fbcurpos cc_size;	/* size of mask & image fields */
-	u_int	cc_bits[2][32];		/* space for mask & image bits */
-	union	cursor_cmap cc_color;	/* cursor colormap */
-};
-#endif
 
 /* per-display variables */
 struct tcx_softc {
@@ -288,11 +272,11 @@ int
 tcxioctl(dev, cmd, data, flags, p)
 	dev_t dev;
 	u_long cmd;
-	register caddr_t data;
+	caddr_t data;
 	int flags;
 	struct proc *p;
 {
-	register struct tcx_softc *sc = tcx_cd.cd_devs[minor(dev)];
+	struct tcx_softc *sc = tcx_cd.cd_devs[minor(dev)];
 	int error;
 
 	switch (cmd) {
@@ -371,9 +355,9 @@ tcxpoll(dev, events, p)
  */
 static void
 tcx_reset(sc)
-	register struct tcx_softc *sc;
+	struct tcx_softc *sc;
 {
-	register volatile struct bt_regs *bt;
+	volatile struct bt_regs *bt;
 
 	/* Enable cursor in Brooktree DAC. */
 	bt = sc->sc_bt;
@@ -386,12 +370,12 @@ tcx_reset(sc)
  */
 static void
 tcx_loadcmap(sc, start, ncolors)
-	register struct tcx_softc *sc;
-	register int start, ncolors;
+	struct tcx_softc *sc;
+	int start, ncolors;
 {
-	register volatile struct bt_regs *bt;
-	register u_int *ip, i;
-	register int count;
+	volatile struct bt_regs *bt;
+	u_int *ip, i;
+	int count;
 
 	ip = &sc->sc_cmap.cm_chip[BT_D4M3(start)];	/* start/4 * 3 */
 	count = BT_D4M3(start + ncolors - 1) - BT_D4M3(start) + 3;
@@ -459,6 +443,7 @@ tcxmmap(dev, off, prot)
 	int off, prot;
 {
 	struct tcx_softc *sc = tcx_cd.cd_devs[minor(dev)];
+	bus_space_handle_t bh;
 	struct rom_reg *rr = sc->sc_physadr;
 	struct mmo *mo;
 	u_int u, sz;
@@ -500,15 +485,18 @@ tcxmmap(dev, off, prot)
 			bus_type_t t = (bus_type_t)rr[mo->mo_bank].rr_iospace;
 			bus_addr_t a = (bus_addr_t)rr[mo->mo_bank].rr_paddr;
 
-			return (bus_space_mmap (sc->sc_bustag,
-						t,
-						a + u,
-						BUS_SPACE_MAP_LINEAR));
+			if (bus_space_mmap(sc->sc_bustag,
+					   t,
+					   a + u,
+					   BUS_SPACE_MAP_LINEAR, &bh))
+				return (-1);
+
+			return ((int)bh);
 		}
 	}
 #ifdef DEBUG
 	{
-	  register struct proc *p = curproc;	/* XXX */
+	  struct proc *p = curproc;	/* XXX */
 	  log(LOG_NOTICE, "tcxmmap(0x%x) (%s[%d])\n", off, p->p_comm, p->p_pid);
 	}
 #endif
