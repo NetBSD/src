@@ -1,7 +1,7 @@
-/*	$NetBSD: ip2x.c,v 1.8 2004/01/12 12:50:07 sekiya Exp $	*/
+/*	$NetBSD: int.c,v 1.1 2004/01/18 00:47:21 sekiya Exp $	*/
 
 /*
- * Copyright (c) 2001, 2002 Rafal K. Boni
+ * Copyright (c) 2004 Christopher SEKIYA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * INT/INT2/INT3 interrupt controller (used in ip1x and ip2x-class machines)
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip2x.c,v 1.8 2004/01/12 12:50:07 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.1 2004/01/18 00:47:21 sekiya Exp $");
 
 #include "opt_cputype.h"
 #include "opt_machtypes.h"
@@ -39,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip2x.c,v 1.8 2004/01/12 12:50:07 sekiya Exp $");
 #include <sys/kernel.h>
 #include <sys/device.h>
 
+#include <dev/ic/i8253reg.h>
 #include <machine/sysconf.h>
 #include <machine/machtype.h>
 #include <machine/bus.h>
@@ -48,78 +53,27 @@ __KERNEL_RCSID(0, "$NetBSD: ip2x.c,v 1.8 2004/01/12 12:50:07 sekiya Exp $");
 
 #include <sgimips/dev/int2reg.h>
 
-u_int32_t next_clk_intr;
-u_int32_t missed_clk_intrs;
-static unsigned long last_clk_intr;
-static bus_space_handle_t ioh;		/* for int2/3 */
+static bus_space_handle_t ioh;
 static bus_space_tag_t iot;
 
-static struct evcnt mips_int5_evcnt =
-    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 5 (clock)");
-
-static struct evcnt mips_spurint_evcnt =
-    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "spurious interrupts");
-
-void		ip2x_init(void);
-int 		ip2x_local0_intr(void);
-int		ip2x_local1_intr(void);
-int 		ip2x_mappable_intr(void *);
-void		ip2x_intr(u_int, u_int, u_int, u_int);
-void		ip2x_intr_establish(int, int, int (*)(void *), void *);
-
-unsigned long 	ip2x_clkread(void);
-unsigned long	ip2x_cal_timer(void);
-
-/* ip22_cache.S */
-extern void	ip22_sdcache_do_wbinv(vaddr_t, vaddr_t);
-extern void	ip22_sdcache_enable(void);
-extern void	ip22_sdcache_disable(void);
-
-/* imc has the bus reset code */
-extern void	imc_bus_reset(void);
-extern void	imc_bus_error(void);
-extern void	imc_watchdog_tickle(void);
+void		int_init(u_int32_t);
+void 		int_local0_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+void		int_local1_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+int 		int_mappable_intr(void *);
+void		int_intr(u_int, u_int, u_int, u_int);
+void		*int_intr_establish(int, int, int (*)(void *), void *);
+unsigned long	int_cal_timer(void);
+void		int_8254_cal(void);
 
 void
-ip2x_init(void)
+int_init(u_int32_t address)
 {
-	u_int i;
-	u_int32_t sysid;
+	int i;
 	unsigned long cps;
 	unsigned long ctrdiff[3];
 
-	if ( !strcmp(cpu_model, "SGI-IP20"))
-	{
-		mach_type = MACH_SGI_IP20;
-		ioh = MIPS_PHYS_TO_KSEG1(0x1fb801c0);
-
-		sysid = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000);
-		mach_boardrev = (sysid & 0x7000) >> 12;
-	}
-	else
-	{
-		mach_type = MACH_SGI_IP22;
-		sysid = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd9858);
-		if (sysid & 1)
-		{
-			mach_subtype = MACH_SGI_IP22_FULLHOUSE;
-			ioh = MIPS_PHYS_TO_KSEG1(0x1fbd9000);
-		}
-		else
-		{
-			mach_subtype = MACH_SGI_IP22_GUINESS;
-			ioh = MIPS_PHYS_TO_KSEG1(0x1fbd9880);
-		}
-
-		mach_boardrev = (sysid >> 1) & 0x0f;
-
-		/* Wire interrupts 7, 11 to mappable interrupt 0,1 handlers */
-		intrtab[7].ih_fun = ip2x_mappable_intr;
-		intrtab[7].ih_arg	= (void*) 0;
-
-		intrtab[11].ih_fun = ip2x_mappable_intr;
-		intrtab[11].ih_arg	= (void*) 1;
-	}
+	bus_space_map(iot, address, 0, 0, &ioh);
+	iot = SGIMIPS_BUS_SPACE_NORMAL;
 
 	/* Clean out interrupt masks */
 	bus_space_write_4(iot, ioh, INT2_LOCAL0_MASK, 0);
@@ -130,108 +84,61 @@ ip2x_init(void)
 	/* Reset timer interrupts */
 	bus_space_write_4(iot, ioh, INT2_TIMER_CLEAR, 0x03);
 
-	platform.iointr = ip2x_intr;
-	platform.bus_reset = imc_bus_reset;
-	platform.intr_establish = ip2x_intr_establish;
+	switch (mach_type) {
+		case MACH_SGI_IP12:
+			platform.intr1 = int_local0_intr;
+			platform.intr2 = int_local1_intr;
+			int_8254_cal();
+			break;
+		case MACH_SGI_IP20:
+		case MACH_SGI_IP22:
+			platform.intr0 = int_local0_intr;
+			platform.intr1 = int_local1_intr;
 
-	biomask = 0x0700;
-	netmask = 0x0700;
-	ttymask = 0x0f00;
-	clockmask = 0xbf00;
+			/* calibrate timer */
+			int_cal_timer();
 
-	/* Prime cache */
-	ip2x_cal_timer();
+			cps = 0;
+			for (i = 0; i < sizeof(ctrdiff) / sizeof(ctrdiff[0]); i++) {
+				do {
+					ctrdiff[i] = int_cal_timer();
+				} while (ctrdiff[i] == 0);
 
-	cps = 0;
-	for(i = 0; i < sizeof(ctrdiff) / sizeof(ctrdiff[0]); i++) {
-		do {
-			ctrdiff[i] = ip2x_cal_timer();
-		} while (ctrdiff[i] == 0);
+				cps += ctrdiff[i];
+			}
 
-		cps += ctrdiff[i];
+			cps = cps / (sizeof(ctrdiff) / sizeof(ctrdiff[0]));
+
+			printf("Timer calibration, %lu cycles (%lu, %lu, %lu)\n", cps,
+				ctrdiff[0], ctrdiff[1], ctrdiff[2]);
+
+			/* R4k/R4400/R4600/R5k count at half CPU frequency */
+			curcpu()->ci_cpu_freq = 2 * cps * hz;
+
+			break;
+		default:
+			panic("int: unsupported machine type %i\n", mach_type);
+			break;
 	}
 
-	cps = cps / (sizeof(ctrdiff) / sizeof(ctrdiff[0]));
-
-	printf("Timer calibration, got %lu cycles (%lu, %lu, %lu)\n", cps,
-	    ctrdiff[0], ctrdiff[1], ctrdiff[2]);
-
-	platform.clkread = ip2x_clkread;
-
-	/* Counter on R4k/R4400/R4600/R5k counts at half the CPU frequency */
-	curcpu()->ci_cpu_freq = 2 * cps * hz;
 	curcpu()->ci_cycles_per_hz = curcpu()->ci_cpu_freq / (2 * hz);
 	curcpu()->ci_divisor_delay = curcpu()->ci_cpu_freq / (2 * 1000000);
 	MIPS_SET_CI_RECIPRICAL(curcpu());
 
-	evcnt_attach_static(&mips_int5_evcnt);
-	evcnt_attach_static(&mips_spurint_evcnt);
+	if (mach_type == MACH_SGI_IP22) {
+		/* Wire interrupts 7, 11 to mappable interrupt 0,1 handlers */
+		intrtab[7].ih_fun = int_mappable_intr;
+		intrtab[7].ih_arg = (void*) 0;
 
-	printf("CPU clock speed = %lu.%02luMHz\n",
-	    curcpu()->ci_cpu_freq / 1000000,
-	    (curcpu()->ci_cpu_freq / 10000) % 100);
-}
-
-/*
- * NB: Do not re-enable interrupts here -- reentrancy here can cause all
- * sorts of Bad Things(tm) to happen, including kernel stack overflows.
- */
-void
-ip2x_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
-{
-	u_int32_t newcnt;
-	struct clockframe cf;
-
-	imc_watchdog_tickle();
-
-	if (ipending & MIPS_INT_MASK_5) {
-		last_clk_intr = mips3_cp0_count_read();
-
-		next_clk_intr += curcpu()->ci_cycles_per_hz;
-		mips3_cp0_compare_write(next_clk_intr);
-		newcnt = mips3_cp0_count_read();
-
-		/*
-		 * Missed one or more clock interrupts, so let's start
-		 * counting again from the current value.
-		 */
-		if ((next_clk_intr - newcnt) & 0x80000000) {
-		    missed_clk_intrs++;
-
-		    next_clk_intr = newcnt + curcpu()->ci_cycles_per_hz;
-		    mips3_cp0_compare_write(next_clk_intr);
-		}
-
-		cf.pc = pc;
-		cf.sr = status;
-
-		hardclock(&cf);
-		mips_int5_evcnt.ev_count++;
-
-		cause &= ~MIPS_INT_MASK_5;
+		intrtab[11].ih_fun = int_mappable_intr;
+		intrtab[11].ih_arg = (void*) 1;
 	}
 
-	if (ipending & MIPS_INT_MASK_0) {
-		if (ip2x_local0_intr())
-			cause &= ~MIPS_INT_MASK_0;
-	}
-
-	if (ipending & MIPS_INT_MASK_1) {
-		if (ip2x_local1_intr())
-			cause &= ~MIPS_INT_MASK_1;
-	}
-
-	if (ipending & MIPS_INT_MASK_4) {
-		imc_bus_error();
-		cause &= ~MIPS_INT_MASK_4;
-	}
-
-	if (cause & status & MIPS_HARD_INT_MASK)
-		mips_spurint_evcnt.ev_count++;
+	platform.intr_establish = int_intr_establish;
 }
 
 int
-ip2x_mappable_intr(void *arg)
+int_mappable_intr(void *arg)
 {
 	int i;
 	int ret;
@@ -261,8 +168,8 @@ ip2x_mappable_intr(void *arg)
 	return ret;
 }
 
-int
-ip2x_local0_intr(void)
+void
+int_local0_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 {
 	int i;
 	int ret;
@@ -283,12 +190,10 @@ ip2x_local0_intr(void)
 				printf("Unexpected local0 interrupt %d\n", i);
 		}
 	}
-
-	return ret;
 }
 
-int
-ip2x_local1_intr(void)
+void
+int_local1_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 {
 	int i;
 	int ret;
@@ -311,12 +216,10 @@ ip2x_local1_intr(void)
 				    8 + i );
 		}
 	}
-
-	return ret;
 }
 
-void
-ip2x_intr_establish(int level, int ipl, int (*handler) (void *), void *arg)
+void *
+int_intr_establish(int level, int ipl, int (*handler) (void *), void *arg)
 {
 	u_int32_t mask;
 
@@ -326,7 +229,7 @@ ip2x_intr_establish(int level, int ipl, int (*handler) (void *), void *arg)
 	if (intrtab[level].ih_fun != NULL)
 	{
 		printf("warning: ip2x cannot share interrupts yet.\n");
-		return;
+		return (void *)NULL;
 	}
 
 	intrtab[level].ih_fun = handler;
@@ -359,20 +262,12 @@ ip2x_intr_establish(int level, int ipl, int (*handler) (void *), void *arg)
 		mask |= (1 << (level - 24));
 		bus_space_write_4(iot, ioh, INT2_MAP_MASK1, mask);
 	}
+
+	return (void *)NULL;
 }
 
 unsigned long
-ip2x_clkread(void)
-{
-	uint32_t res, count;
-
-	count = mips3_cp0_count_read() - last_clk_intr;
-	MIPS_COUNT_TO_MHZ(curcpu(), count, res);
-	return (res);
-}
-
-unsigned long
-ip2x_cal_timer(void)
+int_cal_timer(void)
 {
 	int s;
 	int roundtime;
@@ -391,7 +286,8 @@ ip2x_cal_timer(void)
 
 	s = splhigh();
 
-	bus_space_write_4(iot, ioh, INT2_TIMER_CONTROL, (0x80 | 0x30 | 0x04));
+	bus_space_write_4(iot, ioh, INT2_TIMER_CONTROL,
+		( TIMER_SEL2 | TIMER_16BIT | TIMER_RATEGEN) );
 	bus_space_write_4(iot, ioh, INT2_TIMER_2, (sampletime & 0xff));
 	bus_space_write_4(iot, ioh, INT2_TIMER_2, (sampletime >> 8));
 
@@ -399,7 +295,7 @@ ip2x_cal_timer(void)
 
 	/* Wait for the MSB to count down to zero */
 	do {
-		bus_space_write_4(iot, ioh, INT2_TIMER_CONTROL, (0x80 | 0x00));
+		bus_space_write_4(iot, ioh, INT2_TIMER_CONTROL, TIMER_SEL2 );
 		lsb = bus_space_read_4(iot, ioh, INT2_TIMER_2) & 0xff;
 		msb = bus_space_read_4(iot, ioh, INT2_TIMER_2) & 0xff;
 
@@ -407,9 +303,33 @@ ip2x_cal_timer(void)
 	} while (msb);
 
 	/* Turn off timer */
-	bus_space_write_4(iot, ioh, INT2_TIMER_CONTROL, (0x80 | 0x30 | 0x08));
+	bus_space_write_4(iot, ioh, INT2_TIMER_CONTROL,
+		( TIMER_SEL2 | TIMER_16BIT | TIMER_SWSTROBE) );
 
 	splx(s);
 
 	return (endctr - startctr) / roundtime * roundtime;
+}
+
+void
+int_8254_cal(void)
+{
+	int s;
+
+	s = splhigh();
+
+	bus_space_write_1(iot, ioh, INT2_TIMER_CLEAR + 15,
+                                TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT); 
+	bus_space_write_1(iot, ioh, INT2_TIMER_CLEAR + 3, (20000 / hz) % 256);
+	wbflush();
+	delay(4);
+	bus_space_write_1(iot, ioh, INT2_TIMER_CLEAR + 3, (20000 / hz) / 256);
+
+	bus_space_write_1(iot, ioh, INT2_TIMER_CLEAR + 15,
+                                TIMER_SEL2|TIMER_RATEGEN|TIMER_16BIT); 
+	bus_space_write_1(iot, ioh, INT2_TIMER_CLEAR + 11, 50);
+	wbflush();
+	delay(4);
+	bus_space_write_1(iot, ioh, INT2_TIMER_CLEAR + 11, 0);
+	splx(s);
 }
