@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.20 2003/05/01 15:42:51 yamt Exp $
+.\"     $NetBSD: vnodeops.9,v 1.21 2003/05/01 15:58:49 yamt Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1206,7 +1206,7 @@ is the
 operation to perform.
 Valid values are:
 .Pp
-.Bl -tag -offset indent -width F_SETLK -compact
+.Bl -tag -offset indent -width F_UNLCK -compact
 .It F_SETLK
 set lock
 .It F_GETLK
@@ -1223,7 +1223,7 @@ The argument
 is the set of flags.
 Valid values are:
 .Pp
-.Bl -tag -offset indent -width F_WAIT -compact
+.Bl -tag -offset indent -width F_FLOCK -compact
 .It F_WAIT
 wait until lock is granted
 .It F_FLOCK
