@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.124 2002/11/02 07:40:47 perry Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.125 2002/11/14 17:58:48 atatat Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.124 2002/11/02 07:40:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.125 2002/11/14 17:58:48 atatat Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -101,9 +101,9 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.124 2002/11/02 07:40:47 perry Exp $");
 extern struct vm_map *pager_map;
 
 struct uvm_cnt map_ubackmerge, map_uforwmerge;
-struct uvm_cnt map_ubimerge, map_uforwmerge_fail, map_unomerge;
+struct uvm_cnt map_ubimerge, map_unomerge;
 struct uvm_cnt map_kbackmerge, map_kforwmerge;
-struct uvm_cnt map_kbimerge, map_kforwmerge_fail, map_knomerge;
+struct uvm_cnt map_kbimerge, map_knomerge;
 struct uvm_cnt uvm_map_call, uvm_mlk_call, uvm_mlk_hint;
 const char vmmapbsy[] = "vmmapbsy";
 
@@ -354,8 +354,6 @@ uvm_map_init()
 	    "# uvm_map() forward umerges", 0);
 	UVMCNT_INIT(map_ubimerge, UVMCNT_CNT, 0,
 	    "# uvm_map() dual umerge", 0);
-	UVMCNT_INIT(map_uforwmerge_fail, UVMCNT_CNT, 0,
-	    "# uvm_map() forward umerge fails", 0);
 	UVMCNT_INIT(map_unomerge, UVMCNT_CNT, 0,
 	    "# uvm_map() no umerge", 0);
 
@@ -365,8 +363,6 @@ uvm_map_init()
 	    "# uvm_map() forward kmerges", 0);
 	UVMCNT_INIT(map_kbimerge, UVMCNT_CNT, 0,
 	    "# uvm_map() dual kmerge", 0);
-	UVMCNT_INIT(map_kforwmerge_fail, UVMCNT_CNT, 0,
-	    "# uvm_map() forward kmerge fails", 0);
 	UVMCNT_INIT(map_knomerge, UVMCNT_CNT, 0,
 	    "# uvm_map() no kmerge", 0);
 
@@ -684,7 +680,8 @@ uvm_map(map, startp, size, uobj, uoffset, align, flags)
 		}
 
 		if (prev_entry->aref.ar_amap) {
-			error = amap_extend(prev_entry, size);
+			error = amap_extend(prev_entry, size,
+			    AMAP_EXTEND_FORWARDS);
 			if (error) {
 				vm_map_unlock(map);
 				if (new_entry) {
@@ -751,6 +748,12 @@ forwardmerge:
 		 * merged with the previous entry which has an amap,
 		 * and the next entry also has an amap, we give up.
 		 *
+		 * Interesting cases:
+		 * amap, new, amap -> give up second merge (single fwd extend)
+		 * amap, new, none -> double forward extend (extend again here)
+		 * none, new, amap -> double backward extend (done here)
+		 * uobj, new, amap -> single backward extend (done here)
+		 *
 		 * XXX should we attempt to deal with someone refilling
 		 * the deallocated region between two entries that are
 		 * backed by the same amap (ie, arefs is 2, "prev" and
@@ -765,27 +768,6 @@ forwardmerge:
 			goto nomerge;
 		}
 
-		/* got it...almost */
-
-		if (prev_entry->next->aref.ar_amap) {
-			/*
-			 * XXX if not for this, we could have merged
-			 * forwards, so the number of times we missed
-			 * a *possible* chance to merge more.  note,
-			 * however, that only processes use amaps,
-			 * and they only *VERY* rarely present solely
-			 * forward mergeable allocations.  -- @@@
-			 */
-			if (kmap)
-				UVMCNT_INCR(map_kforwmerge_fail);
-			else
-				UVMCNT_INCR(map_uforwmerge_fail);
-			goto nomerge;
-		}
-
-		/*
-		 * XXX call amap_extend() to merge backwards here if needed.  -- @@@
-		 */
 		if (merged) {
 			/*
 			 * Try to extend the amap of the previous entry to
@@ -793,10 +775,47 @@ forwardmerge:
 			 * just skip on, don't actually give up, since we've
 			 * already completed the back merge.
 			 */
-			if (prev_entry->aref.ar_amap &&
-			    amap_extend(prev_entry, prev_entry->next->end -
-				prev_entry->next->start))
+			if (prev_entry->aref.ar_amap) {
+				if (amap_extend(prev_entry,
+				    prev_entry->next->end -
+				    prev_entry->next->start,
+				    AMAP_EXTEND_FORWARDS))
 				goto nomerge;
+			}
+
+			/*
+			 * Try to extend the amap of the *next* entry
+			 * back to cover the new allocation *and* the
+			 * previous entry as well (the previous merge
+			 * didn't have an amap already otherwise we
+			 * wouldn't be checking here for an amap).  If
+			 * it doesn't work just skip on, again, don't
+			 * actually give up, since we've already
+			 * completed the back merge.
+			 */
+			else if (prev_entry->next->aref.ar_amap) {
+				if (amap_extend(prev_entry->next,
+				    prev_entry->end -
+				    prev_entry->start + size,
+				    AMAP_EXTEND_BACKWARDS))
+				goto nomerge;
+			}
+		} else {
+			/*
+			 * Pull the next entry's amap backwards to cover this
+			 * new allocation.
+			 */
+			if (prev_entry->next->aref.ar_amap) {
+				error = amap_extend(prev_entry->next, size,
+				    AMAP_EXTEND_BACKWARDS);
+				if (error) {
+					vm_map_unlock(map);
+					if (new_entry) {
+						uvm_mapent_free(new_entry);
+					}
+					return error;
+				}
+			}
 		}
 
 		if (merged) {
@@ -827,6 +846,10 @@ forwardmerge:
 			struct vm_map_entry *dead = prev_entry->next;
 			prev_entry->end = dead->end;
 			uvm_map_entry_unlink(map, dead);
+			if (dead->aref.ar_amap != NULL) {
+				prev_entry->aref = dead->aref;
+				dead->aref.ar_amap = NULL;
+			}
 			uvm_mapent_free(dead);
 		} else {
 			prev_entry->next->start -= size;
