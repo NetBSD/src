@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.111 1997/09/30 16:23:21 christos Exp $	*/
+/*	$NetBSD: pccons.c,v 1.112 1997/10/01 20:48:59 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -749,6 +749,9 @@ pcstart(tp)
 		goto out;
 	tp->t_state |= TS_BUSY;
 	splx(s);
+
+	lock_state &= ~SCROLL;
+
 	/*
 	 * We need to do this outside spl since it could be fairly
 	 * expensive and we don't want our serial ports to overflow.
@@ -778,7 +781,8 @@ pcstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-
+	lock_state |= SCROLL;
+	async_update();
 }
 
 int
@@ -1339,13 +1343,6 @@ sput(cp, n)
 			scroll = 0;
 			/* scroll check */
 			if (crtat >= Crtat + vs.nchr) {
-				if (!kernel) {
-					int s = spltty();
-					if (lock_state & SCROLL)
-						tsleep(&lock_state,
-						    PUSER, "pcputc", 0);
-					splx(s);
-				}
 				bcopy(Crtat + vs.ncol, Crtat,
 				    (vs.nchr - vs.ncol) * CHR);
 				fillw((vs.at << 8) | ' ',
@@ -1999,8 +1996,6 @@ top:
 				break;
 			shift_state |= SCROLL;
 			lock_state ^= SCROLL;
-			if ((lock_state & SCROLL) == 0)
-				wakeup(&lock_state);
 			async_update();
 			break;
 		}
@@ -2092,11 +2087,12 @@ top:
 			if (shift_state & SCROLL)
 				break;
 			shift_state |= SCROLL;
-			lock_state ^= SCROLL;
 			if ((lock_state & SCROLL) == 0)
-				wakeup(&lock_state);
-			async_update();
-			break;
+				capchar[0] = 'S' - '@';
+			else
+				capchar[0] = 'Q' - '@';
+			extended = 0;
+			return capchar;
 		/*
 		 * non-locking keys
 		 */
