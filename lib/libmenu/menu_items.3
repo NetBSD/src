@@ -1,4 +1,4 @@
-.\"	$NetBSD: menu_items.3,v 1.7 2002/07/29 13:30:13 wiz Exp $
+.\"	$NetBSD: menu_items.3,v 1.8 2002/10/01 19:26:59 wiz Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -56,7 +56,8 @@ passed.
 The
 .Fn menu_items
 function returns a pointer to an array of item pointers that represent
-the menu items currently attached to the given menu.  Apart from using
+the menu items currently attached to the given menu.
+Apart from using
 .Fn new_menu
 (see
 .Xr menu_new 3 )
@@ -66,8 +67,8 @@ any items currently attached to the menu will be detached and the NULL
 terminated array of new items will be attached to the menu.
 .Sh RETURN VALUES
 Any function returning a string pointer will return NULL if an error
-occurs.  Functions returning an integer will return one of the
-following:
+occurs.
+Functions returning an integer will return one of the following:
 .Pp
 .Bl -tag -width E_CONNECTED -compact
 .It Er E_OK

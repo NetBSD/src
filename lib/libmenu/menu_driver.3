@@ -1,4 +1,4 @@
-.\"	$NetBSD: menu_driver.3,v 1.6 2002/07/29 13:30:13 wiz Exp $
+.\"	$NetBSD: menu_driver.3,v 1.7 2002/10/01 19:26:58 wiz Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -44,7 +44,8 @@
 .Sh DESCRIPTION
 The
 .Fn menu_driver
-function is the guts of the menu system.  It takes the commands passed
+function is the guts of the menu system.
+It takes the commands passed
 by c parameter and performs the requested action on the menu given.
 The following commands may be given to the menu driver:
 .Pp
@@ -62,11 +63,11 @@ Sets the new current item to be the item above the current item.
 .It REQ_DOWN_ITEM
 Sets the new current item to be the item below the current item.
 .It REQ_SCR_ULINE
-Scroll the menu one line towards the bottom of the menu window.  The
-new current item becomes the item immediately above the current item.
+Scroll the menu one line towards the bottom of the menu window.
+The new current item becomes the item immediately above the current item.
 .It REQ_SCR_DLINE
-Scroll the menu one line towards the top of the menu window.  The new
-current item becomes the item immediately below the current item.
+Scroll the menu one line towards the top of the menu window.
+The new current item becomes the item immediately below the current item.
 .It REQ_SCR_DPAGE
 Scroll the menu one page towards the bottom of the menu window.
 .It REQ_SCR_UPAGE
@@ -97,7 +98,8 @@ If
 is passed a command that is greater than MAX_COMMAND then the command
 passed is assumed to be a user defined command and
 .Fn menu_driver
-returns E_UNKNOWN_COMMAND.  Otherwise if the command is a printable
+returns E_UNKNOWN_COMMAND.
+Otherwise if the command is a printable
 character then the character represented by the command is placed at
 the end of the pattern buffer and an attempt is made to match the
 pattern buffer against the items in the menu.

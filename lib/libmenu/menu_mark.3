@@ -1,4 +1,4 @@
-.\"	$NetBSD: menu_mark.3,v 1.7 2002/07/29 13:30:14 wiz Exp $
+.\"	$NetBSD: menu_mark.3,v 1.8 2002/10/01 19:26:59 wiz Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -54,9 +54,11 @@
 The
 .Fn menu_mark
 function returns a pointer to the character string that is used to
-mark selected items in the menu.  The mark string is set by the
+mark selected items in the menu.
+The mark string is set by the
 .Fn set_menu_mark
-function.  The
+function.
+The
 .Fn menu_unmark
 function returns a pointer to the character string that is used to
 indicate a menu items is not selected, this string is set by the
@@ -64,8 +66,8 @@ indicate a menu items is not selected, this string is set by the
 function.
 The mark and unmark strings may be of differing lengths, the room
 allocated to drawing the mark will be the maximum of the lengths of
-both the mark and unmark strings.  The shorter of the two strings will
-be left justified and space padded.
+both the mark and unmark strings.
+The shorter of the two strings will be left justified and space padded.
 .Sh RETURN VALUES
 The functions return one of the following error values:
 .Pp

@@ -1,4 +1,4 @@
-.\" $NetBSD: pcap.3,v 1.14 2002/09/25 00:30:24 wiz Exp $
+.\" $NetBSD: pcap.3,v 1.15 2002/10/01 19:27:54 wiz Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -108,8 +108,8 @@ is a string that specifies the network device to open.
 .Fa snaplen
 specifies the maximum number of bytes to capture.
 .Fa promisc
-specifies if the interface is to be put into promiscuous mode.  (Note
-that even if this parameter is false, the interface could well be in
+specifies if the interface is to be put into promiscuous mode.
+(Note that even if this parameter is false, the interface could well be in
 promiscuous mode for some other reason.)
 .Fa to_ms
 specifies the read timeout in milliseconds.
@@ -124,8 +124,8 @@ is called to open a
 .Dq savefile
 for reading.
 .Fa fname
-specifies the name of the file to open.  The file has
-the same format as those used by
+specifies the name of the file to open.
+The file has the same format as those used by
 .Xr tcpdump 8 .
 The name
 .Dq \&-
@@ -140,7 +140,8 @@ fails and returns
 .Fn pcap_dump_open
 is called to open a
 .Dq savefile
-for writing.  The name
+for writing.
+The name
 .Dq \&-
 is a synonym
 for
@@ -191,9 +192,11 @@ is filled in with an appropriate error message.
 .Fn pcap_dispatch
 is used to collect and process packets.
 .Fa cnt
-specifies the maximum number of packets to process before returning.  A
+specifies the maximum number of packets to process before returning.
+A
 .Fa cnt
-of -1 processes all the packets received in one buffer.  A
+of -1 processes all the packets received in one buffer.
+A
 .Fa cnt
 of 0 processes all packets until an error occurs (or
 .Em EOF
@@ -209,7 +212,8 @@ a pointer to the
 struct (which precede the actual network headers and data),
 and a
 .Fa u_char
-pointer to the packet data.  The number of packets read is returned.
+pointer to the packet data.
+The number of packets read is returned.
 Zero is returned when
 .Em EOF
 is reached in a
@@ -248,9 +252,9 @@ is similar to
 except that instead of passing a pcap descriptor, one passes the
 snaplen, linktype, and error buffer (which must be
 .Em PCAP_ERRBUF_SIZE
-in length) explicitly.  It is intended to
-be used for compiling filters for direct bpf usage, without
-necessarily having called
+in length) explicitly.
+It is intended to be used for compiling filters for direct
+bpf usage, without necessarily having called
 .Fn pcap_open .
 .Pp
 .Fn pcap_setfilter
@@ -333,8 +337,10 @@ returns the name of the
 .Fn pcap_stats
 returns 0 and fills in a
 .Fa pcap_stat
-struct.  The values represent packet statistics from the start of the
-run to the time of the call.  If there is an error or the under lying
+struct.
+The values represent packet statistics from the start of the
+run to the time of the call.
+If there is an error or the under lying
 packet capture doesn't support packet statistics, -1 is returned and
 the error text can be obtained with
 .Fn pcap_perror

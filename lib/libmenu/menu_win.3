@@ -1,4 +1,4 @@
-.\"	$NetBSD: menu_win.3,v 1.8 2002/07/29 13:30:14 wiz Exp $
+.\"	$NetBSD: menu_win.3,v 1.9 2002/10/01 19:27:00 wiz Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -59,12 +59,14 @@ The
 function returns a pointer to the window that will be used to post a
 menu into, this pointer is set by the
 .Fn set_menu_sub
-function.  The
+function.
+The
 .Fn menu_win
 function returns a pointer to the window in which the menu subwindow
 will be created when the menu is posted, this pointer is set by the
 .Fn set_menu_win
-function.  The
+function.
+The
 .Fn scale_menu
 function calculates the minimum size a window needs to be to hold the
 items for a given menu, the parameters rows and cols are set to the

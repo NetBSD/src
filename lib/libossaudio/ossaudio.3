@@ -1,4 +1,4 @@
-.\"	$NetBSD: ossaudio.3,v 1.14 2002/02/20 11:38:02 wiz Exp $
+.\"	$NetBSD: ossaudio.3,v 1.15 2002/10/01 19:27:53 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -70,7 +70,8 @@ The emulation is incomplete.
 .Pp
 The emulation only covers
 .Fn ioctl ,
-there are other differences as well.  E.g., on a write
+there are other differences as well.
+E.g., on a write
 that would block in non-blocking mode Linux returns
 .Dv EINTR
 whereas

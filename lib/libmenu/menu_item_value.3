@@ -1,5 +1,4 @@
-.\"	$NetBSD: menu_item_value.3,v 1.9 2002/07/29 13:30:13 wiz Exp $
-.\"
+.\"	$NetBSD: menu_item_value.3,v 1.10 2002/10/01 19:26:59 wiz Exp $ .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
 .\"
@@ -50,26 +49,30 @@
 .Sh DESCRIPTION
 The
 .Fn item_value
-function returns value of the item.  If the item has been selected
-then this value will be TRUE.  The value can also be set by calling
+function returns value of the item.
+If the item has been selected then this value will be TRUE.
+The value can also be set by calling
 .Fn set_item_value
-to set the value to a defined state.  Setting the value to a value
+to set the value to a defined state.
+Setting the value to a value
 other than TRUE or FALSE will have undefined results.
 The
 .Fn item_selected
 function returns the number of items that are selected in the menu, that
-is the number of items whose value is TRUE.  The indexes of the selected
+is the number of items whose value is TRUE.
+The indexes of the selected
 items will be returned in
 .Fa array
-which will be dynamically allocated to hold the number of indexes.  It
-is the responsibility of the caller to release this storage by calling
+which will be dynamically allocated to hold the number of indexes.
+It is the responsibility of the caller to release this storage by calling
 .Xr free 3
-when the storage is no longer required.  If there are no elements selected
-in the items array then
+when the storage is no longer required.
+If there are no elements selected in the items array then
 .Fn item_selected
 will return 0 and
 .Fa array
-will be NULL.  If an error occurs
+will be NULL.
+If an error occurs
 .Fn item_selected
 will return one of the below return values which are less than 0.
 .Sh RETURN VALUES
