@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_hb.c,v 1.7 2003/07/15 02:59:29 lukem Exp $	*/
+/*	$NetBSD: kb_hb.c,v 1.8 2005/02/06 02:18:02 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kb_hb.c,v 1.7 2003/07/15 02:59:29 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kb_hb.c,v 1.8 2005/02/06 02:18:02 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -89,10 +89,7 @@ struct wskbd_mapdata kb_hb_keymapdata = {
 };
 
 int
-kb_hb_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+kb_hb_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct hb_attach_args *ha = aux;
 
@@ -103,9 +100,7 @@ kb_hb_match(parent, cf, aux)
 }
 
 void
-kb_hb_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+kb_hb_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct kb_hb_softc *sc = (void *)self;
 	struct hb_attach_args *ha = aux;
@@ -142,8 +137,7 @@ kb_hb_attach(parent, self, aux)
 }
 
 int
-kb_hb_intr(v)
-	void *v;
+kb_hb_intr(void *v)
 {
 	struct kb_hb_softc *sc = v;
 	volatile struct kbreg *reg = sc->sc_reg;
@@ -168,7 +162,7 @@ kb_hb_intr(v)
 }
 
 void
-kb_hb_cnattach()
+kb_hb_cnattach(void)
 {
 	volatile int *dipsw = (void *)DIP_SWITCH;
 	volatile struct kbreg *reg = (void *)KEYB_DATA;
@@ -178,10 +172,7 @@ kb_hb_cnattach()
 }
 
 void
-kb_hb_cngetc(v, type, data)
-	void *v;
-	u_int *type;
-	int *data;
+kb_hb_cngetc(void *v, u_int *type, int *data)
 {
 	volatile struct kbreg *reg = v;
 	volatile u_char *ien = (void *)INTEN0;
@@ -202,35 +193,26 @@ kb_hb_cngetc(v, type, data)
 }
 
 void
-kb_hb_cnpollc(v, on)
-	void *v;
-	int on;
+kb_hb_cnpollc(void *v, int on)
 {
 }
 
 int
-kb_hb_enable(v, on)
-	void *v;
-	int on;
+kb_hb_enable(void *v, int on)
 {
+
 	return 0;
 }
 
 void
-kb_hb_setleds(v, on)
-	void *v;
-	int on;
+kb_hb_setleds(void *v, int on)
 {
 }
 
 int
-kb_hb_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+kb_hb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
+
 	switch (cmd) {
 
 	case WSKBDIO_GTYPE:

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_cons.c,v 1.9 2003/08/07 16:28:54 agc Exp $	*/
+/*	$NetBSD: cpu_cons.c,v 1.10 2005/02/06 02:18:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_cons.c,v 1.9 2003/08/07 16:28:54 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_cons.c,v 1.10 2005/02/06 02:18:02 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ void kb_ap_cnattach(void);
 #include "zsc.h"
 
 void
-consinit()
+consinit(void)
 {
 	volatile int *dipsw;
 	static int initted = 0;

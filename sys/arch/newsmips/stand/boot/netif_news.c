@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_news.c,v 1.4 2003/03/13 14:49:12 drochner Exp $	*/
+/*	$NetBSD: netif_news.c,v 1.5 2005/02/06 02:18:03 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -61,18 +61,16 @@ int netif_debug;
 static struct iodesc sdesc;
 
 struct iodesc *
-socktodesc(sock)
-	int sock;
+socktodesc(int sock)
 {
 	if (sock != 0) {
-		return(NULL);
+		return NULL;
 	}
-	return (&sdesc);
+	return &sdesc;
 }
 
 int
-netif_news_open(pd)
-	struct romdev *pd;
+netif_news_open(struct romdev *pd)
 {
 	struct iodesc *io;
 
@@ -83,7 +81,7 @@ netif_news_open(pd)
 		printf("netif_open: device busy\n");
 #endif
 		errno = ENFILE;
-		return (-1);
+		return -1;
 	}
 	memset(io, 0, sizeof(*io));
 
@@ -92,12 +90,11 @@ netif_news_open(pd)
 	/* Put our ethernet address in io->myea */
 	prom_getether(pd, io->myea);
 
-	return(0);
+	return 0;
 }
 
 void
-netif_news_close(fd)
-	int fd;
+netif_news_close(int fd)
 {
 	struct iodesc *io;
 
@@ -110,10 +107,7 @@ netif_news_close(fd)
  * Return the length sent (or -1 on error).
  */
 ssize_t
-netif_put(desc, pkt, len)
-	struct iodesc *desc;
-	void *pkt;
-	size_t len;
+netif_put(struct iodesc *desc, void *pkt, size_t len)
 {
 	struct romdev *pd;
 	ssize_t rv;
@@ -157,11 +151,7 @@ netif_put(desc, pkt, len)
  * Return the total length received (or -1 on error).
  */
 ssize_t
-netif_get(desc, pkt, maxlen, timo)
-	struct iodesc *desc;
-	void *pkt;
-	size_t maxlen;
-	time_t timo;
+netif_get(struct iodesc *desc, void *pkt, size_t maxlen, time_t timo)
 {
 	struct romdev *pd;
 	int tick0;
@@ -203,10 +193,9 @@ netif_get(desc, pkt, maxlen, timo)
 }
 
 int
-prom_getether(pd, ea)
-	struct romdev *pd;
-	u_char *ea;
+prom_getether(struct romdev *pd, u_char *ea)
 {
+
 	if (apcall_ioctl(pd->fd, APIOCGIFHWADDR, ea));
 		return -1;
 
@@ -218,7 +207,7 @@ prom_getether(pd, ea)
 }
 
 time_t
-getsecs()
+getsecs(void)
 {
 	u_int t[2];
 

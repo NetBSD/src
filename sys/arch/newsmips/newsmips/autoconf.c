@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.23 2004/10/23 17:12:22 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.24 2005/02/06 02:18:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.23 2004/10/23 17:12:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24 2005/02/06 02:18:02 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.23 2004/10/23 17:12:22 thorpej Exp $"
  */
 int	cpuspeed = 10;	/* approx # instr per usec. */
 
-static void findroot __P((void));
+static void findroot(void);
 
 /*
  * Determine mass storage and memory configuration for a machine.
@@ -123,7 +123,7 @@ static void findroot __P((void));
  * for attached scsi devices.
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
 	extern struct idrom idrom;
 
@@ -153,7 +153,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 	findroot();
 
@@ -168,8 +168,8 @@ u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
 /*
  * Attempt to find the device from which we were booted.
  */
-void
-findroot()
+static void
+findroot(void)
 {
 	int ctlr, unit, part, type;
 	struct device *dv;

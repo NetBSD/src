@@ -1,4 +1,4 @@
-/*	$NetBSD: news3400.c,v 1.13 2003/10/25 04:07:28 tsutsui Exp $	*/
+/*	$NetBSD: news3400.c,v 1.14 2005/02/06 02:18:03 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: news3400.c,v 1.13 2003/10/25 04:07:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: news3400.c,v 1.14 2005/02/06 02:18:03 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -63,11 +63,7 @@ static int badaddr_flag;
  * Handle news3400 interrupts.
  */
 void
-news3400_intr(status, cause, pc, ipending)
-	u_int status;	/* status register at time of the exception */
-	u_int cause;	/* cause register at time of exception */
-	u_int pc;	/* program counter where to continue */
-	u_int ipending;
+news3400_intr(u_int status, u_int cause, u_int pc, u_int ipending)
 {
 	struct clockframe cf;
 
@@ -137,7 +133,7 @@ news3400_intr(status, cause, pc, ipending)
 	(INTST1_DMA|INTST1_SLOT1|INTST1_SLOT3|INTST1_EXT1|INTST1_EXT3)
 
 static void
-news3400_level0_intr()
+news3400_level0_intr(void)
 {
 	volatile u_char *intst1 = (void *)INTST1;
 	volatile u_char *intclr1 = (void *)INTCLR1;
@@ -158,7 +154,7 @@ news3400_level0_intr()
 #define LEVEL1_MASK1	(INTST1_BEEP|INTST1_SCC|INTST1_LANCE)
 
 static void
-news3400_level1_intr()
+news3400_level1_intr(void)
 {
 	volatile u_char *inten1 = (void *)INTEN1;
 	volatile u_char *intst1 = (void *)INTST1;
@@ -185,9 +181,7 @@ news3400_level1_intr()
 }
 
 int
-news3400_badaddr(addr, size)
-	void *addr;
-	u_int size;
+news3400_badaddr(void *addr, u_int size)
 {
 	volatile int x;
 
@@ -211,10 +205,10 @@ news3400_badaddr(addr, size)
 static void
 news3400_enable_intr(void)
 {
-	volatile u_int8_t *inten0 = (void *)INTEN0;
-	volatile u_int8_t *inten1 = (void *)INTEN1;
-	volatile u_int8_t *intclr0 = (void *)INTCLR0;
-	volatile u_int8_t *intclr1 = (void *)INTCLR1;
+	volatile uint8_t *inten0 = (void *)INTEN0;
+	volatile uint8_t *inten1 = (void *)INTEN1;
+	volatile uint8_t *intclr0 = (void *)INTCLR0;
+	volatile uint8_t *intclr1 = (void *)INTCLR1;
 
 	/* clear all interrupts */
 	*intclr0 = 0xff;
@@ -240,8 +234,8 @@ static void
 news3400_disable_intr(void)
 {
 
-	volatile u_int8_t *inten0 = (void *)INTEN0;
-	volatile u_int8_t *inten1 = (void *)INTEN1;
+	volatile uint8_t *inten0 = (void *)INTEN0;
+	volatile uint8_t *inten1 = (void *)INTEN1;
 
 	*inten0 = 0;
 	*inten1 = 0;
@@ -252,15 +246,14 @@ news3400_enable_timer(void)
 {
 
 	/* initialize interval timer */
-	*(volatile u_int8_t *)ITIMER = IOCLOCK / 6144 / 100 - 1;
+	*(volatile uint8_t *)ITIMER = IOCLOCK / 6144 / 100 - 1;
 
 	/* enable timer interrupt */
-	*(volatile u_int8_t *)INTEN0 |= (u_int8_t)INTEN0_TIMINT;
+	*(volatile uint8_t *)INTEN0 |= (uint8_t)INTEN0_TIMINT;
 }
 
 static void
-news3400_readidrom(rom)
-	u_char *rom;
+news3400_readidrom(u_char *rom)
 {
 	u_char *p = (u_char *)IDROM;
 	int i;
@@ -272,7 +265,7 @@ news3400_readidrom(rom)
 extern struct idrom idrom;
 
 void
-news3400_init()
+news3400_init(void)
 {
 
 	enable_intr = news3400_enable_intr;

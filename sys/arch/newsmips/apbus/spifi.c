@@ -1,4 +1,4 @@
-/*	$NetBSD: spifi.c,v 1.12 2004/12/07 22:23:45 thorpej Exp $	*/
+/*	$NetBSD: spifi.c,v 1.13 2005/02/06 02:18:02 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spifi.c,v 1.12 2004/12/07 22:23:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spifi.c,v 1.13 2005/02/06 02:18:02 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -107,7 +107,8 @@ struct spifi_softc {
 int spifi_match(struct device *, struct cfdata *, void *);
 void spifi_attach(struct device *, struct device *, void *);
 
-void spifi_scsipi_request(struct scsipi_channel *, scsipi_adapter_req_t, void *);
+void spifi_scsipi_request(struct scsipi_channel *, scsipi_adapter_req_t,
+    void *);
 struct spifi_scb *spifi_get_scb(struct spifi_softc *);
 void spifi_free_scb(struct spifi_softc *, struct spifi_scb *);
 int spifi_poll(struct spifi_softc *);
@@ -137,10 +138,7 @@ CFATTACH_DECL(spifi, sizeof(struct spifi_softc),
     spifi_match, spifi_attach, NULL, NULL);
 
 int
-spifi_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+spifi_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct apbus_attach_args *apa = aux;
 
@@ -151,9 +149,7 @@ spifi_match(parent, cf, aux)
 }
 
 void
-spifi_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+spifi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct spifi_softc *sc = (void *)self;
 	struct apbus_attach_args *apa = aux;
@@ -213,10 +209,8 @@ spifi_attach(parent, self, aux)
 }
 
 void
-spifi_scsipi_request(chan, req, arg)
-	struct scsipi_channel *chan;
-	scsipi_adapter_req_t req;
-	void *arg;
+spifi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
+   void *arg)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
@@ -244,7 +238,7 @@ spifi_scsipi_request(chan, req, arg)
 		scb->status = 0;
 		scb->daddr = (vaddr_t)xs->data;
 		scb->resid = xs->datalen;
-		bcopy(xs->cmd, &scb->cmd, xs->cmdlen);
+		memcpy(&scb->cmd, xs->cmd, xs->cmdlen);
 		scb->cmdlen = xs->cmdlen;
 
 		scb->target = periph->periph_target;
@@ -281,8 +275,7 @@ spifi_scsipi_request(chan, req, arg)
 }
 
 struct spifi_scb *
-spifi_get_scb(sc)
-	struct spifi_softc *sc;
+spifi_get_scb(struct spifi_softc *sc)
 {
 	struct spifi_scb *scb;
 	int s;
@@ -297,9 +290,7 @@ spifi_get_scb(sc)
 }
 
 void
-spifi_free_scb(sc, scb)
-	struct spifi_softc *sc;
-	struct spifi_scb *scb;
+spifi_free_scb(struct spifi_softc *sc, struct spifi_scb *scb)
 {
 	int s;
 
@@ -309,8 +300,7 @@ spifi_free_scb(sc, scb)
 }
 
 int
-spifi_poll(sc)
-	struct spifi_softc *sc;
+spifi_poll(struct spifi_softc *sc)
 {
 	struct spifi_scb *scb = sc->sc_nexus;
 	struct scsipi_xfer *xs;
@@ -342,18 +332,17 @@ spifi_poll(sc)
 }
 
 void
-spifi_minphys(bp)
-	struct buf *bp;
+spifi_minphys(struct buf *bp)
 {
-	if (bp->b_bcount > 64*1024)
-		bp->b_bcount = 64*1024;
+
+	if (bp->b_bcount > 64 * 1024)
+		bp->b_bcount = 64 * 1024;
 
 	minphys(bp);
 }
 
 void
-spifi_sched(sc)
-	struct spifi_softc *sc;
+spifi_sched(struct spifi_softc *sc)
 {
 	struct spifi_scb *scb;
 
@@ -361,10 +350,10 @@ spifi_sched(sc)
 start:
 	if (scb == NULL || sc->sc_nexus != NULL)
 		return;
-/*
+#if 0
 	if (sc->sc_targets[scb->target] & (1 << scb->lun))
 		goto next;
-*/
+#endif
 	TAILQ_REMOVE(&sc->ready_scb, scb, chain);
 
 #ifdef SPIFI_DEBUG
@@ -389,8 +378,7 @@ start:
 }
 
 static inline int
-spifi_read_count(reg)
-	struct spifi_reg *reg;
+spifi_read_count(struct spifi_reg *reg)
 {
 	int count;
 
@@ -401,10 +389,9 @@ spifi_read_count(reg)
 }
 
 static inline void
-spifi_write_count(reg, count)
-	struct spifi_reg *reg;
-	int count;
+spifi_write_count(struct spifi_reg *reg, int count)
 {
+
 	reg->count_hi  = count >> 16;
 	reg->count_mid = count >> 8;
 	reg->count_low = count;
@@ -419,8 +406,7 @@ static char scsi_phase_name[][8] = {
 #endif
 
 int
-spifi_intr(v)
-	void *v;
+spifi_intr(void *v)
 {
 	struct spifi_softc *sc = v;
 	struct spifi_reg *reg = sc->sc_reg;
@@ -546,8 +532,7 @@ done:
 }
 
 void
-spifi_pmatch(sc)
-	struct spifi_softc *sc;
+spifi_pmatch(struct spifi_softc *sc)
 {
 	struct spifi_reg *reg = sc->sc_reg;
 	int phase;
@@ -579,8 +564,7 @@ spifi_pmatch(sc)
 }
 
 void
-spifi_select(sc)
-	struct spifi_softc *sc;
+spifi_select(struct spifi_softc *sc)
 {
 	struct spifi_reg *reg = sc->sc_reg;
 	struct spifi_scb *scb = sc->sc_nexus;
@@ -605,9 +589,7 @@ spifi_select(sc)
 }
 
 void
-spifi_sendmsg(sc, msg)
-	struct spifi_softc *sc;
-	int msg;
+spifi_sendmsg(struct spifi_softc *sc, int msg)
 {
 	struct spifi_scb *scb = sc->sc_nexus;
 	/* struct mesh_tinfo *ti; */
@@ -646,6 +628,7 @@ spifi_sendmsg(sc, msg)
 	for (i = 0; i < len; i++)
 		reg->cmbuf[id].cdb[i] = sc->sc_omsg[i];
 }
+
 void
 spifi_command(struct spifi_softc *sc)
 {
@@ -722,8 +705,7 @@ spifi_status(struct spifi_softc *sc)
 }
 
 int
-spifi_done(sc)
-	struct spifi_softc *sc;
+spifi_done(struct spifi_softc *sc)
 {
 	struct spifi_scb *scb = sc->sc_nexus;
 	struct scsipi_xfer *xs = scb->xs;
@@ -749,8 +731,7 @@ spifi_done(sc)
 }
 
 void
-spifi_fifo_drain(sc)
-	struct spifi_softc *sc;
+spifi_fifo_drain(struct spifi_softc *sc)
 {
 	struct spifi_scb *scb = sc->sc_nexus;
 	struct spifi_reg *reg = sc->sc_reg;
@@ -776,8 +757,7 @@ spifi_fifo_drain(sc)
 }
 
 void
-spifi_reset(sc)
-	struct spifi_softc *sc;
+spifi_reset(struct spifi_softc *sc)
 {
 	struct spifi_reg *reg = sc->sc_reg;
 	int id = sc->sc_id;
@@ -812,8 +792,7 @@ spifi_reset(sc)
 }
 
 void
-spifi_bus_reset(sc)
-	struct spifi_softc *sc;
+spifi_bus_reset(struct spifi_softc *sc)
 {
 	struct spifi_reg *reg = sc->sc_reg;
 
@@ -833,10 +812,9 @@ static u_char spifi_sync_period[] = {
 };
 
 void
-spifi_setsync(sc, ti)
-	struct spifi_softc *sc;
-	struct spifi_tinfo *ti;
+spifi_setsync(struct spifi_softc *sc, struct spifi_tinfo *ti)
 {
+
 	if ((ti->flags & T_SYNCMODE) == 0)
 		reg->data_xfer = 0;
 	else {

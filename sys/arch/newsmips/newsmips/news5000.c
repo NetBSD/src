@@ -1,4 +1,4 @@
-/*	$NetBSD: news5000.c,v 1.12 2003/10/25 04:07:28 tsutsui Exp $	*/
+/*	$NetBSD: news5000.c,v 1.13 2005/02/06 02:18:03 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: news5000.c,v 1.12 2003/10/25 04:07:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: news5000.c,v 1.13 2005/02/06 02:18:03 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,11 +57,7 @@ static u_int freerun_off;
  * Handle news5000 interrupts.
  */
 void
-news5000_intr(status, cause, pc, ipending)
-	u_int status;	/* status register at time of the exception */
-	u_int cause;	/* cause register at time of exception */
-	u_int pc;	/* program counter where to continue */
-	u_int ipending;
+news5000_intr(u_int status, u_int cause, u_int pc, u_int ipending)
 {
 	if (ipending & MIPS_INT_MASK_2) {
 #ifdef DEBUG
@@ -219,12 +215,11 @@ news5000_enable_timer(void)
 {
 
 	/* enable timer interrpt */
-	*(volatile u_int32_t *)NEWS5000_INTEN2 = NEWS5000_INT2_TIMER0;
+	*(volatile uint32_t *)NEWS5000_INTEN2 = NEWS5000_INT2_TIMER0;
 }
 
 static void
-news5000_readmicrotime(tvp)
-	struct timeval *tvp;
+news5000_readmicrotime(struct timeval *tvp)
 {
 	u_int freerun;
 
@@ -241,10 +236,9 @@ news5000_readmicrotime(tvp)
 }
 
 static void
-news5000_readidrom(rom)
-	u_char *rom;
+news5000_readidrom(u_char *rom)
 {
-	u_int32_t *p = (void *)NEWS5000_IDROM;
+	uint32_t *p = (void *)NEWS5000_IDROM;
 	int i;
 
 	for (i = 0; i < sizeof (struct idrom); i++, p += 2)
@@ -268,5 +262,5 @@ news5000_init(void)
 	/* XXX reset uPD72067 FDC to avoid spurious interrupts */
 #define NEWS5000_FDC_FDOUT 0xbed20000
 #define FDO_FRST 0x04
-	*(volatile u_int8_t *)NEWS5000_FDC_FDOUT = FDO_FRST;
+	*(volatile uint8_t *)NEWS5000_FDC_FDOUT = FDO_FRST;
 }
