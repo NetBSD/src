@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)MAKEDEV.8	5.2 (Berkeley) 3/22/91
-.\"	$Id: MAKEDEV.8,v 1.2 1993/08/01 07:34:46 mycroft Exp $
+.\"	$NetBSD: MAKEDEV.8,v 1.3 1997/07/16 05:26:20 mikel Exp $
 .\"
 .TH MAKEDEV 8 "March 22, 1991"
 .UC 7
@@ -43,9 +43,9 @@ The shell script
 .IR MAKEDEV ,
 found in the ``/dev'' directory, is used to create the common special
 files.
-See
-.IR special (8)
-for a more complete discussion of special files.
+.\" See
+.\" .IR special (8)
+.\" for a more complete discussion of special files.
 .PP
 .I MAKEDEV
 takes any number of device names as arguments, where the names are
@@ -230,7 +230,7 @@ unibus versatec parallel interface
 .SH FILES
 /dev		The special file directory.
 .SH SEE ALSO
-.IR mknod (1), 
 .IR intro (4),
 .IR config (8),
-.IR special (8)
+.IR mknod (8)
+.\" .IR special (8)
