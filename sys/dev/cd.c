@@ -37,7 +37,7 @@
  *
  * from: Utah $Hdr: cd.c 1.6 90/11/28$
  *
- *	@(#)cd.c	8.2 (Berkeley) 11/16/93
+ *	@(#)cd.c	8.3 (Berkeley) 1/9/95
  */
 
 /*
@@ -418,6 +418,7 @@ cdopen(dev, flags)
 	return(0);
 }
 
+void
 cdstrategy(bp)
 	register struct buf *bp;
 {
@@ -684,7 +685,7 @@ cdwrite(dev, uio)
 
 cdioctl(dev, cmd, data, flag)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 {
