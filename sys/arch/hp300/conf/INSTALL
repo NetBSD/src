@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.14 2003/11/22 17:24:29 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.14.2.1 2004/07/15 20:22:39 he Exp $
 #
 # INSTALL machine description file
 #
@@ -19,6 +19,7 @@ options 	NFS_V2_ONLY
 options 	NFS_DEFAULT_NIOTHREADS=1
 options 	USERCONF		# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 
