@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.32 1998/11/30 20:43:06 thorpej Exp $	*/
+/*	$NetBSD: namespace.h,v 1.33 1999/01/20 11:48:49 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -64,9 +64,9 @@
 #define MD5Init			_MD5Init
 #define MD5Update		_MD5Update
 #define a64l			_a64l
-#define asctime_r		_asctime_r
 #define alarm			_alarm
 #define alphasort		_alphasort
+#define asctime_r		_asctime_r
 #define authnone_create		_authnone_create
 #define authunix_create		_authunix_create
 #define authunix_create_default _authunix_create_default
@@ -244,6 +244,7 @@
 #define nice			_nice
 #define nlist			_nlist
 #define nrand48			_nrand48
+#define nsdispatch		_nsdispatch
 #define offtime			_offtime
 #define opendir			_opendir
 #define openlog			_openlog
