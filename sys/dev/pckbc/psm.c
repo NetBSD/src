@@ -1,4 +1,4 @@
-/* $NetBSD: psm.c,v 1.7 1999/01/23 16:05:56 drochner Exp $ */
+/* $NetBSD: psm.c,v 1.8 1999/05/03 15:45:16 ad Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -239,16 +239,37 @@ pms_ioctl(v, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-#if 0
 	struct pms_softc *sc = v;
-#endif
+	u_char kbcmd[2];
+	int i;
 
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
 		*(u_int *)data = WSMOUSE_TYPE_PS2;
-		return (0);
+		break;
+		
+	case WSMOUSEIO_SRES:
+		i = (*(u_int *)data - 12) / 25;
+		
+		if (i < 0)
+			i = 0;
+			
+		if (i > 3)
+			i = 3;
+
+		kbcmd[0] = PMS_SET_RES;
+		kbcmd[1] = i;			
+		i = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, kbcmd, 
+		    2, 0, 1, 0);
+		
+		if (i)
+			printf("pms_ioctl: SET_RES command error\n");
+		break;
+		
+	default:
+		return (-1);
 	}
-	return (-1);
+	return (0);
 }
 
 /* Masks for the first byte of a packet */
