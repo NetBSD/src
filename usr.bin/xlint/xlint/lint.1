@@ -1,4 +1,4 @@
-.\"	$NetBSD: lint.1,v 1.5 1997/03/08 14:27:38 mouse Exp $
+.\"	$NetBSD: lint.1,v 1.6 1997/07/10 08:00:58 mikel Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -400,7 +400,7 @@ Suppress complaints about use of long long integer types.
 At appropriate points, inhibit complaints about unreachable code.
 (This comment is typically placed just after calls to functions
 like
-.Xr exit 2 ).
+.Xr exit 3 ).
 .It Li /* PRINTFLIKE Ns Ar n Li */
 makes
 .Nm
@@ -505,7 +505,7 @@ temporaries
 Jochen Pohl
 .Sh BUGS
 The routines
-.Xr exit 2 ,
+.Xr exit 3 ,
 .Xr longjmp 3
 and other functions that do not return are not understood; this
 causes various incorrect diagnostics.

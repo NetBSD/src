@@ -1,4 +1,4 @@
-.\"	$NetBSD: gprof.1,v 1.7 1996/10/15 18:58:15 explorer Exp $
+.\"	$NetBSD: gprof.1,v 1.8 1997/07/10 07:57:07 mikel Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -287,7 +287,7 @@ propagated properly, unless the signal catcher was invoked during
 the execution of the profiling routine, in which case all is lost.
 .Pp
 The profiled program must call
-.Xr exit  2
+.Xr exit 3
 or return normally for the profiling information to be saved
 in the
 .Pa gmon.out
