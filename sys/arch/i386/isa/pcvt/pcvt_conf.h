@@ -85,7 +85,7 @@
 #endif
 
 #ifdef NetBSD1_1
-#define PCVT_NETBSD 110
+#define PCVT_NETBSD (110 + (NetBSD1_1 - 1))
 #endif
 
 /*---------------------------------------------------------------------------
