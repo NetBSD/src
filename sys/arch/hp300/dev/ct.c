@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.36 2003/08/07 16:27:26 agc Exp $	*/
+/*	$NetBSD: ct.c,v 1.37 2003/11/17 14:37:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.36 2003/08/07 16:27:26 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.37 2003/11/17 14:37:59 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -395,10 +395,10 @@ ctopen(dev, flag, type, p)
 	else
 		sc->sc_soptc.opt = C_SPAR;
 
-	/* 
+	/*
 	 * Check the return of hpibsend() and hpibswait().
 	 * Drive could be loading/unloading a tape. If not checked,
-	 * driver hangs. 
+	 * driver hangs.
 	 */
 	cc = hpibsend(ctlr, slave, C_CMD, &sc->sc_soptc, sizeof(sc->sc_soptc));
 	if (cc != sizeof(sc->sc_soptc))
@@ -490,7 +490,7 @@ ctcommand(dev, cmd, cnt)
 #ifdef DEBUG
 			if (ctdebug & CT_BSF)
 				printf("%s: backup eof pos %d blk %d\n",
-				    sc->sc_dev.dv_xname, sc->sc_eofp, 
+				    sc->sc_dev.dv_xname, sc->sc_eofp,
 				    sc->sc_eofs[sc->sc_eofp]);
 #endif
 		}
@@ -628,7 +628,7 @@ mustio:
 			bp->b_resid = bp->b_bcount;
 			ctdone(sc, bp);
 			return;
-		}			
+		}
 		sc->sc_flags |= CTF_IO;
 		sc->sc_ioc.unit = C_SUNIT(sc->sc_punit);
 		sc->sc_ioc.saddr = C_SADDR;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.7 2003/08/01 00:23:18 tsutsui Exp $	*/
+/*	$NetBSD: bus.h,v 1.8 2003/11/17 14:37:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ typedef u_long bus_space_handle_t;
  * Implementation specific structures.
  * XXX Don't use outside of bus_space definitions!
  * XXX maybe this should be encapsuled in a non-global .h file?
- */ 
+ */
 
 struct bus_space_tag {
 	u_int		bustype;
