@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.27 1996/02/14 21:47:32 christos Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.28 1996/02/18 20:32:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -286,6 +286,7 @@ void show_scsi_xs __P((struct scsi_xfer *));
 void show_scsi_cmd __P((struct scsi_xfer *));
 void show_mem __P((u_char *, int));
 int scsi_probe_busses __P((int, int, int));
+void scsi_strvis __P((u_char *, u_char *, int));
 
 
 void lto3b __P((u_int32_t val, u_int8_t *bytes));
