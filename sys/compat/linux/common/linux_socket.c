@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.18 1998/10/04 00:02:43 fvdl Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.19 1999/03/25 04:26:45 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
+#include <sys/protosw.h> 
 
 #include <sys/syscallargs.h>
 
@@ -490,3 +491,46 @@ linux_ioctl_socket(p, uap, retval)
 	SCARG(&ia, data) = SCARG(uap, data);
 	return sys_ioctl(p, &ia, retval);
 }
+
+int
+linux_sys_connect(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	int error;
+
+	register struct sys_connect_args /* {
+		syscallarg(int) s;
+		syscallarg(const struct sockaddr *) name;
+		syscallarg(unsigned int) namelen;
+	} */ *uap = v;
+	
+	error = sys_connect (p, v, retval);
+
+	if (error == EISCONN) {
+		struct file *fp;
+		register struct socket *so;
+		int s, state, prflags;
+		
+	    	if (getsock(p->p_fd, SCARG(uap, s), &fp)!= 0)
+		    	return EISCONN;
+
+		s = splsoftnet();
+		so = (struct socket *)fp->f_data;
+		state = so->so_state;
+		prflags = so->so_proto->pr_flags;
+		splx(s);
+		/*
+		 * We should only let this call succeed once per
+		 * non-blocking connect; however we don't have
+		 * a convenient place to keep that state..
+		 */
+		if ((state & SS_NBIO) && (state & SS_ISCONNECTED) &&
+		    (prflags & PR_CONNREQUIRED))
+			return 0;
+	}
+
+	return error;
+}
+

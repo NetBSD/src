@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.h,v 1.4 1998/10/04 00:02:44 fvdl Exp $	*/
+/*	$NetBSD: linux_socketcall.h,v 1.5 1999/03/25 04:26:45 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -235,6 +235,7 @@ int linux_sys_sendto __P((struct proc *, void *, register_t *));
 int linux_sys_recvfrom __P((struct proc *, void *, register_t *));
 int linux_sys_setsockopt __P((struct proc *, void *, register_t *));
 int linux_sys_getsockopt __P((struct proc *, void *, register_t *));
+int linux_sys_connect __P((struct proc *, void *, register_t *));
 __END_DECLS
 # endif /* !_KERNEL */
 
