@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.42 2004/04/06 04:02:10 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.43 2004/04/06 04:03:17 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -465,3 +465,8 @@ sys/dev/ic/com.c				1.225
 	don't get interrupted again (as the corresponding bit in the IIR is 
 	cleared by reading, except for some broken devices). PR#25010
 	[enami, ticket #70]
+
+dist/dhcp/includes/cf/netbsd.h			1.5
+
+	Use _LP64 to indicate 64-bit platform.
+	[nakayama, ticket #71]
