@@ -65,7 +65,7 @@
  */
 /* 
  *	from: @(#)pmap.c	7.5 (Berkeley) 5/10/91
- *	$Id: pmap.c,v 1.10 1994/06/26 13:07:48 briggs Exp $
+ *	$Id: pmap.c,v 1.11 1994/07/31 08:27:38 lkestel Exp $
  */
 
 /*
@@ -200,7 +200,10 @@ extern vm_offset_t pager_sva, pager_eva;
 #define pmap_pte_set_w(pte, v)		((pte)->pg_w = (v))
 #define pmap_pte_set_prot(pte, v)	((pte)->pg_prot = (v))
 
+#define pmap_valid_page(pa)	(pmap_initialized && pmap_page_index(pa) >= 0)
+
 void print_pmap(pmap_t pmap);  /* LAK */
+int pmap_page_index(vm_offset_t pa);
 
 /*
  * Given a map and a machine independent protection code,
@@ -245,11 +248,22 @@ vm_map_t	pt_map;
 
 vm_offset_t    	avail_start;	/* PA of first available physical page */
 vm_offset_t	avail_end;	/* PA of last available physical page */
+
+#if defined(MACHINE_NONCONTIG)
+vm_offset_t	avail_next;	/* Next available physical page		*/
+vm_offset_t	hole_start;	/* Start of hole between banks A and B	*/
+vm_offset_t	hole_end;	/* End of hole between bank A and B	*/
+int		avail_remaining;/* Number of physical free pages left	*/
+int		avail_range;	/* Range avail_next is in		*/
+#endif
+
 vm_size_t	mem_size;	/* memory size in bytes */
 vm_offset_t	virtual_avail;  /* VA of first avail page (after kernel bss)*/
 vm_offset_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
+#ifndef MACHINE_NONCONTIG
 vm_offset_t	vm_first_phys;	/* PA of first managed page */
 vm_offset_t	vm_last_phys;	/* PA just past last managed page */
+#endif
 int		macpagesperpage;/* PAGE_SIZE / MAC_PAGE_SIZE */
 boolean_t	pmap_initialized = FALSE;	/* Has pmap_init completed? */
 int		pmap_aliasmask;	/* seperation at which VA aliasing ok */
@@ -259,6 +273,11 @@ static int	pmap_ishift;	/* segment table index shift */
 boolean_t	pmap_testbit();
 void		pmap_enter_ptpage();
 
+/* These are used to map the RAM: */
+int		numranges; /* = 0 == don't use the ranges */
+unsigned long	low[8];
+unsigned long	high[8];
+
 #if BSDVM_COMPAT
 #include "msgbuf.h"
 
@@ -267,7 +286,7 @@ void		pmap_enter_ptpage();
  */
 struct pte	*CMAP1, *CMAP2;
 caddr_t		CADDR1, CADDR2;
-struct pte	*pmap_mmap;
+struct pte	*mmap_pte;
 caddr_t		vmmap;
 struct pte	*msgbufmap;
 struct msgbuf	*msgbufp;
@@ -277,7 +296,7 @@ struct msgbuf	*msgbufp;
  *	Bootstrap the system enough to run with virtual memory.
  *	Map the kernel's code and data, and allocate the system page table.
  *
- *	On the HP this is called after mapping has already been enabled
+ *	On the Mac this is called after mapping has already been enabled
  *	and just syncs the pmap module with what has already been done.
  *	[We can't call it easily with mapping off since the kernel is not
  *	mapped with PA == VA, hence we would have to relocate every address
@@ -286,8 +305,8 @@ struct msgbuf	*msgbufp;
  */
 void
 pmap_bootstrap(firstaddr, loadaddr)
-	vm_offset_t firstaddr;
-	vm_offset_t loadaddr;
+	vm_offset_t firstaddr;		/* Physical address of 1st free page */
+	vm_offset_t loadaddr;		/* Physical address of kernel */
 {
  
 #if BSDVM_COMPAT
@@ -295,18 +314,55 @@ pmap_bootstrap(firstaddr, loadaddr)
 	struct pte *pte;
 #endif
 	extern vm_offset_t maxmem, physmem;
+	int	i;
 
 	avail_start = firstaddr;
 	avail_end = maxmem << PGSHIFT;
 
+#if defined(MACHINE_NONCONTIG)
+	if (numranges == 0) {
+		numranges = 1;
+		low[0] = avail_start;
+		high[0] = avail_end;
+	}
+
+	avail_next = avail_start;
+
+	avail_remaining = 0;
+	avail_range = -1;
+	for (i = 0; i < numranges; i++) {
+		if (avail_next >= low[i] && avail_next < high[i]) {
+			avail_range = i;
+		}
+		if (avail_range != -1) {
+			avail_remaining +=
+				mac68k_btop (high[i] - low[i]);
+		}
+	}
+	if (avail_range == -1) {
+		/* I'm not sure I can panic here, cause maybe no console */
+		panic ("pmap_bootstrap(): avail_next not in range\n");
+	}
+	avail_remaining -= mac68k_btop (avail_start - low[avail_range]);
+#endif
+
 	/* XXX: allow for msgbuf */
-	avail_end -= mac68k_round_page(sizeof(struct msgbuf));
+#if defined(MACHINE_NONCONTIG)
+	avail_remaining -= mac68k_btop (mac68k_round_page (
+						sizeof (struct msgbuf)));
+	high[numranges - 1] -= mac68k_round_page (sizeof (struct msgbuf));
+	while (high[numranges - 1] < low[numranges - 1]) {
+		numranges--;
+		high[numranges - 1] -= low[numranges] - high[numranges];
+	}
+#else
+	avail_end -= mac68k_round_page (sizeof (struct msgbuf));
+#endif
 
 	mem_size = physmem << PGSHIFT;
 	virtual_avail = VM_MIN_KERNEL_ADDRESS + (firstaddr - loadaddr);
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
 	macpagesperpage = 1;
-
 
 /* BARF HELP ME! DAYSTAR CACHE fails */
 #if defined(EXTERNAL_CACHE)  /* LAK -- Do we have external cache? */
@@ -373,7 +429,7 @@ pmap_bootstrap(firstaddr, loadaddr)
 	SYSMAP(caddr_t	,CMAP2	,CADDR2	   ,1	)
 
 	/* BG -- this is used only in mem.c and machdep.c, once each: */
-	SYSMAP(caddr_t		,pmap_mmap	,vmmap	   ,1		)
+	SYSMAP(caddr_t		,mmap_pte	,vmmap	   ,1		)
 
 	/* BG -- this is used a few times in kern/subr_log.c and once */
 	/*  in kern/subr_prf.c. */
@@ -409,6 +465,11 @@ pmap_bootstrap_alloc(size)
 	virtual_avail = pmap_map(virtual_avail, avail_start,
 		avail_start + size, VM_PROT_READ|VM_PROT_WRITE);
 	avail_start += size;
+#if defined(MACHINE_NONCONTIG)
+	avail_remaining -= mac68k_btop (size);
+	/* XXX hope this doesn't pop it into the next range: */
+	avail_next += size;
+#endif
 
 	blkclr ((caddr_t) val, size);
 	return ((void *) val);
@@ -520,7 +581,11 @@ bogons:
 	 * Allocate memory for random pmap data structures.  Includes the
 	 * initial segment table, pv_head_table and pmap_attributes.
 	 */
-	npg = atop(phys_end - phys_start);
+#ifdef MACHINE_NONCONTIG
+	npg = pmap_page_index (high[numranges - 1] - 1) + 1;
+#else
+	npg = atop (phys_end - phys_start);
+#endif
 	s = (vm_size_t) ((cpu040 ? MAC_040STSIZE*128 : MAC_STSIZE) +
 			 sizeof(struct pv_entry) * npg + npg);
 	s = round_page(s);
@@ -601,8 +666,10 @@ bogons:
 	/*
 	 * Now it is safe to enable pv_table recording.
 	 */
+#ifndef MACHINE_NONCONTIG
 	vm_first_phys = phys_start;
 	vm_last_phys = phys_end;
+#endif
 	pmap_initialized = TRUE;
 }
 
@@ -908,8 +975,14 @@ pmap_remove(pmap, sva, eva)
 		 * Remove from the PV table (raise IPL since we
 		 * may be called at interrupt time).
 		 */
+#ifdef MACHINE_NONCONTIG
+		if (!pmap_valid_page (pa)) {
+			continue;
+		}
+#else
 		if (pa < vm_first_phys || pa >= vm_last_phys)
 			continue;
+#endif
 		pv = pa_to_pvh(pa);
 		ste = (int *)0;
 		s = splimp();
@@ -1100,8 +1173,14 @@ pmap_page_protect(pa, prot)
 	    prot == VM_PROT_NONE && (pmapdebug & PDB_REMOVE))
 		printf("pmap_page_protect(%x, %x)\n", pa, prot);
 #endif
+#ifdef MACHINE_NONCONTIG
+	if (!pmap_valid_page (pa)) {
+		return;
+	}
+#else
 	if (pa < vm_first_phys || pa >= vm_last_phys)
 		return;
+#endif
 
 	switch (prot) {
 	case VM_PROT_ALL:
@@ -1341,7 +1420,11 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 * Note that we raise IPL while manipulating pv_table
 	 * since pmap_enter can be called at interrupt time.
 	 */
+#ifdef MACHINE_NONCONTIG
+	if (pmap_valid_page (pa)) {
+#else
 	if (pa >= vm_first_phys && pa < vm_last_phys) {
+#endif
 		register pv_entry_t pv, npv;
 		int s;
 
@@ -1673,6 +1756,9 @@ void
 pmap_collect(pmap)
 	pmap_t		pmap;
 {
+#ifdef MACHINE_NONCONTIG
+	return; /* ACK! */
+#else
 	register vm_offset_t pa;
 	register pv_entry_t pv;
 	register int *pte;
@@ -1777,6 +1863,7 @@ ok:
 #endif
 	}
 	splx(s);
+#endif /* MACHINE_NONCONTIG */
 }
 
 /*
@@ -1872,8 +1959,14 @@ pmap_pageable(pmap, sva, eva, pageable)
 		if (!pmap_ste_v(pmap_ste(pmap, sva)))
 			return;
 		pa = pmap_pte_pa(pmap_pte(pmap, sva));
+#ifdef MACHINE_NONCONTIG
+		if (!pmap_valid_page (pa)) {
+			return;
+		}
+#else
 		if (pa < vm_first_phys || pa >= vm_last_phys)
 			return;
+#endif
 		pv = pa_to_pvh(pa);
 		if (pv->pv_ptste == NULL)
 			return;
@@ -2018,8 +2111,14 @@ pmap_testbit(pa, bit)
 	register int *pte, ix;
 	int s;
 
+#ifdef MACHINE_NONCONTIG
+	if (!pmap_valid_page (pa)) {
+		return FALSE;
+	}
+#else
 	if (pa < vm_first_phys || pa >= vm_last_phys)
 		return(FALSE);
+#endif
 
 	pv = pa_to_pvh(pa);
 	s = splimp();
@@ -2072,8 +2171,15 @@ pmap_changebit(pa, bit, setem)
 		printf("pmap_changebit(%x, %x, %s)\n",
 		       pa, bit, setem ? "set" : "clear");
 #endif
+
+#ifdef MACHINE_NONCONTIG
+	if (!pmap_valid_page (pa)) {
+		return;
+	}
+#else
 	if (pa < vm_first_phys || pa >= vm_last_phys)
 		return;
+#endif
 
 	pv = pa_to_pvh(pa);
 	s = splimp();
@@ -2430,56 +2536,92 @@ pmap_check_stab()
 
 #if defined (MACHINE_NONCONTIG)
 
-void remap_MMU (void)
-{
-  extern ddprintf (char *, long);
+/*
+ * LAK: These functions are from NetBSD/i386 and are used for
+ *  the non-contiguous memory machines, such as the IIci, IIsi, and IIvx.
+ *  See the functions in sys/vm that #ifdef MACHINE_NONCONTIG.
+ */
 
-  ddprintf ("Now in remap_MMU\n", 0);
-}
-
-unsigned int
-pmap_page_index(pa)
-	vm_offset_t pa;
-{
-	/* HACK */
-	return mac68k_btop (pa);
-}
+/*
+ * pmap_free_pages()
+ *
+ *   Returns the number of free physical pages left.
+ */
 
 unsigned int
 pmap_free_pages()
 {
-	/* Returns # of free physical pages left */
-	return 0;  /*avail_remaining;*/
+	/* printf ("pmap_free_pages(): returning %d\n", avail_remaining); */
+	return avail_remaining;
 }
+
+/*
+ * pmap_next_page()
+ *
+ *   Stores in *addrp the next available page, skipping the hole between
+ *   bank A and bank B.
+ */
 
 int
 pmap_next_page(addrp)
 	vm_offset_t *addrp;
 {
-/*
-	if (avail_next == avail_end) {
-		return FALSE;
-	}
-
-	if (avail_next == hole_start) {
-		avail_next = hold_end;
+	if (avail_next == high[avail_range]) {
+		avail_range++;
+		if (avail_range >= numranges) {
+			/* printf ("pmap_next_page(): returning FALSE\n"); */
+			return FALSE;
+		}
+		avail_next = low[avail_range];
 	}
 
 	*addrp = avail_next;
+	/* printf ("pmap_next_page(): returning 0x%x\n", avail_next); */
 	avail_next += NBPG;
 	avail_remaining--;
 	return TRUE;
-*/
+}
+
+/*
+ * pmap_page_index()
+ *
+ *   Given a physical address, return the page number that it is in
+ *   the block of free memory.
+ */
+
+int
+pmap_page_index(pa)
+	vm_offset_t pa;
+{
+	/*
+	 * XXX LAK: This routine is called quite a bit.  We should go
+	 *  back and try to optimize it a bit.
+	 */
+
+	int	i, index;
+
+	index = 0;
+	for (i = 0; i < numranges; i++) {
+		if (pa >= low[i] && pa < high[i]) {
+			index += mac68k_btop (pa - low[i]);
+			/* printf ("pmap_page_index(0x%x): returning %d\n", */
+				/* (int)pa, index); */
+			return index;
+		}
+		index += mac68k_btop (high[i] - low[i]);
+	}
+
+	return -1;
 }
 
 void
 pmap_virtual_space(startp, endp)
 	vm_offset_t *startp, *endp;
 {
-/*
+	/* printf ("pmap_virtual_space(): returning 0x%x and 0x%x\n", */
+		/* virtual_avail, virtual_end); */
 	*startp = virtual_avail;
 	*endp = virtual_end;
-*/
 }
 
 #endif /* MACHINE_NONCONTIG */
