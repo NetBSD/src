@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.10 1998/08/29 20:19:56 hubertf Exp $	*/
+/*	$NetBSD: init.c,v 1.11 1999/02/10 12:38:54 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.10 1998/08/29 20:19:56 hubertf Exp $");
+__RCSID("$NetBSD: init.c,v 1.11 1999/02/10 12:38:54 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -217,7 +217,7 @@ linkdata()
 
 void
 trapdel(n)			/* come here if he hits a del */
-	int     n;
+	int     n __attribute__((__unused__));
 {
 	delhit = 1;		/* main checks, treats as QUIT */
 	signal(SIGINT, trapdel);/* catch subsequent DELs */
