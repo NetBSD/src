@@ -1,4 +1,4 @@
-/*	$NetBSD: wwinit.c,v 1.8 1995/12/21 08:39:56 mycroft Exp $	*/
+/*	$NetBSD: wwinit.c,v 1.9 1995/12/21 10:46:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)wwinit.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: wwinit.c,v 1.8 1995/12/21 08:39:56 mycroft Exp $";
+static char rcsid[] = "$NetBSD: wwinit.c,v 1.9 1995/12/21 10:46:12 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,15 +61,13 @@ wwinit()
 	wwhead.ww_back = &wwhead;
 
 	sigemptyset(&sigset);
-	sigaddset(&sigset, SIGIO);
 	sigaddset(&sigset, SIGCHLD);
 	sigaddset(&sigset, SIGALRM);
 	sigaddset(&sigset, SIGHUP);
 	sigaddset(&sigset, SIGTERM);
 	sigprocmask(SIG_BLOCK, &sigset, &osigset);
 
-	if (signal(SIGIO, wwrint) == BADSIG ||
-	    signal(SIGCHLD, wwchild) == BADSIG ||
+	if (signal(SIGCHLD, wwchild) == BADSIG ||
 	    signal(SIGHUP, wwquit) == BADSIG ||
 	    signal(SIGTERM, wwquit) == BADSIG ||
 	    signal(SIGPIPE, SIG_IGN) == BADSIG) {
@@ -121,7 +119,7 @@ wwinit()
 	wwnewtty.ww_termios.c_cc[VMIN] = 1;
 	wwnewtty.ww_termios.c_cc[VTIME] = 0;
 #endif
-	wwnewtty.ww_fflags = wwoldtty.ww_fflags | FASYNC | FNONBLOCK;
+	wwnewtty.ww_fflags = wwoldtty.ww_fflags | FNONBLOCK;
 	if (wwsettty(0, &wwnewtty) < 0)
 		goto bad;
 
@@ -325,8 +323,6 @@ wwinit()
 			wwerrno = WWE_SYS;
 			goto bad;
 		}
-	/* catch typeahead before ASYNC was set */
-	(void) kill(getpid(), SIGIO);
 	wwstart1();
 
 	sigprocmask(SIG_SETMASK, &osigset, (sigset_t *)0);
@@ -338,7 +334,6 @@ bad:
 	 * to exit when wwinit fails anyway.
 	 */
 	(void) wwsettty(0, &wwoldtty);
-	(void) signal(SIGIO, SIG_DFL);
 
 	sigprocmask(SIG_SETMASK, &osigset, (sigset_t *)0);
 	return -1;
