@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.7 1998/08/05 16:50:39 kleink Exp $ */
+/*	$NetBSD: smg.c,v 1.8 1998/08/10 14:47:16 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -144,7 +144,7 @@ smg_match(parent, match, aux)
 {
 	struct	vsbus_attach_args *va = aux;
 
-	if (va->va_type != INR_VF)
+	if (va->va_type != inr_vf)
 		return 0;
 #ifdef DIAGNOSTIC
 	if (sm_addr == 0)
@@ -352,7 +352,23 @@ smg_ioctl(v, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	return -1;
+	struct wsdisplay_fbinfo fb;
+
+	switch (cmd) {
+	case WSDISPLAYIO_GTYPE:
+		*(u_int *)data = WSDISPLAY_TYPE_PM_MONO;
+		break;
+
+	case WSDISPLAYIO_GINFO:
+		fb.height = 864;
+		fb.width = 1024;
+		return copyout(&fb, data, sizeof(struct wsdisplay_fbinfo));
+
+	
+	default:
+		return -1;
+	}
+	return 0;
 }
 
 static int
@@ -361,7 +377,9 @@ smg_mmap(v, offset, prot)
 	off_t offset;
 	int prot;
 {
-	return -1;
+	if (offset > SMSIZE)
+		return -1;
+	return (SMADDR + offset) >> CLSHIFT;
 }
 
 int
@@ -397,7 +415,7 @@ smg_show_screen(v, cookie)
 		return;
 
 	for (row = 0; row < SM_ROWS; row++)
-		for (line = 0; line < SM_CHEIGHT; line++)
+		for (line = 0; line < SM_CHEIGHT; line++) {
 			for (col = 0; col < SM_COLS; col++) {
 				u_char s, c = ss->ss_image[row][col];
 
@@ -408,6 +426,9 @@ smg_show_screen(v, cookie)
 					s ^= 255;
 				SM_ADDR(row, col, line) = s;
 			}
+			if (ss->ss_attr[row][col] & WSATTR_UNDERLINE)
+				SM_ADDR(row, col, line) = 255;
+		}
 	cursor = &sm_addr[(ss->ss_cury * SM_CHEIGHT * SM_COLS) + ss->ss_curx +
 	    ((SM_CHEIGHT - 1) * SM_COLS)];
 	curscr = ss;
