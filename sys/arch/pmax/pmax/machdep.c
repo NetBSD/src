@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.150 1999/09/12 01:17:17 chs Exp $	*/
+/* $NetBSD: machdep.c,v 1.151 1999/11/12 09:55:39 nisimura Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150 1999/09/12 01:17:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.151 1999/11/12 09:55:39 nisimura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -87,8 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150 1999/09/12 01:17:17 chs Exp $");
 #include <machine/sysconf.h>
 #include <machine/bootinfo.h>
 #include <machine/locore.h>
-#include <pmax/pmax/pmaxtype.h>
-#include <pmax/pmax/clockreg.h>
 #include <pmax/pmax/machdep.h>
 
 #ifdef DDB
@@ -130,11 +128,6 @@ struct splvec	splvec;			/* XXX will go XXX */
 
 void	mach_init __P((int, char *[], int, int, u_int, char *));
 
-unsigned (*clkread) __P((void)); /* high resolution timer if available */
-unsigned nullclkread __P((void));
-
-int	initcpu __P((void));
-
 /* XXX XXX XXX */
 
 /* Old 4.4bsd/pmax-derived interrupt-enable method */
@@ -143,7 +136,6 @@ void	(*tc_enable_interrupt)
      __P ((u_int slotno, int (*handler) __P((void *sc)),
           void *sc, int onoff));
 
-volatile struct chiptime *mcclock_addr;
 /*XXXjrs*/
 const	struct callback *callv;	/* pointer to PROM entry points */
 /* XXX XXX XXX */
@@ -154,22 +146,20 @@ extern void stacktrace __P((void)); /*XXX*/
 #endif
 
 /* Motherboard or system-specific initialization vector */
-void	unimpl_os_init __P((void));
 void	unimpl_bus_reset __P((void));
-int	unimpl_intr __P((unsigned, unsigned, unsigned, unsigned));
 void	unimpl_cons_init __P((void));
 void	unimpl_device_register __P((struct device *, void *));
-void 	unimpl_iointr __P ((void *, u_long));
-void	unimpl_clockintr __P ((void *));
+int	unimpl_iointr __P((unsigned, unsigned, unsigned, unsigned));
+unsigned nullwork __P((void));
+
 
 struct platform platform = {
 	"iobus not set",
-	unimpl_os_init,
 	unimpl_bus_reset,
 	unimpl_cons_init,
 	unimpl_device_register,
 	unimpl_iointr,
-	unimpl_clockintr
+	(void *)nullwork,
 };
 
 extern caddr_t esym;
@@ -401,6 +391,8 @@ mach_init(argc, argv, code, cv, bim, bip)
 		cp += NBPG;
 		physmem++;
 	}
+	/* clear any memory error conditions possibly caused by probe */
+	(*platform.bus_reset)();
 
 	maxmem = physmem;
 
@@ -565,11 +557,6 @@ cpu_startup()
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-
-	/*
-	 * Set up CPU-specific registers, cache, etc.
-	 */
-	initcpu();
 }
 
 
@@ -714,7 +701,7 @@ microtime(tvp)
 
 	*tvp = time;
 #if (DEC_3MIN + DEC_MAXINE + DEC_3MAXPLUS) > 0
-	tvp->tv_usec += (*clkread)();
+	tvp->tv_usec += (*platform.clkread)();
 #endif
 	if (tvp->tv_usec >= 1000000) {
 		tvp->tv_usec -= 1000000;
@@ -731,36 +718,6 @@ microtime(tvp)
 	splx(s);
 }
 
-
-int
-initcpu()
-{
-	volatile struct chiptime *c;
-	int i = 0;
-
-	/*
-	 * reset after autoconfig probe:
-	 * clear  any memory errors, reset any pending interrupts.
-	 */
-
-	(*platform.bus_reset)();	/* XXX_cf_alpha */
-
-	/*
-	 * With newconf, this should be  done elswhere, but without it
-	 * we hang (?)
-	 */
-#if 1 /*XXX*/
-	/* disable clock interrupts (until startrtclock()) */
-	if (mcclock_addr) {
-		c = mcclock_addr;
-		c->regb = REGB_DATA_MODE | REGB_HOURS_FORMAT;
-		i = c->regc;
-	}
-	return (i);
-#endif
-}
-
-
 /*
  * Wait "n" microseconds. (scsi code needs this).
  */
@@ -774,12 +731,6 @@ delay(n)
 /*
  *  Ensure all platform vectors are always initialized.
  */
-void
-unimpl_os_init()
-{
-	panic("sysconf.init didnt set os_init");
-}
-
 void
 unimpl_bus_reset()
 {
@@ -801,23 +752,8 @@ unimpl_device_register(sc, arg)
 
 }
 
-void
-unimpl_iointr(arg, arg2)
-	void *arg;
-	u_long arg2;
-{
-	panic("sysconf.init didnt set iointr");
-}
-
-void
-unimpl_clockintr(arg)
-	void *arg;
-{
-	panic("sysconf.init didnt set clockintr");
-}
-
 int
-unimpl_intr(mask, pc, statusreg, causereg)
+unimpl_iointr(mask, pc, statusreg, causereg)
 	u_int mask;
 	u_int pc;
 	u_int statusreg;
@@ -827,7 +763,7 @@ unimpl_intr(mask, pc, statusreg, causereg)
 }
 
 unsigned
-nullclkread()
+nullwork()
 {
 	return 0;
 }	
