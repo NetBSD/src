@@ -1,4 +1,4 @@
-#	$NetBSD: ALPHA,v 1.14.4.1 1996/05/25 22:06:55 jtc Exp $
+#	$NetBSD: ALPHA,v 1.14.4.2 1996/06/03 20:11:49 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -124,6 +124,7 @@ pci*	at	ppb?
 
 # PCI devices
 de*	at	pci?
+le*	at	pci?
 ncr*	at	pci?
 pceb*	at	pci?
 pcivga*	at	pci?
