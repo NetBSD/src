@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2002/03/05 21:31:23 thorpej Exp $
+#	$NetBSD: Makefile,v 1.27 2003/09/30 09:23:19 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 .include <bsd.own.mk>
@@ -21,7 +21,7 @@ ALLFILES=gold lastdead mess monsters void motd characs scoreboard
 FILES=gold lastdead mess monsters void motd
 # don't overwrite existing characters or scorefile
 .for file in characs scoreboard
-.if !exists(${DESTDIR}/${FILESDIR}/${file})
+.if !exists(${DESTDIR}${FILESDIR}/${file})
 FILES+=${file}
 .endif
 .endfor
