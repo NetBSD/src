@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.4.2.12 2002/08/19 21:39:03 thorpej Exp $	*/
+/*	$NetBSD: fault.c,v 1.4.2.13 2002/08/28 20:14:24 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -47,7 +47,7 @@
 #include "opt_pmap_debug.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.4.2.12 2002/08/19 21:39:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.4.2.13 2002/08/28 20:14:24 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -698,22 +698,4 @@ prefetch_abort_handler(frame)
 		trapsignal(l, SIGSEGV, fault_pc);
  out:
 	userret(l);
-}
-
-int
-cowfault(va)
-	vaddr_t va;
-{
-	struct vmspace *vm;
-	int error;
-
-	if (va >= VM_MAXUSER_ADDRESS)
-		return (EFAULT);
-
-	/* uvm_fault can't be called from within an interrupt */
-	KASSERT(current_intr_depth == 0);
-	
-	vm = curproc->p_vmspace;
-	error = uvm_fault(&vm->vm_map, va, 0, VM_PROT_WRITE);
-	return error;
 }
