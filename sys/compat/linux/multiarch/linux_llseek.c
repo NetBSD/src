@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_llseek.c,v 1.18 1997/09/05 01:49:12 kleink Exp $	*/
+/*	$NetBSD: linux_llseek.c,v 1.19 1997/10/16 23:54:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -444,8 +444,11 @@ bsd_to_linux_stat(bsp, lsp)
 
 	lsp->lst_dev     = bsp->st_dev;
 	lsp->lst_ino     = bsp->st_ino;
-	lsp->lst_mode    = bsp->st_mode;
-	lsp->lst_nlink   = bsp->st_nlink;
+	lsp->lst_mode    = (linux_mode_t)bsp->st_mode;
+	if (bsp->st_nlink >= (1 << 15))
+		lsp->lst_nlink = (1 << 15) - 1;
+	else
+		lsp->lst_nlink = (linux_nlink_t)bsp->st_nlink;
 	lsp->lst_uid     = bsp->st_uid;
 	lsp->lst_gid     = bsp->st_gid;
 	lsp->lst_rdev    = linux_fakedev(bsp->st_rdev);
