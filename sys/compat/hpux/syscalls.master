@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.15 1997/10/17 18:39:14 scottr Exp $
+	$NetBSD: syscalls.master,v 1.16 1998/02/14 21:16:35 kleink Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -192,7 +192,7 @@
 			    u_int iovcnt); }
 122	NOARGS		{ int sys_settimeofday(struct timeval *tv, \
 			    struct timezone *tzp); }
-123	NOARGS		{ int sys_fchown(int fd, int uid, int gid); }
+123	NOARGS		{ int sys___posix_fchown(int fd, int uid, int gid); }
 124	NOARGS		{ int sys_fchmod(int fd, int mode); }
 125	UNIMPL
 126	STD		{ int hpux_sys_setresuid(uid_t r, uid_t e, uid_t s); }
