@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.31 2000/04/12 21:46:00 jdc Exp $	*/
+/*	$NetBSD: curses.h,v 1.32 2000/04/13 07:07:33 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -449,11 +449,11 @@ void	 keypad __P((WINDOW *, bool));
 int	 leaveok __P((WINDOW *, bool));
 char	*longname __P((void));
 int	 mvcur __P((int, int, int, int));
-int	 mvprintw __P((int, int, char *, ...));
-int	 mvscanw __P((int, int, char *, ...));
+int	 mvprintw __P((int, int, const char *, ...));
+int	 mvscanw __P((int, int, const char *, ...));
 int	 mvwin __P((WINDOW *, int, int));
-int	 mvwprintw __P((WINDOW *, int, int, char *, ...));
-int	 mvwscanw __P((WINDOW *, int, int, char *, ...));
+int	 mvwprintw __P((WINDOW *, int, int, const char *, ...));
+int	 mvwscanw __P((WINDOW *, int, int, const char *, ...));
 WINDOW	*newwin __P((int, int, int, int));
 int	 nl __P((void));
 int	 nocbreak __P((void));
@@ -465,13 +465,13 @@ int	 notimeout __P((WINDOW *, bool));
 int	 overlay __P((const WINDOW *, WINDOW *));
 int	 overwrite __P((WINDOW *, WINDOW *));
 int	 pair_content __P((short, short *, short *));
-int	 printw __P((char *, ...));
+int	 printw __P((const char *, ...));
 int	 raw __P((void));
 int	 reset_prog_mode __P((void));
 int	 reset_shell_mode __P((void));
 int	 resetty __P((void));
 int	 savetty __P((void));
-int	 scanw __P((char *, ...));
+int	 scanw __P((const char *, ...));
 int	 scroll __P((WINDOW *));
 int	 scrollok __P((WINDOW *, bool));
 int	 setterm __P((char *));
@@ -480,8 +480,8 @@ WINDOW	*subwin __P((WINDOW *, int, int, int, int));
 int	 touchline __P((WINDOW *, int, int));
 int	 touchoverlap __P((WINDOW *, WINDOW *));
 int	 touchwin __P((WINDOW *));
-int	 vwprintw __P((WINDOW *, char *, _BSD_VA_LIST_));
-int	 vwscanw __P((WINDOW *, char *, _BSD_VA_LIST_));
+int	 vwprintw __P((WINDOW *, const char *, _BSD_VA_LIST_));
+int	 vwscanw __P((WINDOW *, const char *, _BSD_VA_LIST_));
 int	 waddch __P((WINDOW *, const chtype));
 int	 waddnstr __P((WINDOW *, const char *, int));
 int	 wattron __P((WINDOW *, int));
@@ -503,9 +503,9 @@ int	 winsch __P((WINDOW *, chtype));
 int	 winsdelln __P((WINDOW *, int));
 int	 winsertln __P((WINDOW *));
 int	 wmove __P((WINDOW *, int, int));
-int	 wprintw __P((WINDOW *, char *, ...));
+int	 wprintw __P((WINDOW *, const char *, ...));
 int	 wrefresh __P((WINDOW *));
-int	 wscanw __P((WINDOW *, char *, ...));
+int	 wscanw __P((WINDOW *, const char *, ...));
 int	 wscrl __P((WINDOW *, int));
 int	 wstandend __P((WINDOW *));
 int	 wstandout __P((WINDOW *));
