@@ -1,4 +1,4 @@
-/*	$NetBSD: rwho.c,v 1.10 1998/04/02 11:00:10 kleink Exp $	*/
+/*	$NetBSD: rwho.c,v 1.11 1998/12/19 21:52:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rwho.c	8.1 (Berkeley) 6/6/93";*/
-__RCSID("$NetBSD: rwho.c,v 1.10 1998/04/02 11:00:10 kleink Exp $");
+__RCSID("$NetBSD: rwho.c,v 1.11 1998/12/19 21:52:00 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: rwho.c,v 1.10 1998/04/02 11:00:10 kleink Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <fcntl.h>
 #include <unistd.h>
 
 DIR	*dirp;
@@ -86,8 +87,6 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern char *optarg;
-	extern int optind;
 	int ch;
 	struct dirent *dp;
 	int cc, width;
