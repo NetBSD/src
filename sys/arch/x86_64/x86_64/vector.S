@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.8 2002/06/05 21:59:32 fvdl Exp $	*/
+/*	$NetBSD: vector.S,v 1.9 2002/06/07 00:06:21 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -214,6 +214,7 @@ calltrap:
 	INTRFASTEXIT
 3:	sti
 	movabsq	$4f,%rdi
+	xorq	%rax,%rax
 	call	_C_LABEL(printf)
 #ifdef DDB
 	int	$3
@@ -256,6 +257,10 @@ IDTVEC(syscall)
 	movq	$2,TF_ERR(%rsp)
 	movq	$T_ASTFLT, TF_TRAPNO(%rsp)
 
+#ifdef DIAGNOSTIC
+	movl	_C_LABEL(cpl)(%rip),%ebx
+#endif /* DIAGNOSTIC */
+
 	movq    _C_LABEL(curproc)(%rip),%r15
 	movq	%rsp,P_MD_REGS(%r15)	# save pointer to frame
 	call	*P_MD_SYSCALL(%r15)
@@ -272,6 +277,10 @@ IDTVEC(syscall)
 2:
 	sti
 syscall_return:
+#ifdef DIAGNOSTIC
+	cmpl	_C_LABEL(cpl)(%rip),%ebx
+	jne	3f
+#endif
 	INTR_RESTOREARGS
 	addq	$16,%rsp
 	popq	%rcx	/* return rip */
@@ -281,6 +290,19 @@ syscall_return:
 	cli
 	movq	(%rsp),%rsp
 	sysretq
+
+#ifdef DIAGNOSTIC
+3:	movabsq	$4f, %rdi
+	xorq	%rax,%rax
+	call	_C_LABEL(printf)
+#ifdef DDB
+	int	$3
+#endif /* DDB */
+	movl	%ebx,_C_LABEL(cpl)(%rip)
+	jmp	1b
+4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
+#endif
+
 
 NENTRY(proc_trampoline)
 	movq	%r13,%rdi
@@ -315,11 +337,11 @@ osyscall1:
 	pushq	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
 	movq	_C_LABEL(curproc)(%rip),%rdx	# get pointer to curproc
-	testl	$P_32,P_FLAG(%rdx)
-	je	1f		# not a 32bit process, go away please
 #ifdef DIAGNOSTIC
 	movl	_C_LABEL(cpl)(%rip),%ebx
 #endif /* DIAGNOSTIC */
+	testl	$P_32,P_FLAG(%rdx)
+	je	1f		# not a 32bit process, go away please
 	movq	%rsp,P_MD_REGS(%rdx)	# save pointer to frame
 	call	*P_MD_SYSCALL(%rdx)
 _C_LABEL(osyscall_return):
@@ -337,7 +359,7 @@ _C_LABEL(osyscall_return):
 1:	INTRFASTEXIT
 #else /* DIAGNOSTIC */
 1:	cmpl	_C_LABEL(cpl)(%rip),%ebx
-	jne	3f
+	jne 3f
 	INTRFASTEXIT
 3:	sti
 	movabsq	$4f, %rdi
