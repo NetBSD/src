@@ -1,4 +1,4 @@
-/*	$NetBSD: level.c,v 1.5 1998/11/10 13:01:32 hubertf Exp $	*/
+/*	$NetBSD: level.c,v 1.6 2003/01/20 05:29:55 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)level.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: level.c,v 1.5 1998/11/10 13:01:32 hubertf Exp $");
+__RCSID("$NetBSD: level.c,v 1.6 2003/01/20 05:29:55 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -261,7 +261,7 @@ make_room(rn, r1, r2, r3)
 	case BIG_ROOM:
 		top_row = get_rand(MIN_ROW, MIN_ROW+5);
 		bottom_row = get_rand(DROWS-7, DROWS-2);
-		left_col = get_rand(0, 10);;
+		left_col = get_rand(0, 10);
 		right_col = get_rand(DCOLS-11, DCOLS-1);
 		rn = 0;
 		goto B;

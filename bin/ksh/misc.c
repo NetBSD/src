@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.6 2002/09/25 02:41:11 provos Exp $	*/
+/*	$NetBSD: misc.c,v 1.7 2003/01/20 05:29:54 simonb Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -1039,13 +1039,13 @@ ksh_getopt(argv, go, options)
 				go->optarg = argv[go->optind - 1] + go->p;
 				go->p = 0;
 			} else
-				go->optarg = (char *) 0;;
+				go->optarg = (char *) 0;
 		} else {
 			if (argv[go->optind] && digit(argv[go->optind][0])) {
 				go->optarg = argv[go->optind++];
 				go->p = 0;
 			} else
-				go->optarg = (char *) 0;;
+				go->optarg = (char *) 0;
 		}
 	}
 	return c;

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.18 2002/08/02 00:10:40 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.19 2003/01/20 05:30:11 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: util.c,v 1.18 2002/08/02 00:10:40 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.19 2003/01/20 05:30:11 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -194,7 +194,7 @@ enter_where(ep, pn)
 	w->info = LOGGEDIN;
 	w->tty = ep->line;
 	w->host = ep->host;
-	w->loginat = (time_t)ep->tv.tv_sec;;
+	w->loginat = (time_t)ep->tv.tv_sec;
 	find_idle_and_ttywrite(w);
 }
 

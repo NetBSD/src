@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3 2003/01/12 21:49:52 christos Exp $ */
+/*	$NetBSD: md.c,v 1.4 2003/01/20 05:29:54 simonb Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -573,7 +573,7 @@ static int
 count_mbr_parts(pt)
 	struct mbr_partition *pt;
 {
-	int i, count = 0;;
+	int i, count = 0;
 
 	for (i = 0; i < NMBRPART; i++)
 		if (pt[i].mbrp_typ != 0)

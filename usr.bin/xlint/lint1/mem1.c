@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.8 2002/06/28 05:03:55 jmc Exp $	*/
+/*	$NetBSD: mem1.c,v 1.9 2003/01/20 05:30:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.8 2002/06/28 05:03:55 jmc Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.9 2003/01/20 05:30:13 simonb Exp $");
 #endif
 
 #include <sys/types.h>
@@ -213,7 +213,7 @@ xgetblk(mbl_t **mbp, size_t s)
 			frmblks = mb->nxt;
 		}
 		mb->ffree = mb->blk;
-		mb->nfree = mb->size;;
+		mb->nfree = mb->size;
 		mb->nxt = *mbp;
 		*mbp = mb;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.7 1999/10/20 15:49:15 hubertf Exp $	*/
+/*	$NetBSD: lex.c,v 1.8 2003/01/20 05:29:54 simonb Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -1396,5 +1396,5 @@ pop_state_(si, old_end)
 
 	afree(old_base, ATEMP);
 
-	return si->base + STATE_BSIZE - 1;;
+	return si->base + STATE_BSIZE - 1;
 }

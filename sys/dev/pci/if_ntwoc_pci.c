@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_pci.c,v 1.10 2003/01/06 13:05:15 wiz Exp $	*/
+/*	$NetBSD: if_ntwoc_pci.c,v 1.11 2003/01/20 05:30:07 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.10 2003/01/06 13:05:15 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.11 2003/01/20 05:30:07 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -668,7 +668,7 @@ ntwoc_pci_setup_dma(struct sca_softc *sc)
 
 	scp0->sp_txdesc_p = paddr0;
 	scp0->sp_txdesc = (sca_desc_t *)vaddr0;
-	addroff = sizeof(sca_desc_t) * scp0->sp_ntxdesc;;
+	addroff = sizeof(sca_desc_t) * scp0->sp_ntxdesc;
 
 	/*
 	 * point to the range following the tx descriptors, and

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.5 2003/01/12 00:52:45 augustss Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.6 2003/01/20 05:30:02 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -246,5 +246,5 @@ pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin, int swiz,
     int *iline)
 {
 	/*printf("pci_conf_interrupt: bus=%d dev=%d pin=%d swiz=%d\n", bus, dev, pin, swiz);*/
-	*iline = (swiz + dev) & 3;;
+	*iline = (swiz + dev) & 3;
 }

@@ -1,4 +1,4 @@
-/*      $NetBSD: functions.c,v 1.4 2002/07/25 12:20:56 jdolecek Exp $       */
+/*      $NetBSD: functions.c,v 1.5 2003/01/20 05:30:14 simonb Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -352,7 +352,7 @@ ftp_base(int truename)
 	if (pkg_path)
 		return strdup(pkg_path);
 
-	strncpy(buf, NETBSD_PKG_BASE, sizeof(buf));;
+	strncpy(buf, NETBSD_PKG_BASE, sizeof(buf));
 
 	rc = uname(&un);
 	if (rc == -1)

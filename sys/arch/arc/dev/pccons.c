@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.32 2003/01/19 10:06:13 tsutsui Exp $	*/
+/*	$NetBSD: pccons.c,v 1.33 2003/01/20 05:30:00 simonb Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -133,7 +133,7 @@ void kbd_flush_input __P((void));
 void set_cursor_shape __P((void));
 void get_cursor_shape __P((void));
 void async_update __P((void));
-void do_async_update __P((u_char));;
+void do_async_update __P((u_char));
 
 void pccnputc __P((dev_t, int c));
 int pccngetc __P((dev_t));

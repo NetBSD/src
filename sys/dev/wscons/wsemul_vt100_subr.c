@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_subr.c,v 1.11 2002/07/04 14:37:15 junyoung Exp $ */
+/* $NetBSD: wsemul_vt100_subr.c,v 1.12 2003/01/20 05:30:10 simonb Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.11 2002/07/04 14:37:15 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.12 2003/01/20 05:30:10 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,11 +218,11 @@ wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp, u_char c)
 	    case A3('\0', '\0', 'l'): /* RM */
 		for (n = 0; n < edp->nargs; n++)
 			vt100_ansimode(edp, ARG(n), VTMODE_RESET);
-		break;;
+		break;
 	    case A3('?', '\0', 'l'): /* DECRM */
 		for (n = 0; n < edp->nargs; n++)
 			vt100_decmode(edp, ARG(n), VTMODE_RESET);
-		break;;
+		break;
 	    case A3('\0', '$', 'p'): /* DECRQM request mode ANSI */
 		vt100_ansimode(edp, ARG(0), VTMODE_REPORT);
 		break;

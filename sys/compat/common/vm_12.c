@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_12.c,v 1.11 2003/01/18 07:28:34 thorpej Exp $	*/
+/*	$NetBSD: vm_12.c,v 1.12 2003/01/20 05:30:04 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_12.c,v 1.11 2003/01/18 07:28:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_12.c,v 1.12 2003/01/20 05:30:04 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,8 +63,8 @@ compat_12_sys_msync(struct lwp *l, void *v, register_t *retval)
 		syscallarg(size_t) len;
 	} */ *uap = v;
 
-	SCARG(&ua, addr) = SCARG(uap, addr);;
-	SCARG(&ua, len) = SCARG(uap, len);;
+	SCARG(&ua, addr) = SCARG(uap, addr);
+	SCARG(&ua, len) = SCARG(uap, len);
 	SCARG(&ua, flags) = MS_SYNC | MS_INVALIDATE;
 	return (sys___msync13(l, &ua, retval));
 }

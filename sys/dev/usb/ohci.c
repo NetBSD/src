@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.135 2002/12/10 14:07:37 toshii Exp $	*/
+/*	$NetBSD: ohci.c,v 1.136 2003/01/20 05:30:09 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.135 2002/12/10 14:07:37 toshii Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.136 2003/01/20 05:30:09 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1408,7 +1408,7 @@ ohci_softintr(void *v)
 			    bEndpointAddress);
 			xfer->status = USBD_NORMAL_COMPLETION;
 			actlen = 0;
-			for (i = 0, sitd = xfer->hcpriv;;
+			for (i = 0, sitd = xfer->hcpriv;
 			    sitd = next) {
 				next = sitd->nextitd;
 				if (OHCI_ITD_GET_CC(le32toh(sitd->

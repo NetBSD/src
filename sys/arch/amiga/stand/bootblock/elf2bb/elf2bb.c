@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2bb.c,v 1.5 2002/07/20 08:36:18 grant Exp $	*/
+/*	$NetBSD: elf2bb.c,v 1.6 2003/01/20 05:29:59 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -177,7 +177,7 @@ main(int argc, char *argv[])
 				tsz += sh_size;
 		} else if (htobe32(sh[i].sh_type) == SHT_NOBITS &&
 		    htobe32(sh[i].sh_flags) == (SHF_ALLOC | SHF_WRITE)) {
-			bsz += sh_size;;
+			bsz += sh_size;
 		} else if (htobe32(sh[i].sh_type) == SHT_RELA) {
 			trsz += htobe32(sh[i].sh_size);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.20 2002/12/08 01:09:34 jmc Exp $ */
+/*	$NetBSD: iha.c,v 1.21 2003/01/20 05:30:06 simonb Exp $ */
 
 /*-
  * Device driver for the INI-9XXXU/UW or INIC-940/950 PCI SCSI Controller.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.20 2002/12/08 01:09:34 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.21 2003/01/20 05:30:06 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1207,13 +1207,13 @@ iha_exec_scb(sc, scb)
 		ioh = sc->sc_ioh;
 
 		bus_space_write_1(iot, ioh, TUL_IMSK, MASK_ALL);
-		sc->sc_semaph = SEMAPH_IN_MAIN;;
+		sc->sc_semaph = SEMAPH_IN_MAIN;
 
 		splx(s);
 		iha_main(sc);
 		s = splbio();
 
-		sc->sc_semaph = ~SEMAPH_IN_MAIN;;
+		sc->sc_semaph = ~SEMAPH_IN_MAIN;
 		bus_space_write_1(iot, ioh, TUL_IMSK, (MASK_ALL & ~MSCMP));
 	}
 

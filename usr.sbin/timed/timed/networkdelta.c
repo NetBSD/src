@@ -1,4 +1,4 @@
-/*	$NetBSD: networkdelta.c,v 1.10 2002/07/06 22:08:31 wiz Exp $	*/
+/*	$NetBSD: networkdelta.c,v 1.11 2003/01/20 05:30:14 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)networkdelta.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: networkdelta.c,v 1.10 2002/07/06 22:08:31 wiz Exp $");
+__RCSID("$NetBSD: networkdelta.c,v 1.11 2003/01/20 05:30:14 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -219,13 +219,13 @@ median(float a,				/* initial guess for the median */
 		aa = (sumx/sum-a)*AMP;
 		if (npts >= 2) {	/* guess was too low */
 			am = a;
-			aa = xp + max(0.0, aa);;
+			aa = xp + max(0.0, aa);
 			if (aa > ap)
 				aa = (a + ap)/2;
 
 		} else if (npts <= -2) {  /* guess was two high */
 			ap = a;
-			aa = xm + min(0.0, aa);;
+			aa = xm + min(0.0, aa);
 			if (aa < am)
 				aa = (a + am)/2;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.174 2003/01/13 03:32:56 toshii Exp $	*/
+/*	$NetBSD: cd.c,v 1.175 2003/01/20 05:30:09 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.174 2003/01/13 03:32:56 toshii Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.175 2003/01/20 05:30:09 simonb Exp $");
 
 #include "rnd.h"
 
@@ -841,7 +841,7 @@ cddone(xs)
 
 	if (xs->bp != NULL) {
 		disk_unbusy(&cd->sc_dk, xs->bp->b_bcount - xs->bp->b_resid,
-		    (xs->bp->b_flags & B_READ));;
+		    (xs->bp->b_flags & B_READ));
 #if NRND > 0
 		rnd_add_uint32(&cd->rnd_source, xs->bp->b_rawblkno);
 #endif

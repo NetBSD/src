@@ -1,4 +1,4 @@
-/*	$NetBSD: xargs.c,v 1.12 1999/12/22 14:41:01 kleink Exp $	*/
+/*	$NetBSD: xargs.c,v 1.13 2003/01/20 05:30:13 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xargs.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: xargs.c,v 1.12 1999/12/22 14:41:01 kleink Exp $");
+__RCSID("$NetBSD: xargs.c,v 1.13 2003/01/20 05:30:13 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -326,7 +326,7 @@ run(argv)
 	case 0:
 		execvp(argv[0], argv);
 		noinvoke = (errno == ENOENT) ? 127 : 126;
-		warn("%s", argv[0]);;
+		warn("%s", argv[0]);
 		_exit(1);
 	}
 	pid = waitpid(pid, &status, 0);

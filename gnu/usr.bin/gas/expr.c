@@ -25,7 +25,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: expr.c,v 1.8 1998/08/17 22:49:22 tv Exp $";
+static char rcsid[] = "$Id: expr.c,v 1.9 2003/01/20 05:29:56 simonb Exp $";
 #endif
 
 #include <ctype.h>
@@ -982,7 +982,7 @@ char
 {
     register char c;
     
-    while (is_part_of_name(c = *input_line_pointer++)) ;;
+    while (is_part_of_name(c = *input_line_pointer++)) ;
     *--input_line_pointer = 0;
     return (c);
 }

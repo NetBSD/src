@@ -1,5 +1,5 @@
 /*
- * $NetBSD: main.c,v 1.16 2002/12/10 17:14:06 thorpej Exp $
+ * $NetBSD: main.c,v 1.17 2003/01/20 05:29:59 simonb Exp $
  *
  *
  * Copyright (c) 1996,1999 Ignatios Souvatzis
@@ -321,7 +321,7 @@ again:
 
 		if ((mh->Attribs & (MEMF_CHIP|MEMF_FAST)) == MEMF_CHIP) {
 			size += from;
-			cmemsz = size;;
+			cmemsz = size;
 			from = 0;
 		} else if ((fmemsz < size) && mapped1to1) {
 			fmem = from;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_pci.c,v 1.36 2003/01/20 04:10:26 simonb Exp $	*/
+/*	$NetBSD: ahc_pci.c,v 1.37 2003/01/20 05:30:06 simonb Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.36 2003/01/20 04:10:26 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.37 2003/01/20 05:30:06 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -674,7 +674,7 @@ ahc_pci_attach(parent, self, aux)
 		
 
 	/* Ensure busmastering is enabled */
-	command |= PCI_COMMAND_MASTER_ENABLE;;
+	command |= PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
 
 	/* On all PCI adapters, we allow SCB paging */

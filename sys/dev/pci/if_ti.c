@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.53 2003/01/17 08:11:51 itojun Exp $ */
+/* $NetBSD: if_ti.c,v 1.54 2003/01/20 05:30:07 simonb Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.53 2003/01/17 08:11:51 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.54 2003/01/20 05:30:07 simonb Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -1700,7 +1700,7 @@ static void ti_attach(parent, self, aux)
 	/* Allocate interrupt */
 	if (pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
-		return;;
+		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, ti_intr, sc);
@@ -1710,7 +1710,7 @@ static void ti_attach(parent, self, aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		return;;
+		return;
 	}
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 	/*

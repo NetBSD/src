@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 2002/12/13 02:52:10 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25 2003/01/20 05:30:03 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -506,7 +506,7 @@ sendsig(sig, mask, code)
 	 * Round down the stackpointer to a multiple of 16 for
 	 * fxsave and the ABI.
 	 */
-	sp = (char *)((unsigned long)sp & ~15) - 8;;
+	sp = (char *)((unsigned long)sp & ~15) - 8;
 	fp = (struct sigframe *)sp - 1;
 
 	if (p->p_md.md_flags & MDP_USEDFPU) {

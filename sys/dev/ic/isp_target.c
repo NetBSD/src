@@ -1,4 +1,4 @@
-/* $NetBSD: isp_target.c,v 1.21 2003/01/06 13:05:10 wiz Exp $ */
+/* $NetBSD: isp_target.c,v 1.22 2003/01/20 05:30:06 simonb Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_target.c,v 1.21 2003/01/06 13:05:10 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_target.c,v 1.22 2003/01/20 05:30:06 simonb Exp $");
 
 #ifdef	__NetBSD__
 #include <dev/ic/isp_netbsd.h>
@@ -394,7 +394,7 @@ isp_target_put_entry(struct ispsoftc *isp, void *ap)
 		return (-1);
 	}
 
-	ISP_TDQE(isp, "isp_target_put_entry", (int) optr, ap);;
+	ISP_TDQE(isp, "isp_target_put_entry", (int) optr, ap);
 	ISP_ADD_REQUEST(isp, nxti);
 	return (0);
 }

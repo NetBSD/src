@@ -1,4 +1,4 @@
-/* $NetBSD: awireg.h,v 1.7 2002/09/03 14:54:01 onoe Exp $ */
+/* $NetBSD: awireg.h,v 1.8 2003/01/20 05:30:06 simonb Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -356,7 +356,7 @@ struct awi_mib_local {
 	u_int8_t	Rx_Buffer_Size[4];
 	u_int8_t	Acting_as_AP;
 	u_int8_t	Fill_CFP;
-} __attribute__((__packed__));;
+} __attribute__((__packed__));
 
 struct awi_mib_mac {
 	u_int8_t	_Reserved1[2];

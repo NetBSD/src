@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.92 2003/01/06 12:46:09 wiz Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.93 2003/01/20 05:30:05 simonb Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.92 2003/01/06 12:46:09 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.93 2003/01/20 05:30:05 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ahc.h"
@@ -591,7 +591,7 @@ static __inline struct scb *
 ahcgetscb(struct ahc_softc *ahc)
 {
 	struct scb *scbp;
-	int opri;;
+	int opri;
 
 	opri = splbio();
 	if ((scbp = SLIST_FIRST(&ahc->scb_data->free_scbs))) {

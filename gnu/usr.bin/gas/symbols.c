@@ -19,7 +19,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: symbols.c,v 1.4 1995/03/21 15:27:14 mycroft Exp $";
+static char rcsid[] = "$Id: symbols.c,v 1.5 2003/01/20 05:29:56 simonb Exp $";
 #endif
 
 #include "as.h"
@@ -127,7 +127,7 @@ register int augend; /* 0 for nb, 1 for n:, nf */
 		    *q = n % 10 + '0';
 		    n /= 10;
 	    }
-	while (( * p ++ = * -- q ) != '\0') ;;
+	while (( * p ++ = * -- q ) != '\0') ;
 	
 	/* The label, as a '\0' ended string, starts at symbol_name_build. */
 	return(symbol_name_build);
