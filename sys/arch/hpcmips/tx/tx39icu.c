@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39icu.c,v 1.2 1999/12/07 17:11:05 uch Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.3 1999/12/22 15:35:35 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -304,6 +304,8 @@ tx39icu_intr(mask, pc, status, cause)
 	/* IRQHIGH */
 	if (mask & MIPS_INT_MASK_4) {
 		tx39_irqhigh_intr(mask, pc, status, cause);
+
+		return 0;
 	}
 
 	/* IRQLOW */
@@ -389,12 +391,16 @@ tx39_irqhigh_intr(mask, pc, status, cause)
 	pri = TX39_INTRSTATUS6_INTVECT(sc->sc_regs[0]);
 
 	if (pri == TX39_INTRPRI13_TIMER_PERIODIC) {
+		tx_conf_write(tc, TX39_INTRCLEAR5_REG, 
+			      TX39_INTRSTATUS5_PERINT);
 		cf.pc = pc;
 		cf.sr = status;
 		hardclock(&cf);
-		tx_conf_write(tc, TX39_INTRCLEAR5_REG, 
-			      TX39_INTRSTATUS5_PERINT);
+		intrcnt[HARDCLOCK]++;
+
+		return;
 	}
+
 	/* Handle all pending IRQHIGH interrupts */
 	for (i = pri; i > 0; i--) {
 		TAILQ_FOREACH(he, &sc->sc_he_head[i], he_link) {
