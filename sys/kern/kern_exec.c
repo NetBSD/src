@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.64 1995/03/09 12:05:39 mycroft Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.65 1995/04/07 22:33:23 fvdl Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994 Christopher G. Demetriou
@@ -61,10 +61,6 @@
 
 #ifdef COPY_SIGCODE
 extern char sigcode[], esigcode[];
-
-#define	szsigcode	(esigcode - sigcode)
-#else
-#define	szsigcode	0
 #endif
 
 /*
@@ -223,6 +219,7 @@ execve(p, uap, retval)
 	struct ps_strings arginfo;
 	struct vmspace *vm = p->p_vmspace;
 	char **tmpfap;
+	int szsigcode;
 
 	/*
 	 * figure out the maximum size of an exec header, if necessary.
@@ -255,6 +252,10 @@ execve(p, uap, retval)
 	pack.ep_vap = &attr;
 	pack.ep_emul = EMUL_NETBSD;
 	pack.ep_flags = 0;
+#ifdef COPY_SIGCODE
+	pack.ep_sigcode = sigcode;
+	pack.ep_esigcode = esigcode;
+#endif
 
 	/* see if we can run it. */
 	if (error = check_exec(p, &pack))
@@ -335,12 +336,18 @@ execve(p, uap, retval)
 
 	dp = (char *) ALIGN(dp);
 
+#ifdef COPY_SIGCODE
+	szsigcode = pack.ep_esigcode - pack.ep_sigcode;
+#else
+	szsigcode = 0;
+#endif
+
 	/* Now check if args & environ fit into new stack */
 	len = ((argc + envc + 2 + pack.ep_setup_arglen) * sizeof(char *) +
 	    sizeof(long) + dp + STACKGAPLEN + szsigcode +
 	    sizeof(struct ps_strings)) - argp;
 #ifdef COMPAT_LINUX
-	/* XXXX need this for envp and argv on stack */
+	/* XXXX need this for envp and argv on stack, and sigcode */
 	if (pack.ep_emul == EMUL_LINUX)
 		len += 2 * sizeof (char *);
 #endif
@@ -456,7 +463,7 @@ execve(p, uap, retval)
 
 #ifdef COPY_SIGCODE
 	/* copy out the process's signal trapoline code */
-	if (copyout((char *) sigcode, ((char *) PS_STRINGS) - szsigcode,
+	if (copyout((char *) pack.ep_sigcode, ((char *) PS_STRINGS) - szsigcode,
 		szsigcode)) {
 		goto exec_abort;
 	}
