@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.78 2003/12/29 05:58:34 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.79 2003/12/29 06:30:42 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.78 2003/12/29 05:58:34 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.79 2003/12/29 06:30:42 oster Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -162,18 +162,12 @@ static int rf_ConfigureRDFreeList(RF_ShutdownList_t ** listp);
 int     
 rf_BootRaidframe()
 {
-	int     rc;
 
 	if (raidframe_booted)
 		return (EBUSY);
 	raidframe_booted = 1;
-
-	rc = rf_lkmgr_mutex_init(&configureMutex);
-	if (rc) {
-		rf_print_unable_to_init_mutex( __FILE__, __LINE__, rc);
-		RF_PANIC();
-	}
-	configureCount = 0;
+	lockinit(&configureMutex, PRIBIO, "RAIDframe lock", 0, 0);
+ 	configureCount = 0;
 	isconfigged = 0;
 	globalShutdown = NULL;
 	return (0);
