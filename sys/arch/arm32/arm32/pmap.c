@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.16 1998/01/02 22:36:33 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.17 1998/01/17 07:14:11 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -75,6 +75,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/user.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
