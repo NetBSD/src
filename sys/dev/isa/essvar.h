@@ -32,7 +32,7 @@
  */
 
 /*
-** @(#) $RCSfile: essvar.h,v $ $Revision: 1.3 $ (SHARK) $Date: 1998/07/31 15:17:18 $
+** @(#) $RCSfile: essvar.h,v $ $Revision: 1.4 $ (SHARK) $Date: 1998/08/04 13:14:42 $
 **
 **++
 **
@@ -92,6 +92,7 @@
 struct ess_audio_channel
 {
 	int	drq;			/* DMA channel */
+#define IS16BITDRQ(drq) ((drq) >= 4)
 	int	irq;			/* IRQ line for this DMA channel */
 	int	ist;
 	void	*ih;			/* interrupt vectoring */
@@ -101,11 +102,9 @@ struct ess_audio_channel
 
 	/* Status information */
 	int	active;			/* boolean: channel in use? */
-	int	dmaflags;		/* value last passed to isa_dmastart */
-	caddr_t	dmaaddr;		/* value last passed to isa_dmastart */
-	vm_size_t	dmacnt;		/* value last passed to isa_dmastart */
-
 	u_int	channels;		/* 1:mono, 2:stereo */
+
+	u_int	dmacnt;
 };
 
 struct ess_softc
