@@ -1,4 +1,4 @@
-.\"	$NetBSD: who.1,v 1.9 1997/10/20 03:20:28 lukem Exp $
+.\"	$NetBSD: who.1,v 1.10 2001/12/01 16:43:28 wiz Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,11 +42,11 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl mTuH
-.Op Ar file 
+.Op Ar file
 .Nm ""
 .Ar am i
 .Sh DESCRIPTION
-The 
+The
 .Nm
 utility displays a list of all users currently logged on, showing for
 each user the login name, tty name, the date and time of login, and
@@ -64,9 +64,9 @@ way of saying
 .It Fl T
 Print a character after the user name indicating the state of the
 terminal line:
-.Sq + 
+.Sq +
 if the terminal is writable;
-.Sq - 
+.Sq -
 if it is not;
 and
 .Sq ?
@@ -76,7 +76,7 @@ Print the idle time for each user.
 .It Fl H
 Write column headings above the regular output.
 .It Ar \&am I
-Returns the invoker's real user name. 
+Returns the invoker's real user name.
 .It Ar file
 By default,
 .Nm
