@@ -1,4 +1,4 @@
-/*	$NetBSD: memc_3min.c,v 1.6 2000/01/08 01:02:39 simonb Exp $	*/
+/*	$NetBSD: memc_3min.c,v 1.7 2000/07/09 09:14:29 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: memc_3min.c,v 1.6 2000/01/08 01:02:39 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memc_3min.c,v 1.7 2000/07/09 09:14:29 nisimura Exp $");
 
 /*
  * Motherboard memory error contoller used in both
@@ -60,31 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: memc_3min.c,v 1.6 2000/01/08 01:02:39 simonb Exp $")
 #include <pmax/pmax/kmin.h>
 #include <pmax/pmax/memc.h>
 
-
-/* forward declarations */
-static unsigned	kn02ba_recover_erradr __P((u_int phys, u_int mer));
-
-
-static unsigned
-kn02ba_recover_erradr(phys, mer)
-	unsigned phys, mer;
-{
-	/* phys holds bits 28:2, mer knows which byte */
-	switch (mer & KMIN_MER_LASTBYTE) {
-	case KMIN_LASTB31:
-		mer = 3; break;
-	case KMIN_LASTB23:
-		mer = 2; break;
-	case KMIN_LASTB15:
-		mer = 1; break;
-	case KMIN_LASTB07:
-		mer = 0; break;
-	}
-	return ((phys & KMIN_AER_ADDR_MASK) | mer);
-}
-
-
-
 /*
  * Handle error
  * All we can do with parity is panic.
@@ -93,19 +68,29 @@ kn02ba_recover_erradr(phys, mer)
 void
 kn02ba_errintr()
 {
-	int mer, adr, siz;
+	int mer, adr, siz, err;
 	static int errintr_cnt = 0;
 
-	siz = *(volatile int *)MIPS_PHYS_TO_KSEG1(KMIN_REG_MSR);
-	mer = *(volatile int *)MIPS_PHYS_TO_KSEG1(KMIN_REG_MER);
-	adr = *(volatile int *)MIPS_PHYS_TO_KSEG1(KMIN_REG_AER);
+	siz = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_MSR);
+	mer = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_MER);
+	adr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_AER);
 
 	/* clear interrupt bit */
-	*(unsigned int *)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT) = 0;
+	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT) = 0;
+
+	switch (mer & KMIN_MER_LASTBYTE) {
+	case KMIN_LASTB31:
+		err = 3; break;
+	case KMIN_LASTB23:
+		err = 2; break;
+	case KMIN_LASTB15:
+		err = 1; break;
+	case KMIN_LASTB07:
+		err = 0; break;
+	}
+	err |= (adr & KMIN_AER_ADDR_MASK);
 
 	errintr_cnt++;
-	printf("(%d)%s%x [%x %x %x]\n", errintr_cnt,
-	       "Bad memory chip at phys ",
-	       kn02ba_recover_erradr(adr, mer),
-	       mer, siz, adr);
+	printf("(%d)Bad memory chip at phys %x [%x %x %x]\n",
+		errintr_cnt, err, mer, siz, adr);
 }
