@@ -37,7 +37,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define PTRACE_ARG3_TYPE char*
 
-#if !defind(NO_SOLIB)
+#if !defined(NO_SOLIB)
 #include "solib.h"      /* Support for shared libraries. */
 #endif
 
