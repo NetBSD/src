@@ -1,50 +1,52 @@
-#	$NetBSD: Makefile,v 1.11 2002/04/10 05:00:47 shin Exp $
+#	$NetBSD: Makefile,v 1.12 2002/04/11 06:39:04 lukem Exp $
 
-.include "../Makefile.inc"
-
-.include <bsd.obj.mk>
-.include <bsd.kernobj.mk>
 .include <bsd.own.mk>
+.include "${_SRC_TOP_}/distrib/Makefile.inc"
 
-SUBDIR=
+.include <bsd.kernobj.mk>
 
 ITARGET=	${RELEASEDIR}/installation
-IINST=		${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE}
 
-PBSDBOOTDIR = ${KERNSRCDIR}/arch/${MACHINE}/stand/pbsdboot
-PBSDBOOT = ${PBSDBOOTDIR}/pbsdboot.uu
-PBSDBOOT1 = ${PBSDBOOTDIR}/pbsdboot1.uu
-HPCBOOTDIR = ${KERNSRCDIR}/arch/hpc/stand
-HPCBOOT = ${HPCBOOTDIR}/binary/MIPS/hpcboot.exe.uu
-MDSETIMAGE?=	mdsetimage
+PBSDBOOTDIR=	${KERNSRCDIR}/arch/${MACHINE}/stand/pbsdboot
+PBSDBOOT=	${PBSDBOOTDIR}/pbsdboot.uu
+PBSDBOOT1=	${PBSDBOOTDIR}/pbsdboot1.uu
+HPCBOOTDIR=	${KERNSRCDIR}/arch/hpc/stand
+HPCBOOT=	${HPCBOOTDIR}/binary/MIPS/hpcboot.exe.uu
 
-INSTKERNELS = TX3912
+MINIROOTOBJ!=	cd ${.CURDIR}/../miniroot && ${PRINTOBJDIR}
 
-.ifndef RELEASEDIR
-release:
-	@echo setenv RELEASEDIR first
-	@false
-.else
-MINIROOTDIR = ${.CURDIR}/../miniroot
-MINIROOTOBJ != cd ${MINIROOTDIR} && ${PRINTOBJDIR}
+#	TARGETS is a list of kernel directories and generated images:
+#		Kernel			Image
+#
+TARGETS=	RAMDISK			netbsd		\
+		INSTALL_TX3912		netbsd.TX3912
 
-release:
-	rm -f netbsd netbsd.gz
-	cp ${KERNOBJDIR}/RAMDISK/netbsd .
-	${MDSETIMAGE} netbsd ${MINIROOTOBJ}/miniroot.fs
-	gzip -9 netbsd
-	${IINST} netbsd.gz ${ITARGET}/.
-.for instkern in ${INSTKERNELS}
-	rm -f netbsd netbsd.gz
-	cp ${KERNOBJDIR}/INSTALL_${instkern}/netbsd .
-	${MDSETIMAGE} netbsd ${MINIROOTOBJ}/miniroot.fs
-	gzip -9 netbsd
-	${IINST} netbsd.gz ${ITARGET}/netbsd.${instkern}.gz
+.for K I in ${TARGETS}					# {
+IMAGES+=	${I}.gz
+${I}.gz: .NOTMAIN ${KERNOBJDIR}/${K}/netbsd ${MINIROOTOBJ}/miniroot.fs
+	cp ${KERNOBJDIR}/${K}/netbsd.tmp .
+	${MDSETIMAGE} netbsd.tmp ${MINIROOTOBJ}/miniroot.fs
+	gzip -9 netbsd.tmp
+	mv netbsd.tmp.gz ${.TARGET}
+.endfor							# }
+
+CLEANFILES+=	netbsd.tmp netbsd.tmp.gz ${IMAGES}
+
+#	do the work
+#
+realall: ${IMAGES}
+
+release: check_RELEASEDIR .WAIT ${IMAGES}
+.for img in ${IMAGES}
+	${RELINST} ${img} ${ITARGET}/.
 .endfor
-	(cd ${ITARGET}; ${UUDECODE} ${PBSDBOOT1}; chmod ${NONBINMODE} pbsdboot1.exe)
-	(cd ${ITARGET}; ${UUDECODE} ${PBSDBOOT}; chmod ${NONBINMODE} pbsdboot.exe)
-	(cd ${ITARGET}; rm -f hpcboot.exe; ${UUDECODE} -p ${HPCBOOT} >hpcboot.exe ; chmod ${NONBINMODE} hpcboot.exe)
-	${.CURDIR}/../sets/makesums -t ${ITARGET} '*.gz' '*.exe'
-.endif
+	(cd ${ITARGET}; ${UUDECODE} ${PBSDBOOT1}; \
+	    chmod ${NONBINMODE} pbsdboot1.exe)
+	(cd ${ITARGET}; ${UUDECODE} ${PBSDBOOT}; \
+	    chmod ${NONBINMODE} pbsdboot.exe)
+	(cd ${ITARGET}; rm -f hpcboot.exe; \
+	    ${UUDECODE} -p ${HPCBOOT} >hpcboot.exe ; \
+	    chmod ${NONBINMODE} hpcboot.exe)
+	${MAKESUMS} -t ${ITARGET} '*.gz' '*.exe'
 
-.include <bsd.subdir.mk>
+.include <bsd.prog.mk>
