@@ -1,4 +1,4 @@
-.\"	$NetBSD: inphy.4,v 1.4 2001/09/22 00:57:40 wiz Exp $
+.\"	$NetBSD: inphy.4,v 1.5 2002/05/16 03:50:54 david Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,6 +48,11 @@ The
 .Nm
 driver supports the Intel i82555 10/100 Ethernet PHYs.
 These PHYs are found on a variety of high-performance Ethernet interfaces.
+.Sh NOTES
+While not required for basic card operation, the lack of this device will
+mean that the
+.Xr fxp 4
+device cannot detect link and link-speed.
 .Sh SEE ALSO
 .Xr fxp 4 ,
 .Xr ifmedia 4 ,
