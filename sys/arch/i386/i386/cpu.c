@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1.2.23 2001/09/03 19:48:09 sommerfeld Exp $ */
+/* $NetBSD: cpu.c,v 1.1.2.24 2001/09/22 23:01:04 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -371,14 +371,16 @@ cpu_init(ci)
 	if (cpu_feature & CPUID_PGE)
 		lcr4(rcr4() | CR4_PGE);	/* enable global TLB caching */
 
+#ifdef MTRR
 	/*
 	 * On a P6 or above, initialize MTRR's if the hardware supports them.
 	 */
 	if (cpu_feature & CPUID_MTRR) {
 		if ((ci->ci_flags & CPUF_AP) == 0)
-			mtrr_init_first();
+			i686_mtrr_init_first();
 		mtrr_init_cpu(ci);
 	}
+#endif
 #endif
 #if defined(I686_CPU)
 	/*
@@ -394,6 +396,22 @@ cpu_init(ci)
 			lcr4(rcr4() | CR4_OSXMMEXCPT);
 	}
 #endif /* I686_CPU */
+#ifdef MTRR
+	if (strcmp((char *)(ci->ci_vendor), "AuthenticAMD") == 0) {
+		/*
+		 * Must be a K6-2 Step >= 7 or a K6-III.
+		 */
+		if (CPUID2FAMILY(cpu_id) == 5) {
+			if (CPUID2MODEL(cpu_id) > 8 ||
+			    (CPUID2MODEL(cpu_id) == 8 &&
+			     CPUID2STEPPING(cpu_id) >= 7)) {
+				mtrr_funcs = &k6_mtrr_funcs;
+				k6_mtrr_init_first();
+				mtrr_init_cpu(ci);
+			}
+		}
+	}
+#endif /* MTRR */
 
 #ifdef MULTIPROCESSOR
 	ci->ci_flags |= CPUF_RUNNING;
@@ -403,7 +421,6 @@ cpu_init(ci)
 
 
 #ifdef MULTIPROCESSOR
-
 void
 cpu_boot_secondary_processors()
 {

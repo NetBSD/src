@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.s,v 1.61.10.5 2001/04/30 16:23:14 sommerfeld Exp $	*/
+/*	$NetBSD: icu.s,v 1.61.10.6 2001/09/22 23:01:20 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@ IDTVEC(softserial)
 	call	_C_LABEL(apic_intunlock)
 #endif
 	movl	%ebx,CPL
-	jmp	%esi
+	jmp	*%esi
 
 IDTVEC(softnet)
 	movl	$IPL_SOFTNET,CPL
@@ -181,7 +181,7 @@ IDTVEC(softnet)
 	call	_C_LABEL(apic_intunlock)	
 #endif
 	movl	%ebx,CPL
-	jmp	%esi
+	jmp	*%esi
 
 IDTVEC(softclock)
 	movl	$IPL_SOFTCLOCK,CPL
@@ -195,4 +195,4 @@ IDTVEC(softclock)
 	call	_C_LABEL(apic_intunlock)		
 #endif
 	movl	%ebx,CPL
-	jmp	%esi
+	jmp	*%esi

@@ -1,4 +1,4 @@
-/* $NetBSD: mtrr.c,v 1.1.2.3 2001/01/04 04:44:33 thorpej Exp $ */
+/* $NetBSD: mtrr.c,v 1.1.2.4 2001/09/22 23:01:10 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -54,11 +54,13 @@
 
 static void i686_mtrr_reload(int);
 
-struct mtrr_state 
+#if 0
+struct mtrr_state
 {
 	uint32_t msraddr;
 	uint64_t msrval;
 };
+#endif
 
 static struct mtrr_state
 mtrr[] = {
@@ -129,13 +131,13 @@ i686_mtrr_reload(int synch)
 #ifdef MULTIPROCESSOR
 	uint32_t mymask = 1 << cpu_number();
 #endif
-	
+
 	/*
 	 * 2. Disable interrupts
 	 */
 
 	disable_intr();
-	
+
 #ifdef MULTIPROCESSOR
 	if (synch) {
 		/*
@@ -148,7 +150,7 @@ i686_mtrr_reload(int synch)
 			DELAY(10);
 	}
 #endif
-	
+
 	/*
 	 * 4. Enter the no-fill cache mode (set the CD flag in CR0 to 1 and
 	 * the NW flag to 0)
@@ -158,13 +160,13 @@ i686_mtrr_reload(int synch)
 	cr0 |= CR0_CD;
 	cr0 &= ~CR0_NW;
 	lcr0(cr0);
-	
+
 	/*
 	 * 5. Flush all caches using the WBINVD instruction.
 	 */
 
 	wbinvd();
-	
+
 	/*
 	 * 6. Clear the PGE flag in control register CR4 (if set).
 	 */
@@ -172,7 +174,7 @@ i686_mtrr_reload(int synch)
 	origcr4 = cr4 = rcr4();
 	cr4 &= ~CR4_PGE;
 	lcr4(cr4);
-	
+
 	/*
 	 * 7. Flush all TLBs (execute a MOV from control register CR3
 	 * to another register and then a move from that register back
@@ -181,7 +183,7 @@ i686_mtrr_reload(int synch)
 
 	cr3 = rcr3();
 	lcr3(cr3);
-	
+
 	/*
 	 * 8. Disable all range registers (by clearing the E flag in
 	 * register MTRRdefType.  If only variable ranges are being
@@ -190,7 +192,7 @@ i686_mtrr_reload(int synch)
 	 */
 	/* disable MTRRs (E = 0) */
 	wrmsr(MSR_MTRRdefType, rdmsr(MSR_MTRRdefType) & ~0x800); /* XXX MAGIC */
-	
+
 	/*
 	 * 9. Update the MTRR's
 	 */
@@ -202,7 +204,7 @@ i686_mtrr_reload(int synch)
 			val &= ~0x800; /* XXX magic */
 		wrmsr(addr, val);
 	}
-	
+
 	/*
 	 * 10. Enable all range registers (by setting the E flag in
 	 * register MTRRdefType).  If only variable-range registers
@@ -211,7 +213,7 @@ i686_mtrr_reload(int synch)
 	 */
 
 	wrmsr(MSR_MTRRdefType, rdmsr(MSR_MTRRdefType) | 0x800);	/* XXX MAGIC */
-	
+
 	/*
 	 * 11. Flush all caches and all TLB's a second time. (repeat
 	 * steps 5, 7)
@@ -271,7 +273,7 @@ mtrr_init_first(void)
 }
 
 void
-mtrr_init_cpu(struct cpu_info *ci) 
+mtrr_init_cpu(struct cpu_info *ci)
 {
 	i686_mtrr_reload(0);
 #if 0

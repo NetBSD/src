@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_machdep.c,v 1.1.2.8 2001/09/06 03:41:45 sommerfeld Exp $	*/
+/*	$NetBSD: bus_machdep.c,v 1.1.2.9 2001/09/22 23:01:02 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -322,7 +322,8 @@ i386_mem_add_mapping(bpa, size, cacheable, bshp)
 	}
 
 	pmap_tlb_shootnow(cpumask);
- 
+	pmap_update(pmap_kernel());
+
 	return 0;
 }
 
@@ -441,7 +442,7 @@ ok:
 	}
 }
 
-void    
+void
 i386_memio_free(t, bsh, size)
 	bus_space_tag_t t;
 	bus_space_handle_t bsh;
@@ -825,7 +826,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			    PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	return (0);
 }

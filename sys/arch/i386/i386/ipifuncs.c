@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.1.2.10 2001/05/26 22:13:09 sommerfeld Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.1.2.11 2001/09/22 23:01:04 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_mtrr.h"
 #include "npx.h"
 
 #include <sys/param.h>
@@ -67,23 +68,29 @@ void i386_ipi_halt(struct cpu_info *);
 #if NNPX > 0
 void i386_ipi_synch_fpu(struct cpu_info *);
 void i386_ipi_flush_fpu(struct cpu_info *);
+#else
+#define i386_ipi_synch_fpu 0
+#define i386_ipi_flush_fpu 0
 #endif
 
-void (*ipifunc[I386_NIPI])(struct cpu_info *) = 
+#ifdef MTRR
+void i386_reload_mtrr(struct cpu_info *);
+#else
+#define i386_reload_mtrr NULL
+#endif
+
+void (*ipifunc[I386_NIPI])(struct cpu_info *) =
 {
 	i386_ipi_halt,
 #if defined(I586_CPU) || defined(I686_CPU)
 	tsc_microset,
-#endif
-#if NNPX > 0
-	i386_ipi_flush_fpu,
-	i386_ipi_synch_fpu,
 #else
 	0,
-	0,
 #endif
+	i386_ipi_flush_fpu,
+	i386_ipi_synch_fpu,
 	pmap_do_tlb_shootdown,
-	mtrr_reload_cpu,
+	i386_reload_mtrr,
 };
 
 void
@@ -101,18 +108,12 @@ i386_ipi_halt(struct cpu_info *ci)
 void
 i386_ipi_flush_fpu(struct cpu_info *ci)
 {
-#if 0
-	printf("%s: flush_fpu ipi\n", ci->ci_dev->dv_xname);
-#endif
 	npxsave_cpu(ci, 0);
 }
 
 void
 i386_ipi_synch_fpu(struct cpu_info *ci)
 {
-#if 0
-	printf("%s: synch_fpu ipi\n", ci->ci_dev->dv_xname);
-#endif
 	npxsave_cpu(ci, 1);
 }
 #endif
@@ -120,22 +121,34 @@ i386_ipi_synch_fpu(struct cpu_info *ci)
 void
 i386_spurious (void)
 {
-#if 0
-	printf("spurious intr\n");
-#endif
 }
+
+#ifdef MTRR
+
+/*
+ * mtrr_reload_cpu() is a macro in mtrr.h which picks the appropriate
+ * function to use..
+ */
+
+void
+i386_reload_mtrr(struct cpu_info *ci)
+{
+	if (mtrr_funcs != NULL)
+		mtrr_reload_cpu(ci);
+}
+#endif
 
 void
 i386_send_ipi (struct cpu_info *ci, int ipimask)
 {
 	int ret;
-	
+
 	i386_atomic_setbits_l(&ci->ci_ipis, ipimask);
 
 	/* Don't send IPI to cpu which isn't (yet) running. */
 	if (!(ci->ci_flags & CPUF_RUNNING))
 		return;
-	
+
 	ret = i386_ipi(LAPIC_IPI_VECTOR, ci->ci_cpuid, LAPIC_DLMODE_FIXED);
 	if (ret != 0) {
 		printf("ipi of %x from %s to %s failed\n",
@@ -143,7 +156,7 @@ i386_send_ipi (struct cpu_info *ci, int ipimask)
 		    curcpu()->ci_dev->dv_xname,
 		    ci->ci_dev->dv_xname);
 	}
-	
+
 }
 
 void
@@ -172,7 +185,7 @@ i386_broadcast_ipi (int ipimask)
 	}
 	if (!count)
 		return;
-	
+
 	i82489_writereg(LAPIC_ICRLO,
 	    LAPIC_IPI_VECTOR | LAPIC_DLMODE_FIXED | LAPIC_LVL_ASSERT |
 	    LAPIC_DEST_ALLEXCL);
