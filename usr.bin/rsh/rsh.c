@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.5 1997/02/16 15:01:05 mrg Exp $	*/
+/*	$NetBSD: rsh.c,v 1.6 1997/03/19 05:36:59 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rsh.c	8.4 (Berkeley) 4/29/95";*/
-static char rcsid[] = "$NetBSD: rsh.c,v 1.5 1997/02/16 15:01:05 mrg Exp $";
+static char rcsid[] = "$NetBSD: rsh.c,v 1.6 1997/03/19 05:36:59 mikel Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -336,7 +336,7 @@ reread:		errno = 0;
 rewrite:	
 		FD_ZERO(&rembits);
 		FD_SET(rem, &rembits);
-		if (select(16, 0, &rembits, 0, 0) < 0) {
+		if (select(FD_SETSIZE, 0, &rembits, 0, 0) < 0) {
 			if (errno != EINTR)
 				err(1, "select");
 			goto rewrite;
@@ -372,7 +372,7 @@ done:
 	FD_SET(rem, &readfrom);
 	do {
 		ready = readfrom;
-		if (select(16, &ready, 0, 0, 0) < 0) {
+		if (select(FD_SETSIZE, &ready, 0, 0, 0) < 0) {
 			if (errno != EINTR)
 				err(1, "select");
 			continue;
