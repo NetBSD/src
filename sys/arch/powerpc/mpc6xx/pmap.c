@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.29 2001/11/04 21:15:03 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30 2001/11/04 22:39:08 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -629,7 +629,7 @@ pmap_pte_spill(vaddr_t addr)
 {
 	struct pvo_entry *source_pvo, *victim_pvo;
 	struct pvo_entry *pvo;
-	int ptegidx, i;
+	int ptegidx, i, j;
 	sr_t sr;
 	volatile pteg_t *pteg;
 	volatile pte_t *pt;
@@ -645,8 +645,8 @@ pmap_pte_spill(vaddr_t addr)
 	 * Use low bits of timebase as random generator
 	 */
 	pteg = &pmap_pteg_table[ptegidx];
-	i = MFTB();
-	pt = &pteg->pt[i & 7];
+	i = MFTB() & 7;
+	pt = &pteg->pt[i];
 
 	source_pvo = NULL;
 	victim_pvo = NULL;
@@ -661,9 +661,9 @@ pmap_pte_spill(vaddr_t addr)
 			 * Now found an entry to be spilled into the pteg.
 			 * The PTE is now be valid, so we know it's active;
 			 */
-			i = pmap_pte_insert(ptegidx, &pvo->pvo_pte);
-			if (i >= 0) {
-				PVO_PTEGIDX_SET(pvo, i);
+			j = pmap_pte_insert(ptegidx, &pvo->pvo_pte);
+			if (j >= 0) {
+				PVO_PTEGIDX_SET(pvo, j);
 				pmap_pte_overflow--;
 				PMAP_PVO_CHECK(pvo);	/* sanity check */
 				return 1;
