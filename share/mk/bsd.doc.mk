@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.60 2003/07/18 08:26:06 lukem Exp $
+#	$NetBSD: bsd.doc.mk,v 1.61 2003/10/19 05:24:53 lukem Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .include <bsd.init.mk>
@@ -11,6 +11,8 @@ realinstall:	docinstall
 ##### Build rules
 .if !target(paper.ps)
 paper.ps: ${SRCS}
+	${_MKMSGFORMAT}
+	${_MKCMD}\
 	${TOOL_ROFF_PS} ${MACROS} ${PAGES} ${.ALLSRC} > ${.TARGET}
 .endif
 
@@ -23,6 +25,8 @@ docinstall::	# ensure existence
 .if ${MKDOC} != "no"
 
 __docinstall: .USE
+	${_MKMSGINSTALL}
+	${_MKCMD}\
 	${INSTALL_FILE} -o ${DOCOWN} -g ${DOCGRP} -m ${DOCMODE} ${SYSPKGTAG} \
 		${.ALLSRC} ${.TARGET}
 
@@ -52,6 +56,7 @@ docinstall::	${_F}
 
 ##### Clean rules
 cleandoc:
+	${_MKCMD}\
 	rm -f paper.* [eE]rrs mklog ${CLEANFILES}
 
 ##### Custom rules
