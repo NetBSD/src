@@ -1,4 +1,4 @@
-/*	$NetBSD: irdaattach.c,v 1.5 2003/01/12 13:49:54 augustss Exp $	*/
+/*	$NetBSD: irdaattach.c,v 1.6 2003/01/16 09:48:09 kleink Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ main(int argc, char **argv)
 	struct termios tty;
 	tcflag_t cflag = HUPCL;
 	int ch;
-	sigset_t sigset;
+	sigset_t nsigset;
 	int opt_detach = 1;
 	int pr_pid = 0;
 	int pr_frame = 0;
@@ -159,9 +159,9 @@ main(int argc, char **argv)
 		err(1, "couldn't detach");
 	if (pr_pid)
 		pidfile(NULL);
-	sigemptyset(&sigset);
+	sigemptyset(&nsigset);
 	for (;;)
-		sigsuspend(&sigset);
+		sigsuspend(&nsigset);
 }
 
 void

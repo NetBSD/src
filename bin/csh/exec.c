@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.19 2002/05/25 23:29:16 wiz Exp $ */
+/* $NetBSD: exec.c,v 1.20 2003/01/16 09:38:38 kleink Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.3 (Berkeley) 5/23/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.19 2002/05/25 23:29:16 wiz Exp $");
+__RCSID("$NetBSD: exec.c,v 1.20 2003/01/16 09:38:38 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,7 @@ doexec(Char **v, struct command *t)
     struct varent *pathv;
     Char *blk[2], **av, *dp, **pv, *sav;
     int i, hashval, hashval1;
-    sigset_t sigset;
+    sigset_t nsigset;
     bool slash;
 
     hashval = 0;
@@ -193,8 +193,8 @@ doexec(Char **v, struct command *t)
      * We must do this AFTER any possible forking (like `foo` in glob) so that
      * this shell can still do subprocesses.
      */
-    sigemptyset(&sigset);
-    (void)sigprocmask(SIG_SETMASK, &sigset, NULL);
+    sigemptyset(&nsigset);
+    (void)sigprocmask(SIG_SETMASK, &nsigset, NULL);
     /*
      * If no path, no words in path, or a / in the filename then restrict the
      * command search.
