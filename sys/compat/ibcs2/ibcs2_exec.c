@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.34 2000/06/28 15:39:28 mrg Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.35 2000/08/11 22:21:41 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -363,6 +363,12 @@ exec_ibcs2_coff_prep_omagic(p, epp, fp, ap)
 	epp->ep_dsize = ap->a_dsize;
 	epp->ep_entry = ap->a_entry;
 
+	DPRINTF(("ibcs2_omagic: text=%#lx/%#lx, data=%#lx/%#lx, bss=%#lx/%#lx, entry=%#lx\n",
+		epp->ep_taddr, epp->ep_tsize,
+		epp->ep_daddr, epp->ep_dsize,
+		ap->a_dstart + ap->a_dsize, ap->a_bsize,
+		epp->ep_entry));
+
 	/* set up command for text and data segments */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn,
 		  ap->a_tsize + ap->a_dsize, epp->ep_taddr, epp->ep_vp,
@@ -376,6 +382,16 @@ exec_ibcs2_coff_prep_omagic(p, epp, fp, ap)
 			  NULLVP, 0,
 			  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 		epp->ep_dsize += ap->a_bsize;
+	}
+	/* The following is to make obreak(2) happy.  It expects daddr
+	 * to on a page boundary and will round up dsize to a page
+	 * address.
+	 */
+	if (trunc_page(epp->ep_daddr) != epp->ep_daddr) {
+		epp->ep_dsize += epp->ep_daddr - trunc_page(epp->ep_daddr);
+		epp->ep_daddr = trunc_page(epp->ep_daddr);
+		if (epp->ep_taddr + epp->ep_tsize > epp->ep_daddr)
+			epp->ep_tsize = epp->ep_daddr - epp->ep_taddr;
 	}
 	
 	return exec_ibcs2_coff_setup_stack(p, epp);
@@ -449,8 +465,8 @@ exec_ibcs2_coff_prep_nmagic(p, epp, fp, ap)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, tsize,
 			  epp->ep_taddr, epp->ep_vp, COFF_TXTOFF(fp, ap),
 			  VM_PROT_READ|VM_PROT_EXECUTE);
-		DPRINTF((" map_readvn(%#lx/%#lx@%#x)",
-			epp->ep_taddr, tsize, COFF_TXTOFF(fp, ap)));
+		DPRINTF((" map_readvn(%#lx/%#lx@%#lx)",
+			epp->ep_taddr, tsize, (u_long) COFF_TXTOFF(fp, ap)));
 	}
 	if (toverlap > 0) {
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, toverlap,
@@ -503,6 +519,8 @@ exec_ibcs2_coff_prep_nmagic(p, epp, fp, ap)
 	if (trunc_page(epp->ep_daddr) != epp->ep_daddr) {
 		epp->ep_dsize += epp->ep_daddr - trunc_page(epp->ep_daddr);
 		epp->ep_daddr = trunc_page(epp->ep_daddr);
+		if (epp->ep_taddr + epp->ep_tsize > epp->ep_daddr)
+			epp->ep_tsize = epp->ep_daddr - epp->ep_taddr;
 	}
 
 	return exec_ibcs2_coff_setup_stack(p, epp);
@@ -537,9 +555,9 @@ coff_find_section(p, vp, fp, sh, s_type)
 		}
 		siz -= resid;
 		if (siz != sizeof(struct coff_scnhdr)) {
-			DPRINTF(("incomplete read: hdr %d ask=%d, rem=%d got %d\n",
+			DPRINTF(("incomplete read: hdr %d ask=%d, rem=%lu got %d\n",
 				 s_type, sizeof(struct coff_scnhdr),
-				 resid, siz));
+				 (u_long) resid, siz));
 			return ENOEXEC;
 		}
 		/* DPRINTF(("found section: %x\n", sh->s_flags)); */
@@ -707,12 +725,22 @@ n	 */
 	/* set up entry point */
 	epp->ep_entry = ap->a_entry;
 
-#if 0
-	DPRINTF(("text addr: %x size: %d data addr: %x size: %d entry: %x\n",
+	DPRINTF(("ibcs2_zmagic: text addr: %#lx size: %#lx data addr: %#lx size: %#lx entry: %#lx\n",
 		 epp->ep_taddr, epp->ep_tsize,
 		 epp->ep_daddr, epp->ep_dsize,
 		 epp->ep_entry));
-#endif
+
+	/* The following is to make obreak(2) happy.  It expects daddr
+	 * to on a page boundary and will round up dsize to a page
+	 * address.
+	 */
+	if (trunc_page(epp->ep_daddr) != epp->ep_daddr) {
+		epp->ep_dsize += epp->ep_daddr - trunc_page(epp->ep_daddr);
+		epp->ep_daddr = trunc_page(epp->ep_daddr);
+		if (epp->ep_taddr + epp->ep_tsize > epp->ep_daddr)
+			epp->ep_tsize = epp->ep_daddr - epp->ep_taddr;
+	}
+
 	
 	return exec_ibcs2_coff_setup_stack(p, epp);
 }
@@ -753,8 +781,8 @@ coff_load_shlib(p, path, epp)
 	}
 	siz -= resid;
 	if (siz != sizeof(struct coff_filehdr)) {
-	    DPRINTF(("coff_load_shlib: incomplete read: ask=%d, rem=%d got %d\n",
-		     sizeof(struct coff_filehdr), resid, siz));
+	    DPRINTF(("coff_load_shlib: incomplete read: ask=%d, rem=%lu got %d\n",
+		     sizeof(struct coff_filehdr), (u_long) resid, siz));
 	    vrele(nd.ni_vp);
 	    return ENOEXEC;
 	}
