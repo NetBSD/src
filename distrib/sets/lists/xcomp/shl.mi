@@ -1,13 +1,15 @@
-#	$NetBSD: shl.mi,v 1.1 2004/02/07 12:39:20 rtr Exp $
+#	$NetBSD: shl.mi,v 1.2 2004/03/06 03:54:24 rtr Exp $
 ./usr/X11R6/lib/libFS_pic.a
 ./usr/X11R6/lib/libGLU_pic.a
 ./usr/X11R6/lib/libGL_pic.a
+./usr/X11R6/lib/libGLw_pic.a
 ./usr/X11R6/lib/libICE_pic.a
 ./usr/X11R6/lib/libOSMesa_pic.a
 ./usr/X11R6/lib/libSM_pic.a
 ./usr/X11R6/lib/libX11_pic.a
 ./usr/X11R6/lib/libXRes_pic.a
 ./usr/X11R6/lib/libXTrap_pic.a
+./usr/X11R6/lib/libXau_pic.a
 ./usr/X11R6/lib/libXaw_pic.a
 ./usr/X11R6/lib/libXcursor_pic.a
 ./usr/X11R6/lib/libXdmcp_pic.a
