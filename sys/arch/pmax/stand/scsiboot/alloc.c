@@ -1,3 +1,5 @@
+/*	$NetBSD: alloc.c,v 1.2 1999/01/22 14:27:31 simonb Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -61,7 +63,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- * $Id: alloc.c,v 1.1 1999/01/21 12:33:41 simonb Exp $
+ * $Id: alloc.c,v 1.2 1999/01/22 14:27:31 simonb Exp $
  */
 
 #include <sys/param.h>
