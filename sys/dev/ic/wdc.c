@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.83 2000/03/29 03:56:53 simonb Exp $ */
+/*	$NetBSD: wdc.c,v 1.84 2000/04/01 14:32:22 bouyer Exp $ */
 
 
 /*
@@ -672,8 +672,18 @@ wdcintr(arg)
 	}
 
 	WDCDEBUG_PRINT(("wdcintr\n"), DEBUG_INTR);
-	chp->ch_flags &= ~WDCF_IRQ_WAIT;
 	xfer = chp->ch_queue->sc_xfer.tqh_first;
+	if (chp->ch_flags & WDCF_DMA_WAIT) {
+		chp->wdc->dma_status =
+		    (*chp->wdc->dma_finish)(chp->wdc->dma_arg, chp->channel,
+			xfer->drive, 0);
+		if (chp->wdc->dma_status & WDC_DMAST_NOIRQ) {
+			/* IRQ not for us, not detected by DMA engine */
+			return 0;
+		}
+		chp->ch_flags &= ~WDCF_DMA_WAIT;
+	}
+	chp->ch_flags &= ~WDCF_IRQ_WAIT;
 	ret = xfer->c_intr(chp, xfer, 1);
 	if (ret == 0) /* irq was not for us, still waiting for irq */
 		chp->ch_flags |= WDCF_IRQ_WAIT;
@@ -862,6 +872,30 @@ wdcwait(chp, mask, bits, timeout)
 	return 0;
 }
 
+/*
+ * Busy-wait for DMA to complete
+ */
+int
+wdc_dmawait(chp, xfer, timeout)
+	struct channel_softc *chp;
+	struct wdc_xfer *xfer;
+	int timeout;
+{
+	int time;
+	for (time = 0;  time < timeout * 1000 / WDCDELAY; time++) {
+		chp->wdc->dma_status =
+		    (*chp->wdc->dma_finish)(chp->wdc->dma_arg,
+			chp->channel, xfer->drive, 0);
+		if ((chp->wdc->dma_status & WDC_DMAST_NOIRQ) == 0)
+			return 0;
+		delay(WDCDELAY);
+	}
+	/* timeout, force a DMA halt */
+	chp->wdc->dma_status = (*chp->wdc->dma_finish)(chp->wdc->dma_arg,
+	    chp->channel, xfer->drive, 1);
+	return 1;
+}
+
 void
 wdctimeout(arg)
 	void *arg;
@@ -879,6 +913,12 @@ wdctimeout(arg)
 		    "atapi":"ata");
 		printf("\tc_bcount: %d\n", xfer->c_bcount);
 		printf("\tc_skip: %d\n", xfer->c_skip);
+		if (chp->ch_flags & WDCF_DMA_WAIT) {
+			chp->wdc->dma_status =
+			    (*chp->wdc->dma_finish)(chp->wdc->dma_arg,
+				chp->channel, xfer->drive, 1);
+			chp->ch_flags &= ~WDCF_DMA_WAIT;
+		}
 		/*
 		 * Call the interrupt routine. If we just missed and interrupt,
 		 * it will do what's needed. Else, it will take the needed
@@ -1511,15 +1551,15 @@ wdc_addref(chp)
 	struct channel_softc *chp;
 {
 	struct wdc_softc *wdc = chp->wdc; 
-	struct scsipi_adapter *adapter = &wdc->sc_atapi_adapter;
+	struct atapi_adapter *adapter = &wdc->sc_atapi_adapter;
 	int s, error = 0;
 
 	s = splbio();
-	if (adapter->scsipi_refcnt++ == 0 &&
-	    adapter->scsipi_enable != NULL) {
-		error = (*adapter->scsipi_enable)(wdc, 1);
+	if (adapter->_generic.scsipi_refcnt++ == 0 &&
+	    adapter->_generic.scsipi_enable != NULL) {
+		error = (*adapter->_generic.scsipi_enable)(wdc, 1);
 		if (error)
-			adapter->scsipi_refcnt--;
+			adapter->_generic.scsipi_refcnt--;
 	}
 	splx(s);
 	return (error);
@@ -1530,12 +1570,12 @@ wdc_delref(chp)
 	struct channel_softc *chp;
 {
 	struct wdc_softc *wdc = chp->wdc;
-	struct scsipi_adapter *adapter = &wdc->sc_atapi_adapter;
+	struct atapi_adapter *adapter = &wdc->sc_atapi_adapter;
 	int s;
 
 	s = splbio();
-	if (adapter->scsipi_refcnt-- == 1 &&
-	    adapter->scsipi_enable != NULL)
-		(void) (*adapter->scsipi_enable)(wdc, 0);
+	if (adapter->_generic.scsipi_refcnt-- == 1 &&
+	    adapter->_generic.scsipi_enable != NULL)
+		(void) (*adapter->_generic.scsipi_enable)(wdc, 0);
 	splx(s);
 }
