@@ -1,4 +1,4 @@
-/*	$NetBSD: db_print.c,v 1.8 1998/01/31 04:14:46 ross Exp $	*/
+/*	$NetBSD: db_print.c,v 1.9 1999/02/12 00:50:09 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -57,7 +57,7 @@ db_show_regs(addr, have_addr, count, modif)
 
 	for (regp = db_regs; regp < db_eregs; regp++) {
 	    db_read_variable(regp, &value);
-	    db_printf("%-12s%#*ln", regp->name, (sizeof (value) * 2) + 2,
+	    db_printf("%-12s%#*ln", regp->name, (int)(sizeof (value) * 2) + 2,
 		value);
 	    db_find_xtrn_sym_and_offset((db_addr_t)value, &name, &offset);
 	    if (name != 0 && offset <= db_maxoff && offset != value) {
