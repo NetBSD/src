@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.8 2002/03/29 15:15:08 tsutsui Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.9 2002/03/30 07:14:49 tsutsui Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -44,6 +44,7 @@
 #include <lib/libsa/cd9660.h>
 #include <lib/libsa/nfs.h>
 #include <lib/libsa/ufs.h>
+#include <lib/libsa/ustarfs.h>
 
 #include "hfs.h"
 #include "ofdev.h"
@@ -162,6 +163,10 @@ static struct fs_ops file_system_ufs = {
 static struct fs_ops file_system_hfs = {
 	hfs_open, hfs_close, hfs_read, hfs_write, hfs_seek, hfs_stat
 };
+static struct fs_ops file_system_ustarfs = {
+	ustarfs_open, ustarfs_close, ustarfs_read, ustarfs_write, ustarfs_seek,
+	    ustarfs_stat
+};
 static struct fs_ops file_system_cd9660 = {
 	cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
 	    cd9660_stat
@@ -170,7 +175,7 @@ static struct fs_ops file_system_nfs = {
 	nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat
 };
 
-struct fs_ops file_system[3];
+struct fs_ops file_system[4];
 int nfsys;
 
 static struct of_dev ofdev = {
@@ -347,9 +352,10 @@ devopen(of, name, file)
 		of->f_dev = devsw;
 		of->f_devdata = &ofdev;
 		file_system[0] = file_system_ufs;
-		file_system[1] = file_system_cd9660;
-		file_system[2] = file_system_hfs;
-		nfsys = 3;
+		file_system[1] = file_system_ustarfs;
+		file_system[2] = file_system_cd9660;
+		file_system[3] = file_system_hfs;
+		nfsys = 4;
 		return 0;
 	}
 	if (!strcmp(buf, "network")) {
