@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.119 2001/05/08 23:58:14 hubertf Exp $
+.\"	$NetBSD: main,v 1.120 2001/05/09 00:19:15 ross Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -743,7 +743,7 @@ for more information on implementing
 .Pa rc.d
 scripts.
 .bullet)
-.Ss2 Issues affecting an upgrading from NetBSD 1.4 or prior
+.Ss2 Issues affecting an upgrade from NetBSD 1.4 or prior
 .(bullet
 .Xr named 8
 leaks version information
