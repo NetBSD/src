@@ -1,11 +1,11 @@
-#	$NetBSD: DELPHI,v 1.5 2001/08/22 15:39:06 hubertf Exp $
+#	$NetBSD: DELPHI,v 1.6 2001/11/04 09:00:38 yamt Exp $
 #
 #	DELPHI -- one of thorpej@zembu.com's devel machines
 #
 
 include "arch/i386/conf/std.i386"
 
-ident 		"DELPHI-$Revision: 1.5 $"
+ident 		"DELPHI-$Revision: 1.6 $"
 
 maxusers	64		# estimated number of users
 
@@ -381,6 +381,7 @@ ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 
 # CardBus SCSI cards
 #ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
+#adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 
 # SCSI bus support
 #scsibus* at adv?

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.27 2001/11/04 07:39:41 itohy Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.28 2001/11/04 09:00:39 yamt Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.27 $"
+#ident 		"GENERIC-$Revision: 1.28 $"
 
 maxusers	32		# estimated number of users
 
@@ -390,6 +390,7 @@ esp*	at pcmcia? function ?		# Qlogic ESP406/FAS408 SCSI
 
 # CardBus SCSI cards
 ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
+adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 
 # SCSI bus support
 scsibus* at ahc?
