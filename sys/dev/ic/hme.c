@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.11 2000/05/09 22:51:33 pk Exp $	*/
+/*	$NetBSD: hme.c,v 1.12 2000/05/18 12:49:09 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -202,7 +202,7 @@ hme_config(sc)
 		sc->sc_rb.rb_ntbuf * _HME_BUFSZ +	/* TX buffers */
 		sc->sc_rb.rb_nrbuf * _HME_BUFSZ;	/* TX buffers */
 
-	if ((error = bus_dmamap_create(dmatag, size, 1, size, NBPG,
+	if ((error = bus_dmamap_create(dmatag, size, 1, size, 0,
 				    BUS_DMA_NOWAIT, &sc->sc_dmamap)) != 0) {
 		printf("%s: DMA map create error %d\n",
 			sc->sc_dev.dv_xname, error);
