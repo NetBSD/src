@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.70 2001/11/24 06:53:19 isaki Exp $	*/
+/*	$NetBSD: pmap.c,v 1.71 2001/11/25 15:42:23 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1865,7 +1865,7 @@ void
 pmap_zero_page(phys)
 	paddr_t phys;
 {
-	int s, npte;
+	int npte;
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_zero_page(%lx)\n", phys));
 
@@ -1916,7 +1916,7 @@ boolean_t
 pmap_zero_page_uncached(phys)
 	paddr_t phys;
 {
-	int s, npte;
+	int npte;
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_zero_page_uncached(%lx)\n", phys));
 
@@ -1953,7 +1953,7 @@ void
 pmap_copy_page(src, dst)
 	paddr_t src, dst;
 {
-	int s, npte1, npte2;
+	int npte1, npte2;
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_copy_page(%lx, %lx)\n", src, dst));
 
