@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.1 2001/11/10 18:55:52 thorpej Exp $
+#	$NetBSD: MAKEDEV,v 1.2 2001/11/15 22:16:19 augustss Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -136,7 +136,7 @@ ramdisk|floppy)
 	;;
 
 usbs)
-	sh $0 usb usb0 usb1 
+	sh $0 usb usb0 usb1 usb2 usb3 usb4 usb5 usb6 usb7
 	sh $0 uhid0 uhid1 uhid2 uhid3
 	sh $0 ulpt0 ulpt1 
 	sh $0 ttyU0 ttyU1
