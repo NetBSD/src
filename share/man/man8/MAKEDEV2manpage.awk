@@ -1,4 +1,4 @@
-#       $NetBSD: MAKEDEV2manpage.awk,v 1.4 2003/02/14 15:20:20 grant Exp $
+#       $NetBSD: MAKEDEV2manpage.awk,v 1.5 2003/03/30 17:50:15 wiz Exp $
 #
 # Copyright (c) 2002
 #	Dieter Baron <dillo@NetBSD.org>.  All rights reserved.
@@ -168,7 +168,10 @@ function read1line() {
 			gsub(/[ \t]+/, " ", line);
   
               		print ". It Ar " target;
-			print toupper(substr(line, 1, 1)) substr(line, 2);
+			line2=toupper(substr(line, 1, 1)) substr(line, 2);
+			sub(/Wscons/, "wscons", line2);
+			sub(/Pccons/, "pccons", line2);
+			print line2;
         	}
         	print MANPAGE ". El";
     	} while (r1l ~ /^# /);
