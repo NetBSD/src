@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.13 1995/07/30 21:35:00 briggs Exp $	*/
+/*	$NetBSD: nubus.c,v 1.14 1995/08/04 02:55:17 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -69,23 +69,18 @@ nubusattach(parent, self, aux)
 	struct	device	*parent, *self;
 	void		*aux;
 {
-	extern u_long	int_video_start;
-	nubus_slot	fmtblock;
-	int		i;
+	extern u_int32_t	mac68k_vidlog;
+	nubus_slot		fmtblock;
+	int			i;
 
 	printf("\n");
-
-	for ( i = NUBUS_MIN_SLOT; i <= NUBUS_MAX_SLOT; i++) {
-		if (probe_slot(i, &fmtblock)) {
-			config_found(self, &fmtblock, nubusprint);
-		}
-	}
 
 	/*
 	 * Kludge for internal video.
 	 */
-	if (int_video_start) {
+	if (mac68k_vidlog) {
 		int	int_video_slot = NUBUS_INT_VIDEO_PSUEDO_SLOT;
+
 		fmtblock.top = NUBUS_SLOT_TO_BASE(int_video_slot);
 		fmtblock.slot = int_video_slot;
 		fmtblock.bytelanes = 0x0F;
@@ -97,6 +92,12 @@ nubusattach(parent, self, aux)
 		fmtblock.length = 0;
 		fmtblock.directory_offset = 0;
 		config_found(self, &fmtblock, nubusprint);
+	}
+
+	for ( i = NUBUS_MIN_SLOT; i <= NUBUS_MAX_SLOT; i++) {
+		if (probe_slot(i, &fmtblock)) {
+			config_found(self, &fmtblock, nubusprint);
+		}
 	}
 }
 
