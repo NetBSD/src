@@ -1,4 +1,4 @@
-/* $NetBSD: a12cvar.h,v 1.1 1998/01/29 21:42:53 ross Exp $ */
+/* $NetBSD: a12cvar.h,v 1.2 1998/03/02 06:56:16 ross Exp $ */
 
 /* [Notice revision 2.0]
  * Copyright (c) 1997 Avalon Computer Systems, Inc.
@@ -34,6 +34,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef	_ALPHA_PCI_A12CVAR_H_
+#define	_ALPHA_PCI_A12CVAR_H_
+
+#define	A12CVAR() 	/* generate ctags(1) key */
+
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
 #include <alpha/pci/pci_sgmap_pte64.h>
@@ -70,3 +76,18 @@ void	a12c_dma_init __P((struct a12c_config *));
 
 bus_space_tag_t	a12c_bus_io_init __P((void *));
 bus_space_tag_t	a12c_bus_mem_init __P((void *));
+/*
+ * The following two cpu numbers are relative to the local switch;
+ * in a multistage system these numbers will not be unique. a12_ethercpu
+ * is used to route bootp packets and to mount the root FS.
+ */
+int	a12_cpu_local;	/* our CPU number relative to the local switch */
+int	a12_cpu_ether;	/* relative CPU number with outside world access */
+int	a12_cpu_global;	/* XXX used to construct MSN routing tables XXX */
+
+void	a12_intr_register_xb	__P((int (*)(void *)));
+void	a12_intr_register_icw	__P((int (*)(void *)));
+void	configure_xb		__P((void));
+void	configure_a12dc		__P((void));
+
+#endif
