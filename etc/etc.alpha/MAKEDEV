@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.54 1999/12/18 03:09:44 tsutsui Exp $
+#	$NetBSD: MAKEDEV,v 1.55 2000/01/20 17:13:27 mjacob Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -95,6 +95,7 @@
 #	random	Random number generator
 #	satlink* PlanetConnect satellite receiver driver
 #	scsibus* SCSI busses, see scsictl(8), scsi(8)
+#	ses*	SES/SAF-TE SCSI Devices
 #	speaker	PC speaker (IBM BASIC playstring emulation)
 #	ss*	SCSI scanner
 #	tun*	network tunnel driver
@@ -365,10 +366,11 @@ st*)
 		er${name}${unit} enr${name}${unit}
 	;;
 
-ch*|uk*)
+ses*|ch*|uk*)
 	case $i in
 	ch*) name=ch;	unit=${i#ch};	chr=14;;
 	uk*) name=uk;	unit=${i#uk};	chr=33;;
+	ses*) name=ses;	unit=${i#ses};	chr=58;;
 	esac
 	rm -f $name$unit
 	mknod $name$unit	c $chr $unit
