@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.40 2001/01/18 20:28:19 jdolecek Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.41 2001/02/05 10:55:02 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -120,8 +120,8 @@ ffs_alloc(ip, lbn, bpref, size, cred, bnp)
 	if (ITOV(ip)->v_type == VREG && lbn > 0) {
 		struct vm_page *pg;
 		struct uvm_object *uobj = &ITOV(ip)->v_uvm.u_obj;
-		voff_t off = trunc_page(lblktosize(fs, lbn));
-		voff_t endoff = round_page(lblktosize(fs, lbn) + size);
+		voff_t off = trunc_page(lblktosize(fs, (voff_t)lbn));
+		voff_t endoff = round_page(lblktosize(fs, (voff_t)lbn) + size);
 
 		simple_lock(&uobj->vmobjlock);
 		while (off < endoff) {
