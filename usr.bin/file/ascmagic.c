@@ -1,4 +1,4 @@
-/*	$NetBSD: ascmagic.c,v 1.10 1997/01/28 00:49:38 christos Exp $	*/
+/*	$NetBSD: ascmagic.c,v 1.11 1997/10/18 14:53:50 lukem Exp $	*/
 
 /*
  * ASCII magic -- file types that we know based on keywords
@@ -36,9 +36,9 @@
 #include "file.h"
 #include "names.h"
 
+#include <sys/cdefs.h>
 #ifndef	lint
-static char *moduleid = 
-	"@(#)$NetBSD: ascmagic.c,v 1.10 1997/01/28 00:49:38 christos Exp $";
+__RCSID("$NetBSD: ascmagic.c,v 1.11 1997/10/18 14:53:50 lukem Exp $");
 #endif	/* lint */
 
 			/* an optimisation over plain strcmp() */
