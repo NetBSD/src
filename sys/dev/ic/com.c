@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.150 1999/01/26 17:08:37 drochner Exp $	*/
+/*	$NetBSD: com.c,v 1.151 1999/02/03 23:20:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -693,10 +693,7 @@ com_shutdown(sc)
 	com_break(sc, 0);
 
 	/* Turn off PPS capture on last close. */
-	sc->sc_ppsclearmask = 0;
-	sc->sc_ppsassertmask = 0;
-	sc->sc_ppsassert = 1;
-	sc->sc_ppsclear = 1;
+	sc->sc_ppsmask = 0;
 	sc->ppsparam.mode = 0;
 
 	/*
@@ -798,10 +795,7 @@ comopen(dev, flag, mode, p)
 		sc->sc_msr = bus_space_read_1(sc->sc_iot, sc->sc_ioh, com_msr);
 
 		/* Clear PPS capture state on first open. */
-		sc->sc_ppsclearmask = 0;
-		sc->sc_ppsassertmask = 0;
-		sc->sc_ppsassert = 1;
-		sc->sc_ppsclear = 1;
+		sc->sc_ppsmask = 0;
 
 		splx(s2);
 
@@ -1086,6 +1080,7 @@ comioctl(dev, cmd, data, flag, p)
 		 * Compute msr masks from user-specified timestamp state.
 		 */
 		mode = sc->ppsparam.mode;
+#ifdef	PPS_SYNC
 		if (mode & PPS_HARDPPSONASSERT) {
 			mode |= PPS_CAPTUREASSERT;
 			/* XXX revoke any previous HARDPPS source */
@@ -1094,31 +1089,26 @@ comioctl(dev, cmd, data, flag, p)
 			mode |= PPS_CAPTURECLEAR;
 			/* XXX revoke any previous HARDPPS source */
 		}
+#endif	/* PPS_SYNC */
 		switch (mode & PPS_CAPTUREBOTH) {
 		case 0:
-			sc->sc_ppsassertmask = 0;
-			sc->sc_ppsassert = 1;
-			sc->sc_ppsclearmask = 0;
-			sc->sc_ppsclear = 1;
+			sc->sc_ppsmask = 0;
 			break;
 	
 		case PPS_CAPTUREASSERT:
-			sc->sc_ppsassertmask = MSR_DCD;
+			sc->sc_ppsmask = MSR_DCD;
 			sc->sc_ppsassert = MSR_DCD;
-			sc->sc_ppsclearmask = 0;
-			sc->sc_ppsclear = 1;
+			sc->sc_ppsclear = -1;
 			break;
 	
 		case PPS_CAPTURECLEAR:
-			sc->sc_ppsassertmask = 0;
-			sc->sc_ppsassert = 1;
-			sc->sc_ppsclearmask = MSR_DCD;
+			sc->sc_ppsmask = MSR_DCD;
+			sc->sc_ppsassert = -1;
 			sc->sc_ppsclear = 0;
 			break;
 
 		case PPS_CAPTUREBOTH:
-			sc->sc_ppsassertmask = MSR_DCD;
-			sc->sc_ppsclearmask = MSR_DCD;
+			sc->sc_ppsmask = MSR_DCD;
 			sc->sc_ppsassert = MSR_DCD;
 			sc->sc_ppsclear = 0;
 			break;
@@ -1142,7 +1132,7 @@ comioctl(dev, cmd, data, flag, p)
 	}
 
 	case PPS_WAIT:
-		  /* XXX */
+		/* XXX */
 		error = EOPNOTSUPP;
 		break;
 
@@ -1152,19 +1142,16 @@ comioctl(dev, cmd, data, flag, p)
 		 * rising edge as the on-the-second signal. 
 		 * The old API has no way to specify PPS polarity.
 		 */
+		sc->sc_ppsmask = MSR_DCD;
 #ifndef PPS_TRAILING_EDGE
-		sc->sc_ppsassertmask = MSR_DCD;
 		sc->sc_ppsassert = MSR_DCD;
-		sc->sc_ppsclearmask = 0;
-		sc->sc_ppsclear = 1;
-		TIMESPEC_TO_TIMEVAL((struct timeval*)data, 
+		sc->sc_ppsclear = -1;
+		TIMESPEC_TO_TIMEVAL((struct timeval *)data, 
 		    &sc->ppsinfo.assert_timestamp);
 #else
-		sc->sc_ppsassertmask = 0;
-		sc->sc_ppsassert = 1
-		sc->sc_ppsclearmask = MSR_DCD;
+		sc->sc_ppsassert = -1
 		sc->sc_ppsclear = 0;
-		TIMESPEC_TO_TIMEVAL((struct timeval*)data, 
+		TIMESPEC_TO_TIMEVAL((struct timeval *)data, 
 		    &sc->ppsinfo.clear_timestamp);
 #endif
 		break;
@@ -1996,14 +1983,12 @@ comintr(arg)
 			SET(sc->sc_msr_delta, delta);
 
 			/*
-			 * Pulse-per-second clock  signal on edge of DCD?
+			 * Pulse-per-second clock signal on edge of DCD?
 			 */
-			if (ISSET(delta, (sc->sc_ppsassertmask |
-					  sc->sc_ppsclearmask))) {
+			if (ISSET(delta, sc->sc_ppsmask)) {
 				struct timeval tv;
-			    	if ((msr & sc->sc_ppsassertmask) ==
+			    	if (ISSET(msr, sc->sc_ppsmask) ==
 				    sc->sc_ppsassert) {
-
 					/* XXX nanotime() */
 					microtime(&tv);
 					TIMEVAL_TO_TIMESPEC(&tv, 
@@ -2023,10 +2008,9 @@ comintr(arg)
 					sc->ppsinfo.current_mode = 
 					    sc->ppsparam.mode;
 
-				} else if ((msr & sc->sc_ppsclearmask) == 
+				} else if (ISSET(msr, sc->sc_ppsmask) == 
 				    sc->sc_ppsclear) {
 					/* XXX nanotime() */
-
 					microtime(&tv);
 					TIMEVAL_TO_TIMESPEC(&tv, 
 					    &sc->ppsinfo.clear_timestamp);
