@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pdc202xx_reg.h,v 1.8 2002/07/26 14:11:35 wiz Exp $ */
+/*	$NetBSD: pciide_pdc202xx_reg.h,v 1.9 2003/04/28 05:20:33 nakayama Exp $ */
 
 /*
  * Copyright (c) 1999 Manuel Bouyer.
@@ -99,6 +99,8 @@
 #define PDC262_ATAPI_DMA_READ	0x00001000
 #define PDC262_ATAPI_DMA_WRITE	0x00002000
 #define PDC262_ATAPI_UDMA	0x00004000
+#define PDC262_ATAPI_LBA48_READ  0x05000000
+#define PDC262_ATAPI_LBA48_WRITE 0x06000000
 
 /*
  * The timings provided here cmoes from the PDC20262 docs. I hope they are
