@@ -1,5 +1,5 @@
-/*	$NetBSD: ip6_output.c,v 1.23 2000/06/20 02:24:42 itojun Exp $	*/
-/*	$KAME: ip6_output.c,v 1.109 2000/05/31 05:03:09 jinmei Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.24 2000/07/06 12:51:41 itojun Exp $	*/
+/*	$KAME: ip6_output.c,v 1.115 2000/07/03 13:23:28 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,6 @@
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
 #include <netkey/key.h>
-#include <netkey/key_debug.h>
 #endif /* IPSEC */
 
 #include "loop.h"

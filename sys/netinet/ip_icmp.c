@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.49 2000/07/01 21:46:40 sommerfeld Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.50 2000/07/06 12:51:40 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -132,7 +132,6 @@
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
 #include <netkey/key.h>
-#include <netkey/key_debug.h>
 #endif
 
 #include <machine/stdarg.h>
