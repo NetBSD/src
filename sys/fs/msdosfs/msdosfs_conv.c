@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.1.4.2 2004/09/18 14:52:49 skrll Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.1.4.3 2004/09/21 13:35:01 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.1.4.2 2004/09/18 14:52:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.1.4.3 2004/09/21 13:35:01 skrll Exp $");
 
 /*
  * System include files.

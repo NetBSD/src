@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_irc_pxy.c,v 1.1.1.2.2.4 2004/09/18 14:54:54 skrll Exp $	*/
+/*	$NetBSD: ip_irc_pxy.c,v 1.1.1.2.2.5 2004/09/21 13:37:12 skrll Exp $	*/
 
 /*
  * Copyright (C) 2000-2003 Darren Reed

@@ -1,4 +1,4 @@
-/*	$NetBSD: siginfo.h,v 1.1.8.2 2004/09/18 14:56:30 skrll Exp $	 */
+/*	$NetBSD: siginfo.h,v 1.1.8.3 2004/09/21 13:38:50 skrll Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

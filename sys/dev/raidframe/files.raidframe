@@ -1,4 +1,4 @@
-#	$NetBSD: files.raidframe,v 1.2.6.2 2004/09/18 14:50:53 skrll Exp $
+#	$NetBSD: files.raidframe,v 1.2.6.3 2004/09/21 13:32:50 skrll Exp $
 
 defflag			RAID_AUTOCONFIG
 defflag			RAID_DIAGNOSTIC

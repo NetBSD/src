@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_id.c,v 1.13.4.3 2004/09/18 14:55:14 skrll Exp $	*/
+/*	$NetBSD: ip6_id.c,v 1.13.4.4 2004/09/21 13:37:34 skrll Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 /*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_id.c,v 1.13.4.3 2004/09/18 14:55:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_id.c,v 1.13.4.4 2004/09/21 13:37:34 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

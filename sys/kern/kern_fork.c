@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.109.2.4 2004/09/18 14:53:02 skrll Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.109.2.5 2004/09/21 13:35:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.109.2.4 2004/09/18 14:53:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.109.2.5 2004/09/21 13:35:03 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"

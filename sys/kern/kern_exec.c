@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.169.2.3 2004/09/18 14:53:02 skrll Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.169.2.4 2004/09/21 13:35:03 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.169.2.3 2004/09/18 14:53:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.169.2.4 2004/09/21 13:35:03 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -217,16 +217,18 @@ static void link_es(struct execsw_entry **, const struct execsw *);
  */
 int
 #ifdef VERIFIED_EXEC
-check_exec(struct proc *p, struct exec_package *epp, int direct_exec)
+check_exec(struct lwp *l, struct exec_package *epp, int direct_exec)
 #else
-check_exec(struct proc *p, struct exec_package *epp)
+check_exec(struct lwp *l, struct exec_package *epp)
 #endif
 {
 	int		error, i;
 	struct vnode	*vp;
 	struct nameidata *ndp;
 	size_t		resid;
+	struct proc	*p;
 
+	p = l->l_proc;
 	ndp = epp->ep_ndp;
 	ndp->ni_cnd.cn_nameiop = LOOKUP;
 	ndp->ni_cnd.cn_flags = FOLLOW | LOCKLEAF | SAVENAME;
@@ -240,11 +242,11 @@ check_exec(struct proc *p, struct exec_package *epp)
 		error = EACCES;
 		goto bad1;
 	}
-	if ((error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p)) != 0)
+	if ((error = VOP_ACCESS(vp, VEXEC, p->p_ucred, l)) != 0)
 		goto bad1;
 
 	/* get attributes */
-	if ((error = VOP_GETATTR(vp, epp->ep_vap, p->p_ucred, p)) != 0)
+	if ((error = VOP_GETATTR(vp, epp->ep_vap, p->p_ucred, l)) != 0)
 		goto bad1;
 
 	/* Check mount point */
@@ -256,7 +258,7 @@ check_exec(struct proc *p, struct exec_package *epp)
 		epp->ep_vap->va_mode &= ~(S_ISUID | S_ISGID);
 
 	/* try to open it */
-	if ((error = VOP_OPEN(vp, FREAD, p->p_ucred, p)) != 0)
+	if ((error = VOP_OPEN(vp, FREAD, p->p_ucred, l)) != 0)
 		goto bad1;
 
 	/* unlock vp, since we need it unlocked from here on out. */
@@ -294,7 +296,7 @@ check_exec(struct proc *p, struct exec_package *epp)
 		int newerror;
 
 		epp->ep_esch = execsw[i];
-		newerror = (*execsw[i]->es_makecmds)(p, epp);
+		newerror = (*execsw[i]->es_makecmds)(l, epp);
 		/* make sure the first "interesting" error code is saved. */
 		if (!newerror || error == ENOEXEC)
 			error = newerror;
@@ -333,7 +335,7 @@ bad2:
 	 * pathname buf, and punt.
 	 */
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	VOP_CLOSE(vp, FREAD, p->p_ucred, p);
+	VOP_CLOSE(vp, FREAD, p->p_ucred, l);
 	vput(vp);
 	PNBUF_PUT(ndp->ni_cnd.cn_pnbuf);
 	return error;
@@ -410,7 +412,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	 * functions call check_exec() recursively - for example,
 	 * see exec_script_makecmds().
 	 */
-	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
 
 	/*
 	 * initialize the fields of the exec package.
@@ -432,10 +434,10 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 
 	/* see if we can run it. */
 #ifdef VERIFIED_EXEC
-        if ((error = check_exec(p, &pack, 1)) != 0)
-        /* if ((error = check_exec(p, &pack, 0)) != 0) */
+        if ((error = check_exec(l, &pack, 1)) != 0)
+        /* if ((error = check_exec(l, &pack, 0)) != 0) */
 #else
-        if ((error = check_exec(p, &pack)) != 0)
+        if ((error = check_exec(l, &pack)) != 0)
 #endif
 		goto freehdr;
 
@@ -490,7 +492,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 		}
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_EXEC_ARG))
-			ktrkmem(p, KTR_EXEC_ARG, dp, len - 1);
+			ktrkmem(l, KTR_EXEC_ARG, dp, len - 1);
 #endif
 		dp += len;
 		cpp++;
@@ -513,7 +515,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 			}
 #ifdef KTRACE
 			if (KTRPOINT(p, KTR_EXEC_ENV))
-				ktrkmem(p, KTR_EXEC_ENV, dp, len - 1);
+				ktrkmem(l, KTR_EXEC_ENV, dp, len - 1);
 #endif
 			dp += len;
 			cpp++;
@@ -606,7 +608,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 #endif
 			vcp->ev_addr += base_vcp->ev_addr;
 		}
-		error = (*vcp->ev_proc)(p, vcp);
+		error = (*vcp->ev_proc)(l, vcp);
 #ifdef DEBUG_EXEC
 		if (error) {
 			int j;
@@ -627,7 +629,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	kill_vmcmds(&pack.ep_vmcmds);
 
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
-	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
+	VOP_CLOSE(pack.ep_vp, FREAD, cred, l);
 	vput(pack.ep_vp);
 
 	/* if an error happened, deallocate and punt */
@@ -671,7 +673,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 #endif /* __MACHINE_STACK_GROWS_UP */
 
 	/* Now copy argc, args & environ to new stack */
-	error = (*pack.ep_es->es_copyargs)(p, &pack, &arginfo, &stack, argp);
+	error = (*pack.ep_es->es_copyargs)(l, &pack, &arginfo, &stack, argp);
 	if (error) {
 		DPRINTF(("execve: copyargs failed %d\n", error));
 		goto exec_abort;
@@ -697,7 +699,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	}
 
 	stopprofclock(p);	/* stop profiling */
-	fdcloseexec(p);		/* handle close on exec */
+	fdcloseexec(l);		/* handle close on exec */
 	execsigs(p);		/* reset catched signals */
 
 	l->l_ctxlink = NULL;	/* reset ucontext link */
@@ -732,7 +734,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 		p_sugid(p);
 
 		/* Make sure file descriptors 0..2 are in use. */
-		if ((error = fdcheckstd(p)) != 0)
+		if ((error = fdcheckstd(l)) != 0)
 			goto exec_abort;
 
 		p->p_ucred = crcopy(cred);
@@ -815,7 +817,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_EMUL))
-		ktremul(p);
+		ktremul(l);
 #endif
 
 #ifdef LKM
@@ -846,11 +848,11 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	/* kill any opened file descriptor, if necessary */
 	if (pack.ep_flags & EXEC_HASFD) {
 		pack.ep_flags &= ~EXEC_HASFD;
-		(void) fdrelease(p, pack.ep_fd);
+		(void) fdrelease(l, pack.ep_fd);
 	}
 	/* close and put the exec'd file */
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
-	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
+	VOP_CLOSE(pack.ep_vp, FREAD, cred, l);
 	vput(pack.ep_vp);
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
@@ -891,7 +893,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 
 
 int
-copyargs(struct proc *p, struct exec_package *pack, struct ps_strings *arginfo,
+copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo,
     char **stackp, void *argp)
 {
 	char	**cpp, *dp, *sp;

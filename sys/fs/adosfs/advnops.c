@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.6.2.4 2004/09/18 14:52:37 skrll Exp $	*/
+/*	$NetBSD: advnops.c,v 1.6.2.5 2004/09/21 13:34:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.6.2.4 2004/09/18 14:52:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.6.2.5 2004/09/21 13:34:43 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -869,13 +869,13 @@ adosfs_inactive(v)
 		struct proc *a_p;
 	} */ *sp = v;
 	struct vnode *vp = sp->a_vp;
-	struct proc *p = sp->a_p;
+	struct lwp *l = sp->a_l;
 #ifdef ADOSFS_DIAGNOSTIC
 	advopprint(sp);
 #endif
 	VOP_UNLOCK(vp, 0);
 	/* XXX this needs to check if file was deleted */
-	vrecycle(vp, NULL, p);
+	vrecycle(vp, NULL, l);
 
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" 0)");

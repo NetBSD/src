@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.4.2.2 2004/09/18 14:56:30 skrll Exp $	*/
+/*	$NetBSD: savar.h,v 1.4.2.3 2004/09/21 13:38:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

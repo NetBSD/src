@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.h,v 1.1.46.2 2004/09/18 14:54:02 skrll Exp $	*/
+/*	$NetBSD: ustarfs.h,v 1.1.46.3 2004/09/21 13:36:19 skrll Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.

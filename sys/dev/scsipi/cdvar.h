@@ -1,4 +1,4 @@
-/*	$NetBSD: cdvar.h,v 1.17.2.3 2004/09/18 14:51:24 skrll Exp $	*/
+/*	$NetBSD: cdvar.h,v 1.17.2.4 2004/09/21 13:33:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.

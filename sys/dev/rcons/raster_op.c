@@ -1,4 +1,4 @@
-/*	$NetBSD: raster_op.c,v 1.11.16.2 2004/09/18 14:51:16 skrll Exp $ */
+/*	$NetBSD: raster_op.c,v 1.11.16.3 2004/09/21 13:33:12 skrll Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raster_op.c,v 1.11.16.2 2004/09/18 14:51:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raster_op.c,v 1.11.16.3 2004/09/21 13:33:12 skrll Exp $");
 
 #include <sys/types.h>
 #ifdef _KERNEL

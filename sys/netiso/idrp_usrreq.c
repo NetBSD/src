@@ -1,4 +1,4 @@
-/*	$NetBSD: idrp_usrreq.c,v 1.11.2.3 2004/09/18 14:55:52 skrll Exp $	*/
+/*	$NetBSD: idrp_usrreq.c,v 1.11.2.4 2004/09/21 13:38:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idrp_usrreq.c,v 1.11.2.3 2004/09/18 14:55:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idrp_usrreq.c,v 1.11.2.4 2004/09/21 13:38:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -143,14 +143,16 @@ u_long          idrp_recvspace = 40 * 1024;	/* 40 1K datagrams */
 /* ARGSUSED */
 int
 idrp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-	struct mbuf *control, struct proc *p)
+	struct mbuf *control, struct lwp *l)
 {
 	struct rawcb *rp;
+	struct proc *p;
 	int error = 0;
 
 	if (req == PRU_CONTROL)
 		return (EOPNOTSUPP);
 
+	p = l ? l->l_proc : NULL;
 	rp = sotorawcb(so);
 #ifdef DIAGNOSTIC
 	if (req != PRU_SEND && req != PRU_SENDOOB && control)

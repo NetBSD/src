@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.166.2.4 2004/09/18 14:56:30 skrll Exp $	*/
+/*	$NetBSD: proc.h,v 1.166.2.5 2004/09/21 13:38:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -466,7 +466,7 @@ void	cpu_lwp_free(struct lwp *, int);
 
 void	child_return(void *);
 
-int	proc_isunder(struct proc *, struct proc *);
+int	proc_isunder(struct proc *, struct lwp *);
 void	proc_stop(struct proc *, int);
 
 void	proclist_lock_read(void);

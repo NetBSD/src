@@ -1,4 +1,4 @@
-#	$NetBSD: files.netinet6,v 1.1.8.2 2004/09/18 14:55:14 skrll Exp $
+#	$NetBSD: files.netinet6,v 1.1.8.3 2004/09/21 13:37:32 skrll Exp $
 
 # NOTE: netinet/files.netinet must be included before this one!
 

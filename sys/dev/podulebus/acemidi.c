@@ -1,4 +1,4 @@
-/* $NetBSD: acemidi.c,v 1.7.6.1 2004/09/18 14:50:39 skrll Exp $ */
+/* $NetBSD: acemidi.c,v 1.7.6.2 2004/09/21 13:32:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acemidi.c,v 1.7.6.1 2004/09/18 14:50:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acemidi.c,v 1.7.6.2 2004/09/21 13:32:37 skrll Exp $");
 
 #include <sys/param.h>
 

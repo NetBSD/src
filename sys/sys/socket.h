@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.67.2.2 2004/09/18 14:56:30 skrll Exp $	*/
+/*	$NetBSD: socket.h,v 1.67.2.3 2004/09/21 13:38:50 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.83.2.3 2004/09/18 14:54:16 skrll Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.83.2.4 2004/09/21 13:36:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.83.2.3 2004/09/18 14:54:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.83.2.4 2004/09/21 13:36:40 skrll Exp $");
 
 #include "sl.h"
 #if NSL > 0

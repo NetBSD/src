@@ -70,7 +70,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.13.2.3 2004/09/18 14:54:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.13.2.4 2004/09/21 13:37:11 skrll Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"

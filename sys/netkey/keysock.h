@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.h,v 1.10.2.3 2004/09/18 14:56:06 skrll Exp $	*/
+/*	$NetBSD: keysock.h,v 1.10.2.4 2004/09/21 13:38:23 skrll Exp $	*/
 /*	$KAME: keysock.h,v 1.8 2000/03/27 05:11:06 sumikawa Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ extern int key_usrreq __P((struct socket *,
 	int, struct mbuf *, struct mbuf *, struct mbuf *));
 #else
 extern int key_usrreq __P((struct socket *,
-	int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *));
+	int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *));
 #endif
 
 extern int key_sendup_mbuf __P((struct socket *, struct mbuf *, int));

@@ -1,7 +1,7 @@
-/*	$NetBSD: xebec.c,v 1.6.8.2 2004/09/18 14:56:06 skrll Exp $	*/
+/*	$NetBSD: xebec.c,v 1.6.8.3 2004/09/21 13:38:23 skrll Exp $	*/
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: xebec.c,v 1.6.8.2 2004/09/18 14:56:06 skrll Exp $");
+__RCSID("$NetBSD: xebec.c,v 1.6.8.3 2004/09/21 13:38:23 skrll Exp $");
 
 #include "xebec.h"
 #include "llparse.h"

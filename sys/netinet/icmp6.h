@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.27.2.2 2004/09/18 14:54:53 skrll Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.27.2.3 2004/09/21 13:37:10 skrll Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 

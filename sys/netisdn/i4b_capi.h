@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_capi.h,v 1.2.4.3 2004/09/18 14:55:32 skrll Exp $	*/
+/*	$NetBSD: i4b_capi.h,v 1.2.4.4 2004/09/21 13:37:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.67.2.4 2004/09/18 14:53:02 skrll Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.67.2.5 2004/09/21 13:35:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.67.2.4 2004/09/18 14:53:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.67.2.5 2004/09/21 13:35:04 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_malloclog.h"
@@ -142,11 +142,11 @@ lkm_init(void)
 
 /*ARGSUSED*/
 int
-lkmopen(dev, flag, devtype, p)
+lkmopen(dev, flag, devtype, l)
 	dev_t dev;
 	int flag;
 	int devtype;
-	struct proc *p;
+	struct lwp *l;
 {
 	int error;
 
@@ -206,11 +206,11 @@ lkmunreserve()
 }
 
 int
-lkmclose(dev, flag, mode, p)
+lkmclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 
 	if (!(lkm_v & LKM_ALLOC)) {
@@ -239,12 +239,12 @@ lkmclose(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-lkmioctl(dev, cmd, data, flag, p)
+lkmioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	int error = 0;
 	int i;

@@ -1,4 +1,4 @@
-# $NetBSD: files.wscons,v 1.28.2.2 2004/09/18 14:52:24 skrll Exp $
+# $NetBSD: files.wscons,v 1.28.2.3 2004/09/21 13:34:29 skrll Exp $
 
 #
 # "Workstation Console" glue; attaches frame buffer to emulator & keyboard,

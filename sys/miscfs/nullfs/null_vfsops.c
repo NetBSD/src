@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.42.2.4 2004/09/18 14:54:15 skrll Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.42.2.5 2004/09/21 13:36:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.42.2.4 2004/09/18 14:54:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.42.2.5 2004/09/21 13:36:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,19 +90,19 @@ __KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.42.2.4 2004/09/18 14:54:15 skrll E
 #include <miscfs/genfs/layer_extern.h>
 
 int	nullfs_mount __P((struct mount *, const char *, void *,
-	    struct nameidata *, struct proc *));
-int	nullfs_unmount __P((struct mount *, int, struct proc *));
+	    struct nameidata *, struct lwp *));
+int	nullfs_unmount __P((struct mount *, int, struct lwp *));
 
 /*
  * Mount null layer
  */
 int
-nullfs_mount(mp, path, data, ndp, p)
+nullfs_mount(mp, path, data, ndp, l)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	struct nameidata *ndp;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct null_args args;
 	struct vnode *lowerrootvp, *vp;
@@ -145,7 +145,7 @@ nullfs_mount(mp, path, data, ndp, p)
 	 * Find lower node
 	 */
 	NDINIT(ndp, LOOKUP, FOLLOW|LOCKLEAF,
-		UIO_USERSPACE, args.la.target, p);
+		UIO_USERSPACE, args.la.target, l);
 	if ((error = namei(ndp)) != 0)
 		return (error);
 
@@ -208,7 +208,7 @@ nullfs_mount(mp, path, data, ndp, p)
 	nmp->nullm_rootvp = vp;
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args.la.target,
-	    UIO_USERSPACE, mp, p);
+	    UIO_USERSPACE, mp, l);
 #ifdef NULLFS_DIAGNOSTIC
 	printf("nullfs_mount: lower %s, alias at %s\n",
 	    mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname);
@@ -220,10 +220,10 @@ nullfs_mount(mp, path, data, ndp, p)
  * Free reference to null layer
  */
 int
-nullfs_unmount(mp, mntflags, p)
+nullfs_unmount(mp, mntflags, l)
 	struct mount *mp;
 	int mntflags;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct null_mount *nmp = MOUNTTONULLMOUNT(mp);
 	struct vnode *null_rootvp = nmp->nullm_rootvp;

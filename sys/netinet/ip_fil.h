@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.52.2.3 2004/09/18 14:54:54 skrll Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.52.2.4 2004/09/21 13:37:11 skrll Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -1168,17 +1168,17 @@ extern	int	iplidentify __P((char *));
 #     if (__FreeBSD_version >= 500024)
 extern	int	iplioctl __P((dev_t, u_long, caddr_t, int, struct thread *));
 #     else
-extern	int	iplioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+extern	int	iplioctl __P((dev_t, u_long, caddr_t, int, struct lwp *));
 #     endif /* __FreeBSD_version >= 500024 */
 #    else
-extern	int	iplioctl __P((dev_t, int, caddr_t, int, struct proc *));
+extern	int	iplioctl __P((dev_t, int, caddr_t, int, struct lwp *));
 #    endif
 #    if (__FreeBSD_version >= 500024)
 extern	int	iplopen __P((dev_t, int, int, struct thread *));
 extern	int	iplclose __P((dev_t, int, int, struct thread *));
 #    else
-extern	int	iplopen __P((dev_t, int, int, struct proc *));
-extern	int	iplclose __P((dev_t, int, int, struct proc *));
+extern	int	iplopen __P((dev_t, int, int, struct lwp *));
+extern	int	iplclose __P((dev_t, int, int, struct lwp *));
 #    endif /* __FreeBSD_version >= 500024 */
 #   else
 #    ifdef linux

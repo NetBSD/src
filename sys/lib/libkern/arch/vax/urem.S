@@ -1,4 +1,4 @@
-/*	$NetBSD: urem.S,v 1.2.20.2 2004/09/18 14:54:01 skrll Exp $	*/
+/*	$NetBSD: urem.S,v 1.2.20.3 2004/09/21 13:36:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.

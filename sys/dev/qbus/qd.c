@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.30.6.2 2004/09/18 14:50:40 skrll Exp $	*/
+/*	$NetBSD: qd.c,v 1.30.6.3 2004/09/21 13:32:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.30.6.2 2004/09/18 14:50:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.30.6.3 2004/09/21 13:32:38 skrll Exp $");
 
 #include "opt_ddb.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.36.2.4 2004/09/18 14:56:59 skrll Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.36.2.5 2004/09/21 13:39:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -46,7 +46,7 @@ struct inode;
 struct mbuf;
 struct mount;
 struct nameidata;
-struct proc;
+struct lwp;
 struct ucred;
 struct ufs_args;
 struct ufsmount;
@@ -116,7 +116,7 @@ void ufs_ihashins __P((struct inode *));
 void ufs_ihashrem __P((struct inode *));
 
 /* ufs_inode.c */
-int ufs_reclaim __P((struct vnode *, struct proc *));
+int ufs_reclaim __P((struct vnode *, struct lwp *));
 int ufs_balloc_range __P((struct vnode *, off_t, off_t, struct ucred *, int));
 
 /* ufs_lookup.c */
@@ -129,7 +129,7 @@ int ufs_direnter __P((struct vnode *, struct vnode *, struct direct *,
 int ufs_dirremove __P((struct vnode *, struct inode *, int, int));
 int ufs_dirrewrite __P((struct inode *, struct inode *, ino_t, int, int, int));
 int ufs_dirempty __P((struct inode *, ino_t, struct ucred *));
-int ufs_checkpath __P((struct inode *, struct inode *, struct ucred *));
+int ufs_checkpath __P((struct inode *, struct inode *, struct ucred *, struct lwp *));
 
 /* ufs_quota.c */
 int getinoquota __P((struct inode *));
@@ -138,12 +138,12 @@ int chkdqchg __P((struct inode *, int64_t, struct ucred *, int));
 int chkiq __P((struct inode *, int32_t, struct ucred *, int));
 int chkiqchg __P((struct inode *, int32_t, struct ucred *, int));
 void chkdquot __P((struct inode *));
-int quotaon __P((struct proc *, struct mount *, int, caddr_t));
-int quotaoff __P((struct proc *, struct mount *, int));
+int quotaon __P((struct lwp *, struct mount *, int, caddr_t));
+int quotaoff __P((struct lwp *, struct mount *, int));
 int getquota __P((struct mount *, u_long, int, caddr_t));
 int setquota __P((struct mount *, u_long, int, caddr_t));
 int setuse __P((struct mount *, u_long, int, caddr_t));
-int qsync __P((struct mount *));
+int qsync __P((struct lwp *, struct mount *));
 int dqget __P((struct vnode *, u_long, struct ufsmount *, int,
 	       struct dquot **));
 void dqref __P((struct dquot *));
@@ -155,9 +155,9 @@ void dqflush __P((struct vnode *));
 void ufs_init __P((void));
 void ufs_reinit __P((void));
 void ufs_done __P((void));
-int ufs_start __P((struct mount *, int, struct proc *));
+int ufs_start __P((struct mount *, int, struct lwp *));
 int ufs_root __P((struct mount *, struct vnode **));
-int ufs_quotactl __P((struct mount *, int, uid_t, void *, struct proc *));
+int ufs_quotactl __P((struct mount *, int, uid_t, void *, struct lwp *));
 int ufs_fhtovp __P((struct mount *, struct ufid *, struct vnode **));
 int ufs_check_export __P((struct mount *, struct mbuf *, int *,
 		struct ucred **));

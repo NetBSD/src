@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_defs.h,v 1.8.6.2 2004/09/18 14:54:16 skrll Exp $	*/
+/*	$NetBSD: ppp_defs.h,v 1.8.6.3 2004/09/21 13:36:42 skrll Exp $	*/
 /*	Id: ppp_defs.h,v 1.11 1997/04/30 05:46:24 paulus Exp 	*/
 
 /*

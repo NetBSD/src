@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp_var.h,v 1.21.6.3 2004/09/18 14:54:53 skrll Exp $	*/
+/*	$NetBSD: icmp_var.h,v 1.21.6.4 2004/09/21 13:37:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993

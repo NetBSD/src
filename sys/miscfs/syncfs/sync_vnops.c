@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_vnops.c,v 1.10.2.3 2004/09/18 14:54:15 skrll Exp $	*/
+/*	$NetBSD: sync_vnops.c,v 1.10.2.4 2004/09/21 13:36:34 skrll Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.10.2.3 2004/09/18 14:54:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.10.2.4 2004/09/21 13:36:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -132,7 +132,7 @@ sync_fsync(v)
 		int a_flags;
 		off_t offlo;
 		off_t offhi;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *syncvp = ap->a_vp;
 	struct mount *mp = syncvp->v_mount;
@@ -161,7 +161,7 @@ sync_fsync(v)
 		}
 		asyncflag = mp->mnt_flag & MNT_ASYNC;
 		mp->mnt_flag &= ~MNT_ASYNC;
-		VFS_SYNC(mp, MNT_LAZY, ap->a_cred, ap->a_p);
+		VFS_SYNC(mp, MNT_LAZY, ap->a_cred, ap->a_l);
 		if (asyncflag)
 			mp->mnt_flag |= MNT_ASYNC;
 		vn_finished_write(mp, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.47.6.2 2004/09/18 14:52:24 skrll Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.47.6.3 2004/09/21 13:34:29 skrll Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfsnode.h,v 1.13.6.2 2004/09/18 14:56:59 skrll Exp $	*/
+/*	$NetBSD: mfsnode.h,v 1.13.6.3 2004/09/21 13:39:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993

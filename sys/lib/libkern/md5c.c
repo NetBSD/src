@@ -1,4 +1,4 @@
-/*	$NetBSD: md5c.c,v 1.9.16.2 2004/09/18 14:53:41 skrll Exp $	*/
+/*	$NetBSD: md5c.c,v 1.9.16.3 2004/09/21 13:35:54 skrll Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD5 Message-Digest

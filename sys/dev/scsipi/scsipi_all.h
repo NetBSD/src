@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_all.h,v 1.22.16.2 2004/09/18 14:51:24 skrll Exp $	*/
+/*	$NetBSD: scsipi_all.h,v 1.22.16.3 2004/09/21 13:33:23 skrll Exp $	*/
 
 /*
  * SCSI and SCSI-like general interface description

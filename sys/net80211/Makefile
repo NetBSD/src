@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.2.3 2004/09/18 14:54:39 skrll Exp $
+#	$NetBSD: Makefile,v 1.3.2.4 2004/09/21 13:36:55 skrll Exp $
 
 INCSDIR= /usr/include/net80211
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ecn.h,v 1.9.16.2 2004/09/18 14:54:54 skrll Exp $	*/
+/*	$NetBSD: ip_ecn.h,v 1.9.16.3 2004/09/21 13:37:11 skrll Exp $	*/
 /*	$KAME: ip_ecn.h,v 1.6 2001/05/03 14:51:48 itojun Exp $	*/
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.9.62.2 2004/09/18 14:56:30 skrll Exp $	*/
+/*	$NetBSD: dir.h,v 1.9.62.3 2004/09/21 13:38:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993

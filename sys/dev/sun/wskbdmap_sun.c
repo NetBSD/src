@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_sun.c,v 1.2.8.2 2004/09/18 14:51:34 skrll Exp $	*/
+/*	$NetBSD: wskbdmap_sun.c,v 1.2.8.3 2004/09/21 13:33:27 skrll Exp $	*/
 /*	$OpenBSD: sunkbd.c,v 1.9 2002/09/08 23:22:00 miod Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_sun.c,v 1.2.8.2 2004/09/18 14:51:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_sun.c,v 1.2.8.3 2004/09/21 13:33:27 skrll Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>

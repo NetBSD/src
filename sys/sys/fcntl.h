@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.26.2.2 2004/09/18 14:56:30 skrll Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.26.2.3 2004/09/21 13:38:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993

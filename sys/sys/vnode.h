@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.112.2.6 2004/09/18 14:56:31 skrll Exp $	*/
+/*	$NetBSD: vnode.h,v 1.112.2.7 2004/09/21 13:38:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -477,7 +477,7 @@ extern struct simplelock	mntvnode_slock;
 /*
  * Union filesystem hook for vn_readdir().
  */
-extern int (*vn_union_readdir_hook) (struct vnode **, struct file *, struct proc *);
+extern int (*vn_union_readdir_hook) (struct vnode **, struct file *, struct lwp *);
 
 /*
  * This macro is very helpful in defining those offsets in the vdesc struct.
@@ -670,31 +670,31 @@ int	vflush(struct mount *, struct vnode *, int);
 void	vflushbuf(struct vnode *, int);
 int 	vget(struct vnode *, int);
 void 	vgone(struct vnode *);
-void	vgonel(struct vnode *, struct proc *);
+void	vgonel(struct vnode *, struct lwp *);
 int	vinvalbuf(struct vnode *, int, struct ucred *,
-	    struct proc *, int, int);
+	    struct lwp *, int, int);
 void	vprint(char *, struct vnode *);
 void 	vput(struct vnode *);
-int	vrecycle(struct vnode *, struct simplelock *, struct proc *);
+int	vrecycle(struct vnode *, struct simplelock *, struct lwp *);
 void 	vrele(struct vnode *);
 int	vtruncbuf(struct vnode *, daddr_t, int, int);
 void	vwakeup(struct buf *);
 
 /* see vnsubr(9) */
 int	vn_bwrite(void *);
-int 	vn_close(struct vnode *, int, struct ucred *, struct proc *);
-int	vn_isunder(struct vnode *, struct vnode *, struct proc *);
+int 	vn_close(struct vnode *, int, struct ucred *, struct lwp *);
+int	vn_isunder(struct vnode *, struct vnode *, struct lwp *);
 int	vn_lock(struct vnode *, int);
 void	vn_markexec(struct vnode *);
 int	vn_marktext(struct vnode *);
 int 	vn_open(struct nameidata *, int, int);
 int 	vn_rdwr(enum uio_rw, struct vnode *, caddr_t, int, off_t, enum uio_seg,
-	    int, struct ucred *, size_t *, struct proc *);
-int	vn_readdir(struct file *, char *, int, u_int, int *, struct proc *,
+	    int, struct ucred *, size_t *, struct lwp *);
+int	vn_readdir(struct file *, char *, int, u_int, int *, struct lwp *,
 	    off_t **, int *);
 void	vn_restorerecurse(struct vnode *, u_int);
 u_int	vn_setrecurse(struct vnode *);
-int	vn_stat(struct vnode *, struct stat *, struct proc *);
+int	vn_stat(struct vnode *, struct stat *, struct lwp *);
 int	vn_kqfilter(struct file *, struct knote *);
 int	vn_writechk(struct vnode *);
 int	vn_cow_establish(struct vnode *, int (*)(void *, struct buf *),
@@ -715,7 +715,7 @@ int	getvnode(struct filedesc *fdp, int fd, struct file **fpp);
 
 /* see vfssubr(9) */
 void	vfs_getnewfsid(struct mount *);
-int	vfs_drainvnodes(long target, struct proc *);
+int	vfs_drainvnodes(long target, struct lwp *);
 void	vfs_write_resume(struct mount *);
 int	vfs_write_suspend(struct mount *, int, int);
 #ifdef DDB

@@ -1,4 +1,4 @@
-/*	$NetBSD: spif.c,v 1.1.2.3 2004/09/18 14:51:16 skrll Exp $	*/
+/*	$NetBSD: spif.c,v 1.1.2.4 2004/09/21 13:33:13 skrll Exp $	*/
 /*	$OpenBSD: spif.c,v 1.12 2003/10/03 16:44:51 miod Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.1.2.3 2004/09/18 14:51:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.1.2.4 2004/09/21 13:33:13 skrll Exp $");
 
 #include "spif.h"
 #if NSPIF > 0

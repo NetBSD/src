@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/sys/libkern/qsort.c,v 1.12 2002/11/09 12:55:06 alfred Exp $
- * $NetBSD: qsort.c,v 1.1.4.3 2004/09/18 14:54:02 skrll Exp $
+ * $NetBSD: qsort.c,v 1.1.4.4 2004/09/21 13:36:18 skrll Exp $
  */
 
 #include <sys/cdefs.h>

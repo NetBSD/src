@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.70.2.3 2004/09/18 14:54:54 skrll Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.70.2.4 2004/09/21 13:37:12 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.70.2.3 2004/09/18 14:54:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.70.2.4 2004/09/21 13:37:12 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -513,19 +513,21 @@ u_long	rip_recvspace = RIPRCVQ;
 
 /*ARGSUSED*/
 int
-rip_usrreq(so, req, m, nam, control, p)
+rip_usrreq(so, req, m, nam, control, l)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct inpcb *inp;
+	struct proc *p;
 	int s;
 	int error = 0;
 #ifdef MROUTING
 	extern struct socket *ip_mrouter;
 #endif
 
+	p = l ? l->l_proc : NULL;
 	if (req == PRU_CONTROL)
 		return (in_control(so, (long)m, (caddr_t)nam,
 		    (struct ifnet *)control, p));

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootsect.h,v 1.1.4.2 2004/09/18 14:52:49 skrll Exp $	*/
+/*	$NetBSD: bootsect.h,v 1.1.4.3 2004/09/21 13:35:01 skrll Exp $	*/
 
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.31.2.3 2004/09/18 14:53:02 skrll Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.31.2.4 2004/09/21 13:35:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.31.2.3 2004/09/18 14:53:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.31.2.4 2004/09/21 13:35:03 skrll Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -971,7 +971,7 @@ sysctl_kern_maxvnodes(SYSCTLFN_ARGS)
 	old_vnodes = desiredvnodes;
 	desiredvnodes = new_vnodes;
 	if (new_vnodes < old_vnodes) {
-		error = vfs_drainvnodes(new_vnodes, l->l_proc);
+		error = vfs_drainvnodes(new_vnodes, l);
 		if (error) {
 			desiredvnodes = old_vnodes;
 			return (error);
@@ -2108,7 +2108,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	auio.uio_resid = sizeof(pss);
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ;
-	auio.uio_procp = NULL;
+	auio.uio_lwp = NULL;
 	error = uvm_io(&p->p_vmspace->vm_map, &auio);
 	if (error)
 		goto done;
@@ -2144,7 +2144,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	auio.uio_resid = sizeof(argv);
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ;
-	auio.uio_procp = NULL;
+	auio.uio_lwp = NULL;
 	error = uvm_io(&p->p_vmspace->vm_map, &auio);
 	if (error)
 		goto done;
@@ -2166,7 +2166,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		auio.uio_resid = xlen;
 		auio.uio_segflg = UIO_SYSSPACE;
 		auio.uio_rw = UIO_READ;
-		auio.uio_procp = NULL;
+		auio.uio_lwp = NULL;
 		error = uvm_io(&p->p_vmspace->vm_map, &auio);
 		if (error)
 			goto done;

@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.5.4.3 2004/09/18 14:55:32 skrll Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.5.4.4 2004/09/21 13:37:48 skrll Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.5.4.3 2004/09/18 14:55:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.5.4.4 2004/09/21 13:37:48 skrll Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__

@@ -1,4 +1,4 @@
-/*	$NetBSD: hdlc.h,v 1.7.46.2 2004/09/18 14:54:40 skrll Exp $	*/
+/*	$NetBSD: hdlc.h,v 1.7.46.3 2004/09/21 13:36:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993

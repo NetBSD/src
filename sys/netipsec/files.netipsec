@@ -1,4 +1,4 @@
-#	$Id: files.netipsec,v 1.5.2.3 2004/09/18 14:55:32 skrll Exp $
+#	$Id: files.netipsec,v 1.5.2.4 2004/09/21 13:37:48 skrll Exp $
 #
 #
 defflag opt_ipsec.h	FAST_IPSEC:	opencrypto

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr.c,v 1.16.2.2 2004/09/18 14:55:52 skrll Exp $	*/
+/*	$NetBSD: tp_subr.c,v 1.16.2.3 2004/09/21 13:38:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_subr.c,v 1.16.2.2 2004/09/18 14:55:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_subr.c,v 1.16.2.3 2004/09/21 13:38:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
