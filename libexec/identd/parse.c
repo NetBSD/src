@@ -1,5 +1,5 @@
 /*
-**	$Id: parse.c,v 1.2 1994/02/04 23:18:01 cgd Exp $
+**	$Id: parse.c,v 1.3 1994/02/04 23:42:25 cgd Exp $
 **
 ** parse.c                         This file contains the protocol parser
 **
@@ -304,6 +304,10 @@ int parse(fp, laddr, faddr)
       continue;
     }
 
+    if (syslog_flag && verbose_flag)
+	syslog(LOG_NOTICE, "request for (%d,%d) from %s",
+	       lport, fport, gethost(faddr));
+
     if (debug_flag && syslog_flag)
       syslog(LOG_DEBUG, "  After fscanf(), before k_getuid()");
     
@@ -367,7 +371,7 @@ int parse(fp, laddr, faddr)
 
     if (noident_flag && check_noident(pwp->pw_dir))
     {
-      if (syslog_flag)
+      if (syslog_flag && verbose_flag)
 	syslog(LOG_NOTICE, "user %s requested HIDDEN-USER for host %s: %d, %d",
 	       pwp->pw_name,
 	       gethost(faddr),
