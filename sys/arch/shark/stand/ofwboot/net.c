@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.1 2002/02/10 01:58:17 thorpej Exp $	*/
+/*	$NetBSD: net.c,v 1.2 2003/03/13 15:36:07 drochner Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -40,7 +40,7 @@
  *
  * At open time, this does:
  *
- * find interface	- netif_open()
+ * find interface	- netif_of_open()
  * BOOTP		- bootp()
  * RPC/mountd		- nfs_mount()
  *
@@ -59,9 +59,11 @@
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
-#include <lib/libsa/netif.h>
 
 #include <lib/libkern/libkern.h>
+
+#include "ofdev.h"
+#include "netif_of.h"
 
 char	rootpath[FNAME_SIZE];
 
@@ -77,13 +79,13 @@ net_open(op)
 	struct of_dev *op;
 {
 	int error = 0;
-	
+
 	/*
 	 * On first open, do netif open, mount, etc.
 	 */
 	if (open_count == 0) {
 		/* Find network interface. */
-		if ((netdev_sock = netif_open(op)) < 0) {
+		if ((netdev_sock = netif_of_open(op)) < 0) {
 			error = errno;
 			goto bad;
 		}
@@ -93,7 +95,7 @@ net_open(op)
 	open_count++;
 bad:
 	if (netdev_sock >= 0 && open_count == 0) {
-		netif_close(netdev_sock);
+		netif_of_close(netdev_sock);
 		netdev_sock = -1;
 	}
 	return error;
@@ -108,7 +110,7 @@ net_close(op)
 	 */
 	if (open_count > 0)
 		if (--open_count == 0) {
-			netif_close(netdev_sock);
+			netif_of_close(netdev_sock);
 			netdev_sock = -1;
 		}
 }
@@ -120,21 +122,21 @@ net_mountroot()
 #ifdef	DEBUG
 	printf("net_mountroot\n");
 #endif
-	
+
 	/*
 	 * Get info for NFS boot: our IP address, out hostname,
 	 * server IP address, and our root path on the server.
 	 * We use BOOTP (RFC951, RFC1532) exclusively as mandated
 	 * by PowerPC Reference Platform Specification I.4.2
 	 */
-	
+
 	bootp(netdev_sock);
-	
+
 	if (myip.s_addr == 0)
 		return ETIMEDOUT;
-	
+
 	printf("Using IP address: %s\n", inet_ntoa(myip));
-	
+
 #ifdef	DEBUG
 	printf("myip: %s (%s)", hostname, inet_ntoa(myip));
 	if (gateip.s_addr)
@@ -144,7 +146,7 @@ net_mountroot()
 	printf("\n");
 #endif
 	printf("root addr=%s path=%s\n", inet_ntoa(rootip), rootpath);
-	
+
 	/*
 	 * Get the NFS file handle (mount).
 	 */
