@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.84 1997/06/12 21:02:43 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.85 1997/07/06 12:22:39 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -595,6 +595,16 @@ getptesw4m(pm, va)		/* Assumes L3 mapping! */
 	return (sm->sg_pte[VA_SUN4M_VPG(va)]); 	/* return pte */
 }
 
+__inline void
+setpgt4m(ptep, pte)
+	int *ptep;
+	int pte;
+{
+	*ptep = pte;
+	if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0)
+		cpuinfo.pcache_flush_line((int)ptep, VA2PA((caddr_t)ptep));
+}
+
 /*
  * Set the page table entry for va to pte. Only affects software MMU page-
  * tables (the in-core pagetables read by the MMU). Ignores TLB, and
@@ -622,17 +632,7 @@ setptesw4m(pm, va, pte)
 	if (rm->rg_segmap == NULL || sm == NULL || sm->sg_pte == NULL)
 		panic("setptesw4m: no segmap for va %p", (caddr_t)va);
 #endif
-	sm->sg_pte[VA_SUN4M_VPG(va)] = pte; /* set new pte */
-}
-
-__inline void
-setpgt4m(ptep, pte)
-	int *ptep;
-	int pte;
-{
-	*ptep = pte;
-	if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0)
-		cpuinfo.pcache_flush_line((int)ptep, VA2PA((caddr_t)ptep));
+	setpgt4m(sm->sg_pte + VA_SUN4M_VPG(va), pte);
 }
 
 /* Set the page table entry for va to pte. Flushes cache. */
