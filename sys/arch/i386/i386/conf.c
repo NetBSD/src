@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.133 2000/12/03 13:19:07 ad Exp $	*/
+/*	$NetBSD: conf.c,v 1.134 2000/12/14 23:55:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -301,12 +301,14 @@ cdev_decl(vmegeneric);
 #include "iop.h"
 cdev_decl(iop);
 
+#include <altq/altqconf.h>
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
 	cdev_ctty_init(1,ctty),		/* 1: controlling terminal */
 	cdev_mm_init(1,mm),		/* 2: /dev/{null,mem,kmem,...} */
-	cdev_disk_init(NWD,wd),	/* 3: ST506/ESDI/IDE disk */
+	cdev_disk_init(NWD,wd),		/* 3: ST506/ESDI/IDE disk */
 	cdev_swap_init(1,sw),		/* 4: /dev/drum (swap pseudo-device) */
 	cdev_tty_init(NPTY,pts),	/* 5: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 6: pseudo-tty master */
@@ -396,6 +398,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ses_init(NSES,ses),	/* 74: SCSI SES/SAF-TE */
 	cdev_ugen_init(NUSCANNER,uscanner),/* 75: USB scanner */
 	cdev__oci_init(NIOP,iop),	/* 76: I2O IOP control interface */
+	cdev_altq_init(NALTQ,altq),	/* 77: ALTQ control interface */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -513,7 +516,8 @@ static int chrtoblktbl[] = {
 	/* 73 */	NODEV,
 	/* 74 */	NODEV,
 	/* 75 */	NODEV,
-	/* 76 */	NODEV
+	/* 76 */	NODEV,
+	/* 77 */	NODEV,
 };
 
 /*
