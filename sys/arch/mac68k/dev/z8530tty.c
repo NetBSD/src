@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.9 1996/12/16 16:17:12 scottr Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.10 1996/12/18 05:17:44 scottr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -697,6 +697,8 @@ zsgetbaud(cs, rate, tc, rr4, rr11, rr14, source, sourceflag)
 
 	s = -1;		/* no valid source yet */
 	tol = ZS_TOLERANCE;
+
+	sf = 0; tc0 = 0; rate0 = 0;	/* XXX Kill gcc warning */
 
 	/*
 	 * Step through all the sources and see which one matches
