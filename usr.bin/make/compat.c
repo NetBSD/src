@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.17 1997/03/23 01:25:28 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.18 1997/03/28 22:31:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$NetBSD: compat.c,v 1.17 1997/03/23 01:25:28 christos Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.18 1997/03/28 22:31:22 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -367,8 +367,8 @@ CompatMake (gnp, pgnp)
     GNode *pgn = (GNode *) pgnp;
 
     if (pgn->type & OP_MADE) {
-	gn->path = Dir_FindFile(gn->name, dirSearchPath);
-	return 0;
+	(void) Dir_MTime(gn);
+	gn->made = UPTODATE;
     }
 
     if (gn->made == UNMADE) {
