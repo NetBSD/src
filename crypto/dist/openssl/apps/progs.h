@@ -90,7 +90,9 @@ FUNCTION functions[] = {
 	{FUNC_TYPE_MD,"md5",dgst_main},
 	{FUNC_TYPE_MD,"sha",dgst_main},
 	{FUNC_TYPE_MD,"sha1",dgst_main},
+#ifndef OPENSSL_NO_MDC2
 	{FUNC_TYPE_MD,"mdc2",dgst_main},
+#endif
 	{FUNC_TYPE_MD,"rmd160",dgst_main},
 	{FUNC_TYPE_CIPHER,"aes-128-cbc",enc_main},
 	{FUNC_TYPE_CIPHER,"aes-128-ecb",enc_main},
@@ -102,13 +104,17 @@ FUNCTION functions[] = {
 	{FUNC_TYPE_CIPHER,"des",enc_main},
 	{FUNC_TYPE_CIPHER,"des3",enc_main},
 	{FUNC_TYPE_CIPHER,"desx",enc_main},
+#ifndef OPENSSL_NO_IDEA
 	{FUNC_TYPE_CIPHER,"idea",enc_main},
+#endif
 	{FUNC_TYPE_CIPHER,"rc4",enc_main},
 	{FUNC_TYPE_CIPHER,"rc4-40",enc_main},
 	{FUNC_TYPE_CIPHER,"rc2",enc_main},
 	{FUNC_TYPE_CIPHER,"bf",enc_main},
 	{FUNC_TYPE_CIPHER,"cast",enc_main},
+#ifndef OPENSSL_NO_RC5
 	{FUNC_TYPE_CIPHER,"rc5",enc_main},
+#endif
 	{FUNC_TYPE_CIPHER,"des-ecb",enc_main},
 	{FUNC_TYPE_CIPHER,"des-ede",enc_main},
 	{FUNC_TYPE_CIPHER,"des-ede3",enc_main},
@@ -121,10 +127,12 @@ FUNCTION functions[] = {
 	{FUNC_TYPE_CIPHER,"des-ofb",enc_main},
 	{FUNC_TYPE_CIPHER,"des-ede-ofb",enc_main},
 	{FUNC_TYPE_CIPHER,"des-ede3-ofb",enc_main},
+#ifndef OPENSSL_NO_IDEA
 	{FUNC_TYPE_CIPHER,"idea-cbc",enc_main},
 	{FUNC_TYPE_CIPHER,"idea-ecb",enc_main},
 	{FUNC_TYPE_CIPHER,"idea-cfb",enc_main},
 	{FUNC_TYPE_CIPHER,"idea-ofb",enc_main},
+#endif
 	{FUNC_TYPE_CIPHER,"rc2-cbc",enc_main},
 	{FUNC_TYPE_CIPHER,"rc2-ecb",enc_main},
 	{FUNC_TYPE_CIPHER,"rc2-cfb",enc_main},
@@ -140,9 +148,11 @@ FUNCTION functions[] = {
 	{FUNC_TYPE_CIPHER,"cast5-cfb",enc_main},
 	{FUNC_TYPE_CIPHER,"cast5-ofb",enc_main},
 	{FUNC_TYPE_CIPHER,"cast-cbc",enc_main},
+#ifndef OPENSSL_NO_RC5
 	{FUNC_TYPE_CIPHER,"rc5-cbc",enc_main},
 	{FUNC_TYPE_CIPHER,"rc5-ecb",enc_main},
 	{FUNC_TYPE_CIPHER,"rc5-cfb",enc_main},
 	{FUNC_TYPE_CIPHER,"rc5-ofb",enc_main},
+#endif
 	{0,NULL,NULL}
 	};
