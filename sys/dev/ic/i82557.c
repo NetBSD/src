@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.45 2001/05/16 04:20:55 lukem Exp $	*/
+/*	$NetBSD: i82557.c,v 1.46 2001/05/21 20:59:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -165,41 +165,39 @@ u_int8_t fxp_cb_config_template[] = {
 	0x5	/* 21 */
 };
 
-void	fxp_mii_initmedia __P((struct fxp_softc *));
-int	fxp_mii_mediachange __P((struct ifnet *));
-void	fxp_mii_mediastatus __P((struct ifnet *, struct ifmediareq *));
+void	fxp_mii_initmedia(struct fxp_softc *);
+int	fxp_mii_mediachange(struct ifnet *);
+void	fxp_mii_mediastatus(struct ifnet *, struct ifmediareq *);
 
-void	fxp_80c24_initmedia __P((struct fxp_softc *));
-int	fxp_80c24_mediachange __P((struct ifnet *));
-void	fxp_80c24_mediastatus __P((struct ifnet *, struct ifmediareq *));
+void	fxp_80c24_initmedia(struct fxp_softc *);
+int	fxp_80c24_mediachange(struct ifnet *);
+void	fxp_80c24_mediastatus(struct ifnet *, struct ifmediareq *);
 
-inline void fxp_scb_wait __P((struct fxp_softc *));
+void	fxp_start(struct ifnet *);
+int	fxp_ioctl(struct ifnet *, u_long, caddr_t);
+void	fxp_watchdog(struct ifnet *);
+int	fxp_init(struct ifnet *);
+void	fxp_stop(struct ifnet *, int);
 
-void	fxp_start __P((struct ifnet *));
-int	fxp_ioctl __P((struct ifnet *, u_long, caddr_t));
-void	fxp_watchdog __P((struct ifnet *));
-int	fxp_init __P((struct ifnet *));
-void	fxp_stop __P((struct ifnet *, int));
+void	fxp_rxdrain(struct fxp_softc *);
+int	fxp_add_rfabuf(struct fxp_softc *, bus_dmamap_t, int);
+int	fxp_mdi_read(struct device *, int, int);
+void	fxp_statchg(struct device *);
+void	fxp_mdi_write(struct device *, int, int, int);
+void	fxp_autosize_eeprom(struct fxp_softc*);
+void	fxp_read_eeprom(struct fxp_softc *, u_int16_t *, int, int);
+void	fxp_get_info(struct fxp_softc *, u_int8_t *);
+void	fxp_tick(void *);
+void	fxp_mc_setup(struct fxp_softc *);
 
-void	fxp_rxdrain __P((struct fxp_softc *));
-int	fxp_add_rfabuf __P((struct fxp_softc *, bus_dmamap_t, int));
-int	fxp_mdi_read __P((struct device *, int, int));
-void	fxp_statchg __P((struct device *));
-void	fxp_mdi_write __P((struct device *, int, int, int));
-void	fxp_autosize_eeprom __P((struct fxp_softc*));
-void	fxp_read_eeprom __P((struct fxp_softc *, u_int16_t *, int, int));
-void	fxp_get_info __P((struct fxp_softc *, u_int8_t *));
-void	fxp_tick __P((void *));
-void	fxp_mc_setup __P((struct fxp_softc *));
-
-void	fxp_shutdown __P((void *));
-void	fxp_power __P((int, void *));
+void	fxp_shutdown(void *);
+void	fxp_power(int, void *);
 
 int	fxp_copy_small = 0;
 
 struct fxp_phytype {
 	int	fp_phy;		/* type of PHY, -1 for MII at the end. */
-	void	(*fp_init) __P((struct fxp_softc *));
+	void	(*fp_init)(struct fxp_softc *);
 } fxp_phytype_table[] = {
 	{ FXP_PHY_80C24,		fxp_80c24_initmedia },
 	{ -1,				fxp_mii_initmedia },
@@ -216,9 +214,8 @@ static int tx_threshold = 64;
  * Wait for the previous command to be accepted (but not necessarily
  * completed).
  */
-inline void
-fxp_scb_wait(sc)
-	struct fxp_softc *sc;
+static __inline void
+fxp_scb_wait(struct fxp_softc *sc)
 {
 	int i = 10000;
 
@@ -232,8 +229,7 @@ fxp_scb_wait(sc)
  * Finish attaching an i82557 interface.  Called by bus-specific front-end.
  */
 void
-fxp_attach(sc)
-	struct fxp_softc *sc;
+fxp_attach(struct fxp_softc *sc)
 {
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 	struct ifnet *ifp;
@@ -401,8 +397,7 @@ fxp_attach(sc)
 }
 
 void
-fxp_mii_initmedia(sc)
-	struct fxp_softc *sc;
+fxp_mii_initmedia(struct fxp_softc *sc)
 {
 
 	sc->sc_flags |= FXPF_MII;
@@ -426,8 +421,7 @@ fxp_mii_initmedia(sc)
 }
 
 void
-fxp_80c24_initmedia(sc)
-	struct fxp_softc *sc;
+fxp_80c24_initmedia(struct fxp_softc *sc)
 {
 
 	/*
@@ -450,8 +444,7 @@ fxp_80c24_initmedia(sc)
  * kernel memory doesn't get clobbered during warmboot.
  */
 void
-fxp_shutdown(arg)
-	void *arg;
+fxp_shutdown(void *arg)
 {
 	struct fxp_softc *sc = arg;
 
@@ -468,9 +461,7 @@ fxp_shutdown(arg)
  * clobber kernel memory at the wrong time.
  */
 void
-fxp_power(why, arg)
-	int why;
-	void *arg;
+fxp_power(int why, void *arg)
 {
 	struct fxp_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -498,9 +489,7 @@ fxp_power(why, arg)
  * Initialize the interface media.
  */
 void
-fxp_get_info(sc, enaddr)
-	struct fxp_softc *sc;
-	u_int8_t *enaddr;
+fxp_get_info(struct fxp_softc *sc, u_int8_t *enaddr)
 {
 	u_int16_t data, myea[ETHER_ADDR_LEN / 2];
 
@@ -570,8 +559,7 @@ fxp_get_info(sc, enaddr)
  */
 
 void
-fxp_autosize_eeprom(sc)
-	struct fxp_softc *sc;
+fxp_autosize_eeprom(struct fxp_softc *sc)
 {
 	u_int16_t reg;
 	int x;
@@ -627,11 +615,7 @@ fxp_autosize_eeprom(sc)
  * every 16 bits of data.
  */
 void
-fxp_read_eeprom(sc, data, offset, words)
-	struct fxp_softc *sc;
-	u_int16_t *data;
-	int offset;
-	int words;
+fxp_read_eeprom(struct fxp_softc *sc, u_int16_t *data, int offset, int words)
 {
 	u_int16_t reg;
 	int i, x;
@@ -694,8 +678,7 @@ fxp_read_eeprom(sc, data, offset, words)
  * Start packet transmission on the interface.
  */
 void
-fxp_start(ifp)
-	struct ifnet *ifp;
+fxp_start(struct ifnet *ifp)
 {
 	struct fxp_softc *sc = ifp->if_softc;
 	struct mbuf *m0, *m;
@@ -878,8 +861,7 @@ fxp_start(ifp)
  * Process interface interrupts.
  */
 int
-fxp_intr(arg)
-	void *arg;
+fxp_intr(void *arg)
 {
 	struct fxp_softc *sc = arg;
 	struct ethercom *ec = &sc->sc_ethercom;
@@ -1098,8 +1080,7 @@ fxp_intr(arg)
  * them again next time.
  */
 void
-fxp_tick(arg)
-	void *arg;
+fxp_tick(void *arg)
 {
 	struct fxp_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -1198,8 +1179,7 @@ fxp_tick(arg)
  * Drain the receive queue.
  */
 void
-fxp_rxdrain(sc)
-	struct fxp_softc *sc;
+fxp_rxdrain(struct fxp_softc *sc)
 {
 	bus_dmamap_t rxmap;
 	struct mbuf *m;
@@ -1220,9 +1200,7 @@ fxp_rxdrain(sc)
  * the interface.
  */
 void
-fxp_stop(ifp, disable)
-	struct ifnet *ifp;
-	int disable;
+fxp_stop(struct ifnet *ifp, int disable)
 {
 	struct fxp_softc *sc = ifp->if_softc;
 	struct fxp_txsoft *txs;
@@ -1277,8 +1255,7 @@ fxp_stop(ifp, disable)
  * card has wedged for some reason.
  */
 void
-fxp_watchdog(ifp)
-	struct ifnet *ifp;
+fxp_watchdog(struct ifnet *ifp)
 {
 	struct fxp_softc *sc = ifp->if_softc;
 
@@ -1292,8 +1269,7 @@ fxp_watchdog(ifp)
  * Initialize the interface.  Must be called at splnet().
  */
 int
-fxp_init(ifp)
-	struct ifnet *ifp;
+fxp_init(struct ifnet *ifp)
 {
 	struct fxp_softc *sc = ifp->if_softc;
 	struct fxp_cb_config *cbp;
@@ -1551,8 +1527,7 @@ fxp_init(ifp)
  * Change media according to request.
  */
 int
-fxp_mii_mediachange(ifp)
-	struct ifnet *ifp;
+fxp_mii_mediachange(struct ifnet *ifp)
 {
 	struct fxp_softc *sc = ifp->if_softc;
 
@@ -1565,9 +1540,7 @@ fxp_mii_mediachange(ifp)
  * Notify the world which media we're using.
  */
 void
-fxp_mii_mediastatus(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
+fxp_mii_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct fxp_softc *sc = ifp->if_softc;
 
@@ -1583,8 +1556,7 @@ fxp_mii_mediastatus(ifp, ifmr)
 }
 
 int
-fxp_80c24_mediachange(ifp)
-	struct ifnet *ifp;
+fxp_80c24_mediachange(struct ifnet *ifp)
 {
 
 	/* Nothing to do here. */
@@ -1592,9 +1564,7 @@ fxp_80c24_mediachange(ifp)
 }
 
 void
-fxp_80c24_mediastatus(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
+fxp_80c24_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct fxp_softc *sc = ifp->if_softc;
 
@@ -1614,10 +1584,7 @@ fxp_80c24_mediastatus(ifp, ifmr)
  * data pointer is fixed up to point just past it.
  */
 int
-fxp_add_rfabuf(sc, rxmap, unload)
-	struct fxp_softc *sc;
-	bus_dmamap_t rxmap;
-	int unload;
+fxp_add_rfabuf(struct fxp_softc *sc, bus_dmamap_t rxmap, int unload)
 {
 	struct mbuf *m;
 	int error;
@@ -1651,10 +1618,7 @@ fxp_add_rfabuf(sc, rxmap, unload)
 }
 
 int
-fxp_mdi_read(self, phy, reg)
-	struct device *self;
-	int phy;
-	int reg;
+fxp_mdi_read(struct device *self, int phy, int reg)
 {
 	struct fxp_softc *sc = (struct fxp_softc *)self;
 	int count = 10000;
@@ -1674,19 +1638,14 @@ fxp_mdi_read(self, phy, reg)
 }
 
 void
-fxp_statchg(self)
-	struct device *self;
+fxp_statchg(struct device *self)
 {
 
 	/* Nothing to do. */
 }
 
 void
-fxp_mdi_write(self, phy, reg, value)
-	struct device *self;
-	int phy;
-	int reg;
-	int value;
+fxp_mdi_write(struct device *self, int phy, int reg, int value)
 {
 	struct fxp_softc *sc = (struct fxp_softc *)self;
 	int count = 10000;
@@ -1704,10 +1663,7 @@ fxp_mdi_write(self, phy, reg, value)
 }
 
 int
-fxp_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+fxp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct fxp_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -1754,8 +1710,7 @@ fxp_ioctl(ifp, cmd, data)
  * This function must be called at splnet().
  */
 void
-fxp_mc_setup(sc)
-	struct fxp_softc *sc;
+fxp_mc_setup(struct fxp_softc *sc)
 {
 	struct fxp_cb_mcs *mcsp = &sc->sc_control_data->fcd_mcscb;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -1847,8 +1802,7 @@ fxp_mc_setup(sc)
 }
 
 int
-fxp_enable(sc)
-	struct fxp_softc *sc;
+fxp_enable(struct fxp_softc *sc)
 {
 
 	if (sc->sc_enabled == 0 && sc->sc_enable != NULL) {
@@ -1864,8 +1818,7 @@ fxp_enable(sc)
 }
 
 void
-fxp_disable(sc)
-	struct fxp_softc *sc;
+fxp_disable(struct fxp_softc *sc)
 {
 
 	if (sc->sc_enabled != 0 && sc->sc_disable != NULL) {
@@ -1880,9 +1833,7 @@ fxp_disable(sc)
  *	Handle device activation/deactivation requests.
  */
 int
-fxp_activate(self, act)
-	struct device *self;
-	enum devact act;
+fxp_activate(struct device *self, enum devact act)
 {
 	struct fxp_softc *sc = (void *) self;
 	int s, error = 0;
@@ -1911,8 +1862,7 @@ fxp_activate(self, act)
  *	Detach an i82557 interface.
  */
 int
-fxp_detach(sc)
-	struct fxp_softc *sc;
+fxp_detach(struct fxp_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int i;

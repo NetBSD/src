@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.16 2000/05/29 17:37:13 jhawk Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.17 2001/05/21 20:59:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -208,8 +208,8 @@ struct fxp_softc {
 	int phy_10Mbps_only;		/* PHY is 10Mbps-only device */
 
 	int	sc_enabled;	/* boolean; power enabled on interface */
-	int	(*sc_enable) __P((struct fxp_softc *));
-	void	(*sc_disable) __P((struct fxp_softc *));
+	int	(*sc_enable)(struct fxp_softc *);
+	void	(*sc_disable)(struct fxp_softc *);
 
 	int	sc_eeprom_size;		/* log2 size of EEPROM */
 #if NRND > 0
@@ -327,10 +327,10 @@ do {									\
 #define	CSR_WRITE_4(sc, reg, val)					\
 	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (reg), (val))
 
-void	fxp_attach __P((struct fxp_softc *));
-int	fxp_activate __P((struct device *, enum devact));
-int	fxp_detach __P((struct fxp_softc *));
-int	fxp_intr __P((void *));
+void	fxp_attach(struct fxp_softc *);
+int	fxp_activate(struct device *, enum devact);
+int	fxp_detach(struct fxp_softc *);
+int	fxp_intr(void *);
 
-int	fxp_enable __P((struct fxp_softc*));
-void	fxp_disable __P((struct fxp_softc*));
+int	fxp_enable(struct fxp_softc*);
+void	fxp_disable(struct fxp_softc*);
