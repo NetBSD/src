@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.333 2004/07/14 09:37:37 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.334 2004/07/14 11:40:06 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5433,4 +5433,28 @@ usr.bin/netstat/main.c				1.45-1.46
 	Don't show fast-ipsec protocol state when, e.g., listing PCBs with
 	"netstat -A".
 	[jonathan, ticket #647]
+
+sys/kern/uipc_mbuf.c				1.83
+sys/kern/uipc_socket2.c				1.65
+sys/net/if_ethersubr.c				1.116
+sys/netatalk/ddp_input.c			1.9
+sys/nfs/nfs_socket.c				1.108
+sys/sys/mbuf.h					1.94
+
+	Rename MBUFTRACE helper function m_claim() to m_claimm(),
+	for consistency with M_FREE() and m_freem().
+	[jonathan, ticket #648]
+
+crypto/dist/heimdal/lib/krb5/krb5_set_password.3	1.1-1.2 (new)
+distrib/sets/lists/comp/mi				1.715-1.716
+lib/libkrb5/Makefile					1.29
+
+	Add documentation for krb5_set_password().
+	[jonathan, ticket #649]
+
+sbin/savecore/savecore.c			1.64
+
+	Fix an integer overflow that prevented saving cores from machines with
+	more than 2GB of RAM.
+	[tls, ticket #650]
 
