@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.28 1996/03/31 21:30:05 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.29 1996/05/28 23:34:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -48,7 +48,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	5.25 (Berkeley) 4/1/91";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.28 1996/03/31 21:30:05 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.29 1996/05/28 23:34:41 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -86,6 +86,7 @@ static char rcsid[] = "$NetBSD: main.c,v 1.28 1996/03/31 21:30:05 christos Exp $
 #include <sys/signal.h>
 #include <sys/stat.h>
 #include <sys/utsname.h>
+#include <sys/wait.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -817,6 +818,142 @@ found:		Var_Set("MAKEFILE", fname, VAR_GLOBAL);
 		(void)fclose(stream);
 	}
 	return(TRUE);
+}
+
+/*-
+ * Cmd_Exec --
+ *	Execute the command in cmd, and return the output of that command
+ *	in a string.
+ *
+ * Results:
+ *	A string containing the output of the command, or the empty string
+ *	If err is not NULL, it contains the reason for the command failure
+ *
+ * Side Effects:
+ *	The string must be freed by the caller.
+ */
+char *
+Cmd_Exec(cmd, err)
+    char *cmd;
+    char **err;
+{
+    char	*args[4];   	/* Args for invoking the shell */
+    int 	fds[2];	    	/* Pipe streams */
+    int 	cpid;	    	/* Child PID */
+    int 	pid;	    	/* PID from wait() */
+    char	*res;		/* result */
+    int		status;		/* command exit status */
+    Buffer	buf;		/* buffer to store the result */
+    char	*cp;
+    int		cc;
+
+
+    *err = NULL;
+
+    /*
+     * Set up arguments for shell
+     */
+    args[0] = "sh";
+    args[1] = "-c";
+    args[2] = cmd;
+    args[3] = NULL;
+
+    /*
+     * Open a pipe for fetching its output
+     */
+    if (pipe(fds) == -1) {
+	*err = "Couldn't create pipe for \"%s\"";
+	goto bad;
+    }
+
+    /*
+     * Fork
+     */
+    switch (cpid = vfork()) {
+    case 0:
+	/*
+	 * Close input side of pipe
+	 */
+	(void) close(fds[0]);
+
+	/*
+	 * Duplicate the output stream to the shell's output, then
+	 * shut the extra thing down. Note we don't fetch the error
+	 * stream...why not? Why?
+	 */
+	(void) dup2(fds[1], 1);
+	(void) close(fds[1]);
+	
+	(void) execv("/bin/sh", args);
+	_exit(1);
+	/*NOTREACHED*/
+
+    case -1:
+	*err = "Couldn't exec \"%s\"";
+	goto bad;
+
+    default:
+	/*
+	 * No need for the writing half
+	 */
+	(void) close(fds[1]);
+	
+	buf = Buf_Init (MAKE_BSIZE);
+
+	do {
+	    char   result[BUFSIZ];
+	    cc = read(fds[0], result, sizeof(result));
+	    if (cc > 0) 
+		Buf_AddBytes(buf, cc, (Byte *) result);
+	}
+	while (cc > 0 || (cc == -1 && errno == EINTR));
+
+	/*
+	 * Close the input side of the pipe.
+	 */
+	(void) close(fds[0]);
+
+	/*
+	 * Wait for the process to exit.
+	 */
+	while(((pid = wait(&status)) != cpid) && (pid >= 0))
+	    continue;
+
+	res = (char *)Buf_GetAll (buf, &cc);
+	Buf_Destroy (buf, FALSE);
+
+	if (cc == 0) 
+	    *err = "Couldn't read shell's output for \"%s\"";
+
+	if (status)
+	    *err = "\"%s\" returned non-zero status";
+
+	/*
+	 * Null-terminate the result, convert newlines to spaces and
+	 * install it in the variable.
+	 */
+	res[cc] = '\0';
+	cp = &res[cc] - 1;
+
+	if (*cp == '\n') {
+	    /*
+	     * A final newline is just stripped
+	     */
+	    *cp-- = '\0';
+	}
+	while (cp >= res) {
+	    if (*cp == '\n') {
+		*cp = ' ';
+	    }
+	    cp--;
+	}
+	break;
+    }
+    return res;
+bad:
+    res = emalloc(1);
+    *res = '\0';
+    return res;
 }
 
 /*-

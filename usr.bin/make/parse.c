@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.22 1996/03/15 21:52:41 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.23 1996/05/28 23:34:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	5.18 (Berkeley) 2/19/91";
 #else
-static char rcsid[] = "$NetBSD: parse.c,v 1.22 1996/03/15 21:52:41 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.23 1996/05/28 23:34:46 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,6 @@ static char rcsid[] = "$NetBSD: parse.c,v 1.22 1996/03/15 21:52:41 christos Exp 
 #include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
-#include <sys/wait.h>
 #include "make.h"
 #include "hash.h"
 #include "dir.h"
@@ -1276,21 +1275,30 @@ Parse_IsVar (line)
 	    if (wasSpace && haveName) {
 		    if (ISEQOPERATOR(*line)) {
 			/*
+			 * We must have a finished word
+			 */
+			if (level != 0)
+			    return FALSE;
+
+			/*
 			 * When an = operator [+?!:] is found, the next
-			 * character * must be an = or it ain't a valid
+			 * character must be an = or it ain't a valid
 			 * assignment.
 			 */
-			if (line[1] != '=' && level == 0)
-			    return FALSE;
-			else
+			if (line[1] == '=')
 			    return haveName;
-		    }
-		    else {
+#ifdef SUNSHCMD
 			/*
-			 * This is the start of another word, so not assignment.
+			 * This is a shell command
 			 */
-			return FALSE;
+			if (strncmp(line, ":sh", 3) == 0)
+			    return haveName;
+#endif
 		    }
+		    /*
+		     * This is the start of another word, so not assignment.
+		     */
+		    return FALSE;
 	    }
 	    else {
 		haveName = TRUE; 
@@ -1393,6 +1401,17 @@ Parse_DoVar (line, ctxt)
 	    break;
 
 	default:
+#ifdef SUNSHCMD
+	    while (*opc != ':')
+		if (--opc < line)
+		    break;
+
+	    if (strncmp(opc, ":sh", 3) == 0) {
+		type = VAR_SHELL;
+		*opc = '\0';
+		break;
+	    }
+#endif
 	    type = VAR_NORMAL;
 	    break;
     }
@@ -1424,155 +1443,37 @@ Parse_DoVar (line, ctxt)
 	Var_Set(line, cp, ctxt);
 	free(cp);
     } else if (type == VAR_SHELL) {
-	char	*args[4];   	/* Args for invoking the shell */
-	int 	fds[2];	    	/* Pipe streams */
-	int 	cpid;	    	/* Child PID */
-	int 	pid;	    	/* PID from wait() */
-	Boolean	freeCmd;    	/* TRUE if the command needs to be freed, i.e.
-				 * if any variable expansion was performed */
+	Boolean	freeCmd = FALSE; /* TRUE if the command needs to be freed, i.e.
+				  * if any variable expansion was performed */
+	char *res, *err;
 
-	/* 
-	 * Avoid clobbered variable warnings by forcing the compiler
-	 * to ``unregister'' variables
-	 */
-#if __GNUC__
-	(void) &freeCmd;
-#endif
-
-	/*
-	 * Set up arguments for shell
-	 */
-	args[0] = "sh";
-	args[1] = "-c";
-	if (strchr(cp, '$') != (char *)NULL) {
+	if (strchr(cp, '$') != NULL) {
 	    /*
 	     * There's a dollar sign in the command, so perform variable
 	     * expansion on the whole thing. The resulting string will need
 	     * freeing when we're done, so set freeCmd to TRUE.
 	     */
-	    args[2] = Var_Subst(NULL, cp, VAR_CMD, TRUE);
+	    cp = Var_Subst(NULL, cp, VAR_CMD, TRUE);
 	    freeCmd = TRUE;
-	} else {
-	    args[2] = cp;
-	    freeCmd = FALSE;
 	}
-	args[3] = (char *)NULL;
 
-	/*
-	 * Open a pipe for fetching its output
-	 */
-	pipe(fds);
+	res = Cmd_Exec(cp, &err);
+	Var_Set(line, res, ctxt);
+	free(res);
 
-	/*
-	 * Fork
-	 */
-	cpid = vfork();
-	if (cpid == 0) {
-	    /*
-	     * Close input side of pipe
-	     */
-	    close(fds[0]);
+	if (err)
+	    Parse_Error(PARSE_WARNING, err, cp);
 
-	    /*
-	     * Duplicate the output stream to the shell's output, then
-	     * shut the extra thing down. Note we don't fetch the error
-	     * stream...why not? Why?
-	     */
-	    dup2(fds[1], 1);
-	    close(fds[1]);
-	    
-	    execv("/bin/sh", args);
-	    _exit(1);
-	} else if (cpid < 0) {
-	    /*
-	     * Couldn't fork -- tell the user and make the variable null
-	     */
-	    Parse_Error(PARSE_WARNING, "Couldn't exec \"%s\"", cp);
-	    Var_Set(line, "", ctxt);
-	} else {
-	    int	status;
-	    int cc;
-	    Buffer buf;
-	    char *res;
-
-	    /*
-	     * No need for the writing half
-	     */
-	    close(fds[1]);
-	    
-	    buf = Buf_Init (MAKE_BSIZE);
-
-	    do {
-		char   result[BUFSIZ];
-		cc = read(fds[0], result, sizeof(result));
-		if (cc > 0) 
-		    Buf_AddBytes(buf, cc, (Byte *) result);
-	    }
-	    while (cc > 0 || (cc == -1 && errno == EINTR));
-
-	    /*
-	     * Close the input side of the pipe.
-	     */
-	    close(fds[0]);
-
-	    /*
-	     * Wait for the process to exit.
-	     */
-	    while(((pid = wait(&status)) != cpid) && (pid >= 0))
-		continue;
-
-	    res = (char *)Buf_GetAll (buf, &cc);
-	    Buf_Destroy (buf, FALSE);
-
-	    if (cc == 0) {
-		/*
-		 * Couldn't read the child's output -- tell the user and
-		 * set the variable to null
-		 */
-		Parse_Error(PARSE_WARNING, "Couldn't read shell's output");
-	    }
-
-	    if (status) {
-		/*
-		 * Child returned an error -- tell the user but still use
-		 * the result.
-		 */
-		Parse_Error(PARSE_WARNING, "\"%s\" returned non-zero", cp);
-	    }
-
-	    /*
-	     * Null-terminate the result, convert newlines to spaces and
-	     * install it in the variable.
-	     */
-	    res[cc] = '\0';
-	    cp = &res[cc] - 1;
-
-	    if (*cp == '\n') {
-		/*
-		 * A final newline is just stripped
-		 */
-		*cp-- = '\0';
-	    }
-	    while (cp >= res) {
-		if (*cp == '\n') {
-		    *cp = ' ';
-		}
-		cp--;
-	    }
-	    Var_Set(line, res, ctxt);
-	    free(res);
-
-	}
-	if (freeCmd) {
-	    free(args[2]);
-	}
+	if (freeCmd)
+	    free(cp);
     } else {
 	/*
 	 * Normal assignment -- just do it.
 	 */
-	Var_Set (line, cp, ctxt);
+	Var_Set(line, cp, ctxt);
     }
 }
+
 
 /*-
  * ParseAddCmd  --
