@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.173 2002/04/04 01:44:30 thorpej Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.173.2.1 2002/05/16 04:13:51 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.173 2002/04/04 01:44:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.173.2.1 2002/05/16 04:13:51 gehenna Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -331,11 +331,11 @@ vfs_getnewfsid(mp)
 
 	simple_lock(&mntid_slock);
 	mtype = makefstype(mp->mnt_op->vfs_name);
-	mp->mnt_stat.f_fsid.val[0] = makedev(nblkdev + mtype, 0);
+	mp->mnt_stat.f_fsid.val[0] = makedev(mtype, 0);
 	mp->mnt_stat.f_fsid.val[1] = mtype;
 	if (xxxfs_mntid == 0)
 		++xxxfs_mntid;
-	tfsid.val[0] = makedev((nblkdev + mtype) & 0xff, xxxfs_mntid);
+	tfsid.val[0] = makedev(mtype & 0xff, xxxfs_mntid);
 	tfsid.val[1] = mtype;
 	if (mountlist.cqh_first != (void *)&mountlist) {
 		while (vfs_getvfs(&tfsid)) {
