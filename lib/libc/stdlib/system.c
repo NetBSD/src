@@ -43,6 +43,8 @@ static char sccsid[] = "@(#)system.c	5.10 (Berkeley) 2/23/91";
 #include <unistd.h>
 #include <paths.h>
 
+extern char **environ;
+
 system(command)
 	const char *command;
 {
@@ -50,6 +52,7 @@ system(command)
 	pid_t pid;
 	int omask;
 	sig_t intsave, quitsave;
+	char **argp = {"sh", "-c", command, NULL};
 
 	if (!command)		/* just checking... */
 		return(1);
@@ -63,7 +66,7 @@ system(command)
 		return(pstat.w_status);
 	case 0:				/* child */
 		(void)sigsetmask(omask);
-		execl(_PATH_BSHELL, "sh", "-c", command, (char *)NULL);
+		execve(_PATH_BSHELL, argp, environ);
 		_exit(127);
 	}
 	intsave = signal(SIGINT, SIG_IGN);
