@@ -1,4 +1,4 @@
-/* $NetBSD: dec_6600.c,v 1.4 2000/05/22 20:13:32 thorpej Exp $ */
+/* $NetBSD: dec_6600.c,v 1.5 2000/06/06 20:26:19 matt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.4 2000/05/22 20:13:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.5 2000/06/06 20:26:19 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,11 @@ dec_6600_device_register(dev, aux)
 		if (parent->dv_parent != scsipidev)
 			return;
 
-		if (b->unit / 100 != sa->sa_sc_link->scsipi_scsi.target)
+		if (sa->sa_sc_link->type == BUS_SCSI
+		    && b->unit / 100 != sa->sa_sc_link->scsipi_scsi.target)
+			return;
+		if (sa->sa_sc_link->type == BUS_ATAPI
+		    && b->unit / 100 != sa->sa_sc_link->scsipi_atapi.drive)
 			return;
 
 		/* XXX LUN! */
