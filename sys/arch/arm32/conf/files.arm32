@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.58 1998/08/20 06:28:18 thorpej Exp $
+#	$NetBSD: files.arm32,v 1.59 1998/08/22 22:50:53 augustss Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -86,10 +86,14 @@ file	arch/arm32/isa/joy.c			joy needs-flag
 device	sb: audio, isadma, sbdsp, mulaw, auconv
 file	dev/isa/sb.c				sb needs-flag
 
+define ess { }
 # XXX should pull in files.isa
 # ESS Technology ES1887/ES888
-device	ess: audio, isadma, mulaw, auconv
+device	ess: ess, audio, isadma, mulaw, auconv, midibus
 file	dev/isa/ess.c			ess needs-flag
+
+attach	opl at ess with opl_ess
+file	dev/isa/opl_ess.c		opl_ess
 
 # XXX should pull in files.isa
 # AD1848 (CS4248, CS4231, AD1845) audio codec support; used by other drivers
