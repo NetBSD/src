@@ -63,7 +63,7 @@
 
 extern        char *vmmap;		/* poor name! */
 
-extern	int have_rtc;			/* For /dev/rtc. */
+int have_rtc = 1;			/* For access to rtc. */
 #define ROM_ORIGIN	0xFFF00000	/* Mapped origin! */
 
 /* Do the actual reading and writing of the rtc.  We have to read
@@ -186,6 +186,7 @@ mmrw(dev, uio, flags)
 			c = iov->iov_len;
 			break;
 
+#ifdef DEV_RTC
 /* minor device 3 is the realtime clock. */
 		case 3:
 			if (!have_rtc)
@@ -207,6 +208,7 @@ mmrw(dev, uio, flags)
 			rw_rtc ( buffer, 1 );   /* Write the rtc. */
 
 			return (error);
+#endif
 
 /* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
 		case 12:

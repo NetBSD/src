@@ -35,7 +35,7 @@
  *
  *	@(#)clock.c	7.2 (Berkeley) 5/12/91
  *
- *	$Id: clock.c,v 1.1.1.1 1993/09/09 23:53:47 phil Exp $
+ *	$Id: clock.c,v 1.2 1993/12/03 00:18:49 phil Exp $
  */
 
 /*
@@ -113,14 +113,15 @@ int m,leap;
 }
 
 /*
- *
+ *  Access to the real time clock.
  * 
  */
+
+extern int have_rtc;
 
 inittodr(base)
 	time_t base;
 {
-  extern int have_rtc;
   unsigned char buffer[8];
   unsigned int sec;
   int leap;
@@ -130,6 +131,13 @@ inittodr(base)
   /* Read rtc and convert to seconds since Jan 1, 1970. */
 
   rw_rtc ( buffer, 0);  /* Read the rtc. */
+
+  /* Check to see if it was really the rtc! */
+  if (buffer[0] == 0x6d)  /* The first byte of the rom. */
+    {
+      have_rtc = 0;
+      return;
+    }
 
   leap = (bcd(buffer[7]) % 4) == 0;
   sec = ytos(bcd(buffer[7]))		/* year */
@@ -152,6 +160,7 @@ inittodr(base)
  */
 resettodr()
 {
+  printf ("resettodr\n");
 }
 
 /*
