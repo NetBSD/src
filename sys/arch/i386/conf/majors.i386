@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.1.2.4 2002/07/14 17:47:55 gehenna Exp $
+#	$NetBSD: majors.i386,v 1.1.2.5 2002/07/16 08:29:23 gehenna Exp $
 #
 # Device majors for i386
 #
@@ -89,3 +89,4 @@ device-major	radio		char 87			radio
 device-major	netsmb		char 88			netsmb
 device-major	clockctl	char 89			clockctl
 device-major	systrace	char 90			systrace
+device-major	kttcp		char 91			kttcp
