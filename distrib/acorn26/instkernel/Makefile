@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2002/05/02 23:04:31 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.7 2002/05/03 16:47:35 bjh21 Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -16,7 +16,7 @@ MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	le
 MAKEDEVTARGETS=	ramdisk
 IMAGEDEPENDS=	${CRUNCHBIN} \
-		disktab.preinstall dot.hdprofile dot.profile termcap.vt100 \
+		disktab.preinstall dot.hdprofile dot.profile termcap.src \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
 		${NETBSDSRCDIR}/etc/netconfig ${NETBSDSRCDIR}/etc/protocols \
 		${NETBSDSRCDIR}/etc/services
