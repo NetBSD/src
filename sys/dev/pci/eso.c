@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.24.4.1 2004/03/15 05:05:26 jmc Exp $	*/
+/*	$NetBSD: eso.c,v 1.24.4.2 2004/03/15 05:06:53 jmc Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Klaus J. Klein
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.24.4.1 2004/03/15 05:05:26 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.24.4.2 2004/03/15 05:06:53 jmc Exp $");
 
 #include "mpu.h"
 
@@ -1541,7 +1541,7 @@ eso_allocm(hdl, direction, size, type, flags)
 	size_t boundary;
 	int error;
 
-	if ((ed = malloc(size, type, flags)) == NULL)
+	if ((ed = malloc(sizeof (*ed), type, flags)) == NULL)
 		return (NULL);
 
 	/*
