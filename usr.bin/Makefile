@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.101 1999/03/26 16:53:29 tron Exp $
+#	$NetBSD: Makefile,v 1.102 1999/06/05 13:21:59 ad Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
 #					# and OBJECT_FMT definition
 
 SUBDIR=	apply apropos asa at audio banner basename bdes biff \
-	bzip2 bzip2recover cal calendar cap_mkdb checknr chflags chpass \
-	cksum cmp col colcrt colrm column comm compress \
+	bzip2 bzip2recover cal calendar cap_mkdb cdplay checknr chflags \
+	chpass cksum cmp col colcrt colrm column comm compress \
 	crontab crunch ctags cut dirname du eject env \
 	error expand false fdformat fgen file find finger fmt fold fpr \
 	from fsplit fstat ftp gencat getconf getopt gprof head hesinfo \
