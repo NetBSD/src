@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.4 2001/07/04 05:44:56 eeh Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.5 2001/07/04 20:18:30 eeh Exp $	*/
 
 /*
  * Copyright (c) 2001	Eduardo E. Horvath
@@ -46,7 +46,7 @@
 #include <machine/psl.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: bcopy.S,v 1.4 2001/07/04 05:44:56 eeh Exp $")
+	RCSID("$NetBSD: bcopy.S,v 1.5 2001/07/04 20:18:30 eeh Exp $")
 #endif  /* LIBC_SCCS and not lint */
 
 #define	EMPTY	nop
@@ -126,7 +126,7 @@ Lbcopy_start:
 	 * Plenty of data to copy, so try to do it optimally.
 	 */
 2:
-#if 0
+#if 1
 	! If it is big enough, use VIS instructions
 	bge	Lbcopy_block
 	 nop
@@ -695,7 +695,7 @@ Lbcopy_complete:
 	ret
 	 restore %i1, %g0, %o0
 
-#if 0
+#if 1
 
 /*
  * Block copy.  Useful for >256 byte copies.
