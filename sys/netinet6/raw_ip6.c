@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.6 1999/07/09 22:57:30 thorpej Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.7 1999/07/19 18:37:19 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -168,8 +168,8 @@ rip6_input(mp, offp, proto)
 		   !IN6_ARE_ADDR_EQUAL(&in6p->in6p_faddr, &ip6->ip6_src))
 			continue;
 		if (in6p->in6p_cksum != -1
-		 && in6_cksum(m, ip6->ip6_nxt, *offp,
-			 sizeof(struct ip6_hdr) + ip6->ip6_plen - *offp)) {
+		 && in6_cksum(m, ip6->ip6_nxt, *offp, m->m_pkthdr.len - *offp))
+		{
 			/* XXX bark something */
 			continue;
 		}
