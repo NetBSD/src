@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.43 1998/01/21 23:29:10 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.44 1998/01/22 00:39:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -164,6 +164,9 @@ int kvtop __P((caddr_t));
 int	math_emulate __P((struct trapframe *));
 #endif
 
+#if !defined(_LKM)
+#include "opt_user_ldt.h"
+#endif
 #ifdef USER_LDT
 /* sys_machdep.h */
 void	i386_user_cleanup __P((struct pcb *));

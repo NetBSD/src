@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.102 1998/01/21 23:29:08 thorpej Exp $
+#	$NetBSD: files.i386,v 1.103 1998/01/22 00:39:16 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
@@ -16,6 +16,9 @@ defopt	VM86
 
 # Floating point emulation
 defopt	MATH_EMULATE
+
+# User-settable LDT (used by WINE)
+defopt	USER_LDT
 
 file	arch/i386/i386/autoconf.c
 file	arch/i386/i386/conf.c
