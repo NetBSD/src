@@ -1,4 +1,5 @@
-.\"	$NetBSD: hardware,v 1.76 2000/09/26 11:55:22 ad Exp $	
+.\"	$NetBSD: hardware,v 1.77 2000/10/04 00:31:49 lukem Exp $	
+.\"
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors. Support
@@ -271,7 +272,7 @@ them by compiling a custom kernel once
 .Nx
 is installed.
 .Pp
-Support for devices marked with "[+]" IS included in the "generic" kernels,
+Support for devices marked with "[+]" IS included in the `GENERIC' kernels,
 although it is not in the kernels which are on the distribution floppies.
 .Pp
 Support for devices marked with "[b]" requires BIOS support for PCI-PCI
@@ -280,7 +281,7 @@ have this support, or can acquire it via a BIOS upgrade.
 .Pp
 Devices marked with [m] are supported also by MCA-enabled kernels, such as
 one compiled from PS2 configuration file. Support for MCA is NOT in
-the "generic" or installation kernels at this moment.
+the `GENERIC' or installation kernels at this moment.
 .Pp
 Hardware the we do NOT currently support, but get many questions
 about:
