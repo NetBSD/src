@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.52 2001/12/21 03:21:51 itojun Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.53 2001/12/21 04:07:25 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.52 2001/12/21 03:21:51 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.53 2001/12/21 04:07:25 itojun Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -164,12 +164,12 @@ struct protosw inetsw[] = {
   tcp_init,	0,		tcp_slowtimo,	tcp_drain,	tcp_sysctl
 },
 { SOCK_RAW,	&inetdomain,	IPPROTO_RAW,	PR_ATOMIC|PR_ADDR,
-  rip_input,	rip_output,	0,		rip_ctloutput,
+  rip_input,	rip_output,	rip_ctlinput,	rip_ctloutput,
   rip_usrreq,
   0,		0,		0,		0,
 },
 { SOCK_RAW,	&inetdomain,	IPPROTO_ICMP,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-  icmp_input,	rip_output,	0,		rip_ctloutput,
+  icmp_input,	rip_output,	rip_ctlinput,	rip_ctloutput,
   rip_usrreq,
   icmp_init,	0,		0,		0,		icmp_sysctl
 },
@@ -193,31 +193,31 @@ struct protosw inetsw[] = {
 },
 #endif /* IPSEC */
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-  encap4_input,	rip_output, 	0,		rip_ctloutput,
+  encap4_input,	rip_output, 	rip_ctlinput,	rip_ctloutput,
   rip_usrreq,	/*XXX*/
   encap_init,	0,		0,		0,
 },
 #ifdef INET6
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-  encap4_input,	rip_output, 	0,		rip_ctloutput,
+  encap4_input,	rip_output, 	rip_ctlinput,	rip_ctloutput,
   rip_usrreq,	/*XXX*/
   0,		0,		0,		0,
 },
 #endif /* INET6 */
 #if NGRE > 0
 { SOCK_RAW,	&inetdomain,	IPPROTO_GRE,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-  gre_input,	rip_output,	0,		rip_ctloutput,
+  gre_input,	rip_output,	rip_ctlinput,	rip_ctloutput,
   rip_usrreq,
   0,		0,		0,		0,
 },
 { SOCK_RAW,	&inetdomain,	IPPROTO_MOBILE,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-  gre_mobile_input,	rip_output,	0,		rip_ctloutput,
+  gre_mobile_input,	rip_output,	rip_ctlinput,	rip_ctloutput,
   rip_usrreq,
   0,		0,		0,		0,
 },
 #endif /* NGRE > 0 */
 { SOCK_RAW,	&inetdomain,	IPPROTO_IGMP,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-  igmp_input,	rip_output,	0,		rip_ctloutput,
+  igmp_input,	rip_output,	rip_ctlinput,	rip_ctloutput,
   rip_usrreq,
   igmp_init,	igmp_fasttimo,	igmp_slowtimo,	0,
 },
@@ -238,7 +238,7 @@ struct protosw inetsw[] = {
 },
 #else
 { SOCK_RAW,	&inetdomain,	IPPROTO_EON,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-  encap4_input,	rip_output,	0,		rip_ctloutput,
+  encap4_input,	rip_output,	rip_ctlinput,	rip_ctloutput,
   rip_usrreq,	/*XXX*/
   0,		0,		0,		0,
 },
@@ -253,7 +253,7 @@ struct protosw inetsw[] = {
 #endif /* NSIP */
 /* raw wildcard */
 { SOCK_RAW,	&inetdomain,	0,		PR_ATOMIC|PR_ADDR,
-  rip_input,	rip_output,	0,		rip_ctloutput,
+  rip_input,	rip_output,	rip_ctlinput,	rip_ctloutput,
   rip_usrreq,
   rip_init,	0,		0,		0,
 },
