@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.102 2001/04/20 17:58:49 thorpej Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.103 2001/04/27 08:00:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -351,7 +351,7 @@ int safepri;
  * call should be restarted if possible, and EINTR is returned if the system
  * call should be interrupted by the signal (return EINTR).
  *
- * The interlock is held until the scheduler_slock is held.  The
+ * The interlock is held until the scheduler_slock is acquired.  The
  * interlock will be locked before returning back to the caller
  * unless the PNORELOCK flag is specified, in which case the
  * interlock will always be unlocked upon return.
