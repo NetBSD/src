@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.53 2001/02/21 05:45:12 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.54 2001/03/08 03:47:04 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.53 2001/02/21 05:45:12 itojun Exp $");
+__RCSID("$NetBSD: route.c,v 1.54 2001/03/08 03:47:04 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -640,8 +640,10 @@ p_rtentry(rt)
  			(rt->rt_rmx.rmx_locks & RTV_RTT) ? 'L' : ' ',
  			rt->rt_rmx.rmx_rttvar, 
 			(rt->rt_rmx.rmx_locks & RTV_RTTVAR) ? 'L' : ' ');
- 	}	
-
+ 		printf("\thopcount %10lu%c\n",
+ 			rt->rt_rmx.rmx_hopcount, 
+			(rt->rt_rmx.rmx_locks & RTV_HOPCOUNT) ? 'L' : ' ');
+ 	}
 }
 
 char *
