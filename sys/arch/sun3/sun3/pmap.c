@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43 1995/01/11 20:39:16 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.44 1995/03/10 02:20:40 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -216,6 +216,18 @@ pa_to_pvp(pa)
 #define MAKE_PV_REAL(pv_flags) ((pv_flags & PV_PERM) << PV_SHIFT)
 #define PG_TO_PV_FLAGS(pte) (((PG_PERM) & pte) >> PV_SHIFT)
 
+/*
+ * Only "main memory" pages are registered in the pv_lists.
+ * This macro is used to determine if a given pte refers to
+ * "main memory" or not.  One slight hack here deserves more
+ * explanation:  The Sun frame buffers all appear as PG_OBMEM
+ * devices but way up near the end of the address space.
+ * We do not want to consider these as "main memory" so the
+ * macro below treats the high bits of the PFN as type bits.
+ */
+#define MEM_BITS	(PG_TYPE | 0x78000)
+#define	IS_MAIN_MEM(pte) (((pte) & MEM_BITS) == 0)
+
 
 /*
  * cache support
@@ -233,7 +245,8 @@ save_modref_bits(int pte)
 	if (pv_initialized == 0)
 		return;
 
-	if ((pte & PG_TYPE) != PGT_OBMEM)
+	/* Only main memory is ever in the pv_lists */
+	if (!IS_MAIN_MEM(pte))
 		return;
 
 	pvhead = pa_to_pvp(PG_PA(pte));
@@ -1774,7 +1787,7 @@ pmap_remove_range_mmu(pmap, sva, eva)
 	for (va = sva; va < eva; va += NBPG) {
 		pte = get_pte(va);
 		if (pte & PG_VALID) {
-			if ((pte & PG_TYPE) == PGT_OBMEM) {
+			if (IS_MAIN_MEM(pte)) {
 				save_modref_bits(pte);
 				pv_unlink(pmap, PG_PA(pte), va);
 			}
@@ -1854,7 +1867,7 @@ pmap_remove_range_noctx(pmap, sva, eva)
 		ptenum = VA_PTE_NUM(va);
 		pte = get_pte_pmeg(pmegp->pmeg_index, ptenum);
 		if (pte & PG_VALID) {
-			if ((pte & PG_TYPE) == PGT_OBMEM) {
+			if (IS_MAIN_MEM(pte)) {
 				save_modref_bits(pte);
 				pv_unlink(pmap, PG_PA(pte), va);
 			}
@@ -2085,7 +2098,7 @@ pmap_enter_kernel(va, pa, prot, wired, new_pte)
 	/* XXX - removing valid page here, way lame... */
 	pmegp->pmeg_vpages--;
 
-	if ((old_pte & PG_TYPE) != PGT_OBMEM) {
+	if (!IS_MAIN_MEM(old_pte)) {
 		/* Was not main memory, so no pv_entry for it. */
 		goto add_pte;
 	}
@@ -2111,8 +2124,8 @@ pmap_enter_kernel(va, pa, prot, wired, new_pte)
  add_pte:	/* can be destructive */
 	pmeg_set_wiring(pmegp, va, wired);
 
-	/* Anything but RAM is mapped non-cached. */
-	if ((new_pte & PG_TYPE) != PGT_OBMEM) {
+	/* Anything but MAIN_MEM is mapped non-cached. */
+	if (!IS_MAIN_MEM(new_pte)) {
 		new_pte |= PG_NC;
 		do_pv = FALSE;
 	}
@@ -2270,7 +2283,7 @@ pmap_enter_user(pmap, va, pa, prot, wired, new_pte)
 	/* XXX - removing valid page here, way lame... */
 	pmegp->pmeg_vpages--;
 
-	if ((old_pte & PG_TYPE) != PGT_OBMEM) {
+	if (!IS_MAIN_MEM(old_pte)) {
 		/* Was not main memory, so no pv_entry for it. */
 		goto add_pte;
 	}
@@ -2298,7 +2311,7 @@ pmap_enter_user(pmap, va, pa, prot, wired, new_pte)
 	/* pmeg_set_wiring(pmegp, va, wired); */
 
 	/* Anything but RAM is mapped non-cached. */
-	if ((new_pte & PG_TYPE) != PGT_OBMEM) {
+	if (!IS_MAIN_MEM(new_pte)) {
 		new_pte |= PG_NC;
 		do_pv = FALSE;
 	}
