@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 1995/12/15 18:13:41 jtc Exp $
+#	$NetBSD: Makefile,v 1.29 1996/03/18 09:21:33 tls Exp $
 
 # NOTE THAT etc *DOES NOT* BELONG IN THE LIST BELOW
 
@@ -44,9 +44,6 @@ build:
 .if exists(domestic)
 	(cd ${.CURDIR}/domestic/lib/libcrypt && ${MAKE} depend && ${MAKE} && ${MAKE} install)
 .endif
-#.if exists(kerberosIV)
-#	(cd ${.CURDIR}/kerberosIV && ${MAKE} depend && ${MAKE} && ${MAKE} install)
-#.endif
 	${MAKE} depend && ${MAKE} && ${MAKE} install
 
 .include <bsd.subdir.mk>
