@@ -30,85 +30,80 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)rogue.6	6.5 (Berkeley) 6/23/90
-.\"	$Id: rogue.6,v 1.2 1993/08/01 07:46:18 mycroft Exp $
+.\"	$Id: rogue.6,v 1.3 1993/08/05 03:28:31 jtc Exp $
 .\"
-.TH ROGUE 6 "June 23, 1990"
-.UC 4
-.SH NAME
-rogue \- Exploring The Dungeons of Doom
-.SH SYNOPSIS
-.B /usr/games/rogue
-[
-.B \-r
-]
-[
-.I save_file
-]
-[
-.B \-s
-]
-[
-.B \-d
-]
-.SH DESCRIPTION
-.PP
-.I Rogue
+.Dd June 23, 1990
+.Dt ROGUE 6
+.Sh NAME
+.Nm rogue
+.Nd Exploring The Dungeons of Doom
+.Sh SYNOPSIS
+.Nm /usr/games/rogue
+.Op Fl s
+.Op Ar save_file
+.\" .Op Fl r
+.\" .Op Fl d
+.Sh DESCRIPTION
+.Nm Rogue
 is a computer fantasy game with a new twist.  It is crt oriented and the
 object of the game is to survive the attacks of various monsters and get
 a lot of gold, rather than the puzzle solving orientation of most computer
 fantasy games.
-.PP
+.Pp
 To get started you really only need to know two commands.  The command
-.B ?
+.Ic \&?
 will give you a list of the available commands and the command
-.B /
+.Ic \&/
 will identify the things you see on the screen.
-.PP
+.Pp
 To win the game (as opposed to merely playing to beat other people's high
 scores) you must locate the Amulet of Yendor which is somewhere below
 the 20th level of the dungeon and get it out.  Nobody has achieved this
 yet and if somebody does, they will probably go down in history as a hero
 among heroes.
-.PP
+.Pp
 When the game ends, either by your death, when you quit, or if you (by
 some miracle) manage to win,
-.I rogue
+.Nm rogue
 will give you a list of the top-ten scorers.  The scoring is based entirely
 upon how much gold you get.  There is a 10% penalty for getting yourself
 killed.
-.PP
+.Pp
 If
-.I save_file
+.Ar save_file
 is specified,
 rogue will be restored from the specified saved game file.
-.PP
+.Pp
 The
-.B \-s
+.Fl s
 option will print out the list of scores.
-.PP
+.Pp
 For more detailed directions, read the document
-.I "A Guide to the Dungeons of Doom."
-.SH AUTHORS
+.Rs
+.%T A Guide to the Dungeons of Doom
+.Re  .
+.Sh AUTHORS
 Timothy Stoehr,
 Michael C. Toy,
 Kenneth C. R. C. Arnold,
 Glenn Wichman
-.SH FILES
-.DT
-.ta \w'/usr/games/lib/rogue_roll\ \ \ 'u
-/usr/games/lib/rogue_roll	Score file
-.br
-\fB~\fP/rogue.save	Default save file
-.SH SEE ALSO
-Michael C. Toy
-and
-Kenneth C. R. C. Arnold,
-.I "A guide to the Dungeons of Doom"
-.SH BUGS
-.PP
+.Sh FILES
+.Bl -tag -width /var/games/rogue_roll -compact
+.It Pa /var/games/rogue_roll
+Score file
+.It Pa ~/rogue.save
+Default save file
+.El
+.Sh SEE ALSO
+.Rs
+.%A Michael C. Toy
+.%A Kenneth C. R. C. Arnold
+.%T A guide to the Dungeons of Doom
+.Re
+.Sh BUGS
 Probably infinite, although none are known.
 However,
 that Ice Monsters sometimes transfix you permanently is
-.I not
+.Em not
 a bug.
 It's a feature.
