@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.44 2000/12/07 03:17:17 wiz Exp $	*/
+/*	$NetBSD: savecore.c,v 1.45 2000/12/07 03:55:44 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.44 2000/12/07 03:17:17 wiz Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.45 2000/12/07 03:55:44 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ __RCSID("$NetBSD: savecore.c,v 1.44 2000/12/07 03:17:17 wiz Exp $");
 #include <limits.h>
 #include <kvm.h>
 
-extern FILE *zopen __P((const char *fname, const char *mode, int bits));
+extern FILE *zopen(const char *fname, const char *mode, int bits);
 
 #define KREAD(kd, addr, p)\
 	(kvm_read(kd, addr, (char *)(p), sizeof(*(p))) != sizeof(*(p)))
@@ -123,27 +123,25 @@ char	vers[1024];
 
 int	clear, compress, force, verbose;	/* flags */
 
-void	 check_kmem __P((void));
-int	 check_space __P((void));
-void	 clear_dump __P((void));
-int	 Create __P((char *, int));
-int	 dump_exists __P((void));
-char	*find_dev __P((dev_t, int));
-int	 get_crashtime __P((void));
-void	 kmem_setup __P((void));
-void	 log __P((int, char *, ...));
-void	 Lseek __P((int, off_t, int));
-int	 main __P((int, char *[]));
-int	 Open __P((char *, int rw));
-char	*rawname __P((char *s));
-void	 save_core __P((void));
-void	 usage __P((void));
-void	 Write __P((int, void *, int));
+void	check_kmem(void);
+int	check_space(void);
+void	clear_dump(void);
+int	Create(char *, int);
+int	dump_exists(void);
+char	*find_dev(dev_t, int);
+int	get_crashtime(void);
+void	kmem_setup(void);
+void	log(int, char *, ...);
+void	Lseek(int, off_t, int);
+int	main(int, char *[]);
+int	Open(char *, int rw);
+char	*rawname(char *s);
+void	save_core(void);
+void	usage(void);
+void	Write(int, void *, int);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch;
 #ifdef CPU_BOOTED_KERNEL
@@ -238,11 +236,11 @@ main(argc, argv)
 }
 
 void
-kmem_setup()
+kmem_setup(void)
 {
-	kvm_t	*kd_kern;
-	char	errbuf[_POSIX2_LINE_MAX];
-	int	i, hdrsz;
+	kvm_t *kd_kern;
+	char errbuf[_POSIX2_LINE_MAX];
+	int i, hdrsz;
 	
 	/*
 	 * Some names we need for the currently running system, others for
@@ -259,7 +257,7 @@ kmem_setup()
 	}
 	if (kvm_nlist(kd_kern, current_nl) == -1)
 		syslog(LOG_ERR, "%s: kvm_nlist: %s", kernel,
-			kvm_geterr(kd_kern));
+		    kvm_geterr(kd_kern));
 	
 	for (i = 0; cursyms[i] != -1; i++)
 		if (current_nl[cursyms[i]].n_value == 0) {
@@ -292,8 +290,8 @@ kmem_setup()
 		exit(1);
 	}
 
-	(void)kvm_read(kd_kern, current_nl[X_VERSION].n_value,
-	    vers, sizeof(vers));
+	(void)kvm_read(kd_kern, current_nl[X_VERSION].n_value, vers,
+	    sizeof(vers));
 	vers[sizeof(vers) - 1] = '\0';
 
 	ddname = find_dev(dumpdev, S_IFBLK);
@@ -327,7 +325,7 @@ kmem_setup()
 	}
 	if (hdrsz == -1) {
 		syslog(LOG_ERR, "%s: kvm_dump_mkheader: %s", kernel,
-			kvm_geterr(kd_dump));
+		    kvm_geterr(kd_dump));
 		exit(1);
 	}
 	dumplo += hdrsz;
@@ -335,14 +333,14 @@ kmem_setup()
 }
 
 void
-check_kmem()
+check_kmem(void)
 {
-	char	*cp;
-	long	panicloc;
+	char *cp;
+	long panicloc;
 	char core_vers[1024];
 
 	(void)kvm_read(kd_dump, dump_nl[X_VERSION].n_value, core_vers,
-		sizeof(core_vers));
+	    sizeof(core_vers));
 	core_vers[sizeof(core_vers) - 1] = '\0';
 
 	if (strcmp(vers, core_vers) && kernel == 0)
@@ -356,13 +354,13 @@ check_kmem()
 		return;
 	}
 	if (panicstr) {
-		cp       = panic_mesg;
+		cp = panic_mesg;
 		panicloc = panicstr;
 		do {
 			if (KREAD(kd_dump, panicloc, cp) != 0) {
 				if (verbose)
 				    syslog(LOG_WARNING, "kvm_read: %s",
-					   kvm_geterr(kd_dump));
+					kvm_geterr(kd_dump));
 				break;
 			}
 			panicloc++;
@@ -372,7 +370,7 @@ check_kmem()
 }
 
 int
-dump_exists()
+dump_exists(void)
 {
 	int newdumpmag;
 
@@ -407,18 +405,18 @@ dump_exists()
 }
 
 void
-clear_dump()
+clear_dump(void)
 {
 	if (kvm_dump_inval(kd_dump) == -1)
 		syslog(LOG_ERR, "%s: kvm_clear_dump: %s", ddname,
-			kvm_geterr(kd_dump));
+		    kvm_geterr(kd_dump));
 
 }
 
 char buf[1024 * 1024];
 
 void
-save_core()
+save_core(void)
 {
 	FILE *fp;
 	int bounds, ifd, nr, nw, ofd;
@@ -435,7 +433,7 @@ save_core()
 		goto err1;
 	if (fgets(buf, sizeof(buf), fp) == NULL) {
 		if (ferror(fp))
-err1:			syslog(LOG_WARNING, "%s: %s", path, strerror(errno));
+err1:			syslog(LOG_WARNING, "%s: %m", path);
 		bounds = 0;
 	} else
 		bounds = atoi(buf);
@@ -453,15 +451,14 @@ err1:			syslog(LOG_WARNING, "%s: %s", path, strerror(errno));
 	    dirname, bounds, compress ? ".Z" : "");
 	if (compress) {
 		if ((fp = zopen(path, "w", 0)) == NULL) {
-			syslog(LOG_ERR, "%s: %s", path, strerror(errno));
+			syslog(LOG_ERR, "%s: %m", path);
 			exit(1);
 		}
 	} else {
 		ofd = Create(path, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 		fp  = fdopen(ofd, "w");
 		if (fp == NULL) {
-			syslog(LOG_ERR, "%s: fdopen: %s", path,
-			    strerror(errno));
+			syslog(LOG_ERR, "%s: fdopen: %m", path);
 			exit(1);
 		}
 	}
@@ -478,7 +475,7 @@ err1:			syslog(LOG_WARNING, "%s: %s", path, strerror(errno));
 
 	if (kvm_dump_wrtheader(kd_dump, fp, dumpsize) == -1) {
 		syslog(LOG_ERR, "kvm_dump_wrtheader: %s : %s", path,
-			kvm_geterr(kd_dump));
+		    kvm_geterr(kd_dump));
 		exit(1);
 	}
 
@@ -516,7 +513,7 @@ err2:			syslog(LOG_WARNING,
 	    dirname, bounds, compress ? ".Z" : "");
 	if (compress) {
 		if ((fp = zopen(path, "w", 0)) == NULL) {
-			syslog(LOG_ERR, "%s: %s", path, strerror(errno));
+			syslog(LOG_ERR, "%s: %m", path);
 			exit(1);
 		}
 	} else
@@ -537,10 +534,8 @@ err2:			syslog(LOG_WARNING,
 		}
 	}
 	if (nr < 0) {
-		syslog(LOG_ERR, "%s: %s",
-		    kernel ? kernel : _PATH_UNIX, strerror(errno));
-		syslog(LOG_WARNING,
-		    "WARNING: kernel may be incomplete");
+		syslog(LOG_ERR, "%s: %m", kernel ? kernel : _PATH_UNIX);
+		syslog(LOG_WARNING, "WARNING: kernel may be incomplete");
 		exit(1);
 	}
 	if (compress)
@@ -550,9 +545,7 @@ err2:			syslog(LOG_WARNING,
 }
 
 char *
-find_dev(dev, type)
-	dev_t dev;
-	int type;
+find_dev(dev_t dev, int type)
 {
 	DIR *dfd;
 	struct dirent *dir;
@@ -560,14 +553,14 @@ find_dev(dev, type)
 	char *dp, devname[MAXPATHLEN + 1];
 
 	if ((dfd = opendir(_PATH_DEV)) == NULL) {
-		syslog(LOG_ERR, "%s: %s", _PATH_DEV, strerror(errno));
+		syslog(LOG_ERR, "%s: %m", _PATH_DEV);
 		exit(1);
 	}
 	(void)strcpy(devname, _PATH_DEV);
 	while ((dir = readdir(dfd))) {
 		(void)strcpy(devname + sizeof(_PATH_DEV) - 1, dir->d_name);
 		if (lstat(devname, &sb)) {
-			syslog(LOG_ERR, "%s: %s", devname, strerror(errno));
+			syslog(LOG_ERR, "%s: %m", devname);
 			continue;
 		}
 		if ((sb.st_mode & S_IFMT) != type)
@@ -575,7 +568,7 @@ find_dev(dev, type)
 		if (dev == sb.st_rdev) {
 			closedir(dfd);
 			if ((dp = strdup(devname)) == NULL) {
-				syslog(LOG_ERR, "%s", strerror(errno));
+				syslog(LOG_ERR, "%m");
 				exit(1);
 			}
 			return (dp);
@@ -587,10 +580,10 @@ find_dev(dev, type)
 }
 
 char *
-rawname(s)
-	char *s;
+rawname(char *s)
 {
-	char *sl, name[MAXPATHLEN];
+	char *sl;
+	char name[MAXPATHLEN];
 
 	if ((sl = strrchr(s, '/')) == NULL || sl[1] == '0') {
 		syslog(LOG_ERR,
@@ -600,24 +593,24 @@ rawname(s)
 	(void)snprintf(name, sizeof(name), "%.*s/r%s", (int)(sl - s), s,
 	    sl + 1);
 	if ((sl = strdup(name)) == NULL) {
-		syslog(LOG_ERR, "%s", strerror(errno));
+		syslog(LOG_ERR, "%m");
 		exit(1);
 	}
 	return (sl);
 }
 
 int
-get_crashtime()
+get_crashtime(void)
 {
-	struct timeval time;
+	struct timeval dtime;
 	time_t dumptime;			/* Time the dump was taken. */
 
-	if (KREAD(kd_dump, dump_nl[X_TIME].n_value, &time) != 0) {
+	if (KREAD(kd_dump, dump_nl[X_TIME].n_value, &dtime) != 0) {
 		if (verbose)
 		    syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
 		return (0);
 	}
-	dumptime = time.tv_sec;
+	dumptime = dtime.tv_sec;
 	if (dumptime == 0) {
 		if (verbose)
 			syslog(LOG_ERR, "dump time is zero");
@@ -633,13 +626,13 @@ get_crashtime()
 }
 
 int
-check_space()
+check_space(void)
 {
 	FILE *fp;
 	off_t minfree, spacefree, kernelsize, needed;
 	struct stat st;
 	struct statfs fsbuf;
-	char buf[100], path[MAXPATHLEN];
+	char mbuf[100], path[MAXPATHLEN];
 
 #ifdef __GNUC__
 	(void) &minfree;
@@ -662,10 +655,10 @@ check_space()
 	if ((fp = fopen(path, "r")) == NULL)
 		minfree = 0;
 	else {
-		if (fgets(buf, sizeof(buf), fp) == NULL)
+		if (fgets(mbuf, sizeof(mbuf), fp) == NULL)
 			minfree = 0;
 		else
-			minfree = atoi(buf);
+			minfree = atoi(mbuf);
 		(void)fclose(fp);
 	}
 
@@ -682,9 +675,7 @@ check_space()
 }
 
 int
-Open(name, rw)
-	char *name;
-	int rw;
+Open(char *name, int rw)
 {
 	int fd;
 
@@ -696,9 +687,7 @@ Open(name, rw)
 }
 
 void
-Lseek(fd, off, flag)
-	int fd, flag;
-	off_t off;
+Lseek(int fd, off_t off, int flag)
 {
 	off_t ret;
 
@@ -710,9 +699,7 @@ Lseek(fd, off, flag)
 }
 
 int
-Create(file, mode)
-	char *file;
-	int mode;
+Create(char *file, int mode)
 {
 	int fd;
 
@@ -725,9 +712,7 @@ Create(file, mode)
 }
 
 void
-Write(fd, bp, size)
-	int fd, size;
-	void *bp;
+Write(int fd, void *bp, int size)
 {
 	int n;
 
@@ -738,7 +723,7 @@ Write(fd, bp, size)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)syslog(LOG_ERR, "usage: savecore [-cfvz] [-N system] directory");
 	exit(1);
