@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.93 1999/01/06 06:08:37 abs Exp $
+#	$NetBSD: Makefile,v 1.94 1999/01/16 14:25:47 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # XXX: For NO_SENDMAIL and USE_BIND4
@@ -29,7 +29,7 @@ BIN1+=	aliases bootptab changelist csh.cshrc csh.login \
 	ftpusers ftpwelcome gettytab group hosts hosts.lpd \
 	inetd.conf ld.so.conf lkm.conf mailer.conf man.conf \
 	monthly monthly.conf mrouted.conf netstart networks \
-	newsyslog.conf phones printcap profile protocols \
+	newsyslog.conf nsswitch.conf phones printcap profile protocols \
 	rbootd.conf rc rc.conf rc.lkm rc.local rc.subr \
 	rc.shutdown remote rpc security security.conf services \
 	shells syslog.conf weekly weekly.conf etc.${MACHINE}/ttys \
