@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs.h,v 1.8.2.2 2002/01/29 22:50:45 he Exp $	*/
+/*	$NetBSD: cardbusdevs.h,v 1.8.2.3 2002/02/05 12:55:32 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.10.2.2 2002/01/29 22:50:14 he Exp 
+ *	NetBSD: cardbusdevs,v 1.10.2.3 2002/02/05 12:54:48 he Exp 
  */
 
 /*
@@ -110,3 +110,4 @@
 
 /* Realtek (Creative Labs?) products */
 #define	CARDBUS_PRODUCT_REALTEK_RT8138	0x8138		/* 8138 Ethernet */
+#define	CARDBUS_PRODUCT_REALTEK_RT8139	0x8139		/* 8139 Ethernet */
