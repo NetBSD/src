@@ -1,4 +1,4 @@
-/*	$NetBSD: ipnat.c,v 1.3 2000/05/03 11:40:16 veego Exp $	*/
+/*	$NetBSD: ipnat.c,v 1.4 2000/05/11 19:54:36 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -59,7 +59,7 @@ extern	char	*sys_errlist[];
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipnat.c,v 2.16 2000/03/17 03:11:13 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipnat.c,v 2.16.2.1 2000/05/06 12:02:53 darrenr Exp";
 #endif
 
 
@@ -232,12 +232,21 @@ int opts;
 			return;
 		printf("\tFTP Proxy:\n");
 		printf("\t\tpassok: %d\n", ftp.ftp_passok);
-		printf("\t\teol: %d,%d,%d,%d\n",
-			ftp.ftp_eol[0][0], ftp.ftp_eol[0][1],
-			ftp.ftp_eol[1][0], ftp.ftp_eol[1][1]);
-		printf("\t\tseq: %x,%x,%x,%x\n",
-			ftp.ftp_seq[0][0], ftp.ftp_seq[0][1],
-			ftp.ftp_seq[1][0], ftp.ftp_seq[1][1]);
+		ftp.ftp_side[0].ftps_buf[FTP_BUFSZ - 1] = '\0';
+		ftp.ftp_side[1].ftps_buf[FTP_BUFSZ - 1] = '\0';
+		printf("\tClient:\n");
+		printf("\t\trptr %p wptr %p seq %x junk %d\n",
+			ftp.ftp_side[0].ftps_rptr, ftp.ftp_side[0].ftps_wptr,
+			ftp.ftp_side[0].ftps_seq, ftp.ftp_side[0].ftps_junk);
+		printf("\t\tbuf [");
+		printbuf(ftp.ftp_side[0].ftps_buf, FTP_BUFSZ, 1);
+		printf("]\n\tServer:\n");
+		printf("\t\trptr %p wptr %p seq %x junk %d\n",
+			ftp.ftp_side[1].ftps_rptr, ftp.ftp_side[1].ftps_wptr,
+			ftp.ftp_side[1].ftps_seq, ftp.ftp_side[1].ftps_junk);
+		printf("\t\tbuf [");
+		printbuf(ftp.ftp_side[1].ftps_buf, FTP_BUFSZ, 1);
+		printf("]\n");
 	}
 }
 
