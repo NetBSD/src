@@ -1,4 +1,40 @@
-/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.33 2000/02/25 00:45:06 thorpej Exp $ */
+/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.34 2000/02/26 18:53:13 thorpej Exp $ */
+
+/*-
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -70,6 +106,8 @@ int		__C(CHIP,_mem_subregion) __P((void *, bus_space_handle_t,
 
 int		__C(CHIP,_mem_translate) __P((void *, bus_addr_t, bus_size_t,
 		    int, struct alpha_bus_space_translation *));
+int		__C(CHIP,_mem_get_window) __P((void *, int,
+		    struct alpha_bus_space_translation *));
 
 /* allocation/deallocation */
 int		__C(CHIP,_mem_alloc) __P((void *, bus_addr_t, bus_addr_t,
@@ -219,6 +257,7 @@ __C(CHIP,_bus_mem_init)(t, v)
 	t->abs_subregion =	__C(CHIP,_mem_subregion);
 
 	t->abs_translate =	__C(CHIP,_mem_translate);
+	t->abs_get_window =	__C(CHIP,_mem_get_window);
 
 	/* allocation/deallocation */
 	t->abs_alloc =		__C(CHIP,_mem_alloc);
@@ -503,6 +542,74 @@ __C(CHIP,_mem_translate)(v, memaddr, memlen, flags, abst)
 
 	/* XXX */
 	return (EOPNOTSUPP);
+}
+
+int
+__C(CHIP,_mem_get_window)(v, window, abst)
+	void *v;
+	int window;
+	struct alpha_bus_space_translation *abst;
+{
+
+#ifdef CHIP_D_MEM_W1_BUS_START
+#define	FIRST_SPARSE	1
+#else
+#define	FIRST_SPARSE	0
+#endif
+
+	switch (window) {
+#ifdef CHIP_D_MEM_W1_BUS_START
+	case 0:
+		abst->abst_bus_start = CHIP_D_MEM_W1_BUS_START(v);
+		abst->abst_bus_end = CHIP_D_MEM_W1_BUS_END(v);
+		abst->abst_sys_start = CHIP_D_MEM_W1_SYS_START(v);
+		abst->abst_sys_end = CHIP_D_MEM_W1_SYS_END(v);
+		abst->abst_addr_shift = CHIP_ADDR_SHIFT;
+		abst->abst_size_shift = CHIP_SIZE_SHIFT;
+		abst->abst_flags = ABST_DENSE;
+		break;
+#endif
+
+#ifdef CHIP_S_MEM_W1_BUS_START
+	case (FIRST_SPARSE):
+		abst->abst_bus_start = CHIP_S_MEM_W1_BUS_START(v);
+		abst->abst_bus_end = CHIP_S_MEM_W1_BUS_END(v);
+		abst->abst_sys_start = CHIP_S_MEM_W1_SYS_START(v);
+		abst->abst_sys_end = CHIP_S_MEM_W1_SYS_END(v);
+		abst->abst_addr_shift = CHIP_ADDR_SHIFT;
+		abst->abst_size_shift = CHIP_SIZE_SHIFT;
+		abst->abst_flags = 0;
+		break;
+#endif
+
+#ifdef CHIP_S_MEM_W2_BUS_START
+	case (FIRST_SPARSE + 1):
+		abst->abst_bus_start = CHIP_S_MEM_W2_BUS_START(v);
+		abst->abst_bus_end = CHIP_S_MEM_W2_BUS_END(v);
+		abst->abst_sys_start = CHIP_S_MEM_W2_SYS_START(v);
+		abst->abst_sys_end = CHIP_S_MEM_W2_SYS_END(v);
+		abst->abst_addr_shift = CHIP_ADDR_SHIFT;
+		abst->abst_size_shift = CHIP_SIZE_SHIFT;
+		abst->abst_flags = 0;
+		break;
+#endif
+
+#ifdef CHIP_S_MEM_W3_BUS_START
+	case (FIRST_SPARSE + 2):
+		abst->abst_bus_start = CHIP_S_MEM_W3_BUS_START(v);
+		abst->abst_bus_end = CHIP_S_MEM_W3_BUS_END(v);
+		abst->abst_sys_start = CHIP_S_MEM_W3_SYS_START(v);
+		abst->abst_sys_end = CHIP_S_MEM_W3_SYS_END(v);
+		abst->abst_addr_shift = CHIP_ADDR_SHIFT;
+		abst->abst_size_shift = CHIP_SIZE_SHIFT;
+		abst->abst_flags = 0;
+		break;
+#endif
+	}
+
+#undef FIRST_SPARSE
+
+	return (0);
 }
 
 int
