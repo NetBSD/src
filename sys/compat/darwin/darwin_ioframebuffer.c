@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.29 2003/12/26 20:34:34 manu Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.30 2003/12/27 22:06:19 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.29 2003/12/26 20:34:34 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.30 2003/12/27 22:06:19 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -610,7 +610,12 @@ darwin_ioframebuffer_connect_map_memory(args)
 		struct darwin_emuldata *ded;
 
 		ded = p->p_emuldata;
-		ded->ded_vramoffset = (void *)pvaddr;
+		/*
+		 * This seems to be the offset of the framebuffer
+		 * within the VRAM. For now 0, as we are only 
+		 * able to map the framebuffer.
+		 */
+		ded->ded_vramoffset = (void *)(pvaddr - pvaddr);
 	}
 
 	return 0;
