@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.7 1999/02/12 17:52:07 tv Exp $	*/
+/*	$NetBSD: reloc.c,v 1.8 1999/02/13 16:35:14 christos Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -434,14 +434,7 @@ _rtld_relocate_plt_object(
 	dbg("fixup !main in %s --> %p", obj->path, (void *)*where);
 #endif
     } else {
-#ifdef __i386__
- 	new_value = *where + (Elf_Addr) (obj->relocbase);
-#ifdef RTLD_DEBUG_RELOC
-	dbg("fixup main in %s --> %p", obj->path, (void *)*where);
-#endif
-#else
 	return 0;
-#endif
     }
     /*
      * Since this page is probably copy-on-write, let's not write
