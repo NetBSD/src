@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.46 2000/05/27 00:19:53 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.47 2000/05/31 01:40:02 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -198,7 +198,7 @@ lfs_vflush(vp)
 		ivndebug(vp,"vflush/in_cleaning");
 #endif
 		ip->i_flag &= ~IN_CLEANING;
-		if(ip->i_flag & IN_MODIFIED) {
+		if(ip->i_flag & (IN_MODIFIED | IN_ACCESSED)) {
 			fs->lfs_uinodes--;
 		} else
 			ip->i_flag |= IN_MODIFIED;
@@ -261,9 +261,9 @@ lfs_vflush(vp)
 		splx(s);
 		if(ip->i_flag & IN_CLEANING)
 			fs->lfs_uinodes--;
-		if(ip->i_flag & IN_MODIFIED)
+		if(ip->i_flag & (IN_MODIFIED | IN_ACCESSED))
 			fs->lfs_uinodes--;
-		ip->i_flag &= ~(IN_MODIFIED|IN_UPDATE|IN_ACCESS|IN_CHANGE|IN_CLEANING);
+		ip->i_flag &= ~IN_ALLMOD;
 		printf("lfs_vflush: done not flushing ino %d\n",
 			ip->i_number);
 		lfs_segunlock(fs);
@@ -288,7 +288,7 @@ lfs_vflush(vp)
 		lfs_writevnodes(fs, vp->v_mount, sp, VN_CLEAN);
 	}
 	else if(lfs_dostats) {
-		if(vp->v_dirtyblkhd.lh_first || (VTOI(vp)->i_flag & (IN_MODIFIED|IN_UPDATE|IN_ACCESS|IN_CHANGE|IN_CLEANING)))
+		if(vp->v_dirtyblkhd.lh_first || (VTOI(vp)->i_flag & IN_ALLMOD))
 			++lfs_stats.vflush_invoked;
 #ifdef DEBUG_LFS
 		ivndebug(vp,"vflush");
@@ -429,11 +429,10 @@ lfs_writevnodes(fs, mp, sp, op)
 		 * Write the inode/file if dirty and it's not the
 		 * the IFILE.
 		 */
-		if ((ip->i_flag &
-		     (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE | IN_CLEANING) ||
+		if ((ip->i_flag & IN_ALLMOD) ||
 		     vp->v_dirtyblkhd.lh_first != NULL))
 		{
-			only_cleaning = ((ip->i_flag & (IN_ACCESS|IN_CHANGE|IN_MODIFIED|IN_UPDATE|IN_CLEANING))==IN_CLEANING);
+			only_cleaning = ((ip->i_flag & IN_ALLMOD)==IN_CLEANING);
 
 			if(ip->i_number != LFS_IFILE_INUM
 			   && vp->v_dirtyblkhd.lh_first != NULL)
@@ -445,7 +444,7 @@ lfs_writevnodes(fs, mp, sp, op)
 #ifdef DEBUG_LFS
 					ivndebug(vp,"writevnodes/write2");
 #endif
-				} else if(!(ip->i_flag & (IN_ACCESS|IN_CHANGE|IN_MODIFIED|IN_UPDATE|IN_CLEANING))) {
+				} else if(!(ip->i_flag & IN_ALLMOD)) {
 #ifdef DEBUG_LFS
 					printf("<%d>",ip->i_number);
 #endif
@@ -713,7 +712,7 @@ lfs_writeinode(fs, sp, ip)
 	struct timespec ts;
 	int gotblk=0;
 	
-	if (!(ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE | IN_CLEANING)))
+	if (!(ip->i_flag & IN_ALLMOD))
 		return(0);
 	
 	/* Allocate a new inode block if necessary. */
@@ -745,15 +744,17 @@ lfs_writeinode(fs, sp, ip)
 	}
 
 	/* Update the inode times and copy the inode onto the inode page. */
-	if (ip->i_flag & (IN_CLEANING|IN_MODIFIED))
+	if (ip->i_flag & (IN_CLEANING | IN_MODIFIED | IN_ACCESSED))
 		--fs->lfs_uinodes;
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	LFS_ITIMES(ip, &ts, &ts, &ts);
 
+	/* XXX IN_ALLMOD */
 	if(ip->i_flag & IN_CLEANING)
 		ip->i_flag &= ~IN_CLEANING;
 	else
-		ip->i_flag &= ~(IN_ACCESS|IN_CHANGE|IN_MODIFIED|IN_UPDATE);
+		ip->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_MODIFIED |
+				IN_UPDATE | IN_ACCESSED);
 
 	/*
 	 * If this is the Ifile, and we've already written the Ifile in this
@@ -1447,7 +1448,8 @@ lfs_writeseg(fs, sp)
 #ifdef DEBUG_LFS
 				printf("lfs_writeseg: marking ino %d\n",ip->i_number);
 #endif
-		       		if(!(ip->i_flag & (IN_CLEANING|IN_MODIFIED))) {
+		       		if(!(ip->i_flag & (IN_CLEANING | IN_MODIFIED |
+				                   IN_ACCESSED))) {
 					fs->lfs_uinodes++;
 					if(bp->b_flags & B_CALL)
 						ip->i_flag |= IN_CLEANING;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.37 2000/05/27 00:19:54 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.38 2000/05/31 01:40:02 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -732,10 +732,10 @@ lfs_close(v)
 
 	simple_lock(&vp->v_interlock);
 	if (vp->v_usecount > 1) {
-		mod = ip->i_flag & IN_MODIFIED;
+		mod = ip->i_flag & (IN_MODIFIED | IN_ACCESSED);
 		TIMEVAL_TO_TIMESPEC(&time, &ts);
 		LFS_ITIMES(ip, &ts, &ts, &ts);
-		if (!mod && ip->i_flag & IN_MODIFIED)
+		if (!mod && (ip->i_flag & (IN_MODIFIED | IN_ACCESSED)))
 			ip->i_lfs->lfs_uinodes++;
 	}
 	simple_unlock(&vp->v_interlock);
