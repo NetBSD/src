@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.5 2003/07/12 11:57:59 yamt Exp $ */
+/* $NetBSD: lfs.c,v 1.6 2003/07/12 12:28:23 yamt Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -357,11 +357,7 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ufs_daddr_t daddr)
 	LIST_INIT(&vp->v_cleanblkhd);
 	LIST_INIT(&vp->v_dirtyblkhd);
 
-	++nvnodes;
-	LIST_INSERT_HEAD(&getvnodelist, vp, v_getvnodes);
-	LIST_INSERT_HEAD(&vnodelist, vp, v_mntvnodes);
-
-	vp->v_data = ip = (struct inode *) malloc(sizeof(*ip));
+	ip = (struct inode *) malloc(sizeof(*ip));
 	memset(ip, 0, sizeof(*ip));
 
 	ip->i_din.ffs1_din = (struct ufs1_dinode *)
@@ -385,6 +381,7 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ufs_daddr_t daddr)
 	dip = lfs_ifind(fs, ino, bp);
 	if (dip == NULL) {
 		brelse(bp);
+		free(ip);
 		free(vp);
 		return NULL;
 	}
@@ -408,6 +405,10 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ufs_daddr_t daddr)
 	for (i = 0; i < NDADDR; i++)
 		if (ip->i_ffs1_db[i] != 0)
 			ip->i_lfs_fragsize[i] = blksize(fs, ip, i);
+
+	++nvnodes;
+	LIST_INSERT_HEAD(&getvnodelist, vp, v_getvnodes);
+	LIST_INSERT_HEAD(&vnodelist, vp, v_mntvnodes);
 
 	return vp;
 }
