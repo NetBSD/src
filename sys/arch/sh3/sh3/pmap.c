@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.18 2001/04/24 04:31:09 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.19 2001/04/25 16:18:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -2210,7 +2210,7 @@ pmap_page_remove(pg)
 {
 	int bank, off;
 	struct pv_head *pvh;
-	struct pv_entry *pve;
+	struct pv_entry *pve, *npve, **prevptr, *killlist = NULL;
 	pt_entry_t *ptes, opte;
 
 	/* XXX: vm_page should either contain pv_head or have a pointer to it */
@@ -2231,7 +2231,8 @@ pmap_page_remove(pg)
 	/* XXX: needed if we hold head->map lock? */
 	simple_lock(&pvh->pvh_lock);
 
-	for (pve = pvh->pvh_list ; pve != NULL ; pve = pve->pv_next) {
+	for (prevptr = &pvh->pvh_list, pve = pvh->pvh_list;
+	     pve != NULL; pve = npve) {
 		ptes = pmap_map_ptes(pve->pv_pmap);		/* locks pmap */
 
 #ifdef DIAGNOSTIC
@@ -2250,6 +2251,17 @@ pmap_page_remove(pg)
 #endif
 
 		opte = ptes[sh3_btop(pve->pv_va)];
+#if 1 /* XXX Work-around for kern/12554. */
+		if (opte & PG_W) {
+#ifdef DEBUG
+			printf("pmap_page_remove: wired mapping for "
+			    "0x%lx (wire count %d) not removed\n",
+			    VM_PAGE_TO_PHYS(pg), pg->wire_count);
+#endif
+			prevptr = &pve->pv_next;
+			continue;
+		}
+#endif /* kern/12554 */
 		ptes[sh3_btop(pve->pv_va)] = 0;			/* zap! */
 
 		if (opte & PG_W)
@@ -2281,8 +2293,11 @@ pmap_page_remove(pg)
 			}
 		}
 		pmap_unmap_ptes(pve->pv_pmap);		/* unlocks pmap */
+		*prevptr = npve;			/* remove it */
+		pve->pv_next = killlist;		/* mark it for death */
+		killlist = pve;
 	}
-	pmap_free_pvs(NULL, pvh->pvh_list);
+	pmap_free_pvs(NULL, killlist);
 	pvh->pvh_list = NULL;
 	simple_unlock(&pvh->pvh_lock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
