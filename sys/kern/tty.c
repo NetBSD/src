@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.80 1997/04/02 03:23:01 kleink Exp $	*/
+/*	$NetBSD: tty.c,v 1.81 1997/04/03 14:24:45 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -417,61 +417,67 @@ parmrk:				(void)putc(0377 | TTY_QUOTE, &tp->t_rawq);
 			goto endcase;
 		}
 		/*
-		 * word erase (^W)
+		 * Extensions to the POSIX.1 GTI set of functions.
 		 */
-		if (CCEQ(cc[VWERASE], c)) {
-			int alt = ISSET(lflag, ALTWERASE);
-			int ctype;
+		if (ISSET(lflag, IEXTEN)) {
+			/*
+			 * word erase (^W)
+			 */
+			if (CCEQ(cc[VWERASE], c)) {
+				int alt = ISSET(lflag, ALTWERASE);
+				int ctype;
 
-			/*
-			 * erase whitespace
-			 */
-			while ((c = unputc(&tp->t_rawq)) == ' ' || c == '\t')
-				ttyrub(c, tp);
-			if (c == -1)
-				goto endcase;
-			/*
-			 * erase last char of word and remember the
-			 * next chars type (for ALTWERASE)
-			 */
-			ttyrub(c, tp);
-			c = unputc(&tp->t_rawq);
-			if (c == -1)
-				goto endcase;
-			if (c == ' ' || c == '\t') {
-				(void)putc(c, &tp->t_rawq);
-				goto endcase;
-			}
-			ctype = ISALPHA(c);
-			/*
-			 * erase rest of word
-			 */
-			do {
+				/*
+				 * erase whitespace
+				 */
+				while ((c = unputc(&tp->t_rawq)) == ' ' ||
+				       c == '\t')
+					ttyrub(c, tp);
+				if (c == -1)
+					goto endcase;
+				/*
+				 * erase last char of word and remember the
+				 * next chars type (for ALTWERASE)
+				 */
 				ttyrub(c, tp);
 				c = unputc(&tp->t_rawq);
 				if (c == -1)
 					goto endcase;
-			} while (c != ' ' && c != '\t' &&
-			    (alt == 0 || ISALPHA(c) == ctype));
-			(void)putc(c, &tp->t_rawq);
-			goto endcase;
-		}
-		/*
-		 * reprint line (^R)
-		 */
-		if (CCEQ(cc[VREPRINT], c)) {
-			ttyretype(tp);
-			goto endcase;
-		}
-		/*
-		 * ^T - kernel info and generate SIGINFO
-		 */
-		if (CCEQ(cc[VSTATUS], c)) {
-			if (ISSET(lflag, ISIG))
-				pgsignal(tp->t_pgrp, SIGINFO, 1);
-			if (!ISSET(lflag, NOKERNINFO))
-				ttyinfo(tp);
-			goto endcase;
+				if (c == ' ' || c == '\t') {
+					(void)putc(c, &tp->t_rawq);
+					goto endcase;
+				}
+				ctype = ISALPHA(c);
+				/*
+				 * erase rest of word
+				 */
+				do {
+					ttyrub(c, tp);
+					c = unputc(&tp->t_rawq);
+					if (c == -1)
+						goto endcase;
+				} while (c != ' ' && c != '\t' &&
+				         (alt == 0 || ISALPHA(c) == ctype));
+				(void)putc(c, &tp->t_rawq);
+				goto endcase;
+			}
+			/*
+			 * reprint line (^R)
+			 */
+			if (CCEQ(cc[VREPRINT], c)) {
+				ttyretype(tp);
+				goto endcase;
+			}
+			/*
+			 * ^T - kernel info and generate SIGINFO
+			 */
+			if (CCEQ(cc[VSTATUS], c)) {
+				if (ISSET(lflag, ISIG))
+					pgsignal(tp->t_pgrp, SIGINFO, 1);
+				if (!ISSET(lflag, NOKERNINFO))
+					ttyinfo(tp);
+				goto endcase;
+			}
 		}
 	}
 	/*
@@ -1362,7 +1368,8 @@ read:
 		/*
 		 * delayed suspend (^Y)
 		 */
-		if (CCEQ(cc[VDSUSP], c) && ISSET(lflag, ISIG)) {
+		if (CCEQ(cc[VDSUSP], c) &&
+		    ISSET(lflag, IEXTEN|ISIG) == (IEXTEN|ISIG)) {
 			pgsignal(tp->t_pgrp, SIGTSTP, 1);
 			if (first) {
 				error = ttysleep(tp, &lbolt,
