@@ -34,7 +34,7 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 static void usage();
 static void convert_font(const font_params &, FILE *, FILE *);
 
-typedef font_params::*param_t;
+typedef int font_params::*param_t;
 
 static struct {
   const char *name;
