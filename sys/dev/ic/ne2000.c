@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.42 2004/03/17 23:47:16 mycroft Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.42.2.1 2004/07/05 21:40:16 he Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.42 2004/03/17 23:47:16 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.42.2.1 2004/07/05 21:40:16 he Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -616,7 +616,7 @@ ne2000_write_mbuf(sc, m, buf)
 			    *(u_int16_t *)savebyte);
 		}
 		if (padlen) {
-			for(; padlen > 0; padlen -= 2)
+			for(; padlen > 1; padlen -= 2)
 				bus_space_write_stream_2(asict, asich,
 				    NE2000_ASIC_DATA, 0);
 		}
