@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.10 2000/02/23 02:04:21 oster Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.11 2000/02/23 03:44:02 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -132,6 +132,8 @@ struct RF_Raid_s {
 	RF_LockTableEntry_t *lockTable;	/* stripe-lock table */
 	RF_LockTableEntry_t *quiesceLock;	/* quiesnce table */
 	int     numFailures;	/* total number of failures in the array */
+	int     numNewFailures; /* number of *new* failures (that havn't 
+				   caused a mod_counter update */
 
 	int     parity_good;    /* !0 if parity is known to be correct */
 	int     serial_number;  /* a "serial number" for this set */
