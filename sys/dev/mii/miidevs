@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.10 2000/01/13 20:16:08 augustss Exp $
+$NetBSD: miidevs,v 1.11 2000/05/08 13:23:21 augustss Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -89,7 +89,9 @@ oui xxDAVICOM			0x006040	Davicom Semiconductor
 
 /* Advanced Micro Devices PHYs */
 model xxAMD 79C873		0x0000 Am79C873 10/100 media interface
-model AMD 79c973phy		0x0036 Am79c973 internal PHY
+model AMD 79c973phy		0x0036 Am79C973 internal PHY
+model AMD 79c901		0x0037 Am79C901 10 PHY
+model AMD 79c901home		0x0039 Am79C901 HomePHY
 
 /* Broadcom PHYs */
 model BROADCOM BCM5201		0x0021 BCM5201 10/100 media interface
