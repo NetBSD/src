@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.42 2000/08/13 22:45:01 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.43 2000/09/19 22:21:54 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -120,9 +120,9 @@
 #endif /* _KERNEL && ! _LKM */
 
 #ifdef GATEWAY
-#define	NMBCLUSTERS	512		/* map size, max cluster allocation */
+#define	NMBCLUSTERS	2048		/* map size, max cluster allocation */
 #else
-#define	NMBCLUSTERS	256		/* map size, max cluster allocation */
+#define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
 #endif
 #endif
 
