@@ -49,9 +49,6 @@ Boston, MA 02111-1307, USA.  */
   || !strcmp (STR, "iwithprefix") || !strcmp (STR, "iwithprefixbefore") \
   || !strcmp (STR, "isystem"))
 
-/* Print subsidiary information on the compiler version in use.  */
-#define TARGET_VERSION
-
 /* Run-time compilation parameters selecting different hardware subsets.  */
 
 /* Which processor to schedule for. The cpu attribute defines a list that
