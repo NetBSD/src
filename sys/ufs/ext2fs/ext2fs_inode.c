@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.10 1998/10/23 00:33:24 thorpej Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.11 1999/03/05 20:47:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -147,7 +147,9 @@ ext2fs_update(v)
 		return (0);
 	ip = VTOI(ap->a_vp);
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	EXT2FS_ITIMES(ip, ap->a_access, ap->a_modify, &ts);
+	EXT2FS_ITIMES(ip,
+	    ap->a_access ? ap->a_access : &ts,
+	    ap->a_modify ? ap->a_modify : &ts, &ts);
 	if ((ip->i_flag & IN_MODIFIED) == 0)
 		return (0);
 	ip->i_flag &= ~IN_MODIFIED;
