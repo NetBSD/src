@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 1997/01/31 02:15:09 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8 1997/02/03 16:55:00 oki Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -179,7 +179,7 @@ findroot(devpp, partp)
 	part = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
 	unit = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
 
-	sprintf(buf, "%s%d", x68k_nam2blk[i].d_name, unit)
+	sprintf(buf, "%s%d", x68k_nam2blk[i].d_name, unit);
 	for (dv = alldevs.tqh_first; dv != NULL;
 	    dv = dv->dv_list.tqe_next) {
 		if (strcmp(buf, dv->dv_xname) == 0) {
