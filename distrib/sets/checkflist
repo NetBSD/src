@@ -1,6 +1,6 @@
 #! /bin/sh --
 #
-#	$NetBSD: checkflist,v 1.19 2003/07/10 03:19:15 lukem Exp $
+#	$NetBSD: checkflist,v 1.20 2003/08/12 04:20:08 lukem Exp $
 #
 # Verify output of makeflist against contents of $DESTDIR.
 
@@ -11,12 +11,42 @@ fi
 
 prog=${0##*/}
 
-origin=.
-tmpname=/tmp/_CHECK.$$
 
+# Make sure we don't loop forever if mkdir will always fail.
+if [ ! -d /tmp ]; then
+	echo /tmp is not a directory
+	exit 1
+fi
+
+if [ ! -w /tmp ]; then
+	echo /tmp is not writable
+	exit 1
+fi
+
+SDIR_BASE=/tmp/checkflist.$$
+SDIR_SERIAL=0
+
+while true; do
+	SDIR=${SDIR_BASE}.${SDIR_SERIAL}
+	mkdir -m 0700 ${SDIR} && break
+	SDIR_SERIAL=$((${SDIR_SERIAL} + 1))
+done    
+
+es=0
+cleanup()
+{
+	/bin/rm -rf $SDIR
+	if [ $es -gt 255 ] ; then
+		es=255
+	fi
+	exit $es
+}
+trap cleanup 0 2 3 13		# EXIT INT QUIT PIPE
+
+
+origin=.
 xargs=""
 dargs=""
-diffargs=""
 metalog=
 
 # handle args
@@ -29,22 +59,14 @@ while : ; do
 	-both)
 		xargs="-b"
 		;;
-	-u)
-		diffargs="-u"
-		;;
-	-c)
-		diffargs="-c"
-		;;
 	-M*)
 		metalog=$2; shift
 		;;
 	-*)
 		cat 1>&2 <<USAGE
-Usage: ${prog} [-x11|-both] [-u|-c] [-M metalog]
+Usage: ${prog} [-x11|-both] [-M metalog]
 	-x11		check only x11 lists
 	-both		check netbsd + x11 lists
-	-u		output differences in "unified diff" style
-	-c		output differences in "context diff" style
 	-M metalog	metalog file
 USAGE
 		exit 1
@@ -69,7 +91,7 @@ if [ -n "$metalog" ]; then
 fi
 
 
-sh makeflist $xargs $dargs > $tmpname
+sh makeflist $xargs $dargs > $SDIR/flist
 
 (
 	cd $DESTDIR
@@ -84,19 +106,33 @@ sh makeflist $xargs $dargs > $tmpname
 			;;
 		esac
 	done
-) | sort | diff $diffargs $tmpname -
-rv=$?
+) | sort > $SDIR/files
 
-/bin/rm -f $tmpname
+comm -23 $SDIR/flist $SDIR/files > $SDIR/missing
+comm -13 $SDIR/flist $SDIR/files > $SDIR/extra
 
-if [ $rv -ne 0 ]; then
-	echo "${prog}: flist inconsistencies found"
-	if [ -z "$diffargs" ]; then
-		echo "${prog}: key to output:"
-		echo "  <  file is in flist but missing from DESTDIR"
-		echo "     (file wasn't installed ?)"
-		echo "  >  file is in DESTDIR but missing from flist"
-		echo "     (file is obsolete or flist is out of date ?)"
-	fi
+if [ -s $SDIR/extra ]; then
+	echo ""
+	echo "============  extra files  ==============="
+	echo "Files in DESTDIR but missing from flist."
+	echo "File is obsolete or flist is out of date ?"
+	echo "This is non-fatal."
+	echo "------------------------------------------"
+	cat $SDIR/extra
+	echo "=========  end of extra files  ==========="
+	echo ""
 fi
-exit $rv
+
+if [ -s $SDIR/missing ]; then
+	echo ""
+	echo "===========  missing files  =============="
+	echo "Files in flist but missing from DESTDIR."
+	echo "File wasn't installed ?"
+	echo "------------------------------------------"
+	cat $SDIR/missing
+	echo "========  end of missing files  =========="
+	echo ""
+	es=1
+fi
+
+exit 0		# cleanup will exit with $es
