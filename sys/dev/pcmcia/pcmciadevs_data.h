@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.92 2000/06/13 02:18:19 soren Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.93 2000/06/30 16:33:38 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.93 2000/06/13 02:18:00 soren Exp 
+ *	NetBSD: pcmciadevs,v 1.94 2000/06/30 16:33:17 joda Exp 
  */
 
 /*-
@@ -57,6 +57,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Adaptec Corporation",
 	    "Adaptec APA-1460A SlimSCSI"	},
+	},
+	{
+	    PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CRWE737A,
+	    PCMCIA_CIS_3COM_3CRWE737A,
+	    0,
+	    "3Com Corporation",
+	    "3Com AirConnect Wireless LAN"	},
 	},
 	{
 	    PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3C1,
