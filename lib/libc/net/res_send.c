@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.9 1997/07/13 19:58:05 christos Exp $	*/
+/*	$NetBSD: res_send.c,v 1.10 1997/07/20 13:33:34 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -57,9 +57,9 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
-static char rcsid[] = "Id: res_send.c,v 8.12 1996/10/08 04:51:06 vixie Exp";
+static char rcsid[] = "$Id: res_send.c,v 8.13 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.9 1997/07/13 19:58:05 christos Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.10 1997/07/20 13:33:34 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -596,7 +596,7 @@ read_len:
 				seconds = 1;
 			dsfd.fd = s;
 			dsfd.events = POLLIN;
-    wait:
+wait:
 			n = poll(&dsfd, 1, seconds * 1000);
 			if (n < 0) {
 				if (errno == EINTR)

@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetbyname.c,v 1.6 1997/07/13 19:57:35 christos Exp $	*/
+/*	$NetBSD: getnetbyname.c,v 1.7 1997/07/20 13:33:21 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,10 +37,10 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid_[] = "from getnetbyname.c	1.1 (Coimbra) 93/06/02";
-static char rcsid[] = "=Id: getnetbyname.c,v 1.6 1994/05/31 01:49:35 vixie Exp =";
+static char rcsid[] = "$Id: getnetbyname.c,v 8.2 1995/06/19 08:35:01 vixie Exp ";
 static char sccsid[] = "@(#)getnetbyname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getnetbyname.c,v 1.6 1997/07/13 19:57:35 christos Exp $");
+__RCSID("$NetBSD: getnetbyname.c,v 1.7 1997/07/20 13:33:21 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,12 +49,14 @@ __RCSID("$NetBSD: getnetbyname.c,v 1.6 1997/07/13 19:57:35 christos Exp $");
 
 extern int _net_stayopen;
 
+struct netent * _getnetbyname __P((const char *name));
+
 struct netent *
-getnetbyname(name)
-	register const char *name;
+_getnetbyname(name)
+	const char *name;
 {
-	register struct netent *p;
-	register char **cp;
+	struct netent *p;
+	char **cp;
 
 	setnetent(_net_stayopen);
 	while ((p = getnetent()) != NULL) {

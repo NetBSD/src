@@ -1,3 +1,5 @@
+/*	$NetBSD: getnetnamadr.c,v 1.2 1997/07/20 13:33:22 mrg Exp $	*/
+
 /* Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
  *	Dep. Matematica Universidade de Coimbra, Portugal, Europe
  *
@@ -38,10 +40,15 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "$Id: getnetnamadr.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
+#else
+__RCSID("$NetBSD: getnetnamadr.c,v 1.2 1997/07/20 13:33:22 mrg Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -87,6 +94,7 @@ typedef union {
 	char	ac;
 } align;
 
+static struct netent *getnetanswer __P((querybuf *, int, int));
 static struct netent *
 getnetanswer(answer, anslen, net_i)
 	querybuf *answer;

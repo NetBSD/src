@@ -1,3 +1,5 @@
+/*	$NetBSD: gethnamaddr.c,v 1.2 1997/07/20 13:33:18 mrg Exp $	*/
+
 /*
  * ++Copyright++ 1985, 1988, 1993
  * -
@@ -53,9 +55,14 @@
  * --Copyright--
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
+#else
+__RCSID("$NetBSD: gethnamaddr.c,v 1.2 1997/07/20 13:33:18 mrg Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -78,21 +85,13 @@ static char rcsid[] = "$Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp "
 
 #define MULTI_PTRS_ARE_ALIASES 1	/* XXX - experimental */
 
-#if defined(BSD) && (BSD >= 199103) && defined(AF_INET6)
-# include <stdlib.h>
-# include <string.h>
-#else
-# include "../conf/portability.h"
-#endif
+#include <stdlib.h>
+#include <string.h>
 
-#if defined(USE_OPTIONS_H)
-# include <../conf/options.h>
-#endif
-
-#ifdef SPRINTF_CHAR
-# define SPRINTF(x) strlen(sprintf/**/x)
-#else
-# define SPRINTF(x) ((size_t)sprintf x)
+#ifdef YP
+#include <rpc/rpc.h>
+#include <rpcsvc/yp_prot.h>
+#include <rpcsvc/ypclnt.h>
 #endif
 
 #define	MAXALIASES	35
@@ -103,6 +102,10 @@ static const char AskedForGot[] =
 
 static char *h_addr_ptrs[MAXADDRS + 1];
 
+#ifdef YP
+static char *__ypdomain;
+#endif
+
 static struct hostent host;
 static char *host_aliases[MAXALIASES];
 static char hostbuf[8*1024];
@@ -110,12 +113,6 @@ static u_char host_addr[16];	/* IPv4 or IPv6 */
 static FILE *hostf = NULL;
 static int stayopen = 0;
 
-static void map_v4v6_address __P((const char *src, char *dst));
-static void map_v4v6_hostent __P((struct hostent *hp, char **bp, int *len));
-
-#ifdef RESOLVSORT
-static void addrsort __P((char **, int));
-#endif
 
 #if PACKETSZ > 1024
 #define	MAXPACKET	PACKETSZ
@@ -134,6 +131,40 @@ typedef union {
 } align;
 
 extern int h_errno;
+
+#ifdef DEBUG
+static void dprintf __P((char *, int));
+#endif
+static struct hostent *getanswer __P((const querybuf *, int,
+    const char *, int));
+static void map_v4v6_address __P((const char *, char *));
+static void map_v4v6_hostent __P((struct hostent *, char **, int *));
+#ifdef RESOLVSORT
+static void addrsort __P((char **, int));
+#endif
+
+struct hostent *gethostbyname __P((const char *));
+struct hostent *gethostbyname2 __P((const char *, int));
+struct hostent *gethostbyaddr __P((const char *, int, int ));
+void _sethtent __P((int));
+void _endhtent __P((void));
+struct hostent *_gethtent __P((void));
+struct hostent *_gethtbyname __P((const char *));
+struct hostent *_gethtbyname2 __P((const char *, int));
+struct hostent *_gethtbyaddr __P((const char *, int, int ));
+void ht_sethostent __P((int));
+void ht_endhostent __P((void));
+struct hostent *ht_gethostbyname __P((char *));
+struct hostent *ht_gethostbyaddr __P((const char *, int, int ));
+struct hostent *gethostent __P((void));
+void dns_service __P((void));
+int dn_skipname __P((const u_char *, const u_char *));
+#ifdef YP
+struct hostent *_yphostent __P((char *));
+struct hostent *_yp_gethtbyaddr __P((const char *, int, int ));
+struct hostent *_yp_gethtbyname __P((const char *));
+#endif
+
 
 #ifdef DEBUG
 static void
@@ -450,15 +481,14 @@ gethostbyname2(name, af)
 	int af;
 {
 	querybuf buf;
-	register const char *cp;
+	const char *cp;
 	char *bp;
-	int n, size, type, len;
-	extern struct hostent *_gethtbyname2();
+	int n, size, type, len, i;
+	char lookups[MAXDNSLUS];
+	struct hostent *hp;
 
-	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
-		h_errno = NETDB_INTERNAL;
-		return (NULL);
-	}
+	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
+		return (_gethtbyname(name));
 
 	switch (af) {
 	case AF_INET:
@@ -554,13 +584,32 @@ gethostbyname2(name, af)
 				break;
 		}
 
-	if ((n = res_search(name, C_IN, type, buf.buf, sizeof(buf))) < 0) {
-		dprintf("res_search failed (%d)\n", n);
-		if (errno == ECONNREFUSED)
-			return (_gethtbyname2(name, af));
-		return (NULL);
+	bcopy(_res.lookups, lookups, sizeof lookups);
+	if (lookups[0] == '\0')
+		strncpy(lookups, "bf", sizeof lookups);
+
+	hp = (struct hostent *)NULL;
+	for (i = 0; i < MAXDNSLUS && hp == NULL && lookups[i]; i++) {
+		switch (lookups[i]) {
+#ifdef YP
+		case 'y':
+			hp = _yp_gethtbyname(name);
+			break;
+#endif
+		case 'b':
+			if ((n = res_search(name, C_IN, T_A, buf.buf,
+			    sizeof(buf))) < 0) {
+				dprintf("res_search failed (%d)\n", n);
+				break;
+			}
+			hp = getanswer(&buf, n, name, type);
+			break;
+		case 'f':
+			hp = _gethtbyname(name);
+			break;
+		}
 	}
-	return (getanswer(&buf, n, name, type));
+	return (hp);
 }
 
 struct hostent *
@@ -571,22 +620,15 @@ gethostbyaddr(addr, len, af)
 	const u_char *uaddr = (const u_char *)addr;
 	static const u_char mapped[] = { 0,0, 0,0, 0,0, 0,0, 0,0, 0xff,0xff };
 	static const u_char tunnelled[] = { 0,0, 0,0, 0,0, 0,0, 0,0, 0,0 };
-	int n, size;
+	int n, size, i;
 	querybuf buf;
-	register struct hostent *hp;
+	struct hostent *hp;
 	char qbuf[MAXDNAME+1], *qp;
-#ifdef SUNSECURITY
-	register struct hostent *rhp;
-	char **haddr;
-	u_long old_options;
-	char hname2[MAXDNAME+1];
-#endif /*SUNSECURITY*/
-	extern struct hostent *_gethtbyaddr();
+	char lookups[MAXDNSLUS];
 	
-	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
-		h_errno = NETDB_INTERNAL;
-		return (NULL);
-	}
+	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
+		return (_gethtbyaddr(addr, len, af));
+		
 	if (af == AF_INET6 && len == IN6ADDRSZ &&
 	    (!bcmp(uaddr, mapped, sizeof mapped) ||
 	     !bcmp(uaddr, tunnelled, sizeof tunnelled))) {
@@ -624,67 +666,56 @@ gethostbyaddr(addr, len, af)
 	case AF_INET6:
 		qp = qbuf;
 		for (n = IN6ADDRSZ - 1; n >= 0; n--) {
-			qp += SPRINTF((qp, "%x.%x.",
+			qp += sprintf(qp, "%x.%x.",
 				       uaddr[n] & 0xf,
-				       (uaddr[n] >> 4) & 0xf));
+				       (uaddr[n] >> 4) & 0xf);
 		}
 		strcpy(qp, "ip6.int");
 		break;
 	default:
 		abort();
 	}
-	n = res_query(qbuf, C_IN, T_PTR, (u_char *)buf.buf, sizeof buf.buf);
-	if (n < 0) {
-		dprintf("res_query failed (%d)\n", n);
-		if (errno == ECONNREFUSED)
-			return (_gethtbyaddr(addr, len, af));
-		return (NULL);
-	}
-	if (!(hp = getanswer(&buf, n, qbuf, T_PTR)))
-		return (NULL);	/* h_errno was set by getanswer() */
-#ifdef SUNSECURITY
-	if (af == AF_INET) {
-	    /*
-	     * turn off search as the name should be absolute,
-	     * 'localhost' should be matched by defnames
-	     */
-	    strncpy(hname2, hp->h_name, MAXDNAME);
-	    hname2[MAXDNAME] = '\0';
-	    old_options = _res.options;
-	    _res.options &= ~RES_DNSRCH;
-	    _res.options |= RES_DEFNAMES;
-	    if (!(rhp = gethostbyname(hname2))) {
-		syslog(LOG_NOTICE|LOG_AUTH,
-		       "gethostbyaddr: No A record for %s (verifying [%s])",
-		       hname2, inet_ntoa(*((struct in_addr *)addr)));
-		_res.options = old_options;
-		h_errno = HOST_NOT_FOUND;
-		return (NULL);
-	    }
-	    _res.options = old_options;
-	    for (haddr = rhp->h_addr_list; *haddr; haddr++)
-		if (!memcmp(*haddr, addr, INADDRSZ))
+
+	bcopy(_res.lookups, lookups, sizeof lookups);
+	if (lookups[0] == '\0')
+		strncpy(lookups, "bf", sizeof lookups);
+
+	hp = (struct hostent *)NULL;
+	for (i = 0; i < MAXDNSLUS && hp == NULL && lookups[i]; i++) {
+		switch (lookups[i]) {
+#ifdef YP
+		case 'y':
+			hp = _yp_gethtbyaddr(addr, len, af);
 			break;
-	    if (!*haddr) {
-		syslog(LOG_NOTICE|LOG_AUTH,
-		       "gethostbyaddr: A record of %s != PTR record [%s]",
-		       hname2, inet_ntoa(*((struct in_addr *)addr)));
-		h_errno = HOST_NOT_FOUND;
-		return (NULL);
-	    }
+#endif
+		case 'b':
+			n = res_query(qbuf, C_IN, T_PTR, (u_char *)&buf,
+			    sizeof(buf));
+			if (n < 0) {
+				dprintf("res_query failed (%d)\n", n);
+				break;
+			}
+			hp = getanswer(&buf, n, qbuf, T_PTR);
+			if (hp == NULL)
+				break;
+			hp->h_addrtype = af;
+			hp->h_length = len;
+			bcopy(addr, host_addr, len);
+			h_addr_ptrs[0] = (char *)&host_addr;
+			h_addr_ptrs[1] = (char *)0;
+			if (af == AF_INET && (_res.options & RES_USE_INET6)) {
+				map_v4v6_address((char*)host_addr,
+				    (char*)host_addr);
+				hp->h_addrtype = AF_INET6;
+				hp->h_length = IN6ADDRSZ;
+			}
+			h_errno = NETDB_SUCCESS;
+			break;
+		case 'f':
+			hp = _gethtbyaddr(addr, len, af);
+			break;
+		}
 	}
-#endif /*SUNSECURITY*/
-	hp->h_addrtype = af;
-	hp->h_length = len;
-	bcopy(addr, host_addr, len);
-	h_addr_ptrs[0] = (char *)host_addr;
-	h_addr_ptrs[1] = NULL;
-	if (af == AF_INET && (_res.options & RES_USE_INET6)) {
-		map_v4v6_address((char*)host_addr, (char*)host_addr);
-		hp->h_addrtype = AF_INET6;
-		hp->h_length = IN6ADDRSZ;
-	}
-	h_errno = NETDB_SUCCESS;
 	return (hp);
 }
 
@@ -756,7 +787,7 @@ _gethtent()
 		cp++;
 	host.h_name = cp;
 	q = host.h_aliases = host_aliases;
-	if (cp = strpbrk(cp, " \t"))
+	if ((cp = strpbrk(cp, " \t")) != NULL)
 		*cp++ = '\0';
 	while (cp && *cp) {
 		if (*cp == ' ' || *cp == '\t') {
@@ -765,7 +796,7 @@ _gethtent()
 		}
 		if (q < &host_aliases[MAXALIASES - 1])
 			*q++ = cp;
-		if (cp = strpbrk(cp, " \t"))
+		if ((cp = strpbrk(cp, " \t")) != NULL)
 			*cp++ = '\0';
 	}
 	*q = NULL;
@@ -777,7 +808,6 @@ struct hostent *
 _gethtbyname(name)
 	const char *name;
 {
-	extern struct hostent *_gethtbyname2();
 	struct hostent *hp;
 
 	if (_res.options & RES_USE_INET6) {
@@ -797,7 +827,7 @@ _gethtbyname2(name, af)
 	register char **cp;
 	
 	_sethtent(0);
-	while (p = _gethtent()) {
+	while ((p = _gethtent()) != NULL) {
 		if (p->h_addrtype != af)
 			continue;
 		if (strcasecmp(p->h_name, name) == 0)
@@ -819,7 +849,7 @@ _gethtbyaddr(addr, len, af)
 	register struct hostent *p;
 
 	_sethtent(0);
-	while (p = _gethtent())
+	while ((p = _gethtent()) != NULL)
 		if (p->h_addrtype == af && !bcmp(p->h_addr, addr, len))
 			break;
 	_endhtent();
@@ -969,3 +999,133 @@ dn_skipname(comp_dn, eom)
 	return (__dn_skipname(comp_dn, eom));
 }
 #endif /*old-style libc with yp junk in it*/
+
+#ifdef YP
+struct hostent *
+_yphostent(line)
+	char *line;
+{
+	static struct in_addr host_addrs[MAXADDRS];
+	char *p = line;
+	char *cp, **q;
+	char **hap;
+	struct in_addr *buf;
+	int more;
+
+	host.h_name = NULL;
+	host.h_addr_list = h_addr_ptrs;
+	host.h_length = sizeof(u_int32_t);
+	host.h_addrtype = AF_INET;
+	hap = h_addr_ptrs;
+	buf = host_addrs;
+	q = host.h_aliases = host_aliases;
+
+nextline:
+	more = 0;
+	cp = strpbrk(p, " \t");
+	if (cp == NULL) {
+		if (host.h_name == NULL)
+			return (NULL);
+		else
+			goto done;
+	}
+	*cp++ = '\0';
+
+	*hap++ = (char *)buf;
+	(void) inet_aton(p, buf++);
+
+	while (*cp == ' ' || *cp == '\t')
+		cp++;
+	p = cp;
+	cp = strpbrk(p, " \t\n");
+	if (cp != NULL) {
+		if (*cp == '\n')
+			more = 1;
+		*cp++ = '\0';
+	}
+	if (!host.h_name)
+		host.h_name = p;
+	else if (strcmp(host.h_name, p)==0)
+		;
+	else if (q < &host_aliases[MAXALIASES - 1])
+		*q++ = p;
+	p = cp;
+	if (more)
+		goto nextline;
+
+	while (cp && *cp) {
+		if (*cp == ' ' || *cp == '\t') {
+			cp++;
+			continue;
+		}
+		if (*cp == '\n') {
+			cp++;
+			goto nextline;
+		}
+		if (q < &host_aliases[MAXALIASES - 1])
+			*q++ = cp;
+		cp = strpbrk(cp, " \t");
+		if (cp != NULL)
+			*cp++ = '\0';
+	}
+done:
+	*q = NULL;
+	*hap = NULL;
+	return (&host);
+}
+
+struct hostent *
+_yp_gethtbyaddr(addr, len, type)
+	const char *addr;
+	int len, type;
+{
+	struct hostent *hp = (struct hostent *)NULL;
+	static char *__ypcurrent;
+	int __ypcurrentlen, r;
+	char name[sizeof("xxx.xxx.xxx.xxx") + 1];
+	
+	if (!__ypdomain) {
+		if (_yp_check(&__ypdomain) == 0)
+			return (hp);
+	}
+	(void)snprintf(name, sizeof name, "%u.%u.%u.%u",
+		((unsigned)addr[0] & 0xff),
+		((unsigned)addr[1] & 0xff),
+		((unsigned)addr[2] & 0xff),
+		((unsigned)addr[3] & 0xff));
+	if (__ypcurrent)
+		free(__ypcurrent);
+	__ypcurrent = NULL;
+	r = yp_match(__ypdomain, "hosts.byaddr", name,
+		strlen(name), &__ypcurrent, &__ypcurrentlen);
+	if (r==0)
+		hp = _yphostent(__ypcurrent);
+	if (hp==NULL)
+		h_errno = HOST_NOT_FOUND;
+	return (hp);
+}
+
+struct hostent *
+_yp_gethtbyname(name)
+	const char *name;
+{
+	struct hostent *hp = (struct hostent *)NULL;
+	static char *__ypcurrent;
+	int __ypcurrentlen, r;
+
+	if (!__ypdomain) {
+		if (_yp_check(&__ypdomain) == 0)
+			return (hp);
+	}
+	if (__ypcurrent)
+		free(__ypcurrent);
+	__ypcurrent = NULL;
+	r = yp_match(__ypdomain, "hosts.byname", name,
+		strlen(name), &__ypcurrent, &__ypcurrentlen);
+	if (r==0)
+		hp = _yphostent(__ypcurrent);
+	if (hp==NULL)
+		h_errno = HOST_NOT_FOUND;
+	return (hp);
+}
+#endif

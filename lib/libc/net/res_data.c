@@ -1,4 +1,4 @@
-/*	$NetBSD: res_data.c,v 1.2 1997/07/13 19:58:00 christos Exp $	*/
+/*	$NetBSD: res_data.c,v 1.3 1997/07/20 13:33:29 mrg Exp $	*/
 
 /*
  * ++Copyright++ 1995
@@ -57,7 +57,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: res_data.c,v 1.2 1997/07/13 19:58:00 christos Exp $");
+__RCSID("$NetBSD: res_data.c,v 1.3 1997/07/20 13:33:29 mrg Exp $");
+#if 0
+static char rcsid[] = "$Id: res_data.c,v 8.2 1996/08/05 08:31:35 vixie Exp ";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
