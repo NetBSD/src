@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.5 2003/01/17 00:21:37 jonathan Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.6 2003/01/17 11:17:08 fvdl Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2243,6 +2243,7 @@ struct bge_softc {
 	bus_dma_tag_t		bge_dmatag;
 	u_int32_t		bge_asicrev;
 	u_int32_t		bge_quirks;
+	u_int32_t		bge_local_ctrl_reg;
 	struct bge_ring_data	*bge_rdata;	/* rings */
 	struct bge_chain_data	bge_cdata;	/* mbufs */
 	bus_dmamap_t		bge_ring_map;
