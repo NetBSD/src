@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kinc.mk,v 1.1 1998/06/12 23:28:53 cgd Exp $
+#	$NetBSD: bsd.kinc.mk,v 1.2 1998/09/29 11:47:51 christos Exp $
 
 # Notes:
 #	* no obj dir support
@@ -88,10 +88,10 @@ incinstall:: ${DESTDIR}${INCSDIR}/$I
 .endif
 ${DESTDIR}${INCSDIR}/$I: ${DESTDIR}${INCSDIR} $I 
 	@cmp -s $I ${.TARGET} > /dev/null 2>&1 || \
-	    (echo "${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
-		$I ${.TARGET}" && \
-	     ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
-		$I ${.TARGET})
+	    (echo "${INSTALL} ${PRESERVE} -c -o ${BINOWN} -g ${BINGRP} \
+		-m ${NONBINMODE} $I ${.TARGET}" && \
+	     ${INSTALL} ${PRESERVE} -c -o ${BINOWN} -g ${BINGRP} \
+		-m ${NONBINMODE} $I ${.TARGET})
 .endfor
 .endif
 
