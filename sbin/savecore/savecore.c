@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.45 2000/12/07 03:55:44 wiz Exp $	*/
+/*	$NetBSD: savecore.c,v 1.46 2000/12/08 22:03:23 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.45 2000/12/07 03:55:44 wiz Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.46 2000/12/08 22:03:23 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -279,6 +279,10 @@ kmem_setup(void)
 		if (verbose)
 		    syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_kern));
 		exit(1);
+	}
+	if (dumplo == -1) {
+	    syslog(LOG_WARNING, "no core dump (invalid dumplo)");
+	    exit(1);
 	}
 	dumplo *= DEV_BSIZE;
 	if (verbose)
