@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.5 1996/09/28 19:21:41 christos Exp $	*/
+/*	$NetBSD: fsck.c,v 1.6 1996/09/28 19:23:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -38,7 +38,7 @@
  *
  */
 
-static char rcsid[] = "$NetBSD: fsck.c,v 1.5 1996/09/28 19:21:41 christos Exp $";
+static char rcsid[] = "$NetBSD: fsck.c,v 1.6 1996/09/28 19:23:29 christos Exp $";
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -175,7 +175,7 @@ main(argc, argv)
 				    *argv);
 		}
 
-		rval |= checkfs(type, blockcheck(spec), *argv, NULL);
+		rval |= checkfs(type, blockcheck(spec), *argv, NULL, NULL);
 	}
 
 	return rval;
@@ -200,7 +200,7 @@ isok(fs)
 
 
 static int
-checkfs(vfstype, spec, mntpt, ap, pidp)
+checkfs(vfstype, spec, mntpt, auxarg, pidp)
 	const char *vfstype, *spec, *mntpt;
 	void *auxarg;
 	pid_t *pidp;
