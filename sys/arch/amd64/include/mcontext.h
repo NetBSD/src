@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.1 2003/04/26 18:39:44 fvdl Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.2 2003/10/06 22:53:48 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,11 +38,6 @@
 
 #ifndef _AMD64_MCONTEXT_H_
 #define _AMD64_MCONTEXT_H_
-
-/*
- * Layout of mcontext_t according to the System V Application Binary Interface,
- * Intel386(tm) Architecture Processor Supplement, Fourth Edition.
- */  
 
 /*
  * General register state
@@ -103,5 +98,11 @@ typedef struct {
 #ifdef _KERNEL
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_URSP])
 #endif
+
+/*
+ * mcontext extensions to handle signal delivery.
+ */
+#define _UC_SETSTACK	0x00010000
+#define _UC_CLRSTACK	0x00020000
 
 #endif	/* !_AMD64_MCONTEXT_H_ */
