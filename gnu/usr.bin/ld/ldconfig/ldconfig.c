@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ldconfig.c,v 1.11 1995/08/25 10:10:15 pk Exp $
+ *	$Id: ldconfig.c,v 1.12 1995/08/25 11:35:35 pk Exp $
  */
 
 #include <sys/param.h>
@@ -339,20 +339,25 @@ buildhints()
 		bp->hi_ndewey = shp->ndewey;
 	}
 
-	umask(0222);
-	tmpfile = concat(_PATH_LD_HINTS, "+", "");
+	tmpfile = concat(_PATH_LD_HINTS, ".XXXXXX", "");
+	if ((tmpfile = mktemp(tmpfile)) == NULL) {
+		warn("%s", tmpfile);
+		return -1;
+	}
+
+	umask(0);	/* Create with exact permissions */
 	if ((fd = open(tmpfile, O_RDWR|O_CREAT|O_TRUNC, 0444)) == -1) {
 		warn("%s", _PATH_LD_HINTS);
 		return -1;
 	}
 
 	if (write(fd, &hdr, sizeof(struct hints_header)) !=
-						sizeof(struct hints_header)) {
+	    sizeof(struct hints_header)) {
 		warn("%s", _PATH_LD_HINTS);
 		return -1;
 	}
 	if (write(fd, blist, hdr.hh_nbucket * sizeof(struct hints_bucket)) !=
-				hdr.hh_nbucket * sizeof(struct hints_bucket)) {
+		  hdr.hh_nbucket * sizeof(struct hints_bucket)) {
 		warn("%s", _PATH_LD_HINTS);
 		return -1;
 	}
