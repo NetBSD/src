@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.24 2000/09/20 19:53:35 hubertf Exp $	*/
+/*	$NetBSD: target.c,v 1.25 2000/09/26 13:26:02 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.24 2000/09/20 19:53:35 hubertf Exp $");
+__RCSID("$NetBSD: target.c,v 1.25 2000/09/26 13:26:02 fvdl Exp $");
 #endif
 
 /*
@@ -75,7 +75,7 @@ int must_mount_root __P((void));
 static void make_prefixed_dir __P((const char *prefix, const char *path));
 static int do_target_chdir __P((const char *dir, int flag));
 static const char* concat_paths __P((const char *prefix, const char *suffix));
-int	target_test(const char *test, const char *path);
+int	target_test(unsigned int mode, const char *path);
 int	target_test_dir __P((const char *path));	/* deprecated */
 int	target_test_file __P((const char *path));	/* deprecated */
 int	target_test_symlink __P((const char *path));	/* deprecated */
@@ -692,14 +692,14 @@ target_collect_file(kind, buffer, name)
  * by running  test "testflag" on the expanded target pathname.
  */
 int
-target_test(test, path)
-	const char *test;
+target_test(mode, path)
+	unsigned int mode;
 	const char *path;
 {
 	const char *realpath = target_expand(path);
 	register int result;
 
-	result = run_prog(0, 0, NULL, "test %s %s", test, realpath);
+	result = !file_mode_match(realpath, mode);
 	if (scripting)
 		(void)fprintf(script, "if [ $? != 0 ]; then echo \"%s does not exist!\"; fi\n", realpath);
 
@@ -719,7 +719,7 @@ target_test_dir(path)
 	const char *path;
 {
 
- 	return target_test("-d", path);
+ 	return target_test(S_IFDIR, path);
 }
 
 /*
@@ -732,7 +732,7 @@ target_test_file(path)
 	const char *path;
 {
 
- 	return target_test("-f", path);
+ 	return target_test(S_IFREG, path);
 }
 
 int
@@ -740,7 +740,7 @@ target_test_symlink(path)
 	const char *path;
 {
 
- 	return target_test("-h", path);
+ 	return target_test(S_IFLNK, path);
 }
 
 int target_file_exists_p(path)

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.53 2000/08/31 01:10:43 hubertf Exp $	*/
+/*	$NetBSD: util.c,v 1.54 2000/09/26 13:26:02 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -69,29 +69,30 @@ int	extract_file __P((char *path));
 int	extract_dist __P((void));
 int	cleanup_dist __P((const char *path));
 int	distribution_sets_exist_p __P((const char *path));
-static int check_for __P((const char *type, const char *pathname));
+static int check_for __P((unsigned int mode, const char *pathname));
 
-/*
- * XXX these are WAY bogus!
- */
 int
 dir_exists_p(path)
 	const char *path;
 {
-	register int result;
-
-	result = (run_prog(0, 0, NULL, "test -d %s", path) == 0);
-	return (result);
+	return file_mode_match(path, S_IFDIR);
 }
 
 int
 file_exists_p(path)
 	const char *path;
 {
-	register int result;
+	return file_mode_match(path, S_IFREG);
+}
 
-	result = (run_prog(0, 0, NULL, "test -f %s", path) == 0);
-	return (result);
+int
+file_mode_match(path, mode)
+	const char *path;
+	unsigned int mode;
+{
+	struct stat st;
+
+	return (stat(path, &st) == 0 && (st.st_mode & mode) != 0);
 }
 
 int
@@ -796,26 +797,26 @@ get_and_unpack_sets(success_msg, failure_msg)
  */
 
 /* test flag and pathname to check for after unpacking. */
-struct check_table { const char *testarg; const char *path;} checks[] = {
-  { "-f", "/netbsd" },
-  { "-d", "/etc" },
-  { "-f", "/etc/fstab" },
-  { "-f", "/sbin/init" },
-  { "-f", "/bin/sh" },
-  { "-f", "/etc/rc" },
-  { "-f", "/etc/rc.subr" },
-  { "-f", "/etc/rc.conf" },
-  { "-d" "/dev" },
-  { "-c", "/dev/console" },
+struct check_table { unsigned int mode; const char *path;} checks[] = {
+  { S_IFREG, "/netbsd" },
+  { S_IFDIR, "/etc" },
+  { S_IFREG, "/etc/fstab" },
+  { S_IFREG, "/sbin/init" },
+  { S_IFREG, "/bin/sh" },
+  { S_IFREG, "/etc/rc" },
+  { S_IFREG, "/etc/rc.subr" },
+  { S_IFREG, "/etc/rc.conf" },
+  { S_IFDIR, "/dev" },
+  { S_IFCHR, "/dev/console" },
 /* XXX check for rootdev in target /dev? */
-  { "-f", "/etc/fstab" },
-  { "-f", "/sbin/fsck" },
-  { "-f", "/sbin/fsck_ffs" },
-  { "-f", "/sbin/mount" },
-  { "-f", "/sbin/mount_ffs" },
-  { "-f", "/sbin/mount_nfs" },
+  { S_IFREG, "/etc/fstab" },
+  { S_IFREG, "/sbin/fsck" },
+  { S_IFREG, "/sbin/fsck_ffs" },
+  { S_IFREG, "/sbin/mount" },
+  { S_IFREG, "/sbin/mount_ffs" },
+  { S_IFREG, "/sbin/mount_nfs" },
 #if defined(DEBUG) || defined(DEBUG_CHECK)
-  { "-f", "/foo/bar" },		/* bad entry to exercise warning */
+  { S_IFREG, "/foo/bar" },		/* bad entry to exercise warning */
 #endif
   { 0, 0 }
   
@@ -825,13 +826,13 @@ struct check_table { const char *testarg; const char *path;} checks[] = {
  * Check target for a single file.
  */
 static int
-check_for(type, pathname)
-	const char *type;
+check_for(mode, pathname)
+	unsigned int mode;
 	const char *pathname;
 {
 	int found; 
 
-	found = (target_test(type, pathname) == 0);
+	found = (target_test(mode, pathname) == 0);
 	if (found == 0) 
 		msg_display(MSG_rootmissing, pathname);
 	return found;
@@ -848,7 +849,7 @@ sanity_check()
 	struct check_table *p;
 
 	for (p = checks; p->path; p++) {
-		target_ok = target_ok && check_for(p->testarg, p->path);
+		target_ok = target_ok && check_for(p->mode, p->path);
 	}
 	if (target_ok)
 		return 0;	    

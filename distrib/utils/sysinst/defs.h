@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.57 2000/09/20 19:53:35 hubertf Exp $	*/
+/*	$NetBSD: defs.h,v 1.58 2000/09/26 13:26:02 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -312,6 +312,7 @@ void	do_reinstall_sets __P((void));
 int	askyesno __P((int reverse));
 int	dir_exists_p(const char *path);
 int	file_exists_p(const char *path);
+int	file_mode_match(const char *path, unsigned int mode);
 int	distribution_sets_exist_p __P((const char *path));
 void	get_ramsize __P((void));
 void	ask_sizemult __P((int));
@@ -350,7 +351,7 @@ void	dup_file_into_target __P((const char *filename));
 void	mv_within_target_or_die __P((const char *from, const char *to));
 int	cp_within_target __P((const char *frompath, const char *topath));
 int	target_mount __P((const char *fstype, const char *from, const char* on));
-int	target_test __P((const char*, const char*));
+int	target_test __P((unsigned int, const char*));
 int	target_dir_exists_p __P((const char *path));
 int	target_file_exists_p __P((const char *path));
 int	target_symlink_exists_p __P((const char *path));
