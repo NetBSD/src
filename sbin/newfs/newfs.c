@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.33 1998/03/18 17:10:16 bouyer Exp $	*/
+/*	$NetBSD: newfs.c,v 1.34 1998/07/28 19:22:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.33 1998/03/18 17:10:16 bouyer Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.34 1998/07/28 19:22:55 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -381,9 +381,11 @@ main(argc, argv)
 		/*
 		 * No path prefix; try /dev/r%s then /dev/%s.
 		 */
-		(void)sprintf(device, "%sr%s", _PATH_DEV, special);
+		(void)snprintf(device, sizeof(device), "%sr%s", _PATH_DEV,
+		    special);
 		if (stat(device, &st) == -1)
-			(void)sprintf(device, "%s%s", _PATH_DEV, special);
+			(void)snprintf(device, sizeof(device), "%s%s",
+			    _PATH_DEV, special);
 		special = device;
 	}
 	if (Nflag) {
@@ -547,10 +549,12 @@ havelabel:
 			perror("mfs");
 			exit(10);
 		case 0:
-			sprintf(mountfromname, "mfs:%d", getpid());
+			(void)snprintf(mountfromname, sizeof(mountfromname),
+			    "mfs:%d", getpid());
 			break;
 		default:
-			sprintf(mountfromname, "mfs:%d", pid);
+			(void)snprintf(mountfromname, sizeof(mountfromname),
+			    "mfs:%d", pid);
 			for (;;) {
 				/*
 				 * spin until the mount succeeds

@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.5 1998/03/01 02:20:25 fvdl Exp $	*/
+/*	$NetBSD: pass5.c,v 1.6 1998/07/28 19:22:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.5 1998/03/01 02:20:25 fvdl Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.6 1998/07/28 19:22:54 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -186,7 +186,8 @@ pass5()
 					nifree,
 					ndirs);
 		}
-		snprintf(msg, 255, "SUMMARY INFORMATIONS WRONG FOR CG #%d", c);
+		(void)snprintf(msg, sizeof(msg),
+		    "SUMMARY INFORMATIONS WRONG FOR CG #%d", c);
 		if ((fs2h16(fs->e2fs_gd[c].ext2bgd_nbfree) != nbfree ||
 			fs2h16(fs->e2fs_gd[c].ext2bgd_nifree) != nifree ||
 			fs2h16(fs->e2fs_gd[c].ext2bgd_ndirs) != ndirs) &&
@@ -204,7 +205,8 @@ pass5()
 			print_bmap(bbmap, fs->e2fs_bsize);
 		}
 
-		snprintf(msg, 255, "BLK(S) MISSING IN BIT MAPS #%d", c);
+		(void)snprintf(msg, sizeof(msg),
+		    "BLK(S) MISSING IN BIT MAPS #%d", c);
 		if (memcmp(blk_bitmap->b_un.b_buf, bbmap, fs->e2fs_bsize) &&
 			dofix(&idesc[1], msg)) {
 			memcpy(blk_bitmap->b_un.b_buf, bbmap, fs->e2fs_bsize);
@@ -216,7 +218,8 @@ pass5()
 			printf("ibmap:\n");
 			print_bmap(ibmap, fs->e2fs_bsize);
 		}
-		snprintf(msg, 255, "INODE(S) MISSING IN BIT MAPS #%d", c);
+		(void)snprintf(msg, sizeof(msg),
+		    "INODE(S) MISSING IN BIT MAPS #%d", c);
 		if (memcmp(ino_bitmap->b_un.b_buf, ibmap, fs->e2fs_bsize) &&
 			dofix(&idesc[1], msg)) {
 			memcpy(ino_bitmap->b_un.b_buf, ibmap, fs->e2fs_bsize);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.15 1998/07/26 20:57:54 mycroft Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.16 1998/07/28 19:22:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.15 1998/07/26 20:57:54 mycroft Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.16 1998/07/28 19:22:56 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,7 +112,8 @@ again:
 		if (*special != '/') {
 			if (*special == 'r')
 				special++;
-			(void)sprintf(device, "%s/%s", _PATH_DEV, special);
+			(void)snprintf(device, sizeof(device), "%s/%s",
+			    _PATH_DEV, special);
 			special = device;
 			goto again;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: column.c,v 1.7 1997/10/18 13:07:39 lukem Exp $	*/
+/*	$NetBSD: column.c,v 1.8 1998/07/28 19:26:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)column.c	8.4 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: column.c,v 1.7 1997/10/18 13:07:39 lukem Exp $");
+__RCSID("$NetBSD: column.c,v 1.8 1998/07/28 19:26:09 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -82,7 +82,7 @@ main(argc, argv)
 	struct winsize win;
 	FILE *fp;
 	int ch, tflag, xflag;
-	char *p;
+	const char *p;
 
 	if (ioctl(1, TIOCGWINSZ, &win) == -1 || !win.ws_col) {
 		if ((p = getenv("COLUMNS")) != NULL)

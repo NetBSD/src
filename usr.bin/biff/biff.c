@@ -1,4 +1,4 @@
-/*	$NetBSD: biff.c,v 1.5 1997/10/18 12:54:24 lukem Exp $	*/
+/*	$NetBSD: biff.c,v 1.6 1998/07/28 19:26:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)biff.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: biff.c,v 1.5 1997/10/18 12:54:24 lukem Exp $");
+__RCSID("$NetBSD: biff.c,v 1.6 1998/07/28 19:26:09 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ main(argc, argv)
 {
 	struct stat sb;
 	int ch;
-	char *name;
+	const char *name;
 
 
 	while ((ch = getopt(argc, argv, "")) != -1)

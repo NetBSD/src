@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.12 1998/01/22 18:48:43 ws Exp $	*/
+/*	$NetBSD: dir.c,v 1.13 1998/07/28 19:22:55 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dir.c,v 1.12 1998/01/22 18:48:43 ws Exp $");
+__RCSID("$NetBSD: dir.c,v 1.13 1998/07/28 19:22:55 mycroft Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -993,7 +993,7 @@ reconnect(dosfs, boot, fat, head)
 	boot->NumFiles++;
 	/* Ensure uniqueness of entry here!				XXX */
 	memset(&d, 0, sizeof d);
-	sprintf(d.name, "%u", head);
+	(void)snprintf(d.name, sizeof(d.name), "%u", head);
 	d.flags = 0;
 	d.head = head;
 	d.size = fat[head].length * boot->ClusterSize;
