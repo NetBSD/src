@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.55 1997/07/31 04:08:27 perry Exp $
+#	$NetBSD: MAKEDEV,v 1.56 1997/08/04 03:50:26 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -152,13 +152,16 @@ wt*)
 	case $i in
 	wt*) name=wt;  unit=${i#wt};	chr=10;	blk=3;;
 	esac
-	rm -f $name$unit n$name$unit r$name$unit nr$name$unit
-	mknod $name$unit	b $blk $(($unit * 8 + 0))
-	mknod n$name$unit	b $blk $(($unit * 8 + 4))
-	mknod r$name$unit	c $chr $(($unit * 8 + 0))
-	mknod nr$name$unit	c $chr $(($unit * 8 + 4))
-	chgrp operator $name$unit n$name$unit r$name$unit nr$name$unit
-	chmod 640 $name$unit n$name$unit r$name$unit nr$name$unit
+	for sub in $unit $(($unit+8)) $(($unit+16))
+	do
+	    rm -f $name$sub n$name$sub r$name$sub nr$name$sub
+	    mknod $name$sub	b $blk $(($sub + 0))
+	    mknod n$name$sub	b $blk $(($sub + 4))
+	    mknod r$name$sub	c $chr $(($sub + 0))
+	    mknod nr$name$sub	c $chr $(($sub + 4))
+	    chgrp operator $name$sub n$name$sub r$name$sub nr$name$sub
+	    chmod 640 $name$sub n$name$sub r$name$sub nr$name$sub
+	done
 	;;
 
 md*)
