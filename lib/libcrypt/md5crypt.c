@@ -1,4 +1,4 @@
-/*	$NetBSD: md5crypt.c,v 1.2 2000/08/03 08:32:36 ad Exp $	*/
+/*	$NetBSD: md5crypt.c,v 1.3 2000/12/03 13:01:37 ad Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: md5crypt.c,v 1.2 2000/08/03 08:32:36 ad Exp $");
+__RCSID("$NetBSD: md5crypt.c,v 1.3 2000/12/03 13:01:37 ad Exp $");
 #endif /* not lint */
 
 #include <unistd.h>
@@ -46,8 +46,6 @@ to64(char *s, u_int32_t v, int n)
 
 /*
  * MD5 password encryption.
- *
- * XXX This is dumb. NetBSD includes it for NIS compatibility. [ad]
  */
 char *
 __md5crypt(const char *pw, const char *salt)
