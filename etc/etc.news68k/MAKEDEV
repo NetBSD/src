@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.19 2002/06/18 13:40:27 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.20 2002/06/19 15:08:41 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -369,7 +369,7 @@ systrace)
 
 local)
 	umask 0
-	sh $0.local
+	sh $0.local all
 	;;
 
 *)
