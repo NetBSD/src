@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.19 2004/03/15 04:42:48 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.20 2004/03/15 04:44:30 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -112,3 +112,9 @@ lib/libc/net/nsparser.y			1.9
 	Add '0ption never-interactive' to nslexer.l, to prevent isatty() from
 	being called unnecessarily.
 	[lukem, ticket #1601]
+
+lib/libc/net/getnetnamadr.c			1.28
+
+	Use the correct parameters when building the YP map name in 
+	_yp_getnetbyaddr(). Fixes getnetbyaddr() when reading from YP.
+	[lukem, ticket #1602]
