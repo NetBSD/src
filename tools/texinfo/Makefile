@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/10/04 17:55:16 tv Exp $
+#	$NetBSD: Makefile,v 1.3 2001/10/08 22:19:55 tv Exp $
 
 .include <bsd.own.mk>	# for TOOLDIR
 
@@ -30,14 +30,14 @@ texinfo.configure:
 
 texinfo.all: texinfo.configure
 	cd texinfo && \
-		PATH="${TOOLDIR}/bin:$$PATH" DESTDIR= \
-		${MAKE} all LEX=true BISON=true
+		PATH="${TOOLDIR}/bin:$$PATH" \
+		${MAKE} all LEX=true BISON=true DESTDIR=
 
 texinfo.install:
 .for d in makeinfo util
 	cd texinfo/${d} && \
-		PATH="${TOOLDIR}/bin:$$PATH" DESTDIR= \
-		${MAKE} install LEX=true BISON=true
+		PATH="${TOOLDIR}/bin:$$PATH" \
+		${MAKE} install LEX=true BISON=true DESTDIR=
 .endfor
 
 texinfo.clean:
