@@ -1,3 +1,5 @@
+/* $NetBSD: list.c,v 1.3 2003/10/11 09:55:58 jdolecek Exp $ */
+
 /*      list.c: vinum interface program, list routines
  */
 /*-
@@ -39,11 +41,14 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: list.c,v 1.2 2003/10/10 21:59:09 matt Exp $
+ * $Id: list.c,v 1.3 2003/10/11 09:55:58 jdolecek Exp $
  * $FreeBSD$
  */
 
 #include "vext.h"
+
+__RCSID("$NetBSD: list.c,v 1.3 2003/10/11 09:55:58 jdolecek Exp $");
+
 #include <sys/utsname.h>
 #include <dev/vinum/request.h>
 

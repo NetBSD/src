@@ -1,3 +1,5 @@
+/* $NetBSD: v.c,v 1.2 2003/10/11 09:55:58 jdolecek Exp $ */
+
 /* vinum.c: vinum interface program */
 /*-
  * Copyright (c) 1997, 1998
@@ -36,11 +38,13 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: v.c,v 1.1.1.1 2003/10/10 03:14:30 grog Exp $
+ * $Id: v.c,v 1.2 2003/10/11 09:55:58 jdolecek Exp $
  * $FreeBSD$
  */
 
 #include "vext.h"
+
+__RCSID("$NetBSD: v.c,v 1.2 2003/10/11 09:55:58 jdolecek Exp $");
 
 FILE *cf;						    /* config file handle */
 FILE *History;						    /* history file */
