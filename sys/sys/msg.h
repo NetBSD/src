@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.h,v 1.7 1995/03/26 20:24:26 jtc Exp $	*/
+/*	$NetBSD: msg.h,v 1.8 1995/07/11 18:16:20 jtc Exp $	*/
 
 /*
  * SVID compatible msg.h file
@@ -73,6 +73,8 @@ struct mymsg {
 	char	mtext[1];	/* message body */
 };
 
+
+#ifdef _KERNEL
 /*
  * Based on the configuration parameters described in an SVR2 (yes, two)
  * config(1m) man page.
@@ -93,7 +95,6 @@ struct msginfo {
 };
 struct msginfo	msginfo;
 
-#ifdef _KERNEL
 #ifndef MSGSSZ
 #define MSGSSZ	8		/* Each segment must be 2^N long */
 #endif
