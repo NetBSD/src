@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dc.c	8.2 (Berkeley) 11/30/93
- *      $Id: dc.c,v 1.6 1994/06/02 06:14:59 glass Exp $
+ *      $Id: dc.c,v 1.7 1994/06/15 05:18:38 glass Exp $
  */
 
 /*
@@ -487,14 +487,12 @@ dcrint(unit)
 	register dcregs *dcaddr;
 	register struct tty *tp;
 	register int c, cc;
-	register struct tty *tp0;
 	int overrun = 0;
 
 	dcaddr = (dcregs *)dcpdma[unit].p_addr;
-	tp0 = dc_tty[unit];
 	while ((c = dcaddr->dc_rbuf) < 0) {	/* char present */
 		cc = c & 0xff;
-		tp = tp0 + ((c >> 8) & 03);
+		tp = dc_tty[unit + ((c >> 8) & 03)];
 		if ((c & RBUF_OERR) && overrun == 0) {
 			log(LOG_WARNING, "dc%d,%d: silo overflow\n", unit >> 2,
 				(c >> 8) & 03);
@@ -580,9 +578,7 @@ dcxint(tp)
 	dp = &dcpdma[unit];
 	if (dp->p_mem < dp->p_end) {
 		dcaddr = (dcregs *)dp->p_addr;
-/*		dcaddr->dc_tdr = dc_brk[(tp - dc_tty) >> 2] |*/
-		dcaddr->dc_tdr = dc_brk[unit >> 2] |
-			*dp->p_mem++; /* XXX i think i broke this */
+		dcaddr->dc_tdr = dc_brk[unit >> 2] | *dp->p_mem++; 
 		MachEmptyWriteBuffer();
 		DELAY(10);
 		return;
@@ -648,17 +644,10 @@ dcstart(tp)
 		}
 		goto out;
 	}
-	if (tp->t_flags & (RAW|LITOUT))
-		cc = ndqb(&tp->t_outq, 0);
-	else {
-		cc = ndqb(&tp->t_outq, 0200);
-		if (cc == 0) {
-			cc = getc(&tp->t_outq);
-			timeout(ttrstrt, (void *)tp, (cc & 0x7f) + 6);
-			tp->t_state |= TS_TIMEOUT;
-			goto out;
-		}
-	}
+	cc = ndqb(&tp->t_outq, 0);
+	if (cc == 0) 
+		goto out;
+
 	tp->t_state |= TS_BUSY;
 	dp->p_end = dp->p_mem = tp->t_outq.c_cf;
 	dp->p_end += cc;
