@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.7 1998/03/29 04:45:17 mrg Exp $	*/
+/*	$NetBSD: input.c,v 1.8 1998/07/28 02:46:13 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -50,7 +50,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: input.c,v 1.7 1998/03/29 04:45:17 mrg Exp $");
+__RCSID("$NetBSD: input.c,v 1.8 1998/07/28 02:46:13 briggs Exp $");
 #endif
 #endif not lint
 
@@ -444,7 +444,7 @@ Right(c)
 	char c;
 {
 	p.new_dir = p.dir + 2;
-	if (p.new_dir > MAXDIR)
+	if (p.new_dir >= MAXDIR)
 		p.new_dir -= MAXDIR;
 	return (NULL);
 }
