@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.116 2004/04/21 04:32:27 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.117 2004/04/21 04:57:39 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1159,3 +1159,15 @@ sys/kern/init_sysctl.c				1.27
 	Prefer that kern.hostid is printed in hex, not as a signed decimal,
 	and avoid accidental sign-extension when setting it.
 	[atatat, ticket #150]
+
+distrib/sets/lists/base/shl.mi			1.262
+lib/libkrb5/shlib_version			1.12
+doc/3RDPARTY					1.202
+crypto/dist/heimdal				netbsd-2-0-base -> 
+					heimdal-1-6-1-merge-to-netbsd-2-0
+lib/libgssapi/Makefile				1.13
+include/heimdal/config.h			1.14
+include/heimdal/version.h			1.15
+
+	heimdal 0.6 to 0.6.1
+	[lha, ticket #157]
