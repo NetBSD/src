@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.184 2002/02/10 17:36:58 wiz Exp $
+#	$NetBSD: INSTALL,v 1.185 2002/03/04 13:24:10 sommerfeld Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -705,7 +705,6 @@ pseudo-device	sl		2	# Serial Line IP
 #pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 #pseudo-device	tun		2	# network tunneling over tty
 #pseudo-device	gre		2	# generic L3 over IP tunnel
-#pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 
 # miscellaneous pseudo-devices
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
