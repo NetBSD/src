@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.15 2000/11/15 14:27:26 pk Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.16 2001/06/10 11:36:03 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -64,7 +64,7 @@ struct ofbus_attach_args {
  * The softc structure for devices we might be booted from (i.e. we might
  * want to set root/swap to) needs to start with these fields:		XXX
  */
-struct ofb_softc {
+struct ofbus_softc {
 	struct device sc_dev;
 	int sc_phandle;
 	int sc_unit;		/* Might be missing for non-disk devices */
