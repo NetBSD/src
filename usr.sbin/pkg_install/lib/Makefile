@@ -1,12 +1,14 @@
-# $NetBSD: Makefile,v 1.3 1997/06/05 14:25:52 agc Exp $
+# $NetBSD: Makefile,v 1.4 1997/06/05 20:43:28 thorpej Exp $
 # Original from FreeBSD, no rcs id.
 
 LIB=		install
 CFLAGS+=	-I${.CURDIR} ${DEBUG}
 SRCS=		exec.c file.c global.c msg.c pen.c plist.c str.c
 SRCS+=		ftpio.c ftperr.c 
-MAN3=		ftpio.3
 CLEANFILES+=	ftperr.c
+
+# Don't need to install ftpio.3
+NOMAN=		yes
 
 NOPROFILE=	yes
 NOPIC=		yes
