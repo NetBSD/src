@@ -1,4 +1,4 @@
-/* $NetBSD: qmouse.c,v 1.5 1996/03/28 21:56:40 mark Exp $ */
+/* $NetBSD: qmouse.c,v 1.6 1996/04/26 22:02:01 mark Exp $ */
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -142,7 +142,7 @@ quadmouseattach(parent, self, aux)
 	sc->sc_ih.ih_func = quadmouseintr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_level = IPL_TTY;
-	sc->sc_ih.ih_name = "T1 quadmouse";
+	sc->sc_ih.ih_name = "TMR1 qmouse";
 
 /* Set up origin and multipliers */
 
@@ -243,6 +243,7 @@ quadmouseread(dev, uio, flag)
 	int length;
 	u_char buffer[128];
 
+	error = 0;
 	s=spltty();
 	while(sc->buffer.c_cc==0) {
 		if(flag & IO_NDELAY) {
@@ -264,7 +265,7 @@ quadmouseread(dev, uio, flag)
 
 		(void) q_to_b(&sc->buffer, buffer, length);
 
-		if(error = (uiomove(buffer, length, uio)))
+		if ((error = (uiomove(buffer, length, uio))))
 			break;
 	}
 	(void)splx(s);
