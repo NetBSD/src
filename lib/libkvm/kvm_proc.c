@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.49 2003/02/26 23:05:53 enami Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.50 2003/03/01 05:41:56 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.49 2003/02/26 23:05:53 enami Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.50 2003/03/01 05:41:56 atatat Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -559,8 +559,10 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 
 			kp2p->p_uid = kp->kp_eproc.e_ucred.cr_uid;
 			kp2p->p_ruid = kp->kp_eproc.e_pcred.p_ruid;
+			kp2p->p_svuid = kp->kp_eproc.e_pcred.p_svuid;
 			kp2p->p_gid = kp->kp_eproc.e_ucred.cr_gid;
 			kp2p->p_rgid = kp->kp_eproc.e_pcred.p_rgid;
+			kp2p->p_svgid = kp->kp_eproc.e_pcred.p_svgid;
 
 			/*CONSTCOND*/
 			memcpy(kp2p->p_groups, kp->kp_eproc.e_ucred.cr_groups,

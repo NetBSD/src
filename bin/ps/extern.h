@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.22 2003/01/18 10:52:16 thorpej Exp $	*/
+/*	$NetBSD: extern.h,v 1.23 2003/03/01 05:41:56 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -58,6 +58,9 @@ void	 fmt_puts __P((char *, int *));
 void	 fmt_putc __P((int, int *));
 double	 getpcpu __P((struct kinfo_proc2 *));
 double	 getpmem __P((struct kinfo_proc2 *));
+void	 gname __P((void *, VARENT *, int));
+void	 groups __P((void *, VARENT *, int));
+void	 groupnames __P((void *, VARENT *, int));
 void	 logname __P((void *, VARENT *, int));
 void	 longtname __P((void *, VARENT *, int));
 void	 lstarted __P((void *, VARENT *, int));
@@ -73,11 +76,14 @@ void	 pnice __P((void *, VARENT *, int));
 void	 pri __P((void *, VARENT *, int));
 void	 printheader __P((void));
 void	 pvar __P((void *, VARENT *, int));
+void	 rgname __P((void *, VARENT *, int));
 void	 rssize __P((void *, VARENT *, int));
 void	 runame __P((void *, VARENT *, int));
 void	 showkey __P((void));
 void	 started __P((void *, VARENT *, int));
 void	 state __P((void *, VARENT *, int));
+void	 svgname __P((void *, VARENT *, int));
+void	 svuname __P((void *, VARENT *, int));
 void	 tdev __P((void *, VARENT *, int));
 void	 tname __P((void *, VARENT *, int));
 void	 tsize __P((void *, VARENT *, int));

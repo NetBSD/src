@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.91 2003/02/27 01:39:56 thorpej Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.92 2003/03/01 05:41:55 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -456,6 +456,8 @@ struct kinfo_proc2 {
 	u_int64_t p_nlwps;		/* LONG: Number of LWPs */
 	u_int64_t p_nrlwps;		/* LONG: Number of running LWPs */
 	u_int64_t p_realstat;		/* LONG: non-LWP process status */
+	u_int32_t p_svuid;		/* UID_T: saved user id */
+	u_int32_t p_svgid;		/* GID_T: saved group id */
 };
 
 /*
