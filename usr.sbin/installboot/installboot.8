@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.2 2002/04/03 06:34:31 lukem Exp $
+.\"	$NetBSD: installboot.8,v 1.3 2002/04/03 10:21:02 lukem Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -124,6 +124,7 @@ and then
 The following machines are currently supported by
 .Nm "" :
 .Bd -ragged -offset indent
+.Sy alpha ,
 .Sy pmax ,
 .Sy vax
 .Ed
@@ -140,7 +141,13 @@ options, comma separated.
 .Pp
 Supported options are (with the machines for they are valid in brackets):
 .
-.Bl -tag -offset indent -width append
+.Bl -tag -offset indent -width alphasum
+.
+.It Sy alphasum
+.Em [ alpha ]
+Recalculate and restore the Alpha checksum.
+This is the default for
+.Nx Ns Tn /alpha .
 .
 .It Sy append
 .Em [ pmax ,

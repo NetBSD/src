@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2002/04/03 09:09:01 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2002/04/03 10:21:01 lukem Exp $
 #
 
 PROG=	installboot
@@ -12,7 +12,7 @@ CPPFLAGS+=	-I${.CURDIR}
 
 # list of MACHINEs to build this version of installboot for.
 #
-IB_MACHINES?=	pmax vax
+IB_MACHINES?=	alpha pmax vax
 
 SRCS+=		${IB_MACHINES:S/$/.c/}
 
