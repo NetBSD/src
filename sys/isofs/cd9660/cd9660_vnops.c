@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.41 1997/10/10 01:59:30 fvdl Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -120,7 +120,8 @@ cd9660_mknod(ndp, vap, cred, p)
 	}
 
 	dp = iso_dmap(ip->i_dev,ip->i_number,1);
-	if (ip->inode.iso_rdev == vap->va_rdev || vap->va_rdev == VNOVAL) {
+	if (ip->inode.iso_rdev == vap->va_rdev ||
+	    vap->va_rdev == (dev_t)VNOVAL) {
 		/* same as the unmapped one, delete the mapping */
 		dp->d_next->d_prev = dp->d_prev;
 		*dp->d_prev = dp->d_next;
@@ -920,11 +921,11 @@ cd9660_setattr(v)
 	 * Only size is changeable.
 	 */
 	if (vap->va_type != VNON
-	    || vap->va_nlink != VNOVAL
+	    || vap->va_nlink != (nlink_t)VNOVAL
 	    || vap->va_fsid != VNOVAL
 	    || vap->va_fileid != VNOVAL
 	    || vap->va_blocksize != VNOVAL
-	    || vap->va_rdev != VNOVAL
+	    || vap->va_rdev != (dev_t)VNOVAL
 	    || (int)vap->va_bytes != VNOVAL
 	    || vap->va_gen != VNOVAL
 	    || vap->va_flags != VNOVAL
