@@ -1,4 +1,4 @@
-# $NetBSD: md.next68k,v 1.8 1999/04/19 03:11:33 simonb Exp $
+# $NetBSD: md.next68k,v 1.9 1999/04/19 21:34:16 kleink Exp $
 ./usr/include/next68k
 ./usr/include/next68k/_G_config.h
 ./usr/include/next68k/ansi.h
@@ -34,6 +34,7 @@
 ./usr/include/next68k/setjmp.h
 ./usr/include/next68k/signal.h
 ./usr/include/next68k/stdarg.h
+./usr/include/next68k/svr4_machdep.h
 ./usr/include/next68k/trap.h
 ./usr/include/next68k/types.h
 ./usr/include/next68k/varargs.h
