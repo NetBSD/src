@@ -1,5 +1,5 @@
 You will need an AmigaDOS hard drive prep tool to prepare you hard
-drives for use with NetBSD/amiga.  HDToolBox is provided with the
+drives for use with NetBSD/Amiga.  HDToolBox is provided with the
 system software and on floppy installation disks since Release 2.0
 of AmigaDOS so we will provide instructions for its use.
 
@@ -47,7 +47,7 @@ Preparing you hard disk with HDToolBox:
 		be enabled.  To Make the needed changes:
 
 		- Click the `Adv. Options' button
-		- Click the `Change filesystem' button
+		- Click the `Change file system' button
 
 		- Choose `Custom File System'
 		- Turn off `Automount' if on.
@@ -76,36 +76,36 @@ Preparing you hard disk with HDToolBox:
 		partition.
 
 	
-	Once this is done NetBSD/amiga will be able to recognize your
+	Once this is done NetBSD/Amiga will be able to recognize your
 	disks and which partitions it should use.
 
-Transferring the miniroot filesystem:
+Transferring the miniroot file system:
 
-	The NetBSD/amiga installation or upgrade now uses a "miniroot"
+	The NetBSD/Amiga installation or upgrade now uses a "miniroot"
 	fileystem which is installed on the partition used by NetBSD
 	for swapping.  This removes the requirement of using a floppy
-	disk for the filesystem used by the installation or upgrade
+	disk for the file system used by the installation or upgrade
 	process.  It also allows more utilities to be present on the
-	filesystem than would be available when using an 880K floppy
+	file system than would be available when using an 880K floppy
 	disk.
 
 	Once the hard disk has been prepared for NetBSD, the appropriate
-	miniroot filesystem (inst-11.fs for a new install or upgr-11.fs
+	miniroot file system (inst-12.fs for a new install or upgr-12.fs
 	for an upgrade) is transferred to the swap partition configured
-	during the hard disk prep (or the existing swap parition in
+	during the hard disk prep (or the existing swap partition in
 	the case of an upgrade).  The xstreamtodev utility provided in
 	the "amiga/utilities" directory can be used on AmigaDOS to
-	transfer the filesystem for either a new installation or an
-	upgrade.  The filesystem can also be transferred on an existing
+	transfer the file system for either a new installation or an
+	upgrade.  The file system can also be transferred on an existing
 	NetBSD system for an update by using dd.  This should only be
 	done after booting NetBSD into single-user state.  It may also
 	be possible to shutdown to single-user, providing that the
 	single-user state processes are not using the swap partition.
 
 	On AmigaDOS, the command:
-		xstreamtodev --input=inst-11.fs --rdb-name=<swap partition>
+		xstreamtodev --input=inst-12.fs --rdb-name=<swap partition>
 	where <swap partition> is the name you gave to the NetBSD
-	partition to be used for swapping.  Use upgr-11.fs if you
+	partition to be used for swapping.  Use upgr-12.fs if you
 	are going to do an upgrade of an existing NetBSD system.  If
 	xstreamtodev is unable to determine the SCSI driver device
 	name or the unit number of the specified partition, you may
@@ -114,9 +114,9 @@ Transferring the miniroot filesystem:
 
 	To transfer the miniroot using NetBSD, you should be booted up
 	in single user state on the current NetBSD system, or use the
-	"shutdown now" command to shutdown to single-uyser state.  Then
+	"shutdown now" command to shutdown to single-user state.  Then
 	copy the miniroot using dd:
-		dd if=upgr-11.fs of=/dev/rsd0b
+		dd if=upgr-12.fs of=/dev/rsd0b
 	where /dev/rsd0b should be the device path of the swap partition
 	your system is configured to use.  Once the file is copied,
 	reboot back to AmigaDOS to boot the upgrade kernel.  NOTE:  the

@@ -5,7 +5,7 @@ Installation is supported from several media types, including:
 	FTP
 	NetBSD partitions, if doing an upgrade.
 
-The install or upgrade miniroot filesystem needs to be transferred
+The install or upgrade miniroot file system needs to be transferred
 to the NetBSD swap partition.  This can be done from AmigaDOS in
 the case of a new install or upgrade, or from NetBSD when doing an
 upgrade.  See the "Preparing your System for NetBSD Installation"
@@ -32,7 +32,7 @@ To prepare for installing via an AmigaDOS partition:
 To prepare for installing via a tape:
 
 	To install NetBSD from a tape, you need to somehow
-	get the NetBSD filesets you wish to install on
+	get the NetBSD file sets you wish to install on
 	your system on to the appropriate kind of tape,
 	in tar format.
 
