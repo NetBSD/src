@@ -30,14 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ufs_lookup.c	7.33 (Berkeley) 5/19/91
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00040
- * --------------------         -----   ----------------------
- *
- * 10 Aug 92    Scott Burris            Fixed "delete from CD-ROM" bug
+ *	from: @(#)ufs_lookup.c	7.33 (Berkeley) 5/19/91
+ *	$Id: isofs_lookup.c,v 1.4 1993/05/20 03:30:46 cgd Exp $
  */
 
 #include "param.h"

@@ -1,3 +1,7 @@
+/*
+ *	$Id: isofs_node.h,v 1.3 1993/05/20 03:30:50 cgd Exp $
+ */
+
 struct iso_node {
 	struct	iso_node *i_chain[2]; /* hash chain, MUST be first */
 	struct	vnode *i_vnode;	/* vnode associated with this inode */

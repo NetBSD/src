@@ -1,3 +1,7 @@
+/*
+ *	$Id: isofs_util.c,v 1.2 1993/05/20 03:30:52 cgd Exp $
+ */
+
 int
 isonum_711 (p)
 char *p;

@@ -1,3 +1,7 @@
+/*
+ *	$Id: isofs_vfsops.c,v 1.3 1993/05/20 03:30:54 cgd Exp $
+ */
+
 #include "param.h"
 #include "systm.h"
 #include "namei.h"
