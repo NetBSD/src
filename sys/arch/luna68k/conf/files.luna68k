@@ -1,8 +1,11 @@
 #
-#	$NetBSD: files.luna68k,v 1.12 2002/11/05 07:41:21 chs Exp $
+#	$NetBSD: files.luna68k,v 1.13 2003/06/27 21:43:03 he Exp $
 #
 maxpartitions 8
 maxusers 2 8 64
+
+# machine-specific options
+defflag			PANICBUTTON
 
 file arch/luna68k/luna68k/autoconf.c
 file arch/luna68k/luna68k/clock.c
