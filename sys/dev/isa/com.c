@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.10 1993/07/07 11:00:59 deraadt Exp $
+ *	$Id: com.c,v 1.11 1993/07/12 11:37:16 mycroft Exp $
  */
 
 #include "com.h"
@@ -47,7 +47,6 @@
 #include "tty.h"
 #include "proc.h"
 #include "user.h"
-#include "malloc.h"
 #include "conf.h"
 #include "file.h"
 #include "uio.h"
@@ -191,9 +190,7 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 	if (unit >= NCOM || (com_active & (1 << unit)) == 0)
 		return (ENXIO);
 	if(!com_tty[unit]) {
-		MALLOC(tp, struct tty *, sizeof(struct tty), M_TTYS, M_WAITOK);
-		bzero(tp, sizeof(struct tty));
-		com_tty[minor(dev)] = tp;
+		tp = com_tty[unit] = ttymalloc();
 	} else
 		tp = com_tty[unit];
 	tp->t_oproc = comstart;
@@ -220,7 +217,7 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 	while ((flag&O_NONBLOCK) == 0 && (tp->t_cflag&CLOCAL) == 0 &&
 	       (tp->t_state & TS_CARR_ON) == 0) {
 		tp->t_state |= TS_WOPEN;
-		if (error = ttysleep(tp, (caddr_t)&tp->t_raw, TTIPRI | PCATCH,
+		if (error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
 		    ttopen, 0))
 			break;
 	}
@@ -254,7 +251,7 @@ comclose(dev, flag, mode, p)
 	    (tp->t_state&TS_ISOPEN) == 0)
 		(void) commctl(dev, 0, DMSET);
 	ttyclose(tp);
-	FREE(tp, M_TTYS);
+	ttyfree(tp);
 	com_tty[unit] = (struct tty *)NULL;
 	return(0);
 }
@@ -531,22 +528,22 @@ comstart(tp)
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT|TS_TTSTOP))
 		goto out;
-	if (RB_LEN(&tp->t_out) <= tp->t_lowat) {
+	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state&TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_out);
+			wakeup((caddr_t)&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
 	}
-	if (RB_LEN(&tp->t_out) == 0)
+	if (tp->t_outq.c_cc == 0)
 		goto out;
 	if (inb(com+com_lsr) & LSR_TXRDY) {
-		c = rbgetc(&tp->t_out);
+		c = getc(&tp->t_outq);
 		tp->t_state |= TS_BUSY;
 		outb(com+com_data, c);
 		if (com_hasfifo & (1 << unit))
-			for (c = 1; c < 16 && RB_LEN(&tp->t_out); ++c)
-				outb(com+com_data, rbgetc(&tp->t_out));
+			for (c = 1; c < 16 && tp->t_outq.c_cc; ++c)
+				outb(com+com_data, getc(&tp->t_outq));
 	}
 out:
 	splx(s);
@@ -741,7 +738,7 @@ comselect(dev, rw, p)
 		break;
 
 	case FWRITE:
-		if (RB_LEN(&tp->t_out) <= tp->t_lowat)
+		if (tp->t_outq.c_cc <= tp->t_lowat)
 			goto win;
 		selrecord(p, &tp->t_wsel);
 		break;

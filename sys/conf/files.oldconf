@@ -1,4 +1,4 @@
-#	$Id: files.oldconf,v 1.15 1993/07/07 06:03:52 cgd Exp $
+#	$Id: files.oldconf,v 1.16 1993/07/12 11:37:32 mycroft Exp $
 #
 ddb/db_access.c		optional ddb
 ddb/db_aout.c		optional ddb
@@ -60,7 +60,7 @@ kern/tty.c		standard
 kern/tty_compat.c	standard
 kern/tty_conf.c		standard
 kern/tty_pty.c		optional pty device-driver
-kern/tty_ring.c		standard
+kern/tty_subr.c		standard
 kern/tty_tb.c		optional tb device-driver requires broken
 kern/tty_tty.c		standard
 kern/uipc_domain.c	standard

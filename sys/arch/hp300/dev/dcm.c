@@ -38,7 +38,7 @@
  * from: $Hdr: dcm.c 1.26 91/01/21$
  *
  *	from: @(#)dcm.c	7.14 (Berkeley) 6/27/91
- *	$Id: dcm.c,v 1.6 1993/07/07 11:12:33 deraadt Exp $
+ *	$Id: dcm.c,v 1.7 1993/07/12 11:38:07 mycroft Exp $
  */
 
 /*
@@ -60,7 +60,6 @@
 #include "sys/conf.h"
 #include "sys/file.h"
 #include "sys/uio.h"
-#include "sys/malloc.h"
 #include "sys/kernel.h"
 #include "sys/syslog.h"
 #include "sys/time.h"
@@ -353,11 +352,9 @@ dcmopen(dev, flag, mode, p)
 	brd = BOARD(unit);
 	if (unit >= NDCMLINE || (dcm_active & (1 << brd)) == 0)
 		return (ENXIO);
-	if(!dcm_tty[unit]) {
-		MALLOC(tp, struct tty *, sizeof(struct tty), M_TTYS, M_WAITOK);
-		bzero(tp, sizeof(struct tty));
-		dcm_tty[unit] = tp;
-	} else
+	if(!dcm_tty[unit])
+		tp = dcm_tty[unit] = ttymalloc();
+	else
 		tp = dcm_tty[unit];
 	tp->t_oproc = dcmstart;
 	tp->t_param = dcmparam;
@@ -392,7 +389,7 @@ dcmopen(dev, flag, mode, p)
 	while ((flag&O_NONBLOCK) == 0 && (tp->t_cflag&CLOCAL) == 0 &&
 	    (tp->t_state & TS_CARR_ON) == 0) {
 		tp->t_state |= TS_WOPEN;
-		if (error = ttysleep(tp, (caddr_t)&tp->t_raw, TTIPRI | PCATCH,
+		if (error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
 		    ttopen, 0))
 			break;
 	}
@@ -429,7 +426,7 @@ dcmclose(dev, flag, mode, p)
 			unit, tp->t_state, tp->t_flags);
 #endif
 	ttyclose(tp);
-	FREE(tp, M_TTYS);
+	ttyfree(tp);
 	dcm_tty[unit] = (struct tty *)NULL;
 	return (0);
 }
@@ -904,18 +901,18 @@ dcmstart(tp)
 	if (dcmdebug & DDB_OUTPUT)
 		printf("dcmstart(%d): state %x flags %x outcc %d\n",
 		       UNIT(tp->t_dev), tp->t_state, tp->t_flags,
-		       RB_LEN(&tp->t_out));
+		       tp->t_outq.c_cc);
 #endif
 	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
 		goto out;
-	if (RB_LEN(&tp->t_out) <= tp->t_lowat) {
+	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state&TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_out);
+			wakeup((caddr_t)&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
 	}
-	if (RB_LEN(&tp->t_out) == 0) {
+	if (tp->t_outq.c_cc == 0) {
 #ifdef IOSTATS
 		dsp->xempty++;
 #endif
@@ -932,12 +929,7 @@ dcmstart(tp)
 		goto out;
 	fifo = &dcm->dcm_tfifos[3-port][tail];
 again:
-#if 0
 	nch = q_to_b(&tp->t_outq, buf, (head - next) & TX_MASK);
-#else
-	nch = rbunpack(&tp->t_out, buf, nch);
-#endif
-
 #ifdef IOSTATS
 	tch += nch;
 #endif
@@ -970,7 +962,7 @@ again:
 	 * Head changed while we were loading the buffer,
 	 * go back and load some more if we can.
 	 */
-	if (RB_LEN(&tp->t_out) && head != (pp->t_head & TX_MASK)) {
+	if (tp->t_outq.c_cc && head != (pp->t_head & TX_MASK)) {
 #ifdef IOSTATS
 		dsp->xrestarts++;
 #endif
@@ -991,8 +983,8 @@ again:
 	}
 #ifdef DEBUG
 	if (dcmdebug & DDB_INTR)
-		printf("dcmstart(%d): head %x tail %x outlen %d\n",
-		       UNIT(tp->t_dev), head, tail, RB_LEN(&tp->t_out));
+		printf("dcmstart(%d): head %x tail %x outqcc %d\n",
+		       UNIT(tp->t_dev), head, tail, tp->t_outq.c_cc);
 #endif
 out:
 #ifdef IOSTATS
