@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.8 2000/08/08 22:31:14 tshiozak Exp $ */
+/*	$NetBSD: limits.h,v 1.9 2002/05/03 17:56:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -55,13 +55,6 @@
 #define	UINT_MAX	0xffffffffU	/* max value for an unsigned int */
 #define	INT_MAX		0x7fffffff	/* max value for an int */
 #define	INT_MIN		(-0x7fffffff-1)	/* min value for an int */
-
-/* Make sure _LP64 is defined if we have a 64-bit compiler */
-#if	__arch64__||__sparcv9__
-#ifndef _LP64
-#define _LP64
-#endif
-#endif
 
 #ifdef __arch64__
 #define	ULONG_MAX	0xffffffffffffffffUL	/* max value for an unsigned long */
