@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.98 2000/09/17 19:23:37 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.99 2000/09/25 21:02:38 pk Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -7615,8 +7615,10 @@ ENTRY(switchexit)
 	call	_C_LABEL(exit2)			! exit2(p)
 	 mov	%l2, %o0
 
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	call	_C_LABEL(sched_lock_idle)	! Acquire sched_lock
 	 nop
+#endif
 	
 	/*
 	 * Now fall through to `the last switch'.  %g6 was set to
