@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.6 2001/04/09 15:40:09 ad Exp $	*/
+/*	$NetBSD: mlx.c,v 1.7 2001/04/30 03:48:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -197,7 +197,7 @@ static const char * const mlx_status_msgs[] = {
 	"command terminated abnormally",		/* 19 */
 	"controller wedged",				/* 20 */
 	"software timeout",				/* 21 */
-	"command busy (???)",				/* 22 */
+	"command busy (?)",				/* 22 */
 };
 
 struct {
