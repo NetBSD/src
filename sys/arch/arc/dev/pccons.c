@@ -1,7 +1,6 @@
-/*	$NetBSD: pccons.c,v 1.26 2001/05/11 21:15:11 tsutsui Exp $	*/
+/*	$NetBSD: pccons.c,v 1.27 2001/06/13 15:05:44 soda Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
-/*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -53,43 +52,26 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/ioctl.h>
-#include <sys/proc.h>
-#include <sys/user.h>
-#include <sys/select.h>
 #include <sys/tty.h>
-#include <sys/uio.h>
 #include <sys/callout.h>
-#include <sys/syslog.h>
-#include <sys/device.h>
 #include <sys/poll.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
-#include <sys/fcntl.h>
 #include <sys/kernel.h>
 #include <sys/kcore.h>
+#include <sys/device.h>
 
-#include <dev/cons.h>
-
-#include <machine/cpu.h>
-#include <machine/pio.h>
-#include <machine/autoconf.h>
 #include <machine/bus.h>
+
 #include <machine/display.h>
 #include <machine/pccons.h>
-#include <arc/arc/arctype.h>
-#include <arc/arc/arcbios.h>
-#include <arc/jazz/pica.h>
-#include <arc/dti/desktech.h>
-#include <arc/jazz/jazziovar.h>
-
-#include <dev/isa/isavar.h>
-#include <machine/isa_machdep.h>
 #include <machine/kbdreg.h>
 
 #include <dev/cons.h>
+#include <dev/isa/isavar.h>
 
-#include "pc.h"
+#include <arc/arc/arcbios.h>
+#include <arc/dev/pcconsvar.h>
 
 #define	XFREE86_BUG_COMPAT
 
@@ -140,36 +122,15 @@ static struct video_state {
 	char	so_at;		/* standout attributes */
 } vs;
 
-struct pc_softc {
-	struct	device sc_dev;
-	struct	tty *sc_tty;
-};
-
-struct opms_softc {		/* driver status information */
-	struct device sc_dev;
-
-	struct clist sc_q;
-	struct selinfo sc_rsel;
-	u_char sc_state;	/* mouse driver state */
-#define	PMS_OPEN	0x01	/* device is open */
-#define	PMS_ASLP	0x02	/* waiting for mouse data */
-	u_char sc_status;	/* mouse button status */
-	int sc_x, sc_y;		/* accumulated motion in the X,Y axis */
-};
-
 static struct callout async_update_ch = CALLOUT_INITIALIZER;
 
-int pcprobe __P((struct device *, struct cfdata *, void *));
-void pcattach __P((struct device *, struct device *, void *));
-int pcintr __P((void *));
 void pc_xmode_on __P((void));
 void pc_xmode_off __P((void));
 static u_char kbc_get8042cmd __P((void));
-static int kbc_put8042cmd __P((u_char));
 int kbd_cmd __P((u_char, u_char));
 static __inline int kbd_wait_output __P((void));
 static __inline int kbd_wait_input __P((void));
-static __inline void kbd_flush_input __P((void));
+void kbd_flush_input __P((void));
 void set_cursor_shape __P((void));
 void get_cursor_shape __P((void));
 void async_update __P((void));
@@ -181,37 +142,7 @@ void pccnpollc __P((dev_t, int));
 
 extern struct cfdriver pc_cd;
 
-struct cfattach pc_jazzio_ca = {
-	 sizeof(struct pc_softc), pcprobe, pcattach
-};
-
-struct cfattach pc_isa_ca = {
-	 sizeof(struct pc_softc), pcprobe, pcattach
-};
-
-int opmsprobe __P((struct device *, struct cfdata *, void *));
-void opmsattach __P((struct device *, struct device *, void *));
-int opmsintr __P((void *));
-
-#if NOPMS > 0
-struct cfattach opms_ca = {
-	sizeof(struct opms_softc), opmsprobe, opmsattach
-};
-#endif
-
-extern struct cfdriver opms_cd;
-
-#define	PMSUNIT(dev)	(minor(dev))
-
 #define	CHR		2
-
-static unsigned int addr_6845;
-static unsigned int mono_base = 0x3b4;
-static unsigned int mono_buf = 0xb0000;
-static unsigned int cga_base = 0x3d4;
-static unsigned int cga_buf = 0xb8000;
-static unsigned int kbd_cmdp = 0x64;
-static unsigned int kbd_datap = 0x60;
 
 char *sget __P((void));
 void sput __P((u_char *, int));
@@ -219,66 +150,75 @@ void sput __P((u_char *, int));
 void	pcstart __P((struct tty *));
 int	pcparam __P((struct tty *, struct termios *));
 static __inline void wcopy __P((void *, void *, u_int));
-void	pcinithandle __P((void));
+void	pc_context_init __P((bus_space_tag_t, bus_space_tag_t, bus_space_tag_t,
+	    struct pccons_config *));
 
 extern void fillw __P((int, u_int16_t *, int));
 
 #define	KBD_DELAY \
 		DELAY(10);
 
+#define crtc_read_1(reg) \
+	bus_space_read_1(pccons_console_context.pc_crt_iot, \
+	    pccons_console_context.pc_6845_ioh, reg)
+#define crtc_write_1(reg, data) \
+	bus_space_write_1(pccons_console_context.pc_crt_iot, \
+	    pccons_console_context.pc_6845_ioh, reg, data)
+
+struct pccons_context pccons_console_context;
+
 void
-pcinithandle()
+kbd_context_init(kbd_iot, config)
+	bus_space_tag_t kbd_iot;
+	struct pccons_config *config;
 {
-	static int initialized = 0;
+	struct pccons_kbd_context *pkc = &pccons_console_context.pc_pkc;
 
-	if (initialized)
+	if (pkc->pkc_initialized)
 		return;
-	initialized = 1;
+	pkc->pkc_initialized = 1;
 
-	switch (cputype) {
+	pkc->pkc_iot = kbd_iot;
 
-	case ACER_PICA_61:
-	case NEC_R96: /* XXX - not really confirmed */
-		mono_base += PICA_V_LOCAL_VIDEO_CTRL;
-		mono_buf += PICA_V_LOCAL_VIDEO;
-		cga_base += PICA_V_LOCAL_VIDEO_CTRL;
-		cga_buf += PICA_V_LOCAL_VIDEO;
-	case MAGNUM:
-	case NEC_R94:
-	case NEC_RAx94:
-	case NEC_RD94:
-	case NEC_JC94:
-		kbd_cmdp = PICA_SYS_KBD + 0x61;
-		kbd_datap = PICA_SYS_KBD + 0x60;
-		break;
+	bus_space_map(kbd_iot, config->pc_kbd_cmdp, 1, 0,
+	    &pkc->pkc_cmd_ioh);
+	bus_space_map(kbd_iot, config->pc_kbd_datap, 1, 0,
+	    &pkc->pkc_data_ioh);
+}
 
-	case DESKSTATION_TYNE:
-		bus_space_map(&arc_bus_io, mono_base, 2, 0, &mono_base);
-		bus_space_map(&arc_bus_mem, mono_buf, 0x20000, 0, &mono_buf);
-		bus_space_map(&arc_bus_io, cga_base, 2, 0, &cga_base);
-		bus_space_map(&arc_bus_mem, cga_buf, 0x20000, 0, &cga_buf);
-		bus_space_map(&arc_bus_io, 0x64, 1, 0, &kbd_cmdp);
-		bus_space_map(&arc_bus_io, 0x60, 1, 0, &kbd_datap);
-		break;
+void
+pc_context_init(crt_iot, crt_memt, kbd_iot, config)
+	bus_space_tag_t crt_iot, crt_memt, kbd_iot;
+	struct pccons_config *config;
+{
+	struct pccons_context *pc = &pccons_console_context;
 
-	case DESKSTATION_RPC44:
-		bus_space_map(&arc_bus_io, mono_base, 2, 0, &mono_base);
-		bus_space_map(&arc_bus_mem, mono_buf, 0x20000, 0, &mono_buf);
-		bus_space_map(&arc_bus_io, cga_base, 2, 0, &cga_base);
-		bus_space_map(&arc_bus_mem, 0xa0000, 0x20000, 0, &cga_buf);
-		bus_space_map(&arc_bus_io, 0x64, 1, 0, &kbd_cmdp);
-		bus_space_map(&arc_bus_io, 0x60, 1, 0, &kbd_datap);
-		break;
+	if (pc->pc_initialized)
+		return;
+	pc->pc_initialized = 1;
 
-	case SNI_RM200:
-		bus_space_map(&arc_bus_io, mono_base, 2, 0, &mono_base);
-		bus_space_map(&arc_bus_mem, mono_buf, 0x20000, 0, &mono_buf);
-		bus_space_map(&arc_bus_io, cga_base, 2, 0, &cga_base);
-		bus_space_map(&arc_bus_mem, cga_buf, 0x20000, 0, &cga_buf);
-		bus_space_map(&arc_bus_io, 0x64, 1, 0, &kbd_cmdp);
-		bus_space_map(&arc_bus_io, 0x60, 1, 0, &kbd_datap);
-		break;
-	}
+	kbd_context_init(kbd_iot, config);
+
+	pc->pc_crt_iot = crt_iot;
+	pc->pc_crt_memt = crt_memt;
+
+	bus_space_map(crt_iot, config->pc_mono_iobase, 2, 0,
+	    &pc->pc_mono_ioh);
+	bus_space_map(crt_memt, config->pc_mono_memaddr, 0x20000, 0,
+	    &pc->pc_mono_memh);
+	bus_space_map(crt_iot, config->pc_cga_iobase, 2, 0,
+	    &pc->pc_cga_ioh);
+	bus_space_map(crt_memt, config->pc_cga_memaddr, 0x20000, 0,
+	    &pc->pc_cga_memh);
+
+	/*
+	 * pc->pc_6845_ioh and pc->pc_crt_memh will be initialized later,
+	 * when `Crtat' is initialized.
+	 */
+
+	pc->pc_config = config;
+
+	(*config->pc_init)();
 }
 
 /*
@@ -311,7 +251,7 @@ kbd_wait_output()
 	u_int i;
 
 	for (i = 100000; i; i--)
-		if ((inb(kbd_cmdp) & KBS_IBF) == 0) {
+		if ((kbd_cmd_read_1() & KBS_IBF) == 0) {
 			KBD_DELAY;
 			return 1;
 		}
@@ -324,24 +264,24 @@ kbd_wait_input()
 	u_int i;
 
 	for (i = 100000; i; i--)
-		if ((inb(kbd_cmdp) & KBS_DIB) != 0) {
+		if ((kbd_cmd_read_1() & KBS_DIB) != 0) {
 			KBD_DELAY;
 			return 1;
 		}
 	return 0;
 }
 
-static __inline void
+void
 kbd_flush_input()
 {
 	u_char c;
 
-	while ((c = inb(kbd_cmdp)) & 0x03)
+	while ((c = kbd_cmd_read_1()) & 0x03)
 		if ((c & KBS_DIB) == KBS_DIB) {
 			/* XXX - delay is needed to prevent some keyboards from
 			   wedging when the system boots */
 			delay(6);
-			(void) inb(kbd_datap);
+			(void) kbd_data_read_1();
 		}
 }
 
@@ -355,27 +295,27 @@ kbc_get8042cmd()
 
 	if (!kbd_wait_output())
 		return -1;
-	outb(kbd_cmdp, K_RDCMDBYTE);
+	kbd_cmd_write_1(K_RDCMDBYTE);
 	if (!kbd_wait_input())
 		return -1;
-	return inb(kbd_datap);
+	return kbd_data_read_1();
 }
 #endif
 
 /*
  * Pass command byte to keyboard controller (8042).
  */
-static int
+int
 kbc_put8042cmd(val)
 	u_char val;
 {
 
 	if (!kbd_wait_output())
 		return 0;
-	outb(kbd_cmdp, K_LDCMDBYTE);
+	kbd_cmd_write_1(K_LDCMDBYTE);
 	if (!kbd_wait_output())
 		return 0;
-	outb(kbd_datap, val);
+	kbd_data_write_1(val);
 	return 1;
 }
 
@@ -393,7 +333,7 @@ kbd_cmd(val, polling)
 	if(!polling) {
 		i = spltty();
 		if(kb_oq_get == kb_oq_put) {
-			outb(kbd_datap, val);
+			kbd_data_write_1(val);
 		}
 		kb_oq[kb_oq_put] = val;
 		kb_oq_put = (kb_oq_put + 1) & 7;
@@ -403,13 +343,13 @@ kbd_cmd(val, polling)
 	else do {
 		if (!kbd_wait_output())
 			return 0;
-		outb(kbd_datap, val);
+		kbd_data_write_1(val);
 		for (i = 100000; i; i--) {
-			if (inb(kbd_cmdp) & KBS_DIB) {
+			if (kbd_cmd_read_1() & KBS_DIB) {
 				register u_char c;
 
 				KBD_DELAY;
-				c = inb(kbd_datap);
+				c = kbd_data_read_1();
 				if (c == KBR_ACK || c == KBR_ECHO) {
 					return 1;
 				}
@@ -428,24 +368,20 @@ kbd_cmd(val, polling)
 void
 set_cursor_shape()
 {
-	register int iobase = addr_6845;
-
-	outb(iobase, 10);
-	outb(iobase+1, cursor_shape >> 8);
-	outb(iobase, 11);
-	outb(iobase+1, cursor_shape);
+	crtc_write_1(0, 10);
+	crtc_write_1(1, cursor_shape >> 8);
+	crtc_write_1(0, 11);
+	crtc_write_1(1, cursor_shape);
 	old_cursor_shape = cursor_shape;
 }
 
 void
 get_cursor_shape()
 {
-	register int iobase = addr_6845;
-
-	outb(iobase, 10);
-	cursor_shape = inb(iobase+1) << 8;
-	outb(iobase, 11);
-	cursor_shape |= inb(iobase+1);
+	crtc_write_1(0, 10);
+	cursor_shape = crtc_read_1(1) << 8;
+	crtc_write_1(0, 11);
+	cursor_shape |= crtc_read_1(1);
 
 	/*
 	 * real 6845's, as found on, MDA, Hercules or CGA cards, do
@@ -491,11 +427,10 @@ do_async_update(poll)
 
 	pos = crtat - Crtat;
 	if (pos != old_pos) {
-		register int iobase = addr_6845;
-		outb(iobase, 14);
-		outb(iobase+1, pos >> 8);
-		outb(iobase, 15);
-		outb(iobase+1, pos);
+		crtc_write_1(0, 14);
+		crtc_write_1(1, pos >> 8);
+		crtc_write_1(0, 15);
+		crtc_write_1(1, pos);
 		old_pos = pos;
 	}
 	if (cursor_shape != old_cursor_shape)
@@ -523,37 +458,13 @@ async_update()
  * these are both bad jokes
  */
 int
-pcprobe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+pccons_common_match(crt_iot, crt_memt, kbd_iot, config)
+	bus_space_tag_t crt_iot, crt_memt, kbd_iot;
+	struct pccons_config *config;
 {
-	struct jazzio_attach_args *ja = aux;
-	u_int i;
+	int i;
 
-	/* Make shure we're looking for this type of device */
-	if(!strcmp((parent)->dv_cfdata->cf_driver->cd_name, "pica")) {
-		if (strcmp(ja->ja_name, "pckbd") != 0)
-			return(0);
-
-		switch (cputype) { /* XXX ick */
-		case ACER_PICA_61:
-		case NEC_R96: /* XXX - not really confirmed */
-			break;
-		default:
-			return (0);
-		}
-	} else { /* ISA */
-		switch (cputype) { /* XXX ick */
-		case DESKSTATION_RPC44:
-		case DESKSTATION_TYNE:
-			break;
-		default:
-			return (0);
-		}
-	}
-
-	pcinithandle();
+	pc_context_init(crt_iot, crt_memt, kbd_iot, config);
 
 	/* Enable interrupts and keyboard, etc. */
 	if (!kbc_put8042cmd(CMDBYTE)) {
@@ -570,11 +481,11 @@ pcprobe(parent, match, aux)
 		goto lose;
 	}
 	for (i = 600000; i; i--)
-		if ((inb(kbd_cmdp) & KBS_DIB) != 0) {
+		if ((kbd_cmd_read_1() & KBS_DIB) != 0) {
 			KBD_DELAY;
 			break;
 		}
-	if (i == 0 || inb(kbd_datap) != KBR_RSTDONE) {
+	if (i == 0 || kbd_data_read_1() != KBR_RSTDONE) {
 		printf("pcprobe: reset error %d\n", 2);
 		goto lose;
 	}
@@ -627,29 +538,13 @@ lose:
 	return 1;
 }
 
-void
-pcattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+void pccons_common_attach(sc, crt_iot, crt_memt, kbd_iot, config)
+	struct pc_softc *sc;
+	bus_space_tag_t crt_iot, crt_memt, kbd_iot;
+	struct pccons_config *config;
 {
-	struct jazzio_attach_args *ja = aux;
-	struct isa_attach_args *ia = aux;
-	struct pc_softc *sc = (void *)self;
-
 	printf(": %s\n", vs.color ? "color" : "mono");
 	do_async_update(1);
-
-	switch (cputype) {
-	case ACER_PICA_61:
-	case NEC_R96:
-		jazzio_intr_establish(ja->ja_intr, pcintr, (void *)(long)sc);
-		break;
-	case DESKSTATION_RPC44:                     /* XXX ick */
-	case DESKSTATION_TYNE:
-		isa_intr_establish(ia->ia_ic, ia->ia_irq, 1,
-			2, pcintr, sc);			/*XXX ick */
-		break;
-	}
 }
 
 int
@@ -770,7 +665,7 @@ pcintr(arg)
 	register struct tty *tp = sc->sc_tty;
 	u_char *cp;
 
-	if ((inb(kbd_cmdp) & KBS_DIB) == 0)
+	if ((kbd_cmd_read_1() & KBS_DIB) == 0)
 		return 0;
 	if (polling)
 		return 1;
@@ -782,7 +677,7 @@ pcintr(arg)
 			do
 				(*tp->t_linesw->l_rint)(*cp++, tp);
 			while (*cp);
-	} while (inb(kbd_cmdp) & KBS_DIB);
+	} while (kbd_cmd_read_1() & KBS_DIB);
 	return 1;
 }
 
@@ -917,8 +812,9 @@ pcstop(tp, flag)
 }
 
 /* ARGSUSED */
-void
-pccnattach()
+void pccons_common_cnattach(crt_iot, crt_memt, kbd_iot, config)
+	bus_space_tag_t crt_iot, crt_memt, kbd_iot;
+	struct pccons_config *config;
 {
 	int maj;
 	static struct consdev pccons = {
@@ -930,28 +826,8 @@ pccnattach()
 	 * For now, don't screw with it.
 	 */
 	/* crtat = 0; */
-	pcinithandle();
 
-	switch (cputype) {
-
-	case ACER_PICA_61:
-	case NEC_R96: /* XXX - not really confirmed */
-		break;
-
-	case DESKSTATION_TYNE:
-		outb(arc_bus_io.bs_vbase + 0x3ce, 6);	/* Correct video mode */
-		outb(arc_bus_io.bs_vbase + 0x3cf,
-			inb(arc_bus_io.bs_vbase + 0x3cf) | 0xc);
-		kbc_put8042cmd(CMDBYTE);		/* Want XT codes.. */
-		break;
-
-	case DESKSTATION_RPC44:
-		kbc_put8042cmd(CMDBYTE);		/* Want XT codes.. */
-		break;
-
-	case SNI_RM200:
-		break;
-	}
+	pc_context_init(crt_iot, crt_memt, kbd_iot, config);
 
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
@@ -992,7 +868,7 @@ pccngetc(dev)
 
 	do {
 		/* wait for byte */
-		while ((inb(kbd_cmdp) & KBS_DIB) == 0);
+		while ((kbd_cmd_read_1() & KBS_DIB) == 0);
 		/* see if it's worthwhile */
 		cp = sget();
 	} while (!cp);
@@ -1089,6 +965,7 @@ sput(cp, n)
 	u_char *cp;
 	int n;
 {
+	struct pccons_context *pc = &pccons_console_context;
 	u_char c, scroll = 0;
 
 	if (pc_xmode > 0)
@@ -1099,16 +976,19 @@ sput(cp, n)
 		u_short was;
 		unsigned cursorat;
 
-		cp = (volatile u_short *)cga_buf;
+		cp = bus_space_vaddr(pc->pc_crt_memt, pc->pc_cga_memh);
 		was = *cp;
-		*cp = (volatile u_short) 0xA55A;
+		*cp = 0xA55A;
 		if (*cp != 0xA55A) {
-			cp = (volatile u_short *)mono_buf;
-			addr_6845 = mono_base;
+			cp = bus_space_vaddr(pc->pc_crt_memt,
+			    pc->pc_mono_memh);
+			pc->pc_6845_ioh = pc->pc_mono_ioh;
+			pc->pc_crt_memh = pc->pc_mono_memh;
 			vs.color = 0;
 		} else {
 			*cp = was;
-			addr_6845 = cga_base;
+			pc->pc_6845_ioh = pc->pc_cga_ioh;
+			pc->pc_crt_memh = pc->pc_cga_memh;
 			vs.color = 1;
 		}
 
@@ -1724,17 +1604,17 @@ sget()
 
 top:
 	KBD_DELAY;
-	dt = inb(kbd_datap);
+	dt = kbd_data_read_1();
 
 	switch (dt) {
 	case KBR_ACK: case KBR_ECHO:
 		kb_oq_get = (kb_oq_get + 1) & 7;
 		if(kb_oq_get != kb_oq_put) {
-			outb(kbd_datap, kb_oq[kb_oq_get]);
+			kbd_data_write_1(kb_oq[kb_oq_get]);
 		}
 		goto loop;
 	case KBR_RESEND:
-		outb(kbd_datap, kb_oq[kb_oq_get]);
+		kbd_data_write_1(kb_oq[kb_oq_get]);
 		goto loop;
 	}
 
@@ -1938,7 +1818,7 @@ printf("keycode %d\n",dt);
 
 	extended = 0;
 loop:
-	if ((inb(kbd_cmdp) & KBS_DIB) == 0)
+	if ((kbd_cmd_read_1() & KBS_DIB) == 0)
 		return 0;
 	goto top;
 }
@@ -1949,38 +1829,28 @@ pcmmap(dev, offset, nprot)
 	off_t offset;
 	int nprot;
 {
+	struct pccons_context *pc = &pccons_console_context;
+	paddr_t pa;
 
-	switch(cputype) {
-
-	case ACER_PICA_61:
-	case NEC_R96:
-		if (offset >= 0xa0000 && offset < 0xc0000)
-			return mips_btop(PICA_P_LOCAL_VIDEO + offset);
-		if (offset >= 0x0000 && offset < 0x10000)
-			return mips_btop(PICA_P_LOCAL_VIDEO_CTRL + offset);
-		if (offset >= 0x40000000 && offset < 0x40800000)
-			return mips_btop(PICA_P_LOCAL_VIDEO + offset - 0x40000000);
-		return -1;
-
-	case DESKSTATION_RPC44:
-		if (offset >= 0xa0000 && offset < 0xc0000)
-			return mips_btop(RPC44_P_ISA_MEM + offset);
-		if (offset >= 0x0000 && offset < 0x10000)
-			return mips_btop(RPC44_P_ISA_IO + offset);
-		if (offset >= 0x40000000 && offset < 0x40800000)
-			return mips_btop(RPC44_P_ISA_MEM + offset - 0x40000000);
-		return -1;
-
-	case DESKSTATION_TYNE:
-		if (offset >= 0xa0000 && offset < 0xc0000)
-			return mips_btop(TYNE_P_ISA_MEM + offset);
-		if (offset >= 0x0000 && offset < 0x10000)
-			return mips_btop(TYNE_P_ISA_IO + offset);
-		if (offset >= 0x40000000 && offset < 0x40800000)
-			return mips_btop(TYNE_P_ISA_MEM + offset - 0x40000000);
-		return -1;
+	if (offset >= 0xa0000 && offset < 0xc0000) {
+		if (bus_space_paddr(pc->pc_crt_memt, pc->pc_mono_memh, &pa))
+			return (-1);
+		pa += offset - pc->pc_config->pc_mono_memaddr;
+		return (mips_btop(pa));
 	}
-	return -1;
+	if (offset >= 0x0000 && offset < 0x10000) {
+		if (bus_space_paddr(pc->pc_crt_iot, pc->pc_mono_ioh, &pa))
+			return (-1);
+		pa += offset - pc->pc_config->pc_mono_iobase;
+		return (mips_btop(pa));
+	}
+	if (offset >= 0x40000000 && offset < 0x40800000) {
+		if (bus_space_paddr(pc->pc_crt_memt, pc->pc_mono_memh, &pa))
+			return (-1);
+		pa += offset - 0x40000000 - pc->pc_config->pc_mono_memaddr;
+		return (mips_btop(pa));
+	}
+	return (-1);
 }
 
 void
@@ -2010,372 +1880,3 @@ pc_xmode_off()
 #endif
 	async_update();
 }
-
-#include <machine/mouse.h>
-
-/* status bits */
-#define	PMS_OBUF_FULL	0x01
-#define	PMS_IBUF_FULL	0x02
-
-/* controller commands */
-#define	PMS_INT_ENABLE	0x47	/* enable controller interrupts */
-#define	PMS_INT_DISABLE	0x65	/* disable controller interrupts */
-#define	PMS_AUX_ENABLE	0xa7	/* enable auxiliary port */
-#define	PMS_AUX_DISABLE	0xa8	/* disable auxiliary port */
-#define	PMS_MAGIC_1	0xa9	/* XXX */
-
-#define	PMS_8042_CMD	0x65
-
-/* mouse commands */
-#define	PMS_SET_SCALE11	0xe6	/* set scaling 1:1 */
-#define	PMS_SET_SCALE21 0xe7	/* set scaling 2:1 */
-#define	PMS_SET_RES	0xe8	/* set resolution */
-#define	PMS_GET_SCALE	0xe9	/* get scaling factor */
-#define	PMS_SET_STREAM	0xea	/* set streaming mode */
-#define	PMS_SET_SAMPLE	0xf3	/* set sampling rate */
-#define	PMS_DEV_ENABLE	0xf4	/* mouse on */
-#define	PMS_DEV_DISABLE	0xf5	/* mouse off */
-#define	PMS_RESET	0xff	/* reset */
-
-#define	PMS_CHUNK	128	/* chunk size for read */
-#define	PMS_BSIZE	1020	/* buffer size */
-
-#define	FLUSHQ(q) { if((q)->c_cc) ndflush(q, (q)->c_cc); }
-
-#if NOPMS > 0
-
-int opmsopen __P((dev_t, int));
-int opmsclose __P((dev_t, int));
-int opmsread __P((dev_t, struct uio *, int));
-int opmsioctl __P((dev_t, u_long, caddr_t, int));
-int opmsselect __P((dev_t, int, struct proc *));
-int opmspoll __P((dev_t, int, struct proc *));
-static __inline void pms_dev_cmd __P((u_char));
-static __inline void pms_aux_cmd __P((u_char));
-static __inline void pms_pit_cmd __P((u_char));
-
-static __inline void
-pms_dev_cmd(value)
-	u_char value;
-{
-	kbd_flush_input();
-	outb(kbd_cmdp, 0xd4);
-	kbd_flush_input();
-	outb(kbd_datap, value);
-}
-
-static __inline void
-pms_aux_cmd(value)
-	u_char value;
-{
-	kbd_flush_input();
-	outb(kbd_cmdp, value);
-}
-
-static __inline void
-pms_pit_cmd(value)
-	u_char value;
-{
-	kbd_flush_input();
-	outb(kbd_cmdp, 0x60);
-	kbd_flush_input();
-	outb(kbd_datap, value);
-}
-
-int
-opmsprobe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
-{
-	struct confargs *ca = aux;
-	u_char x;
-
-	/* Make shure we're looking for this type of device */
-	if(!BUS_MATCHNAME(ca, "pms"))
-		return(0);
-
-	pcinithandle();
-	pms_dev_cmd(KBC_RESET);
-	pms_aux_cmd(PMS_MAGIC_1);
-	delay(10000);
-	x = inb(kbd_datap);
-	pms_pit_cmd(PMS_INT_DISABLE);
-	if (x & 0x04)
-		return 0;
-
-	return 1;
-}
-
-void
-opmsattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-	struct opms_softc *sc = (void *)self;
-	struct confargs *ca = aux;
-
-	printf("\n");
-
-	/* Other initialization was done by opmsprobe. */
-	sc->sc_state = 0;
-
-	BUS_INTR_ESTABLISH(ca, opmsintr, (void *)(long)sc);
-}
-
-int
-opmsopen(dev, flag)
-	dev_t dev;
-	int flag;
-{
-	int unit = PMSUNIT(dev);
-	struct opms_softc *sc;
-
-	if (unit >= opms_cd.cd_ndevs)
-		return ENXIO;
-	sc = opms_cd.cd_devs[unit];
-	if (!sc)
-		return ENXIO;
-
-	if (sc->sc_state & PMS_OPEN)
-		return EBUSY;
-
-	if (clalloc(&sc->sc_q, PMS_BSIZE, 0) == -1)
-		return ENOMEM;
-
-	sc->sc_state |= PMS_OPEN;
-	sc->sc_status = 0;
-	sc->sc_x = sc->sc_y = 0;
-
-	/* Enable interrupts. */
-	pms_dev_cmd(PMS_DEV_ENABLE);
-	pms_aux_cmd(PMS_AUX_ENABLE);
-	pms_dev_cmd(PMS_SET_RES);
-	pms_dev_cmd(3);		/* 8 counts/mm */
-	pms_dev_cmd(PMS_SET_SCALE21);
-#if 0
-	pms_dev_cmd(PMS_SET_SAMPLE);
-	pms_dev_cmd(100);	/* 100 samples/sec */
-	pms_dev_cmd(PMS_SET_STREAM);
-#endif
-	pms_pit_cmd(PMS_INT_ENABLE);
-
-	return 0;
-}
-
-int
-opmsclose(dev, flag)
-	dev_t dev;
-	int flag;
-{
-	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
-
-	/* Disable interrupts. */
-	pms_dev_cmd(PMS_DEV_DISABLE);
-	pms_pit_cmd(PMS_INT_DISABLE);
-	pms_aux_cmd(PMS_AUX_DISABLE);
-
-	sc->sc_state &= ~PMS_OPEN;
-
-	clfree(&sc->sc_q);
-
-	return 0;
-}
-
-int
-opmsread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
-{
-	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
-	int s;
-	int error = 0;
-	size_t length;
-	u_char buffer[PMS_CHUNK];
-
-	/* Block until mouse activity occured. */
-
-	s = spltty();
-	while (sc->sc_q.c_cc == 0) {
-		if (flag & IO_NDELAY) {
-			splx(s);
-			return EWOULDBLOCK;
-		}
-		sc->sc_state |= PMS_ASLP;
-		error = tsleep((caddr_t)sc, PZERO | PCATCH, "pmsrea", 0);
-		if (error) {
-			sc->sc_state &= ~PMS_ASLP;
-			splx(s);
-			return error;
-		}
-	}
-	splx(s);
-
-	/* Transfer as many chunks as possible. */
-
-	while (sc->sc_q.c_cc > 0 && uio->uio_resid > 0) {
-		length = min(sc->sc_q.c_cc, uio->uio_resid);
-		if (length > sizeof(buffer))
-			length = sizeof(buffer);
-
-		/* Remove a small chunk from the input queue. */
-		(void) q_to_b(&sc->sc_q, buffer, length);
-
-		/* Copy the data to the user process. */
-		error = uiomove(buffer, length, uio);
-		if (error)
-			break;
-	}
-
-	return error;
-}
-
-int
-opmsioctl(dev, cmd, addr, flag)
-	dev_t dev;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-{
-	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
-	struct mouseinfo info;
-	int s;
-	int error;
-
-	switch (cmd) {
-	case MOUSEIOCREAD:
-		s = spltty();
-
-		info.status = sc->sc_status;
-		if (sc->sc_x || sc->sc_y)
-			info.status |= MOVEMENT;
-
-		if (sc->sc_x > 127)
-			info.xmotion = 127;
-		else if (sc->sc_x < -127)
-			/* Bounding at -127 avoids a bug in XFree86. */
-			info.xmotion = -127;
-		else
-			info.xmotion = sc->sc_x;
-
-		if (sc->sc_y > 127)
-			info.ymotion = 127;
-		else if (sc->sc_y < -127)
-			info.ymotion = -127;
-		else
-			info.ymotion = sc->sc_y;
-
-		/* Reset historical information. */
-		sc->sc_x = sc->sc_y = 0;
-		sc->sc_status &= ~BUTCHNGMASK;
-		ndflush(&sc->sc_q, sc->sc_q.c_cc);
-
-		splx(s);
-		error = copyout(&info, addr, sizeof(struct mouseinfo));
-		break;
-	default:
-		error = EINVAL;
-		break;
-	}
-
-	return error;
-}
-
-/* Masks for the first byte of a packet */
-#define PS2LBUTMASK 0x01
-#define PS2RBUTMASK 0x02
-#define PS2MBUTMASK 0x04
-
-int
-opmsintr(arg)
-	void *arg;
-{
-	struct opms_softc *sc = arg;
-	static int state = 0;
-	static u_char buttons;
-	u_char changed;
-	static char dx, dy;
-	u_char buffer[5];
-
-	if ((sc->sc_state & PMS_OPEN) == 0) {
-		/* Interrupts are not expected.  Discard the byte. */
-		kbd_flush_input();
-		return 0;
-	}
-
-	switch (state) {
-
-	case 0:
-		buttons = inb(kbd_datap);
-		if ((buttons & 0xc0) == 0)
-			++state;
-		break;
-
-	case 1:
-		dx = inb(kbd_datap);
-		/* Bounding at -127 avoids a bug in XFree86. */
-		dx = (dx == -128) ? -127 : dx;
-		++state;
-		break;
-
-	case 2:
-		dy = inb(kbd_datap);
-		dy = (dy == -128) ? -127 : dy;
-		state = 0;
-
-		buttons = ((buttons & PS2LBUTMASK) << 2) |
-			  ((buttons & (PS2RBUTMASK | PS2MBUTMASK)) >> 1);
-		changed = ((buttons ^ sc->sc_status) & BUTSTATMASK) << 3;
-		sc->sc_status = buttons | (sc->sc_status & ~BUTSTATMASK) | changed;
-
-		if (dx || dy || changed) {
-			/* Update accumulated movements. */
-			sc->sc_x += dx;
-			sc->sc_y += dy;
-
-			/* Add this event to the queue. */
-			buffer[0] = 0x80 | (buttons & BUTSTATMASK);
-			if(dx < 0)
-				buffer[0] |= 0x10;
-			buffer[1] = dx & 0x7f;
-			if(dy < 0)
-				buffer[0] |= 0x20;
-			buffer[2] = dy & 0x7f;
-			buffer[3] = buffer[4] = 0;
-			(void) b_to_q(buffer, sizeof buffer, &sc->sc_q);
-
-			if (sc->sc_state & PMS_ASLP) {
-				sc->sc_state &= ~PMS_ASLP;
-				wakeup((caddr_t)sc);
-			}
-			selwakeup(&sc->sc_rsel);
-		}
-
-		break;
-	}
-	return -1;
-}
-
-int
-opmspoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
-	int revents = 0;
-	int s = spltty();
-
-	if (events & (POLLIN | POLLRDNORM)) {
-		if (sc->sc_q.c_cc > 0)
-			revents |= events & (POLLIN | POLLRDNORM);
-		else
-			selrecord(p, &sc->sc_rsel);
-	}
-
-	splx(s);
-	return (revents);
-}
-
-#endif /* NOPMS > 0 */
