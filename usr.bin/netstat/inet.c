@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.28 1998/01/07 22:55:07 lukem Exp $	*/
+/*	$NetBSD: inet.c,v 1.29 1998/04/29 21:39:38 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.28 1998/01/07 22:55:07 lukem Exp $");
+__RCSID("$NetBSD: inet.c,v 1.29 1998/04/29 21:39:38 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -342,14 +342,17 @@ ip_stats(off, name)
 	ps(ips_badlen, "\t%lu with data length < header length\n");
 	ps(ips_badoptions, "\t%lu with bad options\n");
 	ps(ips_badvers, "\t%lu with incorrect version number\n");
-	p(ips_fragments, "\t%lu fragment%s received\n");
+	p(ips_fragments, "\t%lu fragment%s received");
 	p(ips_fragdropped, "\t%lu fragment%s dropped (dup or out of space)\n");
 	p(ips_badfrags, "\t%lu malformed fragment%s dropped\n");
 	p(ips_fragtimeout, "\t%lu fragment%s dropped after timeout\n");
 	p(ips_reassembled, "\t%lu packet%s reassembled ok\n");
 	p(ips_delivered, "\t%lu packet%s for this host\n");
 	p(ips_noproto, "\t%lu packet%s for unknown/unsupported protocol\n");
-	p(ips_forward, "\t%lu packet%s forwarded\n");
+	p(ips_forward, "\t%lu packet%s forwarded");
+	p(ips_fastforward, " (%lu packet%s fast forwarded)");
+	if (ipstat.ips_forward || sflag <= 1)
+		putchar('\n');
 	p(ips_cantforward, "\t%lu packet%s not forwardable\n");
 	p(ips_redirectsent, "\t%lu redirect%s sent\n");
 	p(ips_localout, "\t%lu packet%s sent from this host\n");
