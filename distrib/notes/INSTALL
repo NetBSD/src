@@ -408,7 +408,6 @@ The port-masters (and their ports):
 Mark Brinicombe		<mark@NetBSD.ORG>		(arm32)
 Jeremy Cooper		<jeremy@NetBSD.ORG>		(sun3x)
 Chuck Cranor		<chuck@NetBSD.ORG>		(mvme68k)
-Chris G. Demetriou	<cgd@NetBSD.ORG>		(alpha)
 Charles Hannum		<mycroft@NetBSD.ORG>		(i386)
 Chris Hopps		<chopps@NetBSD.ORG>		(amiga)
 Paul Kranenburg		<pk@NetBSD.ORG>			(sparc)
@@ -437,6 +436,7 @@ Dave Carrel		<carrel@NetBSD.ORG>
 Bill Coldwell		<billc@warped.com>
 Alistair Crooks		<agc@NetBSD.ORG>
 Rob Deker		<deker@NetBSD.ORG>
+Chris G. Demetriou	<cgd@NetBSD.ORG>
 Matthias Drochner	<drochner@NetBSD.ORG>
 Bernd Ernesti		<veego@NetBSD.ORG>
 Erik Fair		<fair@NetBSD.ORG>
