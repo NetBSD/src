@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.126 2002/09/19 10:38:04 ragge Exp $ */
+/*	$NetBSD: machdep.c,v 1.127 2002/09/22 07:19:49 chs Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -956,12 +956,11 @@ printf("starting dump, blkno %d\n", blkno);
 			/* print out how many MBs we have dumped */
 			if (i && (i % (1024*1024)) == 0)
 				printf("%d ", i / (1024*1024));
-			(void) pmap_enter(pmap_kernel(), dumpspace, maddr,
-					VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
+			pmap_kenter_pa(dumpspace, maddr, VM_PROT_READ);
 			pmap_update(pmap_kernel());
 			error = (*dump)(dumpdev, blkno,
 					(caddr_t)dumpspace, (int)n);
-			pmap_remove(pmap_kernel(), dumpspace, dumpspace + n);
+			pmap_kremove(dumpspace, n);
 			pmap_update(pmap_kernel());
 			if (error)
 				break;
@@ -1446,22 +1445,23 @@ _bus_dmamap_unload(t, map)
 	bus_dmamap_t map;
 {
 	int i;
-	struct vm_page *m;
-	struct pglist *mlist;
+	struct vm_page *pg;
+	struct pglist *pglist;
 	paddr_t pa;
 
-	for (i=0; i<map->dm_nsegs; i++) {
-		if ((mlist = map->dm_segs[i]._ds_mlist) == NULL) {
-			/* 
-			 * We were asked to load random VAs and lost the 
+	for (i = 0; i < map->dm_nsegs; i++) {
+		if ((pglist = map->dm_segs[i]._ds_mlist) == NULL) {
+
+			/*
+			 * We were asked to load random VAs and lost the
 			 * PA info so just blow the entire cache away.
 			 */
-			blast_vcache();
+			blast_dcache();
 			break;
 		}
-		for (m = TAILQ_FIRST(mlist); m != NULL;
-		     m = TAILQ_NEXT(m,pageq)) {
-			pa = VM_PAGE_TO_PHYS(m);
+		TAILQ_FOREACH(pg, pglist, pageq) {
+			pa = VM_PAGE_TO_PHYS(pg);
+
 			/* 
 			 * We should be flushing a subrange, but we
 			 * don't know where the segments starts.
@@ -1469,6 +1469,7 @@ _bus_dmamap_unload(t, map)
 			dcache_flush_page(pa);
 		}
 	}
+
 	/* Mark the mappings as invalid. */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
@@ -1488,8 +1489,8 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	int ops;
 {
 	int i;
-	struct vm_page *m;
-	struct pglist *mlist;
+	struct vm_page *pg;
+	struct pglist *pglist;
 
 	/*
 	 * We sync out our caches, but the bus must do the same.
@@ -1497,6 +1498,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	 * Actually a #Sync is expensive.  We should optimize.
 	 */
 	if ((ops & BUS_DMASYNC_PREREAD) || (ops & BUS_DMASYNC_PREWRITE)) {
+
 		/* 
 		 * Don't really need to do anything, but flush any pending
 		 * writes anyway. 
@@ -1505,18 +1507,16 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	}
 	if (ops & BUS_DMASYNC_POSTREAD) {
 		/* Invalidate the vcache */
-		for (i=0; i<map->dm_nsegs; i++) {
-			if ((mlist = map->dm_segs[i]._ds_mlist) == NULL)
+		for (i = 0; i < map->dm_nsegs; i++) {
+			if ((pglist = map->dm_segs[i]._ds_mlist) == NULL)
 				/* Should not really happen. */
 				continue;
-			for (m = TAILQ_FIRST(mlist);
-			     m != NULL; m = TAILQ_NEXT(m,pageq)) {
+			TAILQ_FOREACH(pg, pglist, pageq) {
 				paddr_t start;
 				psize_t size = NBPG;
 
 				if (offset < NBPG) {
-					start = VM_PAGE_TO_PHYS(m) + offset;
-					size = NBPG;
+					start = VM_PAGE_TO_PHYS(pg) + offset;
 					if (size > len)
 						size = len;
 					cache_flush_phys(start, size, 0);
@@ -1547,7 +1547,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int flags;
 {
 	vaddr_t low, high;
-	struct pglist *mlist;
+	struct pglist *pglist;
 	int error;
 
 	/* Always round the size. */
@@ -1555,7 +1555,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	low = vm_first_phys;
 	high = vm_first_phys + vm_num_phys - PAGE_SIZE;
 
-	if ((mlist = malloc(sizeof(*mlist), M_DEVBUF,
+	if ((pglist = malloc(sizeof(*pglist), M_DEVBUF,
 	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
 		return (ENOMEM);
 
@@ -1573,7 +1573,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	 * Allocate pages from the VM system.
 	 */
 	error = uvm_pglistalloc(size, low, high,
-	    alignment, boundary, mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
+	    alignment, boundary, pglist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)
 		return (error);
 
@@ -1592,7 +1592,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	 * NOBODY SHOULD TOUCH THE pageq FIELDS WHILE THESE PAGES
 	 * ARE IN OUR CUSTODY.
 	 */
-	segs[0]._ds_mlist = mlist;
+	segs[0]._ds_mlist = pglist;
 
 	/* The bus driver should do the actual mapping */
 	return (0);
@@ -1633,7 +1633,6 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	int flags;
 {
 	vaddr_t va, sva;
-	struct pglist *mlist;
 	int r, cbit;
 	size_t oversize;
 	u_long align;
@@ -1663,14 +1662,11 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 	/* Return excess virtual addresses */
 	if (va != sva)
-		(void)uvm_unmap(kernel_map, sva, va);
+		uvm_unmap(kernel_map, sva, va);
 	if (va + size != sva + oversize)
-		(void)uvm_unmap(kernel_map, va + size, sva + oversize);
-
+		uvm_unmap(kernel_map, va + size, sva + oversize);
 
 	*kvap = (caddr_t)va;
-	mlist = segs[0]._ds_mlist;
-
 	return (0);
 }
 
@@ -1843,7 +1839,8 @@ sparc_bus_map(t, addr, size, flags, unused, hp)
 		hp->_sasi = ASI_PRIMARY;
 
 	pa = addr & ~PAGE_MASK; /* = trunc_page(addr); Will drop high bits */
-	if (!(flags&BUS_SPACE_MAP_READONLY)) pm_prot |= VM_PROT_WRITE;
+	if (!(flags&BUS_SPACE_MAP_READONLY))
+		pm_prot |= VM_PROT_WRITE;
 
 	DPRINTF(BSDB_MAP, ("\nsparc_bus_map: type %x flags %x "
 		"addr %016llx size %016llx virt %llx paddr %016llx\n",
@@ -1852,11 +1849,10 @@ sparc_bus_map(t, addr, size, flags, unused, hp)
 		(unsigned long long)pa));
 
 	do {
-		DPRINTF(BSDB_MAP, ("sparc_bus_map: phys %llx virt %p hp %llx\n", 
+		DPRINTF(BSDB_MAP, ("sparc_bus_map: phys %llx virt %p hp %llx\n",
 			(unsigned long long)pa, (char *)v,
 			(unsigned long long)hp->_ptr));
-		pmap_enter(pmap_kernel(), v, pa | pm_flags, pm_prot,
-			pm_prot|PMAP_WIRED);
+		pmap_kenter_pa(v, pa | pm_flags, pm_prot);
 		v += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);

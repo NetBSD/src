@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.82 2002/09/11 20:19:45 martin Exp $ */
+/*	$NetBSD: trap.c,v 1.83 2002/09/22 07:19:52 chs Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -473,13 +473,14 @@ userret(p, pc, oticks)
  *
  * Oh, and don't touch the FPU bit if we're returning to the kernel.
  */
-static __inline void share_fpu(p, tf)
+static __inline void
+share_fpu(p, tf)
 	struct proc *p;
 	struct trapframe64 *tf;
 {
-	if (!(tf->tf_tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) &&
-	    (tf->tf_tstate & (PSTATE_PEF<<TSTATE_PSTATE_SHIFT)) && fpproc != p)
-		tf->tf_tstate &= ~(PSTATE_PEF<<TSTATE_PSTATE_SHIFT);
+	if (!(tf->tf_tstate & (PSTATE_PRIV << TSTATE_PSTATE_SHIFT)) &&
+	    fpproc != p)
+		tf->tf_tstate &= ~(PSTATE_PEF << TSTATE_PSTATE_SHIFT);
 }
 
 /*
@@ -489,15 +490,16 @@ static __inline void share_fpu(p, tf)
 void
 trap(tf, type, pc, tstate)
 	struct trapframe64 *tf;
-	unsigned type;
+	unsigned int type;
 	vaddr_t pc;
 	long tstate;
 {
 	struct proc *p;
 	struct pcb *pcb;
-	int pstate = (tstate>>TSTATE_PSTATE_SHIFT);
 	int64_t n;
 	u_quad_t sticks;
+	int pstate = tstate >> TSTATE_PSTATE_SHIFT;
+	int error;
 
 	/* This steps the PC over the trap. */
 #define	ADVANCE (n = tf->tf_npc, tf->tf_pc = n, tf->tf_npc = n + 4)
@@ -508,25 +510,8 @@ trap(tf, type, pc, tstate)
 		    (void *)(u_long)tf->tf_pc, (void *)(u_long)tf->tf_npc);
 		Debugger();
 	}
-#if 0
-	{
-		/* Check to make sure we're on the normal stack */
-		int* sp;
-
-		__asm("mov %%sp, %0" : "=r" (sp) :);
-		if (sp < EINTSTACK) {
-			printf("trap: We're on the interrupt stack!\ntype=0x%x tf=%p %s\n", 
-			       type, tf, type < N_TRAP_TYPES ? trap_type[type] : 
-			       ((type == T_AST) ? "ast" : 
-				((type == T_RWRET) ? "rwret" : T)));
-		}
-	}
-#endif
-#endif
-
-
-#ifdef DEBUG
-	if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) || trapdebug&(TDB_FOLLOW|TDB_TRAP)) {
+	if ((trapdebug & TDB_NSAVED && cpcb->pcb_nsaved) ||
+	    trapdebug & (TDB_FOLLOW | TDB_TRAP)) {
 		char sbuf[sizeof(PSTATE_BITS) + 64];
 
 		printf("trap: type 0x%x: pc=%lx &tf=%p\n",
@@ -538,16 +523,8 @@ trap(tf, type, pc, tstate)
 		       ((type == T_AST) ? "ast" : 
 			((type == T_RWRET) ? "rwret" : T)));
 	}
-#if 0
-	if (trapdebug & TDB_FRAME) {
-		print_trapframe(tf);
-	}
-#endif
-#endif
-
-	uvmexp.traps++;
-#ifdef DEBUG
-	if ((trapdebug&(TDB_FOLLOW|TDB_TRAP)) || ((trapdebug & TDB_TL) && tl())) {
+	if ((trapdebug & (TDB_FOLLOW | TDB_TRAP)) ||
+	    ((trapdebug & TDB_TL) && tl())) {
 		char sbuf[sizeof(PSTATE_BITS) + 64];
 
 		extern int trap_trace_dis;
@@ -565,6 +542,9 @@ trap(tf, type, pc, tstate)
 #endif
 	}
 #endif
+
+	uvmexp.traps++;
+
 	/*
 	 * Generally, kernel traps cause a panic.  Any exceptions are
 	 * handled early here.
@@ -603,7 +583,7 @@ extern void db_printf(const char * , ...);
 				/* Enable the FPU */
 /*				loadfpstate(initfpstate);*/
 			}
-			tf->tf_tstate |= (PSTATE_PEF<<TSTATE_PSTATE_SHIFT);
+			tf->tf_tstate |= (PSTATE_PEF << TSTATE_PSTATE_SHIFT);
 			return;
 #else
 			struct proc *newfpproc;
@@ -616,7 +596,7 @@ extern void db_printf(const char * , ...);
 			}
 			if (fpproc != newfpproc) {
 				if (fpproc != NULL) {
-				/* someone else had it, maybe? */
+					/* someone else had it, maybe? */
 					savefpstate(fpproc->p_md.md_fpstate);
 					fpproc = NULL;
 				}
@@ -628,7 +608,7 @@ extern void db_printf(const char * , ...);
 					fpproc = NULL;
 			}
 			/* Enable the FPU */
-			tf->tf_tstate |= (PSTATE_PEF<<TSTATE_PSTATE_SHIFT);
+			tf->tf_tstate |= (PSTATE_PEF << TSTATE_PSTATE_SHIFT);
 			return;
 #endif
 		}
@@ -789,8 +769,10 @@ badtrap:
 		
 #ifdef DEBUG
 #define fmt64(x)	(u_int)((x)>>32), (u_int)((x))
-		printf("Alignment error: pid=%d comm=%s dsfsr=%08x:%08x dsfar=%x:%x isfsr=%08x:%08x pc=%lx\n",
-		       p->p_pid, p->p_comm, fmt64(dsfsr), fmt64(dsfar), fmt64(isfsr), pc);
+		printf("Alignment error: pid=%d comm=%s dsfsr=%08x:%08x "
+		       "dsfar=%x:%x isfsr=%08x:%08x pc=%lx\n",
+		       p->p_pid, p->p_comm, fmt64(dsfsr), fmt64(dsfar),
+		       fmt64(isfsr), pc);
 #endif
 	}
 		
@@ -824,7 +806,13 @@ badtrap:
 		fpproc = NULL;
 		/* tf->tf_psr &= ~PSR_EF; */	/* share_fpu will do this */
 		if (p->p_md.md_fpstate->fs_qsize == 0) {
-			copyin((caddr_t)pc, &p->p_md.md_fpstate->fs_queue[0].fq_instr, sizeof(int));
+			error = copyin((caddr_t)pc,
+			    &p->p_md.md_fpstate->fs_queue[0].fq_instr,
+			    sizeof(int));
+			if (error) {
+				trapsignal(p, SIGBUS, 0);	/* XXX code */
+				break;
+			}
 			p->p_md.md_fpstate->fs_qsize = 1;
 			fpu_cleanup(p, p->p_md.md_fpstate);
 			ADVANCE;
@@ -885,7 +873,7 @@ badtrap:
 	share_fpu(p, tf);
 #undef ADVANCE
 #ifdef DEBUG
-	if (trapdebug&(TDB_FOLLOW|TDB_TRAP)) {
+	if (trapdebug & (TDB_FOLLOW | TDB_TRAP)) {
 		printf("trap: done\n");
 		/* if (type != T_BREAKPOINT) Debugger(); */
 	}
@@ -919,26 +907,28 @@ rwindow_save(p)
 
 	i = pcb->pcb_nsaved;
 #ifdef DEBUG
-	if (rwindow_debug&RW_FOLLOW)
+	if (rwindow_debug & RW_FOLLOW)
 		printf("rwindow_save(%p): nsaved %d\n", p, i);
 #endif
 	if (i == 0)
 		return (0);
 #ifdef DEBUG
-	if (rwindow_debug&RW_FOLLOW)
+	if (rwindow_debug & RW_FOLLOW)
 		printf("%s[%d]: rwindow: pcb->stack:", p->p_comm, p->p_pid);
 #endif
 	 while (i > 0) {
 		rwdest = rw[i--].rw_in[6];
 #ifdef DEBUG
-		if (rwindow_debug&RW_FOLLOW)
+		if (rwindow_debug & RW_FOLLOW)
 			printf("window %d at %lx\n", i, (long)rwdest);
 #endif
 		if (rwdest & 1) {
 #ifdef DEBUG
-			if (rwindow_debug&RW_64) {
-				printf("rwindow_save: 64-bit tf to %p+BIAS or %p\n", 
-				       (void *)(long)rwdest, (void *)(long)(rwdest+BIAS));
+			if (rwindow_debug & RW_64) {
+				printf("rwindow_save: 64-bit tf to %p+BIAS "
+				       "or %p\n", 
+				       (void *)(long)rwdest,
+				       (void *)(long)(rwdest+BIAS));
 				Debugger();
 			}
 #endif
@@ -946,14 +936,15 @@ rwindow_save(p)
 			if (copyout((caddr_t)&rw[i], (caddr_t)(u_long)rwdest,
 				    sizeof(*rw))) {
 #ifdef DEBUG
-			if (rwindow_debug&(RW_ERR|RW_64))
-				printf("rwindow_save: 64-bit pcb copyout to %p failed\n", 
+			if (rwindow_debug & (RW_ERR | RW_64))
+				printf("rwindow_save: 64-bit pcb copyout "
+				       "to %p failed\n", 
 				       (void *)(long)rwdest);
 #endif
 				return (-1);
 			}
 #ifdef DEBUG
-			if (rwindow_debug&RW_64) {
+			if (rwindow_debug & RW_64) {
 				printf("Finished copyout(%p, %p, %lx)\n",
 					(caddr_t)&rw[i], (caddr_t)(long)rwdest,
                                 	sizeof(*rw));
@@ -969,11 +960,14 @@ rwindow_save(p)
 				rwstack.rw_in[j] = (int)rw[i].rw_in[j];
 			}
 			/* Must truncate rwdest */
-			if (copyout(&rwstack, (caddr_t)(u_long)(u_int)rwdest, sizeof(rwstack))) {
+			if (copyout(&rwstack, (caddr_t)(u_long)(u_int)rwdest,
+				    sizeof(rwstack))) {
 #ifdef DEBUG
-				if (rwindow_debug&RW_ERR)
-					printf("rwindow_save: 32-bit pcb copyout to %p (%p) failed\n", 
-					       (void *)(u_long)(u_int)rwdest, (void *)(u_long)rwdest);
+				if (rwindow_debug & RW_ERR)
+					printf("rwindow_save: 32-bit pcb "
+					       "copyout to %p (%p) failed\n", 
+					       (void *)(u_long)(u_int)rwdest,
+					       (void *)(u_long)rwdest);
 #endif
 				return (-1);
 			}
@@ -981,7 +975,7 @@ rwindow_save(p)
 	}
 	pcb->pcb_nsaved = 0;
 #ifdef DEBUG
-	if (rwindow_debug&RW_FOLLOW) {
+	if (rwindow_debug & RW_FOLLOW) {
 		printf("\n");
 		Debugger();
 	}
@@ -1037,14 +1031,15 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 	}
 	write_user_windows();
 	if ((cpcb->pcb_nsaved > 8) ||
-	    (trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) ||
-	    (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))) {
+	    (trapdebug & TDB_NSAVED && cpcb->pcb_nsaved) ||
+	    (trapdebug & (TDB_ADDFLT | TDB_FOLLOW))) {
 		printf("%ld: data_access_fault(%p, %x, %p, %p, %lx, %lx) "
 			"nsaved=%d\n",
 			(long)(curproc?curproc->p_pid:-1), tf, type,
-			(void*)addr, (void*)pc,
+			(void *)addr, (void *)pc,
 			sfva, sfsr, (int)cpcb->pcb_nsaved);
-		if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved)) Debugger();
+		if ((trapdebug & TDB_NSAVED && cpcb->pcb_nsaved))
+			Debugger();
 	}
 	if (trapdebug & TDB_FRAME) {
 		print_trapframe(tf);
@@ -1057,7 +1052,7 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 			sfva, sfsr, (int)cpcb->pcb_nsaved);
 		Debugger();
 	}
-	if (trapdebug&TDB_STOPCALL) { 
+	if (trapdebug & TDB_STOPCALL) {
 		Debugger();
 	}
 #endif
@@ -1066,21 +1061,6 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 	if ((p = curproc) == NULL)	/* safety check */
 		p = &proc0;
 	sticks = p->p_sticks;
-
-#if 0
-	/* 
-	 * This can happen when we're in DDB w/curproc == NULL and try
-	 * to access user space.
-	 */
-#ifdef DIAGNOSTIC
-	if ((addr & PAGE_MASK) && 
-	    (addr & PAGE_MASK) != p->p_vmspace->vm_map.pmap->pm_ctx) {
-		printf("data_access_fault: va ctx %x != pm ctx %x\n",
-		       (addr & PAGE_MASK), p->p_vmspace->vm_map.pmap->pm_ctx);
-		Debugger();
-	}
-#endif
-#endif
 	tstate = tf->tf_tstate;
 
 	/* Find the faulting va to give to uvm_fault */
@@ -1100,6 +1080,7 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 			       curproc->p_sigctx.ps_sigcatch.__bits[0]);
 	}
 #endif
+
 	/* 
 	 * Now munch on protections.
 	 *
@@ -1115,6 +1096,7 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 	}
 	if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
 		extern char Lfsbail[];
+
 		/*
 		 * If this was an access that we shouldn't try to page in,
 		 * resume at the fault handler without any action.
@@ -1129,16 +1111,15 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 		 */
 		if (cold)
 			goto kfault;
-		if (!(addr&TLB_TAG_ACCESS_CTX)) {
+		if (!(addr & TLB_TAG_ACCESS_CTX)) {
 			/* CTXT == NUCLEUS */
 			rv = uvm_fault(kernel_map, va, 0, access_type);
 #ifdef DEBUG
-			if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
+			if (trapdebug & (TDB_ADDFLT | TDB_FOLLOW))
 				printf("data_access_fault: kernel "
 					"uvm_fault(%p, %lx, %x, %x) "
 					"sez %x -- %s\n",
-					kernel_map, (vaddr_t)va, 0,
-					access_type, rv,
+					kernel_map, va, 0, access_type, rv,
 					rv ? "failure" : "success");
 #endif
 			if (rv == 0)
@@ -1152,17 +1133,18 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 	/* alas! must call the horrible vm code */
 	onfault = (vaddr_t)p->p_addr->u_pcb.pcb_onfault;
 	p->p_addr->u_pcb.pcb_onfault = NULL;
-	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, access_type);
+	rv = uvm_fault(&vm->vm_map, va, 0, access_type);
 	p->p_addr->u_pcb.pcb_onfault = (void *)onfault;
 
 #ifdef DEBUG
-	if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
+	if (trapdebug & (TDB_ADDFLT | TDB_FOLLOW))
 		printf("data_access_fault: %s uvm_fault(%p, %lx, %x, %x) "
 			"sez %x -- %s\n",
 			&vm->vm_map == kernel_map ? "kernel!!!" : "user",
-			&vm->vm_map, (vaddr_t)va, 0, access_type, rv,
+			&vm->vm_map, va, 0, access_type, rv,
 			rv ? "failure" : "success");
 #endif
+
 	/*
 	 * If this was a stack access we keep track of the maximum
 	 * accessed stack size.  Also, if uvm_fault gets a protection
@@ -1179,18 +1161,21 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 			rv = EFAULT;
 	}
 	if (rv != 0) {
+
 		/*
 		 * Pagein failed.  If doing copyin/out, return to onfault
 		 * address.  Any other page fault in kernel, die; if user
 		 * fault, deliver SIGSEGV.
 		 */
-		if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
+		if (tstate & (PSTATE_PRIV << TSTATE_PSTATE_SHIFT)) {
 kfault:
 			onfault = p->p_addr ?
 			    (long)p->p_addr->u_pcb.pcb_onfault : 0;
 			if (!onfault) {
 				extern int trap_trace_dis;
-				trap_trace_dis = 1; /* Disable traptrace for printf */
+
+				/* Disable traptrace for printf */
+				trap_trace_dis = 1;
 				(void) splhigh();
 				printf("data fault: pc=%lx addr=%lx\n",
 				    pc, addr);
@@ -1199,8 +1184,10 @@ kfault:
 				/* NOTREACHED */
 			}
 #ifdef DEBUG
-			if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW|TDB_STOPCPIO)) {
-				printf("data_access_fault: copyin/out of %p fault -- recover\n", (void *)addr);
+			if (trapdebug &
+			    (TDB_ADDFLT | TDB_FOLLOW | TDB_STOPCPIO)) {
+				printf("data_access_fault: copyin/out of %p "
+				       "fault -- recover\n", (void *)addr);
 				DEBUGGER(type, tf);
 			}
 #endif
@@ -1209,14 +1196,15 @@ kfault:
 			return;
 		}
 #ifdef DEBUG
-		if (trapdebug&(TDB_ADDFLT|TDB_STOPSIG)) {
+		if (trapdebug & (TDB_ADDFLT | TDB_STOPSIG)) {
 			extern int trap_trace_dis;
 			trap_trace_dis = 1;
-			printf("data_access_fault at addr %p: sending SIGSEGV\n", (void *)addr);
-			printf("%ld: data_access_fault(%p, %x, %p, %p, %lx, %lx) "
-				"nsaved=%d\n",
-				(long)(curproc?curproc->p_pid:-1), tf, type,
-				(void*)addr, (void*)pc,
+			printf("data_access_fault at addr %p: "
+			    "sending SIGSEGV\n", (void *)addr);
+			printf("%ld: data_access_fault(%p, %x, %p, %p, "
+			       "%lx, %lx) nsaved=%d\n",
+				(long)(curproc ? curproc->p_pid : -1), tf, type,
+				(void *)addr, (void *)pc,
 				sfva, sfsr, (int)cpcb->pcb_nsaved);
 			Debugger();
 		}
@@ -1236,13 +1224,14 @@ kfault:
 		share_fpu(p, tf);
 	}
 #ifdef DEBUG
-	if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
+	if (trapdebug & (TDB_ADDFLT | TDB_FOLLOW))
 		printf("data_access_fault: done\n");
 	if (trapdebug & TDB_FRAME) {
 		print_trapframe(tf);
 	}
-	if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW)) {
-		extern void* return_from_trap __P((void));
+	if (trapdebug & (TDB_ADDFLT | TDB_FOLLOW)) {
+		extern void *return_from_trap __P((void));
+
 		if ((void *)(u_long)tf->tf_pc == (void *)return_from_trap) {
 			printf("Returning from stack datafault\n");
 		}
@@ -1282,14 +1271,15 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 		Debugger();
 	}
 	write_user_windows();
-	if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) || 
-	    trapdebug&(TDB_ADDFLT|TDB_FOLLOW)) {
+	if ((trapdebug & TDB_NSAVED && cpcb->pcb_nsaved) || 
+	    trapdebug & (TDB_ADDFLT | TDB_FOLLOW)) {
 		char buf[768];
-		bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
 
+		bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
 		printf("%d data_access_error(%lx, %lx, %lx, %p)=%lx @ %p %s\n",
 		       curproc?curproc->p_pid:-1, 
-		       (long)type, (long)sfva, (long)afva, tf, (long)tf->tf_tstate, 
+		       (long)type, (long)sfva, (long)afva, tf,
+		       (long)tf->tf_tstate, 
 		       (void *)(u_long)tf->tf_pc, buf);
 	}
 	if (trapdebug & TDB_FRAME) {
@@ -1299,13 +1289,15 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 		char buf[768];
 		bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
 
-		printf("%d tl %ld data_access_error(%lx, %lx, %lx, %p)=%lx @ %lx %s\n",
-		       curproc?curproc->p_pid:-1, (long)tl(),
-		       (long)type, (long)sfva, (long)afva, tf, (long)tf->tf_tstate, 
+		printf("%d tl %ld data_access_error(%lx, %lx, %lx, %p)="
+		       "%lx @ %lx %s\n",
+		       curproc ? curproc->p_pid : -1, (long)tl(),
+		       (long)type, (long)sfva, (long)afva, tf,
+		       (long)tf->tf_tstate, 
 		       (long)tf->tf_pc, buf);
 		Debugger();
 	}
-	if (trapdebug&TDB_STOPCALL) { 
+	if (trapdebug & TDB_STOPCALL) {
 		Debugger();
 	}
 #endif
@@ -1329,7 +1321,8 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 
 #ifdef DEBUG
 	if (lastdouble) {
-		printf("stacked data error @ %lx (pc %lx); sfsr %lx", sfva, pc, sfsr);
+		printf("stacked data error @ %lx (pc %lx); sfsr %lx",
+		       sfva, pc, sfsr);
 		lastdouble = 0;
 		if (curproc == NULL)
 			printf("NULL proc\n");
@@ -1343,7 +1336,6 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 #endif
 
 	if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
-
 		if (!onfault) {
 			extern int trap_trace_dis;
 			char buf[768];
@@ -1371,9 +1363,11 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 			/* NOTREACHED */
 		}
 #ifdef DEBUG
-		if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW|TDB_STOPCPIO)) {
-			printf("data_access_error: kern fault -- skipping instr\n");
-			if (trapdebug&TDB_STOPCPIO) DEBUGGER(type, tf);
+		if (trapdebug & (TDB_ADDFLT | TDB_FOLLOW | TDB_STOPCPIO)) {
+			printf("data_access_error: kern fault -- "
+			       "skipping instr\n");
+			if (trapdebug & TDB_STOPCPIO)
+				DEBUGGER(type, tf);
 		}
 #endif
 		tf->tf_pc = onfault;
@@ -1381,8 +1375,9 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 		return;
 	}
 #ifdef DEBUG
-	if (trapdebug&(TDB_ADDFLT|TDB_STOPSIG)) {
+	if (trapdebug & (TDB_ADDFLT | TDB_STOPSIG)) {
 		extern int trap_trace_dis;
+
 		trap_trace_dis = 1;
 		printf("data_access_error at %p: sending SIGSEGV\n",
 			(void *)(u_long)afva);
@@ -1396,7 +1391,7 @@ out:
 		share_fpu(p, tf);
 	}
 #ifdef DEBUG
-	if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
+	if (trapdebug & (TDB_ADDFLT | TDB_FOLLOW))
 		printf("data_access_error: done\n");
 	if (trapdebug & TDB_FRAME) {
 		print_trapframe(tf);
@@ -1425,12 +1420,13 @@ text_access_fault(tf, type, pc, sfsr)
 
 #ifdef DEBUG
 	if (tf->tf_pc == tf->tf_npc) {
-		printf("text_access_fault: tpc %p == tnpc %p\n", (void *)(u_long)tf->tf_pc, (void *)(u_long)tf->tf_npc);
+		printf("text_access_fault: tpc %p == tnpc %p\n",
+		    (void *)(u_long)tf->tf_pc, (void *)(u_long)tf->tf_npc);
 		Debugger();
 	}
 	write_user_windows();
-	if (((trapdebug&TDB_NSAVED) && cpcb->pcb_nsaved) || 
-	    (trapdebug&(TDB_TXTFLT|TDB_FOLLOW)))
+	if (((trapdebug & TDB_NSAVED) && cpcb->pcb_nsaved) || 
+	    (trapdebug & (TDB_TXTFLT | TDB_FOLLOW)))
 		printf("%d text_access_fault(%x, %lx, %p)\n",
 		       curproc?curproc->p_pid:-1, type, pc, tf); 
 	if (trapdebug & TDB_FRAME) {
@@ -1441,7 +1437,7 @@ text_access_fault(tf, type, pc, sfsr)
 		       curproc?curproc->p_pid:-1, tl(), type, pc, tf); 
 		Debugger();
 	}
-	if (trapdebug&TDB_STOPCALL) { 
+	if (trapdebug & TDB_STOPCALL) { 
 		Debugger();
 	}
 #endif
@@ -1450,15 +1446,13 @@ text_access_fault(tf, type, pc, sfsr)
 	if ((p = curproc) == NULL)	/* safety check */
 		p = &proc0;
 	sticks = p->p_sticks;
-
 	tstate = tf->tf_tstate;
-
 	va = trunc_page(pc);
 
 	/* Now munch on protections... */
 
-	access_type = /* VM_PROT_EXECUTE| */VM_PROT_READ;
-	if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
+	access_type = VM_PROT_EXECUTE;
+	if (tstate & (PSTATE_PRIV << TSTATE_PSTATE_SHIFT)) {
 		extern int trap_trace_dis;
 		trap_trace_dis = 1; /* Disable traptrace for printf */
 		(void) splhigh();
@@ -1474,8 +1468,8 @@ text_access_fault(tf, type, pc, sfsr)
 	rv = uvm_fault(&vm->vm_map, va, 0, access_type);
 
 #ifdef DEBUG
-	if (trapdebug&(TDB_TXTFLT|TDB_FOLLOW))
-		printf("text_access_fault: uvm_fault(%p, %lx, %x, FALSE) sez %x\n",
+	if (trapdebug & (TDB_TXTFLT | TDB_FOLLOW))
+		printf("text_access_fault: uvm_fault(%p, %lx, %x) sez %x\n",
 		       &vm->vm_map, va, 0, rv);
 #endif
 	/*
@@ -1494,6 +1488,7 @@ text_access_fault(tf, type, pc, sfsr)
 			rv = EFAULT;
 	}
 	if (rv != 0) {
+
 		/*
 		 * Pagein failed. Any other page fault in kernel, die; if user
 		 * fault, deliver SIGSEGV.
@@ -1508,10 +1503,11 @@ text_access_fault(tf, type, pc, sfsr)
 			/* NOTREACHED */
 		}
 #ifdef DEBUG
-		if (trapdebug&(TDB_TXTFLT|TDB_STOPSIG)) {
+		if (trapdebug & (TDB_TXTFLT | TDB_STOPSIG)) {
 			extern int trap_trace_dis;
 			trap_trace_dis = 1;
-			printf("text_access_fault at %p: sending SIGSEGV\n", (void *)(u_long)va);
+			printf("text_access_fault at %p: sending SIGSEGV\n",
+			    (void *)(u_long)va);
 			Debugger();
 		}
 #endif
@@ -1522,7 +1518,7 @@ text_access_fault(tf, type, pc, sfsr)
 		share_fpu(p, tf);
 	}
 #ifdef DEBUG
-	if (trapdebug&(TDB_TXTFLT|TDB_FOLLOW)) {
+	if (trapdebug & (TDB_TXTFLT | TDB_FOLLOW)) {
 		printf("text_access_fault: done\n");
 		/* kdb_trap(T_BREAKPOINT, tf); */
 	}
@@ -1568,7 +1564,8 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 		Debugger();
 	}
 	write_user_windows();
-	if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) || trapdebug&(TDB_TXTFLT|TDB_FOLLOW)) {
+	if ((trapdebug & TDB_NSAVED && cpcb->pcb_nsaved) ||
+	    trapdebug & (TDB_TXTFLT | TDB_FOLLOW)) {
 		bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
 		printf("%ld text_access_error(%lx, %lx, %lx, %p)=%lx @ %lx %s\n",
 		       (long)(curproc?curproc->p_pid:-1), 
@@ -1586,7 +1583,7 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 		       (long)tf->tf_tstate, (long)tf->tf_pc, buf); 
 		Debugger();
 	}
-	if (trapdebug&TDB_STOPCALL) { 
+	if (trapdebug & TDB_STOPCALL) { 
 		Debugger();
 	}
 #endif
@@ -1634,8 +1631,8 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 #endif
 	/* Now munch on protections... */
 
-	access_type = /* VM_PROT_EXECUTE| */ VM_PROT_READ;
-	if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
+	access_type = VM_PROT_EXECUTE;
+	if (tstate & (PSTATE_PRIV << TSTATE_PSTATE_SHIFT)) {
 		extern int trap_trace_dis;
 		trap_trace_dis = 1; /* Disable traptrace for printf */
 		bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
@@ -1649,7 +1646,7 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 
 	vm = p->p_vmspace;
 	/* alas! must call the horrible vm code */
-	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, access_type);
+	rv = uvm_fault(&vm->vm_map, va, 0, access_type);
 
 	/*
 	 * If this was a stack access we keep track of the maximum
@@ -1683,7 +1680,7 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 			/* NOTREACHED */
 		}
 #ifdef DEBUG
-		if (trapdebug&(TDB_TXTFLT|TDB_STOPSIG)) {
+		if (trapdebug & (TDB_TXTFLT | TDB_STOPSIG)) {
 			extern int trap_trace_dis;
 			trap_trace_dis = 1;
 			printf("text_access_error at %p: sending SIGSEGV\n",
@@ -1699,7 +1696,7 @@ out:
 		share_fpu(p, tf);
 	}
 #ifdef DEBUG
-	if (trapdebug&(TDB_TXTFLT|TDB_FOLLOW))
+	if (trapdebug & (TDB_TXTFLT | TDB_FOLLOW))
 		printf("text_access_error: done\n");
 	if (trapdebug & TDB_FRAME) {
 		print_trapframe(tf);
@@ -1764,15 +1761,18 @@ syscall(tf, code, pc)
 		    (void *)(u_long)tf->tf_npc);
 		Debugger();
 	}
-	if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) || trapdebug&(TDB_SYSCALL|TDB_FOLLOW))
+	if ((trapdebug & TDB_NSAVED && cpcb->pcb_nsaved) ||
+	    trapdebug & (TDB_SYSCALL | TDB_FOLLOW))
 		printf("%d syscall(%lx, %p, %lx)\n",
-		       curproc?curproc->p_pid:-1, (u_long)code, tf, (u_long)pc); 
+		       curproc ? curproc->p_pid : -1, (u_long)code, tf,
+		       (u_long)pc);
 	if (trapdebug & TDB_FRAME) {
 		print_trapframe(tf);
 	}
 	if ((trapdebug & TDB_TL) && tl()) {
 		printf("%d tl %d syscall(%lx, %p, %lx)\n",
-		       curproc?curproc->p_pid:-1, tl(), (u_long)code, tf, (u_long)pc); 
+		       curproc ? curproc->p_pid : -1, tl(), (u_long)code, tf,
+		       (u_long)pc); 
 		Debugger();
 	}
 #endif
@@ -1832,8 +1832,7 @@ syscall(tf, code, pc)
 	}
 
 #ifdef DEBUG
-/*	printf("code=%x, nsys=%x\n", code, nsys); */
-	if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW))
+	if (trapdebug & (TDB_SYSCALL | TDB_FOLLOW))
 		printf("%d syscall(%d[%x]): tstate=%x:%x %s\n", 
 		       curproc?curproc->p_pid:-1, (int)code, (u_int)code,
 		       (int)(tf->tf_tstate>>32), (int)(tf->tf_tstate),
@@ -1854,8 +1853,7 @@ syscall(tf, code, pc)
 		register64_t *argp;
 #ifdef DEBUG
 #ifdef __arch64__
-		if ((curproc->p_flag & P_32) != 0)
-		{
+		if ((curproc->p_flag & P_32) != 0) {
 			printf("syscall(): 64-bit stack but P_32 set\n");
 			Debugger();
 		}
@@ -1869,18 +1867,22 @@ syscall(tf, code, pc)
 		i = callp->sy_narg; /* Why divide? */
 #ifdef DEBUG
 		if (i != (long)callp->sy_argsize / sizeof(register64_t))
-			printf("syscall %s: narg=%hd, argsize=%hd, call=%p, argsz/reg64=%ld\n",
-			       (p->p_emul->e_syscallnames) ? ((code < 0 || code >= nsys) ? 
-							      "illegal syscall" : 
-							      p->p_emul->e_syscallnames[code])
+			printf("syscall %s: narg=%hd, argsize=%hd, call=%p, "
+			       "argsz/reg64=%ld\n",
+			       p->p_emul->e_syscallnames ?
+			       ((code < 0 || code >= nsys) ? 
+				"illegal syscall" : 
+				p->p_emul->e_syscallnames[code])
 			       : "unknown syscall", 
-			       callp->sy_narg, callp->sy_argsize, callp->sy_call, 
+			       callp->sy_narg, callp->sy_argsize,
+			       callp->sy_call,
 			       (long)callp->sy_argsize / sizeof(register64_t));
 #endif
 		if (i > nap) {	/* usually false */
 #ifdef DEBUG
-			if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW) || i>8) {
-				printf("Args64 %d>%d -- need to copyin\n", i , nap);
+			if (trapdebug & (TDB_SYSCALL | TDB_FOLLOW) || i > 8) {
+				printf("Args64 %d>%d -- need to copyin\n",
+				       i, nap);
 			}
 #endif
 			if (i > 8)
@@ -1888,7 +1890,8 @@ syscall(tf, code, pc)
 			/* Read the whole block in */
 			error = copyin((caddr_t)(u_long)tf->tf_out[6] + BIAS +
 				       offsetof(struct frame64, fr_argx),
-				       (caddr_t)&args.l[nap], (i - nap) * sizeof(register64_t));
+				       &args.l[nap],
+				       (i - nap) * sizeof(register64_t));
 			i = nap;
 		}
 		/* It should be faster to do <=6 longword copies than call bcopy */
@@ -1897,16 +1900,17 @@ syscall(tf, code, pc)
 		
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSCALL))
-			ktrsyscall(p, code, (register_t*)args.l);
+			ktrsyscall(p, code, (register_t *)args.l);
 #endif
-		if (error) goto bad;
+		if (error)
+			goto bad;
 #ifdef DEBUG
-		if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW)) {
-			for (i=0; i < callp->sy_narg; i++) 
+		if (trapdebug & (TDB_SYSCALL | TDB_FOLLOW)) {
+			for (i = 0; i < callp->sy_narg; i++) 
 				printf("arg[%d]=%lx ", i, (long)(args.l[i]));
 			printf("\n");
 		}
-		if (trapdebug&(TDB_STOPCALL)) { 
+		if (trapdebug & TDB_STOPCALL) { 
 			printf("stop precall\n");
 			Debugger();
 		}
@@ -1919,8 +1923,7 @@ syscall(tf, code, pc)
 		callp += code;
 
 #if defined(__arch64__) && defined(DEBUG)
-		if ((curproc->p_flag & P_32) == 0)
-		{
+		if ((curproc->p_flag & P_32) == 0) {
 			printf("syscall(): 32-bit stack but no P_32\n");
 			Debugger();
 		}
@@ -1930,25 +1933,29 @@ syscall(tf, code, pc)
 		if (i > nap) {	/* usually false */
 			register32_t temp[6];
 #ifdef DEBUG
-			if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW) || i>8)
-				printf("Args %d>%d -- need to copyin\n", i , nap);
+			if (trapdebug & (TDB_SYSCALL | TDB_FOLLOW) || i > 8)
+				printf("Args %d>%d -- need to copyin\n",
+				       i, nap);
 #endif
 			if (i > 8)
 				panic("syscall nargs");
 			/* Read the whole block in */
 			error = copyin((caddr_t)(u_long)(tf->tf_out[6] +
-						 offsetof(struct frame32, fr_argx)),
-				       (caddr_t)&temp, (i - nap) * sizeof(register32_t));
+					offsetof(struct frame32, fr_argx)),
+				       &temp, (i - nap) * sizeof(register32_t));
 			/* Copy each to the argument array */
 			for (j = 0; nap + j < i; j++)
 				args.i[nap+j] = temp[j];
 #ifdef DEBUG
-			if (trapdebug & (TDB_SYSCALL|TDB_FOLLOW))	{ 
+			if (trapdebug & (TDB_SYSCALL | TDB_FOLLOW)) {
 				int k;
 				printf("Copyin args of %d from %p:\n", j, 
-				       (caddr_t)(u_long)(tf->tf_out[6] + offsetof(struct frame32, fr_argx)));
+				       (caddr_t)(u_long)(tf->tf_out[6] +
+					offsetof(struct frame32, fr_argx)));
 				for (k = 0; k < j; k++)
-					printf("arg %d = %p at %d val %p\n", k, (void *)(u_long)temp[k], nap+k, (void *)(u_long)args.i[nap+k]);
+					printf("arg %d = %p at %d val %p\n",
+					    k, (void *)(u_long)temp[k], nap + k,
+					    (void *)(u_long)args.i[nap + k]);
 			}
 #endif
 			i = nap;
@@ -1964,7 +1971,7 @@ syscall(tf, code, pc)
 			
 			/* Need to xlate 32-bit->64-bit */
 			i = callp->sy_narg;
-			for (j=0; j<i; j++) 
+			for (j = 0; j < i; j++) 
 				temp[j] = args.i[j];
 			ktrsyscall(p, code, (register_t *)temp);
 #else
@@ -1976,12 +1983,13 @@ syscall(tf, code, pc)
 			goto bad;
 		}
 #ifdef DEBUG
-		if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW)) {
-			for (i=0; i < (long)callp->sy_argsize / sizeof(register32_t); i++) 
+		if (trapdebug & (TDB_SYSCALL | TDB_FOLLOW)) {
+			for (i = 0; i < (long)callp->sy_argsize /
+				     sizeof(register32_t); i++) 
 				printf("arg[%d]=%x ", i, (int)(args.i[i]));
 			printf("\n");
 		}
-		if (trapdebug&(TDB_STOPCALL)) { 
+		if (trapdebug & TDB_STOPCALL) { 
 			printf("stop precall\n");
 			Debugger();
 		}
@@ -2013,9 +2021,11 @@ syscall(tf, code, pc)
 			/* jmp %g2 (or %g7, deprecated) on success */
 			dest = tf->tf_global[new & SYSCALL_G2RFLAG ? 2 : 7];
 #ifdef DEBUG
-			if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW))
-				printf("syscall: return tstate=%llx new success to %p retval %lx:%lx\n", 
-				       (unsigned long long)tf->tf_tstate, (void *)(u_long)dest,
+			if (trapdebug & (TDB_SYSCALL | TDB_FOLLOW))
+				printf("syscall: return tstate=%llx new "
+				       "success to %p retval %lx:%lx\n", 
+				       (unsigned long long)tf->tf_tstate,
+				       (void *)(u_long)dest,
 				       (u_long)rval[0], (u_long)rval[1]);
 #endif
 			if (dest & 3) {
@@ -2024,14 +2034,17 @@ syscall(tf, code, pc)
 			}
 		} else {
 			/* old system call convention: clear C on success */
-			tf->tf_tstate &= ~(((int64_t)(ICC_C|XCC_C))<<TSTATE_CCR_SHIFT);	/* success */
+			tf->tf_tstate &= ~(((int64_t)(ICC_C | XCC_C)) <<
+					   TSTATE_CCR_SHIFT);	/* success */
 			dest = tf->tf_npc;
 #ifdef DEBUG
-			if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW))
-				printf("syscall: return tstate=%llx old success to %p retval %lx:%lx\n", 
-				       (unsigned long long)tf->tf_tstate, (void *)(u_long)dest,
+			if (trapdebug & (TDB_SYSCALL | TDB_FOLLOW))
+				printf("syscall: return tstate=%llx old "
+				       "success to %p retval %lx:%lx\n", 
+				       (unsigned long long)tf->tf_tstate,
+				       (void *)(u_long)dest,
 				       (u_long)rval[0], (u_long)rval[1]);
-			if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW))
+			if (trapdebug & (TDB_SYSCALL | TDB_FOLLOW))
 				printf("old pc=%p npc=%p dest=%p\n",
 				    (void *)(u_long)tf->tf_pc,
 				    (void *)(u_long)tf->tf_npc,
@@ -2052,12 +2065,13 @@ syscall(tf, code, pc)
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
 		tf->tf_out[0] = error;
-		tf->tf_tstate |= (((int64_t)(ICC_C|XCC_C))<<TSTATE_CCR_SHIFT);	/* fail */
+		tf->tf_tstate |= (((int64_t)(ICC_C | XCC_C)) <<
+				  TSTATE_CCR_SHIFT);	/* fail */
 		dest = tf->tf_npc;
 		tf->tf_pc = dest;
 		tf->tf_npc = dest + 4;
 #ifdef DEBUG
-		if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW)) 
+		if (trapdebug & (TDB_SYSCALL | TDB_FOLLOW)) 
 			printf("syscall: return tstate=%llx fail %d to %p\n", 
 			       (unsigned long long)tf->tf_tstate, error,
 			       (void *)(long)dest);
@@ -2073,7 +2087,7 @@ syscall(tf, code, pc)
 #endif
 	share_fpu(p, tf);
 #ifdef DEBUG
-	if (trapdebug&(TDB_STOPCALL|TDB_SYSTOP)) { 
+	if (trapdebug & (TDB_STOPCALL | TDB_SYSTOP)) { 
 		Debugger();
 	}
 #endif
