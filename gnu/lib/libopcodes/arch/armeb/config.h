@@ -2,7 +2,7 @@
 /* Generated from: 	NetBSD: mknative,v 1.12 2003/03/05 06:17:17 mrg Exp  */
 
 /* config.h.  Generated automatically by configure.  */
-/* config.in.  Generated automatically from configure.in by autoheader 2.13.  */
+/* config.in.  Generated automatically from configure.in by autoheader.  */
 
 /* Define if using alloca.c.  */
 /* #undef C_ALLOCA */
@@ -47,9 +47,6 @@
 /* Define if you have the ANSI C header files.  */
 #define STDC_HEADERS 1
 
-/* Define if you can safely include both <sys/time.h> and <time.h>.  */
-#define TIME_WITH_SYS_TIME 1
-
 /* Define if you have the __argz_count function.  */
 /* #undef HAVE___ARGZ_COUNT */
 
@@ -62,29 +59,11 @@
 /* Define if you have the dcgettext function.  */
 #define HAVE_DCGETTEXT 1
 
-/* Define if you have the fcntl function.  */
-#define HAVE_FCNTL 1
-
-/* Define if you have the fdopen function.  */
-#define HAVE_FDOPEN 1
-
 /* Define if you have the getcwd function.  */
 #define HAVE_GETCWD 1
 
-/* Define if you have the getgid function.  */
-#define HAVE_GETGID 1
-
 /* Define if you have the getpagesize function.  */
 #define HAVE_GETPAGESIZE 1
-
-/* Define if you have the getuid function.  */
-#define HAVE_GETUID 1
-
-/* Define if you have the madvise function.  */
-#define HAVE_MADVISE 1
-
-/* Define if you have the mprotect function.  */
-#define HAVE_MPROTECT 1
 
 /* Define if you have the munmap function.  */
 #define HAVE_MUNMAP 1
@@ -94,9 +73,6 @@
 
 /* Define if you have the setenv function.  */
 #define HAVE_SETENV 1
-
-/* Define if you have the setitimer function.  */
-#define HAVE_SETITIMER 1
 
 /* Define if you have the setlocale function.  */
 #define HAVE_SETLOCALE 1
@@ -110,17 +86,8 @@
 /* Define if you have the strchr function.  */
 #define HAVE_STRCHR 1
 
-/* Define if you have the sysconf function.  */
-#define HAVE_SYSCONF 1
-
 /* Define if you have the <argz.h> header file.  */
 /* #undef HAVE_ARGZ_H */
-
-/* Define if you have the <dirent.h> header file.  */
-#define HAVE_DIRENT_H 1
-
-/* Define if you have the <fcntl.h> header file.  */
-#define HAVE_FCNTL_H 1
 
 /* Define if you have the <limits.h> header file.  */
 #define HAVE_LIMITS_H 1
@@ -131,14 +98,8 @@
 /* Define if you have the <malloc.h> header file.  */
 #define HAVE_MALLOC_H 1
 
-/* Define if you have the <ndir.h> header file.  */
-/* #undef HAVE_NDIR_H */
-
 /* Define if you have the <nl_types.h> header file.  */
 #define HAVE_NL_TYPES_H 1
-
-/* Define if you have the <stddef.h> header file.  */
-#define HAVE_STDDEF_H 1
 
 /* Define if you have the <stdlib.h> header file.  */
 #define HAVE_STDLIB_H 1
@@ -149,26 +110,14 @@
 /* Define if you have the <strings.h> header file.  */
 #define HAVE_STRINGS_H 1
 
-/* Define if you have the <sys/dir.h> header file.  */
-/* #undef HAVE_SYS_DIR_H */
-
-/* Define if you have the <sys/file.h> header file.  */
-#define HAVE_SYS_FILE_H 1
-
-/* Define if you have the <sys/ndir.h> header file.  */
-/* #undef HAVE_SYS_NDIR_H */
-
 /* Define if you have the <sys/param.h> header file.  */
 #define HAVE_SYS_PARAM_H 1
 
-/* Define if you have the <sys/procfs.h> header file.  */
-/* #undef HAVE_SYS_PROCFS_H */
+/* Define if you have the <sys/stat.h> header file.  */
+#define HAVE_SYS_STAT_H 1
 
-/* Define if you have the <sys/time.h> header file.  */
-#define HAVE_SYS_TIME_H 1
-
-/* Define if you have the <time.h> header file.  */
-#define HAVE_TIME_H 1
+/* Define if you have the <sys/types.h> header file.  */
+#define HAVE_SYS_TYPES_H 1
 
 /* Define if you have the <unistd.h> header file.  */
 #define HAVE_UNISTD_H 1
@@ -177,7 +126,7 @@
 /* #undef HAVE_VALUES_H */
 
 /* Name of package */
-#define PACKAGE "bfd"
+#define PACKAGE "opcodes"
 
 /* Version number of package */
 #define VERSION "2.13.2.1"
@@ -193,79 +142,4 @@
 
 /* Define as 1 if you have gettext and don't want to use GNU gettext. */
 #define HAVE_GETTEXT 1
-
-/* Use b modifier when opening binary files? */
-/* #undef USE_BINARY_FOPEN */
-
-/* Define if strstr is not declared in system header files. */
-/* #undef NEED_DECLARATION_STRSTR */
-
-/* Define if malloc is not declared in system header files. */
-/* #undef NEED_DECLARATION_MALLOC */
-
-/* Define if realloc is not declared in system header files. */
-/* #undef NEED_DECLARATION_REALLOC */
-
-/* Define if free is not declared in system header files. */
-/* #undef NEED_DECLARATION_FREE */
-
-/* Define if getenv is not declared in system header files. */
-/* #undef NEED_DECLARATION_GETENV */
-
-/* Define if struct core_dumpx has member c_impl */
-/* #undef HAVE_ST_C_IMPL */
-
-/* Define if <sys/procfs.h> has prstatus_t. */
-/* #undef HAVE_PRSTATUS_T */
-
-/* Define if <sys/procfs.h> has prstatus32_t. */
-/* #undef HAVE_PRSTATUS32_T */
-
-/* Define if <sys/procfs.h> has prstatus_t.pr_who. */
-/* #undef HAVE_PRSTATUS_T_PR_WHO */
-
-/* Define if <sys/procfs.h> has prstatus32_t.pr_who. */
-/* #undef HAVE_PRSTATUS32_T_PR_WHO */
-
-/* Define if <sys/procfs.h> has pstatus_t. */
-/* #undef HAVE_PSTATUS_T */
-
-/* Define if <sys/procfs.h> has pxstatus_t. */
-/* #undef HAVE_PXSTATUS_T */
-
-/* Define if <sys/procfs.h> has pstatus32_t. */
-/* #undef HAVE_PSTATUS32_T */
-
-/* Define if <sys/procfs.h> has prpsinfo_t. */
-/* #undef HAVE_PRPSINFO_T */
-
-/* Define if <sys/procfs.h> has prpsinfo32_t. */
-/* #undef HAVE_PRPSINFO32_T */
-
-/* Define if <sys/procfs.h> has psinfo_t. */
-/* #undef HAVE_PSINFO_T */
-
-/* Define if <sys/procfs.h> has psinfo32_t. */
-/* #undef HAVE_PSINFO32_T */
-
-/* Define if <sys/procfs.h> has lwpstatus_t. */
-/* #undef HAVE_LWPSTATUS_T */
-
-/* Define if <sys/procfs.h> has lwpxstatus_t. */
-/* #undef HAVE_LWPXSTATUS_T */
-
-/* Define if <sys/procfs.h> has lwpstatus_t.pr_context. */
-/* #undef HAVE_LWPSTATUS_T_PR_CONTEXT */
-
-/* Define if <sys/procfs.h> has lwpstatus_t.pr_reg. */
-/* #undef HAVE_LWPSTATUS_T_PR_REG */
-
-/* Define if <sys/procfs.h> has win32_pstatus_t. */
-/* #undef HAVE_WIN32_PSTATUS_T */
-
-/* Name of host specific header file to include in trad-core.c. */
-/* #undef TRAD_HEADER */
-
-/* Use mmap if it's available? */
-/* #undef USE_MMAP */
 
