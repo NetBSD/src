@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.122 2003/02/26 06:31:10 matt Exp $	*/
+/*	$NetBSD: tulip.c,v 1.123 2003/09/07 10:45:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.122 2003/02/26 06:31:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.123 2003/09/07 10:45:11 tsutsui Exp $");
 
 #include "bpfilter.h"
 
@@ -2440,14 +2440,22 @@ tlp_parse_old_srom(sc, enaddr)
 
 	if (memcmp(&sc->sc_srom[0], &sc->sc_srom[16], 8) != 0) {
 		/*
+		 * Cobalt Networks interfaces simply have the address
+		 * in the first six bytes. The rest is zeroed out
+		 * on some models, but others contain unknown data.
+		 */
+		if (sc->sc_srom[0] == 0x00 &&
+		    sc->sc_srom[1] == 0x10 &&
+		    sc->sc_srom[2] == 0xe0) {
+			memcpy(enaddr, sc->sc_srom, ETHER_ADDR_LEN);
+			return (1);
+		}
+
+		/*
 		 * Some vendors (e.g. ZNYX) don't use the standard
 		 * DEC Address ROM format, but rather just have an
 		 * Ethernet address in the first 6 bytes, maybe a
 		 * 2 byte checksum, and then all 0xff's.
-		 *
-		 * On the other hand, Cobalt Networks interfaces
-		 * simply have the address in the first six bytes
-		 * with the rest zeroed out.
 		 */
 		for (i = 8; i < 32; i++) {
 			if (sc->sc_srom[i] != 0xff &&
