@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.193 2002/09/24 13:30:39 ad Exp $ */
+/* $NetBSD: pmap.c,v 1.194 2002/10/14 05:11:21 chs Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -153,7 +153,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.193 2002/09/24 13:30:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.194 2002/10/14 05:11:21 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2599,7 +2599,7 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte,
 	/*
 	 * PTE not provided, compute it from pmap and va.
 	 */
-	if (pte == PT_ENTRY_NULL) {
+	if (pte == NULL) {
 		pte = pmap_l3pte(pmap, va, NULL);
 		if (pmap_pte_v(pte) == 0)
 			return (FALSE);
