@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.15 1999/09/14 19:54:47 jsm Exp $ */
+/*	$NetBSD: extern.h,v 1.15.8.1 2000/07/26 22:59:49 mycroft Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -335,7 +335,7 @@ int launch __P((void));
 void light __P((void));
 void live __P((void)) __attribute__((__noreturn__));
 void love __P((void));
-int move __P((int, int));
+int moveplayer __P((int, int));
 void moveenemy __P((int));
 void murder __P((void));
 void news __P((void));

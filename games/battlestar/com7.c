@@ -1,4 +1,4 @@
-/*	$NetBSD: com7.c,v 1.6 1997/10/11 02:07:10 lukem Exp $	*/
+/*	$NetBSD: com7.c,v 1.6.12.1 2000/07/26 22:59:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com7.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com7.c,v 1.6 1997/10/11 02:07:10 lukem Exp $");
+__RCSID("$NetBSD: com7.c,v 1.6.12.1 2000/07/26 22:59:49 mycroft Exp $");
 #endif
 #endif				/* not lint */
 
@@ -206,18 +206,18 @@ fighton:
 			puts("You escape stunned and disoriented from the fight.");
 			puts("A victorious bellow echoes from the battlescene.");
 			if (back && position != back)
-				move(back, BACK);
+				moveplayer(back, BACK);
 			else
 				if (ahead && position != ahead)
-					move(ahead, AHEAD);
+					moveplayer(ahead, AHEAD);
 				else
 					if (left && position != left)
-						move(left, LEFT);
+						moveplayer(left, LEFT);
 					else
 						if (right && position != right)
-							move(right, RIGHT);
+							moveplayer(right, RIGHT);
 						else
-							move(location[position].down, AHEAD);
+							moveplayer(location[position].down, AHEAD);
 			return (0);
 		}
 
