@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.89 2001/09/10 10:09:13 fvdl Exp $	*/
+/*	$NetBSD: conf.h,v 1.90 2001/09/13 21:59:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -444,6 +444,9 @@ extern struct cdevsw cdevsw[];
 
 /* open, close, read, ioctl, poll */
 #define cdev_i4b_init(c,n)	cdev__ocrip_init(c,n)
+
+/* open, close, ioctl, mmap */
+#define	cdev_pci_init(c,n)	cdev__ocim_init(c,n)
 
 /* symbolic sleep message strings */
 extern	const char devopn[], devio[], devwait[], devin[], devout[];
