@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.1 1999/09/13 10:31:27 itojun Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.1.12.1 2001/05/26 15:28:22 he Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,16 +71,9 @@ compat_13_sys_sigreturn(p, v, retval)
 	/* Restore register context. */
 	tf = p->p_md.md_regs;
 
-	/*
-	 * Check for security violations.  If we're returning to
-	 * protected mode, the CPU will validate the segment registers
-	 * automatically and generate a trap on violations.  We handle
-	 * the trap, rather than doing all of the checking here.
-	 */
-#ifdef TODO
+	/* Check for security violations.  */
 	if (((context.sc_ssr ^ tf->tf_ssr) & PSL_USERSTATIC) != 0)
 		return (EINVAL);
-#endif
 
 	tf->tf_ssr = context.sc_ssr;
 
