@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.28 2001/02/17 04:32:59 tsutsui Exp $
+#	$NetBSD: files.arc,v 1.29 2001/04/30 04:52:53 tsutsui Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -116,6 +116,10 @@ major	{cd = 3}
 device	asc: scsi
 attach	asc at jazzio
 file	arch/arc/jazz/asc.c		asc
+
+#	Symbios 53C710 SCSI interface driver on Jazz-Internal bus
+attach	osiop at jazzio with osiop_jazzio
+file	arch/arc/jazz/osiop_jazzio.c	osiop_jazzio
 
 #	Floppy disk controller on Jazz-internal bus
 device	fdc {drive = -1}

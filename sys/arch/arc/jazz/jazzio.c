@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzio.c,v 1.3 2001/03/30 09:10:49 ur Exp $	*/
+/*	$NetBSD: jazzio.c,v 1.4 2001/04/30 04:52:53 tsutsui Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 /*	NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp 	*/
 
@@ -171,10 +171,37 @@ struct pica_dev nec_rd94_cpu[] = {
 	   0, pica_intrnull, (void *)NULL, },
 	{{ "sonic",	4, 0, },
 	   RD94_SYS_LB_IE_SONIC, pica_intrnull,	(void *)RD94_SYS_SONIC, },
-	{{ NULL,	5, 0, },
+	{{ NULL,	5, NULL, },
 	   0, pica_intrnull, (void *)NULL, },
 	{{ NULL,	6, NULL, },
 	   0, pica_intrnull, (void *)NULL, },
+	{{ "pckbd",	7, 0, },
+	   RD94_SYS_LB_IE_KBD,	 pica_intrnull,	(void *)RD94_SYS_KBD, },
+	{{ "pms",	8, NULL, },
+	   RD94_SYS_LB_IE_MOUSE, pica_intrnull,	(void *)RD94_SYS_KBD, },
+	{{ "com",	9, 0, },
+	   RD94_SYS_LB_IE_COM1,	 pica_intrnull,	(void *)RD94_SYS_COM1, },
+	{{ "com",      10, 0, },
+	   RD94_SYS_LB_IE_COM2,	 pica_intrnull,	(void *)RD94_SYS_COM2, },
+	{{ NULL,       -1, NULL, },
+	   0, NULL, (void *)NULL, },
+};
+
+struct pica_dev nec_jc94_cpu[] = {
+	{{ "dallas_rtc",0, 0, },
+	   0,			 pica_intrnull,	(void *)RD94_SYS_CLOCK, },
+	{{ "lpt",	1, 0, },
+	   RD94_SYS_LB_IE_PAR1,  pica_intrnull,	(void *)RD94_SYS_PAR1, },
+	{{ "fdc",	2, 0, },
+	   RD94_SYS_LB_IE_FLOPPY,pica_intrnull,	(void *)RD94_SYS_FLOPPY, },
+	{{ NULL,	3, NULL, },
+	   0, pica_intrnull, (void *)NULL, },
+	{{ "sonic",	4, 0, },
+	   RD94_SYS_LB_IE_SONIC, pica_intrnull,	(void *)RD94_SYS_SONIC, },
+	{{ "osiop",	5, 0, },
+	   RD94_SYS_LB_IE_SCSI0, pica_intrnull, (void *)RD94_SYS_SCSI0, },
+	{{ "osiop",	6, 0, },
+	   RD94_SYS_LB_IE_SCSI1, pica_intrnull, (void *)RD94_SYS_SCSI1, },
 	{{ "pckbd",	7, 0, },
 	   RD94_SYS_LB_IE_KBD,	 pica_intrnull,	(void *)RD94_SYS_KBD, },
 	{{ "pms",	8, NULL, },
@@ -199,7 +226,7 @@ struct pica_dev *pica_cpu_devs[] = {
 	NULL,
 	NULL,
 	NULL,
-	nec_rd94_cpu,		/* NEC-JC94 */
+	nec_jc94_cpu,		/* NEC-JC94 */
 };
 int npica_cpu_devs = sizeof pica_cpu_devs / sizeof pica_cpu_devs[0];
 
@@ -271,7 +298,7 @@ jazzioattach(parent, self, aux)
 	/* Try to configure each PICA attached device */
 	for (i = 0; sc->sc_devs[i].ps_ca.ca_slot >= 0; i++) {
 
-		if(sc->sc_devs[i].ps_ca.ca_name == NULL)
+		if (sc->sc_devs[i].ps_ca.ca_name == NULL)
 			continue; /* Empty slot */
 
 		ja.ja_name = sc->sc_devs[i].ps_ca.ca_name;
@@ -308,7 +335,7 @@ jazzio_intr_establish(slot, handler, val)
 {
 	struct jazzio_softc *sc = jazzio_cd.cd_devs[0];
 
-	if(slot == 0) {		/* Slot 0 is special, clock */
+	if (slot == 0) {	/* Slot 0 is special, clock */
 		pica_clock_handler = handler;
 		switch (cputype) {
 		case ACER_PICA_61:
@@ -325,11 +352,10 @@ jazzio_intr_establish(slot, handler, val)
 		}
 	}
 
-	if(int_table[slot].int_mask != 0) {
+	if (int_table[slot].int_mask != 0) {
 		panic("pica intr already set");
-	}
-	else {
-		int_table[slot].int_mask = sc->sc_devs[slot].ps_mask;;
+	} else {
+		int_table[slot].int_mask = sc->sc_devs[slot].ps_mask;
 		local_int_mask |= int_table[slot].int_mask;
 		int_table[slot].int_hand = handler;
 		int_table[slot].param = val;
@@ -362,7 +388,7 @@ void
 jazzio_intr_disestablish(slot)
 	int slot;
 {
-	if(slot != 0)		 {	/* Slot 0 is special, clock */
+	if (slot != 0)		 {	/* Slot 0 is special, clock */
 		local_int_mask &= ~int_table[slot].int_mask;
 		int_table[slot].int_mask = 0;
 		int_table[slot].int_hand = pica_intrnull;
@@ -387,10 +413,10 @@ pica_iointr(mask, cf)
 {
 	int vector;
 
-	while((vector = inb(PVIS) >> 2) != 0) {
+	while ((vector = inb(PVIS) >> 2) != 0) {
 		(*int_table[vector].int_hand)(int_table[vector].param);
 	}
-	return(~0);  /* Dont reenable */
+	return (~0);  /* Dont reenable */
 }
 
 /*
@@ -409,7 +435,7 @@ pica_clkintr(mask, cf)
 	/* Re-enable clock interrupts */
 	splx(MIPS_INT_MASK_4 | MIPS_SR_INT_IE);
 
-	return(~MIPS_INT_MASK_4); /* Keep clock interrupts enabled */
+	return (~MIPS_INT_MASK_4); /* Keep clock interrupts enabled */
 }
 
 /*
@@ -422,10 +448,10 @@ rd94_iointr(mask, cf)
 {
 	int vector;
 
-	while((vector = inb(RD94_SYS_INTSTAT1) >> 2) != 0) {
+	while ((vector = inb(RD94_SYS_INTSTAT1) >> 2) != 0) {
 		(*int_table[vector].int_hand)(int_table[vector].param);
 	}
-	return(~0);  /* Dont reenable */
+	return (~0);  /* Dont reenable */
 }
 
 /*
@@ -444,5 +470,5 @@ rd94_clkintr(mask, cf)
 	/* Re-enable clock interrupts */
 	splx(MIPS_INT_MASK_3 | MIPS_SR_INT_IE);
 
-	return(~MIPS_INT_MASK_3); /* Keep clock interrupts enabled */
+	return (~MIPS_INT_MASK_3); /* Keep clock interrupts enabled */
 }
