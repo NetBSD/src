@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: options.c,v 1.1.1.7 1999/03/29 23:00:52 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: options.c,v 1.1.1.8 1999/03/30 00:10:09 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #define DHCP_OPTION_DATA
@@ -135,7 +135,7 @@ void parse_option_buffer (packet, buffer, length)
 			   for clients, but what the heck... */
 			t = ((unsigned char *)
 			     dmalloc (len + packet -> options [code].len + 1,
-				      "parse_option_buffer");
+				      "parse_option_buffer"));
 			if (!t)
 				error ("Can't expand storage for option %s.",
 				       dhcp_options [code].name);
@@ -605,6 +605,7 @@ void do_packet (interface, packet, len, from_port, from, hfrom)
 	struct hardware *hfrom;
 {
 	struct packet tp;
+	int i;
 
 	if (packet -> hlen > sizeof packet -> chaddr) {
 		note ("Discarding packet with invalid hlen.");
@@ -631,9 +632,8 @@ void do_packet (interface, packet, len, from_port, from, hfrom)
 
 	/* Free the data associated with the options. */
 	for (i = 0; i < 256; i++) {
-		if (packet -> options [i].len &&
-		    packet -> options [i].data)
-			dfree (packet -> options [i].data, "do_packet");
+		if (tp.options [i].len && tp.options [i].data)
+			dfree (tp.options [i].data, "do_packet");
 	}
 }
 
