@@ -1,4 +1,4 @@
-/*	$NetBSD: ifwatchd.c,v 1.2 2001/11/19 10:20:34 martin Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.3 2001/12/10 14:54:09 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Martin Husemann <martin@duskware.de>
@@ -26,6 +26,7 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
 #include <net/if.h>
@@ -39,6 +40,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <netdb.h>
+#include <err.h>
+#include <ifaddrs.h>
 
 /* local functions */
 static void usage(void);
@@ -49,6 +52,7 @@ static void list_interfaces(const char *ifnames);
 static void rescan_interfaces(void);
 static void free_interfaces(void);
 static int find_interface(int index);
+static void run_initial_ups(void);
 
 /* stolen from /sbin/route */
 #define ROUNDUP(a) \
@@ -57,6 +61,7 @@ static int find_interface(int index);
 
 /* global variables */
 static int verbose = 0;
+static int inhibit_initial = 0;
 static const char *up_script = NULL;
 static const char *down_script = NULL;
 
@@ -74,11 +79,14 @@ main(int argc, char **argv)
 	int errs = 0;
 	char msg[2048], *msgp;
 
-	while ((c = getopt(argc, argv, "vhu:d:")) != -1)
+	while ((c = getopt(argc, argv, "vhiu:d:")) != -1)
 		switch (c) {
 		case 'h':
 			usage();
 			return 0;
+		case 'i':
+			inhibit_initial = 1;
+			break;
 		case 'v':
 			verbose++;
 			break;
@@ -119,6 +127,9 @@ main(int argc, char **argv)
 	if (!verbose)
 		daemon(0,0);
 
+	if (!inhibit_initial)
+		run_initial_ups();
+
 	s = socket(PF_ROUTE, SOCK_RAW, 0);
 	if (s < 0) {
 		perror("open routing socket");
@@ -149,6 +160,8 @@ usage()
 	    "\twhere:\n"
 	    "\t -h       show this help message\n"
 	    "\t -v       verbose/debug output, don't run in background\n"
+	    "\t -i       no (!) initial run of the up script if the interface\n"
+	    "\t          is already up on ifwatchd startup\n"
 	    "\t -u <cmd> specify command to run on interface up event\n"
 	    "\t -d <cmd> specify command to run on interface down event\n");
 	exit(1);
@@ -296,4 +309,28 @@ static int find_interface(index)
 	    if (p->index == index)
 		return 1;
 	return 0;
+}
+
+static void run_initial_ups()
+{
+	struct interface_data * ifd;
+	struct ifaddrs *res = NULL, *p;
+
+	if (getifaddrs(&res) == 0) {
+	    for (p = res; p; p = p->ifa_next) {
+		if ((p->ifa_flags & IFF_UP) == 0)
+		    continue;
+		if (p->ifa_addr == NULL)
+		    continue;
+		if (p->ifa_addr->sa_family == AF_LINK)
+		    continue;
+		SLIST_FOREACH(ifd, &ifs, next) {
+		    if (strcmp(ifd->ifname, p->ifa_name) == 0) {
+			invoke_script(p->ifa_addr, 1, ifd->index);
+			break;
+		    }
+		}
+	    }
+	    freeifaddrs(res);
+	}
 }
