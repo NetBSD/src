@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.1.2.3 2005/02/12 22:37:39 bouyer Exp $      */
+/*      $NetBSD: xenevt.c,v 1.1.2.4 2005/02/13 19:15:49 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -135,7 +135,7 @@ xenevt_event(int port)
 
 /* open the xenevt device; this is where we clone */
 int
-xenevtopen(dev_t dev, int flag, int mode, struct proc *p)
+xenevtopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct xenevt_d *d;
 	struct file *fp;
@@ -147,7 +147,7 @@ xenevtopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	d = malloc(sizeof(*d), M_DEVBUF, M_WAITOK | M_ZERO);
 
-	return fdclone(p, fp, fd, &xenevt_fileops, d);
+	return fdclone(p, fp, fd, flags, &xenevt_fileops, d);
 }
 
 static int
