@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_syscallargs.h,v 1.35 2000/08/07 18:10:25 bjh21 Exp $	*/
+/*	$NetBSD: freebsd_syscallargs.h,v 1.36 2000/08/08 02:12:30 itojun Exp $	*/
 
 /*
  * System call argument lists.
@@ -433,7 +433,7 @@ int	freebsd_sys_shmsys	__P((struct proc *, void *, register_t *));
 #endif
 int	sys_pread	__P((struct proc *, void *, register_t *));
 int	sys_pwrite	__P((struct proc *, void *, register_t *));
-#ifdefined NTP
+#ifdef NTP
 int	freebsd_ntp_adjtime	__P((struct proc *, void *, register_t *));
 #else
 #endif
