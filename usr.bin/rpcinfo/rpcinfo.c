@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcinfo.c,v 1.19 2004/01/05 23:23:36 jmmv Exp $	*/
+/*	$NetBSD: rpcinfo.c,v 1.20 2004/04/23 02:58:29 simonb Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)rpcinfo.c 1.16 89/04/05 Copyr 1986 Sun Micro";
 
 /*
  * rpcinfo: ping a particular rpc program
- * 	or dump the the registered programs on the remote machine.
+ * 	or dump the registered programs on the remote machine.
  */
 
 /*

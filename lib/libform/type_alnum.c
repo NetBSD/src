@@ -1,4 +1,4 @@
-/*	$NetBSD: type_alnum.c,v 1.6 2001/06/13 10:45:59 wiz Exp $	*/
+/*	$NetBSD: type_alnum.c,v 1.7 2004/04/23 02:58:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -63,7 +63,7 @@ create_alnum_args(va_list *args)
 }
 
 /*
- * Copy the the alnum argument structure.
+ * Copy the alnum argument structure.
  */
 static char *
 copy_alnum_args(char *args)
