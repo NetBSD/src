@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.13 2000/02/22 08:23:22 thorpej Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.14 2000/02/27 20:40:42 augustss Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -199,6 +199,10 @@ struct ray_softc {
 	/* use to return values to the user */
 	struct ray_param_req	*sc_repreq;
 	struct ray_param_req	*sc_updreq;
+
+#ifdef RAY_DO_SIGLEV
+	struct ray_siglev	sc_siglevs[RAY_NSIGLEVRECS];
+#endif
 };
 #define	sc_memt	sc_mem.memt
 #define	sc_memh	sc_mem.memh
@@ -308,6 +312,9 @@ static int ray_user_update_params __P((struct ray_softc *,
     struct ray_param_req *));
 static void ray_write_region __P((struct ray_softc *,bus_size_t,void *,size_t));
 
+#ifdef RAY_DO_SIGLEV
+static void ray_update_siglev __P((struct ray_softc *, u_int8_t *, u_int8_t));
+#endif
 
 #ifdef RAY_DEBUG
 static int ray_debug = 0;
@@ -1028,9 +1035,15 @@ ray_ioctl(ifp, cmd, data)
 		break;
 	case SIOCG80211NWID:
 		RAY_DPRINTF(("%s: ioctl: cmd SIOCHNWID\n", ifp->if_xname));
-		error2 = copyout(sc->sc_cnwid, ifr->ifr_data,
+		error = copyout(sc->sc_cnwid, ifr->ifr_data,
 		    IEEE80211_NWID_LEN);
 		break;
+#ifdef RAY_DO_SIGLEV
+	case SIOCGRAYSIGLEV:
+		error = copyout(sc->sc_siglevs, ifr->ifr_data, 
+			    sizeof sc->sc_siglevs);
+		break;
+#endif
 	default:
 		RAY_DPRINTF(("%s: ioctl: unknown\n", ifp->if_xname));
 		error = EINVAL;
@@ -1326,6 +1339,9 @@ ray_recv(sc, ccs)
 	u_int8_t *src, *d;
 	u_int frag, nofrag, ni, i, issnap, first;
 	u_int8_t fc0;
+#ifdef RAY_DO_SIGLEV
+	u_int8_t siglev;
+#endif
 
 #ifdef RAY_DEBUG
 	/* have a look if you want to see how the card rx works :) */
@@ -1340,6 +1356,9 @@ ray_recv(sc, ccs)
 	/* it looks like at least with build 4 there is no CRC in length */
 	first = RAY_GET_INDEX(ccs);
 	pktlen = SRAM_READ_FIELD_2(sc, ccs, ray_cmd_rx, c_pktlen);
+#ifdef RAY_DO_SIGLEV
+	siglev = SRAM_READ_FIELD_1(sc, ccs, ray_cmd_rx, c_siglev);
+#endif
 
 	RAY_DPRINTF(("%s: recv pktlen %ld nofrag %d\n", sc->sc_xname,
 	    (u_long)pktlen, nofrag));
@@ -1488,6 +1507,11 @@ done:
 		m_freem(m);
 		return;
 	}
+
+#ifdef RAY_DO_SIGLEV
+	ray_update_siglev(sc, src, siglev);
+#endif
+
 	/*
 	 * This is a mess.. we should support other LLC frame types
 	 */
@@ -3115,3 +3139,42 @@ ray_dump_mbuf(sc, m)
 		printf("\n");
 }
 #endif	/* RAY_DEBUG */
+
+#ifdef RAY_DO_SIGLEV
+static void
+ray_update_siglev(sc, src, siglev)
+	struct ray_softc *sc;
+	u_int8_t *src;
+	u_int8_t siglev;
+{
+	int i, mini;
+	struct timeval mint;
+	struct ray_siglev *sl;
+
+	/* try to find host */
+	for (i = 0; i < RAY_NSIGLEVRECS; i++) {
+		sl = &sc->sc_siglevs[i];
+		if (memcmp(sl->rsl_host, src, ETHER_ADDR_LEN) == 0)
+			goto found;
+	}
+	/* not found, find oldest slot */
+	mini = 0;
+	mint.tv_sec = LONG_MAX;
+	mint.tv_usec = 0;
+	for (i = 0; i < RAY_NSIGLEVRECS; i++) {
+		sl = &sc->sc_siglevs[i];
+		if (timercmp(&sl->rsl_time, &mint, <)) {
+			mini = i;
+			mint = sl->rsl_time;
+		}
+	}
+	sl = &sc->sc_siglevs[mini];
+	memset(sl->rsl_siglevs, 0, RAY_NSIGLEV);
+	memcpy(sl->rsl_host, src, ETHER_ADDR_LEN);
+
+ found:
+	microtime(&sl->rsl_time);
+	memmove(&sl->rsl_siglevs[1], sl->rsl_siglevs, RAY_NSIGLEV-1);
+	sl->rsl_siglevs[0] = siglev;
+}
+#endif

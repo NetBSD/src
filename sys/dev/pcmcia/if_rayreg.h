@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rayreg.h,v 1.1 2000/01/23 23:59:22 chopps Exp $	*/
+/*	$NetBSD: if_rayreg.h,v 1.2 2000/02/27 20:40:43 augustss Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -620,3 +620,16 @@ struct ray_param_req {
 	"RAY_PID_PRIVACY_CAN_JOIN",			\
 	"RAY_PID_BASIC_RATE_SET"			\
     }
+
+#ifdef RAY_DO_SIGLEV
+#define SIOCGRAYSIGLEV  _IOWR('i', 201, struct ifreq)
+
+#define RAY_NSIGLEVRECS 8
+#define RAY_NSIGLEV 8
+
+struct ray_siglev {
+	u_int8_t	rsl_host[ETHER_ADDR_LEN]; /* MAC address */
+	u_int8_t	rsl_siglevs[RAY_NSIGLEV]; /* levels, newest in [0] */
+	struct timeval	rsl_time; 		  /* time of last packet */
+};
+#endif
