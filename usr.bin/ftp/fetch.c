@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.69 1999/09/14 22:49:14 mycroft Exp $	*/
+/*	$NetBSD: fetch.c,v 1.70 1999/09/21 12:57:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.69 1999/09/14 22:49:14 mycroft Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.70 1999/09/21 12:57:51 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1554,7 +1554,7 @@ go_fetch(url)
 		if (strcasecmp(url, "ftp") == 0) {
 			fprintf(ttyout, "%s\n%s\n",
 "This version of ftp has been enhanced by Luke Mewburn <lukem@netbsd.org>.",
-"Execute `man ftp' for more details");
+"Execute `man ftp' for more details.");
 		} else if (strcasecmp(url, "netbsd") == 0) {
 			fprintf(ttyout, "%s\n%s\n",
 "NetBSD is a freely available and redistributable UNIX-like operating system.",
