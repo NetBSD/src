@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_lock.c	7.4 (Berkeley) 4/21/91
- *	$Id: kern_lock.c,v 1.2 1993/05/20 03:59:11 cgd Exp $
+ *	$Id: kern_lock.c,v 1.3 1993/12/17 07:56:32 mycroft Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -67,15 +67,15 @@
  *	Locking primitives implementation
  */
 
-#include "param.h"
-#include "vm_param.h"
-#include "lock.h"
-
+#include <sys/param.h>
 /* XXX */
-#include "proc.h"
+#include <sys/proc.h>
 typedef	int *thread_t;
 #define	current_thread()	((thread_t)&curproc->p_thread)
 /* XXX */
+
+#include <vm/vm_param.h>
+#include <vm/lock.h>
 
 #if	NCPUS > 1
 

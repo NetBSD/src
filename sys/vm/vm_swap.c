@@ -31,20 +31,20 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_swap.c	7.18 (Berkeley) 5/6/91
- *	$Id: vm_swap.c,v 1.12 1993/11/12 05:57:48 cgd Exp $
+ *	$Id: vm_swap.c,v 1.13 1993/12/17 07:57:17 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "buf.h"
-#include "conf.h"
-#include "proc.h"
-#include "namei.h"
-#include "dmap.h"		/* XXX */
-#include "vnode.h"
-#include "miscfs/specfs/specdev.h" /* XXX */
-#include "map.h"
-#include "file.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/conf.h>
+#include <sys/proc.h>
+#include <sys/namei.h>
+#include <sys/dmap.h>		/* XXX */
+#include <sys/vnode.h>
+#include <miscfs/specfs/specdev.h> /* XXX */
+#include <sys/map.h>
+#include <sys/file.h>
 
 /*
  * Indirect driver for multi-controller paging.

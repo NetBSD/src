@@ -31,16 +31,16 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_meter.c	7.11 (Berkeley) 4/20/91
- *	$Id: vm_meter.c,v 1.5 1993/09/15 22:31:07 cgd Exp $
+ *	$Id: vm_meter.c,v 1.6 1993/12/17 07:56:55 mycroft Exp $
  */
 
-#include "param.h"
-#include "proc.h"
-#include "systm.h"
-#include "kernel.h"
+#include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
 
-#include "vm_param.h"
-#include "vmmeter.h"
+#include <vm/vm_param.h>
+#include <sys/vmmeter.h>
 
 fixpt_t	averunnable[3];		/* load average, of runnable procs */
 

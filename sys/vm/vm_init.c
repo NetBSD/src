@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_init.c	7.3 (Berkeley) 4/21/91
- *	$Id: vm_init.c,v 1.3 1993/08/27 23:47:38 brezak Exp $
+ *	$Id: vm_init.c,v 1.4 1993/12/17 07:56:47 mycroft Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -67,11 +67,11 @@
  *	Initialize the Virtual Memory subsystem.
  */
 
-#include "param.h"
+#include <sys/param.h>
 
-#include "vm.h"
-#include "vm_page.h"
-#include "vm_kern.h"
+#include <vm/vm.h>
+#include <vm/vm_page.h>
+#include <vm/vm_kern.h>
 
 /*
  *	vm_init initializes the virtual memory system.
