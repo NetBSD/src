@@ -19,7 +19,7 @@ magic.mgc: magic
 	$(top_builddir)/src/file -C -m magic
 
 magic.mime.mgc: magic.mime
-	$(top_builddir)/src/file -C -m magic.mime
+	$(top_builddir)/src/file -C -m $(srcdir)/magic.mime
 
 magic_FRAGMENTS = \
 Magdir/acorn \
@@ -53,6 +53,7 @@ Magdir/cisco \
 Magdir/citrus \
 Magdir/claris \
 Magdir/clipper \
+Magdir/spec \
 Magdir/commands \
 Magdir/communications \
 Magdir/compress \
@@ -111,6 +112,7 @@ Magdir/magic \
 Magdir/mail.news \
 Magdir/maple \
 Magdir/mathematica \
+Magdir/matroska \
 Magdir/mcrypt \
 Magdir/mime \
 Magdir/mips \
