@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.4 1999/07/26 14:02:32 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.5 1999/07/26 14:40:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -229,7 +229,11 @@ ntfs_getattr(ap)
 
 	dprintf(("ntfs_getattr: %d, flags: %d\n",ip->i_number,ip->i_flag));
 
+#if defined(__FreeBSD__)
 	vap->va_fsid = dev2udev(fp->f_dev);
+#else /* NetBSD */
+	vap->va_fsid = fp->f_dev;
+#endif
 	vap->va_fileid = ip->i_number;
 	vap->va_mode = ip->i_mode;
 	vap->va_nlink = ip->i_nlink;
@@ -854,9 +858,6 @@ ntfs_readdir(ap)
 		       M_TEMP, M_WAITOK);
 #else /* defined(__NetBSD__) */
 		MALLOC(cookies, off_t *, ncookies * sizeof(off_t),
-		       M_TEMP, M_WAITOK);
-#else
-		MALLOC(cookies, u_int *, ncookies * sizeof(u_int),
 		       M_TEMP, M_WAITOK);
 #endif
 		for (dp = dpStart, cookiep = cookies, i=0;
