@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.48 1998/10/31 00:45:48 thorpej Exp $
+#	$NetBSD: files.pci,v 1.49 1998/11/04 00:31:05 fvdl Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -57,6 +57,11 @@ file    dev/pci/if_en_pci.c		en_pci
 # device declaration in sys/conf/files
 attach	ep at pci with ep_pci
 file	dev/pci/if_ep_pci.c		ep_pci
+
+# 3Com 3c90x[B] Ethernet controllers
+# device declaration in sys/conf/files
+attach	ex at pci with ex_pci
+file	dev/pci/if_ex_pci.c		ex_pci
 
 # Digital DEFPA PCI FDDI Controller
 device	fpa: pdq, fddi, ifnet, arp

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.18 1998/08/12 18:51:52 thorpej Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.19 1998/11/04 00:29:55 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,12 +137,12 @@ struct ep_eisa_product {
 	int		eep_flags;	/* initial softc flags */
 	const char	*eep_name;	/* device name */
 } ep_eisa_products[] = {
-	{ "TCM5091",			EP_CHIPSET_3C509,
+	{ "TCM5091",			ELINK_CHIPSET_3C509,
 	  0,				EISA_PRODUCT_TCM5091 },
 
-	{ "TCM5092",			EP_CHIPSET_3C509,
+	{ "TCM5092",			ELINK_CHIPSET_3C509,
 	  0,				EISA_PRODUCT_TCM5092 },
-	{ "TCM5093",			EP_CHIPSET_3C509,
+	{ "TCM5093",			ELINK_CHIPSET_3C509,
 	  0,				EISA_PRODUCT_TCM5093 },
 
 	/*
@@ -150,13 +150,13 @@ struct ep_eisa_product {
 	 * MII connector for an external PHY.  We treat it as
 	 * `manual' in the core driver.
 	 */
-	{ "TCM5920",			EP_CHIPSET_VORTEX,
+	{ "TCM5920",			ELINK_CHIPSET_VORTEX,
 	  0,				EISA_PRODUCT_TCM5920 },
-	{ "TCM5970",			EP_CHIPSET_VORTEX,
+	{ "TCM5970",			ELINK_CHIPSET_VORTEX,
 	  0,				EISA_PRODUCT_TCM5970 },
-	{ "TCM5971",			EP_CHIPSET_VORTEX,
+	{ "TCM5971",			ELINK_CHIPSET_VORTEX,
 	  0,				EISA_PRODUCT_TCM5971 },
-	{ "TCM5972",			EP_CHIPSET_VORTEX,
+	{ "TCM5972",			ELINK_CHIPSET_VORTEX,
 	  0,				EISA_PRODUCT_TCM5972 },
 
 	{ NULL,				0,
@@ -226,7 +226,7 @@ ep_eisa_attach(parent, self, aux)
 	delay(1000);
 
 	/* Read the IRQ from the card. */
-	irq = bus_space_read_2(iot, ioh, EP_W0_RESOURCE_CFG) >> 12;
+	irq = bus_space_read_2(iot, ioh, ELINK_W0_RESOURCE_CFG) >> 12;
 
 	eep = ep_eisa_lookup(ea);
 	if (eep == NULL) {
@@ -240,7 +240,7 @@ ep_eisa_attach(parent, self, aux)
 	sc->disable = NULL;
 	sc->enabled = 1;
 
-	sc->bustype = EP_BUS_EISA;
+	sc->bustype = ELINK_BUS_EISA;
 	sc->ep_flags = eep->eep_flags;
 
 	if (eisa_intr_map(ec, irq, &ih)) {

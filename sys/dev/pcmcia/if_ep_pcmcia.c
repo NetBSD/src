@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.16 1998/08/17 23:20:40 thorpej Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.17 1998/11/04 00:31:33 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -146,15 +146,15 @@ struct ep_pcmcia_product {
 	int		epp_expfunc;	/* expected function */
 	const char	*epp_name;	/* device name */
 } ep_pcmcia_products[] = {
-	{ PCMCIA_PRODUCT_3COM_3C562,	EP_CHIPSET_3C509,
+	{ PCMCIA_PRODUCT_3COM_3C562,	ELINK_CHIPSET_3C509,
 	  0,				0,
 	  PCMCIA_STR_3COM_3C562 },
-	{ PCMCIA_PRODUCT_3COM_3C589,	EP_CHIPSET_3C509,
+	{ PCMCIA_PRODUCT_3COM_3C589,	ELINK_CHIPSET_3C509,
 	  0,				0,
 	  PCMCIA_STR_3COM_3C589 },
 
-	{ PCMCIA_PRODUCT_3COM_3C574,	EP_CHIPSET_ROADRUNNER,
-	  EP_FLAGS_MII,			0,
+	{ PCMCIA_PRODUCT_3COM_3C574,	ELINK_CHIPSET_ROADRUNNER,
+	  ELINK_FLAGS_MII,			0,
 	  PCMCIA_STR_3COM_3C574 },
 
 	{ 0,				0,
@@ -342,14 +342,14 @@ ep_pcmcia_attach(parent, self, aux)
 		break;
 	}
 
-	sc->bustype = EP_BUS_PCMCIA;
+	sc->bustype = ELINK_BUS_PCMCIA;
 
 	epp = ep_pcmcia_lookup(pa);
 	if (epp == NULL)
 		panic("ep_pcmcia_attach: impossible");
 
 	printf(": %s\n", epp->epp_name);
-
+	
 	sc->enable = ep_pcmcia_enable;
 	sc->disable = ep_pcmcia_disable;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isapnp.c,v 1.16 1998/08/12 18:51:54 thorpej Exp $	*/
+/*	$NetBSD: if_ep_isapnp.c,v 1.17 1998/11/04 00:30:36 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -117,7 +117,7 @@ ep_isapnp_attach(parent, self, aux)
 
 	sc->sc_iot = ipa->ipa_iot;
 	sc->sc_ioh = ipa->ipa_io[0].h;
-	sc->bustype = EP_BUS_ISA;
+	sc->bustype = ELINK_BUS_ISA;
 
 	sc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
 	    ipa->ipa_irq[0].type, IPL_NET, epintr, sc);
@@ -128,5 +128,5 @@ ep_isapnp_attach(parent, self, aux)
 
 	/* XXX 3c515 */
 
-	epconfig(sc, EP_CHIPSET_3C509, NULL);
+	epconfig(sc, ELINK_CHIPSET_3C509, NULL);
 }

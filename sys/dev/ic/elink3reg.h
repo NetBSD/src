@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3reg.h,v 1.18 1998/08/26 01:29:03 thorpej Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.19 1998/11/04 00:29:29 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@beer.org>
@@ -35,16 +35,27 @@
  * These define the EEPROM data structure.  They are used in the probe
  * function to verify the existance of the adapter after having sent
  * the ID_Sequence.
- *
- * There are others but only the ones we use are defined here.
  */
 #define EEPROM_NODE_ADDR_0	0x0	/* Word */
 #define EEPROM_NODE_ADDR_1	0x1	/* Word */
 #define EEPROM_NODE_ADDR_2	0x2	/* Word */
 #define EEPROM_PROD_ID		0x3	/* 0x9[0-f]50 */
+#define EEPROM_MFG_DATE		0x4	/* Manufacturing date */
+#define EEPROM_MFG_DIVSION	0x5	/* Manufacturing division */
+#define EEPROM_MFG_PRODUCT	0x6	/* Product code */
 #define EEPROM_MFG_ID		0x7	/* 0x6d50 */
 #define EEPROM_ADDR_CFG		0x8	/* Base addr */
 #define EEPROM_RESOURCE_CFG	0x9     /* IRQ. Bits 12-15 */
+#define EEPROM_OEM_ADDR0	0xa
+#define EEPROM_OEM_ADDR1	0xb
+#define EEPROM_OEM_ADDR2	0xc
+#define EEPROM_SOFTINFO		0xd
+#define EEPROM_COMPAT		0xe
+#define EEPROM_SOFTINFO2	0xf
+#define EEPROM_CAP		0x10
+#define EEPROM_CONFIG_LOW	0x12
+#define EEPROM_CONFIG_HIGH	0x13
+#define EEPROM_CHECKSUM_EL3	0x17
 
 /*
  * These are the registers for the 3Com 3c509 and their bit patterns when
@@ -52,99 +63,99 @@
  * Tasking EISA and ISA Technical Reference" "Beta Draft 10/30/92" manual
  * from 3com.
  */
-#define EP_COMMAND		0x0e    /* Write. BASE+0x0e is always a command reg. */
-#define EP_STATUS		0x0e    /* Read. BASE+0x0e is always status reg. */
-#define EP_WINDOW		0x0f    /* Read. BASE+0x0f is always window reg. */
+#define ELINK_COMMAND	0x0e    /* Write. BASE+0x0e is always a command reg. */
+#define ELINK_STATUS	0x0e    /* Read. BASE+0x0e is always status reg. */
+#define ELINK_WINDOW	0x0f    /* Read. BASE+0x0f is always window reg. */
 
 /*
  * Window 0 registers. Setup.
  */
 	/* Write */
-#define EP_W0_EEPROM_DATA	0x0c
-#define EP_W0_EEPROM_COMMAND	0x0a
-#define EP_W0_RESOURCE_CFG	0x08
-#define EP_W0_ADDRESS_CFG	0x06
-#define EP_W0_CONFIG_CTRL	0x04
+#define ELINK_W0_EEPROM_DATA	0x0c
+#define ELINK_W0_EEPROM_COMMAND	0x0a
+#define ELINK_W0_RESOURCE_CFG	0x08
+#define ELINK_W0_ADDRESS_CFG	0x06
+#define ELINK_W0_CONFIG_CTRL	0x04
 	/* Read */
-#define EP_W0_PRODUCT_ID	0x02
-#define EP_W0_MFG_ID		0x00
+#define ELINK_W0_PRODUCT_ID	0x02
+#define ELINK_W0_MFG_ID		0x00
 
 /*
  * Window 1 registers. Operating Set.
  */
 	/* Write */
-#define EP_W1_TX_PIO_WR_2	0x02
-#define EP_W1_TX_PIO_WR_1	0x00
+#define ELINK_W1_TX_PIO_WR_2	0x02
+#define ELINK_W1_TX_PIO_WR_1	0x00
 	/* Read */
-#define EP_W1_FREE_TX		0x0c
-#define EP_W1_TX_STATUS		0x0b    /* byte */
-#define EP_W1_TIMER		0x0a    /* byte */
-#define EP_W1_RX_STATUS		0x08
-#define EP_W1_RX_PIO_RD_2	0x02
-#define EP_W1_RX_PIO_RD_1	0x00
-
+#define ELINK_W1_FREE_TX		0x0c
+#define ELINK_W1_TX_STATUS		0x0b    /* byte */
+#define ELINK_W1_TIMER		0x0a    /* byte */
+#define ELINK_W1_RX_STATUS		0x08
+#define ELINK_W1_RX_PIO_RD_2	0x02
+#define ELINK_W1_RX_PIO_RD_1	0x00
 /*
  * Special registers used by the RoadRunner.  These are used to program
  * a FIFO buffer to reduce the PCMCIA->PCI bridge latency during PIO.
  */
-#define	EP_W1_RUNNER_RDCTL	0x16
-#define	EP_W1_RUNNER_WRCTL	0x1c
+#define	ELINK_W1_RUNNER_RDCTL	0x16
+#define	ELINK_W1_RUNNER_WRCTL	0x1c
 
 /*
  * Window 2 registers. Station Address Setup/Read
  */
 	/* Read/Write */
-#define EP_W2_RECVMASK_0	0x06
-#define EP_W2_ADDR_5		0x05
-#define EP_W2_ADDR_4		0x04
-#define EP_W2_ADDR_3		0x03
-#define EP_W2_ADDR_2		0x02
-#define EP_W2_ADDR_1		0x01
-#define EP_W2_ADDR_0		0x00
+#define ELINK_W2_RECVMASK_0	0x06
+#define ELINK_W2_ADDR_5		0x05
+#define ELINK_W2_ADDR_4		0x04
+#define ELINK_W2_ADDR_3		0x03
+#define ELINK_W2_ADDR_2		0x02
+#define ELINK_W2_ADDR_1		0x01
+#define ELINK_W2_ADDR_0		0x00
 
 /* 
  * Window 3 registers.  Configuration and FIFO Management.
  */
 	/* Read */
-#define EP_W3_FREE_TX		0x0c
-#define EP_W3_FREE_RX		0x0a
+#define ELINK_W3_FREE_TX		0x0c
+#define ELINK_W3_FREE_RX		0x0a
 	/* Read/Write, at least on busmastering cards. */
-#define EP_W3_INTERNAL_CONFIG	0x00	/* 32 bits */
-#define EP_W3_OTHER_INT		0x04	/*  8 bits */
-#define EP_W3_PIO_RESERVED	0x05	/*  8 bits */
-#define EP_W3_MAC_CONTROL	0x06	/* 16 bits */
-#define EP_W3_RESET_OPTIONS	0x08	/* 16 bits */
+#define ELINK_W3_INTERNAL_CONFIG	0x00	/* 32 bits */
+#define ELINK_W3_OTHER_INT		0x04	/*  8 bits */
+#define ELINK_W3_PIO_RESERVED	0x05	/*  8 bits */
+#define ELINK_W3_MAC_CONTROL	0x06	/* 16 bits */
+#define ELINK_W3_RESET_OPTIONS	0x08	/* 16 bits */
 
 /*
  * Window 4 registers. Diagnostics.
  */
 	/* Read/Write */
-#define EP_W4_MEDIA_TYPE	0x0a
-#define EP_W4_CTRLR_STATUS	0x08
-#define EP_W4_NET_DIAG		0x06
-#define EP_W4_FIFO_DIAG		0x04
-#define EP_W4_HOST_DIAG		0x02
-#define EP_W4_TX_DIAG		0x00
+#define ELINK_W4_MEDIA_TYPE	0x0a
+#define ELINK_W4_CTRLR_STATUS	0x08
+#define ELINK_W4_NET_DIAG		0x06
+#define ELINK_W4_FIFO_DIAG		0x04
+#define ELINK_W4_HOST_DIAG		0x02
+#define ELINK_W4_TX_DIAG		0x00
 
 /*
  * Window 4 offset 8 is the PHY Management register on the
  * 3c90x.
  */
-#define	EP_W4_BOOM_PHYSMGMT	0x08
+#define	ELINK_W4_BOOM_PHYSMGMT	0x08
 #define	PHYSMGMT_CLK		0x0001
 #define	PHYSMGMT_DATA		0x0002
 #define	PHYSMGMT_DIR		0x0004
+
 
 /*
  * Window 5 Registers.  Results and Internal status.
  */
 	/* Read */
-#define EP_W5_READ_0_MASK	0x0c
-#define EP_W5_INTR_MASK		0x0a
-#define EP_W5_RX_FILTER		0x08
-#define EP_W5_RX_EARLY_THRESH	0x06
-#define EP_W5_TX_AVAIL_THRESH	0x02
-#define EP_W5_TX_START_THRESH	0x00
+#define ELINK_W5_READ_0_MASK	0x0c
+#define ELINK_W5_INTR_MASK		0x0a
+#define ELINK_W5_RX_FILTER		0x08
+#define ELINK_W5_RX_EARLY_THRESH	0x06
+#define ELINK_W5_TX_AVAIL_THRESH	0x02
+#define ELINK_W5_TX_START_THRESH	0x00
 
 /*
  * Window 6 registers. Statistics.
@@ -152,6 +163,7 @@
 	/* Read/Write */
 #define TX_TOTAL_OK		0x0c
 #define RX_TOTAL_OK		0x0a
+#define UPPER_FRAMES_OK		0x09
 #define TX_DEFERRALS		0x08
 #define RX_FRAMES_OK		0x07
 #define TX_FRAMES_OK		0x06
@@ -163,16 +175,17 @@
 #define TX_CD_LOST		0x00
 
 /*
- * Window 7 registers.
+ * Window 7 registers. 
  * Address and length for a single bus-master DMA transfer.
- */
-#define EP_W7_MASTER_ADDDRES	0x00
-#define EP_W7_RX_ERROR		0x04
-#define EP_W7_MASTER_LEN	0x06
-#define EP_W7_RX_STATUS		0x08
-#define EP_W7_TIMER		0x0a
-#define EP_W7_TX_STATUS		0x0b
-#define EP_W7_MASTER_STATUS	0x0c
+ * Unused for elink3 cards.
+ */     
+#define ELINK_W7_MASTER_ADDDRES	0x00
+#define ELINK_W7_RX_ERROR	0x04
+#define ELINK_W7_MASTER_LEN	0x06    
+#define ELINK_W7_RX_STATUS	0x08
+#define ELINK_W7_TIMER		0x0a    
+#define ELINK_W7_TX_STATUS	0x0b
+#define ELINK_W7_MASTER_STATUS	0x0c    
 
 /*
  * Register definitions.
@@ -186,62 +199,62 @@
  *     10-0:   11-bit arg if any. For commands with no args;
  *	      this can be set to anything.
  */
-#define GLOBAL_RESET		(u_short) 0x0000   /* Wait at least 1ms after issuing */
-#define WINDOW_SELECT		(u_short) (0x1<<11)
-#define START_TRANSCEIVER	(u_short) (0x2<<11) /* Read ADDR_CFG reg to determine
+#define GLOBAL_RESET		(u_int16_t) 0x0000   /* Wait at least 1ms after issuing */
+#define WINDOW_SELECT		(u_int16_t) (0x1<<11)
+#define START_TRANSCEIVER	(u_int16_t) (0x2<<11) /* Read ADDR_CFG reg to determine
 						      whether this is needed. If so;
 						      wait 800 uSec before using trans-
 						      ceiver. */
-#define RX_DISABLE		(u_short) (0x3<<11) /* state disabled on power-up */
-#define RX_ENABLE		(u_short) (0x4<<11)
-#define RX_RESET		(u_short) (0x5<<11)
-#define RX_DISCARD_TOP_PACK	(u_short) (0x8<<11)
-#define TX_ENABLE		(u_short) (0x9<<11)
-#define TX_DISABLE		(u_short) (0xa<<11)
-#define TX_RESET		(u_short) (0xb<<11)
-#define REQ_INTR		(u_short) (0xc<<11)
+#define RX_DISABLE		(u_int16_t) (0x3<<11) /* state disabled on power-up */
+#define RX_ENABLE		(u_int16_t) (0x4<<11)
+#define RX_RESET		(u_int16_t) (0x5<<11)
+#define RX_DISCARD_TOP_PACK	(u_int16_t) (0x8<<11)
+#define TX_ENABLE		(u_int16_t) (0x9<<11)
+#define TX_DISABLE		(u_int16_t) (0xa<<11)
+#define TX_RESET		(u_int16_t) (0xb<<11)
+#define REQ_INTR		(u_int16_t) (0xc<<11)
 
 /*
  * The following C_* acknowledge the various interrupts.
  * Some of them don't do anything.  See the manual.
  */
-#define ACK_INTR		(u_short) (0xd << 11)
-#      define C_INTR_LATCH	(u_short) (ACK_INTR|0x01)
-#      define C_CARD_FAILURE	(u_short) (ACK_INTR|0x02)
-#      define C_TX_COMPLETE	(u_short) (ACK_INTR|0x04)
-#      define C_TX_AVAIL	(u_short) (ACK_INTR|0x08)
-#      define C_RX_COMPLETE	(u_short) (ACK_INTR|0x10)
-#      define C_RX_EARLY	(u_short) (ACK_INTR|0x20)
-#      define C_INT_RQD		(u_short) (ACK_INTR|0x40)
-#      define C_UPD_STATS	(u_short) (ACK_INTR|0x80)
+#define ACK_INTR		(u_int16_t) (0xd << 11)
+#      define C_INTR_LATCH	(u_int16_t) (ACK_INTR|0x01)
+#      define C_CARD_FAILURE	(u_int16_t) (ACK_INTR|0x02)
+#      define C_TX_COMPLETE	(u_int16_t) (ACK_INTR|0x04)
+#      define C_TX_AVAIL	(u_int16_t) (ACK_INTR|0x08)
+#      define C_RX_COMPLETE	(u_int16_t) (ACK_INTR|0x10)
+#      define C_RX_EARLY	(u_int16_t) (ACK_INTR|0x20)
+#      define C_INT_RQD		(u_int16_t) (ACK_INTR|0x40)
+#      define C_UPD_STATS	(u_int16_t) (ACK_INTR|0x80)
 
-#define SET_INTR_MASK		(u_short) (0x0e<<11)
+#define SET_INTR_MASK		(u_int16_t) (0x0e<<11)
 
 /* busmastering-cards only? */
-#define STATUS_ENABLE		(u_short) (0xf<<11)
+#define STATUS_ENABLE		(u_int16_t) (0xf<<11)
 
-#define SET_RD_0_MASK		(u_short) (0x0f<<11)
+#define SET_RD_0_MASK		(u_int16_t) (0x0f<<11)
 
-#define SET_RX_FILTER		(u_short) (0x10<<11)
-#      define FIL_INDIVIDUAL	(u_short) (0x01)
-#      define FIL_MULTICAST	(u_short) (0x02)
-#      define FIL_BRDCST	(u_short) (0x04)
-#      define FIL_PROMISC	(u_short) (0x08)
+#define SET_RX_FILTER		(u_int16_t) (0x10<<11)
+#      define FIL_INDIVIDUAL	(u_int16_t) (0x01)
+#      define FIL_MULTICAST	(u_int16_t) (0x02)
+#      define FIL_BRDCST	(u_int16_t) (0x04)
+#      define FIL_PROMISC	(u_int16_t) (0x08)
 
-#define SET_RX_EARLY_THRESH	(u_short) (0x11<<11)
-#define SET_TX_AVAIL_THRESH	(u_short) (0x12<<11)
-#define SET_TX_START_THRESH	(u_short) (0x13<<11)
-#define START_DMA		(u_short) (0x14<<11)	/* busmaster-only */
+#define SET_RX_EARLY_THRESH	(u_int16_t) (0x11<<11)
+#define SET_TX_AVAIL_THRESH	(u_int16_t) (0x12<<11)
+#define SET_TX_START_THRESH	(u_int16_t) (0x13<<11)
+#define START_DMA		(u_int16_t) (0x14<<11)	/* busmaster-only */
 #  define START_DMA_TX		(START_DMA | 0x0))	/* busmaster-only */
 #  define START_DMA_RX		(START_DMA | 0x1)	/* busmaster-only */
-#define STATS_ENABLE		(u_short) (0x15<<11)
-#define STATS_DISABLE		(u_short) (0x16<<11)
-#define STOP_TRANSCEIVER	(u_short) (0x17<<11)
+#define STATS_ENABLE		(u_int16_t) (0x15<<11)
+#define STATS_DISABLE		(u_int16_t) (0x16<<11)
+#define STOP_TRANSCEIVER	(u_int16_t) (0x17<<11)
 
 /* Only on adapters that support power management: */
-#define POWERUP			(u_short) (0x1b<<11)
-#define POWERDOWN		(u_short) (0x1c<<11)
-#define POWERAUTO		(u_short) (0x1d<<11)
+#define POWERUP			(u_int16_t) (0x1b<<11)
+#define POWERDOWN		(u_int16_t) (0x1c<<11)
+#define POWERAUTO		(u_int16_t) (0x1d<<11)
 
 
 
@@ -252,7 +265,7 @@
  * The implicit two-bit upshift done by busmastering cards means
  * a value of 2047 disables threshold interrupts on both.
  */
-#define EP_THRESH_DISABLE	2047
+#define ELINK_THRESH_DISABLE	2047
 
 
 /*
@@ -273,17 +286,17 @@
  *     1:      Adapter Failure.
  *     0:      Interrupt Latch.
  */
-#define S_INTR_LATCH		(u_short) (0x0001)
-#define S_CARD_FAILURE		(u_short) (0x0002)
-#define S_TX_COMPLETE		(u_short) (0x0004)
-#define S_TX_AVAIL		(u_short) (0x0008)
-#define S_RX_COMPLETE		(u_short) (0x0010)
-#define S_RX_EARLY		(u_short) (0x0020)
-#define S_INT_RQD		(u_short) (0x0040)
-#define S_UPD_STATS		(u_short) (0x0080)
-#define S_DMA_DONE		(u_short) (0x0100)	/* DMA cards only */
-#define S_DMA_IN_PROGRESS	(u_short) (0x0800)	/* DMA cards only */
-#define S_COMMAND_IN_PROGRESS	(u_short) (0x1000)
+#define S_INTR_LATCH		(u_int16_t) (0x0001)
+#define S_CARD_FAILURE		(u_int16_t) (0x0002)
+#define S_TX_COMPLETE		(u_int16_t) (0x0004)
+#define S_TX_AVAIL		(u_int16_t) (0x0008)
+#define S_RX_COMPLETE		(u_int16_t) (0x0010)
+#define S_RX_EARLY		(u_int16_t) (0x0020)
+#define S_INT_RQD		(u_int16_t) (0x0040)
+#define S_UPD_STATS		(u_int16_t) (0x0080)
+#define S_DMA_DONE		(u_int16_t) (0x0100)	/* DMA cards only */
+#define S_DMA_IN_PROGRESS	(u_int16_t) (0x0800)	/* DMA cards only */
+#define S_COMMAND_IN_PROGRESS	(u_int16_t) (0x1000)
 
 /*
  * FIFO Registers.  RX Status.
@@ -301,15 +314,15 @@
  *
  *     10-0:   RX Bytes (0-1514)
  */
-#define ERR_INCOMPLETE  (u_short) (0x8000)
-#define ERR_RX		(u_short) (0x4000)
-#define ERR_MASK	(u_short) (0x7800)
-#define ERR_OVERRUN	(u_short) (0x4000)
-#define ERR_RUNT	(u_short) (0x5800)
-#define ERR_ALIGNMENT	(u_short) (0x6000)
-#define ERR_CRC		(u_short) (0x6800)
-#define ERR_OVERSIZE	(u_short) (0x4800)
-#define ERR_DRIBBLE	(u_short) (0x1000)
+#define ERR_INCOMPLETE  (u_int16_t) (0x8000)
+#define ERR_RX		(u_int16_t) (0x4000)
+#define ERR_MASK	(u_int16_t) (0x7800)
+#define ERR_OVERRUN	(u_int16_t) (0x4000)
+#define ERR_RUNT	(u_int16_t) (0x5800)
+#define ERR_ALIGNMENT	(u_int16_t) (0x6000)
+#define ERR_CRC		(u_int16_t) (0x6800)
+#define ERR_OVERSIZE	(u_int16_t) (0x4800)
+#define ERR_DRIBBLE	(u_int16_t) (0x1000)
 
 /*
  * TX Status
@@ -339,7 +352,7 @@
  * RX status
  *   Window 1/Port 0x08.
  */
-#define RX_BYTES_MASK			(u_short) (0x07ff)
+#define RX_BYTES_MASK			(u_int16_t) (0x07ff)
 
 /*
  * Internal Config and MAC control (Window 3)
@@ -360,63 +373,65 @@
  * The low-order 16 bits should generally not be changed by software.
  * Offsets defined for two 16-bit words, to help out 16-bit busses.
  */
-#define	CONFIG_RAMSIZE		(u_short) 0x0007
-#define	CONFIG_RAMSIZE_SHIFT	(u_short)      0
+#define	CONFIG_RAMSIZE		(u_int16_t) 0x0007
+#define	CONFIG_RAMSIZE_SHIFT	0
 
-#define	CONFIG_RAMWIDTH		(u_short) 0x0008
-#define	CONFIG_RAMWIDTH_SHIFT	(u_short)      3
+#define	CONFIG_RAMWIDTH		(u_int16_t) 0x0008
+#define	CONFIG_RAMWIDTH_SHIFT	3
 
-#define	CONFIG_RAMSPEED		(u_short) 0x0030
-#define	CONFIG_RAMSPEED_SHIFT	(u_short)      4
-#define	CONFIG_ROMSIZE		(u_short) 0x00c0
-#define	CONFIG_ROMSIZE_SHIFT	(u_short)      6
+#define	CONFIG_RAMSPEED		(u_int16_t) 0x0030
+#define	CONFIG_RAMSPEED_SHIFT	4
+#define	CONFIG_ROMSIZE		(u_int16_t) 0x00c0
+#define	CONFIG_ROMSIZE_SHIFT	6
 
 /* Window 3/port 2 */
-#define	CONFIG_RAMSPLIT		(u_short) 0x0003
-#define	CONFIG_RAMSPLIT_SHIFT	(u_short)      0
-#define	CONFIG_MEDIAMASK	(u_short) 0x0070
-#define	CONFIG_MEDIAMASK_SHIFT	(u_short)      4
+#define	CONFIG_RAMSPLIT		(u_int16_t) 0x0003
+#define	CONFIG_RAMSPLIT_SHIFT	0
+#define	CONFIG_MEDIAMASK	(u_int16_t) 0x0070
+#define	CONFIG_MEDIAMASK_SHIFT	4
 
-/* Active media in EP_W3_RESET_OPTIONS mediamask bits */
-
-#define EPMEDIA_10BASE_T		(u_short)   0x00
-#define EPMEDIA_AUI			(u_short)   0x01
-#define EPMEDIA_RESV1			(u_short)   0x02
-#define EPMEDIA_10BASE_2		(u_short)   0x03
-#define EPMEDIA_100BASE_TX		(u_short)   0x04
-#define EPMEDIA_100BASE_FX		(u_short)   0x05
-#define EPMEDIA_MII			(u_short)   0x06
-#define EPMEDIA_100BASE_T4		(u_short)   0x07
-
-
-#define	CONFIG_AUTOSELECT	(u_short) 0x0100
-#define	CONFIG_AUTOSELECT_SHIFT	(u_short)      8
+#define	CONFIG_AUTOSELECT	(u_int16_t) 0x0100
+#define	CONFIG_AUTOSELECT_SHIFT	8
 
 /*
  * MAC_CONTROL (Window 3)
  */
-#define	MAC_CONTROL_FDX			0x20	/* full-duplex mode */
+#define MAC_CONTROL_FDX		0x20    /* full-duplex mode */
+
+
+/* Active media in INTERNAL_CONFIG media bits */
+
+#define ELINKMEDIA_10BASE_T		(u_int16_t)   0x00
+#define ELINKMEDIA_AUI			(u_int16_t)   0x01
+#define ELINKMEDIA_RESV1		(u_int16_t)   0x02
+#define ELINKMEDIA_10BASE_2		(u_int16_t)   0x03
+#define ELINKMEDIA_100BASE_TX		(u_int16_t)   0x04
+#define ELINKMEDIA_100BASE_FX		(u_int16_t)   0x05
+#define ELINKMEDIA_MII			(u_int16_t)   0x06
+#define ELINKMEDIA_100BASE_T4		(u_int16_t)   0x07
+
 
 /*
  * RESET_OPTIONS (Window 3, on Demon/Vortex/Bomerang only)
  * also mapped to PCI configuration space on PCI adaptors.
  *
- * (same register as  Vortex EP_W3_RESET_OPTIONS, mapped to pci-config space)
+ * (same register as  Vortex ELINK_W3_RESET_OPTIONS, mapped to pci-config space)
  */
-#define EP_PCI_100BASE_T4		(1<<0)
-#define EP_PCI_100BASE_TX		(1<<1)
-#define EP_PCI_100BASE_FX		(1<<2)
-#define EP_PCI_10BASE_T			(1<<3)
-#define EP_PCI_BNC			(1<<4)
-#define EP_PCI_AUI 			(1<<5)
-#define EP_PCI_100BASE_MII		(1<<6)
-#define EP_PCI_INTERNAL_VCO		(1<<8)
+#define ELINK_PCI_100BASE_T4		(1<<0)
+#define ELINK_PCI_100BASE_TX		(1<<1)
+#define ELINK_PCI_100BASE_FX		(1<<2)
+#define ELINK_PCI_10BASE_T			(1<<3)
+#define ELINK_PCI_BNC			(1<<4)
+#define ELINK_PCI_AUI 			(1<<5)
+#define ELINK_PCI_100BASE_MII		(1<<6)
+#define ELINK_PCI_INTERNAL_VCO		(1<<8)
 
-#define	EP_PCI_MEDIAMASK	(EP_PCI_100BASE_T4|EP_PCI_100BASE_TX| \
-				 EP_PCI_100BASE_FX|EP_PCI_10BASE_T| \
-				 EP_PCI_BNC|EP_PCI_AUI|EP_PCI_100BASE_MII)
+#define	ELINK_PCI_MEDIAMASK	(ELINK_PCI_100BASE_T4|ELINK_PCI_100BASE_TX| \
+				 ELINK_PCI_100BASE_FX|ELINK_PCI_10BASE_T| \
+				 ELINK_PCI_BNC|ELINK_PCI_AUI| \
+				 ELINK_PCI_100BASE_MII)
 
-#define	EP_RUNNER_ENABLE_MII		0x8000
+#define	ELINK_RUNNER_ENABLE_MII		0x8000
 
 /*
  * FIFO Status (Window 4)
@@ -451,20 +466,20 @@
  *     9-8:	Unassigned.
  *     7-0:	Built in self test bits for the RX and TX FIFO's.
  */
-#define	FIFOS_RX_RECEIVING	(u_short) 0x8000
-#define	FIFOS_RX_UNDERRUN	(u_short) 0x2000
-#define	FIFOS_RX_STATUS_OVERRUN	(u_short) 0x1000
-#define	FIFOS_RX_OVERRUN	(u_short) 0x0800
-#define	FIFOS_TX_OVERRUN	(u_short) 0x0400
+#define	FIFOS_RX_RECEIVING	(u_int16_t) 0x8000
+#define	FIFOS_RX_UNDERRUN	(u_int16_t) 0x2000
+#define	FIFOS_RX_STATUS_OVERRUN	(u_int16_t) 0x1000
+#define	FIFOS_RX_OVERRUN	(u_int16_t) 0x0800
+#define	FIFOS_TX_OVERRUN	(u_int16_t) 0x0400
 
 /*
  * ISA/eisa CONFIG_CNTRL media-present bits.
  */
-#define EP_W0_CC_AUI 			(1<<13)
-#define EP_W0_CC_BNC 			(1<<12)
-#define EP_W0_CC_UTP 			(1<<9)
-#define	EP_W0_CC_MEDIAMASK	(EP_W0_CC_AUI|EP_W0_CC_BNC|EP_W0_CC_UTP)
-
+#define ELINK_W0_CC_AUI 			(1<<13)
+#define ELINK_W0_CC_BNC 			(1<<12)
+#define ELINK_W0_CC_UTP 			(1<<9)
+#define	ELINK_W0_CC_MEDIAMASK	(ELINK_W0_CC_AUI|ELINK_W0_CC_BNC| \
+				 ELINK_W0_CC_UTP)
 
 /* EEPROM state flags/commands */
 #define EEPROM_BUSY			(1<<15)
@@ -487,9 +502,9 @@
 #define MFG_ID				0x506d	/* `TCM' */
 #define PROD_ID_3C509			0x5090	/* 509[0-f] */
 #define GO_WINDOW(x) 			bus_space_write_2(sc->sc_iot, \
-				sc->sc_ioh, EP_COMMAND, WINDOW_SELECT|x)
+				sc->sc_ioh, ELINK_COMMAND, WINDOW_SELECT|x)
 
 
 /* Used to probe for large-packet support. */
-#define EP_LARGEWIN_PROBE		EP_THRESH_DISABLE
-#define EP_LARGEWIN_MASK		0xffc
+#define ELINK_LARGEWIN_PROBE		ELINK_THRESH_DISABLE
+#define ELINK_LARGEWIN_MASK		0xffc
