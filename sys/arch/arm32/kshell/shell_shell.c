@@ -1,4 +1,4 @@
-/* $NetBSD: shell_shell.c,v 1.2 1996/02/22 23:31:51 mark Exp $ */
+/* $NetBSD: shell_shell.c,v 1.3 1996/03/06 23:50:14 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -41,9 +41,6 @@
  * Debug / Monitor shell entry and commands
  *
  * Created      : 09/10/94
- * Last updated : 28/08/94
- *
- *    $Id: shell_shell.c,v 1.2 1996/02/22 23:31:51 mark Exp $
  */
 
 /* Include standard header files */
@@ -63,14 +60,7 @@
 #include <machine/vidc.h>
 #include <machine/rtc.h>
 
-/* Special compilation symbols
- *
- * SHELL_MALLOC - indicates that we have malloc and free functions available
- */
-
 /* Declare global variables */
-
-caddr_t shell_ident = 0;
 
 /* Local function prototypes */
 
@@ -79,26 +69,9 @@ char	*strchr __P((const char *, int));
 void dumpb __P((u_char */*addr*/, int /*count*/));
 void dumpw __P((u_char */*addr*/, int /*count*/));
 
-int readstring __P((char *, int, char *, char *, caddr_t));
+int readstring __P((char *, int, char *, char *));
 
 void debug_show_q_details __P((void));
-void shell_printhistory __P((int argc, char *argv[]));
-/*
- * These functions have been revoked
- *
-void shell_ls __P((int argc, char *argv[]));
-void shell_cp __P((int argc, char *argv[]));
-void shell_mount __P((int argc, char *argv[]));
-void shell_mountcd __P((int argc, char *argv[]));
-void shell_umount __P((int argc, char *argv[]));
-void shell_mountmsdos __P((int argc, char *argv[]));
-void shell_mountufs __P((int argc, char *argv[]));
-void shell_cat __P((int argc, char *argv[]));
-void shell_fork __P((int argc, char *argv[]));
-void shell_kill __P((int argc, char *argv[]));
-void shell_od __P((int argc, char *argv[]));
-void shell_write __P((int argc, char *argv[]));
-*/
 void shell_disassem	__P((int argc, char *argv[]));
 void shell_devices	__P((int argc, char *argv[]));
 void shell_vmmap	__P((int argc, char *argv[]));
@@ -129,9 +102,8 @@ readhex(buf)
 	int value;
 	int nibble;
 
-	if (buf == NULL) {
+	if (buf == NULL)
 		return(0);
-	}
 
 /* skip any spaces */
 
@@ -140,9 +112,8 @@ readhex(buf)
 
 /* return 0 if a zero length string is passed */
 
-	if (*buf == 0) {
+	if (*buf == 0)
 		return(0);
-	}
 
 /* Convert the characters */
 
@@ -160,109 +131,58 @@ readhex(buf)
 }
 
 
-/* pokebyte - writes a byte to memory */
+/* poke - writes a byte/word to memory */
 
 void
-shell_pokebyte(argc, argv)
+shell_poke(argc, argv)
 	int argc;
 	char *argv[];	
 {
-	u_char *addr;
-	int data;
+	u_int addr;
+	u_int data;
 
 	if (argc < 3) {
-		printf("Syntax: pokebyte <addr> <data>\n\r");
+		printf("Syntax: poke[bw] <addr> <data>\n\r");
 		return;
 	}
 
 /* Decode the two arguments */
 
-	addr = (u_char *)readhex(argv[1]);
+	addr = readhex(argv[1]);
 	data = readhex(argv[2]);
 
-	*addr = data;
+	if (argv[0][4] == 'b')
+		WriteByte(addr, data);
+	if (argv[0][4] == 'w')
+		WriteWord(addr, data);
 }
 
 
-/* peekbyte - reads a byte from memory from supervisor mode */
+/* peek - reads a byte/word from memory*/
 
 void
-shell_peekbyte(argc, argv)
+shell_peek(argc, argv)
 	int argc;
 	char *argv[];	
 {
-	u_char *addr;
-	int data;
+	u_int addr;
+	u_int data;
 
 	if (argc < 2) {
-		printf("Syntax: peekb <addr>\n\r");
+		printf("Syntax: peek[bw] <addr>\n\r");
 		return;
 	}
 
 /* Decode the one argument */
 
-	addr = (u_char *)readhex(argv[1]);
+	addr = readhex(argv[1]);
 
-	data = *addr;
+	if (argv[0][4] == 'b')
+		data = ReadByte(addr);
+	if (argv[0][4] == 'w')
+		data = ReadWord(addr);
 
-	printf("%08x : %02x\n\r", (int)addr, data);
-}
-
-
-/* pokeword - writes a byte to memory */
-
-void
-shell_pokeword(argc, argv)
-	int argc;
-	char *argv[];	
-{
-	u_int *addr;
-	int data;
-
-	if (argc < 3) {
-		printf("Syntax: pokeb <addr> <data>\n\r");
-		return;
-	}
-
-/* Decode the two arguments */
-
-/*
- * Additionally we look for the address "vidc" and substitue the
- * vidc20 address.
- */
-
-	if (strcmp(argv[1], "vidc") == 0)
-		addr = (u_int *)VIDC_BASE;
-	else
-		addr = (u_int *)readhex(argv[1]);
-	data = readhex(argv[2]);
-
-	*addr = data;
-}
-
-
-/* peekword - reads a byte from memory */
-
-void
-shell_peekword(argc, argv)
-	int argc;
-	char *argv[];	
-{
-	u_int *addr;
-	int data;
-
-	if (argc < 2) {
-		printf("Syntax: peekb <addr>\n\r");
-		return;
-	}
-
-/* Decode the one argument */
-
-	addr = (u_int *)readhex(argv[1]);
-
-	data = *addr;
-
-	printf("%08x : %08x\n\r", (int)addr, data);
+	printf("%08x : %08x\n\r", addr, data);
 }
 
 
@@ -414,16 +334,8 @@ shell_reboot(argc, argv)
 	int argc;
 	char *argv[];	
 {
-	if (shell_ident == 0) {
-		IRQdisable;
-		boot0();
-	}
-
-	bootsync();
-              
-	delay(1000000);
-
-	splhigh();
+	printf("Running shutdown hooks ...\n");
+	doshutdownhooks();
 
 	IRQdisable;
 	boot0();
@@ -610,24 +522,17 @@ shell_vncbuf(argc, argv)
 /* shell - a crude shell */
 
 int
-shell(ident)
-	caddr_t ident;
+shell()
 {
 	int quit = 0;
 	char buffer[200];
 	char *ptr;
 	char *ptr1;
 	int args;
-#ifdef SHELL_MALLOC
-	char **argv;
-#else
 	char *argv[20];
-#endif
 
 	printf("\nRiscBSD debug/monitor shell\n");
 	printf("CTRL-D, exit or reboot to terminate\n\n");
-
-	shell_ident = ident;
 
 	do {
 /* print prompt */
@@ -636,7 +541,7 @@ shell(ident)
 
 /* Read line from keyboard */
 
-		if (readstring(buffer, 200, NULL, NULL, ident) == -1)
+		if (readstring(buffer, 200, NULL, NULL) == -1)
 			return(0);
 
 		ptr = buffer;
@@ -665,13 +570,6 @@ shell(ident)
 				++ptr1;
 		}
 
-/* Allocate memory to store arg pointers */
-
-#ifdef SHELL_MALLOC
-		argv = (char **)malloc((args + 1) * sizeof(char *));
-#endif
-
-
 /*
  * Construct the array of pointers to the args and terminate
  * each argument with 0x00
@@ -698,14 +596,18 @@ shell(ident)
 
 		if (strcmp(argv[0], "exit") == 0)
 			quit = 1;
+#ifdef DDB
+		else if (strcmp(argv[0], "deb") == 0)
+			Debugger();
+#endif
 		else if (strcmp(argv[0], "peekb") == 0)
-			shell_peekbyte(args, argv);
+			shell_peek(args, argv);
 		else if (strcmp(argv[0], "pokeb") == 0)
-			shell_pokebyte(args, argv);
+			shell_poke(args, argv);
 		else if (strcmp(argv[0], "peekw") == 0)
-			shell_peekword(args, argv);
+			shell_peek(args, argv);
 		else if (strcmp(argv[0], "pokew") == 0)
-			shell_pokeword(args, argv);
+			shell_poke(args, argv);
 		else if (strcmp(argv[0], "dumpb") == 0)
 			shell_dumpb(args, argv);
 		else if (strcmp(argv[0], "reboot") == 0)
@@ -714,8 +616,6 @@ shell(ident)
 			shell_dumpw(args, argv);
 		else if (strcmp(argv[0], "dump") == 0)
 			shell_dumpw(args, argv);
-		else if (strcmp(argv[0], "history") == 0)
-			shell_printhistory(args, argv);
 		else if (strcmp(argv[0], "dis") == 0)
 			shell_disassem(args, argv);
 		else if (strcmp(argv[0], "qs") == 0)
@@ -726,38 +626,14 @@ shell(ident)
 			debug_show_callout(args, argv);
 		else if (strcmp(argv[0], "devices") == 0)
 			shell_devices(args, argv);
-/*		else if (strcmp(argv[0], "ls") == 0)
-			shell_ls(args, argv);
-		else if (strcmp(argv[0], "cp") == 0)
-			shell_cp(args, argv);
-		else if (strcmp(argv[0], "cat") == 0)
-			shell_cat(args, argv);*/
 		else if (strcmp(argv[0], "listfs") == 0)
 			debug_show_fs(args, argv);
-/*		else if (strcmp(argv[0], "mount") == 0)
-			shell_mount(args, argv);
-		else if (strcmp(argv[0], "umount") == 0)
-			shell_umount(args, argv);
-		else if (strcmp(argv[0], "mountmsdos") == 0)
-			shell_mountmsdos(args, argv);
-		else if (strcmp(argv[0], "mountufs") == 0)
-			shell_mountufs(args, argv);
-		else if (strcmp(argv[0], "mountcd") == 0)
-			shell_mountcd(args, argv);
-		else if (strcmp(argv[0], "fork") == 0)
-			shell_fork(args, argv);
-		else if (strcmp(argv[0], "kill") == 0)
-			shell_kill(args, argv);*/
-/*		else if (strcmp(argv[0], "od") == 0)
-			shell_od(args, argv);*/
 		else if (strcmp(argv[0], "vmmap") == 0)
 			shell_vmmap(args, argv);
 		else if (strcmp(argv[0], "pmap") == 0)
 			shell_pmap(args, argv);
 		else if (strcmp(argv[0], "flush") == 0)
 			shell_flush(args, argv);
-/*		else if (strcmp(argv[0], "write") == 0)
-			shell_write(args, argv);*/
 		else if (strcmp(argv[0], "vmstat") == 0)
 			shell_vmstat(args, argv);
 		else if (strcmp(argv[0], "pdstat") == 0)
@@ -779,28 +655,16 @@ shell(ident)
 			printf("peekb <hexaddr>\r\n");
 			printf("pokeb <hexaddr> <data>\r\n");
 			printf("peekw <hexaddr>\r\n");
-			printf("pokew <hexaddr|\x1b[1mvidc\x1b[0m> <data>\r\n");
+			printf("pokew <hexaddr <data>\r\n");
 			printf("dis <hexaddr>\r\n");
 			printf("dumpb <hexaddr> [length]\r\n");
 			printf("dumpw <hexaddr> [length]\r\n");
 			printf("dump <hexaddr> [length]\r\n");
 			printf("reboot\r\n");
-			printf("history\r\n");
 			printf("qs\r\n");
 			printf("ps [m]\r\n");
-/*			printf("ls [-l] <file|directory>\r\n");
-			printf("cat [-s] <file>\r\n");
-			printf("cp <file1> <file2>\r\n");
-			printf("mount <mountpoint>\n");
-			printf("umount <mountpoint>\n");
-			printf("mountmsdos <device> <mountpoint>\n");
-			printf("mountufs <device> <mountpoint>\n");
-			printf("mountcd <device> <mountpoint>\n");
-			printf("od <file> <offset>\n");*/
 			printf("vmstat\n");
 			printf("listfs\n");
-/*			printf("fork\n");*/
-/*			printf("debug [\x1b[1mfd\x1b[0m|\x1b[1mrd\x1b[0m]\n");*/
 			printf("devices\n");
 			printf("callouts\n");
 			printf("prompt\r\n");
@@ -816,13 +680,9 @@ shell(ident)
 			printf("kstack <proc>\r\n");
 			printf("vnode <vp>\r\n");
 		}
-
-#ifdef SHELL_MALLOC
-		free(argv);
-#endif
 	} while (!quit);
 
 	return(0);
 }
 
-/* End of shell.c */
+/* End of shell_shell.c */
