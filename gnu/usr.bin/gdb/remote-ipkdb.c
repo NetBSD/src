@@ -1,3 +1,12 @@
+/*	$NetBSD: remote-ipkdb.c,v 1.3 2000/08/07 15:20:36 ws Exp $	*/
+
+/*
+ * Part of this code is derived from software copyrighted by the
+ * Free Software Foundation.
+ *
+ * Modified 1993-2000 by Wolfgang Solfrank.
+ */
+
 /* Remote target communications for NetBSD targets via UDP (aka IPKDB).
    Copyright (C) 1988-1991 Free Software Foundation, Inc.
 
