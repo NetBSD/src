@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.4 2002/10/23 09:14:03 jdolecek Exp $	*/
+/*	$NetBSD: ustir.c,v 1.5 2002/11/06 10:56:22 dsainty Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.4 2002/10/23 09:14:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.5 2002/11/06 10:56:22 dsainty Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -477,6 +477,8 @@ deframe_process(struct framestate *fstate, u_int8_t const **bptr, size_t *blen)
 			break;
 
 		state_in_end:
+			/* FALLTHROUGH */
+
 		case FSTATE_IN_END:
 			if (--fstate->state_index == 0) {
 				u_int32_t crc;
@@ -837,6 +839,7 @@ ustir_activate(device_ptr_t self, enum devact act)
 	return error;
 }
 
+/* ARGSUSED */
 Static int
 ustir_open(void *h, int flag, int mode, usb_proc_ptr p)
 {
@@ -924,6 +927,7 @@ ustir_open(void *h, int flag, int mode, usb_proc_ptr p)
 	return error;
 }
 
+/* ARGSUSED */
 Static int
 ustir_close(void *h, int flag, int mode, usb_proc_ptr p)
 {
