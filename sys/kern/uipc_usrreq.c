@@ -1,7 +1,7 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.76 2004/04/18 21:48:15 matt Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.77 2004/04/18 22:20:32 matt Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.76 2004/04/18 21:48:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.77 2004/04/18 22:20:32 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.76 2004/04/18 21:48:15 matt Exp $"
  *	rethink name space problems
  *	need a proper out-of-band
  */
-struct	sockaddr_un sun_noname = { sizeof(sun_noname), AF_LOCAL };
+const struct	sockaddr_un sun_noname = { sizeof(sun_noname), AF_LOCAL };
 ino_t	unp_ino;			/* prototype for fake inode numbers */
 
 struct mbuf *unp_addsockcred(struct proc *, struct mbuf *);
@@ -139,7 +139,7 @@ unp_output(struct mbuf *m, struct mbuf *control, struct unpcb *unp,
 	struct proc *p)
 {
 	struct socket *so2;
-	struct sockaddr_un *sun;
+	const struct sockaddr_un *sun;
 
 	so2 = unp->unp_conn->unp_socket;
 	if (unp->unp_addr)
@@ -162,7 +162,7 @@ unp_output(struct mbuf *m, struct mbuf *control, struct unpcb *unp,
 void
 unp_setsockaddr(struct unpcb *unp, struct mbuf *nam)
 {
-	struct sockaddr_un *sun;
+	const struct sockaddr_un *sun;
 
 	if (unp->unp_addr)
 		sun = unp->unp_addr;
@@ -177,7 +177,7 @@ unp_setsockaddr(struct unpcb *unp, struct mbuf *nam)
 void
 unp_setpeeraddr(struct unpcb *unp, struct mbuf *nam)
 {
-	struct sockaddr_un *sun;
+	const struct sockaddr_un *sun;
 
 	if (unp->unp_conn && unp->unp_conn->unp_addr)
 		sun = unp->unp_conn->unp_addr;
