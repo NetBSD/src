@@ -1,54 +1,136 @@
 #
-#	BOAT_ANCHOR -- kernel for the 386-20 the gang uses for testing
+#	BOAT_ANCHOR -- 386-20 the gang uses for testing
 #
-#	$Id: BOAT_ANCHOR,v 1.23 1993/08/30 07:07:55 deraadt Exp $
+#	$Id: BOAT_ANCHOR,v 1.23.2.1 1993/09/14 19:26:42 mycroft Exp $
 #
+
+# standard options
 machine		"i386"
-cpu		"I386_CPU"
-ident		BOAT_ANCHOR
-timezone	8 dst
-maxusers	10
-options		SWAPPAGER,VNODEPAGER,DEVPAGER
-options		INET,NFSSERVER,NFSCLIENT,MFS
-options		"COMPAT_43"
-options		"TCP_COMPAT_42"
-options		"i387"
-options		XSERVER,UCONSOLE
-options		"DUMMY_NOPS"
-options		KERNFS
-options		FDESC
-options		MSDOSFS
-options		KTRACE
-options		FIFO
-options		"COMPAT_NOMID"
-options		LKM
+options		"I386_CPU"		# 386DX, 386SX, etc.
+#options	"I486_CPU"		# 486DX, 486SX, 486SLC, etc.
+options		DUMMY_NOPS		# speed hack; dangerous
 
-options		DDB
-options		"SYMTAB_SPACE=66000"
+#options	GENERIC			# historical
+maxusers	10			# estimated number of users
+options		TIMEZONE="'8*60'"	# time zone to read RTC in
+options		SWAPPAGER		# paging
+options		VNODEPAGER,DEVPAGER	# vnode and device node caching
+options		DDB			# kernel debugger; recommended
+#options	DIAGNOSTIC		# internal consistency checking
 
-options		ACCOUNTING
+#options	ACCOUNTING		# process accounting
+options		KTRACE			# system call tracing, a la ktrace(1)
+options		FIFO			# fifos; recommended
+#options	SYSVSHM			# System V shared memory; broken
+#options	"SHMMAXPGS=1024"
 
-config		netbsd	root on wd0 swap on wd0
+# compatibility options
+options		"COMPAT_NOMID"		# old zmagic executables
+options		"COMPAT_43"		# 4.3 system calls
+options		"TCP_COMPAT_42"		# 4.2 networking ABI
 
-controller	isa0
-controller	wdc0	at isa? port "IO_WD1" bio irq 14 vector wdintr
-disk		wd0	at wdc0 drive 0
+# file system options
+#options	QUOTA			# file system quotas
+options		FFS			# Berkeley fast file system
+options		MFS			# memory file system; uses RAM and swap
+options		NFSSERVER		# Network File System server
+options		NFSCLIENT		# Network File System client
+#options	ISOFS			# ISO 9660 (CD-ROM) file system, with RR
+options		MSDOSFS			# MS-DOS FAT file system
+options		FDESC			# /dev/fd
+options		KERNFS			# kernel file system; recommended
 
-controller	fdc0	at isa? port "IO_FD1" bio irq 6 drq 2 vector fdintr
-disk		fd0	at fdc0 drive 0
+# networking options
+#options	GATEWAY			# packet forwarding
+options		INET			# IP
+#options	NS			# XNS
+#options	CCITT			# X.25
+#options	ISO			# OSI
+#options	TPIP			# ?
+#options	EON			# ?
 
-device		pc0	at isa? port "IO_KBD" tty irq 1 vector pcrint
-device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
+config		netbsd root on wd0 swap on wd0
 
-device          com0    at isa? port "IO_COM1" tty irq 4 vector comintr
+include		"std.i386"
 
-device ed0 at isa? port 0x280 net irq 9 iomem 0xd0000 vector edintr
+#timer1 at isa? port 0x48 irq 8			# only in EISA boxes
 
-pseudo-device	loop
-pseudo-device	ether
-#pseudo-device	sl	2
-pseudo-device	log
-pseudo-device	pty	32
+#console
+pc0 at isa? port 0x60 irq 1
 
+#math co-processor
+npx0 at isa? port 0xf0 irq 13
 
-pseudo-device	bpfilter	4
+#serial ports
+com0 at isa? port 0x3f8 irq 4
+#com1 at isa? port 0x2f8 irq 3
+#com2 at isa? port 0x3e8 irq 5
+#com3 at isa? port 0x2e8 irq 9
+
+#parallel ports
+#lpt0 at isa? port 0x378 irq 7
+#lpt1 at isa? port 0x278 irq 5
+#lpa0 at isa? port 0x3bc
+
+#bus mice
+#mms0 at isa? port 0x23c irq 5			# MicroSoft InPort
+#mms0 at isa? port 0x238 irq ?
+#lms0 at isa? port 0x23c irq 5			# Logitech
+#lms0 at isa? port 0x238 irq ?
+#pms0 at isa? port 0x60 irq 5			# PS/2 auxiliary port; broken
+
+#non-scsi disk controllers
+wdc0 at isa? port 0x1f0 irq 14			# MFM, RLL, IDE, ESDI
+wd0 at wdc0 drive 0
+#wd1 at wdc0 drive 1
+#wdc1 at isa? port 0x170 irq 12
+#wd2 at wdc1 drive 0
+#wd3 at wdc1 drive 1
+
+#non-scsi floppy controllers
+fdc0 at isa? port 0x3f0 irq 6 drq 2
+fd0 at fdc0 drive 0
+#fd1 at fdc0 drive 1
+#fdc1 at isa? port 0x370 irq ? drq ?
+#fd2 at fdc1 drive 0
+#fd3 at fdc1 drive 1
+
+#non-scsi tape drives
+#wt0 at isa? port 0x300 irq 5 drq 1		# QIC-02, QIC-36
+
+#scsi
+#aha0 at isa? port 0x330 irq 11 drq 5		# Adaptec 1542
+#aha1 at isa? port 0x334 irq ? drq ?
+#ahb0 at eisa? irq 11 drq 5			# Adaptec 1742
+#bt0 at isa? port 0x330 irq 11 drq 5		# Bustec 742
+#bt1 at isa? port 0x334 irq ? drq ?
+#uha0 at isa? port 0x330 irq 11 drq 5		# UltraStor 14f, 34f
+#wds0 at isa? port 0x350 irq 11 drq 5		# WD 7000
+
+#tg0 at scsi? target 0
+#tg* at scsi? target ?
+
+#sd0 at tg0 drive 0
+#sd* at tg? drive ?				# SCSI disks
+#st* at tg? drive ?				# SCSI tapes
+#cd* at tg? drive ?				# SCSI CD-ROMs
+#ch* at tg? drive ?				# SCSI autochangers
+
+#ethernet
+ed0 at isa? port 0x280 irq 9 iomem 0xd0000
+#ed0 at isa? port 0x300 irq 9			# Novell NE1000, NE2000
+#ed0 at isa? port 0x300 irq 10 iomem 0xcc000	# SMC hardware config
+#ed0 at isa? port 0x300 irq 10 iomem 0xd0000	# old SMC default
+#ed0 at isa? port 0x250 irq 9 iomem 0xd8000	# 3C503 default config
+#hp0 at isa? port 0x300 irq 5
+#is0 at isa? port 0x280 irq 10 drq 7		# IsoLAN AT 4141, IsoLink 4110
+
+#pseudo-device	fpe			# floating point emulator
+#pseudo-device	spkr			# speaker queue
+pseudo-device	pty 32			# pseudo-terminals
+pseudo-device	loop 1			# loopback network
+#pseudo-device	bpfilter 4		# packet filter
+#pseudo-device	sl 1			# compressed SLIP
+#pseudo-device	ppp 1			# Point-to-Point Protocol
+#pseudo-device	tb 2			# was never ported to 4.4
+#pseudo-device	tun			# missing header files

@@ -1,55 +1,136 @@
 #
-# PAIN -- kernel for another of cgd's 486/50 EISA boxes...
+#	PAIN -- one of cgd's 486/50 EISA boxes
 #
-#	$Id: PAIN,v 1.13 1993/08/30 07:08:00 deraadt Exp $
+#	$Id: PAIN,v 1.13.2.1 1993/09/14 19:26:44 mycroft Exp $
 #
-machine         "i386"
-cpu             "I486_CPU"
-ident           PAIN
-timezone        8 dst
-maxusers        10
-options		SWAPPAGER,VNODEPAGER,DEVPAGER
-options         INET,NFSSERVER,NFSCLIENT,MFS
-options         "COMPAT_43"
-options         "TCP_COMPAT_42"
-options         UCONSOLE, XSERVER
-options		"DUMMY_NOPS"
-options		MSDOSFS
-options		FDESC
-options		KERNFS
-options		PROCFS
-options		KTRACE
-options		ACCOUNTING
-options		SCSI
-options		"COMPAT_NOMID"
 
-options		DDB
-options		"SYMTAB_SPACE=70000"
+# standard options
+machine		"i386"
+#options	"I386_CPU"		# 386DX, 386SX, etc.
+options		"I486_CPU"		# 486DX, 486SX, 486SLC, etc.
+options		DUMMY_NOPS		# speed hack; dangerous
 
-config          netbsd        root on sd0 swap on sd0
+#options	GENERIC			# historical
+maxusers	10			# estimated number of users
+options		TIMEZONE="'8*60'"	# time zone to read RTC in
+options		SWAPPAGER		# paging
+options		VNODEPAGER,DEVPAGER	# vnode and device node caching
+options		DDB			# kernel debugger; recommended
+#options	DIAGNOSTIC		# internal consistency checking
 
-controller      isa0
-controller      fdc0     at isa? port "IO_FD1" bio irq 6 drq 2 vector fdintr
-disk            fd0     at fdc0 drive 0
-disk            fd1     at fdc0 drive 1
+options		ACCOUNTING		# process accounting
+options		KTRACE			# system call tracing, a la ktrace(1)
+options		FIFO			# fifos; recommended
+#options	SYSVSHM			# System V shared memory; broken
+#options	"SHMMAXPGS=1024"
 
-device          pc0     at isa? port "IO_KBD" tty irq 1 vector pcrint
-device          npx0    at isa? port "IO_NPX" irq 13 vector npxintr
+# compatibility options
+options		"COMPAT_NOMID"		# old zmagic executables
+options		"COMPAT_43"		# 4.3 system calls
+options		"TCP_COMPAT_42"		# 4.2 networking ABI
 
-controller      ahb0    at isa? bio irq 11 drq 5 vector ahbintr
+# file system options
+#options	QUOTA			# file system quotas
+options		FFS			# Berkeley fast file system
+options		MFS			# memory file system; uses RAM and swap
+options		NFSSERVER		# Network File System server
+options		NFSCLIENT		# Network File System client
+options		ISOFS			# ISO 9660 (CD-ROM) file system, with RR
+options		MSDOSFS			# MS-DOS FAT file system
+options		FDESC			# /dev/fd
+options		KERNFS			# kernel file system; recommended
 
-disk            sd0     at ahb0 flags 0 drive 000
-disk            sd1     at ahb0 flags 0 drive ?
-tape		st0	at ahb0 flags 1	drive ?
+# networking options
+#options	GATEWAY			# packet forwarding
+options		INET			# IP
+#options	NS			# XNS
+#options	CCITT			# X.25
+#options	ISO			# OSI
+#options	TPIP			# ?
+#options	EON			# ?
 
-device          ed0 at isa? port 0x300 net irq 5 iomem 0xca000 vector edintr
-device          com0    at isa? port "IO_COM1" tty irq 4 vector comintr
-device          com1    at isa? port "IO_COM2" tty irq 3 vector comintr
-device          lpt0    at isa? port "IO_LPT1" tty irq 7 vector lptintr
+config		netbsd root on sd0 swap on sd0
 
-pseudo-device   loop		2
-pseudo-device   ether
-pseudo-device   log
-pseudo-device   pty		16
+include		"std.i386"
 
-pseudo-device	bpfilter	4
+#timer1 at isa? port 0x48 irq 8			# only in EISA boxes
+
+#console
+pc0 at isa? port 0x60 irq 1
+
+#math co-processor
+npx0 at isa? port 0xf0 irq 13
+
+#serial ports
+com0 at isa? port 0x3f8 irq 4
+com1 at isa? port 0x2f8 irq 3
+#com2 at isa? port 0x3e8 irq 5
+#com3 at isa? port 0x2e8 irq 9
+
+#parallel ports
+lpt0 at isa? port 0x378 irq 7
+#lpt1 at isa? port 0x278 irq 5
+#lpa0 at isa? port 0x3bc
+
+#bus mice
+#mms0 at isa? port 0x23c irq 5			# MicroSoft InPort
+#mms0 at isa? port 0x238 irq ?
+#lms0 at isa? port 0x23c irq 5			# Logitech
+#lms0 at isa? port 0x238 irq ?
+#pms0 at isa? port 0x60 irq 5			# PS/2 auxiliary port; broken
+
+#non-scsi disk controllers
+#wdc0 at isa? port 0x1f0 irq 14			# MFM, RLL, IDE, ESDI
+#wd0 at wdc0 drive 0
+#wd1 at wdc0 drive 1
+#wdc1 at isa? port 0x170 irq 12
+#wd2 at wdc1 drive 0
+#wd3 at wdc1 drive 1
+
+#non-scsi floppy controllers
+fdc0 at isa? port 0x3f0 irq 6 drq 2
+fd0 at fdc0 drive 0
+fd1 at fdc0 drive 1
+#fdc1 at isa? port 0x370 irq ? drq ?
+#fd2 at fdc1 drive 0
+#fd3 at fdc1 drive 1
+
+#non-scsi tape drives
+#wt0 at isa? port 0x300 irq 5 drq 1		# QIC-02, QIC-36
+
+#scsi
+#aha0 at isa? port 0x330 irq 11 drq 5		# Adaptec 1542
+#aha1 at isa? port 0x334 irq ? drq ?
+ahb0 at eisa? irq 11 drq 5			# Adaptec 1742
+#bt0 at isa? port 0x330 irq 11 drq 5		# Bustec 742
+#bt1 at isa? port 0x334 irq ? drq ?
+#uha0 at isa? port 0x330 irq 11 drq 5		# UltraStor 14f, 34f
+#wds0 at isa? port 0x350 irq 11 drq 5		# WD 7000
+
+tg0 at scsi? target 0
+tg* at scsi? target ?
+
+sd0 at tg0 drive 0
+sd* at tg? drive ?				# SCSI disks
+st* at tg? drive ?				# SCSI tapes
+cd* at tg? drive ?				# SCSI CD-ROMs
+#ch* at tg? drive ?				# SCSI autochangers
+
+#ethernet
+ed0 at isa? port 0x300 irq 5 iomem 0xca000
+#ed0 at isa? port 0x300 irq 9			# Novell NE1000, NE2000
+#ed0 at isa? port 0x300 irq 10 iomem 0xcc000	# SMC hardware config
+#ed0 at isa? port 0x300 irq 10 iomem 0xd0000	# old SMC default
+#ed0 at isa? port 0x250 irq 9 iomem 0xd8000	# 3C503 default config
+#hp0 at isa? port 0x300 irq 5
+is0 at isa? port 0x280 irq 10 drq 7		# IsoLAN AT 4141, IsoLink 4110
+
+#pseudo-device	fpe			# floating point emulator
+#pseudo-device	spkr			# speaker queue
+pseudo-device	pty 32			# pseudo-terminals
+pseudo-device	loop 2			# loopback network
+pseudo-device	bpfilter 4		# packet filter
+#pseudo-device	sl 1			# compressed SLIP
+#pseudo-device	ppp 1			# Point-to-Point Protocol
+#pseudo-device	tb 2			# was never ported to 4.4
+#pseudo-device	tun			# missing header files
