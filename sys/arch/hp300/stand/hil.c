@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,9 +35,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: hil.c 1.1 89/08/22
- *	from: @(#)hil.c	7.2 (Berkeley) 12/16/90
- *	$Id: hil.c,v 1.3 1993/09/02 19:05:53 mycroft Exp $
+ * from: Utah Hdr: hil.c 1.1 89/08/22
+ * from: @(#)hil.c	8.1 (Berkeley) 6/10/93
+ *
+ * $Id: hil.c,v 1.4 1994/01/26 02:38:31 brezak Exp $
  */
 
 /*
@@ -47,10 +48,10 @@
 
 #ifdef ITECONSOLE
 
-#include "sys/param.h"
-#include "../dev/hilreg.h"
-#include "../dev/kbdmap.h"
-#include "../dev/itevar.h"
+#include <sys/param.h>
+#include <hp300/dev/hilreg.h>
+#include <hp300/dev/kbdmap.h>
+#include <hp300/dev/itevar.h>
 
 #ifndef SMALL
 

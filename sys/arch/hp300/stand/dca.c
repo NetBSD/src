@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,15 +35,22 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dca.c	7.3 (Berkeley) 5/7/91
- *	$Id: dca.c,v 1.2 1993/05/22 07:58:50 cgd Exp $
+ * from: @(#)dca.c	8.1 (Berkeley) 6/10/93
+ *
+ * $Id: dca.c,v 1.3 1994/01/26 02:38:26 brezak Exp $
  */
 
 #ifdef DCACONSOLE
-#include "sys/param.h"
-#include "../dev/dcareg.h"
-#include "../include/cpu.h"
-#include "../hp300/cons.h"
+#include <sys/param.h>
+#include <hp300/dev/dcareg.h>
+#include <machine/cpu.h>
+#include <hp300/hp300/cons.h>
+
+/* If not using 4.4 devs */
+#ifndef dca_reset
+#define dca_id dca_irid
+#define dca_reset dca_id
+#endif
 
 struct dcadevice *dcacnaddr = 0;
 
@@ -57,8 +64,11 @@ dcaprobe(cp)
 		cp->cn_pri = CN_DEAD;
 		return;
 	}
+#ifdef FORCEDCACONSOLE
+	cp->cn_pri = CN_REMOTE;
+#else
 	dca = dcacnaddr;
-	switch (dca->dca_irid) {
+	switch (dca->dca_id) {
 	case DCAID0:
 	case DCAID1:
 		cp->cn_pri = CN_NORMAL;
@@ -71,6 +81,7 @@ dcaprobe(cp)
 		cp->cn_pri = CN_DEAD;
 		break;
 	}
+#endif
 }
 
 dcainit(cp)
@@ -78,7 +89,7 @@ dcainit(cp)
 {
 	register struct dcadevice *dca = dcacnaddr;
 
-	dca->dca_irid = 0xFF;
+	dca->dca_reset = 0xFF;
 	DELAY(100);
 	dca->dca_ic = 0;
 	dca->dca_cfcr = CFCR_DLAB;
