@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.39 2001/12/06 04:27:43 chs Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.40 2001/12/18 07:51:16 chs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.39 2001/12/06 04:27:43 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.40 2001/12/18 07:51:16 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -949,7 +949,7 @@ const struct vnodeopv_entry_desc ntfs_vnodeop_entries[] = {
 	{ &vop_ioctl_desc, genfs_enoioctl },		/* ioctl */
 	{ &vop_poll_desc, genfs_poll },			/* poll */
 	{ &vop_revoke_desc, genfs_revoke },		/* revoke */
-	{ &vop_mmap_desc, genfs_eopnotsupp },		/* mmap */
+	{ &vop_mmap_desc, genfs_mmap },			/* mmap */
 	{ &vop_fsync_desc, genfs_fsync },		/* fsync */
 	{ &vop_seek_desc, genfs_seek },			/* seek */
 	{ &vop_remove_desc, genfs_eopnotsupp },		/* remove */
@@ -978,7 +978,8 @@ const struct vnodeopv_entry_desc ntfs_vnodeop_entries[] = {
 	{ &vop_truncate_desc, genfs_eopnotsupp },	/* truncate */
 	{ &vop_update_desc, genfs_eopnotsupp },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
-	{ &vop_putpages_desc, genfs_null_putpages },	/* putpages */
+	{ &vop_getpages_desc, genfs_compat_getpages },	/* getpages */
+	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ntfs_vnodeop_opv_desc =
