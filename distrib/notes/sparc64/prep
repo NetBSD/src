@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.7 2001/08/23 16:59:08 mrg Exp $
+.\"	$NetBSD: prep,v 1.8 2002/06/30 12:48:46 lukem Exp $
 .
 If you're installing
 .Nx*M
@@ -20,7 +20,8 @@ memory in your machine (though, unlike
 .Tn SunOS
 4.x, there are no restrictions
 on the size of the swap partition that would render part of your memory
-unusable). A full binary installation including X11R6 takes nearly 200 MB in
+unusable).
+A full binary installation including X11R6 takes nearly 200 MB in
 .Pa /usr .
 .Pp
 You cannot use the security modes of the SPARC OpenBoot PROM.
@@ -28,7 +29,8 @@ You cannot use the security modes of the SPARC OpenBoot PROM.
 .Dl ok Ic "setenv security-mode none"
 .Pp
 Some network devices (i.e. certain SBus cards)
-allow a choice between operating on a UTP or a AUI port. The
+allow a choice between operating on a UTP or a AUI port.
+The
 .Li le
 driver supports automatic detection of the port which is actually connected to
 the wire.
@@ -38,7 +40,8 @@ environment, you may have to specify the type connection using the
 parameter of
 .Xr ifconfig 8 .
 During installation, you'll get the
-opportunity to specify the appropriate medium. Use
+opportunity to specify the appropriate medium.
+Use
 .Li 10base5/AUI
 to select the AUI connector, or
 .Li 10baseT/UTP
