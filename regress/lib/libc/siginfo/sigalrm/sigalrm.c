@@ -1,3 +1,5 @@
+/* $NetBSD: sigalrm.c,v 1.3 2003/11/13 06:48:31 simonb Exp $ */
+
 #include <assert.h>
 #include <signal.h>
 #include <stdio.h>
