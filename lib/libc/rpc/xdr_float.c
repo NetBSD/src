@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_float.c,v 1.6 1995/02/25 03:02:06 cgd Exp $	*/
+/*	$NetBSD: xdr_float.c,v 1.7 1995/03/21 20:54:05 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)xdr_float.c 1.12 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)xdr_float.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: xdr_float.c,v 1.6 1995/02/25 03:02:06 cgd Exp $";
+static char *rcsid = "$NetBSD: xdr_float.c,v 1.7 1995/03/21 20:54:05 jtc Exp $";
 #endif
 
 /*
@@ -53,12 +53,12 @@ static char *rcsid = "$NetBSD: xdr_float.c,v 1.6 1995/02/25 03:02:06 cgd Exp $";
 
 /*
  * NB: Not portable.
- * This routine works on Suns (Sky / 68000's), i386's, MIPS, NS32k and Vaxen,
- * Sparcs, and Alphas
+ * This routine works on machines with IEEE754 FP and Vaxen.
  */
 
 #if defined(__m68k__) || defined(__sparc__) || defined(__i386__) || \
     defined(__mips__) || defined(__ns32k__) || defined(__alpha__)
+#include <machine/endian.h>
 #define IEEEFP
 #endif
 
