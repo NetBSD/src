@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_clock.c,v 1.10 2002/10/02 05:02:30 thorpej Exp $	*/
+/*	$NetBSD: footbridge_clock.c,v 1.11 2002/10/05 12:22:55 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -58,6 +58,18 @@ int clockhandler __P((void *));
 int statclockhandler __P((void *));
 static int load_timer __P((int, int));
 
+/*
+ * Statistics clock variance, in usec.  Variance must be a
+ * power of two.  Since this gives us an even number, not an odd number,
+ * we discard one case and compensate.  That is, a variance of 1024 would
+ * give us offsets in [0..1023].  Instead, we take offsets in [1..1023].
+ * This is symmetric about the point 512, or statvar/2, and thus averages
+ * to that value (assuming uniform random numbers).
+ */
+const int statvar = 1024;
+int statmin;			/* minimum stat clock count in ticks */
+int statcountperusec;		/* number of ticks per usec at current stathz */
+int statprev;			/* last value of we set statclock to */
 
 #if 0
 static int clockmatch	__P((struct device *parent, struct cfdata *cf, void *aux));
@@ -129,7 +141,6 @@ clockhandler(aframe)
 	return(0);	/* Pass the interrupt on down the chain */
 }
 
-
 /*
  * int statclockhandler(struct clockframe *frame)
  *
@@ -142,9 +153,51 @@ statclockhandler(aframe)
 	void *aframe;
 {
 	struct clockframe *frame = aframe;
+	int newint, r;
+	int currentclock ;
+
+	/* start the clock off again */
 	bus_space_write_4(clock_sc->sc_iot, clock_sc->sc_ioh,
-	    TIMER_2_CLEAR, 0);
+			TIMER_2_CLEAR, 0);
+
+	do {
+		r = random() & (statvar-1);
+	} while (r == 0);
+	newint = statmin + (r * statcountperusec);
+	
+	/* fetch the current count */
+	currentclock = bus_space_read_4(clock_sc->sc_iot, clock_sc->sc_ioh,
+		    TIMER_2_VALUE);
+
+	/* 
+	 * work out how much time has run, add another usec for time spent
+	 * here
+	 */
+	r = ((statprev - currentclock) + statcountperusec);
+
+	if (r < newint) {
+		newint -= r;
+		r = 0;
+	}
+	else 
+		printf("statclockhandler: Statclock overrun\n");
+
+
+	/* 
+	 * update the clock to the new counter, this reloads the existing
+	 * timer
+	 */
+	bus_space_write_4(clock_sc->sc_iot, clock_sc->sc_ioh,
+	    		TIMER_2_LOAD, newint);
+	statprev = newint;
 	statclock(frame);
+	if (r)
+		/*
+		 * We've completely overrun the previous interval,
+		 * make sure we report the correct number of ticks. 
+		 */
+		statclock(frame);
+
 	return(0);	/* Pass the interrupt on down the chain */
 }
 
@@ -186,8 +239,24 @@ void
 setstatclockrate(hz)
 	int hz;
 {
+	int statint;
+	int countpersecond;
+	int statvarticks;
 
-	clock_sc->sc_statclock_count = load_timer(TIMER_2_BASE, hz);
+	/* statint == num in counter to drop by desired hz */
+	statint = clock_sc->sc_statclock_count = load_timer(TIMER_2_BASE, hz);
+	
+	/* Get the total ticks a second */
+	countpersecond = statint * hz;
+	
+	/* now work out how many ticks per usec */
+	statcountperusec = countpersecond / 1000000;
+
+	/* calculate a variance range of statvar */
+	statvarticks = statcountperusec * statvar;
+	
+	/* minimum is statint - 50% of variant */
+	statmin = statint - (statvarticks / 2);
 }
 
 /*
@@ -204,7 +273,7 @@ cpu_initclocks()
 {
 	/* stathz and profhz should be set to something, we have the timer */
 	if (stathz == 0)
-		stathz = 64;
+		stathz = hz;
 
 	if (profhz == 0)
 		profhz = stathz * 5;
