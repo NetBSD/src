@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.56 2003/09/21 19:17:11 jdolecek Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.57 2003/09/22 12:59:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.56 2003/09/21 19:17:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.57 2003/09/22 12:59:59 christos Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -311,18 +311,11 @@ sowakeup(struct socket *so, struct sockbuf *sb, int code)
 	}
 	if (sb->sb_flags & SB_ASYNC) {
 		int band;
-		if (code == POLL_IN) {
-			if (so->so_oobmark || (so->so_state & SS_RCVATMARK))
-				band = (POLLPRI | POLLRDBAND);
-			else
-				band = (POLLIN | POLLRDNORM);
-		} else {
-			if (so->so_oobmark)
-				band = (POLLPRI | POLLWRBAND);
-			else
-				band = (POLLOUT | POLLWRNORM);
-		}
-		fownsignal(so->so_pgid, code, band, so);
+		if (code == POLL_IN)
+			band = POLLIN|POLLRDNORM;
+		else
+			band = POLLOUT|POLLWRNORM;
+		fownsignal(so->so_pgid, SIGIO, code, band, so);
 	}
 	if (sb->sb_flags & SB_UPCALL)
 		(*so->so_upcall)(so, so->so_upcallarg, M_DONTWAIT);
