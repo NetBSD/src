@@ -1,4 +1,4 @@
-/*	$NetBSD: wi_hostap.c,v 1.1 2002/08/11 06:13:53 thorpej Exp $	*/
+/*	$NetBSD: wi_hostap.c,v 1.2 2002/09/23 14:31:27 thorpej Exp $	*/
 /*	$OpenBSD: if_wi_hostap.c,v 1.19 2002/06/25 01:59:52 millert Exp $	*/
 
 /*
@@ -60,6 +60,7 @@
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <net/if_dl.h>
+#include <net/if_llc.h>
 #include <net/if_media.h>
 #include <net/if_types.h>
 #include <net/if_ether.h>
@@ -218,7 +219,7 @@ wihap_sta_disassoc(struct wi_softc *sc, u_int8_t sta_addr[], u_int16_t reason)
 		printf("Sending disassoc to sta %s\n", ether_sprintf(sta_addr));
 
 	/* Send disassoc packet. */
-	resp_hdr = (struct wi_80211_hdr *)sc->wi_txbuf;
+	resp_hdr = (struct wi_80211_hdr *)&sc->wi_txbuf;
 	memset(resp_hdr, 0, sizeof(struct wi_80211_hdr));
 	resp_hdr->frame_ctl = WI_FTYPE_MGMT | WI_STYPE_MGMT_DISAS;
 	pkt = (caddr_t)&sc->wi_txbuf + sizeof(struct wi_80211_hdr);
@@ -229,8 +230,7 @@ wihap_sta_disassoc(struct wi_softc *sc, u_int8_t sta_addr[], u_int16_t reason)
 
 	put_hword(&pkt, reason);
 
-	wi_mgmt_xmit(sc, (caddr_t)&sc->wi_txbuf,
-	    2 + sizeof(struct wi_80211_hdr));
+	wi_mgmt_xmit(sc, (caddr_t)&sc->wi_txbuf, pkt - (caddr_t)&sc->wi_txbuf);
 }
 
 /* wihap_sta_deauth()
@@ -248,7 +248,7 @@ wihap_sta_deauth(struct wi_softc *sc, u_int8_t sta_addr[], u_int16_t reason)
 		printf("Sending deauth to sta %s\n", ether_sprintf(sta_addr));
 
 	/* Send deauth packet. */
-	resp_hdr = (struct wi_80211_hdr *)sc->wi_txbuf;
+	resp_hdr = (struct wi_80211_hdr *)&sc->wi_txbuf;
 	memset(resp_hdr, 0, sizeof(struct wi_80211_hdr));
 	resp_hdr->frame_ctl = htole16(WI_FTYPE_MGMT | WI_STYPE_MGMT_DEAUTH);
 	pkt = (caddr_t)&sc->wi_txbuf + sizeof(struct wi_80211_hdr);
@@ -259,8 +259,7 @@ wihap_sta_deauth(struct wi_softc *sc, u_int8_t sta_addr[], u_int16_t reason)
 
 	put_hword(&pkt, reason);
 
-	wi_mgmt_xmit(sc, (caddr_t)&sc->wi_txbuf,
-	    2 + sizeof(struct wi_80211_hdr));
+	wi_mgmt_xmit(sc, (caddr_t)&sc->wi_txbuf, pkt - (caddr_t)&sc->wi_txbuf);
 }
 
 /* wihap_shutdown()
@@ -326,8 +325,8 @@ sta_hash_func(u_int8_t addr[])
 static __inline int
 addr_cmp(u_int8_t a[], u_int8_t b[])
 {
-	return (*(u_int16_t *)(a + 4) == *(u_int16_t *)(b + 4) &&
-		*(u_int32_t *)(a    ) == *(u_int32_t *)(b));
+	return (*(u_int32_t *)(a    ) == *(u_int32_t *)(b) &&
+		*(u_int16_t *)(a + 4) == *(u_int16_t *)(b + 4));
 }
 
 void
@@ -388,6 +387,9 @@ wihap_sta_delete(struct wihap_sta_info *sta)
 	LIST_REMOVE(sta, hash);
 	if (sta->challenge)
 		FREE(sta->challenge, M_TEMP);
+#if defined(WI_HOSTAP_POWERSAVE)
+	IFQ_PURGE(&sta->ps_q);
+#endif
 	FREE(sta, M_DEVBUF);
 	whi->n_stations--;
 }
@@ -429,6 +431,11 @@ wihap_sta_alloc(struct wi_softc *sc, u_int8_t *addr)
 	callout_init(&sta->tmo);
 	callout_reset(&sta->tmo, hz * whi->inactivity_time,
 	    wihap_sta_timeout, sta);
+
+#if defined(WI_HOSTAP_POWERSAVE)
+	/* XXX name the constant. make it configurable. */
+	IFQ_SET_MAXLEN(&sta->ps_q, 3);
+#endif
 
 	return (sta);
 }
@@ -656,9 +663,7 @@ fail:
 		put_tlv(&pkt, IEEE80211_ELEMID_CHALLENGE,
 			challenge, challenge_len);
 
-	wi_mgmt_xmit(sc, (caddr_t)&sc->wi_txbuf,
-	    6 + sizeof(struct wi_80211_hdr) +
-	    (challenge_len > 0 ? challenge_len + 2 : 0));
+	wi_mgmt_xmit(sc, (caddr_t)&sc->wi_txbuf, pkt - (caddr_t)&sc->wi_txbuf);
 }
 
 
@@ -678,6 +683,7 @@ wihap_assoc_req(struct wi_softc *sc, struct wi_frame *rxfrm,
 	u_int16_t		lstintvl;
 	u_int8_t		rates[8];
 	int			ssid_len, rates_len;
+	int			reassociation;
 	struct ieee80211_nwid	ssid;
 	u_int16_t		status;
 	u_int16_t		asid = 0;
@@ -689,8 +695,10 @@ wihap_assoc_req(struct wi_softc *sc, struct wi_frame *rxfrm,
 	capinfo = take_hword(&pkt, &len);
 	lstintvl = take_hword(&pkt, &len);
 
-	if ((rxfrm->wi_frame_ctl & htole16(WI_FCTL_STYPE)) ==
-	    htole16(WI_STYPE_MGMT_REASREQ)) {
+	reassociation = ((rxfrm->wi_frame_ctl & htole16(WI_FCTL_STYPE)) ==
+	    htole16(WI_STYPE_MGMT_REASREQ));
+
+	if (reassociation) {
 		if (len < 6)
 			return;
 		/* Eat the MAC address of the current AP */
@@ -700,7 +708,7 @@ wihap_assoc_req(struct wi_softc *sc, struct wi_frame *rxfrm,
 	}
 
 	if ((ssid_len = take_tlv(&pkt, &len, IEEE80211_ELEMID_SSID,
-	    ssid.i_nwid, sizeof(ssid)))<0)
+	    ssid.i_nwid, sizeof(ssid.i_nwid)))<0)
 		return;
 	ssid.i_len = ssid_len;
 	if ((rates_len = take_tlv(&pkt, &len, IEEE80211_ELEMID_RATES,
@@ -788,7 +796,12 @@ fail:
 	/* Send response. */
 	resp_hdr = (struct wi_80211_hdr *)&sc->wi_txbuf;
 	memset(resp_hdr, 0, sizeof(struct wi_80211_hdr));
-	resp_hdr->frame_ctl = htole16(WI_FTYPE_MGMT | WI_STYPE_MGMT_ASRESP);
+	resp_hdr->frame_ctl = htole16(WI_FTYPE_MGMT);
+	if (reassociation) {
+		resp_hdr->frame_ctl |= htole16(WI_STYPE_MGMT_REASRESP);
+	} else {
+		resp_hdr->frame_ctl |= htole16(WI_STYPE_MGMT_ASRESP);
+	}
 	pkt = (caddr_t)&sc->wi_txbuf + sizeof(struct wi_80211_hdr);
 
 	bcopy(rxfrm->wi_addr2, resp_hdr->addr1, ETHER_ADDR_LEN);
@@ -800,8 +813,7 @@ fail:
 	put_hword(&pkt, asid);
 	rates_len = put_rates(&pkt, sc->wi_supprates);
 
-	wi_mgmt_xmit(sc, (caddr_t)&sc->wi_txbuf,
-	    8 + rates_len + sizeof(struct wi_80211_hdr));
+	wi_mgmt_xmit(sc, (caddr_t)&sc->wi_txbuf, pkt - (caddr_t)&sc->wi_txbuf);
 }
 
 /* wihap_deauth_req()
@@ -945,45 +957,47 @@ wihap_mgmt_input(struct wi_softc *sc, struct wi_frame *rxfrm, struct mbuf *m)
 	if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
 		wihap_debug_frame_type(rxfrm);
 
-	pkt = mtod(m, caddr_t) + WI_802_11_OFFSET_RAW;
-	len = m->m_len - WI_802_11_OFFSET_RAW;
+	pkt = mtod(m, caddr_t) + WI_SHORT_802_11_END;
+	len = m->m_len - WI_SHORT_802_11_END;
 
-	if ((rxfrm->wi_frame_ctl & htole16(WI_FCTL_FTYPE)) ==
+	if ((rxfrm->wi_frame_ctl & htole16(WI_FCTL_FTYPE)) !=
 	    htole16(WI_FTYPE_MGMT)) {
-
-		/* any of the following will mess w/ the station list */
-		s = splsoftclock();
-		switch (le16toh(rxfrm->wi_frame_ctl) & WI_FCTL_STYPE) {
-		case WI_STYPE_MGMT_ASREQ:
-			wihap_assoc_req(sc, rxfrm, pkt, len);
-			break;
-		case WI_STYPE_MGMT_ASRESP:
-			break;
-		case WI_STYPE_MGMT_REASREQ:
-			wihap_assoc_req(sc, rxfrm, pkt, len);
-			break;
-		case WI_STYPE_MGMT_REASRESP:
-			break;
-		case WI_STYPE_MGMT_PROBEREQ:
-			break;
-		case WI_STYPE_MGMT_PROBERESP:
-			break;
-		case WI_STYPE_MGMT_BEACON:
-			break;
-		case WI_STYPE_MGMT_ATIM:
-			break;
-		case WI_STYPE_MGMT_DISAS:
-			wihap_disassoc_req(sc, rxfrm, pkt, len);
-			break;
-		case WI_STYPE_MGMT_AUTH:
-			wihap_auth_req(sc, rxfrm, pkt, len);
-			break;
-		case WI_STYPE_MGMT_DEAUTH:
-			wihap_deauth_req(sc, rxfrm, pkt, len);
-			break;
-		}
-		splx(s);
+		m_freem(m);
+		return;
 	}
+
+	/* any of the following will mess w/ the station list */
+	s = splsoftclock();
+	switch (le16toh(rxfrm->wi_frame_ctl) & WI_FCTL_STYPE) {
+	case WI_STYPE_MGMT_ASREQ:
+		wihap_assoc_req(sc, rxfrm, pkt, len);
+		break;
+	case WI_STYPE_MGMT_ASRESP:
+		break;
+	case WI_STYPE_MGMT_REASREQ:
+		wihap_assoc_req(sc, rxfrm, pkt, len);
+		break;
+	case WI_STYPE_MGMT_REASRESP:
+		break;
+	case WI_STYPE_MGMT_PROBEREQ:
+		break;
+	case WI_STYPE_MGMT_PROBERESP:
+		break;
+	case WI_STYPE_MGMT_BEACON:
+		break;
+	case WI_STYPE_MGMT_ATIM:
+		break;
+	case WI_STYPE_MGMT_DISAS:
+		wihap_disassoc_req(sc, rxfrm, pkt, len);
+		break;
+	case WI_STYPE_MGMT_AUTH:
+		wihap_auth_req(sc, rxfrm, pkt, len);
+		break;
+	case WI_STYPE_MGMT_DEAUTH:
+		wihap_deauth_req(sc, rxfrm, pkt, len);
+		break;
+	}
+	splx(s);
 
 	m_freem(m);
 }
@@ -1009,17 +1023,50 @@ wihap_sta_is_assoc(struct wihap_info *whi, u_int8_t addr[])
 	return (0);
 }
 
+#if defined(WI_HOSTAP_POWERSAVE)
+/* wihap_dequeue()
+ *
+ *	Dequeue a PS-Poll'd frame, if any.
+ */
+struct mbuf *
+wihap_dequeue(struct wihap_info *whi, int *more_data)
+{
+	*more_data = 0;
+	/* TBD Keep a circular queue of STAs who PS Poll'd. At time of
+	 * PS Poll, label a STA with the time of PS Poll and put it
+	 * on the tail of the queue. In this procedure, take STAs off
+	 * the queue whose last Poll was too long ago for a reply to
+	 * arrive in time. Dequeue one frame from the STA on the front
+	 * of the queue. If any frame remains on the STAs queue, set
+	 * *more_data = 1. Otherwise, set *more_data = 0.
+	 */
+
+	/* TBD Keep a second queue of STAs with PS traffic queued. Use
+	 * the second queue to produce the TIM.  Possibly age STAs.
+	 */
+
+	/* TBD Remove a STA from both queues before freeing it. */
+	return 0;
+}
+#endif /* WI_HOSTAP_POWERSAVE */
+
 /* wihap_check_tx()
  *
  *	Determine if a station is assoc'ed, get its tx rate, and update
- *	its activity.
+ *	its activity. Return 1 (send frame), 0 (drop frame), -1 (frame
+ *      power-save queued).
  */
 int
-wihap_check_tx(struct wihap_info *whi, u_int8_t addr[], u_int8_t *txrate)
+wihap_check_tx(struct wi_softc *sc, struct mbuf *m, u_int8_t *txrate)
 {
+	u_int8_t *addr;
+	struct wihap_info *whi;
 	struct wihap_sta_info *sta;
 	static u_int8_t txratetable[] = { 10, 20, 55, 110 };
 	int s;
+
+	whi = &sc->wi_hostap_info;
+	addr = mtod(m, struct ether_header*)->ether_dhost;
 
 	if (addr[0] & 0x01) {
 		*txrate = 0; /* XXX: multicast rate? */
@@ -1028,17 +1075,32 @@ wihap_check_tx(struct wihap_info *whi, u_int8_t addr[], u_int8_t *txrate)
 
 	s = splsoftclock();
 	sta = wihap_sta_find(whi, addr);
-	if (sta != NULL && (sta->flags & WI_SIFLAGS_ASSOC)) {
-		/* Keep it active. */
-		callout_reset(&sta->tmo, hz * whi->inactivity_time,
-		    wihap_sta_timeout, sta);
-		*txrate = txratetable[sta->tx_curr_rate];
-		splx(s);
-		return (1);
-	}
-	splx(s);
 
-	return (0);
+	if (sta == NULL || !(sta->flags & WI_SIFLAGS_ASSOC)) {
+		splx(s);
+		if (sc->sc_ifp->if_flags & IFF_DEBUG)
+			printf("%s: Host-AP: dropping unassoc dst %s\n",
+			    sc->sc_dev.dv_xname,
+			    ether_sprintf(addr));
+		m_freem(m);
+		return (0);
+	}
+
+	/* Keep it active. */
+	callout_reset(&sta->tmo, hz * whi->inactivity_time,
+	    wihap_sta_timeout, sta);
+	*txrate = txratetable[sta->tx_curr_rate];
+#if defined(WI_HOSTAP_POWERSAVE)
+	if ((sta->flags & WI_SIFLAGS_ASLEEP) &&
+	    !(sta->flags & WI_SIFLAGS_PSPOLL)) {
+		IFQ_ENQUEUE(&sta->ps_q, m);
+		splx(s);
+		return (0);
+	}
+	sta->flags &= ~WI_SIFLAGS_PSPOLL;
+#endif /* WI_HOSTAP_POWERSAVE */
+	splx(s);
+	return (1);
 }
 
 /*
@@ -1104,8 +1166,7 @@ wihap_data_input(struct wi_softc *sc, struct wi_frame *rxfrm, struct mbuf *m)
 	mcast = (rxfrm->wi_addr3[0] & 0x01) != 0;
 	if (mcast || wihap_sta_is_assoc(whi, rxfrm->wi_addr3)) {
 
-		/* If it's multicast, make a copy.
-		 */
+		/* If it's multicast, make a copy. */
 		if (mcast) {
 			m = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
 			if (m == NULL)
@@ -1113,13 +1174,11 @@ wihap_data_input(struct wi_softc *sc, struct wi_frame *rxfrm, struct mbuf *m)
 			m->m_flags |= M_MCAST; /* XXX */
 		}
 
-		/* Queue up for repeating.
-		 */
+		/* Queue up for repeating. */
 		if (IF_QFULL(&ifp->if_snd)) {
 			IF_DROP(&ifp->if_snd);
 			m_freem(m);
-		}
-		else {
+		} else {
 			ifp->if_obytes += m->m_pkthdr.len;
 			if (m->m_flags & M_MCAST)
 				ifp->if_omcasts++;
@@ -1216,6 +1275,9 @@ wihap_ioctl(struct wi_softc *sc, u_long command, caddr_t data)
 		}
 		sta = wihap_sta_alloc(sc, reqsta.addr);
 		sta->flags = reqsta.flags;
+#if defined(WI_HOSTAP_POWERSAVE)
+		sta->flags &= ~(HOSTAP_FLAGS_ASLEEP | HOSTAP_FLAGS_PSPOLL);
+#endif
 		callout_reset(&sta->tmo, hz * whi->inactivity_time,
 		    wihap_sta_timeout, sta);
 		splx(s);
