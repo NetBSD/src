@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.47 2002/04/14 13:12:37 bjh21 Exp $
+.\"	$NetBSD: contents,v 1.48 2002/04/23 05:55:23 gmcgarry Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -135,7 +135,8 @@ see below.
 .
 .	(tag instkernel/ -compact
 .
-.if !r_mvme68k \{\
+.if \n[alpha]:\n[amiga]:\n[atari]:\n[bebox]:\n[i386]:\n[macppc]:\n[news68k]:\
+\n[newsmips]:\n[pc532]:\n[x68k]:\n[prep]:\n[sandpoint] \{\
 .		It Pa floppy/
 \*M boot and installation floppies; see below.
 .\}
@@ -405,7 +406,7 @@ This set includes the games and their manual pages.
 .if r_sun2 .Em 5.5 MB gzipped, 12.3 MB uncompressed
 .if r_vax .Em 2.9 MB gzipped, 7.1 MB uncompressed
 .
-.It Sy kern
+.It Sy kern-GENERIC
 This set contains a
 .Nx*M
 \*V
@@ -862,15 +863,18 @@ version of rbootd if server system does not have this utility already.
 The following are included in the
 .Pa hp300/binary/kernel No directory:
 .
-.(tag netbsd.gdb.gz
-.It Pa netbsd.gdb.gz
-A gzipped
-.Li GENERIC
-kernel with debugging symbols.
-.It Pa netbsd.gz
+.(tag netbsd.RAMDISK.symbols.gz
+.It Pa netbsd-GENERIC.gz
 A gzipped
 .Li GENERIC
 kernel.
+.It Pa netbsd.RAMDISK.gz
+A gzipped
+.Li INSTALL
+kernel with embedded ramdisk.
+.It Pa netbsd.RAMDISK.symbols.gz
+Symbols for
+.Pa netbsd.RAMDISK.gz .
 .tag)
 .\}
 .
