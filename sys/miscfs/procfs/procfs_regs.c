@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_regs.c,v 1.16 2002/05/09 15:44:45 thorpej Exp $	*/
+/*	$NetBSD: procfs_regs.c,v 1.17 2003/01/18 09:18:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_regs.c,v 1.16 2002/05/09 15:44:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_regs.c,v 1.17 2003/01/18 09:18:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -50,14 +50,14 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_regs.c,v 1.16 2002/05/09 15:44:45 thorpej Exp
 #include <miscfs/procfs/procfs.h>
 
 int
-procfs_doregs(curp, p, pfs, uio)
+procfs_doregs(curp, l, pfs, uio)
 	struct proc *curp;		/* tracer */
-	struct proc *p;			/* traced */
+	struct lwp *l;			/* traced */
 	struct pfsnode *pfs;
 	struct uio *uio;
 {
 
-	return (process_doregs(curp, p, uio));
+	return (process_doregs(curp, l, uio));
 }
 
 int

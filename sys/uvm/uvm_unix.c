@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.26 2001/12/08 00:35:34 thorpej Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.27 2003/01/18 09:43:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.26 2001/12/08 00:35:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.27 2003/01/18 09:43:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.26 2001/12/08 00:35:34 thorpej Exp $"
 #include <sys/vnode.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm.h>
@@ -68,14 +69,15 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.26 2001/12/08 00:35:34 thorpej Exp $"
  */
 
 int
-sys_obreak(p, v, retval)
-	struct proc *p;
+sys_obreak(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct sys_obreak_args /* {
 		syscallarg(char *) nsize;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct vmspace *vm = p->p_vmspace;
 	vaddr_t new, old;
 	int error;
@@ -152,8 +154,8 @@ uvm_grow(p, sp)
 
 /* ARGSUSED */
 int
-sys_ovadvise(p, v, retval)
-	struct proc *p;
+sys_ovadvise(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {

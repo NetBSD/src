@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.h,v 1.2 2001/12/09 16:10:43 manu Exp $ */
+/*      $NetBSD: clockctl.h,v 1.3 2003/01/18 09:53:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,8 @@
 #include <sys/device.h>
 #include <sys/time.h>
 #include <sys/timex.h>
-#include <sys/mount.h> /* For fhandle_t */
+#include <sys/mount.h>	/* For fhandle_t */
+#include <sys/sa.h>	/* for sa_upcall_t */
 #include <sys/syscallargs.h>
 
 #ifndef SYS_CLOCKCTL_H

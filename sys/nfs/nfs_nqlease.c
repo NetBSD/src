@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.42 2002/12/01 23:02:10 matt Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.43 2003/01/18 09:34:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.42 2002/12/01 23:02:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.43 2003/01/18 09:34:31 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1004,14 +1004,15 @@ nqnfs_callback(nmp, mrep, md, dpos)
  * the list asynchronously.
  */
 int
-nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
+nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 	struct nfsmount *nmp;
 	struct ucred *cred;
 	struct nfsd_cargs *ncd;
 	int flag;
 	caddr_t argp;
-	struct proc *p;
+	struct lwp *l;
 {
+	struct proc *p = l->l_proc;
 #ifndef NFS_V2_ONLY
 	struct nfsnode *np;
 	struct vnode *vp;
@@ -1066,7 +1067,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 		if (vfs_busy(nmp->nm_mountp, LK_NOWAIT, 0) != 0)
 			lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
 		else if (dounmount(nmp->nm_mountp, 0, p) != 0)
-			CLRSIG(p, CURSIG(p));
+			CLRSIG(p, CURSIG(l));
 		sleepreturn = 0;
 		continue;
 	    }
