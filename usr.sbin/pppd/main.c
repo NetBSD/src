@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 1997/03/13 19:05:51 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.23 1997/03/14 01:53:29 christos Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -23,7 +23,7 @@
 #if 0
 static char rcsid[] = "Id: main.c,v 1.40 1997/03/04 03:41:17 paulus Exp ";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.22 1997/03/13 19:05:51 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.23 1997/03/14 01:53:29 christos Exp $";
 #endif
 #endif
 
@@ -1352,7 +1352,7 @@ vfmtmsg(buf, buflen, fmt, args)
     unsigned long val = 0;
     char *str, *f, *buf0;
     unsigned char *p;
-    void *a;
+    va_list a;
     char num[32];
     time_t t;
     static char hexchars[] = "0123456789abcdef";
@@ -1444,7 +1444,8 @@ vfmtmsg(buf, buflen, fmt, args)
 	    break;
 	case 'r':
 	    f = va_arg(args, char *);
-	    n = vfmtmsg(buf, buflen + 1, f, args);
+	    a = va_arg(args, va_list);
+	    n = vfmtmsg(buf, buflen + 1, f, a);
 	    buf += n;
 	    buflen -= n;
 	    continue;
