@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.25 2000/07/14 00:52:02 tv Exp $	*/
+/*	$NetBSD: errno.h,v 1.26 2000/07/14 21:39:56 tv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -103,7 +103,6 @@
 #define	ESOCKTNOSUPPORT	44		/* Socket type not supported */
 #endif /* !_XOPEN_SOURCE */
 #define	EOPNOTSUPP	45		/* Operation not supported */
-#define	ENOTSUP		EOPNOTSUPP	/* Operation not supported (pthreads) */
 #ifndef _XOPEN_SOURCE
 #define	EPFNOSUPPORT	46		/* Protocol family not supported */
 #endif /* !_XOPEN_SOURCE */
