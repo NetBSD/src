@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.15 2003/10/26 11:45:46 jdolecek Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.16 2003/12/06 19:59:32 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.15 2003/10/26 11:45:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.16 2003/12/06 19:59:32 bjh21 Exp $");
 
 #include <sys/conf.h>   /* autoconfig functions */
 #include <sys/device.h> /* device calls */
@@ -330,9 +330,9 @@ vidcaudio_set_params(addr, setmode, usemode, p, r)
 	int setmode, usemode;
 	struct audio_params *p, *r;
 {
-	if (p->encoding != AUDIO_ENCODING_ULAW ||
-	    p->channels != 8)
+	if (p->encoding != AUDIO_ENCODING_ULAW)
 		return EINVAL;
+	/* FIXME Handle number of channels properly. */
 	vidcaudio_rate(4 * p->sample_rate / (3 * 1024)); /* XXX probably wrong */
 
 	return 0;
