@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pppvar.h,v 1.16 2002/09/13 14:32:11 itojun Exp $	*/
+/*	$NetBSD: if_pppvar.h,v 1.17 2003/07/08 07:13:51 itojun Exp $	*/
 /*	Id: if_pppvar.h,v 1.3 1996/07/01 01:04:37 paulus Exp	 */
 
 /*
@@ -148,15 +148,14 @@ struct ppp_softc {
 #ifdef _KERNEL
 extern	struct	ppp_softc ppp_softc[];
 
-struct	ppp_softc *pppalloc __P((pid_t pid));
-void	pppdealloc __P((struct ppp_softc *sc));
-int	pppioctl __P((struct ppp_softc *sc, u_long cmd, caddr_t data,
-		      int flag, struct proc *p));
-void	ppp_restart __P((struct ppp_softc *sc));
-void	ppppktin __P((struct ppp_softc *sc, struct mbuf *m, int lost));
-struct	mbuf *ppp_dequeue __P((struct ppp_softc *sc));
-int	pppoutput __P((struct ifnet *, struct mbuf *,
-		       struct sockaddr *, struct rtentry *));
+struct	ppp_softc *pppalloc __P((pid_t));
+void	pppdealloc __P((struct ppp_softc *));
+int	pppioctl __P((struct ppp_softc *, u_long, caddr_t, int, struct proc *));
+void	ppp_restart __P((struct ppp_softc *));
+void	ppppktin __P((struct ppp_softc *, struct mbuf *, int));
+struct	mbuf *ppp_dequeue __P((struct ppp_softc *));
+int	pppoutput __P((struct ifnet *, struct mbuf *, struct sockaddr *,
+	    struct rtentry *));
 #endif /* _KERNEL */
 
 #endif /* _NET_IF_PPPVAR_H_ */

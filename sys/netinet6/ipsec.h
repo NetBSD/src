@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.31 2002/11/02 07:30:59 perry Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.32 2003/07/08 07:20:12 itojun Exp $	*/
 /*	$KAME: ipsec.h,v 1.51 2001/08/05 04:52:58 itojun Exp $	*/
 
 /*
@@ -352,10 +352,9 @@ extern int ipsec_copy_pcbpolicy
 	__P((struct inpcbpolicy *, struct inpcbpolicy *));
 extern u_int ipsec_get_reqlevel __P((struct ipsecrequest *, int));
 
-extern int ipsec4_set_policy __P((struct inpcb *inp, int optname,
-	caddr_t request, size_t len, int priv));
-extern int ipsec4_get_policy __P((struct inpcb *inpcb, caddr_t request,
-	size_t len, struct mbuf **mp));
+extern int ipsec4_set_policy __P((struct inpcb *, int, caddr_t, size_t, int));
+extern int ipsec4_get_policy __P((struct inpcb *, caddr_t, size_t,
+	    struct mbuf **));
 extern int ipsec4_delete_pcbpolicy __P((struct inpcb *));
 extern int ipsec4_in_reject_so __P((struct mbuf *, struct socket *));
 extern int ipsec4_in_reject __P((struct mbuf *, struct inpcb *));
@@ -363,10 +362,9 @@ extern int ipsec4_in_reject __P((struct mbuf *, struct inpcb *));
 #ifdef INET6
 extern int ipsec6_in_reject_so __P((struct mbuf *, struct socket *));
 extern int ipsec6_delete_pcbpolicy __P((struct in6pcb *));
-extern int ipsec6_set_policy __P((struct in6pcb *in6p, int optname,
-	caddr_t request, size_t len, int priv));
-extern int ipsec6_get_policy __P((struct in6pcb *in6p, caddr_t request,
-	size_t len, struct mbuf **mp));
+extern int ipsec6_set_policy __P((struct in6pcb *, int, caddr_t, size_t, int));
+extern int ipsec6_get_policy __P((struct in6pcb *, caddr_t, size_t,
+	    struct mbuf **));
 extern int ipsec6_in_reject __P((struct mbuf *, struct in6pcb *));
 #endif /* INET6 */
 
