@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.10 2002/09/08 02:48:28 thorpej Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.11 2002/09/11 18:18:37 mycroft Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -30,7 +30,6 @@
 #include <machine/asm.h>
 
 	.extern	_GLOBAL_OFFSET_TABLE_
-	.extern _GOT_END_
 
 /*
  * Note: we can call ourselves LEAF even though we use callee-saved
@@ -41,40 +40,18 @@ LEAF_NOPROFILE(_rtld_start, 0)
 	br	pv, 1f
 1:	LDGP(pv)
 
-	/* XXX Partially relocate ourself. */
-
-	/* Step 1 -- Figure out the displacement */
-
+	/*
+	 * Relocate ourself.
+	 */
 	br	t2, 2f		/* get our PC */
 2:	ldiq	t3, 2b		/* get where the linker thought we were */
-	subq	t2, t3, t8	/* calculate the displacement */
+	subq	t2, t3, a1	/* calculate the displacement */
 
+	lda	t5, _DYNAMIC
+	addq	a1, t5, a0	/* add the displacement */
 
-	/* Step 2 -- Find bounds of global offset table */
-
-	lda	t5, _GLOBAL_OFFSET_TABLE_
-	addq	t8, t5, t9	/* add the displacement */
-	lda	t4, _GOT_END_	/* Get the address of the end of the GOT */
-	addq	t8, t4, t10	/* add the displacement */
-
-	/*
-	 * Step 3 -- Every entry in the global offset table needs to
-	 * modified for the displacement before any code will work.
-	 */
-
-3:	ldq	t1, 0(t9)	/* load the value */
-	addq	t8, t1, t1	/* add the displacement */
-	stq	t1, 0(t9)	/* save the new value */
-	lda	t9, 8(t9)	/* point to next entry */
-	cmpult	t9, t10, t1	/* are we done? */
-	bne	t1, 3b		/* no, do more */
-
-	/*
-	 * Ya!  Things are far enough so we can do some dynamic linking!
-	 */
-
-	/* Squirrel away ps_strings. */
-	mov	a3, s0
+	bsr	ra, _rtld_relocate_nonplt_self
+	LDGP(ra)
 
 	/*
 	 * Allocate space on the stack for the cleanup and obj_main

@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.14 2002/09/08 02:48:28 thorpej Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.15 2002/09/11 18:18:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -72,6 +72,8 @@
 #define	adbg(x)		/* nothing */
 #endif
 
+void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
+
 void
 _rtld_setup_pltgot(const Obj_Entry *obj)
 {
@@ -133,6 +135,33 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 	__asm __volatile("imb");
 }
 
+void
+_rtld_relocate_nonplt_self(dynp, relocbase)
+	Elf_Dyn *dynp;
+	Elf_Addr relocbase;
+{
+	const Elf_Rela *rela = 0, *relalim;
+	Elf_Addr relasz = 0;
+	Elf_Addr *where;
+
+	for (; dynp->d_tag != DT_NULL; dynp++) {
+		switch (dynp->d_tag) {
+		case DT_RELA:
+			rela = (const Elf_Rela *)(relocbase + dynp->d_un.d_ptr);
+			break;
+		case DT_RELASZ:
+			relasz = dynp->d_un.d_val;
+			break;
+		}
+	}
+	relalim = (const Elf_Rela *)((caddr_t)rela + relasz);
+	for (; rela < relalim; rela++) {
+		where = (Elf_Addr *)(relocbase + rela->r_offset);
+		/* XXX For some reason I see a few GLOB_DAT relocs here. */
+		*where += (Elf_Addr)relocbase;
+	}
+}
+
 int
 _rtld_relocate_nonplt_objects(obj, self, dodebug)
 	const Obj_Entry *obj;
@@ -140,6 +169,9 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 	bool dodebug;
 {
 	const Elf_Rela *rela;
+
+	if (self)
+		return 0;
 
 	for (rela = obj->rela; rela < obj->relalim; rela++) {
 		Elf_Addr        *where;
@@ -184,22 +216,10 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 			break;
 
 		case R_TYPE(RELATIVE):
-		    {
-			extern Elf_Addr	_GLOBAL_OFFSET_TABLE_[];
-			extern Elf_Addr	_GOT_END_[];
-
-			/* This is the ...iffy hueristic. */
-			if (!self ||
-			    (caddr_t)where < (caddr_t)_GLOBAL_OFFSET_TABLE_ ||
-			    (caddr_t)where >= (caddr_t)_GOT_END_) {
-				*where += (Elf_Addr)obj->relocbase;
-				rdbg(dodebug, ("RELATIVE in %s --> %p",
-				    obj->path, (void *)*where));
-			} else
-				rdbg(dodebug, ("RELATIVE in %s stays at %p",
-				    obj->path, (void *)*where));
+			*where += (Elf_Addr)obj->relocbase;
+			rdbg(dodebug, ("RELATIVE in %s --> %p",
+			    obj->path, (void *)*where));
 			break;
-		    }
 
 		case R_TYPE(COPY):
 			/*
@@ -398,7 +418,7 @@ _rtld_relocate_plt_object(obj, rela, addrp, dodebug)
 		if (-0x100000 <= idisp && idisp < 0x100000) {
 			insn[insncnt++] = 0x30 << 26 | 31 << 21 |
 			    (idisp & 0x1fffff);
-			rdbg(dodebug, ("  BR   $31,%p", (void *)target));
+			rdbg(dodebug, ("  BR   $31,%p", (void *)new_value));
 		} else {
 			insn[insncnt++] = 0x1a << 26 | 31 << 21 |
 			    27 << 16 | (idisp & 0x3fff);
