@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.54 2004/03/02 15:04:55 christos Exp $	*/
+/*	$NetBSD: df.c,v 1.55 2004/03/02 23:13:07 enami Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.54 2004/03/02 15:04:55 christos Exp $");
+__RCSID("$NetBSD: df.c,v 1.55 2004/03/02 23:13:07 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -366,7 +366,7 @@ prtstat(struct statfs *sfsp, int maxwidth)
 	if (hflag)
 		prthuman(sfsp, used);
 	else
-		(void)printf(" %*llu %8llu  %9llu", headerlen,
+		(void)printf(" %*llu %8llu %9llu", headerlen,
 		    (unsigned long long)
 		    fsbtoblk(sfsp->f_blocks, sfsp->f_bsize, blocksize),
 		    (unsigned long long)
