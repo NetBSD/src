@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.9.4.2 1997/10/27 23:43:59 thorpej Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.9.4.3 1997/10/29 00:40:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -228,18 +228,15 @@ isapnp_alloc_irq(ic, i)
 	struct isapnp_pin *i;
 {
 	int irq;
+#define LEVEL_IRQ (ISAPNP_IRQTYPE_LEVEL_PLUS|ISAPNP_IRQTYPE_LEVEL_MINUS)
+	i->type = (i->flags & LEVEL_IRQ) ? IST_LEVEL : IST_EDGE;
 
 	if (i->bits == 0) {
 		i->num = 0;
 		return 0;
 	}
 
-	/*
-	 * XXX Are there any PnP cards with level triggered interrupts?
-	 * XXX If so, we'll have to change the interface that configures
-	 * XXX the cards to convey that information.
-	 */
-	if (isa_intr_alloc(ic, i->bits, IST_EDGE, &irq) == 0) {
+	if (isa_intr_alloc(ic, i->bits, i->type, &irq) == 0) {
 		i->num = irq;
 		return 0;
 	}
@@ -842,13 +839,10 @@ isapnp_attach(parent, self, aux)
 			}
 #endif
 
-#ifdef DEBUG
-			/* XXX do we even really need this?  --thorpej */
-			printf("%s: configuring <%s, %s, %s, %s>\n",
+			DPRINTF(("%s: configuring <%s, %s, %s, %s>\n",
 			    sc->sc_dev.dv_xname,
 			    lpa->ipa_devident, lpa->ipa_devlogic,
-			    lpa->ipa_devcompat, lpa->ipa_devclass);
-#endif
+			    lpa->ipa_devcompat, lpa->ipa_devclass));
 			if (lpa->ipa_pref == ISAPNP_DEP_CONFLICTING) {
 				printf("%s: <%s, %s, %s, %s> ignored; %s\n",
 				    sc->sc_dev.dv_xname,

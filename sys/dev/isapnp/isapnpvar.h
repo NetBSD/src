@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpvar.h,v 1.5.4.1 1997/10/27 22:21:28 thorpej Exp $	*/
+/*	$NetBSD: isapnpvar.h,v 1.5.4.2 1997/10/29 00:40:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -113,10 +113,10 @@ struct isapnp_region {
 };
 
 struct isapnp_pin {
-	u_int8_t num;
-
+	u_int8_t  num;
+	u_int8_t  flags:4;
+	u_int8_t  type:4;
 	u_int16_t bits;
-	u_int8_t flags;
 };
 
 struct isapnp_attach_args {

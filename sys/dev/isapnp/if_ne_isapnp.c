@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_isapnp.c,v 1.1 1997/10/16 17:18:29 matt Exp $	*/
+/*	$NetBSD: if_ne_isapnp.c,v 1.1.2.1 1997/10/29 00:40:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@ ne_isapnp_attach(
 
 	/* Establish the interrupt handler. */
 	isc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
-	    IST_EDGE, IPL_NET, dp8390_intr, dsc);
+	    ipa->ipa_irq[0].type, IPL_NET, dp8390_intr, dsc);
 	if (isc->sc_ih == NULL)
 		printf("%s: couldn't establish interrupt handler\n",
 		    dsc->sc_dev.dv_xname);
