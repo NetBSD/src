@@ -1,4 +1,4 @@
-/*	$NetBSD: gtvar.h,v 1.3 2003/03/18 19:32:46 matt Exp $	*/
+/*	$NetBSD: gtvar.h,v 1.4 2003/06/12 19:18:49 scw Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -51,8 +51,10 @@ struct gt_softc {
 	bus_space_tag_t gt_memt;	/* the GT itself */
 	bus_space_tag_t gt_pci0_memt;	/* PCI0 mem space */
 	bus_space_tag_t gt_pci0_iot;	/* PCI0 i/o space */
+	boolean_t gt_pci0_host;		/* We're host on PCI0 if TRUE */
 	bus_space_tag_t gt_pci1_memt;	/* PCI1 mem space */
 	bus_space_tag_t gt_pci1_iot;	/* PCI1 i/o space */
+	boolean_t gt_pci1_host;		/* We're host on PCI1 if TRUE */
 
 	bus_space_handle_t gt_memh;	/* to access the GT registers */
 	int gt_childmask;		/* what children are present */
