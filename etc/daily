@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.45 2001/12/18 00:51:16 lukem Exp $
+#	$NetBSD: daily,v 1.46 2002/01/27 22:08:50 bouyer Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -157,9 +157,22 @@ if checkyesno check_disks; then
 		fi
 		echo ""
 	fi
+	rm -f $TMP $TMP2
+	touch $TMP2
+	for dev in `iostat -x | awk '/^raid/ { print $1 }'`; do
+		raidctl -s $dev | awk '/^.*: failed$/ {print $0}' > $TMP
+		if [ -s $TMP ]; then
+			echo "$dev:" >> $TMP2
+			cat $TMP >> $TMP2
+		fi
+		rm -f $TMP
+	done
+	if [ -s $TMP2 ]; then
+		echo "failed RAIDframe component(s):"
+			cat $TMP2
+	fi
+	rm -f $TMP2
 fi
-
-rm -f $TMP $TMP2
 
 if checkyesno check_mailq; then
 	mailq > $TMP
