@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isapnp.c,v 1.9 1999/03/22 14:29:14 mycroft Exp $	*/
+/*	$NetBSD: wss_isapnp.c,v 1.10 1999/09/06 18:31:45 rh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -172,4 +172,16 @@ wss_isapnp_attach(parent, self, aux)
 	    ipa->ipa_devclass);
 
 	wssattach(sc);
+
+	/* set up OPL I/O handle for ISAPNP boards w/o MAD */
+	if (ipa->ipa_nio > 1 && sc->mad_chip_type == MAD_NONE) {
+		struct audio_attach_args arg;
+
+		sc->sc_opl_ioh = ipa->ipa_io[1].h;
+
+		arg.type = AUDIODEV_TYPE_OPL;
+		arg.hwif = 0;
+		arg.hdl = 0;
+		(void)config_found(&ac->sc_dev, &arg, audioprint);
+	}
 }
