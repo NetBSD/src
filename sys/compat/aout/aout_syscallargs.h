@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_syscallargs.h,v 1.7 2000/01/08 17:03:23 tron Exp $	*/
+/*	$NetBSD: aout_syscallargs.h,v 1.8 2000/01/31 15:53:46 christos Exp $	*/
 
 /*
  * System call argument lists.
@@ -524,7 +524,7 @@ int	sys_fhopen	__P((struct proc *, void *, register_t *));
 int	sys_fhstat	__P((struct proc *, void *, register_t *));
 int	sys_fhstatfs	__P((struct proc *, void *, register_t *));
 #if defined(SYSVSEM) || !defined(_KERNEL)
-int	sys___semctl13	__P((struct proc *, void *, register_t *));
+int	sys_____semctl13	__P((struct proc *, void *, register_t *));
 #else
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL)
