@@ -1,4 +1,4 @@
-/*	$NetBSD: conf-glue.c,v 1.13 1997/05/24 09:37:45 jonathan Exp $	*/
+/*	$NetBSD: conf-glue.c,v 1.14 1997/07/21 05:39:35 jonathan Exp $	*/
 
 /*
  * conf-glue.c:
@@ -106,7 +106,7 @@ struct pmax_scsi_device scsi_dinit[] = {
 };
 
 
-int	nomatch  __P((struct device * parent, void *cfdata, void *aux));
+int	nomatch  __P((struct device *parent, struct cfdata *cf, void *aux));
 void	noattach __P((struct device *parent, struct device *self, void *aux));
 
 
@@ -190,13 +190,12 @@ configure_scsi()
  * Match function in struct cfdriver of old-conf drivers: never matches.
  */
 int
-nomatch(parent, cfdata, aux)
+nomatch(parent, cf, aux)
 	struct device *parent;
-	void *cfdata;
+	struct cfdata *cf;
 	void *aux;
 {
 #if /*def DEBUG*/ 0
-	struct cfdata *cf = cfdata;
 	struct confargs *ca = aux;
 
 	printf("nomatch  %s: %s: %s offset 0x%lx not yet done: %x\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_ds.c,v 1.5 1997/06/22 07:42:32 jonathan Exp $	*/
+/*	$NetBSD: pm_ds.c,v 1.6 1997/07/21 05:39:20 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -48,7 +48,7 @@ pm needs dc device
 extern int pminit __P((struct fbinfo *fi, int unit, int cold_console_flag));
 int ds_pm_init __P ((struct fbinfo *fi, int unti, int cold_console_flag));
 
-int pm_ds_match __P((struct device *, void *, void *));
+int pm_ds_match __P((struct device *, struct cfdata *, void *));
 void pm_ds_attach __P((struct device *, struct device *, void *));
 
 /*
@@ -97,7 +97,7 @@ ds_pm_init (fi, unit, cold_console_flag)
 int
 pm_ds_match(parent, match, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *match;
 	void *aux;
 {
 	struct confargs *ca = aux;

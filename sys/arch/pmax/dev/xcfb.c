@@ -1,4 +1,4 @@
-/*	$NetBSD: xcfb.c,v 1.21 1997/06/22 07:42:35 jonathan Exp $	*/
+/*	$NetBSD: xcfb.c,v 1.22 1997/07/21 05:39:30 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -166,7 +166,7 @@ extern u_short defCursor[32];
  * code is completely gone.
  */
 
-int xcfbmatch __P((struct device *, void *, void *));
+int xcfbmatch __P((struct device *, struct cfdata *, void *));
 void xcfbattach __P((struct device *, struct device *, void *));
 
 struct cfattach xcfb_ca = {
@@ -180,10 +180,9 @@ struct cfdriver xcfb_cd = {
 int
 xcfbmatch(parent, match, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *match;
 	void *aux;
 {
-	/*struct cfdata *cf = match;*/
 	struct tc_attach_args *ta = aux;
 
 	/* Make sure that it's an xcfb. */

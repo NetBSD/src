@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.25 1997/07/19 12:00:10 jonathan Exp $	*/
+/*	$NetBSD: dtop.c,v 1.26 1997/07/21 05:39:15 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -205,7 +205,7 @@ static u_long keymodes[8] = {0, 0, 0, 0, 0, 0x0003e000, 0, 0};
  * config.old are completely gone.
  * 
  */
-int  dtopmatch  __P((struct device * parent, void *cfdata, void *aux));
+int  dtopmatch  __P((struct device * parent, struct cfdata *match, void *aux));
 void dtopattach __P((struct device *parent, struct device *self, void *aux));
 int dtopintr	__P((void *sc));
 
@@ -226,10 +226,9 @@ struct  cfdriver dtop_cd = {
 int
 dtopmatch(parent, match, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *match;
 	void *aux;
 {
-	/*struct cfdata *cf = match;*/
 	struct ioasicdev_attach_args *d = aux;
 
 	if (badaddr((caddr_t)(d->iada_addr), 2))
