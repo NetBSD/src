@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: xen.h,v 1.2 2004/04/17 12:46:42 cl Exp $	*/
 
 /*
  *
@@ -89,30 +89,9 @@ void xencn_attach(void);
 
 #include <machine/hypervisor-ifs/hypervisor-if.h>
 
-
-/* this struct defines the way the registers are stored on the 
-   stack during an exception or interrupt. */
-struct pt_regs {
-	long ebx;
-	long ecx;
-	long edx;
-	long esi;
-	long edi;
-	long ebp;
-	long eax;
-	int  xds;
-	int  xes;
-	long orig_eax;
-	long eip;
-	int  xcs;
-	long eflags;
-	long esp;
-	int  xss;
-};
-
 /* some function prototypes */
 void trap_init(void);
-void dump_regs(struct pt_regs *regs);
+void dump_regs(struct trapframe *regs);
 
 
 /*
