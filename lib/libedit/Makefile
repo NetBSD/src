@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.9 1997/07/06 18:25:21 christos Exp $
+#	$NetBSD: Makefile,v 1.10 1997/10/09 14:36:20 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
-WARNS=	1
 LIB=	edit
 
 OSRCS=	chared.c common.c el.c emacs.c fcns.c help.c hist.c key.c map.c \
