@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.14 2000/03/14 22:42:52 fvdl Exp $	*/
+/*	$NetBSD: md.c,v 1.14.4.1 2000/10/18 17:51:22 tv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -141,7 +141,7 @@ md_post_newfs()
 	printf (msg_string(MSG_dobootblks), diskdev);
 	cp_to_target("/usr/mdec/ofwboot", "/boot");
 	sync();
-	run_prog(0, 1, NULL, "/usr/mdec/installboot %s %s /dev/r%sa",
+	run_prog(RUN_DISPLAY, NULL, "/usr/mdec/installboot %s %s /dev/r%sa",
 	    bootfile,  "/usr/mdec/bootxx", diskdev);
 	return 0;
 }
@@ -360,4 +360,15 @@ void
 md_cleanup_install()
 {
 
+}
+
+int
+md_pre_update()
+{
+	return 1;
+}
+
+void
+md_init()
+{
 }

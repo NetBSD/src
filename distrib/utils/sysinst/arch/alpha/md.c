@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.19 2000/03/14 22:42:50 fvdl Exp $	*/
+/*	$NetBSD: md.c,v 1.19.4.1 2000/10/18 17:51:18 tv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -135,7 +135,7 @@ int	md_post_newfs (void)
 {
 	printf (msg_string(MSG_dobootblks), diskdev);
 	cp_to_target("/usr/mdec/boot", "/boot");
-	run_prog(0, 1, "Warning: disk is probably not bootable",
+	run_prog(RUN_DISPLAY, "Warning: disk is probably not bootable",
 		"/usr/mdec/installboot /dev/r%sc /usr/mdec/bootxx_ffs", diskdev);
 	return 0;
 }
@@ -347,5 +347,16 @@ md_update(void)
 
 void
 md_cleanup_install(void)
+{
+}
+
+int
+md_pre_update()
+{
+	return 1;
+}
+
+void
+md_init()
 {
 }

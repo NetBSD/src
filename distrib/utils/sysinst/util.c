@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.51.2.2 2000/08/31 12:40:50 hubertf Exp $	*/
+/*	$NetBSD: util.c,v 1.51.2.3 2000/10/18 17:51:16 tv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -69,29 +69,30 @@ int	extract_file __P((char *path));
 int	extract_dist __P((void));
 int	cleanup_dist __P((const char *path));
 int	distribution_sets_exist_p __P((const char *path));
-static int check_for __P((const char *type, const char *pathname));
+static int check_for __P((unsigned int mode, const char *pathname));
 
-/*
- * XXX these are WAY bogus!
- */
 int
 dir_exists_p(path)
 	const char *path;
 {
-	register int result;
-
-	result = (run_prog(0, 0, NULL, "test -d %s", path) == 0);
-	return (result);
+	return file_mode_match(path, S_IFDIR);
 }
 
 int
 file_exists_p(path)
 	const char *path;
 {
-	register int result;
+	return file_mode_match(path, S_IFREG);
+}
 
-	result = (run_prog(0, 0, NULL, "test -f %s", path) == 0);
-	return (result);
+int
+file_mode_match(path, mode)
+	const char *path;
+	unsigned int mode;
+{
+	struct stat st;
+
+	return (stat(path, &st) == 0 && (st.st_mode & mode) != 0);
 }
 
 int
@@ -163,7 +164,7 @@ run_makedev()
 	/* make /dev, in case the user  didn't extract it. */
 	make_target_dir("/dev");
 	target_chdir_or_die("/dev");
-	run_prog(0, 0, NULL, "/bin/sh MAKEDEV all");
+	run_prog(0, NULL, "/bin/sh MAKEDEV all");
 
 	chdir(owd);
 	free(owd);
@@ -201,7 +202,7 @@ get_via_floppy()
 			first = 1;
 			while (!mounted || stat(fullname, &sb)) {
  				if (mounted) 
-				  run_prog(0, 0, NULL, "/sbin/umount /mnt2");
+				  run_prog(0, NULL, "/sbin/umount /mnt2");
 				if (first)
 					msg_display(MSG_fdmount, fname);
 				else
@@ -209,7 +210,7 @@ get_via_floppy()
 				process_menu(MENU_fdok);
 				if (!yesno)
 					return 0;
-				while (run_prog(0, 0, NULL, 
+				while (run_prog(0, NULL, 
 				    "/sbin/mount -r -t %s %s /mnt2",
 				    fdtype, fddev)) {
 					msg_display(MSG_fdremount, fname);
@@ -232,7 +233,7 @@ get_via_floppy()
 			else
 				post[2] = 'a', post[1]++;
 		}
-		run_prog(0, 0, NULL, "/sbin/umount /mnt2");
+		run_prog(0, NULL, "/sbin/umount /mnt2");
 		mounted = 0;
 		list++;
 	}
@@ -262,10 +263,10 @@ get_via_cdrom()
 	process_menu(MENU_cdromsource);
 
 again:
-	run_prog(0, 0, NULL, "/sbin/umount /mnt2");
+	run_prog(0, NULL, "/sbin/umount /mnt2");
 
 	/* Mount it */
-	if (run_prog(0, 0, NULL,
+	if (run_prog(0, NULL,
 	    "/sbin/mount -rt cd9660 /dev/%sa /mnt2", cdrom_dev)) {
 		msg_display(MSG_badsetdir, cdrom_dev);
 		process_menu(MENU_cdrombadmount);
@@ -308,10 +309,10 @@ get_via_localfs()
 	process_menu (MENU_localfssource);
 
 again:
-	run_prog(0, 0, NULL, "/sbin/umount /mnt2");
+	run_prog(0, NULL, "/sbin/umount /mnt2");
 
 	/* Mount it */
-	if (run_prog(0, 0, NULL, "/sbin/mount -rt %s /dev/%s /mnt2",
+	if (run_prog(0, NULL, "/sbin/mount -rt %s /dev/%s /mnt2",
 	    localfs_fs, localfs_dev)) {
 
 		msg_display(MSG_localfsbadmount, localfs_dir, localfs_dev); 
@@ -468,7 +469,7 @@ extract_file(path)
 	target_chdir_or_die("/");	
 
 	/* now extract set files files into "./". */
-	tarexit = run_prog(0, 1, NULL,
+	tarexit = run_prog(RUN_DISPLAY, NULL,
 	    "pax -zr%spe -f %s", verbose ? "v" : "", path);
 
 	/* Check tarexit for errors and give warning. */
@@ -708,6 +709,11 @@ cleanup_dist(name)
 			msg_display_add(MSG_renamed_dir, current->name,
 			    file_path);
 		} else { /* rmdir error */
+			/*
+			 * Don't worry about non-existing directories.
+			 */
+			if (saved_errno == ENOENT)
+				continue;
 			if (logging)
 				fprintf(log, "rm %s failed: %s\n",
 				    current->name, strerror(saved_errno));
@@ -770,11 +776,11 @@ get_and_unpack_sets(success_msg, failure_msg)
 		
 		/* Clean up dist dir (use absolute path name) */
 		if (clean_dist_dir)
-			run_prog(0, 0, NULL, "/bin/rm -rf %s", ext_dir);
+			run_prog(0, NULL, "/bin/rm -rf %s", ext_dir);
 
 		/* Mounted dist dir? */
 		if (mnt2_mounted)
-			run_prog(0, 0, NULL, "/sbin/umount /mnt2");
+			run_prog(0, NULL, "/sbin/umount /mnt2");
 
 		/* Install/Upgrade complete ... reboot or exit to script */
 		msg_display(success_msg);
@@ -796,26 +802,26 @@ get_and_unpack_sets(success_msg, failure_msg)
  */
 
 /* test flag and pathname to check for after unpacking. */
-struct check_table { const char *testarg; const char *path;} checks[] = {
-  { "-f", "/netbsd" },
-  { "-d", "/etc" },
-  { "-f", "/etc/fstab" },
-  { "-f", "/sbin/init" },
-  { "-f", "/bin/sh" },
-  { "-f", "/etc/rc" },
-  { "-f", "/etc/rc.subr" },
-  { "-f", "/etc/rc.conf" },
-  { "-d" "/dev" },
-  { "-c", "/dev/console" },
+struct check_table { unsigned int mode; const char *path;} checks[] = {
+  { S_IFREG, "/netbsd" },
+  { S_IFDIR, "/etc" },
+  { S_IFREG, "/etc/fstab" },
+  { S_IFREG, "/sbin/init" },
+  { S_IFREG, "/bin/sh" },
+  { S_IFREG, "/etc/rc" },
+  { S_IFREG, "/etc/rc.subr" },
+  { S_IFREG, "/etc/rc.conf" },
+  { S_IFDIR, "/dev" },
+  { S_IFCHR, "/dev/console" },
 /* XXX check for rootdev in target /dev? */
-  { "-f", "/etc/fstab" },
-  { "-f", "/sbin/fsck" },
-  { "-f", "/sbin/fsck_ffs" },
-  { "-f", "/sbin/mount" },
-  { "-f", "/sbin/mount_ffs" },
-  { "-f", "/sbin/mount_nfs" },
+  { S_IFREG, "/etc/fstab" },
+  { S_IFREG, "/sbin/fsck" },
+  { S_IFREG, "/sbin/fsck_ffs" },
+  { S_IFREG, "/sbin/mount" },
+  { S_IFREG, "/sbin/mount_ffs" },
+  { S_IFREG, "/sbin/mount_nfs" },
 #if defined(DEBUG) || defined(DEBUG_CHECK)
-  { "-f", "/foo/bar" },		/* bad entry to exercise warning */
+  { S_IFREG, "/foo/bar" },		/* bad entry to exercise warning */
 #endif
   { 0, 0 }
   
@@ -825,13 +831,13 @@ struct check_table { const char *testarg; const char *path;} checks[] = {
  * Check target for a single file.
  */
 static int
-check_for(type, pathname)
-	const char *type;
+check_for(mode, pathname)
+	unsigned int mode;
 	const char *pathname;
 {
 	int found; 
 
-	found = (target_test(type, pathname) == 0);
+	found = (target_test(mode, pathname) == 0);
 	if (found == 0) 
 		msg_display(MSG_rootmissing, pathname);
 	return found;
@@ -848,7 +854,7 @@ sanity_check()
 	struct check_table *p;
 
 	for (p = checks; p->path; p++) {
-		target_ok = target_ok && check_for(p->testarg, p->path);
+		target_ok = target_ok && check_for(p->mode, p->path);
 	}
 	if (target_ok)
 		return 0;	    
@@ -1049,4 +1055,14 @@ set_timezone()
 	symlink(localtime_target, localtime_link);
 	
 	return 1;
+}
+
+int
+set_root_password()
+{
+	msg_display(MSG_rootpw);
+	process_menu(MENU_yesno);
+	if (yesno)
+		run_prog(RUN_DISPLAY|RUN_CHROOT, NULL, "passwd -l root");
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.31 2000/05/20 00:45:45 wiz Exp $ */
+/*	$NetBSD: disks.c,v 1.31.4.1 2000/10/18 17:51:14 tv Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -232,7 +232,7 @@ int write_disklabel (void)
 
 #ifdef DISKLABEL_CMD
 	/* disklabel the disk */
-	return run_prog(0, 1, MSG_cmdfail,
+	return run_prog(RUN_DISPLAY, MSG_cmdfail,
 	    "%s %s %s", DISKLABEL_CMD, diskdev, bsddiskname);
 #endif
 	return 0;
@@ -271,7 +271,7 @@ do_ffs_newfs(const char *partname, int partno, const char *mountpoint)
 	char devname[STRSIZE];
 	int error;
 
-	error = run_prog(0, 1, MSG_cmdfail,
+	error = run_prog(RUN_DISPLAY, MSG_cmdfail,
 	    "/sbin/newfs /dev/r%s", partname);
 	if (*mountpoint && error == 0) { 
 		snprintf(devname, STRSIZE, "/dev/%s", partname);
@@ -441,9 +441,9 @@ do_fsck(const char *diskpart)
 
 	/*endwin();*/
 #ifndef	DEBUG_SETS
-	err = run_prog(0, 1, NULL, "/sbin/fsck_ffs %s%s", upgr, raw);
+	err = run_prog(RUN_DISPLAY, NULL, "/sbin/fsck_ffs %s%s", upgr, raw);
 #else
-	err = run_prog(0, 1, NULL, "/sbin/fsck_ffs -f %s%s", upgr, raw);
+	err = run_prog(RUN_DISPLAY, NULL, "/sbin/fsck_ffs -f %s%s", upgr, raw);
 #endif	
 		wrefresh(stdscr);
 	return err;
@@ -588,4 +588,38 @@ fsck_disks(void)
 	}
 	
 	return 1;
+}
+
+int
+set_swap(dev, pp, enable)
+	const char *dev;
+	partinfo *pp;
+{
+	partinfo parts[16];
+	int i, maxpart;
+
+	if (pp == NULL) {
+		emptylabel(parts);
+		if (incorelabel(dev, parts) < 0)
+			return -1;
+		pp = parts;
+	}
+
+	maxpart = getmaxpartitions();
+
+	for (i = 0; i < maxpart; i++) {
+		if (pp[i].pi_fstype == FS_SWAP) {
+			if (run_prog(0, NULL,
+			    "/sbin/swapctl -%c /dev/%s%c",
+			    enable ? 'a' : 'd', dev, 'a' + i) != 0)
+				return -1;
+			if (enable)
+				strcpy(swapdev, dev);
+			else
+				swapdev[0] = '\0';
+			break;
+		}
+	}
+
+	return 0;
 }

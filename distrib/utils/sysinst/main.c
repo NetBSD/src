@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2000/05/11 02:23:53 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.20.4.1 2000/10/18 17:51:14 tv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -107,7 +107,8 @@ main(argc, argv)
 		default:
 			usage();
 		}
-	
+
+	md_init();
 
 	/* initialize message window */
 	if (menu_init()) {
@@ -222,7 +223,7 @@ cleanup()
 
 	(void)time(&tloc);
 	unwind_mounts();
-	run_prog(0, 0, NULL, "/sbin/umount /mnt2");
+	run_prog(0, NULL, "/sbin/umount /mnt2");
 	endwin();
 	if (logging) {
 		fprintf(log, "Log ended at: %s\n", asctime(localtime(&tloc)));

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.36.4.1 2000/09/20 20:14:06 hubertf Exp $ */
+/*	$NetBSD: md.c,v 1.36.4.2 2000/10/18 17:51:21 tv Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,11 +38,14 @@
 
 /* md.c -- Machine specific code for i386 */
 
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#include <sys/exec.h>
+#include <sys/utsname.h>
+#include <machine/cpu.h>
 #include <stdio.h>
 #include <util.h>
-#include <sys/param.h>
-#include <machine/cpu.h>
-#include <sys/sysctl.h>
+#include <dirent.h>
 #include "defs.h"
 #include "md.h"
 #include "msg_defs.h"
@@ -50,6 +53,7 @@
 
 
 char mbr[512];
+char kernstr[STRSIZE];
 int mbr_present, mbr_len;
 int c1024_resp;
 struct disklist *disklist = NULL;
@@ -64,6 +68,9 @@ static int mbr_part_above_chs __P((struct mbr_partition *));
 static int mbr_partstart_above_chs __P((struct mbr_partition *));
 static void configure_bootsel __P((void));
 static void md_upgrade_mbrtype __P((void));
+static char *get_bootmodel __P((void));
+static int move_aout_libs __P((void));
+static int handle_aout_libs(const char *dir, int op, const void *arg);
 
 struct mbr_bootsel *mbs;
 int defbootselpart, defbootseldisk;
@@ -105,7 +112,18 @@ edit:
 			    md_read_bootcode(_PATH_BOOTSEL, mbr, sizeof mbr);
 			configure_bootsel();
 			netbsd_mbr_installed = netbsd_bootsel_installed = 1;
+		} else {
+			msg_display(MSG_installnormalmbr);
+			process_menu(MENU_yesno);
+			if (yesno) {
+				mbr_len = md_read_bootcode(_PATH_MBR, mbr,
+				    sizeof mbr);
+				netbsd_mbr_installed = 1;
+			}
 		}
+	} else {
+		mbr_len = md_read_bootcode(_PATH_MBR, mbr, sizeof mbr);
+		netbsd_mbr_installed = 1;
 	}
 
 	if (mbr_partstart_above_chs(part) && !netbsd_mbr_installed) {
@@ -175,10 +193,14 @@ md_pre_disklabel()
 int
 md_post_disklabel(void)
 {
+	if (rammb <= 32)
+		set_swap(diskdev, bsdlabel, 1);
+
 	/* Sector forwarding / badblocks ... */
 	if (*doessf) {
 		msg_display(MSG_dobad144);
-		return run_prog(0, 1, NULL, "/usr/sbin/bad144 %s 0", diskdev);
+		return run_prog(RUN_DISPLAY, NULL, "/usr/sbin/bad144 %s 0",
+		    diskdev);
 	}
 	return 0;
 }
@@ -188,7 +210,7 @@ md_post_newfs(void)
 {
 	/* boot blocks ... */
 	msg_display(MSG_dobootblks, diskdev);
-	return run_prog(0, 1, NULL,
+	return run_prog(RUN_DISPLAY, NULL,
 	    "/usr/mdec/installboot -v /usr/mdec/biosboot.sym /dev/r%sa",
 	    diskdev);
 }
@@ -205,9 +227,7 @@ md_make_bsd_partitions(void)
 {
 	FILE *f;
 	int i;
-	int part;
 	int maxpart = getmaxpartitions();
-	int remain;
 
 editlab:
 	/* Ask for layout type -- standard or special */
@@ -289,70 +309,8 @@ editlab:
 		strcpy (fsmount[E], "/usr");
 		break;
 
-	case 3: /* custom: ask user for all sizes */
-custom:		ask_sizemult(dlcylsize);
-		msg_display(MSG_defaultunit, multname);
-		partstart = ptstart;
-		remain = fsptsize;
-
-		/* root */
-		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize) + partstart;
-		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
-				   dlcylsize) - partstart;
-		if (partsize > remain)
-			partsize = remain;
-		msg_display_add(MSG_askfsroot1, remain/sizemult, multname);
-		partsize = getpartsize(MSG_askfsroot2, partstart, partsize);
-		bsdlabel[A].pi_offset = partstart;
-		bsdlabel[A].pi_size = partsize;
-		bsdlabel[A].pi_bsize = 8192;
-		bsdlabel[A].pi_fsize = 1024;
-		strcpy (fsmount[A], "/");
-		partstart += partsize;
-		remain -= partsize;
-		
-		/* swap */
-		i = NUMSEC( 2 * (rammb < 16 ? 16 : rammb),
-			   MEG/sectorsize, dlcylsize) + partstart;
-		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
-			   dlcylsize) - partstart;
-		if (partsize > remain)
-			partsize = remain;
-		msg_display(MSG_askfsswap1, remain/sizemult, multname);
-		partsize = getpartsize(MSG_askfsswap2, partstart, partsize);
-		bsdlabel[B].pi_offset = partstart;
-		bsdlabel[B].pi_size = partsize;
-		partstart += partsize;
-		remain -= partsize;
-		
-		/* Others E, F, G, H */
-		part = E;
-		if (remain > 0)
-			msg_display (MSG_otherparts);
-		while (remain > 0 && part <= H) {
-			msg_display_add(MSG_askfspart1, diskdev,
-			    partition_name(part), remain/sizemult, multname);
-			partsize = getpartsize(MSG_askfspart2, partstart,
-			    remain);
-			if (partsize > 0) {
-				if (remain - partsize < sizemult)
-					partsize = remain;
-				bsdlabel[part].pi_fstype = FS_BSDFFS;
-				bsdlabel[part].pi_offset = partstart;
-				bsdlabel[part].pi_size = partsize;
-				bsdlabel[part].pi_bsize = 8192;
-				bsdlabel[part].pi_fsize = 1024;
-				if (part == E)
-					strcpy (fsmount[E], "/usr");
-				msg_prompt_add (MSG_mountpoint, fsmount[part],
-						fsmount[part], 20);
-				partstart += partsize;
-				remain -= partsize;
-			}
-			part++;
-		}
-		
-		break;
+	case 3:
+custom:
 	}
 
 	/*
@@ -364,9 +322,6 @@ custom:		ask_sizemult(dlcylsize);
 		return 0;
 	}
 
-	/*
-	 * XXX check for int13 extensions.
-	 */
 	if ((bsdlabel[A].pi_offset + bsdlabel[A].pi_size) / bcylsize > 1024 &&
 	    (biosdisk == NULL || !(biosdisk->bi_flags & BIFLAG_EXTINT13))) {
 		process_menu(MENU_cyl1024);
@@ -386,11 +341,10 @@ custom:		ask_sizemult(dlcylsize);
 	msg_prompt (MSG_packname, "mydisk", bsddiskname, DISKNAME_SIZE);
 
 	/* Create the disktab.preinstall */
-	run_prog (0, 0, NULL, "cp /etc/disktab.preinstall /etc/disktab");
 #ifdef DEBUG
 	f = fopen ("/tmp/disktab", "a");
 #else
-	f = fopen ("/etc/disktab", "a");
+	f = fopen ("/etc/disktab", "w");
 #endif
 	if (f == NULL) {
 		endwin();
@@ -422,11 +376,20 @@ custom:		ask_sizemult(dlcylsize);
 	return (1);
 }
 
+int
+md_pre_update(void)
+{
+	if (rammb <= 8)
+		set_swap(diskdev, NULL, 1);
+	return 1;
+}
+
 
 /* Upgrade support */
 int
 md_update(void)
 {
+	move_aout_libs();
 	endwin();
 	md_copy_filesystem();
 	md_post_newfs();
@@ -470,6 +433,9 @@ md_cleanup_install(void)
 	char realfrom[STRSIZE];
 	char realto[STRSIZE];
 	char cmd[STRSIZE];
+	char *bootmodel;
+
+	bootmodel = get_bootmodel();
 
 	strncpy(realfrom, target_expand("/etc/rc.conf"), STRSIZE);
 	strncpy(realto, target_expand("/etc/rc.conf.install"), STRSIZE);
@@ -491,23 +457,38 @@ md_cleanup_install(void)
 		(void)fprintf(script, "%s\n", cmd);
 	do_system(cmd);
 
-	run_prog(1, 0, NULL, "mv -f %s %s", realto, realfrom);
+	run_prog(RUN_FATAL, NULL, "mv -f %s %s", realto, realfrom);
 
-	strncpy(realfrom, target_expand("/etc/ttys"), STRSIZE);
-	strncpy(realto, target_expand("/etc/ttys.install"), STRSIZE);
-	sprintf(cmd, "sed "
-			"-e '/^ttyE/s/off/on/'"
-			" < %s > %s", realfrom, realto);
+	/*
+	 * For GENERIC_TINY, do not enable any extra screens or wsmux.
+	 * Otherwise, run getty on 4 VTs.
+	 */
+	if (strcmp(bootmodel, "tiny") == 0) {
+		strncpy(realfrom, target_expand("/etc/wscons.conf"), STRSIZE);
+		strncpy(realto, target_expand("/etc/wscons.conf.install"),
+		    STRSIZE);
+		sprintf(cmd, "sed"
+			    " -e '/^screen/s/^/#/'"
+			    " -e '/^mux/s/^/#/'"
+			    " < %s > %s", realfrom, realto);
+	} else {
+		strncpy(realfrom, target_expand("/etc/ttys"), STRSIZE);
+		strncpy(realto, target_expand("/etc/ttys.install"), STRSIZE);
+		sprintf(cmd, "sed "
+				"-e '/^ttyE/s/off/on/'"
+				" < %s > %s", realfrom, realto);
+	}
+		
 	if (logging)
 		(void)fprintf(log, "%s\n", cmd);
 	if (scripting)
 		(void)fprintf(script, "%s\n", cmd);
 	do_system(cmd);
-	run_prog(1, 0, NULL, "mv -f %s %s", realto, realfrom);
+	run_prog(RUN_FATAL, NULL, "mv -f %s %s", realto, realfrom);
 
-	run_prog(0, 0, NULL, "rm -f %s", target_expand("/sysinst"));
-	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.termcap"));
-	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.profile"));
+	run_prog(0, NULL, "rm -f %s", target_expand("/sysinst"));
+	run_prog(0, NULL, "rm -f %s", target_expand("/.termcap"));
+	run_prog(0, NULL, "rm -f %s", target_expand("/.profile"));
 }
 
 int
@@ -552,6 +533,7 @@ nogeom:
 		msg_table_add(MSG_onebiosmatch_header);
 		msg_table_add(MSG_onebiosmatch_row, bip->bi_dev - 0x80,
 		    bip->bi_cyl, bip->bi_head, bip->bi_sec);
+		msg_display_add(MSG_biosgeom_advise);
 		process_menu(MENU_biosonematch);
 	} else {
 		msg_display(MSG_biosmultmatch);
@@ -635,4 +617,204 @@ disp_bootsel(part, mbsp)
 		    i, get_partname(i), mbs->nametab[i]);
 	}
 	msg_display_add(MSG_newline);
+}
+
+char *
+get_bootmodel()
+{
+	struct utsname ut;
+	char *envstr;
+
+	envstr = getenv("BOOTMODEL");
+	if (envstr != NULL)
+		return envstr;
+
+	if (uname(&ut) < 0)
+		return "";
+
+	if (strstr(ut.version, "TINY") != NULL)
+		return "tiny";
+	else if (strstr(ut.version, "SMALL") != NULL)
+		return "small";
+	else if (strstr(ut.version, "LAPTOP") != NULL)
+		return "laptop";
+	return "";
+}
+
+void
+md_init()
+{
+	char *bootmodel;
+
+	bootmodel = get_bootmodel();
+	if (strcmp(bootmodel, "tiny") == 0 || strcmp(bootmodel, "laptop")
+	    == 0) {
+		/*
+		 * XXX assumes the kernset is the first in the array.
+		 */
+		snprintf(kernstr, sizeof kernstr, "kern-%s", bootmodel);
+		dist_list[0].name = &kernstr[0];
+	}
+}
+
+/*
+ * Function to count or move a.out shared libraries.
+ */
+static int
+handle_aout_libs(const char *dir, int op, const void *arg)
+{
+	DIR *dd;
+	struct dirent *dp;
+	struct exec ex;
+	struct stat st;
+	int fd;
+	char *fullname;
+	const char *destdir;
+	int n;
+
+	dd = opendir(dir);
+	if (dd == NULL)
+		return -1;
+
+	n = 0;
+
+	switch (op) {
+	case LIB_COUNT:
+		break;
+	case LIB_MOVE:
+		destdir = (const char *)arg;
+		break;
+	default:
+		return -1;
+	}
+
+	while ((dp = readdir(dd)) != NULL) {
+		/*
+		 * strlen("libX.so")
+		 */
+		if (dp->d_namlen < 7)
+			continue;
+		if (strncmp(dp->d_name, "lib", 3) != 0)
+			continue;
+
+		asprintf(&fullname, "%s/%s", dir, dp->d_name);
+		if (stat(fullname, &st) < 0)
+			goto endloop;
+		if ((st.st_mode & (S_IFREG|S_IFLNK)) == 0)
+			goto endloop;
+
+	
+		fd = open(fullname, O_RDONLY);
+		if (fd < 0) {
+			close(fd);
+			goto endloop;
+		}
+		if (read(fd, &ex, sizeof ex) < sizeof ex) {
+			close(fd);
+			goto endloop;
+		}
+		close(fd);
+		if (N_GETMAGIC(ex) != ZMAGIC ||
+		    (N_GETFLAG(ex) & EX_DYNAMIC) == 0)
+			continue;
+
+		switch (op) {
+		case LIB_COUNT:
+			n++;
+			break;
+		case LIB_MOVE:
+			run_prog(0, NULL, "mv -f %s %s/%s",
+			    fullname, destdir, dp->d_name);
+			break;
+		}
+		
+endloop:
+		free(fullname);
+	}
+
+	closedir(dd);
+
+	return n;
+}
+
+static int
+move_aout_libs()
+{
+	int n;
+	char prefix[MAXPATHLEN], src[MAXPATHLEN];
+	struct stat st;
+
+	n = handle_aout_libs(target_expand("/usr/lib"), LIB_COUNT, NULL);
+	if (n <= 0)
+		return n;
+
+	/*
+	 * See if /emul/aout already exists, taking symlinks into
+	 * account. If so, no need to create it, just use it.
+	 */
+	if (target_realpath("/emul/aout", prefix) != NULL && stat(prefix, &st) == 0)
+		goto domove;
+
+	/*
+	 * See if /emul exists. If not, create it.
+	 */
+	if (target_realpath("/emul", prefix) == NULL || stat(prefix, &st) < 0) {
+		strcpy(prefix, target_expand("/emul"));
+		if (scripting)
+			fprintf(script, "mkdir %s\n", prefix);
+		mkdir(prefix, 0755);
+	}
+
+	/*
+	 * Can use strcpy, target_expand has made sure it fits into
+	 * MAXPATHLEN. XXX all this copying is because concat_paths
+	 * returns a pointer to a static buffer.
+	 *
+	 * If an old aout link exists (apparently pointing to nowhere),
+	 * move it out of the way.
+	 */
+	strcpy(src, concat_paths(prefix, "aout"));
+	run_prog(0, NULL, "mv -f %s %s", src,
+	    concat_paths(prefix, "aout.old"));
+
+	/*
+	 * We have created /emul if needed. Since no previous /emul/aout
+	 * existed, we'll use a symbolic link in /emul to /usr/aout, to
+	 * avoid overflowing the root partition.
+	 */
+	strcpy(prefix, target_expand("/usr/aout"));
+	run_prog(RUN_FATAL, MSG_aoutfail, "mkdir -p %s", prefix);
+	run_prog(RUN_FATAL, MSG_aoutfail, "ln -s %s %s",
+	    "/usr/aout", src);
+
+domove:
+	/*
+	 * Rename etc and usr/lib if they already existed, so that we
+	 * do not overwrite old files.
+	 *
+	 * Then, move /etc/ld.so.conf to /emul/aout/etc/ld.so.conf,
+	 * and all a.out dynamic libraries from /usr/lib to
+	 * /emul/aout/usr/lib. This is where the a.out code in ldconfig
+	 * and ld.so respectively will find them.
+	 */
+	strcpy(src, concat_paths(prefix, "usr/lib"));
+	run_prog(0, NULL, "mv -f %s %s", src,
+	    concat_paths(prefix, "usr/lib.old"));
+	strcpy(src, concat_paths(prefix, "etc/ld.so.conf"));
+	run_prog(0, NULL, "mv -f %s %s", src,
+	    concat_paths(prefix, "etc/ld.so.conf.old"));
+	run_prog(RUN_FATAL, MSG_aoutfail, "mkdir -p %s ",
+	    concat_paths(prefix, "usr/lib"));
+	run_prog(RUN_FATAL, MSG_aoutfail, "mkdir -p %s ",
+	    concat_paths(prefix, "etc"));
+
+	strcpy(src, target_expand("/etc/ld.so.conf"));
+	run_prog(RUN_FATAL, MSG_aoutfail, "mv -f %s %s", src,
+	    concat_paths(prefix, "etc/ld.so.conf"));
+
+	strcpy(src, target_expand("/usr/lib"));
+	n = handle_aout_libs(src, LIB_MOVE,
+	    concat_paths(prefix, "usr/lib"));
+
+	return n;
 }

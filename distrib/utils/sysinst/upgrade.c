@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.20.10.2 2000/09/11 22:13:12 hubertf Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.20.10.3 2000/10/18 17:51:16 tv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -60,7 +60,6 @@ int	merge_X __P((void));
 void
 do_upgrade()
 {
-
 	doingwhat = msg_string(MSG_upgrade);
 
 	msg_display(MSG_upgradeusure);
@@ -73,6 +72,9 @@ do_upgrade()
 	if (find_disks() < 0)
 		return;
 
+	if (md_pre_update() < 0)
+		return;
+
 	/* if we need the user to mount root, ask them to. */
 	if (must_mount_root()) {
 		msg_display(MSG_pleasemountroot, diskdev, diskdev, diskdev);
@@ -82,6 +84,7 @@ do_upgrade()
 
 	if (!fsck_disks())
 		return;
+
 
 	/*
 	 * Save X symlink, ...
@@ -264,6 +267,7 @@ do_reinstall_sets()
 
 	fflush(stdout);
 	puts(CL);		/* XXX */
+	touchwin(stdscr);
 	wclear(stdscr);
 	wrefresh(stdscr);
 
