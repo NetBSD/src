@@ -1,19 +1,19 @@
-/*	$NetBSD: socket.c,v 1.4 1999/07/02 16:15:34 simonb Exp $	*/
+/*	$NetBSD: socket.c,v 1.5 1999/07/03 12:30:42 simonb Exp $	*/
 
  /*
   * This module determines the type of socket (datagram, stream), the client
   * socket address and port, the server socket address and port. In addition,
   * it provides methods to map a transport address to a printable host name
   * or address. Socket address information results are in static memory.
-  *
+  * 
   * The result from the hostname lookup method is STRING_PARANOID when a host
   * pretends to have someone elses name, or when a host name is available but
   * could not be verified.
-  *
+  * 
   * When lookup or conversion fails the result is set to STRING_UNKNOWN.
-  *
+  * 
   * Diagnostics are reported through syslog(3).
-  *
+  * 
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
 
@@ -22,7 +22,7 @@
 #if 0
 static char sccsid[] = "@(#) socket.c 1.14 95/01/30 19:51:50";
 #else
-__RCSID("$NetBSD: socket.c,v 1.4 1999/07/02 16:15:34 simonb Exp $");
+__RCSID("$NetBSD: socket.c,v 1.5 1999/07/03 12:30:42 simonb Exp $");
 #endif
 #endif
 
@@ -163,10 +163,10 @@ struct host_info *host;
 	/*
 	 * Verify that the address is a member of the address list returned
 	 * by gethostbyname(hostname).
-	 *
+	 * 
 	 * Verify also that gethostbyaddr() and gethostbyname() return the same
 	 * hostname, or rshd and rlogind may still end up being spoofed.
-	 *
+	 * 
 	 * On some sites, gethostbyname("localhost") returns "localhost.domain".
 	 * This is a DNS artefact. We treat it as a special case. When we
 	 * can't believe the address list from gethostbyname("localhost")

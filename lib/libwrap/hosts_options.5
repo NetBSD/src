@@ -1,4 +1,4 @@
-.\"	$NetBSD: hosts_options.5,v 1.3 1999/07/02 16:15:33 simonb Exp $
+.\"	$NetBSD: hosts_options.5,v 1.4 1999/07/03 12:30:41 simonb Exp $
 .\"
 .TH HOSTS_OPTIONS 5
 .SH NAME
@@ -6,7 +6,7 @@ hosts_options \- host access control language extensions
 .SH DESCRIPTION
 This document describes optional extensions to the language described
 in the hosts_access(5) document. The extensions are enabled at program
-build time. For example, by editing the Makefile and turning on the
+build time. For example, by editing the Makefile and turning on the 
 PROCESS_OPTIONS compile-time option.
 .PP
 The extensible language uses the following format:
@@ -114,7 +114,7 @@ it is still connected to a server.  The keepalive option is not useful
 for datagram (UDP) services.
 .IP "linger number_of_seconds"
 Specifies how long the kernel will try to deliver not-yet delivered
-data after the server process closes a connection.
+data after the server process closes a connection. 
 .SH USERNAME LOOKUP
 .IP "rfc931 [ timeout_in_seconds ]"
 Look up the client user name with the RFC 931 (TAP, IDENT, RFC 1413)
@@ -139,7 +139,7 @@ Warning: banners are supported for connection-oriented (TCP) network
 services only.
 .IP "nice [ number ]"
 Change the nice value of the process (default 10).  Specify a positive
-value to spend more CPU resources on other processes.
+value to spend more CPU resources on other processes. 
 .IP "setenv name value"
 Place a (name, value) pair into the process environment. The value is
 subjected to %<letter> expansions and may contain whitespace (but
@@ -169,6 +169,6 @@ hosts_access(5), the default access control language
 Wietse Venema (wietse@wzv.win.tue.nl)
 Department of Mathematics and Computing Science
 Eindhoven University of Technology
-Den Dolech 2, P.O. Box 513,
+Den Dolech 2, P.O. Box 513, 
 5600 MB Eindhoven, The Netherlands
 \" @(#) hosts_options.5 1.10 94/12/28 17:42:28

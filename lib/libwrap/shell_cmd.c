@@ -1,12 +1,12 @@
-/*	$NetBSD: shell_cmd.c,v 1.3 1999/07/02 16:15:34 simonb Exp $	*/
+/*	$NetBSD: shell_cmd.c,v 1.4 1999/07/03 12:30:42 simonb Exp $	*/
 
  /*
   * shell_cmd() takes a shell command after %<character> substitutions. The
   * command is executed by a /bin/sh child process, with standard input,
   * standard output and standard error connected to /dev/null.
-  *
+  * 
   * Diagnostics are reported through syslog(3).
-  *
+  * 
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
 
@@ -15,7 +15,7 @@
 #if 0
 static char sccsid[] = "@(#) shell_cmd.c 1.5 94/12/28 17:42:44";
 #else
-__RCSID("$NetBSD: shell_cmd.c,v 1.3 1999/07/02 16:15:34 simonb Exp $");
+__RCSID("$NetBSD: shell_cmd.c,v 1.4 1999/07/03 12:30:42 simonb Exp $");
 #endif
 #endif
 

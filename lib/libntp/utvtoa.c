@@ -1,4 +1,4 @@
-/*	$NetBSD: utvtoa.c,v 1.3 1999/07/02 15:58:37 simonb Exp $	*/
+/*	$NetBSD: utvtoa.c,v 1.4 1999/07/03 12:30:32 simonb Exp $	*/
 
 /*
  * utvtoa - return an asciized representation of an unsigned struct timeval
@@ -20,7 +20,7 @@ utvtoa(tv)
 	register char *buf;
 
 	LIB_GETBUF(buf);
-
+	
 	(void) sprintf(buf, "%lu.%06lu", (u_long)tv->tv_sec,
 	    (u_long)tv->tv_usec);
 	return buf;
