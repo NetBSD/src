@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.24 2000/06/27 15:43:38 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.25 2000/06/28 22:22:36 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -671,3 +671,12 @@ sys/kern/vfs_syscalls.c				1.158
 sys/arch/mac68k/dev/zs.c			1.33
 
   Correct a bug in handling of CLOCAL and MDMBUF flags.
+
+usr.sbin/dhcp/common/options.c			patch
+
+  Quote user-supplied shell meta-characters properly in generated
+  scripts.
+
+usr.sbin/mopd/mopd/process.c			1.7
+
+  Allow "big" VAXes to be mop-booted.
