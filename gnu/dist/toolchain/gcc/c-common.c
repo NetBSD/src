@@ -1432,8 +1432,6 @@ check_format_info (info, params)
 	{
 	  if (format_chars - TREE_STRING_POINTER (format_tree) != format_length)
 	    warning ("embedded `\\0' in format");
-	  if (info->first_arg_num != 0 && params != 0 && ! has_operand_number)
-	    warning ("too many arguments for format");
 	  return;
 	}
       if (*format_chars++ != '%')
