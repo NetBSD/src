@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.48 1995/04/22 20:50:47 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.49 1995/04/26 23:39:04 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -67,6 +67,7 @@
 #include <machine/reg.h>
 
 #ifdef COMPAT_SUNOS
+#include <compat/sunos/sunos_syscall.h>
 extern struct emul emul_sunos;
 #endif
 
@@ -234,13 +235,17 @@ trap(type, code, v, frame)
 	switch (type) {
 	default:
 	dopanic:
-		type &= ~T_USER;
-		printf("trap type=%d, code=0x%x, v=0x%x\n", type, code, v);
+		printf("trap type=0x%x, code=0x%x, v=0x%x\n", type, code, v);
 #ifdef	DDB
 		if (kdb_trap(type, &frame))
 			return;
 #endif
+		if (panicstr) {
+			printf("trap during panic!\n");
+			sun3_mon_abort();
+		}
 		regdump(&frame, 128);
+		type &= ~T_USER;
 		if ((u_int)type < trap_types)
 			panic(trap_type[type]);
 		panic("trap type 0x%x", type);
@@ -558,6 +563,7 @@ syscall(code, frame)
 
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
+
 #ifdef COMPAT_SUNOS
 	if (p->p_emul == &emul_sunos) {
 		/*
@@ -575,7 +581,7 @@ syscall(code, frame)
 		 * on the stack to skip, the argument follows the syscall
 		 * number without a gap.
 		 */
-		if (code != SUNOS_SYS_sigreturn) {
+		if (code != SUNOS_SYS_sunos_sigreturn) {
 			frame.f_regs[SP] += sizeof (int);
 			/*
 			 * remember that we adjusted the SP, 
