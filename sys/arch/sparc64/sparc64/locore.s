@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.166 2003/01/31 22:19:33 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.167 2003/02/01 09:31:23 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -8901,37 +8901,21 @@ ENTRY(pseg_set)
 	brgez,pn %o3, 5f			! has resident changed? (we predict it has)
 	 btst	%g5, %o3			! has wired changed?
 
-#ifdef _LP64
-	ldx	[%o0 + PM_RESIDENT], %g6	! gonna update resident count
-#else
-	ld	[%o0 + PM_RESIDENT], %g6
-#endif
+	LDPTR	[%o0 + PM_RESIDENT], %g6	! gonna update resident count
 	brlz	%o2, 0f
 	 mov	1, %o4
 	neg	%o4				! new is not resident -> decrement
 0:	add	%g6, %o4, %g6
-#ifdef _LP64
-	stx	%g6, [%o0 + PM_RESIDENT]
-#else
-	st	%g6, [%o0 + PM_RESIDENT]
-#endif
+	STPTR	%g6, [%o0 + PM_RESIDENT]
 	btst	%g5, %o3			! has wired changed?
 5:	bz,pt	%xcc, 8f			! we predict it's not
 	 btst	%g5, %o2			! don't waste delay slot, check if new one is wired
-#ifdef _LP64
-	ldx	[%o0 + PM_WIRED], %g6		! gonna update wired count
-#else
-	ld	[%o0 + PM_WIRED], %g6
-#endif
+	LDPTR	[%o0 + PM_WIRED], %g6		! gonna update wired count
 	bnz,pt	%xcc, 0f			! if wired changes, we predict it increments
 	 mov	1, %o4
 	neg	%o4				! new is not wired -> decrement
 0:	add	%g6, %o4, %g6
-#ifdef _LP64
-	stx	%g6, [%o0 + PM_WIRED]
-#else
-	st	%g6, [%o0 + PM_WIRED]
-#endif
+	STPTR	%g6, [%o0 + PM_WIRED]
 8:	retl
 	 mov	%g1, %o0			! return %g1
 
