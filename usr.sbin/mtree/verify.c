@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.30 2002/02/08 18:15:12 tv Exp $	*/
+/*	$NetBSD: verify.c,v 1.31 2002/10/06 01:36:09 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: verify.c,v 1.30 2002/02/08 18:15:12 tv Exp $");
+__RCSID("$NetBSD: verify.c,v 1.31 2002/10/06 01:36:09 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -284,10 +284,14 @@ miss(NODE *p, char *tail)
 				flags = p->st_flags;
 			else
 				flags = p->st_flags & ~SP_FLGS;
+#if HAVE_LCHFLAGS
 			if (lchflags(path, flags))
+#else
+			if ((p->type != F_LINK) && chflags(path, flags))
+#endif
 				printf("%s: file flags not set: %s\n",
 				    path, strerror(errno));
 		}
-#endif
+#endif	/* HAVE_STRUCT_STAT_ST_FLAGS */
 	}
 }
