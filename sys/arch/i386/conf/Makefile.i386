@@ -1,6 +1,6 @@
 # Copyright 1990 W. Jolitz
 # 	from: @(#)Makefile.i386	7.1 5/10/91
-#	$Id: Makefile.i386,v 1.26 1993/07/31 15:26:37 mycroft Exp $
+#	$Id: Makefile.i386,v 1.27 1993/08/27 23:58:20 brezak Exp $
 #
 # Makefile for NetBSD
 #
@@ -104,7 +104,7 @@ genassym:
 		 ${I386}/i386/genassym.c -o genassym
 
 depend: assym.s param.c
-	sh /usr/bin/mkdep ${COPTS} ${CFILES} ioconf.c param.c ${I386}/i386/conf.c
+	sh /usr/bin/mkdep -DLOAD_ADDRESS=0x${LOAD_ADDRESS} ${COPTS} ${CFILES} ioconf.c param.c ${I386}/i386/conf.c
 	sh /usr/bin/mkdep -a -p ${INCLUDES} ${IDENT} ${PARAM} ${I386}/i386/genassym.c
 
 links:
