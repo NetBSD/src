@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.210 2003/10/22 04:22:25 jmc Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.211 2003/10/22 04:40:14 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2604,3 +2604,7 @@ sys/compat/linux/common/linux_socket.c		1.41-1.42
 	to meet with the default behavior of linux.
 	[tv, ticket #1429]
 
+share/man/man8/compat_linux.8			1.27-1.30
+
+	Replaced /proc with /emul/linux/proc. Some minor grammar fixes too.
+	[manu, ticket #1444]
