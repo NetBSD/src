@@ -1,4 +1,4 @@
-/*	$NetBSD: itime.c,v 1.8 1998/04/22 08:55:18 bouyer Exp $	*/
+/*	$NetBSD: itime.c,v 1.8.10.1 2002/01/16 09:56:31 he Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,21 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)itime.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: itime.c,v 1.8 1998/04/22 08:55:18 bouyer Exp $");
+__RCSID("$NetBSD: itime.c,v 1.8.10.1 2002/01/16 09:56:31 he Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/queue.h>
 #include <sys/time.h>
-#ifdef sunos
-#include <sys/vnode.h>
-
-#include <ufs/fsdir.h>
-#include <ufs/inode.h>
-#include <ufs/fs.h>
-#else
 #include <ufs/ufs/dinode.h>
-#endif
 
 #include <protocols/dumprestore.h>
 
@@ -68,10 +61,13 @@ __RCSID("$NetBSD: itime.c,v 1.8 1998/04/22 08:55:18 bouyer Exp $");
 
 #include "dump.h"
 
+struct dumptime {
+	struct	dumpdates dt_value;
+	SLIST_ENTRY(dumptime) dt_list;
+};
+SLIST_HEAD(dthead, dumptime) dthead = SLIST_HEAD_INITIALIZER(dthead);
 struct	dumpdates **ddatev = 0;
 int	nddates = 0;
-int	ddates_in = 0;
-struct	dumptime *dthead = 0;
 
 static	void dumprecout __P((FILE *, struct dumpdates *));
 static	int getrecord __P((FILE *, struct dumpdates *));
@@ -85,18 +81,18 @@ initdumptimes()
 
 	if ((df = fopen(dumpdates, "r")) == NULL) {
 		if (errno != ENOENT) {
-			quit("cannot read %s: %s\n", dumpdates,
+			msg("WARNING: cannot read %s: %s\n", dumpdates,
 			    strerror(errno));
-			/* NOTREACHED */
+			return;
 		}
 		/*
 		 * Dumpdates does not exist, make an empty one.
 		 */
 		msg("WARNING: no file `%s', making an empty one\n", dumpdates);
 		if ((df = fopen(dumpdates, "w")) == NULL) {
-			quit("cannot create %s: %s\n", dumpdates,
+			msg("WARNING: cannot create %s: %s\n", dumpdates,
 			    strerror(errno));
-			/* NOTREACHED */
+			return;
 		}
 		(void) fclose(df);
 		if ((df = fopen(dumpdates, "r")) == NULL) {
@@ -122,19 +118,17 @@ readdumptimes(df)
 		if (getrecord(df, &(dtwalk->dt_value)) < 0)
 			break;
 		nddates++;
-		dtwalk->dt_next = dthead;
-		dthead = dtwalk;
+		SLIST_INSERT_HEAD(&dthead, dtwalk, dt_list);
 	}
 
-	ddates_in = 1;
 	/*
 	 *	arrayify the list, leaving enough room for the additional
 	 *	record that we may have to add to the ddate structure
 	 */
 	ddatev = (struct dumpdates **)
-		calloc((unsigned) (nddates + 1), sizeof (struct dumpdates *));
-	dtwalk = dthead;
-	for (i = nddates - 1; i >= 0; i--, dtwalk = dtwalk->dt_next)
+		calloc((unsigned) (nddates + 1), sizeof(struct dumpdates *));
+	dtwalk = SLIST_FIRST(&dthead);
+	for (i = nddates - 1; i >= 0; i--, dtwalk = SLIST_NEXT(dtwalk, dt_list))
 		ddatev[i] = &dtwalk->dt_value;
 }
 
@@ -189,8 +183,6 @@ putdumptime()
 	free((char *)ddatev);
 	ddatev = 0;
 	nddates = 0;
-	dthead = 0;
-	ddates_in = 0;
 	readdumptimes(df);
 	if (fseek(df, 0L, 0) < 0)
 		quit("fseek: %s\n", strerror(errno));
