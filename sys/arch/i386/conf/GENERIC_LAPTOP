@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.47 2002/04/14 01:42:52 mycroft Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.48 2002/04/17 11:52:47 mycroft Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.47 $"
+#ident 		"GENERIC-$Revision: 1.48 $"
 
 maxusers	32		# estimated number of users
 
@@ -470,6 +470,7 @@ ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ne* 	at pci? dev ? function ?	# NE2000-compatible Ethernet
 rtk* 	at pci? dev ? function ?	# Realtek 8129/8139
+tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 
 # PCMCIA network interfaces
 an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)
