@@ -1,4 +1,4 @@
-/*	$NetBSD: var.h,v 1.10 1996/06/25 16:49:07 christos Exp $	*/
+/*	$NetBSD: var.h,v 1.11 1996/10/16 15:45:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -117,7 +117,7 @@ void initvar __P((void));
 void setvar __P((char *, char *, int));
 void setvareq __P((char *, int));
 struct strlist;
-void listsetvar __P((struct strlist *)); 
+void listsetvar __P((struct strlist *));
 char *lookupvar __P((char *));
 char *bltinlookup __P((char *, int));
 char **environment __P((void));
@@ -125,7 +125,7 @@ void shprocvar __P((void));
 int showvarscmd __P((int, char **));
 int exportcmd __P((int, char **));
 int localcmd __P((int, char **));
-void mklocal __P((char *));   
+void mklocal __P((char *));
 void poplocalvars __P((void));
 int setvarcmd __P((int, char **));
 int unsetcmd __P((int, char **));

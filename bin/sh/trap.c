@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.15 1995/06/07 04:16:57 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.16 1996/10/16 15:45:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-static char rcsid[] = "$NetBSD: trap.c,v 1.15 1995/06/07 04:16:57 christos Exp $";
+static char rcsid[] = "$NetBSD: trap.c,v 1.16 1996/10/16 15:45:19 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,7 @@ static int getsigaction __P((int, sig_t *));
 int
 trapcmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	char *action;
 	char **ap;
@@ -157,7 +157,7 @@ clear_traps() {
  */
 
 long
-setsignal(signo) 
+setsignal(signo)
 	int signo;
 {
 	int action;
@@ -202,9 +202,9 @@ setsignal(signo)
 	}
 
 	t = &sigmode[signo - 1];
-	if (*t == 0) {	
-		/* 
-		 * current setting unknown 
+	if (*t == 0) {
+		/*
+		 * current setting unknown
 		 */
 		if (!getsigaction(signo, &sigact)) {
 			/*
@@ -215,7 +215,7 @@ setsignal(signo)
 			return 0;
 		}
 		if (sigact == SIG_IGN) {
-			if (mflag && (signo == SIGTSTP || 
+			if (mflag && (signo == SIGTSTP ||
 			     signo == SIGTTIN || signo == SIGTTOU)) {
 				*t = S_IGN;	/* don't hard ignore these */
 			} else
@@ -239,7 +239,7 @@ setsignal(signo)
  * Return the current setting for sig w/o changing it.
  */
 static int
-getsigaction(signo, sigact) 
+getsigaction(signo, sigact)
 	int signo;
 	sig_t *sigact;
 {
@@ -256,7 +256,7 @@ getsigaction(signo, sigact)
  */
 
 void
-ignoresig(signo) 
+ignoresig(signo)
 	int signo;
 {
 	if (sigmode[signo - 1] != S_IGN && sigmode[signo - 1] != S_HARD_IGN) {
@@ -288,7 +288,7 @@ SHELLPROC {
  */
 
 void
-onsig(signo) 
+onsig(signo)
 	int signo;
 {
 	signal(signo, onsig);
@@ -356,7 +356,7 @@ setinteractive(on)
  */
 
 void
-exitshell(status) 
+exitshell(status)
 	int status;
 {
 	struct jmploc loc1, loc2;

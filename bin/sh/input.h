@@ -1,4 +1,4 @@
-/*	$NetBSD: input.h,v 1.8 1995/05/11 21:29:16 christos Exp $	*/
+/*	$NetBSD: input.h,v 1.9 1996/10/16 15:45:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -58,7 +58,7 @@ void pushstring __P((char *, int, void *));
 void popstring __P((void));
 void setinputfile __P((char *, int));
 void setinputfd __P((int, int));
-void setinputstring __P((char *, int)); 
+void setinputstring __P((char *, int));
 void popfile __P((void));
 void popallfiles __P((void));
 void closescript __P((void));

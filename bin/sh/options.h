@@ -1,4 +1,4 @@
-/*	$NetBSD: options.h,v 1.9 1996/06/25 16:47:44 christos Exp $	*/
+/*	$NetBSD: options.h,v 1.10 1996/10/16 15:45:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -102,10 +102,10 @@ extern char **argptr;		/* argument list for builtin commands */
 extern char *optarg;		/* set by nextopt */
 extern char *optptr;		/* used by nextopt */
 
-void procargs __P((int, char **)); 
+void procargs __P((int, char **));
 void optschanged __P((void));
 void setparam __P((char **));
-void freeparam __P((struct shparam *)); 
+void freeparam __P((struct shparam *));
 int shiftcmd __P((int, char **));
 int setcmd __P((int, char **));
 int getoptscmd __P((int, char **));
