@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chown.8	8.3 (Berkeley) 3/31/94
-.\"	$NetBSD: chown.8,v 1.8 1997/10/18 04:08:16 lukem Exp $
+.\"	$NetBSD: chown.8,v 1.8.2.1 1997/11/27 08:17:52 mellon Exp $
 .\"
 .Dd March 31, 1994
 .Dt CHOWN 8
@@ -138,16 +138,11 @@ Previous versions of the
 utility used the dot (``.'') character to distinguish the group name.
 This has been changed to be a colon (``:'') character so that user and
 group names may contain the dot character.
-.Pp
-Previous versions of the
-.Nm
-utility changed the owner of symbolic links specified on the command
-line.
-In this system, symbolic links do not have owners.
 .Sh SEE ALSO
 .Xr chgrp 1 ,
 .Xr find 1 ,
 .Xr chown 2 ,
+.Xr lchown 2 ,
 .Xr fts 3 ,
 .Xr symlink 7
 .Sh STANDARDS
