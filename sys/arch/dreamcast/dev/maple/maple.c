@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.21 2002/11/15 13:30:21 itohy Exp $	*/
+/*	$NetBSD: maple.c,v 1.22 2002/12/06 15:49:31 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -610,8 +610,9 @@ maple_print_unit(void *aux, const char *pnp)
 		printf(" subunit %d", subunit);
 
 #ifdef MAPLE_DEBUG
-	printf(": a %#x fn %#x d %#x,%#x,%#x",
+	printf(": a %#x c %#x fn %#x d %#x,%#x,%#x",
 	    ma->ma_devinfo->di_area_code,
+	    ma->ma_devinfo->di_connector_direction,
 	    ntohl(ma->ma_devinfo->di_func),
 	    ntohl(ma->ma_devinfo->di_function_data[0]),
 	    ntohl(ma->ma_devinfo->di_function_data[1]),
@@ -676,6 +677,7 @@ maple_attach_unit(struct maple_softc *sc, struct maple_unit *u)
 
 	ma.ma_unit = u;
 	ma.ma_devinfo = &u->devinfo;
+	ma.ma_basedevinfo = &sc->sc_unit[u->port][0].devinfo;
 	func = ntohl(ma.ma_devinfo->di_func);
 
 	maple_print_unit(&ma, sc->sc_dev.dv_xname);
@@ -683,7 +685,7 @@ maple_attach_unit(struct maple_softc *sc, struct maple_unit *u)
 	strcpy(oldxname, sc->sc_dev.dv_xname);
 	maple_unit_name(sc->sc_dev.dv_xname, u->port, u->subunit);
 
-	for (f = 0; f < MAPLE_NFUNC; f++, ma.ma_function <<= 1) {
+	for (f = 0; f < MAPLE_NFUNC; f++) {
 		u->u_func[f].f_callback = NULL;
 		u->u_func[f].f_arg = NULL;
 		u->u_func[f].f_cmdstat = MAPLE_CMDSTAT_NONE;
