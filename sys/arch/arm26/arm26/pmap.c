@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.29 2001/05/09 23:22:12 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.30 2001/06/09 12:22:11 bjh21 Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -105,7 +105,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.29 2001/05/09 23:22:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30 2001/06/09 12:22:11 bjh21 Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -520,8 +520,9 @@ pv_alloc()
 {
 	struct pv_entry *pv;
 
-	MALLOC(pv, struct pv_entry *, sizeof(*pv), M_VMPMAP, M_WAITOK);
-	bzero(pv, sizeof(*pv));
+	MALLOC(pv, struct pv_entry *, sizeof(*pv), M_VMPMAP, M_NOWAIT);
+	if (pv != NULL)
+		bzero(pv, sizeof(*pv));
 	return pv;
 }
 
@@ -556,6 +557,8 @@ pv_get(pmap_t pmap, int ppn, int lpn)
 		}
 	/* Otherwise, allocate a new entry and link it in after the head. */
 	pv = pv_alloc();
+	if (pv == NULL)
+		return NULL;
 	pv->pv_next = pv_table[ppn].pv_next;
 	pv_table[ppn].pv_next = pv;
 	pmap->pm_stats.resident_count++;
@@ -651,6 +654,8 @@ pmap_enter1(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags,
 
 	/* Make a note */
 	pv = pv_get(pmap, ppn, lpn);
+	if (pv == NULL)
+		panic("pmap_enter1");
 	if (pv->pv_vflags & PV_WIRED)
 		pmap->pm_stats.wired_count--;
 	ppv = &pv_table[ppn];
