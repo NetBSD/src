@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.148 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.149 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -379,3 +379,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	df(1), du(1): add -g argument for output in gigabytes [grant 20030418]
 	arm32: Add new arm32 pmap contributed by Wasabi Systems.
 		[scw 20030418]
+	fsdb(8): add a findblk command, which lists the inode(s) owning the
+		disk sector(s) specified as argument. [bouyer 20030426]
