@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.11 1995/10/09 00:09:40 pk Exp $	*/
+/*	$NetBSD: ldd.c,v 1.12 1995/10/09 00:14:41 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -58,7 +58,7 @@ main(argc, argv)
 int	argc;
 char	*argv[];
 {
-	char		*fmt1, *fmt2;
+	char		*fmt1 = NULL, *fmt2 = NULL;
 	int		rval;
 	int		c;
 
