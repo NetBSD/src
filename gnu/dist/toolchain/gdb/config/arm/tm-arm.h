@@ -92,11 +92,10 @@ extern CORE_ADDR arm_saved_pc_after_call (struct frame_info *);
    Even this may only true if the condition predicate is true. The
    following use a condition predicate of ALWAYS so it is always TRUE.
    
-   There are other ways of forcing a breakpoint.  ARM Linux, RISC iX,
-   and NetBSD will all use a software interrupt rather than an
-   undefined instruction to force a trap.  This can be handled by
-   redefining some or all of the following in a target dependent
-   fashion.  */
+   There are other ways of forcing a breakpoint.  ARM Linux and
+   RISC iX will use a software interrupt rather than an undefined
+   instruction to force a trap.  This can be handled by redefining
+   some or all of the following in a target dependent fashion.  */
 
 #define ARM_LE_BREAKPOINT {0xFE,0xDE,0xFF,0xE7}
 #define ARM_BE_BREAKPOINT {0xE7,0xFF,0xDE,0xFE}
