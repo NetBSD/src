@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211.h,v 1.24 2002/11/02 07:26:55 perry Exp $	*/
+/*	$NetBSD: if_ieee80211.h,v 1.25 2002/11/16 06:08:31 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@ struct ieee80211_frame_addr4 {
 #define	IEEE80211_FC0_SUBTYPE_NODATA		0x40
 #define	IEEE80211_FC0_SUBTYPE_CFACK		0x50
 #define	IEEE80211_FC0_SUBTYPE_CFPOLL		0x60
-#define	IEEE80211_FC0_SUBTYPE_CF_ACK_CF_ACK	0x70
+#define	IEEE80211_FC0_SUBTYPE_CF_ACK_CF_POLL	0x70
 
 #define	IEEE80211_FC1_DIR_MASK			0x03
 #define	IEEE80211_FC1_DIR_NODS			0x00	/* STA->STA */
