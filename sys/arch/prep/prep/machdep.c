@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2000/05/03 11:39:54 kleink Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 2000/05/16 05:45:49 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -157,7 +157,6 @@ void identifycpu __P((void));
 void dumpsys __P((void));
 void strayintr __P((int));
 void lcsplx __P((int));
-void dk_establish __P((void));
 
 /*
  * Global variables used here and there
@@ -974,10 +973,6 @@ lcsplx(ipl)
 
 	splx(ipl);
 }
-
-/* not impliment */
-void
-dk_establish() {}
 
 /*
  * Allocate vm space and mapin the I/O address
