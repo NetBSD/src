@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983, 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)startup.c	5.19 (Berkeley) 2/28/91";
+static char sccsid[] = "@(#)startup.c	8.1 (Berkeley) 6/5/93";
 #endif /* not lint */
 
 /*
@@ -40,7 +40,9 @@ static char sccsid[] = "@(#)startup.c	5.19 (Berkeley) 2/28/91";
  */
 #include "defs.h"
 #include <sys/ioctl.h>
+#include <sys/sysctl.h>
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <syslog.h>
 #include <stdlib.h>
 #include "pathnames.h"
@@ -52,6 +54,49 @@ int	externalinterfaces = 0;		/* # of remote and local interfaces */
 int	foundloopback;			/* valid flag for loopaddr */
 struct	sockaddr loopaddr;		/* our address on loopback */
 
+
+void
+quit(s)
+	char *s;
+{
+	extern int errno;
+	int sverrno = errno;
+
+	(void) fprintf(stderr, "route: ");
+	if (s)
+		(void) fprintf(stderr, "%s: ", s);
+	(void) fprintf(stderr, "%s\n", strerror(sverrno));
+	exit(1);
+	/* NOTREACHED */
+}
+
+struct rt_addrinfo info;
+/* Sleazy use of local variables throughout file, warning!!!! */
+#define netmask	info.rti_info[RTAX_NETMASK]
+#define ifaaddr	info.rti_info[RTAX_IFA]
+#define brdaddr	info.rti_info[RTAX_BRD]
+
+#define ROUNDUP(a) \
+	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+#define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
+
+void
+rt_xaddrs(cp, cplim, rtinfo)
+	register caddr_t cp, cplim;
+	register struct rt_addrinfo *rtinfo;
+{
+	register struct sockaddr *sa;
+	register int i;
+
+	bzero(rtinfo->rti_info, sizeof(rtinfo->rti_info));
+	for (i = 0; (i < RTAX_MAX) && (cp < cplim); i++) {
+		if ((rtinfo->rti_addrs & (1 << i)) == 0)
+			continue;
+		rtinfo->rti_info[i] = sa = (struct sockaddr *)cp;
+		ADVANCE(cp, sa);
+	}
+}
+
 /*
  * Find the network interfaces which have configured themselves.
  * If the interface is present but not yet up (for example an
@@ -61,65 +106,67 @@ struct	sockaddr loopaddr;		/* our address on loopback */
 ifinit()
 {
 	struct interface ifs, *ifp;
-	int s;
-	char buf[BUFSIZ], *cp, *cplim;
-        struct ifconf ifc;
-        struct ifreq ifreq, *ifr;
+	size_t needed;
+	int mib[6], no_ipaddr = 0, flags = 0;
+	char *buf, *cplim, *cp;
+	register struct if_msghdr *ifm;
+	register struct ifa_msghdr *ifam;
+	struct sockaddr_dl *sdl;
         struct sockaddr_in *sin;
 	u_long i;
 
-	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-		syslog(LOG_ERR, "socket: %m");
-		close(s);
-                return;
-	}
-        ifc.ifc_len = sizeof (buf);
-        ifc.ifc_buf = buf;
-        if (ioctl(s, SIOCGIFCONF, (char *)&ifc) < 0) {
-                syslog(LOG_ERR, "ioctl (get interface configuration)");
-		close(s);
-                return;
-        }
-        ifr = ifc.ifc_req;
+        mib[0] = CTL_NET;
+        mib[1] = PF_ROUTE;
+        mib[2] = 0;
+        mib[3] = AF_INET;
+        mib[4] = NET_RT_IFLIST;
+        mib[5] = 0;
+        if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
+                quit("route-sysctl-estimate");
+	if ((buf = malloc(needed)) == NULL)
+		quit("malloc");
+        if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
+		quit("actual retrieval of interface table");
 	lookforinterfaces = 0;
-#ifdef RTM_ADD
-#define max(a, b) (a > b ? a : b)
-#define size(p)	max((p).sa_len, sizeof(p))
-#else
-#define size(p) (sizeof (p))
-#endif
-	cplim = buf + ifc.ifc_len; /*skip over if's with big ifr_addr's */
-	for (cp = buf; cp < cplim;
-			cp += sizeof (ifr->ifr_name) + size(ifr->ifr_addr)) {
-		ifr = (struct ifreq *)cp;
-		bzero((char *)&ifs, sizeof(ifs));
-		ifs.int_addr = ifr->ifr_addr;
-		ifreq = *ifr;
-                if (ioctl(s, SIOCGIFFLAGS, (char *)&ifreq) < 0) {
-                        syslog(LOG_ERR, "%s: ioctl (get interface flags)",
-			    ifr->ifr_name);
-                        continue;
-                }
-		ifs.int_flags = ifreq.ifr_flags | IFF_INTERFACE;
-		if ((ifs.int_flags & IFF_UP) == 0 ||
-		    ifr->ifr_addr.sa_family == AF_UNSPEC) {
-			lookforinterfaces = 1;
+	cplim = buf + needed;
+	for (cp = buf; cp < cplim; cp += ifm->ifm_msglen) {
+		ifm = (struct if_msghdr *)cp;
+		if (ifm->ifm_type == RTM_IFINFO) {
+			bzero(&ifs, sizeof(ifs));
+			ifs.int_flags = flags = (0xffff & ifm->ifm_flags) | IFF_INTERFACE;
+			if ((flags & IFF_UP) == 0 || no_ipaddr)
+				lookforinterfaces = 1;
+			sdl = (struct sockaddr_dl *) (ifm + 1);
+			sdl->sdl_data[sdl->sdl_nlen] = 0;
+			no_ipaddr = 1;
 			continue;
 		}
-		/* argh, this'll have to change sometime */
+		if (ifm->ifm_type != RTM_NEWADDR)
+			quit("ifinit: out of sync");
+		if ((flags & IFF_UP) == 0)
+			continue;
+		ifam = (struct ifa_msghdr *)ifm;
+		info.rti_addrs = ifam->ifam_addrs;
+		rt_xaddrs((char *)(ifam + 1), cp + ifam->ifam_msglen, &info);
+		if (ifaaddr == 0) {
+			syslog(LOG_ERR, "%s: (get addr)", sdl->sdl_data);
+			continue;
+		}
+		ifs.int_addr = *ifaaddr;
 		if (ifs.int_addr.sa_family != AF_INET)
 			continue;
-                if (ifs.int_flags & IFF_POINTOPOINT) {
-                        if (ioctl(s, SIOCGIFDSTADDR, (char *)&ifreq) < 0) {
-                                syslog(LOG_ERR, "%s: ioctl (get dstaddr)",
-				    ifr->ifr_name);
-                                continue;
+		no_ipaddr = 0;
+		if (ifs.int_flags & IFF_POINTOPOINT) {
+			if (brdaddr == 0) {
+				syslog(LOG_ERR, "%s: (get dstaddr)",
+					sdl->sdl_data);
+				continue;
 			}
-			if (ifr->ifr_addr.sa_family == AF_UNSPEC) {
+			if (brdaddr->sa_family == AF_UNSPEC) {
 				lookforinterfaces = 1;
 				continue;
 			}
-			ifs.int_dstaddr = ifreq.ifr_dstaddr;
+			ifs.int_dstaddr = *brdaddr;
 		}
 		/*
 		 * already known to us?
@@ -141,40 +188,26 @@ ifinit()
 			    if (ifp->int_flags & IFF_POINTOPOINT)
 				add_ptopt_localrt(ifp);
 		}
-                if (ifs.int_flags & IFF_BROADCAST) {
-                        if (ioctl(s, SIOCGIFBRDADDR, (char *)&ifreq) < 0) {
-                                syslog(LOG_ERR, "%s: ioctl (get broadaddr)",
-				    ifr->ifr_name);
-                                continue;
-                        }
-#ifndef sun
-			ifs.int_broadaddr = ifreq.ifr_broadaddr;
-#else
-			ifs.int_broadaddr = ifreq.ifr_addr;
-#endif
+		if (ifs.int_flags & IFF_BROADCAST) {
+			if (brdaddr == 0) {
+				syslog(LOG_ERR, "%s: (get broadaddr)",
+					sdl->sdl_data);
+				continue;
+			}
+			ifs.int_dstaddr = *brdaddr;
 		}
-#ifdef SIOCGIFMETRIC
-		if (ioctl(s, SIOCGIFMETRIC, (char *)&ifreq) < 0) {
-			syslog(LOG_ERR, "%s: ioctl (get metric)",
-			    ifr->ifr_name);
-			ifs.int_metric = 0;
-		} else
-			ifs.int_metric = ifreq.ifr_metric;
-#else
-		ifs.int_metric = 0;
-#endif
 		/*
 		 * Use a minimum metric of one;
 		 * treat the interface metric (default 0)
 		 * as an increment to the hop count of one.
 		 */
-		ifs.int_metric++;
-		if (ioctl(s, SIOCGIFNETMASK, (char *)&ifreq) < 0) {
-			syslog(LOG_ERR, "%s: ioctl (get netmask)",
-			    ifr->ifr_name);
-			continue;
+		ifs.int_metric = ifam->ifam_metric + 1;
+		if (netmask == 0) {
+				syslog(LOG_ERR, "%s: (get netmask)",
+					sdl->sdl_data);
+				continue;
 		}
-		sin = (struct sockaddr_in *)&ifreq.ifr_addr;
+		sin = (struct sockaddr_in *)netmask;
 		ifs.int_subnetmask = ntohl(sin->sin_addr.s_addr);
 		sin = (struct sockaddr_in *)&ifs.int_addr;
 		i = ntohl(sin->sin_addr.s_addr);
@@ -188,9 +221,11 @@ ifinit()
 		ifs.int_subnet = i & ifs.int_subnetmask;
 		if (ifs.int_subnetmask != ifs.int_netmask)
 			ifs.int_flags |= IFF_SUBNET;
-		ifp = (struct interface *)malloc(sizeof (struct interface));
+		ifp = (struct interface *)
+			malloc(sdl->sdl_nlen + 1 + sizeof(ifs));
 		if (ifp == 0) {
 			printf("routed: out of memory\n");
+			lookforinterfaces = 1;
 			break;
 		}
 		*ifp = ifs;
@@ -212,14 +247,8 @@ ifinit()
 		 */
 		if ((ifs.int_flags & IFF_POINTOPOINT) && supplier < 0)
 			supplier = 1;
-		ifp->int_name = malloc(strlen(ifr->ifr_name) + 1);
-		if (ifp->int_name == 0) {
-			fprintf(stderr, "routed: ifinit: out of memory\n");
-			syslog(LOG_ERR, "routed: ifinit: out of memory\n");
-			close(s);
-			return;
-		}
-		strcpy(ifp->int_name, ifr->ifr_name);
+		ifp->int_name = (char *)(ifp + 1);
+		strcpy(ifp->int_name, sdl->sdl_data);
 		*ifnext = ifp;
 		ifnext = &ifp->int_next;
 		traceinit(ifp);
@@ -227,7 +256,7 @@ ifinit()
 	}
 	if (externalinterfaces > 1 && supplier < 0)
 		supplier = 1;
-	close(s);
+	free(buf);
 }
 
 /*
@@ -389,7 +418,7 @@ gwkludge()
 				route.rt_flags |= RTF_HOST;
 			if (metric)
 				route.rt_flags |= RTF_GATEWAY;
-			(void) ioctl(s, SIOCADDRT, (char *)&route.rt_rt);
+			(void) rtioctl(ADD, &route.rt_rt);
 			continue;
 		}
 		if (strcmp(qual, "external") == 0) {

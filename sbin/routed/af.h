@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)af.h	5.7 (Berkeley) 6/1/90
+ *	@(#)af.h	8.1 (Berkeley) 6/5/93
  */
 
 /*
@@ -61,5 +61,5 @@ struct afhash {
 	u_int	afh_nethash;		/* network based hash */
 };
 
-struct	afswitch afswitch[];		/* table proper */
-int	af_max;				/* number of entries in table */
+extern struct	afswitch afswitch[];	/* table proper */
+extern int	af_max;			/* number of entries in table */

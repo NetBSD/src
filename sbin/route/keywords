@@ -1,6 +1,7 @@
-#	@(#)keywords	5.7 (Berkeley) 6/27/91
+#	@(#)keywords	8.2 (Berkeley) 3/19/94
 
 add
+blackhole
 change
 cloning
 delete
@@ -26,6 +27,7 @@ monitor
 mtu
 net
 netmask
+nostatic
 osi
 proto1
 proto2
@@ -36,6 +38,7 @@ rttvar
 sa
 sendpipe
 ssthresh
+static
 x25
 xns
 xresolve
