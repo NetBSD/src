@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_lookup.c,v 1.8 2004/05/31 00:46:47 heas Exp $	*/
+/*	$NetBSD: dns_lookup.c,v 1.9 2004/11/13 05:45:33 heas Exp $	*/
 
 /*++
 /* NAME
@@ -514,7 +514,7 @@ int     dns_lookup(const char *name, unsigned type, unsigned flags,
 	    vstring_sprintf(why,
 		   "Name service error for %s: invalid host or domain name",
 			    name);
-	h_errno = HOST_NOT_FOUND;
+	SET_H_ERRNO(HOST_NOT_FOUND);
 	return (DNS_NOTFOUND);
     }
 
@@ -526,7 +526,7 @@ int     dns_lookup(const char *name, unsigned type, unsigned flags,
 	    vstring_sprintf(why,
 		   "Name service error for %s: invalid host or domain name",
 			    name);
-	h_errno = HOST_NOT_FOUND;
+	SET_H_ERRNO(HOST_NOT_FOUND);
 	return (DNS_NOTFOUND);
     }
 
