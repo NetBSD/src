@@ -1,4 +1,4 @@
-# $NetBSD: ENIWETOK,v 1.1 1999/02/06 20:22:43 mycroft Exp $
+# $NetBSD: ENIWETOK,v 1.2 1999/02/18 16:42:31 mycroft Exp $
 # From: GENERIC,v 1.108 1999/01/06 23:42:27 thorpej Exp
 #
 # Mycroft's AS200.
@@ -172,13 +172,13 @@ ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
 #tl*	at	pci? dev ? function ?		# TI ThunderLAN Ethernet
-#vga*	at	pci? dev ? function ?		# PCI VGA Graphics
+vga*	at	pci? dev ? function ?		# PCI VGA Graphics
 #uhci*	at	pci? dev ? function ?		# USB Univ. Host Controller
 #ohci*	at	pci? dev ? function ?		# USB Open Host Controller
-#eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI
-#audio*	at	eap?
-#sv*	at	pci? dev ? function ?		# S3 SonicVibes
-#audio*	at	sv?
+eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI
+audio*	at	eap?
+sv*	at	pci? dev ? function ?		# S3 SonicVibes
+audio*	at	sv?
 #opl*	at	sv?
 
 # MII/PHY support
@@ -191,6 +191,7 @@ tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
 #isa*	at	pceb?
 #eisa*	at	pceb?
 isa*	at	sio?
+isapnp*	at	isa?
 
 # ISA devices
 mcclock* at	isa? port 0x70
@@ -216,6 +217,9 @@ lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
 wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
 audio*	at	wss?
 #midi*	at	wss?
+sb*	at	isa? port 0x220 irq 5 drq 1	# SoundBlaster
+sb*	at	isapnp?				# SoundBlaster-compatible audio
+audio*	at	sb?
 #aha*	at	isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI
 #aha*	at	isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI
 #bha*	at	isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI (unt.)
@@ -300,7 +304,7 @@ st*	at	scsibus? target ? lun ?		# SCSI tape drives
 
 # Workstation Console attachments
 #wsdisplay*	at	cfb?
-#wsdisplay*	at	vga?
+wsdisplay*	at	vga?
 #wsdisplay*	at	sfb?
 wsdisplay*	at	tga?
 wskbd*		at	pckbd?
