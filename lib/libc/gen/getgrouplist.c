@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrouplist.c,v 1.5 1995/06/01 22:51:17 jtc Exp $	*/
+/*	$NetBSD: getgrouplist.c,v 1.6 1997/07/13 19:02:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)getgrouplist.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getgrouplist.c,v 1.5 1995/06/01 22:51:17 jtc Exp $";
+__RCSID("$NetBSD: getgrouplist.c,v 1.6 1997/07/13 19:02:23 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,17 +47,17 @@ static char rcsid[] = "$NetBSD: getgrouplist.c,v 1.5 1995/06/01 22:51:17 jtc Exp
  */
 #include <sys/types.h>
 #include <string.h>
+#include <unistd.h>
 #include <grp.h>
 
 int
 getgrouplist(uname, agroup, groups, grpcnt)
 	const char *uname;
-	int agroup;
-	register int *groups;
+	gid_t agroup;
+	gid_t *groups;
 	int *grpcnt;
 {
 	register struct group *grp;
-	register struct passwd *pw;
 	register int i, ngroups;
 	int ret, maxgroups;
 
@@ -73,7 +74,7 @@ getgrouplist(uname, agroup, groups, grpcnt)
 	 * Scan the group file to find additional groups.
 	 */
 	setgrent();
-	while (grp = getgrent()) {
+	while ((grp = getgrent()) != NULL) {
 		if (grp->gr_gid == agroup)
 			continue;
 		for (i = 0; grp->gr_mem[i]; i++) {
