@@ -1,4 +1,4 @@
-/* $NetBSD: atppc.c,v 1.11 2004/02/03 18:54:59 jdolecek Exp $ */
+/* $NetBSD: atppc.c,v 1.12 2004/02/10 18:42:48 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.11 2004/02/03 18:54:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.12 2004/02/10 18:42:48 jdolecek Exp $");
 
 #include "opt_atppc.h"
 
@@ -616,7 +616,7 @@ atppcintr(void *arg)
 {
 	struct atppc_softc *atppc = (struct atppc_softc *)arg;
 	struct device *dev = &atppc->sc_dev;
-	int error = 1;
+	int claim = 1;
 	enum { NONE, READER, WRITER } wake_up = NONE;
 	int s;
 
@@ -637,21 +637,21 @@ atppcintr(void *arg)
 		if (atppc->sc_outb)
 			wake_up = WRITER;
 		else
-			error = -1;
+			claim = 0;
 		break;
 	
 	case ATPPC_MODE_NIBBLE:
 	case ATPPC_MODE_PS2:
 		/* nAck is set low by device and then high on ack */
 		if (!(atppc->sc_str_intr & nACK)) {
-			error = 0;
+			claim = 0;
 			break;
 		}
 		atppc->sc_irqstat = ATPPC_IRQ_nACK;
 		if (atppc->sc_inb)
 			wake_up = READER;
 		else
-			error = -1;
+			claim = 0;
 		break;
 
 	case ATPPC_MODE_ECP:
@@ -669,18 +669,18 @@ atppcintr(void *arg)
 					if (atppc->sc_inb)
 						wake_up = READER;
 					else
-						error = -1;
+						claim = 0;
 				} else {
 					if (atppc->sc_outb)
 						wake_up = WRITER;
 					else
-						error = -1;
+						claim = 0;
 				}
 			} else {
 				if (atppc->sc_outb)
 					wake_up = WRITER;
 				else
-					error = -1;
+					claim = 0;
 			}
 		}
 		/* Determine if nFault has occured */
@@ -690,6 +690,7 @@ atppcintr(void *arg)
 
 			/* Device is requesting the channel */
 			atppc->sc_irqstat |= ATPPC_IRQ_nFAULT;
+			claim = 1;
 		}
 		break;
 
@@ -701,44 +702,42 @@ atppcintr(void *arg)
 		else if (atppc->sc_outb)
 			wake_up = READER;
 		else
-			error = -1;
+			claim = 0;
 		break;
 
 	default:
 		panic("%s: chipset is in invalid mode.", dev->dv_xname);
 	}
 
-	switch (wake_up) {
-	case NONE:
-		break;
+	if (claim) {
+		switch (wake_up) {
+		case NONE:
+			break;
 
-	case READER:
-		wakeup(atppc->sc_inb);
-		break;
+		case READER:
+			wakeup(atppc->sc_inb);
+			break;
 
-	case WRITER:
-		wakeup(atppc->sc_outb);
-		break;
-
-	default:
-		panic("%s: this code should not be reached.\n", __func__);
-		break;
+		case WRITER:
+			wakeup(atppc->sc_outb);
+			break;
+		}
 	}
-	
+
 	ATPPC_UNLOCK(atppc);
 
 	/* Call all of the installed handlers */
-	{
+	if (claim) {
 		struct atppc_handler_node * callback;
 		SLIST_FOREACH(callback, &(atppc->sc_handler_listhead),
 			entries) {
 				(*callback->func)(callback->arg);
 		}
 	}
-	
+
 	splx(s);
-	
-	return error;
+
+	return claim;
 }
 
 
