@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.70 2001/11/12 15:25:25 lukem Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.71 2001/12/05 00:58:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.70 2001/11/12 15:25:25 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.71 2001/12/05 00:58:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,6 +181,11 @@ sys_ptrace(p, v, retval)
 #ifdef PT_SETFPREGS
 	case  PT_SETFPREGS:
 #endif
+
+#ifdef __HAVE_PTRACE_MACHDEP
+	PTRACE_MACHDEP_REQUEST_CASES
+#endif
+
 		/*
 		 * You can't do what you want to the process if:
 		 *	(1) It's not being traced at all,
@@ -393,6 +398,13 @@ sys_ptrace(p, v, retval)
 			uio.uio_procp = p;
 			return (procfs_dofpregs(p, t, NULL, &uio));
 		}
+#endif
+
+#ifdef __HAVE_PTRACE_MACHDEP
+	PTRACE_MACHDEP_REQUEST_CASES
+		return (ptrace_machdep_dorequest(p, t,
+		    SCARG(uap, req), SCARG(uap, addr),
+		    SCARG(uap, data)));
 #endif
 	}
 
