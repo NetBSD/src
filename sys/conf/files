@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.351 2000/02/25 02:17:45 groo Exp $
+#	$NetBSD: files,v 1.352 2000/02/25 10:02:13 drochner Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -359,7 +359,7 @@ define  i2c_eeprom
 
 # National Semiconductor LM7[89]
 device  lm
-file	dev/ic/nslm7x.c		lm
+file	dev/ic/nslm7x.c		lm	needs-flag
 
 # Essential Communications Corp. HIPPI Interface
 device  esh: hippi, ifnet
