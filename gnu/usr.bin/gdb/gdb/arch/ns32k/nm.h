@@ -17,21 +17,21 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: nm.h,v 1.1 1994/04/28 17:11:24 phil Exp $
+	$Id: nm.h,v 1.2 1995/08/29 08:03:27 phil Exp $
 */
 
-#ifndef NM_I386BSD_H
-#define NM_I386BSD_H
+#ifndef NM_NS32KBSD_H
+#define NM_NS32KBSD_H
+
+#include <machine/vmparam.h>
+
+#define PTRACE_ARG3_TYPE caddr_t
+
+#define ATTACH_DETACH
 
 /* This is the amount to subtract from u.u_ar0
    to get the offset in the core file of the register values.  */
-
-#include <machine/vmparam.h>
 #define KERNEL_U_ADDR USRSTACK
-
-#if 0
-#define FLOAT_INFO	{ extern ns32k_float_info(); ns32k_float_info(); }
-#endif
 
 #define REGISTER_U_ADDR(addr, blockend, regno) \
 	(addr) = ns32k_register_u_addr ((blockend),(regno));
@@ -39,6 +39,4 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 extern int
 ns32k_register_u_addr PARAMS ((int, int));
 
-#define PTRACE_ARG3_TYPE char*
-
-#endif /* NM_I386BSD_H */
+#endif /* NM_NS32KBSD_H */

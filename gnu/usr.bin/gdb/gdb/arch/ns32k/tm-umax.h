@@ -20,6 +20,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /*
  * HISTORY
  * $Log: tm-umax.h,v $
+ * Revision 1.2  1995/08/29 08:03:32  phil
+ * Changes from Matthias Pfaller to get gdb to work.
+ *
  * Revision 1.1  1994/04/28 17:11:32  phil
  * Adding ns32k support.
  *
@@ -121,7 +124,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
  			"f0", "f1", "f2", "f3", "f4", "f5", "f6", "f7",	\
 			"sp", "fp", "pc", "ps",				\
  			"fsr",						\
-			"l0", "l1", "l2", "l3", "xx",			\
+			"l0", "l2", "l4", "l6", "xx",			\
  			}
 
 /* Register numbers of various important registers.
@@ -151,7 +154,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
    register N.  */
 
 #define REGISTER_BYTE(N) ((N) >= LP0_REGNUM ? \
-	LP0_REGNUM * 4 + ((N) - LP0_REGNUM) * 8 : (N) * 4)
+	FP0_REGNUM * 4 + ((N) - LP0_REGNUM) * 8 : (N) * 4)
 
 /* Number of bytes of storage in the actual machine representation
    for register N.  On the 32000, all regs are 4 bytes

@@ -20,6 +20,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /*
  * HISTORY
  * $Log: ns32k-tdep.c,v $
+ * Revision 1.3  1995/08/29 08:03:31  phil
+ * Changes from Matthias Pfaller to get gdb to work.
+ *
  * Revision 1.2  1994/05/24 23:58:24  phil
  * Follow changes to sys/arch/pc532/include/reg.h.
  *
@@ -44,6 +47,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 	   3 when denormalized
  */
 
+#include <sys/types.h>
 #include <machine/reg.h>
 
 #define SINGLE_EXP_BITS  8
