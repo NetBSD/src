@@ -1,4 +1,4 @@
-/* $NetBSD: booted_dev.c,v 1.1 1999/04/02 03:19:08 cgd Exp $ */
+/* $NetBSD: booted_dev.c,v 1.2 1999/11/12 13:11:40 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,6 @@
  */
 
 #include <lib/libsa/stand.h>
-#include <lib/libkern/libkern.h>
 
 #include <machine/prom.h>
 #include "common.h"

@@ -1,4 +1,4 @@
-/* $NetBSD: boot.c,v 1.22 1999/09/10 07:31:17 ross Exp $ */
+/* $NetBSD: boot.c,v 1.23 1999/11/12 13:11:40 simonb Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,6 @@
  */
 
 #include <lib/libsa/stand.h>
-#include <lib/libkern/libkern.h>
 #include <lib/libsa/loadfile.h>
 
 #include <sys/param.h>
