@@ -1,4 +1,4 @@
-/* $NetBSD: mcbus.c,v 1.3 1998/05/14 00:01:31 thorpej Exp $ */
+/* $NetBSD: mcbus.c,v 1.4 1998/07/08 00:56:39 mjacob Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.3 1998/05/14 00:01:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.4 1998/07/08 00:56:39 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,8 +129,9 @@ mcbusattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	static const char *bcs[4] = {
-		"(no bcache)", "1MB BCache", "4MB BCache", "??????"
+	static const char *bcs[8] = {
+		"(no bcache)", "1MB BCache", "2MB BCache", "4MB BCache",
+		"??(4)??", "??(5)??", "??(6)??", "??(7)??"
 	};
 	static const u_int8_t pci_mid_order[4] = { 5, 4, 7, 6 };
 	struct mcbus_dev_attach_args ta;
@@ -183,7 +184,7 @@ mcbusattach(parent, self, aux)
 		mid = mcbus_primary.mcbus_cpu_mid;
 		printf("%s mid %d: %s %s\n", self->dv_xname,
 		    mid, mcbus_node_type_str(MCBUS_TYPE_CPU),
-		    bcs[mcbus_primary.mcbus_bcache & 0x3]);
+		    bcs[mcbus_primary.mcbus_bcache & 0x7]);
 #if	0
 		ta.ma_name = mcbus_cd.cd_name;
 		ta.ma_gid = MCBUS_GID_FROM_INSTANCE(self->dv_unit);
