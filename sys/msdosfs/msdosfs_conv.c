@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.12 1995/10/30 19:06:15 ws Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.13 1995/11/29 15:08:36 ws Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -342,12 +342,14 @@ u2l[256] = {
  * null.
  */
 int
-dos2unixfn(dn, un)
+dos2unixfn(dn, un, lower)
 	u_char dn[11];
 	u_char *un;
+	int lower;
 {
 	int i;
 	int thislong = 1;
+	u_char c;
 
 	/*
 	 * If first char of the filename is SLOT_E5 (0x05), then the real
@@ -356,16 +358,18 @@ dos2unixfn(dn, un)
 	 * directory slot. Another dos quirk.
 	 */
 	if (*dn == SLOT_E5)
-		*un++ = dos2unix[0xe5];
+		c = dos2unix[0xe5];
 	else
-		*un++ = dos2unix[*dn];
+		c = dos2unix[*dn];
+	*un++ = lower ? u2l[c] : c;
 	dn++;
 	
 	/*
 	 * Copy the name portion into the unix filename string.
 	 */
 	for (i = 1; i < 8 && *dn != ' '; i++) {
-		*un++ = dos2unix[*dn++];
+		c = dos2unix[*dn++];
+		*un++ = lower ? u2l[c] : c;
 		thislong++;
 	}
 	dn += 8 - i;
@@ -378,7 +382,8 @@ dos2unixfn(dn, un)
 		*un++ = '.';
 		thislong++;
 		for (i = 0; i < 3 && *dn != ' '; i++) {
-			*un++ = dos2unix[*dn++];
+			c = dos2unix[*dn++];
+			*un++ = lower ? u2l[c] : c;
 			thislong++;
 		}
 	}

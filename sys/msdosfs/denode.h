@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.18 1995/11/05 18:47:48 ws Exp $	*/
+/*	$NetBSD: denode.h,v 1.19 1995/11/29 15:08:32 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -151,8 +151,12 @@ struct denode {
 	pid_t de_lockwaiter;	/* lock wanter */
 	u_char de_Name[12];	/* name, from DOS directory entry */
 	u_char de_Attributes;	/* attributes, from directory entry */
-	u_short de_Time;	/* creation time */
-	u_short de_Date;	/* creation date */
+	u_short de_CTime;	/* creation time */
+	u_short de_CDate;	/* creation date */
+	u_short de_ADate;	/* access date */
+	u_short de_ATime;	/* access time */
+	u_short de_MTime;	/* modification time */
+	u_short de_MDate;	/* modification date */
 	u_short de_StartCluster; /* starting cluster of file */
 	u_long de_FileSize;	/* size of file in bytes */
 	struct fatcache de_fc[FC_SIZE];	/* fat cache */
@@ -164,8 +168,10 @@ struct denode {
 #define	DE_LOCKED	0x0001	/* Denode lock. */
 #define	DE_WANTED	0x0002	/* Denode is wanted by a process. */
 #define	DE_UPDATE	0x0004	/* Modification time update request. */
-#define	DE_MODIFIED	0x0008	/* Denode has been modified. */
-#define	DE_RENAME	0x0010	/* Denode is in the process of being renamed */
+#define	DE_CREATE	0x0008	/* Creation time update */
+#define	DE_ACCESS	0x0010	/* Access time update */
+#define	DE_MODIFIED	0x0020	/* Denode has been modified. */
+#define	DE_RENAME	0x0040	/* Denode is in the process of being renamed */
 
 /*
  * Maximum filename length in Win95
@@ -181,16 +187,24 @@ struct denode {
 #define DE_INTERNALIZE(dep, dp)			\
 	(bcopy((dp)->deName, (dep)->de_Name, 11),	\
 	 (dep)->de_Attributes = (dp)->deAttributes,	\
-	 (dep)->de_Time = getushort((dp)->deTime),	\
-	 (dep)->de_Date = getushort((dp)->deDate),	\
+	 (dep)->de_CTime = getushort((dp)->deCTime),	\
+	 (dep)->de_CDate = getushort((dp)->deCDate),	\
+	 (dep)->de_ATime = getushort((dp)->deATime),	\
+	 (dep)->de_ADate = getushort((dp)->deADate),	\
+	 (dep)->de_MTime = getushort((dp)->deMTime),	\
+	 (dep)->de_MDate = getushort((dp)->deMDate),	\
 	 (dep)->de_StartCluster = getushort((dp)->deStartCluster), \
 	 (dep)->de_FileSize = getulong((dp)->deFileSize))
 
 #define DE_EXTERNALIZE(dp, dep)				\
 	(bcopy((dep)->de_Name, (dp)->deName, 11),	\
 	 (dp)->deAttributes = (dep)->de_Attributes,	\
-	 putushort((dp)->deTime, (dep)->de_Time),	\
-	 putushort((dp)->deDate, (dep)->de_Date),	\
+	 putushort((dp)->deCTime, (dep)->de_CTime),	\
+	 putushort((dp)->deCDate, (dep)->de_CDate),	\
+	 putushort((dp)->deATime, (dep)->de_ATime),	\
+	 putushort((dp)->deADate, (dep)->de_ADate),	\
+	 putushort((dp)->deMTime, (dep)->de_MTime),	\
+	 putushort((dp)->deMDate, (dep)->de_MDate),	\
 	 putushort((dp)->deStartCluster, (dep)->de_StartCluster), \
 	 putulong((dp)->deFileSize, \
 	     ((dep)->de_Attributes & ATTR_DIRECTORY) ? 0 : (dep)->de_FileSize))
@@ -204,13 +218,22 @@ struct denode {
 #define	DETOV(de)	((de)->de_vnode)
 
 #define	DE_TIMES(dep) \
-	if ((dep)->de_flag & DE_UPDATE) { \
-		(dep)->de_flag &= ~DE_UPDATE; \
+	if ((dep)->de_flag & (DE_UPDATE | DE_CREATE | DE_ACCESS)) { \
 		if (((dep)->de_Attributes & ATTR_DIRECTORY) == 0) { \
-			unix2dostime(NULL, &(dep)->de_Date, &(dep)->de_Time); \
-			(dep)->de_Attributes |= ATTR_ARCHIVE; \
+			if ((dep)->de_pmp->pm_flags & MSDOSFSMNT_NOWIN95 \
+			    || (dep)->de_flag & DE_UPDATE) { \
+				unix2dostime(NULL, &(dep)->de_MDate, &(dep)->de_MTime); \
+				(dep)->de_Attributes |= ATTR_ARCHIVE; \
+			} \
+			if (!((dep)->de_pmp->pm_flags & MSDOSFSMNT_NOWIN95)) { \
+				if ((dep)->de_flag & DE_ACCESS) \
+					unix2dostime(NULL, &(dep)->de_ADate, &(dep)->de_ATime); \
+				if ((dep)->de_flag & DE_CREATE) \
+					unix2dostime(NULL, &(dep)->de_CDate, &(dep)->de_CTime); \
+			} \
 			(dep)->de_flag |= DE_MODIFIED; \
 		} \
+		(dep)->de_flag &= ~(DE_UPDATE | DE_CREATE | DE_ACCESS); \
 	}
 
 /*
