@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.20.2.2 1998/02/07 00:42:47 mellon Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.20.2.3 1998/02/07 23:26:40 mellon Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -711,6 +711,7 @@ ncr53c9x_sense(sc, ecb)
 	if (ecb->flags & ECB_NEXUS)
 		ti->lubusy &= ~(1 << sc_link->scsipi_scsi.lun);
 	if (ecb == sc->sc_nexus) {
+		ecb->flags &= ~ECB_NEXUS;
 		ncr53c9x_select(sc, ecb);
 	} else {
 		ncr53c9x_dequeue(sc, ecb);
@@ -800,6 +801,7 @@ ncr53c9x_dequeue(sc, ecb)
 
 	if (ecb->flags & ECB_NEXUS) {
 		TAILQ_REMOVE(&sc->nexus_list, ecb, chain);
+		ecb->flags &= ~ECB_NEXUS;
 	} else {
 		TAILQ_REMOVE(&sc->ready_list, ecb, chain);
 	}
@@ -855,7 +857,8 @@ ncr53c9x_reselect(sc, message)
 	for (ecb = sc->nexus_list.tqh_first; ecb != NULL;
 	     ecb = ecb->chain.tqe_next) {
 		sc_link = ecb->xs->sc_link;
-		if (sc_link->scsipi_scsi.target == target && sc_link->scsipi_scsi.lun == lun)
+		if (sc_link->scsipi_scsi.target == target &&
+		    sc_link->scsipi_scsi.lun == lun)
 			break;
 	}
 	if (ecb == NULL) {
@@ -869,7 +872,13 @@ ncr53c9x_reselect(sc, message)
 	sc->sc_state = NCR_CONNECTED;
 	sc->sc_nexus = ecb;
 	ti = &sc->sc_tinfo[target];
-	ti->lubusy |= (1 << lun);
+#ifdef NCR53C9X_DEBUG
+	if ((ti->lubusy & (1 << lun)) == 0) {
+		printf("%s: reselect: target %d, lun %d: should be busy\n",
+			sc->sc_dev.dv_xname, target, lun);
+		ti->lubusy |= (1 << lun);
+	}
+#endif
 	ncr53c9x_setsync(sc, ti);
 
 	if (ecb->flags & ECB_RESET)
@@ -1013,9 +1022,7 @@ gotit:
 			break;
 
 		case MSG_MESSAGE_REJECT:
-			if (ncr53c9x_debug & NCR_SHOWMSGS)
-				printf("%s: our msg rejected by target\n",
-				    sc->sc_dev.dv_xname);
+			NCR_MSGS(("msg reject (msgout=%x) ", sc->sc_msgout));
 			switch (sc->sc_msgout) {
 			case SEND_SDTR:
 				sc->sc_flags &= ~NCR_SYNCHNEGO;
@@ -1635,6 +1642,11 @@ printf("<<RESELECT CONT'd>>");
 			sc->sc_msgpriq = sc->sc_msgout = sc->sc_msgoutq = 0;
 			sc->sc_flags = 0;
 			ecb = sc->sc_nexus;
+			if (ecb != NULL && (ecb->flags & ECB_NEXUS)) {
+				scsi_print_addr(ecb->xs->sc_link);
+				printf("ECB_NEXUS while in state %x\n",
+					sc->sc_state);
+			}
 
 			if (sc->sc_espintr & NCRINTR_RESEL) {
 				/*
@@ -2070,8 +2082,17 @@ ncr53c9x_abort(sc, ecb)
 		untimeout(ncr53c9x_timeout, ecb);
 		timeout(ncr53c9x_timeout, ecb, (ecb->timeout * hz) / 1000);
 	} else {
-		ncr53c9x_dequeue(sc, ecb);
-		TAILQ_INSERT_HEAD(&sc->ready_list, ecb, chain);
+		/* The command should be on the nexus list */
+		if ((ecb->flags & ECB_NEXUS) == 0) {
+			scsi_print_addr(ecb->xs->sc_link);
+			printf("ncr53c9x_abort: not NEXUS\n");
+			ncr53c9x_init(sc, 1);
+		}
+		/*
+		 * Just leave the command on the nexus list.
+		 * XXX - what choice do we have but to reset the SCSI
+		 *	 eventually?
+		 */
 		if (sc->sc_state == NCR_IDLE)
 			ncr53c9x_sched(sc);
 	}
@@ -2090,11 +2111,13 @@ ncr53c9x_timeout(arg)
 
 	scsi_print_addr(sc_link);
 	printf("%s: timed out [ecb %p (flags 0x%x, dleft %x, stat %x)], "
-	       "<state %d, nexus %p, phase(c %x, p %x), resid %lx, "
+	       "<state %d, nexus %p, phase(l %x, c %x, p %x), resid %lx, "
 	       "msg(q %x,o %x) %s>",
 		sc->sc_dev.dv_xname,
 		ecb, ecb->flags, ecb->dleft, ecb->stat,
-		sc->sc_state, sc->sc_nexus, sc->sc_phase, sc->sc_prevphase,
+		sc->sc_state, sc->sc_nexus,
+		NCR_READ_REG(sc, NCR_STAT),
+		sc->sc_phase, sc->sc_prevphase,
 		(long)sc->sc_dleft, sc->sc_msgpriq, sc->sc_msgout,
 		NCRDMA_ISACTIVE(sc) ? "DMA active" : "");
 #if NCR53C9X_DEBUG > 1
