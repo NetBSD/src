@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.buildboot,v 1.2 1999/02/13 02:54:48 lukem Exp $
+#	$NetBSD: Makefile.buildboot,v 1.3 2000/07/21 21:54:54 jdolecek Exp $
 
 S=		${.CURDIR}/../../../..
 
 .PATH: ${.CURDIR}/../common
 
-SRCS=		${COMMONSOURCE} ${DRIVERSOURCE} ${PROGSOURCE}
+SRCS=		${COMMONSOURCE} ${DRIVERSOURCE} ${PROGSOURCE} vers.c
 MKMAN=	no
 STRIP=
 BINMODE=	444
@@ -40,9 +40,11 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
+.PHONY: vers.c
+vers.c: version
+	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version "pc532" ${NEWVERSWHAT}
+
 ${PROG}.sym: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	sh ${.CURDIR}/../common/newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
-	${COMPILE.c} vers.c
 	${LD} -Ttext ${RELOC} -z -e start -o ${PROG}.sym \
-	    ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
+	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 	@size ${PROG}.sym
