@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.37 2001/01/09 07:18:49 lukem Exp $	*/
+/*	$NetBSD: termcap.c,v 1.38 2001/01/29 01:22:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,13 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.37 2001/01/09 07:18:49 lukem Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.38 2001/01/29 01:22:31 christos Exp $");
 #endif
 #endif /* not lint */
 
-#define	PBUFSIZ		512	/* max length of filename path */
-#define	PVECSIZ		32	/* max number of names in path */
 
+#include <sys/types.h>
+#include <sys/param.h>
 #include <assert.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -54,6 +54,9 @@ __RCSID("$NetBSD: termcap.c,v 1.37 2001/01/09 07:18:49 lukem Exp $");
 #include <errno.h>
 #include "pathnames.h"
 #include "termcap_private.h"
+
+#define	PBUFSIZ		MAXPATHLEN	/* max length of filename path */
+#define	PVECSIZ		32		/* max number of names in path */
 
 /*
  * termcap - routines for dealing with the terminal capability data base
@@ -149,20 +152,26 @@ t_getent(bp, name)
 	 */
 	if (!cp || *cp != '/') {	/* no TERMCAP or it holds an entry */
 		if ((termpath = getenv("TERMPATH")) != NULL)
-			strncpy(pathbuf, termpath, PBUFSIZ);
+			(void)strlcpy(pathbuf, termpath, sizeof(pathbuf));
 		else {
 			if ((home = getenv("HOME")) != NULL) {
 				/* set up default */
 				p += strlen(home);	/* path, looking in */
-				(void)strncpy(pathbuf, home,
-				    sizeof(pathbuf) - 1); /* $HOME first */
-				*p++ = '/';
+				(void)strlcpy(pathbuf, home,
+				    sizeof(pathbuf)); /* $HOME first */
+				if ((p - pathbuf) < sizeof(pathbuf) - 1)
+				    *p++ = '/';
 			}	/* if no $HOME look in current directory */
-			strncpy(p, _PATH_DEF, PBUFSIZ - (size_t)(p - pathbuf));
+			if ((p - pathbuf) < sizeof(pathbuf) - 1) {
+			    (void)strlcpy(p, _PATH_DEF,
+				sizeof(pathbuf) - (p - pathbuf));
+			}
 		}
 	}
-	else				/* user-defined name in TERMCAP */
-		strncpy(pathbuf, cp, PBUFSIZ);	/* still can be tokenized */
+	else {
+		/* user-defined name in TERMCAP; still can be tokenized */
+		(void)strlcpy(pathbuf, cp, sizeof(pathbuf));
+	}
 
 	*fname++ = pathbuf;	/* tokenize path into vector of names */
 	while (*++p)
@@ -179,7 +188,7 @@ t_getent(bp, name)
 				break;
 			}
 		}
-	*fname = (char *) 0;			/* mark end of vector */
+	*fname = NULL;			/* mark end of vector */
 
 	/*
 	 * try ignoring TERMCAP if it has a ZZ in it, we do this
@@ -258,8 +267,7 @@ tgetent(bp, name)
 		 * in the termcap buffer passed.
 		 */
                 plen = asprintf(&ptrbuf, ":ZZ=%p", fbuf->info);
-		strncpy(bp, fbuf->info, 1024);
-		bp[1023] = '\0';
+		(void)strlcpy(bp, fbuf->info, 1024);
                 elen = strlen(bp);
 		/*
 		 * backup over the entry if the addition of the full
@@ -523,8 +531,7 @@ t_getterm(info, area, limit)
 			return -1;
 		}
 
-		strncpy(*area, info->info, count);
-		(*area)[count] = '\0';
+		(void)strlcpy(*area, info->info, count);
 		if (limit != NULL)
 			*limit -= count;
 	}
