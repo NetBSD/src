@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.41 1998/02/05 04:57:51 gwr Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.42 1998/06/08 20:47:47 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -43,6 +43,8 @@
  *	from: @(#)vm_machdep.c	8.6 (Berkeley) 1/12/94
  */
 
+#include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -55,6 +57,14 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+/* XXX - Gratuitous name changes... */
+#define kmem_alloc_wait  uvm_km_valloc_wait
+#define kmem_free_wakeup uvm_km_free_wakeup
+#define vmspace_free     uvmspace_free
+#endif	/* UVM */
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -192,7 +202,11 @@ cpu_exit(p)
 	vmspace_free(p->p_vmspace);
 
 	(void) splimp();
+#if defined(UVM)
+	uvmexp.swtch++;
+#else
 	cnt.v_swtch++;
+#endif
 	switch_exit(p);
 	/* NOTREACHED */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.34 1998/02/05 04:57:37 gwr Exp $	*/
+/*	$NetBSD: isr.c,v 1.35 1998/06/08 20:47:46 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,11 +41,18 @@
  * and the handy software interrupt request register.
  */
 
+#include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/vmmeter.h>
+
+#if defined(UVM)
+#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <net/netisr.h>
 
@@ -173,7 +180,11 @@ void isr_autovec(cf)
 
 	n = intrcnt[ipl];
 	intrcnt[ipl] = n+1;
+#if defined(UVM)
+	uvmexp.intrs++;
+#else
 	cnt.v_intr++;
+#endif
 
 	isr = isr_autovec_list[ipl];
 	if (isr == NULL) {
@@ -239,7 +250,11 @@ isr_vectored(cf)
 	ipl = (ipl >> 8) & 7;
 
 	intrcnt[ipl]++;
+#if defined(UVM)
+	uvmexp.intrs++;
+#else
 	cnt.v_intr++;
+#endif
 
 	if (vec < 64 || vec >= 256) {
 		printf("isr_vectored: vector=0x%x (invalid)\n", vec);

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.12 1998/02/05 04:57:30 gwr Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.13 1998/06/08 20:47:45 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@ db_mach_pagemap(addr, have_addr, count, modif)
 	db_expr_t	count;
 	char *		modif;
 {
-	u_long va = trunc_page((u_long)addr);
+	u_long va = m68k_trunc_page((u_long)addr);
 	int pte;
 #ifdef	_SUN3_
 	int sme;

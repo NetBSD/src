@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.102 1998/05/19 19:00:18 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.103 1998/06/08 20:47:47 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -86,6 +86,8 @@
  * the MMU H/W (and this pmap) is fixed for all time.
  */
 
+#include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -96,7 +98,16 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
+#include <vm/vm_prot.h>
 #include <vm/vm_page.h>
+
+#if defined(UVM)
+#include <uvm/uvm.h>
+/* XXX - Gratuitous name changes... */
+#define vm_page_physload uvm_page_physload
+#define vm_set_page_size uvm_setpagesize
+#define kmem_alloc uvm_km_alloc
+#endif	/* UVM */
 
 #include <m68k/m68k.h>
 
@@ -1899,7 +1910,6 @@ pmap_page_upload()
 	}
 }
 
-#undef	vm_page_physload
 #else	/* MACHINE_NEW_NONCONTIG */
 
 /*
@@ -2554,7 +2564,11 @@ _pmap_fault(map, va, ftype)
 		if (pmap_fault_reload(pmap, va, ftype))
 			return KERN_SUCCESS;
 	}
+#if defined(UVM)
+	rv = uvm_fault(map, va, 0, ftype);
+#else
 	rv = vm_fault(map, va, ftype, FALSE);
+#endif
 
 #ifdef	PMAP_DEBUG
 	if (pmap_debug & PMD_FAULT) {
