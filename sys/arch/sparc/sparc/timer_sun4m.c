@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4m.c,v 1.2 2002/12/06 17:45:40 pk Exp $	*/
+/*	$NetBSD: timer_sun4m.c,v 1.3 2002/12/31 15:57:26 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,6 +74,7 @@ struct timer_4m		*timerreg4m;
 #define	counterreg4m	cpuinfo.counterreg_4m
 
 static int timerok;
+static void *sched_cookie;	/* for schedclock() interrupts */
 
 /*
  * Set up the real-time and statistics clocks.
@@ -155,7 +156,24 @@ statintr_4m(void *cap)
 	 * interrupt was raised.
 	 */
 	counterreg4m->t_limit_nr = tmr_ustolim4m(newint);
+
+	/*
+	 * The factor 8 is only valid for stathz==100. For other
+	 * values we should compute a mask, approx.
+	 *	mask = round_power2(stathz / schedhz) - 1
+	 */
+	if (curproc && (++cpuinfo.ci_schedstate.spc_schedticks & 7) == 0)
+		raise_ipi(&cpuinfo, IPL_SCHED);
+
 	return (1);
+}
+
+static void schedintr(void *v)
+{
+	struct proc *p = curproc;
+
+	if (p != NULL)
+		schedclock(p);
 }
 
 void
@@ -221,5 +239,11 @@ timerattach_obio_4m(struct device *parent, struct device *self, void *aux)
 
 	timerattach(&counterreg4m->t_counter, &counterreg4m->t_limit);
 
+	/* Establish a soft interrupt at a lower level for schedclock */
+	sched_cookie = softintr_establish(IPL_SCHED, schedintr, NULL);
+	if (sched_cookie == NULL)
+		return;
+
+	schedhz = 12;
 	timerok = 1;
 }
