@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.54 2000/11/27 03:33:57 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.55 2000/11/30 15:57:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  *	@(#)lfs_syscalls.c	8.10 (Berkeley) 5/14/95
  */
 
-#include "fs_lfs.h"		/* for prototypes in syscallargs.h */
+#define LFS		/* for prototypes in syscallargs.h */
 
 #include <sys/param.h>
 #include <sys/systm.h>
