@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.30 1996/10/11 00:11:09 christos Exp $	*/
+/*	$NetBSD: dcm.c,v 1.31 1996/10/13 03:14:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
@@ -291,7 +291,7 @@ dcmmatch(hd)
 	DELAY(50000);	/* XXX why is this needed ???? */
 	if (dcm->dcm_stcon != ST_OK) {
 		if (hd->hp_args->hw_sc != conscode)
-			kprintf("dcm%d: self test failed: %x\n",
+			printf("dcm%d: self test failed: %x\n",
 			       brd, dcm->dcm_stcon);
 		return (0);
 	}
@@ -363,9 +363,9 @@ dcmattach(hd)
 	if (sc->sc_flags & DCM_ISCONSOLE) {
 		dcmconsinit = 0;
 		sc->sc_softCAR |= (1 << DCMCONSPORT);
-		kprintf(": console on port %d\n", DCMCONSPORT);
+		printf(": console on port %d\n", DCMCONSPORT);
 	} else
-		kprintf("\n");
+		printf("\n");
 
 #ifdef KGDB
 	if (major(kgdb_dev) == dcmmajor &&
@@ -381,11 +381,11 @@ dcmattach(hd)
 			dcminit(dcm, DCMPORT(DCMUNIT(kgdb_dev)),
 			    kgdb_rate);
 			if (kgdb_debug_init) {
-				kprintf("%s port %d: ", sc->sc_hd->hp_xname,
+				printf("%s port %d: ", sc->sc_hd->hp_xname,
 				    DCMPORT(DCMUNIT(kgdb_dev)));
 				kgdb_connect(1);
 			} else
-				kprintf("%s port %d: kgdb enabled\n",
+				printf("%s port %d: kgdb enabled\n",
 				    sc->sc_hd->hp_xname,
 				    DCMPORT(DCMUNIT(kgdb_dev)));
 		}
@@ -467,7 +467,7 @@ dcmopen(dev, flag, mode, p)
 
 #ifdef DEBUG
 	if (dcmdebug & DDB_MODEM)
-		kprintf("%s: dcmopen port %d softcarr %c\n",
+		printf("%s: dcmopen port %d softcarr %c\n",
 		       sc->sc_hd->hp_xname, port,
 		       (tp->t_state & TS_CARR_ON) ? '1' : '0');
 #endif
@@ -489,7 +489,7 @@ dcmopen(dev, flag, mode, p)
 
 #ifdef DEBUG
 	if (dcmdebug & DDB_OPENCLOSE)
-		kprintf("%s port %d: dcmopen: st %x fl %x\n",
+		printf("%s port %d: dcmopen: st %x fl %x\n",
 			sc->sc_hd->hp_xname, port, tp->t_state, tp->t_flags);
 #endif
 	if (error == 0)
@@ -525,7 +525,7 @@ dcmclose(dev, flag, mode, p)
 		(void) dcmmctl(dev, MO_OFF, DMSET);
 #ifdef DEBUG
 	if (dcmdebug & DDB_OPENCLOSE)
-		kprintf("%s port %d: dcmclose: st %x fl %x\n",
+		printf("%s port %d: dcmclose: st %x fl %x\n",
 			sc->sc_hd->hp_xname, port, tp->t_state, tp->t_flags);
 #endif
 	splx(s);
@@ -630,10 +630,10 @@ dcmintr(arg)
 
 #ifdef DEBUG
 	if (dcmdebug & DDB_INTR) {
-		kprintf("%s: dcmintr: iir %x pc %x/%x/%x/%x ",
+		printf("%s: dcmintr: iir %x pc %x/%x/%x/%x ",
 		       sc->sc_hd->hp_xname, code, pcnd[0], pcnd[1],
 		       pcnd[2], pcnd[3]); 
-		kprintf("miir %x mc %x/%x/%x/%x\n",
+		printf("miir %x mc %x/%x/%x/%x\n",
 		       mcode, mcnd[0], mcnd[1], mcnd[2], mcnd[3]);
 	}
 #endif
@@ -772,7 +772,7 @@ dcmreadbuf(sc, port)
 
 #ifdef DEBUG
 		if (dcmdebug & DDB_INPUT)
-			kprintf("%s port %d: dcmreadbuf: c%x('%c') s%x f%x h%x t%x\n",
+			printf("%s port %d: dcmreadbuf: c%x('%c') s%x f%x h%x t%x\n",
 			       sc->sc_hd->hp_xname, port,
 			       c&0xFF, c, stat&0xFF,
 			       tp->t_flags, head, pp->r_tail);
@@ -783,7 +783,7 @@ dcmreadbuf(sc, port)
 		if (stat & RD_MASK) {
 #ifdef DEBUG
 			if (dcmdebug & (DDB_INPUT|DDB_SIOERR))
-				kprintf("%s port %d: dcmreadbuf: err: c%x('%c') s%x\n",
+				printf("%s port %d: dcmreadbuf: err: c%x('%c') s%x\n",
 				       sc->sc_hd->hp_xname, port,
 				       stat, c&0xFF, c);
 #endif
@@ -837,7 +837,7 @@ dcmmint(sc, port, mcnd)
 
 #ifdef DEBUG
 	if (dcmdebug & DDB_MODEM)
-		kprintf("%s port %d: dcmmint: mcnd %x mcndlast %x\n",
+		printf("%s port %d: dcmmint: mcnd %x mcndlast %x\n",
 		       sc->sc_hd->hp_xname, port, mcnd, sc->sc_mcndlast[port]);
 #endif
 	delta = mcnd ^ sc->sc_mcndlast[port];
@@ -888,7 +888,7 @@ dcmioctl(dev, cmd, data, flag, p)
  
 #ifdef DEBUG
 	if (dcmdebug & DDB_IOCTL)
-		kprintf("%s port %d: dcmioctl: cmd %x data %x flag %x\n",
+		printf("%s port %d: dcmioctl: cmd %x data %x flag %x\n",
 		       sc->sc_hd->hp_xname, port, cmd, *data, flag);
 #endif
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
@@ -1035,7 +1035,7 @@ dcmparam(tp, t)
 		mode |= LC_1STOP;
 #ifdef DEBUG
 	if (dcmdebug & DDB_PARAM)
-		kprintf("%s port %d: dcmparam: cflag %x mode %x speed %d uperch %d\n",
+		printf("%s port %d: dcmparam: cflag %x mode %x speed %d uperch %d\n",
 		       sc->sc_hd->hp_xname, port, cflag, mode, tp->t_ospeed,
 		       DCM_USPERCH(tp->t_ospeed));
 #endif
@@ -1093,7 +1093,7 @@ dcmstart(tp)
 #endif
 #ifdef DEBUG
 	if (dcmdebug & DDB_OUTPUT)
-		kprintf("%s port %d: dcmstart: state %x flags %x outcc %d\n",
+		printf("%s port %d: dcmstart: state %x flags %x outcc %d\n",
 		       sc->sc_hd->hp_xname, port, tp->t_state, tp->t_flags,
 		       tp->t_outq.c_cc);
 #endif
@@ -1127,7 +1127,7 @@ again:
 #endif
 #ifdef DEBUG
 	if (dcmdebug & DDB_OUTPUT)
-		kprintf("\thead %x tail %x nch %d\n", head, tail, nch);
+		printf("\thead %x tail %x nch %d\n", head, tail, nch);
 #endif
 	/*
 	 * Loop transmitting all the characters we can.
@@ -1175,7 +1175,7 @@ again:
 	}
 #ifdef DEBUG
 	if (dcmdebug & DDB_INTR)
-		kprintf("%s port %d: dcmstart(%d): head %x tail %x outqcc %d\n",
+		printf("%s port %d: dcmstart(%d): head %x tail %x outqcc %d\n",
 		    sc->sc_hd->hp_xname, port, head, tail, tp->t_outq.c_cc);
 #endif
 out:
@@ -1227,7 +1227,7 @@ dcmmctl(dev, bits, how)
 
 #ifdef DEBUG
 	if (dcmdebug & DDB_MODEM)
-		kprintf("%s port %d: dcmmctl: bits 0x%x how %x\n",
+		printf("%s port %d: dcmmctl: bits 0x%x how %x\n",
 		       sc->sc_hd->hp_xname, port, bits, how);
 #endif
 
@@ -1281,11 +1281,11 @@ dcmsetischeme(brd, flags)
 
 #ifdef DEBUG
 	if (dcmdebug & DDB_INTSCHM)
-		kprintf("%s: dcmsetischeme(%d): cur %d, ints %d, chars %d\n",
+		printf("%s: dcmsetischeme(%d): cur %d, ints %d, chars %d\n",
 		       sc->sc_hd->hp_xname, perchar, dis->dis_perchar,
 		       dis->dis_intr, dis->dis_char);
 	if ((flags & DIS_RESET) == 0 && perchar == dis->dis_perchar) {
-		kprintf("%s: dcmsetischeme: redundent request %d\n",
+		printf("%s: dcmsetischeme: redundent request %d\n",
 		       sc->sc_hd->hp_xname, perchar);
 		return;
 	}
@@ -1461,7 +1461,7 @@ dcmcnprobe(cp)
 			 * has been selected already and will init
 			 * on the first putc.
 			 */
-			kprintf("dcm%d: ", DCMUNIT(kgdb_dev));
+			printf("dcm%d: ", DCMUNIT(kgdb_dev));
 			kgdb_connect(1);
 		}
 	}

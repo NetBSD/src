@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.32 1996/10/11 00:11:25 christos Exp $	*/
+/*	$NetBSD: ite.c,v 1.33 1996/10/13 03:14:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -168,7 +168,7 @@ ite_attach_grf(unit, isconsole)
 		    (struct ite_data *)malloc(sizeof(struct ite_data),
 		    M_DEVBUF, M_NOWAIT);
 		if (ite->sc_data == NULL) {
-			kprintf("ite_attach_grf: malloc for ite_data failed\n");
+			printf("ite_attach_grf: malloc for ite_data failed\n");
 			return;
 		}
 		bzero(ite->sc_data, sizeof(struct ite_data));
@@ -180,7 +180,7 @@ ite_attach_grf(unit, isconsole)
 	ite->sc_grf = grf;
 	grf->sc_ite = ite;
 
-	kprintf("ite%d at grf%d: attached\n", unit, unit);
+	printf("ite%d at grf%d: attached\n", unit, unit);
 }
 
 /*
@@ -423,7 +423,7 @@ itestart(tp)
 	/*
 	 * (Potentially) lower priority.  We only need to protect ourselves
 	 * from keyboard interrupts since that is all that can affect the
-	 * state of our tty (kernel kprintf doesn't go through this routine).
+	 * state of our tty (kernel printf doesn't go through this routine).
 	 */
 	s = splite();
 	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP)) {
