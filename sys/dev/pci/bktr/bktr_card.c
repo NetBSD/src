@@ -1,6 +1,6 @@
-/*	$NetBSD: bktr_card.c,v 1.1.1.2 2000/07/01 01:30:42 wiz Exp $	*/
+/*	$NetBSD: bktr_card.c,v 1.1.1.3 2000/10/28 14:17:08 wiz Exp $	*/
 
-/* FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.12 2000/06/28 15:09:12 roger Exp */
+/* FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.14 2000/10/15 14:18:06 phk Exp */
 
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
@@ -56,7 +56,11 @@
 #include <sys/vnode.h>
 
 #ifdef __FreeBSD__
-#include <machine/clock.h>      /* for DELAY */
+
+#if (__FreeBSD_version < 500000)
+#include <machine/clock.h>              /* for DELAY */
+#endif
+
 #include <pci/pcivar.h>
 
 #if (__FreeBSD_version >=300000)
@@ -81,6 +85,12 @@
 #include <dev/bktr/bktr_tuner.h>
 #include <dev/bktr/bktr_card.h>
 #include <dev/bktr/bktr_audio.h>
+#endif
+
+/* Include the PCI Vendor definitions */
+#ifdef __NetBSD__
+#include <dev/pci/pcidevs.h>
+#include <dev/pci/pcireg.h>
 #endif
 
 /* Various defines */
@@ -142,7 +152,7 @@ static const struct CARDTYPE cards[] = {
 	   0 },					/* GPIO mask */
 
 	{  CARD_MIRO,				/* the card id */
-	  "Miro TV",				/* the 'name' */
+	  "Pinnacle/Miro TV",			/* the 'name' */
 	   NULL,				/* the tuner */
 	   0,					/* the tuner i2c address */
 	   0,					/* dbx unknown */
@@ -357,7 +367,7 @@ writeEEProm( bktr_ptr_t bktr, int offset, int count, u_char *data )
 
 /*
  * Read the contents of the configuration EEPROM on the card.
- * (This is not fitted to all makes of card. All Hauppuage cards have them
+ * (This is not fitted to all makes of card. All Hauppauge cards have them
  * and so do newer Bt878 based cards.
  */
 int
@@ -520,12 +530,18 @@ static int locate_eeprom_address( bktr_ptr_t bktr) {
  * configuration EEPROM used on Bt878/879 cards. They should match the
  * number assigned to the company by the PCI Special Interest Group
  */
-#define VENDOR_AVER_MEDIA	0x1461
-#define VENDOR_HAUPPAUGE	0x0070
-#define VENDOR_FLYVIDEO		0x1851
-#define VENDOR_STB		0x10B4
-#define VENDOR_ASKEY_COMP	0x144F
-#define VENDOR_LEADTEK		0x6606
+#ifndef __NetBSD__
+#define PCI_VENDOR_HAUPPAUGE	0x0070
+#define PCI_VENDOR_AVERMEDIA	0x1461
+#define PCI_VENDOR_STB		0x10B4
+#define PCI_VENDOR_ASKEY	0x144F
+#endif
+/* Following not confirmed with http://members.hyperlink.net.au/~chart,
+   so not added to NetBSD's pcidevs */
+#define PCI_VENDOR_LEADTEK_ALT	0x6606
+#define PCI_VENDOR_FLYVIDEO	0x1851
+#define PCI_VENDOR_FLYVIDEO_2	0x1852
+#define PCI_VENDOR_PINNACLE_ALT	0xBD11
 
 
 void
@@ -611,43 +627,51 @@ probeCard( bktr_ptr_t bktr, int verbose, int unit )
 	            printf("%s: subsystem 0x%04x 0x%04x\n", bktr_name(bktr),
 			   subsystem_vendor_id, subsystem_id);
 
-                if (subsystem_vendor_id == VENDOR_AVER_MEDIA) {
+                if (subsystem_vendor_id == PCI_VENDOR_AVERMEDIA) {
                     bktr->card = cards[ (card = CARD_AVER_MEDIA) ];
 		    bktr->card.eepromAddr = eeprom_i2c_address;
 		    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
                     goto checkTuner;
                 }
 
-                if (subsystem_vendor_id == VENDOR_HAUPPAUGE) {
+                if (subsystem_vendor_id == PCI_VENDOR_HAUPPAUGE) {
                     bktr->card = cards[ (card = CARD_HAUPPAUGE) ];
 		    bktr->card.eepromAddr = eeprom_i2c_address;
 		    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
                     goto checkTuner;
                 }
 
-                if (subsystem_vendor_id == VENDOR_FLYVIDEO) {
+                if ((subsystem_vendor_id == PCI_VENDOR_FLYVIDEO)
+                 || (subsystem_vendor_id == PCI_VENDOR_FLYVIDEO_2) ) {
                     bktr->card = cards[ (card = CARD_FLYVIDEO) ];
 		    bktr->card.eepromAddr = eeprom_i2c_address;
 		    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
                     goto checkTuner;
                 }
 
-                if (subsystem_vendor_id == VENDOR_STB) {
+                if (subsystem_vendor_id == PCI_VENDOR_STB) {
                     bktr->card = cards[ (card = CARD_STB) ];
 		    bktr->card.eepromAddr = eeprom_i2c_address;
 		    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
                     goto checkTuner;
                 }
 
-                if (subsystem_vendor_id == VENDOR_ASKEY_COMP) {
+                if (subsystem_vendor_id == PCI_VENDOR_ASKEY) {
                     bktr->card = cards[ (card = CARD_ASKEY_DYNALINK_MAGIC_TVIEW) ];
 		    bktr->card.eepromAddr = eeprom_i2c_address;
 		    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
                     goto checkTuner;
                 }
 
-                if (subsystem_vendor_id == VENDOR_LEADTEK) {
+                if (subsystem_vendor_id == PCI_VENDOR_LEADTEK_ALT) {
                     bktr->card = cards[ (card = CARD_LEADTEK) ];
+		    bktr->card.eepromAddr = eeprom_i2c_address;
+		    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
+                    goto checkTuner;
+                }
+
+		if (subsystem_vendor_id == PCI_VENDOR_PINNACLE_ALT) {
+                    bktr->card = cards[ (card = CARD_MIRO) ];
 		    bktr->card.eepromAddr = eeprom_i2c_address;
 		    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
                     goto checkTuner;
@@ -874,7 +898,7 @@ checkTuner:
  0x29 Temic 4006FN5         BG/I/DK
  0x2a Temic 4009FR5         BG FM
  0x2b Temic 4046FM5         B/G, I, D/K, L/L'
- 0x2c Temic 4009FN5         B/G, I, D/K, FM (no demod)
+ 0x2c Temic 4009FN5         B/G, I, D/K, FM (no demod)  PHILIPS_PALI
  0x2d Philips TD1536D_FH_44 MN/ATSCDigital DUAL INPUT
 	    */
 
@@ -928,6 +952,7 @@ checkTuner:
 	          case 0xb:
 	          case 0x1d:
 	          case 0x23:
+	          case 0x2c:
 		    select_tuner( bktr, PHILIPS_PALI );
 		    goto checkDBX;
 
