@@ -1,7 +1,8 @@
 #	from: @(#)Makefile	5.8 (Berkeley) 7/28/90
-#	$NetBSD: Makefile,v 1.7 1998/11/01 03:51:16 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 1999/01/17 20:02:29 eeh Exp $
 
-.if ${MACHINE} == "sun3" || ${MACHINE} == "sun3x" || ${MACHINE} == "sparc"
+.if ${MACHINE} == "sun3" || ${MACHINE} == "sun3x" || ${MACHINE} == "sparc" \
+	|| ${MACHINE} == "sparc64"
 PROG=	eeprom
 
 YPREFIX=getdate_
@@ -11,7 +12,7 @@ BINMODE=2555
 
 SRCS=	eehandlers.c getdate.y main.c
 
-.if ${MACHINE} == "sparc"
+.if ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
 SRCS+=	ophandlers.c
 DPADD=	${LIBKVM}
 LDADD=	-lkvm
