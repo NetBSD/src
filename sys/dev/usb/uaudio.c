@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.51 2002/03/12 15:12:03 kent Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.52 2002/03/15 17:20:14 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.51 2002/03/12 15:12:03 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.52 2002/03/15 17:20:14 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2381,39 +2381,54 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 		enc = p->encoding;
 		switch (enc) {
 		case AUDIO_ENCODING_SLINEAR_BE:
-			if (p->precision == 16) {
+			/* FALLTHROUGH */
+		case AUDIO_ENCODING_SLINEAR_LE:
+			if (enc == AUDIO_ENCODING_SLINEAR_BE
+			    && p->precision == 16 && (flags & HAS_16)) {
 				swcode = swap_bytes;
 				enc = AUDIO_ENCODING_SLINEAR_LE;
-			} else if (p->precision == 8 && !(flags & HAS_8)) {
-				swcode = change_sign8;
-				enc = AUDIO_ENCODING_ULINEAR_LE;
-			}
-			break;
-		case AUDIO_ENCODING_SLINEAR_LE:
-			if (p->precision == 8 && !(flags & HAS_8)) {
-				swcode = change_sign8;
-				enc = AUDIO_ENCODING_ULINEAR_LE;
+			} else if (p->precision == 8) {
+				if (flags & HAS_8) {
+					/* No conversion */
+				} else if (flags & HAS_8U) {
+					swcode = change_sign8;
+					enc = AUDIO_ENCODING_ULINEAR_LE;
+				} else if (flags & HAS_16) {
+					factor = 2;
+					p->hw_precision = 16;
+					if (mode == AUMODE_PLAY)
+						swcode = linear8_to_linear16_le;
+					else
+						swcode = linear16_to_linear8_le;
+				}
 			}
 			break;
 		case AUDIO_ENCODING_ULINEAR_BE:
+			/* FALLTHROUGH */
+		case AUDIO_ENCODING_ULINEAR_LE:
 			if (p->precision == 16) {
-				if (mode == AUMODE_PLAY)
+				if (enc == AUDIO_ENCODING_ULINEAR_LE)
+					swcode = change_sign16_le;
+				else if (mode == AUMODE_PLAY)
 					swcode = swap_bytes_change_sign16_le;
 				else
 					swcode = change_sign16_swap_bytes_le;
 				enc = AUDIO_ENCODING_SLINEAR_LE;
-			} else if (p->precision == 8 && !(flags & HAS_8U)) {
-				swcode = change_sign8;
-				enc = AUDIO_ENCODING_SLINEAR_LE;
-			}
-			break;
-		case AUDIO_ENCODING_ULINEAR_LE:
-			if (p->precision == 16) {
-				swcode = change_sign16_le;
-				enc = AUDIO_ENCODING_SLINEAR_LE;
-			} else if (p->precision == 8 && !(flags & HAS_8U)) {
-				swcode = change_sign8;
-				enc = AUDIO_ENCODING_SLINEAR_LE;
+			} else if (p->precision == 8) {
+				if (flags & HAS_8U) {
+					/* No conversion */
+				} else if (flags & HAS_8) {
+					swcode = change_sign8;
+					enc = AUDIO_ENCODING_SLINEAR_LE;
+				} else if (flags & HAS_16) {
+					factor = 2;
+					p->hw_precision = 16;
+					enc = AUDIO_ENCODING_SLINEAR_LE;
+					if (mode == AUMODE_PLAY)
+						swcode = ulinear8_to_slinear16_le;
+					else
+						swcode = slinear16_to_ulinear8_le;
+				}
 			}
 			break;
 		case AUDIO_ENCODING_ULAW:
