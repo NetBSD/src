@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.1 2000/11/26 17:44:04 ad Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.2 2000/12/03 13:03:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,8 +70,10 @@ struct ld_softc {
 #define	LDF_LKWANTED	0x04		/* lock wanted */
 #define	LDF_WLABEL	0x08		/* label is writable */
 #define	LDF_LABELLING	0x10		/* writing label */
+#define	LDF_DRAIN	0x20		/* detach pending */
 
 void	ldattach(struct ld_softc *);
+void	lddetach(struct ld_softc *);
 void	lddone(struct ld_softc *, struct buf *);
 
 #endif	/* !_DEV_LD_LDVAR_H_ */
