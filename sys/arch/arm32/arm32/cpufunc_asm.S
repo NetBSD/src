@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm.S,v 1.3 1997/10/14 10:07:34 mark Exp $	*/
+/*	$NetBSD: cpufunc_asm.S,v 1.4 1997/11/06 00:35:41 mark Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -118,7 +118,8 @@ ENTRY(cpufunc_control)
 	bic	r2, r3, r0		/* Clear bits */
 	eor     r2, r2, r1		/* XOR bits */
 
-	mcr	15, 0, r2, c1, c0, 0	/* Write new control register */
+	teq	r2, r3			/* Only write if there is a change */
+	mcrne	15, 0, r2, c1, c0, 0	/* Write new control register */
 	mov	r0, r3			/* Return old value */
 	mov	pc, lr
 
