@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sh3.c,v 1.3 2000/06/29 06:34:26 mrg Exp $	*/
+/*	$NetBSD: kvm_sh3.c,v 1.4 2001/08/05 03:33:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sh3.c,v 1.3 2000/06/29 06:34:26 mrg Exp $");
+__RCSID("$NetBSD: kvm_sh3.c,v 1.4 2001/08/05 03:33:15 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,6 +68,7 @@ __RCSID("$NetBSD: kvm_sh3.c,v 1.3 2000/06/29 06:34:26 mrg Exp $");
 #include "kvm_private.h"
 
 #include <machine/pte.h>
+#include <machine/vmparam.h>
 
 #ifndef btop
 #define	btop(x)		(((unsigned)(x)) >> PGSHIFT)	/* XXX */
