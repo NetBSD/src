@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.50 2001/03/12 16:48:13 atatat Exp $
+#	$NetBSD: security,v 1.51 2001/03/15 02:23:47 hubertf Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -708,12 +708,6 @@ if [ -n "$CHANGELIST" ]; then
 			fi
 		fi
 	done
-fi
-
-# run skeyaudit to inform users of ready to expire S/Keys
-#
-if checkyesno run_skeyaudit; then
-	skeyaudit
 fi
 
 if [ -f /etc/security.local ]; then
