@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.2.2.2 2002/01/10 19:38:25 thorpej Exp $	*/
+/*	$NetBSD: console.c,v 1.2.2.3 2002/06/17 19:49:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -103,9 +103,9 @@ static int want_switch=-1;
  */
 
 int	physcon_switch	__P((u_int /*number*/));
-void	physconstart	__P((struct tty */*tp*/));
+void	physconstart	__P((struct tty *));
 static	struct vconsole *vconsole_spawn	__P((dev_t , struct vconsole *));
-int	physconparam	__P((struct tty */*tp*/, struct termios */*t*/));
+int	physconparam	__P((struct tty *, struct termios *));
 int	physcon_switchup __P((void));
 int	physcon_switchdown	__P((void));
 
@@ -529,6 +529,22 @@ physconpoll(dev, events, p)
 	}
  
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
+}
+
+/* XXXLUKEM (jdolecek) kqueue hooks not tested */
+int
+physconkqfilter(dev, kn)
+	dev_t dev;
+	struct knote *kn;
+{
+	register struct tty *tp;
+
+	tp = find_tp(dev);
+	
+	if (tp == NULL)
+		return (0);
+
+	return (ttykqfilter(dev, kn));
 }
 
 struct tty *
