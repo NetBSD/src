@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.112.2.7 2001/11/14 19:16:37 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.112.2.8 2001/11/17 00:32:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.7 2001/11/14 19:16:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.8 2001/11/17 00:32:23 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -71,6 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.7 2001/11/14 19:16:37 nathanw E
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/ucontext.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -87,6 +89,7 @@ static int	build_corename(struct proc *, char [MAXPATHLEN]);
 sigset_t	contsigmask, stopsigmask, sigcantmask;
 
 struct pool	sigacts_pool;	/* memory pool for sigacts structures */
+struct pool	siginfo_pool;	/* memory pool for siginfo structures */
 
 int	(*coredump32_hook)(struct proc *p, struct vnode *vp);
 
@@ -110,6 +113,9 @@ signal_init(void)
 
 	pool_init(&sigacts_pool, sizeof(struct sigacts), 0, 0, 0, "sigapl",
 	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_SUBPROC);
+	pool_init(&siginfo_pool, sizeof(siginfo_t), 0, 0, 0, "siginfo",
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_SUBPROC);
+
 }
 
 /*
@@ -705,7 +711,7 @@ trapsignal(struct lwp *l, int signum, u_long code)
 			    SIGACTION_PS(ps, signum).sa_handler,
 			    &p->p_sigctx.ps_sigmask, code);
 #endif
-		(*p->p_emul->e_sendsig)(SIGACTION_PS(ps, signum).sa_handler,
+		psendsig(l, SIGACTION_PS(ps, signum).sa_handler,
 		    signum, &p->p_sigctx.ps_sigmask, code);
 		(void) splsched();	/* XXXSMP */
 		sigplusset(&SIGACTION_PS(ps, signum).sa_mask,
@@ -987,6 +993,31 @@ psignal1(struct proc *p, int signum,
 		SCHED_UNLOCK(s);
 }
 
+void
+psendsig(struct lwp *l, sig_t catcher, int sig, sigset_t *mask, u_long code)
+{
+	struct proc *p = l->l_proc;
+	struct lwp *le, *li;
+	siginfo_t *si;	
+
+	if (p->p_flag & P_SA) {
+		si = pool_get(&siginfo_pool, PR_WAITOK);
+		si->si_signo = sig;
+		si->si_errno = 0;
+		si->si_code = code;
+		le = li = NULL;
+		if (code)
+			le = l;
+		else
+			li = l;
+
+		sa_upcall(l, SA_UPCALL_SIGNAL, le, li, 
+			    sizeof(siginfo_t), si);
+		return;
+	}
+
+	(*p->p_emul->e_sendsig)(catcher, sig, mask, code);
+}
 
 static __inline int firstsig(const sigset_t *);
 
@@ -1347,7 +1378,7 @@ postsig(int signum)
 			p->p_sigctx.ps_code = 0;
 			p->p_sigctx.ps_sig = 0;
 		}
-		(*p->p_emul->e_sendsig)(action, signum, returnmask, code);
+		psendsig(l, action, signum, returnmask, code);
 		(void) splsched();	/* XXXSMP */
 		sigplusset(&SIGACTION_PS(ps, signum).sa_mask,
 		    &p->p_sigctx.ps_sigmask);
