@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.2 1997/04/16 20:50:46 thorpej Exp $	*/
+/*	$NetBSD: crt0.c,v 1.3 1997/04/17 06:11:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -103,7 +103,7 @@ extern unsigned char _etext, _eprol;
  * last argument, ps_strings, is a NetBSD extension.
  */
 void
-__start(argc, argv, envp, obj, cleanup, ps_strings)
+_start(argc, argv, envp, obj, cleanup, ps_strings)
 	int argc;
 	char **argv, **envp;
 	const Obj_Entry *obj;			/* from shared loader */
