@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.16 2003/11/05 13:51:29 fvdl Exp $
+# $NetBSD: GENERIC,v 1.17 2003/11/08 21:38:18 fvdl Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.16 $"
+#ident 		"GENERIC-$Revision: 1.17 $"
 
 maxusers	32		# estimated number of users
 
@@ -62,6 +62,7 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=2048	# 2048 pages is the default
+options 	P1003_1B_SEMAPHORE
 
 options 	LKM		# loadable kernel modules
 
