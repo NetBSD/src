@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.3 2003/10/06 05:30:21 matt Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.4 2004/07/18 22:38:33 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #include <machine/psl.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: __setjmp14.S,v 1.3 2003/10/06 05:30:21 matt Exp $")
+	RCSID("$NetBSD: __setjmp14.S,v 1.4 2004/07/18 22:38:33 chs Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -134,42 +134,5 @@ ENTRY(__setjmp14,0)
 	bv	%r0(%rp)
 	copy	%r0, %ret0
 EXIT(__setjmp14)
-
-ENTRY(__longjmp14,0)
-	/* Finish our stack frame. */
-	stw	%rp, HPPA_FRAME_CRP(%sp)
-	stw	%arg0, HPPA_FRAME_ARG(0)(%sp)
-
-	ldw	8(%arg0), %r1		; ensure non-zero SP
-	combt,=,n	%r0, %r1, botch	; oops!
-	add,<>	%r0, %arg1, %ret0	; ensure return value non-zero
-	ldi	1, %ret0
-
-	/* restore callee-saved registers */
-	ldo	56(%arg0), %r1
-	ldwm	4(%r1), %r3
-	ldwm	4(%r1), %r4
-	ldwm	4(%r1), %r5
-	ldwm	4(%r1), %r6
-	ldwm	4(%r1), %r7
-	ldwm	4(%r1), %r8
-	ldwm	4(%r1), %r9
-	ldwm	4(%r1), %r10
-	ldwm	4(%r1), %r11
-	ldwm	4(%r1), %r12
-	ldwm	4(%r1), %r13
-	ldwm	4(%r1), %r14
-	ldwm	4(%r1), %r15
-	ldwm	4(%r1), %r16
-	ldwm	4(%r1), %r17
-	ldwm	4(%r1), %r18
-
-	/* let sigreturn finish for us */
-	bl	__sigreturn14, %rp
-	nop
-botch:
-	bl	longjmperror, %rp
-	nop
-EXIT(__longjmp14)
 
 	.end
