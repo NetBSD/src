@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ntpd,v 1.4 2002/01/18 10:51:30 lukem Exp $
+# $NetBSD: ntpd,v 1.5 2002/03/22 04:16:39 lukem Exp $
 #
 
 # PROVIDE: ntpd
@@ -38,7 +38,7 @@ ntpd_precmd()
 
 	#	Change run_rc_commands()'s internal copy of $ntpd_flags
 	#
-	_flags="-u ntpd:ntpd -i ${ntpd_chrootdir} $_flags"
+	rc_flags="-u ntpd:ntpd -i ${ntpd_chrootdir} $rc_flags"
 }
 
 load_rc_config $name
