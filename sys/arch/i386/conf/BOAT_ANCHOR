@@ -1,7 +1,7 @@
 #
 #	BOAT_ANCHOR -- kernel for the 386-20 the gang uses for testing
 #
-#	$Id: BOAT_ANCHOR,v 1.15 1993/05/26 10:15:05 deraadt Exp $
+#	$Id: BOAT_ANCHOR,v 1.16 1993/05/26 12:48:35 cgd Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -16,6 +16,7 @@ options		XSERVER,UCONSOLE
 options		KERNFS,FDESC,PCFS
 options		KTRACE
 options		DDB
+options		FIFO
 
 options		ACCOUNTING
 
