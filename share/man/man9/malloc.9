@@ -1,4 +1,4 @@
-.\"	$NetBSD: malloc.9,v 1.12 1999/11/18 18:12:54 kristerw Exp $
+.\"	$NetBSD: malloc.9,v 1.13 2000/12/24 02:52:53 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -115,7 +115,7 @@ The following types are currently defined:
 .It Dv M_FREE
 Should be on free list.
 .It Dv M_MBUF
-Mbuf  memory.
+Mbuf memory.
 .It Dv M_DEVBUF
 Device driver memory.
 .It Dv M_SOCKET
@@ -300,7 +300,8 @@ Statistics based on the
 argument is maintained only if the kernel option
 .Dv KMEMSTATS
 is used when compiling the kernel
-.Po the default in current
+.Po
+the default in current 
 .Nx
 kernels
 .Pc
