@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isa.c,v 1.17 2002/01/07 21:47:04 thorpej Exp $	*/
+/*	$NetBSD: com_isa.c,v 1.17.6.1 2002/04/06 16:14:19 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.17 2002/01/07 21:47:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.17.6.1 2002/04/06 16:14:19 eeh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.17 2002/01/07 21:47:04 thorpej Exp $")
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+#include <sys/properties.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -107,7 +108,7 @@ void com_isa_attach __P((struct device *, struct device *, void *));
 void com_isa_cleanup __P((void *));
 
 struct cfattach com_isa_ca = {
-	sizeof(struct com_isa_softc), com_isa_probe, com_isa_attach
+	-sizeof(struct com_isa_softc), com_isa_probe, com_isa_attach
 };
 
 int
@@ -120,26 +121,27 @@ com_isa_probe(parent, match, aux)
 	bus_space_handle_t ioh;
 	int iobase;
 	int rv = 1;
-	struct isa_attach_args *ia = aux;
+	struct device *self = (struct device *)aux;
+	struct isa_attach_args *ia = DEV_PRIVATE(self);
 
-	if (ia->ia_nio < 1)
+	if (dev_getprop(self, "PNP-name", NULL, 0, NULL, 0) != -1)
 		return (0);
-	if (ia->ia_nirq < 1)
+	if (dev_getprop(self, "PNP-compat", NULL, 0, NULL, 0) != -1)
 		return (0);
+	if (ISA_DIRECT_CONFIG(ia)) {
+		printf("com_isa: direct config -- how did this happen?\n");
+		return (0);
+	}
 
-	if (ISA_DIRECT_CONFIG(ia))
+	if (dev_getprop(parent, "io-tag", &iot, sizeof(iot), NULL, 0) !=
+		sizeof(iot))
 		return (0);
-
-	/* Disallow wildcarded i/o address. */
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (dev_getprop(self, "port", &iobase, sizeof(iobase), NULL, 0) !=
+		sizeof(iobase))
 		return (0);
-
 	/* Don't allow wildcarded IRQ. */
-	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
+	if (dev_getprop(self, "irq", NULL, 0, NULL, 0) < sizeof(int))
 		return (0);
-
-	iot = ia->ia_iot;
-	iobase = ia->ia_io[0].ir_addr;
 
 	/* if it's in use as console, it's there. */
 	if (!com_is_console(iot, iobase, 0)) {
@@ -149,15 +151,14 @@ com_isa_probe(parent, match, aux)
 		rv = comprobe1(iot, ioh);
 		bus_space_unmap(iot, ioh, COM_NPORTS);
 	}
-
 	if (rv) {
-		ia->ia_nio = 1;
-		ia->ia_io[0].ir_size = COM_NPORTS;
+		int size = COM_NPORTS;
 
-		ia->ia_nirq = 1;
-
-		ia->ia_niomem = 0;
-		ia->ia_ndrq = 0;
+		dev_setprop(self, "size", &size, sizeof(size), PROP_INT, 0);
+		dev_delprop(self, "iomem");
+		dev_delprop(self, "iosiz");
+		dev_delprop(self, "drq");
+		dev_delprop(self, "drq2");
 	}
 	return (rv);
 }
@@ -176,8 +177,16 @@ com_isa_attach(parent, self, aux)
 	/*
 	 * We're living on an isa.
 	 */
-	iobase = sc->sc_iobase = ia->ia_io[0].ir_addr;
-	iot = sc->sc_iot = ia->ia_iot;
+	if (dev_getprop(parent, "io-tag", &iot, sizeof(iot), NULL, 0) !=
+		sizeof(iot))
+		panic("com_isa_attach: no io-tag");
+	if (dev_getprop(self, "port", &iobase, sizeof(iobase), NULL, 0) !=
+		sizeof(iobase))
+		panic("com_isa_attach: no port");
+
+	sc->sc_iobase = iobase;
+	sc->sc_iot = iot;
+
 	if (!com_is_console(iot, iobase, &sc->sc_ioh) &&
 	    bus_space_map(iot, iobase, COM_NPORTS, 0, &sc->sc_ioh)) {
 		printf(": can't map i/o space\n");
@@ -185,7 +194,9 @@ com_isa_attach(parent, self, aux)
 	}
 
 	sc->sc_frequency = COM_FREQ;
-	irq = ia->ia_irq[0].ir_irq;
+	if (dev_getprop(self, "irq", &irq, sizeof(irq), NULL, 0) !=
+		sizeof(iobase))
+		panic("com_isa_attach: no irq");
 
 	com_attach_subr(sc);
 
