@@ -68,7 +68,7 @@ static uschar	*lastre;	/* origin of last re */
 static	int setcnt;
 static	int poscnt;
 
-char	*patbeg;
+uschar	*patbeg;
 int	patlen;
 
 #define	NFA	20	/* cache this many dynamic fa's */
@@ -248,7 +248,7 @@ int hexstr(char **pp)	/* find and eval hex string at pp, return new p */
 
 #define isoctdigit(c) ((c) >= '0' && (c) <= '7')	/* multiple use of arg */
 
-int quoted(char **pp)	/* pick up next thing after a \\ */
+int quoted(uschar **pp)	/* pick up next thing after a \\ */
 			/* and increment *pp */
 {
 	char *p = *pp;
@@ -296,20 +296,20 @@ char *cclenter(const char *argp)	/* add a character class */
 	bp = buf;
 	for (i = 0; (c = *p++) != 0; ) {
 		if (c == '\\') {
-			c = quoted((char **) &p);
+			c = quoted(&p);
 		} else if (c == '-' && i > 0 && bp[-1] != 0) {
 			if (*p != 0) {
 				c = bp[-1];
 				c2 = *p++;
 				if (c2 == '\\')
-					c2 = quoted((char **) &p);
+					c2 = quoted(&p);
 				if (c > c2) {	/* empty; ignore */
 					bp--;
 					i--;
 					continue;
 				}
 				while (c < c2) {
-					if (!adjbuf((char **) &buf, &bufsz, bp-buf+2, 100, (char **) &bp, 0))
+					if (!adjbuf(&buf, &bufsz, bp-buf+2, 100, &bp, 0))
 						FATAL("out of space for character class [%.10s...] 2", p);
 					*bp++ = ++c;
 					i++;
@@ -317,7 +317,7 @@ char *cclenter(const char *argp)	/* add a character class */
 				continue;
 			}
 		}
-		if (!adjbuf((char **) &buf, &bufsz, bp-buf+2, 100, (char **) &bp, 0))
+		if (!adjbuf(&buf, &bufsz, bp-buf+2, 100, &bp, 0))
 			FATAL("out of space for character class [%.10s...] 3", p);
 		*bp++ = c;
 		i++;
@@ -483,7 +483,7 @@ int pmatch(fa *f, const char *p0)	/* longest match, for sub */
 	int i, k;
 
 	s = f->reset ? makeinit(f,1) : f->initstat;
-	patbeg = (char *) p;
+	patbeg = p;
 	patlen = -1;
 	do {
 		q = p;
@@ -758,7 +758,7 @@ int relex(void)		/* lexical analyzer for reparse */
 	case ')':
 		return c;
 	case '\\':
-		rlxval = quoted((char **) &prestr);
+		rlxval = quoted(&prestr);
 		return CHAR;
 	default:
 		rlxval = c;
@@ -774,7 +774,7 @@ int relex(void)		/* lexical analyzer for reparse */
 		else
 			cflag = 0;
 		n = 2 * strlen((const char *) prestr)+1;
-		if (!adjbuf((char **) &buf, &bufsz, n, n, (char **) &bp, 0))
+		if (!adjbuf(&buf, &bufsz, n, n, &bp, 0))
 			FATAL("out of space for reg expr %.10s...", lastre);
 		for (; ; ) {
 			if ((c = *prestr++) == '\\') {
@@ -793,7 +793,7 @@ int relex(void)		/* lexical analyzer for reparse */
 				    prestr[2 + cc->cc_namelen] == ']') {
 					prestr += cc->cc_namelen + 3;
 					for (i = 0; i < NCHARS; i++) {
-						if (!adjbuf((char **) &buf, &bufsz, bp-buf+1, 100, (char **) &bp, 0))
+						if (!adjbuf(&buf, &bufsz, bp-buf+1, 100, &bp, 0))
 						    FATAL("out of space for reg expr %.10s...", lastre);
 						if (cc->cc_func(i)) {
 							*bp++ = i;
