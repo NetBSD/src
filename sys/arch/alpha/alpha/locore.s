@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.22 1996/07/16 04:40:32 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.23 1996/08/20 23:18:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -561,7 +561,7 @@ LEAF(restorefpstate, 1)
 LEAF(savectx, 1)
 	br	pv, 1f
 1:	SETGP(pv)
-	stq	sp, U_PCB_HW_KSP(a0)		/* store sp */
+	stq	sp, U_PCB_HWPCB_KSP(a0)		/* store sp */
 	stq	s0, U_PCB_CONTEXT+(0 * 8)(a0)	/* store s0 - s6 */
 	stq	s1, U_PCB_CONTEXT+(1 * 8)(a0)
 	stq	s2, U_PCB_CONTEXT+(2 * 8)(a0)
@@ -614,18 +614,21 @@ LEAF(cpu_switch, 0)
 	SETGP(pv)
 	/* do an inline savectx(), to save old context */
 	ldq	a0, curproc
-	ldq	a0, P_ADDR(a0)
+	ldq	a1, P_ADDR(a0)
 	/* NOTE: ksp is stored by the swpctx */
-	stq	s0, U_PCB_CONTEXT+(0 * 8)(a0)	/* store s0 - s6 */
-	stq	s1, U_PCB_CONTEXT+(1 * 8)(a0)
-	stq	s2, U_PCB_CONTEXT+(2 * 8)(a0)
-	stq	s3, U_PCB_CONTEXT+(3 * 8)(a0)
-	stq	s4, U_PCB_CONTEXT+(4 * 8)(a0)
-	stq	s5, U_PCB_CONTEXT+(5 * 8)(a0)
-	stq	s6, U_PCB_CONTEXT+(6 * 8)(a0)
-	stq	ra, U_PCB_CONTEXT+(7 * 8)(a0)	/* store ra */
+	stq	s0, U_PCB_CONTEXT+(0 * 8)(a1)	/* store s0 - s6 */
+	stq	s1, U_PCB_CONTEXT+(1 * 8)(a1)
+	stq	s2, U_PCB_CONTEXT+(2 * 8)(a1)
+	stq	s3, U_PCB_CONTEXT+(3 * 8)(a1)
+	stq	s4, U_PCB_CONTEXT+(4 * 8)(a1)
+	stq	s5, U_PCB_CONTEXT+(5 * 8)(a1)
+	stq	s6, U_PCB_CONTEXT+(6 * 8)(a1)
+	stq	ra, U_PCB_CONTEXT+(7 * 8)(a1)	/* store ra */
 	call_pal PAL_OSF1_rdps			/* NOTE: doesn't kill a0 */
-	stq	v0, U_PCB_CONTEXT+(8 * 8)(a0)	/* store ps, for ipl */
+	stq	v0, U_PCB_CONTEXT+(8 * 8)(a1)	/* store ps, for ipl */
+
+	mov	a0, s0				/* save old curproc */
+	mov	a1, s1				/* save old U-area */
 
 	ldl	t0, whichqs			/* look for non-empty queue */
 	beq	t0, idle			/* and if none, go idle */
@@ -682,7 +685,7 @@ sw1:
 	ldq	t5, P_MD_PCBPADDR(t4)		/* t5 = p->p_md.md_pcbpaddr */
 	stq	t5, curpcb			/* and store it in curpcb */
 
-#ifdef OLD_PMAP
+#ifndef NEW_PMAP
 	/*
 	 * Do the context swap, and invalidate old TLB entries (XXX).
 	 * XXX should do the ASN thing, and therefore not have to invalidate.
@@ -691,13 +694,10 @@ sw1:
 	ldq	t2, VM_PMAP_STPTE(t2)		/* = p_vmspace.vm_pmap.pm_ste */
 	ldq	t3, Lev1map			/* and store pte into Lev1map */
 	stq	t2, USTP_OFFSET(t3)
-#endif /* OLD_PMAP */
 	mov	t5, a0				/* swap the context */
 	call_pal PAL_OSF1_swpctx
-#ifdef OLD_PMAP
 	CONST(-1, a0)				/* & invalidate old TLB ents */
 	call_pal PAL_OSF1_tbi
-#endif /* OLD_PMAP */
 
 	/*
 	 * Now running on the new u struct.
@@ -705,6 +705,34 @@ sw1:
 	 */
 	ldq	t0, curproc
 	ldq	t0, P_ADDR(t0)
+#else /* NEW_PMAP */
+	mov	t4, s2				/* save new curproc */
+	mov	t5, s3				/* save new pcbpaddr */
+	ldq	s4, P_ADDR(t4)			/* load/save new U-AREA */
+
+	ldq	a0, P_VMSPACE(s2)		/* p->p_vmspace */
+	lda	a1, U_PCB_HWPCB(s4)		/* &hardware PCB */
+	mov	zero, a2
+	lda	a0, VM_PMAP(a0)			/* &p->p_vmspace->vm_pmap */
+	CALL(pmap_activate)
+
+	mov	s3, a0				/* swap the context */
+	call_pal PAL_OSF1_swpctx
+	CONST(-2, a0)				/* & invalidate old TLB ents */
+	call_pal PAL_OSF1_tbi
+
+	ldq	a0, P_VMSPACE(s0)
+	lda	a1, U_PCB_HWPCB(s1)
+	mov	zero, a2
+	lda	a0, VM_PMAP(a0)
+	CALL(pmap_deactivate)
+
+	/*
+	 * Now running on the new u struct.
+	 * Restore registers and return.
+	 */
+	mov	s4, t0
+#endif /* NEW_PMAP */
 	/* NOTE: ksp is restored by the swpctx */
 	ldq	s0, U_PCB_CONTEXT+(0 * 8)(t0)		/* restore s0 - s6 */
 	ldq	s1, U_PCB_CONTEXT+(1 * 8)(t0)
@@ -748,29 +776,34 @@ LEAF(switch_exit, 1)
 	SETGP(pv)
 
 	/* save the exiting proc pointer */
-	mov	a0, s0
+	mov	a0, s2
 
 	/* Switch to proc0. */
 	lda	t4, proc0			/* t4 = &proc0 */
 	ldq	t5, P_MD_PCBPADDR(t4)		/* t5 = p->p_md.md_pcbpaddr */
 	stq	t5, curpcb			/* and store it in curpcb */
 
+#ifndef NEW_PMAP
+	mov	t4, s0
+	ldq	s1, P_ADDR(t4)
+#endif
+
 	/*
 	 * Do the context swap, and invalidate old TLB entries (XXX).
 	 * XXX should do the ASN thing, and therefore not have to invalidate.
 	 */
-#ifdef OLD_PMAP
+#ifndef NEW_PMAP
 	ldq	t2, P_VMSPACE(t4)		/* t2 = p->p_vmspace */
 	ldq	t2, VM_PMAP_STPTE(t2)		/* = p_vmspace.vm_pmap.pm_ste */
 	ldq	t3, Lev1map			/* and store pte into Lev1map */
 	stq	t2, USTP_OFFSET(t3)
-#endif /* OLD_PMAP */
+#endif /* NEW_PMAP */
 	mov	t5, a0				/* swap the context */
 	call_pal PAL_OSF1_swpctx
-#ifdef OLD_PMAP
+#ifndef NEW_PMAP
 	CONST(-1, a0)				/* & invalidate old TLB ents */
 	call_pal PAL_OSF1_tbi
-#endif /* OLD_PMAP */
+#endif /* NEW_PMAP */
 
 	/*
 	 * Now running as proc0, except for the value of 'curproc' and
@@ -779,11 +812,14 @@ LEAF(switch_exit, 1)
 
 	/* blow away the old user struct */
 	ldq	a0, kernel_map
-	ldq	a1, P_ADDR(s0)
+	ldq	a1, P_ADDR(s2)
 	CONST(UPAGES*NBPG, a2)
 	CALL(kmem_free)
 
 	/* and jump into the middle of cpu_switch. */
+#ifdef NEW_PMAP
+	/* XXX XXX LOSE */
+#endif
 	JMP(sw1)
 	END(switch_exit)
 
