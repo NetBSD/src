@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.214 2003/06/28 14:21:34 darrenr Exp $	*/
+/*	$NetBSD: com.c,v 1.215 2003/06/29 14:09:21 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.214 2003/06/28 14:21:34 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.215 2003/06/29 14:09:21 simonb Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -1024,7 +1024,7 @@ compoll(dev_t dev, int events, struct lwp *l)
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
  
-	return (*tp->t_linesw->l_poll)(tp, events, l);
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
