@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.62 2000/06/11 10:40:06 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.63 2000/06/15 19:49:37 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -178,6 +178,7 @@ static int booted_qe(struct device *, void *);
 static int booted_le(struct device *, void *);
 static int booted_ze(struct device *, void *);
 static int booted_de(struct device *, void *);
+static int booted_ni(struct device *, void *);
 #if NSD > 0 || NCD > 0
 static int booted_sd(struct device *, void *);
 #endif
@@ -196,6 +197,7 @@ int (*devreg[])(struct device *, void *) = {
 	booted_le,
 	booted_ze,
 	booted_de,
+	booted_ni,
 #if NSD > 0 || NCD > 0
 	booted_sd,
 #endif
@@ -253,6 +255,20 @@ ubtest(void *aux)
 		return 1;
 	return 0;
 }
+
+#if 1 /* NNI */
+#include <dev/bi/bivar.h>
+int
+booted_ni(struct device *dev, void *aux)
+{
+	struct bi_attach_args *ba = aux;
+
+	if (jmfr("ni", dev, BDEV_NI) || (kvtophys(ba->ba_ioh) != rpb.csrphy))
+		return 0;
+
+	return 1;
+}
+#endif /* NNI */
 
 #if 1 /* NDE */
 int
