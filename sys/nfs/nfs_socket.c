@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.50 1999/03/06 05:34:41 fair Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.51 1999/07/04 19:56:00 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -329,8 +329,25 @@ nfs_disconnect(nmp)
 		so = nmp->nm_so;
 		nmp->nm_so = (struct socket *)0;
 		soshutdown(so, 2);
+		if (nmp->nm_iflag & NFSMNT_DISMNT) {
+			/*
+			 * soshutdown() above should wake up the current
+			 * listener.
+			 * Now wake up those waiting for the recive lock, and
+			 * wait for them to go away unhappy, to prevent *nmp
+			 * from evaporating while they're sleeping.
+			 */
+			while (nmp->nm_waiters > 0) {
+				wakeup (&nmp->nm_iflag);
+				sleep(&nmp->nm_waiters, PVFS);
+			}
+		}
 		soclose(so);
 	}
+#ifdef DIAGNOSTIC
+	if (nmp->nm_waiters > 0)
+		panic("nfs_disconnect: waiters left after drain?\n");
+#endif
 }
 
 void
@@ -341,7 +358,7 @@ nfs_safedisconnect(nmp)
 
 	memset(&dummyreq, 0, sizeof(dummyreq));
 	dummyreq.r_nmp = nmp;
-	nfs_rcvlock(&dummyreq);
+	nfs_rcvlock(&dummyreq); /* XXX ignored error return */
 	nfs_disconnect(nmp);
 	nfs_rcvunlock(&nmp->nm_iflag);
 }
@@ -628,6 +645,8 @@ errout:
 				return (EINTR);
 		} while (error == EWOULDBLOCK);
 		len -= auio.uio_resid;
+		if (!error && *mp == NULL)
+			error = EPIPE;
 	}
 	if (error) {
 		m_freem(*mp);
@@ -672,10 +691,20 @@ nfs_reply(myrep)
 		/*
 		 * Get the next Rpc reply off the socket
 		 */
+		nmp->nm_waiters++;
 		error = nfs_receive(myrep, &nam, &mrep);
 		nfs_rcvunlock(&nmp->nm_iflag);
 		if (error) {
 
+			if (nmp->nm_iflag & NFSMNT_DISMNT) {
+				/*
+				 * Oops, we're going away now..
+				 */
+				nmp->nm_waiters--;
+				wakeup (&nmp->nm_waiters);
+				return error;
+			}
+			nmp->nm_waiters--;
 			/*
 			 * Ignore routing errors on connectionless protocols??
 			 */
@@ -690,6 +719,7 @@ nfs_reply(myrep)
 			}
 			return (error);
 		}
+		nmp->nm_waiters--;			
 		if (nam)
 			m_freem(nam);
 	
@@ -1466,9 +1496,13 @@ int
 nfs_rcvlock(rep)
 	register struct nfsreq *rep;
 {
-	register int *flagp = &rep->r_nmp->nm_iflag;
+	struct nfsmount *nmp = rep->r_nmp;
+	register int *flagp = &nmp->nm_iflag;
 	int slpflag, slptimeo = 0;
 
+	if (*flagp & NFSMNT_DISMNT)
+		return EIO;
+	
 	if (*flagp & NFSMNT_INT)
 		slpflag = PCATCH;
 	else
@@ -1477,8 +1511,14 @@ nfs_rcvlock(rep)
 		if (nfs_sigintr(rep->r_nmp, rep, rep->r_procp))
 			return (EINTR);
 		*flagp |= NFSMNT_WANTRCV;
+		nmp->nm_waiters++;
 		(void) tsleep((caddr_t)flagp, slpflag | (PZERO - 1), "nfsrcvlk",
 			slptimeo);
+		nmp->nm_waiters--;
+		if (*flagp & NFSMNT_DISMNT) {
+			wakeup(&nmp->nm_waiters);
+			return EIO;
+		}
 		/* If our reply was received while we were sleeping,
 		 * then just return without taking the lock to avoid a
 		 * situation where a single iod could 'capture' the
