@@ -61,7 +61,7 @@
 
 /* #undef HAVE_STPCPY */
 
-/* #undef ENABLE_NLS */
+#define ENABLE_NLS 1
 
 /* #undef HAVE_CATGETS */
 
