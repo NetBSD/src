@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_drv.c,v 1.7 1994/10/30 21:44:31 cgd Exp $	*/
+/*	$NetBSD: pcvt_drv.c,v 1.8 1994/11/04 01:00:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore,
@@ -99,7 +99,7 @@ static int pcvt_xmode_set(int on, struct proc *p); /* initialize for X mode */
 
 int
 #if PCVT_NETBSD > 9
-pcprobe(struct device *parent, struct device *self, void *aux)
+pcprobe(struct device *parent, void *match, void *aux)
 #else
 pcprobe(struct isa_device *dev)
 #endif

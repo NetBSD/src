@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_hdr.h,v 1.9 1994/10/30 21:44:36 cgd Exp $	*/
+/*	$NetBSD: pcvt_hdr.h,v 1.10 1994/11/04 01:00:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore
@@ -111,7 +111,7 @@
 #include "i386/isa/isa_device.h"
 #endif
 #include "i386/isa/icu.h"
-#include "i386/isa/isa.h"
+#include "i386/isa/isareg.h"
 
 #if PCVT_NETBSD > 9
 #include "dev/cons.h"
@@ -1225,8 +1225,8 @@ struct mousestat {
 
 #if PCVT_NETBSD > 9
 
-int pcprobe ();
-void pcattach ();
+int pcprobe (struct device *, void *, void *);
+void pcattach (struct device *, struct device *, void *);
 
 struct cfdriver vtcd = {
 	NULL, "vt", pcprobe, pcattach, DV_TTY, sizeof(struct device)
