@@ -45,6 +45,7 @@ static char sccsid[] = "@(#)nice.c	5.4 (Berkeley) 6/1/90";
 #include <sys/resource.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <string.h>
 
 #define	DEFNICE	10
 
@@ -55,11 +56,13 @@ main(argc, argv)
 {
 	extern int errno;
 	int niceness;
-	char *strerror();
+
+	if (!argv[1])
+		usage();
 
 	niceness = DEFNICE;
 	if (argv[1][0] == '-')
-		if (isdigit(argv[1][1])) {
+		if (isdigit(argv[1][1]) || argv[1][1] == '-') {
 			niceness = atoi(argv[1] + 1);
 			++argv;
 		}
@@ -80,8 +83,8 @@ main(argc, argv)
 		exit(1);
 	}
 	if (setpriority(PRIO_PROCESS, 0, niceness)) {
-		(void)fprintf(stderr,
-		    "nice: setpriority: %s\n", strerror(errno));
+		(void)fprintf(stderr, "nice: setpriority: %s\n",
+		    strerror(errno));
 		exit(1);
 	}
 	execvp(argv[1], &argv[1]);
