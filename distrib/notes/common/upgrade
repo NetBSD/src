@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.6 2000/10/10 12:24:27 lukem Exp $
+.\"	$NetBSD: upgrade,v 1.7 2000/10/29 12:32:24 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -78,13 +78,17 @@ To do the upgrade, you must have the boot floppy
 available.
 .\}
 You must also have at least the
-.Ic base No and Ic kern
+.Sy base
+and
+.Sy kern
 binary distribution sets available, so that you can upgrade with them,
 using one of the upgrade methods described above. Finally, you must
 have sufficient disk space available to install the new binaries.
 Since the old binaries are being overwritten in place, you only need
 space for the new binaries, which weren't previously on the system.
-If you have a few megabytes free on each of your root and
+If you have a few megabytes free on each of your root
+.Pq Pa /
+and
 .Pa /usr
 partitions, you should have enough space.
 .Pp
@@ -108,7 +112,7 @@ are backed up and merged with the new files. Getting the binary
 sets is done in the same manner as the installation procedure;
 refer to the installation part of the document
 for how to do this. Also, some sanity checks are done, i.e.
-filesystems are checked before unpacking the sets.
+file systems are checked before unpacking the sets.
 .Pp
 After a new kernel has been copied to your hard disk, your
 machine is a complete
@@ -122,8 +126,10 @@ If you've changed the contents of
 .Pa /dev
 by hand, you will need to be careful about this, but if
 not, you can just cd into
-.Pa /dev No , and run the command
-.Dl sh MAKEDEV all
+.Pa /dev ,
+and run the command
+.Pp
+.Dl # Ic "sh MAKEDEV all"
 .Pp
 You must also deal with certain changes in the formats of
 some of the configuration files. The most notable change is
@@ -132,7 +138,7 @@ that the options given to many of the file systems in
 have changed, and some of the file
 systems have changed names. To find out what the new options
 are, it's suggested that you read the manual page
-for the file systems' mount commands, for example
+for the file system's mount commands, for example
 .Xr mount_nfs 8
 for NFS.
 .Pp
