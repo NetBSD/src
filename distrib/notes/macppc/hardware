@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.22 2002/01/27 14:17:10 tsutsui Exp $
+.\"$NetBSD: hardware,v 1.23 2002/04/22 00:35:50 mbw Exp $
 .
 Currently,
 .Nx*M
@@ -57,6 +57,8 @@ version:
 Apple PowerMacintosh (7300, 7500 (with CPU upgrade), 7600, 8500, 8600, 9500,
 and 9600)
 .It
+Apple Workgroup Server 8550
+.It
 Power Computing (PowerBase, PowerCenter, PowerCenter Pro, PowerCurve,
 PowerTower, PowerTower Pro, and PowerWave)
 .It
@@ -111,21 +113,13 @@ iMac (Summer 2000), and iMac (Early 2001)
 .It
 Apple PowerBook (G3 Series (bronze keyboard) and G3 (FireWire))
 .It
-Apple PowerBook G4 (Titanium)
+Apple PowerBook G4 (Titanium) and PowerBook G4 (Gigabit Ethernet)
 .It
 Apple PowerMacintosh G3 (Blue and White)
 .It
 Apple PowerMacintosh (G4 (PCI), G4 (AGP), G4 (Gigabit Ethernet), G4
-(Digital Audio), and G4 Cube)
+(Digital Audio), G4 (Quicksilver), and G4 Cube)
 .bullet)
-.(Note
-The PowerBook (FireWire) and PowerBook G4 (Titanium) models that have
-BootROM version 4.1.8 are not supported by \*V.
-You will need to use a kernel from the -current branch of
-.Nx .
-See
-.Lk http://www.netbsd.org/Documentation/kernel
-.Note)
 .(Note
 Some iMac (Bondi Blue) and PowerMacintosh G3 (Blue and
 White) machines have keyboard problems.  There is a workaround for the
@@ -161,11 +155,11 @@ Systems with a Motorola 68k microprocessor (these systems are supported by
 Systems upgraded from any of the above (unless the motherboard is replaced as
 part of the upgrade)
 .It
-Systems released in the second half of 2001 and later (future releases of
+Systems released in the second half of 2002 and later (future releases of
 .Nx*M
 will support these systems)
 .It
-Systems released before the second half of 2001, but not listed
+Systems released before the second half of 2002, but not listed
 above.  These models might work, but have not been tested as of the
 release of
 .Nx \*V .
@@ -256,6 +250,15 @@ and
 .Pc
 .bullet)
 .It
+Wireless
+.(bullet -compact
+On-board AirPort or AirMac 802.11b
+.Pq Em wi
+.It
+AT&T/Lucent WaveLan IEEE PCMCIA card
+.Pq Em wi
+.bullet)
+.It
 SCSI
 .(bullet -compact
 On-board NCR 53c94 SCSI controller
@@ -279,6 +282,14 @@ AdvanSys 1200[A,B], 9xx[U,UA] SCSI controller
 .It
 AMD 53c974
 .Pq Em pcscp
+.It
+Apple 53c875 Ultra Wide SCSI (shipped in some Beige G3 models)
+.Pq Em ncr No or Em siop
+.(Note
+This card may need a firmware update to boot NetBSD.  Use the 
+Mac OS X SCSI Card Updater from
+.Lk http://docs.info.apple.com/article.html?artnum=25176
+.Note)
 .It
 NCR/Symbios 53C8xx
 .Pq Em ncr No or Em siop
@@ -397,8 +408,8 @@ Some USB, PCI, and Cardbus serial ports should work, but no one has tried them
 .It
 USB devices
 .(bullet -compact
-Most MI USB devices should work (such as disks, printers, input devices, and
-ethernet interfaces)
+Most MI USB devices should work (such as disks, printers, input devices, 
+SCSI adapters, and ethernet interfaces)
 .Lk http://www.netbsd.org/Hardware/usb.html
 .bullet)
 .It
@@ -453,12 +464,6 @@ can boot with more than one processor present, it will not use the additional
 CPUs
 .Note)
 .Pp
-.It
-AirPort/AirMac 802.11b wireless interface
-.(Note
-This interface is supported in the -current branch of
-.Nx .
-.Note)
 .It
 On-board video capture
 .bullet)
