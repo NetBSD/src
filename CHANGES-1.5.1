@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.74 2001/05/27 20:06:41 jhawk Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.75 2001/05/28 12:38:22 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -5012,3 +5012,18 @@ distrib/notes/macppc/prep			1.18
 distrib/notes/i386/hardware			patch
 
   We do not have 3ware Escalade driver for 1.5.1.
+
+crypto/dist/ssh/primes				1.1-1.2 (new)
+etc/changelist					1.21
+usr.bin/ssh/Makefile				1.12
+distrib/sets/lists/etc/mi			1.85 via patch
+
+  Install /etc/primes, which is required for Diffie-Hellman Group
+  Exchange operation.
+
+share/examples/supfiles/sup.uk.netbsd.org	delete
+share/examples/supfiles/Makefile		1.9
+distrib/sets/lists/misc/mi			1.66 via patch
+distrib/sets/lists/misc/obsolete.mi		1.15
+
+  Delete old sup.uk.netbsd.org entry.  Fixes PR#10884.
