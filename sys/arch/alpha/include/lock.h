@@ -1,4 +1,4 @@
-/* $NetBSD: lock.h,v 1.7 2000/06/07 01:49:13 simonb Exp $ */
+/* $NetBSD: lock.h,v 1.8 2000/06/08 03:10:06 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -48,15 +48,6 @@ typedef	__volatile int		__cpu_simple_lock_t;
 
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0
-
-static __inline void __cpu_simple_lock_init __P((__cpu_simple_lock_t *))
-	__attribute__((__unused__));
-static __inline void __cpu_simple_lock __P((__cpu_simple_lock_t *))
-	__attribute__((__unused__));
-static __inline int __cpu_simple_lock_try __P((__cpu_simple_lock_t *))
-	__attribute__((__unused__));
-static __inline void __cpu_simple_unlock __P((__cpu_simple_lock_t *))
-	__attribute__((__unused__));
 
 static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)

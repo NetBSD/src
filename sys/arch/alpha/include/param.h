@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.27 2000/02/11 19:25:13 thorpej Exp $ */
+/* $NetBSD: param.h,v 1.28 2000/06/08 03:10:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -159,15 +159,15 @@
 #ifdef _KERNEL
 #ifndef _LOCORE
 
-void	delay __P((unsigned long));
+void	delay(unsigned long);
 #define	DELAY(n)	delay(n)
 
 /* XXX THE FOLLOWING PROTOTYPE BELONGS IN INTR.H */
-int spl0 __P((void));					/* drop ipl to zero */
+int spl0(void);						/* drop ipl to zero */
 /* XXX END INTR.H */
 
 /* XXX THE FOLLOWING PROTOTYPE SHOULD BE A BUS.H INTERFACE */
-paddr_t alpha_XXX_dmamap __P((vaddr_t));
+paddr_t alpha_XXX_dmamap(vaddr_t);
 /* XXX END BUS.H */
 
 #endif

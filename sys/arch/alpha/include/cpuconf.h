@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.11 2000/06/03 20:47:41 thorpej Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.12 2000/06/08 03:10:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -65,13 +65,13 @@ struct platform {
 	 *	clockintr	-	Clock Interrupt Handler
 	 *	mcheck_handler	-	Platform Specific Machine Check Handler
 	 */
-	void	(*cons_init) __P((void));
-	void	(*device_register) __P((struct device *, void *));
-	void	(*iointr) __P((void *, unsigned long));
-	void	(*clockintr) __P((struct clockframe *));
-	void	(*mcheck_handler) __P((unsigned long, struct trapframe *,
-		unsigned long, unsigned long));
-	void	(*powerdown) __P((void));
+	void	(*cons_init)(void);
+	void	(*device_register)(struct device *, void *);
+	void	(*iointr)(void *, unsigned long);
+	void	(*clockintr)(struct clockframe *);
+	void	(*mcheck_handler)(unsigned long, struct trapframe *,
+		    unsigned long, unsigned long);
+	void	(*powerdown)(void);
 };
 
 /*
@@ -89,7 +89,7 @@ struct platform {
  */
 
 struct cpuinit {
-	void	(*init) __P((void));
+	void	(*init)(void);
 	u_int64_t systype;
 	const char *option;
 };
@@ -100,8 +100,8 @@ struct cpuinit {
 #define	cpu_init(st, fn, opt)	{ fn, st, opt }
 
 extern struct platform platform;
-extern const struct cpuinit *platform_lookup __P((int));
-extern void platform_not_configured __P((void));
-extern void platform_not_supported __P((void));
+extern const struct cpuinit *platform_lookup(int);
+extern void platform_not_configured(void);
+extern void platform_not_supported(void);
 #endif /* _KERNEL */
 #endif /* ! _ALPHA_CPUCONF_H_ */
