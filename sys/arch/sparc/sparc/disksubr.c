@@ -1,5 +1,5 @@
 /*
- *	$Id: disksubr.c,v 1.1 1994/09/17 23:28:55 deraadt Exp $
+ *	$Id: disksubr.c,v 1.2 1994/10/02 21:51:37 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -30,7 +30,7 @@ dk_establish(dk, dev)
 	struct dkdevice *dk;
 	struct device *dev;
 {
-	/* sd -> scsibus -> esp */
+	/* XXX: sd -> scsibus -> esp */
 	struct bootpath *bp = ((struct esp_softc *)dev->dv_parent->dv_parent)->sc_bp;
 	char name[10];
 
