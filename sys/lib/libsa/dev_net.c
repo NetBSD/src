@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.15 1999/03/26 15:41:38 dbj Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.16 1999/05/07 14:49:53 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -60,6 +60,8 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
+
+#include <lib/libkern/libkern.h>
 
 #include "stand.h"
 #include "net.h"
@@ -250,8 +252,7 @@ net_getparams(sock)
 		printf("nfs_open: gateway bootparam missing\n");
 	else {
 		/* Got it!  Parse the netmask. */
-		/* XXX - Use inet_addr() from libkern! */
-		smask = ip_convertaddr(buf);
+		smask = inet_addr(buf);
 	}
 	if (smask) {
 		netmask = smask;

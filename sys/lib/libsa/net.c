@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.22 1999/04/12 01:05:01 ross Exp $	*/
+/*	$NetBSD: net.c,v 1.23 1999/05/07 14:49:55 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -61,8 +61,6 @@
 #include "stand.h"
 #include "net.h"
 
-
-static char	*number __P((char *, int *));
 
 /* Caller must leave room for ethernet, ip and udp headers in front!! */
 ssize_t
@@ -347,83 +345,4 @@ sendrecv(d, sproc, sbuf, ssize, rproc, rbuf, rsize)
 		tleft -= t - tlast;
 		tlast = t;
 	}
-}
-
-char *
-inet_ntoa(ia)
-	struct in_addr ia;
-{
-	return (intoa(ia.s_addr));
-}
-
-/* Similar to inet_ntoa() */
-char *
-intoa(addr)
-	register n_long addr;
-{
-	register char *cp;
-	register u_int byte;
-	register int n;
-	static char buf[17];	/* strlen(".255.255.255.255") + 1 */
-
-	NTOHL(addr);
-	cp = &buf[sizeof buf];
-	*--cp = '\0';
-
-	n = 4;
-	do {
-		byte = addr & 0xff;
-		*--cp = byte % 10 + '0';
-		byte /= 10;
-		if (byte > 0) {
-			*--cp = byte % 10 + '0';
-			byte /= 10;
-			if (byte > 0)
-				*--cp = byte + '0';
-		}
-		*--cp = '.';
-		addr >>= 8;
-	} while (--n > 0);
-
-	return (cp+1);
-}
-
-
-static char *
-number(s, n)
-	char *s;
-	int *n;
-{
-	for (*n = 0; isdigit(*s); s++)
-		*n = (*n * 10) + *s - '0';
-	return s;
-}
-
-n_long
-ip_convertaddr(p)
-	char *p;
-{
-#define IP_ANYADDR	0
-	n_long addr = 0, n;
-
-	if (p == (char *)0 || *p == '\0')
-		return IP_ANYADDR;
-	p = number(p, &n);
-	addr |= (n << 24) & 0xff000000;
-	if (*p == '\0' || *p++ != '.')
-		return IP_ANYADDR;
-	p = number(p, &n);
-	addr |= (n << 16) & 0xff0000;
-	if (*p == '\0' || *p++ != '.')
-		return IP_ANYADDR;
-	p = number(p, &n);
-	addr |= (n << 8) & 0xff00;
-	if (*p == '\0' || *p++ != '.')
-		return IP_ANYADDR;
-	p = number(p, &n);
-	addr |= n & 0xff;
-	if (*p != '\0')
-		return IP_ANYADDR;
-
-	return htonl(addr);
 }
