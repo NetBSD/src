@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.116 1999/05/07 00:56:46 matt Exp $
+$NetBSD: pcidevs,v 1.117 1999/05/07 15:38:40 drochner Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -493,6 +493,7 @@ vendor LINEARSYS	0x1254	Linear Systems
 vendor ASIX		0x125b	ASIX Electronics
 vendor AURORA		0x125c	Aurora Technologies
 vendor ESSTECH		0x125d	ESS Technology Inc
+vendor SILMOTION	0x126f	Silicon Motion
 vendor ENSONIQ		0x1274	Ensoniq
 vendor NETAPP		0x1275	Network Appliance
 vendor ROCKWELL		0x127a	Rockwell Semiconductor Systems
@@ -657,6 +658,7 @@ product AVM FRITZ_CARD		0x0a00	Fritz! Card ISDN Interface
 
 /* Bit3 products */
 product BIT3 PCIVME617		0x0001	PCI-VME Interface Mod. 617
+product BIT3 PCIVME618		0x0010	PCI-VME Interface Mod. 618
 product BIT3 PCIVME2706		0x0300	PCI-VME Interface Mod. 2706
 
 /* Brooktree products */
@@ -1062,6 +1064,9 @@ product SIS 900			0x0900	SiS900 10/100 Ethernet
 product SIS 5597_IDE		0x5513	5597/5598 IDE controller
 product SIS 5597_HB		0x5597	5597/5598 host bridge
 product SIS 5597_USB		0x7001	5597/5598 USB host controller
+
+/* Silicon Motion products */
+product SILMOTION LYNX_E	0x0810	Lynx E
 
 /* SMC products */
 product SMC 37C665	0x1000	FDC 37C665
