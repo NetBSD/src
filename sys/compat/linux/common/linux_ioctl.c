@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.38.2.1 2003/07/02 15:25:47 darrenr Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.38.2.2 2003/08/19 15:40:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.38.2.1 2003/07/02 15:25:47 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.38.2.2 2003/08/19 15:40:48 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "sequencer.h"
@@ -125,13 +125,13 @@ linux_sys_ioctl(l, v, retval)
 			return EBADF;
 		FILE_USE(fp);
 		if (fp->f_type == DTYPE_VNODE &&
-		    VOP_GETATTR(vp, &va, p->p_ucred, l) == 0 &&
+		    (vp = (struct vnode *)fp->f_data) != NULL &&
 		    vp->v_type == VCHR &&
-			error = oss_ioctl_sequencer(l,
-						    (void*)LINUX_TO_OSS(uap),
-						    retval);
+		    VOP_GETATTR(vp, &va, p->p_ucred, l) == 0 &&
+		    cdevsw_lookup(va.va_rdev) == &sequencer_cdevsw) {
 			error = oss_ioctl_sequencer(l, (void*)LINUX_TO_OSS(uap),
 						   retval);
+		}
 		else {
 			error = linux_ioctl_termios(l, uap, retval);
 		}
@@ -140,6 +140,7 @@ linux_sys_ioctl(l, v, retval)
 #else
 		return linux_ioctl_termios(l, uap, retval);
 #endif
+	}
 		return linux_ioctl_socket(l, uap, retval);
 	case 0x89:
 		return linux_ioctl_hdio(l, uap, retval);
