@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.40 2003/07/13 07:45:27 itojun Exp $	*/
+/*	$NetBSD: modload.c,v 1.41 2003/09/06 19:23:20 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.40 2003/07/13 07:45:27 itojun Exp $");
+__RCSID("$NetBSD: modload.c,v 1.41 2003/09/06 19:23:20 jdolecek Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -69,6 +69,7 @@ __RCSID("$NetBSD: modload.c,v 1.40 2003/07/13 07:45:27 itojun Exp $");
 
 int debug = 0;
 int verbose = 0;
+u_long force = 0;
 char *out = NULL;
 int symtab = 0;
 int Sflag;
@@ -121,7 +122,7 @@ usage(void)
 {
 
 	fprintf(stderr, "usage:\n");
-	fprintf(stderr, "modload [-d] [-v] [-n] [-s] [-S] "
+	fprintf(stderr, "modload [-dfnsSv] "
 	    "[-A <kernel>] [-e <entry>]\n");
 	fprintf(stderr,
 	    "        [-p <postinstall>] [-o <output file>] <input file>\n");
@@ -257,11 +258,14 @@ main(int argc, char **argv)
 	void *modentry;	/* XXX */
 	int noready = 0;
 
-	while ((c = getopt(argc, argv, "dnvse:p:o:A:ST:")) != -1) {
+	while ((c = getopt(argc, argv, "dfnvse:p:o:A:ST:")) != -1) {
 		switch (c) {
 		case 'd':
 			debug = 1;
 			break;	/* debug */
+		case 'f':
+			force = 1;
+			break;	/* force load */
 		case 'v':
 			verbose = 1;
 			break;	/* verbose */
@@ -439,6 +443,14 @@ main(int argc, char **argv)
 		err(9, "can't reserve memory");
 
 	fileopen |= PART_RESRV;
+
+	if (force) {
+		if (ioctl(devfd, LMFORCE, &force) == -1)
+			err(10, "can't force load");
+
+		warnx("Forced load of LKM '%s'. MAY CAUSE SYSTEM INSTABILITY.",
+			modout);
+	}
 
 	/*
 	 * Relink at kernel load address

@@ -1,4 +1,4 @@
-.\" $NetBSD: modload.8,v 1.23 2003/02/25 10:34:59 wiz Exp $
+.\" $NetBSD: modload.8,v 1.24 2003/09/06 19:23:21 jdolecek Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd April 30, 1999
+.Dd September 6, 2003
 .Dt MODLOAD 8
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 .Nd load a kernel module
 .Sh SYNOPSIS
 .Nm
-.Op Fl dnvsS
+.Op Fl dfnsSv
 .Op Fl A Ar kernel
 .Op Fl e Ar entry
 .Op Fl p Ar postinstall
@@ -62,6 +62,14 @@ Debug.
 Used to debug
 .Nm
 itself.
+.It Fl f
+This forces load of the module, even if it doesn't match currently
+running kernel. When LKM is loaded, kernel normally checks if the LKM
+is compatible with the running kernel. This option disables this check.
+.Em Note
+incompatible LKM can cause system instability, including data loss
+or corruption. Don't use this option unless you are sure what you
+are doing.
 .It Fl n
 Do everything, except calling the module entry point (and any
 post-install program).
