@@ -1,7 +1,7 @@
-/*	$NetBSD: lock.h,v 1.1 2001/01/10 19:02:07 bjh21 Exp $	*/
+/*	$NetBSD: lock.h,v 1.2 2001/11/15 19:22:32 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,14 +38,59 @@
 
 /*
  * Machine-dependent spin lock operations.
+ *
+ * NOTE: The SWP insn used here is available only on ARM architecture
+ * version 3 and later (as well as 2a).  What we are going to do is
+ * expect that the kernel will trap and emulate the insn.  That will
+ * be slow, but give us the atomicity that we need.
  */
 
-#ifndef _ARM32_LOCK_H_
-#define	_ARM32_LOCK_H_
+#ifndef _ARM_LOCK_H_
+#define	_ARM_LOCK_H_
 
-typedef	int		__cpu_simple_lock_t;
+typedef	__volatile int		__cpu_simple_lock_t;
 
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0
 
-#endif /* _ARM32_LOCK_H_ */
+static __inline void __attribute__((__unused__))
+__cpu_simple_lock_init(__cpu_simple_lock_t *alp)
+{
+
+	*alp = __SIMPLELOCK_UNLOCKED;
+}
+
+static __inline void __attribute__((__unused__))
+__cpu_simple_lock(__cpu_simple_lock_t *alp)
+{
+	int __val = __SIMPLELOCK_LOCKED;
+
+	do {
+		__asm __volatile("swp %0, %1, [%2]"
+			: "=r" (__val)
+			: "0" (__val), "r" (alp)
+			: "memory");
+	} while (__val != __SIMPLELOCK_UNLOCKED);
+}
+
+static __inline int __attribute__((__unused__))
+__cpu_simple_lock_try(__cpu_simple_lock_t *alp)
+{
+	int __val = __SIMPLELOCK_LOCKED;
+
+	__asm __volatile("swp %0, %1, [%2]"
+		: "=r" (__val)
+		: "0" (__val), "r" (alp)
+		: "memory");
+
+	return ((__val == __SIMPLELOCK_UNLOCKED) ? 1 : 0);
+}
+
+static __inline void __attribute__((__unused__))
+__cpu_simple_unlock(__cpu_simple_lock_t *alp)
+{
+
+	*alp = __SIMPLELOCK_UNLOCKED;
+}
+
+#endif /* _ARM_LOCK_H_ */
