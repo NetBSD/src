@@ -1,4 +1,4 @@
-#	$NetBSD: majors.arm32,v 1.4 2002/10/04 18:28:26 elric Exp $
+#	$NetBSD: majors.arm32,v 1.5 2002/11/20 18:20:36 bsh Exp $
 #
 # Device majors for arm32
 #
@@ -100,3 +100,4 @@ device-major	ixpcom		char 100		ixpcom
 device-major	sysmon		char 101		sysmon
 device-major	dmoverio	char 102		dmoverio
 device-major	apm		char 103		apm
+device-major	sscom		char 104		sscom
