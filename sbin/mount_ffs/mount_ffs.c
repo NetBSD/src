@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_ffs.c,v 1.1 1995/07/12 03:46:50 cgd Exp $	*/
+/*	$NetBSD: mount_ffs.c,v 1.2 1995/11/11 23:02:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_ufs.c	8.2 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$NetBSD: mount_ffs.c,v 1.1 1995/07/12 03:46:50 cgd Exp $";
+static char rcsid[] = "$NetBSD: mount_ffs.c,v 1.2 1995/11/11 23:02:28 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,7 @@ main(argc, argv)
 	char * const argv[];
 {
 	extern int optreset;
-	struct ufs_args args;		/* XXX ffs_args */
+	struct ufs_args args;
 	int ch, mntflags;
 	char *fs_name, *errcause;
 
@@ -107,7 +107,7 @@ main(argc, argv)
 	else
 		args.export.ex_flags = 0;
 
-	if (mount(MOUNT_UFS, fs_name, mntflags, &args) < 0) {
+	if (mount(MOUNT_FFS, fs_name, mntflags, &args) < 0) {
 		switch (errno) {
 		case EMFILE:
 			errcause = "mount table full";
