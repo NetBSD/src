@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.60 2002/03/11 16:39:39 uch Exp $ */
+/* $NetBSD: locore.h,v 1.61 2002/05/13 04:15:40 simonb Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -328,5 +328,5 @@ struct kernframe {
 	register_t cf_ra;
 	struct trapframe cf_frame;
 };
-#endif
+#endif	/* _KERNEL */
 #endif	/* _MIPS_LOCORE_H */
