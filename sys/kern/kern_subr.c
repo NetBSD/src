@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.99 2003/05/16 14:25:03 itojun Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.100 2003/05/17 22:22:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.99 2003/05/16 14:25:03 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.100 2003/05/17 22:22:41 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -981,11 +981,11 @@ setroot(bootdv, bootpartition)
 
 	switch (rootdv->dv_class) {
 	case DV_IFNET:
-		printf("root on %s", rootdv->dv_xname);
+		aprint_normal("root on %s", rootdv->dv_xname);
 		break;
 
 	case DV_DISK:
-		printf("root on %s%c", rootdv->dv_xname,
+		aprint_normal("root on %s%c", rootdv->dv_xname,
 		    DISKPART(rootdev) + 'a');
 		break;
 
@@ -1048,12 +1048,13 @@ setroot(bootdv, bootpartition)
 		}
 	}
 
-	printf(" dumps on %s%c\n", dumpdv->dv_xname, DISKPART(dumpdev) + 'a');
+	aprint_normal(" dumps on %s%c\n", dumpdv->dv_xname,
+	    DISKPART(dumpdev) + 'a');
 	return;
 
  nodumpdev:
 	dumpdev = NODEV;
-	printf("\n");
+	aprint_normal("\n");
 }
 
 static struct device *
