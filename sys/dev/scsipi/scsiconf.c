@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.150 2000/08/13 00:03:01 mjacob Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.151 2000/09/22 16:45:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -816,6 +816,12 @@ scsi_probedev(scsi, target, lun)
 	default:
 		break;
 	}
+
+	/* Let the adapter driver handle the device separatley if it wants. */
+	if (sc_link->adapter->scsipi_accesschk != NULL &&
+	    (*sc_link->adapter->scsipi_accesschk)(sc_link, &sa.sa_inqbuf))
+		goto bad;
+
 	if (checkdtype) {
 		switch (inqbuf.device & SID_TYPE) {
 		case T_DIRECT:
