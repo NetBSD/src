@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.23 2000/03/23 07:01:31 thorpej Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.23.4.1 2000/08/11 22:24:48 tls Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  * Matthew Jacob <mjacob@nas.nasa.gov>
@@ -177,7 +177,8 @@ struct isposinfo {
  * This is our default tag (simple).
  */
 #define	XS_KINDOF_TAG(xs)	\
-	(((xs)->xs_control & XS_CTL_URGENT) ? REQFLAG_HTAG : REQFLAG_OTAG)
+	(((xs)->xs_control & XS_CTL_URGENT) ? REQFLAG_HTAG : \
+	((xs)->bp && xs->bp->b_flags & B_ASYNC) ? REQFLAG_STAG : REQFLAG_OTAG)
 
 /*
  * These get turned into NetBSD midlayer codes
