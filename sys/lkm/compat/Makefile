@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2000/12/08 20:15:11 jdolecek Exp $
+# $NetBSD: Makefile,v 1.7 2000/12/08 20:20:23 jdolecek Exp $
 
 # XXX for now, only Linux on i386 was actually tested, others might
 # need further work; compile stuff on everything, but only install
@@ -7,7 +7,7 @@
 .if (${MACHINE} == "i386")
 SUBDIR+=	linux
 .endif
-.else # !install
+.else # !make(install)
 
 .if (${MACHINE} == "alpha")
 SUBDIR+=	linux osf1
@@ -41,6 +41,6 @@ SUBDIR+=	netbsd32 sunos svr4
 SUBDIR+=	ibcs2 ultrix
 .endif
 
-.endif # target(install)
+.endif # !make(install)
 
 .include <bsd.subdir.mk>
