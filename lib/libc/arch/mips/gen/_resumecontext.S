@@ -1,4 +1,4 @@
-/*	$NetBSD: _resumecontext.S,v 1.2 2003/01/18 11:38:51 thorpej Exp $	*/
+/*	$NetBSD: _resumecontext.S,v 1.3 2004/03/01 18:32:51 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,13 +40,13 @@
 #include <machine/mcontext.h>
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	ASMSTR("$NetBSD: _resumecontext.S,v 1.2 2003/01/18 11:38:51 thorpej Exp $")
+	ASMSTR("$NetBSD: _resumecontext.S,v 1.3 2004/03/01 18:32:51 drochner Exp $")
 #endif /* SYSLIBC_SCCS && !lint */
 
 	.set	reorder
 	
 LEAF_NOPROFILE(__resumecontext)
-	move	t9, ra
+	addiu	t9, ra, 4
 	PIC_PROLOGUE(_resumecontext, t9)
 	
 	la	t9, _C_LABEL(_resumecontext)
