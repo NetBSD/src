@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.54 2001/05/01 04:30:04 enami Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.55 2001/06/05 04:38:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,14 @@
 void	lock_printf(const char *fmt, ...)
     __attribute__((__format__(__printf__,1,2)));
 
-int	lock_debug_syslog = 1;	/* defaults to syslog, but can be patched */
+int	lock_debug_syslog = 0;	/* defaults to syslog, but can be patched */
+
+#ifdef DDB
+#include <ddb/ddbvar.h>
+#include <machine/db_machdep.h>
+#include <ddb/db_command.h>
+#include <ddb/db_interface.h>
+#endif
 #endif
 
 /*
@@ -1217,34 +1224,49 @@ simple_lock_freecheck(void *start, void *end)
 	splx(s);
 }
 
+/*
+ * We must be holding exactly one lock: the sched_lock.
+ */
+
 void
 simple_lock_switchcheck(void)
+{
+
+	simple_lock_only_held(&sched_lock, "switching");
+}
+
+void
+simple_lock_only_held(volatile struct simplelock *lp, const char *where)
 {
 	struct simplelock *alp;
 	cpuid_t cpu_id = cpu_number();
 	int s;
 
-	/*
-	 * We must be holding exactly one lock: the sched_lock.
-	 */
-
-	SCHED_ASSERT_LOCKED();
-
+	if (lp) {
+		LOCK_ASSERT(simple_lock_held(lp));
+	}
 	s = spllock();
 	SLOCK_LIST_LOCK();
 	for (alp = TAILQ_FIRST(&simplelock_list); alp != NULL;
 	     alp = TAILQ_NEXT(alp, list)) {
-		if (alp == &sched_lock)
+		if (alp == lp)
 			continue;
-		if (alp->lock_holder == cpu_id) {
-			lock_printf("switching with held simple_lock %p "
-			    "CPU %lu %s:%d\n",
-			    alp, alp->lock_holder, alp->lock_file,
-			    alp->lock_line);
-			SLOCK_DEBUGGER();
-		}
+		if (alp->lock_holder == cpu_id)
+			break;
 	}
 	SLOCK_LIST_UNLOCK();
 	splx(s);
+
+	if (alp != NULL) {
+		lock_printf("%s with held simple_lock %p "
+		    "CPU %lu %s:%d\n",
+		    where, alp, alp->lock_holder, alp->lock_file,
+		    alp->lock_line);
+#ifdef DDB
+		db_stack_trace_print((db_expr_t)__builtin_frame_address(0),
+		    TRUE, 65535, "", printf);
+#endif
+		SLOCK_DEBUGGER();
+	}
 }
 #endif /* LOCKDEBUG */ /* } */
