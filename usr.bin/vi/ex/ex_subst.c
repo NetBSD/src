@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,21 +32,30 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)ex_substitute.c	8.33 (Berkeley) 1/9/94"; */
-static char *rcsid = "$Id: ex_subst.c,v 1.3 1994/03/03 23:26:31 mycroft Exp $";
+static char sccsid[] = "@(#)ex_subst.c	8.39 (Berkeley) 3/22/94";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/time.h>
 
+#include <bitstring.h>
 #include <ctype.h>
 #include <errno.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
 #include <unistd.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "excmd.h"
-#include "interrupt.h"
 
 #define	SUB_FIRST	0x01		/* The 'r' flag isn't reasonable. */
 #define	SUB_MUSTSETR	0x02		/* The 'r' flag is required. */
@@ -54,7 +63,6 @@ static char *rcsid = "$Id: ex_subst.c,v 1.3 1994/03/03 23:26:31 mycroft Exp $";
 static int		checkmatchsize __P((SCR *, regex_t *));
 static inline int	regsub __P((SCR *,
 			    char *, char **, size_t *, size_t *));
-static void		subst_intr __P((int));
 static int		substitute __P((SCR *, EXF *,
 			    EXCMDARG *, char *, regex_t *, u_int));
 
@@ -130,19 +138,11 @@ ex_substitute(sp, ep, cmdp)
 			*t = '\0';
 			break;
 		}
-		if (p[0] == '\\') {
+		if (p[0] == '\\')
 			if (p[1] == delim)
 				++p;
-			else if (p[1] == '\\') {
-				/*
-				 * Skip over an escaped escape character;
-				 * otherwise the check for an escaped
-				 * delimiter will be confused on the next
-				 * iteration.
-		 		 */
+			else if (p[1] == '\\')
 				*t++ = *p++;
-			}
-		}
 		*t++ = *p++;
 	}
 
@@ -199,18 +199,20 @@ ex_substitute(sp, ep, cmdp)
 	/*
 	 * Get the replacement string.
 	 *
-	 * The special character ~ (\~ if O_MAGIC not set) inserts the
-	 * previous replacement string into this replacement string.
-	 *
 	 * The special character & (\& if O_MAGIC not set) matches the
 	 * entire RE.  No handling of & is required here, it's done by
 	 * regsub().
 	 *
+	 * The special character ~ (\~ if O_MAGIC not set) inserts the
+	 * previous replacement string into this replacement string.
+	 * Count ~'s to figure out how much space we need.  We could
+	 * special case nonexistent last patterns or whether or not
+	 * O_MAGIC is set, but it's probably not worth the effort.
+	 *
 	 * QUOTING NOTE:
 	 *
 	 * Only toss an escape character if it escapes a delimiter or
-	 * an escape character, or if O_MAGIC is set and it escapes a
-	 * tilde.
+	 * if O_MAGIC is set and it escapes a tilde.
 	 */
 	if (*p == '\0') {
 		if (sp->repl != NULL)
@@ -218,11 +220,6 @@ ex_substitute(sp, ep, cmdp)
 		sp->repl = NULL;
 		sp->repl_len = 0;
 	} else {
-		/*
-		 * Count ~'s to figure out how much space we need.  We could
-		 * special case nonexistent last patterns or whether or not
-		 * O_MAGIC is set, but it's probably not worth the effort.
-		 */
 		for (rep = p, len = 0;
 		    p[0] != '\0' && p[0] != delim; ++p, ++len)
 			if (p[0] == '~')
@@ -235,9 +232,12 @@ ex_substitute(sp, ep, cmdp)
 				break;
 			}
 			if (p[0] == '\\') {
-				if (p[1] == '\\' || p[1] == delim)
+				if (p[1] == delim)
 					++p;
-				else if (p[1] == '~') {
+				else if (p[1] == '\\') {
+					*t++ = *p++;
+					++len;
+				} else if (p[1] == '~') {
 					++p;
 					if (!O_ISSET(sp, O_MAGIC))
 						goto tilde;
@@ -307,7 +307,7 @@ ex_subtilde(sp, ep, cmdp)
 	return (substitute(sp, ep, cmdp, cmdp->argv[0]->bp, &sp->sre, 0));
 }
 
-/* 
+/*
  * The nasty part of the substitution is what happens when the replacement
  * string contains newlines.  It's a bit tricky -- consider the information
  * that has to be retained for "s/f\(o\)o/^M\1^M\1/".  The solution here is
@@ -367,13 +367,12 @@ substitute(sp, ep, cmdp, s, re, flags)
 	regex_t *re;
 	u_int flags;
 {
-	DECLARE_INTERRUPTS;
 	MARK from, to;
 	recno_t elno, lno;
 	size_t blen, cnt, last, lbclen, lblen, len, llen, offset, saved_offset;
-	int didsub, do_eol_match, eflags, empty_ok, eval;
-	int linechanged, matched, quit, rval;
 	int cflag, gflag, lflag, nflag, pflag, rflag;
+	int didsub, do_eol_match, eflags, empty_ok, eval;
+	int linechanged, matched, quit, rval, teardown;
 	char *bp, *lb;
 
 	/*
@@ -465,8 +464,8 @@ usage:		msgq(sp, M_ERR, "Usage: %s", cmdp->cmd->usage);
 		return (1);
 	}
 
-	if (!F_ISSET(sp, S_GLOBAL))
-		SET_UP_INTERRUPTS(subst_intr);
+	/* Set up interrupts. */
+	teardown = !intr_init(sp);
 
 	/*
 	 * bp:		if interactive, line cache
@@ -630,7 +629,7 @@ nextmatch:	sp->match[0].rm_so = 0;
 				/* If interruptible, pass the info back. */
 				if (F_ISSET(sp, S_INTERRUPTIBLE))
 					F_SET(sp, S_INTERRUPTED);
-				
+
 				/*
 				 * If any changes, resolve them, otherwise
 				 * return to the main loop.
@@ -648,11 +647,12 @@ nextmatch:	sp->match[0].rm_so = 0;
 		 *
 		 * !!!
 		 * Historic vi just put the cursor on the first non-blank
-		 * of the last line changed.  This might be better.
+		 * of the last line changed.  We move to the beginning of
+		 * the next substitution.
 		 */
 		if (!cflag) {
 			sp->lno = lno;
-			sp->cno = sp->match[0].rm_so + offset;
+			sp->cno = lbclen;
 		}
 
 		/* Substitute the matching bytes. */
@@ -807,9 +807,8 @@ endmatch:	if (!linechanged)
 ret1:		rval = 1;
 	}
 
-interrupt_err:
-	if (!F_ISSET(sp, S_GLOBAL))
-		TEAR_DOWN_INTERRUPTS;
+	if (teardown)
+		intr_end(sp);
 
 	if (bp != NULL)
 		FREE_SPACE(sp, bp, blen);
@@ -847,7 +846,7 @@ regsub(sp, ip, lbp, lbclenp, lblenp)
 	 * There are some special sequences that vi provides in the
 	 * replacement patterns.
 	 *	 & string the RE matched (\& if nomagic set)
-	 *	\# n-th regular subexpression	
+	 *	\# n-th regular subexpression
 	 *	\E end \U, \L conversion
 	 *	\e end \U, \L conversion
 	 *	\l convert the next character to lower-case
@@ -971,26 +970,4 @@ checkmatchsize(sp, re)
 		}
 	}
 	return (0);
-}
-
-/*
- * subst_intr --
- *	Set the interrupt bit in any screen that is interruptible.
- *
- * XXX
- * In the future this may be a problem.  The user should be able to move to
- * another screen and keep typing while this runs.  If so, and the user has
- * more than one substitute running, it will be hard to decide which one to
- * stop.
- */
-static void
-subst_intr(signo)
-	int signo;
-{
-	SCR *sp;
-
-	for (sp = __global_list->dq.cqh_first;
-	    sp != (void *)&__global_list->dq; sp = sp->q.cqe_next)
-		if (F_ISSET(sp, S_INTERRUPTIBLE))
-			F_SET(sp, S_INTERRUPTED);
 }

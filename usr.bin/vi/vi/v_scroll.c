@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,17 +32,29 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)v_scroll.c	8.8 (Berkeley) 12/16/93"; */
-static char *rcsid = "$Id: v_scroll.c,v 1.2 1994/01/24 06:41:52 cgd Exp $";
+static char sccsid[] = "@(#)v_scroll.c	8.14 (Berkeley) 3/14/94";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/time.h>
 
+#include <bitstring.h>
 #include <errno.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
+#include <termios.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "excmd.h"
 #include "vcmd.h"
+
+static void goto_adjust __P((VICMDARG *));
 
 /*
  * The historic vi had a problem in that all movements were by physical
@@ -82,41 +94,44 @@ static char *rcsid = "$Id: v_scroll.c,v 1.2 1994/01/24 06:41:52 cgd Exp $";
  *	of the file by default.
  */
 int
-v_lgoto(sp, ep, vp, fm, tm, rp)
+v_lgoto(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
-	recno_t last;
+	recno_t nlines;
 
-	if (file_lline(sp, ep, &last))
-		return (1);
 	if (F_ISSET(vp, VC_C1SET)) {
-		if (last < vp->count) {
-			v_eof(sp, ep, fm);
+		if (file_gline(sp, ep, vp->count, NULL) == NULL) {
+			v_eof(sp, ep, &vp->m_start);
 			return (1);
 		}
-		rp->lno = vp->count;
-	} else
-		rp->lno = last ? last : 1;
+		vp->m_stop.lno = vp->count;
+	} else {
+		if (file_lline(sp, ep, &nlines))
+			return (1);
+		vp->m_stop.lno = nlines ? nlines : 1;
+	}
+	goto_adjust(vp);
 	return (0);
 }
 
-/* 
+/*
  * v_home -- [count]H
  *	Move to the first non-blank character of the logical line
- *	count from the top of the screen, 1 by default.
+ *	count - 1 from the top of the screen, 0 by default.
  */
 int
-v_home(sp, ep, vp, fm, tm, rp)
+v_home(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
-	return (sp->s_position(sp, ep, rp,
-	    F_ISSET(vp, VC_C1SET) ? vp->count : 0, P_TOP));
+	if (sp->s_position(sp, ep, &vp->m_stop,
+	    F_ISSET(vp, VC_C1SET) ? vp->count - 1 : 0, P_TOP))
+		return (1);
+	goto_adjust(vp);
+	return (0);
 }
 
 /*
@@ -125,34 +140,72 @@ v_home(sp, ep, vp, fm, tm, rp)
  *	in the middle of the screen.
  */
 int
-v_middle(sp, ep, vp, fm, tm, rp)
+v_middle(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
 	/*
 	 * Yielding to none in our quest for compatibility with every
 	 * historical blemish of vi, no matter how strange it might be,
 	 * we permit the user to enter a count and then ignore it.
 	 */
-	return (sp->s_position(sp, ep, rp, 0, P_MIDDLE));
+	if (sp->s_position(sp, ep, &vp->m_stop, 0, P_MIDDLE))
+		return (1);
+	goto_adjust(vp);
+	return (0);
 }
 
 /*
  * v_bottom -- [count]L
  *	Move to the first non-blank character of the logical line
- *	count from the bottom of the screen, 1 by default.
+ *	count - 1 from the bottom of the screen, 0 by default.
  */
 int
-v_bottom(sp, ep, vp, fm, tm, rp)
+v_bottom(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
-	return (sp->s_position(sp, ep,
-	    rp, F_ISSET(vp, VC_C1SET) ? vp->count : 0, P_BOTTOM));
+	if (sp->s_position(sp, ep, &vp->m_stop,
+	    F_ISSET(vp, VC_C1SET) ? vp->count - 1 : 0, P_BOTTOM))
+		return (1);
+	goto_adjust(vp);
+	return (0);
+}
+
+static void
+goto_adjust(vp)
+	VICMDARG *vp;
+{
+	/*
+	 * !!!
+	 * If it's not a yank to the current line or greater, and we've
+	 * changed lines, move to the first non-blank of the line.
+	 */
+	if (!F_ISSET(vp, VC_Y) || vp->m_stop.lno < vp->m_start.lno) {
+		F_CLR(vp, VM_RCM_MASK);
+		F_SET(vp, VM_RCM_SETLFNB);
+	}
+
+	/* Non-motion commands go to the end of the range. */
+	vp->m_final = vp->m_stop;
+	if (!ISMOTION(vp))
+		return;
+
+	/*
+	 * If moving backward in the file, VC_D and VC_Y move to the end
+	 * of the range, unless the line didn't change, in which case VC_Y
+	 * doesn't move.  If moving forward in the file, VC_D and VC_Y stay
+	 * at the start of the range.  Ignore VC_C and VC_S.
+	 */
+	if (vp->m_stop.lno < vp->m_start.lno ||
+	    vp->m_stop.lno == vp->m_start.lno &&
+	    vp->m_stop.cno < vp->m_start.cno) {
+		if (F_ISSET(vp, VC_Y) && vp->m_stop.lno == vp->m_start.lno)
+			vp->m_final = vp->m_start;
+	} else
+		vp->m_final = vp->m_start;
 }
 
 /*
@@ -160,21 +213,20 @@ v_bottom(sp, ep, vp, fm, tm, rp)
  *	Move up by lines.
  */
 int
-v_up(sp, ep, vp, fm, tm, rp)
+v_up(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
 	recno_t lno;
 
 	lno = F_ISSET(vp, VC_C1SET) ? vp->count : 1;
-
-	if (fm->lno <= lno) {
-		v_sof(sp, fm);
+	if (vp->m_start.lno <= lno) {
+		v_sof(sp, &vp->m_start);
 		return (1);
 	}
-	rp->lno = fm->lno - lno;
+	vp->m_stop.lno = vp->m_start.lno - lno;
+	vp->m_final = vp->m_stop;
 	return (0);
 }
 
@@ -184,18 +236,17 @@ v_up(sp, ep, vp, fm, tm, rp)
  *	In a regular window, move down by lines.
  */
 int
-v_cr(sp, ep, vp, fm, tm, rp)
+v_cr(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
 	/*
 	 * If it's a script window, exec the line,
 	 * otherwise it's the same as v_down().
 	 */
 	return (F_ISSET(sp, S_SCRIPT) ?
-	    sscr_exec(sp, ep, fm->lno) : v_down(sp, ep, vp, fm, tm, rp));
+	    sscr_exec(sp, ep, vp->m_start.lno) : v_down(sp, ep, vp));
 }
 
 /*
@@ -203,21 +254,20 @@ v_cr(sp, ep, vp, fm, tm, rp)
  *	Move down by lines.
  */
 int
-v_down(sp, ep, vp, fm, tm, rp)
+v_down(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
 	recno_t lno;
 
-	lno = fm->lno + (F_ISSET(vp, VC_C1SET) ? vp->count : 1);
-
+	lno = vp->m_start.lno + (F_ISSET(vp, VC_C1SET) ? vp->count : 1);
 	if (file_gline(sp, ep, lno, NULL) == NULL) {
-		v_eof(sp, ep, fm);
+		v_eof(sp, ep, &vp->m_start);
 		return (1);
 	}
-	rp->lno = lno;
+	vp->m_stop.lno = lno;
+	vp->m_final = ISMOTION(vp) ? vp->m_start : vp->m_stop;
 	return (0);
 }
 
@@ -226,23 +276,27 @@ v_down(sp, ep, vp, fm, tm, rp)
  *	Page up half screens.
  */
 int
-v_hpageup(sp, ep, vp, fm, tm, rp)
+v_hpageup(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
-	/* 
-	 * Half screens always succeed unless already at SOF.  Half screens
-	 * set the scroll value, even if the command ultimately failed, in
-	 * historic vi.  It's probably a don't care.
+	/*
+	 * Half screens always succeed unless already at SOF.
+	 *
+	 * !!!
+	 * Half screens set the scroll value, even if the command ultimately
+	 * failed, in historic vi.  Probably a don't care.
 	 */
 	if (F_ISSET(vp, VC_C1SET))
 		O_VAL(sp, O_SCROLL) = vp->count;
 	else
 		vp->count = O_VAL(sp, O_SCROLL);
 
-	return (sp->s_down(sp, ep, rp, (recno_t)O_VAL(sp, O_SCROLL), 1));
+	if (sp->s_down(sp, ep, &vp->m_stop, (recno_t)O_VAL(sp, O_SCROLL), 1))
+		return (1);
+	vp->m_final = vp->m_stop;
+	return (0);
 }
 
 /*
@@ -250,23 +304,27 @@ v_hpageup(sp, ep, vp, fm, tm, rp)
  *	Page down half screens.
  */
 int
-v_hpagedown(sp, ep, vp, fm, tm, rp)
+v_hpagedown(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
-	/* 
-	 * Half screens always succeed unless already at EOF.  Half screens
-	 * set the scroll value, even if the command ultimately failed, in
-	 * historic vi.  It's probably a don't care.
+	/*
+	 * Half screens always succeed unless already at EOF.
+	 *
+	 * !!!
+	 * Half screens set the scroll value, even if the command ultimately
+	 * failed, in historic vi.  Probably a don't care.
 	 */
 	if (F_ISSET(vp, VC_C1SET))
 		O_VAL(sp, O_SCROLL) = vp->count;
 	else
 		vp->count = O_VAL(sp, O_SCROLL);
 
-	return (sp->s_up(sp, ep, rp, (recno_t)O_VAL(sp, O_SCROLL), 1));
+	if (sp->s_up(sp, ep, &vp->m_stop, (recno_t)O_VAL(sp, O_SCROLL), 1))
+		return (1);
+	vp->m_final = vp->m_stop;
+	return (0);
 }
 
 /*
@@ -279,18 +337,17 @@ v_hpagedown(sp, ep, vp, fm, tm, rp)
  * move to SOF in that case, making ^B more like the the historic ^U.
  */
 int
-v_pageup(sp, ep, vp, fm, tm, rp)
+v_pageup(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
-	recno_t count;
-
 	/* Calculation from POSIX 1003.2/D8. */
-	count = (F_ISSET(vp, VC_C1SET) ? vp->count : 1) * (sp->t_rows - 1);
-
-	return (sp->s_down(sp, ep, rp, count, 1));
+	if (sp->s_down(sp, ep, &vp->m_stop,
+	    (F_ISSET(vp, VC_C1SET) ? vp->count : 1) * (sp->t_rows - 1), 1))
+		return (1);
+	vp->m_final = vp->m_stop;
+	return (0);
 }
 
 /*
@@ -302,18 +359,17 @@ v_pageup(sp, ep, vp, fm, tm, rp)
  * move to EOF in that case, making ^F more like the the historic ^D.
  */
 int
-v_pagedown(sp, ep, vp, fm, tm, rp)
+v_pagedown(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
-	recno_t count;
-
 	/* Calculation from POSIX 1003.2/D8. */
-	count = (F_ISSET(vp, VC_C1SET) ? vp->count : 1) * (sp->t_rows - 1);
-
-	return (sp->s_up(sp, ep, rp, count, 1));
+	if (sp->s_up(sp, ep, &vp->m_stop,
+	    (F_ISSET(vp, VC_C1SET) ? vp->count : 1) * (sp->t_rows - 1), 1))
+		return (1);
+	vp->m_final = vp->m_stop;
+	return (0);
 }
 
 /*
@@ -321,18 +377,20 @@ v_pagedown(sp, ep, vp, fm, tm, rp)
  *	Page up by lines.
  */
 int
-v_lineup(sp, ep, vp, fm, tm, rp)
+v_lineup(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
 	/*
 	 * The cursor moves down, staying with its original line, unless it
 	 * reaches the bottom of the screen.
 	 */
-	return (sp->s_down(sp, ep,
-	    rp, F_ISSET(vp, VC_C1SET) ? vp->count : 1, 0));
+	if (sp->s_down(sp, ep,
+	    &vp->m_stop, F_ISSET(vp, VC_C1SET) ? vp->count : 1, 0))
+		return (1);
+	vp->m_final = vp->m_stop;
+	return (0);
 }
 
 /*
@@ -340,16 +398,18 @@ v_lineup(sp, ep, vp, fm, tm, rp)
  *	Page down by lines.
  */
 int
-v_linedown(sp, ep, vp, fm, tm, rp)
+v_linedown(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
 	/*
 	 * The cursor moves up, staying with its original line, unless it
 	 * reaches the top of the screen.
 	 */
-	return (sp->s_up(sp, ep,
-	    rp, F_ISSET(vp, VC_C1SET) ? vp->count : 1, 0));
+	if (sp->s_up(sp, ep,
+	    &vp->m_stop, F_ISSET(vp, VC_C1SET) ? vp->count : 1, 0))
+		return (1);
+	vp->m_final = vp->m_stop;
+	return (0);
 }

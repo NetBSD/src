@@ -29,8 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)vi.apwh.ms	8.1 (Berkeley) 6/8/93
-.\"	$Id: vi.apwh.ms,v 1.2 1994/01/24 06:39:54 cgd Exp $
+.\"	@(#)vi.apwh.ms	8.1 (Berkeley) 6/8/93
 .\"
 .TL
 Vi Command & Function Reference

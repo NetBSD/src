@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,11 +32,22 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)v_delete.c	8.7 (Berkeley) 1/11/94"; */
-static char *rcsid = "$Id: v_delete.c,v 1.2 1994/01/24 06:41:31 cgd Exp $";
+static char sccsid[] = "@(#)v_delete.c	8.10 (Berkeley) 3/14/94";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/time.h>
+
+#include <bitstring.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
+#include <termios.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "vcmd.h"
@@ -46,39 +57,38 @@ static char *rcsid = "$Id: v_delete.c,v 1.2 1994/01/24 06:41:31 cgd Exp $";
  *	Delete line command.
  */
 int
-v_Delete(sp, ep, vp, fm, tm, rp)
+v_Delete(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
 	recno_t lno;
 	size_t len;
 
-	if (file_gline(sp, ep, fm->lno, &len) == NULL) {
+	if (file_gline(sp, ep, vp->m_start.lno, &len) == NULL) {
 		if (file_lline(sp, ep, &lno))
 			return (1);
 		if (lno == 0)
 			return (0);
-		GETLINE_ERR(sp, fm->lno);
+		GETLINE_ERR(sp, vp->m_start.lno);
 		return (1);
 	}
 
 	if (len == 0)
 		return (0);
 
-	tm->lno = fm->lno;
-	tm->cno = len;
+	vp->m_stop.lno = vp->m_start.lno;
+	vp->m_stop.cno = len - 1;
 
 	/* Yank the lines. */
-	if (cut(sp, ep, NULL,
-	    F_ISSET(vp, VC_BUFFER) ? &vp->buffer : NULL, fm, tm, CUT_DELETE))
+	if (cut(sp, ep, NULL, F_ISSET(vp, VC_BUFFER) ? &vp->buffer : NULL,
+	    &vp->m_start, &vp->m_stop, CUT_DELETE))
 		return (1);
-	if (delete(sp, ep, fm, tm, 0))
+	if (delete(sp, ep, &vp->m_start, &vp->m_stop, 0))
 		return (1);
 
-	rp->lno = fm->lno;
-	rp->cno = fm->cno ? fm->cno - 1 : 0;
+	vp->m_final.lno = vp->m_start.lno;
+	vp->m_final.cno = vp->m_start.cno ? vp->m_start.cno - 1 : 0;
 	return (0);
 }
 
@@ -87,62 +97,50 @@ v_Delete(sp, ep, vp, fm, tm, rp)
  *	Delete a range of text.
  */
 int
-v_delete(sp, ep, vp, fm, tm, rp)
+v_delete(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
 	recno_t nlines;
 	size_t len;
 	int lmode;
-	
+
 	/* Yank the lines. */
-	lmode = F_ISSET(vp, VC_LMODE) ? CUT_LINEMODE : 0;
-	if (cut(sp, ep, NULL,
-	    F_ISSET(vp, VC_BUFFER) ? &vp->buffer : NULL,
-	    fm, tm, lmode | CUT_DELETE))
+	lmode = F_ISSET(vp, VM_LMODE) ? CUT_LINEMODE : 0;
+	if (cut(sp, ep, NULL, F_ISSET(vp, VC_BUFFER) ? &vp->buffer : NULL,
+	    &vp->m_start, &vp->m_stop, lmode | CUT_DELETE))
 		return (1);
-	if (delete(sp, ep, fm, tm, lmode))
+	if (delete(sp, ep, &vp->m_start, &vp->m_stop, lmode))
 		return (1);
 
-	/* Check for deleting the file. */
-	if (file_lline(sp, ep, &nlines))
-		return (1);
-	if (nlines == 0) {
-		rp->lno = 1;
-		rp->cno = 0;
-		return (0);
+	/*
+	 * Check for deletion of the entire file.  Try to check a close
+	 * by line so we don't go to the end of the file unnecessarily.
+	 */
+	if (file_gline(sp, ep, vp->m_final.lno + 1, &len) == NULL) {
+		if (file_lline(sp, ep, &nlines))
+			return (1);
+		if (nlines == 0) {
+			vp->m_final.lno = 1;
+			vp->m_final.cno = 0;
+			return (0);
+		}
 	}
 
 	/*
-	 * If deleting lines, leave the cursor at the lowest line deleted,
-	 * else, leave the cursor where it started.  Always correct for EOL.
-	 *
-	 * The historic vi would delete the line the cursor was on (even if
-	 * not in line mode) if the motion from the cursor was past the EOF
-	 * and the cursor didn't originate on the last line of the file.  A
-	 * strange special case.  We never delete the line the cursor is on.
-	 * We'd have to pass a flag down to the delete() routine which would
-	 * have to special case it.
+	 * One special correction, in case we've deleted the current line or
+	 * character.  We check it here instead of checking in every command
+	 * that can be a motion component.
 	 */
-	if (lmode) {
-		rp->lno = MIN(fm->lno, tm->lno);
-		if (rp->lno > nlines)
-			rp->lno = nlines;
-		rp->cno = 0;
-		(void)nonblank(sp, ep, rp->lno, &rp->cno);
-		return (0);
+	if (file_gline(sp, ep, vp->m_final.lno, &len) == NULL) {
+		if (file_gline(sp, ep, nlines, &len) == NULL) {
+			GETLINE_ERR(sp, nlines);
+			return (1);
+		}
+		vp->m_final.lno = nlines;
 	}
-
-	rp->lno = fm->lno;
-	if (file_gline(sp, ep, rp->lno, &len) == NULL) {
-		GETLINE_ERR(sp, rp->lno);
-		return (1);
-	}
-	if (fm->cno >= len)
-		rp->cno = len ? len - 1 : 0;
-	else
-		rp->cno = fm->cno;
+	if (vp->m_final.cno >= len)
+		vp->m_final.cno = len ? len - 1 : 0;
 	return (0);
 }

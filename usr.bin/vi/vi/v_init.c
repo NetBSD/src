@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,15 +32,25 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)v_init.c	8.18 (Berkeley) 1/9/94"; */
-static char *rcsid = "$Id: v_init.c,v 1.2 1994/01/24 06:41:38 cgd Exp $";
+static char sccsid[] = "@(#)v_init.c	8.21 (Berkeley) 3/8/94";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/time.h>
 
+#include <bitstring.h>
 #include <errno.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "vcmd.h"
@@ -65,6 +75,7 @@ v_screen_copy(orig, sp)
 	if (orig == NULL) {
 		nvip->inc_lastch = '+';
 		nvip->inc_lastval = 1;
+		nvip->csearchdir = CNOTSET;
 	} else {
 		ovip = VIP(orig);
 
@@ -85,6 +96,9 @@ v_screen_copy(orig, sp)
 			msgq(sp, M_SYSERR, NULL);
 			return (1);
 		}
+
+		nvip->lastckey = ovip->lastckey;
+		nvip->csearchdir = ovip->csearchdir;
 	}
 	return (0);
 }
@@ -144,7 +158,6 @@ v_init(sp, ep)
 			}
 		} else if (sp->cno >= len)
 			sp->cno = 0;
-
 	} else {
 		sp->lno = 1;
 		sp->cno = 0;

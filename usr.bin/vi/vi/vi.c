@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,16 +32,26 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)vi.c	8.45 (Berkeley) 1/22/94"; */
-static char *rcsid = "$Id: vi.c,v 1.2 1994/01/24 06:42:15 cgd Exp $";
+static char sccsid[] = "@(#)vi.c	8.57 (Berkeley) 3/18/94";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/time.h>
 
+#include <bitstring.h>
 #include <ctype.h>
 #include <errno.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "vcmd.h"
@@ -53,8 +63,7 @@ static inline int
 static inline int
 	   getkey __P((SCR *, CH *, u_int));
 static int getkeyword __P((SCR *, EXF *, VICMDARG *, u_int));
-static int getmotion __P((SCR *, EXF *,
-		VICMDARG *, VICMDARG *, MARK *, MARK *));
+static int getmotion __P((SCR *, EXF *, VICMDARG *, VICMDARG *));
 
 /*
  * Side-effect:
@@ -73,16 +82,14 @@ vi(sp, ep)
 	SCR *sp;
 	EXF *ep;
 {
-	MARK abs, fm, tm, m;
+	MARK abs;
 	VICMDARG cmd, *vp;
 	u_int flags, saved_mode;
 	int comcount, eval;
 
-	/* Start vi. */
+	/* Start vi and paint the screen. */
 	if (v_init(sp, ep))
 		return (1);
-
-	/* Paint the screen. */
 	if (sp->s_refresh(sp, ep)) {
 		(void)v_end(sp);
 		return (1);
@@ -112,67 +119,66 @@ vi(sp, ep)
 		if (F_ISSET(vp, VC_ISDOT) && comcount)
 			DOTMOTION->count = 1;
 
+		/* Copy the key flags into the local structure. */
+		F_SET(vp, vp->kp->flags);
+
 		/* Get any associated keyword. */
-		flags = vp->kp->flags;
-		if (LF_ISSET(V_KEYNUM | V_KEYW) &&
-		    getkeyword(sp, ep, vp, flags))
+		if (F_ISSET(vp, V_KEYNUM | V_KEYW) &&
+		    getkeyword(sp, ep, vp, vp->flags))
 			goto err;
 
 		/* If a non-relative movement, copy the future absolute mark. */
-		if (LF_ISSET(V_ABS)) {
+		if (F_ISSET(vp, V_ABS)) {
 			abs.lno = sp->lno;
 			abs.cno = sp->cno;
 		}
 
 		/*
-		 * Do any required motion; getmotion sets the from MARK
-		 * and the line mode flag.
+		 * Set the three cursor locations to the current cursor.  The
+		 * underlying routines don't bother if the cursor doesn't move.
+		 * This also handles line commands (e.g. Y) defaulting to the
+		 * current line.
 		 */
-		if (LF_ISSET(V_MOTION)) {
-			if (getmotion(sp, ep, DOTMOTION, vp, &fm, &tm))
-				goto err;
-		} else {
-			/*
-			 * Set everything to the current cursor position.
-			 * Line commands (ex: Y) default to the current line.
-			 */
-			tm.lno = fm.lno = sp->lno;
-			tm.cno = fm.cno = sp->cno;
+		vp->m_start.lno = vp->m_stop.lno = vp->m_final.lno = sp->lno;
+		vp->m_start.cno = vp->m_stop.cno = vp->m_final.cno = sp->cno;
 
-			/*
-			 * Set line mode flag, for example, "yy".
-			 *
-			 * If a count is set, we set the to MARK here relative
-			 * to the cursor/from MARK.  This is done for commands
-			 * that take both counts and motions, i.e. "4yy" and
-			 * "y%" -- there's no way the command can known which
-			 * the user did, so we have to do it here.  There are
-			 * other commands that are line mode commands and take
-			 * counts ("#G", "#H") and for which this calculation
-			 * is either meaningless or wrong.  Each command must
-			 * do its own validity checking of the value.
-			 */
-			if (F_ISSET(vp->kp, V_LMODE)) {
-				F_SET(vp, VC_LMODE);
-				if (F_ISSET(vp, VC_C1SET)) {
-					tm.lno = sp->lno + vp->count - 1;
-					tm.cno = sp->cno;
-				}
-			}
+		/*
+		 * Do any required motion; getmotion sets the from MARK and the
+		 * line mode flag.  We save off the RCM mask and only restore
+		 * it if it no RCM flags are set by the motion command.  This
+		 * means that the motion command is expected to determine where
+		 * the cursor ends up!
+		 */
+		if (F_ISSET(vp, V_MOTION)) {
+			flags = F_ISSET(vp, VM_RCM_MASK);
+			F_CLR(vp, VM_RCM_MASK);
+			if (getmotion(sp, ep, DOTMOTION, vp))
+				goto err;
+			if (F_ISSET(vp, VM_NOMOTION))
+				goto err;
+			if (!F_ISSET(vp, VM_RCM_MASK))
+				F_SET(vp, flags);
 		}
+
+		/*
+		 * If a count is set and the command is line oriented, set the
+		 * to MARK here relative to the cursor/from MARK.  This is for
+		 * commands that take both counts and motions, i.e. "4yy" and
+		 * "y%".  As there's no way the command can know which the user
+		 * did, we have to do it here.  (There are commands that are
+		 * line oriented and that take counts ("#G", "#H"), for which
+		 * this calculation is either completely meaningless or wrong.
+		 * Each command must validate the value for itself.
+		 */
+		if (F_ISSET(vp, VC_C1SET) && F_ISSET(vp, VM_LMODE))
+			vp->m_stop.lno += vp->count - 1;
 
 		/* Increment the command count. */
 		++sp->ccnt;
 
-		/*
-		 * Call the function.  Set the return cursor to the current
-		 * cursor position first -- the underlying routines don't
-		 * bother to do the work if it doesn't move.
-		 */
-		m.lno = sp->lno;
-		m.cno = sp->cno;
+		/* Save the mode and call the function. */
 		saved_mode = F_ISSET(sp, S_SCREENS | S_MAJOR_CHANGE);
-		if ((vp->kp->func)(sp, ep, vp, &fm, &tm, &m))
+		if ((vp->kp->func)(sp, ep, vp))
 			goto err;
 #ifdef DEBUG
 		/* Make sure no function left the temporary space locked. */
@@ -188,13 +194,13 @@ vi(sp, ep)
 		 */
 		 if (saved_mode != F_ISSET(sp, S_SCREENS | S_MAJOR_CHANGE))
 			break;
-		
+
 		/* Set the absolute mark. */
-		if (LF_ISSET(V_ABS) && mark_set(sp, ep, ABSMARK1, &abs, 1))
+		if (F_ISSET(vp, V_ABS) && mark_set(sp, ep, ABSMARK1, &abs, 1))
 			goto err;
 
 		/* Set the dot command structure. */
-		if (LF_ISSET(V_DOT)) {
+		if (F_ISSET(vp, V_DOT)) {
 			*DOT = cmd;
 			F_SET(DOT, VC_ISDOT);
 			/*
@@ -208,13 +214,13 @@ vi(sp, ep)
 
 		/*
 		 * Some vi row movements are "attracted" to the last position
-		 * set, i.e. the V_RCM commands are moths to the V_RCM_SET
+		 * set, i.e. the VM_RCM commands are moths to the VM_RCM_SET
 		 * commands' candle.  It's broken into two parts.  Here we deal
 		 * with the command flags.  In sp->relative(), we deal with the
 		 * screen flags.  If the movement is to the EOL the vi command
 		 * handles it.  If it's to the beginning, we handle it here.
 		 *
-		 * Note, some commands (e.g. _, ^) don't set the V_RCM_SETFNB
+		 * Note, some commands (e.g. _, ^) don't set the VM_RCM_SETFNB
 		 * flag, but do the work themselves.  The reason is that they
 		 * have to modify the column in case they're being used as a
 		 * motion component.  Other similar commands (e.g. +, -) don't
@@ -226,38 +232,45 @@ vi(sp, ep)
 		 * You betcha.  As they say, if you think you understand it,
 		 * you don't.
 		 */
-		switch (LF_ISSET(V_RCM | V_RCM_SETFNB |
-		    V_RCM_SETLAST | V_RCM_SETLFNB | V_RCM_SETNNB)) {
+		switch (F_ISSET(vp, VM_RCM_MASK)) {
 		case 0:
+		case VM_RCM_SET:
 			break;
-		case V_RCM:
-			m.cno = sp->s_relative(sp, ep, m.lno);
+		case VM_RCM:
+			vp->m_final.cno = sp->s_rcm(sp, ep, vp->m_final.lno);
 			break;
-		case V_RCM_SETLAST:
+		case VM_RCM_SETLAST:
 			sp->rcmflags = RCM_LAST;
 			break;
-		case V_RCM_SETLFNB:
-			if (fm.lno != m.lno) {
-				if (nonblank(sp, ep, m.lno, &m.cno))
+		case VM_RCM_SETLFNB:
+			/*
+			 * If we changed lines, move to the first non-blank.
+			 * This is the hack that makes logical scrolling on
+			 * really long lines work.
+			 */
+			if (vp->m_start.lno != vp->m_final.lno) {
+				vp->m_final.cno = 0;
+				if (nonblank(sp, ep,
+				    vp->m_final.lno, &vp->m_final.cno))
 					goto err;
 				sp->rcmflags = RCM_FNB;
 			}
 			break;
-		case V_RCM_SETFNB:
-			m.cno = 0;
+		case VM_RCM_SETFNB:
+			vp->m_final.cno = 0;
 			/* FALLTHROUGH */
-		case V_RCM_SETNNB:
-			if (nonblank(sp, ep, m.lno, &m.cno))
+		case VM_RCM_SETNNB:
+			if (nonblank(sp, ep, vp->m_final.lno, &vp->m_final.cno))
 				goto err;
 			sp->rcmflags = RCM_FNB;
 			break;
 		default:
 			abort();
 		}
-			
+
 		/* Update the cursor. */
-		sp->lno = m.lno;
-		sp->cno = m.cno;
+		sp->lno = vp->m_final.lno;
+		sp->cno = vp->m_final.cno;
 
 		if (!MAPPED_KEYS_WAITING(sp)) {
 			(void)msg_rpt(sp, 1);
@@ -273,7 +286,7 @@ err:				term_map_flush(sp, "Vi error");
 		}
 
 		/* Set the new favorite position. */
-		if (LF_ISSET(V_RCM_SET)) {
+		if (F_ISSET(vp, VM_RCM_SET)) {
 			sp->rcmflags = 0;
 			(void)sp->s_column(sp, ep, &sp->rcm);
 		}
@@ -423,26 +436,29 @@ getcmd(sp, ep, dp, vp, ismotion, comcountp)
 		/* Required buffer. */
 		if (LF_ISSET(V_RBUF))
 			KEY(vp->buffer, 0);
+	}
 
-		/*
-		 * Special case: '[', ']' and 'Z' commands.  Doesn't the
-		 * fact that the *single* characters don't mean anything
-		 * but the *doubled* characters do just frost your shorts?
-		 */
-		if (vp->key == '[' || vp->key == ']' || vp->key == 'Z') {
-			KEY(key, TXT_MAPCOMMAND);
-			if (vp->key != key)
-				goto usage;
+	/*
+	 * Special case: '[', ']' and 'Z' commands.  Doesn't the fact that
+	 * the *single* characters don't mean anything but the *doubled*
+	 * characters do just frost your shorts?
+	 */
+	if (vp->key == '[' || vp->key == ']' || vp->key == 'Z') {
+		KEY(key, TXT_MAPCOMMAND);
+		if (vp->key != key) {
+usage:			msgq(sp, M_ERR, "Usage: %s", ismotion != NULL ?
+			    vikeys[ismotion->key].usage : kp->usage);
+			return (1);
 		}
-		/* Special case: 'z' command. */
-		if (vp->key == 'z') {
+	}
+	/* Special case: 'z' command. */
+	if (vp->key == 'z') {
+		KEY(vp->character, 0);
+		if (isdigit(vp->character)) {
+			if (getcount(sp, vp->character, &vp->count2))
+				return (1);
+			F_SET(vp, VC_C2SET);
 			KEY(vp->character, 0);
-			if (isdigit(vp->character)) {
-				if (getcount(sp, vp->character, &vp->count2))
-					return (1);
-				F_SET(vp, VC_C2SET);
-				KEY(vp->character, 0);
-			}
 		}
 	}
 
@@ -450,9 +466,9 @@ getcmd(sp, ep, dp, vp, ismotion, comcountp)
 	 * Commands that have motion components can be doubled to
 	 * imply the current line.
 	 */
-	else if (ismotion->key != key && !LF_ISSET(V_MOVE)) {
-usage:		msgq(sp, M_ERR, "Usage: %s", ismotion != NULL ?
-		    vikeys[ismotion->key].usage : kp->usage);
+	if (ismotion != NULL && ismotion->key != key && !LF_ISSET(V_MOVE)) {
+		msgq(sp, M_ERR, "%s may not be used as a motion command.",
+		    charname(sp, key));
 		return (1);
 	}
 
@@ -469,14 +485,14 @@ usage:		msgq(sp, M_ERR, "Usage: %s", ismotion != NULL ?
  * Get resulting motion mark.
  */
 static int
-getmotion(sp, ep, dm, vp, fm, tm)
+getmotion(sp, ep, dm, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *dm, *vp;
-	MARK *fm, *tm;
 {
 	MARK m;
 	VICMDARG motion;
+	size_t len;
 	u_long cnt;
 	int notused;
 
@@ -491,7 +507,7 @@ getmotion(sp, ep, dm, vp, fm, tm)
 	 * A count may be provided both to the command and to the motion, in
 	 * which case the count is multiplicative.  For example, "3y4y" is the
 	 * same as "12yy".  This count is provided to the motion command and
-	 * not to the regular function. 
+	 * not to the regular function.
 	 */
 	cnt = motion.count = F_ISSET(&motion, VC_C1SET) ? motion.count : 1;
 	if (F_ISSET(vp, VC_C1SET)) {
@@ -514,29 +530,31 @@ getmotion(sp, ep, dm, vp, fm, tm)
 	 * the resulting mark.
  	 */
 	if (vp->key == motion.key) {
-		F_SET(vp, VC_LMODE);
+		F_SET(vp, VM_LMODE);
+
+		/* Set the origin of the command. */
+		vp->m_start.lno = sp->lno;
+		vp->m_start.cno = 0;
 
 		/*
-		 * Set the end of the command; the column is after the line.
+		 * Set the end of the command.
 		 *
 		 * If the current line is missing, i.e. the file is empty,
 		 * historic vi permitted a "cc" or "!!" command to insert
 		 * text.
 		 */
-		tm->lno = sp->lno + motion.count - 1;
-		if (file_gline(sp, ep, tm->lno, &tm->cno) == NULL) {
-			if (tm->lno != 1 || vp->key != 'c' && vp->key != '!') {
+		vp->m_stop.lno = sp->lno + motion.count - 1;
+		if (file_gline(sp, ep, vp->m_stop.lno, &len) == NULL) {
+			if (vp->m_stop.lno != 1 ||
+			   vp->key != 'c' && vp->key != '!') {
 				m.lno = sp->lno;
 				m.cno = sp->cno;
 				v_eof(sp, ep, &m);
 				return (1);
 			}
-			tm->cno = 0;
-		}
-
-		/* Set the origin of the command. */
-		fm->lno = sp->lno;
-		fm->cno = 0;
+			vp->m_stop.cno = 0;
+		} else
+			vp->m_stop.cno = len ? len - 1 : 0;
 	} else {
 		/*
 		 * Motion commands change the underlying movement (*snarl*).
@@ -545,56 +563,60 @@ getmotion(sp, ep, dm, vp, fm, tm)
 		 */
 		F_SET(&motion, vp->kp->flags & VC_COMMASK);
 
+		/* Copy the key flags into the local structure. */
+		F_SET(&motion, motion.kp->flags);
+
 		/*
-		 * Everything starts at the current position.  This permits
-		 * commands like 'j' and 'k', that are line oriented motions
-		 * and have special cursor suck semantics when they are used
-		 * as standalone commands, to ignore column positioning.
+		 * Set the three cursor locations to the current cursor.  This
+		 * permits commands like 'j' and 'k', that are line oriented
+		 * motions and have special cursor suck semantics when they are
+		 * used as standalone commands, to ignore column positioning.
 		 */
-		fm->lno = tm->lno = sp->lno;
-		fm->cno = tm->cno = sp->cno;
-		if ((motion.kp->func)(sp, ep, &motion, fm, NULL, tm))
+		motion.m_final.lno =
+		    motion.m_stop.lno = motion.m_start.lno = sp->lno;
+		motion.m_final.cno =
+		    motion.m_stop.cno = motion.m_start.cno = sp->cno;
+
+		/* Run the function. */
+		if ((motion.kp->func)(sp, ep, &motion))
 			return (1);
 
 		/*
-		 * If the underlying motion was a line motion, set the flag
-		 * in the command structure.  Underlying commands can also
-		 * flag the movement as a line motion (see v_sentence).
+		 * Copy line mode and cursor position information from the
+		 * motion command structure.  The commands can flag the
+		 * movement as a line motion (see v_sentence) as well as set
+		 * the VM_RCM_* flags explicitly.
 		 */
-		if (F_ISSET(motion.kp, V_LMODE) || F_ISSET(&motion, VC_LMODE))
-			F_SET(vp, VC_LMODE);
+		F_SET(vp,
+		    F_ISSET(&motion, VM_LMODE | VM_NOMOTION | VM_RCM_MASK));
 
 		/*
-		 * If the motion is in the reverse direction, switch the from
-		 * and to MARK's so that it's always in a forward direction.
-		 * Because the motion is always from the from MARK to, but not
-		 * including, the to MARK, the function may have modified the
-		 * from MARK, so that it gets the one-past-the-place semantics
-		 * we use; see v_match() for an example.  Also set a flag so
-		 * that the underlying function knows that we did this; v_yank,
-		 * for example, has to know so it gets the return cursor right.
+		 * Motion commands can reset all of the cursor information.
+		 * If the motion is in the reverse direction, switch the
+		 * from and to MARK's so that it's in a forward direction.
+		 * Motions are from the from MARK to the to MARK (inclusive).
 		 */
-		if (tm->lno < fm->lno ||
-		    tm->lno == fm->lno && tm->cno < fm->cno) {
-			m = *fm;
-			*fm = *tm;
-			*tm = m;
-			F_SET(vp, VC_REVMOVE);
+		if (motion.m_start.lno > motion.m_stop.lno ||
+		    motion.m_start.lno == motion.m_stop.lno &&
+		    motion.m_start.cno > motion.m_stop.cno) {
+			vp->m_start = motion.m_stop;
+			vp->m_stop = motion.m_start;
+		} else {
+			vp->m_start = motion.m_start;
+			vp->m_stop = motion.m_stop;
 		}
+		vp->m_final = motion.m_final;
 	}
 
 	/*
-	 * If the command sets dot, save the motion structure.  The
-	 * motion count was changed above and needs to be reset, that's
-	 * why this is done here, and not in the calling routine.
+	 * If the command sets dot, save the motion structure.  The motion
+	 * count was changed above and needs to be reset, that's why this
+	 * is done here, and not in the calling routine.
 	 */
 	if (F_ISSET(vp->kp, V_DOT)) {
 		*dm = motion;
 		dm->count = cnt;
 	}
-
-	/* Let the underlying function know what motion command was used. */
-	vp->mkp = motion.kp;
 	return (0);
 }
 
@@ -772,9 +794,8 @@ getkey(sp, ikeyp, map)
 	case INP_OK:
 		break;
 	case INP_EOF:
-		F_SET(sp, S_EXIT_FORCE);
-		/* FALLTHROUGH */
 	case INP_ERR:
+		F_SET(sp, S_EXIT_FORCE);
 		return (1);
 	}
 	return (ikeyp->value == K_ESCAPE);

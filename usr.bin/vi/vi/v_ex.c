@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,25 +32,51 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)v_ex.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$Id: v_ex.c,v 1.2 1994/01/24 06:41:32 cgd Exp $";
+static char sccsid[] = "@(#)v_ex.c	8.3 (Berkeley) 3/8/94";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/time.h>
+
+#include <bitstring.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
+#include <termios.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "vcmd.h"
 
 /*
- * v_ex --
- *	Run ex.
+ * v_ex -- :
+ *	Execute a colon command line.
  */
 int
-v_ex(sp, ep, vp, fm, tm, rp)
+v_ex(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
-	return (sp->s_ex_run(sp, ep, rp));
+	return (sp->s_ex_run(sp, ep, &vp->m_final));
+}
+
+/*
+ * v_exmode -- Q
+ *	Switch the editor into EX mode.
+ */
+int
+v_exmode(sp, ep, vp)
+	SCR *sp;
+	EXF *ep;
+	VICMDARG *vp;
+{
+	sp->saved_vi_mode = F_ISSET(sp, S_VI_CURSES | S_VI_XAW);
+	F_CLR(sp, S_SCREENS);
+	F_SET(sp, S_EX);
+	return (0);
 }

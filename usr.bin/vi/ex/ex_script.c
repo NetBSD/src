@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,18 +32,28 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)ex_script.c	8.10 (Berkeley) 12/22/93"; */
-static char *rcsid = "$Id: ex_script.c,v 1.2 1994/01/24 06:40:35 cgd Exp $";
+static char sccsid[] = "@(#)ex_script.c	8.12 (Berkeley) 3/14/94";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
+#include <sys/queue.h>
+#include <sys/time.h>
 #include <sys/wait.h>
 
+#include <bitstring.h>
 #include <errno.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
 #include <unistd.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "excmd.h"
@@ -472,7 +482,7 @@ ret:	FREE_SPACE(sp, bp, blen);
  * sscr_setprompt --
  *
  * Set the prompt to the last line we got from the shell.
- * 
+ *
  */
 static int
 sscr_setprompt(sp, buf, len)
@@ -552,7 +562,7 @@ sscr_end(sp)
 
 	/* Turn off the script flag. */
 	F_CLR(sp, S_SCRIPT);
-	
+
 	/* Close down the parent's file descriptors. */
 	if (sc->sh_master != -1)
 	    (void)close(sc->sh_master);

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,15 +32,25 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)ex_init.c	8.11 (Berkeley) 1/9/94"; */
-static char *rcsid = "$Id: ex_init.c,v 1.2 1994/01/24 06:40:21 cgd Exp $";
+static char sccsid[] = "@(#)ex_init.c	8.14 (Berkeley) 3/18/94";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/time.h>
 
+#include <bitstring.h>
 #include <errno.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "excmd.h"
@@ -63,6 +73,7 @@ ex_screen_copy(orig, sp)
 	/* Initialize queues. */
 	TAILQ_INIT(&nexp->tagq);
 	TAILQ_INIT(&nexp->tagfq);
+	TAILQ_INIT(&nexp->cdq);
 	CIRCLEQ_INIT(&nexp->rangeq);
 
 	if (orig == NULL) {
@@ -109,6 +120,12 @@ ex_screen_end(sp)
 
 	if (exp->lastbcomm != NULL)
 		FREE(exp->lastbcomm, strlen(exp->lastbcomm) + 1);
+
+	if (ex_tagfree(sp))
+		rval = 1;
+
+	if (ex_cdfree(sp))
+		rval = 1;
 
 	/* Free private memory. */
 	FREE(exp, sizeof(EX_PRIVATE));
@@ -165,11 +182,6 @@ int
 ex_end(sp)
 	SCR *sp;
 {
-	/* Save the cursor location. */
-	sp->frp->lno = sp->lno;
-	sp->frp->cno = sp->cno;
-	F_SET(sp->frp, FR_CURSORSET);
-
 	return (0);
 }
 
@@ -183,6 +195,8 @@ ex_optchange(sp, opt)
 	int opt;
 {
 	switch (opt) {
+	case O_CDPATH:
+		return (ex_cdalloc(sp, O_STR(sp, O_CDPATH)));
 	case O_TAGS:
 		return (ex_tagalloc(sp, O_STR(sp, O_TAGS)));
 	}

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,15 +32,25 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)ex_join.c	8.8 (Berkeley) 12/29/93"; */
-static char *rcsid = "$Id: ex_join.c,v 1.2 1994/01/24 06:40:22 cgd Exp $";
+static char sccsid[] = "@(#)ex_join.c	8.11 (Berkeley) 3/24/94";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/time.h>
 
+#include <bitstring.h>
 #include <ctype.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "excmd.h"
@@ -86,8 +96,8 @@ ex_join(sp, ep, cmdp)
 		++cmdp->addr2.lno;
 
 	clen = tlen = 0;
-        for (first = 1, from = cmdp->addr1.lno,
-	    to = cmdp->addr2.lno; from <= to; ++from) {
+        for (first = 1,
+	    from = cmdp->addr1.lno, to = cmdp->addr2.lno; from <= to; ++from) {
 		/*
 		 * Get next line.  Historic versions of vi allowed "10J" while
 		 * less than 10 lines from the end-of-file, so we do too.
@@ -137,7 +147,7 @@ ex_join(sp, ep, cmdp)
 				for (; len && isblank(*p); --len, ++p);
 			}
 		}
-			
+
 		if (len != 0) {
 			memmove(tbp, p, len);
 			tbp += len;
@@ -177,9 +187,9 @@ ex_join(sp, ep, cmdp)
         for (from = cmdp->addr1.lno, to = cmdp->addr2.lno; to > from; --to)
 		if (file_dline(sp, ep, to))
 			goto err;
-		
-	/* Reset the original line. */
-	if (file_sline(sp, ep, from, bp, tbp - bp)) {
+
+	/* If the original line changed, reset it. */
+	if (!first && file_sline(sp, ep, from, bp, tbp - bp)) {
 err:		FREE_SPACE(sp, bp, blen);
 		return (1);
 	}

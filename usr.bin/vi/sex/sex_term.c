@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1993
+ * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,16 +32,26 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)sex_term.c	8.24 (Berkeley) 12/20/93"; */
-static char *rcsid = "$Id: sex_term.c,v 1.2 1994/01/24 06:41:06 cgd Exp $";
+static char sccsid[] = "@(#)sex_term.c	8.28 (Berkeley) 3/15/94";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
+#include <sys/queue.h>
+#include <sys/time.h>
 
+#include <bitstring.h>
 #include <errno.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
 #include <string.h>
+#include <termios.h>
 #include <unistd.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "excmd.h"
@@ -116,10 +126,10 @@ sigchk:	while (F_ISSET(sp->gp,
 	 *    when trying to complete a map, but we're going to hang
 	 *    on the next read anyway.
 	 */
-	if (!F_ISSET(sp->gp, G_ISFROMTTY)) {
+	if (!F_ISSET(sp->gp, G_STDIN_TTY)) {
 		if ((nr = read(STDIN_FILENO,
 		    tty->ch + tty->next + tty->cnt,
-		    tty->len - (tty->next + tty->cnt))) > 0) {
+		    tty->nelem - (tty->next + tty->cnt))) > 0) {
 			tty->cnt += *nrp = nr;
 			return (INP_OK);
 		}
@@ -186,7 +196,7 @@ sigchk:	while (F_ISSET(sp->gp,
 				FD_CLR(sp->script->sh_master, &sp->rdfd);
 			maxfd = STDIN_FILENO;
 		}
-		
+
 		switch (select(maxfd + 1, &sp->rdfd, NULL, NULL, tp)) {
 		case -1:		/* Error or interrupt. */
 			if (errno == EINTR)
@@ -210,7 +220,7 @@ err:			msgq(sp, M_SYSERR, "select");
 
 		switch (nr = read(STDIN_FILENO,
 		    tty->ch + tty->next + tty->cnt,
-		    tty->len - (tty->next + tty->cnt))) {
+		    tty->nelem - (tty->next + tty->cnt))) {
 		case  0:			/* EOF. */
 			return (INP_EOF);
 		case -1:			/* Error or interrupt. */

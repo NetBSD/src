@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,11 +32,22 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)v_z.c	8.8 (Berkeley) 12/2/93"; */
-static char *rcsid = "$Id: v_z.c,v 1.2 1994/01/24 06:42:11 cgd Exp $";
+static char sccsid[] = "@(#)v_z.c	8.11 (Berkeley) 3/8/94";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/time.h>
+
+#include <bitstring.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
+#include <termios.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "vcmd.h"
@@ -46,11 +57,10 @@ static char *rcsid = "$Id: v_z.c,v 1.2 1994/01/24 06:42:11 cgd Exp $";
  *	Move the screen.
  */
 int
-v_z(sp, ep, vp, fm, tm, rp)
+v_z(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
 	recno_t last, lno;
 	u_int value;
@@ -66,11 +76,11 @@ v_z(sp, ep, vp, fm, tm, rp)
 		if (lno > last)
 			lno = last;
 	} else
-		lno = fm->lno;
+		lno = vp->m_start.lno;
 
-	/* Set return cursor values. */
-	rp->lno = lno;
-	rp->cno = fm->cno;
+	/* Set default return cursor values. */
+	vp->m_final.lno = lno;
+	vp->m_final.cno = vp->m_start.cno;
 
 	/*
 	 * The second count is the displayed window size, i.e. the 'z'
@@ -82,7 +92,7 @@ v_z(sp, ep, vp, fm, tm, rp)
 	 * of the O_WINDOW option, but that's not how it worked historically.
 	 */
 	if (F_ISSET(vp, VC_C2SET) &&
-	    vp->count2 != 0 && sp->s_rrel(sp, vp->count2))
+	    vp->count2 != 0 && sp->s_crel(sp, vp->count2))
 		return (1);
 
 	switch (vp->character) {
@@ -120,9 +130,9 @@ v_z(sp, ep, vp, fm, tm, rp)
 		 */
 		if (sp->s_fill(sp, ep, lno, P_BOTTOM))
 			return (1);
-		if (sp->s_down(sp, ep, rp, sp->t_maxrows - 1, 1))
+		if (sp->s_down(sp, ep, &vp->m_final, sp->t_maxrows - 1, 1))
 			return (1);
-		if (sp->s_position(sp, ep, rp, 0, P_MIDDLE))
+		if (sp->s_position(sp, ep, &vp->m_final, 0, P_MIDDLE))
 			return (1);
 		break;
 	}

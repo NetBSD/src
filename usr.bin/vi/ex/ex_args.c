@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1991, 1993
+ * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,15 +32,25 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)ex_args.c	8.13 (Berkeley) 12/20/93"; */
-static char *rcsid = "$Id: ex_args.c,v 1.2 1994/01/24 06:40:06 cgd Exp $";
+static char sccsid[] = "@(#)ex_args.c	8.16 (Berkeley) 3/14/94";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/time.h>
 
+#include <bitstring.h>
 #include <errno.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "excmd.h"
@@ -65,7 +75,7 @@ ex_next(sp, ep, cmdp)
 	FREF *frp;
 	char *name;
 
-	MODIFY_CHECK(sp, ep, F_ISSET(cmdp, E_FORCE));
+	MODIFY_RET(sp, ep, F_ISSET(cmdp, E_FORCE));
 
 	if (cmdp->argc) {
 		/* Mark all the current files as ignored. */
@@ -77,7 +87,7 @@ ex_next(sp, ep, cmdp)
 		for (argv = cmdp->argv; argv[0]->len != 0; ++argv)
 			if (file_add(sp, NULL, argv[0]->bp, 0) == NULL)
 				return (1);
-		
+
 		if ((frp = file_first(sp)) == NULL)
 			return (1);
 	} else if ((frp = file_next(sp, sp->a_frp)) == NULL) {
@@ -119,7 +129,7 @@ ex_prev(sp, ep, cmdp)
 	FREF *frp;
 	char *name;
 
-	MODIFY_CHECK(sp, ep, F_ISSET(cmdp, E_FORCE));
+	MODIFY_RET(sp, ep, F_ISSET(cmdp, E_FORCE));
 
 	if ((frp = file_prev(sp, sp->a_frp)) == NULL) {
 		msgq(sp, M_ERR, "No previous files to edit.");
@@ -161,7 +171,7 @@ ex_rew(sp, ep, cmdp)
 		return (1);
 	}
 
-	MODIFY_CHECK(sp, ep, F_ISSET(cmdp, E_FORCE));
+	MODIFY_RET(sp, ep, F_ISSET(cmdp, E_FORCE));
 
 	/*
 	 * !!!

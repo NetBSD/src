@@ -30,8 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)sex_screen.h	8.12 (Berkeley) 11/29/93
- *	$Id: sex_screen.h,v 1.2 1994/01/24 06:41:05 cgd Exp $
+ *	@(#)sex_screen.h	8.12 (Berkeley) 11/29/93
  */
 
 #define	SEX_NORAW(t)							\

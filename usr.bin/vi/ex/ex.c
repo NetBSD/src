@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,19 +32,29 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)ex.c	8.90 (Berkeley) 1/23/94"; */
-static char *rcsid = "$Id: ex.c,v 1.2 1994/01/24 06:40:03 cgd Exp $";
+static char sccsid[] = "@(#)ex.c	8.106 (Berkeley) 3/23/94";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/queue.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
+#include <bitstring.h>
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
 #include <unistd.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "excmd.h"
@@ -66,7 +76,7 @@ ex(sp, ep)
 	EXF *ep;
 {
 	TEXT *tp;
-	u_int saved_mode;
+	u_int flags, saved_mode;
 	int eval;
 	char defcom[sizeof(DEFCOM)];
 
@@ -77,38 +87,57 @@ ex(sp, ep)
 		return (ex_end(sp));
 
 	/* If reading from a file, messages should have line info. */
-	if (!F_ISSET(sp->gp, G_ISFROMTTY)) {
+	if (!F_ISSET(sp->gp, G_STDIN_TTY)) {
 		sp->if_lno = 1;
 		sp->if_name = strdup("input");
 	}
+
+	/*
+	 * !!!
+	 * Historically, the beautify option applies to ex command input read
+	 * from a file.  In addition, the first time a ^H was discarded from
+	 * the input, a message "^H discarded" was displayed.  We don't bother.
+	 */
+	LF_INIT(TXT_CNTRLD | TXT_CR | TXT_PROMPT);
+	if (O_ISSET(sp, O_BEAUTIFY))
+		LF_SET(TXT_BEAUTIFY);
+
 	for (eval = 0;; ++sp->if_lno) {
 		/* Get the next command. */
-		switch (sp->s_get(sp, ep, &sp->tiq, ':', TXT_CR | TXT_PROMPT)) {
+		switch (sp->s_get(sp, ep, &sp->tiq, ':', flags)) {
 		case INP_OK:
 			break;
 		case INP_EOF:
+		case INP_ERR:
 			F_SET(sp, S_EXIT_FORCE);
 			goto ret;
-		case INP_ERR:
-			continue;
 		}
 
 		saved_mode = F_ISSET(sp, S_SCREENS | S_MAJOR_CHANGE);
 		tp = sp->tiq.cqh_first;
 		if (tp->len == 0) {
-			if (F_ISSET(sp->gp, G_ISFROMTTY)) {
+			if (F_ISSET(sp->gp, G_STDIN_TTY)) {
+				/* Special case \r command. */
 				(void)fputc('\r', stdout);
 				(void)fflush(stdout);
 			}
 			memmove(defcom, DEFCOM, sizeof(DEFCOM));
-			(void)ex_icmd(sp, ep, defcom, sizeof(DEFCOM) - 1);
+			if (ex_icmd(sp, ep, defcom, sizeof(DEFCOM) - 1) &&
+			    !F_ISSET(sp->gp, G_STDIN_TTY))
+				F_SET(sp, S_EXIT_FORCE);
 		} else {
-			if (F_ISSET(sp->gp, G_ISFROMTTY))
-				(void)fputc('\n', stdout);
-			(void)ex_icmd(sp, ep, tp->lb, tp->len);
+			if (F_ISSET(sp->gp, G_STDIN_TTY))
+				/* Special case ^D command. */
+				if (tp->len == 1 && tp->lb[0] == '\004') {
+					(void)fputc('\r', stdout);
+					(void)fflush(stdout);
+				} else
+					(void)fputc('\n', stdout);
+			if (ex_icmd(sp, ep, tp->lb, tp->len) &&
+			    !F_ISSET(sp->gp, G_STDIN_TTY))
+				F_SET(sp, S_EXIT_FORCE);
 		}
 		(void)msg_rpt(sp, 0);
-
 		if (saved_mode != F_ISSET(sp, S_SCREENS | S_MAJOR_CHANGE))
 			break;
 
@@ -164,11 +193,16 @@ err:		rval = 1;
 	} else {
 		bp[sb.st_size] = '\0';		/* XXX */
 
-		/* Run the command.  Messages include file/line information. */
+		/*
+		 * Run the command.  Messages include file/line information,
+		 * but we don't care if we can't get space.
+		 */
 		sp->if_lno = 1;
 		sp->if_name = strdup(filename);
+		F_SET(sp, S_VLITONLY);
 		rval = ex_icmd(sp, ep, bp, len);
-		FREE(sp->if_name, strlen(sp->if_name) + 1);
+		F_CLR(sp, S_VLITONLY);
+		free(sp->if_name);
 		sp->if_name = NULL;
 	}
 
@@ -206,7 +240,7 @@ ex_icmd(sp, ep, cmd, len)
 }
 
 /* Special command structure for :s as a repeat substitution command. */
-static EXCMDLIST const cmd_subagain = 
+static EXCMDLIST const cmd_subagain =
 	{"s",		ex_subagain,	E_ADDR2|E_NORC,
 	    "s",
 	    "[line [,line]] s [cgr] [count] [#lp]",
@@ -223,7 +257,6 @@ ex_cmd(sp, ep, cmd, cmdlen)
 	char *cmd;
 	size_t cmdlen;
 {
-	CHAR_T vlit;
 	EX_PRIVATE *exp;
 	EXCMDARG exc;
 	EXCMDLIST const *cp;
@@ -319,7 +352,7 @@ loop:	if (nl) {
 	 * the command "cut" wasn't known.  However, it makes ":e+35 file" work
 	 * correctly.
 	 */
-#define	SINGLE_CHAR_COMMANDS	"!#&<=>@~"
+#define	SINGLE_CHAR_COMMANDS	"\004!#&<=>@~"
 	if (cmdlen != 0 && cmd[0] != '|' && cmd[0] != '\n') {
 		if (strchr(SINGLE_CHAR_COMMANDS, *cmd)) {
 			p = cmd;
@@ -347,8 +380,6 @@ loop:	if (nl) {
 		 * Historic vi permitted pretty much anything to follow the
 		 * substitute command, e.g. "s/e/E/|s|sgc3p" was fine.  Make
 		 * it work.
-		 *
-		 * Use of msgq below is safe, command names are all alphabetics.
 		 */
 		if ((cp = ex_comm_search(p, namelen)) == NULL)
 			if (p[0] == 'k' && p[1] && !p[2]) {
@@ -416,12 +447,14 @@ loop:	if (nl) {
 	 * called when reading the .exrc file and similar things.  There's
 	 * this little chicken and egg problem -- if we read the file first,
 	 * we won't know how to display it.  If we read/set the exrc stuff
-	 * first, we can't allow any command that requires file state.
-	 * Historic vi generally took the easy way out and dropped core.
+	 * first, we can't allow any command that requires file state.  We
+	 * don't have a "reading an rc" bit, because we want the commands
+	 * to work when the user source's the rc file later.  Historic vi
+	 * generally took the easy way out and dropped core.
  	 */
 	if (LF_ISSET(E_NORC) && ep == NULL) {
 		msgq(sp, M_ERR,
-	"The %s command requires that a file already have been read in.",
+	"The %s command requires that a file have already been read in.",
 		    cp->name);
 		goto err;
 	}
@@ -475,7 +508,6 @@ loop:	if (nl) {
 	 */
 	arg1_len = 0;
 	save_cmd = cmd;
-	(void)term_key_ch(sp, K_VLNEXT, &vlit);
 	if (cp == &cmds[C_EDIT] ||
 	    cp == &cmds[C_EX] || cp == &cmds[C_VISUAL_VI]) {
 		/*
@@ -502,7 +534,8 @@ loop:	if (nl) {
 			++cmd;
 			--cmdlen;
 			for (arg1 = p = cmd; cmdlen > 0; --cmdlen, ++cmd) {
-				if ((ch = *cmd) == vlit && cmdlen > 1) {
+				ch = *cmd;
+				if (IS_ESCAPE(sp, ch) && cmdlen > 1) {
 					--cmdlen;
 					ch = *++cmd;
 				} else if (isblank(ch))
@@ -574,22 +607,23 @@ loop:	if (nl) {
 	 *
 	 * Historically, vi permitted ^V's to escape <newline>'s in the .exrc
 	 * file.  It was almost certainly a bug, but that's what bug-for-bug
-	 * compatibility means, Grasshopper.  Also, ^V's escape the command 
+	 * compatibility means, Grasshopper.  Also, ^V's escape the command
 	 * delimiters.  Literal next quote characters in front of the newlines,
 	 * '|' characters or literal next characters are stripped as as they're
 	 * no longer useful.
 	 */
 	for (p = cmd, cnt = 0; cmdlen > 0; --cmdlen, ++cmd) {
-		if ((ch = cmd[0]) == vlit && cmdlen > 1) {
-			ch = cmd[1];
-			if (ch == '\n' || ch == '|') {
-				if (ch == '\n')
+		ch = cmd[0];
+		if (IS_ESCAPE(sp, ch) && cmdlen > 1) {
+			tmp = cmd[1];
+			if (tmp == '\n' || tmp == '|') {
+				if (tmp == '\n')
 					++sp->if_lno;
 				--cmdlen;
 				++cmd;
 				++cnt;
-			} else
-				ch = vlit;
+				ch = tmp;
+			}
 		} else if (ch == '\n' || ch == '|') {
 			if (ch == '\n')
 				nl = 1;
@@ -620,7 +654,7 @@ loop:	if (nl) {
 	if (cp == &cmds[C_SET])
 		for (p = cmd, len = cmdlen; len > 0; --len, ++p)
 			if (*p == '\\')
-				*p = vlit;
+				*p = LITERAL_CH;
 
 	/*
 	 * Set the default addresses.  It's an error to specify an address for
@@ -696,7 +730,7 @@ two:		switch (exc.addrcnt) {
 				if (lno == 0) {
 					exc.addr1.lno = exc.addr2.lno = 0;
 					LF_SET(E_ZERO);
-				} else 
+				} else
 					exc.addr1.lno = exc.addr2.lno = sp->lno;
 			} else
 				exc.addr1.lno = exc.addr2.lno = sp->lno;
@@ -713,6 +747,24 @@ two:		switch (exc.addrcnt) {
 	default:
 		if (exc.addrcnt)		/* Error. */
 			goto usage;
+	}
+
+	/*
+	 * !!!
+	 * The ^D scroll command historically scrolled half the screen size
+	 * rows down, rounded down, or to EOF.  It was an error if the cursor
+	 * was already at EOF.  (Leading addresses were permitted, but were
+	 * then ignored.)
+	 */
+	if (cp == &cmds[C_SCROLL]) {
+		exc.addrcnt = 2;
+		exc.addr1.lno = sp->lno + 1;
+		exc.addr2.lno = sp->lno + 1 + (O_VAL(sp, O_LINES) + 1) / 2;
+		exc.addr1.cno = exc.addr2.cno = sp->cno;
+		if (file_lline(sp, ep, &lno))
+			goto err;
+		if (lno != 0 && lno > sp->lno && exc.addr2.lno > lno)
+			exc.addr2.lno = lno;
 	}
 
 	flagoff = 0;
@@ -821,9 +873,15 @@ end2:			break;
 			break;
 		case 'c':				/* count [01+a] */
 			++p;
+			/* Validate any signed value. */
 			if (!isdigit(*cmd) &&
 			    (*p != '+' || (*cmd != '+' && *cmd != '-')))
 				break;
+			/* If a signed value, set appropriate flags. */
+			if (*cmd == '-')
+				F_SET(&exc, E_COUNT_NEG);
+			else if (*cmd == '+')
+				F_SET(&exc, E_COUNT_POS);
 /* 8-bit XXX */		if ((lno = strtol(cmd, &t, 10)) == 0 && *p != '0') {
 				msgq(sp, M_ERR, "Count may not be zero.");
 				goto err;
@@ -856,7 +914,7 @@ end2:			break;
 				goto err;
 			/* Line specifications are always required. */
 			if (!tmp) {
-				msgq(sp, M_ERR, 
+				msgq(sp, M_ERR,
 				     "%s: bad line specification", cmd);
 				goto err;
 			}
@@ -882,7 +940,8 @@ end2:			break;
 			 * First there was the word.
 			 */
 			for (p = t = cmd; cmdlen > 0; --cmdlen, ++cmd) {
-				if ((ch = *cmd) == vlit && cmdlen > 1) {
+				ch = *cmd;
+				if (IS_ESCAPE(sp, ch) && cmdlen > 1) {
 					--cmdlen;
 					*p++ = *++cmd;
 				} else if (isblank(ch)) {
@@ -894,7 +953,7 @@ end2:			break;
 			}
 			if (argv_exp0(sp, ep, &exc, t, p - t))
 				goto err;
-				
+
 			/* Delete intervening whitespace. */
 			for (; cmdlen > 0; --cmdlen, ++cmd) {
 				ch = *cmd;
@@ -905,12 +964,14 @@ end2:			break;
 				goto usage;
 
 			/* Followed by the string. */
-			for (p = t = cmd; cmdlen > 0; --cmdlen, ++cmd, ++p)
-				if ((ch = *cmd) == vlit && cmdlen > 1) {
+			for (p = t = cmd; cmdlen > 0; --cmdlen, ++cmd, ++p) {
+				ch = *cmd;
+				if (IS_ESCAPE(sp, ch) && cmdlen > 1) {
 					--cmdlen;
 					*p = *++cmd;
 				} else
 					*p = ch;
+			}
 			if (argv_exp0(sp, ep, &exc, t, p - t))
 				goto err;
 			goto addr2;
@@ -1195,8 +1256,9 @@ addr2:	switch (exc.addrcnt) {
 	 * to know if part of the command was discarded.
 	 */
 err:	if (save_cmdlen == 0)
-		for (; cmdlen; --cmdlen)
-			if ((ch = *cmd++) == vlit && cmdlen > 1) {
+		for (; cmdlen; --cmdlen) {
+			ch = *cmd++;
+			if (IS_ESCAPE(sp, ch) && cmdlen > 1) {
 				--cmdlen;
 				++cmd;
 			} else if (ch == '\n' || ch == '|') {
@@ -1204,6 +1266,7 @@ err:	if (save_cmdlen == 0)
 					save_cmdlen = 1;
 				break;
 			}
+		}
 	if (save_cmdlen != 0)
 		msgq(sp, M_ERR,
 		    "Ex command failed: remaining command input discarded.");
@@ -1344,10 +1407,11 @@ ep_line(sp, ep, cur, cmdp, cmdlenp, addr_found)
 	size_t *cmdlenp;
 	int *addr_found;
 {
-	MARK m, *mp;
+	MARK m;
 	long total;
 	u_int flags;
 	size_t cmdlen;
+	int (*sf) __P((SCR *, EXF *, MARK *, MARK *, char *, char **, u_int *));
 	char *cmd, *endp;
 
 	*addr_found = 0;
@@ -1390,9 +1454,8 @@ ep_line(sp, ep, cur, cmdp, cmdlenp, addr_found)
 			msgq(sp, M_ERR, "No mark name supplied.");
 			return (1);
 		}
-		if ((mp = mark_get(sp, ep, cmd[1])) == NULL)
+		if (mark_get(sp, ep, cmd[1], cur))
 			return (1);
-		*cur = *mp;
 		cmd += 2;
 		cmdlen -= 2;
 		break;
@@ -1409,29 +1472,23 @@ ep_line(sp, ep, cur, cmdp, cmdlenp, addr_found)
 		}
 		++cmd;
 		--cmdlen;
-		if (cmd[0] == '/')
-			goto forward;
-		if (cmd[0] == '?')
-			goto backward;
-		/* NOTREACHED */
+		sf = cmd[0] == '/' ? f_search : b_search;
+		goto search;
 	case '/':				/* Search forward. */
-forward:	*addr_found = 1;
-		m.lno = sp->lno;
-		m.cno = sp->cno;
-		flags = SEARCH_MSG | SEARCH_PARSE | SEARCH_SET;
-		if (f_search(sp, ep, &m, &m, cmd, &endp, &flags))
-			return (1);
-		cur->lno = m.lno;
-		cur->cno = m.cno;
-		cmdlen -= (endp - cmd);
-		cmd = endp;
-		break;
+		sf = f_search;
+		goto search;
 	case '?':				/* Search backward. */
-backward:	*addr_found = 1;
+		sf = b_search;
+search:		if (ep == NULL) {
+			msgq(sp, M_ERR,
+	"A search address requires that a file have already been read in.");
+			return (1);
+		}
+		*addr_found = 1;
 		m.lno = sp->lno;
 		m.cno = sp->cno;
 		flags = SEARCH_MSG | SEARCH_PARSE | SEARCH_SET;
-		if (b_search(sp, ep, &m, &m, cmd, &endp, &flags))
+		if (sf(sp, ep, &m, &m, cmd, &endp, &flags))
 			return (1);
 		cur->lno = m.lno;
 		cur->cno = m.cno;
@@ -1477,14 +1534,18 @@ backward:	*addr_found = 1;
 			++cmd;
 		}
 	}
-	if (total < 0 && -total > cur->lno) {
-		msgq(sp, M_ERR, "Reference to a line number less than 0.");
-		return (1);
-	}
-	cur->lno += total;
 
-	*cmdp = cmd;
-	*cmdlenp = cmdlen;
+	if (*addr_found) {
+		if (total < 0 && -total > cur->lno) {
+			msgq(sp, M_ERR,
+			    "Reference to a line number less than 0.");
+			return (1);
+		}
+		cur->lno += total;
+
+		*cmdp = cmd;
+		*cmdlenp = cmdlen;
+	}
 	return (0);
 }
 
@@ -1503,6 +1564,30 @@ ex_is_abbrev(name, len)
 
 	return ((cp = ex_comm_search(name, len)) != NULL &&
 	    (cp == &cmds[C_ABBR] || cp == &cmds[C_UNABBREVIATE]));
+}
+
+/*
+ * ex_is_unmap -
+ *	The vi text input routine needs to know if ex thinks this is
+ *	an unmap command, so it can turn off input mapping.  Usual
+ *	ranting in the vi/v_ntext:txt_unmap() routine.
+ */
+int
+ex_is_unmap(name, len)
+	char *name;
+	size_t len;
+{
+	EXCMDLIST const *cp;
+
+	/*
+	 * The command the vi input routines are really interested in
+	 * is "unmap!", not just unmap.
+	 */
+	if (name[len - 1] != '!')
+		return (0);
+	--len;
+	return ((cp = ex_comm_search(name, len)) != NULL &&
+	    cp == &cmds[C_UNMAP]);
 }
 
 static inline EXCMDLIST const *

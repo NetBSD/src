@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,13 +32,23 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)v_section.c	8.4 (Berkeley) 1/22/94"; */
-static char *rcsid = "$Id: v_section.c,v 1.2 1994/01/24 06:41:55 cgd Exp $";
+static char sccsid[] = "@(#)v_section.c	8.6 (Berkeley) 3/8/94";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/time.h>
 
+#include <bitstring.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
 #include <string.h>
+#include <termios.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "vcmd.h"
@@ -48,67 +58,37 @@ static char *rcsid = "$Id: v_section.c,v 1.2 1994/01/24 06:41:55 cgd Exp $";
  * paragraph commands, which was probably okay.  However, they also moved
  * to the start of the last line when there where no more sections instead
  * of the end of the last line like the paragraph commands.  I've changed
- * the latter behaviore to match the paragraphs command.
+ * the latter behavior to match the paragraph commands.
  *
  * In historic vi, a "function" was defined as the first character of the
  * line being an open brace, which could be followed by anything.  This
  * implementation follows that historic practice.
+ *
+ * !!!
+ * The historic vi documentation (USD:15-10) claimed:
+ *	The section commands interpret a preceding count as a different
+ *	window size in which to redraw the screen at the new location,
+ *	and this window size is the base size for newly drawn windows
+ *	until another size is specified.  This is very useful if you are
+ *	on a slow terminal ...
+ *
+ * I can't get the 4BSD vi to do this, it just beeps at me.  For now, a
+ * count to the section commands simply repeats the command.
  */
 
-/* Macro to do a check on each line. */
-#define	CHECK {								\
-	if (len == 0)							\
-		continue;						\
-	if (p[0] == '{') {						\
-		if (!--cnt) {						\
-			rp->cno = 0;					\
-			rp->lno = lno;					\
-			return (0);					\
-		}							\
-		continue;						\
-	}								\
-	if (p[0] != '.' || len < 3)					\
-		continue;						\
-	for (lp = list; *lp; lp += 2)					\
-		if (lp[0] == p[1] &&					\
-		    (lp[1] == ' ' || lp[1] == p[2]) && !--cnt) {	\
-			rp->cno = 0;					\
-			rp->lno = lno;					\
-			return (0);					\
-		}							\
-}
+static int section __P((SCR *, EXF *, VICMDARG *, int, enum direction));
 
 /*
  * v_sectionf -- [count]]]
  *	Move forward count sections/functions.
  */
 int
-v_sectionf(sp, ep, vp, fm, tm, rp)
+v_sectionf(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
-	size_t len;
-	recno_t cnt, lno;
-	char *p, *list, *lp;
-
-	/* Get macro list. */
-	if ((list = O_STR(sp, O_SECTIONS)) == NULL)
-		return (1);
-
-	cnt = F_ISSET(vp, VC_C1SET) ? vp->count : 1;
-	for (lno = fm->lno; (p = file_gline(sp, ep, ++lno, &len)) != NULL;)
-		CHECK;
-
-	/* EOF is a movement sink. */
-	if (fm->lno != lno - 1) {
-		rp->lno = lno - 1;
-		rp->cno = len ? len - 1 : 0;
-		return (0);
-	}
-	v_eof(sp, ep, NULL);
-	return (1);
+	return (section(sp, ep, vp, 1, FORWARD));
 }
 
 /*
@@ -116,32 +96,107 @@ v_sectionf(sp, ep, vp, fm, tm, rp)
  *	Move backward count sections/functions.
  */
 int
-v_sectionb(sp, ep, vp, fm, tm, rp)
+v_sectionb(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
-	size_t len;
-	recno_t cnt, lno;
-	char *p, *list, *lp;
-
-	/* Check for SOF. */
-	if (fm->lno <= 1) {
+	/* An empty file or starting from line 1 is always illegal. */
+	if (vp->m_start.lno <= 1) {
 		v_sof(sp, NULL);
 		return (1);
 	}
+	return (section(sp, ep, vp, -1, BACKWARD));
+}
 
-	/* Get macro list. */
+static int
+section(sp, ep, vp, off, dir)
+	SCR *sp;
+	EXF *ep;
+	VICMDARG *vp;
+	int off;
+	enum direction dir;
+{
+	size_t len;
+	recno_t cnt, lno;
+	int closeok;
+	char *p, *list, *lp;
+
+	/* Get the macro list. */
 	if ((list = O_STR(sp, O_SECTIONS)) == NULL)
 		return (1);
 
-	cnt = F_ISSET(vp, VC_C1SET) ? vp->count : 1;
-	for (lno = fm->lno; (p = file_gline(sp, ep, --lno, &len)) != NULL;)
-		CHECK;
+	/*
+	 * !!!
+	 * Using ]] as a motion command was a bit special, historically.
+	 * It could match } as well as the usual { and section values.  If
+	 * it matched a { or a section, it did NOT include the matched line.
+	 * If it matched a }, it did include the line.  Not a clue why.
+	 */
+	closeok = ISMOTION(vp) && dir == FORWARD;
 
-	/* SOF is a movement sink. */
-	rp->lno = 1;
-	rp->cno = 0;
+	cnt = F_ISSET(vp, VC_C1SET) ? vp->count : 1;
+	for (lno = vp->m_start.lno;
+	    (p = file_gline(sp, ep, lno += off, &len)) != NULL;) {
+		if (len == 0)
+			continue;
+		if (p[0] == '{' || closeok && p[0] == '}') {
+			if (!--cnt) {
+				if (dir == FORWARD && ISMOTION(vp) &&
+				    p[0] == '{' &&
+				    file_gline(sp, ep, --lno, &len) == NULL)
+					return (1);
+				vp->m_stop.lno = lno;
+				vp->m_stop.cno = len ? len - 1 : 0;
+				goto ret;
+			}
+			continue;
+		}
+		if (p[0] != '.' || len < 3)
+			continue;
+		for (lp = list; *lp != '\0'; lp += 2 * sizeof(*lp))
+			if (lp[0] == p[1] &&
+			    (lp[1] == ' ' || lp[1] == p[2]) && !--cnt) {
+				if (dir == FORWARD && ISMOTION(vp) &&
+				    file_gline(sp, ep, --lno, &len) == NULL)
+					return (1);
+				vp->m_stop.lno = lno;
+				vp->m_stop.cno = len ? len - 1 : 0;
+				goto ret;
+			}
+	}
+
+	/*
+	 * If moving forward, reached EOF, if moving backward, reached SOF.
+	 * Both are movement sinks.  The calling code has already checked
+	 * for SOF, so all we check is EOF.
+	 */
+	if (dir == FORWARD) {
+		if (vp->m_start.lno == lno - 1) {
+			v_eof(sp, ep, NULL);
+			return (1);
+		}
+		vp->m_stop.lno = lno - 1;
+		vp->m_stop.cno = len ? len - 1 : 0;
+	} else {
+		vp->m_stop.lno = 1;
+		vp->m_stop.cno = 0;
+	}
+
+	/*
+	 * Non-motion commands go to the end of the range.  If moving backward
+	 * in the file, VC_D and VC_Y move to the end of the range.  If moving
+	 * forward in the file, VC_D and VC_Y stay at the start of the range.
+	 * Ignore VC_C and VC_S.
+	 *
+	 * !!!
+	 * Historic practice is the section cut was in line mode if it started
+	 * from column 0 and was in the backward direction.  I don't know why
+	 * you'd want to cut an entire section in character mode, so I do it in
+	 * line mode in both directions if the cut starts in column 0.
+	 */
+ret:	if (vp->m_start.cno == 0)
+		F_SET(vp, VM_LMODE);
+	vp->m_final = ISMOTION(vp) && dir == FORWARD ? vp->m_start : vp->m_stop;
 	return (0);
 }
