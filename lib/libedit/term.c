@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.26 2000/11/28 22:37:51 jmc Exp $	*/
+/*	$NetBSD: term.c,v 1.27 2000/12/30 22:46:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.26 2000/11/28 22:37:51 jmc Exp $");
+__RCSID("$NetBSD: term.c,v 1.27 2000/12/30 22:46:05 jdolecek Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -822,9 +822,13 @@ protected void
 term_beep(EditLine *el)
 {
 
-	if (GoodStr(T_vb))
+	if (GoodStr(T_vb)) {
 		(void) tputs(Str(T_vb), 1, term__putc);	/* visible bell */
-	else if (GoodStr(T_bl))
+
+		/* if terminal supports it, use also ordinary (sound) bell */
+		if (GoodStr(T_bl))
+			(void) tputs(Str(T_bl), 1, term__putc);
+	} else if (GoodStr(T_bl))
 		/* what termcap says we should use */
 		(void) tputs(Str(T_bl), 1, term__putc);
 	else
