@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.s,v 1.3 1996/07/03 14:05:16 mycroft Exp $	*/
+/*	$NetBSD: in_cksum.s,v 1.4 1996/07/03 18:20:38 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -44,11 +44,11 @@
  *
  * Registers used:
  * %eax = sum
- * %ebx = m
+ * %ebx = m->m_data
  * %cl = rotation count to unswap
- * %edx = len
- * %esi = m->m_len
- * %ebp = m->m_data
+ * %edx = m->m_len
+ * %ebp = m
+ * %esi = len
  */
 
 #define	SWAP \
@@ -62,26 +62,26 @@
 	adcl	$0, %eax
 
 #define	ADVANCE(n) \
-	leal	n(%ebp), %ebp	; \
-	leal	-n(%esi), %esi	; \
+	leal	n(%ebx), %ebx	; \
+	leal	-n(%edx), %edx	; \
 
 #define	ADDBYTE \
 	SWAP			; \
-	addb	(%ebp), %ah
+	addb	(%ebx), %ah
 
 #define	ADDWORD \
-	addw	(%ebp), %ax
+	addw	(%ebx), %ax
 
 #define	ADD(n) \
-	addl	n(%ebp), %eax
+	addl	n(%ebx), %eax
 
 #define	ADC(n) \
-	adcl	n(%ebp), %eax
+	adcl	n(%ebx), %eax
 
 #define	REDUCE \
-	movzwl	%ax, %esi	; \
+	movzwl	%ax, %edx	; \
 	shrl	$16, %eax	; \
-	addw	%si, %ax	; \
+	addw	%dx, %ax	; \
 	adcw	$0, %ax
 
 ENTRY(in_cksum)
@@ -89,44 +89,44 @@ ENTRY(in_cksum)
 	pushl	%ebx
 	pushl	%esi
 
-	movl	16(%esp), %ebx
-	movl	20(%esp), %edx
+	movl	16(%esp), %ebp
+	movl	20(%esp), %esi
 	xorl	%eax, %eax
 	xorb	%cl, %cl
 
 mbuf_loop_1:
-	testl	%edx, %edx
+	testl	%esi, %esi
 	jz	done
 
 mbuf_loop_2:
-	testl	%ebx, %ebx
+	testl	%ebp, %ebp
 	jz	out_of_mbufs
 
-	movl	M_DATA(%ebx), %ebp
-	movl	M_LEN(%ebx), %esi
-	movl	M_NEXT(%ebx), %ebx
+	movl	M_DATA(%ebp), %ebx
+	movl	M_LEN(%ebp), %edx
+	movl	M_NEXT(%ebp), %ebp
 
-	cmpl	%edx, %esi
+	cmpl	%esi, %edx
 	jbe	1f
-	movl	%edx, %esi
+	movl	%esi, %edx
 
 1:
-	subl	%esi, %edx
+	subl	%edx, %esi
 
-	cmpl	$16, %esi
+	cmpl	$16, %edx
 	jb	short_mbuf
 
-	testl	$3, %ebp
+	testb	$3, %bl
 	jz	dword_aligned
 
-	testl	$1, %ebp
+	testb	$1, %bl
 	jz	byte_aligned
 
 	ADDBYTE
 	ADVANCE(1)
 	MOP
 
-	testl	$2, %ebp
+	testb	$2, %bl
 	jz	word_aligned
 
 byte_aligned:
@@ -136,7 +136,7 @@ byte_aligned:
 
 word_aligned:
 dword_aligned:
-	testl	$4, %ebp
+	testb	$4, %bl
 	jnz	qword_aligned
 
 	ADD(0)
@@ -144,7 +144,7 @@ dword_aligned:
 	MOP
 
 qword_aligned:
-	testl	$8, %ebp
+	testb	$8, %bl
 	jz	oword_aligned
 
 	ADD(0)
@@ -153,7 +153,7 @@ qword_aligned:
 	MOP
 
 oword_aligned:
-	subl	$128, %esi
+	subl	$128, %edx
 	jb	finished_128
 
 loop_128:
@@ -189,14 +189,14 @@ loop_128:
 	ADC(112)
 	ADC(116)
 	ADC(120)
-	leal	128(%ebp), %ebp
+	leal	128(%ebx), %ebx
 	MOP
 
-	subl	$128, %esi
+	subl	$128, %edx
 	jnb	loop_128
 
 finished_128:
-	subl	$32-128, %esi
+	subl	$32-128, %edx
 	jb	finished_32
 
 loop_32:
@@ -208,53 +208,53 @@ loop_32:
 	ADC(16)
 	ADC(20)
 	ADC(24)
-	leal	32(%ebp), %ebp
+	leal	32(%ebx), %ebx
 	MOP
 
-	subl	$32, %esi
+	subl	$32, %edx
 	jnb	loop_32
 
 finished_32:
-	testl	$16, %esi
+	testb	$16, %dl
 	jz	finished_16
 
 	ADD(12)
 	ADC(0)
 	ADC(4)
 	ADC(8)
-	leal	16(%ebp), %ebp
+	leal	16(%ebx), %ebx
 	MOP
 
 finished_16:
 short_mbuf:
-	testl	$8, %esi
+	testb	$8, %dl
 	jz	finished_8
 
 	ADD(0)
 	ADC(4)
-	leal	8(%ebp), %ebp
+	leal	8(%ebx), %ebx
 	MOP
 
 finished_8:
-	testl	$4, %esi
+	testb	$4, %dl
 	jz	finished_4
 
 	ADD(0)
-	leal	4(%ebp), %ebp
+	leal	4(%ebx), %ebx
 	MOP
 
 finished_4:
-	testl	$3, %esi
+	testb	$3, %dl
 	jz	mbuf_loop_1
 
-	testl	$2, %esi
+	testb	$2, %dl
 	jz	finished_2
 
 	ADDWORD
-	leal	2(%ebp), %ebp
+	leal	2(%ebx), %ebx
 	MOP
 
-	testl	$1, %esi
+	testb	$1, %dl
 	jz	finished_1
 
 finished_2:
@@ -263,7 +263,7 @@ finished_2:
 
 finished_1:
 mbuf_done:
-	testl	%edx, %edx
+	testl	%esi, %esi
 	jnz	mbuf_loop_2
 
 done:
