@@ -1,4 +1,4 @@
-.\"     $NetBSD: namecache.9,v 1.4 2002/02/13 08:18:46 ross Exp $
+.\"     $NetBSD: namecache.9,v 1.5 2002/08/06 13:01:04 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,7 +65,7 @@
 .Ft void
 .Fn cache_purgevfs "struct mount *mp"
 .Ft void
-.Fn namecache_print "struct vnode *vp" "void (*func)(const char *, ..."
+.Fn namecache_print "struct vnode *vp" "void (*func)(const char *, ...)"
 .Sh DESCRIPTION
 The name lookup cache is the mechanism to allow the file system type
 dependent algorithms to quickly resolve a file's vnode from its
