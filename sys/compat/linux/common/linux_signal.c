@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.29 2000/08/09 20:20:49 tv Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.30 2000/08/23 17:02:18 christos Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -587,3 +587,73 @@ linux_sys_kill(p, v, retval)
 	SCARG(&ka, signum) = linux_to_native_sig[sig];
 	return sys_kill(p, &ka, retval);
 }
+
+#ifdef LINUX_SS_ONSTACK
+static void linux_to_native_sigaltstack __P((struct sigaltstack *,
+    const struct linux_sigaltstack *));
+static void native_to_linux_sigaltstack __P((struct linux_sigaltstack *,
+    const struct sigaltstack *));
+
+static void
+linux_to_native_sigaltstack(bss, lss)
+	struct sigaltstack *bss;
+	const struct linux_sigaltstack *lss;
+{
+	bss->ss_sp = lss->ss_sp;
+	bss->ss_size = lss->ss_size;
+	if (lss->ss_flags & LINUX_SS_ONSTACK)
+	    bss->ss_flags = SS_ONSTACK;
+	else if (lss->ss_flags & LINUX_SS_DISABLE)
+	    bss->ss_flags = SS_DISABLE;
+	else
+	    bss->ss_flags = 0;
+}
+
+static void
+native_to_linux_sigaltstack(lss, bss)
+	struct linux_sigaltstack *lss;
+	const struct sigaltstack *bss;
+{
+	lss->ss_sp = bss->ss_sp;
+	lss->ss_size = bss->ss_size;
+	if (bss->ss_flags & SS_ONSTACK)
+	    lss->ss_flags = LINUX_SS_ONSTACK;
+	else if (bss->ss_flags & SS_DISABLE)
+	    lss->ss_flags = LINUX_SS_DISABLE;
+	else
+	    lss->ss_flags = 0;
+}
+
+int
+linux_sys_sigaltstack(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_sigaltstack_args /* {
+		syscallarg(const struct linux_sigaltstack *) ss;
+		syscallarg(struct linux_sigaltstack *) oss;
+	} */ *uap = v;
+	struct linux_sigaltstack ss;
+	struct sigaltstack nss, oss;
+	int error;
+
+	if (SCARG(uap, ss) != NULL) {
+		if ((error = copyin(SCARG(uap, ss), &ss, sizeof(ss))) != 0)
+			return error;
+		linux_to_native_sigaltstack(&nss, &ss);
+	}
+
+	error = sigaltstack1(p,
+	    SCARG(uap, ss) ? &nss : NULL, SCARG(uap, oss) ? &oss : NULL);
+	if (error)
+		return error;
+
+	if (SCARG(uap, oss) != NULL) {
+		native_to_linux_sigaltstack(&ss, &oss);
+		if ((error = copyout(&ss, SCARG(uap, oss), sizeof(ss))) != 0)
+			return error;
+	}
+	return 0;
+}
+#endif
