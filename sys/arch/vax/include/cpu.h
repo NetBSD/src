@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.34 1999/02/02 18:37:22 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.35 1999/04/17 00:01:18 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -109,7 +109,7 @@ extern	int     want_resched;   /* resched() was called */
 /*
  * This defines the I/O device register space size in pages.
  */
-#define	IOSPSZ	((1*1024*1024) / VAX_NBPG)	/* 1 MB  == 2k pages */
+#define	IOSPSZ	((64*1024) / VAX_NBPG)	/* 64k == 128 pages */
 
 struct device;
 
