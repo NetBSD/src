@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.h,v 1.7.2.2 1997/11/25 03:32:19 mrg Exp $	*/
+/*	$NetBSD: ip_proxy.h,v 1.7.2.3 1998/07/22 23:43:30 mellon Exp $	*/
 
 /*
  * Copyright (C) 1997 by Darren Reed.
@@ -7,11 +7,11 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * Id: ip_proxy.h,v 2.0.2.10 1997/10/19 15:39:23 darrenr Exp 
+ * Id: ip_proxy.h,v 2.0.2.10.2.1 1997/11/27 09:33:27 darrenr Exp 
  */
 
-#ifndef	__IP_PROXY_H__
-#define	__IP_PROXY_H__
+#ifndef _NETINET_IP_PROXY_H_
+#define _NETINET_IP_PROXY_H_
 
 #ifndef SOLARIS
 #define SOLARIS (defined(sun) && (defined(__svr4__) || defined(__SVR4)))
@@ -92,4 +92,4 @@ extern	int	ap_check __P((ip_t *, tcphdr_t *, fr_info_t *, struct nat *));
 extern	aproxy_t	*ap_match __P((u_char, char *));
 extern	void	ap_expire __P((void));
 
-#endif /* __IP_PROXY_H__ */
+#endif /* _NETINET_IP_PROXY_H_ */
