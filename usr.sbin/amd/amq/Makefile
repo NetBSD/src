@@ -1,10 +1,11 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$Id: Makefile,v 1.8 1994/06/13 20:48:16 mycroft Exp $
+#	$Id: Makefile,v 1.9 1994/12/25 12:32:12 pk Exp $
 
 .include "../config/Makefile.config"
 
 PROG = amq
 SRCS = amq.c amq_clnt.c amq_xdr.c misc_rpc.c
+MAN  = amq.8
 CFLAGS+=-I${.CURDIR}/../include
 CFLAGS+=-I${.CURDIR}/../rpcx
 CFLAGS+=-I${.CURDIR}/../config
