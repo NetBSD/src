@@ -1,4 +1,4 @@
-#	$NetBSD: TOKOCHAN,v 1.27 2002/04/25 15:06:40 atatat Exp $
+#	$NetBSD: TOKOCHAN,v 1.28 2002/06/17 05:14:29 lukem Exp $
 
 #
 #	TOKOCHAN -- Believe in the BSD power; Toko to issyo-ni make all!
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"TOKOCHAN-$Revision: 1.27 $"
+#ident 		"TOKOCHAN-$Revision: 1.28 $"
 
 maxusers	10
 
@@ -335,3 +335,5 @@ pseudo-device	pty			# pseudo-terminals
 ## and generate randomness for some kernel formulae.
 
 pseudo-device	rnd
+
+pseudo-device	clockctl		# user control of clock subsystem

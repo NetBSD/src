@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.45 2002/06/06 21:16:48 gmcgarry Exp $
+#	$NetBSD: DR-EVIL,v 1.46 2002/06/17 05:14:12 lukem Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3800 laptop used by thorpej@netbsd.org
 #
@@ -835,6 +835,7 @@ pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+pseudo-device	clockctl		# user control of clock subsystem
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.

@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.85 2002/04/25 15:06:28 atatat Exp $
+#	$NetBSD: DISKLESS,v 1.86 2002/06/17 05:14:12 lukem Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -273,3 +273,4 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline
 #pseudo-device	vnd	4		# paging to files
 #pseudo-device	ccd	4		# concatenated disk devices
+pseudo-device	clockctl		# user control of clock subsystem

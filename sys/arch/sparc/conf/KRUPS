@@ -1,4 +1,4 @@
-# $NetBSD: KRUPS,v 1.9 2002/05/14 14:27:33 lukem Exp $
+# $NetBSD: KRUPS,v 1.10 2002/06/17 05:14:25 lukem Exp $
 # From: NetBSD: GENERIC,v 1.133 2002/04/25 15:06:37 atatat Exp
 #
 # Krups (JavaStation 10, aka JavaStation NC) machine description file
@@ -10,7 +10,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"KRUPS-$Revision: 1.9 $"
+#ident 		"KRUPS-$Revision: 1.10 $"
 
 maxusers	32
 
@@ -301,3 +301,5 @@ pseudo-device	rnd
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+
+pseudo-device	clockctl		# user control of clock subsystem

@@ -1,11 +1,11 @@
-# $NetBSD: GENERIC,v 1.7 2002/06/04 08:35:05 simonb Exp $
+# $NetBSD: GENERIC,v 1.8 2002/06/17 05:14:23 lukem Exp $
 
 include 	"arch/sbmips/conf/std.sbmips.eb"	# big-endian mode
 #include 	"arch/sbmips/conf/std.sbmips.el"	# little-endian mode
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.7 $"
+#ident 		"GENERIC-$Revision: 1.8 $"
 
 # The following three options are required for BCM1250 pass 1 silicon
 options 	SB1250_PASS1
@@ -159,6 +159,7 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
 #pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random & kernel generator
+pseudo-device	clockctl		# user control of clock subsystem
 
 # A pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
