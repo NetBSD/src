@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_db.c,v 1.14 2002/07/06 00:42:27 wiz Exp $	*/
+/*	$NetBSD: ypserv_db.c,v 1.15 2003/07/16 06:57:39 itojun Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv_db.c,v 1.14 2002/07/06 00:42:27 wiz Exp $");
+__RCSID("$NetBSD: ypserv_db.c,v 1.15 2003/07/16 06:57:39 itojun Exp $");
 #endif
 
 /*
@@ -501,7 +501,7 @@ lookup_host(int nametable, int host_lookup, DBM *db, char *keystr,
 			    inet_ntoa(*addr_name), host->h_name);
 			if (v - val + strlen(tmpbuf) + 1 > sizeof(val))
 				break;
-			strcpy(v, tmpbuf);
+			strlcpy(v, tmpbuf, sizeof(val) - (v - val));
 			v = v + strlen(tmpbuf);
 		}
 		result->valdat.dptr = val;
@@ -539,9 +539,9 @@ lookup_host(int nametable, int host_lookup, DBM *db, char *keystr,
 		l = strlen(ptr);
 		if ((v - val) + l + 1 > BUFSIZ)
 			break;
-		strcpy(v, " ");
+		strlcpy(v, " ", sizeof(val) - (v - val));
 		v += 1;
-		strcpy(v, ptr);
+		strlcpy(v, ptr, sizeof(val) - (v - val));
 		v += l;
 		host->h_aliases++;
 	}
