@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.9 2003/01/22 17:48:18 christos Exp $	 */
+/*	$NetBSD: mach_machdep.c,v 1.10 2003/09/06 22:08:14 christos Exp $	 */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.9 2003/01/22 17:48:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.10 2003/09/06 22:08:14 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -90,8 +90,12 @@ mach_trap(frame)
 	extern struct emul emul_mach;
 
 	if (curproc->p_emul != &emul_mach) {
+		ksiginfo_t ksi;
 		DPRINTF(("mach trap %d on bad emulation\n", frame.tf_eax));
-		trapsignal(curlwp, SIGBUS, 0);
+		memset(&ksi, 0, sizeof(ksi));
+		ksi.ksi_signo = SIGILL;
+		ksi.ksi_code = ILL_ILLTRP;
+		trapsignal(curlwp, &ksi);
 		return;
 	}
 

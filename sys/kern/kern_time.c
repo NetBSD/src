@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.72 2003/08/07 16:31:51 agc Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.73 2003/09/06 22:03:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.72 2003/08/07 16:31:51 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.73 2003/09/06 22:03:10 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -568,12 +568,12 @@ sys_timer_create(struct lwp *l, void *v, register_t *retval)
 		}
 		pt->pt_ev.sigev_value.sival_int = timerid;
 	}
-	pt->pt_info.si_signo = pt->pt_ev.sigev_signo;
-	pt->pt_info.si_errno = 0;
-	pt->pt_info.si_code = 0;
-	pt->pt_info.si_pid = p->p_pid;
-	pt->pt_info.si_uid = p->p_cred->p_ruid;
-	pt->pt_info.si_sigval = pt->pt_ev.sigev_value;
+	pt->pt_info.ksi_signo = pt->pt_ev.sigev_signo;
+	pt->pt_info.ksi_errno = 0;
+	pt->pt_info.ksi_code = 0;
+	pt->pt_info.ksi_pid = p->p_pid;
+	pt->pt_info.ksi_uid = p->p_cred->p_ruid;
+	pt->pt_info.ksi_sigval = pt->pt_ev.sigev_value;
 
 	pt->pt_type = id;
 	pt->pt_proc = p;
@@ -880,11 +880,14 @@ timerupcall(struct lwp *l, void *arg)
 	fired = pt->pts_fired;
 	done = 0;
 	while ((i = ffs(fired)) != 0) {
-		i--;
+		siginfo_t si;
+		int mask = 1 << --i;
+
+		si._info = pt->pts_timers[i]->pt_info;
 		if (sa_upcall(l, SA_UPCALL_SIGEV | SA_UPCALL_DEFER, NULL, l,
-		    sizeof(siginfo_t), &pt->pts_timers[i]->pt_info) == 0)
-			done |= 1 << i;
-		fired &= ~(1 << i);
+		    sizeof(si), &si) == 0)
+			done |= mask;
+		fired &= ~mask;
 	}
 	pt->pts_fired &= ~done;
 	if (pt->pts_fired == 0)

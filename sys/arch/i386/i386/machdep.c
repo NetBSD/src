@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.533 2003/08/24 17:52:30 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.534 2003/09/06 22:08:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.533 2003/08/24 17:52:30 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.534 2003/09/06 22:08:14 christos Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -582,6 +582,49 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/* NOTREACHED */
 }
 
+void *
+getframe(struct lwp *l, int sig, int *onstack)
+{
+	struct proc *p = l->l_proc;
+	struct sigctx *ctx = &p->p_sigctx;
+	struct trapframe *tf = l->l_md.md_regs;
+
+	/* Do we need to jump onto the signal stack? */
+	*onstack = (ctx->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
+	    && (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
+	if (*onstack)
+		return (char *)ctx->ps_sigstk.ss_sp + ctx->ps_sigstk.ss_size;
+#ifdef VM86
+	if (tf->tf_eflags & PSL_VM)
+		return (void *)(tf->tf_esp + (tf->tf_ss << 4));
+	else
+#endif
+		return (void *)tf->tf_esp;
+}
+
+/*
+ * Build context to run handler in.  We invoke the handler
+ * directly, only returning via the trampoline.  Note the
+ * trampoline version numbers are coordinated with machine-
+ * dependent code in libc.
+ */
+void
+buildcontext(struct lwp *l, int sel, void *catcher, void *fp)
+{
+	struct trapframe *tf = l->l_md.md_regs;
+
+	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_eip = (int)catcher;
+	tf->tf_cs = GSEL(sel, SEL_UPL);
+	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
+	tf->tf_esp = (int)fp;
+	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+}
+
+#ifdef COMPAT_16
 /*
  * Send an interrupt to process.
  *
@@ -592,49 +635,29 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  * frame pointer, it returns to the user
  * specified pc, psl.
  */
-void
-sendsig(sig, mask, code)
-	int sig;
-	sigset_t *mask;
-	u_long code;
+static void
+sendsig_sigcontext(ksiginfo_t *ksi, sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct pmap *pmap = vm_map_pmap(&p->p_vmspace->vm_map);
+	int sel = pmap->pm_hiexec > I386_MAX_EXE_ADDR ?
+	    GUCODEBIG_SEL : GUCODE_SEL;
 	struct sigacts *ps = p->p_sigacts;
-	struct trapframe *tf;
-	struct sigframe *fp, frame;
+	struct trapframe *tf = l->l_md.md_regs;
 	int onstack;
+	int sig = ksi->ksi_signo;
+	u_long code = ksi->ksi_trap;
+	struct sigframe_sigcontext *fp = getframe(l, sig, &onstack), frame;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
-	tf = l->l_md.md_regs;
-
-	/* Do we need to jump onto the signal stack? */
-	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
-
-	/* Allocate space for the signal handler context. */
-	if (onstack)
-		fp = (struct sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-					  p->p_sigctx.ps_sigstk.ss_size);
-	else {
-#ifdef VM86
-		if (tf->tf_eflags & PSL_VM)
-			fp = (struct sigframe *)(tf->tf_esp + (tf->tf_ss << 4));
-		else
-#endif
-			fp = (struct sigframe *)tf->tf_esp;
-	}
 	fp--;
 
 	/* Build stack frame for signal trampoline. */
 	switch (ps->sa_sigdesc[sig].sd_vers) {
-#if 1 /* COMPAT_16 */
 	case 0:		/* legacy on-stack sigtramp */
 		frame.sf_ra = (int)p->p_sigctx.ps_sigcode;
 		break;
-#endif /* COMPAT_16 */
 
 	case 1:
 		frame.sf_ra = (int)ps->sa_sigdesc[sig].sd_tramp;
@@ -642,6 +665,8 @@ sendsig(sig, mask, code)
 
 	default:
 		/* Don't know what trampoline version; kill it. */
+		printf("osendsig: bad version %d\n",
+		    ps->sa_sigdesc[sig].sd_vers);
 		sigexit(l, SIGILL);
 	}
 
@@ -702,35 +727,95 @@ sendsig(sig, mask, code)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
+		printf("osendsig: copyout failed\n");
 		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
-	/*
-	 * Build context to run handler in.  We invoke the handler
-	 * directly, only returning via the trampoline.  Note the
-	 * trampoline version numbers are coordinated with machine-
-	 * dependent code in libc.
-	 */
-	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_eip = (int)catcher;
-	tf->tf_cs = pmap->pm_hiexec > I386_MAX_EXE_ADDR ?
-	    GSEL(GUCODEBIG_SEL, SEL_UPL) : GSEL(GUCODE_SEL, SEL_UPL);
-	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
-	tf->tf_esp = (int)fp;
-	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+	buildcontext(l, sel, catcher, fp);
+
+	/* Remember that we're now on the signal stack. */
+	if (onstack)
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+}
+#endif
+
+static void
+sendsig_siginfo(ksiginfo_t *ksi, sigset_t *mask)
+{
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
+	struct pmap *pmap = vm_map_pmap(&p->p_vmspace->vm_map);
+	int sel = pmap->pm_hiexec > I386_MAX_EXE_ADDR ?
+	    GUCODEBIG_SEL : GUCODE_SEL;
+	struct sigacts *ps = p->p_sigacts;
+	int onstack;
+	int sig = ksi->ksi_signo;
+	struct sigframe_siginfo *fp = getframe(l, sig, &onstack), frame;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
+	struct trapframe *tf = l->l_md.md_regs;
+
+	fp--;
+
+	/* Build stack frame for signal trampoline. */
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+	case 0:		/* handled by osendsig */
+	case 1:		/* handled by osendsig */
+	default:	/* unknown version */
+		printf("nsendsig: bad version %d\n",
+		    ps->sa_sigdesc[sig].sd_vers);
+		sigexit(l, SIGILL);
+	case 2:
+		break;
+	}
+
+	frame.sf_ra = (int)ps->sa_sigdesc[sig].sd_tramp;
+	frame.sf_signum = sig;
+	frame.sf_sip = &fp->sf_si;
+	frame.sf_ucp = &fp->sf_uc;
+	frame.sf_si._info = *ksi;
+	frame.sf_uc.uc_flags = _UC_SIGMASK|_UC_VM;
+	frame.sf_uc.uc_sigmask = *mask;
+	frame.sf_uc.uc_link = NULL;
+	frame.sf_uc.uc_flags |= (p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
+	    ? _UC_SETSTACK : _UC_CLRSTACK;
+	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
+	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
+
+	if (tf->tf_eflags & PSL_VM)
+		(*p->p_emul->e_syscall_intern)(p);
+
+	if (copyout(&frame, fp, sizeof(frame)) != 0) {
+		/*
+		 * Process has trashed its stack; give it an illegal
+		 * instruction to halt it in its tracks.
+		 */
+		printf("nsendsig: copyout failed\n");
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+
+	buildcontext(l, sel, catcher, fp);
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 
+void
+sendsig(ksiginfo_t *ksi, sigset_t *mask)
+{
+#ifdef COMPAT_16
+	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
+		sendsig_sigcontext(ksi, mask);
+	else
+#endif
+		sendsig_siginfo(ksi, mask);
+}
 
 void 
-cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
+    void *ap, void *sp, sa_upcall_t upcall)
 {
 	struct pmap *pmap = vm_map_pmap(&l->l_proc->p_vmspace->vm_map);
 	struct saframe *sf, frame;
@@ -2333,6 +2418,10 @@ cpu_setmcontext(l, mcp, flags)
 			tf->tf_vm86_es = gr[_REG_ES];
 			tf->tf_vm86_ds = gr[_REG_DS];
 			set_vflags(l, gr[_REG_EFL]);
+			if (flags & _UC_VM) {
+				void syscall_vm86 __P((struct trapframe *));
+				l->l_proc->p_md.md_syscall = syscall_vm86;
+			}
 		} else
 #endif
 		{
@@ -2343,8 +2432,10 @@ cpu_setmcontext(l, mcp, flags)
 			 * violations.  We handle the trap, rather than doing
 			 * all of the checking here.
 			 */
-			if (!USERMODE(gr[_REG_CS], gr[_REG_EFL])) {
-				printf("cpu_setmcontext error: uc EFL: %08x  tf EFL: %08x uc CS: %d",
+			if (((gr[_REG_EFL] ^ tf->tf_eflags) & PSL_USERSTATIC) ||
+			    !USERMODE(gr[_REG_CS], gr[_REG_EFL])) {
+				printf("cpu_setmcontext error: uc EFL: 0x%08x"
+				    " tf EFL: 0x%08x uc CS: 0x%x",
 				    gr[_REG_EFL], tf->tf_eflags, gr[_REG_CS]);
 				return (EINVAL);
 			}
@@ -2408,7 +2499,10 @@ cpu_setmcontext(l, mcp, flags)
 		l->l_addr->u_pcb.pcb_saveemc = mcp->mc_fp.fp_emcsts;
 #endif
 	}
-
+	if (flags & _UC_SETSTACK)
+		l->l_proc->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+	if (flags & _UC_CLRSTACK)
+		l->l_proc->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 	return (0);
 }
 
