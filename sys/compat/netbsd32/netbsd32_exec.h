@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.h,v 1.11 2002/06/04 14:49:15 eeh Exp $	*/
+/*	$NetBSD: netbsd32_exec.h,v 1.12 2002/08/26 21:06:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -63,18 +63,19 @@ int netbsd32_elf32_probe __P((struct proc *, struct exec_package *, void *,
     char *, vaddr_t *));
 int netbsd32_elf32_probe_noteless __P((struct proc *, struct exec_package *, 
     void *, char *, vaddr_t *));
-int netbsd32_elf32_copyargs __P((struct exec_package *, struct ps_strings *,
-    char **, void *));
+int netbsd32_elf32_copyargs __P((struct proc *, struct exec_package *,
+    struct ps_strings *, char **, void *));
 #endif /* EXEC_ELF32 */
 
-static __inline int netbsd32_copyargs __P((struct exec_package *,
+static __inline int netbsd32_copyargs __P((struct proc *, struct exec_package *,
     struct ps_strings *, char **, void *));
 
 /*
  * We need to copy out all pointers as 32-bit values.
  */
 static __inline int
-netbsd32_copyargs(pack, arginfo, stackp, argp)
+netbsd32_copyargs(p, pack, arginfo, stackp, argp)
+	struct proc *p;
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
 	char **stackp;
