@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.4 1994/12/24 17:56:23 cgd Exp $	*/
+/*	$NetBSD: cmds.c,v 1.5 1995/09/26 06:02:08 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: cmds.c,v 1.4 1994/12/24 17:56:23 cgd Exp $";
+static char rcsid[] = "$NetBSD: cmds.c,v 1.5 1995/09/26 06:02:08 jtc Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -364,8 +364,10 @@ transmit(fd, eofchars, command)
 out:
 	if (lastc != '\n' && !boolean(value(RAWFTP)))
 		send('\r');
-	for (pc = eofchars; *pc; pc++)
-		send(*pc);
+	if (eofchars) {
+		for (pc = eofchars; *pc; pc++)
+			send(*pc);
+	}
 	stop_t = time(0);
 	fclose(fd);
 	signal(SIGINT, f);
