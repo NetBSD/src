@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.5 1999/06/20 06:42:06 cgd Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.6 1999/07/04 08:01:40 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -99,8 +99,20 @@ Do you wish to exclude the last cylinder?
 
 }
 
-message part_head
-{No   Start(%s)   Size(%s)   End(%s)  Kind\n}
+/* the %s's will expand into three character strings */
+message part_header
+{   Start(%3s) Size(%3s)  End(%3s)   Kind
+   ---------- ---------- ---------- ----
+}
+
+message part_row_start_unused
+{%-1d:                                 }
+
+message part_row_start_used
+{%-1d: %-10d %-10d %-10d}
+
+message part_row_end
+{ %s\n}
 
 message setbiosgeom
 {You will be prompted for the geometry.  Please enter the values you

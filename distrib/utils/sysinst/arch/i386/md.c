@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.29 1999/06/22 00:57:08 cgd Exp $ */
+/*	$NetBSD: md.c,v 1.30 1999/07/04 08:01:40 cgd Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -527,14 +527,16 @@ nogeom:
 	} else if (nip->ni_nmatches == 1) {
 		bip = &disklist->dl_biosdisks[nip->ni_biosmatches[0]];
 		msg_display(MSG_onebiosmatch);
-		msg_printf_add("%6x%10d%7d%10d\n", bip->bi_dev - 0x80,
+		msg_table_add(MSG_onebiosmatch_header);
+		msg_table_add(MSG_onebiosmatch_row, bip->bi_dev - 0x80,
 		    bip->bi_cyl, bip->bi_head, bip->bi_sec);
 		process_menu(MENU_biosonematch);
 	} else {
 		msg_display(MSG_biosmultmatch);
+		msg_table_add(MSG_biosmultmatch_header);
 		for (i = 0; i < nip->ni_nmatches; i++) {
 			bip = &disklist->dl_biosdisks[nip->ni_biosmatches[i]];
-			msg_printf_add("%d: %6x%10d%7d%10d\n", i,
+			msg_table_add(MSG_biosmultmatch_row, i,
 			    bip->bi_dev - 0x80, bip->bi_cyl, bip->bi_head,
 			    bip->bi_sec);
 		}
@@ -605,9 +607,9 @@ disp_bootsel(part, mbsp)
 {
 	int i;
 
-	msg_display_add(MSG_bootselheader);
+	msg_table_add(MSG_bootsel_header);
 	for (i = 0; i < 4; i++) {
-		msg_printf_add("%6d      %-32s     %s\n",
+		msg_table_add(MSG_bootsel_row,
 		    i, get_partname(i), mbs->nametab[i]);
 	}
 }
