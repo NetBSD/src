@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.20 1996/10/13 03:00:46 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.21 1997/03/30 17:18:19 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -348,7 +348,6 @@ svr4_getsiginfo(si, sig, code, addr)
 	 * architectures.
 	 */
 	si->si_trap = code;
-
 	switch (code) {
 	case T_RESET:
 		si->si_code = 0;
@@ -445,9 +444,15 @@ svr4_getsiginfo(si, sig, code, addr)
 
 	default:
 		si->si_code = 0;
+#ifdef notyet
+		/*
+		 * XXX: in trap.c, code gets passed the address
+		 * of the fault! not the trap code on SEGV!
+		 */
 #ifdef DIAGNOSTIC
 		printf("sig %d code %ld\n", sig, code);
 		panic("svr4_getsiginfo");
+#endif
 #endif
 		break;
 	}
