@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.31 2000/03/13 20:32:28 cgd Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.32 2000/03/13 23:36:02 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -170,8 +170,8 @@ const struct ep_pcmcia_product {
 	    PCMCIA_PRODUCT_3COM_3CCFEM556BI,	0 },
 	  ELINK_CHIPSET_ROADRUNNER, ELINK_FLAGS_MII },
 
-	{ { PCMCIA_STR_3COM_3C1,	PCMCIA_VENDOR_3COM,
-	    PCMCIA_PRODUCT_3COM_3C1,	0 },
+	{ { PCMCIA_STR_3COM_3C1,		PCMCIA_VENDOR_3COM,
+	    PCMCIA_PRODUCT_3COM_3C1,		0 },
 	  ELINK_CHIPSET_3C509, 0 },
 
 	{ { NULL } }
