@@ -1,4 +1,4 @@
-/*	$NetBSD: __glob13.c,v 1.14 2000/10/16 04:12:55 erh Exp $	*/
+/*	$NetBSD: __glob13.c,v 1.15 2001/03/16 20:34:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: __glob13.c,v 1.14 2000/10/16 04:12:55 erh Exp $");
+__RCSID("$NetBSD: __glob13.c,v 1.15 2001/03/16 20:34:08 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -718,6 +718,11 @@ globextend(path, pglob)
 
 	_DIAGASSERT(path != NULL);
 	_DIAGASSERT(pglob != NULL);
+
+	if ((pglob->gl_flags & GLOB_LIMIT) && pglob->gl_pathc >= ARG_MAX) {
+		errno = 0;
+		return(GLOB_NOSPACE);
+	}
 
 	newsize = sizeof(*pathv) * (2 + pglob->gl_pathc + pglob->gl_offs);
 	pathv = pglob->gl_pathv ? 
