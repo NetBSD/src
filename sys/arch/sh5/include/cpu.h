@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.5 2002/09/06 15:36:16 scw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6 2002/09/10 11:11:12 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -246,6 +246,7 @@ do {									\
 
 #ifdef _KERNEL
 extern void delay(u_int);
+extern u_int _sh5_delay_constant;
 extern u_int _sh5_ctc_ticks_per_us;
 
 struct pcb;
