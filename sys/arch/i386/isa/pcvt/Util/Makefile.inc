@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.7 1997/12/10 14:14:24 drochner Exp $
+#	$NetBSD: Makefile.inc,v 1.8 1998/10/26 21:06:22 hubertf Exp $
 
 ECHO	?=	echo
 
-BINDIR	?=	/usr/local/bin
+BINDIR	?=	/usr/bin
 FONTDIR	=	/usr/share/misc/pcvtfonts
-LIBDIR	=	/usr/local/lib
+LIBDIR	=	/usr/lib
 LIBMODE	=	644
 
 # for pcvt_ioctl.h
@@ -20,7 +20,7 @@ MAN3EXT	=	3
 MAN4EXT	=	4
 MAN5EXT	=	5
 MAN8EXT	=	8
-MANDIR	=	/usr/local/man
+MANDIR	=	/usr/share/man
 
 MAN = ${MAN1} ${MAN3} ${MAN4} ${MAN5} ${MAN8}
 
