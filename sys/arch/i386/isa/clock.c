@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.63 2000/02/02 15:26:27 minoura Exp $	*/
+/*	$NetBSD: clock.c,v 1.64 2000/05/03 21:32:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -463,14 +463,13 @@ delay(n)
 		 * code so we can take advantage of the intermediate 64-bit
 		 * quantity to prevent loss of significance.
 		 */
-		register int m;
+		int m;
 		__asm __volatile("mul %3"
 				 : "=a" (n), "=d" (m)
 				 : "0" (n), "r" (TIMER_FREQ));
-		__asm __volatile("div %3"
-				 : "=a" (n)
-				 : "0" (n), "d" (m), "r" (1000000)
-				 : "%edx");
+		__asm __volatile("div %4"
+				 : "=a" (n), "=d" (m)
+				 : "0" (n), "1" (m), "r" (1000000));
 #else
 		/*
 		 * Calculate ((n * TIMER_FREQ) / 1e6) without using floating
