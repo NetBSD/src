@@ -1,4 +1,4 @@
-/*      $Id: menu.h,v 1.1.1.1 1999/11/23 11:12:34 blymn Exp $ */
+/*      $Id: menu.h,v 1.2 1999/11/24 12:17:11 kleink Exp $ */
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com)
@@ -26,11 +26,11 @@
  *
  */
 
+#ifndef	_MENU_H_
+#define	_MENU_H_
+
 #include <curses.h>
 #include <eti.h>
-
-#ifndef MENU_H
-#define MENU_H 1
 
 /* the following is a hack to define attr_t until the curses lib
    does it officially */
@@ -208,7 +208,7 @@ int set_item_term __P((MENU *, _menui_menu_hook));
 int set_item_userptr __P((ITEM *, char *));
 int set_item_value __P((ITEM *, int));
 
-#ifdef EXPOSE_PRIVATES
+#ifdef __LIBMENU_EXPOSE_PRIVATES__
 void __menui_draw_item __P((MENU *, int));
 
 /* stole this from curses.h */
@@ -216,4 +216,4 @@ void __menui_draw_item __P((MENU *, int));
 #endif
 __END_DECLS
 
-#endif
+#endif /* !_MENU_H_ */
