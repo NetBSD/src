@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.4 1996/04/26 19:00:22 chuck Exp $	*/
+/*	$NetBSD: zs.c,v 1.4.4.1 1996/05/27 21:20:05 chuck Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -346,7 +346,7 @@ zs_getc(arg)
  top:
 	/* Wait for a character to arrive. */
 	do {
-		*cs->cs_reg_csr;
+		rr0 = *cs->cs_reg_csr;
 		ZS_DELAY();
 	} while ((rr0 & ZSRR0_RX_READY) == 0);
 
