@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.7 1999/07/16 09:00:42 christos Exp $
+$NetBSD: acronyms,v 1.8 1999/07/16 09:01:35 mycroft Exp $
 
 AFAICT	as far as I can tell
 AFAIK	as far as I know
@@ -17,6 +17,7 @@ FWIW	for what it's worth
 FYI	for your information
 L8R	later
 ISTR	I seem to recall
+OIC	oh, I see
 SMOP	simple matter of programming
 SOL	shit out [of] luck
 UTSL	use the source, Luke
