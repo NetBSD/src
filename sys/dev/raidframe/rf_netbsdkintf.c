@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.61 2000/02/25 20:11:00 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.62 2000/02/26 17:35:43 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -135,6 +135,7 @@
 #include <sys/user.h>
 
 #include "raid.h"
+#include "opt_raid_autoconfig.h"
 #include "rf_raid.h"
 #include "rf_raidframe.h"
 #include "rf_copyback.h"
@@ -294,7 +295,10 @@ int rf_have_enough_components __P((RF_ConfigSet_t *));
 int rf_auto_config_set __P((RF_ConfigSet_t *, int *));
 
 static int raidautoconfig = 0; /* Debugging, mostly.  Set to 0 to not
-				  allow autoconfig to take place */
+				  allow autoconfig to take place.
+			          Note that this is overridden by having
+			          RAID_AUTOCONFIG as an option in the 
+			          kernel config file.  */
 extern struct device *booted_device;
 
 void
@@ -379,6 +383,10 @@ raidattach(num)
 			return;
 		}
 	}
+
+#if RAID_AUTOCONFIG
+	raidautoconfig = 1;
+#endif
 
 if (raidautoconfig) {
 	/* 1. locate all RAID components on the system */
@@ -627,7 +635,7 @@ raidclose(dev, flags, fmt, p)
 		   Device shutdown has taken care of setting the 
 		   clean bits if RAIDF_INITED is not set 
 		   mark things as clean... */
-#if 0
+#if 1
 		printf("Last one on raid%d.  Updating status.\n",unit);
 #endif
 		rf_update_component_labels( raidPtrs[unit] );
