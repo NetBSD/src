@@ -1,5 +1,5 @@
-/*	$NetBSD: consinit.c,v 1.2 2004/04/24 18:24:14 cl Exp $	*/
-/*	NetBSD: consinit.c,v 1.3 2003/06/14 17:01:15 thorpej Exp 	*/
+/*	$NetBSD: consinit.c,v 1.3 2004/04/24 21:45:58 cl Exp $	*/
+/*	NetBSD: consinit.c,v 1.4 2004/03/13 17:31:34 bjh21 Exp 	*/
 
 /*
  * Copyright (c) 1998
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.2 2004/04/24 18:24:14 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.3 2004/04/24 21:45:58 cl Exp $");
 
 #include "opt_kgdb.h"
 
@@ -73,7 +73,13 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.2 2004/04/24 18:24:14 cl Exp $");
 
 #include "opt_xen.h"
 #if (XEN > 0)
+#include "vga_xen.h"
+#include "xenkbc.h"
 #include <machine/xen.h>
+#include <dev/pckbport/pckbportvar.h>
+#include <machine/xenkbcvar.h>
+#include <machine/vga_xenvar.h>
+#include <machine/hypervisor.h>
 #endif
 
 #include "com.h"
@@ -154,6 +160,33 @@ consinit()
 		return;
 	initted = 1;
 
+#if (XEN > 0)
+#if (NVGA_XEN > 0) && (NXENKBC > 0)
+#ifndef CONS_OVERRIDE
+	if (xen_start_info.flags & SIF_CONSOLE) {
+		union xen_cmdline_parseinfo xcp;
+
+		xen_parse_cmdline(XEN_PARSE_CONSOLE, &xcp);
+		if (strcmp(xcp.xcp_console, "xencons") == 0) {
+			xenconscn_attach();
+			return;
+		}
+	}
+#endif
+	if ((xen_start_info.flags & SIF_CONSOLE) &&
+	    strcmp(default_consinfo.devname, "xencons") != 0) {
+		if ((xen_start_info.flags & SIF_PRIVILEGED) == 0)
+			panic("Console access without privileged status");
+
+		vga_xen_cnattach(X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM);
+		xenkbc_cnattach(PCKBPORT_KBD_SLOT);
+		return;
+	}
+#endif
+	xenconscn_attach();
+	return;
+#endif
+
 #ifndef CONS_OVERRIDE
 	consinfo = lookup_bootinfo(BTINFO_CONSOLE);
 	if (!consinfo)
@@ -201,13 +234,6 @@ dokbd:
 		return;
 	}
 #endif
-#if (XEN > 0)
-	if (!strcmp(consinfo->devname, "xencons")) {
-		xenconscn_attach();
-		printf("NetBSD Xen console attached.\n");
-		return;
-	}
-#endif
 	panic("invalid console device %s", consinfo->devname);
 }
 
@@ -217,9 +243,9 @@ dokbd:
  * mi keyboard controller driver
  */
 int
-pckbc_machdep_cnattach(kbctag, kbcslot)
-	pckbc_tag_t kbctag;
-	pckbc_slot_t kbcslot;
+pckbport_machdep_cnattach(kbctag, kbcslot)
+	pckbport_tag_t kbctag;
+	pckbport_slot_t kbcslot;
 {
 #if (NPC > 0) && (NPCCONSKBD > 0)
 	return (pcconskbd_cnattach(kbctag, kbcslot));
