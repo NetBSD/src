@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_alarms.c,v 1.7 2003/03/11 16:27:38 nathanw Exp $	*/
+/*	$NetBSD: pthread_alarms.c,v 1.8 2003/04/07 19:41:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_alarms.c,v 1.7 2003/03/11 16:27:38 nathanw Exp $");
+__RCSID("$NetBSD: pthread_alarms.c,v 1.8 2003/04/07 19:41:22 nathanw Exp $");
 
 #include <err.h>
 #include <sys/time.h>
@@ -66,8 +66,7 @@ pthread__alarm_init(void)
 	ev.sigev_signo = 0;
 	ev.sigev_value.sival_int = (int)PT_ALARMTIMER_MAGIC;
 	retval = timer_create(CLOCK_REALTIME, &ev, &pthread_alarmtimer);
-	if (retval)
-		err(1, "timer_create");
+	pthread__assert(retval == 0);
 
 }
 
@@ -103,8 +102,7 @@ pthread__alarm_add(pthread_t self, struct pt_alarm_t *alarm,
 		    self, it.it_value.tv_sec, it.it_value.tv_nsec/1000));
 		retval = timer_settime(pthread_alarmtimer, TIMER_ABSTIME, 
 		    &it, NULL);
-		if (retval)
-			err(1, "timer_settime");
+		pthread__assert(retval == 0);
 			
 	} else {
 		PTQ_INSERT_AFTER(&pthread_alarmqueue, prev, alarm, pta_next);
@@ -136,8 +134,6 @@ pthread__alarm_del(pthread_t self, struct pt_alarm_t *alarm)
 			retval = timer_settime(pthread_alarmtimer, TIMER_ABSTIME, &it, 
 			    NULL);
 			pthread__assert(retval == 0);
-			if (retval)
-				err(1, "timer_settime");
 		}
 		PTQ_REMOVE(&pthread_alarmqueue, alarm, pta_next);
 	}
@@ -194,8 +190,6 @@ pthread__alarm_process(pthread_t self, void *arg)
 		    it.it_value.tv_sec, it.it_value.tv_nsec));
 		retval = timer_settime(pthread_alarmtimer, TIMER_ABSTIME, &it, NULL);
 		pthread__assert(retval == 0);
-		if (retval)
-			err(1, "timer_settime");
 	}
 	pthread_spinunlock(self, &pthread_alarmqlock);
 
