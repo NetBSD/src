@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.1.1.1 1997/03/29 21:52:18 mellon Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.1.1.1.4.1 2000/07/27 17:17:36 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -72,3 +72,4 @@ struct	ether_header {
 #define	ETHERMTU	1500
 #define	ETHERMIN	(60-14)
 
+#define ETHER_HEADER_SIZE (ETHER_ADDR_LEN * 2 + sizeof (u_int16_t))

@@ -42,10 +42,11 @@
 
 #ifndef lint
 static char ocopyright [] =
-"$Id: dhcrelay.c,v 1.1.1.12.2.2 1999/04/26 16:45:53 mellon Exp $ Copyright (c) 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcrelay.c,v 1.1.1.12.2.3 2000/07/27 17:17:37 he Exp $ Copyright (c) 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
+#include "version.h"
 
 static void usage PROTO ((char *));
 
@@ -76,7 +77,7 @@ struct server_list {
 static char copyright [] =
 "Copyright 1997, 1998, 1999 The Internet Software Consortium.";
 static char arr [] = "All rights reserved.";
-static char message [] = "Internet Software Consortium DHCP Relay Agent V2.0b1pl25+";
+static char message [] = "Internet Software Consortium DHCP Relay Agent";
 static char contrib [] = "Please contribute if you find this software useful.";
 static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.html";
 
@@ -91,7 +92,7 @@ int main (argc, argv, envp)
 	int quiet = 0;
 	char *s;
 
-	s = strchr (argv [0], '/');
+	s = strrchr (argv [0], '/');
 	if (!s)
 		s = argv [0];
 	else
@@ -169,14 +170,15 @@ int main (argc, argv, envp)
 	}
 
 	if (!quiet) {
-		note (message);
+		note ("%s %s", message, DHCP_VERSION);
 		note (copyright);
 		note (arr);
 		note ("");
 		note (contrib);
 		note (url);
 		note ("");
-	}
+	} else
+		log_perror = 0;
 
 	/* Default to the DHCP/BOOTP port. */
 	if (!local_port) {

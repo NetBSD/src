@@ -222,6 +222,10 @@ int if_register_dlpi (info)
 	      case DL_ETHER:
 		info -> hw_address.htype = HTYPE_ETHER;
 		break;
+	      /* adding token ring 5/1999 - mayer@ping.at  */ 
+	      case DL_TPR:
+		info -> hw_address.htype = HTYPE_IEEE802;
+		break;
 	      case DL_FDDI:
 		info -> hw_address.htype = HTYPE_FDDI;
 		break;

@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: bootp.c,v 1.7.2.1 1999/04/09 20:08:55 mellon Exp $ Copyright (c) 1995, 1996, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: bootp.c,v 1.7.2.2 2000/07/27 17:17:38 he Exp $ Copyright (c) 1995, 1996, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -285,7 +285,7 @@ void bootp (packet)
 	raw.hops = packet -> raw -> hops;
 	raw.xid = packet -> raw -> xid;
 	raw.secs = packet -> raw -> secs;
-	raw.flags = 0;
+	raw.flags = packet -> raw -> flags;
 	raw.ciaddr = packet -> raw -> ciaddr;
 	memcpy (&raw.yiaddr, ip_address.iabuf, sizeof raw.yiaddr);
 
@@ -300,16 +300,20 @@ void bootp (packet)
 		raw.siaddr = packet -> interface -> primary_address;
 
 	raw.giaddr = packet -> raw -> giaddr;
-	if (hp -> group -> server_name) {
+	if (hp -> group -> server_name)
 		strncpy (raw.sname, hp -> group -> server_name,
-			 (sizeof raw.sname) - 1);
-		raw.sname [(sizeof raw.sname) - 1] = 0;
-	}
-	if (hp -> group -> filename) {
+			 (sizeof raw.sname));
+	else if (subnet -> group -> server_name)
+		strncpy (raw.sname, subnet -> group -> server_name,
+			 (sizeof raw.sname));
+
+	if (hp -> group -> filename)
 		strncpy (raw.file, hp -> group -> filename,
-			 (sizeof raw.file) - 1);
-		raw.file [(sizeof raw.file) - 1] = 0;
-	} else
+			 (sizeof raw.file));
+	else if (subnet -> group -> filename)
+		strncpy (raw.file, subnet -> group -> filename,
+			 (sizeof raw.file));
+	else
 		memcpy (raw.file, packet -> raw -> file, sizeof raw.file);
 
 	/* Set up the hardware destination address... */
@@ -348,6 +352,16 @@ void bootp (packet)
 					      from, &to, &hto);
 			return;
 		}
+
+	/* If it comes from a client that already knows its address
+	   and is not requesting a broadcast response, and we can
+	   unicast to a client without using the ARP protocol, sent it
+	   directly to that client. */
+	} else if (!(raw.flags & htons (BOOTP_BROADCAST)) &&
+		   can_unicast_without_arp ()) {
+		to.sin_addr = raw.yiaddr;
+		to.sin_port = remote_port;
+
 	/* Otherwise, broadcast it on the local network. */
 	} else {
 		to.sin_addr.s_addr = INADDR_BROADCAST;

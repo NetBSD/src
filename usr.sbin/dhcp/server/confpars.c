@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: confpars.c,v 1.1.1.7.2.1 1999/04/09 20:09:21 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: confpars.c,v 1.1.1.7.2.2 2000/07/27 17:17:39 he Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -773,8 +773,7 @@ void parse_subnet_declaration (cfile, share)
 		share -> subnets = subnet;
 	else {
 		u = (struct subnet *)0;
-		for (t = share -> subnets;
-		     t -> next_sibling; t = t -> next_sibling) {
+		for (t = share -> subnets; t; t = t -> next_sibling) {
 			if (subnet_inner_than (subnet, t, 0)) {
 				if (u)
 					u -> next_sibling = subnet;
@@ -785,7 +784,7 @@ void parse_subnet_declaration (cfile, share)
 			}
 			u = t;
 		}
-		t -> next_sibling = subnet;
+		u -> next_sibling = subnet;
 	}
 }
 
@@ -1219,7 +1218,7 @@ struct lease *parse_lease_declaration (cfile)
 				token = peek_token (&val, cfile);
 				if (token == STRING) {
 					token = next_token (&val, cfile);
-					lease.uid_len = strlen (val) + 1;
+					lease.uid_len = strlen (val);
 					lease.uid = (unsigned char *)
 						malloc (lease.uid_len);
 					if (!lease.uid) {
@@ -1227,6 +1226,7 @@ struct lease *parse_lease_declaration (cfile)
 						return (struct lease *)0;
 					}
 					memcpy (lease.uid, val, lease.uid_len);
+					parse_semi (cfile);
 				} else {
 					lease.uid_len = 0;
 					lease.uid = parse_numeric_aggregate
