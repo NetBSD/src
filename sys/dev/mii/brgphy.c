@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.2 2001/06/02 21:39:38 thorpej Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.3 2001/06/30 17:53:58 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -270,14 +270,14 @@ brgphy_status(sc)
 
 		switch (auxsts & BRGPHY_AUXSTS_AN_RES) {
 		case BRGPHY_RES_1000FD:
-			mii->mii_media_active |= IFM_1000_TX|IFM_FDX;
+			mii->mii_media_active |= IFM_1000_T|IFM_FDX;
 			gtsr = PHY_READ(sc, MII_100T2SR);
 			if (gtsr & GTSR_MS_RES)
 				mii->mii_media_active |= IFM_ETH_MASTER;
 			break;
 
 		case BRGPHY_RES_1000HD:
-			mii->mii_media_active |= IFM_1000_TX;
+			mii->mii_media_active |= IFM_1000_T;
 			gtsr = PHY_READ(sc, MII_100T2SR);
 			if (gtsr & GTSR_MS_RES)
 				mii->mii_media_active |= IFM_ETH_MASTER;
