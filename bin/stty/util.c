@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)util.c	5.2 (Berkeley) 6/4/91";*/
-static char rcsid[] = "$Id: util.c,v 1.5 1993/08/01 18:57:34 mycroft Exp $";
+static char rcsid[] = "$Id: util.c,v 1.6 1994/01/18 18:10:58 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -43,23 +43,6 @@ static char rcsid[] = "$Id: util.c,v 1.5 1993/08/01 18:57:34 mycroft Exp $";
 #include <stdlib.h>
 #include "stty.h"
 #include "extern.h"
-
-/*
- * Gross, but since we're changing the control descriptor from 1 to 0, most
- * users will be probably be doing "stty > /dev/sometty" by accident.  If 1
- * and 2 are both ttys, but not the same, assume that 1 was incorrectly
- * redirected.
- */
-void
-checkredirect()
-{
-	struct stat sb1, sb2;
-
-	if (isatty(STDOUT_FILENO) && isatty(STDERR_FILENO) &&
-	    !fstat(STDOUT_FILENO, &sb1) && !fstat(STDERR_FILENO, &sb2) &&
-	    (sb1.st_rdev != sb2.st_rdev))
-warn("stdout appears redirected, but stdin is the control descriptor");
-}
 
 #if __STDC__
 #include <stdarg.h>
