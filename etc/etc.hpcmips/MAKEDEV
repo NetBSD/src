@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.2 1999/09/18 00:23:37 hubertf Exp $
+#	$NetBSD: MAKEDEV,v 1.3 1999/09/20 00:04:17 hubertf Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -74,8 +74,6 @@
 #	uhid*	Generic HID devices
 #	ulpt*	Printer devices
 #	ugen*	Generic device
-#
-# Call units:
 #
 # Special purpose devices:
 #	fd	file descriptors
