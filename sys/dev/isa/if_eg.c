@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.19 1995/07/24 02:08:13 mycroft Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.20 1995/07/24 04:12:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -628,7 +628,7 @@ egread(sc, buf, len)
 	if (len <= sizeof(struct ether_header) ||
 	    len > ETHER_MAX_LEN) {
 		printf("%s: invalid packet size %d; dropping\n",
-		    sc->sc_dev.dv_xname);
+		    sc->sc_dev.dv_xname, len);
 		ifp->if_ierrors++;
 		return;
 	}
