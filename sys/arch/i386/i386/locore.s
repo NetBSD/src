@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.78 1994/08/03 06:22:26 mycroft Exp $
+ *	$Id: locore.s,v 1.79 1994/08/03 22:11:53 mycroft Exp $
  */
 
 /*
@@ -245,44 +245,44 @@ is486:	movl	$CPU_486,_cpu-KERNBASE
 
 	/* Set cache parameters */
 	invd				# Start with guaranteed clean cache
-	movb	$0xc0,%al		# Configuration Register index (CCR0)
+#ifdef CYRIX_CACHE_WORKS
+	movb	$CCR0,%al		# Configuration Register index (CCR0)
 	outb	%al,$0x22
-	# movb	$0x22,%al		# Configuration Register CCR0 data
-	movb	$0x02,%al		# Configuration Register CCR0 data
-	outb	%al,$0x23
-	movb	$0xc1,%al		# CCR1
-	outb	%al,$0x22
-	xorb	%al,%al
+	inb	$0x23,%al
+	andb	$~CCR0_NC0,%al
+	orb	$CCR0_NC1,%al
 	outb	%al,$0x23
 	/* clear non-cacheable region 1	*/
-	movb	$0xc6,%al
+	movb	$(NCR1+2),%al
 	outb	%al,$0x22
-	xorb	%al,%al
+	movb	$NCR_SIZE_0K,%al
 	outb	%al,$0x23
 	/* clear non-cacheable region 2	*/
-	movb	$0xc9,%al
+	movb	$(NCR2+2),%al
 	outb	%al,$0x22
-	xorb	%al,%al
+	movb	$NCR_SIZE_0K,%al
 	outb	%al,$0x23
 	/* clear non-cacheable region 3	*/
-	movb	$0xcc,%al
+	movb	$(NCR3+2),%al
 	outb	%al,$0x22
-	xorb	%al,%al
+	movb	$NCR_SIZE_0K,%al
 	outb	%al,$0x23
 	/* clear non-cacheable region 4	*/
-	movb	$0xcf,%al
+	movb	$(NCR4+2),%al
 	outb	%al,$0x22
-	xorb	%al,%al
+	movb	$NCR_SIZE_0K,%al
 	outb	%al,$0x23
 	/* enable caching in CR0 */
 	movl	%cr0,%eax
-#ifdef notyet_cyrix
 	andl	$~(CR0_CD|CR0_NW),%eax
-#else
-	orl	$CR0_CD,%eax
-	invd
-#endif
 	movl	%eax,%cr0
+#else
+	/* disable caching in CR0 */
+	movl	%cr0,%eax
+	orl	$CR0_CD,%eax
+	movl	%eax,%cr0
+#endif
+	invd
 
 	jmp	2f
 
@@ -559,16 +559,18 @@ reloc_gdt:
 1:
 #endif
 
-#ifndef notyet_cyrix
 	cmp	$CPU_486DLC,_cpu
 	jne	1f
 	pushl	$2f
 	call	_printf
 	addl	$4,%esp
 	jmp	1f
-2:	.asciz	"WARNING: CYRIX 486DLC DETECTED; CACHE DISABLED.\n"
-1:
+#ifdef CYRIX_CACHE_WORKS
+2:	.asciz	"WARNING: CYRIX 486DLC CACHE ENABLED.\n"
+#else
+2:	.asciz	"WARNING: CYRIX 486DLC CACHE DISABLED BY DEFAULT.\n"
 #endif
+1:
 
 	INTRFASTEXIT
 	/* NOTREACHED */
