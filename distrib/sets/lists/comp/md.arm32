@@ -1,4 +1,4 @@
-# $NetBSD: md.arm32,v 1.51 2001/06/23 13:26:36 bjh21 Exp $
+# $NetBSD: md.arm32,v 1.52 2001/07/28 19:21:59 bjh21 Exp $
 ./usr/include/arm			comp-c-include
 ./usr/include/arm/ansi.h		comp-c-include
 ./usr/include/arm/aout_machdep.h	comp-c-include
@@ -10,7 +10,6 @@
 ./usr/include/arm/arm32/pmap.h		comp-c-include
 ./usr/include/arm/arm32/psl.h		comp-c-include
 ./usr/include/arm/arm32/rtc.h		comp-c-include
-./usr/include/arm/arm32/sysarch.h	comp-c-include
 ./usr/include/arm/armreg.h		comp-c-include
 ./usr/include/arm/asm.h			comp-c-include
 ./usr/include/arm/bswap.h		comp-c-include
@@ -55,6 +54,7 @@
 ./usr/include/arm/setjmp.h		comp-c-include
 ./usr/include/arm/signal.h		comp-c-include
 ./usr/include/arm/stdarg.h		comp-c-include
+./usr/include/arm/sysarch.h		comp-c-include
 ./usr/include/arm/trap.h		comp-c-include
 ./usr/include/arm/types.h		comp-c-include
 ./usr/include/arm/varargs.h		comp-c-include
