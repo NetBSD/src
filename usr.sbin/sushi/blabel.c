@@ -1,4 +1,4 @@
-/*      $NetBSD: blabel.c,v 1.7 2001/01/10 10:00:29 garbled Exp $       */
+/*      $NetBSD: blabel.c,v 1.8 2001/01/14 21:23:23 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -80,6 +80,9 @@ bottom_help(int type)
 			label[i] = strdup(keylabel[i]);
 
 	labelwin = subwin(stdscr, 2, ws.ws_col, ws.ws_row-2, 0);
+	if (labelwin == NULL)
+		bailout("%s", catgets(catalog, 1, 23,
+		    "failed to allocate bottomhelp window"));
 	wattron(labelwin, A_BOLD);
 
 	for (i=0,j=0; i < 10; i+=2, j+=17)
