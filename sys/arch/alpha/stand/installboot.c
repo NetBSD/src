@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.4 1997/01/16 20:41:54 cgd Exp $ */
+/*	$NetBSD: installboot.c,v 1.5 1997/01/18 00:27:50 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -141,7 +141,10 @@ main(argc, argv)
 	    (minor(bootsb.st_dev) / getmaxpartitions()))
 		errx(1, "%s must be somewhere on %s", boot, dev);
 
-	/* XXX */
+	/*
+	 * Find the offset of the secondary boot block's partition
+	 * into the disk.  If disklabels not supported, assume zero.
+	 */
 	if (ioctl(devfd, DIOCGDINFO, &dl) != -1) {
 		printf("bootsb.st_dev = 0x%lx\n", bootsb.st_dev);
 		partoffset = dl.d_partitions[minor(bootsb.st_dev) %
@@ -157,6 +160,14 @@ main(argc, argv)
 		    dev);
 		partoffset = 0;
 	}
+	if (verbose)
+		printf("%s partition offset = 0x%lx\n", boot, partoffset);
+
+	/* Sync filesystems (make sure boot's block numbers are stable) */
+	sync();
+	sleep(2);
+	sync();
+	sleep(2);
 
 	if (loadblocknums(boot, devfd, partoffset) != 0)
 		exit(1);
@@ -177,10 +188,6 @@ main(argc, argv)
 
 	if (lseek(devfd, DEV_BSIZE, SEEK_SET) != DEV_BSIZE)
 		err(1, "lseek bootstrap");
-
-	/* Sync filesystems (to clean in-memory superblock?) */
-	sync();
-	sleep(3);
 
 	if (write(devfd, protostore, protosize) != protosize)
 		err(1, "write bootstrap");
@@ -329,8 +336,6 @@ loadblocknums(boot, devfd, partoffset)
 	struct dinode	*ip;
 	int		ndb;
 	int32_t		cksum;
-
-printf("partoffset = 0x%lx\n", partoffset);
 
 	/*
 	 * Open 2nd-level boot program and record the block numbers
