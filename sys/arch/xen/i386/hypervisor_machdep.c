@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.3.6.1 2004/12/13 17:52:21 bouyer Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.3.6.2 2005/01/18 14:41:52 bouyer Exp $	*/
 
 /*
  *
@@ -59,7 +59,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.3.6.1 2004/12/13 17:52:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.3.6.2 2005/01/18 14:41:52 bouyer Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.3.6.1 2004/12/13 17:52:21 b
 void
 hypervisor_force_callback(void)
 {
+	// DDD printf("hypervisor_force_callback\n");
 
 	(void)HYPERVISOR_xen_version(0);
 }
@@ -89,7 +90,7 @@ stipending()
 	unsigned long l2;
 	unsigned int l1i, l2i, port;
 	int irq;
-	shared_info_t *s = HYPERVISOR_shared_info;
+	volatile shared_info_t *s = HYPERVISOR_shared_info;
 	struct cpu_info *ci;
 	int ret;
 
@@ -156,12 +157,14 @@ void do_hypervisor_callback(struct intrframe *regs)
 	unsigned long l2;
 	unsigned int l1i, l2i, port;
 	int irq;
-	shared_info_t *s = HYPERVISOR_shared_info;
+	volatile shared_info_t *s = HYPERVISOR_shared_info;
 	struct cpu_info *ci;
 	int level;
 
 	ci = curcpu();
 	level = ci->ci_ilevel;
+
+	// DDD printf("do_hypervisor_callback\n");
 
 	while (s->vcpu_data[0].evtchn_upcall_pending) {
 		s->vcpu_data[0].evtchn_upcall_pending = 0;
@@ -178,8 +181,11 @@ void do_hypervisor_callback(struct intrframe *regs)
 				l2 &= ~(1 << l2i);
 
 				port = (l1i << 5) + l2i;
+				// DDD printf("do_hypervisor_callback port %d\n", port);
 				if ((irq = evtchn_to_irq[port]) != -1)
 					do_event(irq, regs);
+				else
+					printf("do_hypervisor_callback port %d no IRQ\n", port);
 #if 0 /* XXXcl dev/evtchn */
 				else
 					evtchn_device_upcall(port);
@@ -198,7 +204,8 @@ void do_hypervisor_callback(struct intrframe *regs)
 
 void hypervisor_unmask_event(unsigned int ev)
 {
-	shared_info_t *s = HYPERVISOR_shared_info;
+	volatile shared_info_t *s = HYPERVISOR_shared_info;
+	// DDD if (ev) printf("hypervisor_unmask_event %d\n", ev);
 
 	x86_atomic_clear_bit(&s->evtchn_mask[0], ev);
 	/*
@@ -216,14 +223,16 @@ void hypervisor_unmask_event(unsigned int ev)
 
 void hypervisor_mask_event(unsigned int ev)
 {
-	shared_info_t *s = HYPERVISOR_shared_info;
+	volatile shared_info_t *s = HYPERVISOR_shared_info;
+	// DDD if (ev) printf("hypervisor_mask_event %d\n", ev);
 
 	x86_atomic_set_bit(&s->evtchn_mask[0], ev);
 }
 
 void hypervisor_clear_event(unsigned int ev)
 {
-	shared_info_t *s = HYPERVISOR_shared_info;
+	volatile shared_info_t *s = HYPERVISOR_shared_info;
+	// DDD if (ev) printf("hypervisor_clear_event %d\n", ev);
 
 	x86_atomic_clear_bit(&s->evtchn_pending[0], ev);
 }
