@@ -1,7 +1,8 @@
-/*	$NetBSD: mips_reloc.c,v 1.18 2002/09/12 18:21:18 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.19 2002/09/12 18:28:53 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
+ * Portions copyright 2002 Charles M. Hannum.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -136,12 +137,12 @@ _rtld_relocate_nonplt_self(dynp, relocbase)
 	/* Now do the global GOT entries */
 	for (i = gotsym; i < symtabno; i++) {
 		if (sym->st_shndx == SHN_UNDEF ||
-		    sym->st_shndx == SHN_COMMON) {
+		    sym->st_shndx == SHN_COMMON)
 			*got = sym->st_value + relocbase;
-		} else if (ELF_ST_TYPE(sym->st_info) == STT_FUNC &&
-		    *got != sym->st_value) {
+		else if (ELF_ST_TYPE(sym->st_info) == STT_FUNC &&
+		    *got != sym->st_value)
 			*got += relocbase;
-		} else if (ELF_ST_TYPE(sym->st_info) == STT_SECTION &&
+		else if (ELF_ST_TYPE(sym->st_info) == STT_SECTION &&
 		    ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
 			if (sym->st_shndx == SHN_ABS)
 				*got = sym->st_value + relocbase;
@@ -161,8 +162,7 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 {
 	const Elf_Rel *rel;
 	Elf_Addr *got = obj->pltgot;
-	const Elf_Sym *sym = obj->symtab;
-	const Elf_Sym *def;
+	const Elf_Sym *sym, *def;
 	const Obj_Entry *defobj;
 	int i;
 
@@ -171,8 +171,6 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 
 	for (rel = obj->rel; rel < obj->rellim; rel++) {
 		Elf_Addr        *where;
-		const Elf_Sym   *def;
-		const Obj_Entry *defobj;
 		unsigned long	 symnum;
 
 		where = (Elf_Addr *)(obj->relocbase + rel->r_offset);
@@ -250,7 +248,7 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 	while (i < obj->local_gotno)
 		got[i++] += (Elf_Word)obj->relocbase;
 	got += obj->local_gotno;
-	sym += obj->gotsym;
+	sym = obj->symtab + obj->gotsym;
 	/* Now do the global GOT entries */
 	for (i = obj->gotsym; i < obj->symtabno; i++) {
 		rdbg(1, (" doing got %d sym %p (%s, %x)", i - obj->gotsym, 
@@ -258,42 +256,21 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 
 		def = _rtld_find_symdef(i, obj, &defobj, true);
 		if (def == NULL)
-			_rtld_error(
-	    "%s: Undefined PLT symbol \"%s\" (section type = %ld, symnum = %ld)",
-			    obj->path, sym->st_name + obj->strtab,
-			    (u_long) ELF_ST_TYPE(sym->st_info), (u_long) i);
-		else {
-			if (sym->st_shndx == SHN_UNDEF) {
-#if 0	/* These don't seem to work? */
-
-				if (ELF_ST_TYPE(sym->st_info) == STT_FUNC) {
-					if (sym->st_value)
-						*got = sym->st_value +
-						    (Elf_Word)obj->relocbase;
-					else
-						*got = def->st_value +
-						    (Elf_Word)defobj->relocbase;
-				} else
-#endif
-					*got = def->st_value +
-					    (Elf_Word)defobj->relocbase;
-			} else if (sym->st_shndx == SHN_COMMON) {
-				*got = def->st_value +
-				    (Elf_Word)defobj->relocbase;
-			} else if (ELF_ST_TYPE(sym->st_info) == STT_FUNC &&
-			    *got != sym->st_value) {
-				*got += (Elf_Word)obj->relocbase;
-			} else if (ELF_ST_TYPE(sym->st_info) == STT_SECTION &&
-			    ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
-				if (sym->st_shndx == SHN_ABS)
-					*got = sym->st_value +
-					    (Elf_Word)obj->relocbase;
-				/* else SGI stuff ignored */
-			} else
-				*got = def->st_value +
-				    (Elf_Word)defobj->relocbase;
-		}
-
+			return -1;
+		if (sym->st_shndx == SHN_UNDEF ||
+		    sym->st_shndx == SHN_COMMON)
+			*got = def->st_value + (Elf_Word)defobj->relocbase;
+		else if (ELF_ST_TYPE(sym->st_info) == STT_FUNC &&
+		    *got != sym->st_value)
+			*got += (Elf_Word)obj->relocbase;
+		else if (ELF_ST_TYPE(sym->st_info) == STT_SECTION &&
+		    ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
+			if (sym->st_shndx == SHN_ABS)
+				*got = sym->st_value +
+				    (Elf_Word)obj->relocbase;
+			/* else SGI stuff ignored */
+		} else
+			*got = def->st_value + (Elf_Word)defobj->relocbase;
 		++sym;
 		++got;
 	}
