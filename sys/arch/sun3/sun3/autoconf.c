@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/autoconf.c,v 1.7 1994/03/01 08:22:59 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/autoconf.c,v 1.8 1994/05/04 05:36:55 gwr Exp $
  */
 /*
  * Setup the system to run on the current machine.
@@ -90,7 +90,7 @@ void configure()
 {
     int root_found;
 
-    boothowto = RB_SINGLE;
+    boothowto = RB_SINGLE | RB_NOSYNC;	/* XXX - Temporary hack... */
     isr_init();
     root_found = config_rootfound("mainbus", NULL);
     if (!root_found)
