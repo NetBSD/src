@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.54 2003/08/07 16:31:59 agc Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.55 2003/09/06 22:03:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.54 2003/08/07 16:31:59 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.55 2003/09/06 22:03:10 christos Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.54 2003/08/07 16:31:59 agc Exp $"
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
+#include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/signalvar.h>
@@ -300,7 +301,7 @@ sb_lock(struct sockbuf *sb)
  * if the socket buffer has the SB_ASYNC flag set.
  */
 void
-sowakeup(struct socket *so, struct sockbuf *sb)
+sowakeup(struct socket *so, struct sockbuf *sb, int code)
 {
 	struct proc	*p;
 
@@ -311,10 +312,25 @@ sowakeup(struct socket *so, struct sockbuf *sb)
 		wakeup((caddr_t)&sb->sb_cc);
 	}
 	if (sb->sb_flags & SB_ASYNC) {
+		ksiginfo_t ksi;
+		memset(&ksi, 0, sizeof(ksi));
+		ksi.ksi_signo = SIGIO;
+		ksi.ksi_code = code;
+		if (code == POLL_IN) {
+			if (so->so_oobmark || (so->so_state & SS_RCVATMARK))
+				ksi.ksi_band = (POLLPRI | POLLRDBAND);
+			else
+				ksi.ksi_band = (POLLIN | POLLRDNORM);
+		} else {
+			if (so->so_oobmark)
+				ksi.ksi_band = (POLLPRI | POLLWRBAND);
+			else
+				ksi.ksi_band = (POLLOUT | POLLWRNORM);
+		}
 		if (so->so_pgid < 0)
-			gsignal(-so->so_pgid, SIGIO);
+			kgsignal(-so->so_pgid, &ksi, so);
 		else if (so->so_pgid > 0 && (p = pfind(so->so_pgid)) != 0)
-			psignal(p, SIGIO);
+			kpsignal(p, &ksi, so);
 	}
 	if (sb->sb_flags & SB_UPCALL)
 		(*so->so_upcall)(so, so->so_upcallarg, M_DONTWAIT);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.103 2003/08/07 16:27:58 agc Exp $	*/
+/*	$NetBSD: cpu.h,v 1.104 2003/09/06 22:05:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -395,7 +395,7 @@ int kvtop __P((caddr_t));
 #endif
 #ifdef MATH_EMULATE
 /* math_emulate.c */
-int	math_emulate __P((struct trapframe *));
+int	math_emulate __P((struct trapframe *, ksiginfo_t *));
 #endif
 
 #if !defined(_LKM)

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.185 2003/08/24 17:52:32 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.186 2003/09/06 22:08:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.185 2003/08/24 17:52:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.186 2003/09/06 22:08:15 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -221,6 +221,7 @@ trap(frame)
 		    resume_pop_fs[], resume_pop_gs[],
 		    IDTVEC(osyscall)[];
 	struct trapframe *vframe;
+	ksiginfo_t ksi;
 	int resume;
 	caddr_t onfault;
 	int error;
@@ -404,17 +405,46 @@ copyfault:
 	case T_STKFLT|T_USER:
 	case T_ALIGNFLT|T_USER:
 	case T_NMI|T_USER:
-		KERNEL_PROC_LOCK(l);
-		(*p->p_emul->e_trapsignal)(l, SIGBUS, type & ~T_USER);
-		KERNEL_PROC_UNLOCK(l);
-		goto out;
+		(void)memset(&ksi, 0, sizeof(ksi));
+		ksi.ksi_signo = SIGBUS;
+		ksi.ksi_trap = type & ~T_USER;
+		ksi.ksi_addr = (void *)rcr2();
+		switch (type) {
+		case T_SEGNPFLT|T_USER:
+		case T_STKFLT|T_USER:
+			ksi.ksi_code = BUS_ADRERR;
+			break;
+		case T_TSSFLT|T_USER:
+		case T_NMI|T_USER:
+			ksi.ksi_code = BUS_OBJERR;
+			break;
+		case T_ALIGNFLT|T_USER:
+			ksi.ksi_code = BUS_ADRALN;
+			break;
+		default:
+			ksi.ksi_code = 0;
+			break;
+		}
+		goto trapsignal;
 
 	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
 	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
-		KERNEL_PROC_LOCK(l);
-		(*p->p_emul->e_trapsignal)(l, SIGILL, type & ~T_USER);
-		KERNEL_PROC_UNLOCK(l);
-		goto out;
+		(void)memset(&ksi, 0, sizeof(ksi));
+		ksi.ksi_signo = SIGILL;
+		ksi.ksi_trap = type & ~T_USER;
+		ksi.ksi_addr = (void *)rcr2();
+		switch (type) {
+		case T_PRIVINFLT|T_USER:
+			ksi.ksi_code = ILL_PRVOPC;
+			break;
+		case T_FPOPFLT|T_USER:
+			ksi.ksi_code = ILL_COPROC;
+			break;
+		default:
+			ksi.ksi_code = 0;
+			break;
+		}
+		goto trapsignal;
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
 		uvmexp.softs++;
@@ -431,40 +461,52 @@ copyfault:
 
 	case T_DNA|T_USER: {
 #ifdef MATH_EMULATE
-		int rv;
-		if ((rv = math_emulate(frame)) == 0) {
+		if (math_emulate(frame, &ksi) == 0) {
 			if (frame->tf_eflags & PSL_T)
 				goto trace;
 			return;
 		}
-		KERNEL_PROC_LOCK(l);
-		(*p->p_emul->e_trapsignal)(l, rv, type & ~T_USER);
-		KERNEL_PROC_UNLOCK(l);
-		goto out;
+		ksi.ksi_trap = type & ~T_USER;
+		goto trapsignal;
 #else
+		(void)memset(&ksi, 0, sizeof(ksi));
+		ksi.ksi_signo = SIGKILL;
+		ksi.ksi_trap = type & ~T_USER;
+		ksi.ksi_addr = (void *)frame->tf_eip;
 		printf("pid %d killed due to lack of floating point\n",
 		    p->p_pid);
-		KERNEL_PROC_LOCK(l);
-		(*p->p_emul->e_trapsignal)(l, SIGKILL, type & ~T_USER);
-		KERNEL_PROC_UNLOCK(l);
-		goto out;
+		goto trapsignal;
 #endif
 	}
 
 	case T_BOUND|T_USER:
 	case T_OFLOW|T_USER:
 	case T_DIVIDE|T_USER:
-		KERNEL_PROC_LOCK(l);
-		(*p->p_emul->e_trapsignal)(l, SIGFPE, type & ~T_USER);
-		KERNEL_PROC_UNLOCK(l);
-		goto out;
+		(void)memset(&ksi, 0, sizeof(ksi));
+		ksi.ksi_signo = SIGFPE;
+		ksi.ksi_trap = type & ~T_USER;
+		ksi.ksi_addr = (void *)frame->tf_eip;
+		switch (type) {
+		case T_BOUND|T_USER:
+		case T_OFLOW|T_USER:
+			ksi.ksi_code = FPE_FLTOVF;
+			break;
+		case T_DIVIDE|T_USER:
+			ksi.ksi_code = FPE_FLTDIV;
+			break;
+		default:
+			ksi.ksi_code = 0;
+			break;
+		}
+		goto trapsignal;
 
 	case T_ARITHTRAP|T_USER:
-		KERNEL_PROC_LOCK(l);
-		(*p->p_emul->e_trapsignal)(l, SIGFPE,
-		    frame->tf_err & ~TC_FLAGMASK);
-		KERNEL_PROC_UNLOCK(l);
-		goto out;
+		(void)memset(&ksi, 0, sizeof(ksi));
+		ksi.ksi_signo = SIGFPE;
+		ksi.ksi_trap = frame->tf_err & ~TC_FLAGMASK;
+		ksi.ksi_addr = (void *)frame->tf_eip;
+		ksi.ksi_code = FPE_INTOVF;
+		goto trapsignal;
 
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
 		if (l == 0)
@@ -565,8 +607,14 @@ copyfault:
 			KERNEL_PROC_UNLOCK(l);
 			goto out;
 		}
+		(void)memset(&ksi, 0, sizeof(ksi));
+		ksi.ksi_trap = type & ~T_USER;
+		ksi.ksi_addr = (void *)cr2;
 		if (error == EACCES) {
+			ksi.ksi_code = SEGV_ACCERR;
 			error = EFAULT;
+		} else {
+			ksi.ksi_code = SEGV_MAPERR;
 		}
 
 		if (type == T_PAGEFLT) {
@@ -579,14 +627,15 @@ copyfault:
 			goto we_re_toast;
 		}
 		if (error == ENOMEM) {
+			ksi.ksi_signo = SIGKILL;
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : -1);
-			(*p->p_emul->e_trapsignal)(l, SIGKILL, T_PAGEFLT);
 		} else {
-			(*p->p_emul->e_trapsignal)(l, SIGSEGV, T_PAGEFLT);
+			ksi.ksi_signo = SIGSEGV;
 		}
+		(*p->p_emul->e_trapsignal)(l, &ksi);
 		if (type == T_PAGEFLT)
 			KERNEL_UNLOCK();
 		else
@@ -614,8 +663,16 @@ copyfault:
 		 */
 		if ((p->p_nras == 0) ||
 		    (ras_lookup(p, (caddr_t)frame->tf_eip) == (caddr_t)-1)) {
+			(void)memset(&ksi, 0, sizeof(ksi));
+			ksi.ksi_signo = SIGTRAP;
+			ksi.ksi_trap = type & ~T_USER;
+			if (type == (T_BPTFLT|T_USER))
+				ksi.ksi_code = TRAP_BRKPT;
+			else
+				ksi.ksi_code = TRAP_TRACE;
+			ksi.ksi_addr = (void *)frame->tf_eip;
 			KERNEL_PROC_LOCK(l);
-			(*p->p_emul->e_trapsignal)(l, SIGTRAP, type & ~T_USER);
+			(*p->p_emul->e_trapsignal)(l, &ksi);
 			KERNEL_PROC_UNLOCK(l);
 		}
 		break;
@@ -655,6 +712,12 @@ copyfault:
 	if ((type & T_USER) == 0)
 		return;
 out:
+	userret(l);
+	return;
+trapsignal:
+	KERNEL_PROC_LOCK(l);
+	(*p->p_emul->e_trapsignal)(l, &ksi);
+	KERNEL_PROC_UNLOCK(l);
 	userret(l);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: math_emulate.c,v 1.25 2003/01/17 23:10:31 thorpej Exp $	*/
+/*	$NetBSD: math_emulate.c,v 1.26 2003/09/06 22:08:15 christos Exp $	*/
 
 /*
  * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: math_emulate.c,v 1.25 2003/01/17 23:10:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: math_emulate.c,v 1.26 2003/09/06 22:08:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: math_emulate.c,v 1.25 2003/01/17 23:10:31 thorpej Ex
 #include <sys/acct.h>
 #include <sys/kernel.h>
 #include <sys/signal.h>
-
 #include <machine/cpu.h>
 #include <machine/reg.h>
 
@@ -55,7 +54,15 @@ __KERNEL_RCSID(0, "$NetBSD: math_emulate.c,v 1.25 2003/01/17 23:10:31 thorpej Ex
 
 #define ST(x) (*__st((x)))
 #define PST(x) ((const temp_real *) __st((x)))
-#define	math_abort(tfp, signo) tfp->tf_eip = oldeip; return (signo);
+#define	math_abort(tfp, ksi, signo, code) 	\
+    do {					\
+	    (void)memset(ksi, 0, sizeof(*ksi));	\
+	    ksi->ksi_signo = signo;		\
+	    ksi->ksi_code = code;		\
+	    ksi->ksi_addr = (void *)info->tf_eip;\
+	    tfp->tf_eip = oldeip;		\
+	    return -1;				\
+    } while (/*CONSTCOND*/0)
 
 /*
  * We don't want these inlined - it gets too messy in the machine-code.
@@ -72,8 +79,9 @@ static temp_real_unaligned * __st(int i);
 } while (0)
 
 int
-math_emulate(info)
+math_emulate(info, ksi)
 	struct trapframe *info;
+	ksiginfo_t *ksi;
 {
 	struct lwp *l = curlwp;
 	u_short cw, code;
@@ -115,7 +123,7 @@ math_emulate(info)
 		prefix = fubyte((const void *)info->tf_eip);
 		switch (prefix) {
 		case INSPREF_LOCK:
-			math_abort(info, SIGILL);
+			math_abort(info, ksi, SIGILL, ILL_ILLOPC);
 		case INSPREF_REPN:
 		case INSPREF_REPE:
 			break;
@@ -134,7 +142,7 @@ math_emulate(info)
 			override_addrsize = prefix;
 			break;
 		case -1:
-			math_abort(info,SIGSEGV);
+			math_abort(info, ksi, SIGSEGV, SEGV_ACCERR);
 		default:
 			goto done;
 		}
@@ -222,17 +230,17 @@ done:
 	case 0x1e2: case 0x1e3:
 	case 0x1e6: case 0x1e7:
 	case 0x1ef:
-		math_abort(info,SIGILL);
+		math_abort(info, ksi, SIGILL, ILL_ILLOPC);
 	case 0x1e5:
 		uprintf("math_emulate: fxam not implemented\n\r");
-		math_abort(info,SIGILL);
+		math_abort(info, ksi, SIGILL, ILL_ILLOPC);
 	case 0x1f0: case 0x1f1: case 0x1f2: case 0x1f3:
 	case 0x1f4: case 0x1f5: case 0x1f6: case 0x1f7:
 	case 0x1f8: case 0x1f9: case 0x1fa: case 0x1fb:
 	case 0x1fe: case 0x1ff:
 		uprintf("math_emulate: 0x%04x not implemented\n",
 		    code + 0xd800);
-		math_abort(info,SIGILL);
+		math_abort(info, ksi, SIGILL, ILL_ILLOPC);
 	}
 	switch (code >> 3) {
 	case 0x18: /* fadd */
@@ -316,7 +324,7 @@ done:
 		return(0);
 	case 0xb8: /* ffree */
 		printf("ffree not implemented\n\r");
-		math_abort(info,SIGILL);
+		math_abort(info, ksi, SIGILL, ILL_ILLOPC);
 	case 0xb9: /* fstp XXX */
 		fxchg(&ST(0),&ST(code & 7));
 		return(0);
@@ -373,7 +381,7 @@ done:
 		return(0);
 	case 0xf8: /* XXX */
 		printf("ffree not implemented\n\r");
-		math_abort(info,SIGILL);
+		math_abort(info, ksi, SIGILL, ILL_ILLOPC);
 	case 0xf9: /* XXX */
 		fxchg(&ST(0),&ST(code & 7));
 		return(0);
@@ -525,7 +533,7 @@ done:
 	}
 	printf("Unknown math-insns: %04x:%08x %04x\n\r",(u_short)info->tf_cs,
 		info->tf_eip,code);
-	math_abort(info,SIGFPE);
+	math_abort(info, ksi, SIGFPE, FPE_FLTINV);
 }
 
 static void fpop(void)
@@ -640,7 +648,7 @@ char * ea(struct trapframe * info, u_short code)
 			break;
 #ifdef notyet
 		case 3:
-			math_abort(info,SIGILL);
+			math_abort(info, ksi, SIGILL, ILL_ILLOPN);
 #endif
 	}
 	I387.foo = offset;

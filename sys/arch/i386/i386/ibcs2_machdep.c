@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.23 2003/08/24 17:52:30 chs Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.24 2003/09/06 22:08:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.23 2003/08/24 17:52:30 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.24 2003/09/06 22:08:14 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -75,8 +75,8 @@ ibcs2_setregs(l, epp, stack)
 	struct exec_package *epp;
 	u_long stack;
 {
-	register struct pcb *pcb = &l->l_addr->u_pcb;
-	register struct trapframe *tf;
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct trapframe *tf;
 
 	setregs(l, epp, stack);
 	if (i386_use_fxsave)
@@ -99,32 +99,18 @@ ibcs2_setregs(l, epp, stack)
  * specified pc, psl.
  */
 void
-ibcs2_sendsig(sig, mask, code)
-	int sig;
-	sigset_t *mask;
-	u_long code;
+ibcs2_sendsig(ksiginfo_t *ksi, sigset_t *mask)
 {
+	int sig = ksi->ksi_signo;
+	u_long code = ksi->ksi_trap;
 	/* XXX Need SCO sigframe format. */
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
-	struct trapframe *tf;
-	struct sigframe *fp, frame;
 	int onstack;
+	struct sigframe_sigcontext *fp = getframe(l, sig, &onstack), frame;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
+	struct trapframe *tf = l->l_md.md_regs;
 
-	tf = l->l_md.md_regs;
-
-	/* Do we need to jump onto the signal stack? */
-	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
-
-	/* Allocate space for the signal handler context. */
-	if (onstack)
-		fp = (struct sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-		    p->p_sigctx.ps_sigstk.ss_size);
-	else
-		fp = (struct sigframe *)tf->tf_esp;
 	fp--;
 
 	/* Build stack frame for signal trampoline. */
@@ -180,19 +166,7 @@ ibcs2_sendsig(sig, mask, code)
 		/* NOTREACHED */
 	}
 
-	/*
-	 * Build context to run handler in.  We invoke the handler
-	 * directly, only returning via the trampoline.
-	 */
-	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);	
-	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_eip = (int)catcher;
-	tf->tf_cs = GSEL(GUCODEBIG_SEL, SEL_UPL);
-	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
-	tf->tf_esp = (int)fp;
-	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+	buildcontext(l, GUCODEBIG_SEL, catcher, fp);
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)

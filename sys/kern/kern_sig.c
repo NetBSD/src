@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.147 2003/08/11 21:18:19 fvdl Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.148 2003/09/06 22:03:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.147 2003/08/11 21:18:19 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.148 2003/09/06 22:03:09 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -622,11 +622,17 @@ sys_kill(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	struct proc	*cp, *p;
 	struct pcred	*pc;
+	ksiginfo_t	ksi;
 
 	cp = l->l_proc;
 	pc = cp->p_cred;
 	if ((u_int)SCARG(uap, signum) >= NSIG)
 		return (EINVAL);
+	memset(&ksi, 0, sizeof(ksi));
+	ksi.ksi_signo = SCARG(uap, signum);
+	ksi.ksi_code = SI_USER;
+	ksi.ksi_pid = cp->p_pid;
+	ksi.ksi_uid = cp->p_ucred->cr_uid;
 	if (SCARG(uap, pid) > 0) {
 		/* kill single process */
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
@@ -634,16 +640,16 @@ sys_kill(struct lwp *l, void *v, register_t *retval)
 		if (!CANSIGNAL(cp, pc, p, SCARG(uap, signum)))
 			return (EPERM);
 		if (SCARG(uap, signum))
-			psignal(p, SCARG(uap, signum));
+			kpsignal(p, &ksi, NULL);
 		return (0);
 	}
 	switch (SCARG(uap, pid)) {
 	case -1:		/* broadcast signal */
-		return (killpg1(cp, SCARG(uap, signum), 0, 1));
+		return (killpg1(cp, &ksi, 0, 1));
 	case 0:			/* signal own process group */
-		return (killpg1(cp, SCARG(uap, signum), 0, 0));
+		return (killpg1(cp, &ksi, 0, 0));
 	default:		/* negative explicit process group */
-		return (killpg1(cp, SCARG(uap, signum), -SCARG(uap, pid), 0));
+		return (killpg1(cp, &ksi, -SCARG(uap, pid), 0));
 	}
 	/* NOTREACHED */
 }
@@ -653,12 +659,13 @@ sys_kill(struct lwp *l, void *v, register_t *retval)
  * cp is calling process.
  */
 int
-killpg1(struct proc *cp, int signum, int pgid, int all)
+killpg1(struct proc *cp, ksiginfo_t *ksi, int pgid, int all)
 {
 	struct proc	*p;
 	struct pcred	*pc;
 	struct pgrp	*pgrp;
 	int		nfound;
+	int		signum = ksi->ksi_signo;
 	
 	pc = cp->p_cred;
 	nfound = 0;
@@ -673,7 +680,7 @@ killpg1(struct proc *cp, int signum, int pgid, int all)
 				continue;
 			nfound++;
 			if (signum)
-				psignal(p, signum);
+				kpsignal(p, ksi, NULL);
 		}
 		proclist_unlock_read();
 	} else {
@@ -693,7 +700,7 @@ killpg1(struct proc *cp, int signum, int pgid, int all)
 				continue;
 			nfound++;
 			if (signum && P_ZOMBIE(p) == 0)
-				psignal(p, signum);
+				kpsignal(p, ksi, NULL);
 		}
 	}
 	return (nfound ? 0 : ESRCH);
@@ -705,10 +712,19 @@ killpg1(struct proc *cp, int signum, int pgid, int all)
 void
 gsignal(int pgid, int signum)
 {
+	ksiginfo_t ksi;
+	memset(&ksi, 0, sizeof(ksi));
+	ksi.ksi_signo = signum;
+	kgsignal(pgid, &ksi, NULL);
+}
+
+void
+kgsignal(int pgid, ksiginfo_t *ksi, void *data)
+{
 	struct pgrp *pgrp;
 
 	if (pgid && (pgrp = pgfind(pgid)))
-		pgsignal(pgrp, signum, 0);
+		kpgsignal(pgrp, ksi, data, 0);
 }
 
 /*
@@ -716,14 +732,23 @@ gsignal(int pgid, int signum)
  * limit to members which have a controlling terminal.
  */
 void
-pgsignal(struct pgrp *pgrp, int signum, int checkctty)
+pgsignal(struct pgrp *pgrp, int sig, int checkctty)
+{
+	ksiginfo_t ksi;
+	memset(&ksi, 0, sizeof(ksi));
+	ksi.ksi_signo = sig;
+	kpgsignal(pgrp, &ksi, NULL, checkctty);
+}
+
+void
+kpgsignal(struct pgrp *pgrp, ksiginfo_t *ksi, void *data, int checkctty)
 {
 	struct proc *p;
 
 	if (pgrp)
 		LIST_FOREACH(p, &pgrp->pg_members, p_pglist)
 			if (checkctty == 0 || p->p_flag & P_CONTROLT)
-				psignal(p, signum);
+				kpsignal(p, ksi, data);
 }
 
 /*
@@ -731,11 +756,26 @@ pgsignal(struct pgrp *pgrp, int signum, int checkctty)
  * If it will be caught immediately, deliver it with correct code.
  * Otherwise, post it normally.
  */
+#ifndef __HAVE_SIGINFO
+void _trapsignal(struct lwp *, ksiginfo_t *);
 void
 trapsignal(struct lwp *l, int signum, u_long code)
 {
+#define trapsignal _trapsignal
+	ksiginfo_t ksi;
+	memset(&ksi, 0, sizeof(ksi));
+	ksi.ksi_signo = signum;
+	ksi.ksi_trap = (int)code;
+	trapsignal(l, &ksi);
+}
+#endif
+
+void
+trapsignal(struct lwp *l, ksiginfo_t *ksi)
+{
 	struct proc	*p;
 	struct sigacts	*ps;
+	int signum = ksi->ksi_signo;
 
 	p = l->l_proc;
 	ps = p->p_sigacts;
@@ -744,12 +784,17 @@ trapsignal(struct lwp *l, int signum, u_long code)
 	    !sigismember(&p->p_sigctx.ps_sigmask, signum)) {
 		p->p_stats->p_ru.ru_nsignals++;
 #ifdef KTRACE
+#ifdef notyet
+		if (KTRPOINT(p, KTR_PSIGINFO))
+			ktrpsiginfo(p, ksi, SIGACTION_PS(ps, signum).sa_handler,
+			    &p->p_sigctx.ps_sigmask);
+#else
 		if (KTRPOINT(p, KTR_PSIG))
-			ktrpsig(p, signum,
-			    SIGACTION_PS(ps, signum).sa_handler,
-			    &p->p_sigctx.ps_sigmask, code);
+			ktrpsig(p, signum, SIGACTION_PS(ps, signum).sa_handler,
+			    &p->p_sigctx.ps_sigmask, 0);
 #endif
-		psendsig(l, signum, &p->p_sigctx.ps_sigmask, code);
+#endif
+		kpsendsig(l, ksi, &p->p_sigctx.ps_sigmask);
 		(void) splsched();	/* XXXSMP */
 		sigplusset(&SIGACTION_PS(ps, signum).sa_mask,
 		    &p->p_sigctx.ps_sigmask);
@@ -761,10 +806,10 @@ trapsignal(struct lwp *l, int signum, u_long code)
 		}
 		(void) spl0();		/* XXXSMP */
 	} else {
-		p->p_sigctx.ps_code = code;	/* XXX for core dump/debugger */
-		p->p_sigctx.ps_sig = signum;	/* XXX to verify code */
+		/* XXX for core dump/debugger */
+		p->p_sigctx.ps_siginfo = *ksi;
 		p->p_sigctx.ps_lwp = l->l_lid;
-		psignal(p, signum);
+		kpsignal(p, ksi, NULL);
 	}
 }
 
@@ -784,16 +829,27 @@ trapsignal(struct lwp *l, int signum, u_long code)
  * XXXSMP: Invoked as psignal() or sched_psignal().
  */
 void
-psignal1(struct proc *p, int signum,
+psignal1(struct proc *p, int signum, int dolock)
+{
+    ksiginfo_t ksi;
+    memset(&ksi, 0, sizeof(ksi));
+    ksi.ksi_signo = signum;
+    kpsignal1(p, &ksi, NULL, dolock);
+}
+
+void
+kpsignal1(struct proc *p, ksiginfo_t *ksi, void *data,
 	int dolock)		/* XXXSMP: works, but icky */
 {
 	struct lwp *l, *suspended;
 	int	s = 0, prop, allsusp;
 	sig_t	action;
+	int	signum = ksi->ksi_signo;
 
 #ifdef DIAGNOSTIC
 	if (signum <= 0 || signum >= NSIG)
-		panic("psignal signal number");
+		panic("psignal signal number %d", signum);
+
 
 	/* XXXSMP: works, but icky */
 	if (dolock)
@@ -801,6 +857,21 @@ psignal1(struct proc *p, int signum,
 	else
 		SCHED_ASSERT_LOCKED();
 #endif
+
+	if (data) {
+		size_t fd;
+		struct filedesc *fdp = p->p_fd;
+		ksi->ksi_fd = -1;
+		for (fd = 0; fd < fdp->fd_nfiles; fd++) {
+			struct file *fp = fdp->fd_ofiles[fd];
+			/* XXX: lock? */
+			if (fp && fp->f_data == data) {
+				ksi->ksi_fd = fd;
+				break;
+			}
+		}
+	}
+
 	/*
 	 * Notify any interested parties in the signal.
 	 */
@@ -907,7 +978,7 @@ psignal1(struct proc *p, int signum,
 			l = NULL;		
 			allsusp = 1;
 
-			if ((l2->l_stat == LSSLEEP) &&  (l2->l_flag & L_SINTR))
+			if ((l2->l_stat == LSSLEEP) && (l2->l_flag & L_SINTR))
 				l = l2; 
 			else if (l2->l_stat == LSSUSPENDED)
 				suspended = l2;
@@ -1077,7 +1148,7 @@ psignal1(struct proc *p, int signum,
 }
 
 void
-psendsig(struct lwp *l, int sig, sigset_t *mask, u_long code)
+kpsendsig(struct lwp *l, ksiginfo_t *ksi, sigset_t *mask)
 {
 	struct proc *p = l->l_proc;
 	struct lwp *le, *li;
@@ -1090,11 +1161,9 @@ psendsig(struct lwp *l, int sig, sigset_t *mask, u_long code)
 		int s = l->l_flag & L_SA;
 		l->l_flag &= ~L_SA; 
 		si = pool_get(&siginfo_pool, PR_WAITOK);
-		si->si_signo = sig;
-		si->si_errno = 0;
-		si->si_code = code;
+		si->_info = *ksi;
 		le = li = NULL;
-		if (code)
+		if (ksi->ksi_trap)
 			le = l;
 		else
 			li = l;
@@ -1105,7 +1174,11 @@ psendsig(struct lwp *l, int sig, sigset_t *mask, u_long code)
 		return;
 	}
 
-	(*p->p_emul->e_sendsig)(sig, mask, code);
+#ifdef __HAVE_SIGINFO
+	(*p->p_emul->e_sendsig)(ksi, mask);
+#else
+	(*p->p_emul->e_sendsig)(ksi->ksi_signo, mask, ksi->ksi_trap);
+#endif
 }
 
 static __inline int firstsig(const sigset_t *);
@@ -1480,7 +1553,6 @@ postsig(int signum)
 	struct proc	*p;
 	struct sigacts	*ps;
 	sig_t		action;
-	u_long		code;
 	sigset_t	*returnmask;
 
 	l = curlwp;
@@ -1509,6 +1581,7 @@ postsig(int signum)
 		sigexit(l, signum);
 		/* NOTREACHED */
 	} else {
+		ksiginfo_t ksi;
 		/*
 		 * If we get here, the signal must be caught.
 		 */
@@ -1532,15 +1605,16 @@ postsig(int signum)
 		} else
 			returnmask = &p->p_sigctx.ps_sigmask;
 		p->p_stats->p_ru.ru_nsignals++;
-		if (p->p_sigctx.ps_sig != signum) {
-			code = 0;
+		if (p->p_sigctx.ps_siginfo.ksi_signo != signum) {
+			memset(&ksi, 0, sizeof(ksi));
+			ksi.ksi_signo = signum;
 		} else {
-			code = p->p_sigctx.ps_code;
-			p->p_sigctx.ps_code = 0;
+			ksi = p->p_sigctx.ps_siginfo;
+			memset(&p->p_sigctx.ps_siginfo, 0,
+			    sizeof(p->p_sigctx.ps_siginfo));
 			p->p_sigctx.ps_lwp = 0;
-			p->p_sigctx.ps_sig = 0;
 		}
-		psendsig(l, signum, returnmask, code);
+		kpsendsig(l, &ksi, returnmask);
 		(void) splsched();	/* XXXSMP */
 		sigplusset(&SIGACTION_PS(ps, signum).sa_mask,
 		    &p->p_sigctx.ps_sigmask);
@@ -1562,7 +1636,6 @@ postsig(int signum)
 void
 killproc(struct proc *p, const char *why)
 {
-
 	log(LOG_ERR, "pid %d was killed: %s\n", p->p_pid, why);
 	uprintf("sorry, pid %d was killed: %s\n", p->p_pid, why);
 	psignal(p, SIGKILL);
@@ -1650,7 +1723,7 @@ sigexit(struct lwp *l, int signum)
 	exitsig = signum;
 	p->p_acflag |= AXSIG;
 	if (sigprop[signum] & SA_CORE) {
-		p->p_sigctx.ps_sig = signum;
+		p->p_sigctx.ps_siginfo.ksi_signo = signum;
 		if ((error = coredump(l)) == 0)
 			exitsig |= WCOREFLAG;
 

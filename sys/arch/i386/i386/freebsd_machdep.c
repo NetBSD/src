@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.38 2003/08/24 17:52:30 chs Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.39 2003/09/06 22:08:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.38 2003/08/24 17:52:30 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.39 2003/09/06 22:08:14 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.38 2003/08/24 17:52:30 chs Exp
 
 #include <compat/freebsd/freebsd_syscallargs.h>
 #include <compat/freebsd/freebsd_exec.h>
+#include <compat/freebsd/freebsd_signal.h>
 #include <compat/freebsd/freebsd_ptrace.h>
 
 void
@@ -68,7 +69,7 @@ freebsd_setregs(l, epp, stack)
 	struct exec_package *epp;
 	u_long stack;
 {
-	register struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 
 	setregs(l, epp, stack);
 	if (i386_use_fxsave)
@@ -92,31 +93,17 @@ freebsd_setregs(l, epp, stack)
  * specified pc, psl.
  */
 void
-freebsd_sendsig(sig, mask, code)
-	int sig;
-	sigset_t *mask;
-	u_long code;
+freebsd_sendsig(ksiginfo_t *ksi, sigset_t *mask)
 {
+	int sig = ksi->ksi_signo;
+	u_long code = ksi->ksi_trap;
 	struct lwp *l = curlwp;
-	register struct proc *p = l->l_proc;
-	register struct trapframe *tf;
-	struct freebsd_sigframe *fp, frame;
+	struct proc *p = l->l_proc;
 	int onstack;
+	struct freebsd_sigframe *fp = getframe(l, sig, &onstack), frame;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
+	struct trapframe *tf = l->l_md.md_regs;
 
-	tf = l->l_md.md_regs;
-
-	/* Do we need to jump onto the signal stack? */
-	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
-
-	/* Allocate space for the signal handler context. */
-	if (onstack)
-		fp = (struct freebsd_sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-		    p->p_sigctx.ps_sigstk.ss_size);
-	else
-		fp = (struct freebsd_sigframe *)tf->tf_esp;
 	fp--;
 
 	/* Build stack frame for signal trampoline. */
@@ -126,7 +113,7 @@ freebsd_sendsig(sig, mask, code)
 	frame.sf_addr = (char *)rcr2();
 	frame.sf_handler = catcher;
 
-	/* Save register context. */
+	/* Save context. */
 #ifdef VM86
 	if (tf->tf_eflags & PSL_VM) {
 		frame.sf_sc.sc_gs = tf->tf_vm86_gs;
@@ -173,18 +160,7 @@ freebsd_sendsig(sig, mask, code)
 		/* NOTREACHED */
 	}
 
-	/*
-	 * Build context to run handler in.
-	 */
-	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_eip = (int)p->p_sigctx.ps_sigcode;
-	tf->tf_cs = GSEL(GUCODEBIG_SEL, SEL_UPL);
-	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
-	tf->tf_esp = (int)fp;
-	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+	buildcontext(l, GUCODEBIG_SEL, p->p_sigctx.ps_sigcode, fp);
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
@@ -212,7 +188,7 @@ freebsd_sys_sigreturn(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct freebsd_sigcontext *scp, context;
-	register struct trapframe *tf;
+	struct trapframe *tf;
 	sigset_t mask;
 
 	/*

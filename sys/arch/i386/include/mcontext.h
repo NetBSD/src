@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.4 2003/08/25 13:11:30 tron Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.5 2003/09/06 22:05:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,6 +38,14 @@
 
 #ifndef _I386_MCONTEXT_H_
 #define _I386_MCONTEXT_H_
+
+
+/*
+ * mcontext extensions to handle signal delivery.
+ */
+#define _UC_SETSTACK	0x00010000
+#define _UC_CLRSTACK	0x00020000
+#define _UC_VM		0x00040000
 
 /*
  * Layout of mcontext_t according to the System V Application Binary Interface,

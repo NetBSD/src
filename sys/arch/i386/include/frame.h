@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.21 2003/08/07 16:27:58 agc Exp $	*/
+/*	$NetBSD: frame.h,v 1.22 2003/09/06 22:05:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -151,12 +151,21 @@ struct switchframe {
 /*
  * Signal frame
  */
-struct sigframe {
+struct sigframe_sigcontext {
 	int	sf_ra;			/* return address for handler */
 	int	sf_signum;		/* "signum" argument for handler */
 	int	sf_code;		/* "code" argument for handler */
 	struct	sigcontext *sf_scp;	/* "scp" argument for handler */
 	struct	sigcontext sf_sc;	/* actual saved context */
+};
+
+struct sigframe_siginfo {
+	int		sf_ra;		/* return address for handler */
+	int		sf_signum;	/* "signum" argument for handler */
+	siginfo_t	*sf_sip;	/* "sip" argument for handler */
+	ucontext_t	*sf_ucp;	/* "ucp" argument for handler */
+	siginfo_t	sf_si;		/* actual saved siginfo */
+	ucontext_t	sf_uc;		/* actual saved ucontext */
 };
 
 /*
@@ -170,5 +179,10 @@ struct saframe {
 	int		sa_interrupted;
 	void*		sa_arg;
 };
+
+#ifdef _KERNEL
+void *getframe(struct lwp *, int, int *);
+void buildcontext(struct lwp *, int, void *, void *);
+#endif
 
 #endif  /* _I386_FRAME_H_ */
