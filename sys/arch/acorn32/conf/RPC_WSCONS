@@ -1,4 +1,4 @@
-#	$NetBSD: RPC_WSCONS,v 1.23 2004/01/22 13:27:07 bjh21 Exp $
+#	$NetBSD: RPC_WSCONS,v 1.24 2004/01/25 13:46:59 bjh21 Exp $
 #
 #	RPC_WSCONS -- Full RiscPC config with wscons
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.23 $"
+#ident		"GENERIC-$Revision: 1.24 $"
 
 # estimated number of users
 maxusers	32
@@ -243,9 +243,6 @@ lpt*	at pioc? offset 0x0278 irq 0	# Old driver
 #ppbus*	at atppc?
 #lpt*	at ppbus?		# Parallel printer
 #plip*	at ppbus?		# Parallel line IP
-
-# Crude sound device
-beep0	at vidc?
 
 # Audio device
 vidcaudio0	at vidc?
