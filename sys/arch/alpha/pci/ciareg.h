@@ -1,4 +1,4 @@
-/* $NetBSD: ciareg.h,v 1.15 1998/05/12 18:40:44 thorpej Exp $ */
+/* $NetBSD: ciareg.h,v 1.16 1998/06/03 22:19:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -122,6 +122,7 @@
 #define	CIA_CSR_REV	(CIA_CSRS + 0x80)
 
 #define		REV_MASK		0x000000ff
+#define		REV_ALT_MEM		0x00000100
 
 #define	CIA_CSR_CNFG	(CIA_CSRS + 0x140)
 
