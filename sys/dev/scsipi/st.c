@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.97 1998/07/31 17:25:55 mjacob Exp $ */
+/*	$NetBSD: st.c,v 1.98 1998/08/06 10:20:39 drochner Exp $ */
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -2060,7 +2060,7 @@ st_setpos(st, hard, blkptr)
 	u_int32_t *blkptr;
 {
 	int error;
-	struct scsipi_generic cmd;
+	struct scsi_tape_locate cmd;
 
 	/*
 	 * First flush any pending writes. Strictly speaking,
@@ -2080,10 +2080,11 @@ st_setpos(st, hard, blkptr)
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = LOCATE;
 	if (hard)
-		cmd.bytes[0] = 1 << 2;
-	_lto4b(*blkptr, &cmd.bytes[2]);
-	error = scsipi_command(st->sc_link, &cmd, sizeof(cmd),
-	    NULL, 0, ST_RETRIES, ST_SPC_TIME, NULL, 0);
+		cmd.byte2 = 1 << 2;
+	_lto4b(*blkptr, cmd.blkaddr);
+	error = scsipi_command(st->sc_link,
+		(struct scsipi_generic *)&cmd, sizeof(cmd),
+		NULL, 0, ST_RETRIES, ST_SPC_TIME, NULL, 0);
 	/*
 	 * XXX: Note file && block number position now unknown (if
 	 * XXX: these things ever start being maintained in this driver)
