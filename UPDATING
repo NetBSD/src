@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.77 2002/11/26 23:35:42 lukem Exp $
+$NetBSD: UPDATING,v 1.78 2002/12/04 12:50:43 lukem Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,15 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20021130:
+	fparseln(3) moved from libutil to libc.
+	If building to DESTDIR=/, reinstall the includes
+	and rebuild libc:
+		make includes
+		make do-lib-libc
+	If using build.sh, "cd tools/compat && make clean"
+	before rebuilding the tools.
 
 20021126:
 	The mk.conf(5) variable SYS_INCLUDE has been deprecated,
