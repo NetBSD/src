@@ -1,4 +1,4 @@
-.\"	$NetBSD: pax.1,v 1.25 2000/09/04 07:26:38 kleink Exp $
+.\"	$NetBSD: pax.1,v 1.26 2001/10/25 08:51:51 lukem Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 .\"
 .\"	@(#)pax.1	8.4 (Berkeley) 4/18/94
 .\"
-.Dd March 30, 2000
+.Dd October 25, 2001
 .Dt PAX 1
 .Os
 .Sh NAME
@@ -117,7 +117,7 @@
 .Op Ar pattern ...\&
 .Nm ""
 .Fl w
-.Op Fl dituvzAHLOPX
+.Op Fl dituvzAHLMOPX
 .Bk -words
 .Op Fl b Ar blocksize
 .Ek
@@ -162,7 +162,7 @@
 .Nm ""
 .Fl r
 .Fl w
-.Op Fl diklntuvzADHLOPXYZ
+.Op Fl diklntuvzADHLMOPXYZ
 .Bk -words
 .Op Fl p Ar string
 .Ar ...\&
@@ -868,6 +868,41 @@ Follow only command line symbolic links while performing a physical file
 system traversal.
 .It Fl L
 Follow all symbolic links to perform a logical file system traversal.
+.It Fl M
+During a
+.Em write
+or
+.Em copy
+operation, treat the list of files on
+.Dv standard input
+as an
+.Xr mtree 8
+.Sq specfile
+specification, and write or copy only those items in the specfile.
+.Pp
+If the file exists in the underlying file system, its permissions and
+modification time will be used unless specifically overridden by the specfile.
+An error will be raised if the type of entry in the specfile conflicts
+with that of an existing file.
+.Pp
+Otherwise, it is necessary to specify at least the following parameters
+in the specfile:
+.Sy type ,
+.Sy mode ,
+.Sy gname
+or
+.Sy gid ,
+and
+.Sy uname
+or
+.Sy uid ,
+.Sy device
+(in the case of block or character devices), and
+.Sy link
+(in the case of symbolic links).
+If
+.Sy time
+isn't provided, the current time will be used.
 .It Fl O
 Force the archive to be one volume.  If a volume ends prematurely,
 .Nm
@@ -1136,9 +1171,10 @@ which are older (less recent inode change or file modification times) than
 files with the same name found in the source file tree
 .Pa home .
 .Sh SEE ALSO
-.Xr tar 1 ,
 .Xr cpio 1 ,
-.Xr symlink 7
+.Xr tar 1 ,
+.Xr symlink 7 ,
+.Xr mtree 8
 .Sh STANDARDS
 The
 .Nm
@@ -1152,6 +1188,7 @@ The options
 .Fl G ,
 .Fl H ,
 .Fl L ,
+.Fl M ,
 .Fl O ,
 .Fl P ,
 .Fl T ,
@@ -1170,8 +1207,10 @@ and
 operations are extensions to the
 .Tn POSIX
 standard.
-.Sh AUTHOR
-Keith Muller at the University of California, San Diego
+.Sh AUTHORS
+Keith Muller at the University of California, San Diego.
+Luke Mewburn implemented
+.Fl M .
 .Sh ERRORS
 .Nm
 will exit with one of the following values:
