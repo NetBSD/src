@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 1998/12/19 19:51:24 he Exp $
+#	$NetBSD: Makefile.inc,v 1.2 1999/02/01 14:25:09 he Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -9,7 +9,8 @@ VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 VND_CDEV=	/dev/${VND}d
 VND_CRDEV=	/dev/r${VND}d
-IMAGE1=		disk1.fs
+BASENAME=	boot
+IMAGE1=		${BASENAME}1.fs
 FSTMP=		ustar.tmp
 KERN?=		netbsd-xxx
 MDEC=		${DESTDIR}/usr/mdec
@@ -52,8 +53,8 @@ all:	netbsd boot
 			d=2; \
 			while test $$d -le $$disks; do \
 				echo Making disk number $$d.; \
-				IMAGE=disk$${d}.fs; \
-				PIMAGE=disk$$(($$d - 1)).fs; \
+				IMAGE=${BASENAME}$${d}.fs; \
+				PIMAGE=${BASENAME}$$(($$d - 1)).fs; \
 				echo USTARFS $$d > $${IMAGE}; \
 				(echo 'Prototype image created on: ';   \
 					echo -n '     '; date;          \
