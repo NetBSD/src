@@ -1,4 +1,4 @@
-/*	$NetBSD: wscons_rinit.c,v 1.3 1996/11/13 21:13:42 cgd Exp $ */
+/* $NetBSD: wscons_rinit.c,v 1.4 1997/04/06 20:09:10 cgd Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -43,6 +43,8 @@
  *
  *	@(#)rcons_font.c	8.1 (Berkeley) 6/11/93
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/systm.h>
