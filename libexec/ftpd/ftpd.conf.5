@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.conf.5,v 1.7 2000/01/09 10:08:45 lukem Exp $
+.\"	$NetBSD: ftpd.conf.5,v 1.8 2000/01/12 22:39:29 lukem Exp $
 .\"
 .\" Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 9, 2000
+.Dd January 11, 2000
 .Dt FTPD.CONF 5
 .Os
 .Sh NAME
@@ -281,6 +281,16 @@ or
 .Sy off
 is given, disallow passive (PASV/LPSV/EPSV) connections.
 Otherwise, enable them.
+.It Sy portrange Ar class Ar min Ar max
+Set the range of port number which will be used for the passive data port.
+.Ar max
+must be greater than
+.Ar min ,
+and both numbers must be be between
+.Dv IPPORT_RESERVED 
+(1024) and
+.Dv IPPORT_ANONMAX 
+(65535).
 .It Sy rateget Ar class Ar rate
 Set the maximum get (RETR) transfer rate throttle for
 .Ar class
