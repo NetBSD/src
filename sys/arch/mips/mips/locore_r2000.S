@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r2000.S,v 1.26 1996/10/13 08:45:17 jonathan Exp $	*/
+/*	$NetBSD: locore_r2000.S,v 1.27 1996/10/13 21:37:41 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,8 +56,7 @@
 /*
  *----------------------------------------------------------------------------
  *
- * mips_r2000_UTLBmiss --
- * MachUTLBmiss --
+ * mips1_UTLBmiss --
  *
  *	Vector code for a MIPS-I user-space TLB miss from user-space.
  *
@@ -66,10 +65,8 @@
  * handle user level TLB translation misses.
  * NOTE: This code must be relocatable!!!
  */
-	.globl	_C_LABEL(mips_R2000_UTLBMiss)
-_C_LABEL(mips_R2000_UTLBMiss):
-	.globl	_C_LABEL(MachUTLBMiss)
-_C_LABEL(MachUTLBMiss):
+	.globl	_C_LABEL(mips1_UTLBMiss)
+_C_LABEL(mips1_UTLBMiss):
 	.set	noat
 	mfc0	k0, MACH_COP_0_BAD_VADDR	# get the virtual address
 	lw	k1, UADDR+U_PCB_SEGTAB		# get the current segment table
@@ -97,20 +94,17 @@ _C_LABEL(MachUTLBMiss):
 	j	k1
 	rfe
 2:
-	j	mips_r2000_SlowFault			# handle the rest
+	j	mips1_SlowFault			# handle the rest
 	nop
 	.set	at
-	.globl	_C_LABEL(MachUTLBMissEnd)
-_C_LABEL(MachUTLBMissEnd):
-
-	.globl	_C_LABEL(mips_R2000_UTLBMissEnd)
-_C_LABEL(mips_R2000_UTLBMissEnd):
+	.globl	_C_LABEL(mips1_UTLBMissEnd)
+_C_LABEL(mips1_UTLBMissEnd):
 
 
 /*
  *----------------------------------------------------------------------------
  *
- * mips_R2000_execption --
+ * mips1_execption --
  *
  *	Vector code for the general exception vector 0x80000080
  *	on an r2000 or r3000.
@@ -121,8 +115,8 @@ _C_LABEL(mips_R2000_UTLBMissEnd):
  *
  *----------------------------------------------------------------------------
  */
-	.globl	_C_LABEL(mips_R2000_exception)
-_C_LABEL(mips_R2000_exception):
+	.globl	_C_LABEL(mips1_exception)
+_C_LABEL(mips1_exception):
 /*
  * Find out what mode we came from and jump to the proper handler.
  */
@@ -134,7 +128,7 @@ _C_LABEL(mips_R2000_exception):
 	and	k1, k1, MIPS_3K_CR_EXC_CODE	# Mask out the cause bits.
 	or	k1, k1, k0			# change index to user table
 1:
-	la	k0, _C_LABEL(mips_r2000_ExceptionTable) # get base of the jump table
+	la	k0, _C_LABEL(mips1_ExceptionTable) # get base of the jump table
 	addu	k0, k0, k1			# Get the address of the
 						#  function entry.  Note that
 						#  the cause is already
@@ -145,28 +139,28 @@ _C_LABEL(mips_R2000_exception):
 	j	k0				# Jump to the function.
 	nop
 	.set	at
-	.globl	_C_LABEL(mips_R2000_exceptionEnd)
-_C_LABEL(mips_R2000_exceptionEnd):
+	.globl	_C_LABEL(mips1_exceptionEnd)
+_C_LABEL(mips1_exceptionEnd):
 
 
 
 
 /*----------------------------------------------------------------------------
  *
- * mips_r2000_SlowFault --
+ * mips1_SlowFault --
  *
- * Alternate entry point into the mips_r2000_UserGenExceptionor or
- * or mips_r2000_user_Kern_exception, when the ULTB miss handler couldn't
+ * Alternate entry point into the mips1_UserGenExceptionor or
+ * or mips1_user_Kern_exception, when the ULTB miss handler couldn't
  * find a TLB entry.
  *
  * Find out what mode we came from and call the appropriate handler.
  */
-mips_r2000_SlowFault:
+mips1_SlowFault:
 	.set	noat
 	mfc0	k0, MACH_COP_0_STATUS_REG
 	nop
 	and	k0, k0, MACH_SR_KU_PREV
-	bne	k0, zero, _C_LABEL(mips_r2000_UserGenException)
+	bne	k0, zero, _C_LABEL(mips1_UserGenException)
 	nop
 	.set	at
 /*
@@ -175,7 +169,7 @@ mips_r2000_SlowFault:
 
 /*----------------------------------------------------------------------------
  *
- * mips_r2000_KernGenException --
+ * mips1_KernGenException --
  *
  *	Handle an exception from kernel mode.
  *
@@ -200,7 +194,7 @@ mips_r2000_SlowFault:
 #define KERN_MULT_HI_OFFSET	(STAND_FRAME_SIZE + KERN_REG_SIZE + 8)
 #define	KERN_EXC_FRAME_SIZE	(STAND_FRAME_SIZE + KERN_REG_SIZE + 12)
 
-NNON_LEAF(mips_r2000_KernGenException, KERN_EXC_FRAME_SIZE, ra)
+NNON_LEAF(mips1_KernGenException, KERN_EXC_FRAME_SIZE, ra)
 	.set	noat
 #ifdef KADB
 	la	k0, kdbpcb			# save registers for kadb
@@ -276,11 +270,11 @@ NNON_LEAF(mips_r2000_KernGenException, KERN_EXC_FRAME_SIZE, ra)
 	j	k0				# Now return from the
 	rfe					#  exception.
 	.set	at
-END(mips_r2000_KernGenException)
+END(mips1_KernGenException)
 
 /*----------------------------------------------------------------------------
  *
- * mips_r2000_UserGenException --
+ * mips1_UserGenException --
  *
  *	Handle an exception from user mode.
  *
@@ -292,7 +286,7 @@ END(mips_r2000_KernGenException)
  *
  *----------------------------------------------------------------------------
  */
-NNON_LEAF(mips_r2000_UserGenException, STAND_FRAME_SIZE, ra)
+NNON_LEAF(mips1_UserGenException, STAND_FRAME_SIZE, ra)
 	.set	noat
 	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
 /*
@@ -368,11 +362,11 @@ NNON_LEAF(mips_r2000_UserGenException, STAND_FRAME_SIZE, ra)
 	j	k0
 	rfe
 	.set	at
-END(mips_r2000_UserGenException)
+END(mips1_UserGenException)
 
 /*----------------------------------------------------------------------------
  *
- * mips_r2000_KernIntr --
+ * mips1_KernIntr --
  *
  *	Handle an interrupt from kernel mode.
  *	Interrupts use the standard kernel stack.
@@ -393,7 +387,7 @@ END(mips_r2000_UserGenException)
 #define KINTR_GP_OFFSET		(STAND_FRAME_SIZE + KERN_REG_SIZE + 12)
 #define	KINTR_FRAME_SIZE	(STAND_FRAME_SIZE + KERN_REG_SIZE + 16)
 
-NNON_LEAF(mips_r2000_KernIntr, KINTR_FRAME_SIZE, ra)
+NNON_LEAF(mips1_KernIntr, KINTR_FRAME_SIZE, ra)
 	.set	noat
 	subu	sp, sp, KINTR_FRAME_SIZE	# allocate stack frame
 	.mask	0x80000000, (STAND_RA_OFFSET - KINTR_FRAME_SIZE)
@@ -456,11 +450,11 @@ NNON_LEAF(mips_r2000_KernIntr, KINTR_FRAME_SIZE, ra)
 	j	k0				# Now return from the
 	rfe					#  interrupt.
 	.set	at
-END(mips_r2000_KernIntr)
+END(mips1_KernIntr)
 
 /*----------------------------------------------------------------------------
  *
- * mips_r2000_UserIntr --
+ * mips1_UserIntr --
  *
  *	Handle an interrupt from user mode.
  *	Note: we save minimal state in the u.u_pcb struct and use the standard
@@ -477,7 +471,7 @@ END(mips_r2000_KernIntr)
  *
  *----------------------------------------------------------------------------
  */
-NNON_LEAF(mips_r2000_UserIntr, STAND_FRAME_SIZE, ra)
+NNON_LEAF(mips1_UserIntr, STAND_FRAME_SIZE, ra)
 	.set	noat
 	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
 /*
@@ -599,15 +593,15 @@ NNON_LEAF(mips_r2000_UserIntr, STAND_FRAME_SIZE, ra)
 	j	k0
 	rfe
 	.set	at
-END(mips_r2000_UserIntr)
+END(mips1_UserIntr)
 
 /*
  *  Mark where code entreed from exception hander jumptable
  * ends, for stack traceback code.
  */
+
 	.globl	_C_LABEL(mips1_exceptionentry_end)
 _C_LABEL(mips1_exceptionentry_end):
-
 
 
 /*----------------------------------------------------------------------------
@@ -622,7 +616,7 @@ _C_LABEL(mips1_exceptionentry_end):
 #if 0
 /*----------------------------------------------------------------------------
  *
- * mips_r2000_TLBModException --
+ * mips1_TLBModException --
  *
  *	Handle a TLB modified exception.
  *	The BaddVAddr, Context, and EntryHi registers contain the failed
@@ -636,7 +630,7 @@ _C_LABEL(mips1_exceptionentry_end):
  *
  *----------------------------------------------------------------------------
  */
-NLEAF(mips_r2000_TLBModException)
+NLEAF(mips1_TLBModException)
 	.set	noat
 	tlbp					# find the TLB entry
 	mfc0	k0, MACH_COP_0_TLB_LOW		# get the physical address
@@ -660,12 +654,12 @@ NLEAF(mips_r2000_TLBModException)
 4:
 	break	0				# panic
 	.set	at
-END(mips_r2000_TLBModException)
+END(mips1_TLBModException)
 #endif
 
 /*----------------------------------------------------------------------------
  *
- * mips_r2000_TLBMissException --
+ * mips1_TLBMissException --
  *
  *	Handle a TLB miss exception from kernel mode.
  *	The BaddVAddr, Context, and EntryHi registers contain the failed
@@ -679,7 +673,7 @@ END(mips_r2000_TLBModException)
  *
  *----------------------------------------------------------------------------
  */
-NLEAF(mips_r2000_TLBMissException)
+NLEAF(mips1_TLBMissException)
 	.set	noat
 	mfc0	k0, MACH_COP_0_BAD_VADDR	# get the fault address
 	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
@@ -696,7 +690,7 @@ NLEAF(mips_r2000_TLBMissException)
 	mfc0	k1, MACH_COP_0_EXC_PC		# get return address
 	mtc0	k0, MACH_COP_0_TLB_LOW		# save PTE entry
 	and	k0, k0, PG_V			# check for valid entry
-	beq	k0, zero, _C_LABEL(mips_r2000_KernGenException) # PTE invalid
+	beq	k0, zero, _C_LABEL(mips1_KernGenException) # PTE invalid
 	nop
 	tlbwr					# update TLB
 	j	k1
@@ -705,7 +699,7 @@ NLEAF(mips_r2000_TLBMissException)
 1:
 	subu	k0, sp, UADDR + 0x200		# check to see if we have a
 	sltiu	k0, UPAGES*NBPG - 0x200		#  valid kernel stack
-	bne	k0, zero, _C_LABEL(mips_r2000_KernGenException) # Go panic
+	bne	k0, zero, _C_LABEL(mips1_KernGenException) # Go panic
 	nop
 
 	la	a0, start - START_FRAME - 8	# set sp to a valid place
@@ -729,16 +723,16 @@ NLEAF(mips_r2000_TLBMissException)
 	la	sp, start - START_FRAME		# set sp to a valid place
 	PANIC("kernel stack overflow")
 	.set	at
-END(mips_r2000_TLBMissException)
+END(mips1_TLBMissException)
 
 
 /*--------------------------------------------------------------------------
  *
- * mips_r2000_TLBWriteIndexed --
+ * mips1_TLBWriteIndexed --
  *
  *	Write the given entry into the TLB at the given index.
  *
- *	mips_r2000_TLBWriteIndexed(index, highEntry, lowEntry)
+ *	mips1_TLBWriteIndexed(index, highEntry, lowEntry)
  *		int index;
  *		int highEntry;
  *		int lowEntry;
@@ -751,7 +745,7 @@ END(mips_r2000_TLBMissException)
  *
  *--------------------------------------------------------------------------
  */
-LEAF(mips_r2000_TLBWriteIndexed)
+LEAF(mips1_TLBWriteIndexed)
 	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
 	mfc0	t0, MACH_COP_0_TLB_HI		# Save the current PID.
@@ -766,16 +760,16 @@ LEAF(mips_r2000_TLBWriteIndexed)
 	mtc0	t0, MACH_COP_0_TLB_HI		# Restore the PID.
 	j	ra
 	mtc0	v1, MACH_COP_0_STATUS_REG	# Restore the status register
-END(mips_r2000_TLBWriteIndexed)
+END(mips1_TLBWriteIndexed)
 
 #if 0
 /*--------------------------------------------------------------------------
  *
- * mips_r2000_TLBWriteRandom --
+ * mips1_TLBWriteRandom --
  *
  *	Write the given entry into the TLB at a random location.
  *
- *	mips_r2000_TLBWriteRandom(highEntry, lowEntry)
+ *	mips1_TLBWriteRandom(highEntry, lowEntry)
  *		unsigned highEntry;
  *		unsigned lowEntry;
  *
@@ -787,7 +781,7 @@ END(mips_r2000_TLBWriteIndexed)
  *
  *--------------------------------------------------------------------------
  */
-LEAF(mips_r2000_TLBWriteRandom)
+LEAF(mips1_TLBWriteRandom)
 	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
 	mfc0	v0, MACH_COP_0_TLB_HI		# Save the current PID.
@@ -801,16 +795,16 @@ LEAF(mips_r2000_TLBWriteRandom)
 	mtc0	v0, MACH_COP_0_TLB_HI		# Restore the PID.
 	j	ra
 	mtc0	v1, MACH_COP_0_STATUS_REG	# Restore the status register
-END(mips_r2000_TLBWriteRandom)
+END(mips1_TLBWriteRandom)
 #endif
 
 /*--------------------------------------------------------------------------
  *
- * mips_r2000_SetPID --
+ * mips1_SetPID --
  *
  *	Write the given pid into the TLB pid reg.
  *
- *	mips_r2000_SetPID(pid)
+ *	mips1_SetPID(pid)
  *		int pid;
  *
  * Results:
@@ -821,20 +815,20 @@ END(mips_r2000_TLBWriteRandom)
  *
  *--------------------------------------------------------------------------
  */
-LEAF(mips_r2000_SetPID)
+LEAF(mips1_SetPID)
 	sll	a0, a0, VMMACH_TLB_PID_SHIFT	# put PID in right spot
 	mtc0	a0, MACH_COP_0_TLB_HI		# Write the hi reg value
 	j	ra
 	nop
-END(mips_r2000_SetPID)
+END(mips1_SetPID)
 
 /*--------------------------------------------------------------------------
  *
- * mips_r2000_TLBFlush --
+ * mips1_TLBFlush --
  *
  *	Flush the "random" entries from the TLB.
  *
- *	mips_r2000_TLBFlush()
+ *	mips1_TLBFlush()
  *
  * Results:
  *	None.
@@ -844,7 +838,7 @@ END(mips_r2000_SetPID)
  *
  *--------------------------------------------------------------------------
  */
-LEAF(mips_r2000_TLBFlush)
+LEAF(mips1_TLBFlush)
 	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
 	mfc0	t0, MACH_COP_0_TLB_HI		# Save the PID
@@ -865,16 +859,16 @@ LEAF(mips_r2000_TLBFlush)
 	mtc0	t0, MACH_COP_0_TLB_HI		# Restore the PID
 	j	ra
 	mtc0	v1, MACH_COP_0_STATUS_REG	# Restore the status register
-END(mips_r2000_TLBFlush)
+END(mips1_TLBFlush)
 
 #if 0
 /*--------------------------------------------------------------------------
  *
- * mips_r2000_TLBFlushPID --
+ * mips1_TLBFlushPID --
  *
  *	Flush all entries with the given PID from the TLB.
  *
- *	mips_r2000_TLBFlushPID(pid)
+ *	mips1_TLBFlushPID(pid)
  *		int pid;
  *
  * Results:
@@ -885,7 +879,7 @@ END(mips_r2000_TLBFlush)
  *
  *--------------------------------------------------------------------------
  */
-LEAF(mips_r2000_TLBFlushPID)
+LEAF(mips1_TLBFlushPID)
 	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
 	mfc0	t0, MACH_COP_0_TLB_HI		# Save the current PID
@@ -915,16 +909,16 @@ LEAF(mips_r2000_TLBFlushPID)
 	mtc0	t0, MACH_COP_0_TLB_HI		# restore PID
 	j	ra
 	mtc0	v1, MACH_COP_0_STATUS_REG	# Restore the status register
-END(mips_r2000_TLBFlushPID)
+END(mips1_TLBFlushPID)
 #endif
 
 /*--------------------------------------------------------------------------
  *
- * mips_r2000_TLBFlushAddr --
+ * mips1_TLBFlushAddr --
  *
  *	Flush any TLB entries for the given address and TLB PID.
  *
- *	mips_r2000_TLBFlushAddr(highreg)
+ *	mips1_TLBFlushAddr(highreg)
  *		unsigned highreg;
  *
  * Results:
@@ -935,7 +929,7 @@ END(mips_r2000_TLBFlushPID)
  *
  *--------------------------------------------------------------------------
  */
-LEAF(mips_r2000_TLBFlushAddr)
+LEAF(mips1_TLBFlushAddr)
 	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
 	mfc0	t0, MACH_COP_0_TLB_HI		# Get current PID
@@ -955,15 +949,15 @@ LEAF(mips_r2000_TLBFlushAddr)
 	mtc0	t0, MACH_COP_0_TLB_HI		# restore PID
 	j	ra
 	mtc0	v1, MACH_COP_0_STATUS_REG	# Restore the status register
-END(mips_r2000_TLBFlushAddr)
+END(mips1_TLBFlushAddr)
 
 /*--------------------------------------------------------------------------
  *
- * mips_r2000_TLBUpdate --
+ * mips1_TLBUpdate --
  *
  *	Update the TLB if highreg is found; otherwise, enter the data.
  *
- *	mips_r2000_TLBUpdate(highreg, lowreg)
+ *	mips1_TLBUpdate(highreg, lowreg)
  *		unsigned highreg, lowreg;
  *
  * Results:
@@ -974,7 +968,7 @@ END(mips_r2000_TLBFlushAddr)
  *
  *--------------------------------------------------------------------------
  */
-LEAF(mips_r2000_TLBUpdate)
+LEAF(mips1_TLBUpdate)
 	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
 	mfc0	t0, MACH_COP_0_TLB_HI		# Save current PID
@@ -996,15 +990,15 @@ LEAF(mips_r2000_TLBUpdate)
 	mtc0	t0, MACH_COP_0_TLB_HI		# restore PID
 	j	ra
 	mtc0	v1, MACH_COP_0_STATUS_REG	# Restore the status register
-END(mips_r2000_TLBUpdate)
+END(mips1_TLBUpdate)
 
 /*--------------------------------------------------------------------------
  *
- * mips_r2000_TLBFind --
+ * mips1_TLBFind --
  *
  *	Search the TLB for the given entry.
  *
- *	mips_r2000_TLBFind(hi)
+ *	mips1_TLBFind(hi)
  *		unsigned hi;
  *
  * Results:
@@ -1018,7 +1012,7 @@ END(mips_r2000_TLBUpdate)
  */
 	.comm	tlbhi, 4
 	.comm	tlblo, 4
-LEAF(mips_r2000_TLBFind)
+LEAF(mips1_TLBFind)
 	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
 	mfc0	t0, MACH_COP_0_TLB_HI		# Get current PID
@@ -1040,15 +1034,15 @@ LEAF(mips_r2000_TLBFind)
 	mtc0	t0, MACH_COP_0_TLB_HI		# Restore current PID
 	j	ra
 	mtc0	v1, MACH_COP_0_STATUS_REG	# Restore the status register
-END(mips_r2000_TLBFind)
+END(mips1_TLBFind)
 
 /*--------------------------------------------------------------------------
  *
- * mips_r2000_TLBRead --
+ * mips1_TLBRead --
  *
  *	Read the TLB entry.
  *
- *	mips_r2000_TLBRead(entry)
+ *	mips1_TLBRead(entry)
  *		unsigned entry;
  *
  * Results:
@@ -1059,7 +1053,7 @@ END(mips_r2000_TLBFind)
  *
  *--------------------------------------------------------------------------
  */
-LEAF(mips_r2000_TLBRead)
+LEAF(mips1_TLBRead)
 	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
 	mfc0	t0, MACH_COP_0_TLB_HI		# Get current PID
@@ -1076,13 +1070,13 @@ LEAF(mips_r2000_TLBRead)
 	mtc0	t0, MACH_COP_0_TLB_HI		# restore PID
 	j	ra
 	mtc0	v1, MACH_COP_0_STATUS_REG	# Restore the status register
-END(mips_r2000_TLBRead)
+END(mips1_TLBRead)
 
 /*--------------------------------------------------------------------------
  *
- * mips_r2000_TLBGetPID --
+ * mips1_TLBGetPID --
  *
- *	mips_r2000_TLBGetPID()
+ *	mips1_TLBGetPID()
  *
  * Results:
  *	Returns the current TLB pid reg.
@@ -1092,13 +1086,13 @@ END(mips_r2000_TLBRead)
  *
  *--------------------------------------------------------------------------
  */
-LEAF(mips_r2000_TLBGetPID)
+LEAF(mips1_TLBGetPID)
 	mfc0	v0, MACH_COP_0_TLB_HI		# get PID
 	nop
 	and	v0, v0, VMMACH_TLB_PID		# mask off PID
 	j	ra
 	srl	v0, v0, VMMACH_TLB_PID_SHIFT	# put PID in right spot
-END(mips_r2000_TLBGetPID)
+END(mips1_TLBGetPID)
 
 
 /*----------------------------------------------------------------------------
@@ -1111,7 +1105,7 @@ END(mips_r2000_TLBGetPID)
 
 /*----------------------------------------------------------------------------
  *
- * mips_r2000_ConfigCache --
+ * mips1_ConfigCache --
  *
  *	Size the caches.
  *	NOTE: should only be called from mach_init().
@@ -1125,7 +1119,7 @@ END(mips_r2000_TLBGetPID)
  *
  *----------------------------------------------------------------------------
  */
-NON_LEAF(mips_r2000_ConfigCache, STAND_FRAME_SIZE, ra)
+NON_LEAF(mips1_ConfigCache, STAND_FRAME_SIZE, ra)
 	subu	sp, sp, STAND_FRAME_SIZE
 	sw	ra, STAND_RA_OFFSET(sp)		# Save return address.
 	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
@@ -1140,7 +1134,7 @@ NON_LEAF(mips_r2000_ConfigCache, STAND_FRAME_SIZE, ra)
  * linker still thinks SizeCache is in the cached region so it computes
  * the correct address without complaining.
  */
-	jal	_C_LABEL(mips_r2000_SizeCache)	# Get the size of the d-cache.
+	jal	_C_LABEL(mips1_SizeCache)	# Get the size of the d-cache.
 	nop
 	sw	v0, _C_LABEL(machDataCacheSize)
 	nop					# Make sure sw out of pipe
@@ -1153,7 +1147,7 @@ NON_LEAF(mips_r2000_ConfigCache, STAND_FRAME_SIZE, ra)
 	nop
 	nop
 	nop
-	jal	_C_LABEL(mips_r2000_SizeCache)	# Get the size of the i-cache.
+	jal	_C_LABEL(mips1_SizeCache)	# Get the size of the i-cache.
 	nop
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Swap back caches and enable.
 	nop
@@ -1169,11 +1163,11 @@ NON_LEAF(mips_r2000_ConfigCache, STAND_FRAME_SIZE, ra)
 	addu	sp, sp, STAND_FRAME_SIZE	# Restore sp.
 	j	ra
 	nop
-END(mips_r2000_ConfigCache)
+END(mips1_ConfigCache)
 
 /*----------------------------------------------------------------------------
  *
- * mips_r2000_SizeCache --
+ * mips1_SizeCache --
  *
  *	Get the size of the cache.
  *
@@ -1185,7 +1179,7 @@ END(mips_r2000_ConfigCache)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(mips_r2000_SizeCache)
+LEAF(mips1_SizeCache)
 	mfc0	t0, MACH_COP_0_STATUS_REG	# Save the current status reg.
 	nop
 	or	v0, t0, MACH_SR_ISOL_CACHES	# Isolate the caches.
@@ -1227,11 +1221,11 @@ LEAF(mips_r2000_SizeCache)
 	nop
 	j	ra
 	nop
-END(mips_r2000_SizeCache)
+END(mips1_SizeCache)
 
 /*----------------------------------------------------------------------------
  *
- * mips_r2000_FlushCache --
+ * mips1_FlushCache --
  *
  *	Flush the caches.
  *
@@ -1243,7 +1237,7 @@ END(mips_r2000_SizeCache)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(mips_r2000_FlushCache)
+LEAF(mips1_FlushCache)
 	lw	t1, _C_LABEL(machInstCacheSize)	# Must load before isolating
 	lw	t2, _C_LABEL(machDataCacheSize)	# Must load before isolating
 	mfc0	t3, MACH_COP_0_STATUS_REG 	# Save the status register.
@@ -1300,13 +1294,13 @@ LEAF(mips_r2000_FlushCache)
 	nop
 	j	ra
 	nop
-END(mips_r2000_FlushCache)
+END(mips1_FlushCache)
 
 /*----------------------------------------------------------------------------
  *
- * mips_r2000_FlushICache --
+ * mips1_FlushICache --
  *
- *	void mips_r2000_FlushICache(addr, len)
+ *	void mips1_FlushICache(addr, len)
  *		vm_offset_t addr, len;
  *
  *	Flush instruction cache for range of addr to addr + len - 1.
@@ -1320,7 +1314,7 @@ END(mips_r2000_FlushCache)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(mips_r2000_FlushICache)
+LEAF(mips1_FlushICache)
 	mfc0	t0, MACH_COP_0_STATUS_REG	# Save SR
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts.
 
@@ -1342,13 +1336,13 @@ LEAF(mips_r2000_FlushICache)
 	mtc0	t0, MACH_COP_0_STATUS_REG	# enable interrupts
 	j	ra				# return and run cached
 	nop
-END(mips_r2000_FlushICache)
+END(mips1_FlushICache)
 
 /*----------------------------------------------------------------------------
  *
- * mips_r2000_FlushDCache --
+ * mips1_FlushDCache --
  *
- *	void mips_r2000_FlushDCache(addr, len)
+ *	void mips1_FlushDCache(addr, len)
  *		vm_offset_t addr, len;
  *
  *	Flush data cache for range of addr to addr + len - 1.
@@ -1362,7 +1356,7 @@ END(mips_r2000_FlushICache)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(mips_r2000_FlushDCache)
+LEAF(mips1_FlushDCache)
 	mfc0	t0, MACH_COP_0_STATUS_REG	# Save SR
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts.
 	nop
@@ -1393,7 +1387,7 @@ LEAF(mips_r2000_FlushDCache)
 	nop
 	j	ra				# return and run cached
 	nop
-END(mips_r2000_FlushDCache)
+END(mips1_FlushDCache)
 
 /*----------------------------------------------------------------------------
  *
