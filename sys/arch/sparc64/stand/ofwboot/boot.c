@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.12 2000/04/05 06:23:33 mrg Exp $	*/
+/*	$NetBSD: boot.c,v 1.13 2000/05/26 22:59:51 eeh Exp $	*/
 #define DEBUG
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -157,10 +157,13 @@ parseargs(str, howtop)
 			break;
 		case 'd':
 			*howtop |= RB_KDB;
-			debug = 1;
+			if (!debug) debug = 1;
+			break;
+		case 'D':
+			debug = 2;
 			break;
 		case 'v':
-			debug = 1;
+			if (!debug) debug = 1;
 			break;
 		}
 	}
@@ -218,6 +221,8 @@ chain(pentry, args, ssym, esym)
 	printf("chain: calling OF_chain(%x, %x, %x, %x, %x)\n",
 	       (void *)RELOC, end - (char *)RELOC, entry, args, l);
 #endif
+	/* if -D is set then pause in the PROM. */
+	if (debug > 1) OF_enter();
 	OF_chain((void *)RELOC, ((end - (char *)RELOC)+NBPG)%NBPG, entry, args, l);
 	panic("chain");
 }
