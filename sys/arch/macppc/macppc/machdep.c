@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.65 2000/01/19 20:05:43 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66 2000/01/21 18:49:52 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -434,6 +434,9 @@ identifycpu()
 		break;
 	case 9:
 		sprintf(cpu_model, "604ev");
+		break;
+	case 12:
+		sprintf(cpu_model, "7400");
 		break;
 	case 20:
 		sprintf(cpu_model, "620");
