@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.32 1998/03/31 22:49:10 thorpej Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.33 1998/04/29 03:44:12 kml Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -263,6 +263,20 @@ tcp_timers(tp, timer)
 		TCPT_RANGESET(tp->t_rxtcur, rto * tcp_backoff[tp->t_rxtshift],
 		    tp->t_rttmin, TCPTV_REXMTMAX);
 		tp->t_timer[TCPT_REXMT] = tp->t_rxtcur;
+		/* 
+		 * If we are losing and we are trying path MTU discovery,
+		 * try turning it off.  This will avoid black holes in
+		 * the network which suppress or fail to send "packet
+		 * too big" ICMP messages.  We should ideally do
+		 * lots more sophisticated searching to find the right
+		 * value here...
+		 */
+		if (ip_mtudisc && tp->t_rxtshift > TCP_MAXRXTSHIFT / 6) {
+			struct inpcb *inp = tp->t_inpcb;
+			struct rtentry *rt = in_pcbrtentry(inp);
+
+			rt->rt_rmx.rmx_locks |= RTV_MTU;
+		}
 		/*
 		 * If losing, let the lower level know and try for
 		 * a better route.  Also, if we backed off this far,
