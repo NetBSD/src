@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2002/06/18 01:37:12 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 2002/06/18 02:55:19 thorpej Exp $
 #	$OpenBSD: Makefile,v 1.4 2002/06/05 17:34:56 mickey Exp $
 
 PROG=	systrace
@@ -8,7 +8,7 @@ SRCS=	filter.c intercept-translate.c intercept.c \
 	systrace-translate.c systrace.c \
 	parse.y lex.l
 
-CPPFLAGS+= -I.
+CPPFLAGS+= -I. -I${.CURDIR}/../../sys
 
 YHEADER=yes
 

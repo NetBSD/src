@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd-syscalls.c,v 1.4 2002/06/18 02:49:09 thorpej Exp $	*/
+/*	$NetBSD: netbsd-syscalls.c,v 1.5 2002/06/18 02:55:19 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,29 +31,29 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netbsd-syscalls.c,v 1.4 2002/06/18 02:49:09 thorpej Exp $");
+__RCSID("$NetBSD: netbsd-syscalls.c,v 1.5 2002/06/18 02:55:19 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 
 #include <sys/syscall.h>
 
-#include "../../sys/compat/aout/aout_syscall.h"
-#include "../../sys/compat/aoutm68k/aoutm68k_syscall.h"
-#include "../../sys/compat/freebsd/freebsd_syscall.h"
-#include "../../sys/compat/hpux/hpux_syscall.h"
-#include "../../sys/compat/ibcs2/ibcs2_syscall.h"
-#include "../../sys/compat/irix/irix_syscall.h"
-#include "../../sys/compat/linux/linux_syscall.h"
-#include "../../sys/compat/mach/mach_syscall.h"
-#include "../../sys/compat/netbsd32/netbsd32_syscall.h"
-#include "../../sys/compat/osf1/osf1_syscall.h"
-#include "../../sys/compat/pecoff/pecoff_syscall.h"
-#include "../../sys/compat/sunos/sunos_syscall.h"
-#include "../../sys/compat/sunos32/sunos32_syscall.h"
-#include "../../sys/compat/svr4/svr4_syscall.h"
-#include "../../sys/compat/svr4_32/svr4_32_syscall.h"
-#include "../../sys/compat/ultrix/ultrix_syscall.h"
+#include "compat/aout/aout_syscall.h"
+#include "compat/aoutm68k/aoutm68k_syscall.h"
+#include "compat/freebsd/freebsd_syscall.h"
+#include "compat/hpux/hpux_syscall.h"
+#include "compat/ibcs2/ibcs2_syscall.h"
+#include "compat/irix/irix_syscall.h"
+#include "compat/linux/linux_syscall.h"
+#include "compat/mach/mach_syscall.h"
+#include "compat/netbsd32/netbsd32_syscall.h"
+#include "compat/osf1/osf1_syscall.h"
+#include "compat/pecoff/pecoff_syscall.h"
+#include "compat/sunos/sunos_syscall.h"
+#include "compat/sunos32/sunos32_syscall.h"
+#include "compat/svr4/svr4_syscall.h"
+#include "compat/svr4_32/svr4_32_syscall.h"
+#include "compat/ultrix/ultrix_syscall.h"
 
 #define KTRACE
 #define NFSCLIENT
@@ -63,24 +63,24 @@ __RCSID("$NetBSD: netbsd-syscalls.c,v 1.4 2002/06/18 02:49:09 thorpej Exp $");
 #define SYSVSHM
 #define LFS
 #define NTP
-#include "../../sys/kern/syscalls.c"
+#include "kern/syscalls.c"
 
-#include "../../sys/compat/aout/aout_syscalls.c"
-#include "../../sys/compat/aoutm68k/aoutm68k_syscalls.c"
-#include "../../sys/compat/freebsd/freebsd_syscalls.c"
-#include "../../sys/compat/hpux/hpux_syscalls.c"
-#include "../../sys/compat/ibcs2/ibcs2_syscalls.c"
-#include "../../sys/compat/irix/irix_syscalls.c"
-#include "../../sys/compat/linux/linux_syscalls.c"
-#include "../../sys/compat/mach/mach_syscalls.c"
-#include "../../sys/compat/netbsd32/netbsd32_syscalls.c"
-#include "../../sys/compat/osf1/osf1_syscalls.c"
-#include "../../sys/compat/pecoff/pecoff_syscalls.c"
-#include "../../sys/compat/sunos/sunos_syscalls.c"
-#include "../../sys/compat/sunos32/sunos32_syscalls.c"
-#include "../../sys/compat/svr4/svr4_syscalls.c"
-#include "../../sys/compat/svr4_32/svr4_32_syscalls.c"
-#include "../../sys/compat/ultrix/ultrix_syscalls.c"
+#include "compat/aout/aout_syscalls.c"
+#include "compat/aoutm68k/aoutm68k_syscalls.c"
+#include "compat/freebsd/freebsd_syscalls.c"
+#include "compat/hpux/hpux_syscalls.c"
+#include "compat/ibcs2/ibcs2_syscalls.c"
+#include "compat/irix/irix_syscalls.c"
+#include "compat/linux/linux_syscalls.c"
+#include "compat/mach/mach_syscalls.c"
+#include "compat/netbsd32/netbsd32_syscalls.c"
+#include "compat/osf1/osf1_syscalls.c"
+#include "compat/pecoff/pecoff_syscalls.c"
+#include "compat/sunos/sunos_syscalls.c"
+#include "compat/sunos32/sunos32_syscalls.c"
+#include "compat/svr4/svr4_syscalls.c"
+#include "compat/svr4_32/svr4_32_syscalls.c"
+#include "compat/ultrix/ultrix_syscalls.c"
 #undef KTRACE
 #undef NFSCLIENT
 #undef NFSSERVER
