@@ -1,4 +1,4 @@
-/*	$NetBSD: form.c,v 1.4 2001/02/16 03:21:35 blymn Exp $	*/
+/*	$NetBSD: form.c,v 1.5 2001/03/25 12:24:47 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -43,6 +43,7 @@ FORM _formi_default_form = {
 	FALSE, /* make field list circular if true */
 	NULL, /* window for the form */
 	NULL, /* subwindow for the form */
+	NULL, /* use this window for output */
 	NULL, /* user defined pointer */
 	0, /* options for the form */
 	NULL, /* function called when form posted and
@@ -57,7 +58,6 @@ FORM _formi_default_form = {
 	0, /* current field */
 	0, /* current page of form */
 	0, /* number of pages in the form */
-	0, /* libform made the window */
 	NULL, /* dynamic array of fields that start
 					   the pages */
 	{NULL, NULL}, /* sorted field list */
@@ -70,15 +70,18 @@ FORM _formi_default_form = {
 int
 set_form_win(FORM *form, WINDOW *win)
 {
-	if (form == NULL)
+	if (form == NULL) {
 		_formi_default_form.win = win;
-	else {
+		_formi_default_form.scrwin = win;
+	} else {
 		if (form->posted == TRUE)
 			return E_POSTED;
-		else
+		else {
 			form->win = win;
+			form->scrwin = win;
+		}
 	}
-	
+
 	return E_OK;
 }
 
@@ -100,15 +103,18 @@ form_win(FORM *form)
 int
 set_form_sub(FORM *form, WINDOW *window)
 {
-	if (form == NULL)
+	if (form == NULL) {
 		_formi_default_form.subwin = window;
-	else {
+		_formi_default_form.scrwin = window;
+	} else {
 		if (form->posted == TRUE)
 			return E_POSTED;
-		else
+		else {
 			form->subwin = window;
+			form->scrwin = window;
+		}
 	}
-	
+
 	return E_OK;
 }
 
@@ -485,7 +491,7 @@ new_form(FIELD **fields)
 	bcopy(&_formi_default_form, new, sizeof(FORM));
 
 	if (new->win == NULL)
-		new->win = stdscr; /* something for curses to write to */
+		new->scrwin = stdscr; /* something for curses to write to */
 
 	if (fields != NULL) { /* attach the fields, if any */
 		if (set_form_fields(new, fields) < 0) {
@@ -583,17 +589,21 @@ pos_form_cursor(FORM *form)
 	if (form->posted != 1)
 		return E_NOT_POSTED;
 
-	if (form->subwin == NULL)
-		return E_SYSTEM_ERROR;
-	
 	cur = form->fields[form->cur_field];
-	row = cur->form_row + cur->cursor_ypos;
-	col = cur->form_col + cur->cursor_xpos;
+	row = cur->form_row;
+	col = cur->form_col;
+
+	  /* if the field is public then show the cursor pos */
+	if ((cur->opts & O_PUBLIC) == O_PUBLIC) {
+		row += cur->cursor_ypos;
+		col += cur->cursor_xpos;
+	}
+	
 #ifdef DEBUG
 	fprintf(dbg, "pos_cursor: row=%d, col=%d\n", row, col);
 #endif
 	
-	wmove(form->subwin, row, col);
+	wmove(form->scrwin, row, col);
 
 	return E_OK;
 }
