@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.298 2001/01/02 22:34:25 augustss Exp $
+# $NetBSD: mi,v 1.299 2001/01/05 20:16:39 martin Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -522,6 +522,7 @@
 ./usr/share/man/cat4/cue.0
 ./usr/share/man/cat4/cy.0
 ./usr/share/man/cat4/cz.0
+./usr/share/man/cat4/daic.0
 ./usr/share/man/cat4/ddb.0
 ./usr/share/man/cat4/de.0
 ./usr/share/man/cat4/depca.0
@@ -597,6 +598,13 @@
 ./usr/share/man/cat4/i386/opms.0
 ./usr/share/man/cat4/i386/pcibios.0
 ./usr/share/man/cat4/i386/pnpbios.0
+./usr/share/man/cat4/i4b.0
+./usr/share/man/cat4/i4bctl.0
+./usr/share/man/cat4/i4bipr.0
+./usr/share/man/cat4/i4bisp.0
+./usr/share/man/cat4/i4brbch.0
+./usr/share/man/cat4/i4btel.0
+./usr/share/man/cat4/i4btrc.0
 ./usr/share/man/cat4/icmp.0
 ./usr/share/man/cat4/icmp6.0
 ./usr/share/man/cat4/icsphy.0
@@ -621,6 +629,7 @@
 ./usr/share/man/cat4/ipsec.0
 ./usr/share/man/cat4/isa.0
 ./usr/share/man/cat4/isapnp.0
+./usr/share/man/cat4/isic.0
 ./usr/share/man/cat4/iso.0
 ./usr/share/man/cat4/isp.0
 ./usr/share/man/cat4/ix.0
@@ -1963,6 +1972,7 @@
 ./usr/share/man/man4/cue.4
 ./usr/share/man/man4/cy.4
 ./usr/share/man/man4/cz.4
+./usr/share/man/man4/daic.4
 ./usr/share/man/man4/ddb.4
 ./usr/share/man/man4/de.4
 ./usr/share/man/man4/depca.4
@@ -2038,6 +2048,13 @@
 ./usr/share/man/man4/i386/opms.4
 ./usr/share/man/man4/i386/pcibios.4
 ./usr/share/man/man4/i386/pnpbios.4
+./usr/share/man/man4/i4b.4
+./usr/share/man/man4/i4bctl.4
+./usr/share/man/man4/i4bipr.4
+./usr/share/man/man4/i4bisp.4
+./usr/share/man/man4/i4brbch.4
+./usr/share/man/man4/i4btel.4
+./usr/share/man/man4/i4btrc.4
 ./usr/share/man/man4/icmp.4
 ./usr/share/man/man4/icmp6.4
 ./usr/share/man/man4/icsphy.4
@@ -2062,6 +2079,7 @@
 ./usr/share/man/man4/ipsec.4
 ./usr/share/man/man4/isa.4
 ./usr/share/man/man4/isapnp.4
+./usr/share/man/man4/isic.4
 ./usr/share/man/man4/iso.4
 ./usr/share/man/man4/isp.4
 ./usr/share/man/man4/ix.4
