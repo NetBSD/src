@@ -1,4 +1,4 @@
-/*	$NetBSD: newport.c,v 1.3 2004/01/26 07:12:33 sekiya Exp $	*/
+/*	$NetBSD: newport.c,v 1.4 2004/01/26 11:00:47 lonewolf Exp $	*/
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.3 2004/01/26 07:12:33 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.4 2004/01/26 11:00:47 lonewolf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,8 +65,6 @@ struct newport_devconfig {
 	int			dc_yres;
 	int			dc_depth;
 
-	int			dc_screens;
-	
 	int			dc_font;
 	struct wsdisplay_font	*dc_fontdata;
 };
@@ -592,8 +590,6 @@ static void
 newport_attach_common(struct newport_devconfig *dc, struct gio_attach_args *ga)
 {
 	dc->dc_addr = ga->ga_addr;
-
-	dc->dc_screens = 0;
 
 	dc->dc_st = ga->ga_iot;
 	dc->dc_sh = ga->ga_ioh;
