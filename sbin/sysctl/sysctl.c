@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.88 2004/04/08 04:00:33 atatat Exp $ */
+/*	$NetBSD: sysctl.c,v 1.89 2004/04/08 06:12:43 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.88 2004/04/08 04:00:33 atatat Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.89 2004/04/08 06:12:43 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -1441,7 +1441,7 @@ getdesc1(int *name, u_int namelen, struct sysctlnode *pnode)
 	if (desc == NULL)
 		desc = (char *)-1;
 	if (desc != (char *)-1)
-		memcpy(desc, &d->descr_str[0], sz);
+		memcpy(desc, &d->descr_str[0], d->descr_len);
 	name[namelen - 1] = node.sysctl_num;
 	if (pnode->sysctl_desc != NULL &&
 	    pnode->sysctl_desc != (const char *)-1)
