@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.25 1994/11/18 22:03:28 mycroft Exp $	*/
+/*	$NetBSD: lpt.c,v 1.26 1995/01/03 01:30:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -252,7 +252,7 @@ lptattach(parent, self, aux)
 		sc->sc_ih.ih_fun = lptintr;
 		sc->sc_ih.ih_arg = sc;
 		sc->sc_ih.ih_level = IPL_NONE;
-		intr_establish(ia->ia_irq, &sc->sc_ih);
+		intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
 	}
 }
 

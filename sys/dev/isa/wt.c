@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.21 1994/11/18 22:03:51 mycroft Exp $	*/
+/*	$NetBSD: wt.c,v 1.22 1995/01/03 01:31:14 mycroft Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -252,7 +252,7 @@ wtattach(parent, self, aux)
 	sc->sc_ih.ih_fun = wtintr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_level = IPL_BIO;
-	intr_establish(ia->ia_irq, &sc->sc_ih);
+	intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
 }
 
 int

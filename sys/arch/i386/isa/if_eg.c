@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.8 1994/11/18 22:03:15 mycroft Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.9 1995/01/03 01:30:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -409,7 +409,7 @@ egattach(parent, self, aux)
 	sc->sc_ih.ih_fun = egintr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_level = IPL_NET;
-	intr_establish(ia->ia_irq, &sc->sc_ih);
+	intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
 }
 
 static void

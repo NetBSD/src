@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.78 1994/12/13 13:42:56 mycroft Exp $	*/
+/*	$NetBSD: pccons.c,v 1.79 1995/01/03 01:30:55 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -470,7 +470,7 @@ pcattach(parent, self, aux)
 	pchand.ih_fun = pcintr;
 	pchand.ih_arg = 0;
 	pchand.ih_level = IPL_TTY;
-	intr_establish(ia->ia_irq, &pchand);
+	intr_establish(ia->ia_irq, IST_EDGE, &pchand);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.42 1994/11/25 08:17:21 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.43 1995/01/03 01:30:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -216,7 +216,7 @@ comattach(parent, self, aux)
 		sc->sc_ih.ih_fun = comintr;
 		sc->sc_ih.ih_arg = sc;
 		sc->sc_ih.ih_level = IPL_TTY;
-		intr_establish(ia->ia_irq, &sc->sc_ih);
+		intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
 	}
 
 #ifdef KGDB
