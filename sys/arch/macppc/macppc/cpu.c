@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.7 2000/07/05 16:02:38 tsubai Exp $	*/
+/*	$NetBSD: cpu.c,v 1.8 2000/07/06 22:56:23 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999 Internet Research Institute, Inc.
@@ -62,23 +62,18 @@ struct cfattach cpu_ca = {
 
 int ncpus;
 
+#ifdef MULTIPROCESSOR
+struct cpu_info cpu_info[2];
+#else
+struct cpu_info cpu_info_store;
+#endif
+
 extern struct cfdriver cpu_cd;
 extern int powersave;
 
 #define HAMMERHEAD	0xf8000000
 #define HH_ARBCONF	(HAMMERHEAD + 0x90)
 #define HH_INTR		(HAMMERHEAD + 0xc0)
-
-/* XXX for now */
-#undef cpu_number
-static inline int
-cpu_number()
-{
-	int pir;
-
-	asm ("mfspr %0,1023" : "=r"(pir));
-	return pir;
-}
 
 int
 cpumatch(parent, cf, aux)
@@ -125,24 +120,27 @@ cpuattach(parent, self, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
-	int *reg = ca->ca_reg;
+	int id = ca->ca_reg[0];
 	int hid0, pvr;
 	char model[80];
 
 	ncpus++;
+#ifdef MULTIPROCESSOR
+	cpu_info[id].ci_cpuid = id;
+#endif
 
-	switch (reg[0]) {
+	switch (id) {
 	case 0:
-		asm volatile ("mtspr 1023,%0" :: "r"(0));	/* PIR */
+		asm volatile ("mtspr 1023,%0" :: "r"(id));	/* PIR */
 		identifycpu(model);
 		printf(": %s, ID %d (primary)", model, cpu_number());
 		break;
-/* #ifdef MULTIPROCESSOR */
+#ifdef MULTIPROCESSOR
 	case 1:
 		cpu_spinup();
 		printf("\n");
 		return;
-/* #endif */
+#endif
 	default:
 		printf(": more than 2 cpus?\n");
 		panic("cpuattach");
@@ -315,7 +313,8 @@ display_l2cr()
 	printf("\n");
 }
 
-/* #ifdef MULTIPROCESSOR */
+#ifdef MULTIPROCESSOR
+
 struct cpu_hatch_data {
 	int running;
 	int pir;
@@ -464,9 +463,7 @@ cpu_hatch()
 
 	for (;;);
 }
-/* #endif MULTIPROCESSOR */
 
-#ifdef MULTIPROCESSOR
 void
 cpu_boot_secondary_processors()
 {
