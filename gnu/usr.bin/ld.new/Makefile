@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2000/01/24 07:27:15 mycroft Exp $
+#	$NetBSD: Makefile,v 1.18 2000/05/13 19:50:51 msaitoh Exp $
 
 # for OBJECT_FMT, UNPRIVILEGED
 .include <bsd.own.mk>
@@ -34,6 +34,9 @@ CPPFLAGS+=	-I. -I${.CURDIR} -I${BFDOBJ} -I${DIST}/ld \
 LDADD+=		-L${BFDOBJ} -lbfd
 DPADD+=		${BFDOBJ}/libbfd_pic.a
 YHEADER=1
+
+TEXINFO=	ld.texi
+INFOFLAGS=	-I${DIST}/ld -I${DIST}/bfd/doc
 
 DIST=		${.CURDIR}/../../dist
 BFDOBJ!=	cd ${.CURDIR}/../../lib/libbfd; ${MAKE} print-objdir
@@ -146,6 +149,7 @@ cleanprog: __cleanldscripts
 __cleanldscripts:
 	rm -rf ldscripts
 
+.include <bsd.info.mk>
 .include <bsd.prog.mk>
 
 ${OBJS}: ldemul-list.h
