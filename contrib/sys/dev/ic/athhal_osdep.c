@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting, Atheros
+ * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting, Atheros
  * Communications, Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms are permitted
@@ -34,7 +34,7 @@
  * SUCH DAMAGES.
  *
  * $NetBSD$
- * $Id: ah_osdep.c,v 1.28 2003/11/01 01:43:21 sam Exp $
+ * $Id: ah_osdep.c,v 1.3 2004/06/09 16:33:48 samleffler Exp $
  */
 #ifdef __FreeBSD__
 #include "opt_ah.h"
@@ -91,13 +91,9 @@ extern	void ath_hal_free(void *);
 extern	void ath_hal_assert_failed(const char* filename,
 		int lineno, const char* msg);
 #endif
-#ifdef AH_DEBUG
-extern	void HALDEBUG(struct ath_hal *ah, const char* fmt, ...);
-extern	void HALDEBUGn(struct ath_hal *ah, u_int level, const char* fmt, ...);
-#endif /* AH_DEBUG */
 
 #ifdef AH_DEBUG
-static	int ath_hal_debug = 0;		/* XXX */
+static	int ath_hal_debug = 0;
 #endif /* AH_DEBUG */
 
 #ifdef __FreeBSD__
@@ -171,17 +167,9 @@ err:
 }
 #endif /* __NetBSD__ */
 
-void*
-ath_hal_malloc(size_t size)
-{
-	return malloc(size, M_DEVBUF, M_NOWAIT | M_ZERO);
-}
-
-void
-ath_hal_free(void* p)
-{
-	return free(p, M_DEVBUF);
-}
+/*
+ * Print/log message support.
+ */
 
 void
 ath_hal_vprintf(struct ath_hal *ah, const char* fmt, va_list ap)
@@ -198,188 +186,25 @@ ath_hal_printf(struct ath_hal *ah, const char* fmt, ...)
 	va_end(ap);
 }
 
+/*
+ * Format an Ethernet MAC for printing.
+ */
 const char*
 ath_hal_ether_sprintf(const u_int8_t *mac)
 {
 	return ether_sprintf(mac);
 }
 
-#ifdef AH_DEBUG
+#ifdef AH_ASSERT
 void
-HALDEBUG(struct ath_hal *ah, const char* fmt, ...)
+ath_hal_assert_failed(const char* filename, int lineno, const char *msg)
 {
-	if (ath_hal_debug) {
-		va_list ap;
-		va_start(ap, fmt);
-		ath_hal_vprintf(ah, fmt, ap);
-		va_end(ap);
-	}
+	printf("Atheros HAL assertion failure: %s: line %u: %s\n",
+		filename, lineno, msg);
+	panic("ath_hal_assert");
 }
+#endif /* AH_ASSERT */
 
-void
-HALDEBUGn(struct ath_hal *ah, u_int level, const char* fmt, ...)
-{
-	if (ath_hal_debug >= level) {
-		va_list ap;
-		va_start(ap, fmt);
-		ath_hal_vprintf(ah, fmt, ap);
-		va_end(ap);
-	}
-}
-#endif /* AH_DEBUG */
-
-#ifdef AH_DEBUG_ALQ
-/*
- * ALQ register tracing support.
- *
- * Setting hw.ath.hal.alq=1 enables tracing of all register reads and
- * writes to the file /tmp/ath_hal.log.  The file format is a simple
- * fixed-size array of records.  When done logging set hw.ath.hal.alq=0
- * and then decode the file with the arcode program (that is part of the
- * HAL).  If you start+stop tracing the data will be appended to an
- * existing file.
- *
- * NB: doesn't handle multiple devices properly; only one DEVICE record
- *     is emitted and the different devices are not identified.
- */
-#include <sys/alq.h>
-#include <sys/pcpu.h>
-#include <contrib/dev/ath/ah_decode.h>
-
-static	struct alq *ath_hal_alq;
-static	int ath_hal_alq_emitdev;	/* need to emit DEVICE record */
-static	u_int ath_hal_alq_lost;		/* count of lost records */
-static	const char *ath_hal_logfile = "/tmp/ath_hal.log";
-static	u_int ath_hal_alq_qsize = 64*1024;
-
-static int
-ath_hal_setlogging(int enable)
-{
-	int error;
-
-	if (enable) {
-		error = suser(curthread);
-		if (error == 0) {
-			error = alq_open(&ath_hal_alq, ath_hal_logfile,
-				curthread->td_ucred,
-				sizeof (struct athregrec), ath_hal_alq_qsize);
-			ath_hal_alq_lost = 0;
-			ath_hal_alq_emitdev = 1;
-			printf("ath_hal: logging to %s enabled\n",
-				ath_hal_logfile);
-		}
-	} else {
-		if (ath_hal_alq)
-			alq_close(ath_hal_alq);
-		ath_hal_alq = NULL;
-		printf("ath_hal: logging disabled\n");
-		error = 0;
-	}
-	return (error);
-}
-
-static int
-sysctl_hw_ath_hal_log(SYSCTL_HANDLER_ARGS)
-{
-	int error, enable;
-
-	enable = (ath_hal_alq != NULL);
-	error = sysctl_handle_int(oidp, &enable, 0, req);
-	if (error || !req->newptr)
-	        return (error);
-	else
-		return (ath_hal_setlogging(enable));
-}
-SYSCTL_PROC(_hw_ath_hal, OID_AUTO, alq, CTLTYPE_INT|CTLFLAG_RW,
-	0, 0, sysctl_hw_ath_hal_log, "I", "Enable HAL register logging");
-SYSCTL_INT(_hw_ath_hal, OID_AUTO, alq_size, CTLFLAG_RW,
-	&ath_hal_alq_qsize, 0, "In-memory log size (#records)");
-SYSCTL_INT(_hw_ath_hal, OID_AUTO, alq_lost, CTLFLAG_RW,
-	&ath_hal_alq_lost, 0, "Register operations not logged");
-
-static struct ale *
-ath_hal_alq_get(struct ath_hal *ah)
-{
-	struct ale *ale;
-
-	if (ath_hal_alq_emitdev) {
-		ale = alq_get(ath_hal_alq, ALQ_NOWAIT);
-		if (ale) {
-			struct athregrec *r =
-				(struct athregrec *) ale->ae_data;
-			r->op = OP_DEVICE;
-			r->reg = 0;
-			r->val = ah->ah_devid;
-			alq_post(ath_hal_alq, ale);
-			ath_hal_alq_emitdev = 0;
-		} else
-			ath_hal_alq_lost++;
-	}
-	ale = alq_get(ath_hal_alq, ALQ_NOWAIT);
-	if (!ale)
-		ath_hal_alq_lost++;
-	return ale;
-}
-
-void
-ath_hal_reg_write(struct ath_hal *ah, u_int32_t reg, u_int32_t val)
-{
-	if (ath_hal_alq) {
-		struct ale *ale = ath_hal_alq_get(ah);
-		if (ale) {
-			struct athregrec *r = (struct athregrec *) ale->ae_data;
-			r->op = OP_WRITE;
-			r->reg = reg;
-			r->val = val;
-			alq_post(ath_hal_alq, ale);
-		}
-	}
-#if _BYTE_ORDER == _BIG_ENDIAN
-	if (reg >= 0x4000 && reg < 0x5000)
-		bus_space_write_4(ah->ah_st, ah->ah_sh, reg, htole32(val));
-	else
-#endif
-		bus_space_write_4(ah->ah_st, ah->ah_sh, reg, val);
-}
-
-u_int32_t
-ath_hal_reg_read(struct ath_hal *ah, u_int32_t reg)
-{
-	u_int32_t val;
-
-	val = bus_space_read_4(ah->ah_st, ah->ah_sh, reg);
-#if _BYTE_ORDER == _BIG_ENDIAN
-	if (reg >= 0x4000 && reg < 0x5000)
-		val = le32toh(val);
-#endif
-	if (ath_hal_alq) {
-		struct ale *ale = ath_hal_alq_get(ah);
-		if (ale) {
-			struct athregrec *r = (struct athregrec *) ale->ae_data;
-			r->op = OP_READ;
-			r->reg = reg;
-			r->val = val;
-			alq_post(ath_hal_alq, ale);
-		}
-	}
-	return val;
-}
-
-void
-OS_MARK(struct ath_hal *ah, u_int id, u_int32_t v)
-{
-	if (ath_hal_alq) {
-		struct ale *ale = ath_hal_alq_get(ah);
-		if (ale) {
-			struct athregrec *r = (struct athregrec *) ale->ae_data;
-			r->op = OP_MARK;
-			r->reg = id;
-			r->val = v;
-			alq_post(ath_hal_alq, ale);
-		}
-	}
-}
-#elif defined(AH_DEBUG) || defined(AH_REGOPS_FUNC)
 /*
  * Memory-mapped device register read/write.  These are here
  * as routines when debugging support is enabled and/or when
@@ -390,7 +215,7 @@ OS_MARK(struct ath_hal *ah, u_int id, u_int32_t v)
  * NB: see the comments in ah_osdep.h about byte-swapping register
  *     reads and writes to understand what's going on below.
  */
-
+#if defined(AH_DEBUG) || defined(AH_REGOPS_FUNC)
 void
 ath_hal_reg_write(struct ath_hal *ah, u_int32_t reg, u_int32_t val)
 {
@@ -416,15 +241,30 @@ ath_hal_reg_read(struct ath_hal *ah, u_int32_t reg)
 }
 #endif /* AH_DEBUG || AH_REGOPS_FUNC */
 
-#ifdef AH_ASSERT
+#ifdef AH_DEBUG
 void
-ath_hal_assert_failed(const char* filename, int lineno, const char *msg)
+HALDEBUG(struct ath_hal *ah, const char* fmt, ...)
 {
-	printf("Atheros HAL assertion failure: %s: line %u: %s\n",
-		filename, lineno, msg);
-	panic("ath_hal_assert");
+	if (ath_hal_debug) {
+		va_list ap;
+		va_start(ap, fmt);
+		ath_hal_vprintf(ah, fmt, ap);
+		va_end(ap);
+	}
 }
-#endif /* AH_ASSERT */
+
+
+void
+HALDEBUGn(struct ath_hal *ah, u_int level, const char* fmt, ...)
+{
+	if (ath_hal_debug >= level) {
+		va_list ap;
+		va_start(ap, fmt);
+		ath_hal_vprintf(ah, fmt, ap);
+		va_end(ap);
+	}
+}
+#endif /* AH_DEBUG */
 
 /*
  * Delay n microseconds.
@@ -445,6 +285,28 @@ ath_hal_getuptime(struct ath_hal *ah)
 	splx(s);
 
 	return (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
+}
+
+/*
+ * Allocate/free memory.
+ */
+
+void *
+ath_hal_malloc(size_t size)
+{
+	return malloc(size, M_DEVBUF, M_NOWAIT | M_ZERO);
+}
+
+void
+ath_hal_free(void* p)
+{
+	free(p, M_DEVBUF);
+}
+
+void *
+ath_hal_memcpy(void *dst, const void *src, size_t n)
+{
+	return memcpy(dst, src, n);
 }
 
 void

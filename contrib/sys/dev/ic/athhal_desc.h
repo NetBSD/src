@@ -1,6 +1,6 @@
 /*	$NetBSD$	*/
 /*-
- * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting, Atheros
+ * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting, Atheros
  * Communications, Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms are permitted
@@ -34,7 +34,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: ah_desc.h,v 1.11 2003/06/25 04:50:22 sam Exp $
+ * $Id: ah_desc.h,v 1.2 2004/05/15 22:26:25 samleffler Exp $
  */
 
 #ifndef _DEV_ATH_DESC_H
@@ -54,6 +54,7 @@ struct ath_tx_status {
 	u_int16_t	ts_tstamp;	/* h/w assigned timestamp */
 	u_int8_t	ts_status;	/* frame status, 0 => xmit ok */
 	u_int8_t	ts_rate;	/* h/w transmit rate index */
+#define	HAL_TXSTAT_ALTRATE	0x80	/* alternate xmit rate used */
 	int8_t		ts_rssi;	/* tx ack RSSI */
 	u_int8_t	ts_shortretry;	/* # short retries */
 	u_int8_t	ts_longretry;	/* # long retries */
@@ -73,10 +74,17 @@ struct ath_tx_status {
  *
  * If rx_status is zero, then the frame was received ok;
  * otherwise the error information is indicated and rs_phyerr
- * contains a phy error code if HAL_RXERR_PHY is set.
+ * contains a phy error code if HAL_RXERR_PHY is set.  In general
+ * the frame contents is undefined when an error occurred thought
+ * for some errors (e.g. a decryption error), it may be meaningful.
  *
  * Note that the receive timestamp is expanded using the TSF to
  * a full 16 bits (regardless of what the h/w provides directly).
+ *
+ * rx_rssi is in units of dbm above the noise floor.  This value
+ * is measured during the preamble and PLCP; i.e. with the initial
+ * 4us of detection.  The noise floor is typically a consistent
+ * -96dBm absolute power in a 20MHz channel.
  */
 struct ath_rx_status {
 	u_int16_t	rs_datalen;	/* rx frame length */
