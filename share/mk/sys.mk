@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.35 1997/11/03 22:56:27 cgd Exp $
+#	$NetBSD: sys.mk,v 1.36 1997/11/04 21:12:41 gwr Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -58,7 +58,11 @@ LDFLAGS?=
 LINT?=		lint
 LINTFLAGS?=	-chapbxz
 
+LORDER?=	lorder
+
 MAKE?=		make
+
+NM?=		nm
 
 PC?=		pc
 PFLAGS?=
@@ -66,6 +70,10 @@ COMPILE.p?=	${PC} ${PFLAGS} ${CPPFLAGS} -c
 LINK.p?=	${PC} ${PFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
 SHELL?=		sh
+
+SIZE?=		size
+
+TSORT?= 	tsort -q
 
 YACC?=		yacc
 YFLAGS?=	-d
