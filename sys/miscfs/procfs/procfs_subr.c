@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.47 2003/03/04 18:55:02 tron Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.48 2003/03/15 00:22:47 enami Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.47 2003/03/04 18:55:02 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.48 2003/03/15 00:22:47 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,6 +218,7 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 	return (0);
 
  bad:
+	lockmgr(&pfs_hashlock, LK_RELEASE, NULL);
 	FREE(pfs, M_TEMP);
 	ungetnewvnode(vp);
 	return (error);
