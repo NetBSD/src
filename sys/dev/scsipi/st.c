@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.160 2003/03/20 05:49:22 dbj Exp $ */
+/*	$NetBSD: st.c,v 1.161 2003/04/14 16:18:23 perry Exp $ */
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.160 2003/03/20 05:49:22 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.161 2003/04/14 16:18:23 perry Exp $");
 
 #include "opt_scsi.h"
 
@@ -142,6 +142,13 @@ const struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 		{0, 0, QIC_525},			/* minor 4-7 */
 		{0, 0, QIC_150},			/* minor 8-11 */
 		{0, 0, QIC_120}				/* minor 12-15 */
+	}}},
+	{{T_SEQUENTIAL, T_REMOV,
+	  "TANDBERG", " SLR5 4/8GB     ", ""},     {0, 0, {
+		{ST_Q_FORCE_BLKSIZE, 1024, 0},		/* minor 0-3 */
+		{0, 0, 0},				/* minor 4-7 */
+		{0, 0, 0},				/* minor 8-11 */
+		{0, 0, 0}				/* minor 12-15 */
 	}}},
 	/*
 	 * lacking a manual for the 4200, it's not clear what the
