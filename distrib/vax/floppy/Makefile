@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2002/03/30 01:33:20 matt Exp $
+#	$NetBSD: Makefile,v 1.6 2002/04/06 16:41:24 bjh21 Exp $
 
 .include "${.CURDIR}/../../Makefile.inc"
 .include <bsd.own.mk>
@@ -24,6 +24,6 @@ boot.vax: ${DESTDIR}/usr/mdec/boot
 ${IMAGE}: ${IMAGEDEPENDS}
 	cat ${XXBOOT} > ${IMAGE}.tmp
 	${PAX} -w -x ustar boot.vax netbsd.gz | dd of=${IMAGE}.tmp seek=16
-	dd if=${IMAGE}.tmp of=${IMAGE} obs=${IMAGESIZE} conv=osync
+	dd if=${IMAGE}.tmp of=${IMAGE} bs=${IMAGESIZE} conv=sync
 
 .include <bsd.prog.mk>
