@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.63 2000/06/28 07:06:46 ur Exp $
+.\" $NetBSD: main,v 1.64 2000/07/10 16:25:44 jeffs Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -956,6 +956,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Takao Shinohara Ta Mt shin@NetBSD.ORG
 .It Ta Chuck Silvers Ta Mt chs@NetBSD.ORG
 .It Ta Thor Lancelot Simon Ta Mt tls@NetBSD.ORG
+.It Ta Jeff Smith Ta Mt jeffs@NetBSD.ORG
 .It Ta Bill Sommerfeld Ta Mt sommerfeld@NetBSD.ORG
 .It Ta Bill Squier Ta Mt groo@NetBSD.ORG
 .It Ta Bill Studenmund Ta Mt wrstuden@NetBSD.ORG
