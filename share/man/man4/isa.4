@@ -1,4 +1,4 @@
-.\"	$NetBSD: isa.4,v 1.3 1997/04/08 04:46:55 mikel Exp $
+.\"	$NetBSD: isa.4,v 1.4 1997/04/09 05:13:44 mikel Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -43,14 +43,13 @@ main system bus or via PCI-ISA bridges. See the
 documentation for your system for details.
 .Sh INTRODUCTION
 .Nx 1.2 
-and later versions include  machine-independent bus support and
-drivers for  the following ISA  bus devices.
-Not all supported ISA devices are listed below.
-Consult the
+and later versions include machine-independent bus support and
+drivers for the following ISA bus devices.
+Not all supported ISA devices are listed below; consult the
 .Xr intro 4
-section for your CPU for additional machine-dependent  drivers.
-Note that console support (cga, ega, vga, or better)  and
-NS8250/16450/16550 serial drivers are  currently machine-dependent and
+page for your machine for additional machine-dependent drivers.
+Note that console support (CGA, EGA, VGA, or better) and
+NS8250/16450/16550 serial drivers are currently machine-dependent and
 documented elsewhere.
 .Sh SUPPORTED DEVICES
 .Nx
@@ -60,29 +59,30 @@ and driver name:
 .Ss Disk controllers
 .Bl -tag -width speaker -offset indent -compact
 .It aha
-SCSI controllers including the Adaptec AHA-154x family (154xA, 154xB, 154xC, and 154xCF)
-of SCSI adaptors and the  Buslogic BT-54x.
+SCSI controllers including the Adaptec AHA-154x family (154xA, 154xB,
+154xC, and 154xCF)
+of SCSI adaptors, and the Buslogic BT-54x.
 .It aic
-SCSI controllers including Adaptec AIC-6260, Adaptec AIC-6360, Adaptec 152x, and SoundBlaster
-SCSI boards,and others based on Adaptec AIC-6x60 chips.
+SCSI controllers including Adaptec AIC-6260, Adaptec AIC-6360, Adaptec
+152x, and SoundBlaster
+SCSI boards, as well as others based on Adaptec AIC-6x60 chips.
 .It bha
-Buslogic BT-9[45][68] SCSI boards.
+Buslogic BT-445, BT-74x, and BT-9[45][68] SCSI boards.
 .It mcd
 Mitsumi CD-ROM drives.
 .It sea
 Seagate/Future Domain SCSI cards.  ST01/02, Future Domain TMC-885, and
 Future Domain TMC-950.
 .It uha
-Ultrastor ISA and EISA SCSI adapter cards.  Ultrastore 14f, Ultrastore 34f,
-and Ultrastore 24f.
+Ultrastor ISA and EISA SCSI adapter cards.  Ultrastor 14f, Ultrastor 34f,
+and Ultrastor 24f.
 .It wd
 Standard ISA Western Digital type hard drives.  MFM, RLL, ESDI, and IDE.
 .It wds
-WD7000 family of bus-mastering SCSI controllers,
+WD7000 family of bus-mastering SCSI controllers.
 .It wt
-Wangtek and compatible QIC-02 and QIC-36 tape drives.  
+Wangtek and compatible QIC-02 and QIC-36 tape drives.
 .El
-.\"
 .Pp
 .Ss Serial and parallel interfaces
 .Bl -tag -width speaker -offset indent -compact
@@ -93,24 +93,22 @@ Boca BB100[48] and BB2016 multiplexing serial communications cards.
 .It lpt
 Standard ISA parallel port interface.
 .It cy
-Cyclades Cyclom-4Y, -8Y, and -16Y asynchronous serial communications
+Cyclades Cyclom-4Y, -8Y, and -16Y asynchronous serial communications cards.
 .It rtfps
 RT four-port serial cards.
 .El
-.\"
-.\"
 .Pp
 .Ss Network interfaces
 .Bl -tag -width speaker -offset indent -compact
 .It ed
 Western Digital/SMC 80x3 and Ultra, 3Com 3c503, and Novell NE1000 and 2000
-Ethernet interface
+Ethernet interfaces.
 .It eg
 3Com 3c505 Ethernet board.
 .It el
-3c501 Ethernet  interface.
+3Com 3c501 Ethernet interface.
 .It ep
-3com 3c509 Etherlink-III Ethernet interface.
+3Com 3c509 Etherlink-III Ethernet interface.
 .It fe
 Ethernet interfaces based on the Fujitsu MB86960A/MB86965A chipset,
 including Fujitsu FMV-181, FMV-182, Allied Telesis AT1700 series,
@@ -121,30 +119,30 @@ and RE2000 series.
 Ethernet interfaces based on Intel 82586 Ethernet chip,
 including AT&T Starlan-10, AT&T EN100, AT&T Starlan Fibre, and 3Com 3c507.
 .It iy
-Ethernet interfaces baed on the EtherExpress Pro/10 chip.
+Ethernet interfaces based on the Intel EtherExpress Pro/10 chip.
 (Does not support PRO/100).
 .It le
-Ethernet interfaces basd on the AMD LANCE chip,
-including  BICC Isolan,  Novell NE2100,  and Digital DEPCA.
+Ethernet interfaces based on the AMD LANCE chip,
+including BICC Isolan, Novell NE2100, and Digital DEPCA.
 .El
-.\"
 .Ss Sound cards
 .Bl -tag -width speaker -offset indent -compact
 .It gus
-Gravis Ultrasound soundcards
+Gravis Ultrasound sound cards.
 .It pas
 ProAudio Spectrum sound cards.
 .It pss
-Personal Sound System-compatible soundcards, including
+Personal Sound System-compatible sound cards, including
 Cardinal Digital SoundPro 16 and Orchid Soundwave 32.
 .It sb
-Soundblaster, Soundblaster 16, and Soundblaster Pro soundcards.
+Soundblaster, Soundblaster 16, and Soundblaster Pro sound cards.
 .It wss
-Windows Sound System-compatible sound cards based on the ad1848 chip.
+Windows Sound System-compatible sound cards based on the AD1848 and
+compatible chips.
 .El
 .Pp
 Note that some ISA devices also have newer ISA Plug-and-Play
-or PCI variants. These are listed in 
+or PCI variants.  These are listed in 
 .Xr isapnp 4
 and
 .Xr pci 4 ,
@@ -179,7 +177,7 @@ the supported variants on other buses.
 .Xr wt 4
 .Sh HISTORY
 The
-.Nm isa
+.Nm
 introduction
 appeared in
 .Nx 1.2 .
