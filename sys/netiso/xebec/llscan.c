@@ -7,7 +7,7 @@
  * University of Wisconsin for the ARGO project.
  * ****************************************************************
  *
- *	$Id: llscan.c,v 1.2 1993/05/20 05:28:23 cgd Exp $
+ *	$Id: llscan.c,v 1.3 1994/03/29 04:30:26 glass Exp $
  */
 #include "xebec.h"
 #include "llparse.h"
@@ -188,7 +188,7 @@ char o,c;
 					ch = getch();
 				} while(chtype[ch] & LETTER);
 				addbuf('\0');
-				if( !strcmp(obufp, synonyms[PCB_SYN],
+				if( !strncmp(obufp, synonyms[PCB_SYN],
 										strlen(synonyms[PCB_SYN]) )) {
 					buffptr = obufp;
 					addbuf('p');
