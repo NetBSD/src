@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey_dump.c,v 1.4 2000/01/31 14:15:32 itojun Exp $	*/
+/*	$NetBSD: pfkey_dump.c,v 1.5 2000/02/08 13:14:35 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -39,9 +39,6 @@
 
 #include <netinet/in.h>
 #include <netinet6/ipsec.h>
-#ifdef INET6
-#include <netinet6/in6.h>
-#endif
 #include <arpa/inet.h>
 
 #include <stdlib.h>
