@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_spd.c,v 1.7 2003/10/08 11:14:12 bouyer Exp $	*/
+/*	$NetBSD: wdc_spd.c,v 1.8 2003/12/11 09:53:15 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.7 2003/10/08 11:14:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.8 2003/12/11 09:53:15 uch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ STATIC void __wdc_spd_bus_space(struct channel_softc *);
 /*
  * wdc register is 16 bit wide.
  */
-#define VADDR(h, o)	((h) + ((o) << 1))
+#define VADDR(h, o)	((h) + (o))
 _BUS_SPACE_READ(_wdc_spd, 1, 8)
 _BUS_SPACE_READ(_wdc_spd, 2, 16)
 _BUS_SPACE_READ_MULTI(_wdc_spd, 1, 8)
@@ -228,13 +228,15 @@ wdc_spd_attach(struct device *parent, struct device *self, void *aux)
 void
 __wdc_spd_bus_space(struct channel_softc *ch)
 {
+	int i;
 
 	ch->cmd_iot = &_wdc_spd_space;
-	ch->cmd_ioh = SPD_HDD_IO_BASE;
+	for (i = 0; i < 8; i++)
+		ch->cmd_iohs[i] = SPD_HDD_IO_BASE + i * 2; /*  wdc register is 16 bit wide. */
 	ch->ctl_iot = &_wdc_spd_space;
 	ch->ctl_ioh = SPD_HDD_IO_BASE + WDC_SPD_HDD_AUXREG_OFFSET;
 	ch->data32iot = ch->cmd_iot;
-	ch->data32ioh = ch->cmd_ioh;
+	ch->data32ioh = SPD_HDD_IO_BASE;
 }
 
 void
