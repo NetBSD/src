@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.23 1997/04/07 05:48:35 scottr Exp $	*/
+/*	$NetBSD: sbc.c,v 1.24 1997/04/18 17:38:08 scottr Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -73,7 +73,7 @@
 
 int	sbc_debug = 0 /* | SBC_DB_INTR | SBC_DB_DMA */;
 int	sbc_link_flags = 0 /* | SDEV_DB2 */;
-int	sbc_options = SBC_PDMA;
+int	sbc_options = 0 /* | SBC_PDMA */;
 
 static	void	sbc_minphys __P((struct buf *bp));
 
@@ -232,16 +232,16 @@ sbc_pdma_in(ncr_sc, phase, datalen, data)
 	u_char *data;
 {
 	struct sbc_softc *sc = (struct sbc_softc *)ncr_sc;
-	volatile long *long_data = (long *)sc->sc_drq_addr;
-	volatile u_char *byte_data = (u_char *)sc->sc_nodrq_addr;
+	volatile u_int32_t *long_data = (u_int32_t *)sc->sc_drq_addr;
+	volatile u_int8_t *byte_data = (u_int8_t *)sc->sc_nodrq_addr;
 	int resid, s;
 
 	s = splbio();
 	*ncr_sc->sci_mode |= SCI_MODE_DMA;
 	*ncr_sc->sci_irecv = 0;
 
-#define R4	*((long *)data)++ = *long_data
-#define R1	*data++ = *byte_data
+#define R4	*((u_int32_t *)data)++ = *long_data++
+#define R1	*data++ = *byte_data++
 	for (resid = datalen; resid >= 128; resid -= 128) {
 		if (sbc_ready(ncr_sc) == 0)
 			goto interrupt;
@@ -249,6 +249,9 @@ sbc_pdma_in(ncr_sc, phase, datalen, data)
 		R4; R4; R4; R4; R4; R4; R4; R4;
 		R4; R4; R4; R4; R4; R4; R4; R4;
 		R4; R4; R4; R4; R4; R4; R4; R4;
+
+		long_data = (u_int32_t *)sc->sc_drq_addr;
+		byte_data = (u_int8_t *)sc->sc_nodrq_addr;
 	}
 	while (resid) {
 		if (sbc_ready(ncr_sc) == 0)
@@ -274,10 +277,13 @@ sbc_pdma_out(ncr_sc, phase, datalen, data)
 	u_char *data;
 {
 	struct sbc_softc *sc = (struct sbc_softc *)ncr_sc;
-	volatile long *long_data = (long *)sc->sc_drq_addr;
-	volatile u_char *byte_data = (u_char *)sc->sc_nodrq_addr;
+	volatile u_int32_t *long_data = (u_int32_t *)sc->sc_drq_addr;
+	volatile u_int8_t *byte_data = (u_int8_t *)sc->sc_nodrq_addr;
 	int i, s, resid;
 	u_char icmd;
+
+	if (datalen < 64)
+		return ncr5380_pio_out(ncr_sc, phase, datalen, data);
 
 	s = splbio();
 	icmd = *(ncr_sc->sci_icmd) & SCI_ICMD_RMASK;
@@ -289,8 +295,8 @@ sbc_pdma_out(ncr_sc, phase, datalen, data)
 	if (sbc_ready(ncr_sc) == 0)
 		goto interrupt;
 
-#define W1	*byte_data = *data++
-#define W4	*long_data = *((long*)data)++
+#define W1	*byte_data++ = *data++
+#define W4	*long_data++ = *((u_int32_t *)data)++
 	while (resid >= 64) {
 		if (sbc_ready(ncr_sc) == 0)
 			goto interrupt;
@@ -315,6 +321,9 @@ sbc_pdma_out(ncr_sc, phase, datalen, data)
 		W4; W4; W4; W4;
 		W4; W4; W4;
 		resid -= 60;
+
+		long_data = (u_int32_t *)sc->sc_drq_addr;
+		byte_data = (u_int8_t *)sc->sc_nodrq_addr;
 	}
 	for (; resid; resid--) {
 		if (sbc_ready(ncr_sc) == 0)
@@ -369,8 +378,8 @@ sbc_drq_intr(p)
 	void *p;
 {
 	extern int *nofault, mac68k_buserr_addr;
-	struct sbc_softc *sc = (struct sbc_softc *) p;
-	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *) p;
+	struct sbc_softc *sc = (struct sbc_softc *)p;
+	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *)p;
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct sbc_pdma_handle *dh = sr->sr_dma_hand;
 	label_t faultbuf;
@@ -402,11 +411,11 @@ sbc_drq_intr(p)
 	 */
 	nofault = (int *) &faultbuf;
 
-	if (setjmp((label_t *) nofault)) {
+	if (setjmp((label_t *)nofault)) {
 		nofault = (int *) 0;
 		if ((dh->dh_flags & SBC_DH_DONE) == 0) {
-			count = ((  (u_long) mac68k_buserr_addr
-				  - (u_long) sc->sc_drq_addr));
+			count = ((  (u_long)mac68k_buserr_addr
+				  - (u_long)sc->sc_drq_addr));
 
 			if ((count < 0) || (count > dh->dh_len)) {
 				printf("%s: complete=0x%x (pending 0x%x)\n",
@@ -435,10 +444,10 @@ sbc_drq_intr(p)
 		 * Get the source address aligned.
 		 */
 		resid =
-		    count = min(dh->dh_len, 4 - (((int) dh->dh_addr) & 0x3));
+		    count = min(dh->dh_len, 4 - (((int)dh->dh_addr) & 0x3));
 		if (count && count < 4) {
-			drq = (volatile u_int8_t *) sc->sc_drq_addr;
-			data = (u_int8_t *) dh->dh_addr;
+			drq = (volatile u_int8_t *)sc->sc_drq_addr;
+			data = (u_int8_t *)dh->dh_addr;
 
 #define W1		*drq++ = *data++
 			while (count) {
@@ -454,8 +463,8 @@ sbc_drq_intr(p)
 		 */
 		while (dh->dh_len) {
 			dcount = count = min(dh->dh_len, MAX_DMA_LEN);
-			long_drq = (volatile u_int32_t *) sc->sc_drq_addr;
-			long_data = (u_int32_t *) dh->dh_addr;
+			long_drq = (volatile u_int32_t *)sc->sc_drq_addr;
+			long_data = (u_int32_t *)dh->dh_addr;
 
 #define W4		*long_drq++ = *long_data++
 			while (count >= 64) {
@@ -467,16 +476,16 @@ sbc_drq_intr(p)
 				W4; count -= 4;
 			}
 #undef W4
-			data = (u_int8_t *) long_data;
-			drq = (u_int8_t *) long_drq;
+			data = (u_int8_t *)long_data;
+			drq = (u_int8_t *)long_drq;
 #else /* notyet */
 		/*
 		 * Start the transfer.
 		 */
 		while (dh->dh_len) {
 			dcount = count = min(dh->dh_len, MAX_DMA_LEN);
-			drq = (volatile u_int8_t *) sc->sc_drq_addr;
-			data = (u_int8_t *) dh->dh_addr;
+			drq = (volatile u_int8_t *)sc->sc_drq_addr;
+			data = (u_int8_t *)dh->dh_addr;
 #endif /* notyet */
 
 #define W1		*drq++ = *data++
@@ -500,7 +509,7 @@ sbc_drq_intr(p)
 			while ((*ncr_sc->sci_csr & SCI_CSR_ACK) == 0)
 				;
 #endif
-			drq = (volatile u_int8_t *) sc->sc_drq_addr;
+			drq = (volatile u_int8_t *)sc->sc_drq_addr;
 		}
 		tmp = *drq;
 #endif
@@ -509,10 +518,10 @@ sbc_drq_intr(p)
 		 * Get the dest address aligned.
 		 */
 		resid =
-		    count = min(dh->dh_len, 4 - (((int) dh->dh_addr) & 0x3));
+		    count = min(dh->dh_len, 4 - (((int)dh->dh_addr) & 0x3));
 		if (count && count < 4) {
-			data = (u_int8_t *) dh->dh_addr;
-			drq = (volatile u_int8_t *) sc->sc_drq_addr;
+			data = (u_int8_t *)dh->dh_addr;
+			drq = (volatile u_int8_t *)sc->sc_drq_addr;
 
 #define R1		*data++ = *drq++
 			while (count) {
@@ -528,8 +537,8 @@ sbc_drq_intr(p)
 		 */
 		while (dh->dh_len) {
 			dcount = count = min(dh->dh_len, MAX_DMA_LEN);
-			long_data = (u_int32_t *) dh->dh_addr;
-			long_drq = (volatile u_int32_t *) sc->sc_drq_addr;
+			long_data = (u_int32_t *)dh->dh_addr;
+			long_drq = (volatile u_int32_t *)sc->sc_drq_addr;
 
 #define R4		*long_data++ = *long_drq++
 			while (count >= 64) {
@@ -541,8 +550,8 @@ sbc_drq_intr(p)
 				R4; count -= 4;
 			}
 #undef R4
-			data = (u_int8_t *) long_data;
-			drq = (volatile u_int8_t *) long_drq;
+			data = (u_int8_t *)long_data;
+			drq = (volatile u_int8_t *)long_drq;
 
 #define R1		*data++ = *drq++
 			while (count) {
@@ -573,7 +582,7 @@ void
 sbc_dma_alloc(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
-	struct sbc_softc *sc = (struct sbc_softc *) ncr_sc;
+	struct sbc_softc *sc = (struct sbc_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct scsi_xfer *xs = sr->sr_xs;
 	struct sbc_pdma_handle *dh;
@@ -670,7 +679,7 @@ void
 sbc_dma_start(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
-	struct sbc_softc *sc = (struct sbc_softc *) ncr_sc;
+	struct sbc_softc *sc = (struct sbc_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct sbc_pdma_handle *dh = sr->sr_dma_hand;
 
@@ -715,7 +724,7 @@ void
 sbc_dma_stop(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
-	struct sbc_softc *sc = (struct sbc_softc *) ncr_sc;
+	struct sbc_softc *sc = (struct sbc_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct sbc_pdma_handle *dh = sr->sr_dma_hand;
 	int ntrans;
