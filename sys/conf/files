@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.56 1994/08/15 16:37:37 cgd Exp $
+#	$NetBSD: files,v 1.57 1995/01/25 04:48:07 cgd Exp $
 #
 adosfs/adlookup.c	optional adosfs
 adosfs/adutil.c		optional adosfs
@@ -20,7 +20,7 @@ ddb/db_trap.c		optional ddb
 ddb/db_variables.c	optional ddb
 ddb/db_watch.c		optional ddb
 ddb/db_write_cmd.c	optional ddb
-dev/vn.c		optional vn device-driver
+dev/vnd.c		optional vnd device-driver
 isofs/cd9660/cd9660_bmap.c	optional cd9660
 isofs/cd9660/cd9660_lookup.c	optional cd9660
 isofs/cd9660/cd9660_node.c	optional cd9660

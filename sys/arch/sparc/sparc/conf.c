@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.20 1994/12/14 19:10:51 mycroft Exp $ */
+/*	$NetBSD: conf.c,v 1.21 1995/01/25 04:48:25 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -108,12 +108,12 @@ bdev_decl(no);	/* dummy declarations */
 #include "sd.h"
 #include "st.h"
 #include "cd.h"
-#include "vn.h"
+#include "vnd.h"
 
 bdev_decl(sd);
 bdev_decl(st);
 bdev_decl(cd);
-bdev_decl(vn);
+bdev_decl(vnd);
 
 #ifdef LKM
 int	lkmenodev();				/* lkm "nodev" routine */
@@ -128,30 +128,30 @@ int	lkmenodev();				/* lkm "nodev" routine */
 
 struct bdevsw	bdevsw[] =
 {
-	bdev_notdef(),		/*  0 */
-	bdev_notdef(),		/*  1 */
-	bdev_notdef(),		/*  2 */
-	bdev_swap_init(),	/*  3 */
-	bdev_notdef(),		/*  4 */
-	bdev_notdef(),		/*  5 */
-	bdev_notdef(),		/*  6 */
-	bdev_disk_init(NSD,sd),	/*  7: scsi disk */
-	bdev_disk_init(NVN,vn), /*  8: vnode */
-	bdev_notdef(),		/*  9: */
-	bdev_notdef(),		/* 10: */
-	bdev_tape_init(NST,st),	/* 11: SCSI tape */
-	bdev_notdef(),		/* 13: */
-	bdev_notdef(),		/* 14: */
-	bdev_notdef(),		/* 15: */
-	bdev_notdef(),		/* 16: */
-	bdev_notdef(),		/* 17: */
-	bdev_disk_init(NCD,cd),	/* 18: scsi cdrom */
-	bdev_lkm_stub(),	/* 19: LKM STUB */
-	bdev_lkm_stub(),	/* 20: LKM STUB */
-	bdev_lkm_stub(),	/* 21: LKM STUB */
-	bdev_lkm_stub(),	/* 22: LKM STUB */
-	bdev_lkm_stub(),	/* 23: LKM STUB */
-	bdev_lkm_stub(),	/* 24: LKM STUB */
+	bdev_notdef(),			/*  0 */
+	bdev_notdef(),			/*  1 */
+	bdev_notdef(),			/*  2 */
+	bdev_swap_init(),		/*  3 */
+	bdev_notdef(),			/*  4 */
+	bdev_notdef(),			/*  5 */
+	bdev_notdef(),			/*  6 */
+	bdev_disk_init(NSD,sd),		/*  7: scsi disk */
+	bdev_disk_init(NVND,vnd),	/*  8: vnode */
+	bdev_notdef(),			/*  9: */
+	bdev_notdef(),			/* 10: */
+	bdev_tape_init(NST,st),		/* 11: SCSI tape */
+	bdev_notdef(),			/* 13: */
+	bdev_notdef(),			/* 14: */
+	bdev_notdef(),			/* 15: */
+	bdev_notdef(),			/* 16: */
+	bdev_notdef(),			/* 17: */
+	bdev_disk_init(NCD,cd),		/* 18: scsi cdrom */
+	bdev_lkm_stub(),		/* 19: LKM STUB */
+	bdev_lkm_stub(),		/* 20: LKM STUB */
+	bdev_lkm_stub(),		/* 21: LKM STUB */
+	bdev_lkm_stub(),		/* 22: LKM STUB */
+	bdev_lkm_stub(),		/* 23: LKM STUB */
+	bdev_lkm_stub(),		/* 24: LKM STUB */
 };
 
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
@@ -275,7 +275,7 @@ cdev_decl(cgthree);
 cdev_decl(sd);
 cdev_decl(st);
 cdev_decl(cd);
-cdev_decl(vn);
+cdev_decl(vnd);
 
 #ifdef LKM
 #define NLKM 1
@@ -433,7 +433,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 107 */
 	cdev_notdef(),			/* 108 */
 	cdev_notdef(),			/* 109 */
-	cdev_disk_init(NVN,vn),		/* 110: vnode */
+	cdev_disk_init(NVND,vnd),	/* 110: vnode disk */
 	cdev_gen_init(NTUN,tun),	/* 111: tunnel */
 	cdev_lkm_init(NLKM,lkm),	/* 112: loadable kernel modules */
 	cdev_lkm_stub(),		/* 113: LKM STUB */

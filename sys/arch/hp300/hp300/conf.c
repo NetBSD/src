@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.23 1995/01/05 21:06:36 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.24 1995/01/25 04:48:14 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -106,7 +106,7 @@ int	lkmenodev();
 #include "rd.h"
 #include "sd.h"
 #include "ccd.h"
-#include "vn.h"
+#include "vnd.h"
 
 bdev_decl(ct);
 bdev_decl(mt);
@@ -114,7 +114,7 @@ bdev_decl(st);
 bdev_decl(rd);
 bdev_decl(sd);
 bdev_decl(ccd);
-bdev_decl(vn);
+bdev_decl(vnd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -124,7 +124,7 @@ struct bdevsw	bdevsw[] =
 	bdev_swap_init(),		/* 3: swap pseudo-device */
 	bdev_disk_init(NSD,sd),		/* 4: scsi disk */
 	bdev_disk_init(NCCD,ccd),	/* 5: concatenated disk driver */
-	bdev_disk_init(NVN,vn),		/* 6: vnode disk driver */
+	bdev_disk_init(NVND,vnd),	/* 6: vnode disk driver */
 	bdev_tape_init(NST,st),		/* 7: exabyte tape */
 	bdev_lkm_dummy(),		/* 8 */
 	bdev_lkm_dummy(),		/* 9 */
@@ -282,7 +282,7 @@ cdev_decl(hil);
 cdev_decl(dcm);
 
 cdev_decl(ccd);
-cdev_decl(vn);
+cdev_decl(vnd);
 
 dev_type_open(fdopen);
 /* open */
@@ -338,7 +338,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tape_init(NMT,mt),		/* 16: magnetic reel tape */
 	cdev_disk_init(NCCD,ccd),	/* 17: concatenated disk */
 	cdev_notdef(),			/* 18 */
-	cdev_disk_init(NVN,vn),		/* 19: vnode disk */
+	cdev_disk_init(NVND,vnd),	/* 19: vnode disk */
 	cdev_tape_init(NST,st),		/* 20: exabyte tape */
 	cdev_fd_init(1,fd),		/* 21: file descriptor pseudo-dev */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 22: berkeley packet filter */

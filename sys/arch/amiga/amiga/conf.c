@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.22 1994/12/28 08:57:36 chopps Exp $	*/
+/*	$NetBSD: conf.c,v 1.23 1995/01/25 04:48:11 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -75,10 +75,10 @@ int	ttselect	__P((dev_t, int, struct proc *));
 	dev_decl(n,ioctl); dev_decl(n,dump); dev_decl(n,size)
 
 
-#include "vn.h"
+#include "vnd.h"
 #include "sd.h"
 #include "cd.h"
-bdev_decl(vn);
+bdev_decl(vnd);
 bdev_decl(sd);
 bdev_decl(cd);
 #define	bdev_disk_init(c,n) { \
@@ -155,21 +155,21 @@ int lkmenodev();
 
 struct bdevsw	bdevsw[] =
 {
-	bdev_notdef(),		/* 0: */
-	bdev_notdef(),		/* 1: */
-	bdev_floppy_init(NFD),	/* 2: floppy */
-	bdev_swap_init(),	/* 3: swap pseudo-device */
-	bdev_disk_init(NSD,sd),	/* 4: scsi disk */
-	bdev_tape_init(NST,st),	/* 5: exabyte tape */
-	bdev_disk_init(NVN,vn),	/* 6: vnode disk driver (swap to files) */
-	bdev_disk_init(NCD,cd),	/* 7: scsi cd.*/
-	bdev_notdef(),		/* 8: */
-	LKM_BDEV(),		/* 9: Empty slot for LKM */
-	LKM_BDEV(),		/* 10: Empty slot for LKM */
-	LKM_BDEV(),		/* 11: Empty slot for LKM */
-	LKM_BDEV(),		/* 12: Empty slot for LKM */
-	LKM_BDEV(),		/* 13: Empty slot for LKM */
-	LKM_BDEV(),		/* 14: Empty slot for LKM */
+	bdev_notdef(),			/* 0: */
+	bdev_notdef(),			/* 1: */
+	bdev_floppy_init(NFD),		/* 2: floppy */
+	bdev_swap_init(),		/* 3: swap pseudo-device */
+	bdev_disk_init(NSD,sd),		/* 4: scsi disk */
+	bdev_tape_init(NST,st),		/* 5: exabyte tape */
+	bdev_disk_init(NVND,vnd),	/* 6: vnode disk driver */
+	bdev_disk_init(NCD,cd),		/* 7: scsi cd.*/
+	bdev_notdef(),			/* 8: */
+	LKM_BDEV(),			/* 9: Empty slot for LKM */
+	LKM_BDEV(),			/* 10: Empty slot for LKM */
+	LKM_BDEV(),			/* 11: Empty slot for LKM */
+	LKM_BDEV(),			/* 12: Empty slot for LKM */
+	LKM_BDEV(),			/* 13: Empty slot for LKM */
+	LKM_BDEV(),			/* 14: Empty slot for LKM */
 };
 
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
@@ -222,7 +222,7 @@ cdev_decl(no);			/* dummy declarations */
 }
 
 /* disks */
-cdev_decl(vn);
+cdev_decl(vnd);
 cdev_decl(sd);
 #define	cdev_disk_init(c,n) { \
 	dev_init(c,n,open), \
@@ -578,7 +578,7 @@ struct cdevsw	cdevsw[] =
 	cdev_view_init(NVIEW),		/* 16: /dev/view00 /dev/view01 ... */
 	cdev_tty_init(NMFCS,mfcs),	/* 17: MultiFaceCard III serial */
 	cdev_floppy_init(NFD),		/* 18: floppy */
-	cdev_disk_init(NVN,vn),		/* 19: vnode disk */
+	cdev_disk_init(NVND,vnd),	/* 19: vnode disk */
 	cdev_st_init(NST),		/* 20: scsi tape */
 	cdev_fd_init(1),		/* 21: file descriptor pseudo-dev */
 	cdev_bpf_init(NBPFILTER),	/* 22: berkeley packet filter */

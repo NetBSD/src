@@ -1,4 +1,4 @@
-#	$NetBSD: files.newconf,v 1.33 1994/08/15 16:37:39 cgd Exp $
+#	$NetBSD: files.newconf,v 1.34 1995/01/25 04:48:09 cgd Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -26,7 +26,7 @@ pseudo-device imp
 # device st at tg: tape	-- not yet
 
 # legitimate pseudo-devices
-pseudo-device vn: disk
+pseudo-device vnd: disk
 #pseudo-device cd: disk
 
 pseudo-device pty: tty
@@ -59,7 +59,7 @@ file ddb/db_trap.c		ddb
 file ddb/db_variables.c	 	ddb
 file ddb/db_watch.c		ddb
 file ddb/db_write_cmd.c	 	ddb
-file dev/vn.c			vn needs-flag
+file dev/vnd.c			vnd needs-flag
 file isofs/cd9660/cd9660_bmap.c		cd9660
 file isofs/cd9660/cd9660_lookup.c	cd9660
 file isofs/cd9660/cd9660_node.c		cd9660
