@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.64 2001/05/03 22:59:11 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.65 2001/05/06 22:50:32 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -4351,7 +4351,7 @@ sys/dev/qbus/rl.c				1.6-1.7
 sys/dev/raidframe/rf_netbsdkintf.c		1.102-1.103
 sys/dev/scsipi/cd.c				1.142-1.143
 sys/dev/scsipi/sd.c				1.167-1.168
-sys/dev/vme/xd.c				1.33-1.34
+sys/dev/vme/xd.c				1.33-1.35
 sys/dev/vme/xy.c				1.31-1.32
 sys/dev/ic/ca.c					patch
 
@@ -4513,3 +4513,159 @@ sys/dev/ic/elinkxlreg.h				1.5
 gnu/libexec/uucp/libunix/serial.c		1.6
 
   Avoid division by zero when computing timeouts for pipe connections.
+
+gnu/usr.bin/gas.new/Makefile			1.18 via patch
+
+  Fix logic botch so that in-tree gas isn't built for sparc64, and so
+  that we don't build it on m68k or ns32k unless we build for ELF.
+
+sys/arch/sparc/conf/GENERIC			1.120
+sys/arch/hpcmips/conf/GENERIC			1.90
+sys/arch/x68k/conf/GENERIC			1.58
+
+  Visually separate the vlan(4) device from the IPv6 devices.
+
+share/man/man4/vlan.4				1.12
+
+  Mention that 802.1q is an IEEE standard.
+
+share/examples/apm/script			1.4
+
+  Fix some errors, and provide more flexible logging.
+
+sys/arch/i386/conf/CARDBUS			patch
+
+  Delete redundant PULLDOWN_TEST, and correct an* entry typo.
+
+sys/dev/pci/neo-coeff.h				1.1 (new)
+sys/dev/pci/neoreg.h				1.1 (new)
+sys/dev/pci/neo.c				1.1-1.6, 1.8 (new)
+sys/dev/pci/files.pci				1.106
+share/man/man4/neo.4				1.1-1.2 (new)
+share/man/man4/Makefile				patch
+sys/arch/i386/conf/GENERIC			patch
+sys/arch/i386/conf/CARDBUS			patch
+sys/arch/i386/conf/GENERIC_LAPTOP		patch
+distrib/sets/lists/man/mi			patch
+
+  Add a driver for the NeoMagic 256 AC'97 chip.
+
+sys/arch/i386/i386/apm.c			1.53,1.56
+share/man/man9/powerhook_establish.9		1.2
+sys/dev/ic/awi.c				1.28
+sys/dev/ic/i82557.c				1.42 via patch
+sys/dev/ic/rtl81x9.c				1.19 via patch
+sys/dev/ic/tulip.c				1.82 via patch
+sys/dev/isa/ym.c				1.17
+sys/dev/usb/uhci.c				1.128
+sys/sys/queue.h					1.22-1.26
+sys/sys/systm.h					1.123
+sys/kern/kern_subr.c				1.71,1.73
+sys/dev/ic/midway.c				1.43
+
+  Add new powerhook argument values, PWR_SOFTSUSPEND, PWR_SOFTSTANDBY and
+  PWR_SOFTRESUME.  Apm calls powerhook with the values in normal interrupt
+  priority level while others are protected with splhigh().
+
+sys/dev/pci/pcidevs				1.275 via patch
+sys/dev/pci/pcidevs.h				regenerate
+sys/dev/pci/pcidevs_data.h			regenerate
+sys/dev/pci/cs4280.c			1.7-1.8, 1.10-1.14, 1.16 via patch
+sys/dev/pci/cs428x.c				1.1-1.2 (new)
+sys/dev/pci/cs4281.c				1.1-1.4 via patch
+sys/dev/pci/cs4281reg.h				1.1-1.3 (new)
+sys/dev/pci/cs428x.h				1.1-1.4 (new)
+sys/dev/pci/cs428xreg.h				1.1-1.2 (new)
+sys/dev/pci/files.pci				1.117, 1.120
+share/man/man4/clct.4				1.1-1.4 (new) via patch
+share/man/man4/Makefile				1.179 via patch
+distrib/sets/lists/man/mi			patch
+
+  Add driver for Cirrus Logic CrystalClear PCI Audio CS4281.
+
+sys/arch/i386/conf/GENERIC			1.393
+sys/arch/i386/conf/GENERIC_LAPTOP		patch
+sys/arch/i386/conf/CARDBUS			patch
+
+  Add clct(4) driver.
+
+sys/kern/init_main.c				1.188
+
+  Add 2001 to Copyright year list.
+
+lib/libc/time/localtime.c			1.27
+
+  Prevent core dump on call to ctime() if TZ is set but empty.
+
+libexec/ld.aout_so/ld.so.i386.uue		1.2
+libexec/ld.aout_so/ld.so.sparc.uue		1.2
+
+  Regenerated binaries including fix for PR#10940.
+
+sys/dev/ata/wd.c				1.213
+sys/dev/scsipi/cd.c				1.148
+sys/dev/scsipi/sd.c				1.174
+
+  Compensate for the fact that after __HAVE_OLD_DISKLABEL,
+  DISKMINOR(u,p) is no longer contiguous over ``p'', so ranges
+  can no longer be passed to vdevgone().
+
+distrib/notes/common/main			patch
+
+  Mention recent audio driver additions.
+
+distrib/notes/common/legal.common		1.19-1.21 via patch
+
+  Update copyright date, remove .Pp between items.
+
+distrib/notes/common/sysinst			1.19-1.20
+
+  Fix warnings from html generation, update copyright date,
+  plus various minor spelling and consistency fixes.
+
+distrib/notes/common/postinstall		1.19,1.21-1.23
+
+  Explain how to install binary packages.  Update copyright date,
+  workaround for PR#12593 by using unfilled instead of literal,
+  various spelling and consistency fixes.
+
+distrib/notes/common/upgrade			1.9-1.11
+
+  Don't claim that old /etc configuration is merged, fixes PR#9662.
+  Update copyright date, minor punctuation fixes.
+  Say that sysinst is now able to do an upgrade.
+
+distrib/notes/common/main			1.105,1.112-1.113
+
+  Mention that ssh/sshd now require rnd(4).
+  Update copyright and document date, avoid wording implying that
+  the current release is 1.5, some personal name and role fixes,
+  and various spelling and formatting fixes.
+
+distrib/notes/common/contents			1.33
+
+  Update copyright date.  Various spelling and formatting fixes.
+
+distrib/notes/i386/hardware			1.83-1.85,1.87
+
+  Sort audio drivers by alphabet, add cs461x, cs4280, cs4281, and
+  ESS Maestro-1/2/2E.  Note where footnotes are explained, and some
+  minor spelling and punctuation fixes.
+
+distrib/notes/common/xfer			1.14-1.16
+
+  Update copyright date, and some minor consistency and markup
+  fixes.
+
+distrib/notes/i386/prep				1.12
+
+  Use proper markup, note what sysinst is before using the term.
+
+distrib/notes/common/macros			1.10
+
+  Add .Bc/.Ec macros for coloumnarized unfilled displays.
+
+distrib/notes/common/donations			1.20
+
+  Update copyright year, and use .Bc/.Ec macros for two-coloumn
+  output.
