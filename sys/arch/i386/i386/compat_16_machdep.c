@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.4 2003/09/25 22:01:31 christos Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.5 2003/10/08 00:28:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.4 2003/09/25 22:01:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.5 2003/10/08 00:28:41 thorpej Exp $");
 
 #include "opt_vm86.h"
 #include "opt_compat_netbsd.h"
@@ -175,7 +175,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct trapframe *tf = l->l_md.md_regs;
 	int onstack;
 	int sig = ksi->ksi_signo;
-	u_long code = ksi->ksi_trap;
+	u_long code = KSI_TRAPCODE(ksi);
 	struct sigframe_sigcontext *fp = getframe(l, sig, &onstack), frame;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 

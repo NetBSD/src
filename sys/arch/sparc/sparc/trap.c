@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.143 2003/10/05 21:13:23 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.144 2003/10/08 00:28:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.143 2003/10/05 21:13:23 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.144 2003/10/08 00:28:42 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -448,6 +448,7 @@ trap(type, psr, pc, tf)
 			       PSR_BITS, bits, sizeof(bits)));
 			sig = SIGILL;
 			ucode = type;
+			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_trap = type;
 			ksi.ksi_code = ILL_ILLTRP;
 			ksi.ksi_addr = (void *)pc;
@@ -463,6 +464,7 @@ badtrap:
 			p->p_comm, p->p_pid, type);
 #endif
 		sig = SIGILL;
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_trap = type;
 		ksi.ksi_code = ILL_ILLTRP;
 		ksi.ksi_addr = (void *)pc;
@@ -490,6 +492,7 @@ badtrap:
 			ADVANCE;
 			break;
 		}
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_trap = type;
 		ksi.ksi_code = ILL_ILLOPC;
 		ksi.ksi_addr = (void *)pc;
@@ -497,6 +500,7 @@ badtrap:
 
 	case T_PRIVINST:
 		sig = SIGILL;
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_trap = type;
 		ksi.ksi_code = ILL_PRVOPC;
 		ksi.ksi_addr = (void *)pc;
@@ -530,6 +534,7 @@ badtrap:
 #else
 			sig = SIGFPE;
 			/* XXX - ucode? */
+			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_trap = type;
 			ksi.ksi_code = 0;
 			ksi.ksi_addr = (void *)pc;
@@ -667,6 +672,7 @@ badtrap:
 			}
 		}
 		sig = SIGBUS;
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_trap = type;
 		ksi.ksi_code = BUS_ADRALN;
 		ksi.ksi_addr = (void *)pc;
@@ -700,6 +706,7 @@ badtrap:
 
 	case T_TAGOF:
 		sig = SIGEMT;
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_trap = type;
 		ksi.ksi_code = 0;
 		ksi.ksi_addr = (void *)pc;
@@ -708,6 +715,7 @@ badtrap:
 	case T_CPDISABLED:
 		uprintf("coprocessor instruction\n");	/* XXX */
 		sig = SIGILL;
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_trap = type;
 		ksi.ksi_code = ILL_COPROC;
 		ksi.ksi_addr = (void *)pc;
@@ -715,6 +723,7 @@ badtrap:
 
 	case T_BREAKPOINT:
 		sig = SIGTRAP;
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_trap = type;
 		ksi.ksi_code = TRAP_BRKPT;
 		ksi.ksi_addr = (void *)pc;
@@ -724,6 +733,7 @@ badtrap:
 	case T_IDIV0:
 		ADVANCE;
 		sig = SIGFPE;
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_trap = type;
 		ksi.ksi_code = FPE_INTDIV;
 		ksi.ksi_addr = (void *)pc;
@@ -749,6 +759,7 @@ badtrap:
 		uprintf("T_RANGECHECK\n");	/* XXX */
 		ADVANCE;
 		sig = SIGILL;
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_trap = type;
 		ksi.ksi_code = ILL_ILLADR;
 		ksi.ksi_addr = (void *)pc;
@@ -768,6 +779,7 @@ badtrap:
 		uprintf("T_INTOF\n");		/* XXX */
 		ADVANCE;
 		sig = SIGFPE;
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_trap = type;
 		ksi.ksi_code = FPE_INTOVF;
 		ksi.ksi_addr = (void *)pc;
@@ -1039,6 +1051,7 @@ kfault:
 			ksi.ksi_code = (rv == EACCES
 				? SEGV_ACCERR : SEGV_MAPERR);
 		}
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_trap = type;
 		ksi.ksi_addr = (void *)v;
 		trapsignal(l, &ksi);
@@ -1324,6 +1337,7 @@ kfault:
 			ksi.ksi_code = (rv == EACCES)
 				? SEGV_ACCERR : SEGV_MAPERR;
 		}
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_trap = type;
 		ksi.ksi_addr = (void *)sfva;
 		trapsignal(l, &ksi);

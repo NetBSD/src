@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.38 2003/09/25 22:00:48 christos Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.39 2003/10/08 00:28:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.38 2003/09/25 22:00:48 christos Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.39 2003/10/08 00:28:41 thorpej Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -454,7 +454,7 @@ int hpuxsigpid = 0;
 void
 hpux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
-	u_long code = ksi->ksi_trap;
+	u_long code = KSI_TRAPCODE(ksi);
 	int sig = ksi->ksi_signo;
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;

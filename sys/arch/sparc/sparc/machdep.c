@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.234 2003/10/05 21:13:23 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.235 2003/10/08 00:28:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.234 2003/10/05 21:13:23 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.235 2003/10/08 00:28:42 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -540,7 +540,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	int addr, onstack, oldsp, newsp;
 	struct sigframe_sigcontext sf;
 	int sig = ksi->ksi_signo;
-	u_long code = ksi->ksi_trap;
+	u_long code = KSI_TRAPCODE(ksi);
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	tf = l->l_md.md_tf;
@@ -723,7 +723,7 @@ void sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	sf.sf_sip = &fp->sf_si;
 	sf.sf_ucp = &fp->sf_uc;
-	sf.sf_si._info = *ksi;
+	sf.sf_si._info = ksi->ksi_info;
 	sf.sf_uc.uc_flags = _UC_SIGMASK /*|
 		((p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
 			? _UC_SETSTACK : _UC_CLRSTACK)*/;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.76 2003/09/14 06:56:22 christos Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.77 2003/10/08 00:28:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.76 2003/09/14 06:56:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.77 2003/10/08 00:28:42 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -889,7 +889,7 @@ timerupcall(struct lwp *l, void *arg)
 		f = l->l_flag & L_SA;
 		l->l_flag &= ~L_SA;
 		si = pool_get(&siginfo_pool, PR_WAITOK);
-		si->_info = pt->pts_timers[i]->pt_info;
+		si->_info = pt->pts_timers[i]->pt_info.ksi_info;
 		if (sa_upcall(l, SA_UPCALL_SIGEV | SA_UPCALL_DEFER, NULL, l,
 		    sizeof(*si), si) == 0)
 			done |= mask;
