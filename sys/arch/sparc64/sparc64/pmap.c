@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.157 2004/12/01 08:05:26 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.158 2004/12/01 09:48:03 martin Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.157 2004/12/01 08:05:26 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.158 2004/12/01 09:48:03 martin Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1766,6 +1766,7 @@ pmap_kremove(va, size)
 	struct pmap *pm = pmap_kernel();
 	int64_t data;
 	paddr_t pa;
+	int rv;
 	boolean_t flush = FALSE;
 
 	KASSERT(va < INTSTACK || va > EINTSTACK);
@@ -1795,11 +1796,10 @@ pmap_kremove(va, size)
 		 * clear the access statistics.
 		 */
 
-		if (pseg_set(pm, va, 0, 0)) {
-			printf("pmap_kremove: pseg empty!\n");
-			Debugger();
-			/* panic? */
-		}
+		rv = pseg_set(pm, va, 0, 0);
+		if (rv & 1)
+			panic("pmap_kremove: pseg_set needs spare, rv=%d\n",
+			    rv);
 		DPRINTF(PDB_DEMAP, ("pmap_kremove: seg %x pdir %x pte %x\n",
 		    (int)va_to_seg(va), (int)va_to_dir(va),
 		    (int)va_to_pte(va)));
@@ -2092,6 +2092,7 @@ pmap_remove(pm, va, endva)
 	paddr_t pa;
 	struct vm_page *pg;
 	pv_entry_t pv;
+	int rv;
 	boolean_t flush = FALSE;
 
 	/*
@@ -2140,11 +2141,11 @@ pmap_remove(pm, va, endva)
 		 * clear the access statistics.
 		 */
 
-		if (pseg_set(pm, va, 0, 0)) {
-			printf("pmap_remove: pseg empty!\n");
-			Debugger();
-			/* panic? */
-		}
+		rv = pseg_set(pm, va, 0, 0);
+		if (rv & 1)
+			panic("pmap_remove: pseg_set needed spare, rv=%d!\n",
+			    rv);
+
 		DPRINTF(PDB_REMOVE, (" clearing seg %x pte %x\n",
 				     (int)va_to_seg(va), (int)va_to_pte(va)));
 		REMOVE_STAT(removes);
@@ -2190,6 +2191,7 @@ pmap_protect(pm, sva, eva, prot)
 	int64_t data;
 	struct vm_page *pg;
 	pv_entry_t pv;
+	int rv;
 
 	KASSERT(pm != pmap_kernel() || eva < INTSTACK || sva > EINTSTACK);
 	KASSERT(pm != pmap_kernel() || eva < kdata || sva > ekdata);
@@ -2244,11 +2246,10 @@ pmap_protect(pm, sva, eva, prot)
 		if ((prot & VM_PROT_EXECUTE) == 0)
 			data &= ~(TLB_EXEC);
 
-		if (pseg_set(pm, sva, data, 0)) {
-			printf("pmap_protect: gotten pseg empty!\n");
-			Debugger();
-			/* panic? */
-		}
+		rv = pseg_set(pm, sva, data, 0);
+		if (rv & 1)
+			panic("pmap_protect: pseg_set needs spare! rv=%d\n",
+			    rv);
 
 		if (!pm->pm_ctx && pm != pmap_kernel())
 			continue;
@@ -2338,15 +2339,19 @@ pmap_kprotect(va, prot)
 {
 	struct pmap *pm = pmap_kernel();
 	int64_t data;
+	int rv;
 
 	simple_lock(&pm->pm_lock);
 	data = pseg_get(pm, va);
+	KASSERT(data & TLB_V);
 	if (prot & VM_PROT_WRITE) {
 		data |= (TLB_W|TLB_REAL_W);
 	} else {
 		data &= ~(TLB_W|TLB_REAL_W);
 	}
-	(void) pseg_set(pm, va, data, 0);
+	rv = pseg_set(pm, va, data, 0);
+	if (rv & 1)
+		panic("pmap_kprotect: pseg_set needs spare! rv=%d", rv);
 	tsb_invalidate(pm->pm_ctx, va);
 	tlb_flush_pte(va, pm->pm_ctx);
 	simple_unlock(&pm->pm_lock);
@@ -2540,6 +2545,7 @@ pmap_clear_modify(pg)
 	struct vm_page *pg;
 {
 	pv_entry_t pv;
+	int rv;
 	int changed = 0;
 #ifdef DEBUG
 	int modified = 0;
@@ -2574,6 +2580,7 @@ pmap_clear_modify(pg)
 			simple_lock(&pmap->pm_lock);
 			/* First clear the mod bit in the PTE and make it R/O */
 			data = pseg_get(pmap, va);
+			KASSERT(data & TLB_V);
 			/* Need to both clear the modify and write bits */
 			if (data & TLB_MODIFY)
 				changed |= 1;
@@ -2582,11 +2589,10 @@ pmap_clear_modify(pg)
 #else
 			data &= ~(TLB_MODIFY|TLB_W|TLB_REAL_W);
 #endif
-			if (pseg_set(pmap, va, data, 0)) {
-				printf("pmap_clear_modify: pseg empty!\n");
-				Debugger();
-				/* panic? */
-			}
+			rv = pseg_set(pmap, va, data, 0);
+			if (rv & 1)
+				printf("pmap_clear_modify: pseg_set needs"
+				    " spare! rv=%d\n", rv);
 			if (pmap->pm_ctx || pmap == pmap_kernel()) {
 				tsb_invalidate(pmap->pm_ctx, va);
 				tlb_flush_pte(va, pmap->pm_ctx);
@@ -2621,6 +2627,7 @@ pmap_clear_reference(pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	pv_entry_t pv;
+	int rv;
 	int changed = 0;
 #ifdef DEBUG
 	int referenced = 0;
@@ -2649,6 +2656,7 @@ pmap_clear_reference(pg)
 
 			simple_lock(&pmap->pm_lock);
 			data = pseg_get(pmap, va);
+			KASSERT(data & TLB_V);
 			DPRINTF(PDB_CHANGEPROT,
 			    ("clearing ref pm:%p va:%p ctx:%lx data:%llx\n",
 			     pmap, (void *)(u_long)va, (u_long)pmap->pm_ctx,
@@ -2662,11 +2670,10 @@ pmap_clear_reference(pg)
 				changed |= 1;
 			data = 0;
 #endif
-			if (pseg_set(pmap, va, data, 0)) {
-				printf("pmap_clear_reference: pseg empty!\n");
-				Debugger();
-				/* panic? */
-			}
+			rv = pseg_set(pmap, va, data, 0);
+			if (rv & 1)
+				panic("pmap_clear_reference: pseg_set needs"
+				    " spare! rv=%d\n", rv);
 			if (pmap->pm_ctx || pmap == pmap_kernel()) {
 				tsb_invalidate(pmap->pm_ctx, va);
 				tlb_flush_pte(va, pmap->pm_ctx);
@@ -2720,6 +2727,7 @@ pmap_is_modified(pg)
 			int64_t data;
 
 			data = pseg_get(npv->pv_pmap, npv->pv_va & PV_VAMASK);
+			KASSERT(data & TLB_V);
 			if (data & TLB_MODIFY)
 				i = 1;
 
@@ -2765,6 +2773,7 @@ pmap_is_referenced(pg)
 			int64_t data;
 
 			data = pseg_get(npv->pv_pmap, npv->pv_va & PV_VAMASK);
+			KASSERT(data & TLB_V);
 			if (data & TLB_ACCESS)
 				i = 1;
 
@@ -2799,6 +2808,7 @@ pmap_unwire(pmap, va)
 	vaddr_t va;
 {
 	int64_t data;
+	int rv;
 
 	DPRINTF(PDB_MMU_STEAL, ("pmap_unwire(%p, %lx)\n", pmap, va));
 
@@ -2815,12 +2825,11 @@ pmap_unwire(pmap, va)
 #endif
 	simple_lock(&pmap->pm_lock);
 	data = pseg_get(pmap, va & PV_VAMASK);
+	KASSERT(data & TLB_V);
 	data &= ~TLB_TSB_LOCK;
-	if (pseg_set(pmap, va & PV_VAMASK, data, 0)) {
-		printf("pmap_unwire: gotten pseg empty!\n");
-		Debugger();
-		/* panic? */
-	}
+	rv = pseg_set(pmap, va & PV_VAMASK, data, 0);
+	if (rv & 1)
+		panic("pmap_unwire: pseg_set needs spare! rv=%d\n", rv);
 	simple_unlock(&pmap->pm_lock);
 	pv_check();
 }
@@ -2838,6 +2847,7 @@ pmap_page_protect(pg, prot)
 {
 	int64_t clear, set;
 	int64_t data = 0;
+	int rv;
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	pv_entry_t pv, npv, firstpv;
 	struct pmap *pmap;
@@ -2877,6 +2887,7 @@ pmap_page_protect(pg, prot)
 					 "RO va %p of pg %p...\n",
 					 (void *)(u_long)pv->pv_va, pg));
 				data = pseg_get(pmap, va);
+				KASSERT(data & TLB_V);
 
 				/* Save REF/MOD info */
 				if (data & TLB_ACCESS)
@@ -2886,12 +2897,11 @@ pmap_page_protect(pg, prot)
 
 				data &= ~clear;
 				data |= set;
-				if (pseg_set(pmap, va, data, 0)) {
-					printf("pmap_page_protect: "
-					       "pseg empty!\n");
-					Debugger();
-					/* panic? */
-				}
+				rv = pseg_set(pmap, va, data, 0);
+				if (rv & 1)
+					panic("pmap_page_protect: "
+					       "pseg_set needs spare! rv=%d\n",
+					       rv);
 				if (pmap->pm_ctx || pmap == pmap_kernel()) {
 					tsb_invalidate(pmap->pm_ctx, va);
 					tlb_flush_pte(va, pmap->pm_ctx);
@@ -2920,6 +2930,7 @@ pmap_page_protect(pg, prot)
 
 			/* clear the entry in the page table */
 			data = pseg_get(pmap, va);
+			KASSERT(data & TLB_V);
 
 			/* Save ref/mod info */
 			if (data & TLB_ACCESS)
@@ -2927,11 +2938,10 @@ pmap_page_protect(pg, prot)
 			if (data & TLB_MODIFY)
 				firstpv->pv_va |= PV_MOD;
 			/* Clear mapping */
-			if (pseg_set(pmap, va, 0, 0)) {
-				printf("pmap_page_protect: pseg empty!\n");
-				Debugger();
-				/* panic? */
-			}
+			rv = pseg_set(pmap, va, 0, 0);
+			if (rv & 1)
+				panic("pmap_page_protect: pseg_set needs"
+				     " spare! rv=%d\n", rv);
 			if (pmap->pm_ctx || pmap == pmap_kernel()) {
 				tsb_invalidate(pmap->pm_ctx, va);
 				tlb_flush_pte(va, pmap->pm_ctx);
@@ -2966,16 +2976,16 @@ pmap_page_protect(pg, prot)
 				 (void *)(u_long)va, pg, pmap));
 
 			data = pseg_get(pmap, va);
+			KASSERT(data & TLB_V);
 			/* Save ref/mod info */
 			if (data & TLB_ACCESS)
 				pv->pv_va |= PV_REF;
 			if (data & TLB_MODIFY)
 				pv->pv_va |= PV_MOD;
-			if (pseg_set(pmap, va, 0, 0)) {
-				printf("pmap_page_protect: pseg empty!\n");
-				Debugger();
-				/* panic? */
-			}
+			rv = pseg_set(pmap, va, 0, 0);
+			if (rv & 1)
+				panic("pmap_page_protect: pseg_set needs"
+				    " spare! rv=%d\n", rv);
 			if (pv->pv_pmap->pm_ctx ||
 			    pv->pv_pmap == pmap_kernel()) {
 				tsb_invalidate(pmap->pm_ctx, va);
@@ -3276,6 +3286,7 @@ pmap_remove_pv(pmap, va, pg)
 	 */
 	if (pmap == pvh->pv_pmap && PV_MATCH(pvh, va)) {
 		data = pseg_get(pvh->pv_pmap, pvh->pv_va & PV_VAMASK);
+		KASSERT(data & TLB_V);
 		npv = pvh->pv_next;
 		if (npv) {
 			/* First save mod/ref bits */
@@ -3301,6 +3312,7 @@ pmap_remove_pv(pmap, va, pg)
 		}
 		pv->pv_next = npv->pv_next;
 		data = pseg_get(npv->pv_pmap, npv->pv_va & PV_VAMASK);
+		KASSERT(data & TLB_V);
 	}
 
 	/* Save ref/mod info */
@@ -3339,6 +3351,7 @@ pmap_page_cache(pm, pa, mode)
 	struct vm_page *pg;
 	pv_entry_t pv;
 	vaddr_t va;
+	int rv;
 
 	DPRINTF(PDB_ENTER, ("pmap_page_uncache(%llx)\n",
 	    (unsigned long long)pa));
@@ -3349,30 +3362,35 @@ pmap_page_cache(pm, pa, mode)
 		if (pv->pv_pmap != pm)
 			simple_lock(&pv->pv_pmap->pm_lock);
 		if (pv->pv_va & PV_NC) {
+			int64_t data;
+
 			/* Non-cached -- I/O mapping */
-			if (pseg_set(pv->pv_pmap, va,
-				     pseg_get(pv->pv_pmap, va) &
-				     ~(TLB_CV|TLB_CP), 0)) {
-				printf("pmap_page_cache: pseg empty!\n");
-				Debugger();
-				/* panic? */
-			}
+			data = pseg_get(pv->pv_pmap, va);
+			KASSERT(data & TLB_V);
+			rv = pseg_set(pv->pv_pmap, va,
+				     data & ~(TLB_CV|TLB_CP), 0);
+			if (rv & 1)
+				panic("pmap_page_cache: pseg_set needs"
+				     " spare! rv=%d\n", rv);
 		} else if (mode && (!(pv->pv_va & PV_NVC))) {
+			int64_t data;
+
 			/* Enable caching */
-			if (pseg_set(pv->pv_pmap, va,
-				     pseg_get(pv->pv_pmap, va) | TLB_CV, 0)) {
-				printf("pmap_page_cache: pseg empty!\n");
-				Debugger();
-				/* panic? */
-			}
+			data = pseg_get(pv->pv_pmap, va);
+			KASSERT(data & TLB_V);
+			rv = pseg_set(pv->pv_pmap, va, data | TLB_CV, 0);
+			if (rv & 1)
+				panic("pmap_page_cache: pseg_set needs"
+				    " spare! rv=%d\n", rv);
 		} else {
+			int64_t data;
+
 			/* Disable caching */
-			if (pseg_set(pv->pv_pmap, va,
-				     pseg_get(pv->pv_pmap, va) & ~TLB_CV, 0)) {
-				printf("pmap_page_cache: pseg empty!\n");
-				Debugger();
-				/* panic? */
-			}
+			data = pseg_get(pv->pv_pmap, va);
+			rv = pseg_set(pv->pv_pmap, va, data & ~TLB_CV, 0);
+			if (rv & 1)
+				panic("pmap_page_cache: pseg_set needs"
+				    " spare! rv=%d\n", rv);
 		}
 		if (pv->pv_pmap != pm)
 			simple_unlock(&pv->pv_pmap->pm_lock);
