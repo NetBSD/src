@@ -1,4 +1,4 @@
-#	$NetBSD: list2sh.awk,v 1.2 1998/01/06 04:45:40 perry Exp $
+#	$NetBSD: list2sh.awk,v 1.3 1999/03/12 18:36:52 ragge Exp $
 
 BEGIN {
 	printf("cd ${CURDIR}\n");
@@ -10,12 +10,28 @@ BEGIN {
 }
 $1 == "COPY" {
 	printf("echo '%s'\n", $0);
+	printf("rm -f ${TARGDIR}/%s\n", $3);
 	printf("cp %s ${TARGDIR}/%s\n", $2, $3);
 	next;
 }
 $1 == "LINK" {
 	printf("echo '%s'\n", $0);
+	printf("rm -f ${TARGDIR}/%s\n", $3);
 	printf("(cd ${TARGDIR}; ln %s %s)\n", $2, $3);
+	next;
+}
+$1 == "SYMLINK" {
+	printf("echo '%s'\n", $0);
+	printf("rm -f ${TARGDIR}/%s\n", $3);
+	printf("(cd ${TARGDIR}; ln -s %s %s)\n", $2, $3);
+	next;
+}
+$1 == "COPYDIR" {
+	printf("echo '%s'\n", $0);
+	printf("(cd ${TARGDIR}/%s && find . ! -name . | xargs /bin/rm -rf)\n",
+	    $3);
+	printf("(cd %s && find . ! -name . | cpio -pdamu ${TARGDIR}/%s)\n", $2,
+	    $3);
 	next;
 }
 $1 == "SPECIAL" {
