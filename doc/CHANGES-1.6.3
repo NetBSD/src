@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.133 2004/08/31 06:54:49 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.134 2004/11/12 00:00:29 he Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1460,3 +1460,58 @@ libexec/ftpd/strsuftoll.c			patch (new)
 
 	Update to NetBSD ftpd 20040809.  Fixes SA#2004-009.
 	[he, ticket #1739]
+
+sys/dev/pci/pcidevs				1.647 via patch
+sys/dev/pci/pcidevs.h				regnerate
+sys/dev/pci/pcidevs_data.h			regenerate
+sys/dev/cardbus/cardbusdevs			patch (from pcidevs 1.647)
+sys/dev/cardbus/cardbusdevs.h			regenerate
+sys/dev/cardbus/cardbusdevs_data.h		regenerate
+sys/dev/ic/ninjascsi32.c			1.1-1.2 via patch (new)
+sys/dev/ic/ninjascsi32reg.h			1.1 (new)
+sys/dev/ic/ninjascsi32var.h			1.1-1.2 (new)
+sys/dev/cardbus/njs_cardbus.c			1.1-1.2 via patch (new)
+sys/dev/cardbus/files.cardbus			1.23 via patch
+sys/dev/pci/njs_pci.c				1.1-1.2 via patch (new)
+sys/dev/pci/files.pci				1.217 via patch
+share/man/man4/njs.4				1.1-1.3 (new)
+share/man/man4/Makefile				1.329 via patch
+distrib/sets/lists/man/mi			1.722 via patch
+sys/dev/DEVNAMES				1.162 via patch
+sys/conf/files					1.682 via patch
+sys/arch/i386/conf/CARDBUS			1.73 via patch
+sys/arch/i386/conf/GENERIC			1.629 via patch
+sys/arch/i386/conf/GENERIC_LAPTOP		1.114 via patch
+
+	Add support for the Workbit NinjaSCSI-32 PCI/Cardbus
+	SCSI driver, njs(4).
+	[itohy, ticket #1741]
+
+sys/arch/amiga/dev/ite_et.c			1.7
+
+	While in graphics mode, short-circuit text-mode functions
+	which would otherwise destroy graphics state.  Fixes PR#26788.
+	[is, ticket #1742]
+
+distrib/notes/common/xfer			1.50
+
+	Remove mention of split sets, as we don't produce them any more.
+	[is, ticket #1744]
+
+distrib/notes/amiga/hardware			1.45
+
+	Clarify Apollo-accelerator-modified-mainboard-SCSI vs.
+	Apollo-accelerator-provided-SCSI support status.
+	[is, ticket #1743]
+
+sys/arch/i386/conf/CARDBUS			patch
+sys/arch/i386/conf/DR-EVIL			patch
+sys/arch/i386/conf/GENERIC_LAPTOP		patch
+
+	Add missing "scsibus* at adv?" line.
+	[itohy, ticket #1745]
+
+usr.bin/newsyslog/newsyslog.c			1.47
+
+	Various fixes for when ngen is 0.  Fixes PR#26991.
+	[mjl, ticket #1746]
