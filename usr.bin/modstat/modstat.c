@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: modstat.c,v 1.5 1994/05/23 05:44:08 cgd Exp $
+ *	$Id: modstat.c,v 1.6 1995/06/27 00:18:19 jtc Exp $
  */
 
 #include <stdio.h>
@@ -43,7 +43,7 @@
 #include <sys/mount.h>
 #include <sys/lkm.h>
 #include <sys/file.h>
-#include <sys/errno.h>
+#include <errno.h>
 #include "pathnames.h"
 
 void
