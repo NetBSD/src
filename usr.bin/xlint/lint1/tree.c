@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.39 2005/01/02 10:40:49 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.40 2005/01/02 17:59:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.39 2005/01/02 10:40:49 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.40 2005/01/02 17:59:47 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -2631,12 +2631,13 @@ bldasgn(op_t op, tnode_t *ln, tnode_t *rn)
 		}
 	}
 
-	if (op == SHLASS || op == SHRASS) {
-		if (rt != INT) {
-			rn = convert(NOOP, 0, gettyp(INT), rn);
-			rt = INT;
+	if (op == SHLASS) {
+		if (psize(lt) < psize(rt)) {
+			if (hflag)
+				/* semantics of %s change in ANSI C; use ... */
+				warning(118, "<<=");
 		}
-	} else {
+	} else if (op != SHRASS) {
 		if (op == ASSIGN || lt != PTR) {
 			if (lt != rt ||
 			    (ln->tn_type->t_isfield && rn->tn_op == CON)) {
