@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.8 2001/03/17 18:12:09 bjh21 Exp $	*/
+/*	$NetBSD: undefined.c,v 1.9 2001/10/18 21:26:21 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -52,7 +52,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.8 2001/03/17 18:12:09 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.9 2001/10/18 21:26:21 bjh21 Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -124,7 +124,8 @@ static int
 gdb_trapper(u_int addr, u_int insn, struct trapframe *frame, int code)
 {
 
-	if (insn == GDB_BREAKPOINT && code == FAULT_USER) {
+	if ((insn == GDB_BREAKPOINT || insn == GDB5_BREAKPOINT) &&
+	    code == FAULT_USER) {
 		trapsignal(curproc, SIGTRAP, 0);
 		return 0;
 	}
