@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.76 2000/07/18 19:25:26 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.77 2000/07/18 19:27:57 pk Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -8178,7 +8178,7 @@ ENTRY(probeget)
 	LDPTR	[%o2 + %lo(CPCB)], %o2	! cpcb->pcb_onfault = Lfserr;
 	set	_C_LABEL(Lfsprobe), %o5
 	STPTR	%o5, [%o2 + PCB_ONFAULT]
-	or	%o0, 9, %o3		! if (PHYS_ASI(asi)) {
+	or	%o0, 0x9, %o3		! if (PHYS_ASI(asi)) {
 	sub	%o3, 0x1d, %o3
 	brz,a	%o3, 0f
 	 mov	%g0, %o5
