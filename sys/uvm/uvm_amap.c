@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.9 1998/05/14 13:51:28 chuck Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.10 1998/06/20 13:16:29 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -1210,6 +1210,7 @@ uvm_anfree(anon)
 	uvm.afree = anon;
 	uvmexp.nfreeanon++;
 	simple_unlock(&uvm.afreelock);
+	UVMHIST_LOG(maphist,"<- done!",0,0,0,0);
 }
 
 /*
