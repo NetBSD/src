@@ -1,4 +1,4 @@
-/*	$NetBSD: number.c,v 1.4 1997/01/07 12:16:57 tls Exp $	*/
+/*	$NetBSD: number.c,v 1.5 1997/10/10 16:41:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)number.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: number.c,v 1.4 1997/01/07 12:16:57 tls Exp $";
+__RCSID("$NetBSD: number.c,v 1.5 1997/10/10 16:41:43 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,6 +81,7 @@ static char	*name1[] = {
 };
 
 void	convert __P((char *));
+int	main __P((int, char *[]));
 int	number __P((char *, int));
 void	pfract __P((int));
 void	toobig __P((void));
@@ -98,7 +99,7 @@ main(argc, argv)
 	char line[256];
 
 	lflag = 0;
-	while ((ch = getopt(argc, argv, "l")) != EOF)
+	while ((ch = getopt(argc, argv, "l")) != -1)
 		switch (ch) {
 		case 'l':
 			lflag = 1;
@@ -132,9 +133,10 @@ void
 convert(line)
 	char *line;
 {
-	register flen, len, rval;
-	register char *p, *fraction;
+	int flen, len, rval;
+	char *p, *fraction;
 
+	flen = 0;
 	fraction = NULL;
 	for (p = line; *p != '\0' && *p != '\n'; ++p) {
 		if (isblank(*p)) {
@@ -165,7 +167,7 @@ badnum:			errx(1, "illegal number: %s", line);
 	*p = '\0';
 
 	if ((len = strlen(line)) > MAXNUM ||
-	    fraction != NULL && (flen = strlen(fraction)) > MAXNUM)
+	    (fraction != NULL && (flen = strlen(fraction)) > MAXNUM))
 		errx(1, "number too large, max %d digits.", MAXNUM);
 
 	if (*line == '-') {
@@ -197,10 +199,10 @@ badnum:			errx(1, "illegal number: %s", line);
 
 int
 unit(len, p)
-	register int len;
-	register char *p;
+	int len;
+	char *p;
 {
-	register int off, rval;
+	int off, rval;
 
 	rval = 0;
 	if (len > 3) {
@@ -233,10 +235,10 @@ unit(len, p)
 
 int
 number(p, len)
-	register char *p;
+	char *p;
 	int len;
 {
-	register int val, rval;
+	int val, rval;
 
 	rval = 0;
 	switch (len) {
