@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.25 2001/01/03 10:09:01 takemura Exp $	*/
+/*	$NetBSD: types.h,v 1.26 2001/01/14 22:32:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -44,11 +44,12 @@
 #include <sys/cdefs.h>
 #include <machine/int_types.h>
 
+#define	__HAVE_AST_PERPROC
+
 /*
  * Note that mips_reg_t is distinct from the register_t defined
  * in <types.h> to allow these structures to be as hidden from
  * the rest of the operating system as possible.
- *
  */
 
 #if defined(_MIPS_BSD_API) && _MIPS_BSD_API != _MIPS_BSD_API_LP32
