@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.18 1997/10/05 23:52:14 mark Exp $
+#	$NetBSD: Makefile,v 1.19 1997/10/19 19:10:26 oki Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
 .if	(${MACHINE} != "i386")   && \
 	(${MACHINE} != "pica")   && \
-	(${MACHINE} != "pmax")   && \
-	(${MACHINE} != "x68k")
+	(${MACHINE} != "pmax")
 LIB=	kvm
 CFLAGS+=-DLIBC_SCCS
 
