@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.40 2002/10/12 11:53:43 chris Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.41 2002/11/03 21:43:33 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -804,7 +804,7 @@ initarm(void *arg)
 
 	/* Setup the IRQ system */
 	printf("irq ");
-	irq_init();
+	footbridge_intr_init();
 	printf("done.\n");
 
 	/*

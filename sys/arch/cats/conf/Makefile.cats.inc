@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile.cats.inc,v 1.10 2002/10/29 14:33:32 tsutsui Exp $
-
-GENASSYM_EXTRAS+=	${ARM}/footbridge/genassym.cf
+#	$NetBSD: Makefile.cats.inc,v 1.11 2002/11/03 21:43:32 chris Exp $
 
 .if (${OBJECT_FMT} == "ELF")
 # Need to convert the kernel from ELF to a.out so that OpenFirmware
