@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.seq,v 1.6 2003/08/29 01:28:53 thorpej Exp $	*/
+/*	$NetBSD: aic79xx.seq,v 1.7 2003/08/29 03:51:50 thorpej Exp $	*/
 
 /*
  * Adaptec U320 device driver firmware for Linux and FreeBSD.
@@ -39,10 +39,10 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.seq,v 1.11 2003/05/26 21:26:52 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.seq,v 1.12 2003/06/28 04:40:46 gibbs Exp $
  */
 
-VERSION = "Id: //depot/aic7xxx/aic7xxx/aic79xx.seq#94 $"
+VERSION = "Id: //depot/aic7xxx/aic7xxx/aic79xx.seq#95 $"
 PATCH_ARG_LIST = "struct ahd_softc *ahd"
 PREFIX = "ahd_"
 
@@ -584,9 +584,6 @@ found_last_sent_scb:
 		bmov	CURRSCB, SCBPTR, 2;
 curscb_ww_done:
 	} else {
-		/*
-		 * Untested - Verify with Rev B.
-		 */
 		bmov	SCBPTR, CURRSCB, 2;
 	}
 
@@ -1961,12 +1958,14 @@ SET_DST_MODE	M_SCSI;
 	test	SSTAT0, SELDO jnz return;
 	mvi	SCBPTR[1], SCB_LIST_NULL;
 unexpected_nonpkt_phase:
-	test	MODE_PTR, ~(MK_MODE(M_DFF1, M_DFF1)) jnz . + 3;
+	test	MODE_PTR, ~(MK_MODE(M_DFF1, M_DFF1))
+		jnz unexpected_nonpkt_mode_cleared;
 SET_SRC_MODE	M_DFF0;
 SET_DST_MODE	M_DFF0;
 	or	LONGJMP_ADDR[1], INVALID_ADDR;
 	dec	SCB_FIFO_USE_COUNT;
 	mvi	DFFSXFRCTL, CLRCHN;
+unexpected_nonpkt_mode_cleared:
 	mvi	CLRSINT2, CLRNONPACKREQ;
 	test	SCSIPHASE, ~(MSG_IN_PHASE|MSG_OUT_PHASE) jnz illegal_phase;
 	SET_SEQINTCODE(ENTERING_NONPACK)
