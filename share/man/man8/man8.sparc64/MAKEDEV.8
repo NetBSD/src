@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.22 2003/02/25 10:35:32 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.23 2003/03/10 08:17:04 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 28, 2002
+.Dd March 10, 2003
 .Dt MAKEDEV 8 sparc64
 .Os
 .Sh NAME
@@ -289,6 +289,22 @@ Wscons event multiplexor, see
 .Xr \&wsmux 4
 . It Ar wsfont#
 Console font control
+. It Ar dpt#
+DPT/Adaptec EATA RAID management interface, see
+.Xr \&dpt 4
+. It Ar nsmb#
+SMB requester
+. It Ar kttcp
+Kernel ttcp helper device
+. It Ar dmoverio
+Hardware-assisted data movers, see
+.Xr \&dmoverio 4
+. It Ar veriexec
+Verified executable fingerprint loader, see
+.Xr \&veriexec 4
+. It Ar twe
+3ware Escalade control interface, see
+.Xr \&twe 4
 . El
 .El
 .Sh FILES
