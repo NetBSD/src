@@ -1,4 +1,4 @@
-/*	$NetBSD: atwreg.h,v 1.1 2003/07/06 22:58:09 dyoung Exp $	*/
+/*	$NetBSD: atwreg.h,v 1.2 2003/10/13 16:35:49 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.  All rights reserved.
@@ -734,13 +734,13 @@
 #define ATW_SR_CR28_CR03	(0x18/2)
 #define ATW_SR_CTRY_CR29	(0x1A/2)
 #define		ATW_SR_CTRY_MASK	BITS(15,8)	/* country code */
-#define			COUNTRY_FCC	LSHIFT(0, ATW_SR_CTRY_MASK)
-#define			COUNTRY_IC	LSHIFT(1, ATW_SR_CTRY_MASK)
-#define			COUNTRY_ETSI	LSHIFT(2, ATW_SR_CTRY_MASK)
-#define			COUNTRY_SPAIN	LSHIFT(3, ATW_SR_CTRY_MASK)
-#define			COUNTRY_FRANCE	LSHIFT(4, ATW_SR_CTRY_MASK)
-#define			COUNTRY_MMK	LSHIFT(5, ATW_SR_CTRY_MASK)
-#define			COUNTRY_MMK2	LSHIFT(6, ATW_SR_CTRY_MASK)
+#define			COUNTRY_FCC	0
+#define			COUNTRY_IC	1
+#define			COUNTRY_ETSI	2
+#define			COUNTRY_SPAIN	3
+#define			COUNTRY_FRANCE	4
+#define			COUNTRY_MMK	5
+#define			COUNTRY_MMK2	6
 #define ATW_SR_PCI_DEVICE	(0x20/2)	/* CR0 */
 #define ATW_SR_PCI_VENDOR	(0x22/2)	/* CR0 */
 #define ATW_SR_SUB_DEVICE	(0x24/2)	/* CR11 */
