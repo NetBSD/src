@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.19 1998/12/30 18:03:37 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.20 1998/12/30 19:25:27 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -167,6 +167,8 @@ static u_int8_t ukbd_trtab[256] = {
 
 #define KEY_ERROR 0x01
 
+#define MAXKEYS (NMOD+2*NKEYCODE)
+
 struct ukbd_softc {
 	bdevice		sc_dev;		/* base device */
 	usbd_interface_handle sc_iface;	/* interface */
@@ -183,12 +185,16 @@ struct ukbd_softc {
 #if defined(__NetBSD__)
 	struct device *sc_wskbddev;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
+#define REP_DELAY1 400
+#define REP_DELAYN 100
 	int sc_rawkbd;
-#endif
+	int sc_nrep;
+	char sc_rep[MAXKEYS];
 #endif
 
 	int sc_polling;
 	int sc_pollchar;
+#endif
 };
 
 #define	UKBDUNIT(dev)	(minor(dev))
@@ -213,6 +219,7 @@ void	ukbd_set_leds __P((void *, int));
 #if defined(__NetBSD__)
 int	ukbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 int	ukbd_cnattach __P((void *v));
+void	ukbd_rawrepeat __P((void *v));
 
 const struct wskbd_accessops ukbd_accessops = {
 	ukbd_enable,
@@ -306,6 +313,7 @@ USB_ATTACH(ukbd)
 			USB_ATTACH_ERROR_RETURN;
 		}
 	}
+
 	/* Ignore if SETIDLE fails since it is not crucial. */
 	usbd_set_idle(iface, 0, 0);
 
@@ -320,12 +328,12 @@ USB_ATTACH(ukbd)
 	a.accessops = &ukbd_accessops;
 	a.accesscookie = sc;
 
-	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
-
 	/* Flash the leds; no real purpose, just shows we're alive. */
 	ukbd_set_leds(sc, WSKBD_LED_SCROLL | WSKBD_LED_NUM | WSKBD_LED_CAPS);
 	usbd_delay_ms(uaa->device, 300);
 	ukbd_set_leds(sc, 0);
+
+	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
 
 #elif defined(__FreeBSD__)
 	/* XXX why waste CPU in delay() ? */
@@ -408,8 +416,6 @@ ukbd_enable(v, on)
 	return (0);
 }
 
-#define MAXKEYS (NMOD+2*NKEYCODE)
-
 void
 ukbd_intr(reqh, addr, status)
 	usbd_request_handle reqh;
@@ -484,35 +490,55 @@ ukbd_intr(reqh, addr, status)
 	}
 	sc->sc_odata = *ud;
 
+	if (nkeys == 0)
+		return;
+
+#if defined(__NetBSD__)
 	if (sc->sc_polling) {
 		DPRINTFN(1,("ukbd_intr: pollchar = 0x%02x\n", ibuf[0]));
 		if (nkeys > 0)
 			sc->sc_pollchar = ibuf[0]; /* XXX lost keys? */
 		return;
 	}
-#if defined(__NetBSD__)
+#ifdef WSDISPLAY_COMPAT_RAWKBD
 	if (sc->sc_rawkbd) {
 		char cbuf[MAXKEYS * 2];
-		for (i = j = 0; i < nkeys; i++, j++) {
+		int npress;
+
+		for (npress = i = j = 0; i < nkeys; i++, j++) {
 			c = ibuf[i];
 			if (c & 0x80)
 				cbuf[j++] = 0xe0;
 			cbuf[j] = c & 0x7f;
 			if (c & RELEASE)
 				cbuf[j] |= 0x80;
+			else {
+				/* remember keys for autorepeat */
+				if (c & 0x80)
+					sc->sc_rep[npress++] = 0xe0;
+				sc->sc_rep[npress++] = c & 0x7f;
+			}
 		}
 		wskbd_rawinput(sc->sc_wskbddev, cbuf, j);
+		untimeout(ukbd_rawrepeat, sc);
+		if (npress != 0) {
+			sc->sc_nrep = npress;
+			timeout(ukbd_rawrepeat, sc, hz * REP_DELAY1 / 1000);
+		}
 		return;
 	}
 #endif
 
 	for (i = 0; i < nkeys; i++) {
 		c = ibuf[i];
-#if defined(__NetBSD__)
 		wskbd_input(sc->sc_wskbddev, 
 		    c & RELEASE ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN,
 		    c & 0xff);
+	}
 #elif defined(__FreeBSD__)
+	/* XXX shouldn't the keys be used? */
+	for (i = 0; i < nkeys; i++) {
+		c = ibuf[i];
 		printf("%c (%d) %s\n", 
 		       ((c&0xff) < 32 || (c&0xff) > 126? '.':(c&0xff)), c,
 		       (c&RELEASE? "released":"pressed"));
@@ -522,8 +548,8 @@ ukbd_intr(reqh, addr, status)
 			if (ud->keycode[i])
 				printf("%d ", ud->keycode[i]);
 		printf("\n");
-#endif
 	}
+#endif
 }
 
 void
@@ -552,6 +578,19 @@ ukbd_set_leds(v, leds)
 }
 
 #if defined(__NetBSD__)
+
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+void
+ukbd_rawrepeat(v)
+	void *v;
+{
+	struct ukbd_softc *sc = v;
+
+	wskbd_rawinput(sc->sc_wskbddev, sc->sc_rep, sc->sc_nrep);
+	timeout(ukbd_rawrepeat, sc, hz * REP_DELAYN / 1000);
+}
+#endif
+
 int
 ukbd_ioctl(v, cmd, data, flag, p)
 	void *v;
@@ -564,7 +603,7 @@ ukbd_ioctl(v, cmd, data, flag, p)
 
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
-		*(int *)data = WSKBD_TYPE_PC_XT;
+		*(int *)data = WSKBD_TYPE_USB;
 		return (0);
 	case WSKBDIO_SETLEDS:
 		ukbd_set_leds(v, *(int *)data);
@@ -576,6 +615,7 @@ ukbd_ioctl(v, cmd, data, flag, p)
 	case WSKBDIO_SETMODE:
 		DPRINTF(("ukbd_ioctl: set raw = %d\n", *(int *)data));
 		sc->sc_rawkbd = *(int *)data == WSKBD_RAW;
+		untimeout(ukbd_rawrepeat, sc);
 		return (0);
 #endif
 	}
@@ -630,7 +670,7 @@ ukbd_cnattach(v)
 	return (0);
 }
 
-#endif
+#endif /* NetBSD */
 
 #if defined(__FreeBSD__)
 DRIVER_MODULE(ukbd, usb, ukbd_driver, ukbd_devclass, usb_driver_load, 0);
