@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.6 2002/10/14 14:19:28 scw Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.7 2003/04/18 19:57:11 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -247,6 +247,7 @@ sh5_intr_dispatch(struct intrframe *fr)
 
 	_sh5_intr_events[ih->ih_level].ev_count++;
 	intrcnt[ih->ih_level]++;
+	uvmexp.intrs++;
 
 	if ((ih->ih_func)(ih->ih_arg ? ih->ih_arg : (void *)fr))
 		return;
