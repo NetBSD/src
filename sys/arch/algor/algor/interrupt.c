@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.2 2001/05/28 18:19:27 thorpej Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.3 2001/06/10 05:26:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,8 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_algor_p4032.h"
+#include "opt_algor_p5064.h" 
+#include "opt_algor_p6032.h"
+
 #include <sys/param.h>
 #include <sys/malloc.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -45,10 +50,23 @@
 #include <machine/intr.h>
 #include <machine/locore.h>
 
+#ifdef ALGOR_P4032
+#include <algor/algor/algor_p4032var.h>
+#endif
+
+#ifdef ALGOR_P5064
+#include <algor/algor/algor_p5064var.h>
+#endif  
+ 
+#ifdef ALGOR_P6032
+#include <algor/algor/algor_p6032var.h>
+#endif
+
 void	(*algor_iointr)(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
-void	(*algor_init_clock_intr)(void);
 
 struct algor_soft_intrhand *softnet_intrhand;
+
+u_long	cycles_per_hz;
 
 /*
  * This is a mask of bits to clear in the SR when we go to a
@@ -69,25 +87,33 @@ const u_int32_t ipl_sr_bits[_IPL_N] = {
 
 	MIPS_SOFT_INT_MASK_0|
 		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0,		/* IPL_BIO */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0|
-		MIPS_INT_MASK_1,		/* IPL_NET */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
 		MIPS_INT_MASK_0|
 		MIPS_INT_MASK_1|
-		MIPS_INT_MASK_2,		/* IPL_{TTY,SERIAL} */
+		MIPS_INT_MASK_2|
+		MIPS_INT_MASK_3,		/* IPL_BIO */
 
 	MIPS_SOFT_INT_MASK_0|
 		MIPS_SOFT_INT_MASK_1|
 		MIPS_INT_MASK_0|
 		MIPS_INT_MASK_1|
 		MIPS_INT_MASK_2|
-		MIPS_INT_MASK_3,		/* IPL_{CLOCK,HIGH} */
+		MIPS_INT_MASK_3,		/* IPL_NET */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0|
+		MIPS_INT_MASK_1|
+		MIPS_INT_MASK_2|
+		MIPS_INT_MASK_3,		/* IPL_{TTY,SERIAL} */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0|
+		MIPS_INT_MASK_1|
+		MIPS_INT_MASK_2|
+		MIPS_INT_MASK_3|
+		MIPS_INT_MASK_4|
+		MIPS_INT_MASK_5,		/* IPL_{CLOCK,HIGH} */
 };
 
 const u_int32_t ipl_si_to_sr[_IPL_NSOFT] = {
@@ -99,23 +125,48 @@ const u_int32_t ipl_si_to_sr[_IPL_NSOFT] = {
 
 struct algor_soft_intr algor_soft_intrs[_IPL_NSOFT];
 
+struct evcnt mips_int5_evcnt =
+    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 5 (clock)");
+
+void
+intr_init(void)
+{
+
+#if defined(ALGOR_P4032)
+	algor_p4032_intr_init(&p4032_configuration);
+#elif defined(ALGOR_P5064)
+	algor_p5064_intr_init(&p5064_configuration);
+#elif defined(ALGOR_P6032)
+	algor_p6032_intr_init(&p6032_configuration);
+#endif
+
+	softintr_init();
+}
+
 void
 cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 {
+	struct clockframe cf;
 	struct algor_soft_intr *asi;
 	struct algor_soft_intrhand *sih;
 	int i, s;
 
 	uvmexp.intrs++;
 
-	/*
-	 * XXX Deal with the pesky cycle counter interrupt.  Actually,
-	 * XXX I'd much rather just not enable it, but I have to figure
-	 * XXX out how to keep it masked off.  --thorpej
-	 */
 	if (ipending & MIPS_INT_MASK_5) {
 		u_int32_t cycles = mips3_cp0_count_read();
-		mips3_cp0_compare_write(cycles + 1250000);	/* XXX */
+		mips3_cp0_compare_write(cycles + cycles_per_hz);
+
+		cf.pc = pc;
+		cf.sr = status;
+		hardclock(&cf);
+
+		mips_int5_evcnt.ev_count++;
+
+		/* Re-enable clock interrupts. */
+		cause &= ~MIPS_INT_MASK_5;
+		_splset(MIPS_SR_INT_IE |
+		    ((status & ~cause) & MIPS_HARD_INT_MASK));
 	}
 
 	if (ipending & (MIPS_INT_MASK_0|MIPS_INT_MASK_1|MIPS_INT_MASK_2|
