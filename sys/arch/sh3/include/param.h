@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.6 2002/02/26 15:13:26 simonb Exp $	*/
+/*	$NetBSD: param.h,v 1.7 2002/02/28 01:58:53 uch Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -50,14 +50,6 @@
 #endif
 #endif
 
-#if 0 /* machine/param.h should define it */
-#define	_MACHINE	sh3
-#define	MACHINE		"sh3"
-#define	_MACHINE_ARCH	sh3
-#define	MACHINE_ARCH	"sh3"
-#define	MID_MACHINE	MID_SH3
-#endif
-
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value
  * for all data types (int, long, ...).   The result is u_int and
@@ -94,11 +86,7 @@
 
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
-#if 0
-#define	UPAGES		2		/* pages of u-area */
-#else
 #define	UPAGES		4		/* pages of u-area */
-#endif
 #define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
 
 #ifndef MSGBUFSIZE
