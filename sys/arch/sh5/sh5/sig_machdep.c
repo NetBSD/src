@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.6 2002/07/12 19:27:32 scw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.7 2002/09/06 15:48:51 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -50,7 +50,7 @@
 #include <machine/reg.h>
 
 /*
- * Send an signal to process
+ * Send a signal to process
  */
 void
 sendsig(int sig, sigset_t *returnmask, u_long code)
@@ -77,7 +77,7 @@ sendsig(int sig, sigset_t *returnmask, u_long code)
 		scp = (struct sigcontext *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp
 		    + p->p_sigctx.ps_sigstk.ss_size);
 	else
-		scp = (struct sigcontext *)(uintptr_t)tf->tf_caller.r15;
+		scp = (struct sigcontext *)(intptr_t)tf->tf_caller.r15;
 	scp = (struct sigcontext *)((caddr_t)scp - rndfsize);
 
 	/* Build stack frame for signal trampoline. */
@@ -117,7 +117,7 @@ sendsig(int sig, sigset_t *returnmask, u_long code)
 	switch (ps->sa_sigdesc[sig].sd_vers) {
 	case 1:
 		tf->tf_caller.r18 =
-		    (register_t)(uintptr_t)ps->sa_sigdesc[sig].sd_tramp;
+		    (register_t)(intptr_t)ps->sa_sigdesc[sig].sd_tramp;
 		break;
 
 	default:
@@ -125,11 +125,11 @@ sendsig(int sig, sigset_t *returnmask, u_long code)
 		sigexit(p, SIGILL);
 	}
 
-	tf->tf_state.sf_spc = (register_t)(uintptr_t)catcher;
+	tf->tf_state.sf_spc = (register_t)(intptr_t)catcher;
 	tf->tf_caller.r2 = sig;
 	tf->tf_caller.r3 = code;
-	tf->tf_caller.r4 = (register_t)(uintptr_t)scp;
-	tf->tf_caller.r15 = (register_t)(uintptr_t)scp;
+	tf->tf_caller.r4 = (register_t)(intptr_t)scp;
+	tf->tf_caller.r15 = (register_t)(intptr_t)scp;
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
@@ -164,7 +164,7 @@ sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 	 * program jumps out of a signal handler.
 	 */
 	scp = SCARG(uap, sigcntxp);
-	if (ALIGN(scp) != (uintptr_t)scp)
+	if (ALIGN(scp) != (intptr_t)scp)
 		return (EINVAL);
 
 	if (copyin((caddr_t)scp, &ksc, sizeof(ksc)) != 0)
@@ -174,7 +174,7 @@ sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 		return (EINVAL);
 
 	/*
-	 * Validate the branch target registers. If don't, we risk
+	 * Validate the branch target registers. If we don't, we risk
 	 * a kernel-mode exception when trying to restore invalid
 	 * values to them just before returning to user-mode.
 	 */
@@ -194,9 +194,10 @@ sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 	/* Restore register context. */
 	process_write_regs(p, &ksc.sc_regs);
 	if ((ksc.sc_fpstate & MDP_FPSAVED) != 0) {
+		process_write_fpregs(p, &ksc.sc_regs);
 		sh5_fprestore(tf->tf_state.sf_usr, &p->p_addr->u_pcb);
-		p->p_md.md_flags = ksc.sc_fpstate & ~MDP_FPSAVED;
 	}
+	p->p_md.md_flags = ksc.sc_fpstate & MDP_FPUSED;
 
 	/* Restore signal stack. */
 	if (ksc.sc_onstack & SS_ONSTACK)
@@ -206,6 +207,9 @@ sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 
 	/* Restore signal mask. */
 	(void) sigprocmask1(p, SIG_SETMASK, &ksc.sc_mask, 0);
+
+	/* Flag "no error" to the syscall stub  */
+	tf->tf_caller.r0 = 0;
 
 	return (EJUSTRETURN);
 }
