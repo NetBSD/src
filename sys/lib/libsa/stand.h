@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.43 2001/09/02 07:04:16 tsutsui Exp $	*/
+/*	$NetBSD: stand.h,v 1.44 2002/06/01 11:40:31 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -228,6 +228,7 @@ void	twiddle __P((void));
 void	gets __P((char *));
 int	getfile __P((char *prompt, int mode));
 char	*strerror __P((int));
+__dead void	exit __P((int)) __attribute__((noreturn));
 __dead void	panic __P((const char *, ...)) __attribute__((noreturn));
 __dead void	_rtt __P((void)) __attribute__((noreturn));
 void	bcopy __P((const void *, void *, size_t));
