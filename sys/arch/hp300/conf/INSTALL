@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.12 2003/09/22 14:11:18 cl Exp $
+# $NetBSD: INSTALL,v 1.13 2003/11/08 11:18:33 tsutsui Exp $
 #
 # INSTALL machine description file
 #
@@ -136,7 +136,7 @@ frodo*		at intio?
 
 # 8250-like serial ports found on Frodo ASIC
 #dnkbd0		at frodo? offset 0x0	# Domain keyboard flavor
-apci*		at frodo? offset ?	# tty flavor
+com*		at frodo? offset ?	# tty flavor
 
 # Davinci framebuffer
 dvbox*		at intio?
@@ -167,8 +167,7 @@ grf*		at topcat?
 # Internal Terminal Emulator
 ite*		at grf?
 
-dca0		at dio? scode 9	flags 1	# DCA serial interfaces
-dca*		at dio? scode ?
+com*		at dio? scode ?		# DCA serial interfaces
 
 dcm*		at dio? scode ?	flags 0xe # DCM 4- or 8-port serial interfaces
 
