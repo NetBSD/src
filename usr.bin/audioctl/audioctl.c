@@ -1,4 +1,4 @@
-/*	$NetBSD: audioctl.c,v 1.17 1998/08/10 18:19:03 mycroft Exp $	*/
+/*	$NetBSD: audioctl.c,v 1.18 1998/08/13 09:36:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ struct field {
 #define INT 2
 #define UINT 3
 #define P_R 4
-#define ULONG 5
+#define ULONG 5	/* XXX obsolete now */
 #define UCHAR 6
 #define ENC 7
 #define PROPS 8
@@ -106,7 +106,7 @@ struct field {
 	{ "play.balance",	&info.play.balance,	UCHAR,	0 },
 	{ "play.port",		&info.play.port,	XINT,	0 },
 	{ "play.avail_ports",	&info.play.avail_ports,	XINT,	0 },
-	{ "play.seek",		&info.play.seek,	ULONG,	READONLY },
+	{ "play.seek",		&info.play.seek,	UINT,	READONLY },
 	{ "play.samples",	&info.play.samples,	UINT,	READONLY },
 	{ "play.eof",		&info.play.eof,		UINT,	READONLY },
 	{ "play.pause",		&info.play.pause,	UCHAR,	0 },
@@ -125,7 +125,7 @@ struct field {
 	{ "record.balance",	&info.record.balance,	UCHAR,	0 },
 	{ "record.port",	&info.record.port,	XINT,	0 },
 	{ "record.avail_ports",	&info.record.avail_ports,XINT,	0 },
-	{ "record.seek",	&info.record.seek,	ULONG,	READONLY },
+	{ "record.seek",	&info.record.seek,	UINT,	READONLY },
 	{ "record.samples",	&info.record.samples,	UINT,	READONLY },
 	{ "record.eof",		&info.record.eof,	UINT,	READONLY },
 	{ "record.pause",	&info.record.pause,	UCHAR,	0 },
