@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.h,v 1.35 2000/03/26 20:54:48 kleink Exp $	*/
+/*	$NetBSD: vm_page.h,v 1.36 2000/04/24 17:12:02 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -147,12 +147,17 @@ struct vm_page {
  *   PQ_ ==> lock by page queue lock 
  *   PQ_FREE is locked by free queue lock and is mutex with all other PQs
  *
+ * PG_ZERO is used to indicate that a page has been pre-zero'd.  This flag
+ * is only set when the page is on no queues, and is cleared when the page
+ * is placed on the free list.
+ *
  * possible deadwood: PG_FAULTING, PQ_LAUNDRY
  */
 #define	PG_CLEAN	0x0008		/* page has not been modified */
 #define	PG_BUSY		0x0010		/* page is in transit  */
 #define	PG_WANTED	0x0020		/* someone is waiting for page */
 #define	PG_TABLED	0x0040		/* page is in VP table  */
+#define	PG_ZERO		0x0100		/* page is pre-zero'd */
 #define	PG_FAKE		0x0200		/* page is placeholder for pagein */
 #define	PG_FILLED	0x0400		/* client flag to set when filled */
 #define	PG_DIRTY	0x0800		/* client flag to set when dirty */

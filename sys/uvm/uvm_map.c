@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.72 2000/04/16 20:52:29 chs Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.73 2000/04/24 17:12:00 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -3367,8 +3367,11 @@ uvm_page_printit(pg, full, pr)
 	}
 
 	/* cross-verify page queue */
-	if (pg->pqflags & PQ_FREE)
-		pgl = &uvm.page_free[uvm_page_lookup_freelist(pg)];
+	if (pg->pqflags & PQ_FREE) {
+		int fl = uvm_page_lookup_freelist(pg);
+		pgl = &uvm.page_free[fl].pgfl_queues[((pg)->flags & PG_ZERO) ?
+		    PGFL_ZEROS : PGFL_UNKNOWN];
+	}
 	else if (pg->pqflags & PQ_INACTIVE)
 		pgl = (pg->pqflags & PQ_SWAPBACKED) ? 
 		    &uvm.page_inactive_swp : &uvm.page_inactive_obj;
