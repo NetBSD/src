@@ -29,12 +29,15 @@
 /*
  * HISTORY
  * $Log: boot2.S,v $
- * Revision 1.2  1993/07/11 12:02:22  andrew
- * Fixes from bde, including support for loading @ any MB boundary (e.g. a
- * kernel linked for 0xfe100000 will load at the 1MB mark) and read-ahead
- * buffering to speed booting from floppies.  Also works with aha174x
- * controllers in enhanced mode.
+ * Revision 1.3  1993/07/13 21:51:36  mycroft
+ * Fix addressing bug in bdb junk.
  *
+Revision 1.2  1993/07/11  12:02:22  andrew
+Fixes from bde, including support for loading @ any MB boundary (e.g. a
+kernel linked for 0xfe100000 will load at the 1MB mark) and read-ahead
+buffering to speed booting from floppies.  Also works with aha174x
+controllers in enhanced mode.
+
  *
  * 93/07/06  bde
  *	Delete LOADMSG define (not used).
@@ -175,11 +178,9 @@ ENTRY(boot2)
 	mov	%ax, %es
 
 	/* fix up IDT entries for bdb */
-	addr32
 	movl	%es: -2(%ebx), %eax	/* actually movw to %ax */
 	addr32
 	movl	%eax, EXT(Idt)+8*DEBUG_VECTOR	/* actually movw %ax */
-	addr32
 	movl	%es: -2(%ecx), %eax	/* actually movw to %ax */
 	addr32
 	movl	%eax, EXT(Idt)+8*BREAKPOINT_VECTOR	/* actually movw %ax */
