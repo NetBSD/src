@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)find.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$Id: find.c,v 1.6 1994/07/18 09:55:36 cgd Exp $";
+static char rcsid[] = "$Id: find.c,v 1.7 1996/06/23 11:21:48 mrg Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -187,7 +187,8 @@ find_execute(plan, paths)
 		 * false or all have been executed.  This is where we do all
 		 * the work specified by the user on the command line.
 		 */
-		for (p = plan; p && (p->eval)(p, entry); p = p->next);
+		for (p = plan; p && (p->eval)(p, entry); p = p->next)
+			;
 	}
 	(void)fts_close(tree);
 }
