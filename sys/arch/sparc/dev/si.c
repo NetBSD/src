@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.50 1998/11/19 21:49:17 thorpej Exp $	*/
+/*	$NetBSD: si.c,v 1.51 1999/03/17 23:20:16 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -318,7 +318,7 @@ si_match(parent, cf, aux)
 	 * 4K bytes in VME space but the "si" board occupies 2K bytes.
 	 */
 	vme_addr = va->vma_reg[0];
-	return (vme_bus_probe(ct, bt, vme_addr, 0x801, 1, mod, NULL, 0));
+	return (vme_bus_probe(ct, bt, vme_addr, 0x801, 1, mod, NULL, 0) == 0);
 }
 
 static void
