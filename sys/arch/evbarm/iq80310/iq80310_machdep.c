@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.17 2002/01/25 19:19:29 thorpej Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.18 2002/01/30 04:01:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -818,7 +818,7 @@ initarm(void *arg)
 
 	/* Setup the IRQ system */
 	printf("irq ");
-	irq_init();
+	iq80310_intr_init();
 	printf("done.\n");
 
 #ifdef IPKDB
