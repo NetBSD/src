@@ -41,6 +41,11 @@
 #	vga	stock pccons vga (note it has no keyboard name or minor!)
 #	vgaco	codrv vga
 #	kbdco	codrv kbd
+#
+# Pointing devices:
+#	mms*	Microsoft bus mouse
+#	lms*	Logitech bus mouse
+#	pms*	PS/2 mouse
 # 
 # Terminal ports:
 #	com*	standard PC COM ports
@@ -308,31 +313,29 @@ lkm)
 	chmod 640 lkm
 	;;
 
-mms)
-	rm -f mms
-	mknod mms c 35 1	# non-blocking for X11
-	chown root.wheel mms
+mms*)
+	unit=`expr $i : 'mms\(.*\)'`
+	rm -f mms$unit
+	mknod mms$unit c 35 `expr $unit '*' 2 + 1`	# non-blocking for X11
+	chown root.wheel mms$unit
 	;;
 
-lms)
-	rm -f lms
-	mknod lms c 36 1	# non-blocking for X11
-	chown root.wheel lms
+lms*)
+	unit=`expr $i : 'lms\(.*\)'`
+	rm -f lms$unit
+	mknod lms$unit c 36 `expr $unit '*' 2 + 1`	# non-blocking for X11
+	chown root.wheel lms$unit
+	;;
+
+pms*)
+	unit=`expr $i : 'pms\(.*\)'`
+	rm -f pms$unit
+	mknod pms$unit c 37 `expr $unit '*' 2 + 1`	# non-blocking for X11
+	chown root.wheel pms$unit
 	;;
 
 mouse*)
-	type=`expr $i : 'mouse-\(.*\)'`
-	case $type in
-	ms|microsoft)
-		name=mms
-		;;
-	lg|logitech)
-		name=lms
-		;;
-	*)
-		echo 'mouse-microsoft or mouse-logitech?'
-		exit 1
-	esac
+	name=`expr $i : 'mouse-\(.*\)'`
 	if [ ! -c $name ]; then
 		$0 $name	# make the appropriate device
 	fi
