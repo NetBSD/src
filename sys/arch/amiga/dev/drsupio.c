@@ -1,4 +1,4 @@
-/*	$NetBSD: drsupio.c,v 1.10 2002/01/28 09:56:54 aymeric Exp $ */
+/*	$NetBSD: drsupio.c,v 1.10.8.1 2002/05/16 16:58:58 gehenna Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drsupio.c,v 1.10 2002/01/28 09:56:54 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drsupio.c,v 1.10.8.1 2002/05/16 16:58:58 gehenna Exp $");
 
 /*
  * DraCo multi-io chip bus space stuff
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: drsupio.c,v 1.10 2002/01/28 09:56:54 aymeric Exp $")
 #include <sys/param.h>
 
 #include <machine/bus.h>
-#include <machine/conf.h>
 
 #include <amiga/include/cpu.h>
 
