@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.7 2000/03/27 14:08:39 leo Exp $	*/
+/*	$NetBSD: itevar.h,v 1.8 2001/05/30 14:25:07 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)
@@ -200,6 +200,7 @@ dev_type_open(iteopen);
 dev_type_close(iteclose);
 dev_type_read(iteread);
 dev_type_write(itewrite);
+dev_type_poll(itepoll);
 dev_type_ioctl(iteioctl);
 dev_type_tty(itetty);
 dev_type_stop(itestop);
