@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.40 1996/07/12 17:09:26 scottr Exp $	*/
+/*	$NetBSD: cpu.h,v 1.41 1996/09/11 00:19:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,6 +73,12 @@
 #define _CPU_MACHINE_
 
 #include <machine/pcb.h>
+
+/*
+ * Get common m68k definitions.
+ */
+#include <m68k/cpu.h>
+#define	M68K_MMU_MOTOROLA
 
 /*
  * definitions of cpu-dependent requirements
@@ -219,12 +225,6 @@ extern unsigned char ssir;
 #define MACH_68040	2
 #define MACH_PENTIUM	3	/* 66 and 99 MHz versions *only* */
 
-/* Defines for mmutype */
-#define MMU_68040	-2
-#define MMU_68030	-1
-/* #define MMU_HP	0    Just a reminder as to where this came from. */
-#define MMU_68851	1
-
 #ifdef _KERNEL
 struct mac68k_machine_S {
 	int			cpu_model_index;
@@ -273,7 +273,6 @@ extern unsigned long		IOBase;		/* Base address of I/O */
 extern unsigned long		NuBusBase;	/* Base address of NuBus */
 
 extern  struct mac68k_machine_S	mac68k_machine;
-extern	int			mmutype  ;
 extern	unsigned long		load_addr;
 #endif /* _KERNEL */
 
@@ -297,67 +296,6 @@ extern	unsigned long		load_addr;
 #define NBMAPSIZE	btoc(NBTOP-NBBASE)	/* ~ 96 megs */
 #define NBMEMSIZE	0x01000000	/* 16 megs per card */
 #define NBROMOFFSET	0x00FF0000	/* Last 64K == ROM */
-
-/*
- * 68851 and 68030 MMU
- */
-#define	PMMU_LVLMASK	0x0007
-#define	PMMU_INV	0x0400
-#define	PMMU_WP		0x0800
-#define	PMMU_ALV	0x1000
-#define	PMMU_SO		0x2000
-#define	PMMU_LV		0x4000
-#define	PMMU_BE		0x8000
-#define	PMMU_FAULT	(PMMU_WP|PMMU_INV)
-
-/*
- * 68040 MMU
- */
-#define MMU4_RES	0x001
-#define MMU4_TTR	0x002
-#define MMU4_WP		0x004
-#define MMU4_MOD	0x010
-#define MMU4_CMMASK	0x060
-#define MMU4_SUP	0x080
-#define MMU4_U0		0x100
-#define MMU4_U1		0x200
-#define MMU4_GLB	0x400
-#define MMU4_BE		0x800
-
-/* 680X0 function codes */
-#define	FC_USERD	1	/* user data space */
-#define	FC_USERP	2	/* user program space */
-#define	FC_SUPERD	5	/* supervisor data space */
-#define	FC_SUPERP	6	/* supervisor program space */
-#define	FC_CPU		7	/* CPU space */
-
-/* fields in the 68020 cache control register */
-#define	IC_ENABLE	0x0001	/* enable instruction cache */
-#define	IC_FREEZE	0x0002	/* freeze instruction cache */
-#define	IC_CE		0x0004	/* clear instruction cache entry */
-#define	IC_CLR		0x0008	/* clear entire instruction cache */
-
-/* additional fields in the 68030 cache control register */
-#define	IC_BE		0x0010	/* instruction burst enable */
-#define	DC_ENABLE	0x0100	/* data cache enable */
-#define	DC_FREEZE	0x0200	/* data cache freeze */
-#define	DC_CE		0x0400	/* clear data cache entry */
-#define	DC_CLR		0x0800	/* clear entire data cache */
-#define	DC_BE		0x1000	/* data burst enable */
-#define	DC_WA		0x2000	/* write allocate */
-
-#define	CACHE_ON	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|IC_CLR|IC_ENABLE)
-#define	CACHE_OFF	(DC_CLR|IC_CLR)
-#define	CACHE_CLR	(CACHE_ON)
-#define	IC_CLEAR	(DC_WA|DC_BE|DC_ENABLE|IC_BE|IC_CLR|IC_ENABLE)
-#define	DC_CLEAR	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|IC_ENABLE)
-
-/* 68040 cache control register */
-#define IC4_ENABLE	0x00008000	/* enable instruction cache */
-#define DC4_ENABLE	0x80000000	/* enable data cache */
-
-#define CACHE4_ON	(IC4_ENABLE|DC4_ENABLE)
-#define CACHE4_OFF	0x00000000
 
 __BEGIN_DECLS
 /* machdep.c */
