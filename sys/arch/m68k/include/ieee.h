@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.2 2003/08/07 16:28:14 agc Exp $ */
+/*	$NetBSD: ieee.h,v 1.3 2003/10/23 15:04:00 kleink Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@
 #define	DBL_FRACBITS	52
 
 #define	EXT_EXPBITS	15
-#define	EXT_FRACBITS	112
+#define	EXT_FRACBITS	64
 
 struct ieee_single {
 	u_int	sng_sign:1;
@@ -99,9 +99,8 @@ struct ieee_double {
 struct ieee_ext {
 	u_int	ext_sign:1;
 	u_int	ext_exp:15;
-	u_int	ext_frach:16;
-	u_int	ext_frachm;
-	u_int	ext_fraclm;
+	u_int	ext_zero:16;
+	u_int	ext_frach;
 	u_int	ext_fracl;
 };
 
