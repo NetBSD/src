@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.41 2004/04/11 15:42:48 thorpej Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.42 2004/04/11 15:47:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.41 2004/04/11 15:42:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.42 2004/04/11 15:47:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -622,6 +622,9 @@ mii_phy_flowstatus(struct mii_softc *sc)
 
 	anar = PHY_READ(sc, MII_ANAR);
 	anlpar = PHY_READ(sc, MII_ANLPAR);
+
+	if ((anar & ANAR_X_PAUSE_SYM) & (anlpar & ANLPAR_X_PAUSE_SYM))
+		return (IFM_FLOW|IFM_ETH_TXPAUSE|IFM_ETH_RXPAUSE);
 
 	if ((anar & ANAR_X_PAUSE_SYM) == 0) {
 		if ((anar & ANAR_X_PAUSE_ASYM) &&
