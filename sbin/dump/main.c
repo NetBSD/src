@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.26 2000/10/11 04:57:42 briggs Exp $	*/
+/*	$NetBSD: main.c,v 1.27 2000/12/13 22:45:12 scw Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.26 2000/10/11 04:57:42 briggs Exp $");
+__RCSID("$NetBSD: main.c,v 1.27 2000/12/13 22:45:12 scw Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,15 +80,15 @@ __RCSID("$NetBSD: main.c,v 1.26 2000/10/11 04:57:42 briggs Exp $");
 #include "dump.h"
 #include "pathnames.h"
 
-int	notify = 0;		/* notify operator flag */
-int	blockswritten = 0;	/* number of blocks written on current tape */
-int	tapeno = 0;		/* current tape number */
-int	density = 0;		/* density in bytes/0.1" */
+int	notify;			/* notify operator flag */
+int	blockswritten;		/* number of blocks written on current tape */
+int	tapeno;			/* current tape number */
+int	density;		/* density in bytes/0.1" */
 int	ntrec = NTREC;		/* # tape blocks in each tape record */
-int	cartridge = 0;		/* Assume non-cartridge tape */
+int	cartridge;		/* Assume non-cartridge tape */
 long	dev_bsize = 1;		/* recalculated below */
-long	blocksperfile = 0;	/* output blocks per file */
-char	*host = NULL;		/* remote host (if any) */
+long	blocksperfile;		/* output blocks per file */
+char	*host;			/* remote host (if any) */
 int	readcache = -1;		/* read cache size (in readblksize blks) */
 int	readblksize = 32 * 1024; /* read block size */
 
