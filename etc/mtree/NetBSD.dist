@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.81.2.1 1999/04/04 09:27:12 fair Exp $
+#	$NetBSD: NetBSD.dist,v 1.81.2.2 1999/10/09 21:32:12 cgd Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -769,6 +769,11 @@ examples
 # ./usr/share/examples/amd
 amd
 # ./usr/share/examples/amd
+..
+
+# ./usr/share/examples/dhcp
+dhcp
+# ./usr/share/examples/dhcp
 ..
 
 # ./usr/share/examples/emul
