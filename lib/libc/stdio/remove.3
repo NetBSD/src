@@ -1,4 +1,4 @@
-.\"	$NetBSD: remove.3,v 1.8 2002/02/07 07:00:26 ross Exp $
+.\"	$NetBSD: remove.3,v 1.9 2002/08/10 09:42:23 yamt Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,12 +52,17 @@
 .Sh DESCRIPTION
 The
 .Fn remove
-function
-is an alias for the
-.Xr unlink 2
-system call.
-It deletes the file referenced by
+function removes the file or directory specified by
 .Fa path .
+.Pp
+If
+.Fa path
+specifies a directory,
+.Fn remove "path"
+is the equivalent of
+.Fn rmdir "path" .
+Otherwise, it is the equivalent of
+.Fn unlink "path" .
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn remove
@@ -71,7 +76,9 @@ The
 function
 may fail and set
 .Va errno
-for any of the errors specified for the routine
+for any of the errors specified for the routines
+.Xr rmdir 2
+or
 .Xr unlink 2 .
 .Sh SEE ALSO
 .Xr rmdir 2 ,
