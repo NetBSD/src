@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.14 1998/01/13 03:30:39 thorpej Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.15 1998/02/19 00:54:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,6 +34,8 @@
  *
  *	@(#)lfs_syscalls.c	8.6 (Berkeley) 6/16/94
  */
+
+#include "fs_lfs.h"		/* for prototypes in syscallargs.h */
 
 #include <sys/param.h>
 #include <sys/systm.h>
