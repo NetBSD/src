@@ -1,5 +1,7 @@
+/*	$NetBSD: tsort.c,v 1.9 1994/12/07 01:06:25 jtc Exp $	*/
+
 /*
- * Copyright (c) 1989, 1993
+ * Copyright (c) 1989, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -36,24 +38,27 @@
 
 #ifndef lint
 static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
+"@(#) Copyright (c) 1989, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)tsort.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$Id: tsort.c,v 1.8 1994/02/04 07:18:27 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)tsort.c	8.2 (Berkeley) 3/30/94";
+#endif
+static char rcsid[] = "$NetBSD: tsort.c,v 1.9 1994/12/07 01:06:25 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
+
+#include <ctype.h>
+#include <db.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <db.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
 #include <string.h>
-#include <err.h>
 
 /*
  *  Topological sort.  Input is a list of pairs of strings separated by
@@ -77,7 +82,6 @@ static char *rcsid = "$Id: tsort.c,v 1.8 1994/02/04 07:18:27 cgd Exp $";
 #define	NF_ACYCLIC	0x2		/* this node is cycle free */
 #define	NF_NODEST	0x4		/* Unreachable */
 
-
 typedef struct node_str NODE;
 
 struct node_str {
@@ -97,11 +101,8 @@ typedef struct _buf {
 } BUF;
 
 DB *db;
-NODE *graph;
-NODE **cycle_buf;
-NODE **longest_cycle;
-int longest = 0;
-int debug = 0;
+NODE *graph, **cycle_buf, **longest_cycle;
+int debug, longest;
 
 void	 add_arc __P((char *, char *));
 int	 find_cycle __P((NODE *, NODE *, int, int));
@@ -123,15 +124,13 @@ main(argc, argv)
 	BUF bufs[2];
 
 	while ((ch = getopt(argc, argv, "dl")) != EOF)
-		switch(ch) {
+		switch (ch) {
 		case 'd':
-		    debug = 1;
-		    break;
-
+			debug = 1;
+			break;
 		case 'l':
-		    longest = 1;
-		    break;
-
+			longest = 1;
+			break;
 		case '?':
 		default:
 			usage();
@@ -139,13 +138,13 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	switch(argc) {
+	switch (argc) {
 	case 0:
 		fp = stdin;
 		break;
 	case 1:
 		if ((fp = fopen(*argv, "r")) == NULL)
-			err(1, NULL);
+			err(1, "%s", *argv);
 		break;
 	default:
 		usage();
@@ -246,12 +245,12 @@ get_node(name)
 
 	if (db == NULL &&
 	    (db = dbopen(NULL, O_RDWR, 0, DB_HASH, NULL)) == NULL)
-		err(1, "db: open: %s", name);
+		err(1, "db: %s", name);
 
 	key.data = name;
 	key.size = strlen(name) + 1;
 
-	switch((*db->get)(db, &key, &data, 0)) {
+	switch ((*db->get)(db, &key, &data, 0)) {
 	case 0:
 		bcopy(data.data, &n, sizeof(n));
 		return (n);
@@ -259,7 +258,7 @@ get_node(name)
 		break;
 	default:
 	case -1:
-		err(1, "db: get %s", name);
+		err(1, "db: %s", name);
 	}
 
 	if ((n = malloc(sizeof(NODE) + key.size)) == NULL)
@@ -273,7 +272,7 @@ get_node(name)
 	bcopy(name, n->n_name, key.size);
 
 	/* Add to linked list. */
-	if (n->n_next = graph)
+	if ((n->n_next = graph) != NULL)
 		graph->n_prevp = &n->n_next;
 	n->n_prevp = &graph;
 	graph = n;
@@ -282,7 +281,7 @@ get_node(name)
 	data.data = &n;
 	data.size = sizeof(n);
 	if ((*db->put)(db, &key, &data, 0))
-		err(1, "db: put %s", name);
+		err(1, "db: %s", name);
 	return (n);
 }
 
@@ -295,7 +294,7 @@ clear_cycle()
 {
 	NODE *n;
 
-	for (n = graph; n; n = n->n_next)
+	for (n = graph; n != NULL; n = n->n_next)
 		n->n_flags &= ~NF_NODEST;
 }
 
@@ -304,25 +303,25 @@ void
 tsort()
 {
 	register NODE *n, *next;
-	register int cnt;
+	register int cnt, i;
 
-	while (graph) {
+	while (graph != NULL) {
 		/*
 		 * Keep getting rid of simple cases until there are none left,
 		 * if there are any nodes still in the graph, then there is
 		 * a cycle in it.
 		 */
 		do {
-			for (cnt = 0, n = graph; n; n = next) {
+			for (cnt = 0, n = graph; n != NULL; n = next) {
 				next = n->n_next;
 				if (n->n_refcnt == 0) {
 					remove_node(n);
 					++cnt;
 				}
 			}
-		} while (graph && cnt);
+		} while (graph != NULL && cnt);
 
-		if (!graph)
+		if (graph == NULL)
 			break;
 
 		if (!cycle_buf) {
@@ -331,21 +330,19 @@ tsort()
 			 * as scratch space, the other to save the longest
 			 * cycle.
 			 */
-			for (cnt = 0, n = graph; n; n = n->n_next)
+			for (cnt = 0, n = graph; n != NULL; n = n->n_next)
 				++cnt;
 			cycle_buf = malloc((u_int)sizeof(NODE *) * cnt);
 			longest_cycle = malloc((u_int)sizeof(NODE *) * cnt);
 			if (cycle_buf == NULL || longest_cycle == NULL)
 				err(1, NULL);
 		}
-		for (n = graph; n; n = n->n_next)
-			if (!(n->n_flags & NF_ACYCLIC)) {
+		for (n = graph; n != NULL; n = n->n_next)
+			if (!(n->n_flags & NF_ACYCLIC))
 				if (cnt = find_cycle(n, n, 0, 0)) {
-					register int i;
-
 					warnx("cycle in data");
 					for (i = 0; i < cnt; i++)
-						warnx("%s",
+						warnx("%s", 
 						    longest_cycle[i]->n_name);
 					remove_node(n);
 					clear_cycle();
@@ -355,10 +352,9 @@ tsort()
 					n->n_flags  |= NF_ACYCLIC;
 					clear_cycle();
 				}
-			}
 
-		if (!n)
-			err(1, "internal error -- could not find cycle");
+		if (n == NULL)
+			errx(1, "internal error -- could not find cycle");
 	}
 }
 
@@ -412,11 +408,11 @@ find_cycle(from, to, longest_len, depth)
 			len = find_cycle(*np, to, longest_len, depth + 1);
 
 			if (debug)
-			    printf("%*s %s->%s %d\n", depth, "",
-			    	   from->n_name, to->n_name, len);
+				(void)printf("%*s %s->%s %d\n", depth, "",
+				    from->n_name, to->n_name, len);
 
 			if (len == 0)
-			    (*np)->n_flags |= NF_NODEST;
+				(*np)->n_flags |= NF_NODEST;
 
 			if (len > longest_len)
 				longest_len = len;
