@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.75 1997/04/01 13:12:14 mycroft Exp $
+#	$NetBSD: GENERIC,v 1.76 1997/05/13 22:48:33 jtk Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -95,6 +95,7 @@ eisa0	at mainbus0
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 pci*	at ppb? bus ?
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
+pci* at pchb?
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 
 isa*	at pcib?			# ISA on PCI-ISA bridge
