@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.9 2001/03/05 23:06:17 bjh21 Exp $
+#	$NetBSD: files.hpcarm,v 1.10 2001/03/10 14:10:51 toshii Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -26,7 +26,6 @@ major   {md = 18}
 #file	arch/hpcarm/dev/kbd.c			kbd needs-flag
 
 # Generic MD files
-file	arch/hpcarm/hpcarm/ast.c
 file	arch/hpcarm/hpcarm/autoconf.c
 file	arch/hpcarm/hpcarm/blockio.S
 file	arch/hpcarm/hpcarm/bus_space_notimpl.S
