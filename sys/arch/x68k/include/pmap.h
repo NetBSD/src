@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11 1999/01/18 07:39:51 itohy Exp $	*/
+/*	$NetBSD: pmap.h,v 1.12 1999/02/26 16:07:07 is Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -150,5 +150,7 @@ extern pt_entry_t	*Sysmap;
 extern char		*vmmap;		/* map for mem, dumps, etc. */
 
 vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
+void	pmap_procwr __P((struct proc *, vaddr_t, size_t));
+#define PMAP_NEED_PROCWR
 
 #endif /* !_X68K_PMAP_H_ */

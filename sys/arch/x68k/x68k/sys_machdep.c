@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.12 1999/01/19 18:18:45 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.13 1999/02/26 16:07:08 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -132,9 +132,9 @@ vdoualarm(arg)
  */
 /*ARGSUSED1*/
 int
-cachectl(req, addr, len)
+cachectl1(req, addr, len)
 	int req;
-	caddr_t	addr;
+	vaddr_t	addr;
 	int len;
 {
 	int error = 0;
@@ -143,7 +143,7 @@ cachectl(req, addr, len)
 	if (mmutype == MMU_68040) {
 		int inc = 0;
 		int pa = 0, doall = 0;
-		caddr_t end;
+		vaddr_t end;
 #ifdef COMPAT_HPUX
 		extern struct emul emul_hpux;
 
@@ -159,10 +159,10 @@ cachectl(req, addr, len)
 		if (!doall) {
 			end = addr + len;
 			if (len <= 1024) {
-				addr = (caddr_t)((int)addr & ~0xF);
+				addr = addr & ~0xF;
 				inc = 16;
 			} else {
-				addr = (caddr_t)((int)addr & ~PGOFSET);
+				addr = addr & ~PGOFSET;
 				inc = NBPG;
 			}
 		}
@@ -174,8 +174,8 @@ cachectl(req, addr, len)
 			 */
 			if (!doall &&
 			    (pa == 0 || ((int)addr & PGOFSET) == 0)) {
-				pa = pmap_extract(curproc->p_vmspace->vm_map.pmap,
-						  (vaddr_t)addr);
+				pa = pmap_extract(p->p_vmspace->vm_map.pmap,
+						  addr);
 				if (pa == 0)
 					doall = 1;
 			}
