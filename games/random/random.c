@@ -52,6 +52,7 @@ static char sccsid[] = "@(#)random.c	8.5 (Berkeley) 4/5/94";
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <limits.h>
 
 void usage __P((void));
 
