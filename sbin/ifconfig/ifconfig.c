@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.46 1998/08/08 18:14:20 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.47 1998/08/08 22:33:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.46 1998/08/08 18:14:20 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.47 1998/08/08 22:33:17 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,6 +147,7 @@ void	checkatrange __P ((struct sockaddr_at *));
 void	setmedia __P((char *, int));
 void	setmediaopt __P((char *, int));
 void	unsetmediaopt __P((char *, int));
+void	setmediainst __P((char *, int));
 void	fixnsel __P((struct sockaddr_iso *));
 int	main __P((int, char *[]));
 
@@ -167,6 +168,7 @@ int	actions;			/* Actions performed */
 #define	A_MEDIAOPTSET	0x0002		/* mediaopt command */
 #define	A_MEDIAOPTCLR	0x0004		/* -mediaopt command */
 #define	A_MEDIAOPT	(A_MEDIAOPTSET|A_MEDIAOPTCLR)
+#define	A_MEDIAINST	0x0008		/* instance or inst command */
 
 #define	NEXTARG		0xffffff
 
@@ -212,6 +214,8 @@ struct	cmd {
 	{ "media",	NEXTARG,	A_MEDIA,	setmedia },
 	{ "mediaopt",	NEXTARG,	A_MEDIAOPTSET,	setmediaopt },
 	{ "-mediaopt",	NEXTARG,	A_MEDIAOPTCLR,	unsetmediaopt },
+	{ "instance",	NEXTARG,	A_MEDIAINST,	setmediainst },
+	{ "inst",	NEXTARG,	A_MEDIAINST,	setmediainst },
 	{ 0,		0,		0,		setifaddr },
 	{ 0,		0,		0,		setifdstaddr },
 };
@@ -753,6 +757,11 @@ setmedia(val, d)
 	if (actions & A_MEDIAOPT)
 		errx(1, "may not issue `media' after `mediaopt' commands");
 
+	/*
+	 * No need to check if `instance' has been issued; setmediainst()
+	 * craps out if `media' has not been specified.
+	 */
+
 	type = IFM_TYPE(media_current);
 	inst = IFM_INST(media_current);
 
@@ -777,6 +786,10 @@ setmediaopt(val, d)
 	if (actions & A_MEDIAOPTSET)
 		errx(1, "only one `mediaopt' command may be issued");
 
+	/* Can't issue `mediaopt' if `instance' has already been issued. */
+	if (actions & A_MEDIAINST)
+		errx(1, "may not issue `mediaopt' after `instance'");
+
 	mediaopt_set = get_media_options(IFM_TYPE(media_current), val);
 
 	/* Media will be set after other processing is complete. */
@@ -798,7 +811,42 @@ unsetmediaopt(val, d)
 	if (actions & A_MEDIA)
 		errx(1, "may not issue both `media' and `-mediaopt'");
 
+	/*
+	 * No need to check for A_MEDIAINST, since the test for A_MEDIA
+	 * implicitly checks for A_MEDIAINST.
+	 */
+
 	mediaopt_clear = get_media_options(IFM_TYPE(media_current), val);
+
+	/* Media will be set after other processing is complete. */
+}
+
+void
+setmediainst(val, d)
+	char *val;
+	int d;
+{
+	int type, subtype, options, inst;
+
+	init_current_media();
+
+	/* Can only issue `instance' once. */
+	if (actions & A_MEDIAINST)
+		errx(1, "only one `instance' command may be issued");
+
+	/* Must have already specified `media' */
+	if ((actions & A_MEDIA) == 0)
+		errx(1, "must specify `media' before `instance'");
+
+	type = IFM_TYPE(media_current);
+	subtype = IFM_SUBTYPE(media_current);
+	options = IFM_OPTIONS(media_current);
+
+	inst = atoi(val);
+	if (inst < 0 || inst > IFM_INST_MAX)
+		errx(1, "invalid media instance: %s", val);
+
+	media_current = IFM_MAKEWORD(type, subtype, options, inst);
 
 	/* Media will be set after other processing is complete. */
 }
@@ -926,7 +974,7 @@ print_media_word(ifmw, print_type, as_syntax)
 		}
 	}
 	if (IFM_INST(ifmw) != 0)
-		printf(" [inst %d]", IFM_INST(ifmw));
+		printf(" instance %d", IFM_INST(ifmw));
 }
 
 #define	IFFBITS \
