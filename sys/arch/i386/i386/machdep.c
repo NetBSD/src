@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.498 2002/11/22 15:23:41 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.499 2002/12/05 10:01:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.498 2002/11/22 15:23:41 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.499 2002/12/05 10:01:56 jdolecek Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -3609,13 +3609,15 @@ cpu_reset()
 	for (;;);
 }
 
-void cpu_initclocks()
+void
+cpu_initclocks()
 {
 	(*initclock_func)();
 }
 
 #ifdef MULTIPROCESSOR
-void need_resched(struct cpu_info *ci)
+void
+need_resched(struct cpu_info *ci)
 {
 	ci->ci_want_resched = 1;
 	aston(ci);
