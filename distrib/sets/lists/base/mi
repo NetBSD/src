@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.310 2002/03/14 06:48:28 simonb Exp $
+# $NetBSD: mi,v 1.311 2002/03/17 10:55:02 wiz Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -87,7 +87,7 @@
 ./sbin/fsirand		base-sysutil-root
 ./sbin/halt		base-sysutil-root
 ./sbin/ifconfig		base-netutil-root
-./sbin/ispppcontrol	base-netutil-root
+./sbin/ipppctl		base-netutil-root
 ./sbin/pppoectl		base-netutil-root
 ./sbin/init		base-sysutil-root
 ./sbin/ipf		base-netutil-root
