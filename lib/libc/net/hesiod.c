@@ -1,4 +1,4 @@
-/*	$NetBSD: hesiod.c,v 1.22 2004/05/23 16:54:13 christos Exp $	*/
+/*	$NetBSD: hesiod.c,v 1.23 2005/02/28 01:25:24 lukem Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -51,7 +51,7 @@ __IDSTRING(rcsid_hesiod_p_h,
     "#Id: hesiod_p.h,v 1.1 1996/12/08 21:39:37 ghudson Exp #");
 __IDSTRING(rcsid_hescompat_c,
     "#Id: hescompat.c,v 1.1.2.1 1996/12/16 08:37:45 ghudson Exp #");
-__RCSID("$NetBSD: hesiod.c,v 1.22 2004/05/23 16:54:13 christos Exp $");
+__RCSID("$NetBSD: hesiod.c,v 1.23 2005/02/28 01:25:24 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -112,7 +112,7 @@ hesiod_init(context)
 
 	_DIAGASSERT(context != NULL);
 
-	ctx = malloc(sizeof(struct hesiod_p));
+	ctx = calloc(1, sizeof(struct hesiod_p));
 	if (ctx) {
 		*context = ctx;
 		/*
@@ -152,12 +152,13 @@ hesiod_init(context)
 		errno = ENOMEM;
 
 	serrno = errno;
-	if (ctx->lhs)
-		free(ctx->lhs);
-	if (ctx->rhs)
-		free(ctx->rhs);
-	if (ctx)
+	if (ctx) {
+		if (ctx->lhs)
+			free(ctx->lhs);
+		if (ctx->rhs)
+			free(ctx->rhs);
 		free(ctx);
+	}
 	errno = serrno;
 	return -1;
 }
