@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.19 1997/09/02 13:19:00 thorpej Exp $ */
+/* $NetBSD: pckbd.c,v 1.20 1997/09/25 02:42:47 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.19 1997/09/02 13:19:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.20 1997/09/25 02:42:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -739,6 +739,17 @@ pckbd_translate(dev, c)
 		extended = 1;
 		return NULL;
 	}
+
+#ifdef DDB
+	/*
+	 * Check for cntl-alt-esc.
+	 */
+	if ((dt == 1) && ((shift_state & (CTL | ALT)) == (CTL | ALT))
+	    /* XXX && we're the console */) {
+		Debugger();
+		dt |= 0x80;	/* discard esc (ddb discarded ctl-alt) */
+	}
+#endif
 
 	/*
 	 * Check for make/break.
