@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.67 2002/08/05 13:00:47 shin Exp $	*/
+/*	$NetBSD: cpu.h,v 1.68 2002/11/24 07:26:04 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -47,6 +47,7 @@
  * Exported definitions unique to NetBSD/mips cpu support.
  */
 
+#ifdef _KERNEL
 #ifndef _LOCORE
 #include <sys/sched.h>
 
@@ -66,6 +67,7 @@ struct cpu_info {
 	u_long ci_simple_locks;		/* # of simple locks held */
 #endif
 };
+
 /*
  * To implement a more accurate microtime using the CP0 COUNT register
  * we need to divide that register by the number of cycles per MHz.
@@ -87,7 +89,9 @@ do {									\
 #define	MIPS_COUNT_TO_MHZ(cpu, count, res)				\
 	asm volatile("multu %1,%2 ; mfhi %0"				\
 	    : "=r"((res)) : "r"((count)), "r"((cpu)->ci_divisor_recip))
-#endif /* !defined(_LOCORE) */
+
+#endif /* !_LOCORE */
+#endif /* _KERNEL */
 
 /*
  * CTL_MACHDEP definitions.
@@ -356,7 +360,9 @@ extern int want_resched;		/* resched() was called */
 struct proc;
 struct user;
 
-extern struct proc *fpcurproc;
+extern struct proc *fpcurproc;	/* the current FPU owner */
+extern struct pcb *curpcb;	/* the current running pcb */
+extern struct segtab *segbase;	/* current segtab base */
 
 /* trap.c */
 void	netintr(void);
