@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.10 2000/05/05 09:05:44 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.11 2000/05/05 09:32:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -670,7 +670,7 @@ siop_intr(v)
 			else
 				printf("%s:", sc->sc_dev.dv_xname);
 			printf("parity error\n");
-			need_reset = 1;
+			goto reset;
 		}
 		if ((sist1 & SIST1_STO) && need_reset == 0) {
 			/* selection time out, assume there's no device here */
@@ -934,6 +934,10 @@ reset:
 			}
 			bus_space_write_4(sc->sc_rt, sc->sc_rh, SIOP_DSA,
 			    siop_cmd->dsa);
+			bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL3,
+			    (sc->targets[target]->id >> 24) & 0xff);
+			bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCXFER,
+			    (sc->targets[target]->id >> 8) & 0xff);
 			/* no table to flush */
 			CALL_SCRIPT(Ent_selected);
 			return 1;
