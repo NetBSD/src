@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.169 1997/10/05 18:15:51 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.170 1997/10/17 02:28:36 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -137,7 +137,6 @@
 #include <sys/user.h>
 #include <sys/mount.h>
 #include <sys/extent.h>
-#include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
@@ -163,12 +162,15 @@
 #include <net/netisr.h>
 
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
+#include <vm/vm.h>
 #include <vm/vm_param.h>
 #include <vm/pmap.h>
 #include <vm/vm_map.h>
 #include <vm/vm_object.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
+
+#include <sys/sysctl.h>		/* Requires vm/vm.h */
 
 #include <dev/cons.h>
 
