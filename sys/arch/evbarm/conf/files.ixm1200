@@ -1,4 +1,4 @@
-#	$NetBSD: files.ixm1200,v 1.3 2002/07/20 03:09:04 ichiro Exp $
+#	$NetBSD: files.ixm1200,v 1.4 2003/05/05 04:34:48 igy Exp $
 #
 # Intel IXM1200 evaluation board configuration info
 #
@@ -6,8 +6,6 @@
 file	arch/arm/arm/softintr.c
 file	arch/evbarm/ixm1200/ixm1200_machdep.c
 file	arch/evbarm/ixm1200/ixm1200_pci.c
-
-file	dev/cninit.c
 
 # IXP12x0 Network Processor CPU support
 include "arch/arm/ixp12x0/files.ixp12x0"
