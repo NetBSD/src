@@ -1,3 +1,5 @@
+/*	$NetBSD: w.c,v 1.18 1996/06/07 01:36:39 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +40,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)w.c	8.4 (Berkeley) 4/16/94";
+#else
+static char rcsid[] = "$NetBSD: w.c,v 1.18 1996/06/07 01:36:39 thorpej Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -165,6 +171,13 @@ main(argc, argv)
 		}
 	argc -= optind;
 	argv += optind;
+
+	/*
+	 * Discard setgid privelidges if not the running kernel so that
+	 * bad guys can't print interesting stuff from kernel memory.
+	 */
+	if (nlistf != NULL || memf != NULL)
+		setgid(getgid());
 
 	if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf)) == NULL)
 		errx(1, "%s", errbuf);
