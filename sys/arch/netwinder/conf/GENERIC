@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.34 2003/06/01 00:06:24 uwe Exp $
+# $NetBSD: GENERIC,v 1.35 2003/06/14 18:59:25 uwe Exp $
 #
 # GENERIC machine description file
 # 
@@ -44,6 +44,11 @@ makeoptions	COPTS="-O2 -march=armv4 -mtune=strongarm"
 # FPA options
 
 #options 	ARMFPE		# ARM Ltd FPE
+
+# Default console is wscons, if igsfb(4) and pckbc(4) are configured,
+# or com(4) otherwise.  You can force a serial console with these options
+#options 	CONSDEVNAME="\"com\"",CONCOMADDR=0x3f8,CONSPEED=115200
+
 
 # File systems
 
@@ -229,7 +234,6 @@ wskbd*		at pckbd? console ?
 pms*		at pckbc?
 wsmouse*	at pms? mux 0
 
-# XXX: cannot be used as console yet
 igsfb*		at pci? dev ? function ?
 wsdisplay*	at igsfb? console ?
 
