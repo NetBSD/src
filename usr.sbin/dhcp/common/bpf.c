@@ -47,7 +47,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: bpf.c,v 1.3.2.1 2000/10/18 04:11:01 tv Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: bpf.c,v 1.3.2.2 2000/12/13 22:47:20 he Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -435,6 +435,10 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 			interface -> rbuf_offset = interface -> rbuf_len;
 			continue;
 		}
+
+		/* Adjust for any padding BPF inserted between the packets. */
+		interface -> rbuf_offset =
+		    BPF_WORDALIGN (interface -> rbuf_offset);
 
 		/* Copy out a bpf header... */
 		memcpy (&hdr, &interface -> rbuf [interface -> rbuf_offset],
