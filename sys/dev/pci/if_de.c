@@ -1,4 +1,4 @@
-/*    $NetBSD: if_de.c,v 1.28 1996/10/23 04:37:34 cgd Exp $       */
+/*    $NetBSD: if_de.c,v 1.29 1996/10/25 21:33:30 cgd Exp $       */
 
 /*-
  * Copyright (c) 1994, 1995 Matt Thomas (matt@lkg.dec.com)
@@ -421,7 +421,7 @@ static void tulip_addr_filter(tulip_softc_t *sc);
 #if defined(__NetBSD__) && defined(__alpha__)
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
 #undef vtophys
-#define	vtophys(va)	alpha_XXX_dmamap((void *)(va))
+#define	vtophys(va)	alpha_XXX_dmamap((vm_offset_t)(va))
 #endif
 
 

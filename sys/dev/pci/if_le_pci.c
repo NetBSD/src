@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.12 1996/10/23 04:37:35 cgd Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.13 1996/10/25 21:33:32 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -77,7 +77,7 @@
 #ifdef __alpha__			/* XXX */
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */ 
 #undef vtophys
-#define	vtophys(va)	alpha_XXX_dmamap((void *)(va))
+#define	vtophys(va)	alpha_XXX_dmamap((vm_offset_t)(va))
 #endif
 
 int le_pci_match __P((struct device *, void *, void *));
