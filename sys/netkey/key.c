@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.108 2003/12/04 19:38:25 atatat Exp $	*/
+/*	$NetBSD: key.c,v 1.109 2003/12/10 23:46:42 itojun Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.108 2003/12/04 19:38:25 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.109 2003/12/10 23:46:42 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2697,10 +2697,11 @@ key_delsah(sah)
 			/* sanity check */
 			KEY_CHKSASTATE(state, sav->state, "key_delsah");
 
-			key_freesav(sav);
-
 			/* remove back pointer */
 			sav->sah = NULL;
+
+			key_freesav(sav);
+
 			sav = NULL;
 		}
 	}
