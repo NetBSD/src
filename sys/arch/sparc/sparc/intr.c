@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.55 2001/09/27 02:05:44 mrg Exp $ */
+/*	$NetBSD: intr.c,v 1.56 2001/10/18 12:32:25 uwe Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,11 +71,6 @@
 #include <machine/db_machdep.h>
 #endif
 
-#include "com.h"
-#if NCOM > 0
-extern void comsoft __P((void));
-#endif
-
 void *softnet_cookie;
 
 void	strayintr __P((struct clockframe *));
@@ -121,6 +116,9 @@ softnet(fp)
 	n = netisr;
 	netisr = 0;
 	splx(s);
+
+	if (n == 0)
+		return;
 
 #define DONETISR(bit, fn) do {		\
 	if (n & (1 << bit))		\
