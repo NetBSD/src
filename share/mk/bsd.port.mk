@@ -2,7 +2,7 @@
 # ex:ts=4
 #
 #	Id: bsd.port.mk,v 1.263 1997/07/17 17:47:36 markm Exp 
-#	$NetBSD: bsd.port.mk,v 1.8 1997/10/01 23:38:34 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.9 1997/10/03 09:16:15 agc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -350,10 +350,6 @@ WRKSRC?=		${WRKDIR}
 WRKSRC?=		${WRKDIR}/${DISTNAME}
 .endif
 
-.if (${OPSYS} == "NetBSD")
-.include <bsd.own.mk>
-.endif
-
 .if defined(WRKOBJDIR)
 # XXX Is pwd -P available in FreeBSD's /bin/sh?
 __canonical_PORTSDIR!=	cd ${PORTSDIR}; pwd -P
@@ -501,7 +497,12 @@ EXTRACT_BEFORE_ARGS?=   -xzf
 # Figure out where the local mtree file is
 .if !defined(MTREE_FILE)
 .if defined(USE_IMAKE) || defined(USE_X11)
+.if (${OPSYS} == "NetBSD")
+# XXX - agc - this is temporary, and will change when NetBSD has an X11 mtree file
+MTREE_FILE=	/etc/mtree/BSD.pkg.dist
+.else
 MTREE_FILE=	/etc/mtree/BSD.x11.dist
+.endif
 .else
 .if (${OPSYS} == "NetBSD")
 MTREE_FILE=	/etc/mtree/BSD.pkg.dist
@@ -1805,3 +1806,13 @@ tags:
 .endif
 
 .endif
+
+.if (${OPSYS} == "NetBSD")
+.include <bsd.own.mk>
+
+SHAREOWN = ${DOCOWN}
+SHAREGRP = ${DOCGRP}
+SHAREMODE = ${DOCMODE}
+
+.endif
+
