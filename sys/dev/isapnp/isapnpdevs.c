@@ -1,10 +1,10 @@
-/*	$NetBSD: isapnpdevs.c,v 1.27 1999/03/29 21:36:00 fvdl Exp $	*/
+/*	$NetBSD: isapnpdevs.c,v 1.28 1999/04/06 23:02:31 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: isapnpdevs,v 1.24 1999/03/29 21:35:19 fvdl Exp 
+ *	NetBSD: isapnpdevs,v 1.25 1999/04/06 23:02:09 augustss Exp 
  */
 
 /*-
@@ -85,13 +85,14 @@ static const struct isapnp_matchinfo isapnp_com_devlogic[] = {
 	{"ZTIF761", 0},	/* Zoom ComStar 33.6 */
 	{"CIR3000", 0},	/* Cirrus Logic V43 */
 	{"MOT0000", 0},	/* Motorola ModemSurfr */
+	{"SMM00C1", 0},	/* Leopard 56k PnP */
 };
 static const struct isapnp_matchinfo isapnp_com_devcompat[] = {
 	{"PNP0500", 0},	/* Generic 8250/16450 */
 	{"PNP0501", 0},	/* Generic 16550A */
 };
 const struct isapnp_devinfo isapnp_com_devinfo = {
-	isapnp_com_devlogic, 12,
+	isapnp_com_devlogic, 13,
 	isapnp_com_devcompat, 2,
 };
 
