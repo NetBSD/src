@@ -47,3 +47,15 @@ Also, you cannot use the security modes of the sparc OpenBOOT ROM.
 
     ok setenv security-mode none
 
+
+
+If you're installing NetBSD/sparc for the first time it's a good idea
+to look at the partition sizes of disk you intend installing NetBSD on.
+
+Asumming a classic partition scheme with root (`/') and /usr filesystems,
+a comfortable size for the NetBSD root filesystem partition is about 20MB;
+a good initial size for the swap partition is twice the amount of physical
+memory in your machine (though, unlike SunOS 4.x, there are no restrictions
+on the size of the swap partition that would render part of your memory
+unusable). A full binary installation takes about 60MB in `/usr'.
+
