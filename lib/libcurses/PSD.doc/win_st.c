@@ -1,3 +1,5 @@
+.\"	$NetBSD: win_st.c,v 1.4 1998/01/09 04:12:17 perry Exp $
+.\"
 .\" Copyright (c) 1980, 1993
 .\"	 The Regents of the University of California.  All rights reserved.
 .\"
