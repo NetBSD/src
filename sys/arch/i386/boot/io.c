@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.10 1995/01/09 22:13:10 ws Exp $	*/
+/*	$NetBSD: io.c,v 1.11 1995/01/16 02:19:09 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -67,7 +67,7 @@ gateA20()
 
 /* printf - only handles %d as decimal, %c as char, %s as string */
 
-printf(format,data)
+printf(format, data)
 	char *format;
 	int data;
 {
@@ -122,20 +122,6 @@ putchar(c)
 	putc(c);
 }
 
-getchar()
-{
-	int c;
-
-	if ((c = getc()) == '\r')
-		c = '\n';
-	if (c == '\b') {
-		putchar('\b');
-		putchar(' ');
-	}
-	putchar(c);
-	return(c);
-}
-
 gets(buf)
 	char *buf;
 {
@@ -145,15 +131,22 @@ gets(buf)
 	for (i = 240000; i > 0; i--)
 		if (ischar())
 			for (;;) {
-				*ptr = getchar() & 0xff;
-				if (*ptr == '\n' || *ptr == '\r') {
+				register int c = getc();
+				if (c == '\n' || c == '\r') {
+					putchar('\n');
 					*ptr = '\0';
 					return 1;
-				} else if (*ptr == '\b') {
-					if (ptr > buf)
+				} else if (c == '\b' || c == '\177') {
+					if (ptr > buf) {
+						putchar('\b');
+						putchar(' ');
+						putchar('\b');
 						ptr--;
-				} else
-					ptr++;
+					}
+				} else {
+					putchar(c);
+					*ptr++ = c;
+				}
 			}
 	return 0;
 }
