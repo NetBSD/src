@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.8 1995/07/04 07:15:53 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.9 1995/07/11 21:24:29 leo Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -159,8 +159,8 @@ struct cdevsw	cdevsw[] =
 	cdev_ctty_init(1,ctty),		/* 1: controlling terminal */
 	cdev_mm_init(1,mm),		/* 2: /dev/{null,mem,kmem,...} */
 	cdev_swap_init(1,sw),		/* 3: /dev/drum (swap pseudo-device) */
-	cdev_ptc_init(NPTY,ptc),	/* 5: pseudo-tty master */
 	cdev_tty_init(NPTY,pts),	/* 4: pseudo-tty slave	*/
+	cdev_ptc_init(NPTY,ptc),	/* 5: pseudo-tty master */
 	cdev_log_init(1,log),		/* 6: /dev/klog */
 	cdev_tty_init(NZS,zs),		/* 7: 8530 SCC */
 	cdev_disk_init(NSD,sd),		/* 8: SCSI disk */
