@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.53 1998/10/06 18:38:08 kleink Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.54 1999/03/25 00:52:14 tron Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -283,17 +283,17 @@ slopen(dev, tp)
 			 * make sure tty output queue is large enough
 			 * to hold a full-sized packet (including frame
 			 * end, and a possible extra frame end).  full-sized
-			 * packet occupies a max of 2*SLMTU bytes (because
+			 * packet occupies a max of 2*SLMAX bytes (because
 			 * of possible escapes), and add two on for frame
 			 * ends.
 			 */
 			s = spltty();
-			if (tp->t_outq.c_cn < 2*SLMTU+2) {
+			if (tp->t_outq.c_cn < 2*SLMAX+2) {
 				sc->sc_oldbufsize = tp->t_outq.c_cn;
 				sc->sc_oldbufquot = tp->t_outq.c_cq != 0;
 
 				clfree(&tp->t_outq);
-				error = clalloc(&tp->t_outq, 3*SLMTU, 0);
+				error = clalloc(&tp->t_outq, 2*SLMAX+2, 0);
 				if (error) {
 					splx(s);
 					return(error);
@@ -457,11 +457,14 @@ slstart(tp)
 	int s;
 	struct mbuf *m2;
 #if NBPFILTER > 0
-	u_char bpfbuf[SLMTU + SLIP_HDRLEN];
+	u_char *bpfbuf;
 	register int len = 0;
 #endif
 #ifndef __NetBSD__					/* XXX - cgd */
 	extern int cfreecount;
+#endif
+#if NBPFILTER > 0
+	MALLOC(bpfbuf, u_char *, SLMAX + SLIP_HDRLEN, M_DEVBUF, M_NOWAIT);
 #endif
 
 	for (;;) {
@@ -472,24 +475,30 @@ slstart(tp)
 		 */
 		if (tp->t_outq.c_cc != 0) {
 			(*tp->t_oproc)(tp);
-			if (tp->t_outq.c_cc > SLIP_HIWAT)
+			if (tp->t_outq.c_cc > SLIP_HIWAT) {
+				if (bpfbuf != NULL) FREE(bpfbuf, M_DEVBUF);
 				return;
+			}
 		}
 		/*
 		 * This happens briefly when the line shuts down.
 		 */
-		if (sc == NULL)
+		if (sc == NULL) {
+			if (bpfbuf != NULL) FREE(bpfbuf, M_DEVBUF);
 			return;
+		}
 
 #ifdef __NetBSD__					/* XXX - cgd */
 		/*
 		 * Do not remove the packet from the IP queue if it
 		 * doesn't look like the packet will fit into the
 		 * current serial output queue, with a packet full of
-		 * escapes this could be as bad as SLMTU*2+2.
+		 * escapes this could be as bad as MTU*2+2.
 		 */
-		if (tp->t_outq.c_cn - tp->t_outq.c_cc < 2*SLMTU+2)
+		if (tp->t_outq.c_cn - tp->t_outq.c_cc < 2*sc->sc_if.if_mtu+2) {
+			if (bpfbuf != NULL) FREE(bpfbuf, M_DEVBUF);
 			return;
+		}
 #endif /* __NetBSD__ */
 
 		/*
@@ -502,8 +511,10 @@ slstart(tp)
 		else
 			IF_DEQUEUE(&sc->sc_if.if_snd, m);
 		splx(s);
-		if (m == NULL)
+		if (m == NULL) {
+			if (bpfbuf != NULL) FREE(bpfbuf, M_DEVBUF);
 			return;
+		}
 
 		/*
 		 * We do the header compression here rather than in sloutput
@@ -512,7 +523,7 @@ slstart(tp)
 		 * munged when this happens.
 		 */
 #if NBPFILTER > 0
-		if (sc->sc_bpf) {
+		if (sc->sc_bpf && bpfbuf != NULL) {
 			/*
 			 * We need to save the TCP/IP header before it's
 			 * compressed.  To avoid complicated code, we just
@@ -540,7 +551,7 @@ slstart(tp)
 				    &sc->sc_comp, 1);
 		}
 #if NBPFILTER > 0
-		if (sc->sc_bpf) {
+		if (sc->sc_bpf && bpfbuf != NULL) {
 			/*
 			 * Put the SLIP pseudo-"link header" in place.  The
 			 * compressed header is now at the beginning of the
@@ -879,8 +890,9 @@ slioctl(ifp, cmd, data)
 	caddr_t data;
 {
 	register struct ifaddr *ifa = (struct ifaddr *)data;
-	register struct ifreq *ifr;
+	register struct ifreq *ifr = (struct ifreq *)data;
 	register int s = splimp(), error = 0;
+	register struct sl_softc *sc = ifp->if_softc;
 
 	switch (cmd) {
 
@@ -896,9 +908,20 @@ slioctl(ifp, cmd, data)
 			error = EAFNOSUPPORT;
 		break;
 
+	case SIOCSIFMTU:
+		if ((ifr->ifr_mtu < 3) || (ifr->ifr_mtu > SLMAX)) {
+		    error = EINVAL;
+		    break;
+		}
+		sc->sc_if.if_mtu = ifr->ifr_mtu;
+		break;
+
+	case SIOCGIFMTU:
+		ifr->ifr_mtu = sc->sc_if.if_mtu;
+		break;
+
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
 		if (ifr == 0) {
 			error = EAFNOSUPPORT;		/* XXX */
 			break;
