@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.c,v 1.4 1998/07/25 04:34:13 mycroft Exp $	*/
+/*	$NetBSD: crtbegin.c,v 1.5 1998/07/25 04:45:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -45,6 +45,7 @@
  * null-terminated.
  */
 
+#include <sys/types.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <stdlib.h>
