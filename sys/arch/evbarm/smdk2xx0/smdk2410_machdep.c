@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_machdep.c,v 1.1 2003/07/31 20:11:45 bsh Exp $ */
+/*	$NetBSD: smdk2410_machdep.c,v 1.2 2003/08/01 01:01:37 bsh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,14 +105,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.1 2003/07/31 20:11:45 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.2 2003/08/01 01:01:37 bsh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_ipkdb.h"
 #include "opt_pmap_debug.h"
 #include "opt_md.h"
-#include "rbt.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -312,16 +311,6 @@ cpu_reboot(int howto, char *bootstr)
 	printf("boot: howto=%08x curproc=%p\n", howto, curproc);
 #endif
 
-#if	NRBT > 0
-#ifndef RB_JUMPTO
-#error	rbt pseudo device needs RB_JUMPTO flag
-#endif
-	if (howto & RB_JUMPTO) {
-		/* horrible hack to reboot new kernel loaded to physical memory */
-		cpu_reset_address = vtophys((u_int)bootstr);
-	}
-	else
-#endif
 	cpu_reset_address = vtophys((u_int)s3c2410_softreset);
 
 	/*
@@ -371,6 +360,7 @@ cpu_reboot(int howto, char *bootstr)
 	cpu_reset();
 	/* NOTREACHED */
 }
+
 #define ioreg_write8(a,v)  (*(volatile uint8_t *)(a)=(v))
 
 /*
