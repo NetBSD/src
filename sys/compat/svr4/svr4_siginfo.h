@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_siginfo.h,v 1.3 1998/09/04 19:54:39 christos Exp $	 */
+/*	$NetBSD: svr4_siginfo.h,v 1.4 2002/06/19 17:33:01 eeh Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -88,6 +88,10 @@ typedef union svr4_siginfo {
 		int				_signo;
 		int				_code;
 		int				_errno;
+#ifdef _LP64
+		/* In _LP64 the union starts on an 8-byte boundary. */
+		int				_pad;
+#endif
 		union {
 			struct {
 				svr4_pid_t	_pid;
