@@ -66,6 +66,11 @@
 ./etc/sendmail.cf
 ./etc/services
 ./etc/shells
+./etc/skel/.cshrc
+./etc/skel/.login
+./etc/skel/.mailrc
+./etc/skel/.profile
+./etc/skel/.rhosts
 ./etc/skeykeys
 ./etc/spwd.db
 ./etc/syslog.conf
