@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with GAS; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
    
-/* $Id: i386.h,v 1.5 1996/05/11 13:39:26 mycroft Exp $ */
+/* $Id: i386.h,v 1.6 1997/04/12 00:11:12 jtc Exp $ */
 
 static const template i386_optab[] = {
 
@@ -729,8 +729,48 @@ static const template i386_optab[] = {
 {"wbinvd", 0, 0x0f09, _, NoModrm, 0, 0, 0},
 {"invlpg", 1, 0x0f01, 7, Modrm, Mem, 0, 0},
 
-/* Pentium extensions */
+/* 586 and late 486 extensions */
 {"cpuid", 0, 0x0fa2, _, NoModrm, 0, 0, 0},
+
+/* Pentium extensions */
+{"wrmsr", 0, 0x0f30, _, NoModrm, 0, 0, 0},
+{"rdtsc", 0, 0x0f31, _, NoModrm, 0, 0, 0}, 
+{"rdmsr", 0, 0x0f32, _, NoModrm, 0, 0, 0}, 
+{"cmpxchg8b", 1, 0x0fc7, 1, Modrm, Mem, 0, 0},
+  
+/* Pentium Pro extensions */
+{"rdpmc", 0, 0x0f33, _, NoModrm, 0, 0, 0},
+
+{"cmovo",  2, 0x0f40, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmovno", 2, 0x0f41, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmovb",  2, 0x0f42, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmovae", 2, 0x0f43, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmove",  2, 0x0f44, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmovne", 2, 0x0f45, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmovbe", 2, 0x0f46, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmova",  2, 0x0f47, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmovs",  2, 0x0f48, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmovns", 2, 0x0f49, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmovp",  2, 0x0f4a, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmovnp", 2, 0x0f4b, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmovl",  2, 0x0f4c, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmovge", 2, 0x0f4d, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmovle", 2, 0x0f4e, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmovg",  2, 0x0f4f, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+
+{"fcmovb", 2, 0xdac0, _, ShortForm, FloatReg, FloatAcc, 0},
+{"fcmove", 2, 0xdac8, _, ShortForm, FloatReg, FloatAcc, 0},
+{"fcmovbe",2, 0xdad0, _, ShortForm, FloatReg, FloatAcc, 0},
+{"fcmovu", 2, 0xdad8, _, ShortForm, FloatReg, FloatAcc, 0},
+{"fcmovnb", 2, 0xdbc0, _, ShortForm, FloatReg, FloatAcc, 0},
+{"fcmovne", 2, 0xdbc8, _, ShortForm, FloatReg, FloatAcc, 0},
+{"fcmovnbe",2, 0xdbd0, _, ShortForm, FloatReg, FloatAcc, 0},
+{"fcmovnu", 2, 0xdbd8, _, ShortForm, FloatReg, FloatAcc, 0},
+
+{"fcomi",  2, 0xdbf0, _, ShortForm, FloatReg, FloatAcc, 0},
+{"fucomi", 2, 0xdbe8, _, ShortForm, FloatReg, FloatAcc, 0},
+{"fcomip", 2, 0xdff0, _, ShortForm, FloatReg, FloatAcc, 0},
+{"fucomip",2, 0xdfe8, _, ShortForm, FloatReg, FloatAcc, 0},
 
 {"", 0, 0, 0, 0, 0, 0, 0}	/* sentinal */
 };
