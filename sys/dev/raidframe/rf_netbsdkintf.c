@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.149 2002/11/19 01:45:29 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.150 2002/11/19 01:49:41 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.149 2002/11/19 01:45:29 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.150 2002/11/19 01:49:41 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -1631,7 +1631,7 @@ raidinit(raidPtr)
 	rs->sc_size = raidPtr->totalSectors;
 
 }
-
+#if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
 /* wake up the daemon & tell it to get us a spare table
  * XXX
  * the entries in the queues should be tagged with the raidPtr
@@ -1666,6 +1666,7 @@ rf_GetSpareTableFromDaemon(req)
 					 * alloc'd */
 	return (retcode);
 }
+#endif
 
 /* a wrapper around rf_DoAccess that extracts appropriate info from the 
  * bp & passes it down.
