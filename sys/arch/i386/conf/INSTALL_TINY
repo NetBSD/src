@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.27 2000/10/01 16:20:01 fvdl Exp $
+#	$NetBSD: INSTALL_TINY,v 1.28 2000/10/02 18:43:35 abs Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -492,7 +492,7 @@ pseudo-device	loop			# network loopback
 #pseudo-device	tun		2	# network tunneling over tty
 
 # miscellaneous pseudo-devices
-pseudo-device	pty		2	# pseudo-terminals
+pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 #pseudo-device	tb		1	# tablet line discipline
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
