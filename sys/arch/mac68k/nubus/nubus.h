@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.38 1998/05/07 23:41:51 briggs Exp $	*/
+/*	$NetBSD: nubus.h,v 1.39 1998/05/23 22:08:41 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -72,6 +72,7 @@
 #define    NUBUS_DRHW_FUTURASX	0x02AE	/* E-Machines Futura-SX */
 #define    NUBUS_DRHW_THUNDER24	0x02CB	/* SuperMac Thunder/24 */
 #define	   NUBUS_DRHW_RPC24XP	0x0406	/* Radius PrecisionColor 24Xp */
+#define	   NUBUS_DRHW_RPC24X	0x040A	/* Radius PrecisionColor 24X */
 #define	   NUBUS_DRHW_RPC8XJ	0x040B	/* Radius PrecisionColor 8xj */
 #define	   NUBUS_DRHW_FIILX	0x0417	/* Futura II LX */
 #define	   NUBUS_DRHW_FIISXDSP	0x042F	/* Futura II SX/DSP */
@@ -92,6 +93,7 @@
 #define    NUBUS_DRHW_INTERLAN	0x0100
 #define    NUBUS_DRHW_KINETICS	0x0106
 #define    NUBUS_DRHW_CABLETRON	0x0109
+#define    NUBUS_DRHW_ASANTE_LC	0x010F
 #define    NUBUS_DRHW_SONIC	0x0110
 #define    NUBUS_DRHW_APPLE_SNT	0x0118
 #define    NUBUS_DRHW_APPLE_SN	0x0119
@@ -291,3 +293,4 @@ char	*nubus_get_vendor __P((bus_space_tag_t, bus_space_handle_t,
 	    nubus_slot *slot, int rsrc));
 char	*nubus_get_card_name __P((bus_space_tag_t, bus_space_handle_t,
 	    nubus_slot *slot));
+void	nubus_scan_slot __P((bus_space_tag_t, int));
