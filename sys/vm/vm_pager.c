@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_pager.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_pager.c,v 1.3 1993/05/20 03:59:42 cgd Exp $
+ *	$Id: vm_pager.c,v 1.4 1993/05/29 17:03:06 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -76,29 +76,34 @@
 #include "vm_kern.h"
 
 #include "swappager.h"
-
 #if NSWAPPAGER > 0
 extern struct pagerops swappagerops;
-#else
-#define	swappagerops	NULL
 #endif
 #include "vnodepager.h"
 #if NVNODEPAGER > 0
 extern struct pagerops vnodepagerops;
-#else
-#define	vnodepagerops	NULL
 #endif
 #include "devpager.h"
 #if NDEVPAGER > 0
 extern struct pagerops devicepagerops;
-#else
-#define	devicepagerops	NULL
 #endif
 
 struct pagerops *pagertab[] = {
+#if NSWAPPAGER > 0
 	&swappagerops,		/* PG_SWAP */
+#else
+	NULL,			/* no swappager */
+#endif
+#if NVNODEPAGER > 0
 	&vnodepagerops,		/* PG_VNODE */
+#else
+	NULL,			/* no vnodepager */
+#endif
+#if NDEVPAGER > 0
 	&devicepagerops,	/* PG_DEV */
+#else
+	NULL,			/* no devpager */
+#endif
 };
 int npagers = sizeof (pagertab) / sizeof (pagertab[0]);
 
