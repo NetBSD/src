@@ -1,6 +1,0 @@
-# $NetBSD: md.hpcsh,v 1.6 2004/07/03 12:57:18 uch Exp $
-./sbin/fdisk					base-sysutil-root
-./usr/sbin/apm					base-sysutil-bin
-./usr/sbin/apmd					base-sysutil-bin
-./usr/sbin/tpctl				base-sysutil-bin
-./usr/sbin/zzz					base-sysutil-bin

@@ -1,5 +1,0 @@
-#	$NetBSD: README,v 1.1 2000/04/30 21:22:10 perry Exp $
-
-Example Postfix configuration files can be found in:
-
-	/usr/share/examples/postfix

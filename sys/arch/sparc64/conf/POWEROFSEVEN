@@ -1,7 +1,0 @@
-# 	$NetBSD: POWEROFSEVEN,v 1.21 2001/10/25 13:28:21 mrg Exp $
-
-include "arch/sparc64/conf/POWEROFSEVEN.inc"
-include "arch/sparc64/conf/std.sparc64-64"
-
-#options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility
-#options 	COMPAT_SVR4_32	# SunOS 5.x 32-bit binary compatibility

@@ -1,6 +1,0 @@
-#	$NetBSD: std.luna68k,v 1.5 2001/12/24 17:56:59 chs Exp $
-
-machine luna68k m68k
-
-options 	EXEC_ELF32	# exec ELF binaries
-options 	EXEC_SCRIPT	# exec #! scripts
