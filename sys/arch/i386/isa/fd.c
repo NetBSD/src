@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.29 1994/03/10 20:05:30 mycroft Exp $
+ *	$Id: fd.c,v 1.30 1994/03/10 20:26:26 mycroft Exp $
  *
  * Largely rewritten to handle multiple controllers and drives
  * By Julian Elischer, Sun Apr  4 16:34:33 WST 1993
@@ -188,7 +188,7 @@ extern int hz;
 /****************************************************************************/
 /*                      autoconfiguration stuff                             */
 /****************************************************************************/
-int fdprobe(), fdattach(), fd_turnoff();
+int fdcprobe(), fdcattach(), fdprobe(), fdattach(), fd_turnoff();
 
 struct	isa_driver fdcdriver = {
 	fdcprobe, fdcattach, "fdc",
