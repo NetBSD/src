@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.23 1997/02/25 17:51:50 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.24 1997/03/14 01:42:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: options.c,v 1.23 1997/02/25 17:51:50 christos Exp $";
+static char rcsid[] = "$NetBSD: options.c,v 1.24 1997/03/14 01:42:22 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ static char rcsid[] = "$NetBSD: options.c,v 1.23 1997/02/25 17:51:50 christos Ex
 #include "memalloc.h"
 #include "error.h"
 #include "mystring.h"
-#ifndef NO_HISTORY
+#ifndef SMALL
 #include "myhistedit.h"
 #endif
 
@@ -131,7 +131,7 @@ void
 optschanged()
 {
 	setinteractive(iflag);
-#ifndef NO_HISTORY
+#ifndef SMALL
 	histedit();
 #endif
 	setjobctl(mflag);

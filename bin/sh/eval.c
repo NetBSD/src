@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.34 1997/01/11 02:04:29 tls Exp $	*/
+/*	$NetBSD: eval.c,v 1.35 1997/03/14 01:42:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-static char sccsid[] = "$NetBSD: eval.c,v 1.34 1997/01/11 02:04:29 tls Exp $";
+static char sccsid[] = "$NetBSD: eval.c,v 1.35 1997/03/14 01:42:19 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ static char sccsid[] = "$NetBSD: eval.c,v 1.34 1997/01/11 02:04:29 tls Exp $";
 #include "error.h"
 #include "show.h"
 #include "mystring.h"
-#ifndef NO_HISTORY
+#ifndef SMALL
 #include "myhistedit.h"
 #endif
 
@@ -194,7 +194,7 @@ evaltree(n, flags)
 		exitstatus = 0;
 		goto out;
 	}
-#ifndef NO_HISTORY
+#ifndef SMALL
 	displayhist = 1;	/* show history substitutions done with fc */
 #endif
 	TRACE(("evaltree(0x%lx: %d) called\n", (long)n, n->type));
@@ -828,7 +828,7 @@ cmddone:
 			   || cmdentry.u.index == BLTINCMD
 			   || cmdentry.u.index == DOTCMD
 			   || cmdentry.u.index == EVALCMD
-#ifndef NO_HISTORY
+#ifndef SMALL
 			   || cmdentry.u.index == HISTCMD
 #endif
 			   || cmdentry.u.index == EXECCMD)
