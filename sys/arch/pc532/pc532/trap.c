@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.17 1996/09/07 22:26:53 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.18 1996/10/09 07:45:25 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
@@ -66,14 +66,21 @@
 #include <machine/fpu.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
+#ifdef DDB
+#include <machine/db_machdep.h>
+#endif
 
 struct proc *fpu_proc;		/* Process owning the FPU. */
+
+static __inline void userret __P((struct proc *, int, u_quad_t));
+void trap __P((struct trapframe));
+void syscall __P((struct syscframe));
 
 /*
  * Define the code needed before returning to user mode, for
  * trap and syscall.
  */
-static inline void
+static __inline void
 userret(p, pc, oticks)
 	register struct proc *p;
 	int pc;
@@ -158,7 +165,7 @@ trap(frame)
 	register struct proc *p = curproc;
 	int type = frame.tf_trapno;
 	u_quad_t sticks;
-	struct pcb *pcb;
+	struct pcb *pcb = NULL;
 	extern char fusubail[];
 #ifdef CINVSMALL
 	extern char cinvstart[], cinvend[];
@@ -169,8 +176,9 @@ trap(frame)
 #ifdef DEBUG
 	if (trapdebug) {
 		printf("trap type=%d, pc=0x%x, tear=0x%x, msr=0x%x\n",
-			type, frame.tf_pc, frame.tf_tear, frame.tf_msr);
-		printf("curproc %x\n", curproc);
+			type, frame.tf_regs.r_pc,
+			frame.tf_tear, frame.tf_msr);
+		printf("curproc %p\n", curproc);
 	}
 #endif
 
@@ -184,9 +192,47 @@ trap(frame)
 
 	default:
 	we_re_toast:
+#if defined(DDB) || defined(KGDB)
+	{
+		static struct trapframe *db_frame = (struct trapframe *)
+			(VM_MIN_KERNEL_ADDRESS + 0x1000 - sizeof(frame));
+		static int usp, r;
+		register int ret __asm("r3");
+		register int s __asm("r4") = splhigh();
+		register int sp __asm("r5");
+
+		r = 0;
+		ret = ((int *)&frame)[-1];
+		*++db_frame = frame;
+		usp = db_frame->tf_regs.r_sp;
+		db_frame->tf_regs.r_sp = ((int)&frame) + sizeof(frame);
+		sprd(sp, sp);
+		if (sp >= (VM_MIN_KERNEL_ADDRESS + 0x2000))
+			lprd(sp, VM_MIN_KERNEL_ADDRESS + 0x1000 - 4);
+		else
+			lprd(sp, sp - 64);
+#ifdef KGDB
+		r = kgdb_trap(type, db_frame);
+#endif
 #ifdef DDB
-		if (kdb_trap(type, 0, &frame))
-			return;
+		if (r == 0) {
+			extern int db_active_ipl;
+			db_active_ipl = s;
+			r = kdb_trap(type, 0, db_frame);
+		}
+#endif
+		splx(s);
+		if (r) {
+			sp = db_frame->tf_regs.r_sp - sizeof(frame);
+			db_frame->tf_regs.r_sp = usp;
+			*(struct trapframe *)sp = *db_frame--;
+			lprd(fp, &((struct trapframe *)sp)->tf_regs.r_fp);
+			lprd(sp, sp);
+			__asm __volatile("jump 0(%0)" : : "g" (ret));
+		}
+		db_frame--;
+		lprd(sp, sp); /* Frame should be intact */
+	}
 #endif
 		if (frame.tf_trapno < trap_types)
 			printf("fatal %s", trap_type[frame.tf_trapno]);
@@ -204,14 +250,16 @@ trap(frame)
 #ifndef NS381
 		extern int _have_fpu;
 		if (!_have_fpu) {
-#ifdef MATH_EMULATE
+# ifdef MATH_EMULATE
 			int rv;
 			if ((rv = math_emulate(&frame)) == 0) {
-				if (frame.tf_psr &  PSL_T)
+				if (frame.tf_psr & PSL_T) {
+					type = T_TRC | T_USER;
 					goto trace;
+				}
 				return;
 			}
-#endif
+# endif
 		} else
 #endif
 		sprd(cfg, cfg);
@@ -324,7 +372,7 @@ trap(frame)
 
 #ifdef DIAGNOSTIC
 		if (map == kernel_map && va == 0) {
-			printf("trap: bad kernel access at %x\n", va);
+			printf("trap: bad kernel access at %lx\n", va);
 			goto we_re_toast;
 		}
 #endif
@@ -373,7 +421,7 @@ trap(frame)
 				frame.tf_regs.r_pc = (int)curpcb->pcb_onfault;
 				return;
 			}
-			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
+			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
 			    map, va, ftype, rv);
 			goto we_re_toast;
 		}
@@ -385,17 +433,22 @@ trap(frame)
 	case T_BPT | T_USER: 	/* breakpoint instruction */
 	case T_DBG | T_USER: 	/* debug trap */
 	trace:
-		frame.tf_regs.r_psr &= ~PSL_P;
 		trapsignal(p, SIGTRAP, type &~ T_USER);
 		break;
 
 	case T_NMI:		/* non-maskable interrupt */
 	case T_NMI | T_USER: 
-#ifdef DDB
+#if defined(KGDB) || defined(DDB)
 		/* NMI can be hooked up to a pushbutton for debugging */
 		printf ("NMI ... going to debugger\n");
+# ifdef KGDB
+		if (kgdb_trap(type, &frame))
+			return;
+# endif
+# ifdef DDB
 		if (kdb_trap (type, 0, &frame))
 			return;
+# endif
 #endif
 		goto we_re_toast;
 	}
