@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0.c,v 1.8.2.1 2004/08/03 10:32:49 skrll Exp $ */
+/*	$NetBSD: ixp12x0.c,v 1.8.2.2 2004/09/03 12:44:29 skrll Exp $ */
 /*
  * Copyright (c) 2002, 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0.c,v 1.8.2.1 2004/08/03 10:32:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0.c,v 1.8.2.2 2004/09/03 12:44:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,8 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: ixp12x0.c,v 1.8.2.1 2004/08/03 10:32:49 skrll Exp $"
 #include <arm/ixp12x0/ixp12x0reg.h>
 #include <arm/ixp12x0/ixp12x0var.h>
 #include <arm/ixp12x0/ixp12x0_pcireg.h>
-
-int ixp12x0_pcibus_print(void *, const char *);
 
 static struct ixp12x0_softc *ixp12x0_softc;
 
@@ -175,7 +173,6 @@ ixp12x0_attach(sc)
 	/*
 	 * Attach the PCI bus.
 	 */
-	pba.pba_busname = "pci";
 	pba.pba_pc = &sc->ia_pci_chipset;
 	pba.pba_iot = &ixp12x0_bs_tag;
 	pba.pba_memt = &ixp12x0_bs_tag;
@@ -186,20 +183,7 @@ ixp12x0_attach(sc)
 	pba.pba_intrtag = 0;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 		PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
-	(void) config_found(&sc->sc_dev, &pba, ixp12x0_pcibus_print);
-}
-
-int
-ixp12x0_pcibus_print(void *aux, const char *pnp)
-{
-	struct pcibus_attach_args *pba = aux;
-
-	if (pnp)
-		aprint_normal("%s at %s", pba->pba_busname, pnp);
-
-	aprint_normal(" bus %d", pba->pba_bus);
-
-	return (UNCONF);
+	(void) config_found_ia(&sc->sc_dev, "pcibus", &pba, pcibusprint);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.6.2.1 2004/08/03 10:40:24 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.6.2.2 2004/09/03 12:45:06 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.6.2.1 2004/08/03 10:40:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.6.2.2 2004/09/03 12:45:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,40 +242,6 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	pcb->pcb_ctx.sf_sp = pcb->pcb_ctx.sf_fp = (register_t)(intptr_t)tf;
 	pcb->pcb_ctx.sf_r10 = (register_t)(intptr_t)func;
 	pcb->pcb_ctx.sf_r11 = (register_t)(intptr_t)arg;
-}
-
-/*
- * Move pages from one kernel virtual address to another.
- * Both addresses are assumed to reside in KSEG1,
- * and size must be a multiple of NBPG.
- */
-void
-pagemove(caddr_t from, caddr_t to, size_t size)
-{
-	paddr_t pa;
-	boolean_t rv;
-
-#ifdef DEBUG
-	if (size & PGOFSET ||
-	    (uintptr_t)from < SH5_KSEG1_BASE || (uintptr_t)to < SH5_KSEG1_BASE)
-		panic("pagemove");
-#endif
-
-	while (size > 0) {
-		rv = pmap_extract(pmap_kernel(), (vaddr_t)from, &pa);
-#ifdef DEBUG
-		if (rv == FALSE)
-			panic("pagemove 2");
-		if (pmap_extract(pmap_kernel(), (vaddr_t)to, NULL) == TRUE)
-			panic("pagemove 3");
-#endif
-		pmap_kremove((vaddr_t)from, (vsize_t)PAGE_SIZE);
-		pmap_kenter_pa((vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE);
-		from += PAGE_SIZE;
-		to += PAGE_SIZE;
-		size -= PAGE_SIZE;
-	}
-	pmap_update(pmap_kernel());
 }
 
 /*

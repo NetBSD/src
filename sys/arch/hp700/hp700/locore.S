@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.3.6.2 2004/08/12 11:41:04 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.3.6.3 2004/09/03 12:44:39 skrll Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -619,14 +619,16 @@ $hp700_inew_loop:
 	/*
 	 * If the map entry for this bit has INT_REG_BIT_REG 
 	 * set, branch to descend into the next interrupt 
-	 * register.  Otherwise, set the bit in our ipending_new
+	 * register.  Otherwise, set the bits in our ipending_new
 	 * value and loop.
 	 */
-	ldbx	%arg2(%arg0), %t1
-	bb,<,n	%t1, (31 - INT_REG_BIT_REG_POS), $hp700_inew_descend
-	mtsar	%t1
+	ldwx,s  %arg2(%arg0), %t1
+	ldil	L%INT_REG_BIT_REG, %t2
+	ldo	R%INT_REG_BIT_REG(%t2), %t2
+	and	%t1, %t2, %t3
+	combt,=,n	%t2, %t3, $hp700_inew_descend
 	addib,>= -1, %arg2, $hp700_inew_loop
-	vdepi	1, 1, %ret0
+	or	%t1, %ret0, %ret0
 
 $hp700_inew_done:
 
@@ -645,7 +647,7 @@ $hp700_inew_descend:
 	 * is the CPU interrupt register, which you can
 	 * never descend into since it's the root.)
 	 */
-	extru,<> %t1, 31, INT_REG_BIT_REG_POS, %t1
+	andcm,<> %t1, %t2, %t1
 	b,n	$hp700_inew_unused
 
 	/* Save our state. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.15.2.1 2004/08/03 10:34:23 skrll Exp $	*/
+/*	$NetBSD: intio.c,v 1.15.2.2 2004/09/03 12:44:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.15.2.1 2004/08/03 10:34:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.15.2.2 2004/09/03 12:44:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,9 +57,9 @@ struct intio_softc {
 	struct bus_space_tag sc_tag;
 };
 
-int	intiomatch(struct device *, struct cfdata *, void *);
-void	intioattach(struct device *, struct device *, void *);
-int	intioprint(void *, const char *);
+static int	intiomatch(struct device *, struct cfdata *, void *);
+static void	intioattach(struct device *, struct device *, void *);
+static int	intioprint(void *, const char *);
 
 CFATTACH_DECL(intio, sizeof(struct intio_softc),
     intiomatch, intioattach, NULL, NULL);
@@ -67,7 +67,7 @@ CFATTACH_DECL(intio, sizeof(struct intio_softc),
 #if defined(HP320) || defined(HP330) || defined(HP340) || defined(HP345) || \
     defined(HP350) || defined(HP360) || defined(HP370) || defined(HP375) || \
     defined(HP380) || defined(HP385)
-const struct intio_builtins intio_3xx_builtins[] = {
+static const struct intio_builtins intio_3xx_builtins[] = {
 	{ "rtc",	0x020000,	-1},
 	{ "hil",	0x028000,	1},
 	{ "hpib",	0x078000,	3},
@@ -79,7 +79,7 @@ const struct intio_builtins intio_3xx_builtins[] = {
 #endif
 
 #if defined(HP400) || defined(HP425) || defined(HP433)
-const struct intio_builtins intio_4xx_builtins[] = {
+static const struct intio_builtins intio_4xx_builtins[] = {
 	{ "rtc",	0x020000,	-1},
 	{ "frodo",	0x01c000,	5},
 	{ "hil",	0x028000,	1},
@@ -93,11 +93,8 @@ const struct intio_builtins intio_4xx_builtins[] = {
 static int intio_matched = 0;
 extern caddr_t internalhpib;
 
-int
-intiomatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+intiomatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	/* Allow only one instance. */
 	if (intio_matched)
@@ -107,10 +104,8 @@ intiomatch(parent, match, aux)
 	return (1);
 }
 
-void
-intioattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+intioattach(struct device *parent, struct device *self, void *aux)
 {
 	struct intio_softc *sc = (struct intio_softc *)self;
 	struct intio_attach_args ia;
@@ -175,10 +170,8 @@ intioattach(parent, self, aux)
 	}
 }
 
-int
-intioprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+static int
+intioprint(void *aux, const char *pnp)
 {
 	struct intio_attach_args *ia = aux;
 

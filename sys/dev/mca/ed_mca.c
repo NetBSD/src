@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.22.2.2 2004/08/25 06:58:05 skrll Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.22.2.3 2004/09/03 12:45:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,10 +38,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.22.2.2 2004/08/25 06:58:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.22.2.3 2004/09/03 12:45:27 skrll Exp $");
 
 #include "rnd.h"
-#include "locators.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,13 +129,6 @@ ed_mca_probe(parent, cf, aux)
 	struct edc_mca_softc *sc = (void *) parent;
 	struct ed_attach_args *eda = (struct ed_attach_args *) aux;
 	int found = 1;
-
-	/*
-	 * Check we match hardwired config.
-	 */
-	if (cf->edccf_unit != EDCCF_DRIVE_DEFAULT &&
-	    cf->edccf_unit != eda->edc_drive)
-		return (0);
 
 	/*
 	 * Get Device Configuration (09).

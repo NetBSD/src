@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.19.2.1 2004/08/03 10:37:00 skrll Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.19.2.2 2004/09/03 12:44:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.19.2.1 2004/08/03 10:37:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.19.2.2 2004/09/03 12:44:57 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -106,8 +106,8 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.19.2.1 2004/08/03 10:37:00 skrll E
 extern int fputype;
 extern short exframesize[];
 struct fpframe m68k_cached_fpu_idle_frame;
-void	m68881_save __P((struct fpframe *));
-void	m68881_restore __P((struct fpframe *));
+void	m68881_save(struct fpframe *);
+void	m68881_restore(struct fpframe *);
 
 #ifdef DEBUG
 int sigdebug = 0;
@@ -238,11 +238,8 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 }
 
 void
-cpu_upcall(l, type, nevents, ninterrupted, sas, ap, sp, upcall)
-	struct lwp *l;
-	int type, nevents, ninterrupted;
-	void *sas, *ap, *sp;
-	sa_upcall_t upcall;
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
+    void *ap, void *sp, sa_upcall_t upcall)
 {
 	struct saframe *sfp, sf;
 	struct frame *frame;
@@ -271,10 +268,7 @@ cpu_upcall(l, type, nevents, ninterrupted, sas, ap, sp, upcall)
 }
 
 void
-cpu_getmcontext(l, mcp, flags)
-	struct lwp *l;
-	mcontext_t *mcp;
-	unsigned int *flags;
+cpu_getmcontext(struct lwp *l, mcontext_t *mcp, u_int *flags)
 {
 	__greg_t *gr = mcp->__gregs;
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
@@ -347,10 +341,7 @@ cpu_getmcontext(l, mcp, flags)
 }
 
 int
-cpu_setmcontext(l, mcp, flags)
-	struct lwp *l;
-	const mcontext_t *mcp;
-	unsigned int flags;
+cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, u_int flags)
 {
 	__greg_t *gr = mcp->__gregs;
 	struct frame *frame = (struct frame *)l->l_md.md_regs;

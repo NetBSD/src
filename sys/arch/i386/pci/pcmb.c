@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmb.c,v 1.8.2.1 2004/08/03 10:36:14 skrll Exp $	*/
+/*	$NetBSD: pcmb.c,v 1.8.2.2 2004/09/03 12:44:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmb.c,v 1.8.2.1 2004/08/03 10:36:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmb.c,v 1.8.2.2 2004/09/03 12:44:48 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,12 +66,6 @@ CFATTACH_DECL(pcmb, sizeof(struct device),
     pcmbmatch, pcmbattach, NULL, NULL);
 
 void	pcmb_callback __P((struct device *));
-int	pcmb_print __P((void *, const char *));
-
-union pcmb_attach_args {
-	const char *ma_name;			/* XXX should be common */
-	struct mcabus_attach_args ma_mba;
-};
 
 int
 pcmbmatch(parent, match, aux)
@@ -116,30 +110,17 @@ void
 pcmb_callback(self)
 	struct device *self;
 {
-	union pcmb_attach_args ma;
+	struct mcabus_attach_args ma;
 
 	/*
 	 * Attach MCA bus behind this bridge.
 	 */
-	ma.ma_mba.mba_busname = "mca";
-	ma.ma_mba.mba_iot = X86_BUS_SPACE_IO;
-	ma.ma_mba.mba_memt = X86_BUS_SPACE_MEM;
+	ma.mba_iot = X86_BUS_SPACE_IO;
+	ma.mba_memt = X86_BUS_SPACE_MEM;
 #if NMCA > 0
-	ma.ma_mba.mba_dmat = &mca_bus_dma_tag;
+	ma.mba_dmat = &mca_bus_dma_tag;
 #endif
-	ma.ma_mba.mba_mc = NULL;
-	ma.ma_mba.mba_bus = 0;
-	config_found(self, &ma.ma_mba, pcmb_print);
-}
-
-int
-pcmb_print(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	union pcmb_attach_args *ma = aux;
-
-	if (pnp)
-		aprint_normal("%s at %s", ma->ma_name, pnp);
-	return (UNCONF);
+	ma.mba_mc = NULL;
+	ma.mba_bus = 0;
+	config_found_ia(self, "mcabus", &ma, mcabusprint);
 }

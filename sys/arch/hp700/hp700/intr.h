@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3.6.1 2004/08/03 10:34:48 skrll Exp $	*/
+/*	$NetBSD: intr.h,v 1.3.6.2 2004/09/03 12:44:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -54,21 +54,24 @@ struct hp700_int_reg {
 	const char *int_reg_dev;
 
 	/*
-	 * The virtual address of the mask and request 
+	 * The virtual address of the mask, request and level
 	 * registers.
 	 */
 	volatile int *int_reg_mask;
 	volatile int *int_reg_req;
+	volatile int *int_reg_level;
 
 	/*
 	 * This array has one entry for each bit in the 
-	 * interrupt request register.  If the most 
-	 * significant bit is clear, the low 7 bits are 
-	 * the HP bit position of this interrupt bit in 
-	 * a cpl value/spl mask.  Otherwise, the low 7
+	 * interrupt request register. If the 24 most 
+	 * significant bits are set, the low 8
 	 * bits are the index of the hp700_int_reg
 	 * that this interrupt bit leads to, with zero 
 	 * meaning that the interrupt bit is unused.
+	 * Otherwise this bits correspond to the 
+	 * hp700_int_bits. I.e. this bits are ored to 
+	 * ipending_new in hp700_intr_ipending_new()
+	 * when an interrupt happend.
 	 *
 	 * Note that this array is indexed by HP bit
 	 * number, *not* by "normal" bit number.  In
@@ -76,9 +79,8 @@ struct hp700_int_reg {
 	 * the interrupt register corresponds to array
 	 * index 31.
 	 */
-	unsigned char int_reg_bits_map[HP700_INT_BITS];
-#define	INT_REG_BIT_REG_POS	(7)
-#define	INT_REG_BIT_REG		(1 << INT_REG_BIT_REG_POS)
+	unsigned int int_reg_bits_map[HP700_INT_BITS];
+#define	INT_REG_BIT_REG		0xffffff00
 #define	INT_REG_BIT_UNUSED	INT_REG_BIT_REG
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425.c,v 1.3.2.1 2004/08/03 10:32:58 skrll Exp $ */
+/*	$NetBSD: ixp425.c,v 1.3.2.2 2004/09/03 12:44:29 skrll Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425.c,v 1.3.2.1 2004/08/03 10:32:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425.c,v 1.3.2.2 2004/09/03 12:44:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425.c,v 1.3.2.1 2004/08/03 10:32:58 skrll Exp $")
 #include <arm/xscale/ixp425reg.h>
 #include <arm/xscale/ixp425var.h>
 
-int	ixp425_pcibus_print(void *, const char *);
 struct	ixp425_softc *ixp425_softc;
 
 void
@@ -92,7 +91,6 @@ ixp425_attach(struct ixp425_softc *sc)
 	/*
 	 * Attach the PCI bus.
 	 */
-	pba.pba_busname = "pci";
 	pba.pba_pc = &sc->ia_pci_chipset;
 	pba.pba_iot = &sc->sc_pci_iot;
 	pba.pba_memt = &sc->sc_pci_memt;
@@ -104,18 +102,5 @@ ixp425_attach(struct ixp425_softc *sc)
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 			PCI_FLAGS_MRL_OKAY   | PCI_FLAGS_MRM_OKAY |
 			PCI_FLAGS_MWI_OKAY;
-	(void) config_found(&sc->sc_dev, &pba, ixp425_pcibus_print);
-}
-
-int
-ixp425_pcibus_print(void *aux, const char *pnp)
-{
-	struct pcibus_attach_args *pba = aux;
-
-	if (pnp)
-		aprint_normal("%s at %s", pba->pba_busname, pnp);
-
-	aprint_normal(" bus %d", pba->pba_bus);
-
-	return (UNCONF);
+	(void) config_found_ia(&sc->sc_dev, "pcibus", &pba, pcibusprint);
 }

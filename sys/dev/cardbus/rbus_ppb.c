@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.9.2.1 2004/08/03 10:45:47 skrll Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.9.2.2 2004/09/03 12:45:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.9.2.1 2004/08/03 10:45:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.9.2.2 2004/09/03 12:45:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -768,8 +768,7 @@ ppb_cardbus_attach(parent, self, aux)
 	 *
 	 * XXX Don't pass-through Memory Read Multiple.  Should we?
 	 * XXX Consult the spec...
-	 */
-	pba.pba_busname = "pci";	
+	 */	
 	pba.pba_iot  = ca->ca_iot;
 	pba.pba_memt = ca->ca_memt;
 	pba.pba_dmat = ca->ca_dmat;
@@ -780,7 +779,7 @@ ppb_cardbus_attach(parent, self, aux)
 	/*pba.pba_intrswiz = parent_sc->sc_intrswiz; */
 	pba.pba_intrtag  = psc->sc_pa.pa_intrtag;
 
-	config_found(self, &pba, rppbprint);
+	config_found_ia(self, "pcibus", &pba, rppbprint);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_subr.c,v 1.9.2.1 2004/08/03 10:34:23 skrll Exp $	*/
+/*	$NetBSD: grf_subr.c,v 1.9.2.2 2004/09/03 12:44:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_subr.c,v 1.9.2.1 2004/08/03 10:34:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_subr.c,v 1.9.2.2 2004/09/03 12:44:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,14 +54,12 @@ __KERNEL_RCSID(0, "$NetBSD: grf_subr.c,v 1.9.2.1 2004/08/03 10:34:23 skrll Exp $
 #include <hp300/dev/grfioctl.h>
 #include <hp300/dev/grfvar.h>
 
-int	grfdevprint __P((void *, const char *));
+static int	grfdevprint(void *, const char *);
 
 void
-grfdev_attach(sc, init, regs, sw)
-	struct grfdev_softc *sc;
-	int (*init) __P((struct grf_data *, int, caddr_t));
-	caddr_t regs;
-	struct grfsw *sw;
+grfdev_attach(struct grfdev_softc *sc,
+    int (*init)(struct grf_data *, int, caddr_t),
+    caddr_t regs, struct grfsw *sw)
 {
 	struct grfdev_attach_args ga;
 	struct grf_data *gp;
@@ -107,10 +105,8 @@ grfdev_attach(sc, init, regs, sw)
 	(void)config_found(&sc->sc_dev, &ga, grfdevprint);
 }
 
-int
-grfdevprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+static int
+grfdevprint(void *aux, const char *pnp)
 {
 	/* struct grfdev_attach_args *ga = aux; */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.8.2.1 2004/08/03 10:33:46 skrll Exp $	*/
+/*	$NetBSD: gt.c,v 1.8.2.2 2004/09/03 12:44:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.8.2.1 2004/08/03 10:33:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.8.2.2 2004/09/03 12:44:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,19 +43,32 @@ __KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.8.2.1 2004/08/03 10:33:46 skrll Exp $");
 #include <sys/types.h>
 #include <sys/device.h>
 
-#include <machine/intr.h>
+#include <machine/autoconf.h>
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <dev/pci/pcivar.h>
+
+#include <cobalt/cobalt/clockvar.h>
+#include <cobalt/dev/gtreg.h>
+
 #include "pci.h"
 
 struct gt_softc {
 	struct device	sc_dev;
+
+	bus_space_tag_t sc_bst;
+	bus_space_handle_t sc_bsh;
+	struct cobalt_pci_chipset sc_pc;
 };
 
 static int	gt_match(struct device *, struct cfdata *, void *);
 static void	gt_attach(struct device *, struct device *, void *);
 static int	gt_print(void *aux, const char *pnp);
+
+static void	gt_timer_init(struct gt_softc *sc);
+static void	gt_timer0_init(void *);
+static long	gt_timer0_read(void *);
 
 CFATTACH_DECL(gt, sizeof(struct gt_softc),
     gt_match, gt_attach, NULL, NULL);
@@ -69,22 +82,41 @@ gt_match(parent, match, aux)
 	return 1;
 }
 
+#define GT_REG_REGION	0x1000
+
 static void
 gt_attach(parent, self, aux)
 	struct device *parent;
 	struct device *self;
 	void *aux;
 {
+	struct mainbus_attach_args *ma = aux;
+	struct gt_softc *sc = (void *)self;
+#if NPCI > 0
+	pci_chipset_tag_t pc;
 	struct pcibus_attach_args pba;
+#endif
+
+	sc->sc_bst = ma->ma_iot;
+	if (bus_space_map(sc->sc_bst, ma->ma_addr, GT_REG_REGION,
+	    0, &sc->sc_bsh)) {
+		printf(": unable to map GT64111 registers\n");
+		return;
+	}
 
 	printf("\n");
 
-	/* XXX */
-	*((volatile u_int32_t *)0xb4000c00) =
-		(*((volatile u_int32_t *)0xb4000c00) & ~0x6) | 0x2;
+	gt_timer_init(sc);
+
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, GT_PCI_COMMAND,
+	    (bus_space_read_4(sc->sc_bst, sc->sc_bsh, GT_PCI_COMMAND) &
+	    ~PCI_SYNCMODE) | PCI_PCLK_HIGH);
 
 #if NPCI > 0
-	pba.pba_busname = "pci";
+	pc = &sc->sc_pc;
+	pc->pc_bst = sc->sc_bst;
+	pc->pc_bsh = sc->sc_bsh;
+
 	pba.pba_dmat = &pci_bus_dma_tag;
 	pba.pba_dmat64 = NULL;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
@@ -92,9 +124,9 @@ gt_attach(parent, self, aux)
 	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 		PCI_FLAGS_MRL_OKAY | /*PCI_FLAGS_MRM_OKAY|*/ PCI_FLAGS_MWI_OKAY;
-	config_found(self, &pba, gt_print);
+	pba.pba_pc = pc;
+	config_found_ia(self, "pcibus", &pba, gt_print);
 #endif
-	return;
 }
 
 static int
@@ -104,4 +136,51 @@ gt_print(aux, pnp)
 {
 	/* XXX */
 	return 0;
+}
+
+static void
+gt_timer_init(struct gt_softc *sc)
+{
+
+	/* stop timer0 */
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, GT_TIMER_CTRL,
+	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, GT_TIMER_CTRL) & ~ENTC0);
+
+	timer_start = gt_timer0_init;
+	timer_read  = gt_timer0_read;
+	timer_cookie = sc;
+}
+
+#define TIMER0_INIT_VALUE 500000
+
+static void
+gt_timer0_init(void *cookie)
+{
+	struct gt_softc *sc = cookie;
+
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh,
+	    GT_TIMER_COUNTER0, TIMER0_INIT_VALUE);
+	/* start timer0 */
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, GT_TIMER_CTRL,
+	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, GT_TIMER_CTRL) | ENTC0);
+}
+
+static long
+gt_timer0_read(void *cookie)
+{
+	struct gt_softc *sc = cookie;
+	uint32_t counter0;
+
+	counter0 = bus_space_read_4(sc->sc_bst, sc->sc_bsh, GT_TIMER_COUNTER0);
+	counter0 = TIMER0_INIT_VALUE - counter0;
+#if 0
+	counter /= 50;
+#else
+	/*
+	 * From pmax/pmax/dec_3min.c:
+	 * 1/64 + 1/256 + 1/2048 = 41/2048 = 1/49.9512...
+	 */
+	counter0 = (counter0 >> 6) + (counter0 >> 8) + (counter0 >> 11);
+#endif
+	return counter0;
 }

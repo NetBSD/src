@@ -1,4 +1,4 @@
-/* $NetBSD: lca.c,v 1.41 2003/06/15 23:08:55 fvdl Exp $ */
+/* $NetBSD: lca.c,v 1.41.2.1 2004/09/03 12:44:28 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.41 2003/06/15 23:08:55 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.41.2.1 2004/09/03 12:44:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,8 +107,6 @@ CFATTACH_DECL(lca, sizeof(struct lca_softc),
     lcamatch, lcaattach, NULL, NULL);
 
 extern struct cfdriver lca_cd;
-
-static int	lcaprint __P((void *, const char *pnp));
 
 int	lca_bus_get_window __P((int, int,
 	    struct alpha_bus_space_translation *));
@@ -244,7 +242,6 @@ lcaattach(parent, self, aux)
 		panic("lcaattach: shouldn't be here, really...");
 	}
 
-	pba.pba_busname = "pci";
 	pba.pba_iot = &lcp->lc_iot;
 	pba.pba_memt = &lcp->lc_memt;
 	pba.pba_dmat =
@@ -255,21 +252,7 @@ lcaattach(parent, self, aux)
 	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
-	config_found(self, &pba, lcaprint);
-}
-
-static int
-lcaprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	register struct pcibus_attach_args *pba = aux;
-
-	/* only PCIs can attach to LCAes; easy. */
-	if (pnp)
-		aprint_normal("%s at %s", pba->pba_busname, pnp);
-	aprint_normal(" bus %d", pba->pba_bus);
-	return (UNCONF);
+	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.80.2.2 2004/08/25 06:58:06 skrll Exp $	*/
+/*	$NetBSD: pci.c,v 1.80.2.3 2004/09/03 12:45:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.80.2.2 2004/08/25 06:58:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.80.2.3 2004/09/03 12:45:28 skrll Exp $");
 
 #include "opt_pci.h"
 
@@ -110,9 +110,6 @@ pcimatch(parent, cf, aux)
 	void *aux;
 {
 	struct pcibus_attach_args *pba = aux;
-
-	if (strcmp(pba->pba_busname, cf->cf_name))
-		return (0);
 
 	/* Check the locators */
 	if (cf->pcibuscf_bus != PCIBUS_UNK_BUS &&

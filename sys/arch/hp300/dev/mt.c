@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.23.2.1 2004/08/03 10:34:23 skrll Exp $	*/
+/*	$NetBSD: mt.c,v 1.23.2.2 2004/09/03 12:44:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.23.2.1 2004/08/03 10:34:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.23.2.2 2004/09/03 12:44:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.23.2.1 2004/08/03 10:34:23 skrll Exp $");
 
 #include <hp300/dev/mtreg.h>
 
-struct	mtinfo {
+static const struct mtinfo {
 	u_short	hwid;
 	char	*desc;
 } mtinfo[] = {
@@ -98,7 +98,7 @@ struct	mtinfo {
 	{ MT7980ID,	"7980"	},
 	{ MT7974AID,	"7974A"	},
 };
-int	nmtinfo = sizeof(mtinfo) / sizeof(mtinfo[0]);
+static const int nmtinfo = sizeof(mtinfo) / sizeof(mtinfo[0]);
 
 struct	mt_softc {
 	struct	device sc_dev;
@@ -133,20 +133,20 @@ int	mtdebug = 0;
 #define B_CMD		B_XXX		/* command buf instead of data */
 #define	b_cmd		b_blkno		/* blkno holds cmd when B_CMD */
 
-int	mtmatch __P((struct device *, struct cfdata *, void *));
-void	mtattach __P((struct device *, struct device *, void *));
+static int	mtmatch(struct device *, struct cfdata *, void *);
+static void	mtattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(mt, sizeof(struct mt_softc),
     mtmatch, mtattach, NULL, NULL);
 
 extern struct cfdriver mt_cd;
 
-dev_type_open(mtopen);
-dev_type_close(mtclose);
-dev_type_read(mtread);
-dev_type_write(mtwrite);
-dev_type_ioctl(mtioctl);
-dev_type_strategy(mtstrategy);
+static dev_type_open(mtopen);
+static dev_type_close(mtclose);
+static dev_type_read(mtread);
+static dev_type_write(mtwrite);
+static dev_type_ioctl(mtioctl);
+static dev_type_strategy(mtstrategy);
 
 const struct bdevsw mt_bdevsw = {
 	mtopen, mtclose, mtstrategy, mtioctl, nodump, nosize, D_TAPE
@@ -157,32 +157,27 @@ const struct cdevsw mt_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_TAPE
 };
 
-int	mtident __P((struct mt_softc *, struct hpibbus_attach_args *));
-void	mtustart __P((struct mt_softc *));
-int	mtreaddsj __P((struct mt_softc *, int));
-int	mtcommand __P((dev_t, int, int));
-void	spl_mtintr __P((void *));
-void	spl_mtstart __P((void *));
+static int	mtident(struct mt_softc *, struct hpibbus_attach_args *);
+static void	mtustart(struct mt_softc *);
+static int	mtreaddsj(struct mt_softc *, int);
+static int	mtcommand(dev_t, int, int);
+static void	spl_mtintr(void *);
+static void	spl_mtstart(void *);
 
-void	mtstart __P((void *));
-void	mtgo __P((void *));
-void	mtintr __P((void *));
+static void	mtstart(void *);
+static void	mtgo(void *);
+static void	mtintr(void *);
 
-int
-mtmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+mtmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct hpibbus_attach_args *ha = aux;
 
 	return (mtident(NULL, ha));
 }
 
-void
-mtattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+mtattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mt_softc *sc = (struct mt_softc *)self;
 	struct hpibbus_attach_args *ha = aux;
@@ -213,10 +208,8 @@ mtattach(parent, self, aux)
 	sc->sc_hq.hq_intr = mtintr;
 }
 
-int
-mtident(sc, ha)
-	struct mt_softc *sc;
-	struct hpibbus_attach_args *ha;
+static int
+mtident(struct mt_softc *sc, struct hpibbus_attach_args *ha)
 {
 	int i;
 
@@ -238,10 +231,8 @@ mtident(sc, ha)
  * performed, unless "ecmd" is zero.  Returns DSJ value, -1 on failure
  * and -2 on "temporary" failure.
  */
-int
-mtreaddsj(sc, ecmd)
-	struct mt_softc *sc;
-	int ecmd;
+static int
+mtreaddsj(struct mt_softc *sc, int ecmd)
 {
 	int retval;
 
@@ -316,11 +307,8 @@ mtreaddsj(sc, ecmd)
 	return ((int) sc->sc_lastdsj);
 }
 
-int
-mtopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+static int
+mtopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = UNIT(dev);
 	struct mt_softc *sc;
@@ -422,11 +410,8 @@ errout:
 	return (error);
 }
 
-int
-mtclose(dev, flag, fmt, p)
-	dev_t dev;
-	int flag, fmt;
-	struct proc *p;
+static int
+mtclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct mt_softc *sc = mt_cd.cd_devs[UNIT(dev)];
 
@@ -441,11 +426,8 @@ mtclose(dev, flag, fmt, p)
 	return (0);
 }
 
-int
-mtcommand(dev, cmd, cnt)
-	dev_t dev;
-	int cmd;
-	int cnt;
+static int
+mtcommand(dev_t dev, int cmd, int cnt)
 {
 	struct mt_softc *sc = mt_cd.cd_devs[UNIT(dev)];
 	struct buf *bp = &sc->sc_bufstore;
@@ -477,9 +459,8 @@ mtcommand(dev, cmd, cnt)
 /*
  * Only thing to check here is for legal record lengths (writes only).
  */
-void
-mtstrategy(bp)
-	struct buf *bp;
+static void
+mtstrategy(struct buf *bp)
 {
 	struct mt_softc *sc;
 	int unit;
@@ -533,9 +514,8 @@ mtstrategy(bp)
 	splx(s);
 }
 
-void
-mtustart(sc)
-	struct mt_softc *sc;
+static void
+mtustart(struct mt_softc *sc)
 {
 
 	dlog(LOG_DEBUG, "%s ustart", sc->sc_dev.dv_xname);
@@ -543,9 +523,8 @@ mtustart(sc)
 		mtstart(sc);
 }
 
-void
-spl_mtintr(arg)
-	void *arg;
+static void
+spl_mtintr(void *arg)
 {
 	struct mt_softc *sc = arg;
 	int s = splbio();
@@ -555,9 +534,8 @@ spl_mtintr(arg)
 	splx(s);
 }
 
-void
-spl_mtstart(arg)
-	void *arg;
+static void
+spl_mtstart(void *arg)
 {
 	int s = splbio();
 
@@ -565,9 +543,8 @@ spl_mtstart(arg)
 	splx(s);
 }
 
-void
-mtstart(arg)
-	void *arg;
+static void
+mtstart(void *arg)
 {
 	struct mt_softc *sc = arg;
 	struct buf *bp;
@@ -771,9 +748,8 @@ done:
  * "rw" was initialized to bp->b_flags & B_READ before "bp" was initialized.
  *   -- ajv@comp.vuw.ac.nz
  */
-void
-mtgo(arg)
-	void *arg;
+static void
+mtgo(void *arg)
 {
 	struct mt_softc *sc = arg;
 	struct buf *bp;
@@ -786,9 +762,8 @@ mtgo(arg)
 	    bp->b_data, bp->b_bcount, rw, rw != 0);
 }
 
-void
-mtintr(arg)
-	void *arg;
+static void
+mtintr(void *arg)
 {
 	struct mt_softc *sc = arg;
 	struct buf *bp;
@@ -951,11 +926,8 @@ mtintr(arg)
 		mtustart(sc);
 }
 
-int
-mtread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+static int
+mtread(dev_t dev, struct uio *uio, int flags)
 {
 	struct mt_softc *sc = mt_cd.cd_devs[UNIT(dev)];
 
@@ -963,11 +935,8 @@ mtread(dev, uio, flags)
 	    dev, B_READ, minphys, uio));
 }
 
-int
-mtwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+static int
+mtwrite(dev_t dev, struct uio *uio, int flags)
 {
 	struct mt_softc *sc = mt_cd.cd_devs[UNIT(dev)];
 
@@ -975,13 +944,8 @@ mtwrite(dev, uio, flags)
 	    dev, B_WRITE, minphys, uio));
 }
 
-int
-mtioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+static int
+mtioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct mtop *op;
 	int cnt;

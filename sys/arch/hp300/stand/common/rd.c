@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.1.60.1 2004/08/03 10:34:38 skrll Exp $	*/
+/*	$NetBSD: rd.c,v 1.1.60.2 2004/09/03 12:44:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -247,53 +247,6 @@ rdident(ctlr, unit)
 	return id;
 }
 
-#ifdef COMPAT_NOLABEL
-int rdcyloff[][8] = {
-	{ 1, 143, 0, 143, 0,   0,   323, 503, },	/* 7945A */
-	{ 1, 167, 0, 0,	  0,   0,   0,	 0,   },	/* 9134D */
-	{ 0, 0,	  0, 0,	  0,   0,   0,	 0,   },	/* 9122S */
-	{ 0, 71,  0, 221, 292, 542, 221, 0,   },	/* 7912P */
-	{ 1, 72,  0, 72,  362, 802, 252, 362, },	/* 7914P */
-	{ 1, 28,  0, 140, 167, 444, 140, 721, },	/* 7933H */
-	{ 1, 200, 0, 200, 0,   0,   450, 600, },	/* 9134L */
-	{ 1, 105, 0, 105, 380, 736, 265, 380, },	/* 7957A */
-	{ 1, 65,  0, 65,  257, 657, 193, 257, },	/* 7958A */
-	{ 1, 128, 0, 128, 518, 918, 388, 518, },	/* 7957B */
-	{ 1, 44,  0, 44,  174, 496, 131, 174, },	/* 7958B */
-	{ 1, 44,  0, 44,  218, 1022,174, 218, },	/* 7959B */
-	{ 1, 37,  0, 37,  183, 857, 147, 183, },	/* 2200A */
-	{ 1, 19,  0, 94,  112, 450, 94,	 788, },	/* 2203A */
-	{ 1, 20,  0, 98,  117, 256, 98,	 397, },	/* 7936H */
-	{ 1, 11,  0, 53,  63,  217, 53,	 371, },	/* 7937H */
-};
-
-struct rdcompatinfo {
-	int	nbpc;
-	int	*cyloff;
-} rdcompatinfo[] = {
-	{ NRD7945ABPT * NRD7945ATRK, rdcyloff[0] },
-	{ NRD9134DBPT * NRD9134DTRK, rdcyloff[1] },
-	{ NRD9122SBPT * NRD9122STRK, rdcyloff[2] },
-	{ NRD7912PBPT * NRD7912PTRK, rdcyloff[3] },
-	{ NRD7914PBPT * NRD7914PTRK, rdcyloff[4] },
-	{ NRD7958ABPT * NRD7958ATRK, rdcyloff[8] },
-	{ NRD7957ABPT * NRD7957ATRK, rdcyloff[7] },
-	{ NRD7933HBPT * NRD7933HTRK, rdcyloff[5] },
-	{ NRD9134LBPT * NRD9134LTRK, rdcyloff[6] },
-	{ NRD7936HBPT * NRD7936HTRK, rdcyloff[14] },
-	{ NRD7937HBPT * NRD7937HTRK, rdcyloff[15] },
-	{ NRD7914PBPT * NRD7914PTRK, rdcyloff[4] },
-	{ NRD7945ABPT * NRD7945ATRK, rdcyloff[0] },
-	{ NRD9122SBPT * NRD9122STRK, rdcyloff[2] },
-	{ NRD7957BBPT * NRD7957BTRK, rdcyloff[9] },
-	{ NRD7958BBPT * NRD7958BTRK, rdcyloff[10] },
-	{ NRD7959BBPT * NRD7959BTRK, rdcyloff[11] },
-	{ NRD2200ABPT * NRD2200ATRK, rdcyloff[12] },
-	{ NRD2203ABPT * NRD2203ATRK, rdcyloff[13] },
-};
-int	nrdcompatinfo = sizeof(rdcompatinfo) / sizeof(rdcompatinfo[0]);
-#endif					
-
 char io_buf[MAXBSIZE];
 
 static int
@@ -323,24 +276,11 @@ rdgetinfo(rs)
 	
 	msg = getdisklabel(io_buf, lp);
 	if (msg) {
-		printf("rd(%d,%d,%d): WARNING: %s, ",
+		printf("rd(%d,%d,%d): WARNING: %s\n",
 		       rs->sc_ctlr, rs->sc_unit, rs->sc_part, msg);
-#ifdef COMPAT_NOLABEL
-		{
-			struct rdcompatinfo *ci;
-
-			printf("using old default partitioning\n");
-			ci = &rdcompatinfo[rs->sc_type];
-			pi->npart = 8;
-			for (i = 0; i < pi->npart; i++)
-				pi->offset[i] = ci->cyloff[i] * ci->nbpc;
-		}
-#else
-		printf("defining `c' partition as entire disk\n");
 		pi->npart = 3;
 		pi->offset[0] = pi->offset[1] = -1;
 		pi->offset[2] = 0;
-#endif
 	} else {
 		pi->npart = lp->d_npartitions;
 		for (i = 0; i < pi->npart; i++)

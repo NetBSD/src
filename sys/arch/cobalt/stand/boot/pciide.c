@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.1.2.1 2004/08/03 10:33:46 skrll Exp $	*/
+/*	$NetBSD: pciide.c,v 1.1.2.2 2004/09/03 12:44:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -40,13 +40,15 @@
 #include "boot.h"
 #include "wdvar.h"
 
+#define COBALT_IO_SPACE_BASE	0x10000000	/* XXX VT82C586 ISA I/O space */
+
 int
 pciide_init(chp, unit)
 	struct wdc_channel *chp;
 	u_int *unit;
 {
-	u_long bpa, addr;
-	int compatchan = 0;
+	u_int32_t cmdreg, ctlreg;
+	int i, compatchan = 0;
 
 	/*
 	 * two channels per chip, two drives per channel
@@ -61,12 +63,21 @@ pciide_init(chp, unit)
 	/*
 	 * XXX map?
 	 */
-	bpa = PCIIDE_COMPAT_CMD_BASE(compatchan);
-	addr = MIPS_PHYS_TO_KSEG1(bpa);
-	if (bpa < 0x10000000)
-		addr += 0x10000000;
+	cmdreg = MIPS_PHYS_TO_KSEG1(COBALT_IO_SPACE_BASE +
+	    PCIIDE_COMPAT_CMD_BASE(compatchan));
+	ctlreg = MIPS_PHYS_TO_KSEG1(COBALT_IO_SPACE_BASE +
+	    PCIIDE_COMPAT_CTL_BASE(compatchan));
 
-	chp->c_base = (u_int8_t*)addr;
-	chp->c_data = (u_int16_t*)(addr + wd_data);
+	/* set up cmd regsiters */
+	chp->c_cmdbase = (u_int8_t *)cmdreg;
+	chp->c_data = (u_int16_t *)(cmdreg + wd_data);
+	for (i = 0; i < WDC_NPORTS; i++)
+		chp->c_cmdreg[i] = chp->c_cmdbase + i;
+	/* set up shadow registers */
+	chp->c_cmdreg[wd_status]   = chp->c_cmdreg[wd_command];
+	chp->c_cmdreg[wd_features] = chp->c_cmdreg[wd_precomp];
+	/* set up ctl registers */
+	chp->c_ctlbase = (u_int8_t *)ctlreg;
+
 	return (0);
 }

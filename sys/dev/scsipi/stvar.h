@@ -1,4 +1,4 @@
-/*	$NetBSD: stvar.h,v 1.6.6.1 2004/08/25 06:58:44 skrll Exp $ */
+/*	$NetBSD: stvar.h,v 1.6.6.2 2004/09/03 12:45:39 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -148,6 +148,8 @@ struct st_softc {
 						 */
 	struct bufq_state buf_queue;	/* the queue of pending IO */
 					/* operations */
+	struct callout sc_callout;	/* restarting the queue after */
+					/* transient error */
 #if NRND > 0
 	rndsource_element_t	rnd_source;
 #endif

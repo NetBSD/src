@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6.2.1 2004/08/03 10:38:16 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6.2.2 2004/09/03 12:44:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6.2.1 2004/08/03 10:38:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6.2.2 2004/09/03 12:44:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -55,10 +55,6 @@ CFATTACH_DECL(mainbus, sizeof(struct device),
 
 int	mainbus_print(void *, const char *);
 
-union mainbus_attach_args {
-	const char *mba_busname;		/* first elem of all */
-	struct pcibus_attach_args mba_pba;
-};
 
 /* There can be only one */
 static int mainbus_found;
@@ -87,8 +83,7 @@ mainbus_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	union mainbus_attach_args mba;
-	struct confargs ca;
+	struct pcibus_attach_args pba;
 #ifdef PCI_NETBSD_CONFIGURE
 	struct extent *ioext, *memext;
 #endif
@@ -97,9 +92,8 @@ mainbus_attach(parent, self, aux)
 
 	printf("\n");
 
-	ca.ca_name = "cpu";
-	ca.ca_node = 0;
-	config_found(self, &ca, mainbus_print);
+	/* attach cpu */
+	config_found_ia(self, "mainbus", NULL, mainbus_print);
 
 	/*
 	 * XXX Note also that the presence of a PCI bus should
@@ -120,15 +114,14 @@ mainbus_attach(parent, self, aux)
 	extent_destroy(memext);
 #endif
 
-	mba.mba_pba.pba_busname = "pci";
-	mba.mba_pba.pba_iot = &mvmeppc_pci_io_bs_tag;
-	mba.mba_pba.pba_memt = &mvmeppc_pci_mem_bs_tag;
-	mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
-	mba.mba_pba.pba_dmat64 = NULL;
-	mba.mba_pba.pba_bus = 0;
-	mba.mba_pba.pba_bridgetag = NULL;
-	mba.mba_pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
-	config_found(self, &mba.mba_pba, mainbus_print);
+	pba.pba_iot = &mvmeppc_pci_io_bs_tag;
+	pba.pba_memt = &mvmeppc_pci_mem_bs_tag;
+	pba.pba_dmat = &pci_bus_dma_tag;
+	pba.pba_dmat64 = NULL;
+	pba.pba_bus = 0;
+	pba.pba_bridgetag = NULL;
+	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	config_found_ia(self, "pcibus", &pba, pcibusprint);
 #endif
 }
 
@@ -137,12 +130,9 @@ mainbus_print(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
-	union mainbus_attach_args *mba = aux;
 
 	if (pnp)
-		aprint_normal("%s at %s", mba->mba_busname, pnp);
-	if (!strcmp(mba->mba_busname, "pci"))
-		aprint_normal(" bus %d", mba->mba_pba.pba_bus);
+		aprint_normal("cpu at %s", pnp);
 
 	return (UNCONF);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.16.2.1 2004/08/03 10:34:23 skrll Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.16.2.2 2004/09/03 12:44:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -105,9 +105,9 @@ struct	grfsw {
 	int	gd_swid;	/* id to be returned by software */
 	char	*gd_desc;	/* description printed at config time */
 				/* boot time init routine */
-	int	(*gd_init) __P((struct grf_data *, int, caddr_t));
+	int	(*gd_init)(struct grf_data *, int, caddr_t);
 				/* misc function routine */
-	int	(*gd_mode) __P((struct grf_data *, int, caddr_t));
+	int	(*gd_mode)(struct grf_data *, int, caddr_t);
 };
 
 struct	grf_softc {
@@ -160,35 +160,35 @@ struct	grfdev_attach_args {
 extern	struct grf_data grf_cn;		/* grf_data for console device */
 
 /* grf.c prototypes */
-int	grfmap __P((dev_t, caddr_t *, struct proc *));
-int	grfunmap __P((dev_t, caddr_t, struct proc *));
-int	grfon __P((dev_t));
-int	grfoff __P((dev_t));
-paddr_t	grfaddr __P((struct grf_softc *, off_t));
+int	grfmap(dev_t, caddr_t *, struct proc *);
+int	grfunmap(dev_t, caddr_t, struct proc *);
+int	grfon(dev_t);
+int	grfoff(dev_t);
+paddr_t	grfaddr(struct grf_softc *, off_t);
 
 #ifndef _LKM
 #include "opt_compat_hpux.h"
 #endif
 
 #ifdef COMPAT_HPUX
-int	hpuxgrfioctl __P((dev_t, int, caddr_t, int, struct proc *));
+int	hpuxgrfioctl(dev_t, int, caddr_t, int, struct proc *);
 
-int	grflock __P((struct grf_data *, int));
-int	grfunlock __P((struct grf_data *));
-int	grfdevno __P((dev_t));
+int	grflock(struct grf_data *, int);
+int	grfunlock(struct grf_data *);
+int	grfdevno(dev_t);
 
-int	iommap __P((dev_t, caddr_t *));
-int	iounmmap __P((dev_t, caddr_t));
+int	iommap(dev_t, caddr_t *);
+int	iounmmap(dev_t, caddr_t);
 
-int	grffindpid __P((struct grf_data *));
-void	grfrmpid __P((struct grf_data *));
-int	grflckmmap __P((dev_t, caddr_t *));
-int	grflckunmmap __P((dev_t, caddr_t));
+int	grffindpid(struct grf_data *);
+void	grfrmpid(struct grf_data *);
+int	grflckmmap(dev_t, caddr_t *);
+int	grflckunmmap(dev_t, caddr_t);
 #endif /* COMPAT_HPUX */
 
 /* grf_subr.c prototypes */
-void	grfdev_attach __P((struct grfdev_softc *,
+void	grfdev_attach(struct grfdev_softc *,
 	    int (*init)(struct grf_data *, int, caddr_t),
-	    caddr_t, struct grfsw *));
+	    caddr_t, struct grfsw *);
 
 #endif /* _KERNEL */

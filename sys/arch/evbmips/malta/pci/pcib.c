@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.7.2.1 2004/08/03 10:34:15 skrll Exp $	*/
+/*	$NetBSD: pcib.c,v 1.7.2.2 2004/09/03 12:44:30 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.7.2.1 2004/08/03 10:34:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.7.2.2 2004/09/03 12:44:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,6 @@ static int	pcib_match(struct device *, struct cfdata *, void *);
 static void	pcib_attach(struct device *, struct device *, void *);
 static int	pcib_intr(void *v);
 static void	pcib_bridge_callback(struct device *);
-static int	pcib_print(void *, const char *);
 static void	pcib_set_icus(struct pcib_softc *sc);
 static void	pcib_cleanup(void *arg);
 
@@ -319,7 +318,6 @@ pcib_bridge_callback(struct device *self)
 	 */
 	memset(&iba, 0, sizeof(iba));
 
-	iba.iba_busname = "isa";
 	iba.iba_iot = &mcp->mc_iot;
 	iba.iba_memt = &mcp->mc_memt;
 	iba.iba_dmat = &mcp->mc_isa_dmat;
@@ -327,17 +325,7 @@ pcib_bridge_callback(struct device *self)
 	iba.iba_ic = &sc->sc_ic;
 	iba.iba_ic->ic_attach_hook = pcib_isa_attach_hook;
 
-	config_found(&sc->sc_dev, &iba, pcib_print);
-}
-
-static int
-pcib_print(void *aux, const char *pnp)
-{
-
-	/* Only ISAs can attach to pcib's; easy. */
-	if (pnp)
-		aprint_normal("isa at %s", pnp);
-	return (UNCONF);
+	config_found_ia(&sc->sc_dev, "isabus", &iba, isabusprint);
 }
 
 static void

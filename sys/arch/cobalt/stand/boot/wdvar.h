@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.1.2.1 2004/08/03 10:33:46 skrll Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.1.2.2 2004/09/03 12:44:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -45,13 +45,23 @@
 #define WDC_TIMEOUT		2000000
 #define PCIIDE_CHANNEL_NDEV	2
 #define NUNITS			(PCIIDE_CHANNEL_NDEV * PCIIDE_NUM_CHANNELS)
+#define WDC_NPORTS		8	/* XXX */
+#define WDC_NSHADOWREG		2	/* XXX */
 
 struct wdc_channel {
-	volatile u_int8_t *c_base;
+	volatile u_int8_t *c_cmdbase;
+	volatile u_int8_t *c_ctlbase;
+	volatile u_int8_t *c_cmdreg[WDC_NPORTS + WDC_NSHADOWREG];
 	volatile u_int16_t *c_data;
 
 	u_int8_t compatchan;
 };
+
+#define WDC_READ_REG(chp, reg)		*(chp)->c_cmdreg[(reg)]
+#define WDC_WRITE_REG(chp, reg, val)	*(chp)->c_cmdreg[(reg)] = (val)
+#define WDC_READ_CTLREG(chp, reg)	(chp)->c_ctlbase[(reg)]
+#define WDC_WRITE_CTLREG(chp, reg, val)	(chp)->c_ctlbase[(reg)] = (val)
+#define WDC_READ_DATA(chp)		*(chp)->c_data
 
 struct wd_softc {
 #define WDF_LBA		0x0001

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.541.2.2 2004/08/12 11:41:45 skrll Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.541.2.3 2004/09/03 12:45:28 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.640 2004/08/02 19:25:35 mycroft Exp 
+ *	NetBSD: pcidevs,v 1.647 2004/08/26 13:14:59 itohy Exp 
  */
 
 /*
@@ -6236,6 +6236,10 @@ const struct pci_product pci_products[] = {
 	    "CBIDE2 IDE controller",
 	},
 	{
+	    PCI_VENDOR_IODATA, PCI_PRODUCT_IODATA_CBSCII,
+	    "CBSCII NinjaSCSI-32Bi SCSI",
+	},
+	{
 	    PCI_VENDOR_ITE, PCI_PRODUCT_ITE_IT8152,
 	    "IT8152 Host Bridge",
 	},
@@ -9564,6 +9568,34 @@ const struct pci_product pci_products[] = {
 	    "W6692 ISDN",
 	},
 	{
+	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32BI,
+	    "NinjaSCSI-32Bi SCSI",
+	},
+	{
+	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE,
+	    "NinjaSCSI-32UDE SCSI",
+	},
+	{
+	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32BI_KME,
+	    "NinjaSCSI-32Bi SCSI (KME)",
+	},
+	{
+	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE_IODATA,
+	    "NinjaSCSI-32UDE SCSI (IODATA)",
+	},
+	{
+	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE_LOGITEC,
+	    "NinjaSCSI-32UDE SCSI (LOGITEC)",
+	},
+	{
+	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE_LOGITEC2,
+	    "NinjaSCSI-32UDE SCSI (LOGITEC2)",
+	},
+	{
+	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE_BUFFALO,
+	    "NinjaSCSI-32UDE SCSI (BUFFALO)",
+	},
+	{
 	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3,
 	    "X3201-3 Fast Ethernet Controller",
 	},
@@ -9616,4 +9648,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1829;
+const int pci_nproducts = 1837;

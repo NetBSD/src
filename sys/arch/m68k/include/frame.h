@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.19.2.1 2004/08/03 10:36:40 skrll Exp $	*/
+/*	$NetBSD: frame.h,v 1.19.2.2 2004/09/03 12:44:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -241,7 +241,7 @@ struct sigframe_siginfo {
  * Utility function to relocate the initial frame, make room to restore an
  * exception frame and reenter the syscall.
  */
-void reenter_syscall __P((struct frame *, int)) __attribute__((__noreturn__));
+void	reenter_syscall(struct frame *, int) __attribute__((__noreturn__));
 
 /*
  * Create an FPU "idle" frame for use by cpu_setmcontext()
@@ -249,10 +249,10 @@ void reenter_syscall __P((struct frame *, int)) __attribute__((__noreturn__));
 extern void m68k_make_fpu_idle_frame(void);
 extern struct fpframe m68k_cached_fpu_idle_frame;
 
-void *getframe(struct lwp *, int, int *);
-void buildcontext(struct lwp *, void *, void *);
+void	*getframe(struct lwp *, int, int *);
+void	buildcontext(struct lwp *, void *, void *);
 #ifdef COMPAT_16
-void sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
+void	sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
 #endif
 
 #endif	/* _KERNEL */

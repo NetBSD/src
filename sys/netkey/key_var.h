@@ -1,4 +1,4 @@
-/*	$NetBSD: key_var.h,v 1.12.6.1 2004/08/03 10:56:04 skrll Exp $	*/
+/*	$NetBSD: key_var.h,v 1.12.6.2 2004/09/03 12:45:40 skrll Exp $	*/
 /*	$KAME: key_var.h,v 1.12 2001/11/06 03:48:29 itojun Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 #define KEYCTL_SPI_TRY			2
 #define KEYCTL_SPI_MIN_VALUE		3
 #define KEYCTL_SPI_MAX_VALUE		4
-#define KEYCTL_RANDOM_INT		5
+/*#define KEYCTL_RANDOM_INT		5*/
 #define KEYCTL_LARVAL_LIFETIME		6
 #define KEYCTL_BLOCKACQ_COUNT		7
 #define KEYCTL_BLOCKACQ_LIFETIME	8
@@ -62,7 +62,7 @@
 	{ "spi_try", CTLTYPE_INT }, \
 	{ "spi_min_value", CTLTYPE_INT }, \
 	{ "spi_max_value", CTLTYPE_INT }, \
-	{ "random_int", CTLTYPE_INT }, \
+	{ 0, 0 /* "random_int", CTLTYPE_INT */ }, \
 	{ "larval_lifetime", CTLTYPE_INT }, \
 	{ "blockacq_count", CTLTYPE_INT }, \
 	{ "blockacq_lifetime", CTLTYPE_INT }, \

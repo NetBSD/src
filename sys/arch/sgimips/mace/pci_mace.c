@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_mace.c,v 1.2.4.2 2004/08/03 10:40:07 skrll Exp $	*/
+/*	$NetBSD: pci_mace.c,v 1.2.4.3 2004/09/03 12:45:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001,2003 Christopher Sekiya
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.2.4.2 2004/08/03 10:40:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.2.4.3 2004/09/03 12:45:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -80,7 +80,6 @@ struct macepci_softc {
 
 static int	macepci_match(struct device *, struct cfdata *, void *);
 static void	macepci_attach(struct device *, struct device *, void *);
-static int	macepci_print(void *, const char *);
 pcireg_t	macepci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void		macepci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 int		macepci_intr(void *);
@@ -201,7 +200,6 @@ macepci_attach(parent, self, aux)
 
 #if NPCI > 0
 	memset(&pba, 0, sizeof pba);
-	pba.pba_busname = "pci";
 /*XXX*/	pba.pba_iot = SGIMIPS_BUS_SPACE_IO;
 /*XXX*/	pba.pba_memt = SGIMIPS_BUS_SPACE_MEM;
 	pba.pba_dmat = &pci_bus_dma_tag;
@@ -219,24 +217,8 @@ macepci_attach(parent, self, aux)
 
 	cpu_intr_establish(maa->maa_intr, IPL_NONE, macepci_intr, sc);
 
-	config_found(self, &pba, macepci_print);
+	config_found_ia(self, "pcibus", &pba, pcibusprint);
 #endif
-}
-
-
-static int
-macepci_print(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct pcibus_attach_args *pba = aux;
-
-	if (pnp != 0)
-		aprint_normal("%s at %s", pba->pba_busname, pnp);
-	else
-		aprint_normal(" bus %d", pba->pba_bus);
-
-	return UNCONF;
 }
 
 pcireg_t

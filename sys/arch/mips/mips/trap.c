@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.180.2.2 2004/08/03 10:37:50 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.180.2.3 2004/09/03 12:44:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.180.2.2 2004/08/03 10:37:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.180.2.3 2004/09/03 12:44:57 skrll Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -395,13 +395,8 @@ trap(unsigned status, unsigned cause, unsigned vaddr, unsigned opc,
 		 * error.
 		 */
 		if ((caddr_t)va >= vm->vm_maxsaddr) {
-			if (rv == 0) {
-				segsz_t nss;
-
-				nss = btoc(USRSTACK - va);
-				if (nss > vm->vm_ssize)
-					vm->vm_ssize = nss;
-			}
+			if (rv == 0)
+				uvm_grow(p, va);
 			else if (rv == EACCES)
 				rv = EFAULT;
 		}

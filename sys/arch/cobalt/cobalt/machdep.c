@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43.2.1 2004/08/03 10:33:46 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43.2.2 2004/09/03 12:44:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43.2.1 2004/08/03 10:33:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43.2.2 2004/09/03 12:44:29 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -353,36 +353,6 @@ haltsys:
 	printf("WARNING: reboot failed!\n");
 
 	for (;;);
-}
-
-void
-microtime(tvp)
-	struct timeval *tvp;
-{
-	int s = splclock();
-	static struct timeval lasttime;
-	u_int32_t counter0;
-
-	*tvp = time;
-
-	counter0 = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x14000850);
-
-	/*
-	 * XXX
-	 */
-
-	counter0 /= 50;
-	counter0 %= 10000;
-
-	if (counter0 > 9999) {
-		counter0 = 9999;
-	}
-
-	tvp->tv_usec -= tvp->tv_usec % 10000;
-	tvp->tv_usec += 10000 - counter0;
-
-	lasttime = *tvp;
-	splx(s);
 }
 
 unsigned long cpuspeed;

@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.81.2.1 2004/08/03 10:39:21 skrll Exp $	*/
+/*	$NetBSD: scc.c,v 1.81.2.2 2004/09/03 12:45:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.81.2.1 2004/08/03 10:39:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.81.2.2 2004/09/03 12:45:05 skrll Exp $");
 
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
@@ -339,14 +339,6 @@ sccmatch(parent, cf, aux)
 	if ((strncmp(d->iada_modname, "z8530   ", TC_ROM_LLEN) != 0) &&
 	    (strncmp(d->iada_modname, "scc", TC_ROM_LLEN)!= 0))
 	    return (0);
-
-	/*
-	 * Check user-specified offset against the ioasic offset.
-	 * Allow it to be wildcarded.
-	 */
-	if (cf->cf_loc[IOASICCF_OFFSET] != IOASICCF_OFFSET_DEFAULT &&
-	    cf->cf_loc[IOASICCF_OFFSET] != d->iada_offset)
-		return (0);
 
 	/* Get the address, and check it for validity. */
 	sccaddr = (void *)d->iada_addr;

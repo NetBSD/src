@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpci.c,v 1.9.2.1 2004/08/03 10:48:22 skrll Exp $	*/
+/*	$NetBSD: gtpci.c,v 1.9.2.2 2004/09/03 12:45:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.9.2.1 2004/08/03 10:48:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.9.2.2 2004/09/03 12:45:27 skrll Exp $");
 
 #include "opt_marvell.h"
 #include <sys/param.h>
@@ -307,7 +307,6 @@ gtpci_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	pba.pba_pc = pc;
 	pba.pba_bus = 0;
-	pba.pba_busname = "pci";
 	pba.pba_iot = gtpc->gtpc_io_bs;
 	pba.pba_memt = gtpc->gtpc_mem_bs;
 	pba.pba_dmat = gt->gt_dmat;
@@ -328,7 +327,7 @@ gtpci_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Configure the pci bus.
 	 */
-	config_found(self, &pba, gtpci_cfprint);
+	config_found_ia(self, "pcibus", &pba, gtpci_cfprint);
 
 	gt_watchdog_service();
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops.h,v 1.9 2002/11/02 20:03:06 chs Exp $	*/
+/*	$NetBSD: cacheops.h,v 1.9.6.1 2004/09/03 12:44:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -151,24 +151,24 @@
 
 #endif /* M68K_CACHEOPS_NTYPES == 1 */
 
-void	_DCFA __P((void));
-void	_DCFL __P((paddr_t));
-void	_DCFP __P((paddr_t));
-void	_DCIA __P((void));
-void	_DCIAS __P((paddr_t));
-void	_DCIS __P((void));
-void	_DCIU __P((void));
-void	_DCPA __P((void));
-void	_DCPL __P((paddr_t));
-void	_DCPP __P((paddr_t));
-void	_ICIA __P((void));
-void	_ICPA __P((void));
-void	_ICPL __P((paddr_t));
-void	_ICPP __P((paddr_t));
-void	_PCIA __P((void));
-void	_TBIA __P((void));
-void	_TBIAS __P((void));
-void	_TBIAU __P((void));
-void	_TBIS __P((vaddr_t));
+void	_DCFA(void);
+void	_DCFL(paddr_t);
+void	_DCFP(paddr_t);
+void	_DCIA(void);
+void	_DCIAS(paddr_t);
+void	_DCIS(void);
+void	_DCIU(void);
+void	_DCPA(void);
+void	_DCPL(paddr_t);
+void	_DCPP(paddr_t);
+void	_ICIA(void);
+void	_ICPA(void);
+void	_ICPL(paddr_t);
+void	_ICPP(paddr_t);
+void	_PCIA(void);
+void	_TBIA(void);
+void	_TBIAS(void);
+void	_TBIAU(void);
+void	_TBIS(vaddr_t);
 
 #endif /* _M68K_CACHEOPS_H_ */

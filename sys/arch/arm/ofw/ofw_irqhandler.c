@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_irqhandler.c,v 1.2.8.1 2004/08/03 10:32:50 skrll Exp $	*/
+/*	$NetBSD: ofw_irqhandler.c,v 1.2.8.2 2004/09/03 12:44:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_irqhandler.c,v 1.2.8.1 2004/08/03 10:32:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_irqhandler.c,v 1.2.8.2 2004/09/03 12:44:29 skrll Exp $");
 
 #include "opt_irqstats.h"
 
@@ -471,6 +471,8 @@ enable_irq(irq)
  * Handler for stray interrupts. This gets called if a handler cannot be
  * found for an interrupt.
  */
+
+void	stray_irqhandler(u_int);	/* called from assembly */
 
 void
 stray_irqhandler(mask)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.101.2.2 2004/08/03 10:44:54 skrll Exp $	*/
+/*	$NetBSD: vnd.c,v 1.101.2.3 2004/09/03 12:45:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.101.2.2 2004/08/03 10:44:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.101.2.3 2004/09/03 12:45:17 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -202,32 +202,32 @@ int numvnd = 0;
 	(MAKEDISKDEV(major((dev)), vndunit((dev)), RAW_PART))
 
 /* called by main() at boot time (XXX: and the LKM driver) */
-void	vndattach __P((int));
-int	vnddetach __P((void));
+void	vndattach(int);
+int	vnddetach(void);
 
-void	vndclear __P((struct vnd_softc *, int));
-void	vndstart __P((struct vnd_softc *));
-int	vndsetcred __P((struct vnd_softc *, struct ucred *));
-void	vndthrottle __P((struct vnd_softc *, struct vnode *));
-void	vndiodone __P((struct buf *));
+static void	vndclear(struct vnd_softc *, int);
+static void	vndstart(struct vnd_softc *);
+static int	vndsetcred(struct vnd_softc *, struct ucred *);
+static void	vndthrottle(struct vnd_softc *, struct vnode *);
+static void	vndiodone(struct buf *);
 #if 0
-void	vndshutdown __P((void));
+static void	vndshutdown(void);
 #endif
 
-void	vndgetdefaultlabel __P((struct vnd_softc *, struct disklabel *));
-void	vndgetdisklabel __P((dev_t));
+static void	vndgetdefaultlabel(struct vnd_softc *, struct disklabel *);
+static void	vndgetdisklabel(dev_t);
 
-static	int vndlock __P((struct vnd_softc *));
-static	void vndunlock __P((struct vnd_softc *));
+static int	vndlock(struct vnd_softc *);
+static void	vndunlock(struct vnd_softc *);
 
-dev_type_open(vndopen);
-dev_type_close(vndclose);
-dev_type_read(vndread);
-dev_type_write(vndwrite);
-dev_type_ioctl(vndioctl);
-dev_type_strategy(vndstrategy);
-dev_type_dump(vnddump);
-dev_type_size(vndsize);
+static dev_type_open(vndopen);
+static dev_type_close(vndclose);
+static dev_type_read(vndread);
+static dev_type_write(vndwrite);
+static dev_type_ioctl(vndioctl);
+static dev_type_strategy(vndstrategy);
+static dev_type_dump(vnddump);
+static dev_type_size(vndsize);
 
 const struct bdevsw vnd_bdevsw = {
 	vndopen, vndclose, vndstrategy, vndioctl, vnddump, vndsize, D_DISK
@@ -238,11 +238,10 @@ const struct cdevsw vnd_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
-int vndattached = 0;
+static int vndattached;
 
 void
-vndattach(num)
-	int num;
+vndattach(int num)
 {
 	int i;
 	char *mem;
@@ -269,7 +268,7 @@ vndattach(num)
 }
 
 int
-vnddetach()
+vnddetach(void)
 {
 	int i;
 
@@ -287,11 +286,8 @@ vnddetach()
 	return (0);
 }
 
-int
-vndopen(dev, flags, mode, l)
-	dev_t dev;
-	int flags, mode;
-	struct lwp *l;
+static int
+vndopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = vndunit(dev);
 	struct vnd_softc *sc;
@@ -352,11 +348,8 @@ vndopen(dev, flags, mode, l)
 	return (error);
 }
 
-int
-vndclose(dev, flags, mode, l)
-	dev_t dev;
-	int flags, mode;
-	struct lwp *l;
+static int
+vndclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = vndunit(dev);
 	struct vnd_softc *sc;
@@ -401,9 +394,8 @@ vndclose(dev, flags, mode, l)
 /*
  * Break the request into bsize pieces and submit using VOP_BMAP/VOP_STRATEGY.
  */
-void
-vndstrategy(bp)
-	struct buf *bp;
+static void
+vndstrategy(struct buf *bp)
 {
 	int unit = vndunit(bp->b_dev);
 	struct vnd_softc *vnd = &vnd_softc[unit];
@@ -609,9 +601,8 @@ out: /* Arrive here at splbio */
  * to an NFS file.  This places the burden on the client rather than the
  * server.
  */
-void
-vndstart(vnd)
-	struct vnd_softc *vnd;
+static void
+vndstart(struct vnd_softc *vnd)
 {
 	struct buf	*bp;
 
@@ -648,9 +639,8 @@ vndstart(vnd)
 	vnd->sc_flags &= ~VNF_BUSY;
 }
 
-void
-vndiodone(bp)
-	struct buf *bp;
+static void
+vndiodone(struct buf *bp)
 {
 	struct vndbuf *vbp = (struct vndbuf *) bp;
 	struct vndxfer *vnx = (struct vndxfer *)vbp->vb_xfer;
@@ -727,11 +717,8 @@ vndiodone(bp)
 }
 
 /* ARGSUSED */
-int
-vndread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+static int
+vndread(dev_t dev, struct uio *uio, int flags)
 {
 	int unit = vndunit(dev);
 	struct vnd_softc *sc;
@@ -752,11 +739,8 @@ vndread(dev, uio, flags)
 }
 
 /* ARGSUSED */
-int
-vndwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+static int
+vndwrite(dev_t dev, struct uio *uio, int flags)
 {
 	int unit = vndunit(dev);
 	struct vnd_softc *sc;
@@ -777,13 +761,8 @@ vndwrite(dev, uio, flags)
 }
 
 /* ARGSUSED */
-int
-vndioctl(dev, cmd, data, flag, l)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct lwp *l;
+static int
+vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	int unit = vndunit(dev);
 	struct vnd_softc *vnd;
@@ -1142,10 +1121,8 @@ unlock_and_exit:
  * to this "disk" is essentially as root.  Note that credentials may change
  * if some other uid can write directly to the mapped file (NFS).
  */
-int
-vndsetcred(vnd, cred)
-	struct vnd_softc *vnd;
-	struct ucred *cred;
+static int
+vndsetcred(struct vnd_softc *vnd, struct ucred *cred)
 {
 	struct uio auio;
 	struct iovec aiov;
@@ -1186,13 +1163,11 @@ vndsetcred(vnd, cred)
 /*
  * Set maxactive based on FS type
  */
-void
-vndthrottle(vnd, vp)
-	struct vnd_softc *vnd;
-	struct vnode *vp;
+static void
+vndthrottle(struct vnd_softc *vnd, struct vnode *vp)
 {
 #ifdef NFS
-	extern int (**nfsv2_vnodeop_p) __P((void *));
+	extern int (**nfsv2_vnodeop_p)(void *);
 
 	if (vp->v_op == nfsv2_vnodeop_p)
 		vnd->sc_maxactive = 2;
@@ -1205,8 +1180,8 @@ vndthrottle(vnd, vp)
 }
 
 #if 0
-void
-vndshutdown()
+static void
+vndshutdown(void)
 {
 	struct vnd_softc *vnd;
 
@@ -1216,10 +1191,8 @@ vndshutdown()
 }
 #endif
 
-void
-vndclear(vnd, myminor)
-	struct vnd_softc *vnd;
-	int myminor;
+static void
+vndclear(struct vnd_softc *vnd, int myminor)
 {
 	struct vnode *vp = vnd->sc_vp;
 	struct lwp *l = curlwp;
@@ -1254,9 +1227,8 @@ vndclear(vnd, myminor)
 	vnd->sc_size = 0;
 }
 
-int
-vndsize(dev)
-	dev_t dev;
+static int
+vndsize(dev_t dev)
 {
 	struct vnd_softc *sc;
 	struct disklabel *lp;
@@ -1290,22 +1262,16 @@ vndsize(dev)
 	return (size);
 }
 
-int
-vnddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
+static int
+vnddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
 
 	/* Not implemented. */
 	return ENXIO;
 }
 
-void
-vndgetdefaultlabel(sc, lp)
-	struct vnd_softc *sc;
-	struct disklabel *lp;
+static void
+vndgetdefaultlabel(struct vnd_softc *sc, struct disklabel *lp)
 {
 	struct vndgeom *vng = &sc->sc_geom;
 	struct partition *pp;
@@ -1340,9 +1306,8 @@ vndgetdefaultlabel(sc, lp)
 /*
  * Read the disklabel from a vnd.  If one is not present, create a fake one.
  */
-void
-vndgetdisklabel(dev)
-	dev_t dev;
+static void
+vndgetdisklabel(dev_t dev)
 {
 	struct vnd_softc *sc = &vnd_softc[vndunit(dev)];
 	const char *errstring;
@@ -1401,8 +1366,7 @@ vndgetdisklabel(dev)
  * Several drivers do this; it should be abstracted and made MP-safe.
  */
 static int
-vndlock(sc)
-	struct vnd_softc *sc;
+vndlock(struct vnd_softc *sc)
 {
 	int error;
 
@@ -1419,8 +1383,7 @@ vndlock(sc)
  * Unlock and wake up any waiters.
  */
 static void
-vndunlock(sc)
-	struct vnd_softc *sc;
+vndunlock(struct vnd_softc *sc)
 {
 
 	sc->sc_flags &= ~VNF_LOCKED;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.2.2.2 2004/08/25 06:58:05 skrll Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.2.2.3 2004/09/03 12:45:28 skrll Exp $	*/
 /*	Id: if_ipw.c,v 1.1.2.7 2004/08/20 11:20:11 damien Exp   */
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.2.2.2 2004/08/25 06:58:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.2.2.3 2004/09/03 12:45:28 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -73,8 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.2.2.2 2004/08/25 06:58:05 skrll Exp $")
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 
-#include "if_ipwreg.h"
-#include "if_ipwvar.h"
+#include <dev/pci/if_ipwreg.h>
+#include <dev/pci/if_ipwvar.h>
 
 static int ipw_match(struct device *, struct cfdata *, void *);
 static void ipw_attach(struct device *, struct device *, void *);
@@ -1899,13 +1899,3 @@ ipw_zero_mem_4(struct ipw_softc *sc, bus_size_t offset, bus_size_t count)
 		CSR_WRITE_4(sc, IPW_CSR_AUTOINC_DATA, 0);
 }
 
-#ifdef IPW_AS_LKM
-
-#include <sys/lkm.h>
-#include <lkm/dev/pcilkm/pcilkm.h>
-
-MOD_MISC("ipw");
-
-PCILKM_DECLARE(ipw, DV_DULL, NULL);
-
-#endif

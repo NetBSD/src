@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tc.c,v 1.26.2.1 2004/08/03 10:34:23 skrll Exp $	*/
+/*	$NetBSD: grf_tc.c,v 1.26.2.2 2004/09/03 12:44:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_tc.c,v 1.26.2.1 2004/08/03 10:34:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_tc.c,v 1.26.2.2 2004/09/03 12:44:30 skrll Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -151,18 +151,18 @@ __KERNEL_RCSID(0, "$NetBSD: grf_tc.c,v 1.26.2.1 2004/08/03 10:34:23 skrll Exp $"
 
 #include "ite.h"
 
-int	tc_init __P((struct grf_data *, int, caddr_t));
-int	tc_mode __P((struct grf_data *, int, caddr_t));
+static int	tc_init(struct grf_data *, int, caddr_t);
+static int	tc_mode(struct grf_data *, int, caddr_t);
 
-void	topcat_common_attach __P((struct grfdev_softc *, caddr_t, u_int8_t));
+static void	topcat_common_attach(struct grfdev_softc *, caddr_t, u_int8_t);
 
-int	topcat_intio_match __P((struct device *, struct cfdata *, void *));
-void	topcat_intio_attach __P((struct device *, struct device *, void *));
+static int	topcat_intio_match(struct device *, struct cfdata *, void *);
+static void	topcat_intio_attach(struct device *, struct device *, void *);
 
-int	topcat_dio_match __P((struct device *, struct cfdata *, void *));
-void	topcat_dio_attach __P((struct device *, struct device *, void *));
+static int	topcat_dio_match(struct device *, struct cfdata *, void *);
+static void	topcat_dio_attach(struct device *, struct device *, void *);
 
-int	topcatcnattach __P((bus_space_tag_t, bus_addr_t, int));
+int	topcatcnattach(bus_space_tag_t, bus_addr_t, int);
 
 CFATTACH_DECL(topcat_intio, sizeof(struct grfdev_softc),
     topcat_intio_match, topcat_intio_attach, NULL, NULL);
@@ -171,22 +171,22 @@ CFATTACH_DECL(topcat_dio, sizeof(struct grfdev_softc),
     topcat_dio_match, topcat_dio_attach, NULL, NULL);
 
 /* Topcat (bobcat) grf switch */
-struct grfsw topcat_grfsw = {
+static struct grfsw topcat_grfsw = {
 	GID_TOPCAT, GRFBOBCAT, "topcat", tc_init, tc_mode
 };
 
 /* Lo-res catseye grf switch */
-struct grfsw lrcatseye_grfsw = {
+static struct grfsw lrcatseye_grfsw = {
 	GID_LRCATSEYE, GRFCATSEYE, "lo-res catseye", tc_init, tc_mode
 };
 
 /* Hi-res catseye grf switch */
-struct grfsw hrcatseye_grfsw = {
+static struct grfsw hrcatseye_grfsw = {
 	GID_HRCCATSEYE, GRFCATSEYE, "hi-res catseye", tc_init, tc_mode
 };
 
 /* Hi-res monochrome catseye grf switch */
-struct grfsw hrmcatseye_grfsw = {
+static struct grfsw hrmcatseye_grfsw = {
 	GID_HRMCATSEYE, GRFCATSEYE, "hi-res catseye", tc_init, tc_mode
 };
 
@@ -194,27 +194,24 @@ static int tcconscode;
 static caddr_t tcconaddr;
 
 #if NITE > 0
-void	topcat_init __P((struct ite_data *));
-void	topcat_deinit __P((struct ite_data *));
-void	topcat_putc __P((struct ite_data *, int, int, int, int));
-void	topcat_cursor __P((struct ite_data *, int));
-void	topcat_clear __P((struct ite_data *, int, int, int, int));
-void	topcat_scroll __P((struct ite_data *, int, int, int, int));
-void	topcat_windowmove __P((struct ite_data *, int, int, int, int,
-		int, int, int));
+static void	topcat_init(struct ite_data *);
+static void	topcat_deinit(struct ite_data *);
+static void	topcat_putc(struct ite_data *, int, int, int, int);
+static void	topcat_cursor(struct ite_data *, int);
+static void	topcat_clear(struct ite_data *, int, int, int, int);
+static void	topcat_scroll(struct ite_data *, int, int, int, int);
+static void	topcat_windowmove(struct ite_data *, int, int, int, int,
+			int, int, int);
 
 /* Topcat/catseye ite switch */
-struct itesw topcat_itesw = {
+static struct itesw topcat_itesw = {
 	topcat_init, topcat_deinit, topcat_clear, topcat_putc,
 	topcat_cursor, topcat_scroll, ite_readbyte, ite_writeglyph
 };
 #endif /* NITE > 0 */
 
-int
-topcat_intio_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+topcat_intio_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 	struct grfreg *grf;
@@ -243,10 +240,8 @@ topcat_intio_match(parent, match, aux)
 	return (0);
 }
 
-void
-topcat_intio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+topcat_intio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 	struct grfdev_softc *sc = (struct grfdev_softc *)self;
@@ -259,11 +254,8 @@ topcat_intio_attach(parent, self, aux)
 	topcat_common_attach(sc, (caddr_t)grf, grf->gr_id2);
 }
 
-int
-topcat_dio_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+topcat_dio_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct dio_attach_args *da = aux;
 
@@ -283,10 +275,8 @@ topcat_dio_match(parent, match, aux)
 	return (0);
 }
 
-void
-topcat_dio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+topcat_dio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct grfdev_softc *sc = (struct grfdev_softc *)self;
 	struct dio_attach_args *da = aux;
@@ -307,11 +297,8 @@ topcat_dio_attach(parent, self, aux)
 	topcat_common_attach(sc, grf, da->da_secid);
 }
 
-void
-topcat_common_attach(sc, grf, secid)
-	struct grfdev_softc *sc;
-	caddr_t grf;
-	u_int8_t secid;
+static void
+topcat_common_attach(struct grfdev_softc *sc, caddr_t grf, u_int8_t secid)
 {
 	struct grfsw *sw;
 
@@ -351,11 +338,8 @@ topcat_common_attach(sc, grf, secid)
  * Must fill in the grfinfo structure in g_softc.
  * Returns 0 if hardware not present, non-zero ow.
  */
-int
-tc_init(gp, scode, addr)
-	struct grf_data *gp;
-	int scode;
-	caddr_t addr;
+static int
+tc_init(struct grf_data *gp, int scode, caddr_t addr)
 {
 	struct tcboxfb *tp = (struct tcboxfb *) addr;
 	struct grfinfo *gi = &gp->g_display;
@@ -422,11 +406,8 @@ tc_init(gp, scode, addr)
  * Function may not be needed anymore.
  */
 /*ARGSUSED*/
-int
-tc_mode(gp, cmd, data)
-	struct grf_data *gp;
-	int cmd;
-	caddr_t data;
+static int
+tc_mode(struct grf_data *gp, int cmd, caddr_t data)
 {
 	int error = 0;
 
@@ -524,9 +505,8 @@ tc_mode(gp, cmd, data)
 #define REGBASE	    	((struct tcboxfb *)(ip->regbase))
 #define WINDOWMOVER 	topcat_windowmove
 
-void
-topcat_init(ip)
-	struct ite_data *ip;
+static void
+topcat_init(struct ite_data *ip)
 {
 
 	/* XXX */
@@ -629,9 +609,8 @@ topcat_init(ip)
 			  ip->ftwidth, RR_COPYINVERTED);
 }
 
-void
-topcat_deinit(ip)
-	struct ite_data *ip;
+static void
+topcat_deinit(struct ite_data *ip)
 {
 
 	topcat_windowmove(ip, 0, 0, 0, 0, ip->fbheight, ip->fbwidth, RR_CLEAR);
@@ -641,10 +620,8 @@ topcat_deinit(ip)
 	ip->flags &= ~ITE_INITED;
 }
 
-void
-topcat_putc(ip, c, dy, dx, mode)
-	struct ite_data *ip;
-	int c, dy, dx, mode;
+static void
+topcat_putc(struct ite_data *ip, int c, int dy, int dx, int mode)
 {
 	int wmrr = ((mode == ATTR_INV) ? RR_COPYINVERTED : RR_COPY);
 
@@ -653,10 +630,8 @@ topcat_putc(ip, c, dy, dx, mode)
 			  ip->ftheight, ip->ftwidth, wmrr);
 }
 
-void
-topcat_cursor(ip, flag)
-	struct ite_data *ip;
-	int flag;
+static void
+topcat_cursor(struct ite_data *ip, int flag)
 {
 
 	if (flag == DRAW_CURSOR)
@@ -669,10 +644,8 @@ topcat_cursor(ip, flag)
 		erase_cursor(ip)
 }
 
-void
-topcat_clear(ip, sy, sx, h, w)
-	struct ite_data *ip;
-	int sy, sx, h, w;
+static void
+topcat_clear(struct ite_data *ip, int sy, int sx, int h, int w)
 {
 	topcat_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
 			  sy * ip->ftheight, sx * ip->ftwidth,
@@ -680,10 +653,8 @@ topcat_clear(ip, sy, sx, h, w)
 			  RR_CLEAR);
 }
 
-void
-topcat_scroll(ip, sy, sx, count, dir)
-	struct ite_data *ip;
-	int sy, count, dir, sx;
+static void
+topcat_scroll(struct ite_data *ip, int sy, int sx, int count, int dir)
 {
 	int dy;
 	int dx = sx;
@@ -716,9 +687,8 @@ topcat_scroll(ip, sy, sx, count, dir)
 }
 
 void
-topcat_windowmove(ip, sy, sx, dy, dx, h, w, func)
-	struct ite_data *ip;
-	int sy, sx, dy, dx, h, w, func;
+topcat_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx, int h,
+    int w, int func)
 {
 	struct tcboxfb *rp = REGBASE;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.1.4.2 2004/08/03 10:39:06 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.1.4.3 2004/09/03 12:44:58 skrll Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -34,12 +34,6 @@
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
-
-void
-pagemove(caddr_t from, caddr_t to, size_t size)
-{
-	panic("pagemove");
-}
 
 int
 cpu_coredump(struct lwp *p, struct vnode *vp,

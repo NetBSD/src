@@ -1,5 +1,6 @@
-/* $NetBSD: uuid.h,v 1.1.4.2 2004/08/03 10:56:33 skrll Exp $ */
 /* $FreeBSD: /repoman/r/ncvs/src/sys/sys/uuid.h,v 1.3 2003/05/31 16:47:07 phk Exp $ */
+/*	$NetBSD: uuid.h,v 1.1.4.3 2004/09/03 12:45:55 skrll Exp $	*/
+
 /*
  * Copyright (c) 2002 Marcel Moolenaar
  * All rights reserved.
@@ -36,6 +37,9 @@
 /* Length of a node address (an IEEE 802 address). */
 #define	_UUID_NODE_LEN		6
 
+/* Length of a printed UUID. */
+#define	_UUID_STR_LEN		38
+
 /*
  * See also:
  *      http://www.opengroup.org/dce/info/draft-leach-uuids-guids-01.txt
@@ -55,19 +59,17 @@ struct uuid {
 #ifdef _KERNEL
 
 #define	UUID_NODE_LEN	_UUID_NODE_LEN
+#define	UUID_STR_LEN	_UUID_STR_LEN
 
-#ifdef notyet
-int snprintf_uuid(char *, size_t, struct uuid *);
-int printf_uuid(struct uuid *);
-void be_uuid_dec(void const *buf, struct uuid *uuid);
-void be_uuid_enc(void *buf, struct uuid const *uuid);
-void le_uuid_dec(void const *buf, struct uuid *uuid);
-void le_uuid_enc(void *buf, struct uuid const *uuid);
-#endif
+int	uuid_snprintf(char *, size_t, const struct uuid *);
+int	uuid_printf(const struct uuid *);
+void	uuid_dec_be(const void *, struct uuid *);
+void	uuid_dec_le(const void *, struct uuid *);
+void	uuid_enc_be(void *, const struct uuid *);
+void	uuid_enc_le(void *, const struct uuid *);
 
 #else	/* _KERNEL */
 
-/* XXX namespace pollution? */
 typedef struct uuid uuid_t;
 
 __BEGIN_DECLS

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.24 2003/04/29 17:06:05 scw Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.24.2.1 2004/09/03 12:44:55 skrll Exp $	*/
 
 /* 
  * Mach Operating System
@@ -96,15 +96,17 @@ typedef long kgdb_reg_t;
 
 #ifdef _KERNEL
 
-void	Debugger __P((void));	/* XXX */
-void	kdb_kintr __P((db_regs_t *));
-int 	kdb_trap __P((int, db_regs_t *));
+void	Debugger(void);		/* XXX */
+void	kdb_kintr(db_regs_t *);
+int 	kdb_trap(int, db_regs_t *);
 
 #endif /* _KERNEL */
 
 /*
- * We use a.out symbols in DDB.
+ * We use either a.out or Elf32 symbols in DDB.
  */
 #define	DB_AOUT_SYMBOLS
+#define	DB_ELF_SYMBOLS
+#define	DB_ELFSIZE	32
 
 #endif	/* _M68K_DB_MACHDEP_H_ */

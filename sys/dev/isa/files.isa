@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.129.2.2 2004/08/12 11:41:43 skrll Exp $
+#	$NetBSD: files.isa,v 1.129.2.3 2004/09/03 12:45:18 skrll Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -13,6 +13,8 @@ device	isa {[port = -1], [size = 0],
 	     [irq = -1], [drq = -1], [drq2 = -1]}
 attach	isa at isabus
 file	dev/isa/isa.c			isa			needs-flag
+
+file	dev/isa/isabusprint.c		isabus
 
 # ISA DMA controller
 define	isadma

@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.39.2.1 2004/08/03 10:33:36 skrll Exp $
+#	$NetBSD: files.bebox,v 1.39.2.2 2004/09/03 12:44:29 skrll Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -46,7 +46,7 @@ include "dev/i2o/files.i2o"
 # System bus types
 #
 define mainbus { }
-device	mainbus: isabus, pcibus, mainbus
+device	mainbus: pcibus, mainbus
 attach	mainbus at root
 
 device	cpu

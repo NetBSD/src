@@ -1,4 +1,4 @@
-/*	$NetBSD: copyoutstr.c,v 1.3.2.1 2004/08/03 10:39:28 skrll Exp $	*/
+/*	$NetBSD: copyoutstr.c,v 1.3.2.2 2004/09/03 12:45:05 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copyoutstr.c,v 1.3.2.1 2004/08/03 10:39:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copyoutstr.c,v 1.3.2.2 2004/09/03 12:45:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -88,8 +88,8 @@ copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
 
 			"mtpid %1; mtmsr %0;"		/* Restore PID, MSR */
 			"sync; isync;"
-			: "=&r" (msr), "=&r" (pid), "=&r" (tmp), "+r" (len)
-			: "r" (ctx), "r" (udaddr), "r" (kaddr));
+			: "=&r" (msr), "=&r" (pid), "=&r" (tmp), "+b" (len)
+			: "r" (ctx), "b" (udaddr), "b" (kaddr));
 	}
 	curpcb->pcb_onfault = 0;
 	if (done)

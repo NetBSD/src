@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.80.2.1 2004/08/03 10:31:06 skrll Exp $ */
+/* $NetBSD: trap.c,v 1.80.2.2 2004/09/03 12:44:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.80.2.1 2004/08/03 10:31:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.80.2.2 2004/09/03 12:44:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -514,14 +514,9 @@ do_fault:
 			if (map != kernel_map &&
 			    (caddr_t)va >= vm->vm_maxsaddr &&
 			    va < USRSTACK) {
-				if (rv == 0) {
-					unsigned nss;
-
-					nss = btoc(USRSTACK -
-					    (unsigned long)va);
-					if (nss > vm->vm_ssize)
-						vm->vm_ssize = nss;
-				} else if (rv == EACCES &&
+				if (rv == 0)
+					uvm_grow(l->l_proc, va);
+				else if (rv == EACCES &&
 					   ftype != VM_PROT_EXECUTE)
 					rv = EFAULT;
 			}

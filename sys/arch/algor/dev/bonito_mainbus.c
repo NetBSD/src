@@ -1,4 +1,4 @@
-/*	$NetBSD: bonito_mainbus.c,v 1.7.2.1 2004/08/03 10:31:02 skrll Exp $	*/
+/*	$NetBSD: bonito_mainbus.c,v 1.7.2.2 2004/09/03 12:44:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bonito_mainbus.c,v 1.7.2.1 2004/08/03 10:31:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bonito_mainbus.c,v 1.7.2.2 2004/09/03 12:44:27 skrll Exp $");
 
 #include "opt_algor_p6032.h"
 
@@ -67,8 +67,6 @@ void	bonito_mainbus_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(bonito_mainbus, sizeof(struct bonito_softc),
     bonito_mainbus_match, bonito_mainbus_attach, NULL, NULL);
 extern struct cfdriver bonito_cd;
-
-int	bonito_mainbus_print(void *, const char *);
 
 int
 bonito_mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -103,7 +101,6 @@ bonito_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	    BONITO_REV_FPGA(rev) ? "FPGA" : "ASIC",
 	    BONITO_REV_MAJOR(rev), BONITO_REV_MINOR(rev));
 
-	pba.pba_busname = "pci";
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
@@ -120,18 +117,5 @@ bonito_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	    }
 #endif /* ALGOR_P6032 */
 
-	(void) config_found(self, &pba, bonito_mainbus_print);
-}
-
-int
-bonito_mainbus_print(void *aux, const char *pnp)
-{
-	struct pcibus_attach_args *pba = aux;
-
-	/* only PCIs can attach to BONITOs; easy. */
-	if (pnp)
-		aprint_normal("%s at %s", pba->pba_busname, pnp);
-	aprint_normal(" bus %d", pba->pba_bus);
-
-	return (UNCONF);
+	(void) config_found_ia(self, "pcibus", &pba, pcibusprint);
 }

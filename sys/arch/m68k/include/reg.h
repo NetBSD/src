@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.14.2.1 2004/08/03 10:36:40 skrll Exp $	*/
+/*	$NetBSD: reg.h,v 1.14.2.2 2004/09/03 12:44:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -134,8 +134,8 @@ struct fpreg {
 #define	R1	A0
 
 struct lwp;
-int process_read_regs   __P((struct lwp *, struct reg *));
-int process_read_fpregs __P((struct lwp *, struct fpreg *));
+int	process_read_regs(struct lwp *, struct reg *);
+int	process_read_fpregs(struct lwp *, struct fpreg *);
 
 #endif
 

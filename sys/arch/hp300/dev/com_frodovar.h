@@ -1,4 +1,4 @@
-/*	$NetBSD: com_frodovar.h,v 1.1.4.2 2004/08/03 10:34:22 skrll Exp $	*/
+/*	$NetBSD: com_frodovar.h,v 1.1.4.3 2004/09/03 12:44:30 skrll Exp $	*/
 /*
  * Copyright (c) 2003 Izumi Tsutsui.
  * All rights reserved.
@@ -26,4 +26,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-int com_frodo_cnattach(bus_space_tag_t, bus_addr_t, int);
+#ifndef _HP300_DEV_COM_FRODOVAR_H_
+#define	_HP300_DEV_COM_FRODOVAR_H_
+
+int	com_frodo_cnattach(bus_space_tag_t, bus_addr_t, int);
+
+#endif /* _HP300_DEV_COM_FRODOVAR_H_ */

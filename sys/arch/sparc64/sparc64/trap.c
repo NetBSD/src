@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.91.2.2 2004/08/03 10:41:39 skrll Exp $ */
+/*	$NetBSD: trap.c,v 1.91.2.3 2004/09/03 12:45:08 skrll Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.91.2.2 2004/08/03 10:41:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.91.2.3 2004/09/03 12:45:08 skrll Exp $");
 
 #define NEW_FPSTATE
 
@@ -1213,11 +1213,9 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 	 * error.
 	 */
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
-		if (rv == 0) {
-			segsz_t nss = btoc(p->p_vmspace->vm_minsaddr - va);
-			if (nss > vm->vm_ssize)
-				vm->vm_ssize = nss;
-		} else if (rv == EACCES)
+		if (rv == 0)
+			uvm_grow(p, va);
+		else if (rv == EACCES)
 			rv = EFAULT;
 	}
 	if (rv != 0) {
@@ -1557,11 +1555,8 @@ text_access_fault(tf, type, pc, sfsr)
 	 * error.
 	 */
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
-		if (rv == 0) {
-			segsz_t nss = btoc(p->p_vmspace->vm_minsaddr - va);
-			if (nss > vm->vm_ssize)
-				vm->vm_ssize = nss;
-		}
+		if (rv == 0)
+			uvm_grow(p, va);
 	}
 	if (rv != 0) {
 
@@ -1744,11 +1739,9 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 	 * error.
 	 */
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
-		if (rv == 0) {
-			segsz_t nss = btoc(p->p_vmspace->vm_minsaddr - va);
-			if (nss > vm->vm_ssize)
-				vm->vm_ssize = nss;
-		} else if (rv == EACCES)
+		if (rv == 0)
+			uvm_grow(p, va);
+		else if (rv == EACCES)
 			rv = EFAULT;
 	}
 	if (rv != 0) {

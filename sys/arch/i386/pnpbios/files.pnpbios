@@ -1,9 +1,9 @@
-# $NetBSD: files.pnpbios,v 1.12.6.1 2004/08/03 10:36:14 skrll Exp $
+# $NetBSD: files.pnpbios,v 1.12.6.2 2004/09/03 12:44:48 skrll Exp $
 
 defflag	PNPBIOSVERBOSE
 
 device	pnpbios { [index = -1] }
-attach	pnpbios at mainbus
+attach	pnpbios at pnpbiosbus
 file	arch/i386/pnpbios/pnpbios.c		pnpbios		needs-flag
 file	arch/i386/pnpbios/pnpbioscall.S		pnpbios
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.5.10.1 2004/08/03 10:33:46 skrll Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.5.10.2 2004/09/03 12:44:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -50,9 +50,14 @@ extern struct cobalt_bus_dma_tag pci_bus_dma_tag;
 /*
  * Types provided to machine-independent PCI code
  */
-typedef void		*pci_chipset_tag_t;
+typedef struct cobalt_pci_chipset *pci_chipset_tag_t;
 typedef u_int32_t	pcitag_t;
 typedef int 		pci_intr_handle_t;
+
+struct cobalt_pci_chipset {
+	bus_space_tag_t pc_bst;		/* bus space tag for PCICFG regs */
+	bus_space_handle_t pc_bsh;	/* bus space handle for PCICFG regs */
+};
 
 /*
  * Functions provided to machine-independent PCI code.

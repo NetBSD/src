@@ -1,4 +1,4 @@
-/*	$NetBSD: kcore.h,v 1.1 1998/02/18 01:09:26 thorpej Exp $	*/
+/*	$NetBSD: kcore.h,v 1.1.50.1 2004/09/03 12:44:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -36,7 +36,7 @@
 #define _I386_KCORE_H_
 
 typedef struct cpu_kcore_hdr {
-	u_int32_t	ptdpaddr;		/* PA of PTD */
+	u_int32_t	pdppaddr;		/* PA of PDP */
 	u_int32_t	nmemsegs;		/* Number of RAM segments */
 #if 0
 	phys_ram_seg_t  memsegs[];		/* RAM segments */

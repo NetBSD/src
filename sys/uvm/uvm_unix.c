@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.28.2.1 2004/08/03 10:57:09 skrll Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.28.2.2 2004/09/03 12:45:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.28.2.1 2004/08/03 10:57:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.28.2.2 2004/09/03 12:45:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ uvm_grow(p, sp)
 	vaddr_t sp;
 {
 	struct vmspace *vm = p->p_vmspace;
-	int si;
+	vsize_t nss;
 
 	/*
 	 * For user defined stacks (from sendsig).
@@ -143,10 +143,10 @@ uvm_grow(p, sp)
 	/*
 	 * Really need to check vs limit and increment stack size if ok.
 	 */
-	si = btoc(USRSTACK-sp) - vm->vm_ssize;
-	if (vm->vm_ssize + si > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur))
+	nss = btoc(USRSTACK - sp);
+	if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur))
 		return (0);
-	vm->vm_ssize += si;
+	vm->vm_ssize = nss;
 	return (1);
 }
 

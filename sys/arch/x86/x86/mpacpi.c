@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.6.2.1 2004/08/03 10:43:05 skrll Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.6.2.2 2004/09/03 12:45:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.6.2.1 2004/08/03 10:43:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.6.2.2 2004/09/03 12:45:08 skrll Exp $");
 
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
@@ -93,7 +93,8 @@ static TAILQ_HEAD(, mpacpi_pcibus) mpacpi_pcibusses;
 #endif
 
 static int mpacpi_print(void *, const char *);
-static int mpacpi_match(struct device *, struct cfdata *, void *);
+static int mpacpi_submatch(struct device *, struct cfdata *,
+	const locdesc_t *, void *);
 
 /* acpi_madt_walk callbacks */
 static ACPI_STATUS mpacpi_count(APIC_HEADER *, void *);
@@ -141,7 +142,8 @@ mpacpi_print(void *aux, const char *pnp)
 }
 
 static int
-mpacpi_match(struct device *parent, struct cfdata *cf, void *aux)
+mpacpi_submatch(struct device *parent, struct cfdata *cf,
+	const locdesc_t *ldesc, void *aux)
 {
 	struct cpu_attach_args * caa = (struct cpu_attach_args *) aux;
 	if (strcmp(caa->caa_name, cf->cf_name))
@@ -296,8 +298,8 @@ mpacpi_config_cpu(APIC_HEADER *hdrp, void *aux)
 			caa.caa_name = "cpu";
 			caa.cpu_number = p->LocalApicId;
 			caa.cpu_func = &mp_cpu_funcs;
-			config_found_sm(parent, &caa, mpacpi_print,
-			    mpacpi_match);
+			config_found_sm_loc(parent, "cpubus", NULL,
+				&caa, mpacpi_print, mpacpi_submatch);
 		}
 	}
 	return AE_OK;
@@ -318,7 +320,8 @@ mpacpi_config_ioapic(APIC_HEADER *hdrp, void *aux)
 		aaa.apic_version = -1;
 		aaa.flags = IOAPIC_VWIRE;
 		aaa.apic_vecbase = p->Interrupt;
-		config_found_sm(parent, &aaa, mpacpi_print, mpacpi_match);
+		config_found_sm_loc(parent, "cpubus", NULL, &aaa,
+			mpacpi_print, mpacpi_submatch);
 	}
 	return AE_OK;
 }
@@ -955,7 +958,7 @@ mpacpi_scan_pci(struct device *self, struct pcibus_attach_args *pba,
 			continue;
 		if (!strcmp(mpb->mb_name, "pci") && mpb->mb_configured == 0) {
 			pba->pba_bus = i;
-			config_found(self, pba, print);
+			config_found_ia(self, "pcibus", pba, print);
 		}
 	}
 	return 0;

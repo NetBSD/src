@@ -1,3 +1,5 @@
+/*	$NetBSD: dino.c,v 1.1.2.3 2004/09/03 12:44:39 skrll Exp $ */
+
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
 /*
@@ -25,6 +27,9 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.1.2.3 2004/09/03 12:44:39 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -131,6 +136,7 @@ CFATTACH_DECL(dino, sizeof(struct dino_softc), dinomatch, dinoattach, NULL,
 
 void dino_attach_hook(struct device *, struct device *,
     struct pcibus_attach_args *);
+void dino_enable_bus(struct dino_softc *, int);
 int dino_maxdevs(void *, int);
 pcitag_t dino_make_tag(void *, int, int, int);
 void dino_decompose_tag(void *, pcitag_t, int *, int *, int *);
@@ -243,7 +249,6 @@ void dino_dmamem_free(void *, bus_dma_segment_t *, int);
 int dino_dmamem_map(void *, bus_dma_segment_t *, int, size_t, caddr_t *, int);
 void dino_dmamem_unmap(void *, caddr_t, size_t);
 paddr_t dino_dmamem_mmap(void *, bus_dma_segment_t *, int, off_t, int, int);
-int dinoprint(void *, const char *);
 
 
 void
@@ -251,30 +256,43 @@ dino_attach_hook(struct device *parent, struct device *self,
     struct pcibus_attach_args *pba)
 {
 	struct dino_softc *sc = pba->pba_pc->_cookie;
-	int f, d;
-	pcitag_t t;
-	pcireg_t data;
 
 	/* 
 	 * The firmware enables only devices that are needed for booting. 
 	 * So other devices will fail to map PCI MEM / IO when they attach. 
-	 * Therefore we walk the bus to simply enable everything.
+	 * Therefore we recursively walk all buses to simply enable everything.
 	 */
-	for (d = 0; d < 32; d++) {
-		t = dino_make_tag( sc, 0, d, 0);
-		if (t != -1 && dino_conf_read(sc, t, 0) != 0xffffffff) {
-			for (f = 0; f < 8; f++) {
-				t = dino_make_tag(sc, 0, d, f);
-				if (dino_conf_read(sc, t, 0) != 0xffffffff) {
-					data = dino_conf_read(sc, t, 
+	dino_enable_bus(sc, 0);
+}
+
+void
+dino_enable_bus(struct dino_softc *sc, int bus)
+{
+	int func;
+	int dev;
+	pcitag_t tag;
+	pcireg_t data;
+	pcireg_t class;
+
+	for (dev = 0; dev < 32; dev++) {
+		tag = dino_make_tag(sc, bus, dev, 0);
+		if (tag != -1 && dino_conf_read(sc, tag, 0) != 0xffffffff) {
+			for (func = 0; func < 8; func++) {
+				tag = dino_make_tag(sc, bus, dev, func);
+				if (dino_conf_read(sc, tag, 0) != 0xffffffff) {
+					data = dino_conf_read(sc, tag, 
 					    PCI_COMMAND_STATUS_REG);
-					dino_conf_write(sc, t, 
+					dino_conf_write(sc, tag, 
 					    PCI_COMMAND_STATUS_REG, 
 					    PCI_COMMAND_IO_ENABLE |
 					    PCI_COMMAND_MEM_ENABLE |
 					    PCI_COMMAND_MASTER_ENABLE | data);
 				}
 			}
+			class = dino_conf_read(sc, tag, PCI_CLASS_REG);
+			if (PCI_CLASS(class) == PCI_CLASS_BRIDGE &&
+			    PCI_SUBCLASS(class) == PCI_SUBCLASS_BRIDGE_PCI)
+				dino_enable_bus(sc, bus + 1);
 		}
 	}
 }
@@ -1538,16 +1556,6 @@ const struct hppa_pci_chipset_tag dino_pc = {
 };
 
 int
-dinoprint(void *aux, const char *pnp)
-{
-	struct pcibus_attach_args *pba = aux;
-
-	if (pnp)
-		printf("%s at %s\n", pba->pba_busname, pnp);
-	return UNCONF;
-}
-
-int
 dinomatch(parent, cfdata, aux)
 	struct device *parent;
 	struct cfdata *cfdata;
@@ -1628,6 +1636,7 @@ dinoattach(parent, self, aux)
 	hp700_intr_reg_establish(&sc->sc_int_reg);
 	sc->sc_int_reg.int_reg_mask = &r->imr;
 	sc->sc_int_reg.int_reg_req = &r->irr0;
+	sc->sc_int_reg.int_reg_level = &r->ilr;
 	/* Add the I/O interrupt register. */
 	sc->sc_int_reg.int_reg_dev = sc->sc_dv.dv_xname;
 	sc->sc_ih = hp700_intr_establish(&sc->sc_dv, IPL_NONE,
@@ -1685,7 +1694,6 @@ dinoattach(parent, self, aux)
 	pdc_scanbus(self, ca, MAXMODBUS);
 #endif
 
-	pba.pba_busname = "pci";
 	pba.pba_iot = &sc->sc_iot;
 	pba.pba_memt = &sc->sc_memt;
 	pba.pba_dmat = &sc->sc_dmatag;
@@ -1693,5 +1701,5 @@ dinoattach(parent, self, aux)
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
-	config_found(self, &pba, dinoprint);
+	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.52.2.1 2004/08/03 10:35:50 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.52.2.2 2004/09/03 12:44:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.52.2.1 2004/08/03 10:35:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.52.2.2 2004/09/03 12:44:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,21 +218,21 @@ mainbus_attach(parent, self, aux)
 #endif
 		{
 			struct cpu_attach_args caa;
-			
+
 			memset(&caa, 0, sizeof(caa));
 			caa.caa_name = "cpu";
 			caa.cpu_number = 0;
 			caa.cpu_role = CPU_ROLE_SP;
 			caa.cpu_func = 0;
-			
-			config_found(self, &caa, mainbus_print);
+
+			config_found_ia(self, "cpubus", &caa, mainbus_print);
 		}
 	}
 
 #if NVESABIOS > 0
 	if (vbeprobe()) {
 		mba.mba_vba.vaa_busname = "vesabios";
-		config_found(self, &mba.mba_vba, mainbus_print);
+		config_found_ia(self, "vesabiosbus", &mba.mba_vba, mainbus_print);
 	}
 #endif
 
@@ -255,7 +255,7 @@ mainbus_attach(parent, self, aux)
 		    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
 		    PCI_FLAGS_MWI_OKAY;
 		mba.mba_acpi.aa_ic = &x86_isa_chipset;
-		config_found(self, &mba.mba_acpi, mainbus_print);
+		config_found_ia(self, "acpibus", &mba.mba_acpi, mainbus_print);
 #if 0 /* XXXJRT not yet */
 		if (acpi_active) {
 			/*
@@ -275,7 +275,7 @@ mainbus_attach(parent, self, aux)
 	if (pnpbios_probe()) {
 		mba.mba_paa.paa_busname = "pnpbios";
 		mba.mba_paa.paa_ic = &x86_isa_chipset;
-		config_found(self, &mba.mba_paa, mainbus_print);
+		config_found_ia(self, "pnpbiosbus", &mba.mba_paa, mainbus_print);
 	}
 #endif
 
@@ -287,7 +287,6 @@ mainbus_attach(parent, self, aux)
 	 */
 #if NPCI > 0
 	if (pci_mode != 0) {
-		mba.mba_pba.pba_busname = "pci";
 		mba.mba_pba.pba_iot = X86_BUS_SPACE_IO;
 		mba.mba_pba.pba_memt = X86_BUS_SPACE_MEM;
 		mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
@@ -298,45 +297,43 @@ mainbus_attach(parent, self, aux)
 		mba.mba_pba.pba_bridgetag = NULL;
 #if defined(MPACPI) && defined(MPACPI_SCANPCI)
 		if (mpacpi_active)
-			mpacpi_scan_pci(self, &mba.mba_pba, mainbus_print);
+			mpacpi_scan_pci(self, &mba.mba_pba, pcibusprint);
 		else
 #endif
 #if defined(MPBIOS) && defined(MPBIOS_SCANPCI)
 		if (mpbios_scanned != 0)
-			mpbios_scan_pci(self, &mba.mba_pba, mainbus_print);
+			mpbios_scan_pci(self, &mba.mba_pba, pcibusprint);
 		else
 #endif
-		config_found(self, &mba.mba_pba, mainbus_print);
+		config_found_ia(self, "pcibus", &mba.mba_pba, pcibusprint);
 	}
 #endif
 
 #if NMCA > 0
 	/* Note: MCA bus probe is done in i386/machdep.c */
 	if (MCA_system) {
-		mba.mba_mba.mba_busname = "mca";
 		mba.mba_mba.mba_iot = X86_BUS_SPACE_IO;
 		mba.mba_mba.mba_memt = X86_BUS_SPACE_MEM;
 		mba.mba_mba.mba_dmat = &mca_bus_dma_tag;
 		mba.mba_mba.mba_mc = NULL;
 		mba.mba_mba.mba_bus = 0;
-		config_found(self, &mba.mba_mba, mainbus_print);
+		config_found_ia(self, "mcabus", &mba.mba_mba, mcabusprint);
 	}
 #endif
 
 	if (memcmp(ISA_HOLE_VADDR(EISA_ID_PADDR), EISA_ID, EISA_ID_LEN) == 0 &&
 	    eisa_has_been_seen == 0) {
-		mba.mba_eba.eba_busname = "eisa";
 		mba.mba_eba.eba_iot = X86_BUS_SPACE_IO;
 		mba.mba_eba.eba_memt = X86_BUS_SPACE_MEM;
 #if NEISA > 0
 		mba.mba_eba.eba_dmat = &eisa_bus_dma_tag;
 #endif
-		config_found(self, &mba.mba_eba, mainbus_print);
+		config_found_ia(self, "eisabus", &mba.mba_eba, eisabusprint);
 	}
 
 #if NISA > 0
 	if (isa_has_been_seen == 0)
-		config_found(self, &mba_iba, mainbus_print);
+		config_found_ia(self, "isabus", &mba_iba, isabusprint);
 #endif
 
 #if NAPM > 0
@@ -345,7 +342,7 @@ mainbus_attach(parent, self, aux)
 #endif
 	if (apm_busprobe()) {
 		mba.mba_aaa.aaa_busname = "apm";
-		config_found(self, &mba.mba_aaa, mainbus_print);
+		config_found_ia(self, "apmbus", &mba.mba_aaa, mainbus_print);
 	}
 #endif
 }
@@ -359,7 +356,5 @@ mainbus_print(aux, pnp)
 
 	if (pnp)
 		aprint_normal("%s at %s", mba->mba_busname, pnp);
-	if (strcmp(mba->mba_busname, "pci") == 0)
-		aprint_normal(" bus %d", mba->mba_pba.pba_bus);
 	return (UNCONF);
 }

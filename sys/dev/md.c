@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.36.2.2 2004/08/03 10:44:54 skrll Exp $	*/
+/*	$NetBSD: md.c,v 1.36.2.3 2004/09/03 12:45:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.36.2.2 2004/08/03 10:44:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.36.2.3 2004/09/03 12:45:17 skrll Exp $");
 
 #include "opt_md.h"
 
@@ -92,16 +92,17 @@ struct md_softc {
 #define sc_size sc_md.md_size
 #define sc_type sc_md.md_type
 
-void mdattach __P((int));
-static void md_attach __P((struct device *, struct device *, void *));
+void	mdattach(int);
 
-dev_type_open(mdopen);
-dev_type_close(mdclose);
-dev_type_read(mdread);
-dev_type_write(mdwrite);
-dev_type_ioctl(mdioctl);
-dev_type_strategy(mdstrategy);
-dev_type_size(mdsize);
+static void	md_attach(struct device *, struct device *, void *);
+
+static dev_type_open(mdopen);
+static dev_type_close(mdclose);
+static dev_type_read(mdread);
+static dev_type_write(mdwrite);
+static dev_type_ioctl(mdioctl);
+static dev_type_strategy(mdstrategy);
+static dev_type_size(mdsize);
 
 const struct bdevsw md_bdevsw = {
 	mdopen, mdclose, mdstrategy, mdioctl, nodump, mdsize, D_DISK
@@ -112,7 +113,7 @@ const struct cdevsw md_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
-struct dkdriver mddkdriver = { mdstrategy };
+static struct dkdriver mddkdriver = { mdstrategy };
 
 static int   ramdisk_ndevs;
 static void *ramdisk_devs[MD_MAX_UNITS];
@@ -121,8 +122,7 @@ static void *ramdisk_devs[MD_MAX_UNITS];
  * This is called if we are configured as a pseudo-device
  */
 void
-mdattach(n)
-	int n;
+mdattach(int n)
 {
 	struct md_softc *sc;
 	int i;
@@ -158,9 +158,7 @@ mdattach(n)
 }
 
 static void
-md_attach(parent, self, aux)
-	struct device	*parent, *self;
-	void		*aux;
+md_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct md_softc *sc = (struct md_softc *)self;
 
@@ -191,13 +189,14 @@ md_attach(parent, self, aux)
  */
 
 #if MEMORY_DISK_SERVER
-static int md_server_loop __P((struct md_softc *sc));
-static int md_ioctl_server __P((struct md_softc *sc,
-		struct md_conf *umd, struct proc *proc));
+static int	md_server_loop(struct md_softc *sc);
+static int	md_ioctl_server(struct md_softc *sc, struct md_conf *umd,
+		    struct lwp *l);
 #endif	/* MEMORY_DISK_SERVER */
-static int md_ioctl_kalloc __P((struct md_softc *sc, struct md_conf *umd));
+static int	md_ioctl_kalloc(struct md_softc *sc, struct md_conf *umd,
+		    struct lwp *l);
 
-int
+static int
 mdsize(dev_t dev)
 {
 	int unit;
@@ -216,11 +215,8 @@ mdsize(dev_t dev)
 	return (sc->sc_size >> DEV_BSHIFT);
 }
 
-int
-mdopen(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+static int
+mdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int unit;
 	struct md_softc *sc;
@@ -253,11 +249,8 @@ mdopen(dev, flag, fmt, l)
 	return 0;
 }
 
-int
-mdclose(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+static int
+mdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int unit;
 
@@ -269,11 +262,8 @@ mdclose(dev, flag, fmt, l)
 	return 0;
 }
 
-int
-mdread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+static int
+mdread(dev_t dev, struct uio *uio, int flags)
 {
 	int unit;
 	struct md_softc *sc;
@@ -291,11 +281,8 @@ mdread(dev, uio, flags)
 	return (physio(mdstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
-int
-mdwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+static int
+mdwrite(dev_t dev, struct uio *uio, int flags)
 {
 	int unit;
 	struct md_softc *sc;
@@ -317,9 +304,8 @@ mdwrite(dev, uio, flags)
  * Handle I/O requests, either directly, or
  * by passing them to the server process.
  */
-void
-mdstrategy(bp)
-	struct buf *bp;
+static void
+mdstrategy(struct buf *bp)
 {
 	int unit;
 	struct md_softc	*sc;
@@ -378,13 +364,8 @@ mdstrategy(bp)
 	biodone(bp);
 }
 
-int
-mdioctl(dev, cmd, data, flag, l)
-	dev_t dev;
-	u_long cmd;
-	int flag;
-	caddr_t data;
-	struct lwp *l;
+static int
+mdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	int unit;
 	struct md_softc *sc;
@@ -409,10 +390,10 @@ mdioctl(dev, cmd, data, flag, l)
 			break;
 		switch (umd->md_type) {
 		case MD_KMEM_ALLOCATED:
-			return md_ioctl_kalloc(sc, umd);
+			return md_ioctl_kalloc(sc, umd, l);
 #if MEMORY_DISK_SERVER
 		case MD_UMEM_SERVER:
-			return md_ioctl_server(sc, umd, l->l_proc);
+			return md_ioctl_server(sc, umd, l);
 #endif	/* MEMORY_DISK_SERVER */
 		default:
 			break;
@@ -427,9 +408,7 @@ mdioctl(dev, cmd, data, flag, l)
  * Just allocate some kernel memory and return.
  */
 static int
-md_ioctl_kalloc(sc, umd)
-	struct md_softc *sc;
-	struct md_conf *umd;
+md_ioctl_kalloc(struct md_softc *sc, struct md_conf *umd, struct lwp *l)
 {
 	vaddr_t addr;
 	vsize_t size;
@@ -454,10 +433,7 @@ md_ioctl_kalloc(sc, umd)
  * Set config, then become the I/O server for this unit.
  */
 static int
-md_ioctl_server(sc, umd, proc)
-	struct md_softc *sc;
-	struct md_conf *umd;
-	struct proc *proc;
+md_ioctl_server(struct md_softc *sc, struct md_conf *umd, struct lwp *l)
 {
 	vaddr_t end;
 	int error;
@@ -485,11 +461,10 @@ md_ioctl_server(sc, umd, proc)
 	return (error);
 }	
 
-int md_sleep_pri = PWAIT | PCATCH;
+static int md_sleep_pri = PWAIT | PCATCH;
 
 static int
-md_server_loop(sc)
-	struct md_softc *sc;
+md_server_loop(struct md_softc *sc)
 {
 	struct buf *bp;
 	caddr_t addr;	/* user space address */

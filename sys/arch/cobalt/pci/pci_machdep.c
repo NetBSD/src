@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.12.16.1 2004/08/03 10:33:46 skrll Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.12.16.2 2004/09/03 12:44:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12.16.1 2004/08/03 10:33:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12.16.2 2004/09/03 12:44:29 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12.16.1 2004/08/03 10:33:46 skrll 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
+
+#include <cobalt/dev/gtreg.h>
 
 /*
  * PCI doesn't have any special needs; just use
@@ -103,9 +105,6 @@ pci_decompose_tag(pc, tag, bp, dp, fp)
 		*fp = (tag >> 8) & 0x07;
 }
 
-#define PCI_CFG_ADDR	((volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x14000cf8))
-#define PCI_CFG_DATA	((volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x14000cfc))
-
 pcireg_t
 pci_conf_read(pc, tag, reg)
 	pci_chipset_tag_t pc;
@@ -128,9 +127,10 @@ pci_conf_read(pc, tag, reg)
 	if (bus == 0 && dev == 31)
 		return 0;
 
-	*PCI_CFG_ADDR = 0x80000000 | tag | reg;
-	data = *PCI_CFG_DATA;
-	*PCI_CFG_ADDR = 0;
+	bus_space_write_4(pc->pc_bst, pc->pc_bsh, GT_PCICFG_ADDR,
+	    0x80000000 | tag | reg);
+	data = bus_space_read_4(pc->pc_bst, pc->pc_bsh, GT_PCICFG_DATA);
+	bus_space_write_4(pc->pc_bst, pc->pc_bsh, GT_PCICFG_ADDR, 0);
 
 	return data;
 }
@@ -142,11 +142,11 @@ pci_conf_write(pc, tag, reg, data)
 	int reg;
 	pcireg_t data;
 {
-	*PCI_CFG_ADDR = 0x80000000 | tag | reg;
-	*PCI_CFG_DATA = data;
-	*PCI_CFG_ADDR = 0;
 
-	return;
+	bus_space_write_4(pc->pc_bst, pc->pc_bsh, GT_PCICFG_ADDR,
+	    0x80000000 | tag | reg);
+	bus_space_write_4(pc->pc_bst, pc->pc_bsh, GT_PCICFG_DATA, data);
+	bus_space_write_4(pc->pc_bst, pc->pc_bsh, GT_PCICFG_ADDR, 0);
 }
 
 int

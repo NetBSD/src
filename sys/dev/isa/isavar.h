@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.40.2.1 2004/08/03 10:47:58 skrll Exp $	*/
+/*	$NetBSD: isavar.h,v 1.40.2.2 2004/09/03 12:45:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ struct isabus_attach_args;
  * ISA bus attach arguments
  */
 struct isabus_attach_args {
-	char	*iba_busname;		/* XXX should be common */
+	char	*_iba_busname;		/* XXX placeholder */
 	bus_space_tag_t iba_iot;	/* isa i/o space tag */
 	bus_space_tag_t iba_memt;	/* isa mem space tag */
 	bus_dma_tag_t iba_dmat;		/* isa DMA tag */
@@ -236,6 +236,8 @@ struct isa_softc {
 #define		cf_irq			cf_loc[ISACF_IRQ]
 #define		cf_drq			cf_loc[ISACF_DRQ]
 #define		cf_drq2			cf_loc[ISACF_DRQ2]
+
+int	isabusprint(void *, const char *);
 
 /*
  * ISA interrupt handler manipulation.

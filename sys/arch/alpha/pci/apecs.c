@@ -1,4 +1,4 @@
-/* $NetBSD: apecs.c,v 1.43 2003/06/15 23:08:54 fvdl Exp $ */
+/* $NetBSD: apecs.c,v 1.43.2.1 2004/09/03 12:44:28 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.43 2003/06/15 23:08:54 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.43.2.1 2004/09/03 12:44:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,8 +111,6 @@ CFATTACH_DECL(apecs, sizeof(struct apecs_softc),
     apecsmatch, apecsattach, NULL, NULL);
 
 extern struct cfdriver apecs_cd;
-
-static int	apecsprint __P((void *, const char *pnp));
 
 int	apecs_bus_get_window __P((int, int,
 	    struct alpha_bus_space_translation *));
@@ -240,7 +238,6 @@ apecsattach(parent, self, aux)
 		panic("apecsattach: shouldn't be here, really...");
 	}
 
-	pba.pba_busname = "pci";
 	pba.pba_iot = &acp->ac_iot;
 	pba.pba_memt = &acp->ac_memt;
 	pba.pba_dmat =
@@ -251,21 +248,7 @@ apecsattach(parent, self, aux)
 	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
-	config_found(self, &pba, apecsprint);
-}
-
-static int
-apecsprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	register struct pcibus_attach_args *pba = aux;
-
-	/* only PCIs can attach to APECSes; easy. */
-	if (pnp)
-		aprint_normal("%s at %s", pba->pba_busname, pnp);
-	aprint_normal(" bus %d", pba->pba_bus);
-	return (UNCONF);
+	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
 
 int

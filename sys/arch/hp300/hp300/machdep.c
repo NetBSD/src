@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.172.2.2 2004/08/03 10:34:37 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.172.2.3 2004/09/03 12:44:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.172.2.2 2004/08/03 10:34:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.172.2.3 2004/09/03 12:44:39 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -188,26 +188,26 @@ extern struct emul emul_hpux;
 #endif
 
 /* prototypes for local functions */
-void	parityenable __P((void));
-int	parityerror __P((struct frame *));
-int	parityerrorfind __P((void));
-void    identifycpu __P((void));
-void    initcpu __P((void));
+static void	parityenable(void);
+static int	parityerror(struct frame *);
+static int	parityerrorfind(void);
+static void	identifycpu(void);
+static void	initcpu(void);
 
-int	cpu_dumpsize __P((void));
-int	cpu_dump __P((int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *));
-void	cpu_init_kcore_hdr __P((void));
+static int	cpu_dumpsize(void);
+static int	cpu_dump(int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *);
+static void	cpu_init_kcore_hdr(void);
 
 /* functions called from locore.s */
-void    dumpsys __P((void));
-void	hp300_init __P((void));
-void    straytrap __P((int, u_short));
-void	nmihand __P((struct frame));
+void    dumpsys(void);
+void	hp300_init(void);
+void    straytrap(int, u_short);
+void	nmihand(struct frame);
 
 /*
  * Machine-dependent crash dump header info.
  */
-cpu_kcore_hdr_t cpu_kcore_hdr;
+static cpu_kcore_hdr_t cpu_kcore_hdr;
 
 /*
  * Note that the value of delay_divisor is roughly
@@ -222,7 +222,7 @@ int	delay_divisor;		/* delay constant */
  * Early initialization, before main() is called.
  */
 void
-hp300_init()
+hp300_init(void)
 {
 	struct btinfo_magic *bt_mag;
 	int i;
@@ -278,7 +278,7 @@ hp300_init()
  * to choose and initialize a console.
  */
 void
-consinit()
+consinit(void)
 {
 
 	/*
@@ -318,7 +318,7 @@ consinit()
  * initialize CPU
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	extern char *etext;
 	vaddr_t minaddr, maxaddr;
@@ -406,10 +406,7 @@ cpu_startup()
  * Set registers on exec.
  */
 void
-setregs(l, pack, stack)
-	struct lwp *l;
-	struct exec_package *pack;
-	u_long stack;
+setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
 
@@ -441,7 +438,7 @@ setregs(l, pack, stack)
 /*
  * Info for CTL_HW
  */
-char	cpu_model[120];
+char cpu_model[120];
 
 struct hp300_model {
 	int id;
@@ -450,7 +447,7 @@ struct hp300_model {
 	const char *speed;
 };
 
-const struct hp300_model hp300_models[] = {
+static const struct hp300_model hp300_models[] = {
 	{ HP_320,	-1,		"320",		"16.67"	},
 	{ HP_330,	-1,		"318/319/330",	"16.67"	},
 	{ HP_340,	-1,		"340",		"16.67"	},
@@ -472,8 +469,8 @@ const struct hp300_model hp300_models[] = {
 	{ 0,		-1,		NULL,		NULL	},
 };
 
-void
-identifycpu()
+static void
+identifycpu(void)
 {
 	const char *t, *mc, *s;
 	int i, len;
@@ -661,9 +658,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 int	waittime = -1;
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 
 #if __GNUC__	/* XXX work around lame compiler problem (gcc 2.7.2) */
@@ -724,8 +719,8 @@ cpu_reboot(howto, bootstr)
 /*
  * Initialize the kernel crash dump header.
  */
-void
-cpu_init_kcore_hdr()
+static void
+cpu_init_kcore_hdr(void)
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
@@ -786,8 +781,8 @@ cpu_init_kcore_hdr()
  * Compute the size of the machine-dependent crash dump header.
  * Returns size in disk blocks.
  */
-int
-cpu_dumpsize()
+static int
+cpu_dumpsize(void)
 {
 	int size;
 
@@ -798,10 +793,8 @@ cpu_dumpsize()
 /*
  * Called by dumpsys() to dump the machine-dependent header.
  */
-int
-cpu_dump(dump, blknop)
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
-	daddr_t *blknop;
+static int
+cpu_dump(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t *blknop)
 {
 	int buf[dbtob(1) / sizeof(int)];
 	cpu_kcore_hdr_t *chdr;
@@ -837,7 +830,7 @@ long	dumplo = 0;		/* blocks */
  * reduce the chance that swapping trashes it.
  */
 void
-cpu_dumpconf()
+cpu_dumpconf(void)
 {
 	const struct bdevsw *bdev;
 	int chdrsize;	/* size of dump header */
@@ -875,12 +868,12 @@ cpu_dumpconf()
  * Dump physical memory onto the dump device.  Called by cpu_reboot().
  */
 void
-dumpsys()
+dumpsys(void)
 {
 	const struct bdevsw *bdev;
 	daddr_t blkno;		/* current block to write */
 				/* dump routine */
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	int pg;			/* page being dumped */
 	paddr_t maddr;		/* PA being dumped */
 	int error;		/* error code from (*dump)() */
@@ -964,8 +957,8 @@ dumpsys()
 	printf("succeeded\n");
 }
 
-void
-initcpu()
+static void
+initcpu(void)
 {
 
 #ifdef MAPPEDCOPY
@@ -986,9 +979,7 @@ initcpu()
 }
 
 void
-straytrap(pc, evec)
-	int pc;
-	u_short evec;
+straytrap(int pc, u_short evec)
 {
 	printf("unexpected trap (vector offset %x) from %x\n",
 	       evec & 0xFFF, pc);
@@ -999,8 +990,7 @@ straytrap(pc, evec)
 int	*nofault;
 
 int
-badaddr(addr)
-	caddr_t addr;
+badaddr(caddr_t addr)
 {
 	int i;
 	label_t	faultbuf;
@@ -1016,8 +1006,7 @@ badaddr(addr)
 }
 
 int
-badbaddr(addr)
-	caddr_t addr;
+badbaddr(caddr_t addr)
 {
 	int i;
 	label_t	faultbuf;
@@ -1038,8 +1027,7 @@ badbaddr(addr)
  *	Look up information in bootinfo from boot loader.
  */
 void *
-lookup_bootinfo(type)
-	int type;
+lookup_bootinfo(int type)
 {
 	struct btinfo_common *bt;
 	char *help = (char *)bootinfo_va;
@@ -1066,15 +1054,14 @@ lookup_bootinfo(type)
 int panicbutton = 1;	/* non-zero if panic buttons are enabled */
 int candbdiv = 2;	/* give em half a second (hz / candbdiv) */
 
-void	candbtimer __P((void *));
+static void	candbtimer(void *);
 
 int crashandburn;
 
 struct callout candbtimer_ch = CALLOUT_INITIALIZER;
 
 void
-candbtimer(arg)
-	void *arg;
+candbtimer(void *arg)
 {
 
 	crashandburn = 0;
@@ -1087,8 +1074,7 @@ static int innmihand;	/* simple mutex */
  * Level 7 interrupts can be caused by the keyboard or parity errors.
  */
 void
-nmihand(frame)
-	struct frame frame;
+nmihand(struct frame frame)
 {
 
 	/* Prevent unwanted recursion. */
@@ -1159,8 +1145,8 @@ int ignorekperr = 0;	/* ignore kernel parity errors */
 /*
  * Enable parity detection
  */
-void
-parityenable()
+static void
+parityenable(void)
 {
 	label_t	faultbuf;
 
@@ -1179,9 +1165,8 @@ parityenable()
  * Determine if level 7 interrupt was caused by a parity error
  * and deal with it if it was.  Returns 1 if it was a parity error.
  */
-int
-parityerror(fp)
-	struct frame *fp;
+static int
+parityerror(struct frame *fp)
 {
 	if (!gotparmem)
 		return(0);
@@ -1214,8 +1199,8 @@ parityerror(fp)
  * Yuk!  There has got to be a better way to do this!
  * Searching all of memory with interrupts blocked can lead to disaster.
  */
-int
-parityerrorfind()
+static int
+parityerrorfind(void)
 {
 	static label_t parcatch;
 	static int looking = 0;
@@ -1288,9 +1273,7 @@ done:
  *	done on little-endian machines...  -- cgd
  */
 int
-cpu_exec_aout_makecmds(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 #if defined(COMPAT_NOMID) || defined(COMPAT_44)
 	u_long midmag, magic;

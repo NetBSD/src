@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.5.2.1 2004/08/03 10:34:48 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.5.2.2 2004/09/03 12:44:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.5.2.1 2004/08/03 10:34:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.5.2.2 2004/09/03 12:44:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -63,6 +63,9 @@ volatile int cpl;
 
 /* The pending interrupts. */
 volatile int ipending;
+
+/* Shared interrupts */
+int ishared;
 
 /* Nonzero iff we are running an interrupt. */
 u_int hppa_intr_depth;
@@ -129,8 +132,8 @@ hp700_intr_reg_establish(struct hp700_int_reg *int_reg)
 
 	/* Initialize the register structure. */
 	memset(int_reg, 0, sizeof(*int_reg));
-	memset(int_reg->int_reg_bits_map, INT_REG_BIT_UNUSED,
-		sizeof(int_reg->int_reg_bits_map));
+	for (idx = 0; idx < HP700_INT_BITS; idx++)
+		int_reg->int_reg_bits_map[idx] = INT_REG_BIT_UNUSED;
 
 	/* Add this structure to the list. */
 	for (idx = 0; idx < HP700_INT_BITS; idx++)
@@ -192,8 +195,12 @@ hp700_intr_establish(struct device *dv, int ipl, int (*handler)(void *),
 	if (bit_pos < 0 || bit_pos >= HP700_INT_BITS)
 		panic("hp700_intr_establish: bad interrupt bit");
 
-	/* Panic if this int bit is already handled. */
-	if (int_reg->int_reg_bits_map[31 ^ bit_pos] != INT_REG_BIT_UNUSED)
+	/*
+	 * Panic if this int bit is already handled,
+	 * but allow shared interrupts for PCI.
+	 */
+	if (int_reg->int_reg_bits_map[31 ^ bit_pos] != INT_REG_BIT_UNUSED
+	    && strncmp(dv->dv_xname, "dino", 4) != 0 && handler == NULL)
 		panic("hp700_intr_establish: int already handled");
 
 	/*
@@ -215,7 +222,12 @@ hp700_intr_establish(struct device *dv, int ipl, int (*handler)(void *),
 	 */
 	idx = _hp700_intr_ipl_next();
 	int_reg->int_reg_allocatable_bits &= ~(1 << bit_pos);
-	int_reg->int_reg_bits_map[31 ^ bit_pos] = (31 ^ idx);
+	if (int_reg->int_reg_bits_map[31 ^ bit_pos] == INT_REG_BIT_UNUSED)
+		int_reg->int_reg_bits_map[31 ^ bit_pos] = 1 << idx;
+	else {
+		int_reg->int_reg_bits_map[31 ^ bit_pos] |= 1 << idx;
+		ishared |= int_reg->int_reg_bits_map[31 ^ bit_pos];
+	}
 	int_bit = hp700_int_bits + idx;
 
 	/* Fill this int bit. */
@@ -339,6 +351,7 @@ hp700_intr_init(void)
          * IPL_HIGH must block everything that can manipulate a run queue.
          */     
         imask[IPL_HIGH] |= imask[IPL_CLOCK]; 
+        imask[IPL_SERIAL] |= imask[IPL_HIGH]; 
 
 	/* Now go back and flesh out the spl levels on each bit. */
 	for(bit_pos = 0; bit_pos < HP700_INT_BITS; bit_pos++) {
@@ -398,27 +411,49 @@ hppa_intr(struct trapframe *frame)
 {
 	int eirr;
 	int ipending_new;
+	int pending;
+	int i;
+	struct hp700_int_reg *int_reg;
 	int hp700_intr_ipending_new(struct hp700_int_reg *, int);
 
 	/*
 	 * Read the CPU interrupt register and acknowledge
 	 * all interrupts.  Starting with this value, get
-	 * our set of new pending interrupts.
+	 * our set of new pending interrupts and add
+	 * these new bits to ipending. 
 	 */
 	mfctl(CR_EIRR, eirr);
 	mtctl(eirr, CR_EIRR);
-	ipending_new = hp700_intr_ipending_new(&int_reg_cpu, eirr);
-
-	/* Add these new bits to ipending. */
-	ipending |= ipending_new;
+	ipending |= hp700_intr_ipending_new(&int_reg_cpu, eirr);
 
 	/* If we have interrupts to dispatch, do so. */
 	if (ipending & ~cpl)
 		hp700_intr_dispatch(cpl, frame->tf_eiem, frame);
-#if 0
-	else if (ipending != 0x80000000)
-		printf("ipending %x cpl %x\n", ipending, cpl);
-#endif
+
+	/* We are done if there are no shared interrupts. */
+	if (ishared == 0)
+		return;
+
+	for (i = 0; i < HP700_INT_BITS; i++) {
+		int_reg = hp700_int_regs[i];
+		if (int_reg == NULL || int_reg->int_reg_level == NULL)
+			continue;
+		/* 
+		 * For shared interrupts look if the interrupt line is still
+		 * asserted. If it is, reschedule the corresponding interrupt.
+		 */
+		ipending_new = *int_reg->int_reg_level;
+		while (ipending_new != 0) {
+			pending = ffs(ipending_new) - 1;
+			ipending |= int_reg->int_reg_bits_map[31 ^ pending] 
+			    & ishared;
+			ipending_new &= ~(1 << pending);
+		}
+	}
+
+	/* If we still have interrupts to dispatch, do so. */
+	if (ipending & ~cpl)
+		hp700_intr_dispatch(cpl, frame->tf_eiem, frame);
 }
 		
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.58.2.3 2004/08/25 06:58:06 skrll Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.58.2.4 2004/09/03 12:45:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -62,7 +62,7 @@ struct pci_softc;
  * PCI bus attach arguments.
  */
 struct pcibus_attach_args {
-	char		*pba_busname;	/* XXX should be common */
+	char		*_pba_busname;	/* XXX placeholder */
 	bus_space_tag_t pba_iot;	/* pci i/o space tag */
 	bus_space_tag_t pba_memt;	/* pci mem space tag */
 	bus_dma_tag_t pba_dmat;		/* DMA tag */
@@ -187,6 +187,8 @@ extern struct cfdriver pci_cd;
 
 #define	pcicf_function		cf_loc[PCICF_FUNCTION]
 #define	PCI_UNK_FUNCTION	PCICF_FUNCTION_DEFAULT /* wildcarded 'function' */
+
+int pcibusprint(void *, const char *);
 
 /*
  * Configuration space access and utility functions.  (Note that most,

@@ -1,7 +1,7 @@
-/* $NetBSD: vesabios.c,v 1.9.2.1 2004/08/03 10:35:46 skrll Exp $ */
+/* $NetBSD: vesabios.c,v 1.9.2.2 2004/09/03 12:44:47 skrll Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesabios.c,v 1.9.2.1 2004/08/03 10:35:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesabios.c,v 1.9.2.2 2004/09/03 12:44:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,11 +49,6 @@ vesabios_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct vesabios_attach_args *vaa = aux;
-
-	/* These are not the droids you're looking for. */
-	if (strcmp(vaa->vaa_busname, "vesabios") != 0)
-		return (0);
 
 	return (1);
 }

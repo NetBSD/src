@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.68.2.3 2004/08/24 17:57:42 skrll Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.68.2.4 2004/09/03 12:45:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.68.2.3 2004/08/24 17:57:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.68.2.4 2004/09/03 12:45:55 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1752,7 +1752,8 @@ ffs_vfree(v)
 		softdep_freefile(ap);
 		return (0);
 	}
-	return (ffs_freefile(ap));
+	return (ffs_freefile(VTOI(ap->a_pvp)->i_fs, VTOI(ap->a_pvp)->i_devvp,
+	    ap->a_ino, ap->a_mode));
 }
 
 /*
@@ -1760,37 +1761,35 @@ ffs_vfree(v)
  * The specified inode is placed back in the free map.
  */
 int
-ffs_freefile(v)
-	void *v;
+ffs_freefile(fs, devvp, ino, mode)
+	struct fs *fs;
+	struct vnode *devvp;
+	ino_t ino;
+	int mode;
 {
-	struct vop_vfree_args /* {
-		struct vnode *a_pvp;
-		ino_t a_ino;
-		int a_mode;
-	} */ *ap = v;
 	struct cg *cgp;
-	struct inode *pip = VTOI(ap->a_pvp);
-	struct fs *fs = pip->i_fs;
-	ino_t ino = ap->a_ino;
 	struct buf *bp;
 	int error, cg;
 	daddr_t cgbno;
 	u_int8_t *inosused;
+	dev_t dev;
 #ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
 #endif
 
 	cg = ino_to_cg(fs, ino);
-	if (pip->i_devvp->v_type != VBLK) {
-		/* pip->i_devvp is a snapshot */
+	if (devvp->v_type != VBLK) {
+		/* devvp is a snapshot */
+		dev = VTOI(devvp)->i_devvp->v_rdev;
 		cgbno = fragstoblks(fs, cgtod(fs, cg));
 	} else {
+		dev = devvp->v_rdev;
 		cgbno = fsbtodb(fs, cgtod(fs, cg));
 	}
 	if ((u_int)ino >= fs->fs_ipg * fs->fs_ncg)
 		panic("ifree: range: dev = 0x%x, ino = %d, fs = %s",
-		    pip->i_dev, ino, fs->fs_fsmnt);
-	error = bread(pip->i_devvp, cgbno, (int)fs->fs_cgsize, NOCRED, &bp);
+		    dev, ino, fs->fs_fsmnt);
+	error = bread(devvp, cgbno, (int)fs->fs_cgsize, NOCRED, &bp);
 	if (error) {
 		brelse(bp);
 		return (error);
@@ -1808,7 +1807,7 @@ ffs_freefile(v)
 	ino %= fs->fs_ipg;
 	if (isclr(inosused, ino)) {
 		printf("dev = 0x%x, ino = %d, fs = %s\n",
-		    pip->i_dev, ino, fs->fs_fsmnt);
+		    dev, ino, fs->fs_fsmnt);
 		if (fs->fs_ronly == 0)
 			panic("ifree: freeing free inode");
 	}
@@ -1818,7 +1817,7 @@ ffs_freefile(v)
 	ufs_add32(cgp->cg_cs.cs_nifree, 1, needswap);
 	fs->fs_cstotal.cs_nifree++;
 	fs->fs_cs(fs, cg).cs_nifree++;
-	if ((ap->a_mode & IFMT) == IFDIR) {
+	if ((mode & IFMT) == IFDIR) {
 		ufs_add32(cgp->cg_cs.cs_ndir, -1, needswap);
 		fs->fs_cstotal.cs_ndir--;
 		fs->fs_cs(fs, cg).cs_ndir--;

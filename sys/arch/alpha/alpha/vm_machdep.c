@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.80.2.1 2004/08/03 10:31:07 skrll Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.80.2.2 2004/09/03 12:44:28 skrll Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.80.2.1 2004/08/03 10:31:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.80.2.2 2004/09/03 12:44:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,46 +267,6 @@ cpu_swapout(struct lwp *l)
 
 	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
 		fpusave_proc(l, 1);
-}
-
-/*
- * Move pages from one kernel virtual address to another.
- * Both addresses are assumed to have valid page table pages.
- * and size must be a multiple of PAGE_SIZE.
- *
- * Note that since all kernel page table pages are pre-allocated
- * and mapped in, we can use the Virtual Page Table.
- */
-void
-pagemove(caddr_t from, caddr_t to, size_t size)
-{
-	long fidx, tidx;
-	ssize_t todo;
-	PMAP_TLB_SHOOTDOWN_CPUSET_DECL
-
-	if (size % PAGE_SIZE)
-		panic("pagemove");
-
-	todo = size;			/* if testing > 0, need sign... */
-	while (todo > 0) {
-		fidx = VPT_INDEX(from);
-		tidx = VPT_INDEX(to);
-
-		VPT[tidx] = VPT[fidx];
-		VPT[fidx] = 0;
-
-		ALPHA_TBIS((vaddr_t)from);
-		ALPHA_TBIS((vaddr_t)to);
-
-		PMAP_TLB_SHOOTDOWN(pmap_kernel(), (vaddr_t)from, PG_ASM);
-		PMAP_TLB_SHOOTDOWN(pmap_kernel(), (vaddr_t)to, PG_ASM);
-
-		todo -= PAGE_SIZE;
-		from += PAGE_SIZE;
-		to += PAGE_SIZE;
-	}
-
-	PMAP_TLB_SHOOTNOW();
 }
 
 /*

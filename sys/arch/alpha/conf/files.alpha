@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.161.2.1 2004/08/03 10:31:19 skrll Exp $
+# $NetBSD: files.alpha,v 1.161.2.2 2004/09/03 12:44:28 skrll Exp $
 #
 # alpha-specific configuration info
 
@@ -300,7 +300,10 @@ file	arch/alpha/pci/cia_bwx_bus_mem.c cia
 file	arch/alpha/pci/cia_swiz_bus_io.c cia
 file	arch/alpha/pci/cia_swiz_bus_mem.c cia
 
-device	a12c { }: pcibus
+define	a12c_xb {}
+define	a12c_a12dc {}
+
+device	a12c { }: pcibus, a12c_xb, a12c_a12dc
 attach	a12c at mainbus
 file	arch/alpha/pci/a12c.c		a12c
 file	arch/alpha/pci/a12c_bus_mem.c	a12c
@@ -352,7 +355,9 @@ file	arch/alpha/pci/tsp_bus_mem.c	tsp
 
 device	ttwoga { hose = -1 }
 attach	ttwoga at mainbus
-device	ttwopci: pcibus, alpha_sgmap, alpha_pci_sgmap_pte64
+# identical to pcibus
+define	sableiobus {[bus = -1]}
+device	ttwopci: pcibus, sableiobus, alpha_sgmap, alpha_pci_sgmap_pte64
 attach	ttwopci at ttwoga
 file	arch/alpha/pci/ttwoga.c		ttwoga
 file	arch/alpha/pci/ttwoga_bus_io.c	ttwoga
@@ -364,7 +369,7 @@ file	arch/alpha/pci/ttwoga_pci.c	ttwoga
 # Sable STDIO support
 #
 device	sableio { port = -1 }
-attach	sableio at pcibus
+attach	sableio at sableiobus
 file	arch/alpha/sableio/sableio.c		sableio
 
 attach	com at sableio with com_sableio
@@ -430,13 +435,13 @@ file	arch/alpha/a12/if_ade.c		ade
 # Switch
 
 device	xb
-attach	xb at a12c
+attach	xb at a12c_xb
 file	arch/alpha/a12/if_xb.c	xb
 
 # Console
 
 device	a12dc
-attach	a12dc at a12c
+attach	a12dc at a12c_a12dc
 file	arch/alpha/a12/a12dc.c	a12dc		needs-flag
 
 #

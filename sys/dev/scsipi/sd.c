@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.202.2.3 2004/08/25 06:58:43 skrll Exp $	*/
+/*	$NetBSD: sd.c,v 1.202.2.4 2004/09/03 12:45:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.202.2.3 2004/08/25 06:58:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.202.2.4 2004/09/03 12:45:39 skrll Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -100,6 +100,7 @@ static void	sdminphys(struct buf *);
 static void	sdgetdefaultlabel(struct sd_softc *, struct disklabel *);
 static void	sdgetdisklabel(struct sd_softc *);
 static void	sdstart(struct scsipi_periph *);
+static void	sdrestart(void *);
 static void	sddone(struct scsipi_xfer *);
 static void	sd_shutdown(void *);
 static int	sd_interpret_sense(struct scsipi_xfer *);
@@ -230,6 +231,8 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	bufq_alloc(&sd->buf_queue,
 	    BUFQ_DISK_DEFAULT_STRAT()|BUFQ_SORT_RAWBLOCK);
 
+	callout_init(&sd->sc_callout);
+
 	/*
 	 * Store information needed to contact our base driver
 	 */
@@ -346,6 +349,9 @@ sddetach(struct device *self, int flags)
 	/* locate the major number */
 	bmaj = bdevsw_lookup_major(&sd_bdevsw);
 	cmaj = cdevsw_lookup_major(&sd_cdevsw);
+
+	/* kill any pending restart */
+	callout_stop(&sd->sc_callout);
 
 	s = splbio();
 
@@ -808,23 +814,28 @@ sdstart(struct scsipi_periph *periph)
 		}
 
 		/*
-		 * See if there is a buf with work for us to do..
-		 */
-		if ((bp = BUFQ_GET(&sd->buf_queue)) == NULL)
-			return;
-
-		/*
 		 * If the device has become invalid, abort all the
 		 * reads and writes until all files have been closed and
 		 * re-opened
 		 */
-		if ((periph->periph_flags & PERIPH_MEDIA_LOADED) == 0) {
-			bp->b_error = EIO;
-			bp->b_flags |= B_ERROR;
-			bp->b_resid = bp->b_bcount;
-			biodone(bp);
-			continue;
+		if (__predict_false(
+		    (periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)) {
+			if ((bp = BUFQ_GET(&sd->buf_queue)) != NULL) {
+				bp->b_error = EIO;
+				bp->b_flags |= B_ERROR;
+				bp->b_resid = bp->b_bcount;
+				biodone(bp);
+				continue;
+			} else {
+				return;
+			}
 		}
+
+		/*
+		 * See if there is a buf with work for us to do..
+		 */
+		if ((bp = BUFQ_PEEK(&sd->buf_queue)) == NULL)
+			return;
 
 		/*
 		 * We have a buf, now we should make a command.
@@ -891,12 +902,36 @@ sdstart(struct scsipi_periph *periph)
 		error = scsipi_command(periph, cmdp, cmdlen,
 		    (u_char *)bp->b_data, bp->b_bcount,
 		    SDRETRIES, SD_IO_TIMEOUT, bp, flags);
-		if (error) {
+		if (__predict_false(error)) {
 			disk_unbusy(&sd->sc_dk, 0, 0);
 			printf("%s: not queued, error %d\n",
 			    sd->sc_dev.dv_xname, error);
 		}
+		if (__predict_false(error == ENOMEM)) {
+			/*
+			 * out of memory. Keep this buffer in the queue, and
+			 * retry later.
+			 */
+			callout_reset(&sd->sc_callout, hz / 2, sdrestart,
+			    periph);
+			return;
+		}
+#ifdef DIAGNOSTIC
+		if (BUFQ_GET(&sd->buf_queue) != bp)
+			panic("sdstart(): dequeued wrong buf");
+#else
+		BUFQ_GET(&sd->buf_queue);
+#endif
+
 	}
+}
+
+static void
+sdrestart(void *v)
+{
+	int s = splbio();
+	sdstart((struct scsipi_periph *)v);
+	splx(s);
 }
 
 static void

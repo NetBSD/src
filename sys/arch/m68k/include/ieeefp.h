@@ -1,7 +1,8 @@
-/*	$NetBSD: ieeefp.h,v 1.3 1998/01/05 07:02:59 perry Exp $	*/
+/*	$NetBSD: ieeefp.h,v 1.3.48.1 2004/09/03 12:44:56 skrll Exp $	*/
 
 /* 
  * Written by J.T. Conklin, Apr 6, 1995
+ * Modified by Jason R. Thorpe, June 22, 2003
  * Public domain.
  */
 
@@ -21,5 +22,13 @@ typedef enum {
     FP_RM=2,			/* round toward negative infinity */
     FP_RP=3			/* round toward positive infinity */
 } fp_rnd;
+
+typedef enum {
+    FP_PE=0,			/* extended-precision (64-bit) */
+    FP_PS=1,			/* single-precision (24-bit) */
+    FP_PD=2			/* double-precision (53-bit) */
+} fp_prec;
+
+#define	__HAVE_FP_PREC
 
 #endif /* _M68K_IEEEFP_H_ */
