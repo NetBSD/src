@@ -1,4 +1,4 @@
-/*	$NetBSD: names.c,v 1.18 1995/12/17 05:30:05 jonathan Exp $	*/
+/*	$NetBSD: names.c,v 1.19 1996/04/01 21:45:25 mark Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,6 +40,14 @@ char *defdrives[] = { 0 };
 #endif
 
 #if defined(i386)
+int
+read_names()
+{
+	return 1;
+}
+#endif
+
+#if defined(arm32)
 int
 read_names()
 {
