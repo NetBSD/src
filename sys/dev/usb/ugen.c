@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.32 2000/01/19 00:23:58 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.33 2000/02/02 13:20:59 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -207,6 +207,9 @@ USB_ATTACH(ugen)
 		}
 	}
 #endif
+
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
+			   USBDEV(sc->sc_dev));
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
@@ -680,6 +683,9 @@ USB_DETACH(ugen)
 #elif defined(__FreeBSD__)
 	/* XXX not implemented yet */
 #endif
+
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
+			   USBDEV(sc->sc_dev));
 
 	return (0);
 }
