@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2002/12/24 21:21:03 perry Exp $
+#	$NetBSD: Makefile,v 1.10 2003/03/08 19:12:16 perry Exp $
 
 # The first four of these are libraries and have to be built first.
 
@@ -8,7 +8,7 @@ SUBDIR=	util global dns masterlib .WAIT \
 	README_FILES bounce cleanup error flush html \
 	lmtp local man master nqmgr pickup pipe postalias \
 	postcat postconf postdrop postfix postkick postlock \
-	postlog postmap postqueue postsuper qmgr sendmail \
+	postlog postmap postqueue postsuper proxymap qmgr sendmail \
 	showq smtp smtpd spawn trivial-rewrite virtual
 
 .if ${MKSHARE} != "no" || \
