@@ -1,5 +1,7 @@
 #!/bin/sh -
 #
+#	$NetBSD: MAKEDEV,v 1.9 1997/02/15 10:28:13 matthias Exp $
+#
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
 #
@@ -50,6 +52,7 @@
 # Special purpose devices:
 #	fd	file descriptors
 #	bpf*	packet filter
+#	ipl	ip filter
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
 #	ss*	SCSI scanner
@@ -67,8 +70,8 @@ all)
 	sh $0 std fd sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
 	sh $0 tty0 tty1 tty2 tty3 tty4 tty5 tty6 tty7
 	sh $0 pty0 pty1 vnd0 vnd1 bpf0 bpf1 bpf2 bpf3
-	sh $0 tun0 tun1 tun2 lkm ccd0 ccd1 ccd2 ccd3
-	sh $0 md0 ss0 ch0 uk0 uk1 lpt0 lpt1 rtc
+	sh $0 tun0 tun1 tun2 lkm ipl ccd0 ccd1 ccd2
+	sh $0 ccd3 md0 ss0 ch0 uk0 uk1 lpt0 lpt1 rtc
 	;;
 
 floppy)
@@ -244,6 +247,13 @@ bpf*|tun*)
 	rm -f $name$unit
 	mknod $name$unit	c $chr $unit
 	chown root.wheel $name$unit
+	;;
+
+ipl)
+	rm -f ipl
+	mknod ipl c 28 0
+	chown root.wheel ipl
+	chmod 600 ipl
 	;;
 
 lkm)
