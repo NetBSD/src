@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.40 2000/07/27 17:29:06 cgd Exp $ */
+/* $NetBSD: locore.h,v 1.41 2000/09/13 01:20:41 chuck Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -90,7 +90,6 @@ u_int32_t mips3_write_count(u_int32_t);
 u_int32_t mips3_read_compare(void);
 void	mips3_write_config(u_int32_t);
 void	mips3_write_compare(u_int32_t);
-void	mips3_write_xcontext_upper(u_int32_t);
 void	mips3_clearBEV(void);
 
 /*
