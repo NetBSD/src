@@ -1,4 +1,4 @@
-/*	$NetBSD: checknr.c,v 1.10 2002/01/21 18:28:00 wiz Exp $	*/
+/*	$NetBSD: checknr.c,v 1.11 2003/05/09 08:44:57 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)checknr.c	8.1 (Berkeley) 6/6/93";
 #else 
-__RCSID("$NetBSD: checknr.c,v 1.10 2002/01/21 18:28:00 wiz Exp $");
+__RCSID("$NetBSD: checknr.c,v 1.11 2003/05/09 08:44:57 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -285,9 +285,10 @@ main(int argc, char **argv)
 			f = fopen(cfilename, "r");
 			if (f == NULL)
 				perror(cfilename);
-			else
+			else {
 				process(f);
-			fclose(f);
+				fclose(f);
+			}
 		}
 	} else {
 		cfilename = "stdin";
