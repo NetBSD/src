@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.27 1998/07/27 14:04:01 mycroft Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.28 1998/09/09 12:08:05 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.27 1998/07/27 14:04:01 mycroft Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.28 1998/09/09 12:08:05 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -67,6 +67,7 @@ __RCSID("$NetBSD: vfprintf.c,v 1.27 1998/07/27 14:04:01 mycroft Exp $");
 #include "local.h"
 #include "fvwrite.h"
 #include "extern.h"
+#include "reentrant.h"
 
 static int __sprint __P((FILE *, struct __suio *));
 static int __sbprintf __P((FILE *, const char *, va_list));
@@ -266,16 +267,22 @@ vfprintf(fp, fmt0, ap)
 	    flags&SHORTINT ? (u_long)(u_short)va_arg(ap, int) : \
 	    (u_long)va_arg(ap, u_int))
 
+	FLOCKFILE(fp);
+
 	/* sorry, fprintf(read_only_file, "") returns -1, not 0 */
 	if (cantwrite(fp)) {
 		errno = EBADF;
+		FUNLOCKFILE(fp);
 		return (-1);
 	}
 
 	/* optimise fprintf(stderr) (and other unbuffered Unix files) */
 	if ((fp->_flags & (__SNBF|__SWR|__SRW)) == (__SNBF|__SWR) &&
-	    fp->_file >= 0)
-		return (__sbprintf(fp, fmt0, ap));
+	    fp->_file >= 0) {
+		ret = __sbprintf(fp, fmt0, ap);
+		FUNLOCKFILE(fp);
+		return (ret);
+	}
 
 	fmt = fmt0;
 	uio.uio_iov = iovp = iov;
@@ -713,8 +720,10 @@ number:			if ((dprec = prec) >= 0)
 done:
 	FLUSH();
 error:
-	return (__sferror(fp) ? -1 : ret);
-	/* NOTREACHED */
+	if (__sferror(fp))
+		ret = -1;
+	FUNLOCKFILE(fp);
+	return (ret);
 }
 
 #ifdef FLOATING_POINT
