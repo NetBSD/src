@@ -1,4 +1,4 @@
-/*	$NetBSD: t3000.c,v 1.8 1998/07/12 09:14:20 mrg Exp $	*/
+/*	$NetBSD: t3000.c,v 1.9 1998/12/19 23:02:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)t3000.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: t3000.c,v 1.8 1998/07/12 09:14:20 mrg Exp $");
+__RCSID("$NetBSD: t3000.c,v 1.9 1998/12/19 23:02:02 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -369,43 +369,48 @@ t3000_verbose_read()
 }
 #endif
 
-/*
- * Code stolen from /usr/src/lib/libc/gen/sleep.c
- */
-#define mask(s) (1<<((s)-1))
-#define setvec(vec, a) \
-        vec.sv_handler = a; vec.sv_mask = vec.sv_onstack = 0
+#define setsa(sa, a) \
+	sa.sa_handler = a; sigemptyset(&sa.sa_mask); sa.sa_flags = 0
 
 static int napms = 50; /* Give the t3000 50 milliseconds between characters */
 
 static int ringring;
 
-static void
+void
 t3000_nap()
 {
+	
+	struct itimerval itv, oitv;
+	struct itimerval *itp = &itv;
+	struct sigaction sa, osa;
+	sigset_t sm, osm;
 
-	int omask;
-        struct itimerval itv, oitv;
-        struct itimerval *itp = &itv;
-        struct sigvec vec, ovec;
+	timerclear(&itp->it_interval);
+	timerclear(&itp->it_value);
+	if (setitimer(ITIMER_REAL, itp, &oitv) < 0)
+		return;
 
-        timerclear(&itp->it_interval);
-        timerclear(&itp->it_value);
-        if (setitimer(ITIMER_REAL, itp, &oitv) < 0)
-                return;
-        setvec(ovec, SIG_DFL);
-        omask = sigblock(mask(SIGALRM));
-        itp->it_value.tv_sec = napms/1000;
+	sigemptyset(&sm);
+	sigaddset(&sm, SIGALRM);
+	(void)sigprocmask(SIG_BLOCK, &sm, &osm);
+
+	itp->it_value.tv_sec = napms/1000;
 	itp->it_value.tv_usec = ((napms%1000)*1000);
-        setvec(vec, t3000_napx);
-        ringring = 0;
-        (void) sigvec(SIGALRM, &vec, &ovec);
-        (void) setitimer(ITIMER_REAL, itp, (struct itimerval *)0);
-        while (!ringring)
-                sigpause(omask &~ mask(SIGALRM));
-        (void) sigvec(SIGALRM, &ovec, (struct sigvec *)0);
-        (void) setitimer(ITIMER_REAL, &oitv, (struct itimerval *)0);
-	(void) sigsetmask(omask);
+
+	setsa(sa, t3000_napx);
+	(void)sigaction(SIGALRM, &sa, &osa);
+
+	(void)setitimer(ITIMER_REAL, itp, NULL);
+
+	sm = osm;
+	sigdelset(&sm, SIGALRM);
+
+	for (ringring = 0; !ringring; )
+		sigsuspend(&sm);
+
+	(void)sigaction(SIGALRM, &osa, NULL);
+	(void)setitimer(ITIMER_REAL, &oitv, NULL);
+	(void)sigprocmask(SIG_SETMASK, &osm, NULL);
 }
 
 static void
