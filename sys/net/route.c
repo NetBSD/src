@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.25 1999/07/01 08:12:49 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.26 1999/07/30 10:35:39 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -167,18 +167,6 @@ rtalloc(ro)
 		return;				 /* XXX */
 	ro->ro_rt = rtalloc1(&ro->ro_dst, 1);
 }
-
-#if 1
-/* for INET6 */
-void
-rtcalloc(ro)
-	register struct route *ro;
-{
-	if (ro->ro_rt && ro->ro_rt->rt_ifp && (ro->ro_rt->rt_flags & RTF_UP))
-		return;				 /* XXX */
-	ro->ro_rt = rtalloc1(&ro->ro_dst, 0);
-}
-#endif
 
 struct rtentry *
 rtalloc1(dst, report)
