@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.3 1997/05/18 23:14:03 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.4 1997/06/06 23:29:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,6 +49,8 @@
 #include <dev/pci/pcireg.h>
 
 #include <dev/pci/pcidevs.h>
+
+#include "isa.h"
 
 int	pcibmatch __P((struct device *, void *, void *));
 void	pcibattach __P((struct device *, struct device *, void *));
@@ -129,6 +131,9 @@ pcib_callback(arg)
 	iba.iba_busname = "isa";
 	iba.iba_iot = I386_BUS_SPACE_IO;
 	iba.iba_memt = I386_BUS_SPACE_MEM;
+#if NISA > 0
+	iba.iba_dmat = &isa_bus_dma_tag;
+#endif
 	config_found(self, &iba, pcib_print);
 }
 
