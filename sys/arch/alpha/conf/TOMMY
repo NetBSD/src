@@ -1,4 +1,4 @@
-#	$NetBSD: TOMMY,v 1.2 1995/11/23 02:35:23 cgd Exp $
+#	$NetBSD: TOMMY,v 1.3 1995/11/25 01:32:34 cgd Exp $
 #
 # Kernel for tomintoul.pdl.cs.cmu.edu.
 # Should work on AlphaStation 400s and AlphaStation 200s
@@ -43,7 +43,6 @@ options		LKM
 
 # Misc. options
 options		PCIVERBOSE	# recognize "unknown" PCI devices
-options		DDB
 
 config		netbsd		root on sd0 swap on sd0
 
