@@ -39,40 +39,44 @@ static char sccsid[] = "@(#)lsearch.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
-#include <unistd.h>
+#include <string.h>
+#include <search.h>
 
-static char *linear_base();
+typedef int (*cmp_fn_t) __P((const void *, const void *));
+static void *linear_base __P((const void *, const void *, size_t *, size_t,
+			     cmp_fn_t, int));
 
-char *
+void *
 lsearch(key, base, nelp, width, compar)
-	char *key, *base;
-	u_int *nelp, width;
-	int (*compar)();
+	const void *key, *base;
+	size_t *nelp, width;
+	cmp_fn_t compar;
 {
 	return(linear_base(key, base, nelp, width, compar, 1));
 }
 
-char *
+void *
 lfind(key, base, nelp, width, compar)
-	char *key, *base;
-	u_int *nelp, width;
-	int (*compar)();
+	const void *key, *base;
+	size_t *nelp, width;
+	cmp_fn_t compar;
 {
 	return(linear_base(key, base, nelp, width, compar, 0));
 }
 
-static char *
+static void *
 linear_base(key, base, nelp, width, compar, add_flag)
-	char *key, *base;
-	u_int *nelp, width;
-	int (*compar)(), add_flag;
+	const void *key, *base;
+	size_t *nelp, width;
+	cmp_fn_t compar;
+	int add_flag;
 {
-	register char *element, *end;
+	register const char *element, *end;
 
-	end = base + *nelp * width;
+	end = (const char *)base + *nelp * width;
 	for (element = base; element < end; element += width)
 		if (!compar(element, key))		/* key found */
-			return(element);
+			return((void *)element);
 
 	if (!add_flag)					/* key not found */
 		return(NULL);
@@ -83,10 +87,10 @@ linear_base(key, base, nelp, width, compar, add_flag)
 	 * appropriately, if there is not enough room in the table
 	 * to add a new item.  This can't be done as none of these
 	 * routines have any method of determining the size of the
-	 * table.  This comment was isn't in the 1986-87 System V
+	 * table.  This comment isn't in the 1986-87 System V
 	 * manual.
 	 */
 	++*nelp;
-	bcopy(key, end, (int)width);
-	return(end);
+	memcpy((void *)end, key, width);
+	return((void *)end);
 }
