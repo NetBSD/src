@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.37 1997/07/23 21:26:42 thorpej Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.38 1997/09/22 21:39:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -652,4 +652,26 @@ in_pcbstate(inp, state)
 	}
 
 	inp->inp_state = state;
+}
+
+struct rtentry *
+in_pcbrtentry(inp)
+	struct inpcb *inp;
+{
+	struct route *ro;
+
+	ro = &inp->inp_route;
+
+	if (ro->ro_rt == NULL) {
+		/*
+		 * No route yet, so try to acquire one.
+		 */
+		if (!in_nullhost(inp->inp_faddr)) {
+			ro->ro_dst.sa_family = AF_INET;
+			ro->ro_dst.sa_len = sizeof(ro->ro_dst);
+			satosin(&ro->ro_dst)->sin_addr = inp->inp_faddr;
+			rtalloc(ro);
+		}
+	}
+	return (ro->ro_rt);
 }
