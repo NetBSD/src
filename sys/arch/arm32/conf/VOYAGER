@@ -231,6 +231,9 @@ wdc*	at rapide?
 simide*	at podulebus?			# Simtec IDE card
 wdc*	at simide?
 
+amps*	at podulebus?			# Atomwide Multi-Port Serial card
+com*	at amps?
+
 ie*	at podulebus?			# Ether1 podules
 ea*	at podulebus?			# Ether3 podules
 eb0	at podulebus?			# EtherB network slot cards
