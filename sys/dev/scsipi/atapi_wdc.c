@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.68 2004/01/03 23:59:58 thorpej Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.69 2004/02/03 20:55:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.68 2004/01/03 23:59:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.69 2004/02/03 20:55:02 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -302,6 +302,8 @@ wdc_atapi_probe_device(struct atapibus_softc *sc, int target)
 			wdc_probe_caps(drvp);
 		else
 			drvp->drive_flags &= ~DRIVE_ATAPI;
+	} else {
+		drvp->drive_flags &= ~DRIVE_ATAPI;
 	}
 }
 
