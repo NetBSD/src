@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.14 2002/10/23 09:12:14 jdolecek Exp $	*/
+/*	$NetBSD: pcons.c,v 1.15 2003/06/29 10:29:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -119,10 +119,10 @@ static int pconsparam __P((struct tty *, struct termios *));
 static void pcons_poll __P((void *));
 
 int
-pconsopen(dev, flag, mode, p)
+pconsopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct pconssoftc *sc;
 	int unit = minor(dev);
@@ -148,7 +148,7 @@ pconsopen(dev, flag, mode, p)
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		pconsparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if ((tp->t_state&TS_XCLUDE) && suser(p->p_ucred, &p->p_acflag))
+	} else if ((tp->t_state&TS_XCLUDE) && suser(l->l_proc->p_ucred, &l->l_proc->p_acflag))
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 	
@@ -161,10 +161,10 @@ pconsopen(dev, flag, mode, p)
 }
 
 int
-pconsclose(dev, flag, mode, p)
+pconsclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
@@ -201,32 +201,32 @@ pconswrite(dev, uio, flag)
 }
 
 int
-pconspoll(dev, events, p)
+pconspoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
  
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 int
-pconsioctl(dev, cmd, data, flag, p)
+pconsioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
 	int error;
 	
-	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p)) != EPASSTHROUGH)
+	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l)) != EPASSTHROUGH)
 		return error;
-	return ttioctl(tp, cmd, data, flag, p);
+	return ttioctl(tp, cmd, data, flag, l);
 }
 
 struct tty *
