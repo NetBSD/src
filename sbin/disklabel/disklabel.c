@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.115 2003/07/07 13:05:46 dsl Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.116 2003/07/13 07:48:01 itojun Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.115 2003/07/07 13:05:46 dsl Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.116 2003/07/13 07:48:01 itojun Exp $");
 #endif
 #endif	/* not lint */
 
@@ -429,20 +429,20 @@ makelabel(const char *type, const char *name, struct disklabel *lp)
 	 */
 	if (!xxboot && lp->d_boot0) {
 		if (*lp->d_boot0 != '/')
-			(void)sprintf(boot0, "%s/%s",
-				      _PATH_BOOTDIR, lp->d_boot0);
+			(void)snprintf(boot0, sizeof(boot0), "%s/%s",
+			    _PATH_BOOTDIR, lp->d_boot0);
 		else
-			(void)strcpy(boot0, lp->d_boot0);
+			(void)strlcpy(boot0, lp->d_boot0, sizeof(boot0));
 		xxboot = boot0;
 	}
 
 #if NUMBOOT > 1
 	if (!bootxx && lp->d_boot1) {
 		if (*lp->d_boot1 != '/')
-			(void)sprintf(boot1, "%s/%s",
-				      _PATH_BOOTDIR, lp->d_boot1);
+			(void)snprintf(boot1, sizeof(boot1), "%s/%s",
+			    _PATH_BOOTDIR, lp->d_boot1);
 		else
-			(void)strcpy(boot1, lp->d_boot1);
+			(void)strlcpy(boot1, lp->d_boot1, sizeof(boot1));
 		bootxx = boot1;
 	}
 #endif	/* NUMBOOT > 1 */
@@ -1288,6 +1288,8 @@ editit(void)
 		 * is "editor arg1 arg2".
 		 */
 		asprintf(&buf, "%s %s", ed, tmpfil);
+		if (!buf)
+			err(1, "malloc");
 		retval = execlp(_PATH_BSHELL, _PATH_BSHELL, "-c", buf, NULL);
 		if (retval == -1)
 			perror(ed);
