@@ -1,4 +1,4 @@
-/*	$NetBSD: mksunbootcd.c,v 1.5 1999/05/13 12:55:37 ross Exp $	*/
+/*	$NetBSD: mksunbootcd.c,v 1.6 2000/11/29 19:47:31 tv Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,10 +49,11 @@
 
 #include <err.h>
 #include <fcntl.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
 
 /*
  * How we work:
@@ -170,6 +171,14 @@ main(argc, argv)
 
 	/* initialize label template */
 	(void)memset(&sdl, 0, sizeof(sdl));
+
+	if (read(pfd[0], &sdl, sizeof(sdl)) < 0)
+		err(2, "reading block 0 of CD image");
+
+	/* clear sun boot info segment */
+	(void)memset(((char *)&sdl) + offsetof(struct sun_disklabel, sl_rpm),
+		     0, sizeof(sdl) - offsetof(struct sun_disklabel, sl_rpm));
+
 	sdl.sl_magic = htons(SUN_DKMAGIC);
 	sdl.sl_rpm = htons(300);
 	sdl.sl_nsectors = htons(cylsz);
