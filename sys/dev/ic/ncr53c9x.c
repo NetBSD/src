@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.79 2001/05/18 12:57:42 bouyer Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.80 2001/05/23 18:32:26 petrov Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1345,7 +1345,7 @@ ncr53c9x_rdfifo(struct ncr53c9x_softc *sc, int how)
 		for (i = 0; i < n; i++)
 			buf[i] = NCR_READ_REG(sc, NCR_FIFO);
 
-		if (sc->sc_espstat2 & FAS_STAT2_ISHUTTLE) {
+		if (sc->sc_espstat2 & NCRFAS_STAT2_ISHUTTLE) {
 
 			NCR_WRITE_REG(sc, NCR_FIFO, 0);
 			buf[i++] = NCR_READ_REG(sc, NCR_FIFO);
@@ -2669,7 +2669,7 @@ msgin:
 		NCR_PHASE(("MESSAGE_IN_PHASE "));
 		if ((sc->sc_espintr & NCRINTR_BS) != 0) {
 			if ((sc->sc_rev != NCR_VARIANT_FAS366) ||
-			    !(sc->sc_espstat2 & FAS_STAT2_EMPTY)) {
+			    !(sc->sc_espstat2 & NCRFAS_STAT2_EMPTY)) {
 				NCRCMD(sc, NCRCMD_FLUSH);
 			}
 			sc->sc_flags |= NCR_WAITI;
