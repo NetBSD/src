@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.24 2003/07/14 15:56:30 itojun Exp $	*/
+/*	$NetBSD: telnet.c,v 1.25 2003/07/14 16:06:49 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnet.c,v 1.24 2003/07/14 15:56:30 itojun Exp $");
+__RCSID("$NetBSD: telnet.c,v 1.25 2003/07/14 16:06:49 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,7 +57,6 @@ __RCSID("$NetBSD: telnet.c,v 1.24 2003/07/14 15:56:30 itojun Exp $");
 #include <ctype.h>
 
 #include "ring.h"
-
 #include "defines.h"
 #include "externs.h"
 #include "types.h"

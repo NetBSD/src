@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.17 2003/07/14 15:56:30 itojun Exp $	*/
+/*	$NetBSD: utilities.c,v 1.18 2003/07/14 16:06:49 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.17 2003/07/14 15:56:30 itojun Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.18 2003/07/14 16:06:49 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,13 +55,8 @@ __RCSID("$NetBSD: utilities.c,v 1.17 2003/07/14 15:56:30 itojun Exp $");
 #include <ctype.h>
 
 #include "general.h"
-
-#include "fdset.h"
-
 #include "ring.h"
-
 #include "defines.h"
-
 #include "externs.h"
 
 #ifdef TN3270

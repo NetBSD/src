@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.28 2003/07/14 15:56:29 itojun Exp $	*/
+/*	$NetBSD: externs.h,v 1.29 2003/07/14 16:06:47 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,18 +34,6 @@
  *
  *	from: @(#)externs.h	8.3 (Berkeley) 5/30/95
  */
-
-#ifndef	BSD
-# define BSD 43
-#endif
-
-/*
- * ucb stdio.h defines BSD as something weird
- */
-#if defined(sun) && defined(__svr4__) && !defined(BSD)
-#define BSD 43
-#endif
-
 
 #include <stdio.h>
 #include <stdlib.h>
