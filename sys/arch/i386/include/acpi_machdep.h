@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.h,v 1.1 2001/09/28 01:47:00 thorpej Exp $	*/
+/*	$NetBSD: acpi_machdep.h,v 1.2 2001/09/28 01:50:04 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -60,7 +60,7 @@ void		acpi_md_OsRemoveInterruptHandler(void *);
 
 ACPI_STATUS	acpi_md_OsMapMemory(ACPI_PHYSICAL_ADDRESS, UINT32, void **);
 void		acpi_md_OsUnmapMemory(void *, UINT32);
-ACPI_STATUS	acpi_md_OSGetPhysicalAddress(void *LogicalAddress,
+ACPI_STATUS	acpi_md_OsGetPhysicalAddress(void *LogicalAddress,
 		    ACPI_PHYSICAL_ADDRESS *PhysicalAddress);
 
 BOOLEAN		acpi_md_OsReadable(void *, UINT32);
