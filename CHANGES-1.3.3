@@ -57,3 +57,9 @@ include/time.h				1.22		kleink
   Remove the public declaration of gtime(), which is shipped with
   tzcode but is not compiled into our libc since it is intended for
   use with Mach only.
+
+sys/dev/ic/z8530tty.c			1.49-1.50	wrstuden
+
+  Initialize the struct tty's t_dev field at attach, so that the
+  console parameters are correctly set even if the console is not
+  zstty0.
