@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.2 (Berkeley) 3/5/91
-#	$Id: Makefile,v 1.21 1993/12/04 02:31:56 cgd Exp $
+#	$Id: Makefile,v 1.22 1993/12/04 05:15:26 cgd Exp $
 #
 # All library objects contain sccsid strings by default; they may be
 # excluded as a space-saving measure.  To produce a library that does
@@ -38,11 +38,17 @@ LIBKERN=	/sys/lib/libkern
 
 KSRCS=	bcmp.c bzero.c ffs.c strcat.c strcmp.c strcpy.c strlen.c strncmp.c \
 	strncpy.c htonl.c htons.c ntohl.c ntohl.c
+KSRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
+	lshldi3.c lshrdi3.c moddi3.c muldi3.c negdi2.c notdi2.c qdivrem.c \
+	subdi3.c  ucmpdi2.c udivdi3.c umoddi3.c xordi3.c
+
+KINCLUDES+=	quad/quad.h
 
 copy-to-libkern:	copy-to-libkern-machind copy-to-libkern-machdep
 
 copy-to-libkern-machind: ${KSRCS}
 	cp -p ${.ALLSRC} ${LIBKERN}
+	(cd ${.CURDIR} ; cp -p ${KINCLUDES} ${LIBKERN})
 
 copy-to-libkern-machdep: ${KMSRCS}
 .if defined(KMSRCS) && !empty(KMSRCS)
