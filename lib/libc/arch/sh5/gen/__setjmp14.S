@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.2 2002/09/06 15:33:48 scw Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.3 2002/09/28 10:38:55 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -100,6 +100,11 @@ ENTRY_NOPROFILE(__setjmp14)
 	gettr	tr7, r0
 	st.q	r2, _JB_TR7, r0
 	pta/u	1f, tr0
+	fmov.dq dr0, r0			/* Save dr0 temporarily */
+	fgetscr	fr0			/* Always save FPSCR */
+	fst.s	r2, _JB_FPSCR, fr0
+	fmov.qd r0, dr0			/* Restore dr0 */
+	putcon	r1, usr			/* Compensate for using dr0 */
 	shlri	r1, 8, r3
 	andi	r3, 0xff, r3
 	movi	0, r0			/* Assume not saved */
@@ -122,8 +127,6 @@ ENTRY_NOPROFILE(__setjmp14)
 	fst.d	r2, _JB_DR58, dr58
 	fst.d	r2, _JB_DR60, dr60
 	fst.d	r2, _JB_DR62, dr62
-	fgetscr	fr0
-	fst.d	r2, _JB_FPSCR, dr0
 	movi	3, r0			/* Regs saved/used */
 1:	st.l	r2, _JB_SIGFPSTATE, r0
 	st.q	r2, _JB_USR, r1
