@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.10 2001/01/23 22:07:59 bjh21 Exp $ */
+/* $NetBSD: arckbd.c,v 1.11 2001/01/23 23:58:32 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arckbd.c,v 1.10 2001/01/23 22:07:59 bjh21 Exp $");
+__RCSID("$NetBSD: arckbd.c,v 1.11 2001/01/23 23:58:32 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -170,8 +170,6 @@ struct arckbd_attach_args {
 	struct wskbddev_attach_args aka_wskbdargs;
 	struct wsmousedev_attach_args aka_wsmouseargs;
 };
-
-extern struct cfdriver arckbd_cd, arcwskbd_cd, arcwsmouse_cd;
 
 static struct wskbd_accessops arckbd_accessops = {
 	arckbd_enable, arckbd_set_leds, arckbd_ioctl
@@ -343,9 +341,9 @@ arckbd_getc(void *cookie, u_int *typep, int *valuep)
 		panic("%s: arckbd_getc called with polling disabled",
 		      sc->sc_dev.dv_xname);
 	while (sc->sc_poll_type == 0) {
-		if (ioc_irq_status(sc->sc_dev.dv_parent, IOC_IRQ_STX))
+		if (ioc_irq_status(IOC_IRQ_STX))
 			arckbd_xint(&sc->sc_dev);
-		if (ioc_irq_status(sc->sc_dev.dv_parent, IOC_IRQ_SRX))
+		if (ioc_irq_status(IOC_IRQ_SRX))
 			arckbd_rint(&sc->sc_dev);
 	}
 	s = spltty();
@@ -386,13 +384,13 @@ arckbd_send(struct device *self, int data, enum arckbd_state newstate,
 
 	s = spltty();
 	if (waitok) {
-		while (!ioc_irq_status(sc->sc_dev.dv_parent, IOC_IRQ_STX))
+		while (!ioc_irq_status(IOC_IRQ_STX))
 			if ((sc->sc_flags & AKF_POLLING) == 0) {
 				res = tsleep(arckbd_send, PWAIT, "kbdsend", 0);
 				if (res != 0)
 					return res;
 			}
-	} else if (!ioc_irq_status(sc->sc_dev.dv_parent, IOC_IRQ_STX)) {
+	} else if (!ioc_irq_status(IOC_IRQ_STX)) {
 		if (sc->sc_cmdqueued)
 			panic("%s: queue overflow", sc->sc_dev.dv_xname);
 		else {

@@ -1,4 +1,4 @@
-/* $NetBSD: arcvideo.c,v 1.11 2001/01/23 22:08:00 bjh21 Exp $ */
+/* $NetBSD: arcvideo.c,v 1.12 2001/01/23 23:58:32 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arcvideo.c,v 1.11 2001/01/23 22:08:00 bjh21 Exp $");
+__RCSID("$NetBSD: arcvideo.c,v 1.12 2001/01/23 23:58:32 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -64,8 +64,6 @@ __RCSID("$NetBSD: arcvideo.c,v 1.11 2001/01/23 22:08:00 bjh21 Exp $");
 #include <arch/arm26/iobus/iocvar.h>
 #include <arch/arm26/vidc/vidcreg.h>
 #include <arch/arm26/vidc/arcvideovar.h>
-
-#include "ioc.h"
 
 static int arcvideo_match(struct device *parent, struct cfdata *cf, void *aux);
 static void arcvideo_attach(struct device *parent, struct device *self,
@@ -94,7 +92,6 @@ struct arcvideo_softc {
 	paddr_t			sc_screenmem_base;
 	struct arcvideo_mode	sc_current_mode;
 	u_int32_t		sc_vidc_ctl;
-	struct device		*sc_ioc;
 	struct irq_handler	*sc_irq;
 	struct evcnt		sc_intrcnt;
 	int			sc_flags;
@@ -105,10 +102,7 @@ struct cfattach arcvideo_ca = {
 	sizeof(struct arcvideo_softc), arcvideo_match, arcvideo_attach
 };
 
-extern struct cfdriver arcvideo_cd;
-#if NIOC > 0
-extern struct cfdriver ioc_cd;
-#endif
+struct device *the_arcvideo;
 
 static struct rasops_info arccons_ri;
 
@@ -126,10 +120,9 @@ arcvideo_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
 	/* A system can't sensibly have more than one VIDC. */
-	if (cf->cf_unit == 0)
+	if (the_arcvideo == NULL)
 		return 1;
-	else
-		return 0;
+	return 0;
 }
 
 static void
@@ -140,6 +133,7 @@ arcvideo_attach(struct device *parent, struct device *self, void *aux)
 	const struct wsscreen_descr *screenp;
 	struct arcvideo_softc *sc = (void *)self;
 
+	the_arcvideo = self;
 	if (!arcvideo_isconsole) {
 		printf(": Not console -- I can't cope with this!\n");
 		return;
@@ -150,26 +144,13 @@ arcvideo_attach(struct device *parent, struct device *self, void *aux)
 	/* Reset VIDC */
 
 	/* Find IRQ */
-#if NIOC > 0
-	/*
-	 * We could probe, but until someone comes up with a machine
-	 * that's different from all the others, why bother?
-	 */
-	if (ioc_cd.cd_ndevs > 0 && ioc_cd.cd_devs[0] != NULL) {
-		/* ioc0 exists */
-		sc->sc_ioc = ioc_cd.cd_devs[0];
-		evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-		    sc->sc_dev.dv_xname, "vsync intr");
-		sc->sc_irq = irq_establish(IOC_IRQ_IR, IPL_TTY, arcvideo_intr,
-		    self, &sc->sc_intrcnt);
-		if (bootverbose)
-			printf(": VSYNC interrupts at %s",
-			    irq_string(sc->sc_irq));
-		irq_disable(sc->sc_irq);
-	} else
-#endif /* NIOC > 0 */
-		if (bootverbose)
-			printf(": no VSYNC sensing");
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    sc->sc_dev.dv_xname, "vsync intr");
+	sc->sc_irq = irq_establish(IOC_IRQ_IR, IPL_TTY, arcvideo_intr, self,
+	    &sc->sc_intrcnt);
+	if (bootverbose)
+		printf(": VSYNC interrupts at %s", irq_string(sc->sc_irq));
+	irq_disable(sc->sc_irq);
 
 	printf("\n");
 

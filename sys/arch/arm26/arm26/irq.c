@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.12 2001/01/23 22:07:58 bjh21 Exp $ */
+/* $NetBSD: irq.c,v 1.13 2001/01/23 23:58:31 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: irq.c,v 1.12 2001/01/23 22:07:58 bjh21 Exp $");
+__RCSID("$NetBSD: irq.c,v 1.13 2001/01/23 23:58:31 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h> /* for cold */
@@ -64,11 +64,6 @@ __RCSID("$NetBSD: irq.c,v 1.12 2001/01/23 22:07:58 bjh21 Exp $");
 #endif
 #if NUNIXBP > 0
 #include <arch/arm26/podulebus/unixbpvar.h>
-#endif
-
-extern struct cfdriver ioc_cd;
-#if NIOEB > 0
-extern struct cfdriver ioeb_cd;
 #endif
 
 #define NIRQ 20
@@ -121,13 +116,9 @@ irq_handler(struct irqframe *irqf)
 	int s, status, result, stray;
 	struct irq_handler *h;
 
-#ifdef DIAGNOSTIC
-	if (ioc_cd.cd_ndevs == 0 || ioc_cd.cd_devs == NULL ||
-	    ioc_cd.cd_devs[0] == NULL)
-		panic("irq_handler: no ioc0");
-#endif
+	KASSERT(the_ioc != NULL);
 	/* Get the current interrupt state */
-	status = ioc_irq_status_full(ioc_cd.cd_devs[0]);
+	status = ioc_irq_status_full();
 #if NUNIXBP > 0
 	status |= unixbp_irq_status_full() << IRQ_UNIXBP_BASE;
 #endif
@@ -152,11 +143,11 @@ irq_handler(struct irqframe *irqf)
 			printf("IRQ %d...", h->irqnum);
 #endif
 			if (h->mask & IOC_IRQ_CLEARABLE_MASK)
-				ioc_irq_clear(ioc_cd.cd_devs[0], h->mask);
+				ioc_irq_clear(h->mask);
 #if NIOEB > 0
 			else if ((h->mask & IOEB_IRQ_CLEARABLE_MASK) &&
-			    ioeb_cd.cd_ndevs > 0 && ioeb_cd.cd_devs[0] != NULL)
-				ioeb_irq_clear(ioeb_cd.cd_devs[0], h->mask);
+			    the_ioeb != NULL)
+				ioeb_irq_clear(h->mask);
 #endif
 			if (h->arg == NULL)
 				result = (h->func)(irqf);
@@ -219,11 +210,10 @@ irq_establish(int irqnum, int ipl, int (*func)(void *), void *arg,
 		LIST_INSERT_AFTER(h, new, link);
 	}
 	if (new->mask & IOC_IRQ_CLEARABLE_MASK)
-		ioc_irq_clear(ioc_cd.cd_devs[0], new->mask);
+		ioc_irq_clear(new->mask);
 #if NIOEB > 0
-	else if ((h->mask & IOEB_IRQ_CLEARABLE_MASK) &&
-	    ioeb_cd.cd_ndevs > 0 && ioeb_cd.cd_devs[0] != NULL)
-		ioeb_irq_clear(ioeb_cd.cd_devs[0], h->mask);
+	else if ((h->mask & IOEB_IRQ_CLEARABLE_MASK) && the_ioeb != NULL)
+		ioeb_irq_clear(h->mask);
 #endif
 	irq_genmasks();
 	return new;
@@ -320,14 +310,8 @@ hardsplx(int s)
 	int_off();
 	was = current_spl;
 	/* Don't try this till we've found the IOC */
-	/*
-	 * XXX Note that second check should be redundant, but config_attach
-	 * changes cd_ndevs before cd_devs, and can call up (via malloc) in
-	 * the meantime.
-	 */
-	if (ioc_cd.cd_ndevs > 0 && ioc_cd.cd_devs != NULL &&
-	    ioc_cd.cd_devs[0] != NULL)
-		ioc_irq_setmask(ioc_cd.cd_devs[0], irqmask[s]);
+	if (the_ioc != NULL)
+		ioc_irq_setmask(irqmask[s]);
 #if NUNIXBP > 0
 	unixbp_irq_setmask(irqmask[s] >> IRQ_UNIXBP_BASE);
 #endif

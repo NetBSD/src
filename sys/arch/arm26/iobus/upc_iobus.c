@@ -1,4 +1,4 @@
-/* $NetBSD: upc_iobus.c,v 1.4 2001/01/23 22:07:59 bjh21 Exp $ */
+/* $NetBSD: upc_iobus.c,v 1.5 2001/01/23 23:58:32 bjh21 Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: upc_iobus.c,v 1.4 2001/01/23 22:07:59 bjh21 Exp $");
+__RCSID("$NetBSD: upc_iobus.c,v 1.5 2001/01/23 23:58:32 bjh21 Exp $");
 
 #include <sys/device.h>
 
@@ -45,6 +45,10 @@ __RCSID("$NetBSD: upc_iobus.c,v 1.4 2001/01/23 22:07:59 bjh21 Exp $");
 #include <dev/ic/upcvar.h>
 
 #include "ioeb.h"
+
+#if NIOEB > 0
+#include <arch/arm26/ioc/ioebvar.h>
+#endif
 
 static int upc_iobus_match(struct device *, struct cfdata *, void *);
 static void upc_iobus_attach(struct device *, struct device *, void *);
@@ -61,9 +65,7 @@ struct cfattach upc_iobus_ca = {
 	sizeof(struct upc_iobus_softc), upc_iobus_match, upc_iobus_attach
 };
 
-#if NIOEB > 0
-extern struct cfdriver ioeb_cd;
-#endif
+static struct device *the_upc_iobus;
 
 static int
 upc_iobus_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -72,15 +74,13 @@ upc_iobus_match(struct device *parent, struct cfdata *cf, void *aux)
 	/*
 	 * As is traditional, probing for iobus devices is impossible
 	 * (The machine hangs if there's nothing there).  In this case,
-	 * assume that if there's an ioeb0, we've got a upc0 too.
+	 * assume that if there's an IOEB, we've got a UPC too.
 	 */
 #if NIOEB > 0
-	if (ioeb_cd.cd_ndevs > 0 && ioeb_cd.cd_devs[0] != NULL &&
-	    cf->cf_unit == 0)
+	if (the_ioeb != NULL && the_upc_iobus == NULL)
 		return 1;
-	else
 #endif
-		return 0;
+	return 0;
 }
 
 static void
