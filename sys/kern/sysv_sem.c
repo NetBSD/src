@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.33 1999/08/25 05:05:49 thorpej Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.34 2000/01/31 15:12:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -322,20 +322,21 @@ semundo_clear(semid, semnum)
 }
 
 int
-sys___semctl13(p, v, retval)
+sys_____semctl13(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sys___semctl13_args /* {
+	struct sys_____semctl13_args /* {
 		syscallarg(int) semid;
 		syscallarg(int) semnum;
 		syscallarg(int) cmd;
-		syscallarg(union __semun) arg;
+		syscallarg(union __semun *) arg;
 	} */ *uap = v;
 	struct semid_ds sembuf;
 	int cmd, error;
-	void *pass_arg = NULL;
+	void *pass_arg;
+	union __semun karg;
 
 	cmd = SCARG(uap, cmd);
 
@@ -348,21 +349,29 @@ sys___semctl13(p, v, retval)
 	case GETALL:
 	case SETVAL:
 	case SETALL:
-		pass_arg = &SCARG(uap, arg);
+		pass_arg = &karg;
+		break;
+	default:
+		pass_arg = NULL;
 		break;
 	}
 
-	if (cmd == IPC_SET) {
-		error = copyin(SCARG(uap, arg).buf, &sembuf, sizeof(sembuf));
+	if (pass_arg) {
+		error = copyin(SCARG(uap, arg), &karg, sizeof(karg));
 		if (error)
-			return (error);
+			return error;
+		if (cmd == IPC_SET) {
+			error = copyin(karg.buf, &sembuf, sizeof(sembuf));
+			if (error)
+				return (error);
+		}
 	}
 
 	error = semctl1(p, SCARG(uap, semid), SCARG(uap, semnum), cmd,
 	    pass_arg, retval);
 
 	if (error == 0 && cmd == IPC_STAT)
-		error = copyout(&sembuf, SCARG(uap, arg).buf, sizeof(sembuf));
+		error = copyout(&sembuf, karg.buf, sizeof(sembuf));
 
 	return (error);
 }
