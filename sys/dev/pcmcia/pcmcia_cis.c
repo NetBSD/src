@@ -11,7 +11,8 @@
 #include <dev/pcmcia/pcmciavar.h>
 
 #ifdef PCMCIACISDEBUG
-#define DPRINTF(arg) printf arg
+int	pcmciacis_debug = 0;
+#define DPRINTF(arg) if (pcmciacis_debug) printf arg
 #else
 #define DPRINTF(arg)
 #endif

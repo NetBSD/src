@@ -21,7 +21,8 @@
 #include <dev/ic/i82365reg.h>
 
 #ifdef PCICDEBUG
-#define DPRINTF(arg) printf arg;
+int	pcic_debug = 0;
+#define DPRINTF(arg) if (pcic_debug) printf arg;
 #else
 #define DPRINTF(arg)
 #endif
