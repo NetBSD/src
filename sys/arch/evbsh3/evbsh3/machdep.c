@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2000/03/20 22:27:16 msaitoh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 2000/03/25 02:51:58 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -940,7 +940,7 @@ InitializeBsc()
 	 * OE/WE negate-address delay 3.5 cycle
 	 */
 #ifdef BSC_PCR_VAL
-	SHREG_PCR = 0x00ff;
+	SHREG_PCR = BSC_PCR_VAL;
 #endif
 
 	/*
