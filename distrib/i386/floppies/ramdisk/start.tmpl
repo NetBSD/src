@@ -7,7 +7,8 @@ echo
 
 while [ $again = "true" ]; do
 
-	echo 'enter "install" to install NetBSD,'
+	echo 'enter "sysinst" to run the new system install program,'
+	echo '      "install" to install NetBSD,'
 	echo '      "upgrade" to upgrade an existing NetBSD system,'
 	echo '   or "shell" for a shell prompt.'
 	echo
@@ -15,7 +16,7 @@ while [ $again = "true" ]; do
 	read resp
 
 	case "$resp" in
-		install|upgrade|shell)
+		sysinst|install|upgrade|shell)
 			again="false"
 			;;
 		"")
@@ -29,6 +30,9 @@ while [ $again = "true" ]; do
 done
 
 case "$resp" in
+	sysinst)
+		sysinst
+		;;
 	install)
 		install
 		;;
