@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_wait.h,v 1.2 1995/01/08 21:31:49 christos Exp $	 */
+/*	$NetBSD: svr4_wait.h,v 1.3 1995/01/09 01:04:24 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -51,6 +51,13 @@
 
 #define SVR4_WOPTMASK   (SVR4_WEXITED|SVR4_WTRAPPED|SVR4_WSTOPPED|\
 			 SVR4_WCONTINUED|SVR4_WNOHANG|SVR4_WNOWAIT)
+
+#define	SVR4_CLD_EXITED		1
+#define	SVR4_CLD_KILLED		2
+#define	SVR4_CLD_DUMPED		3
+#define	SVR4_CLD_TRAPPED	4
+#define	SVR4_CLD_STOPPED	5
+#define	SVR4_CLD_CONTINUED	6
 
 struct svr4_siginfo {
 	int	si_signo;
