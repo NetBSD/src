@@ -1,4 +1,4 @@
-/*	$NetBSD: clonetest.c,v 1.3 2001/07/23 01:45:34 christos Exp $	*/
+/*	$NetBSD: clonetest.c,v 1.4 2001/07/23 02:37:58 christos Exp $	*/
 
 /*
  * This file placed in the public domain.
@@ -74,7 +74,7 @@ test1()
 		err(1, "sigprocmask (SIGUSR1)");
 
 	switch (pid = __clone(newclone, stack,
-	    CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|SIGCHLD,
+	    CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|SIGUSR1,
 	    (void *)frobme)) {
 	case 0:
 		errx(1, "clone returned 0\n");
@@ -83,7 +83,7 @@ test1()
 		err(1, "clone");
 		/*NOTREACHED*/
 	default:
-		while (waitpid(pid, &stat, 0) != pid)
+		while (waitpid(pid, &stat, __WCLONE) != pid)
 			continue;
 	}
 
