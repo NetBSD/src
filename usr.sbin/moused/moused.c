@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.3 2001/11/21 21:05:41 gmcgarry Exp $ */
+/* $NetBSD: moused.c,v 1.4 2001/12/31 19:52:45 thorpej Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: moused.c,v 1.3 2001/11/21 21:05:41 gmcgarry Exp $");
+__RCSID("$NetBSD: moused.c,v 1.4 2001/12/31 19:52:45 thorpej Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -834,7 +834,7 @@ wsev(int ty, int val)
     if (debug)
 	printf("wsev: type=%d value=%d\n", ty, val);
     if (ioctl(rodent.cfd, WSMUXIO_INJECTEVENT, &ev) < 0)
-	logwarn("WSMUXIO_INJECTEVENT", 0);
+	logwarn("WSMUXIO_INJECTEVENT");
 }
 
 static void
@@ -858,7 +858,7 @@ moused(char *wsm)
 
     if (!nodaemon && !background) {
 	if (daemon(0, 0)) {
-	    logerr(1, "failed to become a daemon", 0);
+	    logerr(1, "failed to become a daemon");
 	} else {
 	    background = TRUE;
 	    fp = fopen(pidfile, "w");
@@ -900,7 +900,7 @@ moused(char *wsm)
 	c = select(FD_SETSIZE, &fds, NULL, NULL,
 		   (rodent.flags & Emulate3Button) ? &timeout : NULL);
 	if (c < 0) {                    /* error */
-	    logwarn("failed to read from mouse", 0);
+	    logwarn("failed to read from mouse");
 	    continue;
 	} else if (c == 0) {            /* timeout */
 	    /* assert(rodent.flags & Emulate3Button) */
@@ -2239,7 +2239,7 @@ setmousespeed(int old, int new, unsigned cflag)
 
 	if (tcgetattr(rodent.mfd, &tty) < 0)
 	{
-		logwarn("unable to get status of mouse fd", 0);
+		logwarn("unable to get status of mouse fd");
 		return;
 	}
 
@@ -2272,7 +2272,7 @@ setmousespeed(int old, int new, unsigned cflag)
 
 	if (tcsetattr(rodent.mfd, TCSADRAIN, &tty) < 0)
 	{
-		logwarn("unable to set status of mouse fd", 0);
+		logwarn("unable to set status of mouse fd");
 		return;
 	}
 
@@ -2305,14 +2305,14 @@ setmousespeed(int old, int new, unsigned cflag)
 	{
 		if (write(rodent.mfd, c, 2) != 2)
 		{
-			logwarn("unable to write to mouse fd", 0);
+			logwarn("unable to write to mouse fd");
 			return;
 		}
 	}
 	usleep(100000);
 
 	if (tcsetattr(rodent.mfd, TCSADRAIN, &tty) < 0)
-		logwarn("unable to set status of mouse fd", 0);
+		logwarn("unable to set status of mouse fd");
 }
 
 /* 
