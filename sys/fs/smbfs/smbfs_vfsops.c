@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.36 2004/04/25 16:42:41 simonb Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.37 2004/04/26 17:08:34 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.36 2004/04/25 16:42:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.37 2004/04/26 17:08:34 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.36 2004/04/25 16:42:41 simonb Exp
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/kernel.h>
+#include <sys/dirent.h>
 #include <sys/sysctl.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
@@ -199,6 +200,7 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 	    mp, p);
 	if (error)
 		goto bad;
+	sbp->mnt_stat.f_namemax = MAXNAMLEN;
 	memset(mp->mnt_stat.f_mntfromname, 0, MNAMELEN);
 	snprintf(mp->mnt_stat.f_mntfromname, MNAMELEN,
 	    "//%s@%s/%s", vcp->vc_username, vcp->vc_srvname, ssp->ss_name);
@@ -413,6 +415,7 @@ smbfs_statvfs(struct mount *mp, struct statvfs *sbp, struct proc *p)
 		return error;
 	sbp->f_flag = 0;		/* copy of mount exported flags */
 	sbp->f_owner = mp->mnt_stat.f_owner;	/* user that mounted the filesystem */
+	sbp->f_namemax = MAXNAMLEN;
 	copy_statvfs_info(sbp, mp);
 	return 0;
 }
