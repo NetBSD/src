@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.17 2002/09/12 22:56:29 mycroft Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.18 2002/09/13 05:45:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -189,19 +189,6 @@ _rtld_relocate_nonplt_objects(obj, self)
 			break;
 
 		case R_TYPE(REFQUAD):
-			def = _rtld_find_symdef(symnum, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
-
-			tmp = (Elf_Addr)(defobj->relocbase + def->st_value) +
-			    *where + rela->r_addend;
-			if (*where != tmp)
-				*where = tmp;
-			rdbg(("REFQUAD %s in %s --> %p in %s",
-			    obj->strtab + obj->symtab[symnum].st_name,
-			    obj->path, (void *)*where, defobj->path));
-			break;
-
 		case R_TYPE(GLOB_DAT):
 			def = _rtld_find_symdef(symnum, obj, &defobj, false);
 			if (def == NULL)
@@ -211,15 +198,15 @@ _rtld_relocate_nonplt_objects(obj, self)
 			    rela->r_addend;
 			if (*where != tmp)
 				*where = tmp;
-			rdbg(("GLOB_DAT %s in %s --> %p in %s",
+			rdbg(("REFQUAD/GLOB_DAT %s in %s --> %p in %s",
 			    obj->strtab + obj->symtab[symnum].st_name,
 			    obj->path, (void *)*where, defobj->path));
 			break;
 
 		case R_TYPE(RELATIVE):
 			*where += (Elf_Addr)obj->relocbase;
-			rdbg(("RELATIVE in %s --> %p",
-			    obj->path, (void *)*where));
+			rdbg(("RELATIVE in %s --> %p", obj->path,
+			    (void *)*where));
 			break;
 
 		case R_TYPE(COPY):
