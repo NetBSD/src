@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.3 1998/09/11 00:16:59 eeh Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.4 1998/09/11 13:31:40 mycroft Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -128,14 +128,13 @@ svr4_printcontext(fun, uc)
 #endif
 
 void
-svr4_getcontext(p, uc, mask, oonstack)
+svr4_getcontext(p, uc, mask)
 	struct proc *p;
 	struct svr4_ucontext *uc;
-	int mask, oonstack;
+	sigset_t *mask;
 {
 	struct trapframe *tf = (struct trapframe *)p->p_md.md_tf;
 	svr4_greg_t *r = uc->uc_mcontext.greg;
-	struct svr4_sigaltstack *s = &uc->uc_stack;
 #ifdef FPU_CONTEXT
 	svr4_fregset_t *f = &uc->uc_mcontext.freg;
 	struct fpstate *fps = p->p_md.md_fpstate;
@@ -149,7 +148,8 @@ svr4_getcontext(p, uc, mask, oonstack)
 #endif
 		sigexit(p, SIGILL);
 	}
-	bzero(uc, sizeof(struct svr4_ucontext));
+
+	memset(uc, 0, sizeof(struct svr4_ucontext));
 
 	/*
 	 * Get the general purpose registers
@@ -201,23 +201,19 @@ svr4_getcontext(p, uc, mask, oonstack)
 	f->fp_busy = 0;	/* XXX: How do we determine that? */
 #endif
 
-	/*
-	 * Set the signal stack to something reasonable
-	 */
-	/* XXX: Don't really know what to do with this */
-	s->ss_sp = (char *) ((r[SVR4_SPARC_SP] & ~0xfff) - 8192);
-	s->ss_size = 8192;
-	s->ss_flags = 0;
+	/* Save signal stack. */
+	native_to_svr4_sigaltstack(&p->p_sigacts->ps_sigstk, &uc->uc_stack);
 
-	/*
-	 * Get the signal mask
-	 */
-	bsd_to_svr4_sigset(&mask, &uc->uc_sigmask);
+	/* Save signal mask. */
+	native_to_svr4_sigset(mask, &uc->uc_sigmask);
 
 	/*
 	 * Get the flags
 	 */
 	uc->uc_flags = SVR4_UC_CPU|SVR4_UC_SIGMASK|SVR4_UC_STACK;
+#ifdef FPU_CONTEXT
+	uc->uc_flags |= SVR4_UC_FPU;
+#endif
 
 #ifdef DEBUG_SVR4
 	svr4_printcontext("getcontext", uc);
@@ -244,9 +240,7 @@ svr4_setcontext(p, uc)
 	struct sigacts *psp = p->p_sigacts;
 	register struct trapframe *tf;
 	svr4_greg_t *r = uc->uc_mcontext.greg;
-	struct svr4_sigaltstack *s = &uc->uc_stack;
-	struct sigaltstack *sf = &psp->ps_sigstk;
-	int mask;
+	sigset_t mask;
 #ifdef FPU_CONTEXT
 	svr4_fregset_t *f = &uc->uc_mcontext.freg;
 	struct fpstate *fps = p->p_md.md_fpstate;
@@ -271,12 +265,10 @@ svr4_setcontext(p, uc)
 		    p->p_comm, p->p_pid, uc);
 #endif
 
-	tf = (struct trapframe *)p->p_md.md_tf;
-
-	/*
-	 * Restore register context.
-	 */
 	if (uc->uc_flags & SVR4_UC_CPU) {
+		/* Restore register context. */
+		tf = (struct trapframe *)p->p_md.md_tf;
+
 		/*
 		 * Only the icc bits in the psr are used, so it need not be
 		 * verified.  pc and npc must be multiples of 4.  This is all
@@ -343,21 +335,17 @@ svr4_setcontext(p, uc)
 #endif
 
 	if (uc->uc_flags & SVR4_UC_STACK) {
-		/*
-		 * restore signal stack
-		 */
-		svr4_to_bsd_sigaltstack(s, sf);
+		/* Restore signal stack. */
+		svr4_to_native_sigaltstack(&uc->uc_stack, &p->p_sigacts->ps_sigstk);
 	}
 
 	if (uc->uc_flags & SVR4_UC_SIGMASK) {
-		/*
-		 * restore signal mask
-		 */
-		svr4_to_bsd_sigset(&uc->uc_sigmask, &mask);
-		p->p_sigmask = mask & ~sigcantmask;
+		/* Restore signal mask. */
+		svr4_to_native_sigset(&uc->uc_sigmask, &mask);
+		(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 	}
 
-	return EJUSTRETURN;
+	return (EJUSTRETURN);
 }
 
 /*
@@ -370,7 +358,7 @@ svr4_getsiginfo(si, sig, code, addr)
 	u_long			 code;
 	caddr_t			 addr;
 {
-	si->si_signo = bsd_to_svr4_sig[sig];
+	si->si_signo = native_to_svr4_sig[sig];
 	si->si_errno = 0;
 	si->si_addr  = addr;
 	/*
@@ -495,43 +483,41 @@ svr4_getsiginfo(si, sig, code, addr)
 void
 svr4_sendsig(catcher, sig, mask, code)
 	sig_t catcher;
-	int sig, mask;
+	int sig;
+	sigset_t *mask;
 	u_long code;
 {
 	register struct proc *p = curproc;
 	register struct trapframe *tf;
 	struct svr4_sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
-	int oonstack, oldsp, newsp, addr;
-	extern char svr4_sigcode[], svr4_esigcode[];
-
+	int onstack, oldsp, newsp, addr;
 
 	tf = (struct trapframe *)p->p_md.md_tf;
 	oldsp = tf->tf_out[6];
-	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+
+	/* Do we need to jump onto the signal stack? */
+	onstack =
+	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
 
 	/*
 	 * Allocate space for the signal handler context.
 	 */
-	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct svr4_sigframe *)(psp->ps_sigstk.ss_sp +
-					      psp->ps_sigstk.ss_size);
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
-	} else {
+	if (onstack)
+		fp = (struct svr4_sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
+						       psp->ps_sigstk.ss_size);
+	else
 		fp = (struct svr4_sigframe *)oldsp;
-	}
-
-	/*
-	 * Subtract off one signal frame and align.
-	 */
 	fp = (struct svr4_sigframe *) ((int) (fp - 1) & ~7);
 
 	/*
 	 * Build the argument list for the signal handler.
 	 */
+	svr4_getcontext(p, &frame.sf_uc, mask);
 	svr4_getsiginfo(&frame.sf_si, sig, code, (caddr_t) tf->tf_pc);
-	svr4_getcontext(p, &frame.sf_uc, mask, oonstack);
+
+	/* Build stack frame for signal trampoline. */
 	frame.sf_signum = frame.sf_si.si_signo;
 	frame.sf_sip = &fp->sf_si;
 	frame.sf_ucp = &fp->sf_uc;
@@ -567,12 +553,15 @@ svr4_sendsig(catcher, sig, mask, code)
 	/*
 	 * Build context to run handler in.
 	 */
-	addr = (int)PS_STRINGS - (svr4_esigcode - svr4_sigcode);
-	tf->tf_global[1] = (int)catcher;
-
+	addr = (int)psp->ps_sigcode;
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
+	tf->tf_global[1] = (int)catcher;
 	tf->tf_out[6] = newsp;
+
+	/* Remember that we're now on the signal stack. */
+	if (onstack)
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 
