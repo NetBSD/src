@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.55 2003/07/15 03:35:55 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.56 2003/09/15 06:39:22 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55 2003/07/15 03:35:55 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56 2003/09/15 06:39:22 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -104,6 +104,13 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55 2003/07/15 03:35:55 lukem Exp $");
 extern char cpu_model[];
 
 struct sgimips_intrhand intrtab[NINTR];
+
+const uint32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
+	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTNET */
+ 	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
+};
 
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
@@ -871,21 +878,14 @@ cpu_intr(status, cause, pc, ipending)
 	if (ipending & MIPS_HARD_INT_MASK)
 		(*platform.iointr)(status, cause, pc, ipending);
 
-	/*
-	 * Service pending soft interrupts -- make sure to re-enable
-	 * only those hardware interrupts that are not masked and 
-	 * that weren't pending on the current invocation of the
-	 * interrupt handler, else we risk infinite stack growth
-	 * due to nested interrupts.
-	 */
-	/* software simulated interrupt */
-	if ((ipending & MIPS_SOFT_INT_MASK_1) || 
-	    (ssir && (status & MIPS_SOFT_INT_MASK_1))) {
-		_splset(MIPS_SR_INT_IE |
-			    (status & ~ipending & MIPS_HARD_INT_MASK));
-		_clrsoftintr(MIPS_SOFT_INT_MASK_1);
-		softintr_dispatch();
-	}
+	/* software interrupt */
+	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
+	if (ipending == 0)
+		return;
+
+	_clrsoftintr(ipending);
+
+	softintr_dispatch(ipending);
 }
 
 void unconfigured_system_type(int ipnum)
