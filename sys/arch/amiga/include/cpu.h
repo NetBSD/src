@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.36 1996/09/11 00:11:42 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.37 1997/01/31 22:59:19 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -242,13 +242,6 @@ int	kvtop __P((caddr_t));
 void	physaccess __P((caddr_t,  caddr_t, int, int));
 void	physunaccess __P((caddr_t, int));
 void	setredzone __P((u_int *, caddr_t));
-
-#ifdef GENERIC
-/*
- * Prototypes from swapgeneric.c:
- */
-void	setconf __P((void));
-#endif
 
 /*
  * Prototypes from pmap.c:
