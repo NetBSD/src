@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.135 2005/02/26 22:32:20 perry Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.136 2005/03/08 00:18:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.135 2005/02/26 22:32:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.136 2005/03/08 00:18:21 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -411,10 +411,8 @@ restart:
 
 	if (lfs_dirvcount > LFS_MAX_DIROP) {
 		simple_unlock(&fs->lfs_interlock);
-#ifdef DEBUG_LFS
-		printf("lfs_set_dirop: sleeping with dirops=%d, "
-		       "dirvcount=%d\n", fs->lfs_dirops, lfs_dirvcount);
-#endif
+		DLOG((DLOG_DIROP, "lfs_set_dirop: sleeping with dirops=%d, "
+		      "dirvcount=%d\n", fs->lfs_dirops, lfs_dirvcount));
 		if ((error = ltsleep(&lfs_dirvcount,
 		    PCATCH | PUSER | PNORELOCK, "lfs_maxdirop", 0,
 		    &lfs_subsys_lock)) != 0) {
@@ -576,9 +574,8 @@ lfs_mknod(void *v)
 	 */
 	if ((error = VOP_FSYNC(*vpp, NOCRED, FSYNC_WAIT, 0, 0,
 	    curproc)) != 0) {
-		printf("Couldn't fsync in mknod (ino %d)---what do I do?\n",
-		       VTOI(*vpp)->i_number);
-		return (error);
+		panic("lfs_mknod: couldn't fsync (ino %d)", ino);
+		/* return (error); */
 	}
 	/*
 	 * Remove vnode so that it will be reloaded by VFS_VGET and
@@ -1089,16 +1086,16 @@ lfs_strategy(void *v)
 		for (i = 0; i < fs->lfs_cleanind; i++) {
 			if (sn == dtosn(fs, fs->lfs_cleanint[i]) &&
 			    tbn >= fs->lfs_cleanint[i]) {
-#ifdef DEBUG_LFS
-				printf("lfs_strategy: ino %d lbn %" PRId64
+				DLOG((DLOG_CLEAN,
+				      "lfs_strategy: ino %d lbn %" PRId64
 				       " ind %d sn %d fsb %" PRIx32
 				       " given sn %d fsb %" PRIx64 "\n",
 					ip->i_number, bp->b_lblkno, i,
 					dtosn(fs, fs->lfs_cleanint[i]),
-					fs->lfs_cleanint[i], sn, tbn);
-				printf("lfs_strategy: sleeping on ino %d lbn %"
-				       PRId64 "\n", ip->i_number, bp->b_lblkno);
-#endif
+					fs->lfs_cleanint[i], sn, tbn));
+				DLOG((DLOG_CLEAN,
+				      "lfs_strategy: sleeping on ino %d lbn %"
+				      PRId64 "\n", ip->i_number, bp->b_lblkno));
 				tsleep(&fs->lfs_seglock, PRIBIO+1,
 					"lfs_strategy", 0);
 				/* Things may be different now; start over. */
@@ -1175,8 +1172,8 @@ lfs_flush_dirops(struct lfs *fs)
 			    LK_NOWAIT) == 0) {
 			needunlock = 1;
 		} else {
-			printf("lfs_flush_dirops: flushing locked ino %d\n",
-			       VTOI(vp)->i_number);
+			DLOG((DLOG_VNODE, "lfs_flush_dirops: flushing locked ino %d\n",
+			       VTOI(vp)->i_number));
 			needunlock = 0;
 		}
 		if (vp->v_type != VREG &&
@@ -1311,13 +1308,12 @@ lfs_fcntl(void *v)
 		lfs_segunlock(fs);
 		lfs_writer_leave(fs);
 
-#ifdef DEBUG_LFS
+#ifdef DEBUG
 		LFS_CLEANERINFO(cip, fs, bp);
-		oclean = cip->clean;
-		printf("lfs_fcntl: reclaim wrote %" PRId64 " blocks, cleaned "
-			"%" PRId32 " segments (activesb %d)\n",
-			fs->lfs_offset - off, cip->clean - oclean,
-			fs->lfs_activesb);
+		DLOG((DLOG_CLEAN, "lfs_fcntl: reclaim wrote %" PRId64
+		      " blocks, cleaned %" PRId32 " segments (activesb %d)\n",
+		      fs->lfs_offset - off, cip->clean - oclean,
+		      fs->lfs_activesb));
 		LFS_SYNC_CLEANERINFO(cip, fs, bp, 0);
 #endif
 
@@ -1659,10 +1655,8 @@ lfs_putpages(void *v)
 	if (startoffset == endoffset) {
 		/* Nothing to do, why were we called? */
 		simple_unlock(&vp->v_interlock);
-#ifdef DEBUG
-		printf("lfs_putpages: startoffset = endoffset = %" PRId64 "\n",
-			startoffset);
-#endif
+		DLOG((DLOG_PAGE, "lfs_putpages: startoffset = endoffset = %"
+		      PRId64 "\n", startoffset));
 		return 0;
 	}
 
@@ -1728,7 +1722,7 @@ lfs_putpages(void *v)
 	    (vp->v_flag & VDIROP)) {
 		int locked;
 
-		/* printf("putpages to clean VDIROP, flushing\n"); */
+		DLOG((DLOG_PAGE, "lfs_putpages: flushing VDIROP\n"));
 		lfs_writer_enter(fs, "ppdirop");
 		locked = VOP_ISLOCKED(vp) && /* XXX */
 			vp->v_lock.lk_lockholder == curproc->p_pid;
@@ -1816,12 +1810,10 @@ again:
 	check_dirty(fs, vp, startoffset, endoffset, blkeof, ap->a_flags, 0);
 
 	if ((error = genfs_putpages(v)) == EDEADLK) {
-#ifdef DEBUG_LFS
-		printf("lfs_putpages: genfs_putpages returned EDEADLK [2]"
-		       " ino %d off %x (seg %d)\n",
-		       ip->i_number, fs->lfs_offset,
-		       dtosn(fs, fs->lfs_offset));
-#endif
+		DLOG((DLOG_PAGE, "lfs_putpages: genfs_putpages returned"
+		      " EDEADLK [2] ino %d off %x (seg %d)\n",
+		      ip->i_number, fs->lfs_offset,
+		      dtosn(fs, fs->lfs_offset)));
 		/* If nothing to write, short-circuit */
 		if (sp->cbpp - sp->bpp > 1) {
 			/* Write gathered pages */
@@ -1908,10 +1900,8 @@ again:
 		s = splbio();
 		simple_lock(&global_v_numoutput_slock);
 		while (vp->v_numoutput > 0) {
-#ifdef DEBUG
-			printf("ino %d sleeping on num %d\n",
-				ip->i_number, vp->v_numoutput);
-#endif
+			DLOG((DLOG_PAGE, "lfs_putpages: ino %d sleeping on"
+			      " num %d\n", ip->i_number, vp->v_numoutput));
 			vp->v_flag |= VBWAIT;
 			ltsleep(&vp->v_numoutput, PRIBIO + 1, "lfs_vn", 0,
 			    &global_v_numoutput_slock);
