@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.10 2000/01/11 12:59:44 pk Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.11 2000/11/01 06:18:45 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -95,6 +95,7 @@ struct sbus_attach_args {
 	u_int32_t	*sa_promvaddrs;/* PROM-supplied virtual addresses -- 32-bit */
 	int		sa_npromvaddrs;	/* Number of PROM VAs */
 #define sa_promvaddr	sa_promvaddrs[0]
+	int		sa_frequency;	/* SBus clockrate */
 };
 
 /* sbus_attach_internal() is also used from obio.c */
