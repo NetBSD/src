@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.51 1997/08/27 08:52:54 thorpej Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.52 1997/10/10 02:01:05 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -775,7 +775,7 @@ procfs_readdir(v)
 		struct uio *a_uio;
 		struct ucred *a_cred;
 		int *a_eofflag;
-		u_long *a_cookies;
+		off_t *a_cookies;
 		int a_ncookies;
 	} */ *ap = v;
 	struct uio *uio = ap->a_uio;
@@ -783,7 +783,7 @@ procfs_readdir(v)
 	struct pfsnode *pfs;
 	int i;
 	int error;
-	u_long *cookies = ap->a_cookies;
+	off_t *cookies = ap->a_cookies;
 	int ncookies = ap->a_ncookies;
 
 	pfs = VTOPFS(ap->a_vp);
