@@ -1,16 +1,13 @@
-#	$NetBSD: Makefile,v 1.4 1999/01/07 05:56:30 itohy Exp $
+#	$NetBSD: Makefile,v 1.5 1999/02/02 22:06:02 tv Exp $
 
-.if (${MACHINE_ARCH} != "powerpc")
 PROG=	strip
 SRCS=	objcopy.c is-strip.c
-.endif
-
 MAN=	strip.1
 
 .include <bsd.prog.mk>
 
 # STRIPPROG is capable of stripping itself, so this is OK.
-.if (${STRIPFLAG} != "") && (${MACHINE_ARCH} != "powerpc")
+.if (${STRIPFLAG} != "")
 STRIPFLAG:=
 realinstall: __installstrip
 __installstrip:

@@ -1,11 +1,7 @@
-#	$NetBSD: Makefile,v 1.6 1998/08/27 20:32:08 tv Exp $
+#	$NetBSD: Makefile,v 1.7 1999/02/02 22:05:59 tv Exp $
 
-# XXX until our binutils is upgraded 
-.if (${MACHINE_ARCH} != "powerpc")
 PROG=	c++filt
 SRCS=	cplus-dem.c underscore.c
-.endif
-
 MAN=	c++filt.1
 
 CPPFLAGS+=-DMAIN -DVERSION='"${VERSION}"'
