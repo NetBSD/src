@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mipsco,v 1.1 2000/08/12 22:57:58 wdk Exp $
+#	$NetBSD: Makefile.mipsco,v 1.2 2000/10/03 09:46:39 wdk Exp $
 
 # Makefile for NetBSD
 #
@@ -118,8 +118,7 @@ LINKFLAGS+=	-x
 
 SYSTEM_LD_TAIL+=; \
 	set -x; \
-	mv $@ $@.elf; \
-	objcopy --output-target=ecoff-bigmips $@.elf $@
+	objcopy --output-target=ecoff-bigmips $@ $@.ecoff
 
 %LOAD
 
@@ -191,7 +190,7 @@ depend: .depend
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
- 
+
 # depend on network or filesystem configuration 
 uipc_proto.o vfs_conf.o: Makefile 
 
