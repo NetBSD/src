@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.48 2003/10/20 15:33:48 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.49 2003/10/20 15:34:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.48 2003/10/20 15:33:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.49 2003/10/20 15:34:25 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2404,7 +2404,7 @@ wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 	for (i = 0; i < wordcnt; i++) {
 		if (wm_acquire_eeprom(sc)) {
 			/* Failed to acquire EEPROM. */
-			*data = 0xffff;
+			data[i] = 0xffff;
 			continue;
 		}
 
