@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.42 1999/12/12 14:05:54 lukem Exp $
+.\"	$NetBSD: ftpd.8,v 1.43 1999/12/16 01:16:04 lukem Exp $
 .\"
 .\" Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -71,8 +71,7 @@
 .Dt FTPD 8
 .Os
 .Sh NAME
-.Nm ftpd ,
-.Nm ftpd.conf
+.Nm ftpd
 .Nd
 Internet File Transfer Protocol server
 .Sh SYNOPSIS
@@ -106,7 +105,7 @@ to
 .It Fl C
 Check whether the specified user would be granted access under
 the restrictions given in
-.Pa /etc/ftpusers
+.Xr ftpusers 5
 and exit without attempting a connection.
 .Nm
 exits with an exit code of 0 if access would be granted, or 1 otherwise.
@@ -143,7 +142,7 @@ exists,
 .Nm
 prints it after a successful login.
 (This may be changed with the
-.Sx /etc/ftpd.conf
+.Xr ftpd.conf 5
 directive
 .Sy upload . )
 .Pp
@@ -238,7 +237,8 @@ conventions used by
 .Xr csh 1 .
 This allows users to utilize the metacharacters
 .Dq Li \&*?[]{}~ .
-.Ss User authentication
+.Sh User authentication
+.Pp
 .Nm
 authenticates users according to five rules.
 .Pp
@@ -261,8 +261,7 @@ for more information on S/Key authentication.
 S/Key is a Trademark of Bellcore.
 .It
 The login name must be allowed based on the information in
-.Pa /etc/ftpusers
-(see below).
+.Xr ftpusers 5 .
 .It
 The user must have a standard shell returned by
 .Xr getusershell 3 .
@@ -304,360 +303,11 @@ user.
 If other restrictions are required (such as disabling of certain
 commands and the setting of a specific umask), then appropriate
 entries in
-.Pa /etc/ftpd.conf
+.Xr ftpd.conf 5
 are required.
 .El
-.Ss /etc/ftpusers
-The file
-.Pa /etc/ftpusers
-is used to determine which users may use ftp.
-If the file does not exist, all users are denied access.
+.Sh Display file escape sequences
 .Pp
-A
-.Dq \e
-is the escape character; it can be used to escape the meaning of the
-comment character, or if it is the last character on a line, extends
-a configuration directive across multiple lines.
-A
-.Dq #
-is the comment character, and all characters from it to the end of
-line are ignored (unless it is escaped with the escape character).
-.Pp
-The syntax of each line is:
-.Dl  userglob[@host] [directive [class]]
-.Pp
-.Sy userglob
-is matched against the username, using
-.Xr fnmatch 3
-glob matching.
-.Pp
-.Sy host
-may be either a CIDR address (refer to
-.Xr inet_net_pton 3 )
-to match against the remote address,
-or a glob to match against the remote hostname.
-.Pp
-If
-.Sy directive
-is given, it may be one of
-.Dq allow ,
-.Dq yes ,
-.Dq deny ,
-or
-.Dq no .
-If
-.Sy directive
-is not given, the user is denied access.
-.Pp
-.Sy class
-defines the class to use in
-.Sx /etc/ftpd.conf .
-If
-.Sy class
-is not given, it defaults to one of the following:
-.Bl -tag -width "chroot" -offset indent
-.It Sy chroot
-If there is a match in
-.Sx /etc/ftpchroot
-for the user.
-.It Sy guest
-If the username is
-.Dq anonymous
-or
-.Sq ftp .
-.It Sy real
-If neither of the above is true.
-.El
-.Pp
-No further comparisons are attempted after the first successful match.
-If no match is found, the user is granted access.
-This syntax is backward-compatable with the old syntax.
-.Pp
-If a user requests a guest login, the ftp server checks to see that
-both
-.Dq anonymous
-and
-.Dq ftp
-have access, so if you deny all users by default, you will need to add both
-.Dq "anonymous allow"
-and
-.Dq "ftp allow"
-to
-.Pa /etc/ftpusers
-in order to allow guest logins.
-.Ss /etc/ftpchroot
-The file
-.Pa /etc/ftpchroot
-is used to determine which users will have their session's root changed
-to the user's home directory (using
-.Xr chroot 2 ) .
-If the file does not exist, the root change is not performed.
-.Pp
-The syntax is similar to
-.Sx /etc/ftpusers ,
-except that the
-.Sy class
-argument is ignored. 
-If there's a positive match, the root is changed.
-No further comparisons are attempted after the first successful match.
-This syntax is backward-compatable with the old syntax.
-.Ss /etc/ftpd.conf
-The file
-.Pa /etc/ftpd.conf
-is used to configure various options.
-.Pp
-A
-.Dq \e
-is the escape character; it can be used to escape the meaning of the
-comment character, or if it is the last character on a line, extends
-a configuration directive across multiple lines.
-A
-.Dq #
-is the comment character, and all characters from it to the end of
-line are ignored (unless it is escaped with the escape character).
-.Pp
-Each configuration line may be one of:
-.Bl -tag -width 4n
-.It Sy checkportcmd Ar class Op Sy off
-Check the
-PORT
-command for validity.
-The
-PORT
-command will fail if the IP address specified does not match the ftp
-command connection, or if the remote TCP port number is less than
-.Dv IPPORT_RESERVED .
-It is
-.Em strongly
-encouraged that this option be used, espcially for sites concerned
-with potential security problems with ftp bounce attacks.
-If class is
-.Dq none
-or
-.Sy off
-is given, disable this feature, otherwise enable it.
-.It Sy classtype Ar class Ar type
-Set the class type of
-.Ar class
-to
-.Ar type .
-.Ar type
-may be one of:
-.Bl -tag -width "chroot" -offset indent
-.It Sy GUEST
-Guests (as per the
-.Dq anonymous
-and
-.Dq ftp
-logins).
-A
-.Xr chroot 2
-is performed after login.
-.It Sy CHROOT
-Chroot-ed users (as per
-.Pa /etc/ftpchroot ) .
-A
-.Xr chroot 2
-is performed after login.
-.It Sy REAL
-Normal users.
-.El
-.It Xo Sy conversion Ar class
-.Ar suffix Op Ar "type disable command"
-.Xc
-Define an automatic in-line file conversion.
-If a file to retrieve ends in
-.Ar suffix ,
-and a real file (sans
-.Ar suffix )
-exists, then the output of
-.Ar command
-is returned instead of the contents of the file.
-.Pp
-.Bl -tag -width "disable" -offset indent
-.It Ar suffix
-The suffix to initiate the conversion.
-.It Ar type
-A list of valid filetypes for the conversion.
-Valid types are:
-.Sq f
-(file), and
-.Sq d
-(directory).
-.It Ar disable
-The name of file that will prevent conversion if it exists.
-A filename of
-.Pa \&.
-will prevent this disabling action.
-.It Ar command
-The command to run for the conversion.
-The first word should be the full path name
-of the command, as
-.Xr execv 3
-is used to execute the command.
-The first instance of
-.Sq %s
-in
-.Ar command
-is replaced with the requested file (sans
-.Ar suffix ) .
-.El
-.Pp
-Conversion directives specified later in the file override earlier
-conversions with the same suffix.
-The order in which conversions is matched is the reverse of their
-order in the file (i.e. a LIFO).
-.It Sy display Ar class Op Ar file
-If
-.Ar file
-is not given or
-.Ar class
-is
-.Dq none ,
-disable this.
-Otherwise, each time the user enters a new directory, check if
-.Ar file
-exists, and if so, display its contents to the user.
-.It Sy maxtimeout Ar class Ar time
-Set the maximum timeout period that a client may request,
-defaulting to two hours.
-This cannot be less than 30 seconds, or the value for
-.Sy timeout .
-Ignored if class is
-.Dq none
-or
-.Ar time
-is not specified.
-.It Sy modify Ar class Op Sy off
-If class is
-.Dq none
-or
-.Sy off
-is given, disable the following commands:
-CHMOD, DELE, MKD, RMD, RNFR, and UMASK.
-Otherwise, enable them.
-.It Sy motd Ar class Op Ar file
-If
-.Ar file
-is not given or
-.Ar class
-is
-.Dq none ,
-disable this.
-Otherwise, use
-.Ar file
-as the message of the day file to display after login.
-.It Sy notify Ar class Op Ar fileglob
-If
-.Ar fileglob
-is not given or
-.Ar class
-is
-.Dq none ,
-disable this.
-Otherwise, each time the user enters a new directory,
-notify the user of any files matching
-.Ar fileglob .
-.It Sy passive Ar class Op Sy off
-If class is
-.Dq none
-or
-.Sy off
-is given, disallow passive (PASV/LPSV/EPSV) connections.
-Otherwise, enable them.
-.It Sy rateget Ar rate
-Set the maximum get (RETR) transfer rate throttle to
-.Ar rate .
-If
-.Ar rate
-is 0, the throttle is disabled.
-.Pp
-An optional suffix may be provided, which changes the intrepretation of 
-.Ar rate
-as follows:
-.Bl -tag -width 3n -offset indent -compact
-.It b
-Causes no modification. (Optional)
-.It k
-Kilo; multiply the argument by 1024
-.It m
-Mega; multiply the argument by 1048576
-.It g
-Giga; multiply the argument by 1073741824
-.El
-.It Sy rateput Ar class
-Set the maximum put (STOR) transfer rate throttle to
-.Ar rate ,
-which is parsed as per
-.Sy rateget Ar rate .
-.It Sy timeout Ar class Ar time
-Set the inactivity timeout period.
-(the default is fifteen minutes).
-This cannot be less than 30 seconds, or greater than the value for
-.Sy maxtimeout .
-Ignored if class is
-.Dq none
-or
-.Ar time
-is not specified.
-.It Sy umask Ar class Ar umaskval
-Set the umask to
-.Ar umaskval .
-Ignored if class is
-.Dq none
-or
-.Ar umaskval
-is not specified.
-.It Sy upload Ar class Op Sy off
-If class is
-.Dq none
-or
-.Sy off
-is given, disable the following commands:
-APPE, STOR, and STOU,
-as well as the modify commands:
-CHMOD, DELE, MKD, RMD, RNFR, and UMASK.
-Otherwise, enable them.
-.El
-.Pp
-In any configuration line,
-.Ar class
-may be a user specified word, or one of:
-.Bl -tag -width "chroot" -compact -offset indent
-.It Sy all
-Matches any class.
-.It Sy none
-Matches no class.
-.El
-.Pp
-The following defaults are used:
-.Bd -literal -offset indent -compact
-checkportcmd  none
-display       none
-maxtimeout    all    7200   # 2 hours
-modify        all
-motd          all    motd
-notify        none
-passive       all
-timeout       all    900    # 15 minutes
-umask         all    027
-upload        all
-classtype     guest  GUEST
-modify        guest  off
-umask         guest  0707
-.Ed
-.Pp
-Directives that appear later in the file override settings by previous
-directives.
-This allows
-.Sq wildcard
-entries to define defaults, and then have class-specific overrides.
-.Pp
-The
-STAT
-command will return the class settings for the current user as defined by
-.Pa /etc/ftpd.conf .
-.Ss Display file escape sequences
 When
 .Nm
 displays various files back to the client (such as
@@ -686,7 +336,8 @@ A
 .Dq \&%
 character.
 .El
-.Ss Setting up a restricted ftp subtree
+.Sh Setting up a restricted ftp subtree
+.Pp
 In order that system security is not breached, it is recommended
 that the
 subtrees for the
@@ -774,7 +425,7 @@ However, error messages from conversion or
 commands won't be returned to the user.
 (This is the traditional behaviour.)
 Note that the
-.Sx /etc/ftpd.conf
+.Xr ftpd.conf 5
 directive
 .Sy upload
 can be used to prevent users uploading here.
@@ -810,8 +461,9 @@ If it exists, displayed and access is refused.
 .Sh SEE ALSO
 .Xr ftp 1 ,
 .Xr skey 1 ,
-.Xr fnmatch 3 ,
 .Xr getusershell 3 ,
+.Xr ftpd.conf 5 ,
+.Xr ftpusers 5 ,
 .Xr syslogd 8
 .Sh STANDARDS
 .Nm
@@ -831,7 +483,7 @@ command appeared in
 .Bx 4.2 .
 .Pp
 The
-.Pa /etc/ftpd.conf
+.Xr ftpd.conf 5
 functionality was implemented in
 .Nx 1.3
 and later releases by Luke Mewburn, based on work by Simon Burge.
@@ -849,7 +501,7 @@ can be fooled into connecting to any service on any host.
 With the
 .Dq checkportcmd
 feature of the
-.Pa /etc/ftpd.conf ,
+.Xr ftpd.conf 5 ,
 PORT commands with different host addresses, or TCP ports lower than
 .Dv IPPORT_RESERVED
 will be rejected.
@@ -867,3 +519,8 @@ Don't create
 if you don't want anonymous users to upload files there.
 That directory is only necessary if you want to display the error
 messages of conversion commands to the user.
+Note that if uploads are disabled with the
+.Xr ftpd.conf 5
+directive
+.Sy upload ,
+then this directory cannot be abused by the user in this way.
