@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.28 1996/08/02 13:44:48 pk Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.29 1996/10/28 23:02:54 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -114,11 +114,19 @@ dvma_malloc(len, kaddr, flags)
 {
 	vm_offset_t	kva;
 	vm_offset_t	dva;
+#if defined(SUN4M)
+	extern int has_iocache;
+#endif
 
 	len = round_page(len);
 	kva = (vm_offset_t)malloc(len, M_DEVBUF, flags);
 	if (kva == NULL)
 		return (NULL);
+
+#if defined(SUN4M)
+	if (!has_iocache)
+#endif
+		kvm_uncache((caddr_t)kva, len >> PGSHIFT);
 
 	*(vm_offset_t *)kaddr = kva;
 	dva = dvma_mapin(kernel_map, kva, len, (flags & M_NOWAIT) ? 0 : 1);
@@ -155,19 +163,16 @@ dvma_mapin(map, va, len, canwait)
 	register int npf, s;
 	register vm_offset_t pa;
 	long off, pn;
-#if defined(SUN4M)
-	extern int has_iocache;
-#endif
+	vm_offset_t	ova;
+	int		olen;
+
+	ova = va;
+	olen = len;
 
 	off = (int)va & PGOFSET;
 	va -= off;
 	len = round_page(len + off);
 	npf = btoc(len);
-
-#if defined(SUN4M)
-	if (!has_iocache)
-	    kvm_uncache((caddr_t)va, len >> PGSHIFT);
-#endif
 
 	s = splimp();
 	for (;;) {
@@ -194,7 +199,7 @@ dvma_mapin(map, va, len, canwait)
 		pa = trunc_page(pa);
 
 #if defined(SUN4M)
-		if (cputyp == CPU_SUN4M) {
+		if (CPU_ISSUN4M) {
 			iommu_enter(tva, pa);
 		} else
 #endif
@@ -217,6 +222,13 @@ dvma_mapin(map, va, len, canwait)
 		tva += PAGE_SIZE;
 		va += PAGE_SIZE;
 	}
+
+	/*
+	 * XXX Only have to do this on write.
+	 */
+	if (vactype == VAC_WRITEBACK)			/* XXX */
+		cache_flush((caddr_t)ova, olen);	/* XXX */
+
 	return kva + off;
 }
 
