@@ -2894,8 +2894,11 @@ ecoff_swap_rpdr_out (abfd, in, ex)
   bfd_h_put_16 (abfd, in->pcreg, (bfd_byte *) ex->p_pcreg);
 
   bfd_h_put_32 (abfd, in->irpss, (bfd_byte *) ex->p_irpss);
+  bfd_h_put_32 (abfd, 0, (bfd_byte *) ex->p_reserved);
 #if 0 /* FIXME */
   ecoff_put_off (abfd, in->exception_info, (bfd_byte *) ex->p_exception_info);
+#else
+  bfd_h_put_32 (abfd, 0, (bfd_byte *) ex->p_exception_info);
 #endif
 }
 
