@@ -93,7 +93,7 @@
 ./sbin/mount_union
 ./sbin/newfs
 ./sbin/newfs_msdos
-./sbin/newlfs
+./sbin/newfs_lfs
 ./sbin/nologin
 ./sbin/ping
 ./sbin/raidctl
