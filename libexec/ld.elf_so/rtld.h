@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.27 2000/07/26 02:07:35 mycroft Exp $	 */
+/*	$NetBSD: rtld.h,v 1.28 2000/10/10 19:54:38 is Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -236,7 +236,8 @@ extern Elf_Sym _rtld_sym_zero;
 void _rtld_bind_start __P((void));
 
 /* rtld.c */
-void _rtld_error __P((const char *, ...));
+void _rtld_error __P((const char *, ...))
+     __attribute__((__format__(__printf__,1,2)));
 void _rtld_die __P((void));
 char *_rtld_dlerror __P((void));
 void *_rtld_dlopen __P((const char *, int));
