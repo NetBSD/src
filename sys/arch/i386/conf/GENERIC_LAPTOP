@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.1 2000/09/27 16:57:09 fvdl Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.2 2000/10/02 12:54:39 fvdl Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.1 $"
+#ident 		"GENERIC-$Revision: 1.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -181,7 +181,7 @@ config		netbsd	root on ? type ?
 
 mainbus0 at root
 
-#apm0	at mainbus0			# Advanced power management
+apm0	at mainbus0			# Advanced power management
 
 # Tuning for power management, see apm(4) for more details.
 #options 	APM_NO_IDLE		# Don't call BIOS CPU idle function
@@ -233,7 +233,7 @@ options 	PCIBIOS_ADDR_FIXUP	# fixup PCI I/O addresses
 options 	PCIBIOS_BUS_FIXUP	# fixup PCI bus numbering
 options 	PCIBIOS_INTR_FIXUP	# fixup PCI interrupt routing
 #options 	PCIBIOS_IRQS_HINT=0x0a00 # PCI interrupts hint. IRQ 9 or 11
-#options 	PCIBIOS_INTR_GUESS	# see pcibios(4)
+options 	PCIBIOS_INTR_GUESS	# see pcibios(4)
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
 
 # PCI bridges
@@ -584,7 +584,7 @@ pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
 pss0	at isa? port 0x220 irq 7 drq 6  	# Personal Sound System
 sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 sb0	at isa? port 0x220 irq 5 drq 1 drq2 5	# SoundBlaster
-wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
+#wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
 #cms0	at isa? port 0x220			# Creative Music System
 
