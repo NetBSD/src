@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.1.2.10 2001/12/30 02:19:00 nathanw Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.1.2.11 2002/02/08 22:18:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include "pthread.h"
 #include "pthread_int.h"
 
-#define PTHREAD_RUN_DEBUG
+#undef PTHREAD_RUN_DEBUG
 
 #ifdef PTHREAD_RUN_DEBUG
 #define SDPRINTF(x) DPRINTF(x)
@@ -57,14 +57,6 @@ struct pthread_queue_t idlequeue;
 
 extern pthread_spin_t deadqueue_lock;
 extern struct pthread_queue_t reidlequeue;
-
-#define PTHREAD_SA_DEBUG
-
-#ifdef PTHREAD_SA_DEBUG
-#define SDPRINTF(x) DPRINTF(x)
-#else
-#define SDPRINTF(x)
-#endif
 
 /* Go do another thread, without putting us on the run queue. */
 void
@@ -114,7 +106,9 @@ pthread__sched(pthread_t self, pthread_t thread)
 	SDPRINTF(("(sched %p) scheduling %p\n", self, thread));
 	thread->pt_state = PT_STATE_RUNNABLE;
 	assert (thread->pt_type == PT_THREAD_NORMAL);
+#ifdef PTHREAD__DEBUG
 	thread->rescheds++;
+#endif
 	pthread_spinlock(self, &runqueue_lock);
 	PTQ_INSERT_TAIL(&runqueue, thread, pt_runq);
 	pthread_spinunlock(self, &runqueue_lock);
@@ -174,7 +168,9 @@ pthread__sched_bulk(pthread_t self, pthread_t qhead)
 			qhead->pt_state = PT_STATE_RUNNABLE;
 			qhead->pt_next = NULL;
 			qhead->pt_parent = NULL;
+#ifdef PTHREAD__DEBUG
 			qhead->rescheds++;
+#endif
 			SDPRINTF(("(bulk %p) scheduling %p\n", self, qhead));
 			assert(PTQ_LAST(&runqueue, pthread_queue_t) != qhead);
 			assert(PTQ_FIRST(&runqueue) != qhead);
