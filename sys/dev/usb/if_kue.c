@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.7 2000/02/17 05:41:41 mycroft Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.8 2000/02/17 18:42:21 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -704,6 +704,7 @@ USB_ATTACH(kue)
 #endif
 
 #endif /* __NetBSD__ */
+	sc->kue_attached = 1;
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->kue_udev,
@@ -719,6 +720,17 @@ USB_DETACH(kue)
 	int			s;
 
 	s = splusb();		/* XXX why? */
+
+	if (sc->kue_mcfilters != NULL) {
+		free(sc->kue_mcfilters, M_USBDEV);
+		sc->kue_mcfilters = NULL;
+	}
+
+	if (!sc->kue_attached) {
+		/* Detached before attached finished, so just bail out. */
+		splx(s);
+		return (0);
+	}
 
 	if (ifp->if_flags & IFF_RUNNING)
 		kue_stop(sc);
@@ -743,9 +755,7 @@ USB_DETACH(kue)
 		       USBDEVNAME(sc->kue_dev));
 #endif
 
-	if (sc->kue_mcfilters != NULL)
-		free(sc->kue_mcfilters, M_USBDEV);
-
+	sc->kue_attached = 0;
 	splx(s);
 
 	return (0);

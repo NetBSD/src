@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kuereg.h,v 1.3 2000/02/02 13:22:07 augustss Exp $	*/
+/*	$NetBSD: if_kuereg.h,v 1.4 2000/02/17 18:42:22 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -189,4 +189,5 @@ struct kue_softc {
 	struct kue_cdata	kue_cdata;
 
 	char			kue_dying;
+	char			kue_attached;
 };

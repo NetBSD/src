@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.23 2000/02/17 05:41:41 mycroft Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.24 2000/02/17 18:42:21 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -879,6 +879,7 @@ USB_ATTACH(aue)
 
 #endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
+	sc->aue_attached = 1;
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->aue_udev,
@@ -898,6 +899,12 @@ USB_DETACH(aue)
 	s = splusb();
 
 	usb_untimeout(aue_tick, sc, sc->aue_stat_ch);
+
+	if (!sc->aue_attached) {
+		/* Detached before attached finished, so just bail out. */
+		splx(s);
+		return (0);
+	}
 
 	if (ifp->if_flags & IFF_RUNNING)
 		aue_stop(sc);
@@ -924,6 +931,7 @@ USB_DETACH(aue)
 		       USBDEVNAME(sc->aue_dev));
 #endif
 
+	sc->aue_attached = 0;
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->aue_udev, 
