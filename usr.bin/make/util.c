@@ -1,15 +1,15 @@
-/*	$NetBSD: util.c,v 1.16 1998/02/04 14:47:40 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.17 1998/09/18 20:15:36 christos Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: util.c,v 1.16 1998/02/04 14:47:40 christos Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.17 1998/09/18 20:15:36 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.16 1998/02/04 14:47:40 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.17 1998/09/18 20:15:36 christos Exp $");
 #endif
 #endif
 
@@ -437,7 +437,7 @@ strftime(buf, len, fmt, tm)
 	const char *fmt;
 	struct tm *tm;
 {
-	static char months[] = {
+	static char months[][4] = {
 		"Jan", "Feb", "Mar", "Apr", "May", "Jun", 
 		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 	};
