@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte.c,v 1.7 2001/01/03 15:23:26 lukem Exp $	*/
+/*	$NetBSD: multibyte.c,v 1.8 2001/02/06 18:48:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ansi.c	8.1 (Berkeley) 6/27/93";
 #else
-__RCSID("$NetBSD: multibyte.c,v 1.7 2001/01/03 15:23:26 lukem Exp $");
+__RCSID("$NetBSD: multibyte.c,v 1.8 2001/02/06 18:48:41 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -67,7 +67,7 @@ __RCSID("$NetBSD: multibyte.c,v 1.7 2001/01/03 15:23:26 lukem Exp $");
 		if (state && ___rune_initstate(rl))			\
 			(*___rune_initstate(rl))(rl, state);		\
 	}								\
-    } while (0)
+    } while (/*CONSTCOND*/0)
 #define INIT(rl, state, state0, ps) \
     do {								\
 	if (___rune_sizestate(rl)) {					\
@@ -87,14 +87,14 @@ __RCSID("$NetBSD: multibyte.c,v 1.7 2001/01/03 15:23:26 lukem Exp $");
 			(*___rune_initstate(rl))((rl), (state));	\
 		}							\
 	}								\
-    } while (0)
+    } while (/*CONSTCOND*/0)
 #define	CLEANUP(rl, state, state0, ps) \
     do {								\
 	if ((state) && (ps) && ___rune_packstate(rl))			\
 		(*___rune_packstate(rl))((rl), (ps), (state));		\
 	if ((state) && (state0) && (state) != (state0))			\
 		free(state);						\
-    } while (0)
+    } while (/*CONSTCOND*/0)
 
 static _RuneLocale *_mbstate_get_locale __P((const mbstate_t *));
 static void _mbstate_set_locale __P((mbstate_t *, const _RuneLocale *));
@@ -108,6 +108,7 @@ _mbstate_get_locale(ps)
 
 	_DIAGASSERT(ps != NULL);
 
+	/*LINTED disgusting const castaway can pointer cast */
 	rl = *(_RuneLocale **)ps;
 	if (!rl)
 		rl = _CurrentRuneLocale;
@@ -123,7 +124,7 @@ _mbstate_set_locale(ps, rl)
 	_DIAGASSERT(ps != NULL);
 	/* XXX: can rl be NULL ? */
 
-	*(const _RuneLocale **)ps = rl;
+	*(const _RuneLocale **)(void *)ps = rl;
 }
 
 static int
@@ -137,7 +138,7 @@ _mbstate_init_locale(ps, rl)
 
 	if (!rl)
 		rl = _CurrentRuneLocale;
-	if (*(_RuneLocale **)ps != rl) {
+	if (*(_RuneLocale **)(void *)ps != rl) {
 		memset(ps, 0, sizeof(*ps));
 		_mbstate_set_locale(ps, rl);
 		return 0;

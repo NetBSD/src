@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.9 2001/01/21 07:13:23 itojun Exp $	*/
+/*	$NetBSD: rune.c,v 1.10 2001/02/06 18:48:41 christos Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)rune.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rune.c,v 1.9 2001/01/21 07:13:23 itojun Exp $");
+__RCSID("$NetBSD: rune.c,v 1.10 2001/02/06 18:48:41 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -111,9 +111,9 @@ readrange(_RuneLocale *rl, _RuneRange *rr, _FileRuneRange *frr, void *lastp,
 		if (fread(&fre, sizeof(fre), 1, fp) != 1)
 			return -1;
 
-		re->__min = ntohl(fre.__min);
-		re->__max = ntohl(fre.__max);
-		re->__map = ntohl(fre.__map);
+		re->__min = ntohl((u_int32_t)fre.__min);
+		re->__max = ntohl((u_int32_t)fre.__max);
+		re->__map = ntohl((u_int32_t)fre.__map);
 		re++;
 
 		if ((void *)re > lastp)
@@ -217,7 +217,7 @@ _Read_RuneMagi(fp)
 	if (memcmp(frl.__magic, _RUNE_MAGIC_1, sizeof(frl.__magic)))
 		return NULL;
 
-	hostdatalen = sizeof(*rl) + ntohl(frl.__variable_len) +
+	hostdatalen = sizeof(*rl) + ntohl((u_int32_t)frl.__variable_len) +
 	    ntohl(frl.__runetype_ext.__nranges) * sizeof(_RuneEntry) +
 	    ntohl(frl.__maplower_ext.__nranges) * sizeof(_RuneEntry) +
 	    ntohl(frl.__mapupper_ext.__nranges) * sizeof(_RuneEntry);
@@ -227,21 +227,21 @@ _Read_RuneMagi(fp)
 	memset(hostdata, 0, hostdatalen);
 	lastp = hostdata + hostdatalen;
 
-	rl = (_RuneLocale *)hostdata;
+	rl = (_RuneLocale *)(void *)hostdata;
 	rl->__rune_variable = rl + 1;
 
 	memcpy(rl->__magic, frl.__magic, sizeof(rl->__magic));
 	memcpy(rl->__encoding, frl.__encoding, sizeof(rl->__encoding));
 
-	rl->__invalid_rune = ntohl(frl.__invalid_rune);
-	rl->__variable_len = ntohl(frl.__variable_len);
+	rl->__invalid_rune = ntohl((u_int32_t)frl.__invalid_rune);
+	rl->__variable_len = ntohl((u_int32_t)frl.__variable_len);
 
 	for (x = 0; x < _CACHED_RUNES; ++x) {
 		rl->__runetype[x] = ntohl(frl.__runetype[x]);
 
 		/* XXX assumes rune_t = u_int32_t */
-		rl->__maplower[x] = ntohl(frl.__maplower[x]);
-		rl->__mapupper[x] = ntohl(frl.__mapupper[x]);
+		rl->__maplower[x] = ntohl((u_int32_t)frl.__maplower[x]);
+		rl->__mapupper[x] = ntohl((u_int32_t)frl.__mapupper[x]);
 	}
 
 	if (readrange(rl, &rl->__runetype_ext, &frl.__runetype_ext, lastp, fp))
@@ -317,7 +317,6 @@ _Read_CTypeAsRune(fp)
 	/* host data */
 	char *hostdata;
 	size_t hostdatalen;
-	void *lastp;
 	_RuneLocale *rl;
 	struct stat sb;
 	int x;
@@ -368,9 +367,7 @@ _Read_CTypeAsRune(fp)
 	if ((hostdata = malloc(hostdatalen)) == NULL)
 		goto bad;
 	memset(hostdata, 0, hostdatalen);
-	lastp = hostdata + hostdatalen;
-
-	rl = (_RuneLocale *)hostdata;
+	rl = (_RuneLocale *)(void *)hostdata;
 	rl->__rune_variable = NULL;
 
 	memcpy(rl->__magic, _RUNE_MAGIC_1, sizeof(rl->__magic));
