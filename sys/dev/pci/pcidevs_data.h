@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.118.2.11 2000/07/07 18:24:53 he Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.118.2.12 2000/07/23 17:56:11 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.113.2.9 2000/06/03 18:31:43 he Exp 
+ *	NetBSD: pcidevs,v 1.113.2.10 2000/07/07 17:13:50 he Exp 
  */
 
 /*
@@ -3094,10 +3094,40 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "W89C940F Ethernet",
 	},
 	{
-	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724E_V,
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724,
 	    0,
 	    "Yamaha",
 	    "724 Audio",
+	},
+	{
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF740,
+	    0,
+	    "Yamaha",
+	    "740 Audio",
+	},
+	{
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF740C,
+	    0,
+	    "Yamaha",
+	    "740C (DS-1) Audio",
+	},
+	{
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724F,
+	    0,
+	    "Yamaha",
+	    "724F (DS-1) Audio",
+	},
+	{
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF744B,
+	    0,
+	    "Yamaha",
+	    "744 (DS-1S) Audio",
+	},
+	{
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF754,
+	    0,
+	    "Yamaha",
+	    "754 (DS-1E) Audio",
 	},
 	{
 	    PCI_VENDOR_ZEINET, PCI_PRODUCT_ZEINET_1221,
