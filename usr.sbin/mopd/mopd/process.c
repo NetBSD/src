@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.6.4.3 2000/09/30 15:59:50 sommerfeld Exp $	*/
+/*	$NetBSD: process.c,v 1.6.4.4 2000/12/15 04:32:43 he Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: process.c,v 1.6.4.3 2000/09/30 15:59:50 sommerfeld Exp $");
+__RCSID("$NetBSD: process.c,v 1.6.4.4 2000/12/15 04:32:43 he Exp $");
 #endif
 
 #include "os.h"
@@ -356,6 +356,8 @@ mopNextLoad(dst, src, new_count, trans)
 	
 	if (slot == -1)
 		return;
+
+	dle = &dllist[slot];
 
 	if ((new_count == ((dle->count+1) % 256))) {
 		dle->loadaddr = dllist[slot].nloadaddr;
