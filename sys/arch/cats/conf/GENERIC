@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.55 2003/10/18 08:30:13 lukem Exp $
+# $NetBSD: GENERIC,v 1.56 2003/10/21 08:03:16 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -364,7 +364,7 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-atapibus* at umass? channel ?
+atapibus* at umass?
 scsibus* at umass? channel ?
 
 # USB audio
