@@ -1,4 +1,4 @@
-/*	$NetBSD: math_emulate.c,v 1.19 1996/10/13 03:19:48 christos Exp $	*/
+/*	$NetBSD: math_emulate.c,v 1.20 1998/01/24 13:19:53 mycroft Exp $	*/
 
 /*
  * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj
@@ -72,7 +72,7 @@ int
 math_emulate(info)
 	struct trapframe *info;
 {
-	u_short code;
+	u_short cw, code;
 	temp_real tmp;
 	char * address;
 	u_long oldeip;
@@ -82,8 +82,10 @@ math_emulate(info)
 
 	/* ever used fp? */
 	if ((curproc->p_md.md_flags & MDP_USEDFPU) == 0) {
-		curproc->p_md.md_flags |= MDP_USEDFPU;
+		cw = curproc->p_addr->u_pcb.pcb_savefpu.sv_env.en_cw;
 		fninit();
+		I387.cwd = cw;
+		curproc->p_md.md_flags |= MDP_USEDFPU;
 	}
 
 	if (I387.cwd & I387.swd & 0x3f)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.3 1997/10/16 04:23:37 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.4 1998/01/24 13:19:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,7 +39,9 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
+#include <sys/user.h>
 
+#include <machine/npx.h>
 #include <machine/reg.h>
 #include <machine/vmparam.h>
 #include <machine/ibcs2_machdep.h>
@@ -50,9 +52,11 @@ ibcs2_setregs(p, epp, stack)
 	struct exec_package *epp;
 	u_long stack;
 {
+	register struct pcb *pcb = &p->p_addr->u_pcb;
 	register struct trapframe *tf;
 
 	setregs(p, epp, stack);
+	pcb->pcb_savefpu.sv_env.en_cw = __iBCS2_NPXCW__;
 	tf = p->p_md.md_regs;
 	tf->tf_eax = 0x2000000;		/* XXX base of heap */
 }
