@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.20 1997/10/13 16:10:36 lukem Exp $	*/
+/*	$NetBSD: curses.h,v 1.21 1998/01/30 04:33:32 perry Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -32,14 +32,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)curses.h	8.4 (Berkeley) 8/10/94
+ *	@(#)curses.h	8.5 (Berkeley) 4/29/95
  */
 
 #ifndef _CURSES_H_
 #define	_CURSES_H_
-
-#include <sys/types.h>
-#include <sys/cdefs.h>
 
 #include <stdio.h>
 #include <termcap.h>
@@ -51,7 +48,9 @@
  * START BACKWARD COMPATIBILITY ONLY.
  */
 #ifndef _CURSES_PRIVATE
+#ifndef __cplusplus
 #define	bool	char
+#endif
 #define	reg	register
 
 #ifndef TRUE
