@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.81 1999/12/05 22:54:35 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.82 2000/01/31 22:01:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.81 1999/12/05 22:54:35 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.82 2000/01/31 22:01:03 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -458,7 +458,7 @@ mput(argc, argv)
 	char *argv[];
 {
 	int i;
-	sig_t oldintr;
+	sigfunc oldintr;
 	int ointer;
 	char *tp;
 
@@ -691,7 +691,7 @@ mget(argc, argv)
 	int argc;
 	char *argv[];
 {
-	sig_t oldintr;
+	sigfunc oldintr;
 	int ch, ointer;
 	char *cp, *tp, *tp2, tmpbuf[MAXPATHLEN];
 
@@ -1209,7 +1209,7 @@ mdelete(argc, argv)
 	int argc;
 	char *argv[];
 {
-	sig_t oldintr;
+	sigfunc oldintr;
 	int ointer;
 	char *cp;
 
@@ -1346,7 +1346,7 @@ mls(argc, argv)
 	int argc;
 	char *argv[];
 {
-	sig_t oldintr;
+	sigfunc oldintr;
 	int ointer, i;
 	int dolist;
 	char mode[1], *dest, *odest;
@@ -1404,7 +1404,7 @@ shell(argc, argv)
 	char *argv[];
 {
 	pid_t pid;
-	sig_t old1;
+	sigfunc old1;
 	char shellnam[MAXPATHLEN], *shell, *namep;
 	int wait_status;
 
@@ -1831,7 +1831,7 @@ doproxy(argc, argv)
 {
 	struct cmd *c;
 	int cmdpos;
-	sig_t oldintr;
+	sigfunc oldintr;
 
 	if ((argc == 0 && argv != NULL) ||
 	    (argc == 1 && !another(&argc, &argv, "command"))) {
@@ -2259,7 +2259,7 @@ parserate(argc, argv, cmdlineopt)
 	int cmdlineopt;
 {
 	int dir, max, incr, showonly;
-	sig_t oldusr1, oldusr2;
+	sigfunc oldusr1, oldusr2;
 
 	if (argc > 4 || (argc < (cmdlineopt ? 3 : 2))) {
 usage:
