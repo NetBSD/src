@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.95 2002/01/28 02:15:16 simonb Exp $ */
+/* $NetBSD: vmstat.c,v 1.96 2002/02/20 07:43:30 enami Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.95 2002/01/28 02:15:16 simonb Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.96 2002/02/20 07:43:30 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -259,7 +259,8 @@ void	doevcnt(int verbose);
 void	dohashstat(int, int, const char *);
 void	dointr(int verbose);
 void	domem(void);
-void	dopool(void);
+void	dopool(int);
+void	dopoolcache(struct pool *, int);
 void	dosum(void);
 void	dovmstat(u_int, int);
 void	kread(int, void *, size_t);
@@ -440,7 +441,7 @@ main(int argc, char *argv[])
 		}
 		if (todo & MEMSTAT) {
 			domem();
-			dopool();
+			dopool(verbose);
 			putchar('\n');
 		}
 		if (todo & SUMSTAT) {
@@ -1058,7 +1059,7 @@ domem(void)
 }
 
 void
-dopool(void)
+dopool(int verbose)
 {
 	int first, ovflw;
 	void *addr;
@@ -1139,6 +1140,7 @@ dopool(void)
 			inuse += (pp->pr_nget - pp->pr_nput) * pp->pr_size;
 			total += pp->pr_npages * pp->pr_pagesz;
 		}
+		dopoolcache(pp, verbose);
 		addr = TAILQ_NEXT(pp, pr_poollist);
 	}
 
@@ -1148,6 +1150,48 @@ dopool(void)
 	    inuse, total, (double)(100 * inuse) / total);
 }
 
+#ifndef PCG_NOBJECTS
+/* The pool cache group. */
+#define	PCG_NOBJECTS		16
+struct pool_cache_group {
+	TAILQ_ENTRY(pool_cache_group)
+		pcg_list;	/* link in the pool cache's group list */
+	u_int	pcg_avail;	/* # available objects */
+				/* pointers to the objects */
+	void	*pcg_objects[PCG_NOBJECTS];
+};
+#endif
+
+void
+dopoolcache(struct pool *pp, int verbose)
+{
+	struct pool_cache pool_cache, *pc = &pool_cache;
+	struct pool_cache_group pool_cache_group, *pcg = &pool_cache_group;
+	void *addr, *pcg_addr;
+	int i;
+
+	if (verbose < 1)
+		return;
+
+	for (addr = TAILQ_FIRST(&pp->pr_cachelist); addr != NULL;
+	    addr = TAILQ_NEXT(pc, pc_poollist)) {
+		deref_kptr(addr, pc, sizeof(*pc), "pool cache trashed");
+		printf("\tcache %p: allocfrom %p freeto %p\n", addr,
+		    pc->pc_allocfrom, pc->pc_freeto);
+		printf("\t    hits %lu misses %lu ngroups %lu nitems %lu\n",
+		    pc->pc_hits, pc->pc_misses, pc->pc_ngroups, pc->pc_nitems);
+		if (verbose < 2)
+			continue;
+		for (pcg_addr = TAILQ_FIRST(&pc->pc_grouplist);
+		    pcg_addr != NULL; pcg_addr = TAILQ_NEXT(pcg, pcg_list)) {
+			printf("\t\tgroup %p: avail %d\n", pcg_addr,
+			    pcg->pcg_avail);
+			for (i = 0; i < PCG_NOBJECTS; i++)
+				printf("\t\t\t%p\n", pcg->pcg_objects[i]);
+		}
+	}
+
+}
 
 enum hashtype {			/* from <sys/systm.h> */
 	HASH_LIST,
