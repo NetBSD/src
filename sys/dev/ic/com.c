@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.65 1996/02/10 20:23:18 christos Exp $	*/
+/*	$NetBSD: com.c,v 1.66 1996/02/17 04:04:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -78,6 +78,8 @@ struct com_softc {
 	int sc_floods;
 	int sc_errors;
 
+	int sc_halt;
+
 	int sc_iobase;
 #ifdef COM_HAYESP
 	int sc_hayespbase;
@@ -113,10 +115,11 @@ struct cfdriver comcd = {
 	NULL, "com", comprobe, comattach, DV_TTY, sizeof(struct com_softc)
 };
 
-int	comdefaultrate = TTYDEF_SPEED;
 #ifdef COMCONSOLE
+int	comdefaultrate = CONSPEED;
 int	comconsole = COMCONSOLE;
 #else
+int	comdefaultrate = TTYDEF_SPEED;
 int	comconsole = -1;
 #endif
 int	comconsinit;
@@ -697,7 +700,7 @@ comparam(tp, t)
 	if (ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed))
 		return EINVAL;
 
-	lcr = sc->sc_lcr & LCR_SBREAK;
+	lcr = ISSET(sc->sc_lcr, LCR_SBREAK);
 
 	switch (ISSET(t->c_cflag, CSIZE)) {
 	case CS5:
@@ -734,20 +737,44 @@ comparam(tp, t)
 	 * Set the FIFO threshold based on the receive speed, if we are
 	 * changing it.
 	 */
+#if 1
 	if (tp->t_ispeed != t->c_ispeed) {
-		if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
+#else
+	if (1) {
+#endif
+		if (ospeed != 0) {
+			/*
+			 * Make sure the transmit FIFO is empty before
+			 * proceeding.
+			 */
+			while (ISSET(tp->t_state, TS_BUSY)) {
+				int error;
+
+				++sc->sc_halt;
+				error = ttysleep(tp, &tp->t_outq,
+				    TTOPRI | PCATCH, "comprm", 0);
+				--sc->sc_halt;
+				if (error) {
+					splx(s);
+					comstart(tp);
+					return (error);
+				}
+			}
+
+			outb(iobase + com_lcr, lcr | LCR_DLAB);
+			outb(iobase + com_dlbl, ospeed);
+			outb(iobase + com_dlbh, ospeed >> 8);
+			outb(iobase + com_lcr, lcr);
+			SET(sc->sc_mcr, MCR_DTR);
+			outb(iobase + com_mcr, sc->sc_mcr);
+		} else
+			outb(iobase + com_lcr, lcr);
+
+		if (!ISSET(sc->sc_hwflags, COM_HW_HAYESP) &&
+		    ISSET(sc->sc_hwflags, COM_HW_FIFO))
 			outb(iobase + com_fifo,
 			    FIFO_ENABLE |
 			    (t->c_ispeed <= 1200 ? FIFO_TRIGGER_1 : FIFO_TRIGGER_8));
-	}
-
-	if (ospeed != 0) {
-		outb(iobase + com_lcr, lcr | LCR_DLAB);
-		outb(iobase + com_dlbl, ospeed);
-		outb(iobase + com_dlbh, ospeed >> 8);
-		outb(iobase + com_lcr, lcr);
-		SET(sc->sc_mcr, MCR_DTR);
-		outb(iobase + com_mcr, sc->sc_mcr);
 	} else
 		outb(iobase + com_lcr, lcr);
 
@@ -786,7 +813,9 @@ comparam(tp, t)
 		outb(iobase + com_mcr, sc->sc_mcr);
 	}
 
+	/* Just to be sure... */
 	splx(s);
+	comstart(tp);
 	return 0;
 }
 
@@ -800,6 +829,8 @@ comstart(tp)
 
 	s = spltty();
 	if (ISSET(tp->t_state, TS_TTSTOP | TS_BUSY))
+		goto out;
+	if (sc->sc_halt > 0)
 		goto out;
 	if (ISSET(tp->t_cflag, CRTSCTS) && !ISSET(sc->sc_msr, MSR_CTS))
 		goto out;
@@ -1032,7 +1063,9 @@ comintr(arg)
 
 		if (ISSET(lsr, LSR_TXRDY) && ISSET(tp->t_state, TS_BUSY)) {
 			CLR(tp->t_state, TS_BUSY);
-			if (ISSET(tp->t_state, TS_FLUSH))
+			if (sc->sc_halt > 0)
+				wakeup(&tp->t_outq);
+			else if (ISSET(tp->t_state, TS_FLUSH))
 				CLR(tp->t_state, TS_FLUSH);
 			else
 				(*linesw[tp->t_line].l_start)(tp);
