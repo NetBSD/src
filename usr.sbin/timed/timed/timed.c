@@ -1,4 +1,4 @@
-/*	$NetBSD: timed.c,v 1.19 2003/08/18 05:39:53 itojun Exp $	*/
+/*	$NetBSD: timed.c,v 1.20 2005/02/06 04:56:27 perry Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)timed.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: timed.c,v 1.19 2003/08/18 05:39:53 itojun Exp $");
+__RCSID("$NetBSD: timed.c,v 1.20 2005/02/06 04:56:27 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,7 +125,7 @@ main(int argc, char *argv[])
 	int nflag, iflag;
 	struct timeval ntime;
 	struct servent *srvp;
-	register struct netinfo *ntp;
+	struct netinfo *ntp;
 	struct netinfo *ntip;
 	struct netinfo *savefromnet;
 	struct netent *nentp;
@@ -627,7 +627,7 @@ setstatus(void)
 void
 makeslave(struct netinfo *net)
 {
-	register struct netinfo *ntp;
+	struct netinfo *ntp;
 
 	for (ntp = nettab; ntp != NULL; ntp = ntp->next) {
 		if (ntp->status == SLAVE && ntp != net)
@@ -642,7 +642,7 @@ makeslave(struct netinfo *net)
 static void
 checkignorednets(void)
 {
-	register struct netinfo *ntp;
+	struct netinfo *ntp;
 
 	for (ntp = nettab; ntp != NULL; ntp = ntp->next) {
 		if (!Mflag && ntp->status == SLAVE)
@@ -704,7 +704,7 @@ date(void)
 void
 addnetname(char *name)
 {
-	register struct nets **netlist = &nets;
+	struct nets **netlist = &nets;
 
 	while (*netlist)
 		netlist = &((*netlist)->next);
@@ -722,8 +722,8 @@ static void
 add_good_host(const char* name,
 	      char perm)		/* 1=not part of the netgroup */
 {
-	register struct goodhost *ghp;
-	register struct hostent *hentp;
+	struct goodhost *ghp;
+	struct hostent *hentp;
 
 	ghp = (struct goodhost*)malloc(sizeof(*ghp));
 	if (!ghp) {
@@ -821,8 +821,8 @@ get_goodgroup(int force)
 int					/* 1=trust hp to change our date */
 good_host_name(char *name)
 {
-	register struct goodhost *ghp = goodhosts;
-	register char c;
+	struct goodhost *ghp = goodhosts;
+	char c;
 
 	if (!ghp || !Mflag)		/* trust everyone if no one named */
 		return 1;
