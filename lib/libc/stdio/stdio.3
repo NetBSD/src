@@ -1,4 +1,4 @@
-.\"	$NetBSD: stdio.3,v 1.10 2001/09/16 02:08:55 wiz Exp $
+.\"	$NetBSD: stdio.3,v 1.11 2001/09/16 02:17:17 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -174,7 +174,7 @@ without first removing their current definitions with
 .Dv FOPEN_MAX ,
 .Dv L_cuserid ,
 .Dv L_ctermid ,
-.Dv L_tmpnam,
+.Dv L_tmpnam ,
 .Dv NULL ,
 .Dv SEEK_END ,
 .Dv SEEK_SET ,
@@ -205,16 +205,10 @@ and
 .Fn putchar
 exist and will be used if the macros definitions are explicitly removed.
 .Sh SEE ALSO
-.Xr open 2 ,
 .Xr close 2 ,
+.Xr open 2 ,
 .Xr read 2 ,
 .Xr write 2
-.Sh BUGS
-The standard buffered functions do not interact well with certain other
-library and system functions, especially
-.Xr vfork 2
-and
-.Xr abort 3 .
 .Sh STANDARDS
 The
 .Nm
@@ -286,3 +280,9 @@ vsnprintf	formatted output conversion
 vsprintf	formatted output conversion
 vsscanf	input format conversion
 .El
+.Sh BUGS
+The standard buffered functions do not interact well with certain other
+library and system functions, especially
+.Xr vfork 2
+and
+.Xr abort 3 .
