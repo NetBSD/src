@@ -1,12 +1,12 @@
 #	from: @(#)Makefile	5.4 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.4 1993/08/01 05:43:25 mycroft Exp $
+#	$Id: Makefile,v 1.5 1993/10/26 06:51:34 cgd Exp $
 
 PROG=	chess
 SRCS=	gnuchess.c uxdsp.c move.c
 CFLAGS+=-DNEWMOVE=12
 MAN6=	chess.0
-DPADD=	${LIBCURSES} ${LIBTERM}
-LDADD=	-lcurses -ltermlib
+DPADD=	${LIBCURSES} ${LIBTERM} /usr/lib/libgnumalloc.a
+LDADD=	-lcurses -ltermlib -lgnumalloc
 HIDEGAME=hidegame
 MANALL+= chess.6
 CLEANFILES += chess.6
