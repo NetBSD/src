@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.40 2001/05/26 16:32:45 chs Exp $ */
+/*	$NetBSD: db_interface.c,v 1.41 2001/05/26 18:16:01 chs Exp $ */
 
 /*
  * Mach Operating System
@@ -376,14 +376,14 @@ db_simple_lock_cmd(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	struct simple_lock *l;
+	struct simplelock *l;
 
 	if (!have_addr) {
 		db_printf("What lock address?\n");
 		return;
 	}
 
-	l = (struct simple_lock *)addr;
+	l = (struct simplelock *)addr;
 	db_printf("lock_data=%d", l->lock_data);
 #ifdef LOCKDEBUG
 	db_printf(" holder=%ld\n"
