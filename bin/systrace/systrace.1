@@ -1,4 +1,4 @@
-.\"	$NetBSD: systrace.1,v 1.21 2003/03/25 23:17:30 provos Exp $
+.\"	$NetBSD: systrace.1,v 1.22 2003/04/16 10:17:26 wiz Exp $
 .\"	$OpenBSD: systrace.1,v 1.27 2002/08/05 23:27:53 provos Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -59,19 +59,21 @@ Alternatively, it might be used to protect the system
 from software bugs (such as buffer overflows) by constraining a
 daemon's access to the system.
 Its privilege elevation feature can be used to obviate the
-need to run large, untrusted programs as root when only one or two 
+need to run large, untrusted programs as root when only one or two
 system calls require root privilege.
 .Pp
 The access policy can be generated interactively or obtained from a
 policy file.
-Interactive policy generation will be performed by the ``notification
-user agent'', normally
+Interactive policy generation will be performed by the
+.Dq notification user agent ,
+normally
 .Xr xsystrace 1 ,
 unless text mode is specified via
 .Fl t .
 .Pp
-When running in ``automatic enforcement'' mode,
-operations not covered by the policy raise an alarm and
+When running in
+.Dq automatic enforcement
+mode, operations not covered by the policy raise an alarm and
 allow an user to refine the currently configured policy.
 .Pp
 The options are as follows:
@@ -234,8 +236,9 @@ A rule is added to the configured policy only if its predicate
 evaluates to true.
 .Pp
 The environment variables $HOME, $USER and $CWD are substituted in rules.
-Comments, begun by an unquoted '#' character and 
-continuing to the end of the line, are ignored.
+Comments, begun by an unquoted
+.Sq \&#
+character and continuing to the end of the line, are ignored.
 .Sh PRIVILEGE ELEVATION
 With
 .Nm
