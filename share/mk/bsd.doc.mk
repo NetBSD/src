@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.41 1999/02/12 01:10:06 lukem Exp $
+#	$NetBSD: bsd.doc.mk,v 1.41.2.1 1999/09/10 22:49:46 he Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .if !target(__initialized__)
@@ -55,7 +55,7 @@ docinstall:: ${DESTDIR}${DOCDIR}/${DIR}/${F}
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${DOCDIR}/${DIR}/${F}
 .endif
-.if !defined(BUILD)
+.if !defined(BUILD) && !make(all) && !make(${F})
 ${DESTDIR}${DOCDIR}/${DIR}/${F}: .MADE
 .endif
 
