@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.4 2002/10/08 14:49:24 provos Exp $	*/
+/*	$NetBSD: parse.y,v 1.5 2002/10/11 21:54:58 provos Exp $	*/
 /*	$OpenBSD: parse.y,v 1.9 2002/08/04 04:15:50 provos Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 %{
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.y,v 1.4 2002/10/08 14:49:24 provos Exp $");
+__RCSID("$NetBSD: parse.y,v 1.5 2002/10/11 21:54:58 provos Exp $");
 
 #include <sys/types.h>
 
@@ -65,11 +65,13 @@ int errors = 0;
 struct filter *myfilter;
 extern char *mystring;
 extern int myoff;
+extern int iamroot;
 
 %}
 
 %token	AND OR NOT LBRACE RBRACE LSQBRACE RSQBRACE THEN MATCH PERMIT DENY
-%token	EQ NEQ TRUE SUB NSUB INPATH LOG COMMA IF USER GROUP EQUAL NEQUAL
+%token	EQ NEQ TRUE SUB NSUB INPATH LOG COMMA IF USER GROUP EQUAL NEQUAL AS
+%token	COLON
 %token	<string> STRING
 %token	<string> CMDSTRING
 %token	<number> NUMBER
@@ -78,18 +80,24 @@ extern int myoff;
 %type	<action> action
 %type	<number> typeoff
 %type	<number> logcode
+%type	<uid> uid
+%type	<gid> gid
 %type	<string> errorcode
 %type	<predicate> predicate
+%type	<elevate> elevate;
 %union {
 	int number;
 	char *string;
 	short action;
 	struct logic *logic;
 	struct predicate predicate;
+	struct elevate elevate;
+	uid_t uid;
+	gid_t gid;
 }
 %%
 
-fullexpression	: expression THEN action errorcode logcode predicate
+fullexpression	: expression THEN action errorcode logcode elevate predicate
 	{
 		int flags = 0, errorcode = SYSTRACE_EPERM;
 
@@ -128,7 +136,8 @@ fullexpression	: expression THEN action errorcode logcode predicate
 		myfilter->match_action = $3;
 		myfilter->match_error = errorcode;
 		myfilter->match_flags = flags;
-		myfilter->match_predicate = $6;
+		myfilter->match_predicate = $7;
+		myfilter->elevate = $6;
 	}
 ;
 
@@ -152,56 +161,91 @@ logcode	: /* Empty */
 }
 ;
 
+
+uid: STRING
+{
+	struct passwd *pw;
+	if ((pw = getpwnam($1)) == NULL) {
+		yyerror("Unknown user %s", $1);
+		break;
+	}
+
+	$$ = pw->pw_uid;
+}
+
+gid: STRING
+{
+	struct group *gr;
+	if ((gr = getgrnam($1)) == NULL) {
+		yyerror("Unknown group %s", $1);
+		break;
+	}
+
+	$$ = gr->gr_gid;
+}
+
+elevate: /* Empty */
+{
+	memset(&$$, 0, sizeof($$));
+}
+		| AS uid
+{
+	if (!iamroot) {
+		yyerror("Privilege elevation not allowed.");
+		break;
+	}
+
+	$$.e_flags = ELEVATE_UID;
+	$$.e_uid = $2;
+}
+		| AS uid COLON gid
+{
+	if (!iamroot) {
+		yyerror("Privilege elevation not allowed.");
+		break;
+	}
+
+	$$.e_flags = ELEVATE_UID|ELEVATE_GID;
+	$$.e_uid = $2;
+	$$.e_gid = $4;
+}
+		| AS COLON gid
+{
+	if (!iamroot) {
+		yyerror("Privilege elevation not allowed.");
+		break;
+	}
+
+	$$.e_flags = ELEVATE_GID;
+	$$.e_gid = $3;
+}
+
 predicate : /* Empty */
 {
 	memset(&$$, 0, sizeof($$));
 }
-		| COMMA IF USER EQUAL STRING
+		| COMMA IF USER EQUAL uid
 {
-	struct passwd *pw;
-
 	memset(&$$, 0, sizeof($$));
-	if ((pw = getpwnam($5)) == NULL) {
-		yyerror("Unknown user %s", $5);
-		break;
-	}
-	$$.p_uid = pw->pw_uid;
+	$$.p_uid = $5;
 	$$.p_flags = PREDIC_UID;
 }
-		| COMMA IF USER NEQUAL STRING
+		| COMMA IF USER NEQUAL uid
 {
-	struct passwd *pw;
-
 	memset(&$$, 0, sizeof($$));
-	if ((pw = getpwnam($5)) == NULL) {
-		yyerror("Unknown user %s", $5);
-		break;
-	}
-	$$.p_uid = pw->pw_uid;
+	$$.p_uid = $5;
 	$$.p_flags = PREDIC_UID | PREDIC_NEGATIVE;
 }
-		| COMMA IF GROUP EQUAL STRING
+		| COMMA IF GROUP EQUAL gid
 {
-	struct group *gr;
-
 	memset(&$$, 0, sizeof($$));
-	if ((gr = getgrnam($5)) == NULL) {
-		yyerror("Unknown group %s", $5);
-		break;
-	}
-	$$.p_gid = gr->gr_gid;
+	$$.p_gid = $5;
 	$$.p_flags = PREDIC_GID;
 }
-		| COMMA IF GROUP NEQUAL STRING
+		| COMMA IF GROUP NEQUAL gid
 {
-	struct group *gr;
-
 	memset(&$$, 0, sizeof($$));
-	if ((gr = getgrnam($5)) == NULL) {
-		yyerror("Unknown group %s", $5);
-		break;
-	}
-	$$.p_gid = gr->gr_gid;
+	$$.p_gid = $5;
 	$$.p_flags = PREDIC_GID | PREDIC_NEGATIVE;
 }
 
@@ -365,7 +409,6 @@ struct logic *
 parse_newsymbol(char *type, int typeoff, char *data)
 {
 	struct logic *node;
-	int iamroot = getuid() == 0;
 
 	node = calloc(1, sizeof(struct logic));
 

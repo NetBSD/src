@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.5 2002/10/08 14:46:25 provos Exp $	*/
+/*	$NetBSD: systrace.h,v 1.6 2002/10/11 21:54:55 provos Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -91,6 +91,8 @@ struct systrace_answer {
 	pid_t stra_pid;
 	u_int16_t stra_seqnr;
 	int16_t reserved;
+ 	uid_t stra_seteuid;	/* elevated privileges for system call */
+ 	uid_t stra_setegid;
 	int32_t stra_policy;
 	int32_t stra_error;
 	int32_t stra_flags;
@@ -154,6 +156,8 @@ struct systrace_replace {
 #define SYSTR_POLICY_NEVER	2
 
 #define SYSTR_FLAGS_RESULT	0x001
+#define SYSTR_FLAGS_SETEUID	0x002
+#define SYSTR_FLAGS_SETEGID	0x004
 
 #ifdef _KERNEL
 /* XXX: these shouldn't be here. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.c,v 1.7 2002/10/08 14:49:23 provos Exp $	*/
+/*	$NetBSD: intercept.c,v 1.8 2002/10/11 21:54:57 provos Exp $	*/
 /*	$OpenBSD: intercept.c,v 1.29 2002/08/28 03:30:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept.c,v 1.7 2002/10/08 14:49:23 provos Exp $");
+__RCSID("$NetBSD: intercept.c,v 1.8 2002/10/11 21:54:57 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -235,22 +235,27 @@ sigusr1_handler(int signum)
 }
 
 void
-intercept_setpid(struct intercept_pid *icpid)
+intercept_setpid(struct intercept_pid *icpid, uid_t uid, gid_t gid)
 {
 	struct passwd *pw;
 
-	icpid->uid = getuid();
-	icpid->gid = getgid();
+	icpid->uid = uid;
+	icpid->gid = gid;
 	if (getcwd(icpid->cwd, sizeof(icpid->cwd)) == NULL)
 		err(1, "getcwd");
-	if ((pw = getpwuid(icpid->uid)) == NULL)
-		err(1, "getpwuid");
-	strlcpy(icpid->username, pw->pw_name, sizeof(icpid->username));
-	strlcpy(icpid->home, pw->pw_dir, sizeof(icpid->home));
+	if ((pw = getpwuid(icpid->uid)) == NULL) {
+		snprintf(icpid->username, sizeof(icpid->username),
+		    "unknown(%d)", icpid->uid);
+		strlcpy(icpid->home, "/var/empty", sizeof(icpid->home));
+	} else {
+		strlcpy(icpid->username, pw->pw_name, sizeof(icpid->username));
+		strlcpy(icpid->home, pw->pw_dir, sizeof(icpid->home));
+	}
 }
 
 pid_t
-intercept_run(int bg, int fd, char *path, char *const argv[])
+intercept_run(int bg, int fd, uid_t uid, gid_t gid,
+    char *path, char *const argv[])
 {
 	struct intercept_pid *icpid;
 	sigset_t none, set, oset;
@@ -304,6 +309,19 @@ intercept_run(int bg, int fd, char *path, char *const argv[])
 		if (sigprocmask(SIG_SETMASK, &oset, NULL) == -1)
 			err(1, "sigprocmask");
 
+		/* Change to different user */
+		if (uid || gid) {
+			if (setgroups(1, &gid) == -1)
+				err(1, "setgroups");
+			if (setgid(gid) == -1)
+				err(1, "setgid");
+			if (setegid(gid) == -1)
+				err(1, "setegid");
+			if (setuid(uid) == -1)
+				err(1, "setuid");
+			if (seteuid(uid) == -1)
+				err(1, "seteuid");
+		}
 		execvp(path, argv);
 
 		/* Error */
@@ -317,7 +335,11 @@ intercept_run(int bg, int fd, char *path, char *const argv[])
 		err(1, "intercept_getpid");
 	
 	/* Set up user related information */
-	intercept_setpid(icpid);
+	if (!uid && !gid) {
+		uid = getuid();
+		gid = getgid();
+	}
+	intercept_setpid(icpid, uid, gid);
 	
 	/* Setup done, restore signal handling state */
 	if (signal(SIGUSR1, ohandler) == SIG_ERR) {
@@ -661,19 +683,19 @@ intercept_syscall(int fd, pid_t pid, u_int16_t seqnr, int policynr,
 {
 	short action, flags = 0;
 	struct intercept_syscall *sc;
+	struct intercept_pid *icpid;
+	struct elevate *elevate = NULL;
 	int error = 0;
 
 	action = ICPOLICY_PERMIT;
 	flags = 0;
 
+	icpid = intercept_getpid(pid);
+
 	/* Special handling for the exec call */
 	if (!strcmp(name, "execve")) {
-		struct intercept_pid *icpid;
 		void *addr;
 		char *argname;
-
-		if ((icpid = intercept_getpid(pid)) == NULL)
-			err(1, "intercept_getpid");
 
 		icpid->execve_code = code;
 		icpid->policynr = policynr;
@@ -693,6 +715,8 @@ intercept_syscall(int fd, pid_t pid, u_int16_t seqnr, int policynr,
 		/* We need to know the result from this system call */
 		flags = ICFLAGS_RESULT;
 	}
+
+	icpid->elevate = NULL;
 
 	sc = intercept_sccb_find(emulation, name);
 	if (sc != NULL) {
@@ -717,10 +741,12 @@ intercept_syscall(int fd, pid_t pid, u_int16_t seqnr, int policynr,
 	if (action > 0) {
 		error = action;
 		action = ICPOLICY_NEVER;
-	}
+	} else
+		elevate = icpid->elevate;
+
 
 	/* Resume execution of the process */
-	intercept.answer(fd, pid, seqnr, action, error, flags);
+	intercept.answer(fd, pid, seqnr, action, error, flags, elevate);
 }
 
 void
@@ -750,7 +776,7 @@ intercept_syscall_result(int fd, pid_t pid, u_int16_t seqnr, int policynr,
 
  out:
 	/* Resume execution of the process */
-	intercept.answer(fd, pid, seqnr, 0, 0, 0);
+	intercept.answer(fd, pid, seqnr, 0, 0, 0, NULL);
 }
 
 int
