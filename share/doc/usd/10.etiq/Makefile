@@ -1,7 +1,7 @@
 #	@(#)Makefile	6.2 (Berkeley) 6/30/90
 
 DIR=	usd/10.etiq
-SRCS=	tmac.n manner.mn
+SRCS=	../../smm/10.newsop/tmac.n manner.mn
 
 paper.${PRINTER}: ${SRCS}
 	${ROFF} > ${.TARGET}
