@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: toolchain2netbsd,v 1.5 2001/08/06 19:33:11 tv Exp $
+#	$NetBSD: toolchain2netbsd,v 1.6 2001/08/06 19:58:25 tv Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/toolchain.
@@ -213,13 +213,26 @@ for f in config itbl-cpu obj-format targ-cpu targ-env; do
 	write_c usr.bin/binutils/gas/arch/$MACHINE_ARCH/$f.h <$_TMPDIR/gas/$f.h
 done
 
+##### gnu/usr.bin/binutils/gprof #####
+
+mkdir -p usr.bin/binutils/gprof/arch/$MACHINE_ARCH
+
+getvars gprof/Makefile \
+	DEFS gprof_OBJECTS INCLUDES TEXINFOS \
+	| write_mk usr.bin/binutils/gprof/arch/$MACHINE_ARCH/defs.mk
+
+write_c usr.bin/binutils/gprof/arch/$MACHINE_ARCH/gconfig.h <$_TMPDIR/gprof/gconfig.h
+
 ##### gnu/usr.bin/binutils/ld #####
 
 mkdir -p usr.bin/binutils/ld/arch/$MACHINE_ARCH
 
-getvars ld/Makefile \
-	DEFS EMUL EMULATION_OFILES INCLUDES OFILES STRINGIFY target_alias \
-	| write_mk usr.bin/binutils/ld/arch/$MACHINE_ARCH/defs.mk
+{
+	getvars ld/Makefile \
+		DEFS EMUL EMULATION_OFILES INCLUDES OFILES STRINGIFY TEXINFOS
+	getvars ld/Makefile \
+		target_alias | sed 's,[\._0-9]*$,,'
+} | write_mk usr.bin/binutils/ld/arch/$MACHINE_ARCH/defs.mk
 
 (cd $_TMPDIR/ld && $MAKE ldemul-list.h)
 
@@ -234,8 +247,8 @@ mkdir -p usr.bin/gcc/arch/$MACHINE_ARCH
 {
 	getvars gcc/Makefile \
 		ALL_CFLAGS ALL_CPPFLAGS C_AND_OBJC_OBJS C_OBJS CCCP_OBJS \
-		DRIVER_DEFINES HOST_LIBS HOST_PRINT HOST_RTL HOST_RTLANAL \
-		INCLUDES md_file OBJC_OBJS OBJS out_file version
+		DRIVER_DEFINES GCOV_OBJS HOST_LIBS HOST_PRINT HOST_RTL \
+		HOST_RTLANAL INCLUDES md_file OBJC_OBJS OBJS out_file version
 	getvars gcc/cp/Makefile \
 		CXX_OBJS
 	getvars gcc/f/Makefile \
