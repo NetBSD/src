@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.39.2.1 1997/11/20 04:54:42 thorpej Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.39.2.2 1997/11/28 08:55:41 mellon Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -121,7 +121,9 @@ in_pcbbind(v, nam, p)
 	register struct sockaddr_in *sin;
 	u_int16_t lport = 0;
 	int wild = 0, reuseport = (so->so_options & SO_REUSEPORT);
+#ifndef IPNOPRIVPORTS
 	int error;
+#endif
 
 	if (in_ifaddr.tqh_first == 0)
 		return (EADDRNOTAVAIL);
