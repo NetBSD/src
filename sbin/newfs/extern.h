@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.6 2001/09/06 02:16:01 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.7 2002/01/07 12:00:09 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 /* prototypes */
-void mkfs(struct partition *, const char *, int, int);
+void mkfs(struct partition *, const char *, int, int, mode_t, uid_t, gid_t);
 
 /* * variables set up by front end. */
 extern int	mfs;		/* run as the memory based filesystem */
