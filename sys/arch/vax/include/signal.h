@@ -1,4 +1,4 @@
-/*      $NetBSD: signal.h,v 1.3 1994/11/25 19:09:00 ragge Exp $   */
+/*      $NetBSD: signal.h,v 1.4 1995/01/10 19:01:52 jtc Exp $   */
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -37,6 +37,12 @@
 
  /* All bugs are subject to removal without further notice */
 
+#ifndef _VAX_SIGNAL_H_
+#define _VAX_SIGNAL_H_
+
+typedef int sig_atomic_t;
+
+#ifndef _ANSI_SOURCE
 /*
  * Information pushed on stack when a signal is delivered.
  * This is used by the kernel to restore state following
@@ -53,3 +59,6 @@ struct	sigcontext {
 	int	sc_pc;			/* pc to restore */
 	int	sc_ps;			/* psl to restore */
 };
+
+#endif	/* !_ANSI_SOURCE */
+#endif	/* !_VAX_SIGNAL_H_ */
