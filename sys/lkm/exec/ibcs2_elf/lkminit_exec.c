@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.6 2002/01/04 06:51:01 thorpej Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.7 2003/02/19 15:43:56 martin Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.6 2002/01/04 06:51:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.7 2003/02/19 15:43:56 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ static struct execsw exec_ibcs2_elf =
 	  { ELFNAME2(ibcs2,probe) },
 	  &emul_ibcs2,
 	  EXECSW_PRIO_ANY,
-	  IBCS2_ELF_AUX_ARGSIZ,
+	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof (Elf32_Addr)),
 	  elf32_copyargs,
 	  NULL,
 	  coredump_elf32 };
