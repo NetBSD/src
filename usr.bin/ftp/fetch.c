@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.121 2000/08/01 22:47:27 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.122 2000/08/06 08:51:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.121 2000/08/01 22:47:27 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.122 2000/08/06 08:51:22 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -386,20 +386,10 @@ parse_url(const char *url, const char *desc, url_t *type,
 	if (cp != NULL) {
 		long	nport;
 
-		nport = strtol(cp, &ep, 10);
-		if (*ep != '\0' && ep == cp) {
-			struct servent	*svp;
-
-			svp = getservbyname(cp, "tcp");
-			if (svp == NULL) {
-				warnx("Unknown port `%s' in %s `%s'",
-				    cp, desc, origurl);
-				goto cleanup_parse_url;
-			} else
-				nport = ntohs(svp->s_port);
-		} else if (nport < 1 || nport > MAX_IN_PORT_T || *ep != '\0') {
-			warnx("Invalid port `%s' in %s `%s'", cp, desc,
-			    origurl);
+		nport = parseport(cp, -1);
+		if (nport == -1) {
+			warnx("Unknown port `%s' in %s `%s'",
+			    cp, desc, origurl);
 			goto cleanup_parse_url;
 		}
 		*portnum = nport;
@@ -656,7 +646,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		hints.ai_family = AF_UNSPEC;
 		hints.ai_socktype = SOCK_STREAM;
 		hints.ai_protocol = 0;
-		error = getaddrinfo(host, port, &hints, &res0);
+		error = getaddrinfo(host, NULL, &hints, &res0);
 		if (error) {
 			warnx("%s", gai_strerror(error));
 			goto cleanup_fetch_url;
@@ -678,6 +668,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			if (verbose && res != res0)
 				fprintf(ttyout, "Trying %s...\n", hbuf);
 
+			((struct sockaddr_in *)res->ai_addr)->sin_port =
+			    htons(portnum);
 			s = socket(res->ai_family, res->ai_socktype,
 				res->ai_protocol);
 			if (s < 0) {

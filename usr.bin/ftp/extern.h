@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.58 2000/07/18 07:16:53 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.59 2000/08/06 08:51:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -180,6 +180,7 @@ char   *onoff(int);
 void	opts(int, char **);
 void	newer(int, char **);
 void	page(int, char **);
+int	parseport(const char *, int);
 int	parserate(int, char **, int);
 void	progressmeter(int);
 char   *prompt(void);
