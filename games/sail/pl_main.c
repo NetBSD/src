@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_main.c,v 1.14 2001/01/04 04:41:42 jwise Exp $	*/
+/*	$NetBSD: pl_main.c,v 1.15 2001/02/05 01:10:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_main.c,v 1.14 2001/01/04 04:41:42 jwise Exp $");
+__RCSID("$NetBSD: pl_main.c,v 1.15 2001/02/05 01:10:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,6 @@ __RCSID("$NetBSD: pl_main.c,v 1.14 2001/01/04 04:41:42 jwise Exp $");
 #include "player.h"
 #include "restart.h"
 
-int	pl_main(void);
 static void	initialize(void);
 
 /*ARGSUSED*/

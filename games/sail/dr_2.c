@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_2.c,v 1.17 2001/01/04 06:16:51 jwise Exp $	*/
+/*	$NetBSD: dr_2.c,v 1.18 2001/02/05 01:10:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_2.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_2.c,v 1.17 2001/01/04 06:16:51 jwise Exp $");
+__RCSID("$NetBSD: dr_2.c,v 1.18 2001/02/05 01:10:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,11 +50,7 @@ __RCSID("$NetBSD: dr_2.c,v 1.17 2001/01/04 06:16:51 jwise Exp $");
 
 #define couldwin(f,t) (f->specs->crew2 > t->specs->crew2 * 1.5)
 
-void	thinkofgrapples(void);
-void	checkup(void);
-void	prizecheck(void);
 static int	str_end(const char *);
-void	closeon(struct ship *, struct ship *, char *, int, int, int);
 static int	score(struct ship *, struct ship *, char *, int);
 static void	move_ship(struct ship *, const char *, unsigned char *, short *, short *, char *);
 static void	try(struct ship *, struct ship *, char *, char *, int, int, int, int, int, int *, int);

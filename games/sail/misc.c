@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.11 2001/01/04 06:33:18 itojun Exp $	*/
+/*	$NetBSD: misc.c,v 1.12 2001/02/05 01:10:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: misc.c,v 1.11 2001/01/04 06:33:18 itojun Exp $");
+__RCSID("$NetBSD: misc.c,v 1.12 2001/02/05 01:10:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,13 +51,7 @@ __RCSID("$NetBSD: misc.c,v 1.11 2001/01/04 06:33:18 itojun Exp $");
 
 #define distance(x,y) (abs(x) >= abs(y) ? abs(x) + abs(y)/2 : abs(y) + abs(x)/2)
 
-int	range(struct ship *, struct ship *);
-struct ship	*closestenemy(struct ship *, int, int);
 static int	angle(int, int);
-int	gunsbear(struct ship *, struct ship *);
-int	portside(struct ship *, struct ship *, int);
-int	colours(struct ship *);
-void	logger(struct ship *);
 
 /* XXX */
 int
