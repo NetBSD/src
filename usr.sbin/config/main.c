@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.76 2003/04/26 12:53:43 jmmv Exp $	*/
+/*	$NetBSD: main.c,v 1.77 2003/06/18 04:19:49 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1293,6 +1293,7 @@ logconfig_include(FILE *cf, const char *filename)
 {
 	char line[1024], in[2048], *out;
 	struct stat st;
+	int missingeol;
 
 	if (!cfg)
 		return;
@@ -1307,6 +1308,7 @@ logconfig_include(FILE *cf, const char *filename)
 		    "\"_CFG_### (included from \\\"%s\\\")\\n\"\n",
 		    filename);
 	while (fgets(line, sizeof(line), cf) != NULL) {
+		missingeol = 1;
 		(void)fprintf(cfg, "\"_CFG_");
 		if (filename)
 			(void)fprintf(cfg, "###> ");
@@ -1315,6 +1317,7 @@ logconfig_include(FILE *cf, const char *filename)
 			switch (*out) {
 			case '\n':
 				(void)fprintf(cfg, "\\n\"\n");
+				missingeol = 0;
 				break;
 			case '"': case '\\':
 				(void)fputc('\\', cfg);
@@ -1323,6 +1326,11 @@ logconfig_include(FILE *cf, const char *filename)
 				(void)fputc(*out, cfg);
 				break;
 			}
+	}
+	if (missingeol) {
+		(void)fprintf(cfg, "\\n\"\n");
+		warnx("%s: newline missing at EOF",
+		    filename != NULL ? filename : conffile);
 	}
 	if (filename)
 		(void)fprintf(cfg, "\"_CFG_### (end include \\\"%s\\\")\\n\"\n",
