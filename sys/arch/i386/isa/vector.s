@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.s,v 1.48 2001/09/21 14:12:52 fvdl Exp $	*/
+/*	$NetBSD: vector.s,v 1.48.12.1 2003/02/08 07:17:20 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -170,13 +170,21 @@
 
 #define	INTR(irq_num, icu, ack) \
 IDTVEC(resume/**/irq_num)						;\
+	push	%ebx							;\
 	cli								;\
-	jmp	1f							;\
+	jmp 1f								;\
 IDTVEC(recurse/**/irq_num)						;\
 	pushfl								;\
 	pushl	%cs							;\
 	pushl	%esi							;\
+	pushl	$0			/* dummy error code */		;\
+	pushl	$T_ASTFLT		/* trap # for doing ASTs */	;\
+	movl	%ebx,%esi						;\
+	INTRENTRY							;\
+	MAKE_FRAME							;\
+	push	%esi							;\
 	cli								;\
+	jmp 1f								;\
 XINTR(irq_num):								;\
 	pushl	$0			/* dummy error code */		;\
 	pushl	$T_ASTFLT		/* trap # for doing ASTs */	;\
@@ -187,8 +195,9 @@ XINTR(irq_num):								;\
 	incl	MY_COUNT+V_INTR		/* statistical info */		;\
 	testb	$IRQ_BIT(irq_num),_C_LABEL(cpl) + IRQ_BYTE(irq_num)	;\
 	jnz	XHOLD(irq_num)		/* currently masked; hold it */	;\
-1:	movl	_C_LABEL(cpl),%eax	/* cpl to restore on exit */	;\
+	movl	_C_LABEL(cpl),%eax	/* cpl to restore on exit */	;\
 	pushl	%eax							;\
+1:									;\
 	orl	_C_LABEL(intrmask) + (irq_num) * 4,%eax			;\
 	movl	%eax,_C_LABEL(cpl)	/* add in this intr's mask */	;\
 	sti				/* safe to take intrs now */	;\

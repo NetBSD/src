@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.s,v 1.65 2001/09/21 14:12:52 fvdl Exp $	*/
+/*	$NetBSD: icu.s,v 1.65.12.1 2003/02/08 07:17:20 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,13 +82,17 @@ IDTVEC(spllower)
 	movl	$1f,%esi		# address to resume loop at
 1:	movl	%ebx,%eax
 	notl	%eax
+	cli
 	andl	_C_LABEL(ipending),%eax
 	jz	2f
+	sti
 	bsfl	%eax,%eax
 	btrl	%eax,_C_LABEL(ipending)
 	jnc	1b
 	jmp	*_C_LABEL(Xrecurse)(,%eax,4)
-2:	popl	%edi
+2:	movl	%ebx,_C_LABEL(cpl)
+	sti
+	popl	%edi
 	popl	%esi
 	popl	%ebx
 	ret
@@ -103,18 +107,19 @@ IDTVEC(spllower)
  */
 IDTVEC(doreti)
 	popl	%ebx			# get previous priority
-	movl	%ebx,_C_LABEL(cpl)
 	movl	$1f,%esi		# address to resume loop at
 1:	movl	%ebx,%eax
 	notl	%eax
+	cli
 	andl	_C_LABEL(ipending),%eax
 	jz	2f
+	sti
 	bsfl    %eax,%eax               # slow, but not worth optimizing
 	btrl    %eax,_C_LABEL(ipending)
 	jnc     1b			# some intr cleared the in-memory bit
 	jmp	*_C_LABEL(Xresume)(,%eax,4)
 2:	/* Check for ASTs on exit to user mode. */
-	cli
+	movl	%ebx,_C_LABEL(cpl)
 	cmpb	$0,_C_LABEL(astpending)
 	je	3f
 	testb   $SEL_RPL,TF_CS(%esp)
@@ -143,7 +148,6 @@ IDTVEC(softserial)
 	call	_C_LABEL(softintr_dispatch)
 	addl	$4,%esp
 
-	movl	%ebx,_C_LABEL(cpl)
 	jmp	*%esi
 
 IDTVEC(softnet)
@@ -168,7 +172,6 @@ IDTVEC(softnet)
 	call	_C_LABEL(softintr_dispatch)
 	addl	$4,%esp
 
-	movl	%ebx,_C_LABEL(cpl)
 	jmp	*%esi
 
 IDTVEC(softclock)
@@ -179,5 +182,4 @@ IDTVEC(softclock)
 	call	_C_LABEL(softintr_dispatch)
 	addl	$4,%esp
 
-	movl	%ebx,_C_LABEL(cpl)
 	jmp	*%esi
