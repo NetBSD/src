@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.c,v 1.18 1999/10/05 20:37:23 is Exp $	*/
+/*	$NetBSD: gencode.c,v 1.19 1999/10/18 19:44:12 is Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: gencode.c,v 1.93 97/06/12 14:22:47 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: gencode.c,v 1.18 1999/10/05 20:37:23 is Exp $");
+__RCSID("$NetBSD: gencode.c,v 1.19 1999/10/18 19:44:12 is Exp $");
 #endif
 #endif
 
@@ -43,6 +43,7 @@ struct rtentry;
 
 #include <netinet/in.h>
 #ifdef __NetBSD__
+#include <net/if_arc.h>
 #include <net/if_ether.h>
 #else
 #include <netinet/if_ether.h>
@@ -492,7 +493,7 @@ init_linktype(type)
 	switch (type) {
 
 	case DLT_ARCNET:
-		off_linktype = 3;
+		off_linktype = 2;
 		off_nl = 6;	/* XXX in reality, variable! */
 		return;
 
@@ -689,6 +690,39 @@ gen_linktype(proto)
 #endif /* INET6 */
 		else
 			return gen_false();
+		break;
+	case DLT_ARCNET:
+		/*
+		 * XXX should we check for first fragment if the protocol
+		 * uses PHDS?
+		 */
+		switch(proto) {
+		default:
+			return gen_false();
+#ifdef INET6
+		case ETHERTYPE_IPV6:
+			return(gen_cmp(2, BPF_B,
+					(bpf_int32)htonl(ARCTYPE_INET6)));
+#endif /* INET6 */
+		case ETHERTYPE_IP:
+			b0 = gen_cmp(2, BPF_B, (bpf_int32)htonl(ARCTYPE_IP));
+			b1 = gen_cmp(2, BPF_B,
+					(bpf_int32)htonl(ARCTYPE_IP_OLD));
+			gen_or(b0, b1);
+			return(b1);
+		case ETHERTYPE_ARP:
+			b0 = gen_cmp(2, BPF_B, (bpf_int32)htonl(ARCTYPE_ARP));
+			b1 = gen_cmp(2, BPF_B,
+					(bpf_int32)htonl(ARCTYPE_ARP_OLD));
+			gen_or(b0, b1);
+			return(b1);
+		case ETHERTYPE_REVARP:
+			return(gen_cmp(2, BPF_B,
+					(bpf_int32)htonl(ARCTYPE_REVARP)));
+		case ETHERTYPE_ATALK:
+			return(gen_cmp(2, BPF_B,
+					(bpf_int32)htonl(ARCTYPE_ATALK)));
+		}
 	}
 	return gen_cmp(off_linktype, BPF_H, (bpf_int32)proto);
 }
