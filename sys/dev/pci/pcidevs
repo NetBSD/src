@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.605 2004/01/05 19:30:51 matt Exp $
+$NetBSD: pcidevs,v 1.606 2004/01/06 19:44:17 matt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1416,6 +1416,8 @@ product HEURICON PMPPC		0x000e	PM/PPC
 
 /* Hewlett-Packard products */
 product HP A4977A		0x1005	A4977A Visualize EG
+product HP TACHYON_TL		0x1028	Tachyon TL FC controller
+product HP TACHYON_TS		0x102A	Tachyon TS FC controller
 product HP TACHYON_XL2		0x1030	Tachyon XL2 FC controller
 product HP J2585A		0x1030	J2585A
 product HP J2585B		0x1031	J2585B
