@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.5 1994/11/03 22:27:16 mycroft Exp $	*/
+/*	$NetBSD: pci.c,v 1.6 1994/11/04 09:42:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -54,12 +54,23 @@ pciprint(aux, pci)
 {
 	register struct pci_attach_args *pa = aux;
 
-	printf("%s bus %d device %d", pci ? pci : "", pa->pa_bus,
-	    pa->pa_device);
-	if (pci)
-		printf(": identifier %08x class %08x", pa->pa_id,
-		    pa->pa_class);
-	return UNCONF;
+	printf(" bus %d device %d", pa->pa_bus, pa->pa_device);
+	return (UNCONF);
+}
+
+int
+pcisubmatch(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
+{
+	struct cfdata *cf = match;
+	struct pci_attach_args *pa = aux;
+
+	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != pa->pa_bus)
+		return 0;
+	if (cf->cf_loc[1] != -1 && cf->cf_loc[1] != pa->pa_device)
+		return 0;
+	return ((*cf->cf_driver->cd_match)(parent, match, aux));
 }
 
 void
@@ -97,6 +108,7 @@ pciattach(parent, self, aux)
 			pcireg_t id = pci_conf_read(tag, PCI_ID_REG),
 				 class = pci_conf_read(tag, PCI_CLASS_REG);
 			struct pci_attach_args pa;
+			struct cfdata *cf;
 
 			if (id == 0 || id == 0xffffffff)
 				continue;
@@ -107,20 +119,12 @@ pciattach(parent, self, aux)
 			pa.pa_id = id;
 			pa.pa_class = class;
 
-			(void)config_found(self, (void *)&pa, pciprint);
+			if ((cf = config_search(pcisubmatch, self, &pa)) != NULL)
+				config_attach(self, cf, &pa, pciprint);
+			else
+				printf("%s bus %d device %d: identifier %08x class %08x%s",
+				    self->dv_xname, bus, device, id, class,
+				    " not configured\n");
 		}
 	}
-}
-
-int
-pci_targmatch(cf, pa)
-	struct cfdata *cf;
-	struct pci_attach_args *pa;
-{
-
-	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != pa->pa_bus)
-		return 0;
-	if (cf->cf_loc[1] != -1 && cf->cf_loc[1] != pa->pa_device)
-		return 0;
-	return 1;
 }
