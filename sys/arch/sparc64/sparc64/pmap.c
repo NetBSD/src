@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.145 2003/10/12 19:06:29 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.146 2003/10/21 08:43:32 petrov Exp $	*/
 /*
  * 
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.145 2003/10/12 19:06:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.146 2003/10/21 08:43:32 petrov Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -376,9 +376,9 @@ pmap_enter_kpage(va, data)
 {
 	paddr_t newp;
 
-	newp = NULL;
+	newp = 0UL;
 	while (pseg_set(pmap_kernel(), va, data, newp) & 1) {
-		newp = NULL;
+		newp = 0UL;
 		pmap_get_page(&newp);
 		if (!newp) {
 			prom_printf("pmap_enter_kpage: out of pages\n");
@@ -1500,7 +1500,7 @@ pmap_create()
 	TAILQ_INIT(&pm->pm_obj.memq);
 	if (pm != pmap_kernel()) {
 		pmap_get_page(&pm->pm_physaddr);
-		while (pm->pm_physaddr == NULL) {
+		while (pm->pm_physaddr == 0UL) {
 			uvm_wait("pmap_create");
 			pmap_get_page(&pm->pm_physaddr);
 		}
@@ -3184,7 +3184,7 @@ ctx_free(pm)
 #endif
 	/* We should verify it has not been stolen and reallocated... */
 	DPRINTF(PDB_CTX_ALLOC, ("ctx_free: freeing ctx %d\n", oldctx));
-	ctxbusy[oldctx] = NULL;
+	ctxbusy[oldctx] = 0UL;
 	pm->pm_ctx = 0;
 	LIST_REMOVE(pm, pm_list);
 }
