@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.7 2000/04/20 02:12:04 itojun Exp $
+# $NetBSD: network,v 1.8 2000/04/28 00:13:39 thorpej Exp $
 #
 
 # PROVIDE: network
@@ -29,7 +29,13 @@ network_start()
 		echo "Hostname: $hostname"
 		hostname $hostname
 	else
-		warn "\$hostname not set."
+		# Don't warn about it if we're going to run
+		# DHCP later, as we will probably get the
+		# hostname at that time.
+		#
+		if ! checkyesno dhclient
+			warn "\$hostname not set."
+		fi
 	fi
 
 	# Check $domainname first, then /etc/defaultdomain,
