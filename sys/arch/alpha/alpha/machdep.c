@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26 1996/06/13 00:24:52 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.27 1996/06/13 00:28:59 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -409,6 +409,7 @@ alpha_init(pfn, ptb)
 		cpu_modelname = dec_21000_modelname;
 		cpu_consinit = dec_21000_consinit;
 		cpu_iobus = "tlsb";
+	XXX DEC 21000 NOT SUPPORTED
 		break;
 #endif
 
