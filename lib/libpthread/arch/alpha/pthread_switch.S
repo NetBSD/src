@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.2 2001/12/17 22:07:29 nathanw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.3 2003/01/13 20:26:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,23 +56,6 @@
 	call_pal PAL_bugchk		; \
 	/* NOTREACHED */
 
-NESTED(pthread__switch, 2, CONTEXTSIZE + 8, ra, 0, 0)
-	LDGP(pv)
-	/* Don't need LDGP(); this is only called from within
-	 * the same module.
-	 */
-	lda	sp, -(CONTEXTSIZE + 8)(sp)
-	stq	ra, 0(sp)
-	lda	t0, 8(sp)
-	stq	t0, PT_UC(a0)
-	mov	t0, a0
-	ldq	a1, PT_UC(a1)
-	CALL(_swapcontext_u)
-	ldq	ra, 0(sp)
-	lda	sp, (CONTEXTSIZE + 8)(sp)
-	RET
-	END(pthread__switch)
-
 /* 		*** WARNING ***
  * STACK_SWITCH is more subtle than it looks. Please go read the extended
  * comment in the i386 pthread_switch.S file.
@@ -81,6 +64,37 @@ NESTED(pthread__switch, 2, CONTEXTSIZE + 8, ra, 0, 0)
 #define STACK_SWITCH(pt,tmp)		  \
 	ldq	tmp, PT_UC(pt)		; \
 	lda	sp, -STACKSPACE(tmp)
+
+NESTED(pthread__switch, 2, CONTEXTSIZE + 24, ra, 0, 0)
+	LDGP(pv)
+	lda	sp, -(CONTEXTSIZE + 24)(sp)
+	stq	ra, 0(sp)
+	stq	a0, 8(sp)
+	stq	a1, 16(sp)
+
+	/* Get the current context */
+	lda	a0, 24(sp)
+	CALL(_getcontext_u)
+	ldq	a0, 8(sp)
+	ldq	a1, 16(sp)
+
+	/* Edit the context to make it continue below, rather than here */
+	lda	t3, 24(sp)
+	lda	t1, switch_return_point
+	stq	t1, (UC_GREGS + _REG_PC * 8)(t3)
+
+	lda	t0, 24(sp)
+
+	STACK_SWITCH(a1, t2)
+	
+	stq	t0, PT_UC(a0)
+	mov	t2, a0
+	CALL(_setcontext_u)
+switch_return_point:	
+	ldq	ra, 0(sp)
+	lda	sp, (CONTEXTSIZE + 24)(sp)
+	RET
+	END(pthread__switch)
 
 /*
  * Helper switch code used by pthread__locked_switch() and 
@@ -120,9 +134,7 @@ NESTED(pthread__locked_switch, 3, CONTEXTSIZE + 32, ra, 0x00030000, 0)
 	stl	t0, PT_SPINLOCKS(a1)
 
 	/* Get the current context */
-	lda	t0, 32(sp)
-	stq	t0, PT_UC(a0)
-	mov	t0, a0
+	lda	a0, 32(sp)
 	CALL(_getcontext_u)
 	ldq	a0, 8(sp)
 	ldq	a1, 16(sp)
@@ -132,9 +144,12 @@ NESTED(pthread__locked_switch, 3, CONTEXTSIZE + 32, ra, 0x00030000, 0)
 	lda	t3, 32(sp)
 	lda	t1, locked_return_point
 	stq	t1, (UC_GREGS + _REG_PC * 8)(t3)
+
+	lda	t0, 32(sp)
 	
 	STACK_SWITCH(a1, t2)
 
+	stq	t0, PT_UC(a0)
 	/* Check if the switcher was preempted and continued to here. */
 	ldq	t0, PT_NEXT(a0)
 	beq	t0, 1f
