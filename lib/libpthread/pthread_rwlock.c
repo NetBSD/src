@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.10 2005/01/09 01:47:20 nathanw Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.11 2005/01/09 01:57:38 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.10 2005/01/09 01:47:20 nathanw Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.11 2005/01/09 01:57:38 nathanw Exp $");
 
 #include <errno.h>
 
@@ -296,8 +296,14 @@ pthread_rwlock_timedrdlock(pthread_rwlock_t *rwlock,
 		pthread_spinlock(self, &rwlock->ptr_interlock);
 	}
 
-	if (retval == 0)
+	/* One last chance to get the lock, in case it was released between
+	   the alarm firing and when this thread got rescheduled, or in case
+	   a signal handler kept it busy */
+	if ((rwlock->ptr_writer == NULL) &&
+	    (PTQ_EMPTY(&rwlock->ptr_wblocked))) {
 		rwlock->ptr_nreaders++;
+		retval = 0;
+	}
 	pthread_spinunlock(self, &rwlock->ptr_interlock);
 
 	return retval;
@@ -359,8 +365,10 @@ pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlock,
 		pthread_spinlock(self, &rwlock->ptr_interlock);
 	}
 
-	if (retval == 0)
+	if ((rwlock->ptr_nreaders == 0) && (rwlock->ptr_writer == NULL)) {
 		rwlock->ptr_writer = self;
+		retval = 0;
+	}
 	pthread_spinunlock(self, &rwlock->ptr_interlock);
 
 	return retval;
