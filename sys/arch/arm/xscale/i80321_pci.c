@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_pci.c,v 1.2 2003/04/29 01:07:31 thorpej Exp $	*/
+/*	$NetBSD: i80321_pci.c,v 1.3 2003/06/30 15:27:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -186,8 +186,17 @@ i80321_pci_conf_setup(struct i80321_softc *sc, pcitag_t tag, int offset,
 	if (ps->ps_b == busno) {
 		if (ps->ps_d > (31 - 16))
 			return (1);
-		ps->ps_addr_val = (1U << (ps->ps_d + 16)) | (ps->ps_f << 8) |
-		    offset;
+		/*
+		 * NOTE: PCI-X requires that that devices updated their
+		 * PCIXSR on every config write with the device number
+		 * specified in AD[15:11].  If we don't set this field,
+		 * each device could end of thinking it is at device 0,
+		 * which can cause a number of problems.  Doing this
+		 * unconditionally should be OK when only PCI devices
+		 * are present.
+		 */
+		ps->ps_addr_val = (1U << (ps->ps_d + 16)) |
+		    (ps->ps_d << 11) | (ps->ps_f << 8) | offset;
 	} else {
 		/* The tag is already in the correct format. */
 		ps->ps_addr_val = tag | offset | 1;
