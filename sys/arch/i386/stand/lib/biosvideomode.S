@@ -1,3 +1,4 @@
+/*	$NetBSD: biosvideomode.S,v 1.3 2003/04/16 13:49:21 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -30,11 +31,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-	
 
 #include <machine/asm.h>
-
-#define	data32	.byte 0x66
 
 	.text
 
