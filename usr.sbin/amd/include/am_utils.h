@@ -1,4 +1,4 @@
-/*	$NetBSD: am_utils.h,v 1.7 1999/02/01 19:05:13 christos Exp $	*/
+/*	$NetBSD: am_utils.h,v 1.7.2.1 1999/09/21 04:57:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Erez Zadok
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: am_utils.h,v 1.4 1999/01/13 23:31:20 ezk Exp 
+ * Id: am_utils.h,v 1.6 1999/08/22 05:12:55 ezk Exp 
  *
  */
 
@@ -129,6 +129,8 @@
 /* allocate anything of type ty */
 #define	ALLOC(ty)	((ty *) xmalloc(sizeof(ty)))
 #define	CALLOC(ty)	((ty *) xcalloc(1, sizeof(ty)))
+/* simply allocate b bytes */
+#define	SALLOC(b)	xmalloc((b))
 
 /* converting am-filehandles to mount-points */
 #define	fh_to_mp2(fhp, rp) fh_to_mp3(fhp, rp, VLOOK_CREATE)
