@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.87 2004/12/09 01:14:59 matt Exp $	*/
+/*	$NetBSD: pstat.c,v 1.88 2004/12/18 08:43:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.87 2004/12/09 01:14:59 matt Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.88 2004/12/18 08:43:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -105,6 +105,9 @@ int	hflag;
 char	*nlistf	= NULL;
 char	*memf	= NULL;
 kvm_t	*kd;
+
+static const char * const dtypes[] = { DTYPE_NAMES };
+
 
 static const struct {
 	u_int m_flag;
@@ -880,8 +883,6 @@ filemode()
 	char flags[sizeof(filemode_flags) / sizeof(filemode_flags[0])];
 	char *buf, *offset;
 	int len, maxfile, nfile, ovflw;
-	static const char * const dtypes[] =
-		{ "???", "inode", "socket", "pipe" };
 
 	KGET(FNL_MAXFILE, maxfile);
 	if (totalflag) {
@@ -905,7 +906,7 @@ filemode()
 	    (PTRSTRWIDTH - 4) / 2, "", " LOC", (PTRSTRWIDTH - 4) / 2, "",
 	    (PTRSTRWIDTH - 4) / 2, "", "DATA", (PTRSTRWIDTH - 4) / 2, "");
 	for (; (char *)fp < offset + len; addr = fp->f_list.le_next, fp++) {
-		if ((unsigned)fp->f_type > DTYPE_PIPE)
+		if ((unsigned)fp->f_type > sizeof(dtypes) / sizeof(dtypes[0]))
 			continue;
 		ovflw = 0;
 		(void)getflags(filemode_flags, flags, fp->f_flag);
