@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.10 1997/11/03 00:19:41 thorpej Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.11 1998/01/27 23:26:21 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -1076,6 +1076,18 @@ dp8390_get(sc, src, total_len)
 			}
 			len = MCLBYTES;
 		}
+
+		/*
+		 * Make sure the data after the Ethernet header is aligned.
+		 */
+		if (top == NULL) {
+			caddr_t newdata = (caddr_t)
+			    ALIGN(m->m_data + sizeof(struct ether_header)) -
+			    sizeof(struct ether_header);
+			len -= newdata - m->m_data;
+			m->m_data = newdata;
+		}
+
 		m->m_len = len = min(total_len, len);
 		if (sc->ring_copy)
 			src = (*sc->ring_copy)(sc, src, mtod(m, caddr_t), len);
