@@ -1,4 +1,4 @@
-/*	$NetBSD: mulaw.c,v 1.8 1997/08/04 09:29:53 augustss Exp $	*/
+/*	$NetBSD: mulaw.c,v 1.9 1998/05/22 13:05:31 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -270,6 +270,19 @@ mulaw_to_ulinear8(v, p, cc)
 }
 
 void
+mulaw_to_slinear8(v, p, cc)
+	void *v;
+	u_char *p;
+	int cc;
+{
+	/* Use the 16 bit table for 8 bits too. */
+	while (--cc >= 0) {
+		*p = mulawtolin16[*p][0] ^ 0x80;
+		++p;
+	}
+}
+
+void
 mulaw_to_ulinear16(v, p, cc)
 	void *v;
 	u_char *p;
@@ -298,6 +311,18 @@ ulinear8_to_mulaw(v, p, cc)
 }
 
 void
+slinear8_to_mulaw(v, p, cc)
+	void *v;
+	u_char *p;
+	int cc;
+{
+	while (--cc >= 0) {
+		*p = lintomulaw[*p ^ 0x80];
+		++p;
+	}
+}
+
+void
 alaw_to_ulinear8(v, p, cc)
 	void *v;
 	u_char *p;
@@ -306,6 +331,19 @@ alaw_to_ulinear8(v, p, cc)
 	/* Use the 16 bit table for 8 bits too. */
 	while (--cc >= 0) {
 		*p = alawtolin16[*p][0];
+		++p;
+	}
+}
+
+void
+alaw_to_slinear8(v, p, cc)
+	void *v;
+	u_char *p;
+	int cc;
+{
+	/* Use the 16 bit table for 8 bits too. */
+	while (--cc >= 0) {
+		*p = alawtolin16[*p][0] ^ 0x80;
 		++p;
 	}
 }
@@ -338,3 +376,14 @@ ulinear8_to_alaw(v, p, cc)
 	}
 }
 
+void
+slinear8_to_alaw(v, p, cc)
+	void *v;
+	u_char *p;
+	int cc;
+{
+	while (--cc >= 0) {
+		*p = lintoalaw[*p ^ 0x80];
+		++p;
+	}
+}
