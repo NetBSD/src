@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_seq.h,v 1.6 1995/03/26 20:32:35 jtc Exp $	*/
+/*	$NetBSD: tcp_seq.h,v 1.7 1997/10/10 01:51:08 explorer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -56,9 +56,3 @@
 #define	tcp_sendseqinit(tp) \
 	(tp)->snd_una = (tp)->snd_nxt = (tp)->snd_max = (tp)->snd_up = \
 	    (tp)->iss
-
-#define	TCP_ISSINCR	(125*1024)	/* increment for tcp_iss each second */
-
-#ifdef _KERNEL
-tcp_seq	tcp_iss;		/* tcp initial send seq # */
-#endif
