@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_mace.c,v 1.1 2004/01/18 04:06:43 sekiya Exp $	*/
+/*	$NetBSD: pckbc_mace.c,v 1.2 2004/01/19 10:28:28 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher SEKIYA
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_mace.c,v 1.1 2004/01/18 04:06:43 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_mace.c,v 1.2 2004/01/19 10:28:28 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,11 +74,7 @@ pckbc_mace_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-
-	if (mach_type == MACH_SGI_IP32)
-		return (1);
-
-	return (0);
+	return (1);
 }
 
 static void
