@@ -1,6 +1,6 @@
 #!/usr/bin/awk -
 #
-#	$NetBSD: MAKEDEV.awk,v 1.4 2003/10/17 19:01:49 jdolecek Exp $
+#	$NetBSD: MAKEDEV.awk,v 1.5 2003/10/19 19:07:26 jdolecek Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -91,25 +91,76 @@ BEGIN {
 					blk[$2] = $4
 			}
 		}
+		close(file)
 	}
 
-	# read MD config file, and determine disk partitions
-	# and MD device list
+	# read MD config file for MD device targets
 	cfgfile = "etc." machine "/MAKEDEV.conf"
-	MDDEV = 0		# MD device targets
-	MKDISK = ""		# routine to create disk devices
-	while (getline < cfgfile) {
-		if ($1 ~ "^DISKPARTITIONS=") {
-			sub(".*=[ \t]*", "")
-			MKDISK = "makedisk_p" $0
-		} else if (MDDEV) {
-			if (MDDEV == 1)
-				MDDEV = $0
-			else
-				MDDEV = MDDEV "\n" $0
-		} else if ($1 ~ "^MD_DEVICES=")
-			MDDEV = 1
+	if (system("test -f '" cfgfile "'") != 0) {
+		print "ERROR: no platform MAKEDEV.conf - '" file "' doesn't exist" > "/dev/stderr"
+		exit 1
 	}
+	# skip first two lines - RCS Id and blank line
+	getline < cfgfile
+	getline < cfgfile
+	MDDEV = 0		# MD device targets
+	while (getline < cfgfile) {
+		if (MDDEV)
+			MDDEV = MDDEV "\n" $0
+		else
+			MDDEV = $0
+	}
+	close(cfgfile)
+
+	# determine number of partitions used by platform
+	# there are three variants in tree:
+	# 1. MAXPARTITIONS = 8
+	# 2. MAXPARTITIONS = 16 with no back compat mapping
+	# 3. MAXPARTITIONS = 16 with back compat with old limit of 8
+	# currently all archs, which moved from 8->16 use same
+	# scheme for mapping disk minors, high minor offset
+	# if this changes, the below needs to be adjusted and
+	# additional makedisk_p16foo needs to be added
+	incdir = machine
+	diskpartitions = 0
+	diskbackcompat = 0
+	while (1) {
+		inc = top "arch/" incdir "/include/disklabel.h"
+		if (system("test -f '" inc "'") != 0) {
+			print "ERROR: can't find kernel include file '" inc "'" > "/dev/stderr"
+			exit 1
+		}
+		incdir = 0
+		while (getline < inc) {
+			if ($2 == "MAXPARTITIONS") {
+				# if 8, we are done; otherwise have
+				# to check if it's 16 partitions with
+				# back compat mapping
+				diskpartitions = $3
+				if (diskpartitions == 8)
+					break;
+			} else if ($2 == "OLDMAXPARTITIONS") {
+				diskbackcompat = 1
+				break
+			} else if ($1 == "#include" && $2 ~ "<.*/disklabel.h>"){
+				# wrapper, switch to the right file
+				incdir = substr($2, 2)
+				sub("/.*", "", incdir)
+				break;
+			}
+		}
+
+		if (diskpartitions)
+			break;
+
+		if (!incdir) {
+			print "ERROR: can't determine MAXPARTITIONS from include file '" inc "'" > "/dev/stderr"
+			exit 1
+		}
+	}
+	MKDISK = "makedisk_p" diskpartitions	# routine to create disk devs
+	if (diskbackcompat)
+		MKDISK = MKDISK "high"
 
 	# initially no substitutions
 	devsubst = 0
