@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.37 2001/03/01 16:31:41 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.38 2001/03/16 12:22:34 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.183 2001/03/01 15:15:23 itojun Exp $	*/
 
 /*
@@ -378,6 +378,20 @@ ip6_input(m)
 		}
 	}
 
+	/* drop packets if interface ID portion is already filled */
+	if ((m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) == 0) {
+		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src) &&
+		    ip6->ip6_src.s6_addr16[1]) {
+			ip6stat.ip6s_badscope++;
+			goto bad;
+		}
+		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst) &&
+		    ip6->ip6_dst.s6_addr16[1]) {
+			ip6stat.ip6s_badscope++;
+			goto bad;
+		}
+	}
+  
 #ifndef FAKE_LOOPBACK_IF
 	if ((m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) == 0)
 #else
