@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.599 2003/12/19 03:43:07 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.600 2003/12/20 03:35:00 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.603 2003/12/19 03:41:21 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.604 2003/12/20 03:34:19 thorpej Exp 
  */
 
 /*
@@ -2708,6 +2708,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "CMD Technology",
 	    "SiI3114 SATALink",
+	},
+	{
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_3124,
+	    0,
+	    "CMD Technology",
+	    "SiI3124 SATALink",
 	},
 	{
 	    PCI_VENDOR_CMEDIA, PCI_PRODUCT_CMEDIA_CMI8338A,
