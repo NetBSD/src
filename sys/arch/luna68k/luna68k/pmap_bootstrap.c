@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.7.10.4 2005/03/19 10:45:52 yamt Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.7.10.5 2005/03/19 15:01:22 yamt Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.7.10.4 2005/03/19 10:45:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.7.10.5 2005/03/19 15:01:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -234,7 +234,7 @@ pmap_bootstrap(nextpa, firstpa)
 		 * to point to Sysptmap.
 		 */
 		pte = (u_int *)kptmpa;
-		*pte[SYSMAP_VA/(NPTEPG*PAGE_SIZE)] =
+		pte[SYSMAP_VA/(NPTEPG*PAGE_SIZE)] =
 		    kptmpa | PG_RW | PG_CI | PG_V;
 	} else
 #endif
@@ -268,10 +268,10 @@ pmap_bootstrap(nextpa, firstpa)
  		 */
 		ste = (u_int *)kstpa;
 		pte = (u_int *)kptmpa;
-		*pte[SYSMAP_VA/(NPTEPG*PAGE_SIZE)] =
-		    = kptmpa | SG_RW | SG_V;
-		*ste[SYSMAP_VA/(NPTEPG*PAGE_SIZE)] =
-		    = kptmpa | PG_RW | PG_CI | PG_V;
+		pte[SYSMAP_VA/(NPTEPG*PAGE_SIZE)] =
+		    kptmpa | SG_RW | SG_V;
+		ste[SYSMAP_VA/(NPTEPG*PAGE_SIZE)] =
+		    kptmpa | PG_RW | PG_CI | PG_V;
 	}
 
 	/*
