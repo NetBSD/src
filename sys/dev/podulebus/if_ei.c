@@ -1,4 +1,4 @@
-/* $NetBSD: if_ei.c,v 1.1 2001/03/19 23:58:12 bjh21 Exp $ */
+/* $NetBSD: if_ei.c,v 1.2 2001/11/13 07:23:16 lukem Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -35,9 +35,10 @@
  * having dodgy copyright status).  Let's try again.
  */
 
-#include <sys/param.h>
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: if_ei.c,v 1.2 2001/11/13 07:23:16 lukem Exp $");
 
-__RCSID("$NetBSD: if_ei.c,v 1.1 2001/03/19 23:58:12 bjh21 Exp $");
+#include <sys/param.h>
 
 #include <sys/device.h>
 #include <sys/malloc.h>

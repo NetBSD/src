@@ -1,4 +1,4 @@
-/*	$NetBSD: oak.c,v 1.5 2001/07/04 16:36:52 bjh21 Exp $	*/
+/*	$NetBSD: oak.c,v 1.6 2001/11/13 07:23:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,9 +49,10 @@
  * controllers.
  */
 
-#include <sys/param.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.6 2001/11/13 07:23:16 lukem Exp $");
 
-__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.5 2001/07/04 16:36:52 bjh21 Exp $");
+#include <sys/param.h>
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
