@@ -1,4 +1,4 @@
-.\"	$NetBSD: co.1,v 1.5 2002/02/08 01:26:50 ross Exp $
+.\"	$NetBSD: co.1,v 1.6 2003/01/18 18:54:15 grant Exp $
 .\"
 .de Id
 .ds Rv \\$3
@@ -36,7 +36,7 @@ fails if the revision to be checked out is currently locked by another user.
 Checkout with locking also requires the caller to be on the access list of
 the \*r file, unless he is the owner of the
 file or the superuser, or the access list is empty.
-Checkout without locking is not subject to accesslist restrictions, and is
+Checkout without locking is not subject to access list restrictions, and is
 not affected by the presence of locks.
 .PP
 A revision is selected by options for revision or branch number,
@@ -217,7 +217,7 @@ Generate a binary image of the old keyword string.
 This acts like
 .BR \-ko ,
 except it performs all working file input and output in binary mode.
-This makes little difference on Posix and Unix hosts,
+This makes little difference on POSIX and UNIX hosts,
 but on DOS-like hosts one should use
 .B "rcs\ \-i\ \-kb"
 to initialize an \*r file intended to be used for binary files.
