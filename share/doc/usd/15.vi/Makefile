@@ -1,8 +1,8 @@
 #	from: @(#)Makefile	6.3 (Berkeley) 6/30/90
-#	$Id: Makefile,v 1.4 1993/07/31 15:30:11 mycroft Exp $
+#	$Id: Makefile,v 1.5 1993/10/23 00:24:50 cgd Exp $
 
 DIR=	usd/15.vi
-DIR=	15.vi
+DOC=	15.vi
 
 SRCS=	vi.in vi.chars
 MACROS=	-ms
