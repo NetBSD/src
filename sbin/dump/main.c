@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 1998/08/25 19:18:14 ross Exp $	*/
+/*	$NetBSD: main.c,v 1.21 1999/01/03 02:17:46 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.20 1998/08/25 19:18:14 ross Exp $");
+__RCSID("$NetBSD: main.c,v 1.21 1999/01/03 02:17:46 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,6 +116,7 @@ main(argc, argv)
 	int dirlist;
 	char *toplevel;
 	int just_estimate = 0;
+	char labelstr[LBLSIZE];
 
 	spcl.c_date = 0;
 	(void)time((time_t *)&spcl.c_date);
@@ -125,6 +126,7 @@ main(argc, argv)
 		tape = _PATH_DEFTAPE;
 	dumpdates = _PATH_DUMPDATES;
 	temp = _PATH_DTMP;
+	strcpy(labelstr, "none");	/* XXX safe strcpy. */
 	if (TP_BSIZE / DEV_BSIZE == 0 || TP_BSIZE % DEV_BSIZE != 0)
 		quit("TP_BSIZE must be a multiple of DEV_BSIZE\n");
 	level = '0';
@@ -134,7 +136,7 @@ main(argc, argv)
 
 	obsolete(&argc, &argv);
 	while ((ch = getopt(argc, argv,
-	    "0123456789B:b:cd:f:h:ns:ST:uWw")) != -1)
+	    "0123456789B:b:cd:f:h:L:ns:ST:uWw")) != -1)
 		switch (ch) {
 		/* dump level */
 		case '0': case '1': case '2': case '3': case '4':
@@ -169,6 +171,22 @@ main(argc, argv)
 			honorlevel = numarg("honor level", 0L, 10L);
 			break;
 
+		case 'L':
+			/*
+			 * Note that although there are LBLSIZE characters,
+			 * the last must be '\0', so the limit on strlen()
+			 * is really LBLSIZE-1.
+			 */
+			strncpy(labelstr, optarg, LBLSIZE);
+			labelstr[LBLSIZE-1] = '\0';
+			if (strlen(optarg) > LBLSIZE-1) {
+				msg(
+		"WARNING Label `%s' is larger than limit of %d characters.\n",
+				    optarg, LBLSIZE-1);
+				msg("WARNING: Using truncated label `%s'.\n",
+				    labelstr);
+			}
+			break;
 		case 'n':		/* notify operators */
 			notify = 1;
 			break;
@@ -351,7 +369,7 @@ main(argc, argv)
 		(void)strncpy(spcl.c_filesys, "an unlisted file system",
 		    NAMELEN);
 	}
-	(void)strncpy(spcl.c_label, "none", sizeof(spcl.c_label) - 1);
+	(void)strncpy(spcl.c_label, labelstr, sizeof(spcl.c_label) - 1);
 	(void)gethostname(spcl.c_host, NAMELEN);
 	spcl.c_host[sizeof(spcl.c_host) - 1] = '\0';
 
@@ -391,6 +409,7 @@ main(argc, argv)
 		msgtail("to %s on host %s\n", tape, host);
 	else
 		msgtail("to %s\n", tape);
+	msg("Label: %s\n", labelstr);
 
 	dev_bsize = sblock->fs_fsize / fsbtodb(sblock, 1);
 	dev_bshift = ffs(dev_bsize) - 1;
@@ -400,8 +419,19 @@ main(argc, argv)
 	if (TP_BSIZE != (1 << tp_bshift))
 		quit("TP_BSIZE (%d) is not a power of 2", TP_BSIZE);
 #ifdef FS_44INODEFMT
-	if (sblock->fs_inodefmt >= FS_44INODEFMT)
+	if (sblock->fs_inodefmt >= FS_44INODEFMT) {
 		spcl.c_flags = iswap32(iswap32(spcl.c_flags) | DR_NEWINODEFMT);
+	} else {
+		/*
+		 * Determine parameters for older filesystems. From
+		 *	/sys/ufs/ffs/ffs_vfsops.c::ffs_oldfscompat()
+		 *
+		 * XXX: not sure if other variables (fs_npsect, fs_interleave,
+		 * fs_nrpos, fs_maxfilesize) need to be fudged too.
+		 */
+		sblock->fs_qbmask = ~sblock->fs_bmask;
+		sblock->fs_qfmask = ~sblock->fs_fmask;
+	}
 #endif
 	maxino = sblock->fs_ipg * sblock->fs_ncg;
 	mapsize = roundup(howmany(maxino, NBBY), TP_BSIZE);
@@ -552,8 +582,10 @@ static void
 usage()
 {
 
-	(void)fprintf(stderr, "usage: dump [-0123456789cnu] [-B records] [-b blocksize] [-d density] [-f file]\n            [-h level] [-s feet] [-T date] filesystem\n");
-	(void)fprintf(stderr, "       dump [-W | -w]\n");
+	(void)fprintf(stderr, "%s\n%s\n%s\n",
+"usage: dump [-0123456789cnu] [-B records] [-b blocksize] [-d density]",
+"            [-f file] [-h level] [-L label] [-s feet] [-T date] filesystem",
+"       dump [-W | -w]");
 	exit(1);
 }
 
