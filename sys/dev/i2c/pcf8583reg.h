@@ -1,10 +1,11 @@
-/* $NetBSD: pcf8583reg.h,v 1.1 2002/03/24 15:47:21 bjh21 Exp $ */
+/*	$NetBSD: pcf8583reg.h,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 
 /*
  * Ben Harris, 2000
  *
  * This file is in the public domain
  */
+
 /*
  * Philips PCF8583 RTC registers
  */
@@ -14,8 +15,13 @@
 #ifndef _PCF8583REG_H
 #define _PCF8583REG_H
 
-#define PCF8583_ADDR 0xa0
-#define PCF8583_MASK 0xfc
+/*
+ * PCF8583 RTC I2C address:
+ *
+ *	101 0000
+ */
+#define PCF8583_ADDRMASK	0x7f
+#define PCF8583_ADDR		0x50
 
 #define PCF8583_REG_CSR		0x00
 #define PCF8583_REG_CENTI	0x01
@@ -33,6 +39,9 @@
 #define PCF8583_REG_ALMDAY	0x0d
 #define PCF8583_REG_ALMMON	0x0e
 #define PCF8583_REG_ALMTIMER	0x0f
+
+#define	PCF8583_NVRAM_START	0x10
+#define	PCF8583_NVRAM_SIZE	240
 
 #define PCF8583_CSR_TIMER	0x01
 #define PCF8583_CSR_SECTICK	0x01
@@ -77,5 +86,4 @@
 #define PCF8583_ALMCTL_TIMERALM		0x40
 #define PCF8583_ALMCTL_ALMINT		0x80
 
-
-#endif
+#endif	/* _PCF8583REG_H */

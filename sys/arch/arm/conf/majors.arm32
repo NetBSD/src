@@ -1,4 +1,4 @@
-#	$NetBSD: majors.arm32,v 1.9 2003/08/22 05:06:48 itojun Exp $
+#	$NetBSD: majors.arm32,v 1.10 2003/09/30 00:35:31 thorpej Exp $
 #
 # Device majors for arm32
 #
@@ -41,9 +41,6 @@ device-major	audio		char 36			audio
 device-major	vidcconsole	char 37			vidcconsole
 
 device-major	opms		char 40			opms
-
-device-major	iic		char 42			iic
-device-major	rtc		char 43			rtc
 
 device-major	ipl		char 46			ipfilter
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.57 2003/06/16 20:00:56 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.58 2003/09/30 00:35:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -56,7 +56,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.57 2003/06/16 20:00:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.58 2003/09/30 00:35:30 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -97,6 +97,12 @@ __KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.57 2003/06/16 20:00:56 thorpej Exp
 #include <sys/device.h>
 #include <arm/iomd/rpckbdvar.h>
 #include <dev/ic/pckbcvar.h>
+
+#include <dev/i2c/i2cvar.h>
+#include <dev/i2c/pcf8583var.h>
+#include <arm/iomd/iomdiicvar.h>
+
+static i2c_tag_t acorn32_i2c_tag;
 
 #include "opt_ipkdb.h"
 #include "ksyms.h"
@@ -1004,6 +1010,11 @@ initarm(void *cookie)
 	    bootconfig.vram[0].address,
 	    bootconfig.vram[0].pages * bootconfig.pagesize);
 
+	/*
+	 * Get a handle on the I2C interface so we can read
+	 * the NVRAM in the real-time clock chip.
+	 */
+	acorn32_i2c_tag = iomdiic_bootstrap_cookie();
 
 	if (cmos_read(RTC_ADDR_REBOOTCNT) > 0)
 		printf("Warning: REBOOTCNT = %d\n",
@@ -1113,5 +1124,40 @@ rpc_sa110_cc_setup(void)
 	sa1_cache_clean_size = CPU_SA110_CACHE_CLEAN_SIZE / 2;
 }
 #endif	/* CPU_SA110 */
+
+/* Read a byte from CMOS RAM. */
+int
+cmos_read(int location)
+{
+	uint8_t val;
+
+	if (pcfrtc_bootstrap_read(acorn32_i2c_tag, 0x50,
+	    location, &val, 1) != 0)
+		return (-1);
+	return (val);
+}
+
+/* Write a byte to CMOS RAM. */
+int
+cmos_write(int location, int value)
+{
+	uint8_t val = value;
+	int oldvalue, oldsum;
+
+	/* Get the old value and checksum. */
+	if ((oldvalue = cmos_read(location)) < 0)
+		return (-1);
+	if ((oldsum = cmos_read(RTC_ADDR_CHECKSUM)) < 0)
+		return (-1);
+
+	if (pcfrtc_bootstrap_write(acorn32_i2c_tag, 0x50,
+	    location, &val, 1) != 0)
+		return (-1);
+
+	/* Now update the checksum. */
+	val = (uint8_t)oldsum - (uint8_t)oldvalue + val;
+	return (pcfrtc_bootstrap_write(acorn32_i2c_tag, 0x50,
+	    RTC_ADDR_CHECKSUM, &val, 1));
+}
 
 /* End of machdep.c */

@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.3 2003/04/27 10:42:48 ragge Exp $ */
+/* $NetBSD: start.c,v 1.4 2003/09/30 00:35:30 thorpej Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -31,12 +31,15 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.3 2003/04/27 10:42:48 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.4 2003/09/30 00:35:30 thorpej Exp $");
 
 #include <sys/msgbuf.h>
 #include <sys/user.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
+
+#include <dev/i2c/i2cvar.h>
+#include <acorn26/ioc/iociicvar.h>
 
 #include <arm/armreg.h>
 #include <arm/undefined.h>
@@ -61,6 +64,9 @@ extern void main __P((void)); /* XXX Should be in a header file */
 struct bootconfig bootconfig;
 
 struct user *proc0paddr;
+
+/* in machdep.h */
+extern i2c_tag_t acorn26_i2c_tag;
 
 /* We don't pass a command line yet. */
 char *boot_args = "";
@@ -205,6 +211,12 @@ start(initbootconfig)
 	 */
 	proc0paddr = (struct user *)(round_page((vaddr_t)&onstack) - USPACE);
 	bzero(proc0paddr, sizeof(*proc0paddr));
+
+	/*
+	 * Get a handle on the IOC's I2C interface in the event we need
+	 * it during bootstrap.
+	 */
+	acorn26_i2c_tag = iociic_bootstrap_cookie();
 
 	/* TODO: anything else? */
 	

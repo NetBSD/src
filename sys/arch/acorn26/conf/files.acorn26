@@ -1,4 +1,4 @@
-# $NetBSD: files.acorn26,v 1.5 2003/07/27 01:17:38 thorpej Exp $
+# $NetBSD: files.acorn26,v 1.6 2003/09/30 00:35:30 thorpej Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -54,6 +54,9 @@ defflag	opt_fputypes.h		FPU_FPPC FPU_FPA
 file	arch/acorn26/acorn26/fpu.c		fpu		needs-flag
 file	arch/acorn26/acorn26/fpu_asm.S		fpu
 
+# Real-time clock support
+file	arch/acorn26/ioc/rtc.c
+
 # I/O bus (on the far side of the address and data latches)
 device iobus { base = -1 }
 attach iobus at root
@@ -68,14 +71,9 @@ file	arch/acorn26/iobus/ioc.c		ioc		needs-flag
 file	arch/acorn26/ioc/ioc_fiq_util.S		fiq		needs-flag
 
 # I^2C bus (bit-banged through IOC control register)
-device	iic { addr = -1 }
-attach	iic at ioc
-file	arch/acorn26/ioc/iic.c			iic
-
-# PCF8583 I^2C Clock/calendar/RAM
-device	rtc
-attach	rtc at iic
-file	arch/acorn26/ioc/rtc.c			rtc
+device	iociic: i2cbus, i2c_bitbang
+attach	iociic at ioc
+file	arch/acorn26/ioc/iociic.c		iociic
 
 # DS2401 Silicon Serial Number
 device	ssn

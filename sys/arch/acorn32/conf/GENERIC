@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.27 2003/09/13 13:30:05 chris Exp $
+# 	$NetBSD: GENERIC,v 1.28 2003/09/30 00:35:31 thorpej Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.27 $"
+#ident		"GENERIC-$Revision: 1.28 $"
 
 # estimated number of users
 maxusers	32
@@ -166,13 +166,11 @@ iomd0	at mainbus?
 clock*	at iomd?
 
 # IIC bus device
-iic*	at iomd?
+iomdiic* at iomd?
+iic0 at iomdiic?
 
 # RTC device via IIC bus
-rtc*	at iic? addr 0xa0
-
-# time-of-day device via rtc device
-todclock0	at rtc?
+pcfrtc*	at iic? addr 0x50
 
 # VIDC device
 vidc0		at mainbus?
