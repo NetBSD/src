@@ -322,6 +322,8 @@ time_stamp_server (file, vers_ts, entdata)
 	    cp = ctime (&sb.st_mtime);
 
 	cp[24] = 0;
+	/* Fix non-standard format.  */
+	if (cp[8] == '0') cp[8] = ' ';
 	(void) strcpy (vers_ts->ts_user, cp);
     }
 }
@@ -337,13 +339,22 @@ time_stamp (file)
 {
     struct stat sb;
     char *cp;
-    char *ts;
+    char *ts = NULL;
+    time_t mtime = 0L;
 
-    if (CVS_LSTAT (file, &sb) < 0)
+    if (!CVS_LSTAT (file, &sb))
     {
-	ts = NULL;
+	mtime = sb.st_mtime;
     }
-    else
+    /* If it's a symlink, return whichever is the newest mtime of
+       the link and its target, for safety.
+    */
+    if (!CVS_STAT (file, &sb))
+    {
+        if (mtime < sb.st_mtime)
+	    mtime = sb.st_mtime;
+    }
+    if (mtime)
     {
 	struct tm *tm_p;
         struct tm local_tm;
@@ -365,6 +376,8 @@ time_stamp (file)
 	    cp = ctime(&sb.st_mtime);
 
 	cp[24] = 0;
+	/* Fix non-standard format.  */
+	if (cp[8] == '0') cp[8] = ' ';
 	(void) strcpy (ts, cp);
     }
 

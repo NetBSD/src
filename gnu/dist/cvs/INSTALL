@@ -134,6 +134,8 @@ i386 family:
 	Linux (kernel 1.2.x) (1.8.86)
 	Linux (kernel 2.0.x, RedHat 4.2) (1.10)
 	Linux (kernel 2.0.x, RedHat 5.x) (1.10)
+	Linux (kernel 2.2.x, RedHat 6.x) (1.10.8)
+	Linux (kernel 2.2.x, RedHat 7.x) (1.11)
 	BSDI 4.0 (1.10.7)
 	FreeBSD 2.1.5-stable (1.8.87)
 	NextSTEP 3.3 (1.7)
@@ -146,6 +148,7 @@ i386 family:
 	Windows NT 3.51 service pack 4 (1.9)
 	Windows NT 3.51 service pack 5 (1.9) -- DOES NOT WORK (footnote 11)
 	Windows NT 4.0 (1.9 client and local)
+	Windows NT 4.0 (1.11 client and local - build & test, but no test suite)
 	Windows 95 (1.9 client and local)
 	QNX (1.9.1 + patches for strippath() and va_list)
 	OS/2 Version 3 using IBM C/C++ Tools 2.01 (1.8.86 + patches, client)
@@ -238,7 +241,19 @@ VAX:
 
 Building from source code under Unix:
 
-1)  Run "configure":
+1)  Some combinations of Automake and Autoconf versions may break the CVS build
+    if file timestamps aren't set correctly, so you may wish to run
+    noautomake.sh to set the timestamps and avoid attempting to run the
+    autotools on your system, especially if you are building from source
+    checked out from CVS:
+
+	$ ./noautomake.sh --noautoconf
+
+    The CVS Makefiles and configure script were built using Automake 1.5 and
+    Autoconf 2.13, respectively.  Other combinations of autotool versions may
+    or may not work.
+
+2)  Run "configure":
 
 	$ ./configure
 
@@ -284,6 +299,14 @@ Building from source code under Unix:
     the --enable-encryption option.  This option is disabled by
     default.
 
+    If you want to disable automatic dependency tracking in the makefiles,
+    use the '--disable-dependency-tracking' option:
+
+	$ ./configure --disable-dependency-tracking
+
+    This avoids problems on some platforms.  See the note at the end of this
+    file on BSD.
+
     Try './configure --help' for further information on its usage.
 
     NOTE ON CVS's USE OF NDBM:
@@ -321,10 +344,10 @@ Building from source code under Unix:
 
     END OF NOTE FOR NDBM GUNK.
 
-2)  Edit src/options.h.  The defaults should be reasonable, and in fact
+3)  Edit src/options.h.  The defaults should be reasonable, and in fact
     if you are lazy you can safely skip this step.
 
-3)  Try to build it:
+4)  Try to build it:
 
 	$ make
 
@@ -335,7 +358,7 @@ Building from source code under Unix:
     compiler information, make output, and anything else you think
     will be helpful.
 
-3a)  Run the regression tests (optional).
+4a)  Run the regression tests (optional).
 
     You may also wish to validate the correctness of the new binary by
     running the regression tests.  If they succeed, that is nice to
@@ -347,7 +370,7 @@ Building from source code under Unix:
 
     If you want to run the tests, see the file TESTS for more information.
 
-4)  Install the binaries/documentation:
+5)  Install the binaries/documentation:
 
 	$ make install
 
@@ -360,7 +383,8 @@ Detailed information about your interaction with "configure":
 
 The "configure" script and its interaction with its options and the
 environment is described here.  For more detailed documentation about
-"configure", please refer to the GNU Autoconf documentation.
+"configure", please run `./configure --help' or refer to the GNU Autoconf
+documentation.
 
 Supported options are:
 
@@ -390,7 +414,7 @@ behaviour:
 
 -------------------------------------------------------------------------------
 
-Building from source code under Windows NT/95:
+Building from source code under Windows NT/95/98/2000:
 
 You may find interesting information in windows-NT/README.
 
@@ -401,6 +425,14 @@ You may find interesting information in windows-NT/README.
 3) MSVC will place the executable file cvs.exe in WinRel, or whatever
    your target directory is.
 
+* From the top level directory, with MSVC++ 6.0 installed, something like the
+following also works:
+
+	C:\> vcvars32
+	C:\> nmake /f cvsnt.mak CFG="cvsnt - Win32 Debug"
+
+* You might also try http://wincvs.org & http://www.cvsnt.org
+
 -------------------------------------------------------------------------------
 
 Building from source code under other platforms:
@@ -409,10 +441,25 @@ For OS/2, see os2/README and emx/README.
 
 For VMS, see README.VMS
 
-For Macintosh, see macintosh/README.MacCVS
+For Macintosh, see macintosh/README.MacCVS, or, since that file isn't there
+anymore, you might try http://wincvs.org .
 
 For a Java client, see jCVS (which is a separate package from CVS
 itself, but which might be preferable to the Macintosh port mentioned
 above, for example).
+
+                                  **** ****
+
+Builds are breaking on some systems (notably,
+BSD/OS thor.sdrc.com 4.0.1 BSDI BSD/OS 4.0.1 Kernel #3: Thu Mar  9 11:29:16 EST 2000
+) due to Automake's dependency tracking code.  The work around for this is to
+comile without it by passing the '--disable-dependency-tracking' option to
+configure:
+
+	$ ./configure --disable-dependency-tracking
+
+This will allow a compile but make will no longer be tracking header
+dependencies.  This means that if you make any changes to header files you may
+have to run 'make clean' before running a 'make' to get everything to compile.
 
 -------------------------------------------------------------------------------
