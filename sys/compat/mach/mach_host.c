@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.c,v 1.25 2003/12/08 12:03:16 manu Exp $ */
+/*	$NetBSD: mach_host.c,v 1.26 2003/12/09 11:29:01 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.25 2003/12/08 12:03:16 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.26 2003/12/09 11:29:01 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -66,14 +66,8 @@ mach_host_info(args)
 	size_t *msglen = args->rsize;
 	mach_host_info_reply_simple_t *reps;
 
-	rep->rep_msgh.msgh_bits = 
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_trailer.msgh_trailer_size = 8;
-
 	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
 
 	switch(req->req_flavor) {
 	case MACH_HOST_BASIC_INFO: {
@@ -84,11 +78,6 @@ mach_host_info(args)
 		    - sizeof(rep->rep_trailer) + sizeof(*info);
 		rep->rep_count = sizeof(*info) / sizeof(mach_integer_t);
 		mach_host_basic_info(info);
-		/* 
-		 * XXX this is the trailer, the way it 
-		 * is filled should be improved 
-		 */
-		rep->rep_data[rep->rep_count + 1] = 8;
 		break;
 	}
 
@@ -100,11 +89,6 @@ mach_host_info(args)
 		    - sizeof(rep->rep_trailer) + sizeof(*info);
 		rep->rep_count = sizeof(*info) / sizeof(mach_integer_t);
 		mach_host_priority_info(info);
-		/* 
-		 * XXX this is the trailer, the way it 
-		 * is filled should be improved 
-		 */
-		rep->rep_data[rep->rep_count + 1] = 8;
 		break;
 	}
 
@@ -113,7 +97,6 @@ mach_host_info(args)
 		reps = (mach_host_info_reply_simple_t *)rep;
 		reps->rep_msgh.msgh_size = 
 		    sizeof(*reps) - sizeof(reps->rep_trailer);
-		reps->rep_trailer.msgh_trailer_size = 8;
 		*msglen = sizeof(*reps);
 		break;
 
@@ -128,7 +111,6 @@ mach_host_info(args)
 		info->min_timeout = 1000 / hz; /* XXX timout in ms */
 		info->min_quantum = 1000 / hz; /* quantum in ms */
 
-		rep->rep_data[rep->rep_count + 1] = 8; /* XXX trailer */
 		break;
 	}
 
@@ -140,6 +122,8 @@ mach_host_info(args)
 		rep->rep_retval = native_to_mach_errno[EINVAL];
 		break;
 	}
+
+	mach_set_trailer(rep, *msglen);
 
 	return 0;
 }
@@ -153,15 +137,13 @@ mach_host_page_size(args)
 	mach_host_page_size_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_page_size = PAGE_SIZE;
-	rep->rep_trailer.msgh_trailer_size = 8;
-	
 	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+
+	rep->rep_page_size = PAGE_SIZE;
+	
+	mach_set_trailer(rep, *msglen);
+
 	return 0;
 }
 
@@ -177,19 +159,11 @@ mach_host_get_clock_service(args)
 
 	mr = mach_right_get(mach_clock_port, l, MACH_PORT_TYPE_SEND, 0);
 
-	rep->rep_msgh.msgh_bits = 
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
-	    MACH_MSGH_BITS_COMPLEX;
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_body.msgh_descriptor_count = 1;
-	rep->rep_clock_serv.name = (mach_port_t)mr->mr_name;
-	rep->rep_clock_serv.disposition = MACH_MSG_TYPE_MOVE_SEND;
-	rep->rep_clock_serv.type = MACH_MSG_PORT_DESCRIPTOR;
-	rep->rep_trailer.msgh_trailer_size = 8;
-
 	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+	mach_add_port_desc(rep, mr->mr_name);
+	mach_set_trailer(rep, *msglen);
+
 	return 0;
 }
 
@@ -222,18 +196,10 @@ mach_host_get_io_master(args)
 
 	mr = mach_right_get(mach_io_master_port, l, MACH_PORT_TYPE_SEND, 0);
 
-	rep->rep_msgh.msgh_bits = 
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
-	    MACH_MSGH_BITS_COMPLEX;
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_body.msgh_descriptor_count = 1;
-	rep->rep_iomaster.name = (mach_port_t)mr->mr_name;
-	rep->rep_iomaster.disposition = MACH_MSG_TYPE_MOVE_SEND;
-	rep->rep_iomaster.type = MACH_MSG_PORT_DESCRIPTOR;
-	rep->rep_trailer.msgh_trailer_size = 8;
-
 	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+	mach_add_port_desc(rep, mr->mr_name);
+	mach_set_trailer(rep, *msglen);
+
 	return 0;
 }

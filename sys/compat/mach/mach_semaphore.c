@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_semaphore.c,v 1.6 2003/11/13 13:40:39 manu Exp $ */
+/*	$NetBSD: mach_semaphore.c,v 1.7 2003/12/09 11:29:01 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_semaphore.c,v 1.6 2003/11/13 13:40:39 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_semaphore.c,v 1.7 2003/12/09 11:29:01 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: mach_semaphore.c,v 1.6 2003/11/13 13:40:39 manu Exp 
 #include <compat/mach/mach_message.h>
 #include <compat/mach/mach_semaphore.h>
 #include <compat/mach/mach_clock.h>
+#include <compat/mach/mach_errno.h>
+#include <compat/mach/mach_port.h>
 #include <compat/mach/mach_services.h>
 #include <compat/mach/mach_syscallargs.h>
 
@@ -80,9 +82,18 @@ mach_sys_semaphore_wait_trap(l, v, retval)
 	} */ *uap = v;
 	struct mach_semaphore *ms;
 	struct mach_waiting_proc *mwp;
+	struct mach_right *mr;
+	mach_port_t mn;
 	int blocked = 0;
 
-	ms = (struct mach_semaphore *)SCARG(uap, wait_name);
+	mn = SCARG(uap, wait_name);
+	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == 0)
+		return EPERM;
+		
+	if (mr->mr_port->mp_datatype != MACH_MP_SEMAPHORE)
+		return EINVAL;
+
+	ms = (struct mach_semaphore *)mr->mr_port->mp_data;
 
 	lockmgr(&ms->ms_lock, LK_EXCLUSIVE, NULL);	
 	ms->ms_value--;
@@ -110,9 +121,18 @@ mach_sys_semaphore_signal_trap(l, v, retval)
 	} */ *uap = v;
 	struct mach_semaphore *ms;
 	struct mach_waiting_proc *mwp;
+	struct mach_right *mr;
+	mach_port_t mn;
 	int unblocked = 0;
 
-	ms = (struct mach_semaphore *)SCARG(uap, signal_name);
+	mn = SCARG(uap, signal_name);
+	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == 0)
+		return EPERM;
+		
+	if (mr->mr_port->mp_datatype != MACH_MP_SEMAPHORE)
+		return EINVAL;
+
+	ms = (struct mach_semaphore *)mr->mr_port->mp_datatype;
 
 	lockmgr(&ms->ms_lock, LK_EXCLUSIVE, NULL);	
 	ms->ms_value++;
@@ -136,19 +156,24 @@ mach_semaphore_create(args)
 	mach_semaphore_create_request_t *req = args->smsg;
 	mach_semaphore_create_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
+	struct lwp *l = args->l;
 	struct mach_semaphore *ms;
+	struct mach_port *mp;
+	struct mach_right *mr;
 
 	ms = mach_semaphore_get(req->req_value, req->req_policy);
+
+	mp = mach_port_get();
+	mp->mp_datatype = MACH_MP_SEMAPHORE;
+	mp->mp_data = (void *)ms;
 	
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_sem.name = (mach_port_t)ms; /* Waiting for better */
-	rep->rep_trailer.msgh_trailer_size = 8;
+	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
 
 	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+	mach_add_port_desc(rep, mr->mr_name);
+	mach_set_trailer(rep, *msglen);
+
 	return 0;
 }
 
@@ -158,20 +183,30 @@ mach_semaphore_destroy(args)
 {
 	mach_semaphore_destroy_request_t *req = args->smsg;
 	mach_semaphore_destroy_reply_t *rep = args->rmsg;
+	struct lwp *l = args->l;
 	size_t *msglen = args->rsize;
 	struct mach_semaphore *ms;
+	struct mach_right *mr;
+	mach_port_t mn;
 
-	ms = (struct mach_semaphore *)req->req_sem.name;
+	mn = req->req_sem.name;
+	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == 0)
+		return mach_msg_error(args, EPERM);
+		
+	if (mr->mr_port->mp_datatype != MACH_MP_SEMAPHORE)
+		return mach_msg_error(args, EINVAL);
+
+	ms = (struct mach_semaphore *)mr->mr_port->mp_data;
 	mach_semaphore_put(ms);
+	mach_right_put(mr, MACH_PORT_TYPE_REF_RIGHTS);
 	
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_trailer.msgh_trailer_size = 8;
-
 	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+
+	rep->rep_retval = 0;
+
+	mach_set_trailer(rep, *msglen);
+
 	return 0;
 }
 

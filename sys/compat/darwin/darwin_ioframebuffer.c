@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.25 2003/12/07 10:25:38 manu Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.26 2003/12/09 11:29:01 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.25 2003/12/07 10:25:38 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.26 2003/12/09 11:29:01 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -133,13 +133,7 @@ darwin_ioframebuffer_connect_method_scalari_scalaro(args)
 #ifdef DEBUG_DARWIN
 	printf("darwin_ioframebuffer_connect_method_scalari_scalaro()\n");
 #endif
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_outcount = 0;
-
 	maxoutcount = req->req_in[req->req_incount];
 
 	switch (req->req_selector) {
@@ -284,9 +278,9 @@ darwin_ioframebuffer_connect_method_scalari_scalaro(args)
 		break;
 	}
 
-	rep->rep_out[rep->rep_outcount + 1] = 8; /* XXX Trailer */
 	*msglen = sizeof(*rep) - ((16 - rep->rep_outcount) * sizeof(int));
-	rep->rep_msgh.msgh_size = *msglen - sizeof(rep->rep_trailer);
+	mach_set_header(rep, req, *msglen);
+	mach_set_trailer(rep, *msglen);
 
 	return 0;
 }
@@ -303,13 +297,7 @@ darwin_ioframebuffer_connect_method_scalari_structo(args)
 #ifdef DEBUG_DARWIN
 	printf("darwin_ioframebuffer_connect_method_scalari_structo()\n");
 #endif
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_outcount = 0;
-
 	maxoutcount = req->req_in[req->req_incount];
 
 	switch(req->req_selector) {
@@ -408,9 +396,10 @@ darwin_ioframebuffer_connect_method_scalari_structo(args)
 		break;	
 	}
 
-	rep->rep_out[rep->rep_outcount + 7] = 8; /* XXX Trailer */
 	*msglen = sizeof(*rep) - (4096 - rep->rep_outcount);
-	rep->rep_msgh.msgh_size = *msglen - sizeof(rep->rep_trailer);
+	mach_set_header(rep, req, *msglen);
+	mach_set_trailer(rep, *msglen);
+
 	return 0;
 }
 
@@ -425,17 +414,14 @@ darwin_ioframebuffer_connect_method_structi_structo(args)
 #ifdef DEBUG_DARWIN
 	printf("darwin_ioframebuffer_connect_method_structi_structo()\n");
 #endif
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+
 	rep->rep_outcount = 1;
 	rep->rep_out[0] = 1;
-	rep->rep_out[rep->rep_outcount + 1] = 8; /* XXX Trailer */
 
 	*msglen = sizeof(*rep) - (4096 - rep->rep_outcount);
-	rep->rep_msgh.msgh_size = *msglen - sizeof(rep->rep_trailer);
+	mach_set_header(rep, req, *msglen);
+	mach_set_trailer(rep, *msglen);
+
 	return 0;
 }
 
@@ -573,17 +559,14 @@ darwin_ioframebuffer_connect_map_memory(args)
 		break;
 	}
 
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+
 	rep->rep_retval = 0;
 	rep->rep_addr = pvaddr;
 	rep->rep_len = len;
-	rep->rep_trailer.msgh_trailer_size = 8;
 
-	*msglen = sizeof(*rep);
+	mach_set_trailer(rep, *msglen);
 
 	return 0;
 }
@@ -722,15 +705,12 @@ darwin_ioframebuffer_connect_method_scalari_structi(args)
 		break;
 	}
 
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_trailer.msgh_trailer_size = 8;
-
 	*msglen = sizeof(*rep); 
+	mach_set_header(rep, req, *msglen);
+
+	rep->rep_retval = 0;
+
+	mach_set_trailer(rep, *msglen);
 
 	return 0;
 }

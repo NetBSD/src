@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_clock.c,v 1.9 2003/11/13 13:40:39 manu Exp $ */
+/*	$NetBSD: mach_clock.c,v 1.10 2003/12/09 11:29:01 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_clock.c,v 1.9 2003/11/13 13:40:39 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_clock.c,v 1.10 2003/12/09 11:29:01 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -140,16 +140,13 @@ mach_clock_get_time(args)
 
 	microtime(&tv);
 	
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+
 	rep->rep_cur_time.tv_sec = tv.tv_sec; 
 	rep->rep_cur_time.tv_nsec = tv.tv_usec * 1000; 
-	rep->rep_trailer.msgh_trailer_size = 8;
 
-	*msglen = sizeof(*rep);
+	mach_set_trailer(rep, *msglen);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.h,v 1.22 2003/12/08 19:27:38 manu Exp $	 */
+/*	$NetBSD: mach_message.h,v 1.23 2003/12/09 11:29:01 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -163,6 +163,7 @@ typedef	struct {
 	mach_msg_id_t	msgh_id;
 } mach_msg_header_t;
 
+#define MACH_MSG_TRAILER_FORMAT_0	0
 typedef u_int32_t mach_msg_trailer_type_t;
 typedef u_int32_t mach_msg_trailer_size_t;
 typedef struct { 
@@ -264,6 +265,11 @@ struct mach_message {
 
 inline int mach_ool_copyin(struct proc *, const void *, void **, size_t, int);
 inline int mach_ool_copyout(struct proc *, void *, void **, size_t, int);
+inline void mach_set_trailer(void *, size_t);
+inline void mach_set_header(void *, void *, size_t);
+inline void mach_add_port_desc(void *, mach_port_name_t);
+inline void mach_add_ool_ports_desc(void *, void *, int);
+inline void mach_add_ool_desc(void *, void *, size_t);
 void mach_message_init(void);
 struct mach_message *mach_message_get(mach_msg_header_t *, 
     size_t, struct mach_port *, struct lwp *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_bootstrap.c,v 1.9 2003/11/13 13:40:39 manu Exp $ */
+/*	$NetBSD: mach_bootstrap.c,v 1.10 2003/12/09 11:29:01 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_bootstrap.c,v 1.9 2003/11/13 13:40:39 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_bootstrap.c,v 1.10 2003/12/09 11:29:01 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -75,18 +75,14 @@ mach_bootstrap_look_up(args)
 
 	mr = mach_right_get(NULL, l, MACH_PORT_TYPE_DEAD_NAME, 0);
 
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
-	    MACH_MSGH_BITS_COMPLEX;
-	rep->rep_msgh.msgh_size = *msglen - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_count = 1; /* XXX Why? */
+	mach_set_header(rep, req, *msglen);
+
+	rep->rep_count = 1;
 	rep->rep_bootstrap_port = mr->mr_name;
 	strncpy((char *)rep->rep_service_name, service_name,
 	    service_name_len);
-	/* XXX This is the trailer. We should find something better */
-	rep->rep_service_name[service_name_len + 7] = 8;
+
+	mach_set_trailer(rep, *msglen);
 
 	return 0;
 }

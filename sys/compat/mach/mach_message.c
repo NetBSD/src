@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.36 2003/12/08 19:27:38 manu Exp $ */
+/*	$NetBSD: mach_message.c,v 1.37 2003/12/09 11:29:01 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.36 2003/12/08 19:27:38 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.37 2003/12/09 11:29:01 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -586,8 +586,7 @@ mach_msg_recv(l, urm, option, recv_size, timeout, mn)
 		 * whole message, so just copy the whole header.
 		 */
 		memcpy(&sr, mm->mm_msg, sizeof(mach_msg_header_t));
-		sr.sr_trailer.msgh_trailer_type = 0;
-		sr.sr_trailer.msgh_trailer_size = 8;
+		mach_set_trailer(&sr, sizeof(sr));
 
 		if ((error = copyout(&sr, urm, sizeof(sr))) != 0) {
 			ret = MACH_RCV_INVALID_DATA;
@@ -1044,6 +1043,115 @@ out:
 	if (error == 0)
 		*uaddr = (void *)ubuf;
 	return error;
+}
+
+
+inline void
+mach_set_trailer(msgh, size)
+	void *msgh;
+	size_t size;
+{
+	mach_msg_trailer_t *trailer;
+	char *msg = (char *)msgh;
+
+	trailer = (mach_msg_trailer_t *)&msg[size - sizeof(*trailer)];
+	trailer->msgh_trailer_type = MACH_MSG_TRAILER_FORMAT_0;
+	trailer->msgh_trailer_size = sizeof(*trailer);
+
+	return;
+}
+
+inline void 
+mach_set_header(rep, req, size)
+	void *rep;
+	void *req;
+	size_t size;
+{
+	mach_msg_header_t *rephdr = rep;
+	mach_msg_header_t *reqhdr = req;
+
+	rephdr->msgh_bits = 
+		MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rephdr->msgh_size = size - sizeof(mach_msg_trailer_t);
+	rephdr->msgh_local_port = reqhdr->msgh_local_port;
+	rephdr->msgh_remote_port = 0;
+	rephdr->msgh_id = reqhdr->msgh_id + 100;
+
+	return;
+}
+
+inline void
+mach_add_port_desc(msg, name)
+	void *msg;
+	mach_port_name_t name;
+{
+	struct mach_complex_msg *mcm = msg;
+	int i;
+
+	if ((mcm->mcm_header.msgh_bits & MACH_MSGH_BITS_COMPLEX) == 0) {
+		mcm->mcm_header.msgh_bits |= MACH_MSGH_BITS_COMPLEX;
+		mcm->mcm_body.msgh_descriptor_count = 0;
+	}
+
+	i = mcm->mcm_body.msgh_descriptor_count;
+
+	mcm->mcm_port_desc[i].name = name;
+	mcm->mcm_port_desc[i].disposition = MACH_MSG_TYPE_MOVE_SEND;
+	mcm->mcm_port_desc[i].type = MACH_MSG_PORT_DESCRIPTOR;
+	
+	mcm->mcm_body.msgh_descriptor_count++;
+	return;
+}
+
+inline void 
+mach_add_ool_ports_desc(msg, addr, count)
+	void *msg;
+	void *addr;
+	int count;
+{
+	struct mach_complex_msg *mcm = msg;
+	int i;
+
+	if ((mcm->mcm_header.msgh_bits & MACH_MSGH_BITS_COMPLEX) == 0) {
+		mcm->mcm_header.msgh_bits |= MACH_MSGH_BITS_COMPLEX;
+		mcm->mcm_body.msgh_descriptor_count = 0;
+	}
+
+	i = mcm->mcm_body.msgh_descriptor_count;
+
+	mcm->mcm_ool_ports_desc[i].address = addr;
+	mcm->mcm_ool_ports_desc[i].count = count;
+	mcm->mcm_ool_ports_desc[i].copy = MACH_MSG_ALLOCATE;
+	mcm->mcm_ool_ports_desc[i].disposition = MACH_MSG_TYPE_MOVE_SEND;
+	mcm->mcm_ool_ports_desc[i].type = MACH_MSG_OOL_PORTS_DESCRIPTOR;
+	
+	mcm->mcm_body.msgh_descriptor_count++;
+	return;
+}
+
+inline void mach_add_ool_desc(msg, addr, size)
+	void *msg;
+	void *addr;
+	size_t size;
+{
+	struct mach_complex_msg *mcm = msg;
+	int i;
+
+	if ((mcm->mcm_header.msgh_bits & MACH_MSGH_BITS_COMPLEX) == 0) {
+		mcm->mcm_header.msgh_bits |= MACH_MSGH_BITS_COMPLEX;
+		mcm->mcm_body.msgh_descriptor_count = 0;
+	}
+
+	i = mcm->mcm_body.msgh_descriptor_count;
+
+	mcm->mcm_ool_desc[i].address = addr;
+	mcm->mcm_ool_desc[i].size = size;
+	mcm->mcm_ool_desc[i].deallocate = 0;
+	mcm->mcm_ool_desc[i].copy = MACH_MSG_ALLOCATE;
+	mcm->mcm_ool_desc[i].type = MACH_MSG_OOL_DESCRIPTOR;
+	
+	mcm->mcm_body.msgh_descriptor_count++;
+	return;
 }
 
 void

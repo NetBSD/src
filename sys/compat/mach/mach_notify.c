@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_notify.c,v 1.12 2003/12/08 12:03:16 manu Exp $ */
+/*	$NetBSD: mach_notify.c,v 1.13 2003/12/09 11:29:01 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.12 2003/12/08 12:03:16 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.13 2003/12/09 11:29:01 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -90,7 +90,8 @@ mach_notify_port_destroyed(l, mr)
 	req->req_msgh.msgh_id = MACH_NOTIFY_DESTROYED_MSGID;
 	req->req_body.msgh_descriptor_count = 1;
 	req->req_rights.name = mr->mr_name;
-	req->req_trailer.msgh_trailer_size = 8;
+
+	mach_set_trailer(req, sizeof(*req));
 
 	(void)mach_message_get((mach_msg_header_t *)req, sizeof(*req), mp, l);
 #ifdef DEBUG_MACH_MSG
@@ -135,7 +136,8 @@ mach_notify_port_no_senders(l, mr)
 	req->req_msgh.msgh_local_port = mr->mr_notify_no_senders->mr_name;
 	req->req_msgh.msgh_id = MACH_NOTIFY_NO_SENDERS_MSGID;
 	req->req_mscount = mr->mr_refcount;
-	req->req_trailer.msgh_trailer_size = 8;
+
+	mach_set_trailer(req, sizeof(*req));
 
 	(void)mach_message_get((mach_msg_header_t *)req, sizeof(*req), mp, l);
 #ifdef DEBUG_MACH_MSG
@@ -176,7 +178,8 @@ mach_notify_port_dead_name(l, mr)
 	req->req_msgh.msgh_local_port = mr->mr_notify_dead_name->mr_name;
 	req->req_msgh.msgh_id = MACH_NOTIFY_DEAD_NAME_MSGID;
 	req->req_name = mr->mr_name;
-	req->req_trailer.msgh_trailer_size = 8;
+
+	mach_set_trailer(req, sizeof(*req));
 
 	mr->mr_refcount++;
 
@@ -346,7 +349,7 @@ mach_exception(l, exc, code)
 		msglen = sizeof(*req);
 		msgh = (mach_msg_header_t *)req;
 
-		req->req_msgh.msgh_bits = MACH_MSGH_BITS_COMPLEX |
+		req->req_msgh.msgh_bits = 
 		    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND) |
 		    MACH_MSGH_REMOTE_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
 		req->req_msgh.msgh_size = 
@@ -354,17 +357,14 @@ mach_exception(l, exc, code)
 		req->req_msgh.msgh_remote_port = kernel_mr->mr_name;
 		req->req_msgh.msgh_local_port = exc_mr->mr_name;
 		req->req_msgh.msgh_id = MACH_EXC_RAISE_MSGID;
-		req->req_body.msgh_descriptor_count = 2;
-		req->req_thread.name = thread->mr_name;
-		req->req_thread.disposition = MACH_MSG_TYPE_MOVE_SEND;
-		req->req_thread.type = MACH_MSG_PORT_DESCRIPTOR;
-		req->req_task.name = task->mr_name;
-		req->req_task.disposition = MACH_MSG_TYPE_MOVE_SEND;
-		req->req_task.type = MACH_MSG_PORT_DESCRIPTOR;
+
+		mach_add_port_desc(req, thread->mr_name);
+		mach_add_port_desc(req, task->mr_name);
+
 		req->req_exc = exc;
 		req->req_codecount = 2;
 		memcpy(&req->req_code[0], code, sizeof(req->req_code));
-		req->req_trailer.msgh_trailer_size = 8;
+
 		break;
 	}
 	 
@@ -376,7 +376,7 @@ mach_exception(l, exc, code)
 		msglen = sizeof(*req);
 		msgh = (mach_msg_header_t *)req;
 
-		req->req_msgh.msgh_bits = MACH_MSGH_BITS_COMPLEX |
+		req->req_msgh.msgh_bits =
 		    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND) |
 		    MACH_MSGH_REMOTE_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
 		req->req_msgh.msgh_size = 
@@ -389,12 +389,11 @@ mach_exception(l, exc, code)
 		memcpy(&req->req_code[0], code, sizeof(req->req_code));
 		req->req_flavor = flavor;
 		mach_thread_get_state_machdep(l, flavor, req->req_state, &dc);
-		/* Trailer */
-		req->req_state[(dc / sizeof(req->req_state[0])) + 1] = 8;
 
 		msglen = msglen - 
 			 sizeof(req->req_state) +
 			 (dc * sizeof(req->req_state[0]));
+
 		break;
 	}
 
@@ -406,7 +405,7 @@ mach_exception(l, exc, code)
 		msglen = sizeof(*req);
 		msgh = (mach_msg_header_t *)req;
 
-		req->req_msgh.msgh_bits = MACH_MSGH_BITS_COMPLEX |
+		req->req_msgh.msgh_bits = 
 		    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND) |
 		    MACH_MSGH_REMOTE_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
 		req->req_msgh.msgh_size = 
@@ -415,12 +414,10 @@ mach_exception(l, exc, code)
 		req->req_msgh.msgh_local_port = exc_mr->mr_name;
 		req->req_msgh.msgh_id = MACH_EXC_RAISE_STATE_IDENTITY_MSGID;
 		req->req_body.msgh_descriptor_count = 2;
-		req->req_thread.name = thread->mr_name;
-		req->req_thread.disposition = MACH_MSG_TYPE_MOVE_SEND;
-		req->req_thread.type = MACH_MSG_PORT_DESCRIPTOR;
-		req->req_task.name = task->mr_name;
-		req->req_task.disposition = MACH_MSG_TYPE_MOVE_SEND;
-		req->req_task.type = MACH_MSG_PORT_DESCRIPTOR;
+
+		mach_add_port_desc(req, thread->mr_name);
+		mach_add_port_desc(req, task->mr_name);
+
 		req->req_exc = exc;
 		req->req_codecount = 2;
 		memcpy(&req->req_code[0], code, sizeof(req->req_code));
@@ -441,6 +438,8 @@ mach_exception(l, exc, code)
 		break;
 	}
 		
+	mach_set_trailer(msgh, msglen);
+
 	(void)mach_message_get(msgh, msglen, exc_port, NULL);
 	wakeup(exc_port->mp_recv->mr_sethead);
 
