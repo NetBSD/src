@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr_bootsel.S,v 1.3 1999/04/28 23:27:02 fvdl Exp $	*/
+/*	$NetBSD: mbr_bootsel.S,v 1.4 1999/05/02 12:20:01 fvdl Exp $	*/
 
 
 /*-
@@ -179,7 +179,7 @@
  * or inactive. There may never be more because of space constraints.
  */
 #define BFL_SELACTIVE	0x01
-#define BFL_EXT13	0x02
+#define BFL_EXTINT13	0x02
 
 /*
  * Scan values for the various keys we use, as returned by the BIOS
@@ -193,7 +193,7 @@
  * Minimum and maximum drive number that is considered to be valid.
  */
 #define MINDRV		0x80
-#define MAXDRV		0x88
+#define MAXDRV		0x87
 
 /*
  * Error codes. Done this way to save space.
@@ -225,8 +225,11 @@ ENTRY(start)
  * do this and pass garbage.
  */
 1:
-	testb	$0x78,%dl
-	jz 3f
+	cmpb	$MINDRV,%dl
+	jl	2f
+	cmpb	$MAXDRV,%dl
+	jle	3f
+2:
 	movb $0x80,%dl
 3:
 	movb_reg_mem(DL,drvno)
@@ -367,7 +370,7 @@ boot:
 	movb_mem_reg(drvno,DL)
 boot2:
 	movb_mem_al(flags)
-	testb	$BFL_EXT13,%al
+	testb	$BFL_EXTINT13,%al
 	jz	noext
 
 	push	%esi
@@ -406,8 +409,6 @@ boot2:
 rderr:
 	movb	$ERR_READ,%al
 errhang:
-	movw_imm_reg(err,SI)
-	call16(putasciz)
 	call16(putc)
 hang:
 	sti
@@ -470,8 +471,6 @@ newline:
 	.asciz	"\r\n"
 prefix:
 	.asciz	"F1: "
-err:
-	.asciz	"E"
 /*
  * Fake partition entry used to boot from other disks. First byte is
  * overloaded, it's also used as storage for the drive number. We're
