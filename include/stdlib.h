@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.47 2000/08/10 10:03:43 kleink Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.48 2000/10/03 19:53:58 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -252,7 +252,9 @@ int	 sradixsort __P((const unsigned char **, int, const unsigned char *,
 
 int	 setenv __P((const char *, const char *, int));
 void	 unsetenv __P((const char *));
-void	 setproctitle __P((const char *, ...));
+void	 setproctitle __P((const char *, ...))
+	    __attribute__((__format__(__printf__, 1, 2)));
+
 
 quad_t	 qabs __P((quad_t));
 qdiv_t	 qdiv __P((quad_t, quad_t));
