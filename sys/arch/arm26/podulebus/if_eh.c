@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.15 2001/03/17 21:56:07 bjh21 Exp $ */
+/* $NetBSD: if_eh.c,v 1.16 2001/03/18 15:56:04 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -53,7 +53,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.15 2001/03/17 21:56:07 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.16 2001/03/18 15:56:04 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -104,7 +104,7 @@ struct eh_softc {
 	bus_space_handle_t	sc_ctlh;
 	bus_space_tag_t		sc_ctl2t;
 	bus_space_handle_t	sc_ctl2h;
-	struct		irq_handler *sc_ih;
+	void			*sc_ih;
 	struct		evcnt	sc_intrcnt;
 	int			sc_flags;
 #define EHF_16BIT	0x01
@@ -320,8 +320,8 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
 	    self->dv_xname, "intr");
-	sc->sc_ih = podulebus_irq_establish(self->dv_parent, pa->pa_slotnum,
-	    IPL_NET, dp8390_intr, self, &sc->sc_intrcnt);
+	sc->sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_NET, dp8390_intr,
+	    self, &sc->sc_intrcnt);
 	if (bootverbose)
 		printf("%s: interrupting at %s\n",
 		       self->dv_xname, irq_string(sc->sc_ih));

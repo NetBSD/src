@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.9 2001/03/17 21:56:07 bjh21 Exp $ */
+/* $NetBSD: podulebus.c,v 1.10 2001/03/18 15:56:05 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -30,7 +30,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: podulebus.c,v 1.9 2001/03/17 21:56:07 bjh21 Exp $");
+__RCSID("$NetBSD: podulebus.c,v 1.10 2001/03/18 15:56:05 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -339,8 +339,8 @@ podulebus_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	return 0;
 }
 
-struct irq_handler *
-podulebus_irq_establish(struct device *self, int slot, int ipl,
+void *
+podulebus_irq_establish(podulebus_intr_handle_t slot, int ipl,
 			int (*func)(void *), void *arg, struct evcnt *ev)
 {
 
