@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.22.10.3 2000/10/18 17:51:16 tv Exp $	*/
+/*	$NetBSD: target.c,v 1.22.10.4 2000/10/20 17:25:01 tv Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.22.10.3 2000/10/18 17:51:16 tv Exp $");
+__RCSID("$NetBSD: target.c,v 1.22.10.4 2000/10/20 17:25:01 tv Exp $");
 #endif
 
 /*
@@ -91,6 +91,7 @@ __RCSID("$NetBSD: target.c,v 1.22.10.3 2000/10/18 17:51:16 tv Exp $");
 #include <sys/stat.h>			/* stat() */
 #include <sys/mount.h>			/* statfs() */
 
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <unistd.h>
