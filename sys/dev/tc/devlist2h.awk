@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.7 2003/12/15 07:32:21 jmc Exp $
+#	$NetBSD: devlist2h.awk,v 1.8 2005/02/27 15:33:58 perry Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
 # All rights reserved.
@@ -37,6 +37,7 @@ BEGIN {
 NR == 1 {
 	VERSION = $0
 	gsub("\\$", "", VERSION)
+	gsub(/ $/, "", VERSION)
 
 	printf("/*\t$NetBSD" "$\t*/\n\n") > dfile
 	printf("/*\n") > dfile
