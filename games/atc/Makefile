@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1995/03/21 15:03:38 cgd Exp $
+#	$NetBSD: Makefile,v 1.10 1996/10/18 02:43:36 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	atc
@@ -23,7 +23,7 @@ beforeinstall:
         else \
                 true ; \
         fi
-	(cd ${.CURDIR}/games; install -c -o ${BINOWN} -g ${BINGRP} -m 400 \
+	(cd ${.CURDIR}/games; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 400 \
 	    ${GAMES} ${DESTDIR}/usr/share/games/atc)
 
 .include <bsd.prog.mk>
