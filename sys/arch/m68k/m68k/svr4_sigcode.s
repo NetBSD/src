@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sigcode.s,v 1.1 2000/11/26 11:47:25 jdolecek Exp $	*/
+/*	$NetBSD: svr4_sigcode.s,v 1.2 2000/11/26 12:02:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,9 +42,18 @@
  *	@(#)locore.s	8.6 (Berkeley) 5/27/94
  */
 
+#include <machine/asm.h>
+
+#ifndef SVR4_SIGF_HANDLER
 /*
- * NOTICE: This is not a standalone file.  To use it, #include it in
- * your port's locore.s, like so:
+ * This check is here so that it's possible to use the file as both
+ * standalone and included into port's locore.s
+ */
+#include "assym.h"
+#endif
+
+/*
+ * NOTICE: This is typically included in port's locore.s, like so:
  *
  *	#ifdef COMPAT_SVR4
  *	#include <m68k/m68k/svr4_sigcode.s>
