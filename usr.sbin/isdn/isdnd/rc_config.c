@@ -27,7 +27,7 @@
  *	i4b daemon - config file processing
  *	-----------------------------------
  *
- *	$Id: rc_config.c,v 1.8 2002/03/17 20:57:24 martin Exp $ 
+ *	$Id: rc_config.c,v 1.9 2002/03/20 11:39:49 skrll Exp $ 
  *
  * $FreeBSD$
  *
@@ -1292,7 +1292,7 @@ check_config(void)
 		}
 
 		if(cep->ppp_expect_auth != AUTH_UNDEF 
-		   || cep->ppp_send_auth == AUTH_UNDEF)
+		   || cep->ppp_send_auth != AUTH_UNDEF)
 			set_isppp_auth(i);
 	}
 	if(error)
