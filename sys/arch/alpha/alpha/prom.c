@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.c,v 1.12 1996/11/13 21:13:11 cgd Exp $	*/
+/*	$NetBSD: prom.c,v 1.13 1997/03/12 04:45:41 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -238,7 +238,8 @@ prom_halt(halt)
 	 * Set "boot request" part of the CPU state depending on what
 	 * we want to happen when we halt.
 	 */
-	p = (struct pcs *)((char *)hwrpb + hwrpb->rpb_pcs_off);
+	p = (struct pcs *)((char *)hwrpb + hwrpb->rpb_pcs_off +
+	    (hwrpb->rpb_primary_cpu_id * hwrpb->rpb_pcs_size));
 	p->pcs_flags &= ~(PCS_RC | PCS_HALT_REQ);
 	if (halt)
 		p->pcs_flags |= PCS_HALT_STAY_HALTED;
