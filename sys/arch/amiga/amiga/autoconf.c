@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.72 2000/03/30 20:58:39 is Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.73 2000/05/18 15:39:22 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -274,7 +274,6 @@ mbattach(pdp, dp, auxp)
 		config_found(dp, "ser", simple_devprint);
 		config_found(dp, "par", simple_devprint);
 		config_found(dp, "kbd", simple_devprint);
-		config_found(dp, "ms", simple_devprint);
 		config_found(dp, "ms", simple_devprint);
 		config_found(dp, "grfcc", simple_devprint);
 		config_found(dp, "fdc", simple_devprint);
