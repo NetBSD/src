@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.52 2001/09/15 20:36:45 chs Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.53 2001/09/23 07:10:08 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -608,6 +608,7 @@ uvm_swapout(p)
 		remrunqueue(p);
 	SCHED_UNLOCK(s);
 	p->p_swtime = 0;
+	p->p_stats->p_ru.ru_nswap++;
 	++uvmexp.swapouts;
 
 	/*
