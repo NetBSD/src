@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.h,v 1.8 1997/07/25 00:03:47 thorpej Exp $ */
+/* $NetBSD: autoconf.h,v 1.9 1997/07/25 06:59:47 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -86,25 +86,31 @@ struct bootdev_data {
  *
  *	a0 contains first free page frame number
  *	a1 contains page number of current level 1 page table
- *	if a2 contains BOOTINFO_MAGIC
- *		a3 contains address of bootinfo
+ *	if a2 contains BOOTINFO_MAGIC:
+ *		a3 contains (boot env. virtual) address of bootinfo
  */
 
 #define	BOOTINFO_MAGIC		0xdeadbeeffeedface
 
 struct bootinfo_v1 {
-	u_long	ssym;		/* start of kernel symbol table */
-	u_long	esym;		/* end of kernel symbol table */
-	char	boot_flags[64];	/* boot flags */
-	char	booted_kernel[64]; /* name of booted kernel */
+	u_long	ssym;			/* 0: start of kernel sym table	*/
+	u_long	esym;			/* 8: end of kernel sym table	*/
+	char	boot_flags[64];		/* 16: boot flags		*/
+	char	booted_kernel[64];	/* 80: name of booted kernel	*/
+	void	*hwrpb;			/* 144: hwrpb pointer */
+	int	(*cngetc) __P((void));	/* 152: console getc pointer	*/
+	void	(*cnputc) __P((int));	/* 160: console putc pointer	*/
+	void	(*cnpollc) __P((int));	/* 168: console pollc pointer	*/
+					/* 176: total size		*/
 };
 
 struct bootinfo {
-	u_int	version;		/* version number */
-	union {
-		struct bootinfo_v1 v1;	/* version 1 boot info */
-		char pad[256];		/* reserve space for future use */
-	} un;
+	u_long	version;		/* 0: version number		*/
+	union {				/* 8: union:			*/
+		struct bootinfo_v1 v1;	/*    version 1 boot info	*/
+		char pad[256];		/*    space rsvd for future use	*/
+	} un;				/*				*/
+					/* 264: total size		*/
 };
 
 #ifdef EVCNT_COUNTERS
