@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.149 2000/02/01 01:24:38 assar Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.150 2000/02/16 11:57:46 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -78,6 +78,8 @@ static int rename_files __P((const char *, const char *, struct proc *, int));
 void checkdirs __P((struct vnode *));
 int dounmount __P((struct mount *, int, struct proc *));
 
+int dovfsusermount = 0;
+
 /*
  * Virtual File System System Calls
  */
@@ -140,6 +142,8 @@ sys_mount(p, v, retval)
 	struct nameidata nd;
 	struct vfsops *vfs;
 
+	if (dovfsusermount == 0 && (error = suser(p->p_ucred, &p->p_acflag)))
+		return (error);
 	/*
 	 * Get vnode to be covered
 	 */
