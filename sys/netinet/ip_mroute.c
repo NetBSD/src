@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.54 2001/05/08 10:07:15 itojun Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.55 2001/06/02 16:17:10 thorpej Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -996,6 +996,11 @@ ip_mforward(m, ifp)
     struct vif *vifp;
     vifi_t vifi;
 #endif /* RSVP_ISI */
+
+    /*
+     * Clear any in-bound checksum flags for this packet.
+     */
+    m->m_pkthdr.csum_flags = 0;
 
     if (mrtdebug & DEBUG_FORWARD)
 	log(LOG_DEBUG, "ip_mforward: src %x, dst %x, ifp %p\n",

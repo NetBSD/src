@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.85 2001/05/26 21:27:09 ragge Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.86 2001/06/02 16:17:10 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -172,7 +172,7 @@ ip_output(m0, va_alist)
 	struct in_ifaddr *ia;
 	struct mbuf *opt;
 	struct route *ro;
-	int flags;
+	int flags, sw_csum;
 	int *mtu_p;
 	int mtu;
 	struct ip_moptions *imo;
@@ -213,7 +213,7 @@ ip_output(m0, va_alist)
 	 */
 	if ((flags & (IP_FORWARDING|IP_RAWOUTPUT)) == 0) {
 		ip->ip_v = IPVERSION;
-		ip->ip_off &= IP_DF;
+		ip->ip_off = 0;
 		ip->ip_id = htons(ip_id++);
 		ip->ip_hl = hlen >> 2;
 		ipstat.ips_localout++;
@@ -484,6 +484,20 @@ sendit:
 		state.ro = ro;
 	state.dst = (struct sockaddr *)dst;
 
+	/*
+	 * We can't defer the checksum of payload data if
+	 * we're about to encrypt/authenticate it.
+	 *
+	 * XXX When we support crypto offloading functions of
+	 * XXX network interfaces, we need to reconsider this,
+	 * XXX since it's likely that they'll support checksumming,
+	 * XXX as well.
+	 */
+	if (m->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
+		in_delayed_cksum(m);
+		m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
+	}
+
 	error = ipsec4_output(&state, sp, flags);
 
 	m = state.m;
@@ -571,14 +585,47 @@ skip_ipsec:
 		if (ia)
 			ia->ia_ifa.ifa_data.ifad_outbytes += ip_len;
 #endif
+		/*
+		 * Always initialize the sum to 0!  Some HW assisted
+		 * checksumming requires this.
+		 */
 		ip->ip_sum = 0;
-		ip->ip_sum = in_cksum(m, hlen);
+		m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+
+		sw_csum = m->m_pkthdr.csum_flags & ~ifp->if_csum_flags;
+
+		/*
+		 * Perform any checksums that the hardware can't do
+		 * for us.
+		 *
+		 * XXX Does any hardware require the {th,uh}_sum
+		 * XXX fields to be 0?
+		 */
+		if (sw_csum & M_CSUM_IPv4)
+			ip->ip_sum = in_cksum(m, hlen);
+		if (sw_csum & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
+			in_delayed_cksum(m);
+			sw_csum &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
+		}
+		m->m_pkthdr.csum_flags &= ifp->if_csum_flags;
+
 #ifdef IPSEC
 		/* clean ipsec history once it goes out of the node */
 		ipsec_delaux(m);
 #endif
 		error = (*ifp->if_output)(ifp, m, sintosa(dst), ro->ro_rt);
 		goto done;
+	}
+
+	/*
+	 * We can't use HW checksumming if we're about to
+	 * to fragment the packet.
+	 *
+	 * XXX Some hardware can do this.
+	 */
+	if (m->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
+		in_delayed_cksum(m);
+		m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
 	}
 
 	/*
@@ -725,6 +772,32 @@ done:
 bad:
 	m_freem(m);
 	goto done;
+}
+
+/*
+ * Process a delayed payload checksum calculation.
+ */
+void
+in_delayed_cksum(struct mbuf *m)
+{
+	struct ip *ip;
+	u_int16_t csum, offset;
+
+	ip = mtod(m, struct ip *);
+	offset = ip->ip_hl << 2;
+	csum = in4_cksum(m, 0, offset, ntohs(ip->ip_len) - offset);
+	if (csum == 0 && (m->m_pkthdr.csum_flags & M_CSUM_UDPv4) != 0)
+		csum = 0xffff;
+
+	offset += m->m_pkthdr.csum_data;	/* checksum offset */
+
+	if ((offset + sizeof(u_int16_t)) > m->m_len) {
+		/* XXX This should basically never happen. */
+		printf("in_delayed_cksum: pullup len %d off %d proto %d\n",
+		    m->m_len, offset, ip->ip_p);
+		m_copyback(m, offset, sizeof(csum), (caddr_t) &csum);
+	} else
+		*(u_int16_t *)(mtod(m, caddr_t) + offset) = csum;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.77 2001/05/31 19:56:13 soda Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.78 2001/06/02 16:17:11 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,6 +66,7 @@
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
+#include "opt_inet_csum.h"
 #include "opt_ipkdb.h"
 
 #include <sys/param.h>
@@ -160,6 +161,26 @@ static	void udp_notify __P((struct inpcb *, int));
 #endif
 int	udbhashsize = UDBHASHSIZE;
 
+#ifdef UDP_CSUM_COUNTERS
+#include <sys/device.h>
+
+struct evcnt udp_hwcsum_bad = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "udp", "hwcsum bad");
+struct evcnt udp_hwcsum_ok = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "udp", "hwcsum ok");
+struct evcnt udp_hwcsum_data = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "udp", "hwcsum data");
+struct evcnt udp_swcsum = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "udp", "swcsum");
+
+#define	UDP_CSUM_COUNTER_INCR(ev)	(ev)->ev_count++
+
+#else
+
+#define	UDP_CSUM_COUNTER_INCR(ev)	/* nothing */
+
+#endif /* UDP_CSUM_COUNTERS */
+
 void
 udp_init()
 {
@@ -167,6 +188,13 @@ udp_init()
 #ifdef INET
 	in_pcbinit(&udbtable, udbhashsize, udbhashsize);
 #endif
+
+#ifdef UDP_CSUM_COUNTERS
+	evcnt_attach_static(&udp_hwcsum_bad);
+	evcnt_attach_static(&udp_hwcsum_ok);
+	evcnt_attach_static(&udp_hwcsum_data);
+	evcnt_attach_static(&udp_swcsum);
+#endif /* UDP_CSUM_COUNTERS */
 }
 
 #ifndef UDP6
@@ -255,10 +283,30 @@ udp_input(m, va_alist)
 	 * Checksum extended UDP header and data.
 	 */
 	if (uh->uh_sum) {
-		if (in4_cksum(m, IPPROTO_UDP, iphlen, len) != 0) {
-			udpstat.udps_badsum++;
-			m_freem(m);
-			return;
+		switch (m->m_pkthdr.csum_flags &
+			((m->m_pkthdr.rcvif->if_csum_flags & M_CSUM_UDPv4) |
+			 M_CSUM_TCP_UDP_BAD | M_CSUM_DATA)) {
+		case M_CSUM_UDPv4|M_CSUM_TCP_UDP_BAD:
+			UDP_CSUM_COUNTER_INCR(&udp_hwcsum_bad);
+			goto badcsum;
+
+		case M_CSUM_UDPv4|M_CSUM_DATA:
+			UDP_CSUM_COUNTER_INCR(&udp_hwcsum_data);
+			if ((m->m_pkthdr.csum_data ^ 0xffff) != 0)
+				goto badcsum;
+			break;
+
+		case M_CSUM_UDPv4:
+			/* Checksum was okay. */
+			UDP_CSUM_COUNTER_INCR(&udp_hwcsum_ok);
+			break;
+
+		default:
+			/* Need to compute it ourselves. */
+			UDP_CSUM_COUNTER_INCR(&udp_swcsum);
+			if (in4_cksum(m, IPPROTO_UDP, iphlen, len) != 0)
+				goto badcsum;
+			break;
 		}
 	}
 
@@ -322,6 +370,11 @@ udp_input(m, va_alist)
 bad:
 	if (m)
 		m_freem(m);
+	return;
+
+badcsum:
+	m_freem(m);
+	udpstat.udps_badsum++;
 }
 #endif
 
@@ -946,13 +999,33 @@ udp_input(m, va_alist)
 	 * Checksum extended UDP header and data.
 	 */
 	if (uh->uh_sum) {
-		bzero(((struct ipovly *)ip)->ih_x1,
-		    sizeof ((struct ipovly *)ip)->ih_x1);
-		((struct ipovly *)ip)->ih_len = uh->uh_ulen;
-		if (in_cksum(m, len + sizeof (struct ip)) != 0) {
-			udpstat.udps_badsum++;
-			m_freem(m);
-			return;
+		switch (m->m_pkthdr.csum_flags &
+			((m->m_pkthdr.rcvif->if_csum_flags & M_CSUM_UDPv4) |
+			 M_CSUM_TCP_UDP_BAD | M_CSUM_DATA)) {
+		case M_CSUM_UDPv4|M_CSUM_TCP_UDP_BAD:
+			UDP_CSUM_COUNTER_INCR(&udp_hwcsum_bad);
+			goto badcsum;
+
+		case M_CSUM_UDPv4|M_CSUM_DATA:
+			UDP_CSUM_COUNTER_INCR(&udp_hwcsum_data);
+			if ((m->m_pkthdr.csum_data ^ 0xffff) != 0)
+				goto badcsum;
+			break;
+
+		case M_CSUM_UDPv4:
+			/* Checksum was okay. */
+			UDP_CSUM_COUNTER_INCR(&udp_hwcsum_ok);
+			break;
+
+		default:
+			/* Need to compute it ourselves. */
+			UDP_CSUM_COUNTER_INCR(&udp_swcsum);
+			bzero(((struct ipovly *)ip)->ih_x1,
+			    sizeof ((struct ipovly *)ip)->ih_x1);
+			((struct ipovly *)ip)->ih_len = uh->uh_ulen;
+			if (in_cksum(m, len + sizeof (struct ip)) != 0)
+				goto badcsum;
+			break;
 		}
 	}
 
@@ -1140,6 +1213,11 @@ bad:
 	m_freem(m);
 	if (opts)
 		m_freem(opts);
+	return;
+
+badcsum:
+	udpstat.udps_badsum++;
+	m_freem(m);
 }
 #endif /*UDP6*/
 
@@ -1237,23 +1315,28 @@ udp_output(m, va_alist)
 	 * and addresses and length put into network format.
 	 */
 	ui = mtod(m, struct udpiphdr *);
-	bzero(ui->ui_x1, sizeof ui->ui_x1);
 	ui->ui_pr = IPPROTO_UDP;
-	ui->ui_len = htons((u_int16_t)len + sizeof (struct udphdr));
 	ui->ui_src = inp->inp_laddr;
 	ui->ui_dst = inp->inp_faddr;
 	ui->ui_sport = inp->inp_lport;
 	ui->ui_dport = inp->inp_fport;
-	ui->ui_ulen = ui->ui_len;
+	ui->ui_ulen = htons((u_int16_t)len + sizeof(struct udphdr));
 
 	/*
-	 * Stuff checksum and output datagram.
+	 * Set up checksum and output datagram.
 	 */
-	ui->ui_sum = 0;
 	if (udpcksum) {
-	    if ((ui->ui_sum = in_cksum(m, sizeof (struct udpiphdr) + len)) == 0)
-		ui->ui_sum = 0xffff;
-	}
+		/*
+		 * XXX Cache pseudo-header checksum part for
+		 * XXX "connected" UDP sockets.
+		 */
+		ui->ui_sum = in_cksum_phdr(ui->ui_src.s_addr,
+		    ui->ui_dst.s_addr, htons((u_int16_t)len +
+		    sizeof(struct udphdr) + IPPROTO_UDP));
+		m->m_pkthdr.csum_flags = M_CSUM_UDPv4;
+		m->m_pkthdr.csum_data = offsetof(struct udphdr, uh_sum);
+	} else
+		ui->ui_sum = 0;
 	((struct ip *)ui)->ip_len = sizeof (struct udpiphdr) + len;
 	((struct ip *)ui)->ip_ttl = inp->inp_ip.ip_ttl;	/* XXX */
 	((struct ip *)ui)->ip_tos = inp->inp_ip.ip_tos;	/* XXX */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.65 2001/04/03 06:14:31 itojun Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.66 2001/06/02 16:17:10 thorpej Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -857,32 +857,47 @@ send:
 		tp->snd_up = tp->snd_una;		/* drag it along */
 
 	/*
-	 * Put TCP length in extended header, and then
-	 * checksum extended header and data.
+	 * Set ourselves up to be checksummed just before the packet
+	 * hits the wire.
 	 */
 	switch (af) {
 #ifdef INET
 	case AF_INET:
-	    {
-		struct ipovly *ipov = (struct ipovly *)ip;
-		if (len + optlen)
-			ipov->ih_len = htons((u_int16_t)(sizeof(struct tcphdr) +
-			    optlen + len));
-		bzero(ipov->ih_x1, sizeof(ipov->ih_x1));
-		th->th_sum = 0;
-		th->th_sum = in_cksum(m, (int)(hdrlen + len));
+		m->m_pkthdr.csum_flags = M_CSUM_TCPv4;
+		m->m_pkthdr.csum_data = offsetof(struct tcphdr, th_sum);
+		if (len + optlen) {
+			/* Fixup the pseudo-header checksum. */
+			/* XXXJRT Not IP Jumbogram safe. */
+			th->th_sum = in_cksum_addword(th->th_sum,
+			    htons((u_int16_t) (len + optlen)));
+		}
 		break;
-	    }
 #endif
 #ifdef INET6
 	case AF_INET6:
+		/*
+		 * XXX Actually delaying the checksum is Hard
+		 * XXX (well, maybe not for Itojun, but it is
+		 * XXX for me), but we can still take advantage
+		 * XXX of the cached pseudo-header checksum.
+		 */
 		/* equals to hdrlen + len */
 		m->m_pkthdr.len = sizeof(struct ip6_hdr)
 			+ sizeof(struct tcphdr) + optlen + len;
-		th->th_sum = 0;
-		th->th_sum = in6_cksum(m, IPPROTO_TCP,
-				sizeof(struct ip6_hdr),
-				sizeof(struct tcphdr) + optlen + len);
+#ifdef notyet
+		m->m_pkthdr.csum_flags = M_CSUM_TCPv6;
+		m->m_pkthdr.csum_data = offsetof(struct tcphdr, th_sum);
+#endif
+		if (len + optlen) {
+			/* Fixup the pseudo-header checksum. */
+			/* XXXJRT: Not IPv6 Jumbogram safe. */
+			th->th_sum = in_cksum_addword(th->th_sum,
+			    htons((u_int16_t) (len + optlen)));
+		}
+#ifndef notyet
+		th->th_sum = in6_cksum(m, 0, sizeof(struct ip6_hdr),
+		    sizeof(struct tcphdr) + optlen + len);
+#endif
 		break;
 #endif
 	}
