@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.72 1998/09/22 13:08:44 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.73 1998/09/22 13:39:20 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -382,7 +382,7 @@ extern void cpu_hatch __P((void));
 	 * Flush entire cache here, since the CPU may start with
 	 * caches off, hence no cache-coherency may be assumed.
 	 */
-	/*XXX*/cpuinfo.cache_flush((caddr_t)KERNBASE, 0xff000000U - KERNBASE);
+	cpuinfo.cache_flush_all();
 	(*promvec->pv_v3cpustart)(cip->node, (u_int)&rr, 0, pc);
 
 	/*
@@ -548,6 +548,7 @@ struct module_info module_sun4 = {
 	sun4_vcache_flush_context,
 	noop_pcache_flush_line,
 	noop_pure_vcache_flush,
+	noop_cache_flush_all,
 	0
 };
 
@@ -673,6 +674,7 @@ struct module_info module_sun4c = {
 	sun4_vcache_flush_context,
 	noop_pcache_flush_line,
 	noop_pure_vcache_flush,
+	noop_cache_flush_all,
 	0
 };
 
@@ -870,6 +872,7 @@ struct module_info module_ms1 = {
 	noop_vcache_flush_context,
 	noop_pcache_flush_line,
 	noop_pure_vcache_flush,
+	ms1_cache_flush_all,
 	memerr4m
 };
 
@@ -897,6 +900,7 @@ struct module_info module_ms2 = {		/* UNTESTED */
 	srmmu_vcache_flush_context,
 	noop_pcache_flush_line,
 	noop_pure_vcache_flush,
+	srmmu_cache_flush_all,
 	memerr4m
 };
 
@@ -919,6 +923,7 @@ struct module_info module_swift = {		/* UNTESTED */
 	srmmu_vcache_flush_context,
 	srmmu_pcache_flush_line,
 	noop_pure_vcache_flush,
+	srmmu_cache_flush_all,
 	memerr4m
 };
 
@@ -957,6 +962,7 @@ struct module_info module_viking = {		/* UNTESTED */
 	noop_vcache_flush_context,
 	viking_pcache_flush_line,
 	noop_pure_vcache_flush,
+	noop_cache_flush_all,
 	viking_memerr
 };
 
@@ -1037,6 +1043,7 @@ struct module_info module_hypersparc = {		/* UNTESTED */
 	srmmu_vcache_flush_context,
 	srmmu_pcache_flush_line,
 	hypersparc_pure_vcache_flush,
+	hypersparc_cache_flush_all,
 	hypersparc_memerr
 };
 
@@ -1085,6 +1092,7 @@ struct module_info module_cypress = {		/* UNTESTED */
 	srmmu_vcache_flush_context,
 	srmmu_pcache_flush_line,
 	noop_pure_vcache_flush,
+	srmmu_cache_flush_all,
 	memerr4m
 };
 
@@ -1107,6 +1115,7 @@ struct module_info module_turbosparc = {	/* UNTESTED */
 	srmmu_vcache_flush_context,
 	srmmu_pcache_flush_line,
 	noop_pure_vcache_flush,
+	srmmu_cache_flush_all,
 	memerr4m
 };
 
@@ -1329,6 +1338,7 @@ getcpuinfo(sc, node)
 		MPCOPY(vcache_flush_context);
 		MPCOPY(pcache_flush_line);
 		MPCOPY(pure_vcache_flush);
+		MPCOPY(cache_flush_all);
 		MPCOPY(memerr);
 #undef MPCOPY
 		return;
