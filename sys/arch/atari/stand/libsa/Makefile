@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2002/04/08 17:25:54 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.16 2002/05/05 15:30:05 jdolecek Exp $
 
 LIB=	sa
 
@@ -50,7 +50,7 @@ S_MACHSA=${S}/arch/atari/stand/libsa
 
 .PATH:  ${S_SA} ${S_KERN}
 
-.if !make(obj)
+.if !make(obj) && !make(cleandir)
 .BEGIN:
 	@([ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine)
 	@([ -h ${MACHINE_ARCH} ] || ln -s ${S}/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH})
