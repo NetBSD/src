@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.9 1999/12/24 09:08:50 agc Exp $ */
+/* $NetBSD: user.c,v 1.10 1999/12/31 21:58:14 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -151,10 +151,10 @@ enum {
 
 /* Full paths of programs used here */
 #define CHOWN		"/usr/sbin/chown"
-#define CP		"/bin/cp"
-#define FALSE_PROG	"/usr/bin/false"
 #define MKDIR		"/bin/mkdir"
 #define MV		"/bin/mv"
+#define NOLOGIN		"/sbin/nologin"
+#define PAX		"/bin/pax"
 #define RM		"/bin/rm"
 
 #define UNSET_EXPIRY	"Null (unset)"
@@ -254,17 +254,16 @@ copydotfiles(char *skeldir, int uid, int gid, char *dir)
 		    strcmp(dp->d_name, "..") == 0) {
 			continue;
 		}
-		if (dp->d_name[0] == '.' && isalnum(dp->d_name[1])) {
-			n = 1;
-		}
+		n = 1;
 	}
 	(void) closedir(dirp);
 	if (n == 0) {
 		warnx("No \"dot\" initialisation files found");
 	} else {
-		(void) asystem("%s -p -R %s/.[A-z]* %s", CP, skeldir, dir);
+		(void) asystem("cd %s; %s -rw -pe %s . %s", 
+				skeldir, PAX, (verbose) ? "-v" : "", dir);
 	}
-	(void) asystem("%s -R %d:%d %s", CHOWN, uid, gid, dir);
+	(void) asystem("%s -R -h %d:%d %s", CHOWN, uid, gid, dir);
 	return n;
 }
 
@@ -783,7 +782,7 @@ moduser(char *login, char *newlogin, user_t *up)
 		errx(EXIT_FAILURE, "`%s' is not a valid login name", login);
 	}
 	if ((pwp = getpwnam(login)) == (struct passwd *) NULL) {
-		err(EXIT_FAILURE, "No such user `%s'", login);
+		errx(EXIT_FAILURE, "No such user `%s'", login);
 	}
 	if ((masterfd = open(MASTER, O_RDONLY)) < 0) {
 		err(EXIT_FAILURE, "can't open `%s'", MASTER);
@@ -947,8 +946,8 @@ void
 usermgmt_usage(char *prog)
 {
 	if (strcmp(prog, "useradd") == 0) {
-		(void) fprintf(stderr, "Usage: %s -D [-b basedir] [-e expiry] [-f inactive] [-g group] [-r range] [-s shell]\n", prog);
-		(void) fprintf(stderr, "Usage: %s [-G group] [-b basedir] [-c comment] [-d homedir] [-e expiry] [-f inactive]\n\t[-g group] [-k skeletondir] [-m] [-o] [-p password] [-r range] [-s shell]\n\t[-u uid] [-v] user\n", prog);
+		(void) fprintf(stderr, "Usage: %s -D [-b basedir] [-e expiry] [-f inactive] [-g group] [-r lowuid..highuid] [-s shell]\n", prog);
+		(void) fprintf(stderr, "Usage: %s [-G group] [-b basedir] [-c comment] [-d homedir] [-e expiry] [-f inactive]\n\t[-g group] [-k skeletondir] [-m] [-o] [-p password] [-r lowuid..highuid] [-s shell]\n\t[-u uid] [-v] user\n", prog);
 	} else if (strcmp(prog, "usermod") == 0) {
 		(void) fprintf(stderr, "Usage: %s [-G group] [-c comment] [-d homedir] [-e expire] [-f inactive] [-g group] [-l newname] [-m] [-o] [-p password] [-s shell] [-u uid] [-v] user\n", prog);
 	} else if (strcmp(prog, "userdel") == 0) {
@@ -1232,7 +1231,7 @@ userdel(int argc, char **argv)
 	}
 	checkeuid();
 	if ((pwp = getpwnam(argv[optind])) == (struct passwd *) NULL) {
-		warn("No such user `%s'", argv[optind]);
+		warnx("No such user `%s'", argv[optind]);
 		return EXIT_FAILURE;
 	}
 	if (rmhome) {
@@ -1243,7 +1242,7 @@ userdel(int argc, char **argv)
 		(void) asystem("%s -rf %s", RM, pwp->pw_dir);
 	}
 	if (u.u_preserve) {
-		memsave(&u.u_shell, FALSE_PROG, strlen(FALSE_PROG));
+		memsave(&u.u_shell, NOLOGIN, strlen(NOLOGIN));
 		(void) memset(password, '*', PasswordLength);
 		password[PasswordLength] = 0;
 		memsave(&u.u_password, password, PasswordLength);
