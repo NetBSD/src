@@ -38,6 +38,7 @@
 #define ALIAS_DB_MAP	"hash:/etc/mail/aliases"
 #if (defined(__NetBSD_Version__) && __NetBSD_Version__ >= 104000000)
 /* NetBSD 1.4 and later has basename(3) */
+#include <libgen.h>
 #define HAVE_BASENAME
 #endif
 #else
