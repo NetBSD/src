@@ -1,20 +1,22 @@
 #
 # DECstation (3100 or 2100) config file
 #
-# 	$NetBSD: DS3100,v 1.1 1996/09/18 13:43:37 jonathan Exp $
+# 	$NetBSD: DS3100,v 1.2 1996/10/16 08:29:35 jonathan Exp $
 #
-include		"std.pmax"
+include		"arch/pmax/conf/std.pmax"
 
 maxusers	64
 
-options		CPU_R3000		# R2000/R3000 support
+options		MIPS1			# R2000/R3000 support (new)
+#options	MIPS3			# R4000/R4400 support (not finished)
+
 
 # Support for specific models of DECstation
 options		DS3100			# PMAX (kn01) DECstation 2100, 3100
-#options		DS5000_25		# MAXINE (kn02ca/xine) support
-#options		DS5000_100		# 3MIN (kn02ba/kmin) support
-#options		DS5000_200		# 3MAX (kn02) support
-#options		DS5000_240		# 3MAXPLUS (kn03) support
+#options 	DS5000_25		# MAXINE (kn02ca/xine) support
+#options 	DS5000_100		# 3MIN (kn02ba/kmin) support
+#options 	DS5000_200		# 3MAX (kn02) support
+#options 	DS5000_240		# 3MAXPLUS (kn03) support
 
 
 
@@ -65,8 +67,16 @@ options		GATEWAY		# IP packet forwarding
 #options	TPIP
 #options	EON
 
+
+# NetBSD backwards compatibility
+#options	COMPAT_10	# NetBSD 1.0, (needed for X on 386?)
+#options	COMPAT_11	# NetBSD 1.1,
+options		COMPAT_12	# Netbsd 1.2 reboot()
+
+
 # pmax specific
 options		COMPAT_ULTRIX	# ultrix compatibility
+options		EXEC_ECOFF	# Ultrix RISC binaries are ECOFF format
 options		"HZ=256"	# RTC rate required
 
 # Note that this configuration is unlikely to work, yet...
@@ -79,21 +89,21 @@ config		netbsd root on rz0a swap on rz0b and rz1b dumps on rz0b
 ########################################################################
 
 # TC bus and supported options. (All but PMAXes have a turbochannel.)
-#include	"tc.std"
+#include 	"arch/pmax/conf/tc.std"
 
 # ioasic standard baseboard options (5000/2x, 5000/1xx, 5000/2[46]0
-#include "builtin.ioasic"
+#include 	"arch/pmax/conf/builtin.ioasic"
 
 # MAXINE-only ioasic baseboard devices and on-baseboard "options"
-#include	"builtin.maxine"
+#include 	"arch/pmax/conf/builtin.maxine"
 
 # 5000/200-only (aka 3MAX aka KN02) baseboard devices.
 # (KN02 has turbochannel but no	IOASIC).
-#include	"builtin.3max"
+#include 	"arch/pmax/conf/builtin.3max"
 
 # 2100/3100-only (aka PMAX aka KN01) baseboard devices.
 # (may also be present on a 5100).
-include "builtin.3100"
+include 	"arch/pmax/conf/builtin.3100"
 
 ########################################################################
 # SCSI configuration                                                   #
@@ -103,8 +113,8 @@ oldscsibus*	at sii?
 #
 # SCSI configuration for old 4.4bsd/pmax DECstation SCSI driver
 #
-include "scsi.pmax"
-#include "mi.scsi"		# not yet supported on DECstations
+include 	"arch/pmax/conf/scsi.pmax"
+#include 	"arch/pmax/conf/mi.scsi"		# not yet supported
 
 
 ########################################################################
