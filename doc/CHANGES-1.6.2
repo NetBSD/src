@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.127 2003/08/27 10:57:14 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.128 2003/08/31 09:44:09 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1398,4 +1398,29 @@ etc/rc.d/ipnat					1.10
 	ipnat needs to be before SERVERS - one may need NAT for servers to work
 	(eg, ntpdate).
 	[martti, ticket #1442]
+
+distrib/notes/sparc/whatis			1.15
+
+	pk posted that a longstanding MMU problem with sun4c systems has been
+	fixed. Benefits primarily stability and SS1, SS1+, and IPC system
+	speed.
+	[mbw, ticket #1377]
+
+bin/df/df.c					1.48
+
+	Bump ifree/iused field width.
+	[simonb, ticket #1378]
+
+sys/arch/alpha/conf/GENERIC			1.214
+
+	Add options QUOTA; pointed out by Mattias Karlsson
+	also move options NFSSERVER after options SOFTDEP
+	[keihan, ticket #1385]
+
+usr.sbin/mailwrapper/mailer.conf.5		1.10-1.12
+usr.sbin/mailwrapper/mailwrapper.c		1.7
+
+	Actually make additional arguments in mailer.conf useful, and document
+	them. Reviewed by perry and wiz.
+	[is, ticket #1390]
 
