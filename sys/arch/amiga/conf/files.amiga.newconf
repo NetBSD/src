@@ -1,5 +1,5 @@
 #
-#	$Id: files.amiga.newconf,v 1.11 1994/07/16 02:26:21 chopps Exp $
+#	$Id: files.amiga.newconf,v 1.12 1994/10/06 19:07:20 chopps Exp $
 #
 
 maxusers 2 8 64
@@ -121,6 +121,10 @@ file	arch/amiga/dev/mgnsc.c		mgnsc needs-flag
 # MacroSystems Warp Engine
 device	wesc at zthreebus: scsi, siop
 file	arch/amiga/dev/wesc.c		wesc needs-flag
+
+# C= A4091
+device	afsc at zthreebus: scsi, siop
+file	arch/amiga/dev/afsc.c		afsc needs-flag
 
 # ncr 5380 controllers
 define	sci
