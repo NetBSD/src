@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.17 2005/02/06 05:53:07 perry Exp $	*/
+/*	$NetBSD: auth.c,v 1.18 2005/02/19 21:55:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)auth.c	8.3 (Berkeley) 5/30/95"
 #else
-__RCSID("$NetBSD: auth.c,v 1.17 2005/02/06 05:53:07 perry Exp $");
+__RCSID("$NetBSD: auth.c,v 1.18 2005/02/19 21:55:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -185,7 +185,17 @@ Authenticator authenticators[] = {
 				rsaencpwd_status,
 				rsaencpwd_printsub },
 #endif
-	{ 0, },
+#ifdef SRA
+	{ AUTHTYPE_SRA, AUTH_WHO_CLIENT|AUTH_HOW_ONE_WAY,
+				sra_init,
+				sra_send,
+				sra_is,
+				sra_reply,
+				sra_status,
+				sra_printsub },
+
+#endif
+	{ 0, 0, 0, 0, 0, 0, 0, 0 },
 };
 
 static Authenticator NoAuth = { 0 };
@@ -239,7 +249,7 @@ auth_disable_name(name)
 {
 	int x;
 	for (x = 0; x < AUTHTYPE_CNT; ++x) {
-		if (!strcasecmp(name, AUTHTYPE_NAME(x))) {
+		if (AUTHTYPE_NAME(x) && !strcasecmp(name, AUTHTYPE_NAME(x))) {
 			i_wont_support |= typemask(x);
 			break;
 		}
@@ -253,13 +263,13 @@ getauthmask(type, maskp)
 {
 	register int x;
 
-	if (!strcasecmp(type, AUTHTYPE_NAME(0))) {
+	if (AUTHTYPE_NAME(0) && !strcasecmp(type, AUTHTYPE_NAME(0))) {
 		*maskp = -1;
 		return(1);
 	}
 
 	for (x = 1; x < AUTHTYPE_CNT; ++x) {
-		if (!strcasecmp(type, AUTHTYPE_NAME(x))) {
+		if (AUTHTYPE_NAME(x) && !strcasecmp(type, AUTHTYPE_NAME(x))) {
 			*maskp = typemask(x);
 			return(1);
 		}
