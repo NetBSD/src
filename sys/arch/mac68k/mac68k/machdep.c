@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.223.2.2 1999/03/08 02:06:14 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.223.2.3 1999/03/18 09:22:04 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -341,17 +341,18 @@ consinit(void)
 	static int init;	/* = 0 */
 
 	if (!init) {
-#if (NAKBD > 0) && (NWSKBD > 0)
-		akbd_cnattach();
-#endif
 		cninit();
 		init = 1;
 	} else {
-		mac68k_calibrate_delay();
-
 #if (NMACFB > 0) && (NWSDISPLAY > 0)
 		macfb_cnattach(mac68k_vidphys);
 #endif
+#if (NAKBD > 0) && (NWSKBD > 0)
+		akbd_cnattach();
+#endif
+
+		mac68k_calibrate_delay();
+
 #if NZSC > 0 && defined(KGDB)
 		zs_kgdb_init();
 #endif
