@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.13 2002/01/31 19:36:56 tv Exp $ */
+/* $NetBSD: read.c,v 1.13.4.1 2004/06/22 07:18:49 tron Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -32,9 +32,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.13 2002/01/31 19:36:56 tv Exp $");
+__RCSID("$NetBSD: read.c,v 1.13.4.1 2004/06/22 07:18:49 tron Exp $");
 #endif
 
 #include <ctype.h>

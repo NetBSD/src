@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc64.c,v 1.13 2002/05/15 02:18:24 lukem Exp $	*/
+/*	$NetBSD: sparc64.c,v 1.13.4.1 2004/06/22 07:18:49 tron Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -64,9 +64,13 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: sparc64.c,v 1.13 2002/05/15 02:18:24 lukem Exp $");
+__RCSID("$NetBSD: sparc64.c,v 1.13.4.1 2004/06/22 07:18:49 tron Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>

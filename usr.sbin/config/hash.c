@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.13 2003/11/25 19:34:05 rafal Exp $	*/
+/*	$NetBSD: hash.c,v 1.13.2.1 2004/06/22 07:18:49 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,6 +39,10 @@
  *
  *	from: @(#)hash.c	8.1 (Berkeley) 6/6/93
  */
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 
 #include <sys/param.h>
 #include <stdlib.h>
