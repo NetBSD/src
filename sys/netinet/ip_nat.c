@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.34.2.1 2000/08/31 14:49:50 veego Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.34.2.2 2000/08/31 14:58:06 veego Exp $	*/
 
 /*
  * Copyright (C) 1995-2000 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_nat.c,v 1.34.2.1 2000/08/31 14:49:50 veego Exp $";
+static const char rcsid[] = "$NetBSD: ip_nat.c,v 1.34.2.2 2000/08/31 14:58:06 veego Exp $";
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.37.2.20 2000/08/08 16:01:01 darrenr Exp";
@@ -1492,7 +1492,9 @@ int dir;
 
 	oip = (ip_t *)((char *)fin->fin_dp + 8);
 	minlen = (oip->ip_hl << 2);
-	if (ip->ip_len < ICMPERR_MINPKTLEN + minlen)
+	if (minlen < sizeof(ip_t))
+		return NULL;
+	if (ip->ip_len < ICMPERR_IPICMPHLEN + minlen)
 		return NULL;
 	/*
 	 * Is the buffer big enough for all of it ?  It's the size of the IP
@@ -1526,7 +1528,7 @@ int dir;
 		flags = IPN_UDP;
 	if (flags & IPN_TCPUDP) {
 		minlen += 8;		/* + 64bits of data to get ports */
-		if (ip->ip_len < ICMPERR_MINPKTLEN + minlen)
+		if (ip->ip_len < ICMPERR_IPICMPHLEN + minlen)
 			return NULL;
 		tcp = (tcphdr_t *)((char *)oip + (oip->ip_hl << 2));
 		if (dir == NAT_INBOUND)
