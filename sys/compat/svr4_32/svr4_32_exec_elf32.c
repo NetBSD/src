@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec_elf32.c,v 1.8 2002/11/29 19:13:16 jdolecek Exp $	 */
+/*	$NetBSD: svr4_32_exec_elf32.c,v 1.9 2002/12/22 02:54:34 mrg Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.8 2002/11/29 19:13:16 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.9 2002/12/22 02:54:34 mrg Exp $");
 
 #define	ELFSIZE		32				/* XXX should die */
 
@@ -86,7 +86,7 @@ svr4_32_copyargs(p, pack, arginfo, stackp, argp)
 	size_t len;
 	AuxInfo ai[SVR4_32_AUX_ARGSIZ], *a, *platform=NULL, *exec=NULL;
 	struct elf_args *ap;
-	extern char platform_type[32];
+	extern char machine_model[];
 	int error;
 
 	if ((error = netbsd32_copyargs(p, pack, arginfo, stackp, argp)) != 0)
@@ -180,9 +180,9 @@ svr4_32_copyargs(p, pack, arginfo, stackp, argp)
 		/* Copy out the platform name. */
 		platform->a_v = (u_long)(*stackp) + len;
 		/* XXXX extremely inefficient.... */
-		strcpy(ptr, platform_type);
-		ptr += strlen(platform_type) + 1;
-		len += strlen(platform_type) + 1;
+		strcpy(ptr, machine_model);
+		ptr += strlen(machine_model) + 1;
+		len += strlen(machine_model) + 1;
 
 		if (exec) {
 			path = pack->ep_ndp->ni_cnd.cn_pnbuf;
