@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.13 1997/03/19 02:43:03 mark Exp $ */
+/* $NetBSD: if_eb.c,v 1.14 1997/07/31 00:09:48 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -1287,8 +1287,6 @@ ebgetpackets(sc)
 			WriteShort(iobase + EB_8004_CONFIG2, sc->sc_config2);
 			eb_reinit(sc);
 			return;
-			addr = ptr;
-			continue;
 		}
 
 /* Is the packet too big ? - this will probably be trapped above as a receive error */
@@ -1300,8 +1298,6 @@ ebgetpackets(sc)
 			WriteShort(iobase + EB_8004_CONFIG2, sc->sc_config2);
 			eb_reinit(sc);
 			return;
-			addr = ptr;
-			continue;
 		}
 
 		eb_readbuf(sc, sc->sc_pktbuf, addr + 4, len);
