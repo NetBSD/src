@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.41 2002/02/11 16:23:18 tron Exp $
+# $NetBSD: makeflist,v 1.42 2002/02/27 10:42:55 lukem Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
@@ -121,4 +121,4 @@ for setname in $lists; do
 			cat $setd/lists/$setname/tc.old
 		fi
 	fi
-done | egrep -v '^#' | awk -- '{print $1}' | sort -u
+done | awk -- '/^[^#]/ {print $1}' | sort -u
