@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1.8.3 2002/07/12 01:39:26 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.1.8.4 2002/08/02 21:02:29 nathanw Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -192,6 +192,3 @@ define	ENAMETOOLONG		ENAMETOOLONG
 
 # event counter
 define	EVCNT_COUNT		offsetof(struct evcnt, ev_count)
-
-# Upcall handler
-define SAF_UPCALL		offsetof(struct saframe, sa_upcall)
