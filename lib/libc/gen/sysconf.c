@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.8 1998/05/24 20:12:27 kleink Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.9 1998/08/03 14:41:21 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.8 1998/05/24 20:12:27 kleink Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.9 1998/08/03 14:41:21 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -127,6 +127,10 @@ sysconf(name)
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_FSYNC;
 		goto yesno;
+	case _SC_SYNCHRONIZED_IO:
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_SYNCHRONIZED_IO;
+		goto yesno;
 
 /* 1003.2 */
 	case _SC_BC_BASE_MAX:
@@ -199,6 +203,10 @@ sysconf(name)
 		goto yesno;
 
 /* XPG 4.2 */
+	case _SC_IOV_MAX:
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_IOV_MAX;
+		break;
 	case _SC_XOPEN_SHM:
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_SYSVSHM;
