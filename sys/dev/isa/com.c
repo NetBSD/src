@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.100 1997/05/26 14:54:46 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.101 1997/06/15 11:18:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -124,7 +124,7 @@ void 	comsoft		__P((void *));
 int	comhwiflow	__P((struct tty *, int));
 
 void	com_loadchannelregs __P((struct com_softc *));
-void	com_hwiflow	__P((struct com_softc *, int));
+void	com_hwiflow	__P((struct com_softc *));
 void	com_break	__P((struct com_softc *, int));
 void	com_modem	__P((struct com_softc *, int));
 void	com_iflush	__P((struct com_softc *));
@@ -144,6 +144,7 @@ void	comcnpollc	__P((dev_t, int));
 integrate void comrxint		__P((struct com_softc *, struct tty *));
 integrate void comtxint		__P((struct com_softc *, struct tty *));
 integrate void commsrint	__P((struct com_softc *, struct tty *));
+integrate void com_schedrx	__P((struct com_softc *));
 
 struct cfdriver com_cd = {
 	NULL, "com", DV_TTY
@@ -207,6 +208,8 @@ comspeed(speed)
 }
 
 #ifdef COM_DEBUG
+int	com_debug = 0;
+
 void comstatus __P((struct com_softc *, char *));
 void
 comstatus(sc, str)
@@ -223,13 +226,13 @@ comstatus(sc, str)
 	    ISSET(sc->sc_mcr, MCR_DTR) ? "+" : "-",
 	    sc->sc_tx_stopped ? "+" : "-");
 
-	printf("%s: %s %scrtscts %scts %sts_ttstop  %srts %srx_blocked\n",
+	printf("%s: %s %scrtscts %scts %sts_ttstop  %srts %xrx_flags\n",
 	    sc->sc_dev.dv_xname, str,
 	    ISSET(tp->t_cflag, CRTSCTS) ? "+" : "-",
 	    ISSET(sc->sc_msr, MSR_CTS) ? "+" : "-",
 	    ISSET(tp->t_state, TS_TTSTOP) ? "+" : "-",
 	    ISSET(sc->sc_mcr, MCR_RTS) ? "+" : "-",
-	    sc->sc_rx_blocked ? "+" : "-");
+	    sc->sc_rx_flags);
 }
 #endif
 
@@ -536,11 +539,12 @@ comopen(dev, flag, mode, p)
 		sc->sc_rbput = sc->sc_rbget = 0;
 		sc->sc_rbavail = RXBUFSIZE;
 		com_iflush(sc);
-		sc->sc_rx_blocked = 0;
-		com_hwiflow(sc, 0);
+		CLR(sc->sc_rx_flags, RX_ANY_BLOCK);
+		com_hwiflow(sc);
 
 #ifdef COM_DEBUG
-		comstatus(sc, "comopen  ");
+		if (com_debug)
+			comstatus(sc, "comopen  ");
 #endif
 
 		splx(s2);
@@ -594,8 +598,8 @@ comclose(dev, flag, mode, p)
 	ttyclose(tp);
 
 	/* If we were asserting flow control, then deassert it. */
-	sc->sc_rx_blocked = 1;
-	com_hwiflow(sc, 1);
+	SET(sc->sc_rx_flags, RX_IBUF_BLOCKED);
+	com_hwiflow(sc);
 	/* Clear any break condition set with TIOCSBRK. */
 	com_break(sc, 0);
 	/*
@@ -708,10 +712,33 @@ comioctl(dev, cmd, data, flag, p)
 	}
 
 #ifdef COM_DEBUG
+	if (com_debug)
 		comstatus(sc, "comioctl ");
 #endif
 
 	return (0);
+}
+
+integrate void
+com_schedrx(sc)
+	struct com_softc *sc;
+{
+
+	sc->sc_rx_ready = 1;
+
+	/* Wake up the poller. */
+#ifdef __GENERIC_SOFT_INTERRUPTS
+	softintr_schedule(sc->sc_si);
+#else
+#ifndef alpha
+	setsoftserial();
+#else
+	if (!com_softintr_scheduled) {
+		com_softintr_scheduled = 1;
+		timeout(comsoft, NULL, 1);
+	}
+#endif
+#endif
 }
 
 void
@@ -833,6 +860,7 @@ comparam(tp, t)
 		sc->sc_mcr_rts = MCR_RTS;
 		sc->sc_msr_cts = MSR_CTS;
 		sc->sc_r_hiwat = RXHIWAT;
+		sc->sc_r_lowat = RXLOWAT;
 	} else if (ISSET(t->c_cflag, MDMBUF)) {
 		/*
 		 * For DTR/DCD flow control, make sure we don't toggle DTR for
@@ -842,6 +870,7 @@ comparam(tp, t)
 		sc->sc_mcr_rts = MCR_DTR;
 		sc->sc_msr_cts = MSR_DCD;
 		sc->sc_r_hiwat = RXHIWAT;
+		sc->sc_r_lowat = RXLOWAT;
 	} else {
 		/*
 		 * If no flow control, then always set RTS.  This will make
@@ -852,6 +881,7 @@ comparam(tp, t)
 		sc->sc_mcr_rts = 0;
 		sc->sc_msr_cts = 0;
 		sc->sc_r_hiwat = 0;
+		sc->sc_r_lowat = 0;
 		if (ISSET(sc->sc_mcr, MCR_DTR))
 			SET(sc->sc_mcr, MCR_RTS);
 		else
@@ -911,21 +941,26 @@ comparam(tp, t)
 	(void) (*linesw[tp->t_line].l_modem)(tp, ISSET(sc->sc_msr, MSR_DCD));
 
 #ifdef COM_DEBUG
-	comstatus(sc, "comparam ");
+	if (com_debug)
+		comstatus(sc, "comparam ");
 #endif
 
-	/* XXXXX FIX ME */
 	/* Block or unblock as needed. */
 	if (!ISSET(t->c_cflag, CHWFLOW)) {
-		if (sc->sc_rx_blocked) {
-			sc->sc_rx_blocked = 0;
-			com_hwiflow(sc, 0);
+		if (ISSET(sc->sc_rx_flags, RX_TTY_OVERFLOWED)) {
+			CLR(sc->sc_rx_flags, RX_TTY_OVERFLOWED);
+			com_schedrx(sc);
+		}
+		if (ISSET(sc->sc_rx_flags, RX_TTY_BLOCKED|RX_IBUF_BLOCKED)) {
+			CLR(sc->sc_rx_flags, RX_TTY_BLOCKED|RX_IBUF_BLOCKED);
+			com_hwiflow(sc);
 		}
 		if (sc->sc_tx_stopped) {
 			sc->sc_tx_stopped = 0;
 			comstart(tp);
 		}
 	} else {
+		/* XXXXX FIX ME */
 #if 0
 		commsrint(sc, tp);
 #endif
@@ -981,22 +1016,20 @@ comhwiflow(tp, block)
 
 	s = splserial();
 	if (block) {
-		/*
-		 * The tty layer is asking us to block input.
-		 * If we already did it, just return TRUE.
-		 */
-		if (sc->sc_rx_blocked)
-			goto out;
-		sc->sc_rx_blocked = 1;
+		if (!ISSET(sc->sc_rx_flags, RX_TTY_BLOCKED)) {
+			SET(sc->sc_rx_flags, RX_TTY_BLOCKED);
+			com_hwiflow(sc);
+		}
 	} else {
-		/*
-		 * The tty layer is asking us to resume input.
-		 * The input ring is always empty by now.
-		 */
-		sc->sc_rx_blocked = 0;
+		if (ISSET(sc->sc_rx_flags, RX_TTY_OVERFLOWED)) {
+			CLR(sc->sc_rx_flags, RX_TTY_OVERFLOWED);
+			com_schedrx(sc);
+		}
+		if (ISSET(sc->sc_rx_flags, RX_TTY_BLOCKED)) {
+			CLR(sc->sc_rx_flags, RX_TTY_BLOCKED);
+			com_hwiflow(sc);
+		}
 	}
-	com_hwiflow(sc, block);
-out:
 	splx(s);
 	return (1);
 }
@@ -1005,9 +1038,8 @@ out:
  * (un)block input via hw flowcontrol
  */
 void
-com_hwiflow(sc, block)
+com_hwiflow(sc)
 	struct com_softc *sc;
-	int block;
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1015,7 +1047,7 @@ com_hwiflow(sc, block)
 	if (sc->sc_mcr_rts == 0)
 		return;
 
-	if (block) {
+	if (ISSET(sc->sc_rx_flags, RX_ANY_BLOCK)) {
 		CLR(sc->sc_mcr, sc->sc_mcr_rts);
 		CLR(sc->sc_mcr_active, sc->sc_mcr_rts);
 	} else {
@@ -1172,7 +1204,7 @@ comrxint(sc, tp)
 			timeout(comdiag, sc, 60 * hz);
 	}
 
-	while (cc--) {
+	while (cc) {
 		lsr = sc->sc_lbuf[get];
 		if (ISSET(lsr, LSR_BI)) {
 #ifdef DDB
@@ -1187,22 +1219,54 @@ comrxint(sc, tp)
 		}
 		code = sc->sc_rbuf[get] |
 		    lsrmap[(lsr & (LSR_BI|LSR_FE|LSR_PE)) >> 2];
-		(*linesw[tp->t_line].l_rint)(code, tp);
+		if ((*linesw[tp->t_line].l_rint)(code, tp) == -1) {
+			/*
+			 * The line discipline's buffer is out of space.
+			 */
+			if (!ISSET(sc->sc_rx_flags, RX_TTY_BLOCKED)) {
+				/*
+				 * We're either not using flow control, or the
+				 * line discipline didn't tell us to block for
+				 * some reason.  Either way, we have no way to
+				 * know when there's more space available, so
+				 * just drop the rest of the data.
+				 */
+				get = (get + cc) & RXBUFMASK;
+				cc = 0;
+			} else {
+				/*
+				 * Don't schedule any more receive processing
+				 * until the line discipline tells us there's
+				 * space available (through comhwiflow()).
+				 * Leave the rest of the data in the input
+				 * buffer.
+				 */
+				SET(sc->sc_rx_flags, RX_TTY_OVERFLOWED);
+			}
+			break;
+		}
 		get = (get + 1) & RXBUFMASK;
+		cc--;
 	}
 
-	sc->sc_rbget = get;
-	s = splserial();
-	sc->sc_rbavail += scc;
-	/*
-	 * Buffers should be ok again, release possible block, but only if the
-	 * tty layer isn't blocking too.
-	 */
-	if (sc->sc_rx_blocked && !ISSET(tp->t_state, TS_TBLOCK)) {
-		sc->sc_rx_blocked = 0;
-		com_hwiflow(sc, 0);
+	if (cc != scc) {
+		sc->sc_rbget = get;
+		s = splserial();
+		cc = sc->sc_rbavail += scc - cc;
+		/* Buffers should be ok again, release possible block. */
+		if (cc >= sc->sc_r_lowat) {
+			if (ISSET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED)) {
+				CLR(sc->sc_rx_flags, RX_IBUF_OVERFLOWED);
+				SET(sc->sc_ier, IER_ERXRDY);
+				bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
+			}
+			if (ISSET(sc->sc_rx_flags, RX_IBUF_BLOCKED)) {
+				CLR(sc->sc_rx_flags, RX_IBUF_BLOCKED);
+				com_hwiflow(sc);
+			}
+		}
+		splx(s);
 	}
-	splx(s);
 }
 
 integrate void
@@ -1251,7 +1315,8 @@ commsrint(sc, tp)
 	}
 
 #ifdef COM_DEBUG
-	comstatus(sc, "commsrint");
+	if (com_debug)
+		comstatus(sc, "commsrint");
 #endif
 }
 
@@ -1337,7 +1402,8 @@ comintr(arg)
 		u_char	msr, delta;
 
 		lsr = bus_space_read_1(iot, ioh, com_lsr);
-		if (ISSET(lsr, LSR_RCV_MASK)) {
+		if (ISSET(lsr, LSR_RCV_MASK) &&
+		    !ISSET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED)) {
 			for (; ISSET(lsr, LSR_RCV_MASK) && cc > 0; cc--) {
 				sc->sc_rbuf[put] =
 				    bus_space_read_1(iot, ioh, com_data);
@@ -1353,25 +1419,25 @@ comintr(arg)
 			 */
 			sc->sc_rbput = put;
 			sc->sc_rbavail = cc;
-			sc->sc_rx_ready = 1;
+			if (!ISSET(sc->sc_rx_flags, RX_TTY_OVERFLOWED))
+				sc->sc_rx_ready = 1;
 			/*
 			 * See if we are in danger of overflowing a buffer. If
 			 * so, use hardware flow control to ease the pressure.
 			 */
-			if (sc->sc_rx_blocked == 0 &&
+			if (!ISSET(sc->sc_rx_flags, RX_IBUF_BLOCKED) &&
 			    cc < sc->sc_r_hiwat) {
-				sc->sc_rx_blocked = 1;
-				com_hwiflow(sc, 1);
+				SET(sc->sc_rx_flags, RX_IBUF_BLOCKED);
+				com_hwiflow(sc);
 			}
 			/*
-			 * If we're out of space, throw away any further input.
+			 * If we're out of space, disable receive interrupts
+			 * until the queue has drained a bit.
 			 */
 			if (!cc) {
-				while (ISSET(lsr, LSR_RCV_MASK)) {
-					bus_space_read_1(iot, ioh, com_data);
-					lsr = bus_space_read_1(iot, ioh,
-								com_lsr);
-				}
+				SET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED);
+				CLR(sc->sc_ier, IER_ERXRDY);
+				bus_space_write_1(iot, ioh, com_ier, sc->sc_ier);
 			}
 		} else {
 			if ((iir & IIR_IMASK) == IIR_RXRDY) {
@@ -1397,7 +1463,8 @@ comintr(arg)
 				sc->sc_tbc = 0;
 				sc->sc_heldtbc = 0;
 #ifdef COM_DEBUG
-				comstatus(sc, "comintr  ");
+				if (com_debug)
+					comstatus(sc, "comintr  ");
 #endif
 			}
 

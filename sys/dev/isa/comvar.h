@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.9 1997/05/24 03:45:40 thorpej Exp $	*/
+/*	$NetBSD: comvar.h,v 1.10 1997/06/15 11:19:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,9 +43,10 @@ extern tcflag_t comconscflag;
 #define	COM_HW_CONSOLE	0x40
 
 /* Buffer size for character buffer */
-#define RXBUFSIZE 2048		/* More than enough.. */
-#define RXBUFMASK (RXBUFSIZE-1)	/* Only iff previous is a power of 2 */
-#define RXHIWAT   (RXBUFSIZE >> 2)
+#define RXBUFSIZE 2048			/* More than enough.. */
+#define RXBUFMASK (RXBUFSIZE - 1)	/* Only iff previous is a power of 2 */
+#define RXHIWAT   ((RXBUFSIZE * 1) / 4)
+#define	RXLOWAT	  ((RXBUFSIZE * 3) / 4)
 
 struct com_softc {
 	struct device sc_dev;
@@ -72,6 +73,7 @@ struct com_softc {
 	u_char sc_mcr_dtr, sc_mcr_rts, sc_msr_cts, sc_msr_dcd;
 
 	int sc_r_hiwat;
+	int sc_r_lowat;
  	volatile u_int sc_rbget;
  	volatile u_int sc_rbput;
 	volatile u_int sc_rbavail;
@@ -82,7 +84,12 @@ struct com_softc {
  	int sc_tbc,
 	    sc_heldtbc;
 
-	volatile u_char sc_rx_blocked,
+	volatile u_char sc_rx_flags,
+#define	RX_TTY_BLOCKED		0x01
+#define	RX_TTY_OVERFLOWED	0x02
+#define	RX_IBUF_BLOCKED		0x04
+#define	RX_IBUF_OVERFLOWED	0x08
+#define	RX_ANY_BLOCK		0x0f
 			sc_tx_busy,
 			sc_tx_done,
 			sc_tx_stopped,
