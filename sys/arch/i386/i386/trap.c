@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.154.2.9 2002/06/24 22:05:07 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.154.2.10 2002/07/02 21:02:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.154.2.9 2002/06/24 22:05:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.154.2.10 2002/07/02 21:02:16 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -334,13 +334,6 @@ copyfault:
 	case T_STKFLT|T_USER:
 	case T_ALIGNFLT|T_USER:
 	case T_NMI|T_USER:
-		printf("trap %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
-		    frame.tf_trapno, frame.tf_err, frame.tf_eip, frame.tf_cs,
-		    frame.tf_eflags, rcr2(), cpl);
-		printf("curlwp %p%s", curlwp, curlwp ? " " : "\n");
-		if (curlwp)
-			printf("process %d.%d\n", l->l_proc->p_pid, l->l_lid);
-
 		(*p->p_emul->e_trapsignal)(l, SIGBUS, type & ~T_USER);
 		goto out;
 
