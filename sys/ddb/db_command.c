@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.51 2000/11/24 07:25:51 chs Exp $	*/
+/*	$NetBSD: db_command.c,v 1.52 2000/11/28 19:27:46 eeh Exp $	*/
 
 /* 
  * Mach Operating System
@@ -486,6 +486,7 @@ struct db_command db_command_table[] = {
 	{ "break",	db_breakpoint_cmd,	0,		NULL },
 	{ "c",		db_continue_cmd,	0,		NULL },
 	{ "call",	db_fncall,		CS_OWN,		NULL },
+	{ "callout",	db_show_callout,	0,		NULL },
 	{ "continue",	db_continue_cmd,	0,		NULL },
 	{ "d",		db_delete_cmd,		0,		NULL },
 	{ "delete",	db_delete_cmd,		0,		NULL },
