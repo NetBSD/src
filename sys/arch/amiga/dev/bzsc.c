@@ -214,7 +214,7 @@ void bzsc_set_dma_adr(struct sfas_softc *sc, void *ptr, int mode)
 
 	rp = (bzsc_regmap_p)sc->sc_fas;
 
-	p = ((unsigned long)p)>>1;
+	p = ((unsigned long)ptr)>>1;
 	
 	if (mode == SFAS_DMA_WRITE)
 		p |= BZSC_DMA_WRITE;
