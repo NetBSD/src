@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_ul.c,v 1.4 1996/05/10 13:02:35 is Exp $	*/
+/*	$NetBSD: ite_ul.c,v 1.5 1996/07/08 13:28:44 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Ignatios Souvatzis
@@ -14,7 +14,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Lutz Vieweg.
+ *      This product includes software developed by Ignatios Souvatzis for
+ *	the NetBSD project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
