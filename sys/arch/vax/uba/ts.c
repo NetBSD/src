@@ -1,4 +1,4 @@
-/*      $NetBSD: ts.c,v 1.3 1996/02/02 18:59:33 mycroft Exp $ */
+/*      $NetBSD: ts.c,v 1.4 1996/03/02 14:06:03 ragge Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -871,7 +871,7 @@ tsintr(ctlr)
 	register struct tsmsg *tsmsgp = &ts[ctlr].msg;
 	register struct tscmd *tscmdp = &ts[ctlr].cmd;
 	volatile struct tsdevice *tsreg = ts[ctlr].reg;
-	volatile struct uba_ctlr *um = zsinfo[ctlr];
+	struct uba_ctlr *um = zsinfo[ctlr];
 	register struct buf *bp;
 
 	unsigned short sr = tsreg->tssr;	/* save TSSR */
