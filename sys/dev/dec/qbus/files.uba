@@ -1,4 +1,4 @@
-#	$NetBSD: files.uba,v 1.2 1999/05/26 01:26:18 ragge Exp $
+#	$NetBSD: files.uba,v 1.3 1999/05/27 03:45:21 ragge Exp $
 #
 # Config file and device description for machine-independent
 # code for devices Digital Equipment Corp. Unibus and Q22 bus.
@@ -10,5 +10,10 @@ file	dev/dec/uba/uba.c	uba & new_uba
 # DZ-11 (-compatible) tty device driver.
 device	dz { }: tty
 attach	dz at uba with dz_uba
-file	dev/dec/uba/dz.c	dz			needs-flag
-file	dev/dec/uba/dz_uba.c	dz_uba & new_uba
+file	dev/dec/qbus/dz.c	dz			needs-flag
+file	dev/dec/qbus/dz_uba.c	dz_uba & new_uba
+
+# DL-11 at UBA
+device	dl: tty
+attach	dl at uba
+file	dev/dec/qbus/dl.c	dl needs-flag
