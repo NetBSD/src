@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.41 1999/08/29 17:20:10 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.42 1999/08/30 12:49:21 bouyer Exp $	*/
 
 
 /*
@@ -190,7 +190,6 @@ struct pciide_softc {
 void default_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 
 void piix_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-void piix_channel_map __P((struct pci_attach_args *, struct pciide_channel *));
 void piix_setup_channel __P((struct channel_softc*));
 void piix3_4_setup_channel __P((struct channel_softc*));
 static u_int32_t piix_setup_idetim_timings __P((u_int8_t, u_int8_t, u_int8_t));
@@ -266,6 +265,16 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	{ PCI_PRODUCT_INTEL_82371AB_IDE,
 	  0,
 	  "Intel 82371AB IDE controller (PIIX4)",
+	  piix_chip_map,
+	},
+	{ PCI_PRODUCT_INTEL_82801AA_IDE,
+	  0,
+	  "Intel 82801AA IDE Controller (ICH)",
+	  piix_chip_map,
+	},
+	{ PCI_PRODUCT_INTEL_82801AB_IDE,
+	  0,
+	  "Intel 82801AB IDE Controller (ICH0)",
 	  piix_chip_map,
 	},
 	{ 0,
@@ -1228,6 +1237,8 @@ piix_chip_map(sc, pa)
 {
 	struct pciide_channel *cp;
 	int channel;
+	u_int32_t idetim;
+	bus_size_t cmdsize, ctlsize;
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
@@ -1238,7 +1249,10 @@ piix_chip_map(sc, pa)
 	printf("\n");
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
-		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82371AB_IDE) {
+		switch(sc->sc_pp->ide_product) {
+		case PCI_PRODUCT_INTEL_82371AB_IDE:
+		case PCI_PRODUCT_INTEL_82801AA_IDE:
+		case PCI_PRODUCT_INTEL_82801AB_IDE:
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 		}
 	}
@@ -1246,7 +1260,8 @@ piix_chip_map(sc, pa)
 	    WDC_CAPABILITY_MODE;
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
-	sc->sc_wdcdev.UDMA_cap = 2;
+	sc->sc_wdcdev.UDMA_cap =
+	    (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE) ? 4 : 2;
 	if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82371FB_IDE)
 		sc->sc_wdcdev.set_modes = piix_setup_channel;
 	else
@@ -1266,6 +1281,13 @@ piix_chip_map(sc, pa)
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_UDMAREG)),
 			    DEBUG_PROBE);
 		}
+		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE) {
+			WDCDEBUG_PRINT((", IDE_CONTROL 0x%x",
+			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_CONFIG)),
+			    DEBUG_PROBE);
+		}
+
 	}
 	WDCDEBUG_PRINT(("\n"), DEBUG_PROBE);
 
@@ -1274,7 +1296,24 @@ piix_chip_map(sc, pa)
 		/* PIIX is compat-only */
 		if (pciide_chansetup(sc, channel, 0) == 0)
 			continue;
-		piix_channel_map(pa, cp);
+		idetim = pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_IDETIM);
+		if ((PIIX_IDETIM_READ(idetim, channel) &
+		    PIIX_IDETIM_IDE) == 0) {
+			printf("%s: %s channel ignored (disabled)\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+			return;
+		}
+		/* PIIX are compat-only pciide devices */
+		pciide_mapchan(pa, cp, 0, &cmdsize, &ctlsize, pciide_pci_intr);
+		if (cp->hw_ok == 0)
+			continue;
+		if (pciiide_chan_candisable(cp)) {
+			idetim = PIIX_IDETIM_CLEAR(idetim, PIIX_IDETIM_IDE,
+			    channel);
+			pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_IDETIM,
+			    idetim);
+		}
+		pciide_map_compat_intr(pa, cp, channel, 0);
 		if (cp->hw_ok == 0)
 			continue;
 		sc->sc_wdcdev.set_modes(&cp->wdc_channel);
@@ -1290,6 +1329,12 @@ piix_chip_map(sc, pa)
 		if (sc->sc_wdcdev.cap & WDC_CAPABILITY_UDMA) {
 			WDCDEBUG_PRINT((", udamreg 0x%x",
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_UDMAREG)),
+			    DEBUG_PROBE);
+		}
+		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE) {
+			WDCDEBUG_PRINT((", IDE_CONTROL 0x%x",
+			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_CONFIG)),
 			    DEBUG_PROBE);
 		}
 	}
@@ -1410,31 +1455,33 @@ piix3_4_setup_channel(chp)
 	struct channel_softc *chp;
 {
 	struct ata_drive_datas *drvp;
-	u_int32_t oidetim, idetim, sidetim, udmareg, idedma_ctl;
+	u_int32_t oidetim, idetim, sidetim, udmareg, ideconf, idedma_ctl;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
 	int drive;
+	int channel = chp->channel;
 
 	oidetim = pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_IDETIM);
 	sidetim = pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_SIDETIM);
 	udmareg = pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_UDMAREG);
-	idetim = PIIX_IDETIM_CLEAR(oidetim, 0xffff, chp->channel);
-	sidetim &= ~(PIIX_SIDETIM_ISP_MASK(chp->channel) |
-	    PIIX_SIDETIM_RTC_MASK(chp->channel));
+	ideconf = pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_CONFIG);
+	idetim = PIIX_IDETIM_CLEAR(oidetim, 0xffff, channel);
+	sidetim &= ~(PIIX_SIDETIM_ISP_MASK(channel) |
+	    PIIX_SIDETIM_RTC_MASK(channel));
 
 	idedma_ctl = 0;
 	/* If channel disabled, no need to go further */
-	if ((PIIX_IDETIM_READ(oidetim, chp->channel) & PIIX_IDETIM_IDE) == 0)
+	if ((PIIX_IDETIM_READ(oidetim, channel) & PIIX_IDETIM_IDE) == 0)
 		return;
 	/* set up new idetim: Enable IDE registers decode */
-	idetim = PIIX_IDETIM_SET(idetim, PIIX_IDETIM_IDE, chp->channel);
+	idetim = PIIX_IDETIM_SET(idetim, PIIX_IDETIM_IDE, channel);
 
 	/* setup DMA if needed */
 	pciide_channel_dma_setup(cp);
 
 	for (drive = 0; drive < 2; drive++) {
-		udmareg &= ~(PIIX_UDMACTL_DRV_EN(chp->channel, drive) |
-		    PIIX_UDMATIM_SET(0x3, chp->channel, drive));
+		udmareg &= ~(PIIX_UDMACTL_DRV_EN(channel, drive) |
+		    PIIX_UDMATIM_SET(0x3, channel, drive));
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
 		if ((drvp->drive_flags & DRIVE) == 0)
@@ -1443,26 +1490,38 @@ piix3_4_setup_channel(chp)
 		    (drvp->drive_flags & DRIVE_UDMA) == 0))
 			goto pio;
 
+		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE) {
+			ideconf |= PIIX_CONFIG_PINGPONG;
+		}
+		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE) {
+			/* setup Ultra/66 */
+			if (drvp->UDMA_mode > 2 &&
+			    (ideconf & PIIX_CONFIG_CR(channel, drive)) == 0)
+				drvp->UDMA_mode = 2;
+			if (drvp->UDMA_mode > 2)
+				ideconf |= PIIX_CONFIG_UDMA66(channel, drive);
+			else
+				ideconf &= ~PIIX_CONFIG_UDMA66(channel, drive);
+		}
 		if ((chp->wdc->cap & WDC_CAPABILITY_UDMA) &&
 		    (drvp->drive_flags & DRIVE_UDMA)) {
 			/* use Ultra/DMA */
 			drvp->drive_flags &= ~DRIVE_DMA;
-			udmareg |= PIIX_UDMACTL_DRV_EN(
-			    chp->channel, drive);
+			udmareg |= PIIX_UDMACTL_DRV_EN( channel, drive);
 			udmareg |= PIIX_UDMATIM_SET(
-			    piix4_sct_udma[drvp->UDMA_mode],
-			    chp->channel, drive);
+			    piix4_sct_udma[drvp->UDMA_mode], channel, drive);
 		} else {
 			/* use Multiword DMA */
 			drvp->drive_flags &= ~DRIVE_UDMA;
 			if (drive == 0) {
 				idetim |= piix_setup_idetim_timings(
-				    drvp->DMA_mode, 1, chp->channel);
+				    drvp->DMA_mode, 1, channel);
 			} else {
 				sidetim |= piix_setup_sidetim_timings(
-					drvp->DMA_mode, 1, chp->channel);
+					drvp->DMA_mode, 1, channel);
 				idetim =PIIX_IDETIM_SET(idetim,
-				    PIIX_IDETIM_SITRE, chp->channel);
+				    PIIX_IDETIM_SITRE, channel);
 			}
 		}
 		idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
@@ -1471,23 +1530,24 @@ pio:		/* use PIO mode */
 		idetim |= piix_setup_idetim_drvs(drvp);
 		if (drive == 0) {
 			idetim |= piix_setup_idetim_timings(
-			    drvp->PIO_mode, 0, chp->channel);
+			    drvp->PIO_mode, 0, channel);
 		} else {
 			sidetim |= piix_setup_sidetim_timings(
-				drvp->PIO_mode, 0, chp->channel);
+				drvp->PIO_mode, 0, channel);
 			idetim =PIIX_IDETIM_SET(idetim,
-			    PIIX_IDETIM_SITRE, chp->channel);
+			    PIIX_IDETIM_SITRE, channel);
 		}
 	}
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * chp->channel),
+		    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * channel),
 		    idedma_ctl);
 	}
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_IDETIM, idetim);
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_SIDETIM, sidetim);
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_UDMAREG, udmareg);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_CONFIG, ideconf);
 	pciide_print_modes(cp);
 }
 
@@ -1581,35 +1641,6 @@ piix_setup_sidetim_timings(mode, dma, channel)
 	else 
 		return PIIX_SIDETIM_ISP_SET(piix_isp_pio[mode], channel) |
 		    PIIX_SIDETIM_RTC_SET(piix_rtc_pio[mode], channel);
-}
-
-void
-piix_channel_map(pa, cp)
-	struct pci_attach_args *pa;
-	struct pciide_channel *cp;
-{
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
-	bus_size_t cmdsize, ctlsize;
-	struct channel_softc *wdc_cp = &cp->wdc_channel;
-	u_int32_t idetim = pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_IDETIM);
-
-	if ((PIIX_IDETIM_READ(idetim, wdc_cp->channel) &
-	    PIIX_IDETIM_IDE) == 0) {
-		printf("%s: %s channel ignored (disabled)\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-		return;
-	}
-
-	/* PIIX are compat-only pciide devices */
-	pciide_mapchan(pa, cp, 0, &cmdsize, &ctlsize, pciide_pci_intr);
-	if (cp->hw_ok == 0)
-		return;
-	if (pciiide_chan_candisable(cp)) {
-		idetim = PIIX_IDETIM_CLEAR(idetim, PIIX_IDETIM_IDE,
-					   wdc_cp->channel);
-		pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_IDETIM, idetim);
-	}
-	pciide_map_compat_intr(pa, cp, wdc_cp->channel, 0);
 }
 
 void
