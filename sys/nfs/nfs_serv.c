@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.29 1997/01/31 16:12:26 fvdl Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.30 1997/02/10 12:20:49 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1656,9 +1656,9 @@ nfsrv_remove(nfsd, slp, procp, mrq)
 			error = EBUSY;
 			goto out;
 		}
-		(void) vnode_pager_uncache(vp);
 out:
 		if (!error) {
+			(void)vnode_pager_uncache(vp);
 			nqsrv_getl(nd.ni_dvp, ND_WRITE);
 			nqsrv_getl(vp, ND_WRITE);
 			error = VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
@@ -1831,8 +1831,10 @@ out:
 	if (!error) {
 		nqsrv_getl(fromnd.ni_dvp, ND_WRITE);
 		nqsrv_getl(tdvp, ND_WRITE);
-		if (tvp)
+		if (tvp) {
+			(void)vnode_pager_uncache(tvp);
 			nqsrv_getl(tvp, ND_WRITE);
+		}
 		error = VOP_RENAME(fromnd.ni_dvp, fromnd.ni_vp, &fromnd.ni_cnd,
 				   tond.ni_dvp, tond.ni_vp, &tond.ni_cnd);
 	} else {
