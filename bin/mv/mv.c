@@ -1,4 +1,4 @@
-/*	$NetBSD: mv.c,v 1.12 1997/07/20 19:20:46 christos Exp $	*/
+/*	$NetBSD: mv.c,v 1.13 1997/10/07 02:06:37 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: mv.c,v 1.12 1997/07/20 19:20:46 christos Exp $");
+__RCSID("$NetBSD: mv.c,v 1.13 1997/10/07 02:06:37 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -270,7 +270,8 @@ err:		if (unlink(to))
 	(void)close(from_fd);
 
 	if (fchown(to_fd, sbp->st_uid, sbp->st_gid))
-		warn("%s: set owner/group", to);
+		if (errno != EPERM)
+			warn("%s: set owner/group", to);
 	if (fchmod(to_fd, sbp->st_mode))
 		warn("%s: set mode", to);
 
