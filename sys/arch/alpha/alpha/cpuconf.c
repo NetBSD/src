@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.c,v 1.20 1999/03/17 19:00:01 drochner Exp $	*/
+/*	$NetBSD: cpuconf.c,v 1.20.2.1 1999/07/02 17:34:50 perry Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -135,6 +135,13 @@ extern void dec_eb66_init __P((void));
 #define	dec_eb66_init		platform_not_configured
 #endif
 
+#include "opt_dec_6600.h"
+#ifdef DEC_6600
+extern void dec_6600_init __P((void));
+#else
+#define	dec_6600_init		platform_not_configured
+#endif
+
 struct cpuinit cpuinit[] = {
 	cpu_notsupp("???"),			     /*  0: ??? */
 	cpu_notsupp("ST_ADU"),			     /*  1: ST_ADU */
@@ -170,7 +177,7 @@ struct cpuinit cpuinit[] = {
 	cpu_notsupp("???"),			     /* 31: ??? */
 	cpu_notsupp("ST_DEC_EV56_PBP"),		     /* 32: ST_DEC_EV56_PBP */
 	cpu_notsupp("ST_DEC_ALPHAVME_320"),	   /* 33: ST_DEC_ALPHAVME_320 */
-	cpu_notsupp("ST_DEC_6600"),	   	   /* 34: ST_DEC_6600 */
+	cpu_init(dec_6600_init,"DEC_6600"),	     /* 34: ST_6600 */
 };
 int ncpuinit = (sizeof(cpuinit) / sizeof(cpuinit[0]));
 
