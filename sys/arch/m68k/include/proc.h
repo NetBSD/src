@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.2.4.3 2002/08/02 08:39:02 gmcgarry Exp $	*/
+/*	$NetBSD: proc.h,v 1.2.4.4 2002/08/06 17:40:53 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -54,7 +54,7 @@ struct mdlwp {
                                    ERESTART. */
 #define MDL_FPUSED	0x0002	/* floating point coprocessor used (sun[23]) */
 
-struct proc;
+struct lwp;
 
 /*
  * Machine-dependent part of the proc structure for m68k-based ports.
