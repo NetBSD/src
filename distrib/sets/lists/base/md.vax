@@ -1,4 +1,4 @@
-# $NetBSD: md.vax,v 1.13 2001/01/26 01:37:19 jwise Exp $
+# $NetBSD: md.vax,v 1.14 2001/01/27 23:48:34 jdolecek Exp $
 ./boot				base-sys-root
 ./pcs750.bin			base-sys-root
 ./sbin/ldconfig			base-sysutil-root
@@ -11,6 +11,7 @@
 ./usr/lkm/coda.o		base-coda-lkm
 ./usr/lkm/ext2fs.o		base-ext2fs-lkm
 ./usr/lkm/fdesc.o		base-miscfs-lkm
+./usr/lkm/filecorefs.o		base-filecorefs-lkm
 ./usr/lkm/if_ipl.o		base-ipf-lkm
 ./usr/lkm/lfs.o			base-sys-lkm
 ./usr/lkm/kernfs.o		base-sys-lkm
