@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC_SCSI3,v 1.21 1996/02/27 22:09:17 thorpej Exp $
+# 	$NetBSD: GENERIC_SCSI3,v 1.22 1996/03/31 22:57:18 pk Exp $
 
 machine		sparc
 options		"SUN4", "SUN4C"
@@ -16,7 +16,7 @@ options		KTRACE			# system call tracing support
 #options	KGDBDEV=0xc01, KGDBRATE=38400	# device & baud rate
 options		RASTERCONSOLE		# fast rasterop console
 options		SYSVMSG,SYSVSEM,SYSVSHM
-options		"COMPAT_09", "COMPAT_10"
+options		"COMPAT_09", "COMPAT_10", "COMPAT_11"
 
 # Filesystem options
 options		FFS
