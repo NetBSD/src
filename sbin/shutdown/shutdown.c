@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.41 2004/10/09 02:51:19 dsainty Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.42 2004/11/05 22:46:31 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.41 2004/10/09 02:51:19 dsainty Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.42 2004/11/05 22:46:31 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -417,7 +417,7 @@ getoffset(timearg)
 	}
 
 	if (*timearg == '+') {				/* +minutes */
-		if (!isdigit(*++timearg))
+		if (!isdigit((unsigned char)*++timearg))
 			badtime();
 		offset = atoi(timearg) * 60;
 		shuttime = now + offset;
@@ -426,7 +426,7 @@ getoffset(timearg)
 
 	/* handle hh:mm by getting rid of the colon */
 	for (p = timearg; *p; ++p)
-		if (!isascii(*p) || !isdigit(*p)) {
+		if (!isascii(*p) || !isdigit((unsigned char)*p)) {
 			if (*p == ':' && strlen(p) == 3) {
 				p[0] = p[1];
 				p[1] = p[2];

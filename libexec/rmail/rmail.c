@@ -1,4 +1,4 @@
-/*	$NetBSD: rmail.c,v 1.19 2003/09/19 06:01:24 itojun Exp $	*/
+/*	$NetBSD: rmail.c,v 1.20 2004/11/05 22:00:40 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rmail.c	8.3 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: rmail.c,v 1.19 2003/09/19 06:01:24 itojun Exp $");
+__RCSID("$NetBSD: rmail.c,v 1.20 2004/11/05 22:00:40 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,7 +148,7 @@ main(argc, argv)
 		/* Use the "remote from" if it exists. */
 		for (p = addrp; (p = strchr(p + 1, 'r')) != NULL;)
 			if (!strncmp(p, "remote from ", 12)) {
-				for (t = p += 12; *t && !isspace(*t); ++t);
+				for (t = p += 12; *t && !isspace((unsigned char)*t); ++t);
 				*t = '\0';
 				if (debug)
 					(void)fprintf(stderr,
@@ -176,7 +176,7 @@ main(argc, argv)
 		/* 'p' now points to any system string from this line. */
 		if (p != NULL) {
 			/* Nul terminate it as necessary. */
-			for (t = p; *t && !isspace(*t); ++t);
+			for (t = p; *t && !isspace((unsigned char)*t); ++t);
 			*t = '\0';
 
 			/* If the first system, copy to the from_sys string. */
@@ -209,7 +209,7 @@ main(argc, argv)
 		}
 
 		/* Save off from user's address; the last one wins. */
-		for (p = addrp; *p && !isspace(*p); ++p);
+		for (p = addrp; *p && !isspace((unsigned char)*p); ++p);
 		*p = '\0';
 		if (*addrp == '\0')
 			addrp = "<>";
