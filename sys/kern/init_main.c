@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.89 1996/10/10 22:46:12 christos Exp $	*/
+/*	$NetBSD: init_main.c,v 1.90 1996/10/13 02:32:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -174,7 +174,7 @@ main(framep)
 	 * in case of early panic or other messages.
 	 */
 	consinit();
-	kprintf(copyright);
+	printf(copyright);
 
 	vm_mem_init();
 	kmeminit();
@@ -454,7 +454,7 @@ start_init(p)
 			*flagsp++ = '\0';
 			i = flagsp - flags;
 #ifdef DEBUG
-			kprintf("init: copying out flags `%s' %d\n", flags, i);
+			printf("init: copying out flags `%s' %d\n", flags, i);
 #endif
 			(void)copyout((caddr_t)flags, (caddr_t)(ucp -= i), i);
 			arg1 = ucp;
@@ -465,7 +465,7 @@ start_init(p)
 		 */
 		i = strlen(path) + 1;
 #ifdef DEBUG
-		kprintf("init: copying out path `%s' %d\n", path, i);
+		printf("init: copying out path `%s' %d\n", path, i);
 #endif
 		(void)copyout((caddr_t)path, (caddr_t)(ucp -= i), i);
 		arg0 = ucp;
@@ -493,9 +493,9 @@ start_init(p)
 		if ((error = sys_execve(p, &args, retval)) == 0)
 			return;
 		if (error != ENOENT)
-			kprintf("exec %s: error %d\n", path, error);
+			printf("exec %s: error %d\n", path, error);
 	}
-	kprintf("init: not found\n");
+	printf("init: not found\n");
 	panic("no init");
 }
 

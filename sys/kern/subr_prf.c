@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.29 1996/10/10 22:46:27 christos Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.30 1996/10/13 02:32:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -82,7 +82,7 @@ void	(*v_putc) __P((int)) = cnputc;	/* routine to putc on virtual console */
 
 static void putchar __P((int, int, struct tty *));
 static char *ksprintn __P((u_long, int, int *));
-void kdoprnt __P((const char *, int, struct tty *, va_list));
+void kprintf __P((const char *, int, struct tty *, va_list));
 
 int consintr = 1;			/* Ok to handle console interrupts? */
 
@@ -116,7 +116,7 @@ panic(fmt, va_alist)
 		panicstr = fmt;
 
 	va_start(ap, fmt);
-	kprintf("panic: %:\n", fmt, ap);
+	printf("panic: %:", fmt, ap);
 	va_end(ap);
 
 #if NKGDB > 0
@@ -165,7 +165,7 @@ uprintf(fmt, va_alist)
 
 	if (p->p_flag & P_CONTROLT && p->p_session->s_ttyvp) {
 		va_start(ap, fmt);
-		kdoprnt(fmt, TOTTY, p->p_session->s_ttyp, ap);
+		kprintf(fmt, TOTTY, p->p_session->s_ttyp, ap);
 		va_end(ap);
 	}
 }
@@ -216,7 +216,7 @@ tprintf(tpr, fmt, va_alist)
 		tp = sess->s_ttyp;
 	}
 	va_start(ap, fmt);
-	kdoprnt(fmt, flags, tp, ap);
+	kprintf(fmt, flags, tp, ap);
 	va_end(ap);
 	logwakeup();
 }
@@ -239,7 +239,7 @@ ttyprintf(tp, fmt, va_alist)
 	va_list ap;
 
 	va_start(ap, fmt);
-	kdoprnt(fmt, TOTTY, tp, ap);
+	kprintf(fmt, TOTTY, tp, ap);
 	va_end(ap);
 }
 
@@ -266,12 +266,12 @@ log(level, fmt, va_alist)
 	s = splhigh();
 	logpri(level);
 	va_start(ap, fmt);
-	kdoprnt(fmt, TOLOG, NULL, ap);
+	kprintf(fmt, TOLOG, NULL, ap);
 	splx(s);
 	va_end(ap);
 	if (!log_open) {
 		va_start(ap, fmt);
-		kdoprnt(fmt, TOCONS, NULL, ap);
+		kprintf(fmt, TOCONS, NULL, ap);
 		va_end(ap);
 	}
 	logwakeup();
@@ -304,12 +304,12 @@ addlog(fmt, va_alist)
 
 	s = splhigh();
 	va_start(ap, fmt);
-	kdoprnt(fmt, TOLOG, NULL, ap);
+	kprintf(fmt, TOLOG, NULL, ap);
 	splx(s);
 	va_end(ap);
 	if (!log_open) {
 		va_start(ap, fmt);
-		kdoprnt(fmt, TOCONS, NULL, ap);
+		kprintf(fmt, TOCONS, NULL, ap);
 		va_end(ap);
 	}
 	logwakeup();
@@ -317,9 +317,9 @@ addlog(fmt, va_alist)
 
 void
 #ifdef __STDC__
-kprintf(const char *fmt, ...)
+printf(const char *fmt, ...)
 #else
-kprintf(fmt, va_alist)
+printf(fmt, va_alist)
 	char *fmt;
 	va_dcl
 #endif
@@ -330,7 +330,7 @@ kprintf(fmt, va_alist)
 	savintr = consintr;		/* disable interrupts */
 	consintr = 0;
 	va_start(ap, fmt);
-	kdoprnt(fmt, TOCONS | TOLOG, NULL, ap);
+	kprintf(fmt, TOCONS | TOLOG, NULL, ap);
 	va_end(ap);
 	if (!panicstr)
 		logwakeup();
@@ -345,7 +345,7 @@ kprintf(fmt, va_alist)
  * The format %b is supported to decode error registers.
  * Its usage is:
  *
- *	kprintf("reg=%b\n", regval, "<base><arg>*");
+ *	printf("reg=%b\n", regval, "<base><arg>*");
  *
  * where <base> is the output base expressed as a control character, e.g.
  * \10 gives octal; \20 gives hex.  Each arg is a sequence of characters,
@@ -353,7 +353,7 @@ kprintf(fmt, va_alist)
  * the next characters (up to a control character, i.e. a character <= 32),
  * give the name of the register.  Thus:
  *
- *	kdoprnt("reg=%b\n", 3, "\10\2BITTWO\1BITONE\n");
+ *	kprintf("reg=%b\n", 3, "\10\2BITTWO\1BITONE\n");
  *
  * would produce output:
  *
@@ -366,7 +366,7 @@ kprintf(fmt, va_alist)
  * {
  *	va_list ap;
  *	va_start(ap, fmt);
- *	kprintf("prefix: %: suffix\n", fmt, ap);
+ *	printf("prefix: %: suffix\n", fmt, ap);
  *	va_end(ap);
  * }
  *
@@ -374,7 +374,7 @@ kprintf(fmt, va_alist)
  * formats only.
  */
 void
-kdoprnt(fmt, flags, tp, ap)
+kprintf(fmt, flags, tp, ap)
 	register const char *fmt;
 	int flags;
 	struct tty *tp;
@@ -439,7 +439,7 @@ reswitch:	switch (ch = *(u_char *)fmt++) {
 			break;
 		case ':':
 			p = va_arg(ap, char *);
-			kdoprnt(p, flags, tp, va_arg(ap, va_list));
+			kprintf(p, flags, tp, va_arg(ap, va_list));
 			break;
 		case 's':
 			if ((p = va_arg(ap, char *)) == NULL)
@@ -533,9 +533,9 @@ putchar(c, flags, tp)
  */
 int
 #ifdef __STDC__
-ksprintf(char *buf, const char *cfmt, ...)
+sprintf(char *buf, const char *cfmt, ...)
 #else
-ksprintf(buf, cfmt, va_alist)
+sprintf(buf, cfmt, va_alist)
 	char *buf, 
 	const char *cfmt;
 	va_dcl
