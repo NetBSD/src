@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.13 1996/01/07 22:02:52 thorpej Exp $	*/
+/*	$NetBSD: rz.c,v 1.14 1996/04/07 22:46:31 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -69,14 +69,29 @@
 #include <machine/pte.h>
 
 extern int splbio();
-extern void splx();
 extern int physio();
 
-int	rzprobe();
-void	rzstrategy(), rzstart(), rzdone();
+int	rzprobe __P((void /*register struct pmax_scsi_device*/ *sd));
+void	rzstrategy __P((register struct buf *bp));
+void	rzstart __P((int unit));
+void	rzdone __P((int unit, int error, int resid, int status));
+void	rzgetinfo __P((dev_t dev));
+
+int	rzopen __P((dev_t dev, int flags, int mode, struct proc *p));
+int	rzclose __P((dev_t dev, int flags, int mode));
+int	rzread  __P((dev_t dev, struct uio *uio));
+int	rzwrite __P((dev_t dev, struct uio *uio));
+int	rzioctl __P((dev_t dev, int cmd, caddr_t data, int flag,
+		     struct proc *p));
+int	rzsize __P((dev_t dev));
+int	rzdump __P((dev_t dev));
+
+
 
 struct	pmax_driver rzdriver = {
-	"rz", rzprobe, rzstart, rzdone,
+	"rz", rzprobe,
+	(void	(*) __P((struct ScsiCmd *cmd))) rzstart,
+	rzdone,
 };
 
 struct	size {
@@ -94,23 +109,23 @@ struct	size {
  */
 static struct size rzdefaultpart[MAXPARTITIONS] = {
 #ifdef GENERIC	/* greedy machines have 64 meg of swap */
-	        0,   32768,	/* A */
-	    32768,  131072,	/* B */
-	        0,       0,	/* C */
-	    17408,       0,	/* D */
-	   115712,       0,	/* E */
-	   218112,       0,	/* F */
-	   163840,       0,	/* G */
-	   115712,       0,	/* H */
+	{       0,   32768 },	/* A */
+	{   32768,  131072 },	/* B */
+	{       0,       0 },	/* C */
+	{   17408,       0 },	/* D */
+	{  115712,       0 },	/* E */
+	{  218112,       0 },	/* F */
+	{  163840,       0 },	/* G */
+	{  115712,       0 }	/* H */
 #else
-	        0,   16384,	/* A */
-	    16384,   65536,	/* B */
-	        0,       0,	/* C */
-	    17408,       0,	/* D */
-	   115712,       0,	/* E */
-	   218112,       0,	/* F */
-	    81920,       0,	/* G */
-	   115712,       0,	/* H */
+	{       0,   16384 },	/* A */
+	{   16384,   65536 },	/* B */
+	{       0,       0 },	/* C */
+	{   17408,       0 },	/* D */
+	{  115712,       0 },	/* E */
+	{  218112,       0 },	/* F */
+	{   81920,       0 },	/* G */
+	{  115712,       0 }	/* H */
 #endif
 };
 
@@ -325,13 +340,14 @@ rzready(sc)
  * Test to see if device is present.
  * Return true if found and initialized ok.
  */
-rzprobe(sd)
-	register struct pmax_scsi_device *sd;
+int
+rzprobe(xxxsd)
+	void *xxxsd;
 {
+	register struct pmax_scsi_device *sd = xxxsd;
 	register struct rz_softc *sc = &rz_softc[sd->sd_unit];
 	register int i;
 	ScsiInquiryData inqbuf;
-	ScsiClass7Sense *sp;
 
 	/* init some parameters that don't change */
 	sc->sc_sd = sd;
@@ -373,7 +389,8 @@ rzprobe(sd)
 		break;
 
 	default:			/* not a disk */
-		printf("rz%d: unknown media code 0x%x\n", inqbuf.type);
+		printf("rz%d: unknown media code 0x%x\n",
+		       sd->sd_unit, inqbuf.type);
 		goto bad;
 	}
 	sc->sc_type = inqbuf.type;
@@ -469,7 +486,7 @@ rzlblkstrat(bp, bsize)
 	addr = bp->b_un.b_addr;
 #ifdef DEBUG
 	if (rzdebug & RZB_PARTIAL)
-		printf("rzlblkstrat: bp %x flags %x bn %x resid %x addr %x\n",
+		printf("rzlblkstrat: bp %p flags %lx bn %x resid %x addr %p\n",
 		       bp, bp->b_flags, bn, resid, addr);
 #endif
 
@@ -486,7 +503,7 @@ rzlblkstrat(bp, bsize)
 			cbp->b_bcount = bsize;
 #ifdef DEBUG
 			if (rzdebug & RZB_PARTIAL)
-				printf(" readahead: bn %x cnt %x off %x addr %x\n",
+				printf(" readahead: bn %x cnt %x off %x addr %p\n",
 				       cbp->b_blkno, count, boff, addr);
 #endif
 			rzstrategy(cbp);
@@ -503,7 +520,7 @@ rzlblkstrat(bp, bsize)
 			bcopy(addr, &cbuf[boff], count);
 #ifdef DEBUG
 			if (rzdebug & RZB_PARTIAL)
-				printf(" writeback: bn %x cnt %x off %x addr %x\n",
+				printf(" writeback: bn %x cnt %x off %x addr %p\n",
 				       cbp->b_blkno, count, boff, addr);
 #endif
 		} else {
@@ -513,7 +530,7 @@ rzlblkstrat(bp, bsize)
 			cbp->b_bcount = count;
 #ifdef DEBUG
 			if (rzdebug & RZB_PARTIAL)
-				printf(" fulltrans: bn %x cnt %x addr %x\n",
+				printf(" fulltrans: bn %x cnt %x addr %p\n",
 				       cbp->b_blkno, count, addr);
 #endif
 		}
@@ -531,7 +548,7 @@ done:
 		addr += count;
 #ifdef DEBUG
 		if (rzdebug & RZB_PARTIAL)
-			printf(" done: bn %x resid %x addr %x\n",
+			printf(" done: bn %x resid %x addr %p\n",
 			       bn, resid, addr);
 #endif
 	}
@@ -647,7 +664,7 @@ rzstart(unit)
 		sc->sc_rwcmd.lowBlockCount = n;
 #ifdef DEBUG
 		if ((bp->b_bcount & (sc->sc_blksize - 1)) != 0)
-			printf("rz%d: partial block xfer -- %x bytes\n",
+			printf("rz%d: partial block xfer -- %lx bytes\n",
 				unit, bp->b_bcount);
 #endif
 		sc->sc_stats.rztransfers++;
@@ -932,6 +949,7 @@ rzopen(dev, flags, mode, p)
 	return (0);
 }
 
+int
 rzclose(dev, flags, mode)
 	dev_t dev;
 	int flags, mode;
@@ -1137,12 +1155,14 @@ rzdump(dev)
 	int part = rzpart(dev);
 	int unit = rzunit(dev);
 	register struct rz_softc *sc = &rz_softc[unit];
-	register struct pmax_scsi_device *sd = sc->sc_sd;
 	register daddr_t baddr;
 	register int maddr;
 	register int pages, i;
-	int stat;
 	extern int lowram;
+#ifdef later
+	register struct pmax_scsi_device *sd = sc->sc_sd;
+	int stat;
+#endif
 
 	/*
 	 * Hmm... all vax drivers dump maxfree pages which is physmem minus
