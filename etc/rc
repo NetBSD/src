@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.147 2000/02/09 16:24:03 itojun Exp $
+#	$NetBSD: rc,v 1.148 2000/03/07 14:33:13 jdolecek Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -430,13 +430,16 @@ if [ "$virecovery" != "/var/tmp/vi.recover/recover.*" ]; then
 	done
 fi
 
-echo clearing /tmp
+# sweep /tmp
+if checkyesno clear_tmp; then
+	echo clearing /tmp
 
-# Prune quickly with one rm, then use find to clean up /tmp/[lq]* (this
-# is not needed with mfs /tmp, but doesn't hurt anything).
-(cd /tmp && rm -rf [a-km-pr-zA-Z]* &&
-    find . ! -name . ! -name lost+found ! -name quota.user \
-	! -name quota.group -exec rm -rf -- {} \; -type d -prune)
+	# Prune quickly with one rm, then use find to clean up /tmp/[lq]* (this
+	# is not needed with mfs /tmp, but doesn't hurt anything).
+	(cd /tmp && rm -rf [a-km-pr-zA-Z]* &&
+	    find . ! -name . ! -name lost+found ! -name quota.user \
+		! -name quota.group -exec rm -rf -- {} \; -type d -prune)
+fi
 
 # Update kernel info in /etc/motd
 # Must be done *before* interactive logins are possible to prevent
