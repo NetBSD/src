@@ -24,7 +24,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: io.c,v 1.5 1994/02/17 01:22:21 jtc Exp $";
+static char rcsid[] = "$Id: io.c,v 1.6 1994/04/01 01:29:28 jtc Exp $";
 #endif
 
 #if !defined(VMS) && !defined(VMS_POSIX) && !defined(_MSC_VER)
@@ -798,7 +798,7 @@ const char *name, *mode;
 	char tbuf[BUFSIZ], *cp;
 	int i;
 #if defined(NGROUPS_MAX) && NGROUPS_MAX > 0
-#if defined(atarist) || defined(__svr4__)
+#if defined(atarist) || defined(__svr4__) || defined(__NetBSD__)
 	gid_t groupset[NGROUPS_MAX];
 #else
 	int groupset[NGROUPS_MAX];
