@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcioman.c,v 1.3 2001/06/04 18:59:32 uch Exp $ */
+/*	$NetBSD: hpcioman.c,v 1.4 2001/06/13 19:02:14 uch Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
 
+#include <machine/bus.h>
 #include <dev/hpc/hpciovar.h>
 #include <dev/hpc/hpciomanvar.h>
 
