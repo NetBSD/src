@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.6 2003/04/02 04:27:17 thorpej Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.7 2003/05/05 12:55:43 fvdl Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -58,11 +58,6 @@
 #include <uvm/uvm_extern.h>
 
 extern paddr_t avail_end;		/* XXX temporary */
-
-/*
- * ISA can DMA to 0-16M.
- */
-#define	ISA_DMA_BOUNCE_THRESHOLD	(16 * 1024 * 1024)
 
 /*
  * Cookie used by ISA dma.  A pointer to one of these it stashed in
