@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1212.c,v 1.6 2003/07/14 15:47:27 lukem Exp $	*/
+/*	$NetBSD: ieee1212.c,v 1.7 2003/10/26 20:53:09 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee1212.c,v 1.6 2003/07/14 15:47:27 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee1212.c,v 1.7 2003/10/26 20:53:09 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -756,7 +756,6 @@ p1212_parse_textdir(struct p1212_com *com, u_int32_t *addr)
 	u_int32_t *t, entry, new;
 	u_int16_t crclen, crc, crc1, romcrc;
 	u_int8_t type, val;
-
 	int i, size;
 
 	/*
@@ -766,6 +765,7 @@ p1212_parse_textdir(struct p1212_com *com, u_int32_t *addr)
 	
 	com->text = NULL;
 	size = sizeof(struct p1212_text *);
+	t = addr;
 	
 	crclen = P1212_DIRENT_GET_LEN((ntohl(t[0])));
 	romcrc = P1212_DIRENT_GET_CRC((ntohl(t[0])));
