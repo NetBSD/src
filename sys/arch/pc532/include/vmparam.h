@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.12 1998/03/18 21:59:39 matthias Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.13 1998/07/08 04:43:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -158,6 +158,9 @@
 #define VM_PHYSSEG_MAX		1	/* we have contiguous memory */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
 #define VM_PHYSSEG_NOADD		/* can't add RAM after vm_mem_init */
+
+#define	VM_NFREELIST		1
+#define	VM_FREELIST_DEFAULT	0
 
 /*
  * pmap specific data stored in the vm_physmem[] array
