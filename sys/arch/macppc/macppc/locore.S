@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.33 2001/01/01 04:33:40 tsubai Exp $	*/
+/*	$NetBSD: locore.S,v 1.34 2001/01/01 05:16:12 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -54,11 +54,16 @@
 /*
  * Get varios per-cpu values.
  */
+#ifdef notyet
+#define GET_CPUINFO(r)	\
+	mfsprg	r,0
+#else
 #define	GET_CPUINFO(r)						\
 	mfspr	r,1023;			/* r = cpu_number() */	\
 	mulli	r,r,CI_SIZE;					\
 	addis	r,r,_C_LABEL(cpu_info)@ha;			\
 	addi	r,r,_C_LABEL(cpu_info)@l;
+#endif
 #endif
 
 #define	INTSTK	(8*1024)	/* 8K interrupt stack */
@@ -345,26 +350,6 @@ ofw_back:
  * When we get here, interrupts are off (MSR[EE]=0) and sched_lock is held.
  */
 ASENTRY(Idle)
-#if defined(MULTIPROCESSOR)
-	/* Switch to the idle PCB unless we're already running on it. */
-	cmpwi	30,0			/* old process was exiting? */
-	beq	idle_loop
-
-	mfsr	10,USER_SR		/* save USER_SR for copyin/copyout */
-	mfcr	11			/* save cr */
-	mr	12,2			/* save r2 */
-	stwu	1,-SFRAMELEN(1)		/* still running on old stack */
-	stmw	10,8(1)
-	lwz	3,P_ADDR(30)
-	stw	1,PCB_SP(3)		/* save SP */
-
-	GET_CPUINFO(7)
-	lwz	6,CI_IDLE_PCB(7)
-	addi	1,6,USPACE-16		/* 16 bytes are reserved at stack top */
-	li	30,0			/* we are now on idle stack */
-#endif
-
-idle_loop:
 	lis	8,_C_LABEL(sched_whichqs)@ha
 	lwz	9,_C_LABEL(sched_whichqs)@l(8)
 
@@ -399,7 +384,7 @@ idle_loop:
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_lock_idle)
 #endif
-	b	idle_loop
+	b	_ASM_LABEL(Idle)
 
 /*
  * switchexit gets called from cpu_exit to complete the exit procedure.
@@ -444,10 +429,29 @@ ENTRY(cpu_switch)
 
 	mr	30,3
 #if defined(MULTIPROCESSOR)
-	GET_CPUINFO(3)
+	/* Switch to the idle PCB unless we're already running on it. */
+	GET_CPUINFO(7)
+	cmpwi	30,0			/* old process was exiting? */
+	beq	1f
+
+	mfsr	10,USER_SR		/* save USER_SR for copyin/copyout */
+	mfcr	11			/* save cr */
+	mr	12,2			/* save r2 */
+	stwu	1,-SFRAMELEN(1)		/* still running on old stack */
+	stmw	10,8(1)
+	lwz	3,P_ADDR(30)
+	stw	1,PCB_SP(3)		/* save SP */
+
+	lwz	6,CI_IDLE_PCB(7)
+	addi	1,6,USPACE-16		/* 16 bytes are reserved at stack top */
+
+1:
 	xor	31,31,31
-	stw	31,CI_CURPROC(3)	/* Zero to not accumulate cpu time */
-	lwz	31,CI_CURPCB(3)
+	stw	31,CI_CURPROC(7)	/* Zero to not accumulate cpu time */
+	lwz	31,CI_CURPCB(7)
+
+	lwz	3,CI_CPL(7)
+	stw	3,PCB_SPL(31)		/* save spl */
 #else
 	lis	3,_C_LABEL(curproc)@ha
 	xor	31,31,31
@@ -463,7 +467,9 @@ ENTRY(cpu_switch)
 
 	xor	3,3,3
 	bl	_C_LABEL(lcsplx)
+#if !defined(MULTIPROCESSOR)
 	stw	3,PCB_SPL(31)		/* save spl */
+#endif
 
 /* Lock the scheduler. */
 	mfmsr	3
@@ -540,6 +546,7 @@ ENTRY(cpu_switch)
 	ori	3,3,PSL_EE@l		/* Now we can interrupt again */
 	mtmsr	3
 
+#if !defined(MULTIPROCESSOR)		/* XXX */
 	cmpl	0,31,30			/* is it the same process? */
 	beq	switch_return
 
@@ -553,6 +560,7 @@ ENTRY(cpu_switch)
 	stmw	10,8(1)
 	lwz	3,P_ADDR(30)
 	stw	1,PCB_SP(3)		/* save SP */
+#endif
 
 switch_exited:
 	mfmsr	3
