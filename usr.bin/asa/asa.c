@@ -1,3 +1,5 @@
+/*	$NetBSD: asa.c,v 1.8 1995/03/25 18:05:06 glass Exp $	*/
+
 /*
  * Copyright (c) 1993,94 Winning Strategies, Inc.
  * All rights reserved.
@@ -27,11 +29,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Header: /cvsroot/src/usr.bin/asa/asa.c,v 1.7 1994/12/24 15:50:16 cgd Exp $
  */
 
 #ifndef lint
-static char *rcsid = "$Id: asa.c,v 1.7 1994/12/24 15:50:16 cgd Exp $";
+static char *rcsid = "$NetBSD: asa.c,v 1.8 1995/03/25 18:05:06 glass Exp $";
 #endif
 
 #include <stdio.h>
