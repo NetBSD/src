@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.7 2000/07/19 00:58:25 matt Exp $ */
+/*	$NetBSD: srt0.s,v 1.8 2000/11/01 14:06:44 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,9 +42,9 @@
  */
 
 	.globl	nisse		# pass -e nisse to ld gives OK start addr
+	.set	nisse,0
 
 ALTENTRY(start)
-nisse:
 	nop;nop;
 	movl	$_C_LABEL(start), sp	# Probably safe place for stack
 	pushr	$0x1fff		# save for later usage
