@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
+/*	$NetBSD: pcb.h,v 1.2 1998/11/22 21:21:32 ws Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 #ifndef	_MACHINE_PCB_H_
 #define	_MACHINE_PCB_H_
 
-typedef int faultbuf[24];
+typedef int faultbuf[23];
 
 struct pcb {
 	struct pmap *pcb_pm;	/* pmap of our vmspace */
