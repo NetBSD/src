@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.10 2000/03/13 22:37:13 soren Exp $	
+.\"	$NetBSD: hardware,v 1.11 2000/08/25 23:56:08 jhawk Exp $	
 .
 NetBSD/pmax \*V runs on the following classes of machines:
 .Bl -bullet -compact
@@ -89,7 +89,7 @@ ethernet:
 .	Bl -hyphen -compact
 .	It
 on-board AMD Lance ethernet
-.Pq Em (le0) ,
+.Pq Em le0 ,
 .	It
 TURBOchannel AMD Lance ethernet cards
 .Pq the Em PMAD
