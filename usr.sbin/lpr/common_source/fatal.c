@@ -1,4 +1,4 @@
-/*	$NetBSD: fatal.c,v 1.2 2000/07/04 20:27:37 matt Exp $	*/
+/*	$NetBSD: fatal.c,v 1.3 2002/07/14 15:27:58 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,37 +40,23 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fatal.c,v 1.2 2000/07/04 20:27:37 matt Exp $");
+__RCSID("$NetBSD: fatal.c,v 1.3 2002/07/14 15:27:58 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/dirent.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include "lp.h"
 
 void
-#ifdef __STDC__
 fatal(const char *msg, ...)
-#else
-fatal(msg, va_alist)
-	char *msg;
-        va_dcl
-#endif
 {
 	va_list ap;
-#ifdef __STDC__
+
 	va_start(ap, msg);
-#else
-	va_start(ap);
-#endif
 	if (from != host)
 		(void)printf("%s: ", host);
 	(void)printf("%s: ", name);

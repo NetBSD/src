@@ -1,4 +1,4 @@
-/*	$NetBSD: lpc.c,v 1.12 2002/05/19 17:38:36 wiz Exp $	*/
+/*	$NetBSD: lpc.c,v 1.13 2002/07/14 15:27:59 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpc.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpc.c,v 1.12 2002/05/19 17:38:36 wiz Exp $");
+__RCSID("$NetBSD: lpc.c,v 1.13 2002/07/14 15:27:59 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,17 +82,15 @@ uid_t	uid, euid;
 
 jmp_buf	toplevel;
 
-static void		 cmdscanner __P((int));
-static struct cmd	*getcmd __P((char *));
-static void		 intr __P((int));
-static void		 makeargv __P((void));
-static int		 ingroup __P((char *));
-int			 main __P((int, char *p[]));
+static void		 cmdscanner(int);
+static struct cmd	*getcmd(char *);
+static void		 intr(int);
+static void		 makeargv(void);
+static int		 ingroup(char *);
+int			 main(int, char *p[]);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct cmd *c;
 
@@ -130,8 +128,7 @@ main(argc, argv)
 }
 
 static void
-intr(signo)
-	int signo;
+intr(int signo)
 {
 	if (!fromatty)
 		exit(0);
@@ -142,8 +139,7 @@ intr(signo)
  * Command parser.
  */
 static void
-cmdscanner(top)
-	int top;
+cmdscanner(int top)
 {
 	struct cmd *c;
 
@@ -178,8 +174,7 @@ cmdscanner(top)
 }
 
 static struct cmd *
-getcmd(name)
-	char *name;
+getcmd(char *name)
 {
 	char *p, *q;
 	struct cmd *c, *found;
@@ -210,7 +205,7 @@ getcmd(name)
  * Slice a string up into argc/argv.
  */
 static void
-makeargv()
+makeargv(void)
 {
 	char *cp;
 	char **argp = margv;
@@ -240,9 +235,7 @@ makeargv()
  * Help command.
  */
 void
-help(argc, argv)
-	int argc;
-	char *argv[];
+help(int argc, char *argv[])
 {
 	struct cmd *c;
 
@@ -298,8 +291,7 @@ help(argc, argv)
  * return non-zero if the user is a member of the given group
  */
 static int
-ingroup(grname)
-	char *grname;
+ingroup(char *grname)
 {
 	static struct group *gptr=NULL;
 	static gid_t groups[NGROUPS];

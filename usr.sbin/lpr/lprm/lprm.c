@@ -1,4 +1,4 @@
-/*	$NetBSD: lprm.c,v 1.12 2002/07/03 22:28:28 kleink Exp $	*/
+/*	$NetBSD: lprm.c,v 1.13 2002/07/14 15:28:01 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lprm.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lprm.c,v 1.12 2002/07/03 22:28:28 kleink Exp $");
+__RCSID("$NetBSD: lprm.c,v 1.13 2002/07/14 15:28:01 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,13 +83,11 @@ uid_t	 uid, euid;		/* real and effective user id's */
 
 static char	luser[16];	/* buffer for person */
 
-static void usage __P((void));
-int main __P((int, char *[]));
+static void usage(void);
+int main(int, char *[]);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	char *arg;
 	struct passwd *p;
@@ -162,7 +160,7 @@ main(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
 	fprintf(stderr,
 		"usage: lprm [-] [-Pprinter] [-w maxwait] [[job #] [user] ...]\n");

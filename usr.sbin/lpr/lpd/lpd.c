@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.34 2002/07/09 01:12:35 hubertf Exp $	*/
+/*	$NetBSD: lpd.c,v 1.35 2002/07/14 15:28:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.34 2002/07/09 01:12:35 hubertf Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.35 2002/07/14 15:28:00 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,8 +108,8 @@ __RCSID("$NetBSD: lpd.c,v 1.34 2002/07/09 01:12:35 hubertf Exp $");
 #include "extern.h"
 
 /* XXX from libc/net/rcmd.c */
-extern int __ivaliduser_sa __P((FILE *, struct sockaddr *, socklen_t,
-		const char *, const char *));
+extern int __ivaliduser_sa(FILE *, struct sockaddr *, socklen_t,
+			   const char *, const char *);
 
 int	lflag;				/* log requests flag */
 int	rflag;				/* allow of for remote printers */
@@ -119,15 +119,15 @@ char	**blist;			/* list of addresses to bind(2) to */
 int	blist_size;
 int	blist_addrs;
 
-int               main __P((int, char **));
-static void       reapchild __P((int));
-static void       mcleanup __P((int));
-static void       doit __P((void));
-static void       startup __P((void));
-static void       chkhost __P((struct sockaddr *, int));
-static int	  ckqueue __P((char *));
-static void	  usage __P((void));
-static int	  *socksetup __P((int, int, const char *));
+int               main(int, char **);
+static void       reapchild(int);
+static void       mcleanup(int);
+static void       doit(void);
+static void       startup(void);
+static void       chkhost(struct sockaddr *, int);
+static int	  ckqueue(char *);
+static void	  usage(void);
+static int	  *socksetup(int, int, const char *);
 
 uid_t	uid, euid;
 int child_count;

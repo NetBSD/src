@@ -1,4 +1,4 @@
-/*	$NetBSD: lpr.c,v 1.22 2002/07/03 22:12:46 hubertf Exp $	*/
+/*	$NetBSD: lpr.c,v 1.23 2002/07/14 15:28:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpr.c,v 1.22 2002/07/03 22:12:46 hubertf Exp $");
+__RCSID("$NetBSD: lpr.c,v 1.23 2002/07/14 15:28:00 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,27 +104,25 @@ static char	*width;		/* width for versatec printing */
 
 static struct stat statb;
 
-static void	 card __P((int, const char *));
-static void	 chkprinter __P((char *));
-static void	 cleanup __P((int));
-static void	 copy __P((int, char []));
-static void	 fatal2 __P((const char *, ...))
+static void	 card(int, const char *);
+static void	 chkprinter(char *);
+static void	 cleanup(int);
+static void	 copy(int, char []);
+static void	 fatal2(const char *, ...)
 	__attribute__((__format__(__printf__, 1, 2)));
-static char	*itoa __P((int));
-static char	*linked __P((char *));
-static char	*lmktemp __P((char *, int, int));
-static void	 mktemps __P((void));
-static int	 nfile __P((char *));
-static int	 test __P((char *));
-static void	 usage __P((void));
-int		 main __P((int, char *[]));
+static char	*itoa(int);
+static char	*linked(char *);
+static char	*lmktemp(char *, int, int);
+static void	 mktemps(void);
+static int	 nfile(char *);
+static int	 test(char *);
+static void	 usage(void);
+int		 main(int, char *[]);
 
 uid_t	uid, euid;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct passwd *pw;
 	struct group *gptr;
@@ -418,9 +416,7 @@ main(argc, argv)
  * Create the file n and copy from file descriptor f.
  */
 static void
-copy(f, n)
-	int f;
-	char n[];
+copy(int f, char n[])
 {
 	int fd, i, nr, nc;
 	char buf[MAXPATHLEN];
@@ -461,8 +457,7 @@ copy(f, n)
  * path name if successful.
  */
 static char *
-linked(file)
-	char *file;
+linked(char *file)
 {
 	char *cp;
 	static char buf[BUFSIZ];
@@ -501,9 +496,7 @@ linked(file)
  * Put a line into the control file.
  */
 static void
-card(c, p2)
-	int c;
-	const char *p2;
+card(int c, const char *p2)
 {
 	char buf[BUFSIZ];
 	char *p1 = buf;
@@ -525,8 +518,7 @@ card(c, p2)
  * Create a new file in the spool directory.
  */
 static int
-nfile(n)
-	char *n;
+nfile(char *n)
 {
 	int f;
 	int oldumask = umask(0);		/* should block signals */
@@ -558,8 +550,7 @@ nfile(n)
  * Cleanup after interrupts and errors.
  */
 static void
-cleanup(signo)
-	int signo;
+cleanup(int signo)
 {
 	int i;
 
@@ -593,8 +584,7 @@ cleanup(signo)
  * we should remove it after printing.
  */
 static int
-test(file)
-	char *file;
+test(char *file)
 {
 	struct exec execb;
 	int fd;
@@ -656,8 +646,7 @@ bad:
  * itoa - integer to string conversion
  */
 static char *
-itoa(i)
-	int i;
+itoa(int i)
 {
 	static char b[10] = "########";
 	char *p;
@@ -673,8 +662,7 @@ itoa(i)
  * Perform lookup for printer name or abbreviation --
  */
 static void
-chkprinter(s)
-	char *s;
+chkprinter(char *s)
 {
 	int status;
 
@@ -700,7 +688,7 @@ chkprinter(s)
  * Make the temp files.
  */
 static void
-mktemps()
+mktemps(void)
 {
 	int len, fd, n;
 	char *cp;
@@ -741,9 +729,7 @@ mktemps()
  * Make a temp file name.
  */
 static char *
-lmktemp(id, num, len)
-	char	*id;
-	int	num, len;
+lmktemp(char *id, int num, int len)
 {
 	char *s;
 
@@ -753,27 +739,14 @@ lmktemp(id, num, len)
 	return(s);
 }
 
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 static void
-#ifdef __STDC__
 fatal2(const char *msg, ...)
-#else
-fatal2(msg, va_alist)
-	char *msg;
-        va_dcl
-#endif
 {
 	va_list ap;
-#ifdef __STDC__
+
 	va_start(ap, msg);
-#else
-	va_start(ap);
-#endif
 	printf("%s: ", name);
 	vprintf(msg, ap);
 	putchar('\n');
@@ -782,7 +755,7 @@ fatal2(msg, va_alist)
 }
 
 static void
-usage()
+usage(void)
 {
 
 	fprintf(stderr, "%s\n%s\n",
