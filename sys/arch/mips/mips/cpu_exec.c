@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.4 1995/04/25 19:16:46 mellon Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.5 1996/03/23 04:59:03 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@ cpu_exec_aout_makecmds(p, epp)
 		/* If it's not a.out, maybe it's ELF.  (This wants to
 		   be moved up to the machine independent code as soon
 		   as possible.)  XXX */
-		return pmax_elf_makecmds (p, epp);
+		return mips_elf_makecmds (p, epp);
 
 #ifdef COMPAT_09
 	epp -> ep_taddr = 0x1000;

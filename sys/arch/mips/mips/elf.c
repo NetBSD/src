@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.1 1995/01/18 06:16:33 mellon Exp $	*/
+/*	$NetBSD: elf.c,v 1.2 1996/03/23 04:59:00 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994 Ted Lemon
@@ -49,12 +49,14 @@
 #include <sys/exec.h>
 #include <machine/elf.h>
 
-/* pmax_elf_makecmds (p, epp)
+/*
+ * mips_elf_makecmds (p, epp)
+ *
+ * Test if an executable is a MIPS ELF executable.   If it is,
+ * try to load it.
+ */
 
-   Test if an executable is a MIPS ELF executable.   If it is,
-   try to load it. */
-
-pmax_elf_makecmds (p, epp)
+mips_elf_makecmds (p, epp)
         struct proc *p;
         struct exec_package *epp;
 {
@@ -66,7 +68,7 @@ pmax_elf_makecmds (p, epp)
 	if (epp -> ep_hdrvalid < sizeof (struct ehdr)) {
 #ifdef DIAGNOSTIC
 	    if (epp -> ep_hdrlen < sizeof (struct ehdr))
-		printf ("pmax_elf_makecmds: execsw hdrsize too short!\n");
+		printf ("mips_elf_makecmds: execsw hdrsize too short!\n");
 #endif
 	    return ENOEXEC;
 	}
