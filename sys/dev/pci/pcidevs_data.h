@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.525 2003/04/15 21:43:57 rjs Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.526 2003/04/15 23:15:47 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.524 2003/04/15 21:32:28 rjs Exp 
+ *	NetBSD: pcidevs,v 1.526 2003/04/15 23:15:23 augustss Exp 
  */
 
 /*
@@ -8230,6 +8230,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "VT8235 (Apollo KT400) PCI-ISA Bridge",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8377,
+	    0,
+	    "VIA Technologies",
+	    "VT8377 Apollo KT400 CPU to PCI Bridge",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100A,
 	    0,
 	    "VIA Technologies",
@@ -8288,6 +8294,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT8366 CPU-AGP Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8377AGP,
+	    0,
+	    "VIA Technologies",
+	    "VT8377 CPU-AGP Bridge",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_60x0,
