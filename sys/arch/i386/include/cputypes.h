@@ -24,15 +24,26 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: cputypes.h,v 1.1 1993/05/21 11:06:40 cgd Exp $
+ *	$Id: cputypes.h,v 1.2 1993/05/21 12:26:04 cgd Exp $
  */
+
+/*
+ *	Classes of Processor
+ */
+
+#define	CPUCLASS_286	0
+#define	CPUCLASS_386	1
+#define	CPUCLASS_486	2
+#define	CPUCLASS_586	3
 
 /*
  *	Kinds of Processor
  */
 
-#define	CPU_386SX	0
-#define	CPU_386		1
-#define	CPU_486SX	2
-#define	CPU_486		3
-#define	CPU_586		4
+#define	CPU_286		0	/* Intel 80286 */
+#define	CPU_386SX	1	/* Intel 80386SX */
+#define	CPU_386		2	/* Intel 80386DX */
+#define	CPU_486SX	3	/* Intel 80486SX */
+#define	CPU_486		4	/* Intel 80486DX */
+#define	CPU_586		5	/* Intel P.....m (I hate lawyers; it's TM) */
+

@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.17 1993/05/20 15:36:40 cgd Exp $
+ *	$Id: machdep.c,v 1.18 1993/05/21 12:23:31 cgd Exp $
  */
 
 #include "param.h"
@@ -248,48 +248,64 @@ again:
 	configure();
 }
 
+
+struct cpu_nameclass i386_cpus[] = {
+	{ "Intel 80286",	CPUCLASS_286 },		/* CPU_286   */
+	{ "i386SX",		CPUCLASS_386 },		/* CPU_386SX */
+	{ "i386DX",		CPUCLASS_386 },		/* CPU_386   */
+	{ "i486SX",		CPUCLASS_486 },		/* CPU_486SX */
+	{ "i486DX",		CPUCLASS_486 },		/* CPU_486   */
+	{ "i586",		CPUCLASS_586 },		/* CPU_586   */
+};
+
 identifycpu()	/* translated from hp300 -- cgd */
 {
+	int class;
+
 	printf("CPU: ");
-	switch (cpu) {
-	case CPU_386SX:
-		printf("i386SX");
-		break;
-	case CPU_386:
-		printf("i386");
-		break;
-	case CPU_486SX:
-		printf("i486SX");
-		break;
-	case CPU_486:
-		printf("i486");
-		break;
-	case CPU_586:
-		printf("i586");
-		break;
-	default:
+	if (cpu >= 0 && cpu < (sizeof i386_cpus/sizeof(struct cpu_nameclass))) {
+		printf("%s", i386_cpus[cpu].cpu_name);
+		class = i386_cpus[cpu].cpu_class;
+	} else {
 		printf("unknown cpu type %d\n", cpu);
 		panic("startup: bad cpu id");
 	}
+	printf(" (");
+	switch(class) {
+	case CPUCLASS_286:
+		printf("286");
+		break;
+	case CPUCLASS_386:
+		printf("386");
+		break;
+	case CPUCLASS_486:
+		printf("486");
+		break;
+	case CPUCLASS_586:
+		printf("586");
+		break;
+	default:
+		printf("unknown");	/* will panic below... */
+	}
+	printf("-class CPU)");
 	printf("\n");	/* cpu speed would be nice, but how? */
+
 	/*
 	 * Now that we have told the user what they have,
 	 * let them know if that machine type isn't configured.
 	 */
-	switch (cpu) {
-	case -1:                /* keep compilers happy */
+	switch (class) {
+	case CPUCLASS_286:	/* a 286 should not make it this far, anyway */
 #if !defined(I386_CPU)
-	case CPU_386SX:
-	case CPU_386:
+	case CPUCLASS_386:
 #endif
 #if !defined(I486_CPU)
-	case CPU_486SX:
-	case CPU_486:
+	case CPUCLASS_486:
 #endif
 #if !defined(I586_CPU)
-	case CPU_586:
+	case CPUCLASS_586:
 #endif
-		panic("CPU type not configured");
+		panic("CPU class not configured");
 	default:
 		break;
 	}
