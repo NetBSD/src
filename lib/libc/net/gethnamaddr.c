@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.36 2000/07/30 02:44:36 itojun Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.37 2000/07/30 03:01:01 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.36 2000/07/30 02:44:36 itojun Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.37 2000/07/30 03:01:01 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1252,28 +1252,38 @@ _yphostent(line, af)
 	int af;
 {
 	static struct in_addr host_addrs[MAXADDRS];
+	static struct in6_addr host6_addrs[MAXADDRS];
 	char *p = line;
 	char *cp, **q;
 	char **hap;
-	struct in_addr *buf;
+	int addrok;
 	int more;
+	int naddrs;
 
 	_DIAGASSERT(line != NULL);
 
 	host.h_name = NULL;
 	host.h_addr_list = h_addr_ptrs;
-	host.h_length = sizeof(u_int32_t);
-	host.h_addrtype = AF_INET;
+	host.h_addrtype = af;
+	switch (af) {
+	case AF_INET:
+		host.h_length = INADDRSZ;
+		break;
+	case AF_INET6:
+		host.h_length = IN6ADDRSZ;
+		break;
+	default:
+		return (NULL);
+	}
 	hap = h_addr_ptrs;
-	buf = host_addrs;
 	q = host.h_aliases = host_aliases;
+	naddrs = 0;
 
-	/*
-	 * XXX: maybe support IPv6 parsing, based on 'af' setting
-	 */
 nextline:
 	/* check for host_addrs overflow */
-	if (buf >= &host_addrs[sizeof(host_addrs) / sizeof(host_addrs[0])])
+	if (naddrs >= sizeof(host_addrs) / sizeof(host_addrs[0]))
+		goto done;
+	if (naddrs >= sizeof(host6_addrs) / sizeof(host6_addrs[0]))
 		goto done;
 
 	more = 0;
@@ -1282,8 +1292,36 @@ nextline:
 		goto done;
 	*cp++ = '\0';
 
-	*hap++ = (char *)(void *)buf;
-	(void) inet_aton(p, buf++);
+	/* p has should have an address */
+	switch (af) {
+	case AF_INET:
+		addrok = inet_aton(p, &host_addrs[naddrs]);
+		break;
+	case AF_INET6:
+		addrok = inet_pton(af, p, &host6_addrs[naddrs]);
+		break;
+	}
+	if (addrok != 1) {
+		/* skip to the next line */
+		while (cp && *cp) {
+			if (*cp == '\n') {
+				cp++;
+				goto nextline;
+			}
+			cp++;
+		}
+
+		goto done;
+	}
+
+	switch (af) {
+	case AF_INET:
+		*hap++ = (char *)(void *)&host_addrs[naddrs++];
+		break;
+	case AF_INET6:
+		*hap++ = (char *)(void *)&host6_addrs[naddrs++];
+		break;
+	}
 
 	while (*cp == ' ' || *cp == '\t')
 		cp++;
@@ -1319,6 +1357,7 @@ nextline:
 		if (cp != NULL)
 			*cp++ = '\0';
 	}
+
 done:
 	if (host.h_name == NULL)
 		return (NULL);
@@ -1337,9 +1376,10 @@ _yp_gethtbyaddr(rv, cb_data, ap)
 	struct hostent *hp = (struct hostent *)NULL;
 	static char *__ypcurrent;
 	int __ypcurrentlen, r;
-	char name[sizeof("xxx.xxx.xxx.xxx") + 1];
+	char name[INET6_ADDRSTRLEN];	/* XXX enough? */
 	const unsigned char *uaddr;
 	int af;
+	const char *map;
 
 	_DIAGASSERT(rv != NULL);
 
@@ -1352,19 +1392,23 @@ _yp_gethtbyaddr(rv, cb_data, ap)
 			return NS_UNAVAIL;
 	}
 	/*
-	 * XXX: based on the value of af, it would be possible to lookup
-	 *	IPv6 names in YP, by changing the following snprintf().
-	 *	Is it worth it?
+	 * XXX unfortunately, we cannot support IPv6 extended scoped address
+	 * notation here.  gethostbyaddr() is not scope-aware.  too bad.
 	 */
-	(void)snprintf(name, sizeof name, "%u.%u.%u.%u",
-		(uaddr[0] & 0xff),
-		(uaddr[1] & 0xff),
-		(uaddr[2] & 0xff),
-		(uaddr[3] & 0xff));
+	if (inet_ntop(af, uaddr, name, sizeof(name)) == NULL)
+		return NS_UNAVAIL;
 	if (__ypcurrent)
 		free(__ypcurrent);
 	__ypcurrent = NULL;
-	r = yp_match(__ypdomain, "hosts.byaddr", name,
+	switch (af) {
+	case AF_INET:
+		map = "hosts.byaddr";
+		break;
+	default:
+		map = "ipnodes.byaddr";
+		break;
+	}
+	r = yp_match(__ypdomain, map, name,
 		(int)strlen(name), &__ypcurrent, &__ypcurrentlen);
 	if (r==0)
 		hp = _yphostent(__ypcurrent, af);
@@ -1388,6 +1432,7 @@ _yp_gethtbyname(rv, cb_data, ap)
 	int __ypcurrentlen, r;
 	const char *name;
 	int af;
+	const char *map;
 
 	_DIAGASSERT(rv != NULL);
 
@@ -1402,7 +1447,15 @@ _yp_gethtbyname(rv, cb_data, ap)
 	if (__ypcurrent)
 		free(__ypcurrent);
 	__ypcurrent = NULL;
-	r = yp_match(__ypdomain, "hosts.byname", name,
+	switch (af) {
+	case AF_INET:
+		map = "hosts.byname";
+		break;
+	default:
+		map = "ipnodes.byname";
+		break;
+	}
+	r = yp_match(__ypdomain, map, name,
 		(int)strlen(name), &__ypcurrent, &__ypcurrentlen);
 	if (r==0)
 		hp = _yphostent(__ypcurrent, af);
