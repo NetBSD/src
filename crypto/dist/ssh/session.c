@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.10 2001/04/10 08:08:00 itojun Exp $	*/
+/*	$NetBSD: session.c,v 1.11 2001/04/11 23:39:46 itojun Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -208,16 +208,6 @@ do_authenticated1(Authctxt *authctxt)
 
 	s = session_new();
 	s->pw = authctxt->pw;
-
-	if (!no_port_forwarding_flag && options.allow_tcp_forwarding)
-		channel_permit_all_opens();
-
-#ifdef HAVE_LOGIN_CAP
-	if ((lc = login_getclass(s->pw->pw_class)) == NULL) {
-		error("unable to get login class");
-		return;
-	}
-#endif
 
 	/*
 	 * We stay in this loop until the client requests to execute a shell
