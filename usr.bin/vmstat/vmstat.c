@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.85 2001/11/21 00:38:50 enami Exp $ */
+/* $NetBSD: vmstat.c,v 1.86 2001/11/21 00:40:56 enami Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.85 2001/11/21 00:38:50 enami Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.86 2001/11/21 00:40:56 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -862,8 +862,8 @@ event_chain_trashed:
 		    34 - (evcnt.ev_grouplen + 1 + evcnt.ev_namelen), "",
 		    (unsigned long long)evcnt.ev_count,
 		    (unsigned long long)(evcnt.ev_count / uptime),
-		    (evcnt.ev_type < sizeof(evtypes)/sizeof(evtypes)
-			? evtypes[evcnt.ev_type] : "?"));
+		    (evcnt.ev_type < sizeof(evtypes)/sizeof(evtypes[0]) ?
+			evtypes[evcnt.ev_type] : "?"));
 	}
 }
 
