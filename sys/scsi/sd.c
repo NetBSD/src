@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: sd.c,v 1.14 1993/06/16 04:31:40 deraadt Exp $
+ *	$Id: sd.c,v 1.15 1993/06/27 06:59:20 andrew Exp $
  */
 
 #include "sd.h"
@@ -594,7 +594,7 @@ sd_done(int unit, struct scsi_xfer *xs)
 		sd_free_xs(unit, xs, 0);
 		sdstart(unit);		/* If there's anything waiting.. do it */
 	} else
-		wakeup(xs);
+		wakeup((caddr_t)xs);
 }
 
 /*
@@ -1077,7 +1077,7 @@ retry:
 	case SUCCESSFULLY_QUEUED:
 		s = splbio();
 		while(!(xs->flags & ITSDONE))
-			sleep(xs,PRIBIO+1);
+			sleep((caddr_t)xs, PRIBIO+1);
 		splx(s);
 	case HAD_ERROR:
 		/*printf("err = %d ", xs->error);*/

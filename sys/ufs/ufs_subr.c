@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_subr.c	7.13 (Berkeley) 6/28/90
- *	$Id: ufs_subr.c,v 1.2 1993/05/20 03:53:43 cgd Exp $
+ *	$Id: ufs_subr.c,v 1.3 1993/06/27 07:00:11 andrew Exp $
  */
 
 #ifdef KERNEL
@@ -171,6 +171,7 @@ setblock(fs, cp, h)
  * C definitions of special instructions.
  * Normally expanded with inline.
  */
+int
 scanc(size, cp, table, mask)
 	u_int size;
 	register u_char *cp, table[];
@@ -185,8 +186,9 @@ scanc(size, cp, table, mask)
 #endif
 
 #if !defined(vax) && !defined(tahoe) && !defined(hp300)
+int
 skpc(mask, size, cp)
-	register u_char mask;
+	register int mask;
 	u_int size;
 	register u_char *cp;
 {
@@ -197,8 +199,9 @@ skpc(mask, size, cp)
 	return (end - cp);
 }
 
+int
 locc(mask, size, cp)
-	register u_char mask;
+	register int mask;
 	u_int size;
 	register u_char *cp;
 {
