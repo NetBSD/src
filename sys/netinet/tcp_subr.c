@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.115 2001/09/10 04:24:24 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.116 2001/09/10 20:19:54 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -784,6 +784,7 @@ tcp_newtcpcb(family, aux)
 	void *aux;
 {
 	struct tcpcb *tp;
+	int i;
 
 	switch (family) {
 	case PF_INET:
@@ -809,6 +810,8 @@ tcp_newtcpcb(family, aux)
 	LIST_INIT(&tp->t_sc);
 
 	callout_init(&tp->t_delack_ch);
+	for (i = 0; i < TCPT_NTIMERS; i++)
+		TCP_TIMER_INIT(tp, i);
 
 	tp->t_flags = 0;
 	if (tcp_do_rfc1323 && tcp_do_win_scale)

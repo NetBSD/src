@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.h,v 1.12 2001/09/10 20:15:14 thorpej Exp $	*/
+/*	$NetBSD: tcp_timer.h,v 1.13 2001/09/10 20:19:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -116,8 +116,11 @@ char *tcptimers[] =
 #endif
 
 /*
- * Arm, disarm, and test TCP timers.
+ * Init, arm, disarm, and test TCP timers.
  */
+#define	TCP_TIMER_INIT(tp, timer) \
+	/* Nothing. */
+
 #define	TCP_TIMER_ARM(tp, timer, nticks) \
 	PRT_SLOW_ARM((tp)->t_timer[(timer)], (nticks))
 
