@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 1998/08/13 02:10:47 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.5 1998/08/23 15:49:03 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1220,37 +1220,6 @@ cpu_exec_aout_makecmds(p, epp)
 {
 	return (ENOEXEC);
 }
-
-#ifdef not4u
-int
-ldcontrolb(addr)
-caddr_t addr;
-{
-	struct pcb *xpcb;
-	extern struct user *proc0paddr;
-	u_long saveonfault;
-	int res;
-	int s;
-
-	if (CPU_ISSUN4M) {
-		printf("warning: ldcontrolb called in sun4m\n");
-		return 0;
-	}
-
-	s = splhigh();
-	if (curproc == NULL)
-		xpcb = (struct pcb *)proc0paddr;
-	else
-		xpcb = &curproc->p_addr->u_pcb;
-
-	saveonfault = (u_long)xpcb->pcb_onfault;
-        res = xldcontrolb(addr, xpcb);
-	xpcb->pcb_onfault = (caddr_t)saveonfault;
-
-	splx(s);
-	return (res);
-}
-#endif
 
 void
 wzero(vb, l)
