@@ -12,13 +12,17 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1542.c,v 1.10 1993/06/09 22:36:40 deraadt Exp $
+ *	$Id: aha1542.c,v 1.11 1993/06/14 04:16:03 andrew Exp $
  */
 
 /*
  * HISTORY
  * $Log: aha1542.c,v $
- * Revision 1.10  1993/06/09 22:36:40  deraadt
+ * Revision 1.11  1993/06/14 04:16:03  andrew
+ * Reduced bus-on time from the default of 11ms -> 9ms, to prevent floppy from
+ * becoming data-starved during simultaneous fd & scsi activity.
+ *
+ * Revision 1.10  1993/06/09  22:36:40  deraadt
  * minor silliness related to two or more controllers
  *
  * Revision 1.9  1993/05/22  08:00:56  cgd
@@ -856,6 +860,16 @@ aha_init(int unit)
 		printf("aha%d found, but unable to talk to it correctly\n");
 		return(EIO);
 	}
+
+	/*
+	 * Initialize bus-on time
+	 *
+	 * The default is 11ms, which can result in the fd driver becoming
+	 * starved for data during simultaneous fd & scsi transfers.  We
+	 * set it to 9ms - if this still gives you trouble, set to 6 (ms)
+	 * and work your way up.
+	 */
+	aha_cmd(unit,1, 0, 0, 0, AHA_BUS_ON_TIME_SET, 9);
 
 	/*
 	 * Initialize mail box
