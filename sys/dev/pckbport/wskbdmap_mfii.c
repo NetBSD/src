@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.28 2004/03/06 19:42:26 heinz Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.1 2004/03/13 17:31:33 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,12 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.28 2004/03/06 19:42:26 heinz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.1 2004/03/13 17:31:33 bjh21 Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
-#include <dev/pckbc/wskbdmap_mfii.h>
+#include <dev/pckbport/wskbdmap_mfii.h>
 
 #define KC(n) KS_KEYCODE(n)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.32 2004/02/13 11:36:11 wiz Exp $	*/
+/*	$NetBSD: pccons.c,v 1.33 2004/03/13 17:31:33 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.32 2004/02/13 11:36:11 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.33 2004/03/13 17:31:33 bjh21 Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -105,7 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.32 2004/02/13 11:36:11 wiz Exp $");
 #include "pc.h"
 #include <machine/bus.h>
 #if (NPCCONSKBD > 0)
-#include <dev/ic/pckbcvar.h>
+#include <dev/pckbport/pckbportvar.h>
 #else
 /* consistency check: plain pccons can't coexist with pckbc */
 #include "pckbc.h"
@@ -131,7 +131,7 @@ __KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.32 2004/02/13 11:36:11 wiz Exp $");
 #include <dev/isa/isavar.h>
 #include <dev/ic/pcdisplay.h>
 #include <dev/ic/i8042reg.h>
-#include <dev/pckbc/pckbdreg.h>
+#include <dev/pckbport/pckbdreg.h>
 
 #define	ISA_MEM(p)		((void *)(BEBOX_BUS_SPACE_MEM + (u_long)(p)))
 #define	ISA_HOLE_VADDR(p)	ISA_MEM(p)
@@ -176,8 +176,8 @@ int pc_xmode = 0;
 #endif
 int pccons_is_console = 0;
 #if (NPCCONSKBD > 0)
-static pckbc_tag_t kbctag;
-static pckbc_slot_t kbcslot;
+static pckbport_tag_t kbctag;
+static pckbport_slot_t kbcslot;
 static int kbc_attached;
 #endif
 
@@ -519,7 +519,7 @@ do_async_update(v)
 	}
 #else
 	/*
-	 * If the mi pckbc driver is used, keyboard commands are handled
+	 * If the mi pckbport driver is used, keyboard commands are handled
 	 * there. The commands are issued synchronously (in update_leds()
 	 * and pcioctl()).
 	 */
@@ -567,7 +567,7 @@ void update_leds()
 	cmd[0] = KBC_MODEIND;
 	cmd[1] = lock_state & 7;
 
-	pckbc_enqueue_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0);
+	pckbport_enqueue_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0);
 }
 #endif
 
@@ -618,7 +618,7 @@ pcprobe(parent, match, aux)
 #if (NPCCONSKBD == 0)
 	kbd_flush_input();
 #else
-	pckbc_flush(kbctag, kbcslot);
+	pckbport_flush(kbctag, kbcslot);
 #endif
 	/* Reset the keyboard. */
 #if (NPCCONSKBD == 0)
@@ -637,7 +637,7 @@ pcprobe(parent, match, aux)
 	}
 #else
 	cmd[0] = KBC_RESET;
-	res = pckbc_poll_cmd(kbctag, kbcslot, cmd, 1, 1, resp, 1);
+	res = pckbport_poll_cmd(kbctag, kbcslot, cmd, 1, 1, resp, 1);
 	if (res) {
 		printf("pcprobe: reset error %d\n", 1);
 		/*
@@ -645,7 +645,7 @@ pcprobe(parent, match, aux)
 		 * controller to "translating" anyway in case it is
 		 * connected later. This should be done in attach().
 		 */
-		(void) pckbc_xt_translation(kbctag, kbcslot, 1);
+		(void) pckbport_xt_translation(kbctag, kbcslot, 1);
 		goto lose;
 	}
 	if (resp[0] != KBR_RSTDONE) {
@@ -661,7 +661,7 @@ pcprobe(parent, match, aux)
 #if (NPCCONSKBD == 0)
 	kbd_flush_input();
 #else
-	pckbc_flush(kbctag, kbcslot);
+	pckbport_flush(kbctag, kbcslot);
 #endif
 	/* Just to be sure. */
 #if (NPCCONSKBD == 0)
@@ -671,7 +671,7 @@ pcprobe(parent, match, aux)
 	}
 #else
 	cmd[0] = KBC_ENABLE;
-	res = pckbc_poll_cmd(kbctag, kbcslot, cmd, 1, 0, 0, 0);
+	res = pckbport_poll_cmd(kbctag, kbcslot, cmd, 1, 0, 0, 0);
 	if (res) {
 		printf("pcprobe: reset error %d\n", 3);
 		goto lose;
@@ -706,11 +706,11 @@ pcprobe(parent, match, aux)
 		}
 	}
 #else
-	if (pckbc_xt_translation(kbctag, kbcslot, 1)) {
+	if (pckbport_xt_translation(kbctag, kbcslot, 1)) {
 		/* The 8042 is translating for us; use AT codes. */
 		cmd[0] = KBC_SETTABLE;
 		cmd[1] = 2;
-		res = pckbc_poll_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0);
+		res = pckbport_poll_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0);
 		if (res) {
 			printf("pcprobe: reset error %d\n", 4);
 			goto lose;
@@ -719,7 +719,7 @@ pcprobe(parent, match, aux)
 		/* Stupid 8042; set keyboard to XT codes. */
 		cmd[0] = KBC_SETTABLE;
 		cmd[1] = 1;
-		res = pckbc_poll_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0);
+		res = pckbport_poll_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0);
 		if (res) {
 			printf("pcprobe: reset error %d\n", 5);
 			goto lose;
@@ -765,7 +765,7 @@ pcattach(parent, self, aux)
 	do_async_update((void *)1);
 
 #if (NPCCONSKBD > 0)
-	pckbc_set_inputhandler(kbctag, kbcslot, pcinput, sc, sc->sc_dev.dv_xname);
+	pckbport_set_inputhandler(kbctag, kbcslot, pcinput, sc, sc->sc_dev.dv_xname);
 #else
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_TTY, pcintr, sc);
@@ -802,9 +802,9 @@ pcconskbdprobe(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct pckbc_attach_args *pka = aux;
+	struct pckbport_attach_args *pka = aux;
 
-	if (pka->pa_slot != PCKBC_KBD_SLOT)
+	if (pka->pa_slot != PCKBPORT_KBD_SLOT)
 		return (0);
 	return (1);
 }
@@ -814,7 +814,7 @@ pcconskbdattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct pckbc_attach_args *pka = aux;
+	struct pckbport_attach_args *pka = aux;
 
 	printf("\n");
 
@@ -825,8 +825,8 @@ pcconskbdattach(parent, self, aux)
 
 int
 pcconskbd_cnattach(tag, slot)
-	pckbc_tag_t tag;
-	pckbc_slot_t slot;
+	pckbport_tag_t tag;
+	pckbport_slot_t slot;
 {
 	kbctag = tag;
 	kbcslot = slot;
@@ -1056,7 +1056,7 @@ pcioctl(dev, cmd, data, flag, p)
 			cmd[0] = KBC_TYPEMATIC;
 			cmd[1] = rate;
 
-			return (pckbc_enqueue_cmd(kbctag, kbcslot, cmd, 2, 0,
+			return (pckbport_enqueue_cmd(kbctag, kbcslot, cmd, 2, 0,
 						  1, 0));
 		}
 #else
@@ -1194,7 +1194,7 @@ pccngetc(dev)
 #else
 		int data;
 		do {
-			data = pckbc_poll_data(kbctag, kbcslot);
+			data = pckbport_poll_data(kbctag, kbcslot);
 		} while (data == -1);
 		cp = strans(data);
 #endif
@@ -1212,7 +1212,7 @@ pccnpollc(dev, on)
 
 	polling = on;
 #if (NPCCONSKBD > 0)
-	pckbc_set_poll(kbctag, kbcslot, on);
+	pckbport_set_poll(kbctag, kbcslot, on);
 #else
 	if (on)
 		poll_data = -1;
