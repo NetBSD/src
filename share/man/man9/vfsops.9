@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfsops.9,v 1.4 2002/02/13 08:18:54 ross Exp $
+.\"     $NetBSD: vfsops.9,v 1.5 2002/08/14 18:50:48 soren Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -123,7 +123,7 @@ int  (*vfs_root)()	VFS_ROOT	Get the file system root vnode
 int  (*vfs_quotactl)()	VFS_QUOTACTL	Query/modify space quotas
 int  (*vfs_statfs)()	VFS_STATFS	Get file system statistics
 int  (*vfs_sync)()	VFS_SYNC	Flush file system buffers
-int  (*vfs_vget)()	VFS_VGET	Get vnode from file ID
+int  (*vfs_vget)()	VFS_VGET	Get vnode from file id
 int  (*vfs_fhtovp)()	VFS_FHTOVP	NFS file handle to vnode lookup
 int  (*vfs_vptofh)()	VFS_VPTOFH	Vnode to NFS file handle lookup
 void (*vfs_init)()	-	Initialise file system
@@ -131,7 +131,7 @@ void (*vfs_reinit)()	-	Reinitialise file system
 void (*vfs_done)()	-	Cleanup unmounted file system
 int  (*vfs_sysctl)()	-	Query/modify kernel state
 int  (*vfs_mountroot)()	-	Mount the root file system
-int  (*vfs_checkexp)()	VFS_CHECKEXP	Check if fs is exported
+int  (*vfs_checkexp)()	VFS_CHECKEXP	Check if file system is exported
 .fi
 .Pp
 Some additional non-function members of the vfsops structure are the
@@ -144,6 +144,11 @@ operation, but it must assign each member function pointer to a
 suitable function to do the minimum required of it.  In most cases,
 such functions either do nothing or return an error value to the
 effect that it is not supported.
+.Em vfs_reinit
+and
+.Em vfs_mountroot
+may
+be NULL.
 .Pp
 At system boot, each file system with an entry in
 .Va vfs_list_initial
@@ -235,7 +240,7 @@ Make the file system specified by the mount structure
 .Fa mp
 operational.  The argument
 .Fa p
-is the calling processing.  The argument
+is the calling process.  The argument
 .Fa flags
 is a set of flags for controlling the operation of
 .Fn VOP_START .
@@ -291,7 +296,7 @@ structure
 .Fa mp .
 The argument
 .Fa p
-is the calling processing.  A statfs structure filled with the
+is the calling process.  A statfs structure filled with the
 statistics is returned in
 .Fa sbp .
 .Fn VFS_STATFS
@@ -325,7 +330,7 @@ The function is optional for file systems which have a unique id
 number for every file in the file system.  It is used internally by
 the UFS file system and also by the NFSv3 server to implement the
 READDIRPLUS nfs call.  If the file system does not support this
-invoked, it should return EOPNOTSUPP.
+function, it should return EOPNOTSUPP.
 .It Fn VFS_FHTOVP "mp" "fhp" "vpp"
 Get the vnode for the NFS file specified by the file handle
 .Fa fhp
@@ -345,7 +350,7 @@ Get a unique NFS file handle for the file specified by the vnode
 The file handle is returned in
 .Fa fhp .
 The contents of the file handle are defined by the file system and are
-not examined by an eother subsystems.  It should contain enough
+not examined by any other subsystems.  It should contain enough
 information to uniquely identify a file within the file system as well
 as noticing when a file has been removed and the file system resources
 have been recycled for a new file.
@@ -384,7 +389,9 @@ and
 .Xr intro 9 ,
 .Xr namei 9 ,
 .Xr vfs 9 ,
+.Xr vfsops 9 ,
 .Xr vnode 9
+.Xr vnodeops 9
 .Sh HISTORY
 The vfs operations vector, its functions and the corresponding macros
 appeared in
