@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.5 2002/10/02 02:21:21 thorpej Exp $ */
+/* $NetBSD: if_eh.c,v 1.6 2002/10/02 03:25:47 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -52,7 +52,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.5 2002/10/02 02:21:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.6 2002/10/02 03:25:47 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -135,7 +135,7 @@ static int eh_match(struct device *, struct cfdata *, void *);
 static void eh_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(eh, sizeof(struct eh_softc),
-	eh_match, eh_attach, NULL, NULL);
+    eh_match, eh_attach, NULL, NULL);
 
 static int
 eh_match(struct device *parent, struct cfdata *cf, void *aux)
