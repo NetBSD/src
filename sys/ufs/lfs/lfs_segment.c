@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.17 1999/03/25 21:54:10 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.18 1999/03/25 22:02:36 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1119,8 +1119,34 @@ lfs_writeseg(fs, sp)
 		if (((*++bpp)->b_flags & (B_CALL|B_INVAL)) == (B_CALL|B_INVAL)) {
 			if (copyin((*bpp)->b_saveaddr, dp++, sizeof(u_long)))
 				panic("lfs_writeseg: copyin failed [1]: ino %d blk %d", VTOI((*bpp)->b_vp)->i_number, (*bpp)->b_lblkno);
-		} else
+		} else {
+			if( !((*bpp)->b_flags & B_CALL) ) {
+				/*
+				 * Before we record data for a checksm,
+				 * make sure the data won't change in between
+				 * the checksum calculation and the write,
+				 * by marking the buffer B_BUSY.  It will
+				 * be freed later by brelse().
+				 */
+			again:
+				s = splbio();
+				if((*bpp)->b_flags & B_BUSY) {
+#ifdef DEBUG
+					printf("lfs_writeseg: avoiding potential data summary corruption for ino %d, lbn %d\n",
+					       VTOI((*bpp)->b_vp)->i_number,
+					       bp->b_lblkno);
+#endif
+					(*bpp)->b_flags |= B_WANTED;
+					tsleep((*bpp), (PRIBIO + 1),
+					       "lfs_writeseg", 0);
+					splx(s);
+					goto again;
+				}
+				(*bpp)->b_flags |= B_BUSY;
+				splx(s);
+			}
 			*dp++ = ((u_long *)(*bpp)->b_data)[0];
+		}
 	}
 	ssp->ss_create = time.tv_sec;
 	ssp->ss_datasum = cksum(datap, (nblocks - 1) * sizeof(u_long));
