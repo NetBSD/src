@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.4 1999/01/02 13:06:54 dbj Exp $
+#	$NetBSD: MAKEDEV,v 1.5 1999/03/24 23:46:37 dbj Exp $
 # @@@ This was taken from the mac68k port.  It works, but still should
 # be reviewed for next68k device #'s --dbj
 #
@@ -143,6 +143,15 @@ wscons)
 	sh $0 ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
 	sh $0 wsmouse0
 	sh $0 wskbd0
+	sh $0 ttyEcfg
+	;;
+
+ttyEcfg)
+	chr=41
+	rm -f ttyEcfg
+	mknod ttyEcfg c $chr 255
+	chown root.wheel ttyEcfg
+	chmod 600 ttyEcfg
 	;;
 
 ttyE*)
