@@ -1,4 +1,7 @@
-# $NetBSD: Makefile,v 1.5.2.1 2000/06/21 04:22:32 thorpej Exp $
+# $NetBSD: Makefile,v 1.5.2.2 2001/04/05 23:25:33 he Exp $
+
+.include <bsd.own.mk>
+
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/krb4/lib/krb
 .PATH: ${DIST}/krb4/doc
@@ -9,7 +12,7 @@ MKLINT= no
 
 LIB=	krb
 
-COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && make print-objdir
+COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
 
 krb_err.c krb_err.h: krb_err.et
 	${COMPILEET}/compile_et ${DIST}/krb4/lib/krb/krb_err.et
