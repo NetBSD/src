@@ -1,4 +1,4 @@
-.\"	$NetBSD: ti.4,v 1.4 2000/12/19 14:10:51 bouyer Exp $
+.\"	$NetBSD: ti.4,v 1.5 2001/06/02 17:08:47 thorpej Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" FreeBSD Id: src/share/man/man4/ti.4,v 1.5 2000/01/23 16:13:24 asmodai Exp
 .\"
-.Dd March 4, 1999
+.Dd June 2, 2001
 .Dt TI 4
 .Os
 .Sh NAME
@@ -149,6 +149,14 @@ Force full duplex operation.
 .It half-duplex
 Force half duplex operation.
 .El
+.Pp
+The Algeon Tigon and Tigon II support IPv4/TCP/UDP checksumming in
+hardware.
+The
+.Nm
+supports this feature of the chip's firmware.  See
+.Xr ifconfig 8
+for information on how to enable this feature.
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
