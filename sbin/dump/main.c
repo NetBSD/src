@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 1997/04/10 05:36:24 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.11 1997/04/15 01:09:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 4/15/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.10 1997/04/10 05:36:24 lukem Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.11 1997/04/15 01:09:51 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -101,12 +101,12 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register ino_t ino;
-	register int dirty; 
-	register struct dinode *dp;
-	register struct	fstab *dt;
-	register char *map;
-	register int ch;
+	ino_t ino;
+	int dirty; 
+	struct dinode *dp;
+	struct	fstab *dt;
+	char *map;
+	int ch;
 	int i, anydirskipped, bflag = 0, Tflag = 0, honorlevel = 1;
 	ino_t maxino;
 	time_t tnow;
