@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.69 2003/01/17 08:12:00 itojun Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.70 2003/01/17 10:07:23 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -80,6 +80,7 @@
 #include <sys/malloc.h>
 #endif
 #include <sys/pool.h>
+#include <sys/queue.h>
 
 /*
  * Mbufs are of a single size, MSIZE (machine/param.h), which
