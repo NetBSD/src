@@ -1,4 +1,4 @@
-/* $NetBSD: ioeb.c,v 1.2 2000/08/18 12:50:01 bjh21 Exp $ */
+/* $NetBSD: ioebvar.h,v 1.1 2000/08/18 12:50:01 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -28,63 +28,10 @@
  */
 /* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 
-#include <sys/param.h>
+#ifndef _IOEBVAR_H_
+#define _IOEBVAR_H_
 
-__KERNEL_RCSID(0, "$NetBSD: ioeb.c,v 1.2 2000/08/18 12:50:01 bjh21 Exp $");
+#define IOEB_IRQ_CLEARABLE_MASK 0x0001
 
-#include <sys/device.h>
-#include <sys/systm.h>
-
-#include <machine/bus.h>
-
-#include <arch/arm26/iobus/iocvar.h>
-#include <arch/arm26/ioc/ioebreg.h>
-#include <arch/arm26/ioc/ioebvar.h>
-
-struct ioeb_softc {
-	struct device sc_dev;
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
-};
-
-static int ioeb_match(struct device *, struct cfdata *, void *);
-static void ioeb_attach(struct device *, struct device *, void *);
-
-struct cfattach ioeb_ca = {
-	sizeof(struct ioeb_softc), ioeb_match, ioeb_attach
-};
-
-/* IOEB is only four bits wide */
-#define ioeb_read(t, h, o) (bus_space_read_1(t, h, o) & 0xf)
-
-static int
-ioeb_match(struct device *parent, struct cfdata *cf, void *aux)
-{
-	struct ioc_attach_args *ioc = aux;
-
-	if (ioeb_read(ioc->ioc_fast_t, ioc->ioc_fast_h, IOEB_REG_ID) ==
-	    IOEB_ID_IOEB)
-		return 1;
-	return 0;
-}
-
-static void
-ioeb_attach(struct device *parent, struct device *self, void *aux)
-{
-	struct ioeb_softc *sc = (void *)self;
-	struct ioc_attach_args *ioc = aux;
-
-	sc->sc_iot = ioc->ioc_fast_t;
-	sc->sc_ioh = ioc->ioc_fast_h;
-	printf("\n");
-}
-
-void
-ioeb_irq_clear(struct device *self, int mask)
-{
-	struct ioeb_softc *sc = (void *)self;
-
-	/* The IOEB only controls interrupt 0 */
-	if (mask & IOEB_IRQ_CLEARABLE_MASK)
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, IOEB_REG_INTRCLR, 0);
-}
+extern void ioeb_irq_clear(struct device *self, int mask);
+#endif
