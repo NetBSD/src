@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.12 1997/03/06 23:11:55 thorpej Exp $	*/
+/*	$NetBSD: sem.c,v 1.13 1997/03/14 00:14:20 jtk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,7 +62,6 @@ static const char *s_ifnet;		/* magic attribute */
 const char *s_nfs;
 const char *s_qmark;
 
-static struct hashtab *attrtab;		/* for attribute lookup */
 static struct hashtab *cfhashtab;	/* for config lookup */
 static struct hashtab *devitab;		/* etc */
 
