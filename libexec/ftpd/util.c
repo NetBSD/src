@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.1 1998/12/28 04:54:01 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.2 1999/01/02 17:54:21 nathanw Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -74,7 +74,7 @@ logcmd(command, bytes, file1, file2)
 	snprintf(buf, sizeof(buf), "%s %s", command, p);
 
 	if (bytes != (off_t)-1) {
-		syslog(LOG_INFO, "%s = %qd bytes", buf, bytes);
+		syslog(LOG_INFO, "%s = %qd bytes", buf, (long long) bytes);
 	} else if (file2 != NULL) {
 		if ((p = realpath(file2, realfile)) == NULL)
 			p = file2;
