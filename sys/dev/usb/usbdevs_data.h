@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs_data.h,v 1.4 1998/09/05 15:46:09 augustss Exp $	*/
+/*	$NetBSD: usbdevs_data.h,v 1.5 1998/09/07 08:19:31 veego Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.3 1998/09/05 15:45:34 augustss Exp 
+ *	NetBSD: usbdevs,v 1.4 1998/09/07 08:18:40 veego Exp 
  */
 
 /*
@@ -51,9 +51,9 @@ struct usb_knowndev usb_knowndevs[] = {
 	    "hub",
 	},
 	{
-	    USB_VENDOR_Kodak, USB_PRODUCT_Kodak_DC260,
+	    USB_VENDOR_KODAK, USB_PRODUCT_KODAK_DC260,
 	    0,
-	    "",
+	    "Eastman Kodak",
 	    "Digital Science DC260",
 	},
 	{
