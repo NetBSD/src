@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.16 1998/10/04 00:02:42 fvdl Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.17 1998/10/07 22:12:48 erh Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -69,6 +69,7 @@
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_siginfo.h>
 #include <compat/linux/common/linux_util.h>
 
 #include <compat/linux/linux_syscallargs.h>
@@ -318,22 +319,11 @@ linux_sys_rt_sigaction(p, v, retval)
 }
 
 int
-linux_sys_rt_sigprocmask(p, v, retval)
+linux_sigprocmask1(p, how, set, oset)
 	register struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	/* Use non-rt function: sigsetsize is ignored. */
-	/* Assume sizeof(linux_sigset_t) == sizeof(linux_old_sigset_t) */
-	return(linux_sys_sigprocmask(p, v, retval));
-}
-
-
-int
-linux_sys_sigprocmask(p, v, retval)
-	register struct proc *p;
-	void *v;
-	register_t *retval;
+	int how;
+	const linux_old_sigset_t *set;
+	linux_old_sigset_t *oset;
 {
 	struct linux_sys_sigprocmask_args /* {
 		syscallarg(int) how;
@@ -345,7 +335,7 @@ linux_sys_sigprocmask(p, v, retval)
 	int how;
 	int error;
 
-	switch (SCARG(uap, how)) {
+	switch (how) {
 	case LINUX_SIG_BLOCK:
 		how = SIG_BLOCK;
 		break;
@@ -359,23 +349,50 @@ linux_sys_sigprocmask(p, v, retval)
 		return (EINVAL);
 	}
 
-	if (SCARG(uap, set)) {
-		error = copyin(SCARG(uap, set), &nlss, sizeof(nlss));
+	if (set) {
+		error = copyin(set, &nlss, sizeof(nlss));
 		if (error)
 			return (error);
 		linux_old_to_native_sigset(&nlss, &nbss);
 	}
 	error = sigprocmask1(p, how,
-	    SCARG(uap, set) ? &nbss : 0, SCARG(uap, oset) ? &obss : 0);
+	    set ? &nbss : 0, oset ? &obss : 0);
 	if (error)
 		return (error); 
-	if (SCARG(uap, oset)) {
+	if (oset) {
 		native_to_linux_old_sigset(&obss, &olss);
-		error = copyout(&olss, SCARG(uap, oset), sizeof(olss));
+		error = copyout(&olss, oset, sizeof(olss));
 		if (error)
 			return (error);
 	}       
 	return (error);
+}
+
+int
+linux_sys_rt_sigprocmask(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_rt_sigprocmask_args /* {
+		syscallarg(int) how;
+		syscallarg(const linux_sigset_t *) set;
+		syscallarg(linux_sigset_t *) oset;
+		syscallarg(size_t) sigsetsize;
+	} */ *uap = v;
+
+	/* Use non-rt function: sigsetsize is ignored. */
+	/* Assume sizeof(linux_sigset_t) == sizeof(linux_old_sigset_t) */
+	if (SCARG(uap, sigsetsize) != sizeof(struct linux_old_sigset_t)) {
+#ifdef LINUX_DEBUG
+	    printf("linux_sys_rt_sigprocmask: sigsetsize != sizeof(old_sigset_t)");
+#endif
+	    return(ENOSYS);
+	}
+
+	return(linux_sigprocmask1(p, SCARG(uap, how), 
+				(linux_old_sigset_t)SCARG(uap, set),
+				(linux_old_sigset_t)SCARG(uap, oset));
 }
 
 int
