@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.42 1998/08/06 04:25:55 perry Exp $	*/
+/*	$NetBSD: bpf.c,v 1.43 1998/08/06 04:37:57 perry Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -126,7 +126,7 @@ static void	bpf_freed __P((struct bpf_d *));
 static void	bpf_freed __P((struct bpf_d *));
 static void	bpf_ifname __P((struct ifnet *, struct ifreq *));
 static void	bpf_ifname __P((struct ifnet *, struct ifreq *));
-static void	bpf_mcpy __P((void *, const void *, size_t));
+static void	*bpf_mcpy __P((void *, const void *, size_t));
 static int	bpf_movein __P((struct uio *, int, int,
 			        struct mbuf **, struct sockaddr *));
 static void	bpf_attachd __P((struct bpf_d *, struct bpf_if *));
@@ -136,7 +136,7 @@ int		bpfpoll __P((dev_t, int, struct proc *));
 static __inline void
 		bpf_wakeup __P((struct bpf_d *));
 static void	catchpacket __P((struct bpf_d *, u_char *, u_int, u_int,
-				 void (*)(const void *, void *, size_t)));
+				 void *(*)(void *, const void *, size_t)));
 static void	reset_d __P((struct bpf_d *));
 
 static int
@@ -1114,7 +1114,7 @@ bpf_tap(arg, pkt, pktlen)
  * Copy data from an mbuf chain into a buffer.  This code is derived
  * from m_copydata in sys/uipc_mbuf.c.
  */
-static void
+static void *
 bpf_mcpy(dst_arg, src_arg, len)
 	void *dst_arg;
 	const void *src_arg;
@@ -1135,6 +1135,7 @@ bpf_mcpy(dst_arg, src_arg, len)
 		dst += count;
 		len -= count;
 	}
+	return(dst_arg);
 }
 
 /*
@@ -1175,7 +1176,7 @@ catchpacket(d, pkt, pktlen, snaplen, cpfn)
 	register struct bpf_d *d;
 	register u_char *pkt;
 	register u_int pktlen, snaplen;
-	register void (*cpfn) __P((const void *, void *, size_t));
+	register void *(*cpfn) __P((void *, const void *, size_t));
 {
 	register struct bpf_hdr *hp;
 	register int totlen, curlen;
