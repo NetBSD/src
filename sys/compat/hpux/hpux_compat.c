@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.56 2001/06/06 16:17:40 thorpej Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.57 2001/06/14 20:32:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -726,9 +726,9 @@ hpux_sys_ioctl(p, v, retval)
 	if (com == HPUXTIOCGETP || com == HPUXTIOCSETP)
 		return (getsettty(p, SCARG(uap, fd), com, SCARG(uap, data)));
 
-	if (((unsigned)SCARG(uap, fd)) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
+
 	if ((fp->f_flag & (FREAD|FWRITE)) == 0)
 		return (EBADF);
 

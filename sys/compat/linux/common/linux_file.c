@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.37 2001/01/22 21:31:37 jdolecek Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.38 2001/06/14 20:32:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -201,10 +201,12 @@ linux_sys_open(p, v, retval)
 	 */ 
         if (!(fl & O_NOCTTY) && SESS_LEADER(p) && !(p->p_flag & P_CONTROLT)) {
                 struct filedesc *fdp = p->p_fd;
-                struct file     *fp = fdp->fd_ofiles[*retval];
+                struct file     *fp;
+
+		fp = fd_getfile(fdp, *retval);
 
                 /* ignore any error, just give it a try */
-                if (fp->f_type == DTYPE_VNODE)
+                if (fp != NULL && fp->f_type == DTYPE_VNODE)
                         (fp->f_ops->fo_ioctl) (fp, TIOCSCTTY, (caddr_t) 0, p);
         }
 	return 0;
@@ -363,8 +365,7 @@ linux_sys_fcntl(p, v, retval)
 		 * does not exist.
 		 */
 		fdp = p->p_fd;
-		if ((u_int)fd >= fdp->fd_nfiles ||
-		    (fp = fdp->fd_ofiles[fd]) == NULL)
+		if ((fp = fd_getfile(fdp, fd)) == NULL)
 			return EBADF;
 		if (fp->f_type == DTYPE_SOCKET) {
 			cmd = cmd == LINUX_F_SETOWN ? F_SETOWN : F_GETOWN;
