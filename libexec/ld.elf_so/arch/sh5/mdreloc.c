@@ -1,7 +1,8 @@
-/*	$NetBSD: mdreloc.c,v 1.2 2003/03/26 14:46:32 scw Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.3 2003/04/21 11:54:46 scw Exp $	*/
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <string.h>
 
 #include "debug.h"
 #include "rtld.h"
@@ -46,6 +47,30 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 	}
 }
 
+/*
+ * It is possible for the compiler to emit relocations for unaligned data.
+ * We handle this situation with these inlines.
+ */
+#define	RELOC_ALIGNED_P(x) \
+	(((intptr_t)(x) & (sizeof(void *) - 1)) == 0)
+
+static __inline Elf_Addr
+load_ptr(void *where)
+{
+	Elf_Addr res;
+
+	memcpy(&res, where, sizeof(res));
+
+	return (res);
+}
+
+static __inline void
+store_ptr(void *where, Elf_Addr val)
+{
+
+	memcpy(where, &val, sizeof(val));
+}
+
 int
 _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 {
@@ -75,15 +100,35 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 			    rela->r_addend);
 			if (def->st_other & STO_SH5_ISA32)
 				tmp |= 1;
-			if (*where != tmp)
-				*where = tmp;
+			if (__predict_true(RELOC_ALIGNED_P(where))) {
+				if (*where != tmp)
+					*where = tmp;
+			} else {
+				if (load_ptr(where) != tmp)
+					store_ptr(where, tmp);
+			}
 			rdbg(("32/GLOB_DAT %s in %s --> %p in %s",
 			    obj->strtab + obj->symtab[symnum].st_name,
-			    obj->path, (void *)*where, defobj->path));
+			    obj->path, (void *)(intptr_t)tmp, defobj->path));
 			break;
 
 		case R_TYPE(RELATIVE):
-			*where += (Elf_Addr)obj->relocbase;
+			if (__predict_true(RELOC_ALIGNED_P(where))) {
+				if (__predict_true(rela->r_addend) == 0)
+					*where += (Elf_Addr)obj->relocbase;
+				else
+					*where = (Elf_Addr)obj->relocbase +
+					    rela->r_addend;
+			} else {
+				if (__predict_true(rela->r_addend) == 0) {
+					tmp = load_ptr(where);
+					tmp += (Elf_Addr)obj->relocbase;
+				} else {
+					tmp = (Elf_Addr)obj->relocbase +
+					    rela->r_addend;
+				}
+				store_ptr(where, tmp);
+			}
 			rdbg(("RELATIVE in %s --> %p", obj->path,
 			    (void *)*where));
 			break;
