@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.46 2000/09/13 15:00:20 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.47 2000/10/12 03:10:07 onoe Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2000/09/13 15:00:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2000/10/12 03:10:07 onoe Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -126,6 +126,7 @@ int mem_cluster_cnt;
 struct idrom idrom;
 void (*enable_intr) __P((void));
 void (*disable_intr) __P((void));
+void (*readmicrotime) __P((struct timeval *tvp));
 
 /* System type dependent initializations. */
 extern void news3400_init __P((void));
@@ -216,10 +217,29 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 
 #ifdef news5000
 	if (systype == NEWS5000) {
+		char *bootspec = (char *)x_bootdev;
+
 		_sip = (void *)bi_arg->sip;
 		x_maxmem = _sip->apbsi_memsize;
 		x_maxmem -= 0x00100000;	/* reserve 1MB for ROM monitor */
-
+		if (strncmp(bootspec, "scsi", 4) == 0) {
+			x_bootdev = (5 << 28) | 0;	 /* magic, sd */
+			bootspec += 4;
+			if (*bootspec != '(' /*)*/)
+				goto bootspec_end;
+			i = strtoul(bootspec + 1, &bootspec, 10);
+			x_bootdev |= (i << 24);		/* bus */
+			if (*bootspec != ',')
+				goto bootspec_end;
+			i = strtoul(bootspec + 1, &bootspec, 10);
+			x_bootdev |= (i / 10) << 20;	/* controller */
+			x_bootdev |= (i % 10) << 16;	/* unit */
+			if (*bootspec != ',')
+				goto bootspec_end;
+			i = strtoul(bootspec + 1, &bootspec, 10);
+			x_bootdev |= (i << 8);		/* partition */
+		}
+  bootspec_end:
 		consinit();
 	}
 #endif
@@ -276,7 +296,6 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 		ddb_init(esym - ssym, ssym, esym);
 #endif
 
-	boothowto &= ~RB_ASKNAME;	/* for lack of cn_getc */
 #ifdef KADB
 	boothowto |= RB_KDB;
 #endif
@@ -332,50 +351,43 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 #ifdef news3400
 	case NEWS3400:
 		news3400_init();
+		strcpy(cpu_model, idrom.id_machine);
+		if (strcmp(cpu_model, "news3400") == 0 ||
+		    strcmp(cpu_model, "news3200") == 0 ||
+		    strcmp(cpu_model, "news3700") == 0) {
+			/*
+			 * Set up interrupt handling and I/O addresses.
+			 */
+			hardware_intr = news3400_intr;
+			cpuspeed = 10;
+		} else {
+			printf("kernel not configured for machine %s\n",
+			    cpu_model);
+		}
 		break;
 #endif
 
 #ifdef news5000
 	case NEWS5000:
 		news5000_init();
+		strcpy(cpu_model, idrom.id_machine);
+		if (strcmp(cpu_model, "news5000") == 0 ||
+		    strcmp(cpu_model, "news5900") == 0) {
+			/*
+			 * Set up interrupt handling and I/O addresses.
+			 */
+			hardware_intr = news5000_intr;
+			cpuspeed = 50;	/* ??? XXX */
+		} else {
+			printf("kernel not configured for machine %s\n",
+			    cpu_model);
+		}
 		break;
 #endif
-	}
-
-	i = idrom.id_modelid;
-
-	switch (i) {
 
 	default:
-		printf("kernel not configured for systype 0x%x\n", i);
-		/* cpu_reboot(RB_HALT | RB_NOSYNC, NULL); */
-
-#ifdef news5000
-	case 2: /* NWS-5000U/W */
-	case 5: /* NWS-5000R */
-	case 7: /* NWS-5000X */
-	case 9: /* NWS-5900X */
-	case 11:/* NWS-5000G */
-		/*
-		 * Set up interrupt handling and I/O addresses.
-		 */
-		hardware_intr = news5000_intr;
-		strcpy(cpu_model, "news5000");
-		cpuspeed = 50;	/* ??? XXX */
+		printf("kernel not configured for systype %d\n", systype);
 		break;
-#endif
-
-#ifdef news3400
-	case 3: /* NWS-3410 */
-	case 6: /* NWS-3470 */
-		/*
-		 * Set up interrupt handling and I/O addresses.
-		 */
-		hardware_intr = news3400_intr;
-		strcpy(cpu_model, "news3400");
-		cpuspeed = 10;
-		break;
-#endif
 	}
 
 	/*
@@ -634,14 +646,10 @@ microtime(tvp)
 	int s = splclock();
 	static struct timeval lasttime;
 
-	*tvp = time;
-#if 0
-	tvp->tv_usec += clkread();
-	if (tvp->tv_usec >= 1000000) {
-		tvp->tv_usec -= 1000000;
-		tvp->tv_sec++;
-	}
-#endif
+	if (readmicrotime)
+		readmicrotime(tvp);
+	else
+		*tvp = time;
 
 	if (tvp->tv_sec == lasttime.tv_sec &&
 	    tvp->tv_usec <= lasttime.tv_usec &&
