@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.76 1996/08/09 10:30:23 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.77 1996/09/29 21:27:36 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1210,7 +1210,8 @@ initcpu()
 #endif
 
 #ifdef DRACO
-	extern u_int8_t DraCoIntr, DraCoLev2intr;
+	extern u_int8_t DraCoIntr, DraCoLev1intr, DraCoLev2intr;
+	u_char dracorev;
 #endif
 
 #ifdef M68060
@@ -1242,9 +1243,15 @@ initcpu()
 #endif
 
 #ifdef DRACO
-	if (is_draco()) {
-		vectab[24+1] = &DraCoIntr;
-		vectab[24+2] = &DraCoLev2intr;
+	dracorev = is_draco();
+	if (dracorev) {
+		if (dracorev >= 4) {
+			vectab[24+1] = &DraCoLev1intr;
+			vectab[24+2] = &DraCoIntr;
+		} else {
+			vectab[24+1] = &DraCoIntr;
+			vectab[24+2] = &DraCoLev2intr;
+		}
 		vectab[24+3] = &DraCoIntr;
 		vectab[24+4] = &DraCoIntr;
 		vectab[24+5] = &DraCoIntr;
