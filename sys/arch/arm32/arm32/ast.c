@@ -1,4 +1,4 @@
-/* $NetBSD: ast.c,v 1.3 1996/05/06 00:52:35 mark Exp $ */
+/* $NetBSD: ast.c,v 1.4 1996/06/12 19:40:48 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -62,10 +62,10 @@ userret(p, pc, oticks)
 {
 	int sig, s;
 
+#ifdef DIAGNOSTIC
 	if (p == NULL)
 		panic("userret: p=0 curproc=%08x", (u_int)curproc);
     
-#ifdef DIAGNOSTIC
 	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE) {
 		traceback();
 		panic("userret called in non SVC mode !");
