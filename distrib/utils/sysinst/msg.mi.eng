@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.7.2.18 1998/11/16 07:18:36 cgd Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.7.2.19 1998/11/23 07:20:33 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,6 +49,9 @@ message no {No}
 message install
 {install}
 
+message reinstall
+{re-install sets for}
+
 message upgrade
 {upgrade}
 
@@ -94,7 +97,7 @@ any existing configuration info.  (Quit and choose `install' or
 `upgrade' if you want those options.)  You should have already done an
 `install' or `upgrade' before starting this procedure!
 
-Do you really want to re-install  NetBSD dstribution sets?
+Do you really want to re-install NetBSD distribution sets?
 (This is your last warning before this procedure starts modifying your
 disks.)
 }
