@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/01/02 06:24:24 rtr Exp $
+#	$NetBSD: Makefile,v 1.6 2004/01/02 06:31:11 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -40,8 +40,6 @@ DPADD=	${DPADD.hw/xfree86/xf86} ${DPADD.hw/xfree86/xf86config} \
 LDADD+=	-li386
 DPADD+=	${LIBI386}
 .endif
-
-SYMLINKS=       ${X11BINDIR}/XFree86 ${X11BINDIR}/X
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
