@@ -1,6 +1,6 @@
-/*	$NetBSD: bktr_tuner.c,v 1.3 2000/05/21 15:43:57 wiz Exp $	*/
+/*	$NetBSD: bktr_tuner.c,v 1.3.4.1 2000/07/03 02:21:54 wiz Exp $	*/
 
-/* FreeBSD: src/sys/dev/bktr/bktr_tuner.c,v 1.5 2000/01/24 14:00:21 roger Exp */
+/* FreeBSD: src/sys/dev/bktr/bktr_tuner.c,v 1.7 2000/06/26 09:41:32 roger Exp */
 
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
@@ -848,7 +848,7 @@ tv_freq( bktr_ptr_t bktr, int frequency, int type )
 			else
 			    frequency = N - TBL_IF;
 #if defined( TEST_TUNER_AFC )
- printf("%s: do_afc: returned freq %d (%d %% %d)\n", frequency, frequency / 16, bktr_name(bktr), frequency % 16);
+ printf("%s: do_afc: returned freq %d (%d %% %d)\n", bktr_name(bktr), frequency, frequency / 16, frequency % 16);
 			    afcDelta = frequency - oldFrequency;
  printf("%s: changed by: %d clicks (%d mod %d)\n", bktr_name(bktr), afcDelta, afcDelta / 16, afcDelta % 16);
 #endif
