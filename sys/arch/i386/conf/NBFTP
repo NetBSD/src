@@ -1,4 +1,4 @@
-#	$NetBSD: NBFTP,v 1.29 2001/07/09 15:05:24 soren Exp $
+#	$NetBSD: NBFTP,v 1.30 2001/08/22 15:39:06 hubertf Exp $
 #	From: GENERIC,v 1.212 1999/01/06 23:30:53 thorpej Exp
 #
 #	NBFTP -- ftp/sup.netbsd.org server machine
@@ -423,7 +423,7 @@ fd*	at fdc? drive ?			# the drives themselves
 de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 #en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 #ep*	at pci? dev ? function ?	# 3Com 3c59x
-#ex*	at pci? dev ? function ?	# 3Com 90x[B]
+#ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 #epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 #esh*	at pci? dev ? function ?	# Essential HIPPI card
 #fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
