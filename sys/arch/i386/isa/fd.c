@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.30 1993/11/29 06:16:41 mycroft Exp $
+ *	$Id: fd.c,v 1.20.2.31 1993/11/29 21:08:52 mycroft Exp $
  */
 
 #ifdef DIAGNOSTIC
@@ -71,6 +71,7 @@
 #define	FDTYPE(s)	(minor(s)&7)
 
 #define b_cylin b_resid
+#define	b_type	b_driver1
 
 enum fdc_state {
 	DEVIDLE = 0,
@@ -93,19 +94,19 @@ enum fdc_state {
 
 /* software state, per controller */
 struct fdc_softc {
-	struct	device sc_dev;		/* boilerplate */
-	struct	isadev sc_id;
-	struct	intrhand sc_ih;
+	struct device sc_dev;		/* boilerplate */
+	struct isadev sc_id;
+	struct intrhand sc_ih;
 
 	u_short	sc_iobase;
 	u_short	sc_drq;
 
-	struct	fd_softc *sc_fd[4];	/* pointers to children */
-	struct	fd_softc *sc_afd;	/* active drive */
-	struct	buf sc_driveq;
-	enum	fdc_state sc_state;
-	int	sc_retry;		/* number of retries so far */
-	u_char	sc_status[7];		/* copy of registers */
+	struct fd_softc *sc_fd[4];	/* pointers to children */
+	struct fd_softc *sc_afd;	/* active drive */
+	struct buf sc_driveq;
+	enum fdc_state sc_state;
+	int sc_retry;		/* number of retries so far */
+	u_char sc_status[7];		/* copy of registers */
 };
 
 /* controller driver configuration */
@@ -114,7 +115,7 @@ STATIC void fdcforceintr __P((void *));
 STATIC void fdcattach __P((struct device *, struct device *, void *));
 STATIC int fdcintr __P((void *));
 
-struct	cfdriver fdccd =
+struct cfdriver fdccd =
 { NULL, "fdc", fdcprobe, fdcattach, DV_DULL, sizeof(struct fdc_softc) };
 
 /*
@@ -149,20 +150,19 @@ STATIC struct fd_type fd_types[] = {
 
 /* software state, per disk (with up to 2 disks per ctlr) */
 struct fd_softc {
-	struct	device sc_dev;
-	struct	dkdevice sc_dk;
+	struct device sc_dev;
+	struct dkdevice sc_dk;
 
-	struct	fd_type *sc_deftype;	/* default type descriptor */
-	struct	fd_type *sc_type;	/* current type descriptor */
-	struct	buf sc_bufq;		/* head of buf chain */
-	int	sc_drive;		/* unit number on this controller */
-	int	sc_flags;
+	struct fd_type *sc_deftype;	/* default type descriptor */
+	struct buf sc_bufq;		/* head of buf chain */
+	int sc_drive;			/* unit number on this controller */
+	int sc_flags;
 #define	FD_OPEN		0x01		/* it's open */
 #define	FD_MOTOR	0x02		/* motor should be on */
 #define	FD_MOTOR_WAIT	0x04		/* motor coming up */
-	int	sc_skip;		/* bytes transferred so far */
-	int	sc_track;		/* where we think the head is */
-	int	sc_nblks;		/* number of blocks tranferring */
+	int sc_skip;			/* bytes transferred so far */
+	int sc_track;			/* where we think the head is */
+	int sc_nblks;			/* number of blocks tranferring */
 	daddr_t	sc_blkno;		/* starting block number */
 };
 
@@ -170,7 +170,7 @@ struct fd_softc {
 STATIC int fdprobe __P((struct device *, struct cfdata *, void *));
 STATIC void fdattach __P((struct device *, struct device *, void *));
 
-struct	cfdriver fdcd =
+struct cfdriver fdcd =
 { NULL, "fd", fdprobe, fdattach, DV_DISK, sizeof(struct fd_softc) };
 
 void fdstrategy __P((struct buf *));
@@ -240,8 +240,8 @@ fdcforceintr(aux)
  * Arguments passed between fdcattach and fdprobe.
  */
 struct fdc_attach_args {
-	int	fa_drive;
-	struct	fd_type *fa_deftype;
+	int fa_drive;
+	struct fd_type *fa_deftype;
 };
 
 /*
@@ -413,18 +413,28 @@ fd_nvtotype(fdc, nvraminfo, drive)
 	}
 }
 
+STATIC inline struct fd_type *
+fd_dev_to_type(fd, dev)
+	struct fd_softc *fd;
+	dev_t dev;
+{
+	int type = FDTYPE(dev);
+
+	return type ? &fd_types[type - 1] : fd->sc_deftype;
+}
+
 void
 fdstrategy(bp)
 	register struct buf *bp;	/* IO operation to perform */
 {
-	int	fdu = FDUNIT(bp->b_dev);
-	struct	fd_softc *fd = fdcd.cd_devs[fdu];
-	struct	fdc_softc *fdc = (struct fdc_softc *)fd->sc_dev.dv_parent;
-	struct	fd_type *type = fd->sc_type;
-	struct	buf *dp;
-	int	nblks;
-	daddr_t	blkno;
- 	int	s;
+	int fdu = FDUNIT(bp->b_dev);
+	struct fd_softc *fd = fdcd.cd_devs[fdu];
+	struct fdc_softc *fdc = (struct fdc_softc *)fd->sc_dev.dv_parent;
+	struct fd_type *type = fd_dev_to_type(fd, bp->b_dev);
+	struct buf *dp;
+	int nblks;
+	daddr_t blkno;
+ 	int s;
 
 #ifdef DIAGNOSTIC
 	if (bp->b_blkno < 0 || fdu < 0 || fdu > fdcd.cd_ndevs) {
@@ -448,6 +458,7 @@ fdstrategy(bp)
 		goto bad;
 	}
  	bp->b_cylin = (blkno / (type->sectrac * type->heads)) * type->step;
+	bp->b_type = type;
 #ifdef DEBUG
 	printf("fdstrategy: b_blkno %d b_bcount %d blkno %d cylin %d nblks %d\n",
 	       bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylin, nblks);
@@ -574,8 +585,8 @@ out_fdc(iobase, x)
 
 int
 Fdopen(dev, flags)
-	dev_t	dev;
-	int	flags;
+	dev_t dev;
+	int flags;
 {
  	int fdu = FDUNIT(dev);
  	int type = FDTYPE(dev);
@@ -583,18 +594,12 @@ Fdopen(dev, flags)
 
 	if (fdu >= fdcd.cd_ndevs)
 		return ENXIO;
-
 	fd = fdcd.cd_devs[fdu];
 	if (!fd)
 		return ENXIO;
 
-	if (type)
-		if (type > (sizeof(fd_types) / sizeof(fd_types[0])))
-			return EINVAL;
-		else
-			fd->sc_type = &fd_types[type - 1];
-	else
-		fd->sc_type = fd->sc_deftype;
+	if (type > (sizeof(fd_types) / sizeof(fd_types[0])))
+		return EINVAL;
 
 	fd->sc_track = -1;
 	/* XXX disallow multiple opens? */
@@ -686,9 +691,8 @@ fd_pseudointr(fdc)
 	struct fdc_softc *fdc;
 {
 	/* just ensure it has the right spl */
-	int	s;
+	int s = splbio();
 
-	s = splbio();
 	(void) fdcintr((void *)fdc);
 	splx(s);
 }
@@ -775,23 +779,25 @@ fdcstate(fdc)
 		/* fall through */
 	    case DOSEEK:
 	    doseek:
-		if (fd->sc_track != bp->b_cylin) {
-			out_fdc(iobase, NE7CMD_SPECIFY);/* specify command */
-			out_fdc(iobase, fd->sc_type->steprate);
-			out_fdc(iobase, 6);		/* XXX head load time == 6ms */
-			out_fdc(iobase, NE7CMD_SEEK);	/* seek function */
-			out_fdc(iobase, fd->sc_drive);	/* drive number */
-			out_fdc(iobase, bp->b_cylin);
-			fd->sc_track = -1;
-			fdc->sc_state = SEEKWAIT;
-			timeout((timeout_t)fd_timeout, (caddr_t)fdc, hz*4);
-			return 0;
-		}
+		if (fd->sc_track == bp->b_cylin)
+			goto doio;
 
-		/* fall through */
+		type = bp->b_type;
+		out_fdc(iobase, NE7CMD_SPECIFY);/* specify command */
+		out_fdc(iobase, type->steprate);
+		out_fdc(iobase, 6);		/* XXX head load time == 6ms */
+
+		out_fdc(iobase, NE7CMD_SEEK);	/* seek function */
+		out_fdc(iobase, fd->sc_drive);	/* drive number */
+		out_fdc(iobase, bp->b_cylin);
+		fd->sc_track = -1;
+		fdc->sc_state = SEEKWAIT;
+		timeout((timeout_t)fd_timeout, (caddr_t)fdc, hz*4);
+		return 0;
+
 	    case DOIO:
 	    doio:
-		type = fd->sc_type;
+		type = bp->b_type;
 		sectrac = type->sectrac;
 		sec = fd->sc_blkno % (sectrac * type->heads);
 		nblks = (sectrac * type->heads) - sec;
@@ -873,7 +879,7 @@ fdcstate(fdc)
 		if (fd->sc_skip < bp->b_bcount) {
 			/* set up next transfer */
 			blkno = fd->sc_blkno += nblks;
-			type = fd->sc_type;
+			type = bp->b_type;
 			bp->b_cylin = (blkno / (type->sectrac * type->heads)) * type->step;
 			goto doseek;
 		} else {
@@ -1013,49 +1019,45 @@ fdioctl(dev, cmd, addr, flag)
 	struct fd_softc *fd = fdcd.cd_devs[FDUNIT(dev)];
 	struct fd_type *type;
 	struct disklabel buffer;
-	int error = 0;
+	int error;
 
-	switch (cmd)
-	{
+	switch (cmd) {
 	    case DIOCGDINFO:
 		bzero(&buffer, sizeof(buffer));
-		buffer.d_secsize = FDC_BSIZE;
 		
-		type = fd->sc_type;
+		type = fd_dev_to_type(fd, dev);
 		buffer.d_secpercyl = type->size / type->tracks;
 		buffer.d_type = DTYPE_FLOPPY;
+		buffer.d_secsize = FDC_BSIZE;
 
-		if (readdisklabel(dev, fdstrategy, &buffer, NULL) != NULL) {
-			error = EINVAL;
-			break;
-		}
+		if (readdisklabel(dev, fdstrategy, &buffer, NULL) != NULL)
+			return EINVAL;
 
 		*(struct disklabel *)addr = buffer;
-		break;
+		return 0;
 
 	    case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
-			error = EBADF;
+			return EBADF;
 		/* XXX do something */
-		break;
+		return 0;
 
 	    case DIOCSDINFO:
 	    case DIOCWDINFO:
-		if ((flag & FWRITE) == 0) {
-			error = EBADF;
-			break;
-		}
+		if ((flag & FWRITE) == 0)
+			return EBADF;
 
 		error = setdisklabel(&buffer, (struct disklabel *)addr, 0, NULL);
 		if (error)
-			break;
+			return error;
 
 		error = writedisklabel(dev, fdstrategy, &buffer, NULL);
-		break;
+		return error;
 
 	    default:
-		error = EINVAL;
-		break;
+		return EINVAL;
 	}
-	return error;
+#ifdef DIAGNOSTIC
+	panic("fdioctl: impossible");
+#endif
 }
