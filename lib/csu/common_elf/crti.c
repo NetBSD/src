@@ -1,12 +1,15 @@
-/* $NetBSD: dot_init.h,v 1.2 2002/11/22 06:45:01 thorpej Exp $ */
+/*	$NetBSD: crti.c,v 1.1 2002/11/22 06:44:59 thorpej Exp $	*/
 
-/*-
- * Copyright (c) 2001 Ross Harvey
+/*- 
+ * Copyright (c) 1998, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Paul Kranenburg, Ross Harvey, and Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
- * are met:
+ * are met:     
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
@@ -33,40 +36,32 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+#include <sys/param.h>		/* sysident.h requires `NetBSD' constant */
+#include <sys/exec.h> 
+#include <sys/exec_elf.h>
 
-/*
- * These must be extern to avoid warnings ("declared static but never defined")
- * However, only the declaration is extern, the actually __asm() defines them
- * as static.
- */
-#define	INIT_FALLTHRU_DECL void init_fallthru(void)
-#define	FINI_FALLTHRU_DECL void fini_fallthru(void)
+#include "sysident.h"
+#include "dot_init.h"
 
-#define	INIT_FALLTHRU()	init_fallthru()
-#define	FINI_FALLTHRU()	fini_fallthru()
+INIT_FALLTHRU_DECL;
+FINI_FALLTHRU_DECL;
 
-#define	MD_SECTION_PROLOGUE(sect, entry_pt)		\
-		__asm (					\
-		".section "#sect",\"ax\",@progbits	\n"\
-		#entry_pt":				\n"\
-		"	.align	16			\n"\
-		"	/* fall thru */			\n"\
-		".previous")
+void	_init(void);
+void	_fini(void);
 
-		/* placement of the .align _after_ the label is intentional */
+void
+_init(void)
+{
 
-#define	MD_SECTION_EPILOGUE(sect)			\
-		__asm (					\
-		".section "#sect",\"ax\",@progbits	\n"\
-		"	ret				\n"\
-		".previous")
+	INIT_FALLTHRU();
+}
 
-#define	MD_INIT_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.init, init_fallthru)
-#define	MD_FINI_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.fini, fini_fallthru)
+void
+_fini(void)
+{
 
-#define	MD_INIT_SECTION_EPILOGUE MD_SECTION_EPILOGUE(.init)
-#define	MD_FINI_SECTION_EPILOGUE MD_SECTION_EPILOGUE(.fini)
+	FINI_FALLTHRU();
+}
 
-#define MD_CALL_STATIC_FUNCTION(section, func) \
-asm(".section " #section "; call " #func "; .previous");
+MD_INIT_SECTION_PROLOGUE;
+MD_FINI_SECTION_PROLOGUE;

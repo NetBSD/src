@@ -1,4 +1,4 @@
-/*	$NetBSD: crtend.c,v 1.9 2001/12/30 23:45:01 thorpej Exp $	*/
+/*	$NetBSD: crtend.c,v 1.10 2002/11/22 06:44:59 thorpej Exp $	*/
 
 #include <sys/cdefs.h>
 #include "dot_init.h"
@@ -20,7 +20,3 @@ static unsigned int __FRAME_END__[]
 static void *__JCR_END__[1]
     __attribute__((__unused__, section(".jcr"))) = { (void *) 0 };
 #endif
-
-MD_INIT_SECTION_EPILOGUE;
-
-MD_FINI_SECTION_EPILOGUE;

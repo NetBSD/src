@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.18 2002/08/19 09:41:27 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.19 2002/11/22 06:44:58 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,7 @@ CPPFLAGS+=	-DDSO_HANDLE
 
 .PATH:		${.CURDIR}/../common_elf
 
-OBJS+=		crt0.o gcrt0.o crtbegin.o crtend.o
+OBJS+=		crt0.o gcrt0.o crti.o crtbegin.o crtend.o crtn.o
 .if ${MKPIC} != "no"
 OBJS+=		crtbeginS.o crtendS.o
 COPTS+=		-fPIC
@@ -59,6 +59,18 @@ crtend.o: crtend.c
 crtendS.o: crtend.c
 	@echo "${COMPILE.c} -DSHARED ${.ALLSRC} -o ${.TARGET}"
 	@${COMPILE.c} -DSHARED ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -X -r -o ${.TARGET} ${.TARGET}.o
+	@rm -f ${.TARGET}.o
+
+crti.o: crti.c
+	@echo "${COMPILE.c} ${.ALLSRC} -o ${.TARGET}"
+	@${COMPILE.c} ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -X -r -o ${.TARGET} ${.TARGET}.o
+	@rm -f ${.TARGET}.o
+
+crtn.o: crtn.c
+	@echo "${COMPILE.c} ${.ALLSRC} -o ${.TARGET}"
+	@${COMPILE.c} ${.ALLSRC} -o ${.TARGET}.o
 	@${LD} -X -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 

@@ -1,4 +1,4 @@
-/* $NetBSD: dot_init.h,v 1.1 2001/05/11 22:44:14 ross Exp $ */
+/* $NetBSD: dot_init.h,v 1.2 2002/11/22 06:44:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -77,3 +77,12 @@
 
 #define	MD_INIT_SECTION_EPILOGUE MD_SECTION_EPILOGUE(.init)
 #define	MD_FINI_SECTION_EPILOGUE MD_SECTION_EPILOGUE(.fini)
+
+/* We assume we need to reload our GP. */
+#define MD_CALL_STATIC_FUNCTION(section, func) \
+asm(".section " #section "\n"		\
+"    br $29, 1f		\n"		\
+"1:  ldgp $29, 1f	\n"		\
+"    unop		\n"		\
+"    jsr $26, " #func "\n"		\
+"    .align 3; .previous");
