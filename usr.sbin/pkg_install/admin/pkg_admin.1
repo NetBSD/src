@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_admin.1,v 1.23 2003/09/08 07:14:29 wiz Exp $
+.\"	$NetBSD: pkg_admin.1,v 1.24 2003/09/08 08:57:42 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2002 Hubert Feyrer.  All rights reserved.
 .\"
@@ -60,8 +60,6 @@ taken from the value of the environment variable
 .Ev PKG_DBDIR
 if it's set, otherwise it defaults to
 .Pa /var/db/pkg .
-.It Fl V
-Print version number and exit.
 .It Fl s Ar sfx_pattern
 Set the shell glob pattern for package suffices when matching package
 names for
@@ -69,6 +67,8 @@ names for
 and
 .Cm lsbest .
 The default pattern is ".t[bg]z".
+.It Fl V
+Print version number and exit.
 .El
 .Pp
 The following commands are supported:
