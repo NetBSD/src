@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
+/*	$NetBSD: locore.s,v 1.146 1996/06/18 01:53:07 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -141,7 +141,8 @@
 	.data
 
 	.globl	_cpu,_cpu_vendor,_cold,_esym,_boothowto,_bootdev,_atdevbase
-	.globl	_cyloffset,_proc0paddr,_curpcb,_PTDpaddr,_dynamic_gdt
+	.globl	_cyloffset,_proc0paddr,_curpcb,_PTDpaddr,_biosbasemem
+	.globl	_biosextmem,_dynamic_gdt
 _cpu:		.long	0	# are we 386, 386sx, or 486
 _cpu_vendor:	.space	16	# vendor string returned by `cpuid' instruction
 _cold:		.long	1	# cold till we are not
@@ -150,6 +151,8 @@ _atdevbase:	.long	0	# location of start of iomem in virtual
 _cyloffset:	.long	0
 _proc0paddr:	.long	0
 _PTDpaddr:	.long	0	# paddr of PTD, for libkvm
+_biosbasemem:	.long	0	# base memory reported by BIOS
+_biosextmem:	.long	0	# extended memory reported by BIOS
 
 	.space 512
 tmpstk:
@@ -177,6 +180,10 @@ start:	movw	$0x1234,0x472			# warm boot
 	jz	1f
 	addl	$KERNBASE,%eax
 1: 	movl	%eax,RELOC(_esym)
+	movl	20(%esp),%eax
+	movl	%eax,RELOC(_biosextmem)
+	movl	24(%esp),%eax
+	movl	%eax,RELOC(_biosbasemem)
 
 	/* First, reset the PSL. */
 	pushl	$PSL_MBO

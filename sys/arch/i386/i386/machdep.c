@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.203 1996/06/18 01:53:19 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -140,6 +140,7 @@ int	msgbufmapped;
 
 vm_map_t buffer_map;
 
+extern	int biosbasemem, biosextmem;
 extern	vm_offset_t avail_start, avail_end;
 static	vm_offset_t hole_start, hole_end;
 static	vm_offset_t avail_next;
@@ -1056,7 +1057,6 @@ init386(first_avail)
 	vm_offset_t first_avail;
 {
 	int x;
-	unsigned biosbasemem, biosextmem;
 	struct region_descriptor region;
 	extern void consinit __P((void));
 
@@ -1116,21 +1116,15 @@ init386(first_avail)
 	enable_intr();
 
 	/*
-	 * Use BIOS values stored in RTC CMOS RAM, since probing
-	 * breaks certain 386 AT relics.
+	 * Use BIOS values passed in from the boot program.
 	 *
 	 * XXX Not only does probing break certain 386 AT relics, but
 	 * not all BIOSes (Dell, Compaq, others) report the correct
 	 * amount of extended memory.
 	 */
-	biosbasemem = (mc146818_read(NULL, NVRAM_BASEHI) << 8) |
-	    mc146818_read(NULL, NVRAM_BASELO);
 #ifdef EXTMEM_SIZE
 	biosextmem = EXTMEM_SIZE;
-#else
-	biosextmem = (mc146818_read(NULL, NVRAM_EXTHI) << 8) |
-	    mc146818_read(NULL, NVRAM_EXTLO);
-#endif /* EXTMEM_SIZE */
+#endif
 
 	/* Round down to whole pages. */
 	biosbasemem &= -(NBPG / 1024);
