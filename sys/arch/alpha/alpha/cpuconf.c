@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.c,v 1.5 1997/09/02 14:00:11 thorpej Exp $	*/
+/*	$NetBSD: cpuconf.c,v 1.6 1997/09/02 14:19:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -41,33 +41,14 @@
 #include <sys/device.h>
 #include <machine/cpuconf.h>
 
-#undef DEC_2100_A50		/* config 'option' with flag brokenness */
 #include "dec_2100_a50.h"
-cpu_decl(dec_2100_a50);
-
-#undef DEC_KN8AE		/* config 'option' with flag brokenness */
-#include "dec_kn8ae.h"
-cpu_decl(dec_kn8ae);
-
-#undef DEC_3000_300		/* config 'option' with flag brokenness */
 #include "dec_3000_300.h"
-cpu_decl(dec_3000_300);
-
-#undef DEC_3000_500		/* config 'option' with flag brokenness */
 #include "dec_3000_500.h"
-cpu_decl(dec_3000_500);
-
-#undef DEC_AXPPCI_33		/* config 'option' with flag brokenness */
 #include "dec_axppci_33.h"
-cpu_decl(dec_axppci_33);
-
-#undef DEC_EB164		/* config 'option' with flag brokenness */
 #include "dec_eb164.h"
-cpu_decl(dec_eb164);
-
-#undef DEC_KN20AA		/* config 'option' with flag brokenness */
+#include "dec_eb64plus.h"
 #include "dec_kn20aa.h"
-cpu_decl(dec_kn20aa);
+#include "dec_kn8ae.h"
 
 const struct cpusw cpusw[] = {
 	cpu_unknown(),				/*  0: ??? */
@@ -98,7 +79,8 @@ const struct cpusw cpusw[] = {
 	cpu_notdef("DEC 1000 (\"Mikasa\")"),	/* 17: ST_DEC_1000 */
 	cpu_unknown(),				/* 18: ??? */
 	cpu_notdef("EB66"),			/* 19: ST_EB66 */
-	cpu_notdef("EB64+"),			/* 20: ST_EB64P */
+	cpu_init("EB64+",DEC_EB64PLUS,dec_eb64plus),
+						/* 20: ST_EB64P */
 	cpu_unknown(),				/* 21: ??? */
 	cpu_notdef("DEC 4100 (\"Rawhide\")"),	/* 22: ST_DEC_4100 */
 	cpu_notdef("??? (\"Lego\")"),		/* 23: ST_DEC_EV45_PBP */
