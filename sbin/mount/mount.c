@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.61 2002/09/21 18:43:32 christos Exp $	*/
+/*	$NetBSD: mount.c,v 1.62 2002/09/21 21:30:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.61 2002/09/21 18:43:32 christos Exp $");
+__RCSID("$NetBSD: mount.c,v 1.62 2002/09/21 21:30:27 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -448,7 +448,8 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted, buf, buflen)
 		if (optbuf)
 			free(optbuf);
 
-		if (buf || strstr(options, "getargs") != NULL) {
+		if (buf || (options != NULL
+		    && strstr(options, "getargs") != NULL)) {
 			char tbuf[1024], *ptr;
 			int nread;
 			if (buf == NULL) {
