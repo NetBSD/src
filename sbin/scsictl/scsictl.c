@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.5 1999/02/24 18:51:39 jwise Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.6 1999/07/30 02:29:04 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@
 
 struct command {
 	const char *cmd_name;
+	const char *arg_names;
 	void (*cmd_func) __P((int, char *[]));
 };
 
@@ -72,6 +73,7 @@ int	fd;				/* file descriptor for device */
 const	char *dvname;			/* device name */
 char	dvname_store[MAXPATHLEN];	/* for opendisk(3) */
 const	char *cmdname;			/* command user issued */
+const	char *argnames;			/* helpstring: expected arguments */
 struct	scsi_addr dvaddr;		/* SCSI device's address */
 
 extern const char *__progname;		/* from crt0.o */
@@ -82,20 +84,20 @@ void	device_reassign __P((int, char *[]));
 void	device_reset __P((int, char *[]));
 
 struct command device_commands[] = {
-	{ "format",	device_format },
-	{ "identify",	device_identify },
-	{ "reassign",	device_reassign },
-	{ "reset",	device_reset },
-	{ NULL,		NULL },
+	{ "format",	" device",			device_format },
+	{ "identify",	" device",			device_identify },
+	{ "reassign",	" device blkno [blkno [...]]",	device_reassign },
+	{ "reset",	" device",			device_reset },
+	{ NULL,		NULL,				NULL },
 };
 
 void	bus_reset __P((int, char *[]));
 void	bus_scan __P((int, char *[]));
 
 struct command bus_commands[] = {
-	{ "reset",	bus_reset },
-	{ "scan",	bus_scan },
-	{ NULL,		NULL },
+	{ "reset",	" bus",				bus_reset },
+	{ "scan",	" bus target lun",		bus_scan },
+	{ NULL,		NULL,				NULL },
 };
 
 int
@@ -156,6 +158,8 @@ main(argc, argv)
 		errx(1, "unknown %s command: %s\n",
 		    commands == bus_commands ? "bus" : "device", cmdname);
 
+	argnames = commands[i].arg_names;
+
 	(*commands[i].cmd_func)(argc, argv);
 	exit(0);
 }
@@ -163,9 +167,20 @@ main(argc, argv)
 void
 usage()
 {
+	int i;
 
-	fprintf(stderr, "usage: %s device command [arg [...]]\n",
+	fprintf(stderr, "Usage: %s device command [arg [...]]\n",
 	    __progname);
+	fprintf(stderr, "Where command (and args) are:\n");
+	
+	for (i=0; device_commands[i].cmd_name != NULL; i++)
+		fprintf(stderr, "\t%s%s\n", device_commands[i].cmd_name,
+					    device_commands[i].arg_names);
+	for (i=0; bus_commands[i].cmd_name != NULL; i++)
+		fprintf(stderr, "\t%s%s\n", bus_commands[i].cmd_name,
+					    bus_commands[i].arg_names);
+	fprintf(stderr, "Use `any' to wildcard target or lun\n");
+	
 	exit(1);
 }
 
@@ -194,7 +209,7 @@ device_format(argc, argv)
 
 	/* No arguments. */
 	if (argc != 0)
-		goto usage;
+		usage();
 
 	/*
 	 * Get the DISK FORMAT mode page.  SCSI-2 recommends specifying the
@@ -211,10 +226,6 @@ device_format(argc, argv)
 	scsi_command(fd, &cmd, sizeof(cmd), NULL, 0, 60000, 0);
 
 	return;
-
- usage:
-	fprintf(stderr, "usage: %s device %s\n", __progname, cmdname);
-	exit(1);
 }
 
 /*
@@ -238,7 +249,7 @@ device_identify(argc, argv)
 
 	/* No arguments. */
 	if (argc != 0)
-		goto usage;
+		usage();
 
 	memset(&cmd, 0, sizeof(cmd));
 	memset(&inqbuf, 0, sizeof(inqbuf));
@@ -261,10 +272,6 @@ device_identify(argc, argv)
 	    dvaddr.addr.scsi.lun, vendor, product, revision);
 
 	return;
-
- usage:
-	fprintf(stderr, "usage: %s device %s\n", __progname, cmdname);
-	exit(1);
 }
 
 /*
@@ -286,7 +293,7 @@ device_reassign(argc, argv)
 
 	/* We get a list of block numbers. */
 	if (argc < 1)
-		goto usage;
+		usage();
 
 	/*
 	 * Allocate the reassign blocks descriptor.  The 4 comes from the
@@ -315,11 +322,6 @@ device_reassign(argc, argv)
 
 	free(data);
 	return;
-
- usage:
-	fprintf(stderr, "usage: %s device %s blkno [blkno [...]]\n",
-	    __progname, cmdname);
-	exit(1);
 }
 
 /*
@@ -335,16 +337,12 @@ device_reset(argc, argv)
 
 	/* No arguments. */
 	if (argc != 0)
-		goto usage;
+		usage();
 
 	if (ioctl(fd, SCIOCRESET, NULL) != 0)
 		err(1, "SCIOCRESET");
 
 	return;
-
- usage:
-	fprintf(stderr, "usage: %s device %s\n", __progname, cmdname);
-	exit(1);
 }
 
 /*
@@ -364,16 +362,12 @@ bus_reset(argc, argv)
 
 	/* No arguments. */
 	if (argc != 0)
-		goto usage;
+		usage();
 
 	if (ioctl(fd, SCBUSIORESET, NULL) != 0)
 		err(1, "SCBUSIORESET");
 
 	return;
-
- usage:
-	fprintf(stderr, "usage: %s device %s\n", __progname, cmdname);
-	exit(1);
 }
 
 /*
@@ -391,7 +385,7 @@ bus_scan(argc, argv)
 
 	/* Must have two args: target lun */
 	if (argc != 2)
-		goto usage;
+		usage();
 
 	if (strcmp(argv[0], "any") == 0)
 		args.sa_target = -1;
@@ -413,10 +407,4 @@ bus_scan(argc, argv)
 		err(1, "SCBUSIOSCAN");
 
 	return;
-
- usage:
-	fprintf(stderr, "usage: %s device %s target lun\n", __progname,
-	    cmdname);
-	fprintf(stderr, "       use `any' to wildcard target or lun\n");
-	exit(1);
 }
