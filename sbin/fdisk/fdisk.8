@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdisk.8,v 1.29 2002/03/05 15:11:11 wiz Exp $
+.\"	$NetBSD: fdisk.8,v 1.30 2002/03/26 23:56:05 christos Exp $
 .\"
 .Dd December 19, 2000
 .Dt FDISK 8
@@ -86,7 +86,9 @@ The various fields in each partition are:
 is used to label the partition.
 .Nx
 reserves the magic number 169 decimal (A9 in hex).
-The number 0 is used to mark a partition as unused.
+The number 0 is used to mark a partition as unused. See the
+.Fl l
+flag.
 .It Xo
 .Em start ,
 .Em size
@@ -209,6 +211,10 @@ does under
 .Tn MSDOS ) ,
 even if the magic number in the first sector is ok.
 The partition table is left alone by this (but see above).
+.It Fl l
+Lists known
+.Em sysid
+values and exit.
 .It Fl s Ar id/start/size
 Specify the partition
 .Ar id ,
