@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.11 1998/12/10 23:16:48 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.12 1998/12/26 12:53:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -251,6 +251,7 @@ struct usb_attach_arg {
 	int			usegeneric;
 };
 
+#if defined(__NetBSD__)
 /* Match codes. */
 /* First five codes is for a whole device. */
 #define UMATCH_VENDOR_PRODUCT_REV			14
@@ -271,6 +272,47 @@ struct usb_attach_arg {
 #define UMATCH_GENERIC					 1
 /* No match */
 #define UMATCH_NONE					 0
+
+#elif defined(__FreeBSD__)
+/* FreeBSD needs values less than zero */
+/* for the moment disabled
+#define UMATCH_VENDOR_PRODUCT_REV			-14
+#define UMATCH_VENDOR_PRODUCT				-13
+#define UMATCH_VENDOR_DEVCLASS_DEVPROTO			-12
+#define UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO		-11
+#define UMATCH_DEVCLASS_DEVSUBCLASS			-10
+#define UMATCH_VENDOR_PRODUCT_REV_CONF_IFACE		 -9
+#define UMATCH_VENDOR_PRODUCT_CONF_IFACE		 -8
+#define UMATCH_VENDOR_IFACESUBCLASS_IFACEPROTO		 -7
+#define UMATCH_VENDOR_IFACESUBCLASS			 -6
+#define UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO	 -5
+#define UMATCH_IFACECLASS_IFACESUBCLASS			 -4
+#define UMATCH_IFACECLASS				 -3
+#define UMATCH_IFACECLASS_GENERIC			 -2
+#define UMATCH_GENERIC					 -1
+#define UMATCH_NONE				      ENXIO
+
+* For the moment we use Yes/No answers with appropriate
+* sorting in the config file
+*/
+#define UMATCH_VENDOR_PRODUCT_REV			0
+#define UMATCH_VENDOR_PRODUCT				0
+#define UMATCH_VENDOR_DEVCLASS_DEVPROTO			0
+#define UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO		0
+#define UMATCH_DEVCLASS_DEVSUBCLASS			0
+#define UMATCH_VENDOR_PRODUCT_REV_CONF_IFACE		0
+#define UMATCH_VENDOR_PRODUCT_CONF_IFACE		0
+#define UMATCH_VENDOR_IFACESUBCLASS_IFACEPROTO		0
+#define UMATCH_VENDOR_IFACESUBCLASS			0
+#define UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO	0
+#define UMATCH_IFACECLASS_IFACESUBCLASS			0
+#define UMATCH_IFACECLASS				0
+#define UMATCH_IFACECLASS_GENERIC			0
+#define UMATCH_GENERIC					0
+#define UMATCH_NONE				      ENXIO
+
+
+#endif
 
 void usbd_devinfo __P((usbd_device_handle, int, char *));
 struct usbd_quirks *usbd_get_quirks __P((usbd_device_handle));

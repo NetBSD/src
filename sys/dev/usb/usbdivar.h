@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.10 1998/12/09 00:18:12 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.11 1998/12/26 12:53:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,15 +59,17 @@ struct usbd_methods {
 
 struct usbd_port {
 	usb_port_status_t	status;
-	int 			power;	/* mA of current on port */
+	u_int16_t		power;	/* mA of current on port */
+	u_int8_t		portno;
+	u_int8_t		restartcnt;
+#define USBD_RESTART_MAX 5
 	struct usbd_device     *device;
 	struct usbd_device     *parent;	/* The ports hub */
 };
 
 struct usbd_hub {
-	usbd_status	      (*explore)__P((struct device *parent,
-					     usbd_device_handle hub));
-	void		       *hubdata;
+	usbd_status	      (*explore)__P((usbd_device_handle hub));
+	void		       *hubsoftc;
 	usb_hub_descriptor_t	hubdesc;
 	struct usbd_port        ports[1];
 };
@@ -78,7 +80,7 @@ struct usb_softc;
 
 struct usbd_bus {
 	/* Filled by HC driver */
-	struct device		bdev; /* base device */
+	bdevice			bdev; /* base device, host adapter */
 	usbd_status	      (*open_pipe)__P((struct usbd_pipe *pipe));
 	u_int32_t		pipe_size; /* size of a pipe struct */
 	void		      (*do_poll)__P((struct usbd_bus *));
@@ -109,6 +111,7 @@ struct usbd_device {
 	usb_config_descriptor_t *cdesc;	/* full config descr */
 	struct usbd_quirks     *quirks;
 	struct usbd_hub	       *hub; /* only if this is a hub */
+	void		       *softc;	/* device softc if attached */
 };
 
 struct usbd_interface {
@@ -162,6 +165,10 @@ struct usbd_request {
 	SIMPLEQ_ENTRY(usbd_request) next;
 
 	void		       *hcpriv; /* XXX private use by the HC driver */
+
+#if defined(__FreeBSD__)
+	struct callout_handle  timo_handle;
+#endif
 };
 
 void usbd_init __P((void));
@@ -177,10 +184,12 @@ usbd_status	usbd_setup_pipe __P((usbd_device_handle dev,
 				     usbd_interface_handle iface,
 				     struct usbd_endpoint *,
 				     usbd_pipe_handle *pipe));
-usbd_status	usbd_new_device __P((struct device *parent, 
+usbd_status	usbd_new_device __P((bdevice *parent, 
 				     usbd_bus_handle bus, int depth,
 				     int lowspeed, int port, 
 				     struct usbd_port *));
+void		usbd_remove_device __P((usbd_device_handle,
+					struct usbd_port *));
 int		usbd_printBCD __P((char *cp, int bcd));
 usbd_status	usbd_fill_iface_data __P((usbd_device_handle dev, 
 					  int i, int a));
@@ -190,11 +199,18 @@ int		usb_bus_count __P((void));
 usbd_status	usb_get_bus_handle __P((int, usbd_bus_handle *));
 void		usb_needs_explore __P((usbd_bus_handle));
 
+#if defined(__FreeBSD__)
+int 		usb_driver_load    __P((module_t mod, int what, void *arg));
+void		usb_device_set_desc __P((device_t device, char *devinfo));
+#endif
+
 extern	int usbd_use_polling;
 
 /* Locator stuff. */
 
+#if defined(__NetBSD__)
 #include "locators.h"
+#endif
 
 #define	uhubcf_port		cf_loc[UHUBCF_PORT]
 #define	uhubcf_configuration	cf_loc[UHUBCF_CONFIGURATION]

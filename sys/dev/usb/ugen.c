@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.4 1998/12/12 11:59:28 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.5 1998/12/26 12:53:01 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -115,19 +115,11 @@ int ugen_get_alt_index __P((struct ugen_softc *sc, int ifaceidx));
 #define UGENUNIT(n) (((n) >> 4) & 0xf)
 #define UGENENDPOINT(n) ((n) & 0xf)
 
-extern struct cfdriver ugen_cd;
+USB_DECLARE_DRIVER(ugen);
 
-struct cfattach ugen_ca = {
-	sizeof(struct ugen_softc), ugen_match, ugen_attach
-};
-
-int
-ugen_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+USB_MATCH(ugen)
 {
-	struct usb_attach_arg *uaa = (struct usb_attach_arg *)aux;
+	USB_MATCH_START(ugen, uaa);
 
 	if (uaa->usegeneric)
 		return (UMATCH_GENERIC);
@@ -135,28 +127,25 @@ ugen_match(parent, match, aux)
 		return (UMATCH_NONE);
 }
 
-void
-ugen_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+USB_ATTACH(ugen)
 {
-	struct ugen_softc *sc = (struct ugen_softc *)self;
-	struct usb_attach_arg *uaa = (struct usb_attach_arg *)aux;
+	USB_ATTACH_START(ugen, sc, uaa);
 	char devinfo[1024];
 	usbd_status r;
 	
 	usbd_devinfo(uaa->device, 0, devinfo);
-	printf(": %s\n", devinfo);
+	USB_ATTACH_SETUP;
+	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 
 	sc->sc_udev = uaa->device;
-	r = ugen_set_config(sc, 1);
+	r = ugen_set_config(sc, 1); /* XXX 1 */
 	if (r != USBD_NORMAL_COMPLETION) {
-		printf("%s: setting configuration 0 failed\n", 
-		       sc->sc_dev.dv_xname);
+		printf("%s: setting configuration 1 failed\n", 
+		       USBDEVNAME(sc->sc_dev));
 		sc->sc_disconnected = 1;
-		return;
+		USB_ATTACH_ERROR_RETURN;
 	}
+	USB_ATTACH_SUCCESS_RETURN;
 }
 
 int
@@ -173,7 +162,7 @@ ugen_set_config(sc, configno)
 	usbd_status r;
 
 	DPRINTFN(1,("ugen_set_config: %s to configno %d, sc=%p\n",
-		    sc->sc_dev.dv_xname, configno, sc));
+		    USBDEVNAME(sc->sc_dev), configno, sc));
 	r = usbd_set_config_no(dev, configno, 0);
 	if (r != USBD_NORMAL_COMPLETION)
 		return (r);
@@ -687,7 +676,7 @@ ugenioctl(dev, cmd, addr, flag, p)
 	case USB_SET_CONFIG:
 		if (!(flag & FWRITE))
 			return (EPERM);
-		r = usbd_set_config_no(sc->sc_udev, *(int *)addr, 0);
+		r = ugen_set_config(sc, *(int *)addr);
 		if (r != USBD_NORMAL_COMPLETION)
 			return (EIO);
 		break;
@@ -915,3 +904,18 @@ ugenpoll(dev, events, p)
 	splx(s);
 	return (revents);
 }
+
+#if defined(__FreeBSD__)
+static int
+ugen_detach(device_t self)
+{       
+        struct ugen_softc *sc = device_get_softc(self);
+	char *devinfo = (char *) device_get_desc(self);
+
+	if (devinfo) {
+		device_set_desc(self, NULL);
+		free(devinfo, M_USB);
+	}
+	return 0;
+}
+#endif
