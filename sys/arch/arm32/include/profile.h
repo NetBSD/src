@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.8 1998/04/19 04:16:25 mark Exp $	*/
+/*	$NetBSD: profile.h,v 1.9 1999/09/21 22:15:11 tron Exp $	*/
 
 /*
  * Copyright (c) 1995-1996 Mark Brinicombe
@@ -45,7 +45,7 @@
 	/*								\
 	 * Preserve registers that are trashed during mcount		\
 	 */								\
-	__asm__("stmfd	sp!, {r0-r3, lr}");				\
+	__asm__("stmfd	sp!, {r0-r3, ip, lr}");				\
 	/*								\
 	 * find the return address for mcount,				\
 	 * and the return address for mcount's caller.			\
@@ -64,7 +64,7 @@
 	/*								\
 	 * Restore registers that were trashed during mcount		\
 	 */								\
-	__asm__("ldmfd	sp!, {r0-r3, pc}");
+	__asm__("ldmfd	sp!, {r0-r3, lr, pc}");
 
 #ifdef _KERNEL
 #include <machine/cpufunc.h>
