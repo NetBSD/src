@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn8ae.c,v 1.4 1997/04/07 23:40:44 cgd Exp $ */
+/* $NetBSD: pci_kn8ae.c,v 1.5 1997/06/24 18:08:59 mjacob Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -33,7 +33,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.4 1997/04/07 23:40:44 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.5 1997/06/24 18:08:59 mjacob Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -254,8 +254,10 @@ kn8ae_iointr(framep, vec)
 	}
 	vp = &vectab[ionode][hose][device];
 	if ((*vp->func)(vp->arg) == 0) {
+#if	0
 		printf("kn8ae_iointr: TLSB Node %d Hose %d Slot %d - "
 		    " unclaimed interrupt\n", ionode + 4, hose, device);
+#endif
 	}
 }
 
