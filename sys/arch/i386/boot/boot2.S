@@ -68,7 +68,7 @@ ENTRY(boot2)
 	FIXUP(BOOT_CS16_INDEX)
 	FIXUP(BOOT_DS_INDEX)
 
-	/* fix up GDT entry for GDT, and GDT and IDT pointers */
+	/* fix up GDT pointer */
 	data32
 	movl	%eax, %ecx
 	data32
@@ -76,11 +76,6 @@ ENTRY(boot2)
 	addr32
 	data32
 	movl	%eax, EXT(Gdtr)+2
-	data32
-	addl	$ EXT(Idt), %ecx
-	addr32
-	data32
-	movl	%ecx, EXT(Idtr_prot)+2
 
 	/* change to protected mode */
 	data32

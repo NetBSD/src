@@ -94,9 +94,6 @@ xprot:
 	movl	%ax, %ss
 	movl	%ax, %es
 
-	# load idtr so we can debug
-	lidt	EXT(Idtr_prot)
-
 	ret
 
 /*
@@ -137,11 +134,6 @@ xreal:
 	movl	%ax, %ds
 	movl	%ax, %ss
 	movl	%ax, %es
-
-	# load idtr so we can debug
-	addr32
-	data32
-	lidt	EXT(Idtr_real)
 
 	data32
 	ret
