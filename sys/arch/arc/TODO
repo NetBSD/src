@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.18 2003/05/22 17:10:27 tsutsui Exp $
+$NetBSD: TODO,v 1.19 2003/05/25 15:46:15 tsutsui Exp $
 
 To do list (in some particular order)
 XXX some entries might be obsolete.
@@ -55,7 +55,7 @@ XXX some entries might be obsolete.
 
     o	Olivetti M700 support
 
-    o	NEC Express5800/230 R10000 PCI (NEC-JC95) support
+    o	NEC Express5800/230 R10000 PCI (NEC-J95) support
 	(needs MI R10000 support)
 
     o	SNI RM200PCI/RM300/RM400/RM600 support
@@ -104,33 +104,13 @@ XXX some entries might be obsolete.
 	    softnet() and softclock() are handled with all interrupt disabled.
 		-> overblocking, possibly causes missing hardclock()
 
-	-   softclock() is handled with softnet() disabled.
-		-> slightly overblocking
-
 	-   `netisr' handling in netintr() implies potential race condition.
 	    The access to `netisr' should be protected by splnet().
 	    Currently this is not real problem due to above overblocking.
 
-	    `ssir' handling on many mips ports has same problem.
-	    It should be protected by splnet() or splserial() or splhigh()
-	    (depends on the highest interrupt level which sets `ssir').
-	    Since `ssir' is accessed not only by setsoftnet() but also
-	    by setsoft(), setsoftnet() should protect `ssir' by splserial()
-	    or something. (i.e. priority level which setsoft() will be called)
-	    Probably, it is better to split `ssir' variable for each
-	    priority level.
-	    Also, _clearsoftintr() should be called before `ssir' access.
-	    currently this is not real problem due to above overblocking.
-
 	-   INT_MASK_REAL_DEV should be removed
 
 	-   make CLKF_INTR() work.
-
-	-   generic software interrupt
-	    (see algor, mipsco, pmax etc.)
-
-	-   major rework, possibly by software emulated spl.
-		splserial()/splsoftserial()
 
     o	it is better to always disable MIPS_INT_MASK_CLOCK.
 	those are the points which should be fixed:
