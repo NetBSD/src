@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.75 2004/01/04 11:33:32 jdolecek Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.76 2004/01/16 12:43:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.75 2004/01/04 11:33:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.76 2004/01/16 12:43:16 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -747,7 +747,7 @@ uvm_coredump_walkmap(p, vp, cred, func, cookie)
 			state.flags |= UVM_COREDUMP_NODUMP;
 
 		if (entry->object.uvm_obj != NULL &&
-		    entry->object.uvm_obj->pgops == &uvm_deviceops)
+		    UVM_OBJ_IS_DEVICE(entry->object.uvm_obj))
 			state.flags |= UVM_COREDUMP_NODUMP;
 
 		vm_map_unlock_read(map);
