@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.57 1998/11/13 04:47:08 oster Exp $ */
+/*	$NetBSD: conf.c,v 1.58 1998/12/18 16:55:39 drochner Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,8 @@
  *
  *	@(#)conf.c	8.3 (Berkeley) 11/14/93
  */
+
+#include "opt_compat_svr4.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
