@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.4.2.6 1997/11/13 03:10:23 jonathan Exp $ */
+/*	$NetBSD: disks.c,v 1.4.2.7 1997/12/02 11:02:37 jonathan Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -278,7 +278,7 @@ void write_disklabel (void)
 #ifdef DISKLABEL_CMD
 	/* disklabel the disk */
 	printf ("%s", msg_string (MSG_dodisklabel));
-	run_prog_or_continue ("%s %s %s", DISKLABEL_CMD, diskdev, bsddiskname);
+	run_prog_or_continue ("%s %s \"%s\"", DISKLABEL_CMD, diskdev, bsddiskname);
 #endif
 
 }
