@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2002/06/12 19:13:27 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 2002/06/18 08:35:14 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -123,6 +123,7 @@
 #include <machine/specialreg.h>
 #include <machine/bootinfo.h>
 #include <machine/fpu.h>
+#include <machine/mtrr.h>
 
 #include <dev/isa/isareg.h>
 #include <machine/isa_machdep.h>
@@ -141,7 +142,7 @@ char machine[] = "x86_64";		/* cpu "architecture" */
 char machine_arch[] = "x86_64";		/* machine == machine_arch */
 
 u_int cpu_serial[3];
-char cpu_model[] = "VirtuHammer x86-64";
+char cpu_model[] = "Hammer x86-64";
 
 char bootinfo[BOOTINFO_MAXSIZE];
 
@@ -189,6 +190,8 @@ int	mem_cluster_cnt;
  */
 u_int64_t cpu_tsc_freq;
 
+struct mtrr_funcs *mtrr_funcs;
+
 int	cpu_dump __P((void));
 int	cpu_dumpsize __P((void));
 u_long	cpu_dump_mempagecnt __P((void));
@@ -201,6 +204,7 @@ void	init_x86_64 __P((vaddr_t));
 void
 cpu_startup()
 {
+	struct cpu_info *ci = curcpu();
 	caddr_t v, v2;
 	unsigned long sz;
 	int x;
@@ -247,6 +251,12 @@ cpu_startup()
 			cpu_serial[0] / 65536, cpu_serial[0] % 65536,
 			cpu_serial[1] / 65536, cpu_serial[1] % 65536,
 			cpu_serial[2] / 65536, cpu_serial[2] % 65536);
+	}
+
+	if (cpu_feature & CPUID_MTRR) {
+		mtrr_funcs = &i686_mtrr_funcs;
+		i686_mtrr_init_first();
+		mtrr_init_cpu(ci);
 	}
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
