@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.127 2004/10/01 15:29:23 christos Exp $
+$NetBSD: UPDATING,v 1.128 2004/10/02 16:24:32 he Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -20,8 +20,8 @@ Recent changes:
 	The ipfilter kernel sources moved from sys/netinet to
 	dist/sys/ipf/netinet. Due to the move some Makefile
 	dependencies are now dangling requiring a make cleandir
-	before they work again (kdump, ktruss, rescue, ipf are
-	amongst the victims).
+	before they work again (kdump, ktruss, rescue, ipf, and
+	ftp-proxy are the victims).
 
 20040715:
 	The rc.d/sendmail script now uses a heuristic to determine
