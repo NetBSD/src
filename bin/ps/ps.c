@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.48 2003/01/18 10:52:17 thorpej Exp $	*/
+/*	$NetBSD: ps.c,v 1.49 2003/03/06 09:02:16 dsl Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.48 2003/01/18 10:52:17 thorpej Exp $");
+__RCSID("$NetBSD: ps.c,v 1.49 2003/03/06 09:02:16 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,6 +93,7 @@ __RCSID("$NetBSD: ps.c,v 1.48 2003/01/18 10:52:17 thorpej Exp $");
 #include <sys/ioctl.h>
 #include <sys/sysctl.h>
 
+#include <stddef.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -113,11 +114,11 @@ __RCSID("$NetBSD: ps.c,v 1.48 2003/01/18 10:52:17 thorpej Exp $");
  * ARGOPTS must contain all option characters that take arguments
  * (except for 't'!) - it is used in kludge_oldps_options()
  */
-#define	GETOPTSTR	"acCeghjLlM:mN:O:o:p:rSsTt:U:uvW:wx"
-#define	ARGOPTS		"MNOopUW"
+#define	GETOPTSTR	"acCeghjk:LlM:mN:O:o:p:rSsTt:U:uvW:wx"
+#define	ARGOPTS		"kMNOopUW"
 
 struct kinfo_proc2 *kinfo;
-struct varent *vhead, *vtail;
+struct varent *vhead, *sorthead;
 
 int	eval;			/* exit value */
 int	rawcpu;			/* -C */
@@ -127,8 +128,6 @@ int	totwidth;		/* calculated width of requested variables */
 
 int	needcomm, needenv, commandonly;
 uid_t	myuid;
-
-enum sort { DEFAULT, SORTMEM, SORTCPU } sortby = DEFAULT;
 
 static struct kinfo_lwp
 		*pick_representative_lwp __P((struct kinfo_proc2 *, 
@@ -206,6 +205,9 @@ main(argc, argv)
 			fmt = 1;
 			jfmt[0] = '\0';
 			break;
+		case 'k':
+			parsesort(optarg);
+			break;
 		case 'K':
 			break;			/* no-op - was dontuseprocfs */
 		case 'L':
@@ -221,7 +223,7 @@ main(argc, argv)
 			memf = optarg;
 			break;
 		case 'm':
-			sortby = SORTMEM;
+			parsesort("vsz");
 			break;
 		case 'N':
 			nlistf = optarg;
@@ -243,7 +245,7 @@ main(argc, argv)
 			xflg = 1;
 			break;
 		case 'r':
-			sortby = SORTCPU;
+			parsesort("%cpu");
 			break;
 		case 'S':
 			sumrusage = 1;
@@ -308,13 +310,13 @@ main(argc, argv)
 			break;
 		case 'u':
 			parsefmt(ufmt);
-			sortby = SORTCPU;
+			parsesort("%cpu");
 			fmt = 1;
 			ufmt[0] = '\0';
 			break;
 		case 'v':
 			parsefmt(vfmt);
-			sortby = SORTMEM;
+			parsesort("vsz");
 			fmt = 1;
 			vfmt[0] = '\0';
 			break;
@@ -350,8 +352,8 @@ main(argc, argv)
 	}
 #endif
 
-	if (memf == NULL && swapf == NULL) {
-		kd = kvm_openfiles(nlistf, memf, swapf, KVM_NO_FILES, errbuf);
+	if (memf == NULL) {
+		kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, errbuf);
 		donlist_sysctl();
 	} else
 		kd = kvm_openfiles(nlistf, memf, swapf, O_RDONLY, errbuf);
@@ -361,6 +363,14 @@ main(argc, argv)
 
 	if (!fmt)
 		parsefmt(dfmt);
+
+	/* Add default sort criteria */
+	parsesort("tdev,pid");
+	for (vent = sorthead; vent; vent = vent->next) {
+		if (vent->var->flag & LWP || vent->var->type == UNSPECIFIED)
+			warnx("Cannot sort on %s, sort key ignored\n",
+				vent->var->name);
+	}
 
 	/*
 	 * scan requested variables, noting what structures are needed.
@@ -553,24 +563,107 @@ scanvars()
 }
 
 static int
-pscomp(a, b)
-	const void *a, *b;
+pscomp(const void *a, const void *b)
 {
 	struct kinfo_proc2 *ka = (struct kinfo_proc2 *)a;
 	struct kinfo_proc2 *kb = (struct kinfo_proc2 *)b;
 
 	int i;
-#define VSIZE(k) (k->p_vm_dsize + k->p_vm_ssize + k->p_vm_tsize)
+	int64_t i64;
+	VAR *v;
+	struct varent *ve;
+	sigset_t *sa, *sb;
 
-	if (sortby == SORTCPU)
-		return (getpcpu(kb) - getpcpu(ka));
-	if (sortby == SORTMEM)
-		return (VSIZE(kb) - VSIZE(ka));
-	i =  ka->p_tdev - kb->p_tdev;
+#define V_SIZE(k) (k->p_vm_dsize + k->p_vm_ssize + k->p_vm_tsize)
+#define RDIFF_N(t, n) \
+	if (((t *)((char *)ka + v->off))[n] > ((t *)((char *)kb + v->off))[n]) \
+		return 1; \
+	if (((t *)((char *)ka + v->off))[n] < ((t *)((char *)kb + v->off))[n]) \
+		return -1;
 
-	if (i == 0)
-		i = ka->p_pid - kb->p_pid;
-	return (i);
+#define RDIFF(type) RDIFF_N(type, 0); continue
+
+	for (ve = sorthead; ve != NULL; ve = ve->next) {
+		v = ve->var;
+		if (v->flag & LWP)
+			/* LWP structure not available (yet) */
+			continue;
+		/* Sort on pvar() fields, + a few others */
+		switch (v->type) {
+		case CHAR:
+			RDIFF(char);
+		case UCHAR:
+			RDIFF(u_char);
+		case SHORT:
+			RDIFF(short);
+		case USHORT:
+			RDIFF(ushort);
+		case INT:
+			RDIFF(int);
+		case UINT:
+			RDIFF(uint);
+		case LONG:
+			RDIFF(long);
+		case ULONG:
+			RDIFF(ulong);
+		case INT32:
+			RDIFF(int32_t);
+		case UINT32:
+			RDIFF(uint32_t);
+		case SIGLIST:
+			sa = (void *)((char *)a + v->off);
+			sb = (void *)((char *)b + v->off);
+			i = 0;
+			do {
+				if (sa->__bits[i] > sb->__bits[i])
+					return 1;
+				if (sa->__bits[i] < sb->__bits[i])
+					return -1;
+				i++;
+			} while (i < sizeof sa->__bits / sizeof sa->__bits[0]);
+			continue;
+		case INT64:
+			RDIFF(int64_t);
+		case KPTR:
+		case KPTR24:
+		case UINT64:
+			RDIFF(uint64_t);
+		case TIMEVAL:
+			/* compare xxx_sec then xxx_usec */
+			RDIFF_N(uint32_t, 0);
+			RDIFF_N(uint32_t, 1);
+			continue;
+		case CPUTIME:
+			i64 = ka->p_rtime_sec * 1000000 + ka->p_rtime_usec;
+			i64 -= kb->p_rtime_sec * 1000000 + kb->p_rtime_usec;
+			if (sumrusage) {
+				i64 += ka->p_uctime_sec * 1000000
+				    + ka->p_uctime_usec;
+				i64 -= kb->p_uctime_sec * 1000000
+				    + kb->p_uctime_usec;
+			}
+			if (i64 != 0)
+				return i64 > 0 ? 1 : -1;
+			continue;
+		case PCPU:
+			i = getpcpu(kb) - getpcpu(ka);
+			if (i != 0)
+				return i;
+			continue;
+		case VSIZE:
+			i = V_SIZE(kb) - V_SIZE(ka);
+			if (i != 0)
+				return i;
+			continue;
+
+		default:
+			/* Ignore everything else */
+			break;
+		}
+	}
+	return 0;
+
+#undef VSIZE
 }
 
 /*
@@ -642,7 +735,7 @@ usage()
 
 	(void)fprintf(stderr,
 	    "usage:\t%s\n\t   %s\n\t%s\n",
-	    "ps [-acCehjlmrsSTuvwx] [-O|o fmt] [-p pid] [-t tty]",
+	    "ps [-acCehjlmrsSTuvwx] [-k key] [-O|o fmt] [-p pid] [-t tty]",
 	    "[-M core] [-N system] [-W swap] [-U username]",
 	    "ps [-L]");
 	exit(1);
