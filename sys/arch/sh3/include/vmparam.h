@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.13 2002/05/09 12:28:08 uch Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.14 2002/12/10 05:14:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,8 +47,7 @@
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xc0000000)
 #define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xe0000000)
 
-/* User program text start address and top of stack */
-#define	USRTEXT			0x00001000
+/* top of stack */
 #define	USRSTACK		VM_MAXUSER_ADDRESS
 
 /* Virtual memory resoruce limit. */

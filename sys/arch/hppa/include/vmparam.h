@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.2 2002/08/05 20:58:35 fredette Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.3 2002/12/10 05:14:28 thorpej Exp $	*/
 
 /*	$OpenBSD: vmparam.h,v 1.17 2001/09/22 18:00:09 miod Exp $	*/
 
@@ -32,16 +32,9 @@
  * Machine dependent constants for HP PA
  */
 /*
- * USRTEXT is the start of the user text/data space, while USRSTACK
- * is the top (end) of the user stack.  LOWPAGES and HIGHPAGES are
- * the number of pages from the beginning of the P0 region to the
- * beginning of the text and from the beginning of the P1 region to the
- * beginning of the stack respectively.
+ * USRSTACK is the top (end) of the user stack.
  */
-#define	USRTEXT		0x00002000		/* Start of user .text */
 #define	USRSTACK	0x68FF3000		/* Start of user stack */
-#define	LOWPAGES	0
-#define	HIGHPAGES	UPAGES
 #define	SYSCALLGATE	0xC0000000		/* syscall gateway page */
 
 /* Alignment requirement for a uspace. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.7 2001/11/30 17:52:34 fredette Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.8 2002/12/10 05:14:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,10 +52,8 @@
 #define	PAGER_MAP_SIZE (1 * 1024 * 1024)
 
 /*
- * USRTEXT is the start of the user text/data space, while
  * USRSTACK is the top (end) of the user stack.
  */
-#define	USRTEXT 	NBPG		/* Start of user text */
 #define	USRSTACK	0x1000000	/* High end of user stack */
 
 /*

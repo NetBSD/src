@@ -45,10 +45,6 @@
  * get the right thing to happen.
  */
 
-#ifndef USRTEXT
-#define	USRTEXT			PAGE_SIZE
-#endif
-
 #ifndef	USRSTACK
 #define	USRSTACK		VM_MAXUSER_ADDRESS
 #endif

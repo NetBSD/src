@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.9 2002/07/31 16:23:37 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.10 2002/12/10 05:14:32 thorpej Exp $	*/
 
 #ifndef OLDPMAP
 #define	USER_SR		11
@@ -38,7 +38,6 @@
 #ifndef	_MACHINE_VMPARAM_H_
 #define	_MACHINE_VMPARAM_H_
 
-#define	USRTEXT		NBPG
 #define	USRSTACK	VM_MAXUSER_ADDRESS
 
 #ifndef	MAXTSIZ

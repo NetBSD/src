@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.c,v 1.25 2002/10/05 22:34:05 chs Exp $	*/
+/*	$NetBSD: exec_aout.c,v 1.26 2002/12/10 05:14:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.25 2002/10/05 22:34:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.26 2002/12/10 05:14:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.25 2002/10/05 22:34:05 chs Exp $");
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/exec.h>
+#include <sys/exec_aout.h>
 #include <sys/resourcevar.h>
 
 #include <uvm/uvm_extern.h>
@@ -108,7 +109,7 @@ exec_aout_prep_zmagic(struct proc *p, struct exec_package *epp)
 	struct exec *execp = epp->ep_hdr;
 	int error;
 
-	epp->ep_taddr = USRTEXT;
+	epp->ep_taddr = __LDPGSZ;
 	epp->ep_tsize = execp->a_text;
 	epp->ep_daddr = epp->ep_taddr + execp->a_text;
 	epp->ep_dsize = execp->a_data + execp->a_bss;
@@ -146,7 +147,7 @@ exec_aout_prep_nmagic(struct proc *p, struct exec_package *epp)
 	struct exec *execp = epp->ep_hdr;
 	long bsize, baddr;
 
-	epp->ep_taddr = USRTEXT;
+	epp->ep_taddr = __LDPGSZ;
 	epp->ep_tsize = execp->a_text;
 	epp->ep_daddr = roundup(epp->ep_taddr + execp->a_text, __LDPGSZ);
 	epp->ep_dsize = execp->a_data + execp->a_bss;
@@ -182,7 +183,7 @@ exec_aout_prep_omagic(struct proc *p, struct exec_package *epp)
 	struct exec *execp = epp->ep_hdr;
 	long dsize, bsize, baddr;
 
-	epp->ep_taddr = USRTEXT;
+	epp->ep_taddr = __LDPGSZ;
 	epp->ep_tsize = execp->a_text;
 	epp->ep_daddr = epp->ep_taddr + execp->a_text;
 	epp->ep_dsize = execp->a_data + execp->a_bss;

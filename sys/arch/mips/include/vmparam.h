@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.30 2001/11/15 18:06:15 soren Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.31 2002/12/10 05:14:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,14 +58,12 @@
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 
 /*
- * USRTEXT is the start of the user text/data space, while USRSTACK
- * is the top (end) of the user stack.
+ * USRSTACK is the top (end) of the user stack.
  *
  * USRSTACK needs to start a little below 0x8000000 because the R8000
  * and some QED CPUs perform some virtual address checks before the
  * offset is calculated.
  */
-#define	USRTEXT		0x00001000		/* Start of user text */
 #define	USRSTACK	0x7ffff000		/* Start of user stack */
 
 /* alignment requirement for u-area space in bytes */
