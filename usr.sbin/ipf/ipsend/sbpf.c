@@ -1,3 +1,5 @@
+/*	$NetBSD: sbpf.c,v 1.1.1.2 1997/05/27 22:18:18 thorpej Exp $	*/
+
 /*
  * (C)opyright October 1995 Darren Reed. (from tcplog)
  *
@@ -36,7 +38,7 @@
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
 #include <netinet/tcp.h>
-#include <netinet/tcpip.h>
+#include "ipsend.h"
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sbpf[] = "@(#)sbpf.c	1.3 8/25/95 (C)1995 Darren Reed";

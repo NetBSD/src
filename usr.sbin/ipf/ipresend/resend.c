@@ -1,3 +1,5 @@
+/*	$NetBSD: resend.c,v 1.1.1.2 1997/05/27 22:18:09 thorpej Exp $	*/
+
 /*
  * resend.c (C) 1995 Darren Reed
  *
@@ -28,22 +30,16 @@ static	char	sccsid[] = "@(#)resend.c	1.3 1/11/96 (C)1995 Darren Reed";
 #include <netinet/ip_icmp.h>
 #ifndef	linux
 #include <netinet/ip_var.h>
-#include <netinet/tcpip.h>
 #include <netinet/if_ether.h>
 #endif
-#include "ip_compat.h"
-#ifdef	linux
-#include <linux/sockios.h>
-#include "tcpip.h"
-#endif
-#include "ipt.h"
+#include "ipsend.h"
 
 
 static	u_char	buf[65536];	/* 1 big packet */
+static	void	printpacket __P((ip_t *));
 
-extern	int	initdevice(), arp(), sendip();
 
-void printpacket(ip)
+static void printpacket(ip)
 ip_t	*ip;
 {
 	tcphdr_t *t;
@@ -119,7 +115,7 @@ char	*datain;
 		bcopy(ip, (char *)(eh + 1), len);
 		printpacket(ip);
 
-		if (sendip(wfd, eh, sizeof(*eh) + len) == -1)
+		if (sendip(wfd, (char *)eh, sizeof(*eh) + len) == -1)
 		    {
 			perror("send_packet");
 			break;

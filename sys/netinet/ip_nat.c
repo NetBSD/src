@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.1.1.3 1997/05/25 12:07:05 darrenr Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.1.1.4 1997/05/27 22:18:31 thorpej Exp $	*/
 
 /*
  * (C)opyright 1995-1996 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static	char	rcsid[] = "$Id: ip_nat.c,v 1.1.1.3 1997/05/25 12:07:05 darrenr Exp $";
+static	char	rcsid[] = "Id: ip_nat.c,v 2.0.2.18 1997/05/24 07:34:44 darrenr Exp ";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)

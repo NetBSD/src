@@ -1,4 +1,4 @@
-/*	$NetBSD: ipnat.c,v 1.1.1.3 1997/05/25 11:46:44 darrenr Exp $	*/
+/*	$NetBSD: ipnat.c,v 1.1.1.4 1997/05/27 22:18:03 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -50,14 +50,14 @@
 #include <ctype.h>
 #include <netinet/ip_compat.h>
 #include <netinet/ip_fil.h>
-#include "ip_proxy.h"
+#include <netinet/ip_proxy.h>
 #include <netinet/ip_nat.h>
 #include "kmem.h"
 
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static  char    sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static	char	rcsid[] = "$Id: ipnat.c,v 1.1.1.3 1997/05/25 11:46:44 darrenr Exp $";
+static	char	rcsid[] = "Id: ipnat.c,v 2.0.2.9 1997/05/05 14:03:55 darrenr Exp ";
 #endif
 
 #if	SOLARIS

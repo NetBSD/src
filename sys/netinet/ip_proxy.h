@@ -1,3 +1,5 @@
+/*	$NetBSD: ip_proxy.h,v 1.1.1.2 1997/05/27 22:18:44 thorpej Exp $	*/
+
 /*
  * (C)opyright 1997 by Darren Reed.
  *
@@ -5,7 +7,7 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * $Id: ip_proxy.h,v 1.1.1.1 1997/05/26 15:18:15 darrenr Exp $
+ * Id: ip_proxy.h,v 2.0.2.2 1997/05/24 07:36:44 darrenr Exp 
  */
 
 #ifndef	__IP_PROXY_H__
