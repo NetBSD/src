@@ -1,4 +1,4 @@
-.\" $NetBSD: tadpolectl.8,v 1.4 2001/12/09 07:52:20 soren Exp $
+.\" $NetBSD: tadpolectl.8,v 1.5 2002/02/02 02:00:19 wiz Exp $
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -121,9 +121,8 @@ privilege can change the value, and if a displayed value is valid.
 .It hw.serial.power	yes	yes
 .El
 .Sh EXAMPLES
-.Pp
-For example, to retrieve the current internal battery charge level
-, one would use the following request:
+For example, to retrieve the current internal battery charge level,
+one would use the following request:
 .Bd -literal -offset indent -compact
 tadpolectl hw.power.battery.int.chargelevel
 .Ed
