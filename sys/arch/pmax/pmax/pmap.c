@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.17 1997/05/26 23:02:11 jonathan Exp $	*/
+/*	$NetBSD: pmap.c,v 1.18 1997/06/15 18:19:47 mhitch Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -80,11 +80,9 @@
 #include <vm/vm_pageout.h>
 
 #include <mips/cpuregs.h>
-#include <machine/locore.h>
+#include <mips/locore.h>
 #include <machine/pte.h>
-
-extern vm_page_t vm_page_alloc1 __P((void));
-extern void vm_page_free1 __P((vm_page_t));
+#include <machine/cpu.h>
 
 /*
  * For each vm_page_t, there is a list of all currently valid virtual
@@ -95,7 +93,9 @@ typedef struct pv_entry {
 	struct pv_entry	*pv_next;	/* next pv_entry */
 	struct pmap	*pv_pmap;	/* pmap where mapping lies */
 	vm_offset_t	pv_va;		/* virtual address for mapping */
+	int		pv_flags;	/* Some flags for the mapping */
 } *pv_entry_t;
+#define	PV_UNCACHED	0x0001		/* Page is mapped unchached */
 
 pv_entry_t	pv_table;	/* array of entries, one per page */
 
@@ -127,7 +127,7 @@ struct {
 	int pvsearch;
 } remove_stats;
 
-int pmapdebug;
+int pmapdebug = 0;
 #define PDB_FOLLOW	0x0001
 #define PDB_INIT	0x0002
 #define PDB_ENTER	0x0004
@@ -163,11 +163,28 @@ pt_entry_t	*Sysmap;		/* kernel pte table */
 u_int		Sysmapsize;		/* number of pte's in Sysmap */
 
 
+#ifdef MIPS3
+extern MachHitFlushDCache __P((vm_offset_t, int));
+#endif
+
 /* Forward function declarations */
-void	pmap_remove_pv __P((pmap_t pmap, vm_offset_t va, vm_offset_t pa));
+int	pmap_remove_pv __P((pmap_t pmap, vm_offset_t va, vm_offset_t pa));
 int	pmap_alloc_tlbpid __P((register struct proc *p));
 void	pmap_zero_page __P((vm_offset_t phys));
-
+void pmap_zero_page __P((vm_offset_t));
+#ifdef MIPS3XXX
+void pmap_enter_pv __P((pmap_t, vm_offset_t, vm_offset_t, u_int *));
+#else
+void pmap_enter_pv __P((pmap_t, vm_offset_t, vm_offset_t));
+#endif
+vm_page_t vm_page_alloc1 __P((void));
+void vm_page_free1 __P((vm_page_t));
+pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
+#ifdef MIPS3
+int pmap_is_page_ro __P((pmap_t, vm_offset_t, int));
+void pmap_page_cache __P((vm_offset_t, int));
+void mips_dump_segtab __P((struct proc *));
+#endif
 
 /*
  *	Bootstrap the system enough to run with virtual memory.
@@ -178,6 +195,9 @@ pmap_bootstrap(firstaddr)
 	vm_offset_t firstaddr;
 {
 	register int i;
+#ifdef MIPS3
+	register pt_entry_t *spte;
+#endif
 	vm_offset_t start = firstaddr;
 	extern int maxmem, physmem;
 
@@ -225,6 +245,18 @@ pmap_bootstrap(firstaddr)
 
 	simple_lock_init(&pmap_kernel()->pm_lock);
 	pmap_kernel()->pm_count = 1;
+
+#ifdef MIPS3
+	/*
+	 * The R4?00 stores only one copy of the Global bit in the
+	 * translation lookaside buffer for each 2 page entry. 
+	 * Thus invalid entrys must have the Global bit set so
+	 * when Entry LO and Entry HI G bits are anded together
+	 * they will produce a global bit to store in the tlb.
+	 */
+	for(i = 0, spte = Sysmap; i < Sysmapsize; i++, spte++)
+		spte->pt_entry = PG_G;
+#endif
 }
 
 /*
@@ -252,7 +284,7 @@ pmap_bootstrap_alloc(size)
 	size = round_page(size);
 	avail_start += size;
 
-	blkclr((caddr_t)val, size);
+	bzero((caddr_t)val, size);
 	return ((void *)val);
 }
 
@@ -341,6 +373,8 @@ pmap_pinit(pmap)
 		vm_page_t mem;
 
 		mem = vm_page_alloc1();
+		if (mem == NULL)		/* XXX - fix this! */
+			panic("pmap_pinit: segtab alloc failed");
 		pmap_zero_page(VM_PAGE_TO_PHYS(mem));
 		pmap->pm_segtab = stp = (struct segtab *)
 			MACH_PHYS_TO_CACHED(VM_PAGE_TO_PHYS(mem));
@@ -427,13 +461,20 @@ pmap_release(pmap)
 			pte = pmap->pm_segtab->seg_tab[i];
 			if (!pte)
 				continue;
+#ifndef MIPS3
 			vm_page_free1(
 				PHYS_TO_VM_PAGE(MACH_CACHED_TO_PHYS(pte)));
+#endif
 #ifdef DIAGNOSTIC
 			for (j = 0; j < NPTEPG; j++) {
-				if (pte->pt_entry)
+				if ((pte+j)->pt_entry)
 					panic("pmap_release: segmap not empty");
 			}
+#endif
+#ifdef MIPS3
+			MachHitFlushDCache((vm_offset_t)pte, PAGE_SIZE);
+			vm_page_free1(
+				PHYS_TO_VM_PAGE(MACH_CACHED_TO_PHYS(pte)));
 #endif
 			pmap->pm_segtab->seg_tab[i] = NULL;
 		}
@@ -503,17 +544,27 @@ pmap_remove(pmap, sva, eva)
 			if (entry & PG_WIRED)
 				pmap->pm_stats.wired_count--;
 			pmap->pm_stats.resident_count--;
-			pmap_remove_pv(pmap, sva, entry & PG_FRAME);
-#ifdef ATTR
-			pmap_attributes[atop(entry & PG_FRAME)] = 0;
+			if(pmap_remove_pv(pmap, sva, pfn_to_vad(entry))) {
+#ifdef MIPS3
+				MachFlushDCache(sva, PAGE_SIZE);
 #endif
+			}
+#ifdef ATTR
+			pmap_attributes[atop(pfn_to_vad(entry))] = 0;
+#endif
+#ifndef MIPS3
 			pte->pt_entry = PG_NV;
+#endif
 			/*
 			 * Flush the TLB for the given address.
 			 */
+#ifdef MIPS3
+			pte->pt_entry = PG_NV | PG_G; /* See above about G bit */
+#endif
 			MachTLBFlushAddr(sva);
 #ifdef DEBUG
 			remove_stats.flushes++;
+
 #endif
 		}
 		return;
@@ -538,7 +589,7 @@ pmap_remove(pmap, sva, eva)
 		/*
 		 * Invalidate every valid mapping within this segment.
 		 */
-		pte += (sva >> PGSHIFT) & (NPTEPG - 1);
+		pte += uvtopte(sva);
 		for (; sva < nssva; sva += NBPG, pte++) {
 			entry = pte->pt_entry;
 			if (!(entry & PG_V))
@@ -546,9 +597,13 @@ pmap_remove(pmap, sva, eva)
 			if (entry & PG_WIRED)
 				pmap->pm_stats.wired_count--;
 			pmap->pm_stats.resident_count--;
-			pmap_remove_pv(pmap, sva, entry & PG_FRAME);
+			if(pmap_remove_pv(pmap, sva, pfn_to_vad(entry))) {
+#ifdef MIPS3
+				MachFlushDCache(sva, PAGE_SIZE);
+#endif
+			}
 #ifdef ATTR
-			pmap_attributes[atop(entry & PG_FRAME)] = 0;
+			pmap_attributes[atop(pfn_to_vad(entry))] = 0;
 #endif
 			pte->pt_entry = PG_NV;
 			/*
@@ -658,7 +713,11 @@ pmap_protect(pmap, sva, eva, prot)
 		return;
 	}
 
+#ifdef MIPS3
+	p = (prot & VM_PROT_WRITE) ? PG_M : PG_RO;
+#else
 	p = (prot & VM_PROT_WRITE) ? PG_RW : PG_RO;
+#endif
 
 	if (!pmap->pm_segtab) {
 		/*
@@ -748,14 +807,13 @@ pmap_page_cache(pa,mode)
 {
 	register pv_entry_t pv;
 	register pt_entry_t *pte;
-	register vm_offset_t va;
 	register unsigned entry;
 	register unsigned newmode;
 	int s;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
-		printf("pmap_page_uncache(%x)\n", pa);
+		printf("pmap_page_uncache(%lx)\n", pa);
 #endif
 	if (!IS_VM_PHYSADDR(pa))
 		return;
@@ -778,7 +836,7 @@ pmap_page_cache(pa,mode)
 			}
 		}
 		else {
-			if (pte = pmap_segmap(pv->pv_pmap, pv->pv_va)) {
+			if ((pte = pmap_segmap(pv->pv_pmap, pv->pv_va)) != NULL) {
 				pte += (pv->pv_va >> PGSHIFT) & (NPTEPG - 1);
 				entry = pte->pt_entry;
 				if (entry & PG_V) {
@@ -796,7 +854,6 @@ pmap_page_cache(pa,mode)
 	splx(s);
 }
 #endif	/* MIPS3 */	/* r4000,r4400,r4600 */
-
 
 /*
  *	Insert the given physical page (p) at
@@ -819,7 +876,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	boolean_t wired;
 {
 	register pt_entry_t *pte;
-	register u_int npte;
+	u_int npte;
 	register int i;
 	vm_page_t mem;
 
@@ -832,11 +889,15 @@ pmap_enter(pmap, va, pa, prot, wired)
 	if (!pmap)
 		panic("pmap_enter: pmap");
 	if (!pmap->pm_segtab) {
+#ifdef DEBUG
 		enter_stats.kernel++;
+#endif
 		if (va < VM_MIN_KERNEL_ADDRESS || va >= virtual_end)
 			panic("pmap_enter: kva");
 	} else {
+#ifdef DEBUG
 		enter_stats.user++;
+#endif
 		if (va >= VM_MAXUSER_ADDRESS)
 			panic("pmap_enter: uva");
 	}
@@ -847,21 +908,20 @@ pmap_enter(pmap, va, pa, prot, wired)
 #endif
 
 	if (IS_VM_PHYSADDR(pa)) {
-		register pv_entry_t pv, npv;
-		int s;
-
 		if (!(prot & VM_PROT_WRITE))
+#ifdef MIPS3
+			npte = PG_ROPAGE;
+#else
 			npte = PG_RO;
+#endif
 		else {
-			register vm_page_t mem;
-
 			mem = PHYS_TO_VM_PAGE(pa);
 			if ((int)va < 0) {
 				/*
 				 * Don't bother to trap on kernel writes,
 				 * just record page as dirty.
 				 */
-				npte = PG_M;
+				npte = PG_RWPAGE;
 				mem->flags &= ~PG_CLEAN;
 			} else
 #ifdef ATTR
@@ -870,90 +930,18 @@ pmap_enter(pmap, va, pa, prot, wired)
 #else
 				if (!(mem->flags & PG_CLEAN))
 #endif
-					npte = PG_M;
+					npte = PG_RWPAGE;
 			else
-				npte = 0;
-		}
-
+					npte = PG_CWPAGE;
+				}
 #ifdef DEBUG
 		enter_stats.managed++;
 #endif
-		/*
-		 * Enter the pmap and virtual address into the
-		 * physical to virtual map table.
-		 */
-		pv = pa_to_pvh(pa);
-		s = splimp();
-#ifdef DEBUG
-		if (pmapdebug & PDB_ENTER)
-			printf("pmap_enter: pv %p: was %lx/%p/%p\n",
-			       pv, pv->pv_va, pv->pv_pmap, pv->pv_next);
+#ifdef MIPS3XXX
+		pmap_enter_pv(pmap, va, pa, &npte);
+#else
+		pmap_enter_pv(pmap, va, pa);
 #endif
-		if (pv->pv_pmap == NULL) {
-			/*
-			 * No entries yet, use header as the first entry
-			 */
-#ifdef DEBUG
-			if (pmapdebug & PDB_PVENTRY)
-				printf("pmap_enter: first pv: pmap %p va %lx\n",
-					pmap, va);
-			enter_stats.firstpv++;
-#endif
-			pv->pv_va = va;
-			pv->pv_pmap = pmap;
-			pv->pv_next = NULL;
-		} else {
-			/*
-			 * There is at least one other VA mapping this page.
-			 * Place this entry after the header.
-			 *
-			 * Note: the entry may already be in the table if
-			 * we are only changing the protection bits.
-			 */
-			for (npv = pv; npv; npv = npv->pv_next)
-				if (pmap == npv->pv_pmap && va == npv->pv_va) {
-#ifdef DIAGNOSTIC
-					unsigned entry;
-
-					if (!pmap->pm_segtab)
-						entry = kvtopte(va)->pt_entry;
-					else {
-						pte = pmap_segmap(pmap, va);
-						if (pte) {
-							pte += (va >> PGSHIFT) &
-							    (NPTEPG - 1);
-							entry = pte->pt_entry;
-						} else
-							entry = 0;
-					}
-					if (!(entry & PG_V) ||
-					    (entry & PG_FRAME) != pa)
-						printf(
-			"pmap_enter: found va %x pa %x in pv_table but != %x\n",
-							va, pa, entry);
-#endif
-					goto fnd;
-				}
-#ifdef DEBUG
-			if (pmapdebug & PDB_PVENTRY)
-				printf("pmap_enter: new pv: pmap %p va %lx\n",
-					pmap, va);
-#endif
-			/* can this cause us to recurse forever? */
-			npv = (pv_entry_t)
-				malloc(sizeof *npv, M_VMPVENT, M_NOWAIT);
-			npv->pv_va = va;
-			npv->pv_pmap = pmap;
-			npv->pv_next = pv->pv_next;
-			pv->pv_next = npv;
-#ifdef DEBUG
-			if (!npv->pv_next)
-				enter_stats.secondpv++;
-#endif
-		fnd:
-			;
-		}
-		splx(s);
 	} else {
 		/*
 		 * Assumption: if it is not part of our managed memory
@@ -962,7 +950,11 @@ pmap_enter(pmap, va, pa, prot, wired)
 #ifdef DEBUG
 		enter_stats.unmanaged++;
 #endif
+#ifdef MIPS3
+		npte = (prot & VM_PROT_WRITE) ? (PG_IOPAGE & ~PG_G) : (PG_IOPAGE& ~(PG_G | PG_M));
+#else
 		npte = (prot & VM_PROT_WRITE) ? (PG_M | PG_N) : (PG_RO | PG_N);
+#endif
 	}
 
 	/*
@@ -973,13 +965,20 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 * between R/W and R/O pages.
 	 * NOTE: we only support cache flush for read only text.
 	 */
-	if (prot == (VM_PROT_READ | VM_PROT_EXECUTE))
+#ifndef MIPS3
+	if (prot == (VM_PROT_READ | VM_PROT_EXECUTE)) {
 		MachFlushICache(MACH_PHYS_TO_CACHED(pa), PAGE_SIZE);
+	}
+#endif
 
 	if (!pmap->pm_segtab) {
 		/* enter entries into kernel pmap */
 		pte = kvtopte(va);
-		npte |= pa | PG_V | PG_G;
+#ifdef MIPS3
+		npte |= vad_to_pfn(pa) | PG_ROPAGE | PG_G;
+#else
+		npte |= vad_to_pfn(pa) | PG_V | PG_G;
+#endif
 		if (wired) {
 			pmap->pm_stats.wired_count += mipspagesperpage;
 			npte |= PG_WIRED;
@@ -1000,7 +999,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 			MachTLBUpdate(va, npte);
 			pte->pt_entry = npte;
 			va += NBPG;
-			npte += NBPG;
+			npte += vad_to_pfn(NBPG);
 			pte++;
 		} while (--i != 0);
 		return;
@@ -1008,18 +1007,30 @@ pmap_enter(pmap, va, pa, prot, wired)
 
 	if (!(pte = pmap_segmap(pmap, va))) {
 		mem = vm_page_alloc1();
+		if (mem == NULL)		/* XXX - fix this! */
+			panic("pmap_enter: segmap alloc failed");
 		pmap_zero_page(VM_PAGE_TO_PHYS(mem));
 		pmap_segmap(pmap, va) = pte = (pt_entry_t *)
 			MACH_PHYS_TO_CACHED(VM_PAGE_TO_PHYS(mem));
+#ifdef DIAGNOSTIC
+		for (i = 0; i < NPTEPG; i++) {
+			if ((pte+i)->pt_entry)
+				panic("pmap_enter: new segmap not empty");
+		}
+#endif
 	}
 	pte += (va >> PGSHIFT) & (NPTEPG - 1);
 
 	/*
 	 * Now validate mapping with desired protection/wiring.
 	 * Assume uniform modified and referenced status for all
-	 * PMAX pages in a MACH page.
+	 * MIPS pages in a MACH page.
 	 */
-	npte |= pa | PG_V;
+#ifdef MIPS3
+	npte |= vad_to_pfn(pa);
+#else
+	npte |= vad_to_pfn(pa) | PG_V;
+#endif
 	if (wired) {
 		pmap->pm_stats.wired_count += mipspagesperpage;
 		npte |= PG_WIRED;
@@ -1039,9 +1050,19 @@ pmap_enter(pmap, va, pa, prot, wired)
 			MachTLBUpdate(va | (pmap->pm_tlbpid <<
 				VMMACH_TLB_PID_SHIFT), npte);
 		va += NBPG;
-		npte += NBPG;
+		npte += vad_to_pfn(NBPG);
 		pte++;
 	} while (--i != 0);
+#ifdef MIPS3
+	if (prot == (VM_PROT_READ | VM_PROT_EXECUTE)) {
+#ifdef DEBUG
+		if (pmapdebug & PDB_ENTER)
+			printf("pmap_enter: flush I cache va %lx (%lx)\n",
+			    va - mipspagesperpage * NBPG, pa);
+#endif
+		MachFlushICache(va - mipspagesperpage * NBPG, PAGE_SIZE);
+	}
+#endif
 }
 
 /*
@@ -1121,7 +1142,7 @@ pmap_extract(pmap, va)
 		if (va < VM_MIN_KERNEL_ADDRESS || va >= virtual_end)
 			panic("pmap_extract");
 #endif
-		pa = kvtopte(va)->pt_entry & PG_FRAME;
+		pa = pfn_to_vad(kvtopte(va)->pt_entry);
 	} else {
 		register pt_entry_t *pte;
 
@@ -1129,7 +1150,7 @@ pmap_extract(pmap, va)
 			pa = 0;
 		else {
 			pte += (va >> PGSHIFT) & (NPTEPG - 1);
-			pa = pte->pt_entry & PG_FRAME;
+			pa = pfn_to_vad(pte->pt_entry);
 		}
 	}
 	if (pa)
@@ -1219,6 +1240,11 @@ pmap_zero_page(phys)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_zero_page(%lx)\n", phys);
 #endif
+#ifdef MIPS3
+/*XXX FIXME Not very sophisticated */
+/*	MachFlushCache();*/
+	MachFlushDCache(phys, NBPG);
+#endif
 	p = (int *)MACH_PHYS_TO_CACHED(phys);
 	end = p + PAGE_SIZE / sizeof(int);
 	/* XXX blkclr()? */
@@ -1229,6 +1255,11 @@ pmap_zero_page(phys)
 		p[3] = 0;
 		p += 4;
 	} while (p != end);
+#ifdef MIPS3
+/*XXX FIXME Not very sophisticated */
+/*	MachFlushCache();*/
+	MachFlushDCache(phys, NBPG);
+#endif
 }
 
 /*
@@ -1246,6 +1277,11 @@ pmap_copy_page(src, dst)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_copy_page(%lx, %lx)\n", src, dst);
 #endif
+#ifdef MIPS3
+/*XXX FIXME Not very sophisticated */
+/*	MachFlushCache(); */
+	MachFlushDCache(src, NBPG);
+#endif
 	s = (int *)MACH_PHYS_TO_CACHED(src);
 	d = (int *)MACH_PHYS_TO_CACHED(dst);
 	end = s + PAGE_SIZE / sizeof(int);
@@ -1261,6 +1297,11 @@ pmap_copy_page(src, dst)
 		s += 4;
 		d += 4;
 	} while (s != end);
+#ifdef MIPS3
+/*XXX FIXME Not very sophisticated */
+/*	MachFlushCache();*/
+	MachFlushDCache(dst, NBPG);
+#endif
 }
 
 /*
@@ -1424,15 +1465,138 @@ pmap_alloc_tlbpid(p)
 }
 
 /*
- * Remove a physical to virtual address translation.
+ * Enter the pmap and virtual address into the
+ * physical to virtual map table.
  */
 void
+#ifdef MIPS3XXX
+pmap_enter_pv(pmap, va, pa, npte)
+#else
+pmap_enter_pv(pmap, va, pa)
+#endif
+	pmap_t pmap;
+	vm_offset_t va, pa;
+#ifdef MIPS3XXX
+	u_int *npte;
+#endif
+{
+	register pv_entry_t pv, npv;
+	int s;
+
+	pv = pa_to_pvh(pa);
+	s = splimp();
+#ifdef DEBUG
+	if (pmapdebug & PDB_ENTER)
+		printf("pmap_enter: pv %p: was %lx/%p/%p\n",
+		       pv, pv->pv_va, pv->pv_pmap, pv->pv_next);
+#endif
+	if (pv->pv_pmap == NULL) {
+		/*
+		 * No entries yet, use header as the first entry
+		 */
+#ifdef DEBUG
+		if (pmapdebug & PDB_PVENTRY)
+			printf("pmap_enter: first pv: pmap %p va %lx\n",
+				pmap, va);
+		enter_stats.firstpv++;
+#endif
+		pv->pv_va = va;
+		pv->pv_flags = 0;
+		pv->pv_pmap = pmap;
+		pv->pv_next = NULL;
+	} else {
+#ifdef MIPS3XXX
+			if (!(pv->pv_flags & PV_UNCACHED)) {
+			/*
+			 * There is at least one other VA mapping this page.
+			 * Check if they are cache index compatible. If not
+			 * remove all mappings, flush the cache and set page
+			 * to be mapped uncached. Caching will be restored
+			 * when pages are mapped compatible again.
+			 */
+				for (npv = pv; npv; npv = npv->pv_next) {
+					/*
+					 * Check cache aliasing incompatibility
+					 */
+					if((npv->pv_va & machCacheAliasMask) != (va & machCacheAliasMask)) {
+						pmap_page_cache(pa,PV_UNCACHED);
+						MachFlushDCache(pv->pv_va, PAGE_SIZE);
+						*npte = (*npte & ~PG_CACHEMODE) | PG_UNCACHED;
+						break;
+					}
+				}
+			}
+			else {
+				*npte = (*npte & ~PG_CACHEMODE) | PG_UNCACHED;
+			}
+#endif
+		/*
+		 * There is at least one other VA mapping this page.
+		 * Place this entry after the header.
+		 *
+		 * Note: the entry may already be in the table if
+		 * we are only changing the protection bits.
+		 */
+		for (npv = pv; npv; npv = npv->pv_next) {
+			if (pmap == npv->pv_pmap && va == npv->pv_va) {
+#ifdef DIAGNOSTIC
+				pt_entry_t *pte;
+				unsigned entry;
+
+				if (!pmap->pm_segtab)
+					entry = kvtopte(va)->pt_entry;
+				else {
+					pte = pmap_segmap(pmap, va);
+					if (pte) {
+						pte += (va >> PGSHIFT) &
+						    (NPTEPG - 1);
+						entry = pte->pt_entry;
+					} else
+						entry = 0;
+				}
+				if (!(entry & PG_V) ||
+				    pfn_to_vad(entry) != pa)
+					printf(
+		"pmap_enter: found va %lx pa %lx in pv_table but != %x\n",
+						va, pa, entry);
+#endif
+				goto fnd;
+			}
+		}
+#ifdef DEBUG
+		if (pmapdebug & PDB_PVENTRY)
+			printf("pmap_enter: new pv: pmap %p va %lx\n",
+				pmap, va);
+#endif
+		/* can this cause us to recurse forever? */
+		npv = (pv_entry_t)
+			malloc(sizeof *npv, M_VMPVENT, M_NOWAIT);
+		npv->pv_va = va;
+		npv->pv_pmap = pmap;
+		npv->pv_flags = pv->pv_flags;
+		npv->pv_next = pv->pv_next;
+		pv->pv_next = npv;
+#ifdef DEBUG
+		if (!npv->pv_next)
+			enter_stats.secondpv++;
+#endif
+	fnd:
+		;
+	}
+	splx(s);
+}
+
+/*
+ * Remove a physical to virtual address translation.
+ * Returns TRUE if it was the last mapping and cached, else FALSE.
+ */
+int
 pmap_remove_pv(pmap, va, pa)
 	pmap_t pmap;
 	vm_offset_t va, pa;
 {
 	register pv_entry_t pv, npv;
-	int s;
+	int s, last;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_PVENTRY))
@@ -1443,7 +1607,7 @@ pmap_remove_pv(pmap, va, pa)
 	 * may be called at interrupt time).
 	 */
 	if (!IS_VM_PHYSADDR(pa))
-		return;
+		return(TRUE);
 	pv = pa_to_pvh(pa);
 	s = splimp();
 	/*
@@ -1453,6 +1617,7 @@ pmap_remove_pv(pmap, va, pa)
 	 * the entry.  In either case we free the now unused entry.
 	 */
 	if (pmap == pv->pv_pmap && va == pv->pv_va) {
+		last = (pv->pv_flags & PV_UNCACHED) ? FALSE : TRUE;
 		npv = pv->pv_next;
 		if (npv) {
 			*pv = *npv;
@@ -1463,22 +1628,21 @@ pmap_remove_pv(pmap, va, pa)
 		remove_stats.pvfirst++;
 #endif
 	} else {
+		last = FALSE;
 		for (npv = pv->pv_next; npv; pv = npv, npv = npv->pv_next) {
 #ifdef DEBUG
 			remove_stats.pvsearch++;
 #endif
 			if (pmap == npv->pv_pmap && va == npv->pv_va)
-				goto fnd;
+				break;
 		}
-#ifdef DIAGNOSTIC
-		printf("pmap_remove_pv(%x, %x, %x) not found\n", pmap, va, pa);
-		panic("pmap_remove_pv");
-#endif
-	fnd:
-		pv->pv_next = npv->pv_next;
-		free((caddr_t)npv, M_VMPVENT);
+		if (npv) {
+			pv->pv_next = npv->pv_next;
+			free((caddr_t)npv, M_VMPVENT);
+		}
 	}
 	splx(s);
+	return(last);
 }
 
 /*
@@ -1565,3 +1729,74 @@ vm_page_free1(mem)
 		splx(spl);
 	}
 }
+
+#ifdef MIPS3
+void
+mips_dump_segtab(p)
+	register struct proc *p;
+{
+	register pmap_t pmap;
+	int i;
+#if 0
+	int j;
+#endif
+
+	printf("Segment table process %p pmap ", p);
+	if (p != NULL) {
+		pmap = p->p_vmspace->vm_map.pmap;
+		printf("%p pm_segtab ", pmap);
+		if (pmap->pm_segtab) {
+			printf("%p\n", pmap->pm_segtab);
+			for (i = 0; i < PMAP_SEGTABSIZE; ++i) {
+				if (pmap->pm_segtab->seg_tab[i] != 0) {
+					printf("  seg_tab[%3d] %p", i,
+					    pmap->pm_segtab->seg_tab[i]);
+					printf(" 0x%08x\n", i << SEGSHIFT);
+#if 0
+					for (j = 0; j < 1024; +j)
+						if (pmap->pm_segtab->seg_tab[i].pt_entry[j])
+							printf(" %x", pmap->pm_segtab->seg_tab[i].pt_entry[j]);
+#endif
+				}
+			}
+		}
+		else
+			printf("NULL\n");
+	}
+	else
+		printf("NULL\n");
+}
+#endif
+
+pt_entry_t *
+pmap_pte(pmap, va)
+	pmap_t pmap;
+	vm_offset_t va;
+{
+	pt_entry_t *pte = NULL;
+
+	if (pmap->pm_segtab == NULL)
+		pte = kvtopte(va);
+	else if ((pte = pmap_segmap(pmap, va)) != NULL)
+		pte += (va >> PGSHIFT) & (NPTEPG - 1);
+	return pte;
+}
+
+#ifdef MIPS3
+/*
+ * Find first virtual address >= *vap that doesn't cause
+ * a cache alias conflict.
+ */
+void
+pmap_prefer(foff, vap)
+	register vm_offset_t foff;
+	register vm_offset_t *vap;
+{
+	register vm_offset_t	va = *vap;
+	register long		d;
+
+	d = foff - va;
+	d &= (0x10000 - 1);	/* Use 64K to prevent virtual coherency exceptions */
+	*vap = va + d;
+}
+#endif
