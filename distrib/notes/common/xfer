@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.11 2000/11/13 02:38:36 lukem Exp $
+.\"	$NetBSD: xfer,v 1.12 2000/11/13 22:05:52 fvdl Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,24 +46,33 @@ for details.
 If you are not booting off a CD-ROM, you will need to have some floppy
 disks to boot off;
 either two 1.44 MB floppies or one 1.2 MB floppy.
-You must write the boot floppy images
-.Pa ( boot1.fs
+.Pp
+For laptops that have cardbus slots, you should use the
+.Pa bootlap1.fs
+and
+.Pa bootlap2.fs
+floppy images.
+.Pp
+For older machines with little RAM, use
+.Pa boot-tiny.fs .
+This image is tailored towards old, small-memory systems, and thus does
+not contain any PCI or SCSI support. It should work on systems with
+4M of RAM. Note that this means 4M available to NetBSD; systems that
+are said to have 4M may have 640k of base memory and 3072k of extended
+memory, which currently will not work, as this is a total of 3712k.
+.Pp
+For old machines that may have EISA, SCSI and more RAM, but only
+have an 1.2M floppy drive, use
+.Pa boot-small.fs .
+For all other systems, use
+.Pa boot1.fs
 and
 .Pa boot2.fs
-for 1.44 MB floppies,
-.Pa boot-tiny.fs
-for 1.2 MB floppies) onto these disks, which contain
-software to install or upgrade your
-.Nx
-system.
+.
 .Pp
-Note that the
-.Pa boot-tiny.fs
-image is tailored for
-.Dq small
-machines. this install image does not have drivers for PCI, PCMCIA,
-EISA or SCSI (i.e. ISA-only), but can be used on machines with only
-4 MB of RAM.
+For the 2-floppy sets (and the CD boot image), utilities to repair
+a badly crashed systems are included. The -small and -tiny images
+have seperate rescue floppy images because of lack of space.
 .Pp
 If you are using a
 .Ul
@@ -92,7 +101,7 @@ It will write a file system image (.fs file) to a floppy disk.
 A
 .Ic rawrite32
 is also available that runs under
-.Tn Windows .
+.Tn MS Windows .
 .Pp
 .\} \" r_i386
 .
@@ -140,7 +149,7 @@ It will write a file system image (.fs file) to a floppy disk.
 A
 .Ic rawrite32
 is also available that runs under
-.Tn Windows .
+.Tn MS Windows .
 .Pp
 Though
 .Nx*M
@@ -519,7 +528,7 @@ format is not recognized by this release of the
 If you have a
 .Tn MS-DOS
 or
-.Tn Windows
+.Tn MS Windows
 machine with an M-O drive connected, use it.
 If you don't, and if you have a program to handle
 .Tn IBM
