@@ -1,4 +1,4 @@
-/*	$NetBSD: sleep.c,v 1.15 1998/07/28 11:41:58 mycroft Exp $	*/
+/*	$NetBSD: sleep.c,v 1.16 1998/11/04 20:13:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: sleep.c,v 1.15 1998/07/28 11:41:58 mycroft Exp $");
+__RCSID("$NetBSD: sleep.c,v 1.16 1998/11/04 20:13:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,7 +102,7 @@ main(argc, argv)
 	fracflag = 0;
 	arg = *argv;
 	for (temp = arg; *temp != '\0'; temp++)
-		if (!isdigit(*temp))
+		if (!isdigit((unsigned char)*temp))
 			fracflag++;
 
 	if (fracflag) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: test.c,v 1.19 1998/07/28 11:41:59 mycroft Exp $	*/
+/*	$NetBSD: test.c,v 1.20 1998/11/04 20:12:12 christos Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: test.c,v 1.19 1998/07/28 11:41:59 mycroft Exp $");
+__RCSID("$NetBSD: test.c,v 1.20 1998/11/04 20:12:12 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -424,7 +424,7 @@ getn(s)
 	if (errno != 0)
 	  errx(2, "%s: out of range", s);
 
-	while (isspace(*p))
+	while (isspace((unsigned char)*p))
 	  p++;
 	
 	if (*p)
