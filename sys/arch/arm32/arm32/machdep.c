@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.90 2001/03/15 06:10:36 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.91 2001/03/20 18:20:53 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -38,6 +38,7 @@
  * Machine dependant functions for kernel setup
  *
  * Created      : 17/09/94
+ * Updated	: 18/04/01 updated for new wscons
  */
 
 #include "opt_footbridge.h"
@@ -75,9 +76,18 @@
 #include <machine/pte.h>
 #include <machine/bootconfig.h>
 
+#include <arm/mainbus/mainbus.h>
+#include <arm32/iomd/iomdreg.h>
+#include <arm32/dev/rpckbdvar.h>
+#include <machine/vidc.h>
+#include <arm32/vidc/vidcvideo.h>
+
 #include "opt_ipkdb.h"
 #include "md.h"
 #include "opt_mdsize.h"
+
+#include "vidcvideo.h"
+#include "rpckbd.h"
 
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
@@ -469,6 +479,35 @@ cpu_startup()
  * Initialise the console
  */
 
+#if ((NVIDCVIDEO>0) && (NRPCKBD>0))
+
+extern videomemory_t videomemory;
+extern struct bus_space iomd_bs_tag;
+extern struct rpckbd_softc console_kbd;
+
+void
+consinit(void)
+{
+	static struct rpckbd_softc *ksc = &console_kbd;
+	static int consinit_called = 0;
+
+	if (consinit_called != 0) return;
+	consinit_called = 1;
+
+	/* set up bus variables for attachment */
+	ksc->sc_iot	 = &iomd_bs_tag;
+	ksc->t_isconsole = 1;
+	ksc->data_port	 = IOMD_KBDDAT;
+	ksc->cmd_port	 = IOMD_KBDCR;
+	ksc->sc_enabled	 = 1;
+	bus_space_map(ksc->sc_iot, IOMD_KBDDAT, 8, 0, &(ksc->sc_ioh));
+
+	rpckbd_cnattach((struct device *) ksc);
+	vidcvideo_cnattach(videomemory.vidm_vbase);
+}
+
+#else
+
 void
 consinit(void)
 {
@@ -480,6 +519,8 @@ consinit(void)
 	consinit_called = 1;
 	cninit();
 }
+#endif
+
 #endif
 
 
