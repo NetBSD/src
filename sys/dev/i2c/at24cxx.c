@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.2 2004/03/11 15:11:53 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -281,7 +281,7 @@ seeprom_write(dev_t dev, struct uio *uio, int flags)
 			cmdbuf[0] = AT24CXX_ADDR_HI(a);
 			cmdbuf[1] = AT24CXX_ADDR_LO(a);
 		}
-		if ((error == uiomove(&ch, 1, uio)) != 0) {
+		if ((error = uiomove(&ch, 1, uio)) != 0) {
 			iic_release_bus(sc->sc_tag, 0);
 			return (error);
 		}
