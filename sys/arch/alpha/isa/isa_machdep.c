@@ -1,4 +1,4 @@
-/* $NetBSD: isa_machdep.c,v 1.9 1997/09/02 13:18:55 thorpej Exp $ */
+/* $NetBSD: isa_machdep.c,v 1.10 1998/04/15 20:43:07 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.9 1997/09/02 13:18:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.10 1998/04/15 20:43:07 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,28 +47,18 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.9 1997/09/02 13:18:55 thorpej Exp 
 
 #include "vga_isa.h"
 #if NVGA_ISA
-#include <alpha/isa/vga_isavar.h>
+#include <dev/isa/vga_isavar.h>
 #endif
 
-struct {
-	int	(*probe) __P((bus_space_tag_t, bus_space_tag_t));
-	void	(*console) __P((bus_space_tag_t, bus_space_tag_t));
-} isa_display_console_devices[] = {
-#if NVGA_ISA
-	{ vga_isa_console_match, vga_isa_console_attach },
-#endif
-	{ },
-};
-
-void
+int
 isa_display_console(iot, memt)
 	bus_space_tag_t iot, memt;
 {
-	int i = 0;
-
-	while (isa_display_console_devices[i].probe != NULL)
-		if ((*isa_display_console_devices[i].probe)(iot, memt)) {
-			(*isa_display_console_devices[i].console)(iot, memt);
-			break;
-		}
+	int res = ENXIO;
+#if NVGA_ISA
+	res = vga_isa_cnattach(iot, memt);
+	if (!res)
+		return(0);
+#endif
+	return(res);
 }
