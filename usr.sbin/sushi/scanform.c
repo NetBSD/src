@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.36 2004/03/24 19:10:58 garbled Exp $       */
+/*      $NetBSD: scanform.c,v 1.37 2004/03/24 19:14:07 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -155,7 +155,6 @@ scan_formindex(struct cqForm *cqf, char *row)
 	char *x;
 	char desc[80];
 	int type;
-	char data[80];
 	int req = 0;
 
 	while (*++t && !isspace((unsigned char)*t));
@@ -233,8 +232,6 @@ scan_formindex(struct cqForm *cqf, char *row)
 		bailout("%s: %s",
 		    catgets(catalog, 1, 11, "invalid data type"), x);
 
-	snprintf(data, (size_t)(t-row+1), "%s", row);
-
 	while (*++t && isspace((unsigned char)*t));
 	if (strlen(t) > 50)
 		bailout(catgets(catalog, 1, 12, "description too long"));
@@ -243,7 +240,7 @@ scan_formindex(struct cqForm *cqf, char *row)
 	if (strcmp(desc, "BLANK") == 0)
 		snprintf(desc, sizeof(desc), " ");
 
-	form_appenditem(cqf, desc, type, data, req);
+	form_appenditem(cqf, desc, type, row, req);
 }
 
 int
