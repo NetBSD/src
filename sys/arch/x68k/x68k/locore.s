@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: locore.s,v 1.1 1996/05/05 12:17:22 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
