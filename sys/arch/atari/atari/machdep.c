@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.72 1998/11/24 15:03:31 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.73 1998/11/24 15:05:53 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1166,6 +1166,9 @@ int panicbutton = 1;	/* non-zero if panic buttons are enabled */
 int crashandburn = 0;
 int candbdelay = 50;	/* give em half a second */
 
+void candbtimer __P((void));
+
+void
 candbtimer()
 {
 	crashandburn = 0;
