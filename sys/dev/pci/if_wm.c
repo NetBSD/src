@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.40 2003/09/04 19:32:19 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.41 2003/09/10 04:02:17 tls Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -42,12 +42,10 @@
  *
  *	- Fix hw VLAN assist.
  *
- *	- Jumbo frames -- requires changes to network stack due to
- *	  lame buffer length handling on chip.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.40 2003/09/04 19:32:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.41 2003/09/10 04:02:17 tls Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -109,6 +107,21 @@ int	wm_debug = WM_DEBUG_TX|WM_DEBUG_RX|WM_DEBUG_LINK;
 #else
 #define	DPRINTF(x, y)	/* nothing */
 #endif /* WM_DEBUG */
+
+/*
+ * *_HDR_ALIGNED_P is constant 1 if __NO_STRICT_ALIGMENT is set.
+ * There is a small but measurable benefit to avoiding the adjusment
+ * of the descriptor so that the headers are aligned, for normal mtu,
+ * on such platforms.  One possibility is that the DMA itself is
+ * slightly more efficient if the front of the entire packet (instead
+ * of the front of the headers) is aligned.
+ */
+
+#ifdef __NO_STRICT_ALIGNMENT
+int wm_align_tweak	=	0;
+#else
+int wm_align_tweak	= 	2;
+#endif
 
 /*
  * Transmit descriptor list size.  Due to errata, we can only have
@@ -364,18 +377,16 @@ do {									\
 	 * The stupid chip uses the same size for every buffer, which	\
 	 * is set in the Receive Control register.  We are using the 2K	\
 	 * size option, but what we REALLY want is (2K - 2)!  For this	\
-	 * reason, we can't accept packets longer than the standard	\
-	 * Ethernet MTU, without incurring a big penalty to copy every	\
-	 * incoming packet to a new, suitably aligned buffer.		\
-	 *								\
-	 * We'll need to make some changes to the layer 3/4 parts of	\
-	 * the stack (to copy the headers to a new buffer if not	\
-	 * aligned) in order to support large MTU on this chip.  Lame.	\
+	 * reason, we can't "scoot" packets longer than the standard	\
+	 * Ethernet MTU.  On strict-alignment platforms, if the total	\
+	 * size exceeds (2K - 2) we set wm_align_tweak to 0 and let	\
+	 * the upper layer copy the headers.				\
 	 */								\
-	__m->m_data = __m->m_ext.ext_buf + 2;				\
+	__m->m_data = __m->m_ext.ext_buf + wm_align_tweak;		\
 									\
 	__rxd->wrx_addr.wa_low =					\
-	    htole32(__rxs->rxs_dmamap->dm_segs[0].ds_addr + 2);		\
+	    htole32(__rxs->rxs_dmamap->dm_segs[0].ds_addr + 		\
+		wm_align_tweak);					\
 	__rxd->wrx_addr.wa_high = 0;					\
 	__rxd->wrx_len = 0;						\
 	__rxd->wrx_cksum = 0;						\
@@ -878,6 +889,8 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_stop = wm_stop;
 	IFQ_SET_MAXLEN(&ifp->if_snd, WM_IFQUEUELEN);
 	IFQ_SET_READY(&ifp->if_snd);
+
+	sc->sc_ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
 
 	/*
 	 * If we're a i82543 or greater, we can support VLANs.
@@ -1430,7 +1443,6 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
-
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) {
@@ -1939,6 +1951,18 @@ wm_init(struct ifnet *ifp)
 	int i, error = 0;
 	uint32_t reg;
 
+#ifndef __NO_STRICT_ALIGNMENT
+	if((ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN) >
+            (MCLBYTES - 2)) {
+		wm_align_tweak = 0;
+	}
+	else {
+		wm_align_tweak = 2;
+	}
+#else
+	wm_align_tweak = 0;
+#endif
+
 	/* Cancel any pending I/O. */
 	wm_stop(ifp, 0);
 
@@ -2129,8 +2153,38 @@ wm_init(struct ifnet *ifp)
 	 * CRC, so we don't enable that feature.
 	 */
 	sc->sc_mchash_type = 0;
-	sc->sc_rctl = RCTL_EN | RCTL_LBM_NONE | RCTL_RDMTS_1_2 | RCTL_2k |
+	sc->sc_rctl = RCTL_EN | RCTL_LBM_NONE | RCTL_RDMTS_1_2 | RCTL_LPE |
 	    RCTL_DPF | RCTL_MO(sc->sc_mchash_type);
+
+	if(MCLBYTES == 2048) {
+		sc->sc_rctl |= RCTL_2k;
+	} else {
+	/*
+	 * XXX MCLBYTES > 2048 causes "Tx packet consumes too many DMA"
+	 * XXX segments, dropping" -- why?
+	 */
+#if 0
+		if(sc->sc_type >= WM_T_82543) {
+			switch(MCLBYTES) {
+			case 4096:
+				sc->sc_rctl |= RCTL_BSEX | RCTL_BSEX_4k;
+				break;
+			case 8192:
+				sc->sc_rctl |= RCTL_BSEX | RCTL_BSEX_8k;
+				break;
+			case 16384:
+				sc->sc_rctl |= RCTL_BSEX | RCTL_BSEX_16k;
+				break;
+			default:
+				panic("wm_init: MCLBYTES %d unsupported",
+				    MCLBYTES);
+				break;
+			}
+		} else panic("wm_init: i82542 requires MCLBYTES = 2048");
+#else
+		panic("wm_init: MCLBYTES > 2048 not supported.");
+#endif
+	}
 
 	/* Set the receive filter. */
 	wm_set_filter(sc);
