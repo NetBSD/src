@@ -33,8 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: snprintf.c,v 1.34 2002/04/18 08:50:57 joda Exp $"
-        "$NetBSD: snprintf.c,v 1.4 2003/05/15 20:44:22 lha Exp $");
+__RCSID("$Heimdal: snprintf.c,v 1.35 2003/03/26 10:05:48 joda Exp $"
+        "$NetBSD: snprintf.c,v 1.5 2003/05/15 21:36:55 lha Exp $");
 #endif
 #include <stdio.h>
 #include <stdarg.h>

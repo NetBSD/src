@@ -33,19 +33,21 @@
 
 #include "gssapi_locl.h"
 
-__RCSID("$Heimdal: release_cred.c,v 1.6 2002/08/20 12:02:45 nectar Exp $"
-        "$NetBSD: release_cred.c,v 1.5 2003/05/15 20:44:17 lha Exp $");
+__RCSID("$Heimdal: release_cred.c,v 1.8 2003/03/16 17:52:19 lha Exp $"
+        "$NetBSD: release_cred.c,v 1.6 2003/05/15 21:36:44 lha Exp $");
 
 OM_uint32 gss_release_cred
            (OM_uint32 * minor_status,
             gss_cred_id_t * cred_handle
            )
 {
+    *minor_status = 0;
+
     if (*cred_handle == GSS_C_NO_CREDENTIAL) {
         return GSS_S_COMPLETE;
     }
 
-    GSSAPI_KRB5_INIT_MS(minor_status);
+    GSSAPI_KRB5_INIT ();
 
     if ((*cred_handle)->principal != NULL)
         krb5_free_principal(gssapi_krb5_context, (*cred_handle)->principal);

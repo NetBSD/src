@@ -33,8 +33,8 @@
 
 #include "krb5_locl.h"
 
-__RCSID("$Heimdal: keytab_any.c,v 1.6 2002/04/18 14:02:11 joda Exp $"
-        "$NetBSD: keytab_any.c,v 1.4 2003/05/15 20:44:19 lha Exp $");
+__RCSID("$Heimdal: keytab_any.c,v 1.7 2002/10/21 13:36:59 joda Exp $"
+        "$NetBSD: keytab_any.c,v 1.5 2003/05/15 21:36:49 lha Exp $");
 
 struct any_data {
     krb5_keytab kt;

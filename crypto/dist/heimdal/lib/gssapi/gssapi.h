@@ -31,8 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Heimdal: gssapi.h,v 1.21 2001/05/04 13:52:02 assar Exp $
-   $NetBSD: gssapi.h,v 1.8 2003/05/15 20:44:16 lha Exp $ */
+/* $Heimdal: gssapi.h,v 1.26.2.2 2003/05/07 11:12:21 lha Exp $
+   $NetBSD: gssapi.h,v 1.9 2003/05/15 21:36:42 lha Exp $ */
 
 #ifndef GSSAPI_H_
 #define GSSAPI_H_

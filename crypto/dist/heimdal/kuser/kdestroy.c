@@ -32,8 +32,8 @@
  */
 
 #include "kuser_locl.h"
-__RCSID("$Heimdal: kdestroy.c,v 1.13 2001/02/20 01:44:51 assar Exp $"
-        "$NetBSD: kdestroy.c,v 1.6 2003/05/15 20:44:14 lha Exp $");
+__RCSID("$Heimdal: kdestroy.c,v 1.14.2.1 2003/05/08 18:59:17 lha Exp $"
+        "$NetBSD: kdestroy.c,v 1.7 2003/05/15 21:36:37 lha Exp $");
 
 static const char *cache;
 static int help_flag;

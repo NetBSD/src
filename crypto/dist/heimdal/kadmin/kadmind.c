@@ -33,8 +33,8 @@
 
 #include "kadmin_locl.h"
 
-__RCSID("$Heimdal: kadmind.c,v 1.27 2001/05/14 06:16:41 assar Exp $"
-        "$NetBSD: kadmind.c,v 1.8 2003/05/15 20:44:11 lha Exp $");
+__RCSID("$Heimdal: kadmind.c,v 1.28 2002/10/21 13:21:24 joda Exp $"
+        "$NetBSD: kadmind.c,v 1.9 2003/05/15 21:36:34 lha Exp $");
 
 static char *check_library  = NULL;
 static char *check_function = NULL;
