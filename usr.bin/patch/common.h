@@ -1,4 +1,4 @@
-/*	$Id: common.h,v 1.2 1993/08/02 17:55:15 mycroft Exp $ */
+/*	$Id: common.h,v 1.3 1994/03/28 09:19:18 cgd Exp $ */
 
 #define DEBUGGING
 
@@ -166,7 +166,6 @@ char *getenv();
 char *strcpy();
 char *strcat();
 char *rindex();
-long lseek();
 char *mktemp();
 #if 0				/* This can cause a prototype conflict.  */
 #ifdef CHARSPRINTF
