@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.24 2001/05/17 17:28:21 drochner Exp $	*/
+/*	$NetBSD: miivar.h,v 1.25 2001/05/31 16:02:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -130,6 +130,7 @@ struct mii_softc {
 	int mii_capabilities;		/* capabilities from BMSR */
 	int mii_extcapabilities;	/* extended capabilities */
 	int mii_ticks;			/* MII_TICK counter */
+	int mii_anegticks;		/* ticks before retrying aneg */
 
 	struct callout mii_nway_ch;	/* NWAY callout */
 
