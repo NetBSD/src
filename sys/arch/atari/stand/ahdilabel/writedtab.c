@@ -1,4 +1,4 @@
-/*	$NetBSD: writedtab.c,v 1.1.1.1 2000/08/07 09:23:40 leo Exp $	*/
+/*	$NetBSD: writedtab.c,v 1.2 2003/10/28 11:38:04 he Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include <disktab.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <string.h>
 
 /*
  * Write AHDI partitions to disk
