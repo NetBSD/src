@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.14 2001/07/06 18:03:47 mcr Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.15 2001/07/17 13:53:15 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -806,7 +806,7 @@ pci_intr_fixup(pc, iot, pciirq)
 		 * looked at.
 		 */
 		icuid = 0;
-found:
+found:;
 	}
 
 	if (piit == NULL) {
