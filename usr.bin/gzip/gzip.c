@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.29.2.24 2004/07/19 09:49:16 tron Exp $	*/
+/*	$NetBSD: gzip.c,v 1.29.2.25 2004/07/19 09:51:13 tron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.29.2.24 2004/07/19 09:49:16 tron Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.29.2.25 2004/07/19 09:51:13 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -1146,7 +1146,7 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 			maybe_warn("can't read %s", file);
 		else
 			maybe_warnx("%s: unexpected end of file", file);
-		goto lose;
+		goto lose_close_it;
 	}
 
 	method = file_gettype(header1);
@@ -1200,7 +1200,7 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 			if (fflag)
 				goto lose_close_it;
 			maybe_warn("can't read %s", file);
-			goto lose;
+			goto lose_close_it;
                }
                timestamp = ((time_t)header2[3] << 24)
                          + ((time_t)header2[2] << 16)
