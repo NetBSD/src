@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.58 1998/03/18 23:21:46 pk Exp $	*/
+/*	$NetBSD: rtld.c,v 1.59 1998/03/26 23:33:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -203,7 +203,8 @@ static void		reloc_map __P((struct so_map *));
 static void		reloc_copy __P((struct so_map *));
 static void		call_map __P((struct so_map *, char *));
 static char		*rtfindlib __P((char *, int, int, int *, char *));
-static struct nzlist	*lookup __P((const char *, struct so_map **, int));
+static struct nzlist	*lookup __P((	const char *, struct so_map *,
+					struct so_map **, int));
 static inline struct rt_symbol	*lookup_rts __P((const char *));
 static struct rt_symbol	*enter_rts __P((const char *, long, int, caddr_t,
 						long, struct so_map *));
@@ -846,7 +847,7 @@ reloc_map(smp)
 
 			sym = stringbase + p->nz_strx;
 
-			np = lookup(sym, &src_map, 0/*XXX-jumpslots!*/);
+			np = lookup(sym, smp, &src_map, 0/*XXX-jumpslots!*/);
 			if (np == NULL)
 				errx(1, "Undefined symbol \"%s\" in %s:%s\n",
 					sym, main_progname, smp->som_path);
@@ -928,7 +929,7 @@ call_map(smp, sym)
 	struct so_map		*src_map = smp;
 	struct nzlist		*np;
 
-	np = lookup(sym, &src_map, 1);
+	np = lookup(sym, smp, &src_map, 1);
 	if (np)
 		(*(void (*) __P((void)))(src_map->som_addr + np->nz_value))();
 }
@@ -1029,9 +1030,10 @@ enter_rts(name, value, type, srcaddr, size, smp)
  * have a proper type (used by binder()).
  */
 static struct nzlist *
-lookup(name, src_map, strong)
+lookup(name, ref_map, src_map, strong)
 	const char	*name;
-	struct so_map	**src_map;	/* IN/OUT */
+	struct so_map	*ref_map;	/* map cont. the reference */
+	struct so_map	**src_map;	/* map cont. the definition IN/OUT */
 	int		strong;
 {
 	long			common_size = 0;
@@ -1065,7 +1067,7 @@ lookup(name, src_map, strong)
 		 * When doing a global search, consider only maps
 		 * marked for global lookup.
 		 */
-		if (*src_map == NULL &&
+		if (*src_map == NULL && smp != ref_map &&
 		    (LM_PRIVATE(smp)->spd_flags & _RTLD_GLOBAL) == 0)
 			continue;
 
@@ -1204,7 +1206,7 @@ binder(jsp)
 	sym = LM_STRINGS(smp) +
 		LM_SYMBOL(smp,RELOC_SYMBOL(&LM_REL(smp)[index]))->nz_strx;
 
-	np = lookup(sym, &src_map, 1);
+	np = lookup(sym, smp, &src_map, 1);
 	if (np == NULL)
 		errx(1, "Undefined symbol \"%s\" called from %s:%s at %#x",
 				sym, main_progname, smp->som_path, jsp);
@@ -1651,7 +1653,7 @@ __dlsym(fd, sym)
 	else
 		src_map = smp = (struct so_map *)fd;
 
-	np = lookup(sym, &src_map, 1);
+	np = lookup(sym, smp, &src_map, 1);
 	if (np == NULL)
 		return NULL;
 
