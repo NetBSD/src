@@ -3,9 +3,9 @@
 #	example of a configuration file for the isdn daemon
 #	---------------------------------------------------
 #
-#	$Id: isdnd.rc.sample,v 1.3 2002/03/17 21:32:21 martin Exp $
+#	$Id: isdnd.rc.sample,v 1.4 2002/04/11 09:08:19 martin Exp $
 #
-# $NetBSD: isdnd.rc.sample,v 1.3 2002/03/17 21:32:21 martin Exp $
+# $NetBSD: isdnd.rc.sample,v 1.4 2002/04/11 09:08:19 martin Exp $
 #
 #	last edit-date: [Wed Jul 19 09:59:42 2000]
 #
@@ -95,9 +95,25 @@ name        		= I4BIP		# name for reference. This name will
 usrdevicename		= irip		# irip, ippp, isdntel, isdnbchan
 usrdeviceunit		= 0		# unit number
 
+autoupdown		= no		# If this entry is missing (or set
+					# to "yes") isdnd will mark the
+					# interface UP on startup, which
+					# may result in an imediate connection
+					# attempt (depending on network
+					# setup). If set to "no" this will
+					# not happen and a manual
+					#   ifconfig irip0 up
+					# will be needed to make the interface
+					# useable.
+					# Note: if there is no IP configure via
+					#   /etc/ifconfig.irip0
+					# isdnd will note the missing
+					# IP configuration and leave the
+					# interface alone.
+
 					# the ISDN controller number to be
 					# used for this entry:
-isdncontroller		= 0		# contoller to use or -1 to use any
+isdncontroller		= -1		# contoller to use or -1 to use any
 isdnchannel		= -1		# channel (1/2) to use or 0 or -1 for any
 
 					# incoming only, outgoing only or both:
