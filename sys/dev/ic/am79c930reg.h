@@ -1,4 +1,4 @@
-/* $NetBSD: am79c930reg.h,v 1.2 1999/11/05 05:13:36 sommerfeld Exp $ */
+/* $NetBSD: am79c930reg.h,v 1.3 2000/03/22 11:22:22 onoe Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,6 +66,7 @@
 #define AM79C930_IO_BASE	0
 #define AM79C930_IO_SIZE	16
 #define AM79C930_IO_SIZE_BIG	40
+#define AM79C930_IO_ALIGN	0x40	/* am79c930 decodes lower 6bits */
 
 
 #define AM79C930_GCR	0	/* General Config Register */

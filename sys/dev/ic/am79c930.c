@@ -1,4 +1,4 @@
-/* $NetBSD: am79c930.c,v 1.3 2000/02/17 17:37:23 sommerfeld Exp $ */
+/* $NetBSD: am79c930.c,v 1.4 2000/03/22 11:22:22 onoe Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -63,16 +63,30 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#ifndef __FreeBSD__
 #include <sys/device.h>
+#endif
 
 #include <machine/cpu.h>
+#ifdef __FreeBSD__
+#include <machine/bus_pio.h>
+#include <machine/bus_memio.h>
+#endif
 #include <machine/bus.h>
+#ifdef __NetBSD__
 #include <machine/intr.h>
+#endif
 
+#ifdef __NetBSD__
 #include <dev/ic/am79c930reg.h>
 #include <dev/ic/am79c930var.h>
+#endif
+#ifdef __FreeBSD__
+#include <dev/awi/am79c930reg.h>
+#include <dev/awi/am79c930var.h>
+#endif
 
-#define AM930_DELAY(x) /*nothing*/;
+#define AM930_DELAY(x) /*nothing*/
 
 void am79c930_regdump __P((struct am79c930_softc *sc));
 
