@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172gpio.c,v 1.8 2003/10/23 20:25:40 he Exp $	*/
+/*	$NetBSD: vrc4172gpio.c,v 1.9 2003/10/25 17:59:16 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 TAKEMRUA Shin. All rights reserved.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4172gpio.c,v 1.8 2003/10/23 20:25:40 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4172gpio.c,v 1.9 2003/10/25 17:59:16 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ int	vrc4172gpio_debug = VRC2GPIODEBUG_CONF;
 #define DBG(flag)		(vrc4172gpio_debug & (flag))
 #define	DPRINTF(flag, arg...)	do { \
 					if (DBG(flag)) \
-						printf(##arg); \
+						printf(arg); \
 				} while (0)
 #else
 #define DBG(flag)		(0)
