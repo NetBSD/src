@@ -983,12 +983,12 @@ do {									\
 									\
       if (MODE == DImode || (TARGET_SOFT_FLOAT && MODE == DFmode))	\
 	low = ((val & 0xf) ^ 0x8) - 0x8;				\
-      else if (MODE == SImode || MODE == QImode				\
+      else if (MODE == SImode						\
 	       || (MODE == SFmode && TARGET_SOFT_FLOAT)			\
-	       || (MODE == HImode && ! arm_arch4))			\
+	       || ((MODE == HImode || MODE == QImode) && ! arm_arch4))	\
 	/* Need to be careful, -4096 is not a valid offset */		\
 	low = val >= 0 ? (val & 0xfff) : -((-val) & 0xfff);		\
-      else if (MODE == HImode && arm_arch4)				\
+      else if ((MODE == HImode || MODE == QImode) && arm_arch4)		\
 	/* Need to be careful, -256 is not a valid offset */		\
 	low = val >= 0 ? (val & 0xff) : -((-val) & 0xff);		\
       else if (GET_MODE_CLASS (MODE) == MODE_FLOAT			\
