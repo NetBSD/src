@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.9 2004/04/04 16:49:12 matt Exp $	*/
+/*	$NetBSD: psl.h,v 1.10 2004/04/15 21:07:06 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -82,7 +82,12 @@
 
 /*
  * A user is not allowed to change any MSR bits except the following:
+ * We restrict the test to the low 16 bits of the MSR since those are the
+ * only ones preserved in the trap.  Note that this means PSL_VEC needs to
+ * restored the SRR1 in userret.
  */
-#define	PSL_USERSTATIC	(~(PSL_VEC|PSL_FP|PSL_FE0|PSL_FE1|PSL_LE|PSL_SE|PSL_BE))
+#define	PSL_USERSRR1	((PSL_USERSET|PSL_USERMOD) & 0xFFFF)
+#define	PSL_USERMOD (PSL_VEC|PSL_FP|PSL_FE0|PSL_FE1|PSL_LE|PSL_SE|PSL_BE)
+#define	PSL_USEROK_P(psl)	(((psl) & ~PSL_USERMOD) == PSL_USERSET)
 
 #endif	/* _POWERPC_PSL_H_ */
