@@ -1,4 +1,4 @@
-/*	$NetBSD: strtouq.c,v 1.15 2000/05/02 12:39:03 is Exp $	*/
+/*	$NetBSD: strtouq.c,v 1.16 2000/05/16 22:07:30 is Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)strtouq.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtouq.c,v 1.15 2000/05/02 12:39:03 is Exp $");
+__RCSID("$NetBSD: strtouq.c,v 1.16 2000/05/16 22:07:30 is Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,11 +69,6 @@ strtouq(nptr, endptr, base)
 
 	_DIAGASSERT(nptr != NULL);
 	/* endptr may be NULL */
-
-#ifdef __GNUC__
-	/* This outrageous construct works around an arm32 compiler bug. */
-	(void) &acc;
-#endif
 
 	/*
 	 * See strtoq for comments as to the logic used.
