@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.3 2002/08/18 07:45:04 kanaoka Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.4 2002/08/20 14:07:51 christos Exp $	*/
 
 /*
  * Copyright 2001 Bill Sommerfeld.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.3 2002/08/18 07:45:04 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.4 2002/08/20 14:07:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.3 2002/08/18 07:45:04 kanaoka Exp $")
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+
+#define	BAT_WORDS	13
 
 struct acpibat_softc {
 	struct device sc_dev;		/* base device glue */
@@ -73,6 +75,8 @@ struct acpibat_softc {
 	int sc_pred_capacity;		/* estimated current max */
 	int sc_warn_capacity;		/* warning level */
 	int sc_low_capacity;		/* low level */
+
+	ACPI_OBJECT sc_Ret[BAT_WORDS];	/* Return Buffer */
 };
 
 #define	ABAT_F_VERBOSE		0x01	/* verbose events */
@@ -238,7 +242,10 @@ acpibat_get_status(void *arg)
 	ACPI_STATUS rv;
 	ACPI_BUFFER buf;
 
-	rv = acpi_eval_struct(sc->sc_node->ad_handle, "_BST", &buf);
+	buf.Pointer = sc->sc_Ret;
+	buf.Length = sizeof(sc->sc_Ret);
+
+	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "_BST", NULL, &buf);
 	if (rv != AE_OK) {
 		printf("bat: failed to evaluate _BST: %x\n", rv);
 		return;
@@ -247,7 +254,7 @@ acpibat_get_status(void *arg)
 
 	if (p1->Type != ACPI_TYPE_PACKAGE) {
 		printf("bat: expected PACKAGE, got %d\n", p1->Type);
-		goto out;
+		return;
 	}
 	if (p1->Package.Count < 4)
 		printf("bat: expected 4 elts, got %d\n", p1->Package.Count);
@@ -270,8 +277,6 @@ acpibat_get_status(void *arg)
 			    (sc->sc_capacity * 100) / sc->sc_design_capacity,
 		       ACM_SCALE(sc->sc_rate), ACM_RATEUNIT(sc));
 	}
-out:
-	AcpiOsFree(buf.Pointer);
 }
 
 /*
