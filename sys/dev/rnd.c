@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.38 2002/11/26 18:49:41 christos Exp $	*/
+/*	$NetBSD: rnd.c,v 1.39 2003/02/05 13:57:50 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.38 2002/11/26 18:49:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.39 2003/02/05 13:57:50 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.38 2002/11/26 18:49:41 christos Exp $");
 #include <sys/pool.h>
 
 #ifdef __HAVE_CPU_COUNTER
-#include <machine/rnd.h>
+#include <machine/cpu_counter.h>
 #endif
 
 #ifdef RND_DEBUG
@@ -189,14 +189,14 @@ rnd_counter(void)
 
 #ifdef __HAVE_CPU_COUNTER
 	if (cpu_hascounter())
-		return (cpu_counter() & 0xffffffff);
+		return (cpu_counter32());
 #endif
 	if (rnd_ready) {
 		microtime(&tv);
 		return (tv.tv_sec * 1000000 + tv.tv_usec);
 	} 
 	/* when called from rnd_init, its too early to call microtime safely */
-	return 0;  
+	return (0);
 }
 
 /*

@@ -1,11 +1,11 @@
-/*	$NetBSD: rnd.h,v 1.1 2002/10/07 13:26:57 martin Exp $	*/
+/*	$NetBSD: cpu_counter.h,v 1.1 2003/02/05 13:58:02 nakayama Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Martin Husemann.
+ * by Bill Sommerfeld.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,20 +36,40 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SPARC64_RND_H_
-#define	_SPARC64_RND_H_
-
-/*
- * Machine-specific support for rnd(4)
- */
-
-#include <machine/ctlreg.h>
+#ifndef _X86_64_CPU_COUNTER_H_
+#define _X86_64_CPU_COUNTER_H_
 
 #ifdef _KERNEL
 
-#define	cpu_hascounter()	(1)
-#define	cpu_counter()		tick()
+/*
+ * Machine-specific support for CPU counter.
+ */
+
+#include <machine/cpufunc.h>
+
+#define cpu_hascounter()	(1)
+
+static __inline uint64_t
+cpu_counter(void)
+{
+
+	return (rdtsc());
+}
+
+static __inline uint32_t
+cpu_counter32(void)
+{
+
+	return (rdtsc() & 0xffffffffUL);
+}
+
+#if 0	/* XXX MI microtime() needs frequency of CPU counter. */
+static __inline uint64_t
+cpu_frequency(struct cpu_info *ci)
+{
+}
+#endif
 
 #endif /* _KERNEL */
 
-#endif /* !_SPARC64_RND_H_ */
+#endif /* !_X86_64_CPU_COUNTER_H_ */
