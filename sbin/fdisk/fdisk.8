@@ -1,6 +1,6 @@
-.\"	$NetBSD: fdisk.8,v 1.44 2004/03/19 18:19:17 dyoung Exp $
+.\"	$NetBSD: fdisk.8,v 1.45 2004/03/19 22:21:36 snj Exp $
 .\"
-.Dd October 6, 2003
+.Dd March 19, 2004
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -56,12 +56,16 @@ disklabel saved in sector 1 of the
 .Nx
 partition.
 .Pp
-The standard MBR boot code will only boot the 'active' partition.
+The standard MBR boot code will only boot the
+.Sq active
+partition.
 However
 .Nx
 contains two alternate boot programs which allow the user to
 interactively select which of the partitions to boot.
-The 'mbr_ext' code will boot
+The
+.Sq mbr_ext
+code will boot
 .Nx
 from an extended partition but will not work on old systems that do not
 support LBA reads.
@@ -188,10 +192,11 @@ and
 are specified then the details of the specified partition will be changed.
 Any other partitions which overlap the requested part of the disk will be
 silently deleted.
-.It Fl F 
+.It Fl F
 Indicate that
 .Ar device
-is a regular file.  Unless the geometry of
+is a regular file.
+Unless the geometry of
 .Ar device
 is told to
 .Nm fdisk
@@ -241,14 +246,14 @@ When used with no other flags print a series of
 commands for setting variables to the partition information.
 This could be used by installation scripts.
 .It Fl t Ar disktab
-Read 
+Read
 .Ar disktype
-from the named 
-.Xr disktab 5 
+from the named
+.Xr disktab 5
 file instead of from
-.Pa /etc/disktab.
+.Pa /etc/disktab .
 .It Fl T Ar disktype
-Use the disklabel 
+Use the disklabel
 .Ar disktype
 instead of the disklabel on
 .Ar device .
@@ -393,7 +398,7 @@ If
 .Fl v
 is not specified the start of extended partitions and the first partition
 on the disk are rounded down to include the mandatory red tape in the
-preceeding track.
+preceding track.
 .It Active
 is output if this is the active partition.
 .El
@@ -475,12 +480,14 @@ Default location of i386 bootselect code
 Default location of i386 bootselect for extended partitions
 .El
 .Sh SEE ALSO
-.Xr disklabel 8 ,
 .Xr disktab 5 ,
+.Xr disklabel 8 ,
 .Xr mbr 8 ,
 .Xr mbrlabel 8
 .Sh BUGS
-The word 'partition' is used to mean both an MBR partition and a
+The word
+.Sq partition
+is used to mean both an MBR partition and a
 .Nx
 partition, sometimes in the same sentence.
 .Pp
