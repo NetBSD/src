@@ -46,7 +46,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)finger.c	5.22 (Berkeley) 6/29/90";*/
-static char rcsid[] = "$Id: finger.c,v 1.3 1993/10/07 19:58:29 brezak Exp $";
+static char rcsid[] = "$Id: finger.c,v 1.4 1994/12/24 16:33:46 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -65,6 +65,7 @@ static char rcsid[] = "$Id: finger.c,v 1.3 1993/10/07 19:58:29 brezak Exp $";
 #include <sys/param.h>
 #include <sys/file.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "finger.h"
 
 time_t now;
