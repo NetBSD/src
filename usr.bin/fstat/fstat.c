@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.41 2000/02/04 11:02:00 jdolecek Exp $	*/
+/*	$NetBSD: fstat.c,v 1.42 2000/05/27 15:02:04 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.41 2000/02/04 11:02:00 jdolecek Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.42 2000/05/27 15:02:04 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 
@@ -162,6 +162,7 @@ void	socktrans __P((struct socket *, int));
 int	ufs_filestat __P((struct vnode *, struct filestat *));
 void	usage __P((void));
 void	vtrans __P((struct vnode *, int, int));
+void	ftrans __P((struct file *, int));
 
 int
 main(argc, argv)
@@ -309,7 +310,6 @@ dofiles(kp)
 	struct kinfo_proc *kp;
 {
 	int i;
-	struct file file;
 	struct filedesc0 filed0;
 #define	filed	filed0.fd_fd
 	struct cwdinfo cwdi;
@@ -348,7 +348,7 @@ dofiles(kp)
 	 * ktrace vnode, if one
 	 */
 	if (p->p_tracep)
-		vtrans(p->p_tracep, TRACE, FREAD|FWRITE);
+		ftrans(p->p_tracep, TRACE);
 	/*
 	 * open files
 	 */
@@ -367,21 +367,30 @@ dofiles(kp)
 	for (i = 0; i <= filed.fd_lastfile; i++) {
 		if (ofiles[i] == NULL)
 			continue;
-		if (!KVM_READ(ofiles[i], &file, sizeof (struct file))) {
-			dprintf("can't read file %d at %p for pid %d",
-			    i, ofiles[i], Pid);
-			continue;
-		}
-		if (file.f_type == DTYPE_VNODE)
-			vtrans((struct vnode *)file.f_data, i, file.f_flag);
-		else if (file.f_type == DTYPE_SOCKET) {
-			if (checkfile == 0)
-				socktrans((struct socket *)file.f_data, i);
-		}
-		else {
-			dprintf("unknown file type %d for file %d of pid %d",
-				file.f_type, i, Pid);
-		}
+		ftrans(ofiles[i], i);
+	}
+}
+
+void
+ftrans (fp, i)
+	struct file *fp;
+	int i;
+{
+	struct file file;
+
+	if (!KVM_READ(fp, &file, sizeof (struct file))) {
+		dprintf("can't read file %d at %p for pid %d",
+		    i, fp, Pid);
+		return;
+	}
+	if (file.f_type == DTYPE_VNODE)
+		vtrans((struct vnode *)file.f_data, i, file.f_flag);
+	else if (file.f_type == DTYPE_SOCKET) {
+		if (checkfile == 0)
+			socktrans((struct socket *)file.f_data, i);
+	} else {
+		dprintf("unknown file type %d for file %d of pid %d",
+		    file.f_type, i, Pid);
 	}
 }
 
