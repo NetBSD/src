@@ -28,7 +28,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypset.c,v 1.2 1993/05/16 02:49:07 deraadt Exp $";
+static char rcsid[] = "$Id: ypset.c,v 1.3 1993/06/12 00:02:37 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -74,7 +74,7 @@ char *dom, *server;
 	tv.tv_sec = 15;
 	tv.tv_usec = 0;
 	sock = RPC_ANYSOCK;
-	client = clntudp_create(sin, YPBINDPROG, YPBINDVERS, &sock, 0, 0);
+	client = clntudp_create(sin, YPBINDPROG, YPBINDVERS, tv, &sock);
 	if (client==NULL) {
 		fprintf(stderr, "can't yp_bind: Reason: %s\n",
 			yperr_string(YPERR_YPBIND));
