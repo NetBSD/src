@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.274 2000/11/03 16:31:51 ad Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.275 2000/11/04 16:43:14 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.270 2000/11/03 16:31:01 ad Exp 
+ *	NetBSD: pcidevs,v 1.271 2000/11/04 16:41:57 thorpej Exp 
  */
 
 /*
@@ -3370,6 +3370,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "uPD72871 IEEE 1394 OHCI Host Controller",
 	},
 	{
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMG2070,
+	    0,
+	    "Neomagic",
+	    "MagicGraph NM2070",
+	},
+	{
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMG128V,
+	    0,
+	    "Neomagic",
+	    "MagicGraph 128V",
+	},
+	{
 	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMG128ZV,
 	    0,
 	    "Neomagic",
@@ -3392,6 +3404,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Neomagic",
 	    "MagicMedia 256ZX VGA",
+	},
+	{
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMM256XLP_AU,
+	    0,
+	    "Neomagic",
+	    "MagicMedia 256XL+ Audio",
 	},
 	{
 	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMM256AV_AU,
