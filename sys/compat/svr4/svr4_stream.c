@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.22 1997/09/09 21:15:34 mycroft Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.23 1997/10/19 18:40:11 mycroft Exp $	 */
 /*
  * Copyright (c) 1994, 1996 Christos Zoulas.  All rights reserved.
  *
@@ -277,7 +277,7 @@ clean_pipe(p, path)
 	/*
 	 * Make sure we are dealing with a mode 0 named pipe.
 	 */
-	if ((st.st_mode & S_IFMT) != S_IFIFO)
+	if (!S_ISFIFO(st.st_mode))
 		return 0;
 
 	if ((st.st_mode & ALLPERMS) != 0)
