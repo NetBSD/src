@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.17 1998/05/26 15:33:16 matt Exp $	*/
+/*	$NetBSD: pdq.c,v 1.18 1998/05/27 14:01:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -879,13 +879,15 @@ pdq_process_received_data(
     }
 }
 
+static void pdq_process_transmitted_data(pdq_t *pdq);
+
 pdq_boolean_t
 pdq_queue_transmit_data(
     pdq_t *pdq,
     PDQ_OS_DATABUF_T *pdu)
 {
-    pdq_tx_info_t *tx = &pdq->pdq_tx_info;
-    pdq_descriptor_block_t *dbp = pdq->pdq_dbp;
+    pdq_tx_info_t * const tx = &pdq->pdq_tx_info;
+    pdq_descriptor_block_t * const dbp = pdq->pdq_dbp;
     pdq_uint32_t producer = tx->tx_producer;
     pdq_txdesc_t *eop = NULL;
     PDQ_OS_DATABUF_T *pdu0;
@@ -894,11 +896,15 @@ pdq_queue_transmit_data(
     bus_dmamap_t map;
 #endif
 
+  again:
     /*
      * Need 2 or more descriptors to be able to send.
      */
-    if (tx->tx_free <= 1)
+    if (tx->tx_free <= 1) {
+	pdq->pdq_intrmask |= PDQ_HOST_INT_TX_ENABLE;
+	PDQ_CSR_WRITE(&pdq->pdq_csrs, csr_host_int_enable, pdq->pdq_intrmask);
 	return PDQ_FALSE;
+    }
 
     dbp->pdqdb_transmits[producer] = tx->tx_hdrdesc;
     PDQ_OS_DESC_PRESYNC(pdq, &dbp->pdqdb_transmits[producer], sizeof(pdq_txdesc_t));
@@ -956,12 +962,22 @@ pdq_queue_transmit_data(
     }
 #endif /* defined(PDQ_BUS_DMA) */
     if (pdu0 != NULL) {
+	unsigned completion = tx->tx_completion;
 	PDQ_ASSERT(freecnt == 0);
+	PDQ_OS_CONSUMER_POSTSYNC(pdq);
+	pdq_process_transmitted_data(pdq);
+	if (completion != tx->tx_completion) {
+	    producer = tx->tx_producer;
+	    eop = NULL;
+	    goto again;
+	}
 	/*
 	 * If we still have data to process then the ring was too full
 	 * to store the PDU.  Return FALSE so the caller will requeue
 	 * the PDU for later.
 	 */
+	pdq->pdq_intrmask |= PDQ_HOST_INT_TX_ENABLE;
+	PDQ_CSR_WRITE(&pdq->pdq_csrs, csr_host_int_enable, pdq->pdq_intrmask);
 	return PDQ_FALSE;
     }
     /*
@@ -999,6 +1015,8 @@ pdq_process_transmitted_data(
     if (tx->tx_completion != completion) {
 	tx->tx_completion = completion;
 	pdq_os_restart_transmitter(pdq);
+	pdq->pdq_intrmask &= ~PDQ_HOST_INT_TX_ENABLE;
+	PDQ_CSR_WRITE(&pdq->pdq_csrs, csr_host_int_enable, pdq->pdq_intrmask);
     }
     PDQ_DO_TYPE2_PRODUCER(pdq);
 }
@@ -1236,9 +1254,11 @@ pdq_stop(
     PDQ_ASSERT(state == PDQS_DMA_AVAILABLE);
     
     PDQ_CSR_WRITE(csrs, csr_host_int_type_0, 0xFF);
-    PDQ_CSR_WRITE(csrs, csr_host_int_enable, 0) /* PDQ_HOST_INT_STATE_CHANGE
+    pdq->pdq_intrmask = 0;
+      /* PDQ_HOST_INT_STATE_CHANGE
 	|PDQ_HOST_INT_FATAL_ERROR|PDQ_HOST_INT_CMD_RSP_ENABLE
 	|PDQ_HOST_INT_UNSOL_ENABLE */;
+    PDQ_CSR_WRITE(csrs, csr_host_int_enable, pdq->pdq_intrmask);
 
     /*
      * Any other command but START should be valid.
@@ -1286,9 +1306,11 @@ pdq_run(
 	     * ones will get through.
 	     */
 	    PDQ_CSR_WRITE(csrs, csr_host_int_type_0, 0xFF);
-	    PDQ_CSR_WRITE(csrs, csr_host_int_enable, PDQ_HOST_INT_STATE_CHANGE|PDQ_HOST_INT_XMT_DATA_FLUSH
-		|PDQ_HOST_INT_FATAL_ERROR|PDQ_HOST_INT_CMD_RSP_ENABLE|PDQ_HOST_INT_UNSOL_ENABLE
-		|PDQ_HOST_INT_RX_ENABLE|PDQ_HOST_INT_TX_ENABLE|PDQ_HOST_INT_HOST_SMT_ENABLE);
+	    pdq->pdq_intrmask = PDQ_HOST_INT_STATE_CHANGE
+		|PDQ_HOST_INT_XMT_DATA_FLUSH|PDQ_HOST_INT_FATAL_ERROR
+		|PDQ_HOST_INT_CMD_RSP_ENABLE|PDQ_HOST_INT_UNSOL_ENABLE
+		|PDQ_HOST_INT_RX_ENABLE|PDQ_HOST_INT_HOST_SMT_ENABLE;
+	    PDQ_CSR_WRITE(csrs, csr_host_int_enable, pdq->pdq_intrmask);
 	    /*
 	     * Set the MAC and address filters and start up the PDQ.
 	     */
