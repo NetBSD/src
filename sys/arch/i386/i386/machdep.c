@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.83 1994/01/20 23:08:13 mycroft Exp $
+ *	$Id: machdep.c,v 1.84 1994/01/27 07:17:30 cgd Exp $
  */
 
 #include <stddef.h>
@@ -933,7 +933,7 @@ init386(first_avail)
 
 	proc0.p_addr = proc0paddr;
 
-	cninit();	/* XXXX should be consinit() */
+	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 
 #ifndef LKM		/* don't do this if we're using LKM's */
 	/* set code segment limit to end of kernel text */
@@ -1268,4 +1268,21 @@ pmap_page_index(pa)
 	if (pa >= hole_end && pa < avail_end)
 		return i386_btop(pa - hole_end + hole_start - avail_start);
 	return -1;
+}
+
+/*
+ * consinit:
+ * initialize the system console.
+ * XXX - shouldn't deal with this cons_initted thing, but then,
+ * it shouldn't be called from init386 either.
+ */
+static int cons_initted;
+
+void
+consinit()
+{
+	if (!cons_initted) {
+		cninit();
+		cons_initted = 1;
+	}
 }
