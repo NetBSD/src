@@ -1,6 +1,6 @@
-.\" $NetBSD: scanner.l,v 1.1.1.4 2004/09/19 21:31:43 dyoung Exp $
-.\
 %{
+/*	$NetBSD: scanner.l,v 1.1.1.5 2004/09/19 21:57:52 dyoung Exp $	*/
+
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/libpcap/scanner.l,v 1.95.2.3 2004/03/28 21:45:33 fenner Exp  (LBL)";
 #else
-__RCSID("$NetBSD: scanner.l,v 1.1.1.4 2004/09/19 21:31:43 dyoung Exp $");
+__RCSID("$NetBSD: scanner.l,v 1.1.1.5 2004/09/19 21:57:52 dyoung Exp $");
 #endif
 #endif
 

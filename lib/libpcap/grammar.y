@@ -1,6 +1,6 @@
-.\" $NetBSD: grammar.y,v 1.1.1.4 2004/09/19 21:31:41 dyoung Exp $
-.\
 %{
+/*	$NetBSD: grammar.y,v 1.1.1.5 2004/09/19 21:57:50 dyoung Exp $	*/
+
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/libpcap/grammar.y,v 1.79.2.3 2004/03/28 21:45:32 fenner Exp  (LBL)";
 #else
-__RCSID("$NetBSD: grammar.y,v 1.1.1.4 2004/09/19 21:31:41 dyoung Exp $");
+__RCSID("$NetBSD: grammar.y,v 1.1.1.5 2004/09/19 21:57:50 dyoung Exp $");
 #endif
 #endif
 

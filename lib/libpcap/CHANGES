@@ -1,5 +1,4 @@
-.\" $NetBSD: CHANGES,v 1.1.1.4 2004/09/19 21:31:45 dyoung Exp $
-.\
+$NetBSD: CHANGES,v 1.1.1.5 2004/09/19 21:57:55 dyoung Exp $
 @(#) Header: /tcpdump/master/libpcap/CHANGES,v 1.56.4.3 2004/03/30 14:29:16 mcr Exp  (LBL)
 
 Tue.   March 30, 2004. mcr@sandelman.ottawa.on.ca. Summary for 3.8.3 release

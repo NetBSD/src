@@ -1,5 +1,5 @@
-.\" $NetBSD: nametoaddr.c,v 1.1.1.4 2004/09/19 21:31:41 dyoung Exp $
-.\
+/*	$NetBSD: nametoaddr.c,v 1.1.1.5 2004/09/19 21:57:50 dyoung Exp $	*/
+
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
  *	The Regents of the University of California.  All rights reserved.
@@ -30,7 +30,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/libpcap/nametoaddr.c,v 1.68.2.3 2003/11/19 18:13:48 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: nametoaddr.c,v 1.1.1.4 2004/09/19 21:31:41 dyoung Exp $");
+__RCSID("$NetBSD: nametoaddr.c,v 1.1.1.5 2004/09/19 21:57:50 dyoung Exp $");
 #endif
 #endif
 

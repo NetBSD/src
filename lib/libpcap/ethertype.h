@@ -1,5 +1,5 @@
-.\" $NetBSD: ethertype.h,v 1.1.1.4 2004/09/19 21:31:46 dyoung Exp $
-.\
+/*	$NetBSD: ethertype.h,v 1.1.1.5 2004/09/19 21:57:55 dyoung Exp $	*/
+
 /*
  * Copyright (c) 1993, 1994, 1996
  *	The Regents of the University of California.  All rights reserved.

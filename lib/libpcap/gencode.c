@@ -1,5 +1,5 @@
-.\" $NetBSD: gencode.c,v 1.1.1.4 2004/09/19 21:31:41 dyoung Exp $
-.\
+/*	$NetBSD: gencode.c,v 1.1.1.5 2004/09/19 21:57:50 dyoung Exp $	*/
+
 /*#define CHASE_CHAIN*/
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -27,7 +27,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/libpcap/gencode.c,v 1.193.2.8 2004/03/29 20:53:47 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: gencode.c,v 1.1.1.4 2004/09/19 21:31:41 dyoung Exp $");
+__RCSID("$NetBSD: gencode.c,v 1.1.1.5 2004/09/19 21:57:50 dyoung Exp $");
 #endif
 #endif
 

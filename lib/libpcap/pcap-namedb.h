@@ -1,5 +1,5 @@
-.\" $NetBSD: pcap-namedb.h,v 1.1.1.4 2004/09/19 21:31:45 dyoung Exp $
-.\
+/*	$NetBSD: pcap-namedb.h,v 1.1.1.5 2004/09/19 21:57:52 dyoung Exp $	*/
+
 /*
  * Copyright (c) 1994, 1996
  *	The Regents of the University of California.  All rights reserved.

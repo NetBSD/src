@@ -1,5 +1,4 @@
-.\" $NetBSD: README,v 1.1.1.4 2004/09/19 21:31:45 dyoung Exp $
-.\
+$NetBSD: README,v 1.1.1.5 2004/09/19 21:57:55 dyoung Exp $
 @(#) Header: /tcpdump/master/libpcap/README,v 1.27.2.1 2003/11/15 23:29:19 guy Exp  (LBL)
 
 LIBPCAP 0.8

@@ -1,5 +1,5 @@
-.\" $NetBSD: pcap.c,v 1.1.1.4 2004/09/19 21:31:42 dyoung Exp $
-.\
+/*	$NetBSD: pcap.c,v 1.1.1.5 2004/09/19 21:57:51 dyoung Exp $	*/
+
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/libpcap/pcap.c,v 1.63.2.9 2004/03/25 22:40:52 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: pcap.c,v 1.1.1.4 2004/09/19 21:31:42 dyoung Exp $");
+__RCSID("$NetBSD: pcap.c,v 1.1.1.5 2004/09/19 21:57:51 dyoung Exp $");
 #endif
 #endif
 

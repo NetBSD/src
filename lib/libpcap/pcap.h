@@ -1,5 +1,5 @@
-.\" $NetBSD: pcap.h,v 1.1.1.4 2004/09/19 21:31:45 dyoung Exp $
-.\
+/*	$NetBSD: pcap.h,v 1.1.1.5 2004/09/19 21:57:52 dyoung Exp $	*/
+
 /* -*- Mode: c; tab-width: 8; indent-tabs-mode: 1; c-basic-offset: 8; -*- */
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997

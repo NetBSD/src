@@ -1,5 +1,5 @@
-.\" $NetBSD: ppp.h,v 1.1.1.2 2004/09/19 21:31:46 dyoung Exp $
-.\
+/*	$NetBSD: ppp.h,v 1.1.1.3 2004/09/19 21:57:55 dyoung Exp $	*/
+
 /* @(#) Header: /tcpdump/master/libpcap/ppp.h,v 1.8 1999/10/19 15:18:31 itojun Exp  (LBL) */
 /*
  * Point to Point Protocol (PPP) RFC1331
