@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.45 2003/06/26 17:46:36 wiz Exp $
+.\"	$NetBSD: find.1,v 1.46 2003/08/03 19:46:03 provos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -291,6 +291,11 @@ If
 is numeric and there is no such group name, then
 .Ar gname
 is treated as a group id.
+.It Ic -iname Ar pattern
+True if the last component of the pathname being examined
+matches
+.Ar pattern .
+Case insensitive.
 .It Ic -inum Ar n
 True if the file has inode number
 .Ar n  .
@@ -614,6 +619,7 @@ The options and the
 .Ic -empty ,
 .Ic -follow ,
 .Ic -fstype ,
+.Ic -iname ,
 .Ic -inum ,
 .Ic -iregex ,
 .Ic -links ,
