@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	5.24 (Berkeley) 2/25/91";*/
-static char rcsid[] = "$Id: comsat.c,v 1.4 1994/02/01 00:32:22 cgd Exp $";
+static char rcsid[] = "$Id: comsat.c,v 1.5 1994/08/05 01:01:16 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -51,6 +51,7 @@ static char rcsid[] = "$Id: comsat.c,v 1.4 1994/02/01 00:32:22 cgd Exp $";
 #include <netinet/in.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <sgtty.h>
 #include <utmp.h>
 #include <signal.h>
@@ -60,6 +61,7 @@ static char rcsid[] = "$Id: comsat.c,v 1.4 1994/02/01 00:32:22 cgd Exp $";
 #include <ctype.h>
 #include <string.h>
 #include <pwd.h>
+#include <unistd.h>
 #include <paths.h>
 
 int	debug = 0;
@@ -137,8 +139,6 @@ onalrm()
 	static u_int utmpsize;		/* last malloced size for utmp */
 	static u_int utmpmtime;		/* last modification time for utmp */
 	struct stat statbf;
-	off_t lseek();
-	char *malloc(), *realloc();
 
 	if (time((time_t *)NULL) - lastmsgtime >= MAXIDLE)
 		exit(0);
