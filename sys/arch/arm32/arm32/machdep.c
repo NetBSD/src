@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.3 1996/02/15 22:07:11 mark Exp $ */
+/* $NetBSD: machdep.c,v 1.4 1996/02/22 22:44:58 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -45,7 +45,7 @@
  * Created      : 17/09/94
  * Last updated : 25/12/95
  *
- *    $Id: machdep.c,v 1.3 1996/02/15 22:07:11 mark Exp $
+ *    $Id: machdep.c,v 1.4 1996/02/22 22:44:58 mark Exp $
  */
 
 #include <sys/types.h>
@@ -529,11 +529,11 @@ bootsync(void)
 
 void
 delay(n)
-	int n;
+	u_int n;
 {
 	u_int i;
 
-	while (--n >= 0)
+	while (--n > 0)
 		for (i = 8; --i;);
 }
 
@@ -1239,13 +1239,13 @@ initarm(bootconf)
 
 	printf("irq ");
 	irq_init();
+	printf("done.\n");
 
 #ifdef DDB
-	printf("ddb ");
+	printf("ddb: ");
 	db_machine_init();
 	ddb_init();
 #endif
-	printf("done.\n");
 }
 
 
@@ -1277,7 +1277,7 @@ cpu_startup()
 	if (cpu_cache & 2)
 		cpu_ctrl |= CPU_CONTROL_WBUF_ENABLE;
 
-	if (cpu_cache & 4)
+	if (!(cpu_cache & 4))
 		cpu_ctrl |= CPU_CONTROL_CPCLK;
 
 #ifdef CPU_LATE_ABORT
@@ -1610,7 +1610,7 @@ map_entry_ro(pagetable, va, pa)
 }
 
 
-extern int wdresethack;
+int wdresethack = 1;
 
 void
 process_kernel_args()
@@ -2156,6 +2156,5 @@ vmem_cachectl(flag)
 
 	return(0);
 }
-
 
 /* End of machdep.c */
