@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.39 2003/07/30 11:19:00 dsl Exp $	*/
+/*	$NetBSD: newwin.c,v 1.40 2003/08/01 13:29:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.39 2003/07/30 11:19:00 dsl Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.40 2003/08/01 13:29:06 dsl Exp $");
 #endif
 #endif				/* not lint */
 
@@ -47,7 +47,6 @@ __RCSID("$NetBSD: newwin.c,v 1.39 2003/07/30 11:19:00 dsl Exp $");
 #include "curses.h"
 #include "curses_private.h"
 
-extern struct __winlist	*winlistp;
 
 static WINDOW *__makenew(SCREEN *screen, int nlines, int ncols, int by,
 			 int bx, int sub, int ispad);
