@@ -1,4 +1,4 @@
-/*	$NetBSD: start_bootsect.S,v 1.10 1999/03/08 00:09:25 fvdl Exp $	*/
+/*	$NetBSD: start_bootsect.S,v 1.11 1999/04/01 17:07:54 drochner Exp $	*/
 	
 /*
  * BIOS bootsector startup
@@ -356,7 +356,7 @@ done:
 
 eread:	.asciz		"Read error\r\n"
 enoboot: .asciz		"No bootable partition\r\n"
-efail: .asciz		"Boot failed, system halted\r\n"
+efail: .asciz		"Boot failed\r\n"
 
 /* throw in a partition in case we are block0 as well */
 /* flag, head, sec, cyl, typ, ehead, esect, ecyl, start, len */
@@ -472,8 +472,17 @@ ENTRY(exit)
 	movl	$efail, %esi
 	data32
 	call	message
-	cli
-	hlt
+
+	/* sleep for 3s = 0x2dc6c0 us */
+	movb	$0x86, %ah
+	data32
+	movl	$0x002d, %ecx
+	data32
+	movl	$0xc6c0, %edx
+	int	$0x15
+
+	/* call ROM BASIC */
+	int	$0x18
 
 CR0_PE		=	0x1
 
