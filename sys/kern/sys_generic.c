@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.67 2002/11/29 19:48:22 jdolecek Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.68 2002/11/30 13:46:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.67 2002/11/29 19:48:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.68 2002/11/30 13:46:58 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 
@@ -939,10 +939,8 @@ selrecord(struct proc *selector, struct selinfo *sip)
 	if (sip->sel_pid && (p = pfind(sip->sel_pid)) &&
 	    p->p_wchan == (caddr_t)&selwait)
 		sip->sel_flags |= SI_COLL;
-	else {
-		sip->sel_flags &= ~SI_COLL;
+	else
 		sip->sel_pid = mypid;
-	}
 }
 
 /*
