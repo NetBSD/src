@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.53 1998/03/01 02:21:17 fvdl Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.54 1998/04/21 16:36:37 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -937,7 +937,8 @@ procfs_readdir(v)
 
 	if (ap->a_ncookies) {
 		if (error) {
-			FREE(*ap->a_cookies, M_TEMP);
+			if (cookies)
+				FREE(*ap->a_cookies, M_TEMP);
 			*ap->a_ncookies = 0;
 			*ap->a_cookies = NULL;
 		} else
