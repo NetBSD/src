@@ -1,4 +1,4 @@
-/*	$NetBSD: pcs_bus_io_common.c,v 1.2 1996/04/18 05:53:04 cgd Exp $	*/
+/*	$NetBSD: pcs_bus_io_common.c,v 1.3 1996/06/09 23:49:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -37,6 +37,7 @@
  */
 
 #define	__C(A,B)	__CONCAT(A,B)
+#define	__S(S)		__STRING(S)
 
 int		__C(CHIP,_io_map) __P((void *, bus_io_addr_t, bus_io_size_t,
 		    bus_io_handle_t *));
@@ -207,7 +208,7 @@ __C(CHIP,_io_read_8)(v, ioh, off)
 {
 
 	/* XXX XXX XXX */
-	panic("%s not implemented\n", __STRING(__C(CHIP,_io_read_8)));
+	panic("%s not implemented\n", __S(__C(CHIP,_io_read_8)));
 }
 
 void
@@ -292,7 +293,7 @@ __C(CHIP,_io_read_multi_8)(v, ioh, off, addr, count)
 {
 
 	/* XXX XXX XXX */
-	panic("%s not implemented\n", __STRING(__C(CHIP,_io_read_multi_8)));
+	panic("%s not implemented\n", __S(__C(CHIP,_io_read_multi_8)));
 }
 
 void
@@ -361,7 +362,7 @@ __C(CHIP,_io_write_8)(v, ioh, off, val)
 {
 
 	/* XXX XXX XXX */
-	panic("%s not implemented\n", __STRING(__C(CHIP,_io_write_8)));
+	panic("%s not implemented\n", __S(__C(CHIP,_io_write_8)));
 	wbflush();
 }
 
@@ -440,5 +441,5 @@ __C(CHIP,_io_write_multi_8)(v, ioh, off, addr, count)
 {
 
 	/* XXX XXX XXX */
-	panic("%s not implemented\n", __STRING(__C(CHIP,_io_write_multi_8)));
+	panic("%s not implemented\n", __S(__C(CHIP,_io_write_multi_8)));
 }

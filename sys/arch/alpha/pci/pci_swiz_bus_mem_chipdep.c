@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.2 1996/06/03 20:18:53 cgd Exp $	*/
+/*	$NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.3 1996/06/09 23:49:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -38,6 +38,7 @@
  */
 
 #define	__C(A,B)	__CONCAT(A,B)
+#define	__S(S)		__STRING(S)
 
 int		__C(CHIP,_mem_map) __P((void *, bus_mem_addr_t, bus_mem_size_t,
 		    int, bus_mem_handle_t *));
@@ -207,7 +208,7 @@ __C(CHIP,_mem_read_8)(v, memh, off)
                 return (*(u_int64_t *)(memh + off));
 
 	/* XXX XXX XXX */
-	panic("%s not implemented\n", __STRING(__C(CHIP,_mem_read_8)));
+	panic("%s not implemented\n", __S(__C(CHIP,_mem_read_8)));
 }
 
 void
@@ -292,7 +293,7 @@ __C(CHIP,_mem_write_8)(v, memh, off, val)
 	else {
 		/* XXX XXX XXX */
 		panic("%s not implemented\n",
-		    __STRING(__C(CHIP,_mem_write_8)));
+		    __S(__C(CHIP,_mem_write_8)));
 	}
 	wbflush();
 }
