@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.16 1994/08/17 11:41:44 mycroft Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.17 1994/08/17 14:43:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1065,21 +1065,19 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp)
 	 * Check/setup credentials.
 	 */
 	if (exflags & MNT_EXKERB) {
-		uidp = slp->ns_uidh[NUIDHASH(cred->cr_uid)];
-		while (uidp) {
+		for (uidp = NUIDHASH(slp, cred->cr_uid)->lh_first; uidp != 0;
+		    uidp = uidp->nu_hash.le_next) {
 			if (uidp->nu_uid == cred->cr_uid)
 				break;
-			uidp = uidp->nu_hnext;
 		}
-		if (uidp) {
-			cred->cr_uid = uidp->nu_cr.cr_uid;
-			for (i = 0; i < uidp->nu_cr.cr_ngroups; i++)
-				cred->cr_groups[i] = uidp->nu_cr.cr_groups[i];
-			cred->cr_ngroups = i;
-		} else {
+		if (uidp == 0) {
 			vput(*vpp);
 			return (NQNFS_AUTHERR);
 		}
+		cred->cr_uid = uidp->nu_cr.cr_uid;
+		for (i = 0; i < uidp->nu_cr.cr_ngroups; i++)
+			cred->cr_groups[i] = uidp->nu_cr.cr_groups[i];
+		cred->cr_ngroups = i;
 	} else if (cred->cr_uid == 0 || (exflags & MNT_EXPORTANON)) {
 		cred->cr_uid = credanon->cr_uid;
 		for (i = 0; i < credanon->cr_ngroups && i < NGROUPS; i++)
