@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.9 1998/08/20 10:59:09 augustss Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.10 1998/08/24 17:59:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1133,28 +1133,15 @@ midiseq_out(md, buf, cc, chk)
 	u_int cc;
 	int chk;
 {
-	struct uio uio;
-	struct iovec iovec;
-
 	DPRINTFN(5, ("midiseq_out: m=%p, unit=%d, buf[0]=0x%02x, cc=%d\n",
 		     md->msc, md->unit, buf[0], cc));
-#if 1
+
 	/* The MIDI "status" byte does not have to be repeated. */
 	if (chk && md->last_cmd == buf[0])
 		buf++, cc--;
 	else
-#endif
 		md->last_cmd = buf[0];
-	iovec.iov_base = (char *)buf;
-	iovec.iov_len = cc;
-	uio.uio_iov = &iovec;
-	uio.uio_iovcnt = 1;
-	uio.uio_offset = 0;
-	uio.uio_resid = cc;
-	uio.uio_segflg = UIO_SYSSPACE;
-	uio.uio_rw = UIO_WRITE;
-	uio.uio_procp = 0;	/* process not needed for UIO_SYSSPACE */
-	return midiwrite(makedev(0, md->unit), &uio, 0);
+	return midi_writebytes(md->unit, buf, cc);
 }
 
 int
@@ -1379,10 +1366,10 @@ midiclose(dev, flags, ifmt, p)
 }
 
 int
-midiwrite(dev, uio, ioflag)
-	dev_t dev;
-	struct uio *uio;
-	int ioflag;
+midi_writebytes(unit, buf, cc)
+	int unit;
+	u_char *buf;
+	int cc;
 {
 	return (ENXIO);
 }

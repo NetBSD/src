@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_if.h,v 1.1 1998/08/17 21:16:12 augustss Exp $	*/
+/*	$NetBSD: midi_if.h,v 1.2 1998/08/24 17:59:26 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -63,5 +63,6 @@ void	midi_attach_mi __P((struct midi_hw_if *, void *, struct device *));
 
 int	midi_unit_count __P((void));
 void	midi_getinfo __P((dev_t, struct midi_info *));
+int	midi_writebytes __P((int, u_char *, int));
 
 #endif /* _SYS_DEV_MIDI_IF_H_ */
