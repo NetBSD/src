@@ -1,7 +1,9 @@
-/*	$NetBSD: iconv.c,v 1.3 2002/01/04 02:39:37 deberg Exp $	*/
+/*	$NetBSD: iconv.c,v 1.4 2002/01/05 20:29:38 deberg Exp $	*/
+
+/* Public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iconv.c,v 1.3 2002/01/04 02:39:37 deberg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iconv.c,v 1.4 2002/01/05 20:29:38 deberg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
