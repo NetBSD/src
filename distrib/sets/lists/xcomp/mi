@@ -188,6 +188,8 @@
 ./usr/X11R6/include/X11/extensions/Xdbe.h
 ./usr/X11R6/include/X11/extensions/Xdbeproto.h
 ./usr/X11R6/include/X11/extensions/Xext.h
+./usr/X11R6/include/X11/extensions/dpms.h
+./usr/X11R6/include/X11/extensions/dpmsstr.h
 ./usr/X11R6/include/X11/extensions/lbxbuf.h
 ./usr/X11R6/include/X11/extensions/lbxbufstr.h
 ./usr/X11R6/include/X11/extensions/lbxdeltastr.h
@@ -311,6 +313,7 @@
 ./usr/X11R6/lib/libXau.a
 ./usr/X11R6/lib/libXaw.a
 ./usr/X11R6/lib/libXdmcp.a
+./usr/X11R6/lib/libXdpms.a
 ./usr/X11R6/lib/libXext.a
 ./usr/X11R6/lib/libXi.a
 ./usr/X11R6/lib/libXmu.a
