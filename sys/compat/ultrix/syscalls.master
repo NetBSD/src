@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.18 1997/01/31 02:20:03 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.19 1997/06/09 11:50:52 jonathan Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -272,7 +272,8 @@
 177	UNIMPL		semget
 178	UNIMPL		semop
 179	STD		{ int ultrix_sys_uname(struct ultrix_utsname *name); }
-180	UNIMPL		shmsys
+180	STD		{ int ultrix_sys_shmsys(u_int shmop, \
+						u_int a2, u_int a3, u_int a4); }
 181	UNIMPL	0 plock
 182	UNIMPL	0 lockf
 183	STD		{ int ultrix_sys_ustat(int dev, \
