@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.13 1997/08/01 19:38:50 leo Exp $
+#	$NetBSD: MAKEDEV,v 1.14 1997/08/22 15:35:12 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -104,8 +104,8 @@ all)
 	;;
 
 floppy)
-	sh MAKEDEV std fd0 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7
-	sh MAKEDEV tty00 cd0 ttye0
+	sh $0 std fd0 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7
+	sh $0 tty00 cd0 ttye0
 	;;
 
 std)
@@ -139,14 +139,13 @@ fd)
 	;;
 
 st*)
-	umask 2
 	case $i in
 	st*) name=st;	unit=${i#st} blk=5; chr=20;;
 	esac
 	rm -f $name$unit n$name$unit e$name$unit en$name$unit \
 		r$name$unit nr$name$unit er$name$unit enr$name$unit 
 	case $unit in
-	0|1|2|3|4|5|6)
+	[0-6])
 		mknod $name$unit	b $blk $(($unit * 16 + 0))
 		mknod n$name$unit	b $blk $(($unit * 16 + 1))
 		mknod e$name$unit	b $blk $(($unit * 16 + 2))
@@ -159,7 +158,7 @@ st*)
 			e$name$unit en$name$unit \
 			r$name$unit nr$name$unit \
 			er$name$unit enr$name$unit 
-		chmod 640 $name$unit n$name$unit \
+		chmod 660 $name$unit n$name$unit \
 			e$name$unit en$name$unit \
 			r$name$unit nr$name$unit \
 			er$name$unit enr$name$unit
@@ -168,14 +167,13 @@ st*)
 		echo bad unit for tape in: $i
 		;;
 	esac
-	umask 77
 	;;
 
 fd*)
-	umask 2 ; unit=${i#fd}
+	unit=${i#fd}
 	rm -f fd$unit? rfd$unit?
 	case $unit in
-	0|1|2|3)
+	[0-3])
 		mknod fd${unit}a b 2 $(($unit * 8 + 0))
 		mknod fd${unit}b b 2 $(($unit * 8 + 1))
 		mknod fd${unit}c b 2 $(($unit * 8 + 2))
@@ -199,11 +197,9 @@ fd*)
 		echo bad unit for floppy disk in: $i
 		;;
 	esac
-	umask 77
 	;;
 
 sd*|vnd*|ccd*)
-	umask 2
 	case $i in
 	sd*) name=sd;	unit=${i#sd};	blk=4; chr=8;;
 	vnd*) name=vnd; unit=${i#vnd};	blk=6; chr=19;;
@@ -211,7 +207,7 @@ sd*|vnd*|ccd*)
 	esac
 	rm -f $name$unit? r$name$unit?
 	case $unit in
-	0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15)
+	[0-9]|1[0-5])
 		mknod ${name}${unit}c	b $blk $(($unit * 8 + 2))
 		mknod r${name}${unit}c	c $chr $(($unit * 8 + 2))
 		if [ $name != cd -a $name != vnd ]
@@ -238,17 +234,15 @@ sd*|vnd*|ccd*)
 		echo bad unit for disk in: $i
 		;;
 	esac
-	umask 77
 	;;
 
 cd*)
-	umask 2
 	case $i in
 	cd*) name=cd;	unit=${i#cd} blk=7; chr=9;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	case $unit in
-	0|1|2|3|4|5|6)
+	[0-6])
 		mknod ${name}${unit}a   b $blk $(($unit * 8 + 0))
 		mknod ${name}${unit}d   b $blk $(($unit * 8 + 3))
 		mknod r${name}${unit}a  c $chr $(($unit * 8 + 0))
@@ -260,7 +254,6 @@ cd*)
 		echo bad unit for disk in: $i
 		;;
 	esac
-	umask 77
 	;;
 
 md*)
@@ -278,11 +271,12 @@ ss*)
 	case $i in
 	ss*) name=ss;	unit=${i#ss}  chr=35;;
 	esac
-	rm -f $name$unit n$name$unit
+	rm -f $name$unit n$name$unit en$name$unit
 	mknod $name$unit	c $chr $(($unit * 16 + 0))
 	mknod n$name$unit	c $chr $(($unit * 16 + 1))
-	chgrp operator $name$unit n$name$unit
-	chmod 640 $name$unit n$name$unit
+	mknod en$name$unit	c $chr $(($unit * 16 + 3))
+	chgrp operator $name$unit n$name$unit en$name$unit
+	chmod 640 $name$unit n$name$unit en$name$unit
 	;;
 
 ch*|uk*)
@@ -482,7 +476,7 @@ bell*)
 
 local)
 	umask 0
-	sh MAKEDEV.local all
+	sh $0.local all
 	umask 77
 	;;
 
