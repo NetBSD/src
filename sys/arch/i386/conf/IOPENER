@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.5 2000/07/09 00:41:24 mycroft Exp $
+#	$NetBSD: IOPENER,v 1.6 2000/07/18 11:41:32 soda Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"IOPENER-$Revision: 1.5 $"
+#ident 		"IOPENER-$Revision: 1.6 $"
 
 maxusers	32		# estimated number of users
 
@@ -192,7 +192,7 @@ pci*	at ppb? bus ?
 #options 	PCIBIOS			# PCI BIOS support
 #options 	PCIBIOSVERBOSE		# PCI BIOS verbose info
 #options 	PCIBIOS_INTR_FIXUP	# fixup PCI interrupt routing
-#options 	PCIBIOS_IRQS_HINT="0x0a00" # PCI interrupts hint. IRQ 9 or 11
+#options 	PCIBIOS_IRQS_HINT=0x0a00 # PCI interrupts hint. IRQ 9 or 11
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
 #options 	PCIBIOS_BUS_FIXUP	# fixup PCI bus numbering
 #options 	PCIBIOS_ADDR_FIXUP	# fixup PCI I/O addresses
