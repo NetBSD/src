@@ -1,4 +1,4 @@
-/*	$NetBSD: syscallargs.h,v 1.70 1998/09/13 04:58:22 thorpej Exp $	*/
+/*	$NetBSD: syscallargs.h,v 1.71 1998/10/03 19:25:36 eeh Exp $	*/
 
 /*
  * System call argument lists.
@@ -7,7 +7,21 @@
  * created from	NetBSD: syscalls.master,v 1.84 1998/09/12 10:48:29 mycroft Exp 
  */
 
-#define	syscallarg(x)	union { x datum; register_t pad; }
+#ifdef	syscallarg
+#undef	syscallarg
+#endif
+
+#define	syscallarg(x)								\
+		union {								\
+			register_t pad;						\
+			struct { x datum; } le;					\
+			struct {						\
+				int8_t pad[ (sizeof (register_t) < sizeof (x))	\
+					? 0					\
+					: sizeof (register_t) - sizeof (x)];	\
+				x datum;					\
+			} be;							\
+		}
 
 struct sys_exit_args {
 	syscallarg(int) rval;
