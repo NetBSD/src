@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_fault.c	7.6 (Berkeley) 5/7/91
- *	$Id: vm_fault.c,v 1.11.2.2 1994/04/15 04:24:27 cgd Exp $
+ *	$Id: vm_fault.c,v 1.11.2.3 1994/04/15 06:28:02 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -114,7 +114,7 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 	vm_page_t		old_m;
 	vm_object_t		next_object;
 
-	cnt.v_faults++;		/* needs lock XXX */
+	cnt.v_vm_faults++;		/* needs lock XXX */
 /*
  *	Recovery actions
  */
