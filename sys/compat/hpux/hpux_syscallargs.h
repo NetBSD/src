@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_syscallargs.h,v 1.17 1998/02/19 03:34:17 thorpej Exp $	*/
+/*	$NetBSD: hpux_syscallargs.h,v 1.18 1998/10/03 19:33:32 eeh Exp $	*/
 
 /*
  * System call argument lists.
@@ -7,7 +7,17 @@
  * created from	NetBSD: syscalls.master,v 1.17 1998/02/19 00:37:43 thorpej Exp 
  */
 
-#define	syscallarg(x)	union { x datum; register_t pad; }
+#define	syscallarg(x)								\
+		union {								\
+			register_t pad;						\
+			struct { x datum; } le;					\
+			struct {						\
+				int8_t pad[ (sizeof (register_t) < sizeof (x))	\
+					? 0					\
+					: sizeof (register_t) - sizeof (x)];	\
+				x datum;					\
+			} be;							\
+		}
 
 struct hpux_sys_read_args {
 	syscallarg(int) fd;

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.67 1998/10/01 19:26:30 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.68 1998/10/03 19:43:27 eeh Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1073,8 +1073,6 @@ svr4_sys_pgrpsys(p, v, retval)
 		return EINVAL;
 	}
 }
-
-#define syscallarg(x)   union { x datum; register_t pad; }
 
 struct svr4_hrtcntl_args {
 	syscallarg(int) 			cmd;
