@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.2 1997/10/16 23:27:30 thorpej Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.3 1997/10/19 14:04:29 enami Exp $	*/
 
 #define	PCMCIADEBUG
 
@@ -44,6 +44,8 @@
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciachip.h>
 #include <dev/pcmcia/pcmciavar.h>
+
+#include "locators.h"
 
 #ifdef PCMCIADEBUG
 int	pcmcia_debug = 0;
@@ -233,7 +235,8 @@ pcmcia_submatch(parent, cf, aux)
 #endif
 	struct pcmcia_attach_args *paa = aux;
 
-	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != paa->pf->number)
+	if (cf->cf_loc[PCMCIACF_FUNCTION] != PCMCIACF_FUNCTION_DEFAULT &&
+	    cf->cf_loc[PCMCIACF_FUNCTION] != paa->pf->number)
 		return (0);
 
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
