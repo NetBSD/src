@@ -38,7 +38,8 @@ REQUIREMENTS
 FILES
    Source tree layout
 
-     BUILDING.mdoc  This document (in -mdoc troff format; the original copy).
+     doc/BUILDING.mdoc
+                    This document (in -mdoc troff format; the original copy).
 
      BUILDING       This document (in plaintext).
 
