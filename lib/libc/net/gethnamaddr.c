@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.7.2.2 1998/11/02 03:29:36 lukem Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.7.2.3 1999/01/14 06:59:09 lukem Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.7.2.2 1998/11/02 03:29:36 lukem Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.7.2.3 1999/01/14 06:59:09 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -495,14 +495,12 @@ gethostbyname2(name, af)
 	char *bp;
 	int size, len;
 	struct hostent *hp;
-	static ns_dtab dtab;
-
-	if (dtab[NS_FILES].cb == NULL) {
-		NS_FILES_CB(dtab, _gethtbyname, NULL);
-			/* override -UHESIOD */
-		NS_CB(dtab, NS_DNS, _dns_gethtbyname, NULL);
-		NS_NIS_CB(dtab, _yp_gethtbyname, NULL);
-	}
+	static ns_dtab	dtab[] = {
+		NS_FILES_CB(_gethtbyname, NULL),
+		{ NSSRC_DNS, _dns_gethtbyname, NULL },	/* force -DHESIOD */
+		NS_NIS_CB(_yp_gethtbyname, NULL),
+		{ NULL, NULL, NULL }
+	};
 
 	switch (af) {
 	case AF_INET:
@@ -615,15 +613,13 @@ gethostbyaddr(addr, len, af)
 	static const u_char tunnelled[] = { 0,0, 0,0, 0,0, 0,0, 0,0, 0,0 };
 	int size;
 	struct hostent *hp;
-	static ns_dtab dtab;
+	static ns_dtab	dtab[] = {
+		NS_FILES_CB(_gethtbyaddr, NULL),
+		{ NSSRC_DNS, _dns_gethtbyaddr, NULL },	/* force -DHESIOD */
+		NS_NIS_CB(_yp_gethtbyaddr, NULL),
+		{ NULL, NULL, NULL }
+	};
 	
-	if (dtab[NS_FILES].cb == NULL) {
-		NS_FILES_CB(dtab, _gethtbyaddr, NULL);
-			/* override -UHESIOD */
-		NS_CB(dtab, NS_DNS, _dns_gethtbyaddr, NULL);
-		NS_NIS_CB(dtab, _yp_gethtbyaddr, NULL);
-	}
-		
 	if (af == AF_INET6 && len == IN6ADDRSZ &&
 	    (!memcmp(uaddr, mapped, sizeof mapped) ||
 	     !memcmp(uaddr, tunnelled, sizeof tunnelled))) {

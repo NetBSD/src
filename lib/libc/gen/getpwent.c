@@ -1,10 +1,9 @@
-/*	$NetBSD: getpwent.c,v 1.21.2.5 1998/11/22 23:53:03 lukem Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.21.2.6 1999/01/14 07:02:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  * Portions Copyright (c) 1994, 1995, Jason Downs.  All rights reserved.
- * Portions Copyright (c) 1997 Luke Mewburn.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.21.2.5 1998/11/22 23:53:03 lukem Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.21.2.6 1999/01/14 07:02:16 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -666,14 +665,13 @@ __getpwcompat(type, uid, name)
 	uid_t		 uid;
 	const char	*name;
 {
-	static ns_dtab	dtab;
-
-	if (dtab[NS_FILES].cb == NULL) {
-		NS_FILES_CB(dtab, _bad_getpw, "files");
-		NS_DNS_CB(dtab, _dns_getpw, NULL);
-		NS_NIS_CB(dtab, _nis_getpw, NULL);
-		NS_COMPAT_CB(dtab, _bad_getpw, "compat");
-	}
+	static ns_dtab	dtab[] = {
+		NS_FILES_CB(_bad_getpw, NULL),
+		NS_DNS_CB(_dns_getpw, NULL),
+		NS_NIS_CB(_nis_getpw, NULL),
+		NS_COMPAT_CB(_bad_getpw, NULL),
+		{ NULL, NULL, NULL }
+	};
 
 	switch (type) {
 	case _PW_KEYBYNUM:
@@ -977,14 +975,13 @@ struct passwd *
 getpwent()
 {
 	int		r;
-	static ns_dtab	dtab;
-
-	if (dtab[NS_FILES].cb == NULL) {
-		NS_FILES_CB(dtab, _local_getpw, NULL);
-		NS_DNS_CB(dtab, _dns_getpw, NULL);
-		NS_NIS_CB(dtab, _nis_getpw, NULL);
-		NS_COMPAT_CB(dtab, _compat_getpwent, NULL);
-	}
+	static ns_dtab	dtab[] = {
+		NS_FILES_CB(_local_getpw, NULL),
+		NS_DNS_CB(_dns_getpw, NULL),
+		NS_NIS_CB(_nis_getpw, NULL),
+		NS_COMPAT_CB(_compat_getpwent, NULL),
+		{ NULL, NULL, NULL }
+	};
 
 	_pw_none = 0;
 	r = nsdispatch(NULL, dtab, NSDB_PASSWD, _PW_KEYBYNUM);
@@ -998,17 +995,16 @@ getpwnam(name)
 	const char *name;
 {
 	int		r;
-	static ns_dtab	dtab;
+	static ns_dtab	dtab[] = {
+		NS_FILES_CB(_local_getpw, NULL),
+		NS_DNS_CB(_dns_getpw, NULL),
+		NS_NIS_CB(_nis_getpw, NULL),
+		NS_COMPAT_CB(_compat_getpw, NULL),
+		{ NULL, NULL, NULL }
+	};
 
 	if (name == NULL || name[0] == '\0')
 		return (struct passwd *)NULL;
-
-	if (dtab[NS_FILES].cb == NULL) {
-		NS_FILES_CB(dtab, _local_getpw, NULL);
-		NS_DNS_CB(dtab, _dns_getpw, NULL);
-		NS_NIS_CB(dtab, _nis_getpw, NULL);
-		NS_COMPAT_CB(dtab, _compat_getpw, NULL);
-	}
 
 	r = nsdispatch(NULL, dtab, NSDB_PASSWD, _PW_KEYBYNAME, name);
 	return (r == NS_SUCCESS ? &_pw_passwd : (struct passwd *)NULL);
@@ -1019,14 +1015,13 @@ getpwuid(uid)
 	uid_t uid;
 {
 	int		r;
-	static ns_dtab	dtab;
-
-	if (dtab[NS_FILES].cb == NULL) {
-		NS_FILES_CB(dtab, _local_getpw, NULL);
-		NS_DNS_CB(dtab, _dns_getpw, NULL);
-		NS_NIS_CB(dtab, _nis_getpw, NULL);
-		NS_COMPAT_CB(dtab, _compat_getpw, NULL);
-	}
+	static ns_dtab	dtab[] = {
+		NS_FILES_CB(_local_getpw, NULL),
+		NS_DNS_CB(_dns_getpw, NULL),
+		NS_NIS_CB(_nis_getpw, NULL),
+		NS_COMPAT_CB(_compat_getpw, NULL),
+		{ NULL, NULL, NULL }
+	};
 
 	r = nsdispatch(NULL, dtab, NSDB_PASSWD, _PW_KEYBYUID, (int)uid);
 	return (r == NS_SUCCESS ? &_pw_passwd : (struct passwd *)NULL);
