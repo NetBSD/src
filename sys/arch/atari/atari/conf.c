@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.16 1996/09/07 12:40:27 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.17 1996/09/25 15:15:07 leo Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -131,8 +131,12 @@ cdev_decl(zs);
 cdev_decl(sd);
 cdev_decl(cd);
 cdev_decl(st);
-#include "grf.h"
+
+#include "grfcc.h"
+#include "grfet.h"
+#define	NGRF	(NGRFCC + NGRFET)
 cdev_decl(grf);
+
 #include "ite.h"
 cdev_decl(ite);
 #include "view.h"
