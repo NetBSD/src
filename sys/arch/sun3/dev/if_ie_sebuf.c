@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_sebuf.c,v 1.5 1998/07/05 00:51:14 jonathan Exp $	*/
+/*	$NetBSD: if_ie_sebuf.c,v 1.6 1998/10/01 20:05:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -78,8 +78,8 @@ static void ie_sebuf_run __P((struct ie_softc *));
  * zero/copy functions: OBIO can use the normal functions, but VME
  *    must do only byte or half-word (16 bit) accesses...
  */
-static void wcopy __P((const void *vb1, void *vb2, u_int l));
-static void wzero __P((void *vb, u_int l));
+static void *wmemcpy __P((void *dst, const void *src, size_t size));
+static void *wmemset __P((void *dst, int val, size_t size));
 
 
 /*
@@ -126,8 +126,8 @@ ie_sebuf_attach(parent, self, args)
 	sc->reset_586 = ie_sebuf_reset;
 	sc->chan_attn = ie_sebuf_attend;
 	sc->run_586   = ie_sebuf_run;
-	sc->sc_bcopy = wcopy;
-	sc->sc_bzero = wzero;
+	sc->sc_memcpy = wmemcpy;
+	sc->sc_memset = wmemset;
 
 	/* Control regs mapped by parent. */
 	sc->sc_reg = aa->regs;
@@ -152,7 +152,7 @@ ie_sebuf_attach(parent, self, args)
 	sc->sc_maddr = aa->buf;
 
 	/* Clear the memory. */
-	(sc->sc_bzero)(sc->sc_maddr, sc->sc_msize);
+	(sc->sc_memset)(sc->sc_maddr, 0, sc->sc_msize);
 
 	/*
 	 * XXX:  Unfortunately, the common driver code
@@ -230,52 +230,55 @@ ie_sebuf_run(sc)
 }
 
 /*
- * wcopy/wzero - like bcopy/bzero but largest access is 16-bits,
+ * wmemcpy/wmemset - like memcpy/memset but largest access is 16-bits,
  * and also does byte swaps...
  * XXX - Would be nice to have asm versions in some library...
  */
 
-static void
-wzero(vb, l)
+static void *
+wmemset(vb, val, l)
 	void *vb;
-	u_int l;
+	int val;
+	size_t l;
 {
 	u_char *b = vb;
 	u_char *be = b + l;
 	u_short *sp;
 
 	if (l == 0)
-		return;
+		return (vb);
 
 	/* front, */
 	if ((u_long)b & 1)
-		*b++ = 0;
+		*b++ = val;
 
 	/* back, */
 	if (b != be && ((u_long)be & 1) != 0) {
 		be--;
-		*be = 0;
+		*be = val;
 	}
 
 	/* and middle. */
 	sp = (u_short *)b;
 	while (sp != (u_short *)be)
-		*sp++ = 0;
+		*sp++ = val;
+
+	return (vb);
 }
 
-static void
-wcopy(vb1, vb2, l)
-	const void *vb1;
-	void *vb2;
-	u_int l;
+static void *
+wmemcpy(dst, src, l)
+	void *dst;
+	const void *src;
+	size_t l;
 {
-	const u_char *b1e, *b1 = vb1;
-	u_char *b2 = vb2;
+	const u_char *b1e, *b1 = src;
+	u_char *b2 = dst;
 	u_short *sp;
 	int bstore = 0;
 
 	if (l == 0)
-		return;
+		return (dst);
 
 	/* front, */
 	if ((u_long)b1 & 1) {
@@ -303,4 +306,6 @@ wcopy(vb1, vb2, l)
 	/* and back. */
 	if (l & 1)
 		*b2 = *b1e;
+
+	return (dst);
 }

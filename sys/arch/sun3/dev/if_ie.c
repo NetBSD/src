@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.27 1998/08/15 03:02:44 mycroft Exp $ */
+/*	$NetBSD: if_ie.c,v 1.28 1998/10/01 20:05:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -398,18 +398,18 @@ ie_setupram(sc)
 
 	/* SCP (address already chosen). */
 	scp = sc->scp;
-	(sc->sc_bzero)((char *) scp, sizeof(*scp));
+	(sc->sc_memset)((char *) scp, 0, sizeof(*scp));
 
 	/* ISCP */
 	off -= sizeof(*iscp);
 	iscp = (volatile void *) (sc->buf_area + off);
-	(sc->sc_bzero)((char *) iscp, sizeof(*iscp));
+	(sc->sc_memset)((char *) iscp, 0, sizeof(*iscp));
 	sc->iscp = iscp;
 
 	/* SCB */
 	off -= sizeof(*scb);
 	scb  = (volatile void *) (sc->buf_area + off);
-	(sc->sc_bzero)((char *) scb, sizeof(*scb));
+	(sc->sc_memset)((char *) scb, 0, sizeof(*scb));
 	sc->scb = scb;
 
 	/* Remainder is for buffers, etc. */
@@ -936,7 +936,7 @@ ieget(sc, ehp, to_bpf)
 	/*
 	 * Snarf the Ethernet header.
 	 */
-	(sc->sc_bcopy)((caddr_t)sc->cbuffs[head], (caddr_t)ehp, sizeof *ehp);
+	(sc->sc_memcpy)((caddr_t)ehp, (caddr_t)sc->cbuffs[head], sizeof(*ehp));
 
 	/*
 	 * As quickly as possible, check if this packet is for us.
@@ -1000,8 +1000,9 @@ ieget(sc, ehp, to_bpf)
 		int thismblen = m->m_len - thismboff;
 
 		len = min(thisrblen, thismblen);
-		(sc->sc_bcopy)((caddr_t)(sc->cbuffs[head] + thisrboff),
-		    mtod(m, caddr_t) + thismboff, (u_int)len);
+		(sc->sc_memcpy)(mtod(m, caddr_t) + thismboff,
+		    (caddr_t)(sc->cbuffs[head] + thisrboff),
+		    (u_int)len);
 		resid -= len;
 
 		if (len == thismblen) {
@@ -1195,7 +1196,7 @@ iestart(ifp)
 
 		buffer = sc->xmit_cbuffs[sc->xchead];
 		for (m = m0; m != 0; m = m->m_next) {
-			(sc->sc_bcopy)(mtod(m, caddr_t), buffer, m->m_len);
+			(sc->sc_memcpy)(buffer, mtod(m, caddr_t), m->m_len);
 			buffer += m->m_len;
 		}
 		len = max(m0->m_pkthdr.len, ETHER_MIN_LEN);
@@ -1373,7 +1374,7 @@ iememinit(sc)
 
 	/* First, zero all the memory. */
 	ptr = sc->buf_area;
-	(sc->sc_bzero)(ptr, sc->buf_area_sz);
+	(sc->sc_memset)(ptr, 0, sc->buf_area_sz);
 
 	/* Allocate tx/rx buffers. */
 	for (i = 0; i < NTXBUF; i++) {
@@ -1482,7 +1483,8 @@ mc_setup(sc, ptr)
 	cmd->com.ie_cmd_cmd = IE_CMD_MCAST | IE_CMD_LAST;
 	cmd->com.ie_cmd_link = SWAP(0xffff);
 
-	(sc->sc_bcopy)((caddr_t)sc->mcast_addrs, (caddr_t)cmd->ie_mcast_addrs,
+	(sc->sc_memcpy)((caddr_t)cmd->ie_mcast_addrs,
+	    (caddr_t)sc->mcast_addrs,
 	    sc->mcast_count * sizeof *sc->mcast_addrs);
 
 	cmd->ie_mcast_bytes =
@@ -1571,8 +1573,8 @@ ieinit(sc)
 		cmd->com.ie_cmd_cmd = IE_CMD_IASETUP | IE_CMD_LAST;
 		cmd->com.ie_cmd_link = SWAP(0xffff);
 
-		(sc->sc_bcopy)(LLADDR(ifp->if_sadl),
-		    (caddr_t)&cmd->ie_address, sizeof(cmd->ie_address));
+		(sc->sc_memcpy)((caddr_t)&cmd->ie_address,
+		    LLADDR(ifp->if_sadl), sizeof(cmd->ie_address));
 
 		if (cmd_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
 		    !(cmd->com.ie_cmd_status & IE_STAT_OK)) {
