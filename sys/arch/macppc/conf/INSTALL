@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.52 2002/01/03 04:34:21 mbw Exp $
+#	$NetBSD: INSTALL,v 1.53 2002/01/17 15:50:28 wiz Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -151,7 +151,8 @@ sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 usb*	at ohci?
 uhub*	at usb?
 uhub*	at uhub? port ? configuration ? interface ?
-ukbd*	at uhub? port ? configuration ? interface ?
+uhidev* 	at uhub? port ? configuration ? interface ?
+ukbd* 	at uhidev? reportid ?
 wskbd*	at ukbd? console ?
 
 pseudo-device	md		1	# memory disk
