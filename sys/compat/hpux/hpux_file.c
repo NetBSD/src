@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_file.c,v 1.7 1997/10/16 23:52:03 christos Exp $	*/
+/*	$NetBSD: hpux_file.c,v 1.8 1997/10/18 16:39:46 carrel Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -595,10 +595,10 @@ bsd_to_hpux_stat(sb, hsb)
 	hsb->hst_dev = (long)sb->st_dev;
 	hsb->hst_ino = (u_long)sb->st_ino;
 	hsb->hst_mode = (u_short)sb->st_mode;
-	if (st->st_nlink >= (1 << 15))
+	if (sb->st_nlink >= (1 << 15))
 		hsb->hst_nlink = (1 << 15) - 1;
 	else
-		hsb->hst_nlink = (u_short)st->st_nlink;
+		hsb->hst_nlink = (u_short)sb->st_nlink;
 	hsb->hst_uid = (u_long)sb->st_uid;
 	hsb->hst_gid = (u_long)sb->st_gid;
 	hsb->hst_rdev = (long)bsdtohpuxdev(sb->st_rdev);
@@ -632,10 +632,10 @@ bsd_to_hpux_ostat(sb, hsb)
 	hsb->hst_dev = (u_short)sb->st_dev;
 	hsb->hst_ino = (u_short)sb->st_ino;
 	hsb->hst_mode = (u_short)sb->st_mode;
-	if (st->st_nlink >= (1 << 15))
+	if (sb->st_nlink >= (1 << 15))
 		hsb->hst_nlink = (1 << 15) - 1;
 	else
-		hsb->hst_nlink = (u_short)st->st_nlink;
+		hsb->hst_nlink = (u_short)sb->st_nlink;
 	hsb->hst_uid = (u_short)sb->st_uid;
 	hsb->hst_gid = (u_short)sb->st_gid;
 	hsb->hst_rdev = (u_short)sb->st_rdev;
