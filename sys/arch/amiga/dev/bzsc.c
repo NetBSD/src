@@ -266,7 +266,7 @@ int bzsc_need_bump(struct sfas_softc *sc, void *ptr, int len)
 {
 	int	p;
 
-	p = (int)p & 0x03;
+	p = (int)ptr & 0x03;
 
 	if (p) {
 		p = 4-p;
