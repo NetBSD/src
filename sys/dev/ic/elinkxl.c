@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.18 1999/11/17 08:03:30 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.19 1999/11/17 17:56:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -96,6 +96,7 @@
 
 #include <dev/mii/miivar.h>
 #include <dev/mii/mii.h>
+#include <dev/mii/mii_bitbang.h>
 
 #include <dev/ic/elink3reg.h>
 /* #include <dev/ic/elink3var.h> */
@@ -131,12 +132,7 @@ static void ex_shutdown __P((void *));
 static void ex_start __P((struct ifnet *));
 static void ex_txstat __P((struct ex_softc *));
 static u_int16_t ex_mchash __P((u_char *));
-static void ex_mii_sendbits __P((struct ex_softc *, u_int, int));
 
-void ex_mii_setbit __P((void *, u_int16_t));
-void ex_mii_clrbit __P((void *, u_int16_t));
-u_int16_t ex_mii_readbit __P((void *, u_int16_t));
-void ex_mii_sync __P((struct ex_softc *));
 int ex_mii_readreg __P((struct device *, int, int));
 void ex_mii_writereg __P((struct device *, int, int, int));
 void ex_mii_statchg __P((struct device *));
@@ -179,6 +175,24 @@ struct ex_media ex_native_media[] = {
 	  ELINKMEDIA_100BASE_T4 },
 	{ 0,			NULL,		0,
 	  0 },
+};
+
+/*
+ * MII bit-bang glue.
+ */
+u_int32_t ex_mii_bitbang_read __P((struct device *));
+void ex_mii_bitbang_write __P((struct device *, u_int32_t));
+
+const struct mii_bitbang_ops ex_mii_bitbang_ops = {
+	ex_mii_bitbang_read,
+	ex_mii_bitbang_write,
+	{
+		ELINK_PHY_DATA,		/* MII_BIT_MDO */
+		ELINK_PHY_DATA,		/* MII_BIT_MDI */
+		ELINK_PHY_CLK,		/* MII_BIT_MDC */
+		ELINK_PHY_DIR,		/* MII_BIT_DIR_HOST_PHY */
+		0,			/* MII_BIT_DIR_PHY_HOST */
+	}
 };
 
 /*
@@ -1676,78 +1690,25 @@ ex_add_rxbuf(sc, rxd)
 	return (rval);
 }
 
-void
-ex_mii_setbit(v, bit)
-	void *v;
-	u_int16_t bit;
+u_int32_t
+ex_mii_bitbang_read(self)
+	struct device *self;
 {
-	struct ex_softc *sc = v;
-	u_int16_t val;
+	struct ex_softc *sc = (void *) self;
 
-	val = bus_space_read_2(sc->sc_iot, sc->sc_ioh, ELINK_W4_PHYSMGMT);
-	val |= bit;
+	/* We're already in Window 4. */
+	return (bus_space_read_2(sc->sc_iot, sc->sc_ioh, ELINK_W4_PHYSMGMT));
+}
+
+void
+ex_mii_bitbang_write(self, val)
+	struct device *self;
+	u_int32_t val;
+{
+	struct ex_softc *sc = (void *) self;
+
+	/* We're already in Window 4. */
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, ELINK_W4_PHYSMGMT, val);
-}
-
-void
-ex_mii_clrbit(v, bit)
-	void *v;
-	u_int16_t bit;
-{
-	struct ex_softc *sc = v;
-	u_int16_t val;
-
-	val = bus_space_read_2(sc->sc_iot, sc->sc_ioh, ELINK_W4_PHYSMGMT);
-	val &= ~bit;
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, ELINK_W4_PHYSMGMT, val);
-}
-
-u_int16_t
-ex_mii_readbit(v, bit)
-	void *v;
-	u_int16_t bit;
-{
-	struct ex_softc *sc = v;
-	u_int16_t val;
-
-	val = bus_space_read_2(sc->sc_iot, sc->sc_ioh, ELINK_W4_PHYSMGMT);
-	return (val & bit);
-}
-
-void
-ex_mii_sync(sc)
-	struct ex_softc *sc;
-{
-	int i;
-
-	/* We assume we're already in Window 4 */
-	ex_mii_clrbit(sc, ELINK_PHY_DIR);
-	for (i = 0; i < 32; i++) {
-		ex_mii_clrbit(sc, ELINK_PHY_CLK);
-		ex_mii_setbit(sc, ELINK_PHY_CLK);
-	}
-}
-
-void
-ex_mii_sendbits(sc, data, nbits)
-	struct ex_softc *sc;
-	u_int32_t data;
-	int nbits;
-{
-	int i;
-
-	/* We assume we're already in Window 4 */
-	ex_mii_setbit(sc, PHYSMGMT_DIR);
-	for (i = 1 << (nbits -1); i; i = i >>  1) {
-		ex_mii_clrbit(sc, ELINK_PHY_CLK);
-		ex_mii_readbit(sc, ELINK_PHY_CLK);
-		if (data & i)
-			ex_mii_setbit(sc, ELINK_PHY_DATA);
-		else
-			ex_mii_clrbit(sc, ELINK_PHY_DATA);
-		ex_mii_setbit(sc, ELINK_PHY_CLK);
-		ex_mii_readbit(sc, ELINK_PHY_CLK);
-	}
 }
 
 int
@@ -1756,43 +1717,18 @@ ex_mii_readreg(v, phy, reg)
 	int phy, reg;
 {
 	struct ex_softc *sc = (struct ex_softc *)v;
-	int val = 0, i, err;
+	int val;
 
 	if ((sc->ex_conf & EX_CONF_INTPHY) && phy != ELINK_INTPHY_ID)
 		return 0;
 
 	GO_WINDOW(4);
 
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, ELINK_W4_PHYSMGMT, 0);
-
-	ex_mii_sync(sc);
-	ex_mii_sendbits(sc, MII_COMMAND_START, 2);
-	ex_mii_sendbits(sc, MII_COMMAND_READ, 2);
-	ex_mii_sendbits(sc, phy, 5);
-	ex_mii_sendbits(sc, reg, 5);
-
-	ex_mii_clrbit(sc, ELINK_PHY_DIR);
-	ex_mii_clrbit(sc, ELINK_PHY_CLK);
-	ex_mii_setbit(sc, ELINK_PHY_CLK);
-	ex_mii_clrbit(sc, ELINK_PHY_CLK);
-
-	err = ex_mii_readbit(sc, ELINK_PHY_DATA);
-	ex_mii_setbit(sc, ELINK_PHY_CLK);
-
-	/* Even if an error occurs, must still clock out the cycle. */
-	for (i = 0; i < 16; i++) {
-		val <<= 1;
-		ex_mii_clrbit(sc, ELINK_PHY_CLK);
-		if (err == 0 && ex_mii_readbit(sc, ELINK_PHY_DATA))
-			val |= 1;
-		ex_mii_setbit(sc, ELINK_PHY_CLK);
-	}
-	ex_mii_clrbit(sc, ELINK_PHY_CLK);
-	ex_mii_setbit(sc, ELINK_PHY_CLK);
+	val = mii_bitbang_readreg(v, &ex_mii_bitbang_ops, phy, reg);
 
 	GO_WINDOW(1);
 
-	return (err ? 0 : val);
+	return (val);
 }
 
 void
@@ -1806,16 +1742,7 @@ ex_mii_writereg(v, phy, reg, data)
 
 	GO_WINDOW(4);
 
-	ex_mii_sync(sc);
-	ex_mii_sendbits(sc, MII_COMMAND_START, 2);
-	ex_mii_sendbits(sc, MII_COMMAND_WRITE, 2);
-	ex_mii_sendbits(sc, phy, 5);
-	ex_mii_sendbits(sc, reg, 5);
-	ex_mii_sendbits(sc, MII_COMMAND_ACK, 2);
-	ex_mii_sendbits(sc, data, 16);
-
-	ex_mii_clrbit(sc, ELINK_PHY_CLK);
-	ex_mii_setbit(sc, ELINK_PHY_CLK);
+	mii_bitbang_writereg(v, &ex_mii_bitbang_ops, phy, reg, data);
 
 	GO_WINDOW(1);
 }
