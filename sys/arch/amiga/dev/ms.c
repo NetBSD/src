@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.24 2002/10/23 09:10:34 jdolecek Exp $ */
+/*	$NetBSD: ms.c,v 1.25 2003/02/05 00:02:31 perry Exp $ */
 
 /*
  * based on:
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.24 2002/10/23 09:10:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.25 2003/02/05 00:02:31 perry Exp $");
 
 /*
  * Mouse driver.
@@ -126,7 +126,7 @@ const struct cdevsw ms_cdevsw = {
 
 /*
  * Given a dev_t, return a pointer to the port's hardware state.
- * Assumes the unit to be valid, so do *not* utilize this in msopen().
+ * Assumes the unit to be valid, so do *not* use this in msopen().
  */
 #define	MS_DEV2MSPORT(d) \
     (&(((struct ms_softc *)getsoftc(ms_cd, MS_UNIT(d)))->sc_ports[MS_PORT(d)]))

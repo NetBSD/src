@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.14 2003/01/28 22:35:15 wiz Exp $       */
+/*      $NetBSD: pccons.c,v 1.15 2003/02/05 00:02:36 perry Exp $       */
 
 /*
  * Copyright 1997
@@ -85,7 +85,7 @@
 **    The driver has been cleaned up a little as part of the StrongARM 
 **    porting work.  The main modifications have been to change the 
 **    driver to use the bus_space_ macros, re-organise the sget and sput
-**    mechanisms and utilise a more robust set of i8042 keybord controller
+**    mechanisms and use a more robust set of i8042 keybord controller
 **    routines which are now external to this module and also used by the
 **    opms mouse driver.
 **

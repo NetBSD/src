@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.4 1997/10/03 15:53:01 christos Exp $
+$NetBSD: README,v 1.5 2003/02/05 00:02:25 perry Exp $
 @(#) Header: README,v 1.18 97/06/12 14:23:56 leres Exp  (LBL)
 
 LIBPCAP 0.4
@@ -27,7 +27,7 @@ User-level Packet Capture''.  A compressed postscript version is in:
 	ftp://ftp.ee.lbl.gov/papers/bpf-usenix93.ps.Z.
 
 Although most packet capture interfaces support in-kernel filtering,
-libpcap utilizes in-kernel filtering only for the BPF interface.
+libpcap uses in-kernel filtering only for the BPF interface.
 On systems that don't have BPF, all packets are read into user-space
 and the BPF filters are evaluated in the libpcap library, incurring
 added overhead (especially, for selective filters).  Ideally, libpcap
@@ -36,7 +36,7 @@ with the underlying kernel subsystem, but this is not yet implemented.
 
 BPF is standard in 4.4BSD, BSD/386, NetBSD, and FreeBSD.  DEC OSF/1
 uses the packetfilter interface but has been extended to accept BPF
-filters (which libpcap utilizes).  Also, you can add BPF filter support
+filters (which libpcap uses).  Also, you can add BPF filter support
 to Ultrix using the kernel source and/or object patches available in:
 
 	ftp://gatekeeper.dec.com/pub/DEC/net/bpfext42.tar.Z.

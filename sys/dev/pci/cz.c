@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.25 2003/01/31 00:07:41 thorpej Exp $	*/
+/*	$NetBSD: cz.c,v 1.26 2003/02/05 00:02:37 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -40,7 +40,7 @@
  * Some notes:
  *
  *	- The Cyclades-Z has fully automatic hardware (and software!)
- *	  flow control.  We only utilize RTS/CTS flow control here,
+ *	  flow control.  We only use RTS/CTS flow control here,
  *	  and it is implemented in a very simplistic manner.  This
  *	  may be an area of future work.
  *
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.25 2003/01/31 00:07:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.26 2003/02/05 00:02:37 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

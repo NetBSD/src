@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.h,v 1.6 2001/02/06 04:32:29 wdk Exp $	*/
+/*	$NetBSD: prom.h,v 1.7 2003/02/05 00:02:35 perry Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ struct mips_prom {
 	void	(*prom_reset)	__P((void)) __attribute__((__noreturn__));
 
 	/*
-	 * called to utilize prom to boot new image.  After the booted
+	 * called to use prom to boot new image.  After the booted
 	 * program returns control can either be returned to the
 	 * original caller of the exec routine or to the prom monitor.
 	 * (to return to the original caller, the new program must
