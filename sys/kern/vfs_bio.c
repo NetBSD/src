@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.122.2.2 2004/06/22 08:56:51 tron Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.122.2.3 2004/06/22 09:01:03 tron Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.122.2.2 2004/06/22 08:56:51 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.122.2.3 2004/06/22 09:01:03 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -330,7 +330,7 @@ void
 bufinit(void)
 {
 	struct bqueues *dp;
-	int smallmem;
+	int use_std;
 	u_int i;
 
 	/*
@@ -360,7 +360,15 @@ bufinit(void)
 	pool_init(&bufpool, sizeof(struct buf), 0, 0, 0, "bufpl", NULL);
 
 	/* On "small" machines use small pool page sizes where possible */
-	smallmem = (physmem < atop(16*1024*1024));
+	use_std = (physmem < atop(16*1024*1024));
+
+	/*
+	 * Also use them on systems that can map the pool pages using
+	 * a direct-mapped segment.
+	 */
+#ifdef PMAP_MAP_POOLPAGE
+	use_std = 1;
+#endif
 
 	for (i = 0; i < NMEMPOOLS; i++) {
 		struct pool_allocator *pa;
@@ -368,7 +376,7 @@ bufinit(void)
 		u_int size = 1 << (i + MEMPOOL_INDEX_OFFSET);
 		char *name = malloc(8, M_TEMP, M_WAITOK);
 		snprintf(name, 8, "buf%dk", 1 << i);
-		pa = (size <= PAGE_SIZE && smallmem)
+		pa = (size <= PAGE_SIZE && use_std)
 			? &pool_allocator_nointr
 			: &bufmempool_allocator;
 		pool_init(pp, size, 0, 0, 0, name, pa);
