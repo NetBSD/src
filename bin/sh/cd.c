@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.27 1999/07/09 03:05:49 christos Exp $	*/
+/*	$NetBSD: cd.c,v 1.28 2001/11/14 18:04:36 he Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: cd.c,v 1.27 1999/07/09 03:05:49 christos Exp $");
+__RCSID("$NetBSD: cd.c,v 1.28 2001/11/14 18:04:36 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -243,7 +243,7 @@ updatepwd(dir)
 		prevdir = curdir;
 		curdir = NULL;
 		getpwd();
-		setvar("PWD", curdir, VEXPORT|VTEXTFIXED);
+		setvar("PWD", curdir, VEXPORT);
 		INTON;
 		return;
 	}
@@ -274,7 +274,7 @@ updatepwd(dir)
 		ckfree(prevdir);
 	prevdir = curdir;
 	curdir = savestr(stackblock());
-	setvar("PWD", curdir, VEXPORT|VTEXTFIXED);
+	setvar("PWD", curdir, VEXPORT);
 	INTON;
 }
 
