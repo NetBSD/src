@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.3 1995/09/12 07:28:06 jonathan Exp $	*/
+/*	$NetBSD: tc.c,v 1.4 1995/09/25 20:33:26 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -426,7 +426,7 @@ tc_ds_ioasic_intr_establish(ca, handler, val)
 	    panic("tc_intr_establish: tc_enable not set\n");
 #endif
 
-	(*tc_enable_interrupt) (ca->ca_slotpri, handler, unit, 1);
+	(*tc_enable_interrupt) (ca->ca_slotpri, handler, (void*)unit, 1);
 }
 
 void

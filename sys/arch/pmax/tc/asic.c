@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.5 1995/09/12 07:28:09 jonathan Exp $	*/
+/*	$NetBSD: asic.c,v 1.6 1995/09/25 20:33:28 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -296,7 +296,7 @@ asic_intr_establish(ca, handler, val)
 		 ca->ca_name, val, ca->ca_slot, ca->ca_slotpri,
 		 asic_slots[ca->ca_slot].as_val);
 #endif	/*DEBUG*/
-	tc_enable_interrupt(ca->ca_slotpri, handler, (int)val, 1);
+	tc_enable_interrupt(ca->ca_slotpri, handler, val, 1);
 
 #else	/* Alpha AXP */
 
