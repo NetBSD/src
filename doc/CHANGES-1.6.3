@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.49 2004/03/28 22:24:24 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.50 2004/03/29 05:35:57 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -295,3 +295,8 @@ sys/dev/ic/wdc.c			patch
 
 	Wait a bit more after reset before re-enabling interrupts. PR#24904
 	[bouyer, ticket #1637]
+
+usr.sbin/sushi/sushi.c			1.11-1.12
+
+	Don't report curses initialization failure using curses.
+	[martin, ticket #1638]
