@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.217 1999/01/09 22:10:18 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.218 1999/02/20 09:57:35 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -670,7 +670,6 @@ initcpu()
 
 void doboot __P((void))
 	__attribute__((__noreturn__));
-void via_shutdown __P((void));
 
 /*
  * Set registers on exec.
@@ -764,7 +763,7 @@ cpu_reboot(howto, bootstr)
 
 	if (howto & RB_HALT) {
 		printf("System halted.\n\n");
-		via_shutdown();
+		via_powerdown();
 #ifndef MRG_ADB
 		/*
 		 * Shut down machines whose power functions are accessed
