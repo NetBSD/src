@@ -6,29 +6,27 @@ Installation is supported from several media types, including:
 	FTP
 
 No matter which installation medium you choose, you'll need to have a
-floppy disk (either 1.2M or 1.44 will work).  You'll put the
-appropriate install or upgrade floppy image onto this disk, depending
-on whether you're installing NetBSD for the first time, or upgrading a
-previous installation, and on whether you have a machine with only
-four megabytes of memory.
+floppy disk (either 1.2M or 1.44 will work).  You'll put the boot
+floppy image (boot-12G.fs) onto this disk, which contains software to
+install or upgrade your NetBSD system.
 
-If you are installing for the first time, you want an inst12D.fs or
-insts12D.fs floppy image. The second is the "small installation" disk
-for four meg machines. If you are upgrading, you want an upgr12D.fs or
-an upgrs12D.fs floppy.
+[Note: previous versions of NetBSD used several floppy images,
+including several kernel/boot floppies depending on hardware
+configuration, an install floppy, and an upgrade floppy. NetBSD 1.2G
+only requires a single floppy for all tasks and configurations.]
 
 If you are using a UN*X-like system to write the floppy images to
-disks, you should use the "dd" command to copy the file system images
-(.fs files) directly to the raw floppy disks.  It is suggested that
-you read the dd(1) manual page or ask your system administrator to
+disks, you should use the "dd" command to copy the file system image
+(.fs file) directly to the raw floppy disk.  It is suggested that you
+read the dd(1) manual page or ask your system administrator to
 determine the correct set of arguments to use; it will be slightly
 different from system to system, and a comprehensive list of the
 possibilities is beyond the scope of this document.
 
-If you are using DOS to write the floppy images to disks, you should
+If you are using DOS to write the floppy image to disk, you should
 use the "rawrite" utility, provided in the "i386/utilities" directory
-of the NetBSD distribution.  It will write the file system images (.fs
-files) to disks.
+of the NetBSD distribution.  It will write the file system image (.fs
+file) to disks.
 
 Note that, when installing or upgrading, the floppy can be
 write-protected if you wish. These systems mount ramdisks as their
@@ -91,13 +89,13 @@ following:
 	In the above example, "<dist_directories>" are the
 	distribution sets' directories, for the distribution sets you
 	wish to place on the tape.  For instance, to put the
-	"kern12D", "base12D" and "etc12D" distributions on tape (in
+	"kern12G", "base12G" and "etc12G" distributions on tape (in
 	order to do the absolute minimum installation to a new disk),
 	you would do the following:
 
-		cd .../NetBSD-1.2D		# the top of the tree
+		cd .../NetBSD-1.2G		# the top of the tree
 		cd i386/binary
-		tar cf <tape_device> base12D etc12D kern12D
+		tar cf <tape_device> base12G etc12G kern12G
 
 	(Note that you still need to fill in "<tape_device>" in the
 	example.)
@@ -173,7 +171,7 @@ following:
         Place the distribution sets you wish to upgrade somewhere in
         your current file system tree.  At a bare minimum, you must
         upgrade the "base" and "kern" binary distribution, and so must
-        put the "base12D" and "kern12D" sets somewhere in your file
+        put the "base12G" and "kern12G" sets somewhere in your file
         system.  If you wish, you can do the other sets, as well, but
         you should NOT upgrade the "etc" distribution; the "etc"
         distribution contains system configuration files that you

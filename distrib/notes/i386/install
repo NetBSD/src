@@ -31,12 +31,12 @@ question.  If you wish to stop the installation, you may hit Control-C
 at any time, but if you do, you'll have to begin the installation
 process again from scratch.
 
-        Boot your machine using the appropriate installation floppy.
-        The boot loader will start, and will print a countdown and
-        begin booting. You will likely see one "file not found"
-        warning from the boot loader -- ignore this as it is normal,
-        and indicates the boot loader failed to find a normal kernel
-        to boot before trying to boot a compressed kernel.
+        Boot your machine using the boot floppy.  The boot loader will
+        start, and will print a countdown and begin booting. You will
+        likely see one "file not found" warning from the boot loader
+        -- ignore this as it is normal, and indicates the boot loader
+        failed to find a normal kernel to boot before trying to boot a
+        compressed kernel.
 
         If the boot loader messages do not appear in a reasonable
         amount of time, you either have a bad boot floppy or a
@@ -74,6 +74,9 @@ process again from scratch.
 	init(8) cannot find /etc/rc.  Do not be alarmed, these are
 	completely normal.  When you reach the prompt asking you for a
 	shell name, just hit return.
+
+	You will be asked if you wish to install or upgrade your
+	system or go to a shell prompt. Enter "install".
 
 	You will be presented with a welcome message and a prompt,
 	asking if you wish to proceed with the installation process.
@@ -222,12 +225,12 @@ process again from scratch.
 
                 Run the "Extract" command once for each distribution
                 set you wish to install.  For instance, if you wish to
-                install the "kern12D" distribution set, followed by the
-                "base12" distribution set, and finally the "etc12"
+                install the "kern12G" distribution set, followed by the
+                "base12G" distribution set, and finally the "etc12G"
                 distribution set, use the commands:
-			Extract kern12D
-			Extract base12
-			Extract etc12
+			Extract kern12G
+			Extract base12G
+			Extract etc12G
 
 		For each extraction, it will ask you if the extraction
 		should be verbose.  If you reply affirmatively, it
@@ -282,9 +285,9 @@ process again from scratch.
 		hitting return at the prompt.
 
 		Use the "Extract" command to extract the distribution
-		set.  For instance, if you're extracting the "base12"
+		set.  For instance, if you're extracting the "base12G"
 		set, use the command:
-			Extract base12
+			Extract base12G
 		You will be asked if you wish the extraction to be
 		verbose.  If you reply affirmatively, the name of each
 		file being extracted will be printed.
@@ -403,8 +406,8 @@ Completing your installation:
         Once you have finished extracting all of the distribution sets
         that you wish to install, and are back at the "#" prompt, you
         are ready to configure your system.  The configuration utility
-        expects that you have installed the "kern12D", "base12" and
-        "etc12" distribution sets.  If you have not, you will not be
+        expects that you have installed the "kern12G", "base12G" and
+        "etc12G" distribution sets.  If you have not, you will not be
         able to run it successfully (nor will you have a functional
         system, in any case).  To configure your newly-installed
         NetBSD system, run the command "Configure".  It will ask you
@@ -414,13 +417,13 @@ Completing your installation:
         system.
 
 
-Congratulations, you have successfully installed NetBSD 1.2D.  When you
+Congratulations, you have successfully installed NetBSD 1.2G.  When you
 reboot into NetBSD, you should log in as "root" at the login prompt.
 There is no initial password, but if you're using the machine in a
 networked environment, you should create yourself an account and
 protect it and the "root" account with good passwords.
 
-Some of the files in the NetBSD 1.2D distribution might need to be
+Some of the files in the NetBSD 1.2G distribution might need to be
 tailored for your site.  In particular, the /etc/sendmail.cf file will
 almost definitely need to be adjusted, and other files in /etc will
 probably need to be modified, as well.  If you are unfamiliar with
