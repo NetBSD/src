@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530reg.h,v 1.3 1995/06/19 13:15:08 briggs Exp $ */
+/*	$NetBSD: z8530reg.h,v 1.4 1995/08/20 13:24:05 leo Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,16 +66,16 @@
  */
 #ifndef LOCORE
 struct zschan {
-#if BYTE_ORDER == BIG_ENDIAN
-	u_char	zc_csr;		/* control and status, and indirect access */
-	u_char	zc_xxx0;
-	u_char	zc_data;	/* data */
-	u_char	zc_xxx1;
+#if (BYTE_ORDER == BIG_ENDIAN) && !defined(atari)
+	volatile u_char	zc_csr;		/* ctrl,status, and indirect access */
+	u_char		zc_xxx0;
+	volatile u_char	zc_data;	/* data */
+	u_char		zc_xxx1;
 #else
-	u_char	zc_xxx0;
-	u_char	zc_csr;		/* control and status, and indirect access */
-	u_char	zc_xxx1;
-	u_char	zc_data;	/* data */
+	u_char		zc_xxx0;
+	volatile u_char	zc_csr;		/* ctrl,status, and indirect access */
+    	u_char		zc_xxx1;
+    	volatile u_char	zc_data;	/* data */
 #endif
 };
 
