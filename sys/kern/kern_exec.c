@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.152 2002/04/23 15:11:25 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.153 2002/08/25 21:18:15 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.152 2002/04/23 15:11:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.153 2002/08/25 21:18:15 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -86,7 +86,7 @@ extern int			nexecs_builtin;
 static const struct execsw	**execsw = NULL;
 static int			nexecs;
 
-int	exec_maxhdrsz;		/* must not be static - netbsd32 needs it */
+u_int	exec_maxhdrsz;		/* must not be static - netbsd32 needs it */
 
 #ifdef LKM
 /* list of supported emulations */
@@ -276,7 +276,8 @@ check_exec(struct proc *p, struct exec_package *epp)
 
 		/* check limits */
 		if ((epp->ep_tsize > MAXTSIZ) ||
-		    (epp->ep_dsize > p->p_rlimit[RLIMIT_DATA].rlim_cur))
+		    (epp->ep_dsize >
+		     (u_quad_t)p->p_rlimit[RLIMIT_DATA].rlim_cur))
 			error = ENOMEM;
 
 		if (!error)
@@ -322,7 +323,8 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		syscallarg(char * const *)	argp;
 		syscallarg(char * const *)	envp;
 	} */ *uap = v;
-	int			error, i;
+	int			error;
+	u_int			i;
 	struct exec_package	pack;
 	struct nameidata	nid;
 	struct vattr		attr;

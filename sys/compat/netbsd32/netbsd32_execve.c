@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.10 2002/06/06 10:12:42 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.11 2002/08/25 21:18:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.10 2002/06/06 10:12:42 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.11 2002/08/25 21:18:18 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.10 2002/06/06 10:12:42 fvdl Ex
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 /* this is provided by kern/kern_exec.c */
-extern int exec_maxhdrsz;
+extern u_int exec_maxhdrsz;
 #if defined(LKM) || defined(_LKM)
 extern struct lock exec_lock;
 #endif
