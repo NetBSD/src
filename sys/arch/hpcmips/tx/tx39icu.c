@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39icu.c,v 1.14 2001/09/23 14:32:53 uch Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.15 2002/01/02 13:13:20 uch Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -69,6 +69,7 @@
 #else
 #define	TX_INTR	cpu_intr	/* locore_mips3 directly call this */
 #endif
+void TX_INTR(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 
 #ifdef TX39ICUDEBUG
 #define	DPRINTF(arg) printf arg

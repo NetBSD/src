@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.102 2002/01/02 13:13:18 uch Exp $
+# $NetBSD: VR41XX,v 1.1 2002/01/02 13:13:19 uch Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,16 +20,14 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-include		"arch/hpcmips/conf/std.hpcmips.tx39"
-
-#ident 		"GENERIC-$Revision: 1.102 $"
+#ident 		"GENERIC-$Revision: 1.1 $"
 
 maxusers	16
 
+# Support for specific models of H/PC MIPS
 options 	VR4102			# NEC VR4102
 options 	VR4111			# NEC VR4111
 options 	VR4121			# NEC VR4121
-options 	TX392X			# Toshiba TX3922
 
 # Standard system options
 options 	DDB			# in-kernel debugger
@@ -139,6 +137,15 @@ vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_530
 vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_SIGMARION
 vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_530A
 vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_700
+
+# Workstation Console attachments
+bivideo0	at	mainbus0
+hpcfb*		at	bivideo0
+wsdisplay*	at	hpcfb?
+wskbd*		at	hpckbd? mux 1
+wsmouse*	at	vrpiu? mux 0
+btnmgr0		at	mainbus0
+wskbd*		at	btnmgr0 mux 1
 
 #
 # hpcmips isa? bus irq locator means:
@@ -313,75 +320,7 @@ vrisab5	at vrc4172gpio0 isaportoffset 0x1000000
 isa5	at vrisab5
 pcic0	at isa5 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00010003
 
-#
-# Sharp Telios HC-AJ1, HC-VJ1C
-#
-txcsbus1	at tx39biu? platform SHARP_TELIOS
-
-# IO module manager (virtual bridge) DO NOT DELETE
-txioman* at txsim?
-# iochip 0 TX39 internal IO
-#	 1 TX39 internal MFIO
-#	 2 BETTY IO
-#	(3) ITE IO notyet
-#	(4) Plum2 IO (EXTPW[0:2]) notyet
-hpcioman1 at txioman? platform SHARP_TELIOS_HCAJ1
-hpcin*	at hpcioman1 iochip 1 evtype BUTTON  id BTN_APP0   port 7  edge 1 # IE button
-hpcin*	at hpcioman1 iochip 1 evtype BUTTON  id BTN_APP1   port 8  edge 1 # Mail button
-hpcin*	at hpcioman1 iochip 1 evtype PMEVENT id PME_AC	   port 6  edge 1 # AC-power
-hpcin*	at hpcioman1 iochip 0 evtype EVENT   id COM0_CTS   port 27 edge 3
-hpcin*	at hpcioman1 iochip 0 evtype EVENT   id COM0_DCD   port 29 edge 3
-hpcout*	at hpcioman1 iochip 1 evtype POWER   id PWCTL_LED  port 4  flags 3 #(blink)
-
-hpcioman2 at txioman? platform SHARP_TELIOS_HCVJ1C_JP
-hpcin*	at hpcioman2 iochip 1 evtype BUTTON  id BTN_APP0   port 7  edge 1 # IE button
-hpcin*	at hpcioman2 iochip 1 evtype BUTTON  id BTN_APP1   port 8  edge 1 # Mail button
-hpcin*	at hpcioman2 iochip 1 evtype BUTTON  id BTN_APP2   port 11 edge 1 # Video button
-hpcin*	at hpcioman2 iochip 1 evtype BUTTON  id BTN_APP3   port 12 edge 1 # Head phone button
-hpcin*	at hpcioman2 iochip 1 evtype PMEVENT id PME_AC     port 6
-hpcin*	at hpcioman2 iochip 0 evtype EVENT   id COM0_CTS   port 27 edge 3
-hpcin*	at hpcioman2 iochip 1 evtype EVENT   id COM0_DCD   port 13 edge 3
-hpcout*	at hpcioman2 iochip 1 evtype POWER   id PWCTL_COM0 port 15
-hpcout*	at hpcioman2 iochip 1 evtype POWER   id PWCTL_LED  port 4  flags 3 #(blink)
-
-options 	USE_POLL
-
-# PHILIPS UCB1200 / TOSHIBA TC35413F modem/audio analog front-end
-ucb*		at tx39sib? slot 0
-ucbtp*		at ucb?
-ucbsnd*		at ucb?
-ucbio*		at ucb?
-
-# PHILIPS 74ALVC*1624? / TOSHIBA TC5165BFTS buffer chip (keyboard)
-# chip select: CS1, IRQ: 3:12/4:12 (irq1 108)
-# interrupt-mode don't work. use polling mode.
-tc5165buf*	at txcsbus1 iocs 1 iocsbase 0 iocssize 0x100 iocswidth 16
-hpckbd*		at tc5165buf?
-#wsmouse*	at ucbtp? mux 0
-
-# TC6358TB(Plum2)
-#  register space: CS3,
-#  I/O space: MCS0 & MCS1,  IRQ: 8:21 (IO[5] positive)
-#
-plum*		at txcsbus? regcs 3 regcswidth 32 iocs 4 iocswidth 32 memcs 5 memcswidth 32 irq1 277
-plumicu*	at plum?
-plumpower*	at plum?
-plumvideo*	at plum?
-hpcfb*		at plumvideo?
-plumpcmcia*	at plum?
-ohci*	at plum?
-
-# Workstation Console attachments
-bivideo0	at	mainbus0
-hpcfb*		at	bivideo0
-wsdisplay*	at	hpcfb?
-wskbd*		at	hpckbd? mux 1
-wsmouse*	at	vrpiu? mux 0
-btnmgr0		at	mainbus0
-wskbd*		at	btnmgr0 mux 1
-
 # PCMCIA bus support
-pcmcia* at plumpcmcia? controller ? socket ?
 pcmcia*	at pcic? controller 0 socket ?
 
 # PCMCIA IDE disk
@@ -416,93 +355,8 @@ scsibus* at esp?
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
-# USB Hubs
-usb*	at ohci?
-uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
-
-# USB HID device
-uhidev*	at uhub? port ? configuration ? interface ?
-
-# USB Mice
-ums*	at uhidev? reportid ?
-wsmouse*	at ums? mux 0
-
-# USB Keyboards
-ukbd*	at uhidev? reportid ?
-wskbd*	at ukbd? console ? mux 1
-
-# USB Generic HID devices
-uhid*	at uhidev? reportid ?
-
-# USB Printer
-ulpt*	at uhub? port ? configuration ? interface ?
-
-# USB Modem
-umodem*	at uhub? port ? configuration ?
-ucom*	at umodem?
-
-# USB Mass Storage
-umass*	at uhub? port ? configuration ? interface ?
-atapibus* at umass? channel ?
-scsibus* at umass? channel ?
-
-# USB audio
-uaudio*	at uhub? port ? configuration ?
-
-# USB MIDI
-umidi* at uhub? port ? configuration ?
-
-# USB IrDA bridges
-#uirda* at uhub? port ? configuration ? interface ?
-#irframe* at uirda?
-
-# USB Ethernet adapters
-aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
-cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
-kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
-
-# Prolofic PL2301/PL2302 host-to-host adapter
-upl*	at uhub? port ?
-
-# Serial adapters
-# FTDI FT8U100AX serial adapter
-uftdi*	at uhub? port ?
-ucom*	at uftdi? portno ?
-
-uplcom*	at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
-ucom*	at uplcom? portno ?
-
-umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
-ucom*	at umct? portno ?
-
-# Diamond Multimedia Rio 500
-urio*	at uhub? port ?
-
-# USB Handspring Visor
-uvisor*	at uhub? port ?
-ucom*	at uvisor?
-
-# USB scanners
-uscanner* at uhub? port ?
-
-# USB scanners that use SCSI emulation, e.g., HP5300
-usscanner* at uhub? port ?
-scsibus* at usscanner? channel ?
-
-# Y@P firmware loader
-uyap* at uhub? port ?
-
-# USB Generic driver
-ugen*	at uhub? port ?
-
-audio*	at uaudio?
-
-# Pseudo-Devices
-
 pseudo-device	loop		1	# network loopback
 pseudo-device	ppp		2	# serial-line IP ports
-pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter	16	# packet filter ports
 pseudo-device	ipfilter		# IP filter, NAT
