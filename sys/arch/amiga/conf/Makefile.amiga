@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.36 1996/02/03 00:43:54 mycroft Exp $
+#	$NetBSD: Makefile.amiga,v 1.37 1996/02/09 02:21:17 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -36,7 +36,7 @@ AMIGA=	../..
 INCLUDES=	-I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Damiga
 CFLAGS=		${DEBUG} -O2 -Werror -mc68020 -msoft-float
-AFLAGS=		-D_LOCORE
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
 
 ### find out what to use for libkern
@@ -69,8 +69,8 @@ NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 DRIVER_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 
-NORMAL_S=	${CC} -traditional-cpp -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} -c $<
-NORMAL_S_C=	${CC} -traditional-cpp -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
+NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
+NORMAL_S_C=	${CC} ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
 
 .SUFFIXES: .o .g
 
@@ -161,9 +161,9 @@ SRCS=	${AMIGA}/amiga/locore.s \
 	vnode_if.c param.c ioconf.c ${CFILES} ${SFILES}
 depend: .depend
 .depend: ${SRCS} assym.h vnode_if.h param.c
-	mkdep -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} ${AMIGA}/amiga/locore.s
+	mkdep ${AFLAGS} ${CPPFLAGS} ${AMIGA}/amiga/locore.s
 	mkdep -a ${CFLAGS} ${CPPFLAGS} vnode_if.c param.c ioconf.c ${CFILES}
-	mkdep -a -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 	mkdep -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${AMIGA}/amiga/genassym.c
 
 
