@@ -1,0 +1,176 @@
+Mon May 24 1999 - Fri May 28 1999
+
+vs SSH
+	KAME -> SSH
+
+	phase1 で敵がパケット解けない無くて失敗。
+	RC5, IDEA, CAST, blowfish 全滅…ぬぬぬ
+		racoon の keylength 間違ってた。
+		phase 1 が一瞬で expire してた。
+		lifetime 送ってこない時 0 入れてた。default を入れる。
+		isakmp-test.ssh.fiで確認
+
+	再送を一回に数発送って来る。
+	racoon は再送なパケットを悪いパケットと思って exchange を終らせてた。
+	暗号化されてるパケットを期待してる時も同じ。
+	結局、悪いパケットか再送なパケットかの判断が出来ないので無視する。
+
+	敵が遅くて、こっちが先に再送をあきらめちゃう。
+
+	ばっちり
+		phase 1: RC5
+		phase 2: ESP 1DES+SHA1
+
+vs Altiga
+	Altiga -> KAME
+	phase1: modp768,MD5,3DES
+	phase2: ESP DES+MD5 tunnel mode
+
+	SA の方向チェックに引っかかって、phase 2 の inbound SA が突っ込めない。
+	なおして phase 2 交換は OK
+
+	向こうからの ESP パケットをほどいて、後ろに投げようとするが
+	なんと inbound の policy check にひっかかって転送できない…
+		a --- A === B --- b
+
+		a -> b  B	行き
+		b -> a  A	帰り A->a に投げる時に引っかかる。
+		とりあえず b->a A を消して挑戦。OK
+
+			PFKEYv2実装する時になおす。
+
+	敵が netmask = 255.255.255.255 で ID type = IPv4net で送って来た。
+	あり？ -> あり。
+
+vs CheckPoint
+	ふられた。
+	テスト中だったみたい。
+
+vs HITACHI
+	KAME -> HITACHI
+	HITACHI -> KAME
+
+	つなぎっぱなしで色々。
+	勝手に落して勝手につなぐ。
+	racoon 側 IV の計算にミス。Informatinal message の decode に失敗。
+	phase 1 の rekeying に失敗すると pst が残る時がある。
+		phase 1 がエラーになった時の処理がいまいち。
+
+	INVALID-COOKIE はログして無視するべき。新規SAを張ろうとして、
+	いんちきProposal 投げられると終る。
+	暗号化された Informatinal message は信用する。
+	それ以外はログして捨てるべき。
+
+vs freeSWAN
+	freeSWAN -> KAME
+		config file問題: phase 1のtransportのdiffie-hellmanはmust
+			config fileに間違いがあったら叫ぶべき。
+		lifetime attributeのparser間違い
+		lifetime attributeのparseに失敗すると、0を設定しちゃう
+			defaultに戻す
+	KAME -> freeSWAN
+		長いproposalを投げるとparseしてくれない
+		先方がquick modeの最後で死ぬ(SADB_UPDATE相当の処理でへくる)
+
+vs Netlock
+	あっちinitiatorでやってみるが、こっち側のphase 2 proposal parserの問題
+	(ANDが解釈できない)でへくる。phase 1はok。以後再挑戦せず。
+
+vs VPNet
+	VPN->KAME AH SHA1 
+
+	phase1: modp768,MD5,3DES
+	phase2: AH SHA1 tunnel mode
+		AH checksum error
+		MD5 試す予定。なんか問題があって今回はお開きらしい。
+		
+	phase2: ESP DES+MD5 tunnel mode
+		双方向OK
+
+	CERT のデモ見せてもらう予定
+		相手がいないとダメだって。
+		CERT は別にセキュアに取得しなくても良いらしい。
+
+vs ashley-laurent (vpcom.com)
+	どっち向きもok。
+
+	ashley -> KAME
+		phase 1: 1DES+SHA1
+		phase 2: ESP 1DES+SHA1
+	KAME -> ashley
+		phase 1: 3DES+MD5
+		phase 2: ESP 1DES+SHA1
+
+	ashley-laurentがresponderのとき、proposal id #を書き換えて
+	返しているのでプロトコル的にはいけない(racoonは黙って受けてしまう)。
+	lifetimeの値は書き変わって返って来る。
+
+分かった事
+	- 再送送りまくりテストはした方が良い。
+	- phase1, phase2 の rekeying は激しくやるべき。
+	- 勝手に落して勝手に接続するテスト。
+	- proposal parserが甘い。proposal id #が同じ2つ以上のプロトコル
+	  (例: AH+ESP)を正しく処理できない。
+		とりあえず安全策はいれた
+			initiatorのときはconfig fileに書いてあっても捨てる
+			responderのときは返答候補から外す
+		cleanupはしたがまだ不完全
+		pfkeyとともに直すべし
+
+question
+	- informational exchange
+		- 1st exchange in phase 1 の返事は cookie 埋めて返すか？
+		- phase 1 で暗号できるまでは、来た奴そのまま返せば良いのでは？
+		- phase 1 と言えども msg-id は入れる。
+	- informatinal message
+		暗号化されてなければ無視するべきだ。(DoS attack)
+	- retransmmission
+		古いパケットと、期待しない payload の判断が面倒なので、
+		パケットをチェックして、期待しないpayloadが入っていれば
+		悲鳴あげて無視。暗号化されてなくてもアラームあげて無視。
+		mulformed packet は全部無視しないとDOS攻撃に対抗出来ない。
+		1st exchange を偽造されると、いつまでたっても正しい相手と
+		通信出来ない。
+	- HASH(3) の 0 は何であんの？
+		HASH(3) = prf(SKEYID_a, 0 | M-ID | Ni_b | Nr_b)
+	- broadcastいきIKEパケット
+		無視すべき。
+		さらに、IKEはsrcとdstを単にひっくりかえして投げるので、
+		srcがbroadcastのパケットが原因でbroadcast stormになりかねない。
+		-> どうしよう?
+
+racoon
+	- zonbie-pst しなりお
+		phase 2 完了
+		片方reboot
+		reboot してない方から phase 2 に行く
+		reboot したほうから invalid-cookie 
+	- phase 2 の id-type deirective いる？
+	- first contact 処理しろよな。-> とりあえずしなくて良い。
+	- phase 1 の SA payload のSPI って？
+		option にした方が良いかも。
+		isakmp-test.ssh はオプション
+	- SADB_DELETE から delete payload 出すようにする。
+		けど DELETE 2発受けてracoon死んだ。
+		再現しない。
+	- cool log
+		racoon 終らせないとlog みれないのはいや
+		syslog 化？
+	- SPD 関係の処理は？
+		PFKEYv3やるとき考える。
+	- racoon.conf base の acceptable かのチェック
+	- cool SA parser
+		error check
+		acceptable check
+		length check
+	- sys/queue.h 化
+		SLISTはFreeBSD onlyなので禁止。LIST_hogeにしてね。
+	- 送ったproposalと返って来たproposalがちゃんと合致するかチェック
+		いまはinitiatorのくせに受身。
+
+IPsec
+	- sadb_expire が片方しかあがってこないぞ？
+	- 固有アドレスのproxy モードがsetkey 出来ない。
+	spdadd 209.154.67.34 10.64.91.10 any -P ipsec esp/require/209.154.64.91;
+		PFKEYv2 やるときなおす。
+
