@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.18 2000/08/26 03:33:49 thorpej Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.19 2000/09/04 00:31:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.18 2000/08/26 03:33:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.19 2000/09/04 00:31:59 thorpej Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -94,13 +94,13 @@ alpha_send_ipi(u_long cpu_id, u_long ipimask)
 #ifdef DIAGNOSTIC
 	if (cpu_id >= hwrpb->rpb_pcs_cnt ||
 	    cpu_info[cpu_id].ci_softc == NULL)
-		panic("alpha_sched_ipi: bogus cpu_id");
+		panic("alpha_send_ipi: bogus cpu_id");
+	if (((1UL << cpu_id) & cpus_running) == 0)
+		panic("alpha_send_ipi: CPU %ld not running", cpu_id);
 #endif
 
 	atomic_setbits_ulong(&cpu_info[cpu_id].ci_ipis, ipimask);
-printf("SENDING IPI TO %lu\n", cpu_id);
 	alpha_pal_wripir(cpu_id);
-printf("IPI SENT\n");
 }
 
 /*
@@ -110,10 +110,12 @@ void
 alpha_broadcast_ipi(u_long ipimask)
 {
 	u_long i, cpu_id = cpu_number();
+	u_long cpumask;
+
+	cpumask = cpus_running &= ~(1UL << cpu_id);
 
 	for (i = 0; i < hwrpb->rpb_pcs_cnt; i++) {
-		if (cpu_info[i].ci_softc == NULL ||
-		    cpu_info[i].ci_cpuid == cpu_id)
+		if ((cpumask & (1UL << i)) == 0)
 			continue;
 		alpha_send_ipi(i, ipimask);
 	}
@@ -127,13 +129,13 @@ alpha_multicast_ipi(u_long cpumask, u_long ipimask)
 {
 	u_long i;
 
+	cpumask &= cpus_running;
 	cpumask &= ~(1UL << cpu_number());
 	if (cpumask == 0)
 		return;
 
 	for (i = 0; i < hwrpb->rpb_pcs_cnt; i++) {
-		if (cpu_info[i].ci_softc == NULL ||
-		    ((1UL << cpu_info[i].ci_cpuid) & cpumask) == 0)
+		if ((cpumask & (1UL << i)) == 0)
 			continue;
 		alpha_send_ipi(i, ipimask);
 	}
@@ -214,7 +216,7 @@ alpha_ipi_discard_fpu(void)
 void
 alpha_ipi_pause(void)
 {
-	u_long cpu_mask = (1UL << cpu_number());
+	u_long cpumask = (1UL << cpu_number());
 	int s;
 
 	/*
@@ -229,8 +231,9 @@ alpha_ipi_pause(void)
 #endif
 
 	/* Spin with interrupts disabled until we're resumed. */
-	while (cpus_paused & cpu_mask)
-		alpha_mb();	/* spin */
+	do {
+		alpha_mb();
+	} while (cpus_paused & cpumask);
 
 #if defined(DDB) || defined(KGDB)
 	/* XXX Restore register state from cpu_info into trapframe */

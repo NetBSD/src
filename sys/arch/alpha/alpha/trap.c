@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.59 2000/08/15 22:16:17 thorpej Exp $ */
+/* $NetBSD: trap.c,v 1.60 2000/09/04 00:31:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.59 2000/08/15 22:16:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.60 2000/09/04 00:31:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,24 +295,16 @@ trap(a0, a1, a2, entry, framep)
 	int call_debugger = 1;
 #endif
 
-	uvmexp.traps++;
 	p = curproc;
+
+	uvmexp.traps++;			/* XXXSMP: NOT ATOMIC */
 	ucode = 0;
 	user = (framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) != 0;
 	if (user)  {
 		sticks = p->p_sticks;
 		p->p_md.md_tf = framep;
-#if	0
-/* This is to catch some wierd stuff on the UDB (mj) */
-		if (framep->tf_regs[FRAME_PC] > 0 && 
-		    framep->tf_regs[FRAME_PC] < 0x120000000) {
-			printf("PC Out of Whack\n");
-			printtrap(a0, a1, a2, entry, framep, 1, user);
-		}
-#endif
-	} else {
+	} else
 		sticks = 0;		/* XXX bogus -Wuninitialized warning */
-	}
 
 	switch (entry) {
 	case ALPHA_KENTRY_UNA:
@@ -322,7 +314,10 @@ trap(a0, a1, a2, entry, framep)
 		 * and per-process unaligned-access-handling flags).
 		 */
 		if (user) {
-			if ((i = unaligned_fixup(a0, a1, a2, p)) == 0)
+			KERNEL_PROC_LOCK(p);
+			i = unaligned_fixup(a0, a1, a2, p);
+			KERNEL_PROC_UNLOCK(p);
+			if (i == 0)
 				goto out;
 
 			ucode = a0;		/* VA */
@@ -369,7 +364,7 @@ trap(a0, a1, a2, entry, framep)
 		 * These are always fatal in kernel, and should never
 		 * happen.  (Debugger entry is handled in XentIF.)
 		 */
-		if (!user) {
+		if (user == 0) {
 #if defined(DDB)
 			/*
 			 * ...unless a debugger is configured.  It will
@@ -402,7 +397,10 @@ trap(a0, a1, a2, entry, framep)
 			break;
 
 		case ALPHA_IF_CODE_OPDEC:
-			if ((i = handle_opdec(p, &ucode)) == 0)
+			KERNEL_PROC_LOCK(p);
+			i = handle_opdec(p, &ucode);
+			KERNEL_PROC_UNLOCK(p);
+			if (i == 0)
 				goto out;
 			break;
 
@@ -456,24 +454,37 @@ trap(a0, a1, a2, entry, framep)
 			register vm_map_t map;
 			vm_prot_t ftype;
 			int rv;
-			extern vm_map_t kernel_map;
 
-			/*
-			 * If it was caused by fuswintr or suswintr,
-			 * just punt.  Note that we check the faulting
-			 * address against the address accessed by
-			 * [fs]uswintr, in case another fault happens
-			 * when they are running.
-			 */
-			if (!user &&
-			    p != NULL &&
-			    p->p_addr->u_pcb.pcb_onfault ==
-			      (unsigned long)fswintrberr &&
-			    p->p_addr->u_pcb.pcb_accessaddr == a0) {
-				framep->tf_regs[FRAME_PC] =
-				    p->p_addr->u_pcb.pcb_onfault;
-				p->p_addr->u_pcb.pcb_onfault = 0;
-				goto out;
+			if (user)
+				KERNEL_PROC_LOCK(p);
+			else {
+				if (p == NULL) {
+					/*
+					 * If there is no current process,
+					 * it can be nothing but a fatal
+					 * error (i.e. memory in this case
+					 * must be wired).
+					 */
+					goto dopanic;
+				}
+
+				/*
+				 * If it was caused by fuswintr or suswintr,
+				 * just punt.  Note that we check the faulting
+				 * address against the address accessed by
+				 * [fs]uswintr, in case another fault happens
+				 * when they are running.
+				 */
+				if (p->p_addr->u_pcb.pcb_onfault ==
+					(unsigned long)fswintrberr &&
+				    p->p_addr->u_pcb.pcb_accessaddr == a0) {
+					framep->tf_regs[FRAME_PC] =
+					    p->p_addr->u_pcb.pcb_onfault;
+					p->p_addr->u_pcb.pcb_onfault = 0;
+					goto out;
+				}
+
+				KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 			}
 
 			/*
@@ -484,8 +495,8 @@ trap(a0, a1, a2, entry, framep)
 			 * The last can occur during an exec() copyin where the
 			 * argument space is lazy-allocated.
 			 */
-			if (!user && (a0 >= VM_MIN_KERNEL_ADDRESS ||
-			    p == NULL || p->p_addr->u_pcb.pcb_onfault == 0))
+			if (user == 0 && (a0 >= VM_MIN_KERNEL_ADDRESS ||
+			    p->p_addr->u_pcb.pcb_onfault == 0))
 				map = kernel_map;
 			else {
 				vm = p->p_vmspace;
@@ -502,12 +513,18 @@ trap(a0, a1, a2, entry, framep)
 				break;
 #ifdef DIAGNOSTIC
 			default:		/* XXX gcc -Wuninitialized */
+				if (user)
+					KERNEL_PROC_UNLOCK(p);
+				else
+					KERNEL_UNLOCK();
 				goto dopanic;
 #endif
 			}
 	
 			va = trunc_page((vaddr_t)a0);
-			rv = uvm_fault(map, va, 0, ftype);
+			rv = uvm_fault(map, va,
+			    (a1 == ALPHA_MMCSR_INVALTRANS) ?
+			    VM_FAULT_INVALID : VM_FAULT_PROTECT, ftype);
 			/*
 			 * If this was a stack access we keep track of the
 			 * maximum accessed stack size.  Also, if vm_fault
@@ -529,10 +546,16 @@ trap(a0, a1, a2, entry, framep)
 					rv = KERN_INVALID_ADDRESS;
 			}
 			if (rv == KERN_SUCCESS) {
+				if (user)
+					KERNEL_PROC_UNLOCK(p);
+				else
+					KERNEL_UNLOCK();
 				goto out;
 			}
 
-			if (!user) {
+			if (user == 0) {
+				KERNEL_UNLOCK();
+
 				/* Check for copyin/copyout fault */
 				if (p != NULL &&
 				    p->p_addr->u_pcb.pcb_onfault != 0) {
@@ -550,9 +573,9 @@ trap(a0, a1, a2, entry, framep)
 				       p->p_cred && p->p_ucred ?
 				       p->p_ucred->cr_uid : -1);
 				i = SIGKILL;
-			} else {
+			} else
 				i = SIGSEGV;
-			}
+			KERNEL_PROC_UNLOCK(p);
 			break;
 		    }
 
@@ -569,7 +592,9 @@ trap(a0, a1, a2, entry, framep)
 #ifdef DEBUG
 	printtrap(a0, a1, a2, entry, framep, 1, user);
 #endif
+	KERNEL_PROC_LOCK(p);
 	trapsignal(p, i, ucode);
+	KERNEL_PROC_UNLOCK(p);
 out:
 	if (user)
 		userret(p, framep->tf_regs[FRAME_PC], sticks);
@@ -626,8 +651,12 @@ syscall(code, framep)
 	if ((framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) == 0)
 		panic("syscall");
 #endif
-	uvmexp.syscalls++;
+
 	p = curproc;
+
+	KERNEL_PROC_LOCK(p);
+
+	uvmexp.syscalls++;
 	p->p_md.md_tf = framep;
 	opc = framep->tf_regs[FRAME_PC] - 4;
 	sticks = p->p_sticks;
@@ -731,10 +760,15 @@ syscall(code, framep)
 	scdebug_ret(p, code, error, rval);
 #endif
 
+	KERNEL_PROC_UNLOCK(p);
+
 	userret(p, framep->tf_regs[FRAME_PC], sticks);
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
+	if (KTRPOINT(p, KTR_SYSRET)) {
+		KERNEL_PROC_LOCK(p);
 		ktrsysret(p, code, error, rval[0]);
+		KERNEL_PROC_UNLOCK(p);
+	}
 #endif
 }
 
@@ -751,10 +785,15 @@ child_return(arg)
 	 * Return values in the frame set by cpu_fork().
 	 */
 
+	KERNEL_PROC_UNLOCK(p);
+
 	userret(p, p->p_md.md_tf->tf_regs[FRAME_PC], 0);
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
+	if (KTRPOINT(p, KTR_SYSRET)) {
+		KERNEL_PROC_LOCK(p);
 		ktrsysret(p, SYS_fork, 0, 0);
+		KERNEL_PROC_UNLOCK(p);
+	}
 #endif
 }
 
@@ -769,7 +808,20 @@ ast(framep)
 	register struct proc *p;
 	u_quad_t sticks;
 
+	curcpu()->ci_astpending = 0;
+
 	p = curproc;
+
+	/*
+	 * We may not have a current process to do AST processing
+	 * on.  This happens on multiprocessor systems in which
+	 * at least one CPU simply has no current process to run,
+	 * but roundrobin() (called via hardclock()) kicks us to
+	 * attempt to preempt the process running on our CPU.
+	 */
+	if (p == NULL)
+		return;
+
 	sticks = p->p_sticks;
 	p->p_md.md_tf = framep;
 
@@ -778,7 +830,6 @@ ast(framep)
 
 	uvmexp.softs++;
 
-	curcpu()->ci_astpending = 0;
 	if (p->p_flag & P_OWEUPC) {
 		p->p_flag &= ~P_OWEUPC;
 		ADDUPROF(p);

@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.61 2000/08/26 03:27:45 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.62 2000/09/04 00:32:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.61 2000/08/26 03:27:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.62 2000/09/04 00:32:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ cpu_exit(p)
  * Copy and update the pcb and trap frame, making the child ready to run.
  * 
  * Rig the child's kernel stack so that it will start out in
- * switch_trampoline() and call child_return() with p2 as an
+ * proc_trampoline() and call child_return() with p2 as an
  * argument. This causes the newly-created child process to go
  * directly to user level with an apparent return value of 0 from
  * fork(), while the parent process returns normally.
@@ -225,7 +225,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		up->u_pcb.pcb_context[2] =
 		    (u_int64_t)arg;			/* s2: arg */
 		up->u_pcb.pcb_context[7] =
-		    (u_int64_t)switch_trampoline;	/* ra: assembly magic */
+		    (u_int64_t)proc_trampoline;		/* ra: assembly magic */
 	}
 }
 

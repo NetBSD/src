@@ -1,7 +1,7 @@
-/* $NetBSD: multiproc.s,v 1.5 1999/12/16 20:17:23 thorpej Exp $ */
+/* $NetBSD: multiproc.s,v 1.6 2000/09/04 00:31:59 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(5, "$NetBSD: multiproc.s,v 1.5 1999/12/16 20:17:23 thorpej Exp $")
+__KERNEL_RCSID(5, "$NetBSD: multiproc.s,v 1.6 2000/09/04 00:31:59 thorpej Exp $")
 
 /*
  * Multiprocessor glue code.
@@ -53,7 +53,8 @@ inc5:	.stabs	__FILE__,132,0,0,inc5; .loc	1 __LINE__
  * make the function call look right, and call cpu_hatch() to finish
  * starting up the processor.
  *
- * We are provided an argument in $27 (pv) (which will be our cpu_info).
+ * We are provided an argument in $27 (pv).  It will be a pointer to
+ * our cpu_info.
  */
 NESTED_NOPROFILE(cpu_spinup_trampoline,0,0,ra,0,0)
 	mov	pv, s0			/* squirrel away argument */
@@ -61,24 +62,39 @@ NESTED_NOPROFILE(cpu_spinup_trampoline,0,0,ra,0,0)
 	br	pv, 1f			/* compute new GP */
 1:	LDGP(pv)
 
+	/* Write new KGP. */
+	mov	s0, a0
+	call_pal PAL_OSF1_wrkgp
+
+	/* Store our CPU info in SysValue. */
+	mov	s0, a0
+	call_pal PAL_OSF1_wrval
+
+	/* Switch to this CPU's idle thread. */
+	ldq	a0, CPU_INFO_IDLE_PCB_PADDR(s0)
+	SWITCH_CONTEXT
+
 	/* Invalidate TLB and I-stream. */
 	ldiq	a0, -2			/* TBIA */
 	call_pal PAL_OSF1_tbi
 	call_pal PAL_imb
 
-	/* Load KGP with current GP. */
-	mov	gp, a0
-	call_pal PAL_OSF1_wrkgp		/* clobbers a0, t0, t8-t11 */
-
-	/* Restore argument and write it in SysValue. */
-	mov	s0, a0
-	call_pal PAL_OSF1_wrval
+	/* Make sure the FPU is turned off. */
+	mov	zero, a0
+	call_pal PAL_OSF1_wrfen
 
 	/* Restore argument and call cpu_hatch() */
 	mov	s0, a0
 	CALL(cpu_hatch)
 
-	/* cpu_hatch() returned!  Just halt (forever). */
-2:	call_pal PAL_halt
-	br	zero, 2b
+#if 0
+	/* Acquire the scheduler lock, and then jump into the idle loop! */
+	CALL(sched_lock_idle)
+	mov	zero, s0		/* no outgoing proc */
+	jmp	zero, idle
+#else
+	ldiq	 a0, ALPHA_PSL_IPL_0	/* enable interrupts */
+	call_pal PAL_OSF1_swpipl
+2:	br	zero, 2b		/* turn, turn, turn */
+#endif
 	END(cpu_spinup_trampoline)
