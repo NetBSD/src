@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_common.c,v 1.8 1998/02/11 01:37:54 thorpej Exp $ */
+/* $NetBSD: sgmap_common.c,v 1.9 1998/03/23 07:51:25 mjacob Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.8 1998/02/11 01:37:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.9 1998/03/23 07:51:25 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,7 @@ alpha_sgmap_init(t, sgmap, name, wbase, sgvabase, sgvasize, ptesize, ptva,
 	 * Create the extent map used to manage the virtual address
 	 * space.
 	 */
-	sgmap->aps_ex = extent_create(name, sgvabase, sgvasize - 1,
+	sgmap->aps_ex = extent_create((char *)name, sgvabase, sgvasize - 1,
 	    M_DMAMAP, NULL, 0, EX_NOWAIT|EX_NOCOALESCE);
 	if (sgmap->aps_ex == NULL)
 		panic("alpha_sgmap_init: can't create extent map");
@@ -135,22 +135,46 @@ alpha_sgmap_init(t, sgmap, name, wbase, sgvabase, sgvasize, ptesize, ptva,
 }
 
 int
-alpha_sgmap_alloc(map, len, sgmap, flags)
+alpha_sgmap_alloc(map, origlen, sgmap, flags)
 	bus_dmamap_t map;
-	bus_size_t len;
+	bus_size_t origlen;
 	struct alpha_sgmap *sgmap;
 	int flags;
 {
 	int error;
+	bus_size_t len = origlen, boundary;
 
 #ifdef DIAGNOSTIC
 	if (map->_dm_flags & DMAMAP_HAS_SGMAP)
 		panic("alpha_sgmap_alloc: already have sgva space");
 #endif
+	/*
+	 * Add a range for spill page.
+	 */
+	len += NBPG;
+
+	/*
+	 * And add an additional amount in case of ALLOCNOW.
+	 */
+	if (flags & BUS_DMA_ALLOCNOW)
+		len += NBPG;
 
 	map->_dm_sgvalen = round_page(len);
+
+	/*
+	 * ARGH! If the addition of spill pages bumped us over our
+	 * boundary, we have to 2x the boundary limit.
+	 */
+	boundary = map->_dm_boundary;
+	while (boundary && boundary < map->_dm_sgvalen)
+		boundary <<= 1;
+#if	0
+	printf("len %x -> %x, _dm_sgvalen %x _dm_boundary %x boundary %x\n",
+	origlen, len, map->_dm_sgvalen, map->_dm_boundary, boundary);
+#endif
+
 	error = extent_alloc(sgmap->aps_ex, map->_dm_sgvalen, NBPG,
-	    map->_dm_boundary, (flags & BUS_DMA_NOWAIT) ? EX_NOWAIT :
+	    boundary, (flags & BUS_DMA_NOWAIT) ? EX_NOWAIT :
 	    EX_WAITOK, &map->_dm_sgva);
 
 	if (error == 0)

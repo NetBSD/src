@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.8 1998/02/04 00:10:30 thorpej Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.9 1998/03/23 07:51:26 mjacob Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.8 1998/02/04 00:10:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.9 1998/03/23 07:51:26 mjacob Exp $");
 
 #ifdef SGMAP_LOG
 
@@ -54,7 +54,7 @@ u_long			__C(SGMAP_TYPE,_log_unloads);
 #endif /* SGMAP_LOG */
 
 #ifdef SGMAP_DEBUG
-int			__C(SGMAP_TYPE,_debug);
+int			__C(SGMAP_TYPE,_debug) = 0;
 #endif
 
 SGMAP_PTE_TYPE		__C(SGMAP_TYPE,_prefetch_spill_page_pte);
@@ -124,15 +124,15 @@ __C(SGMAP_TYPE,_load)(t, map, buf, buflen, p, flags, sgmap)
 	/*
 	 * Allocate the necessary virtual address space for the
 	 * mapping.  Round the size, since we deal with whole pages.
-	 * Allocate one extra PTE to deal with systems that implement
-	 * prefetch for memory -> device DMA, otherwise we could get
-	 * a machine check during the last page of the transfer.
+	 *
+	 * alpha_sgmap_alloc will deal with the appropriate spill page
+	 * allocations.
+	 *
 	 */
 	endva = round_page(va + buflen);
 	va = trunc_page(va);
 	if ((map->_dm_flags & DMAMAP_HAS_SGMAP) == 0) {
-		error = alpha_sgmap_alloc(map, (endva - va) + NBPG, sgmap,
-		    flags);
+		error = alpha_sgmap_alloc(map, (endva - va), sgmap, flags);
 		if (error)
 			return (error);
 	}
@@ -172,8 +172,9 @@ __C(SGMAP_TYPE,_load)(t, map, buf, buflen, p, flags, sgmap)
 	map->_dm_pteidx = pteidx;
 	map->_dm_ptecnt = 0;
 
-	for (; va < endva; va += NBPG, pte += SGMAP_PTE_SPACING,
-	    map->_dm_ptecnt++) {
+	for (; va < endva; va += NBPG, pteidx++,
+		pte = &page_table[pteidx * SGMAP_PTE_SPACING],
+		map->_dm_ptecnt++) {
 		/*
 		 * Get the physical address for this segment.
 		 */
@@ -221,10 +222,9 @@ __C(SGMAP_TYPE,_load)(t, map, buf, buflen, p, flags, sgmap)
 #endif
 
 #if defined(SGMAP_DEBUG) && defined(DDB)
-	if (__C(SGMAP_TYPE,_debug))
+	if (__C(SGMAP_TYPE,_debug) > 1)
 		Debugger();
 #endif
-
 	map->dm_mapsize = buflen;
 	map->dm_nsegs = 1;
 	return (0);
@@ -275,7 +275,7 @@ __C(SGMAP_TYPE,_unload)(t, map, sgmap)
 	struct alpha_sgmap *sgmap;
 {
 	SGMAP_PTE_TYPE *pte, *page_table = sgmap->aps_pt;
-	int ptecnt;
+	int ptecnt, pteidx;
 #ifdef SGMAP_LOG
 	struct sgmap_log_entry *sl;
 
@@ -298,9 +298,11 @@ __C(SGMAP_TYPE,_unload)(t, map, sgmap)
 	/*
 	 * Invalidate the PTEs for the mapping.
 	 */
-	for (ptecnt = map->_dm_ptecnt,
-	    pte = &page_table[map->_dm_pteidx * SGMAP_PTE_SPACING];
-	    ptecnt != 0; ptecnt--, pte += SGMAP_PTE_SPACING) {
+	for (ptecnt = map->_dm_ptecnt, pteidx = map->_dm_pteidx,
+		pte = &page_table[pteidx * SGMAP_PTE_SPACING];
+		ptecnt != 0;
+		ptecnt--, pteidx++,
+		pte = &page_table[pteidx * SGMAP_PTE_SPACING]) {
 #ifdef SGMAP_DEBUG
 		if (__C(SGMAP_TYPE,_debug))
 			printf("sgmap_unload:     pte = %p, *pte = 0x%lx\n",
@@ -315,7 +317,6 @@ __C(SGMAP_TYPE,_unload)(t, map, sgmap)
 	 */
 	if ((map->_dm_flags & BUS_DMA_ALLOCNOW) == 0)
 		alpha_sgmap_free(map, sgmap);
-
 	/*
 	 * Mark the mapping invalid.
 	 */
