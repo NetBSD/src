@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.4 1998/11/10 22:45:44 dbj Exp $	*/
+/*	$NetBSD: zs.c,v 1.5 1999/01/02 12:47:50 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -211,12 +211,13 @@ zs_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-
 	struct zsc_softc *zsc = (void *) self;
 	struct zsc_attach_args zsc_args;
 	volatile struct zschan *zc;
 	struct zs_chanstate *cs;
 	int s, zs_unit, channel;
+
+	printf("\n");
 
 	zs_unit = zsc->zsc_dev.dv_unit;
 
@@ -667,7 +668,7 @@ zscnprobe(cp)
     zs_major = maj;
     zs_consunit = 0;
     zsaddr[0] = (void *)IIOV(NEXT_P_SCC);
-		cp->cn_dev = makedev(maj, zs_consunit);
+    cp->cn_dev = makedev(maj, zs_consunit);
     zs_conschan = zs_get_chan_addr(0, zs_consunit);
   } else {
     cp->cn_pri = CN_DEAD;
