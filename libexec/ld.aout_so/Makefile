@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2002/01/31 19:15:23 tv Exp $
+#	$NetBSD: Makefile,v 1.35 2002/02/06 20:36:18 thorpej Exp $
 
 .include <bsd.own.mk>
 .if (${OBJECT_FMT} == "a.out")
@@ -29,7 +29,7 @@ $(PROG):
 .S.o:
 	${CPP} ${.IMPSRC} | ${AS} ${ASFLAGS} -o ${.TARGET} -
 .elif (${OBJECT_FMT} == "ELF" && \
-       (${MACHINE_ARCH} == "arm32" || \
+       (${MACHINE_ARCH} == "arm" || \
         ${MACHINE_ARCH} == "i386" || \
         ${MACHINE_ARCH} == "m68k" || \
         ${MACHINE_ARCH} == "sparc"))
