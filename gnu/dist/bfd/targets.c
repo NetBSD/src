@@ -809,6 +809,9 @@ const bfd_target * const bfd_target_vector[] = {
 #ifdef IRIX_CORE
 	&irix_core_vec,
 #endif
+#ifdef NETBSD_CORE
+	&netbsd_core_vec,
+#endif
 #ifdef OSF_CORE
 	&osf_core_vec,
 #endif
