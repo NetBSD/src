@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/03/28 22:03:03 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2002/03/29 01:52:46 thorpej Exp $
 
 .include "../../../../Makefile.inc"
 .include <bsd.own.mk>
@@ -17,10 +17,6 @@ all:
 	${MDSETIMAGE} -v -s gzboot.sym ${KIMG}
 	${OBJCOPY} -O binary gzboot.sym ${GZIMG}
 	gzip -9f ${GZIMG}
-
-release: check_RELEASEDIR
-	-mkdir -p ${RELEASEDIR}/binary/gzimg
-	cp -p ${GZIMG}.gz ${RELEASEDIR}/binary/gzimg/${GZIMG}.gz
 
 clean cleandir distclean:
 	rm -f gzboot.sym ${GZIMG} ${GZIMG}.gz
