@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.37 1998/08/04 12:19:15 kleink Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.38 1998/08/04 19:48:35 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -392,11 +392,13 @@ sys_sendmsg(p, v, retval)
 		MALLOC(iov, struct iovec *,
 		       sizeof(struct iovec) * (u_int)msg.msg_iovlen, M_IOV,
 		       M_WAITOK);
-	} else
+	} else if ((u_int)msg.msg_iovlen > 0)
 		iov = aiov;
-	if (msg.msg_iovlen &&
-	    (error = copyin((caddr_t)msg.msg_iov, (caddr_t)iov,
-	    (unsigned)(msg.msg_iovlen * sizeof(struct iovec)))))
+	else
+		return (EMSGSIZE);
+	error = copyin((caddr_t)msg.msg_iov, (caddr_t)iov,
+	    (size_t)(msg.msg_iovlen * sizeof(struct iovec)));
+	if (error)
 		goto done;
 	msg.msg_iov = iov;
 #ifdef COMPAT_OLDSOCK
@@ -587,8 +589,10 @@ sys_recvmsg(p, v, retval)
 		MALLOC(iov, struct iovec *,
 		       sizeof(struct iovec) * (u_int)msg.msg_iovlen, M_IOV,
 		       M_WAITOK);
-	} else
+	} else if ((u_int)msg.msg_iovlen > 0)
 		iov = aiov;
+	else
+		return (EMSGSIZE);
 #ifdef COMPAT_OLDSOCK
 	msg.msg_flags = SCARG(uap, flags) &~ MSG_COMPAT;
 #else
@@ -597,7 +601,7 @@ sys_recvmsg(p, v, retval)
 	uiov = msg.msg_iov;
 	msg.msg_iov = iov;
 	error = copyin((caddr_t)uiov, (caddr_t)iov,
-		       (unsigned)(msg.msg_iovlen * sizeof(struct iovec)));
+	    (size_t)(msg.msg_iovlen * sizeof(struct iovec)));
 	if (error)
 		goto done;
 	if ((error = recvit(p, SCARG(uap, s), &msg, (caddr_t)0, retval)) == 0) {

@@ -1,4 +1,4 @@
-.\"	$NetBSD: recv.2,v 1.9 1998/07/29 02:11:36 thorpej Exp $
+.\"	$NetBSD: recv.2,v 1.10 1998/08/04 19:48:34 kleink Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -256,6 +256,19 @@ address space.
 .It Bq Er EINVAL
 The total length of the I/O is more than can be expressed by the ssize_t
 return value.
+.El
+.Pp
+.Fn Recvmsg
+will also fail if:
+.Bl -tag -width Er
+.It Bq Er EMSGSIZE
+The
+.Fa msg_iovlen
+member of the
+.Fa msg
+structure is less than or equal to 0
+or is greater than
+.Dv {IOV_MAX} .
 .El
 .Sh SEE ALSO
 .Xr fcntl 2 ,
