@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.53.4.1 1999/06/21 01:07:37 thorpej Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.53.4.2 1999/08/02 21:52:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -954,10 +954,6 @@ linux_sys_clone(p, v, retval)
 	if (sig < 0 || sig >= LINUX_NSIG)
 		return (EINVAL);
 	sig = linux_to_native_sig[sig];
-
-	/* XXX Is this the right thing? */
-	if (sig == 0)
-		sig = SIGCHLD;
 
 	/*
 	 * Note that Linux does not provide a portable way of specifying
