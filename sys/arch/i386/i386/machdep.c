@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.111.2.2 1994/07/24 01:48:43 cgd Exp $
+ *	$Id: machdep.c,v 1.111.2.3 1994/08/14 09:04:46 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -803,6 +803,7 @@ setregs(p, entry, stack, retval)
 	tf->tf_ds = _udatasel;
 	tf->tf_es = _udatasel;
 	tf->tf_cs = _ucodesel;
+	tf->tf_eflags = PSL_USERSET | (tf->tf_eflags & PSL_T);
 
 	p->p_addr->u_pcb.pcb_flags &= 0 /* FM_SYSCTRC */; /* no fp at all */
 #if NNPX > 0
