@@ -1,10 +1,10 @@
-# $NetBSD: _vax.mk,v 1.2 1997/10/17 20:07:48 gwr Exp $
+# $NetBSD: _vax.mk,v 1.3 1997/10/20 12:44:24 ragge Exp $
 
 BFD_MACHINES =	cpu-vax.c
 BFD_BACKENDS =	vaxnetbsd.c aout32.c
 
 ARCH_DEFS = -DARCH_vax \
- -DSELECT_ARCHITECTURES='&bfd_arch_vax'
+ -DSELECT_ARCHITECTURES='&bfd_vax_arch'
 
 TDEFAULTS = \
  -DDEFAULT_VECTOR=vaxnetbsd_vec \

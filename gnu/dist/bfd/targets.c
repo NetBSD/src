@@ -574,6 +574,7 @@ extern const bfd_target sparcnetbsd_vec;
 extern const bfd_target sparccoff_vec;
 extern const bfd_target sunos_big_vec;
 extern const bfd_target tekhex_vec;
+extern const bfd_target vaxnetbsd_vec;
 extern const bfd_target versados_vec;
 extern const bfd_target we32kcoff_vec;
 extern const bfd_target w65_vec;

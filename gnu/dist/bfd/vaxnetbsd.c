@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 #define	SEGMENT_SIZE	TARGET_PAGE_SIZE
 
 #define	DEFAULT_ARCH	bfd_arch_vax
-#define	DEFAULT_MID 	M_VAX
+#define	DEFAULT_MID 	M_VAX_NETBSD
 
 #define MY(OP) CAT(vaxnetbsd_,OP)
 /* This needs to start with a.out so GDB knows it is an a.out variant.  */

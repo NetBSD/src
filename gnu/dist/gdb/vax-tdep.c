@@ -61,7 +61,7 @@ vax_print_insn (memaddr, stream)
   /* Point at first byte of argument data,
      and at descriptor for first argument.  */
   p = buffer + 1 + (votstrs[i].detail.code >= 0x100);
-  d = votstrs[i].detail.args;
+  d = (char *)votstrs[i].detail.args;
 
   if (*d)
     fputc_unfiltered (' ', stream);
