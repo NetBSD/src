@@ -27,7 +27,7 @@
  *	i4b_rbch.c - device driver for raw B channel data
  *	---------------------------------------------------
  *
- *	$Id: i4b_rbch.c,v 1.3 2001/03/24 12:40:32 martin Exp $
+ *	$Id: i4b_rbch.c,v 1.3.2.1 2001/09/08 23:26:02 thorpej Exp $
  *
  * $FreeBSD$
  *
@@ -177,6 +177,7 @@ int i4brbchwrite __P((dev_t dev, struct uio *uio, int ioflag));
 int i4brbchioctl __P((dev_t dev, IOCTL_CMD_T cmd, caddr_t arg, int flag, struct proc* pr));
 #ifdef OS_USES_POLL
 int i4brbchpoll __P((dev_t dev, int events, struct proc *p));
+int i4brbchkqfilter __P((dev_t dev, struct knote *kn));
 #else
 PDEVSTATIC int i4brbchselect __P((dev_t dev, int rw, struct proc *p));
 #endif
@@ -762,6 +763,90 @@ i4brbchpoll(dev_t dev, int events, struct proc *p)
 	return(revents);
 }
 
+static void
+filt_i4brbchdetach(struct knote *kn)
+{
+	struct rbch_softc *sc = (void *) kn->kn_hook;
+	int s;
+
+	s = splhigh();
+	SLIST_REMOVE(&sc->selp.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_i4brbchread(struct knote *kn, long hint)
+{
+	struct rbch_softc *sc = (void *) kn->kn_hook;
+	struct ifqueue *iqp;
+
+	if ((sc->sc_devstate & ST_CONNECTED) == 0)
+		return (0);
+
+	if (sc->sc_bprot == BPROT_RHDLC)
+		iqp = &sc->sc_hdlcq;
+	else
+		iqp = isdn_linktab[sc->sc_unit]->rx_queue;	
+
+	if (IF_QEMPTY(iqp))
+		return (0);
+
+	kn->kn_data = 0;	/* XXXLUKEM (thorpej): what to put here? */
+	return (1);
+}
+
+static const struct filterops i4brbchread_filtops =
+	{ 1, NULL, filt_i4brbchdetach, filt_i4brbchread };
+
+static int
+filt_i4brbchwrite(struct knote *kn, long hint)
+{
+	struct rbch_softc *sc = (void *) kn->kn_hook;
+
+	if ((sc->sc_devstate & ST_CONNECTED) == 0)
+		return (0);
+
+	if (IF_QFULL(isdn_linktab[sc->sc_unit]->tx_queue))
+		return (0);
+
+	kn->kn_data = 0;	/* XXXLUKEM (thorpej): what to put here? */
+	return (1);
+}
+
+static const struct filterops i4brbchwrite_filtops =
+	{ 1, NULL, filt_i4brbchdetach, filt_i4brbchwrite };
+
+int
+i4brbchkqfilter(dev_t dev, struct knote *kn)
+{
+	struct rbch_softc *sc = &rbch_softc[minor(dev)];
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sc->selp.si_klist;
+		kn->kn_fop = &i4brbchread_filtops;
+		break;
+
+	case EVFILT_WRITE:
+		klist = &sc->selp.si_klist;
+		kn->kn_fop = &i4brbchwrite_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = (void *) sc;
+
+	s = splhigh();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
+}
+
 #else /* OS_USES_POLL */
 
 /*---------------------------------------------------------------------------*
@@ -984,7 +1069,7 @@ rbch_rx_data_rdy(int unit)
 	{
 		NDBGL4(L4_RBCHDBG, "unit %d, NO wakeup", unit);
 	}
-	selwakeup(&rbch_softc[unit].selp);
+	selnotify(&rbch_softc[unit].selp, 0);
 }
 
 /*---------------------------------------------------------------------------*
@@ -1005,7 +1090,7 @@ rbch_tx_queue_empty(int unit)
 	{
 		NDBGL4(L4_RBCHDBG, "unit %d, NO wakeup", unit);
 	}
-	selwakeup(&rbch_softc[unit].selp);
+	selnotify(&rbch_softc[unit].selp, 0);
 }
 
 /*---------------------------------------------------------------------------*
@@ -1017,7 +1102,7 @@ rbch_activity(int unit, int rxtx)
 {
 	if (rbch_softc[unit].sc_cd)
 		rbch_softc[unit].sc_cd->last_active_time = SECOND;
-	selwakeup(&rbch_softc[unit].selp);
+	selnotify(&rbch_softc[unit].selp, 0);
 }
 
 /*---------------------------------------------------------------------------*

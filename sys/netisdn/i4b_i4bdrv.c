@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.4.2.1 2001/08/25 06:17:07 thorpej Exp $ 
+ *	$Id: i4b_i4bdrv.c,v 1.4.2.2 2001/09/08 23:26:02 thorpej Exp $ 
  *
  * $FreeBSD$
  *
@@ -140,6 +140,7 @@ PDEVSTATIC int i4bioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, stru
 
 #ifdef OS_USES_POLL
 PDEVSTATIC int i4bpoll __P((dev_t dev, int events, struct proc *p));
+PDEVSTATIC int i4bkqfilter __P((dev_t dev, struct knote *kn));
 #else
 PDEVSTATIC int i4bselect __P((dev_t dev, int rw, struct proc *p));
 #endif
@@ -953,6 +954,66 @@ i4bpoll(dev_t dev, int events, struct proc *p)
 	return(0);
 }
 
+static void
+filt_i4brdetach(struct knote *kn)
+{
+	int s;
+
+	s = splnet();
+	SLIST_REMOVE(&select_rd_info.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_i4bread(struct knote *kn, long hint)
+{
+	struct mbuf *m;
+
+	if (IF_QEMPTY(&i4b_rdqueue))
+		return (0);
+
+	IF_POLL(&i4b_rdqueue, m);
+
+	kn->kn_data = m->m_len;
+	return (1);
+}
+
+static const struct filterops i4bread_filtops =
+	{ 1, NULL, filt_i4brdetach, filt_i4bread };
+
+static const struct filterops i4b_seltrue_filtops =
+	{ 1, NULL, filt_i4brdetach, filt_seltrue };
+
+int
+i4bkqfilter(dev_t dev, struct knote *kn)
+{
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &select_rd_info.si_klist;
+		kn->kn_fop = &i4bread_filtops;
+		break;
+
+	case EVFILT_WRITE:
+		klist = &select_rd_info.si_klist;
+		kn->kn_fop = &i4b_seltrue_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = NULL;
+
+	s = splnet();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
+}
+
 #endif /* OS_USES_SELECT */
 
 /*---------------------------------------------------------------------------*
@@ -992,7 +1053,7 @@ i4bputqueue(struct mbuf *m)
 	if(selflag)
 	{
 		selflag = 0;
-		selwakeup(&select_rd_info);
+		selnotify(&select_rd_info, 0);
 	}
 }
 
@@ -1033,7 +1094,7 @@ i4bputqueue_hipri(struct mbuf *m)
 	if(selflag)
 	{
 		selflag = 0;
-		selwakeup(&select_rd_info);
+		selnotify(&select_rd_info, 0);
 	}
 }
 
