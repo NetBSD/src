@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.31 2001/05/27 14:17:56 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.32 2001/05/27 15:07:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.31 2001/05/27 14:17:56 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.32 2001/05/27 15:07:34 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -584,9 +584,7 @@ usage(void)
  * range (except that a vmax of 0 means unlimited).
  */
 static long
-numarg(meaning, vmin, vmax)
-	char *meaning;
-	long vmin, vmax;
+numarg(char *meaning, long vmin, long vmax)
 {
 	char *p;
 	long val;
@@ -600,9 +598,9 @@ numarg(meaning, vmin, vmax)
 }
 
 void
-sig(signo)
-	int signo;
+sig(int signo)
 {
+
 	switch(signo) {
 	case SIGALRM:
 	case SIGBUS:
@@ -627,8 +625,7 @@ sig(signo)
 }
 
 char *
-rawname(cp)
-	char *cp;
+rawname(char *cp)
 {
 	static char rawbuf[MAXPATHLEN];
 	char *dp = strrchr(cp, '/');
@@ -647,9 +644,7 @@ rawname(cp)
  *	getopt(3) will like.
  */
 static void
-obsolete(argcp, argvp)
-	int *argcp;
-	char **argvp[];
+obsolete(int *argcp, char **argvp[])
 {
 	int argc, flags;
 	char *ap, **argv, *flagsp, **nargv, *p;
