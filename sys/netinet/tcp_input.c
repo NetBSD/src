@@ -1,7 +1,7 @@
-/*	$NetBSD: tcp_input.c,v 1.33.2.3 1997/11/21 06:42:39 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.33.2.4 1998/01/29 10:21:32 mellon Exp $	*/
 
 /*
- * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
+ * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tcp_input.c	8.5 (Berkeley) 4/10/94
+ *	@(#)tcp_input.c	8.12 (Berkeley) 5/24/95
  */
 
 /*
@@ -111,6 +111,20 @@ extern u_long sb_max;
 #define TSTMP_GEQ(a,b)	((int)((a)-(b)) >= 0)
 
 /*
+ * Macro to compute ACK transmission behavior.  Delay the ACK unless
+ * the other side PUSH'd or we have already delayed an ACK (must send
+ * an ACK every two segments).
+ */
+#define	TCP_SETUP_ACK(tp, ti) \
+do { \
+	if ((ti)->ti_flags & TH_PUSH || \
+	    (tp)->t_flags & TF_DELACK) \
+		tp->t_flags |= TF_ACKNOW; \
+	else \
+		TCP_SET_DELACK(tp); \
+} while (0)
+
+/*
  * Insert segment ti into reassembly queue of tcp with
  * control block tp.  Return TH_FIN if reassembly now includes
  * a segment with FIN.  The macro form does the common case inline
@@ -124,10 +138,7 @@ extern u_long sb_max;
 	if ((ti)->ti_seq == (tp)->rcv_nxt && \
 	    (tp)->segq.lh_first == NULL && \
 	    (tp)->t_state == TCPS_ESTABLISHED) { \
-		if ((ti)->ti_flags & TH_PUSH) \
-			tp->t_flags |= TF_ACKNOW; \
-		else \
-			tp->t_flags |= TF_DELACK; \
+		TCP_SETUP_ACK(tp, ti); \
 		(tp)->rcv_nxt += (ti)->ti_len; \
 		flags = (ti)->ti_flags & TH_FIN; \
 		tcpstat.tcps_rcvpack++;\
@@ -606,10 +617,9 @@ after_listen:
 			m->m_len -= sizeof(struct tcpiphdr)+off-sizeof(struct tcphdr);
 			sbappend(&so->so_rcv, m);
 			sorwakeup(so);
-			if (ti->ti_flags & TH_PUSH)
-				tp->t_flags |= TF_ACKNOW;
-			else
-				tp->t_flags |= TF_DELACK;
+			TCP_SETUP_ACK(tp, ti);
+			if (tp->t_flags & TF_ACKNOW)
+				(void) tcp_output(tp);
 			return;
 		}
 	}
@@ -772,19 +782,21 @@ after_listen:
 			}
 			todrop--;
 		}
-		if (todrop >= ti->ti_len) {
+		if (todrop > ti->ti_len ||
+		    (todrop == ti->ti_len && (tiflags & TH_FIN) == 0)) {
 			/*
-			 * Any valid FIN must be to the left of the
-			 * window.  At this point, FIN must be a
-			 * duplicate or out-of-sequence, so drop it.
+			 * Any valid FIN must be to the left of the window.
+			 * At this point the FIN must be a duplicate or
+			 * out of sequence; drop it.
 			 */
 			tiflags &= ~TH_FIN;
 			/*
-			 * Send ACK to resynchronize, and drop any data,
-			 * but keep on processing for RST or ACK.
+			 * Send an ACK to resynchronize and drop any data.
+			 * But keep on processing for RST or ACK.
 			 */
 			tp->t_flags |= TF_ACKNOW;
-			tcpstat.tcps_rcvdupbyte += todrop = ti->ti_len;
+			todrop = ti->ti_len;
+			tcpstat.tcps_rcvdupbyte += todrop;
 			tcpstat.tcps_rcvduppack++;
 		} else {
 			tcpstat.tcps_rcvpartduppack++;
@@ -1670,10 +1682,15 @@ syn_cache_insert(sc, prevp, headp)
 	}
 	if (scp->sch_timer_sum > 0)
 		sc->sc_timer = tcp_syn_cache_timeo - scp->sch_timer_sum;
-	else if (scp->sch_timer_sum == 0) {
-		/* When the bucket timer is 0, it is not in the cache queue.  */
-		scp->sch_headq = tcp_syn_cache_first;
-		tcp_syn_cache_first = scp;
+	else {
+		if (scp->sch_timer_sum == 0) {
+			/*
+			 * When the bucket timer is 0, it is not in the
+			 * cache queue.
+			 */
+			scp->sch_headq = tcp_syn_cache_first;
+			tcp_syn_cache_first = scp;
+		}
 		sc->sc_timer = tcp_syn_cache_timeo;
 	}
 	scp->sch_timer_sum = tcp_syn_cache_timeo;
@@ -1854,10 +1871,8 @@ syn_cache_get(so, m)
 #endif
 
 	am = m_get(M_DONTWAIT, MT_SONAME);	/* XXX */
-	if (am == NULL) {
-		m_freem(m);
+	if (am == NULL)
 		goto resetandabort;
-	}
 	am->m_len = sizeof(struct sockaddr_in);
 	sin = mtod(am, struct sockaddr_in *);
 	sin->sin_family = AF_INET;
@@ -1867,7 +1882,6 @@ syn_cache_get(so, m)
 	bzero((caddr_t)sin->sin_zero, sizeof(sin->sin_zero));
 	if (in_pcbconnect(inp, am)) {
 		(void) m_free(am);
-		m_freem(m);
 		goto resetandabort;
 	}
 	(void) m_free(am);
