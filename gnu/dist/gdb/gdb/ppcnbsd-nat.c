@@ -28,6 +28,16 @@
 #include "defs.h"
 #include "inferior.h"
 
+#ifndef HAVE_GREGSET_T
+typedef struct reg gregset_t;
+#endif
+
+#ifndef HAVE_FPREGSET_T
+typedef struct fpreg fpregset_t;
+#endif
+
+#include "gregset.h"
+
 #include "ppc-tdep.h"
 #include "ppcnbsd-tdep.h"
 
@@ -56,6 +66,29 @@ getfpregs_supplies (int regno)
 }
 
 void
+supply_gregset(gregset_t *gregs)
+{
+  ppcnbsd_supply_reg ((char *)gregs, -1);
+}
+
+void
+fill_gregset(gregset_t *gregs, int regno)
+{
+  ppcnbsd_fill_reg ((char *)gregs, regno);
+}
+
+void
+supply_fpregset(fpregset_t *fpregs)
+{
+  ppcnbsd_supply_fpreg ((char *)fpregs, -1);
+}
+void
+fill_fpregset(fpregset_t *fpregs, int regno)
+{
+  ppcnbsd_fill_fpreg ((char *)fpregs, regno);
+}
+
+void
 fetch_inferior_registers (int regno)
 {
   if (regno == -1 || getregs_supplies (regno))
@@ -63,7 +96,7 @@ fetch_inferior_registers (int regno)
       struct reg regs;
 
       if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		  (PTRACE_ARG3_TYPE) &regs, 0) == -1)
+		  (PTRACE_ARG3_TYPE) &regs, TIDGET (inferior_ptid)) == -1)
         perror_with_name ("Couldn't get registers");
 
       ppcnbsd_supply_reg ((char *) &regs, regno);
@@ -76,7 +109,7 @@ fetch_inferior_registers (int regno)
       struct fpreg fpregs;
 
       if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_ARG3_TYPE) &fpregs, 0) == -1)
+		  (PTRACE_ARG3_TYPE) &fpregs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name ("Couldn't get FP registers");
 
       ppcnbsd_supply_fpreg ((char *) &fpregs, regno);
@@ -93,13 +126,13 @@ store_inferior_registers (int regno)
       struct reg regs;
 
       if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		  (PTRACE_ARG3_TYPE) &regs, 0) == -1)
+		  (PTRACE_ARG3_TYPE) &regs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name ("Couldn't get registers");
 
       ppcnbsd_fill_reg ((char *) &regs, regno);
 
       if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
-		  (PTRACE_ARG3_TYPE) &regs, 0) == -1)
+		  (PTRACE_ARG3_TYPE) &regs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name ("Couldn't write registers");
 
       if (regno != -1)
@@ -111,13 +144,13 @@ store_inferior_registers (int regno)
       struct fpreg fpregs;
 
       if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_ARG3_TYPE) &fpregs, 0) == -1)
+		  (PTRACE_ARG3_TYPE) &fpregs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name ("Couldn't get FP registers");
 
       ppcnbsd_fill_fpreg ((char *) &fpregs, regno);
       
       if (ptrace (PT_SETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_ARG3_TYPE) &fpregs, 0) == -1)
+		  (PTRACE_ARG3_TYPE) &fpregs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name ("Couldn't set FP registers");
     }
 }
