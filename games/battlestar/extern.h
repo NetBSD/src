@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.3 1997/01/07 12:35:42 tls Exp $	*/
+/*	$NetBSD: extern.h,v 1.4 1997/01/07 12:41:18 tls Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
