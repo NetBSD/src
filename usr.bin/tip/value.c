@@ -1,4 +1,4 @@
-/*	$NetBSD: value.c,v 1.5 1996/12/29 10:41:53 cgd Exp $	*/
+/*	$NetBSD: value.c,v 1.6 1997/02/11 09:24:09 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)value.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: value.c,v 1.5 1996/12/29 10:41:53 cgd Exp $";
+static char rcsid[] = "$NetBSD: value.c,v 1.6 1997/02/11 09:24:09 mrg Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -68,8 +68,9 @@ vinit()
 	 * Read the .tiprc file in the HOME directory
 	 *  for sets
 	 */
-	strcpy(file, value(HOME));
-	strcat(file, "/.tiprc");
+	/* 8 == 1 + strlen("/.tiprc") */
+	(void)strncpy(file, value(HOME), sizeof(file) - 8);
+	strcat(file, "/.tiprc");	/* XXX strcat is safe */
 	if ((f = fopen(file, "r")) != NULL) {
 		register char *tp;
 
@@ -107,12 +108,11 @@ vassign(p, v)
 			return;
 		if (!(p->v_type&(ENVIRON|INIT)))
 			free(p->v_value);
-		if ((p->v_value = malloc(size(v)+1)) == NOSTR) {
+		if ((p->v_value = strdup(v)) == NOSTR) {
 			printf("out of core\r\n");
 			return;
 		}
 		p->v_type &= ~(ENVIRON|INIT);
-		strcpy(p->v_value, v);
 		break;
 
 	case NUMBER:
