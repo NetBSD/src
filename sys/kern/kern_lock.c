@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.75 2004/02/13 11:36:22 wiz Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.76 2004/05/18 11:55:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.75 2004/02/13 11:36:22 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.76 2004/05/18 11:55:59 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -402,12 +402,30 @@ lockinit(struct lock *lkp, int prio, const char *wmesg, int timo, int flags)
 int
 lockstatus(struct lock *lkp)
 {
-	int s = 0, lock_type = 0;
+	int s = 0; /* XXX: gcc */
+	int lock_type = 0;
+	struct lwp *l = curlwp; /* XXX */
+	pid_t pid;
+	lwpid_t lid;
+	cpuid_t cpu_id;
+
+	if ((lkp->lk_flags & LK_SPIN) || l == NULL) {
+		cpu_id = cpu_number();
+		pid = LK_KERNPROC;
+		lid = 0;
+	} else {
+		cpu_id = LK_NOCPU;
+		pid = l->l_proc->p_pid;
+		lid = l->l_lid;
+	}
 
 	INTERLOCK_ACQUIRE(lkp, lkp->lk_flags, s);
-	if (lkp->lk_exclusivecount != 0)
-		lock_type = LK_EXCLUSIVE;
-	else if (lkp->lk_sharecount != 0)
+	if (lkp->lk_exclusivecount != 0) {
+		if (WEHOLDIT(lkp, pid, lid, cpu_id))
+			lock_type = LK_EXCLUSIVE;
+		else
+			lock_type = LK_EXCLOTHER;
+	} else if (lkp->lk_sharecount != 0)
 		lock_type = LK_SHARED;
 	INTERLOCK_RELEASE(lkp, lkp->lk_flags, s);
 	return (lock_type);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.52 2004/01/14 11:34:48 yamt Exp $	*/
+/*	$NetBSD: lock.h,v 1.53 2004/05/18 11:55:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -220,6 +220,7 @@ struct lock {
 #define	LK_DOWNGRADE	0x00000005	/* exclusive-to-shared downgrade */
 #define	LK_RELEASE	0x00000006	/* release any type of lock */
 #define	LK_DRAIN	0x00000007	/* wait for all lock activity to end */
+#define	LK_EXCLOTHER	0x00000008	/* other process holds lock */
 /*
  * External lock flags.
  *
