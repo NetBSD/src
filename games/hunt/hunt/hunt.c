@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.4 1997/10/20 00:37:14 lukem Exp $	*/
+/*	$NetBSD: hunt.c,v 1.5 1998/03/29 04:50:29 mrg Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.4 1997/10/20 00:37:14 lukem Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.5 1998/03/29 04:50:29 mrg Exp $");
 #endif /* not lint */
 
 # include	<sys/stat.h>
@@ -387,7 +387,7 @@ list_drivers()
 	int			test_socket;
 	int			namelen;
 	char			local_name[256];
-	static			initial = TRUE;
+	static int		initial = TRUE;
 	static struct in_addr	local_address;
 	struct hostent		*hp;
 	extern int		errno;
