@@ -1,4 +1,4 @@
-/* $NetBSD: mountd.c,v 1.62 2000/02/16 04:08:40 enami Exp $	 */
+/* $NetBSD: mountd.c,v 1.63 2000/06/03 14:20:49 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.62 2000/02/16 04:08:40 enami Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.63 2000/06/03 14:20:49 fvdl Exp $");
 #endif
 #endif				/* not lint */
 
@@ -2093,7 +2093,7 @@ send_umntall(n)
 	int n;
 {
 	(void)clnt_broadcast(RPCPROG_MNT, RPCMNT_VER1, RPCMNT_UMNTALL,
-	    xdr_void, NULL, xdr_void, NULL, umntall_each);
+	    xdr_void, NULL, xdr_void, NULL, (resultproc_t)umntall_each);
 	exit(0);
 }
 
