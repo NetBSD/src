@@ -1,10 +1,10 @@
-/*	$NetBSD: adw_pci.c,v 1.1 1998/09/26 16:09:32 dante Exp $	*/
+/* $NetBSD: adw_pci.c,v 1.2 1998/09/26 19:53:34 dante Exp $	 */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
- * 
+ *
  * Author: Baldassare Dante Profeta <dante@mclink.it>
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -69,8 +69,8 @@
 
 /******************************************************************************/
 
-int	adw_pci_match __P((struct device *, struct cfdata *, void *));
-void	adw_pci_attach __P((struct device *, struct device *, void *));
+int adw_pci_match __P((struct device *, struct cfdata *, void *));
+void adw_pci_attach __P((struct device *, struct device *, void *));
 
 struct cfattach adw_pci_ca =
 {
@@ -83,11 +83,11 @@ struct cfattach adw_pci_ca =
  * If we find one, note it's address (slot) and call
  * the actual probe routine to check it out.
  */
-int 
+int
 adw_pci_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+	struct device  *parent;
+	struct cfdata  *match;
+	void           *aux;
 {
 	struct pci_attach_args *pa = aux;
 
@@ -101,10 +101,10 @@ adw_pci_match(parent, match, aux)
 }
 
 
-void 
+void
 adw_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+	struct device  *parent, *self;
+	void           *aux;
 {
 	struct pci_attach_args *pa = aux;
 	ADW_SOFTC      *sc = (void *) self;
@@ -142,7 +142,6 @@ adw_pci_attach(parent, self, aux)
 		 command | (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
 			    PCI_COMMAND_MASTER_ENABLE));
 	}
-
 	/*
 	 * Latency timer settings.
 	 */
@@ -152,27 +151,24 @@ adw_pci_attach(parent, self, aux)
 		bhlcr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG);
 
 		if ((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADVSYS_WIDE) &&
-			   (PCI_LATTIMER(bhlcr) < 0x20)) {
-			bhlcr &= 0xFFFF00FFul;
-			bhlcr |= 0x00002000ul;
+		    (PCI_LATTIMER(bhlcr) < 0x20)) {
+			bhlcr &= 0xFFFF00FFUL;
+			bhlcr |= 0x00002000UL;
 			pci_conf_write(pa->pa_pc, pa->pa_tag,
-					PCI_BHLC_REG, bhlcr);
+				       PCI_BHLC_REG, bhlcr);
 		}
 	}
 
 
-	if((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADVSYS_WIDE) &&
-		(command & PCI_COMMAND_PARITY_ENABLE) == 0) {
+	if ((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADVSYS_WIDE) &&
+	    (command & PCI_COMMAND_PARITY_ENABLE) == 0) {
 		sc->cfg.control_flag |= CONTROL_FLAG_IGNORE_PERR;
 	}
-		
-
-
 	/*
 	 * Map Device Registers for I/O
 	 */
 	if (pci_mapreg_map(pa, PCI_BASEADR_IO, PCI_MAPREG_TYPE_IO, 0,
-			&iot, &ioh, NULL, NULL)) {
+			   &iot, &ioh, NULL, NULL)) {
 		printf("%s: unable to map device registers\n",
 		       sc->sc_dev.dv_xname);
 		return;
