@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.27 1998/02/05 04:57:44 gwr Exp $	*/
+/*	$NetBSD: mem.c,v 1.28 1998/06/08 20:47:46 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -46,6 +46,8 @@
  * Memory special file
  */
 
+#include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -57,6 +59,12 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_map.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+/* XXX - Gratuitous name changes... */
+#define kernacc uvm_kernacc
+#endif  
 
 #include <machine/cpu.h>
 #include <machine/eeprom.h>
@@ -157,7 +165,7 @@ mmrw(dev, uio, flags)
 			}
 			/* Temporarily map the memory at vmmap. */
 			pmap_enter(pmap_kernel(), vmmap,
-			    trunc_page(v), uio->uio_rw == UIO_READ ?
+			    m68k_trunc_page(v), uio->uio_rw == UIO_READ ?
 			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
 			o = v & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));

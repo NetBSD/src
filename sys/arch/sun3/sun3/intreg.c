@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.c,v 1.11 1998/02/05 04:57:36 gwr Exp $	*/
+/*	$NetBSD: intreg.c,v 1.12 1998/06/08 20:47:46 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,10 +41,17 @@
  * and the handy software interrupt request register.
  */
 
+#include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/vmmeter.h>
+
+#if defined(UVM)
+#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <m68k/asm_single.h>
 
@@ -142,7 +149,11 @@ soft1intr(arg)
 	splx(s);
 
 	if (sir.sir_any) {
+#if defined(UVM)
+		uvmexp.softs++;
+#else
 		cnt.v_soft++;
+#endif
 		if (sir.sir_which[SIR_NET]) {
 			sir.sir_which[SIR_NET] = 0;
 			netintr();

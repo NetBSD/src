@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112 1998/05/20 18:35:49 fair Exp $	*/
+/*	$NetBSD: machdep.c,v 1.113 1998/06/08 20:47:46 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -43,6 +43,8 @@
  *	from: @(#)machdep.c	8.10 (Berkeley) 4/20/94
  */
 
+#include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -86,7 +88,7 @@
 
 #if defined(UVM)
 #include <uvm/uvm.h> /* XXX: not _extern ... need vm_map_create */
-#endif 
+#endif
 
 #include <sys/sysctl.h>
 
@@ -108,6 +110,16 @@
 extern char kernel_text[];
 /* Defined by the linker */
 extern char etext[];
+
+#if defined(UVM)
+/* XXX - Gratuitous name changes... */
+#define kmem_alloc uvm_km_alloc
+vm_map_t exec_map = NULL;  
+vm_map_t mb_map = NULL;
+vm_map_t phys_map = NULL;
+#else
+vm_map_t buffer_map;
+#endif
 
 int	physmem;
 int	fputype;
@@ -307,12 +319,21 @@ cpu_startup()
 	 * in that they usually occupy more virtual memory than physical.
 	 */
 	size = MAXBSIZE * nbuf;
+#if defined(UVM)
+	if (uvm_map(kernel_map, (vm_offset_t *) &buffers, round_page(size),
+		    NULL, UVM_UNKNOWN_OFFSET,
+		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
+				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
+		panic("startup: cannot allocate VM for buffers");
+	minaddr = (vm_offset_t)buffers;
+#else
 	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
 				   &maxaddr, size, TRUE);
 	minaddr = (vm_offset_t)buffers;
 	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
 			&minaddr, size, FALSE) != KERN_SUCCESS)
 		panic("startup: cannot allocate buffers");
+#endif /* UVM */
 	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
 		/* don't want to alloc more physical mem than needed */
 		bufpages = btoc(MAXBSIZE) * nbuf;
@@ -320,6 +341,35 @@ cpu_startup()
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
 	for (i = 0; i < nbuf; i++) {
+#if defined(UVM)
+		vm_size_t curbufsize;
+		vm_offset_t curbuf;
+		struct vm_page *pg;
+
+		/*
+		 * Each buffer has MAXBSIZE bytes of VM space allocated.  Of
+		 * that MAXBSIZE space, we allocate and map (base+1) pages
+		 * for the first "residual" buffers, and then we allocate
+		 * "base" pages for the rest.
+		 */
+		curbuf = (vm_offset_t) buffers + (i * MAXBSIZE);
+		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
+
+		while (curbufsize) {
+			pg = uvm_pagealloc(NULL, 0, NULL);
+			if (pg == NULL) 
+				panic("cpu_startup: not enough memory for "
+				    "buffer cache");
+#if defined(PMAP_NEW)
+			pmap_kenter_pgs(curbuf, &pg, 1);
+#else
+			pmap_enter(kernel_map->pmap, curbuf,
+				   VM_PAGE_TO_PHYS(pg), VM_PROT_ALL, TRUE);
+#endif
+			curbuf += PAGE_SIZE;
+			curbufsize -= PAGE_SIZE;
+		}
+#else /* ! UVM */
 		vm_size_t curbufsize;
 		vm_offset_t curbuf;
 
@@ -334,14 +384,20 @@ cpu_startup()
 		curbufsize = CLBYTES * (i < residual ? base+1 : base);
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
+#endif /* UVM */
 	}
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
+#if defined(UVM)
+	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+				   16*NCARGS, TRUE, FALSE, NULL);
+#else
 	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 				 16*NCARGS, TRUE);
+#endif
 
 	/*
 	 * We don't use a submap for physio, and use a separate map
@@ -353,8 +409,13 @@ cpu_startup()
 	/*
 	 * Finally, allocate mbuf cluster submap.
 	 */
+#if defined(UVM)
+	mb_map = uvm_km_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+				 VM_MBUF_SIZE, FALSE, FALSE, NULL);
+#else
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
+#endif
 
 	/*
 	 * Initialize callouts
@@ -377,18 +438,28 @@ cpu_startup()
 	 * Tell the VM system that writing to kernel text isn't allowed.
 	 * If we don't, we might end up COW'ing the text segment!
 	 */
-	if (vm_map_protect(kernel_map, (vm_offset_t) kernel_text,
-					   trunc_page((vm_offset_t) etext),
-					   VM_PROT_READ|VM_PROT_EXECUTE, TRUE)
-		!= KERN_SUCCESS)
+#if defined(UVM)
+	if (uvm_map_protect(kernel_map, (vm_offset_t) kernel_text,
+	    m68k_trunc_page((vm_offset_t) etext),
+	    UVM_PROT_READ|UVM_PROT_EXEC, TRUE) != KERN_SUCCESS)
 		panic("can't protect kernel text");
+#else
+	if (vm_map_protect(kernel_map, (vm_offset_t) kernel_text,
+	    m68k_trunc_page((vm_offset_t) etext),
+	    VM_PROT_READ|VM_PROT_EXECUTE, TRUE) != KERN_SUCCESS)
+		panic("can't protect kernel text");
+#endif
 
 	/*
 	 * Allocate a virtual page (for use by /dev/mem)
 	 * This page is handed to pmap_enter() therefore
 	 * it has to be in the normal kernel VA range.
 	 */
+#if defined(UVM)
+	vmmap = uvm_km_valloc_wait(kernel_map, NBPG);
+#else
 	vmmap = kmem_alloc_wait(kernel_map, NBPG);
+#endif
 
 	/*
 	 * Create the DVMA maps.
@@ -416,7 +487,7 @@ cpu_startup()
  */
 void
 setregs(p, pack, stack)
-	register struct proc *p;
+	struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
 {

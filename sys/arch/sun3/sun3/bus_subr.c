@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.5 1998/02/08 05:02:52 gwr Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.6 1998/06/08 20:47:45 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@
  * The common stuff is in autoconf.c
  */
 
+#include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -48,6 +50,13 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_map.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+/* XXX - Gratuitous name changes... */
+#define kmem_alloc_wait  uvm_km_valloc_wait
+#define kmem_free_wakeup uvm_km_free_wakeup
+#endif	/* UVM */
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
