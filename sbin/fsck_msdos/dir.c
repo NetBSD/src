@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.1 1996/05/14 17:39:30 ws Exp $	*/
+/*	$NetBSD: dir.c,v 1.2 1996/05/25 17:09:44 ws Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank
@@ -36,7 +36,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: dir.c,v 1.1 1996/05/14 17:39:30 ws Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.2 1996/05/25 17:09:44 ws Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -46,6 +46,8 @@ static char rcsid[] = "$NetBSD: dir.c,v 1.1 1996/05/14 17:39:30 ws Exp $";
 #include <stdio.h>
 #include <unistd.h>
 #include <time.h>
+
+#include <sys/param.h>
 
 #include "ext.h"
 
@@ -86,6 +88,32 @@ static char rcsid[] = "$NetBSD: dir.c,v 1.1 1996/05/14 17:39:30 ws Exp $";
 #define DD_MONTH_SHIFT		5
 #define DD_YEAR_MASK		0xFE00	/* year - 1980 */
 #define DD_YEAR_SHIFT		9
+
+/*
+ * Return the full pathname for a directory entry.
+ */
+static char *
+fullpath(dir)
+	struct dosDirEntry *dir;
+{
+	static char namebuf[MAXPATHLEN + 1];
+	char *cp, *np;
+	int nl;
+	
+	cp = namebuf + sizeof namebuf - 1;
+	*cp = '\0';
+	do {
+		np = dir->lname[0] ? dir->lname : dir->name;
+		nl = strlen(np);
+		if ((cp -= nl) <= namebuf + 1)
+			break;
+		memcpy(cp, np, nl);
+		*--cp = '/';
+       } while (dir = dir->parent);
+	if (dir->parent)
+		*--cp = '?';
+	return cp;
+}
 
 /*
  * Calculate a checksum over an 8.3 alias name
@@ -248,7 +276,7 @@ checksize(boot, fat, p, dir)
 	physicalSize = fat[dir->head].length * boot->ClusterSize;
 	if (physicalSize < dir->size) {
 		pwarn("size of %s is %lu, should at most be %lu\n",
-		      dir->fullpath, dir->size, physicalSize);
+		      fullpath(dir), dir->size, physicalSize);
 		if (ask(1, "Truncate")) {
 			dir->size = physicalSize;
 			p[28] = (u_char)physicalSize;
@@ -260,7 +288,7 @@ checksize(boot, fat, p, dir)
 			return FSERROR;
 	} else if (physicalSize - dir->size >= boot->ClusterSize) {
 		pwarn("%s has too many clusters allocated\n",
-		      dir->fullpath);
+		      fullpath(dir));
 		if (ask(1, "Drop superfluous clusters")) {
 			cl_t cl;
 			u_int32_t sz = 0;
@@ -306,7 +334,7 @@ readDosDirSection(f, boot, fat, dir)
 #define	THISMOD	0x8000			/* Only used within this routine */
 
 	cl = dir->head;
-	if (dir->fullpath[1] && (cl < CLUST_FIRST || cl >= boot->NumClusters)) {
+	if (dir->parent && (cl < CLUST_FIRST || cl >= boot->NumClusters)) {
 		/*
 		 * Already handled somewhere else.
 		 */
@@ -315,7 +343,7 @@ readDosDirSection(f, boot, fat, dir)
 	shortSum = -1;
 	vallfn = invlfn = empty = NULL;
 	do {
-		if (!dir->fullpath[1]) {
+		if (!dir->parent) {
 			last = boot->RootDirEnts * 32;
 			off = boot->ResSectors + boot->FATs * boot->FATsecs;
 		} else {
@@ -351,7 +379,7 @@ readDosDirSection(f, boot, fat, dir)
 			if (dir->fsckflags & DIREMPTY) {
 				if (!(dir->fsckflags & DIREMPWARN)) {
 					pwarn("%s has entries after end of directory\n",
-					      dir->fullpath);
+					      fullpath(dir));
 					if (ask(1, "Extend")) {
 						dir->fsckflags &= ~DIREMPTY;
 						if (delete(f, boot, fat,
@@ -491,19 +519,11 @@ readDosDirSection(f, boot, fat, dir)
 				shortSum = -1;
 			}
 			
-			k = strlen(dirent.lname[0] ? dirent.lname : dirent.name);
-			k += strlen(dir->fullpath) + 2;
-			dirent.fullpath = malloc(k);
-			strcpy(dirent.fullpath, dir->fullpath);
-			if (dir->fullpath[1])
-				strcat(dirent.fullpath, "/");
-			strcat(dirent.fullpath,
-			       dirent.lname[0] ? dirent.lname : dirent.name);
 			if (invlfn) {
 				mod |= k = removede(f, boot, fat,
 						    invlfn, vallfn ? vallfn : p,
 						    invcl, vallfn ? valcl : cl, cl,
-						    dirent.fullpath, 0);
+						    fullpath(&dirent), 0);
 				if (mod & FSFATAL)
 					return FSFATAL;
 				if (vallfn
@@ -518,7 +538,7 @@ readDosDirSection(f, boot, fat, dir)
 			if (dirent.size == 0 && !(dirent.flags & ATTR_DIRECTORY)) {
 				if (dirent.head != 0) {
 					pwarn("%s has clusters, but size 0\n",
-					      dirent.fullpath);
+					      fullpath(&dirent));
 					if (ask(1, "Drop allocated clusters")) {
 						p[26] = p[27] = 0;
 						clearchain(boot, fat, dirent.head);
@@ -529,7 +549,7 @@ readDosDirSection(f, boot, fat, dir)
 				}
 			} else if (dirent.head == 0
 				   && !strcmp(dirent.name, "..")
-				   && !strcmp(dir->parent->fullpath, "/")) {
+				   && !dir->parent->parent) {
 				/*
 				 *  Do nothing, the parent is the root
 				 */
@@ -541,22 +561,22 @@ readDosDirSection(f, boot, fat, dir)
 				   || fat[dirent.head].head != dirent.head) {
 				if (dirent.head == 0)
 					pwarn("%s has no clusters\n",
-					      dirent.fullpath);
+					      fullpath(&dirent));
 				else if (dirent.head < CLUST_FIRST
 					 || dirent.head >= boot->NumClusters)
 					pwarn("%s starts with cluster out of range(%d)\n",
-					      dirent.fullpath,
+					      fullpath(&dirent),
 					      dirent.head);
 				else if (fat[dirent.head].next == CLUST_FREE)
 					pwarn("%s starts with free cluster\n",
-					      dirent.fullpath);
+					      fullpath(&dirent));
 				else if (fat[dirent.head].next >= CLUST_RSRVD)
 					pwarn("%s starts with %s cluster\n",
-					      dirent.fullpath,
+					      fullpath(&dirent),
 					      rsrvdcltype(fat[dirent.head].next));
 				else
 					pwarn("%s doesn't start a cluster chain\n",
-					      dirent.fullpath);
+					      fullpath(&dirent));
 				if (dirent.flags & ATTR_DIRECTORY) {
 					if (ask(0, "Remove")) {
 						*p = SLOT_DELETED;
@@ -575,7 +595,11 @@ readDosDirSection(f, boot, fat, dir)
 			}
 			
 			/* create directory tree node */
-			d = malloc(sizeof(struct dosDirEntry));
+			if (!(d = malloc(sizeof(struct dosDirEntry)))) {
+				perror("No space for directory");
+				return FSFATAL;
+			}
+			
 			memcpy(d, &dirent, sizeof(struct dosDirEntry));
 			/* link it into the directory tree */
 			d->parent = dir;
@@ -592,7 +616,7 @@ readDosDirSection(f, boot, fat, dir)
 				
 				if (d->size) {
 					pwarn("Directory %s has size != 0\n",
-					      d->fullpath);
+					      fullpath(d));
 					if (ask(1, "Correct")) {
 						p[28] = p[29] = p[30] = p[31] = 0;
 						d->size = 0;
@@ -606,7 +630,7 @@ readDosDirSection(f, boot, fat, dir)
 				if (strcmp(d->name, ".") == 0) {
 					if (d->head != dir->head) {
 						pwarn("`.' entry in %s has incorrect start cluster\n",
-						      dir->fullpath);
+						      fullpath(dir));
 						if (ask(1, "Correct")) {
 							d->head = dir->head;
 							p[26] = (u_char)d->head;
@@ -620,7 +644,7 @@ readDosDirSection(f, boot, fat, dir)
 				if (strcmp(d->name, "..") == 0) {
 					if (d->head != dir->parent->head) {
 						pwarn("`..' entry in %s has incorrect start cluster\n",
-						      dir->fullpath);
+						      fullpath(dir));
 						if (ask(1, "Correct")) {
 							d->head = dir->parent->head;
 							p[26] = (u_char)d->head;
@@ -634,7 +658,10 @@ readDosDirSection(f, boot, fat, dir)
 				
 				boot->NumFiles++;
 				/* Enter this directory into the todo list */
-				n = malloc(sizeof(struct dirTodoNode));
+				if (!(n = malloc(sizeof(struct dirTodoNode)))) {
+					perror("No space for todo list");
+					return FSFATAL;
+				}
 				n->next = pendingDirectories;
 				n->dir = d;
 				pendingDirectories = n;
@@ -659,7 +686,7 @@ readDosDirSection(f, boot, fat, dir)
 		mod |= removede(f, boot, fat,
 				invlfn ? invlfn : vallfn, p,
 				invlfn ? invcl : valcl, -1, 0,
-				dir->fullpath, 1);
+				fullpath(dir), 1);
 	return mod & ~THISMOD;
 }
 
@@ -723,14 +750,15 @@ reconnect(dosfs, boot, fat, head, dir)
 	/* Ensure uniqueness of entry here!				XXX */
 	memset(&d, 0, sizeof d);
 	sprintf(d.name, "%d", head);
-	d.fullpath = malloc(strlen(dir->fullpath) + strlen(d.name) + 2);
-	sprintf(d.fullpath, "%s/%s", dir->fullpath, d.name);
 	d.flags = 0;
 	d.head = head;
 	d.size = fat[head].length * boot->ClusterSize;
 	d.parent = dir;
 	d.next = dir->child;
-	dir->child = malloc(sizeof(struct dosDirEntry));
+	if (!(dir->child = malloc(sizeof(struct dosDirEntry)))) {
+		perror("No space for directory");
+		return FSFATAL;
+	}
 	memcpy(dir->child, &d, sizeof(struct dosDirEntry));
 	
 	memset(p, 0, 32);

@@ -1,3 +1,5 @@
+/*	$NetBSD: ext.h,v 1.2 1996/05/25 17:09:46 ws Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank
  * Copyright (c) 1995 Martin Husemann
