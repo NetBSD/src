@@ -1,4 +1,4 @@
-/* $NetBSD: vidcaudio.c,v 1.7 1996/11/23 03:37:40 mark Exp $ */
+/* $NetBSD: vidcaudio.c,v 1.8 1997/03/13 02:19:35 mycroft Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -315,7 +315,6 @@ int    vidcaudio_get_out_port	 __P((void *));
 int    vidcaudio_set_in_port	 __P((void *, int));
 int    vidcaudio_get_in_port  	 __P((void *));
 int    vidcaudio_commit_settings __P((void *));
-u_int  vidcaudio_get_silence	 __P((int));
 void   vidcaudio_sw_encode	 __P((void *, int, u_char *, int));
 void   vidcaudio_sw_decode	 __P((void *, int, u_char *, int));
 int    vidcaudio_start_output	 __P((void *, void *, int, void (*)(), void *));
@@ -474,19 +473,6 @@ printf ( "DEBUG: committ_settings\n" );
     return 0;
 }
 
-u_int vidcaudio_get_silence ( int enc )
-{
-    switch (enc)
-    {
-	case AUDIO_ENCODING_ULAW:
-	    return 0x7f;
-
-        default:
-	    return 0;
-    }
-    return 0;
-}
-
 void vidcaudio_sw_encode ( void *addr, int e, u_char *p, int cc )
 {
 #ifdef DEBUG
@@ -633,7 +619,6 @@ struct audio_hw_if vidcaudio_hw_if = {
     vidcaudio_set_in_port,
     vidcaudio_get_in_port,
     vidcaudio_commit_settings,
-    vidcaudio_get_silence,
     vidcaudio_sw_encode,
     vidcaudio_sw_decode,
     vidcaudio_start_output,

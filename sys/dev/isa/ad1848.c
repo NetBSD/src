@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.14 1996/12/05 07:01:30 mikel Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.15 1997/03/13 02:19:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -1141,33 +1141,6 @@ ad1848_round_blocksize(addr, blk)
     else
 	return(blk);	/* Anything goes :-) */
 }
-
-u_int
-ad1848_get_silence(enc)
-    int enc;
-{
-#define ULAW_SILENCE	0x7f
-#define ALAW_SILENCE	0x55
-#define LINEAR_SILENCE	0
-    u_int auzero;
-    
-    switch (enc) {
-    case AUDIO_ENCODING_ULAW:
-	auzero = ULAW_SILENCE; 
-	break;
-    case AUDIO_ENCODING_ALAW:
-	auzero = ALAW_SILENCE;
-	break;
-    case AUDIO_ENCODING_PCM8:
-    case AUDIO_ENCODING_PCM16:
-    default:
-	auzero = LINEAR_SILENCE;
-	break;
-    }
-
-    return(auzero);
-}
-
 
 int
 ad1848_open(sc, dev, flags)

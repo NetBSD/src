@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.7 1996/03/07 15:00:10 christos Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.8 1997/03/13 02:19:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -84,9 +84,6 @@ struct audio_hw_if {
 	 * adjustment.
 	 */
 	int	(*commit_settings)__P((void *));
-
-	/* Return silence value for encoding */
-	u_int	(*get_silence)__P((int));
 
 	/* Software en/decode functions, set if SW coding required by HW */
 	void	(*sw_encode)__P((void *, int, u_char *, int));
