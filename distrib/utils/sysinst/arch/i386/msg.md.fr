@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.36 2004/03/29 16:08:20 bouyer Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.37 2004/05/08 14:25:59 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -164,7 +164,3 @@ message set_kernel_5
 {Kernel (GENERIC_DIAGNOSTIC)}
 message set_kernel_6
 {Kernel (GENERIC_PS2TINY)}
-
-message set_md_1        
-{GNU toolchain}          /* for amd64 */
-
