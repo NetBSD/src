@@ -1,4 +1,4 @@
-/*	$NetBSD: rewind.c,v 1.7 1998/11/18 21:11:09 kleink Exp $	*/
+/*	$NetBSD: rewind.c,v 1.8 1998/11/18 21:13:46 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,11 +41,10 @@
 #if 0
 static char sccsid[] = "@(#)rewind.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rewind.c,v 1.7 1998/11/18 21:11:09 kleink Exp $");
+__RCSID("$NetBSD: rewind.c,v 1.8 1998/11/18 21:13:46 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#include <errno.h>
 #include <stdio.h>
 #include "reentrant.h"
 
