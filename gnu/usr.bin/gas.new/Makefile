@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2000/11/17 06:51:35 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2000/12/05 09:59:31 scw Exp $
 #
 
 .include <bsd.own.mk>
@@ -11,7 +11,8 @@ TARGET_ARCH ?=	${MACHINE_ARCH}
 .endif
 
 .if (${MACHINE_ARCH} != "m68k" && ${MACHINE_ARCH} != "ns32k") ||	\
-    (${OBJECT_FMT} == "ELF" && ${MACHINE_ARCH} != "sparc64")
+    (${OBJECT_FMT} == "ELF" && ${MACHINE_ARCH} != "sparc64") ||		\
+    defined(BOOTSTRAP_ELF)
 PROG=		as
 MAN=		as.1
 SRCS=		app.c as.c atof-generic.c bignum-copy.c cond.c depend.c \
