@@ -1,4 +1,4 @@
-/*	$NetBSD: irdaattach.c,v 1.1 2001/12/05 02:09:41 augustss Exp $	*/
+/*	$NetBSD: irdaattach.c,v 1.2 2001/12/05 16:11:37 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ main(int argc, char **argv)
 	if (pr_frame) {
 		if (ioctl(fd, IRFRAMETTY_GET_DEVICE, &frdev) < 0)
 			err(1, "IRFRAMETTY_GET_DEVICE");
-		printf("%s/irframe%d\n", _PATH_DEV, frdev);
+		printf("%sirframe%d\n", _PATH_DEV, frdev);
 	}
 	if (strcmp(donglename, "none") == 0)
 		dongle = DONGLE_NONE;
