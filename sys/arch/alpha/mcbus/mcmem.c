@@ -1,4 +1,4 @@
-/* $NetBSD: mcmem.c,v 1.1 1998/04/15 00:48:12 mjacob Exp $ */
+/* $NetBSD: mcmem.c,v 1.2 1998/04/15 20:40:34 mjacob Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -31,12 +31,13 @@
  */
 
 /*
- * Dummy Node for MCBUS Memory Modules found on AlphaServer 4100 systems.
+ * 'dummy' (for now) node for the memory modules attached to
+ * the MCBUS main system bus found on AlphaServer 4100 systems.
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcmem.c,v 1.1 1998/04/15 00:48:12 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcmem.c,v 1.2 1998/04/15 20:40:34 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

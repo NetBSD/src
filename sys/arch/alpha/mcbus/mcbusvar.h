@@ -1,4 +1,4 @@
-/* $NetBSD: mcbusvar.h,v 1.1 1998/04/15 00:48:12 mjacob Exp $ */
+/* $NetBSD: mcbusvar.h,v 1.2 1998/04/15 20:40:34 mjacob Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -31,7 +31,8 @@
  */
 
 /*
- * Definitions for the MCbus System Bus found on AlphaServer 4100 systems.
+ * Soft definitions for the MCBUS main system
+ * bus found on AlphaServer 4100 systems.
  */
 
 /*
