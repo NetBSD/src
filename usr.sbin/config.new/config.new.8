@@ -30,32 +30,32 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)config.8	5.1 (Berkeley) 1/12/93
-.\"	$Id: config.new.8,v 1.2 1993/12/04 06:06:03 cgd Exp $
+.\"	$Id: config.new.8,v 1.3 1993/12/20 22:42:55 davidb Exp $
 .\"
 .Dd January 12, 1993
-.Dt CONFIG 8
+.Dt CONFIG.NEW 8
 .Os BSD 4
 .Sh NAME
-.Nm config
+.Nm config.new
 .Nd build kernel compilation directories
 .Sh SYNOPSIS
-.Nm config
+.Nm config.new
 .Op Fl p
 .Ar system-name
 .Sh DESCRIPTION
 .Pp
-.Nm Config
+.Nm Config.new
 builds a set of configuration files from the file
 .Ar system-name ,
 which describes
 the system to configure.
 .Pp
-.Nm Config
+.Nm Config.new
 should run from the
 .Pa conf
 subdirectory of the top-level machine-specific directory
 of the system source (usually
-.Pa /sys/MACHINE/conf ,
+.Pa /sys/arch/MACHINE/conf ,
 where
 .Pa MACHINE
 is one of
@@ -63,24 +63,24 @@ is one of
 .Pa tahoe ,
 .Pa hp300 ,
 and so forth).
-.Nm Config
+.Nm Config.new
 assumes the directory
-.Pa ../../compile
+.Pa ../compile
 exists; it places all output files in a subdirectory there,
 creating the subdirectory if necessary.
 The subdirectory name is taken from the
 .Ar system-name ;
 thus, configuring with
-.Dq Li config PICKLE
+.Dq Li config.new PICKLE
 will use the directory
-.Pa ../../compile/PICKLE .
+.Pa ../compile/PICKLE .
 .Pp
 If the
 .Fl p
 option is supplied,
 .Pa .PROF
 is appended to the compilation directory name, and
-.Nm config
+.Nm config.new
 acts as if the lines
 .Dq Li makeoptions PROF="-pg"
 and
@@ -110,7 +110,7 @@ and (typically)
 .Dq Li options KGDB .
 .Pp
 The output of
-.Nm config
+.Nm config.new
 consists of a number of files, principally
 .Pa ioconf.c ,
 a description of I/O devices that may be attached to the system; and a
@@ -120,20 +120,20 @@ used by
 in building the kernel.
 .Pp
 After running
-.Nm config ,
+.Nm config.new ,
 it is wise to run
 .Dq Li make depend
 in the directory where the new makefile
 was created.
-.Nm Config
+.Nm Config.new
 prints a reminder of this when it completes.
 .Pp
 If
-.Nm config
+.Nm config.new
 stops due to errors, the problems reported should be corrected and
-.Nm config
+.Nm config.new
 should be run again.
-.Nm Config
+.Nm Config.new
 attempts to avoid changing the compilation directory
 if there are configuration errors,
 but this code is not well-tested,
@@ -147,7 +147,7 @@ The SYNOPSIS portion of each device in section 4.
 .Re
 .Sh HISTORY
 The
-.Nm
+.Nm config
 command appeared in
 .Bx 4.1 .
 It was completely revised in
