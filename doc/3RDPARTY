@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.306 2005/03/18 11:01:53 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.307 2005/03/18 23:53:57 tron Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -754,7 +754,7 @@ Notes:
         except during testing.
 
 Package:	XFree86
-Version:	4.4.0
+Version:	4.5.0
 Current Vers:	4.5.0
 Maintainer:	XFree86 consortium
 Archive Site:	ftp://ftp.xfree86.org/pub/XFree86/
