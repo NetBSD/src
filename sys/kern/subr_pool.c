@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.7 1998/08/02 04:34:46 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.8 1998/08/02 19:07:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -411,6 +411,7 @@ pool_init(pp, size, align, ioff, flags, wchan, pagesz, alloc, release, mtype)
 	pp->pr_npagealloc = 0;
 	pp->pr_npagefree = 0;
 	pp->pr_hiwat = 0;
+	pp->pr_nidle = 0;
 
 #ifdef POOL_DIAGNOSTIC
 	if ((flags & PR_LOGGING) != 0) {
