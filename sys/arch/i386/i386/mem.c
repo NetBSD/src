@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.22 1994/10/27 04:15:33 cgd Exp $	*/
+/*	$NetBSD: mem.c,v 1.23 1995/01/09 09:13:09 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1988 University of Utah.
@@ -93,6 +93,8 @@ mmopen(dev, flag, mode)
 	return(0);
 }
 
+caddr_t zeropage;
+
 /*ARGSUSED*/
 mmrw(dev, uio, flags)
 	dev_t dev;
@@ -103,8 +105,19 @@ mmrw(dev, uio, flags)
 	register u_int c, v;
 	register struct iovec *iov;
 	int error = 0;
-	caddr_t zbuf = NULL;
+	static int physlock;
 
+	if (minor(dev) == 0) {
+		/* lock against other uses of shared vmempage */
+		while (physlock > 0) {
+			physlock++;
+			error = tsleep((caddr_t)&physlock, PZERO | PCATCH,
+			    "mmrw", 0);
+			if (error)
+				return (error);
+		}
+		physlock = 1;
+	}
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
 		if (iov->iov_len == 0) {
@@ -119,35 +132,31 @@ mmrw(dev, uio, flags)
 /* minor device 0 is physical memory */
 		case 0:
 			v = uio->uio_offset;
-			pmap_enter(kernel_pmap, (vm_offset_t)vmmap, v,
-				uio->uio_rw == UIO_READ ? 
-				    VM_PROT_READ : VM_PROT_WRITE,
-				TRUE);
+			pmap_enter(kernel_pmap, (vm_offset_t)vmmap,
+			    trunc_page(v), uio->uio_rw == UIO_READ ? 
+			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
 			o = (int)uio->uio_offset & PGOFSET;
-			c = (u_int)(NBPG - ((int)iov->iov_base & PGOFSET));
-			c = min(c, (u_int)(NBPG - o));
-			c = min(c, (u_int)iov->iov_len);
-			error = uiomove((caddr_t)&vmmap[o], (int)c, uio);
+			c = min(uio->uio_resid, (u_int)(NBPG - o));
+			error = uiomove((caddr_t)vmmap + o, (int)c, uio);
 			pmap_remove(kernel_pmap, (vm_offset_t)vmmap,
-			    (vm_offset_t)&vmmap[NBPG]);
+			    (vm_offset_t)vmmap + NBPG);
 			continue;
 
 /* minor device 1 is kernel memory */
 		case 1:
-			c = iov->iov_len;
-			if (!kernacc((caddr_t)(long)uio->uio_offset, c,
+			v = uio->uio_offset;
+			c = min(iov->iov_len, MAXPHYS);
+			if (!kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return(EFAULT);
-			error = uiomove((caddr_t)(long)uio->uio_offset,
-			    (int)c, uio);
+			error = uiomove(v, (int)c, uio);
 			continue;
 
 /* minor device 2 is EOF/RATHOLE */
 		case 2:
-			if (uio->uio_rw == UIO_READ)
-				return (0);
-			c = iov->iov_len;
-			break;
+			if (uio->uio_rw == UIO_WRITE)
+				uio->uio_resid = 0;
+			return (0);
 
 /* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
 		case 12:
@@ -155,61 +164,14 @@ mmrw(dev, uio, flags)
 				c = iov->iov_len;
 				break;
 			}
-			if (zbuf == NULL) {
-				zbuf = (caddr_t)
+			if (zeropage == NULL) {
+				zeropage = (caddr_t)
 				    malloc(CLBYTES, M_TEMP, M_WAITOK);
-				bzero(zbuf, CLBYTES);
+				bzero(zeropage, CLBYTES);
 			}
 			c = min(iov->iov_len, CLBYTES);
-			error = uiomove(zbuf, (int)c, uio);
+			error = uiomove(zeropage, (int)c, uio);
 			continue;
-
-#ifdef notyet
-/* 386 I/O address space (/dev/ioport[bwl]) is a read/write access to seperate
-   i/o device address bus, different than memory bus. Semantics here are
-   very different than ordinary read/write, as if iov_len is a multiple
-   an implied string move from a single port will be done. Note that lseek
-   must be used to set the port number reliably. */
-		case 14:
-			if (iov->iov_len == 1) {
-				u_char tmp;
-				tmp = inb(uio->uio_offset);
-				error = uiomove (&tmp, iov->iov_len, uio);
-			} else {
-				if (!useracc((caddr_t)iov->iov_base,
-					iov->iov_len, uio->uio_rw))
-					return (EFAULT);
-				insb(uio->uio_offset, iov->iov_base,
-					iov->iov_len);
-			}
-			break;
-		case 15:
-			if (iov->iov_len == sizeof (short)) {
-				u_short tmp;
-				tmp = inw(uio->uio_offset);
-				error = uiomove (&tmp, iov->iov_len, uio);
-			} else {
-				if (!useracc((caddr_t)iov->iov_base,
-					iov->iov_len, uio->uio_rw))
-					return (EFAULT);
-				insw(uio->uio_offset, iov->iov_base,
-					iov->iov_len/ sizeof (short));
-			}
-			break;
-		case 16:
-			if (iov->iov_len == sizeof (long)) {
-				u_long tmp;
-				tmp = inl(uio->uio_offset);
-				error = uiomove (&tmp, iov->iov_len, uio);
-			} else {
-				if (!useracc((caddr_t)iov->iov_base,
-					iov->iov_len, uio->uio_rw))
-					return (EFAULT);
-				insl(uio->uio_offset, iov->iov_base,
-					iov->iov_len/ sizeof (long));
-			}
-			break;
-#endif
 
 		default:
 			return (ENXIO);
@@ -221,8 +183,11 @@ mmrw(dev, uio, flags)
 		uio->uio_offset += c;
 		uio->uio_resid -= c;
 	}
-	if (zbuf)
-		free(zbuf, M_TEMP);
+	if (minor(dev) == 0) {
+		if (physlock > 1)
+			wakeup((caddr_t)&physlock);
+		physlock = 0;
+	}
 	return (error);
 }
 
