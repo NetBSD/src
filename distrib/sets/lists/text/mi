@@ -3,6 +3,7 @@
 ./usr/bin/eqn
 ./usr/bin/grodvi
 ./usr/bin/groff
+./usr/bin/grog
 ./usr/bin/grops
 ./usr/bin/grotty
 ./usr/bin/indxbib
@@ -185,6 +186,7 @@
 ./usr/share/man/cat1/eqn.0
 ./usr/share/man/cat1/grodvi.0
 ./usr/share/man/cat1/groff.0
+./usr/share/man/cat1/grog.0
 ./usr/share/man/cat1/grops.0
 ./usr/share/man/cat1/grotty.0
 ./usr/share/man/cat1/indxbib.0

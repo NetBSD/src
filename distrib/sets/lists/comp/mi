@@ -1171,6 +1171,8 @@
 ./usr/share/man/cat3/puts.0
 ./usr/share/man/cat3/putw.0
 ./usr/share/man/cat3/pwcache.0
+./usr/share/man/cat3/qabs.0
+./usr/share/man/cat3/qdiv.0
 ./usr/share/man/cat3/qsort.0
 ./usr/share/man/cat3/queue.0
 ./usr/share/man/cat3/radixsort.0
