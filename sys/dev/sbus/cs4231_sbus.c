@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.9 1999/02/17 21:44:56 mycroft Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.10 1999/03/19 02:32:48 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -271,11 +271,7 @@ cs_read(sc, index)
 	struct ad1848_softc	*sc;
 	int			index;
 {
-	u_int8_t *p = (u_int8_t *)sc->sc_ioh + (index << 2);
-	int v;
-
-	v = *p;
-	return (v);
+	return bus_space_read_1(sc->sc_iot, sc->sc_ioh, (index << 2));
 }
 
 static void
@@ -283,9 +279,7 @@ cs_write(sc, index, value)
 	struct ad1848_softc	*sc;
 	int			index, value;
 {
-	u_int8_t *p = (u_int8_t *)sc->sc_ioh + (index << 2);
-
-	*p = value;
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, (index << 2), value);
 }
 
 static struct audio_hw_if hw_if = {
@@ -346,6 +340,7 @@ cs4231attach(parent, self, aux)
 	sc->sc_dmatag = sa->sa_dmatag;
 
 	sc->sc_ad1848.parent = sc;
+	sc->sc_ad1848.sc_iot = sc->sc_bustag;
 	sc->sc_ad1848.sc_readreg = cs_read;
 	sc->sc_ad1848.sc_writereg = cs_write;
 
@@ -368,7 +363,7 @@ cs4231attach(parent, self, aux)
 	}
 
 	sc->sc_ad1848.sc_ioh = bh;
-	sc->sc_dmareg = (struct apc_dma *)((int)bh + CS4231_REG_SIZE);
+	sc->sc_dmareg = (struct apc_dma *)(bh + CS4231_REG_SIZE);
 
 	cs4231_init(sc);
 
@@ -400,14 +395,14 @@ cs4231_regdump(label, sc)
 	volatile struct apc_dma *dma = sc->sc_dmareg;
 
 	printf("cs4231regdump(%s): regs:", label);
-	printf("dmapva: 0x%lx; ", (u_long)dma->dmapva);
-	printf("dmapc: 0x%lx; ", (u_long)dma->dmapc);
-	printf("dmapnva: 0x%lx; ", (u_long)dma->dmapnva);
-	printf("dmapnc: 0x%lx\n", (u_long)dma->dmapnc);
-	printf("dmacva: 0x%lx; ", (u_long)dma->dmacva);
-	printf("dmacc: 0x%lx; ", (u_long)dma->dmacc);
-	printf("dmacnva: 0x%lx; ", (u_long)dma->dmacnva);
-	printf("dmacnc: 0x%lx\n", (u_long)dma->dmacnc);
+	printf("dmapva: 0x%x; ", dma->dmapva);
+	printf("dmapc: 0x%x; ", dma->dmapc);
+	printf("dmapnva: 0x%x; ", dma->dmapnva);
+	printf("dmapnc: 0x%x\n", dma->dmapnc);
+	printf("dmacva: 0x%x; ", dma->dmacva);
+	printf("dmacc: 0x%x; ", dma->dmacc);
+	printf("dmacnva: 0x%x; ", dma->dmacnva);
+	printf("dmacnc: 0x%x\n", dma->dmacnc);
 
 	printf("apc_dmacsr=%s\n",
 		bitmask_snprintf(dma->dmacsr, APC_BITS, bits, sizeof(bits)) );
@@ -843,7 +838,7 @@ cs4231_trigger_output(addr, start, end, blksize, intr, arg, param)
 	struct cs_dma *p;
 	volatile struct apc_dma *dma = sc->sc_dmareg;
 	int csr;
-	u_long n;
+	vsize_t n;
 
 	if (sc->sc_locked != 0) {
 		printf("cs4231_trigger_output: already running\n");
@@ -878,12 +873,13 @@ cs4231_trigger_output(addr, start, end, blksize, intr, arg, param)
 
 	DPRINTF(("trigger_out: start %p, end %p, size %lu; "
 		 "dmaaddr 0x%lx, dmacnt %lu, segsize %lu\n",
-		start, end, sc->sc_playsegsz, p->segs[0].ds_addr,
-		n, (u_long)p->size));
+		 start, end, (u_long)sc->sc_playsegsz, 
+		 (u_long)p->segs[0].ds_addr,
+		 (u_long)n, (u_long)p->size));
 
 	csr = dma->dmacsr;
 	dma->dmapnva = (u_long)p->segs[0].ds_addr;
-	dma->dmapnc = n;
+	dma->dmapnc = (u_long)n;
 	if ((csr & PDMA_GO) == 0 || (csr & APC_PPAUSE) != 0) {
 		int reg;
 
