@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1997/03/24 21:59:59 christos Exp $
+#	$NetBSD: Makefile,v 1.8 1997/03/27 11:06:20 mycroft Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/9/93
 
 PROG=	vfontedpr
@@ -14,6 +14,7 @@ FILESDIR=			/usr/share/misc
 FILESDIR_tmac.vgrind=		/usr/share/tmac
 
 SCRIPTS=vgrind.sh
+SCRIPTSDIR=/usr/bin
 
 all: vfontedpr vgrindefs.src.db
 
