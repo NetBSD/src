@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.32 2003/12/01 01:11:57 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.33 2004/02/02 18:43:39 he Exp $
 #
 # Makefile for sysinst
 
@@ -13,6 +13,7 @@ MENUS_MD?=	menus.md.${SYSINSTLANG}
 
 .include <bsd.sys.mk>		# for HOST_SH
 .include <bsd.own.mk>		# for mk.conf
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 _MKSHTARGET_CREATE?=	${_MKSHMSG_CREATE} ${.CURDIR:T}/${.TARGET}
 
@@ -23,11 +24,8 @@ LDSTATIC?=	-static
 UNIF_AWK=	${.CURDIR}/../../unif.awk
 MSG_XLAT_SH=	${.CURDIR}/../../msg_xlat.sh
 
-VERDEP=		${NETBSDSRCDIR}/sys/conf/osrelease.sh
-VER!=		${HOST_SH} ${VERDEP}
-
 CPPFLAGS+=	-I. -I${.CURDIR}/../.. -I${.CURDIR} \
-		-DREL=\"${VER}\" -DMACH=\"${MACHINE}\"
+		-DREL=\"${DISTRIBVER}\" -DMACH=\"${MACHINE}\"
 
 .if defined(SMALLPROG_INET6)
 CPPFLAGS+=-DINET6
@@ -91,7 +89,7 @@ msg_defs.c: msg.def
 	@rm -f msg_defs.oh
 
 # Needed to get proper dependency checks on osrelease
-msgtouch: ${VERDEP}
+msgtouch: ${DISTRIBVERDEP}
 	touch ${.TARGET}
 
 msg.def: msg.mi.${SYSINSTLANG} ${MSG_MD} msgtouch

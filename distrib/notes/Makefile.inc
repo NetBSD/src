@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.34 2003/07/26 17:06:52 salo Exp $
+#	$NetBSD: Makefile.inc,v 1.35 2004/02/02 18:43:39 he Exp $
 #
 
 # Ross Harvey <ross@NetBSD.org>
@@ -49,19 +49,19 @@ TOC.more=	${TOCS:M*.more.*}
 .endif
 
 
-${TARG}.ps: ${SRCS} ${TOC.ps}
+${TARG}.ps: ${SRCS} ${TOC.ps} ${DISTRIBVERDEP}
 	${TOOL_GROFF} ${ARGS_PS}   -mdoc      ${MAIN} > $@
 
 ${TARG}.pdf: ${TARG}.ps
 	ps2pdf ${TARG}.ps $@
 
-${TARG}.txt: ${SRCS} ${TOC.txt}
+${TARG}.txt: ${SRCS} ${TOC.txt} ${DISTRIBVERDEP}
 	${TOOL_GROFF} ${ARGS_TXT}  -mdoc      ${MAIN} > $@
 
-${TARG}.html: ${SRCS} ${TOC.html}
+${TARG}.html: ${SRCS} ${TOC.html} ${DISTRIBVERDEP}
 	${TOOL_GROFF} ${ARGS_HTML} -mdoc2html ${MAIN} > $@
 
-${TARG}.more: ${SRCS} ${TOC.more}
+${TARG}.more: ${SRCS} ${TOC.more} ${DISTRIBVERDEP}
 	${TOOL_GROFF} ${ARGS_MORE} -mdoc      ${MAIN} > $@
 
 
