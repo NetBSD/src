@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 1999/02/13 02:54:55 lukem Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 2000/06/04 14:30:30 he Exp $
 
 PROG=	gencat
-MKMAN=	no
+MAN=	gencat.1
 
 .include <bsd.prog.mk>
