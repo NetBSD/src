@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.9 2002/10/10 22:37:50 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.10 2003/01/22 21:44:55 kleink Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -81,16 +81,7 @@ pmap_remove_all(struct pmap *pmap)
 	/* Nothing. */
 }
 
-/*
- * pmap_bootstrap interface
- */
-struct segtab {
-	sr_t	st_sr[16];	/* SR contents */
-	int	st_mask;	/* st_sr allocation bitmask */
-};
-
-void pmap_bootstrap (vaddr_t kernelstart, vaddr_t kernelend,
-    const struct segtab *);
+void pmap_bootstrap (vaddr_t kernelstart, vaddr_t kernelend);
 boolean_t pmap_extract (struct pmap *, vaddr_t, paddr_t *);
 boolean_t pmap_query_bit (struct vm_page *, int);
 boolean_t pmap_clear_bit (struct vm_page *, int);

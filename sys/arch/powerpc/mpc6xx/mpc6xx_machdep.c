@@ -1,4 +1,4 @@
-/*	$NetBSD: mpc6xx_machdep.c,v 1.11 2003/01/19 02:46:08 matt Exp $	*/
+/*	$NetBSD: mpc6xx_machdep.c,v 1.12 2003/01/22 21:44:55 kleink Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -74,9 +74,11 @@
 #endif
 
 #include <powerpc/mpc6xx/bat.h>
+#include <powerpc/mpc6xx/sr_601.h>
 #include <powerpc/trap.h>
 #include <powerpc/stdarg.h>
 #include <powerpc/spr.h>
+#include <powerpc/pte.h>
 #include <powerpc/altivec.h>
 #include <machine/powerpc.h>
 
@@ -97,16 +99,19 @@ struct pmap *curpm;
 
 extern struct user *proc0paddr;
 
-struct bat battable[16];
+struct bat battable[512];
+sr_t iosrtable[16];	/* I/O segments, for kernel_pmap setup */
 paddr_t msgbuf_paddr;
 
 void
 mpc6xx_init(void (*handler)(void))
 {
+	extern int trapstart[], trapend[];
 	extern int trapcode, trapsize;
 	extern int sctrap, scsize;
 	extern int alitrap, alisize;
 	extern int dsitrap, dsisize;
+	extern int dsi601trap, dsi601size;
 	extern int decrint, decrsize;
 	extern int tlbimiss, tlbimsize;
 	extern int tlbdlmiss, tlbdlmsize;
@@ -122,6 +127,7 @@ mpc6xx_init(void (*handler)(void))
 #endif
 	uintptr_t exc;
 	register_t scratch;
+	unsigned int cpuvers;
 	size_t size;
 #ifdef MULTIPROCESSOR
 	struct cpu_info * const ci = &cpu_info[0];
@@ -130,6 +136,7 @@ mpc6xx_init(void (*handler)(void))
 #endif
 
 	__asm __volatile ("mtsprg 0,%0" :: "r"(ci));
+	cpuvers = mfpvr() >> 16;
 
 
 	/*
@@ -172,8 +179,13 @@ mpc6xx_init(void (*handler)(void))
 			memcpy((void *)EXC_ALI, &alitrap, size);
 			break;
 		case EXC_DSI:
-			size = (size_t)&dsisize;
-			memcpy((void *)EXC_DSI, &dsitrap, size);
+			if (cpuvers == MPC601) {
+				size = (size_t)&dsi601size;
+				memcpy((void *)EXC_DSI, &dsi601trap, size);
+			} else {
+				size = (size_t)&dsisize;
+				memcpy((void *)EXC_DSI, &dsitrap, size);
+			}
 			break;
 		case EXC_DECR:
 			size = (size_t)&decrsize;
@@ -197,6 +209,13 @@ mpc6xx_init(void (*handler)(void))
 			memcpy((void *)EXC_VEC,  &trapcode, size);
 			break;
 #if defined(DDB) || defined(IPKDB) || defined(KGDB)
+		case EXC_RUNMODETRC:
+			if (cpuvers != MPC601) {
+				size = (size_t)&trapsize;
+				memcpy((void *)EXC_RUNMODETRC, &trapcode, size);
+				break;
+			}
+			/* FALLTHROUGH */
 		case EXC_PGM:
 		case EXC_TRC:
 		case EXC_BPT:
@@ -223,11 +242,14 @@ mpc6xx_init(void (*handler)(void))
 	 */
 	cpu_probe_cache();
 
+#define	MxSPR_MASK	0x7c1fffff
+#define	MFSPR_MQ	0x7c0002a6
+#define	MTSPR_MQ	0x7c0003a6
+#define	NOP		0x60000000
+
 #ifdef ALTIVEC
 #define	MFSPR_VRSAVE	0x7c0042a6
 #define	MTSPR_VRSAVE	0x7c0043a6
-#define	MxSPR_MASK	0x7c1fffff
-#define	NOP		0x60000000
 	
 	/*
 	 * Try to set the VEC bit in the MSR.  If it doesn't get set, we are
@@ -246,7 +268,6 @@ mpc6xx_init(void (*handler)(void))
 	if (scratch & PSL_VEC) {
 		cpu_altivec = 1;
 	} else {
-		extern int trapstart[], trapend[];
 		int *ip = trapstart;
 		
 		for (; ip < trapend; ip++) {
@@ -258,13 +279,34 @@ mpc6xx_init(void (*handler)(void))
 				ip[0] = NOP;	/* mtspr */
 			}
 		}
+	}
+#endif
+
+	/*
+	 * If we aren't on a MPC601 processor, we to need zap any of
+	 * sequences we save/restore the MQ SPR into NOPs.
+	 */
+	if (cpuvers != MPC601) {
+		int *ip = trapstart;
+		
+		for (; ip < trapend; ip++) {
+			if ((ip[0] & MxSPR_MASK) == MFSPR_MQ) {
+				ip[0] = NOP;	/* mfspr */
+				ip[1] = NOP;	/* stw */
+			} else if ((ip[0] & MxSPR_MASK) == MTSPR_MQ) {
+				ip[-1] = NOP;	/* lwz */
+				ip[0] = NOP;	/* mtspr */
+			}
+		}
+	}
+
+	if (cpu_altivec == 1 || cpuvers != MPC601) {
 		/*
 		 * Sync the changed instructions.
 		 */
 		__syncicache((void *) trapstart,
 		    (uintptr_t) trapend - (uintptr_t) trapstart);
 	}
-#endif
 
 	/*
 	 * external interrupt handler install
@@ -280,6 +322,24 @@ mpc6xx_init(void (*handler)(void))
 	__asm __volatile ("sync; mfmsr %0; ori %0,%0,%1; mtmsr %0; isync"
 	    : "=r"(scratch)
 	    : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
+}
+
+void
+mpc601_ioseg_add(paddr_t pa, register_t len)
+{
+	const u_int i = pa >> ADDR_SR_SHFT;
+
+	if (len != BAT_BL_256M)
+		panic("mpc601_ioseg_add: len != 256M");
+
+	/*
+	 * Translate into an I/O segment, load it, and stash away for use
+	 * in pmap_bootstrap().
+	 */
+	iosrtable[i] = SR601(SR601_Ks, SR601_BUID_MEMFORCED, 0, i);
+	__asm __volatile ("mtsrin %0,%1"
+	    ::	"r"(iosrtable[i]),
+		"r"(pa));
 }
 
 void
@@ -321,30 +381,78 @@ void
 mpc6xx_batinit(paddr_t pa, ...)
 {
 	struct mem_region *allmem, *availmem, *mp;
+	int i;
+	unsigned int cpuvers;
 	va_list ap;
+
+	cpuvers = mfpvr() >> 16;
 
 	/*
 	 * Initialize BAT registers to unmapped to not generate
 	 * overlapping mappings below.
+	 *
+	 * The 601's implementation differs in the Valid bit being situated
+	 * in the lower BAT register, and in being a unified BAT only whose
+	 * four entries are accessed through the IBAT[0-3] SPRs.
+	 *
+	 * Also, while the 601 does distinguish between supervisor/user
+	 * protection keys, it does _not_ distinguish distinguish between  
+	 * validity in supervisor/user mode.
 	 */
-	__asm __volatile ("mtibatu 0,%0" :: "r"(0));
-	__asm __volatile ("mtibatu 1,%0" :: "r"(0));
-	__asm __volatile ("mtibatu 2,%0" :: "r"(0));
-	__asm __volatile ("mtibatu 3,%0" :: "r"(0));
-	__asm __volatile ("mtdbatu 0,%0" :: "r"(0));
-	__asm __volatile ("mtdbatu 1,%0" :: "r"(0));
-	__asm __volatile ("mtdbatu 2,%0" :: "r"(0));
-	__asm __volatile ("mtdbatu 3,%0" :: "r"(0));
+	if (cpuvers == MPC601) {
+		__asm __volatile ("mtibatl 0,%0" :: "r"(0));
+		__asm __volatile ("mtibatl 1,%0" :: "r"(0));
+		__asm __volatile ("mtibatl 2,%0" :: "r"(0));
+		__asm __volatile ("mtibatl 3,%0" :: "r"(0));
+	} else {
+		__asm __volatile ("mtibatu 0,%0" :: "r"(0));
+		__asm __volatile ("mtibatu 1,%0" :: "r"(0));
+		__asm __volatile ("mtibatu 2,%0" :: "r"(0));
+		__asm __volatile ("mtibatu 3,%0" :: "r"(0));
+		__asm __volatile ("mtdbatu 0,%0" :: "r"(0));
+		__asm __volatile ("mtdbatu 1,%0" :: "r"(0));
+		__asm __volatile ("mtdbatu 2,%0" :: "r"(0));
+		__asm __volatile ("mtdbatu 3,%0" :: "r"(0));
+	}
 
 	/*
-	 * Set up BAT0 to only map the lowest 256 MB area
+	 * Set up BAT to map physical memory
 	 */
-	battable[0].batl = BATL(0x00000000, BAT_M, BAT_PP_RW);
-	battable[0].batu = BATU(0x00000000, BAT_BL_256M, BAT_Vs);
+	if (cpuvers == MPC601) {
+		/*
+		 * Set up battable to map the lowest 256 MB area.
+		 * Map the lowest 32 MB area via BAT[0-3];
+		 * BAT[01] are fixed, BAT[23] are floating.
+		 */
+		for (i = 0; i < 32; i++) {
+			battable[i].batl = BATL601(i << 23,
+			   BAT601_BSM_8M, BAT601_V);
+			battable[i].batu = BATU601(i << 23,
+			    BAT601_M, BAT601_Ku, BAT601_PP_NONE);
+		}
+		__asm __volatile ("mtibatu 0,%1; mtibatl 0,%0"
+		    :: "r"(battable[0x00000000 >> 23].batl),
+		       "r"(battable[0x00000000 >> 23].batu));
+		__asm __volatile ("mtibatu 1,%1; mtibatl 1,%0"
+		    :: "r"(battable[0x00800000 >> 23].batl),
+		       "r"(battable[0x00800000 >> 23].batu));
+		__asm __volatile ("mtibatu 2,%1; mtibatl 2,%0"
+		    :: "r"(battable[0x01000000 >> 23].batl),
+		       "r"(battable[0x01000000 >> 23].batu));
+		__asm __volatile ("mtibatu 3,%1; mtibatl 3,%0"
+		    :: "r"(battable[0x01800000 >> 23].batl),
+		       "r"(battable[0x01800000 >> 23].batu));
+	} else {
+		/*
+		 * Set up BAT0 to only map the lowest 256 MB area
+		 */
+		battable[0].batl = BATL(0x00000000, BAT_M, BAT_PP_RW);
+		battable[0].batu = BATU(0x00000000, BAT_BL_256M, BAT_Vs);
 
-	__asm __volatile ("mtibatl 0,%0; mtibatu 0,%1;"
-			  "mtdbatl 0,%0; mtdbatu 0,%1;"
-	    ::	"r"(battable[0].batl), "r"(battable[0].batu));
+		__asm __volatile ("mtibatl 0,%0; mtibatu 0,%1;"
+				  "mtdbatl 0,%0; mtdbatu 0,%1;"
+		    ::	"r"(battable[0].batl), "r"(battable[0].batu));
+	}
 
 	/*
 	 * Now setup other fixed bat registers
@@ -356,12 +464,21 @@ mpc6xx_batinit(paddr_t pa, ...)
 	va_start(ap, pa);
 
 	/*
-	 * Add any I/O BATs specificed.
+	 * Add any I/O BATs specificed;
+	 * use I/O segments on the BAT-starved 601.
 	 */
-	while (pa != 0) {
-		register_t len = va_arg(ap, register_t);
-		mpc6xx_iobat_add(pa, len);
-		pa = va_arg(ap, paddr_t);
+	if (cpuvers == MPC601) {
+		while (pa != 0) {
+			register_t len = va_arg(ap, register_t);
+			mpc601_ioseg_add(pa, len);
+			pa = va_arg(ap, paddr_t);
+		}
+	} else {
+		while (pa != 0) {
+			register_t len = va_arg(ap, register_t);
+			mpc6xx_iobat_add(pa, len);
+			pa = va_arg(ap, paddr_t);
+		}
 	}
 
 	va_end(ap);
@@ -371,17 +488,36 @@ mpc6xx_batinit(paddr_t pa, ...)
 	 * This is here because mem_regions() call needs bat0 set up.
 	 */
 	mem_regions(&allmem, &availmem);
-	for (mp = allmem; mp->size; mp++) {
-		paddr_t pa = mp->start & 0xf0000000;
-		paddr_t end = mp->start + mp->size;
+	if (cpuvers == MPC601) {
+		for (mp = allmem; mp->size; mp++) {
+			paddr_t pa = mp->start & 0xff800000;
+			paddr_t end = mp->start + mp->size;
 
-		do {
-			u_int i = pa >> 28;
+			do {
+				u_int i = pa >> 23;
 
-			battable[i].batl = BATL(pa, BAT_M, BAT_PP_RW);
-			battable[i].batu = BATU(pa, BAT_BL_256M, BAT_Vs);
-			pa += SEGMENT_LENGTH;
-		} while (pa < end);
+				battable[i].batl =
+				    BATL601(pa, BAT601_BSM_8M, BAT601_V);
+				battable[i].batu =
+				    BATU601(pa, BAT601_M, BAT601_Ku, BAT601_PP_NONE);
+				pa += (1 << 23);
+			} while (pa < end);
+		}
+	} else {
+		for (mp = allmem; mp->size; mp++) {
+			paddr_t pa = mp->start & 0xf0000000;
+			paddr_t end = mp->start + mp->size;
+
+			do {
+				u_int i = pa >> 28;
+
+				battable[i].batl =
+				    BATL(pa, BAT_M, BAT_PP_RW);
+				battable[i].batu =
+				    BATU(pa, BAT_BL_256M, BAT_Vs);
+				pa += SEGMENT_LENGTH;
+			} while (pa < end);
+		}
 	}
 }
 
