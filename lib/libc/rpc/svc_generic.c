@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_generic.c,v 1.5 2003/01/18 11:29:06 thorpej Exp $	*/
+/*	$NetBSD: svc_generic.c,v 1.6 2003/05/13 11:57:21 yamt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -252,7 +252,7 @@ svc_tli_create(fd, nconf, bindaddr, sendsz, recvsz)
 			listen(fd, SOMAXCONN);
 		} else {
 			if (bind(fd,
-			    (struct sockaddr *)(void *)&bindaddr->addr.buf,
+			    (struct sockaddr *)bindaddr->addr.buf,
 			    (socklen_t)si.si_alen) < 0) {
 				warnx(
 		"svc_tli_create: could not bind to requested address");
