@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.40 1999/03/10 03:28:50 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.41 1999/03/10 21:05:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -685,7 +685,7 @@ ether_sprintf(ap)
 void
 ether_ifattach(ifp, lla)
 	struct ifnet *ifp;
-	u_int8_t * lla;
+	const u_int8_t *lla;
 {
 	struct sockaddr_dl *sdl;
 
@@ -698,7 +698,7 @@ ether_ifattach(ifp, lla)
 	    sdl->sdl_family == AF_LINK) {
 		sdl->sdl_type = IFT_ETHER;
 		sdl->sdl_alen = ifp->if_addrlen;
-		bcopy((caddr_t)lla, LLADDR(sdl), ifp->if_addrlen);
+		bcopy(lla, LLADDR(sdl), ifp->if_addrlen);
 	}
 	LIST_INIT(&((struct ethercom *)ifp)->ec_multiaddrs);
 	ifp->if_broadcastaddr = etherbroadcastaddr;
