@@ -1,4 +1,7 @@
 #! /bin/ksh
+#
+#	$NetBSD: tzselect.ksh,v 1.2 1998/01/09 04:11:58 perry Exp $
+#
 # Ask the user about the time zone, and output the resulting TZ value to stdout.
 # Interact with the user via stderr and stdin.
 
