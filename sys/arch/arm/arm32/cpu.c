@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.5 2001/09/28 09:53:41 chris Exp $	*/
+/*	$NetBSD: cpu.c,v 1.6 2001/10/18 15:19:58 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -276,7 +276,7 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_ARM940T,	CPU_CLASS_ARM9TDMI,	"ARM940T" },
 	{ CPU_ID_ARM946ES,	CPU_CLASS_ARM9ES,	"ARM946E-S" },
 	{ CPU_ID_ARM966ES,	CPU_CLASS_ARM9ES,	"ARM966E-S" },
-	{ CPU_ID_ARM966ESR1,	CPU_CLASS_ARM9ES,	"ARM966E-S (Rev 1)" },
+	{ CPU_ID_ARM966ESR1,	CPU_CLASS_ARM9ES,	"ARM966E-S" },
 	{ CPU_ID_SA110,		CPU_CLASS_SA1,		"SA-110" },
 	{ CPU_ID_SA1100,	CPU_CLASS_SA1,		"SA-1100" },
 	{ CPU_ID_SA1110,	CPU_CLASS_SA1,		"SA-1110" },
@@ -290,18 +290,18 @@ struct cpu_classtab {
 };
 
 const struct cpu_classtab cpu_classes[] = {
-	{ "unknown",	NULL },		/* CPU_CLASS_NONE */
-	{ "ARM2",	"CPU_ARM2" },	/* CPU_CLASS_ARM2 */
-	{ "ARM2as",	"CPU_ARM250" },	/* CPU_CLASS_ARM2AS */
-	{ "ARM3",	"CPU_ARM3" },	/* CPU_CLASS_ARM3 */
-	{ "ARM6",	"CPU_ARM6" },	/* CPU_CLASS_ARM6 */
-	{ "ARM7",	"CPU_ARM7" },	/* CPU_CLASS_ARM7 */
-	{ "ARM7TDMI",	"CPU_ARM7TDMI" },/* CPU_CLASS_ARM7TDMI */
-	{ "ARM8",	"CPU_ARM8" },	/* CPU_CLASS_ARM8 */
-	{ "ARM9TDMI",	NULL },		/* CPU_CLASS_ARM9TDMI */
-	{ "ARM9E-S",	NULL },		/* CPU_CLASS_ARM9ES */
-	{ "SA-1",	"CPU_SA110" },	/* CPU_CLASS_SA1 */
-	{ "Xscale",	"CPU_XSCALE" },	/* CPU_CLASS_XSCALE */
+	{ "unknown",	NULL },			/* CPU_CLASS_NONE */
+	{ "ARM2",	"CPU_ARM2" },		/* CPU_CLASS_ARM2 */
+	{ "ARM2as",	"CPU_ARM250" },		/* CPU_CLASS_ARM2AS */
+	{ "ARM3",	"CPU_ARM3" },		/* CPU_CLASS_ARM3 */
+	{ "ARM6",	"CPU_ARM6" },		/* CPU_CLASS_ARM6 */
+	{ "ARM7",	"CPU_ARM7" },		/* CPU_CLASS_ARM7 */
+	{ "ARM7TDMI",	"CPU_ARM7TDMI" },	/* CPU_CLASS_ARM7TDMI */
+	{ "ARM8",	"CPU_ARM8" },		/* CPU_CLASS_ARM8 */
+	{ "ARM9TDMI",	NULL },			/* CPU_CLASS_ARM9TDMI */
+	{ "ARM9E-S",	NULL },			/* CPU_CLASS_ARM9ES */
+	{ "SA-1",	"CPU_SA110" },		/* CPU_CLASS_SA1 */
+	{ "Xscale",	"CPU_XSCALE" },		/* CPU_CLASS_XSCALE */
 };
 
 /*
@@ -349,6 +349,7 @@ identify_arm_cpu(dv, cpu_number)
 		else
 			strcat(cpu->cpu_model, " IDC enabled");
 		break;
+	case CPU_CLASS_ARM9TDMI:
 	case CPU_CLASS_SA1:
 	case CPU_CLASS_XSCALE:
 		if ((cpu->cpu_ctrl & CPU_CONTROL_DC_ENABLE) == 0)
@@ -399,6 +400,9 @@ identify_arm_cpu(dv, cpu_number)
 #endif		
 #ifdef CPU_ARM8
 	case CPU_CLASS_ARM8:
+#endif
+#ifdef CPU_ARM9
+	case CPU_CLASS_ARM9TDMI:
 #endif
 #ifdef CPU_SA110
 	case CPU_CLASS_SA1:
