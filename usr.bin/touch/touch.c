@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.11 1995/08/31 22:10:06 jtc Exp $	*/
+/*	$NetBSD: touch.c,v 1.12 1997/10/06 13:46:52 enami Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$NetBSD: touch.c,v 1.11 1995/08/31 22:10:06 jtc Exp $";
+static char rcsid[] = "$NetBSD: touch.c,v 1.12 1997/10/06 13:46:52 enami Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -73,16 +73,18 @@ main(argc, argv)
 {
 	struct stat sb;
 	struct timeval tv[2];
-	int aflag, cflag, fflag, mflag, ch, fd, len, rval, timeset;
+	int aflag, cflag, fflag, hflag, mflag, ch, fd, len, rval, timeset;
 	char *p;
+	int (*change_file_times) __P((const char *, const struct timeval *));
+	int (*get_file_status) __P((const char *, struct stat *));
 
 	setlocale(LC_ALL, "");
 
-	aflag = cflag = fflag = mflag = timeset = 0;
+	aflag = cflag = fflag = hflag = mflag = timeset = 0;
 	if (gettimeofday(&tv[0], NULL))
 		err(1, "gettimeofday");
 
-	while ((ch = getopt(argc, argv, "acfmr:t:")) != EOF)
+	while ((ch = getopt(argc, argv, "acfhmr:t:")) != EOF)
 		switch(ch) {
 		case 'a':
 			aflag = 1;
@@ -92,6 +94,9 @@ main(argc, argv)
 			break;
 		case 'f':
 			fflag = 1;
+			break;
+		case 'h':
+			hflag = 1;
 			break;
 		case 'm':
 			mflag = 1;
@@ -115,6 +120,15 @@ main(argc, argv)
 	if (aflag == 0 && mflag == 0)
 		aflag = mflag = 1;
 
+	if (hflag) {
+		cflag = 1;		/* Don't create new file */
+		change_file_times = lutimes;
+		get_file_status = lstat;
+	} else {
+		change_file_times = utimes;
+		get_file_status = stat;
+	}
+
 	/*
 	 * If no -r or -t flag, at least two operands, the first of which
 	 * is an 8 or 10 digit number, use the obsolete time specification.
@@ -137,7 +151,7 @@ main(argc, argv)
 
 	for (rval = 0; *argv; ++argv) {
 		/* See if the file exists. */
-		if (stat(*argv, &sb))
+		if ((*get_file_status)(*argv, &sb))
 			if (!cflag) {
 				/* Create the file. */
 				fd = open(*argv,
@@ -160,7 +174,7 @@ main(argc, argv)
 			TIMESPEC_TO_TIMEVAL(&tv[1], &sb.st_mtimespec);
 
 		/* Try utimes(2). */
-		if (!utimes(*argv, tv))
+		if (!(*change_file_times)(*argv, tv))
 			continue;
 
 		/* If the user specified a time, nothing else we can do. */
@@ -175,11 +189,11 @@ main(argc, argv)
 		 * The permission checks are different, too, in that the
 		 * ability to write the file is sufficient.  Take a shot.
 		 */
-		 if (!utimes(*argv, NULL))
+		 if (!(*change_file_times)(*argv, NULL))
 			continue;
 
 		/* Try reading/writing. */
-		if (rw(*argv, &sb, fflag))
+		if (!S_ISLNK(sb.st_mode) && rw(*argv, &sb, fflag))
 			rval = 1;
 	}
 	exit(rval);
