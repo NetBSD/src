@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_gpioreg.h,v 1.10 2001/07/10 14:58:28 ichiro Exp $	*/
+/*	$NetBSD: sa11x0_gpioreg.h,v 1.11 2001/07/13 03:33:38 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -70,28 +70,29 @@
 
 /*
  * SA-11x0 GPIOs parameter
+ *	Alternate Functions
  */
-/*
-port	name 		desc
-0	Reserved
-1	Reserved
-2...9	LDD{8..15}	LCD DATA(8-15)
-10	SSP_TXD		SSP transmit
-11	SSP_RXD		SSP receive
-12	SSP_SCLK	SSP serial clock
-13	SSP_SFRM	SSP frameclock
-14	UART_TXD	UART transmit
-15	UART_RXD	UART receive
-16	GPCLK_OUT	General-purpose clock out
-17	Reserved
-18	UART_SCLK	Sample clock input
-19	SSP_CLK		Sample clock input
-20	UART_SCLK3	Sample clock input
-21	MCP_CLK		MCP dock in
-22	TREQA		Either TIC request A
-23	TREQB		Either TIC request B
-24	Reserved
-25	RTC		Real Time Clock
-26	RCLK_OUT	internal clock /2
-27	32KHZ_OUT	Raw 32.768kHz osc output
- */
+#define GPIO_ALT_LDD8		GPIO(2)		/* LCD DATA(8) */
+#define GPIO_ALT_LDD9		GPIO(3)		/* LCD DATA(9) */
+#define GPIO_ALT_LDD10		GPIO(4)		/* LCD DATA(10) */
+#define GPIO_ALT_LDD11		GPIO(5)		/* LCD DATA(11) */
+#define GPIO_ALT_LDD12		GPIO(6)		/* LCD DATA(12) */
+#define GPIO_ALT_LDD13		GPIO(7)		/* LCD DATA(13) */
+#define GPIO_ALT_LDD14		GPIO(8)		/* LCD DATA(14) */
+#define GPIO_ALT_LDD15		GPIO(9)		/* LCD DATA(15) */
+#define GPIO_ALT_SSP_TXD	GPIO(10)	/* SSP transmit */
+#define GPIO_ALT_SSP_RXD	GPIO(11)	/* SSP receive */
+#define GPIO_ALT_SSP_SCLK	GPIO(12)	/* SSP serial clock */
+#define GPIO_ALT_SSP_SFRM	GPIO(13)	/* SSP frameclock */
+#define GPIO_ALT_UART_TXD	GPIO(14)	/* UART transmit */
+#define GPIO_ALT_UART_RXD	GPIO(15)	/* UART receive */
+#define GPIO_ALT_GPCLK_OUT	GPIO(16)	/* General-purpose clock out */
+#define GPIO_ALT_UART_SCLK	GPIO(18)	/* Sample clock input */
+#define GPIO_ALT_SSP_CLK	GPIO(19)	/* Sample clock input */
+#define GPIO_ALT_UART_SCLK3	GPIO(20)	/* Sample clock input */
+#define GPIO_ALT_MCP_CLK	GPIO(21)	/* MCP dock in */
+#define GPIO_ALT_TREQA		GPIO(22)	/* Either TIC request A */
+#define GPIO_ALT_TREQB		GPIO(23)	/* Either TIC request B */
+#define GPIO_ALT_RTC		GPIO(25)	/* Real Time Clock */
+#define GPIO_ALT_RCLK_OUT	GPIO(26)	/* internal clock /2 */
+#define GPIO_ALT_32KHZ_OUT	GPIO(27)	/* Raw 32.768kHz osc output */
