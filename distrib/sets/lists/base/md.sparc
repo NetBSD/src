@@ -1,3 +1,4 @@
+./usr/bin/fdformat
 ./usr/lib/libamu.so.0.0
 ./usr/lib/libbfd.so.0.0
 ./usr/lib/libc.so.12.21
@@ -34,6 +35,7 @@
 ./usr/lkm/umapfs.o
 ./usr/mdec/binstall
 ./usr/mdec/boot
+./usr/mdec/boot.net
 ./usr/mdec/bootxx
 ./usr/mdec/installboot
 ./usr/sbin/eeprom
