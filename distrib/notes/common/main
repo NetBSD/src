@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.253.2.11 2005/02/17 04:23:33 jmc Exp $
+.\"	$NetBSD: main,v 1.253.2.12 2005/03/22 00:52:07 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -424,18 +424,103 @@ possible, it's likely that
 wouldn't exist.
 .
 .if \n[FOR_RELEASE] \{\
-.Ss Changes Between The NetBSD 2.0 and 2.0.1 Releases
+.Ss Changes Between The NetBSD 2.0.1 and 2.0.2 updates
 .Pp
 The
-.Nx 2.0.1
+.Nx 2.0.2
 release
-is the first security/critical update release of the NetBSD 2.0
+is the second security/critical update of the NetBSD 2.0
 release branch. This represents a selected subset of fixes deemed
 critical in nature for stability or security reasons. All of these fixes
 will also appear on future
 .Nx
-releases from the NetBSD 2.0 release branch as well.
+releases (e.g.
+.Nx 2.1
+, etc) from the NetBSD 2.0 release branch as well.
 .
+.Pp
+Specific updates are as follows:
+.
+.Ss2 Kernel
+.
+.(bullet
+Avoid endless loop in F_CLOSEM fnctl which could be abused for a local DOS.
+.It
+Avoid possible security issues on amd64, x86 and xen by properly checking 
+range for copyinstr and copyoutstr.
+.It
+Make pmap_map() work on sun4 machines so these are usable again.
+.It
+Fix a UVM problem that causes hangs when large processes fork.
+.It
+Fix pthreads on sun4c hardware by fixing a problem with detecting faults
+in atomic load/store instructions.
+.It
+Address further pthread issues on sparc and sparc64 by defining a new 
+LWP flag which indicates that we're in the process of doing a context switch.
+.It
+Make sun3 port functional again by restoring the definition for MAXPHYS
+as it is now used rather than MAXBSIZE to limit page cache I/O sizes.
+.It
+Prevent lockups/panics if the VOP_LOOKUP() call unlocked the parent directory 
+node.
+.It 
+Prevent a kernel panic on boot with a PX graphics card on DECstations.
+.It
+Fix prep port to be functional by ensuring that the OpenPIC register window 
+is mapped during startup.
+.It
+Clear freed memory in
+.Xr cgd 4
+code to avoid possibly security issues.
+.bullet)
+.
+.Ss2 Networking
+.
+.(bullet
+Disabled the oow test in ipf because it is killing valid packets.
+.It
+Prevent deadlock/panic on NFS clients after NFS server reboots and caches
+aren't in sync.
+.It
+Fix an NFS panic caused by truncating a file while another client is writing 
+data to it.
+.It
+Avoid infinite loops when getting NFS readdir response without any entries 
+or EOF.
+.It
+Fix possible remote DOS via IPSec AH packets.
+.bullet)
+.
+.Ss2 System administration and user tools
+.
+.(bullet
+Teach groff about NetBSD versions that aren't on the branches documentation.
+.It
+Add description for Solaris 10 dual boot installation.
+.It
+Document PTHREAD_CONCURRENCY.
+.It
+Fix bug in binutils which broke Firefox under NetBSD-sparc64.
+.It
+Address xpm security problems reported in CAN-2005-0605.
+.bullet)
+.Ss2 \*M specific
+.Ss Changes Between The NetBSD 2.0 release and 2.0.1 update
+.Pp
+The
+.Nx 2.0.1
+release
+is the first security/critical update of the NetBSD 2.0
+release branch. This represents a selected subset of fixes deemed
+critical in nature for stability or security reasons. All of these fixes
+will also appear on future
+.Nx
+releases (e.g.
+.Nx 2.1
+, etc) from the NetBSD 2.0 release branch as well.
+.
+.Pp
 Specific updates are as follows:
 .
 .Ss2 Kernel
@@ -462,7 +547,7 @@ MMU fixes for sh3 based ports to prevent reboots under heavy load.
 Fix major performance issues with the i82547 Gig-E chip which improves
 performance with
 .Xr wm 4
-..
+.
 .It
 Fix problems with
 .Xr sk 4
@@ -821,7 +906,8 @@ distribution.
 .It Li README.files
 README describing the distribution's contents.
 .It Li TODO
-.Nx 's
+The
+.Nx
 todo list (also somewhat incomplete and out of date).
 .It Pa patches/
 Post-release source code patches.
@@ -1266,7 +1352,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .Bl -column xxx "Jun-ichiro itojun Hagino" Mt sommerfeld@NetBSD.org newsmips
 .
 .br_ne 1i
-.It-span Em "The NetBSD core group:"
+.It Em "The NetBSD core group:"
 .It Ta Ta
 .It Ta Allen Briggs Ta Mt briggs@NetBSD.org
 .It Ta Frank van der Linden Ta Mt fvdl@NetBSD.org
@@ -1276,7 +1362,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Ta
 .
 .br_ne 2i
-.It-span Em "The portmasters (and their ports):"
+.It Em "The portmasters (and their ports):"
 .\"
 .\" XXX created by list-portmasters.pl
 .\"
@@ -1341,7 +1427,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Ta
 .
 .br_ne 1i
-.It-span Em "The NetBSD \*V Release Engineering team:"
+.It Em "The NetBSD \*V Release Engineering team:"
 .It Ta Ta
 .It Ta Grant Beattie Ta Mt grant@NetBSD.org
 .It Ta Erik Berls Ta Mt cyber@NetBSD.org
@@ -1357,7 +1443,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Ta
 .
 .br_ne 2i
-.It-span Em "NetBSD Developers:"
+.It Em "NetBSD Developers:"
 .It Ta Ta
 .It Ta Nathan Ahlstrom Ta Mt nra@NetBSD.org
 .It Ta Steve Allen Ta Mt wormey@NetBSD.org
@@ -1610,7 +1696,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Ta
 .
 .br_ne 2i
-.It-span Em "Other contributors:"
+.It Em "Other contributors:"
 .It Ta Ta
 .It Ta Dave Burgess Ta Mt burgess@cynjut.infonet.net
 .It Ta Brian R. Gaeke Ta Mt brg@dgate.org

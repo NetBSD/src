@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.68.2.3 2004/11/29 06:03:20 jmc Exp $
+.\"	$NetBSD: sysinst,v 1.68.2.4 2005/03/22 00:52:07 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -256,7 +256,6 @@ is equal to c0513e3c):
 .Pp
 .Dl db\*> Ic "write 0xc0513e3c 0x0a00"
 .Pp
-
 After installation, this value can be permanently written to the kernel image
 directly with:
 .Pp
@@ -900,7 +899,7 @@ or
 and the geometry will be
 printed on a line that begins with its name.
 As mentioned above, you may need your disk's geometry when creating
-.Nx 's
+.Nx
 partitions.
 You will also need to know the name, to tell
 .Ic sysinst
@@ -909,8 +908,8 @@ to install.
 .\}
 The most important thing to know is that
 .Li wd0
-is
-.Nx 's
+is the
+.Nx
 name for your first IDE disk,
 .Li wd1
 the second, etc.

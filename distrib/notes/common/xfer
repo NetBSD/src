@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.39.2.5 2004/11/29 06:03:14 jmc Exp $
+.\"	$NetBSD: xfer,v 1.39.2.6 2005/03/22 00:52:08 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -480,7 +480,7 @@ on a machine with less than 5MB of memory.
 .Pp
 .\} \" \n[x68k]
 .
-.if !\n[x68k] \{
+.if !\n[x68k] \{\
 Note that if you are installing or upgrading from a writable media,
 the media can be write-protected if you wish.
 These systems mount a root image from inside the kernel, and will not
