@@ -1,4 +1,4 @@
-/*	$NetBSD: sdcd.c,v 1.2 2001/09/29 03:50:13 minoura Exp $	*/
+/*	$NetBSD: sdcd.c,v 1.3 2001/10/15 16:07:20 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -144,7 +144,7 @@ readdisklabel (int id)
 		}
 		current_npart = label->d_npartitions;
 
-		return 0;
+		goto done;
 	}
 
 	/* Try Human68K-style partition table */
@@ -174,6 +174,7 @@ readdisklabel (int id)
 			current_npart++;
 		}
 	}
+done:
 #ifdef DEBUG
 	for (i = 0; i < current_npart; i++) {
 		printf ("%d: starts %d, size %d\n", i,
