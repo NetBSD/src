@@ -1,4 +1,4 @@
-/*	$NetBSD: brconfig.c,v 1.5 2003/03/19 10:34:33 bouyer Exp $	*/
+/*	$NetBSD: brconfig.c,v 1.6 2003/06/23 11:53:36 agc Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,6 +40,12 @@
  *
  *	Configuration utility for the bridge(4) driver.
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: brconfig.c,v 1.6 2003/06/23 11:53:36 agc Exp $");
+#endif
+
 
 #include <sys/param.h>
 #include <sys/socket.h>

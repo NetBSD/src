@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.21 2002/09/18 10:18:17 drochner Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.22 2003/06/23 11:53:44 agc Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999 Matthew R. Green
@@ -52,6 +52,12 @@
  *			swapon(8) command)
  *	<dev>		add this device
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: swapctl.c,v 1.22 2003/06/23 11:53:44 agc Exp $");
+#endif
+
 
 #include <sys/param.h>
 #include <sys/stat.h>

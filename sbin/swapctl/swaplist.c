@@ -1,4 +1,4 @@
-/*	$NetBSD: swaplist.c,v 1.9 2000/08/19 21:31:58 soren Exp $	*/
+/*	$NetBSD: swaplist.c,v 1.10 2003/06/23 11:53:45 agc Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -27,6 +27,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: swaplist.c,v 1.10 2003/06/23 11:53:45 agc Exp $");
+#endif
+
 
 #include <sys/param.h>
 #include <sys/stat.h>

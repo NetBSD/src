@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.20 2002/09/13 18:31:41 mycroft Exp $	*/
+/*	$NetBSD: atactl.c,v 1.21 2003/06/23 11:53:35 agc Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,12 @@
 /*
  * atactl(8) - a program to control ATA devices.
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: atactl.c,v 1.21 2003/06/23 11:53:35 agc Exp $");
+#endif
+
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

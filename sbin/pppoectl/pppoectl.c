@@ -1,4 +1,4 @@
-/*	$NetBSD: pppoectl.c,v 1.11 2003/03/22 14:38:16 mrg Exp $	*/
+/*	$NetBSD: pppoectl.c,v 1.12 2003/06/23 11:53:39 agc Exp $	*/
 
 /*
  * Copyright (c) 1997 Joerg Wunsch
@@ -28,6 +28,12 @@
  * From: spppcontrol.c,v 1.3 1998/01/07 07:55:26 charnier Exp
  * From: ispppcontrol
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: pppoectl.c,v 1.12 2003/06/23 11:53:39 agc Exp $");
+#endif
+
 
 #include <sys/param.h>
 #include <sys/callout.h>
