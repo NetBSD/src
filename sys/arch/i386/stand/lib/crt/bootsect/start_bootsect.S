@@ -1,4 +1,4 @@
-/*	$NetBSD: start_bootsect.S,v 1.13 1999/04/28 23:24:42 fvdl Exp $	*/
+/*	$NetBSD: start_bootsect.S,v 1.14 1999/04/30 15:31:18 christos Exp $	*/
 	
 /*
  * BIOS bootsector startup
@@ -222,10 +222,9 @@ found:
 	orl	%ebx,%ecx
 	incl	%ecx		/* cx has #cylinders */
 
-	mul	%edx		/* h * s (will fit in 16 bits) */
+	mull	%edx		/* h * s (will fit in 16 bits) */
 	data32
-	mul	%ecx		/* eax = c * h * s */
-	data32
+	mull	%ecx		/* eax = c * h * s */
 
 	data32
 	addr32
