@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.47 1998/09/03 14:12:36 christos Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.48 1998/12/10 11:01:01 christos Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -83,6 +83,7 @@
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
+#include "opt_ppp.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -107,6 +108,11 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
+#endif
+
+#if IPX
+#include <netipx/ipx.h>
+#include <netipx/ipx_if.h>
 #endif
 
 #include "bpfilter.h"
@@ -563,13 +569,20 @@ pppsioctl(ifp, cmd, data)
 	break;
 
     case SIOCSIFADDR:
-	if (ifa->ifa_addr->sa_family != AF_INET)
-	    error = EAFNOSUPPORT;
-	break;
-
     case SIOCSIFDSTADDR:
-	if (ifa->ifa_addr->sa_family != AF_INET)
+	switch(ifa->ifa_addr->sa_family) {
+#ifdef INET
+	case AF_INET:
+	    break;
+#endif
+#ifdef IPX
+	case AF_IPX:
+	    break;
+#endif
+	default:
 	    error = EAFNOSUPPORT;
+	    break;
+	}
 	break;
 
     case SIOCSIFMTU:
@@ -681,6 +694,19 @@ pppoutput(ifp, m0, dst, rtp)
 	ip = mtod(m0, struct ip *);
 	if (ip->ip_tos & IPTOS_LOWDELAY)
 	    m0->m_flags |= M_HIGHPRI;
+	break;
+#endif
+#ifdef IPX
+    case AF_IPX:
+	/*
+	 * This is pretty bogus.. We dont have an ipxcp module in pppd
+	 * yet to configure the link parameters.  Sigh. I guess a
+	 * manual ifconfig would do....  -Peter
+	 */
+	address = PPP_ALLSTATIONS;
+	control = PPP_UI;
+	protocol = PPP_IPX;
+	mode = NPMODE_PASS;
 	break;
 #endif
     case AF_UNSPEC:
@@ -1446,6 +1472,25 @@ ppp_inproc(sc, m)
 #endif
 	schednetisr(NETISR_IP);
 	inq = &ipintrq;
+	break;
+#endif
+
+#ifdef IPX
+    case PPP_IPX:
+	/*
+	 * IPX packet - take off the ppp header and pass it up to IPX.
+	 */
+	if ((sc->sc_if.if_flags & IFF_UP) == 0
+	    /* XXX: || sc->sc_npmode[NP_IPX] != NPMODE_PASS*/) {
+	    /* interface is down - drop the packet. */
+	    m_freem(m);
+	    return;
+	}
+	m->m_pkthdr.len -= PPP_HDRLEN;
+	m->m_data += PPP_HDRLEN;
+	m->m_len -= PPP_HDRLEN;
+	schednetisr(NETISR_IPX);
+	inq = &ipxintrq;
 	break;
 #endif
 
