@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.28 1999/09/30 22:57:53 thorpej Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.29 1999/10/20 15:22:27 enami Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -193,6 +193,7 @@ atapibusattach(parent, self, aux)
 	sc_link_proto->scsipi_cmd = atapi_scsipi_cmd;
 	sc_link_proto->scsipi_interpret_sense = atapi_interpret_sense;
 	sc_link_proto->sc_print_addr = atapi_print_addr;
+	sc_link_proto->scsipi_kill_pending = atapi_kill_pending;
 
 
 	sc_ab->adapter_link = sc_link_proto;
