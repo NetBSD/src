@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.29 1993/11/27 01:24:07 mycroft Exp $
+ *	$Id: fd.c,v 1.20.2.30 1993/11/29 06:16:41 mycroft Exp $
  */
 
 #ifdef DIAGNOSTIC
@@ -149,6 +149,7 @@ STATIC struct fd_type fd_types[] = {
 
 /* software state, per disk (with up to 2 disks per ctlr) */
 struct fd_softc {
+	struct	device sc_dev;
 	struct	dkdevice sc_dk;
 
 	struct	fd_type *sc_deftype;	/* default type descriptor */
@@ -371,9 +372,10 @@ fdattach(parent, self, aux)
 	fd->sc_track = -1;
 	fd->sc_drive = fa->fa_drive;
 	fd->sc_deftype = type;
+	fdc->sc_fd[fd->sc_drive] = fd;
 	fd->sc_dk.dk_driver = &fddkdriver;
 	/* XXX need to do some more fiddling with sc_dk */
-	fdc->sc_fd[fd->sc_drive] = fd;
+	dk_establish(&fd->sc_dk, &fd->sc_dev);
 }
 
 /*
@@ -417,7 +419,7 @@ fdstrategy(bp)
 {
 	int	fdu = FDUNIT(bp->b_dev);
 	struct	fd_softc *fd = fdcd.cd_devs[fdu];
-	struct	fdc_softc *fdc = (struct fdc_softc *)fd->sc_dk.dk_dev.dv_parent;
+	struct	fdc_softc *fdc = (struct fdc_softc *)fd->sc_dev.dv_parent;
 	struct	fd_type *type = fd->sc_type;
 	struct	buf *dp;
 	int	nblks;
@@ -511,7 +513,7 @@ fd_motor_off(fd)
 	int s = splbio();
 
 	fd->sc_flags &= ~(FD_MOTOR | FD_MOTOR_WAIT);
-	set_motor((struct fdc_softc *)fd->sc_dk.dk_dev.dv_parent, 0);
+	set_motor((struct fdc_softc *)fd->sc_dev.dv_parent, 0);
 	splx(s);
 }
 
@@ -519,7 +521,7 @@ STATIC void
 fd_motor_on(fd)
 	struct fd_softc *fd;
 {
-	struct fdc_softc *fdc = (struct fdc_softc *)fd->sc_dk.dk_dev.dv_parent;
+	struct fdc_softc *fdc = (struct fdc_softc *)fd->sc_dev.dv_parent;
 	int s = splbio();
 
 	fd->sc_flags &= ~FD_MOTOR_WAIT;
@@ -635,7 +637,7 @@ fd_status(fd, n, s)
 	int n;
 	char *s;
 {
-	struct fdc_softc *fdc = (struct fdc_softc *)fd->sc_dk.dk_dev.dv_parent;
+	struct fdc_softc *fdc = (struct fdc_softc *)fd->sc_dev.dv_parent;
 	u_short iobase = fdc->sc_iobase;
 
 	if (n == 0) {
@@ -644,7 +646,7 @@ fd_status(fd, n, s)
 		n = 2;
 	}
 
-	printf("%s: %s st0 %b ", fd->sc_dk.dk_dev.dv_xname, s,
+	printf("%s: %s st0 %b ", fd->sc_dev.dv_xname, s,
 	       fdc->sc_status[0], NE7_ST0BITS);
 	if (n == 2)
 		printf("cyl %d\n", fdc->sc_status[1]);
@@ -723,7 +725,7 @@ fdcstate(fdc)
 #ifdef DIAGNOSTIC
 		if (fd = fdc->sc_afd) {
 			printf("%s: stray afd %s\n", fdc->sc_dev.dv_xname,
-				fd->sc_dk.dk_dev.dv_xname);
+				fd->sc_dev.dv_xname);
 			fdc->sc_afd = NULL;
 		}
 #endif
