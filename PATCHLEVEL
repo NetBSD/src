@@ -256,10 +256,21 @@ sense buffer.
 
 [ write(1) ] Fix a security bug.
 
-[ kernel/i386 ] Fix bug that caused arguments to be left on the stack.
+[ kernel/i386 ] Fix bug in FP exception handling that might cause a core dump
+	when there is a signal handler installed.
 
 [ C Library/YP ] Fix bug in ypserv and RPC timeout code.
 
 [ fsck_ffs(8) ] Check for (and remove) holes in directories.
 
 [ netstat(8) ] Fix printing of Unix-domain socket addresses.
+
+[ kernel/scsi ] Add better support for optical disks (e.g. ZIP disks).
+
+[ kernel/i386 ] Fix bugs in ahc driver that affect chips with a small number
+	of SCBs.  Also, recognize more boards/chips.
+
+[ kernel/nfs ] Fix various possible null pointer dereferencs and array bound
+	violations.  Also, fix directory lease eviction in NQNFS.
+
+[ kernel/i386 ] Recognize more ep boards.
