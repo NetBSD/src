@@ -1,8 +1,9 @@
-# $NetBSD: Makefile,v 1.3 1998/12/09 00:22:03 ross Exp $
+# $NetBSD: Makefile,v 1.4 1998/12/10 05:15:43 ross Exp $
 #
 # XXX this is evil
 
-TC_SRC_DIR=/ide/rossDec97/toolchain
+TC_SRC_DIR?=/usr/local/toolchain
+SRC_DIR?=/usr/src
 
 includes lint obj regress tags:
 
@@ -18,7 +19,7 @@ clean cleandir distclean::
 	cd $(TC_SRC_DIR) ; make -k distclean
 	rm -f MADE
 install:
-	NETBSDSRCDIR=/usr/src				\
+	NETBSDSRCDIR=${SRC_DIR}				\
 	  sh -e mk-toolchain-install-cmds		\
 	  | (cd $(TC_SRC_DIR) ;				\
 		STRIP=$(TC_SRC_DIR)/binutils/strip.new	\
