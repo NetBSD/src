@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)cchar.c	5.4 (Berkeley) 6/10/91";*/
-static char rcsid[] = "$Id: cchar.c,v 1.5 1993/08/01 18:57:39 mycroft Exp $";
+static char rcsid[] = "$Id: cchar.c,v 1.6 1993/12/10 09:51:38 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -103,7 +103,7 @@ csearch(argvp, ip)
 	if (!arg)
 		err("option requires an argument -- %s\n%s", name, usage);
 
-#define CHK(s)  (*name == s[0] && !strcmp(name, s))
+#define CHK(s)  (*arg == s[0] && !strcmp(arg, s))
 	if (CHK("undef") || CHK("<undef>"))
 		ip->t.c_cc[cp->sub] = _POSIX_VDISABLE;
 	else if (arg[0] == '^')
