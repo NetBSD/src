@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.7 2003/04/14 02:56:48 mrg Exp $	*/
+/*	$NetBSD: search.c,v 1.8 2003/04/14 03:02:29 mrg Exp $	*/
 
 /*
  * Copyright (C) 1984-2002  Mark Nudelman
@@ -54,8 +54,8 @@ static void uncompile_pattern __P((void));
 static int match_pattern __P((char *, char **, char **, int));
 struct hilite;
 static void add_hilite __P((struct hilite *, struct hilite *));
-static void adj_hilite __P((struct hilite *, POSITION));
-static void hilite_line __P((POSITION, char *, char *, char *));
+static void adj_hilite __P((struct hilite *, POSITION, int));
+static void hilite_line __P((POSITION, char *, char *, char *, int));
 static void hilite_screen __P((void));
 static POSITION search_pos __P((int));
 static int search_range __P((POSITION, POSITION, int, int, int, POSITION *, POSITION *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: linenum.c,v 1.6 2003/04/14 02:56:47 mrg Exp $	*/
+/*	$NetBSD: linenum.c,v 1.7 2003/04/14 03:02:28 mrg Exp $	*/
 
 /*
  * Copyright (C) 1984-2002  Mark Nudelman
@@ -73,7 +73,7 @@ extern int linenums;
 extern int sigs;
 extern int sc_height;
 
-static void calcgap __P((struct linenum *));
+static void calcgap __P((struct linenum_info *));
 static void longloopmessage __P((void));
 static void longish __P((void));
 
