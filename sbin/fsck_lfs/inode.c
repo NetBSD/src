@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.21 2003/09/19 08:31:58 itojun Exp $	 */
+/* $NetBSD: inode.c,v 1.22 2003/10/03 12:22:15 yamt Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -187,7 +187,6 @@ ckinode(struct ufs1_dinode *dp, struct inodesc *idesc)
 			ret = (*idesc->id_func) (idesc);
 		} else
 			ret = dirscan(idesc);
-		idesc->id_lblkno = 0;
 		if (ret & STOP)
 			return (ret);
 	}
@@ -273,10 +272,15 @@ iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 	for (ap = ((ufs_daddr_t *) bp->b_data); ap < aplim; ap++) {
 		if (*ap) {
 			idesc->id_blkno = *ap;
-			if (ilevel == 0)
+			if (ilevel == 0) {
+				/*
+				 * dirscan needs lblkno.
+				 */
+				idesc->id_lblkno++;
 				n = (*func) (idesc);
-			else
+			} else {
 				n = iblock(idesc, ilevel, isize);
+			}
 			if (n & STOP) {
 				if (diddirty)
 					VOP_BWRITE(bp);
