@@ -1,4 +1,4 @@
-/*	$KAME: localconf.h,v 1.21 2000/11/19 01:22:56 sakane Exp $	*/
+/*	$KAME: localconf.h,v 1.22 2001/01/10 02:08:33 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -56,7 +56,7 @@
 #define LC_IDENTTYPE_MAX	5	/* XXX */
 
 struct localconf {
-	char *racoon_conf;
+	char *racoon_conf;		/* configuration filename */
 
 	u_int16_t port_isakmp;		/* port for isakmp as default */
 	u_int16_t port_admin;		/* port for admin */
