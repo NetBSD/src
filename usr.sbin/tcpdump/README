@@ -1,0 +1,331 @@
+Fri May 22 17:19:41 PDT 1992
+Version 2.2
+
+This directory contains tcpdump version 2.2, the Berkely Packet Filter (BPF),
+and tcpslice, a tool for manipulating raw packet traces.  Note that there
+was no 2.1 release.  Version 2.1beta was released with the BSD Networking 2
+tape, but we never got around to a general 2.1 release.
+
+Tcpdump runs on following platforms:
+
+	machine		os				packet filter
+	-------		--				-------------
+	hp300		4.3BSD Tahoe/Reno		bpf
+	sparc		SunOS 4.x			bpf, nit
+	sun3		SunOS 3.5, SunOS 4.x		bpf, nit
+	Decstation	Ultrix 4.0 (and higher)		packetfilter
+	IBM RT		4.3BSD				enet
+	386/486		4.3BSD netII			bpf
+
+BPF can be installed in SunOS kernels, provided you have source, 4.3BSD
+kernels, and is now standard in BSD systems.  (The Networking II release
+from CSRG has BPF support.  Tcpdump can be temporarily found in 
+/usr/src/contrib.)  See bpf/README for further details and an installation
+procedure.
+
+In addition to bug fixes, changes from version 2.0 include:
+
+- Easy access to icmp packets, via the 'icmp' keyword.  For example,
+
+	% tcpdump 'icmp[0] != 8 and icmp[0] != 0'
+
+  matches non-echo/reply ICMP packets.
+
+- An improved filter code optimizer.
+
+- A multicast keyword.  Also, the broadcast keyword can now be qualified 
+  with a protocol layer.  For instance, "ip broadcast" and "ether multicast"
+  are valid filters.
+
+- Support for monitoring the loopback interface (i.e. 'tcpdump -i lo').
+  Jeffrey Honig (jch@MITCHELL.CIT.CORNELL.EDU) contributed the kernel
+  patches to netinet/if_loop.c.
+
+- Support for the Ungermann-Bass Ethernet on IBM/PC-RTs running AOS.
+  Contact Jeffrey Honig for the diffs.
+
+- Decoding of EGP and OSPF packets, thanks to Jeffrey Honig.
+
+- The tcpslice program, thanks to Vern Paxson (vern@ee.lbl.gov).  Check
+  out the man page (tcpslice.1) for more information.
+
+The BPF kernel interface has changed and is not backward compatible
+with the interface from the 2.0 release.  tcpdump-2.1 won't work with 
+old versions of BPF, but will work with the CSRG Networking II release.
+If you've made the bpf changes to network drivers, you'll need to update
+them (see bpf/README).  Also, if you've written any BPF applications,
+they may need some minor changes (with respect to ioctls).
+
+The BPF man page is improved and contains an explanation of the
+filtering language.
+
+Tcpdump's makefile has continued to evolve.  Multiple platforms are
+supported using subdirectories.  See INSTALL for more details.
+
+Problems, bugs, questions, desirable enhancements, etc., should be
+sent to the email address "tcpdump@ee.lbl.gov".  
+
+ - Steve McCanne (mccanne@ee.lbl.gov)
+   Craig Leres (leres@ee.lbl.gov)
+   Van Jacobson (van@ee.lbl.gov)
+
+------------------------------
+
+Old news:
+
+ - A packet dumper has been added (thanks to Jeff Mogul of DECWRL). 
+   With this option, you can create an architecture independent binary 
+   trace file in real time, without the overhead of the packet printer.  
+   At a later time, the packets can be filtered (again) and printed.
+
+ - BSD is supported.  You must have BPF in your kernel.
+   Since the filtering is now done in the kernel, fewer packets are
+   dropped.  In fact, with BPF and the packet dumper option, a measly
+   Sun 3/50 can keep up with a busy network.
+
+ - Compressed SLIP packets can now be dumped, provided you use our
+   SLIP software and BPF.  These packets are dumped as any other IP
+   packet; the compressed headers are dumped with the '-e' option.
+
+ - Machines with little-endian byte ordering are supported (thanks to
+   Jeff Mogul).
+
+ - Ultrix 4.0 is supported (also thanks to Jeff Mogul).
+
+ - IBM RT and Stanford Enetfilter support has been added by
+   Rayan Zachariassen <rayan@canet.ca>.  Tcpdump has been tested under
+   both the vanilla enetfilter interface, and the extended interface 
+   (#ifdef'd by IBMRTPC) present in the MERIT version of the enetfilter.
+
+ - TFTP packets are now printed (requests only).
+
+ - BOOTP packets are now printed.
+
+ - SNMP packets are now printed. (thanks to John LoVerso of Xylogics).
+
+ - Sparc architectures, including the Sparcstation-1, are now
+   supported thanks to Steve McCanne and Craig Leres.
+
+ - SunOS 4 is now supported thanks to Micky Liu of Columbia
+   University (micky@cunixc.cc.columbia.edu).
+
+ - IP options are now printed.
+
+ - RIP packets are now printed.
+
+ - There's a -v flag that prints out more information than the
+   default (e.g., it will enable printing of IP ttl, tos and id)
+   and -q flag that prints out less (e.g., it will disable
+   interpretation of AppleTalk-in-UDP).
+
+ - The grammar has undergone substantial changes (if you have an
+   earlier version of tcpdump, you should re-read the manual
+   entry).
+
+   The most useful change is the addition of an expression
+   syntax that lets you filter on arbitrary fields or values in the
+   packet.  E.g., "ip[0] > 0x45" would print only packets with IP
+   options, "tcp[13] & 3 != 0" would print only TCP SYN and FIN
+   packets.
+
+   The most painful change is that concatenation no longer means
+   "and" -- e.g., you have to say "host foo and port bar" instead
+   of "host foo port bar".  The up side to this down is that
+   repeated qualifiers can be omitted, making most filter
+   expressions shorter.  E.g., you can now say "ip host foo and
+   (bar or baz)" to look at ip traffic between hosts foo and bar or
+   between hosts foo and baz.  [The old way of saying this was "ip
+   host foo and (ip host bar or ip host baz)".]
+
+------------------------------
+
+The program is loosely based on SMI's "etherfind" although none
+of the etherfind code remains.  It was originally written by Van
+Jacobson, Lawrence Berkeley Laboratory, as part of an ongoing
+research project to investigate and improve tcp and internet
+gateway performance.  The parts of the program originally taken
+from Sun's etherfind were later re-written by Steve McCanne of
+LBL.  To insure that would be no vestige of proprietary code in
+tcpdump, Steve wrote these pieces from the specification given
+by the manual entry, with no access to the source of tcpdump or
+etherfind.
+
+The current versions of these files are available via anonymous
+ftp from host ftp.ee.lbl.gov (currently at address 128.3.254.68)
+file tcpdump.tar.Z (a compressed Unix tar file).
+
+This program is subject to the 'standard' Berkeley network software
+copyright:
+  
+  Copyright (c) 1988-1990 The Regents of the University of California.
+  All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that: (1) source code distributions
+  retain the above copyright notice and this paragraph in its entirety, (2)
+  distributions including binary code include the above copyright notice and
+  this paragraph in its entirety in the documentation or other materials
+  provided with the distribution, and (3) all advertising materials mentioning
+  features or use of this software display the following acknowledgement:
+  ``This product includes software developed by the University of California,
+  Lawrence Berkeley Laboratory and its contributors.'' Neither the name of
+  the University nor the names of its contributors may be used to endorse
+  or promote products derived from this software without specific prior
+  written permission.
+  THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
+  WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
+Enjoy.
+
+  - Van Jacobson, Steve McCanne, Craig Leres
+----------------------------
+
+This directory also contains some short awk programs intended as
+examples of ways to reduce tcpdump data when you're tracking
+particular network problems:
+
+send-ack.awk
+	Simplifies the tcpdump trace for an ftp (or other unidirectional
+	tcp transfer).  Since we assume that one host only sends and
+	the other only acks, all address information is left off and
+	we just note if the packet is a "send" or an "ack".
+
+	There is one output line per line of the original trace. 
+	Field 1 is the packet time in decimal seconds, relative
+	to the start of the conversation.  Field 2 is delta-time
+	from last packet.  Field 3 is packet type/direction. 
+	"Send" means data going from sender to receiver, "ack"
+	means an ack going from the receiver to the sender.  A
+	preceding "*" indicates that the data is a retransmission.
+	A preceding "-" indicates a hole in the sequence space
+	(i.e., missing packet(s)), a "#" means an odd-size (not max
+	seg size) packet.  Field 4 has the packet flags
+	(same format as raw trace).  Field 5 is the sequence
+	number (start seq. num for sender, next expected seq number
+	for acks).  The number in parens following an ack is
+	the delta-time from the first send of the packet to the
+	ack.  A number in parens following a send is the
+	delta-time from the first send of the packet to the
+	current send (on duplicate packets only).  Duplicate
+	sends or acks have a number in square brackets showing
+	the number of duplicates so far. 
+
+	Here is a short sample from near the start of an ftp:
+		3.00    0.20   send . 512
+		3.20    0.20    ack . 1024  (0.20)
+		3.20    0.00   send P 1024
+		3.40    0.20    ack . 1536  (0.20)
+		3.80    0.40 * send . 0  (3.80) [2]
+		3.82    0.02 *  ack . 1536  (0.62) [2]
+	Three seconds into the conversation, bytes 512 through 1023
+	were sent.  200ms later they were acked.  Shortly thereafter
+	bytes 1024-1535 were sent and again acked after 200ms. 
+	Then, for no apparent reason, 0-511 is retransmitted, 3.8
+	seconds after its initial send (the round trip time for this
+	ftp was 1sec, +-500ms).  Since the receiver is expecting
+	1536, 1536 is re-acked when 0 arrives. 
+
+packetdat.awk
+	Computes chunk summary data for an ftp (or similar
+	unidirectional tcp transfer). [A "chunk" refers to
+	a chunk of the sequence space -- essentially the packet
+	sequence number divided by the max segment size.]
+
+	A summary line is printed showing the number of chunks,
+	the number of packets it took to send that many chunks
+	(if there are no lost or duplicated packets, the number
+	of packets should equal the number of chunks) and the
+	number of acks.
+
+	Following the summary line is one line of information
+	per chunk.  The line contains eight fields:
+	   1 - the chunk number
+	   2 - the start sequence number for this chunk
+	   3 - time of first send
+	   4 - time of last send
+	   5 - time of first ack
+	   6 - time of last ack
+	   7 - number of times chunk was sent 
+	   8 - number of times chunk was acked
+	(all times are in decimal seconds, relative to the start
+	of the conversation.)
+
+	As an example, here is the first part of the output for
+	an ftp trace:
+
+	# 134 chunks.  536 packets sent.  508 acks.
+	1       1       0.00    5.80    0.20    0.20    4       1
+	2       513     0.28    6.20    0.40    0.40    4       1
+	3       1025    1.16    6.32    1.20    1.20    4       1
+	4       1561    1.86    15.00   2.00    2.00    6       1
+	5       2049    2.16    15.44   2.20    2.20    5       1
+	6       2585    2.64    16.44   2.80    2.80    5       1
+	7       3073    3.00    16.66   3.20    3.20    4       1
+	8       3609    3.20    17.24   3.40    5.82    4       11
+	9       4097    6.02    6.58    6.20    6.80    2       5
+
+	This says that 134 chunks were transfered (about 70K
+	since the average packet size was 512 bytes).  It took
+	536 packets to transfer the data (i.e., on the average
+	each chunk was transmitted four times).  Looking at,
+	say, chunk 4, we see it represents the 512 bytes of
+	sequence space from 1561 to 2048.  It was first sent
+	1.86 seconds into the conversation.  It was last
+	sent 15 seconds into the conversation and was sent
+	a total of 6 times (i.e., it was retransmitted every
+	2 seconds on the average).  It was acked once, 140ms
+	after it first arrived.
+
+stime.awk
+atime.awk
+	Output one line per send or ack, respectively, in the form
+		<time> <seq. number>
+	where <time> is the time in seconds since the start of the
+	transfer and <seq. number> is the sequence number being sent
+	or acked.  I typically plot this data looking for suspicious
+	patterns.
+
+
+The problem I was looking at was the bulk-data-transfer
+throughput of medium delay network paths (1-6 sec.  round trip
+time) under typical DARPA Internet conditions.  The trace of the
+ftp transfer of a large file was used as the raw data source. 
+The method was:
+
+  - On a local host (but not the Sun running tcpdump), connect to
+    the remote ftp.
+
+  - On the monitor Sun, start the trace going.  E.g.,
+      tcpdump host local-host and remote-host and port ftp-data >tracefile
+
+  - On local, do either a get or put of a large file (~500KB),
+    preferably to the null device (to minimize effects like
+    closing the receive window while waiting for a disk write).
+
+  - When tranfer is finished, stop tcpdump.  Use awk to make up
+    two files of summary data (maxsize is the maximum packet size,
+    tracedata is the file of tcpdump tracedata):
+      awk -f send-ack.awk packetsize=avgsize tracedata >sa
+      awk -f packetdat.awk packetsize=avgsize tracedata >pd
+
+  - While the summary data files are printing, take a look at
+    how the transfer behaved:
+      awk -f stime.awk tracedata | xgraph
+    (90% of what you learn seems to happen in this step).
+
+  - Do all of the above steps several times, both directions,
+    at different times of day, with different protocol
+    implementations on the other end.
+
+  - Using one of the Unix data analysis packages (in my case,
+    S and Gary Perlman's Unix|Stat), spend a few months staring
+    at the data.
+
+  - Change something in the local protocol implementation and
+    redo the steps above.
+
+  - Once a week, tell your funding agent that you're discovering
+    wonderful things and you'll write up that research report
+    "real soon now".
+
