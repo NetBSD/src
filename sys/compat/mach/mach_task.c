@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.14 2002/12/19 22:23:07 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.15 2002/12/24 12:29:06 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.14 2002/12/19 22:23:07 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.15 2002/12/24 12:29:06 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -148,7 +148,7 @@ mach_ports_lookup(args)
 	    mach_right_get(med->med_bootstrap, p, MACH_PORT_RIGHT_SEND);
 
 	/*
-	 * The date is null, if ifdef this out
+	 * On Darwin, the data seems always null, so ifdef this out
 	 */
 #if 0
 	if ((error = copyout(&msp[0], (void *)va, sizeof(msp))) != 0)
