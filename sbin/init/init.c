@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.23 1997/02/22 02:19:51 thorpej Exp $	*/
+/*	$NetBSD: init.c,v 1.24 1997/03/14 00:44:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 7/15/93";
 #else
-static char rcsid[] = "$NetBSD: init.c,v 1.23 1997/02/22 02:19:51 thorpej Exp $";
+static char rcsid[] = "$NetBSD: init.c,v 1.24 1997/03/14 00:44:35 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -357,6 +357,7 @@ stall(va_alist)
 
 	vsyslog(LOG_ALERT, message, ap);
 	va_end(ap);
+	closelog();
 	sleep(STALL_TIMEOUT);
 }
 
@@ -385,6 +386,7 @@ warning(va_alist)
 
 	vsyslog(LOG_ALERT, message, ap);
 	va_end(ap);
+	closelog();
 }
 
 /*
@@ -411,6 +413,7 @@ emergency(va_alist)
 
 	vsyslog(LOG_EMERG, message, ap);
 	va_end(ap);
+	closelog();
 }
 
 /*
