@@ -23,7 +23,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: db_machdep.h,v 1.5 1994/04/03 22:31:01 mycroft Exp $
+ *	$Id: db_machdep.h,v 1.6 1994/10/09 13:29:11 mycroft Exp $
  */
 
 #ifndef	_I386_DB_MACHDEP_H_
@@ -37,13 +37,10 @@
 #include <vm/vm.h>
 #include <machine/trap.h>
 
-#define i386_saved_state trapframe
-/* end of mangling */
-
 typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
 typedef	int		db_expr_t;	/* expression - signed */
 
-typedef struct i386_saved_state db_regs_t;
+typedef struct trapframe db_regs_t;
 db_regs_t	ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
 
@@ -53,7 +50,7 @@ db_regs_t	ddb_regs;	/* register state */
 #define	BKPT_SIZE	(1)		/* size of breakpoint inst */
 #define	BKPT_SET(inst)	(BKPT_INST)
 
-#define	FIXUP_PC_AFTER_BREAK	ddb_regs.tf_eip -= 1;
+#define	FIXUP_PC_AFTER_BREAK		(ddb_regs.tf_eip -= BKPT_SIZE)
 
 #define	db_clear_single_step(regs)	((regs)->tf_eflags &= ~PSL_T)
 #define	db_set_single_step(regs)	((regs)->tf_eflags |=  PSL_T)
