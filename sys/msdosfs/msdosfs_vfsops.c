@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.39 1996/02/09 19:13:50 christos Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.40 1996/02/11 22:48:16 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -418,21 +418,24 @@ msdosfs_mountfs(devvp, mp, p, argp)
 		      && ((pmp->pm_Heads == 1) || (pmp->pm_Heads == 2))))
 		   )
 			pmp->pm_fatentrysize = 12;
-		else pmp->pm_fatentrysize = 16;
-	}
-	else {
-		if (pmp->pm_maxcluster <= 4086)
+		else
+			pmp->pm_fatentrysize = 16;
+	} else {
+		if (pmp->pm_maxcluster
+		    <= ((CLUST_RSRVS - CLUST_FIRST) & FAT12_MASK))
 			/*
 			 * This will usually be a floppy disk. This size makes
 			 * sure that one fat entry will not be split across
 			 * multiple blocks.
 			 */
 			pmp->pm_fatentrysize = 12;
-		else pmp->pm_fatentrysize = 16;
+		else
+			pmp->pm_fatentrysize = 16;
 	}
-	if(FAT12(pmp))
+	if (FAT12(pmp))
 		pmp->pm_fatblocksize = 3 * pmp->pm_BytesPerSec;
-	else pmp->pm_fatblocksize = MAXBSIZE;
+	else
+		pmp->pm_fatblocksize = MAXBSIZE;
 
 	pmp->pm_fatblocksec = pmp->pm_fatblocksize / pmp->pm_BytesPerSec;
 	pmp->pm_bnshift = ffs(pmp->pm_BytesPerSec) - 1;
