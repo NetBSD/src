@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.303 2001/02/02 03:56:20 hubertf Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.304 2001/02/04 18:16:42 briggs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.297 2001/02/02 03:51:52 hubertf Exp 
+ *	NetBSD: pcidevs,v 1.298 2001/02/04 18:16:20 briggs Exp 
  */
 
 /*
@@ -1313,6 +1313,7 @@
 /* Motorola products */
 #define	PCI_PRODUCT_MOT_MPC105	0x0001		/* MPC105 \"Eagle\" Host Bridge */
 #define	PCI_PRODUCT_MOT_MPC106	0x0002		/* MPC106 \"Grackle\" Host Bridge */
+#define	PCI_PRODUCT_MOT_MPC8240	0x0003		/* MPC8240 \"Kahlua\" Host Bridge */
 
 /* Mylex products */
 #define	PCI_PRODUCT_MYLEX_RAID_V2	0x0001		/* DAC960 RAID (v2 interface) */
