@@ -1,11 +1,12 @@
-.\"	$NetBSD: hardware,v 1.8 2002/04/23 19:48:43 bouyer Exp $
+.\"	$NetBSD: hardware,v 1.8.2.1 2002/06/18 14:45:45 lukem Exp $
 .
 .Ss2 Supported machines
 .(bullet -offset indent
-Sbus-based UltraSPARC systems (the Ultra1, Ultra1E, Ultra2, Ultra2E)
+Sbus-based UltraSPARC systems (the Ultra 1, Ultra 1 Creator/Ultra1 Creator3D, 
+Ultra 2/Ultra 2 Creator/Ultra 2 Creator 3D)
 .It
-PCI-based UltraSPARC systems (known to work on the Ultra5, Ultra10, Ultra30
-and Ultra250, and may work on many other systems)
+PCI-based UltraSPARC systems (known to work on the Ultra 5, Ultra 10, Ultra 30
+and Blade 100, Netra X1, and may work on many other systems)
 .bullet)
 .
 .Ss2 Unsupported machines
@@ -13,14 +14,14 @@ and Ultra250, and may work on many other systems)
 Chassis-based Enterprise Systems (Ex000, Ex500, E10000)
 .bullet)
 .Pp
-The minimal configuration requires 16 MB of RAM and ~60 MB of disk space.
+The minimal configuration requires 32 MB of RAM and ~60 MB of disk space.
 To install the entire system requires much more disk space, and to run
 X or compile the system, more RAM is recommended, as
 .Nx
-with 16 MB of RAM feels like
+with 32 MB of RAM feels like
 .Tn Solaris
-with 16 MB of RAM - slow.
-Note that until you have at least 32 MB of RAM, getting more RAM is more
+with 32 MB of RAM - slow.
+Note that until you have at least 64 MB of RAM, getting more RAM is more
 important than getting a faster CPU.
 .
 .Ss2 Supported devices
@@ -41,6 +42,9 @@ PCI HME ethernet
 .It
 PCI Tulip
 .Pq Em tlp
+.It
+PCI ERI
+.Pq Em gem
 .bullet)
 .It
 Video devices
@@ -77,6 +81,9 @@ Serial devices
 .(bullet -compact
 Sbus z8530 serial
 .Pq Em zs
+.It
+PCI 16550-based su and su-pnp serial
+.Pq Em com
 .bullet)
 .It
 Parallel devices
@@ -86,7 +93,6 @@ Sbus parallel ports
 .It
 PCI/Ebus parallel ports
 .Pq Em lpt
-.bullet)
 .bullet)
 .Pp
 There are a large number of untested PCI drivers that have never
@@ -108,11 +114,6 @@ Serial devices
 PCI based systems
 .Pq Em sab
 .bullet)
-.\" .It
-.\" Keyboard & Mouse devices
-.\" .(bullet -compact
-.\" PCI based systems
-..\" bullet)
 .It
 Video devices
 .(bullet -compact
@@ -121,10 +122,4 @@ Creator3D framebuffers
 .It
 General PCI VGA support
 .bullet)
-.\" .It
-.\" SCSI host controllers
-.\" .(bullet -compact
-.\" ESP366 based controllers found in Ultra1E and Ultra2 systems
-.\" .Pq Em esp
-.\" .bullet)
-.bullet)
+
