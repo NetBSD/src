@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.49 2001/07/07 16:40:24 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.50 2001/07/19 16:36:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -541,7 +541,8 @@ vr_add_rxbuf(sc, i)
 	ds->ds_mbuf = m_new;
 
 	error = bus_dmamap_load(sc->vr_dmat, ds->ds_dmamap,
-	    m_new->m_ext.ext_buf, m_new->m_ext.ext_size, NULL, BUS_DMA_NOWAIT);
+	    m_new->m_ext.ext_buf, m_new->m_ext.ext_size, NULL,
+	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: unable to load rx DMA map %d, error = %d\n",
 		    sc->vr_dev.dv_xname, i, error);
@@ -938,7 +939,7 @@ vr_start(ifp)
 		 */
 		if ((mtod(m0, bus_addr_t) & 3) != 0 ||
 		    bus_dmamap_load_mbuf(sc->vr_dmat, ds->ds_dmamap, m0,
-		     BUS_DMA_NOWAIT) != 0) {
+		     BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
@@ -957,7 +958,7 @@ vr_start(ifp)
 			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->vr_dmat,
-			    ds->ds_dmamap, m, BUS_DMA_NOWAIT);
+			    ds->ds_dmamap, m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", sc->vr_dev.dv_xname, error);
