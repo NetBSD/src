@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.32 1999/01/11 22:35:06 thorpej Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.33 1999/01/19 22:10:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -189,7 +189,7 @@ icmp_error(n, type, code, dest, destifp)
 	icp->icmp_code = code;
 	bcopy((caddr_t)oip, (caddr_t)&icp->icmp_ip, icmplen);
 	nip = &icp->icmp_ip;
-	nip->ip_len = htons((u_int16_t)(nip->ip_len + oiplen));
+	nip->ip_len = htons(ntohs(nip->ip_len) + oiplen);
 
 	/*
 	 * Now, copy old ip header (without options)
