@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.105 2003/09/14 11:12:14 yamt Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.106 2003/10/25 18:31:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.105 2003/09/14 11:12:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.106 2003/10/25 18:31:59 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -342,9 +342,11 @@ hashinit(elements, htype, mtype, mflags, hashmask)
 	case HASH_TAILQ:
 		esize = sizeof(*hashtbl_tailq);
 		break;
-#ifdef DIAGNOSTIC
 	default:
+#ifdef DIAGNOSTIC
 		panic("hashinit: invalid table type");
+#else
+		return NULL;
 #endif
 	}
 

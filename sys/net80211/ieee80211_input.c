@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.12 2003/10/25 03:18:37 mycroft Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.13 2003/10/25 18:32:22 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.8 2003/08/19 22:17:03 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.12 2003/10/25 03:18:37 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.13 2003/10/25 18:32:22 christos Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -657,7 +657,7 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 {
 	struct ifnet *ifp = &ic->ic_if;
 	u_int8_t *challenge = NULL;
-	int allocbs, i;
+	int allocbs = 0, i; /* XXX: gcc */
 
 	if ((ic->ic_flags & IEEE80211_F_WEPON) == 0) {
 		IEEE80211_DPRINTF(("%s: WEP is off\n", __func__));
