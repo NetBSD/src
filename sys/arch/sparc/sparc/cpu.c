@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.78 1998/10/09 10:08:52 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.79 1998/10/11 14:46:46 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -130,6 +130,7 @@ alloc_cpuinfo()
 	vaddr_t low, high;
 	vm_page_t m;
 	struct pglist mlist;
+	struct cpu_info *cpi;
 
 	/*
 	 * Allocate aligned KVA. `cpuinfo' resides at a fixed virtual
@@ -142,8 +143,13 @@ alloc_cpuinfo()
 		/* Assumes `c_totalsize' is power of two */
 		align = CACHEINFO.c_totalsize;
 
-	/* While we're here, allocate a pre-CPU kernel stack as well? */
-	sz = sizeof(struct cpu_info)/* + USPACE*/;
+	/*
+	 * While we're here, allocate a per-CPU idle PCB and
+	 * interrupt stack as well.
+	 */
+	sz = sizeof(struct cpu_info);
+	sz += USPACE;		/* `idle' u-area for this CPU */
+	sz += INT_STACK_SIZE;	/* interrupt stack for this CPU */
 
 	sz = (sz + NBPG - 1) & -NBPG;
 	esz = sz + align - NBPG;
@@ -166,7 +172,7 @@ alloc_cpuinfo()
 	if (uvm_pglistalloc(sz, low, high, NBPG, 0, &mlist, 1, 0) != 0)
 		panic("alloc_cpuinfo: no pages");
 
-	sva = va;	/* re-use sva */
+	cpi = (struct cpu_info *)va;
 
 	/* Map the pages */
 	for (m = TAILQ_FIRST(&mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
@@ -176,11 +182,12 @@ alloc_cpuinfo()
 		va += NBPG;
 	}
 
-	bzero((void *)sva, sizeof(struct cpu_info));
-#if 0
-	((struct cpu_info *)sva)->stack = sva + sz - USPACE;
-#endif
-	return ((struct cpu_info *)sva);
+	bzero((void *)cpi, sizeof(struct cpu_info));
+
+	cpi->eintstack = (void *)(sva + sz);
+	cpi->idle_u = (void *)(sva + sz - INT_STACK_SIZE - USPACE);
+
+	return (cpi);
 }
 
 #ifdef notdef
@@ -258,14 +265,21 @@ static	int cpu_number;
 	 */
 	mid = getpropint(node, "mid", 0);
 	if (bootcpu == NULL) {
+		extern struct pcb idle_u[];
 		bootcpu = sc;
 		cpus = malloc(ncpu * sizeof(cpi), M_DEVBUF, M_NOWAIT);
 		bzero(cpus, ncpu * sizeof(cpi));
 		cpi = sc->sc_cpuinfo = (struct cpu_info *)CPUINFO_VA;
 		cpi->master = 1;
+		cpi->eintstack = eintstack;
+		cpi->idle_u = idle_u;
 	} else {
 		cpi = sc->sc_cpuinfo = alloc_cpuinfo();
 	}
+
+#ifdef DEBUG
+	cpi->redzone = (void *)((long)cpi->idle_u + REDSIZE);
+#endif
 
 	cpus[cpu_number] = cpi;
 	cpi->cpu_no = cpu_number++;
