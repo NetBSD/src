@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.30 1997/08/27 11:23:53 bouyer Exp $	*/
+/*	$NetBSD: sbc.c,v 1.31 1997/09/06 07:53:14 scottr Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -97,6 +97,9 @@ struct scsipi_device sbc_dev = {
 struct cfdriver sbc_cd = {
 	NULL, "sbc", DV_DULL
 };
+
+extern label_t	*nofault;
+extern caddr_t	m68k_fault_addr;
 
 static	int	sbc_wait_busy __P((struct ncr5380_softc *));
 static	int	sbc_ready __P((struct ncr5380_softc *));
@@ -312,8 +315,14 @@ sbc_pdma_out(ncr_sc, phase, datalen, data)
 	struct sbc_softc *sc = (struct sbc_softc *)ncr_sc;
 	volatile u_int32_t *long_data = (u_int32_t *)sc->sc_drq_addr;
 	volatile u_int8_t *byte_data = (u_int8_t *)sc->sc_nodrq_addr;
+	label_t faultbuf;
 	int resid, s;
 	u_int8_t icmd;
+
+#if 1
+	/* Work around lame gcc initialization bug */
+	(void)&data;
+#endif
 
 	if (datalen < ncr_sc->sc_min_dma_len ||
 	    (sc->sc_options & SBC_PDMA) == 0)
@@ -329,6 +338,19 @@ sbc_pdma_out(ncr_sc, phase, datalen, data)
 	*ncr_sc->sci_icmd = icmd | SCI_ICMD_DATA;
 	*ncr_sc->sci_mode |= SCI_MODE_DMA;
 	*ncr_sc->sci_dma_send = 0;
+
+	/*
+	 * Setup for a possible bus error caused by SCSI controller
+	 * switching out of DATA OUT before we're done with the
+	 * current transfer.  (See comment before sbc_drq_intr().)
+	 */
+	nofault = &faultbuf;
+
+	if (setjmp(nofault)) {
+		printf("buf = 0x%lx, fault = 0x%lx\n",
+		    (u_long)sc->sc_drq_addr, (u_long)m68k_fault_addr);
+		panic("Unexpected bus error in sbc_pdma_out()");
+	}
 
 #define W1	*byte_data = *((u_int8_t *)data)++
 #define W4	*long_data = *((u_int32_t *)data)++
@@ -405,7 +427,6 @@ void
 sbc_drq_intr(p)
 	void *p;
 {
-	extern int *nofault, m68k_fault_addr;
 	struct sbc_softc *sc = (struct sbc_softc *)p;
 	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *)p;
 	struct sci_req *sr = ncr_sc->sc_current;
@@ -438,10 +459,10 @@ sbc_drq_intr(p)
 	 * switching out of DATA-IN/OUT before we're done with the
 	 * current transfer.
 	 */
-	nofault = (int *)&faultbuf;
+	nofault = &faultbuf;
 
 	if (setjmp((label_t *)nofault)) {
-		nofault = (int *)0;
+		nofault = (label_t *)0;
 		if ((dh->dh_flags & SBC_DH_DONE) == 0) {
 			count = ((  (u_long)m68k_fault_addr
 				  - (u_long)sc->sc_drq_addr));
@@ -582,7 +603,7 @@ sbc_drq_intr(p)
 	 * OK.  No bus error occurred above.  Clear the nofault flag
 	 * so we no longer short-circuit bus errors.
 	 */
-	nofault = (int *)0;
+	nofault = (label_t *)0;
 
 #ifdef SBC_DEBUG
 	if (sbc_debug & (SBC_DB_REG | SBC_DB_INTR))
