@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.13 2000/07/09 13:39:32 mrg Exp $
+	$NetBSD: syscalls.master,v 1.14 2000/08/07 17:59:36 bjh21 Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -286,8 +286,13 @@
 172	UNIMPL
 173	STD		{ netbsd32_ssize_t netbsd32_pread(int fd, netbsd32_voidp buf, netbsd32_size_t nbyte, int pad, off_t offset); }
 174	STD		{ netbsd32_ssize_t netbsd32_pwrite(int fd, const netbsd32_voidp buf, netbsd32_size_t nbyte, int pad, off_t offset); }
+; For some reason, ntp_gettime doesn't want to raise SIGSYS when it's excluded.
 175	STD		{ int netbsd32_ntp_gettime(netbsd32_ntptimevalp_t ntvp); }
+#if defined(NTP) || !defined(_KERNEL)
 176	STD		{ int netbsd32_ntp_adjtime(netbsd32_timexp_t tp); }
+#else
+176     EXCL            ntp_adjtime
+#endif
 177	UNIMPL
 178	UNIMPL
 179	UNIMPL
