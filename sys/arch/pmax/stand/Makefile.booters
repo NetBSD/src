@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.35 2002/04/12 05:11:18 lukem Exp $
+# $NetBSD: Makefile.booters,v 1.36 2002/05/04 07:26:11 gmcgarry Exp $
 
 # $S must correspond to the top of the 'sys' tree
 S=	${.CURDIR}/../../../..
@@ -98,6 +98,8 @@ SAMISCMAKEFLAGS+=SA_INCLUDE_NET=yes
 LIBSA=		${SALIB}
 
 LIBS=		${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
+
+.include <bsd.own.mk>
 
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
