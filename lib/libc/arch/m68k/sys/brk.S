@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.9 1999/10/18 03:24:30 itohy Exp $	*/
+/*	$NetBSD: brk.S,v 1.10 1999/10/25 23:48:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)brk.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: brk.S,v 1.9 1999/10/18 03:24:30 itohy Exp $")
+	RCSID("$NetBSD: brk.S,v 1.10 1999/10/25 23:48:17 thorpej Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,35 +59,35 @@ _C_LABEL(__minbrk):
 ENTRY(brk)
 #ifdef	PIC
 #ifdef	__ELF__
-	lea	pc@(_GLOBAL_OFFSET_TABLE_@GOTPC),a1
-	movl	a1@(_C_LABEL(__minbrk)@GOT:w),a0
+	lea	%pc@(_GLOBAL_OFFSET_TABLE_@GOTPC),%a1
+	movl	%a1@(_C_LABEL(__minbrk)@GOT:w),%a0
 #else
-	movl	#_C_LABEL(_GLOBAL_OFFSET_TABLE_),a1
-	lea	pc@(0,a1:l),a1
-	movl	a1@(_C_LABEL(__minbrk):w),a0
+	movl	#_C_LABEL(_GLOBAL_OFFSET_TABLE_),%a1
+	lea	%pc@(0,a1:l),%a1
+	movl	%a1@(_C_LABEL(__minbrk):w),%a0
 #endif
-	movl	a0@,d0
+	movl	%a0@,%d0
 #else
-	movl	_C_LABEL(__minbrk),d0
+	movl	_C_LABEL(__minbrk),%d0
 #endif
-	cmpl	sp@(4),d0
+	cmpl	%sp@(4),%d0
 	jle	ok
-	movl	d0,sp@(4)
+	movl	%d0,%sp@(4)
 ok:
-	movl	#SYS_break,d0
+	movl	#SYS_break,%d0
 	trap	#0
 	jcs	err
 #ifdef	PIC
 #ifdef	__ELF__
-	movl	a1@(CURBRK@GOT:w),a0
+	movl	%a1@(CURBRK@GOT:w),%a0
 #else
-	movl	a1@(CURBRK:w),a0
+	movl	%a1@(CURBRK:w),%a0
 #endif
-	movl	sp@(4),a0@
+	movl	%sp@(4),%a0@
 #else
-	movl	sp@(4),CURBRK
+	movl	%sp@(4),CURBRK
 #endif
-	clrl	d0
+	clrl	%d0
 	rts
 err:
 	jra	PIC_PLT(CERROR)
