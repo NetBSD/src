@@ -1,4 +1,4 @@
-/* $NetBSD: oak.c,v 1.3 1996/03/17 01:24:51 thorpej Exp $ */
+/* $NetBSD: oak.c,v 1.4 1996/04/26 22:38:15 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson 1996.
@@ -80,7 +80,8 @@
 
 struct oak_softc {
 	struct ncr5380_softc ncr_sc;
-	int sc_podule;
+	int sc_podule_number;
+	podule_t *sc_podule;
 	int sc_base;
 };
 
@@ -118,17 +119,12 @@ oakprobe(parent, match, aux)
 	void *match;
 	void *aux;
 {
-	struct oak_softc *sc = (void *) match;
 	struct podule_attach_args *pa = (void *) aux;
-	int podule;
 
-	podule = findpodule(MY_MANUFACTURER, MY_PODULE, pa->pa_podule_number);
+/* Look for the card */
 
-	if (podule == -1)
-		return 0;
-
-	sc->sc_podule = podule;
-	sc->sc_base = podules[podule].mod_base;
+	if (matchpodule(pa, MY_MANUFACTURER, MY_PODULE, -1) == 0)
+		return(0);
 
 	return 1;
 }
@@ -142,6 +138,14 @@ oakattach(parent, self, aux)
 	struct oak_softc *sc = (void *) self;
 	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *)sc;
 	struct podule_attach_args *pa = (void *)aux;
+
+	if (pa->pa_podule_number == -1)
+		panic("Podule has disappeared !");
+
+	sc->sc_podule_number = pa->pa_podule_number;
+	sc->sc_podule = pa->pa_podule;
+	podules[sc->sc_podule_number].attached = 1;
+	sc->sc_base = sc->sc_podule->mod_base;
 
 	printf(" 16-bit");
 
