@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 1997/10/07 04:01:37 phil Exp $	*/
+/*	$NetBSD: md.c,v 1.3 1997/10/29 01:07:17 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,7 +50,7 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
-void	md_get_info (void)
+int	md_get_info (void)
 {	struct disklabel disklabel;
 	int fd;
 	char devname[100];
@@ -80,6 +80,8 @@ void	md_get_info (void)
 
 	/* Compute minimum NetBSD partition sizes (in sectors). */
 	minfsdmb = (80 + 4*rammb) * (MEG / sectorsize);
+
+	return 1;
 }
 
 void	md_pre_disklabel (void)
@@ -212,7 +214,7 @@ void md_make_bsd_partitions (void)
 }
 
 /* update support */
-void 
+int 
 md_update(void)
 {
 	return 1;

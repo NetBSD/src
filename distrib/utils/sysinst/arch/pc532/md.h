@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1.1.1 1997/09/26 23:02:56 phil Exp $	*/
+/*	$NetBSD: md.h,v 1.2 1997/10/29 01:07:21 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,11 +43,32 @@
 /* Megs required for a full X installation. */
 #define XNEEDMB 50
 
-/* Definition of files to retreive from ftp. */
-EXTERN char ftp_prefix[STRSIZE] INIT("");
-EXTERN char ftp_postfix[STRSIZE] INIT(".tar.gz");
-EXTERN char *ftp_list[]
+/* Disk names. */
+EXTERN	char *disk_names[]
 #ifdef MAIN
-= { "kern", "base", "comp", "etc", "games", "man", "misc", "text", NULL }
+= {"sd", NULL}
 #endif
 ;
+
+/* Legal start character for a disk for checking input. */
+#define ISDISKSTART(dn)	(dn == 's')
+
+/* Definition of files to retreive from ftp. */
+EXTERN char ftp_prefix[STRSIZE] INIT("/binary/Tarfiles");
+EXTERN char dist_postfix[STRSIZE] INIT(".tar.gz");
+EXTERN distinfo dist_list[]
+#ifdef MAIN
+= { {"kern%s%s", 1, NULL, "Kernel       : "},
+    {"etc%s%s",  1, NULL, "System (/etc): "},
+    {"base%s%s", 1, NULL, "Base         : "}, 
+    {"comp%s%s", 1, NULL, "Compiler     : "},
+    {"games%s%s", 1, NULL,"Games        : "},
+    {"man%s%s",  1, NULL, "Manuals      : "},
+    {"misc%s%s", 1, NULL, "Miscellaneous: "},
+    {"text%s%s", 1, NULL, "Text tools   : "},
+    {NULL, 0, NULL }
+}
+#endif
+;
+
+EXTERN char *fdtype INIT("");
