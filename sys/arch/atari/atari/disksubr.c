@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.6 1996/02/19 09:05:31 leo Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.7 1996/02/22 10:10:47 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -35,6 +35,7 @@
 #endif
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/buf.h>
 #include <ufs/ffs/fs.h>
 #include <sys/disklabel.h>
@@ -49,12 +50,12 @@
 #endif
 
 static void  ck_label __P((struct disklabel *, struct cpu_disklabel *));
-static int   bsd_label __P((dev_t, void (*)(),
+static int   bsd_label __P((dev_t, void (*)(struct buf *),
 			struct disklabel *, u_int, u_int *));
-static int   ahdi_label __P((dev_t, void (*)(),
+static int   ahdi_label __P((dev_t, void (*)(struct buf *),
 			struct disklabel *, struct cpu_disklabel *));
 static void  ahdi_to_bsd __P((struct disklabel *, struct ahdi_ptbl *));
-static u_int ahdi_getparts __P((dev_t, void (*)(), u_int,
+static u_int ahdi_getparts __P((dev_t, void (*)(struct buf *), u_int,
 					u_int, u_int, struct ahdi_ptbl *));
 
 /*
@@ -87,6 +88,7 @@ bounds_check_with_label(bp, lp, wlabel)
 			bp->b_flags |= B_ERROR;
 			return(-1);
 		}
+
 		maxsz = pp->p_size * (lp->d_secsize / DEV_BSIZE);
 		sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
 	} else {
@@ -134,7 +136,7 @@ bounds_check_with_label(bp, lp, wlabel)
 char *
 readdisklabel(dev, strat, lp, clp)
 	dev_t			dev;
-	void			(*strat)();
+	void			(*strat)(struct buf *);
 	struct disklabel	*lp;
 	struct cpu_disklabel	*clp;
 {
@@ -245,7 +247,7 @@ setdisklabel(olp, nlp, openmask, clp)
 int
 writedisklabel(dev, strat, lp, clp)
 	dev_t			dev;
-	void			(*strat)();
+	void			(*strat)(struct buf *);
 	struct disklabel	*lp;
 	struct cpu_disklabel	*clp;
 {
@@ -302,7 +304,7 @@ writedisklabel(dev, strat, lp, clp)
 static int
 bsd_label(dev, strat, label, blkno, offset)
 	dev_t			dev;
-	void			(*strat)();
+	void			(*strat)(struct buf *);
 	struct disklabel	*label;
 	u_int			blkno,
 				*offset;
@@ -405,7 +407,7 @@ ck_label(dl, cdl)
 int
 ahdi_label(dev, strat, dl, cdl)
 	dev_t			dev;
-	void			(*strat)();
+	void			(*strat)(struct buf *);
 	struct disklabel	*dl;
 	struct cpu_disklabel	*cdl;
 {
@@ -589,7 +591,7 @@ ahdi_to_bsd(dl, apt)
 static u_int
 ahdi_getparts(dev, strat, secpercyl, rsec, esec, apt)
 	dev_t			dev;
-	void			(*strat)();
+	void			(*strat)(struct buf *);
 	u_int			secpercyl,
 				rsec, esec;
 	struct ahdi_ptbl	*apt;

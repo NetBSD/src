@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.6 1995/08/17 20:32:50 leo Exp $	*/
+/*	$NetBSD: view.c,v 1.7 1996/02/22 10:11:34 leo Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,6 +38,7 @@
  * a interface to graphics. */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/file.h>
@@ -61,7 +62,7 @@ int viewioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int viewopen __P((dev_t, int));
 int viewmmap __P((dev_t, int, int));
 
-int viewprobe ();
+int viewprobe __P((void));
 
 struct view_softc views[NVIEW];
 static int view_inited;
@@ -75,6 +76,7 @@ int view_default_depth  = 1;
 /* 
  *  functions for probeing.
  */
+void
 viewattach(cnt)
 	int cnt;
 {
@@ -83,6 +85,7 @@ viewattach(cnt)
 }
 
 /* this function is called early to set up a display. */
+int
 viewprobe()
 {
     	int i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.6 1995/06/26 19:55:45 leo Exp $	*/
+/*	$NetBSD: grf.c,v 1.7 1996/02/22 10:11:23 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -366,14 +366,14 @@ struct proc	*p;
 		error = grfsinfo(dev, (struct grfdyninfo *) data);
 		break;
 	case GRFGETVMODE:
-		return(gp->g_mode(gp, GM_GRFGETVMODE, data));
+		return(gp->g_mode(gp, GM_GRFGETVMODE, data, 0, 0));
 	case GRFSETVMODE:
-		error = gp->g_mode(gp, GM_GRFSETVMODE, data);
+		error = gp->g_mode(gp, GM_GRFSETVMODE, data, 0, 0);
 		if (error == 0 && gp->g_itedev)
 			ite_reinit(gp->g_itedev);
 		break;
 	case GRFGETNUMVM:
-		return(gp->g_mode(gp, GM_GRFGETNUMVM, data));
+		return(gp->g_mode(gp, GM_GRFGETNUMVM, data, 0, 0));
 	/*
 	 * these are all hardware dependant, and have to be resolved
 	 * in the respective driver.
@@ -447,7 +447,8 @@ grfon(dev)
 	if (gp->g_itedev != NODEV)
 		ite_off(gp->g_itedev, 3);
 
-	return(gp->g_mode(gp, (dev & GRFOVDEV) ? GM_GRFOVON : GM_GRFON));
+	return(gp->g_mode(gp, (dev & GRFOVDEV) ? GM_GRFOVON : GM_GRFON,
+							NULL, 0, 0));
 }
 
 int
@@ -463,7 +464,8 @@ grfoff(dev)
 		return(0);
 
 	gp->g_flags &= ~GF_GRFON;
-	error = gp->g_mode(gp, (dev & GRFOVDEV) ? GM_GRFOVOFF : GM_GRFOFF);
+	error = gp->g_mode(gp, (dev & GRFOVDEV) ? GM_GRFOVOFF : GM_GRFOFF,
+						NULL, 0, 0);
 
 	/*
 	 * Closely tied together no X's
@@ -483,7 +485,7 @@ grfsinfo(dev, dyninfo)
 	int error;
 
 	gp = grfsp[GRFUNIT(dev)];
-	error = gp->g_mode(gp, GM_GRFCONFIG, dyninfo);
+	error = gp->g_mode(gp, GM_GRFCONFIG, dyninfo, 0, 0);
 
 	/*
 	 * Closely tied together no X's

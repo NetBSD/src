@@ -1,4 +1,4 @@
-/*	$NetBSD: dkbad.c,v 1.1.1.1 1995/03/26 07:12:19 leo Exp $	*/
+/*	$NetBSD: dkbad.c,v 1.2 1996/02/22 10:10:49 leo Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -46,8 +46,10 @@
  * Return -1 if not found.
  */
 
+int
 isbad(bt, cyl, trk, sec)
 	register struct dkbad *bt;
+	int cyl, trk, sec;
 {
 	register int i;
 	register long blk, bblk;

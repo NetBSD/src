@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.5 1995/06/26 14:31:27 leo Exp $	*/
+/*	$NetBSD: kbd.c,v 1.6 1996/02/22 10:11:32 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -82,6 +82,16 @@ struct kbd_softc {
 };
 
 static struct kbd_softc kbd_softc;
+
+/* {b,c}devsw[] function prototypes */
+dev_type_open(kbdopen);
+dev_type_close(kbdclose);
+dev_type_read(kbdread);
+dev_type_ioctl(kbdioctl);
+dev_type_select(kbdselect);
+
+/* Interrupt handler */
+void	kbdintr __P((int));
 
 void	kbd_write __P((u_char *, int));
 
@@ -189,8 +199,6 @@ kbdenable()
 
 int kbdopen(dev_t dev, int flags, int mode, struct proc *p)
 {
-	int s, error;
-
 	if (kbd_softc.k_events.ev_io)
 		return EBUSY;
 
@@ -268,7 +276,7 @@ kbdselect (dev_t dev, int rw, struct proc *p)
 /*
  * Keyboard interrupt handler called straight from MFP at spl6.
  */
-int
+void
 kbdintr(sr)
 int sr;	/* sr at time of interrupt	*/
 {
@@ -413,7 +421,7 @@ static	char sound[] = {
 	0xF8,0x10,0x10,0x10,0x00,0x20,0x03
 };
 
-int
+void
 kbdbell()
 {
 	register int	i, sps;

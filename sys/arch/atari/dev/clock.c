@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8 1996/02/11 12:42:19 leo Exp $	*/
+/*	$NetBSD: clock.c,v 1.9 1996/02/22 10:11:19 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,9 @@
 
 #include <sys/param.h>
 #include <sys/kernel.h>
+#include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
 #include <machine/psl.h>
 #include <machine/cpu.h>
 #include <machine/iomap.h>
@@ -78,6 +80,8 @@ struct cfdriver clockcd = {
 	NULL, "clock", (cfmatch_t)clockmatch, clockattach, 
 	DV_DULL, sizeof(struct device), NULL, 0
 };
+
+void statintr __P((struct clockframe *));
 
 static u_long	gettod __P((void));
 static int	settod __P((u_long));
@@ -177,6 +181,7 @@ void cpu_initclocks()
 #endif /* STATCLOCK */
 }
 
+void
 setstatclockrate(newhz)
 	int newhz;
 {
@@ -216,6 +221,7 @@ statintr(frame)
  * Returns number of usec since last recorded clock "tick"
  * (i.e. clock interrupt).
  */
+long
 clkread()
 {
 	u_int	delta;
@@ -338,6 +344,7 @@ u_int	regno, value;
  * Initialize the time of day register, based on the time base which is, e.g.
  * from a filesystem.
  */
+void
 inittodr(base)
 time_t base;
 {
@@ -354,6 +361,7 @@ time_t base;
 	time.tv_sec = timbuf;
 }
 
+void
 resettodr()
 {
 	if(settod(time.tv_sec) == 1)
@@ -383,17 +391,17 @@ gettod()
 	MC146818_GETTOD(RTC, &clkregs);
 	splx(sps);
 
-	if(range_test(clkregs[MC_SEC], 0, 59))
+	if(clkregs[MC_SEC] > 59)
 		return(0);
-	if(range_test(clkregs[MC_MIN], 0, 59))
+	if(clkregs[MC_MIN] > 59)
 		return(0);
-	if(range_test(clkregs[MC_HOUR], 0, 23))
+	if(clkregs[MC_HOUR] > 23)
 		return(0);
 	if(range_test(clkregs[MC_DOM], 1, 31))
 		return(0);
 	if (range_test(clkregs[MC_MONTH], 1, 12))
 		return(0);
-	if(range_test(clkregs[MC_YEAR], 0, 2000 - GEMSTARTOFTIME))
+	if(clkregs[MC_YEAR] > (2000 - GEMSTARTOFTIME))
 		return(0);
 	clkregs[MC_YEAR] += GEMSTARTOFTIME;
 

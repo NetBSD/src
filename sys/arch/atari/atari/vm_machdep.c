@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.5 1996/02/05 02:07:06 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.6 1996/02/22 10:11:01 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -148,6 +148,7 @@ cpu_exit(p)
  * Both addresses are assumed to reside in the Sysmap,
  * and size must be a multiple of CLSIZE.
  */
+void
 pagemove(from, to, size)
 	register caddr_t from, to;
 	int size;
@@ -199,6 +200,7 @@ physaccess(vaddr, paddr, size, prot)
 	TBIAS();
 }
 
+void
 physunaccess(vaddr, size)
 	caddr_t vaddr;
 	register int size;
@@ -298,6 +300,7 @@ cpu_coredump(p, vp, cred, chdr)
  * Look at _lev6intr in locore.s for more details.
  */
 /*ARGSUSED*/
+void
 setredzone(pte, vaddr)
 	u_int *pte;
 	caddr_t vaddr;
@@ -307,6 +310,7 @@ setredzone(pte, vaddr)
 /*
  * Convert kernel VA to physical address
  */
+vm_offset_t
 kvtop(addr)
 	register caddr_t addr;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.4 1995/05/28 19:45:39 leo Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.5 1996/02/22 10:11:29 leo Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -192,7 +192,7 @@ struct itewinsize	*winsz;
 {
 	struct view_size	vs;
 	ipriv_t			*cci = ip->priv;    
-	u_long			fbp, i, j;
+	u_long			i, j;
 	int			error = 0;
 	view_t			*view;
 
@@ -279,10 +279,11 @@ struct proc		*p;
 {
 	struct winsize		ws;
 	struct itewinsize	*is;
-	struct itebell		*ib;
 	int			error = 0;
-	ipriv_t			*cci  = ip->priv;
 	view_t			*view = viewview(ip->grf->g_viewdev);
+#if 0 /* LWP: notyet */
+	struct itebell		*ib;
+#endif
 
 	switch (cmd) {
 	case ITEIOCGWINSZ:
@@ -512,8 +513,6 @@ int				dir, sx, count;
 
 	if(dir == SCROLL_UP) {
 		int	dy = sy - count;
-		int	height = ip->bottom_margin - sy + 1;
-		int	i;
 
 		cursor32(ip, ERASE_CURSOR);
 		scrollbmap(bm, 0, dy*ip->font.height, bm->bytes_per_row >> 3,
@@ -521,11 +520,7 @@ int				dir, sx, count;
 				0, -(count*ip->font.height));
 	}
 	else if(dir == SCROLL_DOWN) {
-		int	dy = sy + count;
-		int	height = ip->bottom_margin - dy + 1;
-		int	i;
-
-        cursor32(ip, ERASE_CURSOR);
+        	cursor32(ip, ERASE_CURSOR);
 		scrollbmap(bm, 0, sy*ip->font.height, bm->bytes_per_row >> 3,
 				(ip->bottom_margin-sy+1)*ip->font.height,
 				0, count*ip->font.height);
@@ -578,7 +573,6 @@ int				dir, sx, count;
 static void 
 scrollbmap (bmap_t *bm, u_short x, u_short y, u_short width, u_short height, short dx, short dy)
 {
-    u_short	depth = bm->depth; 
     u_short lwpr  = bm->bytes_per_row >> 2;
 
     if(dx) {

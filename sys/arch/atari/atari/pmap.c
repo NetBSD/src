@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.8 1995/12/25 14:13:53 leo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.9 1996/02/22 10:10:56 leo Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -76,6 +76,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/msgbuf.h>
@@ -228,6 +229,8 @@ static	vm_size_t	avail_remaining;
 boolean_t		pmap_testbit __P((vm_offset_t, int));
 void			pmap_enter_ptpage __P((pmap_t, vm_offset_t));
 extern vm_offset_t	reserve_dumppages __P((vm_offset_t));
+static void		pmap_changebit __P((vm_offset_t, int, boolean_t));
+static void		atari_protection_init __P((void));
 
 #ifdef MACHINE_NONCONTIG
 #define pmap_valid_page(pa)	(pmap_initialized && pmap_isvalidphys(pa))
@@ -787,7 +790,7 @@ pmap_remove(pmap, sva, eva)
 	register u_int *pte;
 	register pv_entry_t pv, npv;
 	pmap_t ptpmap;
-	int *ste, i, s, bits;
+	int *ste, s, bits;
 	boolean_t flushcache = FALSE;
 #ifdef DEBUG
 	u_int opte;
@@ -1217,7 +1220,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		 * resident as long as there are valid mappings in them.
 		 * Hence, if a user page is wired, the PT page will be also.
 		 */
-		if (wired && !pmap_pte_w(pte) || !wired && pmap_pte_w(pte)) {
+		if ((wired && !pmap_pte_w(pte)) || (!wired && pmap_pte_w(pte))){
 #ifdef DEBUG
 			if (pmapdebug & PDB_ENTER)
 				printf("enter: wiring change -> %x\n", wired);
@@ -1429,7 +1432,7 @@ pmap_change_wiring(pmap, va, wired)
 			printf("pmap_change_wiring: invalid PTE for %x\n", va);
 	}
 #endif
-	if (wired && !pmap_pte_w(pte) || !wired && pmap_pte_w(pte)) {
+	if ((wired && !pmap_pte_w(pte)) || (!wired && pmap_pte_w(pte))) {
 		if (wired)
 			pmap->pm_stats.wired_count++;
 		else
@@ -1836,7 +1839,7 @@ pmap_phys_address(ppn)
  * Miscellaneous support routines follow
  */
 
-/* static */
+static void
 atari_protection_init()
 {
 	register int *kp, prot;
@@ -1901,7 +1904,7 @@ pmap_testbit(pa, bit)
 	return(FALSE);
 }
 
-/* static */
+static void
 pmap_changebit(pa, bit, setem)
 	register vm_offset_t pa;
 	int bit;
@@ -1988,7 +1991,6 @@ pmap_enter_ptpage(pmap, va)
 	register pv_entry_t pv;
 	u_int *ste;
 	int s;
-	u_int sg_proto, *sg;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER|PDB_PTPAGE))
@@ -2088,7 +2090,7 @@ pmap_enter_ptpage(pmap, va)
 		kpt->kpt_next = kpt_used_list;
 		kpt_used_list = kpt;
 		ptpa = kpt->kpt_pa;
-		bzero(kpt->kpt_va, NBPG);
+		bzero((caddr_t)kpt->kpt_va, NBPG);
 		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT, TRUE);
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE))

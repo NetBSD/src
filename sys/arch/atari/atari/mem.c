@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.4 1996/01/06 20:10:43 leo Exp $	*/
+/*	$NetBSD: mem.c,v 1.5 1996/02/22 10:10:53 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,6 +46,7 @@
 
 #include <sys/param.h>
 #include <sys/conf.h>
+#include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
@@ -57,14 +58,19 @@
 
 #include "nvr.h"
 
+dev_type_open(mmopen);
+dev_type_close(mmclose);
+dev_type_mmap(mmmmap);
+
 extern u_int lowram;
 caddr_t zeropage;
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode)
-	dev_t dev;
-	int flag, mode;
+mmopen(dev, flag, mode, p)
+	dev_t 		dev;
+	int		flag, mode;
+	struct proc	*p;
 {
 
 	return (0);
@@ -72,9 +78,10 @@ mmopen(dev, flag, mode)
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode)
-	dev_t dev;
-	int flag, mode;
+mmclose(dev, flag, mode, p)
+	dev_t 		dev;
+	int		flag, mode;
+	struct proc	*p;
 {
 
 	return (0);

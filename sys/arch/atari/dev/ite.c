@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.7 1995/09/04 19:39:21 leo Exp $	*/
+/*	$NetBSD: ite.c,v 1.8 1996/02/22 10:11:27 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -91,8 +91,11 @@ u_char	cons_tabs[MAX_TABS];
 struct ite_softc *kbd_ite;
 int kbd_init;
 
+static void iteprecheckwrap __P((struct ite_softc *));
+static void itecheckwrap __P((struct ite_softc *));
+
 static char	*index __P((const char *, int));
-static int	inline atoi __P((const char *));
+static __inline__ int	atoi __P((const char *));
 static void	ite_switch __P((int));
 void iteputchar __P((int c, struct ite_softc *ip));
 void ite_putstr __P((const u_char * s, int len, dev_t dev));
@@ -142,7 +145,6 @@ iteattach(pdp, dp, auxp)
 struct device	*pdp, *dp;
 void		*auxp;
 {
-	extern int		hz;
 	struct grf_softc	*gp;
 	struct ite_softc	*ip;
 	int			s;
@@ -439,7 +441,7 @@ itewrite(dev, uio, flag)
 	return ((*linesw[tp->t_line].l_write) (tp, uio, flag));
 }
 
-int
+void
 itestop(tp, flag)
 	struct tty *tp;
 	int flag;
@@ -521,7 +523,7 @@ itestart(tp)
 	struct clist *rbp;
 	struct ite_softc *ip;
 	u_char buf[ITEBURST];
-	int s, len, n;
+	int s, len;
 
 	ip = getitesp(tp->t_dev);
 
@@ -591,7 +593,7 @@ ite_on(dev, flag)
 	return (0);
 }
 
-int
+void
 ite_off(dev, flag)
 dev_t	dev;
 int	flag;
@@ -733,7 +735,7 @@ enum caller	caller;
 			if(!up)
 				key_mod ^= KBD_MOD_CAPS;
 			splx(s);
-			return;
+			return -1;
 			break;
 	}
 	if(mask) {
@@ -1069,7 +1071,7 @@ enum caller	caller;
 }
 
 /* helper functions, makes the code below more readable */
-static void inline
+static __inline__ void
 ite_sendstr(str)
 	char *str;
 {
@@ -1094,7 +1096,7 @@ alignment_display(ip)
   SUBR_CURSOR(ip, DRAW_CURSOR);
 }
 
-static void inline
+static __inline__ void
 snap_cury(ip)
 	struct ite_softc *ip;
 {
@@ -1107,7 +1109,7 @@ snap_cury(ip)
     }
 }
 
-static void inline
+static __inline__ void
 ite_dnchar(ip, n)
      struct ite_softc *ip;
      int n;
@@ -1125,7 +1127,7 @@ ite_dnchar(ip, n)
   SUBR_CURSOR(ip, DRAW_CURSOR);
 }
 
-static void inline
+static __inline__ void
 ite_inchar(ip, n)
      struct ite_softc *ip;
      int n;
@@ -1143,7 +1145,7 @@ ite_inchar(ip, n)
   SUBR_CURSOR(ip, DRAW_CURSOR);
 }
 
-static void inline
+static __inline__ void
 ite_clrtoeol(ip)
      struct ite_softc *ip;
 {
@@ -1156,7 +1158,7 @@ ite_clrtoeol(ip)
     }
 }
 
-static void inline
+static __inline__ void
 ite_clrtobol(ip)
      struct ite_softc *ip;
 {
@@ -1166,7 +1168,7 @@ ite_clrtobol(ip)
   SUBR_CURSOR(ip, DRAW_CURSOR);
 }
 
-static void inline
+static __inline__ void
 ite_clrline(ip)
      struct ite_softc *ip;
 {
@@ -1178,7 +1180,7 @@ ite_clrline(ip)
 
 
 
-static void inline
+static __inline__ void
 ite_clrtoeos(ip)
      struct ite_softc *ip;
 {
@@ -1191,7 +1193,7 @@ ite_clrtoeos(ip)
     }
 }
 
-static void inline
+static __inline__ void
 ite_clrtobos(ip)
      struct ite_softc *ip;
 {
@@ -1204,7 +1206,7 @@ ite_clrtobos(ip)
     }
 }
 
-static void inline
+static __inline__ void
 ite_clrscreen(ip)
      struct ite_softc *ip;
 {
@@ -1215,7 +1217,7 @@ ite_clrscreen(ip)
 
 
 
-static void inline
+static __inline__ void
 ite_dnline(ip, n)
      struct ite_softc *ip;
      int n;
@@ -1237,7 +1239,7 @@ ite_dnline(ip, n)
   SUBR_CURSOR(ip, DRAW_CURSOR);
 }
 
-static void inline
+static __inline__ void
 ite_inline(ip, n)
      struct ite_softc *ip;
      int n;
@@ -1259,7 +1261,7 @@ ite_inline(ip, n)
   SUBR_CURSOR(ip, DRAW_CURSOR);
 }
 
-static void inline
+static __inline__ void
 ite_lf (ip)
      struct ite_softc *ip;
 {
@@ -1274,7 +1276,7 @@ ite_lf (ip)
   clr_attr(ip, ATTR_INV);
 }
 
-static void inline 
+static __inline__ void
 ite_crlf (ip)
      struct ite_softc *ip;
 {
@@ -1282,7 +1284,7 @@ ite_crlf (ip)
   ite_lf (ip);
 }
 
-static void inline
+static __inline__ void
 ite_cr (ip)
      struct ite_softc *ip;
 {
@@ -1293,7 +1295,7 @@ ite_cr (ip)
     }
 }
 
-static void inline
+static __inline__ void
 ite_rlf (ip)
      struct ite_softc *ip;
 {
@@ -1308,7 +1310,7 @@ ite_rlf (ip)
   clr_attr(ip, ATTR_INV);
 }
 
-static int inline
+static __inline__ int
 atoi (cp)
     const char *cp;
 {
@@ -1331,7 +1333,7 @@ index (cp, ch)
 
 
 
-static int inline
+static __inline__ int
 ite_argnum (ip)
     struct ite_softc *ip;
 {
@@ -1349,11 +1351,11 @@ ite_argnum (ip)
   return n;
 }
 
-static int inline
+static __inline__ int
 ite_zargnum (ip)
     struct ite_softc *ip;
 {
-  char ch, *cp;
+  char ch;
   int n;
 
   /* convert argument string into number */
@@ -1365,17 +1367,6 @@ ite_zargnum (ip)
   *ip->ap = ch;
   
   return n;	/* don't "n ? n : 1" here, <CSI>0m != <CSI>1m ! */
-}
-
-static int inline
-strncmp (a, b, l)
-    const char *a, *b;
-    int l;
-{
-  for (;l--; a++, b++)
-    if (*a != *b)
-      return *a - *b;
-  return 0;
 }
 
 void
@@ -1417,7 +1408,6 @@ iteputchar(c, ip)
 
 	if (ip->escape) 
 	  {
-doesc:
 	    switch (ip->escape) 
 	      {
 	      case ESC:
@@ -2322,6 +2312,7 @@ doesc:
 	}
 }
 
+static void
 iteprecheckwrap(ip)
 	struct ite_softc *ip;
 {
@@ -2338,6 +2329,7 @@ iteprecheckwrap(ip)
 	}
 }
 
+static void
 itecheckwrap(ip)
 	struct ite_softc *ip;
 {

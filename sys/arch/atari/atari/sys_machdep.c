@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.4 1995/12/03 14:34:24 leo Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.5 1996/02/22 10:10:58 leo Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -119,6 +119,7 @@ vdoualarm(arg)
 /* XXX end should be */
 
 /*ARGSUSED1*/
+int
 cachectl(req, addr, len)
 	int req;
 	caddr_t	addr;
@@ -230,6 +231,7 @@ cachectl(req, addr, len)
  */
 
 /*ARGSUSED1*/
+int
 dma_cachectl(addr, len)
 	caddr_t	addr;
 	int len;
@@ -276,10 +278,12 @@ sys_sysarch(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#ifdef notyet
 	struct sys_sysarch_args /* {
 		syscallarg(int) op;
 		syscallarg(char*)parms; 
 	} */ *uap = v;
+#endif
 
 	return ENOSYS;
 }

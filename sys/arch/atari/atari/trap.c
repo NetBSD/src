@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.11 1996/02/11 12:41:25 leo Exp $	*/
+/*	$NetBSD: trap.c,v 1.12 1996/02/22 10:11:00 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -451,21 +451,22 @@ nogo:
  * System calls are broken out for efficiency.
  */
 /*ARGSUSED*/
+void
 trap(type, code, v, frame)
 	int type;
 	u_int code, v;
 	struct frame frame;
 {
 	struct proc *p;
-	u_int ncode, ucode;
+	u_int ucode;
 	u_quad_t sticks;
-	int i, s;
+	int i;
 #ifdef COMPAT_SUNOS
 	extern struct emul emul_sunos;
 #endif
 
 	p = curproc;
-	ucode = 0;
+	sticks = ucode = 0;
 	cnt.v_trap++;
 
 	if (USERMODE(frame.f_sr)) {
@@ -693,6 +694,7 @@ trap(type, code, v, frame)
 /*
  * Process a system call.
  */
+void
 syscall(code, frame)
 	register_t code;
 	struct frame frame;
@@ -863,6 +865,7 @@ child_return(p, frame)
 /*
  * Process a pending write back
  */
+int
 _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 	u_int wb;	/* writeback type: 1, 2, or 3 */
 	u_int wb_sts;	/* writeback status information */
@@ -871,7 +874,8 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 	vm_map_t wb_map;
 {
 	u_int wb_extra_page = 0;
-	u_int wb_rc, mmusr;
+	u_int mmusr;
+	int   wb_rc;
 	void _wb_fault ();	/* fault handler for write back */
 
 #ifdef DEBUG
@@ -963,21 +967,24 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 	switch(wb_sts & WBS_SZMASK) {
 
 	case WBS_SIZE_BYTE :
-		asm volatile ("movec %0,dfc ; movesb %1,%2@" : : "d" (wb_sts & WBS_TMMASK),
-								 "d" (wb_data),
-								 "a" (wb_addr));
+		asm volatile ("movec %0,dfc ; movesb %1,%2@" : :
+						"d" (wb_sts & WBS_TMMASK),
+						"d" (wb_data),
+						"a" (wb_addr));
 		break;
 
 	case WBS_SIZE_WORD :
-		asm volatile ("movec %0,dfc ; movesw %1,%2@" : : "d" (wb_sts & WBS_TMMASK),
-								 "d" (wb_data),
-								 "a" (wb_addr));
+		asm volatile ("movec %0,dfc ; movesw %1,%2@" : :
+						"d" (wb_sts & WBS_TMMASK),
+						"d" (wb_data),
+						"a" (wb_addr));
 		break;
 
 	case WBS_SIZE_LONG :
-		asm volatile ("movec %0,dfc ; movesl %1,%2@" : : "d" (wb_sts & WBS_TMMASK),
-								 "d" (wb_data),
-								 "a" (wb_addr));
+		asm volatile ("movec %0,dfc ; movesl %1,%2@" : :
+						"d" (wb_sts & WBS_TMMASK),
+						"d" (wb_data),
+						"a" (wb_addr));
 		break;
 
 	}
@@ -991,7 +998,8 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 /*
  * fault handler for write back
  */
-void _wb_fault()
+void
+_wb_fault()
 {
 #ifdef DEBUG
 	printf ("trap: writeback fault\n");

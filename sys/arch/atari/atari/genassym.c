@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.7 1996/02/02 19:42:29 mycroft Exp $	*/
+/*	$NetBSD: genassym.c,v 1.8 1996/02/22 10:10:50 leo Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -54,35 +54,36 @@
 #include <machine/iomap.h>
 #include <machine/scu.h>
 
-main()
+#include <stdio.h>
+
+int
+main(void)
 {
 	register struct proc *p = (struct proc *)0;
 	register struct vmmeter *vm = (struct vmmeter *)0;
 	register struct user *up = (struct user *)0;
-	register struct rusage *rup = (struct rusage *)0;
 	struct frame *frame = NULL;
 	struct vmspace *vms = (struct vmspace *)0;
 	pmap_t pmap = (pmap_t)0;
 	struct pcb *pcb = (struct pcb *)0;
 	struct mdproc *mdproc = (struct mdproc *)0;
-	register unsigned i;
 
-	printf("#define\tP_FORW %d\n", &p->p_forw);
-	printf("#define\tP_BACK %d\n", &p->p_back);
-	printf("#define\tP_VMSPACE %d\n", &p->p_vmspace);
-	printf("#define\tP_ADDR %d\n", &p->p_addr);
-	printf("#define\tP_PRIORITY %d\n", &p->p_priority);
-	printf("#define\tP_STAT %d\n", &p->p_stat);
-	printf("#define\tP_WCHAN %d\n", &p->p_wchan);
-	printf("#define\tP_MD %d\n", &p->p_md);
-	printf("#define\tP_PID %d\n", &p->p_pid);
-	printf("#define\tMD_REGS %d\n", &mdproc->md_regs);
+	printf("#define\tP_FORW %p\n", (void *)&p->p_forw);
+	printf("#define\tP_BACK %p\n", (void *)&p->p_back);
+	printf("#define\tP_VMSPACE %p\n", (void *)&p->p_vmspace);
+	printf("#define\tP_ADDR %p\n", (void *)&p->p_addr);
+	printf("#define\tP_PRIORITY %p\n", (void *)&p->p_priority);
+	printf("#define\tP_STAT %p\n", (void *)&p->p_stat);
+	printf("#define\tP_WCHAN %p\n", (void *)&p->p_wchan);
+	printf("#define\tP_MD %p\n", (void *)&p->p_md);
+	printf("#define\tP_PID %p\n", (void *)&p->p_pid);
+	printf("#define\tMD_REGS %p\n", (void *)&mdproc->md_regs);
 	printf("#define\tSRUN %d\n", SRUN);
 	
-	printf("#define\tPM_STCHG %d\n", &pmap->pm_stchanged);
+	printf("#define\tPM_STCHG %p\n", (void *)&pmap->pm_stchanged);
 
-	printf("#define\tVM_PMAP %d\n", &vms->vm_pmap);
-	printf("#define\tV_INTR %d\n", &vm->v_intr);
+	printf("#define\tVM_PMAP %p\n", (void *)&vms->vm_pmap);
+	printf("#define\tV_INTR %p\n", (void *)&vm->v_intr);
 	
 	printf("#define\tUPAGES %d\n", UPAGES);
 	printf("#define\tUSPACE %d\n", USPACE);
@@ -90,8 +91,9 @@ main()
 	printf("#define\tPGSHIFT %d\n", PGSHIFT);
 	printf("#define\tUSRSTACK %d\n", USRSTACK);
 
-	printf("#define\tU_PROF %d\n", &up->u_stats.p_prof);
-	printf("#define\tU_PROFSCALE %d\n", &up->u_stats.p_prof.pr_scale);
+	printf("#define\tU_PROF %p\n", (void *)&up->u_stats.p_prof);
+	printf("#define\tU_PROFSCALE %p\n",
+					(void *)&up->u_stats.p_prof.pr_scale);
 	printf("#define\tT_BUSERR %d\n", T_BUSERR);
 	printf("#define\tT_ADDRERR %d\n", T_ADDRERR);
 	printf("#define\tT_ILLINST %d\n", T_ILLINST);
@@ -140,19 +142,19 @@ main()
 	printf("#define\tSG_NV %d\n", SG_NV);
 	printf("#define\tSG_RW %d\n", SG_RW);
 	printf("#define\tSG_FRAME %d\n", SG_FRAME);
-	printf("#define\tPCB_FLAGS %d\n", &pcb->pcb_flags);
-	printf("#define\tPCB_PS %d\n", &pcb->pcb_ps);
-	printf("#define\tPCB_USTP %d\n", &pcb->pcb_ustp);
-	printf("#define\tPCB_USP %d\n", &pcb->pcb_usp);
-	printf("#define\tPCB_REGS %d\n", pcb->pcb_regs);
-	printf("#define\tPCB_CMAP2 %d\n", &pcb->pcb_cmap2);
-	printf("#define\tPCB_ONFAULT %d\n", &pcb->pcb_onfault);
-	printf("#define\tPCB_FPCTX %d\n", &pcb->pcb_fpregs);
+	printf("#define\tPCB_FLAGS %p\n", (void *)&pcb->pcb_flags);
+	printf("#define\tPCB_PS %p\n", (void *)&pcb->pcb_ps);
+	printf("#define\tPCB_USTP %p\n", (void *)&pcb->pcb_ustp);
+	printf("#define\tPCB_USP %p\n", (void *)&pcb->pcb_usp);
+	printf("#define\tPCB_REGS %p\n", (void *)pcb->pcb_regs);
+	printf("#define\tPCB_CMAP2 %p\n", (void *)&pcb->pcb_cmap2);
+	printf("#define\tPCB_ONFAULT %p\n", (void *)&pcb->pcb_onfault);
+	printf("#define\tPCB_FPCTX %p\n", (void *)&pcb->pcb_fpregs);
 	printf("#define\tSIZEOF_PCB %d\n", sizeof(struct pcb));
 
-	printf("#define\tFR_SP %d\n", &frame->f_regs[15]);
-	printf("#define\tFR_HW %d\n", &frame->f_sr);
-	printf("#define\tFR_ADJ %d\n", &frame->f_stackadj);
+	printf("#define\tFR_SP %p\n", (void *)&frame->f_regs[15]);
+	printf("#define\tFR_HW %p\n", (void *)&frame->f_sr);
+	printf("#define\tFR_ADJ %p\n", (void *)&frame->f_stackadj);
 
 	printf("#define\tSP %d\n", SP);
 	printf("#define\tSYS_exit %d\n", SYS_exit);
@@ -165,8 +167,8 @@ main()
 	printf("#define\tMMU_68851 %d\n", MMU_68851);
 	printf("#define\tMMU_68040 %d\n", MMU_68040);
 
-	printf("#define\tSOFTINT_ADDR %d\n", &SCU->sys_int);
-	printf("#define\tSYSMASK_ADDR %d\n", &SCU->sys_mask);
+	printf("#define\tSOFTINT_ADDR %p\n", (void *)&SCU->sys_int);
+	printf("#define\tSYSMASK_ADDR %p\n", (void *)&SCU->sys_mask);
 
 	exit(0);
 }
