@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.8 2002/09/27 20:29:12 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.9 2002/10/02 02:23:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -186,9 +186,8 @@ int fdcprobe __P((struct device *, struct cfdata *, void *));
 int fdprint __P((void *, const char *));
 void fdcattach __P((struct device *, struct device *, void *));
 
-const struct cfattach fdc_ca = {
-	sizeof(struct fdc_softc), fdcprobe, fdcattach
-};
+CFATTACH_DECL(fdc, sizeof(struct fdc_softc),
+	fdcprobe, fdcattach, NULL, NULL);
 
 /*
  * Floppies come in various flavors, e.g., 1.2MB vs 1.44MB; here is how
@@ -264,9 +263,8 @@ void fdattach __P((struct device *, struct device *, void *));
 extern char floppy_read_fiq[], floppy_read_fiq_end[];
 extern char floppy_write_fiq[], floppy_write_fiq_end[];
 
-const struct cfattach fd_ca = {
-	sizeof(struct fd_softc), fdprobe, fdattach
-};
+CFATTACH_DECL(fd, sizeof(struct fd_softc),
+	fdprobe, fdattach, NULL, NULL);
 
 extern struct cfdriver fd_cd;
 
