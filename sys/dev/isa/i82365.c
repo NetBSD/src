@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.4 1997/10/17 09:37:12 enami Exp $	*/
+/*	$NetBSD: i82365.c,v 1.5 1997/10/19 14:07:19 enami Exp $	*/
 
 #define	PCICDEBUG
 
@@ -48,6 +48,8 @@
 
 #include <dev/ic/i82365reg.h>
 #include <dev/ic/i82365var.h>
+
+#include "locators.h"
 
 #ifdef PCICDEBUG
 int	pcic_debug = 0;
@@ -383,30 +385,42 @@ pcic_submatch(parent, cf, aux)
 
 	switch (h->sock) {
 	case C0SA:
-		if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != 0)
+		if (cf->cf_loc[PCICCF_CONTROLLER] !=
+		    PCICCF_CONTROLLER_DEFAULT &&
+		    cf->cf_loc[PCICCF_CONTROLLER] != 0)
 			return 0;
-		if (cf->cf_loc[1] != -1 && cf->cf_loc[1] != 0)
+		if (cf->cf_loc[PCICCF_SOCKET] != PCICCF_SOCKET_DEFAULT &&
+		    cf->cf_loc[PCICCF_SOCKET] != 0)
 			return 0;
 
 		break;
 	case C0SB:
-		if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != 0)
+		if (cf->cf_loc[PCICCF_CONTROLLER] !=
+		    PCICCF_CONTROLLER_DEFAULT &&
+		    cf->cf_loc[PCICCF_CONTROLLER] != 0)
 			return 0;
-		if (cf->cf_loc[1] != -1 && cf->cf_loc[1] != 1)
+		if (cf->cf_loc[PCICCF_SOCKET] != PCICCF_SOCKET_DEFAULT &&
+		    cf->cf_loc[PCICCF_SOCKET] != 1)
 			return 0;
 
 		break;
 	case C1SA:
-		if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != 1)
+		if (cf->cf_loc[PCICCF_CONTROLLER] !=
+		    PCICCF_CONTROLLER_DEFAULT &&
+		    cf->cf_loc[PCICCF_CONTROLLER] != 1)
 			return 0;
-		if (cf->cf_loc[1] != -1 && cf->cf_loc[1] != 0)
+		if (cf->cf_loc[PCICCF_SOCKET] != PCICCF_SOCKET_DEFAULT &&
+		    cf->cf_loc[PCICCF_SOCKET] != 0)
 			return 0;
 
 		break;
 	case C1SB:
-		if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != 1)
+		if (cf->cf_loc[PCICCF_CONTROLLER] !=
+		    PCICCF_CONTROLLER_DEFAULT &&
+		    cf->cf_loc[PCICCF_CONTROLLER] != 1)
 			return 0;
-		if (cf->cf_loc[1] != -1 && cf->cf_loc[1] != 1)
+		if (cf->cf_loc[PCICCF_SOCKET] != PCICCF_SOCKET_DEFAULT &&
+		    cf->cf_loc[PCICCF_SOCKET] != 1)
 			return 0;
 
 		break;
