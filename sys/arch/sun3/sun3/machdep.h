@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.9 1997/04/28 23:19:39 gwr Exp $	*/
+/*	$NetBSD: machdep.h,v 1.10 1997/05/29 21:17:38 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -121,6 +121,9 @@ int 	fpu_emulate __P((struct trapframe *, struct fpframe *));
 
 int 	getdfc __P((void));
 int 	getsfc __P((void));
+
+/* Backward compatibility... */
+#define getsr	_getsr
 
 void**	getvbr __P((void));
 
