@@ -93,7 +93,6 @@ file kern/kern_xxx.c
 file kern/subr_autoconf.c
 file kern/subr_disk.c
 file kern/subr_log.c		
-file kern/subr_mcount.c	 	profiling-routine
 file kern/subr_prf.c		
 file kern/subr_prof.c		
 file kern/subr_rmap.c	
