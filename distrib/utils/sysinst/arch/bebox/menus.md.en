@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.7 1999/06/20 06:08:18 cgd Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.8 1999/07/04 21:52:13 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -94,7 +94,7 @@ menu editpart, title  "Select to change";
 	display action { msg_display (MSG_editpart, editpart);
 			   disp_cur_part((struct mbr_partition *)&mbr[MBR_PARTOFF
 ], activepart,editpart);
-			   msg_printf_add ("\n");
+			   msg_display_add(MSG_newline);
 			};
 	option "Kind", sub menu chooseid;
 	option "Start and size", action 
