@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.25 1997/10/01 02:22:54 enami Exp $	*/
+/*	$NetBSD: route.c,v 1.26 1997/11/16 17:03:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.25 1997/10/01 02:22:54 enami Exp $");
+__RCSID("$NetBSD: route.c,v 1.26 1997/11/16 17:03:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,6 +72,7 @@ __RCSID("$NetBSD: route.c,v 1.25 1997/10/01 02:22:54 enami Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <paths.h>
+#include <err.h>
 
 #include "keywords.h"
 #include "extern.h"
@@ -80,7 +81,6 @@ typedef union sockunion *sup;
 
 int main __P((int, char **));
 static void usage __P((char *));
-static void quit __P((char *));
 static char *any_ntoa __P((const struct sockaddr *));
 static void set_metric __P((char *, int));
 static void newroute __P((int, char **));
@@ -126,24 +126,11 @@ static void
 usage(cp)
 	char *cp;
 {
+	extern char *__progname;
 	if (cp)
-		(void) fprintf(stderr, "route: botched keyword: %s\n", cp);
+		warnx("botched keyword: %s", cp);
 	(void) fprintf(stderr,
-	    "usage: route [ -nqv ] cmd [[ -<qualifers> ] args ]\n");
-	exit(1);
-	/* NOTREACHED */
-}
-
-static void
-quit(s)
-	char *s;
-{
-	int sverrno = errno;
-
-	(void) fprintf(stderr, "route: ");
-	if (s)
-		(void) fprintf(stderr, "%s: ", s);
-	(void) fprintf(stderr, "%s\n", strerror(sverrno));
+	    "Usage: %s [ -nqv ] cmd [[ -<qualifers> ] args ]\n", __progname);
 	exit(1);
 	/* NOTREACHED */
 }
@@ -160,7 +147,7 @@ main(argc, argv)
 	int ch;
 
 	if (argc < 2)
-		usage((char *)NULL);
+		usage(NULL);
 
 	while ((ch = getopt(argc, argv, "nqdtv")) != -1)
 		switch(ch) {
@@ -181,7 +168,7 @@ main(argc, argv)
 			break;
 		case '?':
 		default:
-			usage((char *)NULL);
+			usage(NULL);
 		}
 	argc -= optind;
 	argv += optind;
@@ -192,7 +179,7 @@ main(argc, argv)
 	else
 		s = socket(PF_ROUTE, SOCK_RAW, 0);
 	if (s < 0)
-		quit("socket");
+		err(1, "socket");
 
 	if (*argv == NULL)
 		goto no_cmd;
@@ -279,13 +266,13 @@ bad:			usage(*argv);
 	mib[4] = NET_RT_DUMP;
 	mib[5] = 0;		/* no flags */
 	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
-		quit("route-sysctl-estimate");
+		err(1, "route-sysctl-estimate");
 	if (needed == 0)
 		return;
 	if ((buf = malloc(needed)) == NULL)
-		quit("malloc");
+		err(1, "malloc");
 	if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
-		quit("actual retrieval of routing table");
+		err(1, "actual retrieval of routing table");
 	lim = buf + needed;
 	if (verbose) {
 		(void) printf("Examining routing table from sysctl\n");
@@ -310,10 +297,7 @@ bad:			usage(*argv);
 		rtm->rtm_seq = seqno;
 		rlen = write(s, next, rtm->rtm_msglen);
 		if (rlen < (int)rtm->rtm_msglen) {
-			(void) fprintf(stderr,
-			    "route: write to routing socket: %s\n",
-			    strerror(errno));
-			(void) printf("got only %d for rlen\n", rlen);
+			warn("write to routing socket, got %d for rlen", rlen);
 			break;
 		}
 		seqno++;
@@ -718,17 +702,18 @@ newroute(argc, argv)
 
 				if (ret == 0) {
 				    if (!qflag && strcmp(*argv, "0") == 0)
-				        printf("%s,%s",
+				        warnx("%s, %s",
 					    "old usage of trailing 0",
-					    "assuming route to if\n");
+					    "assuming route to if");
 				    else
 					usage((char *)NULL);
 				    iflag = 1;
 				    continue;
 				} else if (ret > 0 && ret < 10) {
 				    if (!qflag) {
-				        printf("old usage of trailing digit, ");
-				        printf("assuming route via gateway\n");
+				        warnx("%s, %s",
+					    "old usage of trailing digit",
+					    "assuming route via gateway");
 				    }
 				    iflag = 0;
 				    continue;
@@ -936,8 +921,7 @@ getaddr(which, s, hpp)
 		t = strchr (s, '.');
 		if (!t) {
 badataddr:
-			(void)fprintf (stderr, "bad address: %s\n", s);
-			exit (1);
+			errx(1, "bad address: %s", s);
 		}
 		val = atoi (s);
 		if (val > 65535)
@@ -986,8 +970,7 @@ netdone:
 		memmove(&su->sin.sin_addr, hp->h_addr, hp->h_length);
 		return (1);
 	}
-	(void) fprintf(stderr, "%s: bad value\n", s);
-	exit(1);
+	errx(1, "bad value: %s", s);
 }
 
 #ifndef SMALL
@@ -1069,11 +1052,11 @@ interfaces()
 	mib[4] = NET_RT_IFLIST;
 	mib[5] = 0;		/* no flags */
 	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
-		quit("route-sysctl-estimate");
+		err(1, "route-sysctl-estimate");
 	if ((buf = malloc(needed)) == NULL)
-		quit("malloc");
+		err(1, "malloc");
 	if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
-		quit("actual retrieval of interface table");
+		err(1, "actual retrieval of interface table");
 	lim = buf + needed;
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
 		rtm = (struct rt_msghdr *)next;
@@ -1173,9 +1156,7 @@ rtmsg(cmd, flags)
 			l = read(s, (char *)&m_rtmsg, sizeof(m_rtmsg));
 		} while (l > 0 && (rtm.rtm_seq != seq || rtm.rtm_pid != pid));
 		if (l < 0)
-			(void) fprintf(stderr,
-			    "route: read from routing socket: %s\n",
-			    strerror(errno));
+			err(1, "read from routing socket");
 		else
 			print_getmsg(&rtm, l);
 	}
@@ -1304,19 +1285,16 @@ print_getmsg(rtm, msglen)
 	(void) printf("   route to: %s\n",
 	    routename((struct sockaddr *) &so_dst));
 	if (rtm->rtm_version != RTM_VERSION) {
-		(void)fprintf(stderr,
-		    "routing message version %d not understood\n",
+		warnx("routing message version %d not understood",
 		    rtm->rtm_version);
 		return;
 	}
 	if (rtm->rtm_msglen > msglen) {
-		(void)fprintf(stderr,
-		    "message length mismatch, in packet %d, returned %d\n",
+		warnx("message length mismatch, in packet %d, returned %d\n",
 		    rtm->rtm_msglen, msglen);
 	}
 	if (rtm->rtm_errno)  {
-		(void) fprintf(stderr, "RTM_GET: %s (errno %d)\n",
-		    strerror(rtm->rtm_errno), rtm->rtm_errno);
+		warn("RTM_GET");
 		return;
 	}
 	cp = ((char *)(rtm + 1));
