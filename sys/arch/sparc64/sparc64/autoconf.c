@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.29 2000/04/12 11:40:12 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.30 2000/05/19 05:26:18 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -215,6 +215,8 @@ bootstrap(nctx)
 /* Moved zs_kgdb_init() to dev/zs.c:consinit(). */
 	zs_kgdb_init();		/* XXX */
 #endif
+	/* Initialize the PROM console so printf will not panic */
+	(*cn_tab->cn_init)(cn_tab);
 #ifdef DDB
 	db_machine_init();
 #ifdef DB_ELF_SYMBOLS
@@ -730,6 +732,10 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		free(ma.ma_interrupts, M_DEVBUF);
 		free(ma.ma_address, M_DEVBUF);
 	}
+	/* Try to attach PROM console */
+	bzero(&ma, sizeof ma);
+	ma.ma_name = "pcons";
+	(void) config_found(dev, (void *)&ma, mbprint);
 }
 
 struct cfattach mainbus_ca = {
