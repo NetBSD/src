@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: cfopt.c,v 1.1.1.1 2003/02/16 08:15:08 jdolecek Exp $
+ * from: Id: cfopt.c,v 1.3 2000/07/11 01:51:49 bp Exp 
  */
 #include <sys/param.h>
 
