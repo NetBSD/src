@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbd.c,v 1.5 1996/04/12 01:52:45 cgd Exp $	*/
+/*	$NetBSD: pckbd.c,v 1.6 1996/04/23 13:57:55 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -111,6 +111,7 @@ int	pckbd_ioctl __P((struct device *, u_long, caddr_t, int,
 
 char	*pckbd_translate __P((struct device *dev, int c));
 
+#if NWSCONS
 struct wscons_idev_spec pckbd_wscons_idev = {
 	pckbd_cngetc,
 	pckbd_cnpollc,
@@ -120,6 +121,7 @@ struct wscons_idev_spec pckbd_wscons_idev = {
 	0x7f,			/* key data mask */
 	0x80,			/* key-up mask */
 };
+#endif
 
 void	pckbd_bell_stop __P((void *));
 
