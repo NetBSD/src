@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.5 1998/08/01 18:16:20 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.6 1998/08/01 20:11:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -431,8 +431,9 @@ usbd_set_config_no(dev, no)
 	power = cdp->bMaxPower * 2;
 	if (power > dev->powersrc->power) {
 		/* XXX print nicer message. */
-		printf("usb: device addr %d (config %d) exceeds power budget, %d mA > %d mA\n",
-		       dev->address, cdp->bConfigurationValue,
+		printf("%s: device addr %d (config %d) exceeds power budget, %d mA > %d mA\n",
+		       dev->bus->bdev.dv_xname, dev->address, 
+		       cdp->bConfigurationValue, 
 		       power, dev->powersrc->power);
 		r = USBD_NO_POWER;
 		goto bad;
@@ -455,6 +456,7 @@ usbd_set_config_no(dev, no)
 		r = USBD_NOMEM;
 		goto bad;
 	}
+	DPRINTFN(5,("usbd_set_config_no: dev=%p cdesc=%p\n", dev, cdp));
 	dev->cdesc = cdp;
 	dev->config = cdp->bConfigurationValue;
 	dev->state = USBD_DEVICE_CONFIGURED;
@@ -600,10 +602,17 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 
 	up->device = dev;
 	d = &dev->ddesc;
-	/* Get the first 8 bytes of the device descriptor. */
-	r = usbd_get_desc(dev, UDESC_DEVICE, 0, USB_MAX_IPACKET, d);
+	/* Try a few times in case the device is slow (i.e. outside specs.) */
+	for (i = 0; i < 5; i++) {
+		/* Get the first 8 bytes of the device descriptor. */
+		r = usbd_get_desc(dev, UDESC_DEVICE, 0, USB_MAX_IPACKET, d);
+		if (r == USBD_NORMAL_COMPLETION)
+			break;
+		usbd_delay_ms(dev->bus, 200);
+	}
 	if (r != USBD_NORMAL_COMPLETION) {
-		DPRINTFN(-1, ("usbd_new_device: addr=%d, getting first desc failed\n", addr));
+		DPRINTFN(-1, ("usbd_new_device: addr=%d, getting first desc failed\n",
+			      addr));
 		goto bad;
 	}
 
@@ -650,9 +659,8 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 		return (USBD_NORMAL_COMPLETION);
 
 	DPRINTF(("usbd_new_device: no device driver found\n"));
-	/* Next try with interface drivers. */
-	/* XXX should we try all configurations? */
 
+	/* Next try with interface drivers. */
 	for (confi = 0; confi < d->bNumConfigurations; confi++) {
 		r = usbd_set_config_no(dev, confi);
 		if (r != USBD_NORMAL_COMPLETION) {
