@@ -925,9 +925,11 @@ isc_result_t omapi_protocol_destroy (omapi_object_t *h,
 
 	while (p -> remote_auth_list) {
 		omapi_remote_auth_t *r = p -> remote_auth_list -> next;
-		omapi_object_dereference (&r -> a, file, line);
-		dfree (r, file, line);
 		p -> remote_auth_list = r;
+		if (r) {
+			omapi_object_dereference (&r -> a, file, line);
+			dfree (r, file, line);
+		}
 	}
 	return ISC_R_SUCCESS;
 }

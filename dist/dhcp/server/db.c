@@ -3,7 +3,7 @@
    Persistent database management routines for DHCPD... */
 
 /*
- * Copyright (c) 1995-2001 Internet Software Consortium.
+ * Copyright (c) 1995-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: db.c,v 1.2 2002/06/10 00:30:37 itojun Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: db.c,v 1.3 2002/06/11 14:00:04 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -151,25 +151,39 @@ int write_lease (lease)
 		}
 	}
 
-	fprintf (db_file, "\n  binding state %s;",
-		 ((lease -> binding_state > 0 &&
-		   lease -> binding_state <= FTS_BOOTP)
-		  ? binding_state_names [lease -> binding_state - 1]
-		  : "abandoned"));
+	if (lease -> binding_state == FTS_ACTIVE &&
+	    (lease -> flags & BOOTP_LEASE)) {
+		fprintf (db_file, "\n  binding state bootp;\n");
+	} else {
+		fprintf (db_file, "\n  binding state %s;",
+			 ((lease -> binding_state > 0 &&
+			   lease -> binding_state <= FTS_LAST)
+			  ? binding_state_names [lease -> binding_state - 1]
+			  : "abandoned"));
+	}
 
-	if (lease -> binding_state != lease -> next_binding_state)
+	if (lease -> binding_state != lease -> next_binding_state) {
+	    if (lease -> next_binding_state == FTS_ACTIVE &&
+		(lease -> flags & BOOTP_LEASE))
+		fprintf (db_file, "\n  next binding state bootp;\n");
+	    else
 		fprintf (db_file, "\n  next binding state %s;",
 			 ((lease -> next_binding_state > 0 &&
-			   lease -> next_binding_state <= FTS_BOOTP)
+			   lease -> next_binding_state <= FTS_LAST)
 			  ? (binding_state_names
 			     [lease -> next_binding_state - 1])
 		  : "abandoned"));
+	}
 
 	/* If this lease is billed to a class and is still valid,
 	   write it out. */
-	if (lease -> billing_class && lease -> ends > cur_time)
-		if (!write_billing_class (lease -> billing_class))
+	if (lease -> billing_class && lease -> ends > cur_time) {
+		if (!write_billing_class (lease -> billing_class)) {
+			log_error ("unable to write class %s",
+				   lease -> billing_class -> name);
 			++errors;
+		}
+	}
 
 	if (lease -> hardware_addr.hlen) {
 		errno = 0;
@@ -678,6 +692,12 @@ int write_billing_class (class)
 	if (errors)
 		lease_file_is_corrupt = 1;
 	return !errors;
+}
+
+/* Commit leases after a timeout. */
+void commit_leases_timeout (void *foo)
+{
+	commit_leases ();
 }
 
 /* Commit any leases that have been written out... */
