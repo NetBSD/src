@@ -1,4 +1,4 @@
-.\"	$NetBSD: systat.1,v 1.13 1999/03/22 18:16:43 garbled Exp $
+.\"	$NetBSD: systat.1,v 1.14 1999/05/30 20:26:21 ad Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -101,7 +101,11 @@ argument expects to be one of:
 .Ic iostat ,
 .Ic swap ,
 .Ic mbufs ,
-.Ic vmstat
+.Ic vmstat ,
+.Ic ip ,
+.Ic icmp ,
+.Ic tcp ,
+.Ic tcpsyn
 or
 .Ic netstat .
 These displays can also be requested interactively and are described in
@@ -164,6 +168,16 @@ Exit
 .Pp
 The available displays are:
 .Bl -tag -width Ic
+.It Ic icmp
+Display ICMP statistics.
+.It Ic ip
+Display IP and UDP statistics.
+.It Ic tcp
+Display TCP statistics.
+.It Ic tcpsyn
+Display statistics about the 
+.Tn TCP
+``syncache''.
 .It Ic pigs
 Display, in the lower window, those processes resident in main
 memory and getting the
@@ -409,6 +423,7 @@ drives may be specified, separated by spaces.
 Display information about the drives indicated.  Multiple drives
 may be specified, separated by spaces.
 .El
+.Pp
 .Sh FILES
 .Bl -tag -width /etc/networks -compact
 .It Pa /netbsd
