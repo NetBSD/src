@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.8 1997/07/22 07:36:59 mikel Exp $	*/
+/*	$NetBSD: refresh.c,v 1.9 1997/09/12 21:08:24 phil Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.8 1997/07/22 07:36:59 mikel Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.9 1997/09/12 21:08:24 phil Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,12 @@ wrefresh(win)
 	register int retval;
 	register short wy;
 	int dnum;
+
+	/* Check if we need to restart ... */
+	if (__endwin) {
+		__endwin = 0;
+		__restartwin();
+	}
 
 	/* Initialize loop parameters. */
 	ly = curscr->cury;
