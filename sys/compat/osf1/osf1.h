@@ -1,4 +1,4 @@
-/* $NetBSD: osf1.h,v 1.5 1999/04/26 05:56:34 cgd Exp $ */
+/* $NetBSD: osf1.h,v 1.6 1999/04/26 06:10:36 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -413,6 +413,13 @@ struct osf1_stat {
 	osf1_uint_t	st_flags;
 	osf1_uint_t	st_gen;
 };
+
+
+/* types.h */
+
+#define osf1_major(x)	((((dev_t)(x)) >> 20) & 0x00000fff)
+#define osf1_minor(x)	((((dev_t)(x)) >>  0) & 0x000fffff)
+#define osf1_makedev(x,y) ((((dev_t)(x)) << 20) | ((dev_t)(x)))
 
 
 /* uio.h */
