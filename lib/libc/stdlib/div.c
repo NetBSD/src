@@ -1,3 +1,5 @@
+/*	$NetBSD: div.c,v 1.4 1995/12/28 08:52:13 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1990 Regents of the University of California.
  * All rights reserved.
@@ -35,8 +37,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)div.c	5.2 (Berkeley) 4/16/91";*/
-static char *rcsid = "$Id: div.c,v 1.3 1993/08/26 00:47:55 jtc Exp $";
+#if 0
+static char *sccsid = "from: @(#)div.c	5.2 (Berkeley) 4/16/91";
+#else
+static char *rcsid = "$NetBSD: div.c,v 1.4 1995/12/28 08:52:13 thorpej Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>		/* div_t */
