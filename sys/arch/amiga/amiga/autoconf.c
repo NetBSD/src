@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.26 1994/12/01 17:24:23 chopps Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.27 1994/12/28 09:06:37 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -39,7 +39,6 @@
 #include <amiga/amiga/cfdev.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/custom.h>
-#include <amiga/dev/ztwobusvar.h>
 
 void configure __P((void));
 void setroot __P((void));
@@ -153,12 +152,10 @@ config_console()
 	 */
 	amiga_config_found(cf, NULL, "grfcc", NULL);
 	/*
-	 * ztwobus and zthreebus know when its not for real and will
+	 * zbus knows when its not for real and will
 	 * only configure the appropriate hardware
 	 */
-	amiga_config_found(cf, NULL, "ztwobus", NULL);
-	if (is_a3000() || is_a4000())
-		amiga_config_found(cf, NULL, "zthreebus", NULL);
+	amiga_config_found(cf, NULL, "zbus", NULL);
 }
 
 /* 
@@ -200,12 +197,9 @@ mbattach(pdp, dp, auxp)
 	config_found(dp, "fdc", simple_devprint);
 	if (is_a4000() || is_a1200())
 		config_found(dp, "idesc", simple_devprint);
-	config_found(dp, "ztwobus", simple_devprint);
+	config_found(dp, "zbus", simple_devprint);
 	if (is_a3000())
 		config_found(dp, "ahsc", simple_devprint);
-	if (is_a3000() || is_a4000()) {
-		config_found(dp, "zthreebus", simple_devprint);
-	}
 }
 
 int
