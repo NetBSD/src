@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.70 1998/11/27 15:08:50 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.71 1998/11/28 21:53:02 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -713,97 +713,6 @@ svr4_sys_sysconfig(p, v, retval)
 		return EINVAL;
 	}
 	return 0;
-}
-
-#define SVR4_RLIMIT_NOFILE	5	/* Other RLIMIT_* are the same */
-#define SVR4_RLIMIT_VMEM	6	/* Other RLIMIT_* are the same */
-#define SVR4_RLIM_NLIMITS	7
-
-int
-svr4_sys_getrlimit(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct svr4_sys_getrlimit_args *uap = v;
-	struct compat_43_sys_getrlimit_args ap;
-
-	if (SCARG(uap, which) >= SVR4_RLIM_NLIMITS)
-		return EINVAL;
-
-	if (SCARG(uap, which) == SVR4_RLIMIT_NOFILE)
-		SCARG(uap, which) = RLIMIT_NOFILE;
-	if (SCARG(uap, which) == SVR4_RLIMIT_VMEM)
-		SCARG(uap, which) = RLIMIT_RSS;
-
-	SCARG(&ap, which) = SCARG(uap, which);
-	SCARG(&ap, rlp) = SCARG(uap, rlp);
-
-	return compat_43_sys_getrlimit(p, &ap, retval);
-}
-
-
-int
-svr4_sys_setrlimit(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct svr4_sys_setrlimit_args *uap = v;
-	struct compat_43_sys_setrlimit_args ap;
-
-	if (SCARG(uap, which) >= SVR4_RLIM_NLIMITS)
-		return EINVAL;
-
-	if (SCARG(uap, which) == SVR4_RLIMIT_NOFILE)
-		SCARG(uap, which) = RLIMIT_NOFILE;
-	if (SCARG(uap, which) == SVR4_RLIMIT_VMEM)
-		SCARG(uap, which) = RLIMIT_RSS;
-
-	SCARG(&ap, which) = SCARG(uap, which);
-	SCARG(&ap, rlp) = SCARG(uap, rlp);
-
-	return compat_43_sys_setrlimit(p, uap, retval);
-}
-
-
-int
-svr4_sys_getrlimit64(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct svr4_sys_getrlimit64_args *uap = v;
-
-	if (SCARG(uap, which) >= SVR4_RLIM_NLIMITS)
-		return EINVAL;
-
-	if (SCARG(uap, which) == SVR4_RLIMIT_NOFILE)
-		SCARG(uap, which) = RLIMIT_NOFILE;
-	if (SCARG(uap, which) == SVR4_RLIMIT_VMEM)
-		SCARG(uap, which) = RLIMIT_RSS;
-
-	return sys_getrlimit(p, uap, retval);
-}
-
-
-int
-svr4_sys_setrlimit64(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct svr4_sys_setrlimit64_args *uap = v;
-
-	if (SCARG(uap, which) >= SVR4_RLIM_NLIMITS)
-		return EINVAL;
-
-	if (SCARG(uap, which) == SVR4_RLIMIT_NOFILE)
-		SCARG(uap, which) = RLIMIT_NOFILE;
-	if (SCARG(uap, which) == SVR4_RLIMIT_VMEM)
-		SCARG(uap, which) = RLIMIT_RSS;
-
-	return sys_setrlimit(p, uap, retval);
 }
 
 
