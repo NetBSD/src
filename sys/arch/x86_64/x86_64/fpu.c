@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.2 2002/06/12 19:13:27 fvdl Exp $	*/
+/*	$NetBSD: fpu.c,v 1.3 2002/11/23 12:53:52 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -64,8 +64,6 @@
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-
-#include <i386/isa/icu.h>
 
 /*
  * We do lazy initialization and switching using the TS bit in cr0 and the

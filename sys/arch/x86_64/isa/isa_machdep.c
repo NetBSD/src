@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.1 2001/06/19 00:20:32 fvdl Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.2 2002/11/23 12:53:51 fvdl Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -94,7 +94,6 @@
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-#include <i386/isa/icu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -192,6 +191,8 @@ struct x86_64_bus_dma_tag isa_bus_dma_tag = {
 	_bus_dmamem_mmap,
 };
 
+extern unsigned imen;
+
 /*
  * Fill in default interrupt table (in case of spuruious interrupt
  * during configuration of kernel, setup interrupt control unit
@@ -202,7 +203,7 @@ isa_defaultirq()
 	int i;
 
 	/* icu vectors */
-	for (i = 0; i < ICU_LEN; i++)
+	for (i = 0; i < NUM_LEGACY_IRQS; i++)
 		setgate(&idt[ICU_OFFSET + i], IDTVEC(intr)[i], 0,
 		    SDT_SYS386IGT, SEL_KPL);
   
@@ -268,8 +269,8 @@ isa_strayintr(irq)
 		    strays >= 5 ? "; stopped logging" : "");
 }
 
-int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
-struct intrhand *intrhand[ICU_LEN];
+int intrtype[NUM_LEGACY_IRQS], intrmask[NUM_LEGACY_IRQS], intrlevel[NUM_LEGACY_IRQS];
+struct intrhand *intrhand[NUM_LEGACY_IRQS];
 
 /*
  * Recalculate the interrupt masks from scratch.
@@ -285,7 +286,7 @@ intr_calculatemasks()
 
 	/* First, figure out which levels each IRQ uses. */
 	unusedirqs = 0xffff;
-	for (irq = 0; irq < ICU_LEN; irq++) {
+	for (irq = 0; irq < NUM_LEGACY_IRQS; irq++) {
 		int levels = 0;
 		for (q = intrhand[irq]; q; q = q->ih_next)
 			levels |= 1 << q->ih_level;
@@ -297,7 +298,7 @@ intr_calculatemasks()
 	/* Then figure out which IRQs use each level. */
 	for (level = 0; level < NIPL; level++) {
 		int irqs = 0;
-		for (irq = 0; irq < ICU_LEN; irq++)
+		for (irq = 0; irq < NUM_LEGACY_IRQS; irq++)
 			if (intrlevel[irq] & (1 << level))
 				irqs |= 1 << irq;
 		imask[level] = irqs | unusedirqs;
@@ -353,7 +354,7 @@ intr_calculatemasks()
 	imask[IPL_SERIAL] |= imask[IPL_HIGH];
 
 	/* And eventually calculate the complete masks. */
-	for (irq = 0; irq < ICU_LEN; irq++) {
+	for (irq = 0; irq < NUM_LEGACY_IRQS; irq++) {
 		int irqs = 1 << irq;
 		for (q = intrhand[irq]; q; q = q->ih_next)
 			irqs |= imask[q->ih_level];
@@ -363,7 +364,7 @@ intr_calculatemasks()
 	/* Lastly, determine which IRQs are actually in use. */
 	{
 		int irqs = 0;
-		for (irq = 0; irq < ICU_LEN; irq++)
+		for (irq = 0; irq < NUM_LEGACY_IRQS; irq++)
 			if (intrhand[irq])
 				irqs |= 1 << irq;
 		if (irqs >= 0x100) /* any IRQs >= 8 in use */
@@ -380,7 +381,7 @@ fakeintr(arg)
 	return 0;
 }
 
-#define	LEGAL_IRQ(x)	((x) >= 0 && (x) < ICU_LEN && (x) != 2)
+#define	LEGAL_IRQ(x)	((x) >= 0 && (x) < NUM_LEGACY_IRQS && (x) != 2)
 
 int
 isa_intr_alloc(ic, mask, type, irq)
@@ -407,7 +408,7 @@ isa_intr_alloc(ic, mask, type, irq)
 	 */
 	mask &= 0xefbf;
 
-	for (i = 0; i < ICU_LEN; i++) {
+	for (i = 0; i < NUM_LEGACY_IRQS; i++) {
 		if (LEGAL_IRQ(i) == 0 || (mask & (1<<i)) == 0)
 			continue;
 
@@ -540,7 +541,8 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	ih->ih_irq = irq;
 	*p = ih;
 
-	SET_ICUS();
+	outb(IO_ICU1 + 1, imen);
+	outb(IO_ICU2 + 1, imen >> 8);
 	return (ih);
 }
 
@@ -572,7 +574,9 @@ isa_intr_disestablish(ic, arg)
 	free(ih, M_DEVBUF);
 
 	intr_calculatemasks();
-	SET_ICUS();
+
+	outb(IO_ICU1 + 1, imen);
+	outb(IO_ICU2 + 1, imen >> 8);
 
 	if (intrhand[irq] == NULL)
 		intrtype[irq] = IST_NONE;
