@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.8 2002/10/06 08:51:44 tls Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.9 2002/10/06 13:42:36 dan Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -96,7 +96,10 @@ arc4_randrekey(void)
 {
 	u_int8_t key[256];
 	static int cur_keybytes;
-	int r, n, byteswanted;
+	int n, byteswanted;
+#if NRND > 0
+	int r;
+#endif
 
 	if(!arc4_initialized)
 		/* The first time through, we must take what we can get */
