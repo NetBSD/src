@@ -1,4 +1,4 @@
-/*	$NetBSD: pfctl_osfp.c,v 1.2 2004/06/22 15:16:30 itojun Exp $	*/
+/*	$NetBSD: pfctl_osfp.c,v 1.3 2004/10/29 19:46:27 dsl Exp $	*/
 /*	$OpenBSD: pfctl_osfp.c,v 1.8 2004/02/27 10:42:00 henning Exp $ */
 
 /*
@@ -133,9 +133,9 @@ pfctl_file_fingerprints(int dev, int opts, const char *fp_filename)
 				break;
 			}
 		/* Chop off whitespace */
-		while (len > 0 && isspace(line[len - 1]))
+		while (len > 0 && isspace((unsigned char)line[len - 1]))
 			len--;
-		while (len > 0 && isspace(line[0])) {
+		while (len > 0 && isspace((unsigned char)line[0])) {
 			len--;
 			line++;
 		}
@@ -516,7 +516,7 @@ found:
 			if (index(version_name, ' '))
 				strlcat(buf, " ", len);
 			else if (index(version_name, '.') &&
-			    isdigit(*subtype_name))
+			    isdigit((unsigned char)*subtype_name))
 				strlcat(buf, ".", len);
 			else
 				strlcat(buf, " ", len);
@@ -550,30 +550,30 @@ add_fingerprint(int dev, int opts, struct pf_osfp_ioctl *fp)
 #define EXPAND(field) do {						\
 	int _dot = -1, _start = -1, _end = -1, _i = 0;			\
 	/* pick major version out of #.# */				\
-	if (isdigit(fp->field[_i]) && fp->field[_i+1] == '.') {		\
+	if (isdigit((unsigned char)fp->field[_i]) && fp->field[_i+1] == '.') { \
 		_dot = fp->field[_i] - '0';				\
 		_i += 2;						\
 	}								\
-	if (isdigit(fp->field[_i]))					\
+	if (isdigit((unsigned char)fp->field[_i]))			\
 		_start = fp->field[_i++] - '0';				\
 	else								\
 		break;							\
-	if (isdigit(fp->field[_i]))					\
+	if (isdigit((unsigned char)fp->field[_i]))			\
 		_start = (_start * 10) + fp->field[_i++] - '0';		\
 	if (fp->field[_i++] != '-')					\
 		break;							\
-	if (isdigit(fp->field[_i]) && fp->field[_i+1] == '.' &&		\
+	if (isdigit((unsigned char)fp->field[_i]) && fp->field[_i+1] == '.' && \
 	    fp->field[_i] - '0' == _dot)				\
 		_i += 2;						\
 	else if (_dot != -1)						\
 		break;							\
-	if (isdigit(fp->field[_i]))					\
+	if (isdigit((unsigned char)fp->field[_i]))			\
 		_end = fp->field[_i++] - '0';				\
 	else								\
 		break;							\
-	if (isdigit(fp->field[_i]))					\
+	if (isdigit((unsigned char)fp->field[_i]))			\
 		_end = (_end * 10) + fp->field[_i++] - '0';		\
-	if (isdigit(fp->field[_i]))					\
+	if (isdigit((unsigned char)fp->field[_i]))			\
 		_end = (_end * 10) + fp->field[_i++] - '0';		\
 	if (fp->field[_i] != '\0')					\
 		break;							\
@@ -904,7 +904,7 @@ get_tcpopts(const char *filename, int lineno, const char *tcpopts,
 		return (0);
 
 	for (i = 0; tcpopts[i] && *optcnt < PF_OSFP_MAX_OPTS;) {
-		switch ((opt = toupper(tcpopts[i++]))) {
+		switch ((opt = toupper((unsigned char)tcpopts[i++]))) {
 		case 'N':	/* FALLTHROUGH */
 		case 'S':
 			*packed = (*packed << PF_OSFP_TCPOPT_BITS) |
@@ -940,7 +940,7 @@ get_tcpopts(const char *filename, int lineno, const char *tcpopts,
 				i++;
 			}
 			do {
-				if (!isdigit(tcpopts[i])) {
+				if (!isdigit((unsigned char)tcpopts[i])) {
 					fprintf(stderr, "%s:%d unknown "
 					    "character '%c' in %c TCP opt\n",
 					    filename, lineno, tcpopts[i], opt);
@@ -981,7 +981,7 @@ get_field(char **line, size_t *len, int *fieldlen)
 	size_t plen = *len;
 
 
-	while (plen && isspace(*ptr)) {
+	while (plen && isspace((unsigned char)*ptr)) {
 		plen--;
 		ptr++;
 	}
@@ -996,7 +996,7 @@ get_field(char **line, size_t *len, int *fieldlen)
 	} else {
 		*len = 0;
 	}
-	while (*fieldlen && isspace(ret[*fieldlen - 1]))
+	while (*fieldlen && isspace((unsigned char)ret[*fieldlen - 1]))
 		(*fieldlen)--;
 	return (ret);
 }
