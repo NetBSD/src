@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: get_krbrlm.c,v 1.3 2000/10/04 04:08:30 simonb Exp $");
+RCSID("$Id: get_krbrlm.c,v 1.4 2001/09/17 12:21:42 assar Exp $");
 
 /*
  * krb_get_lrealm takes a pointer to a string, and a number, n.  It fills
@@ -64,7 +64,7 @@ krb_get_lrealm_f(char *r, int n, FILE *f)
 	    return KFAILURE;
 
     /* We now have the n:th line, remove initial white space. */
-    p = buf + strspn(buf, " \t");
+    rstart = p = buf + strspn(buf, " \t");
 
     /* Collect realmname. */
     nchar    = strcspn(p, " \t\n");
