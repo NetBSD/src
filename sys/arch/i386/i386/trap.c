@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.14.2.19 1994/01/11 15:36:35 mycroft Exp $
+ *	$Id: trap.c,v 1.14.2.20 1994/02/01 19:08:20 mycroft Exp $
  */
 
 /*
@@ -76,7 +76,7 @@ static inline void
 userret(p, pc, oticks)
 	struct proc *p;
 	int pc;
-	u_quad_t oticks;
+	struct timeval oticks;
 {
 	int sig;
 
@@ -93,7 +93,7 @@ userret(p, pc, oticks)
 		 * before we swtch()'ed, we might not be on the queue
 		 * indicated by our priority.
 		 */
-		(void) splstatclock();
+		(void) splclock();
 		setrq(p);
 		p->p_stats->p_ru.ru_nivcsw++;
 		swtch();
@@ -105,8 +105,21 @@ userret(p, pc, oticks)
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
 	 */
-	if (p->p_flag & SPROFIL)
-		addupc_task(p, pc, (int)(p->p_sticks - oticks));
+	if (p->p_stats->p_prof.pr_scale) {
+		int ticks;
+		struct timeval *tv = &p->p_stime;
+
+		ticks = ((tv->tv_sec - oticks.tv_sec) * 1000 +
+			(tv->tv_usec - oticks.tv_usec) / 1000) / (tick / 1000);
+		if (ticks) {
+#ifdef PROFTIMER
+			extern int profscale;
+			addupc(pc, &p->p_stats->p_prof, ticks * profscale);
+#else
+			addupc(pc, &p->p_stats->p_prof, ticks);
+#endif
+		}
+	}
 
 	curpri = p->p_pri;
 }
@@ -149,7 +162,7 @@ trap(frame)
 	register struct proc *p;
 	register struct pcb *pcb;
 	int type, code;
-	u_quad_t sticks;
+	struct timeval sticks;
 	extern char fusubail[];
 
 	cnt.v_trap++;
@@ -181,7 +194,7 @@ trap(frame)
 		return;
 	}
 
-	sticks = p->p_sticks;
+	sticks = p->p_stime;
 
 	if (ISPL(frame.tf_cs) != SEL_KPL) {
 		type |= T_USER;
@@ -228,9 +241,9 @@ trap(frame)
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
 		cnt.v_soft++;
-		if (p->p_flag & SOWEUPC) {
+		if ((p->p_flag & SOWEUPC) && p->p_stats->p_prof.pr_scale) {
+			addupc(frame.tf_eip, &p->p_stats->p_prof, 1);
 			p->p_flag &= ~SOWEUPC;
-			ADDUPROF(p);
 		}
 		goto out;
 
@@ -445,7 +458,7 @@ syscall(frame)
 	register int i;
 	register struct sysent *callp;
 	register struct proc *p = curproc;
-	u_quad_t sticks;
+	struct timeval sticks;
 	int error, opc;
 	int args[8], rval[2];
 	int code;
@@ -455,7 +468,7 @@ syscall(frame)
 
 	cnt.v_syscall++;
 
-	sticks = p->p_sticks;
+	sticks = p->p_stime;
 	code = frame.tf_eax;
 	p->p_regs = (int *)&frame;
 	params = (caddr_t)frame.tf_esp + sizeof(int);
