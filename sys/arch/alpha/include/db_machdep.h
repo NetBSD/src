@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.2 1996/07/11 05:31:31 cgd Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.3 1997/02/06 21:16:28 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -51,6 +51,7 @@ db_regs_t		ddb_regs;	/* register state */
 #define	BKPT_SIZE	(4)		/* size of breakpoint inst */
 #define	BKPT_SET(inst)	(BKPT_INST)
 
-#define	FIXUP_PC_AFTER_BREAK	ddb_regs.tf_regs[FRAME_PC] -= BKPT_SIZE;
+#define	FIXUP_PC_AFTER_BREAK(regs) \
+	((regs)->tf_regs[FRAME_PC] -= BKPT_SIZE)
 
 #endif	/* _ALPHA_DB_MACHDEP_H_ */

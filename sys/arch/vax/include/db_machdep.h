@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.2 1996/04/08 18:35:47 ragge Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.3 1997/02/06 21:17:05 gwr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -51,7 +51,7 @@ db_regs_t	ddb_regs;	/* register state */
 #define	BKPT_SIZE	(1)		/* size of breakpoint inst */
 #define	BKPT_SET(inst)	(BKPT_INST)
 
-#define	FIXUP_PC_AFTER_BREAK		ddb_regs.pc -= BKPT_SIZE;
+#define	FIXUP_PC_AFTER_BREAK(regs)	((regs)->pc -= BKPT_SIZE)
 
 #define	db_clear_single_step(regs)	((regs)->psl &= ~PSL_T)
 #define	db_set_single_step(regs)	((regs)->psl |=  PSL_T)
