@@ -3,8 +3,10 @@
 			 -------------------
 
 	       Ian Dall <ian.dall@dsto.defence.gov.au>
-
 			    December 1995
+
+     NetBSD information by Matthias Pfaller <leo@dachau.marco.de>
+
 
 1. Introduction
 
@@ -21,8 +23,8 @@ as the signal handler in a unix process. The latter has the
 disadvantage that code changes are required to set up the signal
 handler, so it is intended that this mode way of use be used primarily
 for debugging. So far the in-kernel implementation has been done for
-mach. There should be no large obstacles to incorporating this package
-in the NetBSD kernel.
+mach and NetBSD. There should be no large obstacles to incorporating
+this package in other kernels.
 
 2. Building
 
@@ -176,7 +178,7 @@ is implemented in the mach kernel.
     void fpintr(struct ns532_saved_state *regs)
     {
 	    int ss;
-	    int status;
+	    int status = FPC_TT_UNKNOWN;
 	    state state;
 	    state.regs = regs;
 	    state.fps = current_thread()->pcb->fps;
@@ -244,13 +246,83 @@ Notes:
 
 4.4 NetBSD Kernel 
 
-Currently support for NetBSD in-kernel has not been
-implemented. However, care has been taken to ensure that the code is
-flexible. For example, each implementation is free to specify pretty
-much whatever structure is most convenient to contain the CPU and FPU
-state. Using the mach kernel implementation (section 4.3) as an
-example, and following the hints in section 4.5, it should be easy to
-implement the NetBSD in-kernel support.
+The integration of his FPU-handler into NetBSD/pc532 was really
+straightforward. His FPU-handler should be in sys/arch/pc532/fpu in
+any NetBSD version newer then 960415. This piece of code is from
+sys/arch/pc532/pc532/trap.c:trap
+
+	case T_SLAVE | T_USER: {
+		int fsr, sig = SIGFPE;
+		pcb = &p->p_addr->u_pcb;
+		save_fpu_context(pcb);
+		switch(ieee_handle_exception(p)) {
+		case FPC_TT_NONE:
+			restore_fpu_context(pcb);
+			if (frame.tf_regs.r_psr &  PSL_T) {
+				type = T_TRC | T_USER;
+				goto trace;
+			}
+			return;
+		case FPC_TT_ILL:
+			sig = SIGILL;
+			break;
+		default:
+			break;
+		}
+		restore_fpu_context(pcb);
+		sfsr(fsr);
+		trapsignal(p, sig, 0x80000000 | fsr);
+		goto out;
+	}
+
+In NetBSD there is no need to enable the fpu here. save_fpu_context does
+not disable the fpu. The FPU is enabled on T_UND in trap.c:trap and
+disabled in locore.s:cpu_switch.
+
+After an exec the fsr is initialized to FPC_UEN in machdep.c:setregs. All
+other FPU registers are initialized to +0.0. Maybe it would be better to
+set them to sNaNs.
+
+The user can manipulate the behaviour of the FPU by using the following
+functions:
+
+	fp_rnd	  fpgetround(void));
+	fp_rnd	  fpsetround(fp_rnd);
+	fp_except fpgetmask(void);
+	fp_except fpsetmask(fp_except);
+	fp_except fpgetsticky(void);
+	fp_except fpsetsticky(fp_except);
+
+The prototypes for the functions and the typedefs for fp_rnd and fp_except
+are defined in /usr/include/ieeefp.h.
+
+fpsetround takes FP_RN (round to nearest), FP_RZ (round to zero), FP_RP
+(round to +Inf) or FP_RM (round to -Inf) as arguments. fpgetround returns
+the current rounding mode.
+
+fpgetsticky returns the state of the stickybits in the fsr. The stickybits
+can be set/reset by calling fpsetsticky. The stickybits have the same value
+as their corresponding exception mask.
+
+fpsetmask is used to enable and disable FPU exceptions. fpgetmask returns
+the current exception mask.
+
+The user can mask/unmask the following exceptions: FP_X_IMP (imprecise),
+FP_X_OFL (overflow), FP_X_INV (invalid operation), FP_X_DZ
+(devide-by-zero), FP_X_UFL (underflow).
+Examples:
+
+	fpsetmask(FP_X_IMP |  FP_X_OFL | FP_X_INV | FP_X_DZ | FP_X_UFL);
+
+This will enable all fpu exceptions.
+
+Check for divide by zero:
+	fpsetmask(0);	/* mask all exceptions */
+	fpsetsticky(0);	/* clear all sticky bits */
+	a = a / b;
+	if (fpgetsticky() & FP_X_DZ)
+		printf("devide by zero\n");
+
 
 4.5 Porting to other Environments
 
@@ -283,8 +355,8 @@ attributes.  Other macros, FSR, FP, SP, SB, PC and PSR are defined
 such that, for example, (state *)s->FP accesses the fp (frame pointer)
 register.
 
-This should be quite flexible and examples for the mach and signal
-handler implementations can be found in ieee_handler.h.
+This should be quite flexible and examples for the mach, NetBSD and
+signal handler implementations can be found in ieee_handler.h.
 
 There should be only one other place where customization may be required.
 That is in ieee_handler.c. The functions setjmp, longjmp and get_dword
