@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.27 1995/01/18 07:37:06 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.28 1995/02/08 14:53:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -218,7 +218,7 @@ trap(type, code, v, frame)
 	register unsigned v;
 	struct frame frame;
 {
-	extern char fswintr[];
+	extern char fubail[], subail[];
 #ifdef DDB
 	extern char trap0[], trap1[], trap2[], trap12[], trap15[], illinst[];
 #endif
@@ -462,7 +462,8 @@ copyfault:
 		 * If we were doing profiling ticks or other user mode
 		 * stuff from interrupt code, Just Say No.
 		 */
-		if (p->p_addr->u_pcb.pcb_onfault == fswintr)
+		if (p->p_addr->u_pcb.pcb_onfault == fubail ||
+		    p->p_addr->u_pcb.pcb_onfault == subail)
 			goto copyfault;
 		/* fall into ... */
 
