@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.41 2001/06/18 03:33:30 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.42 2001/06/24 19:44:58 sommerfeld Exp $	*/
 
 /*
  *
@@ -1126,7 +1126,6 @@ pmap_init()
 	 */
 	pj_nentries = pmap_tlb_shootdown_job_pool.pr_itemsperpage;
 	pj_nbytes =  pmap_tlb_shootdown_job_pool.pr_pagesz;
-	printf("%d pool entries; page size %d\n", pj_nentries, pj_nbytes);
 	pj_page = (void *)uvm_km_alloc (kernel_map, pj_nbytes);
 	if (pj_page == NULL)
 		panic("pmap_init: pj_page");
@@ -2992,7 +2991,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 		ptp = pmap_get_ptp(pmap, pdei(va));
 		if (ptp == NULL) {
 			if (flags & PMAP_CANFAIL) {
-				return ENOMEM;
+				error = ENOMEM;
+				goto out;
 			}
 			panic("pmap_enter: get ptp failed");
 		}
