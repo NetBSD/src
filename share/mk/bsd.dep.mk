@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.51 2003/07/28 23:57:24 lukem Exp $
+#	$NetBSD: bsd.dep.mk,v 1.52 2003/07/29 07:56:23 lukem Exp $
 
 ##### Basic targets
 .PHONY:		cleandepend
@@ -16,7 +16,6 @@ MKDEP?=		mkdep
 
 .if defined(SRCS)
 __acpp_flags=	-traditional-cpp
-.NOPATH:	.depend
 
 DEPENDSRCS.src=	${SRCS:M*.c}	${DPSRCS:M*.c}		\
 		${SRCS:M*.m}	${DPSRCS:M*.m}		\
@@ -31,6 +30,8 @@ DEPENDSRCS=	.depend ${DEPENDSRCS.dep}
 .depend: ${SRCS} ${DPSRCS} ${DEPENDSRCS.dep}
 	@rm -f .depend
 	cat ${DEPENDSRCS.dep} > .depend
+
+.NOPATH: ${DEPENDSRCS}
 
 .SUFFIXES: .d .c .m .s .S .C .cc .cpp .cxx
 
