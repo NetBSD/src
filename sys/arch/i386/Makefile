@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2000/06/11 02:41:47 mycroft Exp $
+#	$NetBSD: Makefile,v 1.18 2001/02/22 04:40:43 lukem Exp $
 
 # Makefile for i386 tags file and boot blocks
 
@@ -16,7 +16,8 @@ DI386=	i386 eisa isa include pci
 .include "../../kern/Make.tags.inc"
 
 tags:
-	-ctags -wdtf ${TI386} ${SI386} ${COMM}
+	rm -f ${TI386}
+	-echo ${SI386} ${COMM} | xargs ctags -wadtf ${TI386}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AI386} | \
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 		>> ${TI386}
