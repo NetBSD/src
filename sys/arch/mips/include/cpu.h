@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.33 2000/01/09 13:24:14 simonb Exp $	*/
+/*	$NetBSD: cpu.h,v 1.34 2000/03/07 01:05:48 soren Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -114,7 +114,7 @@ struct clockframe {
 /* mips3 versions */
 #define	MIPS3_CLKF_USERMODE(framep)	((framep)->sr & MIPS_SR_KSU_USER)
 #define	MIPS3_CLKF_BASEPRI(framep)	\
-	((~(framep)->sr & (MIPS_INT_MASK | MIPS_SR_INT_ENAB)) == 0)
+	((~(framep)->sr & (MIPS_INT_MASK | MIPS_SR_INT_IE)) == 0)
 
 #define	CLKF_PC(framep)		((framep)->pc)
 #define	CLKF_INTR(framep)	(0)
