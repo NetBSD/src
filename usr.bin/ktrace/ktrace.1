@@ -1,4 +1,4 @@
-.\"	$NetBSD: ktrace.1,v 1.21 2003/05/06 08:22:08 wiz Exp $
+.\"	$NetBSD: ktrace.1,v 1.22 2003/07/17 09:05:11 dsl Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)ktrace.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd May 2, 2003
+.Dd July 17, 2003
 .Dt KTRACE 1
 .Os
 .Sh NAME
@@ -139,7 +139,9 @@ Print at most
 .Ar maxdata
 bytes of data.
 This is used for pointer type arguments, e.g., strings.
-The data will be escaped in C-style.
+The data will be escaped in C-style unless
+.Fl x
+is specified when it will be output in hex and ascii.
 .It Fl o Ar outfile
 Log trace records to
 .Ar outfile .
@@ -162,26 +164,34 @@ The string argument represents the kernel trace points, one per letter.
 The following table equates the letters with the tracepoints:
 .Pp
 .Bl -tag -width flag -compact
+.It Cm A
+trace all tracepoints
+.It Cm a
+trace exec arguments
 .It Cm c
 trace system calls
 .It Cm e
 trace emulation changes
-.It Cm n
-trace namei translations
 .It Cm i
 trace
 .Tn I/O
+.It Cm n
+trace namei translations
+.It Cm m
+trace Mach messages when running Mach binaries with COMPAT_MACH
+(currently limited to i386 and powerpc ports).
 .It Cm s
 trace signal processing
 .It Cm u
 trace user data
-.It Cm m
-trace Mach messages when running Mach binaries with COMPAT_MACH
-(currently limited to i386 and powerpc ports).
+.It Cm v
+trace exec environment
 .It Cm w
 trace context switches
 .It Cm +
 trace the default set of trace points (c, e, i, m, n, s, u)
+.It Cm -
+do not trace following trace points
 .El
 .It Fl e Ar emulation
 If an emulation of a process is unknown,
