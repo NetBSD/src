@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if.c	7.14 (Berkeley) 4/20/91
- *	$Id: if.c,v 1.5 1993/08/14 06:38:35 deraadt Exp $
+ *	$Id: if.c,v 1.6 1993/08/27 10:26:08 mycroft Exp $
  */
 
 #include "param.h"
@@ -122,12 +122,14 @@ if_attach(ifp)
 		}
 		ifnet_addrs = q;
 	}
+#if defined(INET) && NETHER > 0
 	/* XXX -- Temporary fix before changing 10 ethernet drivers */
 	if (ifp->if_output == ether_output) {
 		ifp->if_type = IFT_ETHER;
 		ifp->if_addrlen = 6;
 		ifp->if_hdrlen = 14;
 	}
+#endif
 	/*
 	 * create a Link Level name for this device
 	 */
