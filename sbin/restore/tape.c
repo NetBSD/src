@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.33 1997/11/18 03:08:21 enami Exp $	*/
+/*	$NetBSD: tape.c,v 1.34 1997/12/13 22:22:53 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.33 1997/11/18 03:08:21 enami Exp $");
+__RCSID("$NetBSD: tape.c,v 1.34 1997/12/13 22:22:53 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -578,7 +578,8 @@ extractfile(name)
 			skipfile();
 			return (GOOD);
 		}
-		if (mknod(name, 0600, (int)curfile.dip->di_rdev) < 0) {
+		if (mknod(name, (mode & (IFCHR | IFBLK)) | 0600,
+		    (int)curfile.dip->di_rdev) < 0) {
 			fprintf(stderr, "%s: cannot create special file: %s\n",
 			    name, strerror(errno));
 			skipfile();
