@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.12 1997/09/15 10:38:12 lukem Exp $	*/
+/*	$NetBSD: if.c,v 1.13 1997/09/15 11:51:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 static char sccsid[] = "@(#)if.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: if.c,v 1.12 1997/09/15 10:38:12 lukem Exp $");
+__RCSID("$NetBSD: if.c,v 1.13 1997/09/15 11:51:54 lukem Exp $");
 #endif
 
 #include "defs.h"
@@ -760,7 +760,7 @@ ifinit(void)
 		 * will be an alias.
 		 * Do not output RIP or Router-Discovery packets via aliases.
 		 */
-		bcopy(&ifs0, &ifs, sizeof(ifs));
+		memmove(&ifs, &ifs0, sizeof(ifs));
 		ifs0.int_state |= (IS_ALIAS | IS_NO_RIP | IS_NO_RDISC);
 
 		if (INFO_IFA(&info) == 0) {
@@ -1086,7 +1086,7 @@ ifinit(void)
 		/* It is new and ok.   Add it to the list of interfaces
 		 */
 		ifp = (struct interface *)rtmalloc(sizeof(*ifp), "ifinit");
-		bcopy(&ifs, ifp, sizeof(*ifp));
+		memmove(ifp, &ifs, sizeof(*ifp));
 		get_parms(ifp);
 		if_link(ifp);
 		trace_if("Add", ifp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.13 1997/09/15 10:38:16 lukem Exp $	*/
+/*	$NetBSD: output.c,v 1.14 1997/09/15 11:51:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 static char sccsid[] = "@(#)output.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: output.c,v 1.13 1997/09/15 10:38:16 lukem Exp $");
+__RCSID("$NetBSD: output.c,v 1.14 1997/09/15 11:51:57 lukem Exp $");
 #endif
 
 #include "defs.h"
@@ -272,7 +272,7 @@ clr_ws_buf(struct ws_buf *wb,
 	if (ap->type == RIP_AUTH_PW) {
 		na->a_family = RIP_AF_AUTH;
 		na->a_type = RIP_AUTH_PW;
-		bcopy(ap->key, na->au.au_pw, sizeof(na->au.au_pw));
+		memmove(na->au.au_pw, ap->key, sizeof(na->au.au_pw));
 		wb->n++;
 
 	} else if (ap->type ==  RIP_AUTH_MD5) {
@@ -299,7 +299,7 @@ end_md5_auth(struct ws_buf *wb,
 	na2 = (struct netauth*)wb->n;
 	na2->a_family = RIP_AF_AUTH;
 	na2->a_type = 1;
-	bcopy(ap->key, na2->au.au_pw, sizeof(na2->au.au_pw));
+	memmove(na2->au.au_pw, ap->key, sizeof(na2->au.au_pw));
 	na->au.a_md5.md5_pkt_len = (char *)na2-(char *)(na+1);
 	MD5Init(&md5_ctx);
 	MD5Update(&md5_ctx, (u_char *)na,

@@ -1,4 +1,4 @@
-/*	$NetBSD: parms.c,v 1.6 1997/09/15 10:38:17 lukem Exp $	*/
+/*	$NetBSD: parms.c,v 1.7 1997/09/15 11:51:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 static char sccsid[] = "@(#)if.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parms.c,v 1.6 1997/09/15 10:38:17 lukem Exp $");
+__RCSID("$NetBSD: parms.c,v 1.7 1997/09/15 11:51:58 lukem Exp $");
 #endif
 
 #include "defs.h"
@@ -76,9 +76,9 @@ get_parms(struct interface *ifp)
 				if (parmp->parm_auth[0].type == RIP_AUTH_NONE
 				    || num_passwds >= MAX_AUTH_KEYS)
 					break;
-				bcopy(&parmp->parm_auth[i],
-				      &ifp->int_auth[num_passwds++],
-				      sizeof(ifp->int_auth[0]));
+				memmove(&ifp->int_auth[num_passwds++],
+				    &parmp->parm_auth[i],
+				    sizeof(ifp->int_auth[0]));
 			}
 			if (parmp->parm_rdisc_pref != 0)
 				ifp->int_rdisc_pref = parmp->parm_rdisc_pref;
@@ -534,7 +534,7 @@ get_passwd(char *tgt,
 	if (delim != '\0')
 		return tgt;
 
-	bcopy(&k, ap, sizeof(*ap));
+	memmove(ap, &k, sizeof(*ap));
 	return 0;
 }
 
@@ -805,7 +805,7 @@ check_parms(struct parm *new)
 	 * they affect the result in the order the operator specified.
 	 */
 	parmp = (struct parm*)malloc(sizeof(*parmp));
-	bcopy(new, parmp, sizeof(*parmp));
+	memmove(parmp, new, sizeof(*parmp));
 	*parmpp = parmp;
 
 	return 0;
@@ -830,11 +830,11 @@ getnet(char *name,
 
 	/* Detect and separate "1.2.3.4/24"
 	 */
-	if (0 != (mname = rindex(name,'/'))) {
+	if (0 != (mname = strrchr(name,'/'))) {
 		i = (int)(mname - name);
 		if (i > sizeof(hname)-1)	/* name too long */
 			return 0;
-		bcopy(name, hname, i);
+		memmove(hname, name, i);
 		hname[i] = '\0';
 		mname++;
 		name = hname;
@@ -911,7 +911,7 @@ gethost(char *name,
 
 	hp = gethostbyname(name);
 	if (hp) {
-		bcopy(hp->h_addr, addrp, sizeof(*addrp));
+		memmove(addrp, hp->h_addr, sizeof(*addrp));
 		return 1;
 	}
 
