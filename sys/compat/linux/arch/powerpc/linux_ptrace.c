@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.5 2001/05/27 21:15:07 manu Exp $ */
+/*	$NetBSD: linux_ptrace.c,v 1.6 2001/05/28 10:51:20 manu Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -304,9 +304,13 @@ linux_sys_ptrace_arch(p, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 
 		PRELE(t);
 
+		if (error)
+			goto out;
+
 		error = copyout (retval, 
 		    (caddr_t)SCARG(uap, data), sizeof retval);
 		*retval = SCARG(uap, data);
+
 		goto out;
 
 		break;
