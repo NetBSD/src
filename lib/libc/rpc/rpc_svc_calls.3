@@ -2,7 +2,7 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_svc_calls 1.5 89/07/25 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\"	$NetBSD: rpc_svc_calls.3,v 1.7 2003/04/16 13:34:43 wiz Exp $
+.\"	$NetBSD: rpc_svc_calls.3,v 1.8 2003/06/27 15:33:25 wiz Exp $
 .Dd May 3, 1993
 .Dt RPC_SVC_CALLS 3
 .Os
@@ -201,7 +201,7 @@ RPC service transport handle
 .Nx
 and thus not portable.
 This macro returns a pointer to a sockcred structure, defined in
-.Fd \*[Lt]sys/socket.h\*[Gt] ,
+.Aq Pa sys/socket.h ,
 identifying the calling client.
 This only works if the client is calling the server over an
 .Dv AF_LOCAL
