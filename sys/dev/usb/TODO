@@ -1,0 +1,14 @@
+Some things that need to be done in no particular order:
+
+Implement request timeout and abort in ohci.c.
+
+Implement request abort in uhci.c.
+
+Use the new device attach/detach framework for USB.
+
+Implement isochronous transfer mode.
+
+Implement audio driver.
+
+Implement a modem driver for the Abstract Control Model.
+
