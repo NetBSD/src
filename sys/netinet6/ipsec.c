@@ -1,5 +1,5 @@
-/*	$NetBSD: ipsec.c,v 1.23.2.4 2001/04/06 00:28:34 he Exp $	*/
-/*	$KAME: ipsec.c,v 1.87 2001/01/23 08:59:38 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.23.2.5 2001/04/06 00:34:38 he Exp $	*/
+/*	$KAME: ipsec.c,v 1.83 2000/11/09 17:45:30 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -2406,9 +2406,6 @@ ipsec4_output(state, sp, flags)
 	struct secasindex saidx;
 	int s;
 	int error;
-#ifdef IPSEC_SRCSEL
-	struct in_ifaddr *ia;
-#endif
 	struct sockaddr_in *dst4;
 	struct sockaddr_in *sin;
 
@@ -2550,19 +2547,11 @@ ipsec4_output(state, sp, flags)
 				goto bad;
 			}
 
-#ifdef IPSEC_SRCSEL
-			/*
-			 * Which address in SA or in routing table should I
-			 * select from ?  But I had set from SA at
-			 * ipsec4_encapsulate().
-			 */
-			ia = (struct in_ifaddr *)(state->ro->ro_rt->rt_ifa);
+			/* adjust state->dst if tunnel endpoint is offlink */
 			if (state->ro->ro_rt->rt_flags & RTF_GATEWAY) {
 				state->dst = (struct sockaddr *)state->ro->ro_rt->rt_gateway;
 				dst4 = (struct sockaddr_in *)state->dst;
 			}
-			ip->ip_src = IA_SIN(ia)->sin_addr;
-#endif
 		} else
 			splx(s);
 
@@ -2796,9 +2785,6 @@ ipsec6_output_tunnel(state, sp, flags)
 	struct secasindex saidx;
 	int error = 0;
 	int plen;
-#ifdef IPSEC_SRCSEL
-	struct in6_addr *ia6;
-#endif
 	struct sockaddr_in6* dst6;
 	int s;
 
@@ -2918,28 +2904,12 @@ ipsec6_output_tunnel(state, sp, flags)
 				error = EHOSTUNREACH;
 				goto bad;
 			}
-#if 0	/* XXX Is the following need ? */
+
+			/* adjust state->dst if tunnel endpoint is offlink */
 			if (state->ro->ro_rt->rt_flags & RTF_GATEWAY) {
 				state->dst = (struct sockaddr *)state->ro->ro_rt->rt_gateway;
 				dst6 = (struct sockaddr_in6 *)state->dst;
 			}
-#endif
-#ifdef IPSEC_SRCSEL
-			/*
-			 * Which address in SA or in routing table should I
-			 * select from ?  But I had set from SA at
-			 * ipsec6_encapsulate().
-			 */
-			ia6 = in6_selectsrc(dst6, NULL, NULL,
-					    (struct route_in6 *)state->ro,
-					    NULL, &error);
-			if (ia6 == NULL) {
-				ip6stat.ip6s_noroute++;
-				ipsec6stat.out_noroute++;
-				goto bad;
-			}
-			ip6->ip6_src = *ia6;
-#endif
 		} else
 			splx(s);
 
