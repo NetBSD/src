@@ -1,4 +1,4 @@
-/* $NetBSD: sio_pic.c,v 1.23 1998/08/01 19:38:29 thorpej Exp $ */
+/* $NetBSD: sio_pic.c,v 1.24 1999/07/30 20:33:43 ross Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.23 1998/08/01 19:38:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.24 1999/07/30 20:33:43 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,6 +148,7 @@ void		sio_setirqstat __P((int, int, int));
 
 u_int8_t	(*sio_read_elcr) __P((int));
 void		(*sio_write_elcr) __P((int, u_int8_t));
+static void	specific_eoi __P((int));
 
 /******************** i82378 SIO ELCR functions ********************/
 
@@ -425,6 +426,8 @@ sio_intr_setup(pc, iot)
 			sio_setirqstat(i, INITIALLY_ENABLED(i), IST_EDGE);
 			alpha_shared_intr_set_dfltsharetype(sio_intr, i,
 			    IST_EDGE);
+
+			specific_eoi(i);
 			break;
 
 		case 2:
@@ -452,6 +455,7 @@ sio_intr_setup(pc, iot)
 			alpha_shared_intr_set_dfltsharetype(sio_intr, i,
 			    INITIALLY_LEVEL_TRIGGERED(i) ? IST_LEVEL :
                                 IST_NONE);
+			specific_eoi(i);
 			break;
 		}
 	}
@@ -575,11 +579,7 @@ sio_iointr(framep, vec)
 	 * require the non-specific EOI to be fed to the PIC(s)
 	 * by the interrupt handler.
 	 */
-	if (irq > 7)
-		bus_space_write_1(sio_iot,
-		    sio_ioh_icu2, 0, 0x20 | (irq & 0x07));	/* XXX */
-	bus_space_write_1(sio_iot,
-	    sio_ioh_icu1, 0, 0x20 | (irq > 7 ? 2 : irq));	/* XXX */
+	specific_eoi(irq);
 }
 
 #define	LEGAL_IRQ(x)	((x) >= 0 && (x) < ICU_LEN && (x) != 2)
@@ -655,4 +655,14 @@ sio_intr_alloc(v, mask, type, irq)
 	*irq = bestirq;
 
 	return (0);
+}
+
+static void
+specific_eoi(irq)
+	int irq;
+{
+	if (irq > 7)
+		bus_space_write_1(sio_iot,
+		    sio_ioh_icu2, 0, 0x20 | (irq & 0x07));	/* XXX */
+	bus_space_write_1(sio_iot, sio_ioh_icu1, 0, 0x20 | (irq > 7 ? 2 : irq));
 }
