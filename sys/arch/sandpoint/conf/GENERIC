@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.23 2002/03/09 23:35:59 chs Exp $
+# $NetBSD: GENERIC,v 1.24 2002/03/27 06:39:16 briggs Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/sandpoint/conf/std.sandpoint"
 
-#ident 		"GENERIC-$Revision: 1.23 $"
+#ident 		"GENERIC-$Revision: 1.24 $"
 
 maxusers	32
 
@@ -119,16 +119,18 @@ isa*	at pcib?			# ISA on PCI-ISA bridge
 vga*	at pci? dev ? function ?
 
 ex*	at pci? dev ? function ?	# 3Com 90x[B]
+fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
+rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sip*	at pci? dev ? function ?	# SiS 900 Ethernet
+tlp*	at pci? dev ? function ?	# DEC Tulip and similar
 options 	TLP_MATCH_21040
 options 	TLP_MATCH_21041
 options 	TLP_MATCH_21140
 options 	TLP_MATCH_21142
-tlp*	at pci? dev ? function ?	# DEC Tulip and similar
-rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 
-ukphy*	at mii? phy ?			# generic unknown PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
+inphy*	at mii? phy ?			# Intel 82555 PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
 
 pckbc0		at isa?			# PS/2 keyboard controller
 pckbd*		at pckbc?		# PC keyboard
