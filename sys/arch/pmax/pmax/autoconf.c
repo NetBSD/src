@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.56 2000/11/23 09:44:15 nisimura Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.57 2001/01/06 16:59:53 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.56 2000/11/23 09:44:15 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.57 2001/01/06 16:59:53 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.56 2000/11/23 09:44:15 nisimura Exp $
 #include "rz.h"
 #include "tz.h"
 #include "opt_dec_3100.h"
+#include "opt_dec_5100.h"
 
 #if NRZ > 0 || NTZ > 0
 #include <pmax/dev/device.h>
@@ -103,7 +104,7 @@ cpu_configure()
  * Look at the string 'cp' and decode the boot device.  Boot names
  * can be something like 'rz(0,0,0)vmunix' or '5/rz0/vmunix'.
  *
- * 3100 allows abbrivation;
+ * 2100/3100/5100 allows abbrivation;
  *	dev(controller[,uni-number[,partition-number]]])[filename]
  */
 void
@@ -114,7 +115,7 @@ makebootdev(cp)
 	booted_slot = booted_unit = booted_partition = 0;
 	booted_protocol = NULL;
 
-#ifdef DEC_3100
+#if defined(DEC_3100) || defined(DEC_5100)
 	if (cp[0] == 'r' && cp[1] == 'z' && cp[2] == '(') {
 		cp += 3;
 		if (*cp >= '0' && *cp <= '9')
@@ -289,9 +290,9 @@ device_register(dev, aux)
 	if (netboot && strcmp(cd->cd_name, "le") == 0) {
 		struct tc_attach_args *ta = aux;
 
-#ifdef DEC_3100
-		/* Only one Ethernet interface on 3100. */
-		if (systype == DS_PMAX) {
+#if defined(DEC_3100) || defined(DEC_5100)
+		/* Only one Ethernet interface on 2100/3100/5100. */
+		if (systype == DS_PMAX || systype == DS_MIPSMATE) {
 			booted_device = dev;
 			found = 1;
 			return;
