@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.22 2000/03/19 14:41:49 pk Exp $ */
+/*	$NetBSD: intr.c,v 1.23 2000/05/17 09:16:44 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -30,7 +30,7 @@
  *    without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT OT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
@@ -50,6 +50,7 @@
 #include "opt_ns.h"
 #include "opt_ccitt.h"
 #include "opt_natm.h"
+#include "opt_ddb.h"
 #include "ppp.h"
 
 #include <sys/param.h>
@@ -239,9 +240,6 @@ struct intrhand *intrhand[15] = {
 };
 
 int fastvec = 0;
-#ifdef DIAGNOSTIC
-extern int sparc_interrupt[];
-#endif
 
 /*
  * Attach an interrupt handler to the vector chain for the given level.
@@ -275,14 +273,14 @@ intr_establish(level, ih)
 		Debugger();
 	}
 #endif
-	if (ih->ih_number < MAXINTNUM || ih->ih_number <= 0) {
+	if (ih->ih_number < MAXINTNUM && ih->ih_number >= 0) {
 		if (intrlev[ih->ih_number]) 
 			panic("intr_establish: intr reused %d", ih->ih_number);
 		intrlev[ih->ih_number] = ih;
 #ifdef NOT_DEBUG
-		printf("\nintr_establish: vector %x ipl mask %x clrintr %p fun %p arg %p\n",
-		       ih->ih_number, ih->ih_pil, (long)ih->ih_clr, ih->ih_fun, ih->ih_arg);
-		Debugger();
+		printf("\nintr_establish: vector %x pli %x mapintr %p clrintr %p fun %p arg %p\n",
+		       ih->ih_number, ih->ih_pil, (long)ih->ih_map, (long)ih->ih_clr, ih->ih_fun, ih->ih_arg);
+		/*Debugger();*/
 #endif
 	} else
 		panic("intr_establish: bad intr number %d", ih->ih_number);
