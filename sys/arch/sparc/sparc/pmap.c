@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.203 2002/01/25 17:50:33 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.204 2002/02/04 08:36:37 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -2909,10 +2909,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	caddr_t p;
 	int lastpage;
 	vaddr_t va;
-	extern char end[];
-#ifdef DDB
-	extern char *esym;
-#endif
+	extern char *kernel_top;
 
 	ncontext = nctx;
 
@@ -3014,11 +3011,8 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	/*
 	 * Allocate and clear mmu entries and context structures.
 	 */
-	p = end;
-#ifdef DDB
-	if (esym != 0)
-		p = esym;
-#endif
+	p = kernel_top;
+
 #if defined(SUN4_MMU3L)
 	mmuregions = mmureg = (struct mmuentry *)p;
 	p += nregion * sizeof(struct mmuentry);
@@ -3286,12 +3280,9 @@ pmap_bootstrap4m(void)
 	unsigned int ctxtblsize;
 	caddr_t pagetables_start, pagetables_end;
 	paddr_t pagetables_start_pa;
-	extern char end[];
+	extern char *kernel_top;
 	extern char etext[];
 	extern caddr_t reserve_dumppages(caddr_t);
-#ifdef DDB
-	extern char *esym;
-#endif
 
 	ncontext = cpuinfo.mmu_ncontext;
 
@@ -3314,12 +3305,7 @@ pmap_bootstrap4m(void)
 	/*
 	 * p points to top of kernel mem
 	 */
-	p = end;
-#ifdef DDB
-	/* Skip over DDB symbols */
-	if (esym != 0)
-		p = esym;
-#endif
+	p = kernel_top;
 
 	/*
 	 * Intialize the kernel pmap.
