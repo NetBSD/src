@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.9 2000/03/10 12:55:15 jdolecek Exp $	*/
+/*	$NetBSD: readline.c,v 1.10 2000/03/10 13:06:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.9 2000/03/10 12:55:15 jdolecek Exp $");
+__RCSID("$NetBSD: readline.c,v 1.10 2000/03/10 13:06:43 jdolecek Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -260,7 +260,6 @@ using_history()
  * globally == 1, substitutes all occurences of what, otherwise only the
  * first one
  */
-/* ARGSUSED */
 static char    *
 _rl_compat_sub(str, what, with, globally)
 	const char     *str, *what, *with;
@@ -300,7 +299,7 @@ _rl_compat_sub(str, what, with, globally)
 			len += add;
 			temp = NULL;
 		}
-	} while (temp);
+	} while (temp && globally);
 	result[len] = '\0';
 
 	return result;
