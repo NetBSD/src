@@ -6,7 +6,7 @@
 machine		"pc532"
 cpu		"ns532"
 ident		TINY_NS
-timezone	8 dst
+timezone	0 dst
 maxusers	8
 options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		"COMPAT_43"
@@ -20,15 +20,10 @@ config		"netbsd"	root on rd0
 
 controller	rd0
 
-#controller	ncr0
-#disk		sd0	at ncr0 flags 0 drive ? bio
-#disk		sd1	at ncr0 flags 0 drive ? bio
-#tape		st0	at ncr0 flags 1 drive ? bio
-
-controller	dp0
-disk		sd0	at dp0 flags 0 drive ? bio
-disk		sd1	at dp0 flags 0 drive ? bio
-tape		st0	at dp0 flags 1 drive ? bio
+controller	ncr0
+disk		sd0	at ncr0 flags 0 drive ? bio
+disk		sd1	at ncr0 flags 0 drive ? bio
+tape		st0	at ncr0 flags 1 drive ? bio
 
 controller	scn0
 device		com0 	at scn0 port 0 tty

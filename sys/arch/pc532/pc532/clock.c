@@ -35,7 +35,7 @@
  *
  *	@(#)clock.c	7.2 (Berkeley) 5/12/91
  *
- *	$Id: clock.c,v 1.2 1993/12/03 00:18:49 phil Exp $
+ *	$Id: clock.c,v 1.3 1994/02/22 22:55:24 phil Exp $
  */
 
 /*
@@ -179,7 +179,7 @@ enablertclock()
 void
 spinwait(int millisecs)
 {
-	DELAY(1000 * millisecs);
+	DELAY(5000 * millisecs);
 }
 
 DELAY(n)
