@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.1.2.4 2000/08/07 01:08:37 sommerfeld Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.1.2.5 2000/08/18 03:19:27 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -59,33 +59,31 @@
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
 
-void i386_ipi_halt(void);
-void i386_ipi_fpsave(void);
+#include <ddb/db_output.h>
 
-#if 0
-void i386_ipi_gmtb(void);
-void i386_ipi_nychi(void);
+void i386_ipi_halt(struct cpu_info *);
+
+#if NNPX > 0
+void i386_ipi_synch_fpu(struct cpu_info *);
+void i386_ipi_flush_fpu(struct cpu_info *);
 #endif
 
-void (*ipifunc[I386_NIPI])(void) = 
+void (*ipifunc[I386_NIPI])(struct cpu_info *) = 
 {
 	i386_ipi_halt,
-	pmap_do_tlb_shootdown,
 #if NNPX > 0
-	i386_ipi_fpsave,
+	i386_ipi_flush_fpu,
+	i386_ipi_synch_fpu,
 #else
 	0,
+	0,
 #endif
-	0,
-	0,
-	0,
+	pmap_do_tlb_shootdown,
 };
 
 void
-i386_ipi_halt(void)
+i386_ipi_halt(struct cpu_info *ci)
 {
-	struct cpu_info *ci = curcpu();
-
 	disable_intr();
 
 	printf("%s: shutting down\n", ci->ci_dev.dv_xname);
@@ -96,46 +94,47 @@ i386_ipi_halt(void)
 
 #if NNPX > 0
 void
-i386_ipi_fpsave(void)
-{
-	struct cpu_info *ci = curcpu();
-	
-	npxsave_cpu(ci);
-}
-#endif
-
-#if 0
-void
-i386_ipi_gmtb(void)
+i386_ipi_flush_fpu(struct cpu_info *ci)
 {
 #if 0
-	struct cpu_info *ci = curcpu();
-	printf("%s: we were asked for the brain.\n", ci->ci_dev.dv_xname);
+	printf("%s: flush_fpu ipi\n", ci->ci_dev.dv_xname);
 #endif
-	i386_send_ipi(1, I386_IPI_NYCHI);
+	npxsave_cpu(ci, 0);
 }
 
 void
-i386_ipi_nychi(void)
+i386_ipi_synch_fpu(struct cpu_info *ci)
 {
 #if 0
-	struct cpu_info *ci = curcpu();
-	printf("%s: we were asked for the brain.\n", ci->ci_dev.dv_xname);
+	printf("%s: synch_fpu ipi\n", ci->ci_dev.dv_xname);
 #endif
+	npxsave_cpu(ci, 1);
 }
 #endif
 
 void
 i386_spurious (void)
 {
+#if 0
 	printf("spurious intr\n");
+#endif
 }
 
 void
 i386_send_ipi (struct cpu_info *ci, int ipimask)
 {
+	int ret;
+	
 	i386_atomic_setbits_l(&ci->ci_ipis, ipimask);
-	i386_ipi(LAPIC_IPI_VECTOR, ci->ci_cpuid, LAPIC_DLMODE_FIXED);
+
+	ret = i386_ipi(LAPIC_IPI_VECTOR, ci->ci_cpuid, LAPIC_DLMODE_FIXED);
+	if (ret != 0) {
+		printf("ipi of %x from %s to %s failed\n",
+		    ipimask,
+		    curcpu()->ci_dev.dv_xname,
+		    ci->ci_dev.dv_xname);
+	}
+	
 }
 
 void
@@ -160,6 +159,7 @@ i386_ipi_handler(void)
 	int bit;
 
 	pending = i386_atomic_testset_ul(&ci->ci_ipis, 0);
+
 #if 0
 	printf("%s: pending IPIs: %x\n", ci->ci_dev.dv_xname, pending);
 #endif
@@ -167,10 +167,9 @@ i386_ipi_handler(void)
 	for (bit = 0; bit < I386_NIPI && pending; bit++) {
 		if (pending & (1<<bit)) {
 			pending &= ~(1<<bit);
-			(*ipifunc[bit])();
+			(*ipifunc[bit])(ci);
 		}
 	}
-	
 #if 0
 	Debugger();
 #endif
