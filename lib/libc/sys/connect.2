@@ -1,4 +1,4 @@
-.\"	$NetBSD: connect.2,v 1.9 1998/04/28 06:00:53 fair Exp $
+.\"	$NetBSD: connect.2,v 1.10 1998/07/28 09:43:30 is Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -111,7 +111,9 @@ and the connection cannot
 be completed immediately.
 It is possible to
 .Xr select 2
-for completion by selecting the socket for writing.
+or
+.Xr poll 2
+for completion by selecting or polling the socket for writing.
 .It Bq Er EALREADY
 The socket is non-blocking
 and a previous connection attempt
@@ -144,6 +146,7 @@ Too many symbolic links were encountered in translating the pathname.
 .El
 .Sh SEE ALSO
 .Xr accept 2 ,
+.Xr poll 2 ,
 .Xr select 2 ,
 .Xr socket 2 ,
 .Xr getsockname 2

@@ -1,4 +1,4 @@
-.\"	$NetBSD: recv.2,v 1.7 1998/07/18 05:04:36 lukem Exp $
+.\"	$NetBSD: recv.2,v 1.8 1998/07/28 09:43:30 is Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -110,6 +110,8 @@ described in
 .Pp
 The
 .Xr select 2
+or 
+.Xr poll 2 
 call may be used to determine when more data arrive.
 .Pp
 The
@@ -255,6 +257,7 @@ address space.
 .Sh SEE ALSO
 .Xr fcntl 2 ,
 .Xr read 2 ,
+.Xr poll 2 ,
 .Xr select 2 ,
 .Xr getsockopt 2 ,
 .Xr socket 2
