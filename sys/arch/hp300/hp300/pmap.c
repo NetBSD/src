@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.15 1994/10/26 07:25:53 cgd Exp $	*/
+/*	$NetBSD: pmap.c,v 1.16 1994/11/08 01:17:37 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -506,7 +506,7 @@ pmap_alloc_pv()
 	int i;
 
 	if (pv_nfree == 0) {
-		MALLOC(pvp, struct pv_page *, NBPG, M_VMPVENT, M_NOWAIT);
+		pvp = (struct pv_page *)kmem_alloc(kernel_map, NBPG);
 		if (pvp == 0)
 			panic("pmap_alloc_pv: kmem_alloc() failed");
 		pvp->pvp_pgi.pgi_freelist = pv = &pvp->pvp_pv[1];
@@ -551,7 +551,7 @@ pmap_free_pv(pv)
 	case NPVPPG:
 		pv_nfree -= NPVPPG - 1;
 		TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
-		FREE(pvp, M_VMPVENT);
+		kmem_free(kernel_map, (vm_offset_t)pvp, NBPG);
 		break;
 	}
 }
@@ -609,7 +609,7 @@ pmap_collect_pv()
 
 	for (pvp = pv_page_collectlist.tqh_first; pvp; pvp = npvp) {
 		npvp = pvp->pvp_pgi.pgi_list.tqe_next;
-		FREE(pvp, M_VMPVENT);
+		kmem_free(kernel_map, (vm_offset_t)pvp, NBPG);
 	}
 }
 
