@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.52.2.4 2000/12/15 04:05:44 he Exp $	*/
+/*	$NetBSD: perform.c,v 1.52.2.5 2001/03/20 17:56:19 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.52.2.4 2000/12/15 04:05:44 he Exp $");
+__RCSID("$NetBSD: perform.c,v 1.52.2.5 2001/03/20 17:56:19 he Exp $");
 #endif
 #endif
 
@@ -29,6 +29,7 @@ __RCSID("$NetBSD: perform.c,v 1.52.2.4 2000/12/15 04:05:44 he Exp $");
  *
  */
 
+#include <assert.h>
 #include <err.h>
 #include "lib.h"
 #include "add.h"
@@ -83,6 +84,10 @@ pkg_do(char *pkg)
 	char    pkg_fullname[FILENAME_MAX];
 	char    playpen[FILENAME_MAX];
 	char    extract_contents[FILENAME_MAX];
+	char    upgrade_from[FILENAME_MAX];
+	char    upgrade_via[FILENAME_MAX];
+	char    upgrade_to[FILENAME_MAX];
+	int	upgrading = 0;
 	char   *where_to, *tmp, *extract;
 	char   *dbdir;
 	FILE   *cfile;
@@ -90,6 +95,7 @@ pkg_do(char *pkg)
 	plist_t *p;
 	struct stat sb;
 	int     inPlace;
+	int	rc;
 
 	code = 0;
 	zapLogDir = 0;
@@ -152,7 +158,7 @@ pkg_do(char *pkg)
 					return 1;
 
 				if ((strstr(pkg, ".tgz") != NULL) || (strstr(pkg, ".tbz") != NULL)) {
-					/* There already is a ".tgz" - give up 
+					/* There already is a ".t[bg]z" - give up 
 					 * (We don't want to pretend to be exceedingly
 					 *  clever - the user should give something sane!)
 					 */
@@ -325,9 +331,35 @@ pkg_do(char *pkg)
 			(void) snprintf(buf, sizeof(buf), "%.*s[0-9]*",
 				(int)(s - PkgName) + 1, PkgName);
 			if (findmatchingname(dbdir, buf, note_whats_installed, installed) > 0) {
-				warnx("other version '%s' already installed", installed);
-				code = 1;
-				goto success;	/* close enough for government work */
+				if (upgrade) {
+					snprintf(upgrade_from, sizeof(upgrade_from), "%s/%s/" REQUIRED_BY_FNAME,
+						 dbdir, installed);
+					snprintf(upgrade_via, sizeof(upgrade_via), "%s/.%s." REQUIRED_BY_FNAME,
+						 dbdir, installed);
+					snprintf(upgrade_to, sizeof(upgrade_to), "%s/%s/" REQUIRED_BY_FNAME,
+						 dbdir, PkgName);
+
+					if (Verbose)
+						printf("Upgrading %s to %s.\n", installed, PkgName);
+
+					if (fexists(upgrade_from)) {
+						if (0 && Verbose)
+							printf("HF: mv %s %s\n", upgrade_from, upgrade_via);
+						rc = rename(upgrade_from, upgrade_via);
+						assert(rc == 0);
+
+						if (0 && Verbose)
+							printf("HF: pkg_delete '%s'\n", installed);
+						vsystem("pkg_delete '%s'\n", installed);
+
+						upgrading = 1;
+					}
+				} else {
+					warnx("other version '%s' already installed", installed);
+
+					code = 1;
+					goto success;	/* close enough for government work */
+				}
 			}
 		}
 	}
@@ -391,6 +423,14 @@ pkg_do(char *pkg)
 				if (findmatchingname(dbdir, buf, note_whats_installed, installed) > 0) {
 					warnx("pkg `%s' required, but `%s' found installed.",
 					      p->name, installed);
+
+					if (upgrading) {
+						printf("HF: upgrade note -- could 'pkg_delete %s', and let the normal\n"
+						       "dependency handling reinstall the updated package, assuming one IS\n"
+						       "available. But then I'd expect proper binary pkgs being available for\n"
+						       "the upgrade case.\n", installed);
+					}
+
 					if (Force) {
 						warnx("Proceeding anyways.");
 					} else {	
@@ -713,6 +753,12 @@ success:
 	/* delete the packing list contents */
 	free_plist(&Plist);
 	leave_playpen(Home);
+
+	if (upgrading) {
+		rc = rename(upgrade_via, upgrade_to);
+		assert(rc == 0);
+	}
+
 	return code;
 }
 
