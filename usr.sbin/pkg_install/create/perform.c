@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.25 2001/03/04 18:16:42 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.26 2001/05/21 09:17:30 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.25 2001/03/04 18:16:42 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.26 2001/05/21 09:17:30 agc Exp $");
 #endif
 #endif
 
@@ -297,7 +297,7 @@ pkg_perform(lpkg_head_t *pkgs)
          */
 	if (PlistOnly) {
 		check_list(home, &plist, basename_of(pkg));
-		write_plist(&plist, stdout);
+		write_plist(&plist, stdout, realprefix);
 		exit(0);
 	}
 
@@ -374,7 +374,7 @@ pkg_perform(lpkg_head_t *pkgs)
 		cleanup(0);
 		errx(2, "can't open file %s for writing", CONTENTS_FNAME);
 	}
-	write_plist(&plist, fp);
+	write_plist(&plist, fp, realprefix);
 	if (fclose(fp)) {
 		cleanup(0);
 		errx(2, "error while closing %s", CONTENTS_FNAME);

@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.18 2001/05/18 13:21:38 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.19 2001/05/21 09:17:30 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: main.c,v 1.17 1997/10/08 07:46:23 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.18 2001/05/18 13:21:38 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.19 2001/05/21 09:17:30 agc Exp $");
 #endif
 #endif
 
@@ -24,7 +24,7 @@ __RCSID("$NetBSD: main.c,v 1.18 2001/05/18 13:21:38 agc Exp $");
 #include "lib.h"
 #include "create.h"
 
-static char Options[] = "ORhlVvFf:p:P:C:c:d:i:k:L:r:t:X:D:m:s:S:b:B:U";
+static char Options[] = "ORhlVvFf:p:P:C:c:d:i:k:L:r:t:X:D:m:s:S:b:B:UI:";
 
 char   *Prefix = NULL;
 char   *Comment = NULL;
@@ -43,6 +43,7 @@ char   *BuildInfo = NULL;
 char   *SizePkg = NULL;
 char   *SizeAll = NULL;
 char   *SrcDir = NULL;
+char   *realprefix = NULL;
 char    PlayPen[FILENAME_MAX];
 size_t  PlayPenSize = sizeof(PlayPen);
 int	update_pkgdb = 1;
@@ -60,6 +61,7 @@ usage(void)
 	    "                  [-i iscript] [-k dscript] [-r rscript] [-t template]",
 	    "                  [-X excludefile] [-D displayfile] [-m mtreefile]",
 	    "                  [-b build-version-file] [-B build-info-file]",
+	    "                  [-I realprefix]",
 	    "                  -c comment -d description -f packlist pkg-name");
 	exit(1);
 }
@@ -75,6 +77,10 @@ main(int argc, char **argv)
 		switch (ch) {
 		case 'v':
 			Verbose = TRUE;
+			break;
+
+		case 'I':
+			realprefix = optarg;
 			break;
 
 		case 'O':
