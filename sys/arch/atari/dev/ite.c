@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.6 1995/07/24 05:56:06 leo Exp $	*/
+/*	$NetBSD: ite.c,v 1.7 1995/09/04 19:39:21 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -95,7 +95,7 @@ static char	*index __P((const char *, int));
 static int	inline atoi __P((const char *));
 static void	ite_switch __P((int));
 void iteputchar __P((int c, struct ite_softc *ip));
-void ite_putstr __P((const char * s, int len, dev_t dev));
+void ite_putstr __P((const u_char * s, int len, dev_t dev));
 void iteattach __P((struct device *, struct device *, void *));
 int itematch __P((struct device *, struct cfdata *, void *));
 
@@ -1380,7 +1380,7 @@ strncmp (a, b, l)
 
 void
 ite_putstr(s, len, dev)
-	const char *s;
+	const u_char *s;
 	int len;
 	dev_t dev;
 {
