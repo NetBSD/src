@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.7 1998/12/19 09:31:44 dbj Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.8 1998/12/26 06:17:44 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -53,12 +53,13 @@
 #include "nextdmareg.h"
 #include "nextdmavar.h"
 
-#if 0
+#if 1
 #define ND_DEBUG
 #endif
 
 #if defined(ND_DEBUG)
-#define DPRINTF(x) printf x;
+int nextdma_debug = 0;
+#define DPRINTF(x) if (nextdma_debug) printf x;
 #else
 #define DPRINTF(x)
 #endif
@@ -170,6 +171,13 @@ nextdma_reset(nd)
 {
 	int s;
 	s = spldma();									/* @@@ should this be splimp()? */
+
+	DPRINTF(("DMA reset\n"));
+
+#if (defined(ND_DEBUG))
+	if (nextdma_debug) next_dma_print(nd);
+#endif
+
 	nextdma_init(nd);
 	splx(s);
 }
@@ -728,7 +736,7 @@ nextdma_start(nd, dmadir)
 	next_dma_setup_cont_regs(nd);
 
 #if (defined(ND_DEBUG))
-	next_dma_print(nd);
+	if (nextdma_debug) next_dma_print(nd);
 #endif
 
 	if (nd->_nd_map_cont) {
