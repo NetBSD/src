@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.3 2001/11/12 23:23:14 lukem Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.4 2001/12/08 00:37:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.3 2001/11/12 23:23:14 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.4 2001/12/08 00:37:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,15 +47,23 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.3 2001/11/12 23:23:14 lukem Exp $
 #include <sys/exec_elf.h>
 #include <sys/proc.h>
 #include <sys/lkm.h>
+#include <sys/signalvar.h>
 
 #include <compat/linux/common/linux_exec.h>
 
 int exec_linux_aout_lkmentry __P((struct lkm_table *, int, int));
 
 static struct execsw exec_linux_aout =
-	{ LINUX_AOUT_HDR_SIZE, exec_linux_aout_makecmds, { NULL },
-	  NULL, EXECSW_PRIO_ANY,
-	  LINUX_AOUT_AUX_ARGSIZ, linux_aout_copyargs }; /* linux a.out */
+	/* Linux a.out (native word size) */
+	{ LINUX_AOUT_HDR_SIZE,
+	  exec_linux_aout_makecmds,
+	  { NULL },
+	  NULL,
+	  EXECSW_PRIO_ANY,
+	  LINUX_AOUT_AUX_ARGSIZ,
+	  linux_aout_copyargs,
+	  NULL,
+	  coredump_netbsd };
 
 /*
  * declare the exec
