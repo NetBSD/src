@@ -1,4 +1,4 @@
-/*	$NetBSD: if_inarp.h,v 1.34 2004/04/18 21:00:35 matt Exp $	*/
+/*	$NetBSD: if_inarp.h,v 1.35 2004/04/21 17:49:46 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -61,20 +61,20 @@ struct sockaddr_inarp {
 
 #ifdef _KERNEL
 extern struct ifqueue arpintrq;
-void arp_ifinit (struct ifnet *, struct ifaddr *);
-void arp_rtrequest (int, struct rtentry *, struct rt_addrinfo *);
-int arpresolve (struct ifnet *, struct rtentry *, struct mbuf *,
+void arp_ifinit(struct ifnet *, struct ifaddr *);
+void arp_rtrequest(int, struct rtentry *, struct rt_addrinfo *);
+int arpresolve(struct ifnet *, struct rtentry *, struct mbuf *,
 		    struct sockaddr *, u_char *);
-void arpintr (void);
-void arp_drain (void);
+void arpintr(void);
+void arp_drain(void);
 
-int arpioctl (u_long, caddr_t);
-void arpwhohas (struct ifnet *, struct in_addr *);
+int arpioctl(u_long, caddr_t);
+void arpwhohas(struct ifnet *, struct in_addr *);
 
-void revarpinput (struct mbuf *);
-void in_revarpinput (struct mbuf *);
-void revarprequest (struct ifnet *);
-int revarpwhoarewe (struct ifnet *, struct in_addr *, struct in_addr *);
+void revarpinput(struct mbuf *);
+void in_revarpinput(struct mbuf *);
+void revarprequest(struct ifnet *);
+int revarpwhoarewe(struct ifnet *, struct in_addr *, struct in_addr *);
 #endif
 
 #endif /* _NETINET_IF_INARP_H_ */
