@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dca.c	7.12 (Berkeley) 6/27/91
- *	$Id: dca.c,v 1.3 1993/05/22 11:40:42 cgd Exp $
+ *	$Id: dca.c,v 1.4 1993/05/27 09:35:10 deraadt Exp $
  */
 
 #include "dca.h"
@@ -43,11 +43,11 @@
 #include "sys/param.h"
 #include "sys/systm.h"
 #include "sys/ioctl.h"
-#include "sys/select.h"
 #include "sys/tty.h"
 #include "sys/proc.h"
 #include "sys/conf.h"
 #include "sys/file.h"
+#include "sys/malloc.h"
 #include "sys/uio.h"
 #include "sys/kernel.h"
 #include "sys/syslog.h"
@@ -76,7 +76,7 @@ int	dcaconsinit;
 int	dcadefaultrate = TTYDEF_SPEED;
 int	dcamajor;
 struct	dcadevice *dca_addr[NDCA];
-struct	tty dca_tty[NDCA];
+struct	tty *dca_tty[NDCA];
 struct	isr dcaisr[NDCA];
 
 struct speedtab dcaspeedtab[] = {
@@ -197,7 +197,12 @@ dcaopen(dev, flag, mode, p)
 	unit = UNIT(dev);
 	if (unit >= NDCA || (dca_active & (1 << unit)) == 0)
 		return (ENXIO);
-	tp = &dca_tty[unit];
+	if(!dca_tty[unit]) {
+		MALLOC(tp, struct tty *, sizeof(struct tty), M_TTYS, M_WAITOK);
+		bzero(tp, sizeof(struct tty));
+		dca_tty[unit] = tp;
+	} else
+		tp = dca_tty[unit];
 	tp->t_oproc = dcastart;
 	tp->t_param = dcaparam;
 	tp->t_dev = dev;
@@ -244,7 +249,7 @@ dcaclose(dev, flag, mode, p)
  
 	unit = UNIT(dev);
 	dca = dca_addr[unit];
-	tp = &dca_tty[unit];
+	tp = dca_tty[unit];
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	dca->dca_cfcr &= ~CFCR_SBREAK;
 #ifdef KGDB
@@ -256,6 +261,8 @@ dcaclose(dev, flag, mode, p)
 	    (tp->t_state&TS_ISOPEN) == 0)
 		(void) dcamctl(dev, 0, DMSET);
 	ttyclose(tp);
+	FREE(tp, M_TTYS);
+	dca_tty[unit] = (struct tty *)NULL;
 	return (0);
 }
  
@@ -263,7 +270,7 @@ dcaread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	register struct tty *tp = &dca_tty[UNIT(dev)];
+	register struct tty *tp = dca_tty[UNIT(dev)];
  
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
@@ -273,7 +280,7 @@ dcawrite(dev, uio, flag)
 	struct uio *uio;
 {
 	int unit = UNIT(dev);
-	register struct tty *tp = &dca_tty[unit];
+	register struct tty *tp = dca_tty[unit];
  
 	/*
 	 * (XXX) We disallow virtual consoles if the physical console is
@@ -307,7 +314,7 @@ dcaintr(unit)
 		case IIR_RXTOUT:
 		case IIR_RXRDY:
 			/* do time-critical read in-line */
-			tp = &dca_tty[unit];
+			tp = dca_tty[unit];
 /*
  * Process a received byte.  Inline for speed...
  */
@@ -349,7 +356,7 @@ dcaintr(unit)
 			}
 			break;
 		case IIR_TXRDY:
-			tp = &dca_tty[unit];
+			tp = dca_tty[unit];
 			tp->t_state &=~ (TS_BUSY|TS_FLUSH);
 			if (tp->t_line)
 				(*linesw[tp->t_line].l_start)(tp);
@@ -379,7 +386,7 @@ dcaeint(unit, stat, dca)
 	register struct tty *tp;
 	register int c;
 
-	tp = &dca_tty[unit];
+	tp = dca_tty[unit];
 	c = dca->dca_data;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 #ifdef KGDB
@@ -406,7 +413,7 @@ dcamint(unit, dca)
 	register struct tty *tp;
 	register int stat;
 
-	tp = &dca_tty[unit];
+	tp = dca_tty[unit];
 	stat = dca->dca_msr;
 #ifdef DEBUG
 	dcamintcount[stat & 0xf]++;
@@ -436,7 +443,7 @@ dcaioctl(dev, cmd, data, flag)
 	register struct dcadevice *dca;
 	register int error;
  
-	tp = &dca_tty[unit];
+	tp = dca_tty[unit];
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag);
 	if (error >= 0)
 		return (error);
@@ -545,22 +552,22 @@ dcastart(tp)
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT|TS_TTSTOP))
 		goto out;
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
+	if (RB_LEN(&tp->t_out) <= tp->t_lowat) {
 		if (tp->t_state&TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
+			wakeup((caddr_t)&tp->t_out);
 		}
 		selwakeup(&tp->t_wsel);
 	}
-	if (tp->t_outq.c_cc == 0)
+	if (RB_LEN(&tp->t_out) == 0)
 		goto out;
 	if (dca->dca_lsr & LSR_TXRDY) {
-		c = getc(&tp->t_outq);
+		c = getc(&tp->t_out);
 		tp->t_state |= TS_BUSY;
 		dca->dca_data = c;
 		if (dca_hasfifo & (1 << unit)) {
-			for (c = 1; c < 16 && tp->t_outq.c_cc; ++c)
-				dca->dca_data = getc(&tp->t_outq);
+			for (c = 1; c < 16 && RB_LEN(&tp->t_out); ++c)
+				dca->dca_data = getc(&tp->t_out);
 #ifdef DEBUG
 			if (c > 16)
 				fifoout[0]++;
@@ -650,7 +657,7 @@ dcacnprobe(cp)
 
 	/* initialize required fields */
 	cp->cn_dev = makedev(dcamajor, unit);
-	cp->cn_tp = &dca_tty[unit];
+	cp->cn_tp = dca_tty[unit];
 	switch (dca_addr[unit]->dca_irid) {
 	case DCAID0:
 	case DCAID1:
