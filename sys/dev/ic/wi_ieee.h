@@ -1,4 +1,4 @@
-/*	$NetBSD: wi_ieee.h,v 1.3.2.14 2002/10/18 02:42:04 nathanw Exp $	*/
+/*	$NetBSD: wi_ieee.h,v 1.3.2.15 2002/11/21 12:06:54 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -237,6 +237,7 @@ struct wi_counters {
 #define WI_RID_CNFAUTHMODE	0xFC2A
 #define WI_RID_ROAMING_MODE	0xFC2D
 #define WI_RID_OWN_BEACON_INT	0xFC33 /* beacon xmit time for BSS creation */
+#define WI_RID_DBM_ADJUST	0xFC46 /* RSSI - WI_RID_DBM_ADJUST ~ dBm */
 #define WI_RID_BASIC_RATE	0xFCB3
 #define WI_RID_SUPPORT_RATE	0xFCB4
 
