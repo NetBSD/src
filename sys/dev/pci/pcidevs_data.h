@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.135 1999/06/18 04:55:27 tsubai Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.136 1999/06/19 04:51:42 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.130 1999/06/18 04:54:06 tsubai Exp 
+ *	NetBSD: pcidevs,v 1.131 1999/06/19 04:49:52 augustss Exp 
  */
 
 /*
@@ -1960,6 +1960,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "MagicGraph 128ZV",
 	},
 	{
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMG2160,
+	    0,
+	    "Neomagic",
+	    "MagicGraph 128XD",
+	},
+	{
 	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMM256AV_VGA,
 	    0,
 	    "Neomagic",
@@ -2576,6 +2582,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Texas Instruments",
 	    "PCI2030 PCI-CardBus Bridge",
+	},
+	{
+	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_CXD1947A,
+	    0,
+	    "Sony",
+	    "CXD1947A FireWire Host Controller",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA, PCI_PRODUCT_TOSHIBA_R4X00,
