@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.25 2002/09/25 11:49:49 martti Exp $
+#	$NetBSD: GENERIC.in,v 1.26 2002/10/06 02:58:21 provos Exp $
 #
 # Generic atari
 #
@@ -160,6 +160,7 @@ options 	SYSVSEM			# System V semaphores
 # Support for various kernel options
 #
 options 	KTRACE			# Add kernel tracing system call
+options 	SYSTRACE		# system call vetting via systrace(1)
 options 	DIAGNOSTIC		# Add additional error checking code
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
