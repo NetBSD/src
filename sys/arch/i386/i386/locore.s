@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.245 2001/07/31 22:52:44 jdolecek Exp $	*/
+/*	$NetBSD: locore.s,v 1.246 2001/08/02 21:04:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -2141,7 +2141,7 @@ IDTVEC(trap07)
 	pushl	$T_DNA
 	INTRENTRY
 	pushl	_C_LABEL(curproc)
-	call	_C_LABEL(npxdna)
+	call	*_C_LABEL(npxdna_func)
 	addl	$4,%esp
 	testl	%eax,%eax
 	jz	calltrap

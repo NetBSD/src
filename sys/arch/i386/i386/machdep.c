@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.449 2001/08/01 19:50:48 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.450 2001/08/02 21:04:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -199,6 +199,8 @@ int	cpu_class;
 int	i386_fpu_present;
 int	i386_fpu_exception;
 int	i386_fpu_fdivbug;
+
+int	cpu_use_fxsave;
 
 #define	CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 15)
 
@@ -1515,6 +1517,17 @@ identifycpu(struct cpu_info *ci)
 		cpu_tsc_freq = (rdtsc() - last_tsc) * 10;
 	}
 #endif
+
+#if defined(I686_CPU)
+	/*
+	 * If we have FXSAVE/FXRESTOR, use them.
+	 */
+	if (cpu_feature & CPUID_FXSR) {
+		cpu_use_fxsave = 1;
+		lcr4(rcr4() | CR4_OSFXSR);
+	} else
+		cpu_use_fxsave = 0;
+#endif /* I686_CPU */
 }
 
 /*  
@@ -2132,7 +2145,10 @@ setregs(p, pack, stack)
 
 	p->p_md.md_flags &= ~MDP_USEDFPU;
 	pcb->pcb_flags = 0;
-	pcb->pcb_savefpu.sv_env.en_cw = __NetBSD_NPXCW__;
+	if (cpu_use_fxsave)
+		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = __NetBSD_NPXCW__;
+	else
+		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __NetBSD_NPXCW__;
 
 	tf = p->p_md.md_regs;
 	tf->tf_gs = LSEL(LUDATA_SEL, SEL_UPL);
@@ -2331,6 +2347,13 @@ init386(first_avail)
 	 */
 	if (PAGE_SIZE != NBPG)
 		panic("init386: PAGE_SIZE != NBPG");
+
+	/*
+	 * Saving SSE registers won't work if the save area isn't
+	 * 16-byte aligned.
+	 */
+	if (offsetof(struct user, u_pcb.pcb_savefpu) & 0xf)
+		panic("init386: pcb_savefpu not 16-byte aligned");
 
 	/*
 	 * Start with 2 color bins -- this is just a guess to get us
