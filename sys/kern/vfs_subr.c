@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.34 1994/07/10 05:53:25 cgd Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.35 1994/12/24 16:44:16 ws Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -351,8 +351,6 @@ vwakeup(bp)
 		if (--vp->v_numoutput < 0)
 			panic("vwakeup: neg numoutput");
 		if ((vp->v_flag & VBWAIT) && vp->v_numoutput <= 0) {
-			if (vp->v_numoutput < 0)
-				panic("vwakeup: neg numoutput");
 			vp->v_flag &= ~VBWAIT;
 			wakeup((caddr_t)&vp->v_numoutput);
 		}
@@ -1420,4 +1418,58 @@ vfs_export_lookup(mp, nep, nam)
 			np = &nep->ne_defexported;
 	}
 	return (np);
+}
+
+/*
+ * Do the usual access checking.
+ * file_mode, uid and gid are from the vnode in question,
+ * while acc_mode and cred are from the VOP_ACCESS parameter list
+ */
+vaccess(file_mode, uid, gid, acc_mode, cred)
+	mode_t file_mode;
+	uid_t uid;
+	gid_t gid;
+	mode_t acc_mode;
+	struct ucred *cred;
+{
+	mode_t mask;
+	int i;
+	register gid_t *gp;
+	
+	/* User id 0 always gets access. */
+	if (cred->cr_uid == 0)
+		return 0;
+	
+	mask = 0;
+	
+	/* Otherwise, check the owner. */
+	if (cred->cr_uid == uid) {
+		if (acc_mode & VEXEC)
+			mask |= S_IXUSR;
+		if (acc_mode & VREAD)
+			mask |= S_IRUSR;
+		if (acc_mode & VWRITE)
+			mask |= S_IWUSR;
+		return (file_mode & mask) == mask ? 0 : EACCES;
+	}
+	
+	/* Otherwise, check the groups. */
+	if (groupmember(gid, cred)) {
+		if (acc_mode & VEXEC)
+			mask |= S_IXGRP;
+		if (acc_mode & VREAD)
+			mask |= S_IRGRP;
+		if (acc_mode & VWRITE)
+			mask |= S_IWGRP;
+		return (file_mode & mask) == mask ? 0 : EACCES;
+	}
+	
+	/* Otherwise, check everyone else. */
+	if (acc_mode & VEXEC)
+		mask |= S_IXOTH;
+	if (acc_mode & VREAD)
+		mask |= S_IROTH;
+	if (acc_mode & VWRITE)
+		mask |= S_IWOTH;
+	return (file_mode & mask) == mask ? 0 : EACCES;
 }

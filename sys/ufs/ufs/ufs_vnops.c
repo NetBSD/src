@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.6 1994/12/14 13:04:03 mycroft Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.7 1994/12/24 16:44:45 ws Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -210,10 +210,8 @@ ufs_access(ap)
 {
 	register struct vnode *vp = ap->a_vp;
 	register struct inode *ip = VTOI(vp);
-	register struct ucred *cred = ap->a_cred;
-	mode_t mask, mode = ap->a_mode;
-	register gid_t *gp;
-	int i, error;
+	mode_t mode = ap->a_mode;
+	int error;
 
 #ifdef DIAGNOSTIC
 	if (!VOP_ISLOCKED(vp)) {
@@ -237,43 +235,7 @@ ufs_access(ap)
 	if ((mode & VWRITE) && (ip->i_flags & IMMUTABLE))
 		return (EPERM);
 
-	/* Otherwise, user id 0 always gets access. */
-	if (cred->cr_uid == 0)
-		return (0);
-
-	mask = 0;
-
-	/* Otherwise, check the owner. */
-	if (cred->cr_uid == ip->i_uid) {
-		if (mode & VEXEC)
-			mask |= S_IXUSR;
-		if (mode & VREAD)
-			mask |= S_IRUSR;
-		if (mode & VWRITE)
-			mask |= S_IWUSR;
-		return ((ip->i_mode & mask) == mask ? 0 : EACCES);
-	}
-
-	/* Otherwise, check the groups. */
-	for (i = 0, gp = cred->cr_groups; i < cred->cr_ngroups; i++, gp++)
-		if (ip->i_gid == *gp) {
-			if (mode & VEXEC)
-				mask |= S_IXGRP;
-			if (mode & VREAD)
-				mask |= S_IRGRP;
-			if (mode & VWRITE)
-				mask |= S_IWGRP;
-			return ((ip->i_mode & mask) == mask ? 0 : EACCES);
-		}
-
-	/* Otherwise, check everyone else. */
-	if (mode & VEXEC)
-		mask |= S_IXOTH;
-	if (mode & VREAD)
-		mask |= S_IROTH;
-	if (mode & VWRITE)
-		mask |= S_IWOTH;
-	return ((ip->i_mode & mask) == mask ? 0 : EACCES);
+	return (vaccess(ip->i_mode, ip->i_uid, ip->i_gid, mode, ap->a_cred));
 }
 
 /* ARGSUSED */

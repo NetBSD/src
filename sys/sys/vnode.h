@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.29 1994/12/14 19:04:11 mycroft Exp $	*/
+/*	$NetBSD: vnode.h,v 1.30 1994/12/24 16:44:42 ws Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -391,4 +391,5 @@ struct vnode *
 void 	vput __P((struct vnode *vp));
 void 	vref __P((struct vnode *vp));
 void 	vrele __P((struct vnode *vp));
+int	vaccess __P((mode_t file_mode, uid_t uid, gid_t gid, mode_t acc_mode, struct ucred *cred));
 #endif /* KERNEL */
