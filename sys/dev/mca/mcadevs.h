@@ -1,10 +1,10 @@
-/*	$NetBSD: mcadevs.h,v 1.7 2001/03/23 20:04:51 jdolecek Exp $	*/
+/*	$NetBSD: mcadevs.h,v 1.8 2001/03/24 09:48:39 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: mcadevs,v 1.6 2001/03/23 20:04:28 jdolecek Exp 
+ *	NetBSD: mcadevs,v 1.7 2001/03/24 09:48:11 jdolecek Exp 
  */
 
 /*-
@@ -57,6 +57,10 @@
 #define	MCA_PRODUCT_3C529_TM	0x62DB	/* 3Com 3C529 Ethernet Adapter (test mode) */
 #define	MCA_PRODUCT_3C529_2T	0x62F6	/* 3Com 3C529 Ethernet Adapter (10base2/T) */
 #define	MCA_PRODUCT_3C529_T	0x62F7	/* 3Com 3C529 Ethernet Adapter (10baseT) */
+#define	MCA_PRODUCT_AT1720T	0x6410	/* ATI AT1720T */
+#define	MCA_PRODUCT_AT1720BT	0x6413	/* ATI AT1720BT */
+#define	MCA_PRODUCT_AT1720AT	0x6416	/* ATI AT1720AT */
+#define	MCA_PRODUCT_AT1720FT	0x6419	/* ATI AT1720FT */
 #define	MCA_PRODUCT_WD_8003E	0x6FC0	/* WD EtherCard PLUS/A (WD8003E/A or WD8003ET/A) */
 #define	MCA_PRODUCT_WD_8003ST	0x6FC1	/* WD StarCard PLUS/A (WD8003ST/A) */
 #define	MCA_PRODUCT_WD_8003W	0x6FC2	/* WD EtherCard PLUS 10T/A (WD8003W/A) */
