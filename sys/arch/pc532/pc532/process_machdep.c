@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.10 1996/04/04 06:37:08 phil Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.11 1998/09/12 19:14:59 matthias Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -120,7 +120,7 @@ process_read_fpregs(p, regs)
 		save_fpu_context(&p->p_addr->u_pcb);
 		fpu_proc = 0;
 	}
-	bcopy(&p->p_addr->u_pcb.pcb_fsr, regs, sizeof(*regs));
+	memcpy(regs, &p->p_addr->u_pcb.pcb_fsr, sizeof(*regs));
 	return (0);
 }
 
@@ -135,7 +135,7 @@ process_write_fpregs(p, regs)
 	if (fpu_proc == p)
 		fpu_proc = 0;
 
-	bcopy(regs, &p->p_addr->u_pcb.pcb_fsr, sizeof(*regs));
+	memcpy(&p->p_addr->u_pcb.pcb_fsr, regs, sizeof(*regs));
 
 	return (0);
 }

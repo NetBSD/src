@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.86 1998/09/02 19:17:16 matthias Exp $	*/
+/*	$NetBSD: machdep.c,v 1.87 1998/09/12 19:14:59 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -996,14 +996,14 @@ setregs(p, pack, stack)
 	if (p == fpu_proc)
 		fpu_proc = 0;
 
-	bzero(r, sizeof(*r));
+	memset(r, 0, sizeof(*r));
 	r->r_sp  = stack;
 	r->r_pc  = pack->ep_entry;
 	r->r_psr = PSL_USERSET;
 	r->r_r7  = (int)PS_STRINGS;
 
 	pcbp->pcb_fsr = FPC_UEN;
-	bzero(pcbp->pcb_freg, sizeof(pcbp->pcb_freg));
+	memset(pcbp->pcb_freg, 0, sizeof(pcbp->pcb_freg));
 }
 
 /*
@@ -1015,7 +1015,7 @@ alloc_pages(pages)
 {
 	paddr_t p = avail_start;
 	avail_start += pages * NBPG;
-	bzero((caddr_t) p, pages * NBPG);
+	memset((caddr_t) p, 0, pages * NBPG);
 	return(p);
 }
 
@@ -1357,7 +1357,7 @@ cpu_reset()
 	lprd(sp, 0x2000);
 
 	/* Copy start of ROM. */
-	bcopy((void *)0x10000000, (void *)0, 0x1f00);
+	memcpy((void *)0, (void *)0x10000000, 0x1f00);
 
 	/* Jump into ROM copy. */
 	__asm __volatile("jump @0");

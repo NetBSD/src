@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_handler.c,v 1.9 1998/09/02 19:17:12 matthias Exp $	*/
+/*	$NetBSD: ieee_handler.c,v 1.10 1998/09/12 19:14:58 matthias Exp $	*/
 
 /* 
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -355,7 +355,7 @@ static void store_result(struct operand *op)
   }
   else {
     /* Register */
-    bcopy((char *) &op->data, (char *)op->where.addr, op->size);
+    memcpy((char *)op->where.addr, (char *) &op->data, op->size);
   }
 }
 

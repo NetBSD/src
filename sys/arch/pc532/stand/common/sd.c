@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.1 1997/05/17 13:56:11 matthias Exp $	*/
+/*	$NetBSD: sd.c,v 1.2 1998/09/12 19:15:00 matthias Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -101,7 +101,7 @@ sdgetinfo(ss)
 	int sdstrategy(), i, err;
 
 	lp = &sd_softc[ss->sc_ctlr][ss->sc_unit].sc_label;
-	bzero((caddr_t)lp, sizeof *lp);
+	memset((caddr_t)lp, 0, sizeof *lp);
 	lp->d_secsize = DEV_BSIZE;
 	lp->d_secpercyl = 1;
 	lp->d_npartitions = MAXPARTITIONS;

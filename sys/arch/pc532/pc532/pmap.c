@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.29 1998/09/02 19:17:17 matthias Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30 1998/09/12 19:14:59 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -748,7 +748,7 @@ pmap_create(size)
 		return NULL;
 
 	pmap = (pmap_t) malloc(sizeof *pmap, M_VMPMAP, M_WAITOK);
-	bzero(pmap, sizeof(*pmap));
+	memset(pmap, 0, sizeof(*pmap));
 	pmap_pinit(pmap);
 	return pmap;
 }
@@ -1673,7 +1673,7 @@ pmap_dump_pvlist(phys, m)
 
 /*
  *	pmap_zero_page zeros the specified by mapping it into
- *	virtual memory and using bzero to clear its contents.
+ *	virtual memory and using memset to clear its contents.
  */
 void
 pmap_zero_page(phys)
@@ -1688,12 +1688,12 @@ pmap_zero_page(phys)
 	pmap_dump_pvlist(phys, "pmap_zero_page: phys");
 	*CMAP2 = (phys & PG_FRAME) | PG_V | PG_KW /*| PG_N*/;
 	tlbflush_entry(CADDR2);
-	bzero(CADDR2, NBPG);
+	memset(CADDR2, 0, NBPG);
 }
 
 /*
  *	pmap_copy_page copies the specified page by mapping
- *	it into virtual memory and using bcopy to copy its
+ *	it into virtual memory and using movsdnu to copy its
  *	contents.
  */
 void
