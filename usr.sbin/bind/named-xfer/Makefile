@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1999/11/20 19:47:58 veego Exp $
+#	$NetBSD: Makefile,v 1.5 1999/11/21 16:26:03 itojun Exp $
 
 .include "../Makefile.inc"
 .PATH:	${BIND_DIST_DIR}/bin/named-xfer ${BIND_DIST_DIR}/bin/named \
@@ -7,6 +7,8 @@
 PROG=	named-xfer
 SRCS=	${PROG}.c db_glue.c ns_glue.c tmp_version.c
 CPPFLAGS+= ${INCLUDE} -I${.OBJDIR}/../named
+# how to deal with this in a clean manner??
+CPPFLAGS+= -I${.CURDIR}/../named/obj
 LDADD=	${LIBRARY}
 CLEANFILES+=	tmp_version.c
 MAN=	${PROG}.8
