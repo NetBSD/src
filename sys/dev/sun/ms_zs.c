@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_zs.c,v 1.6 2001/12/09 12:02:06 pk Exp $	*/
+/*	$NetBSD: ms_zs.c,v 1.7 2002/09/27 20:41:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_zs.c,v 1.6 2001/12/09 12:02:06 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_zs.c,v 1.7 2002/09/27 20:41:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ int	ms_zs_bps = MS_DEFAULT_BPS;
 static int	ms_zs_match(struct device *, struct cfdata *, void *);
 static void	ms_zs_attach(struct device *, struct device *, void *);
 
-struct cfattach ms_zs_ca = {
+const struct cfattach ms_zs_ca = {
 	sizeof(struct ms_softc), ms_zs_match, ms_zs_attach
 };
 

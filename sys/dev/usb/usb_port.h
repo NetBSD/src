@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.56 2002/07/11 21:14:34 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.57 2002/09/27 20:42:01 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -133,7 +133,7 @@ int __CONCAT(dname,_activate)(struct device *, enum devact); \
 \
 extern struct cfdriver __CONCAT(dname,_cd); \
 \
-struct cfattach __CONCAT(dname,_ca) = { \
+const struct cfattach __CONCAT(dname,_ca) = { \
 	sizeof(struct __CONCAT(dname,_softc)), \
 	__CONCAT(dname,_match), \
 	__CONCAT(dname,_attach), \
@@ -316,7 +316,7 @@ struct cfdriver __CONCAT(dname,_cd) = { \
 	NULL, #dname, DV_DULL \
 }; \
 \
-struct cfattach __CONCAT(dname,_ca) = { \
+const struct cfattach __CONCAT(dname,_ca) = { \
 	sizeof(struct __CONCAT(dname,_softc)), \
 	__CONCAT(dname,_match), \
 	__CONCAT(dname,_attach), \

@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.15 2001/11/13 06:26:09 lukem Exp $ */
+/* $NetBSD: bba.c,v 1.16 2002/09/27 20:41:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 /* maxine/alpha baseboard audio (bba) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.15 2001/11/13 06:26:09 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.16 2002/09/27 20:41:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ struct bba_softc {
 int	bba_match __P((struct device *, struct cfdata *, void *));
 void	bba_attach __P((struct device *, struct device *, void *));
 
-struct cfattach bba_ca = {
+const struct cfattach bba_ca = {
 	sizeof(struct bba_softc), bba_match, bba_attach
 };
 

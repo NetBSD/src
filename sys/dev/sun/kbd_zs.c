@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_zs.c,v 1.10 2001/12/09 12:03:32 pk Exp $	*/
+/*	$NetBSD: kbd_zs.c,v 1.11 2002/09/27 20:41:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd_zs.c,v 1.10 2001/12/09 12:03:32 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd_zs.c,v 1.11 2002/09/27 20:41:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ static int	kbd_zs_match(struct device *, struct cfdata *, void *);
 static void	kbd_zs_attach(struct device *, struct device *, void *);
 static void	kbd_zs_write_data __P((struct kbd_softc *, int));
 
-struct cfattach kbd_zs_ca = {
+const struct cfattach kbd_zs_ca = {
 	sizeof(struct kbd_softc), kbd_zs_match, kbd_zs_attach
 };
 

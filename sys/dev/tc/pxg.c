@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxg.c,v 1.10 2002/03/17 19:41:02 atatat Exp $	*/
+/* 	$NetBSD: pxg.c,v 1.11 2002/09/27 20:41:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.10 2002/03/17 19:41:02 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.11 2002/09/27 20:41:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ struct pxg_softc {
 	struct	stic_info *pxg_si;
 };
 
-struct cfattach pxg_ca = {
+const struct cfattach pxg_ca = {
 	sizeof(struct pxg_softc), pxg_match, pxg_attach
 };
 

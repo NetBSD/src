@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tc.c,v 1.19 2001/11/15 09:48:19 lukem Exp $ */
+/* $NetBSD: asc_tc.c,v 1.20 2002/09/27 20:41:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc_tc.c,v 1.19 2001/11/15 09:48:19 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tc.c,v 1.20 2002/09/27 20:41:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ struct asc_softc {
 static int  asc_tc_match __P((struct device *, struct cfdata *, void *));
 static void asc_tc_attach __P((struct device *, struct device *, void *));
 
-struct cfattach asc_tc_ca = {
+const struct cfattach asc_tc_ca = {
 	sizeof(struct asc_softc), asc_tc_match, asc_tc_attach
 };
 

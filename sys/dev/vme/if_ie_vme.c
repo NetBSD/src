@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.14 2001/11/13 06:17:07 lukem Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.15 2002/09/27 20:42:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles D. Cranor
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.14 2001/11/13 06:17:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.15 2002/09/27 20:42:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,7 +244,7 @@ struct ie_vme_softc {
 	bus_space_handle_t ievh;
 };
 
-struct cfattach ie_vme_ca = {
+const struct cfattach ie_vme_ca = {
 	sizeof(struct ie_vme_softc), ie_vme_match, ie_vme_attach
 };
 

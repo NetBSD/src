@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.66 2002/09/27 15:37:40 provos Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.67 2002/09/27 20:42:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.66 2002/09/27 15:37:40 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.67 2002/09/27 20:42:08 thorpej Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_compat_netbsd.h"
@@ -143,13 +143,13 @@ static void wsdisplay_emul_attach(struct device *, struct device *, void *);
 static int wsdisplay_noemul_match(struct device *, struct cfdata *, void *);
 static void wsdisplay_noemul_attach(struct device *, struct device *, void *);
 
-struct cfattach wsdisplay_emul_ca = {
+const struct cfattach wsdisplay_emul_ca = {
 	sizeof (struct wsdisplay_softc),
 	wsdisplay_emul_match,
 	wsdisplay_emul_attach,
 };
  
-struct cfattach wsdisplay_noemul_ca = {
+const struct cfattach wsdisplay_noemul_ca = {
 	sizeof (struct wsdisplay_softc),
 	wsdisplay_noemul_match,
 	wsdisplay_noemul_attach,

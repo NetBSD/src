@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.53 2002/09/27 03:18:23 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.54 2002/09/27 20:42:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -179,7 +179,7 @@ struct cfparent {
  */
 struct cfdata {
 	const char *cf_name;		/* driver name */
-	struct	cfattach *cf_attach;	/* config attachment */
+	const struct cfattach *cf_attach;/* config attachment */
 	short	cf_unit;		/* unit number */
 	short	cf_fstate;		/* finding state (below) */
 	int	*cf_loc;		/* locators (machine dependent) */

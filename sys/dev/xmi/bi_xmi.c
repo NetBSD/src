@@ -1,4 +1,4 @@
-/*	$NetBSD: bi_xmi.c,v 1.2 2001/11/13 06:08:32 lukem Exp $	*/
+/*	$NetBSD: bi_xmi.c,v 1.3 2002/09/27 20:42:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bi_xmi.c,v 1.2 2001/11/13 06:08:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bi_xmi.c,v 1.3 2002/09/27 20:42:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -83,7 +83,7 @@ bi_xmi_attach(struct device *parent, struct device *self, void *aux)
 	bi_attach(sc);
 }
 
-struct cfattach bi_xmi_ca = {
+const struct cfattach bi_xmi_ca = {
 	sizeof(struct bi_softc), bi_xmi_match, bi_xmi_attach
 };
 

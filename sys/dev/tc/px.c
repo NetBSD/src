@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.14 2002/06/02 14:44:46 drochner Exp $	*/
+/* 	$NetBSD: px.c,v 1.15 2002/09/27 20:41:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.14 2002/06/02 14:44:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.15 2002/09/27 20:41:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ struct px_softc {
 	volatile u_int32_t	*px_qpoll[PX_BUF_COUNT];
 };
 
-struct cfattach px_ca = {
+const struct cfattach px_ca = {
 	sizeof(struct px_softc), px_match, px_attach
 };
 

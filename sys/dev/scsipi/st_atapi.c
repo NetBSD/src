@@ -1,4 +1,4 @@
-/*	$NetBSD: st_atapi.c,v 1.8 2002/04/23 20:41:20 bouyer Exp $ */
+/*	$NetBSD: st_atapi.c,v 1.9 2002/09/27 20:41:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Manuel Bouyer.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_atapi.c,v 1.8 2002/04/23 20:41:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_atapi.c,v 1.9 2002/09/27 20:41:49 thorpej Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -54,7 +54,7 @@ int	st_atapibus_mode_sense __P((struct st_softc *, int));
 int	st_atapibus_mode_select __P((struct st_softc *, int));
 int	st_atapibus_do_ms __P((struct st_softc *, int, void *, int, int));
 
-struct cfattach st_atapibus_ca = {
+const struct cfattach st_atapibus_ca = {
 	sizeof(struct st_softc), st_atapibus_match, st_atapibus_attach,
 	stdetach, stactivate
 };

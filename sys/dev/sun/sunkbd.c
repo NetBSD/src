@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.9 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.10 2002/09/27 20:41:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.9 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.10 2002/09/27 20:41:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ int	sunkbdstart(struct tty *);
 /* Default keyboard baud rate */
 int	sunkbd_bps = KBD_DEFAULT_BPS;
 
-struct cfattach kbd_ca = {
+const struct cfattach kbd_ca = {
 	sizeof(struct kbd_softc), sunkbd_match, sunkbd_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: st_scsi.c,v 1.7 2001/12/07 11:26:31 yamt Exp $ */
+/*	$NetBSD: st_scsi.c,v 1.8 2002/09/27 20:41:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.7 2001/12/07 11:26:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.8 2002/09/27 20:41:50 thorpej Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -81,7 +81,7 @@ int	st_scsibus_mode_sense __P((struct st_softc *, int));
 int	st_scsibus_mode_select __P((struct st_softc *, int));
 int	st_scsibus_cmprss __P((struct st_softc *, int, int));
 
-struct cfattach st_scsibus_ca = {
+const struct cfattach st_scsibus_ca = {
 	sizeof(struct st_softc), st_scsibus_match, st_scsibus_attach,
 	stdetach, stactivate
 };
