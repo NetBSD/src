@@ -1,4 +1,4 @@
-/*	$NetBSD: post.c,v 1.8 2001/06/13 10:45:59 wiz Exp $	*/
+/*	$NetBSD: post.c,v 1.9 2002/02/04 13:02:06 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -49,8 +49,6 @@ post_menu(MENU *menu)
 		return E_NOT_CONNECTED;
 	if (*menu->items == NULL)
 		return E_NOT_CONNECTED;
-	if (menu->menu_win == NULL)
-		return E_BAD_ARGUMENT;
 
 	menu->in_init = 1;
 	menu->cur_item = 0; /* reset current item in case it was set before */
@@ -68,18 +66,7 @@ post_menu(MENU *menu)
 
 	menu->in_init = 0;
 
-	if (menu->menu_subwin == NULL) {
-		menu->we_created = 1;
-		menu->menu_subwin = derwin(menu->menu_win, menu->rows,
-					   menu->cols * menu->max_item_width
-					   + menu->cols, 0, 0);
-		if (menu->menu_subwin == NULL) {
-			menu->we_created = 0;
-			return E_SYSTEM_ERROR;
-		}
-	}
-
-	getmaxyx(menu->menu_subwin, maxy, maxx);
+	getmaxyx(menu->scrwin, maxy, maxx);
 	if ((maxx == ERR) || (maxy == ERR)) return E_SYSTEM_ERROR;
 
 	if ((menu->cols * menu->max_item_width + menu->cols - 1) > maxx)
@@ -107,11 +94,6 @@ unpost_menu(MENU *menu)
 		return E_NOT_POSTED;
 	if (menu->in_init == 1)
 		return E_BAD_STATE;
-	if (menu->menu_subwin == NULL)
-		return E_SYSTEM_ERROR;
-	if (menu->menu_win == NULL)
-		return E_SYSTEM_ERROR;
-
 	if (menu->item_term != NULL)
 		menu->item_term(menu);
 
@@ -119,13 +101,8 @@ unpost_menu(MENU *menu)
 		menu->menu_term(menu);
 
 	menu->posted = 0;
-	werase(menu->menu_subwin);
-	wrefresh(menu->menu_subwin);
-	if (menu->we_created == 1) {
-		delwin(menu->menu_subwin);
-		menu->menu_subwin = NULL;
-	}
-	wrefresh(menu->menu_win);
+	werase(menu->scrwin);
+	wrefresh(menu->scrwin);
 	return E_OK;
 }
 
