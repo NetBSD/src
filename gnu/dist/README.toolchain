@@ -1,9 +1,11 @@
-$NetBSD: README.toolchain,v 1.1 2000/07/26 00:40:02 tv Exp $
+$NetBSD: README.toolchain,v 1.2 2001/01/12 01:43:57 hubertf Exp $
 
 
 HOW TO BUILD A CROSS COMPILER
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 [Section to be written.]
+
+See also: http://www.netbsd.org/Documentation/cross/
 
 
 IMPORTED VERSIONS
