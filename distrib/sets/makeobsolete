@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeobsolete,v 1.17 2003/02/20 11:40:29 lukem Exp $
+# $NetBSD: makeobsolete,v 1.18 2003/09/21 19:26:05 tron Exp $
 #
 # Print out the obsolete files for a set
 # Usage: makeobsolete [-b] [-x] [-a arch] [-m machine] [-s setsdir] \
@@ -16,6 +16,7 @@ nlists="base comp etc games man misc text"
 xlists="xbase xcomp xcontrib xfont xserver xmisc"
 lists=$nlists
 target=./dist
+have_gcc3="`${make} print_have_gcc3`"
 
 # handle args
 while : ; do
@@ -97,6 +98,9 @@ for setname in $lists; do
 	fi
 	if [ -f $setd/lists/$setname/obsolete.${machine} ]; then
 		awk -- '{print $1}' $setd/lists/$setname/obsolete.${machine}
+	fi
+	if [ "$have_gcc3" = yes -a -f $setd/lists/$setname/obsolete.gcc ]; then
+		awk -- '{print $1}' $setd/lists/$setname/obsolete.gcc
 	fi
 	) | egrep -v '^#' | sort -ru > $file
 	if [ ! -s $file ] ; then
