@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.7 1999/06/06 03:13:13 thorpej Exp $
+#	$NetBSD: Makefile,v 1.8 2000/06/07 14:34:40 bouyer Exp $
 
 PROG=	rpc.lockd
-SRCS=	nlm_prot_svc.c lockd.c lock_proc.c
+SRCS=	nlm_prot_svc.c lockd.c lock_proc.c lockd_lock.c
 MAN=	rpc.lockd.8
 MLINKS=	rpc.lockd.8 lockd.8
 
