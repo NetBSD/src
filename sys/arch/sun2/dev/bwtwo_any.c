@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_any.c,v 1.2 2001/04/10 12:44:12 fredette Exp $ */
+/*	$NetBSD: bwtwo_any.c,v 1.3 2001/06/27 02:59:27 fredette Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -136,13 +136,17 @@ bwtwomatch_any(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct mainbus_attach_args *ma = aux;
+	bus_space_handle_t bh;
+	int matched;
 
-	return (bus_space_probe(ca->ca_bustag, 0, ca->ca_paddr,
-				4,	/* probe size */
-				0,	/* offset */
-				0,	/* flags */
-				NULL, NULL));
+	/* Make sure there is something there... */
+	if (bus_space_map(ma->ma_bustag, ma->ma_paddr + BWREG_REG, sizeof(struct bwtworeg), 
+			  0, &bh))
+		return (0);
+	matched = (bus_space_peek_1(ma->ma_bustag, bh, 0, NULL) == 0);
+	bus_space_unmap(ma->ma_bustag, bh, sizeof(struct bwtworeg));
+	return (matched);
 }
 
 static void
@@ -152,16 +156,16 @@ bwtwoattach_any(parent, self, aux)
 {
 	struct bwtwosun2_softc *scsun2 = (struct bwtwosun2_softc *)self;
 	struct bwtwo_softc *sc = &scsun2->sc;
-	struct confargs *ca = aux;
+	struct mainbus_attach_args *ma = aux;
 	struct fbdevice *fb = &sc->sc_fb;
 	bus_space_handle_t bh;
 	int isconsole;
 	char *name;
 
 	/* Remember cookies for bwtwo_mmap() */
-	sc->sc_bustag = ca->ca_bustag;
+	sc->sc_bustag = ma->ma_bustag;
 	sc->sc_btype = (bus_type_t)0;
-	sc->sc_paddr = (bus_addr_t)ca->ca_paddr;
+	sc->sc_paddr = ma->ma_paddr;
 
 	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
 	fb->fb_type.fb_depth = 1;
@@ -178,7 +182,7 @@ bwtwoattach_any(parent, self, aux)
 	sc->sc_set_video = bwtwo_set_video_sun2;
 
 	/* Map the registers. */
-	if (bus_space_map(ca->ca_bustag, ca->ca_paddr + BWREG_REG, sizeof(struct bwtworeg), 
+	if (bus_space_map(ma->ma_bustag, ma->ma_paddr + BWREG_REG, sizeof(struct bwtworeg), 
 	    		  0, &scsun2->bh)) {
 		printf("%s: cannot map regs\n", self->dv_xname);
 		return;
@@ -186,7 +190,7 @@ bwtwoattach_any(parent, self, aux)
 
 	if (isconsole) {
 		int ramsize = fb->fb_type.fb_height * fb->fb_linebytes;
-		if (bus_space_map(ca->ca_bustag, ca->ca_paddr + sc->sc_pixeloffset,
+		if (bus_space_map(ma->ma_bustag, ma->ma_paddr + sc->sc_pixeloffset,
 				  ramsize,
 				  BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 			printf("%s: cannot map pixels\n", self->dv_xname);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tod.c,v 1.2 2001/06/11 21:33:47 fredette Exp $	*/
+/*	$NetBSD: tod.c,v 1.3 2001/06/27 02:59:26 fredette Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -93,21 +93,21 @@ tod_obio_match(parent, cf, args)
 	struct cfdata *cf;
     void *args;
 {
-	struct confargs *ca = args;
+	struct obio_attach_args *oba = args;
+	bus_space_handle_t bh;
+	int matched;
 
 	/* This driver only supports one unit. */
 	if (cf->cf_unit != 0)
 		return (0);
 
 	/* Make sure there is something there... */
-	if (!bus_space_probe(ca->ca_bustag, 0, ca->ca_paddr,
-				1,	/* probe size */
-				0,	/* offset */
-				0,	/* flags */
-				NULL, NULL))
+	if (bus_space_map(oba->oba_bustag, oba->oba_paddr, MM58167REG_BANK_SZ, 
+			  0, &bh))
 		return (0);
-
-	return (1);
+	matched = (bus_space_peek_1(oba->oba_bustag, bh, 0, NULL) == 0);
+	bus_space_unmap(oba->oba_bustag, bh, MM58167REG_BANK_SZ);
+	return (matched);
 }
 
 static void
@@ -116,14 +116,14 @@ tod_obio_attach(parent, self, args)
 	struct device *self;
 	void *args;
 {
-	struct confargs *ca = args;
+	struct obio_attach_args *oba = args;
 	struct mm58167_softc *sc;
 
 	sc = (struct mm58167_softc *) self;
 
 	/* Map the device. */
-	sc->mm58167_regt = ca->ca_bustag;
-	if (bus_space_map(ca->ca_bustag, ca->ca_paddr, MM58167REG_BANK_SZ, 0, &sc->mm58167_regh))
+	sc->mm58167_regt = oba->oba_bustag;
+	if (bus_space_map(oba->oba_bustag, oba->oba_paddr, MM58167REG_BANK_SZ, 0, &sc->mm58167_regh))
 		panic("tod_obio_attach: can't map");
 
 	tod_attach(sc);
