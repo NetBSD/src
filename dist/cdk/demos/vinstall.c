@@ -84,7 +84,7 @@ int main (int argc, char **argv)
    if (filename == 0)
    {
       fprintf (stderr, "Usage: %s %s\n", argv[0], FPUsage);
-      exit (-1);
+      exit (1);
    }
 
    /* Open the file list file and read it in. */
@@ -92,7 +92,7 @@ int main (int argc, char **argv)
    if (count == 0)
    {
       fprintf (stderr, "%s: Input filename <%s> is empty.\n", argv[0], filename);
-      exit (-1);
+      exit (1);
    }
 
   /*
@@ -191,7 +191,7 @@ int main (int argc, char **argv)
       {
 	 freeChar (fileList[x]);
       }
-      exit (-1);
+      exit (1);
    }
 
   /*
@@ -211,7 +211,7 @@ int main (int argc, char **argv)
       {
 	 freeChar (fileList[x]);
       }
-      exit (-2);
+      exit (2);
    }
 
    /* Create the histogram. */

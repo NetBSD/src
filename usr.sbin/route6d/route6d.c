@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.25 2001/03/08 03:24:47 itojun Exp $	*/
+/*	$NetBSD: route6d.c,v 1.26 2001/04/06 11:13:51 wiz Exp $	*/
 /*	$KAME: route6d.c,v 1.60 2001/03/08 02:15:42 onoe Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.25 2001/03/08 03:24:47 itojun Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.26 2001/04/06 11:13:51 wiz Exp $");
 #endif
 
 #include <stdio.h>
@@ -1532,7 +1532,7 @@ rtrecv()
 
 	if ((len = read(rtsock, buf, sizeof(buf))) < 0) {
 		perror("read from rtsock");
-		exit(-1);
+		exit(1);
 	}
 	if (len < sizeof(*rtm)) {
 		trace(1, "short read from rtsock: %d (should be > %lu)\n",
@@ -2761,12 +2761,12 @@ getroute(np, gw)
 		if (errno == ESRCH)	/* No such route found */
 			return NULL;
 		perror("write to rtsock");
-		exit(-1);
+		exit(1);
 	}
 	do {
 		if ((len = read(rtsock, buf, sizeof(buf))) < 0) {
 			perror("read from rtsock");
-			exit(-1);
+			exit(1);
 		}
 		rtm = (struct rt_msghdr *)buf;
 	} while (rtm->rtm_seq != myseq || rtm->rtm_pid != pid);

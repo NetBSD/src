@@ -233,7 +233,7 @@ main(ac, av)
 	exit(0);
 
     bad:
-	exit(-1);
+	exit(1);
 }
 
 static int

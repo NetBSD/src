@@ -1,4 +1,4 @@
-/*	$NetBSD: rexecd.c,v 1.7 2000/10/10 19:54:38 is Exp $	*/
+/*	$NetBSD: rexecd.c,v 1.8 2001/04/06 11:13:52 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)rexecd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rexecd.c,v 1.7 2000/10/10 19:54:38 is Exp $");
+__RCSID("$NetBSD: rexecd.c,v 1.8 2001/04/06 11:13:52 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -219,13 +219,13 @@ doit(f, fromp)
 			fds[1].fd = pv[0];
 			fds[0].events = fds[1].events = POLLIN;
 			if (ioctl(pv[1], FIONBIO, (char *)&one) < 0)
-				_exit(-1);
+				_exit(1);
 			/* should set s nbio! */
 			do {
 				if (poll(fds, 2, 0) < 0) {
 					close(s);
 					close(pv[0]);
-					_exit(-1);
+					_exit(1);
 				}
 				if (fds[0].revents & POLLIN) {
 					if (read(s, &sig, 1) <= 0)
