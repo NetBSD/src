@@ -1,4 +1,4 @@
-.\"	$NetBSD: cons.9,v 1.9 2003/02/14 01:05:22 perry Exp $
+.\"	$NetBSD: cons.9,v 1.10 2003/04/01 16:53:05 perry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,19 +36,28 @@
 .Os
 .Sh NAME
 .Nm cnbell ,
+.Nm cnflush,
 .Nm cngetc ,
 .Nm cngetsn ,
+.Nm cnhalt ,
 .Nm cnpollc ,
 .Nm cnputc
+.\" void	cninit __P((void));
+.\" void	cnrint __P((void));
+.\"void	nullcnpollc __P((dev_t, int));
 .Nd console access interface
 .Sh SYNOPSIS
 .Fd #include \*[Lt]dev/cons.h\*[Gt]
 .Ft void
 .Fn cnbell "u_int pitch" "u_int period" "u_int volume"
+.Ft void
+.Fn cnflush "void"
 .Ft int
 .Fn cngetc "void"
 .Ft int
 .Fn cngetsn "char *cp" "int size"
+.Ft void
+.Fn cnhalt "void"
 .Ft void
 .Fn cnpollc "int on"
 .Ft void
@@ -81,6 +90,8 @@ milliseconds at given
 Note that the
 .Fa volume
 value is ignored commonly.
+.It Fn cnflush
+Waits for all pending output to finish.
 .It Fn cngetc
 Poll (busy wait) for a input and return the input key.
 Returns 0 if there is no console input device.
@@ -117,6 +128,8 @@ is
 zero-ended before return.
 .Fn cngetsn
 should be used during kernel startup only.
+.It Fn cnhalt
+Terminates the console device (i.e. cleanly shuts down the console hardware.)
 .It Fn cnpollc
 Switch the console driver to polling mode if
 .Fa on
