@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.34 2004/03/15 05:49:18 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.35 2004/03/15 15:30:09 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -202,3 +202,8 @@ sys/netinet/tcp_timer.c			1.66
 
 	callout_ack() was called with wrong argument
 	[he, ticket #1624]
+
+usr.sbin/route6d/route6d.c		1.50
+
+	Need_trigger/idx should be u_int
+	[martin, ticket #1627]
