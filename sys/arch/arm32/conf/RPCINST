@@ -1,4 +1,4 @@
-#	$NetBSD: RPCINST,v 1.25 2000/03/06 03:16:26 mark Exp $
+#	$NetBSD: RPCINST,v 1.25.4.1 2000/08/31 18:16:44 is Exp $
 #
 #	RPCINST -- RiscPC install configuration
 #
@@ -97,7 +97,7 @@ options 	COMPAT_12	# NetBSD 1.2 compatibility.
 
 options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
 #options 	MEMORY_DISK_SIZE=0	# Size in blocks
-options 	MINIROOTSIZE=3400	# Size in blocks
+options 	MINIROOTSIZE=3800	# Size in blocks
 options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
 # Miscellaneous kernel options
