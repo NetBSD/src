@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.108 2003/10/19 01:44:48 simonb Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.109 2003/11/01 17:00:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.108 2003/10/19 01:44:48 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.109 2003/11/01 17:00:49 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2367,7 +2367,7 @@ again:
 		if (sc->sc_phase != MESSAGE_IN_PHASE) {
 			int i = (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF);
  			/*
-			 * Things are seriously fucked up.
+			 * Things are seriously screwed up.
 			 * Pull the brakes, i.e. reset
 			 */
 			printf("%s: target didn't send tag: %d bytes in fifo\n",
@@ -2403,7 +2403,7 @@ again:
 			sc->sc_state = NCR_RESELECTED;
 			if (sc->sc_phase != MESSAGE_IN_PHASE) {
 				/*
-				 * Things are seriously fucked up.
+				 * Things are seriously screwed up.
 				 * Pull the brakes, i.e. reset
 				 */
 				printf("%s: target didn't identify\n",
