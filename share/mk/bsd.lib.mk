@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.125 1998/02/23 10:09:31 jonathan Exp $
+#	$NetBSD: bsd.lib.mk,v 1.126 1998/03/07 02:02:58 jonathan Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -226,9 +226,9 @@ lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD} \
     ${SHLIB_LDSTARTFILE} ${SHLIB_LDENDFILE}
 	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
 	@rm -f lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
-	$(LD) -x -Bshareable ${SHLIB_SHFLAGS} -o ${.TARGET} \
+	$(LD) -x -shared ${SHLIB_SHFLAGS} -o ${.TARGET} \
 	    ${SHLIB_LDSTARTFILE} \
-	    ${SHLIB_WHOLE} lib${LIB}_pic.a ${SHLIB_NOWHOLE} ${LDADD} \
+	    --whole-archive lib${LIB}_pic.a --no-whole-archive ${LDADD} \
 	    ${SHLIB_LDENDFILE}
 
 LOBJS+=		${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
