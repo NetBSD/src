@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops_30.h,v 1.3 1997/11/05 04:13:27 thorpej Exp $	*/
+/*	$NetBSD: cacheops_30.h,v 1.4 1998/09/02 11:16:32 leo Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -52,10 +52,10 @@ TBIA_30()
 /*
  * Invalidate any TLB entry for given VA (TB Invalidate Single)
  */
-void TBIS_30 __P((vm_offset_t));
+void TBIS_30 __P((vaddr_t));
 extern __inline void
 TBIS_30(va)
-	vm_offset_t	va;
+	vaddr_t	va;
 {
 	__asm __volatile (" pflush #0,#0,%0@;"
 			  " movc   %1,cacr" : : "a" (va), "d" (DC_CLEAR));
