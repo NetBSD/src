@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.h,v 1.3 2000/07/25 22:38:14 pk Exp $	*/
+/*	$NetBSD: clock_subr.h,v 1.4 2000/07/26 11:07:45 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@ void	clock_secs_to_ymdhms __P((time_t, struct clock_ymdhms *));
 #define	TOBCD(x)	(((x) / 10 * 16) + ((x) % 10))
 
 /* Some handy constants. */
-#define SECDAY		86400UL
+#define SECDAY		86400
 #define SECYR		(SECDAY * 365)
 
 
