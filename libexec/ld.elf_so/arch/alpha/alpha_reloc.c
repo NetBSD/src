@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.11 2002/09/06 03:12:05 mycroft Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.12 2002/09/06 13:20:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -182,7 +182,7 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 			 * COPY relocation is not in a shared library.  They
 			 * are allowed only in executable files.
 			 */
-			if (!obj->mainprog) {
+			if (obj->isdynamic) {
 				_rtld_error(
 			"%s: Unexpected R_COPY relocation in shared library",
 				    obj->path);
@@ -214,7 +214,7 @@ _rtld_relocate_plt_lazy(obj, dodebug)
 {
 	const Elf_Rela *rela;
 
-	if (obj->mainprog)
+	if (!obj->isdynamic)
 		return 0;
 
 	for (rela = obj->pltrela; rela < obj->pltrelalim; rela++) {

@@ -77,7 +77,7 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 			 * COPY relocation is not in a shared library.  They
 			 * are allowed only in executable files.
 			 */
-			if (!obj->mainprog) {
+			if (obj->isdynamic) {
 				_rtld_error(
 			"%s: Unexpected R_COPY relocation in shared library",
 				    obj->path);
@@ -109,7 +109,7 @@ _rtld_relocate_plt_lazy(obj, dodebug)
 {
 	const Elf_Rela *rela;
 
-	if (obj->mainprog)
+	if (!obj->isdynamic)
 		return 0;
 
 	for (rela = obj->pltrela; rela < obj->pltrelalim; rela++) {
