@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.2 1999/01/10 18:20:13 christos Exp $	*/
+/*	$NetBSD: crt0.c,v 1.3 1999/01/11 09:34:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -120,11 +120,7 @@ ___start(argc, argv, envp, cleanup, obj, ps_strings)
 	const Obj_Entry *obj;			/* from shared loader */
 	struct ps_strings *ps_strings;
 {
-	char *namep;
-
 	environ = envp;
-
-	miniprintf("argc = %d argv = %p envp = %p cleanup = %p obj = %p ps_strings = %p\n", argc, argv, envp, cleanup, obj, ps_strings);
 
 	if ((__progname = argv[0]) != NULL) {	/* NULL ptr if argc = 0 */
 		if ((__progname = _strrchr(__progname, '/')) == NULL)
@@ -156,7 +152,7 @@ ___start(argc, argv, envp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.2 1999/01/10 18:20:13 christos Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.3 1999/01/11 09:34:17 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 static char *
