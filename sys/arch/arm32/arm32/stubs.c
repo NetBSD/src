@@ -1,4 +1,4 @@
-/* $NetBSD: stubs.c,v 1.10 1996/10/13 03:05:58 christos Exp $ */
+/* $NetBSD: stubs.c,v 1.11 1996/10/15 23:39:30 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -159,29 +159,25 @@ do_mountroot()
 #endif
 
 
-void
-setsoftintr(irqmask)
-	u_int irqmask;
-{
-	u_int oldcpsr;
-
-	oldcpsr = disable_interrupts(I32_bit);
-	soft_interrupts |= irqmask;
-	restore_interrupts(oldcpsr);
-}
-
 /* Eventually this will become macros */
+
+void
+setsoftintr(intrmask)
+	u_int intrmask;
+{
+	atomic_set_bit(&soft_interrupts, intrmask);
+}
 
 void
 setsoftclock()
 {
-	setsoftintr(IRQMASK_SOFTCLOCK);
+	atomic_set_bit(&soft_interrupts, IRQMASK_SOFTCLOCK);
 }
 
 void
 setsoftnet()
 {
-	setsoftintr(IRQMASK_SOFTNET);
+	atomic_set_bit(&soft_interrupts, IRQMASK_SOFTNET);
 }
 
 int astpending;
@@ -252,6 +248,8 @@ u_long	dumpmag = 0x8fca0101;	/* magic number */
 int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
 
+struct pcb dumppcb;
+
 /*
  * This is called by configure to set dumplo and dumpsize.
  * Dumps always skip the first CLBYTES of disk space
@@ -307,7 +305,11 @@ dumpsys()
 	int error;
 	int addr;
 	int block;
+	int len;
 	vm_offset_t dumpspace;
+
+	/* Save registers. */
+	savectx(&dumppcb);
 
 	msgbufmapped = 0;
 	if (dumpdev == NODEV)
@@ -317,6 +319,8 @@ dumpsys()
 		if (dumpsize == 0)
 			return;
 	}
+	if (dumplo < 0)
+		return;
 	printf("\ndumping to dev %x, offset %d\n", (u_int)dumpdev,
 	    (u_int)dumplo);
 
@@ -331,26 +335,40 @@ dumpsys()
 	}
 
 	error = 0;
+	len = 0;
+
 	for (block = 0; block < bootconfig.dramblocks && error == 0; ++block) {
-		for (addr = bootconfig.dram[block].address;
-		    addr < bootconfig.dram[block].address
-		    + bootconfig.dram[block].pages * NBPG; addr += NBPG) {
+		addr = bootconfig.dram[block].address;
+#if NHYDRABUS > 0
+		if (block == 0)
+			addr += NBPG;
+#endif
+		for (;addr < (bootconfig.dram[block].address
+		    + (bootconfig.dram[block].pages * NBPG)); addr += NBPG) {
+		    	if ((len % (1024*1024)) == 0)
+		    		printf("%d ", len / (1024*1024));
 	                pmap_map(dumpspace, addr, addr + NBPG, VM_PROT_READ);
 			error = (*bdevsw[major(dumpdev)].d_dump)(dumpdev, blkno, (caddr_t) dumpspace, NBPG);
 			if (error) break;
 			blkno += btodb(NBPG);
+			len += NBPG;
 		}
 	}
 
+#ifdef notyet
 	if (error == 0 && videomemory.vidm_type == VIDEOMEM_TYPE_VRAM) {
 		for (addr = videomemory.vidm_pbase; addr < videomemory.vidm_pbase
 		    + videomemory.vidm_size; addr += NBPG) {
-     	           pmap_map(dumpspace, addr, addr + NBPG, VM_PROT_READ);
-	                error = (*bdevsw[major(dumpdev)].d_dump)(dumpdev, blkno, (caddr_t) dumpspace, NBPG);
-	                if (error) break;
+		    	if ((len % (1024*1024)) == 0)
+		    		printf("%d ", len / (1024*1024));
+			pmap_map(dumpspace, addr, addr + NBPG, VM_PROT_READ);
+			error = (*bdevsw[major(dumpdev)].d_dump)(dumpdev, blkno, (caddr_t) dumpspace, NBPG);
+			if (error) break;
 			blkno += btodb(NBPG);
+			len += NBPG;
 		}
 	}                         
+#endif
 
 	switch (error) {
 	case ENXIO:
@@ -426,25 +444,6 @@ dump_spl_masks()
 	    spl_masks[SPL_0], spl_masks[SPL_SOFT], spl_masks[SPL_BIO], spl_masks[SPL_NET]);
 	printf("spltty=%08x splclock=%08x splimp=%08x splhigh=%08x\n",
 	    spl_masks[SPL_TTY], spl_masks[SPL_CLOCK], spl_masks[SPL_IMP], spl_masks[SPL_HIGH]);
-}
-
-/*
- * Ok things are broken here. If we lower the spl level to SPL_SOFT
- * then, for the most things work. However wd interrupts start to get
- * lost ... i.e. you either get wdc interrupt lost messages or
- * wdc timeout messages.
- * The fault is the CLKF_FRAME macro uses in kern_clock.c. This
- * currently always returns 1 thus splsoftclock() is always
- * called before calling softclock().
- *
- * This is about to be fixed
- */
-
-int
-splsoftclock()
-{
-	return(lowerspl(SPL_SOFT));
-/*	return(current_spl_level);*/
 }
 
 /* End of stubs.c */
