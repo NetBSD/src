@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.34 1997/11/03 04:34:18 gwr Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.35 1997/11/03 06:16:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -119,42 +119,38 @@
  * Note: must be a power of two!
  */
 #ifndef	ZSTTY_RING_SIZE
-#define	ZSTTY_RING_SIZE	2048
+#define	ZSTTY_RING_SIZE	512
 #endif
 
 /*
  * Make this an option variable one can patch.
  * But be warned:  this must be a power of 2!
  */
-int zstty_rbuf_size = ZSTTY_RING_SIZE;
+u_int zstty_rbuf_size = ZSTTY_RING_SIZE;
 
-/* This should usually be 3/4 of ZSTTY_RING_SIZE */
-int zstty_rbuf_hiwat = (ZSTTY_RING_SIZE - (ZSTTY_RING_SIZE >> 2));
+/* Stop input when 3/4 of the ring is full; restart when only 1/4 is full. */
+u_int zstty_rbuf_hiwat = (ZSTTY_RING_SIZE * 1) / 4;
+u_int zstty_rbuf_lowat = (ZSTTY_RING_SIZE * 3) / 4;
 
 struct zstty_softc {
 	struct	device zst_dev;		/* required first: base device */
 	struct  tty *zst_tty;
 	struct	zs_chanstate *zst_cs;
 
-	int zst_hwflags;	/* see z8530var.h */
-	int zst_swflags;	/* TIOCFLAG_SOFTCAR, ... <ttycom.h> */
+	u_int zst_overflows,
+	      zst_floods,
+	      zst_errors;
 
-	/*
-	 * Printing an overrun error message often takes long enough to
-	 * cause another overrun, so we only print one per second.
-	 */
-	long	zst_rotime;		/* time of last ring overrun */
-	long	zst_fotime;		/* time of last fifo overrun */
+	int zst_hwflags,	/* see z8530var.h */
+	    zst_swflags;	/* TIOCFLAG_SOFTCAR, ... <ttycom.h> */
 
-	/*
-	 * The receive ring buffer.
-	 */
-	int	zst_rbget;	/* ring buffer `get' index */
-	volatile int	zst_rbput;	/* ring buffer `put' index */
-	int	zst_ringmask;
-	int	zst_rbhiwat;
-
-	u_short	*zst_rbuf; /* rr1, data pairs */
+	u_int zst_r_hiwat,
+	      zst_r_lowat;
+	u_char *volatile zst_rbget,
+	       *volatile zst_rbput;
+	volatile u_int zst_rbavail;
+	u_char *zst_rbuf,
+	       *zst_ebuf;
 
 	/*
 	 * The transmit byte count and address are used for pseudo-DMA
@@ -162,20 +158,28 @@ struct zstty_softc {
 	 * to get pending changes done; heldtbc is used for this.  It can
 	 * also be stopped for ^S; this sets TS_TTSTOP in tp->t_state.
 	 */
-	int 	zst_tbc;			/* transmit byte count */
-	u_char *zst_tba;			/* transmit buffer address */
-	int 	zst_heldtbc;		/* held tbc while xmission stopped */
+	u_char *zst_tba;		/* transmit buffer address */
+	u_int zst_tbc,			/* transmit byte count */
+	      zst_heldtbc;		/* held tbc while xmission stopped */
 
 	/* Flags to communicate with zstty_softint() */
-	volatile char zst_rx_blocked;	/* input block at ring */
-	volatile char zst_rx_overrun;	/* ring overrun */
-	volatile char zst_tx_busy;	/* working on an output chunk */
-	volatile char zst_tx_done;	/* done with one output chunk */
-	volatile char zst_tx_stopped;	/* H/W level stop (lost CTS) */
-	volatile char zst_st_check;	/* got a status interrupt */
-	char pad[2];
+	volatile u_char zst_rx_flags,	/* receiver blocked */
+#define	RX_TTY_BLOCKED		0x01
+#define	RX_TTY_OVERFLOWED	0x02
+#define	RX_IBUF_BLOCKED		0x04
+#define	RX_IBUF_OVERFLOWED	0x08
+#define	RX_ANY_BLOCK		0x0f
+			zst_tx_busy,	/* working on an output chunk */
+			zst_tx_done,	/* done with one output chunk */
+			zst_tx_stopped,	/* H/W level stop (lost CTS) */
+			zst_st_check,	/* got a status interrupt */
+			zst_rx_ready;
 };
 
+/* Macros to clear/set/test flags. */
+#define SET(t, f)	(t) |= (f)
+#define CLR(t, f)	(t) &= ~(f)
+#define ISSET(t, f)	((t) & (f))
 
 /* Definition of the driver for autoconfig. */
 #ifdef	__BROKEN_INDIRECT_CONFIG
@@ -276,7 +280,7 @@ zstty_attach(parent, self, aux)
 	if (zst->zst_swflags)
 		printf(" flags 0x%x", zst->zst_swflags);
 
-	if (zst->zst_hwflags & ZS_HWFLAG_CONSOLE)
+	if (ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE))
 		printf(" (console)");
 	else {
 #ifdef KGDB
@@ -297,24 +301,26 @@ zstty_attach(parent, self, aux)
 	printf("\n");
 
 	tp = ttymalloc();
-	tp->t_dev = dev;
 	tp->t_oproc = zsstart;
 	tp->t_param = zsparam;
 	tp->t_hwiflow = zshwiflow;
 	tty_attach(tp);
 
 	zst->zst_tty = tp;
-	zst->zst_rbhiwat =  zstty_rbuf_size;	/* impossible value */
-	zst->zst_ringmask = zstty_rbuf_size - 1;
-	zst->zst_rbuf = malloc(zstty_rbuf_size * sizeof(zst->zst_rbuf[0]),
-			      M_DEVBUF, M_WAITOK);
+	zst->zst_rbuf = malloc(zstty_rbuf_size << 1, M_DEVBUF, M_WAITOK);
+	zst->zst_ebuf = zst->zst_rbuf + (zstty_rbuf_size << 1);
+	/* Disable the high water mark. */
+	zst->zst_r_hiwat = 0;
+	zst->zst_r_lowat = 0;
+	zst->zst_rbget = zst->zst_rbput = zst->zst_rbuf;
+	zst->zst_rbavail = zstty_rbuf_size;
 
 	/* XXX - Do we need an MD hook here? */
 
 	/*
 	 * Hardware init
 	 */
-	if (zst->zst_hwflags & ZS_HWFLAG_CONSOLE) {
+	if (ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE)) {
 		/* Call zsparam similar to open. */
 		struct termios t;
 
@@ -336,6 +342,7 @@ zstty_attach(parent, self, aux)
 		/* Make sure zsparam will see changes. */
 		tp->t_ospeed = 0;
 		(void) zsparam(tp, &t);
+
 		/* Make sure DTR is on now. */
 		zs_modem(zst, 1);
 	} else {
@@ -346,6 +353,7 @@ zstty_attach(parent, self, aux)
 		s = splzs();
 		zs_write_reg(cs, 9, reset);
 		splx(s);
+
 		/* Will raise DTR in open. */
 		zs_modem(zst, 0);
 	}
@@ -381,8 +389,8 @@ zsopen(dev, flags, mode, p)
 	int mode;
 	struct proc *p;
 {
-	register struct tty *tp;
-	register struct zs_chanstate *cs;
+	struct tty *tp;
+	struct zs_chanstate *cs;
 	struct zstty_softc *zst;
 	int error, s, s2, unit;
 
@@ -399,16 +407,23 @@ zsopen(dev, flags, mode, p)
 	if (tp == NULL)
 		return (EBUSY);
 
-	if ((tp->t_state & TS_ISOPEN) != 0 &&
-	    (tp->t_state & TS_XCLUDE) != 0 &&
+	if (ISSET(tp->t_state, TS_ISOPEN) &&
+	    ISSET(tp->t_state, TS_XCLUDE) &&
 	    p->p_ucred->cr_uid != 0)
 		return (EBUSY);
 
 	s = spltty();
 
-	if ((tp->t_state & TS_ISOPEN) == 0) {
-		/* First open. */
+	/* We need to set this early for the benefit of zssoft(). */
+	SET(tp->t_state, TS_WOPEN);
+
+	/*
+	 * Do the following iff this is a first open.
+	 */
+	if (!ISSET(tp->t_state, TS_ISOPEN)) {
 		struct termios t;
+
+		tp->t_dev = dev;
 
 		s2 = splzs();
 
@@ -422,19 +437,18 @@ zsopen(dev, flags, mode, p)
 		splx(s2);
 
 		/*
-		 * Setup the "new" parameters in t.
-		 * Can not use tp->t because zsparam
-		 * deals only with what has changed.
+		 * Initialize the termios status to the defaults.  Add in the
+		 * sticky bits from TIOCSFLAGS.
 		 */
 		t.c_ispeed = 0;
 		t.c_ospeed = cs->cs_defspeed;
 		t.c_cflag = cs->cs_defcflag;
-		if (zst->zst_swflags & TIOCFLAG_CLOCAL)
-			t.c_cflag |= CLOCAL;
-		if (zst->zst_swflags & TIOCFLAG_CRTSCTS)
-			t.c_cflag |= CRTSCTS;
-		if (zst->zst_swflags & TIOCFLAG_MDMBUF)
-			t.c_cflag |= MDMBUF;
+		if (ISSET(zst->zst_swflags, TIOCFLAG_CLOCAL))
+			SET(t.c_cflag, CLOCAL);
+		if (ISSET(zst->zst_swflags, TIOCFLAG_CRTSCTS))
+			SET(t.c_cflag, CRTSCTS);
+		if (ISSET(zst->zst_swflags, TIOCFLAG_MDMBUF))
+			SET(t.c_cflag, MDMBUF);
 		/* Make sure zsparam will see changes. */
 		tp->t_ospeed = 0;
 		(void) zsparam(tp, &t);
@@ -443,10 +457,14 @@ zsopen(dev, flags, mode, p)
 		 * so we just need to do: iflag, oflag, lflag, cc
 		 * For "raw" mode, just leave all zeros.
 		 */
-		if ((zst->zst_hwflags & ZS_HWFLAG_RAW) == 0) {
+		if (!ISSET(zst->zst_hwflags, ZS_HWFLAG_RAW)) {
 			tp->t_iflag = TTYDEF_IFLAG;
 			tp->t_oflag = TTYDEF_OFLAG;
 			tp->t_lflag = TTYDEF_LFLAG;
+		} else {
+			tp->t_iflag = 0;
+			tp->t_oflag = 0;
+			tp->t_lflag = 0;
 		}
 		ttychars(tp);
 		ttsetwater(tp);
@@ -463,9 +481,10 @@ zsopen(dev, flags, mode, p)
 		s2 = splzs();
 
 		/* Clear the input ring, and unblock. */
-		zst->zst_rbget = zst->zst_rbput;
+		zst->zst_rbget = zst->zst_rbput = zst->zst_rbuf;
+		zst->zst_rbavail = zstty_rbuf_size;
 		zs_iflush(cs);
-		zst->zst_rx_blocked = 0;
+		CLR(zst->zst_rx_flags, RX_ANY_BLOCK);
 		zs_hwiflow(zst);
 
 		splx(s2);
@@ -473,10 +492,10 @@ zsopen(dev, flags, mode, p)
 	error = 0;
 
 	/* If we're doing a blocking open... */
-	if ((flags & O_NONBLOCK) == 0)
+	if (!ISSET(flags, O_NONBLOCK))
 		/* ...then wait for carrier. */
-		while ((tp->t_state & TS_CARR_ON) == 0 &&
-		    (tp->t_cflag & (CLOCAL | MDMBUF)) == 0) {
+		while (!ISSET(tp->t_state, TS_CARR_ON) &&
+		    !ISSET(tp->t_cflag, CLOCAL | MDMBUF)) {
 			error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
 			    ttopen, 0);
 			if (error) {
@@ -484,14 +503,14 @@ zsopen(dev, flags, mode, p)
 				 * If the open was interrupted and nobody
 				 * else has the device open, then hang up.
 				 */
-				if ((tp->t_state & TS_ISOPEN) == 0) {
+				if (!ISSET(tp->t_state, TS_ISOPEN)) {
 					zs_modem(zst, 0);
-					tp->t_state &= ~TS_WOPEN;
+					CLR(tp->t_state, TS_WOPEN);
 					ttwakeup(tp);
 				}
 				break;
 			}
-			tp->t_state |= TS_WOPEN;
+			SET(tp->t_state, TS_WOPEN);
 		}
 
 	splx(s);
@@ -510,17 +529,13 @@ zsclose(dev, flags, mode, p)
 	int mode;
 	struct proc *p;
 {
-	struct zstty_softc *zst;
-	register struct zs_chanstate *cs;
-	register struct tty *tp;
+	struct zstty_softc *zst = zstty_cd.cd_devs[minor(dev)];
+	struct zs_chanstate *cs = zst->zst_cs;
+	struct tty *tp = zst->zst_tty;
 	int s;
 
-	zst = zstty_cd.cd_devs[minor(dev)];
-	cs = zst->zst_cs;
-	tp = zst->zst_tty;
-
 	/* XXX This is for cons.c. */
-	if ((tp->t_state & TS_ISOPEN) == 0)
+	if (!ISSET(tp->t_state, TS_ISOPEN))
 		return 0;
 
 	(*linesw[tp->t_line].l_close)(tp, flags);
@@ -529,7 +544,7 @@ zsclose(dev, flags, mode, p)
 	s = splzs();
 
 	/* If we were asserting flow control, then deassert it. */
-	zst->zst_rx_blocked = 1;
+	SET(zst->zst_rx_flags, RX_IBUF_BLOCKED);
 	zs_hwiflow(zst);
 
 	splx(s);
@@ -541,7 +556,7 @@ zsclose(dev, flags, mode, p)
 	 * Hang up if necessary.  Wait a bit, so the other side has time to
 	 * notice even if we immediately open the port again.
 	 */
-	if ((tp->t_cflag & HUPCL) != 0) {
+	if (ISSET(tp->t_cflag, HUPCL)) {
 		zs_modem(zst, 0);
 		(void) tsleep(cs, TTIPRI, ttclos, hz);
 	}
@@ -549,7 +564,12 @@ zsclose(dev, flags, mode, p)
 	s = splzs();
 
 	/* Turn off interrupts. */
-	cs->cs_creg[1] = cs->cs_preg[1] = 0;
+#ifdef DDB
+	if (ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE))
+		cs->cs_creg[1] = cs->cs_preg[1] = ZSWR1_RIE | ZSWR1_SIE;
+	else
+#endif
+		cs->cs_creg[1] = cs->cs_preg[1] = 0;
 	zs_write_reg(cs, 1, cs->cs_creg[1]);
 
 	splx(s);
@@ -566,12 +586,10 @@ zsread(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register struct zstty_softc *zst;
-	register struct tty *tp;
+	struct zstty_softc *zst = zstty_cd.cd_devs[minor(dev)];
+	struct tty *tp = zst->zst_tty;
 
-	zst = zstty_cd.cd_devs[minor(dev)];
-	tp = zst->zst_tty;
-	return (linesw[tp->t_line].l_read(tp, uio, flags));
+	return ((*linesw[tp->t_line].l_read)(tp, uio, flags));
 }
 
 int
@@ -580,12 +598,10 @@ zswrite(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register struct zstty_softc *zst;
-	register struct tty *tp;
+	struct zstty_softc *zst = zstty_cd.cd_devs[minor(dev)];
+	struct tty *tp = zst->zst_tty;
 
-	zst = zstty_cd.cd_devs[minor(dev)];
-	tp = zst->zst_tty;
-	return (linesw[tp->t_line].l_write(tp, uio, flags));
+	return ((*linesw[tp->t_line].l_write)(tp, uio, flags));
 }
 
 int
@@ -596,18 +612,12 @@ zsioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register struct zstty_softc *zst;
-	register struct zs_chanstate *cs;
-	register struct tty *tp;
-	register struct linesw *line;
-	register int error;
+	struct zstty_softc *zst = zstty_cd.cd_devs[minor(dev)];
+	struct zs_chanstate *cs = zst->zst_cs;
+	struct tty *tp = zst->zst_tty;
+	int error;
 
-	zst = zstty_cd.cd_devs[minor(dev)];
-	cs = zst->zst_cs;
-	tp = zst->zst_tty;
-	line = &linesw[tp->t_line];
-
-	error = (*line->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -664,32 +674,26 @@ zsioctl(dev, cmd, data, flag, p)
  */
 static void
 zsstart(tp)
-	register struct tty *tp;
+	struct tty *tp;
 {
-	register struct zstty_softc *zst;
-	register struct zs_chanstate *cs;
-	register int s;
-
-	zst = zstty_cd.cd_devs[minor(tp->t_dev)];
-	cs = zst->zst_cs;
+	struct zstty_softc *zst = zstty_cd.cd_devs[minor(tp->t_dev)];
+	struct zs_chanstate *cs = zst->zst_cs;
+	int s;
 
 	s = spltty();
-	if ((tp->t_state & TS_BUSY) != 0)
+	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP))
 		goto out;
-	if ((tp->t_state & (TS_TIMEOUT | TS_TTSTOP)) != 0)
-		goto stopped;
-
 	if (zst->zst_tx_stopped)
-		goto stopped;
+		goto out;
 
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if ((tp->t_state & TS_ASLEEP) != 0) {
-			tp->t_state &= ~TS_ASLEEP;
+		if (ISSET(tp->t_state, TS_ASLEEP)) {
+			CLR(tp->t_state, TS_ASLEEP);
 			wakeup((caddr_t)&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
 		if (tp->t_outq.c_cc == 0)
-			goto stopped;
+			goto out;
 	}
 
 	/* Grab the first contiguous region of buffer space. */
@@ -706,29 +710,21 @@ zsstart(tp)
 		zst->zst_tbc = tbc;
 	}
 
-	tp->t_state |= TS_BUSY;
+	SET(tp->t_state, TS_BUSY);
 	zst->zst_tx_busy = 1;
 
 	/* Enable transmit completion interrupts if necessary. */
-	if ((cs->cs_preg[1] & ZSWR1_TIE) == 0) {
-		cs->cs_preg[1] |= ZSWR1_TIE;
+	if (!ISSET(cs->cs_preg[1], ZSWR1_TIE)) {
+		SET(cs->cs_preg[1], ZSWR1_TIE);
 		cs->cs_creg[1] = cs->cs_preg[1];
 		zs_write_reg(cs, 1, cs->cs_creg[1]);
 	}
 
 	/* Output the first character of the contiguous buffer. */
-	zs_write_data(cs, *zst->zst_tba);
-	zst->zst_tbc--;
-	zst->zst_tba++;
-	splx(s);
-	return;
-
-stopped:
-	/* Disable transmit completion interrupts if necessary. */
-	if ((cs->cs_preg[1] & ZSWR1_TIE) != 0) {
-		cs->cs_preg[1] &= ~ZSWR1_TIE;
-		cs->cs_creg[1] = cs->cs_preg[1];
-		zs_write_reg(cs, 1, cs->cs_creg[1]);
+	{
+		zs_write_data(cs, *zst->zst_tba);
+		zst->zst_tbc--;
+		zst->zst_tba++;
 	}
 out:
 	splx(s);
@@ -743,24 +739,16 @@ zsstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	register struct zstty_softc *zst;
-	register struct zs_chanstate *cs;
-	register int s;
-
-	zst = zstty_cd.cd_devs[minor(tp->t_dev)];
-	cs = zst->zst_cs;
+	struct zstty_softc *zst = zstty_cd.cd_devs[minor(tp->t_dev)];
+	int s;
 
 	s = splzs();
-	if (tp->t_state & TS_BUSY) {
-		/*
-		 * Device is transmitting; must stop it.
-		 * Also clear _heldtbc to prevent any
-		 * flow-control event from resuming.
-		 */
+	if (ISSET(tp->t_state, TS_BUSY)) {
+		/* Stop transmitting at the next chunk. */
 		zst->zst_tbc = 0;
 		zst->zst_heldtbc = 0;
-		if ((tp->t_state & TS_TTSTOP) == 0)
-			tp->t_state |= TS_FLUSH;
+		if (!ISSET(tp->t_state, TS_TTSTOP))
+			SET(tp->t_state, TS_FLUSH);
 	}
 	splx(s);
 }
@@ -772,32 +760,32 @@ zsstop(tp, flag)
  */
 static int
 zsparam(tp, t)
-	register struct tty *tp;
-	register struct termios *t;
+	struct tty *tp;
+	struct termios *t;
 {
-	struct zstty_softc *zst;
-	struct zs_chanstate *cs;
-	register struct linesw *line;
-	int s, bps, cflag, error;
-	u_char tmp3, tmp4, tmp5;
+	struct zstty_softc *zst = zstty_cd.cd_devs[minor(tp->t_dev)];
+	struct zs_chanstate *cs = zst->zst_cs;
+	int ospeed, cflag;
+	u_char tmp3, tmp4, tmp5, tmp15;
+	int s, error;
 
-	zst = zstty_cd.cd_devs[minor(tp->t_dev)];
-	cs = zst->zst_cs;
-	line = &linesw[tp->t_line];
-	bps = t->c_ospeed;
+	ospeed = t->c_ospeed;
 	cflag = t->c_cflag;
 
-	if (bps < 0 || (t->c_ispeed && t->c_ispeed != bps))
+	/* Check requested parameters. */
+	if (ospeed < 0)
+		return (EINVAL);
+	if (t->c_ispeed && t->c_ispeed != ospeed)
 		return (EINVAL);
 
 	/*
 	 * For the console, always force CLOCAL and !HUPCL, so that the port
 	 * is always active.
 	 */
-	if ((zst->zst_swflags & TIOCFLAG_SOFTCAR) != 0 ||
-	    (zst->zst_hwflags & (ZS_HWFLAG_NO_DCD | ZS_HWFLAG_CONSOLE)) != 0) {
-		cflag |= CLOCAL;
-		cflag &= ~HUPCL;
+	if (ISSET(zst->zst_swflags, TIOCFLAG_SOFTCAR) ||
+	    ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE)) {
+		SET(cflag, CLOCAL);
+		CLR(cflag, HUPCL);
 	}
 
 	/*
@@ -805,7 +793,7 @@ zsparam(tp, t)
 	 * Some callers need to clear tp->t_ospeed
 	 * to make sure initialization gets done.
 	 */
-	if (tp->t_ospeed == bps &&
+	if (tp->t_ospeed == ospeed &&
 	    tp->t_cflag == cflag)
 		return (0);
 
@@ -814,17 +802,12 @@ zsparam(tp, t)
 	 * clock modes or H/W flow control modes.
 	 * The BRG divisor is set now. (reg 12,13)
 	 */
-	error = zs_set_speed(cs, bps);
+	error = zs_set_speed(cs, ospeed);
 	if (error)
 		return (error);
 	error = zs_set_modes(cs, cflag);
 	if (error)
 		return (error);
-
-	/* OK, we are now committed to do it. */
-	tp->t_cflag = cflag;
-	tp->t_ospeed = bps;
-	tp->t_ispeed = bps;
 
 	/*
 	 * Block interrupts so that state will not
@@ -838,51 +821,40 @@ zsparam(tp, t)
 	s = splzs();
 
 	cs->cs_rr0_mask = cs->cs_rr0_cts | cs->cs_rr0_dcd;
-	if ((cs->cs_rr0_mask & ZSRR0_DCD) != 0)
-		cs->cs_preg[15] |= ZSWR15_DCD_IE;
+	tmp15 = cs->cs_preg[15];
+	if (ISSET(cs->cs_rr0_mask, ZSRR0_DCD))
+		SET(tmp15, ZSWR15_DCD_IE);
 	else
-		cs->cs_preg[15] &= ~ZSWR15_DCD_IE;
-	if ((cs->cs_rr0_mask & ZSRR0_CTS) != 0)
-		cs->cs_preg[15] |= ZSWR15_CTS_IE;
+		CLR(tmp15, ZSWR15_DCD_IE);
+	if (ISSET(cs->cs_rr0_mask, ZSRR0_CTS))
+		SET(tmp15, ZSWR15_CTS_IE);
 	else
-		cs->cs_preg[15] &= ~ZSWR15_CTS_IE;
+		CLR(tmp15, ZSWR15_CTS_IE);
+	cs->cs_preg[15] = tmp15;
 
 	/* Recompute character size bits. */
-	tmp3 = cs->cs_preg[3] & ~ZSWR3_RXSIZE;
-	tmp5 = cs->cs_preg[5] & ~ZSWR5_TXSIZE;
-	switch (cflag & CSIZE) {
+	tmp3 = cs->cs_preg[3];
+	tmp5 = cs->cs_preg[5];
+	CLR(tmp3, ZSWR3_RXSIZE);
+	CLR(tmp5, ZSWR5_TXSIZE);
+	switch (ISSET(cflag, CSIZE)) {
 	case CS5:
-		/* These are |= 0 but let the optimizer deal with it. */
-		tmp3 |= ZSWR3_RX_5;
-		tmp5 |= ZSWR5_TX_5;
+		SET(tmp3, ZSWR3_RX_5);
+		SET(tmp5, ZSWR5_TX_5);
 		break;
 	case CS6:
-		tmp3 |= ZSWR3_RX_6;
-		tmp5 |= ZSWR5_TX_6;
+		SET(tmp3, ZSWR3_RX_6);
+		SET(tmp5, ZSWR5_TX_6);
 		break;
 	case CS7:
-		tmp3 |= ZSWR3_RX_7;
-		tmp5 |= ZSWR5_TX_7;
+		SET(tmp3, ZSWR3_RX_7);
+		SET(tmp5, ZSWR5_TX_7);
 		break;
 	case CS8:
-	default:
-		tmp3 |= ZSWR3_RX_8;
-		tmp5 |= ZSWR5_TX_8;
+		SET(tmp3, ZSWR3_RX_8);
+		SET(tmp5, ZSWR5_TX_8);
 		break;
 	}
-
-#if 0
-	/* Raise or lower DTR and RTS as appropriate. */
-	if (bps) {
-		/* Raise DTR and RTS */
-		tmp5 |= cs->cs_wr5_dtr;
-	} else {
-		/* Drop DTR and RTS */
-		/* XXX: Should SOFTCAR prevent this? */
-		tmp5 &= ~cs->cs_wr5_dtr;
-	}
-#endif
-
 	cs->cs_preg[3] = tmp3;
 	cs->cs_preg[5] = tmp5;
 
@@ -892,19 +864,21 @@ zsparam(tp, t)
 	 * in wr4, so those must preserved.
 	 */
 	tmp4 = cs->cs_preg[4];
-	/* Recompute stop bits. */
-	tmp4 &= ~ZSWR4_SBMASK;
-	tmp4 |= (cflag & CSTOPB) ?
-		ZSWR4_TWOSB : ZSWR4_ONESB;
-	/* Recompute parity bits. */
-	tmp4 &= ~ZSWR4_PARMASK;
-	if ((cflag & PARODD) == 0)
-		tmp4 |= ZSWR4_EVENP;
-	if (cflag & PARENB)
-		tmp4 |= ZSWR4_PARENB;
+	CLR(tmp4, ZSWR4_SBMASK | ZSWR4_PARMASK);
+	if (ISSET(cflag, CSTOPB))
+		SET(tmp4, ZSWR4_TWOSB);
+	else
+		SET(tmp4, ZSWR4_ONESB);
+	if (!ISSET(cflag, PARODD))
+		SET(tmp4, ZSWR4_EVENP);
+	if (ISSET(cflag, PARENB))
+		SET(tmp4, ZSWR4_PARENB);
 	cs->cs_preg[4] = tmp4;
 
-	/* The MD function zs_set_modes handled CRTSCTS, etc. */
+	/* And copy to tty. */
+	tp->t_ispeed = 0;
+	tp->t_ospeed = ospeed;
+	tp->t_cflag = cflag;
 
 	/*
 	 * If nothing is being transmitted, set up new current values,
@@ -919,15 +893,22 @@ zsparam(tp, t)
 			zs_loadchannelregs(cs);
 	}
 
-	if ((cflag & CHWFLOW) == 0) {
-		/* This impossible value prevents a "high water" trigger. */
-		zst->zst_rbhiwat = zstty_rbuf_size;
-		if (zst->zst_rx_blocked) {
-			zst->zst_rx_blocked = 0;
+	if (!ISSET(cflag, CHWFLOW)) {
+		/* Disable the high water mark. */
+		zst->zst_r_hiwat = 0;
+		zst->zst_r_lowat = 0;
+		if (ISSET(zst->zst_rx_flags, RX_TTY_OVERFLOWED)) {
+			CLR(zst->zst_rx_flags, RX_TTY_OVERFLOWED);
+			zst->zst_rx_ready = 1;
+			cs->cs_softreq = 1;
+		}
+		if (ISSET(zst->zst_rx_flags, RX_TTY_BLOCKED|RX_IBUF_BLOCKED)) {
+			CLR(zst->zst_rx_flags, RX_TTY_BLOCKED|RX_IBUF_BLOCKED);
 			zs_hwiflow(zst);
 		}
 	} else {
-		zst->zst_rbhiwat = zstty_rbuf_hiwat;
+		zst->zst_r_hiwat = zstty_rbuf_hiwat;
+		zst->zst_r_lowat = zstty_rbuf_lowat;
 	}
 
 	splx(s);
@@ -937,9 +918,9 @@ zsparam(tp, t)
 	 * CLOCAL or MDMBUF.  We don't hang up here; we only do that by
 	 * explicit request.
 	 */
-	(void) (*line->l_modem)(tp, (cs->cs_rr0 & cs->cs_rr0_dcd) != 0);
+	(void) (*linesw[tp->t_line].l_modem)(tp, ISSET(cs->cs_rr0, ZSRR0_DCD));
 
-	if ((cflag & CHWFLOW) == 0) {
+	if (!ISSET(cflag, CHWFLOW)) {
 		if (zst->zst_tx_stopped) {
 			zst->zst_tx_stopped = 0;
 			zsstart(tp);
@@ -958,18 +939,17 @@ zs_modem(zst, onoff)
 	struct zstty_softc *zst;
 	int onoff;
 {
-	struct zs_chanstate *cs;
+	struct zs_chanstate *cs = zst->zst_cs;
 	int s;
 
-	cs = zst->zst_cs;
 	if (cs->cs_wr5_dtr == 0)
 		return;
 
 	s = splzs();
 	if (onoff)
-		cs->cs_preg[5] |= cs->cs_wr5_dtr;
+		SET(cs->cs_preg[5], cs->cs_wr5_dtr);
 	else
-		cs->cs_preg[5] &= ~cs->cs_wr5_dtr;
+		CLR(cs->cs_preg[5], cs->cs_wr5_dtr);
 
 	if (!cs->cs_heldchange) {
 		if (zst->zst_tx_busy) {
@@ -993,29 +973,32 @@ zshwiflow(tp, block)
 	struct tty *tp;
 	int block;
 {
-	register struct zstty_softc *zst;
-	register struct zs_chanstate *cs;
+	struct zstty_softc *zst = zstty_cd.cd_devs[minor(tp->t_dev)];
+	struct zs_chanstate *cs = zst->zst_cs;
 	int s;
 
-	zst = zstty_cd.cd_devs[minor(tp->t_dev)];
-	cs = zst->zst_cs;
 	if (cs->cs_wr5_rts == 0)
 		return (0);
 
 	s = splzs();
 	if (block) {
-		if (!zst->zst_rx_blocked) {
-			zst->zst_rx_blocked = 1;
+		if (!ISSET(zst->zst_rx_flags, RX_TTY_BLOCKED)) {
+			SET(zst->zst_rx_flags, RX_TTY_BLOCKED);
 			zs_hwiflow(zst);
 		}
 	} else {
-		if (zst->zst_rx_blocked) {
-			zst->zst_rx_blocked = 0;
+		if (ISSET(zst->zst_rx_flags, RX_TTY_OVERFLOWED)) {
+			CLR(zst->zst_rx_flags, RX_TTY_OVERFLOWED);
+			zst->zst_rx_ready = 1;
+			cs->cs_softreq = 1;
+		}
+		if (ISSET(zst->zst_rx_flags, RX_TTY_BLOCKED)) {
+			CLR(zst->zst_rx_flags, RX_TTY_BLOCKED);
 			zs_hwiflow(zst);
 		}
 	}
 	splx(s);
-	return 1;
+	return (1);
 }
 
 /*
@@ -1024,20 +1007,19 @@ zshwiflow(tp, block)
  */
 static void
 zs_hwiflow(zst)
-	register struct zstty_softc *zst;
+	struct zstty_softc *zst;
 {
-	register struct zs_chanstate *cs;
+	struct zs_chanstate *cs = zst->zst_cs;
 
-	cs = zst->zst_cs;
 	if (cs->cs_wr5_rts == 0)
 		return;
 
-	if (zst->zst_rx_blocked) {
-		cs->cs_preg[5] &= ~cs->cs_wr5_rts;
-		cs->cs_creg[5] &= ~cs->cs_wr5_rts;
+	if (ISSET(zst->zst_rx_flags, RX_ANY_BLOCK)) {
+		CLR(cs->cs_preg[5], cs->cs_wr5_rts);
+		CLR(cs->cs_creg[5], cs->cs_wr5_rts);
 	} else {
-		cs->cs_preg[5] |= cs->cs_wr5_rts;
-		cs->cs_creg[5] |= cs->cs_wr5_rts;
+		SET(cs->cs_preg[5], cs->cs_wr5_rts);
+		SET(cs->cs_creg[5], cs->cs_wr5_rts);
 	}
 	zs_write_reg(cs, 5, cs->cs_creg[5]);
 }
@@ -1050,9 +1032,13 @@ zs_hwiflow(zst)
 static void zstty_rxint __P((struct zs_chanstate *));
 static void zstty_txint __P((struct zs_chanstate *));
 static void zstty_stint __P((struct zs_chanstate *));
-static void zstty_softint  __P((struct zs_chanstate *));
 
-static void zsoverrun __P((struct zstty_softc *, long *, char *));
+#define	integrate	static inline
+static void zstty_softint  __P((struct zs_chanstate *));
+integrate void zstty_rxsoft __P((struct zstty_softc *, struct tty *));
+integrate void zstty_txsoft __P((struct zstty_softc *, struct tty *));
+integrate void zstty_stsoft __P((struct zstty_softc *, struct tty *));
+static void zstty_diag __P((void *));
 
 /*
  * receiver ready interrupt.
@@ -1060,66 +1046,79 @@ static void zsoverrun __P((struct zstty_softc *, long *, char *));
  */
 static void
 zstty_rxint(cs)
-	register struct zs_chanstate *cs;
+	struct zs_chanstate *cs;
 {
-	register struct zstty_softc *zst;
-	register int cc, put, put_next, ringmask;
-	register u_char c, rr0, rr1;
-	register u_short ch_rr1;
+	struct zstty_softc *zst = cs->cs_private;
+	u_char *put, *end;
+	u_int cc;
+	u_char rr0, rr1, c;
 
-	zst = cs->cs_private;
+	end = zst->zst_ebuf;
 	put = zst->zst_rbput;
-	ringmask = zst->zst_ringmask;
+	cc = zst->zst_rbavail;
 
-nextchar:
+	while (cc > 0) {
+		/*
+		 * First read the status, because reading the received char
+		 * destroys the status of this char.
+		 */
+		rr1 = zs_read_reg(cs, 1);
+		c = zs_read_data(cs);
+
+		if (ISSET(rr1, ZSRR1_FE | ZSRR1_DO | ZSRR1_PE)) {
+			/* Clear the receive error. */
+			zs_write_csr(cs, ZSWR0_RESET_ERRORS);
+		}
+
+		put[0] = c;
+		put[1] = rr1;
+		put += 2;
+		if (put >= end)
+			put = zst->zst_rbuf;
+		cc--;
+
+		rr0 = zs_read_csr(cs);
+		if (!ISSET(rr0, ZSRR0_RX_READY))
+			break;
+	}
 
 	/*
-	 * First read the status, because reading the received char
-	 * destroys the status of this char.
+	 * Current string of incoming characters ended because
+	 * no more data was available or we ran out of space.
+	 * Schedule a receive event if any data was received.
+	 * If we're out of space, turn off receive interrupts.
 	 */
-	rr1 = zs_read_reg(cs, 1);
-	c = zs_read_data(cs);
-	ch_rr1 = (c << 8) | rr1;
-
-	if (ch_rr1 & (ZSRR1_FE | ZSRR1_DO | ZSRR1_PE)) {
-		/* Clear the receive error. */
-		zs_write_csr(cs, ZSWR0_RESET_ERRORS);
-	}
-
-	/* XXX: Check for the stop character? */
-
-	zst->zst_rbuf[put] = ch_rr1;
-	put_next = (put + 1) & ringmask;
-
-	/* Would overrun if increment makes (put==get). */
-	if (put_next == zst->zst_rbget) {
-		zst->zst_rx_overrun = 1;
-	} else {
-		/* OK, really increment. */
-		put = put_next;
-	}
-
-	/* Keep reading until the FIFO is empty. */
-	rr0 = zs_read_csr(cs);
-	if (rr0 & ZSRR0_RX_READY)
-		goto nextchar;
-
-	/* Done reading. */
 	zst->zst_rbput = put;
+	zst->zst_rbavail = cc;
+	if (!ISSET(zst->zst_rx_flags, RX_TTY_OVERFLOWED)) {
+		zst->zst_rx_ready = 1;
+		cs->cs_softreq = 1;
+	}
 
 	/*
-	 * If ring is getting too full, try to block input.
+	 * See if we are in danger of overflowing a buffer. If
+	 * so, use hardware flow control to ease the pressure.
 	 */
-	cc = put - zst->zst_rbget;
-	if (cc < 0)
-		cc += zstty_rbuf_size;
-	if ((cc > zst->zst_rbhiwat) && (zst->zst_rx_blocked == 0)) {
-		zst->zst_rx_blocked = 1;
+	if (!ISSET(zst->zst_rx_flags, RX_IBUF_BLOCKED) &&
+	    cc < zst->zst_r_hiwat) {
+		SET(zst->zst_rx_flags, RX_IBUF_BLOCKED);
 		zs_hwiflow(zst);
 	}
 
-	/* Ask for softint() call. */
-	cs->cs_softreq = 1;
+	/*
+	 * If we're out of space, disable receive interrupts
+	 * until the queue has drained a bit.
+	 */
+	if (!cc) {
+		SET(zst->zst_rx_flags, RX_IBUF_OVERFLOWED);
+		CLR(cs->cs_preg[1], ZSWR1_RIE);
+		cs->cs_creg[1] = cs->cs_preg[1];
+		zs_write_reg(cs, 1, cs->cs_creg[1]);
+	}
+
+#if 0
+	printf("%xH%04d\n", zst->zst_rx_flags, zst->zst_rbavail);
+#endif
 }
 
 /*
@@ -1127,46 +1126,39 @@ nextchar:
  */
 static void
 zstty_txint(cs)
-	register struct zs_chanstate *cs;
+	struct zs_chanstate *cs;
 {
-	register struct zstty_softc *zst;
-	register int count;
-
-	zst = cs->cs_private;
+	struct zstty_softc *zst = cs->cs_private;
 
 	/*
-	 * If we suspended output for a "held" change,
-	 * then handle that now and resume.
-	 * Do flow-control changes ASAP.
-	 * When the only change is for flow control,
-	 * avoid hitting other registers, because that
-	 * often makes the stupid zs drop input...
+	 * If we've delayed a parameter change, do it now, and restart
+	 * output.
 	 */
 	if (cs->cs_heldchange) {
 		zs_loadchannelregs(cs);
 		cs->cs_heldchange = 0;
-		count = zst->zst_heldtbc;
-	} else
-		count = zst->zst_tbc;
-
-	/*
-	 * If our transmit buffer still has data,
-	 * just send the next character.
-	 */
-	if (count > 0) {
-		/* Send the next char. */
-		zst->zst_tbc = --count;
-		zs_write_data(cs, *zst->zst_tba);
-		zst->zst_tba++;
-		return;
+		zst->zst_tbc = zst->zst_heldtbc;
+		zst->zst_heldtbc = 0;
 	}
 
-	zs_write_csr(cs, ZSWR0_RESET_TXINT);
-
-	/* Ask the softint routine for more output. */
-	zst->zst_tx_busy = 0;
-	zst->zst_tx_done = 1;
-	cs->cs_softreq = 1;
+	/* Output the next character in the buffer, if any. */
+	if (zst->zst_tbc > 0) {
+		zs_write_data(cs, *zst->zst_tba);
+		zst->zst_tbc--;
+		zst->zst_tba++;
+	} else {
+		/* Disable transmit completion interrupts if necessary. */
+		if (ISSET(cs->cs_preg[1], ZSWR1_TIE)) {
+			CLR(cs->cs_preg[1], ZSWR1_TIE);
+			cs->cs_creg[1] = cs->cs_preg[1];
+			zs_write_reg(cs, 1, cs->cs_creg[1]);
+		}
+		if (zst->zst_tx_busy) {
+			zst->zst_tx_busy = 0;
+			zst->zst_tx_done = 1;
+			cs->cs_softreq = 1;
+		}
+	}
 }
 
 /*
@@ -1174,12 +1166,10 @@ zstty_txint(cs)
  */
 static void
 zstty_stint(cs)
-	register struct zs_chanstate *cs;
+	struct zs_chanstate *cs;
 {
-	register struct zstty_softc *zst;
-	register u_char rr0, delta;
-
-	zst = cs->cs_private;
+	struct zstty_softc *zst = cs->cs_private;
+	u_char rr0, delta;
 
 	rr0 = zs_read_csr(cs);
 	zs_write_csr(cs, ZSWR0_RESET_STATUS);
@@ -1188,48 +1178,193 @@ zstty_stint(cs)
 	 * Check here for console break, so that we can abort
 	 * even when interrupts are locking up the machine.
 	 */
-	if ((rr0 & ZSRR0_BREAK) &&
-		(zst->zst_hwflags & ZS_HWFLAG_CONSOLE))
-	{
+	if (ISSET(rr0, ZSRR0_BREAK) &&
+	    ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE)) {
 		zs_abort(cs);
 		return;
 	}
 
 	delta = rr0 ^ cs->cs_rr0;
 	cs->cs_rr0 = rr0;
-	if ((delta & cs->cs_rr0_mask) != 0) {
-		cs->cs_rr0_delta |= delta;
+	if (ISSET(delta, cs->cs_rr0_mask)) {
+		SET(cs->cs_rr0_delta, delta);
 
 		/*
 		 * Stop output immediately if we lose the output
 		 * flow control signal or carrier detect.
 		 */
-		if ((~rr0 & cs->cs_rr0_mask) != 0) {
+		if (ISSET(~rr0, cs->cs_rr0_mask)) {
 			zst->zst_tbc = 0;
 			zst->zst_heldtbc = 0;
 		}
 
 		zst->zst_st_check = 1;
+		cs->cs_softreq = 1;
 	}
-
-	/* Ask for softint() call. */
-	cs->cs_softreq = 1;
 }
 
-/*
- * Print out a ring or fifo overrun error message.
- */
-static void
-zsoverrun(zst, ptime, what)
+void
+zstty_diag(arg)
+	void *arg;
+{
+	struct zstty_softc *zst = arg;
+	int overflows, floods;
+	int s;
+
+	s = splzs();
+	overflows = zst->zst_overflows;
+	zst->zst_overflows = 0;
+	floods = zst->zst_floods;
+	zst->zst_floods = 0;
+	zst->zst_errors = 0;
+	splx(s);
+
+	log(LOG_WARNING, "%s: %d silo overflow%s, %d ibuf flood%s\n",
+	    zst->zst_dev.dv_xname,
+	    overflows, overflows == 1 ? "" : "s",
+	    floods, floods == 1 ? "" : "s");
+}
+
+integrate void
+zstty_rxsoft(zst, tp)
 	struct zstty_softc *zst;
-	long *ptime;
-	char *what;
+	struct tty *tp;
+{
+	struct zs_chanstate *cs = zst->zst_cs;
+	int (*rint) __P((int c, struct tty *tp)) = linesw[tp->t_line].l_rint;
+	u_char *get, *end;
+	u_int cc, scc;
+	u_char rr1;
+	int code;
+	int s;
+
+	end = zst->zst_ebuf;
+	get = zst->zst_rbget;
+	scc = cc = zstty_rbuf_size - zst->zst_rbavail;
+
+	if (cc == zstty_rbuf_size) {
+		zst->zst_floods++;
+		if (zst->zst_errors++ == 0)
+			timeout(zstty_diag, zst, 60 * hz);
+	}
+
+	while (cc) {
+		rr1 = get[1];
+		if (ISSET(rr1, ZSRR1_DO)) {
+			zst->zst_overflows++;
+			if (zst->zst_errors++ == 0)
+				timeout(zstty_diag, zst, 60 * hz);
+		}
+		code = get[0];
+		if (ISSET(rr1, ZSRR1_FE | ZSRR1_PE)) {
+			if (ISSET(rr1, ZSRR1_FE))
+				SET(code, TTY_FE);
+			if (ISSET(rr1, ZSRR1_PE))
+				SET(code, TTY_PE);
+		}
+		if ((*rint)(code, tp) == -1) {
+			/*
+			 * The line discipline's buffer is out of space.
+			 */
+			if (!ISSET(zst->zst_rx_flags, RX_TTY_BLOCKED)) {
+				/*
+				 * We're either not using flow control, or the
+				 * line discipline didn't tell us to block for
+				 * some reason.  Either way, we have no way to
+				 * know when there's more space available, so
+				 * just drop the rest of the data.
+				 */
+				get += cc << 1;
+				if (get >= end)
+					get -= zstty_rbuf_size << 1;
+				cc = 0;
+			} else {
+				/*
+				 * Don't schedule any more receive processing
+				 * until the line discipline tells us there's
+				 * space available (through comhwiflow()).
+				 * Leave the rest of the data in the input
+				 * buffer.
+				 */
+				SET(zst->zst_rx_flags, RX_TTY_OVERFLOWED);
+			}
+			break;
+		}
+		get += 2;
+		if (get >= end)
+			get = zst->zst_rbuf;
+		cc--;
+	}
+
+	if (cc != scc) {
+		zst->zst_rbget = get;
+		s = splzs();
+		cc = zst->zst_rbavail += scc - cc;
+		/* Buffers should be ok again, release possible block. */
+		if (cc >= zst->zst_r_lowat) {
+			if (ISSET(zst->zst_rx_flags, RX_IBUF_OVERFLOWED)) {
+				CLR(zst->zst_rx_flags, RX_IBUF_OVERFLOWED);
+				SET(cs->cs_preg[1], ZSWR1_RIE);
+				cs->cs_creg[1] = cs->cs_preg[1];
+				zs_write_reg(cs, 1, cs->cs_creg[1]);
+			}
+			if (ISSET(zst->zst_rx_flags, RX_IBUF_BLOCKED)) {
+				CLR(zst->zst_rx_flags, RX_IBUF_BLOCKED);
+				zs_hwiflow(zst);
+			}
+		}
+		splx(s);
+	}
+
+#if 0
+	printf("%xS%04d\n", zst->zst_rx_flags, zst->zst_rbavail);
+#endif
+}
+
+integrate void
+zstty_txsoft(zst, tp)
+	struct zstty_softc *zst;
+	struct tty *tp;
 {
 
-	if (*ptime != time.tv_sec) {
-		*ptime = time.tv_sec;
-		log(LOG_WARNING, "%s: %s overrun\n",
-			zst->zst_dev.dv_xname, what);
+	CLR(tp->t_state, TS_BUSY);
+	if (ISSET(tp->t_state, TS_FLUSH))
+		CLR(tp->t_state, TS_FLUSH);
+	else
+		ndflush(&tp->t_outq, (int)(zst->zst_tba - tp->t_outq.c_cf));
+	(*linesw[tp->t_line].l_start)(tp);
+}
+
+integrate void
+zstty_stsoft(zst, tp)
+	struct zstty_softc *zst;
+	struct tty *tp;
+{
+	struct zs_chanstate *cs = zst->zst_cs;
+	u_char rr0, delta;
+	int s;
+
+	s = splzs();
+	rr0 = cs->cs_rr0;
+	delta = cs->cs_rr0_delta;
+	cs->cs_rr0_delta = 0;
+	splx(s);
+
+	if (ISSET(delta, cs->cs_rr0_dcd)) {
+		/*
+		 * Inform the tty layer that carrier detect changed.
+		 */
+		(void) (*linesw[tp->t_line].l_modem)(tp, ISSET(rr0, ZSRR0_DCD));
+	}
+
+	if (ISSET(delta, cs->cs_rr0_cts)) {
+		/* Block or unblock output according to flow control. */
+		if (ISSET(rr0, cs->cs_rr0_cts)) {
+			zst->zst_tx_stopped = 0;
+			(*linesw[tp->t_line].l_start)(tp);
+		} else {
+			zst->zst_tx_stopped = 1;
+		}
 	}
 }
 
@@ -1249,115 +1384,25 @@ static void
 zstty_softint(cs)
 	struct zs_chanstate *cs;
 {
-	register struct zstty_softc *zst;
-	register struct tty *tp;
-	register struct linesw *line;
-	register int get, c, s, t;
-	int ringmask, overrun;
-	register u_short ring_data;
-	register u_char rr0, delta;
+	struct zstty_softc *zst = cs->cs_private;
+	struct tty *tp = zst->zst_tty;
+	int s;
 
-	zst = cs->cs_private;
-	tp = zst->zst_tty;
-	line = &linesw[tp->t_line];
-	ringmask = zst->zst_ringmask;
-	overrun = 0;
-
-	/*
-	 * Raise to tty priority while servicing the ring.
-	 */
 	s = spltty();
 
-	if (zst->zst_rx_overrun) {
-		zst->zst_rx_overrun = 0;
-		zsoverrun(zst, &zst->zst_rotime, "ring");
+	if (zst->zst_rx_ready) {
+		zst->zst_rx_ready = 0;
+		zstty_rxsoft(zst, tp);
 	}
 
-	/*
-	 * Copy data from the receive ring into the tty layer.
-	 */
-	get = zst->zst_rbget;
-	while (get != zst->zst_rbput) {
-		ring_data = zst->zst_rbuf[get];
-		get = (get + 1) & ringmask;
-
-		if (ring_data & ZSRR1_DO)
-			overrun++;
-		/* low byte of ring_data is rr1 */
-		c = (ring_data >> 8) & 0xff;
-		if (ring_data & ZSRR1_FE)
-			c |= TTY_FE;
-		if (ring_data & ZSRR1_PE)
-			c |= TTY_PE;
-
-		(*line->l_rint)(c, tp);
-	}
-	zst->zst_rbget = get;
-
-	/*
-	 * If the overrun flag is set now, it was set while
-	 * copying char/status pairs from the ring, which
-	 * means this was a hardware (fifo) overrun.
-	 */
-	if (overrun) {
-		zsoverrun(zst, &zst->zst_fotime, "fifo");
-	}
-
-	/*
-	 * We have emptied the input ring.  Maybe unblock input.
-	 * Note: an "input blockage" condition is assumed to exist
-	 * when EITHER zst_rx_blocked or the TS_TBLOCK flag is set,
-	 * so unblock here ONLY if TS_TBLOCK has not been set.
-	 */
-	if (zst->zst_rx_blocked && ((tp->t_state & TS_TBLOCK) == 0)) {
-		t = splzs();
-		zst->zst_rx_blocked = 0;
-		zs_hwiflow(zst);
-		splx(t);
-	}
-
-	/*
-	 * Do any deferred work for status interrupts.
-	 * The rr0 was saved in the h/w interrupt to
-	 * avoid another splzs in here.
-	 */
 	if (zst->zst_st_check) {
 		zst->zst_st_check = 0;
-
-		t = splzs();
-		rr0 = cs->cs_rr0;
-		delta = cs->cs_rr0_delta;
-		cs->cs_rr0_delta = 0;
-		splx(t);
-
-		if ((delta & cs->cs_rr0_dcd) != 0) {
-			/*
-			 * Inform the tty layer that carrier detect changed.
-			 */
-			(void) (*line->l_modem)(tp, (rr0 & cs->cs_rr0_dcd) != 0);
-		}
-
-		if ((delta & cs->cs_rr0_cts) != 0) {
-			/* Block or unblock output according to flow control. */
-			if ((rr0 & cs->cs_rr0_cts) != 0) {
-				zst->zst_tx_stopped = 0;
-				(*line->l_start)(tp);
-			} else {
-				zst->zst_tx_stopped = 1;
-			}
-		}
+		zstty_stsoft(zst, tp);
 	}
 
 	if (zst->zst_tx_done) {
 		zst->zst_tx_done = 0;
-
-		tp->t_state &= ~TS_BUSY;
-		if (tp->t_state & TS_FLUSH)
-			tp->t_state &= ~TS_FLUSH;
-		else
-			ndflush(&tp->t_outq,
-			    (int)(zst->zst_tba - tp->t_outq.c_cf));
-		(*line->l_start)(tp);
+		zstty_txsoft(zst, tp);
 	}
 
 	splx(s);
@@ -1369,4 +1414,3 @@ struct zsops zsops_tty = {
 	zstty_txint,	/* xmit buffer empty */
 	zstty_softint,	/* process software interrupt */
 };
-
