@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.6 2001/12/05 04:06:32 augustss Exp $	*/
+/*	$NetBSD: irframe.c,v 1.7 2001/12/05 04:30:24 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -264,7 +264,7 @@ irframeioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		break;
 
 	case IRDA_RESET_PARAMS:
-		irf_reset_params(sc);
+		error = irf_reset_params(sc);
 		break;
 
 	case IRDA_GET_SPEEDMASK:
