@@ -1,3 +1,5 @@
+/*	$NetBSD: lfs_balloc.c,v 1.2 1994/06/29 06:46:49 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)lfs_balloc.c	8.1 (Berkeley) 6/11/93
- *	$Id: lfs_balloc.c,v 1.1 1994/06/08 11:42:26 mycroft Exp $
+ *	@(#)lfs_balloc.c	8.1 (Berkeley) 6/11/93
  */
 #include <sys/param.h>
 #include <sys/buf.h>

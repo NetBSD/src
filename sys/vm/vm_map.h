@@ -1,4 +1,5 @@
-/* NetBSD $Id: vm_map.h,v 1.9 1994/06/27 04:55:46 cgd Exp $ */
+/*	$NetBSD: vm_map.h,v 1.10 1994/06/29 06:48:08 cgd Exp $	*/
+
 /* 
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.

@@ -1,4 +1,5 @@
-/* NetBSD $Id: disklabel.h,v 1.24 1994/06/27 19:30:57 cgd Exp $ */
+/*	$NetBSD: disklabel.h,v 1.25 1994/06/29 06:43:56 cgd Exp $	*/
+
 /*
  * Copyright (c) 1987, 1988 Regents of the University of California.
  * All rights reserved.

@@ -1,4 +1,5 @@
-/* NetBSD $Id: gmon.h,v 1.3 1994/06/27 19:31:16 cgd Exp $ */
+/*	$NetBSD: gmon.h,v 1.4 1994/06/29 06:44:17 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1982, 1986, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.

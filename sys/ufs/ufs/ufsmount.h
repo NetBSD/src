@@ -1,3 +1,5 @@
+/*	$NetBSD: ufsmount.h,v 1.2 1994/06/29 06:47:36 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ufsmount.h	8.2 (Berkeley) 1/12/94
- *	$Id: ufsmount.h,v 1.1 1994/06/08 11:43:27 mycroft Exp $
+ *	@(#)ufsmount.h	8.2 (Berkeley) 1/12/94
  */
 
 struct buf;

@@ -1,3 +1,5 @@
+/*	$NetBSD: nfs_srvcache.c,v 1.8 1994/06/29 06:42:19 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)nfs_srvcache.c	8.1 (Berkeley) 6/10/93
- *	$Id: nfs_srvcache.c,v 1.7 1994/06/08 11:36:59 mycroft Exp $
+ *	@(#)nfs_srvcache.c	8.1 (Berkeley) 6/10/93
  */
 
 /*

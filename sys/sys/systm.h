@@ -1,4 +1,5 @@
-/* NetBSD $Id: systm.h,v 1.29 1994/06/27 19:32:15 cgd Exp $ */
+/*	$NetBSD: systm.h,v 1.30 1994/06/29 06:45:40 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -92,11 +93,11 @@ extern struct vnode *rootvp;	/* vnode equivalent to above */
 extern dev_t swapdev;		/* swapping device */
 extern struct vnode *swapdev_vp;/* vnode equivalent to above */
 
-struct sysent {			/* system call table */
+extern struct sysent {		/* system call table */
 	int	sy_narg;	/* number of arguments */
 	int	(*sy_call)();	/* implementing function */
 } sysent[];
-int nsysent;
+extern int nsysent;
 #ifdef SYSCALL_DEBUG
 char *syscallnames[];
 #endif

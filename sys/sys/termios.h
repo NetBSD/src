@@ -1,4 +1,5 @@
-/* NetBSD $Id: termios.h,v 1.10 1994/06/27 19:32:18 cgd Exp $ */
+/*	$NetBSD: termios.h,v 1.11 1994/06/29 06:45:43 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988, 1989, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
