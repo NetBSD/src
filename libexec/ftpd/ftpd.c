@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.148 2002/12/06 01:59:22 thorpej Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.149 2003/01/22 04:33:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.148 2002/12/06 01:59:22 thorpej Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.149 2003/01/22 04:33:35 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -670,8 +670,7 @@ user(const char *name)
 	} else
 		pw = sgetpwnam(name);
 
-	if (logging)
-		strlcpy(curname, name, sizeof(curname));
+	strlcpy(curname, name, sizeof(curname));
 
 			/* check user in /etc/ftpusers, and setup class */
 	permitted = checkuser(_PATH_FTPUSERS, curname, 1, 0, &class);
