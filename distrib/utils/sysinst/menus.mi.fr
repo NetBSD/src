@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.fr,v 1.25 2000/01/05 01:50:45 itojun Exp $	*/
+/*	$NetBSD: menus.mi.fr,v 1.26 2000/01/15 15:55:20 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -223,7 +223,7 @@ menu distset, title "Sélection de la distribution";
 
 menu ftpsource, title "Changer";
 	display action
-		{ msg_display (MSG_ftpsource, ftp_host, ftp_dir, ftp_user);
+		{ msg_display (MSG_ftpsource, ftp_host, ftp_dir, ftp_user,
 		     strcmp(ftp_user, "ftp") == 0 ? ftp_pass :
 		       strlen(ftp_pass) != 0 ? "** caché **" : "");
 		};
@@ -237,7 +237,7 @@ menu ftpsource, title "Changer";
 		{ if (strcmp(ftp_user, "ftp") == 0)
 			msg_prompt (MSG_email, ftp_pass, ftp_pass, 255);
 		  else {
-			msg_prompt_noecho (0, MSG_passwd, "", ftp_pass, 255);
+			msg_prompt_noecho (MSG_passwd, "", ftp_pass, 255);
 		  }
 		};
 	option "Récupérer la Distribution", exit;
@@ -323,7 +323,7 @@ menu localdirbad, title "Que voulez vous faire?";
 	option "Ignorer les erreurs, continuer quand même", exit, action
 		{ yesno = 1; ignorerror = 1; };
 
-menu namesrv6, title "  Select IPv6 DNS server";
+menu namesrv6, title "  Choisissez un serveur de noms IPv6 :";
 	option "paradise.v6.kame.net", exit, action
 		{
 #ifdef INET6
@@ -387,6 +387,6 @@ menu namesrv6, title "  Select IPv6 DNS server";
 	option "other ", exit, action
 		{ yesno = 0; };
 
-menu ip6autoconf, title "Perform IPv6 autoconfiguration?";
+menu ip6autoconf, title "Faire la configuration automatique IPv6 ?";
 	option "Yes", exit, action  {yesno = 1;};
 	option "No",  exit, action  {yesno = 0;};
