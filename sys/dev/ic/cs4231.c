@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231.c,v 1.9 2002/08/22 10:06:22 martin Exp $	*/
+/*	$NetBSD: cs4231.c,v 1.10 2002/08/22 20:42:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.9 2002/08/22 10:06:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.10 2002/08/22 20:42:22 martin Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -64,20 +64,20 @@ __KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.9 2002/08/22 10:06:22 martin Exp $");
 #define CSAUDIO_LINE_IN_LVL	1
 #define CSAUDIO_MONO_LVL	2
 #define CSAUDIO_CD_LVL		3
-#define CSAUDIO_MONITOR_LVL	4
+#define CSAUDIO_OUTPUT_LVL	4
 #define CSAUDIO_OUT_LVL		5
 #define CSAUDIO_LINE_IN_MUTE	6
 #define CSAUDIO_DAC_MUTE	7
 #define CSAUDIO_CD_MUTE		8
 #define CSAUDIO_MONO_MUTE	9
-#define CSAUDIO_MONITOR_MUTE	10
-#define CSAUDIO_REC_LVL		11
-#define CSAUDIO_RECORD_SOURCE	12
+#define CSAUDIO_OUTPUT_MUTE	10
+#define CSAUDIO_OUT_MUTE	11
+#define CSAUDIO_REC_LVL		12
+#define CSAUDIO_RECORD_SOURCE	13
 
-#define CSAUDIO_INPUT_CLASS	13
-#define CSAUDIO_OUTPUT_CLASS	14
-#define CSAUDIO_RECORD_CLASS	15
-#define CSAUDIO_MONITOR_CLASS	16
+#define CSAUDIO_INPUT_CLASS	14
+#define CSAUDIO_MONITOR_CLASS	15
+#define CSAUDIO_RECORD_CLASS	16
 
 #ifdef AUDIO_DEBUG
 int     cs4231_debug = 0;
@@ -178,14 +178,6 @@ cs4231_common_attach(sc, ioh)
 
 	sc->sc_ad1848.mode = 2;	/* put ad1848 driver in `MODE 2' mode */
 	ad1848_attach(&sc->sc_ad1848);
-#if 0
-        /*
-         * Before we give audiocs proper "outputs" handling, always mute
-         * internal speaker so that I can test this w/out waking up my family.
-         */
-        reg = ad_read(&sc->sc_ad1848, CS_MONO_IO_CONTROL);
-        ad_write(&sc->sc_ad1848, CS_MONO_IO_CONTROL, reg | MONO_OUTPUT_MUTE);
-#endif
 }
 
 void *
@@ -434,13 +426,14 @@ static ad1848_devmap_t csmapping[] = {
 	{ CSAUDIO_LINE_IN_LVL, AD1848_KIND_LVL, AD1848_LINE_CHANNEL }, 
 	{ CSAUDIO_MONO_LVL, AD1848_KIND_LVL, AD1848_MONO_CHANNEL },
 	{ CSAUDIO_CD_LVL, AD1848_KIND_LVL, AD1848_AUX2_CHANNEL },
-	{ CSAUDIO_MONITOR_LVL, AD1848_KIND_LVL, AD1848_MONITOR_CHANNEL },
+	{ CSAUDIO_OUTPUT_LVL, AD1848_KIND_LVL, AD1848_MONITOR_CHANNEL },
 	{ CSAUDIO_OUT_LVL, AD1848_KIND_LVL, AD1848_DAC_CHANNEL },
 	{ CSAUDIO_DAC_MUTE, AD1848_KIND_MUTE, AD1848_AUX1_CHANNEL },
 	{ CSAUDIO_LINE_IN_MUTE, AD1848_KIND_MUTE, AD1848_LINE_CHANNEL },
 	{ CSAUDIO_MONO_MUTE, AD1848_KIND_MUTE, AD1848_MONO_CHANNEL },
 	{ CSAUDIO_CD_MUTE, AD1848_KIND_MUTE, AD1848_AUX2_CHANNEL },
-	{ CSAUDIO_MONITOR_MUTE, AD1848_KIND_MUTE, AD1848_MONITOR_CHANNEL },
+	{ CSAUDIO_OUTPUT_MUTE, AD1848_KIND_MUTE, AD1848_MONITOR_CHANNEL },
+	{ CSAUDIO_OUT_MUTE, AD1848_KIND_MUTE, AD1848_OUT_CHANNEL },
 	{ CSAUDIO_REC_LVL, AD1848_KIND_RECORDGAIN, -1 },
 	{ CSAUDIO_RECORD_SOURCE, AD1848_KIND_RECORDSOURCE, -1 }
 };
@@ -527,10 +520,10 @@ cs4231_query_devinfo(addr, dip)
 		break;
 
 
-	case CSAUDIO_MONITOR_LVL:	/* monitor level */
+	case CSAUDIO_OUTPUT_LVL:	/* monitor level */
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = CSAUDIO_MONITOR_CLASS;
-		dip->next = CSAUDIO_MONITOR_MUTE;
+		dip->next = CSAUDIO_OUTPUT_MUTE;
 		dip->prev = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNmonitor);
 		dip->un.v.num_channels = 1;
@@ -540,10 +533,24 @@ cs4231_query_devinfo(addr, dip)
 	case CSAUDIO_OUT_LVL:		/* cs4231 output volume */
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = CSAUDIO_MONITOR_CLASS;
-		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNmaster);
 		dip->un.v.num_channels = 2;
 		strcpy(dip->un.v.units.name, AudioNvolume);
+		break;
+
+	case CSAUDIO_OUT_MUTE: /* mute built-in speaker */
+		dip->mixer_class = CSAUDIO_MONITOR_CLASS;
+		dip->type = AUDIO_MIXER_ENUM;
+		dip->prev = CSAUDIO_MONITOR_CLASS;
+		dip->next = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, AudioNmono);
+		/* names reversed, this is a "mute" value used as "mono enabled" */
+		dip->un.e.num_mem = 2;
+		strcpy(dip->un.e.member[0].label.name, AudioNon);
+		dip->un.e.member[0].ord = 0;
+		strcpy(dip->un.e.member[1].label.name, AudioNoff);
+		dip->un.e.member[1].ord = 1;
 		break;
 
 	case CSAUDIO_LINE_IN_MUTE:
@@ -574,10 +581,10 @@ cs4231_query_devinfo(addr, dip)
 		dip->next = AUDIO_MIXER_LAST;
 		goto mute;
 
-	case CSAUDIO_MONITOR_MUTE:
+	case CSAUDIO_OUTPUT_MUTE:
 		dip->mixer_class = CSAUDIO_MONITOR_CLASS;
 		dip->type = AUDIO_MIXER_ENUM;
-		dip->prev = CSAUDIO_MONITOR_LVL;
+		dip->prev = CSAUDIO_OUTPUT_LVL;
 		dip->next = AUDIO_MIXER_LAST;
 	mute:
 		strcpy(dip->label.name, AudioNmute);
@@ -622,20 +629,13 @@ cs4231_query_devinfo(addr, dip)
 		strcpy(dip->label.name, AudioCinputs);
 		break;
 
-	case CSAUDIO_OUTPUT_CLASS:		/* output class descriptor */
-		dip->type = AUDIO_MIXER_CLASS;
-		dip->mixer_class = CSAUDIO_OUTPUT_CLASS;
-		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCoutputs);
-		break;
-
-	case CSAUDIO_MONITOR_CLASS:		/* monitor class descriptor */
+	case CSAUDIO_MONITOR_CLASS:		/* output class descriptor */
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = CSAUDIO_MONITOR_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioCmonitor);
 		break;
-		    
+
 	case CSAUDIO_RECORD_CLASS:		/* record source class */
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = CSAUDIO_RECORD_CLASS;

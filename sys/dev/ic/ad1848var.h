@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.8 2001/11/04 08:08:26 itohy Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.9 2002/08/22 20:42:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -134,7 +134,8 @@ struct ad1848_softc {
 #define AD1848_DAC_CHANNEL	2
 #define AD1848_LINE_CHANNEL	3
 #define AD1848_MONO_CHANNEL	4
-#define AD1848_MONITOR_CHANNEL	5 /* Doesn't seem to be on all later chips */
+#define AD1848_OUT_CHANNEL	5
+#define AD1848_MONITOR_CHANNEL	6 /* Doesn't seem to be on all later chips */
 
 /*
  * Ad1848 registers.
