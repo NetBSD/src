@@ -1,4 +1,4 @@
-/*	$NetBSD: strlcat.c,v 1.5 1999/09/20 04:39:47 lukem Exp $	*/
+/*	$NetBSD: strlcat.c,v 1.5.8.1 2002/04/22 22:03:41 he Exp $	*/
 /*	from OpenBSD: strlcat.c,v 1.2 1999/06/17 16:28:58 millert Exp 	*/
 
 /*
@@ -30,12 +30,17 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strlcat.c,v 1.5 1999/09/20 04:39:47 lukem Exp $");
+__RCSID("$NetBSD: strlcat.c,v 1.5.8.1 2002/04/22 22:03:41 he Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <assert.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(strlcat, _strlcat)
+#endif
 
 /*
  * Appends src to string dst of size siz (unlike strncat, siz is the
@@ -44,7 +49,7 @@ __RCSID("$NetBSD: strlcat.c,v 1.5 1999/09/20 04:39:47 lukem Exp $");
  * Returns strlen(src); if retval >= siz, truncation occurred.
  */
 size_t
-strlcat(dst, src, siz)
+_strlcat(dst, src, siz)
 	char *dst;
 	const char *src;
 	size_t siz;
