@@ -1,6 +1,6 @@
 #	from: @(#)bsd.subdir.mk	5.9 (Berkeley) 2/1/91
 #	Id: bsd.port.subdir.mk,v 1.19 1997/03/09 23:10:56 wosch Exp 
-#	$NetBSD: bsd.port.subdir.mk,v 1.3.2.1 1998/02/07 00:34:18 mellon Exp $
+#	$NetBSD: bsd.port.subdir.mk,v 1.3.2.2 1998/02/24 05:29:51 mellon Exp $
 #
 # The include file <bsd.port.subdir.mk> contains the default targets
 # for building ports subdirectories. 
@@ -8,7 +8,7 @@
 #
 # +++ variables +++
 #
-# STRIP		The flag passed to the install program to cause the binary
+# STRIPFLAG	The flag passed to the install program to cause the binary
 #		to be stripped.  This is to be used when building your
 #		own install script so that the entire system can be made
 #		stripped/not-stripped using a single knob. [-s]
@@ -38,7 +38,7 @@
 .MAIN: all
 
 .if !defined(DEBUG_FLAGS)
-STRIP?=	-s
+STRIPFLAG?=	-s
 .endif
 
 .if !defined(OPSYS)	# XXX !!
