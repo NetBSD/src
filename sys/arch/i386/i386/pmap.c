@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.40 1996/10/18 09:03:42 fvdl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.41 1996/11/18 01:06:14 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -191,6 +191,12 @@ __inline void pmap_enter_pv __P((pmap_t, vm_offset_t, u_int));
 void pmap_deactivate __P((pmap_t, struct pcb *));
 void pmap_remove_all __P((vm_offset_t));
 
+#ifdef	NKPDE
+int	nkpde = NKPDE;
+#else
+int	nkpde = 0;
+#endif
+
 #if BSDVM_COMPAT
 #include <sys/msgbuf.h>
 
@@ -238,13 +244,13 @@ pmap_bootstrap(virtual_start)
 	 * Create Kernel page directory table and page maps.
 	 * [ currently done in locore. i have wild and crazy ideas -wfj ]
 	 */
-	bzero(firstaddr, (1+NKPDE)*NBPG);
+	bzero(firstaddr, (1+nkpde)*NBPG);
 	pmap_kernel()->pm_pdir = firstaddr + VM_MIN_KERNEL_ADDRESS;
 	pmap_kernel()->pm_ptab = firstaddr + VM_MIN_KERNEL_ADDRESS + NBPG;
 
 	firstaddr += NBPG;
 	for (x = i386_btod(VM_MIN_KERNEL_ADDRESS);
-	     x < i386_btod(VM_MIN_KERNEL_ADDRESS) + NKPDE; x++) {
+	     x < i386_btod(VM_MIN_KERNEL_ADDRESS) + nkpde; x++) {
 		pd_entry_t *pde;
 		pde = pmap_kernel()->pm_pdir + x;
 		*pde = (firstaddr + x*NBPG) | PG_V | PG_KW;
@@ -631,7 +637,7 @@ pmap_pinit(pmap)
 	pmap->pm_pdir = (pd_entry_t *) kmem_alloc(kernel_map, NBPG);
 
 	/* wire in kernel global address entries */
-	bcopy(&PTD[KPTDI], &pmap->pm_pdir[KPTDI], NKPDE * sizeof(pd_entry_t));
+	bcopy(&PTD[KPTDI], &pmap->pm_pdir[KPTDI], nkpde * sizeof(pd_entry_t));
 
 	/* install self-referential address mapping entry */
 	pmap->pm_pdir[PTDPTDI] =

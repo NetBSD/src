@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.156 1996/11/12 01:49:29 jtc Exp $	*/
+/*	$NetBSD: locore.s,v 1.157 1996/11/18 01:06:10 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -84,6 +84,11 @@
 #define	NOP	pushl %eax ; inb $0x84,%al ; inb $0x84,%al ; popl %eax
 #endif
 
+/* Disallow the old name for BIOSEXTMEM */
+#ifdef EXTMEM_SIZE
+#error EXTMEM_SIZE option deprecated; use BIOSEXTMEM instead
+#endif
+
 /*
  * These are used on interrupt or trap entry or exit.
  */
@@ -152,8 +157,16 @@ _atdevbase:	.long	0	# location of start of iomem in virtual
 _cyloffset:	.long	0
 _proc0paddr:	.long	0
 _PTDpaddr:	.long	0	# paddr of PTD, for libkvm
+#ifndef BIOSBASEMEM
 _biosbasemem:	.long	0	# base memory reported by BIOS
+#else
+_biosbasemem:	.long	BIOSBASEMEM
+#endif
+#ifndef BIOSEXTMEM
 _biosextmem:	.long	0	# extended memory reported by BIOS
+#else
+_biosextmem:	.long	BIOSEXTMEM
+#endif
 	
 	.space 512
 tmpstk:
@@ -181,10 +194,19 @@ start:	movw	$0x1234,0x472			# warm boot
 	jz	1f
 	addl	$KERNBASE,%eax
 1: 	movl	%eax,RELOC(_esym)
+
+	movl	RELOC(_biosextmem),%eax
+	testl	%eax,%eax
+	jnz	1f
 	movl	20(%esp),%eax
 	movl	%eax,RELOC(_biosextmem)
+1:
+	movl	RELOC(_biosbasemem),%eax
+	testl	%eax,%eax
+	jnz	1f
 	movl	24(%esp),%eax
 	movl	%eax,RELOC(_biosbasemem)
+1:
 
 	/* First, reset the PSL. */
 	pushl	$PSL_MBO
@@ -349,11 +371,11 @@ try586:	/* Use the `cpuid' instruction. */
 #define	PROC0STACK	((1)              * NBPG)
 #define	SYSMAP		((1+UPAGES)       * NBPG)
 #if NAPM > 0
-#define	NKPDE_SPACE	(NKPDE+1)
+#define	APM_PDE_SPACE	1			/* XXX NAME IS TOTALLY BOGUS */
 #else
-#define	NKPDE_SPACE	NKPDE
+#define	APM_PDE_SPACE	0			/* XXX NAME IS TOTALLY BOGUS */
 #endif
-#define	TABLESIZE	((1+UPAGES+NKPDE_SPACE) * NBPG)
+#define	TABLESIZE	((1+UPAGES+APM_PDE_SPACE) * NBPG) /* + nkpde * NBPG */
 
 	/* Clear the BSS. */
 	movl	$RELOC(_edata),%edi
@@ -380,8 +402,28 @@ try586:	/* Use the `cpuid' instruction. */
 	addl	$PGOFSET,%esi			# page align up
 	andl	$~PGOFSET,%esi
 
+	/*
+	 * Calculate the size of the kernel page table directory, and
+	 * how many entries it will have.
+	 */
+	movl	RELOC(_nkpde),%ecx		# get nkpde
+	testl	%ecx,%ecx			# if it's non-zero, use as-is
+	jnz	2f
+
+	movl	RELOC(_biosextmem),%ecx
+	shrl	$10,%ecx			# cvt. # of KB to # of MB
+	imull	$NKPDE_SCALE,%ecx		# scale to # of KPDEs
+	addl	$NKPDE_BASE,%ecx		# and add the base.
+	cmpl	$NKPDE_MAX,%ecx			# clip to max.
+	jle	1f
+	movl	$NKPDE_MAX,%ecx
+1:	movl	%ecx,RELOC(_nkpde)
+2:
+
 	/* Clear memory for bootstrap tables. */
-	leal	(TABLESIZE)(%esi),%ecx		# end of tables
+	shll	$PGSHIFT,%ecx
+	addl	$TABLESIZE,%ecx
+	addl	%esi,%ecx			# end of tables
 	subl	%edi,%ecx			# size of tables
 	shrl	$2,%ecx
 	xorl	%eax,%eax
@@ -427,7 +469,10 @@ try586:	/* Use the `cpuid' instruction. */
 
 	/* Map the data, BSS, and bootstrap tables read-write. */
 	leal	(PG_V|PG_KW)(%edx),%eax
-	leal	(TABLESIZE)(%esi),%ecx			# end of tables
+	movl	RELOC(_nkpde),%ecx
+	shll	$PGSHIFT,%ecx
+	addl	$TABLESIZE,%ecx
+	addl	%esi,%ecx				# end of tables
 	subl	%edx,%ecx				# subtract end of text
 	shrl	$PGSHIFT,%ecx
 	fillkpt
@@ -444,7 +489,7 @@ try586:	/* Use the `cpuid' instruction. */
 	leal	(SYSMAP+PG_V|PG_KW)(%esi),%eax		# pte for KPT in proc 0,
 	movl	%eax,(PROC0PDIR+0*4)(%esi)		# which is where temp maps!
 	/* Map kernel PDEs. */
-	movl	$NKPDE,%ecx				# for this many pde s,
+	movl	RELOC(_nkpde),%ecx			# for this many pde s,
 	leal	(PROC0PDIR+KPTDI*4)(%esi),%ebx		# offset of pde for kernel
 	fillkpt
 
@@ -488,7 +533,10 @@ begin:
 #endif
 
 	/* Relocate atdevbase. */
-	leal	(TABLESIZE+KERNBASE)(%esi),%edx
+	movl	_nkpde,%edx
+	shll	$PGSHIFT,%edx
+	addl	$(TABLESIZE+KERNBASE),%edx
+	addl	%esi,%edx
 	movl	%edx,_atdevbase
 
 	/* Set up bootstrap stack. */
@@ -498,7 +546,10 @@ begin:
 	movl	%esi,PCB_CR3(%eax)	# pcb->pcb_cr3
 	xorl	%ebp,%ebp               # mark end of frames
 
-	leal	(TABLESIZE)(%esi),%eax	# skip past stack and page tables
+	movl	_nkpde,%eax
+	shll	$PGSHIFT,%eax
+	addl	$TABLESIZE,%eax
+	addl	%esi,%eax		# skip past stack and page tables
 	pushl	%eax
 	call	_init386		# wire 386 chip for unix operation
 	addl	$4,%esp

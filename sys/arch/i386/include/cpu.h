@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.36 1996/10/11 00:27:01 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.37 1996/11/18 01:08:00 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -173,11 +173,17 @@ void	setconf __P((void));
  * CTL_MACHDEP definitions.
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define	CPU_MAXID		2	/* number of valid machdep ids */
+#define	CPU_BIOSBASEMEM		2	/* int: bios-reported base mem (K) */
+#define	CPU_BIOSEXTMEM		3	/* int: bios-reported ext. mem (K) */
+#define	CPU_NKPDE		4	/* int: number of kernel PDEs */
+#define	CPU_MAXID		5	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
+	{ "biosbasemem", CTLTYPE_INT }, \
+	{ "biosextmem", CTLTYPE_INT }, \
+	{ "nkpde", CTLTYPE_INT }, \
 }
 
 #endif /* !_I386_CPU_H_ */

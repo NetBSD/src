@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.23 1996/05/03 19:26:30 christos Exp $	*/
+/*	$NetBSD: pmap.h,v 1.24 1996/11/18 01:08:01 fvdl Exp $	*/
 
 /* 
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -67,7 +67,9 @@
  */
 #define	PTDPTDI		0x3df		/* ptd entry that points to ptd! */
 #define	KPTDI		0x3e0		/* start of kernel virtual pde's */
-#define	NKPDE		12
+#define	NKPDE_BASE	4		/* min. # of kernel PDEs */ 
+#define	NKPDE_MAX	31		/* max. # of kernel PDEs */ 
+#define	NKPDE_SCALE	1		/* # of kernel PDEs to add per meg. */
 #define	APTDPTDI	0x3ff		/* start of alternate page directory */
 
 /*
@@ -152,6 +154,7 @@ struct pv_page {
 };
 
 #ifdef	_KERNEL
+extern int		nkpde;		/* number of kernel page dir. ents */
 extern struct pmap	kernel_pmap_store;
 struct pv_entry		*pv_table;	/* array of entries, one per page */
 
