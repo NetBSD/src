@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.23 1997/10/20 18:43:20 thorpej Exp $	*/
+/*	$NetBSD: wds.c,v 1.23.2.1 1997/10/29 00:31:56 thorpej Exp $	*/
 
 #undef WDSDIAG
 #ifdef DDB
@@ -180,7 +180,7 @@ integrate void wds_finish_scbs __P((struct wds_softc *));
 int     wdsintr __P((void *));
 integrate void wds_reset_scb __P((struct wds_softc *, struct wds_scb *));
 void    wds_free_scb __P((struct wds_softc *, struct wds_scb *));
-integrate void wds_init_scb __P((struct wds_softc *, struct wds_scb *));
+integrate int wds_init_scb __P((struct wds_softc *, struct wds_scb *));
 struct	wds_scb *wds_get_scb __P((struct wds_softc *, int));
 struct	wds_scb *wds_scb_phys_kv __P((struct wds_softc *, u_long));
 void	wds_queue_scb __P((struct wds_softc *, struct wds_scb *));
@@ -529,13 +529,13 @@ wds_free_scb(sc, scb)
 	splx(s);
 }
 
-integrate void
+integrate int
 wds_init_scb(sc, scb)
 	struct wds_softc *sc;
 	struct wds_scb *scb;
 {
 	bus_dma_tag_t dmat = sc->sc_dmat;
-	int hashnum;
+	int hashnum, error;
 
 	/*
 	 * XXX Should we put a DIAGNOSTIC check for multiple
@@ -547,20 +547,35 @@ wds_init_scb(sc, scb)
 	/*
 	 * Create DMA maps for this SCB.
 	 */
-	if (bus_dmamap_create(dmat, sizeof(struct wds_scb), 1,
-	    sizeof(struct wds_scb), 0, BUS_DMA_NOWAIT, &scb->dmamap_self) ||
+	error = bus_dmamap_create(dmat, sizeof(struct wds_scb), 1,
+	    sizeof(struct wds_scb), 0, BUS_DMA_NOWAIT, &scb->dmamap_self);
+	if (error) {
+		printf("%s: can't create scb dmamap_self\n",
+		    sc->sc_dev.dv_xname);
+		return (error);
+	}
 
-					/* XXX What's a good value for this? */
-	    bus_dmamap_create(dmat, WDS_MAXXFER, WDS_NSEG, WDS_MAXXFER,
-	    0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &scb->dmamap_xfer))
-		panic("wds_init_scb: can't create DMA maps");
+	error = bus_dmamap_create(dmat, WDS_MAXXFER, WDS_NSEG, WDS_MAXXFER,
+	    0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &scb->dmamap_xfer);
+	if (error) {
+		printf("%s: can't create scb dmamap_xfer\n",
+		    sc->sc_dev.dv_xname);
+		bus_dmamap_destroy(dmat, scb->dmamap_self);
+		return (error);
+	}
 
 	/*
 	 * Load the permanent DMA maps.
 	 */
-	if (bus_dmamap_load(dmat, scb->dmamap_self, scb,
-	    sizeof(struct wds_scb), NULL, BUS_DMA_NOWAIT))
-		panic("wds_init_scb: can't load permanent maps");
+	error = bus_dmamap_load(dmat, scb->dmamap_self, scb,
+	    sizeof(struct wds_scb), NULL, BUS_DMA_NOWAIT);
+	if (error) {
+		printf("%s: can't load scb dmamap_self\n",
+		    sc->sc_dev.dv_xname);
+		bus_dmamap_destroy(dmat, scb->dmamap_self);
+		bus_dmamap_destroy(dmat, scb->dmamap_xfer);
+		return (error);
+	}
 
 	/*
 	 * put in the phystokv hash table
@@ -571,6 +586,7 @@ wds_init_scb(sc, scb)
 	scb->nexthash = sc->sc_scbhash[hashnum];
 	sc->sc_scbhash[hashnum] = scb;
 	wds_reset_scb(sc, scb);
+	return (0);
 }
 
 /*
@@ -595,26 +611,34 @@ wds_create_scbs(sc, mem, size)
 	size = NBPG;
 	error = bus_dmamem_alloc(sc->sc_dmat, size, NBPG, 0, &seg, 1, &rseg,
 	    BUS_DMA_NOWAIT);
-	if (error)
+	if (error) {
+		printf("%s: can't allocate memory for scbs\n",
+		    sc->sc_dev.dv_xname);
 		return (error);
+	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
 	    (caddr_t *)&scb, BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC);
 	if (error) {
+		printf("%s: can't map memory for scbs\n",
+		    sc->sc_dev.dv_xname);
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
 		return (error);
 	}
 
  have_mem:
 	bzero(scb, size);
-	while (size > sizeof(struct wds_scb)) {
-		wds_init_scb(sc, scb);
-		sc->sc_numscbs++;
-		if (sc->sc_numscbs >= WDS_SCB_MAX)
-			break;
+	while (size > sizeof(struct wds_scb) && sc->sc_numscbs < WDS_SCB_MAX) {
+		error = wds_init_scb(sc, scb);
+		if (error) {
+			printf("%s: can't initialize scb\n",
+			    sc->sc_dev.dv_xname);
+			return (error);
+		}
 		TAILQ_INSERT_TAIL(&sc->sc_free_scb, scb, chain);
 		(caddr_t)scb += ALIGN(sizeof(struct wds_scb));
 		size -= ALIGN(sizeof(struct wds_scb));
+		sc->sc_numscbs++;
 	}
 
 	return (0);
@@ -647,7 +671,13 @@ wds_get_scb(sc, flags)
 			break;
 		}
 		if (sc->sc_numscbs < WDS_SCB_MAX) {
-			if (wds_create_scbs(sc, NULL, 0)) {
+			/*
+			 * wds_create_scbs() might have managed to create
+			 * one before it failed.  If so, don't abort,
+			 * just grab it and continue to hobble along.
+			 */
+			if (wds_create_scbs(sc, NULL, 0) != 0 &&
+			    sc->sc_free_scb.tqh_first == NULL) {
 				printf("%s: can't allocate scbs\n",
 				    sc->sc_dev.dv_xname);
 				goto out;
