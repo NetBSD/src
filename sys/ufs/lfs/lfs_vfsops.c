@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.156 2004/08/15 07:19:58 mycroft Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.157 2004/08/15 16:07:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.156 2004/08/15 07:19:58 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.157 2004/08/15 16:07:08 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1071,6 +1071,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	for (i = 0; i < MAXQUOTAS; i++)
 		ump->um_quotas[i] = NULLVP;
 	ump->um_maxsymlinklen = fs->lfs_maxsymlinklen;
+	ump->um_dirblksiz = DIRBLKSIZ;
 	ump->um_maxfilesize = fs->lfs_maxfilesize;
 	devvp->v_specmountpoint = mp;
 
