@@ -1,4 +1,4 @@
-/* $NetBSD: wsemulconf.c,v 1.4 2000/01/05 11:19:37 drochner Exp $ */
+/* $NetBSD: wsemulconf.c,v 1.5 2001/10/13 15:56:16 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemulconf.c,v 1.4 2000/01/05 11:19:37 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemulconf.c,v 1.5 2001/10/13 15:56:16 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,8 +55,7 @@ static const struct wsemul_ops *wsemul_conf[] = {
 };
 
 const struct wsemul_ops *
-wsemul_pick(name)
-	const char *name;
+wsemul_pick(const char *name)
 {
 	const struct wsemul_ops **ops;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.19 2001/10/13 13:36:01 augustss Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.20 2001/10/13 15:56:15 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -49,18 +49,14 @@ struct device;
  * with these functions, which is passed to them when they are invoked.
  */
 struct wsdisplay_emulops {
-	void	(*cursor) __P((void *c, int on, int row, int col));
-	int	(*mapchar) __P((void *, int, unsigned int *));
-	void	(*putchar) __P((void *c, int row, int col,
-				u_int uc, long attr));
-	void	(*copycols) __P((void *c, int row, int srccol, int dstcol,
-		    int ncols));
-	void	(*erasecols) __P((void *c, int row, int startcol,
-		    int ncols, long));
-	void	(*copyrows) __P((void *c, int srcrow, int dstrow,
-		    int nrows));
-	void	(*eraserows) __P((void *c, int row, int nrows, long));
-	int	(*alloc_attr) __P((void *c, int fg, int bg, int flags, long *));
+	void	(*cursor)(void *c, int on, int row, int col);
+	int	(*mapchar)(void *, int, unsigned int *);
+	void	(*putchar)(void *c, int row, int col, u_int uc, long attr);
+	void	(*copycols)(void *c, int row, int srccol, int dstcol,int ncols);
+	void	(*erasecols)(void *c, int row, int startcol, int ncols, long);
+	void	(*copyrows)(void *c, int srcrow, int dstrow, int nrows);
+	void	(*eraserows)(void *c, int row, int nrows, long);
+	int	(*alloc_attr)(void *c, int fg, int bg, int flags, long *);
 /* fg / bg values. Made identical to ANSI terminal color codes. */
 #define WSCOL_BLACK	0
 #define WSCOL_RED	1
@@ -101,16 +97,16 @@ struct wsdisplay_font;
  * with these functions, which is passed to them when they are invoked.
  */
 struct wsdisplay_accessops {
-	int	(*ioctl) __P((void *v, u_long cmd, caddr_t data, int flag,
-		    struct proc *p));
-	paddr_t	(*mmap) __P((void *v, off_t off, int prot));
-	int	(*alloc_screen) __P((void *, const struct wsscreen_descr *,
-				     void **, int *, int *, long *));
-	void	(*free_screen) __P((void *, void *));
-	int	(*show_screen) __P((void *, void *, int,
-				    void (*) (void *, int, int), void *));
-	int	(*load_font) __P((void *, void *, struct wsdisplay_font *));
-	void	(*pollc) __P((void *, int));
+	int	(*ioctl)(void *v, u_long cmd, caddr_t data, int flag,
+		    struct proc *p);
+	paddr_t	(*mmap)(void *v, off_t off, int prot);
+	int	(*alloc_screen)(void *, const struct wsscreen_descr *,
+				     void **, int *, int *, long *);
+	void	(*free_screen)(void *, void *);
+	int	(*show_screen)(void *, void *, int,
+				    void (*) (void *, int, int), void *);
+	int	(*load_font)(void *, void *, struct wsdisplay_font *);
+	void	(*pollc)(void *, int);
 };
 
 /*
@@ -147,60 +143,56 @@ struct wsemuldisplaydev_attach_args {
 #define	wsdisplaydevcf_kbdmux		cf_loc[WSDISPLAYDEVCF_KBDMUX]
 
 struct wscons_syncops {
-	int (*detach) __P((void *, int, void (*)(void *, int, int), void *));
-	int (*attach) __P((void *, int, void (*)(void *, int, int), void *));
-	int (*check) __P((void *));
-	void (*destroy) __P((void *));
+	int (*detach)(void *, int, void (*)(void *, int, int), void *);
+	int (*attach)(void *, int, void (*)(void *, int, int), void *);
+	int (*check)(void *);
+	void (*destroy)(void *);
 };
 
 /*
  * Autoconfiguration helper functions.
  */
-void	wsdisplay_cnattach __P((const struct wsscreen_descr *, void *,
-				int, int, long));
-int	wsdisplaydevprint __P((void *, const char *));
-int	wsemuldisplaydevprint __P((void *, const char *));
+void	wsdisplay_cnattach(const struct wsscreen_descr *, void *,int,int, long);
+int	wsdisplaydevprint(void *, const char *);
+int	wsemuldisplaydevprint(void *, const char *);
 
 /*
  * Console interface.
  */
-void	wsdisplay_cnputc __P((dev_t dev, int i));
+void	wsdisplay_cnputc(dev_t dev, int i);
 
 /*
  * for use by compatibility code
  */
 struct wsdisplay_softc;
 struct wsscreen;
-int wsscreen_attach_sync __P((struct wsscreen *,
-			      const struct wscons_syncops *, void *));
-int wsscreen_detach_sync __P((struct wsscreen *));
-int wsscreen_lookup_sync __P((struct wsscreen *,
-			      const struct wscons_syncops *, void **));
+int wsscreen_attach_sync(struct wsscreen *,
+			 const struct wscons_syncops *, void *);
+int wsscreen_detach_sync(struct wsscreen *);
+int wsscreen_lookup_sync(struct wsscreen *,
+			 const struct wscons_syncops *, void **);
 
-int wsdisplay_maxscreenidx __P((struct wsdisplay_softc *));
-int wsdisplay_screenstate __P((struct wsdisplay_softc *, int));
-int wsdisplay_getactivescreen __P((struct wsdisplay_softc *));
-int wsscreen_switchwait __P((struct wsdisplay_softc *, int));
+int wsdisplay_maxscreenidx(struct wsdisplay_softc *);
+int wsdisplay_screenstate(struct wsdisplay_softc *, int);
+int wsdisplay_getactivescreen(struct wsdisplay_softc *);
+int wsscreen_switchwait(struct wsdisplay_softc *, int);
 
-int wsdisplay_internal_ioctl __P((struct wsdisplay_softc *sc,
-				  struct wsscreen *,
-				  u_long cmd, caddr_t data,
-				  int flag, struct proc *p));
+int wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *,
+			     u_long cmd, caddr_t data,int flag, struct proc *p);
 
-int wsdisplay_usl_ioctl1 __P((struct wsdisplay_softc *,
-			     u_long, caddr_t, int, struct proc *));
+int wsdisplay_usl_ioctl1(struct wsdisplay_softc *,
+			 u_long, caddr_t, int, struct proc *);
 
-int wsdisplay_usl_ioctl2 __P((struct wsdisplay_softc *, struct wsscreen *,
-			     u_long, caddr_t, int, struct proc *));
+int wsdisplay_usl_ioctl2(struct wsdisplay_softc *, struct wsscreen *,
+			 u_long, caddr_t, int, struct proc *);
 
-int wsdisplay_cfg_ioctl __P((struct wsdisplay_softc *sc,
-			     u_long cmd, caddr_t data,
-			     int flag, struct proc *p));
+int wsdisplay_cfg_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
+			int flag, struct proc *p);
 
 /*
  * for general use
  */
 #define WSDISPLAY_NULLSCREEN	-1
-void wsdisplay_switchtoconsole __P((void));
+void wsdisplay_switchtoconsole(void);
 const struct wsscreen_descr *
-    wsdisplay_screentype_pick __P((const struct wsscreen_list *, const char *));
+    wsdisplay_screentype_pick(const struct wsscreen_list *, const char *);

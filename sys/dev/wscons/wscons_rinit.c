@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_rinit.c,v 1.2 1998/05/14 20:49:56 drochner Exp $ */
+/* $NetBSD: wscons_rinit.c,v 1.3 2001/10/13 15:56:15 augustss Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -53,12 +53,10 @@
 
 #include <dev/wscons/wscons_rfont.h>
 
-void	rcons_initfont __P((struct rcons *, struct raster_font *));
+void	rcons_initfont(struct rcons *, struct raster_font *);
 
 void
-rcons_initfont(rc, fp)
-	struct rcons *rc;
-	struct raster_font *fp;
+rcons_initfont(struct rcons *rc, struct raster_font *fp)
 {
 	static int initfontdone;
 
@@ -96,9 +94,7 @@ rcons_initfont(rc, fp)
 }
 
 void
-rcons_init(rc, mrow, mcol)
-	struct rcons *rc;
-	int mrow, mcol;
+rcons_init(struct rcons *rc, int mrow, int mcol)
 {
 	struct raster *rp = rc->rc_sp;
 	int i;

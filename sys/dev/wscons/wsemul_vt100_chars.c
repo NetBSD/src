@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_chars.c,v 1.5 2001/01/18 20:28:23 jdolecek Exp $ */
+/* $NetBSD: wsemul_vt100_chars.c,v 1.6 2001/10/13 15:56:16 augustss Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -79,8 +79,7 @@ static const u_int16_t dectech2uni[128] = {
 };
 
 void
-vt100_initchartables(edp)
-	struct wsemul_vt100_emuldata *edp;
+vt100_initchartables(struct wsemul_vt100_emuldata *edp)
 {
 	int i;
 
@@ -142,9 +141,7 @@ static const struct {
 };
 
 void
-vt100_setnrc(edp, nrc)
-	struct wsemul_vt100_emuldata *edp;
-	int nrc;
+vt100_setnrc(struct wsemul_vt100_emuldata *edp, int nrc)
 {
 	int i;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_dumb.c,v 1.7 2000/01/05 11:19:36 drochner Exp $ */
+/* $NetBSD: wsemul_dumb.c,v 1.8 2001/10/13 15:56:15 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_dumb.c,v 1.7 2000/01/05 11:19:36 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_dumb.c,v 1.8 2001/10/13 15:56:15 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,15 +44,14 @@ __KERNEL_RCSID(0, "$NetBSD: wsemul_dumb.c,v 1.7 2000/01/05 11:19:36 drochner Exp
 #include <dev/wscons/wsemulvar.h>
 #include <dev/wscons/ascii.h>
 
-void	*wsemul_dumb_cnattach __P((const struct wsscreen_descr *, void *,
-				   int, int, long));
-void	*wsemul_dumb_attach __P((int console, const struct wsscreen_descr *,
-				 void *, int, int, void *, long));
-void	wsemul_dumb_output __P((void *cookie, const u_char *data, u_int count,
-				int));
-int	wsemul_dumb_translate __P((void *cookie, keysym_t, char **));
-void	wsemul_dumb_detach __P((void *cookie, u_int *crowp, u_int *ccolp));
-void	wsemul_dumb_resetop __P((void *, enum wsemul_resetops));
+void	*wsemul_dumb_cnattach(const struct wsscreen_descr *, void *,
+				   int, int, long);
+void	*wsemul_dumb_attach(int console, const struct wsscreen_descr *,
+				 void *, int, int, void *, long);
+void	wsemul_dumb_output(void *cookie, const u_char *data, u_int count, int);
+int	wsemul_dumb_translate(void *cookie, keysym_t, char **);
+void	wsemul_dumb_detach(void *cookie, u_int *crowp, u_int *ccolp);
+void	wsemul_dumb_resetop(void *, enum wsemul_resetops);
 
 const struct wsemul_ops wsemul_dumb_ops = {
 	"dumb",
@@ -75,11 +74,8 @@ struct wsemul_dumb_emuldata {
 struct wsemul_dumb_emuldata wsemul_dumb_console_emuldata;
 
 void *
-wsemul_dumb_cnattach(type, cookie, ccol, crow, defattr)
-	const struct wsscreen_descr *type;
-	void *cookie;
-	int ccol, crow;
-	long defattr;
+wsemul_dumb_cnattach(const struct wsscreen_descr *type, void *cookie,
+	int ccol, int crow, long defattr)
 {
 	struct wsemul_dumb_emuldata *edp;
 
@@ -98,13 +94,8 @@ wsemul_dumb_cnattach(type, cookie, ccol, crow, defattr)
 }
 
 void *
-wsemul_dumb_attach(console, type, cookie, ccol, crow, cbcookie, defattr)
-	int console;
-	const struct wsscreen_descr *type;
-	void *cookie;
-	int ccol, crow;
-	void *cbcookie;
-	long defattr;
+wsemul_dumb_attach(int console, const struct wsscreen_descr *type,
+	void *cookie, int ccol, int crow, void *cbcookie, long defattr)
 {
 	struct wsemul_dumb_emuldata *edp;
 
@@ -128,11 +119,8 @@ wsemul_dumb_attach(console, type, cookie, ccol, crow, cbcookie, defattr)
 }
 
 void
-wsemul_dumb_output(cookie, data, count, kernel)
-	void *cookie;
-	const u_char *data;
-	u_int count;
-	int kernel; /* ignored */
+wsemul_dumb_output(void *cookie, const u_char *data, u_int count,
+	int kernel /* ignored */)
 {
 	struct wsemul_dumb_emuldata *edp = cookie;
 	u_char c;
@@ -210,18 +198,13 @@ wsemul_dumb_output(cookie, data, count, kernel)
 }
 
 int
-wsemul_dumb_translate(cookie, in, out)
-	void *cookie;
-	keysym_t in;
-	char **out;
+wsemul_dumb_translate(void *cookie, keysym_t in, char **out)
 {
 	return (0);
 }
 
 void
-wsemul_dumb_detach(cookie, crowp, ccolp)
-	void *cookie;
-	u_int *crowp, *ccolp;
+wsemul_dumb_detach(void *cookie, u_int *crowp, u_int *ccolp)
 {
 	struct wsemul_dumb_emuldata *edp = cookie;
 
@@ -232,9 +215,7 @@ wsemul_dumb_detach(cookie, crowp, ccolp)
 }
 
 void
-wsemul_dumb_resetop(cookie, op)
-	void *cookie;
-	enum wsemul_resetops op;
+wsemul_dumb_resetop(void *cookie, enum wsemul_resetops op)
 {
 	struct wsemul_dumb_emuldata *edp = cookie;
 
