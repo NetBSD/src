@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.8 2001/11/22 06:00:31 simonb Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.9 2001/11/22 06:58:03 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -136,7 +136,7 @@ static char *c0_reg[32] = {
 	"taglo",    "taghi",    "errepc",  "desave"
 };
 
-static void print_addr(long);
+static void print_addr(db_addr_t);
 
 /*
  * Disassemble instruction at 'loc'.  'altfmt' specifies an
@@ -148,10 +148,7 @@ static void print_addr(long);
  * be executed but the 'linear' next instruction.
  */
 db_addr_t
-db_disasm(loc, altfmt)
-	db_addr_t	loc;
-	boolean_t	altfmt;
-
+db_disasm(db_addr_t loc, boolean_t altfmt)
 {
 	u_int32_t instr;
 
@@ -180,10 +177,7 @@ db_disasm(loc, altfmt)
  * 'loc' may in fact contain a breakpoint instruction.
  */
 db_addr_t
-db_disasm_insn(insn, loc, altfmt)
-	int		insn;
-	db_addr_t	loc;
-	boolean_t	altfmt;
+db_disasm_insn(int insn, db_addr_t loc, boolean_t altfmt)
 {
 	boolean_t bdslot = FALSE;
 	InstFmt i;
@@ -488,8 +482,7 @@ db_disasm_insn(insn, loc, altfmt)
 }
 
 static void
-print_addr(loc)
-	long loc;
+print_addr(db_addr_t loc)
 {
 	db_expr_t diff;
 	db_sym_t sym;
