@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.13 1998/02/22 15:40:39 christos Exp $	*/
+/*	$NetBSD: decl.c,v 1.14 1998/07/27 12:10:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -1450,7 +1450,7 @@ sym_t *
 dname(sym)
 	sym_t	*sym;
 {
-	scl_t	sc = NULL;
+	scl_t	sc = NOSCL;
 
 	if (sym->s_scl == NOSCL) {
 		dcs->d_rdcsym = NULL;
@@ -1580,7 +1580,7 @@ mktag(tag, kind, decl, semi)
 	tspec_t	kind;
 	int	decl, semi;
 {
-	scl_t	scl = NULL;
+	scl_t	scl = NOSCL;
 	type_t	*tp;
 
 	if (kind == STRUCT) {

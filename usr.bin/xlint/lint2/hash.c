@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.4 1998/02/22 15:40:41 christos Exp $	*/
+/*	$NetBSD: hash.c,v 1.5 1998/07/27 12:10:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hash.c,v 1.4 1998/02/22 15:40:41 christos Exp $");
+__RCSID("$NetBSD: hash.c,v 1.5 1998/07/27 12:10:24 mycroft Exp $");
 #endif
 
 /*
@@ -113,8 +113,14 @@ _hsearch(table, s, mknew)
 	/* create a new hte */
 	hte = xmalloc(sizeof (hte_t));
 	hte->h_name = xstrdup(s);
+	hte->h_used = 0;
+	hte->h_def = 0;
+	hte->h_static = 0;
+	hte->h_syms = NULL;
 	hte->h_lsym = &hte->h_syms;
+	hte->h_calls = NULL;
 	hte->h_lcall = &hte->h_calls;
+	hte->h_usyms = NULL;
 	hte->h_lusym = &hte->h_usyms;
 	hte->h_link = table[h];
 	hte->h_hte = NULL;
