@@ -1,7 +1,13 @@
-#	$NetBSD: Makefile,v 1.1.1.2 1997/07/24 21:24:18 christos Exp $
+#	$NetBSD: Makefile,v 1.1.1.3 2000/11/20 00:16:18 wiz Exp $
 
-PROG= mk-amd-map
-SRCS=	mk-amd-map.c 
-MAN+= mk-amd-map.8
+.include "${.CURDIR}/../Makefile.inc"
+
+PROG=	mk-amd-map
+
+DIST=	${IDIST}/mk-amd-map
+.PATH:	${DIST}
+
+SRCS=	mk-amd-map.c
+MAN+=	mk-amd-map.8
 
 .include <bsd.prog.mk>
