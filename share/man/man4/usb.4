@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.30 2000/09/24 17:22:08 augustss Exp $
+.\" $NetBSD: usb.4,v 1.31 2001/01/11 07:05:58 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -113,7 +113,7 @@ value of 1.
 includes machine-independent
 .Tn USB
 drivers, sorted by driver name:
-.Bl -tag -width uscanner -offset indent
+.Bl -tag -width usscanner -offset indent
 .It aue
 driver for ADMtek AN986 Pegasus USB Ethernet.
 .It cue
@@ -150,6 +150,8 @@ driver for the
 Rio 500 MP3 player.
 .It uscanner
 driver for some USB scanners.
+.It usscanner
+driver for some SCSI-over-USB scanners.
 .It uvisor
 Handspring Visor driver.
 .El
