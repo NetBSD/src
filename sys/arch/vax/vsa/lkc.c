@@ -1,4 +1,4 @@
-/*	$NetBSD: lkc.c,v 1.9 1999/03/13 15:16:48 ragge Exp $ */
+/*	$NetBSD: lkc.c,v 1.10 1999/04/29 16:58:58 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -85,11 +85,14 @@ lkc_attach(parent, self, aux)
 	*dz->sc_dr.dr_lpr = 0x1c18; /* XXX */
 }
 
+extern	char *q_special[];
+
 int
 lkc_catch(line, ch)
 	int line, ch;
 {
-	int hej;
+	int hej, i;
+	char *cp;
 
 	if (line > 0)
 		return 0;
@@ -98,10 +101,9 @@ lkc_catch(line, ch)
 		return 1;
 
 	if (hej > 255) {
-#ifdef notdef /* XXX don't handle this for now */
 		cp = q_special[hej & 255];
-		wsdisplay_kbdinput(wsdisplay_cd.cd_devs[0], cp, strlen(cp));
-#endif
+		for (i = 0; i < strlen(cp); i++)
+			wsdisplay_kbdinput(wsdisplay_cd.cd_devs[0], cp[i]);
 	} else {
 		wsdisplay_kbdinput(wsdisplay_cd.cd_devs[0], (keysym_t)hej);
 	}
