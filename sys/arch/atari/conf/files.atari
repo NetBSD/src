@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.43 1997/08/27 11:25:47 bouyer Exp $
+#	$NetBSD: files.atari,v 1.44 1997/09/28 20:49:59 is Exp $
 
 maxpartitions 16
 
@@ -181,6 +181,9 @@ file	arch/m68k/m68k/sig_machdep.c
 # Emulation modules
 # 6888x emulator (FPU_EMULATE)
 include "arch/m68k/fpe/files.fpe"
+
+# 68060 software support package
+include "arch/m68k/060sp/files.060sp"
 
 # Compatibility modules
 

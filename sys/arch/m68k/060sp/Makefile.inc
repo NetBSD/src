@@ -1,19 +1,22 @@
 #
-#	$NetBSD: Makefile.inc,v 1.2 1997/05/07 07:15:43 mycroft Exp $
+# $NetBSD: Makefile.inc,v 1.3 1997/09/28 20:49:56 is Exp $
 #
-#	NOTE: $S must correspond to the top of the `sys' tree
+SPDIR		= $S/arch/m68k/060sp
 
-060SPSRCDIR=	$S/arch/m68k/060sp
+M060SPAS	= as -m68060 -I${SPDIR} -o ${.TARGET} ${.IMPSRC}
 
-060SPOBJDIR!=	cd $(060SPSRCDIR); \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | $(MAKE) -s -f-
+netbsd.o:	${SPDIR}/netbsd.S .NOTMAIN
 
-060SPOBJ=	$(060SPOBJDIR)/060sp.o
+$(SPDIR)/netbsd060sp.S:	.NOTMAIN $(SPDIR)/inetbsd.S $(SPDIR)/fnetbsd.S
+$(SPDIR)/inetbsd.S:	.NOTMAIN isp.S
+$(SPDIR)/fnetbsd.S:	.NOTMAIN fpsp.S
+$(SPDIR)/pfnetbsd.S:	.NOTMAIN pfpsp.S
 
-$(060SPOBJ): .NOTMAIN __always_make_060sp
-	@echo making sure the 060sp is up to date...
-	@(cd $(060SPSRCDIR) ; $(MAKE))
+isp.S:	.NOTMAIN ${SPDIR}/isp.sa
+	sh ${SPDIR}/asm2gas ${SPDIR}/isp.sa >${.TARGET}
 
-060SP!=	printf "\#ifdef M060SP\n${060SPOBJ}\n\#endif\n" | cpp -P -undef ${CPPFLAGS:M-DM060SP}
+fpsp.S:	.NOTMAIN ${SPDIR}/fpsp.sa
+	sh ${SPDIR}/asm2gas ${SPDIR}/fpsp.sa >${.TARGET}
 
-__always_make_060sp: .NOTMAIN
+pfpsp.S: .NOTMAIN ${SPDIR}/pfpsp.sa
+	sh ${SPDIR}/asm2gas ${SPDIR}/pfpsp.sa >${.TARGET}
