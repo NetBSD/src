@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.461 2002/08/02 12:45:24 ad Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.462 2002/08/02 19:36:28 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.459 2002/08/02 12:44:42 ad Exp 
+ *	NetBSD: pcidevs,v 1.460 2002/08/02 19:35:43 soren Exp 
  */
 
 /*
@@ -2834,6 +2834,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "O2 Micro Inc",
 	    "OZ6812/OZ6872 PCI-Cardbus Bridge",
+	},
+	{
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6972,
+	    0,
+	    "O2 Micro Inc",
+	    "OZ6912/OZ6972 PCI-Cardbus Bridge",
 	},
 	{
 	    PCI_VENDOR_ES, PCI_PRODUCT_ES_FREEDOM,
