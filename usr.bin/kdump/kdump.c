@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.27 2000/04/10 07:58:30 jdolecek Exp $	*/
+/*	$NetBSD: kdump.c,v 1.28 2000/04/10 09:13:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.27 2000/04/10 07:58:30 jdolecek Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.28 2000/04/10 09:13:45 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,90 +66,15 @@ __RCSID("$NetBSD: kdump.c,v 1.27 2000/04/10 07:58:30 jdolecek Exp $");
 #include <vis.h>
 
 #include "ktrace.h"
+#include "setemul.h"
+
+#include <sys/syscall.h>
 
 int timestamp, decimal, fancy = 1, tail, maxdata;
 const char *tracefile = DEF_TRACEFILE;
 struct ktr_header ktr_header;
 
 #define eqs(s1, s2)	(strcmp((s1), (s2)) == 0)
-
-#include <sys/syscall.h>
-
-#include "../../sys/compat/netbsd32/netbsd32_syscall.h"
-#include "../../sys/compat/freebsd/freebsd_syscall.h"
-#include "../../sys/compat/hpux/hpux_syscall.h"
-#include "../../sys/compat/ibcs2/ibcs2_syscall.h"
-#include "../../sys/compat/linux/linux_syscall.h"
-#include "../../sys/compat/osf1/osf1_syscall.h"
-#include "../../sys/compat/sunos/sunos_syscall.h"
-#include "../../sys/compat/svr4/svr4_syscall.h"
-#include "../../sys/compat/ultrix/ultrix_syscall.h"
-
-#define KTRACE
-#include "../../sys/kern/syscalls.c"
-
-#include "../../sys/compat/netbsd32/netbsd32_syscalls.c"
-#include "../../sys/compat/freebsd/freebsd_syscalls.c"
-#include "../../sys/compat/hpux/hpux_syscalls.c"
-#include "../../sys/compat/ibcs2/ibcs2_syscalls.c"
-#include "../../sys/compat/linux/linux_syscalls.c"
-#include "../../sys/compat/osf1/osf1_syscalls.c"
-#include "../../sys/compat/sunos/sunos_syscalls.c"
-#include "../../sys/compat/svr4/svr4_syscalls.c"
-#include "../../sys/compat/ultrix/ultrix_syscalls.c"
-
-#include "../../sys/compat/hpux/hpux_errno.c"
-#include "../../sys/compat/svr4/svr4_errno.c"
-#include "../../sys/compat/ibcs2/ibcs2_errno.c"
-#include "../../sys/compat/linux/common/linux_errno.c"
-#undef KTRACE
-
-struct emulation {
-	const char *name;	/* Emulation name */
-	char **sysnames;	/* Array of system call names */
-	int  nsysnames;		/* Number of */
-	int  *errno;		/* Array of error number mapping */
-	int  nerrno;		/* number of elements in array */
-};
-
-struct emulation_ctx {
-	pid_t	pid;
-	struct emulation *emulation;
-	struct emulation_ctx *next;
-};
-
-#define NELEM(a) (sizeof(a) / sizeof(a[0]))
-
-static struct emulation emulations[] = {
-#define EMUL_NETBSD_IDX 0
-	{   "netbsd",	       syscallnames,         SYS_MAXSYSCALL,
-	        NULL,		        0 },
-	{   "netbsd32", netbsd32_syscallnames,	     SYS_MAXSYSCALL,
-	        NULL,		        0 },
-	{  "freebsd",  freebsd_syscallnames, FREEBSD_SYS_MAXSYSCALL,
-	        NULL,		        0 },
-	{     "hpux",	  hpux_syscallnames,    HPUX_SYS_MAXSYSCALL,
-	  native_to_hpux_errno,  NELEM(native_to_hpux_errno)  },
-	{    "ibcs2",    ibcs2_syscallnames,   IBCS2_SYS_MAXSYSCALL,
-	 native_to_ibcs2_errno,  NELEM(native_to_ibcs2_errno) },
-	{    "linux",    linux_syscallnames,   LINUX_SYS_MAXSYSCALL,
-	 native_to_linux_errno,  NELEM(native_to_linux_errno) },
-	{     "osf1",     osf1_syscallnames,    OSF1_SYS_MAXSYSCALL,
-	        NULL,		        0 },
-	{    "sunos",    sunos_syscallnames,   SUNOS_SYS_MAXSYSCALL,
-	        NULL,		        0 },
-	{     "svr4",     svr4_syscallnames,    SVR4_SYS_MAXSYSCALL,
-	  native_to_svr4_errno,  NELEM(native_to_svr4_errno)  },
-	{   "ultrix",   ultrix_syscallnames,  ULTRIX_SYS_MAXSYSCALL,
-	        NULL,			0 },
-	{       NULL,		       NULL,		          0,
-	        NULL,			0 }
-};
-
-struct emulation *current, *default_emul;
-
-struct emulation_ctx *current_ctx;
-struct emulation_ctx *emul_ctx = NULL;
 
 static const char *ptrace_ops[] = {
 	"PT_TRACE_ME",	"PT_READ_I",	"PT_READ_D",	"PT_READ_U",
@@ -171,10 +96,6 @@ void	ktrcsw __P((struct ktr_csw *));
 void	usage __P((void));
 void	eprint __P((int));
 char	*ioctlname __P((long));
-
-static struct emulation_ctx *ectx_find __P((pid_t));
-static void	ectx_update __P((pid_t, struct emulation *));
-static void	ectx_sanify __P((pid_t));
 
 int
 main(argc, argv)
@@ -227,7 +148,6 @@ main(argc, argv)
 		usage();
 
 	setemul(emul_name, 0, 0);
-	default_emul = current;
 
 	m = malloc(size = 1024);
 	if (m == NULL)
@@ -628,96 +548,3 @@ usage()
 "usage: kdump [-dnlRT] [-e emulation] [-f trfile] [-m maxdata] [-t [cnis]]\n");
 	exit(1);
 }
-
-void
-setemul(name, pid, update_ectx)
-	const char *name;
-	pid_t pid;
-	int update_ectx;
-{
-	int i;
-	struct emulation *match = NULL;
-
-	for (i = 0; emulations[i].name != NULL; i++) {
-		if (strcmp(emulations[i].name, name) == 0) {
-			match = &emulations[i];
-			break;
-		}
-	}
-
-	if (!match) {
-		warnx("Emulation `%s' unknown", name);
-		return;
-	}
-
-	if (update_ectx)
-		ectx_update(pid, match);
-
-	current = match;
-}
-
-/*
- * Emulation context list is very simple chained list, not even hashed.
- * We expect the number of separate traced contexts/processes to be
- * fairly low, so it's not worth it to optimize this.
- */
-
-/*
- * Find an emulation context appropriate for the given pid.
- */
-static struct emulation_ctx *
-ectx_find(pid)
-	pid_t pid;
-{
-	struct emulation_ctx *ctx;
-
-	for(ctx = emul_ctx; ctx != NULL; ctx = ctx->next) {
-		if (ctx->pid == pid)
-			return ctx;
-	}
-
-	return NULL;
-}
-
-/*
- * Update emulation context for given pid, or create new if no context
- * for this pid exists.
- */
-static void
-ectx_update(pid, emul)
-	pid_t pid;
-	struct emulation *emul;
-{
-	struct emulation_ctx *ctx;
-
-
-	if ((ctx = ectx_find(pid)) != NULL) {
-		/* found and entry, ensure the emulation is right (exec!) */
-		ctx->emulation = emul;
-		return;
-	}
-	
-	ctx = (struct emulation_ctx *)malloc(sizeof(struct emulation_ctx));
-	ctx->pid = pid;
-	ctx->emulation = emul;
-	
-	/* put the entry on start of emul_ctx chain */
-	ctx->next = emul_ctx;
-	emul_ctx = ctx;
-}
-
-/*
- * Ensure current emulation context is correct for given pid.
- */
-static void
-ectx_sanify(pid)
-	pid_t pid;
-{
-	struct emulation_ctx *ctx;
-
-	if ((ctx = ectx_find(pid)) != NULL && ctx->emulation != current)
-		current = ctx->emulation;
-	else
-		current = default_emul;
-}
-
