@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.3 1997/11/14 16:31:45 phil Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.4 1997/11/14 18:27:17 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -59,7 +59,7 @@ int __m_endwin = 0;
 
 static void init_menu (struct menudesc *m);
 static void post_menu (struct menudesc *m);
-static void process_req (struct menudesc *m, int req);
+static void process_req (struct menudesc *m, int num, int req);
 static void mbeep (void);
 static int menucmd (WINDOW *w);
 
@@ -218,14 +218,13 @@ static void post_menu (struct menudesc *m)
 	wmove(m->mw,tadd+hasbox+m->cursel, hasbox);
 }
 
-static void process_req (struct menudesc *m, int req)
+static void process_req (struct menudesc *m, int num, int req)
 {
 	int ch;
 	int lastsel = m->cursel;
 	int hasexit = (m->mopt & NOEXITOPT ? 0 : 1 );
 	int hasbox = (m->mopt & NOBOX ? 0 : 1);
 	int tadd = strlen(m->title) ? 2 : 0;
-	int num;
 
 	if (req == REQ_EXECUTE)
 		return;
@@ -321,7 +320,7 @@ void process_menu (int num)
 		wrefresh (m->mw);
 
 		while ((req = menucmd (m->mw)) != REQ_EXECUTE)
-			process_req (m, req);
+			process_req (m, num, req);
 
 		sel = m->cursel;
 		wclear (m->mw);
