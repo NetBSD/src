@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_of.c,v 1.1 2000/08/20 14:58:39 mrg Exp $	*/
+/*	$NetBSD: netif_of.c,v 1.2 2003/03/13 12:02:54 hannken Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -148,7 +148,7 @@ netif_put(desc, pkt, len)
 	ssize_t rv;
 	size_t sendlen;
 
-	op = desc->io_netif->nif_devdata;
+	op = ((struct netif *)desc->io_netif)->nif_devdata;
 
 #ifdef	NETIF_DEBUG
 	{
@@ -195,7 +195,7 @@ netif_get(desc, pkt, maxlen, timo)
 	int tick0, tmo_ms;
 	int len;
 
-	op = desc->io_netif->nif_devdata;
+	op = ((struct netif *)desc->io_netif)->nif_devdata;
 
 #ifdef	NETIF_DEBUG
 	printf("netif_get: pkt=0x%x, maxlen=%d, tmo=%d\n",
