@@ -23,7 +23,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: db_machdep.h,v 1.3 1993/12/19 03:41:51 mycroft Exp $
+ *	$Id: db_machdep.h,v 1.4 1994/04/03 18:58:55 mycroft Exp $
  */
 
 #ifndef	_I386_DB_MACHDEP_H_
@@ -38,8 +38,7 @@
 #include <vm/vm_param.h>
 #include <vm/vm_inherit.h>
 #include <vm/lock.h>
-#include <machine/frame.h>
-#include <machine/psl.h>
+#include <machine/cpu.h>
 #include <machine/trap.h>
 
 #define i386_saved_state trapframe
