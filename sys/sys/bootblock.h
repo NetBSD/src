@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.7 2002/05/17 18:53:34 lukem Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.8 2002/05/20 13:41:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #ifndef _SYS_BOOTBLOCK_H
-#define _SYS_BOOTBLOCK_H
+#define	_SYS_BOOTBLOCK_H
 
 #ifdef _KERNEL
 #include <sys/stdint.h>
@@ -250,11 +250,24 @@ struct apple_part_map_entry {
  * macppc
  */
 
-#define MACPPC_BOOT_BLOCK_OFFSET	2048
-#define MACPPC_BOOT_BLOCK_BLOCKSIZE	512
-#define MACPPC_BOOT_BLOCK_MAX_SIZE	2048	/* XXX: could be up to 6144 */
+#define	MACPPC_BOOT_BLOCK_OFFSET	2048
+#define	MACPPC_BOOT_BLOCK_BLOCKSIZE	512
+#define	MACPPC_BOOT_BLOCK_MAX_SIZE	2048	/* XXX: could be up to 6144 */
 	/* Magic string -- 32 bytes long (including the NUL) */
 #define	MACPPC_BBINFO_MAGIC		"NetBSD/macppc bootxx   20020515"
+
+/* ------------------------------------------
+ * news68k, newsmips
+ */
+
+#define	NEWS_BOOT_BLOCK_LABELOFFSET	64 /* XXX from <machine/disklabel.h> */
+#define	NEWS_BOOT_BLOCK_OFFSET		512
+#define	NEWS_BOOT_BLOCK_BLOCKSIZE	512
+#define	NEWS_BOOT_BLOCK_MAX_SIZE	(512 * (1 + 15))
+
+	/* Magic string -- 32 bytes long (including the NUL) */
+#define	NEWS68K_BBINFO_MAGIC		"NetBSD/news68k bootxx  20020518"
+#define	NEWSMIPS_BBINFO_MAGIC		"NetBSD/newsmips bootxx 20020518"
 
 /* ------------------------------------------
  * pmax --
@@ -286,21 +299,21 @@ struct pmax_boot_block {
 	struct		pmax_boot_map map[61];	/* boot program section(s). */
 } __attribute__((__packed__));
 
-#define PMAX_BOOT_MAGIC			0x0002757a
-#define PMAX_BOOTMODE_CONTIGUOUS	0
-#define PMAX_BOOTMODE_SCATTERED		1
+#define	PMAX_BOOT_MAGIC			0x0002757a
+#define	PMAX_BOOTMODE_CONTIGUOUS	0
+#define	PMAX_BOOTMODE_SCATTERED		1
 
-#define PMAX_BOOT_BLOCK_OFFSET		0
-#define PMAX_BOOT_BLOCK_BLOCKSIZE	512
+#define	PMAX_BOOT_BLOCK_OFFSET		0
+#define	PMAX_BOOT_BLOCK_BLOCKSIZE	512
 
 
 /* ------------------------------------------
  * sparc
  */
 
-#define SPARC_BOOT_BLOCK_OFFSET		512
-#define SPARC_BOOT_BLOCK_BLOCKSIZE	512
-#define SPARC_BOOT_BLOCK_MAX_SIZE	(512 * 15)
+#define	SPARC_BOOT_BLOCK_OFFSET		512
+#define	SPARC_BOOT_BLOCK_BLOCKSIZE	512
+#define	SPARC_BOOT_BLOCK_MAX_SIZE	(512 * 15)
 	/* Magic string -- 32 bytes long (including the NUL) */
 #define	SPARC_BBINFO_MAGIC		"NetBSD/sparc bootxx    20020515"
 
@@ -309,18 +322,18 @@ struct pmax_boot_block {
  * sparc64
  */
 
-#define SPARC64_BOOT_BLOCK_OFFSET	512
-#define SPARC64_BOOT_BLOCK_BLOCKSIZE	512
-#define SPARC64_BOOT_BLOCK_MAX_SIZE	(512 * 15)
+#define	SPARC64_BOOT_BLOCK_OFFSET	512
+#define	SPARC64_BOOT_BLOCK_BLOCKSIZE	512
+#define	SPARC64_BOOT_BLOCK_MAX_SIZE	(512 * 15)
 
 
 /* ------------------------------------------
  * sun68k (sun2, sun3)
  */
 
-#define SUN68K_BOOT_BLOCK_OFFSET	512
-#define SUN68K_BOOT_BLOCK_BLOCKSIZE	512
-#define SUN68K_BOOT_BLOCK_MAX_SIZE	(512 * 15)
+#define	SUN68K_BOOT_BLOCK_OFFSET	512
+#define	SUN68K_BOOT_BLOCK_BLOCKSIZE	512
+#define	SUN68K_BOOT_BLOCK_MAX_SIZE	(512 * 15)
 	/* Magic string -- 32 bytes long (including the NUL) */
 #define	SUN68K_BBINFO_MAGIC		"NetBSD/sun68k bootxx   20020515"
 
@@ -371,7 +384,7 @@ struct vax_boot_block {
 #define	VAX_BOOT_LOAD			0	/* no load offset */
 #define	VAX_BOOT_ENTRY			0x200	/* one block in */
 
-#define VAX_BOOT_BLOCK_OFFSET		0
-#define VAX_BOOT_BLOCK_BLOCKSIZE	512
+#define	VAX_BOOT_BLOCK_OFFSET		0
+#define	VAX_BOOT_BLOCK_BLOCKSIZE	512
 
 #endif	/* !_SYS_BOOTBLOCK_H */
