@@ -41,27 +41,27 @@
 typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
 typedef	int		db_expr_t;	/* expression - signed */
 struct mc68020_saved_state {
-        int             d0;             /* data registers */
-        int             d1;
-        int             d2;
-        int             d3;
-        int             d4;
-        int             d5;
-        int             d6;
-        int             d7;
-        int             a0;             /* address registers */
-        int             a1;
-        int             a2;
-        int             a3;
-        int             a4;
-        int             a5;
-        int             a6;
-        int             sp;             /* stack pointer */
+	int		d0;		/* data registers */
+	int		d1;
+	int		d2;
+	int		d3;
+	int		d4;
+	int		d5;
+	int		d6;
+	int		d7;
+	int		a0;		/* address registers */
+	int		a1;
+	int		a2;
+	int		a3;
+	int		a4;
+	int		a5;
+	int		a6;
+	int		sp;		/* stack pointer */
 	short		empty;
-        unsigned short  sr;             /* status register */
-        unsigned int    pc;             /* program counter - UNALIGNED!!! */
-        unsigned int    stkfmt  : 4;    /* rte stack frame format */
-        unsigned int    vector  : 12;   /* vector number */
+	unsigned short	sr;		/* status register */
+	unsigned int	pc;		/* program counter - UNALIGNED!!! */
+	unsigned int	stkfmt	: 4;	/* rte stack frame format */
+	unsigned int	vector	: 12;	/* vector number */
 };
 typedef struct mc68020_saved_state db_regs_t;
 db_regs_t	ddb_regs;		/* register state */
@@ -102,4 +102,4 @@ db_regs_t	ddb_regs;		/* register state */
 #define inst_load(ins)		0
 #define inst_store(ins)		0
 
-#endif	/* _M68K_DDB_MACHDEP_H_ */
+#endif	/* _M68K_DB_MACHDEP_H_ */
