@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.31 2000/03/26 20:54:47 kleink Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.32 2000/03/30 12:31:50 augustss Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -212,7 +212,7 @@ uvm_useracc(addr, len, rw)
  */
 void
 uvm_chgkprot(addr, len, rw)
-	register caddr_t addr;
+	caddr_t addr;
 	size_t len;
 	int rw;
 {
@@ -434,8 +434,8 @@ uvm_swapin(p)
 void
 uvm_scheduler()
 {
-	register struct proc *p;
-	register int pri;
+	struct proc *p;
+	int pri;
 	struct proc *pp;
 	int ppri;
 	UVMHIST_FUNC("uvm_scheduler"); UVMHIST_CALLED(maphist);
@@ -530,7 +530,7 @@ loop:
 void
 uvm_swapout_threads()
 {
-	register struct proc *p;
+	struct proc *p;
 	struct proc *outp, *outp2;
 	int outpri, outpri2;
 	int didswap = 0;
@@ -602,7 +602,7 @@ uvm_swapout_threads()
 
 static void
 uvm_swapout(p)
-	register struct proc *p;
+	struct proc *p;
 {
 	vaddr_t addr;
 	int s;
