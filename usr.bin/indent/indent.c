@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.13 2002/05/26 22:53:38 wiz Exp $	*/
+/*	$NetBSD: indent.c,v 1.14 2003/06/19 15:45:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -48,7 +48,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 Sun Microsystems, Inc.\n\
 #if 0
 static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: indent.c,v 1.13 2002/05/26 22:53:38 wiz Exp $");
+__RCSID("$NetBSD: indent.c,v 1.14 2003/06/19 15:45:22 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: indent.c,v 1.13 2002/05/26 22:53:38 wiz Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <locale.h>
 #define EXTERN
 #include "indent_globs.h"
 #undef  EXTERN
@@ -104,6 +105,8 @@ main(int argc, char **argv)
         |		      INITIALIZATION		      |
         \*-----------------------------------------------*/
 
+	if (!setlocale(LC_ALL, ""))
+		fprintf(stderr, "indent: can't set locale.\n");
 
 	hd_type = 0;
 	ps.p_stack[0] = stmt;	/* this is the parser's stack */

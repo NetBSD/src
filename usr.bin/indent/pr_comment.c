@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.7 2002/05/26 22:53:38 wiz Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.8 2003/06/19 15:45:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -41,12 +41,13 @@
 #if 0
 static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: pr_comment.c,v 1.7 2002/05/26 22:53:38 wiz Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.8 2003/06/19 15:45:22 christos Exp $");
 #endif
 #endif				/* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include "indent_globs.h"
 
 /*
@@ -184,7 +185,7 @@ pr_comment(void)
 
 	while (1) {		/* this loop will go until the comment is
 				 * copied */
-		if (*buf_ptr > 040 && *buf_ptr != '*')
+		if (!iscntrl((unsigned char)*buf_ptr) && *buf_ptr != '*')
 			ps.last_nl = 0;
 		CHECK_SIZE_COM;
 		switch (*buf_ptr) {	/* this checks for various spcl cases */
@@ -376,7 +377,9 @@ pr_comment(void)
 			/* remember we saw a blank */
 
 			++e_com;
-			if (now_col > adj_max_col && !ps.box_com && unix_comment == 1 && e_com[-1] > ' ') {
+			if (now_col > adj_max_col && !ps.box_com && unix_comment == 1
+				&& !iscntrl((unsigned char)e_com[-1])
+				&& !isblank((unsigned char)e_com[-1])) {
 				/*
 				 * the comment is too long, it must be broken up
 				 */
@@ -399,7 +402,7 @@ pr_comment(void)
 				}
 				*e_com = '\0';	/* print what we have */
 				*last_bl = '\0';
-				while (last_bl > s_com && last_bl[-1] < 040)
+				while (last_bl > s_com && iscntrl((unsigned char)last_bl[-1]) )
 					*--last_bl = 0;
 				e_com = last_bl;
 				dump_line();
