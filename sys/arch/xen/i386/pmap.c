@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.2 2004/04/10 23:31:41 cl Exp $	*/
 /*	NetBSD: pmap.c,v 1.171 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1 2004/03/11 21:44:08 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.2 2004/04/10 23:31:41 cl Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -1823,8 +1823,6 @@ pmap_pdp_dtor(void *arg, void *object)
 	pdirpa = PDE_GET(&pdir[PDSLOT_PTE]) & PG_FRAME;
 
 	XENPRINTF(("pmap_pdp_dtor %p %p\n", pdir, (void *)pdirpa));
-
-	KDASSERT((PDE_GET(APDP_PDE) & PG_FRAME) == 0);
 
 	/* unpin page type */
 	xpq_queue_unpin_table(xpmap_ptom(pdirpa));
