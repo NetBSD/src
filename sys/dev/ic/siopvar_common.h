@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.16 2002/04/23 10:38:38 bouyer Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.17 2002/04/23 12:55:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -53,20 +53,22 @@ typedef struct scr_table {
  * If you change something here, don't forget to update offsets in {s,es}iop.ss
  */
 struct siop_common_xfer {
-	u_int8_t msg_out[8];	/* 0 */
-	u_int8_t msg_in[8];	/* 8 */
-	u_int32_t status;	/* 16 */
-	u_int32_t pad1;		/* 20 */
-	u_int32_t id;		/* 24 */
-	u_int32_t pad2;		/* 28 */
-	scr_table_t t_msgin;	/* 32 */
-	scr_table_t t_extmsgin;	/* 40 */
-	scr_table_t t_extmsgdata; /* 48 */
-	scr_table_t t_msgout;	/* 56 */
-	scr_table_t cmd;	/* 64 */
-	scr_table_t t_status;	/* 72 */
-	scr_table_t data[SIOP_NSG]; /* 80 */
+	u_int8_t msg_out[16];	/* 0 */
+	u_int8_t msg_in[16];	/* 16 */
+	u_int32_t status;	/* 32 */
+	u_int32_t pad1;		/* 36 */
+	u_int32_t id;		/* 40 */
+	u_int32_t pad2;		/* 44 */
+	scr_table_t t_msgin;	/* 48 */
+	scr_table_t t_extmsgin;	/* 56 */
+	scr_table_t t_extmsgdata; /* 64 */
+	scr_table_t t_msgout;	/* 72 */
+	scr_table_t cmd;	/* 80 */
+	scr_table_t t_status;	/* 88 */
+	scr_table_t data[SIOP_NSG]; /* 96 */
 } __attribute__((__packed__));
+
+#define offsetof(type, member)     ((size_t)(&((type *)0)->member))
 
 /* status can hold the SCSI_* status values, and 2 additionnal values: */
 #define SCSI_SIOP_NOCHECK	0xfe	/* don't check the scsi status */
