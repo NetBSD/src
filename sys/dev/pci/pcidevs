@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.164 1999/11/04 10:34:03 augustss Exp $
+$NetBSD: pcidevs,v 1.165 1999/11/04 16:02:20 tsarna Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -510,6 +510,7 @@ vendor ALTEON		0x12ae	Alteon
 vendor RISCOM		0x12aa	RISCom
 vendor PICTUREEL	0x12c5	Picture Elements
 vendor NVIDIA_SGS	0x12d2	Nvidia Corporation & SGS Thomson Microelectric
+vendor AUREAL		0x12eb	Aureal Semiconductor
 vendor ADMTEK		0x1317	ADMtek
 vendor FORTEMEDIA	0x1319	Forte Media
 vendor LMC		0x1376	LAN Media Corporation
@@ -703,6 +704,9 @@ product ATI MACH64_LD	0x4c44	Mach64 LD
 product ATI MACH64_LG	0x4c47	Mach64 LG
 product ATI MACH64_LI	0x4c49	Mach64 LI
 product ATI MACH64_LP	0x4c50	Mach64 LP
+
+/* Aureal Semiconductor */
+product AUREAL AU8820		0x0001  AU8820 Vortex Digital Audio Processor
 
 /* Applied Micro Circuts products */
 product AMCIRCUITS S5933	0x4750	S5933 PCI Matchmaker
