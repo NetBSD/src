@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.53 1999/03/23 04:18:50 minoura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.54 1999/03/23 15:55:43 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1389,8 +1389,12 @@ cpu_exec_aout_makecmds(p, epp)
 }
 
 #ifdef EXTENDED_MEMORY
-static int em_debug = 1;
+#ifdef EM_DEBUG
+static int em_debug = 0;
 #define DPRINTF(str) do{ if (em_debug) printf str; } while (0);
+#else
+#define DPRINTF(str)
+#endif
 
 static struct memlist {
 	caddr_t base;
@@ -1565,12 +1569,12 @@ setmemrange(void)
 		}
 		if ((u_long)mlist[i].base < h) {
 #ifdef UVM
-			uvm_page_physload((vaddr_t)mlist[i].base, h,
-					  (vaddr_t)mlist[i].base, h,
+			uvm_page_physload(atop(mlist[i].base), atop(h),
+					  atop(mlist[i].base), atop(h),
 					  VM_FREELIST_DEFAULT);
 #else	/* not UVM */
-			vm_page_physload((vaddr_t)mlist[i].base, h,
-					 (vaddr_t)mlist[i].base, h);
+			vm_page_physload(atop(mlist[i].base), atop(h),
+					 atop(mlist[i].base), atop(h));
 #endif
 			mem_size += h - (u_long) mlist[i].base;
 		}
