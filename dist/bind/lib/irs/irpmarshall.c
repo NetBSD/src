@@ -1,4 +1,4 @@
-/*	$NetBSD: irpmarshall.c,v 1.2 2001/01/27 07:22:04 itojun Exp $	*/
+/*	$NetBSD: irpmarshall.c,v 1.2.2.1 2002/06/28 11:51:07 lukem Exp $	*/
 
 /*
  * Copyright(c) 1989, 1993, 1995
@@ -51,7 +51,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: irpmarshall.c,v 8.6 2000/11/13 05:08:08 vixie Exp";
+static const char rcsid[] = "Id: irpmarshall.c,v 8.7 2001/05/29 05:49:01 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #if 0
@@ -141,7 +141,7 @@ irp_marshall_pw(const struct passwd *pw, char **buffer, size_t *len) {
 	char pwGid[24];
 	char pwChange[24];
 	char pwExpire[24];
-	char *pwClass;
+	const char *pwClass;
 	const char *fieldsep = COLONSTR;
 
 	if (pw == NULL || len == NULL) {
@@ -1230,8 +1230,8 @@ irp_marshall_ng(const char *host, const char *user, const char *domain,
 
 
 /*
- * int irp_unmarshall_ng(char **host, char **user, char **domain,
- *			 char *buffer)
+ * int irp_unmarshall_ng(const char **host, const char **user,
+ *			 const char **domain, char *buffer)
  *
  * notes:
  *
@@ -1245,20 +1245,24 @@ irp_marshall_ng(const char *host, const char *user, const char *domain,
  */
 
 int
-irp_unmarshall_ng(char **host, char **user, char **domain, char *buffer) {
+irp_unmarshall_ng(const char **hostp, const char **userp, const char **domainp,
+		  char *buffer)
+{
 	char *p, *q;
 	char fieldsep = ',';
 	int myerrno = EINVAL;
+	char *host, *user, *domain;
 
-	if (user == NULL || host == NULL || domain == NULL || buffer == NULL) {
+	if (userp == NULL || hostp == NULL ||
+	    domainp == NULL || buffer == NULL) {
 		errno = EINVAL;
 		return (-1);
 	}
 
-	*host = *user = *domain = NULL;
+	host = user = domain = NULL;
 
 	p = buffer;
-	while (isspace(*p)) {
+	while (isspace((unsigned char)*p)) {
 		p++;
 	}
 	if (*p != '(') {
@@ -1271,7 +1275,7 @@ irp_unmarshall_ng(char **host, char **user, char **domain, char *buffer) {
 	if (!*q) {
 		goto error;
 	} else if (q > p + 1) {
-		*host = strndup(p, q - p);
+		host = strndup(p, q - p);
 	}
 
 	p = q + 1;
@@ -1284,7 +1288,7 @@ irp_unmarshall_ng(char **host, char **user, char **domain, char *buffer) {
 		if (!*q) {
 			goto error;
 		}
-		*user = strndup(p, q - p);
+		user = strndup(p, q - p);
 	} else {
 		p++;
 	}
@@ -1298,17 +1302,20 @@ irp_unmarshall_ng(char **host, char **user, char **domain, char *buffer) {
 		if (!*q) {
 			goto error;
 		}
-		*domain = strndup(p, q - p);
+		domain = strndup(p, q - p);
 	}
+	*hostp = host;
+	*userp = user;
+	*domainp = domain;
 
 	return (0);
 
  error:
 	errno = myerrno;
 
-	if (*host != NULL) free(*host);
-	if (*user != NULL) free(*user);
-	if (*domain != NULL) free(*domain);
+	if (host != NULL) free(host);
+	if (user != NULL) free(user);
+	if (domain != NULL) free(domain);
 
 	return (-1);
 }
@@ -1849,7 +1856,7 @@ getfield(char **res, size_t reslen, char **ptr, char delim) {
 		if (*res == NULL) {
 			*res = strndup(*ptr, q - *ptr);
 		} else {
-			if (q - *ptr + 1 > reslen) { /* to big for res */
+			if ((size_t)(q - *ptr + 1) > reslen) { /* to big for res */
 				errno = EINVAL;
 				return (NULL);
 			} else {
