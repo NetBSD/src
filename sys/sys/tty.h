@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.52 2001/06/08 15:43:34 mrg Exp $	*/
+/*	$NetBSD: tty.h,v 1.52.2.1 2001/07/10 13:27:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -230,6 +230,7 @@ void	 ttyinfo __P((struct tty *tp));
 int	 ttyinput __P((int c, struct tty *tp));
 int	 ttylclose __P((struct tty *tp, int flag));
 int	 ttylopen __P((dev_t device, struct tty *tp));
+int	 ttykqfilter __P((dev_t device, struct knote *));
 int	 ttymodem __P((struct tty *tp, int flag));
 int	 ttyopen __P((struct tty *tp, int dialout, int nonblock));
 int	 ttyoutput __P((int c, struct tty *tp));
