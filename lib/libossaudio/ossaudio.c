@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.5 1998/03/23 00:39:18 augustss Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.6 1998/05/25 17:13:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -274,7 +274,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		if (retval < 0)
 			return retval;
 		u = tmpinfo.blocksize;
-		for(idat = 0; u; idat++, u >>= 1)
+		for(idat = 0; u > 1; idat++, u >>= 1)
 			;
 		idat |= (tmpinfo.hiwat & 0x7fff) << 16;
 		INTARG = idat;
