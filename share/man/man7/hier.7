@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.13 1998/02/06 06:13:17 perry Exp $
+.\"	$NetBSD: hier.7,v 1.14 1998/04/02 09:47:22 hubertf Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -195,6 +195,10 @@ see
 .It Sy spwd.db
 password files and their databases; see
 .Xr pwd_mkdb 8
+.It Sy mk.conf
+optional file containing
+.Xr make 1
+variables, read by pkgsrc and the system sources. 
 .It Sy monthly
 script run each month by
 .Xr cron 8
@@ -320,20 +324,6 @@ X11 libraries
 .Pp
 .It Sy bin/
 common utilities, programming tools, and applications 
-.It Sy contrib/
-packages maintained by groups other than Berkeley
-.Pp
-.Bl -tag -width "include/" -compact
-.It Sy bin/
-contributed binaries
-.It Sy include/
-contributed include files
-.It Sy libexec/
-contributed daemons
-.It Sy libdata/
-contributed data files
-.El
-.Pp
 .It Sy games/
 the important stuff
 .It Sy include/
@@ -407,6 +397,37 @@ local data files
 .Pp
 .It Sy mdec/
 boot blocks, etc.
+.It Sy pkg/
+packages maintained by groups other than Berkeley
+.Pp
+.Bl -tag -width "include/" -compact
+.It Sy bin/
+contributed binaries
+.It Sy sbin/
+contributed system utilities
+.It Sy include/
+contributed include files
+.It Sy libexec/
+contributed daemons
+.It Sy libdata/
+contributed data files
+.El
+.Pp
+.It Sy pkgsrc/
+build descriptions ("packages") for the NetBSD packages system.
+.Pp
+.Bl -tag -width "distfiles" -compact
+.It Sy distfiles
+Where unchanged source archives are fetched to/stored
+.It Sy packages
+Where compiled binary packages are stored
+.El
+.Pp
+There are also several other subdirectories which contain packages of
+a certain category, e.g. archivers, graphics, ...
+.Pp
+.It Sy bin/
+contributed binaries
 .It Sy obj/
 architecture-specific target tree produced by building the
 .Pa /usr/src
