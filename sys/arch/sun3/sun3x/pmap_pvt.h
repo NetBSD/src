@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pvt.h,v 1.3 1997/02/14 03:56:49 gwr Exp $	*/
+/*	$NetBSD: pmap_pvt.h,v 1.4 1997/03/05 23:55:54 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -188,6 +188,7 @@ boolean_t pmap_stroll __P((pmap_t, vm_offset_t, a_tmgr_t **, b_tmgr_t **,\
 	c_tmgr_t **, mmu_short_pte_t **, int *, int *, int *));
 void  pmap_bootstrap_copyprom __P((void));
 void  pmap_takeover_mmu __P((void));
+void  pmap_bootstrap_setprom __P((void));
 
 /* Debugging function definitions */
 void  pv_list __P((vm_offset_t, int));
