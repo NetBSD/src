@@ -1,4 +1,4 @@
-#	$NetBSD: std.smdk2800,v 1.7 2003/07/31 20:25:28 bsh Exp $
+#	$NetBSD: std.smdk2800,v 1.8 2003/08/04 12:35:51 bsh Exp $
 #
 # standard NetBSD/evbarm for SMDK2800 options
 
@@ -15,6 +15,8 @@ options 	EXEC_SCRIPT
 options 	ARM32
 
 #options 	ARM32_NEW_VM_LAYOUT	# Not yet ready for prime-time
+
+options 	SSCOM_S3C2800
 
 makeoptions	BOARDTYPE="smdk2800"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.smdk2xx0"
