@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.184.2.22 2005/01/01 17:35:27 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.184.2.23 2005/01/01 19:51:33 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.22 2005/01/01 17:35:27 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.23 2005/01/01 19:51:33 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -302,8 +302,11 @@ audioattach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if ((error = audio_set_defaults(sc, 0)))
-		panic("audioattach: audio_set_defaults failed");
+	if ((error = audio_set_defaults(sc, 0))) {
+		printf("audioattach: audio_set_defaults() failed\n");
+		sc->hw_if = NULL;
+		return;
+	}
 
 	iclass = mclass = oclass = -1;
 	sc->sc_inports.index = -1;
@@ -519,7 +522,7 @@ audio_printsc(struct audio_softc *sc)
 	printf("rchan 0x%x wchan 0x%x ", sc->sc_rchan, sc->sc_wchan);
 	printf("rring used 0x%x pring used=%d\n",
 	       audio_stream_get_used(&sc->sc_rr.s),
-	       audio_stream_get_used(&sc->sc_pr.s);
+	       audio_stream_get_used(&sc->sc_pr.s));
 	printf("rbus 0x%x pbus 0x%x ", sc->sc_rbus, sc->sc_pbus);
 	printf("blksize %d", sc->sc_pr.blksize);
 	printf("hiwat %d lowat %d\n", sc->sc_pr.usedhigh, sc->sc_pr.usedlow);
@@ -528,8 +531,9 @@ audio_printsc(struct audio_softc *sc)
 void
 audio_print_params(char *s, struct audio_params *p)
 {
-	printf("audio: %s sr=%ld, enc=%d, chan=%d, prec=%d\n", s,
-	       p->sample_rate, p->encoding, p->channels, p->precision);
+	printf("audio: %s rate=%u enc=%u %uch %u/%ubit\n", s,
+	       p->sample_rate, p->encoding, p->channels,
+	       p->validbits, p->precision);
 }
 #endif
 
@@ -2032,7 +2036,7 @@ audiostartr(struct audio_softc *sc)
 	int error;
 
 	DPRINTF(("audiostartr: start=%p used=%d(hi=%d) mmapped=%d\n",
-		 sc->sc_rr.s.start, audio_stream_get_used(&sc->sc.rr.s),
+		 sc->sc_rr.s.start, audio_stream_get_used(&sc->sc_rr.s),
 		 sc->sc_rr.usedhigh, sc->sc_rr.mmapped));
 
 	if (sc->hw_if->trigger_input)
@@ -2374,7 +2378,7 @@ audio_rint(void *v)
 			cb->s.outp = cb->s.start;
 	}
 
-	DPRINTFN(2, ("audio_rint: inp=%p cc=%d\n", cb->inp, blksize));
+	DPRINTFN(2, ("audio_rint: inp=%p cc=%d\n", cb->s.inp, blksize));
 	if (!hw->trigger_input) {
 		error = hw->start_input(sc->hw_hdl, cb->s.inp, blksize,
 		    audio_rint, (void *)sc);
@@ -2792,6 +2796,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 	if (hw == 0)		/* HW has not attached */
 		return ENXIO;
 
+	DPRINTF(("%s sc=%p ai=%p\n", __func__, sc, ai));
 	r = &ai->record;
 	p = &ai->play;
 	rbus = sc->sc_rbus;
@@ -2898,8 +2903,11 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		error = hw->set_params(sc->hw_hdl, setmode,
 		    sc->sc_mode & (AUMODE_PLAY | AUMODE_RECORD), &pp, &rp,
 		    &pfilters, &rfilters);
-		if (error)
+		if (error) {
+			DPRINTF(("%s: hw->set_params() failed with %d\n",
+				 __func__, error));
 			return error;
+		}
 
 		audio_check_params(&pp);
 		audio_check_params(&rp);
@@ -2913,8 +2921,11 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 			}
 		}
 
-		if (sc->sc_pr.mmapped && pfilters.req_size > 0)
+		if (sc->sc_pr.mmapped && pfilters.req_size > 0) {
+			DPRINTF(("%s: mmapped, and filters are requested.\n",
+				 __func__));
 			return EINVAL;
+		}
 
 		/* construct new filter chain */
 		memset(pf, 0, sizeof(pf));
@@ -2923,7 +2934,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		memset(rs, 0, sizeof(rs));
 		from_param = &pp;
 		for (i = 0; i < pfilters.req_size; i++) {
-			n = pfilters.req_size - i;
+			n = pfilters.req_size - i - 1;
 			to_param = &pfilters.filters[n].param;
 			audio_check_params(to_param);
 			pf[i] = pfilters.filters[n].factory(sc, from_param,
@@ -2937,6 +2948,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 			from_param = to_param;
 		}
 		if (i < pfilters.req_size) { /* failure */
+			DPRINTF(("%s: pfilters failure\n", __func__));
 			for (; i >= 0; i--) {
 				if (pf[i] != NULL)
 					pf[i]->dtor(pf[i]);
@@ -2965,6 +2977,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 			}
 		}
 		if (i < rfilters.req_size) { /* failure */
+			DPRINTF(("%s: rfilters failure\n", __func__));
 			for (; i >= 0; i--) {
 				if (rf[i] != NULL)
 					rf[i]->dtor(rf[i]);
@@ -2986,6 +2999,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		for (i = 1; i < rfilters.req_size; i++) {
 			rf[i]->set_inputbuffer(rf[i], &sc->sc_rstreams[i - 1]);
 		}
+		DPRINTF(("%s: filter setup is completed.\n", __func__));
 		/* userland formats */
 		sc->sc_pparams = pp;
 		sc->sc_rparams = rp;
