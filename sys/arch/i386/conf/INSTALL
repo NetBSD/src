@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.210 2003/01/27 22:31:13 thorpej Exp $
+#	$NetBSD: INSTALL,v 1.211 2003/02/06 04:51:51 grant Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -562,6 +562,7 @@ icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+makphy*	at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ?			# NS83843 PHYs
 pnaphy* at mii? phy ?			# generic HomePNA PHYs
