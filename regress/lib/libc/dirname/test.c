@@ -1,9 +1,9 @@
-/*	$NetBSD: test.c,v 1.3 2002/10/16 21:13:43 thorpej Exp $	*/
+/*	$NetBSD: test.c,v 1.4 2003/07/26 19:38:46 salo Exp $	*/
 
 /*
  * Regression test for dirname(3).
  *
- * Written by Jason R. Thorpe <thorpej@netbsd.org>, Oct. 2002.
+ * Written by Jason R. Thorpe <thorpej@NetBSD.org>, Oct. 2002.
  * Public domain.
  */
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: sigsuspend.c,v 1.1 2003/03/01 01:46:03 lha Exp $	*/
+/*	$NetBSD: sigsuspend.c,v 1.2 2003/07/26 19:38:48 salo Exp $	*/
 
 /*
  * Regression test for sigsuspend in libpthread when pthread lib isn't
  * initialized.
  *
- * Written by Love Hörnquist Åstrand <lha@netbsd.org>, March 2003.
+ * Written by Love Hörnquist Åstrand <lha@NetBSD.org>, March 2003.
  * Public domain.
  */
 
