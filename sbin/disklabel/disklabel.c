@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.78 1999/11/26 06:03:09 mrg Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.79 1999/12/20 18:19:18 fair Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.78 1999/11/26 06:03:09 mrg Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.79 1999/12/20 18:19:18 fair Exp $");
 #endif
 #endif /* not lint */
 
@@ -1152,9 +1152,9 @@ showinfo(f, lp)
 	(void) fprintf(f, "interleave: %ld\n", (long) lp->d_interleave);
 	(void) fprintf(f, "trackskew: %ld\n", (long) lp->d_trackskew);
 	(void) fprintf(f, "cylinderskew: %ld\n", (long) lp->d_cylskew);
-	(void) fprintf(f, "headswitch: %ld\t\t# milliseconds\n",
+	(void) fprintf(f, "headswitch: %ld\t\t# microseconds\n",
 		(long) lp->d_headswitch);
-	(void) fprintf(f, "track-to-track seek: %ld\t# milliseconds\n",
+	(void) fprintf(f, "track-to-track seek: %ld\t# microseconds\n",
 		(long) lp->d_trkseek);
 	(void) fprintf(f, "drivedata: ");
 	for (i = NDDATA - 1; i >= 0; i--)
