@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arch.cpp,v 1.5 2002/02/11 17:01:09 uch Exp $	 */
+/* -*-C++-*-	$NetBSD: arch.cpp,v 1.6 2002/03/02 22:01:05 uch Exp $	 */
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -126,6 +126,26 @@ Architecture::systemInfo(void)
 	u_int32_t val = 0;
 	SYSTEM_INFO si;
 	HDC hdc;
+	BOOL (*getVersionEx)(LPOSVERSIONINFO);
+	
+	//
+	// WCE200 ... GetVersionEx
+	// WCE210 or later ... GetVersionExA or GetVersionExW
+	// see winbase.h
+	//
+	getVersionEx = reinterpret_cast <BOOL(*)(LPOSVERSIONINFO)>
+	    (_load_func(TEXT("GetVersionEx")));
+	
+	if (getVersionEx) {
+		getVersionEx(&WinCEVersion);
+		DPRINTF((TEXT("GetVersionEx\n")));
+	} else {
+		GetVersionEx(&WinCEVersion);
+		DPRINTF((TEXT("GetVersionExW\n")));
+	}
+
+	DPRINTF((TEXT("Windows CE %d.%d\n"), WinCEVersion.dwMajorVersion,
+	    WinCEVersion.dwMinorVersion));
 
 	GetSystemInfo(&si);
 	DPRINTF((TEXT("GetSystemInfo:\n")));
