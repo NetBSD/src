@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.135 2001/08/21 16:13:14 pooka Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.136 2001/09/17 07:45:00 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.134 2001/08/07 13:57:24 christos Exp 
+ *	NetBSD: pcmciadevs,v 1.136 2001/09/17 07:44:33 ichiro Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -83,6 +83,7 @@
 #define	PCMCIA_VENDOR_TELECOMDEVICE	0x021b	/* Telecom Device */
 #define	PCMCIA_VENDOR_NOKIA	0x023d	/* Nokia Communications */
 #define	PCMCIA_VENDOR_SAMSUNG	0x0250	/* Samsung */
+#define	PCMCIA_VENDOR_SYMBOL	0x026c	/* Symbol */
 #define	PCMCIA_VENDOR_BUFFALO	0x026f	/* BUFFALO (Melco Corporation) */
 #define	PCMCIA_VENDOR_IODATA2	0x028a	/* I-O DATA */
 #define	PCMCIA_VENDOR_LASAT	0x3401	/* Lasat Communications A/S */
@@ -493,6 +494,11 @@
 #define	PCMCIA_CIS_SAMSUNG_SWL_2000N	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SAMSUNG_SWL_2000N	0x02
 #define	PCMCIA_STR_SAMSUNG_SWL_2000N	"Samsung MagicLAN SWL-2000N"
+
+/* Samsung */
+#define	PCMCIA_CIS_SYMBOL_LA4100	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SYMBOL_LA4100	0x0001
+#define	PCMCIA_STR_SYMBOL_LA4100	"Symbol Spectrum24 LA4100 Series WLAN"
 
 /* Telecom Device */
 #define	PCMCIA_CIS_TELECOMDEVICE_TCD_HPC100	{ NULL, NULL, NULL, NULL }
