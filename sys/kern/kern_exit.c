@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.120 2003/08/20 13:50:53 yamt Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.121 2003/08/20 14:04:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.120 2003/08/20 13:50:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.121 2003/08/20 14:04:00 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -343,7 +343,7 @@ exit1(struct lwp *l, int rv)
 	s = proclist_lock_write();
 	p->p_stat = SDEAD;
 	p->p_nrlwps--;
-	l->l_stat = SDEAD;
+	l->l_stat = LSDEAD;
 	LIST_REMOVE(p, p_list);
 	LIST_INSERT_HEAD(&zombproc, p, p_list);
 	LIST_REMOVE(l, l_list);
