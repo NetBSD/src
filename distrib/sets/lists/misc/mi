@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.47 2000/11/10 02:00:09 wiz Exp $
+# $NetBSD: mi,v 1.48 2000/11/20 00:48:20 wiz Exp $
 ./usr/share/dict/README
 ./usr/share/dict/eign
 ./usr/share/dict/propernames
@@ -327,8 +327,8 @@
 ./usr/share/doc/usd/31.trek/trek.me
 ./usr/share/doc/usd/Makefile
 ./usr/share/doc/usd/Title
+./usr/share/examples/amd/amd.conf
 ./usr/share/examples/amd/cd
-./usr/share/examples/amd/master
 ./usr/share/examples/amd/net
 ./usr/share/examples/apm/script
 ./usr/share/examples/dhcp/dhcpd.conf
