@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.3 2000/04/27 14:06:58 bouyer Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.4 2000/05/02 19:03:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -41,7 +41,10 @@ struct siop_softc {
 	int features;			/* chip's features */
 	int maxburst;
 	int maxoff;
-	int clock_div;
+	int clock_div;			/* async. clock divider (scntl3) */
+	int clock_period;		/* clock period (ns * 10) */
+	int minsync;			/* min and max sync period, */
+	int maxsync;			/* as sent in SDTR message */
 	bus_space_tag_t sc_rt;		/* bus_space registers tag */
 	bus_space_handle_t sc_rh;	/* bus_space registers handle */
 	bus_addr_t sc_raddr;		/* register adresses */
@@ -49,9 +52,10 @@ struct siop_softc {
 	bus_dmamap_t  sc_scriptdma;	/* DMA map for script */
 	u_int32_t *sc_script;		/* script location in memory */
 	int sc_nshedslots;		/* number of sheduler slots */
+	int sc_currshedslot;		/* current sheduler slot */
 	struct siop_cmd *cmds;		/* commands array */
 	struct cmd_list free_list;	/* cmd descr free list */
-	struct cmd_list active_list[16]; /* per-target active cmds */
+	struct siop_target *targets[16]; /* per-target states */
 	u_int32_t sc_flags;
 };
 /* defs for sc_flags */
@@ -66,10 +70,9 @@ struct siop_softc {
 #define SF_CHIP_LED0	0x00000100 /* led on GPIO0 */
 #define SF_CHIP_DBLR	0x00000200 /* clock doubler */
 #define SF_CHIP_QUAD	0x00000400 /* clock quadrupler */
-#define SF_CHIP_CLK80	0x00000800 /* 80Mhz clock */
-#define SF_CHIP_FIFO	0x00001000 /* large fifo */
-#define SF_CHIP_PF	0x00002000 /* Intructions prefetch */
-#define SF_CHIP_RAM	0x00004000 /* on-board RAM */
+#define SF_CHIP_FIFO	0x00000800 /* large fifo */
+#define SF_CHIP_PF	0x00001000 /* Intructions prefetch */
+#define SF_CHIP_RAM	0x00002000 /* on-board RAM */
 
 #define SF_PCI_RL	0x01000000 /* PCI read line */
 #define SF_PCI_RM	0x02000000 /* PCI read multiple */
