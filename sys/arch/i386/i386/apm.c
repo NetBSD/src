@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.57 2001/01/12 03:36:51 simonb Exp $ */
+/*	$NetBSD: apm.c,v 1.58 2001/01/21 03:23:31 chuck Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -100,16 +100,16 @@ int	apmdebug = APMDEBUG_VALUE;
 #else
 int	apmdebug = 0;
 #endif
-#else
+
+#else	/* APMDEBUG */
 #define	DPRINTF(f, x)		/**/
-#endif
+#endif	/* APMDEBUG */
 
 #define APM_NEVENTS 16
 
 struct apm_softc {
 	struct device sc_dev;
 	struct selinfo sc_rsel;
-	struct selinfo sc_xsel;
 	int	sc_flags;
 	int	event_count;
 	int	event_ptr;
@@ -145,7 +145,7 @@ static int	apmmatch __P((struct device *, struct cfdata *, void *));
 static void	apm_devpowmgt_enable __P((int, u_int));
 static void	apm_disconnect __P((void *));
 #endif
-static void	apm_event_handle __P((struct apm_softc *, struct bioscallregs *));
+static int	apm_event_handle __P((struct apm_softc *, struct bioscallregs *));
 static int	apm_get_event __P((struct bioscallregs *));
 static int	apm_get_powstat __P((struct bioscallregs *));
 static void	apm_get_powstate __P((u_int));
@@ -217,14 +217,100 @@ int	apm_v12_enabled = 1;
 struct apm_connect_info apminfo;
 u_char	apm_majver, apm_minver;
 int	apm_inited;
-int	apm_standbys, apm_userstandbys, apm_suspends, apm_battlow;
-int	apm_damn_fool_bios, apm_op_inprog;
 int	apm_evindex;
+
+/* set if we should standby/suspend at the end of next periodic event */
+int apm_standby_now, apm_suspend_now;
+
+/* 
+ * set if kernel is planning on doing a standby/suspend, or if we are
+ * waiting for an external program to process a standby/suspend event.
+ */
+int apm_standby_pending, apm_suspend_pending;
 
 static int apm_spl;		/* saved spl while suspended */
 
 #ifdef APMDEBUG
 int	apmcall_debug(int, struct bioscallregs *, int);
+static	void acallpr(int, char *, struct bioscallregs *);
+
+/* bitmask defns for printing apm call args/results */
+#define ACPF_AX		0x00000001
+#define ACPF_AX_HI	0x00000002
+#define ACPF_EAX	0x00000004
+#define ACPF_BX 	0x00000008
+#define ACPF_BX_HI 	0x00000010
+#define ACPF_EBX 	0x00000020
+#define ACPF_CX 	0x00000040
+#define ACPF_CX_HI 	0x00000080
+#define ACPF_ECX 	0x00000100
+#define ACPF_DX 	0x00000200
+#define ACPF_DX_HI 	0x00000400
+#define ACPF_EDX 	0x00000800
+#define ACPF_SI 	0x00001000
+#define ACPF_SI_HI 	0x00002000
+#define ACPF_ESI 	0x00004000
+#define ACPF_DI 	0x00008000
+#define ACPF_DI_HI 	0x00010000
+#define ACPF_EDI 	0x00020000
+#define ACPF_FLAGS 	0x00040000
+#define ACPF_FLAGS_HI	0x00080000
+#define ACPF_EFLAGS 	0x00100000
+
+struct acallinfo {
+	char *name;
+	int inflag;
+	int outflag;
+};
+
+static struct acallinfo aci[] = {
+  { "install_check", ACPF_BX, ACPF_AX|ACPF_BX|ACPF_CX },
+  { "connectreal", ACPF_BX, 0 },
+  { "connect16", ACPF_BX, ACPF_AX|ACPF_BX|ACPF_CX|ACPF_SI|ACPF_DI },
+  { "connect32", ACPF_BX, ACPF_AX|ACPF_EBX|ACPF_CX|ACPF_DX|ACPF_ESI|ACPF_DI },
+  { "disconnect", ACPF_BX, 0 },
+  { "cpu_idle", 0, 0 },
+  { "cpu_busy", 0, 0 },
+  { "set_power_state", ACPF_BX|ACPF_CX, 0 },
+  { "enable_power_state", ACPF_BX|ACPF_CX, 0 }, 
+  { "restore_defaults", ACPF_BX, 0 },
+  { "get_power_status", ACPF_BX, ACPF_BX|ACPF_CX|ACPF_DX|ACPF_SI },
+  { "get_event", 0, ACPF_BX|ACPF_CX },
+  { "get_power_state" , ACPF_BX, ACPF_CX }, 
+  { "enable_dev_power_mgt", ACPF_BX|ACPF_CX, 0 },
+  { "driver_version", ACPF_BX|ACPF_CX, ACPF_AX },
+  { "engage_power_mgt",  ACPF_BX|ACPF_CX, 0 },
+  { "get_caps", ACPF_BX, ACPF_BX|ACPF_CX },
+  { "resume_timer", ACPF_BX|ACPF_CX|ACPF_SI|ACPF_DI, ACPF_CX|ACPF_SI|ACPF_DI },
+  { "resume_ring", ACPF_BX|ACPF_CX, ACPF_CX },
+  { "timer_reqs", ACPF_BX|ACPF_CX, ACPF_CX },
+};
+
+static void acallpr(int flag, char *tag, struct bioscallregs *b) {
+  if (!flag) return;
+  printf("%s ", tag);
+  if (flag & ACPF_AX) 		printf("ax=%#x ", b->AX);
+  if (flag & ACPF_AX_HI) 	printf("ax_hi=%#x ", b->AX_HI);
+  if (flag & ACPF_EAX) 		printf("eax=%#x ", b->EAX);
+  if (flag & ACPF_BX ) 		printf("bx=%#x ", b->BX);
+  if (flag & ACPF_BX_HI ) 	printf("bx_hi=%#x ", b->BX_HI);
+  if (flag & ACPF_EBX ) 	printf("ebx=%#x ", b->EBX);
+  if (flag & ACPF_CX ) 		printf("cx=%#x ", b->CX);
+  if (flag & ACPF_CX_HI ) 	printf("cx_hi=%#x ", b->CX_HI);
+  if (flag & ACPF_ECX ) 	printf("ecx=%#x ", b->ECX);
+  if (flag & ACPF_DX ) 		printf("dx=%#x ", b->DX);
+  if (flag & ACPF_DX_HI ) 	printf("dx_hi=%#x ", b->DX_HI);
+  if (flag & ACPF_EDX ) 	printf("edx=%#x ", b->EDX);
+  if (flag & ACPF_SI ) 		printf("si=%#x ", b->SI);
+  if (flag & ACPF_SI_HI ) 	printf("si_hi=%#x ", b->SI_HI);
+  if (flag & ACPF_ESI ) 	printf("esi=%#x ", b->ESI);
+  if (flag & ACPF_DI ) 		printf("di=%#x ", b->DI);
+  if (flag & ACPF_DI_HI ) 	printf("di_hi=%#x ", b->DI_HI);
+  if (flag & ACPF_EDI ) 	printf("edi=%#x ", b->EDI);
+  if (flag & ACPF_FLAGS ) 	printf("flags=%#x ", b->FLAGS);
+  if (flag & ACPF_FLAGS_HI) 	printf("flags_hi=%#x ", b->FLAGS_HI);
+  if (flag & ACPF_EFLAGS ) 	printf("eflags=%#x ", b->EFLAGS);
+}
 
 int
 apmcall_debug(func, regs, line)
@@ -233,16 +319,44 @@ apmcall_debug(func, regs, line)
 	int line;
 {
 	int rv;
-
-	DPRINTF(APMDEBUG_APMCALLS, ("apmcall: func %d from line %d",
-	    func, line));
+	int print = (apmdebug & APMDEBUG_APMCALLS) != 0;
+	char *name;
+	int inf, outf;
+		
+	if (print) {
+		if (func >= sizeof(aci) / sizeof(aci[0])) {
+			name = 0;
+			inf = outf = 0;
+		} else {
+			name = aci[func].name;
+			inf = aci[func].inflag;
+			outf = aci[func].outflag;
+		}
+		inittodr(time.tv_sec);	/* update timestamp */
+		if (name)
+			printf("apmcall@%03ld: %s/%#x (line=%d) ", 
+				time.tv_sec % 1000, name, func, line);
+		else
+			printf("apmcall@%03ld: %#x (line=%d) ", 
+				time.tv_sec % 1000, func, line);
+		acallpr(inf, "in:", regs);
+	}
     	rv = apmcall(func, regs);
-	DPRINTF(APMDEBUG_APMCALLS, (" -> 0x%x\n", rv));
+	if (print) {
+		if (rv) {
+			printf(" => error %#x (%s)\n", regs->AX >> 8,
+				apm_strerror(regs->AX >> 8));
+		} else {
+			printf(" => ");
+			acallpr(outf, "out:", regs);
+			printf("\n");
+		}
+	}
 	return (rv);
 }
 
 #define apmcall(f, r)	apmcall_debug((f), (r), __LINE__)
-#endif
+#endif	/* APMDEBUG */
 
 
 static const char *
@@ -474,8 +588,10 @@ apm_record_event(sc, event_type)
 
 	if ((sc->sc_flags & SCFLAG_OPEN) == 0)
 		return 1;		/* no user waiting */
-	if (sc->event_count == APM_NEVENTS)
+	if (sc->event_count == APM_NEVENTS) {
+		DPRINTF(APMDEBUG_ANOM, ("apm_record_event: queue full!\n"));
 		return 1;			/* overflow */
+	}
 	evp = &sc->event_list[sc->event_ptr];
 	sc->event_count++;
 	sc->event_ptr++;
@@ -486,44 +602,34 @@ apm_record_event(sc, event_type)
 	return (sc->sc_flags & SCFLAG_OWRITE) ? 0 : 1; /* user may handle */
 }
 
-static void
+/*
+ * apm_event_handle: handle an event.  returns 1 if event handled, 0 if
+ * event is a duplicate of an event we are already handling.
+ */
+static int
 apm_event_handle(sc, regs)
 	struct apm_softc *sc;
 	struct bioscallregs *regs;
 {
-	int error;
+	int error, retval;
 	struct bioscallregs nregs;
 	char *code;
 
+	retval = 1;		/* assume we are going to make progress */
+
 	switch (regs->BX) {
 	case APM_USER_STANDBY_REQ:
-		DPRINTF(APMDEBUG_EVENTS, ("apmev: user standby request\n"));
-		if (apm_do_standby) {
-			if (apm_record_event(sc, regs->BX))
-				apm_userstandbys++;
-			apm_op_inprog++;
-			(void)apm_set_powstate(APM_DEV_ALLDEVS,
-			    APM_LASTREQ_INPROG);
-		} else {
-			(void)apm_set_powstate(APM_DEV_ALLDEVS,
-			    APM_LASTREQ_REJECTED);
-			/* in case BIOS hates being spurned */
-			apm_powmgt_enable(1);
-		}
-		break;
-
 	case APM_STANDBY_REQ:
-		DPRINTF(APMDEBUG_EVENTS, ("apmev: system standby request\n"));
-		if (apm_standbys || apm_suspends) {
-			DPRINTF(APMDEBUG_EVENTS | APMDEBUG_ANOM,
-			    ("damn fool BIOS did not wait for answer\n"));
-			/* just give up the fight */
-			apm_damn_fool_bios = 1;
-		}
+		DPRINTF(APMDEBUG_EVENTS, ("apmev: %s standby request\n",
+		  (regs->BX == APM_STANDBY_REQ) ? "system" : "user"));
 		if (apm_do_standby) {
-			if (apm_record_event(sc, regs->BX))
-				apm_standbys++;
-			apm_op_inprog++;
+			if (apm_standby_pending)
+				retval = 0;		/* duplicate request */
+			else {
+				if (apm_record_event(sc, regs->BX))
+					apm_standby_now++; /* kernel handles */
+				apm_standby_pending++;
+			}
 			(void)apm_set_powstate(APM_DEV_ALLDEVS,
 			    APM_LASTREQ_INPROG);
 		} else {
@@ -535,24 +641,16 @@ apm_event_handle(sc, regs)
 		break;
 
 	case APM_USER_SUSPEND_REQ:
-		DPRINTF(APMDEBUG_EVENTS, ("apmev: user suspend request\n"));
-		if (apm_record_event(sc, regs->BX))
-			apm_suspends++;
-		apm_op_inprog++;
-		(void)apm_set_powstate(APM_DEV_ALLDEVS, APM_LASTREQ_INPROG);
-		break;
-
 	case APM_SUSPEND_REQ:
-		DPRINTF(APMDEBUG_EVENTS, ("apmev: system suspend request\n"));
-		if (apm_standbys || apm_suspends) {
-			DPRINTF(APMDEBUG_EVENTS | APMDEBUG_ANOM,
-			    ("damn fool BIOS did not wait for answer\n"));
-			/* just give up the fight */
-			apm_damn_fool_bios = 1;
+		DPRINTF(APMDEBUG_EVENTS, ("apmev: %s suspend request\n",
+		  (regs->BX == APM_SUSPEND_REQ) ? "system" : "user"));
+		if (apm_suspend_pending)
+			retval = 0;		/* duplicate request */
+		else {
+			if (apm_record_event(sc, regs->BX))
+				apm_suspend_now++;	/* kernel handles */
+			apm_suspend_pending++;
 		}
-		if (apm_record_event(sc, regs->BX))
-			apm_suspends++;
-		apm_op_inprog++;
 		(void)apm_set_powstate(APM_DEV_ALLDEVS, APM_LASTREQ_INPROG);
 		break;
 
@@ -596,7 +694,6 @@ apm_event_handle(sc, regs)
 
 	case APM_BATTERY_LOW:
 		DPRINTF(APMDEBUG_EVENTS, ("apmev: battery low\n"));
-		apm_battlow++;
 		apm_record_event(sc, regs->BX);
 		break;
 
@@ -627,6 +724,7 @@ apm_event_handle(sc, regs)
 		}	
 		printf("APM: %s event code %x\n", code, regs->BX);
 	}
+	return(retval);
 }
 
 static int
@@ -644,26 +742,38 @@ apm_periodic_check(sc)
 	struct bioscallregs regs;
 
 	/*
-	 * tell the BIOS we're working on it, if asked to do a
-	 * suspend/standby
+	 * if we are waiting for user (apmd) to process a suspend or 
+	 * standby tell the BIOS we are working on it.
 	 */
-	if (apm_op_inprog)
+	if (apm_standby_pending || apm_suspend_pending)
 		apm_set_powstate(APM_DEV_ALLDEVS, APM_LASTREQ_INPROG);
 
-	while (apm_get_event(&regs) == 0 && !apm_damn_fool_bios)
-		apm_event_handle(sc, &regs);
+	/*
+	 * continue processing events until we run out or we get a
+	 * duplicate.  duplicates occur on some APM BIOS (e.g. IBM
+	 * thinkpad) where it keeps posting the standby/suspend event
+	 * until forward progress is made.
+	 */
+	while (apm_get_event(&regs) == 0) {
+		if (!apm_event_handle(sc, & regs)) {
+			DPRINTF(APMDEBUG_EVENTS | APMDEBUG_ANOM,
+			  ("apm_periodic_check: duplicate event (break)\n"));
+			break;
+		}
+	}
 
 	if (APM_ERR_CODE(&regs) != APM_ERR_NOEVENTS)
 		apm_perror("get event", &regs);
-	if (apm_suspends) {
-		apm_op_inprog = 0;
+	if (apm_suspend_now) {
+		apm_suspend_pending = 0;
 		apm_suspend(sc);
-	} else if (apm_standbys || apm_userstandbys) {
-		apm_op_inprog = 0;
+	} else if (apm_standby_now) {
+		apm_standby_pending = 0;
 		apm_standby(sc);
 	}
-	apm_suspends = apm_standbys = apm_battlow = apm_userstandbys = 0;
-	apm_damn_fool_bios = 0;
+
+	/* reset for next loop */
+	apm_suspend_now = apm_standby_now = 0;
 }
 
 static void
@@ -1501,7 +1611,7 @@ apmioctl(dev, cmd, data, flag, p)
 			error = EBADF;
 			break;
 		}
-		apm_userstandbys++;
+		apm_standby_now++;	/* flag for periodic event */ 
 		break;
 
 	case APM_IOC_SUSPEND:
@@ -1509,7 +1619,7 @@ apmioctl(dev, cmd, data, flag, p)
 			error = EBADF;
 			break;
 		}
-		apm_suspends++;
+		apm_suspend_now++;	/* flag for peroidic event */
 		break;
 
 	case APM_IOC_DEV_CTL:
