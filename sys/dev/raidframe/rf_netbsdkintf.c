@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.57 2000/02/24 01:23:05 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.58 2000/02/25 02:21:12 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -338,7 +338,7 @@ raidattach(num)
 
 	rf_sparet_wait_queue = rf_sparet_resp_queue = NULL;
 
-	for (i = 0; i < numraid; i++)
+	for (i = 0; i < num; i++)
 		raidPtrs[i] = NULL;
 	rc = rf_BootRaidframe();
 	if (rc == 0)
@@ -2307,6 +2307,10 @@ rf_update_component_labels( raidPtr )
 				clabel.status = rf_ds_optimal;
 				/* bump the counter */
 				clabel.mod_counter++;
+#if 0
+				/* note where this set was configured last */
+				clabel.last_unit = raidPtr->raidid;
+#endif
 #if DEBUG
 				if (raidPtr->mod_counter != 
 				    clabel.mod_counter) {
