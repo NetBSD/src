@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.347 2001/06/03 17:44:30 jdolecek Exp $
+#	$NetBSD: mi,v 1.348 2001/06/16 12:02:13 jdolecek Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -866,6 +866,7 @@
 ./usr/include/sys/namei.h		comp-c-include
 ./usr/include/sys/null.h		comp-c-include
 ./usr/include/sys/param.h		comp-c-include
+./usr/include/sys/pipe.h		comp-c-include
 ./usr/include/sys/poll.h		comp-c-include
 ./usr/include/sys/pool.h		comp-c-include
 ./usr/include/sys/proc.h		comp-c-include
