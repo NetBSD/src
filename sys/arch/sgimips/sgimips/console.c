@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.18 2004/01/10 03:18:23 sekiya Exp $	*/
+/*	$NetBSD: console.c,v 1.19 2004/01/18 00:47:21 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.18 2004/01/10 03:18:23 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.19 2004/01/18 00:47:21 sekiya Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_machtypes.h"
@@ -87,7 +87,6 @@ consinit()
 	speed = strtoul(dbaud, NULL, 10);
 
 	switch (mach_type) {
-#if defined(IP2X)
 		case MACH_SGI_IP20:
 		case MACH_SGI_IP22:
 #if (NGIO > 0) && (NPCKBC > 0) 
@@ -111,7 +110,6 @@ consinit()
 			}
 #endif
 			break;
-#endif /* IP2X */
 
 #if defined(IP32)
 		case MACH_SGI_IP32:
@@ -150,10 +148,10 @@ kgdb_port_init()
 		    KGDB_DEVMODE);
 # endif	/* IP32 && (NCOM > 0) */
 
-# if (defined(IP2X)) && (NZSC > 0)
+# if (NZSC > 0)
 	if (mach_type == MACH_SGI_IP20 || mach_type == MACH_SGI_IP22)
 		zs_kgdb_init();			/* XXX */
-# endif /* (IP2X) && (NZSC > 0) */
+# endif
 }
 #endif	/* KGDB */
 
