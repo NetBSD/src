@@ -1,4 +1,4 @@
-/*	$NetBSD: vfscanf.c,v 1.19 1998/07/26 12:31:39 mycroft Exp $	*/
+/*	$NetBSD: vfscanf.c,v 1.20 1998/07/27 14:12:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vfscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vfscanf.c,v 1.19 1998/07/26 12:31:39 mycroft Exp $");
+__RCSID("$NetBSD: vfscanf.c,v 1.20 1998/07/27 14:12:36 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -99,7 +99,7 @@ __RCSID("$NetBSD: vfscanf.c,v 1.19 1998/07/26 12:31:39 mycroft Exp $");
 #define u_char unsigned char
 #define u_long unsigned long
 
-static u_char *__sccl __P((char *, u_char *));
+static const u_char *__sccl __P((char *, const u_char *));
 
 /*
  * vfscanf
@@ -107,10 +107,10 @@ static u_char *__sccl __P((char *, u_char *));
 int
 __svfscanf(fp, fmt0, ap)
 	FILE *fp;
-	char const *fmt0;
+	const char *fmt0;
 	_BSD_VA_LIST_ ap;
 {
-	u_char *fmt = (u_char *)fmt0;
+	const u_char *fmt = fmt0;
 	int c;		/* character from format, or conversion */
 	size_t width;	/* field width, or 0 */
 	char *p;	/* points into all kinds of strings */
@@ -364,7 +364,7 @@ literal:
 		case CT_CCL:
 			/* scan a (nonempty) character class (sets NOSKIP) */
 			if (width == 0)
-				width = ~0;	/* `infinity' */
+				width = ~0U;	/* `infinity' */
 			/* take only those things in the class */
 			if (flags & SUPPRESS) {
 				n = 0;
@@ -405,7 +405,7 @@ literal:
 		case CT_STRING:
 			/* like CCL, but zero-length string OK, & no NOSKIP */
 			if (width == 0)
-				width = ~0;
+				width = ~0U;
 			if (flags & SUPPRESS) {
 				n = 0;
 				while (!isspace(*fp->_p)) {
@@ -678,10 +678,10 @@ match_failure:
  * closing `]'.  The table has a 1 wherever characters should be
  * considered part of the scanset.
  */
-static u_char *
+static const u_char *
 __sccl(tab, fmt)
 	char *tab;
-	u_char *fmt;
+	const u_char *fmt;
 {
 	int c, n, v;
 
@@ -756,8 +756,8 @@ doswitch:
 				return (fmt - 1);
 			if (c == ']')
 				return (fmt);
-#endif
 			break;
+#endif
 
 		case ']':		/* end of scanset */
 			return (fmt);
