@@ -1,4 +1,4 @@
-/*	$NetBSD: autover.c,v 1.3 1995/04/22 10:58:28 cgd Exp $	*/
+/*	$NetBSD: autover.c,v 1.4 1997/10/12 21:24:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,15 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)autover.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: autover.c,v 1.3 1995/04/22 10:58:28 cgd Exp $";
+__RCSID("$NetBSD: autover.c,v 1.4 1997/10/12 21:24:27 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
+#include <stdio.h>
+#include "trek.h"
 
 /*
 **  Automatic Override
@@ -61,10 +63,11 @@ static char rcsid[] = "$NetBSD: autover.c,v 1.3 1995/04/22 10:58:28 cgd Exp $";
 **	quadrants, since that is all that is needed.
 */
 
+void
 autover()
 {
 	double			dist;
-	register int		course;
+	int		course;
 
 	printf("\07RED ALERT:  The %s is in a supernova quadrant\n", Ship.shipname);
 	printf("***  Emergency override attempts to hurl %s to safety\n", Ship.shipname);

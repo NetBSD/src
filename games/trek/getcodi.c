@@ -1,4 +1,4 @@
-/*	$NetBSD: getcodi.c,v 1.3 1995/04/22 10:58:55 cgd Exp $	*/
+/*	$NetBSD: getcodi.c,v 1.4 1997/10/12 21:24:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,15 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)getcodi.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: getcodi.c,v 1.3 1995/04/22 10:58:55 cgd Exp $";
+__RCSID("$NetBSD: getcodi.c,v 1.4 1997/10/12 21:24:49 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	"getpar.h"
+#include "getpar.h"
+#include "trek.h"
 
 /*
 **  get course and distance
@@ -53,6 +55,7 @@ static char rcsid[] = "$NetBSD: getcodi.c,v 1.3 1995/04/22 10:58:55 cgd Exp $";
 **	(meaning to drop the request).
 */
 
+int
 getcodi(co, di)
 int	*co;
 double	*di;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ram.c,v 1.3 1995/04/22 10:59:19 cgd Exp $	*/
+/*	$NetBSD: ram.c,v 1.4 1997/10/12 21:25:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,15 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)ram.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: ram.c,v 1.3 1995/04/22 10:59:19 cgd Exp $";
+__RCSID("$NetBSD: ram.c,v 1.4 1997/10/12 21:25:08 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
+#include <stdio.h>
+#include <unistd.h>
+#include "trek.h"
 
 /*
 **  RAM SOME OBJECT
@@ -54,11 +57,12 @@ static char rcsid[] = "$NetBSD: ram.c,v 1.3 1995/04/22 10:59:19 cgd Exp $";
 **	also rack up incredible damages.
 */
 
+void
 ram(ix, iy)
 int	ix, iy;
 {
-	register int		i;
-	register char		c;
+	int		i;
+	char		c;
 
 	printf("\07RED ALERT\07: collision imminent\n");
 	c = Sect[ix][iy];

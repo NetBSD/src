@@ -1,4 +1,4 @@
-/*	$NetBSD: computer.c,v 1.4 1995/04/24 12:25:51 cgd Exp $	*/
+/*	$NetBSD: computer.c,v 1.5 1997/10/12 21:24:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,17 +33,20 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)computer.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: computer.c,v 1.4 1995/04/24 12:25:51 cgd Exp $";
+__RCSID("$NetBSD: computer.c,v 1.5 1997/10/12 21:24:34 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
-# include	"getpar.h"
-# include	<stdio.h>
+#include <stdio.h>
+#include <math.h>
+#include "trek.h"
+#include "getpar.h"
+
 /*
 **  On-Board Computer
 **
@@ -92,31 +95,36 @@ static char rcsid[] = "$NetBSD: computer.c,v 1.4 1995/04/24 12:25:51 cgd Exp $";
 
 struct cvntab	Cputab[] =
 {
-	"ch",			"art",			(int (*)())1,		0,
-	"t",			"rajectory",		(int (*)())2,		0,
-	"c",			"ourse",		(int (*)())3,		0,
-	"m",			"ove",			(int (*)())3,		1,
-	"s",			"core",			(int (*)())4,		0,
-	"p",			"heff",			(int (*)())5,		0,
-	"w",			"arpcost",		(int (*)())6,		0,
-	"i",			"mpcost",		(int (*)())7,		0,
-	"d",			"istresslist",		(int (*)())8,		0,
-	0
+	{ "ch",		"art",			(cmdfun)1,		0 },
+	{ "t",		"rajectory",		(cmdfun)2,		0 },
+	{ "c",		"ourse",		(cmdfun)3,		0 },
+	{ "m",		"ove",			(cmdfun)3,		1 },
+	{ "s",		"core",			(cmdfun)4,		0 },
+	{ "p",		"heff",			(cmdfun)5,		0 },
+	{ "w",		"arpcost",		(cmdfun)6,		0 },
+	{ "i",		"mpcost",		(cmdfun)7,		0 },
+	{ "d",		"istresslist",		(cmdfun)8,		0 },
+	{ NULL,		NULL,			NULL,			0 }
 };
 
-computer()
+static int kalc __P((int, int, int, int, double *));
+static void prkalc __P((int, double));
+
+/*ARGSUSED*/
+void
+computer(v)
+	int v;
 {
-	int			ix, iy;
-	register int		i, j;
-	int			numout;
-	int			tqx, tqy;
-	struct cvntab		*r;
-	int			cost;
-	int			course;
-	double			dist, time;
-	double			warpfact;
-	struct quad		*q;
-	register struct event	*e;
+	int		ix, iy;
+	int		i, j;
+	int		tqx, tqy;
+	struct cvntab	*r;
+	int		cost;
+	int		course;
+	double		dist, time;
+	double		warpfact;
+	struct quad	*q;
+	struct event	*e;
 
 	if (check_out(COMPUTER))
 		return;
@@ -311,6 +319,7 @@ computer()
 **	sqx,sqy/ssx,ssy to tqx,tqy/tsx,tsy.
 */
 
+static int
 kalc(tqx, tqy, tsx, tsy, dist)
 int	tqx;
 int	tqy;
@@ -321,7 +330,7 @@ double	*dist;
 	double			dx, dy;
 	double			quadsize;
 	double			angle;
-	register int		course;
+	int		course;
 
 	/* normalize to quadrant distances */
 	quadsize = NSECTS;
@@ -340,7 +349,7 @@ double	*dist;
 	return (course);
 }
 
-
+static void
 prkalc(course, dist)
 int	course;
 double	dist;

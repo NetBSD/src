@@ -1,4 +1,4 @@
-/*	$NetBSD: phaser.c,v 1.4 1995/04/24 12:26:02 cgd Exp $	*/
+/*	$NetBSD: phaser.c,v 1.5 1997/10/12 21:25:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,16 +33,19 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)phaser.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: phaser.c,v 1.4 1995/04/24 12:26:02 cgd Exp $";
+__RCSID("$NetBSD: phaser.c,v 1.5 1997/10/12 21:25:06 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
-# include	"getpar.h"
+#include <stdio.h>
+#include <math.h>
+#include "trek.h"
+#include "getpar.h"
 
 /* factors for phaser hits; see description below */
 
@@ -79,9 +82,9 @@ static char rcsid[] = "$NetBSD: phaser.c,v 1.4 1995/04/24 12:26:02 cgd Exp $";
 
 struct cvntab	Matab[] =
 {
-	"m",		"anual",		(int (*)())1,		0,
-	"a",		"utomatic",		0,		0,
-	0
+	{ "m",		"anual",	(cmdfun) 1,	0 },
+	{ "a",		"utomatic",	(cmdfun) 0,	0 },
+	{ NULL,		NULL,		NULL,		0 }
 };
 
 struct banks
@@ -93,28 +96,37 @@ struct banks
 
 
 
-phaser()
+/*ARGSUSED*/
+void
+phaser(v)
+	int v;
 {
-	register int		i;
-	int			j;
-	register struct kling	*k;
-	double			dx, dy;
-	double			anglefactor, distfactor;
-	register struct banks	*b;
-	int			manual, flag, extra;
-	int			hit;
-	double			tot;
-	int			n;
-	int			hitreqd[NBANKS];
-	struct banks		bank[NBANKS];
-	struct cvntab		*ptr;
+	int		i;
+	int		j;
+	struct kling	*k;
+	double		dx, dy;
+	double		anglefactor, distfactor;
+	struct banks	*b;
+	int		manual, flag, extra = 0;
+	int		hit;
+	double		tot;
+	int		n;
+	int		hitreqd[NBANKS];
+	struct banks	bank[NBANKS];
+	struct cvntab	*ptr;
 
-	if (Ship.cond == DOCKED)
-		return(printf("Phasers cannot fire through starbase shields\n"));
-	if (damaged(PHASER))
-		return (out(PHASER));
-	if (Ship.shldup)
-		return (printf("Sulu: Captain, we cannot fire through shields.\n"));
+	if (Ship.cond == DOCKED) {
+		printf("Phasers cannot fire through starbase shields\n");
+		return;
+	}
+	if (damaged(PHASER)) {
+		out(PHASER);
+		return;
+	}
+	if (Ship.shldup) {
+		printf("Sulu: Captain, we cannot fire through shields.\n");
+		return;
+	}
 	if (Ship.cloaked)
 	{
 		printf("Sulu: Captain, surely you must realize that we cannot fire\n");
@@ -198,8 +210,10 @@ phaser()
 	else
 	{
 		/* automatic distribution of power */
-		if (Etc.nkling <= 0)
-			return (printf("Sulu: But there are no Klingons in this quadrant\n"));
+		if (Etc.nkling <= 0) {
+			printf("Sulu: But there are no Klingons in this quadrant\n");
+			return;
+		}
 		printf("Phasers locked on target.  ");
 		while (flag)
 		{

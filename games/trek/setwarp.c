@@ -1,4 +1,4 @@
-/*	$NetBSD: setwarp.c,v 1.3 1995/04/22 10:59:27 cgd Exp $	*/
+/*	$NetBSD: setwarp.c,v 1.4 1997/10/12 21:25:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,16 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)setwarp.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: setwarp.c,v 1.3 1995/04/22 10:59:27 cgd Exp $";
+__RCSID("$NetBSD: setwarp.c,v 1.4 1997/10/12 21:25:16 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
-# include	"getpar.h"
+#include <stdio.h>
+#include "trek.h"
+#include "getpar.h"
 
 /*
 **  SET WARP FACTOR
@@ -51,17 +53,24 @@ static char rcsid[] = "$NetBSD: setwarp.c,v 1.3 1995/04/22 10:59:27 cgd Exp $";
 **	checked for consistancy.
 */
 
-setwarp()
+/*ARGSUSED*/
+void
+setwarp(v)
+	int v;
 {
 	double	warpfac;
 
 	warpfac = getfltpar("Warp factor");
 	if (warpfac < 0.0)
 		return;
-	if (warpfac < 1.0)
-		return (printf("Minimum warp speed is 1.0\n"));
-	if (warpfac > 10.0)
-		return (printf("Maximum speed is warp 10.0\n"));
+	if (warpfac < 1.0) {
+		printf("Minimum warp speed is 1.0\n");
+		return;
+	}
+	if (warpfac > 10.0) {
+		printf("Maximum speed is warp 10.0\n");
+		return;
+	}
 	if (warpfac > 6.0)
 		printf("Damage to warp engines may occur above warp 6.0\n");
 	Ship.warp = warpfac;

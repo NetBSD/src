@@ -1,4 +1,4 @@
-/*	$NetBSD: ranf.c,v 1.3 1995/04/22 10:59:21 cgd Exp $	*/
+/*	$NetBSD: ranf.c,v 1.4 1997/10/12 21:25:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,20 +33,24 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)ranf.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: ranf.c,v 1.3 1995/04/22 10:59:21 cgd Exp $";
+__RCSID("$NetBSD: ranf.c,v 1.4 1997/10/12 21:25:09 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	<stdio.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "trek.h"
 
+int
 ranf(max)
 int	max;
 {
-	register int	t;
+	int	t;
 
 	if (max <= 0)
 		return (0);

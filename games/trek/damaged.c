@@ -1,4 +1,4 @@
-/*	$NetBSD: damaged.c,v 1.3 1995/04/22 10:58:41 cgd Exp $	*/
+/*	$NetBSD: damaged.c,v 1.4 1997/10/12 21:24:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)damaged.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: damaged.c,v 1.3 1995/04/22 10:58:41 cgd Exp $";
+__RCSID("$NetBSD: damaged.c,v 1.4 1997/10/12 21:24:37 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,12 +51,13 @@ static char rcsid[] = "$NetBSD: damaged.c,v 1.3 1995/04/22 10:58:41 cgd Exp $";
 **	event list for a "device fix" action on that device.
 */
 
+int
 damaged(dev)
 int	dev;
 {
-	register int		d;
-	register struct event	*e;
-	register int		i;
+	int		d;
+	struct event	*e;
+	int		i;
 
 	d = dev;
 

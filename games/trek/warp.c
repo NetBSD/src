@@ -1,4 +1,4 @@
-/*	$NetBSD: warp.c,v 1.3 1995/04/22 10:59:40 cgd Exp $	*/
+/*	$NetBSD: warp.c,v 1.4 1997/10/12 21:25:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,15 +33,20 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)warp.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: warp.c,v 1.3 1995/04/22 10:59:40 cgd Exp $";
+__RCSID("$NetBSD: warp.c,v 1.4 1997/10/12 21:25:27 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
+#include <stdio.h>
+#include <math.h>
+#include <unistd.h>
+#include "trek.h"
+#include "getpar.h"
 
 /*
 **  MOVE UNDER WARP POWER
@@ -59,34 +64,44 @@ static char rcsid[] = "$NetBSD: warp.c,v 1.3 1995/04/22 10:59:40 cgd Exp $";
 **	case, there is code to handle time warps, etc.
 */
 
+void
+dowarp(fl)
+{
+	int c;
+	double d;
+
+	if (getcodi(&c, &d))
+		return;
+	warp(fl, c, d);
+}
+
+void
 warp(fl, c, d)
 int	fl, c;
 double	d;
 {
-	int			course;
-	double			power;
-	double			dist;
-	double			time;
-	double			speed;
-	double			frac;
-	register int		percent;
-	register int		i;
-	extern double		move();
+	char	       *p;
+	int		course;
+	double		power;
+	double		dist;
+	double		time;
+	double		speed;
+	double		frac;
+	int		percent;
+	int		i;
 
-	if (Ship.cond == DOCKED)
-		return (printf("%s is docked\n", Ship.shipname));
+	if (Ship.cond == DOCKED) {
+		printf("%s is docked\n", Ship.shipname);
+		return;
+	}
 	if (damaged(WARP))
 	{
-		return (out(WARP));
+		out(WARP);
+		return;
 	}
-	if (fl < 0)
-	{
-		course = c;
-		dist = d;
-	}
-	else
-		if (getcodi(&course, &dist))
-			return;
+
+	course = c;
+	dist = d;
 
 	/* check to see that we are not using an absurd amount of power */
 	power = (dist + 0.05) * Ship.warp3;
@@ -140,7 +155,8 @@ double	d;
 	sleep(4);
 	if (ranf(100) >= 100 * dist)
 	{
-		return (printf("Equilibrium restored -- all systems normal\n"));
+		printf("Equilibrium restored -- all systems normal\n");
+		return;
 	}
 
 	/* select a bizzare thing to happen to us */
@@ -166,10 +182,12 @@ double	d;
 
 		/* s/he got lucky: a negative time portal */
 		time = Now.date;
-		i = (int) Etc.snapshot;
-		bmove(i, Quad, sizeof Quad);
-		bmove(i += sizeof Quad, Event, sizeof Event);
-		bmove(i += sizeof Event, &Now, sizeof Now);
+		p = (char *) Etc.snapshot;
+		memcpy(p, Quad, sizeof Quad);
+		p += sizeof Quad;
+		memcpy(p, Event, sizeof Event);
+		p += sizeof Event;
+		memcpy(p, &Now, sizeof Now);
 		printf("Negative time portal entered -- it is now Stardate %.2f\n",
 			Now.date);
 		for (i = 0; i < MAXEVENTS; i++)

@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.3 1995/04/22 10:59:12 cgd Exp $	*/
+/*	$NetBSD: move.c,v 1.4 1997/10/12 21:25:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,15 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: move.c,v 1.3 1995/04/22 10:59:12 cgd Exp $";
+__RCSID("$NetBSD: move.c,v 1.4 1997/10/12 21:25:02 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
+#include <stdio.h>
+#include <math.h>
+#include "trek.h"
 
 /*
 **  Move Under Warp or Impulse Power
@@ -86,10 +89,10 @@ double	speed;
 {
 	double			angle;
 	double			x, y, dx, dy;
-	register int		ix, iy;
+	int		ix = 0, iy = 0;
 	double			bigger;
 	int			n;
-	register int		i;
+	int		i;
 	double			dist;
 	double			sectsize;
 	double			xn;
@@ -122,7 +125,7 @@ double	speed;
 	evtime = Now.eventptr[E_LRTB]->date - Now.date;
 #	ifdef xTRACE
 	if (Trace)
-		printf("E.ep = %u, ->evcode = %d, ->date = %.2f, evtime = %.2f\n",
+		printf("E.ep = %p, ->evcode = %d, ->date = %.2f, evtime = %.2f\n",
 			Now.eventptr[E_LRTB], Now.eventptr[E_LRTB]->evcode,
 			Now.eventptr[E_LRTB]->date, evtime);
 #	endif

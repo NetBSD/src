@@ -1,4 +1,4 @@
-/*	$NetBSD: destruct.c,v 1.3 1995/04/22 10:58:44 cgd Exp $	*/
+/*	$NetBSD: destruct.c,v 1.4 1997/10/12 21:24:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,15 +33,19 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)destruct.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: destruct.c,v 1.3 1995/04/22 10:58:44 cgd Exp $";
+__RCSID("$NetBSD: destruct.c,v 1.4 1997/10/12 21:24:40 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
+#include <stdio.h>
+#include <unistd.h>
+#include "trek.h"
+#include "getpar.h"
 
 /*
 **  Self Destruct Sequence
@@ -63,14 +67,19 @@ static char rcsid[] = "$NetBSD: destruct.c,v 1.3 1995/04/22 10:58:44 cgd Exp $";
 **	Uses trace flag 41
 */
 
-destruct()
+/*ARGSUSED*/
+void
+destruct(v)
+	int v;
 {
 	char		checkpass[15];
-	register int	i, j;
+	int	i, j;
 	double		zap;
 
-	if (damaged(COMPUTER))
-		return (out(COMPUTER));
+	if (damaged(COMPUTER)) {
+		out(COMPUTER);
+		return;
+	}
 	printf("\n\07 --- WORKING ---\07\n");
 	sleep(3);
 	/* output the count 10 9 8 7 6 */
@@ -85,8 +94,10 @@ destruct()
 	skiptonl(0);
 	getstrpar("Enter password verification", checkpass, 14, 0);
 	sleep(2);
-	if (!sequal(checkpass, Game.passwd))
-		return (printf("Self destruct sequence aborted\n"));
+	if (strcmp(checkpass, Game.passwd) != 0) {
+		printf("Self destruct sequence aborted\n");
+		return;
+	}
 	printf("Password verified; self destruct sequence continues:\n");
 	sleep(2);
 	/* output count 5 4 3 2 1 0 */

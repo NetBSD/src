@@ -1,4 +1,4 @@
-/*	$NetBSD: cgetc.c,v 1.3 1995/04/22 10:58:34 cgd Exp $	*/
+/*	$NetBSD: cgetc.c,v 1.4 1997/10/12 21:24:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,15 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cgetc.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: cgetc.c,v 1.3 1995/04/22 10:58:34 cgd Exp $";
+__RCSID("$NetBSD: cgetc.c,v 1.4 1997/10/12 21:24:30 christos Exp $");
 #endif
 #endif /* not lint */
 
 # include	<stdio.h>
+# include	"trek.h"
 
 char	cgetc(i)
 int	i;

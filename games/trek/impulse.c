@@ -1,4 +1,4 @@
-/*	$NetBSD: impulse.c,v 1.3 1995/04/22 10:59:03 cgd Exp $	*/
+/*	$NetBSD: impulse.c,v 1.4 1997/10/12 21:24:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,32 +33,41 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)impulse.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: impulse.c,v 1.3 1995/04/22 10:59:03 cgd Exp $";
+__RCSID("$NetBSD: impulse.c,v 1.4 1997/10/12 21:24:54 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
+#include <stdio.h>
+#include "trek.h"
+#include "getpar.h"
 
 /**
  **	move under impulse power
  **/
 
-impulse()
+/*ARGSUSED*/
+void
+impulse(v)
+	int v;
 {
-	int			course;
-	register int		power;
-	double			dist, time;
-	register int		percent;
-	extern double		move();
+	int		course;
+	int		power;
+	double		dist, time;
+	int		percent;
 
-	if (Ship.cond == DOCKED)
-		return (printf("Scotty: Sorry captain, but we are still docked.\n"));
-	if (damaged(IMPULSE))
-		return (out(IMPULSE));
+	if (Ship.cond == DOCKED) {
+		printf("Scotty: Sorry captain, but we are still docked.\n");
+		return;
+	}
+	if (damaged(IMPULSE)) {
+		out(IMPULSE);
+		return;
+	}
 	if (getcodi(&course, &dist))
 		return;
 	power = 20 + 100 * dist;

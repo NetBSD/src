@@ -1,4 +1,4 @@
-/*	$NetBSD: systemname.c,v 1.3 1995/04/22 10:59:32 cgd Exp $	*/
+/*	$NetBSD: systemname.c,v 1.4 1997/10/12 21:25:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)systemname.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: systemname.c,v 1.3 1995/04/22 10:59:32 cgd Exp $";
+__RCSID("$NetBSD: systemname.c,v 1.4 1997/10/12 21:25:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,8 +58,8 @@ static char rcsid[] = "$NetBSD: systemname.c,v 1.3 1995/04/22 10:59:32 cgd Exp $
 char *systemname(q1)
 struct quad	*q1;
 {
-	register struct quad	*q;
-	register int		i;
+	struct quad	*q;
+	int		i;
 
 	q = q1;
 

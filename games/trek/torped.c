@@ -1,4 +1,4 @@
-/*	$NetBSD: torped.c,v 1.3 1995/04/22 10:59:34 cgd Exp $	*/
+/*	$NetBSD: torped.c,v 1.4 1997/10/12 21:25:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,16 +33,19 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)torped.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: torped.c,v 1.3 1995/04/22 10:59:34 cgd Exp $";
+__RCSID("$NetBSD: torped.c,v 1.4 1997/10/12 21:25:22 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	<stdio.h>
-# include	"trek.h"
+#include <stdio.h>
+#include <math.h>
+#include "trek.h"
+#include "getpar.h"
 
 /*
 **  PHOTON TORPEDO CONTROL
@@ -63,28 +66,34 @@ static char rcsid[] = "$NetBSD: torped.c,v 1.3 1995/04/22 10:59:34 cgd Exp $";
 **	the misfire damages your torpedo tubes.
 */
 
+static int randcourse __P((int));
 
-torped()
+/*ARGSUSED*/
+void
+torped(v)
+	int v;
 {
-	register int		ix, iy;
-	double			x, y, dx, dy;
-	double			angle;
-	int			course, course2;
-	register int		k;
-	double			bigger;
-	double			sectsize;
-	int			burst;
-	int			n;
+	int		ix, iy;
+	double		x, y, dx, dy;
+	double		angle;
+	int		course, course2;
+	int		k;
+	double		bigger;
+	double		sectsize;
+	int		burst;
+	int		n;
 
 	if (Ship.cloaked)
 	{
-		return (printf("Federation regulations do not permit attack while cloaked.\n"));
+		printf("Federation regulations do not permit attack while cloaked.\n");
+		return;
 	}
 	if (check_out(TORPED))
 		return;
 	if (Ship.torped <= 0)
 	{
-		return (printf("All photon torpedos expended\n"));
+		printf("All photon torpedos expended\n");
+		return;
 	}
 
 	/* get the course */
@@ -118,8 +127,10 @@ torped()
 		burst = getintpar("burst angle");
 		if (burst <= 0)
 			return;
-		if (burst > 15)
-			return (printf("Maximum burst angle is 15 degrees\n"));
+		if (burst > 15) {
+			printf("Maximum burst angle is 15 degrees\n");
+			return;
+		}
 	}
 	sectsize = NSECTS;
 	n = -1;
@@ -221,11 +232,12 @@ torped()
 **	to the tubes, etc.
 */
 
+static int
 randcourse(n)
 int	n;
 {
 	double			r;
-	register int		d;
+	int		d;
 
 	d = ((franf() + franf()) - 1.0) * 20;
 	if (abs(d) > 12)

@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.c,v 1.3 1995/04/22 10:58:53 cgd Exp $	*/
+/*	$NetBSD: externs.c,v 1.4 1997/10/12 21:24:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)externs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: externs.c,v 1.3 1995/04/22 10:58:53 cgd Exp $";
+__RCSID("$NetBSD: externs.c,v 1.4 1997/10/12 21:24:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,22 +50,22 @@ static char rcsid[] = "$NetBSD: externs.c,v 1.3 1995/04/22 10:58:53 cgd Exp $";
 
 struct device	Device[NDEV] =
 {
-	"warp drive",		"Scotty",
-	"S.R. scanners",	"Scotty",
-	"L.R. scanners",	"Scotty",
-	"phasers",		"Sulu",
-	"photon tubes",		"Sulu",
-	"impulse engines",	"Scotty",
-	"shield control",	"Sulu",
-	"computer",		"Spock",
-	"subspace radio",	"Uhura",
-	"life support",		"Scotty",
-	"navigation system",	"Chekov",
-	"cloaking device",	"Scotty",
-	"transporter",		"Scotty",
-	"shuttlecraft",		"Scotty",
-	"*ERR 14*",		"Nobody",
-	"*ERR 15*",		"Nobody"
+	{ "warp drive",		"Scotty" },
+	{ "S.R. scanners",	"Scotty" },
+	{ "L.R. scanners",	"Scotty" },
+	{ "phasers",		"Sulu" },
+	{ "photon tubes",	"Sulu" },
+	{ "impulse engines",	"Scotty" },
+	{ "shield control",	"Sulu" },
+	{ "computer",		"Spock" },
+	{ "subspace radio",	"Uhura" },
+	{ "life support",	"Scotty" },
+	{ "navigation system",	"Chekov" },
+	{ "cloaking device",	"Scotty" },
+	{ "transporter",	"Scotty" },
+	{ "shuttlecraft",	"Scotty" },
+	{ "*ERR 14*",		"Nobody" },
+	{ "*ERR 15*",		"Nobody" }
 };
 
 char	*Systemname[NINHAB] =

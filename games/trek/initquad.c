@@ -1,4 +1,4 @@
-/*	$NetBSD: initquad.c,v 1.3 1995/04/22 10:59:04 cgd Exp $	*/
+/*	$NetBSD: initquad.c,v 1.4 1997/10/12 21:24:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,15 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)initquad.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: initquad.c,v 1.3 1995/04/22 10:59:04 cgd Exp $";
+__RCSID("$NetBSD: initquad.c,v 1.4 1997/10/12 21:24:55 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
+#include <stdio.h>
+#include "trek.h"
 
 /*
 **  Paramize Quadrant Upon Entering
@@ -60,14 +62,15 @@ static char rcsid[] = "$NetBSD: initquad.c,v 1.3 1995/04/22 10:59:04 cgd Exp $";
 **	to be docked, i.e., abandon() and help().
 */
 
+void
 initquad(f)
 int	f;
 {
-	register int		i, j;
-	int			rx, ry;
-	int			nbases, nstars;
-	register struct quad	*q;
-	int			nholes;
+	int		i, j;
+	int		rx, ry;
+	int		nbases, nstars;
+	struct quad	*q;
+	int		nholes;
 
 	q = &Quad[Ship.quadx][Ship.quady];
 
@@ -142,10 +145,11 @@ int	f;
 }
 
 
+void
 sector(x, y)
 int	*x, *y;
 {
-	register int		i, j;
+	int	i, j;
 
 	do
 	{

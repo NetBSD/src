@@ -1,4 +1,4 @@
-/*	$NetBSD: events.c,v 1.3 1995/04/22 10:58:50 cgd Exp $	*/
+/*	$NetBSD: events.c,v 1.4 1997/10/12 21:24:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,15 +33,19 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)events.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: events.c,v 1.3 1995/04/22 10:58:50 cgd Exp $";
+__RCSID("$NetBSD: events.c,v 1.4 1997/10/12 21:24:46 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
+#include <stdio.h>
+#include <math.h>
+#include "getpar.h"
+#include "trek.h"
 
 /*
 **  CAUSE TIME TO ELAPSE
@@ -52,19 +56,21 @@ static char rcsid[] = "$NetBSD: events.c,v 1.3 1995/04/22 10:58:50 cgd Exp $";
 */
 
 
+int
 events(warp)
 int	warp;		/* set if called in a time warp */
 {
-	register int		i;
-	int			j;
+	int		i;
+	char			*p;
+	int			j = 0;
 	struct kling		*k;
 	double			rtime;
 	double			xdate;
 	double			idate;
-	struct event		*ev, *xsched(), *schedule();
+	struct event		*ev = NULL;
 	int			ix, iy;
-	register struct quad	*q;
-	register struct event	*e;
+	struct quad	*q;
+	struct event	*e;
 	int			evnum;
 	int			restcancel;
 
@@ -138,7 +144,7 @@ int	warp;		/* set if called in a time warp */
 
 		  case E_SNOVA:			/* supernova */
 			/* cause the supernova to happen */
-			snova(-1);
+			snova(-1, 0);
 			/* and schedule the next one */
 			xresched(e, E_SNOVA, 1);
 			break;
@@ -389,10 +395,12 @@ int	warp;		/* set if called in a time warp */
 
 		  case E_SNAP:		/* take a snapshot of the galaxy */
 			xresched(e, E_SNAP, 1);
-			i = (int) Etc.snapshot;
-			i = bmove(Quad, i, sizeof (Quad));
-			i = bmove(Event, i, sizeof (Event));
-			i = bmove(&Now, i, sizeof (Now));
+			p = (char *) Etc.snapshot;
+			memcpy(p, Quad, sizeof (Quad));
+			p += sizeof(Quad);
+			memcpy(p, Event, sizeof (Event));
+			p += sizeof(Event);
+			memcpy(p, &Now, sizeof (Now));
 			Game.snap = 1;
 			break;
 
@@ -447,7 +455,7 @@ int	warp;		/* set if called in a time warp */
 	}
 
 	/* unschedule an attack during a rest period */
-	if (e = Now.eventptr[E_ATTACK])
+	if ((e = Now.eventptr[E_ATTACK]) != NULL)
 		unschedule(e);
 
 	if (!warp)
