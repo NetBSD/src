@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.2 2002/02/27 01:20:56 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.2.8.1 2002/05/17 13:35:40 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,36 +53,23 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/fcntl.h>
+#include <sys/conf.h>
 
 #include <machine/cpu.h>
-#include <machine/conf.h>
 
 #include <uvm/uvm_extern.h>
 
 extern char *vmmap;            /* poor name! */
 caddr_t zeropage;
 
-/*ARGSUSED*/
-int
-mmopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
+dev_type_read(mmrw);
+dev_type_ioctl(mmioctl);
+dev_type_mmap(mmmmap);
 
-	return (0);
-}
-
-/*ARGSUSED*/
-int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
-
-	return (0);
-}
+const struct cdevsw mem_cdevsw = {
+	nullopen, nullclose, mmrw, mmrw, mmioctl,
+	nostop, notty, nopoll, mmmmap,
+};
 
 /*ARGSUSED*/
 int

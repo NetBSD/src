@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.6 2002/03/24 03:37:21 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.6.2.1 2002/05/17 13:35:30 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.6 2002/03/24 03:37:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.6.2.1 2002/05/17 13:35:30 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.6 2002/03/24 03:37:21 thorpej Exp $");
 #include <sys/fcntl.h>
 
 #include <machine/cpu.h>
-#include <arm/conf.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -63,31 +62,14 @@ extern char *memhook;            /* poor name! */
 caddr_t zeropage;
 int physlock;
 
+dev_type_read(mmrw);
+dev_type_ioctl(mmioctl);
+dev_type_mmap(mmmmap);
 
-/*ARGSUSED*/
-int
-mmopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
-	switch (minor(dev)) {
-	default:
-		break;
-	}
-	return (0);
-}
-
-/*ARGSUSED*/
-int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
-
-	return (0);
-}
+const struct cdevsw mem_cdevsw = {
+	nullopen, nullclose, mmrw, mmrw, mmioctl,
+	nostop, notty, nopoll, mmmmap,
+};
 
 /*ARGSUSED*/
 int

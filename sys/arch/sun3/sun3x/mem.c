@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.24 2002/02/27 06:51:57 simonb Exp $	*/
+/*	$NetBSD: mem.c,v 1.24.8.1 2002/05/17 13:35:38 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,28 +78,14 @@ extern paddr_t avail_start;
 static int promacc __P((caddr_t, int, int));
 static caddr_t devzeropage;
 
+dev_type_read(mmrw);
+dev_type_ioctl(mmioctl);
+dev_type_mmap(mmmmap);
 
-/*ARGSUSED*/
-int
-mmopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
-
-	return (0);
-}
-
-/*ARGSUSED*/
-int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
-
-	return (0);
-}
+const struct cdevsw mem_cdevsw = {
+	nullopen, nullclose, mmrw, mmrw, mmioctl,
+	nostop, notty, nopoll, mmmmap,
+};
 
 /*ARGSUSED*/
 int

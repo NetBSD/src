@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.15 2002/02/27 04:13:10 kleink Exp $ */
+/*	$NetBSD: mem.c,v 1.15.8.1 2002/05/17 13:35:36 gehenna Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,26 +55,14 @@
 
 #include <uvm/uvm_extern.h>
 
-/*ARGSUSED*/
-int
-mmopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
-	return 0;
-}
+dev_type_read(mmrw);
+dev_type_ioctl(mmioctl);
+dev_type_mmap(mmmmap);
 
-/*ARGSUSED*/
-int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
-
-	return 0;
-}
+const struct cdevsw mem_cdevsw = {
+	nullopen, nullclose, mmrw, mmrw, mmioctl,
+	nostop, notty, nopoll, mmmmap,
+};
 
 /*ARGSUSED*/
 int

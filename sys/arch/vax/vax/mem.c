@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.22 2002/02/27 01:20:56 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.22.8.1 2002/05/17 13:35:39 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,21 +63,13 @@
 extern	unsigned int avail_end;
 static	caddr_t zeropage;
 
-/*ARGSUSED*/
-int
-mmopen(dev_t dev, int flag, int mode, struct proc *p)
-{
+dev_type_read(mmrw);
+dev_type_ioctl(mmioctl);
 
-	return (0);
-}
-
-/*ARGSUSED*/
-int
-mmclose(dev_t dev, int flag, int mode, struct proc *p)
-{
-
-	return (0);
-}
+const struct cdevsw mem_cdevsw = {
+	nullopen, nullclose, mmrw, mmrw, mmioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 /*ARGSUSED*/
 int
@@ -153,11 +145,4 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		uio->uio_resid -= c;
 	}
 	return (error);
-}
-
-paddr_t
-mmmmap(dev_t dev, off_t off, int prot)
-{
-
-	return (-1);
 }
