@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.3 1995/05/05 16:35:21 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.4 1995/05/10 05:59:27 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -461,7 +461,6 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 */
 	pmap_bootstrap(vstart);
 
-
 	/*
 	 * Prepare to enable the MMU.
 	 * Setup and load SRP nolimit, share global, 4 byte PTE's
@@ -506,24 +505,31 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	*(volatile int *)proc0paddr = i;
 
 	/*
-	 * Initialize both MFP chips to generate auto-vectored interrupts
-	 * with EOI. The active-edge registers are set up. The interrupt
-	 * enable registers are set to disable all interrupts.
+	 * Initialize both MFP chips (if both present!) to generate
+	 * auto-vectored interrupts with EOI. The active-edge registers are
+	 * set up. The interrupt enable registers are set to disable all
+	 * interrupts.
+	 * A test on presence on the second MFP determines if this is a
+	 * TT030 or a Falcon. This is added to 'machineid'.
 	 */
 	MFP->mf_iera  = MFP->mf_ierb = 0;
 	MFP->mf_imra  = MFP->mf_imrb = 0;
 	MFP->mf_aer   = 0;
 	MFP->mf_vr    = 0x40;
-	MFP2->mf_iera = MFP2->mf_ierb = 0;
-	MFP2->mf_imra = MFP2->mf_imrb = 0;
-	MFP2->mf_aer  = 0x80;
-	MFP2->mf_vr   = 0x50;
+	if(!badbaddr(&MFP2->mf_gpip)) {
+		machineid |= ATARI_TT;
+		MFP2->mf_iera = MFP2->mf_ierb = 0;
+		MFP2->mf_imra = MFP2->mf_imrb = 0;
+		MFP2->mf_aer  = 0x80;
+		MFP2->mf_vr   = 0x50;
 
-	/*
-	 * Initialize the SCU, to enable interrupts on the SCC (ipl5),
-	 * MFP (ipl6) and softints (ipl1).
-	 */
-	SCU->sys_mask = SCU_MFP | SCU_SCC | SCU_SYS_SOFT;
+		/*
+		 * Initialize the SCU, to enable interrupts on the SCC (ipl5),
+		 * MFP (ipl6) and softints (ipl1).
+		 */
+		SCU->sys_mask = SCU_MFP | SCU_SCC | SCU_SYS_SOFT;
+	}
+	else machineid |= ATARI_FALCON;
 
 	/*
 	 * Initialize stmem allocator
