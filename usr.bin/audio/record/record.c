@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.10 2000/02/02 05:02:25 dmcmahill Exp $	*/
+/*	$NetBSD: record.c,v 1.11 2000/12/13 08:19:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -308,13 +308,22 @@ write_header()
 	sun_audioheader auh;
 	struct iovec iv[3];
 	int veclen = 0, left, tlen = 0;
+	int sunenc;
+
+	/* if we can't express this as a Sun header, don't write any */
+	if (audio_encoding_to_sun(encoding, precision, &sunenc) != 0) {
+		if (!qflag)
+			warnx("failed to convert to sun encoding; "
+			      "Sun audio header not written");
+		return;
+	}
 
 	auh.magic = htonl(AUDIO_FILE_MAGIC);
 	if (outfd == STDOUT_FILENO)
 		auh.data_size = htonl(AUDIO_UNKNOWN_SIZE);
 	else
 		auh.data_size = htonl(total_size);
-	auh.encoding = htonl(encoding);
+	auh.encoding = htonl(sunenc);
 	auh.sample_rate = htonl(sample_rate);
 	auh.channels = htonl(channels);
 	if (header_info) {
