@@ -1,4 +1,4 @@
-/*	$NetBSD: dptreg.h,v 1.11 2002/12/09 15:24:29 ad Exp $	*/
+/*	$NetBSD: dptreg.h,v 1.12 2002/12/28 20:06:09 kristerw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@netbsd.org>
@@ -107,7 +107,7 @@ struct eata_cp {
 } __attribute__ ((__packed__));
 
 struct eata_ucp {
-	u_int8_t	ucp_cp[sizeof(struct eata_cp) - 5*4];	/* XXX */;
+	u_int8_t	ucp_cp[sizeof(struct eata_cp) - 5*4];	/* XXX */
 	u_long		ucp_datalen;
 	u_long		ucp_ccbid;
 	caddr_t		ucp_dataaddr;
