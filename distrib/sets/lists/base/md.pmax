@@ -1,4 +1,5 @@
 ./boot
+./usr/libexec/ld.so
 ./usr/mdec/bootrz
 ./usr/mdec/boot
 ./usr/mdec/rzboot
