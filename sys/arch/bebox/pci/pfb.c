@@ -1,4 +1,4 @@
-/*	$NetBSD: pfb.c,v 1.3 1999/01/11 21:54:23 drochner Exp $	*/
+/*	$NetBSD: pfb.c,v 1.4 1999/06/22 02:04:07 sakamoto Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -143,7 +143,7 @@ pfbattach(parent, self, aux)
 		printf(": cannot map framebuffer\n");
 		return;
 	}
-	dc->dc_raster.pixels = mapiodev(dc->dc_paddr,
+	dc->dc_raster.pixels = (u_int32_t *)mapiodev(dc->dc_paddr,
 				dc->dc_linebytes * dc->dc_height);
 
 	printf(": %d x %d, %dbpp\n",
