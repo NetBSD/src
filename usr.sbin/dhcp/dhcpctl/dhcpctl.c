@@ -61,7 +61,7 @@ dhcpctl_status dhcpctl_initialize ()
 				    dhcpctl_callback_destroy,
 				    dhcpctl_callback_signal_handler,
 				    dhcpctl_callback_stuff_values,
-				    0, 0, 0, 0, 0,
+				    0, 0, 0, 0, 0, 0,
 				    sizeof (dhcpctl_callback_object_t));
 	omapi_object_type_register (&dhcpctl_remote_type,
 				    "dhcpctl-remote",
@@ -70,7 +70,7 @@ dhcpctl_status dhcpctl_initialize ()
 				    dhcpctl_remote_destroy,
 				    dhcpctl_remote_signal_handler,
 				    dhcpctl_remote_stuff_values,
-				    0, 0, 0, 0, 0,
+				    0, 0, 0, 0, 0, 0,
 				    sizeof (dhcpctl_remote_object_t));
 	return ISC_R_SUCCESS;
 }

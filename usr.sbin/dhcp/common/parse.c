@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: parse.c,v 1.1.1.7 2000/06/24 06:38:31 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: parse.c,v 1.1.1.8 2000/07/08 20:40:23 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -2441,6 +2441,26 @@ int parse_non_binary (expr, cfile, lose, context)
 		}
 		break;
 
+	      case LPAREN:
+		token = next_token (&val, cfile);
+		if (!parse_expression (expr, cfile, lose, context,
+				       (struct expression **)0, expr_none)) {
+			if (!*lose) {
+				parse_warn (cfile, "expression expected");
+				skip_to_semi (cfile);
+			}
+			*lose = 1;
+			return 0;
+		}
+		token = next_token (&val, cfile);
+		if (token != RPAREN) {
+			*lose = 1;
+			parse_warn (cfile, "right paren expected");
+			skip_to_semi (cfile);
+			return 0;
+		}
+		break;
+
 	      case EXISTS:
 		if (context == context_dns)
 			goto ns_exists;
@@ -3886,8 +3906,8 @@ int parse_warn (struct parse *cfile, const char *fmt, ...)
 	lexbuf [lix] = 0;
 
 #ifndef DEBUG
-	syslog (log_priority | LOG_ERR, mbuf);
-	syslog (log_priority | LOG_ERR, cfile -> token_line);
+	syslog (log_priority | LOG_ERR, "%s", mbuf);
+	syslog (log_priority | LOG_ERR, "%s", cfile -> token_line);
 	if (cfile -> lexchar < 81)
 		syslog (log_priority | LOG_ERR, "%s^", lexbuf);
 #endif

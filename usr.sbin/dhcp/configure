@@ -29,7 +29,17 @@ if [ "$sysname" = "" ]; then
     ULTRIX)
       sysname=ultrix;;
     BSD/OS)
-      sysname=bsdos;;
+      release=`uname -r`
+      minor=`echo $release |sed -e 's/[0-9]*\.\([0-9][0-9]*\)\(\..*\)*$/\1/'`
+      major=`echo $release |sed -e 's/\([0-9][0-9]*\)\..*$/\1/'`
+      
+      case $major in
+	[123]) sysname=bsdos ;;
+	*) case $minor in
+	     0) sysname=bsdos ;;
+	     *) sysname=bsdos-4.1 ;;
+	   esac;;
+      esac;;
     OSF1)
       if [ $machine = 'alpha' ]; then
         sysname=alphaosf

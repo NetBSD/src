@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcpd.c,v 1.1.1.21 2000/06/24 06:38:44 mellon Exp $ Copyright 1995-2000 Internet Software Consortium.";
+"$Id: dhcpd.c,v 1.1.1.22 2000/07/08 20:41:07 mellon Exp $ Copyright 1995-2000 Internet Software Consortium.";
 #endif
 
   static char copyright[] =
@@ -72,7 +72,9 @@ int server_identifier_matched;
 #if defined (NSUPDATE)
 char std_nsupdate [] = "						    \n\
 on commit {								    \n\
-  if (not defined (ddns-fwd-name)) {					    \n\
+  if (((config-option server.ddns-updates = null) or			    \n\
+       (config-option server.ddns-updates != 0)) and			    \n\
+      (not defined (ddns-fwd-name))) {					    \n\
     set ddns-fwd-name = concat (pick (config-option server.ddns-hostname,   \n\
 				      option host-name), \".\",		    \n\
 			        pick (config-option server.ddns-domainname, \n\
@@ -165,6 +167,20 @@ int main (argc, argv, envp)
 	int lose;
 	int omapi_port;
 
+	/* Set up the client classification system. */
+	classification_setup ();
+
+	/* Initialize the omapi system. */
+	result = omapi_init ();
+	if (result != ISC_R_SUCCESS)
+		log_fatal ("Can't initialize OMAPI: %s",
+			   isc_result_totext (result));
+
+	/* Set up the OMAPI wrappers for various server database internal
+	   objects. */
+	dhcp_db_objects_setup ();
+	dhcp_common_objects_setup ();
+
 	/* Initially, log errors to stderr as well as to syslogd. */
 #ifdef SYSLOG_4_2
 	openlog ("dhcpd", LOG_NDELAY);
@@ -235,16 +251,20 @@ int main (argc, argv, envp)
 			usage ();
 		} else {
 			struct interface_info *tmp =
-				((struct interface_info *)
-				 dmalloc (sizeof *tmp, MDL));
-			if (!tmp)
-				log_fatal ("Insufficient memory to %s %s",
-				       "record interface", argv [i]);
-			memset (tmp, 0, sizeof *tmp);
+				(struct interface_info *)0;
+			result = interface_allocate (&tmp, MDL);
+			if (result != ISC_R_SUCCESS)
+				log_fatal ("Insufficient memory to %s %s: %s",
+					   "record interface", argv [i],
+					   isc_result_totext (result));
 			strcpy (tmp -> name, argv [i]);
-			tmp -> next = interfaces;
+			if (interfaces) {
+				interface_reference (&tmp -> next,
+						     interfaces, MDL);
+				interface_dereference (&interfaces, MDL);
+			}
+			interface_reference (&interfaces, tmp, MDL);
 			tmp -> flags = INTERFACE_REQUESTED;
-			interfaces = tmp;
 		}
 	}
 
@@ -292,20 +312,6 @@ int main (argc, argv, envp)
 	/* Get the current time... */
 	GET_TIME (&cur_time);
 
-	/* Set up the client classification system. */
-	classification_setup ();
-
-	/* Initialize the omapi system. */
-	result = omapi_init ();
-	if (result != ISC_R_SUCCESS)
-		log_fatal ("Can't initialize OMAPI: %s",
-			   isc_result_totext (result));
-
-	/* Set up the OMAPI wrappers for various server database internal
-	   objects. */
-	dhcp_db_objects_setup ();
-	dhcp_common_objects_setup ();
-
 	/* Set up the initial dhcp option universe. */
 	initialize_common_option_spaces ();
 	initialize_server_option_spaces ();
@@ -321,8 +327,9 @@ int main (argc, argv, envp)
 			    std_nsupdate, (sizeof std_nsupdate) - 1,
 			    "standard name service update routine");
 	if (status != ISC_R_SUCCESS)
-		log_fatal ("can't parse standard name service updater!");
+		log_fatal ("can't begin parsing name service updater!");
 
+	lose = 0;
 	if (!(parse_executable_statements
 	      (&root_group -> statements, parse, &lose, context_any))) {
 		end_parse (&parse);
@@ -613,8 +620,10 @@ void lease_pinged (from, packet, length)
 	}
 
 	if (!lp -> state) {
+#if defined (FAILOVER_PROTOCOL)
 		if (!lp -> pool ||
 		    !lp -> pool -> failover_peer)
+#endif
 			log_debug ("ICMP Echo Reply for %s late or spurious.",
 				   piaddr (from));
 		goto out;
