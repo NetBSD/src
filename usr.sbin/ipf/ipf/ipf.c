@@ -1,7 +1,7 @@
-/*	$NetBSD: ipf.c,v 1.1.1.11 1998/07/12 14:48:00 veego Exp $	*/
+/*	$NetBSD: ipf.c,v 1.1.1.12 1998/11/22 14:21:44 mrg Exp $	*/
 
 /*
- * Copyright (C) 1993-1997 by Darren Reed.
+ * Copyright (C) 1993-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -42,7 +42,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipf.c,v 2.0.2.13.2.4 1998/05/23 14:29:44 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ipf.c,v 2.0.2.13.2.5 1998/11/22 01:50:32 darrenr Exp ";
 #endif
 
 static	void	frsync __P((void));
