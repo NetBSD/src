@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.1 1995/03/10 01:50:53 gwr Exp $	*/
+/*	$NetBSD: bw2.c,v 1.2 1995/04/07 02:37:18 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,12 +59,11 @@
 
 #include <vm/vm.h>
 
+#include <machine/cpu.h>
 #include <machine/fbio.h>
 #include <machine/autoconf.h>
 #include <machine/pmap.h>
 #include <machine/control.h>
-#include <machine/cpu.h>
-#include <machine/eeprom.h>
 
 #include "fbvar.h"
 #include "bw2reg.h"
@@ -172,10 +171,7 @@ bw2attach(parent, self, args)
 	}
 
 	printf(" (%dx%d)\n", fbt->fb_width, fbt->fb_height);
-
-	if (ee_console == EE_CONS_BW) {
-		fb_attach(fb);
-	}
+	fb_attach(fb, 1);
 }
 
 int
