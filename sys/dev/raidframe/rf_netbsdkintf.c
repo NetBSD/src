@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.145 2002/11/01 11:31:59 mrg Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.146 2002/11/14 17:11:54 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.145 2002/11/01 11:31:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.146 2002/11/14 17:11:54 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -2306,7 +2306,10 @@ rf_markalldirty(raidPtr)
 	RF_Raid_t *raidPtr;
 {
 	RF_ComponentLabel_t clabel;
+	int sparecol;
 	int r,c;
+	int i,j;
+	int srow, scol;
 
 	raidPtr->mod_counter++;
 	for (r = 0; r < raidPtr->numRow; r++) {
@@ -2323,33 +2326,18 @@ rf_markalldirty(raidPtr)
 					 but whatever you do, don't 
 					 try to access it!! */
 				} else {
-#if 0
-				clabel.status = 
-					raidPtr->Disks[r][c].status;
-				raidwrite_component_label( 
-					raidPtr->Disks[r][c].dev,
-					raidPtr->raid_cinfo[r][c].ci_vp,
-					&clabel);
-#endif
-				raidmarkdirty( 
-				       raidPtr->Disks[r][c].dev, 
-				       raidPtr->raid_cinfo[r][c].ci_vp,
-				       raidPtr->mod_counter);
+					raidmarkdirty( 
+					      raidPtr->Disks[r][c].dev,
+					      raidPtr->raid_cinfo[r][c].ci_vp,
+					      raidPtr->mod_counter);
 				}
 			}
 		} 
 	}
-	/* printf("Component labels marked dirty.\n"); */
-#if 0
+
 	for( c = 0; c < raidPtr->numSpare ; c++) {
 		sparecol = raidPtr->numCol + c;
-		if (raidPtr->Disks[r][sparecol].status == rf_ds_used_spare) {
-			/* 
-
-			   XXX this is where we get fancy and map this spare
-			   into it's correct spot in the array.
-
-			 */
+		if (raidPtr->Disks[0][sparecol].status == rf_ds_used_spare) {
 			/* 
 			   
 			   we claim this disk is "optimal" if it's 
@@ -2362,40 +2350,35 @@ rf_markalldirty(raidPtr)
 			for(i=0;i<raidPtr->numRow;i++) {
 				for(j=0;j<raidPtr->numCol;j++) {
 					if ((raidPtr->Disks[i][j].spareRow == 
-					     r) &&
+					     0) &&
 					    (raidPtr->Disks[i][j].spareCol ==
 					     sparecol)) {
-						srow = r;
-						scol = sparecol;
+						srow = i;
+						scol = j;
 						break;
 					}
 				}
 			}
-			
+				
 			raidread_component_label( 
-				      raidPtr->Disks[r][sparecol].dev,
-				      raidPtr->raid_cinfo[r][sparecol].ci_vp,
-				      &clabel);
+				 raidPtr->Disks[0][sparecol].dev,
+				 raidPtr->raid_cinfo[0][sparecol].ci_vp,
+				 &clabel);
 			/* make sure status is noted */
-			clabel.version = RF_COMPONENT_LABEL_VERSION; 
-			clabel.mod_counter = raidPtr->mod_counter;
-			clabel.serial_number = raidPtr->serial_number;
+
+			raid_init_component_label(raidPtr, &clabel);
+
 			clabel.row = srow;
 			clabel.column = scol;
-			clabel.num_rows = raidPtr->numRow;
-			clabel.num_columns = raidPtr->numCol;
-			clabel.clean = RF_RAID_DIRTY; /* changed in a bit*/
-			clabel.status = rf_ds_optimal;
-			raidwrite_component_label(
-				      raidPtr->Disks[r][sparecol].dev,
-				      raidPtr->raid_cinfo[r][sparecol].ci_vp,
-				      &clabel);
-			raidmarkclean( raidPtr->Disks[r][sparecol].dev, 
-			              raidPtr->raid_cinfo[r][sparecol].ci_vp);
+			/* Note: we *don't* change status from rf_ds_used_spare
+			   to rf_ds_optimal */
+			/* clabel.status = rf_ds_optimal; */
+			
+			raidmarkdirty(raidPtr->Disks[0][sparecol].dev,
+				      raidPtr->raid_cinfo[0][sparecol].ci_vp,
+				      raidPtr->mod_counter);
 		}
 	}
-
-#endif
 }
 
 
