@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.29 1999/11/07 00:12:54 scottr Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.30 1999/11/07 00:16:39 scottr Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -2816,6 +2816,8 @@ adb_poweroff(void)
 
 	if (!adbSoftPower)
 		return -1;
+
+	adb_polling = 1;
 
 	switch (adbHardware) {
 	case ADB_HW_IISI:
