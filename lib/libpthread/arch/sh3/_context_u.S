@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.2 2003/07/05 22:50:09 marcus Exp $ */
+/*	$NetBSD: _context_u.S,v 1.3 2003/07/05 23:01:25 uwe Exp $ */
 
 /*
  * Copyright (c) 2003 Christian P. Groessler
@@ -73,7 +73,6 @@
 	mov.l	.L_uc_user, r0						; \
 	tst	r0, r1		/* ands and sets T if zero(!) */	; \
 	bt	1f							; \
-	 /* .empty */							  \
 									  \
 	/* a _UC_USER context */					  \
 	mov.l	.L_uc_gregs_offset, r1					; \
