@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.248.2.7 2001/11/17 00:53:13 nathanw Exp $ */
+/* $NetBSD: machdep.c,v 1.248.2.8 2001/11/17 21:38:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248.2.7 2001/11/17 00:53:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248.2.8 2001/11/17 21:38:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1677,7 +1677,6 @@ cpu_upcall(struct lwp *l)
 	int i, nsas, nevents, nint;
 
 	extern char sigcode[], upcallcode[];
-	extern struct pool siginfo_pool;
 
 
 	tf = l->l_md.md_tf;
@@ -1721,7 +1720,7 @@ cpu_upcall(struct lwp *l)
 	up = stack;
 	up--;
 	if (copyout(&u, up, sizeof(ucontext_t)) != 0) {
-		pool_put(&saupcall_pool, sau);
+		sadata_upcall_free(sau);
 #ifdef DIAGNOSTIC
 		printf("cpu_upcall: couldn't copyout activation ucontext" 
 		    " for %d.%d\n",
@@ -1741,7 +1740,7 @@ cpu_upcall(struct lwp *l)
 		if ((copyout(sas[i], sap, sizeof(struct sa_t)) != 0) ||
 		    (copyout(&sap, sapp, sizeof(struct sa_t *)) != 0)) {
 			/* Copying onto the stack didn't work. Die. */
-			pool_put(&saupcall_pool, sau);
+			sadata_upcall_free(sau);
 #ifdef DIAGNOSTIC
 		printf("cpu_upcall: couldn't copyout sa_t %d for %d.%d\n",
 		    i, l->l_proc->p_pid, l->l_lid);
@@ -1759,6 +1758,7 @@ cpu_upcall(struct lwp *l)
 		ap = (char *)sapp - sau->sau_argsize;
 		if (copyout(sau->sau_arg, ap, sau->sau_argsize) != 0) {
 			/* Copying onto the stack didn't work. Die. */
+			sadata_upcall_free(sau);
 			sigexit(l, SIGILL);
 			/* NOTREACHED */
 		}
@@ -1776,18 +1776,7 @@ cpu_upcall(struct lwp *l)
 	tf->tf_regs[FRAME_T12] = (u_int64_t)sd->sa_upcall;  /* t12 is pv */
 	alpha_pal_wrusp((unsigned long)sapp);
 
-	/* XXX we have to know what the origin of arg is in order to
-	 * do the right thing here. Sucks to be a non-garbage-collected
-	 * kernel.
-	 */
-	if (sau->sau_arg) {
-		if (sau->sau_type == SA_UPCALL_SIGNAL)
-			pool_put(&siginfo_pool, sau->sau_arg);
-		else
-			panic("cpu_upcall: unknown type of non-null arg");
-	}
-
-	pool_put(&saupcall_pool, sau);
+	sadata_upcall_free(sau);
 }
 
 /*

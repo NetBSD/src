@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.429.2.11 2001/11/17 00:52:02 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.429.2.12 2001/11/17 21:38:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -241,7 +241,6 @@ extern	paddr_t avail_start, avail_end;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int	mem_cluster_cnt;
 
-extern struct pool siginfo_pool;
 /*
  * The number of CPU cycles in one second.
  */
@@ -1855,7 +1854,7 @@ cpu_upcall(struct lwp *l)
 	up = stack;
 	up--;
 	if (copyout(&u, up, sizeof(ucontext_t)) != 0) {
-		pool_put(&saupcall_pool, sau);
+		sadata_upcall_free(sau);
 #ifdef DIAGNOSTIC
 		printf("cpu_upcall: couldn't copyout activation ucontext" 
 		    " for %d.%d\n",
@@ -1875,7 +1874,7 @@ cpu_upcall(struct lwp *l)
 		if ((copyout(sas[i], sap, sizeof(struct sa_t)) != 0) ||
 		    (copyout(&sap, sapp, sizeof(struct sa_t *)) != 0)) {
 			/* Copying onto the stack didn't work. Die. */
-			pool_put(&saupcall_pool, sau);
+			sadata_upcall_free(sau);
 #ifdef DIAGNOSTIC
 		printf("cpu_upcall: couldn't copyout sa_t %d for %d.%d\n",
 		    i, l->l_proc->p_pid, l->l_lid);
@@ -1894,6 +1893,7 @@ cpu_upcall(struct lwp *l)
 		sf = (struct saframe *)ap - 1;
 		if (copyout(sau->sau_arg, ap, sau->sau_argsize) != 0) {
 			/* Copying onto the stack didn't work. Die. */
+			sadata_upcall_free(sau);
 			sigexit(l, SIGILL);
 			/* NOTREACHED */
 		}
@@ -1910,17 +1910,7 @@ cpu_upcall(struct lwp *l)
 	frame.sa_arg = ap;
 	frame.sa_upcall = sd->sa_upcall;
 
-	/* XXX we have to know what the origin of arg is in order to
-	 * do the right thing here. Sucks to be a non-garbage-collected
-	 * kernel.
-	 */
-	if (sau->sau_arg) {
-		if (sau->sau_type == SA_UPCALL_SIGNAL)
-			pool_put(&siginfo_pool, sau->sau_arg);
-		else
-			panic("cpu_upcall: unknown type of non-null arg");
-	}
-	pool_put(&saupcall_pool, sau);
+	sadata_upcall_free(sau);
 
 	if (copyout(&frame, sf, sizeof(frame)) != 0) {
 		/* Copying onto the stack didn't work. Die. */
