@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.13 1997/07/27 23:51:48 augustss Exp $	*/
+/*	$NetBSD: aucc.c,v 1.14 1997/07/28 10:04:35 augustss Exp $	*/
 #undef AUDIO_DEBUG
 /*
  * Copyright (c) 1997 Stephan Thesing
@@ -204,6 +204,8 @@ struct audio_hw_if sa_hw_if = {
 	aucc_set_in_port,
 	aucc_get_in_port,
 	aucc_commit_settings,
+	NULL,
+	NULL,
 	aucc_start_output,
 	aucc_start_input,
 	aucc_halt_output,
@@ -216,6 +218,9 @@ struct audio_hw_if sa_hw_if = {
 	aucc_set_port,
 	aucc_get_port,
 	aucc_query_devinfo,
+	NULL,
+	NULL,
+	NULL,
 	0,
 	0
 };
