@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.4 2003/02/01 06:23:44 thorpej Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.5 2003/04/23 17:50:51 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@
 #include <sys/proc.h>
 #include <sys/lock.h>
 #include <sys/ksem.h>
+#include <sys/sa.h>
 #include <sys/syscall.h>
 #include <sys/stat.h>
 #include <sys/malloc.h>
