@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_lwp.c,v 1.1 2001/02/06 16:37:58 eeh Exp $	*/
+/*	$NetBSD: svr4_32_lwp.c,v 1.2 2001/02/11 01:10:24 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ svr4_32_sys__lwp_create(p, v, retval)
 		(void)sigprocmask1(pt, SIG_BLOCK, &ss, 0);
 	}
 
-	if ((error = copyin(SCARG(uap, uc), &uc, sizeof(uc))) != 0)
+	if ((error = copyin((caddr_t)(u_long)SCARG(uap, uc), &uc, sizeof(uc))) != 0)
 		return error;
 
 	if ((error = svr4_32_setcontext(pt, &uc)) != 0)
@@ -161,8 +161,8 @@ svr4_32_sys__lwp_info(p, v, retval)
 	TIMEVAL_TO_TIMESPEC(&p->p_stats->p_ru.ru_stime, &lwpinfo.lwp_stime);
 	TIMEVAL_TO_TIMESPEC(&p->p_stats->p_ru.ru_utime, &lwpinfo.lwp_utime);
 
-	if ((error = copyout(&lwpinfo, SCARG(uap, lwpinfo), sizeof(lwpinfo))) ==
-	    -1)
+	if ((error = copyout(&lwpinfo, (caddr_t)(u_long)SCARG(uap, lwpinfo), 
+			     sizeof(lwpinfo))) == -1)
 	       return error;
 	return 0;
 }
