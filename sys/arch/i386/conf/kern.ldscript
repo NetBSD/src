@@ -1,9 +1,8 @@
-/*	$NetBSD: kern.ldscript.4MB,v 1.2 2001/01/20 01:05:23 thorpej Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.1 2001/01/20 01:05:23 thorpej Exp $	*/
 
 /*
- * Kernel linker script for NetBSD/i386 which generates a kernel
- * image suitable for mapping with large (2MB/4MB) pages.  This
- * script is based on elf_i386.x.
+ * Kernel linker script for NetBSD/i386.  This script is based on
+ * elf_i386.x, but puts _etext after all of the read-only sections.
  */
 
 OUTPUT_FORMAT("elf32-i386", "elf32-i386",
@@ -65,12 +64,9 @@ SECTIONS
   .rodata1   : { *(.rodata1) }
   _etext = .;
   PROVIDE (etext = .);
-  /* Adjust the address for the data segment.  We push the data segment
-     up to the next 4MB boundary so that we can map the text with large
-     pages.  We then scoot forward to the distance we are within the
-     current page.  (Why, I don't know, but the default elf_i386.x
-     does this.  --thorpej)  */
-  . = ALIGN(0x400000) + (. & (0x1000 - 1));
+  /* Adjust the address for the data segment.  We want to adjust up to
+     the same address within the page on the next page up.  */
+  . = ALIGN(0x1000) + (. & (0x1000 - 1));
   .data    :
   {
     *(.data)
