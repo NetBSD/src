@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.1 1996/01/31 23:17:20 mark Exp $ */
+/* $NetBSD: syscall.c,v 1.2 1996/02/05 21:25:47 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -43,7 +43,7 @@
  * Created      : 09/11/94
  * Last updated : 28/08/95
  *
- *    $Id: syscall.c,v 1.1 1996/01/31 23:17:20 mark Exp $
+ *    $Id: syscall.c,v 1.2 1996/02/05 21:25:47 mark Exp $
  */
 
 #include <sys/param.h>
@@ -77,7 +77,7 @@
 #include <machine/katelib.h>
 #include <machine/undefined.h>
 
-#include "hydra.h"
+#include "hydrabus.h"
 
 #define CONTINUE_AFTER_SYSCALL_BUG              
 
@@ -92,7 +92,7 @@ u_int arm700bugcount = 0;
 extern int vnodeconsolebug;
 extern int usertraceback;
 
-#if NHYDRA > 0
+#if NHYDRABUS > 0
 typedef struct {
 	vm_offset_t physical;
 	vm_offset_t virtual;
@@ -378,7 +378,7 @@ syscall(frame, code)
 		}
 		SYSCALL_SPECIAL_RETURN;
 		break;
-#if NHYDRA > 0
+#if NHYDRABUS > 0
 	case 0x1014:
 		frame->tf_r0 = hydrascratch.physical;
 		SYSCALL_SPECIAL_RETURN;
