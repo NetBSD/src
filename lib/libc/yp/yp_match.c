@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_match.c,v 1.3 1996/05/23 13:49:02 christos Exp $	 */
+/*	$NetBSD: yp_match.c,v 1.4 1997/05/20 15:25:40 lukem Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yp_match.c,v 1.3 1996/05/23 13:49:02 christos Exp $";
+static char rcsid[] = "$NetBSD: yp_match.c,v 1.4 1997/05/20 15:25:40 lukem Exp $";
 #endif
 
 #include <stdlib.h>
@@ -170,6 +170,10 @@ yp_match(indomain, inmap, inkey, inkeylen, outval, outvallen)
 	struct ypreq_key yprk;
 	int r, nerrs = 0;
 
+	if (outval == NULL)
+		return YPERR_BADARGS;
+	*outval = NULL;
+	*outvallen = 0;
 
 	if (indomain == NULL || *indomain == '\0'
 	    || strlen(indomain) > YPMAXDOMAIN)
@@ -179,9 +183,6 @@ yp_match(indomain, inmap, inkey, inkeylen, outval, outvallen)
 		return YPERR_BADARGS;
 	if (inkey == NULL || inkeylen == 0)
 		return YPERR_BADARGS;
-
-	*outval = NULL;
-	*outvallen = 0;
 
 again:
 	if (_yp_dobind(indomain, &ysd) != 0)

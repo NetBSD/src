@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_master.c,v 1.3 1996/05/23 13:49:01 christos Exp $	 */
+/*	$NetBSD: yp_master.c,v 1.4 1997/05/20 15:25:39 lukem Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yp_master.c,v 1.3 1996/05/23 13:49:01 christos Exp $";
+static char rcsid[] = "$NetBSD: yp_master.c,v 1.4 1997/05/20 15:25:39 lukem Exp $";
 #endif
 
 #include <string.h>
@@ -54,13 +54,15 @@ yp_master(indomain, inmap, outname)
 	struct ypreq_nokey yprnk;
 	int r, nerrs = 0;
 
+	if (outname == NULL)
+		return YPERR_BADARGS;
+	*outname = NULL;
+
 	if (indomain == NULL || *indomain == '\0'
 	    || strlen(indomain) > YPMAXDOMAIN)
 		return YPERR_BADARGS;
 	if (inmap == NULL || *inmap == '\0'
 	    || strlen(inmap) > YPMAXMAP)
-		return YPERR_BADARGS;
-	if (outname == NULL)
 		return YPERR_BADARGS;
 
 again:

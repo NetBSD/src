@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_first.c,v 1.3 1996/05/23 13:48:59 christos Exp $	 */
+/*	$NetBSD: yp_first.c,v 1.4 1997/05/20 15:25:38 lukem Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yp_first.c,v 1.3 1996/05/23 13:48:59 christos Exp $";
+static char rcsid[] = "$NetBSD: yp_first.c,v 1.4 1997/05/20 15:25:38 lukem Exp $";
 #endif
 
 #include <stdlib.h>
@@ -58,15 +58,16 @@ yp_first(indomain, inmap, outkey, outkeylen, outval, outvallen)
 	struct dom_binding *ysd;
 	int r, nerrs = 0;
 
+	if (outkey == NULL || outval == NULL)
+		return YPERR_BADARGS;
+	*outkey = *outval = NULL;
+	*outkeylen = *outvallen = 0;
 	if (indomain == NULL || *indomain == '\0'
 	    || strlen(indomain) > YPMAXDOMAIN)
 		return YPERR_BADARGS;
 	if (inmap == NULL || *inmap == '\0'
 	    || strlen(inmap) > YPMAXMAP)
 		return YPERR_BADARGS;
-
-	*outkey = *outval = NULL;
-	*outkeylen = *outvallen = 0;
 
 again:
 	if (_yp_dobind(indomain, &ysd) != 0)
@@ -124,15 +125,17 @@ yp_next(indomain, inmap, inkey, inkeylen, outkey, outkeylen, outval, outvallen)
 	struct dom_binding *ysd;
 	int r, nerrs = 0;
 
+	if (outkey == NULL || outval == NULL)
+		return YPERR_BADARGS;
+	*outkey = *outval = NULL;
+	*outkeylen = *outvallen = 0;
+
 	if (indomain == NULL || *indomain == '\0'
 	    || strlen(indomain) > YPMAXDOMAIN)
 		return YPERR_BADARGS;
 	if (inmap == NULL || *inmap == '\0'
 	    || strlen(inmap) > YPMAXMAP)
 		return YPERR_BADARGS;
-
-	*outkey = *outval = NULL;
-	*outkeylen = *outvallen = 0;
 
 again:
 	if (_yp_dobind(indomain, &ysd) != 0)
