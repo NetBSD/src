@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.29 1998/03/21 21:30:07 mark Exp $ */
+/* $NetBSD: podulebus.c,v 1.30 1998/07/07 03:05:16 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -40,6 +40,8 @@
  *
  * Created      : 07/11/94
  */
+
+#include "opt_cputypes.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
