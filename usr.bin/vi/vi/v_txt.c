@@ -1,4 +1,4 @@
-/*	$NetBSD: v_txt.c,v 1.9 2002/04/09 01:47:36 thorpej Exp $	*/
+/*	$NetBSD: v_txt.c,v 1.9.2.1 2003/06/19 02:29:09 grant Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)v_txt.c	10.87 (Berkeley) 10/13/96";
 #else
-__RCSID("$NetBSD: v_txt.c,v 1.9 2002/04/09 01:47:36 thorpej Exp $");
+__RCSID("$NetBSD: v_txt.c,v 1.9.2.1 2003/06/19 02:29:09 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -1471,6 +1471,7 @@ done:	/* Leave input mode. */
 
 err:
 alloc_err:
+	F_CLR(sp, SC_TINPUT);
 	txt_err(sp, &sp->tiq);
 	return (1);
 }
