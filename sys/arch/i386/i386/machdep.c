@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.502 2002/12/06 05:03:02 junyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.503 2002/12/06 14:47:07 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.502 2002/12/06 05:03:02 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.503 2002/12/06 14:47:07 junyoung Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1117,8 +1117,6 @@ via_cpu_probe(struct cpu_info *ci)
 	if (lfunc >= 0x80000001) {
 		CPUID(0x80000001, descs[0], descs[1], descs[2], descs[3]);
 		ci->ci_feature_flags = descs[3];
-		ci->ci_feature_str2 = CPUID_EXT_FLAGS2;
-		ci->ci_feature_str3 = CPUID_EXT_FLAGS3;
 	}
 }
 
@@ -1144,13 +1142,6 @@ cpu_probe_base_features(struct cpu_info *ci)
 		return;
 
 	CPUID(1, ci->ci_signature, miscbytes, dummy1, ci->ci_feature_flags);
-
-	/*
-	 * These may be overridden with vendor specific strings later.
-	 */
-	ci->ci_feature_str1 = CPUID_FLAGS1;
-	ci->ci_feature_str2 = CPUID_FLAGS2;
-	ci->ci_feature_str3 = CPUID_FLAGS3;
 
 	/* Brand is low order 8 bits of ebx */
 	ci->ci_brand_id = miscbytes & 0xff;
@@ -1258,8 +1249,6 @@ amd_family6_probe(struct cpu_info *ci)
 	if (lfunc >= 0x80000001) {
 		CPUID(0x80000001, descs[0], descs[1], descs[2], descs[3]);
 		ci->ci_feature_flags |= descs[3];
-		ci->ci_feature_str2 = CPUID_EXT_FLAGS2;
-		ci->ci_feature_str3 = CPUID_EXT_FLAGS3;
 	}
 
 	if (lfunc < 0x80000004)
@@ -1707,6 +1696,7 @@ identifycpu(struct cpu_info *ci)
 	char *cpuname = ci->ci_dev->dv_xname;
 	char buf[1024];
 	char *sep;
+	char *feature_str[3];
 
 	if (ci->ci_cpuid_level == -1) {
 #ifdef DIAGNOSTIC
@@ -1835,24 +1825,33 @@ identifycpu(struct cpu_info *ci)
 	if (ci->ci_info)
 		(*ci->ci_info)(ci);
 
+	if (vendor == CPUVENDOR_INTEL) {
+		feature_str[0] = CPUID_FLAGS1;
+		feature_str[1] = CPUID_FLAGS2;
+		feature_str[2] = CPUID_FLAGS3;
+	} else {
+		feature_str[0] = CPUID_FLAGS1;
+		feature_str[1] = CPUID_EXT_FLAGS2;
+		feature_str[2] = CPUID_EXT_FLAGS3;
+	}	
+	
 	if (ci->ci_feature_flags) {
 		if ((ci->ci_feature_flags & CPUID_MASK1) != 0) {
 			bitmask_snprintf(ci->ci_feature_flags,
-			    ci->ci_feature_str1, buf, sizeof(buf));
+			    feature_str[0], buf, sizeof(buf));
 			printf("%s: features %s\n", cpuname, buf);
 		}
 		if ((ci->ci_feature_flags & CPUID_MASK2) != 0) {
 			bitmask_snprintf(ci->ci_feature_flags,
-			    ci->ci_feature_str2, buf, sizeof(buf));
+			    feature_str[1], buf, sizeof(buf));
 			printf("%s: features %s\n", cpuname, buf);
 		}
 		if ((ci->ci_feature_flags & CPUID_MASK3) != 0) {
 			bitmask_snprintf(ci->ci_feature_flags,
-			    ci->ci_feature_str3, buf, sizeof(buf));
+			    feature_str[2], buf, sizeof(buf));
 			printf("%s: features %s\n", cpuname, buf);
 		}
 	}
-
 
 	if (ci->ci_cinfo[CAI_ICACHE].cai_totalsize != 0 ||
 	    ci->ci_cinfo[CAI_DCACHE].cai_totalsize != 0) {

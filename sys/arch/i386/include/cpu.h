@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.91 2002/12/06 02:38:27 junyoung Exp $	*/
+/*	$NetBSD: cpu.h,v 1.92 2002/12/06 14:47:09 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -127,9 +127,6 @@ struct cpu_info {
 	int32_t		ci_cpuid_level;
 	u_int32_t	ci_signature;	 /* X86 cpuid type */
 	u_int32_t	ci_feature_flags;/* X86 CPUID feature bits */
-	char *		ci_feature_str1; /* Vendor specific feature strings */
-	char *		ci_feature_str2;
-	char *		ci_feature_str3;
 	u_int32_t	ci_cpu_class;	 /* CPU class */
 	u_int32_t	ci_brand_id;	 /* Intel brand id */
 	u_int32_t	ci_vendor[4];	 /* vendor string */
