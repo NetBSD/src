@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.21 1995/06/23 13:19:44 pk Exp $ */
+/*	$NetBSD: if_le.c,v 1.22 1995/12/06 22:40:22 pk Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -125,7 +125,8 @@ struct le_softc {
 #define	sc_if	sc_ac.ac_if		/* network-visible interface */
 #define	sc_addr	sc_ac.ac_enaddr		/* hardware Ethernet address */
 	volatile struct	lereg1 *sc_r1;	/* LANCE registers */
-	volatile struct	lereg2 *sc_r2;	/* dual-port RAM */
+	volatile struct	lereg2 *sc_r2;	/* dual-port RAM (CPU accessable) */
+	volatile struct	lereg2 *sc_r2d;	/* dual-port RAM (DMA space) */
 	int	sc_rmd;			/* predicted next rmd to process */
 	int	sc_runt;
 	int	sc_jab;
@@ -215,8 +216,11 @@ leattach(parent, self, args)
 	printf(" pri %d", pri);
 	sc->sc_r1 = (volatile struct lereg1 *)
 	    mapiodev(ca->ca_ra.ra_paddr, sizeof(struct lereg1), ca->ca_bustype);
+
 	ler2 = sc->sc_r2 = (volatile struct lereg2 *)
-	    dvma_malloc(sizeof(struct lereg2));
+		malloc(sizeof(struct lereg2), M_DEVBUF, M_NOWAIT);
+	sc->sc_r2d = (volatile struct lereg2 *)
+		kdvma_mapin((caddr_t)ler2, sizeof(struct lereg2), 0);
 
 	myetheraddr(sc->sc_addr);
 	printf(": hardware address %s\n", ether_sprintf(sc->sc_addr));
@@ -235,10 +239,10 @@ leattach(parent, self, args)
 	ler2->ler2_padr[3] = sc->sc_addr[2];
 	ler2->ler2_padr[4] = sc->sc_addr[5];
 	ler2->ler2_padr[5] = sc->sc_addr[4];
-	a = LANCE_ADDR(&ler2->ler2_rmd);
+	a = LANCE_ADDR(&sc->sc_r2d->ler2_rmd);
 	ler2->ler2_rlen = LE_RLEN | (a >> 16);
 	ler2->ler2_rdra = a;
-	a = LANCE_ADDR(&ler2->ler2_tmd);
+	a = LANCE_ADDR(&sc->sc_r2d->ler2_tmd);
 	ler2->ler2_tlen = LE_TLEN | (a >> 16);
 	ler2->ler2_tdra = a;
 
@@ -397,7 +401,7 @@ lereset(dev)
 
 	/* init receive and transmit rings */
 	for (i = 0; i < LERBUF; i++) {
-		a = LANCE_ADDR(&ler2->ler2_rbuf[i][0]);
+		a = LANCE_ADDR(&sc->sc_r2d->ler2_rbuf[i][0]);
 		ler2->ler2_rmd[i].rmd0 = a;
 		ler2->ler2_rmd[i].rmd1_hadr = a >> 16;
 		ler2->ler2_rmd[i].rmd1_bits = LE_R1_OWN;
@@ -405,7 +409,7 @@ lereset(dev)
 		ler2->ler2_rmd[i].rmd3 = 0;
 	}
 	for (i = 0; i < LETBUF; i++) {
-		a = LANCE_ADDR(&ler2->ler2_tbuf[i][0]);
+		a = LANCE_ADDR(&sc->sc_r2d->ler2_tbuf[i][0]);
 		ler2->ler2_tmd[i].tmd0 = a;
 		ler2->ler2_tmd[i].tmd1_hadr = a >> 16;
 		ler2->ler2_tmd[i].tmd1_bits = 0;
@@ -418,7 +422,7 @@ bzero(&ler2->ler2_rbuf[0][0], (LERBUF + LETBUF) * LEMTU);
 	sc->sc_rmd = 0;
 
 	/* tell the chip where to find the initialization block */
-	a = LANCE_ADDR(&ler2->ler2_mode);
+	a = LANCE_ADDR(&sc->sc_r2d->ler2_mode);
 	ler1->ler1_rap = LE_CSR1;
 	ler1->ler1_rdp = a;
 	ler1->ler1_rap = LE_CSR2;
