@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.3 1998/07/17 18:31:56 tsubai Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.4 1998/07/17 18:53:19 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -198,7 +198,7 @@ pci_conf_write(pc, tag, reg, data)
 		pci_decompose_tag(pc, tag, &bus, &dev, &func);
 
 		if (dev < 11)
-			panic("pci_conf_read");
+			panic("pci_conf_write");
 
 		r = &pci_bridges[pc];
 
