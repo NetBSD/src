@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	Id: if_fxp.c,v 1.34 1997/04/23 01:44:30 davidg Exp
+ *	Id: if_fxp.c,v 1.38 1997/08/02 14:33:10 bde Exp
  */
 
 /*
@@ -43,20 +43,10 @@
 #include <sys/syslog.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
-#include <net/if_types.h>
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/in_var.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
-
-#ifdef IPX
-#include <netipx/ipx.h>
-#include <netipx/ipx_if.h>
 #endif
 
 #ifdef NS
@@ -66,11 +56,9 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 #endif
 
 #include <vm/vm.h>		/* for vtophys */
-#include <vm/vm_param.h>	/* for vtophys */
 #include <vm/pmap.h>		/* for vtophys */
 #include <machine/clock.h>	/* for DELAY */
 
@@ -594,15 +582,14 @@ fxp_intr(arg)
 					txp->mb_head = NULL;
 					sc->tx_queued--;
 				}
-				if (txp->cb_command & FXP_CB_COMMAND_S)
+				if (txp == sc->cbl_last)
 					break;
 			}
 			sc->cbl_first = txp;
-			/*
-			 * Clear watchdog timer. It may or may not be set
-			 * again in fxp_start().
-			 */
 			ifp->if_timer = 0;
+			/*
+			 * Try to start more packets transmitting.
+			 */
 			if (ifp->if_snd.ifq_head != NULL)
 				fxp_start(ifp);
 		}
@@ -963,15 +950,18 @@ fxp_init(xsc)
 	csr->scb_command = FXP_SCB_COMMAND_RU_START;
 
 	/*
-	 * Toggle a few bits in the DP83840 PHY.
+	 * Toggle a few bits in the PHY.
 	 */
-	if (sc->phy_primary_device == FXP_PHY_DP83840 ||
-	     sc->phy_primary_device == FXP_PHY_DP83840A) {
+	switch (sc->phy_primary_device) {
+	case FXP_PHY_DP83840:
+	case FXP_PHY_DP83840A:
 		fxp_mdi_write(sc->csr, sc->phy_primary_addr, FXP_DP83840_PCR,
 		    fxp_mdi_read(sc->csr, sc->phy_primary_addr, FXP_DP83840_PCR) |
 		    FXP_DP83840_PCR_LED4_MODE |	/* LED4 always indicates duplex */
 		    FXP_DP83840_PCR_F_CONNECT |	/* force link disconnect bypass */
 		    FXP_DP83840_PCR_BIT10);	/* XXX I have no idea */
+		/* fall through */
+	case FXP_PHY_82555:
 		/*
 		 * If link0 is set, disable auto-negotiation and then:
 		 *	If link1 is unset = 10Mbps
@@ -983,19 +973,26 @@ fxp_init(xsc)
 			int flags;
 
 			flags = (ifp->if_flags & IFF_LINK1) ?
-			     FXP_DP83840_BMCR_SPEED_100M : 0;
+			     FXP_PHY_BMCR_SPEED_100M : 0;
 			flags |= (ifp->if_flags & IFF_LINK2) ?
-			     FXP_DP83840_BMCR_FULLDUPLEX : 0;
-			fxp_mdi_write(sc->csr, sc->phy_primary_addr, FXP_DP83840_BMCR,
-			    (fxp_mdi_read(sc->csr, sc->phy_primary_addr, FXP_DP83840_BMCR) &
-			    ~(FXP_DP83840_BMCR_AUTOEN | FXP_DP83840_BMCR_SPEED_100M |
-			     FXP_DP83840_BMCR_FULLDUPLEX)) | flags);
+			     FXP_PHY_BMCR_FULLDUPLEX : 0;
+			fxp_mdi_write(sc->csr, sc->phy_primary_addr, FXP_PHY_BMCR,
+			    (fxp_mdi_read(sc->csr, sc->phy_primary_addr, FXP_PHY_BMCR) &
+			    ~(FXP_PHY_BMCR_AUTOEN | FXP_PHY_BMCR_SPEED_100M |
+			     FXP_PHY_BMCR_FULLDUPLEX)) | flags);
 		} else {
-			fxp_mdi_write(sc->csr, sc->phy_primary_addr, FXP_DP83840_BMCR,
-			    (fxp_mdi_read(sc->csr, sc->phy_primary_addr, FXP_DP83840_BMCR) |
-			    FXP_DP83840_BMCR_AUTOEN));
+			fxp_mdi_write(sc->csr, sc->phy_primary_addr, FXP_PHY_BMCR,
+			    (fxp_mdi_read(sc->csr, sc->phy_primary_addr, FXP_PHY_BMCR) |
+			    FXP_PHY_BMCR_AUTOEN));
 		}
-	} else {
+		break;
+	/*
+	 * The Seeq 80c24 doesn't have a PHY programming interface, so do
+	 * nothing.
+	 */
+	case FXP_PHY_80C24:
+		break;
+	default:
 		printf("fxp%d: warning: unsupported PHY, type = %d, addr = %d\n",
 		     ifp->if_unit, sc->phy_primary_device, sc->phy_primary_addr);
 	}
