@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.13 2000/10/30 07:30:59 lukem Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.14 2001/06/01 23:26:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -85,9 +85,6 @@
 
 struct biosdisk {
 	struct biosdisk_ll ll;
-#ifdef COMPAT_OLDBOOT
-	int             disktype;
-#endif
 	int             boff;
 	char            buf[BUFSIZE];
 };
@@ -137,16 +134,6 @@ biosdiskstrategy(devdata, flag, dblk, size, buf, rsize)
 		*rsize = size;
 	return (0);
 }
-
-#ifdef COMPAT_OLDBOOT
-int 
-biosdisk_gettype(f)
-	struct open_file *f;
-{
-	struct biosdisk *d = f->f_devdata;
-	return (d->disktype);
-}
-#endif
 
 int 
 biosdiskopen(struct open_file *f, ...)
@@ -260,9 +247,6 @@ biosdiskopen(struct open_file *f, ...)
 		d->boff = lp->d_partitions[partition].p_offset;
 		if (lp->d_partitions[partition].p_fstype == FS_RAID)
 			d->boff += RF_PROTECTED_SECTORS;
-#ifdef COMPAT_OLDBOOT
-		d->disktype = lp->d_type;
-#endif
 #ifdef _STANDALONE
 		bi_disk.labelsector = sector + LABELSECTOR;
 		bi_disk.label.type = lp->d_type;
