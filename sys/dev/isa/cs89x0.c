@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.12 2000/02/08 18:31:02 tron Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.13 2000/02/08 18:40:51 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -447,8 +447,9 @@ cs_attach(sc, enaddr, media, nmedia, defmedia)
 
 		maxsize = isa_dmamaxsize(sc->sc_ic, sc->sc_drq);
 		if (maxsize < CS8900_DMASIZE) {
-			printf("%s: max DMA size %ld is less than required %d\n",
-			    sc->sc_dev.dv_xname, maxsize, CS8900_DMASIZE);
+			printf("%s: max DMA size %lu is less than required %d\n",
+			    sc->sc_dev.dv_xname, (u_long)maxsize,
+			    CS8900_DMASIZE);
 			goto after_dma_block;
 		}
 
