@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: keywords.sh,v 1.5 1999/07/02 15:29:03 itojun Exp $
+# $NetBSD: keywords.sh,v 1.6 2001/01/27 04:51:17 itojun Exp $
 # @(#)keywords	8.2 (Berkeley) 3/19/94
 #
 # WARNING!  If you change this file, re-run it!
@@ -12,6 +12,7 @@ add
 atalk
 blackhole
 change
+cloned
 cloning
 delete
 dst
