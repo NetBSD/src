@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.8,v 1.7 1996/11/15 18:01:39 gwr Exp $
+.\"	$NetBSD: route.8,v 1.8 1997/02/22 21:22:24 carrel Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -311,6 +311,9 @@ wasn't present in the tables.
 An add operation was attempted, but the system was
 low on resources and was unable to allocate memory
 to create the new entry.
+.It Sy "Permission denied"
+The attempted operation is privileged.  Only root may modify the 
+routing tables.  These privileges are enforced by the kernel.
 .El
 .Sh SEE ALSO
 .Xr netintro 4 ,
