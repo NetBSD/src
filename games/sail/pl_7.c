@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_7.c,v 1.12 1999/09/08 21:45:30 jsm Exp $	*/
+/*	$NetBSD: pl_7.c,v 1.13 1999/12/28 18:05:25 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_7.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_7.c,v 1.12 1999/09/08 21:45:30 jsm Exp $");
+__RCSID("$NetBSD: pl_7.c,v 1.13 1999/12/28 18:05:25 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,22 @@ static char sc_hasprompt;
 static const char *sc_prompt;
 static const char *sc_buf;
 static int sc_line;
+
+WINDOW *view_w;
+WINDOW *slot_w;
+WINDOW *scroll_w;
+WINDOW *stat_w;
+WINDOW *turn_w;
+
+char done_curses;
+char loaded, fired, changed, repaired;
+char dont_adjust;
+int viewrow, viewcol;
+char movebuf[sizeof SHIP(0)->file->movebuf];
+int player;
+struct ship *ms;		/* memorial structure, &cc->ship[player] */
+struct File *mf;		/* ms->file */
+struct shipspecs *mc;		/* ms->specs */
 
 void
 initscreen()
