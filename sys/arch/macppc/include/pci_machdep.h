@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.6.2.1 1999/05/06 02:24:20 perry Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.6.2.2 1999/05/06 19:36:12 perry Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -58,6 +58,7 @@ struct pci_bridge {
 	bus_space_tag_t iot;
 	bus_space_tag_t memt;
 	pci_chipset_tag_t pc;
+	int present;
 };
 struct pci_bridge pci_bridges[2];
 
@@ -84,3 +85,8 @@ const char	*pci_intr_string __P((pci_chipset_tag_t, pci_intr_handle_t));
 void		*pci_intr_establish __P((pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*)(void *), void *));
 void		pci_intr_disestablish __P((pci_chipset_tag_t, void *));
+
+/*
+ * Internal functions.
+ */
+void		pci_init __P((int));
