@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.37 2000/01/07 10:54:11 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.38 2000/01/11 13:01:52 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -173,7 +173,6 @@ iommu_attach(parent, self, aux)
 	struct iommu_softc *sc = (struct iommu_softc *)self;
 	struct mainbus_attach_args *ma = aux;
 	int node;
-	struct bootpath *bp;
 	bus_space_handle_t bh;
 	u_int pbase, pa;
 	int i, mmupcrsave, s;
@@ -306,12 +305,6 @@ iommu_attach(parent, self, aux)
 		sc->sc_pagesize,
 		sc->sc_range >> 20);
 
-	/* Propagate bootpath */
-	if (ma->ma_bp != NULL && strcmp(ma->ma_bp->name, "iommu") == 0)
-		bp = ma->ma_bp + 1;
-	else
-		bp = NULL;
-
 	iommu_dvmamap = extent_create("iommudvma",
 					IOMMU_DVMA_BASE, IOMMU_DVMA_END,
 					M_DEVBUF, 0, 0, EX_NOWAIT);
@@ -332,7 +325,6 @@ iommu_attach(parent, self, aux)
 		ia.iom_dmatag = &iommu_dma_tag;
 
 		ia.iom_node = node;
-		ia.iom_bp = bp;
 
 		ia.iom_reg = NULL;
 		getprop(node, "reg", sizeof(struct sbus_reg),
