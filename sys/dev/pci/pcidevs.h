@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.534 2003/06/07 05:08:45 ichiro Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.535 2003/06/07 09:08:01 wiz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.533 2003/06/07 05:07:52 ichiro Exp 
+ *	NetBSD: pcidevs,v 1.534 2003/06/07 09:07:12 wiz Exp 
  */
 
 /*
@@ -923,6 +923,12 @@
 #define	PCI_PRODUCT_ATI_RADEON_M9	0x4c66		/* Radeon Mobility M9 */
 #define	PCI_PRODUCT_ATI_RADEON_128_AGP4X	0x4d46		/* Radeon Mobility 128 AGP 4x */
 #define	PCI_PRODUCT_ATI_RADEON_128_AGP2X	0x4d4c		/* Radeon Mobility 128 AGP 2x */
+#define	PCI_PRODUCT_ATI_RADEON_9700_9500	0x4e44		/* Radeon 9700/9500 Series */
+#define	PCI_PRODUCT_ATI_RADEON_9700_9500_2	0x4e45		/* Radeon 9700/9500 Series */
+#define	PCI_PRODUCT_ATI_RADEON_9600	0x4e46		/* Radeon 9600TX */
+#define	PCI_PRODUCT_ATI_RADEON_9700_9500_S	0x4e64		/* Radeon 9700/9500 Series Secondary */
+#define	PCI_PRODUCT_ATI_RADEON_9700_9500_S2	0x4e65		/* Radeon 9700/9500 Series Secondary */
+#define	PCI_PRODUCT_ATI_RADEON_9600_2	0x4e66		/* Radeon 9600TX Secondary */
 #define	PCI_PRODUCT_ATI_RAGE1PCI	0x5041		/* Rage 128 Pro PCI */
 #define	PCI_PRODUCT_ATI_RAGE1AGP2X	0x5042		/* Rage 128 Pro AGP 2x */
 #define	PCI_PRODUCT_ATI_RAGE1AGP4X	0x5043		/* Rage 128 Pro AGP 4x */
@@ -948,9 +954,11 @@
 #define	PCI_PRODUCT_ATI_RAGE4AGP2XT	0x5057		/* Rage 128 Pro AGP 2x (TMDS) */
 #define	PCI_PRODUCT_ATI_RAGE4AGP4XT	0x5058		/* Rage 128 Pro AGP 4x (TMDS) */
 #define	PCI_PRODUCT_ATI_RADEON_7200	0x5144		/* Radeon 7200 */
-#define	PCI_PRODUCT_ATI_RADEON_8500	0x514c		/* Radeon 8500 */
+#define	PCI_PRODUCT_ATI_RADEON_8500	0x514c		/* Radeon 8500/8500LE */
+#define	PCI_PRODUCT_ATI_RADEON_9100	0x514d		/* Radeon 9100 Series */
 #define	PCI_PRODUCT_ATI_RADEON_7500	0x5157		/* Radeon 7500 */
 #define	PCI_PRODUCT_ATI_RADEON_7000	0x5159		/* Radeon 7000/VE */
+#define	PCI_PRODUCT_ATI_RADEON_9100	0x514d		/* Radeon 9100 Series Secondary */
 #define	PCI_PRODUCT_ATI_RAGEGLPCI	0x5245		/* Rage 128 GL PCI */
 #define	PCI_PRODUCT_ATI_RAGEGLAGP	0x5246		/* Rage 128 GL AGP 2x */
 #define	PCI_PRODUCT_ATI_RAGEVRPCI	0x524b		/* Rage 128 VR PCI */
