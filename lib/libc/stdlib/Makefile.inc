@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.29 1996/11/19 02:56:35 jtc Exp $
+#	$NetBSD: Makefile.inc,v 1.30 1997/04/21 12:36:27 mrg Exp $
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 6/4/91
 
 # stdlib sources
@@ -8,8 +8,8 @@ SRCS+=	a64l.c abort.c atexit.c atoi.c atof.c atol.c bsearch.c calloc.c \
 	exit.c getenv.c getopt.c heapsort.c l64a.c malloc.c merge.c \
 	multibyte.c putenv.c qsort.c radixsort.c rand.c rand_r.c random.c \
 	realpath.c \
-	setenv.c strtod.c strtol.c strtoq.c strtoul.c strtouq.c system.c \
-	_rand48.c drand48.c erand48.c jrand48.c lcong48.c lrand48.c \
+	setenv.c strptime.c strtod.c strtol.c strtoq.c strtoul.c strtouq.c \
+	system.c _rand48.c drand48.c erand48.c jrand48.c lcong48.c lrand48.c \
 	mrand48.c nrand48.c seed48.c srand48.c qabs.c qdiv.c
 
 .if   (${MACHINE_ARCH} == "m68k")
