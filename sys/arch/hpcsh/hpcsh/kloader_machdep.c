@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader_machdep.c,v 1.2 2002/02/07 17:05:22 uch Exp $	*/
+/*	$NetBSD: kloader_machdep.c,v 1.3 2002/02/11 17:32:35 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,56 +37,82 @@
 #include <sys/systm.h>
 
 #include <sh3/mmureg.h>
+#include <sh3/cache.h>
+#include <sh3/cache_sh3.h>
+#include <sh3/cache_sh4.h>
+
 #include <machine/kloader.h>
 
-#define SH3_CCA			0xf0000000
-
-#define SH7709A_CACHE_LINESZ		16
-#define SH7709A_CACHE_ENTRY		256
-#define SH7709A_CACHE_WAY		4
-#define SH7709A_CACHE_SIZE						\
-	(SH7709A_CACHE_LINESZ * SH7709A_CACHE_ENTRY * SH7709A_CACHE_WAY)
-
-#define SH7709A_CACHE_ENTRY_SHIFT	4
-#define SH7709A_CACHE_ENTRY_MASK	0x00000ff0
-#define SH7709A_CACHE_WAY_SHIFT		12
-#define SH7709A_CACHE_WAY_MASK		0x00003000
-
-#define _SH7709A_CACHE_FLUSH()						\
-do {									\
-	u_int32_t __e, __w, __wa, __a;					\
+/* 
+ * 2nd-bootloader. Make sure that PIC and its size is lower than page size.
+ */
+#define KLOADER_SH_BOOT(cpu, product)					\
+void									\
+kloader_sh ## cpu ## _boot(struct kloader_bootinfo *kbi,		\
+    struct kloader_page_tag *p)						\
+{									\
+	int tmp;							\
 									\
-	for (__w = 0; __w < SH7709A_CACHE_WAY; __w++) {			\
-		__wa = SH3_CCA | __w << SH7709A_CACHE_WAY_SHIFT;	\
-		for (__e = 0; __e < SH7709A_CACHE_ENTRY; __e++)	{	\
-			__a = __wa |(__e << SH7709A_CACHE_ENTRY_SHIFT);	\
-			(*(__volatile__ u_int32_t *)__a) &= ~0x3;	\
-		}							\
-	}								\
-} while (/*CONSTCOND*/0)
+	/* Disable interrupt. block exception. */			\
+	__asm__ __volatile__(						\
+		"stc	sr, %1;"					\
+		"or	%0, %1;"					\
+		"ldc	%1, sr" : : "r"(0x500000f0), "r"(tmp));		\
+									\
+	/* Now I run on P1, TLB flush. and disable. */			\
+	SHREG_MMUCR = MMUCR_TF;						\
+									\
+	do {								\
+		u_int32_t *dst =(u_int32_t *)p->dst;			\
+		u_int32_t *src =(u_int32_t *)p->src;			\
+		u_int32_t sz = p->sz / sizeof (int);			\
+		while (sz--)						\
+			*dst++ = *src++;				\
+	} while ((p = (struct kloader_page_tag *)p->next) != 0);	\
+									\
+	SH ## product ## _CACHE_FLUSH();				\
+									\
+	/* jump to kernel entry. */					\
+	__asm__ __volatile__(						\
+		"mov	%0, r4;"					\
+		"mov	%1, r5;"					\
+		"jmp	@%3;"						\
+		"mov	%2, r6;"					\
+		: :							\
+		"r"(kbi->argc),						\
+		"r"(kbi->argv),						\
+		"r"(&kbi->bootinfo),					\
+		"r"(kbi->entry));					\
+	/* NOTREACHED */						\
+}
 
-void kloader_sh3_jump(kloader_bootfunc_t *, vaddr_t,
+void kloader_sh_jump(kloader_bootfunc_t *, vaddr_t,
     struct kloader_bootinfo *, struct kloader_page_tag *);
 kloader_bootfunc_t kloader_sh3_boot;
+kloader_bootfunc_t kloader_sh4_boot;
 
-struct kloader_ops kloader_sh3_ops = {
-	.jump = kloader_sh3_jump,
-	.boot = kloader_sh3_boot    
+struct kloader_ops kloader_sh_ops = {
+	.jump = kloader_sh_jump,
+	.boot = 0
 };
 
 void
 kloader_reboot_setup(const char *filename)
 {
-
-	__kloader_reboot_setup(&kloader_sh3_ops, filename);
+#ifdef SH4
+	kloader_sh_ops.boot = kloader_sh4_boot;
+#else
+	kloader_sh_ops.boot = kloader_sh3_boot;
+#endif
+	__kloader_reboot_setup(&kloader_sh_ops, filename);
 }
 
 void
-kloader_sh3_jump(kloader_bootfunc_t func, vaddr_t sp,
+kloader_sh_jump(kloader_bootfunc_t func, vaddr_t sp,
     struct kloader_bootinfo *info, struct kloader_page_tag *tag)
 {
 
-	_SH7709A_CACHE_FLUSH();
+	sh_icache_sync_all();	/* also flush d-cache */
 
 	__asm__ __volatile__(
 	    	"mov	%0, r4;"
@@ -97,43 +123,5 @@ kloader_sh3_jump(kloader_bootfunc_t func, vaddr_t sp,
 	/* NOTREACHED */
 }
 
-/* 
- * 2nd-bootloader. Make sure that PIC and its size is lower than page size.
- */
-void
-kloader_sh3_boot(struct kloader_bootinfo *kbi, struct kloader_page_tag *p)
-{
-	int tmp;
-
-	/* Disable interrupt. block exception.(TLB exception don't occur) */
-	__asm__ __volatile__(
-		"stc	sr, %1;"
-		"or	%0, %1;"
-		"ldc	%1, sr" : : "r"(0x500000f0), "r"(tmp));
-	
-	/* Now I run on P1, TLB flush. and disable. */
-	SHREG_MMUCR = MMUCR_TF;
-
-	do {
-		u_int32_t *dst =(u_int32_t *)p->dst;
-		u_int32_t *src =(u_int32_t *)p->src;
-		u_int32_t sz = p->sz / sizeof (int);
-		while (sz--)
-			*dst++ = *src++;
-	} while ((p = (struct kloader_page_tag *)p->next) != 0);
-
-	_SH7709A_CACHE_FLUSH();
-
-	/* jump to kernel entry. */
-	__asm__ __volatile__(
-		"mov	%0, r4;"
-		"mov	%1, r5;"
-		"jmp	@%3;"
-		"mov	%2, r6;"
-		: :
-		"r"(kbi->argc),
-		"r"(kbi->argv),
-		"r"(&kbi->bootinfo),
-		"r"(kbi->entry));
-	/* NOTREACHED */
-}
+KLOADER_SH_BOOT(3, 7709A)
+KLOADER_SH_BOOT(4, 7750)

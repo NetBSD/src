@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.10 2001/10/27 03:46:20 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.11 2002/02/11 17:32:35 uch Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -414,72 +414,6 @@ ENTRY(idle)
 XXLwhichqs:
 	.long	_C_LABEL(sched_whichqs)
 
-
-#define	PUSHALL	\
-	mov.l	r0, @-r15	; \
-	mov.l	r1, @-r15	; \
-	mov.l	r2, @-r15	; \
-	mov.l	r3, @-r15	; \
-	mov.l	r4, @-r15	; \
-	mov.l	r5, @-r15	; \
-	mov.l	r6, @-r15	; \
-	mov.l	r7, @-r15	; \
-	mov.l	r8, @-r15	; \
-	mov.l	r9, @-r15	; \
-	mov.l	r10, @-r15	; \
-	mov.l	r11, @-r15	; \
-	mov.l	r12, @-r15	; \
-	mov.l	r13, @-r15	; \
-	mov.l	r14, @-r15
-
-#define	POPALL \
-	mov.l	@r15+, r14	; \
-	mov.l	@r15+, r13	; \
-	mov.l	@r15+, r12	; \
-	mov.l	@r15+, r11	; \
-	mov.l	@r15+, r10	; \
-	mov.l	@r15+, r9	; \
-	mov.l	@r15+, r8	; \
-	mov.l	@r15+, r7	; \
-	mov.l	@r15+, r6	; \
-	mov.l	@r15+, r5	; \
-	mov.l	@r15+, r4	; \
-	mov.l	@r15+, r3	; \
-	mov.l	@r15+, r2	; \
-	mov.l	@r15+, r1	; \
-	mov.l	@r15+, r0
-
-#define	PUSHALLBUTR0	\
-	mov.l	r1, @-r15	; \
-	mov.l	r2, @-r15	; \
-	mov.l	r3, @-r15	; \
-	mov.l	r4, @-r15	; \
-	mov.l	r5, @-r15	; \
-	mov.l	r6, @-r15	; \
-	mov.l	r7, @-r15	; \
-	mov.l	r8, @-r15	; \
-	mov.l	r9, @-r15	; \
-	mov.l	r10, @-r15	; \
-	mov.l	r11, @-r15	; \
-	mov.l	r12, @-r15	; \
-	mov.l	r13, @-r15	; \
-	mov.l	r14, @-r15
-
-#define	POPALLBUTR0 \
-	mov.l	@r15+, r14	; \
-	mov.l	@r15+, r13	; \
-	mov.l	@r15+, r12	; \
-	mov.l	@r15+, r11	; \
-	mov.l	@r15+, r10	; \
-	mov.l	@r15+, r9	; \
-	mov.l	@r15+, r8	; \
-	mov.l	@r15+, r7	; \
-	mov.l	@r15+, r6	; \
-	mov.l	@r15+, r5	; \
-	mov.l	@r15+, r4	; \
-	mov.l	@r15+, r3	; \
-	mov.l	@r15+, r2	; \
-	mov.l	@r15+, r1
 
 #define DIAGNOSTIC 1
 #ifdef DIAGNOSTIC
@@ -1349,7 +1283,7 @@ XL_KCSAREA:	.long	0x80000000
 XXL_SHREG_TTB:	.long	SHREG_TTB
 XL_P2AREA:	.long	0xa0000000
 #ifdef SH4
-XL_cacheflush:	.long	_C_LABEL(sh4_cache_flush)
+XL_cacheflush:	.long	_C_LABEL(sh4_icache_sync_all)
 #endif
 
 Xrecurse:

@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.6 2002/01/27 05:15:37 uch Exp $	*/
+/*	$NetBSD: console.c,v 1.7 2002/02/11 17:32:35 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -36,13 +36,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_kgdb.h"
+
 #include "biconsdev.h"
 #include "hpcfb.h"
-#include "pfckbd.h"
 #include "sci.h"
 #include "scif.h"
 #include "com.h"
 #include "hd64461video.h"
+
+#include "wskbd.h"
+#include "pfckbd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +54,12 @@
 #include <dev/cons.h> /* consdev */
 
 #include <machine/bootinfo.h>
+
+#if !defined(NBICONSDEV) || !defined(NHPCFB) || !defined(NPFCKBD) ||	\
+	!defined(NHD64461VIDEO) || !defined(NSCI) || !defined(NSCIF) ||	\
+	!defined(NCOM)
+#error
+#endif
 
 #if NBICONSDEV > 0
 #include <dev/hpc/biconsvar.h>
@@ -61,6 +71,7 @@
 #include <dev/rasops/rasops.h>
 #include <dev/hpc/hpcfbvar.h>
 #endif
+
 #if NPFCKBD > 0
 #include <hpcsh/dev/pfckbdvar.h>
 #endif
@@ -82,6 +93,7 @@ cons_decl(bicons);
 #if NHD64461VIDEO > 0
 cons_decl(hd64461video_);
 #if NWSKBD > 0
+#include <dev/wscons/wskbdvar.h>
 #define hd64461video_cngetc	wskbd_cngetc
 #else
 int
@@ -110,19 +122,27 @@ struct consdev constab[] = {
 #if NSCIF > 0
 	cons_init(scif),
 #endif
-#if NHD64461IF > 0 && NCOM > 0
+#if NCOM > 0
 	cons_init(com),
 #endif
 	{ 0 } /* terminator */
 };
 #define CN_ENABLE(x)	set_console(x ## cnputc, x ## cnprobe)
 
+#ifdef KGDB
+#ifndef KGDB_DEVNAME
+#define KGDB_DEVNAME "nodev"
+#endif
+const char kgdb_devname[] = KGDB_DEVNAME;
+#endif
 static int initialized;
-static int attach_kbd = 1;
+static int attach_kbd  __attribute__((__unused__)) = 1;
 static void set_console(void (*)(dev_t, int), void (*)(struct consdev *));
 static void disable_console(void);
 static void cn_nonprobe(struct consdev *);
+#if NBICONSDEV > 0
 static void enable_bicons(void);
+#endif
 
 void
 consinit()
@@ -155,20 +175,24 @@ consinit()
 		CN_ENABLE(scif);
 #endif
 		break;
+	case BI_CNUSE_HD64465COM:
+		/* FALLTHROUGH */
 	case BI_CNUSE_HD64461COM:
-#if NHD64461IF > 0 && NCOM > 0
+#if NCOM > 0
 		CN_ENABLE(com);
 #endif
 		break;
 	}
 
 #if NBICONSDEV > 0
-	if (!initialized) /* use builtin console instead */
+	if (!initialized) { /* use builtin console instead */
 		enable_bicons();
+	}
 #endif
 
-	if (initialized)
+	if (initialized) {
 		cninit();
+	}
 
 #if NPFCKBD > 0
 	if (attach_kbd)
@@ -208,6 +232,7 @@ disable_console()
 static void
 cn_nonprobe(struct consdev *cp)
 {
+
 	cp->cn_pri = CN_DEAD;
 }
 
@@ -215,9 +240,10 @@ cn_nonprobe(struct consdev *cp)
 static void
 enable_bicons()
 {
+
 	bootinfo->bi_cnuse = BI_CNUSE_BUILTIN;
 	bicons_set_priority(CN_INTERNAL);
 	CN_ENABLE(bicons);
 	attach_kbd = 1;
 }
-#endif
+#endif /* NBICONSDEV > 0 */
