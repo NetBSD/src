@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.6 2005/01/08 20:41:56 joff Exp $
+#	$NetBSD: TS7200,v 1.7 2005/01/09 21:44:32 joff Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -182,6 +182,15 @@ tscs0	at isa? port 0x300 iomem ? irq ? drq ?  # TS-ETH10 PC/104 ethernet
 tscs1	at isa? port 0x310 iomem ? irq ? drq ?
 tscs2	at isa? port 0x320 iomem ? irq ? drq ?
 tscs3	at isa? port 0x330 iomem ? irq ? drq ?
+
+# PCMCIA bus support
+pcmcia* at pcic? controller ? socket ?
+
+options PCIC_ISA_INTR_ALLOC_MASK=0xe0
+# ISA PCMCIA controllers
+pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
+pcic1	at isa? port 0x3e2 iomem 0xe0000 iosiz 0x4000
+pcic2	at isa? port 0x3e4 iomem 0xe0000 iosiz 0x4000
 
 # ATA (IDE) bus support
 atabus* at ata?
