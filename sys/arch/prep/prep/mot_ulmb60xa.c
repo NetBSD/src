@@ -1,11 +1,11 @@
-/*	$NetBSD: platform.c,v 1.4 2002/02/26 16:09:15 kleink Exp $	*/
+/*	$NetBSD: mot_ulmb60xa.c,v 1.1 2002/02/26 16:09:15 kleink Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by NONAKA Kimihiro.
+ * by Klaus J. Klein.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,87 +39,89 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <dev/pci/pcivar.h>
-
+#include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/platform.h>
 #include <machine/residual.h>
 
-static struct platform platform_unknown = {
-	NULL,					/* model */
-	platform_generic_match,			/* match */
-	prep_pci_get_chipset_tag_indirect,	/* pci_setup */
-	pci_intr_nofixup,			/* pci_intr_fixup */
-	ext_intr,				/* ext_intr */
+/*
+ * CPU Type Register
+ * These definitions should eventually be moved to a separate header file.
+ */
+#define	MOT_CPUTYPE_REG			(PREP_BUS_SPACE_IO + 0x0800)
+
+/* Cache Size */
+#define	MOT_CPUTYPE_CSIZE_SHIFT		0
+#define	MOT_CPUTYPE_CSIZE_MASK		0x3
+#define	MOT_CPUTYPE_CSIZE(ct) \
+    (((ct) >> MOT_CPUTYPE_CSIZE_SHIFT) & MOT_CPUTYPE_CSIZE_MASK)
+
+#define	MOT_CPUTYPE_CSIZE_512K		0
+#define	MOT_CPUTYPE_CSIZE_256K		1
+#define	MOT_CPUTYPE_CSIZE_RESERVED	2
+#define	MOT_CPUTYPE_CSIZE_NONE		3
+
+/* Board ID */
+#define	MOT_CPUTYPE_BOARDID_SHIFT	4
+#define	MOT_CPUTYPE_BOARDID_MASK	0xf
+#define	MOT_CPUTYPE_BOARDID(ct) \
+    (((ct) >> MOT_CPUTYPE_BOARDID_SHIFT) & MOT_CPUTYPE_BOARDID_MASK)
+
+#define	MOT_CPUTYPE_BOARDID_ULTRA	4
+
+
+static int mot_ulmb60xa_match(struct platform *);
+
+struct platform platform_mot_ulmb60xa = {
+	"BULL ESTRELLA (e0)         (e0)",	/* model */ /* XXX */
+	mot_ulmb60xa_match,			/* match */
+	prep_pci_get_chipset_tag_indirect,	/* pci_get_chipset_tag */
+	pci_intr_fixup_mot_ulmb60xa,		/* pci_intr_fixup */
+	ext_intr_ivr,				/* ext_intr */
 	cpu_setup_unknown,			/* cpu_setup */
-	reset_unknown,				/* reset */
+	reset_ibm_generic,			/* reset */
 };
 
-static struct plattab plattab_unknown = {
-	NULL,	0
-};
-
-struct platform *platform = &platform_unknown;
-
-int
-ident_platform(void)
+static int
+mot_ulmb60xa_match(struct platform *p)
 {
-	struct plattab *p;
-	int matched = -1, match = 0;
-	int i, rv;
-
-	if (res == NULL)
-		return 0;
-
-	if (strncmp(res->VitalProductData.PrintableModel,
-	    "IBM", 3) == 0)
-		p = &plattab_ibm;
-	else if (strncmp(res->VitalProductData.PrintableModel,
-	    "MOT", 3) == 0)
-		p = &plattab_mot;
-	else if (strncmp(res->VitalProductData.PrintableModel,
-	    "BULL ESTRELLA (e0)         (e0)", 31) == 0) /* XXX */
-		p = &plattab_mot;
-	else
-		p = &plattab_unknown;
-
-	for (i = 0; i < p->num; i++) {
-		rv = (*p->platform[i]->match)(p->platform[i]);
-		if (rv > match) {
-			match = rv;
-			matched = i;
-		}
-	}
-	if (match)
-		platform = p->platform[matched];
-	return match;
-}
-
-int
-platform_generic_match(struct platform *p)
-{
+	uint8_t cputype;
 
 	if (p->model == NULL)
 		return 0;
-	if (strcmp(res->VitalProductData.PrintableModel, p->model) == 0)
-    		return 1;
-	return 0;
-}
-
-
-/* ARGUSED */
-void
-pci_intr_nofixup(int busno, int device, int *intr)
-{
-}
-
-/* ARGUSED */
-void
-cpu_setup_unknown(struct device *dev)
-{
+	if (strcmp(res->VitalProductData.PrintableModel, p->model) != 0)
+		return 0;
+	/* Should possibly match against the FirmwareSupplier as well. */
+	cputype = *(volatile uint8_t *)MOT_CPUTYPE_REG;
+	__asm __volatile ("eieio; sync");
+	if (MOT_CPUTYPE_BOARDID(cputype) != MOT_CPUTYPE_BOARDID_ULTRA)
+		return 0;
+	
+	return 1;
 }
 
 void
-reset_unknown(void)
+pci_intr_fixup_mot_ulmb60xa(int bus, int dev, int *line)
 {
+
+	if (bus != 0)
+		return;
+
+	switch (dev) {
+	case 12:		/* NCR 53c810 */
+		*line = 11;
+		break;
+	case 14:		/* DEC 21440 */
+		*line = 9;
+		break;
+	case 16:		/* Slot #1 */
+		*line = 9;
+		break;
+	case 17:		/* Slot #2 */
+		*line = 9;
+		break;
+	case 18:		/* Slot #3 */
+		*line = 11;
+		break;
+	}
 }
