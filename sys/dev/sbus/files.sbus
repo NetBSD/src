@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.5 1998/08/27 20:49:37 pk Exp $
+#	$NetBSD: files.sbus,v 1.6 1998/08/29 20:32:10 pk Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
@@ -17,6 +17,13 @@ file	dev/sbus/xbox.c			xbox
 attach isp at sbus with isp_sbus
 file	dev/sbus/isp_sbus.c		isp_sbus
 
+# Sbus NCR539x SCSI & Lance Ethernet
+device	dma {}: lsi64854
+attach	dma at sbus with dma_sbus
+device	ledma {}: lsi64854
+attach	ledma at sbus
+file	dev/sbus/dma_sbus.c		dma | ledma
+
 device	lebuffer {}
 attach	lebuffer at sbus
 file	dev/sbus/lebuffer.c		lebuffer
@@ -24,8 +31,15 @@ file	dev/sbus/lebuffer.c		lebuffer
 # device definition in sys/conf/files
 attach	le at sbus with le_sbus: le24
 attach	le at lebuffer with le_lebuffer: le24
+attach	le at ledma with le_ledma: le24
 file	dev/sbus/if_le.c		le_sbus
 file	dev/sbus/if_le_lebuffer.c	le_lebuffer
+file	dev/sbus/if_le_ledma.c		le_ledma
+
+device	esp: scsi, ncr53c9x
+attach	esp at sbus with esp_sbus
+attach	esp at dma with esp_dma
+file	dev/sbus/esp_sbus.c		esp_sbus | esp_dma
 
 # Efficient Networks, Inc. ATM interface
 # device declaration in sys/conf/files
