@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -36,10 +36,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: machparam.h 1.11 89/08/14$
- *
- *	from: @(#)param.h	7.8 (Berkeley) 6/28/91
- *	param.h,v 1.2 1993/05/22 07:58:25 cgd Exp
+ *	from: Utah Hdr: machparam.h 1.16 92/12/20
+ *	from: @(#)param.h	8.1 (Berkeley) 6/10/93
+ *	$Id: param.h,v 1.15 1994/05/27 14:55:22 gwr Exp $
  */
 
 /*
@@ -54,16 +53,19 @@
  * for all data types (int, long, ...).   The result is u_int and
  * must be cast to any desired pointer type.
  */
-#define	ALIGN(p)	(((u_int)(p) + (sizeof(int) - 1)) &~ (sizeof(int) - 1))
+#define	ALIGNBYTES	3
+#define	ALIGN(p)	(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
 
 #define	NBPG		8192		/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	PGSHIFT		13		/* LOG2(NBPG) */
-#define SEGSHIFT	17	        /* LOG2(NBSG) */
-#define SEGMAP_MASK     (NSEGMAP-1) 
-#define VA_SEGNUM(x)    ((x >> SEGSHIFT) & SEGMAP_MASK)
 
-#define KERNBASE        0x0E000000
+#define NBSG		0x20000	/* bytes/segment */
+#define	SEGOFSET	(NBSG-1)	/* byte offset into segment */
+#define SEGSHIFT	17	        /* LOG2(NBSG) */
+
+#define	KERNBASE	0x0E000000	/* start of kernel virtual */
+#define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
 #define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
@@ -90,8 +92,8 @@
  * of the hardware page size.
  */
 #define	MSIZE		128		/* size of an mbuf */
-#define	MCLBYTES	1024
-#define	MCLSHIFT	10
+#define	MCLBYTES	2048		/* large enough for ether MTU */
+#define	MCLSHIFT	11
 #define	MCLOFSET	(MCLBYTES - 1)
 #ifndef NMBCLUSTERS
 #ifdef GATEWAY
@@ -138,19 +140,19 @@
 #define sun3_round_seg(x)	((((unsigned)(x)) + NBSG - 1) & ~(NBSG-1))
 #define sun3_trunc_seg(x)	((unsigned)(x) & ~(NBSG-1))
 #define sun3_round_up_seg(x)	(sun3_trunc_seg(x) + NBSG)
+#define sun3_btos(x)		((unsigned)(x) >> SEGSHIFT)
+#define sun3_stob(x)		((unsigned)(x) << SEGSHIFT)
+
 #define sun3_round_page(x)	((((unsigned)(x)) + NBPG - 1) & ~(NBPG-1))
 #define sun3_trunc_page(x)	((unsigned)(x) & ~(NBPG-1))
 #define sun3_round_up_page(x)	(sun3_round_page(x) + NBPG)
-#define sun3_btos(x)		((unsigned)(x) >> SEGSHIFT)
-#define sun3_stob(x)		((unsigned)(x) << SEGSHIFT)
 #define sun3_btop(x)		((unsigned)(x) >> PGSHIFT)
 #define sun3_ptob(x)		((unsigned)(x) << PGSHIFT)
-
-#include <machine/psl.h>
 
 /*
  * spl functions; all but spl0 are done in-line
  */
+#include <machine/psl.h>
 
 #ifdef __GNUC__
 #define _spl(s) \
@@ -183,7 +185,6 @@
 #define splhigh()       spl7()
 #define splsched()      spl7()
 
-#define splnone()       spl0()
 /* watch out for side effects */
 #define splx(s)         (s & PSL_IPL ? _spl(s) : spl0())
 

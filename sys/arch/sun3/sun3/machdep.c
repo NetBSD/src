@@ -38,7 +38,7 @@
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
  *	machdep.c,v 1.3 1993/07/07 07:20:03 cgd Exp
- *	$Id: machdep.c,v 1.29 1994/05/20 04:26:19 gwr Exp $
+ *	$Id: machdep.c,v 1.30 1994/05/27 14:58:32 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -73,8 +73,15 @@
 #include <sys/shm.h>
 #endif
 #ifdef COMPAT_HPUX
-#include <../../hp300/hpux/hpux.h>
+#include <hp300/hpux/hpux.h>
 #endif
+
+#include <machine/cpu.h>
+#include <machine/reg.h>
+#include <machine/psl.h>
+#include <machine/pte.h>
+#include <machine/mon.h> 
+#include <machine/isr.h>
 
 #include <dev/cons.h>
 
@@ -83,14 +90,6 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
-#include <machine/cpu.h>
-#include <machine/reg.h>
-#include <machine/psl.h>
-
-#include <machine/pte.h>
-
-#include <machine/mon.h> 
-#include <machine/isr.h>
 #include <net/netisr.h>
 
 #ifdef COMPAT_SUNOS
@@ -101,6 +100,7 @@ extern char *cpu_string;
 int physmem;
 int cold;
 extern char kstack[];
+extern short exframesize[];
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -191,6 +191,7 @@ void cpu_startup()
      * in that they usually occupy more virtual memory than physical.
      */
     size = MAXBSIZE * nbuf;
+	/* XXX - Should last arg be TRUE instead? (like hp300) -gwr */
     buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
 			       &maxaddr, size, FALSE);
     minaddr = (vm_offset_t)buffers;
@@ -395,24 +396,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/* NOTREACHED */
 }
 
-#ifdef COMPAT_HPUX
-tweaksigcode(ishpux)
-{
-	static short *sigtrap = NULL;
-	extern short sigcode[], esigcode[];
-
-	/* locate trap instruction in pcb_sigc */
-	if (sigtrap == NULL) {
-		sigtrap = esigcode;
-		while (--sigtrap >= sigcode)
-			if ((*sigtrap & 0xFFF0) == 0x4E40)
-				break;
-		if (sigtrap < sigcode)
-			panic("bogus sigcode\n");
-	}
-	*sigtrap = ishpux ? 0x4E42 : 0x4E41;
-}
-#endif
 /*
  * Set registers on exec.
  * XXX Should clear registers except sp, pc,
@@ -425,8 +408,15 @@ setregs(p, entry, stack, retval)
 	u_long stack;
 	int retval[2];
 {
+#if 0	/* XXX - old way */
 	p->p_md.md_regs[PC] = entry & ~1;
 	p->p_md.md_regs[SP] = stack;
+#else
+	struct frame *frame = (struct frame *)p->p_md.md_regs;
+
+	frame->f_pc = entry & ~1;
+	frame->f_regs[SP] = stack;
+#endif
 #ifdef FPCOPROC
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
@@ -435,7 +425,11 @@ setregs(p, entry, stack, retval)
 #ifdef COMPAT_HPUX
 	if (p->p_flag & SHPUX) {
 
+#if 0	/* XXX - old way */
 		p->p_md.md_regs[A0] = 0;	/* not 68010 (bit 31), no FPA (30) */
+#else
+		frame->f_regs[A0] = 0; /* not 68010 (bit 31), no FPA (30) */
+#endif
 		retval[0] = 0;		/* no float card */
 #ifdef FPCOPROC
 		retval[1] = 1;		/* yes 68881 */
@@ -444,22 +438,39 @@ setregs(p, entry, stack, retval)
 #endif
 	}
 	/*
+	 * XXX This doesn't have much to do with setting registers but
+	 * I didn't want to muck up kern_exec.c with this code, so I
+	 * stuck it here.
+	 *
 	 * Ensure we perform the right action on traps type 1 and 2:
 	 * If our parent is an HPUX process and we are being traced, turn
 	 * on HPUX style interpretation.  Else if we were using the HPUX
 	 * style interpretation, revert to the BSD interpretation.
 	 *
-	 * XXX This doesn't have much to do with setting registers but
-	 * I didn't want to muck up kern_exec.c with this code, so I
-	 * stuck it here.
+	 * Note that we do this by changing the trap instruction in the
+	 * global "sigcode" array which then gets copied out to the user's
+	 * sigcode in the stack.  Since we are changing it in the global
+	 * array we must always reset it, even for non-HPUX processes.
+	 *
+	 * Note also that implementing it in this way creates a potential
+	 * race where we could have tweaked it for process A which then
+	 * blocks in the copyout to the stack and process B comes along
+	 * and untweaks it causing A to wind up with the wrong setting
+	 * when the copyout continues.  However, since we have already
+	 * copied something out to this user stack page (thereby faulting
+	 * it in), this scenerio is extremely unlikely.
 	 */
-	if ((p->p_pptr->p_flag & SHPUX) &&
-	    (p->p_flag & STRC)) {
-		tweaksigcode(1);
-		p->p_addr->u_pcb.pcb_flags |= PCB_HPUXTRACE;
-	} else if (p->p_addr->u_pcb.pcb_flags & PCB_HPUXTRACE) {
-		tweaksigcode(0);
-		p->p_addr->u_pcb.pcb_flags &= ~PCB_HPUXTRACE;
+	{
+		extern short sigcodetrap[];
+
+		if ((p->p_pptr->p_emul == EMUL_HPUX) &&
+		    (p->p_flag & P_TRACED)) {
+			p->p_md.md_flags |= MDP_HPUXTRACE;
+			*sigcodetrap = 0x4E42;
+		} else {
+			p->p_md.md_flags &= ~MDP_HPUXTRACE;
+			*sigcodetrap = 0x4E41;
+		}
 	}
 #endif
 }
@@ -560,7 +571,6 @@ sendsig(catcher, sig, mask, code)
 	register struct sigacts *ps = p->p_sigacts;
 	register short ft;
 	int oonstack, fsize;
-	extern short exframesize[];
 	extern char sigcode[], esigcode[];
 
 	frame = (struct frame *)p->p_md.md_regs;
@@ -651,9 +661,9 @@ sendsig(catcher, sig, mask, code)
 	kfp->sf_state.ss_flags = SS_USERREGS;
 	bcopy((caddr_t)frame->f_regs,
 	      (caddr_t)kfp->sf_state.ss_frame.f_regs, sizeof frame->f_regs);
-	if (ft >= FMT9) {
+	if (ft >= FMT7) {
 #ifdef DEBUG
-		if (ft != FMT9 && ft != FMTA && ft != FMTB)
+		if (ft > 15 || exframesize[ft] < 0)
 			panic("sendsig: bogus frame type");
 #endif
 		kfp->sf_state.ss_flags |= SS_RTEFRAME;
@@ -740,8 +750,9 @@ sendsig(catcher, sig, mask, code)
 #endif
 	/*
 	 * Signal trampoline code is at base of user stack.
+	 * XXX - Is cast needed for PS_STRINGS? -gwr
 	 */
-	frame->f_pc = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
+	frame->f_pc = (int)PS_STRINGS - (esigcode - sigcode);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sendsig(%d): sig %d returns\n",
@@ -865,7 +876,7 @@ struct sigreturn_args {
  * psl to gain improper priviledges or to cause
  * a machine fault.
  */
-/* ARGSUSED */
+
 sigreturn(p, uap, retval)
 	struct proc *p;
 	struct sigreturn_args *uap;
@@ -877,7 +888,6 @@ sigreturn(p, uap, retval)
 	struct sigcontext tsigc;
 	struct sigstate tstate;
 	int flags;
-	extern short exframesize[];
 
 	scp = uap->sigcntxp;
 #ifdef DEBUG
@@ -1114,10 +1124,8 @@ regdump(rp, sbytes)
 		return;
 	s = splhigh();
 	doingdump = 1;
-	if (curproc) 
-	    printf("pid = %d, pc = %s, ", curproc->p_pid, hexstr(rp[PC], 8));
-	else
-    	    printf("curproc == NULL, pc = %s, ", hexstr(rp[PC], 8));
+	printf("pid = %d, pc = %s, ",
+	       curproc ? curproc->p_pid : -1, hexstr(rp[PC], 8));
 	printf("ps = %s, ", hexstr(rp[PS], 4));
 	printf("sfc = %s, ", hexstr(getsfc(), 4));
 	printf("dfc = %s\n", hexstr(getdfc(), 4));
@@ -1148,7 +1156,7 @@ regdump(rp, sbytes)
 
 dumpmem(ptr, sz, ustack)
 	register int *ptr;
-	int sz;
+	int sz, ustack;
 {
 	register int i, val;
 	extern char *hexstr();
@@ -1175,6 +1183,7 @@ dumpmem(ptr, sz, ustack)
 char *
 hexstr(val, len)
 	register int val;
+	int len;
 {
 	static char nbuf[9];
 	register int x, i;

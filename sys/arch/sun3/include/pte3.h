@@ -28,14 +28,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/include/pte3.h,v 1.5 1994/02/04 08:20:06 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/include/pte3.h,v 1.6 1994/05/27 14:55:26 gwr Exp $
  */
 
 #ifndef _MACHINE_PTE_H
 #define _MACHINE_PTE_H
 
 #define NCONTEXT 8
-#define NBSG 131072
 #define SEGINV 255
 #define NPAGSEG 16
 #define NSEGMAP 2048

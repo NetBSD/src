@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/m68k.s,v 1.11 1994/02/23 08:29:43 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/m68k.s,v 1.12 1994/05/27 14:58:30 gwr Exp $
  */
 
 ENTRY(getvbr)
@@ -169,15 +169,6 @@ ENTRY(setjmp)
 	movl	sp@(4),a0	| savearea pointer
 	moveml	#0xFCFC,a0@	| save d2-d7/a2-a7
 	movl	sp@,a0@(48)	| and return address
-	moveq	#0,d0		| return 0
-	rts
-
-ENTRY(qsetjmp)
-	movl	sp@(4),a0	| savearea pointer
-	lea	a0@(40),a0	| skip regs we do not save
-	movl	a6,a0@+		| save FP
-	movl	sp,a0@+		| save SP
-	movl	sp@,a0@		| and return address
 	moveq	#0,d0		| return 0
 	rts
 
