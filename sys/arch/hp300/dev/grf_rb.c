@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rb.c,v 1.16 2001/07/22 13:34:04 wiz Exp $	*/
+/*	$NetBSD: grf_rb.c,v 1.17 2001/11/17 23:35:31 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -164,13 +164,16 @@ rbox_intio_match(parent, match, aux)
 	struct intio_attach_args *ia = aux;
 	struct grfreg *grf;
 
-	grf = (struct grfreg *)IIOV(GRFIADDR);
-	if (badaddr((caddr_t)grf))
+	if (strcmp("fb      ",ia->ia_modname) != 0)
 		return (0);
+
+	if (badaddr((caddr_t)ia->ia_addr))
+		return (0);
+
+	grf = (struct grfreg *)ia->ia_addr;
 
 	if (grf->gr_id == DIO_DEVICE_ID_FRAMEBUFFER &&
 	    grf->gr_id2 == DIO_DEVICE_SECID_RENASSIANCE) {
-		ia->ia_addr = (bus_addr_t)GRFIADDR;
 		return (1);
 	}
 
@@ -183,9 +186,10 @@ rbox_intio_attach(parent, self, aux)
 	void *aux;
 {
 	struct grfdev_softc *sc = (struct grfdev_softc *)self;
+	struct intio_attach_args *ia = aux;
 	caddr_t grf;
 
-	grf = (caddr_t)IIOV(GRFIADDR);
+	grf = (caddr_t)ia->ia_addr;
 	sc->sc_scode = -1;	/* XXX internal i/o */
 
 	grfdev_attach(sc, rb_init, grf, &rbox_grfsw);

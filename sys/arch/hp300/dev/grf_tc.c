@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tc.c,v 1.16 2001/07/22 13:34:04 wiz Exp $	*/
+/*	$NetBSD: grf_tc.c,v 1.17 2001/11/17 23:35:31 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -181,10 +181,13 @@ topcat_intio_match(parent, match, aux)
 	struct intio_attach_args *ia = aux;
 	struct grfreg *grf;
 
-	grf = (struct grfreg *)IIOV(GRFIADDR);
-
-	if (badaddr((caddr_t)grf))
+	if (strcmp("fb      ",ia->ia_modname) != 0)
 		return (0);
+
+	if (badaddr((caddr_t)ia->ia_addr))
+		return (0);
+
+	grf = (struct grfreg *)ia->ia_addr;
 
 	if (grf->gr_id == DIO_DEVICE_ID_FRAMEBUFFER) {
 		switch (grf->gr_id2) {
@@ -195,7 +198,6 @@ topcat_intio_match(parent, match, aux)
 #if 0
 		case DIO_DEVICE_SECID_XXXCATSEYE:
 #endif
-			ia->ia_addr = (bus_addr_t)GRFIADDR;
 			return (1);
 		}
 	}
@@ -208,10 +210,11 @@ topcat_intio_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct intio_attach_args *ia = aux;
 	struct grfdev_softc *sc = (struct grfdev_softc *)self;
 	struct grfreg *grf;
 
-	grf = (struct grfreg *)IIOV(GRFIADDR);
+	grf = (struct grfreg *)ia->ia_addr;
 	sc->sc_scode = -1;	/* XXX internal i/o */
 
 	topcat_common_attach(sc, (caddr_t)grf, grf->gr_id2);
@@ -301,6 +304,7 @@ topcat_common_attach(sc, grf, secid)
 	}
 
 	grfdev_attach(sc, tc_init, grf, sw);
+
 }
 
 /*
@@ -485,6 +489,7 @@ void
 topcat_init(ip)
 	struct ite_data *ip;
 {
+
 	/* XXX */
 	if (ip->regbase == NULL) {
 		struct grf_data *gp = ip->grf;
@@ -589,6 +594,7 @@ void
 topcat_deinit(ip)
 	struct ite_data *ip;
 {
+
 	topcat_windowmove(ip, 0, 0, 0, 0, ip->fbheight, ip->fbwidth, RR_CLEAR);
 	tc_waitbusy(ip->regbase, ip->planemask);
 
@@ -601,8 +607,8 @@ topcat_putc(ip, c, dy, dx, mode)
 	struct ite_data *ip;
 	int c, dy, dx, mode;
 {
-        int wmrr = ((mode == ATTR_INV) ? RR_COPYINVERTED : RR_COPY);
-	
+	int wmrr = ((mode == ATTR_INV) ? RR_COPYINVERTED : RR_COPY);
+
 	topcat_windowmove(ip, charY(ip, c), charX(ip, c),
 			  dy * ip->ftheight, dx * ip->ftwidth,
 			  ip->ftheight, ip->ftwidth, wmrr);
@@ -613,6 +619,7 @@ topcat_cursor(ip, flag)
 	struct ite_data *ip;
 	int flag;
 {
+
 	if (flag == DRAW_CURSOR)
 		draw_cursor(ip)
 	else if (flag == MOVE_CURSOR) {
@@ -675,7 +682,7 @@ topcat_windowmove(ip, sy, sx, dy, dx, h, w, func)
 	int sy, sx, dy, dx, h, w, func;
 {
   	struct tcboxfb *rp = REGBASE;
-	
+
 	if (h == 0 || w == 0)
 		return;
 	tc_waitbusy(ip->regbase, ip->planemask);
