@@ -15,7 +15,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: curses.c,v 1.3 1993/08/02 17:53:49 mycroft Exp $";
+static char rcsid[] = "$Id: curses.c,v 1.4 1993/11/08 05:06:13 alm Exp $";
 #endif /* not lint */
 
 
@@ -759,7 +759,7 @@ int getsize(signo)
 
 #ifdef SIGWINCH
 	/* reset the signal vector */
-	signal(SIGWINCH, getsize);
+	signal(SIGWINCH, (void *)getsize);
 #endif
 
 	/* get the window size, one way or another. */
