@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.19 2003/10/17 00:20:28 mycroft Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.20 2004/09/18 16:40:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.19 2003/10/17 00:20:28 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.20 2004/09/18 16:40:11 yamt Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -355,7 +355,7 @@ umass_scsipi_minphys(struct buf *bp)
 {
 #ifdef DIAGNOSTIC
 	if (bp->b_bcount <= 0) {
-		printf("umass_scsipi_minphys count(%ld) <= 0\n",
+		printf("umass_scsipi_minphys count(%d) <= 0\n",
 		       bp->b_bcount);
 		bp->b_bcount = UMASS_MAX_TRANSFER_SIZE;
 	}
