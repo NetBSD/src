@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.201.2.3.2.1 2005/04/06 14:32:26 he Exp $
+#	$NetBSD: 3RDPARTY,v 1.201.2.3.2.2 2005/04/06 14:54:03 he Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -759,7 +759,7 @@ zlib, used by the free NetBSD gzip(1).
 
 Package:      Vinum
 Version:      2003-10-10
-Current:      2003-10-10
+Current Vers: 2003-10-10
 Maintainer:   grog
 URL:          http://www.vinumvm.org/
 Archive Site: none 
