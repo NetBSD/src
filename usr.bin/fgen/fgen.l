@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: fgen.l,v 1.15 2001/10/05 22:40:10 eeh Exp $	*/
+/*	$NetBSD: fgen.l,v 1.16 2001/12/31 18:31:59 thorpej Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.
@@ -1971,6 +1971,7 @@ tokenize(input)
 			}
 			break;
 		default:
+			/* Nothing */ ;
 		}
 	}
 	return;
