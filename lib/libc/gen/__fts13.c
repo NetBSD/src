@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.30 2000/08/07 06:00:59 enami Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.31 2000/08/07 06:08:33 enami Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.30 2000/08/07 06:00:59 enami Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.31 2000/08/07 06:08:33 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -169,7 +169,8 @@ fts_open(argv, options, compar)
 			goto mem3;
 		}
 
-		p = fts_alloc(sp, *argv, len);
+		if ((p = fts_alloc(sp, *argv, len)) == NULL)
+			goto mem3;
 		p->fts_level = FTS_ROOTLEVEL;
 		p->fts_parent = parent;
 		p->fts_accpath = p->fts_name;
@@ -591,10 +592,12 @@ fts_children(sp, instr)
 		return (sp->fts_child = fts_build(sp, instr));
 
 	if ((fd = open(".", O_RDONLY, 0)) < 0)
-		return (NULL);
+		return (sp->fts_child = NULL);
 	sp->fts_child = fts_build(sp, instr);
-	if (fchdir(fd))
+	if (fchdir(fd)) {
+		(void)close(fd);
 		return (NULL);
+	}
 	(void)close(fd);
 	return (sp->fts_child);
 }
