@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_syscalls.c,v 1.12 1998/02/19 00:42:36 thorpej Exp $	*/
+/*	$NetBSD: osf1_syscalls.c,v 1.13 1998/02/19 03:34:18 thorpej Exp $	*/
 
 /*
  * System call names.
@@ -7,6 +7,7 @@
  * created from	NetBSD: syscalls.master,v 1.9 1998/02/19 00:42:15 thorpej Exp 
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
@@ -14,6 +15,7 @@
 #include <sys/poll.h>
 #include <sys/syscallargs.h>
 #include <compat/osf1/osf1_syscallargs.h>
+#endif /* _KERNEL && ! _LKM */
 
 char *osf1_syscallnames[] = {
 	"syscall",			/* 0 = syscall */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_sysent.c,v 1.28 1998/02/19 00:46:39 thorpej Exp $	*/
+/*	$NetBSD: ultrix_sysent.c,v 1.29 1998/02/19 03:34:20 thorpej Exp $	*/
 
 /*
  * System call switch table.

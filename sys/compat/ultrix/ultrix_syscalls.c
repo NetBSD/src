@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_syscalls.c,v 1.27 1998/02/19 00:46:39 thorpej Exp $	*/
+/*	$NetBSD: ultrix_syscalls.c,v 1.28 1998/02/19 03:34:20 thorpej Exp $	*/
 
 /*
  * System call names.
@@ -7,6 +7,7 @@
  * created from	NetBSD: syscalls.master,v 1.24 1998/02/19 00:46:02 thorpej Exp 
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "fs_nfs.h"
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -14,6 +15,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <compat/ultrix/ultrix_syscallargs.h>
+#endif /* _KERNEL && ! _LKM */
 
 char *ultrix_syscallnames[] = {
 	"syscall",			/* 0 = syscall */

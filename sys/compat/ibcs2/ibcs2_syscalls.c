@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_syscalls.c,v 1.15 1998/02/19 00:40:45 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_syscalls.c,v 1.16 1998/02/19 03:34:17 thorpej Exp $	*/
 
 /*
  * System call names.
@@ -7,6 +7,7 @@
  * created from	NetBSD: syscalls.master,v 1.13 1998/02/19 00:40:25 thorpej Exp 
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
@@ -16,6 +17,7 @@
 #include <compat/ibcs2/ibcs2_signal.h>
 #include <compat/ibcs2/ibcs2_syscallargs.h>
 #include <compat/ibcs2/ibcs2_statfs.h>
+#endif /* _KERNEL && ! _LKM */
 
 char *ibcs2_syscallnames[] = {
 	"syscall",			/* 0 = syscall */

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_syscalls.c,v 1.44 1998/02/19 00:45:36 thorpej Exp $	*/
+/*	$NetBSD: svr4_syscalls.c,v 1.45 1998/02/19 03:34:20 thorpej Exp $	*/
 
 /*
  * System call names.
@@ -7,6 +7,7 @@
  * created from	NetBSD: syscalls.master,v 1.31 1998/02/19 00:45:12 thorpej Exp 
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
@@ -20,6 +21,7 @@
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_statvfs.h>
 #include <compat/svr4/svr4_acl.h>
+#endif /* _KERNEL && ! _LKM */
 
 char *svr4_syscallnames[] = {
 	"syscall",			/* 0 = syscall */

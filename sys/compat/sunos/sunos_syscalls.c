@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_syscalls.c,v 1.49 1998/02/19 00:44:20 thorpej Exp $	*/
+/*	$NetBSD: sunos_syscalls.c,v 1.50 1998/02/19 03:34:19 thorpej Exp $	*/
 
 /*
  * System call names.
@@ -7,6 +7,7 @@
  * created from	NetBSD: syscalls.master,v 1.45 1998/02/19 00:43:56 thorpej Exp 
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "fs_nfs.h"
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -16,6 +17,7 @@
 #include <sys/syscallargs.h>
 #include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_syscallargs.h>
+#endif /* _KERNEL && ! _LKM */
 
 char *sunos_syscallnames[] = {
 	"syscall",			/* 0 = syscall */
