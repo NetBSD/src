@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)rtsock.c	7.18 (Berkeley) 6/27/91
- *	$Id: rtsock.c,v 1.6 1994/01/16 02:22:57 cgd Exp $
+ *	$Id: rtsock.c,v 1.7 1994/02/10 17:25:06 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -43,7 +43,6 @@
 #include <sys/domain.h>
 #include <sys/protosw.h>
 
-#include <net/af.h>
 #include <net/if.h>
 #include <net/route.h>
 #include <net/raw_cb.h>
