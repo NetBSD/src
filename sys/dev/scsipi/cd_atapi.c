@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_atapi.c,v 1.7 1998/01/15 02:21:32 cgd Exp $	*/
+/*	$NetBSD: cd_atapi.c,v 1.8 1998/07/13 12:04:29 hpeyerl Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -95,12 +95,14 @@ int	cd_atapibus_getvol __P((struct cd_softc *, struct ioc_vol *, int));
 int	cd_atapibus_setvol __P((struct cd_softc *, const struct ioc_vol *,
 	    int));
 int	cd_atapibus_set_pa_immed __P((struct cd_softc *, int));
+int	cd_atapibus_load_unload __P((struct cd_softc *, int, int));
 
 const struct cd_ops cd_atapibus_ops = {
 	cd_atapibus_setchan,
 	cd_atapibus_getvol,
 	cd_atapibus_setvol,
 	cd_atapibus_set_pa_immed,
+	cd_atapibus_load_unload,
 };
 
 int
@@ -227,4 +229,20 @@ cd_atapibus_set_pa_immed(cd, flags)
 
 	/* Noop. */
 	return (0);
+}
+
+int
+cd_atapibus_load_unload(cd, options, slot)
+	struct cd_softc *cd;
+	int options, slot;
+{
+	struct atapi_load_unload atapi_cmd;
+
+	bzero(&atapi_cmd, sizeof(atapi_cmd));
+	atapi_cmd.opcode = ATAPI_LOAD_UNLOAD;
+	atapi_cmd.options = options;    /* ioctl uses ATAPI values */
+	atapi_cmd.slot = slot;
+	return (scsipi_command(cd->sc_link,
+		(struct scsipi_generic *)&atapi_cmd, sizeof(atapi_cmd),
+		0, 0, CDRETRIES, 200000, NULL, 0));
 }
