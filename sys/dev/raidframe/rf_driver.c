@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.96 2004/03/13 02:31:12 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.97 2004/03/20 04:22:05 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.96 2004/03/13 02:31:12 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.97 2004/03/20 04:22:05 oster Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -280,7 +280,8 @@ int
 rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 {
 	RF_RowCol_t col;
-	int rc;
+	RF_IOBufHeader_t *tmpbuf;	
+	int rc, i;
 
 	RF_LOCK_LKMGR_MUTEX(configureMutex);
 	configureCount++;
@@ -391,6 +392,31 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 
 	if (rf_keepAccTotals) {
 		raidPtr->keep_acc_totals = 1;
+	}
+
+	/* Allocate a bunch of buffers to be used in low-memory conditions */
+	raidPtr->iobuf = NULL;
+	/* XXX next line needs tuning... */
+	raidPtr->numEmergencyBuffers = 10 * raidPtr->numCol;
+#if DEBUG
+	printf("raid%d: allocating %d buffers of %d bytes.\n",
+	       raidPtr->raidid,
+	       raidPtr->numEmergencyBuffers, 
+	       (int)(raidPtr->Layout.sectorsPerStripeUnit << 
+	       raidPtr->logBytesPerSector));
+#endif
+	for (i = 0; i < raidPtr->numEmergencyBuffers; i++) {
+		tmpbuf = malloc( raidPtr->Layout.sectorsPerStripeUnit << 
+				 raidPtr->logBytesPerSector, 
+				 M_RAIDFRAME, M_NOWAIT);
+		if (tmpbuf) {
+			tmpbuf->next = raidPtr->iobuf;
+			raidPtr->iobuf = tmpbuf;
+			raidPtr->iobuf_count++;
+		} else {
+			printf("raid%d: failed to allocate emergency buffer!\n",
+			       raidPtr->raidid);
+		}
 	}
 
 	raidPtr->valid = 1;
