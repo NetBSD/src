@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.23 1998/04/29 23:11:00 thorpej Exp $ */
+/* $NetBSD: param.h,v 1.24 1998/08/14 16:50:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -172,7 +172,7 @@ int spl0 __P((void));					/* drop ipl to zero */
 /* XXX END INTR.H */
 
 /* XXX THE FOLLOWING PROTOTYPE SHOULD BE A BUS.H INTERFACE */
-vm_offset_t alpha_XXX_dmamap __P((vm_offset_t));
+paddr_t alpha_XXX_dmamap __P((vaddr_t));
 /* XXX END BUS.H */
 
 #endif
