@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.4 2004/06/15 11:28:23 fvdl Exp $	*/
+/*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -298,8 +298,6 @@ IDTVEC(recurse_lapic_ipi)
 	pushq	$0		
 	pushq	$T_ASTFLT
 	INTRENTRY		
-IDTVEC(resume_lapic_ipi)
-	cli
 	jmp	1f
 IDTVEC(intr_lapic_ipi)
 	pushq	$0		
@@ -309,6 +307,7 @@ IDTVEC(intr_lapic_ipi)
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_IPI,%ebx
 	jae	2f
+IDTVEC(resume_lapic_ipi)
 1:
 	incl	CPUVAR(IDEPTH)
 	movl	$IPL_IPI,CPUVAR(ILEVEL)
@@ -346,8 +345,6 @@ IDTVEC(recurse_lapic_ltimer)
 	pushq	$0		
 	pushq	$T_ASTFLT
 	INTRENTRY		
-IDTVEC(resume_lapic_ltimer)
-	cli
 	jmp	1f
 IDTVEC(intr_lapic_ltimer)
 	pushq	$0		
@@ -357,6 +354,7 @@ IDTVEC(intr_lapic_ltimer)
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_CLOCK,%ebx
 	jae	2f
+IDTVEC(resume_lapic_ltimer)
 1:
 	incl	CPUVAR(IDEPTH)
 	movl	$IPL_CLOCK,CPUVAR(ILEVEL)
@@ -757,6 +755,7 @@ _C_LABEL(eintrcnt):
 
 IDTVEC(softserial)
 	movl	$IPL_SOFTSERIAL, CPUVAR(ILEVEL)
+	sti
 	incl	CPUVAR(IDEPTH)
 #ifdef MULTIPROCESSOR
 	call	_C_LABEL(x86_softintlock)
@@ -773,6 +772,7 @@ IDTVEC(softserial)
 
 IDTVEC(softnet)
 	movl	$IPL_SOFTNET, CPUVAR(ILEVEL)
+	sti
 	incl	CPUVAR(IDEPTH)
 #ifdef MULTIPROCESSOR	
 	call	_C_LABEL(x86_softintlock)
@@ -802,6 +802,7 @@ IDTVEC(softnet)
 
 IDTVEC(softclock)
 	movl	$IPL_SOFTCLOCK, CPUVAR(ILEVEL)
+	sti
 	incl	CPUVAR(IDEPTH)
 #ifdef MULTIPROCESSOR	
 	call	_C_LABEL(x86_softintlock)
