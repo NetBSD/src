@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.2 1995/08/10 04:30:41 jonathan Exp $	*/
+/*	$NetBSD: asic.c,v 1.3 1995/08/18 10:15:09 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -69,7 +69,7 @@ struct asic_softc {
 int	asicmatch __P((struct device *, void *, void *));
 void	asicattach __P((struct device *, struct device *, void *));
 int     asicprint(void *, char *);
-struct cfdriver asiccd =
+struct cfdriver ioasiccd =
     { NULL, "asic", asicmatch, asicattach, DV_DULL, sizeof(struct asic_softc) };
 
 void    asic_intr_establish __P((struct confargs *, intr_handler_t,
@@ -144,12 +144,12 @@ gotasic:
 	case DS_3MIN:
 		if (cf->cf_unit > 0)
 			return (0);
-		asic_slots = NULL;
+		asic_slots = kn03_asic_slots;	/* XXX - 3min same as kn03? */
 		break;
 	case DS_MAXINE:
 		if (cf->cf_unit > 0)
 			return (0);
-		asic_slots = NULL;
+		asic_slots = xine_asic_slots;
 		break;
 	case DS_3MAX:
 		if (cf->cf_unit > 0)
