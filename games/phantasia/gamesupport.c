@@ -1,4 +1,4 @@
-/*	$NetBSD: gamesupport.c,v 1.5 1999/09/08 21:17:53 jsm Exp $	*/
+/*	$NetBSD: gamesupport.c,v 1.6 1999/09/08 21:57:19 jsm Exp $	*/
 
 /*
  * gamesupport.c - auxiliary routines for support of Phantasia
@@ -443,7 +443,7 @@ monstlist()
 	int     count = 0;	/* count in file */
 
 	puts(" #)  Name                 Str  Brain  Quick  Energy  Exper  Treas  Type  Flock%\n");
-	fseek(Monstfp, 0L, 0);
+	fseek(Monstfp, 0L, SEEK_SET);
 	while (fread((char *) &Curmonster, SZ_MONSTERSTRUCT, 1, Monstfp) == 1)
 		printf("%2d)  %-20.20s%4.0f   %4.0f     %2.0f   %5.0f  %5.0f     %2d    %2d     %3.0f\n", count++,
 		    Curmonster.m_name, Curmonster.m_strength, Curmonster.m_brains,
@@ -468,7 +468,7 @@ scorelist()
 void
 activelist()
 {
-	fseek(Playersfp, 0L, 0);
+	fseek(Playersfp, 0L, SEEK_SET);
 	printf("Current characters on file are:\n\n");
 
 	while (fread((char *) &Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1)
@@ -492,7 +492,7 @@ purgeoldplayers()
 	today = localtime(&ltime)->tm_yday;
 
 	for (;;) {
-		fseek(Playersfp, loc, 0);
+		fseek(Playersfp, loc, SEEK_SET);
 		if (fread((char *) &Other, SZ_PLAYERSTRUCT, 1, Playersfp) != 1)
 			break;
 
@@ -543,7 +543,7 @@ enterscore()
 		strcpy(sbuf.sb_type, descrtype(&Player, TRUE));
 	}
 	/* update entry */
-	fseek(fp, loc, 0);
+	fseek(fp, loc, SEEK_SET);
 	fwrite((char *) &sbuf, SZ_SCORESTRUCT, 1, fp);
 	fclose(fp);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.10 1999/09/08 21:17:49 jsm Exp $	*/
+/*	$NetBSD: strfile.c,v 1.11 1999/09/08 21:57:17 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: strfile.c,v 1.10 1999/09/08 21:17:49 jsm Exp $");
+__RCSID("$NetBSD: strfile.c,v 1.11 1999/09/08 21:57:17 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -175,7 +175,7 @@ main(ac, av)
 	if ((outf = fopen(Outfile, "w")) == NULL)
 		err(1, "open `%s'", Outfile);
 	if (!STORING_PTRS)
-		(void) fseek(outf, sizeof Tbl, 0);
+		(void) fseek(outf, sizeof Tbl, SEEK_SET);
 
 	/*
 	 * Write the strings onto the file
@@ -243,7 +243,7 @@ main(ac, av)
 		       Tbl.str_shortlen == 1 ? "" : "s");
 	}
 
-	(void) fseek(outf, (off_t) 0, 0);
+	(void) fseek(outf, (off_t) 0, SEEK_SET);
 	HTOBE32(Tbl.str_version);
 	Tbl.str_numstr = htobe32(Num_pts - 1);
 	HTOBE32(Tbl.str_longlen);
@@ -411,8 +411,8 @@ cmp_str(vp1, vp2)
 	if (c1 != c2)
 		return c1 - c2;
 
-	(void) fseek(Sort_1, p1->pos, 0);
-	(void) fseek(Sort_2, p2->pos, 0);
+	(void) fseek(Sort_1, p1->pos, SEEK_SET);
+	(void) fseek(Sort_2, p2->pos, SEEK_SET);
 
 	n1 = FALSE;
 	n2 = FALSE;

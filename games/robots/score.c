@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.8 1999/09/08 21:17:57 jsm Exp $	*/
+/*	$NetBSD: score.c,v 1.9 1999/09/08 21:57:20 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.8 1999/09/08 21:17:57 jsm Exp $");
+__RCSID("$NetBSD: score.c,v 1.9 1999/09/08 21:57:20 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ write_score(inf)
 {
 	SCORE	*scp;
 
-	lseek(inf, 0L, 0);
+	lseek(inf, 0L, SEEK_SET);
 
 	max_uid = htonl(max_uid);
 	write(inf, &max_uid, sizeof max_uid);
