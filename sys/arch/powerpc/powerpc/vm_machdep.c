@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.28 2001/06/10 11:01:28 tsubai Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.29 2001/06/13 06:01:50 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,6 +33,7 @@
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
+#include "opt_ppcarch.h"
 
 #include <sys/param.h>
 #include <sys/core.h>
@@ -47,8 +48,13 @@
 #include <machine/fpu.h>
 #include <machine/pcb.h>
 
-#if !defined(MULTIPROCESSOR)
+#if !defined(MULTIPROCESSOR) && defined(PPC_HAVE_FPU)
 #define save_fpu_proc(p) save_fpu(p)		/* XXX */
+#endif
+
+#ifdef PPC_IBM4XX
+vaddr_t vmaprange(struct proc *, vaddr_t, vsize_t, int);
+void vunmaprange(vaddr_t, vsize_t);
 #endif
 
 /*
@@ -74,14 +80,14 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	struct proc *p1, *p2;
 	void *stack;
 	size_t stacksize;
-	void (*func) __P((void *));
+	void (*func)(void *);
 	void *arg;
 {
 	struct trapframe *tf;
 	struct callframe *cf;
 	struct switchframe *sf;
 	caddr_t stktop1, stktop2;
-	extern void fork_trampoline __P((void));
+	void fork_trampoline(void);
 	struct pcb *pcb = &p2->p_addr->u_pcb;
 
 #ifdef DIAGNOSTIC
@@ -92,8 +98,10 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		panic("cpu_fork: curproc");
 #endif
 
+#ifdef PPC_HAVE_FPU
 	if (p1->p_addr->u_pcb.pcb_fpcpu)
 		save_fpu_proc(p1);
+#endif
 	*pcb = p1->p_addr->u_pcb;
 #ifdef ALTIVEC
 	if (p1->p1_addr->u_pcb.pcb_vr != NULL) {
@@ -150,7 +158,9 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	sf = (struct switchframe *)stktop2;
 	bzero((void *)sf, sizeof *sf);		/* just in case */
 	sf->sp = (int)cf;
+#ifndef PPC_IBM4XX
 	sf->user_sr = pmap_kernel()->pm_sr[USER_SR]; /* again, just in case */
+#endif
 	pcb->pcb_sp = (int)stktop2;
 	pcb->pcb_spl = 0;
 }
@@ -204,12 +214,15 @@ void
 cpu_exit(p)
 	struct proc *p;
 {
-	void switchexit __P((struct proc *));	/* Defined in locore.S */
+	void switchexit(struct proc *);		/* Defined in locore.S */
 #ifdef ALTIVEC
 	struct pcb *pcb = &p->p_addr->u_pcb;
 #endif
+
+#ifdef PPC_HAVE_FPU
 	if (p->p_addr->u_pcb.pcb_fpcpu)		/* release the FPU */
 		fpuproc = NULL;
+#endif
 #ifdef ALTIVEC
 	if (p == vecproc)			/* release the AltiVEC */
 		vecproc = NULL;
@@ -245,8 +258,10 @@ cpu_coredump(p, vp, cred, chdr)
 	tf = trapframe(p);
 	bcopy(tf, &md_core.frame, sizeof md_core.frame);
 	if (pcb->pcb_flags & PCB_FPU) {
+#ifdef PPC_HAVE_FPU
 		if (p->p_addr->u_pcb.pcb_fpcpu)
 			save_fpu_proc(p);
+#endif
 		md_core.fpstate = pcb->pcb_fpu;
 	} else
 		bzero(&md_core.fpstate, sizeof(md_core.fpstate));
@@ -277,6 +292,55 @@ cpu_coredump(p, vp, cred, chdr)
 	return 0;
 }
 
+#ifdef PPC_IBM4XX
+/*
+ * Map a range of user addresses into the kernel.
+ */
+vaddr_t
+vmaprange(p, uaddr, len, prot)
+	struct proc *p;
+	vaddr_t uaddr;
+	vsize_t len;
+	int prot;
+{
+	vaddr_t faddr, taddr, kaddr;
+	vsize_t off;
+	paddr_t pa;
+
+	faddr = trunc_page(uaddr);
+	off = uaddr - faddr;
+	len = round_page(off + len);
+	taddr = uvm_km_valloc_wait(phys_map, len);
+	kaddr = taddr + off;
+	for (; len > 0; len -= NBPG) {
+		(void) pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),
+		    faddr, &pa);
+		pmap_enter(vm_map_pmap(phys_map), taddr, pa,
+		    prot, prot|PMAP_WIRED);
+		faddr += NBPG;
+		taddr += NBPG;
+	}
+	return (kaddr);
+}
+
+/*
+ * Undo vmaprange.
+ */
+void
+vunmaprange(kaddr, len)
+	vaddr_t kaddr;
+	vsize_t len;
+{
+	vaddr_t addr;
+	vsize_t off;
+
+	addr = trunc_page(kaddr);
+	off = kaddr - addr;
+	len = round_page(off + len);
+	uvm_km_free_wakeup(phys_map, addr, len);
+}
+#endif /* PPC_IBM4XX */
+
 /*
  * Map a user I/O request into kernel virtual address space.
  * Note: the pages are already locked by uvm_vslock(), so we
@@ -295,6 +359,9 @@ vmapbuf(bp, len)
 	if (!(bp->b_flags & B_PHYS))
 		panic("vmapbuf");
 #endif
+	/*
+	 * XXX Reimplement this with vmaprange (on at least PPC_IBM4XX CPUs).
+	 */
 	faddr = trunc_page((vaddr_t)bp->b_saveaddr = bp->b_data);
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
