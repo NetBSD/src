@@ -1,4 +1,4 @@
-.\"	$NetBSD: gethostbyname.3,v 1.7 1996/03/30 01:14:57 jtc Exp $
+.\"	$NetBSD: gethostbyname.3,v 1.8 1996/11/09 08:30:52 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -59,8 +59,8 @@
 .Ft void
 .Fn endhostent void
 .Ft void
-.Fn herror "char *string"
-.Ft char *
+.Fn herror "const char *string"
+.Ft const char *
 .Fn hstrerror "int err"
 .Sh DESCRIPTION
 The
