@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.107.2.6 2002/04/01 07:48:44 nathanw Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.107.2.7 2002/05/04 19:51:54 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.107.2.6 2002/04/01 07:48:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.107.2.7 2002/05/04 19:51:54 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -227,6 +227,19 @@ struct evcnt tcp_swcsum = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
     NULL, "tcp", "swcsum");
 #endif /* TCP_CSUM_COUNTERS */
 
+#ifdef TCP_OUTPUT_COUNTERS
+#include <sys/device.h>
+
+struct evcnt tcp_output_bigheader = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "tcp", "output big header");
+struct evcnt tcp_output_copysmall = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "tcp", "output copy small");
+struct evcnt tcp_output_copybig = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "tcp", "output copy big");
+struct evcnt tcp_output_refbig = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "tcp", "output reference big");
+#endif /* TCP_OUTPUT_COUNTERS */
+
 /*
  * Tcp initialization
  */
@@ -271,6 +284,13 @@ tcp_init()
 	evcnt_attach_static(&tcp_hwcsum_data);
 	evcnt_attach_static(&tcp_swcsum);
 #endif /* TCP_CSUM_COUNTERS */
+
+#ifdef TCP_OUTPUT_COUNTERS
+	evcnt_attach_static(&tcp_output_bigheader);
+	evcnt_attach_static(&tcp_output_copysmall);
+	evcnt_attach_static(&tcp_output_copybig);
+	evcnt_attach_static(&tcp_output_refbig);
+#endif /* TCP_OUTPUT_COUNTERS */
 }
 
 /*

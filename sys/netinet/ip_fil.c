@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.65.2.8 2002/04/01 07:48:33 nathanw Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.65.2.9 2002/05/04 19:51:47 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -27,6 +27,7 @@
 # endif
 #endif
 #ifdef __sgi
+# define _KMEMUSER
 # include <sys/ptimers.h>
 #endif
 #ifndef	_KERNEL
@@ -122,10 +123,10 @@ extern	int	ip_optcopy __P((struct ip *, struct ip *));
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.65.2.8 2002/04/01 07:48:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.65.2.9 2002/05/04 19:51:47 thorpej Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.53 2002/03/13 02:29:08 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.55 2002/03/26 15:54:39 darrenr Exp";
 #endif
 #endif
 
@@ -366,7 +367,7 @@ int iplattach()
 	}
 
 # ifdef NETBSD_PF
-#  if __NetBSD_Version__ >= 104200000
+#  if (__NetBSD_Version__ >= 104200000) || (__FreeBSD_version >= 500011)
 #   if __NetBSD_Version__ >= 105110000
 	ph_inet = pfil_head_get(PFIL_TYPE_AF, AF_INET);
 #    ifdef USE_INET6
@@ -536,7 +537,7 @@ int ipldetach()
 	fr_running = 0;
 
 # ifdef NETBSD_PF
-#  if __NetBSD_Version__ >= 104200000
+#  if ((__NetBSD_Version__ >= 104200000) || (__FreeBSD_version >= 500011))
 #   if __NetBSD_Version__ >= 105110000
 	if (ph_inet != NULL)
 		error = pfil_remove_hook((void *)fr_check_wrapper, NULL,
