@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1996/02/29 11:36:12 leo Exp $
+#	$NetBSD: Makefile,v 1.2 1996/05/14 10:16:50 leo Exp $
 
 LIB=	sa
 
@@ -24,7 +24,7 @@ SRCS=	consio.s diskio.c
 SRCS+=	ashrdi3.c bzero.c strcmp.c strlen.c
 
 # stand routines
-SRCS+=	alloc.c bcopy.c exit.c exec.c getfile.c gets.c globals.c \
+SRCS+=	alloc.c bcopy.c exec.c getfile.c gets.c globals.c \
 	memcpy.c printf.c strerror.c
 
 # io routines
@@ -43,7 +43,7 @@ SRCS+=	bootp.c rarp.c bootparam.c
 SRCS+=	ufs.c nfs.c
 
 # Logically src/sys
-S=../../../..
+S=${.CURDIR}/../../../..
 S_SA=${S}/lib/libsa
 S_KERN=${S}/lib/libkern
 S_MACHSA=${S}/arch/atari/stand/libsa

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1996/02/29 11:35:05 leo Exp $
+#	$NetBSD: Makefile,v 1.2 1996/05/14 10:16:13 leo Exp $
 
 PROG=	bootxx
 SRCS=	bootxx.c bsdstart.s filesystem.c
@@ -8,8 +8,8 @@ STRIP=
 BINDIR=	/usr/mdec
 BINMODE=${NONBINMODE}
 
-DPADD=	../libsa/libsa.a
-LDADD=	../libsa/libsa.a
+DPADD=	${S_MACHSA}/libsa.a
+LDADD=	${S_MACHSA}/libsa.a
 
 DEFS=	-DSTANDALONE
 INCL=	-I. -I${S_LIBTOS} -I${S_MACHSA} -I${S_KERN} -I${S_SA} -I${S}
@@ -19,7 +19,7 @@ CFLAGS+=	-fomit-frame-pointer -Wall
 LDFLAGS=	-static -nostdlib -Wl,-N,-T${LOADADDR}
 
 # logically src/sys
-S=../../../..
+S=${.CURDIR}/../../../..
 S_SA=${S}/lib/libsa
 S_KERN=${S}/lib/libkern
 S_MACHSA=${S}/arch/atari/stand/libsa

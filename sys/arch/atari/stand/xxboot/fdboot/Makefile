@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1996/02/29 11:36:52 leo Exp $
+#	$NetBSD: Makefile,v 1.2 1996/05/14 10:17:08 leo Exp $
 
 PROG=	fdboot
-SRCS=	fdboot.s
+SRCS=	${.CURDIR}/fdboot.s
 NOMAN=
+INCL=	-I${.CURDIR} -I${.CURDIR}/..
+
+CPPFLAGS+= ${INCL}
 
 .include <bsd.prog.mk>
