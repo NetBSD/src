@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypserv.8,v 1.5 1997/10/18 06:50:50 mikel Exp $
+.\"	$NetBSD: ypserv.8,v 1.5.2.1 1997/11/28 09:51:29 mellon Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -42,19 +42,28 @@
 .Op Fl x
 .Sh DESCRIPTION
 .Nm
-is a fundamental part of the network information system called YP.
-This server provides information from YP maps to the YP clients
-on the network.
+is a fundamental part of the network information system called
+.Tn YP .
+This server provides information from
+.Tn YP
+maps to the
+.Tn YP
+clients on the network.
 .Pp
-A YP map is stored on the server as a
+A
+.Tn YP
+map is stored on the server as a
 .Xr db 3
-database. A number of YP maps is grouped together in a domain.
+database. A number of
+.Tn YP
+maps is grouped together in a domain.
 .Nm
 determines the domains it serves by looking for a directory with
 the domain name in 
 .Ar /var/yp .
 .Pp
-YP hasn't been known for high security through the years. In recent years
+.Tn YP
+hasn't been known for high security through the years. In recent years
 security has improved by restricting access to the server. In SunOS 4.1
 has a new file occured named
 .Ar /var/yp/securenet .
@@ -94,9 +103,9 @@ Use another file with another file format. For further information see
 .Xr ypserv.acl 5 .
 .It Fl d
 Use internet Domain Name System. If a query to map
-.Ar hosts.byname
+.Pa hosts.byname
 or
-.Ar hosts.byaddr
+.Pa hosts.byaddr
 fails, make a DNS query and return the result if successful.
 .It Fl x
 Terminate the server after processing
