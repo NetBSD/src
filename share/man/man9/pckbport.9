@@ -1,4 +1,4 @@
-.\" $NetBSD: pckbport.9,v 1.1 2004/03/20 21:28:59 bjh21 Exp $
+.\" $NetBSD: pckbport.9,v 1.2 2004/03/20 21:43:03 wiz Exp $
 .\"
 .\" Copyright (c) 2004 Ben Harris
 .\" All rights reserved.
@@ -79,7 +79,8 @@ The machine-independent
 subsystem provides an interface layer corresponding to the serial
 keyboard and mouse interface used on the
 .Tn IBM PS/2
-and many other machines.  It interfaces a controller driver such as
+and many other machines.
+It interfaces a controller driver such as
 .Xr pckbc 4
 to device drivers such as
 .Xr pckbd 4
@@ -131,7 +132,7 @@ passed to
 and the slot in question.
 The elements are:
 .Bl -tag -width Fn
-.It Fa int Fn (*t_xt_translation)" "void *cookie" "pckbport_slot_t slot" \
+.It Fa int Fn (*t_xt_translation) "void *cookie" "pckbport_slot_t slot" \
 "int on"
 If
 .Fa on
@@ -186,7 +187,8 @@ functions get passed a
 .Fa "struct pckbport_attach_args"
 which contains the controller and slot number where the device was found.
 Device drivers can use the following functions to communicate with the
-controller.  Each takes
+controller.
+Each takes
 .Fa tag
 and
 .Fa slot
@@ -208,7 +210,7 @@ Issue a complete device command,
 .Fa len
 bytes long, expecting a response
 .Fa responselen
-bytes long, which will be places in
+bytes long, which will be placed in
 .Fa respbuf .
 If
 .Fa slow
@@ -311,7 +313,8 @@ device drivers are in
 The
 .Nm
 system appeared in
-.Nx 2.0 .  Before that,
+.Nx 2.0 .
+Before that,
 .Xr pckbd 4
 and
 .Xr pms 4
