@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpvar.h,v 1.17 1998/10/01 00:42:37 jonathan Exp $	*/
+/*	$NetBSD: isapnpvar.h,v 1.18 1999/03/19 03:24:19 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,27 +49,7 @@
  */
 struct isapnp_softc;
 
-#if (alpha + arc + arm32 + atari + bebox + i386 != 1)
-ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
-#endif
-#if alpha
-#include <alpha/isa/isapnp_machdep.h>
-#endif
-#if arc
-#include <arc/isa/isapnp_machdep.h>
-#endif
-#if arm32
-#include <arm32/isa/isapnp_machdep.h>
-#endif
-#if atari
-#include <atari/isa/isapnp_machdep.h>
-#endif
-#if bebox
-#include <bebox/isa/isapnp_machdep.h>
-#endif
-#if i386
-#include <i386/isa/isapnp_machdep.h>
-#endif
+#include <machine/isapnp_machdep.h>
 
 #ifndef _KERNEL
 
