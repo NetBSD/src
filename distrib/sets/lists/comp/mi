@@ -65,6 +65,7 @@
 ./usr/include/dev/ic/dc21040reg.h
 ./usr/include/dev/ic/dp8390reg.h
 ./usr/include/dev/ic/dp8390var.h
+./usr/include/dev/ic/ds.h
 ./usr/include/dev/ic/elink3reg.h
 ./usr/include/dev/ic/elink3var.h
 ./usr/include/dev/ic/hayespreg.h
@@ -611,6 +612,7 @@
 ./usr/include/netinet/in_systm.h
 ./usr/include/netinet/in_var.h
 ./usr/include/netinet/ip.h
+./usr/include/netinet/ip_auth.h
 ./usr/include/netinet/ip_compat.h
 ./usr/include/netinet/ip_fil.h
 ./usr/include/netinet/ip_frag.h
@@ -804,6 +806,7 @@
 ./usr/include/sys/ktrace.h
 ./usr/include/sys/lkm.h
 ./usr/include/sys/localedef.h
+./usr/include/sys/lock.h
 ./usr/include/sys/lockf.h
 ./usr/include/sys/malloc.h
 ./usr/include/sys/map.h
@@ -903,7 +906,6 @@
 ./usr/include/varargs.h
 ./usr/include/vis.h
 ./usr/include/vm/device_pager.h
-./usr/include/vm/lock.h
 ./usr/include/vm/pmap.h
 ./usr/include/vm/swap_pager.h
 ./usr/include/vm/vm.h
