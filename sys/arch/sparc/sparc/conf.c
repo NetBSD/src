@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.34 1995/08/17 17:41:00 thorpej Exp $ */
+/*	$NetBSD: conf.c,v 1.35 1995/09/24 20:45:27 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -83,8 +83,8 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 0 */
 	bdev_notdef(),			/* 1 */
 	bdev_notdef(),			/* 2 */
-	bdev_swap_init(1,sw),		/* 3 */
-	bdev_notdef(),			/* 4 */
+	bdev_notdef(),			/* 3 */
+	bdev_swap_init(1,sw),		/* 4 */
 	bdev_notdef(),			/* 5 */
 	bdev_notdef(),			/* 6 */
 	bdev_disk_init(NSD,sd),		/* 7: SCSI disk */
@@ -316,7 +316,7 @@ int	mem_no = 3; 	/* major device number of memory special file */
  * confuse, e.g. the hashing routines. Instead, /dev/drum is
  * provided as a character (raw) device.
  */
-dev_t	swapdev = makedev(3, 0);
+dev_t	swapdev = makedev(4, 0);
 
 /*
  * Routine that identifies /dev/mem and /dev/kmem.
@@ -381,7 +381,7 @@ static int chrtoblktbl[] = {
 	/* 39 */	NODEV,
 	/* 40 */	NODEV,
 	/* 41 */	NODEV,
-	/* 42 */	NODEV,
+	/* 42 */	10,
 	/* 43 */	NODEV,
 	/* 44 */	NODEV,
 	/* 45 */	NODEV,
