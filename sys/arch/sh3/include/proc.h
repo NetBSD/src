@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.1 1999/09/13 10:31:21 itojun Exp $	*/
+/*	$NetBSD: proc.h,v 1.2 2002/03/10 07:46:14 uch Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -45,3 +45,7 @@ struct mdproc {
 
 /* md_flags */
 #define	MDP_USEDFPU	0x0001	/* has used the FPU */
+
+#ifdef _KERNEL
+vsize_t sh_proc0_init(vaddr_t, paddr_t, paddr_t);
+#endif
