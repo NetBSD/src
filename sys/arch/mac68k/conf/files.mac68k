@@ -1,9 +1,12 @@
-#	$NetBSD: files.mac68k,v 1.20 1995/01/21 00:14:11 briggs Exp $
+#	$NetBSD: files.mac68k,v 1.21 1995/01/25 20:45:49 cgd Exp $
 
 #	@(#)files.sparc	8.1 (Berkeley) 7/19/93
 #
 # files.mac68k.newconf
 # mac68k-specific configuration info
+
+# maxpartitions must be first item in files.${ARCH}.newconf
+maxpartitions 8
 
 maxusers 2 8 64
 
