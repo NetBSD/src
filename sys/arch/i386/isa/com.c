@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.12.2.16 1993/10/29 19:59:09 mycroft Exp $
+ *	$Id: com.c,v 1.12.2.17 1994/02/01 05:57:44 mycroft Exp $
  */
 
 /*
@@ -283,14 +283,11 @@ comopen(dev, flag, mode, p)
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		tp->t_state |= TS_WOPEN;
 		ttychars(tp);
-		/* preserve previous speed, if any */
-		if (tp->t_ispeed == 0) {
-			tp->t_iflag = TTYDEF_IFLAG;
-			tp->t_oflag = TTYDEF_OFLAG;
-			tp->t_cflag = TTYDEF_CFLAG;
-			tp->t_lflag = TTYDEF_LFLAG;
-			tp->t_ispeed = tp->t_ospeed = comdefaultrate;
-		}
+		tp->t_iflag = TTYDEF_IFLAG;
+		tp->t_oflag = TTYDEF_OFLAG;
+		tp->t_cflag = TTYDEF_CFLAG;
+		tp->t_lflag = TTYDEF_LFLAG;
+		tp->t_ispeed = tp->t_ospeed = comdefaultrate;
 		comparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0)
@@ -371,11 +368,6 @@ comwrite(dev, uio, flag)
 {
 	struct	tty *tp = com_tty[COMUNIT(dev)];
  
-#if 0
-	/* XXXX what is this for? */
-	if (constty == tp)
-		constty = NULL;
-#endif
 	return (*linesw[tp->t_line].l_write)(tp, uio, flag);
 }
 
@@ -710,7 +702,7 @@ comintr(sc)
 /*
  * Following are all routines needed for COM to act as console
  */
-#include "i386/i386/cons.h"
+#include <dev/cons.h>
 
 comcnprobe(cp)
 	struct consdev *cp;
