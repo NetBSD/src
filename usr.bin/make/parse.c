@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.40 1998/11/06 23:31:09 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.41 1998/11/17 23:56:23 ross Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.40 1998/11/06 23:31:09 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.41 1998/11/17 23:56:23 ross Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.40 1998/11/06 23:31:09 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.41 1998/11/17 23:56:23 ross Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2479,7 +2479,7 @@ Parse_File(name, stream)
 		}
 		if (strncmp(cp, "include", 7) == 0 ||
 	    	    ((cp[0] == 's' || cp[0] == '-') &&
-		    strncmp(&line[1], "include", 7) == 0)) {
+		    strncmp(&cp[1], "include", 7) == 0)) {
 		    ParseDoInclude (cp);
 		    goto nextLine;
 		} else if (strncmp(cp, "undef", 5) == 0) {
