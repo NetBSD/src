@@ -1,4 +1,4 @@
-/*	$NetBSD: cfscores.c,v 1.4 1997/10/10 12:26:44 lukem Exp $	*/
+/*	$NetBSD: cfscores.c,v 1.5 1997/10/11 02:41:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,11 +43,12 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cfscores.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cfscores.c,v 1.4 1997/10/10 12:26:44 lukem Exp $");
+__RCSID("$NetBSD: cfscores.c,v 1.5 1997/10/11 02:41:45 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <err.h>
 #include <fcntl.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -83,10 +84,8 @@ main(argc, argv)
 		exit(1);
 	}
 	dbfd = open(_PATH_SCORE, 0);
-	if (dbfd < 0) {
-		perror(_PATH_SCORE);
-		exit(2);
-	}
+	if (dbfd < 0)
+		err(2, "open %s", _PATH_SCORE);
 	setpwent();
 	if (argc == 1) {
 		uid = getuid();
@@ -128,15 +127,11 @@ printuser(pw, printfail)
 		return;
 	}
 	i = lseek(dbfd, pw->pw_uid * sizeof(struct betinfo), 0);
-	if (i < 0) {
-		perror("lseek");
-		return;
-	}
+	if (i < 0)
+		warn("lseek %s", _PATH_SCORE);
 	i = read(dbfd, (char *)&total, sizeof(total));
-	if (i < 0) {
-		perror("read");
-		return;
-	}
+	if (i < 0)
+		warn("read %s", _PATH_SCORE);
 	if (i == 0 || total.hand == 0) {
 		if (printfail)
 			printf("%s has never played canfield.\n", pw->pw_name);
