@@ -1,4 +1,4 @@
-/*	$NetBSD: __glob13.c,v 1.25 2003/08/07 16:42:45 agc Exp $	*/
+/*	$NetBSD: __glob13.c,v 1.26 2005/03/30 16:12:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: __glob13.c,v 1.25 2003/08/07 16:42:45 agc Exp $");
+__RCSID("$NetBSD: __glob13.c,v 1.26 2005/03/30 16:12:58 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -381,12 +381,13 @@ globtilde(pattern, patbuf, patsize, pglob)
 	size_t patsize;
 	glob_t *pglob;
 {
-	struct passwd *pwd;
+	struct passwd *pwd, pwres;
 	const char *h;
 	const Char *p;
 	Char *b;
 	char *d;
 	Char *pend = &patbuf[patsize / sizeof(Char)];
+	char pwbuf[1024];
 
 	pend--;
 
@@ -415,7 +416,8 @@ globtilde(pattern, patbuf, patsize, pglob)
 		 * first and then trying the password file
 		 */
 		if ((h = getenv("HOME")) == NULL) {
-			if ((pwd = getpwuid(getuid())) == NULL)
+			if (getpwuid_r(getuid(), &pwres, pwbuf, sizeof(pwbuf),
+			    &pwd) != 0)
 				return pattern;
 			else
 				h = pwd->pw_dir;
@@ -425,7 +427,7 @@ globtilde(pattern, patbuf, patsize, pglob)
 		/*
 		 * Expand a ~user
 		 */
-		if ((pwd = getpwnam(d)) == NULL)
+		if (getpwnam_r(d, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0)
 			return pattern;
 		else
 			h = pwd->pw_dir;
