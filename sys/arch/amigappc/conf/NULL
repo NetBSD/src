@@ -1,4 +1,4 @@
-# $NetBSD: NULL,v 1.13 2003/04/10 22:06:53 christos Exp $
+# $NetBSD: NULL,v 1.14 2003/09/27 20:51:54 is Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -23,7 +23,7 @@ options 	RTC_OFFSET=0
 
 #processors this kernel should support
 
-options		PPC_OEA
+#options		PPC_OEA this is in std.amigappc
 options 	PPC604E
 options 	PPC603E
 
