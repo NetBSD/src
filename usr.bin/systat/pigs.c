@@ -1,4 +1,4 @@
-/*	$NetBSD: pigs.c,v 1.2 1995/01/20 08:52:08 jtc Exp $	*/
+/*	$NetBSD: pigs.c,v 1.3 1995/04/29 05:54:50 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-static char rcsid[] = "$NetBSD: pigs.c,v 1.2 1995/01/20 08:52:08 jtc Exp $";
+static char rcsid[] = "$NetBSD: pigs.c,v 1.3 1995/04/29 05:54:50 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -56,6 +56,7 @@ static char rcsid[] = "$NetBSD: pigs.c,v 1.2 1995/01/20 08:52:08 jtc Exp $";
 #include <nlist.h>
 #include <pwd.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "extern.h"
 #include "systat.h"
@@ -124,7 +125,7 @@ showpigs()
 		}
 		else {
 			ep = &pt[k].pt_kp->kp_eproc;
-			uname = (char *)user_from_uid(ep->e_ucred.cr_uid, 0);
+			uname = user_from_uid(ep->e_ucred.cr_uid, 0);
 			pname = pt[k].pt_kp->kp_proc.p_comm;
 		}
 		wmove(wnd, y, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.c,v 1.2 1995/01/20 08:52:11 jtc Exp $	*/
+/*	$NetBSD: swap.c,v 1.3 1995/04/29 05:54:53 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)swap.c	8.2 (Berkeley) 2/21/94";
 #endif
-static char rcsid[] = "$NetBSD: swap.c,v 1.2 1995/01/20 08:52:11 jtc Exp $";
+static char rcsid[] = "$NetBSD: swap.c,v 1.3 1995/04/29 05:54:53 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -55,6 +55,7 @@ static char rcsid[] = "$NetBSD: swap.c,v 1.2 1995/01/20 08:52:11 jtc Exp $";
 #include <nlist.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "systat.h"
