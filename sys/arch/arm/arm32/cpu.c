@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.34 2002/05/02 22:57:36 rjs Exp $	*/
+/*	$NetBSD: cpu.c,v 1.35 2002/05/03 03:28:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.34 2002/05/02 22:57:36 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.35 2002/05/03 03:28:49 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -206,6 +206,13 @@ static const char *xscale_steppings[16] = {
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
 
+static const char *pxa2x0_steppings[16] = {
+	"step A-0",	"step A-1",	"step B-0",	"step B-1",
+	"rev 4",	"rev 5",	"rev 6",	"rev 7",
+	"rev 8",	"rev 9",	"rev 10",	"rev 11",
+	"rev 12",	"rev 13",	"rev 14",	"rev 15",
+};
+
 struct cpuidtab {
 	u_int32_t	cpuid;
 	enum		cpu_class cpu_class;
@@ -276,6 +283,11 @@ const struct cpuidtab cpuids[] = {
 
 	{ CPU_ID_80321,		CPU_CLASS_XSCALE,	"i80321",
 	  xscale_steppings },
+
+	{ CPU_ID_PXA250,	CPU_CLASS_XSCALE,	"PXA250",
+	  pxa2x0_steppings },
+	{ CPU_ID_PXA210,	CPU_CLASS_XSCALE,	"PXA210",
+	  pxa2x0_steppings },	/* XXX */
 
 	{ CPU_ID_ARM1022ES,	CPU_CLASS_ARM10E,	"ARM1022ES",
 	  generic_steppings },
@@ -450,7 +462,8 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 #if defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110)
 	case CPU_CLASS_SA1:
 #endif
-#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
+#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
+    defined(CPU_XSCALE_PXA2X0)
 	case CPU_CLASS_XSCALE:
 #endif
 		break;
