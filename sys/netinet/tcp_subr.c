@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.188 2005/03/29 20:10:16 yamt Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.189 2005/04/05 01:07:17 kurahone Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.188 2005/03/29 20:10:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.189 2005/04/05 01:07:17 kurahone Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -201,6 +201,10 @@ int	tcp_compat_42 = 0;
 int	tcp_rst_ppslim = 100;	/* 100pps */
 int	tcp_ackdrop_ppslim = 100;	/* 100pps */
 int	tcp_do_loopback_cksum = 0;
+int	tcp_sack_tp_maxholes = 32;
+int	tcp_sack_globalmaxholes = 1024;
+int	tcp_sack_globalholes = 0;
+
 
 /* tcb hash */
 #ifndef TCBHASHSIZE
@@ -907,6 +911,7 @@ static struct tcpcb tcpcb_template = {
 
 	.snd_cwnd = TCP_MAXWIN << TCP_MAX_WINSHIFT,
 	.snd_ssthresh = TCP_MAXWIN << TCP_MAX_WINSHIFT,
+	.snd_numholes = 0,
 
 	.t_partialacks = -1,
 };
