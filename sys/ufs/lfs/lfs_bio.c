@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.9 1999/03/25 22:26:52 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.10 1999/04/12 00:36:47 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -341,7 +341,8 @@ lfs_check(vp, blkno, flags)
 	int flags;
 {
 	int error;
-	
+	struct lfs *fs;
+
 	error = 0;
 	if (incore(vp, blkno))
 		return (0);
@@ -351,10 +352,19 @@ lfs_check(vp, blkno, flags)
 	if (VTOI(vp)->i_number == LFS_IFILE_INUM)
 		return 0;
 
+	/* If dirops are active, can't flush.  Wait for SET_ENDOP */
+	fs = VTOI(vp)->i_lfs;
+	if (fs->lfs_dirops)
+		return 0;
+
 	if (locked_queue_count > LFS_MAX_BUFS
-	    || locked_queue_bytes > LFS_MAX_BYTES)
+	    || locked_queue_bytes > LFS_MAX_BYTES
+	    || fs->lfs_dirvcount > LFS_MAXDIROP)
 	{
-		lfs_flush(VTOI(vp)->i_lfs, flags);
+		++fs->lfs_writer;
+		lfs_flush(fs, flags);
+		if(--fs->lfs_writer==0)
+			wakeup(&fs->lfs_dirops);
 	}
 	while  (locked_queue_count > LFS_WAIT_BUFS
 		|| locked_queue_bytes > LFS_WAIT_BYTES)
