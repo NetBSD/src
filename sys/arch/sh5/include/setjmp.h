@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.h,v 1.2 2002/07/10 10:22:43 scw Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.3 2002/07/11 14:16:42 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -43,69 +43,95 @@
  */
 
 /*
- * Reserve enough space for callee-saved registers plus some other
- * bits.
+ * Define offsets for callee-saved registers plus some other bits.
  *
- *  r10 - r15	(6)	6
- *  r18		(1)	7
- *  r26 - r35	(10)	17
- *  r44 - r59	(16)	33
- *  tr5 - tr7	(3)	36
- *  signals     (2)	38
+ * Note: the jmpbuf is the same size (and layout) as struct sigcontext
+ * declared in <sh5/signal.h>
  */
 
-#define	_JB_R10		0
-#define	_JB_R11		1
-#define	_JB_R12		2
-#define	_JB_R13		3
-#define	_JB_R14		4
-#define	_JB_R15		5
-#define	_JB_R18		6
-#define	_JB_R26		7
-#define	_JB_R27		8
-#define	_JB_R28		9
-#define	_JB_R29		10
-#define	_JB_R30		11
-#define	_JB_R31		12
-#define	_JB_R32		13
-#define	_JB_R33		14
-#define	_JB_R34		15
-#define	_JB_R35		16
-#define	_JB_R44		17
-#define	_JB_R45		18
-#define	_JB_R46		19
-#define	_JB_R47		20
-#define	_JB_R48		21
-#define	_JB_R49		22
-#define	_JB_R50		23
-#define	_JB_R51		24
-#define	_JB_R52		25
-#define	_JB_R53		26
-#define	_JB_R54		27
-#define	_JB_R55		28
-#define	_JB_R56		29
-#define	_JB_R57		30
-#define	_JB_R58		31
-#define	_JB_R59		32
-#define	_JB_TR5		33
-#define	_JB_TR6		34
-#define	_JB_TR7		35
+#define	_JB_R(r)	((4 + (r)) * 8)
+#define	_JB_TR(r)	((67 + (r)) * 8)
+#define	_JB_DR(r)	((76 + (r)) * 8)
 
-#define	_JB_SP		_JB_R14
-#define	_JB_PC		_JB_R18
+#define	_JB_USR		24
 
-#define	_JB_SIGFLAG	36
-#define	_JB_SIGMASK	37
+#define	_JB_R2		_JB_R(2)
+#define	_JB_R10		_JB_R(10)
+#define	_JB_R11		_JB_R(11)
+#define	_JB_R12		_JB_R(12)
+#define	_JB_R13		_JB_R(13)
+#define	_JB_R14		_JB_R(14)
+#define	_JB_R15		_JB_R(15)
+#define	_JB_R18		_JB_R(18)
+#define	_JB_R24		_JB_R(24)
+#define	_JB_R26		_JB_R(26)
+#define	_JB_R27		_JB_R(27)
+#define	_JB_R28		_JB_R(28)
+#define	_JB_R29		_JB_R(29)
+#define	_JB_R30		_JB_R(30)
+#define	_JB_R31		_JB_R(31)
+#define	_JB_R32		_JB_R(32)
+#define	_JB_R33		_JB_R(33)
+#define	_JB_R34		_JB_R(34)
+#define	_JB_R35		_JB_R(35)
+#define	_JB_R44		_JB_R(44)
+#define	_JB_R45		_JB_R(45)
+#define	_JB_R46		_JB_R(46)
+#define	_JB_R47		_JB_R(47)
+#define	_JB_R48		_JB_R(48)
+#define	_JB_R49		_JB_R(49)
+#define	_JB_R50		_JB_R(50)
+#define	_JB_R51		_JB_R(51)
+#define	_JB_R52		_JB_R(52)
+#define	_JB_R53		_JB_R(53)
+#define	_JB_R54		_JB_R(54)
+#define	_JB_R55		_JB_R(55)
+#define	_JB_R56		_JB_R(56)
+#define	_JB_R57		_JB_R(57)
+#define	_JB_R58		_JB_R(58)
+#define	_JB_R59		_JB_R(59)
+#define	_JB_TR0		_JB_TR(0)
+#define	_JB_TR1		_JB_TR(1)
+#define	_JB_TR2		_JB_TR(2)
+#define	_JB_TR3		_JB_TR(3)
+#define	_JB_TR4		_JB_TR(4)
+#define	_JB_TR5		_JB_TR(5)
+#define	_JB_TR6		_JB_TR(6)
+#define	_JB_TR7		_JB_TR(7)
 
-#define	_JB_DR0		38
-#define	_JB_DR1		39
-#define	_JB_DR2		40
-#define	_JB_DR3		41
-#define	_JB_DR4		42
-#define	_JB_DR5		43
-#define	_JB_DR6		44
-#define	_JB_DR7		45
+#define	_JB_FPSCR	600
 
-#define	_JBLEN		46
+#define	_JB_DR12	_JB_DR(12)
+#define	_JB_DR14	_JB_DR(14)
+#define	_JB_DR36	_JB_DR(36)
+#define	_JB_DR38	_JB_DR(38)
+#define	_JB_DR40	_JB_DR(40)
+#define	_JB_DR42	_JB_DR(42)
+#define	_JB_DR44	_JB_DR(44)
+#define	_JB_DR46	_JB_DR(46)
+#define	_JB_DR48	_JB_DR(48)
+#define	_JB_DR50	_JB_DR(50)
+#define	_JB_DR52	_JB_DR(52)
+#define	_JB_DR54	_JB_DR(54)
+#define	_JB_DR56	_JB_DR(56)
+#define	_JB_DR58	_JB_DR(58)
+#define	_JB_DR60	_JB_DR(60)
+#define	_JB_DR62	_JB_DR(62)
+
+#define	_JB_SIGONSTACK	0
+#define	_JB_SIGMASK13	4
+#define	_JB_SIGFPSTATE	8
+#define	_JB_SIGPAD	12
+#define	_JB_SIGMASK	864
+
+/*
+ * XXX: It would be better if jmp_buf was an array of register_t ...
+ */
+#ifdef _LP64
+#define	_JBLEN		110
+#else
+#define	_JBLEN		220
+#define	_JB_ATTRIBUTES	__attribute__ ((__aligned__(8)))
+#endif
 
 #endif /* _SH5_SETJMP_H */
