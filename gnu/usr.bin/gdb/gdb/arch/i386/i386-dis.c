@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: i386-dis.c,v 1.1 1994/01/28 12:41:24 pk Exp $
+	$Id: i386-dis.c,v 1.2 1995/02/05 13:27:12 mycroft Exp $
 */
 
 /*
@@ -615,7 +615,7 @@ struct dis386 dis386_twobyte[] = {
   /* a0 */
   { "pushl", fs },
   { "popl", fs },
-  { "(bad)" },
+  { "cpuid" },
   { "btS", Ev, Gv },  
   { "shldS", Ev, Gv, Ib },
   { "shldS", Ev, Gv, CL },
