@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.109 2000/01/31 22:39:37 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.110 2000/02/01 23:42:14 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -3054,3 +3054,32 @@ usr.sbin/pkg_install/create/pkg_create.1	1.22
 share/man/man4/termios.4			1.15
 
   Correct typo, fixing PR#9314.
+
+sys/kern/kern_subr.c                     	1.53
+sys/kern/kern_exec.c                     	1.107
+sys/miscfs/procfs/procfs_vfsops.c        	1.32 via patch
+sys/miscfs/procfs/procfs.h               	1.28 via patch
+sys/miscfs/procfs/procfs_subr.c          	1.29 via patch
+sys/sys/systm.h                          	1.101
+
+  Close procfs security hole.  Fixes SA#2000-001.
+
+sys/kern/vfs_syscalls.c				1.149 via patch
+sys/kern/exec_script.c	 			1.23
+sys/sys/file.h	 				1.22
+
+  Move the declaration of `vnops' to a header file, for the
+  benefit of LKMs.
+
+sys/dev/ic/wdc.c				1.71 via patch
+
+  Correct a minor bug in Ultra-DMA mode printing.
+
+sbin/fsck_ext2fs/setup.c			patch
+sys/ufs/ext2fs/ext2fs.h				patch
+sys/ufs/ext2fs/ext2fs_bswap.c			patch
+sys/ufs/ext2fs/ext2fs_lookup.c			patch
+sys/ufs/ext2fs/ext2fs_vfsops.c			patch
+
+  Add support for ext2fs revision 1, with read-only support for
+  the 'sparse_super' and 'filetype' options.  Should fix PR#9088.
