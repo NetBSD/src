@@ -1,4 +1,4 @@
-/*	$NetBSD: lp.h,v 1.8 1995/11/28 19:43:24 jtc Exp $	*/
+/*	$NetBSD: lp.h,v 1.9 1997/07/10 06:18:52 mikel Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@ extern char	*AF;		/* accounting file */
 extern long	 BR;		/* baud rate if lp is a tty */
 extern char	*CF;		/* name of cifplot filter (per job) */
 extern char	*DF;		/* name of tex filter (per job) */
-extern long	 DU;		/* daeomon user-id */
+extern long	 DU;		/* daemon user-id */
 extern long	 FC;		/* flags to clear if lp is a tty */
 extern char	*FF;		/* form feed string */
 extern long	 FS;		/* flags to set if lp is a tty */
@@ -56,7 +56,7 @@ extern char	*LO;		/* lock file name */
 extern char	*LP;		/* line printer device name */
 extern long	 MC;		/* maximum number of copies allowed */
 extern char	*MS;		/* stty flags to set if lp is a tty */
-extern long  MX;		/* maximum number of blocks to copy */
+extern long	 MX;		/* maximum number of blocks to copy */
 extern char	*NF;		/* name of ditroff(1) filter (per job) */
 extern char	*OF;		/* name of output filter (created once) */
 extern long	 PL;		/* page length */
