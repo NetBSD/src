@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raidframe.h,v 1.6 1999/08/10 18:18:30 oster Exp $	*/
+/*	$NetBSD: rf_raidframe.h,v 1.7 1999/08/11 02:20:35 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -42,18 +42,6 @@
 #include "rf_configure.h"
 #include "rf_disks.h"
 #include "rf_raid.h"
-
-struct rf_test_acc {		/* used by RAIDFRAME_TEST_ACC ioctl */
-	RF_SectorNum_t startSector;	/* raidAddress */
-	RF_SectorCount_t numSector;	/* number of sectors to xfer */
-	char   *buf;		/* data buffer */
-	void   *returnBufs[10];	/* for async accs only, completed I/Os
-				 * returned */
-	struct rf_test_acc *next;	/* for making lists */
-	RF_IoType_t type;	/* (see rf_types.h for RF_IO_TYPE_*) */
-	struct rf_test_acc *myaddr;	/* user-address of this struct */
-	void   *bp;		/* used in-kernel: need not be set by user */
-};
 
 typedef RF_uint32 RF_ReconReqFlags_t;
 
