@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_get_ldt.c,v 1.4 1998/01/09 03:15:09 perry Exp $	*/
+/*	$NetBSD: i386_get_ldt.c,v 1.5 1998/02/25 21:24:56 perry Exp $	*/
 
 /*
  *  Copyright (c) 1993 John Brezak
@@ -47,5 +47,5 @@ i386_get_ldt(start, desc, num)
 	p.desc = desc;
 	p.num = num;
 
-	return sysarch(I386_GET_LDT, (char *)&p);
+	return sysarch(I386_GET_LDT, (void *)&p);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: cacheflush.c,v 1.1 1997/10/17 06:29:07 jonathan Exp $ */
+/* $NetBSD: cacheflush.c,v 1.2 1998/02/25 21:24:57 perry Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -50,5 +50,5 @@ _cacheflush(addr, nbytes, whichcache)
 	cfa.va = (vm_offset_t) addr;
 	cfa.nbytes = nbytes;
 	cfa.whichcache = whichcache;
-	return (sysarch(MIPS_CACHEFLUSH, (char*)&cfa));
+	return (sysarch(MIPS_CACHEFLUSH, (void *)&cfa));
 }
