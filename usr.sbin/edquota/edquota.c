@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	5.15 (Berkeley) 9/27/90";*/
-static char rcsid[] = "$Id: edquota.c,v 1.2 1993/08/01 17:59:53 mycroft Exp $";
+static char rcsid[] = "$Id: edquota.c,v 1.3 1994/03/30 02:28:43 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -249,7 +249,7 @@ getprivs(id, quotatype)
 				    getentry(quotagroup, GRPQUOTA));
 				(void) fchmod(fd, 0640);
 			}
-			lseek(fd, (long)(id * sizeof(struct dqblk)), L_SET);
+			lseek(fd, id * sizeof(struct dqblk), L_SET);
 			switch (read(fd, &qup->dqblk, sizeof(struct dqblk))) {
 			case 0:			/* EOF */
 				/*
@@ -303,7 +303,7 @@ putprivs(id, quotatype, quplist)
 		if ((fd = open(qup->qfname, O_WRONLY)) < 0) {
 			perror(qup->qfname);
 		} else {
-			lseek(fd, (long)id * (long)sizeof (struct dqblk), 0);
+			lseek(fd, id * sizeof (struct dqblk), 0);
 			if (write(fd, &qup->dqblk, sizeof (struct dqblk)) !=
 			    sizeof (struct dqblk)) {
 				fprintf(stderr, "edquota: ");
