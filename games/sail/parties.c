@@ -1,4 +1,4 @@
-/*	$NetBSD: parties.c,v 1.6 1999/02/10 00:45:46 hubertf Exp $	*/
+/*	$NetBSD: parties.c,v 1.7 2001/01/01 21:57:38 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,16 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)parties.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: parties.c,v 1.6 1999/02/10 00:45:46 hubertf Exp $");
+__RCSID("$NetBSD: parties.c,v 1.7 2001/01/01 21:57:38 jwise Exp $");
 #endif
 #endif /* not lint */
 
 #include "extern.h"
 
 int
-meleeing(from, to)
-struct ship *from;
-struct ship *to;
+meleeing(struct ship *from, struct ship *to)
 {
 	struct BP *p = from->file->OBP;
 	struct BP *q = p + NBP;
@@ -59,9 +57,7 @@ struct ship *to;
 }
 
 int
-boarding(from, isdefense)
-struct ship *from;
-char isdefense;
+boarding(struct ship *from, int isdefense)
 {
 	struct BP *p = isdefense ? from->file->DBP : from->file->OBP;
 	struct BP *q = p + NBP;
@@ -73,9 +69,7 @@ char isdefense;
 }
 
 void
-unboard(ship, to, isdefense)
-struct ship *ship, *to;
-char isdefense;
+unboard(struct ship *ship, struct ship *to, int isdefense)
 {
 	struct BP *p = isdefense ? ship->file->DBP : ship->file->OBP;
 	int n;
