@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 1999/11/04 09:39:10 sato Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 1999/11/04 13:11:24 takemura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 1999/11/04 09:39:10 sato Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 1999/11/04 13:11:24 takemura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -141,9 +141,7 @@ unsigned (*clkread) __P((void)); /* high resolution timer if available */
 unsigned nullclkread __P((void));
 
 int	initcpu __P((void));
-#ifdef notyet /*__hpcmips__*/
-volatile struct chiptime *mcclock_addr;
-#endif
+void	consinit __P((void));
 
 #ifdef DEBUG
 /* stacktrace code violates prototypes to get callee's registers */
@@ -266,15 +264,15 @@ mach_init(argc, argv, bi)
 	/* Compute bootdev */
 	makebootdev("wd0"); /* XXX Should be passed up from boot lorder */
 
-	boothowto = RB_SINGLE;
+	boothowto = 0;
 #ifdef KADB
 	boothowto |= RB_KDB;
 #endif
 	for (i = 1; i < argc; i++) {
 		for (cp = argv[i]; *cp; cp++) {
 			switch (*cp) {
-			case 'a': /* autoboot */
-				boothowto &= ~RB_SINGLE;
+			case 's': /* single-user */
+				boothowto |= RB_SINGLE;
 				break;
 
 			case 'd': /* break into the kernel debugger ASAP */
@@ -285,16 +283,13 @@ mach_init(argc, argv, bi)
 				boothowto |= RB_MINIROOT;
 				break;
 
-			case 'n': /* ask for names */
+			case 'a': /* ask for names */
 				boothowto |= RB_ASKNAME;
 				break;
 
 			case 'h': /* XXX, serial console */
 				bootinfo->bi_cnuse |= BI_CNUSE_SERIAL;
 				break;
-
-			case 'N': /* don't ask for names */
-				boothowto &= ~RB_ASKNAME;
 			}
 		}
 	}
@@ -681,6 +676,16 @@ initcpu()
 	return i;
 }
 
+void
+consinit()
+{
+	/*
+	 *	Nothing to do.
+	 *	Console is alredy initialized in platform.cons_init().
+	 */
+
+	return;
+}
 
 /*
  * Wait "n" microseconds. (scsi code needs this).
