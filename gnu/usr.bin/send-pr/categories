@@ -27,6 +27,7 @@ port-mac68k
 port-macppc
 port-mips
 port-mvme68k
+port-mvmeppc
 port-news68k
 port-newsmips
 port-next68k
