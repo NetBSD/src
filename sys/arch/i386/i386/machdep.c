@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.204 1996/06/23 19:59:16 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.205 1996/06/25 21:22:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -147,12 +147,15 @@ static	vm_offset_t hole_start, hole_end;
 static	vm_offset_t avail_next;
 
 /*
- * Extent map to manage I/O space.  Allocate storage for 8 regions,
- * initially.  Later, ioport_malloc_safe will indicate that it's
- * safe to use malloc() to dynamically allocate region descriptors.
+ * Extent maps to manage I/O and ISA memory hole space.  Allocate
+ * storage for 8 regions in each, initially.  Later, ioport_malloc_safe
+ * will indicate that it's safe to use malloc() to dynamically allocate
+ * region descriptors.
  */
 static	char ioport_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8)];
+static	char iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8)];
 static	struct extent *ioport_ex;
+static	struct extent *iomem_ex;
 static	ioport_malloc_safe;
 
 caddr_t	allocsys __P((caddr_t));
@@ -1074,10 +1077,17 @@ init386(first_avail)
 	proc0.p_addr = proc0paddr;
 
 	/*
-	 * Initialize the I/O port extent map.
+	 * Initialize the I/O port and I/O mem extent maps.
+	 * Note: we don't have to check the return value since
+	 * creation of a fixed extent map will never fail (since
+	 * descriptor storage has already been allocated).
 	 */
 	ioport_ex = extent_create("ioport", 0x0, 0xffff, M_DEVBUF,
-	    ioport_ex_storage, sizeof(ioport_ex_storage), EX_NOWAIT);
+	    ioport_ex_storage, sizeof(ioport_ex_storage),
+	    EX_NOBLOB|EX_NOWAIT);
+	iomem_ex = extent_create("iomem", 0x0a0000, 0x100000, M_DEVBUF,
+	    iomem_ex_storage, sizeof(iomem_ex_storage),
+	    EX_NOBLOB|EX_NOWAIT);
 
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 
@@ -1410,6 +1420,23 @@ bus_mem_map(t, bpa, size, cacheable, mhp)
 {
 	u_long pa, endpa;
 	vm_offset_t va;
+	int error, did_extent_alloc = 0;
+
+	/*
+	 * Before we go any further, let's make sure that this
+	 * memory region is available.
+	 *
+	 * XXX We check for free space if the requested region
+	 * XXX only if the request is within the ISA memory hole.
+	 * XXX This is arguably bogus.
+	 */
+	if (bpa >= iomem_ex->ex_start && bpa < iomem_ex->ex_end) {
+		error = extent_alloc_region(iomem_ex, bpa, size,
+		    EX_NOWAIT | (ioport_malloc_safe ? EX_MALLOCOK : 0));
+		if (error)
+			return (error);
+		did_extent_alloc = 1;
+	}
 
 	pa = i386_trunc_page(bpa);
 	endpa = i386_round_page((bpa + size) - 1);
@@ -1420,20 +1447,30 @@ bus_mem_map(t, bpa, size, cacheable, mhp)
 #endif
 
 	va = kmem_alloc_pageable(kernel_map, endpa - pa);
-	if (va == 0)
+	if (va == 0) {
+		if (did_extent_alloc) {
+			if (extent_free(iomem_ex, bpa, size, EX_NOWAIT |
+			    (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
+				/* XXX panic? */
+				printf("bus_mem_map: pa 0x%lx, size 0x%lx\n",
+				    bpa, size);
+				printf("bus_mem_map: can't free region\n");
+			}
+		}
 		return (1);
+	}
 	*mhp = (caddr_t)(va + (bpa & PGOFSET));
 
 	for (; pa < endpa; pa += NBPG, va += NBPG) {
-                pmap_enter(pmap_kernel(), va, pa, VM_PROT_READ | VM_PROT_WRITE,
-                    TRUE);
-                if (!cacheable)
-                        pmap_changebit(pa, PG_N, ~0);
-                else
-                        pmap_changebit(pa, 0, ~PG_N);
-        }
+		pmap_enter(pmap_kernel(), va, pa, VM_PROT_READ | VM_PROT_WRITE,
+		    TRUE);
+		if (!cacheable)
+			pmap_changebit(pa, PG_N, ~0);
+		else
+			pmap_changebit(pa, 0, ~PG_N);
+	}
  
-        return 0;
+	return 0;
 }
 
 void
@@ -1443,6 +1480,7 @@ bus_mem_unmap(t, memh, size)
 	bus_mem_size_t size;
 {
 	vm_offset_t va, endva;
+	bus_mem_addr_t bpa;
 
 	va = i386_trunc_page(memh);
 	endva = i386_round_page((memh + size) - 1);
@@ -1451,6 +1489,23 @@ bus_mem_unmap(t, memh, size)
 	if (endva <= va)
 		panic("bus_mem_unmap: overflow");
 #endif
+
+	/*
+	 * Find the PA the mapping corresponds to and free that
+	 * region from the iomem extent map.
+	 *
+	 * XXX We only do this for regions that lie within the
+	 * XXX ISA memory hole.  This is arguably bogus.
+	 */
+	bpa = pmap_extract(pmap_kernel(), va) + ((u_long)memh & PGOFSET);
+	if (bpa >= iomem_ex->ex_start && bpa < iomem_ex->ex_end) {
+		if (extent_free(iomem_ex, bpa, size,
+		    EX_NOWAIT | (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
+			printf("bus_mem_unmap: pa 0x%lx, size 0x%lx\n",
+			    memh, size);
+			printf("bus_mem_unmap: can't free region\n");
+		}
+	}
 
 	kmem_free(kernel_map, va, endva - va);
 }
@@ -1486,7 +1541,7 @@ bus_io_unmap(t, ioh, size)
 	error = extent_free(ioport_ex, ioh, size,
 	    EX_NOWAIT | (ioport_malloc_safe ? EX_MALLOCOK : 0));
 	if (error) {
-		printf("bus_io_unmap: port 0x%x, size 0x%x\n",
+		printf("bus_io_unmap: port 0x%lx, size 0x%lx\n",
 		    ioh, size);
 		printf("bus_io_unmap: can't free region\n");
 	}
