@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_msdos.8,v 1.25 2003/02/25 10:35:02 wiz Exp $
+.\" $NetBSD: mount_msdos.8,v 1.26 2003/08/02 11:41:19 jdolecek Exp $
 .\"
 .\" Copyright (c) 1993, 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -44,6 +44,7 @@
 .Op Fl u Ar uid
 .Op Fl g Ar gid
 .Op Fl m Ar mask
+.Op Fl M Ar mask
 .Op Fl s
 .Op Fl l
 .Op Fl 9
@@ -98,9 +99,20 @@ See
 for more information about octal file modes.)
 Only the nine low-order bits of
 .Ar mask
-are used.
+are used. The value of
+.Fl M
+is used if it is supplied and
+.Fl m 
+is omitted.
 The default mask is taken from the
 directory on which the file system is being mounted.
+.It Fl M Ar mask
+Specify the maximum file permissions for directories
+in the file system. The value of
+.Fl m
+is used if it is supplied and
+.Fl M
+is omitted. See description of previous option for details.
 .It Fl s
 Force behaviour to
 ignore and not generate Win'95 long filenames.
@@ -135,6 +147,13 @@ The differences to the msdos filesystem are minimal and
 limited to the boot block.
 This option enforces
 .Fl s .
+.El
+.Sh EXAMPLES
+To remove the 'execute' permission bit for all files, but still keep
+directories searchable, use:
+.Bl -item -offset indent
+.It
+mount_msdos -m 0644 -M 0755 /dev/wd0e /msdos
 .El
 .Sh SEE ALSO
 .Xr mount 2 ,
