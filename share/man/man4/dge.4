@@ -1,4 +1,4 @@
-.\"	$NetBSD: dge.4,v 1.2 2004/03/18 20:40:59 wiz Exp $
+.\"	$NetBSD: dge.4,v 1.3 2004/03/18 20:44:25 wiz Exp $
 .\"
 .\" Copyright (c) 2004, SUNET, Swedish University Computer Network.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd Mars 18, 2004
+.Dd March 18, 2004
 .Dt DGE 4
 .Os
 .ds nummer "i82597EX
@@ -54,8 +54,9 @@ which uses a single mode fiber (1310nm) interface.
 The
 .nummer
 supports IPv4/TCP/UDP checksumming in hardware, as well
-as TCP Segmentation Offloading (TSO).  The driver does currently
-only support the hardware checksumming features.
+as TCP Segmentation Offloading (TSO).
+The driver does currently only support the hardware checksumming
+features.
 See
 .Xr ifconfig 8
 for information on how to enable the hardware checksum calculations.
@@ -66,7 +67,8 @@ link flags
 .Ar link0
 and
 .Ar link1
-to set the PCIX burst size. The burst size is set according to
+to set the PCIX burst size.
+The burst size is set according to
 this table:
 .Pp
 .Bl -column "link0" "link1" "burst size"
@@ -84,33 +86,35 @@ the system.
 .Bl -diag
 .It dge%d: Tx packet consumes too many DMA segments, dropping...
 The packet consisted of too many small mbufs and could therefore
-not be loaded into a DMA map.  This is most unlikely, the driver
-can currently handle up to 100 segments, but over 80 segments
-has been seen using large (16k) jumbo frames.
+not be loaded into a DMA map.
+This is most unlikely, the driver can currently handle up to 100
+segments, but over 80 segments has been seen using large (16k)
+jumbo frames.
 .Pp
 .It dge%s: device timeout (txfree %d txsfree %d txnext %d)
 The
 .nummer
-had been given packets to send, but didn't interrupt
-within 5 seconds.  This diagnostic is most likely the result of
-a hardware failure, and the chip will be reset to resume normal
-operation.
+had been given packets to send, but didn't interrupt within 5
+seconds.
+This diagnostic is most likely the result of a hardware failure,
+and the chip will be reset to resume normal operation.
 .Pp
 .It dge%d: Receive overrun
 If the computer is is heavy loaded the software may not be able to
 keep up removing received datagrams from the receive queue, and
-will therefore loose datagrams.  To avoid this, check that the other
-end is using the XON/XOFF protocol, if possible, or increase the
-receive descriptor ring size in the driver.
+will therefore loose datagrams.
+To avoid this, check that the other end is using the XON/XOFF
+protocol, if possible, or increase the receive descriptor ring size
+in the driver.
 .Pp
 .It dge%d: symbol error
 .It dge%d: parity error
-An error in the XGMII communication was detected.  This is a hardware
-error in the MAC<->PHY communication bus.
+An error in the XGMII communication was detected.
+This is a hardware error in the MAC\*[Lt]-\*[Gt]PHY communication bus.
 .Pp
 .It dge%d: CRC error
-A CRC error in the received datagram was detected. The error is probably
-caused in the fiber communication.
+A CRC error in the received datagram was detected.
+The error is probably caused in the fiber communication.
 .Pp
 .It dge%d: WARNING: reset failed to complete
 This is a fatal error and means that the hardware is broken and
@@ -118,11 +122,11 @@ will most likely not function correctly.
 .Pp
 .It "dge%d: unable to allocate or map rx buffer %d error = %d
 The driver was not able to map a mbuf cluster page to a receive
-descriptor entry in the receive ring.  Most likely the system has
-run out of mbuf clusters or have a too small cluster map.  See
-the errno for more information.
+descriptor entry in the receive ring.
+Most likely the system has run out of mbuf clusters or have a too
+small cluster map.
+See the errno for more information.
 .El
-.Pp
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
