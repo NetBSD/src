@@ -1,4 +1,4 @@
-/* $NetBSD: bootconfig.h,v 1.1 1996/01/31 23:21:34 mark Exp $ */
+/* $NetBSD: bootconfig.h,v 1.2 1996/03/14 23:11:06 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -41,11 +41,8 @@
  * boot configuration structure
  *
  * Created      : 12/09/94
- * Last updated : 01/07/95
  *
  * Based on kate/boot/bootconfig.h
- *
- *    $Id: bootconfig.h,v 1.1 1996/01/31 23:21:34 mark Exp $
  */
 
 typedef struct _PhysMem {

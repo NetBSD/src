@@ -1,4 +1,4 @@
-/* $NetBSD: qmouse.h,v 1.1 1996/01/31 23:22:53 mark Exp $ */
+/* $NetBSD: qmouse.h,v 1.2 1996/03/14 23:11:40 mark Exp $ */
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -28,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: qmouse.h,v 1.1 1996/01/31 23:22:53 mark Exp $
  */
 
 #define MOVEEVENT	0x40

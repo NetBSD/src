@@ -1,4 +1,4 @@
-/* $NetBSD: io.h,v 1.1 1996/01/31 23:22:00 mark Exp $ */
+/* $NetBSD: io.h,v 1.2 1996/03/14 23:11:16 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -41,9 +41,6 @@
  * IO registers
  *
  * Created      : 10/10/94
- * Last updated : 01/07/95
- *
- *    $Id: io.h,v 1.1 1996/01/31 23:22:00 mark Exp $
  */
 
 /* Some of these addresses are frightening and need cleaning up */

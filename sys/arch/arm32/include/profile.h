@@ -1,4 +1,4 @@
-/* $NetBSD: profile.h,v 1.2 1996/03/13 21:04:55 mark Exp $ */
+/* $NetBSD: profile.h,v 1.3 1996/03/14 23:11:34 mark Exp $ */
 
 /*
  * Copyright (c) 1995-1996 Mark Brinicombe
@@ -27,8 +27,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: profile.h,v 1.2 1996/03/13 21:04:55 mark Exp $
  */
 
 #define	_MCOUNT_DECL static inline void _mcount

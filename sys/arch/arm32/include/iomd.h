@@ -1,4 +1,4 @@
-/* $NetBSD: iomd.h,v 1.1 1996/01/31 23:22:03 mark Exp $ */
+/* $NetBSD: iomd.h,v 1.2 1996/03/14 23:11:18 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -41,11 +41,8 @@
  * IOMD registers
  *
  * Created      : 18/09/94
- * Last updated : 01/07/95
  *
  * Based on kate/display/iomd.h
- *
- *    $Id: iomd.h,v 1.1 1996/01/31 23:22:03 mark Exp $
  */
 
 #define IOMD_HW_BASE  0x03200000

@@ -1,4 +1,4 @@
-/* $NetBSD: reg.h,v 1.1 1996/01/31 23:22:57 mark Exp $ */
+/* $NetBSD: reg.h,v 1.2 1996/03/14 23:11:41 mark Exp $ */
 
 /*
  * Copyright (C) 1994, 1995 Frank Lancaster
@@ -31,7 +31,6 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *	@(#)reg.h	5.5 (Berkeley) 1/18/91
- *	$Id: reg.h,v 1.1 1996/01/31 23:22:57 mark Exp $
  */
 
 #ifndef _ARM32_REG_H_

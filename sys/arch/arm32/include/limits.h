@@ -1,4 +1,4 @@
-/* $NetBSD: limits.h,v 1.1 1996/01/31 23:22:21 mark Exp $ */
+/* $NetBSD: limits.h,v 1.2 1996/03/14 23:11:25 mark Exp $ */
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)limits.h	7.2 (Berkeley) 6/28/90
- *	$Id: limits.h,v 1.1 1996/01/31 23:22:21 mark Exp $
  */
 
 #ifndef	_ARM32_LIMITS_H_

@@ -1,4 +1,4 @@
-/* $NetBSD: aout_machdep.h,v 1.1 1996/01/31 23:21:47 mark Exp $ */
+/* $NetBSD: aout_machdep.h,v 1.2 1996/03/14 23:11:12 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -30,8 +30,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: aout_machdep.h,v 1.1 1996/01/31 23:21:47 mark Exp $
  */
 
 #ifndef	_ARM32_EXEC_H_

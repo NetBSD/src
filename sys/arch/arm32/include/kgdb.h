@@ -1,4 +1,4 @@
-/* $NetBSD: kgdb.h,v 1.1 1996/01/31 23:22:18 mark Exp $ */
+/* $NetBSD: kgdb.h,v 1.2 1996/03/14 23:11:23 mark Exp $ */
 
 /*
  * Copyright (C) 1993, 1994 Wolfgang Solfrank.
@@ -29,8 +29,6 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: kgdb.h,v 1.1 1996/01/31 23:22:18 mark Exp $
  */
 
 /* define certain registers */

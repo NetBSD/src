@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.5 1996/03/04 05:04:16 cgd Exp $ */
+/* $NetBSD: param.h,v 1.6 1996/03/14 23:11:27 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -30,8 +30,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: param.h,v 1.5 1996/03/04 05:04:16 cgd Exp $
  */
 
 #ifndef	_ARM32_PARAM_H_

@@ -1,4 +1,4 @@
-/* $NetBSD: cpus.h,v 1.2 1996/02/01 22:29:38 mycroft Exp $ */
+/* $NetBSD: cpus.h,v 1.3 1996/03/14 23:11:08 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -39,9 +39,6 @@
  * cpu device header file
  *
  * Created      : 26/12/95
- * Last updated : 26/12/95
- *
- *    $Id: cpus.h,v 1.2 1996/02/01 22:29:38 mycroft Exp $
  */
 
 #ifndef _LOCORE

@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.1 1996/01/31 23:21:29 mark Exp $ */
+/* $NetBSD: asm.h,v 1.2 1996/03/14 23:11:03 mark Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)asm.h	5.5 (Berkeley) 5/7/91
- *	$Id: asm.h,v 1.1 1996/01/31 23:21:29 mark Exp $
  */
 
 #ifndef _ARM32_ASM_H_

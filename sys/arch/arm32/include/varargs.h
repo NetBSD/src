@@ -1,4 +1,4 @@
-/* $NetBSD: varargs.h,v 1.1 1996/01/31 23:23:24 mark Exp $ */
+/* $NetBSD: varargs.h,v 1.2 1996/03/14 23:11:53 mark Exp $ */
 
 /*
  * Copyright (c) 1990, 1993
@@ -38,7 +38,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)varargs.h	8.2 (Berkeley) 3/22/94
- *	$Id: varargs.h,v 1.1 1996/01/31 23:23:24 mark Exp $
  */
 
 #ifndef _MACHINE_VARARGS_H_

@@ -1,6 +1,4 @@
-/* $NetBSD: setjmp.h,v 1.1 1996/01/31 23:23:06 mark Exp $ */
-
-/*	$Id: setjmp.h,v 1.1 1996/01/31 23:23:06 mark Exp $	*/
+/* $NetBSD: setjmp.h,v 1.2 1996/03/14 23:11:45 mark Exp $ */
 
 /*
  * machine/setjmp.h: machine dependent setjmp-related information.

@@ -1,4 +1,4 @@
-/* $NetBSD: fp.h,v 1.1 1996/01/31 23:21:52 mark Exp $ */
+/* $NetBSD: fp.h,v 1.2 1996/03/14 23:11:15 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -41,9 +41,6 @@
  * FP info
  *
  * Created      : 10/10/95
- * Last updated : 01/07/95
- *
- *    $Id: fp.h,v 1.1 1996/01/31 23:21:52 mark Exp $
  */
 
 #ifndef __ARM32_FP_H
