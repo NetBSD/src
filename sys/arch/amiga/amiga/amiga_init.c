@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.32 1995/09/29 13:51:30 chopps Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.33 1995/10/05 12:40:48 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -59,7 +59,7 @@
 #include <amiga/dev/zbusvar.h>
 
 extern int	machineid, mmutype;
-extern u_int 	lowram;
+extern u_int	lowram;
 extern u_int	Sysptmap, Sysptsize, Sysseg, Umap, proc0paddr;
 extern u_int	Sysseg_pa;
 extern u_int	virtual_avail;
@@ -104,7 +104,7 @@ chipmem_steal(amount)
 	long amount;
 {
 	/*
-	 * steal from top of chipmem, so we don't collide with 
+	 * steal from top of chipmem, so we don't collide with
 	 * the kernel loaded into chipmem in the not-yet-mapped state.
 	 */
 	vm_offset_t p = chipmem_end - amount;
@@ -141,16 +141,16 @@ alloc_z2mem(amount)
  *	Interrupts are disabled
  *	PA == VA, we don't have to relocate addresses before enabling
  *		the MMU
- * 	Exec is no longer available (because we're loaded all over 
+ * 	Exec is no longer available (because we're loaded all over
  *		low memory, no ExecBase is available anymore)
  *
  * It's purpose is:
- *	Do the things that are done in locore.s in the hp300 version, 
+ *	Do the things that are done in locore.s in the hp300 version,
  *		this includes allocation of kernel maps and enabling the MMU.
- * 
- * Some of the code in here is `stolen' from Amiga MACH, and was 
+ *
+ * Some of the code in here is `stolen' from Amiga MACH, and was
  * written by Bryan Ford and Niklas Hallqvist.
- * 
+ *
  * Very crude 68040 support by Michael L. Hitch.
  */
 
@@ -189,8 +189,8 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 		noncontig_enable = (flags >> 1) & 3;
 #endif
 
-	/* 
-	 * the kernel ends at end(), plus the cfdev structures we placed 
+	/*
+	 * the kernel ends at end(), plus the cfdev structures we placed
 	 * there in the loader. Correct for this now.
 	 */
 	if (esym == NULL) {
@@ -216,7 +216,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 		sp = memlist->m_seg;
 		esp = sp + memlist->m_nseg;
 		for (; sp < esp; sp++) {
-			if ((sp->ms_attrib & (MEMF_FAST | MEMF_24BITDMA)) 
+			if ((sp->ms_attrib & (MEMF_FAST | MEMF_24BITDMA))
 			    != (MEMF_FAST|MEMF_24BITDMA))
 				continue;
 			if (sp->ms_start == fphystart)
@@ -265,7 +265,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 
 	/*
 	 * assume KVA_MIN == 0.  We subtract the kernel code (and
-	 * the configdev's and memlists) from the virtual and 
+	 * the configdev's and memlists) from the virtual and
 	 * phsical starts and ends.
 	 */
 	vend   = fphysize;
@@ -317,8 +317,8 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 	 * pt maps the first N megs of ram Sysptmap comes directly
 	 * after pt (ptpa) and so it must map >= N meg + Its one
 	 * page and so it must map 8M of space.  Specifically
-	 * Sysptmap holds the pte's that map the kerne page tables. 
-	 * 
+	 * Sysptmap holds the pte's that map the kerne page tables.
+	 *
 	 * We want Sysmap to be the first address mapped by Sysptmap.
 	 * this will be the address just above what pt,pt+ptsize maps.
 	 * pt[0] maps address 0 so:
@@ -405,7 +405,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 			sg_proto += NBPG;
 			pg_proto += NBPG;
 		}
-		/* 
+		/*
 		 * invalidate the remainder of each table
 		 */
 		esg = (u_int *)(Sysptmap_pa + NBPG);
@@ -420,13 +420,12 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 	 */
 	pg_proto = fphystart | PG_RO | PG_V;	/* text pages are RO */
 	pg       = (u_int *) ptpa;
-/* XXX make first page PG_NV when vectors get moved */
-	*pg++ = pg_proto;
+	*pg++ = PG_NV;				/* Make page 0 invalid */
 	pg_proto += NBPG;
 	for (i = NBPG; i < (u_int) etext; i += NBPG, pg_proto += NBPG)
 		*pg++ = pg_proto;
 
-	/* 
+	/*
 	 * data, bss and dynamic tables are read/write
 	 */
 	pg_proto = (pg_proto & PG_FRAME) | PG_RW | PG_V;
@@ -447,7 +446,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 		*pg++ = PG_NV;
 
 	/*
-	 * go back and validate internal IO PTEs 
+	 * go back and validate internal IO PTEs
 	 * at end of allocated PT space
 	 */
 	pg      -= ptextra;
@@ -524,14 +523,14 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 
 	/*
 	 * set this before copying the kernel, so the variable is updated in
-	 * the `real' place too. protorp[0] is already preset to the 
+	 * the `real' place too. protorp[0] is already preset to the
 	 * CRP setting.
 	 */
 	protorp[1] = Sysseg_pa;		/* + segtable address */
 
 	/*
-	 * copy over the kernel (and all now initialized variables) 
-	 * to fastram.  DONT use bcopy(), this beast is much larger 
+	 * copy over the kernel (and all now initialized variables)
+	 * to fastram.  DONT use bcopy(), this beast is much larger
 	 * than 128k !
 	 */
 	{
@@ -603,7 +602,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 	*(volatile int *)proc0paddr = i;
 
 	/*
-	 * disable all interupts but enable allow them to be enabled 
+	 * disable all interupts but enable allow them to be enabled
 	 * by specific driver code (global int enable bit)
 	 */
 	custom.intena = 0x7fff;				/* disable ints */
@@ -622,7 +621,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 	/*
 	 * This is needed for 3000's with superkick ROM's. Bit 7 of
 	 * 0xde0002 enables the ROM if set. If this isn't set the machine
-	 * has to be powercycled in order for it to boot again. ICKA! RFH 
+	 * has to be powercycled in order for it to boot again. ICKA! RFH
 	 */
 	if (is_a3000()) {
 		volatile unsigned char *a3000_magic_reset;
@@ -653,7 +652,7 @@ rollcolor(color)
 }
 
 /*
- * Kernel reloading code 
+ * Kernel reloading code
  */
 
 static struct exec kernel_exec;
@@ -676,7 +675,7 @@ kernel_image_magic_size()
 	int sz;
 
 	/* 4 + cfdev's + Mem_Seg's + 4 */
-	sz = 8 + ncfdev * sizeof(struct cfdev) 
+	sz = 8 + ncfdev * sizeof(struct cfdev)
 	    + memlist->m_nseg * sizeof(struct boot_memseg);
 	return(sz);
 }
@@ -747,7 +746,7 @@ kernel_reload_write(uio)
 		kernel_load_phase = 0;
 		kernel_load_endseg = kernel_exec.a_text;
 		return(0);
-	} 
+	}
 	/*
 	 * Continue loading in the kernel image.
 	 */

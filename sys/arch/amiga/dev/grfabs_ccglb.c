@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_ccglb.c,v 1.6 1994/10/26 02:03:26 cgd Exp $	*/
+/*	$NetBSD: grfabs_ccglb.c,v 1.7 1995/10/05 12:41:16 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -42,7 +42,7 @@ monitor_t *cc_monitor;
 
 cop_t std_copper_list[] = {
     { CI_WAIT (0, 12), 0xfffe },
-#if defined (GRF_ECS)
+#if defined (GRF_ECS) || defined (GRF_AGA)
 #if defined (GRF_AGA)
     { R_FMODE, 0x0000 },
 #endif
@@ -64,7 +64,7 @@ cop_t std_copper_list[] = {
     { R_DIWSTRT, 0xffff },
     { R_BPLCON0, 0x0000 },
     { R_DIWSTOP, 0x0000 },
-#if defined (GRF_ECS)
+#if defined (GRF_ECS) || defined (GRF_AGA)
     { R_DIWHIGH, 0x0000 },
 #endif 
     { R_DDFSTRT, 0x0000 },
@@ -297,7 +297,7 @@ int aga_copper_list_size = sizeof (aga_copper_list);
 #if defined (GRF_A2024)
 cop_t std_dlace_copper_list[] = {
     { CI_WAIT(0,12), 0xfffe },				  /* WAIT (0, 12) */
-#if defined (GRF_ECS)
+#if defined (GRF_ECS) || defined (GRF_AGA)
     { R_BEAMCON0, 0x0000 },
     { R_BPLCON3, 0x0020 },			  /* enable border blank */
 #endif
@@ -314,7 +314,7 @@ cop_t std_dlace_copper_list[] = {
     { R_DIWSTRT, 0xffff },
     { R_BPLCON0, 0x0000 },
     { R_DIWSTOP, 0x0000 },
-#if defined (GRF_ECS)
+#if defined (GRF_ECS) || defined (GRF_AGA)
     { R_DIWHIGH, 0x0000 },
 #endif 
     { R_DDFSTRT, 0x0000 },
@@ -339,14 +339,14 @@ int std_dlace_copper_list_size = sizeof (std_dlace_copper_list);
 
 cop_t std_a2024_copper_list[] = {
     { CI_WAIT(0,12), 0xfffe },				  /* WAIT (0, 12) */
-#if defined (GRF_ECS)
+#if defined (GRF_ECS) || defined (GRF_AGA)
     { R_BEAMCON0, 0x0000 },
 #endif
     /* hedley card init setup section */
     { R_COLOR00, 0x0f00 },
     { R_BPL0PTH, 0x0000 }, { R_BPL0PTL, 0x0000 }, /* init plane of 1's with first set for centering */
     { R_DIWSTRT, 0x1561 }, { R_DIWSTOP, 0x16d1 },
-#if defined (GRF_ECS)
+#if defined (GRF_ECS) || defined (GRF_AGA)
     { R_DIWHIGH, 0x2000 },
 #endif
     { R_DDFSTRT, 0x0040 }, { R_DDFSTOP, 0x00d0 },
@@ -379,7 +379,7 @@ cop_t std_a2024_copper_list[] = {
     { R_BPL1PTH, 0x0000 }, { R_BPL1PTL, 0x0000 },
     { R_BPL2PTH, 0x0000 }, { R_BPL2PTL, 0x0000 },
     { R_BPL3PTH, 0x0000 }, { R_BPL3PTL, 0x0000 }, 
-#if defined (GRF_ECS)
+#if defined (GRF_ECS) || defined (GRF_AGA)
     { R_DIWHIGH, 0x2000 },
 #if defined (GRF_AGA)
     { R_FMODE, 0x0000},
@@ -393,14 +393,14 @@ int std_a2024_copper_list_size = sizeof (std_a2024_copper_list);
 
 cop_t std_pal_a2024_copper_list[] = {
     { CI_WAIT(0,20), 0xfffe },				  /* WAIT (0, 12) */
-#if defined (GRF_ECS)
+#if defined (GRF_ECS) || defined (GRF_AGA)
     { R_BEAMCON0, STANDARD_PAL_BEAMCON },
 #endif
     /* hedley card init setup section */
     { R_COLOR00, 0x0f00 },
     { R_BPL0PTH, 0x0000 }, { R_BPL0PTL, 0x0000 }, /* init plane of 1's with first set for centering */
     { R_DIWSTRT, 0x1d61 }, { R_DIWSTOP, 0x1ed1 },
-#if defined (GRF_ECS)
+#if defined (GRF_ECS) || defined (GRF_AGA)
     { R_DIWHIGH, 0x2000 },
 #endif
     { R_DDFSTRT, 0x0040 }, { R_DDFSTOP, 0x00d0 },
@@ -434,7 +434,7 @@ cop_t std_pal_a2024_copper_list[] = {
     { R_BPL1PTH, 0x0000 }, { R_BPL1PTL, 0x0000 },
     { R_BPL2PTH, 0x0000 }, { R_BPL2PTL, 0x0000 },
     { R_BPL3PTH, 0x0000 }, { R_BPL3PTL, 0x0000 }, 
-#if defined (GRF_ECS)
+#if defined (GRF_ECS) || defined (GRF_AGA)
     { R_DIWHIGH, 0x2100 },
 #if defined (GRF_AGA)
     { R_FMODE, 0x0000},
