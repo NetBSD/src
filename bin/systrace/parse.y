@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.6 2002/11/02 20:04:20 provos Exp $	*/
+/*	$NetBSD: parse.y,v 1.7 2002/11/23 17:42:45 provos Exp $	*/
 /*	$OpenBSD: parse.y,v 1.9 2002/08/04 04:15:50 provos Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 %{
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.y,v 1.6 2002/11/02 20:04:20 provos Exp $");
+__RCSID("$NetBSD: parse.y,v 1.7 2002/11/23 17:42:45 provos Exp $");
 
 #include <sys/types.h>
 
@@ -430,8 +430,8 @@ yyerror(const char *fmt, ...)
 	errors = 1;
 
 	va_start(ap, fmt);
-	vfprintf(stdout, fmt, ap);
-	fprintf(stdout, "\n");
+	vfprintf(stderr, fmt, ap);
+	fprintf(stderr, "\n");
 	va_end(ap);
 	return (0);
 }
