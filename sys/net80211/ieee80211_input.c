@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.8 2003/10/18 03:33:51 onoe Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.9 2003/10/18 05:06:43 itojun Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.8 2003/08/19 22:17:03 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.8 2003/10/18 03:33:51 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.9 2003/10/18 05:06:43 itojun Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -1271,8 +1271,10 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		status = le16toh(*(u_int16_t *)frm);
 		frm += 2;
 		if (status != 0) {
-			if_printf(ifp, "association failed (reason %d) for %s\n",
-			    status, ether_sprintf(wh->i_addr3));
+			if (ifp->if_flags & IFF_DEBUG)
+				if_printf(ifp,
+				    "association failed (reason %d) for %s\n",
+				    status, ether_sprintf(wh->i_addr3));
 			if (ni != ic->ic_bss)
 				ni->ni_fails++;
 			return;
