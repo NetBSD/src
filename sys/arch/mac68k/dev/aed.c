@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.8 1999/11/07 00:12:55 scottr Exp $	*/
+/*	$NetBSD: aed.c,v 1.9 2000/02/14 07:01:45 scottr Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -48,8 +48,7 @@
 #include <mac68k/mac68k/macrom.h>
 #include <mac68k/dev/adbvar.h>
 #include <mac68k/dev/aedvar.h>
-#include <mac68k/dev/itevar.h>
-#include <mac68k/dev/kbdvar.h>
+#include <mac68k/dev/akbdvar.h>
 
 /*
  * Function declarations.
@@ -133,11 +132,12 @@ aedattach(parent, self, aux)
  * button emulation handler first.  Pass mouse events directly to
  * the handoff function.
  */
-void
+int
 aed_input(event)
         adb_event_t *event;
 {
         adb_event_t new_event = *event;
+	int rv = aed_sc->sc_open;
 
 	switch (event->def_addr) {
 	case ADBADDR_KBD:
@@ -154,9 +154,11 @@ aed_input(event)
 #ifdef DIAGNOSTIC
 		panic("aed: received event from unsupported device!\n");
 #endif
+		rv = 0;
 		break;
 	}
 
+	return (rv);
 }
 
 /*
@@ -362,10 +364,6 @@ aed_handoff(event)
 {
 	if (aed_sc->sc_open && !adb_polling)
 		aed_enqevent(event);
-	else {
-		if (event->def_addr == 2)
-			ite_intr(event);
-	}
 }
 
 /*
