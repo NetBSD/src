@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.12 1994/12/16 03:18:03 mycroft Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.13 1995/04/10 00:48:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)dead_vnops.c	8.1 (Berkeley) 6/10/93
+ *	@(#)dead_vnops.c	8.2 (Berkeley) 11/21/94
  */
 
 #include <sys/param.h>
@@ -186,9 +186,9 @@ dead_read(ap)
 	if (chkvnlock(ap->a_vp))
 		panic("dead_read: lock");
 	/*
-	 * Return EOF for character devices, EIO for others
+	 * Return EOF for tty devices, EIO for others
 	 */
-	if (ap->a_vp->v_type != VCHR)
+	if ((ap->a_vp->v_flag & VISTTY) == 0)
 		return (EIO);
 	return (0);
 }
