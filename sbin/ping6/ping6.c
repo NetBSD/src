@@ -1,5 +1,5 @@
-/*	$NetBSD: ping6.c,v 1.26 2000/12/22 00:34:46 itojun Exp $	*/
-/*	$KAME: ping6.c,v 1.107 2000/12/22 00:32:44 itojun Exp $	*/
+/*	$NetBSD: ping6.c,v 1.27 2000/12/22 05:52:21 itojun Exp $	*/
+/*	$KAME: ping6.c,v 1.108 2000/12/22 05:51:26 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.26 2000/12/22 00:34:46 itojun Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.27 2000/12/22 05:52:21 itojun Exp $");
 #endif
 #endif
 
@@ -604,6 +604,7 @@ main(argc, argv)
 	}
 
 	/* revoke root privilege */
+	seteuid(getuid());
 	setuid(getuid());
 
 	if (options & F_FLOOD && options & F_INTERVAL)
