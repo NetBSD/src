@@ -1,4 +1,4 @@
-/*	$NetBSD: pwcache.c,v 1.11 1998/07/28 18:13:53 mycroft Exp $	*/
+/*	$NetBSD: pwcache.c,v 1.12 1999/01/19 08:32:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pwcache.c,v 1.11 1998/07/28 18:13:53 mycroft Exp $");
+__RCSID("$NetBSD: pwcache.c,v 1.12 1999/01/19 08:32:34 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -261,8 +261,7 @@ user_from_uid(uid, noname)
 	}
 
 	if (ptr == NULL)
-		ptr = (UIDC *)malloc(sizeof(UIDC));
-	*pptr = ptr;
+		*pptr = ptr = (UIDC *)malloc(sizeof(UIDC));
 
 	if ((pw = getpwuid(uid)) == NULL) {
 		/*
@@ -342,8 +341,7 @@ group_from_gid(gid, noname)
 	}
 
 	if (ptr == NULL)
-		ptr = (GIDC *)malloc(sizeof(GIDC));
-	*pptr = ptr;
+		*pptr = ptr = (GIDC *)malloc(sizeof(GIDC));
 
 	if ((gr = getgrgid(gid)) == NULL) {
 		/*
@@ -424,8 +422,7 @@ uid_from_user(name, uid)
 	}
 
 	if (ptr == NULL)
-		ptr = (UIDC *)malloc(sizeof(UIDC));
-	*pptr = ptr;
+		*pptr = ptr = (UIDC *)malloc(sizeof(UIDC));
 
 	/*
 	 * no match, look it up, if no match store it as an invalid entry,
@@ -497,8 +494,7 @@ gid_from_group(name, gid)
 	}
 
 	if (ptr == NULL)
-		ptr = (GIDC *)malloc(sizeof(GIDC));
-	*pptr = ptr;
+		*pptr = ptr = (GIDC *)malloc(sizeof(GIDC));
 
 	/*
 	 * no match, look it up, if no match store it as an invalid entry,
