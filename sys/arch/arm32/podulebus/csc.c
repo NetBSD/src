@@ -1,4 +1,4 @@
-/*	$NetBSD: csc.c,v 1.12 2001/04/25 17:53:11 bouyer Exp $	*/
+/*	$NetBSD: csc.c,v 1.13 2001/07/04 17:54:18 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@
 #include <arm32/podulebus/cscreg.h>
 #include <arm32/podulebus/cscvar.h>
 #include <dev/podulebus/podules.h>
+#include <dev/podulebus/powerromreg.h>
 
 void cscattach   __P((struct device *, struct device *, void *));
 int  cscmatch    __P((struct device *, struct cfdata *, void *));
@@ -88,10 +89,16 @@ cscmatch(pdp, cf, auxp)
 	struct podule_attach_args *pa = (struct podule_attach_args *)auxp;
 
 	/* Look for the card */
-	if (matchpodule(pa, MANUFACTURER_CUMANA, PODULE_CUMANA_SCSI2, -1) == 0)
-		return(0);
+	if (matchpodule(pa, MANUFACTURER_CUMANA, PODULE_CUMANA_SCSI2, -1))
+		return 1;
 
-	return(1);
+	/* PowerROM */
+        if (pa->pa_product == PODULE_ALSYSTEMS_SCSI &&
+            podulebus_initloader(pa) == 0 &&
+            podloader_callloader(pa, 0, 0) == PRID_CUMANA_SCSI2)
+                return 1;
+
+	return 0;
 }
 
 void

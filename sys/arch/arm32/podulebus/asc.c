@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.33 2001/05/13 13:53:08 bjh21 Exp $	*/
+/*	$NetBSD: asc.c,v 1.34 2001/07/04 17:54:18 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -69,6 +69,7 @@
 #include <arm32/podulebus/ascreg.h>
 #include <arm32/podulebus/ascvar.h>
 #include <dev/podulebus/podules.h>
+#include <dev/podulebus/powerromreg.h>
 
 void ascattach	__P((struct device *, struct device *, void *));
 int ascmatch	__P((struct device *, struct cfdata *, void *));
@@ -111,13 +112,18 @@ ascmatch(pdp, cf, auxp)
 
 /* Look for the card */
 
-	if (matchpodule(pa, MANUFACTURER_ACORN, PODULE_ACORN_SCSI, -1) == 0)
-		return(0);
+	/* Standard ROM, skipping the MCS card that used the same ID. */
+	if (matchpodule(pa, MANUFACTURER_ACORN, PODULE_ACORN_SCSI, -1) &&
+	    strncmp(pa->pa_podule->description, "MCS", 3) != 0)
+		return(1);
 
-	if (strncmp(pa->pa_podule->description, "MCS", 3) == 0)
-		return(0);
+	/* PowerROM */
+        if (pa->pa_product == PODULE_ALSYSTEMS_SCSI &&
+            podulebus_initloader(pa) == 0 &&
+            podloader_callloader(pa, 0, 0) == PRID_ACORN_SCSI1)
+                return 1;
 
-	return(1);
+	return 0;
 }
 
 void

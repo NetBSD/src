@@ -1,4 +1,4 @@
-/*	$NetBSD: csa.c,v 1.11 2001/04/25 17:53:11 bouyer Exp $	*/
+/*	$NetBSD: csa.c,v 1.12 2001/07/04 17:54:18 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@
 
 #include <arm32/podulebus/podulebus.h>
 #include <dev/podulebus/podules.h>
+#include <dev/podulebus/powerromreg.h>
 
 #define CSA_NCR5380_OFFSET	0x2100
 #define CSA_CTRL_OFFSET		0x2000 - 2308
@@ -116,10 +117,17 @@ csa_match(parent, cf, aux)
 {
 	struct podule_attach_args *pa = aux;
 
-	if (matchpodule(pa, MANUFACTURER_CUMANA, PODULE_CUMANA_SCSI1, -1) == 0)
-		return(0);
+	if (matchpodule(pa, MANUFACTURER_CUMANA, PODULE_CUMANA_SCSI1, -1))
+		return(1);
 
-	return(1);
+	/* PowerROM */
+        if (pa->pa_product == PODULE_ALSYSTEMS_SCSI &&
+            podulebus_initloader(pa) == 0 &&
+            (podloader_callloader(pa, 0, 0) == PRID_CUMANA_SCSI1_8 ||
+	     podloader_callloader(pa, 0, 0) == PRID_CUMANA_SCSI1_16))
+                return 1;
+
+	return 0;
 }
 
 /*

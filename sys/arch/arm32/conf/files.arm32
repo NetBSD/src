@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.122 2001/07/04 13:49:24 bjh21 Exp $
+#	$NetBSD: files.arm32,v 1.123 2001/07/04 17:54:18 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -274,7 +274,7 @@ define	sbic
 file	arch/arm32/podulebus/sbic.c		sbic
 
 # Acorn SCSI I specific layer for sbic
-device  asc: scsi, sbic
+device  asc: scsi, sbic, podloader
 attach	asc at podulebus
 file	arch/arm32/podulebus/asc.c		asc needs-flag
 
@@ -291,16 +291,16 @@ file	arch/arm32/podulebus/cosc.c		cosc
 define	sfas
 file	arch/arm32/podulebus/sfas.c		sfas
 
-device	ptsc: scsi, sfas
+device	ptsc: scsi, sfas, podloader
 attach	ptsc at podulebus
 file	arch/arm32/podulebus/ptsc.c		ptsc
 
-device	csc: scsi, sfas
+device	csc: scsi, sfas, podloader
 attach	csc at podulebus
 file	arch/arm32/podulebus/csc.c		csc
 
 # Cumana SCSI1 specific layer for ncr5380
-device	csa: scsi, ncr5380sbc
+device	csa: scsi, ncr5380sbc, podloader
 attach	csa at podulebus
 file	arch/arm32/podulebus/csa.c		csa
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptsc.c,v 1.29 2001/04/25 17:53:11 bouyer Exp $	*/
+/*	$NetBSD: ptsc.c,v 1.30 2001/07/04 17:54:18 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -63,6 +63,7 @@
 #include <arm32/podulebus/ptscreg.h>
 #include <arm32/podulebus/ptscvar.h>
 #include <dev/podulebus/podules.h>
+#include <dev/podulebus/powerromreg.h>
 
 void ptscattach __P((struct device *, struct device *, void *));
 int  ptscmatch  __P((struct device *, struct cfdata *, void *));
@@ -94,10 +95,17 @@ ptscmatch(pdp, cf, auxp)
 
 	/* Look for the card */
 
-	if (matchpodule(pa, MANUFACTURER_ALSYSTEMS, PODULE_ALSYSTEMS_SCSI, -1) == 0)
-		return(0);
+	/*
+	 * All Power-tec cards effectively have PowerROMS.  Note,
+	 * though, that here, if we fail to initialise the loader, we
+	 * assume this _is_ the right kind of card.
+	 */
+        if (pa->pa_product == PODULE_ALSYSTEMS_SCSI &&
+            (podulebus_initloader(pa) != 0 ||
+	     podloader_callloader(pa, 0, 0) == PRID_POWERTEC))
+                return 1;
 
-	return(1);
+	return 0;
 }
 
 void
