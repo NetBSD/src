@@ -1,4 +1,4 @@
-.\"	$NetBSD: passwd.5,v 1.16 2000/08/02 08:17:01 pooka Exp $
+.\"	$NetBSD: passwd.5,v 1.17 2000/11/17 10:06:27 lukem Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)passwd.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd January 14, 2000
+.Dd November 17, 2000
 .Dt PASSWD 5
 .Os
 .Sh NAME
@@ -61,31 +61,37 @@ as controlled by
 The
 .Nm master.passwd
 file is readable only by root, and consists of newline separated
-records, one per user, containing ten colon (``:'') separated
-fields.  These fields are as follows:
+.Tn ASCII
+records, one per user, containing ten colon
+.Pq Dq \&:
+separated fields.
 .Pp
-.Bl -tag -width password -offset indent
-.It name
+Each line has the form:
+.Dl name:password:uid:gid:class:change:expire:gecos:home_dir:shell
+.Pp
+These fields are as follows:
+.Bl -tag -width password -offset indent -compact
+.It Em name
 User's login name.
-.It password
+.It Em password
 User's
 .Em encrypted
 password.
-.It uid
+.It Em uid
 User's id.
-.It gid
+.It Em gid
 User's login group id.
-.It class
+.It Em class
 User's login class.
-.It change
+.It Em change
 Password change time.
-.It expire
+.It Em expire
 Account expiration time.
-.It gecos
+.It Em gecos
 General information about the user.
-.It home_dir
+.It Em home_dir
 User's home directory.
-.It shell
+.It Em shell
 User's login shell.
 .El
 .Pp
@@ -95,13 +101,20 @@ file is generated from the
 .Nm master.passwd
 file by
 .Xr pwd_mkdb 8 ,
-has the class, change, and expire fields removed, and the password
-field replaced by a ``*''.
+has the
+.Em class ,
+.Em change ,
+and
+.Em expire
+fields removed, and the
+.Em password
+field replaced by a
+.Dq \&* .
 .Pp
 The
-.Ar name
+.Em name
 field is the login used to access the computer account, and the
-.Ar uid
+.Em uid
 field is the number associated with it.  They should both be unique
 across the system (and often across a group of systems) since they
 control file access.
@@ -111,29 +124,36 @@ and/or identical user id's, it is usually a mistake to do so.  Routines
 that manipulate these files will often return only one of the multiple
 entries, and that one by random selection.
 .Pp
-The login name must never begin with a hyphen (``-''); also, it is strongly
-suggested that neither upper-case characters or dots (``.'') be part
-of the name, as this tends to confuse mailers.  No field may contain a
-colon (``:'') as this has been used historically to separate the fields
-in the user database.
+The login name must never begin with a hyphen
+.Pq Dq \&- ;
+also, it is strongly suggested that neither upper-case characters or dots
+.Pq Dq \&.
+be part of the name, as this tends to confuse mailers.
+No field may contain a colon
+.Pq Dq \&:
+as this has been used historically to separate the fields in the user database.
 .Pp
-The password field is the
+The
+.Em password
+field is the
 .Em encrypted
 form of the password.
 If the
-.Ar password
+.Em password
 field is empty, no password will be required to gain access to the
 machine.  This is almost invariably a mistake.
 Because these files contain the encrypted user passwords, they should
 not be readable by anyone without appropriate privileges.
 .Pp
-The group field is the group that the user will be placed in upon login.
+The
+.Em gid
+field is the group that the user will be placed in upon login.
 Since this system supports multiple groups (see
 .Xr groups 1 )
 this field currently has little special meaning.
 .Pp
 The
-.Ar class
+.Em class
 field is a key for a user's login class.
 Login classes are defined in
 .Xr login.conf 5 ,
@@ -143,7 +163,7 @@ style database of user attributes, accounting, resource and
 environment settings.
 .Pp
 The
-.Ar change
+.Em change
 field is the number of seconds from the epoch,
 .Dv UTC ,
 until the
@@ -155,7 +175,7 @@ then the user will be prompted to change their password at the next
 login.
 .Pp
 The
-.Ar expire
+.Em expire
 field is the number of seconds from the epoch,
 .Dv UTC ,
 until the
@@ -163,29 +183,33 @@ account expires.
 This field may be left empty to turn off the account aging feature.
 .Pp
 If either of the
-.Ar change
+.Em change
 or
-.Ar expire
+.Em expire
 fields are set, the system will remind the user of the impending
 change or expiry if they login within a configurable period 
 (defaulting to 14 days) before the event.
 .Pp
 The
-.Ar gecos
-field normally contains comma (``,'') separated subfields as follows:
+.Em gecos
+field normally contains comma
+.Pq Dq \&,
+separated subfields as follows:
 .Pp
 .Bl -tag -width office -offset indent -compact
-.It name
+.It Em name
 user's full name
-.It office
+.It Em office
 user's office number
-.It wphone
+.It Em wphone
 user's work phone number
-.It hphone
+.It Em hphone
 user's home phone number
 .El
 .Pp
-The full name may contain a ampersand (``&'') which will be replaced by
+The full name may contain a ampersand
+.Pq Dq \&&
+which will be replaced by
 the capitalized login name when the gecos field is displayed or used
 by various programs such as
 .Xr finger 1 ,
@@ -203,7 +227,7 @@ will be placed on login.
 .Pp
 The shell field is the command interpreter the user prefers.
 If there is nothing in the
-.Ar shell
+.Em shell
 field, the Bourne shell
 .Pq Pa /bin/sh
 is assumed.
@@ -255,20 +279,27 @@ file also supports standard
 .Sq +/-
 exclusions and inclusions, based on user names and netgroups.
 .Pp
-Lines beginning with a ``-'' (minus sign) are entries marked as being excluded
-from any following inclusions, which are marked with a ``+'' (plus sign).
+Lines beginning with a minus sign
+.Pq Dq \&-
+are entries marked as being excluded from any following inclusions,
+which are marked with a plus sign
+.Pq Dq \&+ .
 .Pp
-If the second character of the line is a ``@'' (at sign), the operation
+If the second character of the line is an at sign
+.Pq Dq \&@ ,
+the operation
 involves the user fields of all entries in the netgroup specified by the
 remaining characters of the
-.Ar name
+.Em name
 field.
 Otherwise, the remainder of the
-.Ar name
+.Em name
 field is assumed to be a specific user name.
 .Pp
-The ``+'' token may also be alone in the
-.Ar name
+The
+.Dq \&+
+token may also be alone in the
+.Em name
 field, which causes all users from either the Hesiod domain
 .Nm
 (with
@@ -283,22 +314,22 @@ maps (with
 to be included.
 .Pp
 If the entry contains non-empty
-.Ar uid
+.Em uid
 or
-.Ar gid
+.Em gid
 fields, the specified numbers will override the information retrieved
 from the Hesiod domain or the
 .Tn NIS
 maps. As well, if the
-.Ar gecos,
-.Ar dir
+.Em gecos,
+.Em home_dir
 or
-.Ar shell
+.Em shell
 entries contain text, it will override the information included via
 Hesiod or
 .Tn NIS .
 On some systems, the
-.Ar passwd
+.Em passwd
 field may also be overridden.
 .Sh SEE ALSO
 .Xr chpass 1 ,
