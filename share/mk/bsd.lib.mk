@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.176 2000/08/09 23:41:24 gmcgarry Exp $
+#	$NetBSD: bsd.lib.mk,v 1.177 2000/12/05 22:12:37 mycroft Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -347,10 +347,10 @@ lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} \
 	    ${SHLIB_LDENDFILE}
 .endif
 .if ${OBJECT_FMT} == "ELF"
-	rm -f lib${LIB}.so.${SHLIB_MAJOR}
-	ln -s lib${LIB}.so.${SHLIB_FULLVERSION} lib${LIB}.so.${SHLIB_MAJOR}
-	rm -f lib${LIB}.so
-	ln -s lib${LIB}.so.${SHLIB_FULLVERSION} lib${LIB}.so
+	ln -sf lib${LIB}.so.${SHLIB_FULLVERSION} lib${LIB}.so.${SHLIB_MAJOR}.tmp
+	mv -f lib${LIB}.so.${SHLIB_MAJOR}.tmp lib${LIB}.so.${SHLIB_MAJOR}
+	ln -sf lib${LIB}.so.${SHLIB_FULLVERSION} lib${LIB}.so.tmp
+	mv -f lib${LIB}.so.tmp lib${LIB}.so
 .endif
 
 LLIBS?=		-lc
@@ -440,12 +440,14 @@ ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_FULLVERSION}: lib${LIB}.so.${SHLIB_FULL
 	/sbin/ldconfig -m ${LIBDIR}
 .endif
 .if ${OBJECT_FMT} == "ELF"
-	rm -f ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}
-	ln -s lib${LIB}.so.${SHLIB_FULLVERSION} \
+	ln -sf lib${LIB}.so.${SHLIB_FULLVERSION} \
+	    ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.tmp
+	mv -f ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.tmp \
 	    ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}
-	rm -f ${DESTDIR}${LIBDIR}/lib${LIB}.so
 .if ${MKLINKLIB} != "no"
-	ln -s lib${LIB}.so.${SHLIB_FULLVERSION} \
+	ln -sf lib${LIB}.so.${SHLIB_FULLVERSION} \
+	    ${DESTDIR}${LIBDIR}/lib${LIB}.so.tmp
+	mv -f ${DESTDIR}${LIBDIR}/lib${LIB}.so.tmp \
 	    ${DESTDIR}${LIBDIR}/lib${LIB}.so
 .endif
 .endif
