@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.33 1999/03/22 03:25:33 abs Exp $	*/
+/*	$NetBSD: su.c,v 1.33.2.1 1999/08/29 11:25:05 he Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.33 1999/03/22 03:25:33 abs Exp $");
+__RCSID("$NetBSD: su.c,v 1.33.2.1 1999/08/29 11:25:05 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,7 +109,7 @@ main(argc, argv)
 	uid_t ruid;
 	int asme, ch, asthem, fastlogin, prio;
 	enum { UNSET, YES, NO } iscsh = UNSET;
-	char *user, *shell, *avshell, *username, *cleanenv[10], **np;
+	char *user, *shell, *avshell, *username, **np;
 	char *userpass;
 	char shellbuf[MAXPATHLEN], avshellbuf[MAXPATHLEN];
 
@@ -179,7 +179,6 @@ main(argc, argv)
 
 	if ((pwd = getpwnam(user)) == NULL)
 		errx(1, "unknown login %s", user);
-
 	if (ruid
 #ifdef KERBEROS
 	    && (!use_kerberos || kerberos(username, user, pwd->pw_uid))
@@ -292,8 +291,10 @@ badlogin:
 	if (!asme) {
 		if (asthem) {
 			p = getenv("TERM");
-			cleanenv[0] = NULL;
-			environ = cleanenv;
+			/* Create an empty environment */
+			if ((environ = malloc(sizeof(char *))) == NULL)
+				err(1, "%s", "");
+			environ[0] = NULL;
 			(void)setenv("PATH", _PATH_DEFPATH, 1);
 			if (p)
 				(void)setenv("TERM", p, 1);
