@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.32 1998/06/25 21:19:12 thorpej Exp $ */
+/* $NetBSD: trap.c,v 1.33 1998/06/26 00:01:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -30,10 +30,11 @@
 #include "opt_fix_unaligned_vax_fp.h"
 #include "opt_ktrace.h"
 #include "opt_uvm.h"
+#include "opt_compat_osf1.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.32 1998/06/25 21:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.33 1998/06/26 00:01:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
