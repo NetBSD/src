@@ -8,7 +8,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)i386bsd-dep.c	6.10 (Berkeley) 6/26/91";*/
-static char rcsid[] = "$Id: i386bsd-dep.c,v 1.5 1993/12/15 00:52:27 mycroft Exp $";
+static char rcsid[] = "$Id: i386bsd-dep.c,v 1.6 1994/01/28 02:12:24 mycroft Exp $";
 #endif /* not lint */
 
 /* Low level interface to ptrace, for GDB when running on the Intel 386.
@@ -429,8 +429,6 @@ write_inferior_memory(memaddr, myaddr, len)
 #ifndef AOUTHDR
 #define AOUTHDR struct exec
 #endif
-
-extern char *sys_siglist[];
 
 
 /* Hook for `exec_file_command' command to call.  */
