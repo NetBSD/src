@@ -341,6 +341,12 @@ is relative to the origin of the parent window
 instead of being absolute screen coordinates as they are in
 .Fn subwin .
 .Ds
+.Fn doupdate ""
+.De
+Synchronize the terminal screen with the virtual screen that
+has had window contents added to it by calls to
+.Fn wnoutrefresh .
+.Ds
 .Fn dupwin "WINDOW *win"
 .De
 Creates an exact copy of the window
@@ -1222,6 +1228,13 @@ characters of the string
 .Vn str
 are output to the current \*y position of the window specified by
 .Vn win.
+.Ds
+.Fn wnoutrefresh "WINDOW *win"
+.De
+Add the window contents to a virtual screen.  Several windows can be added
+before a call to
+.Fn doupdate ,
+thus allowing the screen to updated in an efficient manner.
 .Ds
 .Fn wtouchln "WINDOW *win" "int line" "int n" "int changed"
 .De
