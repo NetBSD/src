@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.12 2003/09/26 16:31:08 matt Exp $	*/
+/*	$NetBSD: amr.c,v 1.13 2003/10/13 20:35:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.12 2003/09/26 16:31:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.13 2003/10/13 20:35:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -475,7 +475,10 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	SIMPLEQ_INIT(&amr->amr_ccb_queue);
-	kthread_create(amr_thread_create, amr);
+
+	/* XXX This doesn't work for newer boards yet. */
+	if ((apt->apt_flags & AT_QUARTZ) == 0)
+		kthread_create(amr_thread_create, amr);
 }
 
 /*
@@ -851,7 +854,8 @@ amr_thread(void *cookie)
 		s = splbio();
 		amr_intr(cookie);
 		curtime = (time_t)mono_time.tv_sec;
-		if ((ac = TAILQ_FIRST(&amr->amr_ccb_active)) != NULL) {
+		ac = TAILQ_FIRST(&amr->amr_ccb_active);
+		while (ac != NULL) {
 			if (ac->ac_start_time + AMR_TIMEOUT > curtime)
 				break;
 			if ((ac->ac_flags & AC_MOAN) == 0) {
@@ -860,6 +864,7 @@ amr_thread(void *cookie)
 				amr_ccb_dump(amr, ac);
 				ac->ac_flags |= AC_MOAN;
 			}
+			ac = TAILQ_NEXT(ac, ac_chain.tailq);
 		}
 		splx(s);
 
@@ -1171,7 +1176,7 @@ amr_quartz_submit(struct amr_softc *amr, struct amr_ccb *ac)
 		return (EAGAIN);
 
 	v = amr_inl(amr, AMR_QREG_IDB);
-	if ((v & (AMR_QIDB_SUBMIT | AMR_QIDB_ACK)) != 0) {
+	if ((v & AMR_QIDB_SUBMIT) != 0) {
 		amr->amr_mbox->mb_cmd.mb_busy = 0;
 		bus_dmamap_sync(amr->amr_dmat, amr->amr_dmamap, 0,
 		    sizeof(struct amr_mailbox), BUS_DMASYNC_PREWRITE);
@@ -1187,7 +1192,8 @@ amr_quartz_submit(struct amr_softc *amr, struct amr_ccb *ac)
 
 	ac->ac_start_time = (time_t)mono_time.tv_sec;
 	ac->ac_flags |= AC_ACTIVE;
-	amr_outl(amr, AMR_QREG_IDB, amr->amr_mbox_paddr | AMR_QIDB_SUBMIT);
+	amr_outl(amr, AMR_QREG_IDB,
+	    (amr->amr_mbox_paddr + 16) | AMR_QIDB_SUBMIT);
 	return (0);
 }
 
@@ -1260,7 +1266,7 @@ amr_quartz_get_work(struct amr_softc *amr, struct amr_mailbox_resp *mbsave)
 	 * should.  Who is right?
 	 */
 	while ((amr_inl(amr, AMR_QREG_IDB) & AMR_QIDB_ACK) != 0)
-		;
+		DELAY(10);
 
 	return (0);
 }
