@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.123 2001/01/08 07:41:10 mrg Exp $
+#	$NetBSD: bsd.prog.mk,v 1.124 2001/01/14 06:17:27 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -119,6 +119,7 @@ LOBJS+=		${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 
 .if defined(OBJS) && !empty(OBJS)
 .NOPATH: ${OBJS}
+.if !target(${PROG})
 .if defined(DESTDIR)
 
 ${PROG}: ${LIBCRT0} ${DPSRCS} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
@@ -130,6 +131,7 @@ ${PROG}: ${LIBCRT0} ${DPSRCS} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPAD
 	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${OBJS} ${LDADD}
 
 .endif	# defined(DESTDIR)
+.endif	# !target(${PROG})
 .endif	# defined(OBJS) && !empty(OBJS)
 
 .if !defined(MAN)
