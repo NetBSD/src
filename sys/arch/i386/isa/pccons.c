@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.160 2003/01/19 16:35:55 thorpej Exp $	*/
+/*	$NetBSD: pccons.c,v 1.161 2003/02/19 04:07:56 gson Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.160 2003/01/19 16:35:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.161 2003/02/19 04:07:56 gson Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -107,8 +107,8 @@ __KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.160 2003/01/19 16:35:55 thorpej Exp $")
 #include <dev/cons.h>
 
 #include "pc.h"
-#if (NPCCONSKBD > 0)
 #include <machine/bus.h>
+#if (NPCCONSKBD > 0)
 #include <dev/ic/pckbcvar.h>
 #else
 /* consistency check: plain pccons can't coexist with pckbc */
@@ -757,6 +757,7 @@ pcattach(parent, self, aux)
 #if (NPCCONSKBD == 0)
 	struct isa_attach_args *ia = aux;
 #endif
+	bus_space_handle_t ioh;
 
 	if (crtat == 0)
 		pcinit();
@@ -769,6 +770,17 @@ pcattach(parent, self, aux)
 #else
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_TTY, pcintr, sc);
+
+	/*
+	 * Reserve CRTC I/O ports to keep other devices such as PCMCIA
+	 * from using them.
+	 */
+	if (bus_space_map(ia->ia_iot, addr_6845, 0x2, 0, &ioh))
+		printf("pc: mapping of CRTC registers failed\n");
+
+	if (vs.color)
+		if (bus_space_map(ia->ia_iot, 0x3C0, 0x10, 0, &ioh))
+			printf("pc: mapping of VGA registers failed\n");
 
 	/*
 	 * Look for children of the keyboard controller.
