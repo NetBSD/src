@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.58 2002/02/20 20:30:12 christos Exp $	*/
+/*	$NetBSD: ugen.c,v 1.59 2002/07/11 21:14:28 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.58 2002/02/20 20:30:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.59 2002/07/11 21:14:28 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,7 @@ USB_ATTACH(ugen)
 	char devinfo[1024];
 	usbd_status err;
 	int conf;
-	
+
 	usbd_devinfo(uaa->device, 0, devinfo);
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
@@ -466,7 +466,7 @@ ugenclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
 			continue;
 		DPRINTFN(5, ("ugenclose: endpt=%d dir=%d sce=%p\n",
 			     endpt, dir, sce));
-		
+
 		usbd_abort_pipe(sce->pipeh);
 		usbd_close_pipe(sce->pipeh);
 		sce->pipeh = NULL;
@@ -630,7 +630,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 		splx(s);
 		break;
 
-		
+
 	default:
 		return (ENXIO);
 	}
@@ -827,7 +827,7 @@ ugenintr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 		     ibuf[0], ibuf[1], ibuf[2]));
 
 	(void)b_to_q(ibuf, count, &sce->q);
-		
+
 	if (sce->state & UGEN_ASLP) {
 		sce->state &= ~UGEN_ASLP;
 		DPRINTFN(5, ("ugen_intr: waking %p\n", sce));
@@ -912,7 +912,7 @@ ugen_set_interface(struct ugen_softc *sc, int ifaceidx, int altno)
 		return (err);
 	if (ifaceidx < 0 || ifaceidx >= niface)
 		return (USBD_INVAL);
-	
+
 	err = usbd_device2interface_handle(sc->sc_udev, ifaceidx, &iface);
 	if (err)
 		return (err);
@@ -1035,7 +1035,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		return (0);
 	case USB_SET_TIMEOUT:
 		sce = &sc->sc_endpoints[endpt][IN];
-		if (sce == NULL 
+		if (sce == NULL
 		    /* XXX this shouldn't happen, but the distinction between
 		       input and output pipes isn't clear enough.
 		       || sce->pipeh == NULL */

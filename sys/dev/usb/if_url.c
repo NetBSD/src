@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.4 2002/07/08 17:46:24 augustss Exp $	*/
+/*	$NetBSD: if_url.c,v 1.5 2002/07/11 21:14:27 augustss Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.4 2002/07/08 17:46:24 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.5 2002/07/11 21:14:27 augustss Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -418,7 +418,7 @@ url_mem(struct url_softc *sc, int cmd, int offset, void *buf, int len)
 			 USBDEVNAME(sc->sc_dev),
 			 cmd == URL_CMD_READMEM ? "read" : "write",
 			 offset, err));
-	}	
+	}
 
 	return (err);
 }
@@ -434,7 +434,7 @@ url_csr_read_1(struct url_softc *sc, int reg)
 
 	if (sc->sc_dying)
 		return (0);
-	
+
 	return (url_mem(sc, URL_CMD_READMEM, reg, &val, 1) ? 0 : val);
 }
 
@@ -449,7 +449,7 @@ url_csr_read_2(struct url_softc *sc, int reg)
 
 	if (sc->sc_dying)
 		return (0);
-	
+
 	USETW(val, 0);
 	return (url_mem(sc, URL_CMD_READMEM, reg, &val, 2) ? 0 : UGETW(val));
 }
@@ -465,7 +465,7 @@ url_csr_write_1(struct url_softc *sc, int reg, int aval)
 
 	if (sc->sc_dying)
 		return (0);
-	
+
 	return (url_mem(sc, URL_CMD_WRITEMEM, reg, &val, 1) ? -1 : 0);
 }
 
@@ -482,7 +482,7 @@ url_csr_write_2(struct url_softc *sc, int reg, int aval)
 
 	if (sc->sc_dying)
 		return (0);
-	
+
 	return (url_mem(sc, URL_CMD_WRITEMEM, reg, &val, 2) ? -1 : 0);
 }
 
@@ -499,7 +499,7 @@ url_csr_write_4(struct url_softc *sc, int reg, int aval)
 
 	if (sc->sc_dying)
 		return (0);
-	
+
 	return (url_mem(sc, URL_CMD_WRITEMEM, reg, &val, 4) ? -1 : 0);
 }
 
@@ -512,7 +512,7 @@ url_init(struct ifnet *ifp)
 	int i, s;
 
 	DPRINTF(("%s: %s: enter\n", USBDEVNAME(sc->sc_dev), __func__));
-	
+
 	if (sc->sc_dying)
 		return (EIO);
 
@@ -544,7 +544,7 @@ url_init(struct ifnet *ifp)
 	else
 		URL_CLRBIT2(sc, URL_RCR, URL_RCR_AAM|URL_RCR_AAP);
 
-	
+
 	/* Initialize transmit ring */
 	if (url_tx_list_init(sc) == ENOBUFS) {
 		printf("%s: tx list init failed\n", USBDEVNAME(sc->sc_dev));
@@ -588,7 +588,7 @@ Static void
 url_reset(struct url_softc *sc)
 {
 	int i;
-	
+
 	DPRINTF(("%s: %s: enter\n", USBDEVNAME(sc->sc_dev), __func__));
 
 	if (sc->sc_dying)
@@ -701,7 +701,7 @@ url_openpipes(struct url_softc *sc)
 
 	if (sc->sc_dying)
 		return (EIO);
-	
+
 	sc->sc_refcnt++;
 
 	/* Open RX pipe */
@@ -713,7 +713,7 @@ url_openpipes(struct url_softc *sc)
 		error = EIO;
 		goto done;
 	}
-	
+
 	/* Open TX pipe */
 	err = usbd_open_pipe(sc->sc_ctl_iface, sc->sc_bulkout_no,
 			     USBD_EXCLUSIVE_USE, &sc->sc_pipe_tx);
@@ -755,7 +755,7 @@ url_openpipes(struct url_softc *sc)
  done:
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
-	
+
 	return (error);
 }
 
@@ -792,7 +792,7 @@ url_newbuf(struct url_softc *sc, struct url_chain *c, struct mbuf *m)
 
 	return (0);
 }
-	
+
 
 Static int
 url_rx_list_init(struct url_softc *sc)
@@ -821,7 +821,7 @@ url_rx_list_init(struct url_softc *sc)
 			}
 		}
 	}
-	
+
 	return (0);
 }
 
@@ -851,7 +851,7 @@ url_tx_list_init(struct url_softc *sc)
 			}
 		}
 	}
-	
+
 	return (0);
 }
 
@@ -860,7 +860,7 @@ url_start(struct ifnet *ifp)
 {
 	struct url_softc *sc = ifp->if_softc;
 	struct mbuf *m_head = NULL;
-	
+
 	DPRINTF(("%s: %s: enter, link=%d\n", USBDEVNAME(sc->sc_dev),
 		 __func__, sc->sc_link));
 
@@ -1132,7 +1132,7 @@ url_watchdog(struct ifnet *ifp)
 	struct url_chain *c;
 	usbd_status stat;
 	int s;
-	
+
 	DPRINTF(("%s: %s: enter\n", USBDEVNAME(sc->sc_dev), __func__));
 
 	ifp->if_oerrors++;
@@ -1161,7 +1161,7 @@ url_stop(struct ifnet *ifp, int disable)
 	struct url_softc *sc = ifp->if_softc;
 	usbd_status err;
 	int i;
-	
+
 	DPRINTF(("%s: %s: enter\n", USBDEVNAME(sc->sc_dev), __func__));
 
 	ifp->if_timer = 0;
@@ -1563,7 +1563,7 @@ url_ext_miibus_redreg(device_ptr_t dev, int phy, int reg)
 	if (i == URL_TIMEOUT) {
 		printf("%s: MII read timed out\n", USBDEVNAME(sc->sc_dev));
 	}
-	
+
 	val = url_csr_read_2(sc, URL_PHYDAT);
 
 	DPRINTF(("%s: %s: phy=%d reg=0x%04x => 0x%04x\n",

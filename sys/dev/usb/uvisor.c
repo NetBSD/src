@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.15 2002/06/16 15:01:31 augustss Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.16 2002/07/11 21:14:36 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.15 2002/06/16 15:01:31 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.16 2002/07/11 21:14:36 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ struct uvisor_softc {
 	u_char			sc_dying;
 };
 
-Static usbd_status uvisor_init(struct uvisor_softc *, 
+Static usbd_status uvisor_init(struct uvisor_softc *,
 			       struct uvisor_connection_info *);
 
 Static void uvisor_close(void *, int);
@@ -174,7 +174,7 @@ USB_DECLARE_DRIVER(uvisor);
 USB_MATCH(uvisor)
 {
 	USB_MATCH_START(uvisor, uaa);
-	
+
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
 
@@ -267,7 +267,7 @@ USB_ATTACH(uvisor)
 			break;
 		default:
 			uca.info = "unknown";
-			break;	
+			break;
 		}
 		port = coninfo.connections[i].port;
 		uca.portno = port;
@@ -294,7 +294,7 @@ USB_ATTACH(uvisor)
 			printf("%s: no proper endpoints for port %d (%d,%d)\n",
 			    USBDEVNAME(sc->sc_dev), port, hasin, hasout);
 	}
-	
+
 	USB_ATTACH_SUCCESS_RETURN;
 
 bad:
@@ -419,6 +419,6 @@ uvisor_close(void *addr, int portno)
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, UVISOR_CONNECTION_INFO_SIZE);
-	(void)usbd_do_request_flags(sc->sc_udev, &req, &coninfo, 
+	(void)usbd_do_request_flags(sc->sc_udev, &req, &coninfo,
 		  USBD_SHORT_XFER_OK, &actlen, USBD_DEFAULT_TIMEOUT);
 }
