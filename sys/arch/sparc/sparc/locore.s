@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.148.4.20 2003/01/03 20:01:56 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.148.4.21 2003/01/05 22:38:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4317,7 +4317,6 @@ _C_LABEL(cpu_hatch):
 #include "sigcode_state.s"
 
 	.globl	_C_LABEL(sigcode)
-	.globl	_C_LABEL(upcallcode)
 	.globl	_C_LABEL(esigcode)
 _C_LABEL(sigcode):
 
@@ -4335,16 +4334,6 @@ _C_LABEL(sigcode):
 	add	%sp, 64 + 16, %o0	! compute scp
 	t	ST_SYSCALL		! sigreturn(scp)
 	! sigreturn does not return unless it fails
-	mov	SYS_exit, %g1		! exit(errno)
-	t	ST_SYSCALL
-	/* NOTREACHED */
-
-	/*
-	 * Upcall for scheduler activations.
-	 */
-_C_LABEL(upcallcode):
-	call	%g1
-	 nop
 	mov	SYS_exit, %g1		! exit(errno)
 	t	ST_SYSCALL
 	/* NOTREACHED */
