@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.9 2002/09/29 23:23:57 wiz Exp $       */
+/*      $NetBSD: pccons.c,v 1.10 2002/10/01 19:18:58 thorpej Exp $       */
 
 /*
  * Copyright 1997
@@ -354,10 +354,8 @@ static void            cga_save_restore    __P((int));
 /*
 ** Data structures required by config
 */
-const struct cfattach pc_ca = 
-{
-    sizeof(struct pc_softc), pcprobe, pcattach
-};
+CFATTACH_DECL(pc, sizeof(struct pc_softc),
+    pcprobe, pcattach, NULL, NULL)
 
 extern struct cfdriver pc_cd;
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: opms.c,v 1.4 2002/09/27 20:35:34 thorpej Exp $        */
+/*      $NetBSD: opms.c,v 1.5 2002/10/01 19:18:58 thorpej Exp $        */
 
 /*
  * Copyright 1997
@@ -192,10 +192,8 @@ int                  opmsintr         __P((void *));
 */
 
 /* Autoconfiguration data structures */
-const struct cfattach opms_ca = 
-{
-        sizeof(struct opms_softc), opmsprobe, opmsattach,
-};
+CFATTACH_DECL(opms, sizeof(struct opms_softc),
+    opmsprobe, opmsattach, NULL, NULL)
 
 extern struct cfdriver opms_cd;
 
