@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.50 2002/07/08 16:14:54 atatat Exp $
+# $NetBSD: rc.subr,v 1.51 2002/07/25 14:34:46 grant Exp $
 #
 # Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -764,7 +764,9 @@ err()
 	exitval=$1
 	shift
 
-	logger "$0: ERROR: $*"
+	if [ -x /usr/bin/logger ]; then
+		logger "$0: ERROR: $*"
+	fi
 	echo 1>&2 "$0: ERROR: $*"
 	exit $exitval
 }
@@ -775,7 +777,9 @@ err()
 #
 warn()
 {
-	logger "$0: WARNING: $*"
+	if [ -x /usr/bin/logger ]; then
+		logger "$0: WARNING: $*"
+	fi
 	echo 1>&2 "$0: WARNING: $*"
 }
 
