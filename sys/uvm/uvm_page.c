@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.9 1998/04/16 03:54:35 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.10 1998/05/05 20:51:06 kleink Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -79,14 +79,11 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/mount.h>
 #include <sys/proc.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
 #include <vm/vm_kern.h>
-
-#include <sys/syscallargs.h>
 
 #define UVM_PAGE                /* pull in uvm_page.h functions */
 #include <uvm/uvm.h>

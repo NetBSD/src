@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.17 1998/04/25 19:58:58 matthias Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.18 1998/05/05 20:51:06 kleink Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -79,7 +79,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mount.h>
 #include <sys/mman.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
@@ -91,8 +90,6 @@
 #include <vm/vm.h>
 #include <vm/vm_page.h>
 #include <vm/vm_kern.h>
-
-#include <sys/syscallargs.h>
 
 #define UVM_MAP
 #include <uvm/uvm.h>

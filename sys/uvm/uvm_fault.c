@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.9 1998/03/26 21:50:14 chuck Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.10 1998/05/05 20:51:05 kleink Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -47,7 +47,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/mman.h>
@@ -56,8 +55,6 @@
 #include <vm/vm.h>
 #include <vm/vm_page.h>
 #include <vm/vm_kern.h>
-
-#include <sys/syscallargs.h>
 
 #include <uvm/uvm.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.7 1998/03/22 16:10:29 chuck Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.8 1998/05/05 20:51:07 kleink Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -47,15 +47,12 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
 #include <vm/vm_kern.h>
-
-#include <sys/syscallargs.h>
 
 #define UVM_PAGER
 #include <uvm/uvm.h>
