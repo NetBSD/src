@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.62 2001/06/04 06:01:40 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.63 2001/10/25 22:43:24 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -671,6 +671,8 @@ USB_ATTACH(umass)
 		umass_init_shuttle(sc);
 
 	if (umass_attach_bus(sc)) {
+		DPRINTF(UDMASS_GEN, ("%s: bus attach failed\n",
+				     USBDEVNAME(sc->sc_dev)));
 		umass_disco(sc);
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -1793,7 +1795,7 @@ umass_bbb_dump_cbw(struct umass_softc *sc, umass_bbb_cbw_t *cbw)
 	int tag = UGETDW(cbw->dCBWTag);
 	int flags = cbw->bCBWFlags;
 
-	DPRINTF(UDMASS_BBB, ("%s: CBW %d: cmd = %db "
+	DPRINTF(UDMASS_BBB, ("%s: CBW %d: cmdlen = %db "
 		"(0x%02x%02x%02x%02x%02x%02x%s), "
 		"data = %d bytes, dir = %s\n",
 		USBDEVNAME(sc->sc_dev), tag, clen,
