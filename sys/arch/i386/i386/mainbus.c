@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.45 2002/12/28 17:31:25 jmcneill Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.46 2002/12/28 17:36:59 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.45 2002/12/28 17:31:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.46 2002/12/28 17:36:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,8 @@ mainbus_attach(parent, self, aux)
 	/*
 	 * ACPI and PNPBIOS need ISA DMA initialized before they start probing.
 	 */
-	isa_dmainit(sc->sc_ic, I386_BUS_SPACE_IO, &isa_bus_dma_tag, self);
+	isa_dmainit(&i386_isa_chipset, I386_BUS_SPACE_IO, &isa_bus_dma_tag,
+	    self);
 #endif
 
 #if NACPI > 0
