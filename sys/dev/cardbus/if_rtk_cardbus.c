@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.3.4.1 2002/01/05 17:36:21 he Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.3.4.2 2002/12/15 15:50:21 he Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -111,6 +111,8 @@ static const struct rtk_type rtk_cardbus_devs[] = {
 		"RealTek 8139 10/100BaseTX", RTK_8139 },
 	{ CARDBUS_VENDOR_COREGA, CARDBUS_PRODUCT_COREGA_CB_TXD,
 		"Corega FEther CB-TXD 10/100BaseTX", RTK_8139 },
+	{ CARDBUS_VENDOR_PLANEX, CARDBUS_PRODUCT_PLANEX_FNW_3603_TX,
+		"Planex FNW-3603 10/100BaseTX", RTK_8139 },
 	{ 0, 0, NULL, 0 }
 };
 
