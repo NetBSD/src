@@ -1,4 +1,4 @@
-/*	$NetBSD: sqphy.c,v 1.29 2002/09/27 20:39:26 thorpej Exp $	*/
+/*	$NetBSD: sqphy.c,v 1.30 2002/09/28 10:27:21 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.29 2002/09/27 20:39:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.30 2002/09/28 10:27:21 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,6 +199,7 @@ sqphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * isolate ourselves.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst) {
+printf("sqphy: isolating\n");
 			reg = PHY_READ(sc, MII_BMCR);
 			PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
 			return (0);
@@ -302,10 +303,11 @@ sqphy_84220_reset(struct mii_softc *sc)
 	 *
 	 * This sucks.
 	 */
-	if ((sc->mii_inst == 0 || (sc->mii_flags & MIIF_NOISOLATE)) &&
+	while ((sc->mii_inst == 0 || (sc->mii_flags & MIIF_NOISOLATE)) &&
 	    ((reg = PHY_READ(sc, MII_BMCR)) & BMCR_ISO) != 0) {
 
-		delay(30000);
+		delay(35000);
 		PHY_WRITE(sc, MII_BMCR, reg & ~BMCR_ISO);
+		delay(35000);
 	}
 }
