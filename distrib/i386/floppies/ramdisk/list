@@ -1,0 +1,90 @@
+#	$NetBSD: list,v 1.1 1997/06/14 18:56:13 perry Exp $
+
+# copy the crunched binary, link to it, and kill it
+COPY	${OBJDIR}/ramdiskbin		ramdiskbin
+LINK	ramdiskbin			bin/cat
+LINK	ramdiskbin			bin/chmod
+LINK	ramdiskbin			bin/cp
+LINK	ramdiskbin			bin/dd
+LINK	ramdiskbin			bin/df
+LINK	ramdiskbin			bin/ed
+LINK	ramdiskbin			bin/ln
+LINK	ramdiskbin			bin/ls
+LINK	ramdiskbin			bin/mkdir
+LINK	ramdiskbin			bin/mv
+LINK	ramdiskbin			bin/pwd
+LINK	ramdiskbin			bin/rm
+LINK	ramdiskbin			bin/sh
+LINK	ramdiskbin			bin/stty
+LINK	ramdiskbin			bin/sync
+LINK	ramdiskbin			bin/test
+LINK	ramdiskbin			bin/[
+LINK	ramdiskbin			sbin/disklabel
+LINK	ramdiskbin			sbin/fsck
+LINK	ramdiskbin			sbin/fsck_ffs
+LINK	ramdiskbin			sbin/halt
+LINK	ramdiskbin			sbin/ifconfig
+LINK	ramdiskbin			sbin/init
+LINK	ramdiskbin			sbin/mknod
+LINK	ramdiskbin			sbin/mount
+LINK	ramdiskbin			sbin/mount_cd9660
+LINK	ramdiskbin			sbin/mount_ffs
+LINK	ramdiskbin			sbin/mount_msdos
+LINK	ramdiskbin			sbin/mount_nfs
+LINK	ramdiskbin			sbin/mount_kernfs
+LINK	ramdiskbin			sbin/newfs
+LINK	ramdiskbin			sbin/ping
+LINK	ramdiskbin			sbin/reboot
+LINK	ramdiskbin			sbin/route
+LINK	ramdiskbin			sbin/shutdown
+LINK	ramdiskbin			sbin/slattach
+LINK	ramdiskbin			sbin/umount
+SYMLINK	/bin/cat		usr/bin/chgrp
+SYMLINK	/bin/cat		usr/bin/ftp
+SYMLINK	/bin/cat		usr/bin/gunzip
+SYMLINK	/bin/cat		usr/bin/gzcat
+SYMLINK	/bin/cat		usr/bin/gzip
+SYMLINK	/bin/cat		usr/bin/more
+SYMLINK	/bin/cat		usr/bin/sed
+SYMLINK	/bin/cat		usr/bin/strings
+SYMLINK	/bin/cat		usr/bin/tar
+SYMLINK	/bin/cat		usr/bin/tip
+SYMLINK	/bin/cat		usr/mdec/installboot
+SYMLINK	/bin/cat		usr/sbin/bad144
+SYMLINK	/bin/cat		usr/sbin/chown
+SYMLINK	/bin/cat		usr/sbin/chroot
+SYMLINK	/bin/cat		usr/sbin/update
+SPECIAL	/bin/rm ramdiskbin
+
+# copy the MAKEDEV script and make some devices
+COPY	${CURDIR}/../../../../etc/etc.i386/MAKEDEV	dev/MAKEDEV
+SPECIAL	cd dev; sh MAKEDEV ramdisk
+SPECIAL	/bin/rm dev/MAKEDEV
+
+# we need the boot blocks /usr/mdec
+COPY	${DESTDIR}/usr/mdec/biosboot.sym	usr/mdec/biosboot.sym
+
+# various files that we need in /etc for the install
+COPY	${CURDIR}/../../../../etc/group		etc/group
+COPY	${CURDIR}/../../../../etc/master.passwd	etc/master.passwd
+COPY	${CURDIR}/../../../../etc/protocols	etc/protocols
+COPY	${CURDIR}/../../../../etc/services	etc/services
+SPECIAL	pwd_mkdb -p -d ./ etc/master.passwd
+
+# and the common installation tools
+COPY	dot.commonutils			.commonutils
+COPY	termcap.pc3			usr/share/misc/termcap
+
+# the disktab explanation file
+COPY	disktab.preinstall		etc/disktab.preinstall
+
+# and the installation tools
+COPY	dot.profile			.profile
+COPY	dot.instutils			.instutils
+COPY	install.sh			install
+COPY	upgrade.sh			upgrade
+COPY	start.sh			start
+COPY	dot.hdprofile			tmp/.hdprofile
+SPECIAL	chmod 755 install
+SPECIAL	chmod 755 upgrade
+SPECIAL	chmod 755 start
