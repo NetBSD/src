@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.25 1998/05/18 17:10:37 matt Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.26 1998/10/05 14:33:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -95,8 +95,6 @@ struct inpcbtable {
 #define	INP_RECVIF		0x80	/* receive incoming interface */
 #define	INP_CONTROLOPTS		(INP_RECVOPTS|INP_RECVRETOPTS|INP_RECVDSTADDR|\
 				INP_RECVIF)
-
-#define	INPLOOKUP_WILDCARD	1
 
 #define	sotoinpcb(so)		((struct inpcb *)(so)->so_pcb)
 
