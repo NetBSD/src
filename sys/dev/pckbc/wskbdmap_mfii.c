@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.7 1999/01/14 11:57:48 drochner Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.8 1999/01/15 16:12:25 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -296,6 +296,29 @@ static const keysym_t pckbd_keydesc_uk[] = {
     KC(86),  KS_backslash,      KS_bar,         KS_Udiaeresis,
 };
 
+static const keysym_t pckbd_keydesc_jp[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(3),   KS_2,              KS_quotedbl,
+    KC(7),   KS_6,              KS_ampersand,
+    KC(8),   KS_7,              KS_apostrophe,
+    KC(9),   KS_8,              KS_parenleft,
+    KC(10),  KS_9,              KS_parenright,
+    KC(11),  KS_0,
+    KC(12),  KS_minus,          KS_equal,
+    KC(13),  KS_asciicircum,    KS_asciitilde,
+    KC(26),  KS_grave,          KS_at,
+    KC(27),  KS_bracketleft,    KS_braceleft,
+    KC(39),  KS_semicolon,      KS_plus,
+    KC(40),  KS_colon,          KS_asterisk,
+    /* 41, Hankaku/Zenkaku, */
+    KC(43),  KS_bracketright,   KS_braceright,
+    /* 112, Katakana/Hiragana, */
+    KC(115), KS_backslash,      KS_underscore,
+    /* 121, Henkan, */
+    /* 123, Muhenkan, */
+    KC(125), KS_backslash,      KS_bar,
+};
+
 static const keysym_t pckbd_keydesc_us_declk[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(1),	KS_grave,	KS_asciitilde, /* replace escape */
@@ -353,8 +376,10 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_DK | KB_NODEAD,	KB_DK,	pckbd_keydesc_dk_nodead),
 	KBD_MAP(KB_IT,			KB_US,	pckbd_keydesc_it),
 	KBD_MAP(KB_UK,			KB_US,	pckbd_keydesc_uk),
+	KBD_MAP(KB_JP,			KB_US,	pckbd_keydesc_jp),
 	KBD_MAP(KB_US | KB_DECLK,	KB_US,	pckbd_keydesc_us_declk),
 	KBD_MAP(KB_US | KB_SWAPCTRLCAPS, KB_US,	pckbd_keydesc_swapctrlcaps),
+	KBD_MAP(KB_JP | KB_SWAPCTRLCAPS, KB_JP, pckbd_keydesc_swapctrlcaps),
 	{0, 0, 0, 0}
 };
 
