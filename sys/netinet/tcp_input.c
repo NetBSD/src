@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.144 2002/06/11 19:39:59 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.145 2002/06/29 04:13:21 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.144 2002/06/11 19:39:59 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.145 2002/06/29 04:13:21 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -316,6 +316,14 @@ extern struct evcnt tcp_reass_fragdup;
 #define	TCP_REASS_COUNTER_INCR(ev)	/* nothing */
 
 #endif /* TCP_REASS_COUNTERS */
+
+#ifdef INET
+static void tcp4_log_refused __P((const struct ip *, const struct tcphdr *));
+#endif
+#ifdef INET6
+static void tcp6_log_refused
+    __P((const struct ip6_hdr *, const struct tcphdr *));
+#endif
 
 int
 tcp_reass(tp, th, m, tlen)
@@ -693,6 +701,54 @@ tcp6_input(mp, offp, proto)
 }
 #endif
 
+#ifdef INET
+static void
+tcp4_log_refused(ip, th)
+	const struct ip *ip;
+	const struct tcphdr *th;
+{
+	char src[4*sizeof "123"];
+	char dst[4*sizeof "123"];
+
+	if (ip) {
+		strcpy(src, inet_ntoa(ip->ip_src));
+		strcpy(dst, inet_ntoa(ip->ip_dst));
+	}
+	else {
+		strcpy(src, "(unknown)");
+		strcpy(dst, "(unknown)");
+	}
+	log(LOG_INFO,
+	    "Connection attempt to TCP %s:%d from %s:%d\n",
+	    dst, ntohs(th->th_dport),
+	    src, ntohs(th->th_sport));
+}
+#endif
+
+#ifdef INET6
+static void
+tcp6_log_refused(ip6, th)
+	const struct ip6_hdr *ip6;
+	const struct tcphdr *th;
+{
+	char src[INET6_ADDRSTRLEN];
+	char dst[INET6_ADDRSTRLEN];
+
+	if (ip6) {
+		strcpy(src, ip6_sprintf(&ip6->ip6_src));
+		strcpy(dst, ip6_sprintf(&ip6->ip6_dst));
+	}
+	else {
+		strcpy(src, "(unknown v6)");
+		strcpy(dst, "(unknown v6)");
+	}
+	log(LOG_INFO,
+	    "Connection attempt to TCP [%s]:%d from [%s]:%d\n",
+	    dst, ntohs(th->th_dport),
+	    src, ntohs(th->th_sport));
+}
+#endif
+
 /*
  * TCP input routine, follows pages 65-76 of the
  * protocol specification dated September, 1981 very closely.
@@ -982,21 +1038,7 @@ findpcb:
 		{
 			++tcpstat.tcps_noport;
 			if (tcp_log_refused && (tiflags & TH_SYN)) {
-				char src[4*sizeof "123"];
-				char dst[4*sizeof "123"];
-
-				if (ip) {
-					strcpy(src, inet_ntoa(ip->ip_src));
-					strcpy(dst, inet_ntoa(ip->ip_dst));
-				}
-				else {
-					strcpy(src, "(unknown)");
-					strcpy(dst, "(unknown)");
-				}
-				log(LOG_INFO,
-				    "Connection attempt to TCP %s:%d from %s:%d\n",
-				    dst, ntohs(th->th_dport),
-				    src, ntohs(th->th_sport));
+				tcp4_log_refused(ip, th);
 			}
 			TCP_FIELDS_TO_HOST(th);
 			goto dropwithreset_ratelim;
@@ -1035,21 +1077,7 @@ findpcb:
 		if (in6p == NULL) {
 			++tcpstat.tcps_noport;
 			if (tcp_log_refused && (tiflags & TH_SYN)) {
-				char src[INET6_ADDRSTRLEN];
-				char dst[INET6_ADDRSTRLEN];
-
-				if (ip6) {
-					strcpy(src, ip6_sprintf(&ip6->ip6_src));
-					strcpy(dst, ip6_sprintf(&ip6->ip6_dst));
-				}
-				else {
-					strcpy(src, "(unknown v6)");
-					strcpy(dst, "(unknown v6)");
-				}
-				log(LOG_INFO,
-				    "Connection attempt to TCP [%s]:%d from [%s]:%d\n",
-				    dst, ntohs(th->th_dport),
-				    src, ntohs(th->th_sport));
+				tcp6_log_refused(ip6, th);
 			}
 			TCP_FIELDS_TO_HOST(th);
 			goto dropwithreset_ratelim;
