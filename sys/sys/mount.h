@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.116 2003/11/18 18:26:18 dbj Exp $	*/
+/*	$NetBSD: mount.h,v 1.117 2003/12/01 18:42:12 dbj Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -222,7 +222,14 @@ struct mount {
 /*
  * Mask of flags that are visible to statfs()
  */
-#define	MNT_VISFLAGMASK	0xfc10ffff
+#define	MNT_VISFLAGMASK	\
+    (MNT_SOFTDEP | MNT_NODEVMTIME | MNT_SYMPERM | MNT_EXPUBLIC | \
+     MNT_EXNORESPORT | MNT_NOATIME | \
+     MNT_IGNORE | \
+     MNT_NOCOREDUMP | MNT_ROOTFS | MNT_QUOTA | MNT_LOCAL | \
+     MNT_EXKERB | MNT_EXPORTANON | MNT_DEFEXPORTED | MNT_EXPORTED | \
+     MNT_EXRDONLY | MNT_ASYNC | MNT_UNION | MNT_NODEV | \
+     MNT_NOSUID | MNT_NOEXEC | MNT_SYNCHRONOUS | MNT_RDONLY)
 
 /*
  * External filesystem control flags.
