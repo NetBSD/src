@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.3 2001/12/30 13:20:35 blymn Exp $	*/
+/*	$NetBSD: screen.c,v 1.4 2001/12/31 14:16:01 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)screen.c	8.2 (blymn) 11/27/2001";
 #else
-__RCSID("$NetBSD: screen.c,v 1.3 2001/12/30 13:20:35 blymn Exp $");
+__RCSID("$NetBSD: screen.c,v 1.4 2001/12/31 14:16:01 blymn Exp $");
 #endif
 #endif					/* not lint */
 
@@ -55,11 +55,9 @@ __RCSID("$NetBSD: screen.c,v 1.3 2001/12/30 13:20:35 blymn Exp $");
 SCREEN *
 set_term(SCREEN *new)
 {
-	SCREEN *old_screen;
+	SCREEN *old_screen = _cursesi_screen;
 
 	if (_cursesi_screen != NULL) {
-		old_screen = _cursesi_screen;
-	
 		  /* save changes made to the current screen... */
 		old_screen->echoit = __echoit;
 		old_screen->pfast = __pfast;
@@ -184,18 +182,6 @@ newterm(char *type, FILE *outfd, FILE *infd)
 	   * up the curses screen.... emulate this.
 	   */
 	if (_cursesi_screen == NULL || _cursesi_screen->endwin) {
-		__echoit = new_screen->echoit;
-		__pfast = new_screen->pfast;
-		__rawmode = new_screen->rawmode;
-		__noqch = new_screen->noqch;
-		__nca = new_screen->nca;
-		COLS = new_screen->COLS;
-		LINES = new_screen->LINES;
-		COLORS = new_screen->COLORS;
-		COLOR_PAIRS = new_screen->COLOR_PAIRS;
-		__GT = new_screen->GT;
-		__NONL = new_screen->NONL;
-		__UPPERCASE = new_screen->UPPERCASE;
 		set_term(new_screen);
 	}
 	
@@ -204,7 +190,7 @@ newterm(char *type, FILE *outfd, FILE *infd)
 #endif
 	__startwin(new_screen);
 
-	wrefresh(new_screen->curscr);
+	clearok(new_screen->curscr, TRUE);
 	return new_screen;
 
   error_exit:
