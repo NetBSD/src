@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.44 2002/06/19 15:56:27 christos Exp $	*/
+/*	$NetBSD: termcap.c,v 1.45 2002/11/11 23:56:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.44 2002/06/19 15:56:27 christos Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.45 2002/11/11 23:56:46 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -165,10 +165,10 @@ t_getent(bp, name)
 				p += strlen(home);	/* path, looking in */
 				(void)strlcpy(pathbuf, home,
 				    sizeof(pathbuf)); /* $HOME first */
-				if ((p - pathbuf) < sizeof(pathbuf) - 1)
+				if ((size_t)(p - pathbuf) < sizeof(pathbuf) - 1)
 				    *p++ = '/';
 			}	/* if no $HOME look in current directory */
-			if ((p - pathbuf) < sizeof(pathbuf) - 1) {
+			if ((size_t)(p - pathbuf) < sizeof(pathbuf) - 1) {
 			    (void)strlcpy(p, _PATH_DEF,
 				sizeof(pathbuf) - (p - pathbuf));
 			}
@@ -407,7 +407,7 @@ t_getstr(info, id, area, limit)
 		 * check if there is room for the new entry to be put into
 		 * area
 		 */
-		if (limit != NULL && (*limit < i)) {
+		if (limit != NULL && (*limit < (size_t) i)) {
 			errno = E2BIG;
 			free(s);
 			return NULL;
@@ -490,7 +490,8 @@ t_agetstr(struct tinfo *info, const char *id)
 	if (new_size == 0)
 		return NULL;
 
-	if ((tb = info->tbuf) == NULL || (tb->eptr - tb->ptr) < (new_size + 1)) {
+	if ((tb = info->tbuf) == NULL ||
+	    (size_t) (tb->eptr - tb->ptr) < (new_size + 1)) {
 		if (new_size < BSIZE)
 			new_size = BSIZE;
 		else
