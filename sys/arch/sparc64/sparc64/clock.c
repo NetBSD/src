@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.30 2000/09/09 23:29:06 eeh Exp $ */
+/*	$NetBSD: clock.c,v 1.31 2000/09/11 23:29:31 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -693,14 +693,14 @@ tickintr(cap)
 	extern int rom_console_input;
 #endif
 
+	hardclock((struct clockframe *)cap);
+	if (poll_console)
+		setsoftint();
+
 	s = splhigh();
 	/* Reset the interrupt */
 	next_tick(tick_increment);
 	splx(s);
-
-	hardclock((struct clockframe *)cap);
-	if (poll_console)
-		setsoftint();
 
 	return (1);
 }
