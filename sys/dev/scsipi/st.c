@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.85 1997/11/07 18:16:23 mjacob Exp $	*/
+/*	$NetBSD: st.c,v 1.86 1997/12/28 19:25:35 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -176,7 +176,7 @@ struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 	}}},
 	{{T_SEQUENTIAL, T_REMOV,
 	 "ARCHIVE ", "VIPER 150  21247", ""},     {0, 12, {
-		{0, 0, 0},				/* minor 0-3 */
+		{ST_Q_SENSE_HELP, 0, 0},		/* minor 0-3 */
 		{0, 0, QIC_150},			/* minor 4-7 */
 		{0, 0, QIC_120},			/* minor 8-11 */
 		{0, 0, QIC_24}				/* minor 12-15 */
