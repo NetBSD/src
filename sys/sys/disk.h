@@ -41,7 +41,7 @@
  *
  *	@(#)disk.h	5.1 (Berkeley) 7/10/92
  *
- * from: $Header: /cvsroot/src/sys/sys/disk.h,v 1.2 1994/02/01 02:51:39 deraadt Exp $ (LBL)
+ * from: $Header: /cvsroot/src/sys/sys/disk.h,v 1.3 1994/02/01 19:37:55 mycroft Exp $ (LBL)
  */
 
 /*
@@ -65,6 +65,7 @@ struct dkdevice {
 	struct	dkdriver *dk_driver;	/* pointer to driver */
 	daddr_t	dk_labelsector;		/* sector containing label */
 	struct	disklabel dk_label;	/* label */
+	struct	cpu_disklabel dk_cpulabel;
 };
 
 struct dkdriver {
