@@ -1,6 +1,7 @@
+#	$NetBSD: Makefile,v 1.8 1997/10/08 08:45:07 mrg Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
-#	$NetBSD: Makefile,v 1.7 1997/03/24 22:18:37 christos Exp $
 
+WARNS?=	1
 PROG=	telnetd
 CFLAGS+=-DLINEMODE -DKLUDGELINEMODE -DUSE_TERMIO -DDIAGNOSTICS
 CFLAGS+=-DOLD_ENVIRON -DENV_HACK -I${.CURDIR}

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.10 1997/08/25 19:31:51 kleink Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.11 1997/10/08 08:45:12 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,16 +33,19 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-static char rcsid[] = "$NetBSD: sys_term.c,v 1.10 1997/08/25 19:31:51 kleink Exp $";
+__RCSID("$NetBSD: sys_term.c,v 1.11 1997/10/08 08:45:12 mrg Exp $");
 #endif
 #endif /* not lint */
 
 #include "telnetd.h"
 #include "pathnames.h"
+
+#include <util.h>
 
 #include <sys/cdefs.h>
 #define P __P
@@ -179,6 +182,14 @@ struct termios termbuf, termbuf2;	/* pty control structure */
 int ttyfd = -1;
 # endif
 #endif	/* USE_TERMIO */
+
+void getptyslave __P((void));
+int cleanopen __P((char *));
+void init_env __P((void));
+char **addarg __P((char **, char *));
+void scrub_env __P((void));
+int getent __P((char *, char *));
+char *getstr __P((char *, char **));
 
 /*
  * init_termbuf()
@@ -1074,7 +1085,7 @@ extern void utmp_sig_notify P((int));
  * that is necessary.  The return value is a file descriptor
  * for the slave side.
  */
-	int
+	void
 getptyslave()
 {
 	register int t = -1;
@@ -1392,7 +1403,6 @@ startslave(host, autologin, autoname)
 	char *autoname;
 {
 	register int i;
-	char name[256];
 #ifdef	NEWINIT
 	extern char *ptyip;
 	struct init_request request;
@@ -1455,7 +1465,7 @@ startslave(host, autologin, autoname)
 		utmp_sig_notify(pid);
 # endif	/* PARENT_DOES_UTMP */
 	} else {
-		getptyslave(autologin);
+		getptyslave();
 		start_login(host, autologin, autoname);
 		/*NOTREACHED*/
 	}
@@ -1467,7 +1477,8 @@ startslave(host, autologin, autoname)
 	 */
 	if ((i = open(INIT_FIFO, O_WRONLY)) < 0) {
 		char tbuf[128];
-		(void) sprintf(tbuf, "Can't open %s\n", INIT_FIFO);
+
+		(void)snprintf(tbuf, sizeof tbuf, "Can't open %s\n", INIT_FIFO);
 		fatalperror(net, tbuf);
 	}
 	memset((char *)&request, 0, sizeof(request));
@@ -1490,20 +1501,23 @@ startslave(host, autologin, autoname)
 #endif /* BFTPDAEMON */
 	if (write(i, (char *)&request, sizeof(request)) < 0) {
 		char tbuf[128];
-		(void) sprintf(tbuf, "Can't write to %s\n", INIT_FIFO);
+
+		(void)snprintf(tbuf, sizeof tbuf, "Can't write to %s\n", INIT_FIFO);
 		fatalperror(net, tbuf);
 	}
 	(void) close(i);
 	(void) signal(SIGALRM, nologinproc);
 	for (i = 0; ; i++) {
 		char tbuf[128];
+
 		alarm(15);
 		n = read(pty, ptyip, BUFSIZ);
 		if (i == 3 || n >= 0 || !gotalarm)
 			break;
 		gotalarm = 0;
-		sprintf(tbuf, "telnetd: waiting for /etc/init to start login process on %s\r\n", line);
-		(void) write(net, tbuf, strlen(tbuf));
+		(void)snprintf(tbuf, sizeof tbuf,
+		    "telnetd: waiting for /etc/init to start login process on %s\r\n", line);
+		(void)write(net, tbuf, strlen(tbuf));
 	}
 	if (n < 0 && gotalarm)
 		fatal(net, "/etc/init didn't start login process");
@@ -1521,11 +1535,10 @@ extern char **environ;
 	void
 init_env()
 {
-	extern char *getenv();
 	char **envp;
 
 	envp = envinit;
-	if (*envp = getenv("TZ"))
+	if ((*envp = getenv("TZ")))
 		*envp++ -= 3;
 #if	defined(CRAY) || defined(__hpux)
 	else
@@ -1550,17 +1563,13 @@ start_login(host, autologin, name)
 	int autologin;
 	char *name;
 {
-	register char *cp;
 	register char **argv;
-	char **addarg();
-	extern char *getenv();
-	extern char *getstr();
 	extern char *gettyname;
 #define	TABBUFSIZ	512
 	char	defent[TABBUFSIZ];
 	char	defstrs[TABBUFSIZ];
 #undef	TABBUFSIZ
-	char *loginprog;
+	char *loginprog = NULL;
 #ifdef	UTMPX
 	register int pid = getpid();
 	struct utmpx utmpx;
@@ -1843,6 +1852,7 @@ addarg(argv, val)
  * Remove a few things from the environment that
  * don't need to be there.
  */
+void
 scrub_env()
 {
 	register char **cpp, **cpp2;
