@@ -1,4 +1,4 @@
-/*	$NetBSD: ioctl.h,v 1.26 2000/12/18 14:43:43 fvdl Exp $	*/
+/*	$NetBSD: ioctl.h,v 1.27 2000/12/18 18:57:11 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -75,7 +75,7 @@ struct ttysize {
 
 struct ioctl_pt {
 	unsigned long com;
-	caddr_t data;
+	void *data;
 };
 
 #define PTIOCNETBSD	_IOW('Z', 0, struct ioctl_pt)
