@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.7 1996/06/03 22:39:16 mark Exp $ */
+/* $NetBSD: if_eb.c,v 1.8 1996/06/12 21:01:56 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -141,7 +141,7 @@ struct eb_softc {
  * prototypes
  */
 
-static int ebintr __P((void *));
+int ebintr __P((void *));
 static int eb_init __P((struct eb_softc *));
 static int eb_ioctl __P((struct ifnet *, u_long, caddr_t));
 static void eb_start __P((struct ifnet *));
@@ -1208,7 +1208,8 @@ ebintr(arg)
 	status = ReadShort(iobase + EB_8004_STATUS);
         dprintf(("st=%04x\n", status));
 #endif
-	return(0);
+
+	return(1);	/* Claim the interrupt */
 }
 
 void
