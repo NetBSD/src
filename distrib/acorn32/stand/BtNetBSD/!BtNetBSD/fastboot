@@ -1,4 +1,4 @@
-| $NetBSD: fastboot,v 1.7 2004/06/08 22:56:59 gavan Exp $
+| $NetBSD: fastboot,v 1.8 2004/06/10 07:43:39 abs Exp $
 |
 | Fast boot configuration file, edit by hand, save and run !BtNetBSD
 | Part of !BtNetBSD
@@ -22,9 +22,13 @@ Run <BtNetBSD$Dir>.PreBoot
 |
 | XXX UnixFS is currently broken.
 |If "%*0" = "" Then Set NetBSD$Kernel UnixFS:$.netbsd Else Set NetBSD$Kernel %*0
+|Set NetBSD$Root /dev/wd0a
+|Set NetBSD$BootOptions root=<NetBSD$Root> maxproc=64 noftp symtab
 If "%*0" = "" Then Error Double click a kernel to start NetBSD
-Set NetBSD$Root /dev/wd0a
-Set NetBSD$BootOptions maxproc=64 noftp symtab
+Set NetBSD$Kernel %*0
+
+| Clear incompatible boot options an older version of !BtNetBSD may have set
+UnSet NetBSD$BootOptions
 
 | Set WimpSlot (suit as you like ... to little won't boot correctly)
 *Wimpslot 7000k
@@ -38,6 +42,6 @@ If "<NetBSD$MDF>" <> "" Then loadmodefile <NetBSD$MDF>
 If "<NetBSD$ScreenMode>" <> "" Then Set Alias$SetNetBSDMode Wimpmode <NetBSD$ScreenMode>
 If "<NetBSD$ScreenMode>" <> "" Then SetNetBSDMode
 
-Set Alias$RunNetBSD <BtNetBSD$Dir>.boot32 <NetBSD$Kernel> root=<NetBSD$Root> <NetBSD$BootOptions>
+Set Alias$RunNetBSD <BtNetBSD$Dir>.boot32 <NetBSD$Kernel> <NetBSD$BootOptions>
 
 RunNetBSD
