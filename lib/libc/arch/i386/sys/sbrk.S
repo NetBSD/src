@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.14 2000/06/26 06:25:40 kleink Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.15 2000/12/08 22:57:57 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sbrk.S,v 1.14 2000/06/26 06:25:40 kleink Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.15 2000/12/08 22:57:57 mycroft Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -65,8 +65,7 @@ ENTRY(_sbrk)
 	movl	(%edx),%eax
 	addl	%eax,%ecx
 	movl	%ecx,4(%esp)
-	movl	$(SYS_break),%eax
-	int	$0x80
+	SYSTRAP(break)
 	jc	err
 	PIC_PROLOGUE
 	movl	PIC_GOT(CURBRK),%edx
@@ -83,8 +82,7 @@ err:
 	movl	4(%esp),%ecx
 	movl	CURBRK,%eax
 	addl	%eax,4(%esp)
-	movl	$(SYS_break),%eax
-	int	$0x80
+	SYSTRAP(break)
 	jc	err
 	movl	CURBRK,%eax
 	addl	%ecx,CURBRK

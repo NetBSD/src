@@ -1,4 +1,4 @@
-/*	$NetBSD: __vfork14.S,v 1.4 2000/04/03 04:13:36 mycroft Exp $	*/
+/*	$NetBSD: __vfork14.S,v 1.5 2000/12/08 22:57:57 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: __vfork14.S,v 1.4 2000/04/03 04:13:36 mycroft Exp $")
+	RCSID("$NetBSD: __vfork14.S,v 1.5 2000/12/08 22:57:57 mycroft Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -54,8 +54,7 @@
  */
 ENTRY(__vfork14)
 	popl	%ecx		/* my rta into ecx */
-	movl	$(SYS___vfork14),%eax
-	int	$0x80
+	SYSTRAP(__vfork14)
 	jc	err
 	decl	%edx
 	andl	%edx,%eax

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.13 2000/04/03 04:13:36 mycroft Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.14 2000/12/08 22:57:57 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: ptrace.S,v 1.13 2000/04/03 04:13:36 mycroft Exp $")
+	RCSID("$NetBSD: ptrace.S,v 1.14 2000/12/08 22:57:57 mycroft Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -57,8 +57,7 @@ ENTRY(ptrace)
 #endif /* PIC */
 	xorl	%edx,%edx
 	movl	%edx,(%eax)
-	movl	$(SYS_ptrace),%eax
-	int	$0x80
+	SYSTRAP(ptrace)
 	jc	err
 	ret
 err:
