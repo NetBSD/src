@@ -1,5 +1,5 @@
 #  @(#)Makefile 5.1beta 93/09/24 
-#  $Id: Makefile,v 1.13 1994/02/14 17:32:56 jtc Exp $
+#  $Id: Makefile,v 1.14 1994/02/15 01:00:46 jtc Exp $
 # 
 #  ====================================================
 #  Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -53,7 +53,6 @@
 
 
 CFLAGS+= -D_MULTI_LIBM -D_POSIX_MODE
-NOPIC=
 
 LIB=	m
 OBJS = 	k_standard.o k_rem_pio2.o k_cos.o k_sin.o k_tan.o \
