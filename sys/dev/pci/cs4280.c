@@ -1,8 +1,7 @@
-/*	$NetBSD: cs4280.c,v 1.1 1999/12/13 20:19:23 augustss Exp $	*/
-/*	$Tera: cs4280.c,v 1.24 1999/12/13 15:24:04 tacha Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.2 2000/01/14 14:39:13 augustss Exp $	*/
 
 /*
- * Copyright (c) 1999 Tatoku Ogaito.  All rights reserved.
+ * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -47,7 +46,9 @@
  */
 
 #ifdef CS4280_DEBUG
+#ifndef MIDI_READY
 #define MIDI_READY
+#endif /* ! MIDI_READY */
 #endif
 
 #ifdef MIDI_READY
@@ -189,7 +190,7 @@ struct cfattach clcs_ca = {
 	sizeof(struct cs4280_softc), cs4280_match, cs4280_attach
 };
 
-void	cs4280_init __P((struct cs4280_softc *, int));
+int	cs4280_init __P((struct cs4280_softc *, int));
 int	cs4280_open __P((void *, int));
 void	cs4280_close __P((void *));
 
@@ -228,9 +229,7 @@ void	cs4280_reset_codec __P((void *sc));
 
 void	cs4280_power __P((int, void *));
 
-#ifdef NEED_CLEAR_FIFOS
 void	cs4280_clear_fifos __P((struct cs4280_softc *));
-#endif
 
 #if NMIDI > 0
 void	cs4280_midi_close __P((void*));
@@ -623,7 +622,8 @@ cs4280_attach(parent, self, aux)
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	/* Initialization */
-	cs4280_init(sc, 1);
+	if(cs4280_init(sc, 1) != 0)
+		return;
 
 	/* AC 97 attachement */
 	sc->host_if.arg = sc;
@@ -654,11 +654,8 @@ cs4280_attach(parent, self, aux)
 	cs4280_mixer_set_port(sc, &ctl);
 	
 	audio_attach_mi(&cs4280_hw_if, sc, &sc->sc_dev);
-#if NMIDI > 0
-	/* Reset midi port */
-	mem = BA0READ4(sc, CS4280_MIDCR) & 0xffffffc0;
-	BA0WRITE4(sc, CS4280_MIDCR, mem | MIDCR_MRST);
 
+#if NMIDI > 0
 	midi_attach_mi(&cs4280_midi_hw_if, sc, &sc->sc_dev);
 #endif
 	sc->sc_suspend = PWR_RESUME;
@@ -772,7 +769,6 @@ cs4280_intr(p)
 		default:
 			/* Should not reach here */
 			printf("unknown sc->sc_rparam: %d\n", sc->sc_rparam);
-			
 		}
 		if (sc->sc_rn >= sc->sc_re)
 			sc->sc_rn = sc->sc_rs;
@@ -788,28 +784,40 @@ cs4280_intr(p)
 #if NMIDI > 0
 	/* Midi port Interrupt */
 	if (intr & HISR_MIDI) {
-		u_int32_t data;
-		do {
-			mem = BA0READ4(sc, CS4280_MIDSR);
-			DPRINTF(("cs4280_intr HISR_MIDI: mem=0x%x\n", mem));
-			if (!(mem & MIDSR_TBF)) {
-				if (sc->sc_ointr != NULL) {
-					DPRINTF(("call sc_ointr(%p)\n",
-						 sc->sc_ointr));
-					sc->sc_ointr(sc->sc_arg);
-				}
-			}
-			if (!(mem & MIDSR_RBE)) {
-				data = BA0READ4(sc, CS4280_MIDRP);
-				if (sc->sc_iintr != NULL) {
-					DPRINTF(("call sc_iintr(%p) data=0x"
-						 "%x\n", sc->sc_iintr, data));
-					sc->sc_iintr(sc->sc_arg, data);
-				}
-			}
-		} while ((mem & MIDSR_TBF) || !(mem & MIDSR_RBE));
+		int data;
+
+		DPRINTF(("i: %d: ", 
+			 BA0READ4(sc, CS4280_MIDSR)));
+		/* Read the received data */
+		while ((sc->sc_iintr != NULL) &&
+		       ((BA0READ4(sc, CS4280_MIDSR) & MIDSR_RBE) == 0)) {
+			data = BA0READ4(sc, CS4280_MIDRP) & MIDRP_MASK;
+			DPRINTF(("r:%x\n",data));
+			sc->sc_iintr(sc->sc_arg, data);
+		}
+		
+		/* Write the data */
+#if 1
+		/* XXX:
+		 * It seems "Transmit Buffer Full" never activate until EOI
+		 * is deliverd.  Shall I throw EOI top of this routine ?
+		 */
+		if ((BA0READ4(sc, CS4280_MIDSR) & MIDSR_TBF) == 0) {
+			DPRINTF(("w: "));
+			if (sc->sc_ointr != NULL)
+				sc->sc_ointr(sc->sc_arg);
+		}
+#else
+		while ((sc->sc_ointr != NULL) && 
+		       ((BA0READ4(sc, CS4280_MIDSR) & MIDSR_TBF) == 0)) {
+			DPRINTF(("w: "));
+			sc->sc_ointr(sc->sc_arg);
+		}
+#endif
+		DPRINTF(("\n"));
 	}
 #endif
+	/* Throw EOI */
 	BA0WRITE4(sc, CS4280_HICR, HICR_CHGM | HICR_IEV);
 	return (0);
 }
@@ -829,9 +837,9 @@ cs4280_download(sc, src, offset, len)
 	u_int32_t con, data;
 	u_int8_t c0,c1,c2,c3;
 #endif
-	if ((offset&3) || (len&3)) {
+	if ((offset&3) || (len&3))
 		return (-1);
-	}
+
 	len /= sizeof(u_int32_t);
 	for (ctr = 0; ctr < len; ctr++) {
 		/* XXX:
@@ -888,9 +896,9 @@ cs4280_checkimage(sc, src, offset, len)
 	u_int32_t ctr, data;
 	int err = 0;
 
-	if ((offset&3) || (len&3)) {
+	if ((offset&3) || (len&3))
 		return -1;
-	}
+
 	len /= sizeof(u_int32_t);
 	for (ctr = 0; ctr < len; ctr++) {
 		/* I cannot confirm this is the right thing
@@ -1395,9 +1403,7 @@ cs4280_malloc(addr, direction, size, pool, flags)
 	caddr_t q;
 	int error;
 	
-#if 0
-	printf("cs4280_malloc: size=%d pool=%d flags=%d\n", size, pool, flags);
-#endif
+	DPRINTFN(5,("cs4280_malloc: size=%d pool=%d flags=%d\n", size, pool, flags));
 	q = malloc(size, pool, flags);
 	if (!q) 
 		return (0);
@@ -1513,7 +1519,7 @@ cs4280_trigger_output(addr, start, end, blksize, intr, arg, param)
 	BA1WRITE4(sc, CS4280_PBA, DMAADDR(p));
 
 	/* set PFIE */
-	pfie = (BA1READ4(sc, CS4280_PFIE) & ~PFIE_MASK);
+	pfie = BA1READ4(sc, CS4280_PFIE) & ~PFIE_MASK;
 
 	if (param->precision * param->factor == 8)
 		pfie |= PFIE_8BIT;
@@ -1610,7 +1616,7 @@ cs4280_trigger_input(addr, start, end, blksize, intr, arg, param)
 	return (0);
 }
 
-void
+int
 cs4280_init(sc, init)
 	struct cs4280_softc *sc;
 	int init;
@@ -1638,7 +1644,7 @@ cs4280_init(sc, init)
 	BA0WRITE4(sc, CS4280_ACCTL, ACCTL_RSTN);
 	
 	/* Enable AC-link sync generation */
-	BA0WRITE4(sc, CS4280_ACCTL, ACCTL_ESYN|ACCTL_RSTN);
+	BA0WRITE4(sc, CS4280_ACCTL, ACCTL_ESYN | ACCTL_RSTN);
 	delay(50*1000); /* delay 50ms */
 
 	/* Set the serial port timing configuration */
@@ -1656,9 +1662,13 @@ cs4280_init(sc, init)
 	/* Turn on clock */
 	BA0WRITE4(sc, CS4280_CLKCR1, CLKCR1_PLLP | CLKCR1_SWCE);
 	
-#ifdef NEED_CLEAR_FIFOS
-	/* if we get beep sound,  need clear fifo ? */
+	/* Set the serial port FIFO pointer to the
+	 * first sample in FIFO. (not documented) */
 	cs4280_clear_fifos(sc);
+
+#if 0
+	/* Set the serial port FIFO pointer to the first sample in the FIFO */
+	BA0WRITE4(sc, CS4280_SERBSP, 0);
 #endif
 	
 	/* Configure the serial port */
@@ -1668,17 +1678,17 @@ cs4280_init(sc, init)
 	
 	/* Wait for CODEC ready */
 	n = 0;
-	while (!(BA0READ4(sc, CS4280_ACSTS) & ACSTS_CRDY)) {
-		delay(10);
-		if (++n > 100) {
+	while ((BA0READ4(sc, CS4280_ACSTS) & ACSTS_CRDY) == 0) {
+		delay(125);
+		if (++n > 1000) {
 			printf("%s: codec ready timeout\n",
 			       sc->sc_dev.dv_xname);
-			return;
+			return(1);
 		}
 	}
 
 	/* Assert valid frame signal */
-	BA0WRITE4(sc, CS4280_ACCTL, ACCTL_VFRM|ACCTL_ESYN|ACCTL_RSTN);
+	BA0WRITE4(sc, CS4280_ACCTL, ACCTL_VFRM | ACCTL_ESYN | ACCTL_RSTN);
 
 	/* Wait for valid AC97 input slot */
 	n = 0;
@@ -1686,7 +1696,7 @@ cs4280_init(sc, init)
 		delay(1000);
 		if (++n > 1000) {
 			printf("AC97 inputs slot ready timeout\n");
-			return;
+			return(1);
 		}
 	}
 	
@@ -1699,7 +1709,7 @@ cs4280_init(sc, init)
 	/* Download the image to the processor */
 	if (cs4280_download_image(sc) != 0) {
 		printf("%s: image download error\n", sc->sc_dev.dv_xname);
-		return;
+		return(1);
 	}
 
 	/* Save playback parameter and then write zero.
@@ -1728,7 +1738,7 @@ cs4280_init(sc, init)
 		delay(10);
 		if (++n > 1000) {
 			printf("SPCR 1->0 transition timeout\n");
-			return;
+			return(1);
 		}
 	}
 	
@@ -1737,7 +1747,7 @@ cs4280_init(sc, init)
 		delay(10);
 		if (++n > 1000) {
 			printf("SPCS 0->1 transition timeout\n");
-			return;
+			return(1);
 		}
 	}
 	/* Processor is now running !!! */
@@ -1757,7 +1767,17 @@ cs4280_init(sc, init)
 	mem = BA1READ4(sc, CS4280_CIE) & ~CIE_CI_MASK;
 	mem |= CIE_CI_ENABLE;
 	BA1WRITE4(sc, CS4280_CIE, mem);
-	
+
+#if NMIDI > 0
+	/* Reset midi port */
+	mem = BA0READ4(sc, CS4280_MIDCR) & ~MIDCR_MASK;
+	BA0WRITE4(sc, CS4280_MIDCR, mem | MIDCR_MRST);
+	DPRINTF(("midi reset: 0x%x\n", BA0READ4(sc, CS4280_MIDCR)));
+	/* midi interrupt enable */
+	mem |= MIDCR_TXE | MIDCR_RXE | MIDCR_RIE | MIDCR_TIE;
+	BA0WRITE4(sc, CS4280_MIDCR, mem);
+#endif
+	return(0);
 }
 
 void
@@ -1779,7 +1799,7 @@ cs4280_power(why, v)
 		for(i = 1; i <= CS4280_SAVE_REG_MAX; i++) {
 			if(i == 0x04) /* AC97_REG_MASTER_TONE */
 				continue;
-			cs4280_read_codec(sc, 2*i, &sc->ac97_reg[i>>2]);
+			cs4280_read_codec(sc, 2*i, &sc->ac97_reg[i>>1]);
 		}
 		/* should I powerdown here ? */
 		cs4280_write_codec(sc, AC97_REG_POWER, CS4280_POWER_DOWN_ALL);
@@ -1792,7 +1812,7 @@ cs4280_power(why, v)
 		sc->sc_suspend = why;
 		cs4280_init(sc, 0);
 		cs4280_reset_codec(sc);
-		cs4280_write_codec(sc, AC97_REG_RESET, 0);  /* Cold AC'97 Reset */
+
 		/* restore ac97 registers */
 		for(i = 1; i <= CS4280_SAVE_REG_MAX; i++) {
 			if(i == 0x04) /* AC97_REG_MASTER_TONE */
@@ -1802,7 +1822,6 @@ cs4280_power(why, v)
 	}
 }
 
-#ifdef NEED_CLEAR_FIFOS
 void
 cs4280_clear_fifos(sc)
 	struct cs4280_softc *sc;
@@ -1836,7 +1855,6 @@ cs4280_clear_fifos(sc)
 	if (pd)
 		BA0WRITE4(sc, CS4280_CLKCR1, mem);
 }
-#endif
 
 #if NMIDI > 0
 int
@@ -1855,11 +1873,17 @@ cs4280_midi_open(addr, flags, iintr, ointr, arg)
 	sc->sc_ointr = ointr;
 	sc->sc_arg = arg;
 
-	mem = BA0READ4(sc, CS4280_MIDCR);
-	mem &= ~MIDCR_MASK;
+	/* midi interrupt enable */
+	mem = BA0READ4(sc, CS4280_MIDCR) & ~MIDCR_MASK;
 	mem |= MIDCR_TXE | MIDCR_RXE | MIDCR_RIE | MIDCR_TIE | MIDCR_MLB;
 	BA0WRITE4(sc, CS4280_MIDCR, mem);
-	
+#ifdef CS4280_DEBUG
+	if (mem != BA0READ4(sc, CS4280_MIDCR)) {
+		DPRINTF(("midi_open: MIDCR=%d\n", BA0READ4(sc, CS4280_MIDCR)));
+		return(EINVAL);
+	}
+	DPRINTF(("MIDCR=0x%x\n", BA0READ4(sc, CS4280_MIDCR)));
+#endif
 	return (0);
 }
 
@@ -1872,7 +1896,7 @@ cs4280_midi_close(addr)
 	
 	DPRINTF(("midi_close\n"));
 	mem = BA0READ4(sc, CS4280_MIDCR);
-	mem &= MIDCR_MASK;
+	mem &= ~MIDCR_MASK;
 	BA0WRITE4(sc, CS4280_MIDCR, mem);
 
 	sc->sc_iintr = 0;
@@ -1888,13 +1912,17 @@ cs4280_midi_output(addr, d)
 	u_int32_t mem;
 	int x;
 
-	DPRINTF(("midi_output d=0x%08x\n",d));
 	for (x = 0; x != MIDI_BUSY_WAIT; x++) {
-		if (!(BA0READ4(sc, CS4280_MIDSR) & MIDSR_TBF)) {
-			mem = BA0READ4(sc, CS4280_MIDWP);
-			mem &= ~MIDWP_MASK;
-			mem |= d;
+		if ((BA0READ4(sc, CS4280_MIDSR) & MIDSR_TBF) == 0) {
+			mem = BA0READ4(sc, CS4280_MIDWP) & ~MIDWP_MASK;
+			mem |= d & MIDWP_MASK;
+			DPRINTFN(5,("midi_output d=0x%08x",d));
 			BA0WRITE4(sc, CS4280_MIDWP, mem);
+			if (mem != BA0READ4(sc, CS4280_MIDWP)) {
+				DPRINTF(("Bad write data: %d %d",
+					 mem, BA0READ4(sc, CS4280_MIDWP)));
+				return(EIO);
+			}
 			return (0);
 		}
 		delay(MIDI_BUSY_DELAY);
