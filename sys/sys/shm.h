@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.15 1994/06/29 06:45:17 cgd Exp $	*/
+/*	$NetBSD: shm.h,v 1.16 1994/10/20 04:29:01 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -77,11 +77,10 @@ struct shmid_ds	*shmsegs;
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int shmsys __P((int, ...));
 void *shmat  __P((int, void *, int));
-int shmget __P((key_t, int, int));
 int shmctl __P((int, int, struct shmid_ds *));
 int shmdt  __P((void *));
+int shmget __P((key_t, int, int));
 __END_DECLS
 
 #endif /* !KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.5 1994/06/29 06:45:15 cgd Exp $	*/
+/*	$NetBSD: sem.h,v 1.6 1994/10/20 04:29:00 cgd Exp $	*/
 
 /*
  * SVID compatible sem.h file
@@ -158,20 +158,19 @@ int	*semu;			/* undo structure pool */
 /*
  * Parameters to the semconfig system call
  */
-typedef enum {
-	SEM_CONFIG_FREEZE,	/* Freeze the semaphore facility. */
-	SEM_CONFIG_THAW		/* Thaw the semaphore facility. */
-} semconfig_ctl_t;
+#define	SEM_CONFIG_FREEZE	0	/* Freeze the semaphore facility. */
+#define	SEM_CONFIG_THAW		1	/* Thaw the semaphore facility. */
 #endif /* KERNEL */
 
 #ifndef KERNEL
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int semsys __P((int, ...));
 int semctl __P((int, int, int, union semun));
+int __semctl __P((int, int, int, union semun *));
 int semget __P((key_t, int, int));
-int semop __P((int, struct sembuf *,unsigned));
+int semop __P((int, struct sembuf *, u_int));
+int semconfig __P((int));
 __END_DECLS
 #endif /* !KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.12 1994/08/17 14:43:56 mycroft Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.13 1994/10/20 04:28:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -57,6 +57,8 @@
 #include <sys/namei.h>
 #include <sys/syslog.h>
 
+#include <sys/syscallargs.h>
+
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #ifdef ISO
@@ -102,14 +104,13 @@ static int nfs_asyncdaemon[NFS_MAXASYNCDAEMON];
 /*
  * Get file handle system call
  */
-struct getfh_args {
-	char	*fname;
-	fhandle_t *fhp;
-};
 getfh(p, uap, retval)
 	struct proc *p;
-	register struct getfh_args *uap;
-	int *retval;
+	register struct getfh_args /* {
+		syscallarg(char *) fname;
+		syscallarg(fhandle_t *) fhp;
+	} */ *uap;
+	register_t *retval;
 {
 	register struct vnode *vp;
 	fhandle_t fh;
@@ -121,7 +122,8 @@ getfh(p, uap, retval)
 	 */
 	if (error = suser(p->p_ucred, &p->p_acflag))
 		return (error);
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, uap->fname, p);
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
+	    SCARG(uap, fname), p);
 	if (error = namei(&nd))
 		return (error);
 	vp = nd.ni_vp;
@@ -131,7 +133,7 @@ getfh(p, uap, retval)
 	vput(vp);
 	if (error)
 		return (error);
-	error = copyout((caddr_t)&fh, (caddr_t)uap->fhp, sizeof (fh));
+	error = copyout((caddr_t)&fh, (caddr_t)SCARG(uap, fhp), sizeof (fh));
 	return (error);
 }
 
@@ -142,14 +144,13 @@ getfh(p, uap, retval)
  * - remains in the kernel as an nfsd
  * - remains in the kernel as an nfsiod
  */
-struct nfssvc_args {
-	int flag;
-	caddr_t argp;
-};
 nfssvc(p, uap, retval)
 	struct proc *p;
-	register struct nfssvc_args *uap;
-	int *retval;
+	register struct nfssvc_args /* {
+		syscallarg(int) flag;
+		syscallarg(caddr_t) argp;
+	} */ *uap;
+	register_t *retval;
 {
 	struct nameidata nd;
 	struct file *fp;
@@ -172,17 +173,18 @@ nfssvc(p, uap, retval)
 		nfssvc_sockhead_flag |= SLP_WANTINIT;
 		(void) tsleep((caddr_t)&nfssvc_sockhead, PSOCK, "nfsd init", 0);
 	}
-	if (uap->flag & NFSSVC_BIOD) {
+	if (SCARG(uap, flag) & NFSSVC_BIOD) {
 #ifndef NFSCLIENT
 		error = ENOSYS;
 #else /* !NFSCLIENT */
 		error = nfssvc_iod(p);
 #endif /* !NFSCLIENT */
-	} else if (uap->flag & NFSSVC_MNTD) {
+	} else if (SCARG(uap, flag) & NFSSVC_MNTD) {
 #ifndef NFSCLIENT
 		error = ENOSYS;
 #else /* !NFSCLIENT */
-		if (error = copyin(uap->argp, (caddr_t)&ncd, sizeof (ncd)))
+		if (error =
+		    copyin(SCARG(uap, argp), (caddr_t)&ncd, sizeof (ncd)))
 			return (error);
 		NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
 			ncd.ncd_dirp, p);
@@ -195,17 +197,17 @@ nfssvc(p, uap, retval)
 		if (error)
 			return (error);
 		if ((nmp->nm_flag & NFSMNT_MNTD) &&
-			(uap->flag & NFSSVC_GOTAUTH) == 0)
+		    (SCARG(uap, flag) & NFSSVC_GOTAUTH) == 0)
 			return (0);
 		nmp->nm_flag |= NFSMNT_MNTD;
-		error = nqnfs_clientd(nmp, p->p_ucred, &ncd, uap->flag,
-			uap->argp, p);
+		error = nqnfs_clientd(nmp, p->p_ucred, &ncd, SCARG(uap, flag),
+		    SCARG(uap, argp), p);
 #endif /* !NFSCLIENT */
-	} else if (uap->flag & NFSSVC_ADDSOCK) {
+	} else if (SCARG(uap, flag) & NFSSVC_ADDSOCK) {
 #ifndef NFSSERVER
 		error = ENOSYS;
 #else /* !NFSSERVER */
-		if (error = copyin(uap->argp, (caddr_t)&nfsdarg,
+		if (error = copyin(SCARG(uap, argp), (caddr_t)&nfsdarg,
 		    sizeof(nfsdarg)))
 			return (error);
 		if (error = getsock(p->p_fd, nfsdarg.sock, &fp))
@@ -224,10 +226,12 @@ nfssvc(p, uap, retval)
 #ifndef NFSSERVER
 		error = ENOSYS;
 #else /* !NFSSERVER */
-		if (error = copyin(uap->argp, (caddr_t)nsd, sizeof (*nsd)))
+		if (error = copyin(SCARG(uap, argp), (caddr_t)nsd,
+		    sizeof (*nsd)))
 			return (error);
-		if ((uap->flag & NFSSVC_AUTHIN) && (nfsd = nsd->nsd_nfsd) &&
-			(nfsd->nd_slp->ns_flag & SLP_VALID)) {
+		if ((SCARG(uap, flag) & NFSSVC_AUTHIN) &&
+		    (nfsd = nsd->nsd_nfsd) &&
+		    (nfsd->nd_slp->ns_flag & SLP_VALID)) {
 			slp = nfsd->nd_slp;
 
 			/*
@@ -272,9 +276,10 @@ nfssvc(p, uap, retval)
 			    }
 			}
 		}
-		if ((uap->flag & NFSSVC_AUTHINFAIL) && (nfsd = nsd->nsd_nfsd))
+		if ((SCARG(uap, flag) & NFSSVC_AUTHINFAIL) &&
+		    (nfsd = nsd->nsd_nfsd))
 			nfsd->nd_flag |= NFSD_AUTHFAIL;
-		error = nfssvc_nfsd(nsd, uap->argp, p);
+		error = nfssvc_nfsd(nsd, SCARG(uap, argp), p);
 #endif /* !NFSSERVER */
 	}
 	if (error == EINTR || error == ERESTART)

@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.30 1994/06/29 06:45:40 cgd Exp $	*/
+/*	$NetBSD: systm.h,v 1.31 1994/10/20 04:29:06 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -94,13 +94,12 @@ extern dev_t swapdev;		/* swapping device */
 extern struct vnode *swapdev_vp;/* vnode equivalent to above */
 
 extern struct sysent {		/* system call table */
-	int	sy_narg;	/* number of arguments */
+	short	sy_narg;	/* number of args */
+	short	sy_argsize;	/* total size of arguments */
 	int	(*sy_call)();	/* implementing function */
 } sysent[];
 extern int nsysent;
-#ifdef SYSCALL_DEBUG
-char *syscallnames[];
-#endif
+#define	SCARG(p,k)	((p)->k.datum)	/* get arg from args pointer */
 
 extern int boothowto;		/* reboot flags, from console subsystem */
 
@@ -118,6 +117,7 @@ int	enxio __P((void));
 int	eopnotsupp __P((void));
 int	seltrue __P((dev_t dev, int which, struct proc *p));
 void	*hashinit __P((int count, int type, u_long *hashmask));
+int	nosys __P((struct proc *, void *, register_t *));
 
 #ifdef __GNUC__
 volatile void	panic __P((const char *, ...));
