@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.40 1999/10/22 17:06:12 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.41 1999/10/26 22:23:20 mjacob Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -3142,8 +3142,6 @@ command_known:
 				SYS_DELAY(100);
 				goto command_known;
 			}
-			PRINTF("%s: isp_mboxcmd sees mailbox int with 0x%x in "
-			    "mbox0\n", isp->isp_name, mbox);
 		}
 		SYS_DELAY(100);
 		if (--loops < 0) {
