@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.17 1999/10/16 23:53:28 wrstuden Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.18 1999/10/17 10:18:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -606,9 +606,16 @@ out:
 #endif
 	if (bp)
 		brelse(bp);
+
+#if defined __NetBSD__
+	/* lock the device vnode before calling VOP_CLOSE() */
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
 	VOP_UNLOCK(devvp, 0);
+#else
+	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
+#endif
+	
 	return (error);
 }
 
@@ -660,21 +667,26 @@ ntfs_unmount(
 
 #if defined(__FreeBSD__)
 	ntmp->ntm_devvp->v_specmountpoint = NULL;
+
+	VOP_LOCK(ntmp->ntm_devvp);
+	vnode_pager_uncache(ntmp->ntm_devvp);
+	VOP_UNLOCK(ntmp->ntm_devvp);
 #else
 	ntmp->ntm_devvp->v_specflags &= ~SI_MOUNTEDON;
 #endif
 
-#ifndef __NetBSD__
-	VOP_LOCK(ntmp->ntm_devvp);
-	vnode_pager_uncache(ntmp->ntm_devvp);
-	VOP_UNLOCK(ntmp->ntm_devvp);
-#endif
-
 	vinvalbuf(ntmp->ntm_devvp, V_SAVE, NOCRED, p, 0, 0);
+
+#if defined(__NetBSD__)
+	/* lock the device vnode before calling VOP_CLOSE() */
 	VOP_LOCK(ntmp->ntm_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(ntmp->ntm_devvp, ronly ? FREAD : FREAD|FWRITE,
 		NOCRED, p);
 	VOP_UNLOCK(ntmp->ntm_devvp, 0);
+#else
+	error = VOP_CLOSE(ntmp->ntm_devvp, ronly ? FREAD : FREAD|FWRITE,
+		NOCRED, p);
+#endif
 
 	vrele(ntmp->ntm_devvp);
 
