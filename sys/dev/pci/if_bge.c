@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.83 2005/01/26 22:15:26 jmcneill Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.84 2005/02/18 01:10:44 heas Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.83 2005/01/26 22:15:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.84 2005/02/18 01:10:44 heas Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -3508,7 +3508,7 @@ bge_start(ifp)
 		if (m_head->m_flags & M_FIRSTFRAG &&
 		    m_head->m_pkthdr.csum_flags & (CSUM_DELAY_DATA)) {
 			if ((BGE_TX_RING_CNT - sc->bge_txcnt) <
-			    m_head->m_pkthdr.csum_data + 16) {
+			    (m_head->m_pkthdr.csum_data & 0xffff) + 16) {
 				ifp->if_flags |= IFF_OACTIVE;
 				break;
 			}
