@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.24 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.25 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -138,3 +138,5 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 		[kent 20021008]
 	ubsa(4): Driver for Belkin serial adapters ported from FreeBSD
 		[augustss 20021008]
+	tar(1): upgrade to GNU tar 1.13.25 for security fixes
+		[itojun 20021010]
