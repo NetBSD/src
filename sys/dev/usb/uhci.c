@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.95 2000/03/25 07:23:12 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.96 2000/03/25 18:02:32 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -122,7 +122,6 @@ struct uhci_pipe {
 
 	u_char aborting;
 	usbd_xfer_handle abortstart, abortend;
-	usb_callout_t abort_timeout;
 
 	/* Info needed for different pipe kinds. */
 	union {
@@ -171,7 +170,7 @@ static void		uhci_free_std_chain __P((uhci_softc_t *,
 static usbd_status	uhci_alloc_std_chain __P((struct uhci_pipe *,
 			    uhci_softc_t *, int, int, u_int16_t, usb_dma_t *, 
 			    uhci_soft_td_t **, uhci_soft_td_t **));
-static void		uhci_timo __P((void *));
+static void		uhci_poll_hub __P((void *));
 static void		uhci_waitintr __P((uhci_softc_t *,
 			    usbd_xfer_handle));
 static void		uhci_check_intr __P((uhci_softc_t *,
@@ -458,6 +457,8 @@ uhci_init(sc)
 
 	SIMPLEQ_INIT(&sc->sc_free_xfers);
 
+	usb_callout_init(sc->sc_poll_handle);
+
 	/* Set up the bus struct. */
 	sc->sc_bus.methods = &uhci_bus_methods;
 	sc->sc_bus.pipe_size = sizeof(struct uhci_pipe);
@@ -571,7 +572,6 @@ uhci_allocx(bus)
 	if (xfer != NULL) {
 		memset(xfer, 0, sizeof (struct uhci_xfer));
 		UXFER(xfer)->iinfo.sc = sc;
-		usb_callout_init(UXFER(xfer)->iinfo.timeout_handle);
 #ifdef DIAGNOSTIC
 		UXFER(xfer)->iinfo.isdone = 1;
 #endif
@@ -590,19 +590,14 @@ uhci_freex(bus, xfer)
 	struct uhci_softc *sc = (struct uhci_softc *)bus;
 
 #ifdef DIAGNOSTIC
-#ifdef __NetBSD__
-	if (callout_pending(&UXFER(xfer)->iinfo.timeout_handle)) {
-		printf("uhci_free_intr_info: pending callout");
-		return;
-	}
-#endif
-
 	if (xfer->busy_free != XFER_BUSY) {
 		printf("uhci_freex: xfer=%p not busy, 0x%08x\n", xfer,
 		       xfer->busy_free);
 		return;
 	}
 	xfer->busy_free = XFER_FREE;
+	if (!UXFER(xfer)->iinfo.isdone)
+		printf("uhci_freex: !isdone\n");
 #endif
 	SIMPLEQ_INSERT_HEAD(&sc->sc_free_xfers, xfer, next);
 }
@@ -647,9 +642,9 @@ uhci_power(why, v)
 		if (uhcidebug > 2)
 			uhci_dumpregs(sc);
 #endif
-		if (sc->sc_has_timo != NULL)
-			usb_uncallout(sc->sc_has_timo->timo_handle,
-				      uhci_timo, sc->sc_has_timo);
+		if (sc->sc_intr_xfer != NULL)
+			usb_uncallout(sc->sc_poll_handle, uhci_poll_hub,
+			    sc->sc_intr_xfer);
 		sc->sc_bus.use_polling++;
 		uhci_run(sc, 0); /* stop the controller */
 
@@ -685,9 +680,9 @@ uhci_power(why, v)
 		uhci_run(sc, 1); /* and start traffic again */
 		usb_delay_ms(&sc->sc_bus, USB_RESUME_RECOVERY);
 		sc->sc_bus.use_polling--;
-		if (sc->sc_has_timo != NULL)
-			usb_callout(sc->sc_has_timo->timo_handle, sc->sc_ival,
-				    uhci_timo, sc->sc_has_timo);
+		if (sc->sc_intr_xfer != NULL)
+			usb_callout(sc->sc_poll_handle, sc->sc_ival,
+				    uhci_poll_hub, sc->sc_intr_xfer);
 #ifdef UHCI_DEBUG
 		if (uhcidebug > 2)
 			uhci_dumpregs(sc);
@@ -872,7 +867,7 @@ void iidump() { uhci_dump_iis(thesc); }
  * from the root controller interrupt pipe for port status change.
  */
 void
-uhci_timo(addr)
+uhci_poll_hub(addr)
 	void *addr;
 {
 	usbd_xfer_handle xfer = addr;
@@ -881,9 +876,9 @@ uhci_timo(addr)
 	int s;
 	u_char *p;
 
-	DPRINTFN(20, ("uhci_timo\n"));
+	DPRINTFN(20, ("uhci_poll_hub\n"));
 
-	usb_callout(xfer->timo_handle, sc->sc_ival, uhci_timo, xfer);
+	usb_callout(sc->sc_poll_handle, sc->sc_ival, uhci_poll_hub, xfer);
 
 	p = KERNADDR(&xfer->dmabuf);
 	p[0] = 0;
@@ -1136,7 +1131,7 @@ uhci_check_intr(sc, ii)
 	}
  done:
 	DPRINTFN(12, ("uhci_check_intr: ii=%p done\n", ii));
-	usb_uncallout(ii->timeout_handle, uhci_timeout, ii);
+	usb_uncallout(ii->xfer->timeout_handle, uhci_timeout, ii);
 	uhci_idone(ii);
 }
 
@@ -1643,7 +1638,6 @@ uhci_device_bulk_start(xfer)
 	ii->xfer = xfer;
 	ii->stdstart = data;
 	ii->stdend = dataend;
-	usb_callout_init(ii->timeout_handle);
 #ifdef DIAGNOSTIC
 	if (!ii->isdone) {
 		printf("uhci_device_bulk_transfer: not done, ii=%p\n", ii);
@@ -1659,7 +1653,7 @@ uhci_device_bulk_start(xfer)
 	uhci_add_intr_info(sc, ii);
 
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
-		usb_callout(ii->timeout_handle, MS_TO_TICKS(xfer->timeout),
+		usb_callout(xfer->timeout_handle, MS_TO_TICKS(xfer->timeout),
 			    uhci_timeout, ii);
 	}
 	xfer->status = USBD_IN_PROGRESS;
@@ -1802,14 +1796,17 @@ uhci_abort_xfer(xfer, status)
 	/* wait for HC to complete TDs */
 	delay(maxlen);
 
+	/* Don't timeout, */
+	usb_uncallout(xfer->timeout_handle, uhci_timeout, ii);
+
+#ifdef DIAGNOSTIC
+	UXFER(xfer)->iinfo.isdone = 1;
+#endif
 	/* Run callback and remove from interrupt list. */
 	usb_transfer_complete(xfer);
 
-	/* Don't timeout, */
-	usb_uncallout(ii->timeout_handle, uhci_timeout, ii);
-
 	/* Set up final processing. */
-	usb_callout(upipe->abort_timeout, hz / USB_FRAMES_PER_SECOND,
+	usb_callout(xfer->pipe->abort_handle, hz / USB_FRAMES_PER_SECOND,
 		    uhci_abort_xfer_end, upipe);
 
 	/* And return. */
@@ -1977,7 +1974,7 @@ uhci_cancel_abort(pipe)
 
 	s = splusb();
 	if (upipe->aborting) {
-		usb_uncallout(upipe->abort_timeout, uhci_abort_xfer_end, upipe);
+		usb_uncallout(pipe->abort_handle, uhci_abort_xfer_end, upipe);
 		upipe->aborting = 0;
 	}
 	splx(s);
@@ -2100,7 +2097,6 @@ uhci_device_intr_start(xfer)
 	ii->xfer = xfer;
 	ii->stdstart = data;
 	ii->stdend = dataend;
-	usb_callout_init(ii->timeout_handle);
 #ifdef DIAGNOSTIC
 	if (!ii->isdone) {
 		printf("uhci_device_intr_transfer: not done, ii=%p\n", ii);
@@ -2269,7 +2265,6 @@ uhci_device_request(xfer)
 	ii->xfer = xfer;
 	ii->stdstart = setup;
 	ii->stdend = stat;
-	usb_callout_init(ii->timeout_handle);
 #ifdef DIAGNOSTIC
 	if (!ii->isdone) {
 		printf("uhci_device_request: not done, ii=%p\n", ii);
@@ -2311,7 +2306,7 @@ uhci_device_request(xfer)
 	}
 #endif
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
-		usb_callout(ii->timeout_handle, MS_TO_TICKS(xfer->timeout),
+		usb_callout(xfer->timeout_handle, MS_TO_TICKS(xfer->timeout),
 			    uhci_timeout, ii);
 	}
 	xfer->status = USBD_IN_PROGRESS;
@@ -2368,6 +2363,7 @@ uhci_device_isoc_enter(xfer)
 
 	if (xfer->status == USBD_IN_PROGRESS) {
 		/* This request has already been entered into the frame list */
+		printf("uhci_device_isoc_enter: xfer=%p in frame list\n", xfer);
 		/* XXX */
 	}
 
@@ -2427,6 +2423,8 @@ uhci_device_isoc_start(xfer)
 	uhci_soft_td_t *end;
 	int s, i;
 
+	DPRINTFN(5,("uhci_device_isoc_start: xfer=%p\n", xfer));
+
 	if (sc->sc_dying)
 		return (USBD_IOERROR);
 
@@ -2441,13 +2439,19 @@ uhci_device_isoc_start(xfer)
 		i -= UHCI_VFRAMELIST_COUNT;
 	end = upipe->u.iso.stds[i];
 
+#ifdef DIAGNOSTIC
+	if (end == NULL) {
+		printf("uhci_device_isoc_start: end == NULL\n");
+		return (USBD_INVAL);
+	}
+#endif
+
 	s = splusb();
 	
 	/* Set up interrupt info. */
 	ii->xfer = xfer;
 	ii->stdstart = end;
 	ii->stdend = end;
-	usb_callout_init(ii->timeout_handle);
 #ifdef DIAGNOSTIC
 	if (!ii->isdone) {
 		printf("uhci_device_isoc_start: not done, ii=%p\n", ii);
@@ -2499,6 +2503,9 @@ uhci_device_isoc_abort(xfer)
 	/* and wait until we are sure the hardware has finished. */
 	delay(maxlen);
 
+#ifdef DIAGNOSTIC
+	UXFER(xfer)->iinfo.isdone = 1;
+#endif
 	/* Run callback and remove from interrupt list. */
 	usb_transfer_complete(xfer);
 
@@ -2614,6 +2621,10 @@ uhci_device_isoc_done(xfer)
 
 	DPRINTFN(4, ("uhci_isoc_done: length=%d\n", xfer->actlen));
 
+	if (ii->xfer != xfer)
+		/* Not on interrupt list, ignore it. */
+		return;
+
 #ifdef DIAGNOSTIC
 	if (xfer->busy_free != XFER_BUSY) {
 		printf("uhci_device_isoc_done: xfer=%p not busy 0x%08x\n",
@@ -2677,7 +2688,6 @@ uhci_device_intr_done(xfer)
 
 		ii->stdstart = data;
 		ii->stdend = dataend;
-		usb_callout_init(ii->timeout_handle);
 #ifdef DIAGNOSTIC
 		if (!ii->isdone) {
 			printf("uhci_device_intr_done: not done, ii=%p\n", ii);
@@ -2852,7 +2862,6 @@ uhci_open(pipe)
 		     pipe, pipe->device->address, 
 		     ed->bEndpointAddress, sc->sc_addr));
 
-	usb_callout_init(upipe->abort_timeout);
 	upipe->aborting = 0;
 	upipe->nexttoggle = 0;
 
@@ -3373,14 +3382,17 @@ uhci_root_intr_abort(xfer)
 {
 	uhci_softc_t *sc = (uhci_softc_t *)xfer->pipe->device->bus;
 
-	usb_uncallout(xfer->timo_handle, uhci_timo, xfer);
-	sc->sc_has_timo = NULL;
+	usb_uncallout(sc->sc_poll_handle, uhci_poll_hub, xfer);
+	sc->sc_intr_xfer = NULL;
 
 	if (xfer->pipe->intrxfer == xfer) {
 		DPRINTF(("uhci_root_intr_abort: remove\n"));
 		xfer->pipe->intrxfer = 0;
 	}
 	xfer->status = USBD_CANCELLED;
+#ifdef DIAGNOSTIC
+	UXFER(xfer)->iinfo.isdone = 1;
+#endif
 	usb_transfer_complete(xfer);
 }
 
@@ -3416,8 +3428,8 @@ uhci_root_intr_start(xfer)
 		return (USBD_IOERROR);
 
 	sc->sc_ival = MS_TO_TICKS(xfer->pipe->endpoint->edesc->bInterval);
-	usb_callout(xfer->timo_handle, sc->sc_ival, uhci_timo, xfer);
-	sc->sc_has_timo = xfer;
+	usb_callout(sc->sc_poll_handle, sc->sc_ival, uhci_poll_hub, xfer);
+	sc->sc_intr_xfer = xfer;
 	return (USBD_IN_PROGRESS);
 }
 
@@ -3428,7 +3440,7 @@ uhci_root_intr_close(pipe)
 {
 	uhci_softc_t *sc = (uhci_softc_t *)pipe->device->bus;
 
-	usb_uncallout(pipe->intrxfer->timo_handle, uhci_timo, pipe->intrxfer);
-	sc->sc_has_timo = NULL;
+	usb_uncallout(sc->sc_poll_handle, uhci_poll_hub, sc->sc_intr_xfer);
+	sc->sc_intr_xfer = NULL;
 	DPRINTF(("uhci_root_intr_close\n"));
 }
