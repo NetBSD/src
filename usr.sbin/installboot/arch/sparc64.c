@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc64.c,v 1.3 2002/04/04 15:17:34 mrg Exp $	*/
+/*	$NetBSD: sparc64.c,v 1.4 2002/04/04 15:36:44 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: sparc64.c,v 1.3 2002/04/04 15:17:34 mrg Exp $");
+__RCSID("$NetBSD: sparc64.c,v 1.4 2002/04/04 15:36:44 mrg Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -150,7 +150,7 @@ sparc64_setboot(ib_params *params)
 	struct stat	bootstrapsb;
 	char		bb[SPARC64_BOOT_BLOCK_MAX_SIZE];
 	int		startblock, retval;
-	ssize_t		rv, bblen;
+	ssize_t		rv;
 
 	assert(params != NULL);
 	assert(params->fsfd != -1);
@@ -169,8 +169,9 @@ sparc64_setboot(ib_params *params)
 		goto done;
 	}
 
-	bblen = read(params->bbfd, &bb, sizeof bb);
-	if (bblen == -1) {
+	memset(&bb, 0, SPARC64_BOOT_BLOCK_MAX_SIZE);
+	rv = read(params->bbfd, &bb, sizeof bb);
+	if (rv == -1) {
 		warn("Reading `%s'", params->filesystem);
 		goto done;
 	}
@@ -183,7 +184,7 @@ sparc64_setboot(ib_params *params)
 
 	if (params->flags & IB_VERBOSE) {
 		printf("Bootstrap start sector: %#x\n", startblock);
-		printf("Bootstrap byte count:   %#x\n", (unsigned)bblen);
+		printf("Bootstrap byte count:   %#x\n", (unsigned)rv);
 		printf("%sriting bootstrap\n",
 		    (params->flags & IB_NOWRITE) ? "Not w" : "W");
 	}
@@ -192,12 +193,12 @@ sparc64_setboot(ib_params *params)
 		goto done;
 	}
 
-	rv = pwrite(params->fsfd, &bb, bblen,
+	rv = pwrite(params->fsfd, &bb, SPARC64_BOOT_BLOCK_MAX_SIZE,
 	    startblock * SPARC64_BOOT_BLOCK_BLOCKSIZE);
 	if (rv == -1) {
 		warn("Writing `%s'", params->filesystem);
 		goto done;
-	} else if (rv != bblen) {
+	} else if (rv != SPARC64_BOOT_BLOCK_MAX_SIZE) {
 		warnx("Writing `%s': short write", params->filesystem);
 		goto done;
 	} else
