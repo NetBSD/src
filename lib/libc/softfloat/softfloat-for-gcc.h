@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat-for-gcc.h,v 1.2 2000/07/15 13:26:51 bjh21 Exp $ */
+/* $NetBSD: softfloat-for-gcc.h,v 1.3 2000/07/15 15:07:35 bjh21 Exp $ */
 
 /*
  * Move private identifiers with external linkage into implementation
@@ -39,7 +39,3 @@
 /* #define float64_to_uint32_round_to_zero	__fixunsdfsi */
 #define float32_to_float64		__extendsfdf2
 #define float64_to_float32		__truncdfsf2
-#if !__GNUC_PREREQ__(2,95)
-#define float32_to_uint32_round_to_zero	__fixunssfsi
-#define float64_to_uint32_round_to_zero	__fixunsdfsi
-#endif

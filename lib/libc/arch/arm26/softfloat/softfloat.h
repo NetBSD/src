@@ -135,9 +135,6 @@ Software IEC/IEEE single-precision conversion routines.
 */
 int float32_to_int32( float32 );
 int float32_to_int32_round_to_zero( float32 );
-#if defined(SOFTFLOAT_FOR_GCC) && !__GNUC_PREREQ__(2,95)
-unsigned int float32_to_uint32_round_to_zero( float32 );
-#endif
 long long float32_to_int64( float32 );
 long long float32_to_int64_round_to_zero( float32 );
 float64 float32_to_float64( float32 );
@@ -177,9 +174,6 @@ Software IEC/IEEE double-precision conversion routines.
 */
 int float64_to_int32( float64 );
 int float64_to_int32_round_to_zero( float64 );
-#if defined(SOFTFLOAT_FOR_GCC) && !__GNUC_PREREQ__(2,95)
-unsigned int float64_to_uint32_round_to_zero( float64 );
-#endif
 long long float64_to_int64( float64 );
 long long float64_to_int64_round_to_zero( float64 );
 float32 float64_to_float32( float64 );
