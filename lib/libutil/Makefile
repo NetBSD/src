@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.15 1997/10/11 02:56:22 cjs Exp $
+#	$NetBSD: Makefile,v 1.15.2.1 1997/11/09 01:01:02 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	util
-CFLAGS+=-DLIBC_SCCS -Wall -Wstrict-prototypes -Wmissing-prototypes
+CPPFLAGS+=-DLIBC_SCCS
 SRCS=	getmaxpartitions.c getrawpartition.c login.c login_tty.c logout.c \
 	logwtmp.c opendisk.c passwd.c pidlock.c pty.c ttyaction.c ttymsg.c
 

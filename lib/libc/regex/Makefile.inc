@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.5 1995/02/27 13:28:19 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.5.10.1 1997/11/09 01:00:00 lukem Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/4/93
 
 # regex sources
 .PATH: ${.CURDIR}/regex
 
-CFLAGS+=-DPOSIX_MISTAKE
+CPPFLAGS+=-DPOSIX_MISTAKE
 
 SRCS+=	regcomp.c regerror.c regexec.c regfree.c
 

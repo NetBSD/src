@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 3/5/91
-#	$NetBSD: Makefile.inc,v 1.40 1997/10/09 10:08:16 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.40.2.1 1997/11/09 01:00:09 lukem Exp $
 
 # string sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/string ${.CURDIR}/string
@@ -28,22 +28,21 @@ SRCS+=	memccpy.c
 .if empty(SRCS:Mmemmove.S)
 OBJS+=	memmove.o
 memmove.o: bcopy.c
-	${CC} -DMEMMOVE ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} -o ${.TARGET}
+	${COMPILE.c} -DMEMMOVE ${.ALLSRC} -o ${.TARGET}
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
 memmove.po: bcopy.c
-	${CC} -DMEMMOVE ${CFLAGS} ${CPPFLAGS} -c -p ${.ALLSRC} -o ${.TARGET}
+	${COMPILE.c} -DMEMMOVE -p ${.ALLSRC} -o ${.TARGET}
 	@${LD} -X -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
 memmove.so: bcopy.c
-	${CC} ${PICFLAG} -DPIC -DMEMMOVE ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} \
-	    -o ${.TARGET}
+	${COMPILE.c} ${PICFLAG} -DPIC -DMEMMOVE ${.ALLSRC} -o ${.TARGET}
 
 LOBJS+= memmove.ln
 memmove.ln: bcopy.c
-	${LINT} -DMEMMOVE ${LINTFLAGS} ${CFLAGS:M-[IDU]*} -i -o ${.TARGET} \
+	${LINT} -DMEMMOVE ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} -i -o ${.TARGET} \
 	    ${.ALLSRC}
 .endif
 
@@ -54,22 +53,21 @@ memmove.ln: bcopy.c
 .if empty(SRCS:Mmemmove.S)
 OBJS+=	memcpy.o
 memcpy.o: bcopy.c
-	${CC} -DMEMCOPY ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} -o ${.TARGET}
+	${COMPILE.c} -DMEMCOPY ${.ALLSRC} -o ${.TARGET}
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
 memcpy.po: bcopy.c
-	${CC} -DMEMCOPY ${CFLAGS} ${CPPFLAGS} -c -p ${.ALLSRC} -o ${.TARGET}
+	${COMPILE.c} -DMEMCOPY -p ${.ALLSRC} -o ${.TARGET}
 	@${LD} -X -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
 memcpy.so: bcopy.c
-	${CC} ${PICFLAG} -DPIC -DMEMCOPY ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} \
-	    -o ${.TARGET}
+	${COMPILE.c} ${PICFLAG} -DPIC -DMEMCOPY ${.ALLSRC} -o ${.TARGET}
 
 LOBJS+= memcpy.ln
 memcpy.ln: bcopy.c
-	${LINT} -DMEMCOPY ${LINTFLAGS} ${CFLAGS:M-[IDU]*} -i -o ${.TARGET} \
+	${LINT} -DMEMCOPY ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} -i -o ${.TARGET} \
 	    ${.ALLSRC}
 .endif
 .endif
@@ -78,22 +76,21 @@ memcpy.ln: bcopy.c
 .if empty(SRCS:Mstrchr.S)
 OBJS+=	strchr.o
 strchr.o: index.c
-	${CC} -DSTRCHR ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} -o ${.TARGET}
+	${COMPILE.c} -DSTRCHR ${.ALLSRC} -o ${.TARGET}
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
 strchr.po: index.c
-	${CC} -DSTRCHR ${CFLAGS} ${CPPFLAGS} -c -p ${.ALLSRC} -o ${.TARGET}
+	${COMPILE.c} -DSTRCHR -p ${.ALLSRC} -o ${.TARGET}
 	@${LD} -X -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
 strchr.so: index.c
-	${CC} ${PICFLAG} -DPIC -DSTRCHR ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} \
-	    -o ${.TARGET}
+	${COMPILE.c} ${PICFLAG} -DPIC -DSTRCHR ${.ALLSRC} -o ${.TARGET}
 
 LOBJS+= strchr.ln
 strchr.ln: index.c
-	${LINT} -DSTRCHR ${LINTFLAGS} ${CFLAGS:M-[IDU]*} -i -o ${.TARGET} \
+	${LINT} -DSTRCHR ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} -i -o ${.TARGET} \
 	    ${.ALLSRC}
 .endif
 
@@ -101,22 +98,21 @@ strchr.ln: index.c
 .if empty(SRCS:Mstrrchr.S)
 OBJS+=	strrchr.o
 strrchr.o: rindex.c
-	${CC} -DSTRRCHR ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} -o ${.TARGET}
+	${COMPILE.c} -DSTRRCHR ${.ALLSRC} -o ${.TARGET}
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
 strrchr.po: rindex.c
-	${CC} -DSTRRCHR ${CFLAGS} ${CPPFLAGS} -c -p ${.ALLSRC} -o ${.TARGET}
+	${COMPILE.c} -DSTRRCHR -p ${.ALLSRC} -o ${.TARGET}
 	@${LD} -X -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
 strrchr.so: rindex.c
-	${CC} ${PICFLAG} -DPIC -DSTRRCHR ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} \
-	    -o ${.TARGET}
+	${COMPILE.c} ${PICFLAG} -DPIC -DSTRRCHR ${.ALLSRC} -o ${.TARGET}
 
 LOBJS+= strrchr.ln
 strrchr.ln: rindex.c
-	${LINT} -DSTRRCHR ${LINTFLAGS} ${CFLAGS:M-[IDU]*} -i -o ${.TARGET} \
+	${LINT} -DSTRRCHR ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} -i -o ${.TARGET} \
 	    ${.ALLSRC}
 .endif
 

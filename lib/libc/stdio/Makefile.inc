@@ -1,10 +1,10 @@
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$NetBSD: Makefile.inc,v 1.11 1997/04/02 12:50:23 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.11.2.1 1997/11/09 01:00:04 lukem Exp $
 
 # stdio sources
 .PATH: ${.CURDIR}/stdio
 
-CFLAGS+=-DFLOATING_POINT
+CPPFLAGS+=-DFLOATING_POINT
 
 SRCS+=	clrerr.c fclose.c fdopen.c feof.c ferror.c fflush.c fgetc.c \
 	fgetln.c fgetpos.c fgets.c fileno.c findfp.c flags.c fopen.c \
