@@ -1,4 +1,4 @@
-/*	$NetBSD: hil_keymaps.c,v 1.11 2003/11/17 14:37:59 tsutsui Exp $	*/
+/*	$NetBSD: hil_keymaps.c,v 1.12 2004/05/31 14:04:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil_keymaps.c,v 1.11 2003/11/17 14:37:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil_keymaps.c,v 1.12 2004/05/31 14:04:59 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <hp300/dev/kbdmap.h>
@@ -180,22 +180,22 @@ char	us_ctrlshiftmap[] = {
 };
 
 char	*us_stringmap[] = {
-	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
-	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	"\033V","\033h",
-	"\033U",'\0',	'\0',	'\0',	'\0',	'\0',	"\033K","\033J",
-	'\0',	'\0',	'\0',	"\033p","\033q","\033t","\033u","\033v",
-	"\033r","\033s","\033B","\033A","\033w",'\0',	"\033D","\033C",
-	"\033L","\033M",'\0',	'\0',	"\033P",'\0',	'\0',	'\0',
-	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
-	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
-	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
-	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
-	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
-	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
-	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
-	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
-	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
-	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0'
+	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
+	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	"\033V","\033h",
+	"\033U",NULL,	NULL,	NULL,	NULL,	NULL,	"\033K","\033J",
+	NULL,	NULL,	NULL,	"\033p","\033q","\033t","\033u","\033v",
+	"\033r","\033s","\033B","\033A","\033w",NULL,	"\033D","\033C",
+	"\033L","\033M",NULL,	NULL,	"\033P",NULL,	NULL,	NULL,
+	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
+	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
+	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
+	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
+	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
+	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
+	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
+	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
+	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
+	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL
 };
 
 #ifdef UK_KEYBOARD
@@ -372,5 +372,5 @@ struct kbdmap kbd_map[] = {
 	    se_keymap, se_shiftmap, se_ctrlmap, se_ctrlshiftmap, us_stringmap },
 #endif
 
-	{ 0,  NULL, NULL,  NULL,  NULL,  NULL, NULL },
+	{ 0, "", NULL, NULL, NULL, NULL, NULL },
 };
