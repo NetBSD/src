@@ -1,7 +1,5 @@
 /*
  * This file contains changes from the Open Software Foundation.
- *
- *	$Id: newsyslog.c,v 1.4 1993/08/01 18:10:40 mycroft Exp $
  */
 
 /*
@@ -30,9 +28,9 @@ provided "as is" without express or implied warranty.
  *      $Author: mycroft $
  */
 
-#if !defined(lint) && !defined(_NOIDENT)
-static char rcsid[] = "@(#)$RCSfile: newsyslog.c,v $ $Revision: 1.4 $ (OSF) $Date: 1993/08/01 18:10:40 $";
-#endif
+#ifndef lint
+static char rcsid[] = "$Id: newsyslog.c,v 1.5 1993/08/10 00:05:51 mycroft Exp $";
+#endif /* not lint */
 
 #ifndef CONF
 #define CONF "/etc/athena/newsyslog.conf" /* Configuration file */
@@ -570,7 +568,3 @@ char *string;
         }
         return(1);
 }
-
-#if !defined(__SABER__) && !defined(lint) && !defined(NO_WHAT_STRINGS)
-static char rcsid[] = "$Id: newsyslog.c,v 1.4 1993/08/01 18:10:40 mycroft Exp $";
-#endif
