@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.4,v 1.1.2.12 2001/04/14 21:20:27 he Exp $
+#	$NetBSD: CHANGES-1.4.4,v 1.1.2.13 2001/05/26 15:01:29 he Exp $
 
 A complete list of changes from NetBSD 1.4.3 to NetBSD 1.4.4:
 
@@ -300,3 +300,23 @@ sys/netinet/ip_nat.h				1.23 via patch
 sys/netinet/ip_state.c				1.30 via patch
 
   Fix bug related to fragment cache handling.
+
+usr.sbin/xntp/xntpd/ntp_control.c		patch
+
+  Avoid underrun, and fix the fact that the previous fix was one byte
+  too restrictive.
+
+usr.sbin/pkg_install/lib/ftpio.c		1.30
+
+  Do not exit on EINTR, which happens on window size change.
+
+share/examples/supfiles/ftp.cs.umn.edu		delete
+share/examples/supfiles/sup2.fr.netbsd.org	1.1 (new)
+share/examples/supfiles/Makefile		1.8
+
+  Remove ftp.cs.umn.edu sup mirror, add sup2.fr.netbsd.org.
+
+sys/arch/i386/i386/svr4_machdep.c		1.51
+
+  Make sure the machine state restored by setmcontext() is identical
+  to that of sigreturn().
