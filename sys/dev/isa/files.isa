@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.80 1998/11/22 21:57:48 pk Exp $
+#	$NetBSD: files.isa,v 1.81 1998/12/16 11:33:50 christos Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -28,6 +28,11 @@ define	commulti {[slave = -1]}
 device	ast: commulti
 attach	ast at isa
 file	dev/isa/ast.c			ast
+
+# TC-800 8-port board
+device	tcom: commulti
+attach	tcom at isa
+file	dev/isa/tcom.c			tcom
 
 # BOCA 8-port board
 device	boca: commulti
