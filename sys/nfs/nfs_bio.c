@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.19 1995/01/12 12:08:23 mycroft Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.20 1995/03/18 05:49:51 gwr Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -712,7 +712,7 @@ nfs_doio(bp, cr, p)
 	    } else {
 		uiop->uio_rw = UIO_WRITE;
 		nfsstats.write_physios++;
-		error = nfs_writerpc(vp, uiop, cr);
+		error = nfs_writerpc(vp, uiop, cr, 0);
 	    }
 	    if (error) {
 		bp->b_flags |= B_ERROR;
