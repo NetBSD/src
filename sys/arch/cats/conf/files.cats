@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.30 2004/06/16 12:15:00 he Exp $
+#	$NetBSD: files.cats,v 1.31 2004/07/08 22:07:48 drochner Exp $
 #
 # CATS-specific configuration info
 #
@@ -39,9 +39,6 @@ file	arch/arm/footbridge/todclock.c			todclock	needs-count
 
 # ISA DMA glue
 file	arch/arm/footbridge/isa/isadma_machdep.c	isadma
-
-# Game adapter (joystick)
-file	arch/arm/footbridge/isa/joy_timer.c		joy
 
 # Memory disk driver
 file	dev/md_root.c				md & memory_disk_hooks
