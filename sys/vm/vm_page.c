@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_page.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_page.c,v 1.13 1994/04/15 07:04:57 cgd Exp $
+ *	$Id: vm_page.c,v 1.14 1994/04/29 08:21:50 mycroft Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -619,6 +619,11 @@ vm_page_remove(mem)
 
 	VM_PAGE_CHECK(mem);
 
+#ifdef DIAGNOSTIC
+	if (mem->flags & PG_FAULTING)
+		panic("vm_page_remove: page is faulting");
+#endif
+
 	if (!(mem->flags & PG_TABLED))
 		return;
 
@@ -776,12 +781,12 @@ vm_page_free(mem)
 	register vm_page_t	mem;
 {
 	vm_page_remove(mem);
+
 	if (mem->flags & PG_ACTIVE) {
 		TAILQ_REMOVE(&vm_page_queue_active, mem, pageq);
 		mem->flags &= ~PG_ACTIVE;
 		cnt.v_active_count--;
 	}
-
 	if (mem->flags & PG_INACTIVE) {
 		TAILQ_REMOVE(&vm_page_queue_inactive, mem, pageq);
 		mem->flags &= ~PG_INACTIVE;
