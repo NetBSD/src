@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_sh3.h,v 1.1 2002/02/17 20:55:51 uch Exp $	*/
+/*	$NetBSD: mmu_sh3.h,v 1.2 2002/02/28 01:56:58 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #ifndef _SH3_MMU_SH3_H_
 #define _SH3_MMU_SH3_H_
+#include <sh3/devreg.h>
 
 /* 128-entry 4-way set-associative */
 #define SH3_MMU_WAY			4
@@ -84,4 +85,5 @@
 #define   SH3_MMUDA_D_D			  0x00000004
 #define   SH3_MMUDA_D_SH		  0x00000002
 
+#define SH3_TLB_DISABLE	*(__volatile__ u_int32_t *)SH3_MMUCR = SH3_MMUCR_TF
 #endif /* !_SH3_MMU_SH3_H_ */

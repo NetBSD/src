@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 2002/02/24 18:19:42 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19 2002/02/28 01:57:00 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -108,17 +108,9 @@
 #include <machine/mmeye.h>
 
 #include <sh3/bscreg.h>
-#include <sh3/ccrreg.h>
 #include <sh3/cpgreg.h>
-#include <sh3/intcreg.h>
-#include <sh3/pfcreg.h>
-#include <sh3/wdtreg.h>
 #include <sh3/mmu.h>
-
-#if 0
-#include <dev/ic/comreg.h>
-#include <dev/ic/comvar.h>
-#endif
+#include <sh3/cache_sh3.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -834,9 +826,6 @@ sh_memio_unmap(t, bsh, size)
 void
 InitializeBsc()
 {
-	/* MMEYE_LED = 0x01; */
-
-	/* #define NOPCMCIA */
 #ifdef NOPCMCIA
 	/*
 	 * Drive RAS,CAS in stand by mode and bus release mode
@@ -845,8 +834,8 @@ InitializeBsc()
 	 * Area4 = Normal Memory
 	 * Area6 = Normal memory
 	 */
-	SHREG_BCR1 = 0x1010;
-#else
+	_reg_write_2(SH3_BCR1, 0x1010);
+#else /* NOPCMCIA */
 	/*
 	 * Drive RAS,CAS in stand by mode and bus release mode
 	 * Area0 = Normal memory, Area5,6=Normal(no burst)
@@ -854,8 +843,8 @@ InitializeBsc()
 	 * Area4 = Normal Memory
 	 * Area6 = PCMCIA
 	 */
-	SHREG_BCR1 = 0x1013;
-#endif
+	_reg_write_2(SH3_BCR1, 0x1013);
+#endif /* NOPCMCIA */
 
 #define PCMCIA_16
 #ifdef PCMCIA_16
@@ -866,8 +855,8 @@ InitializeBsc()
 	 * Area1 = 8bit
 	 * Area2,3: Bus width = 32bit
 	 */
-	SHREG_BCR2 = 0x2af4;
-#else
+	_reg_write_2(SH3_BCR2, 0x2af4);
+#else /* PCMCIA16 */
 	/*
 	 * Bus Width
 	 * Area4: Bus width = 16bit
@@ -875,14 +864,14 @@ InitializeBsc()
 	 * Area1 = 8bit
 	 * Area2,3: Bus width = 32bit
 	 */
-	SHREG_BCR2 = 0x16f4;
-#endif
+	_reg_write_2(SH3_BCR2, 0x16f4);
+#endif /* PCMCIA16 */
 	/*
 	 * Idle cycle number in transition area and read to write
 	 * Area6 = 3, Area5 = 3, Area4 = 3, Area3 = 3, Area2 = 3
 	 * Area1 = 3, Area0 = 3
 	 */
-	SHREG_WCR1 = 0x3fff;
+	_reg_write_2(SH3_WCR1, 0x3fff);
 
 #if 0
 	/*
@@ -893,7 +882,7 @@ InitializeBsc()
 	 * Area 2,1 = 3
 	 * Area 0 = 6
 	 */
-	SHREG_WCR2 = 0x4bdd;
+	_reg_write_2(SH3_WCR2, 0x4bdd);
 #else
 	/*
 	 * Wait cycle
@@ -904,7 +893,7 @@ InitializeBsc()
 	 * Area 2,1 = 3
 	 * Area 0 = 6
 	 */
-	SHREG_WCR2 = 0xabfd;
+	_reg_write_2(SH3_WCR2, 0xabfd);
 #endif
 
 	/*
@@ -914,18 +903,18 @@ InitializeBsc()
 	 * Disable burst, Bus size=32bit, Column Address=10bit,Refresh ON
 	 * CAS before RAS refresh ON, EDO DRAM
 	 */
-	SHREG_MCR = 0x6135;
+	_reg_write_2(SH3_MCR, 0x6135);
 	/* SHREG_MCR = 0x4135; */
 
 	/* DRAM Control Register */
-	SHREG_DCR = 0x0000;
+	_reg_write_2(SH3_DCR, 0x0000);
 
 	/*
 	 * PCMCIA Control Register
 	 * OE/WE assert delay 3.5 cycle
 	 * OE/WE negate-address delay 3.5 cycle
 	 */
-	SHREG_PCR = 0x00ff;
+	_reg_write_2(SH3_PCR, 0x00ff);
 
 	/*
 	 * Refresh Timer Control/Status Register
@@ -934,39 +923,37 @@ InitializeBsc()
 	 * In following statement, the reason why high byte = 0xa5(a4 in RFCR)
 	 * is the rule of SH3 in writing these register .
 	 */
-	SHREG_RTCSR = 0xa594;
+	_reg_write_2(SH3_RTCSR, 0xa594);
 
 	/*
 	 * Refresh Timer Counter
 	 * initialize to 0
 	 */
-	SHREG_RTCNT = 0xa500;
+	_reg_write_2(SH3_RTCNT, 0xa500);
 
 	/*
 	 * set Refresh Time Constant Register
 	 */
-	SHREG_RTCOR = 0xa50d;
+	_reg_write_2(SH3_RTCOR, 0xa50d);
 
 	/*
 	 * init Refresh Count Register
 	 */
-	SHREG_RFCR = 0xa400;
+	_reg_write_2(SH3_RFCR, 0xa400);
 
 	/*
 	 * Set Clock mode (make internal clock double speed)
 	 */
 #ifdef SH7708R
-	SHREG_FRQCR = 0xa100; /* 100MHz */
+	_reg_write_2(SH3_FRQCR, 0xa100); /* 100MHz */
 #else
-	SHREG_FRQCR = 0x0112; /* 60MHz */
+	_reg_write_2(SH3_FRQCR, 0x0112); /* 60MHz */
 #endif
 
 #ifndef MMEYE_NO_CACHE
 	/* Cache ON */
-	SHREG_CCR = CCR_CE;
+	_reg_write_4(SH3_CCR, SH3_CCR_CE);
 #endif
-
-	/* MMEYE_LED = 0x04; */
 }
 
 void
@@ -974,9 +961,9 @@ sh3_cache_on(void)
 {
 #ifndef MMEYE_NO_CACHE
 	/* Cache ON */
-	SHREG_CCR = CCR_CE;
-	SHREG_CCR = CCR_CF | CCR_CE;	/* cache clear */
-	SHREG_CCR = CCR_CE;		/* cache on */
+	_reg_write_4(SH3_CCR, SH3_CCR_CE);
+	_reg_write_4(SH3_CCR, SH3_CCR_CF | SH3_CCR_CE);	/* cache clear */
+	_reg_write_4(SH3_CCR, SH3_CCR_CE);
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtcreg.h,v 1.5 2002/02/22 19:44:02 uch Exp $	*/
+/*	$NetBSD: rtcreg.h,v 1.6 2002/02/28 01:56:58 uch Exp $	*/
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -28,6 +28,7 @@
 
 #ifndef _SH3_RTCREG_H__
 #define _SH3_RTCREG_H__
+#include <sh3/devreg.h>
 
 /*
  * RTC
@@ -78,5 +79,26 @@
 #define   SH_RCR2_ADJ			  0x04
 #define   SH_RCR2_RESET			  0x02
 #define   SH_RCR2_START			  0x01
+
+#ifndef _LOCORE
+#if defined(SH3) && defined(SH4)
+extern u_int32_t __sh_R64CNT;
+extern u_int32_t __sh_RSECCNT;
+extern u_int32_t __sh_RMINCNT;
+extern u_int32_t __sh_RHRCNT;
+extern u_int32_t __sh_RWKCNT;
+extern u_int32_t __sh_RDAYCNT;
+extern u_int32_t __sh_RMONCNT;
+extern u_int32_t __sh_RYRCNT;
+extern u_int32_t __sh_RSECAR;
+extern u_int32_t __sh_RMINAR;
+extern u_int32_t __sh_RHRAR;
+extern u_int32_t __sh_RWKAR;
+extern u_int32_t __sh_RDAYAR;
+extern u_int32_t __sh_RMONAR;
+extern u_int32_t __sh_RCR1;
+extern u_int32_t __sh_RCR2;
+#endif /* SH3 && SH4 */
+#endif /* !_LOCORE */
 
 #endif /* !_SH3_RTCREG_H__ */

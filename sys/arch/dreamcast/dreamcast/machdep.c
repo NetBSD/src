@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2002/02/24 18:19:41 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10 2002/02/28 01:56:59 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,6 @@
 #include "opt_kgdb.h"
 #include "opt_syscall_debug.h"
 #include "opt_memsize.h"
-#include "opt_initbsc.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,21 +117,12 @@
 #include <sys/sysctl.h>
 
 #include <machine/cpu.h>
-#include <machine/cpufunc.h>
-#include <machine/psl.h>
 #include <machine/bootinfo.h>
-#include <machine/bus.h>
 #include <sh3/cpufunc.h>
-#include <sh3/bscreg.h>
-#include <sh3/ccrreg.h>
-#include <sh3/cpgreg.h>
-#include <sh3/intcreg.h>
-#include <sh3/pfcreg.h>
-#include <sh3/wdtreg.h>
 #include <sh3/mmu.h>
 
 #include <sys/termios.h>
-#include "sci.h"
+
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = MACHINE;		/* cpu "architecture" */

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465pcmcia.c,v 1.2 2002/02/17 21:01:17 uch Exp $	*/
+/*	$NetBSD: hd64465pcmcia.c,v 1.3 2002/02/28 01:57:00 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -764,7 +764,6 @@ hd64465pcmcia_memory_window16_switch(int channel, enum memory_window_16 window)
 void
 __sh_set_bus_width(int channel, int width)
 {
-#define SH4_BCR2	0xff800004
 	u_int16_t r16;
 
 	r16 = _reg_read_2(SH4_BCR2);

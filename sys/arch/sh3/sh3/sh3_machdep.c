@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.26 2002/02/24 18:19:43 uch Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.27 2002/02/28 01:56:59 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -129,8 +129,6 @@ extern char sh_vector_generic[], sh_vector_generic_end[];
 extern char sh_vector_interrupt[], sh_vector_interrupt_end[];
 extern char sh_vector_tlbmiss[], sh_vector_tlbmiss_end[];
 
-u_int32_t __sh_BBRA; //XXX
-
 void
 sh_cpu_init(int arch, int product)
 {
@@ -138,6 +136,10 @@ sh_cpu_init(int arch, int product)
 	cpu_arch = arch;
 	cpu_product = product;
 
+#if defined(SH3) && defined(SH4)
+	/* Set register addresses */
+	sh_devreg_init();
+#endif
 	/* Cache access ops. */
 	sh_cache_init();
 
@@ -155,9 +157,6 @@ sh_cpu_init(int arch, int product)
 	memcpy(VBR + 0x600, sh_vector_interrupt,
 	    sh_vector_interrupt_end - sh_vector_interrupt);
 	__asm__ __volatile__ ("ldc	%0, vbr" :: "r"(VBR));
-
-
-	__sh_BBRA = CPU_IS_SH3 ? 0xffffffb8 : 0xff200008; //XXX
 }
 
 void

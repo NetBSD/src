@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu.c,v 1.2 2002/02/22 19:46:34 uch Exp $	*/
+/*	$NetBSD: mmu.c,v 1.3 2002/02/28 01:56:59 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,13 +68,6 @@ vaddr_t sh4_mmu_pt_p2addr(vaddr_t);
 vaddr_t (*__sh_mmu_pt_kaddr)(vaddr_t);
 u_int32_t (*__sh_mmu_pd_area)(u_int32_t);
 
-/* register addresses for (SH3 && SH4) */
-u_int32_t __sh_PTEH;
-u_int32_t __sh_TTB;
-u_int32_t __sh_TEA;
-u_int32_t __sh_TRA;
-u_int32_t __sh_EXPEVT;
-u_int32_t __sh_INTEVT;
 
 void
 sh_mmu_init()
@@ -95,13 +88,9 @@ sh_mmu_init()
 		__sh_mmu_ttb_read = sh3_mmu_ttb_read;
 		__sh_mmu_ttb_write = sh3_mmu_ttb_write;
 		__sh_mmu_pd_area = __sh3_mmu_pd_area;
-		__sh_PTEH	= SH3_PTEH;
-		__sh_TEA	= SH3_TEA;
-		__sh_TTB	= SH3_TTB;
-		__sh_TRA	= 0xffffffd0;
-		__sh_EXPEVT	= 0xffffffd4;
-		__sh_INTEVT	= 0xffffffd8;
-	} else {
+	}
+
+	if (CPU_IS_SH4) {
 		__sh_mmu_start = sh4_mmu_start;
 		__sh_tlb_invalidate_addr = sh4_tlb_invalidate_addr;
 		__sh_tlb_invalidate_asid = sh4_tlb_invalidate_asid;
@@ -112,12 +101,6 @@ sh_mmu_init()
 		__sh_mmu_ttb_read = sh4_mmu_ttb_read;
 		__sh_mmu_ttb_write = sh4_mmu_ttb_write;
 		__sh_mmu_pd_area = __sh4_mmu_pd_area;
-		__sh_PTEH	= SH4_PTEH;
-		__sh_TEA	= SH4_TEA;
-		__sh_TTB	= SH4_TTB;
-		__sh_TRA	= 0xff000020;
-		__sh_EXPEVT	= 0xff000024;
-		__sh_INTEVT	= 0xff000028;
 	}
 
 }
@@ -151,7 +134,7 @@ void
 sh_tlb_set_asid(int asid)
 {
 	
-	_reg_write_4(__sh_PTEH, 0);
+	_reg_write_4(SH_(PTEH), 0);
 }
 
 #ifdef SH3

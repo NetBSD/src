@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_sh4.h,v 1.1 2002/02/17 20:55:51 uch Exp $	*/
+/*	$NetBSD: mmu_sh4.h,v 1.2 2002/02/28 01:56:58 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #ifndef _SH3_MMU_SH4_H_
 #define _SH3_MMU_SH4_H_
+#include <sh3/devreg.h>
 
 /* ITLB 4-entry full-associative UTLB 64-entry full-associative */
 #define SH4_PTEH			0xff000000
@@ -148,4 +149,5 @@
 #define   SH4_UTLB_DA2_SA_MASK		  0x00000003
 #define   SH4_UTLB_DA2_TC		  0x00000004
 
-#endif !_SH3_MMU_SH4_H_
+#define SH4_TLB_DISABLE	*(__volatile__ u_int32_t *)SH4_MMUCR = SH4_MMUCR_TI
+#endif /* !_SH3_MMU_SH4_H_ */

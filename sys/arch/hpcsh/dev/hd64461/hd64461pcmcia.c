@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.12 2002/02/17 21:01:17 uch Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.13 2002/02/28 01:57:00 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@
 #include <dev/pcmcia/pcmciachip.h>
 
 #include <sh3/cpufunc.h>
+#include <sh3/bscreg.h>
 
 #include <hpcsh/dev/hd64461/hd64461reg.h>
 #include <hpcsh/dev/hd64461/hd64461var.h>
@@ -1053,7 +1054,6 @@ memory_window_32(enum controller_channel channel, enum memory_window_32 window)
 void
 hd64461_set_bus_width(enum controller_channel channel, int width)
 {
-#define SH3_BCR2	0xffffff62
 	u_int16_t r16;
 
 	r16 = _reg_read_2(SH3_BCR2);

@@ -1,4 +1,4 @@
-/* $NetBSD: trapreg.h,v 1.1 1999/09/13 10:31:23 itojun Exp $ */
+/*	$NetBSD: trapreg.h,v 1.2 2002/02/28 01:56:58 uch Exp $	*/
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -28,27 +28,25 @@
 
 #ifndef _SH3_TRAPREG_H_
 #define _SH3_TRAPREG_H_
+#include <sh3/devreg.h>
 
 /*
  * Trap
  */
+#define SH3_TRA			0xffffffd0	/* 32bit */
+#define SH3_EXPEVT		0xffffffd4	/* 32bit */
+#define SH3_INTEVT		0xffffffd8	/* 32bit */
 
-#if !defined(SH4)
+#define SH4_TRA			0xff000020	/* 32bit */
+#define SH4_EXPEVT		0xff000024	/* 32bit */
+#define SH4_INTEVT		0xff000028	/* 32bit */
 
-/* SH3 definitions */
-
-#define SHREG_TRA	(*(volatile unsigned int *)	0xFFFFFFD0)
-#define SHREG_EXPEVT	(*(volatile unsigned int *)	0xFFFFFFD4)
-#define SHREG_INTEVT	(*(volatile unsigned int *)	0xFFFFFFD8)
-
-#else
-
-/* SH4 definitions */
-
-#define SHREG_TRA	(*(volatile unsigned int *)	0xff000020)
-#define SHREG_EXPEVT	(*(volatile unsigned int *)	0xff000024)
-#define SHREG_INTEVT	(*(volatile unsigned int *)	0xff000028)
-
-#endif
+#ifndef _LOCORE
+#if defined(SH3) && defined(SH4)
+extern u_int32_t __sh_TRA;
+extern u_int32_t __sh_EXPEVT;
+extern u_int32_t __sh_INTEVT;
+#endif /* SH3 && SH4 */
+#endif /* !_LOCORE */
 
 #endif	/* !_SH3_TRAPREG_H_ */

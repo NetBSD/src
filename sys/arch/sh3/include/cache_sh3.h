@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh3.h,v 1.2 2002/02/17 20:58:03 uch Exp $	*/
+/*	$NetBSD: cache_sh3.h,v 1.3 2002/02/28 01:56:58 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
  */
 #ifndef _CACHE_SH3_H_
 #define _CACHE_SH3_H_
+#include <sh3/devreg.h>
 #ifdef _KERNEL
 
 #define SH3_CCR			0xffffffec
@@ -154,4 +155,4 @@ do {									\
 extern void sh3_cache_config(void);
 #endif
 #endif _KERNEL
-#endif /* _CACHE_SH3_H_ */
+#endif /* !_CACHE_SH3_H_ */
