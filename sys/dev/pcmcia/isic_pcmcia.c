@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.22 2003/12/04 13:57:31 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.23 2004/01/04 12:41:46 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -218,6 +218,7 @@ isic_pcmcia_attach(parent, self, aux)
 		    psc->sc_isic.sc_dev.dv_xname);
 		return;
 	}
+	printf(": %s\n", cde->name);
 
 	/* Enable the card */
 	pcmcia_function_init(pa->pf, cfe);
@@ -229,9 +230,6 @@ isic_pcmcia_attach(parent, self, aux)
 		    psc->sc_isic.sc_dev.dv_xname);
 		return;
 	}
-
-	/* Announce card name */
-	printf(": %s\n", cde->name);
 
 	/* XXX - we generate interrupts during card initialization.
 	   Block them for now, until the handler is established. */
