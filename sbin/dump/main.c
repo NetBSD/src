@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.28 2001/05/07 21:17:48 tron Exp $	*/
+/*	$NetBSD: main.c,v 1.29 2001/05/12 08:03:01 tron Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.28 2001/05/07 21:17:48 tron Exp $");
+__RCSID("$NetBSD: main.c,v 1.29 2001/05/12 08:03:01 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -561,7 +561,7 @@ main(argc, argv)
 	msg("Date this dump completed:  %s", ctime(&tnow));
 	msg("Average transfer rate: %d KB/s\n", xferrate / tapeno);
 	putdumptime();
-	trewind();
+	trewind(0);
 	broadcast("DUMP IS DONE!\7\7\n");
 	msg("DUMP IS DONE\n");
 	Exit(X_FINOK);
