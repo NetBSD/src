@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.55 2001/12/02 22:54:27 bouyer Exp $ */
+/*	$NetBSD: autoconf.c,v 1.55.6.1 2002/03/26 17:16:33 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,6 +56,7 @@
 #include <sys/buf.h>
 #include <sys/disklabel.h>
 #include <sys/device.h>
+#include <sys/properties.h>
 #include <sys/disk.h>
 #include <sys/dkstat.h>
 #include <sys/conf.h>
@@ -623,6 +624,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	struct mainbus_attach_args ma;
 	char buf[32];
 	const char *const *ssp, *sp = NULL;
+	struct device *d;
 	int node0, node, rv;
 
 	static const char *const openboot_special[] = {
@@ -657,6 +659,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
  */
 
 	node = findroot();
+	dev_setprop(dev, "node", &node, sizeof(node), PROP_INT, 0);
 
 	/* Establish the first component of the boot path */
 	bootpath_store(1, bootpath);
@@ -664,7 +667,6 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	/* the first early device to be configured is the cpu */
 	{
 		/* XXX - what to do on multiprocessor machines? */
-		
 		for (node = OF_child(node); node; node = OF_peer(node)) {
 			if (OF_getprop(node, "device_type", 
 				buf, sizeof(buf)) <= 0)
@@ -675,7 +677,14 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 				ma.ma_dmatag = &mainbus_dma_tag;
 				ma.ma_node = node;
 				ma.ma_name = "cpu";
-				config_found(dev, (void *)&ma, mbprint);
+
+				d = dev_config_create(dev, 1);
+				if (d) {
+					dev_setprop(d, "node", &node,
+						sizeof(node), PROP_INT, 0);
+					(void) config_found_sad(dev,
+						(void *)&ma, mbprint, NULL, d);
+				}
 				break;
 			}
 		}
@@ -758,16 +767,16 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 				free(ma.ma_interrupts, M_DEVBUF);
 			continue;
 		}
-#ifdef DEBUG
-		if (autoconf_debug & ACDB_PROBE) {
-			if (ma.ma_naddress)
-				printf(" address %08x\n", 
-					*ma.ma_address);
-			else
-				printf(" no address\n");
+
+		d = dev_config_create(dev, 1);
+		if (d) {
+			dev_setprop(d, "node", &node, sizeof(node), 
+				PROP_INT, 0);
+printf("mainbus_attach: %s node %x\n", sp, node);
+			(void) config_found_sad(dev, (void *)&ma,
+				mbprint, NULL, d);
 		}
-#endif
-		(void) config_found(dev, (void *)&ma, mbprint);
+
 		free(ma.ma_reg, M_DEVBUF);
 		if (ma.ma_ninterrupts)
 			free(ma.ma_interrupts, M_DEVBUF);
@@ -783,6 +792,54 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbus_match, mainbus_attach
 };
+
+
+size_t
+dev_mdgetprop(struct device *dev, const char *name, void *val, 
+			size_t len, int *type)
+{
+	int node;
+	ssize_t rv;
+#ifdef DEBUG
+	extern int devprop_debug;
+#endif
+
+	/* Prevent infinite recursion. */
+	if (strcmp(name, "node") == 0) {
+#ifdef DEBUG
+		if (devprop_debug) 
+			printf("dev_mdgetprop: aborting hunt for \"node\"\n");
+#endif
+		return (-1);
+	}
+
+	/* To query the OFW we need the device's node. */
+	if (dev_getprop(dev, "node", &node, sizeof(node), NULL, 0) != 
+		sizeof(node)) {
+#ifdef DEBUG
+		if (devprop_debug) 
+			printf("dev_mdgetprop: can't find \"node\"\n");
+#endif
+		return (-1);
+	}
+
+#ifdef DEBUG
+	if (devprop_debug)
+			printf("dev_mdgetprop: looking for %s on node %x\n",
+				name, node);
+#endif
+	/* OF does not like to be handed empty buffers. */
+	if (val == NULL || len == 0)
+		rv = OF_getproplen(node, (char *)name);
+	else
+		rv = OF_getprop(node, (char *)name, val, len);
+#ifdef DEBUG
+	if (devprop_debug && (rv == -1))
+		printf("dev_mdgetprop: failed\n");
+#endif
+
+	return (rv);
+}
 
 int
 PROM_getprop(node, name, size, nitem, bufp)
