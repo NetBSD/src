@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.237 2004/05/06 22:20:30 pk Exp $	*/
+/*	$NetBSD: init_main.c,v 1.238 2004/06/03 20:35:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.237 2004/05/06 22:20:30 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.238 2004/06/03 20:35:30 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -338,6 +338,7 @@ main(void)
 	p->p_cwdi = &cwdi0;
 	cwdi0.cwdi_cmask = cmask;
 	cwdi0.cwdi_refcnt = 1;
+	simple_lock_init(&cwdi0.cwdi_slock);
 
 	/* Create the limits structures. */
 	p->p_limit = &limit0;
