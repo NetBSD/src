@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1999/05/19 04:17:50 gwr Exp $
+#	$NetBSD: Makefile,v 1.4 1999/05/23 10:25:43 veego Exp $
 
 PROG=	netstat
 SRCS=	if.c inet.c main.c mbuf.c route.c
@@ -13,6 +13,6 @@ BINMODE=4555
 
 all: ${PROG}
 
-.PATH:  ${SRCDIR}
-
 .include <bsd.prog.mk>
+
+.PATH:  ${SRCDIR}
