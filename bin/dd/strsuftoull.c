@@ -1,4 +1,4 @@
-/*	$NetBSD: strsuftoull.c,v 1.1 2001/11/25 10:50:06 lukem Exp $	*/
+/*	$NetBSD: strsuftoull.c,v 1.2 2001/11/26 00:13:24 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: strsuftoull.c,v 1.1 2001/11/25 10:50:06 lukem Exp $");
+__RCSID("$NetBSD: strsuftoull.c,v 1.2 2001/11/26 00:13:24 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -93,7 +93,7 @@ __RCSID("$NetBSD: strsuftoull.c,v 1.1 2001/11/25 10:50:06 lukem Exp $");
 
 
 /*
- * Convert an expression of the following forms to a u_longlong_t.
+ * Convert an expression of the following forms to a uint64_t.
  * 	1) A positive decimal number.
  *	2) A positive decimal number followed by a b (mult by 512).
  *	3) A positive decimal number followed by a k (mult by 1024).
@@ -106,11 +106,10 @@ __RCSID("$NetBSD: strsuftoull.c,v 1.1 2001/11/25 10:50:06 lukem Exp $");
  * appropriate error.
  * 
  */
-u_longlong_t
-strsuftoull(const char *desc, const char *val, 
-    u_longlong_t min, u_longlong_t max)
+uint64_t
+strsuftoull(const char *desc, const char *val, uint64_t min, uint64_t max)
 {
-	u_longlong_t	result;
+	uint64_t	result;
 	char		errbuf[100];
 
 	result = strsuftoullx(desc, val, min, max, errbuf, sizeof(errbuf));
@@ -123,11 +122,11 @@ strsuftoull(const char *desc, const char *val,
  * As strsuftoull(), but returns the error message into the provided buffer
  * rather than exiting with it.
  */
-u_longlong_t
-strsuftoullx(const char *desc, const char *val, 
-    u_longlong_t min, u_longlong_t max, char *ebuf, size_t ebuflen)
+uint64_t
+strsuftoullx(const char *desc, const char *val, uint64_t min, uint64_t max,
+    char *ebuf, size_t ebuflen)
 {
-	u_longlong_t	num, t;
+	uint64_t	num, t;
 	char		*expr;
 
 	assert(desc != NULL);
