@@ -1,4 +1,4 @@
-/*	$NetBSD: am79900reg.h,v 1.3 2001/08/21 16:39:06 thorpej Exp $	*/
+/*	$NetBSD: am79900reg.h,v 1.4 2001/08/24 00:16:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ struct leinit {
 #define	LE_R1_STP	(1<<25)		/* start of packet */
 #define	LE_R1_ENP	(1<<24)		/* end of packet */
 #define	LE_R1_ONES	(0xf<<12)	/* must be ones */
-#define	LE_R1_BCNT_MASK	(0x7ff)		/* byte count mask */
+#define	LE_R1_BCNT_MASK	(0xfff)		/* byte count mask */
 
 #define	LE_R1_BITS \
     "\20\40OWN\37ERR\36FRAM\35OFLO\34CRC\33BUFF\32STP\31ENP"
@@ -133,7 +133,7 @@ struct leinit {
 #define	LE_T1_STP	(1<<25)		/* start of packet */
 #define	LE_T1_ENP	(1<<24)		/* end of packet */
 #define	LE_T1_ONES	(0xf<<12)	/* must be ones */
-#define	LE_T1_BCNT_MASK	(0x7ff)		/* byte count mask */
+#define	LE_T1_BCNT_MASK	(0xfff)		/* byte count mask */
 
 #define	LE_T1_BITS \
     "\20\40OWN\37ERR\36RES\35MORE\34ONE\33DEF\32STP\31ENP"
