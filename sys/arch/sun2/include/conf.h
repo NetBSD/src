@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.1 2001/04/06 13:13:02 fredette Exp $	*/
+/*	$NetBSD: conf.h,v 1.2 2001/06/27 19:02:26 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -52,6 +52,8 @@ cdev_decl(kbd);
 cdev_decl(kd);
 
 cdev_decl(bwtwo);
+
+cdev_decl(pcons);
 
 bdev_decl(xd);
 cdev_decl(xd);
