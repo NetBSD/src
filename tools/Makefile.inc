@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2001/09/22 05:45:51 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2001/09/25 01:43:35 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,9 @@
 
 # Stash the current directory (some builds here actually change .CURDIR).
 _CURDIR?=${.CURDIR}
+
+# Don't use target tool "strip" at install phase
+INSTALL=	${TOOLDIR}/bin/binstall
 
 # "make build":  Only build if the installed program is out-of-date.
 # ("make all" and "make install" always build and install.)
