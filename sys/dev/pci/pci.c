@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.78 2003/04/29 01:15:39 thorpej Exp $	*/
+/*	$NetBSD: pci.c,v 1.79 2003/05/03 18:02:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.78 2003/04/29 01:15:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.79 2003/05/03 18:02:37 thorpej Exp $");
 
 #include "opt_pci.h"
 
@@ -592,7 +592,7 @@ pci_vpd_write(pci_chipset_tag_t pc, pcitag_t tag, int offset, int count,
 		pci_conf_write(pc, tag, PCI_VPD_DATAREG(ofs), data[i]);
 
 		reg &= 0x0000ffff;
-		reg &= ~PCI_VPD_OPFLAG;
+		reg |= PCI_VPD_OPFLAG;
 		reg |= PCI_VPD_ADDRESS(offset);
 		pci_conf_write(pc, tag, ofs, reg);
 
@@ -606,7 +606,7 @@ pci_vpd_write(pci_chipset_tag_t pc, pcitag_t tag, int offset, int count,
 				return (1);
 			delay(1);
 			reg = pci_conf_read(pc, tag, ofs);
-		} while ((reg & PCI_VPD_OPFLAG) == 0);
+		} while (reg & PCI_VPD_OPFLAG);
 	}
 
 	return (0);
