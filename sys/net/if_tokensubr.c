@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.3 1999/03/22 23:14:14 bad Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.4 1999/04/08 15:53:31 bad Exp $	*/
 
 /*
  * Copyright (c) 1997-1999
@@ -36,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if_trsubr.c	8.1 (Berkeley) 6/10/93
- *	from: $NetBSD: if_tokensubr.c,v 1.3 1999/03/22 23:14:14 bad Exp $
+ *	from: NetBSD: if_fddisubr.c,v 1.2 1995/08/19 04:35:29 cgd Exp
  */
 #include "opt_inet.h"
 #include "opt_atalk.h"
