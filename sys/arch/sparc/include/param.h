@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.41 1999/12/04 21:21:28 ragge Exp $ */
+/*	$NetBSD: param.h,v 1.42 2000/01/26 07:35:51 cjs Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,6 +89,9 @@ extern int nbpg, pgofset, pgshift;
 #endif
 
 #define	KERNBASE	0xf0000000	/* start of kernel virtual space */
+#define KERNEND		0xfe000000	/* end of kernel virtual space */
+/* Arbitrarily only use 1/4 of the kernel address space for buffers. */
+#define VM_MAX_KERNEL_BUF	((KERNEND - KERNBASE)/4)
 #define PROM_LOADADDR	0x00004000	/* where the prom loads us */
 #define	KERNTEXTOFF	(KERNBASE+PROM_LOADADDR)/* start of kernel text */
 
