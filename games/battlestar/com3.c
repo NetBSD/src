@@ -1,4 +1,4 @@
-/*	$NetBSD: com3.c,v 1.6 1997/10/11 02:07:02 lukem Exp $	*/
+/*	$NetBSD: com3.c,v 1.7 1998/08/24 00:19:25 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com3.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com3.c,v 1.6 1997/10/11 02:07:02 lukem Exp $");
+__RCSID("$NetBSD: com3.c,v 1.7 1998/08/24 00:19:25 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -196,11 +196,10 @@ shoot()
 	int     firstnumber, value;
 	int     n;
 
-	firstnumber = 0;
+	firstnumber = wordnumber;
 	if (!testbit(inven, LASER))
 		puts("You aren't holding a blaster.");
 	else {
-		firstnumber = wordnumber;
 		while (wordtype[++wordnumber] == ADJS);
 		while (wordnumber <= wordcount && wordtype[wordnumber] == OBJECT) {
 			value = wordvalue[wordnumber];
