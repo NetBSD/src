@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.12 2000/03/23 07:01:31 thorpej Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.13 2000/05/12 03:36:19 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -162,7 +162,6 @@ struct fxp_softc {
 	struct ethercom sc_ethercom;	/* ethernet common part */
 	void *sc_sdhook;		/* shutdown hook */
 	void *sc_powerhook;		/* power hook */
-	void *sc_ih;			/* interrupt handler cookie */
 
 	struct mii_data sc_mii;		/* MII/media information */
 	struct callout sc_callout;	/* MII callout */
