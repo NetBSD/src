@@ -1,4 +1,4 @@
-/*	$NetBSD: macromasm.s,v 1.14 1997/04/08 03:21:17 scottr Exp $	*/
+/*	$NetBSD: macromasm.s,v 1.15 1997/04/15 07:02:50 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -35,6 +35,7 @@
  */
 
 
+#include "opt_mrg_adb.h"
 #include "assym.h"
 
 
