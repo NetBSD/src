@@ -2,6 +2,6 @@
 
 SUBDIR=	bugfiler comsat crond elvispreserve fingerd ftpd getNAME \
 	getty mail.local makekey rexecd rlogind rshd rpc.rstatd rpc.rusersd \
-	rpc.rwalld talkd telnetd tftpd
+	rpc.rwalld talkd telnetd tftpd uucpd
 
 .include <bsd.subdir.mk>
