@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.1.2.5 2001/04/30 16:58:34 sommerfeld Exp $	*/
+/*	$NetBSD: lock.h,v 1.1.2.6 2001/12/29 18:19:31 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -52,6 +52,16 @@ typedef	__volatile int		__cpu_simple_lock_t;
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0
 
+/*
+ * compiler barrier: prevent reordering of instructions.
+ * XXX something similar will move to <sys/cdefs.h>
+ * or thereabouts.
+ * This prevents the compiler from reordering code around
+ * this "instruction", acting as a sequence point for code generation.
+ */
+
+#define __lockbarrier() __asm __volatile("":::"memory")
+
 #ifdef LOCKDEBUG
 
 extern void __cpu_simple_lock_init __P((__cpu_simple_lock_t *));
@@ -69,35 +79,44 @@ static __inline void __cpu_simple_lock __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
 static __inline int __cpu_simple_lock_try __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
-static __inline void __cpu_simple_unlock __P((__cpu_simple_lock_t *)) 
+static __inline void __cpu_simple_unlock __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
 
 static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *lockp)
 {
+
 	*lockp = __SIMPLELOCK_UNLOCKED;
+	__lockbarrier();
 }
 
 static __inline void
 __cpu_simple_lock(__cpu_simple_lock_t *lockp)
 {
+
 	while (i386_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED)
 	    == __SIMPLELOCK_LOCKED) {
 		continue;	/* spin */
 	}
+	__lockbarrier();
 }
 
 static __inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *lockp)
 {
-	return (i386_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED)
+	int r = (i386_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED)
 	    == __SIMPLELOCK_UNLOCKED);
+
+	__lockbarrier();
+
+	return (r);
 }
 
 static __inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *lockp)
 {
 
+	__lockbarrier();
 	*lockp = __SIMPLELOCK_UNLOCKED;
 }
 
