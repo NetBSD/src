@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 2004/02/07 06:52:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.4.4.1 2004/12/07 11:00:33 rtr Exp $
 
 .include "../../../Makefile.serverlib"
+.include "../../../Makefile.servermod"
 
 LIB=	macppc
 

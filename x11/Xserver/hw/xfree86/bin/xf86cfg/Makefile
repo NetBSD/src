@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.4.1 2004/11/15 09:12:39 rtr Exp $
+#	$NetBSD: Makefile,v 1.4.4.2 2004/12/07 11:00:33 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -87,7 +87,7 @@ FILESDIR_Options=	${X11USRLIBDIR}/X11
 
 # need to do this here, so that X11FLAGS.LOADABLE is available
 .if (${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "armeb") \
-        && ${X11LOADABLE} != "no"
+        && ${MKX11LOADABLE} != "no"
 LDADD+= -larm
 DPADD+= ${LIBARM}
 .endif

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12.2.1 2004/11/15 09:12:38 rtr Exp $
+#	$NetBSD: Makefile,v 1.12.2.2 2004/12/07 11:00:32 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ MAN=	Xorg.1 xorg.conf.5
 
 .include "../Makefile.Xserver"
 
-.if ${X11LOADABLE} != "no"
+.if ${MKX11LOADABLE} != "no"
 
 LDADD=  ${LIBDIR.xkb}/xf86KillSrv.o \
 	${LIBDIR.xkb}/xf86VT.o \
@@ -69,7 +69,7 @@ DPADD=  ${DPADD.hw/xfree86/xf86} ${DPADD.hw/xfree86/xf86config} \
         ${LIBLBXUTIL} ${DPADD.randr} ${DPADD.render} ${DPADD.dix/xpstubs} \
         ${DPADD.mi} ${LIBZ} ${LIBM}
 
-.else # X11LOADABLE
+.else # MKX11LOADABLE
 
 
 LDADD=	${LIBDIR.xkb}/xf86KillSrv.o \
@@ -128,7 +128,7 @@ DPADD=	${DPADD.hw/xfree86/xf86} ${DPADD.hw/xfree86/xf86config} \
 	${LIBLBXUTIL} ${DPADD.randr} ${DPADD.render} ${DPADD.dix/xpstubs} \
 	${DPADD.mi} ${LIBZ} ${LIBM}
 
-.endif # X11LOADABLE
+.endif # MKX11LOADABLE
 
 .if ${MACHINE_ARCH} == "x86_64"
 LDADD+=	-lx86_64
@@ -143,7 +143,7 @@ SYMLINKS=	${X11BINDIR}/XFree86 ${X11BINDIR}/X
 .include <bsd.x11.mk>
 
 .if (${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "armeb") \
-        && ${X11LOADABLE} != "no"
+        && ${MKX11LOADABLE} != "no"
 LDADD+= -larm
 DPADD+= ${LIBARM}
 .endif
