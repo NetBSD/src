@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.19 2002/09/21 18:10:34 christos Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.20 2002/12/26 12:40:01 jdolecek Exp $	*/
 
 /*
  * 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.19 2002/09/21 18:10:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.20 2002/12/26 12:40:01 jdolecek Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -88,7 +88,6 @@ struct coda_op_stats coda_vfsopstats[CODA_VFSOPS_SIZE];
 #define MARK_INT_FAIL(op) (coda_vfsopstats[op].unsat_intrn++)
 #define MRAK_INT_GEN(op) (coda_vfsopstats[op].gen_intrn++)
 
-extern int coda_nc_initialized;     /* Set if cache has been initialized */
 extern const struct cdevsw vcoda_cdevsw;
 extern const struct vnodeopv_desc coda_vnodeop_opv_desc;
 
