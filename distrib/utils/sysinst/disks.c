@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.11 1997/11/05 07:28:24 jonathan Exp $ */
+/*	$NetBSD: disks.c,v 1.12 1997/11/05 22:49:06 mhitch Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -336,7 +336,7 @@ void make_fstab (void)
 	}
 	(void)fprintf (f, "/dev/%sa / ffs rw 1 1\n", diskdev);
 	(void)fprintf (f, "/dev/%sb none swap sw 0 0\n", diskdev);
-	for (i=4; i<getmaxpartitions(); i++)
+	for (i=getrawpartition()+1; i<getmaxpartitions(); i++)
 		if (bsdlabel[i][D_FSTYPE] == T_42BSD)
 			(void)fprintf (f, "/dev/%s%c %s ffs rw 1 2\n",
 				       diskdev, 'a'+i, fsmount[i]);
