@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.68 2000/01/20 19:06:14 wrstuden Exp $	*/
+/*	$NetBSD: vnode.h,v 1.69 2000/02/14 22:00:22 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -513,6 +513,8 @@ int	vn_ioctl __P((struct file *fp, u_long com, caddr_t data,
 int	vn_fcntl __P((struct file *fp, u_int com, caddr_t data,
 	    struct proc *p));
 int	vn_lock __P((struct vnode *vp, int flags));
+u_int	vn_setrecurse __P((struct vnode *vp));
+void	vn_restorerecurse __P((struct vnode *vp, u_int flags));
 int 	vn_open __P((struct nameidata *ndp, int fmode, int cmode));
 int 	vn_rdwr __P((enum uio_rw rw, struct vnode *vp, caddr_t base,
 	    int len, off_t offset, enum uio_seg segflg, int ioflg,

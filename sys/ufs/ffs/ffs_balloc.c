@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.15 1999/11/15 18:49:13 fvdl Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.16 2000/02/14 22:00:22 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -348,7 +348,15 @@ fail:
 	/*
 	 * If we have failed part way through block allocation, we
 	 * have to deallocate any indirect blocks that we have allocated.
+	 * We have to fsync the file before we start to get rid of all
+	 * of its dependencies so that we do not leave them dangling.
+	 * We have to sync it at the end so that the soft updates code
+	 * does not find any untracked changes. Although this is really
+	 * slow, running out of disk space is not expected to be a common
+	 * occurence. The error return from fsync is ignored as we already
+	 * have an error to return to the user.
 	 */
+	(void) VOP_FSYNC(vp, cred, MNT_WAIT, curproc);
 	for (deallocated = 0, blkp = allociblk; blkp < allocblk; blkp++) {
 		ffs_blkfree(ip, *blkp, fs->fs_bsize);
 		deallocated += fs->fs_bsize;
@@ -365,5 +373,6 @@ fail:
 		ip->i_ffs_blocks -= btodb(deallocated);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
+	(void) VOP_FSYNC(vp, cred, MNT_WAIT, curproc);
 	return (error);
 }
