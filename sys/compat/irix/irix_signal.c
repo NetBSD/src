@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.1 2001/12/08 11:17:37 manu Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.2 2001/12/25 19:04:18 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.1 2001/12/08 11:17:37 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.2 2001/12/25 19:04:18 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -281,4 +281,98 @@ irix_sys_sginap(p, v, retval)
 	}
 
 	return 0;
+}
+
+/*
+ * XXX Untested. Expect bugs and security problems here 
+ */
+int 
+irix_sys_getcontext(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct irix_sys_getcontext_args /* {
+		syscallarg(struct irix_ucontext *) ucp;
+	} */ *uap = v;
+	struct frame *f;
+	struct irix_ucontext kucp;
+	int i, error;
+
+	f = (struct frame *)p->p_md.md_regs;
+
+	kucp.iuc_flags = IRIX_UC_ALL;
+	kucp.iuc_link = NULL;		/* XXX */
+	native_to_irix_sigset(&p->p_sigctx.ps_sigmask, &kucp.iuc_sigmask);
+	kucp.iuc_stack.ss_sp = p->p_sigctx.ps_sigstk.ss_sp;
+	kucp.iuc_stack.ss_size = p->p_sigctx.ps_sigstk.ss_size;
+	kucp.iuc_stack.ss_flags = 0;
+	if (p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
+		kucp.iuc_stack.ss_flags &= IRIX_SS_ONSTACK;
+	if (p->p_sigctx.ps_sigstk.ss_flags & SS_DISABLE)
+		kucp.iuc_stack.ss_flags &= IRIX_SS_DISABLE;
+
+	for (i = 0; i < 36; i++) /* Is order correct? */
+		kucp.iuc_mcontext.svr4___gregs[i] = f->f_regs[i];
+	for (i = 0; i < 32; i++) 
+		kucp.iuc_mcontext.svr4___fpregs.svr4___fp_r.svr4___fp_regs[i] 
+		    = 0; /* XXX where are FP registers? */
+	for (i = 0; i < 47; i++)
+		kucp.iuc_filler[i] = 0;	/* XXX */
+	kucp.iuc_triggersave = 0;	/* XXX */
+
+	error = copyout(&kucp, SCARG(uap, ucp), sizeof(kucp));
+
+	return error;
+}
+
+/*
+ * XXX Untested. Expect bugs and security problems here 
+ */
+int 
+irix_sys_setcontext(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct irix_sys_setcontext_args /* {
+		syscallarg(struct irix_ucontext *) ucp;
+	} */ *uap = v;
+	struct frame *f;
+	struct irix_ucontext kucp;
+	int i, error;
+
+	error = copyin(SCARG(uap, ucp), &kucp, sizeof(kucp));
+	if (error)
+		goto out;
+
+	f = (struct frame *)p->p_md.md_regs;
+
+	if (kucp.iuc_flags & IRIX_UC_SIGMASK)
+		irix_to_native_sigset(&kucp.iuc_sigmask, 
+		    &p->p_sigctx.ps_sigmask);
+
+	if (kucp.iuc_flags & IRIX_UC_STACK) {
+		p->p_sigctx.ps_sigstk.ss_sp = kucp.iuc_stack.ss_sp;
+		p->p_sigctx.ps_sigstk.ss_size = 
+		    (unsigned long)kucp.iuc_stack.ss_sp;
+		p->p_sigctx.ps_sigstk.ss_flags = 0;
+		if (kucp.iuc_stack.ss_flags & IRIX_SS_ONSTACK)
+			p->p_sigctx.ps_sigstk.ss_flags &= SS_ONSTACK;
+		if (kucp.iuc_stack.ss_flags & IRIX_SS_DISABLE)
+			p->p_sigctx.ps_sigstk.ss_flags &= SS_DISABLE;
+	}
+
+	if (kucp.iuc_flags & IRIX_UC_CPU) 
+		for (i = 0; i < 36; i++) /* Is register order right? */
+			f->f_regs[i] = kucp.iuc_mcontext.svr4___gregs[i];
+
+	if (kucp.iuc_flags & IRIX_UC_MAU) { /* XXX */
+#ifdef DEBUG_IRIX
+	printf("irix_sys_setcontext(): IRIX_UC_MAU requested\n");
+#endif
+	}
+
+out:
+	return error;
 }

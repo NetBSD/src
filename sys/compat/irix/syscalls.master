@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.13 2001/12/25 16:40:48 manu Exp $
+	$NetBSD: syscalls.master,v 1.14 2001/12/25 19:04:19 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -47,6 +47,7 @@
 #include <compat/svr4/svr4_types.h>
 
 #include <compat/irix/irix_types.h>
+#include <compat/irix/irix_signal.h>
 #include <compat/irix/irix_syscallargs.h>
 
 %%
@@ -260,8 +261,8 @@
 			    const svr4_sigset_t *set); }
 166	UNIMPL		sigpoll_sys
 167	UNIMPL		swapctl
-168	UNIMPL		getcontext
-169	UNIMPL		setcontext
+168	STD		{ int irix_sys_getcontext(irix_ucontext_t *ucp); }
+169	STD		{ int irix_sys_setcontext(const irix_ucontext_t *ucp); }
 170	UNIMPL		waitsys
 171	UNIMPL		sigstack
 172	UNIMPL		sigaltstack

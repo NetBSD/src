@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.h,v 1.1 2001/12/08 11:17:37 manu Exp $ */
+/*	$NetBSD: irix_signal.h,v 1.2 2001/12/25 19:04:18 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,6 +42,8 @@
 #include <sys/types.h>
 #include <sys/signal.h>
 
+#include <machine/svr4_machdep.h>
+
 #include <compat/irix/irix_types.h>
 
 /* From IRIX's <sys/signal.h> */
@@ -69,6 +71,42 @@ typedef struct irix_sigcontext {
 struct irix_sigframe {
 	struct irix_sigcontext isf_sc;
 };
+
+#define IRIX_SS_ONSTACK	0x00000001
+#define IRIX_SS_DISABLE 0x00000002
+
+/* From IRIX's <sys/ucontext.h> */
+#define IRIX_UC_SIGMASK	001
+#define IRIX_UC_STACK	002
+#define IRIX_UC_CPU	004
+#define IRIX_UC_MAU	010
+#define IRIX_UC_MCONTEXT (IRIX_UC_CPU|IRIX_UC_MAU)
+#define IRIX_UC_ALL	(IRIX_UC_SIGMASK|IRIX_UC_STACK|IRIX_UC_MCONTEXT)
+
+#if 1 /* _MIPS_SZLONG == 32 */
+typedef struct irix__sigaltstack {
+	void    	*ss_sp;
+	irix_size_t  	ss_size;
+	int     	ss_flags;
+} irix_stack_t;
+#endif
+#if 0 /* _MIPS_SZLONG == 64 */
+typedef struct irix__sigaltstack {
+	void    	*ss_sp;
+	__uint32_t	ss_size;
+	int     	ss_flags;
+} irix_stack_t;
+#endif
+
+typedef struct irix_ucontext {
+	unsigned long		iuc_flags;
+	struct irix_ucontext	*iuc_link;
+	irix_sigset_t		iuc_sigmask;
+	irix_stack_t		iuc_stack;
+	svr4_mcontext_t		iuc_mcontext;
+	long			iuc_filler[47];
+	int			iuc_triggersave;
+} irix_ucontext_t;
 
 #ifdef _KERNEL
 __BEGIN_DECLS
