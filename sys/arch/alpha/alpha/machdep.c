@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.50 1996/10/23 04:12:17 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.51 1996/10/25 20:58:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -1689,9 +1689,9 @@ vm_offset_t alpha_XXX_dmamap_or;				/* XXX */
 								/* XXX */
 vm_offset_t							/* XXX */
 alpha_XXX_dmamap(v)						/* XXX */
-	void *v;						/* XXX */
+	vm_offset_t v;						/* XXX */
 {								/* XXX */
 								/* XXX */
-	return (vtophys((vm_offset_t)v) | alpha_XXX_dmamap_or);	/* XXX */
+	return (vtophys(v) | alpha_XXX_dmamap_or);		/* XXX */
 }								/* XXX */
 /* XXX XXX END XXX XXX */
