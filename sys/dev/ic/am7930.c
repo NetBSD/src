@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930.c,v 1.25 1997/07/28 20:56:07 augustss Exp $	*/
+/*	$NetBSD: am7930.c,v 1.26 1997/07/31 22:33:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -203,7 +203,7 @@ static const u_short ger_coeff[] = {
 /*
  * Define our interface to the higher level audio driver.
  */
-int	amd7930_open __P((dev_t, int));
+int	amd7930_open __P((void *, int));
 void	amd7930_close __P((void *));
 int	amd7930_query_encoding __P((void *, struct audio_encoding *));
 int	amd7930_set_params __P((void *, int, struct audio_params *, struct audio_params *));
@@ -225,6 +225,7 @@ int	amd7930_getdev __P((void *, struct audio_device *));
 int	amd7930_set_port __P((void *, mixer_ctrl_t *));
 int	amd7930_get_port __P((void *, mixer_ctrl_t *));
 int	amd7930_query_devinfo __P((void *, mixer_devinfo_t *));
+int	amd7930_get_props __P((void *));
 
 
 struct audio_hw_if sa_hw_if = {
@@ -257,7 +258,7 @@ struct audio_hw_if sa_hw_if = {
 	0,
 	0,
         0,
-	AUDIO_PROP_FULLDUPLEX
+	amd7930_get_props,
 };
 
 /* autoconfig routines */
@@ -324,7 +325,7 @@ amd7930attach(parent, self, args)
 
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 
-	if (audio_hardware_attach(&sa_hw_if, sc) != 0)
+	if (audio_hardware_attach(&sa_hw_if, sc, &sc->sc_dev) != 0)
 		printf("audio: could not attach to audio pseudo-device driver\n");
 }
 
@@ -350,19 +351,14 @@ init_amd(amd)
 }
 
 int
-amd7930_open(dev, flags)
-	dev_t dev;
+amd7930_open(addr, flags)
+	void *addr;
 	int flags;
 {
-	register struct amd7930_softc *sc;
-	int unit = AUDIOUNIT(dev);
+	struct amd7930_softc *sc = addr;
 
-	DPRINTF(("sa_open: unit %d\n",unit));
+	DPRINTF(("sa_open: unit %p\n", sc));
 
-	if (unit >= audio_cd.cd_ndevs)
-		return (ENODEV);
-	if ((sc = audio_cd.cd_devs[unit]) == NULL)
-		return (ENXIO);
 	if (sc->sc_open)
 		return (EBUSY);
 	sc->sc_open = 1;
@@ -719,6 +715,13 @@ amd7930_get_port(addr, cp)
 		    /* NOTREACHED */
 	}
 	return(0);
+}
+
+int
+amd7930_get_props(addr)
+	void *addr;
+{
+	return AUDIO_PROP_FULLDUPLEX;
 }
 
 int

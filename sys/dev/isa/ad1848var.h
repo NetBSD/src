@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.17 1997/07/28 20:56:13 augustss Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.18 1997/07/31 22:33:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -109,7 +109,7 @@ struct ad1848_softc {
 int	ad1848_probe __P((struct ad1848_softc *));
 void	ad1848_attach __P((struct ad1848_softc *));
 
-int	ad1848_open __P((struct ad1848_softc *, dev_t, int));
+int	ad1848_open __P((void *, int));
 void	ad1848_close __P((void *));
     
 void	ad1848_forceintr __P((struct ad1848_softc *));
@@ -156,5 +156,7 @@ void   *ad1848_malloc __P((void *, unsigned long, int, int));
 void	ad1848_free __P((void *, void *, int));
 unsigned long ad1848_round __P((void *, unsigned long));
 int	ad1848_mappage __P((void *, void *, int, int));
+
+int	ad1848_get_props __P((void *));
 
 #endif

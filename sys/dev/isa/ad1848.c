@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.35 1997/07/28 20:56:11 augustss Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.36 1997/07/31 22:33:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -88,7 +88,7 @@
 #include <vm/vm.h>
 
 #include <dev/audio_if.h>
-#include <dev/mulaw.h>
+#include <dev/auconv.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
@@ -971,7 +971,7 @@ ad1848_query_encoding(addr, fp)
 	strcpy(fp->name, AudioElinear_be);
 	fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
 	fp->precision = 16;
-	fp->flags = sc->mode == 1;
+	fp->flags = sc->mode == 1 ? AUDIO_ENCODINGFLAG_EMULATED : 0;
 	break;
 
     /* emulate some modes */
@@ -979,16 +979,22 @@ ad1848_query_encoding(addr, fp)
 	strcpy(fp->name, AudioElinear);
 	fp->encoding = AUDIO_ENCODING_SLINEAR;
 	fp->precision = 8;
-	fp->flags = 1;
+	fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 	break;
     case 6:
 	strcpy(fp->name, AudioEulinear_le);
 	fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
 	fp->precision = 16;
-	fp->flags = 1;
+	fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
+	break;
+    case 7:
+	strcpy(fp->name, AudioEulinear_le);
+	fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
+	fp->precision = 16;
+	fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 	break;
 
-    case 7: /* only on CS4231 */
+    case 8: /* only on CS4231 */
 	if (sc->mode == 1)
 	    return EINVAL;
 	strcpy(fp->name, AudioEadpcm);
@@ -1161,11 +1167,12 @@ ad1848_round_blocksize(addr, blk)
 }
 
 int
-ad1848_open(sc, dev, flags)
-    struct ad1848_softc *sc;
-    dev_t dev;
+ad1848_open(addr, flags)
+    void *addr;
     int flags;
 {
+    struct ad1848_softc *sc = addr;
+
     DPRINTF(("ad1848_open: sc=%p\n", sc));
 
     sc->sc_intr = 0;
@@ -1707,4 +1714,11 @@ ad1848_mappage(addr, mem, off, prot)
 	int prot;
 {
 	return isa_mappage(mem, off, prot);
+}
+
+int
+ad1848_get_props(addr)
+	void *addr;
+{
+	return AUDIO_PROP_MMAP;
 }

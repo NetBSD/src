@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.35 1997/07/28 20:56:14 augustss Exp $	*/
+/*	$NetBSD: gus.c,v 1.36 1997/07/31 22:33:27 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -117,6 +117,7 @@
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
 #include <dev/mulaw.h>
+#include <dev/auconv.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
@@ -348,7 +349,7 @@ int dmarecord_index = 0;
  * local routines
  */
 
-int	gusopen __P((dev_t, int));
+int	gusopen __P((void *, int));
 void	gusclose __P((void *));
 void	gusmax_close __P((void *));
 int	gusintr __P((void *));
@@ -371,6 +372,7 @@ int	gus_halt_in_dma __P((void *));
 int	gus_cont_out_dma __P((void *));
 int	gus_cont_in_dma __P((void *));
 int	gus_speaker_ctl __P((void *, int));
+int	gusmaxopen __P((void *, int));
 int	gusmax_round_blocksize __P((void *, int));
 int	gusmax_commit_settings __P((void *));
 int	gusmax_dma_output __P((void *, void *, int, void (*)(void *), void *));
@@ -425,6 +427,8 @@ STATIC int	gusmax_mixer_get_port __P((void *, mixer_ctrl_t *));
 STATIC int	gus_mixer_query_devinfo __P((void *, mixer_devinfo_t *));
 STATIC int	gusmax_mixer_query_devinfo __P((void *, mixer_devinfo_t *));
 STATIC int	gus_query_encoding __P((void *, struct audio_encoding *));
+STATIC int	gus_get_props __P((void *));
+STATIC int	gusmax_get_props __P((void *));
 
 STATIC void	gusics_master_mute __P((struct ics2101_softc *, int));
 STATIC void	gusics_dac_mute __P((struct ics2101_softc *, int));
@@ -630,7 +634,7 @@ struct audio_hw_if gus_hw_if = {
 	NULL,
 	NULL,
         NULL,
-	AUDIO_PROP_FULLDUPLEX,
+	gus_get_props,
 };
 
 
@@ -892,10 +896,8 @@ gusattach(parent, self, aux)
 		printf("%s codec/mixer, ", sc->sc_codec.chip_name);
 	if (sc->sc_recdrq == sc->sc_drq) {
 		printf("half-duplex");
-		gus_hw_if.props &= ~AUDIO_PROP_FULLDUPLEX;
 	} else {
 		printf("full-duplex, record drq %d", sc->sc_recdrq);
-		gus_hw_if.props |= AUDIO_PROP_FULLDUPLEX;
 	}
 
 	printf(">\n");
@@ -940,25 +942,18 @@ gusattach(parent, self, aux)
 	 * Attach to the generic audio layer
 	 */
 
-	if (audio_hardware_attach(&gus_hw_if, HAS_CODEC(sc) ? (void *)&sc->sc_codec : (void *)sc) != 0)
+	if (audio_hardware_attach(&gus_hw_if, HAS_CODEC(sc) ? (void *)&sc->sc_codec : (void *)sc, &sc->sc_dev) != 0)
 		printf("gus: could not attach to audio pseudo-device driver\n");
 }
 
 int
-gusopen(dev, flags)
-	dev_t dev;
+gusopen(addr, flags)
+	void *addr;
 	int flags;
 {
-	int unit = AUDIOUNIT(dev);
-	struct gus_softc *sc;
+	struct gus_softc *sc = addr;
 
 	DPRINTF(("gusopen() called\n"));
-
-	if (unit >= gus_cd.cd_ndevs)
-		return ENXIO;
-	sc = gus_cd.cd_devs[unit];
-	if (!sc)
-		return ENXIO;
 
 	if (sc->sc_flags & GUS_OPEN)
 		return EBUSY;
@@ -975,7 +970,7 @@ gusopen(dev, flags)
 	sc->sc_voc[GUS_VOICE_LEFT].current_addr = GUS_MEM_OFFSET;
 
 	if (HAS_CODEC(sc)) {
-		ad1848_open(&sc->sc_codec, dev, flags);
+		ad1848_open(&sc->sc_codec, flags);
 		sc->sc_codec.aux1_mute = 0;
 		ad1848_mute_aux1(&sc->sc_codec, 0); /* turn on DAC output */
 		if (flags & FREAD) {
@@ -992,6 +987,15 @@ gusopen(dev, flags)
 	if (sc->sc_nbufs == 0)
 	    gus_round_blocksize(sc, GUS_BUFFER_MULTIPLE); /* default blksiz */
 	return 0;
+}
+
+int
+gusmaxopen(addr, flags)
+	void *addr;
+	int flags;
+{
+	struct ad1848_softc *ac = addr;
+	return gusopen(ac->parent, flags);
 }
 
 STATIC void
@@ -2760,7 +2764,7 @@ gus_init_cs4231(sc)
 		sc->sc_flags &= ~GUS_CODEC_INSTALLED;
 	} else {
 		struct ad1848_volume vol = {AUDIO_MAX_GAIN, AUDIO_MAX_GAIN};
-		struct audio_hw_if gusmax_hw_if = {
+		static struct audio_hw_if gusmax_hw_if = {
 			gusopen,
 			gusmax_close,
 			NULL,				/* drain */
@@ -2799,7 +2803,7 @@ gus_init_cs4231(sc)
 			NULL,
 			NULL,
                         NULL,
-			AUDIO_PROP_FULLDUPLEX,
+			gus_get_props,
 		};
 		sc->sc_flags |= GUS_CODEC_INSTALLED;
 		sc->sc_codec.parent = sc;
@@ -3828,6 +3832,22 @@ gus_mixer_set_port(addr, cp)
 	    /*NOTREACHED*/
 	}
 	return error;
+}
+
+STATIC int
+gus_get_props(addr)
+	void *addr;
+{
+	struct gus_softc *sc = addr;
+	return sc->sc_recdrq == sc->sc_drq ? 0 : AUDIO_PROP_FULLDUPLEX;
+}
+
+STATIC int
+gusmax_get_props(addr)
+	void *addr;
+{
+	struct ad1848_softc *ac = addr;
+	return gus_get_props(ac->parent);
 }
 
 STATIC int

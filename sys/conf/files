@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.131 1997/07/31 21:56:33 matt Exp $
+#	$NetBSD: files,v 1.132 1997/07/31 22:33:15 augustss Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -19,6 +19,7 @@ define	scsi { [channel = -1] }
 
 # audio device attributes
 define	mulaw
+define	auconv
 
 # net device attributes - we have generic code for arc(net), ether(net),
 # fddi, and atm.
@@ -166,6 +167,7 @@ file ddb/db_variables.c			ddb
 file ddb/db_watch.c			ddb
 file ddb/db_write_cmd.c			ddb
 file ddb/db_xxx.c			ddb
+file dev/auconv.c			auconv
 file dev/audio.c			audio			needs-flag
 file dev/ccd.c				ccd			needs-flag
 file dev/md.c				md			needs-flag

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbreg.h,v 1.21 1997/05/23 21:20:18 augustss Exp $	*/
+/*	$NetBSD: sbreg.h,v 1.22 1997/07/31 22:33:40 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -203,6 +203,10 @@
 #define 	SB_SPKR_OFF	0x00
 #define 	SB_SPKR_ON	0xff
 #define SB_DSP_VERSION		0xe1	/* get version number */
+
+#define SB_BMODE_UNSIGNED	0x00
+#define SB_BMODE_SIGNED		0x10
+#define SB_BMODE_STEREO		0x20
 
 /* Some of these come from linux driver (It serves as convenient unencumbered
    documentation) */
