@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.10 1995/09/03 14:51:38 briggs Exp $	*/
+/*	$NetBSD: macrom.c,v 1.11 1995/09/03 20:47:21 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -682,13 +682,23 @@ mrg_initadbintr()
 
         if ( (HwCfgFlags == 0) && (HwCfgFlags2 == 0) && (HwCfgFlags3 == 0) ){
 
-		printf("Caution: No HwCfgFlags from Booter, using defaults "
-			"for MacIIsi.\n");
+		if (mac68k_machine.class == MACH_CLASSIIsi) {
+			printf("Caution: No HwCfgFlags from Booter, using "
+				"defaults for IIsi.\n");
 
-		/* Egret and ADBReInit look into these HwCfgFlags */
-		HwCfgFlags = 0xfc00;	
-		HwCfgFlags2 = 0x0000773f;
-		HwCfgFlags3 = 0x000001a6;
+			/* Egret and ADBReInit look into these HwCfgFlags */
+			HwCfgFlags = 0xfc00;	
+			HwCfgFlags2 = 0x0000773F;
+			HwCfgFlags3 = 0x000001a6;
+		} else if (mac68k_machine.class == MACH_CLASSQ) {
+			printf("Caution: No HwCfgFlags from Booter, using "
+				"defaults for Q700.\n");
+
+			/* ADBReInit looks into these HwCfgFlags */
+			HwCfgFlags = 0xfc00;	
+			HwCfgFlags2 = 0x05A0183F;
+			HwCfgFlags3 = 0x00000900;
+		}
 
 		printf("Using HwCfgFlags: 0x%4x, 0x%8x, 0x%8x\n",
 			HwCfgFlags, HwCfgFlags2, HwCfgFlags3);
@@ -713,19 +723,11 @@ mrg_initadbintr()
 		if (mac68k_machine.do_graybars)
 			printf("mrg: Not setting up egret.\n");
 
-		/*
-		 * Do we need this elsewhere?
-		 * This should enable ADB interrupts.
-		 */
-		if (   (current_mac_model->class == MACH_CLASSII)
-		    || (current_mac_model->class == MACH_CLASSIIci)) {
+		via_reg(VIA1, vIFR) = 0x4;
+		via_reg(VIA1, vIER) = 0x84;
 
-			if (mac68k_machine.do_graybars)
-				printf("mrg: Enabling ADB interrupt.\n");
-
-			via_reg(VIA1, vIFR) = 0x4;
-			via_reg(VIA1, vIER) = 0x84;
-		}	
+		if (mac68k_machine.do_graybars)
+			printf("mrg: ADB interrupts enabled.\n");
 	}	
 }
 
