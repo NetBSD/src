@@ -1,4 +1,4 @@
-/* $NetBSD: frame.h,v 1.1 1996/01/31 23:21:56 mark Exp $ */
+/* $NetBSD: frame.h,v 1.2 1996/03/06 22:53:50 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -41,13 +41,10 @@
  * Stack frames structures
  *
  * Created      : 30/09/94
- * Last updated : 01/07/95
- *
- *    $Id: frame.h,v 1.1 1996/01/31 23:21:56 mark Exp $
  */
 
-#ifndef _ARM32_FRAME_H
-#define _ARM32_FRAME_H
+#ifndef _ARM32_FRAME_H_
+#define _ARM32_FRAME_H_
 
 #include <sys/signal.h>
 
@@ -111,10 +108,20 @@ struct sigframe {
 	struct	sigcontext sf_sc;
 };
 
+/*
+ * Stack frame. Used during stack traces (db_trace.c)
+ */
+struct frame {
+	u_int	fr_fp;
+	u_int	fr_sp;
+	u_int	fr_lr;
+	u_int	fr_pc;
+};
+
 #ifdef _KERNEL
 void validate_trapframe __P((trapframe_t *, int));
-#endif
+#endif /* _KERNEL */
 
-#endif
+#endif /* _ARM32_FRAME_H_ */
   
 /* End of frame.h */
