@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.19 1996/04/28 06:18:12 mhitch Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.20 1996/10/08 22:18:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -448,7 +448,7 @@ adosfs_vget(mp, an, vpp)
 	/*
 	 * copy in name (from original block)
 	 */
-	nam = bp->b_data + (ap->nwords - 20) * sizeof(long);
+	nam = bp->b_data + (ap->nwords - 20) * sizeof(u_int32_t);
 	namlen = *(u_char *)nam++;
 	if (namlen > 30) {
 #ifdef DIAGNOSTIC
@@ -580,8 +580,8 @@ adosfs_loadbitmap(amp)
 			break;
 		if (adoscksum(mapbp, amp->nwords)) {
 #ifdef DIAGNOSTIC
-			printf("adosfs: loadbitmap - cksum of blk %ld failed\n",
-			    adoswordn(bp, blkix));
+			printf("adosfs: loadbitmap - cksum of blk %d failed\n",
+				adoswordn(bp, blkix));
 #endif
 			/* XXX Force read-only?  Set free space 0? */
 			break;
