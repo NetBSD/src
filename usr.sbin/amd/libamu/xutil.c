@@ -1,4 +1,4 @@
-/*	$NetBSD: xutil.c,v 1.1.1.5 1998/08/08 22:05:24 christos Exp $	*/
+/*	$NetBSD: xutil.c,v 1.2 1998/11/17 18:14:18 kleink Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Erez Zadok
@@ -239,6 +239,9 @@ expand_error(char *f, char *e)
 
   for (p = f; (*e = *p); e++, p++) {
     if (p[0] == '%' && p[1] == 'm') {
+#ifdef HAVE_STRERROR
+      strcpy(e, strerror(error));
+#else
       const char *errstr;
       if (error < 0 || error >= sys_nerr)
 	errstr = NULL;
@@ -248,6 +251,7 @@ expand_error(char *f, char *e)
 	strcpy(e, errstr);
       else
 	sprintf(e, "Error %d", error);
+#endif
       e += strlen(e) - 1;
       p++;
     }
