@@ -1,4 +1,4 @@
-/* $NetBSD: ispvar.h,v 1.38 2000/12/28 08:24:17 mjacob Exp $ */
+/* $NetBSD: ispvar.h,v 1.39 2000/12/28 22:27:47 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -565,7 +565,13 @@ int isp_async __P((struct ispsoftc *, ispasync_t, void *));
 /*
  * Platform Dependent Error and Debug Printout
  */
+#ifdef	__GNUC__
+void isp_prt __P((struct ispsoftc *, int level, const char *, ...))
+	__attribute__((__format__(__printf__,3,4)));
+#else
 void isp_prt __P((struct ispsoftc *, int level, const char *, ...));
+#endif
+
 #define	ISP_LOGALL	0x0	/* log always */
 #define	ISP_LOGCONFIG	0x1	/* log configuration messages */
 #define	ISP_LOGINFO	0x2	/* log informational messages */

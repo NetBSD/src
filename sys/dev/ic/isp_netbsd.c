@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.36 2000/12/28 21:37:04 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.37 2000/12/28 22:27:47 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -708,7 +708,7 @@ isp_async(isp, cmd, arg)
 		break;
 	case ISPASYNC_PDB_CHANGED:
 	if (IS_FC(isp) && isp->isp_dblev) {
-		const char *fmt = "Target %d (Loop 0x%x) Port ID 0x%x "
+		const char fmt[] = "Target %d (Loop 0x%x) Port ID 0x%x "
 		    "role %s %s\n Port WWN 0x%08x%08x\n Node WWN 0x%08x%08x";
 		const static char *roles[4] = {
 		    "No", "Target", "Initiator", "Target/Initiator"
