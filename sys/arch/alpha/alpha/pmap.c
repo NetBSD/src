@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.178 2001/05/01 05:53:29 ross Exp $ */
+/* $NetBSD: pmap.c,v 1.179 2001/05/05 18:22:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.178 2001/05/01 05:53:29 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179 2001/05/05 18:22:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -371,6 +371,18 @@ struct pmap_asn_info pmap_asn_info[ALPHA_MAXPROCS];
  *
  *	* pmap_growkernel_slock - This lock protects pmap_growkernel()
  *	  and the virtual_end variable.
+ *
+ *	  There is a lock ordering constraint for pmap_growkernel_slock.
+ *	  pmap_growkernel() acquires the locks in the following order:
+ *
+ *		pmap_growkernel_slock -> pmap_all_pmaps_slock ->
+ *		    pmap->pm_slock
+ *
+ *	  But pmap_lev1map_create() is called with pmap->pm_slock held,
+ *	  and also needs to acquire the pmap_growkernel_slock.  So,
+ *	  we require that the caller of pmap_lev1map_create() (currently,
+ *	  the only caller is pmap_enter()) acquire pmap_growkernel_slock
+ *	  before acquring pmap->pm_slock.
  *
  *	Address space number management (global ASN counters and per-pmap
  *	ASN state) are not locked; they use arrays of values indexed
@@ -1679,7 +1691,23 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		 * created.
 		 */
 		if (pmap->pm_lev1map == kernel_lev1map) {
+			/*
+			 * XXX Yuck.
+			 * We have to unlock the pmap, lock the
+			 * pmap_growkernel_slock, and re-lock the
+			 * pmap here, in order to avoid a deadlock
+			 * with pmap_growkernel().
+			 *
+			 * Because we unlock, we have a window for
+			 * someone else to add a mapping, thus creating
+			 * a level 1 map; pmap_lev1map_create() checks
+			 * for this condition.
+			 */
+			PMAP_UNLOCK(pmap);
+			simple_lock(&pmap_growkernel_slock);
+			PMAP_LOCK(pmap);
 			error = pmap_lev1map_create(pmap, cpu_id);
+			simple_unlock(&pmap_growkernel_slock);
 			if (error) {
 				if (flags & PMAP_CANFAIL)
 					goto out;
@@ -3231,7 +3259,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
  *
  *	Create a new level 1 page table for the specified pmap.
  *
- *	Note: the pmap must already be locked.
+ *	Note: growkernel and the pmap must already be locked.
  */
 int
 pmap_lev1map_create(pmap_t pmap, long cpu_id)
@@ -3241,22 +3269,27 @@ pmap_lev1map_create(pmap_t pmap, long cpu_id)
 #ifdef DIAGNOSTIC
 	if (pmap == pmap_kernel())
 		panic("pmap_lev1map_create: got kernel pmap");
+#endif
 
+	if (pmap->pm_lev1map != kernel_lev1map) {
+		/*
+		 * We have to briefly unlock the pmap in pmap_enter()
+		 * do deal with a lock ordering constraint, so it's
+		 * entirely possible for this to happen.
+		 */
+		return (0);
+	}
+
+#ifdef DIAGNOSTIC
 	if (pmap->pm_asni[cpu_id].pma_asn != PMAP_ASN_RESERVED)
 		panic("pmap_lev1map_create: pmap uses non-reserved ASN");
 #endif
 
-	simple_lock(&pmap_growkernel_slock);
-
 	l1pt = pool_cache_get(&pmap_l1pt_cache, PR_NOWAIT);
-	if (l1pt == NULL) {
-		simple_unlock(&pmap_growkernel_slock);
-		return ENOMEM;
-	}
+	if (l1pt == NULL)
+		return (ENOMEM);
 
 	pmap->pm_lev1map = l1pt;
-
-	simple_unlock(&pmap_growkernel_slock);
 
 	/*
 	 * The page table base has changed; if the pmap was active,
@@ -3267,7 +3300,7 @@ pmap_lev1map_create(pmap_t pmap, long cpu_id)
 		PMAP_ACTIVATE(pmap, curproc, cpu_id);
 	}
 	PMAP_LEV1MAP_SHOOTDOWN(pmap, cpu_id);
-	return 0;
+	return (0);
 }
 
 /*
