@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.5 1994/10/20 04:21:11 cgd Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.6 1994/12/11 17:57:15 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -424,7 +424,7 @@ lfs_segwait(p, uap, retval)
 		if (itimerfix(&atv))
 			return (EINVAL);
 		s = splclock();
-		timevaladd(&atv, (struct timeval *)&time);
+		__timeradd(&atv, &time);
 		timeout = hzto(&atv);
 		splx(s);
 	} else
