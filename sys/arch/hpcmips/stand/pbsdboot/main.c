@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.28 2000/02/14 07:22:19 jun Exp $	*/
+/*	$NetBSD: main.c,v 1.29 2000/02/25 03:38:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -236,6 +236,7 @@ TCHAR* path_list[] = {
 	TEXT("/"),
 	TEXT("2:/"),
 	TEXT("\\"),
+	TEXT("\\My Documents\\"),
 	TEXT("\\Storage Card\\"),
 	TEXT("\\Storage Card2\\"),
 #ifdef UNDER_CE
