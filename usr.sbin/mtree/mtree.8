@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.20 2001/10/05 13:14:56 lukem Exp $
+.\"	$NetBSD: mtree.8,v 1.21 2001/10/05 15:32:57 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)mtree.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd October 5, 2001
+.Dd October 6, 2001
 .Dt MTREE 8
 .Os
 .Sh NAME
@@ -348,14 +348,22 @@ whitespace characters.
 These values override, without changing, the global value of the
 corresponding keyword.
 .Pp
-All paths are relative.
+A path that contains a slash
+.Pq Ql /
+that is not the first character will be treated as an absolute path
+(relative to the root of the tree).
+All parent directories referenced in the path must exist.
+The current directory path used by relative paths will be updated
+appropriately.
+.Pp
+A path that does not contain a slash will be treated as a relative path.
 Specifying a directory will cause subsequent files to be searched
 for in that directory hierarchy.
 Which brings us to the last type of line in a specification: a line
 containing only the string
 .Dq Sy \&..
 causes the current directory
-path to ascend one level.
+path (used by relative paths) to ascend one level.
 .Pp
 Empty lines and lines whose first non-whitespace character is a hash
 mark
@@ -413,3 +421,35 @@ The
 .Nm
 utility appeared in
 .Bx 4.3 Reno .
+The
+.Sy optional
+keyword appeared in
+.Nx 1.2 .
+The
+.Fl U
+flag appeared in
+.Nx 1.3 .
+The
+.Sy flags
+and
+.Sy md5
+keywords, and
+.Fl i
+and
+.Fl m
+flags
+appeared in
+.Nx 1.4 .
+The
+.Sy tags
+and
+.Sy all
+keywords,
+.Fl l ,
+.Fl D ,
+.Fl E ,
+.Fl I
+and
+.Fl R
+flags, and support for absolute paths appeared in
+.Nx 1.6 .
