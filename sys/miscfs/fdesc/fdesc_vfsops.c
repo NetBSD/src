@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.47 2004/04/21 01:05:40 christos Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.48 2004/04/21 02:38:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.47 2004/04/21 01:05:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.48 2004/04/21 02:38:16 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.47 2004/04/21 01:05:40 christos E
 #include <sys/filedesc.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
+#include <sys/dirent.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
 #include <miscfs/fdesc/fdesc.h>
