@@ -1,0 +1,43 @@
+algor:		Algorithmics MIPS evaluation boards
+alpha:		Compaq Alpha
+amiga:		Commodore et. al. Amiga (m68k)
+amigappc:	Phase 5 Amiga (powerpc)
+arc:		MIPS Advanced Risc Computing spec machines
+arm26:		Acorn Risc Machines Archimedes ARMv2 and ARMv2a
+arm32:		Acorn Risc Machines ARMv3 and Digital StrongArm machines
+atari:		Atari TT30, Falcon, and Hades
+bebox:		Be Inc, BeBox
+cats:		Chalise Technologies, CATS motherboard
+cesfic:  	FIC8234 VME processor board
+cobalt:		Cobalt Networks Microservers
+dnard:		Digital "Shark" DNARD machines
+dreamcast:	SEGA Dreamcast
+evbsh3:		Hitachi SuperHTM sh3 and sh4 boards
+hp300:		Hewlett Packard 300 series machines (m68k)
+hpcarm:		Arm based handheld pc's
+hpcmips:	Mips based handheld pc's
+hpcsh:		Hitachi SuperHTM based handheld pc's
+i386:		Intel/AMD etc. x86 processor line
+luna68k:	LUNA product line of OMRON Tateishi Electric
+mac68k:		Apple Macintosh (m68k)
+macppc:		Apple Macintosh (powerpc)
+mipsco:		MIPS Corp Magnum 3000 computers.
+mmeye:		Hitachi SuperHTM computer controlled camera
+mvme68k:	Motorola's single board VME based computers
+netwinder:	Strongarm based netwinder machines
+news68k:	Sony's NET WORK STATION (m68k)
+newsmips:	Sony's NET WORK STATION (mips)
+next68k:	Next Computer's cubes and slabs
+ofppc:		Open Firmware based powerpc machines
+pc532:		NEC's 532 based processor machines
+pmax:		Digital MIPS based workstations
+prep:		Power PC Reference Platform machines
+sandpoint:	Motorola Sandpoint reference platform
+sgimips:	MIPS based Silicon Graphics workstations
+sparc:		Sun Sparc (sun4, sun4c, sun4m) 32 bit cpu machines
+sparc64:	Sun Sparc "Ultra" 64 bit cpu machines
+sun2:		Sun m68010 based machines
+sun3:		Sun m68k based machines
+vax:		Digital VAX machines
+walnut:		IBM's 405GP Reference Board
+x68k:		Sharp X68000, X68030
