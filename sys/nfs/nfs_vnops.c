@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.157 2002/12/01 23:02:11 matt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.158 2003/02/18 14:37:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.157 2002/12/01 23:02:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.158 2003/02/18 14:37:08 jdolecek Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -839,7 +839,7 @@ nfs_lookup(v)
 	 * If the directory/name pair is found in the name cache,
 	 * we have to ensure the directory has not changed from
 	 * the time the cache entry has been created. If it has,
-	 * the cache entry has to be ignored 
+	 * the cache entry has to be ignored. 
 	 */
 	if ((error = cache_lookup(dvp, vpp, cnp)) >= 0) {
 		struct vattr vattr;
