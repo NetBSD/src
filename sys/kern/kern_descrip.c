@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.59 1999/05/05 20:01:08 thorpej Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.60 1999/06/20 08:54:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -730,7 +730,6 @@ cwdinit(p)
 	struct proc *p;
 {
 	struct cwdinfo *cwdi;
-	extern int cmask;
 
 	cwdi = pool_get(&cwdi_pool, PR_WAITOK);
 
@@ -739,7 +738,7 @@ cwdinit(p)
 	cwdi->cwdi_rdir = p->p_cwdi->cwdi_rdir;
 	if (cwdi->cwdi_rdir)
 		VREF(cwdi->cwdi_rdir);
-	cwdi->cwdi_cmask = cmask;
+	cwdi->cwdi_cmask =  p->p_cwdi->cwdi_cmask;
 	cwdi->cwdi_refcnt = 1;
 
 	return (cwdi);
