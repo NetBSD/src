@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.1 2000/12/29 20:14:03 bjh21 Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.2 2001/01/09 19:47:28 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,7 +70,7 @@ L1:
 	/* Calculate new value */
 	mov	r3, r0
 	add	r0, r0, r1
-	swi	SYS_break
+	SYSTRAP(break)
 	bcs	cerror
 
 	/* Store new curbrk value */

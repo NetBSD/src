@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe.S,v 1.1 2000/12/29 20:14:03 bjh21 Exp $	*/
+/*	$NetBSD: pipe.S,v 1.2 2001/01/09 19:47:27 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@ WEAK_ALIAS(pipe, _pipe)
 
 ENTRY(_pipe)
 	mov	r2, r0
-	swi	SYS_pipe
+	SYSTRAP(pipe)
 	bcs	cerror
 	str	r0, [r2, #0x0000]
 	str	r1, [r2, #0x0004]

@@ -1,4 +1,4 @@
-/*	$NetBSD: __syscall.S,v 1.1 2000/12/29 20:14:01 bjh21 Exp $	*/
+/*	$NetBSD: __syscall.S,v 1.2 2001/01/09 19:47:27 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #include "SYS.h"
 
 ENTRY(__syscall)
-	swi	SYS___syscall
+	SYSTRAP(__syscall)
 	bcs	cerror
 #ifdef __APCS_26__
 	movs	pc, lr
