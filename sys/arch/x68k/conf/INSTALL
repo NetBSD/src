@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.38 2001/03/10 03:23:10 minoura Exp $
+#	$NetBSD: INSTALL,v 1.39 2001/05/02 13:15:24 minoura Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"INSTALL-$Revision: 1.38 $"
+#ident 		"INSTALL-$Revision: 1.39 $"
 
 makeoptions     COPTS="-Os"             # Optimise for space. Implies -O2
 
@@ -148,7 +148,7 @@ options 	RTC_OFFSET=-540	# hardware clock is this many mins. west of GMT
 #options 	COMPAT_LINUX	# Linux/m68k binary compatibility
 #options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
 
-# File systems
+## File systems
 file-system	FFS		# Berkeley Fast Filesystem
 file-system	NFS		# Sun NFS-compatible filesystem client
 #file-system	KERNFS		# kernel data-structure filesystem
@@ -165,7 +165,7 @@ file-system	CD9660		# ISO 9660 + Rock Ridge file system
 file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #file-system 	ADOSFS		# AmigaDOS filesystem
 
-# Filesystem options
+# File system options.
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
@@ -254,9 +254,9 @@ pseudo-device	sram			# battery-backuped static RAM
 #xcom0	at mainbus0			# NS16550 fast serial
 #xcom1	at mainbus0
 
-## Audio device; broken
-#okiadpcm0 at intio0 addr 0xe92000 intr 106 errintr 107 dma 3
-#audio*	at okiadpcm*
+## Audio device
+#vs0 at intio0 addr 0xe92000 dma 3 dmaintr 106
+#audio*	at vs?
 
 ## Network interfaces
 neptune0 at intio0 addr 0xece000 intr 249	# Neptune-X
