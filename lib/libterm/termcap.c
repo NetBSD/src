@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.38 2001/01/29 01:22:31 christos Exp $	*/
+/*	$NetBSD: termcap.c,v 1.39 2001/10/31 21:52:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.38 2001/01/29 01:22:31 christos Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.39 2001/10/31 21:52:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,9 +101,13 @@ t_setinfo(struct tinfo **bp, const char *entry)
 	cap_ptr = capability;
 	limit = 255;
 	(*bp)->up = t_getstr(*bp, "up", &cap_ptr, &limit);
+	if ((*bp)->up)
+		(*bp)->up = strdup((*bp)->up);
 	cap_ptr = capability;
 	limit = 255;
 	(*bp)->bc = t_getstr(*bp, "bc", &cap_ptr, &limit);
+	if ((*bp)->bc)
+		(*bp)->bc = strdup((*bp)->bc);
 	
 	return 0;
 }
@@ -240,9 +244,13 @@ t_getent(bp, name)
 		cap_ptr = capability;
 		limit = 255;
 		(*bp)->up = t_getstr(*bp, "up", &cap_ptr, &limit);
+		if ((*bp)->up)
+			(*bp)->up = strdup((*bp)->up);
 		cap_ptr = capability;
 		limit = 255;
 		(*bp)->bc = t_getstr(*bp, "bc", &cap_ptr, &limit);
+		if ((*bp)->bc)
+			(*bp)->bc = strdup((*bp)->bc);
 	}
 		
 	return (i + 1);
@@ -354,8 +362,6 @@ tgetflag(id)
  * placed in area, which is a ref parameter which is updated.
  * limit is the number of characters allowed to be put into
  * area, this is updated.
- *
- * returns dynamically allocated region, passed from cgetstr().
  */
 char *
 t_getstr(info, id, area, limit)
@@ -390,7 +396,9 @@ t_getstr(info, id, area, limit)
 			return NULL;
 		}
   	
-		strcpy(*area, s);
+		(void)strcpy(*area, s);
+		free(s);
+		s = *area;
 		*area += i + 1;
 		if (limit != NULL) *limit -= i;
   	
@@ -446,11 +454,17 @@ tgetstr(id, area)
  * also returned to the caller.  If the string is not found or a
  * memory allocation fails then NULL is returned and bufptr and area
  * are unchanged.
+ *
+ * XXX: This is horribly broken because realloc's can move memory and
+ * invalidate attributes we've already returned. Only possible way to
+ * fix it for now is to allocate a lot -- 8K, and leak if we need to
+ * realloc. This API needs to be destroyed!.
  */
+#define BSIZE 8192
 char *
 t_agetstr(struct tinfo *info, const char *id, char **bufptr, char **area)
 {
-	size_t new_size, offset;
+	size_t new_size;
 	char *new_buf;
 	
 	_DIAGASSERT(info != NULL);
@@ -461,26 +475,24 @@ t_agetstr(struct tinfo *info, const char *id, char **bufptr, char **area)
 	t_getstr(info, id, NULL, &new_size);
 
 	  /* either the string is empty or the capability does not exist. */
-	if (new_size == 0)
+	if (new_size == 0 || new_size > BSIZE)
 		return NULL;
 
 	  /* check if we have a buffer, if not malloc one and fill it in. */
 	if (*bufptr == NULL) {
-		if ((new_buf = (char *) malloc(new_size)) == NULL)
+		if ((new_buf = (char *) malloc(BSIZE)) == NULL)
 			return NULL;
 		*bufptr = new_buf;
 		*area = new_buf;
-	} else {
-		offset = *area - *bufptr;
-		if ((new_buf = realloc(*bufptr, offset + new_size)) == NULL)
-			return NULL;
-		
-		*bufptr = new_buf;
-		*area = *bufptr + offset; /* we need to do this just in case
-					     realloc shifted the buffer. */
+	} else if (*area - *bufptr >= BSIZE - new_size) {
+		char buf[BSIZE];
+		char *b = buf;
+		size_t len = BSIZE;
+		/* Leak! */
+		return strdup(t_getstr(info, id, &b, &len));
 	}
-	
 	return t_getstr(info, id, area, NULL);
+	
 }
  
 /*
