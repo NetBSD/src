@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.12 1998/10/21 09:54:09 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.13 1998/12/31 00:04:07 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.14 1997/10/08 07:47:26 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.12 1998/10/21 09:54:09 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.13 1998/12/31 00:04:07 tron Exp $");
 #endif
 #endif
 
@@ -30,7 +30,11 @@ __RCSID("$NetBSD: main.c,v 1.12 1998/10/21 09:54:09 agc Exp $");
  *
  */
 
+#include <sys/ioctl.h>
+
+#include <termios.h>
 #include <err.h>
+
 #include "lib.h"
 #include "info.h"
 
@@ -43,6 +47,7 @@ char *InfoPrefix	= "";
 char PlayPen[FILENAME_MAX];
 size_t PlayPenSize	= sizeof(PlayPen);
 char *CheckPkg		= NULL;
+size_t termwidth	= 0;
 
 static void
 usage(void)
@@ -171,5 +176,18 @@ main(int argc, char **argv)
     if (pkgs == start && !AllInstalled && !CheckPkg)
 	warnx("missing package name(s)"), usage();
     *pkgs = NULL;
-    return pkg_perform(start);
+
+    if (isatty(STDOUT_FILENO)) {
+	const char *p;
+	struct winsize win;
+
+	if ((p = getenv("COLUMNS")) != NULL)
+	    termwidth = atoi(p);
+	else if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) == 0 &&
+		 win.ws_col > 0)
+	    termwidth = win.ws_col;
+    }
+
+     exit(pkg_perform(start));
+     /* NOTREACHED */
 }

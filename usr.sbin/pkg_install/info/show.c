@@ -1,11 +1,11 @@
-/*	$NetBSD: show.c,v 1.9 1998/11/22 16:22:41 hubertf Exp $	*/
+/*	$NetBSD: show.c,v 1.10 1998/12/31 00:04:07 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: show.c,v 1.11 1997/10/08 07:47:38 charnier Exp";
 #else
-__RCSID("$NetBSD: show.c,v 1.9 1998/11/22 16:22:41 hubertf Exp $");
+__RCSID("$NetBSD: show.c,v 1.10 1998/12/31 00:04:07 tron Exp $");
 #endif
 #endif
 
@@ -90,21 +90,25 @@ void
 show_index(char *title, char *fname)
 {
 	FILE *fp;
-	char line[MAXINDEXSIZE+2];
+	char *line;
+	size_t linelen;
+	size_t maxline = termwidth;
 
 	if (!Quiet) {
 		printf("%s%s", InfoPrefix, title);
+		maxline -= MAXNAMESIZE;
 	}
 	if ((fp = fopen(fname, "r")) == (FILE *) NULL) {
 		warnx("show_file: can't open '%s' for reading", fname);
 		return;
 	}
-	if (fgets(line, MAXINDEXSIZE+1, fp)) {
-		if (line[MAXINDEXSIZE-1] != '\n') {
-			line[MAXINDEXSIZE] = '\n';
+	if ((line = fgetln(fp, &linelen))) {
+		line[linelen - 1] = '\0'; /* tromp newline & terminate string */
+		if (termwidth && (linelen > maxline)) {
+			/* XXX -1 if term does NOT have xn (or xenl) quirk */
+			line[maxline] = '\0';
 		}
-		line[MAXINDEXSIZE+1] = 0;
-		(void) fputs(line, stdout);
+		(void) printf("%s\n", line);
 	}
 	(void) fclose(fp);
 }
