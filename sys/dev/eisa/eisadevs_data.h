@@ -1,3 +1,5 @@
+/*	$NetBSD: eisadevs_data.h,v 1.16 1998/01/09 06:46:47 thorpej Exp $	*/
+
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
