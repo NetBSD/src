@@ -1,4 +1,4 @@
-/*	$NetBSD: names.c,v 1.10 2002/03/02 14:59:37 wiz Exp $	*/
+/*	$NetBSD: names.c,v 1.11 2002/03/02 15:27:52 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: names.c,v 1.10 2002/03/02 14:59:37 wiz Exp $");
+__RCSID("$NetBSD: names.c,v 1.11 2002/03/02 15:27:52 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,24 +96,24 @@ struct name *
 extract(char line[], int ntype)
 {
 	char *cp;
-	struct name *top, *np, *t;
+	struct name *begin, *np, *t;
 	char nbuf[BUFSIZ];
 
 	if (line == NOSTR || *line == '\0')
 		return NIL;
-	top = NIL;
+	begin = NIL;
 	np = NIL;
 	cp = line;
 	while ((cp = yankword(cp, nbuf)) != NOSTR) {
 		t = nalloc(nbuf, ntype);
-		if (top == NIL)
-			top = t;
+		if (begin == NIL)
+			begin = t;
 		else
 			np->n_flink = t;
 		t->n_blink = np;
 		np = t;
 	}
-	return top;
+	return begin;
 }
 
 /*
@@ -123,7 +123,7 @@ char *
 detract(struct name *np, int ntype)
 {
 	int s;
-	char *cp, *top;
+	char *cp, *begin;
 	struct name *p;
 	int comma;
 
@@ -144,8 +144,8 @@ detract(struct name *np, int ntype)
 	if (s == 0)
 		return(NOSTR);
 	s += 2;
-	top = salloc(s);
-	cp = top;
+	begin = salloc(s);
+	cp = begin;
 	for (p = np; p != NIL; p = p->n_flink) {
 		if (ntype && (p->n_type & GMASK) != ntype)
 			continue;
@@ -157,7 +157,7 @@ detract(struct name *np, int ntype)
 	*--cp = 0;
 	if (comma && *--cp == ',')
 		*cp = 0;
-	return(top);
+	return(begin);
 }
 
 /*
@@ -215,13 +215,13 @@ struct name *
 outof(struct name *names, FILE *fo, struct header *hp)
 {
 	int c;
-	struct name *np, *top;
+	struct name *np, *begin;
 	time_t now;
 	char *date, *fname;
 	FILE *fout, *fin;
 	int ispipe;
 
-	top = names;
+	begin = names;
 	np = names;
 	(void) time(&now);
 	date = ctime(&now);
@@ -280,7 +280,7 @@ outof(struct name *names, FILE *fo, struct header *hp)
 
 		if (ispipe) {
 			int pid;
-			char *shell;
+			char *shellcmd;
 			sigset_t nset;
 
 			/*
@@ -290,13 +290,13 @@ outof(struct name *names, FILE *fo, struct header *hp)
 			 * share the same lseek location and trample
 			 * on one another.
 			 */
-			if ((shell = value("SHELL")) == NOSTR)
-				shell = _PATH_CSHELL;
+			if ((shellcmd = value("SHELL")) == NOSTR)
+				shellcmd = _PATH_CSHELL;
 			sigemptyset(&nset);
 			sigaddset(&nset, SIGHUP);
 			sigaddset(&nset, SIGINT);
 			sigaddset(&nset, SIGQUIT);
-			pid = start_command(shell, &nset,
+			pid = start_command(shellcmd, &nset,
 				image, -1, "-c", fname, NOSTR);
 			if (pid < 0) {
 				senderr++;
@@ -347,7 +347,7 @@ cant:
 		(void) close(image);
 		image = -1;
 	}
-	return(top);
+	return(begin);
 }
 
 /*
@@ -478,7 +478,7 @@ cat(struct name *n1, struct name *n2)
 char **
 unpack(struct name *np)
 {
-	char **ap, **top;
+	char **ap, **begin;
 	struct name *n;
 	int t, extra, metoo, verbose;
 
@@ -499,8 +499,8 @@ unpack(struct name *np)
 	verbose = value("verbose") != NOSTR;
 	if (verbose)
 		extra++;
-	top = (char **) salloc((t + extra) * sizeof *top);
-	ap = top;
+	begin = (char **) salloc((t + extra) * sizeof *begin);
+	ap = begin;
 	*ap++ = "send-mail";
 	*ap++ = "-i";
 	if (metoo)
@@ -511,7 +511,7 @@ unpack(struct name *np)
 		if ((n->n_type & GDEL) == 0)
 			*ap++ = n->n_name;
 	*ap = NOSTR;
-	return(top);
+	return(begin);
 }
 
 /*

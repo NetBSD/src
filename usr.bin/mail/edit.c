@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.9 2002/03/02 14:59:36 wiz Exp $	*/
+/*	$NetBSD: edit.c,v 1.10 2002/03/02 15:27:51 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: edit.c,v 1.9 2002/03/02 14:59:36 wiz Exp $");
+__RCSID("$NetBSD: edit.c,v 1.10 2002/03/02 15:27:51 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ visual(void *v)
  * We get the editor from the stuff above.
  */
 int
-edit1(int *msgvec, int type)
+edit1(int *msgvec, int editortype)
 {
 	int c;
 	int i;
@@ -111,7 +111,8 @@ edit1(int *msgvec, int type)
 		dot = mp = &message[msgvec[i] - 1];
 		touch(mp);
 		sigint = signal(SIGINT, SIG_IGN);
-		fp = run_editor(setinput(mp), mp->m_size, type, readonly);
+		fp = run_editor(setinput(mp), mp->m_size, editortype,
+				readonly);
 		if (fp != NULL) {
 			(void) fseek(otf, 0L, 2);
 			size = ftell(otf);
@@ -140,18 +141,18 @@ edit1(int *msgvec, int type)
  * Run an editor on the file at "fpp" of "size" bytes,
  * and return a new file pointer.
  * Signals must be handled by the caller.
- * "Type" is 'e' for _PATH_EX, 'v' for _PATH_VI.
+ * "Editortype" is 'e' for _PATH_EX, 'v' for _PATH_VI.
  */
 FILE *
-run_editor(FILE *fp, off_t size, int type, int readonly)
+run_editor(FILE *fp, off_t size, int editortype, int readonlyflag)
 {
 	FILE *nf = NULL;
 	int t;
 	time_t modtime;
-	char *edit;
+	char *editcmd;
 	struct stat statb;
 
-	if ((t = creat(tempEdit, readonly ? 0400 : 0600)) < 0) {
+	if ((t = creat(tempEdit, readonlyflag ? 0400 : 0600)) < 0) {
 		perror(tempEdit);
 		goto out;
 	}
@@ -185,9 +186,10 @@ run_editor(FILE *fp, off_t size, int type, int readonly)
 		goto out;
 	}
 	nf = NULL;
-	if ((edit = value(type == 'e' ? "EDITOR" : "VISUAL")) == NOSTR)
-		edit = type == 'e' ? _PATH_EX : _PATH_VI;
-	if (run_command(edit, 0, -1, -1, tempEdit, NOSTR, NOSTR) < 0) {
+	if ((editcmd =
+	         value(editortype == 'e' ? "EDITOR" : "VISUAL")) == NOSTR)
+		editcmd = editortype == 'e' ? _PATH_EX : _PATH_VI;
+	if (run_command(editcmd, 0, -1, -1, tempEdit, NOSTR, NOSTR) < 0) {
 		(void) unlink(tempEdit);
 		goto out;
 	}
@@ -195,7 +197,7 @@ run_editor(FILE *fp, off_t size, int type, int readonly)
 	 * If in read only mode or file unchanged, just remove the editor
 	 * temporary and return.
 	 */
-	if (readonly) {
+	if (readonlyflag) {
 		(void) unlink(tempEdit);
 		goto out;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.10 2002/03/02 14:59:37 wiz Exp $	*/
+/*	$NetBSD: popen.c,v 1.11 2002/03/02 15:27:52 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: popen.c,v 1.10 2002/03/02 14:59:37 wiz Exp $");
+__RCSID("$NetBSD: popen.c,v 1.11 2002/03/02 15:27:52 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,11 +69,11 @@ static void delchild(struct child *);
 static int file_pid(FILE *);
 
 FILE *
-Fopen(char *file, char *mode)
+Fopen(char *fn, char *mode)
 {
 	FILE *fp;
 
-	if ((fp = fopen(file, mode)) != NULL) {
+	if ((fp = fopen(fn, mode)) != NULL) {
 		register_file(fp, 0, 0);
 		(void) fcntl(fileno(fp), F_SETFD, 1);
 	}
@@ -163,14 +163,14 @@ close_all_files(void)
 }
 
 void
-register_file(FILE *fp, int pipe, int pid)
+register_file(FILE *fp, int pipefd, int pid)
 {
 	struct fp *fpp;
 
 	if ((fpp = (struct fp *) malloc(sizeof *fpp)) == NULL)
 		errx(1, "Out of memory");
 	fpp->fp = fp;
-	fpp->pipe = pipe;
+	fpp->pipe = pipefd;
 	fpp->pid = pid;
 	fpp->link = fp_head;
 	fp_head = fpp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: strings.c,v 1.7 2002/03/02 14:59:37 wiz Exp $	*/
+/*	$NetBSD: strings.c,v 1.8 2002/03/02 15:27:52 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)strings.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: strings.c,v 1.7 2002/03/02 14:59:37 wiz Exp $");
+__RCSID("$NetBSD: strings.c,v 1.8 2002/03/02 15:27:52 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,28 +67,28 @@ salloc(int size)
 	char *t;
 	int s;
 	struct strings *sp;
-	int index;
+	int idx;
 
 	s = size;
 	s += (sizeof (char *) - 1);
 	s &= ~(sizeof (char *) - 1);
-	index = 0;
+	idx = 0;
 	for (sp = &stringdope[0]; sp < &stringdope[NSPACE]; sp++) {
-		if (sp->s_topFree == NOSTR && (STRINGSIZE << index) >= s)
+		if (sp->s_topFree == NOSTR && (STRINGSIZE << idx) >= s)
 			break;
 		if (sp->s_nleft >= s)
 			break;
-		index++;
+		idx++;
 	}
 	if (sp >= &stringdope[NSPACE])
 		errx(1, "String too large");
 	if (sp->s_topFree == NOSTR) {
-		index = sp - &stringdope[0];
-		sp->s_topFree = malloc(STRINGSIZE << index);
+		idx = sp - &stringdope[0];
+		sp->s_topFree = malloc(STRINGSIZE << idx);
 		if (sp->s_topFree == NOSTR)
-			errx(1, "No room for space %d", index);
+			errx(1, "No room for space %d", idx);
 		sp->s_nextFree = sp->s_topFree;
-		sp->s_nleft = STRINGSIZE << index;
+		sp->s_nleft = STRINGSIZE << idx;
 	}
 	sp->s_nleft -= s;
 	t = sp->s_nextFree;
@@ -105,17 +105,17 @@ void
 sreset(void)
 {
 	struct strings *sp;
-	int index;
+	int idx;
 
 	if (noreset)
 		return;
-	index = 0;
+	idx = 0;
 	for (sp = &stringdope[0]; sp < &stringdope[NSPACE]; sp++) {
 		if (sp->s_topFree == NOSTR)
 			continue;
 		sp->s_nextFree = sp->s_topFree;
-		sp->s_nleft = STRINGSIZE << index;
-		index++;
+		sp->s_nleft = STRINGSIZE << idx;
+		idx++;
 	}
 }
 

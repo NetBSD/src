@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.2 2002/03/02 14:59:38 wiz Exp $	*/
+/*	$NetBSD: support.c,v 1.3 2002/03/02 15:27:52 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: support.c,v 1.2 2002/03/02 14:59:38 wiz Exp $");
+__RCSID("$NetBSD: support.c,v 1.3 2002/03/02 15:27:52 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -137,7 +137,7 @@ hfield(char field[], struct message *mp)
 	FILE *ibuf;
 	char linebuf[LINESIZE];
 	int lc;
-	char *hfield;
+	char *headerfield;
 	char *colon, *oldhfield = NOSTR;
 
 	ibuf = setinput(mp);
@@ -148,8 +148,8 @@ hfield(char field[], struct message *mp)
 	while (lc > 0) {
 		if ((lc = gethfield(ibuf, linebuf, lc, &colon)) < 0)
 			return oldhfield;
-		if ((hfield = ishfield(linebuf, colon, field)) != NULL)
-			oldhfield = save2str(hfield, oldhfield);
+		if ((headerfield = ishfield(linebuf, colon, field)) != NULL)
+			oldhfield = save2str(headerfield, oldhfield);
 	}
 	return oldhfield;
 }
@@ -518,7 +518,7 @@ name1(struct message *mp, int reptype)
 	char linebuf[LINESIZE];
 	char *cp, *cp2;
 	FILE *ibuf;
-	int first = 1;
+	int firstrun = 1;
 
 	if ((cp = hfield("from", mp)) != NOSTR)
 		return cp;
@@ -552,9 +552,9 @@ newname:
 			if ((cp = strchr(cp, ' ')) == NULL)
 				break;
 			cp++;
-			if (first) {
+			if (firstrun) {
 				cp2 = namebuf;
-				first = 0;
+				firstrun = 0;
 			} else
 				cp2 = strrchr(namebuf, '!') + 1;
 			while (*cp && cp2 < namebuf + LINESIZE - 1)
@@ -628,21 +628,21 @@ copy(char *s1, char *s2)
  * See if the given header field is supposed to be ignored.
  */
 int
-isign(char *field, struct ignoretab ignore[2])
+isign(char *field, struct ignoretab ignoretabs[2])
 {
 	char realfld[LINESIZE];
 
-	if (ignore == ignoreall)
+	if (ignoretabs == ignoreall)
 		return 1;
 	/*
 	 * Lower-case the string, so that "Status" and "status"
 	 * will hash to the same place.
 	 */
 	istrcpy(realfld, field);
-	if (ignore[1].i_count > 0)
-		return (!member(realfld, ignore + 1));
+	if (ignoretabs[1].i_count > 0)
+		return (!member(realfld, ignoretabs + 1));
 	else
-		return (member(realfld, ignore));
+		return (member(realfld, ignoretabs));
 }
 
 int

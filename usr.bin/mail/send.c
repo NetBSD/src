@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.14 2002/03/02 14:59:37 wiz Exp $	*/
+/*	$NetBSD: send.c,v 1.15 2002/03/02 15:27:52 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: send.c,v 1.14 2002/03/02 14:59:37 wiz Exp $");
+__RCSID("$NetBSD: send.c,v 1.15 2002/03/02 15:27:52 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,10 +64,10 @@ int
 sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 	    char *prefix)
 {
-	long count;
+	long len;
 	FILE *ibuf;
 	char line[LINESIZE];
-	int ishead, infld, ignoring = 0, dostat, firstline;
+	int isheadflag, infld, ignoring = 0, dostat, firstline;
 	char *cp, *cp2;
 	int c = 0;
 	int length;
@@ -84,18 +84,18 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 		prefixlen = cp2 == 0 ? 0 : cp2 - prefix + 1;
 	}
 	ibuf = setinput(mp);
-	count = mp->m_size;
-	ishead = 1;
+	len = mp->m_size;
+	isheadflag = 1;
 	dostat = doign == 0 || !isign("status", doign);
 	infld = 0;
 	firstline = 1;
 	/*
 	 * Process headers first
 	 */
-	while (count > 0 && ishead) {
+	while (len > 0 && isheadflag) {
 		if (fgets(line, LINESIZE, ibuf) == NULL)
 			break;
-		count -= length = strlen(line);
+		len -= length = strlen(line);
 		if (firstline) {
 			/* 
 			 * First line is the From line, so no headers
@@ -114,7 +114,7 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 				statusput(mp, obuf, prefix);
 				dostat = 0;
 			}
-			ishead = 0;
+			isheadflag = 0;
 			ignoring = doign == ignoreall;
 		} else if (infld && (line[0] == ' ' || line[0] == '\t')) {
 			/*
@@ -145,7 +145,7 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 				if (doign != ignoreall)
 					/* add blank line */
 					(void) putc('\n', obuf);
-				ishead = 0;
+				isheadflag = 0;
 				ignoring = 0;
 			} else {
 				/*
@@ -194,14 +194,14 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 	 * Copy out message body
 	 */
 	if (doign == ignoreall)
-		count--;		/* skip final blank line */
+		len--;		/* skip final blank line */
 	if (prefix != NOSTR)
-		while (count > 0) {
+		while (len > 0) {
 			if (fgets(line, LINESIZE, ibuf) == NULL) {
 				c = 0;
 				break;
 			}
-			count -= c = strlen(line);
+			len -= c = strlen(line);
 			/*
 			 * Strip trailing whitespace from prefix
 			 * if line is blank.
@@ -216,11 +216,11 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 				return -1;
 		}
 	else
-		while (count > 0) {
-			c = count < LINESIZE ? count : LINESIZE;
+		while (len > 0) {
+			c = len < LINESIZE ? len : LINESIZE;
 			if ((c = fread(line, sizeof *line, c, ibuf)) <= 0)
 				break;
-			count -= c;
+			len -= c;
 			if (fwrite(line, sizeof *line, c, obuf) != c)
 				return -1;
 		}

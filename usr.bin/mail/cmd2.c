@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd2.c,v 1.12 2002/03/02 14:59:35 wiz Exp $	*/
+/*	$NetBSD: cmd2.c,v 1.13 2002/03/02 15:27:51 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmd2.c,v 1.12 2002/03/02 14:59:35 wiz Exp $");
+__RCSID("$NetBSD: cmd2.c,v 1.13 2002/03/02 15:27:51 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -158,19 +158,19 @@ copycmd(void *v)
 
 /*
  * Save/copy the indicated messages at the end of the passed file name.
- * If mark is true, mark the message "saved."
+ * If markmsg is true, mark the message "saved."
  */
 int
-save1(char str[], int mark, char *cmd, struct ignoretab *ignore)
+save1(char str[], int markmsg, char *cmd, struct ignoretab *ignoretabs)
 {
 	int *ip;
 	struct message *mp;
-	char *file, *disp;
+	char *fn, *disp;
 	int f, *msgvec;
 	FILE *obuf;
 
 	msgvec = (int *) salloc((msgCount + 2) * sizeof *msgvec);
-	if ((file = snarf(str, &f)) == NOSTR)
+	if ((fn = snarf(str, &f)) == NOSTR)
 		return(1);
 	if (!f) {
 		*msgvec = first(0, MMNORM);
@@ -182,32 +182,32 @@ save1(char str[], int mark, char *cmd, struct ignoretab *ignore)
 	}
 	if (f && getmsglist(str, msgvec, 0) < 0)
 		return(1);
-	if ((file = expand(file)) == NOSTR)
+	if ((fn = expand(fn)) == NOSTR)
 		return(1);
-	printf("\"%s\" ", file);
+	printf("\"%s\" ", fn);
 	fflush(stdout);
-	if (access(file, 0) >= 0)
+	if (access(fn, 0) >= 0)
 		disp = "[Appended]";
 	else
 		disp = "[New file]";
-	if ((obuf = Fopen(file, "a")) == NULL) {
+	if ((obuf = Fopen(fn, "a")) == NULL) {
 		perror(NOSTR);
 		return(1);
 	}
 	for (ip = msgvec; *ip && ip-msgvec < msgCount; ip++) {
 		mp = &message[*ip - 1];
 		touch(mp);
-		if (sendmessage(mp, obuf, ignore, NOSTR) < 0) {
-			perror(file);
+		if (sendmessage(mp, obuf, ignoretabs, NOSTR) < 0) {
+			perror(fn);
 			Fclose(obuf);
 			return(1);
 		}
-		if (mark)
+		if (markmsg)
 			mp->m_flag |= MSAVED;
 	}
 	fflush(obuf);
 	if (ferror(obuf))
-		perror(file);
+		perror(fn);
 	Fclose(obuf);
 	printf("%s\n", disp);
 	return(0);
