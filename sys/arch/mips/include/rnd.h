@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.1 2000/06/06 02:24:02 soren Exp $	*/
+/*	$NetBSD: rnd.h,v 1.2 2000/06/09 04:24:22 soda Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <machine/cpu.h>
-#include <machine/locore.h>
+#include <mips/locore.h>
 
 #ifdef _KERNEL
 
