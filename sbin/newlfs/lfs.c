@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.17 1999/02/04 22:47:48 bad Exp $	*/
+/*	$NetBSD: lfs.c,v 1.18 1999/03/10 00:43:33 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.17 1999/02/04 22:47:48 bad Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.18 1999/03/10 00:43:33 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: lfs.c,v 1.17 1999/02/04 22:47:48 bad Exp $");
 #include <sys/disklabel.h>
 #include <sys/time.h>
 #include <sys/mount.h>
+#include <sys/stat.h>
 
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/quota.h>
@@ -53,6 +54,7 @@ __RCSID("$NetBSD: lfs.c,v 1.17 1999/02/04 22:47:48 bad Exp $");
 #include <ufs/lfs/lfs.h>
 
 #include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -60,6 +62,8 @@ __RCSID("$NetBSD: lfs.c,v 1.17 1999/02/04 22:47:48 bad Exp $");
 
 #include "config.h"
 #include "extern.h"
+
+daddr_t *ifib = NULL; /* Ifile single indirect block (lbn -NDADDR) */
 
 /*
  * This table is indexed by the log base 2 of the block size.
@@ -102,7 +106,7 @@ static struct lfs lfs_default =  {
 		/* dlfs_dsize */	0,
 		/* dlfs_bsize */	DFL_LFSBLOCK,
 		/* dlfs_fsize */	DFL_LFSFRAG,
-		/* dlfs_frag */		1,
+		/* dlfs_frag */		DFL_LFSBLOCK/DFL_LFSFRAG,
 		/* dlfs_free */		LFS_FIRST_INUM,
 		/* dlfs_bfree */	0,
 		/* dlfs_nfiles */	0,
@@ -139,6 +143,10 @@ static struct lfs lfs_default =  {
 		/* dlfs_sushift */	0,
 		/* dlfs_maxsymlinklen */	MAXSYMLINKLEN,
 		/* dlfs_sboffs */	{ 0 },
+		/* dlfs_nclean */       0,
+		/* dlfs_fsmnt */        { 0 },
+		/* dlfs_clean */        0,
+
 		/* dlfs_cksum */	0,
 		/* dlfs_pad */ 		{ 0 }
 	},
@@ -152,10 +160,8 @@ static struct lfs lfs_default =  {
 	/* lfs_doifile */	0,
 	/* lfs_nactive */	0,
 	/* lfs_fmod */		0,
-	/* lfs_clean */		0,
 	/* lfs_ronly */		0,
-	/* lfs_flags */		0,
-	/* lfs_fsmnt */		{ 0 }
+	/* lfs_flags */		0
 };
 
 
@@ -227,6 +233,16 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	if (!(ssize = seg_size))
 		ssize = DFL_LFSSEG;
 
+	/* Sanity check: fsize<=bsize<ssize */
+	if (fsize > bsize) {
+		/* Only complain if fsize was explicitly set */
+		if(frag_size)
+			fatal("fragment size must be <= block size %d", bsize);
+		fsize = bsize;
+	}
+	if (bsize >= ssize)
+		fatal("block size must be < segment size");
+
 	/* Modify parts of superblock overridden by command line arguments */
 	if (bsize != DFL_LFSBLOCK || fsize != DFL_LFSFRAG) {
 		lfsp->lfs_bshift = log2(bsize);
@@ -271,16 +287,16 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	lfsp->lfs_sushift = log2(lfsp->lfs_sepb);
 	lfsp->lfs_size = partp->p_size >> lfsp->lfs_fsbtodb;
 	lfsp->lfs_dsize = lfsp->lfs_size - (LFS_LABELPAD >> lfsp->lfs_bshift);
-	lfsp->lfs_nseg = lfsp->lfs_dsize / lfsp->lfs_ssize;
+	lfsp->lfs_nclean = lfsp->lfs_nseg = lfsp->lfs_dsize / lfsp->lfs_ssize;
 	lfsp->lfs_maxfilesize = maxtable[lfsp->lfs_bshift] << lfsp->lfs_bshift;
 
 	/* 
 	 * The number of free blocks is set from the number of segments times
-	 * the segment size - 2 (that we never write because we need to make
+	 * the segment size - MIN_FREE_SEGS (that we never write because we need to make
 	 * sure the cleaner can run).  Then we'll subtract off the room for the
 	 * superblocks ifile entries and segment usage table.
 	 */
-	lfsp->lfs_dsize = fsbtodb(lfsp, (lfsp->lfs_nseg - 2) * lfsp->lfs_ssize);
+	lfsp->lfs_dsize = fsbtodb(lfsp, (lfsp->lfs_nseg - MIN_FREE_SEGS) * lfsp->lfs_ssize);
 	lfsp->lfs_bfree = lfsp->lfs_dsize;
 	lfsp->lfs_segtabsz = SEGTABSIZE_SU(lfsp);
 	lfsp->lfs_cleansz = CLEANSIZE_SU(lfsp);
@@ -348,8 +364,7 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	    lp->d_secsize;
 
 	for (segp = segtable + 1, i = 1; i < lfsp->lfs_nseg; i++, segp++) {
-		if (((i % sb_interval) == 0) &&
-		    ((i / sb_interval) < LFS_MAXNUMSB)) {
+		if ((i % sb_interval) == 0) {
 			segp->su_flags = SEGUSE_SUPERBLOCK;
 			lfsp->lfs_bfree -= (LFS_SBPAD / lp->d_secsize);
 		} else
@@ -401,6 +416,7 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	sb_addr = make_dinode(LFS_IFILE_INUM, dip, 
 	    lfsp->lfs_cleansz + lfsp->lfs_segtabsz+1, sb_addr, lfsp);
 	dip->di_mode = IFREG|IREAD|IWRITE;
+	dip->di_flags = SF_IMMUTABLE; /* XXX KS */
 	ip = &ifile[LFS_IFILE_INUM];
 	ip->if_version = 1;
 	ip->if_daddr = lfsp->lfs_idaddr;
@@ -409,6 +425,7 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	sb_addr = make_dinode(ROOTINO, ++dip, 1, sb_addr, lfsp);
 	dip->di_mode = IFDIR|IREAD|IWRITE|IEXEC;
 	dip->di_size = DIRBLKSIZ;
+	dip->di_blocks = howmany(roundup(DIRBLKSIZ,lfsp->lfs_fsize),DEV_BSIZE);
 	dip->di_nlink = 3;
 	ip = &ifile[ROOTINO];
 	ip->if_version = 1;
@@ -418,6 +435,7 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	sb_addr = make_dinode(LOSTFOUNDINO, ++dip, 1, sb_addr, lfsp);
 	dip->di_mode = IFDIR|IREAD|IWRITE|IEXEC;
 	dip->di_size = DIRBLKSIZ;
+	dip->di_blocks = howmany(roundup(DIRBLKSIZ,lfsp->lfs_fsize),DEV_BSIZE);
 	dip->di_nlink = 2;
 	ip = &ifile[LOSTFOUNDINO];
 	ip->if_version = 1;
@@ -468,6 +486,12 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	off += (lfsp->lfs_segtabsz << lfsp->lfs_bshift);
 	(void)free(segtable);
 
+	/* XXX KS - write the single indirect block */
+	if(ifib) {
+		put(fd, off, ifib, lfsp->lfs_bsize);
+		off += lfsp->lfs_bsize;
+	}
+
 	put(fd, off, ifile, lfsp->lfs_bsize);
 	off += lfsp->lfs_bsize;
 
@@ -500,6 +524,7 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	 * and write it.
 	 */
 
+	memset(&summary,0,sizeof(summary));
 	summary.ss_next = lfsp->lfs_nextseg;
 	summary.ss_create = lfsp->lfs_tstamp;
 	summary.ss_nfinfo = 3;
@@ -591,8 +616,8 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 		last_addr = seg_addr;
 		seg_seek = (off_t)seg_addr * lp->d_secsize;
 
-		if (seg_addr == lfsp->lfs_sboffs[j]) {
-			if (j < LFS_MAXNUMSB)
+		if (i % sb_interval == 0) {
+			if (j < (LFS_MAXNUMSB - 2))
 				j++;
 			put(fd, seg_seek, &(lfsp->lfs_dlfs), sizeof(struct dlfs));
 			seg_seek += LFS_SBPAD;
@@ -618,9 +643,9 @@ put(fd, off, p, len)
 	int wbytes;
 
 	if (lseek(fd, off, SEEK_SET) < 0)
-		fatal("%s: %s", special, strerror(errno));
+		fatal("%s: seek: %s", special, strerror(errno));
 	if ((wbytes = write(fd, p, len)) < 0)
-		fatal("%s: %s", special, strerror(errno));
+		fatal("%s: write: %s", special, strerror(errno));
 	if (wbytes != len)
 		fatal("%s: short write (%d, not %d)", special, wbytes, len);
 }
@@ -648,15 +673,31 @@ make_dinode(ino, dip, nblocks, saddr, lfsp)
 	dip->di_atimensec = dip->di_mtimensec = dip->di_ctimensec = 0;
 	dip->di_inumber = ino;
 
-#define	SEGERR \
-"File requires more than the number of direct blocks; increase block or segment size."
+#if 0
 	if (NDADDR < nblocks)
-		fatal("%s", SEGERR);
-
+		fatal("File ino=%d requires more than the number of direct blocks; please increase block or segment size.",ino);
+#else
+	if (NDADDR+NINDIR(lfsp) < nblocks) {
+		fatal("File ino=%d requires more blocks than can be accommodated with a single indirect block; please increase segment or block size.",ino);
+	} else if (NDADDR < nblocks) {
+		printf("Using %d single indirect block(s) for inode %d\n",
+		     (nblocks-NDADDR)/NINDIR(lfsp) + 1, ino);
+	}
+#endif
 	/* Assign the block addresses for the ifile */
 	db_per_fb = 1 << lfsp->lfs_fsbtodb;
-	for (i = 0; i < nblocks; i++, saddr += db_per_fb)
+	for (i = 0; i < MIN(nblocks,NDADDR); i++, saddr += db_per_fb) {
 		dip->di_db[i] = saddr;
+	}
+	/* XXX We are only called with nblocks > 1 for Ifile */
+	if(ino == LFS_IFILE_INUM && nblocks > NDADDR) {
+		ifib = (daddr_t *)malloc(lfsp->lfs_bsize);
+		memset(ifib,0,lfsp->lfs_bsize);
+		for (i = 0; i < nblocks-NDADDR; i++, saddr += db_per_fb)
+			ifib[i] = saddr;
+		dip->di_ib[0] = saddr;
+		saddr += db_per_fb;
+	}
 
 	return (saddr);
 }

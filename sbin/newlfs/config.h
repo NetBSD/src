@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.3 1998/03/01 02:20:53 fvdl Exp $	*/
+/*	$NetBSD: config.h,v 1.4 1999/03/10 00:43:33 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -130,13 +130,13 @@
 #define	DFL_LFSSEG_SHIFT	20
 #define	DFL_LFSSEG_MASK		0xFFFFF
 
-#define	LFS_MINBLOCKSIZE	1024
-#define	DFL_LFSBLOCK		4096
-#define	DFL_LFSBLOCK_SHIFT	12
-#define	DFL_LFSBLOCK_MASK	0xFFF
+#define	LFS_MINBLOCKSIZE	512
+#define	DFL_LFSBLOCK		8192
+#define	DFL_LFSBLOCK_SHIFT	13
+#define	DFL_LFSBLOCK_MASK	0x1FFF
 
-#define DFL_LFSFRAG		4096
-#define DFL_LFS_FFMASK		DFL_LFSBLOCK_MASK
-#define DFL_LFS_FFSHIFT		DFL_LFSBLOCK_SHIFT
-#define DFL_LFS_FBMASK		0
-#define DFL_LFS_FBSHIFT		0
+#define DFL_LFSFRAG		1024
+#define DFL_LFS_FFMASK		0x3FF
+#define DFL_LFS_FFSHIFT		10
+#define DFL_LFS_FBMASK		0x7
+#define DFL_LFS_FBSHIFT		3
