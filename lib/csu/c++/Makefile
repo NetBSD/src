@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.9 1997/05/31 21:21:41 cjs Exp $
+#	$NetBSD: Makefile,v 1.10 1997/10/22 16:01:28 lukem Exp $
 
-CFLAGS+=	-DLIBC_SCCS
+CPPFLAGS+=	-DLIBC_SCCS
 .if (${MACHINE_ARCH} != "powerpc")
-CFLAGS+=	-fpic
+COPTS+=		-fpic
 .endif
 OBJS=		c++rt0.o
 
