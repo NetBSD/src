@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.75 1994/11/04 19:01:57 mycroft Exp $	*/
+/*	$NetBSD: pccons.c,v 1.76 1994/11/18 22:14:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -281,7 +281,7 @@ kbd_cmd(val, polling)
 void
 set_cursor_shape()
 {
-	register u_short iobase = addr_6845;
+	register int iobase = addr_6845;
 
 	outb(iobase, 10);
 	outb(iobase+1, cursor_shape>>8);
@@ -321,7 +321,7 @@ do_async_update(poll)
 
 	pos = crtat - Crtat;
 	if (pos != old_pos) {
-		register u_short iobase = addr_6845;
+		register int iobase = addr_6845;
 		outb(iobase, 14);
 		outb(iobase+1, pos>>8);
 		outb(iobase, 15);

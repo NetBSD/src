@@ -1,4 +1,4 @@
-/*	$NetBSD: bt742a.c,v 1.34 1994/11/04 19:01:37 mycroft Exp $	*/
+/*	$NetBSD: bt742a.c,v 1.35 1994/11/18 22:07:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -347,12 +347,12 @@ struct bt_softc {
         struct isadev sc_id;
         struct intrhand sc_ih;
 
-	u_short bt_base;		/* base port for each board */
+	int bt_base;			/* base port for each board */
 	struct bt_mbx bt_mbx;		/* all our mailboxes */
 	struct bt_ccb *bt_ccb_free;	/* list of free CCBs */
 	struct bt_ccb *ccbhash[CCB_HASH_SIZE];	/* phys to kv hash */
-	u_short bt_int;			/* int. read off board */
-	u_short bt_dma;			/* DMA channel read of board */
+	int bt_int;			/* int. read off board */
+	int bt_dma;			/* DMA channel read of board */
 	int bt_scsi_dev;		/* adapters scsi id */
 	int numccbs;			/* how many we have malloc'd */
 	struct scsi_link sc_link;	/* prototype for devs */
