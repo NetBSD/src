@@ -1,4 +1,4 @@
-/* $NetBSD: mc6845reg.h,v 1.1 1998/05/28 16:48:40 drochner Exp $ */
+/* $NetBSD: mc6845reg.h,v 1.2 2003/01/27 14:53:33 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,13 +33,15 @@
  */
 
 struct reg_mc6845 { /* indexed via port 0x3d4 (mono 0x3b4) */
-	char htotal, hdisple, hblanks, hblanke;
-	char hsyncs, hsynce, vtotal, overfll;
-	char irowaddr, maxrow, curstart, curend;
-	char startadrh, startadrl, cursorh, cursorl;
-	char vsyncs, vsynce, vde, offset;
-	char uloc, vbstart, vbend, mode;
-	char splitl;
+	u_int8_t htotal, hdisple, hblanks, hblanke;
+	u_int8_t hsyncs, hsynce, vtotal, overfll;
+	u_int8_t irowaddr, maxrow, curstart, curend;
+	u_int8_t startadrh, startadrl, cursorh, cursorl;
+	u_int8_t vsyncs, vsynce, vde, offset;
+	u_int8_t uloc, vbstart, vbend, mode;
+	u_int8_t splitl;
 };
-#define MC6845_INDEX 4
-#define MC6845_DATA 5
+
+#define MC6845_NREGS	25
+#define MC6845_INDEX	0x4
+#define MC6845_DATA	0x5
