@@ -1,4 +1,4 @@
-/*	$NetBSD: regfree.c,v 1.4 1995/02/27 13:29:56 cgd Exp $	*/
+/*	$NetBSD: regfree.c,v 1.5 1997/07/13 20:06:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -39,11 +39,12 @@
  *	@(#)regfree.c	8.3 (Berkeley) 3/20/94
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)regfree.c	8.3 (Berkeley) 3/20/94";
 #else
-static char rcsid[] = "$NetBSD: regfree.c,v 1.4 1995/02/27 13:29:56 cgd Exp $";
+__RCSID("$NetBSD: regfree.c,v 1.5 1997/07/13 20:06:26 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
