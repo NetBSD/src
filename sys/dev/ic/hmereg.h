@@ -1,4 +1,4 @@
-/*	$NetBSD: hmereg.h,v 1.5 2000/06/25 01:05:17 eeh Exp $	*/
+/*	$NetBSD: hmereg.h,v 1.6 2000/11/17 19:08:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -111,6 +111,17 @@
 	 HME_SEB_STAT_RFIFOVF  | HME_SEB_STAT_LCNTEXP | HME_SEB_STAT_CCNTEXP  |\
 	 HME_SEB_STAT_ACNTEXP)
 
+#define HME_SEB_STAT_VLAN_ERRORS	\
+	(HME_SEB_STAT_SLVPERR  | HME_SEB_STAT_SLVERR  | HME_SEB_STAT_TXTERR   |\
+	 HME_SEB_STAT_TXPERR   | HME_SEB_STAT_TXLERR  | HME_SEB_STAT_TXEACK   |\
+	 HME_SEB_STAT_EOPERR   | HME_SEB_STAT_RXTERR  | HME_SEB_STAT_RXPERR   |\
+	 HME_SEB_STAT_RXLATERR | HME_SEB_STAT_RXERR   | HME_SEB_STAT_NORXD    |\
+	 HME_SEB_STAT_DTIMEXP  | HME_SEB_STAT_FCNTEXP | HME_SEB_STAT_LCCNTEXP |\
+	 HME_SEB_STAT_ECNTEXP  | HME_SEB_STAT_NCNTEXP |                        \
+	 HME_SEB_STAT_TFIFO_UND| HME_SEB_STAT_STSTERR | HME_SEB_STAT_CVCNTEXP |\
+	 HME_SEB_STAT_RFIFOVF  | HME_SEB_STAT_LCNTEXP | HME_SEB_STAT_CCNTEXP  |\
+	 HME_SEB_STAT_ACNTEXP)
+
 /*
  * HME Transmitter register offsets
  */
@@ -167,6 +178,7 @@
 #define HME_MACI_TXSWRST	(130*4)		/* TX reset */
 #define HME_MACI_TXCFG		(131*4)		/* TX config */
 #define HME_MACI_JSIZE		(139*4)		/* TX jam size */
+#define HME_MACI_TXSIZE		(140*4)		/* TX max size */
 #define HME_MACI_NCCNT		(144*4)		/* TX normal collision cnt */
 #define HME_MACI_FCCNT		(145*4)		/* TX first collision cnt */
 #define HME_MACI_EXCNT		(146*4)		/* TX excess collision cnt */
@@ -174,6 +186,7 @@
 #define HME_MACI_RANDSEED	(148*4)		/*  */
 #define HME_MACI_RXSWRST	(194*4)		/* RX reset */
 #define HME_MACI_RXCFG		(195*4)		/* RX config */
+#define HME_MACI_RXSIZE		(196*4)		/* RX max size */
 #define HME_MACI_MACADDR2	(198*4)		/* MAC address */
 #define HME_MACI_MACADDR1	(199*4)
 #define HME_MACI_MACADDR0	(200*4)
