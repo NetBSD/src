@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.32 1999/05/01 09:26:32 scottr Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.33 2000/01/18 19:43:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -87,8 +87,6 @@
 #include <sys/syslog.h>
 
 #include <machine/bswap.h>
-
-#define	b_cylin	b_resid
 
 #define NUM_PARTS 32
 
@@ -278,7 +276,7 @@ read_mac_label(dev, strat, lp, osdep)
 	bp->b_blkno = 1;	/* partition map starts at blk 1 */
 	bp->b_bcount = lp->d_secsize * NUM_PARTS;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = 1 / lp->d_secpercyl;
+	bp->b_cylinder = 1 / lp->d_secpercyl;
 	(*strat)(bp);
 
 	if (biowait(bp)) {
@@ -367,7 +365,7 @@ read_dos_label(dev, strat, lp, osdep)
 	bp->b_blkno = MBR_BBSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = MBR_BBSECTOR / lp->d_secpercyl;
+	bp->b_cylinder = MBR_BBSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 
 	/* if successful, wander through dos partition table */
@@ -441,7 +439,7 @@ readdisklabel(dev, strat, lp, osdep)
 	bp->b_resid = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = 1 / lp->d_secpercyl;
+	bp->b_cylinder = 1 / lp->d_secpercyl;
 	(*strat)(bp);
 
 	if (biowait(bp)) {
@@ -616,7 +614,7 @@ bounds_check_with_label(bp, lp, wlabel)
 #endif
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylin = (bp->b_blkno + p->p_offset) /
+	bp->b_cylinder = (bp->b_blkno + p->p_offset) /
 	    (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
 	return (1);
 
