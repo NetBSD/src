@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.190 2003/10/15 07:49:41 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.191 2003/11/07 14:54:29 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4953,6 +4953,10 @@ Lsw_load:
 	/* finally, enable traps and continue at splsched() */
 	wr	%g2, IPL_SCHED << 8 , %psr	! psr = newpsr;
 
+	mov	%g3, %l3		! restore p and lastproc from globals
+	mov	%g4, %l4		! (globals will get clobbered by the
+					!  sched_unlock_idle() below)
+
 	sethi	%hi(_WANT_RESCHED), %o0		! want_resched = 0;
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	/* Done with the run queues; release the scheduler lock */
@@ -4968,14 +4972,14 @@ Lsw_load:
 	 * On multi-processor machines, the context might have changed
 	 * (e.g. by exec(2)) even if we pick up the same process here.
 	 */
-	subcc	%g3, %g4, %l0		! p == lastproc?
+	subcc	%l3, %l4, %l0		! p == lastproc?
 #if !defined(MULTIPROCESSOR)
 	be	Lsw_sameproc		! yes, context is still set for p
 	 EMPTY
 #endif
 
+	ld	[%l3 + L_PROC], %o2	! p = l->l_proc;
 	INCR(_C_LABEL(nswitchdiff))	! clobbers %o0,%o1
-	ld	[%g3 + L_PROC], %o2	! p = l->l_proc;
 	ld	[%o2 + P_VMSPACE], %o3	! vm = p->p_vmspace;
 	ld	[%o3 + VM_PMAP], %o3	! pm = vm->vm_map.vm_pmap;
 #if defined(MULTIPROCESSOR)
