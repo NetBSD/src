@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.33 2000/06/09 04:28:17 soda Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.34 2000/06/09 06:07:01 soda Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -1096,7 +1096,7 @@ LEAF_NOPROFILE(mips3_TLBInvalidException)
 	dsll	k0, k0, 34
 	mfc0	k1, MIPS_COP_0_TLB_INDEX
 	dsrl	k0, k0, 34
-	sltiu	k1, k1, MIPS3_TLB_WIRED_ENTRIES	# Luckily this is MIPS3_PG_G
+	sltiu	k1, k1, MIPS3_TLB_WIRED_UPAGES	# Luckily this is MIPS3_PG_G
 	or	k1, k1, k0
 	dmtc0	k0, MIPS_COP_0_TLB_LO1		# load PTE entry
 	nop
@@ -1125,7 +1125,7 @@ KernTLBIOdd:
 	dsll	k0, k0, 34
 	mfc0	k1, MIPS_COP_0_TLB_INDEX
 	dsrl	k0, k0, 34
-	sltiu	k1, k1, MIPS3_TLB_WIRED_ENTRIES	# Luckily this is MIPS3_PG_G
+	sltiu	k1, k1, MIPS3_TLB_WIRED_UPAGES	# Luckily this is MIPS3_PG_G
 	or	k1, k1, k0
 	dmtc0	k0, MIPS_COP_0_TLB_LO0		# save PTE entry
 	nop

@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map.c,v 1.2 2000/06/09 05:51:52 soda Exp $	*/
+/*	$NetBSD: wired_map.c,v 1.3 2000/06/09 06:06:58 soda Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -30,17 +30,16 @@
 #include <sys/systm.h>
 #include <vm/vm.h>
 #include <machine/cpu.h>
+#include <mips/locore.h>
 #include <mips/pte.h>
 #include <arc/arc/wired_map.h>
 
 #define MIPS3_PG_SIZE_MASK_TO_SIZE(sizemask)	\
 	((((sizemask) | 0x00001fff) + 1) / 2)
-#define	MIPS3_LOCORE_TLB_WIRED_ENTRIES	2
 
 #define VA_FREE_START	0xe0000000	/* XXX */
 
-#define ARC_TLB_WIRED_ENTRIES	\
-	(MIPS3_TLB_WIRED_ENTRIES - MIPS3_LOCORE_TLB_WIRED_ENTRIES)
+#define ARC_TLB_WIRED_ENTRIES	8	/* upper limit */
 #define ARC_WIRED_PG_MASK	MIPS3_PG_SIZE_16M
 #define ARC_WIRED_PAGE_SIZE	MIPS3_PG_SIZE_MASK_TO_SIZE(ARC_WIRED_PG_MASK)
 #define ARC_WIRED_ENTRY_SIZE	(ARC_WIRED_PAGE_SIZE * 2)
@@ -85,6 +84,10 @@ arc_enter_wired(va, pa0, pa1, pg_size)
 	wired_map[nwired].pa1 = pa1;
 	wired_map[nwired].size = MIPS3_PG_SIZE_MASK_TO_SIZE(pg_size);
 
+	/* Allocate new wired entry */
+	mips3_SetWIRED(MIPS3_TLB_WIRED_UPAGES + nwired + 1);
+
+	/* Map to it */
 	tlb.tlb_mask = pg_size;
 	tlb.tlb_hi = mips3_vad_to_vpn(va);
 	if (pa0 == 0)
@@ -95,7 +98,7 @@ arc_enter_wired(va, pa0, pa1, pg_size)
 		tlb.tlb_lo1 = MIPS3_PG_G;
 	else
 		tlb.tlb_lo1 = mips3_paddr_to_tlbpfn(pa1) | MIPS3_PG_IOPAGE;
-	mips3_TLBWriteIndexedVPS(MIPS3_LOCORE_TLB_WIRED_ENTRIES + nwired,
+	mips3_TLBWriteIndexedVPS(MIPS3_TLB_WIRED_UPAGES + nwired,
 	    &tlb);
 
 	if (va_free < va + wired_map[nwired].size * 2) {
@@ -111,7 +114,7 @@ arc_wired_map_paddr_entry(pa, vap, sizep)
 	vaddr_t *vap;
 	vsize_t *sizep;
 {
-	int n = ARC_TLB_WIRED_ENTRIES;
+	int n = nwired;
 	struct wired_map_entry *entry = wired_map;
 
 	for (; --n >= 0; entry++) {
@@ -138,7 +141,7 @@ arc_wired_map_vaddr_entry(va, pap, sizep)
 	paddr_t *pap;
 	vsize_t *sizep;
 {
-	int n = ARC_TLB_WIRED_ENTRIES;
+	int n = nwired;
 	struct wired_map_entry *entry = wired_map;
 
 	for (; --n >= 0; entry++) {
