@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: fgen.l,v 1.24 2003/12/06 05:15:29 dmcmahill Exp $	*/
+/*	$NetBSD: fgen.l,v 1.25 2003/12/07 01:02:36 dmcmahill Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.
@@ -42,9 +42,12 @@
 	    #define TOKEN struct tok
 */
 #include <sys/cdefs.h>
+#ifdef HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: fgen.l,v 1.24 2003/12/06 05:15:29 dmcmahill Exp $");
+__RCSID("$NetBSD: fgen.l,v 1.25 2003/12/07 01:02:36 dmcmahill Exp $");
 #endif
 
 %}
