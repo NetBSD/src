@@ -1,4 +1,4 @@
-/*	$NetBSD: player.h,v 1.6 1998/03/29 04:57:20 mrg Exp $	*/
+/*	$NetBSD: player.h,v 1.7 1999/04/18 03:30:12 simonb Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -93,9 +93,9 @@
 #define SLOT_R		(SLOT_L+SLOT_X-1)
 
 #ifdef SIGTSTP
-#define SCREENTEST()	(initscr() != ERR && signal(SIGTSTP, SIG_DFL) != SIG_ERR && STAT_R < COLS && SCROLL_Y > 0)
+#define SCREENTEST()	(initscr() != NULL && signal(SIGTSTP, SIG_DFL) != SIG_ERR && STAT_R < COLS && SCROLL_Y > 0)
 #else
-#define SCREENTEST()	(initscr() != ERR && STAT_R < COLS && SCROLL_Y > 0)
+#define SCREENTEST()	(initscr() != NULL && STAT_R < COLS && SCROLL_Y > 0)
 #endif
 
 WINDOW *view_w;
