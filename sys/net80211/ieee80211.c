@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.3 2003/09/14 01:14:54 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.4 2003/09/23 16:01:21 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.7 2003/08/13 22:09:44 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.3 2003/09/14 01:14:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.4 2003/09/23 16:01:21 dyoung Exp $");
 #endif
 
 /*
@@ -53,7 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.3 2003/09/14 01:14:54 dyoung Exp $")
 #include <sys/sockio.h>
 #include <sys/endian.h>
 #include <sys/errno.h>
+#ifdef __FreeBSD__
 #include <sys/bus.h>
+#endif
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 
@@ -67,22 +69,31 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.3 2003/09/14 01:14:54 dyoung Exp $")
 #include <net/if_arp.h>
 #ifdef __FreeBSD__
 #include <net/ethernet.h>
+#else
+#include <net/if_ether.h>
 #endif
 #include <net/if_llc.h>
 
 #include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_compat.h>
 
 #include <net/bpf.h>
 
 #ifdef INET
 #include <netinet/in.h> 
+#ifdef __FreeBSD__
 #include <netinet/if_ether.h>
+#else
+#include <net/if_ether.h>
+#endif
 #endif
 
 #ifdef IEEE80211_DEBUG
 int	ieee80211_debug = 0;
+#ifdef __FreeBSD__
 SYSCTL_INT(_debug, OID_AUTO, ieee80211, CTLFLAG_RW, &ieee80211_debug,
 	    0, "IEEE 802.11 media debugging printfs");
+#endif
 #endif
 
 static void ieee80211_set11gbasicrates(struct ieee80211_rateset *,
@@ -165,7 +176,11 @@ ieee80211_ifdetach(struct ifnet *ifp)
 	ieee80211_proto_detach(ifp);
 	ieee80211_crypto_detach(ifp);
 	ieee80211_node_detach(ifp);
+#ifdef __FreeBSD__
 	ifmedia_removeall(&ic->ic_media);
+#else
+        ifmedia_delete_instance(&ic->ic_media, IFM_INST_ANY);
+#endif
 	bpfdetach(ifp);
 	ether_ifdetach(ifp);
 }
