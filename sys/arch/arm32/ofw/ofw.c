@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.10 1998/07/07 00:48:12 mark Exp $	*/
+/*	$NetBSD: ofw.c,v 1.11 1998/07/07 02:45:00 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -40,52 +40,22 @@
  *
  */
 
-#include <sys/types.h>
+#include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
-#include <sys/callout.h>
-#include <sys/proc.h>
-#include <sys/user.h>
-#include <sys/kernel.h>
 #include <sys/mbuf.h>
-#include <sys/msgbuf.h>
-#include <sys/buf.h>
-#include <sys/map.h>
-#include <sys/exec.h>
-#include <sys/mount.h>
-#include <sys/vnode.h>
-#include <sys/device.h>
 #include <vm/vm.h>
-#include <sys/sysctl.h>
-#include <sys/syscallargs.h>
-
-#ifdef SYSVMSG
-#include <sys/msg.h>
-#endif
-#ifdef SYSVSEM
-#include <sys/sem.h>
-#endif
-#ifdef SYSVSHM
-#include <sys/shm.h>
-#endif
+#include <vm/vm_kern.h>
 
 #include <dev/cons.h>
 
-#include <machine/db_machdep.h>
-#include <ddb/db_sym.h>
-#include <ddb/db_extern.h>
-
-#include <vm/vm_kern.h>
-
-#include <machine/signal.h>
 #include <machine/frame.h>
 #include <machine/bootconfig.h>
 #include <machine/cpu.h>
 #include <machine/irqhandler.h>
 #include <machine/pte.h>
-#include <machine/undefined.h>
-#include <machine/rtc.h>
 
 #include <dev/ofw/openfirm.h>
 #include <machine/ofw.h>
@@ -101,25 +71,10 @@
 #include "arm32/isa/isa_machdep.h"
 #endif
 
-#include "opt_uvm.h"
 #include "pc.h"
 
 #define IO_VIRT_BASE (OFW_VIRT_BASE + OFW_VIRT_SIZE)
 #define IO_VIRT_SIZE 0x01000000
-
-/*
- *  Imported constants
- */
-/* Describe different actions to take when boot() is called */
-#define ACTION_HALT   0x01	/* Halt and boot */
-#define ACTION_REBOOT 0x02	/* Halt and request RiscBSD reboot */
-#define ACTION_KSHELL 0x04	/* Call kshell */
-#define ACTION_DUMP   0x08	/* Dump the system to the dump dev if requested */
-
-#define HALT_ACTION	ACTION_HALT | ACTION_KSHELL | ACTION_DUMP	/* boot(RB_HALT) */
-#define REBOOT_ACTION	ACTION_REBOOT | ACTION_DUMP			/* boot(0) */
-#define PANIC_ACTION	ACTION_HALT | ACTION_DUMP			/* panic() */
-
 
 /*
  *  Imported types
@@ -148,7 +103,8 @@ extern int ofw_handleticks;
 /*
  *  Imported routines
  */
-extern void map_section	    __P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa, int cacheable));
+extern void map_section	    __P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa,
+				 int cacheable));
 extern void map_pagetable   __P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 extern void map_entry	    __P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 extern void map_entry_nc    __P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
@@ -370,16 +326,9 @@ ofw_boot(howto, bootstr)
 	int howto;
 	char *bootstr;
 {
-	int loop;
-	int action;
 
 #ifdef DIAGNOSTIC
-	if (curproc == NULL)
-		printf("curproc = 0 - must have been in cpu_idle()\n");
-/*	if (curpcb)
-		printf("curpcb=%08x pcb_sp=%08x pcb_und_sp=%08x\n", curpcb, curpcb->pcb_sp, curpcb->pcb_und_sp);*/
-
-	printf("boot: howto=%08x %08x curproc=%08x\n", howto, spl_mask, (u_int)curproc);
+	printf("boot: howto=%08x curproc=%p\n", howto, curproc);
 
 	printf("current_mask=%08x spl_mask=%08x\n", current_mask, spl_mask);
 	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_clock=%08x ipl_imp=%08x\n",
@@ -389,23 +338,17 @@ ofw_boot(howto, bootstr)
 	dump_spl_masks();
 #endif
 
-	/* If we are still cold then hit the air brakes and crash to earth fast */
+	/*
+	 * If we are still cold then hit the air brakes
+	 * and crash to earth fast
+	 */
 	if (cold) {
 		doshutdownhooks();
 		printf("Halted while still in the ICE age.\n");
+		printf("The operating system has halted.\n");
 		goto ofw_exit;
+		/*NOTREACHED*/
 	}
-
-	/*
-	 * Depending on how we got here and with what intructions, choose
-	 * the actions to take. (See the actions defined above)
-	 */
-	if (panicstr)
-		action = PANIC_ACTION;
-	else if (howto & RB_HALT)
-		action = HALT_ACTION;
-	else
-		action = REBOOT_ACTION;
 
 	/*
 	 * If RB_NOSYNC was not specified sync the discs.
@@ -419,58 +362,51 @@ ofw_boot(howto, bootstr)
 	/* Say NO to interrupts */
 	splhigh();
 
-	/* If we need to do a dump, do it */
-	if ((howto & RB_DUMP) && (action & ACTION_DUMP)) {
+	/* Do a dump if requested. */
+	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		dumpsys();
-	}
 	
 	/* Run any shutdown hooks */
-	printf("Running shutdown hooks ...\n");
 	doshutdownhooks();
 
 	/* Make sure IRQ's are disabled */
 	IRQdisable;
 
-	if (action & ACTION_HALT)
-	    goto ofw_exit;
+	if (howto & RB_HALT) {
+		printf("The operating system has halted.\n");
+		goto ofw_exit;
+	}
 
 	/* Tell the user we are booting */
-	printf("boot...");
-
-	/* Give the user time to read the last couple of lines of text. */
-	for (loop = 5; loop > 0; --loop) {
-		printf("%d..", loop);
-		delay(500000);
-	}
+	printf("rebooting...\n");
 
 	/* Jump into the OFW boot routine. */
 	{
-	    static char str[256];
-	    char *ap = str, *ap1 = ap;
+		static char str[256];
+		char *ap = str, *ap1 = ap;
 
-	    if (bootstr && *bootstr) {
-		if (strlen(bootstr) > sizeof str - 5)
-		    printf("boot string too large, ignored\n");
-		else {
-		    strcpy(str, bootstr);
-		    ap1 = ap = str + strlen(str);
-		    *ap++ = ' ';
+		if (bootstr && *bootstr) {
+			if (strlen(bootstr) > sizeof str - 5)
+				printf("boot string too large, ignored\n");
+			else {
+				strcpy(str, bootstr);
+				ap1 = ap = str + strlen(str);
+				*ap++ = ' ';
+			}
 		}
-	    }
-	    *ap++ = '-';
-	    if (howto & RB_SINGLE)
-		*ap++ = 's';
-	    if (howto & RB_KDB)
-		*ap++ = 'd';
-	    *ap++ = 0;
-	    if (ap[-2] == '-')
-		*ap1 = 0;
+		*ap++ = '-';
+		if (howto & RB_SINGLE)
+			*ap++ = 's';
+		if (howto & RB_KDB)
+			*ap++ = 'd';
+		*ap++ = 0;
+		if (ap[-2] == '-')
+			*ap1 = 0;
 #if defined(SHARK) && (NPC > 0)
-	    shark_screen_cleanup(0);
+		shark_screen_cleanup(0);
 #endif
-	    OF_boot(str);
-
-	    /* Not reached. */
+		OF_boot(str);
+		/*NOTREACHED*/
 	}
 
 ofw_exit:
@@ -479,7 +415,7 @@ ofw_exit:
 	shark_screen_cleanup(1);
 #endif
 	OF_exit();
-	/* Not reached. */
+	/*NOTREACHED*/
 }
 
 
@@ -509,7 +445,7 @@ get_fw_dhcp_data(bdp)
 		/*
 		 * OFW saved a DHCP (or BOOTP) packet for us.
 		 */
-		if(dhcplen > sizeof(bdp->dhcp_packet))
+		if (dhcplen > sizeof(bdp->dhcp_packet))
 			panic("DHCP packet too large");
 		OF_getprop(chosen, "bootp-response", &bdp->dhcp_packet,
 		    sizeof(bdp->dhcp_packet));
@@ -520,11 +456,11 @@ get_fw_dhcp_data(bdp)
 		 */
 		bdp->ip_address = bdp->dhcp_packet.yiaddr;
 		ip = ip2dotted(bdp->ip_address);
-		if(bcmp(bdp->dhcp_packet.options, DHCP_OPTIONS_COOKIE, 4) == 0)
-		    parse_dhcp_options(&bdp->dhcp_packet,
-		    bdp->dhcp_packet.options + 4,
-		    &bdp->dhcp_packet.options[dhcplen - DHCP_FIXED_NON_UDP],
-		bdp, ip);
+		if (bcmp(bdp->dhcp_packet.options, DHCP_OPTIONS_COOKIE, 4) == 0)
+			parse_dhcp_options(&bdp->dhcp_packet,
+			    bdp->dhcp_packet.options + 4,
+			    &bdp->dhcp_packet.options[dhcplen
+			    - DHCP_FIXED_NON_UDP], bdp, ip);
 		if (bdp->root_ip.s_addr == 0)
 			bdp->root_ip = bdp->dhcp_packet.siaddr;
 		if (bdp->swap_ip.s_addr == 0)
