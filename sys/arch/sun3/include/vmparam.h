@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.20 1998/02/05 04:57:01 gwr Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.21 1999/02/18 07:13:21 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,10 @@
 #ifdef	_SUN3X_
 #include <machine/vmparam3x.h>
 #endif	/* SUN3X */
+
+struct pmap_physseg {
+	/* NULL */
+};
 
 /*
  * The time for a process to be blocked before being very swappable.

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam3x.h,v 1.9 1999/01/16 20:48:44 chuck Exp $	*/
+/*	$NetBSD: vmparam3x.h,v 1.10 1999/02/18 07:13:21 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -112,7 +112,3 @@
 
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0
-
-struct pmap_physseg {
-	/* NULL */
-};
