@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.179 2003/07/31 06:31:38 lukem Exp $
+#	$NetBSD: bsd.prog.mk,v 1.180 2003/07/31 13:47:32 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -258,8 +258,8 @@ lint: ${LOBJS}
 .include <bsd.files.mk>
 .include <bsd.inc.mk>
 .include <bsd.links.mk>
-.include <bsd.dep.mk>
 .include <bsd.sys.mk>
+.include <bsd.dep.mk>
 
 ${TARGETS}:	# ensure existence
 
