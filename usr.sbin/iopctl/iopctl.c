@@ -1,4 +1,4 @@
-/*	$NetBSD: iopctl.c,v 1.7 2001/02/20 23:56:40 cgd Exp $	*/
+/*	$NetBSD: iopctl.c,v 1.8 2001/03/20 13:07:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: iopctl.c,v 1.7 2001/02/20 23:56:40 cgd Exp $");
+__RCSID("$NetBSD: iopctl.c,v 1.8 2001/03/20 13:07:51 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -58,7 +58,7 @@ __RCSID("$NetBSD: iopctl.c,v 1.7 2001/02/20 23:56:40 cgd Exp $");
 #include <getopt.h>
 
 #include <dev/i2o/i2o.h>
-#include <dev/i2o/iopvar.h>
+#include <dev/i2o/iopio.h>
 
 const char	*class2str(int);
 void	getparam(int, int, void *, int);
@@ -72,6 +72,7 @@ void	showdevid(char **);
 void	showddmid(char **);
 void	showlct(char **);
 void	showstatus(char **);
+void	showtidmap(char **);
 
 struct {
 	int	class;
@@ -103,6 +104,7 @@ struct {
 	{ "showdevid", 1, showdevid },
 	{ "showlct", 0, showlct },
 	{ "showstatus",	0, showstatus },
+	{ "showtidmap",	0, showtidmap },
 };
 
 int	fd;
@@ -150,7 +152,7 @@ main(int argc, char **argv)
 		}
 
 	if (i == sizeof(cmdtab) / sizeof(cmdtab[0]))
-		usage();
+		errx(EXIT_FAILURE, "unknown command ``%s''", argv[optind]);
 
 	close(fd);
 	exit(EXIT_SUCCESS);
@@ -199,6 +201,7 @@ getparam(int tid, int group, void *pbuf, int pbufsize)
 {
 	struct ioppt pt;
 	struct i2o_util_params_op mb;
+	struct i2o_reply *rf;
 	struct {
 		struct	i2o_param_op_list_header olh;
 		struct	i2o_param_op_all_template oat;
@@ -232,9 +235,12 @@ getparam(int tid, int group, void *pbuf, int pbufsize)
 	if (ioctl(fd, IOPIOCPT, &pt) < 0)
 		err(EXIT_FAILURE, "IOPIOCPT");
 
-	if (((struct i2o_reply *)buf)->reqstatus != 0)
+	rf = (struct i2o_reply *)buf;
+	if (rf->reqstatus != 0)
 		errx(EXIT_FAILURE, "I2O_UTIL_PARAMS_GET failed (%d)",
 		    ((struct i2o_reply *)buf)->reqstatus);
+	if ((rf->msgflags & I2O_MSGFLAGS_FAIL) != 0)
+		errx(EXIT_FAILURE, "I2O_UTIL_PARAMS_GET failed (FAIL)");
 }	
 
 void
@@ -390,6 +396,27 @@ reconfig(char **argv)
 
 	if (ioctl(fd, IOPIOCRECONFIG))
 		err(EXIT_FAILURE, "IOPIOCRECONFIG");
+}
+
+void
+showtidmap(char **argv)
+{
+	struct iovec iov;
+	struct iop_tidmap *it;
+	int nent;
+
+	iov.iov_base = buf;
+	iov.iov_len = sizeof(buf);
+
+	if (ioctl(fd, IOPIOCGTIDMAP, &iov) < 0)
+		err(EXIT_FAILURE, "IOPIOCGTIDMAP");
+
+	nent = iov.iov_len / sizeof(*it);
+	it = (struct iop_tidmap *)buf;
+
+	for (; nent--; it++)
+		if ((it->it_flags & IT_CONFIGURED) != 0)
+			printf("%s\ttid %d\n", it->it_dvname, it->it_tid);
 }
 
 void
