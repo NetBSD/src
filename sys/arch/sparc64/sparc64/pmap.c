@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.33 1999/04/25 17:23:04 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.34 1999/05/09 19:24:20 eeh Exp $	*/
 /* #define NO_VCACHE */ /* Don't forget the locked TLB in dostart */
 #define HWREF
 /* #define BOOT_DEBUG */
@@ -1526,10 +1526,12 @@ pmap_kremove(va, size)
 	int64_t data;
 	int i, flush = 0;
 
+#ifdef DEBUG
 	if (pmapdebug & PDB_DEMAP) {
 		printf("pmap_kremove: start %p size %lx\n",
 		       va, size);
 	}
+#endif
 	while (size >= NBPG) {
 		/*
 		 * Is this part of the permanent 4MB mapping?
