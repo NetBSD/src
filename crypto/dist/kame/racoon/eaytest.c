@@ -1,4 +1,4 @@
-/*	$KAME: eaytest.c,v 1.28 2001/08/16 21:44:50 sakane Exp $	*/
+/*	$KAME: eaytest.c,v 1.39 2001/12/12 18:23:42 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,6 +30,8 @@
  */
 
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/socket.h>
 
 #include <netinet/in.h>
 
@@ -37,6 +39,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
+#include <dirent.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <err.h>
+
+#include <openssl/bio.h>
+#include <openssl/pem.h>
 
 #include "var.h"
 #include "vmbuf.h"
@@ -52,8 +61,241 @@
 
 u_int32_t loglevel = 4;
 
-char *capath = "/usr/local/openssl/certs";
-char *certs[] = {
+/* prototype */
+
+void rsatest __P((int, char **));
+static vchar_t *pem_read_buf __P((char *));
+void certtest __P((int, char **));
+static char **getcerts __P((char *));
+void ciphertest __P((int, char **));
+void hmactest __P((int, char **));
+void sha2test __P((int, char **));
+void sha1test __P((int, char **));
+void md5test __P((int, char **));
+void dhtest __P((int, char **));
+void bntest __P((int, char **));
+void Usage __P((void));
+
+/* test */
+
+void
+rsatest(ac, av)
+	int ac;
+	char **av;
+{
+	char *text = "this is test.";
+	vchar_t src;
+	vchar_t *priv, *pub, *sig;
+	int error;
+
+	char *pkcs1 =
+"-----BEGIN RSA PRIVATE KEY-----\n"
+"MIICXQIBAAKBgQChe5/Fzk9SA0vCKBOcu9jBcLb9oLv50PeuEfQojhakY+OH8A3Q\n"
+"M8A0qIDG6uhTNGPvzCWb/+mKeOB48n5HJpLxlDFyP3kyd2yXHIZ/MN8g1nh4FsB0\n"
+"iTkk8QUCJkkan6FCOBrIeLEsGA5AdodzuR+khnCMt8vO+NFHZYKAQeynyQIDAQAB\n"
+"AoGAOfDcnCHxjhDGrwyoNNWl6Yqi7hAtQm67YAbrH14UO7nnmxAENM9MyNgpFLaW\n"
+"07v5m8IZQIcradcDXAJOUwNBN8E06UflwEYCaScIwndvr5UpVlN3e2NC6Wyg2yC7\n"
+"GarxQput3zj35XNR5bK42UneU0H6zDxpHWqI1SwE+ToAHu0CQQDNl9gUJTpg0L09\n"
+"HkbE5jeb8bA5I20nKqBOBP0v5tnzpwu41umQwk9I7Ru0ucD7j+DW4k8otadW+FnI\n"
+"G1M1MpSjAkEAyRMt4bN8otfpOpsOQWzw4jQtouohOxRFCrQTntHhU20PrQnQLZWs\n"
+"pOVzqCjRytYtkPEUA1z8QK5gGcVPcOQsowJBALmt2rwPB1NrEo5Bat7noO+Zb3Ob\n"
+"WDiYWeE8xkHd95gDlSWiC53ur9aINo6ZeP556jGIgL+el/yHHecJLrQL84sCQH48\n"
+"zUxq/C/cb++8UzneJGlPqusiJNTLiAENR1gpmlZfHT1c8Nb9phMsfu0vG29GAfuC\n"
+"bzchVLljALCNQK+2gRMCQQCNIgN+R9mRWZhFAcC1sq++YnuSBlw4VwdL/fd1Yg9e\n"
+"Ul+U98yPl/NXt8Rs4TRBFcOZjkFI8xv0hQtevTgTmgz+\n"
+"-----END RSA PRIVATE KEY-----\n\n";
+	char *pubkey =
+"-----BEGIN PUBLIC KEY-----\n"
+"MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQChe5/Fzk9SA0vCKBOcu9jBcLb9\n"
+"oLv50PeuEfQojhakY+OH8A3QM8A0qIDG6uhTNGPvzCWb/+mKeOB48n5HJpLxlDFy\n"
+"P3kyd2yXHIZ/MN8g1nh4FsB0iTkk8QUCJkkan6FCOBrIeLEsGA5AdodzuR+khnCM\n"
+"t8vO+NFHZYKAQeynyQIDAQAB\n"
+"-----END PUBLIC KEY-----\n\n";
+
+	priv = pem_read_buf(pkcs1);
+
+	src.v = text;
+	src.l = strlen(text);
+
+	/* sign */
+	sig = eay_rsa_sign(&src, priv);
+	if (sig == NULL)
+		printf("sign failed. %s\n", eay_strerror());
+	printf("RSA signed data.\n");
+	PVDUMP(sig);
+
+	/* verify */
+	pub = pem_read_buf(pubkey);
+	error = eay_rsa_verify(&src, sig, pub);
+	if (error)
+		printf("verifying failed.\n");
+	else
+		printf("verified.\n");
+}
+
+static vchar_t *
+pem_read_buf(buf)
+	char *buf;
+{
+	BIO *bio;
+	char *nm = NULL, *header = NULL;
+	unsigned char *data = NULL;
+	long len;
+	vchar_t *ret;
+	int error;
+
+	bio = BIO_new_mem_buf(buf, strlen(buf));
+	error = PEM_read_bio(bio, &nm, &header, &data, &len);
+	if (error == 0)
+		errx(1, "%s", eay_strerror());
+	ret = vmalloc(len);
+	if (ret == NULL)
+		err(1, "vmalloc");
+	memcpy(ret->v, data, len);
+
+	return ret;
+}
+
+void
+certtest(ac, av)
+	int ac;
+	char **av;
+{
+	char *certpath;
+	char **certs;
+	int type;
+	int error;
+
+	printf("\n**Test for Certificate.**\n");
+
+    {
+	char dnstr[] = "C=JP, ST=Kanagawa, L=Fujisawa, O=WIDE Project, OU=KAME Project, CN=Shoichi Sakane/Email=sakane@kame.net";
+	vchar_t *asn1dn = NULL, asn1dn0;
+	char dn0[] = {
+		0x30,0x81,0x9a,0x31,0x0b,0x30,0x09,0x06,
+		0x03,0x55,0x04,0x06,0x13,0x02,0x4a,0x50,
+		0x31,0x11,0x30,0x0f,0x06,0x03,0x55,0x04,
+		0x08,0x13,0x08,0x4b,0x61,0x6e,0x61,0x67,
+		0x61,0x77,0x61,0x31,0x11,0x30,0x0f,0x06,
+		0x03,0x55,0x04,0x07,0x13,0x08,0x46,0x75,
+		0x6a,0x69,0x73,0x61,0x77,0x61,0x31,0x15,
+		0x30,0x13,0x06,0x03,0x55,0x04,0x0a,0x13,
+		0x0c,0x57,0x49,0x44,0x45,0x20,0x50,0x72,
+		0x6f,0x6a,0x65,0x63,0x74,0x31,0x15,0x30,
+		0x13,0x06,0x03,0x55,0x04,0x0b,0x13,0x0c,
+		0x4b,0x41,0x4d,0x45,0x20,0x50,0x72,0x6f,
+		0x6a,0x65,0x63,0x74,0x31,0x17,0x30,0x15,
+		0x06,0x03,0x55,0x04,0x03,0x13,0x0e,0x53,
+		0x68,0x6f,0x69,0x63,0x68,0x69,0x20,0x53,
+		0x61,0x6b,0x61,0x6e,0x65,0x31,0x1e,0x30,
+		0x1c,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,
+		0x0d,0x01,0x09,0x01,
+		0x0c,	/* <== XXX */
+		0x0f,0x73,0x61,
+		0x6b,0x61,0x6e,0x65,0x40,0x6b,0x61,0x6d,
+		0x65,0x2e,0x6e,0x65,0x74,
+	};
+
+	printf("check to convert the string into subjectName.\n");
+	printf("%s\n", dnstr);
+
+	asn1dn0.v = dn0;
+	asn1dn0.l = sizeof(dn0);
+
+	asn1dn = eay_str2asn1dn(dnstr, sizeof(dnstr));
+	if (asn1dn == NULL || asn1dn->l != asn1dn0.l)
+		errx(1, "asn1dn length mismatched.\n");
+
+	/*
+	 * NOTE: The value pointed by "<==" above is different from the
+	 * return of eay_str2asn1dn().  but eay_cmp_asn1dn() can distinguish
+	 * both of the names are same name.
+	 */
+	if (eay_cmp_asn1dn(&asn1dn0,  asn1dn))
+		errx(1, "asn1dn mismatched.\n");
+	vfree(asn1dn);
+
+	printf("succeed.\n");
+    }
+
+	eay_init_error();
+
+	/* get certs */
+	if (ac > 1) {
+		certpath = *(av + 1);
+		certs = getcerts(certpath);
+	} else {
+		printf("\nCAUTION: These certificates are probably invalid "
+			"on your environment because you don't have their "
+			"issuer's certs in your environment.\n\n");
+
+		certpath = "/usr/local/openssl/certs";
+		certs = getcerts(NULL);
+	}
+
+	while (*certs != NULL) {
+
+		vchar_t c;
+		char *str;
+		vchar_t *vstr;
+
+		printf("===CERT===\n");
+
+		c.v = *certs;
+		c.l = strlen(*certs);
+
+		/* print text */
+		str = eay_get_x509text(&c);
+		printf("%s", str);
+		racoon_free(str);
+
+		/* print ASN.1 of subject name */
+		vstr = eay_get_x509asn1subjectname(&c);
+		if (!vstr)
+			return;
+		PVDUMP(vstr);
+		printf("\n");
+		vfree(vstr);
+
+		/* print subject alt name */
+	    {
+		int pos;
+		for (pos = 1; ; pos++) {
+			error = eay_get_x509subjectaltname(&c, &str, &type, pos);
+			if (error) {
+				printf("no subjectaltname found.\n");
+				break;
+			}
+			if (!str)
+				break;
+			printf("SubjectAltName: %d: %s\n", type, str);
+			racoon_free(str);
+		}
+	    }
+
+		error = eay_check_x509cert(&c, certpath);
+		if (error)
+			printf("ERROR: cert is invalid.\n");
+		printf("\n");
+
+		certs++;
+	}
+}
+
+static char **
+getcerts(path)
+	char *path;
+{
+	char **certs = NULL, **p;
+	DIR *dirp;
+	struct dirent *dp;
+	struct stat sb;
+	char buf[512];
+	int len;
+	int n;
+	int fd;
+
+	static char *samplecerts[] = {
 /* self signed */
 "-----BEGIN CERTIFICATE-----\n"
 "MIICpTCCAg4CAQAwDQYJKoZIhvcNAQEEBQAwgZoxCzAJBgNVBAYTAkpQMREwDwYD\n"
@@ -153,148 +395,71 @@ char *certs[] = {
 "Y8++0dC8NVvendIILcJBM5nbDq1TqIbb8K3SP80XhO5JLVJkoZiQftAMjo0peZPO\n"
 "EQ==\n"
 "-----END CERTIFICATE-----\n\n",
-};
-
-/* prototype */
-
-void certtest __P((void));
-void ciphertest __P((void));
-void hmactest __P((void));
-void sha2test __P((void));
-void sha1test __P((void));
-void md5test __P((void));
-void dhtest __P((int));
-void bntest __P((void));
-
-/* test */
-
-#include <sys/stat.h>
-#include <unistd.h>
-void
-certtest()
-{
-	vchar_t c;
-	char *str;
-	vchar_t *vstr;
-	int type;
-	int error;
-	int i;
-
-	printf("\n**Test for Certificate.**\n");
-
-    {
-	char dnstr[] = "C=JP, ST=Kanagawa, L=Fujisawa, O=WIDE Project, OU=KAME Project, CN=Shoichi Sakane/Email=sakane@kame.net";
-	vchar_t *asn1dn = NULL, asn1dn0;
-	char dn0[] = {
-		0x30,0x81,0x9a,0x31,0x0b,0x30,0x09,0x06,
-		0x03,0x55,0x04,0x06,0x13,0x02,0x4a,0x50,
-		0x31,0x11,0x30,0x0f,0x06,0x03,0x55,0x04,
-		0x08,0x13,0x08,0x4b,0x61,0x6e,0x61,0x67,
-		0x61,0x77,0x61,0x31,0x11,0x30,0x0f,0x06,
-		0x03,0x55,0x04,0x07,0x13,0x08,0x46,0x75,
-		0x6a,0x69,0x73,0x61,0x77,0x61,0x31,0x15,
-		0x30,0x13,0x06,0x03,0x55,0x04,0x0a,0x13,
-		0x0c,0x57,0x49,0x44,0x45,0x20,0x50,0x72,
-		0x6f,0x6a,0x65,0x63,0x74,0x31,0x15,0x30,
-		0x13,0x06,0x03,0x55,0x04,0x0b,0x13,0x0c,
-		0x4b,0x41,0x4d,0x45,0x20,0x50,0x72,0x6f,
-		0x6a,0x65,0x63,0x74,0x31,0x17,0x30,0x15,
-		0x06,0x03,0x55,0x04,0x03,0x13,0x0e,0x53,
-		0x68,0x6f,0x69,0x63,0x68,0x69,0x20,0x53,
-		0x61,0x6b,0x61,0x6e,0x65,0x31,0x1e,0x30,
-		0x1c,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,
-		0x0d,0x01,0x09,0x01,
-		0x0c,	/* <== XXX */
-		0x0f,0x73,0x61,
-		0x6b,0x61,0x6e,0x65,0x40,0x6b,0x61,0x6d,
-		0x65,0x2e,0x6e,0x65,0x74,
+	NULL,
 	};
 
-	printf("check to convert the string into subjectName.\n");
-	printf("%s\n", dnstr);
+	if (path == NULL)
+		return (char **)&samplecerts;
 
-	asn1dn0.v = dn0;
-	asn1dn0.l = sizeof(dn0);
-
-	asn1dn = eay_str2asn1dn(dnstr, sizeof(dnstr));
-	if (asn1dn == NULL || asn1dn->l != asn1dn0.l) {
-		printf("asn1dn length mismatched.\n");
-		exit(1);
+	stat(path, &sb);
+	if (!(sb.st_mode & S_IFDIR)) {
+		printf("ERROR: %s is not directory.\n", path);
+		exit(0);
 	}
-	/*
-	 * NOTE: The value pointed by "<==" above is different from the
-	 * return of eay_str2asn1dn().  but eay_cmp_asn1dn() can distinguish
-	 * both of the names are same name.
-	 */
-	if (eay_cmp_asn1dn(&asn1dn0,  asn1dn)) {
-		printf("asn1dn mismatched.\n");
-		exit(1);
+
+	dirp = opendir(path);
+	if (dirp == NULL) {
+		printf("opendir failed.\n");
+		exit(0);
 	}
-	vfree(asn1dn);
 
-	printf("succeed.\n");
-    }
+	n = 0;
+	while ((dp = readdir(dirp)) != NULL) {
+		if (dp->d_type != DT_REG)
+			continue;
+		if (strcmp(dp->d_name + dp->d_namlen - 4, "cert"))
+			continue;
+		snprintf(buf, sizeof(buf), "%s/%s", path, dp->d_name);
+		stat(buf, &sb);
 
-	printf("\nCAUTION: These certificates may be invalid on your "
-		"environment because it was signed by SSH test CA and you "
-		"may not own their issuer's certificates.\n\n");
+		p = (char **)realloc(certs, (n + 1) * sizeof(certs));
+		if (p == NULL)
+			err(1, "realloc");
+		certs = p;
 
-	eay_init_error();
+		certs[n] = malloc(sb.st_size + 1);
+		if (certs[n] == NULL)
+			err(1, "malloc");
 
-	for (i = 0; i < sizeof(certs)/sizeof(certs[0]); i++) {
+		fd = open(buf, O_RDONLY);
+		if (fd == -1)
+			err(1, "open");
+		len = read(fd, certs[n], sb.st_size);
+		if (len == -1)
+			err(1, "read");
+		if (len != sb.st_size)
+			errx(1, "read: length mismatch");
+		certs[n][sb.st_size] = '\0';
+		close(fd);
 
-		printf("CERT[%d]===\n", i);
+		printf("%s: %d\n", dp->d_name, (int)sb.st_size);
 
-		c.v = certs[i];
-		c.l = strlen(certs[i]);
-
-		/* print text */
-		str = eay_get_x509text(&c);
-		printf("%s", str);
-		racoon_free(str);
-
-		/* print ASN.1 of subject name */
-		vstr = eay_get_x509asn1subjectname(&c);
-		if (!vstr)
-			return;
-		PVDUMP(vstr);
-		printf("\n");
-		vfree(vstr);
-
-		/* print subject alt name */
-	    {
-		int pos;
-		for (pos = 1; ; pos++) {
-			error = eay_get_x509subjectaltname(&c, &str, &type, pos);
-			if (error) {
-				printf("no subjectaltname found.\n");
-				break;
-			}
-			if (!str)
-				break;
-			printf("SubjectAltName: %d: %s\n", type, str);
-			racoon_free(str);
-		}
-	    }
-
-	    {
-		struct stat sb;
-
-		stat(capath, &sb);
-		if (!(sb.st_mode & S_IFDIR)) {
-			printf("ERROR: %s is not directory.\n", capath);
-			return;
-		}
-	    }
-
-		error = eay_check_x509cert(&c, capath);
-		printf("cert is %s\n", error ? "invalid" : "valid");
-		printf("\n");
+		n++;
 	}
+
+	p = (char **)realloc(certs, (n + 1) * sizeof(certs));
+	if (p == NULL)
+		err(1, "realloc");
+	certs = p;
+	certs[n] = NULL;
+
+	return certs;
 }
 
 void
-ciphertest()
+ciphertest(ac, av)
+	int ac;
+	char **av;
 {
 	vchar_t data;
 	vchar_t key;
@@ -469,7 +634,9 @@ ciphertest()
 }
 
 void
-hmactest()
+hmactest(ac, av)
+	int ac;
+	char **av;
 {
 	char *keyword = "hehehe test secret!";
 	char *object  = "d7e6a6c1876ef0488bb74958b9fee94e";
@@ -557,7 +724,9 @@ hmactest()
 }
 
 void
-sha1test()
+sha1test(ac, av)
+	int ac;
+	char **av;
 {
 	char *word1 = "1234567890", *word2 = "12345678901234567890";
 	caddr_t ctx;
@@ -590,7 +759,9 @@ sha1test()
 }
 
 void
-md5test()
+md5test(ac, av)
+	int ac;
+	char **av;
 {
 	char *word1 = "1234567890", *word2 = "12345678901234567890";
 	caddr_t ctx;
@@ -623,68 +794,80 @@ md5test()
 }
 
 void
-dhtest(f)
-	int f;
+dhtest(ac, av)
+	int ac;
+	char **av;
 {
-	vchar_t p1, p2, *pub1, *priv1, *pub2, *priv2, *key;
+	static struct {
+		char *name;
+		char *p;
+	} px[] = {
+		{ "modp768",	OAKLEY_PRIME_MODP768, },
+		{ "modp1024",	OAKLEY_PRIME_MODP1024, },
+		{ "modp1536",	OAKLEY_PRIME_MODP1536, },
+		{ "modp2048",	OAKLEY_PRIME_MODP2048, },
+		{ "modp3072",	OAKLEY_PRIME_MODP3072, },
+		{ "modp4096",	OAKLEY_PRIME_MODP4096, },
+		{ "modp6144",	OAKLEY_PRIME_MODP6144, },
+		{ "modp8192",	OAKLEY_PRIME_MODP8192, },
+	};
+	vchar_t p1, *pub1, *priv1, *gxy1;
+	vchar_t p2, *pub2, *priv2, *gxy2;
+	int i;
 
 	printf("\n**Test for DH.**\n");
 
-	switch (f) {
-	case 0:
-		p1.v = str2val(OAKLEY_PRIME_MODP768, 16, &p1.l);
-		p2.v = str2val(OAKLEY_PRIME_MODP768, 16, &p2.l);
-		break;
-	case 1:
-		p1.v = str2val(OAKLEY_PRIME_MODP1024, 16, &p1.l);
-		p2.v = str2val(OAKLEY_PRIME_MODP1024, 16, &p2.l);
-		break;
-	case 2:
-	default:
-		p1.v = str2val(OAKLEY_PRIME_MODP1536, 16, &p1.l);
-		p2.v = str2val(OAKLEY_PRIME_MODP1536, 16, &p2.l);
-		break;
+	for (i = 0; i < sizeof(px)/sizeof(px[0]); i++) {
+		printf("\n**Test for DH %s.**\n", px[i].name);
+
+		p1.v = str2val(px[i].p, 16, &p1.l);
+		p2.v = str2val(px[i].p, 16, &p2.l);
+		printf("prime number = \n"); PVDUMP(&p1);
+
+		if (eay_dh_generate(&p1, 2, 96, &pub1, &priv1) < 0) {
+			printf("error\n");
+			return;
+		}
+		printf("private key for user 1 = \n"); PVDUMP(priv1);
+		printf("public key for user 1  = \n"); PVDUMP(pub1);
+
+		if (eay_dh_generate(&p2, 2, 96, &pub2, &priv2) < 0) {
+			printf("error\n");
+			return;
+		}
+		printf("private key for user 2 = \n"); PVDUMP(priv2);
+		printf("public key for user 2  = \n"); PVDUMP(pub2);
+
+		/* process to generate key for user 1 */
+		gxy1 = vmalloc(p1.l);
+		memset(gxy1->v, 0, gxy1->l);
+		eay_dh_compute(&p1, 2, pub1, priv1, pub2, &gxy1);
+		printf("sharing gxy1 of user 1 = \n"); PVDUMP(gxy1);
+
+		/* process to generate key for user 2 */
+		gxy2 = vmalloc(p1.l);
+		memset(gxy2->v, 0, gxy2->l);
+		eay_dh_compute(&p2, 2, pub2, priv2, pub1, &gxy2);
+		printf("sharing gxy2 of user 2 = \n"); PVDUMP(gxy2);
+
+		if (memcmp(gxy1->v, gxy2->v, gxy1->l))
+			printf("ERROR: sharing gxy mismatched.\n");
+
+		vfree(pub1);
+		vfree(pub2);
+		vfree(priv1);
+		vfree(priv2);
+		vfree(gxy1);
+		vfree(gxy2);
 	}
-	printf("prime number = \n"); PVDUMP(&p1);
-
-	key = vmalloc(p1.l);
-
-	if (eay_dh_generate(&p1, 2, 96, &pub1, &priv1) < 0) {
-		printf("error\n");
-		return;
-	}
-
-	printf("private key for user 1 = \n"); PVDUMP(priv1);
-	printf("public key for user 1  = \n"); PVDUMP(pub1);
-
-	if (eay_dh_generate(&p2, 2, 96, &pub2, &priv2) < 0) {
-		printf("error\n");
-		return;
-	}
-
-	printf("private key for user 2 = \n"); PVDUMP(priv2);
-	printf("public key for user 2  = \n"); PVDUMP(pub2);
-
-	/* process to generate key for user 1 */
-	memset(key->v, 0, key->l);
-	eay_dh_compute(&p1, 2, pub1, priv1, pub2, &key);
-	printf("sharing key of user 1 = \n"); PVDUMP(key);
-
-	/* process to generate key for user 2 */
-	memset(key->v, 0, key->l);
-	eay_dh_compute(&p2, 2, pub2, priv2, pub1, &key);
-	printf("sharing key of user 2 = \n"); PVDUMP(key);
-
-	vfree(pub1);
-	vfree(priv1);
-	vfree(priv2);
-	vfree(key);
 
 	return;
 }
 
 void
-bntest()
+bntest(ac, av)
+	int ac;
+	char **av;
 {
 	vchar_t *rn;
 
@@ -695,42 +878,63 @@ bntest()
 	vfree(rn);
 }
 
+struct {
+	char *name;
+	void (*func) __P((int, char **));
+} func[] = {
+	{ "random", bntest, },
+	{ "dh", dhtest, },
+	{ "md5", md5test, },
+	{ "sha1", sha1test, },
+	{ "hmac", hmactest, },
+	{ "cipher", ciphertest, },
+	{ "cert", certtest, },
+	{ "rsa", rsatest, },
+};
+
 int
 main(ac, av)
 	int ac;
 	char **av;
 {
+	int i;
+	int len = sizeof(func)/sizeof(func[0]);
+
 	if (strcmp(*av, "-h") == 0) {
-		printf("Usage: eaytest [dh|md5|sha1|hmac|cipher|cert]\n");
-		exit(0);
-	}
-
-	if (ac == 1) {
-		bntest();
-		dhtest(0);
-		md5test();
-		sha1test();
-		hmactest();
-		ciphertest();
-		certtest();
-	} else {
-		for (av++; *av != '\0'; av++) {
-			if (strcmp(*av, "random") == 0)
-				bntest();
-			else if (strcmp(*av, "dh") == 0)
-				dhtest(0);
-			else if (strcmp(*av, "md5") == 0)
-				md5test();
-			else if (strcmp(*av, "sha1") == 0)
-				sha1test();
-			else if (strcmp(*av, "hmac") == 0)
-				hmactest();
-			else if (strcmp(*av, "cipher") == 0)
-				ciphertest();
-			else if (strcmp(*av, "cert") == 0)
-				certtest();
+		printf("Usage: eaytest [");
+		for (i = 0; i < len; i++) {
+			printf("%s", func[i].name);
+			if (i != len)
+				printf("|");
 		}
+		printf("]\n");
+		Usage();
 	}
 
+	ac--;
+	av++;
+
+	if (ac == 0) {
+		for (i = 0; i < len; i++)
+			(func[i].func)(ac, av);
+	} else {
+		for (i = 0; i < len; i++) {
+			if (strcmp(*av, func[i].name) == 0) {
+				(func[i].func)(ac, av);
+				break;
+			}
+		}
+		if (i == len)
+			Usage();
+	}
+
+	exit(0);
+}
+
+void
+Usage()
+{
+	printf("Usage: eaytest [dh|md5|sha1|hmac|cipher]\n");
+	printf("       eaytest cert [cert_directory]\n");
 	exit(0);
 }

@@ -1,4 +1,4 @@
-/*	$KAME: sha2.c,v 1.3 2001/08/09 06:22:15 itojun Exp $	*/
+/*	$KAME: sha2.c,v 1.5 2001/11/08 04:38:28 sakane Exp $	*/
 
 /*
  * sha2.c
@@ -43,6 +43,7 @@
 #include <openssl/evp.h>
 
 #include <err.h>
+#include <string.h>
 #define bcopy(a, b, c) memcpy((b), (a), (c))
 #define bzero(a, b) memset((a), 0, (b))
 #define panic(a) err(1, (a))
@@ -568,7 +569,7 @@ void SHA256_Final(sha2_byte digest[], SHA256_CTX* context) {
 			/* Begin padding with a 1 bit: */
 			context->buffer[usedspace++] = 0x80;
 
-			if (usedspace < SHA256_SHORT_BLOCK_LENGTH) {
+			if (usedspace <= SHA256_SHORT_BLOCK_LENGTH) {
 				/* Set-up for the last transform: */
 				bzero(&context->buffer[usedspace], SHA256_SHORT_BLOCK_LENGTH - usedspace);
 			} else {
@@ -885,7 +886,7 @@ void SHA512_Last(SHA512_CTX* context) {
 		/* Begin padding with a 1 bit: */
 		context->buffer[usedspace++] = 0x80;
 
-		if (usedspace < SHA512_SHORT_BLOCK_LENGTH) {
+		if (usedspace <= SHA512_SHORT_BLOCK_LENGTH) {
 			/* Set-up for the last transform: */
 			bzero(&context->buffer[usedspace], SHA512_SHORT_BLOCK_LENGTH - usedspace);
 		} else {
