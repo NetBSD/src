@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.19 1999/11/04 19:04:04 thorpej Exp $	*/
+/*	$NetBSD: ppb.c,v 1.18 1998/06/08 06:55:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -104,16 +104,13 @@ ppbattach(parent, self, aux)
 
 	/*
 	 * Attach the PCI bus than hangs off of it.
-	 *
-	 * XXX Don't pass-through Memory Read Multiple.  Should we?
-	 * XXX Consult the spec...
 	 */
 	pba.pba_busname = "pci";	/* XXX should be pci_ppb attachment */
 	pba.pba_iot = pa->pa_iot;
 	pba.pba_memt = pa->pa_memt;
 	pba.pba_dmat = pa->pa_dmat;
 	pba.pba_pc = pc;
-	pba.pba_flags = pa->pa_flags & ~PCI_FLAGS_MRM_OKAY;
+	pba.pba_flags = pa->pa_flags;
 	pba.pba_bus = PPB_BUSINFO_SECONDARY(busdata);
 	pba.pba_intrswiz = pa->pa_intrswiz;
 	pba.pba_intrtag = pa->pa_intrtag;

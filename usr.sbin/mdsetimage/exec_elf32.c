@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.6 1999/11/04 02:00:19 erh Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.5 1999/10/25 13:57:12 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: exec_elf32.c,v 1.6 1999/11/04 02:00:19 erh Exp $");
+__RCSID("$NetBSD: exec_elf32.c,v 1.5 1999/10/25 13:57:12 kleink Exp $");
 #endif /* not lint */
 
 #ifndef ELFSIZE
@@ -50,6 +50,12 @@ __RCSID("$NetBSD: exec_elf32.c,v 1.6 1999/11/04 02:00:19 erh Exp $");
 
 #if (defined(NLIST_ELF32) && (ELFSIZE == 32)) || \
     (defined(NLIST_ELF64) && (ELFSIZE == 64))
+
+#define	CONCAT(x,y)	__CONCAT(x,y)
+#define	ELFNAME(x)	CONCAT(elf,CONCAT(ELFSIZE,CONCAT(_,x)))
+#define	ELFNAME2(x,y)	CONCAT(x,CONCAT(_elf,CONCAT(ELFSIZE,CONCAT(_,y))))
+#define	ELFNAMEEND(x)	CONCAT(x,CONCAT(_elf,ELFSIZE))
+#define	ELFDEFNNAME(x)	CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
 
 #define	check(off, size)	((off < 0) || (off + size > mappedsize))
 #define	BAD			do { rv = -1; goto out; } while (0)

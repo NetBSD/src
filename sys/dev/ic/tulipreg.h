@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.12 1999/11/03 22:22:49 thorpej Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.11 1999/09/30 17:41:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -445,8 +445,8 @@ struct tulip_desc {
 #define	STATUS_RWT		0x00000200	/* receive watchdog timeout */
 #define	STATUS_AT		0x00000400	/* SIA AUI/TP pin changed
 						   (21040) */
-#define	STATUS_ETI		0x00000400	/* early transmit interrupt
-						   (21142/PMAC/Winbond) */
+#define	STATUS_PMAC_ETI		0x00000400	/* early transmit interrupt */
+#define	STATUS_WINB_TEI		0x00000400	/* transmit early interrupt */
 #define	STATUS_FD		0x00000800	/* full duplex short frame
 						   received (21040) */
 #define	STATUS_TM		0x00000800	/* timer expired (21041) */
@@ -488,10 +488,8 @@ struct tulip_desc {
 #define	STATUS_EB_PARITY	0x00000000	/* parity errror */
 #define	STATUS_EB_MABT		0x00800000	/* master abort */
 #define	STATUS_EB_TABT		0x01000000	/* target abort */
-#define	STATUS_GPPI		0x04000000	/* GPIO interrupt (21142) */
 #define	STATUS_PNIC_TXABORT	0x04000000	/* transmit aborted */
-#define	STATUS_LC		0x08000000	/* 100baseTX link change
-						   (21142/PMAC) */
+#define	STATUS_PMAC_LC		0x08000000	/* 100baseTX link change */
 #define	STATUS_PMAC_WKUPI	0x10000000	/* wake up event */
 
 
@@ -547,8 +545,6 @@ struct tulip_desc {
 #define	OPMODE_PCS		0x00800000	/* PCS function (21140) */
 #define	OPMODE_SCR		0x01000000	/* scrambler mode (21140) */
 #define	OPMODE_MBO		0x02000000	/* must be one (21140) */
-#define	OPMODE_IDAMSB		0x04000000	/* ignore dest addr MSB
-						   (21142) */
 #define	OPMODE_PNIC_DRC		0x20000000	/* don't include CRC in Rx
 						   frames (PNIC) */
 #define	OPMODE_WINB_FES		0x20000000	/* fast ethernet select */
@@ -634,26 +630,14 @@ struct tulip_desc {
 #define	CSR_GPT			TULIP_CSR11
 #define	GPT_VALUE		0x0000ffff	/* timer value */
 #define	GPT_CON			0x00010000	/* continuous mode */
-	/* 21143-PD and 21143-TD Interrupt Mitigation bits */
-#define	GPT_NRX			0x000e0000	/* number of Rx packets */
-#define	GPT_RXT			0x00f00000	/* Rx timer */
-#define	GPT_NTX			0x07000000	/* number of Tx packets */
-#define	GPT_TXT			0x78000000	/* Tx timer */
-#define	GPT_CYCLE		0x80000000	/* cycle size */
 
 
-/* CSR12 - SIA Status Register. */
+/* CSR12 - SIA Status Register (21040, 21041). */
 #define	CSR_SIASTAT		TULIP_CSR12
 #define	SIASTAT_PAUI		0x00000001	/* pin AUI/TP indication	
 						   (21040) */
-#define	SIASTAT_MRA		0x00000001	/* MII receive activity
-						   (21142) */
 #define	SIASTAT_NCR		0x00000002	/* network connection error */
-#define	SIASTAT_LS100		0x00000002	/* 100baseT link status
-						   0 == pass (21142) */
 #define	SIASTAT_LKF		0x00000004	/* link fail status */
-#define	SIASTAT_LS10		0x00000004	/* 10baseT link status
-						   0 == pass (21142) */
 #define	SIASTAT_APS		0x00000008	/* auto polarity status */
 #define	SIASTAT_DSD		0x00000010	/* PLL self test done */
 #define	SIASTAT_DSP		0x00000020	/* PLL self test pass */
@@ -661,12 +645,8 @@ struct tulip_desc {
 #define	SIASTAT_DAO		0x00000080	/* PLL all one */
 #define	SIASTAT_SRA		0x00000100	/* selected port receive
 						   activity (21041) */
-#define	SIASTAT_ARA		0x00000100	/* AUI receive activity
-						   (21142) */
 #define	SIASTAT_NRA		0x00000200	/* non-selected port
 						   receive activity (21041) */
-#define	SIASTAT_TRA		0x00000200	/* 10base-T receive activity
-						   (21142) */
 #define	SIASTAT_NSN		0x00000400	/* non-stable NLPs detected
 						   (21041) */
 #define	SIASTAT_TRF		0x00000800	/* transmit remote fault
@@ -678,7 +658,7 @@ struct tulip_desc {
 #define	SIASTAT_ANS_ABD		0x00002000	/*     ability detect */
 #define	SIASTAT_ANS_ACKD	0x00003000	/*     acknowledge detect */
 #define	SIASTAT_ANS_ACKC	0x00004000	/*     complete acknowledge */
-#define	SIASTAT_ANS_FLPGOOD	0x00005000	/*     FLP link good */
+#define	SIASTAT_ANS_FPLGOOD	0x00005000	/*     FLP link good */
 #define	SIASTAT_ANS_LINKCHECK	0x00006000	/*     link check */
 #define	SIASTAT_LPN		0x00008000	/* link partner negotiable
 						   (21041) */
@@ -687,10 +667,9 @@ struct tulip_desc {
 #define	SIASTAT_GETLPC(x)	(((x) & SIASTAT_LPC) >> 16)
 
 
-/* CSR13 - SIA Connectivity Register. */
+/* CSR13 - SIA Connectivity Register (21040, 21041). */
 #define	CSR_SIACONN		TULIP_CSR13
-#define	SIACONN_SRL		0x00000001	/* SIA reset
-						   (0 == reset) */
+#define	SIACONN_SRL		0x00000001	/* SIA reset */
 #define	SIACONN_PS		0x00000002	/* pin AUI/TP selection
 						   (21040) */
 #define	SIACONN_CAC		0x00000004	/* CSR autoconfiguration */
@@ -719,7 +698,7 @@ struct tulip_desc {
 						   (21041) */
 
 
-/* CSR14 - SIA Transmit Receive Register. */
+/* CSR14 - SIA Transmit Receive Register (21040, 21041). */
 #define	CSR_SIATXRX		TULIP_CSR14
 #define	SIATXRX_ECEN		0x00000001	/* encoder enable */
 #define	SIATXRX_LBK		0x00000002	/* loopback enable */
@@ -731,9 +710,8 @@ struct tulip_desc {
 #define	SIATXRX_CPEN_HIGHPWR	0x00000020	/*     high power */
 #define	SIATXRX_CPEN_NORMAL	0x00000030	/*     normal */
 #define	SIATXRX_MBO		0x00000040	/* must be one (21041 pass 2) */
-#define	SIATXRX_TH		0x00000040	/* 10baseT HDX enable (21142) */
 #define	SIATXRX_ANE		0x00000080	/* autonegotiation enable
-						   (21041/21142) */
+						   (21041) */
 #define	SIATXRX_RSQ		0x00000100	/* receive squelch enable */
 #define	SIATXRX_CSQ		0x00000200	/* collision squelch enable */
 #define	SIATXRX_CLD		0x00000400	/* collision detect enable */
@@ -743,13 +721,10 @@ struct tulip_desc {
 #define	SIATXRX_APE		0x00002000	/* auto-polarity enable */
 #define	SIATXRX_SPP		0x00004000	/* set plarity plus */
 #define	SIATXRX_TAS		0x00008000	/* 10base-T/AUI autosensing
-						   enable (21041/21142) */
-#define	SIATXRX_THX		0x00010000	/* 100baseTX-HDX (21142) */
-#define	SIATXRX_TXF		0x00020000	/* 100baseTX-FDX (21142) */
-#define	SIATXRX_T4		0x00040000	/* 100baseT4 (21142) */
+						   enable (21041) */
 
 
-/* CSR15 - SIA General Register. */
+/* CSR15 - SIA General Register (21040, 21041). */
 #define	CSR_SIAGEN		TULIP_CSR15
 #define	SIAGEN_JBD		0x00000001	/* jabber disable */
 #define	SIAGEN_HUJ		0x00000002	/* host unjab */
@@ -764,23 +739,10 @@ struct tulip_desc {
 #define	SIAGEN_FLF		0x00000400	/* force link fail */
 #define	SIAGEN_LSD		0x00000800	/* LED stretch disable
 						   (21041) */
-#define	SIAGEN_LEE		0x00000800	/* Link extend enable (21142) */
 #define	SIAGEN_DPST		0x00001000	/* PLL self-test start */
 #define	SIAGEN_FRL		0x00002000	/* force receiver low */
 #define	SIAGEN_LE2		0x00004000	/* LED 2 enable (21041) */
-#define	SIAGEN_RMP		0x00004000	/* received magic packet
-						   (21143) */
 #define	SIAGEN_LV2		0x00008000	/* LED 2 value (21041) */
-#define	SIAGEN_HCKR		0x00008000	/* hacker (21143) */
-#define	SIAGEN_MD		0x000f0000	/* general purpose mode/data */
-#define	SIAGEN_LGS		0x00f00000	/* LED/GEP select */
-#define	SIAGEN_GEI0		0x01000000	/* GEP pin 0 intr enable */
-#define	SIAGEN_GEI1		0x02000000	/* GEP pin 1 intr enable */
-#define	SIAGEN_RME		0x04000000	/* receive match enable */
-#define	SIAGEN_CWE		0x08000000	/* control write enable */
-#define	SIAGEN_GI0		0x10000000	/* GEP pin 0 interrupt */
-#define	SIAGEN_GI1		0x20000000	/* GEP pin 1 interrupt */
-#define	SIAGEN_RMI		0x40000000	/* receive match interrupt */
 
 
 /* CSR12 - General Purpose Port (21140+). */
@@ -806,6 +768,15 @@ struct tulip_desc {
 #define	GPP_PNIC_PIN_100M_LPKB	1
 #define	GPP_PNIC_PIN_BNC_XMER	2
 #define	GPP_PNIC_PIN_LNK100X	3
+
+
+/* CSR15 - Watchdog timer (21140+). */
+#define	CSR_WATCHDOG		TULIP_CSR15
+#define	WATCHDOG_JBD		0x00000001	/* jabber disable */
+#define	WATCHDOG_HUJ		0x00000002	/* host unjab */
+#define	WATCHDOG_JCK		0x00000004	/* jabber clock */
+#define	WATCHDOG_RWD		0x00000010	/* receive watchdog disable */
+#define	WATCHDOG_RWR		0x00000020	/* receive watchdog release */
 
 
 /*
@@ -890,29 +861,7 @@ struct tulip_desc {
  * Digital Semiconductor 21142/21143 registers.
  */
 
-/* SIA configuration for 10baseT (from the 21143 manual) */
-#define	SIACONN_21142_10BASET	0x00000001
-#define	SIATXRX_21142_10BASET	0x00007f3f
-#define	SIAGEN_21142_10BASET	0x00000008
-
-
-/* SIA configuration for 10baseT full-duplex (from the 21143 manual) */
-#define	SIACONN_21142_10BASET_FDX   0x00000001
-#define	SIATXRX_21142_10BASET_FDX   0x00007f3d
-#define	SIAGEN_21142_10BASET_FDX    0x00000008
-
-
-/* SIA configuration for 10base5 (from the 21143 manual) */
-#define	SIACONN_21142_AUI	0x00000009
-#define	SIATXRX_21142_AUI	0x00004705
-#define	SIAGEN_21142_AUI	0x0000000e
-
-
-/* SIA configuration for 10base2 (from the 21143 manual) */
-#define	SIACONN_21142_BNC	0x00000009
-#define	SIATXRX_21142_BNC	0x00004705
-#define	SIAGEN_21142_BNC	0x00000006
-
+/* XXX */
 
 /*
  * Lite-On 82C168/82C169 registers.
@@ -1002,33 +951,53 @@ struct tulip_desc {
 	 */
 
 /* CSR12 - 10base-T Status Port (similar to SIASTAT) */
-	/* See SIASTAT 21142/21143 bits */
 #define	CSR_PMAC_10TSTAT	   TULIP_CSR12
-#define	PMAC_SIASTAT_MASK	(SIASTAT_LS100|SIASTAT_LS10|		\
-				 SIASTAT_APS|SIASTAT_TRF|SIASTAT_ANS|	\
-				 SIASTAT_LPN|SIASTAT_LPC)
+#define	PMAC_10TSTAT_LS100	   0x00000002	/* link status 100TX
+						   0 = link up */
+#define	PMAC_10TSTAT_LS10	   0x00000004	/* link status 10T
+						   0 = link up */
+#define	PMAC_10TSTAT_APS	   0x00000008	/* auto polarity status */
+#define	PMAC_10TSTAT_TRF	   0x00000800	/* transmit remote fault
+						   (21041) */
+#define	PMAC_10TSTAT_ANS	   0x00007000	/* autonegotiation state
+						   (21041) */
+#define	PMAC_10TSTAT_ANS_DIS	   0x00000000	/*     disabled */
+#define	PMAC_10TSTAT_ANS_TXDIS	   0x00001000	/*     transmit disabled */
+#define	PMAC_10TSTAT_ANS_ABD	   0x00002000	/*     ability detect */
+#define	PMAC_10TSTAT_ANS_ACKD	   0x00003000	/*     acknowledge detect */
+#define	PMAC_10TSTAT_ANS_ACKC	   0x00004000	/*     complete acknowledge */
+#define	PMAC_10TSTAT_ANS_FLPGOOD   0x00005000	/*     FLP link good */
+#define	PMAC_10TSTAT_ANS_LINKCHECK 0x00006000	/*     link check */
+#define	PMAC_10TSTAT_LPN	   0x00008000	/* link partner negotiable
+						   (21041) */
+#define	PMAC_10TSTAT_LPC	   0xffff0000	/* link partner code word */
+
+#define	PMAC_10TSTAT_GETLPC(x)	   (((x) & SIASTAT_LPC) >> 16)
 
 
 /* CSR13 - NWAY Reset Register */
 #define	CSR_PMAC_NWAYRESET	TULIP_CSR13
-	/* See SIACONN 21142/21143 bits */
-#define	PMAC_SIACONN_MASK	(SIACONN_SRL)
+#define	PMAC_NWAYRESET_RESET	0x00000000	/* NWay reset */
 #define	PMAC_NWAYRESET_100TXRESET 0x00000002	/* 100base PMD reset */
 
 
 /* CSR14 - 10base-T Control Port */
 #define	CSR_PMAC_10TCTL		TULIP_CSR14
-	/* See SIATXRX 21142/21143 bits */
-#define	PMAC_SIATXRX_MASK	(SIATXRX_LBK|SIATXRX_DREN|SIATXRX_TH|	\
-				 SIATXRX_ANE|SIATXRX_RSQ|SIATXRX_LTE|	\
-				 SIATXRX_THX|SIATXRX_TXF|SIATXRX_T4)
+#define	PMAC_10TCTL_LBK		0x00000002	/* loopback */
+#define	PMAC_10TCTL_PWD10	0x00000004	/* power down 10base-T:
+						   0 == power down
+						   1 == normal operation */
+#define	PMAC_10TCTL_HDE		0x00000040	/* half-duplex enable */
+#define	PMAC_10TCTL_ANE		0x00000080	/* autonegotiation enable */
+#define	PMAC_10TCTL_RSQ		0x00000100	/* receive squelch enable */
+#define	PMAC_10TCTL_LTE		0x00001000	/* link test enable */
+#define	PMAC_10TCTL_TXH		0x00010000	/* adv. 100tx */
+#define	PMAC_10TCTL_TXF		0x00020000	/* adv. 100tx-fdx */
+#define	PMAC_10TCTL_T4		0x00040000	/* adv. 100t4 */
 
 
 /* CSR15 - Watchdog Timer Register */
-	/* MX98713: see 21140 CSR15 */
-	/* others: see SIAGEN 21142/21143 bits */
-#define	PMAC_SIAGEN_MASK	(SIAGEN_JBD|SIAGEN_HUJ|SIAGEN_JCK|	\
-				 SIAGEN_RWD|SIAGEN_RWR)
+	/* See 21140 CSR15 */
 
 
 /* CSR16 - Test Operation Register (a.k.a. Magic Packet Register) */

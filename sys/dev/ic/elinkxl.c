@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.16 1999/11/04 00:24:01 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.15 1999/10/15 06:07:26 haya Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -402,8 +402,7 @@ ex_config(sc)
 				<< (CONFIG_XCVR_SEL_SHIFT + 16);
 		bus_space_write_4(iot, ioh, ELINK_W3_INTERNAL_CONFIG, icfg);
 
-		mii_phy_probe(&sc->sc_dev, &sc->ex_mii, 0xffffffff,
-		    MII_PHY_ANY, MII_OFFSET_ANY);
+		mii_phy_probe(&sc->sc_dev, &sc->ex_mii, 0xffffffff);
 		if (LIST_FIRST(&sc->ex_mii.mii_phys) == NULL) {
 			ifmedia_add(&sc->ex_mii.mii_media, IFM_ETHER|IFM_NONE,
 			    0, NULL);
