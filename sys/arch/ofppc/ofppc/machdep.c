@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.56 2000/06/29 07:52:40 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.57 2000/07/02 04:40:42 cgd Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,11 +33,6 @@
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
-#include "opt_inet.h"
-#include "opt_ccitt.h"
-#include "opt_iso.h"
-#include "opt_ns.h"
-#include "opt_ipkdb.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>

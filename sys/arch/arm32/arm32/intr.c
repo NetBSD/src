@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.19 2000/06/29 08:52:58 mrg Exp $	*/
+/*	$NetBSD: intr.c,v 1.20 2000/07/02 04:40:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -35,19 +35,12 @@
  * Soft interrupt and other generic interrupt functions.
  */
 
-#include "opt_inet.h"
-#include "opt_atalk.h"
-#include "opt_ccitt.h"
-#include "opt_iso.h"
-#include "opt_ns.h"
-#include "opt_natm.h"
 #include "opt_irqstats.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
-#include <sys/socket.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -55,46 +48,6 @@
 #include <machine/cpu.h>
 
 #include <net/netisr.h>
-#include <net/if.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#include "arp.h"
-#if NARP > 0
-#include <netinet/if_inarp.h>
-#endif	/* NARP > 0 */
-#include <netinet/ip_var.h>
-#endif 	/* INET */
-#ifdef INET6
-# ifndef INET
-#  include <netinet/in.h>
-# endif
-#include <netinet/ip6.h>
-#include <netinet6/ip6_var.h>
-#endif /* INET6 */
-#ifdef NS
-#include <netns/ns_var.h>
-#endif	/* NS */
-#ifdef ISO
-#include <netiso/iso.h>
-#include <netiso/clnp.h>
-#endif	/* ISO */
-#ifdef CCITT
-#include <netccitt/x25.h>
-#include <netccitt/pk.h>
-#include <netccitt/pk_extern.h>
-#endif	/* CCITT */
-#ifdef NATM
-#include <netnatm/natm.h>
-#endif	/* NATM */
-#ifdef NETATALK
-#include <netatalk/at_extern.h>
-#endif	/* NETATALK */
-#include "ppp.h"
-#if NPPP > 0
-#include <net/ppp_defs.h>
-#include <net/if_ppp.h>
-#endif	/* NPPP > 0 */
 
 u_int soft_interrupts = 0;
 

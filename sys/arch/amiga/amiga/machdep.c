@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.154 2000/06/29 08:44:03 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.155 2000/07/02 04:40:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,11 +43,6 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_inet.h"
-#include "opt_atalk.h"
-#include "opt_ccitt.h"
-#include "opt_iso.h"
-#include "opt_ns.h"
 #include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
@@ -74,7 +69,9 @@
 #include <sys/syscallargs.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
+
 #include <net/netisr.h>
+#undef PS	/* XXX netccitt/pk.h conflict with machine/reg.h? */
 
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
 #include <uvm/uvm_extern.h>
@@ -103,47 +100,6 @@
 
 #include "fd.h"
 #include "ser.h"
-#include "arp.h"
-#include "ppp.h"
-
-#include <net/netisr.h>
-#include <net/if.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#if NARP > 0
-#include <netinet/if_inarp.h>
-#endif
-#include <netinet/ip_var.h>
-#endif 
-#ifdef INET6
-# ifndef INET
-#  include <netinet/in.h>
-# endif
-#include <netinet/ip6.h>
-#include <netinet6/ip6_var.h>
-#endif
-#ifdef CCITT 
-#undef PS	/* XXX namespace collision */
-#include <netccitt/x25.h>
-#include <netccitt/pk.h>
-#include <netccitt/pk_extern.h>
-#undef PS	/* XXX namespace collision */
-#endif 
-#ifdef NS
-#include <netns/ns_var.h>
-#endif
-#ifdef ISO
-#include <netiso/iso.h>
-#include <netiso/clnp.h>
-#endif
-#ifdef NETATALK
-#include <netatalk/at_extern.h>
-#endif
-#if NPPP > 0
-#include <net/ppp_defs.h>
-#include <net/if_ppp.h>
-#endif
 
 /* prototypes */
 void identifycpu __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.97 2000/06/29 08:28:23 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.98 2000/07/02 04:40:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,10 +43,6 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_atalk.h"
-#include "opt_inet.h"
-#include "opt_iso.h"
-#include "opt_ns.h"
 #include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
@@ -776,38 +772,6 @@ badbaddr(addr, size)
 /*
  * Network interrupt handling
  */
-#include "arp.h"
-#include "ppp.h"
-
-#ifdef NPPP
-void	pppintr __P((void));
-#endif
-#ifdef INET
-void	ipintr __P((void));
-#endif
-#ifdef INET6
-void	ip6intr __P((void));
-#endif
-#ifdef NETATALK
-void	atintr __P((void));
-#endif
-#if NARP > 0
-void	arpintr __P((void));
-#endif
-#ifdef NS
-void	nsintr __P((void));
-#endif
-#ifdef ISO
-void	clnlintr __P((void));
-#endif
-#ifdef CCITT
-void	ccittintr __P((void));
-#endif
-#ifdef NATM
-void	natmintr __P((void));
-#endif
-
-
 static void
 netintr()
 {

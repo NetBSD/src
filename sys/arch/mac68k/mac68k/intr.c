@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.14 2000/06/29 08:15:12 mrg Exp $	*/
+/*	$NetBSD: intr.c,v 1.15 2000/07/02 04:40:38 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -39,12 +39,6 @@
 /*
  * Link and dispatch interrupts.
  */
-
-#include "opt_inet.h"
-#include "opt_atalk.h"
-#include "opt_ccitt.h"
-#include "opt_iso.h"
-#include "opt_ns.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,19 +279,6 @@ intr_noint(arg)
 #endif
 	return 0;
 }
-
-/*
- * XXX Why on earth isn't this in a common file?!
- */
-void	netintr __P((void));
-void	arpintr __P((void));
-void	atintr __P((void));
-void	ipintr __P((void));
-void	ip6intr __P((void));
-void	nsintr __P((void));
-void	clnlintr __P((void));
-void	ccittintr __P((void));
-void	pppintr __P((void));
 
 void
 netintr()

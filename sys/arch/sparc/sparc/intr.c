@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.46 2000/06/29 07:40:10 mrg Exp $ */
+/*	$NetBSD: intr.c,v 1.47 2000/07/02 04:40:44 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,24 +43,18 @@
  *
  *	@(#)intr.c	8.3 (Berkeley) 11/11/93
  */
-#include "opt_inet.h"
-#include "opt_atalk.h"
-#include "opt_iso.h"
+
 #include "opt_multiprocessor.h"
-#include "opt_ns.h"
-#include "opt_natm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/socket.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 
 #include <net/netisr.h>
-#include <net/if.h>
 
 #include <machine/cpu.h>
 #include <machine/ctlreg.h>
@@ -70,33 +64,6 @@
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/cpuvar.h>
 
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#include <netinet/ip_var.h>
-#endif
-#ifdef INET6
-# ifndef INET
-#  include <netinet/in.h>
-# endif
-#include <netinet/ip6.h>
-#include <netinet6/ip6_var.h>
-#endif
-#ifdef NS
-#include <netns/ns_var.h>
-#endif
-#ifdef ISO
-#include <netiso/iso.h>
-#include <netiso/clnp.h>
-#endif
-#ifdef NETATALK
-#include <netatalk/at_extern.h>
-#endif
-#include "ppp.h"
-#if NPPP > 0
-#include <net/ppp_defs.h>
-#include <net/if_ppp.h>
-#endif
 #include "com.h"
 #if NCOM > 0
 extern void comsoft __P((void));

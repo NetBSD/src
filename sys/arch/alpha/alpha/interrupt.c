@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.49 2000/06/29 09:02:54 mrg Exp $ */
+/* $NetBSD: interrupt.c,v 1.50 2000/07/02 04:40:33 cgd Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,16 +70,9 @@
 
 #include "opt_multiprocessor.h"
 
-#include "opt_inet.h"    
-#include "opt_atalk.h"
-#include "opt_ccitt.h"   
-#include "opt_iso.h"
-#include "opt_ns.h"
-#include "opt_natm.h" 
-
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.49 2000/06/29 09:02:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.50 2000/07/02 04:40:33 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,49 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.49 2000/06/29 09:02:54 mrg Exp $");
 #include <machine/cpuvar.h>
 
 /* XXX Network interrupts should be converted to new softintrs */
-#include <sys/socket.h>
 #include <net/netisr.h>
-#include <net/if.h>
-
-#ifdef INET
-#include <net/route.h> 
-#include <netinet/in.h>
-#include <netinet/ip_var.h>
-#include "arp.h"
-#if NARP > 0
-#include <netinet/if_inarp.h>
-#endif
-#endif
-#ifdef INET6
-# ifndef INET
-#  include <netinet/in.h>
-# endif
-#include <netinet/ip6.h> 
-#include <netinet6/ip6_var.h>
-#endif
-#ifdef NS
-#include <netns/ns_var.h>
-#endif
-#ifdef ISO
-#include <netiso/iso.h>
-#include <netiso/clnp.h>
-#endif
-#ifdef CCITT
-#include <netccitt/x25.h>
-#include <netccitt/pk.h>
-#include <netccitt/pk_extern.h>
-#endif
-#ifdef NATM
-#include <netnatm/natm.h>
-#endif
-#ifdef NETATALK
-#include <netatalk/at_extern.h>
-#endif
-#include "ppp.h"
-#if NPPP > 0
-#include <net/ppp_defs.h>
-#include <net/if_ppp.h>
-#endif
 
 #include <uvm/uvm_extern.h>
 

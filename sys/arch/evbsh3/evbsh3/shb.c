@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.9 2000/03/21 04:42:57 itojun Exp $	*/
+/*	$NetBSD: shb.c,v 1.10 2000/07/02 04:40:37 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -28,13 +28,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include "opt_atalk.h"
-#include "opt_ccitt.h"
-#include "opt_inet.h"
-#include "opt_iso.h"
-#include "opt_natm.h"
-#include "opt_ns.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -679,20 +672,6 @@ Xsoftserial(void)
 	scifsoft(NULL);
 #endif
 }
-#endif
-
-#ifdef INET
-void arpintr __P((void));
-void ipintr __P((void));
-void pppintr __P((void));
-#endif
-
-#ifdef INET6
-void ip6intr __P((void));
-#endif
-
-#ifdef NS
-void nsintr __P((void));
 #endif
 
 void

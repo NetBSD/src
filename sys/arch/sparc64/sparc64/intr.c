@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.27 2000/06/30 22:58:02 eeh Exp $ */
+/*	$NetBSD: intr.c,v 1.28 2000/07/02 04:40:45 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,58 +44,21 @@
  *	@(#)intr.c	8.3 (Berkeley) 11/11/93
  */
 
-#include "opt_inet.h"
-#include "opt_atalk.h"
-#include "opt_iso.h"
-#include "opt_ns.h"
-#include "opt_ccitt.h"
-#include "opt_natm.h"
 #include "opt_ddb.h"
-#include "ppp.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/malloc.h>
 
 #include <dev/cons.h>
 
 #include <net/netisr.h>
-#include <net/if.h>
 
 #include <machine/cpu.h>
 #include <machine/ctlreg.h>
 #include <machine/instr.h>
 #include <machine/trap.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#include <netinet/ip_var.h>
-#endif
-#ifdef INET6
-# ifndef INET
-#  include <netinet/in.h>
-# endif
-#include <netinet/ip6.h>
-#include <netinet6/ip6_var.h>
-#endif
-#ifdef NS
-#include <netns/ns_var.h>
-#endif
-#ifdef ISO
-#include <netiso/iso.h>
-#include <netiso/clnp.h>
-#endif
-#ifdef NETATALK
-#include <netatalk/at_extern.h>
-#endif
-#include "ppp.h"
-#if NPPP > 0
-#include <net/ppp_defs.h>
-#include <net/if_ppp.h>
-#endif
 
 /*
  * The following array is to used by locore.s to map interrupt packets
@@ -153,8 +116,6 @@ strayintr(fp, vectored)
 	Debugger();
 #endif
 }
-
-#include "arp.h"
 
 /*
  * Level 1 software interrupt (could also be Sbus level 1 interrupt).
