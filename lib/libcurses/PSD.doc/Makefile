@@ -1,4 +1,5 @@
-#	@(#)Makefile	8.2 (Berkeley) 5/23/94
+#	$NetBSD: Makefile,v 1.7 1998/01/09 04:12:02 perry Exp $
+#	from: @(#)Makefile	8.2 (Berkeley) 5/23/94
 
 DIR=	psd/19.curses
 SRCS=	Master

@@ -1,3 +1,5 @@
+#	$NetBSD: README,v 1.2 1998/01/09 04:12:00 perry Exp $
+
 This is a nearly-public-domain reimplementation of the V8 regexp(3) package.
 It gives C programs the ability to use egrep-style regular expressions, and
 does it in a much cleaner fashion than the analogous routines in SysV.

@@ -1,3 +1,5 @@
+#	$NetBSD: checktab.awk,v 1.2 1998/01/09 04:11:57 perry Exp $
+
 # Check tz tables for consistency.
 
 # Contributed by Paul Eggert <eggert@twinsun.com>.
