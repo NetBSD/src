@@ -30,6 +30,8 @@ int	ntp_optopt;	/* for compatibility, option character checked */
 static char	*scan = NULL;	/* Private scan pointer. */
 static char	*prog = "amnesia";
 
+static int badopt __P((char *, int));
+
 /*
  * Print message about a bad option.
  */

@@ -12,6 +12,8 @@
 #include <time.h>
 #endif
 
+char *humanlogtime __P((void));
+
 static char *months[] = {
         "Jan", "Feb", "Mar", "Apr", "May", "Jun",
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
