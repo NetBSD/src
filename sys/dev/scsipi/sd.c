@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.160 2000/05/16 05:45:52 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.161 2000/05/23 10:20:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -782,6 +782,10 @@ sddone(xs)
 		/* Flush completed, no longer dirty. */
 		sd->flags &= ~(SDF_FLUSHING|SDF_DIRTY);
 	}
+	if (sd->flags & SDF_RESTART) {
+		sd->flags &= ~SDF_RESTART;
+		return;
+	}
 
 	if (xs->bp != NULL) {
 		disk_unbusy(&sd->sc_dk, xs->bp->b_bcount - xs->bp->b_resid);
@@ -1145,10 +1149,17 @@ sd_interpret_sense(xs)
 				    sd->sc_dev.dv_xname);
 				retval = EIO;
 			} else {
+				if (sd->flags & SDF_RESTART)
+					return SCSIRET_RETRY;
+				sd->flags |= SDF_RESTART;
 				printf("%s: respinning up disk\n",
 				    sd->sc_dev.dv_xname);
 				retval = scsipi_start(sd->sc_link, SSS_START,
-				    XS_CTL_URGENT | XS_CTL_NOSLEEP);
+				    XS_CTL_URGENT | XS_CTL_NOSLEEP |
+				    ((xs->xs_control & XS_CTL_ASYNC) ?
+				    XS_CTL_ASYNC : 0));
+				if ((xs->xs_control & XS_CTL_ASYNC) == 0)
+					sd->flags &= ~SDF_RESTART;
 				if (retval != 0) {
 					printf(
 					    "%s: respin of disk failed - %d\n",
