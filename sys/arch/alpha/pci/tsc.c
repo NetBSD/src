@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.3 2000/06/25 19:17:40 thorpej Exp $ */
+/* $NetBSD: tsc.c,v 1.4 2000/06/26 18:19:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.3 2000/06/25 19:17:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.4 2000/06/26 18:19:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,6 +241,7 @@ tsp_bus_get_window(type, window, abst)
 {
 	struct tsp_config *tsp = &tsp_configuration[tsp_console_hose];
 	bus_space_tag_t st;
+	int error;
 
 	switch (type) {
 	case ALPHA_BUS_TYPE_PCI_IO:
@@ -255,5 +256,12 @@ tsp_bus_get_window(type, window, abst)
 		panic("tsp_bus_get_window");
 	}
 
-	return (alpha_bus_space_get_window(st, window, abst));
+	error = alpha_bus_space_get_window(st, window, abst);
+	if (error)
+		return (error);
+
+	abst->abst_sys_start = TS_PHYSADDR(abst->abst_sys_start);
+	abst->abst_sys_end = TS_PHYSADDR(abst->abst_sys_end);
+
+	return (0);
 }
