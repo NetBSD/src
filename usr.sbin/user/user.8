@@ -1,4 +1,4 @@
-.\" $NetBSD: user.8,v 1.12 2002/02/08 01:38:57 ross Exp $ */
+.\" $NetBSD: user.8,v 1.12.2.1 2002/06/04 12:10:08 lukem Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -43,7 +43,7 @@
 .Fl D
 .Op Fl b Ar base-dir
 .Op Fl e Ar expiry-time
-.Op Fl f Ar inactive-secs
+.Op Fl f Ar inactive-time
 .Op Fl g Ar gid/name/=uid
 .Op Fl L Ar login-class
 .Op Fl r Ar low..high
@@ -55,7 +55,7 @@
 .Op Fl c Ar comment
 .Op Fl d Ar home-dir
 .Op Fl e Ar expiry-time
-.Op Fl f Ar inactive-secs
+.Op Fl f Ar inactive-time
 .Op Fl g Ar gid/name/=uid
 .Op Fl k Ar skel-dir
 .Op Fl L Ar login-class
@@ -83,7 +83,7 @@
 .Op Fl c Ar comment
 .Op Fl d Ar home-dir
 .Op Fl e Ar expiry-time
-.Op Fl f Ar inactive-secs
+.Op Fl f Ar inactive-time
 .Op Fl g Ar gid/name/=uid
 .Op Fl L Ar login-class
 .Op Fl l Ar new-login
@@ -126,6 +126,7 @@ and
 .Xr chpass 1 ,
 .Xr group 5 ,
 .Xr passwd 5 ,
+.Xr usermgmt.conf 5 ,
 .Xr useradd 8 ,
 .Xr userdel 8 ,
 .Xr userinfo 8 ,
