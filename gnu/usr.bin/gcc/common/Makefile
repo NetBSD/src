@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1996/03/06 20:40:06 jtc Exp $
+#	$NetBSD: Makefile,v 1.4.4.1 1996/06/07 07:56:30 phil Exp $
 
 LIB=	cc1
 
@@ -34,66 +34,66 @@ all: insn-attr.h insn-flags.h insn-codes.h insn-config.h bc-opcode.h bc-opname.h
 
 beforedepend: insn-attr.h insn-flags.h insn-codes.h insn-config.h bc-opcode.h bc-opname.h bc-arity.h c-parse.h
 
-insn-attr.h: genattr
+insn-attr.h: genattr $(MD)
 	./genattr $(MD) > insn-attr.h
 
 CLEANFILES += insn-attr.h genattr genattr.o
 
-insn-flags.h: genflags
+insn-flags.h: genflags $(MD)
 	./genflags $(MD) > insn-flags.h
 
 CLEANFILES += insn-flags.h genflags genflags.o
 
-insn-codes.h: gencodes
+insn-codes.h: gencodes $(MD)
 	./gencodes $(MD) > insn-codes.h
 
 CLEANFILES += insn-codes.h gencodes gencodes.o
 
-insn-config.h: genconfig
+insn-config.h: genconfig $(MD)
 	./genconfig $(MD) > insn-config.h
 
 CLEANFILES += insn-config.h genconfig genconfig.o
 
-bc-opcode.h: bi-opcode
+bc-opcode.h: bi-opcode  $(BCDEF)
 	./bi-opcode < $(BCDEF) > bc-opcode.h
 
 CLEANFILES += bc-opcode.h bi-opcode bi-opcode.o
 
-bc-opname.h: bi-opname
+bc-opname.h: bi-opname  $(BCDEF)
 	./bi-opname < $(BCDEF) > bc-opname.h
 
 CLEANFILES += bc-opname.h bi-opname bi-opname.o
 
-bc-arity.h: bi-arity
+bc-arity.h: bi-arity  $(BCDEF)
 	./bi-arity < $(BCDEF) > bc-arity.h
 
 CLEANFILES += bc-arity.h bi-arity bi-arity.o
 
-insn-peep.c: genpeep
+insn-peep.c: genpeep $(MD)
 	./genpeep $(MD) > insn-peep.c
 CLEANFILES += insn-peep.c genpeep genpeep.o
 
-insn-opinit.c: genopinit
+insn-opinit.c: genopinit $(MD)
 	./genopinit $(MD) > insn-opinit.c
 CLEANFILES += insn-opinit.c genopinit genopinit.o
 
-insn-recog.c: genrecog
+insn-recog.c: genrecog $(MD)
 	./genrecog $(MD) > insn-recog.c
 CLEANFILES += insn-recog.c genrecog genrecog.o
 
-insn-extract.c: genextract
+insn-extract.c: genextract $(MD)
 	./genextract $(MD) > insn-extract.c
 CLEANFILES += insn-extract.c genextract genextract.o
 
-insn-output.c: genoutput
+insn-output.c: genoutput $(MD)
 	./genoutput $(MD) > insn-output.c
 CLEANFILES += insn-output.c genoutput genoutput.o
 
-insn-emit.c: genemit
+insn-emit.c: genemit $(MD)
 	./genemit $(MD) > insn-emit.c
 CLEANFILES += insn-emit.c genemit genemit.o
 
-insn-attrtab.c: genattrtab
+insn-attrtab.c: genattrtab $(MD)
 	./genattrtab $(MD) > insn-attrtab.c
 CLEANFILES += insn-attrtab.c genattrtab genattrtab.o
 
