@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_lock.c,v 1.27 2000/04/29 03:31:46 thorpej Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.28 2000/05/02 04:32:33 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -89,6 +89,10 @@
 #include <sys/systm.h>
 #include <machine/cpu.h>
 
+#if defined(__HAVE_ATOMIC_OPERATIONS)
+#include <machine/atomic.h>
+#endif
+
 #if defined(LOCKDEBUG)
 #include <sys/syslog.h>
 /*
@@ -110,8 +114,12 @@ int	lock_debug_syslog = 0;	/* defaults to printf, but can be patched */
 
 #if defined(LOCKDEBUG) || defined(DIAGNOSTIC) /* { */
 #if defined(MULTIPROCESSOR) /* { */
+#if defined(__HAVE_ATOMIC_OPERATIONS) /* { */
 #define	COUNT_CPU(cpu_id, x)						\
-	/* atomic_add_ulong(&curcpu().ci_spin_locks, (x)) */
+	atomic_add_ulong(&curcpu().ci_spin_locks, (x))
+#else
+#define	COUNT_CPU(cpu_id, x)	/* not safe */
+#endif /* __HAVE_ATOMIC_OPERATIONS */ /* } */
 #else
 u_long	spin_locks;
 #define	COUNT_CPU(cpu_id, x)	spin_locks += (x)
@@ -360,7 +368,6 @@ lockmgr(lkp, flags, interlkp)
 	}
 	cpu_id = cpu_number();
 
-#ifdef DIAGNOSTIC /* { */
 	/*
 	 * Once a lock has drained, the LK_DRAINING flag is set and an
 	 * exclusive lock is returned. The only valid operation thereafter
@@ -373,17 +380,18 @@ lockmgr(lkp, flags, interlkp)
 	 * the lock by specifying LK_REENABLE.
 	 */
 	if (lkp->lk_flags & (LK_DRAINING|LK_DRAINED)) {
+#ifdef DIAGNOSTIC /* { */
 		if (lkp->lk_flags & LK_DRAINED)
 			panic("lockmgr: using decommissioned lock");
 		if ((flags & LK_TYPE_MASK) != LK_RELEASE ||
 		    WEHOLDIT(lkp, pid, cpu_id) == 0)
 			panic("lockmgr: non-release on draining lock: %d\n",
 			    flags & LK_TYPE_MASK);
+#endif /* DIAGNOSTIC */ /* } */
 		lkp->lk_flags &= ~LK_DRAINING;
 		if ((flags & LK_REENABLE) == 0)
 			lkp->lk_flags |= LK_DRAINED;
 	}
-#endif /* DIAGNOSTIC */ /* } */
 
 	switch (flags & LK_TYPE_MASK) {
 
@@ -672,8 +680,12 @@ struct simplelock simplelock_list_slock = SIMPLELOCK_INITIALIZER;
 #define	SLOCK_LIST_UNLOCK()						\
 	__cpu_simple_unlock(&simplelock_list_slock->lock_data)
 
+#if defined(__HAVE_ATOMIC_OPERATIONS) /* { */
 #define	SLOCK_COUNT(x)							\
-	/* atomic_add_ulong(&curcpu()->ci_simple_locks, (x)) */
+	atomic_add_ulong(&curcpu()->ci_simple_locks, (x))
+#else
+#define	SLOCK_COUNT(x)		/* not safe */
+#endif /* __HAVE_ATOMIC_OPERATIONS */ /* } */
 #else
 u_long simple_locks;
 
