@@ -1,4 +1,4 @@
-/*	$NetBSD: checknr.c,v 1.7 2001/01/16 02:50:29 cgd Exp $	*/
+/*	$NetBSD: checknr.c,v 1.8 2002/01/21 16:40:19 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)checknr.c	8.1 (Berkeley) 6/6/93";
 #else 
-__RCSID("$NetBSD: checknr.c,v 1.7 2001/01/16 02:50:29 cgd Exp $");
+__RCSID("$NetBSD: checknr.c,v 1.8 2002/01/21 16:40:19 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -179,24 +179,22 @@ int	sflag;		/* -s: ignore \s */
 int	ncmds;		/* size of knowncmds */
 int	slot;		/* slot in knowncmds found by binsrch */
 
-void	addcmd __P((char *));
-void	addmac __P((char *));
-int	binsrch __P((char *));
-void	checkknown __P((char *));
-void	chkcmd __P((char *, char *));
-void	complain __P((int));
-int	eq __P((const void *, const void *));
-int	main __P((int, char **));
-void	nomatch __P((char *));
-void	pe __P((int));
-void	process __P((FILE *));
-void	prop __P((int));
-void	usage __P((void));
+void	addcmd(char *);
+void	addmac(char *);
+int	binsrch(char *);
+void	checkknown(char *);
+void	chkcmd(char *, char *);
+void	complain(int);
+int	eq(const void *, const void *);
+int	main(int, char **);
+void	nomatch(char *);
+void	pe(int);
+void	process(FILE *);
+void	prop(int);
+void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	FILE *f;
 	int i;
@@ -275,15 +273,14 @@ main(argc, argv)
 }
 
 void
-usage()
+usage(void)
 {
 	printf("Usage: checknr -s -f -a.xx.yy.xx.yy... -c.xx.xx.xx...\n");
 	exit(1);
 }
 
 void
-process(f)
-	FILE *f;
+process(FILE *f)
 {
 	int i, n;
 	char mac[5];	/* The current macro or nroff command */
@@ -379,8 +376,7 @@ process(f)
 }
 
 void
-complain(i)
-	int i;
+complain(int i)
 {
 	pe(stk[i].lno);
 	printf("Unmatched ");
@@ -389,8 +385,7 @@ complain(i)
 }
 
 void
-prop(i)
-	int i;
+prop(int i)
 {
 	if (stk[i].pl == 0)
 		printf(".%s", br[stk[i].opno].opbr);
@@ -409,9 +404,7 @@ prop(i)
 }
 
 void
-chkcmd(line, mac)
-	char *line;
-	char *mac;
+chkcmd(char *line, char *mac)
 {
 	int i;
 
@@ -447,8 +440,7 @@ chkcmd(line, mac)
 }
 
 void
-nomatch(mac)
-	char *mac;
+nomatch(char *mac)
 {
 	int i, j;
 
@@ -493,16 +485,14 @@ nomatch(mac)
 
 /* eq: are two strings equal? */
 int
-eq(s1, s2)
-	const void *s1, *s2;
+eq(const void *s1, const void *s2)
 {
 	return (strcmp((char *)s1, (char *)s2) == 0);
 }
 
 /* print the first part of an error message, given the line number */
 void
-pe(lineno)
-	int lineno;
+pe(int lineno)
 {
 	if (nfiles > 1)
 		printf("%s: ", cfilename);
@@ -510,8 +500,7 @@ pe(lineno)
 }
 
 void
-checkknown(mac)
-	char *mac;
+checkknown(char *mac)
 {
 
 	if (eq(mac, "."))
@@ -529,8 +518,7 @@ checkknown(mac)
  * We have a .de xx line in "line".  Add xx to the list of known commands.
  */
 void
-addcmd(line)
-	char *line;
+addcmd(char *line)
 {
 	char *mac;
 
@@ -561,8 +549,7 @@ addcmd(line)
  * nroff programs, and the register loop below is pretty fast.
  */
 void
-addmac(mac)
-	char *mac;
+addmac(char *mac)
 {
 	char **src, **dest, **loc;
 
@@ -594,8 +581,7 @@ printf("after: %s %s %s %s %s, %d cmds\n", knowncmds[slot-2], knowncmds[slot-1],
  * If found, return the index.  If not, return -1.
  */
 int
-binsrch(mac)
-	char *mac;
+binsrch(char *mac)
 {
 	char *p;	/* pointer to current cmd in list */
 	int d;		/* difference if any */
