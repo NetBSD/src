@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.130 2000/04/02 20:39:14 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.131 2000/04/10 00:48:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.130 2000/04/02 20:39:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.131 2000/04/10 00:48:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3245,10 +3245,9 @@ pmap_physpage_alloc(usage, pap)
 	struct pv_head *pvh;
 	paddr_t pa;
 
-	pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
+	pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE|UVM_PGA_ZERO);
 	if (pg != NULL) {
 		pa = VM_PAGE_TO_PHYS(pg);
-		pmap_zero_page(pa);
 
 		pvh = pa_to_pvh(pa);
 		simple_lock(&pvh->pvh_slock);
