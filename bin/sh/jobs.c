@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.58 2003/08/07 09:05:33 agc Exp $	*/
+/*	$NetBSD: jobs.c,v 1.59 2003/08/26 18:12:33 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.58 2003/08/07 09:05:33 agc Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.59 2003/08/26 18:12:33 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -167,7 +167,7 @@ setjobctl(int on)
 #ifdef FIOCLEX
 		err = ioctl(ttyfd, FIOCLEX, 0);
 #elif FD_CLOEXEC
-		err = fcntl(ttyfd, FD_SETFD,
+		err = fcntl(ttyfd, F_SETFD,
 		    fcntl(ttyfd, F_GETFD, 0) | FD_CLOEXEC);
 #endif
 		if (err == -1) {
