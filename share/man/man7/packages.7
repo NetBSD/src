@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.28.4.4 2000/08/23 23:41:25 tron Exp $
+.\"	$NetBSD: packages.7,v 1.28.4.5 2000/09/11 20:16:40 hubertf Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -295,6 +295,11 @@ Assume package unpacks directly into
 There's no work directory at all; package does this someplace else.
 .It NO_DEPENDS
 Don't verify build of dependencies.
+.It CHECK_SHLIBS
+If set to 
+.Dq NO ,
+do not run 'check-shlibs' even if PKG_DEVELOPER is set. This prevents
+errors on emul/compat packages (e.g. Linux binaries, ...).
 .It NOCLEANDEPENDS
 Don't clean dependent packages
 .It BROKEN	
