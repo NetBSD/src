@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.101 2001/12/15 11:41:09 soren Exp $	*/
+/*	$NetBSD: elink3.c,v 1.102 2001/12/28 20:35:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.101 2001/12/15 11:41:09 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.102 2001/12/28 20:35:46 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -287,7 +287,7 @@ ep_finish_reset(iot, ioh)
 
 	for (i = 0; i < 10000; i++) {
 		if ((bus_space_read_2(iot, ioh, ELINK_STATUS) &
-		    S_COMMAND_IN_PROGRESS) == 0)
+		    COMMAND_IN_PROGRESS) == 0)
 			break;
 		DELAY(10);
 	}
@@ -327,7 +327,7 @@ ep_discard_rxtop(iot, ioh)
 	 */
 	for (i = 0; i < 8000; i++) {
 		if ((bus_space_read_2(iot, ioh, ELINK_STATUS) &
-		    S_COMMAND_IN_PROGRESS) == 0)
+		    COMMAND_IN_PROGRESS) == 0)
 		    return;
 	}
 
@@ -833,11 +833,9 @@ epinit(ifp)
 
 	/* Enable interrupts. */
 	bus_space_write_2(iot, ioh, ELINK_COMMAND,
-	    SET_RD_0_MASK | S_CARD_FAILURE | S_RX_COMPLETE | S_TX_COMPLETE |
-	    S_TX_AVAIL);
+	    SET_RD_0_MASK | WATCHED_INTERRUPTS);
 	bus_space_write_2(iot, ioh, ELINK_COMMAND,
-	    SET_INTR_MASK | S_CARD_FAILURE | S_RX_COMPLETE | S_TX_COMPLETE |
-	    S_TX_AVAIL);
+	    SET_INTR_MASK | WATCHED_INTERRUPTS);
 
 	/*
 	 * Attempt to get rid of any stray interrupts that occurred during
@@ -1280,7 +1278,7 @@ readcheck:
 		/* We received a complete packet. */
 		u_int16_t status = bus_space_read_2(iot, ioh, ELINK_STATUS);
 
-		if ((status & S_INTR_LATCH) == 0) {
+		if ((status & INTR_LATCH) == 0) {
 			/*
 			 * No interrupt, read the packet and continue
 			 * Is  this supposed to happen? Is my motherboard 
@@ -1415,17 +1413,15 @@ epintr(arg)
 	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (0);
 
-	for (;;) {
-		bus_space_write_2(iot, ioh, ELINK_COMMAND, C_INTR_LATCH);
 
+	for (;;) {
 		status = bus_space_read_2(iot, ioh, ELINK_STATUS);
 
-		if ((status & (S_TX_COMPLETE | S_TX_AVAIL |
-			       S_RX_COMPLETE | S_CARD_FAILURE)) == 0) {
-			if ((status & S_INTR_LATCH) == 0) {
+		if ((status & WATCHED_INTERRUPTS) == 0) {
+			if ((status & INTR_LATCH) == 0) {
 #if 0
-				printf("%s: intr latch cleared %d\n",
-				       sc->sc_dev.dv_xname, status);
+				printf("%s: intr latch cleared\n",
+				       sc->sc_dev.dv_xname);
 #endif
 				break;
 			}
@@ -1440,33 +1436,26 @@ epintr(arg)
 		 * interrupts occasionally.
 		 */
 		bus_space_write_2(iot, ioh, ELINK_COMMAND, ACK_INTR |
-				  (status & (C_INTR_LATCH |
-					     C_CARD_FAILURE |
-					     C_TX_COMPLETE |
-					     C_TX_AVAIL |
-					     C_RX_COMPLETE |
-					     C_RX_EARLY |
-					     C_INT_RQD |
-					     C_UPD_STATS)));
+		    (status & (INTR_LATCH | ALL_INTERRUPTS)));
 
 #if 0
 		status = bus_space_read_2(iot, ioh, ELINK_STATUS);
 
 		printf("%s: intr%s%s%s%s\n", sc->sc_dev.dv_xname,
-		       (status & S_RX_COMPLETE)?" RX_COMPLETE":"",
-		       (status & S_TX_COMPLETE)?" TX_COMPLETE":"",
-		       (status & S_TX_AVAIL)?" TX_AVAIL":"",
-		       (status & S_CARD_FAILURE)?" CARD_FAILURE":"");
+		       (status & RX_COMPLETE)?" RX_COMPLETE":"",
+		       (status & TX_COMPLETE)?" TX_COMPLETE":"",
+		       (status & TX_AVAIL)?" TX_AVAIL":"",
+		       (status & CARD_FAILURE)?" CARD_FAILURE":"");
 #endif
 
-		if (status & S_RX_COMPLETE) {
+		if (status & RX_COMPLETE) {
 			epread(sc);
 		}
-		if (status & S_TX_AVAIL) {
+		if (status & TX_AVAIL) {
 			sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
 			epstart(&sc->sc_ethercom.ec_if);
 		}
-		if (status & S_CARD_FAILURE) {
+		if (status & CARD_FAILURE) {
 			printf("%s: adapter failure (%x)\n",
 			    sc->sc_dev.dv_xname, status);
 #if 1
@@ -1476,7 +1465,7 @@ epintr(arg)
 #endif
 			return (1);
 		}
-		if (status & S_TX_COMPLETE) {
+		if (status & TX_COMPLETE) {
 			eptxstat(sc);
 			epstart(ifp);
 		}
@@ -1836,7 +1825,7 @@ epstop(ifp, disable)
 	ep_reset_cmd(sc, ELINK_COMMAND, RX_RESET);
 	ep_reset_cmd(sc, ELINK_COMMAND, TX_RESET);
 
-	bus_space_write_2(iot, ioh, ELINK_COMMAND, C_INTR_LATCH);
+	bus_space_write_2(iot, ioh, ELINK_COMMAND, ACK_INTR | INTR_LATCH);
 	bus_space_write_2(iot, ioh, ELINK_COMMAND, SET_RD_0_MASK);
 	bus_space_write_2(iot, ioh, ELINK_COMMAND, SET_INTR_MASK);
 	bus_space_write_2(iot, ioh, ELINK_COMMAND, SET_RX_FILTER);

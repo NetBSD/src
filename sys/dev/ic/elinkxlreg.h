@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlreg.h,v 1.9 2001/11/28 23:46:42 christos Exp $	*/
+/*	$NetBSD: elinkxlreg.h,v 1.10 2001/12/28 20:35:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -134,13 +134,13 @@
 /*
  * Defines for the interrupt status register, only for the 90x[B]
  */
-#define S_HOST_ERROR		0x0002
-#define S_LINK_EVENT		0x0100
-#define S_DN_COMPLETE		0x0200
-#define S_UP_COMPLETE		0x0400
+#define HOST_ERROR		0x0002
+#define LINK_EVENT		0x0100
+#define DN_COMPLETE		0x0200
+#define UP_COMPLETE		0x0400
 
-#define S_MASK \
-    (S_HOST_ERROR | S_TX_COMPLETE | S_UPD_STATS | S_DN_COMPLETE | S_UP_COMPLETE)
+#define XL_WATCHED_INTERRUPTS \
+    (HOST_ERROR | TX_COMPLETE | UPD_STATS | DN_COMPLETE | UP_COMPLETE)
 
 
 /*
