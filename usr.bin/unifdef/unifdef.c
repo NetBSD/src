@@ -1,4 +1,4 @@
-/*	$NetBSD: unifdef.c,v 1.8 2000/07/03 02:51:36 matt Exp $	*/
+/*	$NetBSD: unifdef.c,v 1.9 2003/07/04 04:20:05 itojun Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1993\n\
 #if 0
 static char sccsid[] = "@(#)unifdef.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: unifdef.c,v 1.8 2000/07/03 02:51:36 matt Exp $");
+__RCSID("$NetBSD: unifdef.c,v 1.9 2003/07/04 04:20:05 itojun Exp $");
 #endif				/* not lint */
 
 /*
@@ -378,11 +378,8 @@ checkline(cursym)
 		return LT_LEOF;
 
 	retval = LT_PLAIN;
-	if (*(cp = tline) != '#'
-	    || incomment
-	    || inquote == QUOTE_SINGLE
-	    || inquote == QUOTE_DOUBLE
-	    )
+	if (*(cp = tline) != '#' || incomment || inquote == QUOTE_SINGLE ||
+	    inquote == QUOTE_DOUBLE)
 		goto eol;
 
 	cp = skipcomment(++cp);
@@ -397,55 +394,47 @@ checkline(cursym)
 	if (strcmp(keyword, "ifdef") == 0) {
 		retval = YES;
 		goto ifdef;
-	} else
-		if (strcmp(keyword, "ifndef") == 0) {
-			retval = NO;
+	} else if (strcmp(keyword, "ifndef") == 0) {
+		retval = NO;
 	ifdef:
-			scp = cp = skipcomment(++cp);
-			if (incomment) {
-				retval = LT_PLAIN;
-				goto eol;
-			} {
-				int     symind;
+		scp = cp = skipcomment(++cp);
+		if (incomment) {
+			retval = LT_PLAIN;
+			goto eol;
+		}
+		{
+			int     symind;
 
-				if ((symind = findsym(scp)) >= 0)
-					retval = (retval ^ true[*cursym = symind])
-					    ? LT_FALSE : LT_TRUE;
-				else
-					retval = LT_OTHER;
-			}
-		} else
-			if (strcmp(keyword, "if") == 0)
-				retval = LT_IF;
+			if ((symind = findsym(scp)) >= 0)
+				retval = (retval ^ true[*cursym = symind])
+				    ? LT_FALSE : LT_TRUE;
 			else
-				if (strcmp(keyword, "else") == 0)
-					retval = LT_ELSE;
-				else
-					if (strcmp(keyword, "endif") == 0)
-						retval = LT_ENDIF;
+				retval = LT_OTHER;
+		}
+	} else if (strcmp(keyword, "if") == 0)
+		retval = LT_IF;
+	else if (strcmp(keyword, "else") == 0)
+		retval = LT_ELSE;
+	else if (strcmp(keyword, "endif") == 0)
+		retval = LT_ENDIF;
 
 eol:
 	if (!text && reject != REJ_IGNORE)
 		for (; *cp;) {
 			if (incomment)
 				cp = skipcomment(cp);
+			else if (inquote == QUOTE_SINGLE)
+				cp = skipquote(cp, QUOTE_SINGLE);
+			else if (inquote == QUOTE_DOUBLE)
+				cp = skipquote(cp, QUOTE_DOUBLE);
+			else if (*cp == '/' && (cp[1] == '*' || cp[1] == '/'))
+				cp = skipcomment(cp);
+			else if (*cp == '\'')
+				cp = skipquote(cp, QUOTE_SINGLE);
+			else if (*cp == '"')
+				cp = skipquote(cp, QUOTE_DOUBLE);
 			else
-				if (inquote == QUOTE_SINGLE)
-					cp = skipquote(cp, QUOTE_SINGLE);
-				else
-					if (inquote == QUOTE_DOUBLE)
-						cp = skipquote(cp, QUOTE_DOUBLE);
-					else
-						if (*cp == '/' && (cp[1] == '*' || cp[1] == '/'))
-							cp = skipcomment(cp);
-						else
-							if (*cp == '\'')
-								cp = skipquote(cp, QUOTE_SINGLE);
-							else
-								if (*cp == '"')
-									cp = skipquote(cp, QUOTE_DOUBLE);
-								else
-									cp++;
+				cp++;
 		}
 	return retval;
 }
