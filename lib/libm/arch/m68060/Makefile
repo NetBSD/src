@@ -1,6 +1,8 @@
-# $NetBSD: Makefile,v 1.2 2000/04/14 20:24:40 is Exp $
+# $NetBSD: Makefile,v 1.3 2002/08/19 09:41:32 lukem Exp $
 
-M060SP=		../../../../sys/arch/m68k/060sp
+.include <bsd.own.mk>
+
+M060SP=		${NETBSDSRCDIR}/sys/arch/m68k/060sp
 ASM2GAS=	${M060SP}/asm2gas
 FPLSP_SA=	${M060SP}/dist/fplsp.sa
 

@@ -1,10 +1,13 @@
-# $NetBSD: Makefile,v 1.3 2001/12/12 00:51:02 tv Exp $
+# $NetBSD: Makefile,v 1.4 2002/08/19 09:41:34 lukem Exp $
 
-DIST=		${.CURDIR}/../../crypto/dist
+NOLINT=		# defined
+
+.include <bsd.own.mk>
+
+DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH:		${DIST}/heimdal/lib/sl
 
 WARNS?=		1
-NOLINT=		# defined
 
 LIB=		ss
 SRCS=		sl.c ss.c
@@ -13,10 +16,10 @@ INCSDIR=	/usr/include/krb5
 
 CPPFLAGS+= -I. \
 	 -I${DIST}/heimdal/lib/sl		\
-	 -I${.CURDIR}/../../include/heimdal	\
-	 -I${.CURDIR}/../../lib/libcom_err	\
+	 -I${NETBSDSRCDIR}/include/heimdal	\
+	 -I${NETBSDSRCDIR}/lib/libcom_err	\
 	 -I${DIST}/heimdal/lib/com_err		\
-	 -I${.CURDIR}/../../lib/libroken	\
+	 -I${NETBSDSRCDIR}/lib/libroken		\
 	 -I${DIST}/heimdal/lib/roken		\
 	 -DHAVE_CONFIG_H
 

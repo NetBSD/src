@@ -1,15 +1,17 @@
-# $NetBSD: Makefile,v 1.4 2001/12/12 00:51:06 tv Exp $
+# $NetBSD: Makefile,v 1.5 2002/08/19 09:41:35 lukem Exp $
 
-DIST=		${.CURDIR}/../../crypto/dist
+NOLINKLIB=	# defined
+NOPIC=		# defined
+NOPROFILE=	# defined
+
+.include <bsd.own.mk>
+
+DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH:		${DIST}/heimdal/lib/vers
 
 MKLINT=		# defined
 
 LIB=		vers
-
-NOLINKLIB=	# defined
-NOPIC=		# defined
-NOPROFILE=	# defined
 
 includes: print_version.h
 
@@ -17,13 +19,13 @@ SRCS=		print_version.c
 DPSRCS=		print_version.h
 
 CPPFLAGS+= -I. \
-	-I${.CURDIR}/../../include/heimdal \
+	-I${NETBSDSRCDIR}/include/heimdal \
 	-I${DIST}/heimdal/lib/roken \
 	-DHAVE_CONFIG_H
  
-HOST_CPPFLAGS+=	-I${.CURDIR}/../../include/heimdal -DHAVE_CONFIG_H
+HOST_CPPFLAGS+=	-I${NETBSDSRCDIR}/include/heimdal -DHAVE_CONFIG_H
 
-make-print-version.lo: ${.CURDIR}/../../include/heimdal/version.h
+make-print-version.lo: ${NETBSDSRCDIR}/include/heimdal/version.h
 
 make-print-version: make-print-version.lo
 	${HOST_CC} ${HOST_LDFLAGS} -o ${.TARGET} ${.ALLSRC}

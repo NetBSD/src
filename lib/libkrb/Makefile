@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.16 2001/12/12 00:51:04 tv Exp $
+# $NetBSD: Makefile,v 1.17 2002/08/19 09:41:32 lukem Exp $
 
 NOLINT=		# defined
 
 .include <bsd.own.mk>
 
-DIST=		${.CURDIR}/../../crypto/dist
+DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH:		${DIST}/krb4/lib/krb ${DIST}/krb4/doc \
 		${DIST}/openssl/crypto/des ${DIST}/krb4/man
 
@@ -124,8 +124,8 @@ CPPFLAGS+= -I.					\
 	-I${DIST}/krb4/lib/krb			\
 	-I${DIST}/openssl/crypto		\
 	-I${DIST}/heimdal/lib/com_err		\
-	-I${.CURDIR}/../../include/heimdal	\
-	-I${.CURDIR}/../libroken		\
+	-I${NETBSDSRCDIR}/include/heimdal	\
+	-I${NETBSDSRCDIR}/lib/libroken		\
 	-I${DIST}/heimdal/lib/roken		\
 	-DHAVE_CONFIG_H
 
@@ -135,7 +135,7 @@ krb.h:	krb.h.in
 	sed 's,@DES_H@,openssl/des.h,' < ${.ALLSRC} > ${.TARGET}
 
 ktypes.h:
-	cp ${.CURDIR}/../../include/heimdal/$@ $@
+	cp ${NETBSDSRCDIR}/include/heimdal/$@ $@
 
 ${SRCS:.c=.o}: krb_err.h
 
