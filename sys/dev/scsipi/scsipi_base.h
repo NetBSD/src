@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.h,v 1.8 1998/08/15 10:10:58 mycroft Exp $	*/
+/*	$NetBSD: scsipi_base.h,v 1.9 1998/12/08 00:20:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,8 +35,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-extern LIST_HEAD(xs_free_list, scsipi_xfer) xs_free_list;
 
 struct scsipi_xfer *scsipi_get_xs __P((struct scsipi_link *, int));
 void scsipi_free_xs __P((struct scsipi_xfer *, int));
