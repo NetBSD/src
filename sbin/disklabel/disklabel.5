@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.5,v 1.19 2002/09/28 00:40:08 dbj Exp $
+.\"	$NetBSD: disklabel.5,v 1.20 2002/09/28 00:47:25 dbj Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -312,6 +312,7 @@ static const char *const dktypenames[] = {
 #define	FS_RAID		19	/* RAIDframe component */
 #define	FS_CCD		20	/* concatenated disk component */
 #define	FS_JFS2		21	/* IBM JFS2 */
+#define	FS_APPLEUFS	22	/* Apple UFS */
 
 #ifdef	FSTYPENAMES
 static const char *const fstypenames[] = {
@@ -337,6 +338,7 @@ static const char *const fstypenames[] = {
 	"RAID",
 	"ccd",
 	"jfs",
+	"Apple UFS",
 	NULL
 };
 #define FSMAXTYPES	(sizeof(fstypenames) / sizeof(fstypenames[0]) - 1)
