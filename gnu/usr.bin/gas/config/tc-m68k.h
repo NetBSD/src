@@ -25,7 +25,6 @@
 
 #define	MID_M68K	135
 #define	MID_M68K4K	136
-#include <machine/param.h>
 
 #define TC_M68K 1
 
@@ -33,7 +32,7 @@
 #define REVERSE_SORT_RELOCS
 #endif /* OLD_GAS */
 
-#define AOUT_MACHTYPE MID_MACHINE
+#define AOUT_MACHTYPE MID_M68K
 #define LOCAL_LABELS_FB
     
 #define tc_crawl_symbol_chain(a)	{;} /* not used */
