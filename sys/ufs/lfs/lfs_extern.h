@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.24.2.6 2002/12/11 06:51:44 thorpej Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.24.2.7 2002/12/19 00:59:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -184,7 +184,7 @@ void lfs_seglock(struct lfs *, unsigned long);
 void lfs_segunlock(struct lfs *);
 
 /* lfs_syscalls.c */
-int lfs_fastvget(struct mount *, ino_t, ufs_daddr_t, struct vnode **, struct dinode *, int *);
+int lfs_fastvget(struct mount *, ino_t, ufs_daddr_t, struct vnode **, struct dinode *);
 struct buf *lfs_fakebuf(struct lfs *, struct vnode *, int, size_t, caddr_t);
 
 /* lfs_vfsops.c */
