@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.43 2000/10/03 04:33:03 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.44 2000/11/04 15:54:36 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -661,6 +661,7 @@ umass_match_proto(struct umass_softc *sc, usbd_interface_handle iface,
 {
 	usb_device_descriptor_t *dd;
 	usb_interface_descriptor_t *id;
+	u_int vendor, product;
 
 	/*
 	 * Fill in sc->drive and sc->proto and return a match
@@ -673,9 +674,11 @@ umass_match_proto(struct umass_softc *sc, usbd_interface_handle iface,
 
 	sc->sc_udev = dev;
 	dd = usbd_get_device_descriptor(dev);
+	vendor = UGETW(dd->idVendor);
+	product = UGETW(dd->idProduct);
 
-	if (UGETW(dd->idVendor) == USB_VENDOR_SHUTTLE
-	    && UGETW(dd->idProduct) == USB_PRODUCT_SHUTTLE_EUSB) {
+	if (vendor == USB_VENDOR_SHUTTLE &&
+	    product == USB_PRODUCT_SHUTTLE_EUSB) {
 		sc->drive = SHUTTLE_EUSB;
 #if CBI_I
 		sc->proto = PROTO_ATAPI | PROTO_CBI_I;
@@ -688,8 +691,8 @@ umass_match_proto(struct umass_softc *sc, usbd_interface_handle iface,
 		return (UMATCH_VENDOR_PRODUCT);
 	}
 
-	if (UGETW(dd->idVendor) == USB_VENDOR_YEDATA
-	    && UGETW(dd->idProduct) == USB_PRODUCT_YEDATA_FLASHBUSTERU) {
+	if (vendor == USB_VENDOR_YEDATA &&
+	    product == USB_PRODUCT_YEDATA_FLASHBUSTERU) {
 
 		/* Revisions < 1.28 do not handle the interrupt endpoint
 		 * very well.
@@ -717,20 +720,19 @@ umass_match_proto(struct umass_softc *sc, usbd_interface_handle iface,
 		return (UMATCH_VENDOR_PRODUCT_REV);
 	}
 
-	if (UGETW(dd->idVendor) == USB_VENDOR_INSYSTEM
-	    && UGETW(dd->idProduct) == USB_PRODUCT_INSYSTEM_USBCABLE) {
+	if (vendor == USB_VENDOR_INSYSTEM &&
+	    product == USB_PRODUCT_INSYSTEM_USBCABLE) {
 		sc->drive = INSYSTEM_USBCABLE;
 		sc->proto = PROTO_ATAPI | PROTO_CBI;
 		sc->quirks |= NO_TEST_UNIT_READY | NO_START_STOP;
-		return(UMATCH_VENDOR_PRODUCT);
+		return (UMATCH_VENDOR_PRODUCT);
 	}
 
 	id = usbd_get_interface_descriptor(iface);
 	if (id == NULL || id->bInterfaceClass != UICLASS_MASS)
 		return (UMATCH_NONE);
 
-	if (UGETW(dd->idVendor) == USB_VENDOR_SONY
-	    && id->bInterfaceSubClass == 0xff) {
+	if (vendor == USB_VENDOR_SONY && id->bInterfaceSubClass == 0xff) {
 		/* 
 		 * Sony DSC devices set the sub class to 0xff
 		 * instead of 1 (RBC). Fix that here.
@@ -739,6 +741,10 @@ umass_match_proto(struct umass_softc *sc, usbd_interface_handle iface,
 		/* They also should be able to do higher speed. */
 		sc->transfer_speed = 500;
 	}
+
+	if (vendor == USB_VENDOR_FUJIPHOTO &&
+	    product == USB_PRODUCT_FUJIPHOTO_MASS0100)
+		sc->quirks |= NO_TEST_UNIT_READY | NO_START_STOP;
 
 	sc->subclass = id->bInterfaceSubClass;
 	sc->protocol = id->bInterfaceProtocol;
