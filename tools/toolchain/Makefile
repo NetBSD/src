@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2002/01/31 15:25:08 tv Exp $
+#	$NetBSD: Makefile,v 1.18 2002/02/11 21:24:09 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -20,5 +20,9 @@ INSTALL_TARGET=	install-binutils install-gas install-ld install-gcc
 ALL_TARGET+=	all-gdb
 INSTALL_TARGET+=install-gdb
 .endif
+
+bootstrap-libgcc: .configure_done
+	@echo 'Creating files needed for libgcc by a native bootstrap build.'
+	@MAKE=${MAKE:Q} sh ${.CURDIR}/mknative libgcc ${.CURDIR}/../..
 
 .include "${.CURDIR}/../Makefile.gnuhost"
