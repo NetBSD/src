@@ -49,10 +49,7 @@
 ;;   addr 0(_x(sb)), r0
 ;;   addd r0, r1
 ;;
-;; This was done through operand constraints (using "rmn" in place of "g"),
-;; but now we use a special predicate ns32k_gen_operand. This can safely
-;; be used everywhere general_operand would otherwise be used *except*
-;; in the "movsi" insn which knows how to deal with global symbols.
+;; This is done through operand constraints (using "rmn" in place of "g").
 ;;
 (define_insn "tstsi"
   [(set (cc0)
@@ -83,7 +80,7 @@
 
 (define_insn "tstdf"
   [(set (cc0)
-	(match_operand:DF 0 "ns32k_gen_operand" "lmF"))]
+	(match_operand:DF 0 "general_operand" "lmF"))]
   "TARGET_32081"
   "*
 { cc_status.flags |= CC_REVERSED;
@@ -92,18 +89,17 @@
 
 (define_insn "tstsf"
   [(set (cc0)
-	(match_operand:SF 0 "ns32k_gen_operand" "fmF"))]
+	(match_operand:SF 0 "general_operand" "fmF"))]
   "TARGET_32081"
   "*
 { cc_status.flags |= CC_REVERSED;
   operands[1] = CONST0_RTX (SFmode);
   return \"cmpf %1,%0\"; }")
 
-;; See note 1
 (define_insn "cmpsi"
   [(set (cc0)
-	(compare (match_operand:SI 0 "ns32k_gen_operand" "g")
-		 (match_operand:SI 1 "ns32k_gen_operand" "g")))]
+	(compare (match_operand:SI 0 "nonimmediate_operand" "rmn")
+		 (match_operand:SI 1 "general_operand" "rmn")))]
   ""
   "*
 {
@@ -129,7 +125,7 @@
 (define_insn "cmphi"
   [(set (cc0)
 	(compare (match_operand:HI 0 "nonimmediate_operand" "g")
-		 (match_operand:HI 1 "ns32k_gen_operand" "g")))]
+		 (match_operand:HI 1 "general_operand" "g")))]
   ""
   "*
 {
@@ -161,7 +157,7 @@
 (define_insn "cmpqi"
   [(set (cc0)
 	(compare (match_operand:QI 0 "nonimmediate_operand" "g")
-		 (match_operand:QI 1 "ns32k_gen_operand" "g")))]
+		 (match_operand:QI 1 "general_operand" "g")))]
   ""
   "*
 {
@@ -192,15 +188,15 @@
 
 (define_insn "cmpdf"
   [(set (cc0)
-	(compare (match_operand:DF 0 "ns32k_gen_operand" "lmF")
-		 (match_operand:DF 1 "ns32k_gen_operand" "lmF")))]
+	(compare (match_operand:DF 0 "general_operand" "lmF")
+		 (match_operand:DF 1 "general_operand" "lmF")))]
   "TARGET_32081"
   "cmpl %0,%1")
 
 (define_insn "cmpsf"
   [(set (cc0)
-	(compare (match_operand:SF 0 "ns32k_gen_operand" "fmF")
-		 (match_operand:SF 1 "ns32k_gen_operand" "fmF")))]
+	(compare (match_operand:SF 0 "general_operand" "fmF")
+		 (match_operand:SF 1 "general_operand" "fmF")))]
   "TARGET_32081"
   "cmpf %0,%1")
 
@@ -210,8 +206,8 @@
 ;; in practice, though the stack slots used are not available for
 ;; optimization.
 (define_insn "movdf"
-  [(set (match_operand:DF 0 "ns32k_gen_operand" "=lg<")
-	(match_operand:DF 1 "ns32k_gen_operand" "lFg"))]
+  [(set (match_operand:DF 0 "general_operand" "=lg<")
+	(match_operand:DF 1 "general_operand" "lFg"))]
   ""
   "*
 {
@@ -244,8 +240,8 @@
 }")
 
 (define_insn "movsf"
-  [(set (match_operand:SF 0 "ns32k_gen_operand" "=fg<")
-	(match_operand:SF 1 "ns32k_gen_operand" "fFg"))]
+  [(set (match_operand:SF 0 "general_operand" "=fg<")
+	(match_operand:SF 1 "general_operand" "fFg"))]
   ""
   "*
 {
@@ -293,8 +289,8 @@
   "movmd %1,%0,4")
 
 (define_insn "movdi"
-  [(set (match_operand:DI 0 "ns32k_gen_operand" "=g<,*f,g")
-	(match_operand:DI 1 "ns32k_gen_operand" "gF,g,*f"))]
+  [(set (match_operand:DI 0 "general_operand" "=g<,*f,g")
+	(match_operand:DI 1 "general_operand" "gF,g,*f"))]
   ""
   "*
 {
@@ -329,7 +325,7 @@
 ;; This special case must precede movsi.
 (define_insn ""
   [(set (reg:SI 25)
-	(match_operand:SI 0 "ns32k_gen_operand" "g"))]
+	(match_operand:SI 0 "general_operand" "rmn"))]
   ""
   "lprd sp,%0")
 
@@ -374,19 +370,21 @@
 #else
 	    return \"addr @%c1,%0\";
 #endif
-	  return \"movd %$%1,%0\";
+	  return \"movd %1,%0\";
 	}
       else
-        return output_move_dconst(i, \"%$%1,%0\");
+        return output_move_dconst(i, \"%1,%0\");
     }
+#if defined(IMMEDIATE_PREFIX) && !defined(NO_IMMEDIATE_PREFIX_IF_SYMBOLIC)
   else if (GET_CODE (operands[1]) == CONST && ! flag_pic)
     {
 	/* Must contain symbols so we don`t know how big it is. In
 	 * that case addr might lead to overflow. For PIC symbolic
 	 * address loads always have to be done with addr.
 	 */
-	return \"movd %$%1,%0\";
+	return \"movd %1,%0\";
     }
+#endif
   else if (GET_CODE (operands[1]) == REG)
     {
       if (REGNO (operands[1]) < F0_REGNUM)
@@ -428,8 +426,8 @@
 }")
 
 (define_insn "movhi"
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g<,*f,g")
-	(match_operand:HI 1 "ns32k_gen_operand" "g,g,*f"))]
+  [(set (match_operand:HI 0 "general_operand" "=g<,*f,g")
+	(match_operand:HI 1 "general_operand" "g,g,*f"))]
   ""
   "*
 {
@@ -463,8 +461,8 @@
 }")
 
 (define_insn "movstricthi"
-  [(set (strict_low_part (match_operand:HI 0 "ns32k_gen_operand" "+r"))
-	(match_operand:HI 1 "ns32k_gen_operand" "g"))]
+  [(set (strict_low_part (match_operand:HI 0 "general_operand" "+r"))
+	(match_operand:HI 1 "general_operand" "g"))]
   ""
   "*
 {
@@ -475,8 +473,8 @@
 }")
 
 (define_insn "movqi"
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g<,*f,g")
-	(match_operand:QI 1 "ns32k_gen_operand" "g,g,*f"))]
+  [(set (match_operand:QI 0 "general_operand" "=g<,*f,g")
+	(match_operand:QI 1 "general_operand" "g,g,*f"))]
   ""
   "*
 { if (GET_CODE (operands[1]) == CONST_INT)
@@ -509,8 +507,8 @@
 }")
 
 (define_insn "movstrictqi"
-  [(set (strict_low_part (match_operand:QI 0 "ns32k_gen_operand" "+r"))
-	(match_operand:QI 1 "ns32k_gen_operand" "g"))]
+  [(set (strict_low_part (match_operand:QI 0 "general_operand" "+r"))
+	(match_operand:QI 1 "general_operand" "g"))]
   ""
   "*
 {
@@ -583,67 +581,67 @@
 ;; are ordered widest source type first.
 
 (define_insn "truncsiqi2"
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g<")
-	(truncate:QI (match_operand:SI 1 "nonimmediate_operand" "g")))]
+  [(set (match_operand:QI 0 "general_operand" "=g<")
+	(truncate:QI (match_operand:SI 1 "nonimmediate_operand" "rmn")))]
   ""
   "movb %1,%0")
 
 (define_insn "truncsihi2"
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g<")
-	(truncate:HI (match_operand:SI 1 "nonimmediate_operand" "g")))]
+  [(set (match_operand:HI 0 "general_operand" "=g<")
+	(truncate:HI (match_operand:SI 1 "nonimmediate_operand" "rmn")))]
   ""
   "movw %1,%0")
 
 (define_insn "trunchiqi2"
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g<")
-	(truncate:QI (match_operand:HI 1 "nonimmediate_operand" "g")))]
+  [(set (match_operand:QI 0 "general_operand" "=g<")
+	(truncate:QI (match_operand:HI 1 "nonimmediate_operand" "rmn")))]
   ""
   "movb %1,%0")
 
 (define_insn "extendhisi2"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:SI 0 "general_operand" "=g<")
 	(sign_extend:SI (match_operand:HI 1 "nonimmediate_operand" "g")))]
   ""
   "movxwd %1,%0")
 
 (define_insn "extendqihi2"
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:HI 0 "general_operand" "=g<")
 	(sign_extend:HI (match_operand:QI 1 "nonimmediate_operand" "g")))]
   ""
   "movxbw %1,%0")
 
 (define_insn "extendqisi2"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:SI 0 "general_operand" "=g<")
 	(sign_extend:SI (match_operand:QI 1 "nonimmediate_operand" "g")))]
   ""
   "movxbd %1,%0")
 
 (define_insn "extendsfdf2"
-  [(set (match_operand:DF 0 "ns32k_gen_operand" "=lm<")
-	(float_extend:DF (match_operand:SF 1 "ns32k_gen_operand" "fmF")))]
+  [(set (match_operand:DF 0 "general_operand" "=lm<")
+	(float_extend:DF (match_operand:SF 1 "general_operand" "fmF")))]
   "TARGET_32081"
   "movfl %1,%0")
 
 (define_insn "truncdfsf2"
-  [(set (match_operand:SF 0 "ns32k_gen_operand" "=fm<")
-	(float_truncate:SF (match_operand:DF 1 "ns32k_gen_operand" "lmF")))]
+  [(set (match_operand:SF 0 "general_operand" "=fm<")
+	(float_truncate:SF (match_operand:DF 1 "general_operand" "lmF")))]
   "TARGET_32081"
   "movlf %1,%0")
 
 (define_insn "zero_extendhisi2"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:SI 0 "general_operand" "=g<")
 	(zero_extend:SI (match_operand:HI 1 "nonimmediate_operand" "g")))]
   ""
   "movzwd %1,%0")
 
 (define_insn "zero_extendqihi2"
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:HI 0 "general_operand" "=g<")
 	(zero_extend:HI (match_operand:QI 1 "nonimmediate_operand" "g")))]
   ""
   "movzbw %1,%0")
 
 (define_insn "zero_extendqisi2"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:SI 0 "general_operand" "=g<")
 	(zero_extend:SI (match_operand:QI 1 "nonimmediate_operand" "g")))]
   ""
   "movzbd %1,%0")
@@ -660,40 +658,40 @@
 ;; A register must be used to perform the conversion.
 
 (define_insn "floatsisf2"
-  [(set (match_operand:SF 0 "ns32k_gen_operand" "=fm<")
-	(float:SF (match_operand:SI 1 "ns32k_gen_operand" "rm")))]
+  [(set (match_operand:SF 0 "general_operand" "=fm<")
+	(float:SF (match_operand:SI 1 "general_operand" "rm")))]
   "TARGET_32081"
   "movdf %1,%0")
 
 (define_insn "floatsidf2"
-  [(set (match_operand:DF 0 "ns32k_gen_operand" "=lm<")
-	(float:DF (match_operand:SI 1 "ns32k_gen_operand" "rm")))]
+  [(set (match_operand:DF 0 "general_operand" "=lm<")
+	(float:DF (match_operand:SI 1 "general_operand" "rm")))]
   "TARGET_32081"
   "movdl %1,%0")
 
 (define_insn "floathisf2"
-  [(set (match_operand:SF 0 "ns32k_gen_operand" "=fm<")
-	(float:SF (match_operand:HI 1 "ns32k_gen_operand" "rm")))]
+  [(set (match_operand:SF 0 "general_operand" "=fm<")
+	(float:SF (match_operand:HI 1 "general_operand" "rm")))]
   "TARGET_32081"
   "movwf %1,%0")
 
 (define_insn "floathidf2"
-  [(set (match_operand:DF 0 "ns32k_gen_operand" "=lm<")
-	(float:DF (match_operand:HI 1 "ns32k_gen_operand" "rm")))]
+  [(set (match_operand:DF 0 "general_operand" "=lm<")
+	(float:DF (match_operand:HI 1 "general_operand" "rm")))]
   "TARGET_32081"
   "movwl %1,%0")
 
 (define_insn "floatqisf2"
-  [(set (match_operand:SF 0 "ns32k_gen_operand" "=fm<")
-	(float:SF (match_operand:QI 1 "ns32k_gen_operand" "rm")))]
+  [(set (match_operand:SF 0 "general_operand" "=fm<")
+	(float:SF (match_operand:QI 1 "general_operand" "rm")))]
   "TARGET_32081"
   "movbf %1,%0")
 
 ; Some assemblers warn that this insn doesn't work.
 ; Maybe they know something we don't.
 ;(define_insn "floatqidf2"
-;  [(set (match_operand:DF 0 "ns32k_gen_operand" "=lm<")
-;	(float:DF (match_operand:QI 1 "ns32k_gen_operand" "rm")))]
+;  [(set (match_operand:DF 0 "general_operand" "=lm<")
+;	(float:DF (match_operand:QI 1 "general_operand" "rm")))]
 ;  "TARGET_32081"
 ;  "movbl %1,%0")
 
@@ -701,132 +699,132 @@
 ;; The sequent compiler always generates "trunc" insns.
 
 (define_insn "fixsfqi2"
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g<")
-	(fix:QI (fix:SF (match_operand:SF 1 "ns32k_gen_operand" "fm"))))]
+  [(set (match_operand:QI 0 "general_operand" "=g<")
+	(fix:QI (fix:SF (match_operand:SF 1 "general_operand" "fm"))))]
   "TARGET_32081"
   "truncfb %1,%0")
 
 (define_insn "fixsfhi2"
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g<")
-	(fix:HI (fix:SF (match_operand:SF 1 "ns32k_gen_operand" "fm"))))]
+  [(set (match_operand:HI 0 "general_operand" "=g<")
+	(fix:HI (fix:SF (match_operand:SF 1 "general_operand" "fm"))))]
   "TARGET_32081"
   "truncfw %1,%0")
 
 (define_insn "fixsfsi2"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g<")
-	(fix:SI (fix:SF (match_operand:SF 1 "ns32k_gen_operand" "fm"))))]
+  [(set (match_operand:SI 0 "general_operand" "=g<")
+	(fix:SI (fix:SF (match_operand:SF 1 "general_operand" "fm"))))]
   "TARGET_32081"
   "truncfd %1,%0")
 
 (define_insn "fixdfqi2"
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g<")
-	(fix:QI (fix:DF (match_operand:DF 1 "ns32k_gen_operand" "lm"))))]
+  [(set (match_operand:QI 0 "general_operand" "=g<")
+	(fix:QI (fix:DF (match_operand:DF 1 "general_operand" "lm"))))]
   "TARGET_32081"
   "trunclb %1,%0")
 
 (define_insn "fixdfhi2"
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g<")
-	(fix:HI (fix:DF (match_operand:DF 1 "ns32k_gen_operand" "lm"))))]
+  [(set (match_operand:HI 0 "general_operand" "=g<")
+	(fix:HI (fix:DF (match_operand:DF 1 "general_operand" "lm"))))]
   "TARGET_32081"
   "trunclw %1,%0")
 
 (define_insn "fixdfsi2"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g<")
-	(fix:SI (fix:DF (match_operand:DF 1 "ns32k_gen_operand" "lm"))))]
+  [(set (match_operand:SI 0 "general_operand" "=g<")
+	(fix:SI (fix:DF (match_operand:DF 1 "general_operand" "lm"))))]
   "TARGET_32081"
   "truncld %1,%0")
 
 ;; Unsigned
 
 (define_insn "fixunssfqi2"
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g<")
-	(unsigned_fix:QI (fix:SF (match_operand:SF 1 "ns32k_gen_operand" "fm"))))]
+  [(set (match_operand:QI 0 "general_operand" "=g<")
+	(unsigned_fix:QI (fix:SF (match_operand:SF 1 "general_operand" "fm"))))]
   "TARGET_32081"
   "truncfb %1,%0")
 
 (define_insn "fixunssfhi2"
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g<")
-	(unsigned_fix:HI (fix:SF (match_operand:SF 1 "ns32k_gen_operand" "fm"))))]
+  [(set (match_operand:HI 0 "general_operand" "=g<")
+	(unsigned_fix:HI (fix:SF (match_operand:SF 1 "general_operand" "fm"))))]
   "TARGET_32081"
   "truncfw %1,%0")
 
 (define_insn "fixunssfsi2"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g<")
-	(unsigned_fix:SI (fix:SF (match_operand:SF 1 "ns32k_gen_operand" "fm"))))]
+  [(set (match_operand:SI 0 "general_operand" "=g<")
+	(unsigned_fix:SI (fix:SF (match_operand:SF 1 "general_operand" "fm"))))]
   "TARGET_32081"
   "truncfd %1,%0")
 
 (define_insn "fixunsdfqi2"
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g<")
-	(unsigned_fix:QI (fix:DF (match_operand:DF 1 "ns32k_gen_operand" "lm"))))]
+  [(set (match_operand:QI 0 "general_operand" "=g<")
+	(unsigned_fix:QI (fix:DF (match_operand:DF 1 "general_operand" "lm"))))]
   "TARGET_32081"
   "trunclb %1,%0")
 
 (define_insn "fixunsdfhi2"
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g<")
-	(unsigned_fix:HI (fix:DF (match_operand:DF 1 "ns32k_gen_operand" "lm"))))]
+  [(set (match_operand:HI 0 "general_operand" "=g<")
+	(unsigned_fix:HI (fix:DF (match_operand:DF 1 "general_operand" "lm"))))]
   "TARGET_32081"
   "trunclw %1,%0")
 
 (define_insn "fixunsdfsi2"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g<")
-	(unsigned_fix:SI (fix:DF (match_operand:DF 1 "ns32k_gen_operand" "lm"))))]
+  [(set (match_operand:SI 0 "general_operand" "=g<")
+	(unsigned_fix:SI (fix:DF (match_operand:DF 1 "general_operand" "lm"))))]
   "TARGET_32081"
   "truncld %1,%0")
 
 ;;; These are not yet used by GCC
 (define_insn "fix_truncsfqi2"
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g<")
-	(fix:QI (match_operand:SF 1 "ns32k_gen_operand" "fm")))]
+  [(set (match_operand:QI 0 "general_operand" "=g<")
+	(fix:QI (match_operand:SF 1 "general_operand" "fm")))]
   "TARGET_32081"
   "truncfb %1,%0")
 
 (define_insn "fix_truncsfhi2"
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g<")
-	(fix:HI (match_operand:SF 1 "ns32k_gen_operand" "fm")))]
+  [(set (match_operand:HI 0 "general_operand" "=g<")
+	(fix:HI (match_operand:SF 1 "general_operand" "fm")))]
   "TARGET_32081"
   "truncfw %1,%0")
 
 (define_insn "fix_truncsfsi2"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g<")
-	(fix:SI (match_operand:SF 1 "ns32k_gen_operand" "fm")))]
+  [(set (match_operand:SI 0 "general_operand" "=g<")
+	(fix:SI (match_operand:SF 1 "general_operand" "fm")))]
   "TARGET_32081"
   "truncfd %1,%0")
 
 (define_insn "fix_truncdfqi2"
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g<")
-	(fix:QI (match_operand:DF 1 "ns32k_gen_operand" "lm")))]
+  [(set (match_operand:QI 0 "general_operand" "=g<")
+	(fix:QI (match_operand:DF 1 "general_operand" "lm")))]
   "TARGET_32081"
   "trunclb %1,%0")
 
 (define_insn "fix_truncdfhi2"
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g<")
-	(fix:HI (match_operand:DF 1 "ns32k_gen_operand" "lm")))]
+  [(set (match_operand:HI 0 "general_operand" "=g<")
+	(fix:HI (match_operand:DF 1 "general_operand" "lm")))]
   "TARGET_32081"
   "trunclw %1,%0")
 
 (define_insn "fix_truncdfsi2"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g<")
-	(fix:SI (match_operand:DF 1 "ns32k_gen_operand" "lm")))]
+  [(set (match_operand:SI 0 "general_operand" "=g<")
+	(fix:SI (match_operand:DF 1 "general_operand" "lm")))]
   "TARGET_32081"
   "truncld %1,%0")
 
 ;; Multiply-add instructions
 (define_insn ""
-  [(set (match_operand:DF 0 "ns32k_gen_operand" "=v,v")
-	(plus:DF (mult:DF (match_operand:DF 1 "ns32k_gen_operand" "%lmF,0")
-		          (match_operand:DF 2 "ns32k_gen_operand" "lmF,lmF"))
-                 (match_operand:DF 3 "ns32k_gen_operand" "0,lmF")))]
+  [(set (match_operand:DF 0 "general_operand" "=v,v")
+	(plus:DF (mult:DF (match_operand:DF 1 "general_operand" "%lmF,0")
+		          (match_operand:DF 2 "general_operand" "lmF,lmF"))
+                 (match_operand:DF 3 "general_operand" "0,lmF")))]
   "TARGET_MULT_ADD"
   "@
    dotl %1,%2
    polyl %2,%3")
 
 (define_insn ""
-  [(set (match_operand:SF 0 "ns32k_gen_operand" "=u,u")
-	(plus:SF (mult:SF (match_operand:SF 1 "ns32k_gen_operand" "%fmF,0")
-		          (match_operand:SF 2 "ns32k_gen_operand" "fmF,fmF"))
-                 (match_operand:SF 3 "ns32k_gen_operand" "0,fmF")))]
+  [(set (match_operand:SF 0 "general_operand" "=u,u")
+	(plus:SF (mult:SF (match_operand:SF 1 "general_operand" "%fmF,0")
+		          (match_operand:SF 2 "general_operand" "fmF,fmF"))
+                 (match_operand:SF 3 "general_operand" "0,fmF")))]
   "TARGET_MULT_ADD"
   "@
    dotf %1,%2
@@ -835,19 +833,19 @@
 
 ;; Multiply-sub instructions
 (define_insn ""
-  [(set (match_operand:DF 0 "ns32k_gen_operand" "=v")
-	(minus:DF (mult:DF (match_operand:DF 1 "ns32k_gen_operand" "%lmF")
-		          (match_operand:DF 2 "ns32k_gen_operand" "lmF"))
-                 (match_operand:DF 3 "ns32k_gen_operand" "0")))]
+  [(set (match_operand:DF 0 "general_operand" "=v")
+	(minus:DF (mult:DF (match_operand:DF 1 "general_operand" "%lmF")
+		          (match_operand:DF 2 "general_operand" "lmF"))
+                 (match_operand:DF 3 "general_operand" "0")))]
   "TARGET_MULT_ADD"
   "@
    negl %0,%0\;dotl %1,%2")
 
 (define_insn ""
-  [(set (match_operand:SF 0 "ns32k_gen_operand" "=u")
-	(minus:SF (mult:SF (match_operand:SF 1 "ns32k_gen_operand" "%fmF")
-		          (match_operand:SF 2 "ns32k_gen_operand" "fmF"))
-                 (match_operand:SF 3 "ns32k_gen_operand" "0")))]
+  [(set (match_operand:SF 0 "general_operand" "=u")
+	(minus:SF (mult:SF (match_operand:SF 1 "general_operand" "%fmF")
+		          (match_operand:SF 2 "general_operand" "fmF"))
+                 (match_operand:SF 3 "general_operand" "0")))]
   "TARGET_MULT_ADD"
   "@
    negf %0,%0\;dotf %1,%2")
@@ -855,17 +853,17 @@
 ;;- All kinds of add instructions.
 
 (define_insn "adddf3"
-  [(set (match_operand:DF 0 "ns32k_gen_operand" "=lm")
-	(plus:DF (match_operand:DF 1 "ns32k_gen_operand" "%0")
-		 (match_operand:DF 2 "ns32k_gen_operand" "lmF")))]
+  [(set (match_operand:DF 0 "general_operand" "=lm")
+	(plus:DF (match_operand:DF 1 "general_operand" "%0")
+		 (match_operand:DF 2 "general_operand" "lmF")))]
   "TARGET_32081"
   "addl %2,%0")
 
 
 (define_insn "addsf3"
-  [(set (match_operand:SF 0 "ns32k_gen_operand" "=fm")
-	(plus:SF (match_operand:SF 1 "ns32k_gen_operand" "%0")
-		 (match_operand:SF 2 "ns32k_gen_operand" "fmF")))]
+  [(set (match_operand:SF 0 "general_operand" "=fm")
+	(plus:SF (match_operand:SF 1 "general_operand" "%0")
+		 (match_operand:SF 2 "general_operand" "fmF")))]
   "TARGET_32081"
   "addf %2,%0")
 
@@ -887,31 +885,31 @@
   if (! TARGET_32532)
     {
       if (INTVAL (operands[0]) < 64 && INTVAL (operands[0]) > -64)
-        return \"adjspb %$%n0\";
+        return \"adjspb %n0\";
       else if (INTVAL (operands[0]) < 8192 && INTVAL (operands[0]) >= -8192)
-        return \"adjspw %$%n0\";
+        return \"adjspw %n0\";
     }
-  return \"adjspd %$%n0\";
+  return \"adjspd %n0\";
 }")
 
 (define_insn ""
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:SI 0 "general_operand" "=g<")
 	(plus:SI (reg:SI 24)
 		 (match_operand:SI 1 "immediate_operand" "i")))]
   "GET_CODE (operands[1]) == CONST_INT"
   "addr %c1(fp),%0")
 
 (define_insn ""
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:SI 0 "general_operand" "=g<")
 	(plus:SI (reg:SI 25)
 		 (match_operand:SI 1 "immediate_operand" "i")))]
   "GET_CODE (operands[1]) == CONST_INT"
   "addr %c1(sp),%0")
 
 (define_insn "adddi3"
-  [(set (match_operand:DI 0 "ns32k_gen_operand" "=ro")
-	(plus:DI (match_operand:DI 1 "ns32k_gen_operand" "%0")
-		 (match_operand:DI 2 "ns32k_gen_operand" "ron")))]
+  [(set (match_operand:DI 0 "general_operand" "=ro")
+	(plus:DI (match_operand:DI 1 "general_operand" "%0")
+		 (match_operand:DI 2 "general_operand" "ron")))]
   ""
   "*
 {
@@ -932,14 +930,14 @@
 	    {
 	      i = INTVAL (xops[3]);
 	      if (i <= 7 && i >= -8)
-                output_asm_insn (\"addqd %$%3,%1\", xops);
+                output_asm_insn (\"addqd %3,%1\", xops);
 	      else
-                output_asm_insn (\"addd %$%3,%1\", xops);
+                output_asm_insn (\"addd %3,%1\", xops);
 	    }
 	  else
 	    {
-              output_asm_insn (\"addqd %$%2,%0\", xops);
-              output_asm_insn (\"addcd %$%3,%1\", xops);
+              output_asm_insn (\"addqd %2,%0\", xops);
+              output_asm_insn (\"addcd %3,%1\", xops);
 	    }
 	  return \"\";
 	}
@@ -949,11 +947,10 @@
   return \"\";
 }")
 
-;; See Note 1
 (define_insn "addsi3"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g,=g&<")
-	(plus:SI (match_operand:SI 1 "ns32k_gen_operand" "%0,r")
-		 (match_operand:SI 2 "ns32k_gen_operand" "g,i")))]
+  [(set (match_operand:SI 0 "general_operand" "=g,=g&<")
+	(plus:SI (match_operand:SI 1 "general_operand" "%0,r")
+		 (match_operand:SI 2 "general_operand" "rmn,n")))]
   ""
   "*
 {
@@ -972,16 +969,16 @@
       if (i <= 7 && i >= -8)
 	return \"addqd %2,%0\";
       else if (! TARGET_32532 && GET_CODE (operands[0]) == REG
-	       && i <= 0x1fffffff && i >= -0x20000000)
+	       && NS32K_DISPLACEMENT_P (i))
 	return \"addr %c2(%0),%0\";
     }
   return \"addd %2,%0\";
 }")
 
 (define_insn "addhi3"
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g")
-	(plus:HI (match_operand:HI 1 "ns32k_gen_operand" "%0")
-		 (match_operand:HI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:HI 0 "general_operand" "=g")
+	(plus:HI (match_operand:HI 1 "general_operand" "%0")
+		 (match_operand:HI 2 "general_operand" "g")))]
   ""
   "*
 { if (GET_CODE (operands[2]) == CONST_INT)
@@ -994,9 +991,9 @@
 }")
 
 (define_insn ""
-  [(set (strict_low_part (match_operand:HI 0 "ns32k_gen_operand" "=r"))
-	(plus:HI (match_operand:HI 1 "ns32k_gen_operand" "0")
-		 (match_operand:HI 2 "ns32k_gen_operand" "g")))]
+  [(set (strict_low_part (match_operand:HI 0 "general_operand" "=r"))
+	(plus:HI (match_operand:HI 1 "general_operand" "0")
+		 (match_operand:HI 2 "general_operand" "g")))]
   ""
   "*
 {
@@ -1007,9 +1004,9 @@
 }")
 
 (define_insn "addqi3"
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g")
-	(plus:QI (match_operand:QI 1 "ns32k_gen_operand" "%0")
-		 (match_operand:QI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:QI 0 "general_operand" "=g")
+	(plus:QI (match_operand:QI 1 "general_operand" "%0")
+		 (match_operand:QI 2 "general_operand" "g")))]
   ""
   "*
 { if (GET_CODE (operands[2]) == CONST_INT)
@@ -1022,9 +1019,9 @@
 }")
 
 (define_insn ""
-  [(set (strict_low_part (match_operand:QI 0 "ns32k_gen_operand" "=r"))
-	(plus:QI (match_operand:QI 1 "ns32k_gen_operand" "0")
-		 (match_operand:QI 2 "ns32k_gen_operand" "g")))]
+  [(set (strict_low_part (match_operand:QI 0 "general_operand" "=r"))
+	(plus:QI (match_operand:QI 1 "general_operand" "0")
+		 (match_operand:QI 2 "general_operand" "g")))]
   ""
   "*
 {
@@ -1037,16 +1034,16 @@
 ;;- All kinds of subtract instructions.
 
 (define_insn "subdf3"
-  [(set (match_operand:DF 0 "ns32k_gen_operand" "=lm")
-	(minus:DF (match_operand:DF 1 "ns32k_gen_operand" "0")
-		  (match_operand:DF 2 "ns32k_gen_operand" "lmF")))]
+  [(set (match_operand:DF 0 "general_operand" "=lm")
+	(minus:DF (match_operand:DF 1 "general_operand" "0")
+		  (match_operand:DF 2 "general_operand" "lmF")))]
   "TARGET_32081"
   "subl %2,%0")
 
 (define_insn "subsf3"
-  [(set (match_operand:SF 0 "ns32k_gen_operand" "=fm")
-	(minus:SF (match_operand:SF 1 "ns32k_gen_operand" "0")
-		  (match_operand:SF 2 "ns32k_gen_operand" "fmF")))]
+  [(set (match_operand:SF 0 "general_operand" "=fm")
+	(minus:SF (match_operand:SF 1 "general_operand" "0")
+		  (match_operand:SF 2 "general_operand" "fmF")))]
   "TARGET_32081"
   "subf %2,%0")
 
@@ -1059,14 +1056,14 @@
 {
   if (! TARGET_32532 && GET_CODE(operands[0]) == CONST_INT 
       && INTVAL(operands[0]) < 64 && INTVAL(operands[0]) > -64)
-    return \"adjspb %$%0\";
-  return \"adjspd %$%0\";
+    return \"adjspb %0\";
+  return \"adjspd %0\";
 }")
 
 (define_insn "subdi3"
-  [(set (match_operand:DI 0 "ns32k_gen_operand" "=ro")
-	(minus:DI (match_operand:DI 1 "ns32k_gen_operand" "0")
-		  (match_operand:DI 2 "ns32k_gen_operand" "ron")))]
+  [(set (match_operand:DI 0 "general_operand" "=ro")
+	(minus:DI (match_operand:DI 1 "general_operand" "0")
+		  (match_operand:DI 2 "general_operand" "ron")))]
   ""
   "*
 {
@@ -1087,14 +1084,14 @@
 	    {
 	      i = INTVAL (xops[3]);
 	      if (i <= 8 && i >= -7)
-                output_asm_insn (\"addqd %$%n3,%1\", xops);
+                output_asm_insn (\"addqd %n3,%1\", xops);
 	      else
-                output_asm_insn (\"subd %$%3,%1\", xops);
+                output_asm_insn (\"subd %3,%1\", xops);
 	    }
 	  else
 	    {
-              output_asm_insn (\"addqd %$%n2,%0\", xops);
-              output_asm_insn (\"subcd %$%3,%1\", xops);
+              output_asm_insn (\"addqd %n2,%0\", xops);
+              output_asm_insn (\"subcd %3,%1\", xops);
 	    }
 	  return \"\";
 	}
@@ -1105,9 +1102,9 @@
 }")
 
 (define_insn "subsi3"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g")
-	(minus:SI (match_operand:SI 1 "ns32k_gen_operand" "0")
-		  (match_operand:SI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:SI 0 "general_operand" "=g")
+	(minus:SI (match_operand:SI 1 "general_operand" "0")
+		  (match_operand:SI 2 "general_operand" "rmn")))]
   ""
   "*
 { if (GET_CODE (operands[2]) == CONST_INT)
@@ -1115,15 +1112,15 @@
       int i = INTVAL (operands[2]);
 
       if (i <= 8 && i >= -7)
-        return \"addqd %$%n2,%0\";
+        return \"addqd %n2,%0\";
     }
   return \"subd %2,%0\";
 }")
 
 (define_insn "subhi3"
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g")
-	(minus:HI (match_operand:HI 1 "ns32k_gen_operand" "0")
-		  (match_operand:HI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:HI 0 "general_operand" "=g")
+	(minus:HI (match_operand:HI 1 "general_operand" "0")
+		  (match_operand:HI 2 "general_operand" "g")))]
   ""
   "*
 { if (GET_CODE (operands[2]) == CONST_INT)
@@ -1131,28 +1128,28 @@
       int i = INTVAL (operands[2]);
 
       if (i <= 8 && i >= -7)
-        return \"addqw %$%n2,%0\";
+        return \"addqw %n2,%0\";
     }
   return \"subw %2,%0\";
 }")
 
 (define_insn ""
-  [(set (strict_low_part (match_operand:HI 0 "ns32k_gen_operand" "=r"))
-	(minus:HI (match_operand:HI 1 "ns32k_gen_operand" "0")
-		  (match_operand:HI 2 "ns32k_gen_operand" "g")))]
+  [(set (strict_low_part (match_operand:HI 0 "general_operand" "=r"))
+	(minus:HI (match_operand:HI 1 "general_operand" "0")
+		  (match_operand:HI 2 "general_operand" "g")))]
   ""
   "*
 {
   if (GET_CODE (operands[1]) == CONST_INT
       && INTVAL (operands[1]) >-8 && INTVAL(operands[1]) < 9)
-    return \"addqw %$%n2,%0\";
+    return \"addqw %n2,%0\";
   return \"subw %2,%0\";
 }")
 
 (define_insn "subqi3"
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g")
-	(minus:QI (match_operand:QI 1 "ns32k_gen_operand" "0")
-		  (match_operand:QI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:QI 0 "general_operand" "=g")
+	(minus:QI (match_operand:QI 1 "general_operand" "0")
+		  (match_operand:QI 2 "general_operand" "g")))]
   ""
   "*
 { if (GET_CODE (operands[2]) == CONST_INT)
@@ -1160,64 +1157,63 @@
       int i = INTVAL (operands[2]);
 
       if (i <= 8 && i >= -7)
-	return \"addqb %$%n2,%0\";
+	return \"addqb %n2,%0\";
     }
   return \"subb %2,%0\";
 }")
 
 (define_insn ""
-  [(set (strict_low_part (match_operand:QI 0 "ns32k_gen_operand" "=r"))
-	(minus:QI (match_operand:QI 1 "ns32k_gen_operand" "0")
-		  (match_operand:QI 2 "ns32k_gen_operand" "g")))]
+  [(set (strict_low_part (match_operand:QI 0 "general_operand" "=r"))
+	(minus:QI (match_operand:QI 1 "general_operand" "0")
+		  (match_operand:QI 2 "general_operand" "g")))]
   ""
   "*
 {
   if (GET_CODE (operands[1]) == CONST_INT
       && INTVAL (operands[1]) >-8 && INTVAL(operands[1]) < 9)
-    return \"addqb %$%n2,%0\";
+    return \"addqb %n2,%0\";
   return \"subb %2,%0\";
 }")
 
 ;;- Multiply instructions.
 
 (define_insn "muldf3"
-  [(set (match_operand:DF 0 "ns32k_gen_operand" "=lm")
-	(mult:DF (match_operand:DF 1 "ns32k_gen_operand" "%0")
-		 (match_operand:DF 2 "ns32k_gen_operand" "lmF")))]
+  [(set (match_operand:DF 0 "general_operand" "=lm")
+	(mult:DF (match_operand:DF 1 "general_operand" "%0")
+		 (match_operand:DF 2 "general_operand" "lmF")))]
   "TARGET_32081"
   "mull %2,%0")
 
 (define_insn "mulsf3"
-  [(set (match_operand:SF 0 "ns32k_gen_operand" "=fm")
-	(mult:SF (match_operand:SF 1 "ns32k_gen_operand" "%0")
-		 (match_operand:SF 2 "ns32k_gen_operand" "fmF")))]
+  [(set (match_operand:SF 0 "general_operand" "=fm")
+	(mult:SF (match_operand:SF 1 "general_operand" "%0")
+		 (match_operand:SF 2 "general_operand" "fmF")))]
   "TARGET_32081"
   "mulf %2,%0")
 
-;; See note 1
 (define_insn "mulsi3"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g")
-	(mult:SI (match_operand:SI 1 "ns32k_gen_operand" "%0")
-		 (match_operand:SI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:SI 0 "general_operand" "=g")
+	(mult:SI (match_operand:SI 1 "general_operand" "%0")
+		 (match_operand:SI 2 "general_operand" "rmn")))]
   ""
   "muld %2,%0")
 
 (define_insn "mulhi3"
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g")
-	(mult:HI (match_operand:HI 1 "ns32k_gen_operand" "%0")
-		 (match_operand:HI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:HI 0 "general_operand" "=g")
+	(mult:HI (match_operand:HI 1 "general_operand" "%0")
+		 (match_operand:HI 2 "general_operand" "g")))]
   ""
   "mulw %2,%0")
 
 (define_insn "mulqi3"
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g")
-	(mult:QI (match_operand:QI 1 "ns32k_gen_operand" "%0")
-		 (match_operand:QI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:QI 0 "general_operand" "=g")
+	(mult:QI (match_operand:QI 1 "general_operand" "%0")
+		 (match_operand:QI 2 "general_operand" "g")))]
   ""
   "mulb %2,%0")
 
 (define_insn "umulsidi3"
-  [(set (match_operand:DI 0 "ns32k_gen_operand" "=g")
+  [(set (match_operand:DI 0 "general_operand" "=g")
 	(mult:DI (zero_extend:DI
 		  (match_operand:SI 1 "nonimmediate_operand" "0"))
 		 (zero_extend:DI
@@ -1229,8 +1225,8 @@
 (define_expand "udivmodsi4"
   [(parallel
   [(set (match_operand:SI 0 "reg_or_mem_operand" "")
-	(udiv:SI (match_operand:SI 1 "ns32k_gen_operand" "")
-		     (match_operand:SI 2 "ns32k_gen_operand" "")))
+	(udiv:SI (match_operand:SI 1 "general_operand" "")
+		     (match_operand:SI 2 "general_operand" "")))
    (set (match_operand:SI 3 "reg_or_mem_operand" "")
 	(umod:SI (match_dup 1) (match_dup 2)))])]
   ""
@@ -1269,7 +1265,7 @@
 (define_insn "udivmoddisi4_internal"
   [(set (match_operand:DI 0 "reg_or_mem_operand" "=rm")
         (unspec:SI [(match_operand:DI 1 "reg_or_mem_operand" "0")
-                    (match_operand:SI 2 "ns32k_gen_operand" "g")] 0))]
+                    (match_operand:SI 2 "general_operand" "g")] 0))]
   ""
   "deid %2,%0")
 
@@ -1293,8 +1289,8 @@
 (define_expand "udivmodhi4"
   [(parallel
   [(set (match_operand:HI 0 "reg_or_mem_operand" "")
-	(udiv:HI (match_operand:HI 1 "ns32k_gen_operand" "")
-		     (match_operand:HI 2 "ns32k_gen_operand" "")))
+	(udiv:HI (match_operand:HI 1 "general_operand" "")
+		     (match_operand:HI 2 "general_operand" "")))
    (set (match_operand:HI 3 "reg_or_mem_operand" "")
 	(umod:HI (match_dup 1) (match_dup 2)))])]
   ""
@@ -1334,7 +1330,7 @@
 (define_insn "udivmoddihi4_internal"
   [(set (match_operand:DI 0 "register_operand" "=r")
         (unspec:HI [(match_operand:DI 1 "register_operand" "0")
-                    (match_operand:HI 2 "ns32k_gen_operand" "g")] 0))]
+                    (match_operand:HI 2 "general_operand" "g")] 0))]
   ""
   "deiw %2,%0")
 
@@ -1350,8 +1346,8 @@
 (define_expand "udivmodqi4"
   [(parallel
   [(set (match_operand:QI 0 "reg_or_mem_operand" "")
-	(udiv:QI (match_operand:QI 1 "ns32k_gen_operand" "")
-		     (match_operand:QI 2 "ns32k_gen_operand" "")))
+	(udiv:QI (match_operand:QI 1 "general_operand" "")
+		     (match_operand:QI 2 "general_operand" "")))
    (set (match_operand:QI 3 "reg_or_mem_operand" "")
 	(umod:QI (match_dup 1) (match_dup 2)))])]
   ""
@@ -1391,7 +1387,7 @@
 (define_insn "udivmoddiqi4_internal"
   [(set (match_operand:DI 0 "register_operand" "=r")
         (unspec:QI [(match_operand:DI 1 "reg_or_mem_operand" "0")
-                    (match_operand:QI 2 "ns32k_gen_operand" "g")] 0))]
+                    (match_operand:QI 2 "general_operand" "g")] 0))]
   ""
   "deib %2,%0")
 
@@ -1407,73 +1403,70 @@
 ;;- Divide instructions.
 
 (define_insn "divdf3"
-  [(set (match_operand:DF 0 "ns32k_gen_operand" "=lm")
-	(div:DF (match_operand:DF 1 "ns32k_gen_operand" "0")
-		(match_operand:DF 2 "ns32k_gen_operand" "lmF")))]
+  [(set (match_operand:DF 0 "general_operand" "=lm")
+	(div:DF (match_operand:DF 1 "general_operand" "0")
+		(match_operand:DF 2 "general_operand" "lmF")))]
   "TARGET_32081"
   "divl %2,%0")
 
 (define_insn "divsf3"
-  [(set (match_operand:SF 0 "ns32k_gen_operand" "=fm")
-	(div:SF (match_operand:SF 1 "ns32k_gen_operand" "0")
-		(match_operand:SF 2 "ns32k_gen_operand" "fmF")))]
+  [(set (match_operand:SF 0 "general_operand" "=fm")
+	(div:SF (match_operand:SF 1 "general_operand" "0")
+		(match_operand:SF 2 "general_operand" "fmF")))]
   "TARGET_32081"
   "divf %2,%0")
 
-;; See note 1
 (define_insn "divsi3"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g")
-	(div:SI (match_operand:SI 1 "ns32k_gen_operand" "0")
-		(match_operand:SI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:SI 0 "general_operand" "=g")
+	(div:SI (match_operand:SI 1 "general_operand" "0")
+		(match_operand:SI 2 "general_operand" "rmn")))]
   ""
   "quod %2,%0")
 
 (define_insn "divhi3"
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g")
-	(div:HI (match_operand:HI 1 "ns32k_gen_operand" "0")
-		(match_operand:HI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:HI 0 "general_operand" "=g")
+	(div:HI (match_operand:HI 1 "general_operand" "0")
+		(match_operand:HI 2 "general_operand" "g")))]
   ""
   "quow %2,%0")
 
 (define_insn "divqi3"
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g")
-	(div:QI (match_operand:QI 1 "ns32k_gen_operand" "0")
-		(match_operand:QI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:QI 0 "general_operand" "=g")
+	(div:QI (match_operand:QI 1 "general_operand" "0")
+		(match_operand:QI 2 "general_operand" "g")))]
   ""
   "quob %2,%0")
 
 ;; Remainder instructions.
 
-;; See note 1
 (define_insn "modsi3"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g")
-	(mod:SI (match_operand:SI 1 "ns32k_gen_operand" "0")
-		(match_operand:SI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:SI 0 "general_operand" "=g")
+	(mod:SI (match_operand:SI 1 "general_operand" "0")
+		(match_operand:SI 2 "general_operand" "rmn")))]
   ""
   "remd %2,%0")
 
 (define_insn "modhi3"
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g")
-	(mod:HI (match_operand:HI 1 "ns32k_gen_operand" "0")
-		(match_operand:HI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:HI 0 "general_operand" "=g")
+	(mod:HI (match_operand:HI 1 "general_operand" "0")
+		(match_operand:HI 2 "general_operand" "g")))]
   ""
   "remw %2,%0")
 
 (define_insn "modqi3"
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g")
-	(mod:QI (match_operand:QI 1 "ns32k_gen_operand" "0")
-		(match_operand:QI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:QI 0 "general_operand" "=g")
+	(mod:QI (match_operand:QI 1 "general_operand" "0")
+		(match_operand:QI 2 "general_operand" "g")))]
   ""
   "remb %2,%0")
 
 
 ;;- Logical Instructions: AND
 
-;; See note 1
 (define_insn "andsi3"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g")
-	(and:SI (match_operand:SI 1 "ns32k_gen_operand" "%0")
-		(match_operand:SI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:SI 0 "general_operand" "=g")
+	(and:SI (match_operand:SI 1 "general_operand" "%0")
+		(match_operand:SI 2 "general_operand" "rmn")))]
   ""
   "*
 {
@@ -1506,9 +1499,9 @@
 }")
 
 (define_insn "andhi3"
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g")
-	(and:HI (match_operand:HI 1 "ns32k_gen_operand" "%0")
-		(match_operand:HI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:HI 0 "general_operand" "=g")
+	(and:HI (match_operand:HI 1 "general_operand" "%0")
+		(match_operand:HI 2 "general_operand" "g")))]
   ""
   "*
 {
@@ -1528,41 +1521,39 @@
 }")
 
 (define_insn "andqi3"
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g")
-	(and:QI (match_operand:QI 1 "ns32k_gen_operand" "%0")
-		(match_operand:QI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:QI 0 "general_operand" "=g")
+	(and:QI (match_operand:QI 1 "general_operand" "%0")
+		(match_operand:QI 2 "general_operand" "g")))]
   ""
   "andb %2,%0")
 
-;; See note 1
 (define_insn ""
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g")
-	(and:SI (not:SI (match_operand:SI 1 "ns32k_gen_operand" "g"))
-		(match_operand:SI 2 "ns32k_gen_operand" "0")))]
+  [(set (match_operand:SI 0 "general_operand" "=g")
+	(and:SI (not:SI (match_operand:SI 1 "general_operand" "rmn"))
+		(match_operand:SI 2 "general_operand" "0")))]
   ""
   "bicd %1,%0")
 
 (define_insn ""
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g")
-	(and:HI (not:HI (match_operand:HI 1 "ns32k_gen_operand" "g"))
-		(match_operand:HI 2 "ns32k_gen_operand" "0")))]
+  [(set (match_operand:HI 0 "general_operand" "=g")
+	(and:HI (not:HI (match_operand:HI 1 "general_operand" "g"))
+		(match_operand:HI 2 "general_operand" "0")))]
   ""
   "bicw %1,%0")
 
 (define_insn ""
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g")
-	(and:QI (not:QI (match_operand:QI 1 "ns32k_gen_operand" "g"))
-		(match_operand:QI 2 "ns32k_gen_operand" "0")))]
+  [(set (match_operand:QI 0 "general_operand" "=g")
+	(and:QI (not:QI (match_operand:QI 1 "general_operand" "g"))
+		(match_operand:QI 2 "general_operand" "0")))]
   ""
   "bicb %1,%0")
 
 ;;- Bit set instructions.
 
-;; See note 1
 (define_insn "iorsi3"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g")
-	(ior:SI (match_operand:SI 1 "ns32k_gen_operand" "%0")
-		(match_operand:SI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:SI 0 "general_operand" "=g")
+	(ior:SI (match_operand:SI 1 "general_operand" "%0")
+		(match_operand:SI 2 "general_operand" "rmn")))]
   ""
   "*
 {
@@ -1576,9 +1567,9 @@
 }")
 
 (define_insn "iorhi3"
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g")
-	(ior:HI (match_operand:HI 1 "ns32k_gen_operand" "%0")
-		(match_operand:HI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:HI 0 "general_operand" "=g")
+	(ior:HI (match_operand:HI 1 "general_operand" "%0")
+		(match_operand:HI 2 "general_operand" "g")))]
   ""
   "*
 {
@@ -1589,19 +1580,18 @@
 }")
 
 (define_insn "iorqi3"
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g")
-	(ior:QI (match_operand:QI 1 "ns32k_gen_operand" "%0")
-		(match_operand:QI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:QI 0 "general_operand" "=g")
+	(ior:QI (match_operand:QI 1 "general_operand" "%0")
+		(match_operand:QI 2 "general_operand" "g")))]
   ""
   "orb %2,%0")
 
 ;;- xor instructions.
 
-;; See note 1
 (define_insn "xorsi3"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g")
-	(xor:SI (match_operand:SI 1 "ns32k_gen_operand" "%0")
-		(match_operand:SI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:SI 0 "general_operand" "=g")
+	(xor:SI (match_operand:SI 1 "general_operand" "%0")
+		(match_operand:SI 2 "general_operand" "rmn")))]
   ""
   "*
 {
@@ -1615,9 +1605,9 @@
 }")
 
 (define_insn "xorhi3"
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g")
-	(xor:HI (match_operand:HI 1 "ns32k_gen_operand" "%0")
-		(match_operand:HI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:HI 0 "general_operand" "=g")
+	(xor:HI (match_operand:HI 1 "general_operand" "%0")
+		(match_operand:HI 2 "general_operand" "g")))]
   ""
   "*
 {
@@ -1628,27 +1618,27 @@
 }")
 
 (define_insn "xorqi3"
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g")
-	(xor:QI (match_operand:QI 1 "ns32k_gen_operand" "%0")
-		(match_operand:QI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:QI 0 "general_operand" "=g")
+	(xor:QI (match_operand:QI 1 "general_operand" "%0")
+		(match_operand:QI 2 "general_operand" "g")))]
   ""
   "xorb %2,%0")
 
 (define_insn "negdf2"
-  [(set (match_operand:DF 0 "ns32k_gen_operand" "=lm<")
-	(neg:DF (match_operand:DF 1 "ns32k_gen_operand" "lmF")))]
+  [(set (match_operand:DF 0 "general_operand" "=lm<")
+	(neg:DF (match_operand:DF 1 "general_operand" "lmF")))]
   "TARGET_32081"
   "negl %1,%0")
 
 (define_insn "negsf2"
-  [(set (match_operand:SF 0 "ns32k_gen_operand" "=fm<")
-	(neg:SF (match_operand:SF 1 "ns32k_gen_operand" "fmF")))]
+  [(set (match_operand:SF 0 "general_operand" "=fm<")
+	(neg:SF (match_operand:SF 1 "general_operand" "fmF")))]
   "TARGET_32081"
   "negf %1,%0")
 
 (define_insn "negdi2"
-  [(set (match_operand:DI 0 "ns32k_gen_operand" "=ro")
-	(neg:DI (match_operand:DI 1 "ns32k_gen_operand" "ro")))]
+  [(set (match_operand:DI 0 "general_operand" "=ro")
+	(neg:DI (match_operand:DI 1 "general_operand" "ro")))]
   ""
   "*
 {
@@ -1674,41 +1664,39 @@
   return \"\"; 
 }")
 
-;; See note 1
 (define_insn "negsi2"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g<")
-	(neg:SI (match_operand:SI 1 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:SI 0 "general_operand" "=g<")
+	(neg:SI (match_operand:SI 1 "general_operand" "rmn")))]
   ""
   "negd %1,%0")
 
 (define_insn "neghi2"
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g<")
-	(neg:HI (match_operand:HI 1 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:HI 0 "general_operand" "=g<")
+	(neg:HI (match_operand:HI 1 "general_operand" "g")))]
   ""
   "negw %1,%0")
 
 (define_insn "negqi2"
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g<")
-	(neg:QI (match_operand:QI 1 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:QI 0 "general_operand" "=g<")
+	(neg:QI (match_operand:QI 1 "general_operand" "g")))]
   ""
   "negb %1,%0")
 
-;; See note 1
 (define_insn "one_cmplsi2"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g<")
-	(not:SI (match_operand:SI 1 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:SI 0 "general_operand" "=g<")
+	(not:SI (match_operand:SI 1 "general_operand" "rmn")))]
   ""
   "comd %1,%0")
 
 (define_insn "one_cmplhi2"
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g<")
-	(not:HI (match_operand:HI 1 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:HI 0 "general_operand" "=g<")
+	(not:HI (match_operand:HI 1 "general_operand" "g")))]
   ""
   "comw %1,%0")
 
 (define_insn "one_cmplqi2"
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g<")
-	(not:QI (match_operand:QI 1 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:QI 0 "general_operand" "=g<")
+	(not:QI (match_operand:QI 1 "general_operand" "g")))]
   ""
   "comb %1,%0")
 
@@ -1719,11 +1707,10 @@
 ;; than elsewhere.
 
 ;; alternative 0 never matches on the 32532
-;; See note 1
 (define_insn "ashlsi3"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g,g")
-	(ashift:SI (match_operand:SI 1 "ns32k_gen_operand" "r,0")
-		   (match_operand:SI 2 "ns32k_gen_operand" "I,g")))]
+  [(set (match_operand:SI 0 "general_operand" "=g,g")
+	(ashift:SI (match_operand:SI 1 "general_operand" "r,0")
+		   (match_operand:SI 2 "general_operand" "I,rmn")))]
   ""
   "*
 { if (TARGET_32532)
@@ -1733,9 +1720,9 @@
 }")
 
 (define_insn "ashlhi3"
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g")
-	(ashift:HI (match_operand:HI 1 "ns32k_gen_operand" "0")
-		   (match_operand:SI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:HI 0 "general_operand" "=g")
+	(ashift:HI (match_operand:HI 1 "general_operand" "0")
+		   (match_operand:SI 2 "general_operand" "rmn")))]
   ""
   "*
 { if (GET_CODE (operands[2]) == CONST_INT)
@@ -1752,9 +1739,9 @@
 }")
 
 (define_insn "ashlqi3"
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g")
-	(ashift:QI (match_operand:QI 1 "ns32k_gen_operand" "0")
-		   (match_operand:SI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:QI 0 "general_operand" "=g")
+	(ashift:QI (match_operand:QI 1 "general_operand" "0")
+		   (match_operand:SI 2 "general_operand" "rmn")))]
   ""
   "*
 { if (GET_CODE (operands[2]) == CONST_INT)
@@ -1772,9 +1759,9 @@
 
 ;; Arithmetic right shift on the 32k works by negating the shift count.
 (define_expand "ashrsi3"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g")
-	(ashiftrt:SI (match_operand:SI 1 "ns32k_gen_operand" "g")
-		     (match_operand:SI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:SI 0 "general_operand" "=g")
+	(ashiftrt:SI (match_operand:SI 1 "general_operand" "g")
+		     (match_operand:SI 2 "general_operand" "g")))]
   ""
   "
 {
@@ -1783,23 +1770,23 @@
 }")
 
 (define_insn ""
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g")
-	(ashiftrt:SI (match_operand:SI 1 "ns32k_gen_operand" "0")
+  [(set (match_operand:SI 0 "general_operand" "=g")
+	(ashiftrt:SI (match_operand:SI 1 "general_operand" "0")
 		     (match_operand:SI 2 "immediate_operand" "i")))]
   ""
-  "ashd %$%n2,%0")
+  "ashd %n2,%0")
 
 (define_insn ""
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g")
-	(ashiftrt:SI (match_operand:SI 1 "ns32k_gen_operand" "0")
-		     (neg:SI (match_operand:SI 2 "ns32k_gen_operand" "r"))))]
+  [(set (match_operand:SI 0 "general_operand" "=g")
+	(ashiftrt:SI (match_operand:SI 1 "general_operand" "0")
+		     (neg:SI (match_operand:SI 2 "general_operand" "r"))))]
   ""
   "ashd %2,%0")
 
 (define_expand "ashrhi3"
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g")
-	(ashiftrt:HI (match_operand:HI 1 "ns32k_gen_operand" "g")
-		     (match_operand:SI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:HI 0 "general_operand" "=g")
+	(ashiftrt:HI (match_operand:HI 1 "general_operand" "g")
+		     (match_operand:SI 2 "general_operand" "g")))]
   ""
   "
 {
@@ -1808,23 +1795,23 @@
 }")
 
 (define_insn ""
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g")
-	(ashiftrt:HI (match_operand:HI 1 "ns32k_gen_operand" "0")
+  [(set (match_operand:HI 0 "general_operand" "=g")
+	(ashiftrt:HI (match_operand:HI 1 "general_operand" "0")
 		     (match_operand:SI 2 "immediate_operand" "i")))]
   ""
-  "ashw %$%n2,%0")
+  "ashw %n2,%0")
 
 (define_insn ""
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g")
-	(ashiftrt:HI (match_operand:HI 1 "ns32k_gen_operand" "0")
-		     (neg:SI (match_operand:SI 2 "ns32k_gen_operand" "r"))))]
+  [(set (match_operand:HI 0 "general_operand" "=g")
+	(ashiftrt:HI (match_operand:HI 1 "general_operand" "0")
+		     (neg:SI (match_operand:SI 2 "general_operand" "r"))))]
   ""
   "ashw %2,%0")
 
 (define_expand "ashrqi3"
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g")
-	(ashiftrt:QI (match_operand:QI 1 "ns32k_gen_operand" "g")
-		     (match_operand:SI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:QI 0 "general_operand" "=g")
+	(ashiftrt:QI (match_operand:QI 1 "general_operand" "g")
+		     (match_operand:SI 2 "general_operand" "g")))]
   ""
   "
 {
@@ -1833,16 +1820,16 @@
 }")
 
 (define_insn ""
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g")
-	(ashiftrt:QI (match_operand:QI 1 "ns32k_gen_operand" "0")
+  [(set (match_operand:QI 0 "general_operand" "=g")
+	(ashiftrt:QI (match_operand:QI 1 "general_operand" "0")
 		     (match_operand:SI 2 "immediate_operand" "i")))]
   ""
-  "ashb %$%n2,%0")
+  "ashb %n2,%0")
 
 (define_insn ""
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g")
-	(ashiftrt:QI (match_operand:QI 1 "ns32k_gen_operand" "0")
-		     (neg:SI (match_operand:SI 2 "ns32k_gen_operand" "r"))))]
+  [(set (match_operand:QI 0 "general_operand" "=g")
+	(ashiftrt:QI (match_operand:QI 1 "general_operand" "0")
+		     (neg:SI (match_operand:SI 2 "general_operand" "r"))))]
   ""
   "ashb %2,%0")
 
@@ -1850,9 +1837,9 @@
 
 ;; Logical right shift on the 32k works by negating the shift count.
 (define_expand "lshrsi3"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g")
-	(lshiftrt:SI (match_operand:SI 1 "ns32k_gen_operand" "g")
-		     (match_operand:SI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:SI 0 "general_operand" "=g")
+	(lshiftrt:SI (match_operand:SI 1 "general_operand" "g")
+		     (match_operand:SI 2 "general_operand" "g")))]
   ""
   "
 {
@@ -1861,23 +1848,23 @@
 }")
 
 (define_insn ""
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g")
-	(lshiftrt:SI (match_operand:SI 1 "ns32k_gen_operand" "0")
+  [(set (match_operand:SI 0 "general_operand" "=g")
+	(lshiftrt:SI (match_operand:SI 1 "general_operand" "0")
 		     (match_operand:SI 2 "immediate_operand" "i")))]
   ""
-  "lshd %$%n2,%0")
+  "lshd %n2,%0")
 
 (define_insn ""
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g")
-	(lshiftrt:SI (match_operand:SI 1 "ns32k_gen_operand" "0")
-		     (neg:SI (match_operand:SI 2 "ns32k_gen_operand" "r"))))]
+  [(set (match_operand:SI 0 "general_operand" "=g")
+	(lshiftrt:SI (match_operand:SI 1 "general_operand" "0")
+		     (neg:SI (match_operand:SI 2 "general_operand" "r"))))]
   ""
   "lshd %2,%0")
 
 (define_expand "lshrhi3"
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g")
-	(lshiftrt:HI (match_operand:HI 1 "ns32k_gen_operand" "g")
-		     (match_operand:SI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:HI 0 "general_operand" "=g")
+	(lshiftrt:HI (match_operand:HI 1 "general_operand" "g")
+		     (match_operand:SI 2 "general_operand" "g")))]
   ""
   "
 {
@@ -1886,23 +1873,23 @@
 }")
 
 (define_insn ""
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g")
-	(lshiftrt:HI (match_operand:HI 1 "ns32k_gen_operand" "0")
+  [(set (match_operand:HI 0 "general_operand" "=g")
+	(lshiftrt:HI (match_operand:HI 1 "general_operand" "0")
 		     (match_operand:SI 2 "immediate_operand" "i")))]
   ""
-  "lshw %$%n2,%0")
+  "lshw %n2,%0")
 
 (define_insn ""
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g")
-	(lshiftrt:HI (match_operand:HI 1 "ns32k_gen_operand" "0")
-		     (neg:SI (match_operand:SI 2 "ns32k_gen_operand" "r"))))]
+  [(set (match_operand:HI 0 "general_operand" "=g")
+	(lshiftrt:HI (match_operand:HI 1 "general_operand" "0")
+		     (neg:SI (match_operand:SI 2 "general_operand" "r"))))]
   ""
   "lshw %2,%0")
 
 (define_expand "lshrqi3"
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g")
-	(lshiftrt:QI (match_operand:QI 1 "ns32k_gen_operand" "g")
-		     (match_operand:SI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:QI 0 "general_operand" "=g")
+	(lshiftrt:QI (match_operand:QI 1 "general_operand" "g")
+		     (match_operand:SI 2 "general_operand" "g")))]
   ""
   "
 {
@@ -1911,48 +1898,47 @@
 }")
 
 (define_insn ""
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g")
-	(lshiftrt:QI (match_operand:QI 1 "ns32k_gen_operand" "0")
+  [(set (match_operand:QI 0 "general_operand" "=g")
+	(lshiftrt:QI (match_operand:QI 1 "general_operand" "0")
 		     (match_operand:SI 2 "immediate_operand" "i")))]
   ""
-  "lshb %$%n2,%0")
+  "lshb %n2,%0")
 
 (define_insn ""
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g")
-	(lshiftrt:QI (match_operand:QI 1 "ns32k_gen_operand" "0")
-		     (neg:SI (match_operand:SI 2 "ns32k_gen_operand" "r"))))]
+  [(set (match_operand:QI 0 "general_operand" "=g")
+	(lshiftrt:QI (match_operand:QI 1 "general_operand" "0")
+		     (neg:SI (match_operand:SI 2 "general_operand" "r"))))]
   ""
   "lshb %2,%0")
 
 ;; Rotate instructions
 
-;; See note 1
 (define_insn "rotlsi3"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g")
-	(rotate:SI (match_operand:SI 1 "ns32k_gen_operand" "0")
-		   (match_operand:SI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:SI 0 "general_operand" "=g")
+	(rotate:SI (match_operand:SI 1 "general_operand" "0")
+		   (match_operand:SI 2 "general_operand" "rmn")))]
   ""
   "rotd %2,%0")
 
 (define_insn "rotlhi3"
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g")
-	(rotate:HI (match_operand:HI 1 "ns32k_gen_operand" "0")
-		   (match_operand:SI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:HI 0 "general_operand" "=g")
+	(rotate:HI (match_operand:HI 1 "general_operand" "0")
+		   (match_operand:SI 2 "general_operand" "rmn")))]
   ""
   "rotw %2,%0")
 
 (define_insn "rotlqi3"
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g")
-	(rotate:QI (match_operand:QI 1 "ns32k_gen_operand" "0")
-		   (match_operand:SI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:QI 0 "general_operand" "=g")
+	(rotate:QI (match_operand:QI 1 "general_operand" "0")
+		   (match_operand:SI 2 "general_operand" "rmn")))]
   ""
   "rotb %2,%0")
 
 ;; Right rotate on the 32k works by negating the shift count.
 (define_expand "rotrsi3"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g")
-	(rotatert:SI (match_operand:SI 1 "ns32k_gen_operand" "g")
-		     (match_operand:SI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:SI 0 "general_operand" "=g")
+	(rotatert:SI (match_operand:SI 1 "general_operand" "g")
+		     (match_operand:SI 2 "general_operand" "g")))]
   ""
   "
 {
@@ -1961,23 +1947,23 @@
 }")
 
 (define_insn ""
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g")
-	(rotatert:SI (match_operand:SI 1 "ns32k_gen_operand" "0")
+  [(set (match_operand:SI 0 "general_operand" "=g")
+	(rotatert:SI (match_operand:SI 1 "general_operand" "0")
 		     (match_operand:SI 2 "immediate_operand" "i")))]
   ""
-  "rotd %$%n2,%0")
+  "rotd %n2,%0")
 
 (define_insn ""
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g")
-	(rotatert:SI (match_operand:SI 1 "ns32k_gen_operand" "0")
-		     (neg:SI (match_operand:SI 2 "ns32k_gen_operand" "r"))))]
+  [(set (match_operand:SI 0 "general_operand" "=g")
+	(rotatert:SI (match_operand:SI 1 "general_operand" "0")
+		     (neg:SI (match_operand:SI 2 "general_operand" "r"))))]
   ""
   "rotd %2,%0")
 
 (define_expand "rotrhi3"
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g")
-	(rotatert:HI (match_operand:HI 1 "ns32k_gen_operand" "g")
-		     (match_operand:SI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:HI 0 "general_operand" "=g")
+	(rotatert:HI (match_operand:HI 1 "general_operand" "g")
+		     (match_operand:SI 2 "general_operand" "g")))]
   ""
   "
 {
@@ -1986,23 +1972,23 @@
 }")
 
 (define_insn ""
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g")
-	(rotatert:HI (match_operand:HI 1 "ns32k_gen_operand" "0")
+  [(set (match_operand:HI 0 "general_operand" "=g")
+	(rotatert:HI (match_operand:HI 1 "general_operand" "0")
 		     (match_operand:SI 2 "immediate_operand" "i")))]
   ""
-  "rotw %$%n2,%0")
+  "rotw %n2,%0")
 
 (define_insn ""
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g")
-	(rotatert:HI (match_operand:HI 1 "ns32k_gen_operand" "0")
-		     (neg:SI (match_operand:SI 2 "ns32k_gen_operand" "r"))))]
+  [(set (match_operand:HI 0 "general_operand" "=g")
+	(rotatert:HI (match_operand:HI 1 "general_operand" "0")
+		     (neg:SI (match_operand:SI 2 "general_operand" "r"))))]
   ""
   "rotw %2,%0")
 
 (define_expand "rotrqi3"
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g")
-	(rotatert:QI (match_operand:QI 1 "ns32k_gen_operand" "g")
-		     (match_operand:SI 2 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:QI 0 "general_operand" "=g")
+	(rotatert:QI (match_operand:QI 1 "general_operand" "g")
+		     (match_operand:SI 2 "general_operand" "g")))]
   ""
   "
 {
@@ -2011,16 +1997,16 @@
 }")
 
 (define_insn ""
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g")
-	(rotatert:QI (match_operand:QI 1 "ns32k_gen_operand" "0")
+  [(set (match_operand:QI 0 "general_operand" "=g")
+	(rotatert:QI (match_operand:QI 1 "general_operand" "0")
 		     (match_operand:SI 2 "immediate_operand" "i")))]
   ""
-  "rotb %$%n2,%0")
+  "rotb %n2,%0")
 
 (define_insn ""
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g")
-	(rotatert:QI (match_operand:QI 1 "ns32k_gen_operand" "0")
-		     (neg:SI (match_operand:SI 2 "ns32k_gen_operand" "r"))))]
+  [(set (match_operand:QI 0 "general_operand" "=g")
+	(rotatert:QI (match_operand:QI 1 "general_operand" "0")
+		     (neg:SI (match_operand:SI 2 "general_operand" "r"))))]
   ""
   "rotb %2,%0")
 
@@ -2029,7 +2015,7 @@
 ;; because we don't want pushl $1 turned into pushad 1.
 
 (define_insn ""
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:SI 0 "general_operand" "=g<")
 	(match_operand:QI 1 "address_operand" "p"))]
   ""
   "*
@@ -2052,58 +2038,53 @@
 ;;; Index insns.  These are about the same speed as multiply-add counterparts.
 ;;; but slower then using power-of-2 shifts if we can use them
 ;
-;;; See note 1
 ;(define_insn ""
 ;  [(set (match_operand:SI 0 "register_operand" "=r")
-;	(plus:SI (match_operand:SI 1 "ns32k_gen_operand" "g")
+;	(plus:SI (match_operand:SI 1 "general_operand" "rmn")
 ;		 (mult:SI (match_operand:SI 2 "register_operand" "0")
-;			  (plus:SI (match_operand:SI 3 "ns32k_gen_operand" "g") (const_int 1)))))]
+;			  (plus:SI (match_operand:SI 3 "general_operand" "rmn") (const_int 1)))))]
 ;  "GET_CODE (operands[3]) != CONST_INT || INTVAL (operands[3]) > 8"
 ;  "indexd %0,%3,%1")
 ;
 ;(define_insn ""
 ;  [(set (match_operand:SI 0 "register_operand" "=r")
 ;	(plus:SI (mult:SI (match_operand:SI 1 "register_operand" "0")
-;			  (plus:SI (match_operand:SI 2 "ns32k_gen_operand" "g") (const_int 1)))
-;		 (match_operand:SI 3 "ns32k_gen_operand" "g")))]
+;			  (plus:SI (match_operand:SI 2 "general_operand" "rmn") (const_int 1)))
+;		 (match_operand:SI 3 "general_operand" "rmn")))]
 ;  "GET_CODE (operands[2]) != CONST_INT || INTVAL (operands[2]) > 8"
 ;  "indexd %0,%2,%3")
 
 ;; Set, Clear, and Invert bit
 
-;; See note 1
 (define_insn ""
-  [(set (zero_extract:SI (match_operand:SI 0 "ns32k_gen_operand" "+g")
+  [(set (zero_extract:SI (match_operand:SI 0 "general_operand" "+g")
 			 (const_int 1)
-			 (match_operand:SI 1 "ns32k_gen_operand" "g"))
+			 (match_operand:SI 1 "general_operand" "rmn"))
 	(const_int 1))]
   ""
   "sbitd %1,%0")
 
-;; See note 1
 (define_insn ""
-  [(set (zero_extract:SI (match_operand:SI 0 "ns32k_gen_operand" "+g")
+  [(set (zero_extract:SI (match_operand:SI 0 "general_operand" "+g")
 			 (const_int 1)
-			 (match_operand:SI 1 "ns32k_gen_operand" "g"))
+			 (match_operand:SI 1 "general_operand" "rmn"))
 	(const_int 0))]
   ""
   "cbitd %1,%0")
 
-;; See note 1
 (define_insn ""
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "+g")
+  [(set (match_operand:SI 0 "general_operand" "+g")
 	(xor:SI (ashift:SI (const_int 1)
-			   (match_operand:SI 1 "ns32k_gen_operand" "g"))
+			   (match_operand:SI 1 "general_operand" "rmn"))
 		(match_dup 0)))]
   ""
   "ibitd %1,%0")
 
-;; See note 1
 (define_insn ""
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g")
+  [(set (match_operand:QI 0 "general_operand" "=g")
 	(xor:QI (subreg:QI
 		 (ashift:SI (const_int 1)
-			    (match_operand:QI 1 "ns32k_gen_operand" "g")) 0)
+			    (match_operand:QI 1 "general_operand" "rmn")) 0)
 		(match_dup 0)))]
   ""
   "ibitb %1,%0")
@@ -2112,9 +2093,9 @@
 
 (define_insn ""
   [(set (cc0)
-	(zero_extract (match_operand:SI 0 "ns32k_gen_operand" "rm")
+	(zero_extract (match_operand:SI 0 "general_operand" "rm")
 		      (const_int 1)
-		      (match_operand:SI 1 "ns32k_gen_operand" "g")))]
+		      (match_operand:SI 1 "general_operand" "g")))]
   ""
   "*
 { cc_status.flags = CC_Z_IN_F;
@@ -2135,7 +2116,7 @@
 ;; enough on the 32532 that such hacks are not needed.
 
 (define_insn ""
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=ro")
+  [(set (match_operand:SI 0 "general_operand" "=ro")
 	(zero_extract:SI (match_operand:SI 1 "register_operand" "r")
 			 (match_operand:SI 2 "const_int_operand" "i")
 			 (match_operand:SI 3 "const_int_operand" "i")))]
@@ -2187,10 +2168,10 @@
 ;; to allow/disallow the use of these instructions.
 
 (define_insn ""
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:SI 0 "general_operand" "=g<")
 	(zero_extract:SI (match_operand:SI 1 "register_operand" "g")
 			 (match_operand:SI 2 "const_int_operand" "i")
-			 (match_operand:SI 3 "ns32k_gen_operand" "rK")))]
+			 (match_operand:SI 3 "general_operand" "rK")))]
   "TARGET_BITFIELD"
   "*
 { if (GET_CODE (operands[3]) == CONST_INT)
@@ -2199,10 +2180,10 @@
 }")
 
 (define_insn "extzv"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g<")
-	(zero_extract:SI (match_operand:QI 1 "ns32k_gen_operand" "g")
+  [(set (match_operand:SI 0 "general_operand" "=g<")
+	(zero_extract:SI (match_operand:QI 1 "general_operand" "g")
 			 (match_operand:SI 2 "const_int_operand" "i")
-			 (match_operand:SI 3 "ns32k_gen_operand" "rK")))]
+			 (match_operand:SI 3 "general_operand" "rK")))]
   "TARGET_BITFIELD"
   "*
 { if (GET_CODE (operands[3]) == CONST_INT)
@@ -2213,8 +2194,8 @@
 (define_insn ""
   [(set (zero_extract:SI (match_operand:SI 0 "memory_operand" "+o")
 			 (match_operand:SI 1 "const_int_operand" "i")
-			 (match_operand:SI 2 "ns32k_gen_operand" "rn"))
-	(match_operand:SI 3 "ns32k_gen_operand" "rm"))]
+			 (match_operand:SI 2 "general_operand" "rn"))
+	(match_operand:SI 3 "general_operand" "rm"))]
   "TARGET_BITFIELD"
   "*
 { if (GET_CODE (operands[2]) == CONST_INT)
@@ -2238,8 +2219,8 @@
 (define_insn ""
   [(set (zero_extract:SI (match_operand:SI 0 "register_operand" "+r")
 			 (match_operand:SI 1 "const_int_operand" "i")
-			 (match_operand:SI 2 "ns32k_gen_operand" "rK"))
-	(match_operand:SI 3 "ns32k_gen_operand" "rm"))]
+			 (match_operand:SI 2 "general_operand" "rK"))
+	(match_operand:SI 3 "general_operand" "rm"))]
   "TARGET_BITFIELD"
   "*
 { if (GET_CODE (operands[2]) == CONST_INT)
@@ -2253,10 +2234,10 @@
 }")
 
 (define_insn "insv"
-  [(set (zero_extract:SI (match_operand:QI 0 "ns32k_gen_operand" "+g")
+  [(set (zero_extract:SI (match_operand:QI 0 "general_operand" "+g")
 			 (match_operand:SI 1 "const_int_operand" "i")
-			 (match_operand:SI 2 "ns32k_gen_operand" "rK"))
-	(match_operand:SI 3 "ns32k_gen_operand" "rm"))]
+			 (match_operand:SI 2 "general_operand" "rK"))
+	(match_operand:SI 3 "general_operand" "rm"))]
   "TARGET_BITFIELD"
   "*
 { if (GET_CODE (operands[2]) == CONST_INT)
@@ -2486,7 +2467,7 @@
 (define_insn ""
   [(set (pc)
 	(if_then_else
-	 (ne (match_operand:SI 0 "ns32k_gen_operand" "+g")
+	 (ne (match_operand:SI 0 "general_operand" "+g")
 	     (match_operand:SI 1 "const_int_operand" "i"))
 	 (label_ref (match_operand 2 "" ""))
 	 (pc)))
@@ -2494,12 +2475,12 @@
        (minus:SI (match_dup 0)
 		 (match_dup 1)))]
   "INTVAL (operands[1]) > -8 && INTVAL (operands[1]) <= 8"
-  "acbd %$%n1,%0,%l2")
+  "acbd %n1,%0,%l2")
 
 (define_insn ""
   [(set (pc)
 	(if_then_else
-	 (ne (match_operand:SI 0 "ns32k_gen_operand" "+g")
+	 (ne (match_operand:SI 0 "general_operand" "+g")
 	     (match_operand:SI 1 "const_int_operand" "i"))
 	 (label_ref (match_operand 2 "" ""))
 	 (pc)))
@@ -2512,7 +2493,7 @@
 
 (define_insn "call"
   [(call (match_operand:QI 0 "memory_operand" "m")
-	 (match_operand:QI 1 "ns32k_gen_operand" "g"))]
+	 (match_operand:QI 1 "general_operand" "g"))]
   ""
   "*
 {
@@ -2551,7 +2532,7 @@
 (define_insn "call_value"
   [(set (match_operand 0 "" "=rf")
 	(call (match_operand:QI 1 "memory_operand" "m")
-	      (match_operand:QI 2 "ns32k_gen_operand" "g")))]
+	      (match_operand:QI 2 "general_operand" "g")))]
   ""
   "*
 {
@@ -2630,33 +2611,32 @@
   "ret 0")
 
 (define_insn "abssf2"
-  [(set (match_operand:SF 0 "ns32k_gen_operand" "=fm<")
-	(abs:SF (match_operand:SF 1 "ns32k_gen_operand" "fmF")))]
+  [(set (match_operand:SF 0 "general_operand" "=fm<")
+	(abs:SF (match_operand:SF 1 "general_operand" "fmF")))]
   "TARGET_32081"
   "absf %1,%0")
 
 (define_insn "absdf2"
-  [(set (match_operand:DF 0 "ns32k_gen_operand" "=lm<")
-	(abs:DF (match_operand:DF 1 "ns32k_gen_operand" "lmF")))]
+  [(set (match_operand:DF 0 "general_operand" "=lm<")
+	(abs:DF (match_operand:DF 1 "general_operand" "lmF")))]
   "TARGET_32081"
   "absl %1,%0")
 
-;; See note 1
 (define_insn "abssi2"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g<")
-	(abs:SI (match_operand:SI 1 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:SI 0 "general_operand" "=g<")
+	(abs:SI (match_operand:SI 1 "general_operand" "rmn")))]
   ""
   "absd %1,%0")
 
 (define_insn "abshi2"
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g<")
-	(abs:HI (match_operand:HI 1 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:HI 0 "general_operand" "=g<")
+	(abs:HI (match_operand:HI 1 "general_operand" "g")))]
   ""
   "absw %1,%0")
 
 (define_insn "absqi2"
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g<")
-	(abs:QI (match_operand:QI 1 "ns32k_gen_operand" "g")))]
+  [(set (match_operand:QI 0 "general_operand" "=g<")
+	(abs:QI (match_operand:QI 1 "general_operand" "g")))]
   ""
   "absb %1,%0")
 
@@ -2672,7 +2652,7 @@
 
 (define_insn "tablejump"
   [(set (pc)
-	(plus:SI (pc) (match_operand:SI 0 "ns32k_gen_operand" "g")))
+	(plus:SI (pc) (match_operand:SI 0 "general_operand" "g")))
    (use (label_ref (match_operand 1 "" "")))]
   ""
   "*
@@ -2684,7 +2664,7 @@
 
 ;; Scondi instructions
 (define_insn "seq"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:SI 0 "general_operand" "=g<")
 	(eq:SI (cc0) (const_int 0)))]
   ""
   "*
@@ -2696,7 +2676,7 @@
 }")
 
 (define_insn ""
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:HI 0 "general_operand" "=g<")
 	(eq:HI (cc0) (const_int 0)))]
   ""
   "*
@@ -2708,7 +2688,7 @@
 }")
 
 (define_insn ""
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:QI 0 "general_operand" "=g<")
 	(eq:QI (cc0) (const_int 0)))]
   ""
   "*
@@ -2720,7 +2700,7 @@
 }")
 
 (define_insn "sne"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:SI 0 "general_operand" "=g<")
 	(ne:SI (cc0) (const_int 0)))]
   ""
   "*
@@ -2732,7 +2712,7 @@
 }")
 
 (define_insn ""
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:HI 0 "general_operand" "=g<")
 	(ne:HI (cc0) (const_int 0)))]
   ""
   "*
@@ -2744,7 +2724,7 @@
 }")
 
 (define_insn ""
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:QI 0 "general_operand" "=g<")
 	(ne:QI (cc0) (const_int 0)))]
   ""
   "*
@@ -2756,145 +2736,145 @@
 }")
 
 (define_insn "sgt"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:SI 0 "general_operand" "=g<")
 	(gt:SI (cc0) (const_int 0)))]
   ""
   "sgtd %0")
 
 (define_insn ""
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:HI 0 "general_operand" "=g<")
 	(gt:HI (cc0) (const_int 0)))]
   ""
   "sgtw %0")
 
 (define_insn ""
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:QI 0 "general_operand" "=g<")
 	(gt:QI (cc0) (const_int 0)))]
   ""
   "sgtb %0")
 
 (define_insn "sgtu"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:SI 0 "general_operand" "=g<")
 	(gtu:SI (cc0) (const_int 0)))]
   ""
   "shid %0")
 
 (define_insn ""
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:HI 0 "general_operand" "=g<")
 	(gtu:HI (cc0) (const_int 0)))]
   ""
   "shiw %0")
 
 (define_insn ""
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:QI 0 "general_operand" "=g<")
 	(gtu:QI (cc0) (const_int 0)))]
   ""
   "shib %0")
 
 (define_insn "slt"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:SI 0 "general_operand" "=g<")
 	(lt:SI (cc0) (const_int 0)))]
   ""
   "sltd %0")
 
 (define_insn ""
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:HI 0 "general_operand" "=g<")
 	(lt:HI (cc0) (const_int 0)))]
   ""
   "sltw %0")
 
 (define_insn ""
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:QI 0 "general_operand" "=g<")
 	(lt:QI (cc0) (const_int 0)))]
   ""
   "sltb %0")
 
 (define_insn "sltu"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:SI 0 "general_operand" "=g<")
 	(ltu:SI (cc0) (const_int 0)))]
   ""
   "slod %0")
 
 (define_insn ""
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:HI 0 "general_operand" "=g<")
 	(ltu:HI (cc0) (const_int 0)))]
   ""
   "slow %0")
 
 (define_insn ""
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:QI 0 "general_operand" "=g<")
 	(ltu:QI (cc0) (const_int 0)))]
   ""
   "slob %0")
 
 (define_insn "sge"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:SI 0 "general_operand" "=g<")
 	(ge:SI (cc0) (const_int 0)))]
   ""
   "sged %0")
 
 (define_insn ""
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:HI 0 "general_operand" "=g<")
 	(ge:HI (cc0) (const_int 0)))]
   ""
   "sgew %0")
 
 (define_insn ""
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:QI 0 "general_operand" "=g<")
 	(ge:QI (cc0) (const_int 0)))]
   ""
   "sgeb %0")
 
 (define_insn "sgeu"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:SI 0 "general_operand" "=g<")
 	(geu:SI (cc0) (const_int 0)))]
   ""
   "shsd %0")  
 
 (define_insn ""
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:HI 0 "general_operand" "=g<")
 	(geu:HI (cc0) (const_int 0)))]
   ""
   "shsw %0")  
 
 (define_insn ""
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:QI 0 "general_operand" "=g<")
 	(geu:QI (cc0) (const_int 0)))]
   ""
   "shsb %0")  
 
 (define_insn "sle"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:SI 0 "general_operand" "=g<")
 	(le:SI (cc0) (const_int 0)))]
   ""
   "sled %0")
 
 (define_insn ""
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:HI 0 "general_operand" "=g<")
 	(le:HI (cc0) (const_int 0)))]
   ""
   "slew %0")
 
 (define_insn ""
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:QI 0 "general_operand" "=g<")
 	(le:QI (cc0) (const_int 0)))]
   ""
   "sleb %0")
 
 (define_insn "sleu"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:SI 0 "general_operand" "=g<")
 	(leu:SI (cc0) (const_int 0)))]
   ""
   "slsd %0")
 
 (define_insn ""
-  [(set (match_operand:HI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:HI 0 "general_operand" "=g<")
 	(leu:HI (cc0) (const_int 0)))]
   ""
   "slsw %0")
 
 (define_insn ""
-  [(set (match_operand:QI 0 "ns32k_gen_operand" "=g<")
+  [(set (match_operand:QI 0 "general_operand" "=g<")
 	(leu:QI (cc0) (const_int 0)))]
   ""
   "slsb %0")
@@ -2902,10 +2882,10 @@
 ;; ffs instructions
 
 (define_insn ""
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "ro")
+  [(set (match_operand:SI 0 "general_operand" "ro")
 	(minus:SI 
 		(plus:SI (ffs:SI (zero_extract:SI 
-				(match_operand:SI 1 "ns32k_gen_operand" "g") 
+				(match_operand:SI 1 "general_operand" "g") 
 				(minus:SI (const_int 32) (match_dup 0))
 				(match_dup 0)))
 			(match_dup 0)) 
@@ -2914,11 +2894,11 @@
   "ffsd %1,%0; bfc 1f; addqd %$-1,%0; 1:")
 
 (define_expand "ffssi2"
-  [(set (match_operand:SI 0 "ns32k_gen_operand" "=g") (const_int 0))
+  [(set (match_operand:SI 0 "general_operand" "=g") (const_int 0))
    (set (match_dup 0)
 	(minus:SI 
 		(plus:SI (ffs:SI (zero_extract:SI 
-				(match_operand:SI 1 "ns32k_gen_operand" "g") 
+				(match_operand:SI 1 "general_operand" "g") 
 				(minus:SI (const_int 32) (match_dup 0))
 				(match_dup 0)))
 			(match_dup 0)) 
@@ -2934,12 +2914,12 @@
 (define_peephole
   [(set (reg:SI 25) (plus:SI (reg:SI 25) (const_int -2)))
    (set (match_operand:HI 0 "push_operand" "=m")
-	(match_operand:HI 1 "ns32k_gen_operand" "g"))]
+	(match_operand:HI 1 "general_operand" "g"))]
   "! reg_mentioned_p (stack_pointer_rtx, operands[1])"
   "*
 {
   if (GET_CODE (operands[1]) == CONST_INT)
-	output_asm_insn (output_move_dconst (INTVAL (operands[1]), \"%$%1,tos\"),
+	output_asm_insn (output_move_dconst (INTVAL (operands[1]), \"%1,tos\"),
 			 operands);
   else
 	output_asm_insn (\"movzwd %1,tos\", operands);
@@ -2951,12 +2931,12 @@
 (define_peephole
   [(set (reg:SI 25) (plus:SI (reg:SI 25) (const_int -2)))
    (set (match_operand:HI 0 "push_operand" "=m")
-	(zero_extend:HI (match_operand:QI 1 "ns32k_gen_operand" "g")))]
+	(zero_extend:HI (match_operand:QI 1 "general_operand" "g")))]
   "! reg_mentioned_p (stack_pointer_rtx, operands[1])"
   "*
 {
   if (GET_CODE (operands[1]) == CONST_INT)
-	output_asm_insn (output_move_dconst (INTVAL (operands[1]), \"%$%1,tos\"),
+	output_asm_insn (output_move_dconst (INTVAL (operands[1]), \"%1,tos\"),
 			 operands);
   else
 	output_asm_insn (\"movzbd %1,tos\", operands);
@@ -2968,12 +2948,12 @@
 (define_peephole
   [(set (reg:SI 25) (plus:SI (reg:SI 25) (const_int -2)))
    (set (match_operand:HI 0 "push_operand" "=m")
-	(sign_extend:HI (match_operand:QI 1 "ns32k_gen_operand" "g")))]
+	(sign_extend:HI (match_operand:QI 1 "general_operand" "g")))]
   "! reg_mentioned_p (stack_pointer_rtx, operands[1])"
   "*
 {
   if (GET_CODE (operands[1]) == CONST_INT)
-	output_asm_insn (output_move_dconst (INTVAL (operands[1]), \"%$%1,tos\"),
+	output_asm_insn (output_move_dconst (INTVAL (operands[1]), \"%1,tos\"),
 			 operands);
   else
 	output_asm_insn (\"movxbd %1,tos\", operands);
@@ -2985,12 +2965,12 @@
 (define_peephole
   [(set (reg:SI 25) (plus:SI (reg:SI 25) (const_int -3)))
    (set (match_operand:QI 0 "push_operand" "=m")
-	(match_operand:QI 1 "ns32k_gen_operand" "g"))]
+	(match_operand:QI 1 "general_operand" "g"))]
   "! reg_mentioned_p (stack_pointer_rtx, operands[1])"
   "*
 {
   if (GET_CODE (operands[1]) == CONST_INT)
-	output_asm_insn (output_move_dconst (INTVAL (operands[1]), \"%$%1,tos\"),
+	output_asm_insn (output_move_dconst (INTVAL (operands[1]), \"%1,tos\"),
 			 operands);
   else
 	output_asm_insn (\"movzbd %1,tos\", operands);
@@ -3002,12 +2982,12 @@
 (define_peephole
   [(set (reg:SI 25) (plus:SI (reg:SI 25) (const_int 4)))
    (set (match_operand:SI 0 "push_operand" "=m")
-	(match_operand:SI 1 "ns32k_gen_operand" "g"))]
+	(match_operand:SI 1 "general_operand" "g"))]
   "! reg_mentioned_p (stack_pointer_rtx, operands[1])"
   "*
 {
   if (GET_CODE (operands[1]) == CONST_INT)
-	output_asm_insn (output_move_dconst (INTVAL (operands[1]), \"%$%1,0(sp)\"),
+	output_asm_insn (output_move_dconst (INTVAL (operands[1]), \"%1,0(sp)\"),
 			 operands);
   else if (GET_CODE (operands[1]) != REG
 	   && GET_CODE (operands[1]) != MEM
@@ -3023,15 +3003,15 @@
 (define_peephole
   [(set (reg:SI 25) (plus:SI (reg:SI 25) (const_int 8)))
    (set (match_operand:SI 0 "push_operand" "=m")
-	(match_operand:SI 1 "ns32k_gen_operand" "g"))
+	(match_operand:SI 1 "general_operand" "g"))
    (set (match_operand:SI 2 "push_operand" "=m")
-	(match_operand:SI 3 "ns32k_gen_operand" "g"))]
+	(match_operand:SI 3 "general_operand" "g"))]
   "! reg_mentioned_p (stack_pointer_rtx, operands[1])
    && ! reg_mentioned_p (stack_pointer_rtx, operands[3])"
   "*
 {
   if (GET_CODE (operands[1]) == CONST_INT)
-	output_asm_insn (output_move_dconst (INTVAL (operands[1]), \"%$%1,4(sp)\"),
+	output_asm_insn (output_move_dconst (INTVAL (operands[1]), \"%1,4(sp)\"),
 			 operands);
   else if (GET_CODE (operands[1]) != REG
 	   && GET_CODE (operands[1]) != MEM
@@ -3041,7 +3021,7 @@
 	output_asm_insn (\"movd %1,4(sp)\", operands);
 
   if (GET_CODE (operands[3]) == CONST_INT)
-	output_asm_insn (output_move_dconst (INTVAL (operands[3]), \"%$%3,0(sp)\"),
+	output_asm_insn (output_move_dconst (INTVAL (operands[3]), \"%3,0(sp)\"),
 			 operands);
   else if (GET_CODE (operands[3]) != REG
 	   && GET_CODE (operands[3]) != MEM
