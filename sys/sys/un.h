@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.9 1995/01/08 23:57:47 cgd Exp $	*/
+/*	$NetBSD: un.h,v 1.10 1995/03/26 20:25:02 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -44,7 +44,7 @@ struct	sockaddr_un {
 	char	sun_path[104];		/* path name (gag) */
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 struct unpcb;
 
 int	uipc_usrreq __P((struct socket *so, int req, struct mbuf *m,
@@ -61,9 +61,9 @@ void	unp_gc __P((void));
 void	unp_mark __P((struct file *fp));
 void	unp_scan __P((struct mbuf *m0, void (*op) __P((struct file *))));
 void	unp_shutdown __P((struct unpcb *unp));
-#else /* !KERNEL */
+#else /* !_KERNEL */
 
 /* actual length of an initialized sockaddr_un */
 #define SUN_LEN(su) \
 	(sizeof(*(su)) - sizeof((su)->sun_path) + strlen((su)->sun_path))
-#endif /* KERNEL */
+#endif /* _KERNEL */

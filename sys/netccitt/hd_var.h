@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_var.h,v 1.5 1994/06/29 06:37:16 cgd Exp $	*/
+/*	$NetBSD: hd_var.h,v 1.6 1995/03/26 20:33:44 jtc Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -98,7 +98,7 @@ struct	hdcb {
 	short	hd_rnrs_out;
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 struct	hdcb *hdcbhead;		/* head of linked list of hdcb's */
 struct	Frmr_frame hd_frmr;	/* rejected frame diagnostic info */
 struct	ifqueue hdintrq;	/* hdlc packet input queue */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.10 1994/06/29 06:38:29 cgd Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.11 1995/03/26 20:32:33 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -142,7 +142,7 @@ struct	ipstat {
 	u_long	ips_rawout;		/* total raw ip packets generated */
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /* flags passed to ip_output as last parameter */
 #define	IP_FORWARDING		0x1		/* most of ip header exists */
 #define	IP_RAWOUTPUT		0x2		/* raw ip header exists */

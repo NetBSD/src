@@ -1,4 +1,4 @@
-/*	$NetBSD: acct.h,v 1.15 1994/12/24 14:12:09 cgd Exp $	*/
+/*	$NetBSD: acct.h,v 1.16 1995/03/26 20:23:52 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -73,7 +73,7 @@ struct acct {
  */
 #define	AHZ	64
 
-#ifdef KERNEL
+#ifdef _KERNEL
 struct vnode	*acctp;
 
 int	acct_process __P((struct proc *p));

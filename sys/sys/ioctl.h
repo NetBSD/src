@@ -1,4 +1,4 @@
-/*	$NetBSD: ioctl.h,v 1.17 1994/11/17 20:35:37 christos Exp $	*/
+/*	$NetBSD: ioctl.h,v 1.18 1995/03/26 20:24:16 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -64,14 +64,14 @@ struct ttysize {
 #include <sys/filio.h>
 #include <sys/sockio.h>
 
-#ifndef KERNEL
+#ifndef _KERNEL
 
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
 int	ioctl __P((int, unsigned long, ...));
 __END_DECLS
-#endif /* !KERNEL */
+#endif /* !_KERNEL */
 #endif /* !_SYS_IOCTL_H_ */
 
 /*

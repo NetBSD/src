@@ -1,4 +1,4 @@
-/*	$NetBSD: mtio.h,v 1.10 1994/06/29 06:44:46 cgd Exp $	*/
+/*	$NetBSD: mtio.h,v 1.11 1995/03/26 20:24:28 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -117,7 +117,7 @@ struct mtget {
 #define MTIOCIEOT	_IO('m', 3)			/* ignore EOT error */
 #define MTIOCEEOT	_IO('m', 4)			/* enable EOT error */
 
-#ifndef KERNEL
+#ifndef _KERNEL
 #define	DEFTAPE	"/dev/rst0"
 #endif
 

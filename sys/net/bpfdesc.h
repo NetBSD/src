@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.9 1994/06/29 06:35:58 cgd Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.10 1995/03/26 20:30:09 jtc Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -95,6 +95,6 @@ struct bpf_if {
 	struct ifnet *bif_ifp;		/* correspoding interface */
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 int	 bpf_setf __P((struct bpf_d *, struct bpf_program *));
 #endif

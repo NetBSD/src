@@ -1,4 +1,4 @@
-/*	$NetBSD: vmmeter.h,v 1.8 1994/12/13 14:41:33 mycroft Exp $	*/
+/*	$NetBSD: vmmeter.h,v 1.9 1995/03/26 20:25:04 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -84,7 +84,7 @@ struct vmmeter {
 	u_int v_inactive_target; /* number of pages desired inactive */
 	u_int v_inactive_count;  /* number of pages inactive */
 };
-#ifdef KERNEL
+#ifdef _KERNEL
 struct	vmmeter cnt;
 #endif
 
@@ -106,7 +106,7 @@ struct vmtotal
 	int32_t	t_armshr;	/* active shared real memory */
 	int32_t	t_free;		/* free memory pages */
 };
-#ifdef KERNEL
+#ifdef _KERNEL
 struct	vmtotal total;
 #endif
 

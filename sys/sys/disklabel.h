@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.32 1995/02/05 14:09:25 cgd Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.33 1995/03/26 20:23:59 jtc Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -324,7 +324,7 @@ struct partinfo {
 
 #define DIOCSBAD	_IOW('d', 110, struct dkbad)	/* set kernel dkbad */
 
-#ifdef KERNEL
+#ifdef _KERNEL
 void	 diskerr
 	    __P((struct buf *, char *, char *, int, int, struct disklabel *));
 void	 disksort __P((struct buf *, struct buf *));
@@ -338,7 +338,7 @@ int	 writedisklabel __P((dev_t, void (*)(), struct disklabel *,
 #endif
 #endif /* LOCORE */
 
-#if !defined(KERNEL) && !defined(LOCORE)
+#if !defined(_KERNEL) && !defined(LOCORE)
 
 #include <sys/cdefs.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: termios.h,v 1.11 1994/06/29 06:45:43 cgd Exp $	*/
+/*	$NetBSD: termios.h,v 1.12 1995/03/26 20:24:52 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993, 1994
@@ -229,7 +229,7 @@ struct termios {
 #define EXTB	38400
 #endif  /* !_POSIX_SOURCE */
 
-#ifndef KERNEL
+#ifndef _KERNEL
 
 #define	TCIFLUSH	1
 #define	TCOFLUSH	2
@@ -259,7 +259,7 @@ int	cfsetspeed __P((struct termios *, speed_t));
 #endif /* !_POSIX_SOURCE */
 __END_DECLS
 
-#endif /* !KERNEL */
+#endif /* !_KERNEL */
 
 #ifndef _POSIX_SOURCE
 

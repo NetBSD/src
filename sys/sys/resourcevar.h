@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.10 1994/12/24 14:36:06 cgd Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.11 1995/03/26 20:24:37 jtc Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -83,7 +83,7 @@ struct plimit {
 	addupc_task(p,							\
 	    (p)->p_stats->p_prof.pr_addr, (p)->p_stats->p_prof.pr_ticks)
 
-#ifdef KERNEL
+#ifdef _KERNEL
 void	 addupc_intr __P((struct proc *p, u_long pc, u_int ticks));
 void	 addupc_task __P((struct proc *p, u_long pc, u_int ticks));
 void	 calcru __P((struct proc *p, struct timeval *up, struct timeval *sp,

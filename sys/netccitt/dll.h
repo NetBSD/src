@@ -1,4 +1,4 @@
-/*	$NetBSD: dll.h,v 1.2 1994/06/29 06:37:02 cgd Exp $	*/
+/*	$NetBSD: dll.h,v 1.3 1995/03/26 20:33:43 jtc Exp $	*/
 
 /* 
  * Copyright (C) Dirk Husemann, Computer Science Department IV, 
@@ -40,7 +40,7 @@
 /* 
  * We define the additional PRC_* codes in here
  */
-#ifdef KERNEL
+#ifdef _KERNEL
 #ifndef PRC_IFUP
 #define PRC_IFUP		   3
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.7 1994/06/29 06:38:08 cgd Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.8 1995/03/26 20:32:24 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -72,7 +72,7 @@ struct inpcb {
 
 #define	sotoinpcb(so)	((struct inpcb *)(so)->so_pcb)
 
-#ifdef KERNEL
+#ifdef _KERNEL
 int	 in_losing __P((struct inpcb *));
 int	 in_pcballoc __P((struct socket *, struct inpcb *));
 int	 in_pcbbind __P((struct inpcb *, struct mbuf *));

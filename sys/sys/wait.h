@@ -1,4 +1,4 @@
-/*	$NetBSD: wait.h,v 1.8 1994/12/13 14:41:35 mycroft Exp $	*/
+/*	$NetBSD: wait.h,v 1.9 1995/03/26 20:25:07 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1994
@@ -141,7 +141,7 @@ union wait {
 #define	WSTOPPED	_WSTOPPED
 #endif /* _POSIX_SOURCE */
 
-#ifndef KERNEL
+#ifndef _KERNEL
 #include <sys/types.h>
 #include <sys/cdefs.h>
 

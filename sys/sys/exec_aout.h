@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.h,v 1.10 1995/03/18 03:24:53 cgd Exp $	*/
+/*	$NetBSD: exec_aout.h,v 1.11 1995/03/26 20:24:08 jtc Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -166,7 +166,7 @@ struct exec {
 	(N_SYMOFF(ex) + (ex).a_syms)
 
 
-#ifdef KERNEL
+#ifdef _KERNEL
 
 /* the "a.out" format's entry in the exec switch */
 int	exec_aout_makecmds __P((struct proc *, struct exec_package *));
@@ -177,4 +177,4 @@ int	exec_aout_prep_nmagic __P((struct proc *, struct exec_package *));
 int	exec_aout_prep_omagic __P((struct proc *, struct exec_package *));
 int	exec_aout_setup_stack __P((struct proc *, struct exec_package *));
 
-#endif /* KERNEL */
+#endif /* _KERNEL */

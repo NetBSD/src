@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.7 1995/03/08 02:57:14 cgd Exp $	*/
+/*	$NetBSD: route.h,v 1.8 1995/03/26 20:30:19 jtc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -226,7 +226,7 @@ struct route_cb {
 	int	any_count;
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #define	RTFREE(rt) \
 	if ((rt)->rt_refcnt <= 1) \
 		rtfree(rt); \
@@ -261,4 +261,4 @@ int	 rtredirect __P((struct sockaddr *, struct sockaddr *,
 	    struct sockaddr *, int, struct sockaddr *, struct rtentry **));
 int	 rtrequest __P((int, struct sockaddr *,
 	    struct sockaddr *, struct sockaddr *, int, struct rtentry **));
-#endif /* KERNEL */
+#endif /* _KERNEL */

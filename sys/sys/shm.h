@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.17 1994/12/22 13:29:12 cgd Exp $	*/
+/*	$NetBSD: shm.h,v 1.18 1995/03/26 20:24:41 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -60,7 +60,7 @@ struct shmid_ds {
 	void		*shm_internal;	/* sysv stupidity */
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 
 /*
  * System 5 style catch-all structure for shared memory constants that
@@ -76,7 +76,7 @@ struct shminfo {
 struct shminfo shminfo;
 struct shmid_ds *shmsegs;
 
-#else /* !KERNEL */
+#else /* !_KERNEL */
 
 #include <sys/cdefs.h>
 
@@ -87,6 +87,6 @@ int shmdt __P((void *));
 int shmget __P((key_t, int, int));
 __END_DECLS
 
-#endif /* !KERNEL */
+#endif /* !_KERNEL */
 
 #endif /* !_SYS_SHM_H_ */

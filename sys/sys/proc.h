@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.37 1995/02/28 23:04:47 cgd Exp $	*/
+/*	$NetBSD: proc.h,v 1.38 1995/03/26 20:24:32 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -232,7 +232,7 @@ struct	pcred {
 	int	p_refcnt;		/* Number of references. */
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  * We use process IDs <= PID_MAX; PID_MAX + 1 must also fit in a pid_t,
  * as it is used to represent "no process group".
@@ -289,5 +289,5 @@ void	sleep __P((void *chan, int pri));
 int	tsleep __P((void *chan, int pri, char *wmesg, int timo));
 void	unsleep __P((struct proc *));
 void	wakeup __P((void *chan));
-#endif	/* KERNEL */
+#endif	/* _KERNEL */
 #endif	/* !_SYS_PROC_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: x25.h,v 1.5 1994/06/29 06:37:45 cgd Exp $	*/
+/*	$NetBSD: x25.h,v 1.6 1995/03/26 20:33:46 jtc Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -42,7 +42,7 @@
  *	@(#)x25.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #define PRC_IFUP	3
 #define PRC_LINKUP	4
 #define PRC_LINKDOWN	5

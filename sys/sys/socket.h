@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.10 1994/06/29 06:45:27 cgd Exp $	*/
+/*	$NetBSD: socket.h,v 1.11 1995/03/26 20:24:45 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -337,5 +337,5 @@ int	socket __P((int, int, int));
 int	socketpair __P((int, int, int, int *));
 __END_DECLS
 
-#endif /* !KERNEL */
+#endif /* !_KERNEL */
 #endif /* !_SYS_SOCKET_H_ */

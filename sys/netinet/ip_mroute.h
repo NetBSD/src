@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.h,v 1.6 1994/06/29 06:38:24 cgd Exp $	*/
+/*	$NetBSD: ip_mroute.h,v 1.7 1995/03/26 20:32:31 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989 Stephen Deering.
@@ -117,7 +117,7 @@ struct mrtctl {
 };
 
 
-#ifdef KERNEL
+#ifdef _KERNEL
 
 /*
  * The kernel's virtual-interface structure.
@@ -172,4 +172,4 @@ struct mrtstat {
 int	ip_mforward __P((struct mbuf *, struct ifnet *));
 int	ip_mrouter_cmd __P((int, struct socket *, struct mbuf *));
 int	ip_mrouter_done __P((void));
-#endif /* KERNEL */
+#endif /* _KERNEL */

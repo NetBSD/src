@@ -1,4 +1,4 @@
-/*	$NetBSD: ucred.h,v 1.10 1994/12/24 14:02:49 cgd Exp $	*/
+/*	$NetBSD: ucred.h,v 1.11 1995/03/26 20:24:59 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ struct ucred {
 #define NOCRED ((struct ucred *)-1)	/* no credential available */
 #define FSCRED ((struct ucred *)-2)	/* filesystem credential */
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #define	crhold(cr)	(cr)->cr_ref++
 
 struct ucred	*crcopy __P((struct ucred *cr));
@@ -59,6 +59,6 @@ struct ucred	*crdup __P((struct ucred *cr));
 void		crfree __P((struct ucred *cr));
 struct ucred	*crget __P((void));
 int		suser __P((struct ucred *cred, u_short *acflag));
-#endif /* KERNEL */
+#endif /* _KERNEL */
 
 #endif /* !_SYS_UCRED_H_ */
