@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 2003/08/07 16:26:37 agc Exp $	*/
+/*	$NetBSD: clock.c,v 1.3.2.1 2004/05/06 05:33:10 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.3 2003/08/07 16:26:37 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.3.2.1 2004/05/06 05:33:10 jmc Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -424,7 +424,7 @@ startrtclock()
 int
 clockintr(void *arg, struct intrframe frame)
 {
-#if defined(I586_CPU) || defined(I686_CPU)
+#if defined(I586_CPU) || defined(I686_CPU) || defined(__x86_64__)
 	static int microset_iter; /* call cc_microset once/sec */
 	struct cpu_info *ci = curcpu();
 	
@@ -785,7 +785,7 @@ inittodr(base)
 	mc_todregs rtclk;
 	struct clock_ymdhms dt;
 	int s;
-#if defined(I586_CPU) || defined(I686_CPU)
+#if defined(I586_CPU) || defined(I686_CPU) || defined(__x86_64__)
 	struct cpu_info *ci = curcpu();
 #endif
 	/*
@@ -850,7 +850,7 @@ inittodr(base)
 #ifdef DEBUG_CLOCK
 	printf("readclock: %ld (%ld)\n", time.tv_sec, base);
 #endif
-#if defined(I586_CPU) || defined(I686_CPU)
+#if defined(I586_CPU) || defined(I686_CPU) || defined(__x86_64__)
 	if (ci->ci_feature_flags & CPUID_TSC) {
 		cc_microset_time = time;
 		cc_microset(ci);
