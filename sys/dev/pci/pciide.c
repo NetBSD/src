@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.93 2000/11/19 15:32:24 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.94 2000/11/26 04:59:18 christos Exp $	*/
 
 
 /*
@@ -2561,7 +2561,7 @@ sis_chip_map(sc, pa)
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
 		sc->sc_wdcdev.irqack = pciide_irqack;
-		if (rev >= 0xd0)
+		if (rev > 0xd0)
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 	}
 
