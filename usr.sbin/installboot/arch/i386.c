@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.5 2003/04/18 14:16:42 bjh21 Exp $ */
+/* $NetBSD: i386.c,v 1.6 2003/05/08 20:33:44 petrov Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.5 2003/04/18 14:16:42 bjh21 Exp $");
+__RCSID("$NetBSD: i386.c,v 1.6 2003/05/08 20:33:44 petrov Exp $");
 #endif /* __RCSID && !__lint */
 
 #if HAVE_CONFIG_H
@@ -141,7 +141,7 @@ i386_setboot(ib_params *params)
 				fprintf(stderr, "\t%s", names[0]);
 				for (i = 1; names[i] != NULL; i++)
 					fprintf(stderr, ", %s", names[i]);
-				fprintf(stderr, "\n", names[0]);
+				fprintf(stderr, "\n");
 				goto done;
 			}
 			if (strcmp(names[i], params->console) == 0)
