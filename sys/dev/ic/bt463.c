@@ -1,4 +1,4 @@
-/* $NetBSD: bt463.c,v 1.1 2000/04/02 18:57:36 nathanw Exp $ */
+/* $NetBSD: bt463.c,v 1.2 2000/06/13 17:21:06 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -155,6 +155,14 @@ struct bt463data {
 	int window_type[16]; /* 16 24-bit window type table entries */
 };
 
+/* When we're doing console initialization, there's no
+ * way to get our cookie back to the video card's softc
+ * before we call sched_update. So we stash it here, 
+ * and bt463_update will look for it here first.
+ */
+static struct bt463data *console_data;
+
+
 #define BTWREG(data, addr, val) do { bt463_wraddr((data), (addr)); \
 	(data)->ramdac_wr((data)->cookie, BT463_REG_IREG_DATA, (val)); } while (0)
 #define BTWNREG(data, val) (data)->ramdac_wr((data)->cookie, \
@@ -228,7 +236,12 @@ bt463_cninit(v, sched_update, wr, rd)
 	data->ramdac_sched_update = sched_update;
 	data->ramdac_wr = wr;
 	data->ramdac_rd = rd;
+	/* Set up console_data so that when bt463_update is called back,
+	 * it can use the right information.
+	 */
+	console_data = data;
 	bt463_init((struct ramdac_cookie *)data);
+	console_data = NULL;
 }
 
 void
@@ -550,6 +563,13 @@ bt463_update(p)
 {
 	struct bt463data *data = (struct bt463data *)p;
 	int i, v;
+
+	if (console_data != NULL) {
+		/* The cookie passed in from sched_update is incorrect. Use the
+		 * right one.
+		 */
+		data = console_data;
+	}
 
 	v = data->changed;
 
