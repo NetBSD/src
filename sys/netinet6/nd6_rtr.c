@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.35 2002/07/30 23:24:21 itojun Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.36 2002/09/11 02:46:46 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.35 2002/07/30 23:24:21 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.36 2002/09/11 02:46:46 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -593,11 +593,11 @@ defrouter_lookup(addr, ifp)
 	for (dr = TAILQ_FIRST(&nd_defrouter); dr;
 	     dr = TAILQ_NEXT(dr, dr_entry)) {
 		if (dr->ifp == ifp && IN6_ARE_ADDR_EQUAL(addr, &dr->rtaddr)) {
-			return(dr);
+			return (dr);
 		}
 	}
 
-	return(NULL);		/* search failed */
+	return (NULL);		/* search failed */
 }
 
 void
@@ -908,7 +908,7 @@ defrtrlist_update(new)
 			 */
 			if (rtpref(new) == oldpref) {
 				splx(s);
-				return(dr);
+				return (dr);
 			}
 
 			/*
@@ -925,19 +925,19 @@ defrtrlist_update(new)
 			goto insert;
 		}
 		splx(s);
-		return(dr);
+		return (dr);
 	}
 
 	/* entry does not exist */
 	if (new->rtlifetime == 0) {
 		splx(s);
-		return(NULL);
+		return (NULL);
 	}
 
 	n = (struct nd_defrouter *)malloc(sizeof(*n), M_IP6NDP, M_NOWAIT);
 	if (n == NULL) {
 		splx(s);
-		return(NULL);
+		return (NULL);
 	}
 	bzero(n, sizeof(*n));
 	*n = *new;
@@ -965,7 +965,7 @@ insert:
 
 	splx(s);
 
-	return(n);
+	return (n);
 }
 
 static struct nd_pfxrouter *
@@ -980,7 +980,7 @@ pfxrtr_lookup(pr, dr)
 			break;
 	}
 
-	return(search);
+	return (search);
 }
 
 static void
@@ -1024,7 +1024,7 @@ nd6_prefix_lookup(pr)
 		}
 	}
 
-	return(search);
+	return (search);
 }
 
 int
@@ -1403,7 +1403,7 @@ find_pfxlist_reachable_router(pr)
 			break;	/* found */
 	}
 
-	return(pfxrtr);
+	return (pfxrtr);
 }
 
 /*
@@ -1581,7 +1581,7 @@ nd6_prefix_onlink(pr)
 		nd6log((LOG_ERR,
 		    "nd6_prefix_onlink: %s/%d is already on-link\n",
 		    ip6_sprintf(&pr->ndpr_prefix.sin6_addr), pr->ndpr_plen);
-		return(EEXIST));
+		return (EEXIST));
 	}
 
 	/*
@@ -1601,7 +1601,7 @@ nd6_prefix_onlink(pr)
 		if (opr->ndpr_plen == pr->ndpr_plen &&
 		    in6_are_prefix_equal(&pr->ndpr_prefix.sin6_addr,
 		    &opr->ndpr_prefix.sin6_addr, pr->ndpr_plen))
-			return(0);
+			return (0);
 	}
 
 	/*
@@ -1633,7 +1633,7 @@ nd6_prefix_onlink(pr)
 		    " to add route for a prefix(%s/%d) on %s\n",
 		    ip6_sprintf(&pr->ndpr_prefix.sin6_addr),
 		    pr->ndpr_plen, if_name(ifp)));
-		return(0);
+		return (0);
 	}
 
 	/*
@@ -1673,7 +1673,7 @@ nd6_prefix_onlink(pr)
 	if (rt != NULL)
 		rt->rt_refcnt--;
 
-	return(error);
+	return (error);
 }
 
 int
@@ -1691,7 +1691,7 @@ nd6_prefix_offlink(pr)
 		nd6log((LOG_ERR,
 		    "nd6_prefix_offlink: %s/%d is already off-link\n",
 		    ip6_sprintf(&pr->ndpr_prefix.sin6_addr), pr->ndpr_plen));
-		return(EEXIST);
+		return (EEXIST);
 	}
 
 	bzero(&sa6, sizeof(sa6));
@@ -1766,7 +1766,7 @@ nd6_prefix_offlink(pr)
 		}
 	}
 
-	return(error);
+	return (error);
 }
 
 static struct in6_ifaddr *
@@ -1878,12 +1878,12 @@ in6_ifadd(pr)
 		    "in6_ifadd: failed to make ifaddr %s on %s (errno=%d)\n",
 		    ip6_sprintf(&ifra.ifra_addr.sin6_addr), if_name(ifp),
 		    error));
-		return(NULL);	/* ifaddr must not have been allocated. */
+		return (NULL);	/* ifaddr must not have been allocated. */
 	}
 
 	ia = in6ifa_ifpwithaddr(ifp, &ifra.ifra_addr.sin6_addr);
 
-	return(ia);		/* this is always non-NULL */
+	return (ia);		/* this is always non-NULL */
 }
 
 int
@@ -1968,10 +1968,10 @@ rt6_deleteroute(rn, arg)
 	struct in6_addr *gate = (struct in6_addr *)arg;
 
 	if (rt->rt_gateway == NULL || rt->rt_gateway->sa_family != AF_INET6)
-		return(0);
+		return (0);
 
 	if (!IN6_ARE_ADDR_EQUAL(gate, &SIN6(rt->rt_gateway)->sin6_addr))
-		return(0);
+		return (0);
 
 	/*
 	 * Do not delete a static route.
@@ -1979,7 +1979,7 @@ rt6_deleteroute(rn, arg)
 	 * 'cloned' bit instead?
 	 */
 	if ((rt->rt_flags & RTF_STATIC) != 0)
-		return(0);
+		return (0);
 
 	/*
 	 * Do not delete a static route.
@@ -1987,16 +1987,16 @@ rt6_deleteroute(rn, arg)
 	 * 'cloned' bit instead?
 	 */
 	if ((rt->rt_flags & RTF_STATIC) != 0)
-		return(0);
+		return (0);
 
 	/*
 	 * We delete only host route. This means, in particular, we don't
 	 * delete default route.
 	 */
 	if ((rt->rt_flags & RTF_HOST) == 0)
-		return(0);
+		return (0);
 
-	return(rtrequest(RTM_DELETE, rt_key(rt), rt->rt_gateway,
+	return (rtrequest(RTM_DELETE, rt_key(rt), rt->rt_gateway,
 	    rt_mask(rt), rt->rt_flags, 0));
 #undef SIN6
 }
@@ -2008,7 +2008,7 @@ nd6_setdefaultiface(ifindex)
 	int error = 0;
 
 	if (ifindex < 0 || if_index < ifindex)
-		return(EINVAL);
+		return (EINVAL);
 
 	if (nd6_defifindex != ifindex) {
 		nd6_defifindex = ifindex;
@@ -2023,5 +2023,5 @@ nd6_setdefaultiface(ifindex)
 		defrouter_select();
 	}
 
-	return(error);
+	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.66 2002/09/11 02:41:27 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.67 2002/09/11 02:46:46 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.66 2002/09/11 02:41:27 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.67 2002/09/11 02:46:46 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3388,10 +3388,10 @@ ipsec_copypkt(m)
 		mpp = &n->m_next;
 	}
 
-	return(m);
+	return (m);
   fail:
 	m_freem(m);
-	return(NULL);
+	return (NULL);
 }
 
 static struct mbuf *

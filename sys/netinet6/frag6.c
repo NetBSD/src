@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.21 2002/09/11 02:41:23 itojun Exp $	*/
+/*	$NetBSD: frag6.c,v 1.22 2002/09/11 02:46:44 itojun Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.21 2002/09/11 02:41:23 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.22 2002/09/11 02:46:44 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -340,14 +340,14 @@ frag6_input(mp, offp, proto)
 			    offset - sizeof(struct ip6_frag) +
 			    offsetof(struct ip6_frag, ip6f_offlg));
 			IP6Q_UNLOCK();
-			return(IPPROTO_DONE);
+			return (IPPROTO_DONE);
 		}
 	} else if (fragoff + frgpartlen > IPV6_MAXPACKET) {
 		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER,
 			    offset - sizeof(struct ip6_frag) +
 				offsetof(struct ip6_frag, ip6f_offlg));
 		IP6Q_UNLOCK();
-		return(IPPROTO_DONE);
+		return (IPPROTO_DONE);
 	}
 	/*
 	 * If it's the first fragment, do the above check for each

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.29 2002/08/14 00:23:29 itojun Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.30 2002/09/11 02:46:43 itojun Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.29 2002/08/14 00:23:29 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.30 2002/09/11 02:46:43 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -212,7 +212,7 @@ in_gif_output(ifp, family, m)
 	}
 
 	error = ip_output(m, NULL, &sc->gif_ro, 0, NULL);
-	return(error);
+	return (error);
 }
 
 void

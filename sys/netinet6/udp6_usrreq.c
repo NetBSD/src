@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.52 2002/05/12 20:33:51 matt Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.53 2002/09/11 02:46:47 itojun Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.52 2002/05/12 20:33:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.53 2002/09/11 02:46:47 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -288,7 +288,7 @@ udp6_usrreq(so, req, m, addr6, control, p)
 	 *  and AF_INET6 socket for AF_INET6 addrs.
 	 */
 	if (req == PRU_CONTROL)
-		return(in6_control(so, (u_long)m, (caddr_t)addr6,
+		return (in6_control(so, (u_long)m, (caddr_t)addr6,
 				   (struct ifnet *)control, p));
 
 	if (req == PRU_PURGEIF) {
@@ -382,7 +382,7 @@ udp6_usrreq(so, req, m, addr6, control, p)
 		break;
 
 	case PRU_SEND:
-		return(udp6_output(in6p, m, addr6, control, p));
+		return (udp6_output(in6p, m, addr6, control, p));
 
 	case PRU_ABORT:
 		soisdisconnected(so);
@@ -401,7 +401,7 @@ udp6_usrreq(so, req, m, addr6, control, p)
 		/*
 		 * stat: don't bother with a blocksize
 		 */
-		return(0);
+		return (0);
 
 	case PRU_SENDOOB:
 	case PRU_FASTTIMO:
@@ -413,7 +413,7 @@ udp6_usrreq(so, req, m, addr6, control, p)
 
 	case PRU_RCVD:
 	case PRU_RCVOOB:
-		return(EOPNOTSUPP);	/* do not free mbuf's */
+		return (EOPNOTSUPP);	/* do not free mbuf's */
 
 	default:
 		panic("udp6_usrreq");
@@ -424,7 +424,7 @@ release:
 		m_freem(control);
 	if (m)
 		m_freem(m);
-	return(error);
+	return (error);
 }
 
 static void
