@@ -2,7 +2,7 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.18 1999/12/23 06:26:08 takemura Exp $
+# 	$NetBSD: GENERIC,v 1.19 1999/12/28 03:15:16 takemura Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -101,13 +101,6 @@ options 	WSDISPLAY_DEFAULTSCREENS=4
 #options 	FONT_VT220L8x8
 options 	FONT_VT220L8x10
 
-# Workstation Console attachments
-fb*		at	mainbus0
-wsdisplay*	at	fb?
-wskbd*		at	vrkiu? mux 1
-#wsmouse*	at	pms? mux 0
-
-
 vrip*	at mainbus0
 vrcmu*	at vrip? addr 0x0b000060 size 0x20
 vrbcu*	at vrip? addr 0x0b000000 size 0x20
@@ -119,6 +112,13 @@ com*	at vrip? addr 0x0c000000 size 0x20 intr 9
 vrgiu*	at vrip? addr 0x0b000100 size 0x20 intr 8
 vrpmu*	at vrip? addr 0x0b0000a0 size 0x20 intr 1 # power switch
 vrdsu*	at vrip? addr 0x0b0000e0 size 0x08
+vrpiu*	at vrip? addr 0x0b000120 size 0x1a0 intr 5
+
+# Workstation Console attachments
+fb*		at	mainbus0
+wsdisplay*	at	fb?
+wskbd*		at	vrkiu? mux 1
+wsmouse*	at	vrpiu? mux 0
 
 #
 # MC-R300
