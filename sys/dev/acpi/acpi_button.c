@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.14 2004/04/11 06:48:25 kochi Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.15 2004/04/11 11:25:34 kochi Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.14 2004/04/11 06:48:25 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.15 2004/04/11 11:25:34 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,8 +59,12 @@ struct acpibut_softc {
 	int sc_flags;			/* see below */
 };
 
-static const char * const button_hid[] = {
+static const char * const power_button_hid[] = {
 	"PNP0C0C",
+	NULL
+};
+
+static const char * const sleep_button_hid[] = {
 	"PNP0C0E",
 	NULL
 };
@@ -89,7 +93,13 @@ acpibut_match(struct device *parent, struct cfdata *match, void *aux)
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
 		return 0;
 
-	return acpi_match_hid(aa->aa_node->ad_devinfo, button_hid);
+	if (acpi_match_hid(aa->aa_node->ad_devinfo, power_button_hid))
+		return 1;
+
+	if (acpi_match_hid(aa->aa_node->ad_devinfo, sleep_button_hid))
+		return 1;
+
+	return 0;
 }
 
 /*
@@ -107,10 +117,10 @@ acpibut_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_smpsw.smpsw_name = sc->sc_dev.dv_xname;
 
-	if (strcmp(aa->aa_node->ad_devinfo->HardwareId.Value, "PNP0C0C") == 0) {
+	if (acpi_match_hid(aa->aa_node->ad_devinfo, power_button_hid)) {
 		sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_POWER;
 		desc = "Power";
-	} else if (strcmp(aa->aa_node->ad_devinfo->HardwareId.Value, "PNP0C0E") == 0) {
+	} else if (acpi_match_hid(aa->aa_node->ad_devinfo, sleep_button_hid)) {
 		sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_SLEEP;
 		desc = "Sleep";
 	} else {
