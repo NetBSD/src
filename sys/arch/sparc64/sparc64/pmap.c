@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.119 2002/04/18 17:19:12 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.120 2002/05/18 00:51:15 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -2268,7 +2268,7 @@ pmap_enter(pm, va, pa, prot, flags)
 		tlb_flush_pte(va, pm->pm_ctx);	
 		ASSERT((tsb[i].data & TLB_NFO) == 0);
 	}
-	if (pm == pmap_kernel() && (flags & VM_PROT_EXECUTE) != 0)
+	if (pm != pmap_kernel() && (flags & VM_PROT_EXECUTE) != 0)
 		icache_flush_page(pa);
 
 	/* We will let the fast mmu miss interrupt load the new translation */
