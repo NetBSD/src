@@ -1,6 +1,7 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +33,13 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)lprm.c	5.6 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: lprm.c,v 1.2 1993/08/01 17:58:36 mycroft Exp $";
+static char sccsid[] = "@(#)lprm.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 /*
@@ -53,27 +53,39 @@ static char rcsid[] = "$Id: lprm.c,v 1.2 1993/08/01 17:58:36 mycroft Exp $";
  * entries, otherwise one can only remove their own.
  */
 
+#include <sys/param.h>
+
+#include <syslog.h>
+#include <dirent.h>
+#include <pwd.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
 #include "lp.h"
+#include "lp.local.h"
 
 /*
  * Stuff for handling job specifications
  */
-char	*user[MAXUSERS];	/* users to process */
-int	users;			/* # of users in user array */
-int	requ[MAXREQUESTS];	/* job number of spool entries */
-int	requests;		/* # of spool requests */
 char	*person;		/* name of person doing lprm */
+int	 requ[MAXREQUESTS];	/* job number of spool entries */
+int	 requests;		/* # of spool requests */
+char	*user[MAXUSERS];	/* users to process */
+int	 users;			/* # of users in user array */
 
 static char	luser[16];	/* buffer for person */
 
+void usage __P((void));
+
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
 	register char *arg;
 	struct passwd *p;
-	struct direct **files;
-	int nitems, assasinated = 0;
 
 	name = argv[0];
 	gethostname(host, sizeof(host));
@@ -121,8 +133,10 @@ main(argc, argv)
 		printer = DEFLP;
 
 	rmjob();
+	exit(0);
 }
 
+void
 usage()
 {
 	fprintf(stderr, "usage: lprm [-] [-Pprinter] [[job #] [user] ...]\n");
