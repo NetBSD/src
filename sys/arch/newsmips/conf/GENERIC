@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.62.2.2 2004/07/02 17:40:08 he Exp $
+# $NetBSD: GENERIC,v 1.62.2.3 2004/07/15 20:18:59 he Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/newsmips/conf/std.newsmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.62.2.2 $"
+#ident 		"GENERIC-$Revision: 1.62.2.3 $"
 
 maxusers	16
 
@@ -48,6 +48,7 @@ options 	LKM			# loadable kernel modules
 options 	NTP			# network time protocol
 options 	USERCONF		# userconf(4) support
 #options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
