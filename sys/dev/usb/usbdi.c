@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.54 2000/01/16 09:37:18 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.55 2000/01/16 13:22:18 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -303,7 +303,20 @@ usbd_transfer(xfer)
 	if (!xfer->done) {
 		if (pipe->device->bus->use_polling)
 			panic("usbd_transfer: not done\n");
-		tsleep(xfer, PRIBIO, "usbsyn", 0);
+		/* XXX Temporary hack XXX */
+		if (xfer->flags & USBD_NO_TSLEEP) {
+			int i;
+			usbd_bus_handle bus = pipe->device->bus;
+			for (i = 0; i < xfer->timeout; i += 10) {
+				delay(10);
+				bus->methods->do_poll(bus);
+				if (xfer->done)
+					break;
+			}
+			if (!xfer->done)
+				pipe->methods->abort(xfer);
+		} else
+			tsleep(xfer, PRIBIO, "usbsyn", 0);
 	}
 	splx(s);
 	return (xfer->status);
