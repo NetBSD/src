@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.45 2000/02/22 13:06:48 dent Exp $
+.\" $NetBSD: main,v 1.46 2000/02/23 07:51:53 groo Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -917,6 +917,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Chuck Silvers Ta Mt chs@NetBSD.ORG
 .It Ta Thor Lancelot Simon Ta Mt tls@NetBSD.ORG
 .It Ta Bill Sommerfeld Ta Mt sommerfeld@NetBSD.ORG
+.It Ta Bill Squier Ta Mt groo@NetBSD.ORG
 .It Ta Bill Studenmund Ta Mt wrstuden@NetBSD.ORG
 .It Ta Kevin Sullivan Ta Mt sullivan@NetBSD.ORG
 .It Ta Kimmo Suominen Ta Mt kim@NetBSD.ORG
