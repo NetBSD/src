@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec_elf32.c,v 1.6 2002/08/29 13:59:23 christos Exp $	 */
+/*	$NetBSD: svr4_32_exec_elf32.c,v 1.7 2002/08/29 14:01:08 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.6 2002/08/29 13:59:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.7 2002/08/29 14:01:08 christos Exp $");
 
 #define	ELFSIZE		32				/* XXX should die */
 
@@ -89,7 +89,7 @@ svr4_32_copyargs(p, pack, arginfo, stackp, argp)
 	extern char platform_type[32];
 	int error;
 
-	if ((error = netbsd32_copyargs(pack, arginfo, stackp, argp)) != 0)
+	if ((error = netbsd32_copyargs(p, pack, arginfo, stackp, argp)) != 0)
 		return error;
 
 	a = ai;
@@ -216,7 +216,7 @@ svr4_32_copyargs(p, pack, arginfo, stackp, argp)
 	struct elf_args *ap;
 	int error;
 
-	if ((error = netbsd32_copyargs(pack, arginfo, stackp, argp)) != 0)
+	if ((error = netbsd32_copyargs(p, pack, arginfo, stackp, argp)) != 0)
 		return error;
 
 	a = ai;
