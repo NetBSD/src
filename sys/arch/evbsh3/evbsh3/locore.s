@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.9 2000/02/24 19:01:26 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.10 2000/02/24 19:42:36 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -292,7 +292,7 @@ start1:
 #ifdef ROMIMAGE
 	/* Initialize BUS State Control Regs. */
 	mov.l	_ROM_START, r3
-	mov.l	_RAM_START, r4
+	mov.l	_C_LABEL(ram_start), r4
 	sub	r3, r4
 	/* Set Bus State Controler */
 	mov.l	XLInitializeBsc, r0
@@ -313,7 +313,7 @@ start1:
 	add	r3, r1		/* src address */
 	mov.l	___start, r3
 	sub	r2, r3
-	mov.l	_RAM_START, r4
+	mov.l	_C_LABEL(ram_start), r4
 	add	r4, r3		/* dest address */
 1:
 	mov.l	@r1+, r4
@@ -358,13 +358,14 @@ start_in_RAM:
 
 		.align	2
 
+	.globl	_C_LABEL(ram_start)
 XLInitializeBsc:.long	_C_LABEL(InitializeBsc)
 ___start:	.long	start
 ___etext:	.long	_etext
 ___end:		.long	_end
 XLtmpstk:	.long	INIT_STACK
 _KERNBASE:	.long	KERNBASE
-_RAM_START:	.long	IOM_RAM_BEGIN
+_C_LABEL(ram_start):	.long	IOM_RAM_BEGIN
 _ROM_START:	.long	IOM_ROM_BEGIN
 XLKernelStack:	.long	KernelStack
 XLinitSH3:	.long	_C_LABEL(initSH3)
@@ -1485,7 +1486,7 @@ load_and_reset:
 
 	.align	2
 XL_start_address:
-	.long	0x8c010000
+	.long	IOM_RAM_BEGIN + 0x00010000
 load_and_reset_end:
 
 ENTRY(XLoadAndReset)
@@ -1507,7 +1508,7 @@ ENTRY(XLoadAndReset)
 
 	.align	2
 XL_load_trampoline_addr:
-	.long	0x8c008000
+	.long	IOM_RAM_BEGIN + 0x00008000
 XL_load_and_reset:
 	.long	load_and_reset
 XL_load_and_reset_end:
