@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.22 1996/08/20 14:05:20 ragge Exp $
+#       $NetBSD: files.vax,v 1.23 1997/01/05 18:50:27 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -51,7 +51,7 @@ attach	ht at mba
 file	arch/vax/mba/ht.c		ht needs-flag
 
 # MSCP device drivers
-include "../mscp/files.mscp"
+include "arch/vax/mscp/files.mscp"
 major	{ra = 9}
 major	{mt = 16}
 
@@ -115,10 +115,14 @@ major	{rd = 19}
 # Machine-independent SCSI driver.
 #
 include "../../../scsi/files.scsi"
-major { st = 20 }
-major { sd = 21 }
-major { cd = 22 }
-major { ch = 23 }
+major	{ sd = 20 }
+major	{ st = 21 }
+major	{ cd = 22 }
+
+# Memory Disk for install floppy
+pseudo-device md
+file	dev/md.c			md needs-flag
+major	{ md = 23 }
 
 # builtin NCR5380 SCSI-controller on VAXstation 
 device	ncr: scsi, ncr5380sbc
