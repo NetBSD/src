@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.7 1998/12/26 12:53:03 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.8 1998/12/28 02:20:28 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,8 +38,9 @@
  */
 
 /*
- * USB spec: http://www.teleport.com/cgi-bin/mailmerge.cgi/~usb/cgiform.tpl
- * More USB specs at http://www.usb.org/developers/index.shtml
+ * USB specifications and other documentation can be found at
+ * http://www.usb.org/developers/data/ and
+ * http://www.usb.org/developers/index.html .
  */
 
 #include <sys/param.h>
