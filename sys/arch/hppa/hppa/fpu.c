@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.3 2003/10/25 16:15:07 chs Exp $	*/
+/*	$NetBSD: fpu.c,v 1.4 2003/11/28 19:02:25 chs Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.3 2003/10/25 16:15:07 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.4 2003/11/28 19:02:25 chs Exp $");
 
 #include <sys/param.h>       
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ u_int fpu_csw;
 paddr_t fpu_cur_uspace;
 
 /* In locore.S, this swaps states in and out of the FPU. */
-void hppa_fpu_swap __P((struct user *, struct user *));
+void hppa_fpu_swap(struct user *, struct user *);
 
 #ifdef FPEMUL
 /*
@@ -239,7 +239,7 @@ hppa_fpu_flush(struct lwp *l)
 /*
  * This emulates a coprocessor load/store instruction.
  */
-static int hppa_fpu_ls __P((struct trapframe *, struct lwp *));
+static int hppa_fpu_ls(struct trapframe *, struct lwp *);
 static int 
 hppa_fpu_ls(struct trapframe *frame, struct lwp *l)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.13 2003/11/08 12:08:12 tsutsui Exp $	*/
+/*	$NetBSD: trap.c,v 1.14 2003/11/28 19:02:25 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.13 2003/11/08 12:08:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.14 2003/11/28 19:02:25 chs Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -173,8 +173,8 @@ int trap_types = sizeof(trap_type)/sizeof(trap_type[0]);
 int want_resched;
 volatile int astpending;
 
-void pmap_hptdump __P((void));
-void syscall __P((struct trapframe *frame, int *args));
+void pmap_hptdump(void);
+void syscall(struct trapframe *, int *);
 
 #ifdef USERTRACE
 /*
@@ -317,7 +317,7 @@ trap_kdebug(int type, int code, struct trapframe *frame)
  * sets up a frame pointer and stores the return pointer 
  * and arguments in it.
  */
-static void user_backtrace_raw __P((u_int, u_int));
+static void user_backtrace_raw(u_int, u_int);
 static void
 user_backtrace_raw(u_int pc, u_int fp)
 {
@@ -348,7 +348,7 @@ user_backtrace_raw(u_int pc, u_int fp)
 	printf("  backtrace stopped with pc %08x fp 0x%08x\n", pc, fp);
 }
 
-static void user_backtrace __P((struct trapframe *, struct lwp *, int));
+static void user_backtrace(struct trapframe *, struct lwp *, int);
 static void
 user_backtrace(struct trapframe *tf, struct lwp *l, int type)
 {
@@ -408,7 +408,7 @@ user_backtrace(struct trapframe *tf, struct lwp *l, int type)
 struct trapframe *sanity_frame;
 struct lwp *sanity_lwp;
 int sanity_checked = 0;
-void frame_sanity_check __P((struct trapframe *, struct lwp *));
+void frame_sanity_check(struct trapframe *, struct lwp *);
 void
 frame_sanity_check(struct trapframe *tf, struct lwp *l)
 {
@@ -468,9 +468,7 @@ do {							\
 #endif /* DEBUG */
 
 void
-trap(type, frame)
-	int type;
-	struct trapframe *frame;
+trap(int type, struct trapframe *frame)
 {
 	struct lwp *l;
 	struct proc *p;
@@ -852,8 +850,7 @@ if (trap_kdebug (type, va, frame))
 }
 
 void
-child_return(arg)
-	void *arg;
+child_return(void *arg)
 {
 	struct lwp *l = arg;
 	struct proc *p = l->l_proc;
@@ -876,9 +873,7 @@ child_return(arg)
  * - register args are copied onto stack too
  */
 void
-syscall(frame, args)
-	struct trapframe *frame;
-	int *args;
+syscall(struct trapframe *frame, int *args)
 {
 	struct lwp *l;
 	struct proc *p;
@@ -1148,8 +1143,7 @@ syscall(frame, args)
  * Start a new LWP
  */
 void
-startlwp(arg)
-	void *arg;
+startlwp(void *arg)
 {
 	int err;
 	ucontext_t *uc = arg;
