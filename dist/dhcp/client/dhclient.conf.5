@@ -35,7 +35,7 @@
 .\" see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
 .\" ``http://www.nominum.com''.
 .\"
-.\" $Id: dhclient.conf.5,v 1.6 2003/03/31 17:31:19 perry Exp $
+.\" $Id: dhclient.conf.5,v 1.7 2004/03/30 20:05:01 mellon Exp $
 .\"
 .TH dhclient.conf 5
 .SH NAME
@@ -187,7 +187,7 @@ are called \fIDHCP Options\fR.  DHCP Options are defined in
 .B request
 .I statement
 .PP
- \fBrequest [ \fIoption\fR ] [\fB,\fI ... \fIoption\fR ]\fB;\fR
+ \fBrequest \fR[ \fIoption\fR ] [\fB,\fI ... \fIoption\fR ]\fB;\fR
 .PP
 The request statement causes the client to request that any server
 responding to the client send the client its values for the specified
@@ -208,7 +208,7 @@ no parameters:
 .B require
 .I statement
 .PP
- \fBrequire [ \fIoption\fR ] [\fB,\fI ... \fIoption ]\fB;\fR
+ \fBrequire \fR[ \fIoption\fR ] [\fB,\fI ... \fIoption ]\fB;\fR
 .PP
 The require statement lists options that must be sent in order for an
 offer to be accepted.   Offers that do not contain all the listed
@@ -218,7 +218,7 @@ options will be ignored.
 .B send
 .I statement
 .PP
- \fBsend { [ \fIoption declaration\fR ]
+ \fBsend { \fR[ \fIoption declaration\fR ]
 [\fB,\fI ... \fIoption declaration\fR ]\fB}\fR
 .PP
 The send statement causes the client to send the specified options to
@@ -255,7 +255,7 @@ updated.   The \fIfqdn.encoded\fR option may need to be set to
 .B do-forward-updates
 .I statement
 .PP
- \fBdo-forward-updates [ \fIflag\fR ] \fB;\fR
+ \fBdo-forward-updates \fR[ \fIflag\fR ] \fB;\fR
 .PP
 If you want to do DNS updates in the DHCP client
 script (see \fBdhclient-script(8)\fR) rather than having the
@@ -266,6 +266,29 @@ the \fBdo-forward-updates\fR statement.   \fIFlag\fR should be \fBtrue\fR
 if you want the DHCP client to do the update, and \fBfalse\fR if
 you don't want the DHCP client to do the update.   By default, the DHCP
 client will do the DNS update.
+.PP
+.I The
+.B omapi port
+.I statement
+.PP
+ \fBomapi port \fR[ \fIport\fR ] \fB;\fR
+.PP
+The \fBomapi port\fR statement causes the DHCP client to set up an OMAPI
+listener on the specified port.   Only one such port should be specified.
+The OMAPI listener will be sensitive to connections from any IP address, so
+it is important to also set up an OMAPI key to protect the client from
+unauthorized changes.
+.PP
+.I The
+.B omapi key
+.I statement
+.PP
+ \fBomapi key \fR[ \fI key-id \fR ] \fB;\fR
+.PP
+The \fBomapi key\fR statement causes the DHCP client to check any incoming
+OMAPI messages to make sure that they are signed by the specified key.   If
+a message is not signed by this key, it is rejected with an "invalid key"
+error.
 .SH OPTION MODIFIERS
 In some cases, a client may receive option data from the server which
 is not really appropriate for that client, or may not receive
@@ -278,7 +301,7 @@ needs, several option modifiers are available.
 .B default
 .I statement
 .PP
- \fBdefault [ \fIoption declaration\fR ] \fB;\fR
+ \fBdefault \fR[ \fIoption declaration\fR ] \fB;\fR
 .PP
 If for some option the client should use the value supplied by
 the server, but needs to use some default value if no value was supplied
@@ -290,7 +313,7 @@ statement.
 .B supersede
 .I statement
 .PP
- \fBsupersede [ \fIoption declaration\fR ] \fB;\fR
+ \fBsupersede \fR[ \fIoption declaration\fR ] \fB;\fR
 .PP
 If for some option the client should always use a locally-configured
 value or values rather than whatever is supplied by the server, these
@@ -302,7 +325,7 @@ statement.
 .B prepend
 .I statement
 .PP
- \fBprepend [ \fIoption declaration\fR ] \fB;\fR
+ \fBprepend \fR[ \fIoption declaration\fR ] \fB;\fR
 .PP
 If for some set of options the client should use a value you
 supply, and then use the values supplied by
@@ -318,7 +341,7 @@ enforced - if you ignore it, the behavior will be unpredictable.
 .B append
 .I statement
 .PP
- \fBappend [ \fIoption declaration\fR ] \fB;\fR
+ \fBappend \fR[ \fIoption declaration\fR ] \fB;\fR
 .PP
 If for some set of options the client should first use the values
 supplied by the server, if any, and then use values you supply, these
@@ -335,7 +358,7 @@ enforced - if you ignore it, the behavior will be unpredictable.
 .B lease
 .I declaration
 .PP
- \fBlease {\fR \fIlease-declaration\fR [ ... \fIlease-declaration ] \fB}\fR
+ \fBlease {\fR \fIlease-declaration\fR \fR[ ... \fIlease-declaration ] \fB}\fR
 .PP
 The DHCP client may decide after some period of time (see \fBPROTOCOL
 TIMING\fR) that it is not going to succeed in contacting a
@@ -561,7 +584,7 @@ states where a lease has been acquired or renewed, and the states
 where a lease has expired.   See \fBdhclient-script(8)\fR for more
 information.
 .PP
- \fBmedia "\fImedia setup\fB"\fI [ \fB, "\fImedia setup\fB", \fI... ]\fB;\fR
+ \fBmedia "\fImedia setup\fB"\fI \fR[ \fB, "\fImedia setup\fB", \fI... ]\fB;\fR
 .PP
 The
 .B media
