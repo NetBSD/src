@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.57 1999/06/24 14:48:35 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.58 1999/06/27 01:17:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.57 1999/06/24 14:48:35 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.58 1999/06/27 01:17:19 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1091,8 +1091,7 @@ fetch_ftp(url)
 		 */
 
 					/* check for trailing ';type=[aid]' */
-		cp = strrchr(path, ';');
-		if (cp != NULL) {
+		if (path != NULL && (cp = strrchr(path, ';')) != NULL) {
 			if (strcasecmp(cp, ";type=a") == 0)
 				type = TYPE_A;
 			else if (strcasecmp(cp, ";type=i") == 0)
