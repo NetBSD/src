@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.24 2004/11/13 03:20:37 sekiya Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.25 2005/01/01 21:20:19 rumble Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.24 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.25 $"
 
 maxusers	32
 
@@ -282,6 +282,8 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
