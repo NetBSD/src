@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cvreg.h,v 1.8 2002/04/25 09:20:31 aymeric Exp $	*/
+/*	$NetBSD: grf_cvreg.h,v 1.9 2003/05/31 03:05:45 kristerw Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -370,7 +370,7 @@ GfxBusyWait (ba)
 
 	do {
 		test = vgar16 (ba, ECR_GP_STAT);
-		asm volatile ("nop");
+		__asm __volatile ("nop");
 	} while (test & (1 << 9));
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3d.c,v 1.14 2003/01/01 00:28:58 thorpej Exp $ */
+/*	$NetBSD: grf_cv3d.c,v 1.15 2003/05/31 03:05:45 kristerw Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.14 2003/01/01 00:28:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.15 2003/05/31 03:05:45 kristerw Exp $");
 
 #include "grfcv3d.h"
 #if NGRFCV3D > 0
@@ -1713,10 +1713,10 @@ cv3d_setup_hwc(struct grf_softc *gp)
 	/* reset colour stack */
 #if 0
 	test = RCrt(ba, CRT_ID_HWGC_MODE);
-	asm volatile("nop");
+	__asm __volatile("nop");
 #else
 	/* do it in assembler, the above does't seem to work */
-	asm volatile ("moveb #0x45, %1@(0x3d4); \
+	__asm __volatile ("moveb #0x45, %1@(0x3d4); \
 		moveb %1@(0x3d5),%0" : "=r" (test) : "a" (ba));
 #endif
 
@@ -1728,10 +1728,10 @@ cv3d_setup_hwc(struct grf_softc *gp)
 
 #if 0
 	test = RCrt(ba, CRT_ID_HWGC_MODE);
-	asm volatile("nop");
+	__asm __volatile("nop");
 #else
 	/* do it in assembler, the above does't seem to work */
-	asm volatile ("moveb #0x45, %1@(0x3d4); \
+	__asm __volatile ("moveb #0x45, %1@(0x3d4); \
 		moveb %1@(0x3d5),%0" : "=r" (test) : "a" (ba));
 #endif
 	switch (gp->g_display.gd_planes) {
@@ -1959,7 +1959,7 @@ cv3d_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 
 		/* reset colour stack */
 		test = RCrt(ba, CRT_ID_HWGC_MODE);
-		asm volatile("nop");
+		__asm __volatile("nop");
 		switch (depth) {
 		    case 8:
 		    case 15:
@@ -1978,7 +1978,7 @@ cv3d_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 		}
 
 		test = RCrt(ba, CRT_ID_HWGC_MODE);
-		asm volatile("nop");
+		__asm __volatile("nop");
 		switch (depth) {
 		    case 8:
 			WCrt (ba, CRT_ID_HWGC_BG_STACK, 1);
