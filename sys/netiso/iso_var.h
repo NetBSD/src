@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_var.h,v 1.6 1995/03/26 20:35:28 jtc Exp $	*/
+/*	$NetBSD: iso_var.h,v 1.7 1995/06/13 07:13:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1991, 1993
@@ -73,7 +73,7 @@ struct iso_ifaddr {
 #define ia_ifp		ia_ifa.ifa_ifp
 #define	ia_flags	ia_ifa.ifa_flags
 	int					ia_snpaoffset;
-	struct iso_ifaddr	*ia_next;	/* next in list of iso addresses */
+	TAILQ_ENTRY(iso_ifaddr) ia_list;	/* list of iso addresses */
 	struct	sockaddr_iso ia_addr;	/* reserve space for interface name */
 	struct	sockaddr_iso ia_dstaddr; /* reserve space for broadcast addr */
 #define	ia_broadaddr	ia_dstaddr
@@ -97,11 +97,7 @@ struct	iso_ifreq {
  *	Given a pointer to an iso_ifaddr (ifaddr),
  *	return a pointer to the addr as a sockaddr_iso
  */
-/*
-#define	IA_SIS(ia) ((struct sockaddr_iso *)(ia.ia_ifa->ifa_addr))
- * works if sockaddr_iso becomes variable sized.
- */
-#define	IA_SIS(ia) (&(((struct iso_ifaddr *)ia)->ia_addr))
+#define	IA_SIS(ia) (&(((struct iso_ifaddr *)(ia))->ia_addr))
 
 #define	SIOCDIFADDR_ISO	_IOW('i',25, struct iso_ifreq)	/* delete IF addr */
 #define	SIOCAIFADDR_ISO	_IOW('i',26, struct iso_aliasreq)/* add/chg IFalias */
@@ -130,7 +126,8 @@ struct snpa_hdr {
 	short	snh_flags;
 };
 #ifdef _KERNEL
-struct iso_ifaddr	*iso_ifaddr;	/* linked list of iso address ifaces */
+TAILQ_HEAD(iso_ifaddrhead, iso_ifaddr);
+struct iso_ifaddrhead	iso_ifaddr;	/* linked list of iso address ifaces */
 struct iso_ifaddr	*iso_localifa();	/* linked list of iso address ifaces */
 struct ifqueue 		clnlintrq;		/* clnl packet input queue */
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_usrreq.c,v 1.6 1995/03/08 02:16:09 cgd Exp $	*/
+/*	$NetBSD: cltp_usrreq.c,v 1.7 1995/06/13 07:13:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -81,7 +81,7 @@ cltp_input(m0, srcsa, dstsa, cons_channel, output)
 	register struct isopcb *isop;
 	register struct mbuf *m = m0;
 	register u_char *up = mtod(m, u_char *);
-	register struct sockaddr_iso *src = (struct sockaddr_iso *)srcsa;
+	register struct sockaddr_iso *src = satosiso(srcsa);
 	int len, hdrlen = *up + 1, dlen = 0;
 	u_char *uplim = up + hdrlen;
 	caddr_t dtsap;
@@ -140,14 +140,14 @@ cltp_input(m0, srcsa, dstsa, cons_channel, output)
 	m = m0;
 	m->m_len -= hdrlen;
 	m->m_data += hdrlen;
-	if (sbappendaddr(&isop->isop_socket->so_rcv, (struct sockaddr *)src,
-	    m, (struct mbuf *)0) == 0)
+	if (sbappendaddr(&isop->isop_socket->so_rcv, sisotosa(src), m,
+	    (struct mbuf *)0) == 0)
 		goto bad;
 	cltpstat.cltps_ipackets++;
 	sorwakeup(isop->isop_socket);
 	m0 = 0;
 bad:
-	if (src != (struct sockaddr_iso *)srcsa)
+	if (src != satosiso(srcsa))
 		m_freem(dtom(src));
 	if (m0)
 		m_freem(m0);
@@ -178,7 +178,7 @@ cltp_ctlinput(cmd, sa)
 		return;
 	if (sa->sa_family != AF_ISO && sa->sa_family != AF_CCITT)
 		return;
-	siso = (struct sockaddr_iso *)sa;
+	siso = satosiso(sa);
 	if (siso == 0 || siso->siso_nlen == 0)
 		return;
 

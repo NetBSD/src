@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_raw.c,v 1.5 1994/06/29 06:39:17 cgd Exp $	*/
+/*	$NetBSD: clnp_raw.c,v 1.6 1995/06/13 07:13:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -112,7 +112,7 @@ int					hdrlen; /* length (in bytes) of clnp header */
 	}
 #endif	/* TROLL */
 
-	raw_input(m, &rclnp_proto, (struct sockaddr *)src, (struct sockaddr *)dst);
+	raw_input(m, &rclnp_proto, sisotosa(src), sisotosa(dst));
 }
 
 /*
@@ -155,8 +155,7 @@ bad:
 	/* set up dest address */
 	if (rp->risop_rcb.rcb_faddr == 0)
 		goto bad;
-	rp->risop_isop.isop_sfaddr =
-				*(struct sockaddr_iso *)rp->risop_rcb.rcb_faddr;
+	rp->risop_isop.isop_sfaddr = *satosiso(rp->risop_rcb.rcb_faddr);
 	rp->risop_isop.isop_faddr = &rp->risop_isop.isop_sfaddr;
 
 	/* get flags and ship it off */
@@ -322,11 +321,11 @@ clnp_usrreq(so, req, m, nam, control)
 		if ((ifnet == 0) ||
 		    (addr->siso_family != AF_ISO) ||
 		    (addr->siso_addr.isoa_len  &&
-		     ifa_ifwithaddr((struct sockaddr *)addr) == 0))
+		     ifa_ifwithaddr(sisotosa(addr)) == 0))
 			return (EADDRNOTAVAIL);
 		rp->risop_isop.isop_sladdr = *addr;
-		rp->risop_rcb.rcb_laddr = (struct sockaddr *)
-			(rp->risop_isop.isop_laddr = &rp->risop_isop.isop_sladdr);
+		rp->risop_rcb.rcb_laddr = sisotosa(
+			(rp->risop_isop.isop_laddr = &rp->risop_isop.isop_sladdr));
 		return (0);
 	    }
 	case PRU_CONNECT:
@@ -339,8 +338,8 @@ clnp_usrreq(so, req, m, nam, control)
 			return (EADDRNOTAVAIL);
 		if (addr->siso_family != AF_ISO)
 		rp->risop_isop.isop_sfaddr = *addr;
-		rp->risop_rcb.rcb_faddr = (struct sockaddr *)
-			(rp->risop_isop.isop_faddr = &rp->risop_isop.isop_sfaddr);
+		rp->risop_rcb.rcb_faddr = sisotosa(
+			(rp->risop_isop.isop_faddr = &rp->risop_isop.isop_sfaddr));
 		soisconnected(so);
 		return (0);
 	    }

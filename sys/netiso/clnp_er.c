@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_er.c,v 1.5 1994/06/29 06:39:08 cgd Exp $	*/
+/*	$NetBSD: clnp_er.c,v 1.6 1995/06/13 07:13:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -307,7 +307,7 @@ char					reason;	/* reason for discard */
 
 	IFDEBUG(D_DISCARD)
 		printf("clnp_emit_er: packet routed to %s\n", 
-			clnp_iso_addrp(&((struct sockaddr_iso *)first_hop)->siso_addr));
+			clnp_iso_addrp(&satosiso(first_hop)->siso_addr));
 	ENDDEBUG
 
 	/* allocate mbuf for er pdu header: punt on no space */

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.6 1994/06/29 06:39:46 cgd Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.7 1995/06/13 07:13:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -144,7 +144,6 @@ iso_pcballoc(so, head)
  *
  * NOTES:			
  */
-#define	satosiso(sa)	((struct sockaddr_iso *)(sa))
 int
 iso_pcbbind(isop, nam)
 	register struct isopcb *isop;
@@ -162,7 +161,7 @@ iso_pcbbind(isop, nam)
 		printf("iso_pcbbind(isop 0x%x, nam 0x%x)\n", isop, nam);
 	ENDDEBUG
 	suf.s = 0;
-	if (iso_ifaddr == 0) /* any interfaces attached? */
+	if (iso_ifaddr.tqh_first == 0) /* any interfaces attached? */
 		return EADDRNOTAVAIL;
 	if (isop->isop_laddr)  /* already bound */
 		return EADDRINUSE;
@@ -198,7 +197,7 @@ iso_pcbbind(isop, nam)
 		IFDEBUG(D_ISO)
 			printf("iso_pcbbind: bind to NOT zeroisoaddr\n");
 		ENDDEBUG
-		for (ia = iso_ifaddr; ia; ia = ia->ia_next) 
+		for (ia = iso_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next) 
 			if (SAME_ISOADDR(siso, &ia->ia_addr))
 				break;
 		if (ia == 0)
@@ -285,7 +284,7 @@ iso_pcbconnect(isop, nam)
 	if (siso->siso_family != AF_ISO)
 		return EAFNOSUPPORT;
 	if (siso->siso_nlen == 0) {
-		if (ia = iso_ifaddr) {
+		if (ia = iso_ifaddr.tqh_first) {
 			int nlen = ia->ia_addr.siso_nlen;
 			ovbcopy(TSEL(siso), nlen + TSEL(siso),
 				siso->siso_plen + siso->siso_tlen + siso->siso_slen);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_input.c,v 1.6 1995/03/08 02:16:14 cgd Exp $	*/
+/*	$NetBSD: tp_input.c,v 1.7 1995/06/13 07:13:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -1554,8 +1554,8 @@ respond:
 	ENDTRACE
 	if (sref == 0)
 		goto discard;
-	(void) tp_error_emit(error, (u_long)sref, (struct sockaddr_iso *)faddr,
-				(struct sockaddr_iso *)laddr, m, errlen, tpcb,
+	(void) tp_error_emit(error, (u_long)sref, satosiso(faddr),
+				satosiso(laddr), m, errlen, tpcb,
 				cons_channel, dgout_routine);
 	IFDEBUG(D_ERROR_EMIT)
 		printf("tp_input after error_emit\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.6 1995/03/26 20:35:22 jtc Exp $	*/
+/*	$NetBSD: iso.h,v 1.7 1995/06/13 07:13:31 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -175,6 +175,9 @@ extern int iso_addrmatch();
 extern struct iso_ifaddr *iso_iaonnetof();
 extern	struct domain isodomain;
 extern	struct protosw isosw[];
+
+#define	satosiso(sa)	((struct sockaddr_iso *)(sa))
+#define	sisotosa(siso)	((struct sockaddr *)(siso))
 
 #else
 /* user utilities definitions from the iso library */

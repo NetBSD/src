@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.8 1995/03/06 19:06:05 glass Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.9 1995/06/13 07:13:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -395,7 +395,7 @@ int					nsellength;	/* nsaps may differ only in trailing bytes */
 			ifp, nsap, snpa, type, ht, nsellength);
 	ENDDEBUG
 	zap_isoaddr(dst, nsap);
-	rt = rtalloc1(S(dst), 0);
+	rt = rtalloc1(sisotosa(&dst), 0);
 	IFDEBUG(D_SNPA)
 		printf("snpac_add: rtalloc1 returns %x\n", rt);
 	ENDDEBUG
@@ -404,7 +404,7 @@ int					nsellength;	/* nsaps may differ only in trailing bytes */
 		int flags;
 		add:
 		if (nsellength) {
-			netmask = S(msk); flags = RTF_UP;
+			netmask = sisotosa(&msk); flags = RTF_UP;
 			snpac_fixdstandmask(nsellength);
 		} else {
 			netmask = 0; flags = RTF_UP | RTF_HOST;
@@ -412,8 +412,8 @@ int					nsellength;	/* nsaps may differ only in trailing bytes */
 		new_entry = 1;
 		zap_linkaddr((&gte_dl), snpa, snpalen, index);
 		gte_dl.sdl_type = iftype;
-		if (rtrequest(RTM_ADD, S(dst), S(gte_dl), netmask, flags, &mrt) ||
-			mrt == 0)
+		if (rtrequest(RTM_ADD, sisotosa(&dst), S(gte_dl), netmask,
+		    flags, &mrt) || mrt == 0)
 			return (0);
 		rt = mrt;
 		rt->rt_refcnt--;
@@ -424,7 +424,7 @@ int					nsellength;	/* nsaps may differ only in trailing bytes */
 			goto add;
 		if (nsellength && (rt->rt_flags & RTF_HOST)) {
 			if (rt->rt_refcnt == 0) {
-				rtrequest(RTM_DELETE, S(dst),
+				rtrequest(RTM_DELETE, sisotosa(&dst),
 				    (struct sockaddr *)0, (struct sockaddr *)0,
 				    0, (struct rtentry **)0);
 				rt = 0;
@@ -558,8 +558,8 @@ register struct rtentry *sc;
 	sc->rt_refcnt++;
 	rt = rtalloc1((struct sockaddr *)&zsi, 0);
 	if (rt == 0)
-		rtrequest(RTM_ADD, S(zsi), rt_key(sc), S(zmk),
-						RTF_DYNAMIC|RTF_GATEWAY, 0);
+		rtrequest(RTM_ADD, sisotosa(&zsi), rt_key(sc), sisotosa(&zmk),
+		    RTF_DYNAMIC|RTF_GATEWAY, 0);
 	else {
 		if ((rt->rt_flags & RTF_DYNAMIC) && 
 		    (rt->rt_flags & RTF_GATEWAY) && rt_mask(rt)->sa_len == 0)
@@ -695,8 +695,8 @@ struct rtentry	**ret_nrt;
 		msk.siso_len = msk.siso_pad - (u_char *)&msk;
 	}
 
-	rtrequest(req, S(dst), S(gte), (netmask ? S(msk) : (struct sockaddr *)0),
-		flags, ret_nrt);
+	rtrequest(req, sisotosa(&dst), sisotosa(&gte),
+	    (netmask ? sisotosa(&msk) : (struct sockaddr *)0), flags, ret_nrt);
 }
 
 /*
@@ -730,9 +730,10 @@ struct iso_addr	*host, *gateway, *netmask;
 		zap_isoaddr(msk, netmask);
 		msk.siso_nlen = 0;
 		msk.siso_len = msk.siso_pad - (u_char *)&msk;
-		rtredirect(S(dst), S(gte), S(msk), RTF_DONE, S(gte), 0);
+		rtredirect(sisotosa(&dst), sisotosa(&gte), sisotosa(&msk),
+		    RTF_DONE, sisotosa(&gte), 0);
 	} else
-		rtredirect(S(dst), S(gte), (struct sockaddr *)0,
-							RTF_DONE | RTF_HOST, S(gte), 0);
+		rtredirect(sisotosa(&dst), sisotosa(&gte), (struct sockaddr *)0,
+		    RTF_DONE | RTF_HOST, sisotosa(&gte), 0);
 }
 #endif	/* ISO */

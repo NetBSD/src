@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.c,v 1.6 1995/03/08 02:16:16 cgd Exp $	*/
+/*	$NetBSD: tp_pcb.c,v 1.7 1995/06/13 07:13:45 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -940,10 +940,9 @@ register struct mbuf *nam;
 #ifdef INET
 		case AF_INET:
 			tsel = (caddr_t)&tutil;
-			if (tutil =  ((struct sockaddr_in *)siso)->sin_port) {
+			if (tutil = satosin(siso)->sin_port)
 				tlen = 2;
-			}
-			if (((struct sockaddr_in *)siso)->sin_addr.s_addr == 0)
+			if (satosin(siso)->sin_addr.s_addr == 0)
 				siso = 0;
 		}
 #endif
@@ -974,7 +973,7 @@ register struct mbuf *nam;
 #endif
 #ifdef INET
 				case AF_INET:
-					((struct sockaddr_in *)siso)->sin_port = tutil;
+					satosin(siso)->sin_port = tutil;
 #endif
 				}
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_input.c,v 1.8 1995/06/13 05:52:42 mycroft Exp $	*/
+/*	$NetBSD: clnp_input.c,v 1.9 1995/06/13 07:13:18 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -312,7 +312,7 @@ struct snpa_hdr	*shp;	/* subnetwork header */
 	 *	If no iso addresses have been set, there is nothing
 	 *	to do with the packet.
 	 */
-	if (iso_ifaddr == NULL) {
+	if (iso_ifaddr.tqh_first == 0) {
 		clnp_discard(m, ADDR_DESTUNREACH);
 		return;
 	}

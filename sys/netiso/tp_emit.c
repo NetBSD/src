@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_emit.c,v 1.5 1994/06/29 06:40:05 cgd Exp $	*/
+/*	$NetBSD: tp_emit.c,v 1.6 1995/06/13 07:13:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -963,9 +963,9 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 
 		IFDEBUG(D_ERROR_EMIT)
 			printf("tp_error_emit 1 sending DG: Laddr\n");
-			dump_addr((struct sockaddr *)laddr);
+			dump_addr(sisotosa(laddr));
 			printf("Faddr\n");
-			dump_addr((struct sockaddr *)faddr);
+			dump_addr(sisotosa(faddr));
 		ENDDEBUG
 		return (tpcb->tp_nlproto->nlp_dgoutput)(
 			&laddr->siso_addr, 
@@ -975,9 +975,9 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 	} else if (dgout_routine) {
 			IFDEBUG(D_ERROR_EMIT)
 				printf("tp_error_emit sending DG: Laddr\n");
-				dump_addr((struct sockaddr *)laddr);
+				dump_addr(sisotosa(laddr));
 				printf("Faddr\n");
-				dump_addr((struct sockaddr *)faddr);
+				dump_addr(sisotosa(faddr));
 			ENDDEBUG
 				return (*dgout_routine)( &laddr->siso_addr, &faddr->siso_addr, 
 					m, datalen, /* no route */ 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_inet.c,v 1.7 1994/06/29 06:40:10 cgd Exp $	*/
+/*	$NetBSD: tp_inet.c,v 1.8 1995/06/13 07:13:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -528,8 +528,7 @@ tpip_input(m, iplen)
 	dst.sin_family  = AF_INET; 
 	dst.sin_len  = sizeof(dst);
 
-	tp_input(m, (struct sockaddr *)&src, (struct sockaddr *)&dst, 0,
-	    tpip_output_dg, 0);
+	tp_input(m, sintosa(&src), sintosa(&dst), 0, tpip_output_dg, 0);
 	return;
 
 discard:
@@ -595,22 +594,23 @@ tpip_ctlinput(cmd, sin)
 	int cmd;
 	struct sockaddr_in *sin;
 {
-	extern u_char inetctlerrmap[];
-	extern struct in_addr zeroin_addr;
+	extern int inetctlerrmap[];
+	void (*notify) __P((struct inpcb *, int));
 	void tp_quench __P((struct inpcb *, int));
 	void tpin_abort __P((struct inpcb *, int));
+	int errno;
 
+	if (cmd < 0 || cmd >= PRC_NCMDS)
+		return;
 	if (sin->sin_family != AF_INET && sin->sin_family != AF_IMPLINK)
 		return;
 	if (sin->sin_addr.s_addr == INADDR_ANY)
 		return;
-	if (cmd < 0 || cmd > PRC_NCMDS)
-		return;
+	errno = inetctlerrmap[cmd];
 	switch (cmd) {
 
 		case	PRC_QUENCH:
-			in_pcbnotify(&tp_inpcb, (struct sockaddr *)sin, 0,
-				zeroin_addr, 0, cmd, tp_quench);
+			notify = tp_quench;
 			break;
 
 		case	PRC_ROUTEDEAD:
@@ -618,8 +618,7 @@ tpip_ctlinput(cmd, sin)
 		case	PRC_UNREACH_NET:
 		case	PRC_IFDOWN:
 		case	PRC_HOSTDEAD:
-			in_pcbnotify(&tp_inpcb, (struct sockaddr *)sin, 0,
-				zeroin_addr, 0, cmd, in_rtchange);
+			notify = in_rtchange;
 			break;
 
 		default:
@@ -638,9 +637,10 @@ tpip_ctlinput(cmd, sin)
 		case	PRC_TIMXCEED_REASS:
 		case	PRC_PARAMPROB:
 		*/
-		in_pcbnotify(&tp_inpcb, (struct sockaddr *)sin, 0,
-			zeroin_addr, 0, cmd, tpin_abort);
+			notify = tpin_abort;
+			break;
 	}
+	in_pcbnotifyall(&tp_inpcb, sintosa(sin), errno, notify);
 }
 
 /*

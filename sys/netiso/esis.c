@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.7 1995/06/13 05:52:45 mycroft Exp $	*/
+/*	$NetBSD: esis.c,v 1.8 1995/06/13 07:13:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -322,10 +322,10 @@ struct rtentry		*rt;			/* snpa cache info regarding next hop of
 	struct iso_addr *rd_gwnsap;
 
 	if (rt->rt_flags & RTF_GATEWAY) {
-		rd_gwnsap = &((struct sockaddr_iso *)rt->rt_gateway)->siso_addr;
+		rd_gwnsap = &satosiso(rt->rt_gateway)->siso_addr;
 		rt = rtalloc1(rt->rt_gateway, 0);
 	} else
-		rd_gwnsap = &((struct sockaddr_iso *)rt_key(rt))->siso_addr;
+		rd_gwnsap = &satosiso(rt_key(rt))->siso_addr;
 	if (rt == 0 || (sdl = (struct sockaddr_dl *)rt->rt_gateway) == 0 ||
 		sdl->sdl_family != AF_LINK) {
 		/* maybe we should have a function that you
@@ -448,7 +448,7 @@ struct rtentry		*rt;			/* snpa cache info regarding next hop of
 	siso.siso_nlen = 6 + 1;	/* should be taken from snpa_hdr */
 										/* +1 is for AFI */
 	bcopy(inbound_shp->snh_shost, siso.siso_data + 1, 6);
-	(ifp->if_output)(ifp, m0, (struct sockaddr *)&siso, 0);
+	(ifp->if_output)(ifp, m0, sisotosa(&siso), 0);
 }
 
 /*
@@ -871,16 +871,16 @@ struct	iso_addr *isoa;
 		(void) esis_insert_addr(&cp, &len, isoa, m, 0);
 		naddr = 1;
 	}
-	for (ia = iso_ifaddr; ia; ia = ia->ia_next) {
+	for (ia = iso_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next) {
 		int nsellen = (type == ESIS_ISH ? ia->ia_addr.siso_tlen : 0); 
 		int n = ia->ia_addr.siso_nlen;
 		register struct iso_ifaddr *ia2;
 
 		if (type == ESIS_ISH && naddr > 0)
 			break;
-		for (ia2 = iso_ifaddr; ia2 != ia; ia2 = ia2->ia_next)
+		for (ia2 = iso_ifaddr.tqh_first; ia2 != ia; ia2 = ia2->ia_list.tqe_next)
 			if (Bcmp(ia->ia_addr.siso_data, ia2->ia_addr.siso_data, n) == 0)
-					break;
+				break;
 		if (ia2 != ia)
 			continue;	/* Means we have previously copied this nsap */
 		if (isoa && Bcmp(ia->ia_addr.siso_data, isoa->isoa_genaddr, n) == 0) {
@@ -928,7 +928,7 @@ struct	iso_addr *isoa;
 	siso.siso_data[0] = AFI_SNA;
 	siso.siso_nlen = sn_len + 1;
 	bcopy(sn_addr, siso.siso_data + 1, (unsigned)sn_len);
-	(ifp->if_output)(ifp, m0, (struct sockaddr *)&siso, 0);
+	(ifp->if_output)(ifp, m0, sisotosa(&siso), 0);
 }
 
 /*
@@ -1029,7 +1029,7 @@ struct mbuf *m;
 	siso.siso_data[0] = AFI_SNA;
 	siso.siso_nlen = sn_len + 1;
 	bcopy(LLADDR(sdl), siso.siso_data + 1, sn_len);
-	error = (ifp->if_output)(ifp, m, (struct sockaddr *)&siso, 0);
+	error = (ifp->if_output)(ifp, m, sisotosa(&siso), 0);
 	if (error) {
 		IFDEBUG(D_ISISOUTPUT)
 			printf("isis_output: error from ether_output is %d\n", error);
@@ -1065,7 +1065,7 @@ struct sockaddr_iso		*siso;		/* address of ifp */
 	register struct iso_ifaddr *ia;	/* scan through interface addresses */
 
 	if (req == PRC_IFDOWN)
-		for (ia = iso_ifaddr; ia; ia = ia->ia_next) {
+		for (ia = iso_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next) {
 			if (iso_addrmatch(IA_SIS(ia), siso))
 				snpac_flushifp(ia->ia_ifp);
 		}
