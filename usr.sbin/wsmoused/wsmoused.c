@@ -1,4 +1,4 @@
-/* $NetBSD: wsmoused.c,v 1.12 2003/08/06 22:11:50 jmmv Exp $ */
+/* $NetBSD: wsmoused.c,v 1.13 2003/08/06 23:58:40 jmmv Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\n"
 "The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: wsmoused.c,v 1.12 2003/08/06 22:11:50 jmmv Exp $");
+__RCSID("$NetBSD: wsmoused.c,v 1.13 2003/08/06 23:58:40 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -48,8 +48,10 @@ __RCSID("$NetBSD: wsmoused.c,v 1.12 2003/08/06 22:11:50 jmmv Exp $");
 #include <poll.h>
 #include <signal.h>
 #include <stdio.h>
-#include <string.h>
+#include <stdarg.h>
 #include <stdlib.h>
+#include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 #include <util.h>
 
@@ -64,6 +66,7 @@ __RCSID("$NetBSD: wsmoused.c,v 1.12 2003/08/06 22:11:50 jmmv Exp $");
 
 static struct mouse Mouse;
 static char *Pid_File = NULL;
+static int Foreground = 1;
 static int X_Console = -1;
 
 #ifdef WSMOUSED_SELECTION_MODE
@@ -117,6 +120,104 @@ usage(void)
 
 /* --------------------------------------------------------------------- */
 
+/* Logs the given error message to syslog if running in daemon mode, or
+ * to the console if running in the foreground. */
+void
+log_err(int e, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	if (Foreground)
+		verr(e, fmt, ap);
+	else {
+		int olderrno = errno;
+		vsyslog(LOG_DAEMON | LOG_ERR, fmt, ap);
+		errno = olderrno;
+		syslog(LOG_DAEMON | LOG_ERR, "%m");
+		exit(e);
+	}
+	/* NOTREACHED */
+	va_end(ap);
+}
+
+/* --------------------------------------------------------------------- */
+
+/* Logs the given error message to syslog if running in daemon mode, or
+ * to the console if running in the foreground. */
+void
+log_errx(int e, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	if (Foreground)
+		verrx(e, fmt, ap);
+	else {
+		vsyslog(LOG_DAEMON | LOG_ERR, fmt, ap);
+		exit(e);
+	}
+	/* NOTREACHED */
+	va_end(ap);
+}
+
+/* --------------------------------------------------------------------- */
+
+/* Logs the given info message to syslog if running in daemon mode, or
+ * to the console if running in the foreground. */
+void
+log_info(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	if (Foreground)
+		vfprintf(stderr, fmt, ap);
+	else
+		vsyslog(LOG_DAEMON | LOG_INFO, fmt, ap);
+	va_end(ap);
+}
+
+/* --------------------------------------------------------------------- */
+
+/* Logs the given warning message to syslog if running in daemon mode, or
+ * to the console if running in the foreground. */
+void
+log_warn(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	if (Foreground)
+		vwarn(fmt, ap);
+	else {
+		int olderrno = errno;
+		vsyslog(LOG_DAEMON | LOG_WARNING, fmt, ap);
+		errno = olderrno;
+		syslog(LOG_DAEMON | LOG_WARNING, "%m");
+	}
+	va_end(ap);
+}
+
+/* --------------------------------------------------------------------- */
+
+/* Logs the given warning message to syslog if running in daemon mode, or
+ * to the console if running in the foreground. */
+void
+log_warnx(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	if (Foreground)
+		vwarnx(fmt, ap);
+	else
+		vsyslog(LOG_DAEMON | LOG_WARNING, fmt, ap);
+	va_end(ap);
+}
+
+/* --------------------------------------------------------------------- */
+
 /* Initializes mouse information.  Basically, it opens required files
  * for the daemon to work. */
 static void
@@ -132,7 +233,8 @@ init_mouse(void)
 		Mouse.m_fifofd = open(Mouse.m_fifoname,
 		    O_RDWR | O_NONBLOCK, 0);
 		if (Mouse.m_fifofd == -1)
-			err(EXIT_FAILURE, "cannot open %s", Mouse.m_fifoname);
+			log_err(EXIT_FAILURE, "cannot open %s",
+			    Mouse.m_fifoname);
 	}
 }
 
@@ -153,7 +255,7 @@ open_device(unsigned int secs)
 	/* Open mouse file descriptor */
 	Mouse.m_devfd = open(Mouse.m_devname, O_RDONLY | O_NONBLOCK, 0);
 	if (Mouse.m_devfd == -1)
-		err(EXIT_FAILURE, "cannot open %s", Mouse.m_devname);
+		log_err(EXIT_FAILURE, "cannot open %s", Mouse.m_devname);
 }
 
 /* --------------------------------------------------------------------- */
@@ -182,12 +284,12 @@ event_loop(void)
 			res = poll(fds, 2, 300);
 
 		if (res < 0)
-			warn("failed to read from devices");
+			log_warn("failed to read from devices");
 
 		if (fds[0].revents & POLLIN) {
 			res = read(Mouse.m_statfd, &event, sizeof(event));
 			if (res != sizeof(event))
-				warn("failed to read from mouse stat");
+				log_warn("failed to read from mouse stat");
 
 			generic_wscons_event(event);
 
@@ -198,13 +300,13 @@ event_loop(void)
 		} else if (fds[1].revents & POLLIN) {
 			res = read(Mouse.m_devfd, &event, sizeof(event));
 			if (res != sizeof(event))
-				warn("failed to read from mouse");
+				log_warn("failed to read from mouse");
 
 			if (Mouse.m_fifofd >= 0) {
 				res = write(Mouse.m_fifofd, &event,
 				            sizeof(event));
 				if (res != sizeof(event))
-					warn("failed to write to fifo");
+					log_warn("failed to write to fifo");
 			}
 
 			for (i = 0; i < MAX_MODES && Modes[i] != NULL; i++)
@@ -264,7 +366,7 @@ attach_mode(const char *name)
 			break;
 		}
 	if (pos == -1) {
-		warnx("modes table full; cannot register `%s'", name);
+		log_warnx("modes table full; cannot register `%s'", name);
 		return 0;
 	}
 
@@ -275,7 +377,7 @@ attach_mode(const char *name)
 
 			res = mb->mb_startup(&Mouse);
 			if (res == 0) {
-				warnx("startup failed for `%s' mode",
+				log_warnx("startup failed for `%s' mode",
 				    mb->mb_name);
 				return 0;
 			} else {
@@ -285,7 +387,7 @@ attach_mode(const char *name)
 		}
 	}
 
-	warnx("unknown mode `%s' (see the `modes' directive)", name);
+	log_warnx("unknown mode `%s' (see the `modes' directive)", name);
 	return 0;
 }
 
@@ -308,7 +410,7 @@ attach_modes(char *list)
 	}
 
 	if (count == 0)
-		errx(EXIT_FAILURE, "no active modes found; exiting...");
+		log_errx(EXIT_FAILURE, "no active modes found; exiting...");
 }
 
 /* --------------------------------------------------------------------- */
@@ -327,7 +429,7 @@ detach_mode(const char *name)
 
 			res = mb->mb_cleanup();
 			if (res == 0) {
-				warnx("cleanup failed for `%s' mode",
+				log_warnx("cleanup failed for `%s' mode",
 				    mb->mb_name);
 				return;
 			} else {
@@ -337,7 +439,7 @@ detach_mode(const char *name)
 		}
 	}
 
-	warnx("unknown mode `%s' (see the `modes' directive)", name);
+	log_warnx("unknown mode `%s' (see the `modes' directive)", name);
 }
 
 /* --------------------------------------------------------------------- */
@@ -419,7 +521,7 @@ main(int argc, char **argv)
 	tstat = block_get_propval(conf, "ttystat", _PATH_TTYSTAT);
 	Mouse.m_statfd = open(tstat, O_RDONLY | O_NONBLOCK, 0);
 	if (Mouse.m_statfd == -1)
-		err(EXIT_FAILURE, "cannot open %s", tstat);
+		log_err(EXIT_FAILURE, "cannot open %s", tstat);
 
 	/* Initialize mouse information and attach modes */
 	if (Mouse.m_devname == NULL)
@@ -440,12 +542,14 @@ main(int argc, char **argv)
 	if (!nodaemon) {
 		/* Become a daemon */
 		if (daemon(0, 0) == -1)
-			err(EXIT_FAILURE, "failed to become a daemon");
+			log_err(EXIT_FAILURE, "failed to become a daemon");
 
 		/* Create the pidfile, if wanted */
 		Pid_File = block_get_propval(conf, "pidfile", NULL);
 		if (pidfile(Pid_File) == -1)
-			warn("pidfile %s", Pid_File);
+			log_warn("pidfile %s", Pid_File);
+
+		Foreground = 0;
 	}
 
 	event_loop();
