@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.19 2000/02/29 21:37:00 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.20 2000/03/24 13:02:00 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1544,7 +1544,7 @@ uaudio_get(sc, which, type, wValue, wIndex, len)
 		    type, which, wValue, wIndex, len));
 	err = usbd_do_request(sc->sc_udev, &req, &data);
 	if (err) {
-		DPRINTF(("uaudio_get: err=%d\n", err));
+		DPRINTF(("uaudio_get: err=%s\n", usbd_errstr(err)));
 		return (-1);
 	}
 	switch (len) {
@@ -2288,11 +2288,15 @@ uaudio_set_params(addr, setmode, usemode, p, r)
 		    p->precision ==a1d->bBitResolution &&
 		    enc == sc->sc_alts[i].encoding) {
 			if (a1d->bSamFreqType == UA_SAMP_CONTNUOUS) {
+				DPRINTFN(2,("uaudio_set_params: cont %d-%d\n",
+				    UA_SAMP_LO(a1d), UA_SAMP_HI(a1d)));
 				if (UA_SAMP_LO(a1d) < p->sample_rate &&
 				    p->sample_rate < UA_SAMP_HI(a1d))
 					goto found;
 			} else {
 				for (j = 0; j < a1d->bSamFreqType; j++) {
+					DPRINTFN(2,("uaudio_set_params: disc #"
+					    "%d: %d\n", j, UA_GETSAMP(a1d, j)));
 					/* XXX allow for some slack */
 					if (UA_GETSAMP(a1d, j) ==
 					    p->sample_rate)
