@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_sbus.c,v 1.1 1999/08/10 04:56:30 christos Exp $ */
+/*	$NetBSD: bwtwo_sbus.c,v 1.2 2000/03/19 15:38:45 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -127,9 +127,6 @@ struct cfattach bwtwo_sbus_ca = {
 static int	bwtwo_get_video_sun4c  __P((struct bwtwo_softc *));
 static void	bwtwo_set_video_sun4c __P((struct bwtwo_softc *, int));
 
-extern int fbnode;
-extern struct tty *fbconstty;
-
 /*
  * Match a bwtwo.
  */
@@ -159,7 +156,6 @@ bwtwoattach_sbus(parent, self, args)
 	bus_space_handle_t bh;
 	int isconsole, node;
 	char *name;
-	extern struct tty *fbconstty;
 
 	node = sa->sa_node;
 
@@ -191,7 +187,7 @@ bwtwoattach_sbus(parent, self, args)
 
 	sc->sc_pixeloffset = BWREG_MEM;
 
-	isconsole = node == fbnode && fbconstty != NULL;
+	isconsole = fb_is_console(node);
 	name = getpropstring(node, "model");
 
 	/* Assume `bwtwo at sbus' only happens at sun4c's */
@@ -214,7 +210,7 @@ bwtwoattach_sbus(parent, self, args)
 	}
 
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
-	bwtwoattach(sc, name, isconsole, node == fbnode);
+	bwtwoattach(sc, name, isconsole);
 }
 
 static void
