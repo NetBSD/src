@@ -8,7 +8,7 @@
     *
     *  SB1250 specification level:  User's manual 1/02/02
     *  
-    *  Author:  Mitch Lichtenberg (mpl@broadcom.com)
+    *  Author:  Mitch Lichtenberg
     *  
     *********************************************************************  
     *
@@ -256,7 +256,12 @@
  */
 
 #define M_DUART_ISR_TX_A            _SB_MAKEMASK1(0)
-#define M_DUART_ISR_RX_A            _SB_MAKEMASK1(1)
+
+#define S_DUART_ISR_RX_A            1
+#define M_DUART_ISR_RX_A            _SB_MAKEMASK1(S_DUART_ISR_RX_A)
+#define V_DUART_ISR_RX_A(x)         _SB_MAKEVALUE(x,S_DUART_ISR_RX_A)
+#define G_DUART_ISR_RX_A(x)         _SB_GETVALUE(x,S_DUART_ISR_RX_A,M_DUART_ISR_RX_A)
+
 #define M_DUART_ISR_BRK_A           _SB_MAKEMASK1(2)
 #define M_DUART_ISR_IN_A            _SB_MAKEMASK1(3)
 #define M_DUART_ISR_TX_B            _SB_MAKEMASK1(4)
