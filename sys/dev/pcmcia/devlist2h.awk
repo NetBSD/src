@@ -1,7 +1,7 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.7 2003/12/15 07:32:21 jmc Exp $
+#	$NetBSD: devlist2h.awk,v 1.8 2004/08/10 18:39:08 mycroft Exp $
 #
-# Copyright (c) 1998 The NetBSD Foundation, Inc.
+# Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
@@ -172,10 +172,6 @@ NF > 0 && $1 == "product" {
 	    products[nproducts, 2], products[nproducts, 3]) > hfile
 
 	products[nproducts, 5] = collectline(f, line)
-
-	printf("#define\tPCMCIA_STR_%s_%s\t\"%s\"\n",
-	    products[nproducts, 1], products[nproducts, 2],
-	    products[nproducts, 5]) > hfile
 
 	next
 }

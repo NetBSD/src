@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.28 2004/08/10 16:04:16 mycroft Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.29 2004/08/10 18:39:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.28 2004/08/10 16:04:16 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.29 2004/08/10 18:39:08 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,17 +74,17 @@ CFATTACH_DECL(aic_pcmcia, sizeof(struct aic_pcmcia_softc),
     aic_pcmcia_match, aic_pcmcia_attach, aic_pcmcia_detach, aic_activate);
 
 const struct pcmcia_product aic_pcmcia_products[] = {
-	{ "",	PCMCIA_VENDOR_ADAPTEC,
-	  PCMCIA_PRODUCT_ADAPTEC_APA1460,	0 },
+	{ PCMCIA_VENDOR_ADAPTEC, PCMCIA_PRODUCT_ADAPTEC_APA1460,
+	  PCMCIA_CIS_INVALID },
 
-	{ "",	PCMCIA_VENDOR_ADAPTEC,
-	  PCMCIA_PRODUCT_ADAPTEC_APA1460A,	0 },
+	{ PCMCIA_VENDOR_ADAPTEC, PCMCIA_PRODUCT_ADAPTEC_APA1460A,
+	  PCMCIA_CIS_INVALID },
 
-	{ "",	PCMCIA_VENDOR_NEWMEDIA,
-	  PCMCIA_PRODUCT_NEWMEDIA_BUSTOASTER,	0 },
-
-	{ NULL }
+	{ PCMCIA_VENDOR_NEWMEDIA, PCMCIA_PRODUCT_NEWMEDIA_BUSTOASTER,
+	  PCMCIA_CIS_INVALID },
 };
+const size_t aic_pcmcia_nproducts =
+    sizeof(aic_pcmcia_products) / sizeof(aic_pcmcia_products[0]);
 
 int
 aic_pcmcia_match(parent, match, aux)
@@ -94,8 +94,8 @@ aic_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (pcmcia_product_lookup(pa, aic_pcmcia_products,
-	    sizeof aic_pcmcia_products[0], NULL) != NULL)
+	if (pcmcia_product_lookup(pa, aic_pcmcia_products, aic_pcmcia_nproducts,
+	    sizeof(aic_pcmcia_products[0]), NULL))
 		return (1);
 	return (0);
 }

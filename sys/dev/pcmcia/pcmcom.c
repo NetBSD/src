@@ -1,7 +1,7 @@
-/*	$NetBSD: pcmcom.c,v 1.16 2004/08/09 18:51:32 mycroft Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.17 2004/08/10 18:39:08 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.16 2004/08/09 18:51:32 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.17 2004/08/10 18:39:08 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,12 +109,12 @@ const struct pcmcom_product {
 	struct pcmcia_product pp_product;
 	int		pp_nslaves;		/* number of slaves */
 } pcmcom_products[] = {
-	{ { PCMCIA_STR_SOCKET_DUAL_RS232,	PCMCIA_VENDOR_SOCKET,
-	    PCMCIA_PRODUCT_SOCKET_DUAL_RS232,	0 },
+	{ { PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_DUAL_RS232,
+	    PCMCIA_CIS_INVALID },
 	  2 },
-
-	{ { NULL } }
 };
+const size_t pcmcom_nproducts =
+    sizeof(pcmcom_products) / sizeof(pcmcom_products[0]);
 
 int	pcmcom_print __P((void *, const char *));
 int	pcmcom_submatch __P((struct device *, struct cfdata *, void *));
@@ -136,10 +136,9 @@ pcmcom_match(parent, cf, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (pcmcia_product_lookup(pa,
-	    (const struct pcmcia_product *)pcmcom_products,
-	    sizeof pcmcom_products[0], NULL) != NULL)
-		return (10);	/* beat com_pcmcia */
+	if (pcmcia_product_lookup(pa, pcmcom_products, pcmcom_nproducts,
+	    sizeof(pcmcom_products[0]), NULL))
+		return (2);	/* beat com_pcmcia */
 	return (0);
 }
 
@@ -155,17 +154,15 @@ pcmcom_attach(parent, self, aux)
 	size_t size;
 	int i;
 
+	printf("\n");
 	sc->sc_pf = pa->pf;
 
-	pp = (const struct pcmcom_product *)pcmcia_product_lookup(pa,
-            (const struct pcmcia_product *)pcmcom_products,
-            sizeof pcmcom_products[0], NULL);
-	if (pp == NULL) {
+	pp = pcmcia_product_lookup(pa, pcmcom_products, pcmcom_nproducts,
+            sizeof(pcmcom_products[0]), NULL);
+	if (!pp) {
 		printf("\n");
 		panic("pcmcom_attach: impossible");
 	}
-
-	printf(": %s\n", pp->pp_product.pp_name);
 
 	/* Allocate the slave info. */
 	sc->sc_nslaves = pp->pp_nslaves;

@@ -1,7 +1,7 @@
-/*	$NetBSD: fdc_pcmcia.c,v 1.11 2004/08/08 23:17:12 mycroft Exp $	*/
+/*	$NetBSD: fdc_pcmcia.c,v 1.12 2004/08/10 18:39:08 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_pcmcia.c,v 1.11 2004/08/08 23:17:12 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_pcmcia.c,v 1.12 2004/08/10 18:39:08 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,6 +157,7 @@ fdc_pcmcia_attach(parent, self, aux)
 	struct pcmcia_function *pf = pa->pf;
 	struct fdc_attach_args fa;
 
+	printf("\n");
 	psc->sc_pf = pf;
 
 	SIMPLEQ_FOREACH(cfe, &pf->cfe_head, cfe_list) {
@@ -171,21 +172,21 @@ fdc_pcmcia_attach(parent, self, aux)
 	}
 
 	if (cfe == 0) {
-		printf(": can't alloc i/o space\n");
+		printf("%s: can't alloc i/o space\n", self->dv_xname);
 		return;
 	}
 
 	/* Enable the card. */
 	pcmcia_function_init(pf, cfe);
 	if (pcmcia_function_enable(pf)) {
-		printf(": function enable failed\n");
+		printf("%s: function enable failed\n", self->dv_xname);
 		return;
 	}
 
 	/* Map in the io space */
 	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, &psc->sc_pcioh,
 	    &psc->sc_io_window)) {
-		printf(": can't map i/o space\n");
+		printf("%s: can't map i/o space\n", self->dv_xname);
 		return;
 	}
 
@@ -197,9 +198,7 @@ fdc_pcmcia_attach(parent, self, aux)
 	TAILQ_INIT(&fdc->sc_drives);
 
 	if (!fdcfind(fdc->sc_iot, fdc->sc_ioh, 1))
-		printf(": coundn't find fdc\n%s", fdc->sc_dev.dv_xname);
-
-	printf(": %s\n", PCMCIA_STR_YEDATA_EXTERNAL_FDD);
+		printf("%s: coundn't find fdc\n", self->dv_xname);
 
 	fdc_conf(fdc);
 

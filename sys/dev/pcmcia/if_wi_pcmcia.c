@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.55 2004/08/10 16:04:16 mycroft Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.56 2004/08/10 18:39:08 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.55 2004/08/10 16:04:16 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.56 2004/08/10 18:39:08 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,10 +87,6 @@ static int	wi_pcmcia_load_firm __P((struct wi_softc *, const void *, int, const 
 static int	wi_pcmcia_write_firm __P((struct wi_softc *, const void *, int, const void *, int));
 static int	wi_pcmcia_set_hcr __P((struct wi_softc *, int));
 
-
-static const struct wi_pcmcia_product
-		*wi_pcmcia_lookup __P((struct pcmcia_attach_args *pa));
-
 struct wi_pcmcia_softc {
 	struct wi_softc sc_wi;
 
@@ -108,11 +104,7 @@ struct wi_pcmcia_softc {
 CFATTACH_DECL(wi_pcmcia, sizeof(struct wi_pcmcia_softc),
     wi_pcmcia_match, wi_pcmcia_attach, wi_pcmcia_detach, wi_activate);
 
-static const struct wi_pcmcia_product {
-	u_int32_t	pp_vendor;	/* vendor ID */
-	u_int32_t	pp_product;	/* product ID */
-	const char	*pp_cisinfo[4];	/* CIS information */
-} wi_pcmcia_products[] = {
+static const struct pcmcia_product wi_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
 	  PCMCIA_CIS_SMC_2632W },
 
@@ -236,34 +228,8 @@ static const struct wi_pcmcia_product {
 	{ PCMCIA_VENDOR_ASUSTEK, PCMCIA_PRODUCT_ASUSTEK_WL_100,
 	  PCMCIA_CIS_ASUSTEK_WL_100 },
 };
-
-static const struct wi_pcmcia_product *
-wi_pcmcia_lookup(pa)
-	struct pcmcia_attach_args *pa;
-{
-	const struct wi_pcmcia_product *pp;
-	int n;
-
-	/* match by CIS information */
-	for (pp = wi_pcmcia_products,
-	    n = sizeof(wi_pcmcia_products) / sizeof(wi_pcmcia_products[0]);
-	    n; pp++, n--) {
-		if (pa->card->cis1_info[0] != NULL &&
-		    pp->pp_cisinfo[0] != NULL &&
-		    strcmp(pa->card->cis1_info[0], pp->pp_cisinfo[0]) == 0 &&
-		    pa->card->cis1_info[1] != NULL &&
-		    pp->pp_cisinfo[1] != NULL &&
-		    strcmp(pa->card->cis1_info[1], pp->pp_cisinfo[1]) == 0)
-			return pp;
-		if (pa->manufacturer != PCMCIA_VENDOR_INVALID &&
-		    pa->manufacturer == pp->pp_vendor &&
-		    pa->product != PCMCIA_PRODUCT_INVALID &&
-		    pa->product == pp->pp_product)
-			return pp;
-	}
-
-	return (NULL);
-}
+static const size_t wi_pcmcia_nproducts =
+    sizeof(wi_pcmcia_products) / sizeof(wi_pcmcia_products[0]);
 
 static int
 wi_pcmcia_match(parent, match, aux)
@@ -273,7 +239,8 @@ wi_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (wi_pcmcia_lookup(pa) != NULL)
+	if (pcmcia_product_lookup(pa, wi_pcmcia_products, wi_pcmcia_nproducts,
+	    sizeof(wi_pcmcia_products[0]), NULL))
 		return (1);
 	return (0);
 }
@@ -347,7 +314,6 @@ wi_pcmcia_attach(parent, self, aux)
 {
 	struct wi_pcmcia_softc *psc = (void *)self;
 	struct wi_softc *sc = &psc->sc_wi;
-	const struct wi_pcmcia_product *pp;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	int haveaddr;
@@ -367,20 +333,16 @@ wi_pcmcia_attach(parent, self, aux)
 	sc->sc_iot = cfe->iospace[0].handle.iot;
 	sc->sc_ioh = cfe->iospace[0].handle.ioh;
 
-	pp = wi_pcmcia_lookup(pa);
-	if (pp == NULL)
-		panic("wi_pcmcia_attach: impossible");
-
-	if (pp->pp_vendor == PCMCIA_VENDOR_SYMBOL &&
-	    pp->pp_product == PCMCIA_PRODUCT_SYMBOL_LA4100)
+	if (pa->manufacturer == PCMCIA_VENDOR_SYMBOL &&
+	    pa->product == PCMCIA_PRODUCT_SYMBOL_LA4100)
 		psc->sc_symbol_cf = 1;
 	/*
 	 * XXX: Sony PEGA-WL100 CF card has a same vendor/product id as
 	 *	Intel PCMCIA card.  It may be incorrect to detect by the
 	 *	initial value of COR register.
 	 */
-	if (pp->pp_vendor == PCMCIA_VENDOR_INTEL &&
-	    pp->pp_product == PCMCIA_PRODUCT_INTEL_PRO_WLAN_2011 &&
+	if (pa->manufacturer == PCMCIA_VENDOR_INTEL &&
+	    pa->product == PCMCIA_PRODUCT_INTEL_PRO_WLAN_2011 &&
 	    CSR_READ_2(sc, WI_COR) == WI_COR_IOMODE)
 		psc->sc_symbol_cf = 1;
 

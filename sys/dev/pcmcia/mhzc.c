@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.26 2004/08/10 16:04:16 mycroft Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.27 2004/08/10 18:39:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.26 2004/08/10 16:04:16 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.27 2004/08/10 18:39:08 mycroft Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"
@@ -157,18 +157,12 @@ const struct mhzc_product {
 	/* Perform any special `enable' magic. */
 	int		(*mp_enable) __P((struct mhzc_softc *));
 } mhzc_products[] = {
-	{ { "",	PCMCIA_VENDOR_MEGAHERTZ,
-	    PCMCIA_PRODUCT_MEGAHERTZ_EM3336,	0 },
+	{ { PCMCIA_VENDOR_MEGAHERTZ, PCMCIA_PRODUCT_MEGAHERTZ_EM3336,
+	    PCMCIA_CIS_INVALID },
 	  mhzc_em3336_enaddr,		mhzc_em3336_enable },
-
-	/*
-	 * Eventually we could add support for other Ethernet/Modem
-	 * combo cards, even if they're aren't Megahertz, because
-	 * most of them work more or less the same way.
-	 */
-
-	{ { NULL } }
 };
+static const size_t mhzc_nproducts =
+    sizeof(mhzc_products) / sizeof(mhzc_products[0]);
 
 int	mhzc_print __P((void *, const char *));
 
@@ -188,11 +182,9 @@ mhzc_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (pcmcia_product_lookup(pa,
-	    (const struct pcmcia_product *)mhzc_products,
-	    sizeof mhzc_products[0], NULL) != NULL)
-		return (10);		/* beat `com' */
-
+	if (pcmcia_product_lookup(pa, mhzc_products, mhzc_nproducts,
+	    sizeof(mhzc_products[0]), NULL))
+		return (2);		/* beat `com' */
 	return (0);
 }
 
@@ -209,10 +201,9 @@ mhzc_attach(parent, self, aux)
 	aprint_normal("\n");
 	sc->sc_pf = pa->pf;
 
-	sc->sc_product = (const struct mhzc_product *)pcmcia_product_lookup(pa,
-            (const struct pcmcia_product *)mhzc_products,
-            sizeof mhzc_products[0], NULL);
-	if (sc->sc_product == NULL)
+	sc->sc_product = pcmcia_product_lookup(pa, mhzc_products,
+	    mhzc_nproducts, sizeof(mhzc_products[0]), NULL);
+	if (!sc->sc_product)
 		panic("mhzc_attach: impossible");
 
 	/*
