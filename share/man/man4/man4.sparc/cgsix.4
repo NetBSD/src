@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)cgsix.4	8.1 (Berkeley) 2/16/94
-.\"	$Id: cgsix.4,v 1.1 1994/07/01 20:47:41 deraadt Exp $
+.\"	$Id: cgsix.4,v 1.2 1996/06/21 22:23:00 pk Exp $
 .\"
 .Dd February 16, 1994
 .Dt CGSIX 4 sparc
@@ -43,7 +43,9 @@
 .Nm cgsix
 .Nd accelerated 8-bit color frame buffer
 .Sh SYNOPSIS
-.Cd "cgsix* at sbus? slot ? offset ?"
+.Cd "cgsix* at sbus? slot ? offset ?" Pq sun4c/sun4m
+.Cd "cgsix0 at obio0 addr 0xfb000000 level 4" Pq sun4/300
+.Cd "cgsix0 at obio0 addr 0x0b000000 level 4" Pq sun4/100
 .Sh DESCRIPTION
 The 
 .Nm cgsix
@@ -51,4 +53,8 @@ is a memory based color frame buffer.
 It supports the minimal ioctl's needed to run X11.
 .Sh SEE ALSO
 .Xr bwtwo 4 ,
-.Xr cgthree 4
+.Xr cgtwo 4 ,
+.Xr cgthree 4 ,
+.Xr cgfour 4 ,
+.Xr cgeight 4 ,
+.Xr tcx 4
