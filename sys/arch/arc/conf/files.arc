@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.21 2000/06/09 05:33:03 soda Exp $
+#	$NetBSD: files.arc,v 1.22 2000/06/17 07:17:36 soda Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -118,6 +118,22 @@ attach	fd at fdc
 file	arch/arc/dev/fd.c		fdc	needs-flag
 major	{fd = 7}
 
+#	bus independent raster console glue
+device	rasdisplay: wsemuldisplaydev, pcdisplayops
+file	arch/arc/dev/rasdisplay.c	rasdisplay
+
+#	raster console glue on PICA bus
+attach	rasdisplay at pica with rasdisplay_jazzio
+file	arch/arc/jazz/rasdisplay_jazzio.c rasdisplay_jazzio needs-flag
+
+#	VGA display driver on PICA bus
+attach	vga at pica with vga_jazzio
+file	arch/arc/jazz/vga_jazzio.c	vga_jazzio needs-flag
+
+#	PC keyboard controller on PICA bus
+attach  pckbc at pica with pckbc_jazzio
+file    arch/arc/jazz/pckbc_jazzio.c	pckbc_jazzio needs-flag
+
 #
 #	Stock ISA bus support
 #
@@ -142,7 +158,7 @@ attach	pc at pica with pc_pica
 attach	pc at isa with pc_isa
 device	opms: tty
 attach	opms at pica
-file	arch/arc/dev/pccons.c		pc & (pc_pica | pc_isa)	needs-flag
+file	arch/arc/dev/pccons.c	pc & (pc_pica | pc_isa | opms) needs-flag
 
 #	BusLogic BT-445C VLB SCSI Controller. Special on TYNE local bus.
 device	btl: scsi
