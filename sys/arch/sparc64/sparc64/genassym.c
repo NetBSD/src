@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.18 2000/07/14 21:04:16 eeh Exp $ */
+/*	$NetBSD: genassym.c,v 1.19 2000/08/01 00:31:15 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,6 +56,8 @@
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
+
+#include <uvm/uvm.h>
 
 #include <machine/db_machdep.h>
 #include <machine/pmap.h>
@@ -132,6 +134,9 @@ main()
 
 	/* VM structure fields */
 	off("VM_PMAP", struct vmspace, vm_map.pmap);
+
+	/* UVM structure fields */
+	off("UVM_PAGE_IDLE_ZERO", struct uvm, page_idle_zero);
 
 	/* pmap structure fields */
 	off("PM_CTX", struct pmap, pm_ctx);
