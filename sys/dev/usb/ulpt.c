@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.61 2004/03/22 14:55:42 tls Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.62 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.61 2004/03/22 14:55:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.62 2004/04/23 17:25:25 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,7 +231,7 @@ USB_ATTACH(ulpt)
 	int i, altno;
 
 	DPRINTFN(10,("ulpt_attach: sc=%p\n", sc));
-	usbd_devinfo(dev, 0, devinfo);
+	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
 	USB_ATTACH_SETUP;
 	printf("%s: %s, iclass %d/%d\n", USBDEVNAME(sc->sc_dev),
 	       devinfo, ifcd->bInterfaceClass, ifcd->bInterfaceSubClass);

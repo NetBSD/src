@@ -1,4 +1,4 @@
-/*	$NetBSD: ubtbcmfw.c,v 1.7 2003/12/01 01:09:24 atatat Exp $	*/
+/*	$NetBSD: ubtbcmfw.c,v 1.8 2004/04/23 17:25:25 itojun Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubtbcmfw.c,v 1.7 2003/12/01 01:09:24 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubtbcmfw.c,v 1.8 2004/04/23 17:25:25 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ USB_ATTACH(ubtbcmfw)
 	usbd_pipe_handle bulk_out_pipe;
 	uint n;
 
-	usbd_devinfo(dev, 0, devinfo);
+	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.41 2004/04/23 17:25:25 itojun Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.41 2004/04/23 17:25:25 itojun Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -497,7 +497,7 @@ USB_ATTACH(cue)
 
 	DPRINTFN(5,(" : cue_attach: sc=%p, dev=%p", sc, dev));
 
-	usbd_devinfo(dev, 0, devinfo);
+	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->cue_dev), devinfo);
 
