@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.51 2002/09/27 15:36:54 provos Exp $	*/
+/*	$NetBSD: si.c,v 1.52 2002/12/29 14:38:11 kristerw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -198,7 +198,7 @@ si_minphys(struct buf *bp)
 #endif
 		bp->b_bcount = MAX_DMA_LEN;
 	}
-	return (minphys(bp));
+	minphys(bp);
 }
 
 
