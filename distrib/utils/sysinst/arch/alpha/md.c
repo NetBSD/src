@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.20 2000/09/26 23:12:44 fvdl Exp $	*/
+/*	$NetBSD: md.c,v 1.21 2000/10/02 12:05:10 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -354,4 +354,9 @@ int
 md_pre_update()
 {
 	return 1;
+}
+
+void
+md_init()
+{
 }
