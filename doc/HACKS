@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.39 2004/10/08 07:07:26 skrll Exp $
+# $NetBSD: HACKS,v 1.40 2004/11/11 00:40:13 he Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -345,12 +345,12 @@ port	sh5
 		Work-around by defining NOGCCERROR when building for sh5.
 	kcah
 
-	hack	gcc 3.3.2 on sh5 - ICE compiling dist/bind/bin/named/ns_main.c
-	cdate	Sun Dec  7 19:44:05 GMT 2003
-	who	scw
-	file	usr.sbin/bind/named/Makefile : 1.15
+	hack	gcc 3.3.3 on sh5 - ICE compiling rbtdb.c and rbtdb64.c
+	cdate	Thu Nov 11 00:35:33 UTC 2004
+	who	he
+	file	usr.sbin/bind/libdns/Makefile/1.2
 	descr
-		Gcc3 for sh5 gets an ICE compiling ns_main.c at -O2.
+		Gcc3 for sh5 gets an ICE compiling these files at -O2.
 		Drop to -O1 for now when building for sh5.
 	kcah
 
