@@ -27,11 +27,6 @@ Boston, MA 02111-1307, USA.  */
 #endif
 #define TARGET_DEFAULT MASK_GAS
 
-#ifdef hpcmips /* XXX should use distinct target name -uch */
-#define NOUSE_GOFAST
-#define SOFT_FLOAT
-#endif
-
 /* Get generic mips ELF definitions. */
 
 #include <mips/elf.h>
