@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.90 2004/04/25 22:25:04 jonathan Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.91 2004/05/18 14:44:16 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.90 2004/04/25 22:25:04 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.91 2004/05/18 14:44:16 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -622,9 +622,6 @@ tcp_ctloutput(op, so, level, optname, mp)
 	struct mbuf *m;
 	int i;
 	int family;	/* family of the socket */
-#ifdef TCP_SIGNATURE
-	int optval;
-#endif
 
 	family = so->so_proto->pr_domain->dom_family;
 
@@ -696,14 +693,10 @@ tcp_ctloutput(op, so, level, optname, mp)
 				error = EINVAL;
 			if (error)
 				break;
-			optval = *mtod(m, int *);
-			if (optval > 0) {
+			if (*mtod(m, int *) > 0)
 				tp->t_flags |= TF_SIGNATURE;
-				/* tp->t_md5spi = optval; */
-			} else {
+			else
 				tp->t_flags &= ~TF_SIGNATURE;
-				/* tp->t_md5spi = 0; */
-			}
 			break;
 #endif /* TCP_SIGNATURE */
 
@@ -740,7 +733,7 @@ tcp_ctloutput(op, so, level, optname, mp)
 		switch (optname) {
 #ifdef TCP_SIGNATURE
 		case TCP_MD5SIG:
-			*mtod(m, int*) = (tp->t_flags & TF_SIGNATURE) ? 1 : 0;
+			*mtod(m, int *) = (tp->t_flags & TF_SIGNATURE) ? 1 : 0;
 			break;
 #endif
 		case TCP_NODELAY:
