@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tp_meas.c	7.4 (Berkeley) 5/6/91
- *	$Id: tp_meas.c,v 1.3 1993/07/04 21:25:07 cgd Exp $
+ *	$Id: tp_meas.c,v 1.4 1993/12/18 00:43:40 mycroft Exp $
  */
 
 /***********************************************************
@@ -65,11 +65,12 @@ SOFTWARE.
  * in the circular buffer tp_Meas[]
  */
 
-#include "types.h"
-#include "cdefs.h"
-#include "time.h"
-#include "argo_debug.h"
-#include "tp_meas.h"
+#include <sys/types.h>
+#include <sys/cdefs.h>
+#include <sys/time.h>
+
+#include <netiso/argo_debug.h>
+#include <netiso/tp_meas.h>
 
 extern struct timeval time;
 

@@ -31,18 +31,18 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)radix.c	7.9 (Berkeley) 2/4/91
- *	$Id: radix.c,v 1.3 1993/09/04 00:00:19 jtc Exp $
+ *	$Id: radix.c,v 1.4 1993/12/18 00:40:59 mycroft Exp $
  */
 
 /*
  * Routines to build and maintain radix trees for routing lookups.
  */
 #ifndef RNF_NORMAL
-#include "param.h"
-#include "systm.h"
-#include "radix.h"
-#include "malloc.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/malloc.h>
 #define	M_DONTWAIT M_NOWAIT
+#include <net/radix.h>
 #endif
 struct radix_node_head *mask_rnhead;
 #define rn_maskhead mask_rnhead->rnh_treetop

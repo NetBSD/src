@@ -31,24 +31,24 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)raw_usrreq.c	7.9 (Berkeley) 6/28/90
- *	$Id: raw_usrreq.c,v 1.3 1993/05/22 11:42:17 cgd Exp $
+ *	$Id: raw_usrreq.c,v 1.4 1993/12/18 00:41:01 mycroft Exp $
  */
 
-#include "param.h"
-#include "socket.h"
-#include "mbuf.h"
-#include "domain.h"
-#include "protosw.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "errno.h"
+#include <sys/param.h>
+#include <sys/socket.h>
+#include <sys/mbuf.h>
+#include <sys/domain.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/errno.h>
 
-#include "if.h"
-#include "route.h"
-#include "netisr.h"
-#include "raw_cb.h"
+#include <net/if.h>
+#include <net/route.h>
+#include <net/netisr.h>
+#include <net/raw_cb.h>
 
-#include "machine/mtpr.h"
+#include <machine/mtpr.h>
 
 /*
  * Initialize raw connection block q.

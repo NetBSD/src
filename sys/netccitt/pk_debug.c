@@ -36,22 +36,22 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pk_debug.c	7.7 (Berkeley) 5/9/91
- *	$Id: pk_debug.c,v 1.2 1993/05/20 04:12:16 cgd Exp $
+ *	$Id: pk_debug.c,v 1.3 1993/12/18 00:41:33 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "mbuf.h"
-#include "socket.h"
-#include "protosw.h"
-#include "socketvar.h"
-#include "errno.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/mbuf.h>
+#include <sys/socket.h>
+#include <sys/protosw.h>
+#include <sys/socketvar.h>
+#include <sys/errno.h>
 
-#include "../net/if.h"
+#include <net/if.h>
 
-#include "x25.h"
-#include "pk.h"
-#include "pk_var.h"
+#include <netccitt/x25.h>
+#include <netccitt/pk.h>
+#include <netccitt/pk_var.h>
 
 char	*pk_state[] = {
 	"Listen",	"Ready",	"Received-Call",

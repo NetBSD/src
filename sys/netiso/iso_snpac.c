@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)iso_snpac.c	7.14 (Berkeley) 6/27/91
- *	$Id: iso_snpac.c,v 1.3 1993/09/06 18:02:46 mycroft Exp $
+ *	$Id: iso_snpac.c,v 1.4 1993/12/18 00:43:26 mycroft Exp $
  */
 
 /***********************************************************
@@ -63,29 +63,29 @@ SOFTWARE.
 
 #ifdef ISO
 
-#include "types.h"
-#include "param.h"
-#include "systm.h"
-#include "mbuf.h"
-#include "domain.h"
-#include "protosw.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "errno.h"
-#include "ioctl.h"
-#include "syslog.h"
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/mbuf.h>
+#include <sys/domain.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/errno.h>
+#include <sys/ioctl.h>
+#include <sys/syslog.h>
 
-#include "../net/if.h"
-#include "../net/if_dl.h"
-#include "../net/route.h"
+#include <net/if.h>
+#include <net/if_dl.h>
+#include <net/route.h>
 
-#include "iso.h"
-#include "iso_var.h"
-#include "iso_snpac.h"
-#include "clnp.h"
-#include "clnp_stat.h"
-#include "esis.h"
-#include "argo_debug.h"
+#include <netiso/iso.h>
+#include <netiso/iso_var.h>
+#include <netiso/iso_snpac.h>
+#include <netiso/clnp.h>
+#include <netiso/clnp_stat.h>
+#include <netiso/esis.h>
+#include <netiso/argo_debug.h>
 
 int 				iso_systype = SNPA_ES;	/* default to be an ES */
 extern short	esis_holding_time, esis_config_time, esis_esconfig_time;
