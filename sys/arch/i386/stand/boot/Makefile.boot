@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.14 2004/03/13 22:41:37 dsl Exp $
+# $NetBSD: Makefile.boot,v 1.15 2004/06/21 18:20:08 jmc Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -130,7 +130,7 @@ LIBZ= ${ZLIB}
 cleandir distclean: cleanlibdir
 
 cleanlibdir:
-	rm -rf lib
+	-rm -rf lib
 
 LIBLIST= ${LIBI386} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} ${LIBSA}
 # LIBLIST= ${LIBSA} ${LIBKERN} ${LIBI386} ${LIBSA} ${LIBZ} ${LIBKERN}
