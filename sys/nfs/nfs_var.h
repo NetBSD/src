@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.46 2004/09/15 09:50:56 yamt Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.47 2004/12/14 09:13:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -87,6 +87,8 @@ int nfs_bioread __P((struct vnode *, struct uio *, int, struct ucred *, int));
 struct buf *nfs_getcacheblk __P((struct vnode *, daddr_t, int, struct proc *));
 int nfs_vinvalbuf __P((struct vnode *, int, struct ucred *, struct proc *,
 		       int));
+int nfs_flushstalebuf __P((struct vnode *, struct ucred *, struct proc *, int));
+#define	NFS_FLUSHSTALEBUF_MYWRITE	1	/* assume writes are ours */
 int nfs_asyncio __P((struct buf *));
 int nfs_doio __P((struct buf *, struct proc *));
 
