@@ -1,4 +1,4 @@
-/*	$NetBSD: sel_subs.h,v 1.3 1995/03/21 09:07:44 cgd Exp $	*/
+/*	$NetBSD: sel_subs.h,v 1.4 1998/01/21 00:11:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -59,8 +59,6 @@ typedef struct grpt {
 /*
  * data structure for storing user supplied time ranges (-T option)
  */
-
-#define ATOI2(s)	((((s)[0] - '0') * 10) + ((s)[1] - '0'))
 
 typedef struct time_rng {
 	time_t		low_time;	/* lower inclusive time limit */
