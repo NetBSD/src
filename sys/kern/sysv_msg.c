@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.36 2003/10/26 10:32:24 jdolecek Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.37 2004/03/23 13:22:04 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.36 2003/10/26 10:32:24 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.37 2004/03/23 13:22:04 junyoung Exp $");
 
 #define SYSVMSG
 
@@ -86,7 +86,7 @@ static struct	msgmap *msgmaps;	/* MSGSEG msgmap structures */
 static struct __msg *msghdrs;		/* MSGTQL msg headers */
 struct	msqid_ds *msqids;		/* MSGMNI msqid_ds struct's */
 
-static void msg_freehdr __P((struct __msg *));
+static void msg_freehdr(struct __msg *);
 
 void
 msginit()

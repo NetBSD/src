@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subr.c,v 1.26 2004/02/13 11:36:23 wiz Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.27 2004/03/23 13:22:05 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.26 2004/02/13 11:36:23 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.27 2004/03/23 13:22:05 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ MALLOC_DEFINE(M_TTYS, "ttys", "allocated tty structures");
 #endif
 
 #ifdef QBITS
-void	clrbits __P((u_char *, int, int));
+void	clrbits(u_char *, int, int);
 #endif
 
 /*

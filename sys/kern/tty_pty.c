@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.75 2004/03/09 05:30:24 dbj Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.76 2004/03/23 13:22:04 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.75 2004/03/09 05:30:24 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.76 2004/03/23 13:22:04 junyoung Exp $");
 
 #include "opt_compat_sunos.h"
 
@@ -89,12 +89,12 @@ static struct simplelock pt_softc_mutex = SIMPLELOCK_INITIALIZER;
 #define	PF_NOSTOP	0x40
 #define PF_UCNTL	0x80		/* user control mode */
 
-void	ptyattach __P((int));
-void	ptcwakeup __P((struct tty *, int));
-void	ptsstart __P((struct tty *));
-int	pty_maxptys __P((int, int));
+void	ptyattach(int);
+void	ptcwakeup(struct tty *, int);
+void	ptsstart(struct tty *);
+int	pty_maxptys(int, int);
 
-static struct pt_softc **ptyarralloc __P((int));
+static struct pt_softc **ptyarralloc(int);
 static int check_pty(int);
 
 dev_type_open(ptcopen);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.55 2003/08/07 16:31:42 agc Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.56 2004/03/23 13:22:03 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.55 2003/08/07 16:31:42 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.56 2004/03/23 13:22:03 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,10 +138,10 @@ do {								\
  * The former's operation is described in Leffler, et al., and the latter
  * was provided by UCB with the 4.4BSD-Lite release
  */
-comp_t	encode_comp_t __P((u_long, u_long));
-void	acctwatch __P((void *));
-void	acct_stop __P((void));
-int	acct_chkfree __P((void));
+comp_t	encode_comp_t(u_long, u_long);
+void	acctwatch(void *);
+void	acct_stop(void);
+int	acct_chkfree(void);
 
 /*
  * Values associated with enabling and disabling accounting
