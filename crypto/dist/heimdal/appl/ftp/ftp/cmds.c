@@ -36,7 +36,7 @@
  */
 
 #include "ftp_locl.h"
-RCSID("$Id: cmds.c,v 1.1.1.1 2000/06/16 18:31:48 thorpej Exp $");
+RCSID("$Id: cmds.c,v 1.1.1.2 2000/08/02 19:58:36 assar Exp $");
 
 typedef void (*sighand)(int);
 
@@ -435,7 +435,7 @@ void
 mput(int argc, char **argv)
 {
     int i;
-    RETSIGTYPE (*oldintr)();
+    RETSIGTYPE (*oldintr)(int);
     int ointer;
     char *tp;
 
@@ -566,16 +566,17 @@ get(int argc, char **argv)
 {
     char *mode;
 
-    if (restart_point)
+    if (restart_point) {
 	if (curtype == TYPE_I)
 	    mode = "r+wb";
 	else
 	    mode = "r+w";
-    else
+    } else {
 	if (curtype == TYPE_I)
 	    mode = "wb";
 	else
 	    mode = "w";
+    }
 
     getit(argc, argv, 0, mode);
 }
@@ -1224,7 +1225,7 @@ void
 shell(int argc, char **argv)
 {
 	pid_t pid;
-	RETSIGTYPE (*old1)(), (*old2)();
+	RETSIGTYPE (*old1)(int), (*old2)(int);
 	char shellnam[40], *shell, *namep; 
 	int status;
 
@@ -1612,7 +1613,7 @@ void
 doproxy(int argc, char **argv)
 {
 	struct cmd *c;
-	RETSIGTYPE (*oldintr)();
+	RETSIGTYPE (*oldintr)(int);
 
 	if (argc < 2 && !another(&argc, &argv, "command")) {
 		printf("usage: %s command\n", argv[0]);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1999 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,7 +32,7 @@
 
 #include <config.h>
 
-RCSID("$Id: su.c,v 1.1.1.1 2000/06/16 18:32:05 thorpej Exp $");
+RCSID("$Id: su.c,v 1.1.1.2 2000/08/02 19:58:11 assar Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,6 +50,7 @@ RCSID("$Id: su.c,v 1.1.1.1 2000/06/16 18:32:05 thorpej Exp $");
 
 #include <pwd.h>
 
+#include <des.h>
 #include <krb5.h>
 #include <kafs.h>
 #include <err.h>
@@ -160,13 +161,16 @@ krb5_verify(struct passwd *login_info, struct passwd *su_info,
 #if 1
 	    krb5_warn(context, ret, "krb5_cc_gen_new");
 #endif
+	    krb5_free_principal (context, p);
 	    return 1;
 	}
 	ret = krb5_verify_user_lrealm(context, p, ccache, NULL, TRUE, NULL);
+	krb5_free_principal (context, p);
 	if(ret) {
-	    krb5_free_principal (context, p);
 	    krb5_cc_destroy(context, ccache);
 	    switch (ret) {
+	    case KRB5_LIBOS_PWDINTR :
+		break;
 	    case KRB5KRB_AP_ERR_BAD_INTEGRITY:
 	    case KRB5KRB_AP_ERR_MODIFIED:
 		krb5_warnx(context, "Password incorrect");
@@ -179,6 +183,7 @@ krb5_verify(struct passwd *login_info, struct passwd *su_info,
 	}
 	return 0;
     }
+    krb5_free_principal (context, p);
 #endif
     return 1;
 }
@@ -311,31 +316,31 @@ main(int argc, char **argv)
    {  struct spwd *sp;
       long    today;
     
-    sp=getspnam(su_info->pw_name);
-    if (sp==NULL)
-        errx(1,"Have not rights to read shadow passwords!");
-    today = time(0)/(24L * 60 * 60);
-    if (sp->sp_expire > 0) {
-        if (today >= sp->sp_expire) {
-            if (login_info->pw_uid) 
-                errx(1,"Your account has expired.");
-            else
-                 printf("Your account has expired.");
+    sp = getspnam(su_info->pw_name);
+    if (sp != NULL) {
+	today = time(0)/(24L * 60 * 60);
+	if (sp->sp_expire > 0) {
+	    if (today >= sp->sp_expire) {
+		if (login_info->pw_uid) 
+		    errx(1,"Your account has expired.");
+		else
+		    printf("Your account has expired.");
             }
             else if (sp->sp_expire - today < 14) 
                 printf("Your account will expire in %d days.\n",
-                   (int)(sp->sp_expire - today));
-    } 
-    if (sp->sp_max > 0) {
-       if (today >= sp->sp_lstchg + sp->sp_max) {
-           if (login_info->pw_uid)    
-               errx(1,"Your password has expired. Choose a new one.");
-           else
-               printf("Your password has expired. Choose a new one.");
-           }
-         else if (today >= sp->sp_lstchg + sp->sp_max - sp->sp_warn)
-             printf("Your account will expire in %d days.\n",
-                   (int)(sp->sp_lstchg + sp->sp_max -today));
+		       (int)(sp->sp_expire - today));
+	} 
+	if (sp->sp_max > 0) {
+	    if (today >= sp->sp_lstchg + sp->sp_max) {
+		if (login_info->pw_uid)    
+		    errx(1,"Your password has expired. Choose a new one.");
+		else
+		    printf("Your password has expired. Choose a new one.");
+	    }
+	    else if (today >= sp->sp_lstchg + sp->sp_max - sp->sp_warn)
+		printf("Your account will expire in %d days.\n",
+		       (int)(sp->sp_lstchg + sp->sp_max -today));
+	}
     }
     }
 #endif
@@ -404,7 +409,8 @@ main(int argc, char **argv)
 	    err(1, "setgid");
 	if (initgroups (su_info->pw_name, su_info->pw_gid) < 0)
 	    err (1, "initgroups");
-	if(setuid(su_info->pw_uid) < 0)
+	if(setuid(su_info->pw_uid) < 0
+	   || (su_info->pw_uid != 0 && setuid(0) == 0))
 	    err(1, "setuid");
 
 #ifdef KRB5

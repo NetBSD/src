@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1999 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -35,7 +35,7 @@
 #endif
 #include "roken.h"
 
-RCSID("$Id: strftime.c,v 1.1.1.1 2000/06/16 18:32:36 thorpej Exp $");
+RCSID("$Id: strftime.c,v 1.1.1.2 2000/08/02 19:59:57 assar Exp $");
 
 static const char *abb_weekdays[] = {
     "Sun",

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1999 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: getaddrinfo-test.c,v 1.1.1.1 2000/06/16 18:32:34 thorpej Exp $");
+RCSID("$Id: getaddrinfo-test.c,v 1.1.1.2 2000/08/02 19:59:48 assar Exp $");
 #endif
 
 #include "roken.h"
@@ -122,7 +122,7 @@ main(int argc, char **argv)
 	usage (0);
 
     if (version_flag) {
-	print_version (NULL);
+	fprintf (stderr, "%s from %s-%s)\n", __progname, PACKAGE, VERSION);
 	return 0;
     }
 

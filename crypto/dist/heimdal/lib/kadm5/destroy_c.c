@@ -33,7 +33,7 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$Id: destroy_c.c,v 1.1.1.1 2000/06/16 18:32:50 thorpej Exp $");
+RCSID("$Id: destroy_c.c,v 1.1.1.2 2000/08/02 19:59:16 assar Exp $");
 
 kadm5_ret_t 
 kadm5_c_destroy(void *server_handle)

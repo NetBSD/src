@@ -33,9 +33,9 @@
 
 #include "hdb_locl.h"
 
-RCSID("$Id: db.c,v 1.1.1.1 2000/06/16 18:32:48 thorpej Exp $");
+RCSID("$Id: db.c,v 1.1.1.2 2000/08/02 19:59:11 assar Exp $");
 
-#ifdef HAVE_DB_H
+#if defined(HAVE_DB_H) && DB_VERSION_MAJOR < 3
 
 static krb5_error_code
 DB_close(krb5_context context, HDB *db)
@@ -103,7 +103,7 @@ DB_seq(krb5_context context, HDB *db,
     if (hdb_value2entry(context, &data, entry))
 	return DB_seq(context, db, flags, entry, R_NEXT);
     if (db->master_key_set && (flags & HDB_F_DECRYPT))
-	hdb_unseal_keys (db, entry);
+	hdb_unseal_keys (context, db, entry);
     if (entry->principal == NULL) {
 	entry->principal = malloc(sizeof(*entry->principal));
 	hdb_key2principal(context, &key_data, entry->principal);

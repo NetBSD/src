@@ -1,4 +1,4 @@
-dnl $Id: acinclude.m4,v 1.1.1.1 2000/06/16 18:31:36 thorpej Exp $
+dnl $Id: acinclude.m4,v 1.1.1.2 2000/08/02 19:58:00 assar Exp $
 dnl
 dnl Only put things that for some reason can't live in the `cf'
 dnl directory in this file.

@@ -1,6 +1,6 @@
-# Makefile.in generated automatically by automake 1.4 from Makefile.am
+# Makefile.in generated automatically by automake 1.4a from Makefile.am
 
-# Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
+# Copyright (C) 1994, 1995-9, 2000 Free Software Foundation, Inc.
 # This Makefile.in is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -9,15 +9,6 @@
 # but WITHOUT ANY WARRANTY, to the extent permitted by law; without
 # even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.
-
-# $Id: Makefile.in,v 1.1.1.1 2000/06/16 18:32:21 thorpej Exp $
-
-
-# $Id: Makefile.in,v 1.1.1.1 2000/06/16 18:32:21 thorpej Exp $
-
-
-# $Id: Makefile.in,v 1.1.1.1 2000/06/16 18:32:21 thorpej Exp $
-
 
 SHELL = @SHELL@
 
@@ -40,8 +31,6 @@ mandir = @mandir@
 includedir = @includedir@
 oldincludedir = /usr/include
 
-DESTDIR =
-
 pkgdatadir = $(datadir)/@PACKAGE@
 pkglibdir = $(libdir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
@@ -54,9 +43,10 @@ AUTOMAKE = @AUTOMAKE@
 AUTOHEADER = @AUTOHEADER@
 
 INSTALL = @INSTALL@
-INSTALL_PROGRAM = @INSTALL_PROGRAM@ $(AM_INSTALL_PROGRAM_FLAGS)
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
+INSTALL_STRIP_FLAG =
 transform = @program_transform_name@
 
 NORMAL_INSTALL = :
@@ -65,21 +55,31 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
+
+@SET_MAKE@
 host_alias = @host_alias@
 host_triplet = @host@
-AFS_EXTRA_LD = @AFS_EXTRA_LD@
 AIX_EXTRA_KAFS = @AIX_EXTRA_KAFS@
+AMDEP = @AMDEP@
+AMTAR = @AMTAR@
+AS = @AS@
 AWK = @AWK@
 CANONICAL_HOST = @CANONICAL_HOST@
 CATMAN = @CATMAN@
 CATMANEXT = @CATMANEXT@
 CC = @CC@
+CPP = @CPP@
+CPPFLAGS_roken = @CPPFLAGS_roken@
+CXX = @CXX@
+CXXCPP = @CXXCPP@
 DBLIB = @DBLIB@
+DEPDIR = @DEPDIR@
+DIR_roken = @DIR_roken@
+DLLTOOL = @DLLTOOL@
 EXEEXT = @EXEEXT@
 EXTRA_LIB45 = @EXTRA_LIB45@
 GROFF = @GROFF@
 INCLUDE_ = @INCLUDE_@
-LD = @LD@
 LEX = @LEX@
 LIBOBJS = @LIBOBJS@
 LIBTOOL = @LIBTOOL@
@@ -92,22 +92,32 @@ LIB_security = @LIB_security@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
-MAKE_X_PROGS_BIN_PROGS = @MAKE_X_PROGS_BIN_PROGS@
-MAKE_X_PROGS_BIN_SCRPTS = @MAKE_X_PROGS_BIN_SCRPTS@
-MAKE_X_PROGS_LIBEXEC_PROGS = @MAKE_X_PROGS_LIBEXEC_PROGS@
 NEED_WRITEAUTH_FALSE = @NEED_WRITEAUTH_FALSE@
 NEED_WRITEAUTH_TRUE = @NEED_WRITEAUTH_TRUE@
-NM = @NM@
 NROFF = @NROFF@
+OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 RANLIB = @RANLIB@
+STRIP = @STRIP@
 VERSION = @VERSION@
 VOID_RETSIGTYPE = @VOID_RETSIGTYPE@
 WFLAGS = @WFLAGS@
 WFLAGS_NOIMPLICITINT = @WFLAGS_NOIMPLICITINT@
 WFLAGS_NOUNUSED = @WFLAGS_NOUNUSED@
 YACC = @YACC@
+dpagaix_CFLAGS = @dpagaix_CFLAGS@
+dpagaix_LDADD = @dpagaix_LDADD@
+install_sh = @install_sh@
+
+# $Id: Makefile.in,v 1.1.1.2 2000/08/02 20:00:02 assar Exp $
+
+
+# $Id: Makefile.in,v 1.1.1.2 2000/08/02 20:00:02 assar Exp $
+
+
+# $Id: Makefile.in,v 1.1.1.2 2000/08/02 20:00:02 assar Exp $
+
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
 
@@ -115,7 +125,9 @@ SUFFIXES = .et .h .1 .3 .5 .8 .cat1 .cat3 .cat5 .cat8 .x
 
 INCLUDES = -I$(top_builddir)/include
 
-AM_CFLAGS =  $(WFLAGS)
+AM_CFLAGS =  $(WFLAGS) $(CPPFLAGS_roken)
+
+CP = cp
 
 COMPILE_ET = $(top_builddir)/lib/com_err/compile_et
 
@@ -169,10 +181,11 @@ CATSUFFIX = @CATSUFFIX@
 
 NROFF_MAN = groff -mandoc -Tascii
 
-@KRB4_TRUE@LIB_kafs = $(top_builddir)/lib/kafs/libkafs.la $(AIX_EXTRA_KAFS)
+@KRB4_TRUE@LIB_kafs = @KRB4_TRUE@$(top_builddir)/lib/kafs/libkafs.la $(AIX_EXTRA_KAFS)
 
-@KRB5_TRUE@LIB_krb5 = $(top_builddir)/lib/krb5/libkrb5.la 	$(top_builddir)/lib/asn1/libasn1.la
-@KRB5_TRUE@LIB_gssapi = $(top_builddir)/lib/gssapi/libgssapi.la
+@KRB5_TRUE@LIB_krb5 = @KRB5_TRUE@$(top_builddir)/lib/krb5/libkrb5.la \
+@KRB5_TRUE@	$(top_builddir)/lib/asn1/libasn1.la
+@KRB5_TRUE@LIB_gssapi = @KRB5_TRUE@$(top_builddir)/lib/gssapi/libgssapi.la
 CHECK_LOCAL = 
 
 lib_LTLIBRARIES = libdes.la
@@ -191,17 +204,94 @@ des_SOURCES = des.c des_ver.h
 
 LDADD = $(lib_LTLIBRARIES)
 
-libdes_la_SOURCES =  	cbc3_enc.c		cbc_cksm.c		cbc_enc.c		cfb64ede.c		cfb64enc.c		cfb_enc.c		des_enc.c		des_locl.h		ecb3_enc.c		ecb_enc.c		ede_enc.c		enc_read.c		enc_writ.c		fcrypt.c		hash.h			key_par.c		md4.c			md5.c			ncbc_enc.c		ofb64ede.c		ofb64enc.c		ofb_enc.c		pcbc_enc.c		podd.h			qud_cksm.c		rc4_skey.c		rc4_enc.c		read_pwd.c		rnd_keys.c		set_key.c		sha.c			sk.h			spr.h			str2key.c		xcbc_enc.c
+libdes_la_SOURCES = \
+	cbc3_enc.c	\
+	cbc_cksm.c	\
+	cbc_enc.c	\
+	cfb64ede.c	\
+	cfb64enc.c	\
+	cfb_enc.c	\
+	des_enc.c	\
+	des_locl.h	\
+	ecb3_enc.c	\
+	ecb_enc.c	\
+	ede_enc.c	\
+	enc_read.c	\
+	enc_writ.c	\
+	fcrypt.c	\
+	hash.h		\
+	key_par.c	\
+	md4.c		\
+	md5.c		\
+	ncbc_enc.c	\
+	ofb64ede.c	\
+	ofb64enc.c	\
+	ofb_enc.c	\
+	pcbc_enc.c	\
+	podd.h		\
+	qud_cksm.c	\
+	rc4_skey.c	\
+	rc4_enc.c	\
+	read_pwd.c	\
+	rnd_keys.c	\
+	set_key.c	\
+	sha.c		\
+	sk.h		\
+	spr.h		\
+	str2key.c	\
+	xcbc_enc.c
 
 
-EXTRA_libdes_la_SOURCES = dllmain.c passwd_dialog.aps passwd_dialog.clw 	passwd_dialog.rc passwd_dialog.res passwd_dlg.c passwd_dlg.h resource.h
+EXTRA_libdes_la_SOURCES = dllmain.c passwd_dialog.aps passwd_dialog.clw \
+	passwd_dialog.rc passwd_dialog.res passwd_dlg.c passwd_dlg.h resource.h
 
 
-EXTRA_DIST =  	COPYRIGHT		DES.pm			DES.pod			DES.xs			FILES			Imakefile		KERBEROS		MODES.DES		Makefile.PL		Makefile.ssl		Makefile.uni		PC1			PC2			VERSION			des.def			des.dsp			des.doc			des.mak			des.man			des.org			des.pl			des_crypt.man		des_locl.org		des_opts.c		doIP			doPC1			doPC2			makefile.bc		rand_key.c		rpc_des.h		rpc_enc.c		shifts.pl		supp.c			testdes.pl		times			typemap			version.h		vms.com
+EXTRA_DIST = \
+	COPYRIGHT	\
+	DES.pm		\
+	DES.pod		\
+	DES.xs		\
+	FILES		\
+	Imakefile	\
+	KERBEROS	\
+	MODES.DES	\
+	Makefile.PL	\
+	Makefile.ssl	\
+	Makefile.uni	\
+	PC1		\
+	PC2		\
+	VERSION		\
+	des.def		\
+	des.dsp		\
+	des.doc		\
+	des.mak		\
+	des.man		\
+	des.org		\
+	des.pl		\
+	des_crypt.man	\
+	des_locl.org	\
+	des_opts.c	\
+	doIP		\
+	doPC1		\
+	doPC2		\
+	makefile.bc	\
+	rand_key.c	\
+	rpc_des.h	\
+	rpc_enc.c	\
+	shifts.pl	\
+	supp.c		\
+	testdes.pl	\
+	times		\
+	typemap		\
+	version.h	\
+	vms.com
 
 
-asm_files = des-som2.pl des-som3.pl des586.pl des686.pl desboth.pl 	dx86-cpp.s dx86unix.cpp readme win32.asm win32.obj win32.uu x86ms.pl 	x86unix.pl
+asm_files = des-som2.pl des-som3.pl des586.pl des686.pl desboth.pl \
+	dx86-cpp.s dx86unix.cpp readme win32.asm win32.obj win32.uu x86ms.pl \
+	x86unix.pl
 
+subdir = lib/des
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../../include/config.h
 CONFIG_CLEAN_FILES = 
@@ -217,18 +307,20 @@ X_LIBS = @X_LIBS@
 X_EXTRA_LIBS = @X_EXTRA_LIBS@
 X_PRE_LIBS = @X_PRE_LIBS@
 libdes_la_LIBADD = 
-libdes_la_OBJECTS =  cbc3_enc.lo cbc_cksm.lo cbc_enc.lo cfb64ede.lo \
+am_libdes_la_OBJECTS =  cbc3_enc.lo cbc_cksm.lo cbc_enc.lo cfb64ede.lo \
 cfb64enc.lo cfb_enc.lo des_enc.lo ecb3_enc.lo ecb_enc.lo ede_enc.lo \
 enc_read.lo enc_writ.lo fcrypt.lo key_par.lo md4.lo md5.lo ncbc_enc.lo \
 ofb64ede.lo ofb64enc.lo ofb_enc.lo pcbc_enc.lo qud_cksm.lo rc4_skey.lo \
 rc4_enc.lo read_pwd.lo rnd_keys.lo set_key.lo sha.lo str2key.lo \
 xcbc_enc.lo
+libdes_la_OBJECTS =  $(am_libdes_la_OBJECTS)
 bin_PROGRAMS =  des$(EXEEXT)
 check_PROGRAMS =  destest$(EXEEXT) mdtest$(EXEEXT) \
 md5crypt_test$(EXEEXT)
 PROGRAMS =  $(bin_PROGRAMS)
 
-des_OBJECTS =  des.$(OBJEXT)
+am_des_OBJECTS =  des.$(OBJEXT)
+des_OBJECTS =  $(am_des_OBJECTS)
 des_LDADD = $(LDADD)
 des_DEPENDENCIES =  libdes.la
 des_LDFLAGS = 
@@ -237,36 +329,39 @@ destest_OBJECTS =  destest.$(OBJEXT)
 destest_LDADD = $(LDADD)
 destest_DEPENDENCIES =  libdes.la
 destest_LDFLAGS = 
-mdtest_SOURCES = mdtest.c
-mdtest_OBJECTS =  mdtest.$(OBJEXT)
-mdtest_LDADD = $(LDADD)
-mdtest_DEPENDENCIES =  libdes.la
-mdtest_LDFLAGS = 
 md5crypt_test_SOURCES = md5crypt_test.c
 md5crypt_test_OBJECTS =  md5crypt_test.$(OBJEXT)
 md5crypt_test_LDADD = $(LDADD)
 md5crypt_test_DEPENDENCIES =  libdes.la
 md5crypt_test_LDFLAGS = 
-CFLAGS = @CFLAGS@
+mdtest_SOURCES = mdtest.c
+mdtest_OBJECTS =  mdtest.$(OBJEXT)
+mdtest_LDADD = $(LDADD)
+mdtest_DEPENDENCIES =  libdes.la
+mdtest_LDFLAGS = 
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+CFLAGS = @CFLAGS@
 CCLD = $(CC)
-LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) -o $@
+LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+DIST_SOURCES =  $(libdes_la_SOURCES) $(EXTRA_libdes_la_SOURCES) \
+$(des_SOURCES) destest.c md5crypt_test.c mdtest.c
 HEADERS =  $(include_HEADERS)
 
-DIST_COMMON =  README ChangeLog INSTALL Makefile.am Makefile.in
+depcomp = 
+DIST_COMMON =  README $(include_HEADERS) ChangeLog INSTALL Makefile.am \
+Makefile.in
 
 
-DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
+DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 
-TAR = tar
 GZIP_ENV = --best
-SOURCES = $(libdes_la_SOURCES) $(EXTRA_libdes_la_SOURCES) $(des_SOURCES) destest.c mdtest.c md5crypt_test.c
-OBJECTS = $(libdes_la_OBJECTS) $(des_OBJECTS) destest.$(OBJEXT) mdtest.$(OBJEXT) md5crypt_test.$(OBJEXT)
+SOURCES = $(libdes_la_SOURCES) $(EXTRA_libdes_la_SOURCES) $(des_SOURCES) destest.c md5crypt_test.c mdtest.c
+OBJECTS = $(am_libdes_la_OBJECTS) $(am_des_OBJECTS) destest.$(OBJEXT) md5crypt_test.$(OBJEXT) mdtest.$(OBJEXT)
 
 all: all-redirect
 .SUFFIXES:
-.SUFFIXES: .1 .3 .5 .8 .S .c .cat1 .cat3 .cat5 .cat8 .et .h .lo .o .obj .s .x
+.SUFFIXES: .1 .3 .5 .8 .c .cat1 .cat3 .cat5 .cat8 .et .h .lo .o .obj .x
 $(srcdir)/Makefile.in: Makefile.am $(top_srcdir)/configure.in $(ACLOCAL_M4) $(top_srcdir)/Makefile.am.common $(top_srcdir)/cf/Makefile.am.common
 	cd $(top_srcdir) && $(AUTOMAKE) --foreign lib/des/Makefile
 
@@ -289,30 +384,17 @@ install-libLTLIBRARIES: $(lib_LTLIBRARIES)
 	$(mkinstalldirs) $(DESTDIR)$(libdir)
 	@list='$(lib_LTLIBRARIES)'; for p in $$list; do \
 	  if test -f $$p; then \
-	    echo "$(LIBTOOL)  --mode=install $(INSTALL) $$p $(DESTDIR)$(libdir)/$$p"; \
-	    $(LIBTOOL)  --mode=install $(INSTALL) $$p $(DESTDIR)$(libdir)/$$p; \
+	    echo " $(LIBTOOL)  --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$p $(DESTDIR)$(libdir)/$$p"; \
+	    $(LIBTOOL)  --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$p $(DESTDIR)$(libdir)/$$p; \
 	  else :; fi; \
 	done
 
 uninstall-libLTLIBRARIES:
 	@$(NORMAL_UNINSTALL)
-	list='$(lib_LTLIBRARIES)'; for p in $$list; do \
+	@list='$(lib_LTLIBRARIES)'; for p in $$list; do \
+	  echo " $(LIBTOOL)  --mode=uninstall rm -f $(DESTDIR)$(libdir)/$$p"; \
 	  $(LIBTOOL)  --mode=uninstall rm -f $(DESTDIR)$(libdir)/$$p; \
 	done
-
-.c.o:
-	$(COMPILE) -c $<
-
-# FIXME: We should only use cygpath when building on Windows,
-# and only if it is available.
-.c.obj:
-	$(COMPILE) -c `cygpath -w $<`
-
-.s.o:
-	$(COMPILE) -c $<
-
-.S.o:
-	$(COMPILE) -c $<
 
 mostlyclean-compile:
 	-rm -f *.o core *.core
@@ -324,15 +406,6 @@ distclean-compile:
 	-rm -f *.tab.c
 
 maintainer-clean-compile:
-
-.c.lo:
-	$(LIBTOOL) --mode=compile $(COMPILE) -c $<
-
-.s.lo:
-	$(LIBTOOL) --mode=compile $(COMPILE) -c $<
-
-.S.lo:
-	$(LIBTOOL) --mode=compile $(COMPILE) -c $<
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -361,15 +434,18 @@ install-binPROGRAMS: $(bin_PROGRAMS)
 	$(mkinstalldirs) $(DESTDIR)$(bindir)
 	@list='$(bin_PROGRAMS)'; for p in $$list; do \
 	  if test -f $$p; then \
-	    echo " $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $$p $(DESTDIR)$(bindir)/`echo $$p|sed 's/$(EXEEXT)$$//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`"; \
-	    $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $$p $(DESTDIR)$(bindir)/`echo $$p|sed 's/$(EXEEXT)$$//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`; \
+	    f="`echo $$p|sed -e 's/$(EXEEXT)$$//' -e '$(transform)' -e 's/$$/$(EXEEXT)/'`"; \
+	    echo " $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $(INSTALL_STRIP_FLAG) $$p $(DESTDIR)$(bindir)/$$f"; \
+	    $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $(INSTALL_STRIP_FLAG) $$p $(DESTDIR)$(bindir)/$$f; \
 	  else :; fi; \
 	done
 
 uninstall-binPROGRAMS:
 	@$(NORMAL_UNINSTALL)
-	list='$(bin_PROGRAMS)'; for p in $$list; do \
-	  rm -f $(DESTDIR)$(bindir)/`echo $$p|sed 's/$(EXEEXT)$$//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`; \
+	@list='$(bin_PROGRAMS)'; for p in $$list; do \
+	  f="`echo $$p|sed -e 's/$(EXEEXT)$$//' -e '$(transform)' -e 's/$$/$(EXEEXT)/'`"; \
+	  echo " rm -f $(DESTDIR)$(bindir)/$$f"; \
+	  rm -f $(DESTDIR)$(bindir)/$$f; \
 	done
 
 mostlyclean-checkPROGRAMS:
@@ -389,48 +465,61 @@ destest$(EXEEXT): $(destest_OBJECTS) $(destest_DEPENDENCIES)
 	@rm -f destest$(EXEEXT)
 	$(LINK) $(destest_LDFLAGS) $(destest_OBJECTS) $(destest_LDADD) $(LIBS)
 
-mdtest$(EXEEXT): $(mdtest_OBJECTS) $(mdtest_DEPENDENCIES)
-	@rm -f mdtest$(EXEEXT)
-	$(LINK) $(mdtest_LDFLAGS) $(mdtest_OBJECTS) $(mdtest_LDADD) $(LIBS)
-
 md5crypt_test$(EXEEXT): $(md5crypt_test_OBJECTS) $(md5crypt_test_DEPENDENCIES)
 	@rm -f md5crypt_test$(EXEEXT)
 	$(LINK) $(md5crypt_test_LDFLAGS) $(md5crypt_test_OBJECTS) $(md5crypt_test_LDADD) $(LIBS)
+
+mdtest$(EXEEXT): $(mdtest_OBJECTS) $(mdtest_DEPENDENCIES)
+	@rm -f mdtest$(EXEEXT)
+	$(LINK) $(mdtest_LDFLAGS) $(mdtest_OBJECTS) $(mdtest_LDADD) $(LIBS)
+.c.o:
+	$(COMPILE) -c $<
+.c.obj:
+	$(COMPILE) -c `cygpath -w $<`
+.c.lo:
+	$(LTCOMPILE) -c -o $@ $<
 
 install-includeHEADERS: $(include_HEADERS)
 	@$(NORMAL_INSTALL)
 	$(mkinstalldirs) $(DESTDIR)$(includedir)
 	@list='$(include_HEADERS)'; for p in $$list; do \
 	  if test -f "$$p"; then d= ; else d="$(srcdir)/"; fi; \
-	  echo " $(INSTALL_DATA) $$d$$p $(DESTDIR)$(includedir)/$$p"; \
-	  $(INSTALL_DATA) $$d$$p $(DESTDIR)$(includedir)/$$p; \
+	  f="`echo $$p | sed -e 's|^.*/||'`"; \
+	  echo " $(INSTALL_DATA) $$d$$p $(DESTDIR)$(includedir)/$$f"; \
+	  $(INSTALL_DATA) $$d$$p $(DESTDIR)$(includedir)/$$f; \
 	done
 
 uninstall-includeHEADERS:
 	@$(NORMAL_UNINSTALL)
-	list='$(include_HEADERS)'; for p in $$list; do \
-	  rm -f $(DESTDIR)$(includedir)/$$p; \
+	@list='$(include_HEADERS)'; for p in $$list; do \
+	  f="`echo $$p | sed -e 's|^.*/||'`"; \
+	  echo " rm -f $(DESTDIR)$(includedir)/$$f"; \
+	  rm -f $(DESTDIR)$(includedir)/$$f; \
 	done
 
 tags: TAGS
 
-ID: $(HEADERS) $(SOURCES) $(LISP)
-	list='$(SOURCES) $(HEADERS)'; \
-	unique=`for i in $$list; do echo $$i; done | \
-	  awk '    { files[$$0] = 1; } \
+ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
+	list='$(SOURCES) $(HEADERS) $(TAGS_FILES)'; \
+	unique=`for i in $$list; do \
+	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
+	  done | \
+	  $(AWK) '    { files[$$0] = 1; } \
 	       END { for (i in files) print i; }'`; \
-	here=`pwd` && cd $(srcdir) \
-	  && mkid -f$$here/ID $$unique $(LISP)
+	mkid -fID $$unique $(LISP)
 
-TAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) $(LISP)
+TAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
+		$(TAGS_FILES) $(LISP)
 	tags=; \
 	here=`pwd`; \
-	list='$(SOURCES) $(HEADERS)'; \
-	unique=`for i in $$list; do echo $$i; done | \
-	  awk '    { files[$$0] = 1; } \
+	list='$(SOURCES) $(HEADERS) $(TAGS_FILES)'; \
+	unique=`for i in $$list; do \
+	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
+	  done | \
+	  $(AWK) '    { files[$$0] = 1; } \
 	       END { for (i in files) print i; }'`; \
 	test -z "$(ETAGS_ARGS)$$unique$(LISP)$$tags" \
-	  || (cd $(srcdir) && etags $(ETAGS_ARGS) $$tags  $$unique $(LISP) -o $$here/TAGS)
+	  || etags $(ETAGS_ARGS) $$tags  $$unique $(LISP)
 
 mostlyclean-tags:
 
@@ -440,48 +529,76 @@ distclean-tags:
 	-rm -f TAGS ID
 
 maintainer-clean-tags:
+check-TESTS: $(TESTS)
+	@failed=0; all=0; xfail=0; xpass=0; \
+	srcdir=$(srcdir); export srcdir; \
+	list='$(TESTS)'; \
+	if test -n "$$list"; then \
+	  for tst in $$list; do \
+	    if test -f ./$$tst; then dir=./; \
+	    elif test -f $$tst; then dir=; \
+	    else dir="$(srcdir)/"; fi; \
+	    if $(TESTS_ENVIRONMENT) $${dir}$$tst; then \
+	      all=`expr $$all + 1`; \
+	      case " $(XFAIL_TESTS) " in \
+	      *" $$tst "*) \
+	        xpass=`expr $$xpass + 1`; \
+	        failed=`expr $$failed + 1`; \
+	        echo "XPASS: $$tst"; \
+	      ;; \
+	      *) \
+	        echo "PASS: $$tst"; \
+	      ;; \
+	      esac; \
+	    elif test $$? -ne 77; then \
+	      all=`expr $$all + 1`; \
+	      case " $(XFAIL_TESTS) " in \
+	      *" $$tst "*) \
+	        xfail=`expr $$xfail + 1`; \
+	        echo "XFAIL: $$tst"; \
+	      ;; \
+	      *) \
+	        failed=`expr $$failed + 1`; \
+	        echo "FAIL: $$tst"; \
+	      ;; \
+	      esac; \
+	    fi; \
+	  done; \
+	  if test "$$failed" -eq 0; then \
+	    if test "$$xfail" -eq 0; then \
+	      banner="All $$all tests passed"; \
+	    else \
+	      banner="All $$all tests behaved as expected ($$xfail expected failures)"; \
+	    fi; \
+	  else \
+	    if test "$$xpass" -eq 0; then \
+	      banner="$$failed of $$all tests failed"; \
+	    else \
+	      banner="$$failed of $$all tests did not behave as expected ($$xpass unexpected passes)"; \
+	    fi; \
+	  fi; \
+	  dashes=`echo "$$banner" | sed s/./=/g`; \
+	  echo "$$dashes"; \
+	  echo "$$banner"; \
+	  echo "$$dashes"; \
+	  test "$$failed" -eq 0; \
+	fi
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
-
-subdir = lib/des
 
 distdir: $(DISTFILES)
 	@for file in $(DISTFILES); do \
 	  d=$(srcdir); \
 	  if test -d $$d/$$file; then \
-	    cp -pr $$/$$file $(distdir)/$$file; \
+	    cp -pR $$d/$$file $(distdir) \
+	    || exit 1; \
 	  else \
 	    test -f $(distdir)/$$file \
-	    || ln $$d/$$file $(distdir)/$$file 2> /dev/null \
-	    || cp -p $$d/$$file $(distdir)/$$file || :; \
+	    || cp -p $$d/$$file $(distdir)/$$file \
+	    || exit 1; \
 	  fi; \
 	done
 	$(MAKE) $(AM_MAKEFLAGS) top_distdir="$(top_distdir)" distdir="$(distdir)" dist-hook
-check-TESTS: $(TESTS)
-	@failed=0; all=0; \
-	srcdir=$(srcdir); export srcdir; \
-	for tst in $(TESTS); do \
-	  if test -f $$tst; then dir=.; \
-	  else dir="$(srcdir)"; fi; \
-	  if $(TESTS_ENVIRONMENT) $$dir/$$tst; then \
-	    all=`expr $$all + 1`; \
-	    echo "PASS: $$tst"; \
-	  elif test $$? -ne 77; then \
-	    all=`expr $$all + 1`; \
-	    failed=`expr $$failed + 1`; \
-	    echo "FAIL: $$tst"; \
-	  fi; \
-	done; \
-	if test "$$failed" -eq 0; then \
-	  banner="All $$all tests passed"; \
-	else \
-	  banner="$$failed of $$all tests failed"; \
-	fi; \
-	dashes=`echo "$$banner" | sed s/./=/g`; \
-	echo "$$dashes"; \
-	echo "$$banner"; \
-	echo "$$dashes"; \
-	test "$$failed" -eq 0
 info-am:
 info: info-am
 dvi-am:
@@ -509,7 +626,7 @@ uninstall: uninstall-am
 all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(HEADERS) all-local
 all-redirect: all-am
 install-strip:
-	$(MAKE) $(AM_MAKEFLAGS) AM_INSTALL_PROGRAM_FLAGS=-s install
+	$(MAKE) $(AM_MAKEFLAGS) INSTALL_STRIP_FLAG=-s install
 installdirs:
 	$(mkinstalldirs)  $(DESTDIR)$(libdir) $(DESTDIR)$(bindir) \
 		$(DESTDIR)$(includedir)
@@ -524,6 +641,7 @@ distclean-generic:
 	-rm -f config.cache config.log stamp-h stamp-h[0-9]*
 
 maintainer-clean-generic:
+	-rm -f Makefile.in
 mostlyclean-am:  mostlyclean-libLTLIBRARIES mostlyclean-compile \
 		mostlyclean-libtool mostlyclean-binPROGRAMS \
 		mostlyclean-checkPROGRAMS mostlyclean-tags \
@@ -565,13 +683,13 @@ clean-binPROGRAMS maintainer-clean-binPROGRAMS uninstall-binPROGRAMS \
 install-binPROGRAMS mostlyclean-checkPROGRAMS distclean-checkPROGRAMS \
 clean-checkPROGRAMS maintainer-clean-checkPROGRAMS \
 uninstall-includeHEADERS install-includeHEADERS tags mostlyclean-tags \
-distclean-tags clean-tags maintainer-clean-tags distdir check-TESTS \
+distclean-tags clean-tags maintainer-clean-tags check-TESTS distdir \
 info-am info dvi-am dvi check-local check check-am installcheck-am \
 installcheck install-exec-am install-exec install-data-local \
 install-data-am install-data install-am install uninstall-am uninstall \
-all-local all-redirect all-am all installdirs mostlyclean-generic \
-distclean-generic clean-generic maintainer-clean-generic clean \
-mostlyclean distclean maintainer-clean
+all-local all-redirect all-am all install-strip installdirs \
+mostlyclean-generic distclean-generic clean-generic \
+maintainer-clean-generic clean mostlyclean distclean maintainer-clean
 
 
 install-suid-programs:
@@ -591,8 +709,8 @@ install-build-headers:: $(include_HEADERS) $(build_HEADERZ)
 		else file="$$f"; fi; \
 		if cmp -s  $$file $(buildinclude)/$$f 2> /dev/null ; then \
 		: ; else \
-			echo " cp $$file $(buildinclude)/$$f"; \
-			cp $$file $(buildinclude)/$$f; \
+			echo " $(CP) $$file $(buildinclude)/$$f"; \
+			$(CP) $$file $(buildinclude)/$$f; \
 		fi ; \
 	done
 

@@ -1,9 +1,12 @@
-# $Id: Makefile.am,v 1.1.1.1 2000/06/16 18:31:41 thorpej Exp $
+# $Id: Makefile.am,v 1.1.1.2 2000/08/02 19:58:05 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
 if OTP
 dir_otp = otp
+endif
+if DCE
+dir_dce = dceutils
 endif
 SUBDIRS = 					\
 	  afsutil				\
@@ -19,4 +22,4 @@ SUBDIRS = 					\
 	  test					\
 	  kx					\
 	  kf					\
-	  # kauth
+	  $(dir_dce)

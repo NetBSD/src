@@ -33,7 +33,7 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$Id: marshall.c,v 1.1.1.1 2000/06/16 18:32:53 thorpej Exp $");
+RCSID("$Id: marshall.c,v 1.1.1.2 2000/08/02 19:59:19 assar Exp $");
 
 kadm5_ret_t
 kadm5_store_key_data(krb5_storage *sp,

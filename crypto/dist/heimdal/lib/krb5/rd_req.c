@@ -33,7 +33,7 @@
 
 #include <krb5_locl.h>
 
-RCSID("$Id: rd_req.c,v 1.1.1.1 2000/06/16 18:33:01 thorpej Exp $");
+RCSID("$Id: rd_req.c,v 1.1.1.2 2000/08/02 19:59:38 assar Exp $");
 
 static krb5_error_code
 decrypt_tkt_enc_part (krb5_context context,

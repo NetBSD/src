@@ -32,7 +32,7 @@
  */
 
 #include "rsh_locl.h"
-RCSID("$Id: common.c,v 1.1.1.1 2000/06/16 18:32:04 thorpej Exp $");
+RCSID("$Id: common.c,v 1.1.1.2 2000/08/02 19:58:10 assar Exp $");
 
 ssize_t
 do_read (int fd,

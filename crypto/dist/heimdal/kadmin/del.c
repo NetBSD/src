@@ -33,7 +33,7 @@
 
 #include "kadmin_locl.h"
 
-RCSID("$Id: del.c,v 1.1.1.1 2000/06/16 18:32:07 thorpej Exp $");
+RCSID("$Id: del.c,v 1.1.1.2 2000/08/02 19:58:50 assar Exp $");
 
 static int
 do_del_entry(krb5_principal principal, void *data)

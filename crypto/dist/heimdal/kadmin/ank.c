@@ -33,7 +33,7 @@
 
 #include "kadmin_locl.h"
 
-RCSID("$Id: ank.c,v 1.1.1.1 2000/06/16 18:32:07 thorpej Exp $");
+RCSID("$Id: ank.c,v 1.1.1.2 2000/08/02 19:58:50 assar Exp $");
 
 /*
  * fetch the default principal corresponding to `princ'

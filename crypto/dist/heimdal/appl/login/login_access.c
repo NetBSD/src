@@ -9,7 +9,7 @@
 
 #include "login_locl.h"
 
-RCSID("$Id: login_access.c,v 1.1.1.1 2000/06/16 18:32:06 thorpej Exp $");
+RCSID("$Id: login_access.c,v 1.1.1.2 2000/08/02 19:58:08 assar Exp $");
 
  /* Delimiters for fields and for lists of users, ttys or hosts. */
 

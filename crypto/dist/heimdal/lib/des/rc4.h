@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-/* $Id: rc4.h,v 1.1.1.1 2000/06/16 18:32:28 thorpej Exp $ */
+/* $Id: rc4.h,v 1.1.1.2 2000/08/02 20:00:09 assar Exp $ */
 
 #ifndef HEADER_RC4_H
 #define HEADER_RC4_H

@@ -8,7 +8,7 @@
  *
  */
 
-/* $Id: popper.h,v 1.1.1.1 2000/06/16 18:32:03 thorpej Exp $ */
+/* $Id: popper.h,v 1.1.1.2 2000/08/02 19:58:26 assar Exp $ */
 
 /* 
  *  Header file for the POP programs

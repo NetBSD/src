@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: krb5_locl.h,v 1.1.1.1 2000/06/16 18:32:58 thorpej Exp $ */
+/* $Id: krb5_locl.h,v 1.1.1.2 2000/08/02 19:59:33 assar Exp $ */
 
 #ifndef __KRB5_LOCL_H__
 #define __KRB5_LOCL_H__
@@ -132,8 +132,5 @@ struct sockaddr_dl;
 #ifndef O_BINARY
 #define O_BINARY 0
 #endif
-
-int
-des_new_random_key __P((des_cblock *key));
 
 #endif /* __KRB5_LOCL_H__ */

@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: v1.c,v 1.1.1.1 2000/06/16 18:32:47 thorpej Exp $");
+RCSID("$Id: v1.c,v 1.1.1.2 2000/08/02 19:59:10 assar Exp $");
 
 /* These functions are for V1 compatibility */
 

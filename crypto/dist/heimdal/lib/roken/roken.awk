@@ -1,3 +1,5 @@
+# $Id: roken.awk,v 1.1.1.2 2000/08/02 19:59:55 assar Exp $
+
 BEGIN {
 	print "#include <stdio.h>"
 	print "#ifdef HAVE_CONFIG_H"
@@ -13,6 +15,8 @@ BEGIN {
 	print "puts(\"\");"
 }
 END {
+	print "puts(\"#define ROKEN_VERSION \" VERSION );"
+	print "puts(\"\");"
 	print "puts(\"#endif /* __ROKEN_H__ */\");"
 	print "exit(0);"
 	print "}"

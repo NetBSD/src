@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,7 +32,7 @@
  */
 
 #include "rsh_locl.h"
-RCSID("$Id: rsh.c,v 1.1.1.1 2000/06/16 18:32:05 thorpej Exp $");
+RCSID("$Id: rsh.c,v 1.1.1.2 2000/08/02 19:58:10 assar Exp $");
 
 enum auth_method auth_method;
 int do_encrypt;
@@ -441,14 +441,45 @@ proto (int s, int errsock,
 	    return 1;
 	}
 
-	errsock2 = accept (errsock, NULL, NULL);
-	if (errsock2 < 0) {
-	    warn ("accept");
-	    close (errsock);
-	    return 1;
-	}
-	close (errsock);
 
+	for (;;) {
+	    fd_set fdset;
+
+	    FD_ZERO(&fdset);
+	    FD_SET(errsock, &fdset);
+	    FD_SET(s, &fdset);
+
+	    ret = select (max(errsock, s) + 1, &fdset, NULL, NULL, NULL);
+	    if (ret < 0) {
+		if (errno == EINTR)
+		    continue;
+		warn ("select");
+		close (errsock);
+		return 1;
+	    }
+	    if (FD_ISSET(errsock, &fdset)) {
+		errsock2 = accept (errsock, NULL, NULL);
+		close (errsock);
+		if (errsock2 < 0) {
+		    warn ("accept");
+		    return 1;
+		}
+		break;
+	    }
+
+	    /*
+	     * there should not arrive any data on this fd so if it's
+	     * readable it probably indicates that the other side when
+	     * away.
+	     */
+
+	    if (FD_ISSET(s, &fdset)) {
+		warnx ("socket closed");
+		close (errsock);
+		errsock2 = -1;
+		break;
+	    }
+	}
     } else {
 	if (net_write (s, "0", 2) != 2) {
 	    warn ("write");
@@ -490,8 +521,7 @@ proto (int s, int errsock,
 
 /*
  * Return in `res' a copy of the concatenation of `argc, argv' into
- * malloced space.
- */
+ * malloced space.  */
 
 static size_t
 construct_command (char **res, int argc, char **argv)
@@ -732,7 +762,7 @@ struct getargs args[] = {
       NULL },
     { "encrypt", 'x', arg_flag,		&do_encrypt,	"Encrypt connection",
       NULL },
-    { "encrypt", 'z', arg_negative_flag,      &do_encrypt,
+    { NULL, 	'z', arg_negative_flag,      &do_encrypt,
       "Don't encrypt connection", NULL },
     { "forward", 'f', arg_flag,		&do_forward,	"Forward credentials",
       NULL },
@@ -782,12 +812,15 @@ main(int argc, char **argv)
     const char *local_user;
     char *host = NULL;
     int host_index = -1;
-    int status; 
+    int status;
+    uid_t uid;
 
     priv_port1 = priv_port2 = IPPORT_RESERVED-1;
     priv_socket1 = rresvport(&priv_port1);
     priv_socket2 = rresvport(&priv_port2);
-    setuid(getuid());
+    uid = getuid ();
+    if (setuid (uid) || (uid != 0 && setuid(0) == 0))
+	err (1, "setuid");
     
     set_progname (argv[0]);
 
@@ -939,6 +972,8 @@ main(int argc, char **argv)
 	else
 	    tmp_port = krb5_getportbyname(context, "shell", "tcp", 514);
 	auth_method = AUTH_BROKEN;
+	if (do_encrypt)
+	    errx (1, "encryption not supported with priv port authentication");
 	ret = doit_broken (argc, argv, host_index, host,
 			   user, local_user,
 			   tmp_port,

@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: send_to_kdc.c,v 1.1.1.1 2000/06/16 18:33:01 thorpej Exp $");
+RCSID("$Id: send_to_kdc.c,v 1.1.1.2 2000/08/02 19:59:40 assar Exp $");
 
 /*
  * send the data in `req' on the socket `fd' (which is datagram iff udp)
@@ -257,7 +257,7 @@ send_via_proxy (krb5_context context,
     ret = getaddrinfo (proxy, portstr, NULL, &ai);
     free (proxy);
     if (ret)
-	return ret;
+	return krb5_eai_to_heim_errno(ret);
 
     for (a = ai; a != NULL; a = a->ai_next) {
 	s = socket (a->ai_family, a->ai_socktype, a->ai_protocol);
@@ -295,25 +295,16 @@ send_via_proxy (krb5_context context,
  */
 
 krb5_error_code
-krb5_sendto_kdc (krb5_context context,
-		 const krb5_data *send,
-		 const krb5_realm *realm,
-		 krb5_data *receive)
+krb5_sendto (krb5_context context,
+	     const krb5_data *send,
+	     char **hostlist,
+	     int port,
+	     krb5_data *receive)
 {
      krb5_error_code ret;
-     char **hostlist, **hp, *p;
+     char **hp, *p;
      int fd;
-     int port;
      int i;
-
-     port = krb5_getportbyname (context, "kerberos", "udp", 88);
-
-     if (context->use_admin_kdc)
-	 ret = krb5_get_krb_admin_hst (context, realm, &hostlist);
-     else
-	 ret = krb5_get_krbhst (context, realm, &hostlist);
-     if (ret)
-	  return ret;
 
      for (i = 0; i < context->max_retries; ++i)
 	 for (hp = hostlist; (p = *hp); ++hp) {
@@ -390,6 +381,38 @@ krb5_sendto_kdc (krb5_context context,
 	 }
      ret = KRB5_KDC_UNREACH;
 out:
-     krb5_free_krbhst (context, hostlist);
      return ret;
+}
+
+krb5_error_code
+krb5_sendto_kdc2(krb5_context context,
+		 const krb5_data *send,
+		 const krb5_realm *realm,
+		 krb5_data *receive,
+		 krb5_boolean master)
+{
+    krb5_error_code ret;
+    char **hostlist;
+    int port;
+    
+    port = krb5_getportbyname (context, "kerberos", "udp", 88);
+    
+    if (master || context->use_admin_kdc)
+	ret = krb5_get_krb_admin_hst (context, realm, &hostlist);
+    else
+	ret = krb5_get_krbhst (context, realm, &hostlist);
+    if (ret)
+	return ret;
+    ret = krb5_sendto(context, send, hostlist, port, receive);
+    krb5_free_krbhst (context, hostlist);
+    return ret;
+}
+
+krb5_error_code
+krb5_sendto_kdc(krb5_context context,
+		const krb5_data *send,
+		const krb5_realm *realm,
+		krb5_data *receive)
+{
+    return krb5_sendto_kdc2(context, send, realm, receive, FALSE);
 }

@@ -33,12 +33,16 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: sl.c,v 1.1.1.1 2000/06/16 18:32:33 thorpej Exp $");
+RCSID("$Id: sl.c,v 1.1.1.2 2000/08/02 20:00:19 assar Exp $");
 #endif
 
 #include "sl_locl.h"
 
-static size_t __attribute__ ((unused))
+static size_t
+print_sl (FILE *stream, int mdoc, int longp, SL_cmd *c)
+    __attribute__ ((unused));
+
+static size_t
 print_sl (FILE *stream, int mdoc, int longp, SL_cmd *c)
 {
     if(mdoc){

@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: mk_error.c,v 1.1.1.1 2000/06/16 18:33:00 thorpej Exp $");
+RCSID("$Id: mk_error.c,v 1.1.1.2 2000/08/02 19:59:35 assar Exp $");
 
 krb5_error_code
 krb5_mk_error(krb5_context context,

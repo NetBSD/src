@@ -32,7 +32,7 @@
 
 #include "hdb_locl.h"
 
-RCSID("$Id: hdb-ldap.c,v 1.1.1.1 2000/06/16 18:32:49 thorpej Exp $");
+RCSID("$Id: hdb-ldap.c,v 1.1.1.2 2000/08/02 19:59:11 assar Exp $");
 
 #ifdef OPENLDAP
 
@@ -889,7 +889,7 @@ LDAP_seq(krb5_context context, HDB * db, unsigned flags, hdb_entry * entry)
 
     if (ret == 0) {
 	if (db->master_key_set && (flags & HDB_F_DECRYPT))
-	    hdb_unseal_keys(db, entry);
+	    hdb_unseal_keys(context, db, entry);
     }
 
     return ret;
@@ -1106,7 +1106,7 @@ LDAP_fetch(krb5_context context, HDB * db, unsigned flags,
     ret = LDAP_message2entry(context, db, e, entry);
     if (ret == 0) {
 	if (db->master_key_set && (flags & HDB_F_DECRYPT))
-	    hdb_unseal_keys(db, entry);
+	    hdb_unseal_keys(context, db, entry);
     }
 
   out:
@@ -1134,7 +1134,7 @@ LDAP_store(krb5_context context, HDB * db, unsigned flags,
 	e = ldap_first_entry((LDAP *) db->db, msg);
     }
 
-    hdb_seal_keys(db, entry);
+    hdb_seal_keys(context, db, entry);
 
     /* turn new entry into LDAPMod array */
     ret = LDAP_entry2mods(context, db, entry, e, &mods);

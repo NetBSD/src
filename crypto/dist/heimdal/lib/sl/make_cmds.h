@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: make_cmds.h,v 1.1.1.1 2000/06/16 18:32:32 thorpej Exp $ */
+/* $Id: make_cmds.h,v 1.1.1.2 2000/08/02 20:00:18 assar Exp $ */
 
 #ifndef __MAKE_CMDS_H__
 #define __MAKE_CMDS_H__
@@ -44,6 +44,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
+
+#include <roken.h>
 
 extern char *filename;
 extern char *table_name;
@@ -65,6 +67,9 @@ struct string_list {
 };
 
 void add_command(char*, char*, struct string_list*, unsigned);
+
+void error_message(const char *, ...)
+    __attribute__ ((format (printf, 1,2)));
 
 int yylex (void);
 

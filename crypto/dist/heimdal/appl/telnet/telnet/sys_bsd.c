@@ -33,7 +33,7 @@
 
 #include "telnet_locl.h"
 
-RCSID("$Id: sys_bsd.c,v 1.1.1.1 2000/06/16 18:31:56 thorpej Exp $");
+RCSID("$Id: sys_bsd.c,v 1.1.1.2 2000/08/02 19:58:20 assar Exp $");
 
 /*
  * The following routines try to encapsulate what is system dependent
@@ -314,10 +314,10 @@ TerminalRestoreState()
 
 
 #ifdef	SIGTSTP
-static RETSIGTYPE susp();
+static RETSIGTYPE susp(int);
 #endif	/* SIGTSTP */
 #ifdef	SIGINFO
-static RETSIGTYPE ayt();
+static RETSIGTYPE ayt(int);
 #endif
 
 void
@@ -495,7 +495,7 @@ TerminalNewMode(int f)
     } else {
         sigset_t sm;
 #ifdef	SIGINFO
-	RETSIGTYPE ayt_status();
+	RETSIGTYPE ayt_status(int);
 
 	signal(SIGINFO, ayt_status);
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -31,6 +31,11 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: lex.h,v 1.1.1.1 2000/06/16 18:32:39 thorpej Exp $ */
+/* $Id: lex.h,v 1.1.1.2 2000/08/02 19:59:05 assar Exp $ */
 
-void error_message (char *, ...);
+#include <roken.h>
+
+void error_message (const char *, ...)
+__attribute__ ((format (printf, 1, 2)));
+
+int yylex(void);

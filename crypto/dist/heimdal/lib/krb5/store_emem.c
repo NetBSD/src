@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 200 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: store_emem.c,v 1.1.1.1 2000/06/16 18:33:02 thorpej Exp $");
+RCSID("$Id: store_emem.c,v 1.1.1.2 2000/08/02 19:59:41 assar Exp $");
 
 typedef struct emem_storage{
     unsigned char *base;
@@ -54,7 +54,7 @@ emem_fetch(krb5_storage *sp, void *data, size_t size)
 }
 
 static ssize_t
-emem_store(krb5_storage *sp, void *data, size_t size)
+emem_store(krb5_storage *sp, const void *data, size_t size)
 {
     emem_storage *s = (emem_storage*)sp->data;
     if(size > s->base + s->size - s->ptr){

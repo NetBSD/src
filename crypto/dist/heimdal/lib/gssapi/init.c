@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: init.c,v 1.1.1.1 2000/06/16 18:32:46 thorpej Exp $");
+RCSID("$Id: init.c,v 1.1.1.2 2000/08/02 19:59:09 assar Exp $");
 
 void
 gssapi_krb5_init (void)

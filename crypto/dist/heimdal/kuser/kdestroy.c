@@ -32,7 +32,7 @@
  */
 
 #include "kuser_locl.h"
-RCSID("$Id: kdestroy.c,v 1.1.1.1 2000/06/16 18:31:40 thorpej Exp $");
+RCSID("$Id: kdestroy.c,v 1.1.1.2 2000/08/02 19:58:58 assar Exp $");
 
 static const char *cache;
 static int help_flag;

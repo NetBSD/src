@@ -29,7 +29,7 @@ in this Software without prior written authorization from the X Consortium.
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: writeauth.c,v 1.1.1.1 2000/06/16 18:31:44 thorpej Exp $");
+RCSID("$Id: writeauth.c,v 1.1.1.2 2000/08/02 19:58:34 assar Exp $");
 #endif
 
 #include <X11/Xauth.h>

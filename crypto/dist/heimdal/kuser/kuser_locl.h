@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: kuser_locl.h,v 1.1.1.1 2000/06/16 18:31:41 thorpej Exp $ */
+/* $Id: kuser_locl.h,v 1.1.1.2 2000/08/02 19:58:59 assar Exp $ */
 
 #ifndef __KUSER_LOCL_H__
 #define __KUSER_LOCL_H__

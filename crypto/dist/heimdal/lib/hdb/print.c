@@ -33,7 +33,7 @@
 #include "hdb_locl.h"
 #include <ctype.h>
 
-RCSID("$Id: print.c,v 1.1.1.1 2000/06/16 18:32:49 thorpej Exp $");
+RCSID("$Id: print.c,v 1.1.1.2 2000/08/02 19:59:14 assar Exp $");
 
 /* 
    This is the present contents of a dump line. This might change at

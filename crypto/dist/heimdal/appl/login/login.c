@@ -39,50 +39,9 @@
 #include <sys/capability.h>
 #endif
 
-RCSID("$Id: login.c,v 1.1.1.1 2000/06/16 18:32:06 thorpej Exp $");
+RCSID("$Id: login.c,v 1.1.1.2 2000/08/02 19:58:08 assar Exp $");
 
-/*
- * the environment we will send to execle and the shell.
- */
-
-static char **env;
-static int num_env;
-
-static void
-extend_env(char *str)
-{
-    env = realloc(env, (num_env + 1) * sizeof(*env));
-    if(env == NULL)
-	errx(1, "Out of memory!");
-    env[num_env++] = str;
-}
-
-static void
-add_env(const char *var, const char *value)
-{
-    int i;
-    char *str;
-    asprintf(&str, "%s=%s", var, value);
-    if(str == NULL)
-	errx(1, "Out of memory!");
-    for(i = 0; i < num_env; i++)
-	if(strncmp(env[i], var, strlen(var)) == 0 && 
-	   env[i][strlen(var)] == '='){
-	    free(env[i]);
-	    env[i] = str;
-	    return;
-	}
-    
-    extend_env(str);
-}
-
-static void
-copy_env(void)
-{
-    char **p;
-    for(p = environ; *p; p++)
-	extend_env(*p);
-}
+static int login_timeout = 60;
 
 static int
 start_login_process(void)
@@ -167,7 +126,18 @@ exec_shell(const char *shell, int fallback)
     err(1, "%s", shell);
 }
 
-static enum { NONE = 0, AUTH_KRB4 = 1, AUTH_KRB5 = 2 } auth;
+static enum { NONE = 0, AUTH_KRB4 = 1, AUTH_KRB5 = 2, AUTH_OTP = 3 } auth;
+
+#ifdef OTP
+static OtpContext otp_ctx;
+
+static int
+otp_verify(struct passwd *pwd, const char *password)
+{
+   return (otp_verify_user (&otp_ctx, password));
+}
+#endif /* OTP */
+
 
 #ifdef KRB5
 static krb5_context context;
@@ -379,10 +349,11 @@ static int r_flag;
 static int version_flag;
 static int help_flag;
 static char *remote_host;
+static char *auth_level = NULL;
 
 struct getargs args[] = {
+    { NULL, 'a', arg_string,    &auth_level,    "authentication mode" },
 #if 0
-    { NULL, 'a' },
     { NULL, 'd' },
 #endif
     { NULL, 'f', arg_flag,	&f_flag,	"pre-authenticated" },
@@ -491,7 +462,7 @@ do_login(const struct passwd *pwd, char *tty, char *ttyn)
 	if(rootlogin == 0)
 	    exit(1);
     }
-    if(setuid(pwd->pw_uid)){
+    if(setuid(pwd->pw_uid) || (pwd->pw_uid != 0 && setuid(0) == 0)) {
 	warn("setuid(%u)", (unsigned)pwd->pw_uid);
 	if(rootlogin == 0)
 	    exit(1);
@@ -592,6 +563,20 @@ do_login(const struct passwd *pwd, char *tty, char *ttyn)
     krb4_get_afs_tokens (pwd);
 #endif /* KRB4 */
 
+    {
+	const char *str = login_conf_get_string("environment");
+	char buf[MAXPATHLEN];
+
+	if(str == NULL) {
+	    login_read_env(_PATH_ETC_ENVIRONMENT);
+	} else {
+	    while(strsep_copy(&str, ",", buf, sizeof(buf)) != -1) {
+		if(buf[0] == '\0')
+		    continue;
+		login_read_env(buf);
+	    }
+	}
+    }
     add_env("HOME", home_dir);
     add_env("USER", pwd->pw_name);
     add_env("LOGNAME", pwd->pw_name);
@@ -625,6 +610,12 @@ check_password(struct passwd *pwd, const char *password)
 	return 0;
     }
 #endif
+#ifdef OTP
+    if (otp_verify (pwd, password) == 0) {
+       auth = AUTH_OTP;
+       return 0;
+    }
+#endif
     return 1;
 }
 
@@ -633,6 +624,17 @@ usage(int status)
 {
     arg_printusage(args, nargs, NULL, "[username]");
     exit(status);
+}
+
+static RETSIGTYPE
+sig_handler(int sig)
+{
+    if (sig == SIGALRM)
+         fprintf(stderr, "Login timed out after %d seconds\n",
+                login_timeout);
+      else
+         fprintf(stderr, "Login received signal, exiting\n");
+    exit(0);
 }
 
 int
@@ -645,6 +647,7 @@ main(int argc, char **argv)
     int optind = 0;
 
     int ask = 1;
+    struct sigaction sa;
     
     set_progname(argv[0]);
 
@@ -689,13 +692,30 @@ main(int argc, char **argv)
 	    ask = 0;
 	}
     }
+
+#if defined(DCE) && defined(AIX)
+    setenv("AUTHSTATE", "DCE", 1);
+#endif
+
     /* XXX should we care about environment on the command line? */
+
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = sig_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    sigaction(SIGALRM, &sa, NULL);
+    alarm(login_timeout);
+
     for(try = 0; try < max_tries; try++){
 	struct passwd *pwd;
 	char password[128];
 	int ret;
 	char ttname[32];
 	char *tty, *ttyn;
+        char prompt[128];
+#ifdef OTP
+        char otp_str[256];
+#endif
 
 	if(ask){
 	    f_flag = r_flag = 0;
@@ -703,7 +723,7 @@ main(int argc, char **argv)
 	    if(ret == -3)
 		exit(0);
 	    if(ret == -2)
-		continue;
+		sig_handler(0); /* exit */
 	}
         pwd = k_getpwnam(username);
 #ifdef ALLOW_NULL_PASSWORD
@@ -712,11 +732,28 @@ main(int argc, char **argv)
         }
         else
 #endif
-	if(f_flag == 0) {
-	    ret = read_string("Password: ", password, sizeof(password), 0);
-	    if(ret == -3 || ret == -2)
-		continue;
-	}
+
+        {
+#ifdef OTP
+           if(auth_level && strcmp(auth_level, "otp") == 0 &&
+                 otp_challenge(&otp_ctx, username,
+                            otp_str, sizeof(otp_str)) == 0)
+                 snprintf (prompt, sizeof(prompt), "%s's %s Password: ",
+                            username, otp_str);
+            else
+#endif
+                 strncpy(prompt, "Password: ", sizeof(prompt));
+
+	    if (f_flag == 0) {
+	       ret = read_string(prompt, password, sizeof(password), 0);
+               if (ret == -3) {
+                  ask = 1;
+                  continue;
+               }
+               if (ret == -2)
+                  sig_handler(0);
+            }
+         }
 	
 	if(pwd == NULL){
 	    fprintf(stderr, "Login incorrect.\n");
@@ -749,6 +786,7 @@ main(int argc, char **argv)
 		       pwd->pw_name, tty);
 	    exit (1);
 	}
+        alarm(0);
 	do_login(pwd, tty, ttyn);
     }
     exit(1);

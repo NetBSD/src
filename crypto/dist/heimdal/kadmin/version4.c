@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1999 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -41,7 +41,7 @@
 #include <krb_err.h>
 #include <kadm_err.h>
 
-RCSID("$Id: version4.c,v 1.1.1.1 2000/06/16 18:32:07 thorpej Exp $");
+RCSID("$Id: version4.c,v 1.1.1.2 2000/08/02 19:58:53 assar Exp $");
 
 #define KADM_NO_OPCODE -1
 #define KADM_NO_ENCRYPT -2
@@ -196,7 +196,7 @@ flags_4_to_5(char *flags)
 	    case KADM_INST:
 		mask |= KADM5_PRINCIPAL;
 	    case KADM_EXPDATE:
-		mask |= KADM5_PW_EXPIRATION;
+		mask |= KADM5_PRINC_EXPIRE_TIME;
 	    case KADM_MAXLIFE:
 		mask |= KADM5_MAX_LIFE;
 #ifdef EXTENDED_KADM
@@ -221,6 +221,7 @@ ent_to_values(krb5_context context,
 {
     krb5_error_code ret;
     char realm[REALM_SZ];
+    time_t exp = 0;
 
     memset(vals, 0, sizeof(*vals));
     if(mask & KADM5_PRINCIPAL) {
@@ -229,16 +230,17 @@ ent_to_values(krb5_context context,
 	SET_FIELD(KADM_NAME, vals->fields);
 	SET_FIELD(KADM_INST, vals->fields);
     }
-    if(mask & KADM5_PW_EXPIRATION) {
-	time_t exp = 0;
+    if(mask & KADM5_PRINC_EXPIRE_TIME) {
 	if(ent->princ_expire_time != 0)
 	    exp = ent->princ_expire_time;
+    }
+    if(mask & KADM5_PW_EXPIRATION) {
 	if(ent->pw_expiration != 0 && (exp == 0 || exp > ent->pw_expiration))
 	    exp = ent->pw_expiration;
-	if(exp) {
-	    vals->exp_date = exp;
-	    SET_FIELD(KADM_EXPDATE, vals->fields);
-	}
+    }
+    if(exp) {
+	vals->exp_date = exp;
+	SET_FIELD(KADM_EXPDATE, vals->fields);
     }
     if(mask & KADM5_MAX_LIFE) {
 	if(ent->max_life == 0)
@@ -298,8 +300,8 @@ values_to_ent(krb5_context context,
 	*mask |= KADM5_PRINCIPAL;
     }
     if(IS_FIELD(KADM_EXPDATE, vals->fields)) {
-	ent->pw_expiration = vals->exp_date;
-	*mask |= KADM5_PW_EXPIRATION;
+	ent->princ_expire_time = vals->exp_date;
+	*mask |= KADM5_PRINC_EXPIRE_TIME;
     }
     if(IS_FIELD(KADM_MAXLIFE, vals->fields)) {
 	ent->max_life = krb_life_to_time(0, vals->max_life);
@@ -465,7 +467,7 @@ kadm_ser_cpw(krb5_context context,
     char *password = NULL;
     krb5_error_code ret;
     
-    krb5_warnx(context, "v4-compat %s: cpw %s",
+    krb5_warnx(context, "v4-compat %s: CHPASS %s",
 	       principal_string, principal_string); 
 
     ret = message->fetch(message, key + 4, 4);
@@ -515,7 +517,7 @@ kadm_ser_cpw(krb5_context context,
     }
     return 0;
 fail:
-    krb5_warn(context, ret, "v4-compat cpw");
+    krb5_warn(context, ret, "v4-compat CHPASS");
     return error_code(ret);
 }
 
@@ -540,10 +542,11 @@ kadm_ser_add(krb5_context context,
 	goto fail;
 
     krb5_unparse_name_fixed(context, ent.principal, name, sizeof(name));
-    krb5_warnx(context, "v4-compat %s: add %s",
+    krb5_warnx(context, "v4-compat %s: ADD %s",
 	       principal_string, name);
 
-    ret = _kadm5_acl_check_permission (kadm_handle, KADM5_PRIV_ADD);
+    ret = _kadm5_acl_check_permission (kadm_handle, KADM5_PRIV_ADD,
+				       ent.principal);
     if (ret)
 	goto fail;
 
@@ -553,7 +556,7 @@ kadm_ser_add(krb5_context context,
 	goto fail;
     }
 
-    mask = KADM5_PRINCIPAL | KADM5_PW_EXPIRATION | KADM5_MAX_LIFE |
+    mask = KADM5_PRINCIPAL | KADM5_PRINC_EXPIRE_TIME | KADM5_MAX_LIFE |
 	KADM5_KEY_DATA | KADM5_MOD_TIME | KADM5_MOD_NAME;
     
     kadm5_get_principal(kadm_handle, ent.principal, &out, mask);
@@ -563,7 +566,7 @@ kadm_ser_add(krb5_context context,
     store_vals(reply, &values);
     return 0;
 fail:
-    krb5_warn(context, ret, "v4-compat add");
+    krb5_warn(context, ret, "v4-compat ADD");
     return error_code(ret);
 }
 
@@ -594,10 +597,11 @@ kadm_ser_get(krb5_context context,
 	goto fail;
 
     krb5_unparse_name_fixed(context, ent.principal, name, sizeof(name));
-    krb5_warnx(context, "v4-compat %s: get %s",
+    krb5_warnx(context, "v4-compat %s: GET %s",
 	       principal_string, name);
 
-    ret = _kadm5_acl_check_permission (kadm_handle, KADM5_PRIV_GET);
+    ret = _kadm5_acl_check_permission (kadm_handle, KADM5_PRIV_GET,
+				       ent.principal);
     if (ret)
 	goto fail;
 
@@ -616,7 +620,7 @@ kadm_ser_get(krb5_context context,
     store_vals(reply, &values);
     return 0;
 fail:
-    krb5_warn(context, ret, "v4-compat get");
+    krb5_warn(context, ret, "v4-compat GET");
     return error_code(ret);
 }
 
@@ -644,10 +648,11 @@ kadm_ser_mod(krb5_context context,
 	goto fail;
 
     krb5_unparse_name_fixed(context, ent.principal, name, sizeof(name));
-    krb5_warnx(context, "v4-compat %s: mod %s",
+    krb5_warnx(context, "v4-compat %s: MOD %s",
 	       principal_string, name);
 
-    ret = _kadm5_acl_check_permission (kadm_handle, KADM5_PRIV_MODIFY);
+    ret = _kadm5_acl_check_permission (kadm_handle, KADM5_PRIV_MODIFY,
+				       ent.principal);
     if (ret)
 	goto fail;
 
@@ -673,7 +678,7 @@ kadm_ser_mod(krb5_context context,
     store_vals(reply, &values1);
     return 0;
 fail:
-    krb5_warn(context, ret, "v4-compat mod");
+    krb5_warn(context, ret, "v4-compat MOD");
     return error_code(ret);
 }
 
@@ -698,10 +703,11 @@ kadm_ser_del(krb5_context context,
 	goto fail;
     
     krb5_unparse_name_fixed(context, ent.principal, name, sizeof(name));
-    krb5_warnx(context, "v4-compat %s: del %s",
+    krb5_warnx(context, "v4-compat %s: DEL %s",
 	       principal_string, name);
 
-    ret = _kadm5_acl_check_permission (kadm_handle, KADM5_PRIV_DELETE);
+    ret = _kadm5_acl_check_permission (kadm_handle, KADM5_PRIV_DELETE,
+				       ent.principal);
     if (ret)
 	goto fail;
 
@@ -714,7 +720,7 @@ kadm_ser_del(krb5_context context,
 
     return 0;
 fail:
-    krb5_warn(context, ret, "v4-compat add");
+    krb5_warn(context, ret, "v4-compat ADD");
     return error_code(ret);
 }
 
@@ -878,8 +884,7 @@ decode_packet(krb5_context context,
 	goto out;
     }
     
-    checksum = des_quad_cksum(msg + off, NULL, rlen, 
-			      0, &ad.session);
+    checksum = des_quad_cksum((void *)(msg + off), NULL, rlen, 0, &ad.session);
     if(checksum != ad.checksum) {
 	krb5_warnx(context, "decode_packet: bad checksum");
 	make_you_loose_packet (KADM_BAD_CHK, reply);
@@ -936,6 +941,9 @@ handle_v4(krb5_context context,
 	krb5_errx (context, 1, "getpeername");
 
     while(1) {
+	doing_useful_work = 0;
+	if(term_flag)
+	    exit(0);
 	if(first) {
 	    /* first time around, we have already read len, and two
                bytes of the version string */
@@ -966,6 +974,7 @@ handle_v4(krb5_context context,
 	    if (n < 0)
 		krb5_err (context, 1, errno, "krb5_net_read");
 	}
+	doing_useful_work = 1;
 	decode_packet(context, &admin_addr, &client_addr, 
 		      message, &reply);
 	krb5_data_free(&message);

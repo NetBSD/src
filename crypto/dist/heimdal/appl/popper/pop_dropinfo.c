@@ -5,7 +5,7 @@
  */
 
 #include <popper.h>
-RCSID("$Id: pop_dropinfo.c,v 1.1.1.1 2000/06/16 18:32:01 thorpej Exp $");
+RCSID("$Id: pop_dropinfo.c,v 1.1.1.2 2000/08/02 19:58:24 assar Exp $");
 
 #if defined(UIDL) || defined(XOVER)
 

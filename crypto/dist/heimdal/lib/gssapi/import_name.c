@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: import_name.c,v 1.1.1.1 2000/06/16 18:32:46 thorpej Exp $");
+RCSID("$Id: import_name.c,v 1.1.1.2 2000/08/02 19:59:09 assar Exp $");
 
 static OM_uint32
 import_krb5_name (OM_uint32 *minor_status,

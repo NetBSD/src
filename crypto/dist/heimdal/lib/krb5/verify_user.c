@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: verify_user.c,v 1.1.1.1 2000/06/16 18:33:03 thorpej Exp $");
+RCSID("$Id: verify_user.c,v 1.1.1.2 2000/08/02 19:59:43 assar Exp $");
 
 static krb5_error_code
 verify_common (krb5_context context,

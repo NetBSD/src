@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: ftpd_locl.h,v 1.1.1.1 2000/06/16 18:31:50 thorpej Exp $ */
+/* $Id: ftpd_locl.h,v 1.1.1.2 2000/08/02 19:58:39 assar Exp $ */
 
 #ifndef __ftpd_locl_h__
 #define __ftpd_locl_h__
@@ -143,11 +143,15 @@
 
 #include "roken.h"
 
+#ifdef KRB5
+#include <krb5.h>
+#endif /* KRB5 */
+
 #ifdef KRB4
 #include <krb.h>
 #include <kafs.h>
 #endif
-
+ 
 #ifdef OTP
 #include <otp.h>
 #endif

@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: address.c,v 1.1.1.1 2000/06/16 18:32:56 thorpej Exp $");
+RCSID("$Id: address.c,v 1.1.1.2 2000/08/02 19:59:23 assar Exp $");
 
 #if 0
 /* This is the supposedly MIT-api version */

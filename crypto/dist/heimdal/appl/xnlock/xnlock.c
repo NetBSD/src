@@ -8,7 +8,7 @@
  */
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: xnlock.c,v 1.1.1.1 2000/06/16 18:31:45 thorpej Exp $");
+RCSID("$Id: xnlock.c,v 1.1.1.2 2000/08/02 19:58:28 assar Exp $");
 #endif
 
 #include <stdio.h>
@@ -954,14 +954,19 @@ main (int argc, char **argv)
      */
     {
       struct passwd *pw;
+      uid_t uid = getuid();
       if (!(pw = k_getpwuid(0)))
 	errx (1, "can't get root's passwd!");
       strlcpy(root_cpass, pw->pw_passwd, sizeof(root_cpass));
 
-      if (!(pw = k_getpwuid(getuid())))
+      if (!(pw = k_getpwuid(uid)))
 	errx (1, "Can't get your password entry!");
       strlcpy(user_cpass, pw->pw_passwd, sizeof(user_cpass));
-      setuid(getuid());
+      setuid(uid);
+      if (uid != 0 && setuid(0) != -1) {
+	fprintf(stderr, "Failed to drop privileges!\n");
+	exit(1);
+      }
       /* Now we're no longer running setuid root. */
       strlcpy(login, pw->pw_name, sizeof(login));
     }

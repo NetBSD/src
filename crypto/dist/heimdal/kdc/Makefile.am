@@ -1,8 +1,8 @@
-# $Id: Makefile.am,v 1.1.1.1 2000/06/16 18:31:36 thorpej Exp $
+# $Id: Makefile.am,v 1.1.1.2 2000/08/02 19:58:53 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
-INCLUDES += $(INCLUDE_krb4)
+INCLUDES += $(INCLUDE_krb4) -I$(srcdir)/../lib/krb5
 
 bin_PROGRAMS = string2key
 
@@ -12,8 +12,8 @@ libexec_PROGRAMS = hprop hpropd kdc
 
 man_MANS = kdc.8 kstash.8 hprop.8 hpropd.8 string2key.8
 
-hprop_SOURCES = hprop.c hprop-common.c hprop.h kadb.h 
-hpropd_SOURCES = hpropd.c hprop-common.c hprop.h
+hprop_SOURCES = hprop.c mit_dump.c v4_dump.c hprop.h kadb.h 
+hpropd_SOURCES = hpropd.c hprop.h
 
 kstash_SOURCES = kstash.c headers.h
 

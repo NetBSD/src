@@ -33,7 +33,7 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$Id: create_s.c,v 1.1.1.1 2000/06/16 18:32:50 thorpej Exp $");
+RCSID("$Id: create_s.c,v 1.1.1.2 2000/08/02 19:59:16 assar Exp $");
 
 static kadm5_ret_t
 get_default(kadm5_server_context *context, krb5_principal princ, 
@@ -124,7 +124,7 @@ kadm5_s_create_principal_with_key(void *server_handle,
     if(ret)
 	goto out;
     
-    hdb_seal_keys(context->db, &ent);
+    hdb_seal_keys(context->context, context->db, &ent);
     
     kadm5_log_create (context, &ent);
 
@@ -176,7 +176,7 @@ kadm5_s_create_principal(void *server_handle,
     ent.keys.val[3].key.keytype = ETYPE_DES3_CBC_SHA1;
     ret = _kadm5_set_keys(context, &ent, password);
 
-    hdb_seal_keys(context->db, &ent);
+    hdb_seal_keys(context->context, context->db, &ent);
     
     kadm5_log_create (context, &ent);
 

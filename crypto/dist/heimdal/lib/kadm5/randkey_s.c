@@ -33,7 +33,7 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$Id: randkey_s.c,v 1.1.1.1 2000/06/16 18:32:53 thorpej Exp $");
+RCSID("$Id: randkey_s.c,v 1.1.1.2 2000/08/02 19:59:21 assar Exp $");
 
 /*
  * Set the keys of `princ' to random values, returning the random keys
@@ -68,13 +68,16 @@ kadm5_s_randkey_principal(void *server_handle,
     ret = _kadm5_set_modifier(context, &ent);
     if(ret)
 	goto out3;
+    ret = _kadm5_bump_pw_expire(context, &ent);
+    if (ret)
+	goto out2;
 
-    hdb_seal_keys(context->db, &ent);
+    hdb_seal_keys(context->context, context->db, &ent);
 
     kadm5_log_modify (context,
 		      &ent,
 		      KADM5_PRINCIPAL | KADM5_MOD_NAME | KADM5_MOD_TIME |
-		      KADM5_KEY_DATA | KADM5_KVNO);
+		      KADM5_KEY_DATA | KADM5_KVNO | KADM5_PW_EXPIRATION);
 
     ret = context->db->store(context->context, context->db, 
 			     HDB_F_REPLACE, &ent);

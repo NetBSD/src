@@ -33,35 +33,11 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: mini_inetd.c,v 1.1.1.1 2000/06/16 18:32:35 thorpej Exp $");
-#endif
-
-#include <stdio.h>
-
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif
-#ifdef HAVE_NETINET_IN6_H
-#include <netinet/in6.h>
-#endif
-#ifdef HAVE_NETINET6_IN6_H
-#include <netinet6/in6.h>
+RCSID("$Id: mini_inetd.c,v 1.1.1.2 2000/08/02 19:59:52 assar Exp $");
 #endif
 
 #include <err.h>
-#include <roken.h>
+#include "roken.h"
 
 /*
  * accept a connection on `s' and pretend it's served by inetd.

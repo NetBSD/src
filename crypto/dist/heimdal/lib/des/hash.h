@@ -30,7 +30,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-/* $Id: hash.h,v 1.1.1.1 2000/06/16 18:32:25 thorpej Exp $ */
+/* $Id: hash.h,v 1.1.1.2 2000/08/02 20:00:06 assar Exp $ */
 
 /* stuff in common between md4, md5, and sha1 */
 

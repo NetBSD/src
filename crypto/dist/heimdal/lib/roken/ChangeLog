@@ -1,3 +1,97 @@
+2000-07-25  Johan Danielsson  <joda@pdc.kth.se>
+
+	* warnerr.c: add get_progname
+
+2000-07-24  Assar Westerlund  <assar@sics.se>
+
+	* getaddrinfo.c (add_hostent): if there's no fqdn in `he' try
+	reverse resolving to see if there's a fuller name there.  don't
+	use just-freed memory
+
+2000-07-22  Assar Westerlund  <assar@sics.se>
+
+	* xdbm.h: do not define ndbm functions in terms of dbm functions
+	if we're using db
+
+2000-07-20  Assar Westerlund  <assar@sics.se>
+
+	* rtbl.c (rtbl_format): avoid printing an empty row at the end
+
+2000-07-19  Johan Danielsson  <joda@pdc.kth.se>
+
+	* Makefile.am: make this compatible with `make dist'
+
+	* Makefile.am: revert version number for now
+
+2000-07-18  Johan Danielsson  <joda@pdc.kth.se>
+
+	* configure.in: AM_PROG_LIBTOOL -> AC_PROG_LIBTOOL
+
+2000-07-09  Assar Westerlund  <assar@sics.se>
+
+	* rtbl.c (rtbl_add_column): initialize `col' completely
+
+	* configure.in: bring headers and functions more in-line with
+	what's actually being used
+
+2000-07-08  Johan Danielsson  <joda@pdc.kth.se>
+
+	* roken.h.in: declare ether_addr and sockaddr_dl for AIX
+
+	* rtbl.{c,h}: simple table functions
+
+2000-07-08  Assar Westerlund  <assar@sics.se>
+
+	* configure.in (AM_INIT_AUTOMAKE): bump version to 10
+	* configure.in (AC_BROKEN): add strsep_copy
+	* Makefile.am (ACLOCAL): fetch files from cf
+
+2000-07-01  Assar Westerlund  <assar@sics.se>
+
+	* roken-common.h (pid_file_*): fix protos
+
+2000-06-28  Assar Westerlund  <assar@sics.se>
+
+	* getnameinfo_verified.c (getnameinfo_verified): free memory
+	returned from getaddrinfo
+
+2000-06-27  Assar Westerlund  <assar@sics.se>
+
+	* resolve.c: export string_to_type and type_to_string
+	* resolve.c: add key,sig,cert update test-program
+	* resolve.h: add key,sig,cert
+
+2000-06-21  Assar Westerlund  <assar@sics.se>
+
+	* resolve.h: add T_SIG, T_KEY
+	* resolve.c: add SIG and KEY
+	* Makefile.am (libroken_la_SOURCES): add environment.c and
+	write_pid.c
+
+	* write_pid.c: new file for writing a pid file.
+
+	* environment.c: new file with functionality for reading
+	/etc/environment.  From Ake Sandgren <ake@cs.umu.se>
+
+2000-06-12  Johan Danielsson  <joda@pdc.kth.se>
+
+	* strsep_copy.c: strsep, but with const stringp so returns string
+	in separate buffer
+
+2000-05-23  Assar Westerlund  <assar@sics.se>
+
+	* vsyslog.c (vsyslog): calculate length of new format string
+	correctly
+
+2000-05-22  Johan Danielsson  <joda@pdc.kth.se>
+
+	* getusershell.c: implment the AIX version use
+	/etc/security/login.cfg
+
+2000-05-21  Assar Westerlund  <assar@sics.se>
+
+	* vsyslog.c (vsyslog): actually handle `%m'
+
 2000-05-15  Assar Westerlund  <assar@sics.se>
 
 	* Makefile.am (libroken_la_LDFLAGS): set version to 8:1:3

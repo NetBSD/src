@@ -33,7 +33,7 @@
 
 #include <krb5_locl.h>
 
-RCSID("$Id: mk_req.c,v 1.1.1.1 2000/06/16 18:33:00 thorpej Exp $");
+RCSID("$Id: mk_req.c,v 1.1.1.2 2000/08/02 19:59:35 assar Exp $");
 
 krb5_error_code
 krb5_mk_req(krb5_context context,
@@ -48,7 +48,6 @@ krb5_mk_req(krb5_context context,
     krb5_error_code ret;
     krb5_creds this_cred, *cred;
     char **realms;
-    krb5_data realm_data;
     char *real_hostname;
 
     memset(&this_cred, 0, sizeof(this_cred));
@@ -64,9 +63,6 @@ krb5_mk_req(krb5_context context,
 	krb5_free_principal (context, this_cred.client);
 	return ret;
     }
-
-    realm_data.length = strlen(*realms);
-    realm_data.data   = *realms;
 
     ret = krb5_build_principal (context, &this_cred.server,
 				strlen(*realms),

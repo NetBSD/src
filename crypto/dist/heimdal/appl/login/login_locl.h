@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: login_locl.h,v 1.1.1.1 2000/06/16 18:32:06 thorpej Exp $ */
+/* $Id: login_locl.h,v 1.1.1.2 2000/08/02 19:58:08 assar Exp $ */
 
 #ifndef __LOGIN_LOCL_H__
 #define __LOGIN_LOCL_H__
@@ -86,6 +86,10 @@
 #endif
 #include <kafs.h>
 
+#ifdef OTP
+#include <otp.h>
+#endif
+
 #ifndef _PATH_BSHELL
 #define _PATH_BSHELL "/bin/sh"
 #endif
@@ -121,7 +125,14 @@
 #define _PATH_LOGIN_CONF "/etc/login.conf"
 #endif /* _PATH_LOGIN_CONF */
 
+#ifndef _PATH_ETC_ENVIRONMENT
+#define _PATH_ETC_ENVIRONMENT "/etc/environment"
+#endif
+
 struct spwd;
+
+extern char **env;
+extern int num_env;
 
 #include "login_protos.h"
 

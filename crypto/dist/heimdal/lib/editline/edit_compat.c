@@ -36,7 +36,7 @@
 #include <string.h>
 #include <histedit.h>
 
-RCSID("$Id: edit_compat.c,v 1.1.1.1 2000/06/16 18:33:03 thorpej Exp $");
+RCSID("$Id: edit_compat.c,v 1.1.1.2 2000/08/02 20:00:14 assar Exp $");
 
 void
 rl_reset_terminal(char *p)

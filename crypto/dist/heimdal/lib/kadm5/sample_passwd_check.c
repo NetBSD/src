@@ -30,7 +30,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-/* $Id: sample_passwd_check.c,v 1.1.1.1 2000/06/16 18:32:53 thorpej Exp $ */
+/* $Id: sample_passwd_check.c,v 1.1.1.2 2000/08/02 19:59:22 assar Exp $ */
 
 #include <string.h>
 #include <stdlib.h>

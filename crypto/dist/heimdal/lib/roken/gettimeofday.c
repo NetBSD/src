@@ -37,7 +37,7 @@
 #include "roken.h"
 #ifndef HAVE_GETTIMEOFDAY
 
-RCSID("$Id: gettimeofday.c,v 1.1.1.1 2000/06/16 18:32:34 thorpej Exp $");
+RCSID("$Id: gettimeofday.c,v 1.1.1.2 2000/08/02 19:59:50 assar Exp $");
 
 /*
  * Simple gettimeofday that only returns seconds.

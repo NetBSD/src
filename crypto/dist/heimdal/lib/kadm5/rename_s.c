@@ -33,7 +33,7 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$Id: rename_s.c,v 1.1.1.1 2000/06/16 18:32:53 thorpej Exp $");
+RCSID("$Id: rename_s.c,v 1.1.1.2 2000/08/02 19:59:21 assar Exp $");
 
 kadm5_ret_t
 kadm5_s_rename_principal(void *server_handle, 
@@ -82,7 +82,7 @@ kadm5_s_rename_principal(void *server_handle,
     ent2.principal = ent.principal;
     ent.principal = target;
 
-    hdb_seal_keys(context->db, &ent);
+    hdb_seal_keys(context->context, context->db, &ent);
 
     kadm5_log_rename (context,
 		      source,

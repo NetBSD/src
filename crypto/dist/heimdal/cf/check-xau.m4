@@ -1,4 +1,4 @@
-dnl $Id: check-xau.m4,v 1.1.1.1 2000/06/16 18:32:16 thorpej Exp $
+dnl $Id: check-xau.m4,v 1.1.1.2 2000/08/02 20:00:28 assar Exp $
 dnl
 dnl check for Xau{Read,Write}Auth and XauFileName
 dnl

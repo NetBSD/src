@@ -1,4 +1,4 @@
-.\" $Id: ktutil.8,v 1.1.1.1 2000/06/16 18:31:39 thorpej Exp $
+.\" $Id: ktutil.8,v 1.1.1.2 2000/08/02 19:58:04 assar Exp $
 .\"
 .Dd Aug 27, 1997
 .Dt KTUTIL 8
@@ -43,7 +43,7 @@ prompted for.
 .Op Fl r Ar realm
 .Op Fl -realm= Ns Ar realm
 .Op Fl -a Ar host
-.Op Fl -admin-server= Ns Ar hots
+.Op Fl -admin-server= Ns Ar host
 .Op Fl -s Ar port
 .Op Fl -server-port= Ns Ar port
 .Xc
@@ -74,7 +74,10 @@ to
 Get a key for
 .Nm principal
 and store it in a keytab.
-.It list
+.It list Xo
+.Op Fl -keys
+.Op Fl -timestamp
+.Xc
 List the keys stored in the keytab.
 .It remove Xo
 .Op Fl p Ar principal
@@ -94,8 +97,8 @@ removes keys of any type.
 .Xc
 Removes all old entries (for which there is a newer version) that are
 older than
-.Ar age
-seconds.
+.Ar age 
+(default one week).
 .It srvconvert
 .It srv2keytab Xo
 .Op Fl s Ar srvtab

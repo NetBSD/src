@@ -1,4 +1,4 @@
-dnl $Id: check-man.m4,v 1.1.1.1 2000/06/16 18:32:15 thorpej Exp $
+dnl $Id: check-man.m4,v 1.1.1.2 2000/08/02 20:00:28 assar Exp $
 dnl check how to format manual pages
 dnl
 

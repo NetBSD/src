@@ -38,7 +38,7 @@
 #endif
 #include "getarg.h"
 
-RCSID("$Id: ftpd.c,v 1.1.1.1 2000/06/16 18:31:50 thorpej Exp $");
+RCSID("$Id: ftpd.c,v 1.1.1.2 2000/08/02 19:58:39 assar Exp $");
 
 static char version[] = "Version 6.00";
 
@@ -195,7 +195,6 @@ parse_auth_level(char *str)
  * Print usage and die.
  */
 
-static int debug_flag;
 static int interactive_flag;
 static char *guest_umask_string;
 static char *port_string;
@@ -216,8 +215,8 @@ struct getargs args[] = {
     { NULL, 't', arg_integer, &ftpd_timeout, "initial timeout" },
     { NULL, 'T', arg_integer, &maxtimeout, "max timeout" },
     { NULL, 'u', arg_string, &umask_string, "umask for user logins" },
-    { NULL, 'd', arg_flag, &debug_flag, "enable debugging" },
-    { NULL, 'v', arg_flag, &debug_flag, "enable debugging" },
+    { NULL, 'd', arg_flag, &debug, "enable debugging" },
+    { NULL, 'v', arg_flag, &debug, "enable debugging" },
     { "builtin-ls", 'B', arg_flag, &use_builtin_ls, "use built-in ls to list files" },
     { "version", 0, arg_flag, &version_flag },
     { "help", 'h', arg_flag, &help_flag }
@@ -253,9 +252,7 @@ show_file(const char *file, int code)
 int
 main(int argc, char **argv)
 {
-    int his_addr_len, ctrl_addr_len, on = 1, tos;
-    char *cp, line[LINE_MAX];
-    FILE *fd;
+    int his_addr_len, ctrl_addr_len, on = 1;
     int port;
     struct servent *sp;
 
@@ -263,17 +260,20 @@ main(int argc, char **argv)
 
     set_progname (argv[0]);
 
-#ifdef KRB4
     /* detach from any tickets and tokens */
     {
+#ifdef KRB4
 	char tkfile[1024];
 	snprintf(tkfile, sizeof(tkfile),
 		 "/tmp/ftp_%u", (unsigned)getpid());
 	krb_set_tkt_string(tkfile);
+#endif
+#if defined(KRB4) && defined(KRB5)
 	if(k_hasafs())
 	    k_setpag();
-    }
 #endif
+    }
+
     if(getarg(args, num_args, argc, argv, &optind))
 	usage(1);
 
@@ -350,10 +350,13 @@ main(int argc, char **argv)
 	exit(1);
     }
 #if defined(IP_TOS) && defined(HAVE_SETSOCKOPT)
-    tos = IPTOS_LOWDELAY;
-    if (setsockopt(STDIN_FILENO, IPPROTO_IP, IP_TOS,
-		   (void *)&tos, sizeof(int)) < 0)
-	syslog(LOG_WARNING, "setsockopt (IP_TOS): %m");
+    {
+	int tos = IPTOS_LOWDELAY;
+
+	if (setsockopt(STDIN_FILENO, IPPROTO_IP, IP_TOS,
+		       (void *)&tos, sizeof(int)) < 0)
+	    syslog(LOG_WARNING, "setsockopt (IP_TOS): %m");
+    }
 #endif
     data_source->sa_family = ctrl_addr->sa_family;
     socket_set_port (data_source,
@@ -709,7 +712,6 @@ checkaccess(char *name)
 
 int do_login(int code, char *passwd)
 {
-    FILE *fd;
     login_attempts = 0;		/* this time successful */
     if (setegid((gid_t)pw->pw_gid) < 0) {
 	reply(550, "Can't set gid.");
@@ -775,7 +777,7 @@ int do_login(int code, char *passwd)
 		  "%s: anonymous/%s",
 		  remotehost,
 		  passwd);
-	setproctitle(proctitle);
+	setproctitle("%s", proctitle);
 #endif /* HAVE_SETPROCTITLE */
 	if (logging) {
 	    char data_addr[256];
@@ -795,7 +797,7 @@ int do_login(int code, char *passwd)
 	reply(code, "User %s logged in.", pw->pw_name);
 #ifdef HAVE_SETPROCTITLE
 	snprintf(proctitle, sizeof(proctitle), "%s: %s", remotehost, pw->pw_name);
-	setproctitle(proctitle);
+	setproctitle("%s", proctitle);
 #endif /* HAVE_SETPROCTITLE */
 	if (logging) {
 	    char data_addr[256];
@@ -833,6 +835,51 @@ end_login(void)
 	dochroot = 0;
 }
 
+#ifdef KRB5
+static int
+krb5_verify(struct passwd *pwd, char *passwd)
+{
+   krb5_context context;  
+   krb5_ccache  id;
+   krb5_principal princ;
+   krb5_error_code ret;
+  
+   ret = krb5_init_context(&context);
+   if(ret)
+        return ret;
+
+  ret = krb5_parse_name(context, pwd->pw_name, &princ);
+  if(ret){
+        krb5_free_context(context);
+        return ret;
+  }
+  ret = krb5_cc_gen_new(context, &krb5_mcc_ops, &id);
+  if(ret){
+        krb5_free_principal(context, princ);
+        krb5_free_context(context);
+        return ret;
+  }
+  ret = krb5_verify_user(context,
+                         princ,
+                         id,
+                         passwd,
+                         1,
+                         NULL);
+  krb5_free_principal(context, princ);
+#ifdef KRB4
+  if (k_hasafs()) {
+      k_setpag();
+      krb5_afslog_uid_home(context, id,NULL, NULL,pwd->pw_uid, pwd->pw_dir);
+  }
+#endif /* KRB4 */
+  krb5_cc_destroy(context, id);
+  krb5_free_context (context);
+  if(ret) 
+      return ret;
+  return 0;
+}
+#endif /* KRB5 */
+
 void
 pass(char *passwd)
 {
@@ -859,19 +906,25 @@ pass(char *passwd)
 		}
 #endif
 		else if((auth_level & AUTH_OTP) == 0) {
-#ifdef KRB4
-		    char realm[REALM_SZ];
-		    if((rval = krb_get_lrealm(realm, 1)) == KSUCCESS)
-			rval = krb_verify_user(pw->pw_name,
-					       "", realm, 
-					       passwd, 
-					       KRB_VERIFY_SECURE, NULL);
-		    if (rval == KSUCCESS ) {
-			chown (tkt_string(), pw->pw_uid, pw->pw_gid);
-			if(k_hasafs())
-			    krb_afslog(0, 0);
-		    } else 
+#ifdef KRB5
+		    rval = krb5_verify(pw, passwd);
 #endif
+#ifdef KRB4
+		    if (rval) {
+			char realm[REALM_SZ];
+			if((rval = krb_get_lrealm(realm, 1)) == KSUCCESS)
+			    rval = krb_verify_user(pw->pw_name,
+						   "", realm, 
+						   passwd, 
+						   KRB_VERIFY_SECURE, NULL);
+			if (rval == KSUCCESS ) {
+			    chown (tkt_string(), pw->pw_uid, pw->pw_gid);
+			    if(k_hasafs())
+				krb_afslog(0, 0);
+			}
+		    }
+#endif
+		    if (rval)
 			rval = unix_verify_user(pw->pw_name, passwd);
 		} else {
 		    char *s;
@@ -1769,7 +1822,7 @@ dolog(struct sockaddr *sa, int len)
 			      NULL, 0, 0);
 #ifdef HAVE_SETPROCTITLE
 	snprintf(proctitle, sizeof(proctitle), "%s: connected", remotehost);
-	setproctitle(proctitle);
+	setproctitle("%s", proctitle);
 #endif /* HAVE_SETPROCTITLE */
 
 	if (logging) {

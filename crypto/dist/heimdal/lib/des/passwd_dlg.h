@@ -36,7 +36,7 @@
  * Date:	June 1996
  */
 
-/* $Id: passwd_dlg.h,v 1.1.1.1 2000/06/16 18:32:27 thorpej Exp $ */
+/* $Id: passwd_dlg.h,v 1.1.1.2 2000/08/02 20:00:08 assar Exp $ */
 
 #ifndef PASSWD_DLG_H
 #define PASSWD_DLG_H

@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.1.1.1 2000/06/16 18:31:41 thorpej Exp $
+# $Id: Makefile.am,v 1.1.1.2 2000/08/02 19:58:56 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -9,6 +9,8 @@ bin_PROGRAMS = kpasswd
 kpasswd_SOURCES = kpasswd.c kpasswd_locl.h
 
 libexec_PROGRAMS = kpasswdd
+
+noinst_PROGRAMS = kpasswd-generator
 
 kpasswdd_SOURCES = kpasswdd.c kpasswd_locl.h
 

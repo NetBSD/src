@@ -1,3 +1,86 @@
+2000-07-27  Assar Westerlund  <assar@sics.se>
+
+	* version4.c (decode_packet): be totally consistent with the
+	prototype of des_cbc_cksum
+	* kadmind.c: use sa_size instead of sa_len, some systems define
+	this to emulate anonymous unions
+	* kadm_conn.c: use sa_size instead of sa_len, some systems define
+	this to emulate anonymous unions
+
+2000-07-24  Assar Westerlund  <assar@sics.se>
+
+	* kadmin.c (commands): add quit
+	* load.c (doit): truncate the log since there's no way of knowing
+	what changes are going to be added
+
+2000-07-23  Assar Westerlund  <assar@sics.se>
+
+	* util.c (str2time_t): be more careful with strptime that might
+	zero out the `struct tm'
+
+2000-07-22  Johan Danielsson  <joda@pdc.kth.se>
+
+	* kadm_conn.c: make the parent process wait for children and
+	terminate after receiving a signal, also terminate on SIGINT
+
+2000-07-22  Assar Westerlund  <assar@sics.se>
+
+	* version4.c: map both princ_expire_time and pw_expiration to v4
+	principal expiration
+
+2000-07-22  Johan Danielsson  <joda@pdc.kth.se>
+
+	* version4.c (handle_v4): check for termination
+
+	* server.c (v5_loop): check for termination
+
+	* kadm_conn.c (wait_term): if we're doing something, set just set
+	a flag otherwise exit rightaway
+
+	* server.c: use krb5_read_priv_message; (v5_loop): check for EOF
+
+2000-07-21  Assar Westerlund  <assar@sics.se>
+
+	* kadm_conn.c: remove sys/select.h.  make signal handlers
+	type-correct and static
+
+	* kadmin_locl.h: add limits.h and sys/select.h
+
+2000-07-20  Assar Westerlund  <assar@sics.se>
+
+	* init.c (init): also create `kadmin/hprop'
+	* kadmind.c: ports is a string argument
+	* kadm_conn.c (start_server): fix printf format
+
+	* kadmin_locl.h: add <sys/select.h>
+	* kadm_conn.c: remove sys/select.h.  make signal handlers
+	type-correct and static
+
+	* kadmin_locl.h: add limits.h and sys/select.h
+
+2000-07-11  Johan Danielsson  <joda@pdc.kth.se>
+
+	* version4.c: change log strings to match the v5 counterparts
+
+	* mod.c: allow setting kvno
+
+	* kadmind.c: if stdin is not a socket create and listen to sockets
+
+	* kadm_conn.c: socket creation functions
+
+	* util.c (deltat2str): treat 0 and INT_MAX as never
+
+2000-07-08  Assar Westerlund  <assar@sics.se>
+
+	* Makefile.am (INCLUDES): add ../lib/krb5
+	* kadmin_locl.h: add krb5_locl.h (since we just use some stuff
+	from there)
+
+2000-06-07  Assar Westerlund  <assar@sics.se>
+
+	* add-random-users.c: new testing program that adds a number of
+	randomly generated users
+
 2000-04-12  Assar Westerlund  <assar@sics.se>
 
 	* cpw.c (do_cpw_entry): call set_password if no argument is given,

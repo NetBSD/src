@@ -40,7 +40,7 @@
 #endif
 #include "resolve.h"
 
-RCSID("$Id: principal.c,v 1.1.1.1 2000/06/16 18:33:01 thorpej Exp $");
+RCSID("$Id: principal.c,v 1.1.1.2 2000/08/02 19:59:37 assar Exp $");
 
 #define princ_num_comp(P) ((P)->name.name_string.len)
 #define princ_type(P) ((P)->name.name_type)
@@ -494,6 +494,9 @@ krb5_copy_principal(krb5_context context,
     return 0;
 }
 
+/*
+ * return TRUE iff princ1 == princ2 (without considering the realm)
+ */
 
 krb5_boolean
 krb5_principal_compare_any_realm(krb5_context context,
@@ -510,6 +513,10 @@ krb5_principal_compare_any_realm(krb5_context context,
     return TRUE;
 }
 
+/*
+ * return TRUE iff princ1 == princ2
+ */
+
 krb5_boolean
 krb5_principal_compare(krb5_context context,
 		       krb5_const_principal princ1,
@@ -520,6 +527,9 @@ krb5_principal_compare(krb5_context context,
     return krb5_principal_compare_any_realm(context, princ1, princ2);
 }
 
+/*
+ * return TRUE iff realm(princ1) == realm(princ2)
+ */
 
 krb5_boolean
 krb5_realm_compare(krb5_context context,
@@ -547,9 +557,7 @@ struct v4_name_convert {
  */
 
 static const char*
-get_name_conversion(krb5_context context,
-		    const char *realm,
-		    const char *name)
+get_name_conversion(krb5_context context, const char *realm, const char *name)
 {
     struct v4_name_convert *q;
     const char *p;
@@ -605,7 +613,6 @@ krb5_425_conv_principal_ext(krb5_context context,
     krb5_error_code ret;
     krb5_principal pr;
     char host[128];
-    char *low_realm = NULL;
 
     /* do the following: if the name is found in the
        `v4_name_convert:host' part, is is assumed to be a `host' type
@@ -689,19 +696,14 @@ krb5_425_conv_principal_ext(krb5_context context,
     p = krb5_config_get_string(context, NULL, "realms", realm, 
 			       "default_domain", NULL);
     if(p == NULL){
-	low_realm = strdup (realm);
-	if (low_realm == NULL)
-	    return ENOMEM;
-	strlwr (low_realm);
-	p = low_realm;
+	/* this should be an error, just faking a name is not good */
+	return HEIM_ERR_V4_PRINC_NO_CONV;
     }
 	
     if (*p == '.')
 	++p;
     snprintf(host, sizeof(host), "%s.%s", instance, p);
     ret = krb5_make_principal(context, &pr, realm, name, host, NULL);
-    if (low_realm)
-	free (low_realm);
     if(func == NULL || (*func)(context, pr)){
 	*princ = pr;
 	return 0;

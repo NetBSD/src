@@ -33,7 +33,7 @@
 
 #include "kdc_locl.h"
 
-RCSID("$Id: kerberos5.c,v 1.1.1.1 2000/06/16 18:31:38 thorpej Exp $");
+RCSID("$Id: kerberos5.c,v 1.1.1.2 2000/08/02 19:58:55 assar Exp $");
 
 #define MAX_TIME ((time_t)((1U << 31) - 1))
 
@@ -283,8 +283,8 @@ get_pa_etype_info(METHOD_DATA *md, hdb_entry *client)
 	return ENOMEM;
     for(i = 0; i < client->keys.len; i++) {
 	pa.val[i].etype = client->keys.val[i].key.keytype;
-	ALLOC(pa.val[i].salttype);
 	if(client->keys.val[i].salt){
+	    ALLOC(pa.val[i].salttype);
 #if 0
 	    if(client->keys.val[i].salt->type == hdb_pw_salt)
 		*pa.val[i].salttype = 0; /* or 1? or NULL? */
@@ -307,19 +307,20 @@ get_pa_etype_info(METHOD_DATA *md, hdb_entry *client)
 	    krb5_copy_data(context, &client->keys.val[i].salt->salt,
 			   &pa.val[i].salt);
 	} else {
-#if 0
-	    *pa.val[i].salttype = 1; /* or 0 with salt? */
-#else
-	    *pa.val[i].salttype = pa_pw_salt;
-#endif
+	    /* we return no salt type at all, as that should indicate
+	     * the default salt type and make everybody happy.  some
+	     * systems (like w2k) dislike being told the salt type
+	     * here. */
+
+	    pa.val[i].salttype = NULL;
 	    pa.val[i].salt = NULL;
 	}
     }
     len = length_ETYPE_INFO(&pa);
     buf = malloc(len);
-    if (buf) {
+    if (buf == NULL) {
 	free_ETYPE_INFO(&pa);
-	return ret;
+	return ENOMEM;
     }
     ret = encode_ETYPE_INFO(buf + len - 1, len, &pa, &len);
     free_ETYPE_INFO(&pa);
@@ -332,7 +333,7 @@ get_pa_etype_info(METHOD_DATA *md, hdb_entry *client)
 	free(buf);
 	return ret;
     }
-    md->val[md->len - 1].padata_type = pa_etype_info;
+    md->val[md->len - 1].padata_type = KRB5_PADATA_ETYPE_INFO;
     md->val[md->len - 1].padata_value.length = len;
     md->val[md->len - 1].padata_value.data = buf;
     return 0;
@@ -516,7 +517,7 @@ as_rep(KDC_REQ *req,
 	PA_DATA *pa;
 	int found_pa = 0;
 	kdc_log(5, "Looking for pa-data -- %s", client_name);
-	while((pa = find_padata(req, &i, pa_enc_timestamp))){
+	while((pa = find_padata(req, &i, KRB5_PADATA_ENC_TIMESTAMP))){
 	    krb5_data ts_data;
 	    PA_ENC_TS_ENC p;
 	    time_t patime;
@@ -619,7 +620,7 @@ as_rep(KDC_REQ *req,
 
 	ret = realloc_method_data(&method_data);
 	pa = &method_data.val[method_data.len-1];
-	pa->padata_type		= pa_enc_timestamp;
+	pa->padata_type		= KRB5_PADATA_ENC_TIMESTAMP;
 	pa->padata_value.length	= 0;
 	pa->padata_value.data	= NULL;
 
@@ -741,10 +742,13 @@ as_rep(KDC_REQ *req,
 	}
 	fix_time(&b->till);
 	t = *b->till;
+
+	/* be careful not overflowing */
+
 	if(client->max_life)
-	    t = min(t, start + *client->max_life);
+	    t = start + min(t - start, *client->max_life);
 	if(server->max_life)
-	    t = min(t, start + *server->max_life);
+	    t = start + min(t - start, *server->max_life);
 #if 0
 	t = min(t, start + realm->max_life);
 #endif
@@ -763,9 +767,9 @@ as_rep(KDC_REQ *req,
 	    if(t == 0)
 		t = MAX_TIME;
 	    if(client->max_renew)
-		t = min(t, start + *client->max_renew);
+		t = start + min(t - start, *client->max_renew);
 	    if(server->max_renew)
-		t = min(t, start + *server->max_renew);
+		t = start + min(t - start, *server->max_renew);
 #if 0
 	    t = min(t, start + realm->max_renew);
 #endif
@@ -1659,7 +1663,7 @@ tgs_rep(KDC_REQ *req,
 	goto out;
     }
     
-    tgs_req = find_padata(req, &i, pa_tgs_req);
+    tgs_req = find_padata(req, &i, KRB5_PADATA_TGS_REQ);
 
     if(tgs_req == NULL){
 	ret = KRB5KDC_ERR_PADATA_TYPE_NOSUPP;

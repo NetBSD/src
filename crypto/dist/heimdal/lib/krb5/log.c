@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: log.c,v 1.1.1.1 2000/06/16 18:32:57 thorpej Exp $");
+RCSID("$Id: log.c,v 1.1.1.2 2000/08/02 19:59:34 assar Exp $");
 
 struct facility {
     int min;
@@ -362,8 +362,7 @@ krb5_vlog_msg(krb5_context context,
 
     vasprintf(&msg, fmt, ap);
     t = time(NULL);
-    strftime(buf, sizeof(buf), context->time_fmt, 
-	     context->log_utc ? gmtime(&t) : localtime(&t));
+    krb5_format_time(context, t, buf, sizeof(buf), TRUE);
     for(i = 0; i < fac->len; i++)
 	if(fac->val[i].min <= level && 
 	   (fac->val[i].max < 0 || fac->val[i].max >= level))

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: constants.c,v 1.1.1.1 2000/06/16 18:32:56 thorpej Exp $");
+RCSID("$Id: constants.c,v 1.1.1.2 2000/08/02 19:59:25 assar Exp $");
 
 const char krb5_config_file[] = "/etc/krb5.conf";
-const char krb5_defkeyname[] = "/etc/v5srvtab";
+const char krb5_defkeyname[] = KEYTAB_DEFAULT;

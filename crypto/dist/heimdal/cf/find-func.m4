@@ -1,4 +1,4 @@
-dnl $Id: find-func.m4,v 1.1.1.1 2000/06/16 18:32:16 thorpej Exp $
+dnl $Id: find-func.m4,v 1.1.1.2 2000/08/02 20:00:29 assar Exp $
 dnl
 dnl AC_FIND_FUNC(func, libraries, includes, arguments)
 AC_DEFUN(AC_FIND_FUNC, [

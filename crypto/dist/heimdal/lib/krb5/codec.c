@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: codec.c,v 1.1.1.1 2000/06/16 18:32:56 thorpej Exp $");
+RCSID("$Id: codec.c,v 1.1.1.2 2000/08/02 19:59:24 assar Exp $");
 
 /* these functions does what the normal asn.1-functions does, but
    converts the keytype to/from the on-the-wire enctypes */

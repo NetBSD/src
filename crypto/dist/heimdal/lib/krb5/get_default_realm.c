@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: get_default_realm.c,v 1.1.1.1 2000/06/16 18:32:57 thorpej Exp $");
+RCSID("$Id: get_default_realm.c,v 1.1.1.2 2000/08/02 19:59:28 assar Exp $");
 
 /*
  * Return a NULL-terminated list of default realms in `realms'.

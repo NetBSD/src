@@ -34,7 +34,7 @@
 #include <config.h>
 #include "misc-proto.h"
 
-RCSID("$Id: genget.c,v 1.1.1.1 2000/06/16 18:31:54 thorpej Exp $");
+RCSID("$Id: genget.c,v 1.1.1.2 2000/08/02 19:58:18 assar Exp $");
 
 #include <ctype.h>
 

@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: verify_init.c,v 1.1.1.1 2000/06/16 18:33:02 thorpej Exp $");
+RCSID("$Id: verify_init.c,v 1.1.1.2 2000/08/02 19:59:43 assar Exp $");
 
 void
 krb5_verify_init_creds_opt_init(krb5_verify_init_creds_opt *options)

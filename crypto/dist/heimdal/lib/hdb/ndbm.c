@@ -33,7 +33,7 @@
 
 #include "hdb_locl.h"
 
-RCSID("$Id: ndbm.c,v 1.1.1.1 2000/06/16 18:32:49 thorpej Exp $");
+RCSID("$Id: ndbm.c,v 1.1.1.2 2000/08/02 19:59:14 assar Exp $");
 
 #ifdef HAVE_NDBM_H
 
@@ -94,7 +94,7 @@ NDBM_seq(krb5_context context, HDB *db,
     if(hdb_value2entry(context, &data, entry))
 	return NDBM_seq(context, db, flags, entry, 0);
     if (db->master_key_set && (flags & HDB_F_DECRYPT))
-	hdb_unseal_keys (db, entry);
+	hdb_unseal_keys (context, db, entry);
     if (entry->principal == NULL) {
 	entry->principal = malloc (sizeof(*entry->principal));
 	hdb_key2principal (context, &key_data, entry->principal);

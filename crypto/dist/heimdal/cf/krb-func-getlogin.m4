@@ -1,5 +1,5 @@
 dnl
-dnl $Id: krb-func-getlogin.m4,v 1.1.1.1 2000/06/16 18:32:17 thorpej Exp $
+dnl $Id: krb-func-getlogin.m4,v 1.1.1.2 2000/08/02 20:00:30 assar Exp $
 dnl
 dnl test for POSIX (broken) getlogin
 dnl

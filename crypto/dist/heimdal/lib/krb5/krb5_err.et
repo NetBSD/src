@@ -3,7 +3,7 @@
 #
 # This might look like a com_err file, but is not
 #
-id "$Id: krb5_err.et,v 1.1.1.1 2000/06/16 18:32:58 thorpej Exp $"
+id "$Id: krb5_err.et,v 1.1.1.2 2000/08/02 19:59:32 assar Exp $"
 
 error_table krb5
 
@@ -91,7 +91,7 @@ error_code KDC_NAME_MISMATCH,	"KDC name mismatch"
 
 index 128
 prefix
-error_code KRB5_ERR_RCSID,	"$Id: krb5_err.et,v 1.1.1.1 2000/06/16 18:32:58 thorpej Exp $"
+error_code KRB5_ERR_RCSID,	"$Id: krb5_err.et,v 1.1.1.2 2000/08/02 19:59:32 assar Exp $"
 
 error_code KRB5_LIBOS_BADLOCKFLAG,	"Invalid flag for file lock mode"
 error_code KRB5_LIBOS_CANTREADPWD,	"Cannot read password"

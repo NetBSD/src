@@ -32,7 +32,7 @@
  */
 
 #include "test_locl.h"
-RCSID("$Id: uu_client.c,v 1.1.1.1 2000/06/16 18:31:47 thorpej Exp $");
+RCSID("$Id: uu_client.c,v 1.1.1.2 2000/08/02 19:58:15 assar Exp $");
 
 krb5_context context;
 
