@@ -1,5 +1,5 @@
-# Copyright (c) 1989 The Regents of the University of California.
-# All rights reserved.
+# Copyright (c) 1989, 1993
+#	The Regents of the University of California.  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -29,7 +29,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	@(#)map3270	5.4 (Berkeley) 4/17/91
+#	@(#)map3270	8.2 (Berkeley) 4/1/94
 #
 
 # This file contains mappings between characters entered from the keyboard,
@@ -617,20 +617,20 @@ tvipt | vp | televideopt {
     indent = '\El' | '\EL';
     undent = '\Eh' | '\EH';
 } # end of tvipt
-vt100 | vt100nam | pt100 | vt125 | vt102 | direct831 | tek4125 | pcplot |        microvax{
+vt100 | vt100nam | pt100 | vt125 | vt102 | direct831 | tek4125 | pcplot |        microvax | vt220 | vt320 | xterm{
 enter = '^m';
 clear = '^z' | '\EOM';
 
-nl = '^?';
+nl = '^j';
 tab = '^i';
 btab = '^b';
-left = '^h' | '\EOD';
-right = '^l' | '\EOC';
-up = '^k' | '\EOA';
-down = '^j' | '\EOB';
+left = '^h' | '\E[D' | '\EOD';
+right = '^l' | '\E[C' | '\EOC';
+up = '^k' | '\E[A' | '\EOA';
+down = '\E[B' | '\EOB';
 home = '\EOn';
 
-delete = '^d';
+delete = '^d' | '^?';
 eeof = '^e';
 einp = '^w';
 insrt = '^ ' | '\E ';
