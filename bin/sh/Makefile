@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.61 2002/11/24 22:35:38 christos Exp $
+#	$NetBSD: Makefile,v 1.62 2003/01/09 13:57:26 christos Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -20,6 +20,9 @@ LFLAGS= -8	# 8-bit lex scanner for arithmetic
 YFLAGS=	-d
 
 CPPFLAGS+=-DSHELL -I. -I${.CURDIR}
+#XXX: For testing only.
+#CFLAGS+=-funsigned-char
+#TARGET_CHARFLAG?= -DTARGET_CHAR="unsigned char" -funsigned-char
 
 .ifdef SMALLPROG
 CPPFLAGS+=-DSMALL
@@ -55,9 +58,9 @@ mknodes: mknodes.c
 
 .if	(${MACHINE_ARCH} == "powerpc") || \
 	(${MACHINE_CPU} == "arm")
-TARGET_CHARFLAG= -DTARGET_CHAR="unsigned char"
+TARGET_CHARFLAG?= -DTARGET_CHAR="unsigned char"
 .else
-TARGET_CHARFLAG= -DTARGET_CHAR="signed char"
+TARGET_CHARFLAG?= -DTARGET_CHAR="signed char"
 .endif
 
 mksyntax: mksyntax.c
