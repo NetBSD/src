@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.66 2000/07/19 06:00:39 onoe Exp $	*/
+/*	$NetBSD: if.c,v 1.67 2000/07/20 18:40:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -150,8 +150,10 @@ extern void nd6_setmtu __P((struct ifnet *));
 int	if_rt_walktree __P((struct radix_node *, void *));
 
 struct if_clone *if_clone_lookup __P((const char *, int *));
+int if_clone_list __P((struct if_clonereq *));
 
 LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
+int if_cloners_count;
 
 /*
  * Network interface utility routines.
@@ -578,6 +580,7 @@ if_clone_attach(ifc)
 {
 
 	LIST_INSERT_HEAD(&if_cloners, ifc, ifc_list);
+	if_cloners_count++;
 }
 
 /*
@@ -589,6 +592,42 @@ if_clone_detach(ifc)
 {
 
 	LIST_REMOVE(ifc, ifc_list);
+	if_cloners_count--;
+}
+
+/*
+ * Provide list of interface cloners to userspace.
+ */
+int
+if_clone_list(ifcr)
+	struct if_clonereq *ifcr;
+{
+	char outbuf[IFNAMSIZ], *dst;
+	struct if_clone *ifc;
+	int count, error = 0;
+
+	ifcr->ifcr_total = if_cloners_count;
+	if ((dst = ifcr->ifcr_buffer) == NULL) {
+		/* Just asking how many there are. */
+		return (0);
+	}
+
+	if (ifcr->ifcr_count < 0)
+		return (EINVAL);
+
+	count = (if_cloners_count < ifcr->ifcr_count) ?
+	    if_cloners_count : ifcr->ifcr_count;
+
+	for (ifc = LIST_FIRST(&if_cloners); ifc != NULL && count != 0;
+	     ifc = LIST_NEXT(ifc, ifc_list), count--, dst += IFNAMSIZ) {
+		strncpy(outbuf, ifc->ifc_name, IFNAMSIZ);
+		outbuf[IFNAMSIZ - 1] = '\0';	/* sanity */
+		error = copyout(outbuf, dst, IFNAMSIZ);
+		if (error)
+			break;
+	}
+
+	return (error);
 }
 
 /*
@@ -1032,6 +1071,9 @@ ifioctl(so, cmd, data, p)
 		return ((cmd == SIOCIFCREATE) ?
 			if_clone_create(ifr->ifr_name) :
 			if_clone_destroy(ifr->ifr_name));
+
+	case SIOCIFGCLONERS:
+		return (if_clone_list((struct if_clonereq *)data));
 	}
 
 	ifp = ifunit(ifr->ifr_name);
