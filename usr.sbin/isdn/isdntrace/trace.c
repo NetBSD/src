@@ -35,7 +35,7 @@
  *	trace.c - print traces of D (B) channel activity for isdn4bsd
  *	-------------------------------------------------------------
  *
- *	$Id: trace.c,v 1.7 2003/10/06 09:43:28 itojun Exp $ 
+ *	$Id: trace.c,v 1.8 2004/03/28 20:49:22 pooka Exp $ 
  *
  * $FreeBSD$
  *
@@ -502,7 +502,7 @@ fmt_hdr(struct i4b_trace_hdr *hdr, int frm_len)
 	if (hdr->type == TRC_CH_I)		/* Layer 1 INFO's */
 	{
 		snprintf(hbuf, sizeof(hbuf),
-		    "\n-- %s - bri:%d ---------------- time:%2.2d.%2.2d %2.2d:%2.2d:%2.2d.%06u ",
+		    "\n-- %s - isdnif:%d ------------- time:%2.2d.%2.2d %2.2d:%2.2d:%2.2d.%06u ",
 		    ((hdr->dir) ? "NT->TE" : "TE->NT"), hdr->isdnif,
 		    s->tm_mday, s->tm_mon + 1, s->tm_hour, s->tm_min,
 		    s->tm_sec, (u_int32_t)hdr->time.tv_usec);
@@ -512,7 +512,7 @@ fmt_hdr(struct i4b_trace_hdr *hdr, int frm_len)
 		if (hdr->trunc > 0)
 		{
 			snprintf(hbuf, sizeof(hbuf),
-			    "\n-- %s - bri:%d - frame:%6.6u - time:%2.2d.%2.2d %2.2d:%2.2d:%2.2d.%06u - length:%d (%d) ",
+			    "\n-- %s - isdnif:%d - frame:%6.6u - time:%2.2d.%2.2d %2.2d:%2.2d:%2.2d.%06u - length:%d (%d) ",
 			    ((hdr->dir) ? "NT->TE" : "TE->NT"), hdr->isdnif,
 			    hdr->count, s->tm_mday, s->tm_mon + 1, s->tm_hour,
 			    s->tm_min, s->tm_sec, (u_int32_t)hdr->time.tv_usec,
@@ -521,7 +521,7 @@ fmt_hdr(struct i4b_trace_hdr *hdr, int frm_len)
 		else
 		{
 			snprintf(hbuf, sizeof(hbuf),
-			    "\n-- %s - bri:%d - frame:%6.6u - time:%2.2d.%2.2d %2.2d:%2.2d:%2.2d.%06u - length:%d ", ((hdr->dir) ? "NT->TE" : "TE->NT"),
+			    "\n-- %s - isdnif:%d - frame:%6.6u - time:%2.2d.%2.2d %2.2d:%2.2d:%2.2d.%06u - length:%d ", ((hdr->dir) ? "NT->TE" : "TE->NT"),
 			    hdr->isdnif, hdr->count, s->tm_mday, s->tm_mon + 1,
 			    s->tm_hour, s->tm_min, s->tm_sec,
 			    (u_int32_t)hdr->time.tv_usec, frm_len);
