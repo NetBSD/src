@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.30 2002/09/26 02:05:41 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.31 2002/09/26 02:51:27 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -350,8 +350,8 @@ _rtld_bind(obj, reloff)
 		_rtld_die();
 
 	value = (Elf_Addr)(defobj->relocbase + def->st_value);
-	rdbg(("bind now/fixup in %s --> old=%p new=%p", 
-	    defobj->strtab + def->st_name, (void *)*where, (void *)value));
+	rdbg(("bind now/fixup in %s --> new=%p", 
+	    defobj->strtab + def->st_name, (void *)value));
 
 	/*
 	 * At the PLT entry pointed at by `where', we now construct
