@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2001/10/13 06:15:19 jmc Exp $
+#	$NetBSD: Makefile,v 1.8 2002/02/02 07:26:40 tsutsui Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -20,11 +20,11 @@ MTREECONF=	mtree.conf
 CRUNCHGEN?=	crunchgen
 MTREE?=		mtree
 
-SIZE=		2048k
+RAMDISKSIZE=	2048k
 DISKTYPE=	floppyinstfs
 
 all: ${CBIN} 
-	dd if=/dev/zero of=${IMAGE} bs=${SIZE} count=1
+	dd if=/dev/zero of=${IMAGE} bs=${RAMDISKSIZE} count=1
 	vnconfig -t ${DISKTYPE} -v -c ${VND} ${IMAGE}
 	disklabel -rw ${VND} ${DISKTYPE}
 	newfs -B be -m 0 -o space -i 8192 -c 128 ${VND_RDEV}
@@ -56,8 +56,10 @@ HACKSRC=${TOP}/../../utils/libhack
 HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o setlocale.o yplib.o
 
 clean cleandir distclean:
+	if [ -f ${CBIN}.mk ]; then ${MAKE} -f ${CBIN}.mk clean; fi; \
 	rm -f ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache
 	rm -f *.core *.o *.cro *.c
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
+.include <bsd.prog.mk>
