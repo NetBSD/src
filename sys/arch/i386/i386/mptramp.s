@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.s,v 1.3 2002/10/01 19:36:51 fvdl Exp $	*/
+/*	$NetBSD: mptramp.s,v 1.4 2002/11/11 09:14:10 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -117,15 +117,13 @@
 #define HALTT(x,y) /**/
 #endif
 
-        .globl  _C_LABEL(cpu),_C_LABEL(cpu_id),_C_LABEL(cpu_vendor)
-	.globl  _C_LABEL(cpuid_level),_C_LABEL(cpu_feature)
 	.globl	_C_LABEL(mpidle)
 
 	.global _C_LABEL(cpu_spinup_trampoline)
 	.global _C_LABEL(cpu_spinup_trampoline_end)
 	.global _C_LABEL(cpu_hatch)
 	.global _C_LABEL(mp_pdirpa)
-	.global _C_LABEL(gdt), _C_LABEL(local_apic)
+	.global _C_LABEL(local_apic)
 
 	.text
 	.align 4,0x0
