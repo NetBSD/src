@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.23.2.1 2005/01/03 06:37:57 kent Exp $	*/
+/*	$NetBSD: interwave.c,v 1.23.2.2 2005/01/03 16:40:26 kent Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.23.2.1 2005/01/03 06:37:57 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.23.2.2 2005/01/03 16:40:26 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -775,10 +775,7 @@ iw_set_params(addr, setmode, usemode, p, q, pfil, rfil)
 			iw_set_speed(sc, p->sample_rate, 0);
 		if (swcode != NULL) {
 			phw.sample_rate = p->sample_rate;
-			/* stream_filter_list_append(pfil, swcode, &phw); */
-			pfil->filters[0].factory = swcode;
-			pfil->filters[0].param = phw;
-			pfil->req_size = 1;
+			pfil->append(pfil, swcode, &phw);
 		}
 	} else {
 #if 0
@@ -795,10 +792,7 @@ iw_set_params(addr, setmode, usemode, p, q, pfil, rfil)
 			iw_set_speed(sc, q->sample_rate, 1);
 		if (swcode != NULL) {
 			rhw.sample_rate = q->sample_rate;
-			/* stream_filter_list_append(rfil, swcode, &rhw); */
-			rfil->filters[0].factory = swcode;
-			rfil->filters[0].param = rhw;
-			rfil->req_size = 1;
+			rfil->append(rfil, swcode, &rhw);
 		}
 	}
 	return 0;

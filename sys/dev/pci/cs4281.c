@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.21.2.1 2005/01/02 20:03:11 kent Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.21.2.2 2005/01/03 16:40:26 kent Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.21.2.1 2005/01/02 20:03:11 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.21.2.2 2005/01/03 16:40:26 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -490,15 +490,13 @@ cs4281_set_params(void *addr, int setmode, int usemode,
 			break;
 		case AUDIO_ENCODING_ULAW:
 			hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
-			stream_filter_list_append
-				(fil, mode == AUMODE_PLAY ? mulaw_to_linear8
-				 :  linear8_to_mulaw, &hw);
+			fil->append(fil, mode == AUMODE_PLAY ? mulaw_to_linear8
+				    :  linear8_to_mulaw, &hw);
 			break;
 		case AUDIO_ENCODING_ALAW:
 			hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
-			stream_filter_list_append
-				(fil, mode == AUMODE_PLAY ? alaw_to_linear8
-				 :  linear8_to_alaw, &hw);
+			fil->append(fil, mode == AUMODE_PLAY ? alaw_to_linear8
+				    : linear8_to_alaw, &hw);
 			break;
 		default:
 			return (EINVAL);

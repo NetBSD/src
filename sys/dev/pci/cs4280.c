@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.32.2.1 2005/01/02 20:03:11 kent Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.32.2.2 2005/01/03 16:40:26 kent Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.32.2.1 2005/01/02 20:03:11 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.32.2.2 2005/01/03 16:40:26 kent Exp $");
 
 #include "midi.h"
 
@@ -602,47 +602,41 @@ cs4280_set_params(void *addr, int setmode, int usemode,
 		switch (p->encoding) {
 		case AUDIO_ENCODING_SLINEAR_BE:
 			if (mode == AUMODE_RECORD && p->precision == 16) {
-				stream_filter_list_append(fil, swap_bytes, &hw);
+				fil->append(fil, swap_bytes, &hw);
 			}
 			break;
 		case AUDIO_ENCODING_SLINEAR_LE:
 			break;
 		case AUDIO_ENCODING_ULINEAR_BE:
 			if (mode == AUMODE_RECORD) {
-				stream_filter_list_append
-					(fil, p->precision == 16
-					 ? swap_bytes_change_sign16
-					 : change_sign8, &hw);
+				fil->append(fil, p->precision == 16
+					    ? swap_bytes_change_sign16
+					    : change_sign8, &hw);
 			}
 			break;
 		case AUDIO_ENCODING_ULINEAR_LE:
 			if (mode == AUMODE_RECORD) {
-				stream_filter_list_append
-					(fil, p->precision == 16
-					 ? change_sign16 : change_sign8,
-					 &hw);
+				fil->append(fil, p->precision == 16
+					    ? change_sign16 : change_sign8,
+					    &hw);
 			}
 			break;
 		case AUDIO_ENCODING_ULAW:
 			if (mode == AUMODE_PLAY) {
 				hw.precision = 16;
 				hw.validbits = 16;
-				stream_filter_list_append
-					(fil, mulaw_to_linear16, &hw);
+				fil->append(fil, mulaw_to_linear16, &hw);
 			} else {
-				stream_filter_list_append
-					(fil, linear8_to_mulaw, &hw);
+				fil->append(fil, linear8_to_mulaw, &hw);
 			}
 			break;
 		case AUDIO_ENCODING_ALAW:
 			if (mode == AUMODE_PLAY) {
 				hw.precision = 16;
 				hw.validbits = 16;
-				stream_filter_list_append
-					(fil, alaw_to_linear16, &hw);
+				fil->append(fil, alaw_to_linear16, &hw);
 			} else {
-				stream_filter_list_append
-					(fil, linear8_to_alaw, &hw);
+				fil->append(fil, linear8_to_alaw, &hw);
 			}
 			break;
 		default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.113.2.1 2005/01/03 06:37:58 kent Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.113.2.2 2005/01/03 16:40:26 kent Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.113.2.1 2005/01/03 06:37:58 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.113.2.2 2005/01/03 16:40:26 kent Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -764,7 +764,7 @@ sbdsp_set_params(addr, setmode, usemode, play, rec, pfil, rfil)
 		}
 
 		if (swcode != NULL)
-			stream_filter_list_append(fil, swcode, &hw);
+			fil->append(fil, swcode, &hw);
 		DPRINTF(("sbdsp_set_params: model=%d, mode=%d, rate=%ld, "
 			 "prec=%d, chan=%d, enc=%d -> tc=%02x, cmd=%02x, "
 			 "bmode=%02x, cmdchan=%02x\n", sc->sc_model, mode,
@@ -782,7 +782,7 @@ sbdsp_set_params(addr, setmode, usemode, play, rec, pfil, rfil)
 		if (sc->sc_o.dmachan == sc->sc_drq8) {
 			/* Use 16 bit DMA for playing by expanding the samples. */
 			hw.precision = hw.validbits = 16;
-			stream_filter_list_append(pfil, linear8_to_linear16, &hw);
+			pfil->append(pfil, linear8_to_linear16, &hw);
 			sc->sc_o.modep = &sbpmodes[PLAY16];
 			sc->sc_o.dmachan = sc->sc_drq16;
 		} else {

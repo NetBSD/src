@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.11.2.9 2005/01/02 15:54:44 kent Exp $	*/
+/*	$NetBSD: auconv.c,v 1.11.2.10 2005/01/03 16:40:26 kent Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.11.2.9 2005/01/02 15:54:44 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.11.2.10 2005/01/03 16:40:26 kent Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -575,38 +575,6 @@ DEFINE_FILTER(linear16_to_linear8)
 	return 0;
 }
 
-void
-stream_filter_list_append(stream_filter_list_t *list,
-			  stream_filter_factory_t factory,
-			  const audio_params_t *param)
-{
-	if (list->req_size >= AUDIO_MAX_FILTERS) {
-		printf("%s: increase AUDIO_MAX_FILTERS in sys/dev/audio_if.h\n",
-		       __func__);
-		return;
-	}
-	list->filters[list->req_size].factory = factory;
-	list->filters[list->req_size].param = *param;
-	list->req_size++;
-}
-
-void
-stream_filter_list_prepend(stream_filter_list_t *list,
-			   stream_filter_factory_t factory,
-			   const audio_params_t *param)
-{
-	if (list->req_size >= AUDIO_MAX_FILTERS) {
-		printf("%s: increase AUDIO_MAX_FILTERS in sys/dev/audio_if.h\n",
-		       __func__);
-		return;
-	}
-	memmove(&list->filters[1], &list->filters[0],
-		sizeof(struct stream_filter_req) * list->req_size);
-	list->filters[0].factory = factory;
-	list->filters[0].param = *param;
-	list->req_size++;
-}
-
 /**
  * Set appropriate parameters in `param,' and return the index in
  * the hardware capability array `formats.'
@@ -709,7 +677,7 @@ auconv_set_converter(const struct audio_format *formats, int nformats,
 		if (i >= 0) {
 			conv = mode == AUMODE_PLAY
 				? table[j].play_conv : table[j].rec_conv;
-			stream_filter_list_append(list, conv, &work);
+			list->append(list, conv, &work);
 			DPRINTF(("%s: LEAVE with %d (emultable)\n", __func__, i));
 			return i;
 		}
@@ -739,7 +707,7 @@ auconv_set_converter(const struct audio_format *formats, int nformats,
 			conv = mode == AUMODE_PLAY
 				? table[j].play_conv : table[j].rec_conv;
 			/* register userland<=>work conversion */
-			stream_filter_list_append(list, conv, &work);
+			list->append(list, conv, &work);
 			DPRINTF(("%s: LEAVE with %d (rateconv2)\n", __func__, i));
 			return i;
 		}
@@ -867,7 +835,7 @@ auconv_rateconv_check_rates(const struct audio_format *formats, int nformats,
 	return -1;
 
  found:
-	stream_filter_list_append(list, aurateconv, hw_param);
+	list->append(list, aurateconv, hw_param);
 	return ind;
 }
 #endif /* NAURATECONV */
