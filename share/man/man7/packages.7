@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.24 1999/11/23 16:44:57 dmcmahill Exp $
+.\"	$NetBSD: packages.7,v 1.25 1999/12/07 08:59:54 sakamoto Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -291,6 +291,18 @@ to retrieve distribution files.
 Says that the package uses
 .Pa libtool
 to manage building of libraries and shared objects, where applicable.
+.It LTCONFIG_OVERRIDE
+If set, override the specified
+.Pa ltconfig
+for using
+.Pa pkglibtool
+instead of the pkg's own
+.Pa libtool .
+.It LIBTOOL_OVERRIDE
+If set, override the specified
+.Pa libtool
+with our
+.Pa pkglibtool .
 .It USE_FORTRAN
 Says that the package uses a fortran compiler for building.
 .It USE_GMAKE	
