@@ -1,4 +1,4 @@
-.\"	$NetBSD: dlfcn.3,v 1.7 1998/05/13 19:33:01 pk Exp $
+.\"	$NetBSD: dlfcn.3,v 1.8 1998/05/30 18:40:41 kleink Exp $
 .\"
 .\" Copyright (c) 1995,1998 Paul Kranenburg
 .\" All rights reserved.
@@ -182,6 +182,16 @@ is
 .Fn dlerror
 return a character string representing the most recent error that has
 occurred while processing one of the other functions described here.
+If no dynamic linking errors have occured since the last invocation of
+.Fn dlerror ,
+.Fn dlerror
+returns
+.Dv NULL .
+Thus, invoking
+.Fn dlerror
+a second time, immediately following a prior invocation, will result in
+.Dv NULL
+being returned.
 .Sh SEE ALSO
 .Xr ld 1 ,
 .Xr rtld 1 ,
