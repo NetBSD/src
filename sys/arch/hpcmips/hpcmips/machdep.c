@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 2000/02/10 02:15:01 sato Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18 2000/02/10 08:34:08 sato Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2000/02/10 02:15:01 sato Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2000/02/10 08:34:08 sato Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41x1.h"
@@ -457,7 +457,7 @@ cpu_startup()
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf(version);
-	sprintf(cpu_model, "%s (%s)\n", platid_name(&platid), cpu_name);
+	sprintf(cpu_model, "%s (%s)", platid_name(&platid), cpu_name);
 	printf("%s\n", cpu_model);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
