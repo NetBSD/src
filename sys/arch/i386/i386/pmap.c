@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.33 2001/04/30 16:23:11 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.34 2001/05/04 01:32:58 thorpej Exp $	*/
 
 /*
  *
@@ -594,6 +594,7 @@ pmap_apte_flush(struct pmap *pmap)
 	struct pmap_tlb_shootdown_q *pq;
 	struct cpu_info *ci, *self = curcpu();
 	CPU_INFO_ITERATOR cii;
+	int s;
 #endif
 
 	tlbflush();		/* flush TLB on current processor */
@@ -610,9 +611,11 @@ pmap_apte_flush(struct pmap *pmap)
 			continue;
 		if (pmap_is_active(pmap, ci->ci_cpuid)) {
 			pq = &pmap_tlb_shootdown_q[ci->ci_cpuid];
+			s = splipi();
 			simple_lock(&pq->pq_slock);
 			pq->pq_flushu++;
 			simple_unlock(&pq->pq_slock);
+			splx(s);
 			i386_send_ipi(ci, I386_IPI_TLB);
 		}
 	}
