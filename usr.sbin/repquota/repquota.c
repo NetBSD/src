@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.14 1998/07/27 00:52:03 mycroft Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.14.2.1 2000/01/23 12:03:29 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -193,7 +193,6 @@ repquota(fs, type, qfpathname)
 	static struct dqblk zerodqblk;
 	static int warned = 0;
 	static int multiple = 0;
-	extern int errno;
 
 	if (quotactl(fs->fs_file, QCMD(Q_SYNC, type), 0, 0) < 0 &&
 	    errno == EOPNOTSUPP && !warned && vflag) {
