@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.46 2002/05/03 15:43:41 lukem Exp $
+# $NetBSD: obsolete.mi,v 1.46.2.1 2002/06/07 18:53:48 thorpej Exp $
 /usr/share/man/cat1/amq.0
 /usr/share/man/cat1/g711conv.0
 /usr/share/man/cat1/i386
@@ -11,6 +11,7 @@
 /usr/share/man/cat1/i386/scon.0
 /usr/share/man/cat1/i386/vt220keys.0
 /usr/share/man/cat1/i386/vttest.0
+/usr/share/man/cat1/mopa.out.0
 /usr/share/man/cat1/pim6stat.0
 /usr/share/man/cat1/pstat.0
 /usr/share/man/cat1/rcorder.0
@@ -137,6 +138,7 @@
 /usr/share/man/man1/i386/scon.1
 /usr/share/man/man1/i386/vt220keys.1
 /usr/share/man/man1/i386/vttest.1
+/usr/share/man/man1/mopa.out.1
 /usr/share/man/man1/pim6stat.1
 /usr/share/man/man1/pstat.1
 /usr/share/man/man1/rcorder.1
