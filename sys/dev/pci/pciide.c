@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.6.2.7 1998/06/11 09:27:24 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.6.2.8 1998/06/12 16:39:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -697,10 +697,8 @@ void
 piix_setup_cap(sc)
 	struct pciide_softc *sc;
 {
-#if 0
 	if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82371AB_IDE)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
-#endif
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32 | WDC_CAPABILITY_PIO |
 	    WDC_CAPABILITY_DMA;
 	sc->sc_wdcdev.pio_mode = 4;
@@ -874,10 +872,14 @@ piix3_4_setup_chip(sc, pc, tag)
 			/* add timing values, setup DMA if needed */
 			if (((drvp->drive_flags & DRIVE_DMA) == 0 &&
 			    (drvp->drive_flags & DRIVE_UDMA) == 0) ||
-			    sc->sc_dma_ok == 0) 
+			    sc->sc_dma_ok == 0) {
+				drvp->drive_flags &= ~(DRIVE_DMA | DRIVE_UDMA);
 				goto pio;
-			if (pciide_dma_table_setup(sc, channel, drive) != 0)
-			    goto pio; /* Abort DMA setup */
+			}
+			if (pciide_dma_table_setup(sc, channel, drive) != 0) {
+				drvp->drive_flags &= ~(DRIVE_DMA | DRIVE_UDMA);
+				goto pio; /* Abort DMA setup */
+			}
 			if ((chp->wdc->cap & WDC_CAPABILITY_UDMA) &&
 			    (drvp->drive_flags & DRIVE_UDMA)) {
 				/* use Ultra/DMA */
@@ -901,10 +903,9 @@ piix3_4_setup_chip(sc, pc, tag)
 				}
 			}
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
-			goto end;
 		
 pio:			/* use PIO mode */
-			drvp->drive_flags &= ~(DRIVE_DMA | DRIVE_UDMA);
+			idetim |= piix_setup_idetim_drvs(&drvp[drive]);
 			if (drive == 0) {
 				idetim |= piix_setup_idetim_timings(
 				    drvp->PIO_mode, 0, channel);
@@ -914,7 +915,6 @@ pio:			/* use PIO mode */
 				idetim =PIIX_IDETIM_SET(idetim,
 				    PIIX_IDETIM_SITRE, channel);
 			}
-end:			idetim |= piix_setup_idetim_drvs(&drvp[drive]);
 			printf("%s:%d:%d: using PIO mode %d",
 			    sc->sc_wdcdev.sc_dev.dv_xname,
 			    channel, drive, drvp[drive].PIO_mode);
