@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.18 2003/10/08 04:25:45 lukem Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.19 2003/10/31 10:49:25 hannken Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -82,8 +82,6 @@
 #ifdef _STANDALONE
 #include "bootinfo.h"
 #endif
-
-extern void memset(void *, int, size_t);
 
 #define BUFSIZE (1 * BIOSDISK_SECSIZE)
 
