@@ -1,4 +1,4 @@
-/*	$NetBSD: lpkg.c,v 1.1 1999/03/22 05:02:41 hubertf Exp $	*/
+/*	$NetBSD: lpkg.c,v 1.1.2.1 1999/09/13 22:32:16 he Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -32,33 +32,35 @@
 #include <err.h>
 #include "lib.h"
 
-/* add a package to the recursive delete list */
+/*
+ * Add a package to the recursive delete list
+ */
 lpkg_t *
 alloc_lpkg(const char *pkgname)
 {
-    lpkg_t *lpp;
+	lpkg_t *lpp;
 
-    if ((lpp = malloc(sizeof(*lpp))) == 0)
-        err(1, "cannot allocate recursion data");
-    if ((lpp->lp_name = strdup(pkgname)) == 0)
-        err(1, "cannot allocate recursion data");
-    return (lpp);
+	if ((lpp = malloc(sizeof(*lpp))) == 0)
+		err(1, "cannot allocate recursion data");
+	if ((lpp->lp_name = strdup(pkgname)) == 0)
+		err(1, "cannot allocate recursion data");
+	return (lpp);
 }
 
 void
 free_lpkg(lpkg_t *lpp)
 {
-    free(lpp->lp_name);
-    free(lpp);
+	free(lpp->lp_name);
+	free(lpp);
 }
 
 lpkg_t *
 find_on_queue(lpkg_head_t *qp, const char *name)
 {
-    lpkg_t *lpp;
+	lpkg_t *lpp;
 
-    for (lpp = TAILQ_FIRST(qp); lpp; lpp = TAILQ_NEXT(lpp, lp_link))
-        if (!strcmp(name, lpp->lp_name))
-            return (lpp);
-    return (0);
+	for (lpp = TAILQ_FIRST(qp); lpp; lpp = TAILQ_NEXT(lpp, lp_link))
+		if (!strcmp(name, lpp->lp_name))
+			return (lpp);
+	return (0);
 }
