@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.16 2001/06/23 03:17:32 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.17 2001/06/28 20:35:21 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -251,6 +251,7 @@ unsigned int pmapdebug = 0;
 #define	EIEIO()		__asm __volatile("eieio")
 #define	MFMSR()		mfmsr()
 #define	MTMSR(psl)	__asm __volatile("mtmsr %0" :: "r"(psl))
+#define	MFSRIN(va)	mfsrin(va)
 #define	MFTB()		mftb()
 
 static __inline u_int32_t
@@ -267,6 +268,14 @@ mftb(void)
 	u_int tb;
 	__asm __volatile("mftb %0" : "=r"(tb) : );
 	return tb;
+}
+
+static __inline sr_t
+mfsrin(vaddr_t va)
+{
+	sr_t sr;
+	__asm __volatile ("mfsrin %0,%1" : "=r"(sr) : "r"(va));
+	return sr;
 }
 
 static __inline u_int32_t
@@ -592,7 +601,8 @@ pmap_pte_insert(int ptegidx, pte_t *pvo_pt)
  * Tries to spill a page table entry from the overflow area.
  * This runs in either real mode (if dealing with a exception spill)
  * or virtual mode when dealing with manually spilling one of the
- * kernel's pte entries.
+ * kernel's pte entries.  In either case, interrupts are already
+ * disabled.
  */
 int
 pmap_pte_spill(vaddr_t addr)
@@ -600,14 +610,13 @@ pmap_pte_spill(vaddr_t addr)
 	struct pvo_entry *source_pvo, *victim_pvo;
 	struct pvo_entry *pvo;
 	int ptegidx, i;
-	u_int32_t msr;
 	sr_t sr;
 	volatile pteg_t *pteg;
 	volatile pte_t *pt;
 
 	pmap_pte_spills++;
 
-	__asm __volatile ("mfsrin %0,%1" : "=r"(sr) : "r"(addr));
+	sr = MFSRIN(addr);
 	ptegidx = va_to_pteg(sr, addr);
 
 	/*
@@ -632,9 +641,7 @@ pmap_pte_spill(vaddr_t addr)
 			 * Now found an entry to be spilled into the pteg.
 			 * The PTE is now be valid, so we know it's active;
 			 */
-			msr = pmap_interrupts_off();
 			i = pmap_pte_insert(ptegidx, &pvo->pvo_pte);
-			pmap_interrupts_restore(msr);
 			if (i >= 0) {
 				PVO_PTEGIDX_SET(pvo, i);
 				pmap_pte_overflow--;
@@ -670,10 +677,8 @@ pmap_pte_spill(vaddr_t addr)
 	 */
 	source_pvo->pvo_pte.pte_hi &= ~PTE_HID;
 
-	msr = pmap_interrupts_off();
 	pmap_pte_unset(pt, &victim_pvo->pvo_pte, victim_pvo->pvo_vaddr);
 	pmap_pte_set(pt, &source_pvo->pvo_pte);
-	pmap_interrupts_restore(msr);
 
 	PVO_PTEGIDX_CLR(victim_pvo);
 	PVO_PTEGIDX_SET(source_pvo, i);
@@ -1076,9 +1081,11 @@ pmap_pvo_find_va(pmap_t pm, vaddr_t va, int *pteidx_p)
 void
 pmap_pa_map(struct pvo_entry *pvo, paddr_t pa, pte_t *saved_pt, int *depth_p)
 {
+	u_int32_t msr;
 	int s;
 
 	s = splvm();
+	msr = pmap_interrupts_off();
 	/*
 	 * If this pvo already has a valid PTE, we need to save it
 	 * so it can restored later.  We then just reload the new
@@ -1113,6 +1120,7 @@ pmap_pa_map(struct pvo_entry *pvo, paddr_t pa, pte_t *saved_pt, int *depth_p)
 		panic("pmap_pa_map: pvo %p: no pte index spill", pvo);
 	if (depth_p != NULL)
 		(*depth_p)++;
+	pmap_interrupts_restore(msr);
 	splx(s);
 }
 
@@ -1120,9 +1128,11 @@ void
 pmap_pa_unmap(struct pvo_entry *pvo, pte_t *saved_pt, int *depth_p)
 {
 	volatile pte_t *pt;
+	u_int32_t msr;
 	int s;
 	
 	s = splvm();
+	msr = pmap_interrupts_off();
 	pt = pmap_pvo_to_pte(pvo, -1);
 	if (pt != NULL) {
 		pmap_pte_unset(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
@@ -1156,7 +1166,8 @@ pmap_pa_unmap(struct pvo_entry *pvo, pte_t *saved_pt, int *depth_p)
 			panic("pmap_pa_unmap: reseting but depth (%u) > 0",
 			    *depth_p);
 	}
-		
+
+	pmap_interrupts_restore(msr);
 	splx(s);
 }
 
@@ -1714,7 +1725,6 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 	if ((prot & (VM_PROT_READ|VM_PROT_WRITE)) == (VM_PROT_READ|VM_PROT_WRITE))
 		return;
 #endif
-
 	/*
 	 * If there is no protection, this is equivalent to
 	 * remove the pmap from the pmap.
@@ -1825,17 +1835,15 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	for (pvo = LIST_FIRST(pvo_head); pvo != NULL; pvo = next_pvo) {
 		next_pvo = LIST_NEXT(pvo, pvo_vlink);
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
+
 		/*
 		 * Downgrading to no mapping at all, we just remove
 		 * the entry EXCEPT if its WIRED.  If it WIRED, we
 		 * just leave it alone.
 		 */
 		if ((prot & VM_PROT_READ) == 0) {
-			if ((pvo->pvo_vaddr & PVO_WIRED) == 0) {
-				u_int32_t msr = pmap_interrupts_off();
+			if ((pvo->pvo_vaddr & PVO_WIRED) == 0)
 				pmap_pvo_remove(pvo, -1, TRUE);
-				pmap_interrupts_restore(msr);
-			}
 			continue;
 		} 
 
@@ -1934,11 +1942,13 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 {
 	struct pvo_entry *pvo;
 	volatile pte_t *pt;
+	u_int32_t msr;
 	int s;
 
 	if (pmap_attr_fetch(pg) & ptebit)
 		return TRUE;
 	s = splvm();
+	msr = pmap_interrupts_off();
 	LIST_FOREACH(pvo, vm_page_to_pvoh(pg), pvo_vlink) {
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 		/*
@@ -1948,6 +1958,7 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 		if (pvo->pvo_pte.pte_lo & ptebit) {
 			pmap_attr_save(pg, ptebit);
 			PMAP_PVO_CHECK(pvo);		/* sanity check */
+			pmap_interrupts_restore(msr);
 			splx(s);
 			return TRUE;
 		}
@@ -1967,17 +1978,17 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 		 */
 		pt = pmap_pvo_to_pte(pvo, -1);
 		if (pt != NULL) {
-			u_int32_t msr = pmap_interrupts_off();
 			pmap_pte_synch(pt, &pvo->pvo_pte);
-			pmap_interrupts_restore(msr);
 			if (pvo->pvo_pte.pte_lo & ptebit) {
 				pmap_attr_save(pg, ptebit);
 				PMAP_PVO_CHECK(pvo);		/* sanity check */
+				pmap_interrupts_restore(msr);
 				splx(s);
 				return TRUE;
 			}
 		}
 	}
+	pmap_interrupts_restore(msr);
 	splx(s);
 	return FALSE;
 }
@@ -2112,9 +2123,8 @@ void
 pmap_print_mmuregs(void)
 {
 	int i;
-	sr_t sr;
 	u_int32_t x;
-	unsigned int addr;
+	vaddr_t addr;
 	sr_t soft_sr[16];
 	struct bat soft_ibat[4];
 	struct bat soft_dbat[4];
@@ -2122,8 +2132,7 @@ pmap_print_mmuregs(void)
 	
 	asm ("mfsdr1 %0" : "=r"(sdr1));
 	for (i=0; i<16; i++) {
-		asm ("mfsrin %0,%1" : "=r"(sr) : "r"(addr));
-		soft_sr[i] = sr;
+		soft_sr[i] = MFSRIN(addr);
 		addr += (1 << ADDR_SR_SHFT);
 	}
 	/* read iBAT registers */
