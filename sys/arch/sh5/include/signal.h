@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.1 2002/07/05 13:32:02 scw Exp $	*/
+/*	$NetBSD: signal.h,v 1.2 2002/07/10 15:55:01 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -44,10 +44,17 @@
 #ifndef _SH5_SIGNAL_H_
 #define	_SH5_SIGNAL_H_
 
-typedef int	sig_atomic_t;
+#ifndef _LP64
+typedef long long	sig_atomic_t;
+#else
+typedef long	sig_atomic_t;
+#endif
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
     !defined(_XOPEN_SOURCE)
+
+#include <machine/reg.h>
+
 /*
  * Information pushed on stack when a signal is delivered.
  * This is used by the kernel to restore state following
@@ -58,34 +65,18 @@ typedef int	sig_atomic_t;
 #if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
 struct sigcontext13 {
 	int	sc_onstack;		/* sigstack state to restore */
-	int	sc_ownedfp;		/* fp has been used */
 	long	sc_mask;		/* signal mask to restore (old style) */
-	register_t sc_pc;		/* pc to restore */
-	register_t sc_sr;		/* sr to restore */
-	register_t sc_usr;		/* usr to restore */
-	register_t sc_regs[64];		/* integer register set */
-#define	sc_sp	sc_regs[15]
-	register_t sc_fpscr;		/* FP statuus/control register */
-	register_t sc_fpregs[32];	/* FP register set */
-	long	sc_reserved[2];		/* XXX */
-	long	sc_xxx[8];		/* XXX */
+	struct reg sc_regs;		/* saved register state */
+	int	sc_fpstate;
 };
 #endif /* __LIBC12_SOURCE__ || _KERNEL */
 
 struct sigcontext {
 	int	sc_onstack;		/* sigstack state to restore */
-	int	sc_ownedfp;		/* fp has been used */
 	long	__sc_mask13;		/* signal mask to restore (old style) */
-	register_t sc_pc;		/* pc to restore */
-	register_t sc_sr;		/* sr to restore */
-	register_t sc_usr;		/* usr to restore */
-	register_t sc_regs[64];		/* integer register set */
-#define	sc_sp	sc_regs[15]
-	register_t sc_fpregs[32];	/* FP register set */
-	register_t sc_fpcr;		/* FP status/control register */
-	long	sc_reserved[2];		/* XXX */
-	long	sc_xxx[8];		/* XXX */
+	struct reg sc_regs;		/* saved register state */
 	sigset_t sc_mask;		/* signal mask to restore (new style) */
+	int	sc_fpstate;
 };
 
 #endif /* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
