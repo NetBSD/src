@@ -1,4 +1,4 @@
-/*	$NetBSD: interplayer.c,v 1.5 1999/09/08 21:57:19 jsm Exp $	*/
+/*	$NetBSD: interplayer.c,v 1.6 1999/09/18 19:38:52 jsm Exp $	*/
 
 /*
  * interplayer.c - player to player routines for Phantasia
@@ -685,7 +685,7 @@ dotampered()
 			break;
 
 		case '3':	/* create energy void */
-			if ((loc = allocvoid()) > 20L * SZ_VOIDSTRUCT)
+			if ((loc = allocvoid()) > 20L * (long)SZ_VOIDSTRUCT)
 				/* can only have 20 void active at once */
 				mvaddstr(5, 0, "Sorry, void creation limit reached.\n");
 			else {
