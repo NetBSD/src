@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.60 2001/03/24 02:07:54 christos Exp $ */
+/*	$NetBSD: apm.c,v 1.61 2001/07/14 02:02:45 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #endif
 
 #include "opt_apm.h"
+#include "opt_compat_mach.h"	/* Needed to get the right segment def */
 
 #ifdef APM_NOIDLE
 #error APM_NOIDLE option deprecated; use APM_NO_IDLE instead
@@ -1349,10 +1350,12 @@ apmattach(parent, self, aux)
 	    ISA_HOLE_VADDR(apminfo.apm_code32_seg_base),
 	    apminfo.apm_code32_seg_len - 1,
 	    SDT_MEMERA, SEL_KPL, 1, 0);
+#ifdef GAPM16CODE_SEL
 	setsegment(&gdt[GAPM16CODE_SEL].sd,
 	    ISA_HOLE_VADDR(apminfo.apm_code16_seg_base),
 	    apminfo.apm_code16_seg_len - 1,
 	    SDT_MEMERA, SEL_KPL, 0, 0);
+#endif
 	if (apminfo.apm_data_seg_len == 0) {
 		/*
 		 *if no data area needed, set up the segment
