@@ -1,4 +1,4 @@
-/*	$NetBSD: print-krb.c,v 1.2 2001/06/25 19:59:59 itojun Exp $	*/
+/*	$NetBSD: print-krb.c,v 1.3 2004/09/27 23:04:24 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -26,10 +26,10 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-krb.c,v 1.15 2000/09/29 04:58:42 guy Exp";
+static const char rcsid[] _U_ =
+    "@(#) Header: /tcpdump/master/tcpdump/print-krb.c,v 1.21.2.2 2003/11/16 08:51:30 guy Exp";
 #else
-__RCSID("$NetBSD: print-krb.c,v 1.2 2001/06/25 19:59:59 itojun Exp $");
+__RCSID("$NetBSD: print-krb.c,v 1.3 2004/09/27 23:04:24 dyoung Exp $");
 #endif
 #endif
 
@@ -37,24 +37,17 @@ __RCSID("$NetBSD: print-krb.c,v 1.2 2001/06/25 19:59:59 itojun Exp $");
 #include "config.h"
 #endif
 
-#include <sys/param.h>
-#include <sys/time.h>
-#include <sys/socket.h>
+#include <tcpdump-stdinc.h>
 
-#include <netinet/in.h>
-
-#include <ctype.h>
-#include <errno.h>
 #include <stdio.h>
 
 #include "interface.h"
 #include "addrtoname.h"
+#include "extract.h"
 
-const u_char *c_print(register const u_char *, register const u_char *);
-const u_char *krb4_print_hdr(const u_char *);
-void krb4_print(const u_char *);
-void krb_print(const u_char *, u_int);
-
+static const u_char *c_print(register const u_char *, register const u_char *);
+static const u_char *krb4_print_hdr(const u_char *);
+static void krb4_print(const u_char *);
 
 #define AUTH_MSG_KDC_REQUEST			1<<1
 #define AUTH_MSG_KDC_REPLY			2<<1
@@ -79,8 +72,8 @@ void krb_print(const u_char *, u_int);
 #define KERB_ERR_NULL_KEY			10
 
 struct krb {
-	u_char pvno;		/* Protocol Version */
-	u_char type;		/* Type+B */
+	u_int8_t pvno;		/* Protocol Version */
+	u_int8_t type;		/* Type+B */
 };
 
 static char tstr[] = " [|kerberos]";
@@ -113,26 +106,7 @@ static struct tok kerr2str[] = {
 	{ 0,				NULL}
 };
 
-
-/* little endian (unaligned) to host byte order */
-/* XXX need to look at this... */
-#define vtohlp(x)	    ((( ((char *)(x))[0] )      )  | \
-			     (( ((char *)(x))[1] ) <<  8)  | \
-			     (( ((char *)(x))[2] ) << 16)  | \
-			     (( ((char *)(x))[3] ) << 24))
-#define vtohsp(x)          ((( ((char *)(x))[0] )      )  | \
-			     (( ((char *)(x))[1] ) <<  8))
-/* network (big endian) (unaligned) to host byte order */
-#define ntohlp(x)	    ((( ((char *)(x))[3] )      )  | \
-			     (( ((char *)(x))[2] ) <<  8)  | \
-			     (( ((char *)(x))[1] ) << 16)  | \
-			     (( ((char *)(x))[0] ) << 24))
-#define ntohsp(x)          ((( ((char *)(x))[1] )      )  | \
-			     (( ((char *)(x))[0] ) <<  8))
-
-
-
-const u_char *
+static const u_char *
 c_print(register const u_char *s, register const u_char *ep)
 {
 	register u_char c;
@@ -161,7 +135,7 @@ c_print(register const u_char *s, register const u_char *ep)
 	return (s);
 }
 
-const u_char *
+static const u_char *
 krb4_print_hdr(const u_char *cp)
 {
 	cp += 2;
@@ -182,7 +156,7 @@ trunc:
 #undef PRINT
 }
 
-void
+static void
 krb4_print(const u_char *cp)
 {
 	register const struct krb *kp;
@@ -192,7 +166,7 @@ krb4_print(const u_char *cp)
 #define PRINT		if ((cp = c_print(cp, snapend)) == NULL) goto trunc
 /*  True if struct krb is little endian */
 #define IS_LENDIAN(kp)	(((kp)->type & 0x01) != 0)
-#define KTOHSP(kp, cp)	(IS_LENDIAN(kp) ? vtohsp(cp) : ntohsp(cp))
+#define KTOHSP(kp, cp)	(IS_LENDIAN(kp) ? EXTRACT_LE_16BITS(cp) : EXTRACT_16BITS(cp))
 
 	kp = (struct krb *)cp;
 
@@ -260,7 +234,7 @@ trunc:
 }
 
 void
-krb_print(const u_char *dat, u_int length)
+krb_print(const u_char *dat)
 {
 	register const struct krb *kp;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-atalk.c,v 1.5 2002/10/18 23:13:57 itojun Exp $	*/
+/*	$NetBSD: print-atalk.c,v 1.6 2004/09/27 23:04:24 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,10 +26,10 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-atalk.c,v 1.71 2002/02/05 10:03:34 guy Exp (LBL)";
+static const char rcsid[] _U_ =
+    "@(#) Header: /tcpdump/master/tcpdump/print-atalk.c,v 1.78.2.2 2003/11/16 08:51:11 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-atalk.c,v 1.5 2002/10/18 23:13:57 itojun Exp $");
+__RCSID("$NetBSD: print-atalk.c,v 1.6 2004/09/27 23:04:24 dyoung Exp $");
 #endif
 #endif
 
@@ -37,16 +37,11 @@ __RCSID("$NetBSD: print-atalk.c,v 1.5 2002/10/18 23:13:57 itojun Exp $");
 #include "config.h"
 #endif
 
-#include <sys/param.h>
-#include <sys/time.h>
-#include <sys/socket.h>
-
-#include <netinet/in.h>
+#include <tcpdump-stdinc.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <netdb.h>		/* for MAXHOSTNAMELEN on some platforms */
 #include <pcap.h>
 
 #include "interface.h"
@@ -93,31 +88,23 @@ static const char *ddpskt_string(int);
 /*
  * Print LLAP packets received on a physical LocalTalk interface.
  */
-void
-ltalk_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
+u_int
+ltalk_if_print(const struct pcap_pkthdr *h, const u_char *p)
 {
-	snapend = p + h->caplen;
-	++infodelay;
-	ts_print(&h->ts);
-	llap_print(p, h->caplen);
-	if(xflag)
-		default_print(p, h->caplen);
-	putchar('\n');
-	--infodelay;
-	if (infoprint)
-		info(0);
+	return (llap_print(p, h->caplen));
 }
 
 /*
  * Print AppleTalk LLAP packets.
  */
-void
+u_int
 llap_print(register const u_char *bp, u_int length)
 {
 	register const struct LAP *lp;
 	register const struct atDDP *dp;
 	register const struct atShortDDP *sdp;
 	u_short snet;
+	u_int hdrlen;
 
 	/*
 	 * Our packet is on a 4-byte boundary, as we're either called
@@ -130,12 +117,13 @@ llap_print(register const u_char *bp, u_int length)
 	lp = (const struct LAP *)bp;
 	bp += sizeof(*lp);
 	length -= sizeof(*lp);
+	hdrlen = sizeof(*lp);
 	switch (lp->type) {
 
 	case lapShortDDP:
 		if (length < ddpSSize) {
 			(void)printf(" [|sddp %d]", length);
-			return;
+			return (length);
 		}
 		sdp = (const struct atShortDDP *)bp;
 		printf("%s.%s",
@@ -144,13 +132,14 @@ llap_print(register const u_char *bp, u_int length)
 		    ataddr_string(0, lp->dst), ddpskt_string(sdp->dstSkt));
 		bp += ddpSSize;
 		length -= ddpSSize;
+		hdrlen += ddpSSize;
 		ddp_print(bp, length, sdp->type, 0, lp->src, sdp->srcSkt);
 		break;
 
 	case lapDDP:
 		if (length < ddpSize) {
 			(void)printf(" [|ddp %d]", length);
-			return;
+			return (length);
 		}
 		dp = (const struct atDDP *)bp;
 		snet = EXTRACT_16BITS(&dp->srcNet);
@@ -161,6 +150,7 @@ llap_print(register const u_char *bp, u_int length)
 		    ddpskt_string(dp->dstSkt));
 		bp += ddpSize;
 		length -= ddpSize;
+		hdrlen += ddpSize;
 		ddp_print(bp, length, dp->type, snet, dp->srcNode, dp->srcSkt);
 		break;
 
@@ -175,6 +165,7 @@ llap_print(register const u_char *bp, u_int length)
 		    lp->src, lp->dst, lp->type, length);
 		break;
 	}
+	return (hdrlen);
 }
 
 /*
@@ -214,9 +205,10 @@ aarp_print(register const u_char *bp, u_int length)
 
 	printf("aarp ");
 	ap = (const struct aarp *)bp;
-	if (ntohs(ap->htype) == 1 && ntohs(ap->ptype) == ETHERTYPE_ATALK &&
+	if (EXTRACT_16BITS(&ap->htype) == 1 &&
+	    EXTRACT_16BITS(&ap->ptype) == ETHERTYPE_ATALK &&
 	    ap->halen == 6 && ap->palen == 4 )
-		switch (ntohs(ap->op)) {
+		switch (EXTRACT_16BITS(&ap->op)) {
 
 		case 1:				/* request */
 			(void)printf("who-has %s tell %s",
@@ -234,8 +226,8 @@ aarp_print(register const u_char *bp, u_int length)
 			return;
 		}
 	(void)printf("len %u op %u htype %u ptype %#x halen %u palen %u",
-	    length, ntohs(ap->op), ntohs(ap->htype), ntohs(ap->ptype),
-	    ap->halen, ap->palen);
+	    length, EXTRACT_16BITS(&ap->op), EXTRACT_16BITS(&ap->htype),
+	    EXTRACT_16BITS(&ap->ptype), ap->halen, ap->palen);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: sll.h,v 1.2 2003/08/07 09:21:13 agc Exp $	*/
+/*	$NetBSD: sll.h,v 1.3 2004/09/27 23:04:25 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -6,7 +6,7 @@
  *
  * This code is derived from the Stanford/CMU enet packet filter,
  * (net/enet.c) distributed as part of 4.3BSD, and code contributed
- * to Berkeley by Steven McCanne and Van Jacobson both of Lawrence 
+ * to Berkeley by Steven McCanne and Van Jacobson both of Lawrence
  * Berkeley Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) Header: /tcpdump/master/tcpdump/sll.h,v 1.4 2000/12/23 07:52:11 guy Exp (LBL)
+ * @(#) Header: /tcpdump/master/tcpdump/sll.h,v 1.7 2002/12/11 07:14:11 guy Exp (LBL)
  */
 
 /*

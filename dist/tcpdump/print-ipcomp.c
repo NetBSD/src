@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ipcomp.c,v 1.2 2001/06/25 19:59:58 itojun Exp $	*/
+/*	$NetBSD: print-ipcomp.c,v 1.3 2004/09/27 23:04:24 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -24,10 +24,10 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-ipcomp.c,v 1.13 2000/12/12 09:58:41 itojun Exp";
+static const char rcsid[] _U_ =
+    "@(#) Header: /tcpdump/master/tcpdump/print-ipcomp.c,v 1.17.2.3 2003/11/19 00:35:45 guy Exp";
 #else
-__RCSID("$NetBSD: print-ipcomp.c,v 1.2 2001/06/25 19:59:58 itojun Exp $");
+__RCSID("$NetBSD: print-ipcomp.c,v 1.3 2004/09/27 23:04:24 dyoung Exp $");
 #endif
 #endif
 
@@ -36,12 +36,7 @@ __RCSID("$NetBSD: print-ipcomp.c,v 1.2 2001/06/25 19:59:58 itojun Exp $");
 #endif
 
 #include <string.h>
-#include <sys/param.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-
-#include <netinet/in.h>
+#include <tcpdump-stdinc.h>
 
 #include <stdio.h>
 
@@ -57,9 +52,10 @@ struct ipcomp {
 
 #include "interface.h"
 #include "addrtoname.h"
+#include "extract.h"
 
 int
-ipcomp_print(register const u_char *bp, register const u_char *bp2, int *nhdr)
+ipcomp_print(register const u_char *bp, int *nhdr)
 {
 	register const struct ipcomp *ipcomp;
 	register const u_char *ep;
@@ -69,7 +65,7 @@ ipcomp_print(register const u_char *bp, register const u_char *bp2, int *nhdr)
 #endif
 
 	ipcomp = (struct ipcomp *)bp;
-	cpi = (u_int16_t)ntohs(ipcomp->comp_cpi);
+	cpi = EXTRACT_16BITS(&ipcomp->comp_cpi);
 
 	/* 'ep' points to the end of available data. */
 	ep = snapend;
@@ -98,7 +94,5 @@ ipcomp_print(register const u_char *bp, register const u_char *bp2, int *nhdr)
 
 #endif
 fail:
-	if (nhdr)
-		*nhdr = -1;
-	return 65536;
+	return -1;
 }

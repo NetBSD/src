@@ -1,4 +1,4 @@
-/*	$NetBSD: print-pim.c,v 1.4 2002/05/31 09:45:46 itojun Exp $	*/
+/*	$NetBSD: print-pim.c,v 1.5 2004/09/27 23:04:24 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996
@@ -24,10 +24,10 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-pim.c,v 1.30 2002/05/07 18:28:38 fenner Exp (LBL)";
+static const char rcsid[] _U_ =
+    "@(#) Header: /tcpdump/master/tcpdump/print-pim.c,v 1.37.2.4 2004/03/24 02:52:37 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-pim.c,v 1.4 2002/05/31 09:45:46 itojun Exp $");
+__RCSID("$NetBSD: print-pim.c,v 1.5 2004/09/27 23:04:24 dyoung Exp $");
 #endif
 #endif
 
@@ -35,11 +35,7 @@ __RCSID("$NetBSD: print-pim.c,v 1.4 2002/05/31 09:45:46 itojun Exp $");
 #include "config.h"
 #endif
 
-#include <sys/param.h>
-#include <sys/time.h>
-#include <sys/socket.h>
-
-#include <netinet/in.h>
+#include <tcpdump-stdinc.h>
 
 /*
  * XXX: We consider a case where IPv6 is not ready yet for portability,
@@ -63,7 +59,6 @@ struct pim {
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 
 #include "interface.h"
 #include "addrtoname.h"
@@ -125,6 +120,7 @@ pimv1_join_prune_print(register const u_char *bp, register u_int len)
 	while (ngroups--) {
 		TCHECK2(bp[0], 4);
 		(void)printf("\n\tGroup: %s", ipaddr_string(bp));
+		TCHECK2(bp[4], 4);
 		if (EXTRACT_32BITS(&bp[4]) != 0xffffffff)
 			(void)printf("/%s", ipaddr_string(&bp[4]));
 		TCHECK2(bp[8], 4);
@@ -134,7 +130,7 @@ pimv1_join_prune_print(register const u_char *bp, register u_int len)
 		bp += 12;
 		len -= 12;
 		for (njp = 0; njp < (njoin + nprune); njp++) {
-			char *type;
+			const char *type;
 
 			if (njp < njoin)
 				type = "Join ";
@@ -166,6 +162,7 @@ pimv1_print(register const u_char *bp, register u_int len)
 	if (bp >= ep)
 		return;
 
+	TCHECK(bp[1]);
 	type = bp[1];
 
 	switch (type) {
@@ -454,7 +451,7 @@ static int
 pimv2_addr_print(const u_char *bp, enum pimv2_addrtype at, int silent)
 {
 	int af;
-	char *afstr;
+	const char *afstr;
 	int len, hdrlen;
 
 	TCHECK(bp[0]);
@@ -591,9 +588,25 @@ pimv2_print(register const u_char *bp, register u_int len)
 				(void)printf(")");
 				break;
 
+			case 2:		/* LAN Prune Delay */
+				(void)printf(" (LAN-Prune-Delay: ");
+				if (olen != 4) {
+					(void)printf("!olen=%d!)", olen);
+				} else {
+					char t_bit;
+					u_int16_t lan_delay, override_interval;
+					lan_delay = EXTRACT_16BITS(&bp[4]);
+					override_interval = EXTRACT_16BITS(&bp[6]);
+					t_bit = (lan_delay & 0x8000)? 1 : 0;
+					lan_delay &= ~0x8000;
+					(void)printf("T-bit=%d lan-delay=%dms override-interval=%dms)",
+					t_bit, lan_delay, override_interval);
+				}
+				break;
+
 			case 18:	/* Old DR-Priority */
 				if (olen == 4)
-					(void)printf(" (OLD-DR-Priority: %d)", 
+					(void)printf(" (OLD-DR-Priority: %d)",
 							EXTRACT_32BITS(&bp[4]));
 				else
 					goto unknown;
@@ -633,6 +646,26 @@ pimv2_print(register const u_char *bp, register u_int len)
 				(void)printf(" (bidir-capable)");
 				break;
 
+			case 24:	/* Address List */
+			case 65001:	/* Address List (old implementations) */
+				(void)printf(" (%saddr-list",
+					     otype == 65001 ? "old" : "");
+				if (vflag > 1) {
+					const u_char *ptr = &bp[4];
+					while (ptr < &bp[4 + olen]) {
+						int advance;
+
+						printf(" ");
+						advance = pimv2_addr_print(ptr, pimv2_unicast, 0);
+						if (advance < 0) {
+							printf("...");
+							break;
+						}
+						ptr += advance;
+					}
+				}
+				(void)printf(")");
+				break;
 			default:
 			unknown:
 				if (vflag)

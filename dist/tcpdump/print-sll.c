@@ -1,4 +1,4 @@
-/*	$NetBSD: print-sll.c,v 1.3 2002/02/18 09:37:09 itojun Exp $	*/
+/*	$NetBSD: print-sll.c,v 1.4 2004/09/27 23:04:25 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,10 +23,10 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-sll.c,v 1.6 2001/07/05 18:54:18 guy Exp (LBL)";
+static const char rcsid[] _U_ =
+    "@(#) Header: /tcpdump/master/tcpdump/print-sll.c,v 1.12.2.2 2003/11/16 08:51:44 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-sll.c,v 1.3 2002/02/18 09:37:09 itojun Exp $");
+__RCSID("$NetBSD: print-sll.c,v 1.4 2004/09/27 23:04:25 dyoung Exp $");
 #endif
 #endif
 
@@ -34,14 +34,7 @@ __RCSID("$NetBSD: print-sll.c,v 1.3 2002/02/18 09:37:09 itojun Exp $");
 #include "config.h"
 #endif
 
-#include <sys/param.h>
-#include <sys/time.h>
-#include <sys/socket.h>
-
-struct mbuf;
-struct rtentry;
-
-#include <netinet/in.h>
+#include <tcpdump-stdinc.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -101,24 +94,19 @@ sll_print(register const struct sll_header *sllp, u_int length)
 }
 
 /*
- * This is the top level routine of the printer.  'p' is the points
- * to the ether header of the packet, 'h->tv' is the timestamp,
+ * This is the top level routine of the printer.  'p' points to the
+ * Linux "cooked capture" header of the packet, 'h->ts' is the timestamp,
  * 'h->length' is the length of the packet off the wire, and 'h->caplen'
  * is the number of bytes actually captured.
  */
-void
-sll_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
+u_int
+sll_if_print(const struct pcap_pkthdr *h, const u_char *p)
 {
 	u_int caplen = h->caplen;
 	u_int length = h->len;
 	register const struct sll_header *sllp;
-	u_short pkttype;
-	struct ether_header ehdr;
 	u_short ether_type;
 	u_short extracted_ethertype;
-
-	++infodelay;
-	ts_print(&h->ts);
 
 	if (caplen < SLL_HDR_LEN) {
 		/*
@@ -127,67 +115,17 @@ sll_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 		 * cooked socket capture.
 		 */
 		printf("[|sll]");
-		goto out;
+		return (caplen);
 	}
 
 	sllp = (const struct sll_header *)p;
-
-	/*
-	 * Fake up an Ethernet header for the benefit of printers that
-	 * insist on "packetp" pointing to an Ethernet header.
-	 */
-	pkttype = ntohs(sllp->sll_pkttype);
-
-	/* The source address is in the packet header */
-	memcpy(ehdr.ether_shost, sllp->sll_addr, ETHER_ADDR_LEN);
-
-	if (pkttype != LINUX_SLL_OUTGOING) {
-		/*
-		 * We received this packet.
-		 *
-		 * We don't know the destination address, so
-		 * we fake it - all 0's except that the
-		 * bottommost bit of the bottommost octet
-		 * is set for a unicast packet, all 0's except
-		 * that the bottommost bit of the uppermost
-		 * octet is set for a multicast packet, all
-		 * 1's for a broadcast packet.
-		 */
-		if (pkttype == LINUX_SLL_BROADCAST)
-			memset(ehdr.ether_dhost, 0xFF, ETHER_ADDR_LEN);
-		else {
-			memset(ehdr.ether_dhost, 0, ETHER_ADDR_LEN);
-			if (pkttype == LINUX_SLL_MULTICAST)
-				ehdr.ether_dhost[0] = 1;
-			else
-				ehdr.ether_dhost[ETHER_ADDR_LEN-1] = 1;
-		}
-	} else {
-		/*
-		 * We sent this packet; we don't know whether it's
-		 * broadcast, multicast, or unicast, so just make
-		 * the destination address all 0's.
-		 */
-		memset(ehdr.ether_dhost, 0, ETHER_ADDR_LEN);
-	}
 
 	if (eflag)
 		sll_print(sllp, length);
 
 	/*
-	 * Some printers want to get back at the ethernet addresses,
-	 * and/or check that they're not walking off the end of the packet.
-	 * Rather than pass them all the way down, we set these globals.
+	 * Go past the cooked-mode header.
 	 */
-	snapend = p + caplen;
-	/*
-	 * Actually, the only printers that use packetp are print-arp.c
-	 * and print-bootp.c, and they assume that packetp points to an
-	 * Ethernet header.  The right thing to do is to fix them to know
-	 * which link type is in use when they excavate. XXX
-	 */
-	packetp = (u_char *)&ehdr;
-
 	length -= SLL_HDR_LEN;
 	caplen -= SLL_HDR_LEN;
 	p += SLL_HDR_LEN;
@@ -217,8 +155,8 @@ sll_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 			 * 802.2.
 			 * Try to print the LLC-layer header & higher layers.
 			 */
-			if (llc_print(p, length, caplen, ESRC(&ehdr),
-			    EDST(&ehdr), &extracted_ethertype) == 0)
+			if (llc_print(p, length, caplen, NULL, NULL,
+			    &extracted_ethertype) == 0)
 				goto unknown;	/* unknown LLC type */
 			break;
 
@@ -243,11 +181,6 @@ sll_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 		if (!xflag && !qflag)
 			default_print(p, caplen);
 	}
-	if (xflag)
-		default_print(p, caplen);
- out:
-	putchar('\n');
-	--infodelay;
-	if (infoprint)
-		info(0);
+
+	return (SLL_HDR_LEN);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: addrtoname.c,v 1.6 2002/05/31 09:45:44 itojun Exp $	*/
+/*	$NetBSD: addrtoname.c,v 1.7 2004/09/27 23:04:24 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,10 +26,10 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/addrtoname.c,v 1.86 2001/11/25 01:48:46 guy Exp (LBL)";
+static const char rcsid[] _U_ =
+    "@(#) Header: /tcpdump/master/tcpdump/addrtoname.c,v 1.96.2.6 2004/03/24 04:14:31 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: addrtoname.c,v 1.6 2002/05/31 09:45:44 itojun Exp $");
+__RCSID("$NetBSD: addrtoname.c,v 1.7 2004/09/27 23:04:24 dyoung Exp $");
 #endif
 #endif
 
@@ -37,23 +37,20 @@ __RCSID("$NetBSD: addrtoname.c,v 1.6 2002/05/31 09:45:44 itojun Exp $");
 #include "config.h"
 #endif
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/time.h>
+#include <tcpdump-stdinc.h>
 
-struct mbuf;
-struct rtentry;
-#include <net/if.h>
-
-#include <netinet/in.h>
+#ifdef USE_ETHER_NTOHOST
 #ifdef HAVE_NETINET_IF_ETHER_H
+struct mbuf;		/* Squelch compiler warnings on some platforms for */
+struct rtentry;		/* declarations in <net/if.h> */
+#include <net/if.h>	/* for "struct ifnet" in "struct arpcom" on Solaris */
 #include <netinet/if_ether.h>
-#endif
+#endif /* HAVE_NETINET_IF_ETHER_H */
+#ifdef HAVE_NETINET_ETHER_H
+#include <netinet/ether.h>  /* ether_ntohost on linux */
+#endif /* HAVE_NETINET_ETHER_H */
+#endif /* USE_ETHER_NTOHOST */
 
-#include <arpa/inet.h>
-
-#include <ctype.h>
-#include <netdb.h>
 #include <pcap.h>
 #include <pcap-namedb.h>
 #include <signal.h>
@@ -91,6 +88,51 @@ struct hnamemem eprototable[HASHNAMESIZE];
 struct hnamemem dnaddrtable[HASHNAMESIZE];
 struct hnamemem llcsaptable[HASHNAMESIZE];
 struct hnamemem ipxsaptable[HASHNAMESIZE];
+
+#if defined(INET6) && defined(WIN32)
+/*
+ * fake gethostbyaddr for Win2k/XP
+ * gethostbyaddr() returns incorrect value when AF_INET6 is passed
+ * to 3rd argument.
+ *
+ * h_name in struct hostent is only valid.
+ */
+static struct hostent *
+win32_gethostbyaddr(const char *addr, int len, int type)
+{
+	static struct hostent host;
+	static char hostbuf[NI_MAXHOST];
+	char hname[NI_MAXHOST];
+	struct sockaddr_in6 addr6;
+
+	host.h_name = hostbuf;
+	switch (type) {
+	case AF_INET:
+		return gethostbyaddr(addr, len, type);
+		break;
+	case AF_INET6:
+		memset(&addr6, 0, sizeof(addr6));
+		addr6.sin6_family = AF_INET6;
+		memcpy(&addr6.sin6_addr, addr, len);
+#ifdef __MINGW32__
+		/* MinGW doesn't provide getnameinfo */
+		return NULL;
+#else
+		if (getnameinfo((struct sockaddr *)&addr6, sizeof(addr6),
+			hname, sizeof(hname), NULL, 0, 0)) {
+		    return NULL;
+		} else {
+			strcpy(host.h_name, hname);
+			return &host;
+		}
+#endif /* __MINGW32__ */
+		break;
+	default:
+		return NULL;
+	}
+}
+#define gethostbyaddr win32_gethostbyaddr
+#endif /* INET6 & WIN32*/
 
 #ifdef INET6
 struct h6namemem {
@@ -160,11 +202,25 @@ intoa(u_int32_t addr)
 
 static u_int32_t f_netmask;
 static u_int32_t f_localnet;
-static u_int32_t netmask;
 
 /*
  * Return a name for the IP address pointed to by ap.  This address
  * is assumed to be in network byte order.
+ *
+ * NOTE: ap is *NOT* necessarily part of the packet data (not even if
+ * this is being called with the "ipaddr_string()" macro), so you
+ * *CANNOT* use the TCHECK{2}/TTEST{2} macros on it.  Furthermore,
+ * even in cases where it *is* part of the packet data, the caller
+ * would still have to check for a null return value, even if it's
+ * just printing the return value with "%s" - not all versions of
+ * printf print "(null)" with "%s" and a null pointer, some of them
+ * don't check for a null pointer and crash in that case.
+ *
+ * The callers of this routine should, before handing this routine
+ * a pointer to packet data, be sure that the data is present in
+ * the packet buffer.  They should probably do those checks anyway,
+ * as other data at that layer might not be IP addresses, and it
+ * also needs to check whether they're present in the packet buffer.
  */
 const char *
 getname(const u_char *ap)
@@ -183,18 +239,14 @@ getname(const u_char *ap)
 	p->nxt = newhnamemem();
 
 	/*
-	 * Only print names when:
-	 *	(1) -n was not given.
+	 * Print names unless:
+	 *	(1) -n was given.
 	 *      (2) Address is foreign and -f was given. (If -f was not
-	 *	    give, f_netmask and f_local are 0 and the test
+	 *	    given, f_netmask and f_localnet are 0 and the test
 	 *	    evaluates to true)
-	 *      (3) -a was given or the host portion is not all ones
-	 *          nor all zeros (i.e. not a network or broadcast address)
 	 */
 	if (!nflag &&
-	    (addr & f_netmask) == f_localnet &&
-	    (aflag ||
-	    !((addr & ~netmask) == 0 || (addr | netmask) == 0xffffffff))) {
+	    (addr & f_netmask) == f_localnet) {
 		hp = gethostbyaddr((char *)&addr, 4, AF_INET);
 		if (hp) {
 			char *dotp;
@@ -237,22 +289,9 @@ getname6(const u_char *ap)
 	p->nxt = newh6namemem();
 
 	/*
-	 * Only print names when:
-	 *	(1) -n was not given.
-	 *      (2) Address is foreign and -f was given. (If -f was not
-	 *	    give, f_netmask and f_local are 0 and the test
-	 *	    evaluates to true)
-	 *      (3) -a was given or the host portion is not all ones
-	 *          nor all zeros (i.e. not a network or broadcast address)
+	 * Do not print names if -n was given.
 	 */
-	if (!nflag
-#if 0
-	&&
-	    (addr & f_netmask) == f_localnet &&
-	    (aflag ||
-	    !((addr & ~netmask) == 0 || (addr | netmask) == 0xffffffff))
-#endif
-	    ) {
+	if (!nflag) {
 		hp = gethostbyaddr((char *)&addr, sizeof(addr), AF_INET6);
 		if (hp) {
 			char *dotp;
@@ -307,7 +346,7 @@ lookup_emem(const u_char *ep)
 }
 
 /*
- * Find the hash node that corresponds to the bytestring 'bs' 
+ * Find the hash node that corresponds to the bytestring 'bs'
  * with length 'nlen'
  */
 
@@ -425,7 +464,7 @@ lookup_protoid(const u_char *pi)
 const char *
 etheraddr_string(register const u_char *ep)
 {
-	register u_int i, j;
+	register u_int i;
 	register char *cp;
 	register struct enamemem *tp;
 	char buf[sizeof("00:00:00:00:00:00")];
@@ -435,21 +474,19 @@ etheraddr_string(register const u_char *ep)
 		return (tp->e_name);
 #ifdef USE_ETHER_NTOHOST
 	if (!nflag) {
-		char buf[128];
-		if (ether_ntohost(buf, (struct ether_addr *)ep) == 0) {
-			tp->e_name = strdup(buf);
+		char buf2[128];
+		if (ether_ntohost(buf2, (const struct ether_addr *)ep) == 0) {
+			tp->e_name = strdup(buf2);
 			return (tp->e_name);
 		}
 	}
 #endif
 	cp = buf;
-	if ((j = *ep >> 4) != 0)
-		*cp++ = hex[j];
+        *cp++ = hex[*ep >> 4 ];
 	*cp++ = hex[*ep++ & 0xf];
 	for (i = 5; (int)--i >= 0;) {
 		*cp++ = ':';
-		if ((j = *ep >> 4) != 0)
-			*cp++ = hex[j];
+                *cp++ = hex[*ep >> 4 ];
 		*cp++ = hex[*ep++ & 0xf];
 	}
 	*cp = '\0';
@@ -466,7 +503,7 @@ linkaddr_string(const u_char *ep, const unsigned int len)
 
 	if (len == 6)	/* XXX not totally correct... */
 		return etheraddr_string(ep);
-	
+
 	tp = lookup_bytestring(ep, len);
 	if (tp->e_name)
 		return (tp->e_name);
@@ -680,7 +717,11 @@ init_servarray(void)
 }
 
 /*XXX from libbpfc.a */
+#ifndef WIN32
 extern struct eproto {
+#else
+__declspec( dllimport) struct eproto {
+#endif
 	char *s;
 	u_short p;
 } eproto_db[];
@@ -800,7 +841,7 @@ init_etherarray(void)
 
 #ifdef USE_ETHER_NTOHOST
                 /* Use yp/nis version of name if available */
-                if (ether_ntohost(name, (struct ether_addr *)el->addr) == 0) {
+                if (ether_ntohost(name, (const struct ether_addr *)el->addr) == 0) {
                         tp->e_name = strdup(name);
 			continue;
 		}
@@ -1086,7 +1127,6 @@ init_ipxsaparray(void)
 void
 init_addrtoname(u_int32_t localnet, u_int32_t mask)
 {
-	netmask = mask;
 	if (fflag) {
 		f_localnet = localnet;
 		f_netmask = mask;

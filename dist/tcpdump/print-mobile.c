@@ -1,4 +1,4 @@
-/*	$NetBSD: print-mobile.c,v 1.3 2002/02/18 09:37:08 itojun Exp $	*/
+/*	$NetBSD: print-mobile.c,v 1.4 2004/09/27 23:04:24 dyoung Exp $	*/
 
 /*
  * (c) 1998 The NetBSD Foundation, Inc.
@@ -43,21 +43,15 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static const char rcsid[] =
-     "@(#) Header: /tcpdump/master/tcpdump/print-mobile.c,v 1.7 2001/08/20 17:53:54 fenner Exp";
+static const char rcsid[] _U_ =
+     "@(#) Header: /tcpdump/master/tcpdump/print-mobile.c,v 1.12.2.2 2003/11/16 08:51:33 guy Exp";
 #else
-__RCSID("$NetBSD: print-mobile.c,v 1.3 2002/02/18 09:37:08 itojun Exp $");
+__RCSID("$NetBSD: print-mobile.c,v 1.4 2004/09/27 23:04:24 dyoung Exp $");
 #endif
 #endif
 
-#include <sys/param.h>
-#include <sys/time.h>
-#include <sys/uio.h>
-#include <sys/socket.h>
+#include <tcpdump-stdinc.h>
 
-#include <netinet/in.h>
-
-#include <netdb.h>
 #include <stdio.h>
 
 #include "interface.h"
@@ -100,7 +94,7 @@ mobile_print(const u_char *bp, u_int length)
 		osp=1;
 		cp +=4 ;
 	}
-	
+
 	if (osp)  {
 		fputs("[S] ",stdout);
 		if (vflag)

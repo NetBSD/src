@@ -1,4 +1,4 @@
-/*	$NetBSD: print-igrp.c,v 1.2 2001/06/25 19:59:58 itojun Exp $	*/
+/*	$NetBSD: print-igrp.c,v 1.3 2004/09/27 23:04:24 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -26,10 +26,10 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-igrp.c,v 1.16 2001/06/15 22:17:32 fenner Exp (LBL)";
+static const char rcsid[] _U_ =
+    "@(#) Header: /tcpdump/master/tcpdump/print-igrp.c,v 1.18.2.2 2003/11/16 08:51:26 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-igrp.c,v 1.2 2001/06/25 19:59:58 itojun Exp $");
+__RCSID("$NetBSD: print-igrp.c,v 1.3 2004/09/27 23:04:24 dyoung Exp $");
 #endif
 #endif
 
@@ -37,13 +37,8 @@ __RCSID("$NetBSD: print-igrp.c,v 1.2 2001/06/25 19:59:58 itojun Exp $");
 #include "config.h"
 #endif
 
-#include <sys/param.h>
-#include <sys/types.h>			/* concession to AIX */
-#include <sys/socket.h>
+#include <tcpdump-stdinc.h>
 
-#include <netinet/in.h>
-
-#include <errno.h>
 #include <stdio.h>
 
 #include "interface.h"

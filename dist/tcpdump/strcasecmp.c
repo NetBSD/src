@@ -1,4 +1,4 @@
-/*	$NetBSD: strcasecmp.c,v 1.2 2001/06/25 20:00:01 itojun Exp $	*/
+/*	$NetBSD: strcasecmp.c,v 1.3 2004/09/27 23:04:25 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1987 Regents of the University of California.
@@ -19,14 +19,14 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static const char rcsid[] =
-     "@(#) Header: /tcpdump/master/tcpdump/strcasecmp.c,v 1.3 2000/01/09 21:34:21 fenner Exp";
+static const char rcsid[] _U_ =
+     "@(#) Header: /tcpdump/master/tcpdump/strcasecmp.c,v 1.4.2.2 2003/11/16 08:51:57 guy Exp";
 #else
-__RCSID("$NetBSD: strcasecmp.c,v 1.2 2001/06/25 20:00:01 itojun Exp $");
+__RCSID("$NetBSD: strcasecmp.c,v 1.3 2004/09/27 23:04:25 dyoung Exp $");
 #endif
 #endif
 
-#include <sys/types.h>
+#include <tcpdump-stdinc.h>
 
 #include "interface.h"
 

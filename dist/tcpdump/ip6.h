@@ -1,7 +1,7 @@
-/*	$NetBSD: ip6.h,v 1.2 2003/08/07 09:21:12 agc Exp $	*/
+/*	$NetBSD: ip6.h,v 1.3 2004/09/27 23:04:24 dyoung Exp $	*/
 
-/* @(#) Header: /tcpdump/master/tcpdump/ip6.h,v 1.3 2000/12/17 23:07:48 guy Exp (LBL) */
-/*	$NetBSD: ip6.h,v 1.2 2003/08/07 09:21:12 agc Exp $	*/
+/* @(#) Header: /tcpdump/master/tcpdump/ip6.h,v 1.6 2002/12/11 22:29:21 guy Exp (LBL) */
+/*	$NetBSD: ip6.h,v 1.3 2004/09/27 23:04:24 dyoung Exp $	*/
 /*	$KAME: ip6.h,v 1.9 2000/07/02 21:01:32 itojun Exp $	*/
 
 /*
@@ -185,9 +185,8 @@ struct ip6_frag {
 	u_int32_t ip6f_ident;		/* identification */
 };
 
-/* network endian */
-#define IP6F_OFF_MASK		((u_int16_t)htons(0xfff8))	/* mask out offset from _offlg */
-#define IP6F_RESERVED_MASK	((u_int16_t)htons(0x0006))	/* reserved bits in ip6f_offlg */
-#define IP6F_MORE_FRAG		((u_int16_t)htons(0x0001))	/* more-fragments flag */
+#define IP6F_OFF_MASK		0xfff8	/* mask out offset from ip6f_offlg */
+#define IP6F_RESERVED_MASK	0x0006	/* reserved bits in ip6f_offlg */
+#define IP6F_MORE_FRAG		0x0001	/* more-fragments flag */
 
 #endif /* not _NETINET_IP6_H_ */

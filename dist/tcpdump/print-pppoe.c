@@ -1,4 +1,4 @@
-/*	$NetBSD: print-pppoe.c,v 1.4 2002/05/31 09:45:46 itojun Exp $	*/
+/*	$NetBSD: print-pppoe.c,v 1.5 2004/09/27 23:04:24 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -19,15 +19,17 @@
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ * 
+ * Original code by Greg Stark <gsstark@mit.edu> 
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static const char rcsid[] =
-"@(#) Header: /tcpdump/master/tcpdump/print-pppoe.c,v 1.16 2002/05/29 10:32:01 guy Exp (LBL)";
+static const char rcsid[] _U_ =
+"@(#) Header: /tcpdump/master/tcpdump/print-pppoe.c,v 1.24.2.4 2004/03/24 03:04:22 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-pppoe.c,v 1.4 2002/05/31 09:45:46 itojun Exp $");
+__RCSID("$NetBSD: print-pppoe.c,v 1.5 2004/09/27 23:04:24 dyoung Exp $");
 #endif
 #endif
 
@@ -35,11 +37,7 @@ __RCSID("$NetBSD: print-pppoe.c,v 1.4 2002/05/31 09:45:46 itojun Exp $");
 #include "config.h"
 #endif
 
-#include <sys/param.h>
-#include <sys/time.h>
-#include <sys/socket.h>
-
-#include <netinet/in.h>
+#include <tcpdump-stdinc.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -99,40 +97,12 @@ static struct tok pppoetag2str[] = {
 };
 
 #define PPPOE_HDRLEN 6
+#define MAXTAGPRINT 80
 
-void
-pppoe_if_print(u_char *user, const struct pcap_pkthdr *h,
-	     register const u_char *p)
+u_int
+pppoe_if_print(const struct pcap_pkthdr *h, register const u_char *p)
 {
-	register u_int length = h->len;
-	register u_int caplen = h->caplen;
-	u_int hdr_len;
-
-	++infodelay;
-	ts_print(&h->ts);
-
-	/*
-	 * Some printers want to get back at the link level addresses,
-	 * and/or check that they're not walking off the end of the packet.
-	 * Rather than pass them all the way down, we set these globals.
-	 */
-	packetp = p;
-	snapend = p + caplen;
-
-	hdr_len = pppoe_print(p, length);
-
-	/*
-	 * If "-x" was specified, print stuff past the PPPoE and PPP headers,
-	 * if there's anything to print.
-	 */
-	if (xflag && caplen > hdr_len)
-		default_print(p + hdr_len, caplen - hdr_len);
-
-	putchar('\n');
-
-	--infodelay;
-	if (infoprint)
-		info(0);
+	return (pppoe_print(p, h->len));
 }
 
 u_int
@@ -142,11 +112,7 @@ pppoe_print(register const u_char *bp, u_int length)
 	const u_char *pppoe_packet, *pppoe_payload;
 
 	pppoe_packet = bp;
-	if (pppoe_packet > snapend) {
-		printf("[|pppoe]");
-		return (PPPOE_HDRLEN);
-	}
-
+	TCHECK2(*pppoe_packet, PPPOE_HDRLEN);
 	pppoe_ver  = (pppoe_packet[0] & 0xF0) >> 4;
 	pppoe_type  = (pppoe_packet[0] & 0x0F);
 	pppoe_code = pppoe_packet[1];
@@ -174,14 +140,19 @@ pppoe_print(register const u_char *bp, u_int length)
 		printf(" [ses 0x%x]", pppoe_sessionid);
 	}
 
-	if (pppoe_payload + pppoe_length < snapend) {
-#if 0
-		const u_char *x = pppoe_payload + pppoe_length;
+	if (pppoe_payload + pppoe_length < snapend && snapend-pppoe_payload+14 > 64) {
+		/* (small packets are probably just padded up to the ethernet
+		   minimum of 64 bytes) */
 		printf(" [length %d (%d extra bytes)]",
 		    pppoe_length, snapend - pppoe_payload - pppoe_length);
-		default_print(x, snapend - x);
-#endif
+#if RESPECT_PAYLOAD_LENGTH
 		snapend = pppoe_payload+pppoe_length;
+#else
+		/* Actual PPPoE implementations appear to ignore the payload
+		   length and use the full ethernet frame anyways */
+		pppoe_length = snapend-pppoe_payload;
+#endif
+		
 	}
 
 	if (pppoe_code) {
@@ -202,25 +173,38 @@ pppoe_print(register const u_char *bp, u_int length)
 			/* p points to tag_value */
 
 			if (tag_len) {
-				int isascii = 1;
+				unsigned isascii = 0, isgarbage = 0;
 				const u_char *v = p;
-				u_short l;
+				char tag_str[MAXTAGPRINT];
+				unsigned tag_str_len = 0;
 
-				for (v = p; v < p + tag_len; v++)
-					if (*v >= 127 || *v < 32) {
-						isascii = 0;
-						break;
+				/* TODO print UTF-8 decoded text */
+				for (v = p; v < p + tag_len && tag_str_len < MAXTAGPRINT-1; v++)
+					if (*v >= 32 && *v < 127) {
+						tag_str[tag_str_len++] = *v;
+						isascii++;
+					} else {
+						tag_str[tag_str_len++] = '.';
+						isgarbage++;
 					}
+				tag_str[tag_str_len] = 0;
 
-				/* TODO print UTF8 decoded text */
-				if (isascii) {
-					l = (tag_len < 80 ? tag_len : 80);
+				if (isascii > isgarbage) {
 					printf(" [%s \"%*.*s\"]",
-					    tok2str(pppoetag2str, "TAG-0x%x", tag_type),
-					    l, l, p);
-				} else
-					printf(" [%s UTF8]",
-					    tok2str(pppoetag2str, "TAG-0x%x", tag_type));
+					       tok2str(pppoetag2str, "TAG-0x%x", tag_type),
+					       (int)tag_str_len,
+					       (int)tag_str_len,
+					       tag_str);
+				} else {
+					/* Print hex, not fast to abuse printf but this doesn't get used much */
+					printf(" [%s 0x", tok2str(pppoetag2str, "TAG-0x%x", tag_type));
+					for (v=p; v<p+tag_len; v++) {
+						printf("%02X", *v);
+					}
+					printf("]");
+				}
+				
+
 			} else
 				printf(" [%s]", tok2str(pppoetag2str,
 				    "TAG-0x%x", tag_type));
@@ -234,4 +218,8 @@ pppoe_print(register const u_char *bp, u_int length)
 		printf(" ");
 		return (PPPOE_HDRLEN + ppp_print(pppoe_payload, pppoe_length));
 	}
+
+trunc:
+	printf("[|pppoe]");
+	return (PPPOE_HDRLEN);
 }

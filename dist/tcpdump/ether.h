@@ -1,6 +1,6 @@
-/*	$NetBSD: ether.h,v 1.2 2003/08/07 09:21:12 agc Exp $	*/
+/*	$NetBSD: ether.h,v 1.3 2004/09/27 23:04:24 dyoung Exp $	*/
 
-/* @(#) Header: /tcpdump/master/tcpdump/ether.h,v 1.6 2000/10/09 03:24:24 guy Exp (LBL) */
+/* @(#) Header: /tcpdump/master/tcpdump/ether.h,v 1.8 2002/12/11 07:13:51 guy Exp (LBL) */
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.

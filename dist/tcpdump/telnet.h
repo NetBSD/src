@@ -1,8 +1,8 @@
-/*	$NetBSD: telnet.h,v 1.2 2003/08/07 09:21:13 agc Exp $	*/
+/*	$NetBSD: telnet.h,v 1.3 2004/09/27 23:04:25 dyoung Exp $	*/
 
-/* @(#) Header: /tcpdump/master/tcpdump/telnet.h,v 1.3 2001/09/17 21:58:06 fenner Exp (LBL) */
+/* @(#) Header: /tcpdump/master/tcpdump/telnet.h,v 1.4 2002/06/11 17:09:01 itojun Exp (LBL) */
 
-/*	$NetBSD: telnet.h,v 1.2 2003/08/07 09:21:13 agc Exp $	*/
+/*	$NetBSD: telnet.h,v 1.3 2004/09/27 23:04:25 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -218,12 +218,12 @@ const char *telopts[NTELOPTS+1] = {
  * list of names if SLC_NAMES is not defined.
  */
 #define	SLC_NAMELIST	"0", "SYNCH", "BRK", "IP", "AO", "AYT", "EOR",	\
- 			"ABORT", "EOF", "SUSP", "EC", "EL", "EW", "RP",	\
- 			"LNEXT", "XON", "XOFF", "FORW1", "FORW2",	\
- 			"MCL", "MCR", "MCWL", "MCWR", "MCBOL",		\
- 			"MCEOL", "INSRT", "OVER", "ECR", "EWR",		\
- 			"EBOL", "EEOL",					\
- 			0,
+			"ABORT", "EOF", "SUSP", "EC", "EL", "EW", "RP",	\
+			"LNEXT", "XON", "XOFF", "FORW1", "FORW2",	\
+			"MCL", "MCR", "MCWL", "MCWR", "MCBOL",		\
+			"MCEOL", "INSRT", "OVER", "ECR", "EWR",		\
+			"EBOL", "EEOL",					\
+			0,
 
 #ifdef	SLC_NAMES
 const char *slc_names[] = {
