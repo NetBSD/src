@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.76 2001/01/27 11:10:18 enami Exp $ */
+/* $NetBSD: vmstat.c,v 1.77 2001/03/09 02:42:23 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.76 2001/01/27 11:10:18 enami Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.77 2001/03/09 02:42:23 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -550,6 +550,7 @@ dosum(void)
 	(void)printf("%9u reserve kernel pages\n", uvmexp.reserve_kernel);
 	(void)printf("%9u anon pager pages\n", uvmexp.anonpages);
 	(void)printf("%9u vnode page cache pages\n", uvmexp.vnodepages);
+	(void)printf("%9u executable pages\n", uvmexp.vtextpages);
 
 	(void)printf("%9u minimum free pages\n", uvmexp.freemin);
 	(void)printf("%9u target free pages\n", uvmexp.freetarg);
