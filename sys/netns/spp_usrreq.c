@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.37 2004/04/19 00:10:48 matt Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.38 2004/04/21 02:33:28 matt Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.37 2004/04/19 00:10:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.38 2004/04/21 02:33:28 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,13 +83,7 @@ struct spp_istat spp_istat;
 
 /*ARGSUSED*/
 void
-#if __STDC__
 spp_input(struct mbuf *m, ...)
-#else
-spp_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	struct nspcb *nsp;
 	struct sppcb *cb;
