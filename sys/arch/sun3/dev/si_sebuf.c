@@ -1,4 +1,4 @@
-/*	$NetBSD: si_sebuf.c,v 1.3 1997/11/07 22:11:19 gwr Exp $	*/
+/*	$NetBSD: si_sebuf.c,v 1.4 1997/11/08 05:42:07 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -160,7 +160,7 @@ static struct scsipi_device se_dev = {
 };
 
 /* Options for disconnect/reselect, DMA, and interrupts. */
-int se_options = SI_DISABLE_DMA | SI_FORCE_POLLING | 0xff;
+int se_options = SE_DISABLE_DMA | SE_FORCE_POLLING | 0xff;
 
 /* How long to wait for DMA before declaring an error. */
 int se_dma_intr_timo = 500;	/* ticks (sec. X 100) */
