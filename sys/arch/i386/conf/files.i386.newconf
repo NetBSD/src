@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386.newconf,v 1.22 1994/11/03 16:25:25 mycroft Exp $
+#	$NetBSD: files.i386.newconf,v 1.23 1994/11/03 16:43:26 mycroft Exp $
 #
 # new style config file for i386 architecture
 #
@@ -24,6 +24,7 @@ file	arch/i386/i386/sys_machdep.c
 file	arch/i386/i386/trap.c
 file	arch/i386/i386/vm_machdep.c
 file	dev/cons.c
+#major	{vnd = 14}
 
 #
 # Generic SCSI drivers
@@ -54,7 +55,7 @@ file	scsi/uk.c			uk needs-flag
 #
 # Generic audio driver
 #
-define	audio {}
+define	audio
 file	arch/i386/isa/bsd_audio.c	audio
 
 #
@@ -66,7 +67,7 @@ device	isa at root {[port = -1], [size = 0],
 device	eisa at root {[slot = -1],
 		      [iomem = -1], [iosiz = 0],
 		      [irq = -1], [drq = -1]}
-device	pci at root {[bus = -1], [device = -1], [function = -1]}
+device	pci at root {[bus = -1], [dev = -1], [function = -1]}
 #device	mca at root {...}
 
 #
@@ -77,7 +78,7 @@ file	arch/i386/isa/isa.c		isa needs-flag
 device	timer at isa
 device	clock at isa
 file	arch/i386/isa/clock.c		clock timer
-define	dma {}
+define	dma
 file	arch/i386/isa/dma.c		dma needs-flag
 file	arch/i386/isa/intr.c		isa
 device	npx at isa
@@ -93,11 +94,13 @@ file	arch/i386/isa/pcvt/pcvt_out.c	vt needs-count
 file	arch/i386/isa/pcvt/pcvt_sup.c	vt needs-count
 file	arch/i386/isa/pcvt/pcvt_vtf.c	vt needs-count
 
-device	ast at isa
+define	commulti {}
+device	ast at isa: commulti
 file	arch/i386/isa/ast.c		ast needs-count
-device	rtfps at isa
+device	rtfps at isa: commulti
 file	arch/i386/isa/rtfps.c		rtfps needs-count
-device	com at isa, ast, rtfps: tty
+
+device	com at isa, commulti: tty
 file	arch/i386/isa/com.c		com needs-count
 device	cy at isa: tty
 file	arch/i386/isa/cy.c		cy needs-count
@@ -140,7 +143,7 @@ device	wt at isa: tape, dma
 file	arch/i386/isa/wt.c		wt needs-flag
 major	{wt = 3}
 
-define	elink {}
+define	elink
 file	arch/i386/isa/elink.c		elink
 
 device	ed at isa: ether, ifnet
@@ -198,8 +201,3 @@ file	compat/ibcs2/ibcs2_exec.c	compat_ibcs2
 file	compat/ibcs2/ibcs2_ioctl.c	compat_ibcs2
 file	compat/ibcs2/ibcs2_misc.c	compat_ibcs2
 file	compat/ibcs2/ibcs2_sysent.c	compat_ibcs2
-
-
-
-
-
