@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 1996/12/18 05:39:57 thorpej Exp $
+#	$NetBSD: Makefile,v 1.22 1996/12/18 22:11:09 cgd Exp $
 #	from: @(#)Makefile	5.7 (Berkeley) 4/1/91
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM
@@ -13,7 +13,7 @@ SUBDIR=	atrun comsat fingerd ftpd getNAME getty identd lfs_cleanerd \
 # XXX process.
 .if !exists(${.CURDIR}/../domestic/libexec/telnetd) || \
     defined(EXPORTABLE_SYSTEM)
-SUBDIR+=telned
+SUBDIR+=telnetd
 .endif
 
 .if ((${MACHINE_ARCH} == "alpha") && defined(ELF_TOOLCHAIN))
