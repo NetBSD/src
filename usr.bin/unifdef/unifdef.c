@@ -1,4 +1,4 @@
-/*	$NetBSD: unifdef.c,v 1.3 1994/12/07 00:33:49 jtc Exp $	*/
+/*	$NetBSD: unifdef.c,v 1.4 1994/12/20 01:44:07 jtc Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)unifdef.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: unifdef.c,v 1.3 1994/12/07 00:33:49 jtc Exp $";
+static char rcsid[] = "$NetBSD: unifdef.c,v 1.4 1994/12/20 01:44:07 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -95,11 +95,18 @@ char incomment BSS;         /* inside C comment */
 #define QUOTE_SINGLE 1
 #define QUOTE_DOUBLE 2
 char inquote BSS;           /* inside single or double quotes */
-
 int exitstat BSS;
-char *skipcomment ();
-char *skipquote ();
 
+int 	error __P((int, int, int));
+int 	findsym __P((char *));
+void 	flushline __P((Bool));
+int 	getlin __P((char *, int, FILE *, int));
+void	pfile __P((void));
+void	prname __P((void));
+char   *skipcomment __P((char *));
+char   *skipquote __P((char *, int));
+
+int
 main (argc, argv)
 int argc;
 char **argv;
@@ -194,13 +201,14 @@ typedef int Linetype;
 #define LT_ELSE        5   /* #else */
 #define LT_ENDIF       6   /* #endif */
 #define LT_LEOF        7   /* end of file */
-extern Linetype checkline ();
+Linetype checkline __P((int *));
 
 typedef int Reject_level;
 Reject_level reject BSS;    /* 0 or 1: pass thru; 1 or 2: ignore comments */
 #define REJ_NO          0
 #define REJ_IGNORE      1
 #define REJ_YES         2
+int doif __P((int, int, Reject_level, int));
 
 int linenum BSS;    /* current line number */
 int stqcline BSS;   /* start of current coment or quote */
@@ -228,6 +236,7 @@ char *errs[] = {
 #define IN_IF   1
 #define IN_ELSE 2
 
+void
 pfile ()
 {
     reject = REJ_NO;
@@ -599,6 +608,7 @@ int expandtabs;
     return num;
 }
 
+void
 flushline (keep)
 Bool keep;
 {
@@ -614,6 +624,7 @@ Bool keep;
     return;
 }
 
+void
 prname ()
 {
     fprintf (stderr, "%s: ", progname);
