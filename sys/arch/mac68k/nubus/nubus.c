@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.12 1995/06/21 02:59:08 briggs Exp $	*/
+/*	$NetBSD: nubus.c,v 1.13 1995/07/30 21:35:00 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -85,8 +85,8 @@ nubusattach(parent, self, aux)
 	 * Kludge for internal video.
 	 */
 	if (int_video_start) {
-		int	int_video_slot = 0xe;
-		fmtblock.top = NUBUS_SLOT_TO_BASE(int_video_slot+1);
+		int	int_video_slot = NUBUS_INT_VIDEO_PSUEDO_SLOT;
+		fmtblock.top = NUBUS_SLOT_TO_BASE(int_video_slot);
 		fmtblock.slot = int_video_slot;
 		fmtblock.bytelanes = 0x0F;
 		fmtblock.step = 4;

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_obio.c,v 1.6 1995/07/28 01:34:58 briggs Exp $	*/
+/*	$NetBSD: grf_obio.c,v 1.7 1995/07/30 21:36:23 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -65,13 +65,15 @@ grfiv_probe(sc, slotinfo)
 	if (int_video_start == 0 && mac68k_vidlog == 0) {
 		return 0;
 	}
-	if (slotinfo->slot <= 0xe) {
-		if (NUBUS_SLOT_TO_BASE(slotinfo->slot) > int_video_start)
-			return 0;
-		if (NUBUS_SLOT_TO_BASE(slotinfo->slot + 1) <= int_video_start)
-			return 0;
-	}
-	return 1;
+
+	if (   (NUBUS_SLOT_TO_BASE(slotinfo->slot) <= int_video_start)
+	    && (int_video_start < NUBUS_SLOT_TO_BASE(slotinfo->slot + 1)))
+		return 1;
+
+	if (slotinfo->slot == NUBUS_INT_VIDEO_PSUEDO_SLOT)
+		return 1;
+
+	return 0;
 }
 
 extern int
