@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.22 1998/01/16 16:26:22 christos Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.23 1998/01/21 10:47:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: miscbltin.c,v 1.22 1998/01/16 16:26:22 christos Exp $");
+__RCSID("$NetBSD: miscbltin.c,v 1.23 1998/01/21 10:47:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,8 +49,8 @@ __RCSID("$NetBSD: miscbltin.c,v 1.22 1998/01/16 16:26:22 christos Exp $");
  * Miscelaneous builtins.
  */
 
-#include <sys/types.h>
-#include <sys/param.h>
+#include <sys/types.h>		/* quad_t */
+#include <sys/param.h>		/* BSD4_4 */
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/resource.h>
