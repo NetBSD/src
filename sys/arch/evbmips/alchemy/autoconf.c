@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.1 2002/07/29 16:22:55 simonb Exp $ */
+/* $NetBSD: autoconf.c,v 1.2 2002/09/11 08:30:48 simonb Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -108,7 +108,8 @@ device_register(struct device *dev, void *aux)
 				ethaddr[i] = strtoul(cp, &cp0, 16);
 				cp = cp0 + 1;
 			}
-			if (aa->aa_addr != MAC0_BASE) {
+			if (aa->aa_addr != MAC0_BASE &&
+			    aa->aa_addr != AU1500_MAC0_BASE) {
 				/* XXX
 				 * The PROM has a variable for the MAC address
 				 * of the first interface.  For now, just add
