@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.44 2003/11/27 23:02:40 fvdl Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.45 2003/12/03 12:01:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -49,6 +49,8 @@ struct channel_queue {  /* per channel queue (may be shared) */
 	TAILQ_HEAD(xferhead, wdc_xfer) sc_xfer;
 	int queue_freeze;
 };
+
+#define WDC_NREG	8 /* number of command registers */
 
 struct channel_softc { /* Per channel data */
 	/* Our timeout callout */
