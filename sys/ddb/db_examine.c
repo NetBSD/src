@@ -22,49 +22,15 @@
  * 
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- */
-/*
- * $Id: db_examine.c,v 1.2 1993/05/20 03:39:12 cgd Exp $
  *
- * HISTORY
- * $Log: db_examine.c,v $
- * Revision 1.2  1993/05/20 03:39:12  cgd
- * add explicit rcs id
- *
- * Revision 1.1.1.1  1993/03/21  09:46:26  cgd
- * initial import of 386bsd-0.1 sources
- *
- * Revision 1.1  1992/03/25  21:45:07  pace
- * Initial revision
- *
- * Revision 2.4  91/02/05  17:06:20  mrt
- * 	Changed to new Mach copyright
- * 	[91/01/31  16:17:37  mrt]
- * 
- * Revision 2.3  90/11/07  16:49:23  rpd
- * 	Added db_search_cmd, db_search.
- * 	[90/11/06            rpd]
- * 
- * Revision 2.2  90/08/27  21:50:38  dbg
- * 	Add 'r', 'z' to print and examine formats.
- * 	Change calling sequence of db_disasm.
- * 	db_examine sets db_prev and db_next instead of explicitly
- * 	advancing dot.
- * 	[90/08/20            dbg]
- * 	Reflected changes in db_printsym()'s calling seq.
- * 	[90/08/20            af]
- * 	Reduce lint.
- * 	[90/08/07            dbg]
- * 	Created.
- * 	[90/07/25            dbg]
- * 
- */
-/*
  *	Author: David B. Golub, Carnegie Mellon University
  *	Date:	7/90
+ *	$Id: db_examine.c,v 1.3 1993/12/18 04:46:31 mycroft Exp $
  */
-#include "param.h"
-#include "proc.h"
+
+#include <sys/param.h>
+#include <sys/proc.h>
+
 #include <machine/db_machdep.h>		/* type definitions */
 
 #include <ddb/db_lex.h>

@@ -22,62 +22,18 @@
  * 
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- */
-/*
- * $Id: db_break.c,v 1.2 1993/05/20 03:39:08 cgd Exp $
  *
- * HISTORY
- * $Log: db_break.c,v $
- * Revision 1.2  1993/05/20 03:39:08  cgd
- * add explicit rcs id
- *
- * Revision 1.1.1.1  1993/03/21  09:46:26  cgd
- * initial import of 386bsd-0.1 sources
- *
- * Revision 1.1  1992/03/25  21:44:57  pace
- * Initial revision
- *
- * Revision 2.7  91/02/05  17:06:00  mrt
- * 	Changed to new Mach copyright
- * 	[91/01/31  16:17:01  mrt]
- * 
- * Revision 2.6  91/01/08  15:09:03  rpd
- * 	Added db_map_equal, db_map_current, db_map_addr.
- * 	[90/11/10            rpd]
- * 
- * Revision 2.5  90/11/05  14:26:32  rpd
- * 	Initialize db_breakpoints_inserted to TRUE.
- * 	[90/11/04            rpd]
- * 
- * Revision 2.4  90/10/25  14:43:33  rwd
- * 	Added map field to breakpoints.
- * 	Added map argument to db_set_breakpoint, db_delete_breakpoint,
- * 	db_find_breakpoint.  Added db_find_breakpoint_here.
- * 	[90/10/18            rpd]
- * 
- * Revision 2.3  90/09/28  16:57:07  jsb
- * 	Fixed db_breakpoint_free.
- * 	[90/09/18            rpd]
- * 
- * Revision 2.2  90/08/27  21:49:53  dbg
- * 	Reflected changes in db_printsym()'s calling seq.
- * 	[90/08/20            af]
- * 	Clear breakpoints only if inserted.
- * 	Reduce lint.
- * 	[90/08/07            dbg]
- * 	Created.
- * 	[90/07/25            dbg]
- * 
- */
-/*
  *	Author: David B. Golub, Carnegie Mellon University
  *	Date:	7/90
+ *	$Id: db_break.c,v 1.3 1993/12/18 04:46:28 mycroft Exp $
  */
+
 /*
  * Breakpoints.
  */
-#include "param.h"
-#include "proc.h"
+#include <sys/param.h>
+#include <sys/proc.h>
+
 #include <machine/db_machdep.h>		/* type definitions */
 
 #include <ddb/db_lex.h>
