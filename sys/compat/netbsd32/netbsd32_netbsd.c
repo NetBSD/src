@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.50 2001/02/02 13:05:18 mrg Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.51 2001/02/03 12:46:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -129,6 +129,7 @@ static __inline void netbsd32_to_semid_ds __P((struct  netbsd32_semid_ds *, stru
 static __inline void netbsd32_from_semid_ds __P((struct  semid_ds *, struct  netbsd32_semid_ds *));
 
 
+/* note that the netbsd32_msghdr's iov really points to a struct iovec, not a netbsd32_iovec. */
 static int recvit32 __P((struct proc *, int, struct netbsd32_msghdr *, struct iovec *, caddr_t, 
 			 register_t *));
 static int dofilereadv32 __P((struct proc *, int, struct file *, struct netbsd32_iovec *, 
@@ -1186,7 +1187,7 @@ recvit32(p, s, mp, iov, namelenp, retsize)
 	/* getsock() will use the descriptor for us */
 	if ((error = getsock(p->p_fd, s, &fp)) != 0)
 		return (error);
-	auio.uio_iov = (struct iovec *)(u_long)mp->msg_iov;
+	auio.uio_iov = iov;
 	auio.uio_iovcnt = mp->msg_iovlen;
 	auio.uio_segflg = UIO_USERSPACE;
 	auio.uio_rw = UIO_READ;
@@ -1401,7 +1402,7 @@ netbsd32_recvfrom(p, v, retval)
 	} else
 		msg.msg_namelen = 0;
 	msg.msg_name = SCARG(uap, from);
-	msg.msg_iov = NULL; /* We can't store a real pointer here */
+	msg.msg_iov = NULL; /* ignored in recvit32(), uses iov */
 	msg.msg_iovlen = 1;
 	aiov.iov_base = (caddr_t)(u_long)SCARG(uap, buf);
 	aiov.iov_len = (u_long)SCARG(uap, len);
@@ -1872,8 +1873,13 @@ netbsd32_execve2(p, uap, retval)
 	int szsigcode;
 	struct exec_vmcmd *base_vcp = NULL;
 
-	/* init the namei data to point the file user's program name */
-	/* XXX cgd 960926: why do this here?  most will be clobbered. */
+	/*
+	 * Init the namei data to point the file user's program name.
+	 * This is done here rather than in check_exec(), so that it's
+	 * possible to override this settings if any of makecmd/probe
+	 * functions call check_exec() recursively - for example,
+	 * see exec_script_makecmds().
+	 */
 	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 
 	/*
