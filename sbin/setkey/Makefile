@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2005/02/19 16:58:26 thorpej Exp $
+# $NetBSD: Makefile,v 1.6 2005/02/24 13:45:08 manu Exp $
 
 WARNS=	0	# Will be fixed later
 
@@ -15,6 +15,7 @@ DIST=	${NETBSDSRCDIR}/crypto/dist/ipsec-tools
 CPPFLAGS+= -I${DIST}/src/setkey -I${DIST}/src/libipsec
 CPPFLAGS+= -I${NETBSDSRCDIR}/lib/libipsec -I.
 CPPFLAGS+= -DIPSEC_DEBUG -DHAVE_CONFIG_H
+CPPFLAGS+= -DSADB_X_EALG_AESCBC=SADB_X_EALG_AES
 
 LDADD+= -ll -ly -lipsec
 DPADD+=	${LIBL} ${LIBY} ${LIBIPSEC}

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2005/02/19 22:03:49 thorpej Exp $
+# $NetBSD: Makefile,v 1.13 2005/02/24 13:45:08 manu Exp $
 
 USE_SHLIBDIR=	yes
 WARNS=	0	# Will be fixed later
@@ -9,6 +9,7 @@ DIST=	${NETBSDSRCDIR}/crypto/dist/ipsec-tools
 LIB=	ipsec
 CPPFLAGS+= -I${DIST}/src/libipsec -I. -DHAVE_CONFIG_H
 CPPFLAGS+= -DIPSEC_DEBUG -I${.CURDIR} -I${NETBSDSRCDIR}/sys
+CPPFLAGS+= -DSADB_X_EALG_AESCBC=SADB_X_EALG_AES
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=-DINET6
