@@ -1,4 +1,4 @@
-/*	$NetBSD: mknodes.c,v 1.13 1997/01/11 02:04:41 tls Exp $	*/
+/*	$NetBSD: mknodes.c,v 1.14 1997/04/11 23:03:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mknodes.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: mknodes.c,v 1.13 1997/01/11 02:04:41 tls Exp $";
+static char rcsid[] = "$NetBSD: mknodes.c,v 1.14 1997/04/11 23:03:08 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ static char rcsid[] = "$NetBSD: mknodes.c,v 1.13 1997/01/11 02:04:41 tls Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
@@ -316,7 +316,7 @@ outfunc(cfile, calcsize)
 		fputs("      funcblocksize += nodesize[n->type];\n", cfile);
 	else {
 		fputs("      new = funcblock;\n", cfile);
-		fputs("      funcblock += nodesize[n->type];\n", cfile);
+		fputs("      funcblock = (char *) funcblock + nodesize[n->type];\n", cfile);
 	}
 	fputs("      switch (n->type) {\n", cfile);
 	for (sp = str ; sp < &str[nstr] ; sp++) {
@@ -441,7 +441,7 @@ readline()
 
 
 static void
-#if __STDC__
+#ifdef __STDC__
 error(const char *msg, ...)
 #else
 error(va_alist)
@@ -449,7 +449,7 @@ error(va_alist)
 #endif
 {
 	va_list va;
-#if __STDC__
+#ifdef __STDC__
 	va_start(va, msg);
 #else
 	char *msg;
