@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.100 2000/04/08 13:44:12 tsutsui Exp $	*/
+/*	$NetBSD: ncr.c,v 1.101 2000/04/08 13:49:43 tsutsui Exp $	*/
 
 /**************************************************************************
 **
@@ -1534,7 +1534,7 @@ static	int	read_tekram_eeprom
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.100 2000/04/08 13:44:12 tsutsui Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.101 2000/04/08 13:49:43 tsutsui Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -7665,11 +7665,7 @@ static	int	ncr_scatter
 
 	free = MAX_SCATTER - 1;
 
-#ifdef __NetBSD__
-	if (vaddr & (NBPG-1)) free -= datalen / NBPG;
-#else
 	if (vaddr & PAGE_MASK) free -= datalen / PAGE_SIZE;
-#endif
 
 	if (free>1)
 		while ((chunk * free >= 2 * datalen) && (chunk>=1024))
@@ -7698,11 +7694,7 @@ static	int	ncr_scatter
 			/*
 			**	continue this segment
 			*/
-#ifdef __NetBSD__
-			pnext = (paddr & (~(NBPG - 1))) + NBPG;
-#else
 			pnext = (paddr & (~PAGE_MASK)) + PAGE_SIZE;
-#endif
 
 			/*
 			**	Compute max size
