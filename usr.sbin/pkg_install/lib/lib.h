@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.37 2002/03/05 13:01:21 agc Exp $ */
+/* $NetBSD: lib.h,v 1.38 2002/05/10 13:17:57 agc Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -67,7 +67,10 @@
 #endif
 
 /* Where we put logging information by default, else ${PKG_DBDIR} if set */
+#ifndef DEF_LOG_DIR
 #define DEF_LOG_DIR		"/var/db/pkg"
+#endif
+
 /* just in case we change the environment variable name */
 #define PKG_DBDIR		"PKG_DBDIR"
 
