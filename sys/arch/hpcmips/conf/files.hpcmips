@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.76 2002/03/06 15:00:04 uch Exp $
+#	$NetBSD: files.hpcmips,v 1.77 2002/03/10 07:24:54 takemura Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -197,23 +197,9 @@ device vrc4173cardu: pcmciabus
 attach vrc4173cardu at pci
 file arch/hpcmips/pci/vrc4173cardu.c		vrc4173cardu
 
-device vrc4173if {}
-
-device vrc4173bcu: vrc4173if
+device vrc4173bcu: vripif
 attach vrc4173bcu at pci
 file arch/hpcmips/vr/vrc4173bcu.c		vrc4173bcu
-
-device vrc4173cmu
-attach vrc4173cmu at vrc4173if
-file arch/hpcmips/vr/vrc4173cmu.c		vrc4173cmu
-
-device vrc4173piu
-attach vrc4173piu at vrc4173if
-file arch/hpcmips/vr/vrc4173piu.c		vrc4173piu
-
-device vrc4173kiu
-attach vrc4173kiu at vrc4173if
-file arch/hpcmips/vr/vrc4173kiu.c		vrc4173kiu
 
 #
 #	TOSHIBA TX3912/3922

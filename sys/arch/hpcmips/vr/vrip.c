@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.20 2002/02/11 08:15:41 takemura Exp $	*/
+/*	$NetBSD: vrip.c,v 1.21 2002/03/10 07:24:54 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -267,6 +267,7 @@ vrip_search(struct device *parent, struct cfdata *cf, void *aux)
 	struct vrip_softc *sc = (struct vrip_softc *)parent;
 	struct vrip_attach_args va;
 
+	memset(&va, 0, sizeof(va));
 	va.va_vc = &sc->sc_chipset;
 	va.va_iot = sc->sc_iot;
 	va.va_unit = cf->cf_loc[VRIPIFCF_UNIT];
@@ -451,7 +452,7 @@ __vrip_intr_setmask2(vrip_chipset_tag_t vc, vrip_intr_handle_t handle,
 		else
 			reg &= ~(mask&0xffff);
 		bus_space_write_2(sc->sc_iot, sc->sc_ioh, vu->vu_mlreg, reg);
-		if (vu->vu_mhreg != -1) { /* GIU [16:31] case only */
+		if (vu->vu_mhreg != 0) { /* GIU [16:31] case only */
 			reg = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
 			    vu->vu_mhreg);
 			if (onoff)
