@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)clnt_perror.c 1.15 87/10/07 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)clnt_perror.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$Id: clnt_perror.c,v 1.3 1994/12/04 01:13:13 cgd Exp $";
+static char *rcsid = "$Id: clnt_perror.c,v 1.4 1995/02/20 21:20:22 jtc Exp $";
 #endif
 
 /*
@@ -151,7 +151,7 @@ clnt_perror(rpch, s)
 	CLIENT *rpch;
 	char *s;
 {
-	(void) fprintf(stderr,"%s",clnt_sperror(rpch,s));
+	(void) fprintf(stderr,"%s\n",clnt_sperror(rpch,s));
 }
 
 
@@ -160,7 +160,7 @@ struct rpc_errtab {
 	char *message;
 };
 
-static struct rpc_errtab  rpc_errlist[] = {
+static const struct rpc_errtab  rpc_errlist[] = {
 	{ RPC_SUCCESS, 
 		"RPC: Success" }, 
 	{ RPC_CANTENCODEARGS, 
@@ -221,7 +221,7 @@ void
 clnt_perrno(num)
 	enum clnt_stat num;
 {
-	(void) fprintf(stderr,"%s",clnt_sperrno(num));
+	(void) fprintf(stderr,"%s\n",clnt_sperrno(num));
 }
 
 
@@ -255,7 +255,7 @@ void
 clnt_pcreateerror(s)
 	char *s;
 {
-	(void) fprintf(stderr,"%s",clnt_spcreateerror(s));
+	(void) fprintf(stderr,"%s\n",clnt_spcreateerror(s));
 }
 
 struct auth_errtab {
@@ -263,7 +263,7 @@ struct auth_errtab {
 	char *message;
 };
 
-static struct auth_errtab auth_errlist[] = {
+static const struct auth_errtab auth_errlist[] = {
 	{ AUTH_OK,
 		"Authentication OK" },
 	{ AUTH_BADCRED,
