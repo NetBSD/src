@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_clk.c,v 1.7 2003/03/25 06:12:46 igy Exp $	*/
+/*	$NetBSD: ixp12x0_clk.c,v 1.8 2003/07/13 09:25:50 igy Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_clk.c,v 1.7 2003/03/25 06:12:46 igy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_clk.c,v 1.8 2003/07/13 09:25:50 igy Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -131,26 +131,23 @@ CFATTACH_DECL(ixpclk, sizeof(struct ixpclk_softc),
 				 & IXPCL_CTV)
 
 static int
-ixpclk_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ixpclk_match(struct device *parent, struct cfdata *match, void *aux)
 {
+
 	return 2;
 }
 
 static void
-ixpclk_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+ixpclk_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct ixpclk_softc		*sc = (struct ixpclk_softc*) self;
-	struct ixpsip_attach_args	*sa = aux;
+	struct ixpclk_softc		*sc;
+	struct ixpsip_attach_args	*sa;
 	u_int32_t			ccf;
 
 	printf("\n");
 
+	sc = (struct ixpclk_softc*) self;
+	sa = aux;
 	sc->sc_iot = sa->sa_iot;
 	sc->sc_baseaddr = sa->sa_addr;
 
@@ -197,8 +194,8 @@ ixpclk_attach(parent, self, aux)
  */
 static int
 ixpclk_intr(void *arg)
-	
 {
+
 	bus_space_write_4(ixpclk_sc->sc_iot, ixpclk_sc->sc_ioh,
 			  IXPCLK_CLEAR, 1);
 
@@ -216,9 +213,9 @@ ixpclk_intr(void *arg)
  *	recalculate the intervals here, but that would be a pain.
  */
 void
-setstatclockrate(hz)
-	int hz;
+setstatclockrate(int hz)
 {
+
 	/* use hardclock */
 
 	/* XXX should I use TIMER2? */
@@ -230,10 +227,11 @@ setstatclockrate(hz)
  *	Initialize the clock and get them going.
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
-	struct ixpclk_softc*	sc = ixpclk_sc;
+	struct ixpclk_softc*	sc;
 
+	sc = ixpclk_sc;
 	stathz = profhz = 0;
 
 	printf("clock: hz = %d stathz = %d\n", hz, stathz);
@@ -252,14 +250,13 @@ cpu_initclocks()
 }
 
 int
-gettick()
+gettick(void)
 {
-	int counter;
-	u_int savedints;
+	int	counter;
+	u_int	savedints;
+
 	savedints = disable_interrupts(I32_bit);
-
 	counter = GET_TIMER_VALUE(ixpclk_sc);
-
 	restore_interrupts(savedints);
 	return counter;
 }
@@ -271,8 +268,7 @@ gettick()
  *	accurate to the microsecond.
  */
 void
-microtime(tvp)
-	register struct timeval *tvp;
+microtime(register struct timeval *tvp)
 {
 	u_int			oldirqstate;
 	u_int32_t		counts;
@@ -329,7 +325,8 @@ delay(unsigned int usecs)
 	u_int32_t	otick;
 	u_int32_t	delta;
 	int		j;
-	int		csec, usec;
+	int		csec;
+	int		usec;
 
 	if (ixpclk_sc == NULL) {
 #ifdef DEBUG
@@ -370,14 +367,14 @@ delay(unsigned int usecs)
 }
 
 void
-resettodr()
+resettodr(void)
 {
 }
 
 void
-inittodr(base)
-	time_t base;
+inittodr(time_t base)
 {
+
 	time.tv_sec = base;
 	time.tv_usec = 0;
 }
