@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.17.2.1 1998/11/09 06:06:40 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.17.2.2 1998/11/16 08:29:12 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -50,6 +50,7 @@
  */
 
 #include "fs_nfs.h"
+#include "opt_uvm.h"
 #include "opt_uvmhist.h"
 
 /*
@@ -75,6 +76,10 @@
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_vnode.h>
+
+#ifdef UBC
+UVMHIST_DECL(ubchist);
+#endif
 
 /*
  * private global data structure
@@ -1009,8 +1014,7 @@ uvn_flush(uobj, start, stop, flags)
 		start = trunc_page(start);
 		stop = round_page(stop);
 		if (stop > round_page(uvn->u_size)) {
-			printf("uvn_flush: out of range flush (fixed)\n");
-			printf("  vp %p stop 0x%x\n", uvn, (int)stop);
+			printf("uvn_flush: oor vp %p start 0x%x stop 0x%x size 0x%x\n", uvn, (int)start, (int)stop, (int)round_page(uvn->u_size));
 		}
 
 		by_list = (uobj->uo_npages <= 
@@ -1425,6 +1429,8 @@ uvn_cluster(uobj, offset, loffset, hoffset)
 	vaddr_t *loffset, *hoffset; /* OUT */
 {
 	struct uvm_vnode *uvn = (struct uvm_vnode *) uobj;
+	UVMHIST_FUNC("uvn_cluster"); UVMHIST_CALLED(ubchist);
+
 	*loffset = offset;
 
 	if (*loffset >= uvn->u_size)
@@ -1432,8 +1438,9 @@ uvn_cluster(uobj, offset, loffset, hoffset)
 	{
 		/* XXX nfs writes cause trouble with this */
 		*loffset = *hoffset = offset;
-		printf("uvn_cluster: offset out of range: vp %p loffset 0x%x\n",
-		      uobj, (int) *loffset);
+UVMHIST_LOG(ubchist, "uvn_cluster: offset out of range: vp %p loffset 0x%x",
+		      uobj, (int)*loffset, 0,0);
+Debugger(); 
 		return;
 	}
 #else
@@ -1472,6 +1479,9 @@ uvn_put(uobj, pps, npages, flags)
 
 	/* note: object locked */
 	simple_lock_assert(&uobj->vmobjlock, 1);
+
+	/* XXX why would the VOP need it locked? */
+	simple_unlock(&uobj->vmobjlock);
 	retval = VOP_PUTPAGES((struct vnode *)uobj, pps, npages, 1, &retval);
 	/* note: object unlocked */
 	simple_lock_assert(&uobj->vmobjlock, 0);
@@ -1774,8 +1784,8 @@ uvm_vnp_setsize(vp, newsize)
 		}
 #ifdef DEBUGxx
 printf("uvm_vnp_setsize: vp %p newsize 0x%x\n", vp, (int)newsize);
-		uvn->u_size = (vaddr_t)newsize;
 #endif
+		uvn->u_size = (vaddr_t)newsize;
 #ifdef UBC
 #else
 	}
