@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.32 1997/06/10 19:09:05 veego Exp $	*/
+/*	$NetBSD: pmap.c,v 1.33 1998/01/01 19:53:05 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -791,31 +791,31 @@ pmap_reference(pmap)
 }
 
 void	loadustp __P((vm_offset_t));
-void	pmap_activate __P((register pmap_t, struct pcb *));
 
+/*
+ *	Mark that a processor is about to be used by a given pmap.
+ */
 void
-pmap_activate(pmap, pcbp)
-	register pmap_t pmap;
-	struct pcb *pcbp;
+pmap_activate(p)
+	struct proc *p;
 {
-
-	if (pmap == NULL)
-		return;
+	struct pcb *pcb = &p->p_addr->u_pcb;
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_SEGTAB))
-		printf("pmap_activate(%p, %p)\n", pmap, pcbp);
+		printf("pmap_activate(%p)\n", p);
 #endif
 
-	PMAP_ACTIVATE(pmap, pcbp, pmap == curproc->p_vmspace->vm_map.pmap);
+	PMAP_ACTIVATE(pmap, pcb, p == curproc);
 }
 
-void	pmap_deactivate __P((register pmap_t, struct pcb *));
-
+/*
+ *	Mark that a processor is no longer in use by a given pmap.
+ */
 void
-pmap_deactivate(pmap, pcb)
-	register pmap_t pmap;
-	struct pcb *pcb;
+pmap_deactivate(p)
+	struct proc *p;
 {
 }
 
@@ -1813,8 +1813,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 				 * pointer for current process so
 				 * update now to reload hardware.
 				 */
-				if (curproc != NULL &&
-				    ptpmap == curproc->p_vmspace->vm_map.pmap)
+				if (active_user_pmap(ptpmap))
 					PMAP_ACTIVATE(ptpmap,
 					    &curproc->p_addr->u_pcb, 1);
 			}
@@ -2032,7 +2031,7 @@ pmap_enter_ptpage(pmap, va)
 		 * XXX may have changed segment table pointer for current
 		 * process so update now to reload hardware.
 		 */
-		if (pmap == curproc->p_vmspace->vm_map.pmap)
+		if (active_user_pmap(pmap))
 			PMAP_ACTIVATE(pmap, &curproc->p_addr->u_pcb, 1);
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB))

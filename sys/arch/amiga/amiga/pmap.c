@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.40 1997/09/19 13:53:05 leo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.41 1998/01/01 19:52:53 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -267,7 +267,6 @@ void		pmap_enter_ptpage __P((register pmap_t, register vm_offset_t));
 				pa < vm_last_phys)
 #endif
 
-void pmap_activate __P((register pmap_t, struct pcb *));
 extern vm_offset_t reserve_dumppages __P((vm_offset_t));
 static void amiga_protection_init __P((void));
 void pmap_check_wiring __P((char *, vm_offset_t));
@@ -1198,10 +1197,9 @@ pmap_remove(pmap, sva, eva)
 					 * pointer for current process so
 					 * update now to reload hardware.
 					 */
-					if (curproc &&
-					    ptpmap == curproc->p_vmspace->vm_map.pmap)
+					if (active_user_pmap(ptpmap))
 						PMAP_ACTIVATE(ptpmap,
-							(struct pcb *)curproc->p_addr, 1);
+						    &curproc->p_addr->u_pcb, 1);
 				}
 			}
 			if (ptpmap == pmap_kernel())
@@ -1877,16 +1875,31 @@ ok:
 	splx(s);
 }
 
+/*
+ *	Mark that a processor is about to be used by a given pmap.
+ */
 void
-pmap_activate(pmap, pcbp)
-	register pmap_t pmap;
-	struct pcb *pcbp;
+pmap_activate(p)
+	struct proc *p;
 {
+	struct pcb *pcb = &p->p_addr->u_pcb;
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_SEGTAB))
-		printf("pmap_activate(%p, %p)\n", pmap, pcbp);
+		printf("pmap_activate(%p)\n", p);
 #endif
-	PMAP_ACTIVATE(pmap, pcbp, pmap == curproc->p_vmspace->vm_map.pmap);
+
+	PMAP_ACTIVATE(pmap, pcb, p == curproc);
+}
+
+/*
+ *	Mark that a processor is no longer in use by a given pmap.
+ */
+void
+pmap_deactivate(p)
+	struct proc *p;
+{
 }
 
 /*
@@ -2277,8 +2290,8 @@ pmap_enter_ptpage(pmap, va)
 		 * XXX may have changed segment table pointer for current
 		 * process so update now to reload hardware.
 		 */
-		if (pmap == curproc->p_vmspace->vm_map.pmap)
-			PMAP_ACTIVATE(pmap, (struct pcb *)curproc->p_addr, 1);
+		if (active_user_pmap(pmap))
+			PMAP_ACTIVATE(pmap, &curproc->p_addr->u_pcb, 1);
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB))
 			printf("enter_pt: pmap %p stab %p(%p)\n",
