@@ -1,4 +1,4 @@
-/*	$NetBSD: cp.c,v 1.17 1997/05/21 09:48:33 kleink Exp $	*/
+/*	$NetBSD: cp.c,v 1.18 1997/07/20 05:13:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -36,17 +36,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
+__COPYRIGHT(
 "@(#) Copyright (c) 1988, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$NetBSD: cp.c,v 1.17 1997/05/21 09:48:33 kleink Exp $";
+__RCSID("$NetBSD: cp.c,v 1.18 1997/07/20 05:13:36 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,6 +96,7 @@ int myumask;
 
 enum op { FILE_TO_FILE, FILE_TO_DIR, DIR_TO_DNE };
 
+int main __P((int, char *[]));
 int copy __P((char *[], enum op, int));
 int mastercmp __P((const FTSENT **, const FTSENT **));
 
@@ -259,8 +261,10 @@ copy(argv, type, fts_options)
 	int base, dne, nlen, rval;
 	char *p, *tmp;
 
+	base = 0;	/* XXX gcc -Wuninitialized (see comment below) */
+
 	if ((ftsp = fts_open(argv, fts_options, mastercmp)) == NULL)
-		err(1, NULL);
+		err(1, argv[0]);
 	for (rval = 0; (curr = fts_read(ftsp)) != NULL;) {
 		switch (curr->fts_info) {
 		case FTS_NS:
