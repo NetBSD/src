@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.654 2004/01/12 09:42:07 lukem Exp $
+# $NetBSD: mi,v 1.655 2004/01/20 15:21:55 rearnsha Exp $
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
 ./usr/share/info/awk.info			man-util-info		info
@@ -735,6 +735,7 @@
 ./usr/share/man/cat4/eso.0			man-sys-catman		.cat
 ./usr/share/man/cat4/esp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ess.0			man-sys-catman		.cat
+./usr/share/man/cat4/evbarm/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/iopaau.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/iopwdog.0		man-sys-catman		.cat
 ./usr/share/man/cat4/ex.0			man-sys-catman		.cat
@@ -2785,6 +2786,7 @@
 ./usr/share/man/man4/eso.4			man-sys-man		.man
 ./usr/share/man/man4/esp.4			man-sys-man		.man
 ./usr/share/man/man4/ess.4			man-sys-man		.man
+./usr/share/man/man4/evbarm/intro.4		man-sys-man		.man
 ./usr/share/man/man4/evbarm/iopaau.4		man-sys-man		.man
 ./usr/share/man/man4/evbarm/iopwdog.4		man-sys-man		.man
 ./usr/share/man/man4/ex.4			man-sys-man		.man
