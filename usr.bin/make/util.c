@@ -1,19 +1,20 @@
-/*	$NetBSD: util.c,v 1.23 1999/09/04 04:21:28 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.24 2000/01/06 22:23:20 wrstuden Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: util.c,v 1.23 1999/09/04 04:21:28 christos Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.24 2000/01/06 22:23:20 wrstuden Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.23 1999/09/04 04:21:28 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.24 2000/01/06 22:23:20 wrstuden Exp $");
 #endif
 #endif
 
 #include <stdio.h>
+#include <time.h>
 #include "make.h"
 #include <sys/param.h>
 
@@ -431,7 +432,7 @@ snprintf(va_alist)
 	return rv;
 }
 
-#if !defined(__SVR4) && !defined(__linux__) && !defined(ultrix)
+#if !defined(__SVR4) && !defined(__linux__) && !defined(ultrix) && !defined(__sgi)
 
 int
 strftime(buf, len, fmt, tm)
