@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.15 2002/11/29 22:17:19 fvdl Exp $	*/
+/*	$NetBSD: vector.S,v 1.16 2002/12/13 17:44:13 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -343,8 +343,7 @@ IDTVEC(oosyscall)
 	jmp	osyscall1
 
 /*
- * Trap gate entry for int $80 syscall
- * XXX should only be used for 32bit binaries, check for this.
+ * Trap gate entry for int $80 syscall, also used by sigreturn.
  */
 IDTVEC(osyscall)
 	pushq	$2		# size of instruction for restart
@@ -352,8 +351,6 @@ osyscall1:
 	pushq	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
 	movq	_C_LABEL(curproc)(%rip),%rdx	# get pointer to curproc
-	testl	$P_32,P_FLAG(%rdx)
-	je	1f		# not a 32bit process, go away please
 	movq	%rsp,P_MD_REGS(%rdx)	# save pointer to frame
 	call	*P_MD_SYSCALL(%rdx)
 _C_LABEL(osyscall_return):
