@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1.2.7 2002/10/21 23:01:48 nathanw Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.1.2.8 2002/10/22 01:26:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,6 +69,22 @@ pthread__sp(void)
 
 #define pthread__uc_sp(ucp) ((ucp)->uc_mcontext.__gregs[_REG_UESP])
 #define pthread__uc_pc(ucp) ((ucp)->uc_mcontext.__gregs[_REG_EIP])
+
+/*
+ * Set initial, sane values for registers whose values aren't just
+ * "don't care".
+ * 0x2b is GSEL(GUDATA_SEL, SEL_UPL), and
+ * 0x23 is GSEL(GUCODE_SEL, SEL_UPL), from arch/i386/include/segments.h.
+ * 0x202 is PSL_USERSET from arch/i386/include/psl.h
+ */
+#define _INITCONTEXT_U_MD(ucp)						\
+	(ucp)->uc_mcontext.__gregs[_REG_GS] = 0x2b;			\
+	(ucp)->uc_mcontext.__gregs[_REG_FS] = 0x2b;			\
+	(ucp)->uc_mcontext.__gregs[_REG_ES] = 0x2b;			\
+	(ucp)->uc_mcontext.__gregs[_REG_DS] = 0x2b;			\
+	(ucp)->uc_mcontext.__gregs[_REG_CS] = 0x23;			\
+	(ucp)->uc_mcontext.__gregs[_REG_SS] = 0x2b;			\
+	(ucp)->uc_mcontext.__gregs[_REG_EFL] = 0x202;
 
 /*
  * Usable stack space below the ucontext_t. 
