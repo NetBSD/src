@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_eisa.c,v 1.6 2001/11/13 12:47:33 lukem Exp $	*/
+/*	$NetBSD: dpt_eisa.c,v 1.6.10.1 2002/12/12 23:46:10 he Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@netbsd.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_eisa.c,v 1.6 2001/11/13 12:47:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_eisa.c,v 1.6.10.1 2002/12/12 23:46:10 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: dpt_eisa.c,v 1.6 2001/11/13 12:47:33 lukem Exp $");
 
 #include <dev/ic/dptreg.h>
 #include <dev/ic/dptvar.h>
+
+#include <dev/i2o/dptivar.h>
 
 #define DPT_EISA_SLOT_OFFSET		0x0c00
 #define DPT_EISA_IOSIZE			0x0100
@@ -173,6 +175,10 @@ dpt_eisa_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dv.dv_xname);
 		return;	
 	}
+
+	sc->sc_bustype = SI_EISA_BUS;
+	sc->sc_isaport =  EISA_SLOT_ADDR(ea->ea_slot) + DPT_EISA_SLOT_OFFSET;
+	sc->sc_isairq = irq;
 
 	/* Now attach to the bus-independent code. */
 	dpt_init(sc, intrstr);
