@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.13 2001/01/25 14:08:55 tsubai Exp $	*/
+/*	$NetBSD: akbd.c,v 1.14 2001/06/08 00:32:02 matt Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -49,6 +49,7 @@
 #include <machine/keyboard.h>
 
 #include <macppc/dev/adbvar.h>
+#include <macppc/dev/pm_direct.h>
 #include <macppc/dev/aedvar.h>
 #include <macppc/dev/akbdmap.h>
 #include <macppc/dev/akbdvar.h>
@@ -455,9 +456,10 @@ static int polledkey;
 extern int adb_polling;
 
 int
-kbd_intr(event)
-	adb_event_t *event;
+kbd_intr(arg)
+	void *arg;
 {
+	adb_event_t *event = arg;
 	int key, press, val;
 	int type;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.24 2001/04/25 17:53:15 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25 2001/06/08 00:32:03 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -51,7 +51,7 @@
 #include <dev/ic/wdcvar.h>
 
 void canonicalize_bootpath __P((void));
-int OF_interpret __P((char *cmd, int nreturns, ...));
+void ofw_stack __P((void));
 
 extern char bootpath[256];
 char cbootpath[256];
@@ -380,7 +380,7 @@ pcidev_to_ofdev(pc, tag)
 int
 getnodebyname(start, target)
 	int start;
-	char *target;
+	const char *target;
 {
 	int node, next;
 	char name[64];

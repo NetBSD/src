@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.3 2000/06/29 08:10:45 mrg Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.4 2001/06/08 00:32:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -68,6 +68,7 @@ hide void	mc_reset_txdma __P((struct mc_softc *sc));
 hide void	mc_select_utp __P((struct mc_softc *sc));
 hide void	mc_select_aui __P((struct mc_softc *sc));
 hide int	mc_mediachange __P((struct mc_softc *sc));
+hide void	mc_mediastatus __P((struct mc_softc *sc, struct ifmediareq *));
 
 int mc_supmedia[] = {
 	IFM_ETHER | IFM_10_T,
@@ -228,7 +229,6 @@ mc_dmaintr(arg)
 	int status, offset, statoff;
 	int datalen, resid;
 	int i, n;
-	u_int maccc;
 	dbdma_command_t *cmd;
 
 	/* We've received some packets from the MACE */

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.15 2000/06/07 17:37:07 tsubai Exp $	*/
+/*	$NetBSD: zs.c,v 1.16 2001/06/08 00:32:02 matt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -443,6 +443,7 @@ void
 zsmd_setclock(cs)
 	struct zs_chanstate *cs;
 {
+#ifdef NOTYET
 	struct xzs_chanstate *xcs = (void *)cs;
 
 	if (cs->cs_channel != 0)
@@ -452,7 +453,8 @@ zsmd_setclock(cs)
 	 * If the new clock has the external bit set, then select the
 	 * external source.
 	 */
-	/*via_set_modem((xcs->cs_pclk_flag & ZSC_EXTERN) ? 1 : 0);*/
+	via_set_modem((xcs->cs_pclk_flag & ZSC_EXTERN) ? 1 : 0);
+#endif
 }
 
 static int zssoftpending;

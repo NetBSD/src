@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.3 2000/06/26 04:55:48 simonb Exp $	*/
+/*	$NetBSD: nvram.c,v 1.4 2001/06/08 00:32:02 matt Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -34,6 +34,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/conf.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -47,9 +48,10 @@
 
 #define NVRAM_SIZE 0x2000
 
+cdev_decl(nvram);
+
 static void nvram_attach __P((struct device *, struct device *, void *));
 static int nvram_match __P((struct device *, struct cfdata *, void *));
-static int nvram_print __P((void *, const char *));
 
 struct nvram_softc {
 	struct device sc_dev;
