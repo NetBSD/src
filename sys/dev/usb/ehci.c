@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.55 2004/06/22 05:25:10 mycroft Exp $	*/
+/*	$NetBSD: ehci.c,v 1.56 2004/06/22 07:20:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.55 2004/06/22 05:25:10 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.56 2004/06/22 07:20:35 mycroft Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1247,7 +1247,7 @@ ehci_open(usbd_pipe_handle pipe)
 	/* qh_link filled when the QH is added */
 	sqh->qh.qh_endp = htole32(
 		EHCI_QH_SET_ADDR(addr) |
-		EHCI_QH_SET_ENDPT(ed->bEndpointAddress) |
+		EHCI_QH_SET_ENDPT(UE_GET_ADDR(ed->bEndpointAddress)) |
 		EHCI_QH_SET_EPS(speed) |
 		EHCI_QH_DTC |
 		EHCI_QH_SET_MPL(UGETW(ed->wMaxPacketSize)) |
@@ -1255,6 +1255,7 @@ ehci_open(usbd_pipe_handle pipe)
 		 EHCI_QH_CTL : 0) |
 		EHCI_QH_SET_NRL(naks)
 		);
+printf("sqh=%p endp=%08x\n", sqh, sqh->qh.qh_endp);
 	sqh->qh.qh_endphub = htole32(
 		EHCI_QH_SET_MULT(1)
 		/* XXX TT stuff */
@@ -2540,6 +2541,7 @@ ehci_device_request(usbd_xfer_handle xfer)
 	     EHCI_QH_SET_ADDR(addr) |
 	     EHCI_QH_SET_MPL(UGETW(epipe->pipe.endpoint->edesc->wMaxPacketSize))
 	    );
+printf("sqh=%p endp=%08x\n", sqh, sqh->qh.qh_endp);
 
 	/* Set up data transaction */
 	if (len != 0) {
