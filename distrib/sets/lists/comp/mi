@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.689.2.4 2004/07/14 11:14:27 tron Exp $
+#	$NetBSD: mi,v 1.689.2.5 2004/07/14 11:33:04 tron Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -3359,7 +3359,7 @@
 ./usr/share/man/cat3/krb5_cc_set_flags.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_cc_store_cred.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_ccache.0		comp-krb5-catman	kerberos,.cat
-./usr/share/man/cat3/krb5_change_passwd.0	comp-krb5-catman	kerberos,.cat
+./usr/share/man/cat3/krb5_change_password.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_checksum_is_collision_proof.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_checksum_is_keyed.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_checksumsize.0	comp-krb5-catman	kerberos,.cat
@@ -3452,7 +3452,7 @@
 ./usr/share/man/cat3/krb5_principal_get_realm.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_print_address.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_set_default_realm.0	comp-krb5-catman	kerberos,.cat
-./usr/share/man/cat/krb5_set_password.3		comp-krb5-catman	kerberos,.cat
+./usr/share/man/cat3/krb5_set_password.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_set_warn_dest.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_sname_to_principal.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_sock_to_principal.0	comp-krb5-catman	kerberos,.cat
@@ -7012,7 +7012,7 @@
 ./usr/share/man/man3/krb5_cc_set_flags.3	comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_cc_store_cred.3	comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_ccache.3		comp-krb5-man		kerberos,.man
-./usr/share/man/man3/krb5_change_passwd.0	comp-krb5-catman	kerberos,.man
+./usr/share/man/man3/krb5_change_password.0	comp-krb5-catman	kerberos,.man
 ./usr/share/man/man3/krb5_checksum_is_collision_proof.3	comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_checksum_is_keyed.3	comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_checksumsize.3	comp-krb5-man		kerberos,.man
