@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.48 2004/06/03 18:37:59 matt Exp $	*/
+/*	$NetBSD: gram.y,v 1.49 2004/06/04 04:38:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -110,7 +110,7 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %token	XMACHINE MAJOR MAKEOPTIONS MAXUSERS MAXPARTITIONS MINOR
 %token	NEEDS_COUNT NEEDS_FLAG NO
 %token	XOBJECT ON OPTIONS
-%token	PACKAGE PREFIX PSEUDO_DEVICE
+%token	PACKAGE PLUSEQ PREFIX PSEUDO_DEVICE
 %token	ROOT
 %token	SOURCE
 %token	TYPE
@@ -479,7 +479,8 @@ mkopt_list:
 	mkoption;
 
 mkoption:
-	WORD '=' value			{ addmkoption($1, $3); }
+	WORD '=' value			{ addmkoption($1, $3); } |
+	WORD PLUSEQ value		{ appendmkoption($1, $3); };
 
 no_mkopt_list:
 	no_mkopt_list ',' no_mkoption |

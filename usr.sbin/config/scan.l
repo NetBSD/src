@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.43 2003/11/24 21:44:37 christos Exp $	*/
+/*	$NetBSD: scan.l,v 1.44 2004/06/04 04:38:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -123,6 +123,8 @@ root		return ROOT;
 source		return SOURCE;
 type		return TYPE;
 with		return WITH;
+
+\+=		return PLUSEQ;
 
 {PATH}	{
 		yylval.str = intern(yytext);

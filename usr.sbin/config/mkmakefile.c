@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.59 2003/08/07 11:25:16 agc Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.60 2004/06/04 04:38:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,6 +66,7 @@ static int emitsfiles(FILE *);
 static int emitrules(FILE *);
 static int emitload(FILE *);
 static int emitincludes(FILE *);
+static int emitappmkoptions(FILE *);
 
 int
 mkmakefile(void)
@@ -122,6 +123,8 @@ mkmakefile(void)
 			fn = emitload;
 		else if (strcmp(line, "%INCLUDES\n") == 0)
 			fn = emitincludes;
+		else if (strcmp(line, "%MAKEOPTIONSAPPEND\n") == 0)
+			fn = emitappmkoptions;
 		else {
 			xerror(ifname, lineno,
 			    "unknown %% construct ignored: %s", line);
@@ -509,5 +512,19 @@ emitincludes(FILE *fp)
 			return (1);
 	}
 
+	return (0);
+}
+
+/*
+ * Emit appending makeoptions.
+ */
+static int
+emitappmkoptions(FILE *fp)
+{
+	struct nvlist *nv;
+
+	for (nv = appmkoptions; nv != NULL; nv = nv->nv_next)
+		if (fprintf(fp, "%s+=%s\n", nv->nv_name, nv->nv_str) < 0)
+			return (1);
 	return (0);
 }
