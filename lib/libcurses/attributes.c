@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.4 2000/04/15 13:17:02 blymn Exp $	*/
+/*	$NetBSD: attributes.c,v 1.5 2000/04/16 09:48:09 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -236,6 +236,9 @@ wattroff(WINDOW *win, int attr)
 int
 wattrset(WINDOW *win, int attr)
 {
+#ifdef DEBUG
+	__CTRACE ("wattrset: %08x\n", attr, __nca);
+#endif
 	if ((attr_t) attr & __BLINK)
 		wattron(win, __BLINK);
 	else
