@@ -1,4 +1,4 @@
-/*	$NetBSD: siglist.c,v 1.11 1998/11/30 20:42:44 thorpej Exp $	*/
+/*	$NetBSD: siglist.c,v 1.12 1998/12/01 20:31:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,9 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)siglist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: siglist.c,v 1.11 1998/11/30 20:42:44 thorpej Exp $");
+__RCSID("$NetBSD: siglist.c,v 1.12 1998/12/01 20:31:00 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
+
+__warn_references(sys_siglist,
+    "warning: reference to compatibility sys_siglist[]; include <signal.h> or <unistd.h> for correct reference")
+__warn_references(__sys_siglist,
+    "warning: reference to deprecated __sys_siglist[]; include <signal.h> or <unistd.h> and use sys_siglist")
 
 const char *const _sys_siglist[] = {
 	"Signal 0",
