@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.53 2000/03/06 20:54:41 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.54 2000/03/06 21:03:46 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -770,7 +770,8 @@ ether_ifattach(ifp, lla)
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
 	ifp->if_input = ether_input;
-	ifp->if_baudrate = IF_Mbps(10);		/* just a default */
+	if (ifp->if_baudrate == 0)
+		ifp->if_baudrate = IF_Mbps(10);		/* just a default */
 	if ((sdl = ifp->if_sadl) &&
 	    sdl->sdl_family == AF_LINK) {
 		sdl->sdl_type = IFT_ETHER;
