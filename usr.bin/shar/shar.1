@@ -1,4 +1,4 @@
-.\"	$NetBSD: shar.1,v 1.5 1997/10/19 23:05:28 lukem Exp $
+.\"	$NetBSD: shar.1,v 1.6 1998/06/08 12:41:44 lukem Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -67,19 +67,6 @@ or
 .Nm
 makes no provisions for special types of files or files containing
 magic characters.
-.Pp
-It is easy to insert trojan horses into
-.Nm
-files.
-It is strongly recommended that all shell archive files be examined
-before running them through
-.Xr sh  1  .
-Archives produced using this implementation of
-.Nm
-may be easily examined with the command:
-.Bd -literal -offset indent
-egrep -v '^[X#]' shar.file
-.Ed
 .Sh EXAMPLES
 To create a shell archive of the program
 .Xr ls  1
@@ -103,3 +90,16 @@ The
 .Nm
 command appears in
 .Bx 4.4 .
+.Sh SECURITY CONSIDERATIONS
+It is easy to insert trojan horses into
+.Nm
+files.
+It is strongly recommended that all shell archive files be examined
+before running them through
+.Xr sh  1  .
+Archives produced using this implementation of
+.Nm
+may be easily examined with the command:
+.Bd -literal -offset indent
+egrep -v '^[X#]' shar.file
+.Ed
