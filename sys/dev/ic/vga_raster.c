@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.4 2002/11/04 08:05:53 junyoung Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.5 2002/11/28 07:02:20 junyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -312,7 +312,9 @@ vga_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, int type, int check)
 {
 	long defattr;
 	const struct wsscreen_descr *scr;
+#ifdef VGA_CONSOLE_SCREENTYPE
 	char *typestr;
+#endif
 
 	if (check && !vga_common_probe(iot, memt))
 		return (ENXIO);
