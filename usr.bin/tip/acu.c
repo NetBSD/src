@@ -1,4 +1,4 @@
-/*	$NetBSD: acu.c,v 1.6 1998/06/30 23:42:08 thorpej Exp $	*/
+/*	$NetBSD: acu.c,v 1.7 1998/07/12 09:59:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)acu.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: acu.c,v 1.6 1998/06/30 23:42:08 thorpej Exp $");
+__RCSID("$NetBSD: acu.c,v 1.7 1998/07/12 09:59:29 mrg Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -176,6 +176,7 @@ void
 disconnect(reason)
 	char *reason;
 {
+
 	if (!conflag) {
 		logent(value(HOST), "", DV, "call terminated");
 		return;
@@ -193,6 +194,7 @@ static void
 acuabort(s)
 	int s;
 {
+
 	signal(s, SIG_IGN);
 	longjmp(jmpbuf, 1);
 }
