@@ -1,0 +1,9 @@
+########################################################################
+#                                                                      #
+# DECstation Turbochannel configuration and options                    #
+#                                                                      #
+########################################################################
+
+tc*		at	mainbus0	# All but PMAXes have a turbochannel
+
+include "tc.options"
