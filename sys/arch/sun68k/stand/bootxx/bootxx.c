@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.3 2002/04/24 01:40:25 lukem Exp $ */
+/*	$NetBSD: bootxx.c,v 1.4 2002/05/05 16:02:24 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 struct sun68k_bbinfo bbinfo = {
 	{ SUN68K_BBINFO_MAGIC },
 	0,
-	MAXBLOCKNUM,
+	0,
 	{ 0 }
 };
 
