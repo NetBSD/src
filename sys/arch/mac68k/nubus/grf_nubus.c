@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.52 1998/09/20 19:17:38 scottr Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.52.6.1 1999/03/11 19:27:45 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -31,8 +31,6 @@
 /*
  * Device-specific routines for handling Nubus-based video cards.
  */
-
-#include "opt_grf.h"
 
 #include <sys/param.h>
 
