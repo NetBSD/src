@@ -5169,7 +5169,7 @@ rx_compile (pattern, size, syntax, rxb)
 		    return REG_ESPACE;
 		  ++paramc;
 		  params [sync_se].se = re_se_tv;
-		  side = (rx_side_effect)sync_se;
+		  side = (rx_side_effect)(long)sync_se;
 		  goto add_side_effect;
 		}
 	    }
@@ -5547,10 +5547,10 @@ rx_compile (pattern, size, syntax, rxb)
 		  {
 		    struct rexp_node * left
 		      = rx_mk_r_side_effect (&rxb->rx,
-					     (rx_side_effect)left_se);
+					     (rx_side_effect)(long)left_se);
 		    struct rexp_node * right
 		      = rx_mk_r_side_effect (&rxb->rx,
-					     (rx_side_effect)right_se);
+					     (rx_side_effect)(long)right_se);
 		    struct rexp_node * c1
 		      = (*inner
 			 ? rx_mk_r_concat (&rxb->rx, left, *inner) : left);
@@ -5595,7 +5595,7 @@ rx_compile (pattern, size, syntax, rxb)
 		  {
 		    struct rexp_node * sync
 		      = rx_mk_r_side_effect (&rxb->rx,
-					     (rx_side_effect)sync_se);
+					     (rx_side_effect)(long)sync_se);
 		    struct rexp_node * conc
 		      = rx_mk_r_concat (&rxb->rx, sync, 0);
 
@@ -5720,7 +5720,7 @@ rx_compile (pattern, size, syntax, rxb)
 					       (rx_side_effect)re_se_push0);
 		      struct rexp_node * start_one_iter
 			= rx_mk_r_side_effect (&rxb->rx,
-					       (rx_side_effect)iter_se);
+					       (rx_side_effect)(long)iter_se);
 		      struct rexp_node * phase1
 			= rx_mk_r_concat (&rxb->rx, start_one_iter,
 					  *last_expression);
@@ -5738,7 +5738,7 @@ rx_compile (pattern, size, syntax, rxb)
 			= rx_mk_r_concat (&rxb->rx, push0, loop);
 		      struct rexp_node * final_test
 			= rx_mk_r_side_effect (&rxb->rx,
-					       (rx_side_effect)end_se);
+					       (rx_side_effect)(long)end_se);
 		      struct rexp_node * full_exp
 			= rx_mk_r_concat (&rxb->rx, push_n_loop, final_test);
 
@@ -5905,7 +5905,7 @@ rx_compile (pattern, size, syntax, rxb)
 		++paramc;
 		params[backref_se].se = re_se_backref;
 		params[backref_se].op1 = c1;
-		side = (rx_side_effect)backref_se;
+		side = (rx_side_effect)(long)backref_se;
 		goto add_side_effect;
 	      }
               break;
@@ -5976,7 +5976,7 @@ rx_compile (pattern, size, syntax, rxb)
     params[win_se].se = re_se_win;
     {
       struct rexp_node * se
-	= rx_mk_r_side_effect (&rxb->rx, (rx_side_effect)win_se);
+	= rx_mk_r_side_effect (&rxb->rx, (rx_side_effect)(long)win_se);
       struct rexp_node * concat
 	= rx_mk_r_concat (&rxb->rx, rexp, se);
       if (!(se && concat))
