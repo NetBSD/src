@@ -721,7 +721,11 @@ format *process_format(table_input &in, options *opt,
       free_input_entry_format_list(list);
       return 0;
     }
+#if !defined(__GNUC__) || (__GNUC__ >= 2)
     entry_format::format_type t;
+#else
+    format_type t;
+#endif
     switch (c) {
     case 'n':
     case 'N':
