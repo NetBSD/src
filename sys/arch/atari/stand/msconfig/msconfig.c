@@ -1,4 +1,4 @@
-/*	$NetBSD: msconfig.c,v 1.2 1998/01/05 07:02:52 perry Exp $	*/
+/*	$NetBSD: msconfig.c,v 1.3 1999/01/11 22:21:30 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996 Thomas Gerner.
@@ -30,11 +30,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
-#include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <machine/msioctl.h>
 
