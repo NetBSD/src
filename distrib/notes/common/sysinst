@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.28 2002/01/02 21:12:16 he Exp $
+.\"	$NetBSD: sysinst,v 1.29 2002/01/03 03:32:10 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -619,7 +619,8 @@ you can give an empty response in reply to answers relating to
 this.
 .if r_macppc \{\
 .It
-.Em "Preparation for a disk which will be used for"
+.To 2 "Preparing a disk which will be used for MacOS and NetBSD"
+.Em "Preparing a disk which will be used for"
 .Tn MacOS
 .Em and NetBSD
 .Pp
@@ -1279,6 +1280,7 @@ Finally you can set a password for the "root" account, to prevent
 the machine coming up without access restrictions.  
 .if r_macppc \{\
 .It
+.To 2 "Making the device nodes"
 .Em Making the device nodes
 .Pp
 If you are installing using the 

@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.148 2002/01/02 21:12:16 he Exp $
+.\"	$NetBSD: main,v 1.149 2002/01/03 03:32:10 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -123,14 +123,17 @@ and
 if installing on a laptop.
 .\}
 .if r_macppc \{\
-boot floppy image
+bootloader
+.Pa installation/ofwboot.xcf 
+and the installation kernel
+.Pa installation/netbsd.ram.gz .
+Alternatively, you can fetch the CD image,
+.Pa macppc_bootable.iso 
+or the boot floppy image
 .Pa installation/boot.fs
-and bootloader
-.Pa installation/ofwboot.xcf ,
-or the CD image,
-.Pa macppc_bootable.iso .
-You only need the floppy image and bootloader, or the CD image to boot
-your system.
+which include the bootloader and installation kernel.
+You only need the installation kernel and bootloader, or the CD image to
+boot your system.
 .\}
 .if r_sparc \{\
 CD image,
@@ -151,13 +154,13 @@ The actual binary distribution is in the
 directory.
 When you boot the install
 .if r_i386 floppies,
-.if r_macppc floppy or CD-ROM,
+.if r_macppc kernel from floppy, hard drive, or CD-ROM,
 .if r_sparc floppies or CD-ROM,
 the installation program
 can fetch these files for you (using e.g. ftp),
 if you have a network connection.
 There are several other methods to get the binary sets onto
-the machine you install.
+your machine.
 .Pp
 You will at a minimum need
 .ie r_i386 \{\
@@ -191,15 +194,14 @@ directory may be of help.
 .\}
 .if \n[macppc] \{
 .It
-If your mac has a floppy drive,
-write the floppy image directly to a floppy disk.
-Otherwise, drag the uncompressed floppy image and bootloader to your
-hard drive icon (the top level of the drive, not the desktop).  If you are
-making a CD, burn it now.
-If you have problems writing a raw image to a floppy, the
-.Ic suntar
-.Tn MacOS
-program may be of help.
+If your mac has a floppy drive, copy
+.Pa ofwboot.xcf No and Pa netbsd.ram.gz
+to an MS-DOS formatted floppy disk and rename
+.Pa netbsd.ram.gz No to Pa netbsd.gz .
+Otherwise, drag 
+.Pa ofwboot.xcf No and Pa netbsd.ram.gz
+to your hard drive icon (the top level of the drive, not the desktop).  If 
+you are making a CD, burn it now.
 .\}
 .if \n[sparc] \{
 .It
@@ -258,18 +260,17 @@ prompt on your screen before attempting to boot
 .\}
 .if r_macppc \{\
 .It
-At the Open Firmware prompt, type the command to boot.  For the boot
+At the Open Firmware prompt, type the command to boot.  To boot from a
 floppy, the command is
-.Dq Ic "boot fd:0" .
-For the boot floppy image and bootloader on your hard drive (Open Firmware
-3), the command is something like
-.Dq Ic "boot hd:9,ofwboot.xcf hd:9,boot.fs" .
-You may need to replace both 9's with your drive's partition number.
+.Dq Ic "boot fd:,\eofwboot.xcf netbsd.gz" .
+For the install kernel and bootloader on your hard drive (Open Firmware
+3), the command is
+.Dq Ic "boot hd:\e,ofwboot.xcf netbsd.ram.gz" .
 .Pp
 For boot CDs, the command is something like
 .Dq Ic "boot cd:,\eofwboot.xcf netbsd.macppc"
 (for Open Firmware 3) or
-.Dq Ic "boot scsi-int/sd@3:0,\eOFWBOOT.XCF NETBSD.MACPPC"
+.Dq Ic "boot scsi-int/sd@3:0 NETBSD.MACPPC"
 (for earlier Open Firmware versions).
 You will need to use the correct case for
 .Ic OFWBOOT.XCF No and Ic NETBSD.MACPPC
