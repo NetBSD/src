@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.3 1998/01/12 18:18:09 thorpej Exp $	*/
+/*	$NetBSD: pms.c,v 1.4 1998/02/02 05:54:26 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -103,7 +103,7 @@ struct pms_softc {		/* driver status information */
 	int sc_x, sc_y;		/* accumulated motion in the X,Y axis */
 };
 
-int pmsprobe __P((struct device *, void *, void *));
+int pmsprobe __P((struct device *, struct cfdata *, void *));
 void pmsattach __P((struct device *, struct device *, void *));
 int pmsintr __P((void *));
 
@@ -172,9 +172,9 @@ pms_pit_cmd(value)
 int
 pmsprobe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
-	struct cfdata *cf = match;
 	u_char x;
 
 	/*
@@ -188,7 +188,7 @@ pmsprobe(parent, match, aux)
 		return (0);
 
 	/* Can't wildcard IRQ. */
-	if (cf->cf_loc[0] == -1)
+	if (match->cf_loc[0] == -1)
 		return (0);
 
 	pms_dev_cmd(PMS_RESET);
