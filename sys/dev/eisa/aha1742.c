@@ -456,7 +456,7 @@ ahb_attach(struct isa_device *dev)
 {
 	static int firsttime;
 	int masunit = dev->id_masunit;
-	short id = dev->id_unit;
+	int id = dev->id_unit;
 
 	scsi_attach(masunit, ahb_data[masunit].our_id, &ahb_switch,
 		&dev->id_physid, &id, dev->id_flags);
