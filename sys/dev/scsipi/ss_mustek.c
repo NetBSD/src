@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.c,v 1.15 2001/07/18 18:25:41 thorpej Exp $	*/
+/*	$NetBSD: ss_mustek.c,v 1.16 2001/07/18 18:27:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -112,11 +112,11 @@ mustek_attach(ss, sa)
 	printf("\n%s: ", ss->sc_dev.dv_xname);
 
 	/* first, check the model which determines resolutions */
-	if (!bcmp(sa->sa_inqbuf.product, "MFS-06000CX", 11)) {
+	if (!memcmp(sa->sa_inqbuf.product, "MFS-06000CX", 11)) {
 		ss->sio.scan_scanner_type = MUSTEK_06000CX;
 		printf("Mustek 6000CX Flatbed 3-pass color scanner, 3 - 600 dpi\n");
 	}
-	if (!bcmp(sa->sa_inqbuf.product, "MFS-12000CX", 11)) {
+	if (!memcmp(sa->sa_inqbuf.product, "MFS-12000CX", 11)) {
 		ss->sio.scan_scanner_type = MUSTEK_12000CX;
 		printf("Mustek 12000CX Flatbed 3-pass color scanner, 6 - 1200 dpi\n");
 	}
