@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype.h,v 1.15 1997/06/02 09:52:36 kleink Exp $	*/
+/*	$NetBSD: ctype.h,v 1.16 1998/03/23 06:44:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -82,23 +82,23 @@ extern int	_toupper __P ((int));
 #endif
 __END_DECLS
 
-#define	isdigit(c)	((int)((_ctype_ + 1)[c] & _N))
-#define	islower(c)	((int)((_ctype_ + 1)[c] & _L))
-#define	isspace(c)	((int)((_ctype_ + 1)[c] & _S))
-#define	ispunct(c)	((int)((_ctype_ + 1)[c] & _P))
-#define	isupper(c)	((int)((_ctype_ + 1)[c] & _U))
-#define	isalpha(c)	((int)((_ctype_ + 1)[c] & (_U|_L)))
-#define	isxdigit(c)	((int)((_ctype_ + 1)[c] & (_N|_X)))
-#define	isalnum(c)	((int)((_ctype_ + 1)[c] & (_U|_L|_N)))
-#define	isprint(c)	((int)((_ctype_ + 1)[c] & (_P|_U|_L|_N|_B)))
-#define	isgraph(c)	((int)((_ctype_ + 1)[c] & (_P|_U|_L|_N)))
-#define	iscntrl(c)	((int)((_ctype_ + 1)[c] & _C))
-#define tolower(c)	((int)((_tolower_tab_ + 1)[c]))
-#define toupper(c)	((int)((_toupper_tab_ + 1)[c]))
+#define	isdigit(c)	((int)((_ctype_ + 1)[(int)(c)] & _N))
+#define	islower(c)	((int)((_ctype_ + 1)[(int)(c)] & _L))
+#define	isspace(c)	((int)((_ctype_ + 1)[(int)(c)] & _S))
+#define	ispunct(c)	((int)((_ctype_ + 1)[(int)(c)] & _P))
+#define	isupper(c)	((int)((_ctype_ + 1)[(int)(c)] & _U))
+#define	isalpha(c)	((int)((_ctype_ + 1)[(int)(c)] & (_U|_L)))
+#define	isxdigit(c)	((int)((_ctype_ + 1)[(int)(c)] & (_N|_X)))
+#define	isalnum(c)	((int)((_ctype_ + 1)[(int)(c)] & (_U|_L|_N)))
+#define	isprint(c)	((int)((_ctype_ + 1)[(int)(c)] & (_P|_U|_L|_N|_B)))
+#define	isgraph(c)	((int)((_ctype_ + 1)[(int)(c)] & (_P|_U|_L|_N)))
+#define	iscntrl(c)	((int)((_ctype_ + 1)[(int)(c)] & _C))
+#define	tolower(c)	((int)((_tolower_tab_ + 1)[(int)(c)]))
+#define	toupper(c)	((int)((_toupper_tab_ + 1)[(int)(c)]))
 
 #if !defined(_ANSI_SOURCE) && !defined (_POSIX_SOURCE)
 #if notyet
-#define isblank(c)	((int)((_ctype_ + 1)[c] & _B))
+#define isblank(c)	((int)((_ctype_ + 1)[(int)(c)] & _B))
 #endif
 #define	isascii(c)	((unsigned)(c) <= 0177)
 #define	toascii(c)	((c) & 0177)
