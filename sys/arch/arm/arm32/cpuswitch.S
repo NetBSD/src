@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.12 2002/08/14 23:07:36 chris Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.13 2002/08/14 23:23:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -60,14 +60,14 @@
  */
 
 #define IRQdisable \
-	mrs	r14, cpsr_all ; \
+	mrs	r14, cpsr ; \
 	orr	r14, r14, #(I32_bit) ; \
-	msr	cpsr_all, r14 ; \
+	msr	cpsr_c, r14 ; \
 
 #define IRQenable \
-	mrs	r14, cpsr_all ; \
+	mrs	r14, cpsr ; \
 	bic	r14, r14, #(I32_bit) ; \
-	msr	cpsr_all, r14 ; \
+	msr	cpsr_c, r14 ; \
 
 /*
  * setrunqueue() and remrunqueue()
@@ -491,14 +491,14 @@ Lidle_ret:
 	 * This can be optimised... We know we want to go from SVC32
 	 * mode to UND32 mode
 	 */
-        mrs	r3, cpsr_all
+        mrs	r3, cpsr
 	bic	r2, r3, #(PSR_MODE)
 	orr	r2, r2, #(PSR_UND32_MODE | I32_bit)
-        msr	cpsr_all, r2
+        msr	cpsr_c, r2
 
 	str	sp, [r1, #(PCB_UND_SP)]
 
-        msr	cpsr_all, r3		/* Restore the old mode */
+        msr	cpsr_c, r3		/* Restore the old mode */
 
 	/* rem: r0 = old proc */
 	/* rem: r1 = old pcb */
@@ -558,14 +558,14 @@ Lcs_context_switched:
 	 * This can be optimised... We know we want to go from SVC32
 	 * mode to UND32 mode
 	 */
-        mrs	r3, cpsr_all
+        mrs	r3, cpsr
 	bic	r2, r3, #(PSR_MODE)
 	orr	r2, r2, #(PSR_UND32_MODE)
-        msr	cpsr_all, r2
+        msr	cpsr_c, r2
 
 	ldr	sp, [r1, #(PCB_UND_SP)]
 
-        msr	cpsr_all, r3		/* Restore the old mode */
+        msr	cpsr_c, r3		/* Restore the old mode */
 
 	/* Restore all the save registers */
 	add	r7, r1, #PCB_R8
@@ -714,9 +714,9 @@ ENTRY(proc_trampoline)
 
 trampoline_return:
 	/* Kill irq's */
-        mrs     r0, cpsr_all
+        mrs     r0, cpsr
         orr     r0, r0, #(I32_bit)
-        msr     cpsr_all, r0
+        msr     cpsr_c, r0
 
 	PULLFRAME
 
