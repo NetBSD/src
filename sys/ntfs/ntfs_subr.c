@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.24 1999/12/20 22:11:57 fvdl Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.25 2001/02/12 19:17:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -62,6 +62,14 @@ MALLOC_DEFINE(M_NTFSRUN, "NTFS vrun", "NTFS vrun storage");
 MALLOC_DEFINE(M_NTFSDECOMP, "NTFS decomp", "NTFS decompression temporary");
 #endif
 
+/* Local struct used in ntfs_ntlookupfile() */
+struct ntfs_lookup_ctx {
+	u_int32_t	aoff;
+	u_int32_t	rdsize;
+	cn_t		cn;
+	struct ntfs_lookup_ctx *prev;
+};
+
 static int ntfs_ntlookupattr __P((struct ntfsmount *, const char *, int, int *, char **));
 static int ntfs_findvattr __P((struct ntfsmount *, struct ntnode *, struct ntvattr **, struct ntvattr **, u_int32_t, const char *, size_t, cn_t));
 static int ntfs_uastricmp __P((const wchar *, size_t, const char *, size_t));
@@ -70,7 +78,7 @@ static int ntfs_uastrcmp __P((const wchar *, size_t, const char *, size_t));
 /* table for mapping Unicode chars into uppercase; it's filled upon first
  * ntfs mount, freed upon last ntfs umount */
 static wchar *ntfs_toupper_tab;
-#define NTFS_U28(ch)		((((ch) & 0xFF) == 0) ? '_' : (ch) & 0xFF)
+#define NTFS_U28(ch)		((((ch) & 0xE0) == 0) ? '_' : (ch) & 0xFF)
 #define NTFS_TOUPPER(ch)	(ntfs_toupper_tab[(unsigned char)(ch)])
 static struct lock ntfs_toupper_lock;
 static signed int ntfs_toupper_usecount;
@@ -671,8 +679,7 @@ ntfs_uastricmp(ustr, ustrlen, astr, astrlen)
 	int             res;
 
 	for (i = 0; i < ustrlen && i < astrlen; i++) {
-		res = ((int) NTFS_TOUPPER(NTFS_U28(ustr[i]))) -
-			((int)NTFS_TOUPPER(astr[i]));
+		res = NTFS_TOUPPER(NTFS_U28(ustr[i])) - NTFS_TOUPPER(astr[i]);
 		if (res)
 			return res;
 	}
@@ -693,7 +700,7 @@ ntfs_uastrcmp(ustr, ustrlen, astr, astrlen)
 	int             res;
 
 	for (i = 0; (i < ustrlen) && (i < astrlen); i++) {
-		res = (int) (((char)NTFS_U28(ustr[i])) - astr[i]);
+		res = NTFS_U28(ustr[i]) - (u_char) astr[i];
 		if (res)
 			return res;
 	}
@@ -844,7 +851,7 @@ ntfs_ntlookupfile(
 	struct fnode   *fp = VTOF(vp);
 	struct ntnode  *ip = FTONT(fp);
 	struct ntvattr *vap;	/* Root attribute */
-	cn_t            cn;	/* VCN in current attribute */
+	cn_t            cn = 0;	/* VCN in current attribute */
 	caddr_t         rdbuf;	/* Buffer to read directory's blocks  */
 	u_int32_t       blsize;
 	u_int32_t       rdsize;	/* Length of data to read from current block */
@@ -857,6 +864,8 @@ ntfs_ntlookupfile(
 	struct fnode   *nfp;
 	struct vnode   *nvp;
 	enum vtype	f_type;
+	int fullscan = 0;
+	struct ntfs_lookup_ctx *lookup_ctx = NULL, *tctx;
 
 	error = ntfs_ntget(ip);
 	if (error)
@@ -865,9 +874,6 @@ ntfs_ntlookupfile(
 	error = ntfs_ntvattrget(ntmp, ip, NTFS_A_INDXROOT, "$I30", 0, &vap);
 	if (error || (vap->va_flag & NTFS_AF_INRUN))
 		return (ENOTDIR);
-
-	blsize = vap->va_a_iroot->ir_size;
-	rdsize = vap->va_datalen;
 
 	/*
 	 * Divide file name into: foofilefoofilefoofile[:attrspec]
@@ -885,9 +891,17 @@ ntfs_ntlookupfile(
 			break;
 		}
 
-	dprintf(("ntfs_ntlookupfile: blksz: %d, rdsz: %d\n", blsize, rdsize));
+	blsize = vap->va_a_iroot->ir_size;
+	dprintf(("ntfs_ntlookupfile: blksz: %d\n", blsize));
 
-	MALLOC(rdbuf, caddr_t, blsize, M_TEMP, M_WAITOK);
+	rdbuf = (caddr_t) malloc(blsize, M_TEMP, M_WAITOK);
+
+	dprintf(("ntfs_ntlookupfile: blksz: %d\n", blsize, rdsize));
+
+
+    loop:
+	rdsize = vap->va_datalen;
+	dprintf(("ntfs_ntlookupfile: rdsz: %d\n", rdsize));
 
 	error = ntfs_readattr(ntmp, ip, NTFS_A_INDXROOT, "$I30",
 			       0, rdsize, rdbuf, NULL);
@@ -906,21 +920,40 @@ ntfs_ntlookupfile(
 			ddprintf(("scan: %d, %d\n",
 				  (u_int32_t) iep->ie_number,
 				  (u_int32_t) iep->ie_fnametype));
-
+ 
 			/* check the name - the case-insensitible check
 			 * has to come first, to break from this for loop
 			 * if needed, so we can dive correctly */
 			res = ntfs_uastricmp(iep->ie_fname, iep->ie_fnamelen,
 				fname, fnamelen);
-			if (res > 0) break;
-			if (res < 0) continue;
+			if (!fullscan) {
+				if (res > 0) break;
+				if (res < 0) continue;
+			}
 
 			if (iep->ie_fnametype == 0 ||
 			    !(ntmp->ntm_flag & NTFS_MFLAG_CASEINS))
 			{
 				res = ntfs_uastrcmp(iep->ie_fname,
 					iep->ie_fnamelen, fname, fnamelen);
-				if (res != 0) continue;
+				if (res != 0 && !fullscan) continue;
+			}
+
+			/* if we perform full scan, the file does not match
+			 * and this is subnode, dive */
+			if (fullscan && res != 0) {
+			    if (iep->ie_flag & NTFS_IEFLAG_SUBNODE) {
+				MALLOC(tctx, struct ntfs_lookup_ctx *,
+					sizeof(struct ntfs_lookup_ctx),
+					M_TEMP, M_WAITOK);
+				tctx->aoff	= aoff + iep->reclen;
+				tctx->rdsize	= rdsize;
+				tctx->cn	= cn;
+				tctx->prev	= lookup_ctx;
+				lookup_ctx = tctx;
+				break;
+			    } else
+				continue;
 			}
 
 			if (aname) {
@@ -1019,6 +1052,27 @@ ntfs_ntlookupfile(
 
 			aoff = (((struct attr_indexalloc *) rdbuf)->ia_hdrsize +
 				0x18);
+		} else if (fullscan && lookup_ctx) {
+			cn = lookup_ctx->cn;
+			aoff = lookup_ctx->aoff;
+			rdsize = lookup_ctx->rdsize;
+
+			error = ntfs_readattr(ntmp, ip,
+				(cn == 0) ? NTFS_A_INDXROOT : NTFS_A_INDX,
+				"$I30", ntfs_cntob(cn), rdsize, rdbuf, NULL);
+			if (error)
+				goto fail;
+			
+			if (cn != 0) {
+				error = ntfs_procfixups(ntmp, NTFS_INDXMAGIC,
+						rdbuf, rdsize);
+				if (error)
+					goto fail;
+			}
+
+			tctx = lookup_ctx;
+			lookup_ctx = lookup_ctx->prev;
+			FREE(tctx, M_TEMP);
 		} else {
 			dprintf(("ntfs_ntlookupfile: nowhere to dive :-(\n"));
 			error = ENOENT;
@@ -1026,13 +1080,31 @@ ntfs_ntlookupfile(
 		}
 	} while (1);
 
+	/* perform full scan if no entry was found */
+	if (!fullscan && error == ENOENT) {
+		fullscan = 1;
+		cn = 0;		/* need zero, used by lookup_ctx */
+
+		ddprintf(("ntfs_ntlookupfile: fullscan performed for: %.*s\n",
+			(int) fnamelen, fname));
+		goto loop;
+	}
+
 	dprintf(("finish\n"));
 
 fail:
-	if (attrname) FREE(attrname, M_TEMP);
+	if (attrname)
+		FREE(attrname, M_TEMP);
+	if (lookup_ctx) {
+		while(lookup_ctx) {
+			tctx = lookup_ctx;
+			lookup_ctx = lookup_ctx->prev;
+			FREE(tctx, M_TEMP);
+		}
+	}
 	ntfs_ntvattrrele(vap);
 	ntfs_ntput(ip);
-	FREE(rdbuf, M_TEMP);
+	free(rdbuf, M_TEMP);
 	return (error);
 }
 
@@ -1698,7 +1770,9 @@ ntfs_readattr(
 
 	if ((roff > vap->va_datalen) ||
 	    (roff + rsize > vap->va_datalen)) {
-		ddprintf(("ntfs_readattr: offset too big\n"));
+		printf("ntfs_readattr: offset too big: %ld (%ld) > %ld\n",
+			(long int) roff, (long int) roff + rsize,
+			(long int) vap->va_datalen);
 		ntfs_ntvattrrele(vap);
 		return (E2BIG);
 	}
