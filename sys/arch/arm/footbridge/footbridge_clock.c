@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_clock.c,v 1.2.6.4 2002/02/28 04:07:27 nathanw Exp $	*/
+/*	$NetBSD: footbridge_clock.c,v 1.2.6.5 2002/04/11 06:29:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -157,10 +157,10 @@ load_timer(base, hz)
 	int control;
 
 	timer_count = dc21285_fclk / hz;
-	if (timer_count > TIMER_MAX * 16) {
+	if (timer_count > TIMER_MAX_VAL * 16) {
 		control = TIMER_FCLK_256;
 		timer_count >>= 8;
-	} else if (timer_count > TIMER_MAX) {
+	} else if (timer_count > TIMER_MAX_VAL) {
 		control = TIMER_FCLK_16;
 		timer_count >>= 4;
 	} else
