@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.8 2002/07/04 10:38:26 fvdl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.9 2002/07/05 16:52:39 fvdl Exp $	*/
 
 /*
  *
@@ -1769,11 +1769,6 @@ try_again:
 		pool_cache_destruct_object(&pmap_pdp_cache, pmap->pm_pdir);
 		goto try_again;
 	}
-
-	/* XXX Need a generic "I want memory" wchan */
-	while ((pmap->pm_pdir =
-	    pool_cache_get(&pmap_pdp_cache, PR_NOWAIT)) == NULL)
-		(void) ltsleep(&lbolt, PVM, "pmapcr", hz >> 3, &pmaps_lock);
 
 	pmap->pm_pdirpa = pmap->pm_pdir[PDIR_SLOT_PTE] & PG_FRAME;
 
