@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.32 2000/11/05 20:05:29 christos Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.33 2001/06/05 17:05:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.32 2000/11/05 20:05:29 christos Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.33 2001/06/05 17:05:11 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -494,8 +494,33 @@ name:		t = sp->fts_path + NAPPEND(p->fts_parent);
 			return (NULL);
 		}
 		(void)close(p->fts_symfd);
-	} else if (!(p->fts_flags & FTS_DONTCHDIR)) {
-		if (CHDIR(sp, "..")) {
+	} else if (!(p->fts_flags & FTS_DONTCHDIR) &&
+		!ISSET(FTS_NOCHDIR)) {
+		int fd;
+		struct STAT sb;
+
+		if ((fd = open("..", O_RDONLY)) == -1) {
+			SET(FTS_STOP);
+			return (NULL);
+		}
+		if (fstat(fd, &sb) == -1) {
+			saved_errno = errno;
+			(void)close(fd);
+			errno = saved_errno;
+			SET(FTS_STOP);
+			return (NULL);
+		}
+		if (sb.st_ino != p->fts_parent->fts_ino ||
+		    sb.st_dev != p->fts_parent->fts_dev) {
+			(void)close(fd);
+			errno = ENOENT;
+			SET(FTS_STOP);
+			return (NULL);
+		}
+		if (fchdir(fd) == -1) {
+			saved_errno = errno;
+			(void)close(fd);
+			errno = saved_errno;
 			SET(FTS_STOP);
 			return (NULL);
 		}
