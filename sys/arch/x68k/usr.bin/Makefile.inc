@@ -1,4 +1,3 @@
-#	$NetBSD: Makefile.inc,v 1.1.1.1.4.1 1996/06/14 05:20:10 oki Exp $
+#	$NetBSD: Makefile.inc,v 1.1.1.1.4.2 1996/06/15 20:18:14 oki Exp $
 
 BINDIR?=	/usr/bin
-MANDIR?=	/usr/man/cat
