@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_var.h,v 1.11 1996/01/31 03:49:39 mycroft Exp $	*/
+/*	$NetBSD: udp_var.h,v 1.12 1996/02/13 23:44:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,11 +81,10 @@ struct	udpstat {
 struct	inpcbtable udbtable;
 struct	udpstat udpstat;
 
-void	 udp_ctlinput __P((int, struct sockaddr *, struct ip *));
+void	 *udp_ctlinput __P((int, struct sockaddr *, void *));
 void	 udp_init __P((void));
-void	 udp_input __P((struct mbuf *, int));
-int	 udp_output __P((struct inpcb *,
-	    struct mbuf *, struct mbuf *, struct mbuf *));
+void	 udp_input __P((struct mbuf *, ...));
+int	 udp_output __P((struct mbuf *, ...));
 int	 udp_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 int	 udp_usrreq __P((struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *));
