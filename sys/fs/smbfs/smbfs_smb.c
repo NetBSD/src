@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.5 2003/02/19 13:51:24 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.6 2003/02/21 20:15:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -883,12 +883,13 @@ smbfs_findnextLM1(struct smbfs_fctx *ctx, int limit)
 	md_get_uint16le(mbp, &time);
 	md_get_uint16le(mbp, &date);
 	md_get_uint32le(mbp, &size);
+	KASSERT(ctx->f_name == ctx->f_fname);
 	cp = ctx->f_name;
 	md_get_mem(mbp, cp, sizeof(ctx->f_fname), MB_MSYSTEM);
-	cp[sizeof(ctx->f_fname) - 1] = 0;
+	cp[sizeof(ctx->f_fname) - 1] = '\0';
 	cp += strlen(cp) - 1;
-	while (*cp == ' ' && cp >= ctx->f_name)
-		*cp-- = 0;
+	while(*cp == ' ' && cp > ctx->f_name)
+		*cp-- = '\0';
 	ctx->f_attr.fa_attr = battr;
 	smb_dos2unixtime(date, time, 0, rqp->sr_vc->vc_sopt.sv_tz,
 	    &ctx->f_attr.fa_mtime);
@@ -1004,14 +1005,10 @@ smbfs_smb_trans2find2(struct smbfs_fctx *ctx)
 		return ENOENT;
 	ctx->f_rnameofs = tw;
 	mdp = &t2p->t2_rdata;
-	if (mdp->md_top == NULL) {
-		printf("bug: ecnt = %d, but data is NULL (please report)\n", ctx->f_ecnt);
-		return ENOENT;
-	}
-	if (mdp->md_top->m_len == 0) {
-		printf("bug: ecnt = %d, but m_len = 0 and m_next = %p (please report)\n", ctx->f_ecnt,mbp->mb_top->m_next);
-		return ENOENT;
-	}
+
+	KASSERT(mdp->md_top != NULL);
+	KASSERT(mdp->md_top->m_len != 0);
+
 	ctx->f_eofs = 0;
 	return 0;
 }
@@ -1076,7 +1073,7 @@ smbfs_findnextLM2(struct smbfs_fctx *ctx, int limit)
 	mbp = &t2p->t2_rdata;
 	svtz = SSTOVC(ctx->f_ssp)->vc_sopt.sv_tz;
 	switch (ctx->f_infolevel) {
-	    case SMB_INFO_STANDARD:
+	case SMB_INFO_STANDARD:
 		next = 0;
 		fxsz = 0;
 		md_get_uint16le(mbp, &date);
@@ -1097,7 +1094,7 @@ smbfs_findnextLM2(struct smbfs_fctx *ctx, int limit)
 		fxsz = 23;
 		recsz = next = 24 + nmlen;	/* docs misses zero byte at end */
 		break;
-	    case SMB_FIND_FILE_DIRECTORY_INFO:
+	case SMB_FIND_FILE_DIRECTORY_INFO:
 		md_get_uint32le(mbp, &next);
 		md_get_uint32(mbp, NULL);	/* file index */
 		md_get_int64(mbp, NULL);	/* creation time */
@@ -1116,7 +1113,7 @@ smbfs_findnextLM2(struct smbfs_fctx *ctx, int limit)
 		fxsz = 64;
 		recsz = next ? next : fxsz + size;
 		break;
-	    default:
+	default:
 		SMBERROR("unexpected info level %d\n", ctx->f_infolevel);
 		return EINVAL;
 	}
@@ -1181,10 +1178,7 @@ smbfs_findopen(struct smbnode *dnp, const char *wildcard, int wclen, int attr,
 	struct smbfs_fctx *ctx;
 	int error;
 
-	ctx = malloc(sizeof(*ctx), M_SMBFSDATA, M_WAITOK);
-	if (ctx == NULL)
-		return ENOMEM;
-	bzero(ctx, sizeof(*ctx));
+	ctx = malloc(sizeof(*ctx), M_SMBFSDATA, M_WAITOK|M_ZERO);
 	ctx->f_ssp = dnp->n_mount->sm_share;
 	ctx->f_dnp = dnp;
 	ctx->f_flags = SMBFS_RDD_FINDFIRST;
@@ -1219,6 +1213,8 @@ smbfs_findnext(struct smbfs_fctx *ctx, int limit, struct smb_cred *scred)
 			error = smbfs_findnextLM2(ctx, limit);
 		if (error)
 			return error;
+
+		/* Skip '.' and '..' */
 		if ((ctx->f_nmlen == 1 && ctx->f_name[0] == '.') ||
 		    (ctx->f_nmlen == 2 && ctx->f_name[0] == '.' &&
 		     ctx->f_name[1] == '.'))
