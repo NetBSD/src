@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.132 2002/06/07 02:05:22 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.133 2002/06/27 03:43:47 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.132 2002/06/07 02:05:22 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.133 2002/06/27 03:43:47 simonb Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -362,6 +362,8 @@ static const struct pridtab cputab[] = {
 	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"4KSc"			},
 	{ MIPS_PRID_CID_MTI, MIPS_5Kc, -1,	-1, 0,
 	  MIPS64_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"5Kc"			},
+	{ MIPS_PRID_CID_MTI, MIPS_20Kc, -1,	-1, 0,
+	  MIPS64_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"20Kc"			},
 
 	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU1000_R1, -1, -1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT,	"Au1000 (Rev 1)"	},
