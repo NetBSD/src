@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.63 1999/03/24 05:51:26 mrg Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.64 1999/07/08 01:26:27 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -99,8 +99,8 @@ struct kern_target kern_targets[] = {
 static int nkern_targets = sizeof(kern_targets) / sizeof(kern_targets[0]);
 
 int	kernfs_lookup	__P((void *));
-#define	kernfs_create	genfs_eopnotsupp
-#define	kernfs_mknod	genfs_eopnotsupp
+#define	kernfs_create	genfs_eopnotsupp_rele
+#define	kernfs_mknod	genfs_eopnotsupp_rele
 #define	kernfs_open	genfs_nullop
 #define	kernfs_close	genfs_nullop
 int	kernfs_access	__P((void *));
@@ -114,23 +114,23 @@ int	kernfs_write	__P((void *));
 #define	kernfs_mmap	genfs_eopnotsupp
 #define	kernfs_fsync	genfs_nullop
 #define	kernfs_seek	genfs_nullop
-#define	kernfs_remove	genfs_eopnotsupp
+#define	kernfs_remove	genfs_eopnotsupp_rele
 int	kernfs_link	__P((void *));
-#define	kernfs_rename	genfs_eopnotsupp
-#define	kernfs_mkdir	genfs_eopnotsupp
-#define	kernfs_rmdir	genfs_eopnotsupp
+#define	kernfs_rename	genfs_eopnotsupp_rele
+#define	kernfs_mkdir	genfs_eopnotsupp_rele
+#define	kernfs_rmdir	genfs_eopnotsupp_rele
 int	kernfs_symlink	__P((void *));
 int	kernfs_readdir	__P((void *));
 #define	kernfs_readlink	genfs_eopnotsupp
 #define	kernfs_abortop	genfs_abortop
 int	kernfs_inactive	__P((void *));
 int	kernfs_reclaim	__P((void *));
-#define	kernfs_lock	genfs_nolock
-#define	kernfs_unlock	genfs_nounlock
+#define	kernfs_lock	genfs_lock
+#define	kernfs_unlock	genfs_unlock
 #define	kernfs_bmap	genfs_badop
 #define	kernfs_strategy	genfs_badop
 int	kernfs_print	__P((void *));
-#define	kernfs_islocked	genfs_noislocked
+#define	kernfs_islocked	genfs_islocked
 int	kernfs_pathconf	__P((void *));
 #define	kernfs_advlock	genfs_einval
 #define	kernfs_blkatoff	genfs_eopnotsupp
@@ -326,7 +326,7 @@ kernfs_lookup(v)
 	const char *pname = cnp->cn_nameptr;
 	struct kern_target *kt;
 	struct vnode *fvp;
-	int error, i;
+	int error, i, wantpunlock;
 
 #ifdef KERNFS_DIAGNOSTIC
 	printf("kernfs_lookup(%p)\n", ap);
@@ -335,17 +335,21 @@ kernfs_lookup(v)
 #endif
 
 	*vpp = NULLVP;
+	cnp->cn_flags &= ~PDIRUNLOCK;
 
 	if (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)
 		return (EROFS);
 
-	VOP_UNLOCK(dvp, 0);
 	if (cnp->cn_namelen == 1 && *pname == '.') {
 		*vpp = dvp;
 		VREF(dvp);
-		vn_lock(dvp, LK_SHARED | LK_RETRY);
 		return (0);
 	}
+
+	/*
+	 * This code only supports a flat directory, so we don't
+	 * need to worry about ..
+	 */
 
 #if 0
 	if (cnp->cn_namelen == 4 && memcmp(pname, "root", 4) == 0) {
@@ -355,6 +359,8 @@ kernfs_lookup(v)
 		return (0);
 	}
 #endif
+
+	wantpunlock = (~cnp->cn_flags & (LOCKPARENT | ISLASTCN));
 
 	for (kt = kern_targets, i = 0; i < nkern_targets; kt++, i++) {
 		if (cnp->cn_namelen == kt->kt_namlen &&
@@ -366,7 +372,6 @@ kernfs_lookup(v)
 	printf("kernfs_lookup: i = %d, failed", i);
 #endif
 
-	vn_lock(dvp, LK_SHARED | LK_RETRY);
 	return (cnp->cn_nameiop == LOOKUP ? ENOENT : EROFS);
 
 found:
@@ -374,12 +379,15 @@ found:
 		dev_t *dp = kt->kt_data;
 	loop:
 		if (*dp == NODEV || !vfinddev(*dp, kt->kt_vtype, &fvp)) {
-			vn_lock(dvp, LK_SHARED | LK_RETRY);
 			return (ENOENT);
 		}
 		*vpp = fvp;
 		if (vget(fvp, LK_EXCLUSIVE))
 			goto loop;
+		if (wantpunlock) {
+			VOP_UNLOCK(dvp, 0);
+			cnp->cn_flags |= PDIRUNLOCK;
+		}
 		return (0);
 	}
 
@@ -388,7 +396,6 @@ found:
 #endif
 	error = getnewvnode(VT_KERNFS, dvp->v_mount, kernfs_vnodeop_p, &fvp);
 	if (error) {
-		vn_lock(dvp, LK_SHARED | LK_RETRY);
 		return (error);
 	}
 
@@ -396,12 +403,16 @@ found:
 	    M_WAITOK);
 	VTOKERN(fvp)->kf_kt = kt;
 	fvp->v_type = kt->kt_vtype;
-	vn_lock(fvp, LK_SHARED | LK_RETRY);
+	vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY);
 	*vpp = fvp;
 
 #ifdef KERNFS_DIAGNOSTIC
 	printf("kernfs_lookup: newvp = %p\n", fvp);
 #endif
+	if (wantpunlock) {
+		VOP_UNLOCK(dvp, 0);
+		cnp->cn_flags |= PDIRUNLOCK;
+	}
 	return (0);
 }
 
