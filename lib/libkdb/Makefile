@@ -1,5 +1,5 @@
-# $NetBSD: Makefile,v 1.1.1.1 2000/06/16 22:50:35 thorpej Exp $
-DIST=		${.CURDIR}/../../dist
+# $NetBSD: Makefile,v 1.2 2000/06/16 23:22:58 thorpej Exp $
+DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/krb4/lib/kdb
 
 WARNS?=  1
@@ -14,7 +14,7 @@ SRCS=	krb_cache.c				\
 	krb_dbm.c				\
 	print_princ.c
 
-INCSDIR= /usr/include/krb5
+INCSDIR= /usr/include/kerberosIV
 
 INCS=	krb_db.h
 
