@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39sib.c,v 1.12 2002/10/02 05:26:51 thorpej Exp $ */
+/*	$NetBSD: tx39sib.c,v 1.13 2003/01/01 01:40:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -303,7 +303,7 @@ tx39sib_print(void *aux, const char *pnp)
 {
 	struct txsib_attach_args *sa = aux;
 
-	printf(" slot %d", sa->sa_slot);
+	aprint_normal(" slot %d", sa->sa_slot);
 
 	return (QUIET);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.55 2002/10/02 05:36:38 thorpej Exp $	*/
+/*	$NetBSD: nubus.c,v 1.56 2003/01/01 01:44:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
@@ -268,24 +268,26 @@ nubus_print(aux, pnp)
 	bus_space_handle_t bsh;
 
 	if (pnp) {
-		printf("%s slot %x", pnp, na->slot);
+		aprint_normal("%s slot %x", pnp, na->slot);
 		if (bus_space_map(bst,
 		    NUBUS_SLOT2PA(na->slot), NBMEMSIZE, 0, &bsh) == 0) {
-			printf(": %s", nubus_get_card_name(bst, bsh, na->fmt));
-			printf(" (Vendor: %s,", nubus_get_vendor(bst, bsh,
+			aprint_normal(": %s",
+			    nubus_get_card_name(bst, bsh, na->fmt));
+			aprint_normal(" (Vendor: %s,",
+			    nubus_get_vendor(bst, bsh,
 			    na->fmt, NUBUS_RSRC_VEND_ID));
-			printf(" Part: %s)", nubus_get_vendor(bst, bsh,
+			aprint_normal(" Part: %s)", nubus_get_vendor(bst, bsh,
 			    na->fmt, NUBUS_RSRC_VEND_PART));
 			bus_space_unmap(bst, bsh, NBMEMSIZE);
 		}
 #ifdef DIAGNOSTIC
 		else
-			printf(":");
-		printf(" Type: %04x %04x %04x %04x",
+			aprint_normal(":");
+		aprint_normal(" Type: %04x %04x %04x %04x",
 		    na->category, na->type, na->drsw, na->drhw);
 #endif
 	} else {
-		printf(" slot %x", na->slot);
+		aprint_normal(" slot %x", na->slot);
 	}
 	return (UNCONF);
 }
