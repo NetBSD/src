@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 2003/08/07 16:27:14 agc Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23 2003/09/22 14:27:04 cl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2003/08/07 16:27:14 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2003/09/22 14:27:04 cl Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -489,16 +489,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/* NOTREACHED */
 }
 
-
-#define SS_RTEFRAME	1
-#define SS_FPSTATE	2
-#define SS_USERREGS	4
-
-struct sigstate {
-	int	ss_flags;		/* which of the following are valid */
-	struct	frame ss_frame;		/* original exception frame */
-	struct	fpframe ss_fpstate;	/* 68881/68882 state info */
-};
 
 int	waittime = -1;
 
