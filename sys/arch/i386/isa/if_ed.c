@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: if_ed.c,v 1.8.2.3 1993/10/29 06:00:05 mycroft Exp $
+ * $Id: if_ed.c,v 1.8.2.4 1993/10/29 06:01:46 mycroft Exp $
  */
 
 /*
@@ -1672,7 +1672,7 @@ edintr(aux)
 	 */
 	outb(sc->nic_addr + ED_P0_CR, ED_CR_RD2|ED_CR_STA);
 
-	if (!(isr = inb(sc->nic_addr + ED_P0_ISR))
+	if (!(isr = inb(sc->nic_addr + ED_P0_ISR)))
 		return 0;
 
 	/*
