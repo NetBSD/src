@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.10 1998/08/15 20:08:37 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.11 1998/08/15 20:46:31 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.9 1998/08/15 20:08:07 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.10 1998/08/15 20:46:06 thorpej Exp 
  */
 
 /*
@@ -157,9 +157,9 @@
 #define	PCMCIA_STR_SOCKET_DUAL_RS232	"Socket Communications Dual RS232"
 
 /* Standard Microsystems Corporation Products */
-#define	PCMCIA_CIS_SMC_8020BT	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_SMC_8020BT	0x0105
-#define	PCMCIA_STR_SMC_8020BT	"SMC 8020BT EtherEZ"
+#define	PCMCIA_CIS_SMC_8016	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SMC_8016	0x0105
+#define	PCMCIA_STR_SMC_8016	"SMC 8016 EtherCard"
 
 /* Cards we know only by their cis */
 #define	PCMCIA_VENDOR_PREMAX	-1	/* Premax */

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.10 1998/08/15 20:08:37 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.11 1998/08/15 20:46:31 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.9 1998/08/15 20:08:07 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.10 1998/08/15 20:46:06 thorpej Exp 
  */
 
 /*
@@ -194,11 +194,11 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Socket Communications Dual RS232"	},
 	},
 	{
-	    PCMCIA_VENDOR_SMC, PCMCIA_PRODUCT_SMC_8020BT,
-	    PCMCIA_CIS_SMC_8020BT,
+	    PCMCIA_VENDOR_SMC, PCMCIA_PRODUCT_SMC_8016,
+	    PCMCIA_CIS_SMC_8016,
 	    0,
 	    "Standard Microsystems Corporation",
-	    "SMC 8020BT EtherEZ"	},
+	    "SMC 8016 EtherCard"	},
 	},
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_MEGAHERTZ_XJ2288,
