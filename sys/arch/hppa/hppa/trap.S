@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.1 2002/06/05 01:04:20 fredette Exp $	*/
+/*	$NetBSD: trap.S,v 1.2 2002/06/06 19:49:58 fredette Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -585,16 +585,14 @@ LDILDO(itlb_x)
 LDILDO(dtlb_x)
 LDILDO(dtlbna_x)
 LDILDO(tlbd_x)
-#endif
 
-#ifdef HP7100_CPU
 LDILDO(itlb_s)
 LDILDO(dtlb_s)
 LDILDO(dtlbna_s)
 LDILDO(tlbd_s)
 #endif
 
-#ifdef HP7200_CPU
+#ifdef HP7100_CPU
 LDILDO(itlb_t)
 LDILDO(dtlb_t)
 LDILDO(dtlbna_t)
@@ -1165,7 +1163,7 @@ EXIT(hppa_fpu_swap)
 	dep	r8, 31, 16, r16		/* put in the space id */	! \
 	depi	1, 0, 1, r16		/* and set the valid bit */
 
-#if defined(HP7000_CPU) || defined(HP7100_CPU)
+#if defined(HP7000_CPU)
 /*
  * int desidhash_s(void)
  */
@@ -1183,9 +1181,9 @@ ALTENTRY(desidhash_x)
 	bv	0(rp)
 	extru	t1, 4, 5, ret0	/* return chip revision */
 EXIT(desidhash_s)
-#endif /* HP7000_CPU || HP7100_CPU */
+#endif /* HP7000_CPU */
 
-#ifdef HP7200_CPU
+#ifdef HP7100_CPU
 /*
  * int desidhash_t(void)
  */
