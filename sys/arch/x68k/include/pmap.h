@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.3 1998/01/01 19:53:11 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.4 1998/01/01 20:05:28 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -92,10 +92,10 @@ typedef struct pmap	*pmap_t;
 /*
  * Macros for speed
  */
-#define	PMAP_ACTIVATE(pmap, pcb, iscurproc)				\
+#define	PMAP_ACTIVATE(pmap, pcb, loadhw)				\
 {									\
 	(pcb)->pcb_ustp = m68k_btop((vm_offset_t)(pmap)->pm_stpa);	\
-	if ((iscurproc))						\
+	if ((loadhw))						\
 		loadustp((pcb)->pcb_ustp);				\
 	(pmap)->pm_stchanged = FALSE;					\
 }
