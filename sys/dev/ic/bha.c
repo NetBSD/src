@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.57 2003/11/02 11:07:45 wiz Exp $	*/
+/*	$NetBSD: bha.c,v 1.57.4.1 2005/04/02 21:59:33 he Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.57 2003/11/02 11:07:45 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.57.4.1 2005/04/02 21:59:33 he Exp $");
 
 #include "opt_ddb.h"
 
@@ -332,6 +332,12 @@ bha_scsipi_request(chan, req, arg)
 			ccb->scsi_cmd_length = 0;
 		} else {
 			/* can't use S/G if zero length */
+			if (xs->cmdlen > sizeof(ccb->scsi_cmd)) {
+				printf("%s: cmdlen %d too large for CCB\n",
+				    sc->sc_dev.dv_xname, xs->cmdlen);
+				xs->error = XS_DRIVER_STUFFUP;
+				goto out_bad;
+			}
 			ccb->opcode = (xs->datalen ? BHA_INIT_SCAT_GATH_CCB
 						   : BHA_INITIATOR_CCB);
 			memcpy(&ccb->scsi_cmd, xs->cmd,
