@@ -1,4 +1,4 @@
-/*	$NetBSD: pigs.c,v 1.12 1999/02/19 04:59:00 jwise Exp $	*/
+/*	$NetBSD: pigs.c,v 1.13 1999/02/21 21:48:07 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-__RCSID("$NetBSD: pigs.c,v 1.12 1999/02/19 04:59:00 jwise Exp $");
+__RCSID("$NetBSD: pigs.c,v 1.13 1999/02/21 21:48:07 jwise Exp $");
 #endif /* not lint */
 
 /*
@@ -61,18 +61,17 @@ __RCSID("$NetBSD: pigs.c,v 1.12 1999/02/19 04:59:00 jwise Exp $");
 
 #include "extern.h"
 #include "systat.h"
+#include "ps.h"
 
-int compar __P((const void *, const void *));
+int compare_pctcpu __P((const void *, const void *));
 
-static int nproc;
-static struct p_times {
-	float pt_pctcpu;
-	struct kinfo_proc *pt_kp;
-} *pt;
+int nproc;
+struct p_times *pt;
 
-static long stime[CPUSTATES];
-static int     fscale;
-static double  lccpu;
+long stime[CPUSTATES];
+long	mempages;
+int     fscale;
+double  lccpu;
 
 WINDOW *
 openpigs()
@@ -117,7 +116,7 @@ showpigs()
  		total = 1.0;
 	factor = 50.0/total;
 
-	qsort(pt, nproc + 1, sizeof (struct p_times), compar);
+	qsort(pt, nproc + 1, sizeof (struct p_times), compare_pctcpu);
 	y = 1;
 	i = nproc + 1;
 	if (i > getmaxy(wnd)-1)
@@ -155,7 +154,8 @@ static struct nlist namelist[] = {
 	{ "_ccpu" },
 #define X_FSCALE        2
 	{ "_fscale" },
-
+#define X_PHYSMEM	3
+	{ "_physmem" },
 	{ "" }
 };
 
@@ -175,6 +175,7 @@ initpigs()
 		}
 	}
 	KREAD(NPTR(X_CPTIME), stime, sizeof (stime));
+	KREAD(NPTR(X_PHYSMEM), &mempages, sizeof (mempages));
 	NREAD(X_CCPU, &ccpu, LONG);
 	NREAD(X_FSCALE,  &fscale, LONG);
 	lccpu = log((double) ccpu / fscale);
@@ -250,7 +251,7 @@ labelpigs()
 }
 
 int
-compar(a, b)
+compare_pctcpu(a, b)
 	const void *a, *b;
 {
 	return (((struct p_times *) a)->pt_pctcpu >
