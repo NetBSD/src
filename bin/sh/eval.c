@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.38 1997/07/20 21:27:35 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.39 1997/08/26 20:09:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.38 1997/07/20 21:27:35 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.39 1997/08/26 20:09:59 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -618,7 +618,6 @@ evalcommand(cmd, flags, backcmd)
 	setstackmark(&smark);
 	arglist.lastp = &arglist.list;
 	varlist.lastp = &varlist.list;
-	cmdenviron = NULL;
 	varflag = 1;
 	oexitstatus = exitstatus;
 	exitstatus = 0;
@@ -818,6 +817,7 @@ cmddone:
 		out1 = &output;
 		out2 = &errout;
 		freestdout();
+		cmdenviron = NULL;
 		if (e != EXSHELLPROC) {
 			commandname = savecmdname;
 			if (flags & EV_EXIT) {
