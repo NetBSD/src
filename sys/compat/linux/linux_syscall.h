@@ -103,6 +103,7 @@
 #define	LINUX_SYS_linux_sigreturn	119
 #define	LINUX_SYS_compat_09_setdomainname	121
 #define	LINUX_SYS_linux_uname	122
+#define	LINUX_SYS_linux_modify_ldt	123
 #define	LINUX_SYS_mprotect	125
 #define	LINUX_SYS_linux_sigprocmask	126
 #define	LINUX_SYS_linux_getpgid	132
