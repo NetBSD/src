@@ -1,4 +1,4 @@
-/*	$NetBSD: rpb.h,v 1.4 1995/03/28 18:14:11 jtc Exp $	*/
+/*	$NetBSD: rpb.h,v 1.5 1995/06/28 01:14:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -81,6 +81,9 @@ struct rpb {
 #define	SV_ST_MASK		0x0000fc00	/* system type mask */
 #define	SV_ST_RESERVED		0x00000000	/* RESERVED */
 
+/*
+ * System types for the DEC 3000/500 (Flamingo) Family
+ */
 #define	SV_ST_SANDPIPER		0x00000400	/* Sandpiper;	3000/400 */
 #define	SV_ST_FLAMINGO		0x00000800	/* Flamingo;	3000/500 */
 #define	SV_ST_HOTPINK		0x00000c00	/* "Hot Pink";	3000/500X */
@@ -90,12 +93,27 @@ struct rpb {
 #define	SV_ST_SANDPIPER45	0x00001c00	/* Sandpiper45;	3000/700 */
 #define	SV_ST_FLAMINGO45	0x00002000	/* Flamingo45;	3000/900 */
 
+/*
+ * System types for ???
+ */
 #define	SV_ST_SABLE		0x00000400	/* Sable (???) */
 
+/*
+ * System types for the DEC 3000/300 (Pelican) Family
+ */
 #define	SV_ST_PELICAN		0x00000000	/* Pelican;	 3000/300 */
 #define	SV_ST_PELICA		0x00000400	/* Pelica;	 3000/300L */
 #define	SV_ST_PELICANPLUS	0x00000800	/* Pelican+;	 3000/300X */
 #define	SV_ST_PELICAPLUS	0x00000c00	/* Pelica+;	 3000/300LX */
+
+/*
+ * System types for the AlphaStation Family
+ */
+#define	SV_ST_AVANTI		0x00000000	/* Avanti;	400 4/233 */
+#define	SV_ST_MUSTANG2_4_166	0x00000800	/* Mustang II;	200 4/166 */
+#define	SV_ST_MUSTANG2_4_233	0x00001000	/* Mustang II;	200 4/233 */
+#define	SV_ST_AVANTI_XXX	0x00001400	/* also Avanti;	400 4/233 */
+#define	SV_ST_MUSTANG2_4_100	0x00002400	/* Mustang II;	200 4/100 */
 
 	u_int64_t	rpb_variation;		/*  58 */
 
@@ -141,7 +159,7 @@ struct pcs {
 	u_int8_t	pcs_hwpcb[128];		/*   0: PAL dependent */
 
 #define	PCS_BIP			0x000001	/* boot in progress */
-#define	PCS_RIP			0x000002	/* restart in progress */
+#define	PCS_RC			0x000002	/* restart possible */
 #define	PCS_PA			0x000004	/* processor available */
 #define	PCS_PP			0x000008	/* processor present */
 #define	PCS_OH			0x000010	/* user halted */
@@ -193,21 +211,22 @@ struct pcs {
 #define	PCS_PROC_EV4		2			/* EV4: 21064 */
 #define	PCS_PROC_SIMULATOR	3			/* simulation */
 #define	PCS_PROC_LCA4		4			/* LCA4: 2106[68] */
+#define	PCS_PROC_EV5		5			/* EV5: 21164 */
 #define	PCS_PROC_EV45		6			/* EV45: 21064A */
-#ifdef XXX_UNKNOWN
-#define PCS_PROC_EV5		???			/* EV5: 21164 */
-#endif
 
 #define	PCS_PROC_MINOR		0xffffffff00000000
 #define	PCS_PROC_MINORSHIFT	32
 #define	PCS_PROC_PASS2		0			/* pass 2 or 2.1 */
 #define	PCS_PROC_PASS3		1			/* pass 3 */
+				/* 4 == ev4s?  or 1 == ... ? */
+	/* minor on the LCA appears to be pass number */
 
 	u_int64_t	pcs_proc_var;		/* B8: processor variation. */
 
 #define	PCS_VAR_VAXFP		0x0000000000000001	/* VAX FP support */
 #define	PCS_VAR_IEEEFP		0x0000000000000002	/* IEEE FP support */
-#define	PCS_VAR_RESERVED	0xfffffffffffffffc	/* Reserved */
+#define	PCS_VAR_IOACCESS	0x0000000000000004	/* Has I/O access */
+#define	PCS_VAR_RESERVED	0xfffffffffffffff8	/* Reserved */
 
 	char		pcs_proc_revision[8];	/*  C0: only first 4 valid */
 	char		pcs_proc_sn[16];	/*  C8: only first 10 valid */
