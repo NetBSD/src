@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 2002/03/24 18:21:08 uch Exp $	*/
+/*	$NetBSD: intr.h,v 1.4 2002/11/15 13:29:27 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,12 +39,12 @@
 #include <sh3/intr.h>
 
 /* Number of interrupt source */
-#define _INTR_N		9	/* TMU0, TMU1, TMU2, SCIF * 4, GDROM, GAPSPCI */
+#define _INTR_N		10	/* TMU0, TMU1, TMU2, SCIF * 4, IRL * 3 */
 
 /* Interrupt priority levels */
-#define	IPL_BIO		9	/* block I/O	(GD-ROM) */
-#define	IPL_NET		11	/* network	(GAPS PCI) */
-#define	IPL_TTY		12	/* terminal */
+#define	IPL_BIO		9	/* block I/O	(IRL9) */
+#define	IPL_NET		11	/* network	(IRL11) */
+#define	IPL_TTY		12	/* terminal	(IRL13) */
 #define	IPL_SERIAL	12	/* serial */
 #define	IPL_CLOCK	14	/* clock */
 #define	IPL_HIGH	15	/* everything */
