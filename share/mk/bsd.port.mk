@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.54 1998/03/01 13:38:03 tron Exp $
+#	$NetBSD: bsd.port.mk,v 1.55 1998/03/07 21:19:00 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -251,10 +251,15 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 # Variables that serve as convenient "aliases" for your *-install targets.
 # Use these like: "${INSTALL_PROGRAM} ${WRKSRC}/prog ${PREFIX}/bin".
 #
-# INSTALL_PROGRAM - A command to install binary executables.
-# INSTALL_SCRIPT - A command to install executable scripts.
-# INSTALL_DATA	- A command to install sharable data.
-# INSTALL_MAN	- A command to install manpages (doesn't compress).
+# INSTALL_PROGRAM		- A command to install binary executables.
+# INSTALL_SCRIPT		- A command to install executable scripts.
+# INSTALL_DATA			- A command to install sharable data.
+# INSTALL_MAN			- A command to install manpages (doesn't compress).
+# INSTALL_PROGRAM_DIR	- Create a directory for storing programs
+# INSTALL_SCRIPT_DIR	- Create a directory for storing scripts (alias for
+#						  (INSTALL_PROGRAM_DIR)
+# INSTALL_DATA_DIR		- Create a directory for storing arbitrary data
+# INSTALL_MAN_DIR		- Create a directory for storing man pages
 #
 # It is assumed that the port installs manpages uncompressed. If this is
 # not the case, set MANCOMPRESSED in the port.  Depending on the setting of
@@ -563,11 +568,23 @@ INSTALL_DATA= \
 	${INSTALL} ${COPY} -o ${SHAREOWN} -g ${SHAREGRP} -m ${SHAREMODE}
 INSTALL_MAN= \
 	${INSTALL} ${COPY} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE}
+INSTALL_PROGRAM_DIR= \
+	${INSTALL} -d -o ${BINOWN} -g ${BINGRP} -m ${BINMODE}
+INSTALL_SCRIPT_DIR= \
+	${INSTALL_PROGRAM_DIR}
+INSTALL_DATA_DIR= \
+	${INSTALL} -d -o ${SHAREOWN} -g ${SHAREGRP} -m ${SHAREMODE}
+INSTALL_MAN_DIR= \
+	${INSTALL} -d -o ${MANOWN} -g ${MANGRP} -m ${MANMODE}
 
 INSTALL_MACROS=	BSD_INSTALL_PROGRAM="${INSTALL_PROGRAM}" \
 			BSD_INSTALL_SCRIPT="${INSTALL_SCRIPT}" \
 			BSD_INSTALL_DATA="${INSTALL_DATA}" \
-			BSD_INSTALL_MAN="${INSTALL_MAN}"
+			BSD_INSTALL_MAN="${INSTALL_MAN}" \
+			BSD_INSTALL_PROGRAM_DIR="${INSTALL_PROGRAM_DIR}" \
+			BSD_INSTALL_SCRIPT_DIR="${INSTALL_SCRIPT_DIR}" \
+			BSD_INSTALL_DATA_DIR="${INSTALL_DATA_DIR}" \
+			BSD_INSTALL_MAN_DIR="${INSTALL_MAN_DIR}"
 MAKE_ENV+=	${INSTALL_MACROS}
 SCRIPTS_ENV+=	${INSTALL_MACROS}
 
