@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sshd,v 1.6 2000/08/10 01:41:09 lukem Exp $
+# $NetBSD: sshd,v 1.7 2000/08/10 22:49:43 lukem Exp $
 #
 
 # PROVIDE: sshd
@@ -10,9 +10,9 @@
 
 name="sshd"
 command="/usr/sbin/${name}"
-
+pidfile="/var/run/${name}.pid"
 required_files="/etc/${name}.conf"
-extra_commands="keygen"
+extra_commands="keygen reload"
 
 sshd_keygen()
 {
