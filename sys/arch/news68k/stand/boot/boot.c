@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1 1999/12/09 14:53:21 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.2 2000/02/08 16:17:34 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,8 @@ boot(d4, d5, d6, d7)
 	printf("NetBSD/news68k Secondary Boot\n");
 
 	/* bootname is "boot" by default. */
-	if (netbsd == NULL || strcmp(netbsd, "boot") == 0)
+	if (netbsd == NULL || strcmp(netbsd, "boot") == 0 ||
+			      strcmp(netbsd, "/boot") == 0)
 		netbsd = "";
 
 	DPRINTF("howto = 0x%x\n", d7);
