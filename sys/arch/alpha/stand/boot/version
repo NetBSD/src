@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.7 1997/01/16 02:59:09 cgd Exp $
+$NetBSD: version,v 1.8 1997/01/18 01:59:32 cgd Exp $
 
 1.1:	Initial version
 1.2:	don't forget the Id string!
@@ -10,3 +10,4 @@ $NetBSD: version,v 1.7 1997/01/16 02:59:09 cgd Exp $
 	calls, kill 'ask' loop (i.e. if boot fails, halt), seperate
 	ECOFF and a.out support into seperate options.
 1.7:	Use libsa and libkern rather than building the objects locally.
+1.8:	Search for a kernel, if none specified.
