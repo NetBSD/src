@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.172 2002/10/31 22:24:42 jdolecek Exp $	*/
+/*	$NetBSD: trap.c,v 1.173 2002/10/31 22:32:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.172 2002/10/31 22:24:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.173 2002/10/31 22:32:40 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -140,7 +140,7 @@ int trapwrite __P((unsigned));
 #define KVM86MODE (0)
 #endif
 
-const char *trap_type[] = {
+const char * const trap_type[] = {
 	"privileged instruction fault",		/*  0 T_PRIVINFLT */
 	"breakpoint trap",			/*  1 T_BPTFLT */
 	"arithmetic trap",			/*  2 T_ARITHTRAP */
