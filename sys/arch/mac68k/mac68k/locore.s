@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.65 1996/06/15 21:25:21 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.66 1996/09/12 21:25:31 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -278,7 +278,7 @@ Lstkadj:
  */
 _fpfline:
 #if defined(M68040)
-	cmpl	#MMU_68040,_mmutype	| 68040?
+	cmpl	#0x3,_fpu_type		| 68040? (see fpu.c)
 	jne	Lfp_unimp		| no, skip FPSP
 	cmpw	#0x202c,sp@(6)		| format type 2?
 	jne	_illinst		| no, treat as illinst
@@ -300,7 +300,7 @@ Lfp_unimp:
 
 _fpunsupp:
 #if defined(M68040)
-	cmpl	#MMU_68040,_mmutype	| 68040?
+	cmpl	#0x3,_fpu_type		| 68040? (see fpu.c)
 	jne	Lfp_unsupp		| no, treat as illinst
 #ifdef FPSP
 	.globl	fpsp_unsupp
@@ -892,7 +892,7 @@ start:
 	jne	Lstartnot040		| It's not an '040
 	.word	0xf4f8			| cpusha bc - push and invalidate caches
 
-	movl	#CACHE4_OFF,d0		| 68040 cache disable
+	movl	#CACHE40_OFF,d0		| 68040 cache disable
 	movc	d0, cacr
 
 	movel	#0x0, d0
