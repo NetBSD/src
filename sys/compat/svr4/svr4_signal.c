@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.44 2002/03/31 22:22:49 christos Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.45 2002/04/12 17:37:30 manu Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.44 2002/03/31 22:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.45 2002/04/12 17:37:30 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ svr4_to_native_sigaction(ssa, bsa)
 	if ((ssa->sa_flags & SVR4_SA_RESTART) != 0)
 		bsa->sa_flags |= SA_RESTART;
 	if ((ssa->sa_flags & SVR4_SA_SIGINFO) != 0)
-		DPRINTF(("svr4_to_native_sigaction: SA_SIGINFO ignored\n"));
+		bsa->sa_flags |= SA_SIGINFO;
 	if ((ssa->sa_flags & SVR4_SA_NODEFER) != 0)
 		bsa->sa_flags |= SA_NODEFER;
 	if ((ssa->sa_flags & SVR4_SA_NOCLDWAIT) != 0)
