@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.h,v 1.6 1997/10/21 19:15:33 gwr Exp $	*/
+/*	$NetBSD: m68k.h,v 1.7 2001/05/03 20:55:11 fredette Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,6 +68,7 @@ extern	int mmutype;		/* MMU on this host */
 #endif	/* _KERNEL */
 
 /* values for cputype */
+#define	CPU_68010	-1	/* 68010 */
 #define	CPU_68020	0	/* 68020 */
 #define	CPU_68030	1	/* 68030 */
 #define	CPU_68040	2	/* 68040 */
