@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.14 1996/05/28 02:07:44 mrg Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.14.2.1 1996/09/20 17:00:41 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -37,10 +37,11 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-static char *rcsid = "$NetBSD: rcmd.c,v 1.14 1996/05/28 02:07:44 mrg Exp $";
+static char *rcsid = "$NetBSD: rcmd.c,v 1.14.2.1 1996/09/20 17:00:41 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -58,6 +59,13 @@ static char *rcsid = "$NetBSD: rcmd.c,v 1.14 1996/05/28 02:07:44 mrg Exp $";
 #include <ctype.h>
 #include <string.h>
 #include <syslog.h>
+
+#ifdef __weak_alias
+__weak_alias(iruserok,_iruserok);
+__weak_alias(rcmd,_rcmd);
+__weak_alias(rresvport,_rresvport);
+__weak_alias(ruserok,_ruserok);
+#endif
 
 int	__ivaliduser __P((FILE *, u_int32_t, const char *, const char *));
 static int __icheckhost __P((u_int32_t, const char *));
@@ -518,7 +526,7 @@ __icheckhost(raddr, lhost)
 
 	/* Spin through ip addresses. */
 	for (pp = hp->h_addr_list; *pp; ++pp)
-		if (!bcmp(&raddr, *pp, sizeof(u_int32_t)))
+		if (!memcmp(&raddr, *pp, sizeof(u_int32_t)))
 			return (1);
 
 	/* No match. */
@@ -553,7 +561,7 @@ __gethostloop(raddr)
 		return (NULL);
 
 	for (; hp->h_addr_list[0] != NULL; hp->h_addr_list++)
-		if (!bcmp(hp->h_addr_list[0], (caddr_t)&raddr, sizeof(raddr)))
+		if (!memcmp(hp->h_addr_list[0], (caddr_t)&raddr, sizeof(raddr)))
 			return (remotehost);
 
 	/*

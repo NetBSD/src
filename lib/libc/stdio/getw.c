@@ -1,4 +1,4 @@
-/*	$NetBSD: getw.c,v 1.5 1995/02/02 02:09:59 jtc Exp $	*/
+/*	$NetBSD: getw.c,v 1.5.6.1 1996/09/20 17:00:51 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,10 +40,15 @@
 #if 0
 static char sccsid[] = "@(#)getw.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char rcsid[] = "$NetBSD: getw.c,v 1.5 1995/02/02 02:09:59 jtc Exp $";
+static char rcsid[] = "$NetBSD: getw.c,v 1.5.6.1 1996/09/20 17:00:51 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <stdio.h>
+
+#ifdef __weak_alias
+__weak_alias(getw,_getw);
+#endif
 
 int
 getw(fp)

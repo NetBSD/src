@@ -33,12 +33,17 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strmode.c	5.3 (Berkeley) 5/18/90";*/
-static char *rcsid = "$Id: strmode.c,v 1.3 1993/08/26 00:51:54 jtc Exp $";
+static char *rcsid = "$Id: strmode.c,v 1.3.8.1 1996/09/20 17:01:03 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(strmode,_strmode);
+#endif
 
 void
 strmode(mode, p)

@@ -1,4 +1,4 @@
-/*	$NetBSD: linkaddr.c,v 1.5 1995/02/25 06:20:49 cgd Exp $	*/
+/*	$NetBSD: linkaddr.c,v 1.5.4.1 1996/09/20 17:00:38 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,14 +37,20 @@
 #if 0
 static char sccsid[] = "@(#)linkaddr.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: linkaddr.c,v 1.5 1995/02/25 06:20:49 cgd Exp $";
+static char rcsid[] = "$NetBSD: linkaddr.c,v 1.5.4.1 1996/09/20 17:00:38 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <net/if_dl.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(link_addr,_link_addr);
+__weak_alias(link_ntoa,_link_ntoa);
+#endif
 
 /* States*/
 #define NAMING	0
@@ -66,7 +72,7 @@ link_addr(addr, sdl)
 	char *cplim = sdl->sdl_len + (char *)sdl;
 	register int byte = 0, state = NAMING, new;
 
-	bzero((char *)&sdl->sdl_family, sdl->sdl_len - 1);
+	memset((char *)&sdl->sdl_family, 0, sdl->sdl_len - 1);
 	sdl->sdl_family = AF_LINK;
 	do {
 		state &= ~LETTER;

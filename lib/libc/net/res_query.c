@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.10 1996/02/02 15:22:34 mrg Exp $	*/
+/*	$NetBSD: res_query.c,v 1.10.2.1 1996/09/20 17:00:45 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -58,10 +58,11 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$Id: res_query.c,v 8.6 1995/06/29 09:26:28 vixie Exp ";
 #else
-static char rcsid[] = "$NetBSD: res_query.c,v 1.10 1996/02/02 15:22:34 mrg Exp $";
+static char rcsid[] = "$NetBSD: res_query.c,v 1.10.2.1 1996/09/20 17:00:45 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -73,6 +74,12 @@ static char rcsid[] = "$NetBSD: res_query.c,v 1.10 1996/02/02 15:22:34 mrg Exp $
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(res_query,_res_query);
+__weak_alias(res_querydomain,_res_querydomain);
+__weak_alias(res_search,_res_search);
+#endif
 
 #if PACKETSZ > 1024
 #define MAXPACKET	PACKETSZ

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.11.4.1 1996/09/19 20:02:25 jtc Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.11.4.2 1996/09/20 17:00:15 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)disklabel.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: disklabel.c,v 1.11.4.1 1996/09/19 20:02:25 jtc Exp $";
+static char rcsid[] = "$NetBSD: disklabel.c,v 1.11.4.2 1996/09/20 17:00:15 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -79,7 +79,7 @@ getdiskbyname(name)
 	if (cgetent(&buf, db_array, (char *) name) < 0)
 		return NULL;
 
-	bzero((char *)&disk, sizeof(disk));
+	memset((char *)&disk, 0, sizeof(disk));
 	/*
 	 * typename
 	 */

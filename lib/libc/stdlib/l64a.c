@@ -4,10 +4,15 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$NetBSD: l64a.c,v 1.4 1995/05/11 23:03:44 jtc Exp $";
+static char *rcsid = "$NetBSD: l64a.c,v 1.4.4.1 1996/09/20 17:00:54 jtc Exp $";
 #endif
 
+#include "namespace.h"
 #include <stdlib.h>
+
+#ifdef __weak_alias
+__weak_alias(l64a,_l64a);
+#endif
 
 char *
 l64a (value)

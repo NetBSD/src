@@ -4,13 +4,18 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: nl_langinfo.c,v 1.3 1995/04/28 23:19:37 jtc Exp $";
+static char *rcsid = "$Id: nl_langinfo.c,v 1.3.4.1 1996/09/20 17:00:22 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/localedef.h>
 #include <locale.h>
 #include <nl_types.h>
 #include <langinfo.h>
+
+#ifdef __weak_alias
+__weak_alias(nl_langinfo,_nl_langinfo);
+#endif
 
 char *
 nl_langinfo(item)

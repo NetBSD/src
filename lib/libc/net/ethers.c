@@ -1,4 +1,4 @@
-/*	$NetBSD: ethers.c,v 1.5 1995/02/25 06:20:28 cgd Exp $	*/
+/*	$NetBSD: ethers.c,v 1.5.4.1 1996/09/20 17:00:23 jtc Exp $	*/
 
 /* 
  * ethers(3N) a la Sun.
@@ -7,6 +7,7 @@
  * Public domain.
  */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <net/if.h>
@@ -18,6 +19,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(ether_aton,_ether_aton);
+__weak_alias(ether_hostton,_ether_hostton);
+__weak_alias(ether_line,_ether_line);
+__weak_alias(ether_ntoa,_ether_ntoa);
+__weak_alias(ether_ntohost,_ether_ntohost);
+#endif
 
 #ifndef _PATH_ETHERS
 #define _PATH_ETHERS "/etc/ethers"
@@ -100,7 +109,7 @@ ether_ntohost(hostname, e)
 		}
 #endif
 		if (ether_line(buf, &try, hostname) == 0 &&
-		    bcmp((char *)&try, (char *)e, sizeof try) == 0) {
+		    memcmp((char *)&try, (char *)e, sizeof try) == 0) {
 			(void)fclose(f);
 			return 0;
 		}     

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_comp.c,v 1.7 1996/02/02 15:22:26 mrg Exp $	*/
+/*	$NetBSD: res_comp.c,v 1.7.2.1 1996/09/20 17:00:43 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993
@@ -58,10 +58,11 @@
 static char sccsid[] = "@(#)res_comp.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$Id: res_comp.c,v 8.3 1995/12/06 20:34:50 vixie Exp ";
 #else
-static char rcsid[] = "$NetBSD: res_comp.c,v 1.7 1996/02/02 15:22:26 mrg Exp $";
+static char rcsid[] = "$NetBSD: res_comp.c,v 1.7.2.1 1996/09/20 17:00:43 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <arpa/nameser.h>
 #include <netinet/in.h>
@@ -70,6 +71,11 @@ static char rcsid[] = "$NetBSD: res_comp.c,v 1.7 1996/02/02 15:22:26 mrg Exp $";
 #include <ctype.h>
 #include <unistd.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(dn_comp,_dn_comp);
+__weak_alias(dn_expand,_dn_expand);
+#endif
 
 static int dn_find __P((u_char *, u_char *, u_char **, u_char **));
 

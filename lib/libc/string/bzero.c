@@ -33,13 +33,18 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)bzero.c	5.7 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: bzero.c,v 1.4 1996/04/18 02:30:09 cgd Exp $";
+static char *rcsid = "$Id: bzero.c,v 1.4.2.1 1996/09/20 17:00:58 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#ifndef _KERNEL
-#include <string.h>
-#else
+#ifdef _KERNEL
 #include <lib/libkern/libkern.h>
+#else
+#include "namespace.h"
+#include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(bzero,_bzero);
+#endif
 #endif
 
 /*

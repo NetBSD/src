@@ -1,4 +1,4 @@
-/*	$NetBSD: cfsetspeed.c,v 1.1 1995/04/25 00:04:35 jtc Exp $	*/
+/*	$NetBSD: cfsetspeed.c,v 1.1.4.1 1996/09/20 17:01:05 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -37,11 +37,16 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-static char rcsid[] = "$NetBSD: cfsetspeed.c,v 1.1 1995/04/25 00:04:35 jtc Exp $";
+static char rcsid[] = "$NetBSD: cfsetspeed.c,v 1.1.4.1 1996/09/20 17:01:05 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <termios.h>
+
+#ifdef __weak_alias
+__weak_alias(cfsetspeed,_cfsetspeed);
+#endif
 
 int
 cfsetspeed(t, speed)

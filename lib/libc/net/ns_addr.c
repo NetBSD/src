@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_addr.c,v 1.5 1995/02/25 06:20:51 cgd Exp $	*/
+/*	$NetBSD: ns_addr.c,v 1.5.4.1 1996/09/20 17:00:39 jtc Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -40,14 +40,19 @@
 #if 0
 static char sccsid[] = "@(#)ns_addr.c	8.1 (Berkeley) 6/7/93";
 #else
-static char rcsid[] = "$NetBSD: ns_addr.c,v 1.5 1995/02/25 06:20:51 cgd Exp $";
+static char rcsid[] = "$NetBSD: ns_addr.c,v 1.5.4.1 1996/09/20 17:00:39 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <netns/ns.h>
 #include <stdio.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(ns_addr,_ns_addr);
+#endif
 
 static struct ns_addr addr, zero_addr;
 

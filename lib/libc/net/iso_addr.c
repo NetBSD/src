@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_addr.c,v 1.4 1995/02/25 06:20:47 cgd Exp $	*/
+/*	$NetBSD: iso_addr.c,v 1.4.4.1 1996/09/20 17:00:37 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,13 +37,19 @@
 #if 0
 static char sccsid[] = "@(#)iso_addr.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: iso_addr.c,v 1.4 1995/02/25 06:20:47 cgd Exp $";
+static char rcsid[] = "$NetBSD: iso_addr.c,v 1.4.4.1 1996/09/20 17:00:37 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <netiso/iso.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(iso_addr,_iso_addr);
+__weak_alias(iso_ntoa,_iso_ntoa);
+#endif
 
 /* States*/
 #define VIRGIN	0
@@ -63,7 +69,7 @@ iso_addr(addr)
 	char *cplim = cp + sizeof(out_addr.isoa_genaddr);
 	register int byte = 0, state = VIRGIN, new;
 
-	bzero((char *)&out_addr, sizeof(out_addr));
+	memset((char *)&out_addr, 0, sizeof(out_addr));
 	do {
 		if ((*addr >= '0') && (*addr <= '9')) {
 			new = *addr - '0';

@@ -1,4 +1,4 @@
-/*	$NetBSD: nsap_addr.c,v 1.1 1996/02/02 15:22:24 mrg Exp $	*/
+/*	$NetBSD: nsap_addr.c,v 1.1.2.1 1996/09/20 17:00:40 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,16 +37,22 @@
 #if 0
 static char rcsid[] = "$Id: lib-libc-net,v 8.1 1995/12/22 21:59:52 vixie Exp ";
 #else
-static char rcsid[] = "$NetBSD: nsap_addr.c,v 1.1 1996/02/02 15:22:24 mrg Exp $";
+static char rcsid[] = "$NetBSD: nsap_addr.c,v 1.1.2.1 1996/09/20 17:00:40 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/nameser.h>
 #include <ctype.h>
 #include <resolv.h>
+
+#ifdef __weak_alias
+__weak_alias(inet_nsap_addr,_inet_nsap_addr);
+__weak_alias(inet_nsap_ntoa,_inet_nsap_ntoa);
+#endif
 
 static char
 xtob(c)

@@ -36,10 +36,15 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)swab.c	5.10 (Berkeley) 3/6/91";*/
-static char *rcsid = "$Id: swab.c,v 1.3 1993/08/26 00:52:03 jtc Exp $";
+static char *rcsid = "$Id: swab.c,v 1.3.8.1 1996/09/20 17:01:04 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(swab,_swab);
+#endif
 
 void
 swab(from, to, len)

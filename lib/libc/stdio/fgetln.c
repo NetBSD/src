@@ -1,4 +1,4 @@
-/*	$NetBSD: fgetln.c,v 1.2 1995/02/02 02:09:10 jtc Exp $	*/
+/*	$NetBSD: fgetln.c,v 1.2.6.1 1996/09/20 17:00:49 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,13 +38,18 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)fgetline.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: fgetln.c,v 1.2 1995/02/02 02:09:10 jtc Exp $";
+static char *rcsid = "$Id: fgetln.c,v 1.2.6.1 1996/09/20 17:00:49 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "local.h"
+
+#ifdef __weak_alias
+__weak_alias(fgetln,_fgetln);
+#endif
 
 /*
  * Expand the line buffer.  Return -1 on error.
