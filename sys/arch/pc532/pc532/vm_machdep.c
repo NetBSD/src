@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.24 1998/04/21 20:12:18 matthias Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.25 1998/07/06 09:42:56 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -283,7 +283,6 @@ setredzone(pte, vaddr)
  * Both addresses are assumed to reside in the Sysmap,
  * and size must be a multiple of CLSIZE.
  */
-#if defined(PMAP_NEW)
 void
 pagemove(from, to, size)
 	register caddr_t from, to;
@@ -295,49 +294,32 @@ pagemove(from, to, size)
 		panic("pagemove");
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
-	while (size > 0) {
-		otpte = *tpte;
-		ofpte = *fpte;
-		*tpte++ = *fpte;
-		*fpte++ = 0;
-		if (otpte & PG_V)
-			pmap_update_pg((vm_offset_t) to);
-		if (ofpte & PG_V)
-			pmap_update_pg((vm_offset_t) from);
-		from += NBPG;
-		to += NBPG;
-		size -= NBPG;
+
+	if (size <= NBPG * 16) {
+		while (size > 0) {
+			otpte = *tpte;
+			ofpte = *fpte;
+			*tpte++ = *fpte;
+			*fpte++ = 0;
+			if (otpte & PG_V)
+				tlbflush_entry((vm_offset_t) to);
+			if (ofpte & PG_V)
+				tlbflush_entry((vm_offset_t) from);
+			from += NBPG;
+			to += NBPG;
+			size -= NBPG;
+		}
+	} else {
+		while (size > 0) {
+			*tpte++ = *fpte;
+			*fpte++ = 0;
+			from += NBPG;
+			to += NBPG;
+			size -= NBPG;
+		}
+		pmap_update();
 	}
 }
-
-#else /* PMAP_NEW */
-
-/*
- * Move pages from one kernel virtual address to another.
- * Both addresses are assumed to reside in the Sysmap,
- * and size must be a multiple of CLSIZE.
- */
-void
-pagemove(from, to, size)
-	register caddr_t from, to;
-	size_t size;
-{
-	register pt_entry_t *fpte, *tpte;
-
-	if (size % CLBYTES)
-		panic("pagemove");
-	fpte = kvtopte(from);
-	tpte = kvtopte(to);
-	while (size > 0) {
-		*tpte++ = *fpte;
-		*fpte++ = 0;
-		from += NBPG;
-		to += NBPG;
-		size -= NBPG;
-	}
-	pmap_update();
-}
-#endif /* PMAP_NEW */
 
 /*
  * Convert kernel VA to physical address
