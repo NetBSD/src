@@ -1,4 +1,4 @@
-/*	$NetBSD: getloadavg.c,v 1.5 1995/02/25 08:51:15 cgd Exp $	*/
+/*	$NetBSD: getloadavg.c,v 1.6 1997/07/13 19:45:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)getloadavg.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getloadavg.c,v 1.5 1995/02/25 08:51:15 cgd Exp $";
+__RCSID("$NetBSD: getloadavg.c,v 1.6 1997/07/13 19:45:55 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_aout.c,v 1.2 1996/09/30 23:49:28 cgd Exp $	*/
+/*	$NetBSD: nlist_aout.c,v 1.3 1997/07/13 19:46:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,11 +34,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: nlist_aout.c,v 1.2 1996/09/30 23:49:28 cgd Exp $";
+__RCSID("$NetBSD: nlist_aout.c,v 1.3 1997/07/13 19:46:06 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

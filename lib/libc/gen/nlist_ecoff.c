@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_ecoff.c,v 1.3 1996/10/01 13:37:05 cgd Exp $	*/
+/*	$NetBSD: nlist_ecoff.c,v 1.4 1997/07/13 19:46:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -30,8 +30,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: nlist_ecoff.c,v 1.3 1996/10/01 13:37:05 cgd Exp $";
+__RCSID("$NetBSD: nlist_ecoff.c,v 1.4 1997/07/13 19:46:07 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
