@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.26 2001/10/25 14:47:39 lukem Exp $
+.\"	$NetBSD: mtree.8,v 1.27 2001/11/07 08:01:52 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)mtree.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd October 26, 2001
+.Dd November 7, 2001
 .Dt MTREE 8
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Nd map a directory hierarchy
 .Sh SYNOPSIS
 .Nm ""
-.Op Fl cdDelrUuWx
+.Op Fl cdDelLPruUWx
 .Bk -words
 .Op Fl i | Fl m
 .Ek
@@ -68,6 +68,9 @@
 .Ek
 .Bk -words
 .Op Fl s Ar seed
+.Ek
+.Bk -words
+.Op Fl X Ar exclude-file
 .Ek
 .Sh DESCRIPTION
 The utility
@@ -152,6 +155,8 @@ performed. This flag may not be set at the same time as the
 or
 .Fl U
 flags.
+.It Fl L
+Follow all symbolic links in the file hierarchy.
 .It Fl m
 If the schg and/or sappnd flags are specified, reset these flags. Note that
 this is only possible with securelevel less than 1 (i. e. in single user mode
@@ -162,24 +167,30 @@ for information on security levels.
 Use the file hierarchy rooted in
 .Ar path  ,
 instead of the current directory.
+.It Fl P
+Don't follow symbolic links in the file hierarchy, instead consider
+the symbolic link itself in any comparisons.
+This is the default.
+.It Fl r
+Remove any files in the file hierarchy that are not described in the
+specification.
 .It Fl R Ar keywords
 Remove the specified (whitespace or comma separated) keywords from the current
 set of keywords.
 If
 .Ql all
 is specified, remove all of the other keywords.
-.It Fl r
-Remove any files in the file hierarchy that are not described in the
-specification.
 .It Fl s Ar seed
 Display a single checksum to the standard error output that represents all
 of the files for which the keyword
 .Sy cksum
 was specified.
 The checksum is seeded with the specified value.
-.It Fl U
-Modify the owner, group, permissions, and flags of existing files to match
-the specification and create any missing directories.
+.It Fl u
+Modify the owner, group, permissions, and flags of existing files,
+the device type of devices, and symbolic link targets,
+to match the specification.
+Create any missing directories, devices or symbolic links.
 User, group, and permissions must all be specified for missing directories
 to be created.
 Note that unless the
@@ -188,13 +199,13 @@ option is given, the schg and sappnd flags will not be set, even if
 specified. If
 .Fl m
 is given, these flags will be reset.
-Exit with a status of 0 on success, 1 if any error occurred;
-a mismatch is not considered to be an error if it was corrected.
-.It Fl u
+Exit with a status of 0 on success,
+2 if the file hierarchy did not match the specification, and
+1 if any other error occurred.
+.It Fl U
 Same as
-.Fl U
-except a status of 2 is returned if the file hierarchy did not match
-the specification.
+.Fl u
+except that a mismatch is not considered to be an error if it was corrected.
 .It Fl W
 Don't attempt to set various file attributes such as the
 ownership, mode, flags, or time
@@ -205,6 +216,20 @@ or
 .Fl U .
 .It Fl x
 Don't descend below mount points in the file hierarchy.
+.It Fl X Ar exclude-file
+The specified file contains
+.Xr fnmatch 3
+patterns matching files to be excluded from
+the specification, one to a line.
+If the pattern contains a
+.Ql \&/
+character, it will be matched against entire pathnames (relative to
+the starting directory); otherwise,
+it will be matched against basenames only.
+Comments are permitted in
+the
+.Ar exclude-list
+file.
 .El
 .Pp
 Specifications are mostly composed of
@@ -310,7 +335,12 @@ The file group as a symbolic name.
 .It Sy link
 The file the symbolic link is expected to reference.
 .It Sy md5
-The MD5 cryptographic checksum of the file.
+The
+.Tn MD5
+cryptographic message digest of the file.
+.It Sy md5digest
+Synonym for
+.Sy md5 .
 .It Sy mode
 The current file's permissions as a numeric (octal) or symbolic
 value.
@@ -319,10 +349,20 @@ The number of hard links the file is expected to have.
 .It Sy optional
 The file is optional; don't complain about the file if it's
 not in the file hierarchy.
-.It Sy uid
-The file owner as a numeric value.
-.It Sy uname
-The file owner as a symbolic name.
+.It Sy rmd160
+The
+.Tn RMD-160
+cryptographic message digest of the file.
+.It Sy rmd160digest
+Synonym for
+.Sy rmd160 .
+.It Sy sha1
+The
+.Tn SHA-1
+cryptographic message digest of the file.
+.It Sy sha1digest
+Synonym for
+.Sy sha1 .
 .It Sy size
 The size, in bytes, of the file.
 .It Sy tags
@@ -336,6 +376,10 @@ stored internally with them.
 The last modification time of the file.
 .It Sy type
 The type of the file; may be set to any one of the following:
+.It Sy uid
+The file owner as a numeric value.
+.It Sy uname
+The file owner as a symbolic name.
 .Pp
 .Bl -tag -width Sy -compact
 .It Sy block
@@ -499,6 +543,7 @@ for distributions and other such things.
 .Xr cksum 1 ,
 .Xr md5 1 ,
 .Xr stat 2 ,
+.Xr fnmatch 3 ,
 .Xr fts 3 ,
 .Xr strsvis 3 ,
 .Xr chown 8 ,
@@ -529,16 +574,21 @@ appeared in
 .Nx 1.4 .
 The
 .Sy device ,
+.Sy rmd160 ,
+.Sy sha1 ,
 .Sy tags ,
 and
 .Sy all
 keywords,
-.Fl l ,
 .Fl D ,
 .Fl E ,
 .Fl I ,
+.Fl l ,
+.Fl L ,
+.Fl P ,
 .Fl R ,
+.Fl W ,
 and
-.Fl W
+.Fl X
 flags, and support for full paths appeared in
 .Nx 1.6 .

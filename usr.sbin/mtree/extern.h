@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.18 2001/11/03 12:51:40 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.19 2001/11/07 08:01:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,24 +38,28 @@
 #include "mtree.h"
 
 void	 addtag(slist_t *, char *);
-int	 compare(const char *, NODE *, FTSENT *);
+int	 check_excludes(const char *, const char *);
+int	 compare(NODE *, FTSENT *);
 int	 crc(int, u_int32_t *, u_int32_t *);
 void	 cwalk(void);
 void	 dump_nodes(const char *, NODE *);
+void	 init_excludes(void);
 int	 matchtags(NODE *);
 void	 mtree_err(const char *, ...)
-	__attribute__((__format__(__printf__, 1, 2)));
+	    __attribute__((__format__(__printf__, 1, 2)));
 const char *nodetype(u_int);
 u_int	 parsekey(const char *, int *);
 void	 parsetags(slist_t *, char *);
 u_int	 parsetype(const char *);
+void	 read_excludes_file(const char *);
 const char *rlink(const char *);
 int	 verify(void);
 
 extern int	dflag, eflag, iflag, lflag, mflag, rflag, sflag, tflag, uflag;
 extern int	Wflag;
 extern size_t	mtree_lineno;
-extern int	crc_total, ftsoptions, keys;
+extern u_int32_t crc_total;
+extern int	ftsoptions, keys;
 extern char	fullpath[];
 extern slist_t	includetags, excludetags;
 

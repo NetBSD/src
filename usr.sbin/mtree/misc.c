@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.19 2001/11/03 12:51:41 lukem Exp $	*/
+/*	$NetBSD: misc.c,v 1.20 2001/11/07 08:01:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: misc.c,v 1.19 2001/11/03 12:51:41 lukem Exp $");
+__RCSID("$NetBSD: misc.c,v 1.20 2001/11/07 08:01:52 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -71,9 +71,14 @@ static KEY keylist[] = {
 	{"ignore",	F_IGN,		0},
 	{"link",	F_SLINK,	NEEDVALUE},
 	{"md5",		F_MD5,		NEEDVALUE},
+	{"md5digest",	F_MD5,		NEEDVALUE},
 	{"mode",	F_MODE,		NEEDVALUE},
 	{"nlink",	F_NLINK,	NEEDVALUE},
 	{"optional",	F_OPT,		0},
+	{"rmd160",	F_RMD160,	NEEDVALUE},
+	{"rmd160digest",F_RMD160,	NEEDVALUE},
+	{"sha1",	F_SHA1,		NEEDVALUE},
+	{"sha1digest",	F_SHA1,		NEEDVALUE},
 	{"size",	F_SIZE,		NEEDVALUE},
 	{"tags",	F_TAGS,		NEEDVALUE},
 	{"time",	F_TIME,		NEEDVALUE},
@@ -215,7 +220,7 @@ matchtags(NODE *node)
 		for (i = 0; i < excludetags.count; i++)
 			if (strstr(node->tags, excludetags.list[i]))
 				break;
-		if (i < excludetags.count) 
+		if (i < excludetags.count)
 			return (0);
 
 		for (i = 0; i < includetags.count; i++)
