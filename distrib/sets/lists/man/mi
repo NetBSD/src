@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.603 2003/09/04 03:21:11 dan Exp $
+# $NetBSD: mi,v 1.604 2003/09/06 16:26:16 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -613,6 +613,7 @@
 ./usr/share/man/cat4/dmphy.0			man-sys-catman
 ./usr/share/man/cat4/dpt.0			man-sys-catman
 ./usr/share/man/cat4/dpti.0			man-sys-catman
+./usr/share/man/cat4/dreamcast/aica.0		man-sys-catman
 ./usr/share/man/cat4/dreamcast/g2bus.0		man-sys-catman
 ./usr/share/man/cat4/dreamcast/gapspci.0	man-sys-catman
 ./usr/share/man/cat4/dreamcast/gdrom.0		man-sys-catman
@@ -2435,6 +2436,7 @@
 ./usr/share/man/man4/dmphy.4			man-sys-man
 ./usr/share/man/man4/dpt.4			man-sys-man
 ./usr/share/man/man4/dpti.4			man-sys-man
+./usr/share/man/man4/dreamcast/aica.4		man-sys-man
 ./usr/share/man/man4/dreamcast/g2bus.4		man-sys-man
 ./usr/share/man/man4/dreamcast/gapspci.4	man-sys-man
 ./usr/share/man/man4/dreamcast/gdrom.4		man-sys-man
