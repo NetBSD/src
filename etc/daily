@@ -1,14 +1,22 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.27 1998/07/16 05:21:56 mycroft Exp $
+#	$NetBSD: daily,v 1.28 1998/09/15 05:06:30 lukem Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
 export PATH=/bin:/usr/bin:/sbin:/usr/sbin
-host=`hostname`
-echo "Subject: $host daily run output"
-
 umask 077
+
+if [ -s /etc/daily.conf ]; then
+	. /etc/daily.conf
+fi
+
+host=`hostname`
+date=`date`
+
+echo "To: ${MAILTO:-root}"
+echo "Subject: $host daily output for $date"
+echo ""
 
 if [ -f /etc/rc.subr ]; then
 	. /etc/rc.subr
@@ -19,10 +27,6 @@ fi
 
 if [ -z "$MAILTO" -o "$USER" != "root" ]; then
 	MAILTO=root
-fi
-
-if [ -s /etc/daily.conf ]; then
-	. /etc/daily.conf
 fi
 
 echo ""
@@ -206,7 +210,12 @@ if checkyesno run_rdist && [ -f /etc/Distfile ]; then
 fi
 
 if checkyesno run_security; then
-	sh /etc/security 2>&1 | mail -s "$host daily insecurity output" $MAILTO
+	SECOUT=$TMPDIR/sec
+	sh /etc/security 2>&1 > $SECOUT
+	if [ ! -s $SECOUT ]; then
+		echo "Nothing to report on $date" > $SECOUT
+	fi
+	mail -s "$host daily insecurity output for $date" $MAILTO < $SECOUT
 fi
 
 rm -rf $TMPDIR
