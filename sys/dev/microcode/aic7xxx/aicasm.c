@@ -1,4 +1,4 @@
-/*	$NetBSD: aicasm.c,v 1.4 2003/04/19 19:26:10 fvdl Exp $	*/
+/*	$NetBSD: aicasm.c,v 1.5 2003/07/14 15:42:39 lukem Exp $	*/
 
 /*
  * Aic7xxx SCSI host adapter firmware asssembler
@@ -41,6 +41,10 @@
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aicasm/aicasm.c,v 1.35 2002/08/31 06:39:40 gibbs Exp $
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: aicasm.c,v 1.5 2003/07/14 15:42:39 lukem Exp $");
+
 #include <sys/types.h>
 #include <sys/mman.h>
 
