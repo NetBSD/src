@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.66 1998/09/22 01:45:47 mark Exp $
+#	$NetBSD: files.arm32,v 1.67 1998/10/05 00:39:44 mark Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -76,6 +76,10 @@ file	arch/arm32/isa/isadma_machdep.c		isadma
 # XXX ISA joystick driver
 device	joy
 file	arch/arm32/isa/joy.c			joy needs-flag
+attach	joy at isa with joy_isa
+file	arch/arm32/isa/joy_isa.c		joy_isa
+attach	joy at isapnp with joy_isapnp
+file	arch/arm32/isa/joy_isapnp.c		joy_isapnp
 
 # OFW ISA bus driver.
 include "dev/ofisa/files.ofisa"
