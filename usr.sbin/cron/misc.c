@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: misc.c,v 1.2 1994/08/31 19:28:50 jtc Exp $";
+static char rcsid[] = "$Id: misc.c,v 1.2.6.1 1997/01/26 04:25:36 rat Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -263,11 +263,12 @@ acquire_daemonlock(closeflag)
 		char	buf[MAX_TEMPSTR];
 		int	fd, otherpid;
 
-		(void) sprintf(pidfile, PIDFILE, PIDDIR);
+		(void) snprintf(pidfile, sizeof(pidfile), PIDFILE, PIDDIR);
 		if ((-1 == (fd = open(pidfile, O_RDWR|O_CREAT, 0644)))
 		    || (NULL == (fp = fdopen(fd, "r+")))
 		    ) {
-			sprintf(buf, "can't open or create %s: %s",
+			snprintf(buf, sizeof(buf),
+				"can't open or create %s: %s",
 				pidfile, strerror(errno));
 			fprintf(stderr, "%s: %s\n", ProgramName, buf);
 			log_it("CRON", getpid(), "DEATH", buf);
@@ -278,7 +279,8 @@ acquire_daemonlock(closeflag)
 			int save_errno = errno;
 
 			fscanf(fp, "%d", &otherpid);
-			sprintf(buf, "can't lock %s, otherpid may be %d: %s",
+			snprintf(buf, sizeof(buf),
+				"can't lock %s, otherpid may be %d: %s",
 				pidfile, otherpid, strerror(save_errno));
 			fprintf(stderr, "%s: %s\n", ProgramName, buf);
 			log_it("CRON", getpid(), "DEATH", buf);
@@ -464,6 +466,7 @@ log_it(username, xpid, event, detail)
 	PID_T			pid = xpid;
 #if defined(LOG_FILE)
 	char			*msg;
+	size_t			msglen;
 	TIME_T			now = time((TIME_T) 0);
 	register struct tm	*t = localtime(&now);
 #endif /*LOG_FILE*/
@@ -475,10 +478,9 @@ log_it(username, xpid, event, detail)
 #if defined(LOG_FILE)
 	/* we assume that MAX_TEMPSTR will hold the date, time, &punctuation.
 	 */
-	msg = malloc(strlen(username)
-		     + strlen(event)
-		     + strlen(detail)
-		     + MAX_TEMPSTR);
+	msglen = strlen(username) + strlen(event) + strlen(detail) +
+	    MAX_TEMPSTR;
+	msg = malloc(msglen);
 
 	if (LogFD < OK) {
 		LogFD = open(LOG_FILE, O_WRONLY|O_APPEND|O_CREAT, 0600);
@@ -491,11 +493,11 @@ log_it(username, xpid, event, detail)
 		}
 	}
 
-	/* we have to sprintf() it because fprintf() doesn't always write
+	/* we have to snprintf() it because fprintf() doesn't always write
 	 * everything out in one chunk and this has to be atomically appended
 	 * to the log file.
 	 */
-	sprintf(msg, "%s (%02d/%02d-%02d:%02d:%02d-%d) %s (%s)\n",
+	snprintf(msg, msglen, "%s (%02d/%02d-%02d:%02d:%02d-%d) %s (%s)\n",
 		username,
 		t->tm_mon+1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec, pid,
 		event, detail);
@@ -640,7 +642,7 @@ arpadate(clock)
 	struct tm *tm = localtime(&t);
 	static char ret[30];	/* zone name might be >3 chars */
 	
-	(void) sprintf(ret, "%s, %2d %s %2d %02d:%02d:%02d %s",
+	(void) snprintf(ret, sizeof(ret), "%s, %2d %s %2d %02d:%02d:%02d %s",
 		       DowNames[tm->tm_wday],
 		       tm->tm_mday,
 		       MonthNames[tm->tm_mon],
