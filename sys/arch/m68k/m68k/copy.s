@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.s,v 1.16 1995/02/08 14:26:10 mycroft Exp $	*/
+/*	$NetBSD: copy.s,v 1.17 1995/02/08 14:50:38 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Charles Hannum.
@@ -273,3 +273,108 @@ cosexit:
 cosfault:
 	moveq	#EFAULT,d0
 	jra	cosdone
+
+/*
+ * {fu,su},{byte,sword,word}
+ */
+ENTRY(fuword)
+	movl	sp@(4),a0		| address to read
+	movl	_curpcb,a1		| current pcb
+	movl	#Lferr,a1@(PCB_ONFAULT)	| where to return to on a fault
+	USER_SFC
+	movsl	a0@,d0			| do read from user space
+	jra	Lfdone
+
+ENTRY(fusword)
+	movl	sp@(4),a0
+	movl	_curpcb,a1		| current pcb
+	movl	#Lferr,a1@(PCB_ONFAULT)	| where to return to on a fault
+	USER_SFC
+	moveq	#0,d0
+	movsw	a0@,d0			| do read from user space
+	jra	Lfdone
+
+/* Just like fusword, but tells trap code not to page in. */
+ENTRY(fuswintr)
+	movl	sp@(4),a0
+	movl	_curpcb,a1
+	movl	#_fubail,a1@(PCB_ONFAULT)
+	USER_SFC
+	moveq	#0,d0
+	movsw	a0@,d0
+	jra	Lfdone
+
+ENTRY(fubyte)
+	movl	sp@(4),a0		| address to read
+	movl	_curpcb,a1		| current pcb
+	movl	#Lferr,a1@(PCB_ONFAULT)	| where to return to on a fault
+	USER_SFC
+	moveq	#0,d0
+	movsb	a0@,d0			| do read from user space
+	jra	Lfdone
+
+Lferr:
+	moveq	#-1,d0			| error indicator
+Lfdone:
+	KERNEL_SFC
+	clrl	a1@(PCB_ONFAULT) 	| clear fault handler
+	rts
+
+/* Just like Lferr, but the address is different (& exported). */
+	.globl	_fubail
+_fubail:
+	moveq	#-1,d0
+	jra	Lfdone
+
+ENTRY(suword)
+	movl	sp@(4),a0		| address to write
+	movl	sp@(8),d1		| value to put there
+	movl	_curpcb,a1		| current pcb
+	movl	#Lserr,a1@(PCB_ONFAULT)	| where to return to on a fault
+	USER_DFC
+	movsl	d1,a0@			| do write to user space
+	moveq	#0,d0			| indicate no fault
+	jra	Lsdone
+
+ENTRY(susword)
+	movl	sp@(4),a0		| address to write
+	movw	sp@(10),d1		| value to put there
+	movl	_curpcb,a1		| current pcb
+	movl	#Lserr,a1@(PCB_ONFAULT)	| where to return to on a fault
+	USER_DFC
+	movsw	d1,a0@			| do write to user space
+	moveq	#0,d0			| indicate no fault
+	jra	Lsdone
+
+ENTRY(suswintr)
+	movl	sp@(4),a0
+	movw	sp@(10),d1
+	movl	_curpcb,a1
+	movl	#_subail,a1@(PCB_ONFAULT)
+	USER_DFC
+	movsw	d1,a0@
+	moveq	#0,d0
+	jra	Lsdone
+
+ENTRY(subyte)
+	movl	sp@(4),a0		| address to write
+	movb	sp@(11),d1		| value to put there
+	movl	_curpcb,a1		| current pcb
+	movl	#Lserr,a1@(PCB_ONFAULT)	| where to return to on a fault
+	USER_DFC
+	movsb	d1,a0@			| do write to user space
+	moveq	#0,d0			| indicate no fault
+	jra	Lsdone
+
+Lserr:
+	moveq	#-1,d0			| error indicator
+Lsdone:
+	KERNEL_DFC
+	clrl	a1@(PCB_ONFAULT) 	| clear fault handler
+	rts
+
+/* Just like Lserr, but the address is different (& exported). */
+	.globl	_subail
+_subail:
+	moveq	#-1,d0
+	jra	Lsdone
