@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.28 1999/08/19 13:30:02 agc Exp $	*/
+/*	$NetBSD: file.c,v 1.29 1999/08/19 14:12:35 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.28 1999/08/19 13:30:02 agc Exp $");
+__RCSID("$NetBSD: file.c,v 1.29 1999/08/19 14:12:35 agc Exp $");
 #endif
 #endif
 
@@ -167,82 +167,91 @@ isemptyfile(char *fname)
     return TRUE;
 }
 
-/* Returns TRUE if file is a URL specification */
-Boolean
-isURL(char *fname)
+/* this struct defines the leading part of a valid URL name */
+typedef struct url_t {
+	char	*u_s;		/* the leading part of the URL */
+	int	u_len;		/* its length */
+} url_t;
+
+/* a table of valid leading strings for URLs */
+static url_t	urls[] = {
+	{	"ftp://",	6	},
+	{	"http://",	7	},
+	{	NULL	}
+};
+
+/* Returns length of leading part of any URL from urls table, or -1 */
+int
+URLlength(char *fname)
 {
-    /*
-     * I'm sure there are other types of URL specifications that I could
-     * also be looking for here, but for now I'll just be happy to get ftp
-     * working.
-     */
-    if (!fname)
-	return FALSE;
-    while (isspace((unsigned char)*fname))
-	++fname;
-    if (!strncmp(fname, "ftp://", 6))
-	return TRUE;
-    if (!strncmp(fname, "http://", 7))
-	return TRUE;
-    return FALSE;
+	url_t	*up;
+	int	 i;
+
+	if (fname != (char *) NULL) {
+		for (i = 0 ; isspace((unsigned char)*fname) ; i++) {
+			fname++;
+		}
+		for (up = urls ; up->u_s ; up++) {
+			if (strncmp(fname, up->u_s, up->u_len) == 0) {
+				return i + up->u_len;
+			}
+		}
+	}
+	return -1;
 }
 
 /* Returns the host part of a URL */
 char *
 fileURLHost(char *fname, char *where, int max)
 {
-    char *ret;
+	char	*ret;
+	int	 i;
 
-    while (isspace((unsigned char)*fname))
-	++fname;
-    /* Don't ever call this on a bad URL! */
-    if (!strncmp(fname, "ftp://", 6))
-	fname += strlen("ftp://");
-    else
-	fname += strlen("http://");
-    /* Do we have a place to stick our work? */
-    if ((ret = where) != NULL) {
-	while (*fname && *fname != '/' && max--)
-	    *where++ = *fname++;
-	*where = '\0';
+	if ((i = URLlength(fname)) < 0) {
+		errx(1, "fileURLhost called with a bad URL: `%s'", fname);
+	}
+	fname += i;
+	/* Do we have a place to stick our work? */
+	if ((ret = where) != NULL) {
+		while (*fname && *fname != '/' && max--)
+			*where++ = *fname++;
+		*where = '\0';
+		return ret;
+	}
+	/* If not, they must really want us to stomp the original string */
+	ret = fname;
+	while (*fname && *fname != '/')
+		++fname;
+	*fname = '\0';
 	return ret;
-    }
-    /* If not, they must really want us to stomp the original string */
-    ret = fname;
-    while (*fname && *fname != '/')
-	++fname;
-    *fname = '\0';
-    return ret;
 }
 
 /* Returns the filename part of a URL */
 char *
 fileURLFilename(char *fname, char *where, int max)
 {
-    char *ret;
+	char	*ret;
+	int	 i;
 
-    while (isspace((unsigned char)*fname))
-	++fname;
-    /* Don't ever call this on a bad URL! */
-    if (!strncmp(fname, "ftp://", 6))
-	fname += strlen("ftp://");
-    else
-	fname += strlen("http://");
-    /* Do we have a place to stick our work? */
-    if ((ret = where) != NULL) {
-	while (*fname && *fname != '/')
-	    ++fname;
-	if (*fname == '/') {
-	    while (*fname && max--)
-		*where++ = *fname++;
+	if ((i = URLlength(fname)) < 0) {
+		errx(1, "fileURLhost called with a bad URL: `%s'", fname);
 	}
-	*where = '\0';
-	return ret;
-    }
-    /* If not, they must really want us to stomp the original string */
-    while (*fname && *fname != '/')
-	++fname;
-    return fname;
+	fname += i;
+	/* Do we have a place to stick our work? */
+	if ((ret = where) != NULL) {
+		while (*fname && *fname != '/')
+			++fname;
+		if (*fname == '/') {
+			while (*fname && max--)
+				*where++ = *fname++;
+		}
+		*where = '\0';
+		return ret;
+	}
+	/* If not, they must really want us to stomp the original string */
+	while (*fname && *fname != '/')
+		++fname;
+	return fname;
 }
 
 /*
@@ -264,7 +273,7 @@ fileGetURL(char *base, char *spec)
     rp = NULL;
     /* Special tip that sysinstall left for us */
     hint = getenv("PKG_ADD_BASE");
-    if (!isURL(spec)) {
+    if (URLlength(spec) < 0) {
 	if (!base && !hint)
 	    return NULL;
 	/* We've been given an existing URL (that's known-good) and now we need
@@ -286,8 +295,7 @@ fileGetURL(char *base, char *spec)
 	    }
 	    else
 		return NULL;
-	}
-	else {
+	} else {
 	    /* Otherwise, we've been given an environment variable hinting at the right location from sysinstall */
 	    strcpy(fname, hint);
 	    strcat(fname, spec);

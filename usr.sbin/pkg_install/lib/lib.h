@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.21 1999/03/22 05:02:41 hubertf Exp $ */
+/* $NetBSD: lib.h,v 1.22 1999/08/19 14:12:35 agc Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -187,7 +187,7 @@ Boolean		isemptydir(char *fname);
 Boolean		isemptyfile(char *fname);
 Boolean         isfile(char *);
 Boolean		isempty(char *);
-Boolean		isURL(char *);
+int		URLlength(char *);
 char		*fileGetURL(char *, char *);
 char		*fileURLFilename(char *, char *, int);
 char		*fileURLHost(char *, char *, int);

@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.34 1999/08/19 13:29:59 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.35 1999/08/19 14:12:34 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.34 1999/08/19 13:29:59 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.35 1999/08/19 14:12:34 agc Exp $");
 #endif
 #endif
 
@@ -121,7 +121,7 @@ pkg_do(char *pkg)
 	 * Is it an ftp://foo.bar.baz/file.tgz or http://foo.bar.baz/file.tgz
 	 * specification?
 	 */
-	if (isURL(pkg)) {
+	if (URLlength(pkg) > 0) {
 	    if (ispkgpattern(pkg)) {
 		warnx("patterns not allowed in URLs, "
 		     "please install manually!");
@@ -230,7 +230,7 @@ pkg_do(char *pkg)
 		warnx("unable to extract `%s'!", pkg_fullname);
 		goto bomb;
 	    }
-	} /* isURL(pkg) */
+	}
 
 	/* Check for sanity and dependencies */
 	if (sanity_check(pkg))
@@ -316,7 +316,7 @@ pkg_do(char *pkg)
 	    char path[FILENAME_MAX], *cp = NULL;
 
 	    if (!Fake) {
-		if (!isURL(pkg) && !getenv("PKG_ADD_BASE")) {
+		if (URLlength(pkg) < 0 && !getenv("PKG_ADD_BASE")) {
 		    /* install depending pkg from local disk */
 		    
 		    (void) snprintf(path, sizeof(path), "%s/%s.tgz", Home, p->name);
