@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_pci.c,v 1.7 2000/10/19 15:31:20 ad Exp $	*/
+/*	$NetBSD: cac_pci.c,v 1.8 2000/11/09 18:19:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@
 #define	PCI_CBMA	0x14	/* Configuration base memory address */
 
 static void	cac_pci_attach(struct device *, struct device *, void *);
+static struct	cac_pci_type *cac_pci_findtype(struct pci_attach_args *);
 static int	cac_pci_match(struct device *, struct cfdata *, void *);
 
 static struct	cac_ccb *cac_pci_l0_completed(struct cac_softc *);
@@ -79,8 +80,7 @@ static struct cac_linkage cac_pci_l0 = {
 	cac_pci_l0_submit
 };
 
-#define	CT_IOMAP	0x01	/* Use I/O port access */
-#define CT_STARTFW	0x02	/* Need to start controller firmware */
+#define CT_STARTFW	0x01	/* Need to start controller firmware */
 
 struct cac_pci_type {
 	int	ct_subsysid;
@@ -88,7 +88,6 @@ struct cac_pci_type {
 	struct	cac_linkage *ct_linkage;
 	char	*ct_typestr;
 } static cac_pci_type[] = {
-	{ 0x3040110e,	CT_IOMAP,	&cac_l0,	"SMART-2/E" },
 	{ 0x40300e11,	0, 		&cac_l0,	"SMART-2/P" },
 	{ 0x40310e11,	0, 		&cac_l0, 	"SMART-2SL" },
 	{ 0x40320e11,	0, 		&cac_l0,	"Smart Array 3200" },
@@ -99,25 +98,57 @@ struct cac_pci_type {
 	{ 0x40500e11,	0,	 	&cac_pci_l0,	"Smart Array 4200" },
 	{ 0x40510e11,	0, 		&cac_pci_l0,	"Smart Array 4200ES" },
 	{ 0x40580e11,	0,		&cac_pci_l0,	"Smart Array 431" },
-	{ 0,		0,		&cac_l0,	NULL },
 };
+
+struct cac_pci_product {
+	u_short	cp_vendor;
+	u_short	cp_product;
+} static cac_pci_product[] = {
+	{ PCI_VENDOR_COMPAQ,	PCI_PRODUCT_COMPAQ_SMART2P },
+	{ PCI_VENDOR_DEC,	PCI_PRODUCT_DEC_CPQ42XX },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_1510 },
+};
+
+static struct cac_pci_type *
+cac_pci_findtype(struct pci_attach_args *pa)
+{
+	struct cac_pci_type *ct;
+	struct cac_pci_product *cp;
+	pcireg_t subsysid;
+	int i;
+
+	cp = cac_pci_product;
+	i = 0;
+	while (i < sizeof(cac_pci_product) / sizeof(cac_pci_product[0])) {
+		if (PCI_VENDOR(pa->pa_id) == cp->cp_vendor && 
+		    PCI_PRODUCT(pa->pa_id) == cp->cp_product)
+		    	break;
+		cp++;
+		i++;
+	}
+	if (i == sizeof(cac_pci_product) / sizeof(cac_pci_product[0]))
+		return (NULL);
+
+	subsysid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+	ct = cac_pci_type;
+	i = 0;
+	while (i < sizeof(cac_pci_type) / sizeof(cac_pci_type[0])) {
+		if (subsysid == ct->ct_subsysid)
+			break;
+		ct++;
+		i++;
+	}
+	if (i == sizeof(cac_pci_type) / sizeof(cac_pci_type[0]))
+		return (NULL);
+
+	return (ct);
+}
 
 static int
 cac_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
-	struct pci_attach_args *pa;
 
-	pa = (struct pci_attach_args *)aux;
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_COMPAQ && 
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_COMPAQ_SMART2P)
-		return (1);
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_DEC && 
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DEC_CPQ42XX)
-		return (1);
-
-	return (0);
+	return (cac_pci_findtype(aux) != NULL);
 }
 
 static void
@@ -129,28 +160,18 @@ cac_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_chipset_tag_t pc;
 	pci_intr_handle_t ih;
 	const char *intrstr;
-	pcireg_t csr, subsysid;
-	int flags;
+	pcireg_t csr;
 
 	sc = (struct cac_softc *)self;
 	pa = (struct pci_attach_args *)aux;
 	pc = pa->pa_pc;
+	ct = cac_pci_findtype(pa);
 
-	subsysid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
-
-	for (ct = cac_pci_type; ct->ct_subsysid != 0; ct++)
-		if (subsysid == ct->ct_subsysid)
-			break;
-
-	if (((flags = ct->ct_flags) & CT_IOMAP) == 0)
-		if (pci_mapreg_map(pa, PCI_CBMA, PCI_MAPREG_TYPE_MEM, 0,
-		    &sc->sc_iot, &sc->sc_ioh, NULL, NULL))
-		    	flags |= CT_IOMAP;
-
-	if ((flags & CT_IOMAP) != 0)
+	if (pci_mapreg_map(pa, PCI_CBMA, PCI_MAPREG_TYPE_MEM, 0,
+	    &sc->sc_iot, &sc->sc_ioh, NULL, NULL))
 		if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 		    &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
-			printf("can't map i/o space\n");
+			printf("can't map memory or i/o space\n");
 			return;
 		}
 
@@ -177,16 +198,11 @@ cac_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	printf(": Compaq ");
-	if (ct->ct_typestr == NULL) {
-		printf("array controller\n%s: unknown subsystem ID: 0x%08x\n",
-		    sc->sc_dv.dv_xname, (u_int)subsysid);
-	} else
-		printf("%s\n", ct->ct_typestr);
+	printf(": Compaq %s\n", ct->ct_typestr);
 
 	/* Now attach to the bus-independent code. */
 	sc->sc_cl = ct->ct_linkage;
-	cac_init(sc, intrstr, (flags & CT_STARTFW) != 0);
+	cac_init(sc, intrstr, (ct->ct_flags & CT_STARTFW) != 0);
 }
 
 static void
