@@ -1,4 +1,4 @@
-/*	$NetBSD: scmio.c,v 1.8 2001/06/11 01:50:59 wiz Exp $	*/
+/*	$NetBSD: scmio.c,v 1.9 2001/09/11 03:32:55 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -466,7 +466,7 @@ char *data;
 		tries = 0;
 		for (;;) {
 			imask = 1 << netfile;
-			if (select(32,(fd_set *)&imask,(fd_set *)0,(fd_set *)0,&timout) < 0)
+			if (select(netfile + 1,(fd_set *)&imask,(fd_set *)0,(fd_set *)0,&timout) < 0)
 				imask = 1;
 			errno = 0;
 			if (imask)
@@ -720,7 +720,7 @@ crosspatch ()
 		FD_ZERO (&xbits);
 		FD_SET (0,&ibits);
 		FD_SET (netfile,&ibits);
-		if ((c = select(16, &ibits, &obits, &xbits,
+		if ((c = select(netfile + 1, &ibits, &obits, &xbits,
 				(struct timeval *)NULL)) < 1) {
 			if (c == -1) {
 				if (errno == EINTR) {
