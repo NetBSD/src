@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.h,v 1.1 1995/02/28 23:25:43 fvdl Exp $	*/
+/*	$NetBSD: linux_ioctl.h,v 1.2 1995/08/16 04:14:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -210,6 +210,7 @@ struct linux_termios {
 #define LINUX_CBAUDEX	0x00001000
 #define LINUX_B57600	0x00001001
 #define LINUX_B115200	0x00001002
+#define LINUX_B230400	0x00001003
 
 #define LINUX_CSIZE	0x00000030
 #define LINUX_CS5	0x00000000
