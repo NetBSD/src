@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.3 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.3 1994/12/22 11:33:31 cgd Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
+#	$NetBSD: Makefile,v 1.4 1997/03/06 07:00:50 mikel Exp $
 
 PROG=	chroot
 MAN=	chroot.8
