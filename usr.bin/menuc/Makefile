@@ -1,37 +1,15 @@
-# Menu system compiler Makefile
-#
+#	$NetBSD: Makefile,v 1.2 1997/10/11 11:37:21 mycroft Exp $
 
-SRCS = main.c parse.y scan.l avl.c mdb.c util.c
+PROG=	menuc
+SRCS=	main.c parse.y scan.l avl.c mdb.c util.c
+CFLAGS+=-I. -I${.CURDIR}
+WARNS=	1
+LDADD+=	-ll
+DPADD+=	${LIBL}
 
-DATA = menu_sys.def
+CLEANFILES+= y.tab.h
 
-DATADIR= /usr/share/misc
+FILES= menu_sys.def
+FILESDIR= /usr/share/misc
 
-PROG=menuc
-
-MAN=menuc.1
-
-LDADD= -lfl
-
-WARNS= 1
-
-CLEANFILES += y.tab.h
-
-CFLAGS += -I. -I${.CURDIR}
-
-.include<bsd.prog.mk>
-
-.for M in ${DATA}
-
-proginstall:: ${DESTDIR}${DATADIR}/${M}
-.if !defined(UPDATE)
-.PHONY: ${DESTDIR}${DATADIR}/${M}
-.endif
-.if !defined(BUILD)
-${DESTDIR}${DATADIR}/${M}: .MADE
-.endif
-
-${DESTDIR}${DATADIR}/${M}: ${M}
-	$(INSTALL) -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.ALLSRC} ${.TARGET}
-.endfor
-
+.include <bsd.prog.mk>
