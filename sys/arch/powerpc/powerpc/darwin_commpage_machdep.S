@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_commpage_machdep.S,v 1.4 2004/07/08 13:24:39 manu Exp $ */
+/*	$NetBSD: darwin_commpage_machdep.S,v 1.5 2004/07/25 09:21:48 manu Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -126,7 +126,15 @@ _C_LABEL(darwin_commpage_gettimeofday_size) = .-_C_LABEL(darwin_commpage_gettime
  */
 	.globl	_C_LABEL(darwin_commpage_bigcopy)
 _C_LABEL(darwin_commpage_bigcopy):
-	.long	0x0
+	stwu	r1,-16(r1)
+	stw	r31,0(r1)
+1:	lwz	r31,0(r12)
+	stw	r31,0(r4)
+	addi	r5,r5,-4
+	cmplwi	r5,0
+	bgt	1b
+	lwz	r31,0(r1)
+	blr
 	.globl	_C_LABEL(darwin_commpage_bigcopy_size)
 _C_LABEL(darwin_commpage_bigcopy_size) = .-_C_LABEL(darwin_commpage_bigcopy)
 
