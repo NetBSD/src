@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_jazzio.c,v 1.5 2003/08/07 16:26:51 agc Exp $	*/
+/*	$NetBSD: mcclock_jazzio.c,v 1.6 2003/10/29 18:17:50 tsutsui Exp $	*/
 /*	$OpenBSD: clock_mc.c,v 1.9 1998/03/16 09:38:26 pefo Exp $	*/
 /*	NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp 	*/
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_jazzio.c,v 1.5 2003/08/07 16:26:51 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_jazzio.c,v 1.6 2003/10/29 18:17:50 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,20 +88,22 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_jazzio.c,v 1.5 2003/08/07 16:26:51 agc Exp $
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 
-#include <dev/ic/mc146818reg.h>
+#include <dev/clock_subr.h>
 
-#include <arc/dev/mcclockvar.h>
+#include <dev/ic/mc146818reg.h>
+#include <dev/ic/mc146818var.h>
+
 #include <arc/jazz/jazziovar.h>
 #include <arc/jazz/mcclock_jazziovar.h>
 
-int mcclock_jazzio_match __P((struct device *, struct cfdata *, void *));
-void mcclock_jazzio_attach __P((struct device *, struct device *, void *));
+int mcclock_jazzio_match(struct device *, struct cfdata *, void *);
+void mcclock_jazzio_attach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(mcclock_jazzio, sizeof(struct mcclock_softc),
+CFATTACH_DECL(mcclock_jazzio, sizeof(struct mc146818_softc),
     mcclock_jazzio_match, mcclock_jazzio_attach, NULL, NULL);
 
 struct mcclock_jazzio_config *mcclock_jazzio_conf = NULL;
-int mcclock_jazzio_found = 0;
+static int mcclock_jazzio_found = 0;
 
 int
 mcclock_jazzio_match(parent, match, aux)
@@ -127,23 +129,31 @@ mcclock_jazzio_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct mcclock_softc *sc = (struct mcclock_softc *)self;
+	struct mc146818_softc *sc = (void *)self;
 	struct jazzio_attach_args *ja = aux;
 
 	if (mcclock_jazzio_conf == NULL)
 		panic("mcclock_jazzio_conf isn't initialized");
 
-	sc->sc_iot = ja->ja_bust;
-	if (bus_space_map(sc->sc_iot,
-	    ja->ja_addr, mcclock_jazzio_conf->mjc_iosize, 0, &sc->sc_ioh)) {
+	sc->sc_bst = ja->ja_bust;
+	if (bus_space_map(sc->sc_bst,
+	    ja->ja_addr, mcclock_jazzio_conf->mjc_iosize, 0, &sc->sc_bsh)) {
 		printf(": unable to map I/O space\n");
 		return;
 	}
 
-	mcclock_attach(sc, &mcclock_jazzio_conf->mjc_mcbusfns, 80);
+	sc->sc_year0 = 1980;
+	sc->sc_mcread  = mcclock_jazzio_conf->mjc_mc_read;
+	sc->sc_mcwrite = mcclock_jazzio_conf->mjc_mc_write;
+
+	mc146818_attach(sc);
+
+	printf("\n");
 
 	/* Turn interrupts off, just in case. */
-	mc146818_write(sc, MC_REGB, MC_REGB_BINARY | MC_REGB_24HR);
+	(*sc->sc_mcwrite)(sc, MC_REGB, MC_REGB_BINARY | MC_REGB_24HR);
 
 	mcclock_jazzio_found = 1;
+
+	todr_attach(&sc->sc_handle);
 }

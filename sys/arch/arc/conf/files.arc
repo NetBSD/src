@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.47 2003/07/27 01:17:40 thorpej Exp $
+#	$NetBSD: files.arc,v 1.48 2003/10/29 18:17:49 tsutsui Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -217,10 +217,9 @@ file	arch/arc/jazz/timer_jazzio.c	timer & timer_jazzio needs-flag
 file	arch/arc/isa/timer_isa.c	timer & timer_isa needs-flag
 
 #	Real time clock, must have one..
-device	mcclock
+device	mcclock: mc146818
 attach	mcclock at jazzio with mcclock_jazzio
 attach	mcclock at isa with mcclock_isa
-file	arch/arc/dev/mcclock.c		mcclock needs-flag
 file	arch/arc/jazz/mcclock_jazzio.c	mcclock & mcclock_jazzio needs-flag
 file	arch/arc/isa/mcclock_isa.c	mcclock & mcclock_isa needs-flag
 

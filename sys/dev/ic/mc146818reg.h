@@ -1,4 +1,4 @@
-/*	$NetBSD: mc146818reg.h,v 1.3 2003/07/08 10:06:31 itojun Exp $	*/
+/*	$NetBSD: mc146818reg.h,v 1.4 2003/10/29 18:17:50 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -60,6 +60,11 @@
  * 24-hour mode, the time-of-day and alarm registers are NOT
  * automatically reset; they must be reprogrammed with correct values.
  */
+
+/* XXX not yet all port switch to MI mc146818(4) with todr(9) support */
+#if defined(arc)
+#define USE_TODR_MCCLOCK
+#endif
 
 /*
  * The registers, and the bits within each register.
@@ -142,7 +147,7 @@
 #define	MC_BASE_NONE	0x60		/* actually, both of these reset */
 #define	MC_BASE_RESET	0x70
 
-
+#ifndef USE_TODR_MCCLOCK
 /*
  * RTC register/NVRAM read and write functions -- machine-dependent.
  * Appropriately manipulate RTC registers to get/put data values.
@@ -192,3 +197,4 @@ typedef u_int mc_todregs[MC_NTODREGS];
 		mc146818_write(sc, MC_REGB,				\
 		    mc146818_read(sc, MC_REGB) & ~MC_REGB_SET);		\
 	} while (0);
+#endif /* USE_TODR_MCCLOCK */
