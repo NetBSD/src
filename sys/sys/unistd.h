@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.22 2003/01/19 19:41:47 skrll Exp $	*/
+/*	$NetBSD: unistd.h,v 1.23 2003/01/20 22:11:15 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -87,6 +87,8 @@
 #define	_POSIX_MONOTONIC_CLOCK	200112L
 				/* threads */
 #define	_POSIX_THREADS		200112L
+				/* semaphores */
+#define	_POSIX_SEMAPHORES	200112L
 				/* barriers */
 #define	_POSIX_BARRIERS		200112L
 				/* timers */
