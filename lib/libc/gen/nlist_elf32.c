@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_elf32.c,v 1.6 1997/07/17 00:54:27 thorpej Exp $	*/
+/*	$NetBSD: nlist_elf32.c,v 1.7 1997/12/15 05:43:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -104,7 +104,8 @@ ELFNAMEEND(__fdnlist)(fd, list)
 		BAD;
 	}
 	mappedsize = st.st_size;
-	mappedfile = mmap(NULL, mappedsize, PROT_READ, 0, fd, 0);
+	mappedfile = mmap(NULL, mappedsize, PROT_READ, MAP_COPY|MAP_FILE,
+	    fd, 0);
 	if (mappedfile == (char *)-1)
 		BAD;
 

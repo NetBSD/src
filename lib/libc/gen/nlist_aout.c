@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_aout.c,v 1.3 1997/07/13 19:46:06 christos Exp $	*/
+/*	$NetBSD: nlist_aout.c,v 1.4 1997/12/15 05:43:50 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: nlist_aout.c,v 1.3 1997/07/13 19:46:06 christos Exp $");
+__RCSID("$NetBSD: nlist_aout.c,v 1.4 1997/12/15 05:43:50 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -93,7 +93,8 @@ __fdnlist_aout(fd, list)
 	 * (i.e., munmap will return it to the system).
 	 */
 	strsize = st.st_size - stroff;
-	strtab = mmap(NULL, (size_t)strsize, PROT_READ, 0, fd, stroff);
+	strtab = mmap(NULL, (size_t)strsize, PROT_READ, MAP_COPY|MAP_FILE,
+	    fd, stroff);
 	if (strtab == (char *)-1)
 		return (-1);
 	/*
