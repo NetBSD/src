@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.c,v 1.24 2001/01/17 01:07:10 lukem Exp $	*/
+/*	$NetBSD: xdr.c,v 1.25 2002/02/10 13:47:10 bjh21 Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr.c 1.35 87/08/12";
 static char *sccsid = "@(#)xdr.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr.c,v 1.24 2001/01/17 01:07:10 lukem Exp $");
+__RCSID("$NetBSD: xdr.c,v 1.25 2002/02/10 13:47:10 bjh21 Exp $");
 #endif
 #endif
 
@@ -535,23 +535,29 @@ xdr_enum(xdrs, ep)
 	XDR *xdrs;
 	enum_t *ep;
 {
-	enum sizecheck { SIZEVAL };	/* used to find the size of an enum */
+	long l;
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(ep != NULL);
 
-	/*
-	 * enums are treated as ints
-	 */
-	/* LINTED */ if (sizeof (enum sizecheck) == sizeof (long)) {
-		return (xdr_long(xdrs, (long *)(void *)ep));
-	} else /* LINTED */ if (sizeof (enum sizecheck) == sizeof (int)) {
-		return (xdr_int(xdrs, (int *)(void *)ep));
-	} else /* LINTED */ if (sizeof (enum sizecheck) == sizeof (short)) {
-		return (xdr_short(xdrs, (short *)(void *)ep));
-	} else {
-		return (FALSE);
+	switch (xdrs->x_op) {
+
+	case XDR_ENCODE:
+		l = (long) *ep;
+		return (XDR_PUTLONG(xdrs, &l));
+
+	case XDR_DECODE:
+		if (!XDR_GETLONG(xdrs, &l)) {
+			return (FALSE);
+		}
+		*ep = (enum_t) l;
+		return (TRUE);
+
+	case XDR_FREE:
+		return (TRUE);
 	}
+	/* NOTREACHED */
+	return (FALSE);
 }
 
 /*
