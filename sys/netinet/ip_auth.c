@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.c,v 1.6 1997/11/14 12:46:45 mrg Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.7 1998/05/17 17:07:25 veego Exp $	*/
 
 /*
  * Copyright (C) 1997 by Darren Reed & Guido van Rooij.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  */
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.0.2.21.2.2 1997/11/12 10:45:51 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.0.2.21.2.3 1998/04/08 13:43:29 darrenr Exp ";
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -88,6 +88,9 @@ extern struct ifqueue   ipintrq;                /* ip packet input queue */
 #include "netinet/ip_auth.h"
 #if !SOLARIS && !defined(linux)
 # include <net/netisr.h>
+# ifdef __FreeBSD__
+#  include <machine/cpufunc.h>
+# endif
 #endif
 
 

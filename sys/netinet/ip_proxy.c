@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.10 1997/11/28 00:46:39 darrenr Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.11 1998/05/17 17:07:26 veego Exp $	*/
 
 /*
  * Copyright (C) 1997 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  */
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.0.2.11.2.5 1997/11/24 06:09:47 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.0.2.11.2.6 1997/11/28 00:41:25 darrenr Exp ";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
@@ -228,7 +228,7 @@ nat_t *nat;
 			 * don't do anything with this packet.
 			 */
 			if (tcp->th_sum != fr_tcpsum(*(mb_t **)fin->fin_mp,
-						     ip, tcp)) {
+						     ip, tcp, ip->ip_len)) {
 				frstats[fin->fin_out].fr_tcpbad++;
 				return -1;
 			}
@@ -249,7 +249,7 @@ nat_t *nat;
 		}
 		if (err == 2) {
 			tcp->th_sum = fr_tcpsum(*(mb_t **)fin->fin_mp, ip,
-						tcp);
+						tcp, ip->ip_len);
 			err = 0;
 		}
 		return err;

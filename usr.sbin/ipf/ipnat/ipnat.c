@@ -1,4 +1,4 @@
-/*	$NetBSD: ipnat.c,v 1.15 1997/12/21 13:35:34 veego Exp $	*/
+/*	$NetBSD: ipnat.c,v 1.16 1998/05/17 16:52:11 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -55,16 +55,16 @@
 #include "netinet/ip_nat.h"
 #include "kmem.h"
 
-#if	defined(sun) && !defined(SOLARIS2)
-#define	STRERROR(x)	sys_errlist[x]
+#if	defined(sun) && !SOLARIS2
+# define	STRERROR(x)	sys_errlist[x]
 extern	char	*sys_errlist[];
 #else
-#define	STRERROR(x)	strerror(x)
+# define	STRERROR(x)	strerror(x)
 #endif
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipnat.c,v 2.0.2.21.2.1 1997/11/08 04:55:55 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ipnat.c,v 2.0.2.21.2.5 1998/05/05 13:35:31 darrenr Exp ";
 #endif
 
 
@@ -144,7 +144,7 @@ char *argv[];
 	if (!(opts & OPT_NODO) && ((fd = open(IPL_NAT, O_RDWR)) == -1) &&
 	    ((fd = open(IPL_NAT, O_RDONLY)) == -1)) {
 		(void) fprintf(stderr, "%s: open: %s\n", IPL_NAT,
-		    STRERROR(errno));                     
+			STRERROR(errno));
 		exit(-1);
 	}
 
@@ -466,7 +466,7 @@ int	*resolved;
 			fprintf(stderr, "can't resolve hostname: %s\n", host);
 			return 0;
 		}
-		return np->n_net;
+		return htonl(np->n_net);
 	}
 	return *(u_32_t *)hp->h_addr;
 }
@@ -772,7 +772,7 @@ int opts;
 	if (strcmp(file, "-")) {
 		if (!(fp = fopen(file, "r"))) {
 			(void) fprintf(stderr, "%s: open: %s\n", file,
-			    STRERROR(errno));                     
+				STRERROR(errno));
 			exit(1);
 		}
 	} else
