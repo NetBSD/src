@@ -1,4 +1,4 @@
-/*	$NetBSD: dh.c,v 1.12 2003/07/10 01:09:44 lukem Exp $	*/
+/*	$NetBSD: dh.c,v 1.13 2005/02/13 05:57:26 christos Exp $	*/
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  *
@@ -24,8 +24,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: dh.c,v 1.23 2002/11/21 22:22:50 markus Exp $");
-__RCSID("$NetBSD: dh.c,v 1.12 2003/07/10 01:09:44 lukem Exp $");
+RCSID("$OpenBSD: dh.c,v 1.31 2004/08/04 10:37:52 djm Exp $");
+__RCSID("$NetBSD: dh.c,v 1.13 2005/02/13 05:57:26 christos Exp $");
 
 #include "xmalloc.h"
 
@@ -93,6 +93,9 @@ parse_prime(int linenum, char *line, struct dhgroup *dhg)
 	if (BN_num_bits(dhg->p) != dhg->size)
 		goto failclean;
 
+	if (BN_is_zero(dhg->g) || BN_is_one(dhg->g))
+		goto failclean;
+
 	return (1);
 
  failclean:
@@ -107,15 +110,16 @@ DH *
 choose_dh(int min, int wantbits, int max)
 {
 	FILE *f;
-	char line[2048];
+	char line[4096];
 	int best, bestcount, which;
 	int linenum;
 	struct dhgroup dhg;
 
 	if ((f = fopen(_PATH_DH_MODULI, "r")) == NULL &&
 	    (f = fopen(_PATH_DH_PRIMES, "r")) == NULL) {
-		logit("WARNING: %s does not exist, using old modulus", _PATH_DH_MODULI);
-		return (dh_new_group1());
+		logit("WARNING: %s does not exist, using fixed modulus",
+		    _PATH_DH_MODULI);
+		return (dh_new_group14());
 	}
 
 	linenum = 0;
@@ -143,7 +147,7 @@ choose_dh(int min, int wantbits, int max)
 	if (bestcount == 0) {
 		fclose(f);
 		logit("WARNING: no suitable primes in %s", _PATH_DH_PRIMES);
-		return (NULL);
+		return (dh_new_group14());
 	}
 
 	linenum = 0;
@@ -168,7 +172,7 @@ choose_dh(int min, int wantbits, int max)
 	return (dh_new_group(dhg.g, dhg.p));
 }
 
-/* diffie-hellman-group1-sha1 */
+/* diffie-hellman-groupN-sha1 */
 
 int
 dh_pub_is_valid(DH *dh, BIGNUM *dh_pub)
@@ -196,11 +200,11 @@ dh_pub_is_valid(DH *dh, BIGNUM *dh_pub)
 void
 dh_gen_key(DH *dh, int need)
 {
-	int i, bits_set = 0, tries = 0;
+	int i, bits_set, tries = 0;
 
 	if (dh->p == NULL)
 		fatal("dh_gen_key: dh->p == NULL");
-	if (2*need >= BN_num_bits(dh->p))
+	if (need > INT_MAX / 2 || 2 * need >= BN_num_bits(dh->p))
 		fatal("dh_gen_key: group too small: %d (2*need %d)",
 		    BN_num_bits(dh->p), 2*need);
 	do {
@@ -213,7 +217,7 @@ dh_gen_key(DH *dh, int need)
 			fatal("dh_gen_key: BN_rand failed");
 		if (DH_generate_key(dh) == 0)
 			fatal("DH_generate_key");
-		for (i = 0; i <= BN_num_bits(dh->priv_key); i++)
+		for (i = 0, bits_set = 0; i <= BN_num_bits(dh->priv_key); i++)
 			if (BN_is_bit_set(dh->priv_key, i))
 				bits_set++;
 		debug2("dh_gen_key: priv key bits set: %d/%d",
@@ -271,6 +275,25 @@ dh_new_group1(void)
 	return (dh_new_group_asc(gen, group1));
 }
 
+DH *
+dh_new_group14(void)
+{
+	static char *gen = "2", *group14 =
+	    "FFFFFFFF" "FFFFFFFF" "C90FDAA2" "2168C234" "C4C6628B" "80DC1CD1"
+	    "29024E08" "8A67CC74" "020BBEA6" "3B139B22" "514A0879" "8E3404DD"
+	    "EF9519B3" "CD3A431B" "302B0A6D" "F25F1437" "4FE1356D" "6D51C245"
+	    "E485B576" "625E7EC6" "F44C42E9" "A637ED6B" "0BFF5CB6" "F406B7ED"
+	    "EE386BFB" "5A899FA5" "AE9F2411" "7C4B1FE6" "49286651" "ECE45B3D"
+	    "C2007CB8" "A163BF05" "98DA4836" "1C55D39A" "69163FA8" "FD24CF5F"
+	    "83655D23" "DCA3AD96" "1C62F356" "208552BB" "9ED52907" "7096966D"
+	    "670C354E" "4ABC9804" "F1746C08" "CA18217C" "32905E46" "2E36CE3B"
+	    "E39E772C" "180E8603" "9B2783A2" "EC07A28F" "B5C55DF0" "6F4C52C9"
+	    "DE2BCBF6" "95581718" "3995497C" "EA956AE5" "15D22618" "98FA0510"
+	    "15728E5A" "8AACAA68" "FFFFFFFF" "FFFFFFFF";
+
+	return (dh_new_group_asc(gen, group14));
+}
+
 /*
  * Estimates the group order for a Diffie-Hellman group that has an
  * attack complexity approximately the same as O(2**bits).  Estimate
@@ -281,11 +304,9 @@ int
 dh_estimate(int bits)
 {
 
-	if (bits < 64)
-		return (512);	/* O(2**63) */
-	if (bits < 128)
+	if (bits <= 128)
 		return (1024);	/* O(2**86) */
-	if (bits < 192)
+	if (bits <= 192)
 		return (2048);	/* O(2**116) */
 	return (4096);		/* O(2**156) */
 }

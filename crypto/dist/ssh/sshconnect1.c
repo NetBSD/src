@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect1.c,v 1.27 2003/12/11 09:46:26 dyoung Exp $	*/
+/*	$NetBSD: sshconnect1.c,v 1.28 2005/02/13 05:57:27 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,8 +14,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect1.c,v 1.52 2002/08/08 13:50:23 aaron Exp $");
-__RCSID("$NetBSD: sshconnect1.c,v 1.27 2003/12/11 09:46:26 dyoung Exp $");
+RCSID("$OpenBSD: sshconnect1.c,v 1.60 2004/07/28 09:40:29 markus Exp $");
+__RCSID("$NetBSD: sshconnect1.c,v 1.28 2005/02/13 05:57:27 christos Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/md5.h>
@@ -37,7 +37,7 @@ __RCSID("$NetBSD: sshconnect1.c,v 1.27 2003/12/11 09:46:26 dyoung Exp $");
 #include "rsa.h"
 #include "buffer.h"
 #include "packet.h"
-#include "mpaux.h"
+#include "kex.h"
 #include "uidswap.h"
 #include "log.h"
 #include "readconf.h"
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: sshconnect1.c,v 1.27 2003/12/11 09:46:26 dyoung Exp $");
 #include "authfd.h"
 #include "sshconnect.h"
 #include "authfile.h"
-#include "readpass.h"
+#include "misc.h"
 #include "cipher.h"
 #include "canohost.h"
 #include "auth.h"
@@ -444,7 +444,7 @@ try_krb4_authentication(void)
 	if (getpeername(packet_get_connection_in(),
 	    (struct sockaddr *)&foreign, &slen) < 0) {
 		debug("getpeername failed: %s", strerror(errno));
-		fatal_cleanup();
+		cleanup_exit(255);
 	}
 	/* Get server reply. */
 	type = packet_read();
@@ -920,7 +920,7 @@ ssh_kex(char *host, struct sockaddr *hostaddr)
 	u_char cookie[8];
 	u_int supported_ciphers;
 	u_int server_flags, client_flags;
-	u_int32_t rand = 0;
+	u_int32_t rnd = 0;
 
 	debug("Waiting for server public key.");
 
@@ -972,7 +972,7 @@ ssh_kex(char *host, struct sockaddr *hostaddr)
 
 	client_flags = SSH_PROTOFLAG_SCREEN_NUMBER | SSH_PROTOFLAG_HOST_IN_FWD_OPEN;
 
-	compute_session_id(session_id, cookie, host_key->rsa->n, server_key->rsa->n);
+	derive_ssh1_session_id(host_key->rsa->n, server_key->rsa->n, cookie, session_id);
 
 	/* Generate a session key. */
 	arc4random_stir();
@@ -984,9 +984,9 @@ ssh_kex(char *host, struct sockaddr *hostaddr)
 	 */
 	for (i = 0; i < 32; i++) {
 		if (i % 4 == 0)
-			rand = arc4random();
-		session_key[i] = rand & 0xff;
-		rand >>= 8;
+			rnd = arc4random();
+		session_key[i] = rnd & 0xff;
+		rnd >>= 8;
 	}
 
 	/*
@@ -1042,7 +1042,7 @@ ssh_kex(char *host, struct sockaddr *hostaddr)
 	if (options.cipher == SSH_CIPHER_NOT_SET) {
 		if (cipher_mask_ssh1(1) & supported_ciphers & (1 << ssh_cipher_default))
 			options.cipher = ssh_cipher_default;
-	} else if (options.cipher == SSH_CIPHER_ILLEGAL ||
+	} else if (options.cipher == SSH_CIPHER_INVALID ||
 	    !(cipher_mask_ssh1(1) & (1 << options.cipher))) {
 		logit("No valid SSH1 cipher, using %.100s instead.",
 		    cipher_name(ssh_cipher_default));
@@ -1156,26 +1156,6 @@ ssh_userauth1(const char *local_user, const char *server_user, char *host,
 	}
 #endif /* KRB4 */
 
-	/*
-	 * Use rhosts authentication if running in privileged socket and we
-	 * do not wish to remain anonymous.
-	 */
-	if ((supported_authentications & (1 << SSH_AUTH_RHOSTS)) &&
-	    options.rhosts_authentication) {
-		debug("Trying rhosts authentication.");
-		packet_start(SSH_CMSG_AUTH_RHOSTS);
-		packet_put_cstring(local_user);
-		packet_send();
-		packet_write_wait();
-
-		/* The server should respond with success or failure. */
-		type = packet_read();
-		if (type == SSH_SMSG_SUCCESS)
-			goto success;
-		if (type != SSH_SMSG_FAILURE)
-			packet_disconnect("Protocol error: got %d in response to rhosts auth",
-					  type);
-	}
 	/*
 	 * Try .rhosts or /etc/hosts.equiv authentication with RSA host
 	 * authentication.
