@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.11 2003/04/02 04:17:52 thorpej Exp $	*/
+/*	$NetBSD: bus.c,v 1.12 2003/04/19 14:56:06 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -575,11 +575,11 @@ _bus_dmamap_sync_r3k(t, map, offset, len, ops)
 		}
 
 		/*
-		 * Now at the first segment to sync; nail 
+		 * Now at the first segment to sync; nail
 		 * each segment until we have exhausted the
 		 * length.
 		 */
-		minlen = len < map->dm_segs[i].ds_len - offset ?  
+		minlen = len < map->dm_segs[i].ds_len - offset ?
 		    len : map->dm_segs[i].ds_len - offset;
 
 		addr = map->dm_segs[i].ds_addr;

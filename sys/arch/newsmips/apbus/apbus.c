@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.12 2003/04/02 04:17:50 thorpej Exp $	*/
+/*	$NetBSD: apbus.c,v 1.13 2003/04/19 14:56:05 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -89,9 +89,9 @@ static struct ap_intrhand *apintr[NLEVEL];
 
 static int
 apbusmatch(parent, cfdata, aux)
-        struct device *parent;
-        struct cfdata *cfdata;
-        void *aux;
+	struct device *parent;
+	struct cfdata *cfdata;
+	void *aux;
 {
 	struct confargs *ca = aux;
 
@@ -104,9 +104,9 @@ apbusmatch(parent, cfdata, aux)
 
 static void
 apbusattach(parent, self, aux)
-        struct device *parent;
-        struct device *self;
-        void *aux;
+	struct device *parent;
+	struct device *self;
+	void *aux;
 {
 	struct apbus_attach_args child;
 	struct apbus_dev *apdev;
@@ -292,7 +292,7 @@ apbus_dma_mapalloc(t, map, flags)
 
 	cnt = round_page(map->_dm_size) / PAGE_SIZE;
 
-  again:
+ again:
 	for (i = 0; i < APBUS_NDMAMAP; i += j + 1) {
 		for (j = 0; j < cnt; j++) {
 			if (apbus_dma_maptbl[i + j])

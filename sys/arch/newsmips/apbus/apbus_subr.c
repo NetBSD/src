@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus_subr.c,v 1.3 2000/12/03 01:42:29 matt Exp $	*/
+/*	$NetBSD: apbus_subr.c,v 1.4 2003/04/19 14:56:05 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -88,7 +88,7 @@ apctl_dump(apctl)
 	printf("	softc:		%p\n", apctl->apbc_softc);
 	printf("	Slot:		%d\n", apctl->apbc_sl);
 	printf("\n");
-	
+
 	if (apctl->apbc_link)
 		apctl_dump(apctl->apbc_link);
 }
