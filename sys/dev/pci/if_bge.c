@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.67 2004/04/04 00:43:25 jonathan Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.68 2004/04/06 08:48:55 keihan Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.67 2004/04/04 00:43:25 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.68 2004/04/06 08:48:55 keihan Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -611,7 +611,7 @@ bge_set_thresh(struct ifnet *ifp, int lvl)
 	 * that a threshold update is pending.  Updating the hardware
 	 * registers here (even at splhigh()) is observed to
 	 * occasionaly cause glitches where Rx-interrupts are not
-	 * honoured for up to 10 seconds. jonathan@netbsd.org, 2003-04-05
+	 * honoured for up to 10 seconds. jonathan@NetBSD.org, 2003-04-05
 	 */
 	s = splnet();
 	sc->bge_rx_coal_ticks = bge_rx_threshes[lvl].rx_ticks;
