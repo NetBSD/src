@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.169.2.28 2002/09/11 00:07:40 itojun Exp $
+# $NetBSD: mi,v 1.169.2.29 2002/10/18 13:31:52 itojun Exp $
 .
 ./altroot
 ./bin
@@ -1250,6 +1250,7 @@
 ./usr/share/zoneinfo/America/Costa_Rica
 ./usr/share/zoneinfo/America/Cuiaba
 ./usr/share/zoneinfo/America/Curacao
+./usr/share/zoneinfo/America/Danmarkshavn
 ./usr/share/zoneinfo/America/Dawson
 ./usr/share/zoneinfo/America/Dawson_Creek
 ./usr/share/zoneinfo/America/Denver
@@ -1311,6 +1312,8 @@
 ./usr/share/zoneinfo/America/Nipigon
 ./usr/share/zoneinfo/America/Nome
 ./usr/share/zoneinfo/America/Noronha
+./usr/share/zoneinfo/America/North_Dakota
+./usr/share/zoneinfo/America/North_Dakota/Center
 ./usr/share/zoneinfo/America/Panama
 ./usr/share/zoneinfo/America/Pangnirtung
 ./usr/share/zoneinfo/America/Paramaribo
@@ -1377,6 +1380,8 @@
 ./usr/share/zoneinfo/Asia/Bishkek
 ./usr/share/zoneinfo/Asia/Brunei
 ./usr/share/zoneinfo/Asia/Calcutta
+./usr/share/zoneinfo/Asia/Choibalsan
+./usr/share/zoneinfo/Asia/Chongqing
 ./usr/share/zoneinfo/Asia/Chungking
 ./usr/share/zoneinfo/Asia/Colombo
 ./usr/share/zoneinfo/Asia/Dacca
@@ -1404,21 +1409,27 @@
 ./usr/share/zoneinfo/Asia/Kuching
 ./usr/share/zoneinfo/Asia/Kuwait
 ./usr/share/zoneinfo/Asia/Macao
+./usr/share/zoneinfo/Asia/Macau
 ./usr/share/zoneinfo/Asia/Magadan
+./usr/share/zoneinfo/Asia/Makassar
 ./usr/share/zoneinfo/Asia/Manila
 ./usr/share/zoneinfo/Asia/Muscat
 ./usr/share/zoneinfo/Asia/Nicosia
 ./usr/share/zoneinfo/Asia/Novosibirsk
 ./usr/share/zoneinfo/Asia/Omsk
+./usr/share/zoneinfo/Asia/Oral
 ./usr/share/zoneinfo/Asia/Phnom_Penh
+./usr/share/zoneinfo/Asia/Pontianak
 ./usr/share/zoneinfo/Asia/Pyongyang
 ./usr/share/zoneinfo/Asia/Qatar
+./usr/share/zoneinfo/Asia/Qyzylorda
 ./usr/share/zoneinfo/Asia/Rangoon
 ./usr/share/zoneinfo/Asia/Riyadh
 ./usr/share/zoneinfo/Asia/Riyadh87
 ./usr/share/zoneinfo/Asia/Riyadh88
 ./usr/share/zoneinfo/Asia/Riyadh89
 ./usr/share/zoneinfo/Asia/Saigon
+./usr/share/zoneinfo/Asia/Sakhalin
 ./usr/share/zoneinfo/Asia/Samarkand
 ./usr/share/zoneinfo/Asia/Seoul
 ./usr/share/zoneinfo/Asia/Shanghai
