@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.6 1996/10/17 08:27:35 thorpej Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,12 +40,28 @@
  * General purpose extent manager.
  */
 
+#ifdef _KERNEL
 #include <sys/param.h>
 #include <sys/extent.h>
 #include <sys/malloc.h>
 #include <sys/time.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#else
+/*
+ * user-land definitions, so it can fit into a testing harness.
+ */
+#include <sys/param.h>
+#include <sys/extent.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+#define	malloc(s, t, flags)		malloc(s)
+#define	free(p, t)			free(p)
+#define	tsleep(chan, pri, str, timo)	(EWOULDBLOCK)
+#define	wakeup(chan)			((void)0)
+#endif
 
 static	void extent_insert_and_optimize __P((struct extent *, u_long, u_long,
 	    int, struct extent_region *, struct extent_region *));
@@ -184,6 +200,7 @@ extent_insert_and_optimize(ex, start, size, flags, after, rp)
 	int flags;
 	struct extent_region *after, *rp;
 {
+	struct extent_region *nextr;
 	int appended = 0;
 
 	if (after == NULL) {
@@ -246,9 +263,9 @@ extent_insert_and_optimize(ex, start, size, flags, after, rp)
 			 * Yup, we can free it up.
 			 */
 			after->er_end = after->er_link.le_next->er_end;
-			LIST_REMOVE(after->er_link.le_next, er_link);
-			extent_free_region_descriptor(ex,
-			    after->er_link.le_next);
+			nextr = after->er_link.le_next;
+			LIST_REMOVE(nextr, er_link);
+			extent_free_region_descriptor(ex, nextr);
 		} else {
 			/*
 			 * Nope, just prepend us to the next region.
@@ -861,7 +878,8 @@ extent_alloc_region_descriptor(ex, flags)
 	    malloc(sizeof(struct extent_region), ex->ex_mtype,
 	    (flags & EX_WAITOK) ? M_WAITOK : M_NOWAIT);
 
-	rp->er_flags = ER_ALLOC;
+	if (rp != NULL)
+		rp->er_flags = ER_ALLOC;
 
 	return (rp);
 }
