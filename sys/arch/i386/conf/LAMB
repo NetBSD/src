@@ -1,4 +1,4 @@
-#	$NetBSD: LAMB,v 1.11 2001/11/13 17:54:51 augustss Exp $
+#	$NetBSD: LAMB,v 1.12 2001/11/16 13:46:32 junyoung Exp $
 #
 #	LAMB -- for "LAMB" router, http://www.wildlab.com/
 #	Be sure to check pkgsrc/sysutils/lambd as well.
@@ -370,5 +370,6 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
-# mouse & keyboard multiplexor pseudo-devices
-pseudo-device	wsmux
+# wscons pseudo-devices
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont
