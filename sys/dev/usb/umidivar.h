@@ -1,4 +1,4 @@
-/*	$NetBSD: umidivar.h,v 1.1 2001/01/30 23:26:49 tshiozak Exp $	*/
+/*	$NetBSD: umidivar.h,v 1.2 2001/02/03 16:49:06 tshiozak Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,10 +35,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* MIDI Stream Bulk Pipe */
-struct umidi_mspipe {
-};
-
 /* pending MUX-MIDI packet */
 typedef enum {
 	PS_EXCL_0=-2,	/* put, and next state is PS_EXCL_0 */
@@ -60,11 +56,11 @@ struct umidi_packet {
 /*
  * hierarchie
  *
- * <-- parent                 child -->
+ * <-- parent		      child -->
  *
  * umidi(sc) -> endpoint -> jack -> mididev
- *         ^     |    ^     |  ^     |
- *         +-----+    +-----+  +-----+
+ *	   ^	 |    ^	    |  ^     |
+ *	   +-----+    +-----+  +-----+
  */
 
 /* midi device */
@@ -90,7 +86,7 @@ struct umidi_jack {
 	int				cable_number;
 	struct umidi_packet		packet;
 	struct umidi_mididev		*mididev;
-	SIMPLEQ_ENTRY(umidi_jack)	queue;
+	LIST_ENTRY(umidi_jack)		queue;
 };
 
 #define UMIDI_MAX_EPJACKS	16
@@ -102,10 +98,11 @@ struct umidi_endpoint {
 	int			num_jacks;
 	struct umidi_jack	*jacks[UMIDI_MAX_EPJACKS];
 	int			num_open;
-	SIMPLEQ_HEAD(, umidi_jack)	queue;
+	LIST_HEAD(, umidi_jack)	queue;
+	struct umidi_jack	*queue_tail;
 	/* valid only while transfer */
 	usbd_pipe_handle	pipe;
-        usbd_xfer_handle	xfer;
+	usbd_xfer_handle	xfer;
 	char			*buffer;
 };
 
@@ -114,7 +111,7 @@ struct umidi_softc {
 	USBBASEDEVICE		sc_dev;
 	usbd_device_handle	sc_udev;
 	usbd_interface_handle	sc_iface;
-	struct umidi_quirk 	*sc_quirk;
+	struct umidi_quirk	*sc_quirk;
 
 	int			sc_dying;
 
