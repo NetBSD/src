@@ -1,13 +1,12 @@
-/* $NetBSD: asc.c,v 1.1.2.2 1998/10/15 07:12:20 nisimura Exp $ */
+/* $NetBSD: asc.c,v 1.1.2.3 1998/12/06 21:09:53 drochner Exp $ */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.1.2.2 1998/10/15 07:12:20 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.1.2.3 1998/12/06 21:09:53 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/buf.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -22,29 +21,12 @@ __KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.1.2.2 1998/10/15 07:12:20 nisimura Exp $")
 
 #include <pmax/tc/ascvar.h> /* XXX */
 
-int asc_scsi_cmd __P((struct scsipi_xfer *));
-
-struct scsipi_adapter asc_switch = {
-	asc_scsi_cmd,
-	minphys,		/* no max at this level; handled by DMA code */
-	NULL,			/* scsipi_ioctl */
-};
-
 struct scsipi_device asc_dev = {
 	NULL,			/* Use default error handler */
 	NULL,			/* have a queue, served by this */
 	NULL,			/* have no async handler */
 	NULL,			/* Use default 'done' routine */
 };
-
-/*
- * Functions and the switch for the MI code.
- */
-u_char	asc_read_reg __P((struct ncr53c9x_softc *, int));
-void	asc_write_reg __P((struct ncr53c9x_softc *, int, u_char));
-int	asc_dma_isintr __P((struct ncr53c9x_softc *));
-int	asc_dma_isactive __P((struct ncr53c9x_softc *));
-void	asc_clear_latched_intr __P((struct ncr53c9x_softc *));
 
 /*
  * Glue functions
