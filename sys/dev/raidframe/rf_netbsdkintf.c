@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.83 2000/05/28 00:48:31 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.84 2000/05/28 01:03:22 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -3126,11 +3126,14 @@ rf_set_autoconfig(raidPtr, new_value)
 	raidPtr->autoconfigure = new_value;
 	for(row=0; row<raidPtr->numRow; row++) {
 		for(column=0; column<raidPtr->numCol; column++) {
-			dev = raidPtr->Disks[row][column].dev;
-			vp = raidPtr->raid_cinfo[row][column].ci_vp;
-			raidread_component_label(dev, vp, &clabel);
-			clabel.autoconfigure = new_value;
-			raidwrite_component_label(dev, vp, &clabel);
+			if (raidPtr->Disks[row][column].status == 
+			    rf_ds_optimal) {
+				dev = raidPtr->Disks[row][column].dev;
+				vp = raidPtr->raid_cinfo[row][column].ci_vp;
+				raidread_component_label(dev, vp, &clabel);
+				clabel.autoconfigure = new_value;
+				raidwrite_component_label(dev, vp, &clabel);
+			}
 		}
 	}
 	return(new_value);
@@ -3149,11 +3152,14 @@ rf_set_rootpartition(raidPtr, new_value)
 	raidPtr->root_partition = new_value;
 	for(row=0; row<raidPtr->numRow; row++) {
 		for(column=0; column<raidPtr->numCol; column++) {
-			dev = raidPtr->Disks[row][column].dev;
-			vp = raidPtr->raid_cinfo[row][column].ci_vp;
-			raidread_component_label(dev, vp, &clabel);
-			clabel.root_partition = new_value;
-			raidwrite_component_label(dev, vp, &clabel);
+			if (raidPtr->Disks[row][column].status == 
+			    rf_ds_optimal) {
+				dev = raidPtr->Disks[row][column].dev;
+				vp = raidPtr->raid_cinfo[row][column].ci_vp;
+				raidread_component_label(dev, vp, &clabel);
+				clabel.root_partition = new_value;
+				raidwrite_component_label(dev, vp, &clabel);
+			}
 		}
 	}
 	return(new_value);
