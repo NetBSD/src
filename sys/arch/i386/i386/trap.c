@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.70 1995/03/09 09:00:01 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.71 1995/03/10 10:56:16 mycroft Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -624,6 +624,7 @@ syscall(frame)
 			    argsize);
 			break;
 		}
+		error = 0;
 	}
 	else
 #endif
