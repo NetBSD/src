@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.8 1997/03/14 04:06:42 perry Exp $
+.\"	$NetBSD: hier.7,v 1.9 1997/10/06 23:36:59 hubertf Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -128,10 +128,10 @@ see
 machine specific C include files
 .It Li net/
 misc network C include files
-.It Li netimp/
-C include files for IMP protocols;
-see
-.Xr imp 4
+.It Li netatalk/
+C include files for AppleTalk protocols
+.It Li netccitt/ 
+C include files for CCITT protocols (HDLC, X.25, ...)
 .It Li netinet/
 C include files for Internet standard protocols;
 see
@@ -140,14 +140,14 @@ see
 C include files for ISO standard protocols;
 see
 .Xr iso 4
+.It Li natm/
+C include files for native mode ATM
 .It Li netns/
 C include files for XNS standard protocols;
 see
 .Xr \&ns 4
 .It Li nfs/
 C include files for NFS (Network File System)
-.It Li pascal/
-include files for pc 1
 .It Li protocols/
 C include files for Berkeley service protocols
 .It Li sys/
@@ -211,24 +211,38 @@ from the
 association)
 .It Li games/
 ascii text files used by various games
+.It Li lkm/
+documentation on the loadable kernel modules interface
 .It Li man/
 manual pages 
 .It Li me/
 macros for use with the me macro package
 .It Li misc/
 misc system-wide ascii text files
+.Pp
 .Bl -tag -width Fl -compact
 .It Li termcap
 terminal characteristics database;
 see
 .Xr termcap 5
 .El
+.Pp
 .It Li mk/
 templates for make;
 see
 .Xr make 1
+.Pp
+.Bl -tag -width Fl -compact
+.It Li bsd.README
+description of the BSD Makefile framework
+.El
+.Pp
 .It Li ms/
 macros for use with the ms macro package
+.It Li nls/
+native language support files for libc
+.It Li sendmail/
+documentation and files for sendmail-configuration
 .It Li skel/
 example . (dot) files for new accounts
 .It Li tabset/
@@ -251,19 +265,21 @@ see
 .It Li src/
 BSD and/or local source files
 .Pp
-.Bl -tag -width "kerberosIV/" -compact
+.Bl -tag -width "usr.sbin/" -compact
 .It Li bin/
 src for files in /bin 
 .It Li contrib/
 src for files in /usr/contrib
+.It Li distrib/
+tools and data-files for making distributions
+.It Li domestic/
+source covered by US ITAR export restrictions
 .It Li etc/
 src for files in /etc
 .It Li games/
 src for files in /usr/games
 .It Li include/
 src for files in /usr/include
-.It Li kerberosIV/
-src for kerberos version IV
 .It Li lib/
 src for files in /usr/lib
 .It Li libexec/
@@ -352,7 +368,9 @@ misc. printer and mail system spooling directories
 .Pp
 .Bl -tag -width Fl -compact
 .It Li ftp/ 
-commonly ~ftp; the anonymous ftp root directory
+commonly ~ftp; the anonymous ftp root directory;
+see
+.Xr ftpd 8
 .It Li mqueue/ 
 undelivered mail queue;
 see
