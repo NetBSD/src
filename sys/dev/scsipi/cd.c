@@ -1567,8 +1567,8 @@ struct	scsi_xfer *xs;
 			return(EINVAL);
 		case	0x6:
 			if(!silent)printf("cd%d: media change\n", unit); 
-			if (cd_data[unit]->openparts)
 			cd_data[unit]->flags &= ~(CDVALID | CDHAVELABEL);
+			if (cd_data[unit]->openparts)
 			{
 				return(EIO);
 			}
