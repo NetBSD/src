@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.38 1999/07/01 18:40:36 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.39 1999/09/03 04:26:31 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.38 1999/07/01 18:40:36 itojun Exp $");
+__RCSID("$NetBSD: route.c,v 1.39 1999/09/03 04:26:31 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,6 +74,11 @@ __RCSID("$NetBSD: route.c,v 1.38 1999/07/01 18:40:36 itojun Exp $");
 #include "netstat.h"
 
 #define kget(p, d) (kread((u_long)(p), (char *)&(d), sizeof (d)))
+
+/* alignment constraint for routing socket */
+#define ROUNDUP(a) \
+	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+#define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 /*
  * Definitions for showing gateway flags.
@@ -390,9 +395,7 @@ np_rtentry(rtm)
 		p_sockaddr(sa, NULL, 0, 36);
 	else {
 		p_sockaddr(sa, NULL, rtm->rtm_flags, 16);
-		if (sa->sa_len == 0)
-			sa->sa_len = sizeof(long);
-		sa = (struct sockaddr *)(sa->sa_len + (char *)sa);
+		sa = (struct sockaddr *)(ROUNDUP(sa->sa_len) + (char *)sa);
 		p_sockaddr(sa, NULL, 0, 18);
 	}
 	p_flags(rtm->rtm_flags & interesting, "%-6.6s ");
@@ -776,12 +779,11 @@ netname6(in6, mask)
 	u_char *p;
 	u_char *lim;
 	int masklen, final = 0, illegal = 0;
+	int i;
 
 	net6 = *in6;
-	net6.s6_addr32[0] &= mask->s6_addr32[0];
-	net6.s6_addr32[1] &= mask->s6_addr32[1];
-	net6.s6_addr32[2] &= mask->s6_addr32[2];
-	net6.s6_addr32[3] &= mask->s6_addr32[3];
+	for (i = 0; i < sizeof(net6); i++)
+		net6.s6_addr[i] &= mask->s6_addr[i];
 	
 	masklen = 0;
 	lim = (u_char *)mask + 16;
