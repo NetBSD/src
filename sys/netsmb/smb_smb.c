@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_smb.c,v 1.9 2003/03/23 16:51:52 jdolecek Exp $	*/
+/*	$NetBSD: smb_smb.c,v 1.10 2003/03/24 07:24:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.9 2003/03/23 16:51:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.10 2003/03/24 07:24:02 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -613,17 +613,8 @@ smb_write(struct smb_share *ssp, u_int16_t fid, struct uio *uio,
 	struct smb_cred *scred)
 {
 	int error = 0, len, tsize, resid;
-	struct uio olduio;
 
-	/*
-	 * review: manage iov more precisely
-	 */
-	if (uio->uio_iovcnt != 1) {
-		SMBERROR("can't handle iovcnt > 1\n");
-		return EIO;
-	}
 	tsize = uio->uio_resid;
-	olduio = *uio;
 	while (tsize > 0) {
 		len = tsize;
 		error = smb_smb_write(ssp, fid, &len, &resid, uio, scred);
@@ -634,9 +625,6 @@ smb_write(struct smb_share *ssp, u_int16_t fid, struct uio *uio,
 			break;
 		}
 		tsize -= resid;
-	}
-	if (error) {
-		*uio = olduio;
 	}
 	return error;
 }
