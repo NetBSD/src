@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.116 2003/03/28 08:03:38 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.117 2003/03/28 22:39:42 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.116 2003/03/28 08:03:38 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.117 2003/03/28 22:39:42 fvdl Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -537,12 +537,11 @@ lfs_segwrite(struct mount *mp, int flags)
 	struct segment *sp;
 	struct vnode *vp;
 	SEGUSE *segusep;
-	daddr_t ibno;
-	int do_ckp, did_ckp, error, i, s;
+	int do_ckp, did_ckp, error, s;
+	unsigned n, segleft, maxseg, sn, i, curseg;
 	int writer_set = 0;
 	int dirty;
 	int redo;
-	int sn;
 	
 	fs = VFSTOUFS(mp)->um_lfs;
 
@@ -598,17 +597,20 @@ lfs_segwrite(struct mount *mp, int flags)
 	 * last checkpoint as no longer ACTIVE.
 	 */
 	if (do_ckp) {
-		for (ibno = fs->lfs_cleansz + fs->lfs_segtabsz;
-		     --ibno >= fs->lfs_cleansz; ) {
+		segleft = fs->lfs_nseg;
+		curseg = 0;
+		for (n = 0; n < fs->lfs_segtabsz; n++) {
 			dirty = 0;
-			if (bread(fs->lfs_ivnode, ibno, fs->lfs_bsize, NOCRED, &bp))
+			if (bread(fs->lfs_ivnode, 
+			    fs->lfs_cleansz + n, fs->lfs_bsize, NOCRED, &bp))
 
 				panic("lfs_segwrite: ifile read");
 			segusep = (SEGUSE *)bp->b_data;
-			for (i = fs->lfs_sepb; i > 0; i--) {
-				sn = (ibno - fs->lfs_cleansz) * fs->lfs_sepb +
-					fs->lfs_sepb - i;
-				if (segusep->su_flags & SEGUSE_ACTIVE) {
+			maxseg = min(segleft, fs->lfs_sepb);
+			for (i = 0; i < maxseg; i++) {
+				sn = curseg + i;
+				if (sn != fs->lfs_curseg &&
+				    segusep->su_flags & SEGUSE_ACTIVE) {
 					segusep->su_flags &= ~SEGUSE_ACTIVE;
 					--fs->lfs_nactive;
 					++dirty;
@@ -622,28 +624,12 @@ lfs_segwrite(struct mount *mp, int flags)
 						((SEGUSE_V1 *)segusep + 1);
 			}
 				
-			/* But the current segment is still ACTIVE */
-			segusep = (SEGUSE *)bp->b_data;
-			if (dtosn(fs, fs->lfs_curseg) / fs->lfs_sepb ==
-			    (ibno-fs->lfs_cleansz)) {
-				sn = dtosn(fs, fs->lfs_curseg);
-				if (fs->lfs_version > 1)
-					segusep[sn % fs->lfs_sepb].su_flags |=
-						     SEGUSE_ACTIVE;
-				else
-					((SEGUSE *)
-					 ((SEGUSE_V1 *)(bp->b_data) +
-					  (sn % fs->lfs_sepb)))->su_flags
-						   |= SEGUSE_ACTIVE;
-				fs->lfs_suflags[fs->lfs_activesb][sn] |=
-					SEGUSE_ACTIVE;
-				++fs->lfs_nactive;
-				--dirty;
-			}
 			if (dirty)
 				error = LFS_BWRITE_LOG(bp); /* Ifile */
 			else
 				brelse(bp);
+			segleft -= fs->lfs_sepb;
+			curseg += fs->lfs_sepb;
 		}
 	}
 
