@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.29 1999/06/27 12:55:58 mrg Exp $
+#	$NetBSD: install.sub,v 1.30 1999/06/28 07:59:39 mrg Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1054,10 +1054,34 @@ install_disk() {
 
 	cat << \__install_disk_1
 
+Ok, lets install from a disk.  The file-system the install sets on may
+already mounted, or we might have to mount the filesystem to get to it.
+
+__install_disk_1
+
+	echo -n "Is the file-system with the install sets already mounted? [n] "
+	getresp "n"
+	case $resp in
+	y*|Y*)
+		echo "What mount point are the sets located in? [] "
+		getresp ""
+		if [ -d "$resp" ]; then
+			install_from_mounted_fs $resp
+		else
+			echo "$resp: Not a directory, aborting..."
+		fi
+		return
+		;;
+	*)
+		;;
+	esac
+
+	cat << \__install_disk_2
+
 The following disk devices are installed on your system; please select
 the disk device containing the partition with the installation sets:
 
-__install_disk_1
+__install_disk_2
 	_DKDEVS=`md_get_diskdevs`
 	echo    "$_DKDEVS"
 	echo	""
