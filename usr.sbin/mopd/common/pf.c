@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.4 1997/10/16 23:24:55 lukem Exp $	*/
+/*	$NetBSD: pf.c,v 1.5 1998/05/24 20:30:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pf.c,v 1.4 1997/10/16 23:24:55 lukem Exp $");
+__RCSID("$NetBSD: pf.c,v 1.5 1998/05/24 20:30:55 thorpej Exp $");
 #endif
 
 #include "os.h"
@@ -104,7 +104,7 @@ pfInit(interface, mode, protocol, typ)
 	} while (fd < 0 && errno == EBUSY);
 
 	if (fd < 0) {
-      		syslog(LOG_ERR,"pfInit: open bpf %m");
+      		syslog(LOG_ERR,"pfInit: open %s: %m", device);
 		return(-1);
 	}
   
