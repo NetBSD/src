@@ -408,7 +408,7 @@ md_assemble (instruction_string)
    */
   if ((goofed = (*v.vit_error)) != 0)
     {
-      as_warn (_("Ignoring statement due to \"%s\""), v.vit_error);
+      as_fatal (_("Ignoring statement due to \"%s\""), v.vit_error);
     }
   /*
    * We need to use expression() and friends, which require us to diddle
@@ -427,7 +427,7 @@ md_assemble (instruction_string)
     {				/* for each operand */
       if (operandP->vop_error)
 	{
-	  as_warn (_("Ignoring statement because \"%s\""), operandP->vop_error);
+	  as_fatal (_("Aborting because statement has \"%s\""), operandP->vop_error);
 	  goofed = 1;
 	}
       else
@@ -474,7 +474,7 @@ md_assemble (instruction_string)
 	       * instruction operands.
 	       */
 	      need_pass_2 = 1;
-	      as_warn (_("Can't relocate expression"));
+	      as_fatal (_("Can't relocate expression"));
 	      break;
 
 	    case O_big:
@@ -652,7 +652,7 @@ md_assemble (instruction_string)
 	    }
 	  if (input_line_pointer != operandP->vop_expr_end + 1)
 	    {
-	      as_warn ("Junk at end of expression \"%s\"", input_line_pointer);
+	      as_fatal ("Junk at end of expression \"%s\"", input_line_pointer);
 	      goofed = 1;
 	    }
 	  operandP->vop_expr_end[1] = c_save;
@@ -2213,6 +2213,8 @@ vax_reg_parse (c1, c2, c3, c4)	/* 3 chars of register name */
       c2 = c3;
       c3 = c4;
     }
+  else if (c3 && c4)	/* can't be 4 characters long.  */
+    return retval;
 #endif
 
   if (isupper (c1))
