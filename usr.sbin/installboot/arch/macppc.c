@@ -1,4 +1,4 @@
-/*	$NetBSD: macppc.c,v 1.4 2002/05/16 01:35:44 lukem Exp $ */
+/*	$NetBSD: macppc.c,v 1.5 2002/05/20 16:05:27 lukem Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: macppc.c,v 1.4 2002/05/16 01:35:44 lukem Exp $");
+__RCSID("$NetBSD: macppc.c,v 1.5 2002/05/20 16:05:27 lukem Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -61,10 +61,10 @@ static struct bbinfo_params bbparams = {
 	MACPPC_BOOT_BLOCK_BLOCKSIZE,
 	MACPPC_BOOT_BLOCK_MAX_SIZE,
 	0,
-	0,
+	BBINFO_BIG_ENDIAN,
 };
 
-static int writeapplepartmap(ib_params *, struct bbinfo_params *, char *);
+static int writeapplepartmap(ib_params *, struct bbinfo_params *, uint8_t *);
 
 
 int
@@ -79,11 +79,27 @@ macppc_clearboot(ib_params *params)
 		return (0);
 	}
 		/* XXX: maybe clear the apple partition map too? */
-	return (shared_bbinfo_clearboot(params, &bbparams));
+	return (shared_bbinfo_clearboot(params, &bbparams, NULL));
 }
 
+int
+macppc_setboot(ib_params *params)
+{
+
+	assert(params != NULL);
+
+	if (params->flags & IB_STAGE1START) {
+		warnx("`-b bno' is not supported for %s",
+		    params->machine->name);
+		return (0);
+	}
+	return (shared_bbinfo_setboot(params, &bbparams, writeapplepartmap));
+}
+
+
 static int
-writeapplepartmap(ib_params *params, struct bbinfo_params *bb_params, char *bb)
+writeapplepartmap(ib_params *params, struct bbinfo_params *bb_params,
+    uint8_t *bb)
 {
 	struct apple_drvr_map dm;
 	struct apple_part_map_entry pme;
@@ -149,18 +165,4 @@ writeapplepartmap(ib_params *params, struct bbinfo_params *bb_params, char *bb)
 	}
 
 	return (1);
-}
-
-int
-macppc_setboot(ib_params *params)
-{
-
-	assert(params != NULL);
-
-	if (params->flags & IB_STAGE1START) {
-		warnx("`-b bno' is not supported for %s",
-		    params->machine->name);
-		return (0);
-	}
-	return (shared_bbinfo_setboot(params, &bbparams, writeapplepartmap));
 }
