@@ -1,4 +1,4 @@
-/*	$NetBSD: whois.c,v 1.19 2003/06/23 13:05:55 agc Exp $	*/
+/*	$NetBSD: whois.c,v 1.20 2003/07/14 09:21:03 itojun Exp $	*/
 
 /*
  * RIPE version marten@ripe.net
@@ -58,7 +58,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: whois.c,v 1.19 2003/06/23 13:05:55 agc Exp $");
+__RCSID("$NetBSD: whois.c,v 1.20 2003/07/14 09:21:03 itojun Exp $");
 #endif
 #endif /* not lint */
 #endif /* not RIPE */
@@ -69,7 +69,7 @@ char sccsid[] =
     "@(#)whois.c 5.11 (Berkeley) 3/2/91 - RIPE 1.15 94/09/07 marten@ripe.net";
 #endif /* not lint */
 #ifndef lint
-__RCSID("$NetBSD: whois.c,v 1.19 2003/06/23 13:05:55 agc Exp $");
+__RCSID("$NetBSD: whois.c,v 1.20 2003/07/14 09:21:03 itojun Exp $");
 #endif
 
 #endif /* RIPE */
@@ -384,13 +384,18 @@ main(int argc, char *argv[])
     
 #ifdef CLEVER
     whoishost=(char *)calloc(MAXHOSTNAMELEN, sizeof(char));
+    if (!whoishost)
+      err(1, "malloc");
     myhost =(char *)calloc(MAXHOSTNAMELEN, sizeof(char));
+    if (!myhost)
+      err(1, "malloc");
     myerror = gethostname(myhost, MAXHOSTNAMELEN);
     if (myerror >= 0) {
       if (occurs(myhost, ".")) {
 	mytoplevel = rindex(myhost,'.');
 	mytoplevel++;
-	(void) sprintf(whoishost, "%s-whois.ripe.net", mytoplevel);
+	(void) snprintf(whoishost, MAXHOSTNAMELEN, "%s-whois.ripe.net",
+	    mytoplevel);
 	if (verb) fprintf(stderr, "Clever guess: %s\n", whoishost);
       }
     }
@@ -554,8 +559,9 @@ main(int argc, char *argv[])
   /* we can only send the -V when we are sure that we are dealing with 
      a RIPE whois server :-( */
   
-  whoishost=(char *)calloc(strlen(host)+1, sizeof(char));
-  strcpy(whoishost, host);
+  whoishost = strdup(host);
+  if (!whoishost)
+    err(1, "malloc");
   for (string=whoishost;(*string=(char)tolower(*string));string++);
   
   if (strstr(whoishost, "ripe.net") ||
