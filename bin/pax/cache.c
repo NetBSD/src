@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.6 1997/07/20 20:32:22 christos Exp $	*/
+/*	$NetBSD: cache.c,v 1.6.2.1 1999/01/20 07:02:30 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cache.c,v 1.6 1997/07/20 20:32:22 christos Exp $");
+__RCSID("$NetBSD: cache.c,v 1.6.2.1 1999/01/20 07:02:30 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -214,7 +214,7 @@ name_uid(uid, frc)
 #endif
 {
 	struct passwd *pw;
-	UIDC *ptr;
+	UIDC *ptr, **pptr;
 
 	if ((uidtb == NULL) && (uidtb_start() < 0))
 		return("");
@@ -222,7 +222,9 @@ name_uid(uid, frc)
 	/*
 	 * see if we have this uid cached
 	 */
-	ptr = uidtb[uid % UID_SZ];
+	pptr = uidtb + (uid % UID_SZ);
+	ptr = *pptr;
+
 	if ((ptr != NULL) && (ptr->valid > 0) && (ptr->uid == uid)) {
 		/*
 		 * have an entry for this uid
@@ -240,7 +242,7 @@ name_uid(uid, frc)
 		++pwopn;
 	}
 	if (ptr == NULL)
-		ptr = (UIDC *)malloc(sizeof(UIDC));
+		*pptr = ptr = (UIDC *)malloc(sizeof(UIDC));
 
 	if ((pw = getpwuid(uid)) == NULL) {
 		/*
@@ -291,7 +293,7 @@ name_gid(gid, frc)
 #endif
 {
 	struct group *gr;
-	GIDC *ptr;
+	GIDC *ptr, **pptr;
 
 	if ((gidtb == NULL) && (gidtb_start() < 0))
 		return("");
@@ -299,7 +301,9 @@ name_gid(gid, frc)
 	/*
 	 * see if we have this gid cached
 	 */
-	ptr = gidtb[gid % GID_SZ];
+	pptr = gidtb + (gid % GID_SZ);
+	ptr = *pptr;
+
 	if ((ptr != NULL) && (ptr->valid > 0) && (ptr->gid == gid)) {
 		/*
 		 * have an entry for this gid
@@ -317,7 +321,7 @@ name_gid(gid, frc)
 		++gropn;
 	}
 	if (ptr == NULL)
-		ptr = (GIDC *)malloc(sizeof(GIDC));
+		*pptr = ptr = (GIDC *)malloc(sizeof(GIDC));
 
 	if ((gr = getgrgid(gid)) == NULL) {
 		/*
@@ -367,7 +371,7 @@ uid_name(name, uid)
 #endif
 {
 	struct passwd *pw;
-	UIDC *ptr;
+	UIDC *ptr, **pptr;
 	int namelen;
 
 	/*
@@ -382,7 +386,9 @@ uid_name(name, uid)
 	 * look up in hash table, if found and valid return the uid,
 	 * if found and invalid, return a -1
 	 */
-	ptr = usrtb[st_hash(name, namelen, UNM_SZ)];
+	pptr = usrtb + st_hash(name, namelen, UNM_SZ);
+	ptr = *pptr;
+
 	if ((ptr != NULL) && (ptr->valid > 0) && !strcmp(name, ptr->name)) {
 		if (ptr->valid == INVALID)
 			return(-1);
@@ -396,7 +402,7 @@ uid_name(name, uid)
 	}
 
 	if (ptr == NULL)
-		ptr = (UIDC *)malloc(sizeof(UIDC));
+		*pptr = ptr = (UIDC *)malloc(sizeof(UIDC));
 
 	/*
 	 * no match, look it up, if no match store it as an invalid entry,
@@ -437,7 +443,7 @@ gid_name(name, gid)
 #endif
 {
 	struct group *gr;
-	GIDC *ptr;
+	GIDC *ptr, **pptr;
 	int namelen;
 
 	/*
@@ -452,7 +458,9 @@ gid_name(name, gid)
 	 * look up in hash table, if found and valid return the uid,
 	 * if found and invalid, return a -1
 	 */
-	ptr = grptb[st_hash(name, namelen, GID_SZ)];
+	pptr = grptb + st_hash(name, namelen, GID_SZ);
+	ptr = *pptr;
+
 	if ((ptr != NULL) && (ptr->valid > 0) && !strcmp(name, ptr->name)) {
 		if (ptr->valid == INVALID)
 			return(-1);
@@ -465,7 +473,7 @@ gid_name(name, gid)
 		++gropn;
 	}
 	if (ptr == NULL)
-		ptr = (GIDC *)malloc(sizeof(GIDC));
+		*pptr = ptr = (GIDC *)malloc(sizeof(GIDC));
 
 	/*
 	 * no match, look it up, if no match store it as an invalid entry,
