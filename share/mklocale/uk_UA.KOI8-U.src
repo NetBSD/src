@@ -1,4 +1,4 @@
-/*	$NetBSD: uk_UA.KOI8-U.src,v 1.1 2000/12/22 00:36:06 itojun Exp $	*/
+/*	$NetBSD: uk_UA.KOI8-U.src,v 1.2 2000/12/22 01:37:23 itojun Exp $	*/
 
 /*
  * LOCALE_CTYPE for Ukrainian koi8-u character set (RFC2319)
@@ -22,6 +22,7 @@ UPPER		'A' - 'Z' 0xb3 0xb4 0xb6 0xb7 0xbd 0xe0 - 0xff
 XDIGIT          '0' - '9' 'a' - 'f' 'A' - 'F'
 BLANK		' ' '\t' 0x9a
 PRINT		0x20 - 0x7e 0x80 - 0xff
+SWIDTH1		0x20 - 0x7e 0x80 - 0xff
 # IDEOGRAM
 # SPECIAL
 # PHONEGRAM
