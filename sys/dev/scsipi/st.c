@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.96 1998/07/31 04:00:22 mjacob Exp $ */
+/*	$NetBSD: st.c,v 1.97 1998/07/31 17:25:55 mjacob Exp $ */
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -637,7 +637,7 @@ stclose(dev, flags, mode, p)
 	int mode;
 	struct proc *p;
 {
-	int stxx;
+	int stxx, error = 0;
 	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
 
 	SC_DEBUG(st->sc_link, SDEV_DB1, ("closing\n"));
@@ -659,7 +659,7 @@ stclose(dev, flags, mode, p)
 
 	stxx = st->flags & (ST_WRITTEN | ST_FM_WRITTEN);
 	if (stxx == ST_WRITTEN || ((flags & O_ACCMODE) == FWRITE && stxx == 0))
-		st_write_filemarks(st, 1, 0);
+		error = st_check_eod(st, FALSE, &stxx, 0); /* recycling stxx */
 	switch (STMODE(dev)) {
 	case NORMAL_MODE:
 		st_unmount(st, NOEJECT);
@@ -676,7 +676,7 @@ stclose(dev, flags, mode, p)
 	}
 	st->sc_link->flags &= ~SDEV_OPEN;
 
-	return (0);
+	return (error);
 }
 
 /*
