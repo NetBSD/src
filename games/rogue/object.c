@@ -1,4 +1,4 @@
-/*	$NetBSD: object.c,v 1.4 1997/10/12 11:45:34 lukem Exp $	*/
+/*	$NetBSD: object.c,v 1.5 1997/10/15 09:27:06 is Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)object.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: object.c,v 1.4 1997/10/12 11:45:34 lukem Exp $");
+__RCSID("$NetBSD: object.c,v 1.5 1997/10/15 09:27:06 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -503,6 +503,8 @@ gr_weapon(obj, assign_wk)
 	short percent;
 	short i;
 	short blessing, increment;
+
+	increment = 0; /* XXX make gcc happy */
 
 	obj->what_is = WEAPON;
 	if (assign_wk) {
