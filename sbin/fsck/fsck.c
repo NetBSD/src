@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.10 1997/06/20 15:14:09 christos Exp $	*/
+/*	$NetBSD: fsck.c,v 1.11 1997/06/23 01:03:35 mikel Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -38,7 +38,7 @@
  *
  */
 
-static char rcsid[] = "$NetBSD: fsck.c,v 1.10 1997/06/20 15:14:09 christos Exp $";
+static char rcsid[] = "$NetBSD: fsck.c,v 1.11 1997/06/23 01:03:35 mikel Exp $";
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -497,7 +497,7 @@ getfslab(str)
 
 	if ((t = dl.d_partitions[p - 'a'].p_fstype) >= DKMAXTYPES) 
 		errx(1, "partition `%s' is not of a legal vfstype",
-		    p, str);
+		    str);
 
 	if ((vfstype = fscknames[t]) == NULL)
 		errx(1, "vfstype `%s' on partition `%s' is not supported",
