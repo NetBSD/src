@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.1.2.8 2002/11/11 20:18:07 skrll Exp $	*/
+/*	$NetBSD: sched.h,v 1.1.2.9 2002/12/18 19:44:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,19 +44,6 @@
 
 /* Required by POSIX 1003.1, section 13.1, lines 12-13. */
 #include <time.h>	
-
-struct sched_param {
-	int	sched_priority;
-};
-
-/*
- * Scheduling policies required by IEEE Std 1003.1-2001
- */
-#define	SCHED_FIFO	1
-#define SCHED_RR	2
-#define SCHED_OTHER	3		/* Behavior can FIFO or RR, or not */
-
-/* Other nonstandard policies: */
 
 /* Functions */
 
