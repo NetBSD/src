@@ -1,4 +1,4 @@
-/*	$NetBSD: env.c,v 1.8 1998/10/07 23:18:29 aidan Exp $	*/
+/*	$NetBSD: env.c,v 1.9 1998/10/11 10:27:46 scw Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: env.c,v 2.7 1994/01/26 02:25:50 vixie Exp";
 #else
-__RCSID("$NetBSD: env.c,v 1.8 1998/10/07 23:18:29 aidan Exp $");
+__RCSID("$NetBSD: env.c,v 1.9 1998/10/11 10:27:46 scw Exp $");
 #endif
 #endif
 
@@ -123,7 +123,7 @@ load_env(envstr, f)
 	long	filepos;
 	int	fileline, len;
 	char	*name, *val, *s;
-	char	*space;
+	char	*space = NULL;
 
 	filepos = ftell(f);
 	fileline = LineNumber;
