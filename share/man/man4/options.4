@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.45 1998/03/19 07:40:04 fair Exp $
+.\"	$NetBSD: options.4,v 1.46 1998/04/28 06:00:55 fair Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -55,10 +55,17 @@ Enable binary compatibility with
 This enables support for
 16-bit user, group, and process ids (following revisions support
 32-bit identifiers),
-It also allows the use of the deprecated getdomainname, setdomainname,
-and uname syscalls.
+It also allows the use of the deprecated
+.Xr getdomainname 2 ,
+.Xr setdomainname 2 ,
+and
+.Xr uname 2
+syscalls.
 This option also allows using numeric filesystem identifiers rather
-than strings.  Post 0.9 versions use string identifiers.
+than strings.
+Post
+.Nx 0.9
+versions use string identifiers.
 .It Cd options COMPAT_10
 Enable binary compatibility with
 .Nx 1.0 .
@@ -70,10 +77,12 @@ The name
 .Dq ffs
 should be used post 1.0 in 
 .Pa /etc/fstab
-and other files.  It also adds old syscalls for the
+and other files.
+It also adds old syscalls for the
 .At V
-shared memory interface.  This was changed post 1.0 to work on 64-bit
-architectures.  This option also enables 
+shared memory interface.
+This was changed post 1.0 to work on 64-bit architectures.
+This option also enables 
 .Dq sgtty
 compatibility, without which programs using the old interface produce
 an
@@ -85,17 +94,19 @@ Enable binary compatibility with
 This allows binaries running on the i386 port to gain direct access to
 the io ports by opening
 .Pa /dev/io
-read/write.  This functionality was
-replaced by 
+read/write.
+This functionality was replaced by 
 .Xr i386_iopl 2
 post 1.1.
 On the
 .Tn Atari
-port, the location of the disk label was moved after 1.1. When the
+port, the location of the disk label was moved after 1.1.
+When the
 .Em COMPAT_11
 option is set, the kernel will read (pre) 1.1 style disk labels as a
-last resort. When a disklabel is re-written, the old style label will
-be replaced with a post 1.1 style label.
+last resort.
+When a disklabel is re-written, the old style label will be replaced
+with a post 1.1 style label.
 .It Cd options COMPAT_12
 Enable binary compatibility with
 .Nx 1.2 .
@@ -104,8 +115,9 @@ This allows the use of old syscalls for
 and
 .Fn swapon .
 The syscall numbers were changed post 1.2 to add functionality to the
-reboot syscall, and the new
-.Fn swapctl
+.Xr reboot 2
+syscall, and the new
+.Xr swapctl 2
 interface was introduced.
 .It Cd options COMPAT_13
 Enable binary compatibility with
@@ -115,11 +127,22 @@ This allows the use of old syscalls for
 .It Cd options COMPAT_43
 Enables compatibility with
 .Bx 4.3 .
-This adds an old syscall for lseek.  It also adds the ioctls for
-TIOCGETP and TIOCSETP.  The return values for getpid, getgid, and
-getuid syscalls are modified as well, to return the parent's pid and
-uid as well as the current process's.  It also enables the deprecated
-NTTYDISC terminal line discipline.
+This adds an old syscall for 
+.Xr lseek 2 .
+It also adds the ioctls for
+.Dv TIOCGETP
+and
+.Dv TIOCSETP .
+The return values for
+.Xr getpid 2 ,
+.Xr getgid 2 ,
+and
+.Xr getuid 2
+syscalls are modified as well, to return the parent's pid and
+uid as well as the current process's.
+It also enables the deprecated
+.Dv NTTYDISC
+terminal line discipline.
 It also provides backwards compatibility with 
 .Dq old
 SIOC[GS]IF{ADDR,DSTADDR,BRDADDR,NETMASK} interface ioctls, including
@@ -133,44 +156,54 @@ socket calls.
 On those architectures that support it, this enables binary
 compatibility with
 .At V.4
-applications built for the same architecture.  This currently includes
-the sparc and i386.
+applications built for the same architecture.
+This currently includes the sparc and i386.
 .It Cd options COMPAT_LINUX
 On those architectures that support it, this enables binary
 compatibility with Linux ELF and a.out
-applications built for the same architecture.  This is currently limited
-to the i386.
+applications built for the same architecture.
+This is currently limited to the i386.
 .It Cd options COMPAT_SUNOS
 On those architectures that support it, this enables binary
-compatibility with SunOS 4.1
-applications built for the same architecture.  This currently includes
-the sparc and most or all m68k platforms.
+compatibility with
+.Tn SunOS 4.1
+applications built for the same architecture.
+This currently includes the sparc and most or all m68k platforms.
 .It Cd options COMPAT_ULTRIX
 On those architectures that support it, this enables binary
-compatibility with Ultrix
-applications built for the same architecture.  This currently is limited
-to the pmax.  The functionality of this option is unknown.
+compatibility with
+.Tn Ultrix
+applications built for the same architecture.
+This currently is limited to the pmax.
+The functionality of this option is unknown.
 .It Cd options COMPAT_FREEBSD
 On those architectures that support it, this enables binary
 compatibility with
 .Fx
-applications built for the same architecture.  This is obviously limited
-to the i386.
+applications built for the same architecture.
+This is obviously limited to the i386.
 .It Cd options COMPAT_HPUX
 On those architectures that support it, this enables binary
-compatibility with HP/UX
-applications built for the same architecture.  This is limited to the
-hp300 port, and has some known bugs.  A limited set of programs do work.
+compatibility with
+.Tn HP/UX
+applications built for the same architecture.
+This is limited to the hp300 port, and has some known bugs.
+A limited set of programs do work.
 .It Cd options COMPAT_IBCS2
 On those architectures that support it, this enables binary
-compatibility with iBCS2 
-applications built for the same architecture.  This is currently
-limited to the i386.
+compatibility with iBCS2 applications built for the same architecture.
+This is currently limited to the i386.
 .It Cd options COMPAT_OSF1
 On those architectures that support it, this enables binary
-compatibility with Digital UNIX (formerly OSF/1)
-applications built for the same architecture.  This is currently
-limited to the alpha, and may not even work.
+compatibility with
+.Tn Digital
+.Ux
+.Po
+formerly
+.Tn OSF/1
+.Pc
+applications built for the same architecture.
+This is currently limited to the alpha, and may not even work.
 .It Cd options COMPAT_NOMID
 Enable compatibility with a.out executables that lack a machine id.
 This includes 
@@ -181,7 +214,8 @@ QMAGIC, NMAGIC, and OMAGIC a.out formats.
 .Ss Debugging Options
 .Bl -ohang
 .It Cd options DDB
-Compiles in a kernel debugger for diagnosing kernel problems. See
+Compiles in a kernel debugger for diagnosing kernel problems.
+See
 .Xr ddb 4
 for details. 
 .Em NOTE:
@@ -190,9 +224,8 @@ not available on all architectures.
 If this is non-zero, enable history editing in the kernel debugger
 and set the size of the history to this value.
 .It Cd options DDB_ONPANIC
-If set to non-zero, the DDB will be entered upon kernel panic.  The
-default if not specified is "1". Note that this sets the value of
-the
+If set to non-zero, the DDB will be entered upon kernel panic.
+The default if not specified is "1". Note that this sets the value of the
 .Em ddb.onpanic
 sysctl variable which may be changed at run time -- see
 .Xr sysctl 8
@@ -955,9 +988,10 @@ a M68060 cpu without FPU, go look into the Processor Configuration Register
 to find out. You need this with Amiga ROMs up to (at least) V40.xxx (OS3.1),
 when you boot via the bootblocks and don't have a DraCo.
 .It Cd options LIMITMEM=value
-If there, limit the part of the first memory bank used by NetBSD to
-value
-megabytes. Default is unlimited.
+If there, limit the part of the first memory bank used by
+.Nx
+to value megabytes.
+Default is unlimited.
 .It Cd options NKPTADD=addvalue
 .It Cd options NKPTADDSHIFT=shiftvalue
 The cpu specific MMU table for the kernel is pre-allocated at kernel startup
@@ -990,8 +1024,9 @@ If set, the kernel will relocate itself to TT-ram, if possible. This
 will give you a slightly faster system. Bewarned that on some TT030 systems,
 the system will frequently dump with MMU-faults with this option enabled.
 .It Cd options SERCONSOLE
-Allow the modem1-port to act as the system-console. A carier should be active
-on modem1 during system boot to active the console functionality.
+Allow the modem1-port to act as the system-console.
+A carrier should be active on modem1 during system boot to active
+the console functionality.
 .It Cd options TT_SCSI
 Include support for the 5380-SCSI configuration as found on the TT030
 and Hades.
@@ -1014,10 +1049,11 @@ Include i386-specific system calls for modifying the local descriptor table,
 used by Windows emulators.
 .It Cd options REALBASEMEM
 Overrides the base memory size passed in from the boot block.  Use this option
-only if the boot block reports the size incorrectly.  (Note that some BIOSes
-put the extended BIOS data area at the top of base memory, and therefore report
-a smaller base memory size to prevent programs overwriting it.  This is correct
-behavior, and you should not use the
+only if the boot block reports the size incorrectly.
+(Note that some BIOSes put the extended BIOS data area at the top
+of base memory, and therefore report a smaller base memory size to
+prevent programs overwriting it.
+This is correct behavior, and you should not use the
 .Em REALBASEMEM
 option to access this memory.)
 .It Cd options REALEXTMEM

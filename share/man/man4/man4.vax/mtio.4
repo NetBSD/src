@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtio.4,v 1.6 1998/02/06 06:07:06 perry Exp $
+.\"	$NetBSD: mtio.4,v 1.7 1998/04/28 06:00:54 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -103,7 +103,8 @@ has been reached. The letter
 is usually prepended to
 the name of the no-rewind devices.
 .Pp
-Unix tapes are written in multiples of 1024 byte block
+.Ux
+tapes are written in multiples of 1024 byte block
 records. Two end-of-file markers mark the end of a tape, and
 one end-of-file marker marks the end of a tape file.
 If the tape is not to be rewound it is positioned with the
