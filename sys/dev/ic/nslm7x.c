@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.3 2000/03/09 04:20:58 groo Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.4 2000/06/24 00:37:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,12 +49,12 @@
 #include <sys/conf.h>
 #include <sys/time.h>
 
-#include <sys/envsys.h>
-
 #include <machine/bus.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
+
+#include <dev/sysmon/sysmonvar.h>
 
 #include <dev/ic/nslm7xvar.h>
 
@@ -67,8 +67,8 @@
 #define DPRINTF(x)
 #endif
 
-struct envsys_range ranges[] = {	/* sc->sensors sub-intervals */
-					/* for each unit type        */
+const struct envsys_range lm_ranges[] = {	/* sc->sensors sub-intervals */
+						/* for each unit type        */
 	{ 7, 7,    ENVSYS_STEMP   },
 	{ 8, 10,   ENVSYS_SFANRPM },
 	{ 1, 0,    ENVSYS_SVOLTS_AC },	/* None */
@@ -79,19 +79,11 @@ struct envsys_range ranges[] = {	/* sc->sensors sub-intervals */
 };
 
 	
-#define SCFLAG_OREAD	0x00000001
-#define SCFLAG_OWRITE	0x00000002
-#define SCFLAG_OPEN	(SCFLAG_OREAD|SCFLAG_OWRITE)
-
 u_int8_t lm_readreg __P((struct lm_softc *, int));
 void lm_writereg __P((struct lm_softc *, int, int));
 void lm_refresh_sensor_data __P((struct lm_softc *));
-
-cdev_decl(lm);
-
-extern struct cfdriver lm_cd;
-
-#define LMUNIT(x)	(minor(x))
+int lm_gtredata __P((struct sysmon_envsys *, struct envsys_tre_data *));
+int lm_streinfo __P((struct sysmon_envsys *, struct envsys_basic_info *));
 
 u_int8_t
 lm_readreg(sc, reg)
@@ -212,184 +204,114 @@ lm_attach(lmsc)
 		lmsc->info[i].desc[4] = i - 7 + '0';
 		lmsc->info[i].desc[5] = 0;
 	}
-}
 
+	/*
+	 * Hook into the System Monitor.
+	 */
+	lmsc->sc_sysmon.sme_ranges = lm_ranges;
+	lmsc->sc_sysmon.sme_sensor_info = lmsc->info;
+	lmsc->sc_sysmon.sme_sensor_data = lmsc->sensors;
+	lmsc->sc_sysmon.sme_cookie = lmsc;
 
-int	
-lmopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
-	int unit = LMUNIT(dev);
-	struct lm_softc *sc;
-	
-	if (unit >= lm_cd.cd_ndevs)
-		return (ENXIO);
-	sc = lm_cd.cd_devs[unit];
-	if (sc == 0)
-		return (ENXIO);
+	lmsc->sc_sysmon.sme_gtredata = lm_gtredata;
+	lmsc->sc_sysmon.sme_streinfo = lm_streinfo;
 
-	/* XXX - add spinlocks instead! */
-	if (sc->sc_flags & SCFLAG_OPEN)
-		return (EBUSY);
+	lmsc->sc_sysmon.sme_nsensors = LM_NUM_SENSORS;
+	lmsc->sc_sysmon.sme_envsys_version = 1000;
 
-	sc->sc_flags |= SCFLAG_OPEN;
-
-	return 0;
+	if (sysmon_envsys_register(&lmsc->sc_sysmon))
+		printf("%s: unable to register with sysmon\n",
+		    lmsc->sc_dev.dv_xname);
 }
 
 
 int
-lmclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
-	struct lm_softc *sc = lm_cd.cd_devs[LMUNIT(dev)];
-
-	DPRINTF(("lmclose: pid %d flag %x mode %x\n", p->p_pid, flag, mode));
-
-	sc->sc_flags &= ~SCFLAG_OPEN;
-
-	return 0;
-}
-
-
-int
-lmioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
-{
-	struct lm_softc *sc = lm_cd.cd_devs[LMUNIT(dev)];
-	struct envsys_range *rng;
+lm_gtredata(sme, tred)
+	struct sysmon_envsys *sme;
 	struct envsys_tre_data *tred;
-	struct envsys_basic_info *binfo;
-	struct timeval t, onepointfive = { 1, 500000 };
-	u_int8_t sdata;
-	int32_t *vers;
+{
+	static const struct timeval onepointfive = { 1, 500000 };
+	struct timeval t;
+	struct lm_softc *sc = sme->sme_cookie;
 	int i, s;
-	int divisor;
 
-	switch (cmd) {
-	case ENVSYS_VERSION:
-		vers = (int32_t *)data;
-		*vers = 1000;
-
-		return (0);
-
-	case ENVSYS_GRANGE:
-		rng = (struct envsys_range *)data;
-		if ((rng->units < ENVSYS_STEMP) ||
-		    (rng->units > ENVSYS_SAMPS) ) {
-			/* Return empty range for unsupp sensor types */
-			rng->low = 1;
-			rng->high = 0;
-		} else {
-			rng->low  = ranges[rng->units].low;
-			rng->high = ranges[rng->units].high;
-		}
-
-		return (0);
-
-	case ENVSYS_GTREDATA:
-		tred = (struct envsys_tre_data *)data;
-		tred->validflags = 0;
-
-		if (tred->sensor < LM_NUM_SENSORS) {
-			/* read new values at most once every 1.5 seconds */
-			s = splclock();
-
-			timeradd(&sc->lastread, &onepointfive, &t);
-
-			i = timercmp(&mono_time, &t, >);
-			if (i) {
-				sc->lastread.tv_sec  = mono_time.tv_sec;
-				sc->lastread.tv_usec = mono_time.tv_usec; 
-			}
-			splx(s);
-		   
-			if (i) {
-				lm_refresh_sensor_data(sc);
-			}
-
-			bcopy(&sc->sensors[tred->sensor], tred,
-			      sizeof(struct envsys_tre_data));
-		}
-
-		return (0);
-
-	case ENVSYS_GTREINFO:
-		binfo = (struct envsys_basic_info *)data;
-
-		if (binfo->sensor >= LM_NUM_SENSORS)
-			binfo->validflags = 0;
-		else
-			bcopy(&sc->info[binfo->sensor], binfo,
-			      sizeof(struct envsys_basic_info));
-
-		return (0);
-
-	case ENVSYS_STREINFO:
-		binfo = (struct envsys_basic_info *)data;
-
-		if (binfo->sensor >= LM_NUM_SENSORS)
-			binfo->validflags = 0;
-		else if (sc->info[binfo->sensor].units == ENVSYS_SVOLTS_DC)
-			sc->info[binfo->sensor].rfact = binfo->rfact;
-		else {
-			/* FAN1 and FAN2 can have divisors set, but not FAN3 */
-			if ((sc->info[binfo->sensor].units == ENVSYS_SFANRPM)
-			    && (binfo->sensor != 10)) {
-
-				if (binfo->rpms == 0) {
-					binfo->validflags = 0;
-					return (0);
-				}
-
-				/* 153 is the nominal FAN speed value */
-				divisor = 1350000 / (binfo->rpms * 153);
-
-				/* ...but we need lg(divisor) */
-				if (divisor <= 1)
-					divisor = 0;
-				else if (divisor <= 2)
-					divisor = 1;
-				else if (divisor <= 4)
-					divisor = 2;
-				else
-					divisor = 3;
-
-				/*
-				 * FAN1 div is in bits <5:4>, FAN2 div is
-				 * in <7:6>
-				 */
-				sdata = lm_readreg(sc, LMD_VIDFAN);
-				if ( binfo->sensor == 8 ) {  /* FAN1 */
-					divisor <<= 4;
-					sdata = (sdata & 0xCF) | divisor;
-				} else { /* FAN2 */
-					divisor <<= 6;
-					sdata = (sdata & 0x3F) | divisor;
-				}
-
-				lm_writereg(sc, LMD_VIDFAN, sdata);
-			}
-
-			bcopy(binfo->desc, sc->info[binfo->sensor].desc, 33);
-			sc->info[binfo->sensor].desc[32] = 0;
-
-			binfo->validflags = ENVSYS_FVALID;
-		}
-
-		return (0);
-
-	default:
-		return (ENOTTY);
+	/* read new values at most once every 1.5 seconds */
+	timeradd(&sc->lastread, &onepointfive, &t);
+	s = splclock();
+	i = timercmp(&mono_time, &t, >);
+	if (i) {
+		sc->lastread.tv_sec  = mono_time.tv_sec;
+		sc->lastread.tv_usec = mono_time.tv_usec; 
 	}
+	splx(s);
+   
+	if (i)
+		lm_refresh_sensor_data(sc);
+
+	*tred = sc->sensors[tred->sensor];
+
+	return (0);
+}
+
+
+int
+lm_streinfo(sme, binfo)
+	struct sysmon_envsys *sme;
+	struct envsys_basic_info *binfo;
+{
+	struct lm_softc *sc = sme->sme_cookie;
+	int divisor;
+	u_int8_t sdata;
+
+	if (sc->info[binfo->sensor].units == ENVSYS_SVOLTS_DC)
+		sc->info[binfo->sensor].rfact = binfo->rfact;
+	else {
+		/* FAN1 and FAN2 can have divisors set, but not FAN3 */
+		if ((sc->info[binfo->sensor].units == ENVSYS_SFANRPM)
+		    && (binfo->sensor != 10)) {
+
+			if (binfo->rpms == 0) {
+				binfo->validflags = 0;
+				return (0);
+			}
+
+			/* 153 is the nominal FAN speed value */
+			divisor = 1350000 / (binfo->rpms * 153);
+
+			/* ...but we need lg(divisor) */
+			if (divisor <= 1)
+				divisor = 0;
+			else if (divisor <= 2)
+				divisor = 1;
+			else if (divisor <= 4)
+				divisor = 2;
+			else
+				divisor = 3;
+
+			/*
+			 * FAN1 div is in bits <5:4>, FAN2 div is
+			 * in <7:6>
+			 */
+			sdata = lm_readreg(sc, LMD_VIDFAN);
+			if ( binfo->sensor == 8 ) {  /* FAN1 */
+				divisor <<= 4;
+				sdata = (sdata & 0xCF) | divisor;
+			} else { /* FAN2 */
+				divisor <<= 6;
+				sdata = (sdata & 0x3F) | divisor;
+			}
+
+			lm_writereg(sc, LMD_VIDFAN, sdata);
+		}
+
+		memcpy(sc->info[binfo->sensor].desc, binfo->desc,
+		    sizeof(sc->info[binfo->sensor].desc));
+		sc->info[binfo->sensor].desc[
+		    sizeof(sc->info[binfo->sensor].desc) - 1] = '\0';
+
+		binfo->validflags = ENVSYS_FVALID;
+	}
+	return (0);
 }
 
 
