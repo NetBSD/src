@@ -1,4 +1,4 @@
-.\"	$NetBSD: netstat.1,v 1.17 1998/07/18 05:04:10 lukem Exp $
+.\"	$NetBSD: netstat.1,v 1.18 1999/01/15 19:06:25 kml Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,7 +46,7 @@
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Nm ""
-.Op Fl dghimnrs
+.Op Fl dghimnrsv
 .Op Fl f Ar address_family
 .Op Fl M Ar core
 .Op Fl N Ar system
@@ -96,8 +96,8 @@ show the state of all sockets; normally sockets used by
 server processes are not shown.
 .It Fl b
 With the interface display (option
-.Fl i
-), show bytes in and out, instead of packets in and out.
+.Fl i ) ,
+show bytes in and out, instead of packets in and out.
 .It Fl d
 With either interface display (option
 .Fl i
@@ -196,6 +196,9 @@ Show the routing tables.
 When
 .Fl s
 is also present, show routing statistics instead.
+.It Fl v
+Show extra (verbose) detail for the routing tables.
+When
 .It Fl w Ar wait
 Show network interface statistics at intervals of
 .Ar wait

@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.11 1999/01/11 12:31:53 mrg Exp $	*/
+/*	$NetBSD: netstat.h,v 1.12 1999/01/15 19:06:25 kml Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,6 +52,7 @@ int	pflag;		/* show given protocol */
 int	rflag;		/* show routing tables (or routing stats) */
 int	sflag;		/* show protocol statistics */
 int	tflag;		/* show i/f watchdog timers */
+int	vflag;		/* verbose route information */
 
 int	interval;	/* repeat interval for i/f stats */
 
