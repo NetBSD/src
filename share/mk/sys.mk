@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.19 1994/07/06 04:12:24 mycroft Exp $
+#	$NetBSD: sys.mk,v 1.19.2.1 1994/07/26 19:58:31 cgd Exp $
 #	@(#)sys.mk	5.11 (Berkeley) 3/13/91
 
 unix=		We run NetBSD.
@@ -181,7 +181,3 @@ YACC.y=		${YACC} ${YFLAGS}
 .sh:
 	rm -f ${.TARGET}
 	cp ${.IMPSRC} ${.TARGET}
-
-# should only be done in 'bsd make' environments, i.e. where using bsd.xxx.mk
-# file, but that's somewhat more difficult...
-.include <bsd.own.mk>
