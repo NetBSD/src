@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.23 2003/02/25 10:35:22 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.24 2003/03/30 17:51:47 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -153,15 +153,15 @@ First 16 ptys, to save inodes on install media
 .It wscons :
 . Bl -tag -width 0123456789 -compact
 . It Ar ttyE#
-Wscons consoles
+wscons consoles
 . It Ar wskbd#
-Wscons keyboard events, see
+wscons keyboard events, see
 .Xr \&wskbd 4
 . It Ar wsmouse#
-Wscons mouse events, see
+wscons mouse events, see
 .Xr \&wsmouse 4
 . It Ar wsmux#
-Wscons events multiplexor, see
+wscons events multiplexor, see
 .Xr \&wsmux 4
 . It Ar wsfont#
 Console font control
