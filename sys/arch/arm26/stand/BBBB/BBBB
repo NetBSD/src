@@ -1,5 +1,5 @@
 REM>BBBB
-REM $NetBSD: BBBB,v 1.5 2001/02/23 00:27:40 bjh21 Exp $
+REM $NetBSD: BBBB,v 1.6 2001/05/26 15:58:26 bjh21 Exp $
 REM
 REM Copyright (c) 1998, 1999, 2000 Ben Harris
 REM All rights reserved.
@@ -33,7 +33,7 @@ REM Ben's BASIC BSD Booter (allegedly)
 ON ERROR ON ERROR OFF:ERROR ERR, REPORT$ + " at line " + STR$(ERL)
 
 debug% = 1
-PRINT ">> BBBB, Revision 0.43"
+PRINT ">> BBBB, Revision 0.44"
 SYS "OS_ReadMemMapInfo" TO nbpp%, npages%
 IF debug% THEN
   PRINT "Machine has ";npages%;" pages of ";nbpp% DIV 1024;"K each.  ";
@@ -318,7 +318,7 @@ DEF PROCload_chunk(file%, offset%, vaddr%, filesz%, memsz%)
   WHILE filesz% > 0
     paddr% = vaddr% - &02000000
     ppn% = paddr% DIV nbpp%
-    IF NOT pgok%(ppn%) THEN ERROR 1, "Page " + STR$(ppn$) + " not free"
+    IF NOT pgok%(ppn%) THEN ERROR 1, "Page " + STR$(ppn%) + " not free"
     fragaddr% = vaddr%(ppn%) + paddr% MOD nbpp%
     fragsz% = nbpp% - (paddr% MOD nbpp%)
     IF fragsz% > filesz% THEN fragsz% = filesz%
