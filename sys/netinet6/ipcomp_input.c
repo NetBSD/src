@@ -1,5 +1,5 @@
-/*	$NetBSD: ipcomp_input.c,v 1.10.4.1 2000/09/29 06:42:42 itojun Exp $	*/
-/*	$KAME: ipcomp_input.c,v 1.18 2000/09/26 07:55:14 itojun Exp $	*/
+/*	$NetBSD: ipcomp_input.c,v 1.10.4.2 2000/10/02 23:41:32 itojun Exp $	*/
+/*	$KAME: ipcomp_input.c,v 1.19 2000/10/01 12:37:20 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -257,7 +257,7 @@ ipcomp6_input(mp, offp, proto)
 		m = NULL;	/*already freed*/
 		ipseclog((LOG_DEBUG, "IPv6 IPComp input: assumption failed "
 		    "(pulldown failure)\n"));
-		ipsecstat.in_inval++;
+		ipsec6stat.in_inval++;
 		goto fail;
 	}
 	ipcomp = mtod(md, struct ipcomp *);
