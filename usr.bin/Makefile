@@ -1,6 +1,6 @@
 #	@(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
 #
-# $Header: /cvsroot/src/usr.bin/Makefile,v 1.17 1993/04/30 08:04:14 glass Exp $
+# $Header: /cvsroot/src/usr.bin/Makefile,v 1.18 1993/05/06 10:46:12 cgd Exp $
 
 SUBDIR=	ar biff basename cal calendar \
 	checknr chpass cksum cmp col colcrt colrm column comm compress \
@@ -14,9 +14,9 @@ SUBDIR=	ar biff basename cal calendar \
 	rdist ref renice rlogin rpcgen rpcinfo rsh ruptime rwall rwho \
 	sccs script sed shar showmount size soelim split strings \
 	strip su symorder tail talk tcopy tee telnet tftp time \
-	tip tn3270 touch tput tr true tset tsort tty ul unexpand unifdef uniq \
-	unvis users uudecode uuencode vacation vgrind vis vmstat \
-	w wall wc what whereis which who whoami whois window \
-	write xargs xinstall xstr yacc yes
+	tip tn3270 touch tput tr true tset tsort tty ul uname unexpand \
+	unifdef uniq unvis users uudecode uuencode vacation vgrind vis \
+	vmstat w wall wc what whereis which who whoami whois window write \
+	xargs xinstall xstr yacc yes
 
 .include <bsd.subdir.mk>

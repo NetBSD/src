@@ -195,7 +195,7 @@ char *syscallnames[] = {
 #endif
 	"getdomainname",			/* 162 = getdomainname */
 	"setdomainname",			/* 163 = setdomainname */
-	"#164",			/* 164 = nosys */
+	"uname",			/* 164 = uname */
 	"#165",			/* 165 = nosys */
 	"#166",			/* 166 = nosys */
 	"#167",			/* 167 = nosys */
