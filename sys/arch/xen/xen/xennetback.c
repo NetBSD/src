@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.3 2005/03/10 17:12:12 bouyer Exp $      */
+/*      $NetBSD: xennetback.c,v 1.4 2005/03/11 11:34:32 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -344,6 +344,9 @@ xnetback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 		printf("%s interrupting at irq %d\n",
 		    xneti->xni_if.if_xname, xneti->xni_irq);
 		hypervisor_enable_irq(xneti->xni_irq);
+		xneti->status = CONNECTED;
+		if (xneti->xni_if.if_flags & IFF_UP)
+			xneti->xni_if.if_flags |= IFF_RUNNING;
 		req->status = NETIF_BE_STATUS_OKAY;
 		break;
 	}
@@ -360,6 +363,8 @@ xnetback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 			req->status = NETIF_BE_STATUS_INTERFACE_NOT_FOUND;
 			goto end;
 		}
+		xneti->status = DISCONNECTED;
+		xneti->xni_if.if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 		hypervisor_disable_irq(xneti->xni_irq);
 		event_remove_handler(xneti->xni_irq,
 		    xennetback_evthandler, xneti);
@@ -708,7 +713,7 @@ xennetback_ifwatchdog(struct ifnet * ifp)
 static int
 xennetback_ifinit(struct ifnet *ifp)
 {
-	//struct xnetback_instance *xneti = ifp->if_softc;
+	struct xnetback_instance *xneti = ifp->if_softc;
 	int s = splnet();
 
 	/* cancel pending I/O - possible ? */
@@ -717,7 +722,8 @@ xennetback_ifinit(struct ifnet *ifp)
 		splx(s);
 		return 0;
 	}
-	ifp->if_flags |= IFF_RUNNING;
+	if (xneti->status == CONNECTED)
+		ifp->if_flags |= IFF_RUNNING;
 	splx(s);
 	return 0;
 }
