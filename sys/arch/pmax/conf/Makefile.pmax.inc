@@ -1,10 +1,4 @@
-#	$NetBSD: Makefile.pmax.inc,v 1.4 2002/03/20 20:18:00 gmcgarry Exp $
-
-.if ${USETOOLS} == "yes"
-ELF2ECOFF?=	${TOOLDIR}/bin/nbmips-elf2ecoff
-.else
-ELF2ECOFF?=	elf2ecoff
-.endif
+#	$NetBSD: Makefile.pmax.inc,v 1.5 2002/04/12 05:11:17 lukem Exp $
 
 SYSTEM_LD_TAIL_EXTRA=; \
 		echo ${ELF2ECOFF} $@ $@.ecoff; ${ELF2ECOFF} $@ $@.ecoff; \

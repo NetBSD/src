@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.34 2002/03/20 20:15:18 gmcgarry Exp $
+# $NetBSD: Makefile.booters,v 1.35 2002/04/12 05:11:18 lukem Exp $
 
 # $S must correspond to the top of the 'sys' tree
 S=	${.CURDIR}/../../../..
@@ -17,12 +17,6 @@ mips:
 	ln -s $S/arch/mips/include mips
 
 BINMODE?=	444
-
-.if ${USETOOLS} == "yes"
-ELF2ECOFF?=	${TOOLDIR}/bin/nbmips-elf2ecoff
-.else
-ELF2ECOFF?=	elf2ecoff
-.endif
 
 .PATH:		${.CURDIR}/../common
 AFLAGS+=	-D_LOCORE -D_KERNEL
