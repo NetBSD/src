@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2003/05/15 14:44:58 itojun Exp $
+# $NetBSD: Makefile,v 1.12 2003/09/06 12:56:43 itojun Exp $
 
 NOMAN=	# defined
 
@@ -7,7 +7,7 @@ NOMAN=	# defined
 PROG=	rtsol
 SRCS=	rtsold.c rtsol.c if.c probe.c dump.c rtsock.c
 
-CPPFLAGS+=-DINET6 -DHAVE_ARC4RANDOM -DUSE_RTSOCK
+CPPFLAGS+=-DINET6 -DUSE_RTSOCK
 
 #MAN=	rtsold.8
 
