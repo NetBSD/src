@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.6 2001/02/15 05:20:42 blymn Exp $	*/
+/*	$NetBSD: field.c,v 1.7 2001/02/16 03:19:32 blymn Exp $	*/
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
  *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -246,7 +246,7 @@ set_field_buffer(FIELD *field, int buffer, char *value)
 	     (char *) realloc(field->buffers[buffer].string, len + 1)) == NULL)
 		return E_SYSTEM_ERROR;
 
-	strncpy(field->buffers[buffer].string, value, len);
+	strlcpy(field->buffers[buffer].string, value, len + 1);
 	field->buffers[buffer].length = len;
 	field->buffers[buffer].allocated = len + 1;
 	field->row_count = 1; /* must be at least one row */
