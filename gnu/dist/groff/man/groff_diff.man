@@ -3,12 +3,12 @@
 .ig
 groff_diff.man
 
-Last update : 1 Mar 2003
+Last update : 04 May 2004
 
 This file is part of groff, the GNU roff type-setting system.
 It is the source of the man-page groff_diff(7).
 
-Copyright (C) 1989, 2001, 2002, 2003 Free Software Foundation, Inc.
+Copyright (C) 1989, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 written by James Clark
 
 modified by Werner Lemberg <wl@gnu.org>
@@ -27,6 +27,9 @@ FDL in the main directory of the groff source package.
 .\" --------------------------------------------------------------------
 .\" Setup
 .\" --------------------------------------------------------------------
+.
+.do nr groff_diff_C \n[.C]
+.cp 0
 .
 .mso www.tmac
 .
@@ -878,14 +881,6 @@ or string diversion is currently undefined or if it is defined to be a
 request; normally they modify the value of an existing object.
 .
 .TP
-.BI .ami\  xx\ yy
-Append to macro indirectly.
-.
-See the
-.B dei
-request below for more information.
-.
-.TP
 .BI .am1\  xx\ yy
 Similar to
 .BR .am , 
@@ -906,6 +901,41 @@ only affect the macro parts defined by
 .B .am1
 and
 .BR .ds1 .
+.
+.TP
+.BI .ami\  xx\ yy
+Append to macro indirectly.
+.
+See the
+.B dei
+request below for more information.
+.
+.TP
+.BI .ami1\  xx\ yy
+Same as the
+.B ami
+request but compatibility mode is switched off during execution.
+.
+.TP
+.BI .as1\  xx\ yy
+Similar to
+.BR .as , 
+but compatibility mode is switched off during expansion.
+.
+To be more precise, a `compatibility save' token is inserted at the
+beginning of the string, and a `compatibility restore' token at the end.
+.
+As a consequence, the requests
+.BR as ,
+.BR as1 ,
+.BR ds ,
+and
+.B ds1
+can be intermixed freely since the compatibility save/\:restore tokens
+only affect the (sub)strings defined by
+.B as1
+and
+.BR ds1 .
 .
 .TP
 .BI .asciify\  xx
@@ -951,27 +981,6 @@ Note that glyph information (font, font size, etc.) is not preserved;
 use
 .B .unformat
 instead.
-.
-.TP
-.BI .as1\  xx\ yy
-Similar to
-.BR .as , 
-but compatibility mode is switched off during expansion.
-.
-To be more precise, a `compatibility save' token is inserted at the
-beginning of the string, and a `compatibility restore' token at the end.
-.
-As a consequence, the requests
-.BR as ,
-.BR as1 ,
-.BR ds ,
-and
-.B ds1
-can be intermixed freely since the compatibility save/\:restore tokens
-only affect the (sub)strings defined by
-.B as1
-and
-.BR ds1 .
 .
 .TP
 .B .backtrace
@@ -1244,6 +1253,14 @@ and
 is not the same.
 .
 .TP
+.BI .de1\  xx\ yy
+Similar to
+.BR .de , 
+but compatibility mode is switched off during execution.
+.
+On entry, the current compatibility mode is saved and restored at exit.
+.
+.TP
 .BI .dei\  xx\ yy
 Define macro indirectly.
 .
@@ -1273,12 +1290,10 @@ is equivalent to
 .RE
 .
 .TP
-.BI .de1\  xx\ yy
-Similar to
-.BR .de , 
-but compatibility mode is switched off during execution.
-.
-On entry, the current compatibility mode is saved and restored at exit.
+.BI .dei1\  xx\ yy
+Similar to the
+.B dei
+request but compatibility mode is switched off during execution.
 .
 .TP
 .BI .do\  xxx
@@ -1889,6 +1904,9 @@ request.
 .TP
 .B .return
 Within a macro, return immediately.
+.
+If called with an argument, return twice, namely from the current macro and
+from the macro one level higher.
 .
 No effect otherwise.
 .
@@ -2675,6 +2693,18 @@ The title length as set by the
 request.
 .
 .TP
+.B \[rs]n[.m]
+The name of the current drawing color.
+.
+This is a string-valued register.
+.
+.TP
+.B \[rs]n[.M]
+The name of the current background color.
+.
+This is a string-valued register.
+.
+.TP
 .B \[rs]n[.ne]
 The amount of space that was needed in the last
 .B ne
@@ -2763,6 +2793,12 @@ trap, and what the vertical position actually is.
 Useful in conjunction with the
 .B \[rs]n[.ne]
 register.
+.
+.TP
+.B \[rs]n[.U]
+Set to 1 if in safer mode and to 0 if in unsafe mode (as given with the
+.B \-U
+command line option).
 .
 .TP
 .B \[rs]n[.vpt]
@@ -2902,7 +2938,7 @@ is the current year minus 1900.
 predefines a single (read/write) string-based register,
 .BR \[rs]*(.T ,
 which contains the argument given to the
-.B -T
+.B \-T
 command line option, namely the current output device (for example,
 .I latin1
 or
@@ -2912,7 +2948,7 @@ Note that this is not the same as the (read-only) number register
 which is defined to be\~1 if
 .B troff
 is called with the
-.B -T
+.B \-T
 command line option, and zero otherwise.
 .
 This behaviour is different to UNIX troff.
@@ -3539,8 +3575,8 @@ pointsize will be set to 10\~scaled points.
 .
 .P
 In
-.I groff
-mode, there is a fundamental difference between unformatted input
+.IR groff ,
+there is a fundamental difference between unformatted input
 characters, and formatted output characters (glyphs).
 .
 Everything that affects how a glyph will be output is
@@ -3590,8 +3626,8 @@ The following example will make things clearer.
 .RE
 .
 .P
-In
-.I GNU mode
+With
+.I GNU troff
 this will be printed as
 .esc \[rs] .
 So each pair of input backslashes
@@ -3662,7 +3698,7 @@ classical "device-independent" troff did.
 .SH AUTHORS
 .\" --------------------------------------------------------------------
 .
-Copyright (C) 1989, 2001, 2002, 2003 Free Software Foundation, Inc.
+Copyright (C) 1989, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 .
 .P
 This document is distributed under the terms of the FDL (GNU Free
@@ -3740,6 +3776,7 @@ of 1992, being the
 .URL http://\:cm.bell-labs.com/\:cm/\:cs/\:cstr/\:54.ps.gz \
      "classical troff documentation" .
 .
+.cp \n[groff_diff_C]
 .
 .\" --------------------------------------------------------------------
 .\" Emacs variables

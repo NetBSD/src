@@ -1,7 +1,7 @@
-/*	$NetBSD: div.cpp,v 1.1.1.1 2003/06/30 17:52:07 wiz Exp $	*/
+/*	$NetBSD: div.cpp,v 1.1.1.2 2004/07/30 14:44:54 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002
+/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002, 2004
    Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
@@ -25,7 +25,6 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 // diversions
 
 #include "troff.h"
-#include "symbol.h"
 #include "dictionary.h"
 #include "hvunits.h"
 #include "env.h"
@@ -34,6 +33,8 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 #include "token.h"
 #include "div.h"
 #include "reg.h"
+
+#include "nonposix.h"
 
 int exit_started = 0;		// the exit process has started
 int done_end_macro = 0;		// the end macro (if any) has finished
@@ -469,7 +470,7 @@ trap::trap(symbol s, vunits n, trap *p)
 {
 }
 
-void top_level_diversion::add_trap(symbol nm, vunits pos)
+void top_level_diversion::add_trap(symbol nam, vunits pos)
 {
   trap *first_free_slot = 0;
   trap **p;
@@ -479,22 +480,22 @@ void top_level_diversion::add_trap(symbol nm, vunits pos)
 	first_free_slot = *p;
     }
     else if ((*p)->position == pos) {
-      (*p)->nm = nm;
+      (*p)->nm = nam;
       return;
     }
   }
   if (first_free_slot) {
-    first_free_slot->nm = nm;
+    first_free_slot->nm = nam;
     first_free_slot->position = pos;
   }
   else
-    *p = new trap(nm, pos, 0);
+    *p = new trap(nam, pos, 0);
 }  
 
-void top_level_diversion::remove_trap(symbol nm)
+void top_level_diversion::remove_trap(symbol nam)
 {
   for (trap *p = page_trap_list; p; p = p->next)
-    if (p->nm == nm) {
+    if (p->nm == nam) {
       p->nm = NULL_SYMBOL;
       return;
     }
@@ -509,10 +510,10 @@ void top_level_diversion::remove_trap_at(vunits pos)
     }
 }
       
-void top_level_diversion::change_trap(symbol nm, vunits pos)
+void top_level_diversion::change_trap(symbol nam, vunits pos)
 {
   for (trap *p = page_trap_list; p; p = p->next)
-    if (p->nm == nm) {
+    if (p->nm == nam) {
       p->position = pos;
       return;
     }
@@ -545,6 +546,7 @@ void cleanup_and_exit(int exit_code)
     the_output->trailer(topdiv->get_page_length());
     delete the_output;
   }
+  FLUSH_INPUT_PIPE(STDIN_FILENO);
   exit(exit_code);
 }
 
@@ -669,7 +671,7 @@ void when_request()
 void begin_page()
 {
   int got_arg = 0;
-  int n;
+  int n = 0;		/* pacify compiler */
   if (has_arg() && get_integer(&n, topdiv->get_page_number()))
     got_arg = 1;
   while (!tok.newline() && !tok.eof())

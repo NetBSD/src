@@ -1,4 +1,4 @@
-/*	$NetBSD: XFontName.c,v 1.1.1.1 2001/04/19 12:52:31 wiz Exp $	*/
+/*	$NetBSD: XFontName.c,v 1.1.1.2 2004/07/30 14:45:08 wiz Exp $	*/
 
 /*
  * XFontName.c
@@ -227,6 +227,7 @@ XCompareFontName (name1, name2, fontNameAttributes)
 	return True;
 }
 
+Bool
 XCopyFontName (name1, name2, fontNameAttributes)
 	XFontName	*name1, *name2;
 	unsigned int	fontNameAttributes;

@@ -1,7 +1,8 @@
-/*	$NetBSD: refer.h,v 1.1.1.2 2003/06/30 17:52:14 wiz Exp $	*/
+/*	$NetBSD: refer.h,v 1.1.1.3 2004/07/30 14:45:02 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992, 2001 Free Software Foundation, Inc.
+/* Copyright (C) 1989, 1990, 1991, 1992, 2001, 2004
+   Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -74,6 +75,6 @@ void command_error(const char *,
 		   const errarg &arg2 = empty_errarg,
 		   const errarg &arg3 = empty_errarg);
 
-struct reference;
+class reference;
 
 void compute_labels(reference **, int);

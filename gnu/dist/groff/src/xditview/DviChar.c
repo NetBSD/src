@@ -1,4 +1,4 @@
-/*	$NetBSD: DviChar.c,v 1.1.1.2 2003/06/30 17:52:18 wiz Exp $	*/
+/*	$NetBSD: DviChar.c,v 1.1.1.3 2004/07/30 14:45:08 wiz Exp $	*/
 
 /*
  * DviChar.c
@@ -7,7 +7,9 @@
  * font indexes and back
  */
 
-#include   "DviChar.h"
+#include <stdlib.h>
+#include <string.h>
+#include "DviChar.h"
 
 extern char *xmalloc();
 
@@ -23,7 +25,7 @@ static struct map_list	*world;
 static int	standard_maps_loaded = 0;
 static void	load_standard_maps ();
 static int	hash_name ();
-static		dispose_hash(), compute_hash();
+static void	dispose_hash(), compute_hash();
 
 DviCharNameMap *
 DviFindMap (encoding)
@@ -60,7 +62,7 @@ DviRegisterMap (map)
 	compute_hash (map);
 }
 
-static
+static void
 dispose_hash (map)
 	DviCharNameMap	*map;
 {
@@ -90,7 +92,7 @@ hash_name (name)
 	return i;
 }
 
-static
+static void
 compute_hash (map)
 	DviCharNameMap	*map;
 {

@@ -1,7 +1,8 @@
-/*	$NetBSD: font.h,v 1.1.1.2 2003/06/30 17:52:05 wiz Exp $	*/
+/*	$NetBSD: font.h,v 1.1.1.3 2004/07/30 14:44:50 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992, 2002 Free Software Foundation, Inc.
+/* Copyright (C) 1989, 1990, 1991, 1992, 2002, 2004
+   Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -89,7 +90,7 @@ private:
   unsigned ligatures;
   font_kern_list **kern_hash_table;
   int space_width;
-  short *ch_index;
+  int *ch_index;
   int nindices;
   font_char_metric *ch;
   int ch_used;

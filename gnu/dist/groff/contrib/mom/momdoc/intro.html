@@ -50,7 +50,7 @@ She's aimed at three kinds of users:
 		started.
 </ol>
 <p>
-As might be infered from the above, <strong>mom</strong> is two macro
+As might be inferred from the above, <strong>mom</strong> is two macro
 packages in one: a set of typesetting macros, and a set of document
 processing macros.  The typesetting macros govern the physical
 aspects of page layout and provide sane, comprehensible control over
@@ -72,6 +72,7 @@ read up on groff
 <a href="definitions.html#TERMS_PRIMITIVES">primitives</a>
 in order to accomplish what you want; the typesetting macros take
 care of that.
+<p>
 
 <a name="INTRO_TYPESETTING">
 	<h2><u>Typesetting with mom</u></h2>
@@ -107,7 +108,7 @@ way: one step at a time with complete control over every element on
 the page.
 <p>
 Years of reading various mailing lists dealing with computer
-typesetting (groff, TeX, and friends) have convinced me that no progam
+typesetting (groff, TeX, and friends) have convinced me that no program
 can ever replace the human eye and human input when it comes to high
 quality typesetting.  As of this writing, a thread on the subject of
 &quot;micro typography&quot; in groff has been going on for nearly a
@@ -124,7 +125,7 @@ so on.  She merely tries to provide tools that allow knowledgeable
 typesetters to come up with solutions to these problems
 in ways that are somewhat easier and more intuitive than manipulating
 groff at the
-<a href="definitions.html#TERMS_PRIMITIVES">primtive</a>
+<a href="definitions.html#TERMS_PRIMITIVES">primitive</a>
 level.  As a professional typesetter of more than two decades, and a
 writer, I have encountered few situations that cannot be handled by
 <strong>mom</strong>'s typesetting macros.
@@ -136,7 +137,7 @@ account both word AND letter spacing when
 lines.  At present, only word spacing is adjusted, requiring what I
 consider an unnecessary amount of user intervention whenever
 letter spacing is required.
-
+<p>
 <a name="INTRO_DOCPROCESSING">
 	<h2><u>Document processing with mom</u></h2>
 </a>
@@ -149,7 +150,7 @@ differs is in the degree of control you have over the look and
 placement of the various elements of a document.  For example, if you
 don't want your heads underlined, or you want them bigger/smaller,
 or you'd prefer them to be in a different font, or you'd rather they
-were flush left instead of centered, you can make the changes easily
+were flush left instead of centred, you can make the changes easily
 and have them apply to the whole document.  Temporary and one-off
 changes are easy, too.
 <p>
@@ -163,7 +164,7 @@ special macro --
 high-school typing teacher proud.  Footnotes, multiple columns,
 recto/verso printing and user designable headers and footers are also
 part of the fun.
-
+<p>
 <a name="INTRO_PHILOSOPHY">
 	<h2><u>Mom's philosophy</u></h2>
 </a>
@@ -220,8 +221,7 @@ produce output that looks good no matter where it's displayed.
 She's designed for printed output, although with
 <a href="#PRINTSTYLE">PRINTSTYLE TYPEWRITE</a>
 she produces acceptable terminal copy.  She makes no attempt to be
-compatible with older versions of troff.  And she remains largely
-untested with the groff preprocessors (tbl, pic, eqn, etc.)
+compatible with older versions of troff.
 <p>
 One special feature in <strong>mom</strong>'s design is the attention
 she pays to aligning the bottom margins of every page.  Nothing screams
@@ -233,7 +233,7 @@ bottom of the page without some text underneath it), but in all cases
 where hanging bottom margins can be avoided, <strong>mom</strong> does
 avoid them, by clever adjustments to leading (&quot;line spacing&quot;)
 and the spacing between different elements on the page.
-
+<p>
 <a name="INTRO_DOCUMENTATION">
 	<h2><u>A note on mom's documentation</u></h2>
 </a>
@@ -259,26 +259,37 @@ or procedure will cause head scratching, I offer an explanation.
 And when explanations aren't enough, I offer examples.
 <a name="CANONICAL"></a>
 <p>
-The canonical reference materials for groff are <strong>cstr54</strong>
-(a downloadable PostScript copy of which is available
+The canonical reference materials for groff are
+<strong>cstr54</strong> (a downloadable PostScript copy of which is
+available
 <a href="http://www.kohala.com/start/troff/">here</a>)
-and the <strong>troff</strong> and <strong>groff_diff</strong> manpages.
-I've tried to avoid reiterating them, however, in a few places, this has
-proved impossible.  Be forewarned: I have no qualms about sidestepping
-excrutiating completeness about groff usage; I'm more concerned with
-getting <strong>mom</strong> users up and running. <em>Mea culpa.</em>
+and the <strong>troff</strong> and <strong>groff_diff</strong>
+manpages.  Another excellent source of information (maybe the best)
+are the groff <strong>info</strong> pages, available by typing
+<p>
+<pre>
+	info groff
+</pre>
+
+at the command line (assuming you have <strong>info</strong>
+installed on your system).
+<p>
+I've tried to avoid reiterating the information contained in these
+documents; however, in a few places, this has proved impossible.
+But be forewarned: I have no qualms about sidestepping excruciating
+completeness concerning groff usage; I'm more interested in getting
+<strong>mom</strong> users up and running. <em>Mea culpa.</em>
 <p>
 <strong>Note:</strong> <strong>Mom</strong>'s macro file
 (om.tmac) is heavily commented.  Each macro is preceded by a
-description of its arguments, function, and usage, which may
+description of its arguments, function and usage, which may
 give you information in addition to what's contained in this
 documentation.
-
+<p>
 <a name="MACRO_ARGS">
 	<h3><u>How to read macro arguments</u></h3>
 </a>
 
-<p>
 The concise descriptions of macros in this documentation typically
 look like this:
 <blockquote>
@@ -299,7 +310,7 @@ should be familiar to anyone who has ever read a manpage.  Briefly:
 		which means &quot;or.&quot;
 	<li>Arguments that are optional are surrounded by square brackets.
 	<li>&lt;off&gt; in an argument list means that any argument
-		turns the macro off.
+	    other than those in the argument list turns the macro off.
 </ol>
 
 <a name="TOGGLE_MACRO"><h3><u>Toggle macros</u></h3></a>
@@ -315,12 +326,14 @@ simply reads
 <blockquote>
 <var>toggle</var>
 </blockquote>
+<br>
 <hr>
 
 <h3>Example 1: an argument requiring double-quotes</h3>
 <blockquote>
 Macro: <strong>TITLE</strong> <var>&quot;&lt;title of document&gt;&quot;</var> 
 </blockquote>
+<p>
 The required argument to <strong>TITLE</strong> is the title of your
 document.  Since it's surrounded by double-quotes, you must
 include them in the argument, like this:
@@ -333,6 +346,7 @@ include them in the argument, like this:
 <blockquote>
 Macro: <strong>TAB_SET</strong> <var>&lt;tab #&gt;  &lt;indent&gt;  &lt;length&gt;  [ L | R | C | J [ QUAD ] ]</var> 
 </blockquote>
+<p>
 The first required argument is a number that identifies the tab (say,
 "3").  The second required argument is an indent from the left margin
 (say, 6 picas).  The third required argument is the length of the tab
@@ -355,12 +369,12 @@ you could enter:
 	.TAB_SET 3 6P 3P L QUAD
 </pre>
 
-<a name="TOGGLE_EXAMPLE"><h3>Example 3: a sample toggle macro:</h3></a>
-
+<a name="TOGGLE_EXAMPLE"></a>
+<h3>Example 3: a sample toggle macro:</h3>
 <blockquote>
 Macro: <strong>QUOTE</strong> <var>toggle</var> 
 </blockquote>
-
+<p>
 <strong>QUOTE</strong> begins a section of quoted text in a document
 and doesn't require an argument.  When the quote's finished,
 you have to tell <strong>mom</strong> it's done.

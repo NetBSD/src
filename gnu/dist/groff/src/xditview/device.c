@@ -1,9 +1,10 @@
-/*	$NetBSD: device.c,v 1.1.1.2 2003/06/30 17:52:18 wiz Exp $	*/
+/*	$NetBSD: device.c,v 1.1.1.3 2004/07/30 14:45:09 wiz Exp $	*/
 
 /* device.c */
 
 #include <stdio.h>
 #include <ctype.h>
+#include <stdlib.h>
 
 #include <X11/Xos.h>
 #include <X11/Intrinsic.h>
@@ -306,10 +307,13 @@ int scale_round(n, x, y)
   if (n >= 0) {
     if (n <= (INT_MAX - y2)/x)
       return (n*x + y2)/y;
+    return (int)(n*(double)x/(double)y + .5);
   }
-  else if (-(unsigned)n <= (-(unsigned)INT_MIN - y2)/x)
+  else {
+    if (-(unsigned)n <= (-(unsigned)INT_MIN - y2)/x)
       return (n*x - y2)/y;
-  return (int)(n*(double)x/(double)y + .5);
+    return (int)(n*(double)x/(double)y + .5);
+  }
 }
 
 static
@@ -561,7 +565,7 @@ static
 FILE *open_device_file(device_name, file_name, result)
      char *device_name, *file_name, **result;
 {
-  char *buf, *path;
+  char *buf;
   FILE *fp;
 
   buf = XtMalloc(3 + strlen(device_name) + 1 + strlen(file_name) + 1);

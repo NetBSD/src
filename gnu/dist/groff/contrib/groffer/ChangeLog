@@ -1,4 +1,231 @@
-2003-01-22  Bernd Warken  <bwarken@mayn.de>
+2004-04-30  Bernd Warken
+	________________________________________________________________
+	* release of groffer 0.9.7
+
+	* groffer.sh:
+	- obj(), obj_data(), obj_from_output(), obj_set(): New object
+	oriented functions to minimize complicated `eval' commands.
+	- list_*(): Corrections.
+	- usage(): Streamlining.
+	
+	* groffer.man, README_SH:
+	Corrections.
+
+2004-04-27  Bernd Warken
+	________________________________________________________________
+	* release of groffer 0.9.6
+
+	This version replaces the license of all files except ChangeLog of
+	the groffer source to the GNU General Public License (GPL) of the
+	version described in files COPYING and LICENSE in the groff top
+	source directory.
+
+	* groffer.man:
+	Changement from the GNU Free Documentation License (FDL) to
+	the GNU General Public License (GPL).
+
+	* README, README_SH, TODO:
+	Add license GNU General Public License (GPL).
+	
+	* Makefile.sub, groffer.sh:
+	Keep the GNU General Public License (GPL), but refer to the
+	COPYING and LICENSE files.
+
+	* ChangeLog: Add a license in the style of Emacs ChangeLog file,
+	which is weaker than the GPL, but has its flavor.
+
+2004-04-24  Bernd Warken
+	________________________________________________________________
+	* release of groffer 0.9.5
+
+	This version is a rewrite of groffer in many parts, but it is kept
+	in the old single script style.
+
+	Overview of new options:
+	--text, --mode text, --tty-viewer,
+	--X, --mode X, --X-viewer, --html, --mode html, --html-view,
+	--apropos-data, --apropos-devel, --apropos-progs
+
+	New file:
+	<groffer-source>/README_SH
+
+	
+	******* Extension of the `apropos' handling
+
+        The output of man's `apropos' has grown immensely meanwhile, so it
+	has become inefficient.  Now `groffer' provides new options to get
+	the a selected information from this output.
+
+	* groffer.sh:
+        `--apropos-progs': new option for displaying only information
+        on programs (man page sections 1, 6, and 8)
+        `--apropos-data': new option for displaying only information
+        on documented data (man page sections 4, 5 and 7)
+        `--apropos-devel': new option for displaying only information
+        on development documentation (man page sections 2, 3 and 9)
+        `--apropos': still displays just the output of man's `apropos'
+	program.
+	- Specify all of these options as a single argument option; that
+	makes groffer's `--apropos' option slightly different because
+	the corresponding `man' option does not have arguments,	but takes
+	all file arguments as apropos targets.  So just ignore the `man'
+	options `-k' and `--apropos' in the parsing of $MANOPT.
+	- Exit after processing one `apropos' call.
+
+
+	******* Quasi object oriented function arguments
+
+	An object is the name of an environment variable.  The value of
+	this variable contains the object's content.  This allows to
+	specify function arguments and the calling syntax in a simpler way
+	by letting the first argument be a variable name, usable for input
+	or output.
+	
+	Such an object type is `list', the string value of a shell
+	variable arranged in space-separated single-quoted elements, such
+	as $GROFFER_OPT internally.
+
+	* groffer.sh:
+	- Remove list_from_args(), list_element_from_arg()
+	list_from_lists(), list_length(), and list_prepend().
+	They can be replaced by list_append().
+	- All list*() functions are rearranged such that the first
+	argument is a list object, the name of a variable.
+
+
+	******* Simplification of configuration files
+
+	The new syntax of the groffer configuration files is
+	- all lines starting with a `-' character are interpreted as
+	command line options for all calls of groffer; they are collected
+	and prepended to the actual value of $GROFFER_OPT; optional
+	spaces at the beginning.of the line are omitted.
+	- all other lines are interpreted as a shell command and executed
+	in the current shell of the groffer call.
+	
+	Precedence:
+	- The command line and the external environment variables such as
+	$GROFFER_OPT of the groffer call have the highest precedence.
+	- This is overwritten by the configuration file in the user's home
+	directory.
+	- The system configuration file in /etc has the lowest
+	precedence.
+	
+	* groffer.sh:	
+	The configuration files are now called after the determination of
+	the temporary files in main_init().
+
+
+	******* Script file name
+
+	The file name of the script is needed for the several calls during
+	the search for the optimal shell.
+
+	* groffer.sh:
+	- $_GROFFER_SH: replace $_this by $_GROFFER_SH and use $0 for
+	determining the file name of the script for the following calls,
+	instead of the cumbersome @BINDIR@ construction.
+	- Force the script to be called as an executable file, so $0 must
+	contain the program name.
+
+	
+	******* Improved temporary file names
+
+	Just like groff, groffer mixes all file parameters into a single
+	output file.  Its name is now constructed as a comma-separated
+	list built from the file name arguments without a leading comma.
+	So a leading comma can be used for the internal temporary file
+	names.
+	
+	* groffer.sh:
+	- $_OUTPUT_FILE_NAME: new global variable as basis for the output
+	file name; it is set in main_set_resources().
+        - tmp_create(): use `,name' for temporary files different from
+	output file because the output file name does not start with a
+	comma.  `$$' is not needed anymore.
+	- main_display(): simplification of $_modefile in _do_display()
+	and single display modes.
+	- Add extension `.html' to output file name in html mode.
+	- base_name(): correction for strange positions of `/'.
+
+
+	******* Mode fixes
+
+	* groffer.sh:
+	- Set the main default mode to `x' with groff's	X Window viewer
+	`gxditview'.
+	- Allow 'x' and 'X' in `--mode' for the X Window mode; the same
+	for `--x' and `X', `--x-viewer' and `--X-viewer'.
+	- Make groff's `-X' equivalent to `mode X'.
+	- Fix `--auto', `--mode auto',  and `--default-modes'.
+	- `html' mode: new mode equivalent to `www', add `konqueror' and
+	`lynx' as viewers.
+	- `pdf' mode: fix zoom options for pdf-viewer `xpdf' in
+	main_set_resources(); in main_display() fix the display structure.
+	- Set default X Window resolution to 75dpi.  This is not optimal,
+	but with a higher value the options and resources for some viewers
+	must be optimized.
+	`--text' and `--mode text': new option for text output without a
+	pager.
+	- `--tty-viewer': new option equivalent to `--pager'.
+	- Correct the pagers for `tty' mode.
+	- Fix `groff' mode in main_set_resources() and main_display().
+	- Harmonize `--mode arg' with the equivalent options `--arg'.
+
+
+	******* Fixes for command line options
+
+	* groffer.sh:
+	- list_from_cmdline(): fix the parsing of options with arguments.
+	- Rename $_OPT_TTY_DEVICE to $_OPT_TEXT_DEVICE.
+	- $_OPTS_X_*: new variables for the inhereted X Window variables.
+	- Improve the distribution of the command line options into
+	$_OPTS_GROFFER_*, $_OPTS_GROFF_*, $_OPTS_X_*, and $_OPTS_MAN_*.
+	- $_OPTS_MANOPT_*: new variables for the parsing of $MANOPT.
+	- Correct $_OPTS_CMDLINE_*.
+	- Remove some unused $_OPTS_*.
+	- `--iconic': new option from `-iconic' of the X Window toolkit.
+	- Correct `--rv' to an option without argument.
+	- Minor fixes of other  X Window toolkit options.
+
+
+	******* Other fixes
+
+	* groffer.sh:
+	- is_prog(): allow 0 arguments.
+	- is_not_writable(): new function.
+	- is_*(): fix trailing return codes.
+        - Replace most `test' calls by is_*() functions.
+	- man_setup(): due to bugs in `manpath', prefer
+	manpath_set_from_path() for the determination of the man page path.
+	- man_search_section(): correction of some `for' loops.
+	- Remove export of external non-groffer variables.
+
+	
+	******* Documentation
+	
+	* groffer.man:
+	- Reorder the option details according to the option origin as
+	groffer, groff, X, and man options.
+	- Add the programming changes information mentioned above.
+	- Support man pages with a dot in their name
+
+	* README_SH: new file
+	Move large parts of the documentation in `groffer.sh' into this
+	file.
+	
+	* groffer.sh: usage():
+	- Change the output for `--help' to standard output.
+	- Restructure the information for this help output.
+	
+
+	******* Removement of the author's email address
+	
+	Because of the extreme spam attacks, the author removed all
+	occurencies of his email address in every file of the groffer
+	source.
+
+2003-01-22  Bernd Warken 
 	________________________________________________________________
 	* release of groffer 0.9.4
 
@@ -19,7 +246,7 @@
 	* TODO:
 	Remove mention of `shoop' and `apropos'.
 
-2002-10-21  Bernd Warken  <bwarken@mayn.de>
+2002-10-21  Bernd Warken 
 	________________________________________________________________
 	* release of groffer 0.9.3
 
@@ -43,7 +270,7 @@
 	- writing part of groffer in C/C++.
 	- handling several files with different macro packages.
 	
-2002-10-17  Bernd Warken  <bwarken@mayn.de>
+2002-10-17  Bernd Warken 
 	________________________________________________________________
 	* fixes of groffer 0.9.2
 
@@ -60,7 +287,7 @@
 	New file for general information on the groffer source; it is
 	not installed.
 	
-2002-10-14  Bernd Warken  <bwarken@mayn.de>
+2002-10-14  Bernd Warken 
 
 	* Makefile.sub:
 	add replacement "@BINDIR@" to "$(bindir)" for "groffer:"
@@ -72,7 +299,7 @@
 	* groffer.man:
 	Remove double definition of filespec parameters.
 
-2002-10-13  Bernd Warken  <bwarken@mayn.de>
+2002-10-13  Bernd Warken 
 	________________________________________________________________
 	* release of groffer 0.9.2
 
@@ -95,7 +322,7 @@
 	- "Option Parsing" is moved to section "COMPATIBILITY".
 	- Fix some "EXAMPLES".
 	
-2002-09-30  Bernd Warken  <bwarken@mayn.de>
+2002-09-30  Bernd Warken 
 	________________________________________________________________
 	* release of groffer 0.9.1
 	
@@ -103,7 +330,7 @@
 	- Remove request for different shells.
 	- Remove the 'sed' complaints.
 
-2002-07-15  Bernd Warken  <bwarken@mayn.de>
+2002-07-15  Bernd Warken 
 
 	* groffer.sh: replace `sed' interface by direct `sed'
 	- This improves the performance of the shell programming parts
@@ -127,7 +354,7 @@
 	  groffer was called from the command line, or with the shell
 	  name in the first line of the script, actually `/bin/sh'.
 
-2002-07-12  Bernd Warken  <bwarken@mayn.de>
+2002-07-12  Bernd Warken 
 	________________________________________________________________
 	* fixes for groffer 0.9.0
 
@@ -147,7 +374,7 @@
 	* TODO:
 	fix entry `shoop' (not 'shopt').
 
-2002-06-28  Bernd Warken  <bwarken@mayn.de>
+2002-06-28  Bernd Warken 
 	________________________________________________________________
 	* release of groffer 0.9.0
 
@@ -178,7 +405,7 @@
 	- Internally, map mode `auto' to '' to facilitate tests.
 	- Fix auto mode sequence to: `ps,x,tty' as was intended.
 
-2002-06-25  Bernd Warken  <bwarken@mayn.de>
+2002-06-25  Bernd Warken 
 
 	* groffer.sh:
 	Fix `source' mode.
@@ -186,7 +413,7 @@
 	* groffer.man:
 	Fix some indentations.
 
-2002-06-23  Bernd Warken  <bwarken@mayn.de>
+2002-06-23  Bernd Warken 
 	________________________________________________________________
 	* release of groffer 0.8
 
@@ -305,7 +532,7 @@
 	Increase to 4m (we use `sh#' as the prompt).
 
 
-2002-05-31  Bernd Warken  <bwarken@mayn.de>
+2002-05-31  Bernd Warken 
 	________________________________________________________________
 	* release of groffer 0.7
 
@@ -341,7 +568,7 @@
 	- fix TP_header.
 
 
-2002-05-28  Bernd Warken  <bwarken@mayn.de>
+2002-05-28  Bernd Warken 
 	________________________________________________________________
 	* release of groffer 0.6
 
@@ -435,7 +662,7 @@
 	- The filespec parsers gets a function of its own do_manpage().
 	
 	
-2002-01-08  Bernd Warken  <bwarken@mayn.de>
+2002-01-08  Bernd Warken 
 	
 	* groffer 0.5 (beta) released
 
@@ -462,7 +689,7 @@
 	- Implement option `--dpi' for setting the resolution for the X
 	  viewer, which had already been documented in earlier versions.
 
-2002-01-07  Bernd Warken  <bwarken@mayn.de>
+2002-01-07  Bernd Warken 
 
 	* groffer 0.4 (beta) released (as groff `contrib')
 	
@@ -501,7 +728,7 @@
         * groffer.man (OptDef): Add missing backslashes.
         Update copyright.
 
-2001-12-15  Bernd Warken  <bwarken@mayn.de>
+2001-12-15  Bernd Warken 
 
 	* groffer 0.3 (alpha) released (still stand-alone package).
 
@@ -520,12 +747,12 @@
 	* Recognize the following filespecs as man-page parameters:
 	  man:name(section), man:name, name.section, name.
 	
-2001-12-03  Bernd Warken  <bwarken@mayn.de>
+2001-12-03  Bernd Warken 
 
 	* Stand-alone package for groffer 0.2 (alpha) created
 	Files: groffer, groffer.man, Makefile, TODO, ChangeLog
 	
-2001-12-02  Bernd Warken  <bwarken@mayn.de>
+2001-12-02  Bernd Warken 
 
 	* groffer 0.2 (alpha) program released.
 
@@ -545,7 +772,7 @@
 
 	* Code restructured and comments added.
 	
-2001-11-28  Bernd Warken  <bwarken@mayn.de>
+2001-11-28  Bernd Warken 
 
 	***** groffview 0.1 (experimental) and groffview.man released
 	(predecessor of groffer, shell script)
@@ -555,3 +782,15 @@
 	* Search for man-pages based on $MANPATH
 
 	* development of `groffview' shell script started
+
+2001-11-28  Bernd Warken
+	________________________________________________________________
+	License
+
+	Copyright (C) 2001,2002,2003,2004 Free Software Foundation, Inc.
+	Written by Bernd Warken
+	Copying and distribution of this file, with or without
+	modification, are permitted provided the copyright notice and this
+	notice are preserved.
+
+	This file is part of groffer, which is part of the groff project.

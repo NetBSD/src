@@ -43,8 +43,8 @@ letter.mom
 This is just the tutorial example from the momdocs, ready for
 previewing.
 
-elvis_syntax
-------------
+elvis_syntax.new
+----------------
 
 For those who use the vi clone, elvis, you can paste this file into
 your elvis.syn file.  Provided your mom documents have the extension
@@ -52,5 +52,8 @@ your elvis.syn file.  Provided your mom documents have the extension
 in elvis_syntax aren't exhaustive, but they go a LONG way to making mom
 files more readable.
 
+The file elvis_syntax (for pre-2.2h versions of elvis) is no longer
+being maintained.  Users are encouraged to update to elvis 2.2h or
+higher, and to use elvis_syntax.new for mom highlighting.
 I'll be very happy if someone sends me syntax highlighting rules for vim
 and emacs. :)

@@ -1,7 +1,7 @@
-/*	$NetBSD: env.h,v 1.1.1.2 2003/06/30 17:52:08 wiz Exp $	*/
+/*	$NetBSD: env.h,v 1.1.1.3 2004/07/30 14:44:54 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002
+/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002, 2004
    Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
@@ -65,7 +65,7 @@ inline int font_size::to_points()
   return p/sizescale;
 }
 
-struct environment;
+class environment;
 
 hunits env_digit_width(environment *);
 hunits env_space_width(environment *);
@@ -96,11 +96,11 @@ public:
 const unsigned MARGIN_CHARACTER_ON = 1;
 const unsigned MARGIN_CHARACTER_NEXT = 2;
 
-struct charinfo;
+class charinfo;
 struct node;
 struct breakpoint;
-struct font_family;
-struct pending_output_line;
+class font_family;
+class pending_output_line;
 
 class environment {
   int dummy;			// dummy environment used for \w
@@ -305,6 +305,8 @@ public:
   void space();
   void space(hunits, hunits);
   void space_newline();
+  const char *get_glyph_color_string();
+  const char *get_fill_color_string();
   const char *get_font_family_string();
   const char *get_font_name_string();
   const char *get_name_string();
@@ -359,7 +361,6 @@ extern void push_env(int);
 
 void init_environments();
 void read_hyphen_file(const char *name);
-void title();
 
 extern double spread_limit;
 

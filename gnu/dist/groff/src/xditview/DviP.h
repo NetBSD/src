@@ -1,4 +1,4 @@
-/*	$NetBSD: DviP.h,v 1.1.1.1 2001/04/19 12:52:30 wiz Exp $	*/
+/*	$NetBSD: DviP.h,v 1.1.1.2 2004/07/30 14:45:08 wiz Exp $	*/
 
 /*
  * $XConsortium: DviP.h,v 1.5 89/07/22 19:44:08 keith Exp $
@@ -184,6 +184,7 @@ typedef struct {
 	int		word_flag;
 } DviPart;
 
+extern int DviGetAndPut();
 #define DviGetIn(dw,cp)\
     (dw->dvi.tmpFile ? (\
 	DviGetAndPut (dw, cp) \

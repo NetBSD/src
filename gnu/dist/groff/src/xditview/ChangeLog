@@ -1,3 +1,14 @@
+2004-04-17  Werner LEMBERG  <wl@gnu.org>
+
+	* device.c (scale_round): Round correctly for negative values
+	(this is the same function as in src/libs/libgroff/font.c).
+	Found by Paul Eggert.
+
+2003-11-10  Werner LEMBERG  <wl@gnu.org>
+
+	* Imakefile.in: s/@top_srcdir@/@abs_top_srcdir@/,
+	s/@groff_top_builddir@/@abs_top_builddir@/.
+
 Version 1.19 released
 =====================
 

@@ -27,6 +27,7 @@
 \# Additional style macros
 \#
 .NUMBER_PARAHEADS
+.HEADER_CENTER_PAD RIGHT 15p \" To get "Outline" in the page header visually centered
 \#
 .START
 .PP
@@ -151,7 +152,8 @@ sit amet.  Accusam et justo duo do\%lo\%res et ea rebum
 \# Additional style macros
 \#
 .EPIGRAPH_FONT I  \" TYPEWRITE underlines italics
-.HEADER_SIZE -1
+.HEADER_SIZE -1   \" Make page header type size smaller
+.HEADER_CENTER_PAD RIGHT 6p
 \#
 .START
 .EPIGRAPH BLOCK

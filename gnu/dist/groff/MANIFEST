@@ -1,10 +1,10 @@
 MANIFEST 
 
-Last update: 13 Apr 2003
+Last update: 10 May 2004
 
 This file is part of groff, the GNU roff type-setting system.
 
-Copyright (C) 2001, 2003 Free Software Foundation, Inc.
+Copyright (C) 2001, 2003, 2004 Free Software Foundation, Inc.
 written by Bernd Warken <bwarken@mayn.de>
 maintained by Werner Lemberg <wl@gnu.org>
 
@@ -31,13 +31,15 @@ the groff source distribution.
   FDL           The Free Documentation License (FDL).
   INSTALL       Information on compiling and installing groff.
   INSTALL.gen   Generic information on configuration and compiling.
+  LICENSE       Licensing information.
   MANIFEST      The file you are reading.
   MORE.STUFF    Useful stuff in other packages.
   NEWS          Recent user-visible changes in groff.
   PROBLEMS      Tips to handle known critical situations.
   PROJECTS      Long-term additions to groff.
   README        Availability and contact information for groff.
-  README.WIN32  Documentation of the Win32 port of groff.
+  README.CVS    Development build information.
+  README.MinGW  Build information for MinGW.
   TODO          Things planned for future groff versions.
 
   All other files in the top directory are related to the configuration,
@@ -48,10 +50,12 @@ the groff source distribution.
 
 ./arch          Data that is special for different architectures.
   djgpp         Data special for the 32-bit DOS compiler djgpp.
+  misc          Data needed for various platforms.
 
 ./contrib       Part of groff, but maintained by other people.
   eqn2graph     Convert equations created with EQN into different
                 graphical formats.
+  grap2graph    Convert grap diagraps into different graphical formats.
   groffer       A wrapper to conveniently view roff files.
   mm            The groff mm macro package.
   mom           The groff mom macro package.

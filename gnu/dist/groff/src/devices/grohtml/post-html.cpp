@@ -1,7 +1,7 @@
-/*	$NetBSD: post-html.cpp,v 1.1.1.1 2003/06/30 17:52:16 wiz Exp $	*/
+/*	$NetBSD: post-html.cpp,v 1.1.1.2 2004/07/30 14:45:05 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+/* Copyright (C) 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
  *
  *  Gaius Mulley (gaius@glam.ac.uk) wrote post-html.cpp
  *  but it owes a huge amount of ideas and raw code from
@@ -80,6 +80,11 @@ static int simple_anchors = FALSE;                   /* default to anchors with 
 static int manufacture_headings = FALSE;             /* default is to use the Hn html headings,  */
                                                      /* rather than manufacture our own.         */
 static color *default_background = NULL;             /* has user requested initial bg color?     */
+static string job_name;                              /* if set then the output is split into     */
+                                                     /* multiple files with `job_name'-%d.html   */
+static int multiple_files = FALSE;                   /* must we the output be divided into       */
+                                                     /* multiple html files, one for each        */
+                                                     /* heading?                                 */
 
 
 /*
@@ -130,6 +135,9 @@ static int is_digit (char ch)
 struct file {
   FILE    *fp;
   file    *next;
+  int      new_output_file;
+  int      require_links;
+  string   output_file_name;
 
   file     (FILE *f);
 };
@@ -139,21 +147,28 @@ struct file {
  */
 
 file::file (FILE *f)
-  : fp(f), next(0)
+  : fp(f), next(0), new_output_file(FALSE),
+    require_links(FALSE), output_file_name("")
 {
 }
 
 class files {
 public:
-            files         ();
-  FILE     *get_file      (void);
-  void      start_of_list (void);
-  void      move_next     (void);
-  void      add_new_file  (FILE *f);
+              files              ();
+  FILE       *get_file           (void);
+  void        start_of_list      (void);
+  void        move_next          (void);
+  void        add_new_file       (FILE *f);
+  void        set_file_name      (string name);
+  void        set_links_required (void);
+  int         are_links_required (void);
+  int         is_new_output_file (void);
+  string      file_name          (void);
+  string      next_file_name     (void);
 private:
-  file     *head;
-  file     *tail;
-  file     *ptr;
+  file       *head;
+  file       *tail;
+  file       *ptr;
 };
 
 /*
@@ -171,11 +186,10 @@ files::files ()
 
 FILE *files::get_file (void)
 {
-  if (ptr) {
-    return( ptr->fp );
-  } else {
-    return( 0 );
-  }
+  if (ptr)
+    return ptr->fp;
+  else
+    return 0;
 }
 
 /*
@@ -211,6 +225,76 @@ void files::add_new_file (FILE *f)
     tail       = tail->next;
   }
   ptr = tail;
+}
+
+/*
+ *  set_file_name - sets the final file name to contain the html
+ *                  data to name.
+ */
+
+void files::set_file_name (string name)
+{
+  if (ptr != NULL) {
+    ptr->output_file_name = name;
+    ptr->new_output_file = TRUE;
+  }
+}
+
+/*
+ *  set_links_required - issue links when processing this component
+ *                       of the file.
+ */
+
+void files::set_links_required (void)
+{
+  if (ptr != NULL)
+    ptr->require_links = TRUE;
+}
+
+/*
+ *  are_links_required - returns TRUE if this section of the file
+ *                       requires that links should be issued.
+ */
+
+int files::are_links_required (void)
+{
+  if (ptr != NULL)
+    return ptr->require_links;
+  return FALSE;
+}
+
+/*
+ *  is_new_output_file - returns TRUE if this component of the file
+ *                       is the start of a new output file.
+ */
+
+int files::is_new_output_file (void)
+{
+  if (ptr != NULL)
+    return ptr->new_output_file;
+  return FALSE;
+}
+
+/*
+ *  file_name - returns the name of the file.
+ */
+
+string files::file_name (void)
+{
+  if (ptr != NULL)
+    return ptr->output_file_name;
+  return string("");
+}
+
+/*
+ *  next_file_name - returns the name of the next file.
+ */
+
+string files::next_file_name (void)
+{
+  if (ptr != NULL && ptr->next != NULL)
+    return ptr->next->output_file_name;
+  return string("");
 }
 
 /*
@@ -425,11 +509,11 @@ text_glob::text_glob (style *s, const char *str, int length,
 		      int max_vertical, int max_horizontal,
 		      bool is_troff_command,
 		      bool is_auto_image, bool is_special_command,
-		      bool is_a_line, int line_thickness)
+		      bool is_a_line_flag, int line_thickness)
   : text_style(*s), text_string(str), text_length(length),
     minv(min_vertical), minh(min_horizontal), maxv(max_vertical), maxh(max_horizontal),
     is_tag(is_troff_command), is_img_auto(is_auto_image), is_special(is_special_command),
-    is_line(is_a_line), thickness(line_thickness), tab(NULL)
+    is_line(is_a_line_flag), thickness(line_thickness), tab(NULL)
 {
 }
 
@@ -485,11 +569,11 @@ void text_glob::text_glob_special (style *s, char *str, int length,
 void text_glob::text_glob_line (style *s,
 				int min_vertical , int min_horizontal,
 				int max_vertical , int max_horizontal,
-				int thickness)
+				int thickness_value)
 {
   text_glob *g = new text_glob(s, "", 0,
 			       min_vertical, min_horizontal, max_vertical, max_horizontal,
-			       FALSE, FALSE, FALSE, TRUE, thickness);
+			       FALSE, FALSE, FALSE, TRUE, thickness_value);
   *this = *g;
   delete g;
 }
@@ -1204,15 +1288,18 @@ void page::add_tag (style *s, const string &str,
 
 void page::add_line (style *s,
 		     int line_number,
-		     int x1, int y1, int x2, int y2,
+		     int x_1, int y_1, int x_2, int y_2,
 		     int thickness)
 {
-  if (y1 == y2) {
+  if (y_1 == y_2) {
     text_glob *g = new text_glob();
     g->text_glob_line(s,
-		      min(y1, y2), min(x1, y2), max(y1, y2), max(x1, x2),
+		      min(y_1, y_2), min(x_1, x_2),
+		      max(y_1, y_2), max(x_1, x_2),
 		      thickness);
-    glyphs.add(g, line_number, min(y1, y2), min(x1, y2), max(y1, y2), max(x1, x2));
+    glyphs.add(g, line_number,
+	       min(y_1, y_2), min(x_1, x_2),
+	       max(y_1, y_2), max(x_1, x_2));
   }
 }
 
@@ -1269,10 +1356,10 @@ void page::add_and_encode (style *s, const string &str,
 	if (html_glyph)
 	  html_string += html_glyph;
 	else {
-	  int index=s->f->name_to_index((troff_charname + '\0').contents());
+	  int idx=s->f->name_to_index((troff_charname + '\0').contents());
 	  
-	  if (s->f->contains(index) && (index != 0))
-	    html_string += s->f->get_code(index);
+	  if (s->f->contains(idx) && (idx != 0))
+	    html_string += s->f->get_code(idx);
 	}
       }
     } else
@@ -1382,18 +1469,21 @@ public:
                             header_desc ();
                            ~header_desc ();
 
-  int                       no_of_headings;      // how many headings have we found?
-  char_buffer               headings;            // all the headings used in the document
-  list                      headers;             // list of headers built from .NH and .SH
-  int                       header_level;        // current header level
-  int                       written_header;      // have we written the header yet?
-  string                    header_buffer;       // current header text
+  int                       no_of_level_one_headings; // how many .SH or .NH 1 have we found?
+  int                       no_of_headings;           // how many headings have we found?
+  char_buffer               headings;                 // all the headings used in the document
+  list                      headers;                  // list of headers built from .NH and .SH
+  list                      header_filename;          // in which file is this header?
+  int                       header_level;             // current header level
+  int                       written_header;           // have we written the header yet?
+  string                    header_buffer;            // current header text
 
   void                      write_headings (FILE *f, int force);
 };
 
 header_desc::header_desc ()
-  :   no_of_headings(0), header_level(2), written_header(0)
+  :   no_of_level_one_headings(0), no_of_headings(0),
+      header_level(2), written_header(0)
 {
 }
 
@@ -1414,9 +1504,15 @@ void header_desc::write_headings (FILE *f, int force)
       int h=1;
 
       headers.start_from_head();
+      header_filename.start_from_head();
       do {
 	g = headers.get_data();
-	fputs("<a href=\"#", f);
+	fputs("<a href=\"", f);
+	if (multiple_files && (! header_filename.is_empty())) {
+	  text_glob *fn = header_filename.get_data();
+	  fputs(fn->text_string, f);
+	}
+	fputs("#", f);
 	if (simple_anchors) {
 	  string buffer(ANCHOR_TEMPLATE);
 
@@ -1430,6 +1526,8 @@ void header_desc::write_headings (FILE *f, int force)
 	fputs(g->text_string, f);
         fputs("</a><br>\n", f);
 	headers.move_right();
+	if (multiple_files && (! header_filename.is_empty()))
+	  header_filename.move_right();
       } while (! headers.is_equal_to_head());
       fputs("\n", f);
     }
@@ -1535,6 +1633,8 @@ class html_printer : public printer {
   void  do_auto_image                 (text_glob *g, const char *filename);
   void  do_links                      (void);
   void  do_flush                      (void);
+  void  do_job_name                   (char *name);
+  void  insert_split_file             (void);
   int   is_in_middle                  (int left, int right);
   void  do_sup_or_sub                 (text_glob *g);
   int   start_subscript               (text_glob *g);
@@ -1565,6 +1665,10 @@ class html_printer : public printer {
   void remove_courier_tabs            (void);
   void update_min_max                 (colType type_of_col, int *minimum, int *maximum, text_glob *g);
   void add_table_end                  (const char *);
+  void do_file_components             (void);
+  void write_navigation               (const string &top, const string &prev,
+				       const string &next, const string &current);
+  void emit_link                      (const string &to, const char *name);
   // ADD HERE
 
 public:
@@ -1939,6 +2043,22 @@ void html_printer::write_header (void)
       html.put_string(">").nl();
     }
 
+    /* and now we save the file name in which this header will occur */
+
+    style st;   // fake style to enable us to use the list data structure
+
+    text_glob *h=new text_glob();
+    h->text_glob_html(&st,
+		      header.headings.add_string(file_list.file_name()),
+		      file_list.file_name().length(),
+		      header.no_of_headings, header.header_level,
+		      header.no_of_headings, header.header_level);
+
+    header.header_filename.add(h,
+			       header.no_of_headings,
+			       header.no_of_headings, header.no_of_headings,
+			       header.no_of_headings, header.no_of_headings);
+
     current_paragraph->do_para(&html, "", indentation, pageoffset, linelength);
   }
 }
@@ -1957,6 +2077,10 @@ void html_printer::determine_header_level (int level)
     }
   }
   header.header_level = level+1;
+  if (header.header_level == 2) {
+    header.no_of_level_one_headings++;
+    insert_split_file();
+  }
 }
 
 /*
@@ -1987,7 +2111,7 @@ void html_printer::do_heading (char *arg)
 	}
       } else if (! (g->is_a_line() || g->is_a_tag())) {
 	/*
-	 *  we ignore tags commands when constructing a heading
+	 *  we ignore tag commands when constructing a heading
 	 */
 	if (l != 0)
 	  header.header_buffer += " ";
@@ -2210,7 +2334,45 @@ void html_printer::do_links (void)
   current_paragraph->done_para();
   auto_links = FALSE;   /* from now on only emit under user request */
   file_list.add_new_file(xtmpfile());
+  file_list.set_links_required();
   html.set_file(file_list.get_file());
+}
+
+/*
+ *  insert_split_file - 
+ */
+
+void html_printer::insert_split_file (void)
+{
+  if (multiple_files) {
+    current_paragraph->done_para();       // flush paragraph
+    html.end_line();                      // flush line
+    html.set_file(file_list.get_file());  // flush current file
+    file_list.add_new_file(xtmpfile());
+    string split_file = job_name;
+
+    split_file += string("-");
+    split_file += as_string(header.no_of_level_one_headings);
+    split_file += string(".html");
+    split_file += '\0';
+
+    file_list.set_file_name(split_file);
+    html.set_file(file_list.get_file());
+  }
+}
+
+/*
+ *  do_job_name - assigns the job_name to name.
+ */
+
+void html_printer::do_job_name (char *name)
+{
+  if (! multiple_files) {
+    multiple_files = TRUE;
+    while (name != NULL && (*name != (char)0) && (*name == ' '))
+      name++;
+    job_name = name;
+  }
 }
 
 /*
@@ -2391,6 +2553,9 @@ void html_printer::troff_tag (text_glob *g)
     do_pointsize(a);
   } else if (strcmp(t, ".links") == 0) {
     do_links();
+  } else if (strncmp(t, ".job-name", 9) == 0) {
+    char *a = (char *)t+9;
+    do_job_name(a);
   } else if (strcmp(t, ".no-auto-rule") == 0) {
     auto_rule = FALSE;
   } else if (strcmp(t, ".tab-ts") == 0) {
@@ -2723,9 +2888,9 @@ void html_printer::lookahead_for_tables (void)
   int         found_col      = FALSE;
   int         seen_text      = FALSE;
   int         ncol           = 0;
-  int         colmin;
-  int         colmax;
-  html_table *table          = new html_table(&html, -1);
+  int         colmin         = 0;		// pacify compiler
+  int         colmax         = 0;		// pacify compiler
+  html_table *tbl            = new html_table(&html, -1);
   const char *tab_defs       = NULL;
   char        align          = 'L';
   int         nf             = FALSE;
@@ -2754,11 +2919,11 @@ void html_printer::lookahead_for_tables (void)
 	if (type_of_col == tab_tag && start_of_table != NULL) {
 	  page_contents->glyphs.move_left();
 	  insert_tab_te();
-	  start_of_table->remember_table(table);
-	  table = new html_table(&html, -1);
+	  start_of_table->remember_table(tbl);
+	  tbl = new html_table(&html, -1);
 	  page_contents->insert_tag(string("*** TAB -> COL ***"));
 	  if (tab_defs != NULL)
-	    table->tab_stops->init(tab_defs);
+	    tbl->tab_stops->init(tab_defs);
 	  start_of_table = NULL;
 	  last = NULL;
 	}
@@ -2772,28 +2937,28 @@ void html_printer::lookahead_for_tables (void)
 	type_of_col = tab_tag;
 	colmin = g->get_tab_args(&align);
 	align = 'L'; // for now as 'C' and 'R' are broken
-	ncol = table->find_tab_column(colmin);
+	ncol = tbl->find_tab_column(colmin);
 	colmin += pageoffset + indentation;
-	colmax = table->get_tab_pos(ncol+1);
+	colmax = tbl->get_tab_pos(ncol+1);
 	if (colmax > 0)
 	  colmax += pageoffset + indentation;
       } else if (g->is_tab0()) {
 	if (type_of_col == col_tag && start_of_table != NULL) {
 	  page_contents->glyphs.move_left();
 	  insert_tab_te();
-	  start_of_table->remember_table(table);
-	  table = new html_table(&html, -1);
+	  start_of_table->remember_table(tbl);
+	  tbl = new html_table(&html, -1);
 	  page_contents->insert_tag(string("*** COL -> TAB ***"));
 	  start_of_table = NULL;
 	  last = NULL;
 	}
 	if (tab_defs != NULL)
-	  table->tab_stops->init(tab_defs);
+	  tbl->tab_stops->init(tab_defs);
 
 	type_of_col = tab0_tag;
 	ncol = 1;
 	colmin = 0;
-	colmax = table->get_tab_pos(2) + pageoffset + indentation;
+	colmax = tbl->get_tab_pos(2) + pageoffset + indentation;
       } else if (! g->is_a_tag())
 	update_min_max(type_of_col, &colmin, &colmax, g);
 
@@ -2807,34 +2972,34 @@ void html_printer::lookahead_for_tables (void)
 	seen_text = FALSE;
       } else if (g->is_ce() && (start_of_table != NULL)) {
 	add_table_end("*** CE ***");
-	start_of_table->remember_table(table);
+	start_of_table->remember_table(tbl);
 	start_of_table = NULL;
 	last = NULL;
       } else if (g->is_ta()) {
 	tab_defs = g->text_string;
-	if (!table->tab_stops->compatible(tab_defs)) {
+	if (!tbl->tab_stops->compatible(tab_defs)) {
 	  if (start_of_table != NULL) {
 	    add_table_end("*** TABS ***");
-	    start_of_table->remember_table(table);
-	    table = new html_table(&html, -1);
+	    start_of_table->remember_table(tbl);
+	    tbl = new html_table(&html, -1);
 	    start_of_table = NULL;
 	    type_of_col = none;
 	    last = NULL;
 	  }
-	  table->tab_stops->init(tab_defs);
+	  tbl->tab_stops->init(tab_defs);
 	}
       }
 
       if (((! g->is_a_tag()) || g->is_tab()) && (start_of_table != NULL)) {
 	// we are in a table and have a glyph
-	if ((ncol == 0) || (! table->add_column(ncol, colmin, colmax, align))) {
+	if ((ncol == 0) || (! tbl->add_column(ncol, colmin, colmax, align))) {
 	  if (ncol == 0)
 	    add_table_end("*** NCOL == 0 ***");
 	  else
 	    add_table_end("*** CROSSED COLS ***");
 
-	  start_of_table->remember_table(table);
-	  table = new html_table(&html, -1);
+	  start_of_table->remember_table(tbl);
+	  tbl = new html_table(&html, -1);
 	  start_of_table = NULL;
 	  type_of_col = none;
 	  last = NULL;
@@ -2878,13 +3043,13 @@ void html_printer::lookahead_for_tables (void)
 	  page_contents->glyphs.move_left();
 
       insert_tab_te();
-      start_of_table->remember_table(table);
-      table = NULL;
+      start_of_table->remember_table(tbl);
+      tbl = NULL;
       page_contents->insert_tag(string("*** LAST ***"));      
     }
   }
-  if (table != NULL)
-    delete table;
+  if (tbl != NULL)
+    delete tbl;
 
   // and reset the registers
   pageoffset = old_pageoffset;
@@ -3338,17 +3503,17 @@ html_printer::html_printer()
  *  add_to_sbuf - adds character code or name to the sbuf.
  */
 
-void html_printer::add_to_sbuf (int index, const string &s)
+void html_printer::add_to_sbuf (int idx, const string &s)
 {
   if (sbuf_style.f == NULL)
     return;
 
   char *html_glyph = NULL;
-  unsigned int code = sbuf_style.f->get_code(index);
+  unsigned int code = sbuf_style.f->get_code(idx);
 
   if (s.empty()) {
-    if (sbuf_style.f->contains(index))
-      html_glyph = (char *)sbuf_style.f->get_special_device_encoding(index);
+    if (sbuf_style.f->contains(idx))
+      html_glyph = (char *)sbuf_style.f->get_special_device_encoding(idx);
     else
       html_glyph = NULL;
     
@@ -3364,7 +3529,7 @@ void html_printer::add_to_sbuf (int index, const string &s)
     sbuf += html_glyph;
 }
 
-int html_printer::sbuf_continuation (int index, const char *name,
+int html_printer::sbuf_continuation (int idx, const char *name,
 				     const environment *env, int w)
 {
   /*
@@ -3374,7 +3539,7 @@ int html_printer::sbuf_continuation (int index, const char *name,
       || ((sbuf_prev_hpos < sbuf_end_hpos)
 	  && (env->hpos < sbuf_end_hpos)
 	  && ((sbuf_end_hpos-env->hpos < env->hpos-sbuf_prev_hpos)))) {
-    add_to_sbuf(index, name);
+    add_to_sbuf(idx, name);
     sbuf_prev_hpos = sbuf_end_hpos;
     sbuf_end_hpos += w + sbuf_kern;
     return TRUE;
@@ -3386,7 +3551,7 @@ int html_printer::sbuf_continuation (int index, const char *name,
        */
 
       if (env->hpos-sbuf_end_hpos < space_width) {
-	add_to_sbuf(index, name);
+	add_to_sbuf(idx, name);
 	sbuf_prev_hpos = sbuf_end_hpos;
 	sbuf_end_hpos = env->hpos + w;
 	return TRUE;
@@ -3403,18 +3568,18 @@ int html_printer::sbuf_continuation (int index, const char *name,
 
 char *get_html_translation (font *f, const string &name)
 {
-  int index;
+  int idx;
 
   if ((f == 0) || name.empty())
     return NULL;
   else {
-    index = f->name_to_index((char *)(name + '\0').contents());
-    if (index == 0) {
+    idx = f->name_to_index((char *)(name + '\0').contents());
+    if (idx == 0) {
       error("character `%s' not found", (name + '\0').contents());
       return NULL;
     } else
-      if (f->contains(index))
-	return (char *)f->get_special_device_encoding(index);
+      if (f->contains(idx))
+	return (char *)f->get_special_device_encoding(idx);
       else
 	return NULL;
   }
@@ -3427,7 +3592,7 @@ char *get_html_translation (font *f, const string &name)
  *               is flushed.
  */
 
-int html_printer::overstrike(int index, const char *name, const environment *env, int w)
+int html_printer::overstrike(int idx, const char *name, const environment *env, int w)
 {
   if ((env->hpos < sbuf_end_hpos)
       || ((sbuf_kern != 0) && (sbuf_end_hpos - sbuf_kern < env->hpos))) {
@@ -3437,7 +3602,7 @@ int html_printer::overstrike(int index, const char *name, const environment *env
     if (overstrike_detected) {
       /* already detected, remove previous glyph and use this glyph */
       sbuf.set_length(last_sbuf_length);
-      add_to_sbuf(index, name);
+      add_to_sbuf(idx, name);
       sbuf_end_hpos = env->hpos + w;
       return TRUE;
     } else {
@@ -3446,7 +3611,7 @@ int html_printer::overstrike(int index, const char *name, const environment *env
       if (! is_bold(sbuf_style.f))
 	flush_sbuf();
       overstrike_detected = TRUE;
-      add_to_sbuf(index, name);
+      add_to_sbuf(idx, name);
       sbuf_end_hpos = env->hpos + w;
       return TRUE;
     }
@@ -3608,6 +3773,105 @@ void html_printer::do_body (void)
   }
 }
 
+/*
+ *  emit_link - generates: <a href="to">name</a>
+ */
+
+void html_printer::emit_link (const string &to, const char *name)
+{
+  fputs("<a href=\"", stdout);
+  fputs(to.contents(), stdout);
+  fputs("\">", stdout);
+  fputs(name, stdout);
+  fputs("</a>", stdout);
+}
+
+/*
+ *  write_navigation - writes out the links which navigate between
+ *                     file fragments.
+ */
+
+void html_printer::write_navigation (const string &top, const string &prev,
+				     const string &next, const string &current)
+{
+  int need_bar = FALSE;
+
+  if (multiple_files) {
+    write_rule();
+    fputs("[ ", stdout);
+    if (prev != "" && prev != top) {
+      emit_link(prev, "prev");
+      need_bar = TRUE;
+    }
+    if (next != "" && next != top) {
+      if (need_bar)
+	fputs(" | ", stdout);
+      emit_link(next, "next");
+      need_bar = TRUE;
+    }
+    if (top != "<standard input>" && top != "" && top != current) {
+      if (need_bar)
+	fputs(" | ", stdout);
+      emit_link(top, "top");
+      fputs(" ]\n", stdout);
+    }
+    write_rule();
+  }
+}
+
+/*
+ *  do_file_components - scan the file list copying each temporary file in turn.
+ *                       This is used twofold:
+ *
+ *                       firstly to emit section heading links, between file fragments if required
+ *                       and secondly to generate jobname file fragments if required.
+ */
+
+void html_printer::do_file_components (void)
+{
+  int fragment_no = 1;
+  string top;
+  string prev;
+  string next;
+  string current;
+
+  file_list.start_of_list();
+  top = string(job_name);
+  top += string(".html");
+  top += '\0';
+  next = file_list.next_file_name();
+  next += '\0';
+  current = next;
+  while (file_list.get_file() != 0) {
+    if (fseek(file_list.get_file(), 0L, 0) < 0)
+      fatal("fseek on temporary file failed");
+    html.copy_file(file_list.get_file());
+    fclose(file_list.get_file());
+    
+    file_list.move_next();
+    if (file_list.is_new_output_file()) {
+      if (fragment_no > 1)
+	write_navigation(top, prev, next, current);
+      prev = current;
+      current = next;
+      next = file_list.next_file_name();
+      next += '\0';
+      string split_file = file_list.file_name();
+      split_file += '\0';
+      fflush(stdout);
+      freopen(split_file.contents(), "w", stdout);
+      fragment_no++;
+      write_navigation(top, prev, next, current);
+    }
+    if (file_list.are_links_required())
+      header.write_headings(stdout, TRUE);
+  }
+  if (fragment_no > 1)
+    write_navigation(top, prev, next, current);
+  else
+    write_rule();
+}
+
 html_printer::~html_printer()
 {
 #ifdef LONG_FOR_TIME_T
@@ -3652,22 +3916,16 @@ html_printer::~html_printer()
 #endif
   html.end_line();
   html.end_line();
-  /*
-   *  now run through the file list copying each temporary file in turn and emitting the links.
-   */
-  file_list.start_of_list();
-  while (file_list.get_file() != 0) {
-    if (fseek(file_list.get_file(), 0L, 0) < 0)
-      fatal("fseek on temporary file failed");
-    html.copy_file(file_list.get_file());
-    fclose(file_list.get_file());
-    file_list.move_next();
-    if (file_list.get_file() != 0)
-      header.write_headings(stdout, TRUE);
+
+  if (multiple_files) {
+    fputs("</body>\n", stdout);
+    fputs("</html>\n", stdout);
+    do_file_components();
+  } else {
+    do_file_components();
+    fputs("</body>\n", stdout);
+    fputs("</html>\n", stdout);
   }
-  write_rule();
-  fputs("</body>\n", stdout);
-  fputs("</html>\n", stdout);
 }
 
 /*
@@ -3735,7 +3993,7 @@ int main(int argc, char **argv)
     { "version", no_argument, 0, 'v' },
     { NULL, 0, 0, 0 }
   };
-  while ((c = getopt_long(argc, argv, "a:g:o:i:I:D:F:vbdhlrnp", long_options, NULL))
+  while ((c = getopt_long(argc, argv, "a:g:o:i:I:j:D:F:vbdhlrnp", long_options, NULL))
 	 != EOF)
     switch(c) {
     case 'v':
@@ -3755,6 +4013,10 @@ int main(int argc, char **argv)
       break;
     case 'F':
       font::command_line_font_dir(optarg);
+      break;
+    case 'j':
+      multiple_files = TRUE;
+      job_name = optarg;
       break;
     case 'l':
       auto_links = FALSE;

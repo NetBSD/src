@@ -17,6 +17,9 @@ translations approved by the Free Software Foundation instead of in
 the original English.
 ..
 .
+.do nr grops_C \n[.C]
+.cp 0
+.
 .mso www.tmac
 .
 .
@@ -62,6 +65,7 @@ grops \- PostScript driver for groff
 .OP \-b n
 .OP \-c n
 .OP \-F dir
+.OP \-I dir
 .OP \-p papersize
 .OP \-P prologue
 .OP \-w n
@@ -184,6 +188,9 @@ PostScript command).
 This was the behaviour of groff version 1.18.1 and earlier; it is needed
 for older printers which don't understand PostScript LanguageLevel\~2.
 .
+It is also necessary if the output is further processed to get an
+encapsulated PS (EPS) file -- see below.
+.
 .IP
 The default value can be specified by a
 .
@@ -223,6 +230,19 @@ centered on the page.
 .
 This option allows you to generate documents that can be printed
 both on letter (8.5\(mu11) paper and on A4 paper without change.
+.
+.TP
+.BI \-I dir
+This option may be used to specify a directory to search for
+files on the command line and files named in 
+.B \eX'ps: import'
+and
+.B \eX'ps: file'
+escapes.
+The current directory is always searched first.
+This option may be specified more than once;
+the directories will be searched in the order specified.
+No directory search is performed for files specified using an absolute path.
 .
 .TP
 .B \-l
@@ -1002,6 +1022,32 @@ comments)
 should be used.
 .
 .
+.SS Encapsulated PostScript
+.B grops
+itself doesn't emit bounding box information.
+.
+With the help of GhostScript the following commands will produce an
+encapsulated PS file
+.B foo.eps
+from input file
+.BR foo :
+.
+.IP
+.B
+groff -P-b16 foo > foo.ps
+.br
+.B
+gs -dNOPAUSE -sDEVICE=bbox -- foo.ps 2> foo.bbox
+.br
+.B
+cat foo.ps | sed \-e '/%%Orientation/rfoo.bbx' > foo.eps
+.br
+.B
+rm foo.bbx
+.br
+.
+.
+.
 .SS TrueType fonts
 TrueType fonts can be used with 
 .B grops 
@@ -1102,6 +1148,8 @@ Temporary file.
 .BR groff_font (@MAN5EXT@),
 .BR groff_char (@MAN7EXT@),
 .BR groff_tmac (@MAN5EXT@)
+.
+.cp \n[grops_C]
 .
 .\" Local Variables:
 .\" mode: nroff

@@ -1,4 +1,4 @@
-/*	$NetBSD: gprint.h,v 1.1.1.2 2003/06/30 17:52:13 wiz Exp $	*/
+/*	$NetBSD: gprint.h,v 1.1.1.3 2004/07/30 14:45:01 wiz Exp $	*/
 
 /* Last non-groff version: gprint.h  1.1  84/10/08
  *
@@ -68,7 +68,7 @@
 #define MOD 3
 
 typedef struct point {
-  float x, y;
+  double x, y;
   struct point *nextpt;
 } POINT;
 

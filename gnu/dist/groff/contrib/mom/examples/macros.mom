@@ -274,7 +274,7 @@ the wrong.
 \#
 \#
 .NEWPAGE       \" Start a new page
-.T_MARGIN 1i   \" Set top margin to 1i (approx. equivalent to .ALD |1i-1v above
+.T_MARGIN 1i   \" Set top margin to 1i (approx. equivalent to .ALD |1i-1v above)
 \#
 \#
 .FAM T
@@ -285,7 +285,7 @@ the wrong.
 Example 3:
 .ALD .25v
 .UNDERSCORE 3.75p "A \*[BU 2]recipe for enumerated lists using indents"
-.SP            \" Add an extra line space
+.SP .5v        \" Add an extra half line space
 .FAM N         \" New Century Schoolbook family
 .FT  R
 .PT_SIZE 11
@@ -296,6 +296,10 @@ This example demonstrates the use of left and hanging indents for
 simple enumerated lists.  Nested lists are possible, as the example
 shows; however, the more complex the nesting, the wiser it becomes
 to use (string) tabs, as seen in Example 4.
+.TI 1.5m
+\*[BD]Please note: mom\*[PREV] has macros that allow you to set
+enumerated lists automatically.  These examples merely show hanging
+indents and string tabs in use.
 \#
 \#
 .JUSTIFY       \" Justify text
@@ -374,7 +378,7 @@ list...
 Example 4:
 .ALD .25v
 .UNDERSCORE 3.75p "A \*[BU 2]recipe for nested lists using string tabs"
-.SP
+.SP .5v
 .FAM N
 .FT  R
 .PT_SIZE 11

@@ -1,4 +1,4 @@
-# Copyright (C) 1989-2000, 2002 Free Software Foundation, Inc.
+# Copyright (C) 1989-2000, 2002, 2003 Free Software Foundation, Inc.
 #      Written by James Clark (jjc@jclark.com)
 #
 # This file is part of groff.
@@ -188,7 +188,8 @@ ZD:
 	`$(AFMNAME) $(afmdir)/ZapfDingbats.afm` $(srcdir)/dingbats.map $@
 
 SS: $(srcdir)/symbolsl.afm
-	$(AFMTODIT) -s $(IFLAG) $(srcdir)/symbolsl.afm $(srcdir)/lgreekmap $@
+	$(AFMTODIT) -s -x $(IFLAG) \
+	$(srcdir)/symbolsl.afm $(srcdir)/lgreekmap $@
 
 S: symbol.afm
 	$(AFMTODIT) -s $(RFLAG) symbol.afm symbolmap $@

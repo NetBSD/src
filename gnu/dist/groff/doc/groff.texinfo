@@ -4,7 +4,7 @@
 @c Please convert this manual with `texi2dvi -e groff.texinfo' due to
 @c problems in texinfo regarding expansion of user-defined macros.
 @c
-@c You need texinfo 4.3 or newer to format this document!
+@c You need texinfo 4.6 or newer to format this document!
 @c
 
 @c %**start of header (This is for running Texinfo on a region.)
@@ -23,7 +23,7 @@
 @copying
 This manual documents GNU @code{troff} version 1.19.
 
-Copyright @copyright{} 1994-2000, 2001, 2002, 2003
+Copyright @copyright{} 1994-2000, 2001, 2002, 2003, 2004
 Free Software Foundation, Inc.
 
 @quotation
@@ -370,8 +370,8 @@ Software Foundation raise funds for GNU development.''
 @titlepage
 @title groff
 @subtitle The GNU implementation of @code{troff}
-@subtitle Edition 1.19
-@subtitle Spring 2003
+@subtitle Edition 1.19.1
+@subtitle Spring 2004
 @author by Trent A.@tie{}Fisher
 @author and Werner Lemberg (@email{bug-groff@@gnu.org})
 
@@ -914,7 +914,8 @@ accessible via @code{groff}.  This option prevents the loading of the
 Make programs run by @code{groff} print out their version number.
 
 @item -V
-Print the pipeline on @code{stdout} instead of executing it.
+Print the pipeline on @code{stdout} instead of executing it.  If specified
+more than once, print the pipeline on @code{stderr} and execute it.
 
 @item -z
 Suppress output from @code{gtroff}.  Only error messages are printed.
@@ -1153,8 +1154,26 @@ Search directory @file{@var{dir}} for macro files before the standard
 directories (@pxref{Macro Directories}).
 
 @item -I@var{dir}
-This option is as described in @ref{gsoelim}.  It implies the
-@option{-s} option.
+This option may be used to specify a directory to search for files.
+It is passed to the following programs:
+
+@itemize
+@item
+@code{gsoelim} (see @ref{gsoelim} for more details);
+it also implies @code{groff}'s @option{-s} option.
+
+@item
+@code{gtroff}; it is used to search files named in the @code{psbb} and
+@code{so} requests.
+
+@item
+@code{grops}; it is used to search files named in the
+@w{@code{\X'ps: import}} and @w{@code{\X'ps: file}} escapes.
+@end itemize
+
+The current directory is always searched first. This option may be specified
+more than once; the directories will be searched in the order specified. No
+directory search is performed for files specified using an absolute path.
 @end table
 
 
@@ -2869,6 +2888,30 @@ Effective: next footnote.
 Default: 0.
 @endDefmpreg
 
+@Defmpreg {FPS, ms}
+Defines the footnote point size.
+
+Effective: next footnote.
+
+Default: @math{@code{@\n[PS]} - 2}.
+@endDefmpreg
+
+@Defmpreg {FVS, ms}
+Defines the footnote vertical spacing.
+
+Effective: next footnote.
+
+Default: @math{@code{@\n[FPS]} + 2}.
+@endDefmpreg
+
+@Defmpreg {FPD, ms}
+Defines the footnote paragraph spacing.
+
+Effective: next footnote.
+
+Default: @math{@code{@\n[PD]} / 2}.
+@endDefmpreg
+
 @unnumberedsubsubsec Miscellaneous Number Registers
 
 @Defmpreg {MINGW, ms}
@@ -3076,7 +3119,6 @@ Underground Press, March 2002.
 A definitive work that answers all questions
 and criticisms about the quality and usability of
 free software.
-
 @end cartouche
 @endExample
 
@@ -3487,6 +3529,11 @@ The @samp{.DS R} call generates a page break, if necessary,
 to keep the entire display on one page.
 The @code{RD} macro allows the display to break across pages.
 The @code{DE} macro ends the display.
+@endDefmac
+
+@DefmacList {Ds, , ms}
+@DefmacListEnd {De, , ms}
+These two macros are aliases for @code{DS} and @code{DE}, respectively.
 @endDefmac
 
 @sp 1
@@ -5847,28 +5894,37 @@ is returned.
 The following lists some built-in registers which are not described
 elsewhere in this manual.  Any register which begins with a @samp{.} is
 read-only.  A complete listing of all built-in registers can be found in
-appendix@tie{}@ref{Register Index}.
+@ref{Register Index}.
 
 @table @code
-@item .F
+@item \n[.F]
 @cindex current input file name register (@code{.F})
 @cindex input file name, current, register (@code{.F})
-@vindex .F
+@vindex \n[.F]
 This string-valued register returns the current input file name.
 
-@item .H
+@item \n[.H]
 @cindex horizontal resolution register (@code{.H})
 @cindex resolution, horizontal, register (@code{.H})
 @vindex .H
 Horizontal resolution in basic units.
 
-@item .V
+@item \n[.U]
+@cindex safer mode
+@cindex mode, safer
+@cindex unsafe mode
+@cindex mode, unsafe
+If @code{gtroff} is called with the @option{-U} command line option, the
+number register @code{.U} is set to@tie{}1, and zero otherwise.
+@xref{Groff Options}.
+
+@item \n[.V]
 @cindex vertical resolution register (@code{.V})
 @cindex resolution, vertical, register (@code{.V})
 @vindex .V
 Vertical resolution in basic units.
 
-@item seconds
+@item \n[seconds]
 @cindex seconds, current time (@code{seconds})
 @cindex time, current, seconds (@code{seconds})
 @cindex current time, seconds (@code{seconds})
@@ -5877,7 +5933,7 @@ The number of seconds after the minute, normally in the range@tie{}0
 to@tie{}59, but can be up to@tie{}61 to allow for leap seconds.  Initialized
 at start-up of @code{gtroff}.
 
-@item minutes
+@item \n[minutes]
 @cindex minutes, current time (@code{minutes})
 @cindex time, current, minutes (@code{minutes})
 @cindex current time, minutes (@code{minutes})
@@ -5885,7 +5941,7 @@ at start-up of @code{gtroff}.
 The number of minutes after the hour, in the range@tie{}0 to@tie{}59.
 Initialized at start-up of @code{gtroff}.
 
-@item hours
+@item \n[hours]
 @cindex hours, current time (@code{hours})
 @cindex time, current, hours (@code{hours})
 @cindex current time, hours (@code{hours})
@@ -5893,32 +5949,32 @@ Initialized at start-up of @code{gtroff}.
 The number of hours past midnight, in the range@tie{}0 to@tie{}23.
 Initialized at start-up of @code{gtroff}.
 
-@item dw
+@item \n[dw]
 @cindex day of the week register (@code{dw})
 @cindex date, day of the week register (@code{dw})
 @vindex dw
 Day of the week (1-7).
 
-@item dy
+@item \n[dy]
 @cindex day of the month register (@code{dy})
 @cindex date, day of the month register (@code{dy})
 @vindex dy
 Day of the month (1-31).
 
-@item mo
+@item \n[mo]
 @cindex month of the year register (@code{mo})
 @cindex date, month of the year register (@code{mo})
 @vindex mo
 Current month (1-12).
 
-@item year
+@item \n[year]
 @cindex date, year register (@code{year}, @code{yr})
 @cindex year, current, register (@code{year}, @code{yr})
 @vindex year
 The current year.
 
-@item yr
-@vindex yr
+@item \n[yr]
+@vindex \n[yr]
 The current year minus@tie{}1900.  Unfortunately, the documentation of
 @acronym{UNIX} Version@tie{}7's @code{troff} had a year@tie{}2000 bug: It
 incorrectly claimed that @code{yr} contains the last two digits of the
@@ -5946,9 +6002,9 @@ or, to be portable to older @code{troff} versions, as follows:
 This document was formatted in \n(y4.
 @endExample
 
-@item .c
+@item \n[.c]
 @vindex .c
-@itemx c.
+@itemx \n[c.]
 @vindex c.
 @cindex input line number register (@code{.c}, @code{c.})
 @cindex line number, input, register (@code{.c}, @code{c.})
@@ -5956,7 +6012,7 @@ The current @emph{input} line number.  Register @samp{.c} is read-only,
 whereas @samp{c.} (a @code{gtroff} extension) is writable also,
 affecting both @samp{.c} and @samp{c.}.
 
-@item ln
+@item \n[ln]
 @vindex ln
 @cindex output line number register (@code{ln})
 @cindex line number, output, register (@code{ln})
@@ -5965,63 +6021,64 @@ request to activate line numbering.
 
 @xref{Miscellaneous}, for more information about line numbering.
 
-@item .x
+@item \n[.x]
 @vindex .x
 @cindex major version number register (@code{.x})
 @cindex version number, major, register (@code{.x})
 The major version number.  For example, if the version number
 is 1.03 then @code{.x} contains@tie{}@samp{1}.
 
-@item .y
+@item \n[.y]
 @vindex .y
 @cindex minor version number register (@code{.y})
 @cindex version number, minor, register (@code{.y})
 The minor version number.  For example, if the version number
 is 1.03 then @code{.y} contains@tie{}@samp{03}.
 
-@item .Y
+@item \n[.Y]
 @vindex .Y
 @cindex revision number register (@code{.Y})
 The revision number of @code{groff}.
 
-@item $$
+@item \n[$$]
 @vindex $$
 @cindex process ID of @code{gtroff} register (@code{$$})
 @cindex @code{gtroff}, process ID register (@code{$$})
 The process ID of @code{gtroff}.
 
-@item .g
+@item \n[.g]
 @vindex .g
 @cindex @code{gtroff}, identification register (@code{.g})
 @cindex GNU-specific register (@code{.g})
 Always@tie{}1.  Macros should use this to determine whether they are
 running under GNU @code{troff}.
 
-@item .A
+@item \n[.A]
 @vindex .A
 @cindex @acronym{ASCII} approximation output register (@code{.A})
 If the command line option @option{-a} is used to produce an
 @acronym{ASCII} approximation of the output, this is set to@tie{}1, zero
 otherwise.  @xref{Groff Options}.
 
-@item .P
+@item \n[.P]
 @vindex .P
 This register is set to@tie{}1 (and to@tie{}0 otherwise) if the current
 page is actually being printed, i.e., if the @option{-o} option is being
 used to only print selected pages.  @xref{Groff Options}, for more
 information.
 
-@item .T
+@item \n[.T]
 @vindex .T
 If @code{gtroff} is called with the @option{-T} command line option, the
 number register @code{.T} is set to@tie{}1, and zero otherwise.
 @xref{Groff Options}.
 
+@item \*[.T]
 @stindex .T
 @cindex output device name string register (@code{.T})
-Additionally, @code{gtroff} predefines a single read-write string
-register @code{.T} which contains the current output device (for
-example, @samp{latin1} or @samp{ps}).
+A single read-write string register which contains the current output
+device (for example, @samp{latin1} or @samp{ps}).  This is the only
+string register defined by @code{gtroff}.
 @end table
 
 
@@ -7856,7 +7913,6 @@ than @code{\c}, flushing out the current partial line in the usual way.
 The @code{.int} register contains a positive value
 if the last output line was interrupted with @code{\c}; this is
 associated with the current environment (@pxref{Environments}).
-
 @endDefesc
 
 @c =====================================================================
@@ -7959,7 +8015,6 @@ before the last call to @code{lt}.
 The current setting of this is available in the @code{.lt} read-only
 number register; it is associated with the current environment
 (@pxref{Environments}).
-
 @endDefreq
 
 @DefreqList {pn, page}
@@ -7976,11 +8031,6 @@ The read-only number register @code{.pn} contains the number of the next
 page: either the value set by a @code{pn} request, or the number of the
 current page plus@tie{}1.
 @endDefreq
-
-@Defreg {%}
-@cindex page number register (@code{%})
-A read-write register holding the current page number.
-@endDefreg
 
 @Defreq {pc, [@Var{char}]}
 @cindex changing the page number character (@code{pc})
@@ -8003,14 +8053,16 @@ Note that this doesn't affect the number register@tie{}@code{%}.
 
 @DefreqList {bp, [@Var{page}]}
 @DefreqItem {bp, @t{+}@Var{page}}
-@DefreqListEnd {bp, @t{-}@Var{page}}
+@DefreqItem {bp, @t{-}@Var{page}}
+@DefregListEnd {%}
 @cindex new page (@code{bp})
 @cindex page, new (@code{bp})
 Stop processing the current page and move to the next page.  This
 request causes a break.  It can also take an argument to set
-(increase, decrease) the page number of the next page.  The only
+(increase, decrease) the page number of the next page (which actually
+becomes the current page after @code{bp} has finished).  The
 difference between @code{bp} and @code{pn} is that @code{pn} does not
-cause a break or actually eject a page.
+cause a break or actually eject a page.  @xref{Page Layout}.
 
 @Example
 .de newpage                         \" define macro
@@ -8026,6 +8078,10 @@ cause a break or actually eject a page.
 @cindex diversion, top-level, and @code{bp}
 @code{bp} has no effect if not called within the top-level diversion
 (@pxref{Diversions}).
+
+@cindex page number register (@code{%})
+@cindex current page number (@code{%})
+The read-write register@tie{}@code{%} holds the current page number.
 
 The number register @code{.pe} is set to@tie{}1 while @code{bp} is
 active.  @xref{Page Location Traps}.
@@ -8075,6 +8131,9 @@ them.
 @endDefreq
 
 @Defreg {nl}
+@cindex current vertical position (@code{nl})
+@cindex vertical position, current (@code{nl})
+@cindex position, vertical, current (@code{nl})
 This register contains the current vertical position.  If the vertical
 position is zero and the top of page transition hasn't happened yet,
 @code{nl} is set to negative value.  @code{gtroff} itself does this at
@@ -8612,8 +8671,8 @@ groff -Tdvi -mec -man groff_char.7 > groff_char.dvi
 @cindex AGL (adobe glyph list)
 Glyph names not listed in groff_char(7) are derived algorithmically,
 using a simplified version of the Adobe Glyph List (AGL) algorithm
-described in
-@uref{http://partners.adobe.com/asn/developer/typeforum/unicodegn.html}.
+which is described in
+@uref{http://partners.adobe.com@//asn@//tech@//type@//unicodegn.jsp}.
 The (frozen) set of glyph names which can't be derived algorithmically
 is called @dfn{groff glyph list (GGL)}.
 
@@ -8843,14 +8902,14 @@ Lines can be broken after the character (initially the character
 @cindex @code{ru} glyph, and @code{cflags}
 @cindex @code{radicalex} glyph, and @code{cflags}
 @cindex @code{sqrtex} glyph, and @code{cflags}
-The character overlaps horizontally (initially the symbols
-@samp{\[ul]}, @samp{\[rn]}, @samp{\[ru]}, @samp{\[radicalex}, and
-@samp{\[sqrtex]} have this property).
+The character overlaps horizontally if used as a horizontal line building
+element.  Initially the symbols @samp{\[ul]}, @samp{\[rn]}, @samp{\[ru]},
+@samp{\[radicalex]}, and @samp{\[sqrtex]} have this property.
 
 @item 16
 @cindex @code{br} glyph, and @code{cflags}
-The character overlaps vertically (initially symbol @samp{\[br]} has
-this property).
+The character overlaps vertically if used as vertical line building element.
+Initially symbol @samp{\[br]} has this property.
 
 @item 32
 @cindex transparent characters
@@ -9567,8 +9626,12 @@ reset to the previous value before the last call to @code{vs}.
 
 @cindex @code{.V} register, and @code{vs}
 @code{gtroff} creates a warning of type @samp{range} if @var{space} is
-negative; the vertical spacing is then set to the vertical
-resolution (as given in the @code{.V} register).
+negative; the vertical spacing is then set to smallest positive value,
+the vertical resolution (as given in the @code{.V} register).
+
+Note that @w{@samp{.vs 0}} isn't saved in a diversion since it doesn't
+result in a vertical motion.  You explicitly have to repeat this command
+before inserting the diversion.
 
 The read-only number register @code{.v} contains the current vertical
 spacing; it is associated with the current environment
@@ -9576,32 +9639,36 @@ spacing; it is associated with the current environment
 @endDefreq
 
 @cindex vertical line spacing, effective value
-The effective vertical line spacing consists of four components.
+The effective vertical line spacing consists of four components.  Breaking
+a line causes the following actions (in the given order).
 
 @itemize @bullet
 @item
-The vertical line spacing as set with the @code{vs} request.
-
-@cindex post-vertical line spacing
-@cindex line spacing, post-vertical (@code{pvs})
-@item
-The @dfn{post-vertical line spacing} as set with the @code{pvs} request.
-This is vertical space which will be added after a line has been
-output.
-
 @cindex extra pre-vertical line space (@code{\x})
 @cindex line space, extra pre-vertical (@code{\x})
-@item
-The @dfn{extra pre-vertical line space} as set with the @code{\x} request,
-using a negative value.  This is vertical space which will be added once
-before the current line has been output.
+Move the current point vertically by the @dfn{extra pre-vertical line
+space}.  This is the minimum value of all @code{\x} escapes with a
+negative argument in the current output line.
 
+@item
+Move the current point vertically by the vertical line spacing as set with
+the @code{vs} request.
+
+@item
+Output the current line.
+
+@item
 @cindex extra post-vertical line space (@code{\x})
 @cindex line space, extra post-vertical (@code{\x})
+Move the current point vertically by the @dfn{extra post-vertical line
+space}.  This is the maximum value of all @code{\x} escapes with a
+positive argument in the line which has just been output.
+
 @item
-The @dfn{extra post-vertical line space} as set with the @code{\x} request,
-using a positive value.  This is vertical space which will be added once
-after the current line has been output.
+@cindex post-vertical line spacing
+@cindex line spacing, post-vertical (@code{pvs})
+Move the current point vertically by the @dfn{post-vertical line spacing}
+as set with the @code{pvs} request.
 @end itemize
 
 @cindex double-spacing (@code{vs}, @code{pvs})
@@ -10093,7 +10160,7 @@ True if the document is being processed in troff mode (i.e., the
 
 @item v
 Always false.  This condition is for compatibility with other
-@code{troff} versions only.
+@code{troff} versions only (identifying a @code{-Tversatec} device).
 
 @item '@var{xxx}'@var{yyy}'
 True if the string @var{xxx} is equal to the string @var{yyy}.  Other
@@ -10178,11 +10245,12 @@ It is possible to omit the whitespace before the argument to the
 the formatting can be painful.
 
 @Defreq {if, expr anything}
+
 Evaluate the expression @var{expr}, and executes @var{anything} (the
-remainder of the line) if @var{expr} evaluates to non-zero (true).
-@var{anything} is interpreted as though it was on a line by itself
-(except that leading spaces are swallowed).  @xref{Expressions}, for
-more info.
+remainder of the line) if @var{expr} evaluates to a value greater than
+zero (true).  @var{anything} is interpreted as though it was on a line
+by itself (except that leading spaces are swallowed).
+@xref{Expressions}, for more info.
 
 @Example
 .nr xxx 1
@@ -10358,7 +10426,8 @@ be invoked multiple times.  Use macros to define common operations.
 
 @DefreqList {de, name [@Var{end}]}
 @DefreqItem {de1, name [@Var{end}]}
-@DefreqListEnd {dei, name [@Var{end}]}
+@DefreqItem {dei, name [@Var{end}]}
+@DefreqListEnd {dei1, name [@Var{end}]}
 Define a new macro named @var{name}.  @code{gtroff} copies subsequent
 lines (starting with the next one) into an internal buffer until it
 encounters the line @samp{..} (two dots).  The optional second
@@ -10444,6 +10513,9 @@ is equivalent to:
 .de aa bb
 @endExample
 
+The @code{dei1} request is similar to @code{dei} but with compatibility
+mode switched off during execution of the defined macro.
+
 @pindex trace.tmac
 Using @file{trace.tmac}, you can trace calls to @code{de} and @code{de1}.
 
@@ -10453,7 +10525,8 @@ diversions.
 
 @DefreqList {am, name [@Var{end}]}
 @DefreqItem {am1, name [@Var{end}]}
-@DefreqListEnd {ami, name [@Var{end}]}
+@DefreqItem {ami, name [@Var{end}]}
+@DefreqListEnd {ami1, name [@Var{end}]}
 @cindex appending to a macro (@code{am})
 @cindex macro, appending (@code{am})
 Works similarly to @code{de} except it appends onto the macro named
@@ -10477,6 +10550,9 @@ The @code{ami} request appends indirectly,
 meaning that @code{gtroff} expands strings whose names
 are @var{name} or @var{end} before performing the append.
 
+The @code{ami1} request is similar to @code{ami} but compatibility mode
+is switched off during execution of the defined macro.
+
 @pindex trace.tmac
 Using @file{trace.tmac}, you can trace calls to @code{am} and @code{am1}.
 @endDefreq
@@ -10489,8 +10565,12 @@ if the name of the macro, diversion or string diversion is currently
 undefined or if it is defined to be a request; normally they modify the
 value of an existing object.
 
-@Defreq {return, }
+@Defreq {return, [@Var{anything}]}
 Exit a macro, immediately returning to the caller.
+
+If called with an argument, exit twice, namely the current macro and the
+macro one level higher.  This is used to define a wrapper macro for
+@code{return} in @file{trace.tmac}.
 @endDefreq
 
 @menu
@@ -10548,6 +10628,8 @@ escapes.
 @cindex number of arguments register (@code{.$})
 The number of arguments passed to a macro or string.  This is a read-only
 number register.
+
+Note that the @code{shift} request can change its value.
 @endDefreg
 
 Any individual argument can be retrieved with one of the following
@@ -10574,6 +10656,8 @@ many positions as specified by its argument.  After executing this
 request, argument@tie{}@var{i} becomes argument @math{@var{i}-@var{n}};
 arguments 1 to@tie{}@var{n} are no longer available.  Shifting by
 negative amounts is currently undefined.
+
+The register @code{.$} is adjusted accordingly.
 @endDefreq
 
 @DefescList {\\$*, , , }
@@ -10879,7 +10963,7 @@ The current horizontal position at the input line.
 @cindex position, horizontal, in output line, register (@code{.k})
 @cindex line, output, horizontal position, register (@code{.k})
 A read-only number register containing the current horizontal output
-position.
+position (relative to the current indentation).
 @endDefreg
 
 @Defesc {\\o, ', abc, '}
@@ -11029,7 +11113,8 @@ which arguments are treated similar to the @code{defcolor} request.
 @cindex line, drawing (@w{@code{\D'l @dots{}'}})
 @cindex drawing a line (@w{@code{\D'l @dots{}'}})
 Draw a line from the current location to the relative point specified by
-(@var{dx},@var{dy}).
+(@var{dx},@var{dy}), where positive values mean down and right,
+respectively.  The end point of the line is the new current location.
 
 The following example is a macro for creating a box around a text string;
 for simplicity, the box margin is taken as a fixed value, 0.2@dmn{m}.
@@ -11416,7 +11501,7 @@ is sprung, it represents the difference of what the vertical position
 would have been but for the trap, and what the vertical position
 actually is.
 
-Since the @code{.trunc} register is only set by traps and it doesn't make
+Since the @code{.trunc} register is only set by traps it doesn't make
 much sense to use it outside of trap macros.
 @endDefreg
 
@@ -11442,10 +11527,10 @@ A line.
 Another line.
 .br
     @result{} A line.
-              .pe=0
-              Another line.
+       .pe=0
+       Another line.
 
-              .pe=1
+       .pe=1
 @endExample
 @endDefreg
 
@@ -11466,7 +11551,7 @@ cases, this is not the expected behaviour.
 @cindex diversion traps
 @cindex traps, diversion
 
-@Defreq {dt, dist macro}
+@Defreq {dt, [@Var{dist} @Var{macro}]}
 @cindex @code{.t} register, and diversions
 @cindex setting diversion trap (@code{dt})
 @cindex diversion trap, setting (@code{dt})
@@ -11474,8 +11559,12 @@ cases, this is not the expected behaviour.
 Set a trap @emph{within} a diversion.
 @var{dist} is the location of the trap
 (identical to the @code{wh} request; default scaling indicator is
-@samp{v}) and @var{macro} is the name of the macro to be invoked.  The
-number register @code{.t} still works within diversions.
+@samp{v}) and @var{macro} is the name of the macro to be invoked.
+If called without arguments, the diversion trap is removed.
+
+Note that there exists only a single diversion trap.
+
+The number register @code{.t} still works within diversions.
 @xref{Diversions}, for more information.
 @endDefreq
 
@@ -12137,7 +12226,8 @@ Note that @code{f} is the default scaling indicator for the
 
 @DefescList {\\m, , c, }
 @DefescItem {\\m, @lparen{}, co, }
-@DefescListEnd {\\m, @lbrack{}, color, @rbrack}
+@DefescItem {\\m, @lbrack{}, color, @rbrack}
+@DefregListEnd {.m}
 Set drawing color.  The following example shows how to turn the next four
 words red.
 
@@ -12146,6 +12236,12 @@ words red.
 @endExample
 
 The escape @code{\m[]} returns to the previous color.
+
+@cindex drawing color name register (@code{.m})
+@cindex name, drawing color, register (@code{.m})
+@cindex color name, drawing, register (@code{.m})
+The name of the current drawing color is available in the read-only,
+string-valued number register @samp{.m}.
 
 The drawing color is associated with the current environment
 (@pxref{Environments}).
@@ -12162,7 +12258,8 @@ the fly:
 
 @DefescList {\\M, , c, }
 @DefescItem {\\M, @lparen{}, co, }
-@DefescListEnd {\\M, @lbrack{}, color, @rbrack}
+@DefescItem {\\M, @lbrack{}, color, @rbrack}
+@DefregListEnd {.M}
 Set background color for filled objects drawn with the
 @code{\D'@dots{}'} commands.
 
@@ -12173,6 +12270,12 @@ A red ellipse can be created with the following code:
 @endExample
 
 The escape @code{\M[]} returns to the previous fill color.
+
+@cindex background color name register (@code{.M})
+@cindex name, background color, register (@code{.M})
+@cindex color name, background, register (@code{.M})
+The name of the current background color is available in the read-only,
+string-valued number register @samp{.M}.
 
 The fill color is associated with the current environment
 (@pxref{Environments}).
@@ -12213,6 +12316,9 @@ bar
 
 @noindent
 yields @samp{This is foobar}.
+
+The search path for @var{file} can be controlled with the @option{-I} command
+line option.
 @endDefreq
 
 @Defreq {pso, command}
@@ -12667,6 +12773,27 @@ appended to the lines.
 With no arguments the margin character is turned off.
 If this occurs before a break, no margin character is printed.
 
+For compatibility with @acronym{AT&T} @code{troff}, a call to @code{mc}
+to set the margin character can't be undone immediately; at least one
+line gets a margin character.  Thus
+
+@Example
+.ll 1i
+.mc \[br]
+.mc
+xxx
+.br
+xxx
+@endExample
+
+@noindent
+produces
+
+@Example
+xxx        |
+xxx
+@endExample
+
 @cindex @code{tl} request, and @code{mc}
 For empty lines and lines produced by the @code{tl} request no margin
 character is emitted.
@@ -12679,7 +12806,7 @@ The margin character is associated with the current environment
 This is quite useful for indicating text that has changed, and, in fact,
 there are programs available for doing this (they are called
 @code{nrchbar} and @code{changebar} and can be found in any
-@samp{comp.sources.unix} archive.
+@samp{comp.sources.unix} archive).
 
 @Example
 .ll 3i
@@ -12724,6 +12851,9 @@ and extracts the bounding box values into the number registers
 If an error occurs (for example, @code{psbb} cannot find
 the @code{%%BoundingBox} comment),
 it sets the four number registers to zero.
+
+The search path for @var{filename} can be controlled with the @option{-I}
+command line option.
 @endDefreq
 
 
@@ -14130,7 +14260,6 @@ Set color using the CMYK color scheme, having the 4@tie{}color components
 @item mr @var{red} @var{green} @var{blue}
 Set color using the RGB color scheme, having the 3@tie{}color components
 @var{red}, @var{green}, and @var{blue}.
-
 @end table
 
 @item N @var{n}
@@ -14196,7 +14325,6 @@ values for @var{n} also, but @code{gtroff} doesn't use this.
 @item w
 Informs about a paddable white space to increase readability.
 The spacing itself must be performed explicitly by a move command.
-
 @end table
 
 @node Graphics Commands, Device Control Commands, Simple Commands, Command Reference
@@ -14310,7 +14438,6 @@ and @var{black}.
 @item DFr @var{red} @var{green} @var{blue}@angles{line break}
 Set fill color for solid drawing objects using the RGB color scheme,
 having the 3@tie{}color components @var{red}, @var{green}, and @var{blue}.
-
 @end table
 
 @item Df @var{n}@angles{line break}
@@ -14336,7 +14463,6 @@ Df -1
 
 @noindent
 sets all colors to blue.
-
 @end table
 
 @noindent
@@ -14383,7 +14509,6 @@ Although this doesn't make sense it is kept for compatibility.
 No position changing.
 @end ignore
 This command is a @code{gtroff} extension.
-
 @end table
 
 @node Device Control Commands, Obsolete Command, Graphics Commands, Command Reference
@@ -14496,7 +14621,6 @@ to all following lines until the first character of a line is not a
 @samp{+} character.  This command is generated by the @code{gtroff}
 escape sequence @code{\X}.  The line-continuing feature is a
 @code{gtroff} extension.
-
 @end table
 
 @node Obsolete Command,  , Device Control Commands, Command Reference
@@ -14518,7 +14642,6 @@ same line ends with an argument of variable length a separating space
 is obligatory.  In @acronym{AT&T} @code{troff}, large clusters of these
 and other commands are used, mostly without spaces; this made such output
 almost unreadable.
-
 @end table
 
 For modern high-resolution devices, this command does not make sense
@@ -14654,7 +14777,6 @@ for displaying in@tie{}X.
 
 Due to the obsolete jump-and-write command, the text clusters in the
 @acronym{AT&T} @code{troff} output are almost unreadable.
-
 @end table
 
 @c ---------------------------------------------------------------------

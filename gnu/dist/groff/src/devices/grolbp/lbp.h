@@ -1,7 +1,7 @@
-/*	$NetBSD: lbp.h,v 1.1.1.2 2003/06/30 17:52:16 wiz Exp $	*/
+/*	$NetBSD: lbp.h,v 1.1.1.3 2004/07/30 14:45:06 wiz Exp $	*/
 
 // -*- C -*-
-/* Copyright (C) 1994, 2000, 2001, 2003 Free Software Foundation, Inc.
+/* Copyright (C) 1994, 2000, 2001, 2003, 2004 Free Software Foundation, Inc.
      Written by Francisco Andrés Verdú <pandres@dragonet.es>
 
 groff is free software; you can redistribute it and/or modify it under
@@ -61,33 +61,33 @@ lbpputc(unsigned char c)
 
 
 static inline void 
-lbpsavestatus(int index )
+lbpsavestatus(int idx )
 {
-	fprintf(lbpoutput,"\033[%d%%y",index);
+	fprintf(lbpoutput,"\033[%d%%y",idx);
 };
 
 static inline void 
-lbprestorestatus(int index )
+lbprestorestatus(int idx )
 {
-	fprintf(lbpoutput,"\033[%d%cz",index ,'%');
+	fprintf(lbpoutput,"\033[%d%cz",idx ,'%');
 };
 
 static inline void 
-lbpsavepos(int index)
+lbpsavepos(int idx)
 {
-	fprintf(lbpoutput,"\033[1;%d;0x",index);
+	fprintf(lbpoutput,"\033[1;%d;0x",idx);
 };
 
 static inline void 
-lbprestorepos(int index)
+lbprestorepos(int idx)
 {
-	fprintf(lbpoutput,"\033[0;%d;0x",index);
+	fprintf(lbpoutput,"\033[0;%d;0x",idx);
 };
 
 static inline void 
-lbprestoreposx(int index)
+lbprestoreposx(int idx)
 {
-	fprintf(lbpoutput,"\033[0;%d;1x",index);
+	fprintf(lbpoutput,"\033[0;%d;1x",idx);
 };
 
 static inline void 
@@ -230,7 +230,7 @@ vdmvarc(int centerx, int centery,int radius, int startx, int starty, int endx, i
 {
   char x[4],y[4],rad[4],stx[4],sty[4],enx[4],eny[4],styl[4],op[4];
   
-	vdmprintf("}6%s%s%s%s%s%s%s%s\x1e",vdmnum(arcopen,op),\
+	vdmprintf("}6%s%s%s%s%s%s%s%s%s\x1e",vdmnum(arcopen,op),\
 		vdmnum(centerx,x),vdmnum(centery,y),\
 		vdmnum(radius,rad),vdmnum(startx,stx),vdmnum(starty,sty),\
 		vdmnum(endx,enx),vdmnum(endy,eny),vdmnum(style,styl));
@@ -350,11 +350,11 @@ static inline void
 splinerel(double px,double py,int flush)
 {
   static int lx = 0 ,ly = 0;
-  static float pend = 0.0;
+  static double pend = 0.0;
   static int dy = 0, despx = 0, despy = 0, sigpend = 0;
-  int dxnew ,dynew, sg;
+  int dxnew = 0, dynew = 0, sg;
   char xcoord[4],ycoord[4];
-  float npend ;
+  double npend ;
 
   if (flush == -1) {lx = (int)px; ly = (int)py; return;};
 
@@ -409,102 +409,105 @@ splinerel(double px,double py,int flush)
  *  The following code to draw splines is adapted from the transfig package
  */
 static void
-quadratic_spline(double a1,double  b1, double a2, double b2, \
-		double a3, double b3, double a4, double b4)
+quadratic_spline(double a_1, double b_1, double a_2, double b_2, \
+		 double a_3, double b_3, double a_4, double b_4)
 {
-	double	x1, y1, x4, y4;
-	double	xmid, ymid;
+	double	x_1, y_1, x_4, y_4;
+	double	x_mid, y_mid;
 
-	x1	 = a1; y1 = b1;
-	x4	 = a4; y4 = b4;
-	xmid	 = (a2 + a3)/2.0;
-	ymid	 = (b2 + b3)/2.0;
-	if ((fabs(x1 - xmid) < THRESHOLD) && (fabs(y1 - ymid) < THRESHOLD)) {
-        	splinerel(xmid,ymid,0);
-/*	    fprintf(tfp, "PA%.4f,%.4f;\n", xmid, ymid);*/
+	x_1	 = a_1; y_1 = b_1;
+	x_4	 = a_4; y_4 = b_4;
+	x_mid	 = (a_2 + a_3)/2.0;
+	y_mid	 = (b_2 + b_3)/2.0;
+	if ((fabs(x_1 - x_mid) < THRESHOLD)
+	    && (fabs(y_1 - y_mid) < THRESHOLD)) {
+        	splinerel(x_mid, y_mid, 0);
+/*	    fprintf(tfp, "PA%.4f,%.4f;\n", x_mid, y_mid);*/
 	}
 	else {
-	    quadratic_spline(x1, y1, ((x1+a2)/2.0), ((y1+b2)/2.0),
-		((3.0*a2+a3)/4.0), ((3.0*b2+b3)/4.0), xmid, ymid);
-	    }
+	    quadratic_spline(x_1, y_1, ((x_1+a_2)/2.0), ((y_1+b_2)/2.0),
+		((3.0*a_2+a_3)/4.0), ((3.0*b_2+b_3)/4.0), x_mid, y_mid);
+	}
 
-	if ((fabs(xmid - x4) < THRESHOLD) && (fabs(ymid - y4) < THRESHOLD)) {
-		splinerel(x4,y4,0);
-/*	    fprintf(tfp, "PA%.4f,%.4f;\n", x4, y4);*/
+	if ((fabs(x_mid - x_4) < THRESHOLD)
+	    && (fabs(y_mid - y_4) < THRESHOLD)) {
+		splinerel(x_4, y_4, 0);
+/*	    fprintf(tfp, "PA%.4f,%.4f;\n", x_4, y_4);*/
 	}
 	else {
-	    quadratic_spline(xmid, ymid, ((a2+3.0*a3)/4.0), ((b2+3.0*b3)/4.0),
-			((a3+x4)/2.0), ((b3+y4)/2.0), x4, y4);
-	    };
+	    quadratic_spline(x_mid, y_mid,
+			     ((a_2+3.0*a_3)/4.0), ((b_2+3.0*b_3)/4.0),
+			     ((a_3+x_4)/2.0), ((b_3+y_4)/2.0), x_4, y_4);
+	};
 }; /* quadratic_spline */
 
 #define XCOORD(i) numbers[(2*i)]
 #define YCOORD(i) numbers[(2*i)+1]
 static void
-vdmspline(int numpoints, int ox,int oy, int *numbers)
+vdmspline(int numpoints, int o_x, int o_y, int *numbers)
 {
-	double	cx1, cy1, cx2, cy2, cx3, cy3, cx4, cy4;
-	double	x1, y1, x2, y2;
+	double	cx_1, cy_1, cx_2, cy_2, cx_3, cy_3, cx_4, cy_4;
+	double	x_1, y_1, x_2, y_2;
 	char xcoord[4],ycoord[4];
 	int i;
 
 	/*p	 = s->points;
-	x1	 = p->x/ppi;*/
-	x1	 = ox;
-	y1	 = oy;
+	x_1	 = p->x/ppi;*/
+	x_1	 = o_x;
+	y_1	 = o_y;
 /*	p	 = p->next;
-	x2	 = p->x/ppi;
-	y2	 = p->y/ppi;*/
-	x2	 = ox + XCOORD(0);
-	y2	 = oy + YCOORD(0);
-	cx1	 = (x1 + x2)/2.0;
-	cy1	 = (y1 + y2)/2.0;
-	cx2	 = (x1 + 3.0*x2)/4.0;
-	cy2	 = (y1 + 3.0*y2)/4.0;
+	x_2	 = p->x/ppi;
+	y_2	 = p->y/ppi;*/
+	x_2	 = o_x + XCOORD(0);
+	y_2	 = o_y + YCOORD(0);
+	cx_1	 = (x_1 + x_2)/2.0;
+	cy_1	 = (y_1 + y_2)/2.0;
+	cx_2	 = (x_1 + 3.0*x_2)/4.0;
+	cy_2	 = (y_1 + 3.0*y_2)/4.0;
 
-/*	fprintf(stderr,"Spline %d (%d,%d)\n",numpoints,(int)x1,(int)y1);*/
-    	vdmprintf("1%s%s",vdmnum((int)x1,xcoord),vdmnum((int)y1,ycoord));
-	splinerel(x1,y1,-1);
-	splinerel(cx1,cy1,0);
+/*	fprintf(stderr,"Spline %d (%d,%d)\n",numpoints,(int)x_1,(int)y_1);*/
+    	vdmprintf("1%s%s",vdmnum((int)x_1,xcoord),vdmnum((int)y_1,ycoord));
+	splinerel(x_1,y_1,-1);
+	splinerel(cx_1,cy_1,0);
 /*	    fprintf(tfp, "PA%.4f,%.4f;PD%.4f,%.4f;\n",
-		    x1, y1, cx1, cy1);*/
+		    x_1, y_1, cx_1, cy_1);*/
 
 	/*for (p = p->next; p != NULL; p = p->next) {*/
 	for (i = 1; i < (numpoints); i++) {
-	    x1	 = x2;
-	    y1	 = y2;
-/*	    x2	 = p->x/ppi;
-	    y2	 = p->y/ppi;*/
-            x2   = x1 + XCOORD(i);
-            y2   = y1 + YCOORD(i);
-	    cx3	 = (3.0*x1 + x2)/4.0;
-	    cy3	 = (3.0*y1 + y2)/4.0;
-	    cx4	 = (x1 + x2)/2.0;
-	    cy4	 = (y1 + y2)/2.0;
-	    /* fprintf(stderr,"Point (%d,%d) - (%d,%d)\n",(int)x1,(int)(y1),(int)x2,(int)y2);*/
-	    quadratic_spline(cx1, cy1, cx2, cy2, cx3, cy3, cx4, cy4);
-	    cx1	 = cx4;
-	    cy1	 = cy4;
-	    cx2	 = (x1 + 3.0*x2)/4.0;
-	    cy2	 = (y1 + 3.0*y2)/4.0;
-	    }
-	x1	 = x2; 
-	y1	 = y2;
-/*	p	 = s->points->next;
-	x2	 = p->x/ppi;
-	y2	 = p->y/ppi;*/
-        x2       = ox + XCOORD(0);
-        y2       = oy + YCOORD(0);
-	cx3	 = (3.0*x1 + x2)/4.0;
-	cy3	 = (3.0*y1 + y2)/4.0;
-	cx4	 = (x1 + x2)/2.0;
-	cy4	 = (y1 + y2)/2.0;
-	splinerel(x1,y1,0);
-	splinerel(x1,y1,1);
-       	/*vdmprintf("%s%s",vdmnum((int)(x1-lx),xcoord),\
-			vdmnum((int)(y1-ly),ycoord));*/
+	    x_1	 = x_2;
+	    y_1	 = y_2;
+/*	    x_2	 = p->x/ppi;
+	    y_2	 = p->y/ppi;*/
+            x_2	 = x_1 + XCOORD(i);
+            y_2	 = y_1 + YCOORD(i);
+	    cx_3 = (3.0*x_1 + x_2)/4.0;
+	    cy_3 = (3.0*y_1 + y_2)/4.0;
+	    cx_4 = (x_1 + x_2)/2.0;
+	    cy_4 = (y_1 + y_2)/2.0;
+	    /* fprintf(stderr,"Point (%d,%d) - (%d,%d)\n",(int)x_1,(int)(y_1),(int)x_2,(int)y_2);*/
+	    quadratic_spline(cx_1, cy_1, cx_2, cy_2, cx_3, cy_3, cx_4, cy_4);
+	    cx_1 = cx_4;
+	    cy_1 = cy_4;
+	    cx_2 = (x_1 + 3.0*x_2)/4.0;
+	    cy_2 = (y_1 + 3.0*y_2)/4.0;
+	}
+	x_1	= x_2; 
+	y_1	= y_2;
+/*	p	= s->points->next;
+	x_2	= p->x/ppi;
+	y_2	= p->y/ppi;*/
+        x_2     = o_x + XCOORD(0);
+        y_2     = o_y + YCOORD(0);
+	cx_3	= (3.0*x_1 + x_2)/4.0;
+	cy_3	= (3.0*y_1 + y_2)/4.0;
+	cx_4	= (x_1 + x_2)/2.0;
+	cy_4	= (y_1 + y_2)/2.0;
+	splinerel(x_1, y_1, 0);
+	splinerel(x_1, y_1, 1);
+       	/*vdmprintf("%s%s",vdmnum((int)(x_1-lx),xcoord),\
+			vdmnum((int)(y_1-ly),ycoord));*/
         vdmprintf("\x1e\n");
-/*	    fprintf(tfp, "PA%.4f,%.4f;PU;\n", x1, y1);*/
+/*	    fprintf(tfp, "PA%.4f,%.4f;PU;\n", x_1, y_1);*/
 
 
 }; /* vdmspline */

@@ -675,8 +675,8 @@ Arcs now have compass points
 determined by the circle of which the arc is a part.
 .
 .LP
-Circles and arcs can be dotted or dashed.
-In \*(tx mode splines can be dotted or dashed.
+Circles, ellipses, and arcs can be dotted or dashed.
+In \*(tx mode splines can be dotted or dashed also.
 .
 .LP
 Boxes can have rounded corners.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.h,v 1.1.1.2 2003/06/30 17:52:15 wiz Exp $	*/
+/*	$NetBSD: ps.h,v 1.1.1.3 2004/07/30 14:45:03 wiz Exp $	*/
 
 // -*- C++ -*-
 /* Copyright (C) 1989, 1990, 1991, 1992, 2002, 2003
@@ -125,3 +125,7 @@ enum {
   USE_PS_ADOBE_2_0 = 010,
   NO_PAPERSIZE = 020
 };
+
+#include "searchpath.h"
+
+extern search_path include_search_path;

@@ -15,11 +15,15 @@ OBJS=\
   geometry.$(OBJEXT) \
   getopt.$(OBJEXT) \
   getopt1.$(OBJEXT) \
+  glyphuni.$(OBJEXT) \
   htmlhint.$(OBJEXT) \
+  iftoa.$(OBJEXT) \
   invalid.$(OBJEXT) \
+  itoa.$(OBJEXT) \
   lf.$(OBJEXT) \
   lineno.$(OBJEXT) \
   macropath.$(OBJEXT) \
+  matherr.$(OBJEXT) \
   maxfilename.$(OBJEXT) \
   mksdir.$(OBJEXT) \
   nametoindex.$(OBJEXT) \
@@ -28,14 +32,17 @@ OBJS=\
   prime.$(OBJEXT) \
   progname.$(OBJEXT) \
   ptable.$(OBJEXT) \
+  quotearg.$(OBJEXT) \
   searchpath.$(OBJEXT) \
+  spawnvp.$(OBJEXT) \
   string.$(OBJEXT) \
   strsave.$(OBJEXT) \
+  symbol.$(OBJEXT) \
   tmpfile.$(OBJEXT) \
   tmpname.$(OBJEXT) \
-  iftoa.$(OBJEXT) \
-  itoa.$(OBJEXT) \
-  matherr.$(OBJEXT) \
+  unicode.$(OBJEXT) \
+  uniglyph.$(OBJEXT) \
+  uniuni.$(OBJEXT) \
   version.$(OBJEXT) \
   $(LIBOBJS)
 CCSRCS=\
@@ -52,6 +59,7 @@ CCSRCS=\
   $(srcdir)/font.cpp \
   $(srcdir)/fontfile.cpp \
   $(srcdir)/geometry.cpp \
+  $(srcdir)/glyphuni.cpp \
   $(srcdir)/htmlhint.cpp \
   $(srcdir)/invalid.cpp \
   $(srcdir)/lf.cpp \
@@ -64,13 +72,16 @@ CCSRCS=\
   $(srcdir)/new.cpp \
   $(srcdir)/paper.cpp \
   $(srcdir)/prime.cpp \
-  $(srcdir)/progname.cpp \
   $(srcdir)/ptable.cpp \
   $(srcdir)/searchpath.cpp \
   $(srcdir)/string.cpp \
   $(srcdir)/strsave.cpp \
+  $(srcdir)/symbol.cpp \
   $(srcdir)/tmpfile.cpp \
   $(srcdir)/tmpname.cpp \
+  $(srcdir)/unicode.cpp \
+  $(srcdir)/uniglyph.cpp \
+  $(srcdir)/uniuni.cpp \
   version.cpp
 CSRCS=\
   $(srcdir)/fmod.c \
@@ -80,7 +91,10 @@ CSRCS=\
   $(srcdir)/iftoa.c \
   $(srcdir)/itoa.c \
   $(srcdir)/matherr.c \
+  $(srcdir)/progname.c \
   $(srcdir)/putenv.c \
+  $(srcdir)/quotearg.c \
+  $(srcdir)/spawnvp.c \
   $(srcdir)/strcasecmp.c \
   $(srcdir)/strerror.c \
   $(srcdir)/strncasecmp.c \

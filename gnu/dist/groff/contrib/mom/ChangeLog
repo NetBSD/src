@@ -1,3 +1,136 @@
+*Mar 15 2004
+
+o Added color support
+
+o Adjusted vertical placement of hyphens around page numbering
+  so that they are better centered on the height of the page
+  number.
+
+o Re-wrote portions of the document processing macros so that tabs
+  behave in a consistent and intuitive manner.  Tab structures are
+  now properly preserved from page to page and column to column.
+
+*Feb 20 2004
+
+o Rewrote the macros associated with DOCTYPE LETTER so that the
+  user can enter DATE, TO and FROM in any order s/he likes.  For
+  backward compatibility, if the older, fixed order (DATE-TO-FROM)
+  is used, the date goes flush right with two linespaces after
+  it, while the other fields go flush left with a single linespace
+  separating them.
+
+o Fixed handling of DOCHEADER OFF <distance> when <distance> fell
+  short of the top margin of running text (the change is actually
+  in the SHIM macro, which is called by DOCHEADER).
+
+o Added a selection of iso 639 two-letter language codes as
+  optional arguments to SMARTQUOTES, so that the use can enter
+  her/his language code to get language specific quoting styles
+
+o Changed the way the strings for \*[ST<n>], \*[ST<n>X], \*[FU<n>]
+  and \*[BU<n>] are read.  Formerly, they were entered literally.
+  Now they're entered as an array.
+
+*Jan 24 2004
+
+o Added lists and associated macros.  Mom now does (nested) lists.
+
+o Added German-style lowered double quotes and two styles of
+  guillemets to SMARTQUOTES.
+
+o Added macro SIZE, intended to be called inline as \*[SIZE <n>].
+  This is to bring mom's inline size change syntax into line with
+  her other inlines.
+
+o Added ESC_CHAR as an alias of .ec
+
+o Added doc entries for lists.
+
+o Updated SMARTQUOTES entry in docs.
+
+o Updated reserved words in docs.
+
+o Fixed a few more typos in docs.
+
+*Tue Oct 21 2003
+
+o Changed \n[#DRAFT] and \n[#REVISION] to strings \*[$DRAFT] and
+  \*[$REVISION], allowing for the possibility of blank entries that
+  don't mess up headers/footers with zeros if user doesn't want any
+  numbers.
+
+o Extended handling of draft and revision numbers and strings in
+  headers/footers for increased flexibility.  It's possible now to
+  have just about any combo of DRAFT_STRING, DRAFT, REVISION_STRING
+  and REVISION, and have them come out in headers/footers as one
+  intuitively expects/wants.
+
+*Fri Jul 25 2003
+
+o Added a .bp after .if \\n[#START]=1 in FOOTER.  Without it,
+  in document processing mode, documents that use *none* of the
+  docprocessing tags (yes, there are times when users want to do
+  this) ignored the footer trap.
+
+*Fri Jun 6 2003
+
+o Changed register #DOCHEADER_LEAD_ADJ to string
+
+*Wed May 21 2003
+
+o DOC_TITLE changed to be used exclusively with DOCTYPE DEFAULT
+
+o Fixed problem with restoration of previous doc pagenum
+  style when endnotes use a different pagenum style (set with
+  ENDNOTES_PAGENUM_STYLE)
+
+o Fixed handling of headers/footers with respect to endnotes.  Now,
+  when either headers or footers are on, mom picks up the correct
+  page header/footer on the last page prior to ENDNOTES, gets the
+  pageheaders correct for endnotes pages *including the last one*,
+  and picks up correct page headers/footers for the subsequent docs
+  after COLLATE
+
+*Sat May 17 2003
+
+o Added TOC (finally) and a nearly complete set of associated
+  control macros
+
+o Added new control macros to endnotes:
+
+  ENDNOTES_STRING_CAPS       - capitalize the endnotes string
+  ENDNOTES_NO_COLUMNS        - allows docs in columns and endnotes not
+  ENDNOTES_PAGENUM_STYLE     - set page numbering style for endnotes
+  ENDNOTES_FIRST_PAGENUMBER  - set first pagenumber for endnotes
+  ENDNOTES_ALLOWS_HEADERS    - page headers on endnotes pages off or on
+  ENDNOTES_NO_FIRST_PAGENUM  - allows non-printing first page number when page footers are being used instead of headers
+  ENDNOTES_SINGLE_SPACE      - for TYPEWRITE, if doc double-spaced
+  SUSPEND/RESTORE_PAGINATION - turns page numbering off for endnotes
+
+o Added an ADJUST option to ENDNOTE_LEAD
+
+o Added DOC_TITLE (like TITLE, but sets document-wide title for collated docs)
+
+o Added HDRFTR_CENTER_PAD, to allow adjustments to placement of
+  HDRFTR_CENTER_STRING
+
+o Added BLANKPAGE macro, to output blank pages (silently numbered)
+
+o Extensive changes to DEFAULTS, START, COLLATE, HEAD, SUBHEAD and
+  PARAHEAD because of new TOC and extended flexibility of ENDNOTES
+  page design
+
+o Fixed DOCHEADER OFF (distance), FINIS
+
+-----------------------------------------------------------------------
+
+*Sat Feb 22 2003
+
+o (Re)-fixed handling of post epigraph spacing after #START for
+  TYPEWRITE double-spaced.
+
+------------------------------------------------------------------------
+
 *Sun Feb 16 2003
 
 o Added James Ramsey's proposed CHAPTER_TITLE macro, along with his
@@ -57,6 +190,8 @@ o Changed handling of inline horizontal and vertical movements.
   The older forms \*[FP#] and \*[BP#] still work (horizontals), as do
   \*[ALD#] and \*[RLD#] (verticals).
 
+------------------------------------------------------------------------
+
 *Mon Aug 19 2002
 
 o Fixed ENDNOTES so footnotes output properly when ENDNOTES is called
@@ -71,15 +206,6 @@ o Added .nf to top of PAD, with a test beforehand for current fill
   mode.  If fill mode was on, it's restored after PAD completes
   processing.  Updated reserved.html to include number register
   #FILL_MODE.
-
-*Mon Jul 29 2002
-
-o Makefile.sub (FFLAG, TFLAG): Add paths to source directories.
-
-*Wed Jul 24 2002
-
-o Makefile.sub (groff_bin_path): Don't use ' \+' but '  *' for sed.
-  (GROFF): Set GROFF_COMMAND_PREFIX to empty value.
 
 *Fri Jul 12 2002
 
@@ -111,10 +237,6 @@ o Fixed the character translations for UNDERLINE so they work properly
 o Expanded docprocessing.html entry "Special Note on Chapters".  Tidied
   up html a bit.
 
-*Tue Jun 18 2002
-
-o examples/macros.mom: Fix path to penguin.ps.
-
 *Sat Jun 15 2002
 
 o Small fix to PAD to make the use of inlines within the pad string
@@ -123,17 +245,17 @@ o Small fix to PAD to make the use of inlines within the pad string
 o Added \*[RULE] ( = \l'\n(.lu' ) so that full measure rules (either to
   full line length or within tabs) are easier to set.
 
-*Sat Jun  8 2002
+*Sat Jun 8 2002
 
 o Macro .PS renamed to .PT_SIZE.  Alias .TS removed.
 
-o .tr bits in .CAPS rewritten in the form .tr é\['E].
+o .tr bits in .CAPS rewritten in the form .tr é\[`E].
 
-o General cleanup of docs to reflect changes.
+o General cleanup of docs to reflect changes
 
-o Small changes/additions to `elvis_syntax'.
+o Small changes/additions to elvis_syn
 
-*Thu Jun  6 2002
+*Thu Jun 6 2002
 
 o In DOCTYPE, in .if '\\$1'LETTER', added .FOOTER_RIGHT_SIZE +0.
   Without it, the suite page was printing at the default

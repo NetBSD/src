@@ -1,6 +1,6 @@
-/*	$NetBSD: eqn.y,v 1.1.1.1 2001/04/19 12:51:41 wiz Exp $	*/
+/*	$NetBSD: eqn.y,v 1.1.1.2 2004/07/30 14:45:00 wiz Exp $	*/
 
-/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+/* Copyright (C) 1989, 1990, 1991, 1992, 2004 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -26,7 +26,6 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 #include "lib.h"
 #include "box.h"
 extern int non_empty_flag;
-char *strsave(const char *);
 int yylex();
 void yyerror(const char *);
 %}

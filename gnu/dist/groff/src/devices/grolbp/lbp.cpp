@@ -1,7 +1,8 @@
-/*	$NetBSD: lbp.cpp,v 1.1.1.1 2003/06/30 17:52:16 wiz Exp $	*/
+/*	$NetBSD: lbp.cpp,v 1.1.1.2 2004/07/30 14:45:06 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1994, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+/* Copyright (C) 1994, 2000, 2001, 2002, 2003, 2004
+   Free Software Foundation, Inc.
      Written by Francisco Andrés Verdú <pandres@dragonet.es> with many ideas
      taken from the other groff drivers.
 
@@ -27,9 +28,6 @@ TODO
 
  - Add X command to include bitmaps
 */
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
 
 #include "driver.h"
 #include "lbp.h"
@@ -94,21 +92,6 @@ private:
   int paperlength;	// custom paper size
   int paperwidth;
 };
-
-//   Compatibility section.
-//
-//   Here we define some functions not present in some of the targets
-//   platforms
-#ifndef HAVE_STRSEP
-// Solaris 8 doesn't have the strsep function
-static char *strsep(char **pcadena, const char *delim)
-{
-  char *p;
-  p = strtok(*pcadena, delim);
-  *pcadena = strtok(NULL, delim);
-  return p;
-}
-#endif
 
 lbp_font::lbp_font(const char *nm)
 : font(nm)
@@ -296,10 +279,10 @@ char *lbp_printer::font_name(const lbp_font *f, const int siz)
   return bfont_name;
 }
 
-void lbp_printer::set_char(int index, font *f, const environment *env,
+void lbp_printer::set_char(int idx, font *f, const environment *env,
 			   int w, const char *)
 {
-  int code = f->get_code(index);
+  int code = f->get_code(idx);
   unsigned char ch = code & 0xff;
   unsigned short symbol_set = code >> 8;
   if (f != cur_font) {
@@ -665,11 +648,14 @@ int main(int argc, char **argv)
   int c = 0;
   int option_index = 0;
   while (c >= 0) {
-    c = getopt_long (argc, argv, "F:p:lvo:c:hw:",
+    c = getopt_long (argc, argv, "c:F:hI:lo:p:vw:",
 		     long_options, &option_index);
     switch (c) {
     case 'F':
       font::command_line_font_dir(optarg);
+      break;
+    case 'I':
+      // ignore include path arguments
       break;
     case 'p':
       {

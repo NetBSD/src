@@ -1,7 +1,7 @@
-/*	$NetBSD: pile.cpp,v 1.1.1.1 2003/06/30 17:52:13 wiz Exp $	*/
+/*	$NetBSD: pile.cpp,v 1.1.1.2 2004/07/30 14:45:01 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+/* Copyright (C) 1989, 1990, 1991, 1992, 2004 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -116,13 +116,13 @@ void pile_box::debug_print()
 int matrix_box::compute_metrics(int style)
 {
   int i, j;
-  int maxlen = 0;
+  int max_len = 0;
   int space = 0;
   for (i = 0; i < len; i++) {
     for (j = 0; j < p[i]->len; j++)
       p[i]->p[j]->compute_metrics(style);
-    if (p[i]->len > maxlen)
-      maxlen = p[i]->len;
+    if (p[i]->len > max_len)
+      max_len = p[i]->len;
     if (p[i]->space > space)
       space = p[i]->space;
   }
@@ -147,7 +147,7 @@ int matrix_box::compute_metrics(int style)
   printf("/\\n(.V+(\\n(.V/2)*\\n(.V\n");
   printf(".nr " SUP_RAISE_FORMAT " \\n[" BASELINE_SEP_FORMAT "]*%d/2"
 	 "+%dM\n",
-	 uid, uid, maxlen-1, axis_height - shift_down);
+	 uid, uid, max_len-1, axis_height - shift_down);
   printf(".nr " HEIGHT_FORMAT " 0\\n[" SUP_RAISE_FORMAT "]+(0",
 	 uid, uid);
   for (i = 0; i < len; i++)
@@ -155,10 +155,10 @@ int matrix_box::compute_metrics(int style)
   printf(")>?0\n");
   printf(".nr " DEPTH_FORMAT " \\n[" BASELINE_SEP_FORMAT "]*%d-\\n["
 	 SUP_RAISE_FORMAT "]+(0",
-	 uid, uid, maxlen-1, uid);
+	 uid, uid, max_len-1, uid);
   for (i = 0; i < len; i++)
-    if (p[i]->len == maxlen)
-      printf(">?\\n[" DEPTH_FORMAT "]", p[i]->p[maxlen-1]->uid);
+    if (p[i]->len == max_len)
+      printf(">?\\n[" DEPTH_FORMAT "]", p[i]->p[max_len-1]->uid);
   printf(")>?0\n");
   return FOUND_NOTHING;
 }

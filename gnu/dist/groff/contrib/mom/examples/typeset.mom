@@ -406,14 +406,15 @@ justo duo do\%lo\%res et ea rebum.
 Sanctus est lorem ipsum dolor sit amet, consetetur sadipscing.  Elitr,
 sed diam nonumy eirmod tempor, invidunt ut labore et do\%lo\%re magna
 ali\%quyam.  Erat sed diam voluptua, at vero eos et accusam et justo
-duo do\%lo\%res et ea rebum amet.  Consetetur sadipsc\%
-ing elitr sed diam nonumy eirmod tempor invidunt ut
-.BREAK_QUOTE  \" Needed because blockquote crosses page AND contain footnotes
-labore.  Et do\%lo\%re magna ali\%quyam erat, sed diam voluptua, at
-vero.  Eos et accusam et justo duo.\c
+rebum amet.  Consetetur sadipsc\%ing elitr sed diam nonumy eirmod
+sed diam nonumy, eirmod tempor.  Invidunt tempor invidunt ut labore.\c
 .FOOTNOTE
-Labore et do\%lo\%re magna ali\%quyam erat sed diam voluptua.
+Sed diam nonumy eirmod tempor, invidunt ut labore et do\%lo\%re
+magna ali\%quyam.  Erat sed diam voluptua, at vero eos et accusam et
+justo.
 .FOOTNOTE OFF
+Et do\%lo\%re et magna ali\%quyam erat, sed diam voluptua, at vero.
+Eos et accusam et justo duo.
 .BLOCKQUOTE OFF
 \#
 .PP
@@ -465,12 +466,12 @@ erat, sed diam
 voluptua at vero eos et accusam.  Et justo duo do\%lo\%res et ea rebum,
 stet clita kasd gubergren, no sea takimata.
 .PP
-Sanctus est lorem ipsum.  Dolor sit amet consete-
-.BREAK_QUOTE  \" Needed because blockquote crosses column AND contain footnotes
-tur sadipscing elitr.  Sed diam nonumy eirmod tempor invidunt ut
-labore.  Et do\%lo\%re magna ali\%quyam erat, sed diam voluptua.
-At vero eos et accusam et justo duo.  Dolores et ea rebum stet clita
-kasd gubergren no sea.
+Sanctus est lorem ipsum.  Dolor sit amet consetetur sadipscing elitr.  Sed diam nonumy eirmod tempor invidunt ut
+labore.  Et do\%lo\%re magna ali\%quyam
+erat, sed diam voluptua.
+At vero eos et accusam et
+.BREAK_QUOTE \"Needed because blockquote crosses a column AND contains a footnote
+justo duo.  Dolores et ea rebum stet clita kasd gubergren no sea.
 .PP
 Takimata lorem ipsum dolor sit amet consetetur sadipscing elitr.
 Sed diam, nonumy eirmod tempor, invidunt ut labore et do\%lo\%re magna.
@@ -528,6 +529,12 @@ justo duo do\%lo\%res et ea rebum.  Stet clita kasd gubergren no sea
 takimata lorem.  Ipsum dolor sit amet, consetetur sadipscing elitr.
 Sed diam nonumy eirmod tempor invidunt ut labore et do\%lo\%re magna.
 Ali\%quyam erat, sed diam voluptua.  At vero eos et accusam et justo
+duo do\%lo\%res et ea rebum.  Stet clita kasd gubergren, no sea
+takimata sanctus est.
+.PP
+Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed
+diam nonumy eirmod tempor invidunt ut labore et do\%lo\%re magna
+ali\%quyam erat, sed diam voluptua.  At vero eos et accusam et justo
 duo do\%lo\%res et ea rebum.  Stet clita kasd gubergren, no sea
 takimata sanctus est.
 .RIGHT

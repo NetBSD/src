@@ -1,7 +1,7 @@
-/*	$NetBSD: driver.h,v 1.1.1.2 2003/06/30 17:52:05 wiz Exp $	*/
+/*	$NetBSD: driver.h,v 1.1.1.3 2004/07/30 14:44:50 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001
+/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2003
    Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 

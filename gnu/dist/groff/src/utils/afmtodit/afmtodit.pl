@@ -6046,7 +6046,7 @@ $prog =~ s@.*/@@;
 $groff_sys_fontdir = "@FONTDIR@";
 
 do 'getopts.pl';
-do Getopts('a:d:e:i:mnsv');
+do Getopts('a:d:e:i:mnsvx');
 
 if ($opt_v) {
     print "GNU afmtodit (groff) version @VERSION@\n";
@@ -6054,7 +6054,7 @@ if ($opt_v) {
 }
 
 if ($#ARGV != 2) {
-    die "usage: $prog [-mnsv] [-a angle] [-d DESC] [-e encoding]\n" .
+    die "usage: $prog [-mnsvx] [-a angle] [-d DESC] [-e encoding]\n" .
 	"       [-i n] afmfile mapfile font\n";
 }
 
@@ -6102,7 +6102,7 @@ while (<AFM>) {
 		$c = -1;
 		$wx = 0;
 		$n = "";
-		%ligs = ();
+#		%ligs = ();
 		$lly = 0;
 		$ury = 0;
 		$llx = 0;
@@ -6125,10 +6125,10 @@ while (<AFM>) {
 			$ury = $field[$i + 4];
 			$i += 5;
 		    }
-		    elsif ($field[$i] eq "L") {
-			$ligs{$field[$i + 2]} = $field[$i + 1];
-			$i += 3;
-		    }
+#		    elsif ($field[$i] eq "L") {
+#			$ligs{$field[$i + 2]} = $field[$i + 1];
+#			$i += 3;
+#		    }
 		    else {
 			while ($i <= $#field && $field[$i] ne ";") {
 			    $i++;
@@ -6145,9 +6145,9 @@ while (<AFM>) {
 		$depth{$n} = -$lly;
 		$left_side_bearing{$n} = -$llx;
 		$right_side_bearing{$n} = $urx - $w;
-		while (($lig, $glyph2) = each %ligs) {
-		    $ligatures{$lig} = $n . " " . $glyph2;
-		}
+#		while (($lig, $glyph2) = each %ligs) {
+#		    $ligatures{$lig} = $n . " " . $glyph2;
+#		}
 	    }
 	}
     }
@@ -6223,24 +6223,26 @@ close(MAP);
 
 $italic_angle = $opt_a if $opt_a;
 
-# add unencoded characters
+# add unencoded characters and unmapped characters of the form `uniXXXX'
 
-$i = ($#encoding > 256) ? ($#encoding + 1) : 256;
-while ($ch = each %width) {
-    if (!$in_encoding{$ch}) {
-	$encoding[$i] = $ch;
-	$i++;
+if (!$opt_x) {
+    $i = ($#encoding > 256) ? ($#encoding + 1) : 256;
+    while ($ch = each %width) {
+	if (!$in_encoding{$ch}) {
+	    $encoding[$i] = $ch;
+	    $i++;
+	}
 	if (!$nmap{$ch}) {
-	    $nmap{$ch} += 1;
 	    $u1 = $AGL_to_unicode{$ch};
+	    if (!$u1 && ($ch =~ /^uni([0-9A-F]{4})$/)) {
+		$u1 = "u" . $1;
+	    }
 	    if ($u1) {
 		$u2 = $unicode_decomposed{$u1};
 		$u = $u2 ? $u2 : $u1;
+		$nmap{$ch} += 1;
+		$map{$ch,"0"} = $u;
 	    }
-	    else {
-		$u = "---";
-	    }
-	    $map{$ch,"0"} = $u;
 	}
     }
 }

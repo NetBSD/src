@@ -1,6 +1,6 @@
-/*	$NetBSD: new.cpp,v 1.1.1.1 2003/06/30 17:52:06 wiz Exp $	*/
+/*	$NetBSD: new.cpp,v 1.1.1.2 2004/07/30 14:44:51 wiz Exp $	*/
 
-/* Copyright (C) 1989, 1990, 1991, 1992, 2001, 2003
+/* Copyright (C) 1989, 1990, 1991, 1992, 2001, 2003, 2004
    Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
@@ -28,7 +28,7 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 #include "posix.h"
 #include "nonposix.h"
 
-extern const char *program_name;
+extern "C" const char *program_name;
 
 static void ewrite(const char *s)
 {

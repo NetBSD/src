@@ -1,7 +1,7 @@
-/*	$NetBSD: tfmtodit.cpp,v 1.1.1.1 2003/06/30 17:52:16 wiz Exp $	*/
+/*	$NetBSD: tfmtodit.cpp,v 1.1.1.2 2004/07/30 14:45:06 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989-1992, 2000, 2001 Free Software Foundation, Inc.
+/* Copyright (C) 1989-1992, 2000, 2001, 2004 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -414,7 +414,7 @@ int gf::load(const char *file)
   };
   int got_an_adjustment = 0;
   int pending_adjustment = 0;
-  int left_adj, right_adj;
+  int left_adj = 0, right_adj = 0;	// pacify compiler
   const int gf_id_byte = 131;
   errno = 0;
   FILE *fp = fopen(file, FOPEN_RB);
@@ -652,7 +652,7 @@ lig_chars table. `ch' gives the full-name of the character, `name'
 gives the groff name of the character, `i' gives its index in
 the encoding, which is filled in later  (-1 if it does not appear). */
 
-struct {
+struct S {
   const char *ch;
   int i;
 } lig_chars[] = {
@@ -672,7 +672,7 @@ enum { CH_f, CH_i, CH_l, CH_ff, CH_fi, CH_fl, CH_ffi, CH_ffl };
 
 // Each possible ligature appears in this table.
 
-struct {
+struct S2 {
   unsigned char c1, c2, res;
   const char *ch;
 } lig_table[] = {

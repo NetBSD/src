@@ -96,10 +96,10 @@ README
 This is the GNU groff document formatting system.
 The version number is given in the file VERSION.
 
-Included in this release are implementations of troff, pic, eqn, tbl, refer,
-the \-man macros and the \-ms macros, and drivers for PostScript, TeX dvi
-format, HP LaserJet 4 printers, HTML format (still alpha), and
-typewriter-like devices.
+Included in this release are implementations of troff, pic, eqn, tbl,
+grn, refer, \-man, \-mdoc, and \-ms macros, and drivers for PostScript,
+TeX dvi format, HP LaserJet 4 printers, Canon CAPSL printers, HTML format
+(still alpha), and typewriter-like devices.
 Also included is a modified version of the Berkeley \-me macros, an enhanced
 version of the X11 xditview previewer, and an implementation of the \-mm
 macros contributed by
@@ -116,13 +116,10 @@ See the file COPYING for copying permission.
 The file PROBLEMS describes various problems that have been encountered in
 compiling, installing, and running groff.
 
-For the moment, the documentation assumes that you are already familiar with
-the Unix versions of troff, \-man, \-ms and the preprocessors.
-
 The most recent released version of groff is always available by anonymous
 ftp from ftp.gnu.org in the directory pub/\:gnu/\:groff.
 
-A CVS repository is now available, containing the current development
+A CVS repository is available, containing the current development
 version of groff.
 You can access it with the commands
 
@@ -151,7 +148,7 @@ Please read the info pages of cvs for further details.
 Alternatively, you can download snapshots (which are updated twice a day)
 from
 .URL ftp://\:ftp.ffii.org/\:pub/\:groff/\:devel/\:groff-current.tar.gz here
-or a diff file relative to the latest official groff release as:
+or a diff file relative to the latest official groff release as
 
 .in 2m
 .ft C
@@ -173,6 +170,14 @@ gunzip -c ../groff-\[la]version\[ra]-current.diff.gz | patch -p1
 .fi
 .in
 
+Finally, it is possible to access the CVS with a browser by pointing it
+to
+
+.in 2m
+.URL http://www.ffii.org/cgi-bin/viewcvs.cgi/groff \
+     http://www.ffii.org/cgi-bin/viewcvs.cgi/groff
+.in
+
 Please report bugs using the form in the file BUG-REPORT; the idea of this
 is to make sure that FSF has all the information it needs to fix the bug.
 At the very least, read the BUG-REPORT form and make sure that you supply
@@ -189,7 +194,7 @@ Three mailing lists are available:
 for reporting bugs
 
 .LI
-.MTO groff@gnu.org groff@gnu.org
+.MTO groff@ffii.org groff@ffii.org
 for general discussion of groff
 
 .LI
@@ -219,6 +224,208 @@ and
 .
 .
 .SH
+NEWS VERSION 1.19.1
+.
+.SH 2
+groff
+
+.ULS
+.LI
+The argument of the command line option `\-I' is now also passed to troff
+and grops, specifying a directory to search for files on the command line,
+files named in `so' and `psbb' requests, and files named in \eX'ps:\~file'
+and \eX'ps:\~import' escapes.
+
+.LI
+If option `\-V' is used more than once, the commands will be both printed
+on standard error and run.
+.ULE
+.
+.
+.SH 2
+troff
+
+.ULS
+.LI
+Two new read-only, string-valued registers `.m' and `.M' return the
+name of the current drawing and background color, respectively.
+
+.LI
+New read-only register `.U' which is set to\~1 if in safer mode and set
+to\~0 if in unsafe mode.
+
+.LI
+An input encoding file for \%latin-5 (a.k.a.\& ISO \%8859-9) has been
+added.
+Example use:
+
+.in 2m
+.ft C
+groff \-Tdvi \-mlatin5 my_file > my_file.dvi
+.ft R
+.in
+
+Note that some output devices don't support all glyphs of this encoding.
+
+.LI
+If the `return' request is called with an argument, it exits twice,
+namely the current macro and the macro one level higher.
+This is used to define a wrapper macro for `return' in trace.tmac.
+
+.LI
+For completeness, two new requests have been added: `dei1' and `ami1'.
+They are equivalent to `dei' and `ami', respectively, but the macros
+are executed with compatibility mode off (similar to `de1' and `am1').
+
+.LI
+New command line option `\-I' to specify a directory for files (both
+those on the command line and those named in `psbb' requests).
+This is also handled by the groff wrapper program.
+
+.LI
+Since version 1.19 you can say `.vs\~0'.
+Older versions emit a warning and convert this to `.vs\~\en[.V]'.
+
+This hasn't been documented properly.
+Note that `.vs\~0' isn't saved in a diversion since it doesn't result
+in vertical motion.
+.ULE
+.
+.
+.SH 2
+pic
+
+.ULS
+.LI
+Dashed and dotted ellipses have been implemented.
+.ULE
+.
+.
+.SH 2
+tbl
+
+.ULS
+.LI
+New key character `x' to make tbl call a user-defined macro on a table
+cell.
+Patch by
+.MTO hj.oertel@\:surfeu.de "Heinz-Jürgen Oertel" .
+.ULE
+.
+.
+.SH 2
+grap2graph
+
+.ULS
+.LI
+A new script contributed by
+.MTO esr@\:thyrsus.com "Eric S. Raymond" .
+It converts a grap diagram into a cropped image.
+Since it uses gs and the PNM library, virtually all graphics formats
+are available for output.
+[Note that the grap program itself isn't part of the groff package;
+see the file MORE.STUFF how to obtain grap.]
+.ULE
+.
+.
+.SH 2
+grohtml
+
+.ULS
+.LI
+New option `\-j' to emit output splitted into multiple files.
+.ULE
+.
+.
+.SH 2
+grops
+
+.ULS
+.LI
+New command line option `\-I' to specify a directory to search for files
+on the command line and files named in \eX'ps:\~import' and \eX'ps:\~file'
+escapes.
+This is also handled by the groff wrapper program.
+
+.LI
+The default value for the `broken' keyword in the DESC file is now\~0.
+.ULE
+.
+.
+.SH 2
+grolj4
+
+.ULS
+.LI
+A new man page `lj4_font(5)' documents how fonts are accessed with
+grolj4.
+
+.LI
+The built-in fonts for LJ4 and newer PCL\~5 devices have been completely
+revised, mainly to access as much glyphs as possible.
+The provided metric files should be compatible with recent PCL\~5 printers
+also.
+Additionally, font description files have been added for the Arial and
+Times New Roman family, the MS symbol, and Wingdings fonts.
+.ULE
+.
+.
+.SH 2
+afmtodit
+
+.ULS
+.LI
+New option `\-x' to prevent use of built-in Adobe Glyph List.
+.ULE
+.
+.
+.SH 2
+hpftodit
+
+.ULS
+.LI
+Completely revised to handle HP TrueType metric files also.
+See the hpftodit manual page for more details.
+.ULE
+.
+.
+.SH 2
+groffer
+
+.ULS
+.LI
+This version is a rewrite of groffer in many parts, but it is kept in
+the old single script style.
+
+.ULS
+.LI
+New options: \-\-text (\-\-mode\~text), \-\-tty-viewer, \-\-X (\-\-mode\~X),
+\-\-X-viewer, \-\-html (\-\-mode\~html), \-\-html-view, \-\-apropos-data,
+\-\-apropos-devel, \-\-apropos-progs.
+
+.LI
+New documentation file README_SH.
+
+.LI
+Enhancement of the configuration files and the `apropos' handling.
+.ULE
+.ULE
+.
+.
+.SH 2
+macro packages
+
+.ULS
+.LI
+www.tmac: New macro `JOBNAME' to split output into multiple files.
+
+.LI
+In mdoc, multiple calls to `.Lb' are now supported in the LIBRARY
+section.
+.ULE
+.
+.
+.SH
 NEWS VERSION 1.19
 .
 .SH 2
@@ -243,8 +450,8 @@ Out of the box, the groff package supports \%latin-9 only for \-Tps,
 .LI
 Composite glyphs are now supported.
 To do this, a subset of the Adobe Glyph List (AGL) Algorithm as described in
-.URL http://partners.adobe.com/asn/developer/typeforum/unicodegn.html \
-     http://partners.adobe.com/asn/developer/typeforum/unicodegn.html
+.URL http://partners.adobe.com/asn/tech/type/unicodegn.jsp \
+     http://partners.adobe.com/asn/tech/type/unicodegn.jsp
 is used to construct glyph names based on Unicode character codes.
 The existing groff glyph names are frozen; no glyph names which can't be
 constructed algorithmically will be added in the future.
@@ -274,7 +481,7 @@ The new request
 .in
 
 will change the mapping while a composite glyph name is constructed.
-To make \e[A ho] yield the expected result,
+To make \e[A\~ho] yield the expected result,
 
 .in 2m
 .ft C
@@ -306,16 +513,16 @@ They are searched after the list of fonts declared with the
 `special' request but before the already mounted special fonts.
 
 .LI
-In groff versions 1.18 and 1.18.1, \eD'f ...' didn't move the current
+In groff versions 1.18 and 1.18.1, \eD'f\~...'\& didn't move the current
 point horizontally.
 Despite of being silly, this change has been reverted for backwards
 compatibility.
 Consequently, the intermediate output command `Df' also moves the 
 position horizontally again.
 
-\eD'f ...' is deprecated since it depends on the horizontal resolution of
-the output device (given with the `hor' parameter in the DESC file).
-Use the new \eD'Fg ...' escape instead.
+\eD'f\~...'\& is deprecated since it depends on the horizontal resolution
+of the output device (given with the `hor' parameter in the DESC file).
+Use the new \eD'Fg\~...'\& escape instead.
 
 .LI
 For orthogonality, new \eD subcommands to change the fill color are
@@ -344,7 +551,7 @@ The values set with \eH and \eS are now available in number registers
 
 .LI
 The `.pe' number register isn't new but hasn't been documented before.
-It is set to 1 during a page ejection caused by the `bp' request.
+It is set to\~1 during a page ejection caused by the `bp' request.
 
 .LI
 The new glyph symbol `tno' is a textual variant of `no'.

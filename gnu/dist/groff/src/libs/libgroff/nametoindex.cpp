@@ -1,7 +1,7 @@
-/*	$NetBSD: nametoindex.cpp,v 1.1.1.1 2003/06/30 17:52:06 wiz Exp $	*/
+/*	$NetBSD: nametoindex.cpp,v 1.1.1.2 2004/07/30 14:44:51 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002, 2003
+/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
@@ -109,9 +109,9 @@ int font::name_to_index(const char *s)
     return indexer.ascii_char_index(s[0]);
   /* char128 and \200 are synonyms */
   if (s[0] == 'c' && s[1] == 'h' && s[2] == 'a' && s[3] == 'r') {
-    char *res;
-    long n = strtol(s + 4, &res, 10);
-    if (res != s + 4 && *res == '\0' && n >= 0 && n < 256)
+    char *val;
+    long n = strtol(s + 4, &val, 10);
+    if (val != s + 4 && *val == '\0' && n >= 0 && n < 256)
       return indexer.ascii_char_index((unsigned char)n);
   }
   return indexer.named_char_index(s);

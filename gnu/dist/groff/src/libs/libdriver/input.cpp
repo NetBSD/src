@@ -1,10 +1,10 @@
-/*	$NetBSD: input.cpp,v 1.1.1.1 2003/06/30 17:52:06 wiz Exp $	*/
+/*	$NetBSD: input.cpp,v 1.1.1.2 2004/07/30 14:44:52 wiz Exp $	*/
 
 // -*- C++ -*-
 
 // <groff_src_dir>/src/libs/libdriver/input.cpp
 
-/* Copyright (C) 1989, 1990, 1991, 1992, 2001, 2002, 2003
+/* Copyright (C) 1989, 1990, 1991, 1992, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
 
    Written by James Clark (jjc@jclark.com)
@@ -282,7 +282,7 @@ public:
   }
   void append(IntArg);
   const IntArg * const
-    get_data(void) const { return (IntArg *) data; }
+    get_data(void) const { return (IntArg *)data; }
   const size_t len(void) const { return num_stored; }
 };
 
@@ -444,7 +444,7 @@ EnvStack::EnvStack(void)
 {
   num_allocated = 4;
   // allocate pointer to array of num_allocated pointers to environment
-  data = (environment **) malloc(envp_size * num_allocated);
+  data = (environment **)malloc(envp_size * num_allocated);
   if (data == 0)
     fatal("could not allocate environment data");
   num_stored = 0;
@@ -477,7 +477,7 @@ EnvStack::push(environment *e)
   if (num_stored >= num_allocated) {
     environment **old_data = data;
     num_allocated *= 2;
-    data = (environment **) malloc(envp_size * num_allocated);
+    data = (environment **)malloc(envp_size * num_allocated);
     if (data == 0)
       fatal("could not allocate data");
     for (size_t i = 0; i < num_stored; i++)
@@ -1036,13 +1036,13 @@ remember_filename(const char *filename)
 {
   char *fname;
   if (strcmp(filename, "-") == 0)
-    fname = "<standard input>";
+    fname = (char *)"<standard input>";
   else
-    fname = (char *) filename;
+    fname = (char *)filename;
   size_t len = strlen(fname) + 1;
   if (current_filename != 0)
     free((char *)current_filename);
-  current_filename = (const char *) malloc(len);
+  current_filename = (const char *)malloc(len);
   if (current_filename == 0)
     fatal("can't malloc space for filename");
   strncpy((char *)current_filename, (char *)fname, len);
@@ -1062,13 +1062,13 @@ remember_source_filename(const char *filename)
 {
   char *fname;
   if (strcmp(filename, "-") == 0)
-    fname = "<standard input>";
+    fname = (char *)"<standard input>";
   else
-    fname = (char *) filename;
+    fname = (char *)filename;
   size_t len = strlen(fname) + 1;
   if (current_source_filename != 0)
     free((char *)current_source_filename);
-  current_source_filename = (const char *) malloc(len);
+  current_source_filename = (const char *)malloc(len);
   if (current_source_filename == 0)
     fatal("can't malloc space for filename");
   strncpy((char *)current_source_filename, (char *)fname, len);
@@ -1085,7 +1085,7 @@ void
 send_draw(const Char subcmd, const IntArray * const args)
 {
   EnvInt n = (EnvInt) args->len();
-  pr->draw((int) subcmd, (IntArg *) args->get_data(), n, current_env);
+  pr->draw((int) subcmd, (IntArg *)args->get_data(), n, current_env);
 }
 
 //////////////////////////////////////////////////////////////////////

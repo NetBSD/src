@@ -10,7 +10,7 @@ Installed position: groff's main macro directory.
 
 This file is part of groff, the GNU roff type-setting system.
 
-Copyright (C) 2001, 2002, 2003 Free Software Foundation, Inc.
+Copyright (C) 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 written by Gaius Mulley <gaius@glam.ac.uk>, with additions by
 Werner Lemberg <wl@gnu.org> and Bernd Warken <bwarken@mayn.de>.
 
@@ -191,7 +191,7 @@ www functionality.  It should work with any macro set.
 .\" Arguments: >=2: <result> <char> [<char>...]
 .\"
 .de www:url_breaks_splitted
-.  nr \\$0:min 5	\" minimal number of characters for next line
+.  nr \\$0:min 5             \" minimal number of characters for next line
 .  if (\\n[.$] < 2) \
 .    www:error .\\$0 expects at least 2 arguments.
 .  ds \\$0:res \\$1\"
@@ -465,13 +465,14 @@ www functionality.  It should work with any macro set.
 .nr www-right-ll-trap 0
 .
 .de www-finish-left-po
-.  po -\\n[www-left-indent]u
+.  po -(\\n[www-left-indent]u + \\n[www-image-gap]u)
 .  wh \\n[www-left-po-trap]u
 .  nr www-left-indent 0
 ..
 .
+.\" called when the -R picture is finished
 .de www-finish-right-ll
-.  ll +\\n[www-right-indent]u
+.  ll +(\\n[www-right-indent]u + \\n[www-image-gap]u)
 .  \" now see whether we need to inline www-finish-left-ll
 .  if (\\n[www-left-ll-trap]u > 0) \
 .    if ((\\n[www-right-ll-trap]u + 1v) >= \\n[www-left-ll-trap]u) \{\
@@ -502,51 +503,81 @@ www functionality.  It should work with any macro set.
 .  mk www-left-po-trap
 .  nr www-left-po-trap +1v
 .  wh \\n[www-left-po-trap]u www-finish-left-po
-.  ll +\\n[www-left-indent]u
+.  ll +(\\n[www-left-indent]u + \\n[www-image-gap]u)
 .  wh \\n[www-left-ll-trap]u
 .  nr www-left-ll-trap 0
 ..
 .\" --------------------------------------------------------------------
-.\" MPIMG [-R|-L] filename [width] [height]
+.\" MPIMG [-R|-L] [-G gap] filename [width [height]]
 .\"
 .\"   Include a png image and wrap text around it.  It will work for
 .\"   -Tps and -Thtml.  The default value for WIDTH is 1i; default value
 .\"   for HEIGHT is WIDTH; the default alignment is left (-L).
+.\"   -G is used to insert a gap between the text and the image.
 .\"
 .\" Note: This macro can only be used with the `-U' option of groff,
 .\"       activating unsafe mode, if not used with -Thtml; the PNG image
 .\"       is then converted to the EPS format using netpbm utilities.
 .\"
+.
+.nr www-htmlimage-gap 0
+.
 .de MPIMG
+.  nr www-image-just 1
+.  nr www-image-gap 0
+.  while (\\n[.$] > 0) \{\
+.    if '-L'\\$1' \{\
+.      nr www-image-just 1
+.      shift
+.      continue
+.    \}
+.    if '-R'\\$1' \{\
+.      nr www-image-just 0
+.      shift
+.      continue
+.    \}
+.    if '-G'\\$1' \{\
+.      nr www-image-gap \\$2
+.      nr www-htmlimage-gap (\\$2 * 100 / 240)
+.      shift 2
+.      continue
+.    \}
+.    break
+.  \}
 .  nr www-width 1i
-.  if !'\\$3'' \
-.    nr www-width \\$3
+.  if !'\\$2'' \
+.    nr www-width \\$2
 .  nr www-height \\n[www-width]
-.  if !'\\$4'' \
-.    nr www-height \\$4
+.  if !'\\$3'' \
+.    nr www-height \\$3
 .  nr www-width (\\n[www-width] * 100 / 240)
 .  nr www-height (\\n[www-height] * 100 / 240)
+.
 .  ie \\n[www-html] \{\
-.    ie '\\$1'-R' \
-.      HTML <img src="\\$2" align=right width=\\n[www-width] height=\\n[www-height]>
+.    ie !\\n[www-image-just] \
+.      HTML <img src="\\$1" hspace=\\n[www-htmlimage-gap] \
+             align=right width=\\n[www-width] height=\\n[www-height]>
 .    el \
-.      HTML <img src="\\$2" align=left width=\\n[www-width] height=\\n[www-height]>
+.      HTML <img src="\\$1" hspace=\\n[www-htmlimage-gap] \
+             align=left width=\\n[www-width] height=\\n[www-height]>
 .  \}
 .  el \{\
 .    if !r ps4html \{\
 .      www-make-unique-name
-.      sy pngtopnm \\$2 | pnmcrop -white | @PNMTOPS_NOSETPAGE@ -noturn > \\*[www-unique-name].eps
-.      ie '\\$1'-R' \{\
+.      sy pngtopnm \\$1 | pnmcrop -white | @PNMTOPS_NOSETPAGE@ -noturn > \\*[www-unique-name].eps
+.      ie !\\n[www-image-just] \{\
 .        \" we must now disable a possible left image trap
 .        sp -1
 .        if (\\n[www-left-ll-trap] > 0) \
 .          wh \\n[www-left-ll-trap]u
 .        if (\\n[www-left-po-trap] > 0) \
 .          wh \\n[www-left-po-trap]u
-.        PSPIC -R \\*[www-unique-name].eps \\$3 \\$4
+.        PSPIC -R \\*[www-unique-name].eps \\$2 \\$3
 .        sp -\\n[ps-desht]u
 .        nr www-right-indent \\n[ps-deswid]u
-.        ll -\\n[www-right-indent]u
+.        \" we want to have some space between text and image,
+.        \" so the line length must be shorter
+.        ll -(\\n[www-right-indent]u + \\n[www-image-gap]u)
 .        mk www-right-ll-trap
 .        nr www-right-ll-trap +(\\n[ps-desht]u - 1v)
 .        wh \\n[www-right-ll-trap]u www-finish-right-ll
@@ -560,11 +591,13 @@ www functionality.  It should work with any macro set.
 .        \" we must now disable a possible right image trap
 .        if (\\n[www-right-ll-trap] > 0) \
 .          wh \\n[www-right-ll-trap]u
-.        PSPIC -L \\*[www-unique-name].eps \\$3 \\$4
+.        PSPIC -L \\*[www-unique-name].eps \\$2 \\$3
 .        sp -\\n[ps-desht]u
 .        nr www-left-indent \\n[ps-deswid]u
-.        po +\\n[www-left-indent]u
-.        ll -\\n[www-left-indent]u
+.        \" increase offset by gap
+.        po +(\\n[www-left-indent]u + \\n[www-image-gap]u)
+.        \" decrease line length by gap
+.        ll -(\\n[www-left-indent]u + \\n[www-image-gap]u)
 .        mk www-left-ll-trap
 .        nr www-left-ll-trap +(\\n[ps-desht]u - 1v)
 .        wh \\n[www-left-ll-trap]u www-finish-left-ll
@@ -763,11 +796,15 @@ www functionality.  It should work with any macro set.
 .      bp
 .    \}
 .    el \{\
-.      nr dummy \w'\\$1'u
-.      nr dcht ((\\n[.v] + \\n[rst]) * \\n[.ps] / \\n[rst])
-.      char \[dcap] \m[\\*[www-dropcolor]]\s'\\n[dcht]u'\\$1
-.      nop \v'\\n[.v]u'\\[dcap]\v'-\\n[.v]u'\c
-'      ti \w'\\[dcap]'u
+.      ie n \
+.        nop \\$1\c
+.      el \{\
+.        nr dummy \w'\\$1'u
+.        nr dcht ((\\n[.v] + \\n[rst]) * \\n[.ps] / \\n[rst])
+.        char \[dcap] \m[\\*[www-dropcolor]]\s'\\n[dcht]u'\\$1
+.        nop \v'\\n[.v]u'\\[dcap]\v'-\\n[.v]u'\c
+'        ti \w'\\[dcap]'u
+.      \}
 .    \}
 .  \}
 .  nop \\$2
@@ -842,6 +879,16 @@ www functionality.  It should work with any macro set.
 .  HTML-DO-IMAGE \\*[www-unique-name] i
 ..
 .
+.\" --------------------------------------------------------------------
+.\" JOBNAME
+.\"
+.\"   Generate multiple output files containing the html.
+.\"   A file is split whenever a .SH or .NH 1 is encountered.
+.\"   The argument to JOBNAME is the file stem for future output files.
+.\"
+.de JOBNAME
+.  HTML-TAG .job-name \\$1
+..
 .\" --------------------------------------------------------------------
 .\" Final Setup
 .\" --------------------------------------------------------------------
