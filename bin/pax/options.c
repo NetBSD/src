@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.31 2000/07/04 17:28:47 thorpej Exp $	*/
+/*	$NetBSD: options.c,v 1.32 2001/07/22 13:33:58 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.31 2000/07/04 17:28:47 thorpej Exp $");
+__RCSID("$NetBSD: options.c,v 1.32 2001/07/22 13:33:58 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -1407,7 +1407,7 @@ opt_add(str)
  *	4) A positive decimal number followed by a m (mult by 512).
  *	5) A positive decimal number followed by a w (mult by sizeof int)
  *	6) Two or more positive decimal numbers (with/without k,b or w).
- *	   seperated by x (also * for backwards compatibility), specifying
+ *	   separated by x (also * for backwards compatibility), specifying
  *	   the product of the indicated values.
  * Return:
  *	0 for an error, a positive value o.w.
