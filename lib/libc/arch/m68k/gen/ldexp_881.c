@@ -1,4 +1,4 @@
-/*	$NetBSD: ldexp_881.c,v 1.1 1999/08/29 19:41:53 mycroft Exp $	*/
+/*	$NetBSD: ldexp_881.c,v 1.2 2001/11/07 17:56:32 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ldexp_881.c,v 1.1 1999/08/29 19:41:53 mycroft Exp $");
+__RCSID("$NetBSD: ldexp_881.c,v 1.2 2001/11/07 17:56:32 drochner Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -49,14 +49,14 @@ __RCSID("$NetBSD: ldexp_881.c,v 1.1 1999/08/29 19:41:53 mycroft Exp $");
  * ldexp(value, exp): return value * (2 ** exp).
  */
 double
-ldexp(value, exp)
+ldexp(value, exp2)
 	double value;
-	int exp;
+	int exp2;
 {
 	double temp;
 
 	__asm ("fscalel %2,%1"
 		: "=f" (temp)
-		: "0" (value), "g" (exp));
+		: "0" (value), "g" (exp2));
 	return (temp);
 }
