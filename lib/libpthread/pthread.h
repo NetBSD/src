@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.17 2004/12/10 16:40:40 nathanw Exp $	*/
+/*	$NetBSD: pthread.h,v 1.18 2004/12/13 03:10:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -232,9 +232,12 @@ __END_DECLS
  * Left out of this list are functions that can't sensibly be trivial
  * or no-op stubs in a single-threaded process (pthread_create,
  * pthread_kill, pthread_detach), functions that normally block and
- * wait for another thread to do something (pthread_join,
- * pthread_cond_wait, pthread_cond_timedwait), and functions that
- * don't make sense without the previous functions (pthread_attr_*).
+ * wait for another thread to do something (pthread_join), and
+ * functions that don't make sense without the previous functions
+ * (pthread_attr_*). The pthread_cond_wait and pthread_cond_timedwait
+ * functions are useful in implementing certain protection mechanisms,
+ * though a non-buggy app shouldn't end up callung them in
+ * single-threaded mode.
  *
  * The rename is done as:
  * #define pthread_foo	__libc_foo
@@ -277,12 +280,17 @@ __BEGIN_DECLS
 int	__libc_cond_init(pthread_cond_t *, const pthread_condattr_t *);
 int	__libc_cond_signal(pthread_cond_t *);
 int	__libc_cond_broadcast(pthread_cond_t *);
+int	__libc_cond_wait(pthread_cond_t *, pthread_mutex_t *);
+int	__libc_cond_timedwait(pthread_cond_t *, pthread_mutex_t *,
+    const struct timespec *);
 int	__libc_cond_destroy(pthread_cond_t *);
 __END_DECLS
 
 #define	pthread_cond_init	     	__libc_cond_init
 #define	pthread_cond_signal		__libc_cond_signal
 #define	pthread_cond_broadcast		__libc_cond_broadcast
+#define	pthread_cond_wait		__libc_cond_wait
+#define	pthread_cond_timedwait		__libc_cond_timedwait
 #define	pthread_cond_destroy		__libc_cond_destroy
 
 __BEGIN_DECLS
