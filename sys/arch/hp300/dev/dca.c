@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dca.c	7.12 (Berkeley) 6/27/91
- *	$Id: dca.c,v 1.10 1994/02/06 00:44:32 mycroft Exp $
+ *	$Id: dca.c,v 1.11 1994/02/06 01:08:36 mycroft Exp $
  */
 
 #include "dca.h"
@@ -99,7 +99,6 @@ struct speedtab dcaspeedtab[] = {
 	-1,	-1
 };
 
-extern	struct tty *constty;
 #ifdef KGDB
 #include "machine/remote-sl.h"
 
@@ -197,7 +196,7 @@ dcaopen(dev, flag, mode, p)
 	unit = UNIT(dev);
 	if (unit >= NDCA || (dca_active & (1 << unit)) == 0)
 		return (ENXIO);
-	if(!dca_tty[unit])
+	if (!dca_tty[unit])
 		tp = dca_tty[unit] = ttymalloc();
 	else
 		tp = dca_tty[unit];
@@ -259,8 +258,10 @@ dcaclose(dev, flag, mode, p)
 	    (tp->t_state&TS_ISOPEN) == 0)
 		(void) dcamctl(dev, 0, DMSET);
 	ttyclose(tp);
+#if 0
 	ttyfree(tp);
 	dca_tty[unit] = (struct tty *)NULL;
+#endif
 	return (0);
 }
  
@@ -277,17 +278,8 @@ dcawrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	int unit = UNIT(dev);
-	register struct tty *tp = dca_tty[unit];
+	register struct tty *tp = dca_tty[UNIT(dev)];
  
-	/*
-	 * (XXX) We disallow virtual consoles if the physical console is
-	 * a serial port.  This is in case there is a display attached that
-	 * is not the console.  In that situation we don't need/want the X
-	 * server taking over the console.
-	 */
-	if (constty && unit == dcaconsole)
-		constty = NULL;
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
  
