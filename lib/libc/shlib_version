@@ -1,9 +1,10 @@
-#	$NetBSD: shlib_version,v 1.96 2000/12/11 19:12:35 ad Exp $
+#	$NetBSD: shlib_version,v 1.97 2000/12/12 15:45:04 ad Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
 # - libc/net/rcmd.c: make __ivaliduser() and __ivaliduser_sa() static
 # - libc/net: resolver update to BIND8/9?
+# - md4, md5, rmd160 & sha1 functions should take the same arguments AFAP
 #
 major=12
 minor=67
