@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.72 2002/11/10 18:23:48 hubertf Exp $
+.\"	$NetBSD: packages.7,v 1.73 2003/01/04 01:04:00 wiz Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -47,7 +47,7 @@ category packages will be installed.
 The default is
 .Pa /usr/X11R6 .
 .It DISTDIR
-Where to get gzip'd, tarballed copies of original sources.  The default is
+Where to get gzip'd, tar-balled copies of original sources.  The default is
 .Pa ${PKGSRCDIR}/distfiles .
 .It MASTER_SITE_BACKUP
 Backup location(s) for distribution files and patch files if not found
@@ -64,7 +64,7 @@ to each package).  The default is
 .It GMAKE
 Set to path of GNU make if not in $PATH (default: gmake).
 .It PKG_FC
-Set to the path of the desired fortran compiler (default: f2c-f77).
+Set to the path of the desired Fortran compiler (default: f2c-f77).
 .It XMKMF
 Set to path of
 .Dq xmkmf
@@ -265,7 +265,7 @@ Patterns that get automatically expanded during the PLIST creation.
 Takes arguments of the form
 .Li VARNAME =
 .Dq value
-and subsequently replaces every occurance of
+and subsequently replaces every occurrence of
 .Li ${VARNAME}
 with
 .Li value .
@@ -353,7 +353,7 @@ Uses passive
 .Xr ftp 1
 to retrieve distribution files.
 .It REPLACE_PERL
-Takes a list of files and replaces each occurence of "/usr/bin/perl", "/usr/local/bin/perl"
+Takes a list of files and replaces each occurrence of "/usr/bin/perl", "/usr/local/bin/perl"
 and "/usr/pkg/bin/perl" in the named files with the value of ${PERL5}.
 This can be used to point perl scripts to the proper interpreter that pkgsrc installs.
 Note: it looks for the listed files in ${WRKSRC}.
@@ -372,7 +372,7 @@ for using the
 package instead of the pkg's own
 .Pa libtool .
 .It USE_FORTRAN
-Says that the package uses a fortran compiler for building.
+Says that the package uses a Fortran compiler for building.
 .It USE_GMAKE
 Says that the package uses
 .Pa gmake .
@@ -677,7 +677,7 @@ A command to install executable scripts.
 .It INSTALL_DATA
 A command to install sharable data.
 .It INSTALL_MAN
-A command to install manpages (doesn't compress).
+A command to install man pages (doesn't compress).
 .It INSTALL_PROGRAM_DIR
 Create a directory for storing programs.
 .It INSTALL_SCRIPT_DIR
@@ -692,8 +692,8 @@ This section documents variables used to configure the way manual pages
 are installed by this package.
 .Bl -tag -offset indent -width XXXXXXXX
 .It MANCOMPRESSED
-Indicates that the package installs manpages in a compressed
-form.  The default package installs manpages uncompressed.
+Indicates that the package installs man pages in a compressed
+form.  The default package installs man pages uncompressed.
 .It INFO_FILES
 set to the base names of the info files you wish to be installed in the
 info dir file. Automatically sets
@@ -701,7 +701,7 @@ info dir file. Automatically sets
 .El
 .Sh PACKAGE TARGETS
 This section documents the default targets and their behaviors.  If any
-target relies on another target for completion (eg, the
+target relies on another target for completion (e.g., the
 .Dq install
 target relies on the
 .Dq build
@@ -775,7 +775,7 @@ Create a README.html file describing the category or package. See
 .Pa ${PKGSRCDIR}/Packages.txt
 for more details.
 .It mirror-distfiles
-Mirror the distfile(s) if they are freely redistributable. If
+Mirror the distfile(s) if they are freely re-distributable. If
 .Dv NO_SRC_ON_FTP
 is set in the package's Makefile (usually to
 .Pa ${RESTRICTED} )
