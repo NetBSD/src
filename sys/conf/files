@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.500 2002/03/09 21:21:57 kent Exp $
+#	$NetBSD: files,v 1.501 2002/03/10 19:56:48 lukem Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -181,9 +181,7 @@ defflag				SYSCALL_DEBUG
 #
 defflag	opt_md.h		MEMORY_DISK_HOOKS MEMORY_DISK_IS_ROOT
 				MEMORY_DISK_DYNAMIC
-defparam opt_md.h		MEMORY_DISK_SERVER
-
-defparam opt_mdsize.h		MINIROOTSIZE
+defparam opt_md.h		MEMORY_DISK_SERVER MEMORY_DISK_SIZE
 
 # device classes
 #
