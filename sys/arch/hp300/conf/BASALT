@@ -1,4 +1,4 @@
-#	$NetBSD: BASALT,v 1.25 1998/05/04 05:01:55 thorpej Exp $
+#	$NetBSD: BASALT,v 1.26 1998/06/26 01:53:54 lukem Exp $
 #
 # Kernel for basalt.og.org - thorpej's HP380 file server.
 #
@@ -35,7 +35,6 @@ file-system	MFS		# Memory-based filesystem
 file-system	CD9660		# ISO 9660 + Rock Ridge filesystem
 
 # Filesystem options
-options 	FIFO		# POSIX fifo support (in all filesystems)
 options 	NFSSERVER	# Network filesystem server
 
 # Networking options

@@ -1,4 +1,4 @@
-#	$NetBSD: MYSTERY,v 1.20 1998/02/27 01:33:14 scottr Exp $
+#	$NetBSD: MYSTERY,v 1.21 1998/06/26 01:54:01 lukem Exp $
 #
 # GENERIC
 
@@ -76,7 +76,6 @@ file-system 	UNION		# union file system
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	NFSSERVER	# Network File System server
-options 	FIFO		# FIFOs; RECOMMENDED
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 

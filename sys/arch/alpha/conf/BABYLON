@@ -1,4 +1,4 @@
-# $NetBSD: BABYLON,v 1.9 1998/05/24 23:45:30 thorpej Exp $
+# $NetBSD: BABYLON,v 1.10 1998/06/26 01:53:44 lukem Exp $
 #
 #	BABYLON -- babylon.netbsd.org, the new mail server
 #
@@ -51,7 +51,6 @@ file-system	PROCFS		# Process file system (/proc)
 #file-system	UNION		# union file system
 
 # File system options
-options 	FIFO		# POSIX fifo support (in all file systems)
 options 	QUOTA		# User and group quotas for the FFS
 options 	NFSSERVER	# Sun NFS-compatible file system server
 

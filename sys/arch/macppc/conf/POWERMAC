@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.4 1998/06/21 13:46:02 tsubai Exp $
+#	$NetBSD: POWERMAC,v 1.5 1998/06/26 01:54:02 lukem Exp $
 #
 # POWERMAC config file
 #
@@ -38,7 +38,6 @@ file-system 	NFS		# Network File System client
 
 # File system options
 #options 	FFS_EI		# FFS Endian Independant support
-options 	FIFO		# FIFOs; RECOMMENDED
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP

@@ -1,4 +1,4 @@
-# $NetBSD: CANE,v 1.1 1998/06/07 00:45:35 thorpej Exp $
+# $NetBSD: CANE,v 1.2 1998/06/26 01:53:45 lukem Exp $
 #
 # cane.nas.nasa.gov - thorpej's Multia
 #
@@ -36,7 +36,6 @@ file-system	MSDOSFS		# MS-DOS-compatible file system
 file-system	NFS		# Sun NFS-compatible file system client
 
 # File system options
-options 	FIFO		# POSIX fifo support (in all file systems)
 options 	NFSSERVER	# Sun NFS-compatible file system server
 #options 	FFS_EI		# FFS Endian Independant support
 

@@ -2,7 +2,7 @@
 # R4000 (any  model) kernel config file
 
 #
-# 	$NetBSD: R4000,v 1.7 1998/04/19 08:46:51 jonathan Exp $
+# 	$NetBSD: R4000,v 1.8 1998/06/26 01:54:08 lukem Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -52,7 +52,6 @@ file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION
 
-options 	FIFO		# POSIX fifo support (in all filesystems)
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	QUOTA		# UFS quotas
 

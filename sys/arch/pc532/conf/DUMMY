@@ -1,4 +1,4 @@
-#	$NetBSD: DUMMY,v 1.10 1998/03/19 22:10:21 matthias Exp $
+#	$NetBSD: DUMMY,v 1.11 1998/06/26 01:54:05 lukem Exp $
 #
 # DUMMY: Matthias Pfaller's second pc532
 #
@@ -40,7 +40,6 @@ file-system 	UNION
 file-system 	NULLFS
 file-system 	NFS			# Network File System client
 
-options 	FIFO			# fifos; recommended
 #options 	QUOTA			# file system quotas
 
 # networking options

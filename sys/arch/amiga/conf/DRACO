@@ -1,4 +1,4 @@
-#	$NetBSD: DRACO,v 1.24 1998/04/07 19:43:08 is Exp $
+#	$NetBSD: DRACO,v 1.25 1998/06/26 01:53:47 lukem Exp $
 
 #
 # Macro System GmbH "DraCo", currently 68060-only until FPE is integrated.
@@ -41,7 +41,6 @@ options 	INET		# IP networking support (Required)
 #
 options 	QUOTA		# Disk quotas for local disks
 options 	NFSSERVER	# Network File System server side code
-options 	FIFO		# FIFO operations on vnodes (Recommended)
 
 #
 # File systems

@@ -1,4 +1,4 @@
-# $NetBSD: JURA,v 1.20 1998/04/15 21:19:22 drochner Exp $
+# $NetBSD: JURA,v 1.21 1998/06/26 01:53:46 lukem Exp $
 #
 # Kernel for jura.pdl.cs.cmu.edu.
 #
@@ -26,9 +26,6 @@ options 	DEBUG			# Expensive debugging checks/support
 file-system	FFS		# Fast file system
 file-system	MFS		# Memory-based file system
 file-system	NFS		# Sun NFS-compatible file system client
-
-# File system options
-options 	FIFO		# POSIX fifo support (in all file systems)
 
 # Networking options
 options 	INET		# Internet protocol suite

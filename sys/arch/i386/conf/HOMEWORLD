@@ -1,4 +1,4 @@
-#	$NetBSD: HOMEWORLD,v 1.31 1998/06/07 03:01:05 enami Exp $
+#	$NetBSD: HOMEWORLD,v 1.32 1998/06/26 01:53:58 lukem Exp $
 #
 #	HOMEWORLD - Mail, CVS, and GNATS server
 #
@@ -76,7 +76,6 @@ file-system 	FDESC		# /dev/fd
 
 #options 	QUOTA		# UFS quotas
 options 	NFSSERVER	# Network File System server
-options 	FIFO		# FIFOs; RECOMMENDED
 
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP

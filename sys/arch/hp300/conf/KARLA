@@ -1,4 +1,4 @@
-#	$NetBSD: KARLA,v 1.5 1998/01/05 06:28:51 perry Exp $
+#	$NetBSD: KARLA,v 1.6 1998/06/26 01:53:55 lukem Exp $
 #
 # KARLA
 #
@@ -30,7 +30,6 @@ file-system	UNION		# Union filesystem (req. for FDESC)
 
 # Filesystem options
 #options 	NFSSERVER	# Network Filesystem server
-options 	FIFO		# POSIX fifo support (in all filesystems)
 
 options 	FDSCRIPTS
 options 	SETUIDSCRIPTS

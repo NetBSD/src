@@ -1,4 +1,4 @@
-#	$NetBSD: RISCPC,v 1.12 1998/06/09 01:15:49 tv Exp $
+#	$NetBSD: RISCPC,v 1.13 1998/06/26 01:53:49 lukem Exp $
 #
 #	RISCPC -- Full RiscPC config
 #
@@ -57,7 +57,6 @@ file-system	UNION		# union file system
 
 # File system options
 options 	QUOTA		# UFS quotas
-options 	FIFO		# FIFOs; RECOMMENDED
 options 	NFSSERVER
 
 # Networking options

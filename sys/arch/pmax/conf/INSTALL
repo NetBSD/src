@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.11 1998/04/19 08:46:51 jonathan Exp $
+# 	$NetBSD: INSTALL,v 1.12 1998/06/26 01:54:08 lukem Exp $
 #
 # Distribution  install kernel (any  model)
 #    netbsd:    cut-down kernel for miniroots.
@@ -48,8 +48,6 @@ options 	"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool
 file-system 	FFS			# BSD fast filesystem
 file-system 	NFS			# Sun NFS-compatible filesystem (client)
 file-system 	KERNFS			# kernel data-structure filesystem
-
-options 	FIFO			# POSIX fifo support (in all filesystems)
 
 
 # Networking options

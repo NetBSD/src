@@ -1,4 +1,4 @@
-#	$NetBSD: HAYDON,v 1.6 1998/01/05 06:28:50 perry Exp $
+#	$NetBSD: HAYDON,v 1.7 1998/06/26 01:53:54 lukem Exp $
 #
 # HAYDON
 #
@@ -32,7 +32,6 @@ file-system	UNION		# Union filesystem (req. for FDESC)
 
 # Filesystem options
 options 	NFSSERVER	# Network Filesystem server
-options 	FIFO		# POSIX fifo support (in all filesystems)
 
 options 	FDSCRIPTS
 options 	SETUIDSCRIPTS

@@ -1,7 +1,7 @@
 #
 # Stanford DSG Decstation (any  model) kernel config file
 #
-# 	$NetBSD: DSG,v 1.13 1998/04/19 08:46:51 jonathan Exp $
+# 	$NetBSD: DSG,v 1.14 1998/06/26 01:54:08 lukem Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -55,7 +55,6 @@ file-system 	PROCFS		# /proc
 #file-system	UMAPFS		# uid/gid remapping filesystem
 file-system	UNION
 
-options 	FIFO		# POSIX fifo support (in all filesystems)
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 #options 	QUOTA		# UFS quotas
 

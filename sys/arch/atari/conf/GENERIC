@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.42 1998/05/11 07:46:28 leo Exp $
+#	$NetBSD: GENERIC,v 1.43 1998/06/26 01:53:52 lukem Exp $
 #
 # Generic atari
 #
@@ -52,7 +52,6 @@ file-system 	UMAPFS		# null file system (with uid & gid remapping)
 file-system 	PORTAL		# portal file system
 
 # File system options
-options 	FIFO		# FIFO operations on vnodes
 options 	QUOTA		# Disk quotas for local disks
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER	# Network File System server side code

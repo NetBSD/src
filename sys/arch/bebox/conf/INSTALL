@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.1 1998/05/28 08:44:59 sakamoto Exp $
+#	$NetBSD: INSTALL,v 1.2 1998/06/26 01:53:53 lukem Exp $
 #
 # First try for BEBOX config file
 #
@@ -49,7 +49,6 @@ file-system 	KERNFS
 #file-system 	UMAPFS
 #file-system 	UNION
 
-options 	FIFO
 #options 	NFSSERVER
 
 options 	INET

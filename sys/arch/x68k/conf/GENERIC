@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.18 1998/03/18 16:34:45 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.19 1998/06/26 01:54:14 lukem Exp $
 
 #
 #	GENERIC
@@ -30,7 +30,6 @@ options 	DEVPAGER		# device pager (mapped devices)
 #options 	DIAGNOSTIC		# internal consistency checking
 
 options 	KTRACE			# system call tracing, a la ktrace(1)
-options 	FIFO			# FIFOs; RECOMMENDED
 options 	SYSVMSG			# System V-like message queues
 options 	SYSVSEM			# System V-like semaphores
 options 	SYSVSHM			# System V-like memory sharing

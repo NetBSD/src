@@ -1,4 +1,4 @@
-#	$NetBSD: SMALL030,v 1.8 1997/12/01 16:33:54 kleink Exp $
+#	$NetBSD: SMALL030,v 1.9 1998/06/26 01:54:15 lukem Exp $
 
 #
 #	SMALL030 -- small configuration with mc68030 processor
@@ -29,7 +29,6 @@ options 	VNODEPAGER,DEVPAGER	# vnode and device node caching
 #options 	DIAGNOSTIC		# internal consistency checking
 
 #options 	KTRACE			# system call tracing, a la ktrace(1)
-options 	FIFO			# fifos; recommended
 #options 	SYSVSHM			# System V shared memory; broken
 #options 	SHMMAXPGS=1024
 #options 	LKM			# loadable kernel modules

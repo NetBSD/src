@@ -1,4 +1,4 @@
-#	$NetBSD: DEFAULT,v 1.16 1998/03/18 16:34:43 bouyer Exp $
+#	$NetBSD: DEFAULT,v 1.17 1998/06/26 01:54:04 lukem Exp $
 #
 # DEFAULT: default install kernel
 #
@@ -33,7 +33,6 @@ file-system	NULLFS			# loopback file system
 file-system	UNION			# union file system
 file-system	NFS			# Network File System client
 
-options 	FIFO			# fifos; recommended
 options 	NFSSERVER		# Network File System server
 #options 	QUOTA			# file system quotas
 #options 	FFS_EI			# FFS Endian Independant support

@@ -1,4 +1,4 @@
-#	$NetBSD: NBFTP,v 1.1 1998/06/14 12:47:31 billc Exp $
+#	$NetBSD: NBFTP,v 1.2 1998/06/26 01:53:59 lukem Exp $
 #
 #	NBFTP - ftp/sup.netbsd.org server machine
 #
@@ -77,7 +77,6 @@ file-system 	MFS		# memory file system
 
 #options 	NFSSERVER	# Network File System server
 #options 	QUOTA		# UFS quotas
-options 	FIFO		# FIFOs; RECOMMENDED
 
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP

@@ -1,4 +1,4 @@
-#	$NetBSD: RPCINST,v 1.12 1998/06/09 01:15:50 tv Exp $
+#	$NetBSD: RPCINST,v 1.13 1998/06/26 01:53:50 lukem Exp $
 #
 #	RPCINST -- RiscPC install configuration
 #
@@ -57,7 +57,6 @@ file-system	KERNFS		# /kern
 
 # File system options
 #options 	QUOTA		# UFS quotas
-options 	FIFO		# FIFOs; RECOMMENDED
 #options 	NFSSERVER
 
 # Networking options

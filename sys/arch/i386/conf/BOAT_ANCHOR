@@ -1,4 +1,4 @@
-#	$NetBSD: BOAT_ANCHOR,v 1.78 1998/06/07 03:01:05 enami Exp $
+#	$NetBSD: BOAT_ANCHOR,v 1.79 1998/06/26 01:53:57 lukem Exp $
 #
 #	BOAT_ANCHOR -- kernel for the 386-20 the gang uses for testing
 #
@@ -31,7 +31,6 @@ file-system	NFS		# Network File System client
 file-system	MSDOSFS		# MS-DOS file system
 
 #options  	NFSSERVER	# Network File System server
-options 	FIFO		# FIFOs; RECOMMENDED
 
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP

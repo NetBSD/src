@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.78 1998/06/05 02:13:41 thorpej Exp $
+# $NetBSD: ALPHA,v 1.79 1998/06/26 01:53:43 lukem Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -49,7 +49,6 @@ file-system	PROCFS		# Process file system (/proc)
 file-system	UNION		# union file system
 
 # File system options
-options 	FIFO		# POSIX fifo support (in all file systems)
 options 	QUOTA		# User and group quotas for the FFS
 options 	NFSSERVER	# Sun NFS-compatible file system server
 
