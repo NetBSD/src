@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.44 2000/12/08 19:42:12 jdolecek Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.45 2000/12/09 12:38:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -142,6 +142,7 @@ extern struct sysent netbsd32_sysent[];
 #ifdef SYSCALL_DEBUG
 extern const char * const netbsd32_syscallnames[];
 #endif
+void syscall __P((void));
 
 const struct emul emul_netbsd32 = {
 	"netbsd32",
@@ -158,6 +159,11 @@ const struct emul emul_netbsd32 = {
 #endif
 	netbsd32_sigcode,
 	netbsd32_esigcode,
+	NULL,
+	NULL,
+	NULL,
+	0,
+	syscall
 };
 
 /* converters for structures that we need */

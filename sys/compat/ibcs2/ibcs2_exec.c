@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.41 2000/12/09 07:10:35 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.42 2000/12/09 12:38:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -56,6 +56,7 @@ static void ibcs2_e_proc_exec __P((struct proc *, struct exec_package *));
 extern struct sysent ibcs2_sysent[];
 extern const char * const ibcs2_syscallnames[];
 extern char ibcs2_sigcode[], ibcs2_esigcode[];
+void syscall __P((void));
 
 #ifdef IBCS2_DEBUG
 int ibcs2_debug = 1;
@@ -81,7 +82,7 @@ const struct emul emul_ibcs2 = {
 #ifdef IBCS2_MACHDEP_HAS_SEPARATED_SYSCALL
 	ibcs2_syscall,
 #else
-	NULL,
+	syscall,
 #endif
 #
 };

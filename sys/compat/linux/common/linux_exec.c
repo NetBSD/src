@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.42 2000/12/02 16:05:04 jdolecek Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.43 2000/12/09 12:38:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -69,6 +69,8 @@
 extern struct sysent linux_sysent[];
 extern const char * const linux_syscallnames[];
 extern char linux_sigcode[], linux_esigcode[];
+void linux_syscall __P((void));
+void syscall __P((void));
 
 static void linux_e_proc_exec __P((struct proc *, struct exec_package *));
 static void linux_e_proc_fork __P((struct proc *, struct proc *));
@@ -127,7 +129,7 @@ const struct emul emul_linux = {
 #ifdef LINUX_MACHDEP_HAS_SEPARATED_SYSCALL
 	linux_syscall,
 #else
-	NULL,
+	syscall,
 #endif
 };
 
