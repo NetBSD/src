@@ -1,4 +1,4 @@
-.\"	$NetBSD: nsswitch.conf.5,v 1.7 1999/01/19 08:26:14 lukem Exp $
+.\"	$NetBSD: nsswitch.conf.5,v 1.8 1999/01/19 08:28:03 lukem Exp $
 .\"
 .\"  Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -197,12 +197,12 @@ To ensure compatibility with previous and current implementations, the
 .Dq compat
 source must appear alone for a given database.
 .Ss Default source lists
-.Pp
 If, for any reason,
 .Nm nsswitch.conf
-doesn't exist, or it has missing or corrupt entries, it
+doesn't exist, or it has missing or corrupt entries,
+.Xr nsdispatch 3
 will default to an entry of
-.Sq files
+.Dq files
 for the requested database.
 Exceptions are:
 .Bd -
