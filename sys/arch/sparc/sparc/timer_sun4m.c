@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4m.c,v 1.8 2003/07/15 00:05:10 lukem Exp $	*/
+/*	$NetBSD: timer_sun4m.c,v 1.9 2004/05/12 15:44:28 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.8 2003/07/15 00:05:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.9 2004/05/12 15:44:28 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -75,8 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.8 2003/07/15 00:05:10 lukem Exp $"
 
 struct timer_4m		*timerreg4m;
 #define	counterreg4m	cpuinfo.counterreg_4m
-
-static int timerok;
 
 /*
  * Set up the real-time and statistics clocks.
@@ -136,17 +134,6 @@ statintr_4m(void *cap)
 
 	/* read the limit register to clear the interrupt */
 	discard = counterreg4m->t_limit;
-	if (timerok == 0) {
-		/* Stop the clock */
-#ifdef DIAGNOSTIC
-		printf("note: counter running!\n");
-#endif
-		discard = counterreg4m->t_limit;
-		counterreg4m->t_limit = 0;
-		counterreg4m->t_ss = 0;
-		timerreg4m->t_cfg = TMR_CFG_USER;
-		return (1);
-	}
 
 	statclock(frame);
 
@@ -245,5 +232,4 @@ timerattach_obio_4m(struct device *parent, struct device *self, void *aux)
 	timerreg4m->t_cfg = 0;
 
 	timerattach(&counterreg4m->t_counter, &counterreg4m->t_limit);
-	timerok = 1;
 }
