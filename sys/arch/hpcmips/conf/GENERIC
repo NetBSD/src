@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.157 2004/08/13 15:55:14 uch Exp $
+# $NetBSD: GENERIC,v 1.158 2004/09/04 23:29:47 manu Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.157 $"
+#ident 		"GENERIC-$Revision: 1.158 $"
 
 maxusers	16
 
@@ -102,6 +102,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# Multicast routing support
+#options 	PIM		# Protocol Independent Multicast
 #options 	ISO		# OSI networking
 #options 	TPIP		# TPIP
 #options 	EON		# OSI tunneling over IP

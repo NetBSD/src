@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.80 2004/05/07 00:55:15 jonathan Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.81 2004/09/04 23:30:07 manu Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.80 2004/05/07 00:55:15 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.81 2004/09/04 23:30:07 manu Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -421,6 +421,9 @@ rip_ctloutput(op, so, level, optname, m)
 		case MRT_ADD_MFC:
 		case MRT_DEL_MFC:
 		case MRT_ASSERT:
+		case MRT_API_CONFIG:
+		case MRT_ADD_BW_UPCALL:
+		case MRT_DEL_BW_UPCALL:
 			error = ip_mrouter_set(so, optname, m);
 			break;
 #endif
@@ -443,6 +446,8 @@ rip_ctloutput(op, so, level, optname, m)
 #ifdef MROUTING
 		case MRT_VERSION:
 		case MRT_ASSERT:
+		case MRT_API_SUPPORT:
+		case MRT_API_CONFIG:
 			error = ip_mrouter_get(so, optname, m);
 			break;
 #endif

@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAROMNEW,v 1.24 2004/07/15 03:53:50 atatat Exp $
+#	$NetBSD: MMTAROMNEW,v 1.25 2004/09/04 23:29:50 manu Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -96,6 +96,7 @@ file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #options 	GATEWAY		# packet forwarding
 #options 	INET		# IP + ICMP + TCP + UDP
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI

@@ -1,4 +1,4 @@
-# 	$NetBSD: TADPOLE3GX,v 1.20 2004/07/15 03:53:52 atatat Exp $
+# 	$NetBSD: TADPOLE3GX,v 1.21 2004/09/04 23:29:57 manu Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -151,6 +151,7 @@ options 	QUOTA		# FFS quotas
 options 	INET		# IP (Internet Protocol) v4
 #options 	GATEWAY		# packet forwarding ("router switch")
 #options 	MROUTING	# packet forwarding of multicast packets
+#options 	PIM		# Protocol Independent Multicast
 #options 	DIRECTED_BROADCAST	# allow broadcasts through routers
 #options 	NS		# Xerox NS networking
 #options 	NSIP		# Xerox NS tunneling over IP

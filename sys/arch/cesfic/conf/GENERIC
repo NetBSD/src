@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.26 2004/07/15 03:53:45 atatat Exp $
+# $NetBSD: GENERIC,v 1.27 2004/09/04 23:29:46 manu Exp $
 #
 # GENERIC machine description file
 # 
@@ -82,6 +82,7 @@ options 	FIFO		# POSIX fifo support (in all filesystems)
 options 	INET		# Internet protocols
 #options 	GATEWAY		# IP forwarding + larger mb_map
 #options 	MROUTING	# Multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	PFIL_HOOKS	# packet filter hooks
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 

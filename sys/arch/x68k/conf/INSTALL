@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.58 2004/07/15 03:53:52 atatat Exp $
+#	$NetBSD: INSTALL,v 1.59 2004/09/04 23:29:57 manu Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.58 $"
+#ident 		"INSTALL-$Revision: 1.59 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -187,6 +187,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# packet forwarding ("router switch")
 #options 	MROUTING	# packet forwarding of multicast packets
+#options 	PIM		# Protocol Independent Multicast
 #options 	DIRECTED_BROADCAST	# allow broadcasts through routers
 #options 	NS		# Xerox NS networking
 #options 	NSIP		# Xerox NS tunneling over IP

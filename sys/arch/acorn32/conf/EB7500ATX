@@ -1,4 +1,4 @@
-#	$NetBSD: EB7500ATX,v 1.6 2004/07/15 03:53:44 atatat Exp $
+#	$NetBSD: EB7500ATX,v 1.7 2004/09/04 23:29:44 manu Exp $
 #
 #	EB7500ATX --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"EB7500ATX-$Revision: 1.6 $"
+#ident		"EB7500ATX-$Revision: 1.7 $"
 
 # estimated number of users
 maxusers	32
@@ -75,6 +75,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI

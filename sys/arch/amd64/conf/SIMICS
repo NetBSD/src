@@ -1,4 +1,4 @@
-#	$NetBSD: SIMICS,v 1.8 2004/07/15 03:53:45 atatat Exp $
+#	$NetBSD: SIMICS,v 1.9 2004/09/04 23:29:45 manu Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -111,6 +111,7 @@ file-system 	FFS		# UFS
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI

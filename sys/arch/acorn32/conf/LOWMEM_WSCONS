@@ -1,4 +1,4 @@
-#	$NetBSD: LOWMEM_WSCONS,v 1.25 2004/07/15 03:53:44 atatat Exp $
+#	$NetBSD: LOWMEM_WSCONS,v 1.26 2004/09/04 23:29:44 manu Exp $
 #
 #	LOWMEM_WSCONS -- RiscPC config with wscons for SMALL machines
 #
@@ -65,6 +65,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI

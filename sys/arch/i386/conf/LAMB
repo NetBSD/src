@@ -1,4 +1,4 @@
-#	$NetBSD: LAMB,v 1.39 2004/07/29 22:29:37 jmmv Exp $
+#	$NetBSD: LAMB,v 1.40 2004/09/04 23:29:49 manu Exp $
 #
 #	LAMB - a complete kernel for wildlab LAMB, http://www.wildlab.com/
 #
@@ -138,6 +138,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI

@@ -1,4 +1,4 @@
-#	$NetBSD: NC_WSCONS,v 1.30 2004/07/15 03:53:44 atatat Exp $
+#	$NetBSD: NC_WSCONS,v 1.31 2004/09/04 23:29:44 manu Exp $
 #
 #	NC - with wscons
 #
@@ -63,6 +63,7 @@ file-system	PROCFS		# /proc
 #options 	IPSEC_DEBUG	# debug for IP security
 options 	INET		# IP + ICMP + TCP + UDP
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI

@@ -1,4 +1,4 @@
-#	$NetBSD: NATSUMI,v 1.26 2004/07/15 03:53:51 atatat Exp $
+#	$NetBSD: NATSUMI,v 1.27 2004/09/04 23:29:57 manu Exp $
 #
 #	for development
 #
@@ -85,6 +85,7 @@ options 	INET6		# IPv6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP

@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.98 2004/07/15 03:53:47 atatat Exp $
+#	$NetBSD: DISKLESS,v 1.99 2004/09/04 23:29:48 manu Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -91,6 +91,7 @@ file-system 	UNION		# union file system
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI

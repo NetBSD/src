@@ -1,4 +1,4 @@
-#	$NetBSD: DELPHI,v 1.39 2004/07/29 22:29:35 jmmv Exp $
+#	$NetBSD: DELPHI,v 1.40 2004/09/04 23:29:48 manu Exp $
 #
 #	DELPHI -- one of thorpej@zembu.com's devel machines
 #
@@ -7,7 +7,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"DELPHI-$Revision: 1.39 $"
+ident 		"DELPHI-$Revision: 1.40 $"
 
 maxusers	64		# estimated number of users
 
@@ -127,6 +127,7 @@ options 	IPSEC		# IP security
 options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 options 	MROUTING	# IP multicast routing
+options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI

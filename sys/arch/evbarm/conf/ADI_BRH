@@ -1,4 +1,4 @@
-#	$NetBSD: ADI_BRH,v 1.19 2004/07/15 03:53:46 atatat Exp $
+#	$NetBSD: ADI_BRH,v 1.20 2004/09/04 23:29:46 manu Exp $
 #
 #	ADI_BRH -- ADI Engineering "Big Red Head" i80200 Evaluation Board
 #
@@ -59,6 +59,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI

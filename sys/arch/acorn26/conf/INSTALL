@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.6 2003/10/08 10:59:55 bouyer Exp $
+# $NetBSD: INSTALL,v 1.7 2004/09/04 23:29:44 manu Exp $
 
 # INSTALL configuration, used to generate installation media
 
@@ -64,6 +64,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI

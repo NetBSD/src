@@ -1,4 +1,4 @@
-# $NetBSD: VIRTUALPC,v 1.9 2004/07/29 22:29:37 jmmv Exp $
+# $NetBSD: VIRTUALPC,v 1.10 2004/09/04 23:29:50 manu Exp $
 #
 # VIRTUALPC machine description file --
 #
@@ -11,7 +11,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VIRTUALPC-$Revision: 1.9 $"
+#ident 		"VIRTUALPC-$Revision: 1.10 $"
 
 maxusers	32		# estimated number of users
 
@@ -161,6 +161,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI

@@ -1,4 +1,4 @@
-#	$NetBSD: ZAO425,v 1.13 2004/07/15 03:53:46 atatat Exp $
+#	$NetBSD: ZAO425,v 1.14 2004/09/04 23:29:47 manu Exp $
 #
 #	ZAO425 -- Intel IXP425
 #
@@ -63,6 +63,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI

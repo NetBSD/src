@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.72 2004/07/31 17:35:19 mrg Exp $
+#	$NetBSD: GENERIC_TINY,v 1.73 2004/09/04 23:29:49 manu Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -121,6 +121,7 @@ options 	VNODE_OP_NOINLINE # don't inline vnode op calls
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI

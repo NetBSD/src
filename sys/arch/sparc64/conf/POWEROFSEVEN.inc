@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.25 2004/07/15 03:53:52 atatat Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.26 2004/09/04 23:29:57 manu Exp $
 #
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #
@@ -161,6 +161,7 @@ options 	INET		# IP (Internet Protocol) v4
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# packet forwarding ("router switch")
 #options 	MROUTING	# packet forwarding of multicast packets
+#options 	PIM		# Protocol Independent Multicast
 #options 	DIRECTED_BROADCAST	# allow broadcasts through routers
 #options 	NS		# Xerox NS networking
 #options 	NSIP		# Xerox NS tunneling over IP

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.69 2004/08/23 14:04:45 lukem Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.70 2004/09/04 23:29:49 manu Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -129,6 +129,7 @@ options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPv6
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI

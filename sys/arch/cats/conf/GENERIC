@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.67 2004/07/15 03:53:45 atatat Exp $
+# $NetBSD: GENERIC,v 1.68 2004/09/04 23:29:46 manu Exp $
 #
 # GENERIC machine description file
 # 
@@ -86,6 +86,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI

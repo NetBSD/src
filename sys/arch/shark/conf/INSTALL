@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.14 2004/07/15 03:53:51 atatat Exp $
+#	$NetBSD: INSTALL,v 1.15 2004/09/04 23:29:57 manu Exp $
 #
 #	Shark installation kernel
 #
@@ -68,6 +68,7 @@ options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI

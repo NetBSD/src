@@ -1,4 +1,4 @@
-# 	$NetBSD: SPLODE,v 1.24 2004/07/15 03:53:52 atatat Exp $
+# 	$NetBSD: SPLODE,v 1.25 2004/09/04 23:29:57 manu Exp $
 #
 # Configuration for Ultra1, 32 bit mode.
 
@@ -6,7 +6,7 @@ include "arch/sparc64/conf/std.sparc64"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.24 $"
+#ident 		"GENERIC-$Revision: 1.25 $"
 
 maxusers	256
 
@@ -168,6 +168,7 @@ options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 options 	GATEWAY		# packet forwarding ("router switch")
 #options 	MROUTING	# packet forwarding of multicast packets
+#options 	PIM		# Protocol Independent Multicast
 #options 	DIRECTED_BROADCAST	# allow broadcasts through routers
 #options 	NS		# Xerox NS networking
 #options 	NSIP		# Xerox NS tunneling over IP
