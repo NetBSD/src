@@ -1,5 +1,5 @@
-.\" $NetBSD: bpf_dump.c,v 1.1.1.1 2004/09/19 21:31:39 dyoung Exp $
-.\
+/*	$NetBSD: bpf_dump.c,v 1.1.1.2 2004/09/19 21:57:48 dyoung Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -26,7 +26,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/libpcap/bpf_dump.c,v 1.13.2.1 2003/11/15 23:26:37 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: bpf_dump.c,v 1.1.1.1 2004/09/19 21:31:39 dyoung Exp $");
+__RCSID("$NetBSD: bpf_dump.c,v 1.1.1.2 2004/09/19 21:57:48 dyoung Exp $");
 #endif
 #endif
 

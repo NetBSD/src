@@ -1,5 +1,5 @@
-.\" $NetBSD: fad-getad.c,v 1.1.1.1 2004/09/19 21:31:39 dyoung Exp $
-.\
+/*	$NetBSD: fad-getad.c,v 1.1.1.2 2004/09/19 21:57:48 dyoung Exp $	*/
+
 /* -*- Mode: c; tab-width: 8; indent-tabs-mode: 1; c-basic-offset: 8; -*- */
 /*
  * Copyright (c) 1994, 1995, 1996, 1997, 1998
@@ -40,7 +40,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/libpcap/fad-getad.c,v 1.7.2.2 2004/03/11 23:04:52 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: fad-getad.c,v 1.1.1.1 2004/09/19 21:31:39 dyoung Exp $");
+__RCSID("$NetBSD: fad-getad.c,v 1.1.1.2 2004/09/19 21:57:48 dyoung Exp $");
 #endif
 #endif
 
