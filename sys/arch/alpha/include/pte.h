@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.17 1998/03/12 01:21:21 thorpej Exp $ */
+/* $NetBSD: pte.h,v 1.18 1998/03/12 07:29:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -88,8 +88,6 @@ typedef	alpha_pt_entry_t	pt_entry_t;
 #define	PT_ENTRY_NULL	((pt_entry_t *) 0)
 #define	PTESHIFT	3			/* pte size == 1 << PTESHIFT */
 
-#define	NPTEPG_SHIFT	(PAGE_SHIFT - PTESHIFT)
-
 #define	PG_V		ALPHA_PTE_VALID
 #define	PG_NV		0
 #define	PG_FOR		ALPHA_PTE_FAULT_ON_READ
@@ -108,12 +106,19 @@ typedef	alpha_pt_entry_t	pt_entry_t;
 #define	PG_SHIFT	32
 #define	PG_PFNUM(x)	ALPHA_PTE_TO_PFN(x)
 
-#ifndef _LOCORE
+#define	NPTEPG_SHIFT	(PAGE_SHIFT - PTESHIFT)
+#define	NPTEPG		(1 << NPTEPG_SHIFT)
+
 #define	PTEMASK		(NPTEPG - 1)
-#define	l3pte_index(va)	(((va) >> PGSHIFT) & PTEMASK)
-#define	l2pte_index(va)	(((va) >> SEGSHIFT) & PTEMASK)
-#define l1pte_index(va) \
-	(((vm_offset_t)(va) >> (PGSHIFT + 2*(PGSHIFT-PTESHIFT))) & PTEMASK)
+
+#define	l3pte_index(va)	\
+	(((vm_offset_t)(va) >> PAGE_SHIFT) & PTEMASK)
+
+#define	l2pte_index(va)	\
+	(((vm_offset_t)(va) >> (PAGE_SHIFT + NPTEPG_SHIFT)) & PTEMASK)
+
+#define	l1pte_index(va) \
+	(((vm_offset_t)(va) >> (PAGE_SHIFT + 2 * NPTEPG_SHIFT)) & PTEMASK)
 
 #define	VPT_INDEX(va)	\
 	(((vm_offset_t)(va) >> PAGE_SHIFT) & ((1 << 3 * NPTEPG_SHIFT) - 1))
@@ -130,6 +135,5 @@ typedef	alpha_pt_entry_t	pt_entry_t;
 #ifdef _KERNEL
 extern	pt_entry_t *Lev1map;		/* kernel level 1 page table */
 #endif /* _KERNEL */
-#endif /* ! _LOCORE */
 
 #endif /* ! _ALPHA_PTE_H_ */
