@@ -85,6 +85,13 @@ lang_specific_driver (in_argc, in_argv, in_added_libraries)
 
   is_cpp_driver = 1;
 
+  /* NetBSD uses __GNUC__ and friends in header files processed with cpp
+     regularly.  Default to old behaviour here. XXX - move me to
+     config/netbsd.h "DEFAULT_CPP_NEED_NO_GCC".  */
+#ifdef DEFAULT_CPP_NEED_NO_GCC
+  need_no_gcc = DEFAULT_CPP_NEED_NO_GCC;
+#endif
+
   /* First pass.  If we see an -S or -c, barf.  If we see an input file,
      turn off read_stdin.  If we see a second input file, it is actually
      the output file.  If we see a third input file, barf.  */

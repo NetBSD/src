@@ -234,3 +234,7 @@ __enable_execute_stack (addr)						\
   /* 7 == PROT_READ | PROT_WRITE | PROT_EXEC */				\
   (void) mprotect (page, end - page, 7);				\
 }
+
+/* NetBSD depends on "cpp" having GNUC semantics, and must default as if
+   "cpp -gcc" was called. */
+#define DEFAULT_CPP_NEED_NO_GCC 0
