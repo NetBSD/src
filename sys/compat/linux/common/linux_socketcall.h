@@ -1,11 +1,11 @@
-/*	$NetBSD: linux_socketcall.h,v 1.3 1998/10/03 20:17:43 christos Exp $	*/
+/*	$NetBSD: linux_socketcall.h,v 1.4 1998/10/04 00:02:44 fvdl Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Eric Haszlakiewicz.
+ * by Frank van der Linden and Eric Haszlakiewicz.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
