@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.54 2002/09/30 20:55:55 christos Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.55 2002/10/01 14:59:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.54 2002/09/30 20:55:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.55 2002/10/01 14:59:21 christos Exp $");
 
 #include "opt_nfs.h"
 
@@ -279,12 +279,7 @@ nfs_reclaim(v)
 
 	LIST_REMOVE(np, n_hash);
 
-	/*
-	 * For nqnfs, take it off the timer queue as required.
-	 * The mount point could have gone away under us.
-	 * XXX: SMP
-	 */
-	if (nmp && (nmp->nm_flag & NFSMNT_NQNFS) && np->n_timer.cqe_next != 0) {
+	if ((nmp->nm_flag & NFSMNT_NQNFS) && np->n_timer.cqe_next != 0) {
 		CIRCLEQ_REMOVE(&nmp->nm_timerhead, np, n_timer);
 	}
 
