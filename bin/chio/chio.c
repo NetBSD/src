@@ -1,4 +1,4 @@
-/*	$NetBSD: chio.c,v 1.14 1999/09/09 23:32:10 thorpej Exp $	*/
+/*	$NetBSD: chio.c,v 1.15 2001/02/19 22:39:39 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1998, 1999\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: chio.c,v 1.14 1999/09/09 23:32:10 thorpej Exp $");
+__RCSID("$NetBSD: chio.c,v 1.15 2001/02/19 22:39:39 cgd Exp $");
 #endif
 
 #include <sys/param.h>
@@ -65,8 +65,6 @@ __RCSID("$NetBSD: chio.c,v 1.14 1999/09/09 23:32:10 thorpej Exp $");
 
 #include "defs.h"
 #include "pathnames.h"
-
-extern	const char *__progname;	/* from crt0.o */
 
 int	main __P((int, char *[]));
 static	void usage __P((void));
@@ -854,7 +852,8 @@ usage()
 {
 	int i;
 
-	(void) fprintf(stderr, "Usage: %s command arg1 arg2 ...\n", __progname);
+	(void) fprintf(stderr, "Usage: %s command arg1 arg2 ...\n",
+	    getprogname());
 	
 	(void) fprintf(stderr, "Where command (and args) are:\n");
 	for (i = 0; commands[i].cc_name != NULL; i++)
