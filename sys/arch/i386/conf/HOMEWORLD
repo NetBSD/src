@@ -1,4 +1,4 @@
-#	$NetBSD: HOMEWORLD,v 1.25 1997/11/25 20:29:35 kleink Exp $
+#	$NetBSD: HOMEWORLD,v 1.26 1997/11/27 09:58:38 fvdl Exp $
 #
 #	HOMEWORLD - Mail, CVS, and GNATS server
 #
@@ -20,11 +20,6 @@ options 	I486_CPU
 # (as is the case on most recent systems).
 #options 	REALBASEMEM=...	# size of base memory
 #options 	REALEXTMEM=...	# size of extended memory
-
-# Some i486 PCI chipsets have bugs in them that cause problems when using
-# memory-mapped device access.  Therefore, PCI mem space is disabled by
-# default on 486-class CPUs.  This option allows re-enables it.
-#options 	I486_PCI_MEM_ENABLED
 
 options 	DUMMY_NOPS	# speed hack; recommended
 options 	XSERVER,UCONSOLE

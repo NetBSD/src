@@ -1,4 +1,4 @@
-#	$NetBSD: KICKME,v 1.46 1997/11/25 20:29:42 kleink Exp $
+#	$NetBSD: KICKME,v 1.47 1997/11/27 09:58:51 fvdl Exp $
 #
 #	KICKME -- 486Cx-33 development machine
 #
@@ -10,11 +10,6 @@ maxusers	24		# estimated number of users
 options 	I486_CPU
 options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
-
-# Some i486 PCI chipsets have bugs in them that cause problems when using
-# memory-mapped device access.  Therefore, PCI mem space is disabled by
-# default on 486-class CPUs.  This option allows re-enables it.
-#options 	I486_PCI_MEM_ENABLED
 
 options 	XSERVER
 options 	UCONSOLE
