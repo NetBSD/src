@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13 1996/07/20 20:52:32 leo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.14 1996/08/23 20:06:29 leo Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -995,7 +995,8 @@ pmap_remove(pmap, sva, eva)
 		}
 #ifdef DEBUG
 		if (npv == NULL) {
-printf ("pmap_remove: PA %08x index %d\n", pa, pa_index(pa));
+			printf ("pmap_remove: PA %08x index %d\n", pa,
+							pa_index(pa));
 			panic("pmap_remove: PA not in pv_tab");
 		}
 #endif
@@ -1475,7 +1476,7 @@ validate:
 		npte |= PG_CI;
 #if defined(M68040) || defined(M68060)
 	else if (mmutype == MMU_68040 && (npte & PG_PROT) == PG_RW &&
-	    (kernel_copyback || pmap != pmap_kernel()))
+	         pmap != pmap_kernel())
 		npte |= PG_CCB;		/* cache copyback */
 #endif
 	/*
