@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 2001/01/23 11:30:54 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.3 2001/01/30 14:11:00 tsutsui Exp $
 
 PROG= installboot
 SRCS= installboot.c loadfile.c
 MKMAN= no
+WARNS?= 1
 
 S= ${.CURDIR}/../../../..
 LIBSA=${S}/lib/libsa
