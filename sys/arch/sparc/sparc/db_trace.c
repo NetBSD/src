@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.2 1994/11/20 20:54:13 deraadt Exp $ */
+/*	$NetBSD: db_trace.c,v 1.3 1995/02/09 10:34:42 pk Exp $ */
 
 /* 
  * Mach Operating System
@@ -32,14 +32,7 @@
 
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
-#include <ddb/db_variables.h>
  
-struct db_variable db_regs[] = {
-	"g0", (int *)&ddb_regs.tf_global[0], FCN_NULL,
-};
-
-struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
-
 #define INKERNEL(va)	(((vm_offset_t)(va)) >= USRSTACK)
 
 void
@@ -63,7 +56,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		count = 65535;
 
 	if (!have_addr)
-		frame = (struct frame *)ddb_regs.tf_out[6];
+		frame = (struct frame *)DDB_TF->tf_out[6];
 	else
 		frame = (struct frame *)addr;
 
