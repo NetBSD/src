@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.147 2003/09/10 19:24:14 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.148 2003/09/10 19:44:22 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1578,3 +1578,114 @@ sys/arch/i386/pci/pchb_rnd.c			1.13
 	Add hardware random number generator support for Intel 865 and
 	875P chipsets.
 	[tron, ticket #1418]
+
+sys/arch/x86_64/compile/.keep_me		delete
+sys/arch/x86_64/Makefile			delete
+sys/arch/x86_64/conf/Makefile.x86_64		delete
+sys/arch/x86_64/conf/SIMICS			delete
+sys/arch/x86_64/conf/files.x86_64		delete
+sys/arch/x86_64/conf/kern.ldscript		delete
+sys/arch/x86_64/conf/std.x86_64			delete
+sys/arch/x86_64/include/Makefile		delete
+sys/arch/x86_64/include/ansi.h			delete
+sys/arch/x86_64/include/aout_machdep.h		delete
+sys/arch/x86_64/include/asm.h			delete
+sys/arch/x86_64/include/bios32.h		delete
+sys/arch/x86_64/include/bootinfo.h		delete
+sys/arch/x86_64/include/bswap.h			delete
+sys/arch/x86_64/include/bus.h			delete
+sys/arch/x86_64/include/byte_swap.h		delete
+sys/arch/x86_64/include/cdefs.h			delete
+sys/arch/x86_64/include/conf.h			delete
+sys/arch/x86_64/include/cpu.h			delete
+sys/arch/x86_64/include/cpufunc.h		delete
+sys/arch/x86_64/include/disklabel.h		delete
+sys/arch/x86_64/include/elf_machdep.h		delete
+sys/arch/x86_64/include/endian.h		delete
+sys/arch/x86_64/include/endian_machdep.h	delete
+sys/arch/x86_64/include/float.h			delete
+sys/arch/x86_64/include/fpu.h			delete
+sys/arch/x86_64/include/frame.h			delete
+sys/arch/x86_64/include/frameasm.h		delete
+sys/arch/x86_64/include/gdt.h			delete
+sys/arch/x86_64/include/ieee.h			delete
+sys/arch/x86_64/include/ieeefp.h		delete
+sys/arch/x86_64/include/int_const.h		delete
+sys/arch/x86_64/include/int_fmtio.h		delete
+sys/arch/x86_64/include/int_limits.h		delete
+sys/arch/x86_64/include/int_mwgwtypes.h		delete
+sys/arch/x86_64/include/int_types.h		delete
+sys/arch/x86_64/include/intr.h			delete
+sys/arch/x86_64/include/isa_machdep.h		delete
+sys/arch/x86_64/include/kcore.h			delete
+sys/arch/x86_64/include/limits.h		delete
+sys/arch/x86_64/include/loadfile_machdep.h	delete
+sys/arch/x86_64/include/lock.h			delete
+sys/arch/x86_64/include/math.h			delete
+sys/arch/x86_64/include/netbsd32_machdep.h	delete
+sys/arch/x86_64/include/param.h			delete
+sys/arch/x86_64/include/pcb.h			delete
+sys/arch/x86_64/include/pccons.h		delete
+sys/arch/x86_64/include/pci_machdep.h		delete
+sys/arch/x86_64/include/pio.h			delete
+sys/arch/x86_64/include/pmap.h			delete
+sys/arch/x86_64/include/pmc.h			delete
+sys/arch/x86_64/include/proc.h			delete
+sys/arch/x86_64/include/profile.h		delete
+sys/arch/x86_64/include/psl.h			delete
+sys/arch/x86_64/include/pte.h			delete
+sys/arch/x86_64/include/ptrace.h		delete
+sys/arch/x86_64/include/reg.h			delete
+sys/arch/x86_64/include/rnd.h			delete
+sys/arch/x86_64/include/segments.h		delete
+sys/arch/x86_64/include/setjmp.h		delete
+sys/arch/x86_64/include/signal.h		delete
+sys/arch/x86_64/include/specialreg.h		delete
+sys/arch/x86_64/include/stdarg.h		delete
+sys/arch/x86_64/include/sysarch.h		delete
+sys/arch/x86_64/include/trap.h			delete
+sys/arch/x86_64/include/tss.h			delete
+sys/arch/x86_64/include/types.h			delete
+sys/arch/x86_64/include/userret.h		delete
+sys/arch/x86_64/include/varargs.h		delete
+sys/arch/x86_64/include/vmparam.h		delete
+sys/arch/x86_64/isa/clock.c			delete
+sys/arch/x86_64/isa/isa_machdep.c		delete
+sys/arch/x86_64/isa/pccons.c			delete
+sys/arch/x86_64/pci/pchbvar.h			delete
+sys/arch/x86_64/pci/pchb.c			delete
+sys/arch/x86_64/pci/pci_machdep.c		delete
+sys/arch/x86_64/pci/pcib.c			delete
+sys/arch/x86_64/pci/pciide_machdep.c		delete
+sys/arch/x86_64/x86_64/autoconf.c		delete
+sys/arch/x86_64/x86_64/bios32.c			delete
+sys/arch/x86_64/x86_64/bus_machdep.c		delete
+sys/arch/x86_64/x86_64/conf.c			delete
+sys/arch/x86_64/x86_64/consinit.c		delete
+sys/arch/x86_64/x86_64/copy.S			delete
+sys/arch/x86_64/x86_64/disksubr.c		delete
+sys/arch/x86_64/x86_64/fpu.c			delete
+sys/arch/x86_64/x86_64/gdt.c			delete
+sys/arch/x86_64/x86_64/genassym.cf		delete
+sys/arch/x86_64/x86_64/locore.S			delete
+sys/arch/x86_64/x86_64/machdep.c		delete
+sys/arch/x86_64/x86_64/mainbus.c		delete
+sys/arch/x86_64/x86_64/md_root.c		delete
+sys/arch/x86_64/x86_64/mem.c			delete
+sys/arch/x86_64/x86_64/microtime.S		delete
+sys/arch/x86_64/x86_64/netbsd32_machdep.c	delete
+sys/arch/x86_64/x86_64/netbsd32_sigcode.S	delete
+sys/arch/x86_64/x86_64/netbsd32_syscall.c	delete
+sys/arch/x86_64/x86_64/pmap.c			delete
+sys/arch/x86_64/x86_64/process_machdep.c	delete
+sys/arch/x86_64/x86_64/syscall.c		delete
+sys/arch/x86_64/x86_64/procfs_machdep.c		delete
+sys/arch/x86_64/x86_64/sys_machdep.c		delete
+sys/arch/x86_64/x86_64/trap.c			delete
+sys/arch/x86_64/x86_64/vector.S			delete
+sys/arch/x86_64/x86_64/vm_machdep.c		delete
+
+	x86_64 was renamed to amd64 in -current, and since x86_64 is not
+	supported on the netbsd-1-6 branch, there is no sense in keeping this
+	obsolete code on the branch.
+	[tron, ticket #1456]
