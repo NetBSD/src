@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.2 2003/02/10 11:09:34 fvdl Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.3 2003/06/12 22:03:18 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -136,9 +136,9 @@ ENTRY(pthread__switch)
 	 * the _setcontext_u below.  
 	 */
 #ifdef PIC
-	movq	PIC_GOT(switch_return_point), %r11
+	movq	PIC_GOT(pthread__switch_return_point), %r11
 #else
-	leaq	switch_return_point, %r11
+	leaq	pthread__switch_return_point, %r11
 #endif
 	movq	%r11, UC_RIP(%r14)
 	
@@ -148,7 +148,7 @@ ENTRY(pthread__switch)
 
 	movq	%r11, %rdi		/* ucontext_t *ucp */
 	call	PIC_PLT(_C_LABEL(_setcontext_u))
-switch_return_point:
+NENTRY(pthread__switch_return_point)
 	/* We're back on the original stack. */
 	addq	$CONTEXTSIZE+12, %rsp
 	popq	%r14
@@ -237,8 +237,8 @@ ENTRY(pthread__locked_switch)
 	 * PT_SWITCHTO will be stomped by another switch_lock and
 	 * preemption.
          */
-	movq	%r13, PT_SWITCHTO(%r12)
 	movq	%r11, PT_SWITCHTOUC(%r12)
+	movq	%r13, PT_SWITCHTO(%r12)
 	movq	%r14, PT_HELDLOCK(%r12)
 	decl	PT_SPINLOCKS(%r12)
 
@@ -270,8 +270,8 @@ locked_no_old_preempt:
 	cmpq	$0, PT_NEXT(%r13)
 	je	locked_no_new_preempt
 	/* Yes, we were. Bummer. Go to the next element in the chain. */
-	movq	%r13, PT_SWITCHTO(%r13)
 	movq	%r11, PT_SWITCHTOUC(%r13)
+	movq	%r13, PT_SWITCHTO(%r13)
 	movq	%r13, %r12
 	movq	PT_NEXT(%r13), %r13
 	movl	$-2, %r10d
@@ -311,9 +311,9 @@ ENTRY(pthread__upcall_switch)
 	 * Yes, it was. Stash the thread we were going to
 	 * switch to, and go to the next thread in the chain.
 	 */
-	movq	%r13, PT_SWITCHTO(%r12)
-	movq	%r11, PT_SWITCHTOUC(%r12)
 	movl	$PT_STATE_RECYCLABLE, PT_STATE(%r12)
+	movq	%r11, PT_SWITCHTOUC(%r12)
+	movq	%r13, PT_SWITCHTO(%r12)
 	movq	PT_NEXT(%r12), %r10
 	movq	%r13, %r12
 	movq	%r10, %r13
@@ -330,8 +330,8 @@ upcall_no_old_preempt:
 	cmpq	$0, PT_NEXT(%r13)
 	je	upcall_no_new_preempt
 	/* Yes, we were. Bummer. Go to the next element in the chain. */
-	movq	%r13, PT_SWITCHTO(%r13)
 	movq	%r14, PT_SWITCHTOUC(%r13)
+	movq	%r13, PT_SWITCHTO(%r13)
 	movq	%r13, %r12
 	movq	PT_NEXT(%r13), %r13
 	movl	$-1, %r10d
