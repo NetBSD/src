@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.39 1995/03/10 16:54:40 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.40 1995/03/12 18:56:57 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -487,6 +487,16 @@ init_translations()
 	printf("note: lost %d pages in translation\n", lost);
 #endif
 	return (pages);
+}
+
+int
+pmap_pa_exists(pa)
+	vm_offset_t pa;
+{
+	/* Holes covered by HWTOSW() translations. */
+	if (pa < vm_first_phys + vm_num_phys) /* XXX - too restrictive ? */
+		return 1;
+	return 0;
 }
 
 #else /* MACHINE_NONCONTIG */
