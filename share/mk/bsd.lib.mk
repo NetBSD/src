@@ -116,7 +116,7 @@ beforeinstall:
 	fi
 .endif
 
-realinstall: beforeinstall
+realinstall:
 	ranlib lib${LIB}.a
 	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} lib${LIB}.a \
 	    ${DESTDIR}${LIBDIR}
@@ -140,8 +140,10 @@ realinstall: beforeinstall
 	done; true
 .endif
 
-install: afterinstall
-afterinstall: realinstall maninstall
+install: maninstall
+maninstall: afterinstall
+afterinstall: realinstall
+realinstall: beforeinstall
 .endif
 
 .if !target(lint)
