@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.86 1997/08/03 22:24:20 perry Exp $
+#	$NetBSD: rc,v 1.87 1997/08/05 03:32:51 cjs Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -316,6 +316,17 @@ fi
 echo -n ' cron';		cron
 echo '.'
 
+# set time, if requested
+if [ "$ntpdate_hosts" != NO ]; then
+	if [ "$ntpdate_hosts" = DEFAULT ]; then
+		ntpdate_hosts=`awk '/^server/ {print $2}' </etc/ntp.conf`
+	fi
+	if [ -n "$ntpdate_hosts"  ]; then
+		echo 'Setting date via ntp.'
+		ntpdate -b $ntpdate_hosts
+	fi
+fi
+
 # now start all the other daemons
 echo -n starting network daemons:
 
@@ -343,17 +354,6 @@ if [ "$timed_flags" != NO ]; then
 		timed_flags=""
 	fi
 	echo -n ' timed'; 		timed $timed_flags
-fi
-
-if [ "$ntpdate_hosts" != NO ]; then
-	if [ "$ntpdate_hosts" = DEFAULT ]; then
-		ntpdate_hosts=`awk '/^server/ {print $2}' </etc/ntp.conf`
-	fi
-
-	if [ -n "$ntpdate_hosts"  ]; then
-		echo -n 'ntpdate:'
-		ntpdate -b $ntpdate_hosts
-	fi
 fi
 
 if [ "$xntpd_flags" != NO ]; then
