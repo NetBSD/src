@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.157 2003/01/10 16:34:16 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.158 2003/01/12 01:16:07 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -227,13 +227,19 @@ alloc_cpuinfo()
 	pmap_update(pmap_kernel());
 
 	bzero((void *)cpi, sz);
-#if 0
-	cpi->eintstack = (void *)((vaddr_t)cpi + sz);
-	cpi->idle_u = (void *)((vaddr_t)cpi + sz - INT_STACK_SIZE - USPACE);
-#else
-	cpi->eintstack = (void *)((vaddr_t)cpi + sz - USPACE);
-	cpi->idle_u = (void *)((vaddr_t)cpi + sz - USPACE);
-#endif
+
+	/*
+	 * Arrange pcb, idle stack and interrupt stack in the same
+	 * way as is done for the boot cpu in locore.
+	 */
+	cpi->eintstack = cpi->idle_u = (void *)((vaddr_t)cpi + sz - USPACE);
+
+	/* Allocate virtual space for pmap page_copy/page_zero */
+	if ((va = uvm_km_valloc(kernel_map, 2*PAGE_SIZE)) == 0)
+		panic("alloc_cpuinfo: no virtual space");
+
+	cpi->vpage[0] = (caddr_t)(va + 0);
+	cpi->vpage[1] = (caddr_t)(va + PAGE_SIZE);
 
 	return (cpi);
 }
