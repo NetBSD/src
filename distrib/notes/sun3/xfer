@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.9.2.1 2002/07/02 04:20:19 lukem Exp $
+.\"	$NetBSD: xfer,v 1.9.2.2 2002/07/22 17:05:15 lukem Exp $
 .
 Installation is supported from several media types, including:
 .(bullet -compact -offset indent
@@ -90,29 +90,25 @@ after
 it has acquired its IP address through
 .Tn RARP .
 It will attempt to download a file using a name derived from the
-machine's recently acquired IP
-.if r_sun3 address.
-.if r_sun3x address and an extension which corresponds to the
-.if r_sun3x machine architecture.
+machine's recently acquired IP address,
+and in the case of sun3x machines, an extension which corresponds to the
+machine architecture.
 (It may be handy to have a hexadecimal
 calculator for this next step.)
-The filename
-.if r_sun3x prefix
-is created by
+The filename is created by
 converting the machine's assigned IP address into hexadecimal,
 most-significant octet first, using uppercase characters for the
 non-decimal (A-F) digits.
-.if r_sun3x \{\
-The filename suffix used by all sun3x machines is
-.Pa SUN3X .
-.\}
+sun3x machines use a filename suffix of
+.Pa .SUN3X .
 .Pp
-For example, a \*M which has been assigned IP address 130.115.144.11
+For example, a sun3 which has been assigned IP address 130.115.144.11
 will make an
 .Tn TFTP
 request for
-.if r_sun3 .Pa 8273900B .
-.if r_sun3x .Pa 8273900B.SUN3X .
+.Pa 8273900B ,
+and a sun3x will try
+.Pa 8273900B.SUN3X .
 Normally, this file
 is a symbolic link to the
 .Nx*M
