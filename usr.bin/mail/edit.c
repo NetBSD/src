@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.6 1997/10/19 05:03:18 lukem Exp $	*/
+/*	$NetBSD: edit.c,v 1.6.2.1 1997/11/26 03:52:20 mellon Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: edit.c,v 1.6 1997/10/19 05:03:18 lukem Exp $");
+__RCSID("$NetBSD: edit.c,v 1.6.2.1 1997/11/26 03:52:20 mellon Exp $");
 #endif
 #endif /* not lint */
 
@@ -174,10 +174,6 @@ run_editor(fp, size, type, readonly)
 		while ((t = getc(fp)) != EOF)
 			(void) putc(t, nf);
 	(void) fflush(nf);
-	if (fstat(fileno(nf), &statb) < 0)
-		modtime = 0;
-	else
-		modtime = statb.st_mtime;
 	if (ferror(nf)) {
 		(void) Fclose(nf);
 		perror(tempEdit);
@@ -185,6 +181,10 @@ run_editor(fp, size, type, readonly)
 		nf = NULL;
 		goto out;
 	}
+	if (fstat(fileno(nf), &statb) < 0)
+		modtime = 0;
+	else
+		modtime = statb.st_mtime;
 	if (Fclose(nf) < 0) {
 		perror(tempEdit);
 		(void) unlink(tempEdit);
