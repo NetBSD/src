@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.3 2002/01/03 22:35:53 jdolecek Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.4 2002/12/31 05:26:56 explorer Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.3 2002/01/03 22:35:53 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.4 2002/12/31 05:26:56 explorer Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -136,21 +136,31 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, caddr_t data, int flag,
 	case ENVSYS_GRANGE:
 	    {
 		struct envsys_range *rng = (void *) data;
+		int i;
+
+
+		/* Return empty range unless we find something better */
+		rng->low = 1;
+		rng->high = 0;
+
+		if (rng->units == -1) {
+			rng->low = 0;
+			rng->high = sysmon_envsys_next_sensor_index;
+			break;
+		}
 
 		sme = sysmon_envsys_find(0);	/* XXX */
 		if (sme == NULL) {
 			/* Return empty range for `no sensors'. */
-			rng->low = 1;
-			rng->high = 0;
 			break;
 		}
-
-		if (rng->units < ENVSYS_NSENSORS)
-			*rng = sme->sme_ranges[rng->units];
-		else {
-			/* Return empty range for unsupported sensor types. */
-			rng->low = 1;
-			rng->high = 0;
+		for (i = 0;
+		     sme->sme_ranges[i].low <= sme->sme_ranges[i].high;
+		     i++) {
+			if (sme->sme_ranges[i].units == rng->units) {
+				*rng = sme->sme_ranges[i];
+				break;
+			}
 		}
 		sysmon_envsys_release(sme);
 		break;
@@ -235,12 +245,6 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 	int error = 0;
 
 	simple_lock(&sysmon_envsys_list_slock);
-
-	/* XXX Only get to register one, for now. */
-	if (LIST_FIRST(&sysmon_envsys_list) != NULL) {
-		error = EEXIST;
-		goto out;
-	}
 
 	if (sme->sme_envsys_version != SYSMON_ENVSYS_VERSION) {
 		error = EINVAL;
