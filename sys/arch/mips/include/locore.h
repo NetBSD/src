@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.22 1999/11/12 06:17:13 nisimura Exp $	*/
+/*	$NetBSD: locore.h,v 1.23 2000/01/09 10:05:55 simonb Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -127,6 +127,11 @@ typedef struct  {
 /* Override writebuffer-drain method. */
 void mips_set_wbflush __P((void (*) __P((void)) ));
 
+
+/* stacktrace() -- print a stack backtrace to the console */
+void stacktrace __P((void));
+/* logstacktrace() -- log a stack traceback to msgbuf */
+void logstacktrace __P((void));
 
 /*
  * The "active" locore-fuction vector, and
