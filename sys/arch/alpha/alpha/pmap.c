@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.119 1999/11/29 18:37:28 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.120 1999/11/30 18:18:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.119 1999/11/29 18:37:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.120 1999/11/30 18:18:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1002,13 +1002,28 @@ pmap_steal_memory(size, vstartp, vendp)
 	size = round_page(size);
 	npgs = atop(size);
 
+#if 0
+	printf("PSM: size 0x%lx (npgs 0x%x)\n", size, npgs);
+#endif
+
 	for (bank = 0; bank < vm_nphysseg; bank++) {
 		if (vm_physmem[bank].pgs)
 			panic("pmap_steal_memory: called _after_ bootstrap");
 
+#if 0
+		printf("     bank %d: avail_start 0x%lx, start 0x%lx, "
+		    "avail_end 0x%lx\n", bank, vm_physmem[bank].avail_start,
+		    vm_physmem[bank].start, vm_physmem[bank].avail_end);
+#endif
+
 		if (vm_physmem[bank].avail_start != vm_physmem[bank].start ||
 		    vm_physmem[bank].avail_start >= vm_physmem[bank].avail_end)
 			continue;
+
+#if 0
+		printf("             avail_end - avail_start = 0x%lx\n",
+		    vm_physmem[bank].avail_end - vm_physmem[bank].avail_start);
+#endif
 
 		if ((vm_physmem[bank].avail_end - vm_physmem[bank].avail_start)
 		    < npgs)
