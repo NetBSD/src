@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.1.1.1 1997/01/14 20:57:06 gwr Exp $	*/
+/*	$NetBSD: pmap.h,v 1.2 1997/01/23 22:24:04 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,15 +39,18 @@
 #ifndef	_SUN3X_PMAP_H
 #define	_SUN3X_PMAP_H
 
+#include <machine/pte.h>
+
 /*
  * Physical map structures exported to the VM code.
  */
 
 struct pmap {
+	struct mmu_rootptr 	pm_mmucrp;	/* MMU Current Root Ptr. */
+	struct a_tmgr_struct    *pm_a_tmgr;	/* Level-A table manager */
 	int	                pm_refcount;	/* pmap reference count */
 	simple_lock_data_t      pm_lock;	/* lock on pmap */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
-	struct a_tmgr_struct    *pm_a_tbl;      /* Root level MMU table to use  */
 };
 
 typedef struct pmap *pmap_t;
@@ -60,10 +63,8 @@ void   pmap_deactivate __P((pmap_t pmap, struct pcb *pcbp));
 
 #define	pmap_kernel()			(&kernel_pmap)
 
-#define PMAP_ACTIVATE(pmap, pcbp, iscurproc) \
-	pmap_activate(pmap, pcbp)
-#define PMAP_DEACTIVATE(pmap, pcbp) \
-	pmap_deactivate(pmap, pcbp)
+#define _pmap_fault(map, va, ftype) \
+	vm_fault(map, va, ftype, 0)
 
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
