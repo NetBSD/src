@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)setruid.c	5.5 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: setruid.c,v 1.2 1994/04/10 06:32:50 cgd Exp $";
+static char *rcsid = "$Id: setruid.c,v 1.3 1994/04/12 23:20:35 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -49,7 +49,7 @@ setruid(ruid)
 {
 	static int warned;
 	static char w[] =
-	    "warning: this program uses setreuid(), which is deprecated.\r\n";
+	    "warning: this program uses setruid(), which is deprecated.\r\n";
 
 	if (!warned) {
 		(void) write(STDERR_FILENO, w, sizeof(w) - 1);
