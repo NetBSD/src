@@ -33,11 +33,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)atof.c	5.3 (Berkeley) 1/8/93";*/
-static char *rcsid = "$Id: atof.c,v 1.5 1993/08/26 00:47:51 jtc Exp $";
+static char *rcsid = "$Id: atof.c,v 1.6 1995/02/28 01:46:30 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
-#include <stddef.h>
 
 double
 atof(ascii)
