@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.8 1996/11/07 22:59:44 gwr Exp $	*/
+/*	$NetBSD: scan.l,v 1.9 1996/11/11 23:54:18 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,17 +66,16 @@ struct incl {
 	YY_BUFFER_STATE in_buf;	/* previous lex state */
 	const char *in_fname;	/* previous file name */
 	int	in_lineno;	/* previous line number */
-	int	in_preveof;	/* previous eoftoken */
+	int	in_ateof;	/* token to insert at EOF */
 };
 static struct incl *incl;
-static int eoftoken;		/* current EOF token */
-static void endinclude __P((void));
+static int endinclude __P((void));
 
 #define	yywrap() 1
 
 %}
 
-PATH	[-/A-Za-z0-9_.]*[./][-/A-Za-z0-9_.]*
+PATH	[A-Za-z_0-9]*[./][-A-Za-z_0-9./]*
 WORD	[A-Za-z_][-A-Za-z_0-9]*
 
 %%
@@ -91,26 +90,24 @@ config		{ return CONFIG; }
 define		{ return DEFINE; }
 device		{ return DEVICE; }
 dumps		{ return DUMPS; }
-flags		{ return FLAGS; }
 file		{ return XFILE; }
+flags		{ return FLAGS; }
 include		{ return INCLUDE; }
 machine		{ return XMACHINE; }
 major		{ return MAJOR; }
 makeoptions	{ return MAKEOPTIONS; }
-maxusers	{ return MAXUSERS; }
 maxpartitions	{ return MAXPARTITIONS; }
+maxusers	{ return MAXUSERS; }
 minor		{ return MINOR; }
+needs-count	{ return NEEDS_COUNT; }
+needs-flag	{ return NEEDS_FLAG; }
 on		{ return ON; }
 options		{ return OPTIONS; }
-"pseudo-device"	{ return PSEUDO_DEVICE; }
+pseudo-device	{ return PSEUDO_DEVICE; }
 root		{ return ROOT; }
 source		{ return SOURCE; }
 swap		{ return SWAP; }
 with		{ return WITH; }
-
-		/* keywords with values */
-needs-count	{ yylval.val = FI_NEEDSCOUNT; return FFLAG; }
-needs-flag	{ yylval.val = FI_NEEDSFLAG; return FFLAG; }
 
 		/* all the rest */
 {PATH}		{ yylval.str = intern(yytext); return PATHNAME; }
@@ -133,9 +130,6 @@ needs-flag	{ yylval.val = FI_NEEDSFLAG; return FFLAG; }
 		yylval.val = strtol(yytext, NULL, 10);
 		return NUMBER;
 	}
-\n/[ \t] {
-		yyline++;
-	}
 \n	{
 		yyline++;
 		return '\n';
@@ -145,12 +139,12 @@ needs-flag	{ yylval.val = FI_NEEDSFLAG; return FFLAG; }
 .	{ return yytext[0]; }
 <<EOF>> {
 		int tok;
-
-		tok = eoftoken;
-		eoftoken = YY_NULL;
-		if (incl != NULL)
-			endinclude();
-		return (tok);
+		if (incl == NULL)
+			return YY_NULL;
+		tok = endinclude();
+		if (tok)
+			return tok;
+		/* otherwise continue scanning */
 	}
 
 %%
@@ -167,7 +161,6 @@ firstfile(fname)
 		return (-1);
 	yyfile = conffile = fname;
 	yyline = 1;
-	eoftoken = YY_NULL;
 	return (0);
 }
 
@@ -175,17 +168,23 @@ firstfile(fname)
  * Open the named file for inclusion at the current point.  Returns 0 on
  * success (file opened and previous state pushed), nonzero on failure
  * (fopen failed, complaint made).  The `ateof' parameter controls the
- * token to be returned at the end of the include file (typically '\n'
- * or ENDFILE).
+ * token to be inserted at the end of the include file (i.e. ENDFILE).
+ * If ateof == 0 then nothing is inserted.
  */
 int
 include(fname, ateof)
 	const char *fname;
 	int ateof;
 {
-	register FILE *fp;
-	register struct incl *in;
+	FILE *fp;
+	struct incl *in;
 	char *s;
+	static int havedirs;
+
+	if (havedirs == 0) {
+		havedirs = 1;
+		setupdirs();
+	}
 
 	/* Kludge until files.* files are fixed. */
 	if (strncmp(fname, "../../../", 9) == 0)
@@ -202,12 +201,11 @@ include(fname, ateof)
 	in->in_buf = YY_CURRENT_BUFFER;
 	in->in_fname = yyfile;
 	in->in_lineno = yyline;
-	in->in_preveof = eoftoken;
+	in->in_ateof = ateof;
 	incl = in;
 	yy_switch_to_buffer(yy_create_buffer(fp, YY_BUF_SIZE));
 	yyfile = intern(s);
 	yyline = 1;
-	eoftoken = ateof;
 	free(s);
 	return (0);
 }
@@ -215,10 +213,11 @@ include(fname, ateof)
 /*
  * Terminate the most recent inclusion.
  */
-static void
+static int
 endinclude()
 {
-	register struct incl *in;
+	struct incl *in;
+	int ateof;
 
 	if ((in = incl) == NULL)
 		panic("endinclude");
@@ -229,8 +228,10 @@ endinclude()
 	yy_switch_to_buffer(in->in_buf);
 	yyfile = in->in_fname;
 	yyline = in->in_lineno;
-	eoftoken = in->in_preveof;
+	ateof  = in->in_ateof;
 	free(in);
+
+	return (ateof);
 }
 
 /*
