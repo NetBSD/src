@@ -1,4 +1,4 @@
-/*	$NetBSD: top.c,v 1.7 2001/04/12 14:10:05 abs Exp $	*/
+/*	$NetBSD: top.c,v 1.8 2001/05/22 15:38:22 christos Exp $	*/
 
 char *copyright =
     "Copyright (c) 1984 through 1996, William LeFebvre";
@@ -269,10 +269,10 @@ char *argv[];
 		break;
 
 	      case 's':
-		if ((delay = atoi(optarg)) < 0)
+		if ((delay = atoi(optarg)) < 0 || (delay == 0 && getuid() != 0))
 		{
 		    fprintf(stderr,
-			"%s: warning: seconds delay should be non-negative -- using default\n",
+			"%s: warning: seconds delay should be positive -- using default\n",
 			myname);
 		    delay = Default_DELAY;
 		    warnings++;
@@ -544,7 +544,7 @@ Usage: %s [-ISbinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
 	    /* determine number of processes to actually display */
 	    /* this number will be the smallest of:  active processes,
 	       number user requested, number current screen accomodates */
-	    active_procs = system_info.p_active;
+	    active_procs = system_info.P_ACTIVE;
 	    if (active_procs > topn)
 	    {
 		active_procs = topn;
@@ -569,7 +569,13 @@ Usage: %s [-ISbinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
 	u_endscreen(i);
 
 	/* now, flush the output buffer */
-	fflush(stdout);
+	if (fflush(stdout) != 0)
+	{
+	    new_message(MT_standout, " Write error on stdout");
+	    putchar('\r');
+	    quit(1);
+	    /*NOTREACHED*/
+	}
 
 	/* only do the rest if we have more displays to show */
 	if (displays)
@@ -625,8 +631,14 @@ Usage: %s [-ISbinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
 
 		    /* now read it and convert to command strchr */
 		    /* (use "change" as a temporary to hold strchr) */
-		    if (read(0, &ch, 1) < 1)
-			quit(0);
+		    if (read(0, &ch, 1) != 1)
+		    {
+			/* read error: either 0 or -1 */
+			new_message(MT_standout, " Read error on stdin");
+			putchar('\r');
+			quit(1);
+			/*NOTREACHED*/
+		    }
 		    if ((iptr = strchr(command_chars, ch)) == NULL)
 		    {
 			/* illegal command */
@@ -729,7 +741,10 @@ Usage: %s [-ISbinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
 				new_message(MT_standout, "Seconds to delay: ");
 				if ((i = readline(tempbuf1, 8, Yes)) > -1)
 				{
-				    delay = i;
+				    if ((delay = i) == 0 && getuid() != 0)
+				    {
+					delay = 1;
+				    }
 				}
 				clear_message();
 				break;
