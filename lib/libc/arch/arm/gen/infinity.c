@@ -1,4 +1,4 @@
-/*	$NetBSD: infinity.c,v 1.1 2000/12/29 20:13:49 bjh21 Exp $	*/
+/*	$NetBSD: infinity.c,v 1.2 2001/10/28 12:40:56 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -32,7 +32,19 @@
  */
 
 #include <math.h>
+#include <machine/endian.h>
 
-/* Bytes for +infinity on an arm32 (IEEE double precision) */
+/* Bytes for +infinity on an ARM (IEEE double precision) */
 
-const char __infinity[] __attribute__((__aligned__(4))) = { 0, 0, (char)0xf0, 0x7f, 0, 0, 0, 0 };
+#if BYTE_ORDER == BIG_ENDIAN
+const char __infinity[] __attribute__((__aligned__(4))) =
+    { 0x7f, (char)0xf0, 0, 0, 0, 0, 0, 0 };
+#else /* LITTLE_ENDIAN */
+#ifdef __VFP_FP__
+const char __infinity[] __attribute__((__aligned__(4))) =
+    { 0, 0, 0, 0, 0, 0, (char)0xf0, 0x7f };
+#else /* !__VFP_FP__ */
+const char __infinity[] __attribute__((__aligned__(4))) =
+    { 0, 0, (char)0xf0, 0x7f, 0, 0, 0, 0 };
+#endif /* !__VFP_FP__ */
+#endif /* LITTLE_ENDIAN */
