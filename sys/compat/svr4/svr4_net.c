@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.18 1999/04/06 02:55:26 tv Exp $	 */
+/*	$NetBSD: svr4_net.c,v 1.19 1999/05/05 20:01:06 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -185,12 +185,14 @@ svr4_netopen(dev, flag, mode, p)
 		return EOPNOTSUPP;
 	}
 
+	/* falloc() will use the descriptor for us */
 	if ((error = falloc(p, &fp, &fd)) != 0)
 		return error;
 
 	if ((error = socreate(family, &so, type, protocol)) != 0) {
 		DPRINTF(("socreate error %d\n", error));
 		p->p_fd->fd_ofiles[fd] = 0;
+		FILE_UNUSE(fp, NULL);
 		ffree(fp);
 		return error;
 	}
@@ -205,6 +207,7 @@ svr4_netopen(dev, flag, mode, p)
 	DPRINTF(("ok);\n"));
 
 	p->p_dupfd = fd;
+	FILE_UNUSE(fp, p);
 	return ENXIO;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_12.c,v 1.4 1999/03/30 00:13:57 wrstuden Exp $	*/
+/*	$NetBSD: vfs_syscalls_12.c,v 1.5 1999/05/05 20:01:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -107,10 +107,13 @@ compat_12_sys_getdirentries(p, v, retval)
 	int error, done;
 	long loff;
 
+	/* getvnode() will use the descriptor for us */
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return error;
-	if ((fp->f_flag & FREAD) == 0)
-		return (EBADF);
+	if ((fp->f_flag & FREAD) == 0) {
+		error = EBADF;
+		goto out;
+	}
 
 	loff = fp->f_offset;
 
@@ -119,6 +122,8 @@ compat_12_sys_getdirentries(p, v, retval)
 
 	error = copyout(&loff, SCARG(uap, basep), sizeof(long));
 	*retval = done;
+ out:
+	FILE_UNUSE(fp, p);
 	return error;
 }
 
