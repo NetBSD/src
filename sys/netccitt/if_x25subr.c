@@ -1,4 +1,4 @@
-/*	$NetBSD: if_x25subr.c,v 1.10 1995/06/13 09:07:29 mycroft Exp $	*/
+/*	$NetBSD: if_x25subr.c,v 1.11 1995/06/15 22:38:20 cgd Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -137,8 +137,8 @@ register struct llinfo_x25 *lx;
 		lcp->lcd_upper = 0;
 		pk_disconnect(lcp);
 	}
-	if ((rt->rt_llinfo == (caddr_t)lx) && (lx->lx_next->lx_rt == rt))
-		rt->rt_llinfo = (caddr_t)lx->lx_next;
+	if ((rt->rt_llinfo == (caddr_t)lx) && (lx->lx_list.le_next->lx_rt == rt))
+		rt->rt_llinfo = (caddr_t)lx->lx_list.le_next;
 	else
 		rt->rt_llinfo = 0;
 	RTFREE(rt);
@@ -355,7 +355,7 @@ next_circuit:
 	case SENT_CALL:
 	case DATA_TRANSFER:
 		if (sbspace(&lcp->lcd_sb) < 0) {
-			lx = lx->lx_next;
+			lx = lx->lx_list.le_next;
 			if (lx->lx_rt != rt)
 				senderr(ENOSPC);
 			goto next_circuit;
@@ -758,7 +758,7 @@ struct mbuf *m0;
 		lcp->lcd_so = 0;
 		pk_close(lcp);
 		lcp = lx->lx_lcd;
-		if (lx->lx_next->lx_rt == rt)
+		if (lx->lx_list.le_next->lx_rt == rt)
 			x25_lxfree(lx);
 		lcp->lcd_so = so;
 		lcp->lcd_upper = 0;
