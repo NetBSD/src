@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.23 1999/02/17 23:55:18 mycroft Exp $	*/
+/*	$NetBSD: eap.c,v 1.24 1999/02/18 05:46:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -768,7 +768,7 @@ eap_trigger_output(addr, start, end, blksize, intr, arg, param)
 {
 	struct eap_softc *sc = addr;
 	struct eap_dma *p;
-	u_int32_t mode;
+	u_int32_t icsc, sic;
 	int sampshift;
 
 #ifdef DIAGNOSTIC
@@ -782,18 +782,22 @@ eap_trigger_output(addr, start, end, blksize, intr, arg, param)
 	sc->sc_pintr = intr;
 	sc->sc_parg = arg;
 
-	mode = EREAD4(sc, EAP_SIC) & ~(EAP_P2_S_EB | EAP_P2_S_MB | EAP_INC_BITS);
-	mode |= EAP_SET_P2_ST_INC(0) | EAP_SET_P2_END_INC(param->precision * param->factor / 8);
+	icsc = EREAD4(sc, EAP_ICSC);
+	EWRITE4(sc, EAP_ICSC, icsc & ~EAP_DAC2_EN);
+
+	sic = EREAD4(sc, EAP_SIC);
+	sic &= ~(EAP_P2_S_EB | EAP_P2_S_MB | EAP_INC_BITS);
+	sic |= EAP_SET_P2_ST_INC(0) | EAP_SET_P2_END_INC(param->precision * param->factor / 8);
 	sampshift = 0;
 	if (param->precision * param->factor == 16) {
-		mode |= EAP_P2_S_EB;
+		sic |= EAP_P2_S_EB;
 		sampshift++;
 	}
 	if (param->channels == 2) {
-		mode |= EAP_P2_S_MB;
+		sic |= EAP_P2_S_MB;
 		sampshift++;
 	}
-	EWRITE4(sc, EAP_SIC, mode);
+	EWRITE4(sc, EAP_SIC, sic);
 
 	for (p = sc->sc_dmas; p && KERNADDR(p) != start; p = p->next)
 		;
@@ -811,11 +815,10 @@ eap_trigger_output(addr, start, end, blksize, intr, arg, param)
 		EAP_SET_SIZE(0, (((char *)end - (char *)start) >> 2) - 1));
 
 	EWRITE2(sc, EAP_DAC2_CSR, (blksize >> sampshift) - 1);
-	mode = EREAD4(sc, EAP_ICSC) & ~EAP_DAC2_EN;
-	EWRITE4(sc, EAP_ICSC, mode);
-	mode |= EAP_DAC2_EN;
-	EWRITE4(sc, EAP_ICSC, mode);
-	DPRINTFN(1, ("eap_trigger_output: set ICSC = 0x%08x\n", mode));
+
+	EWRITE4(sc, EAP_ICSC, icsc | EAP_DAC2_EN);
+
+	DPRINTFN(1, ("eap_trigger_output: set ICSC = 0x%08x\n", icsc));
 
 	return (0);
 }
@@ -831,7 +834,7 @@ eap_trigger_input(addr, start, end, blksize, intr, arg, param)
 {
 	struct eap_softc *sc = addr;
 	struct eap_dma *p;
-	u_int32_t mode;
+	u_int32_t icsc, sic;
 	int sampshift;
 
 #ifdef DIAGNOSTIC
@@ -845,17 +848,21 @@ eap_trigger_input(addr, start, end, blksize, intr, arg, param)
 	sc->sc_rintr = intr;
 	sc->sc_rarg = arg;
 
-	mode = EREAD4(sc, EAP_SIC) & ~(EAP_R1_S_EB | EAP_R1_S_MB);
+	icsc = EREAD4(sc, EAP_ICSC);
+	EWRITE4(sc, EAP_ICSC, icsc & ~EAP_ADC_EN);
+
+	sic = EREAD4(sc, EAP_SIC);
+	sic &= ~(EAP_R1_S_EB | EAP_R1_S_MB);
 	sampshift = 0;
 	if (param->precision * param->factor == 16) {
-		mode |= EAP_R1_S_EB;
+		sic |= EAP_R1_S_EB;
 		sampshift++;
 	}
 	if (param->channels == 2) {
-		mode |= EAP_R1_S_MB;
+		sic |= EAP_R1_S_MB;
 		sampshift++;
 	}
-	EWRITE4(sc, EAP_SIC, mode);
+	EWRITE4(sc, EAP_SIC, sic);
 
 	for (p = sc->sc_dmas; p && KERNADDR(p) != start; p = p->next)
 		;
@@ -873,11 +880,10 @@ eap_trigger_input(addr, start, end, blksize, intr, arg, param)
 		EAP_SET_SIZE(0, (((char *)end - (char *)start) >> 2) - 1));
 
 	EWRITE2(sc, EAP_ADC_CSR, (blksize >> sampshift) - 1);
-	mode = EREAD4(sc, EAP_ICSC) & ~EAP_ADC_EN;
-	EWRITE4(sc, EAP_ICSC, mode);
-	mode |= EAP_ADC_EN;
-	EWRITE4(sc, EAP_ICSC, mode);
-	DPRINTFN(1, ("eap_trigger_input: set ICSC = 0x%08x\n", mode));
+
+	EWRITE4(sc, EAP_ICSC, icsc | EAP_ADC_EN);
+
+	DPRINTFN(1, ("eap_trigger_input: set ICSC = 0x%08x\n", icsc));
 
 	return (0);
 }
@@ -887,11 +893,11 @@ eap_halt_output(addr)
 	void *addr;
 {
 	struct eap_softc *sc = addr;
-	u_int32_t mode;
+	u_int32_t icsc;
 	
 	DPRINTF(("eap: eap_halt_output\n"));
-	mode = EREAD4(sc, EAP_ICSC) & ~EAP_DAC2_EN;
-	EWRITE4(sc, EAP_ICSC, mode);
+	icsc = EREAD4(sc, EAP_ICSC);
+	EWRITE4(sc, EAP_ICSC, icsc & ~EAP_DAC2_EN);
 #ifdef DIAGNOSTIC
 	sc->sc_prun = 0;
 #endif
@@ -903,11 +909,11 @@ eap_halt_input(addr)
 	void *addr;
 {
 	struct eap_softc *sc = addr;
-	u_int32_t mode;
+	u_int32_t icsc;
     
 	DPRINTF(("eap: eap_halt_input\n"));
-	mode = EREAD4(sc, EAP_ICSC) & ~EAP_ADC_EN;
-	EWRITE4(sc, EAP_ICSC, mode);
+	icsc = EREAD4(sc, EAP_ICSC);
+	EWRITE4(sc, EAP_ICSC, icsc & ~EAP_ADC_EN);
 #ifdef DIAGNOSTIC
 	sc->sc_rrun = 0;
 #endif
