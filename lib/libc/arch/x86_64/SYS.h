@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
- *	$NetBSD: SYS.h,v 1.7 2003/10/18 22:47:37 fvdl Exp $
+ *	$NetBSD: SYS.h,v 1.8 2004/03/09 20:21:22 drochner Exp $
  */
 
 /*
@@ -42,10 +42,8 @@
 
 #ifdef __STDC__
 #define SYSTRAP(x)	movl $(SYS_ ## x),%eax; movq %rcx, %r10; syscall
-#define OSYSTRAP(x)	movl $(SYS_ ## x),%eax; int $0x80
 #else
 #define SYSTRAP(x)	movl $(SYS_/**/x),%eax; movq %rcx, %r10; syscall
-#define OSYSTRAP(x)	movl $(SYS_/**/x),%eax; int $0x80
 #endif
 
 #define CERROR		_C_LABEL(__cerror)
@@ -55,10 +53,6 @@
 	ENTRY(x);							\
 	SYSTRAP(y)
 
-#define _OSYSCALL_NOERROR(x,y)						\
-	ENTRY(x);							\
-	OSYSTRAP(y)
-
 #ifdef PIC
 #define _SYSCALL(x,y)							\
 	.text; _ALIGN_TEXT;						\
@@ -73,34 +67,12 @@
 	_SYSCALL_NOERROR(x,y);						\
 	jc 2b
 #endif
-
-#ifdef PIC
-#define _OSYSCALL(x,y)							\
-	.text; _ALIGN_TEXT;						\
-	2: mov PIC_GOT(CERROR), %rcx;					\
-	jmp *%rcx;							\
-	_OSYSCALL_NOERROR(x,y);						\
-	jc 2b
-#else
-#define _OSYSCALL(x,y)							\
-	.text; _ALIGN_TEXT;						\
-	2: jmp CERROR;							\
-	_OSYSCALL_NOERROR(x,y);						\
-	jc 2b
-#endif
-
 
 #define SYSCALL_NOERROR(x)						\
 	_SYSCALL_NOERROR(x,x)
 
-#define OSYSCALL_NOERROR(x)						\
-	_OSYSCALL_NOERROR(x,x)
-
 #define SYSCALL(x)							\
 	_SYSCALL(x,x)
-
-#define OSYSCALL(x)							\
-	_OSYSCALL(x,x)
 
 #define PSEUDO_NOERROR(x,y)						\
 	_SYSCALL_NOERROR(x,y);						\
