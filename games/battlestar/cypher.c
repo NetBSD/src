@@ -1,4 +1,4 @@
-/*	$NetBSD: cypher.c,v 1.12 2000/09/08 17:25:32 jsm Exp $	*/
+/*	$NetBSD: cypher.c,v 1.13 2000/09/10 10:51:17 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cypher.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: cypher.c,v 1.12 2000/09/08 17:25:32 jsm Exp $");
+__RCSID("$NetBSD: cypher.c,v 1.13 2000/09/10 10:51:17 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -370,7 +370,7 @@ cypher()
 			break;
 
 		case SAVE:
-			printf("\nSave file name (default %s) ",
+			printf("\nSave file name (default %s): ",
 			       DEFAULT_SAVE_FILE);
 			filename = fgetln(stdin, &filename_len);
 			if (filename_len == 0

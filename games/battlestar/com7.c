@@ -1,4 +1,4 @@
-/*	$NetBSD: com7.c,v 1.7 2000/07/23 23:57:23 mycroft Exp $	*/
+/*	$NetBSD: com7.c,v 1.8 2000/09/10 10:51:17 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com7.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com7.c,v 1.7 2000/07/23 23:57:23 mycroft Exp $");
+__RCSID("$NetBSD: com7.c,v 1.8 2000/09/10 10:51:17 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -244,7 +244,7 @@ fighton:
 		break;
 
 	default:
-		puts("You don't have a chance, he is too quick.");
+		puts("You don't have a chance; he is too quick.");
 		break;
 
 	}
@@ -258,7 +258,7 @@ fighton:
 		return (0);
 	}
 	puts("He attacks...");
-	/* some embellisments */
+	/* Some embellishments. */
 	hurt = rnd(NUMOFINJURIES) - (testbit(inven, SHIELD) != 0) - (testbit(wear, MAIL) != 0) - (testbit(wear, HELM) != 0);
 	hurt += (testbit(wear, AMULET) != 0) + (testbit(wear, MEDALION) != 0) + (testbit(wear, TALISMAN) != 0);
 	hurt = hurt < 0 ? 0 : hurt;
