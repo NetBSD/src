@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.95 1996/09/01 23:57:15 mycroft Exp $
+#	$NetBSD: files,v 1.96 1996/09/14 14:40:29 mrg Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -234,6 +234,7 @@ file net/raw_usrreq.c
 file net/route.c
 file net/rtsock.c
 file net/slcompress.c			sl | ppp | strip
+file net/pfil.c				pfil_hooks
 file netccitt/ccitt_proto.c		ccitt
 file netccitt/hd_debug.c		hdlc
 file netccitt/hd_input.c		hdlc

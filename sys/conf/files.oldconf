@@ -1,4 +1,4 @@
-#	$NetBSD: files.oldconf,v 1.70 1996/09/01 23:57:19 mycroft Exp $
+#	$NetBSD: files.oldconf,v 1.71 1996/09/14 14:40:31 mrg Exp $
 #
 adosfs/adlookup.c	optional adosfs
 adosfs/adutil.c		optional adosfs
@@ -148,6 +148,7 @@ net/raw_usrreq.c	standard
 net/route.c		standard
 net/rtsock.c		standard
 net/slcompress.c	optional ppp or sl or strip
+net/pfil.c		optional pfil_hooks
 netccitt/ccitt_proto.c	optional ccitt
 netccitt/hd_debug.c	optional hdlc
 netccitt/hd_input.c	optional hdlc
