@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.63 2000/06/06 22:47:22 thorpej Exp $	*/
+/*	$NetBSD: pciide.c,v 1.64 2000/06/06 22:56:06 thorpej Exp $	*/
 
 
 /*
@@ -307,7 +307,7 @@ const struct pciide_product_desc pciide_via_products[] =  {
 const struct pciide_product_desc pciide_cypress_products[] =  {
 	{ PCI_PRODUCT_CONTAQ_82C693,
 	  0,
-	  "Cypress CY82C693 IDE Controller",
+	  "Cypress 82C693 IDE Controller",
 	  cy693_chip_map,
 	},
 	{ 0,
