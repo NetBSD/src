@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.16.4.3 1999/07/04 01:42:26 chs Exp $
+#	$NetBSD: vnode_if.src,v 1.16.4.4 1999/07/31 18:40:02 chs Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -441,10 +441,9 @@ vop_valloc {
 vop_balloc {
 	IN struct vnode *vp;
 	IN off_t offset;
-	IN int size;
+	IN off_t length;
 	IN struct ucred *cred;
 	IN int flags;
-	OUT struct buf **bpp;
 };
 
 #
