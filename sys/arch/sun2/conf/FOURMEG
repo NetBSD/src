@@ -1,11 +1,11 @@
-# $NetBSD: FOURMEG,v 1.1 2001/03/29 21:07:56 fredette Exp $
+# $NetBSD: FOURMEG,v 1.2 2001/04/18 15:08:59 fredette Exp $
 
 # FOURMEG Sun2 (2/120, 2/170, 2/50, ...)
 # Supports root on: ie0, sd*, ...
 
 include "arch/sun2/conf/std.sun2"
 
-#ident 		"FOURMEG-$Revision: 1.1 $"
+#ident 		"FOURMEG-$Revision: 1.2 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -40,20 +40,20 @@ options 	KTRACE		# system call tracing
 #options 	SCSIVERBOSE		# Verbose SCSI errors
 
 # Compatability options
-options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
-options 	COMPAT_43	# and 4.3BSD and ...
+#options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
+#options 	COMPAT_43	# and 4.3BSD and ...
 
 # Filesystem options
 file-system	FFS		# Berkeley Fast Filesystem
 file-system	NFS		# Sun NFS client support
 file-system	CD9660		# ISO 9660 + Rock Ridge file system
-file-system	FDESC		# /dev/fd/*
-file-system	KERNFS		# /kern
-file-system	NULLFS		# loopback file system
-file-system	OVERLAY		# overlay file system
-file-system	PROCFS		# /proc
-file-system	UNION		# union file system
-file-system	MFS		# memory-based filesystem
+#file-system	FDESC		# /dev/fd/*
+#file-system	KERNFS		# /kern
+#file-system	NULLFS		# loopback file system
+#file-system	OVERLAY		# overlay file system
+#file-system	PROCFS		# /proc
+#file-system	UNION		# union file system
+#file-system	MFS		# memory-based filesystem
 
 #options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# FFS quotas
@@ -105,27 +105,28 @@ tod0    at obio0 addr 0x003800	# 2/120, 2/170
 ## Zilog 8530 serial chips.  Each has two-channels.
 ## zs0 is ttya and ttyb.  zs1 is the keyboard and mouse.
 zs0	at obio0 addr 0x002000	# 2/120, 2/170
-zs0	at obio0 addr 0x7f2000	# 2/50
+#zs0	at obio0 addr 0x7f2000	# 2/50
 zstty0	at zs0 channel 0	# ttya
 zstty1	at zs0 channel 1	# ttyb
 
 zs1	at obmem0 addr 0x780000	# 2/120, 2/170
+#zs1	at obio0 addr 0x7f1800	# 2/50
 kbd0	at zs1 channel 0	# keyboard
 ms0	at zs1 channel 1	# mouse
 
-zs2	at mbmem0 addr 0x080800	# 2/120, 2/170
+zs2	at mbmem0 addr 0x080800	# 2/120, 2/170 (first sc SCSI)
 zstty2	at zs2 channel 0	# ttyc
 zstty3	at zs2 channel 1	# ttyd
 
-zs3	at mbmem0 addr 0x081000	# 2/120, 2/170
+zs3	at mbmem0 addr 0x081000	# 2/120, 2/170 (first sc SCSI)
 zstty4	at zs3 channel 0	# ttye
 zstty5	at zs3 channel 1	# ttyf
 
-zs4	at mbmem0 addr 0x084800	# 2/120, 2/170
+zs4	at mbmem0 addr 0x084800	# 2/120, 2/170 (second sc SCSI)
 zstty6	at zs4 channel 0	# ttyg
 zstty7	at zs4 channel 1	# ttyh
 
-zs5	at mbmem0 addr 0x085000	# 2/120, 2/170
+zs5	at mbmem0 addr 0x085000	# 2/120, 2/170 (second sc SCSI)
 zstty8	at zs4 channel 0	# ttyi
 zstty9	at zs4 channel 1	# ttyj
 
@@ -175,11 +176,11 @@ cd*	at scsibus? target ? lun ?		# SCSI CD-ROMs
 #uk*	at scsibus? target ? lun ?		# unknown SCSI
 
 ## Xylogics 450 or 451 Multibus/VME SMD disk controllers and disks.
-xyc0	at mbio0 addr 0xee40 ipl 2 
+#xyc0	at mbio0 addr 0xee40 ipl 2 
 #xyc0	at vme0 addr 0xee40 ipl 2 vect 0x48
-xyc1	at mbio0 addr 0xee48 ipl 2 
+#xyc1	at mbio0 addr 0xee48 ipl 2 
 #xyc1	at vme0 addr 0xee48 ipl 2 vect 0x49
-xy*	at xyc? drive ?
+#xy*	at xyc? drive ?
 
 ## Memory-disk device.
 pseudo-device	md		2
@@ -187,14 +188,14 @@ pseudo-device	md		2
 #### Network interfaces.
 
 ## Intel Ethernet (onboard, or Multibus/VME)
-ie0	at obio0 0x7f0800 ipl 3		# 2/50
+#ie0	at obio0 0x7f0800 ipl 3		# 2/50
 ie0	at mbmem0 addr 0x88000 ipl 3
 
 ## Frame buffers.
 
 ## Sun "bwtwo" black and white framebuffer.
-bwtwo0  at obmem0 addr 0x00700000	# 2/120
-bwtwo0	at obio0 addr 0x0		# 2/50
+bwtwo0  at obmem0 addr 0x00700000	# 2/120, 2/170
+#bwtwo0	at obio0 addr 0x0		# 2/50
 
 #### Miscellaneous.
 pseudo-device	loop		1	# network loopback
