@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.3 1997/08/28 11:05:01 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.4 1997/09/03 07:57:51 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -269,6 +269,10 @@ wdcattach(parent, self, aux)
 	 * Attach standard IDE/ESDI/etc. disks to the controller.
 	 */
 	for (drive = 0; drive < 2; drive++) {
+		/* if a disk is already present, skip */
+		if ((wdc->sc_drives_mask & (1 << drive)) != 0) {
+			continue;
+		}
 		/* test for ATAPI signature on this drive */
 		outb(wdc->sc_iobase+wd_sdh, WDSD_IBM | (drive << 4));
 		if (inb(wdc->sc_iobase+ wd_cyl_lo) == 0x14 &&
@@ -300,6 +304,7 @@ wdcattach(parent, self, aux)
 			else
 				wdc->d_link[drive]->sc_mode = 0;
 
+			wdc->sc_drives_mask |= (1 << drive);
 			(void)config_found(self, (void *)wdc->d_link[drive],
 			    wdprint);
 		}
@@ -1423,9 +1428,10 @@ wdc_atapi_get_params(ab_link, drive, id)
 	int status, len, excess = 0;
 	int s, error;
 
-	if (wdc->d_link[drive] != 0) {
+	/* if a disk is already present, skip */
+	if ((wdc->sc_drives_mask & (1 << drive)) != 0) {
 #ifdef ATAPI_DEBUG_PROBE
-		printf("wdc_atapi_get_params: WD drive %d\n", drive);
+		printf("wdc_atapi_get_params: drive %d present\n", drive);
 #endif
 		return 0;
 	}
@@ -1506,6 +1512,7 @@ wdc_atapi_get_params(ab_link, drive, id)
 	insw(wdc->sc_iobase + wd_data, id,
 	    sizeof(struct atapi_identify)/sizeof(short));
 	wdcbit_bucket(wdc, excess);
+	wdc->sc_drives_mask |= (1 << drive);
 
  end:	/* Restart the queue. */
 	WDDEBUG_PRINT(("wdcstart from wdc_atapi_get_parms flags 0x%x\n",
