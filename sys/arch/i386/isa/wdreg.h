@@ -1,4 +1,4 @@
-/*	$NetBSD: wdreg.h,v 1.9 1994/11/22 05:34:54 mycroft Exp $	*/
+/*	$NetBSD: wdreg.h,v 1.10 1994/11/22 09:34:06 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -143,7 +143,7 @@ struct wdparams {
 	short	wdp_eccbytes;		/* ecc bytes appended */
 	char	wdp_revision[8];	/* firmware revision */
 	char	wdp_model[40];		/* model name */
-	char	wdp_maxmulti;		/* maximum sectors per interrupt */
+	u_char	wdp_maxmulti;		/* maximum sectors per interrupt */
 	char	wdp_vendor2[1];
 	short	wdp_usedmovsd;		/* can use double word read/write? */
 	char	wdp_vendor3[1];
