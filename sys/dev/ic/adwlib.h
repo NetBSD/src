@@ -1,4 +1,4 @@
-/*      $NetBSD: adwlib.h,v 1.10 2000/05/10 21:22:34 dante Exp $        */
+/*      $NetBSD: adwlib.h,v 1.11 2000/05/14 18:25:49 dante Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -1017,6 +1017,8 @@ typedef struct adw_softc {
 
 	TAILQ_HEAD(, scsipi_xfer) sc_queue;
 
+	int			sc_freeze_dev[ADW_MAX_TID];
+
 	ADW_CALLBACK	isr_callback;	/* pointer to function, called in AdvISR() */
 	ADW_CALLBACK	async_callback;	/* pointer to function, called in AdvISR() */
 	u_int16_t	bios_ctrl;	/* BIOS control word, EEPROM word 12 */
@@ -1134,15 +1136,15 @@ typedef struct adw_scsi_req_q {
 /*
  * ASC_SCSI_REQ_Q 'scsi_status' return values.
  */
-#define SS_GOOD              0x00
-#define SS_CHK_CONDITION     0x02
-#define SS_CONDITION_MET     0x04
-#define SS_TARGET_BUSY       0x08
-#define SS_INTERMID          0x10
-#define SS_INTERMID_COND_MET 0x14
-#define SS_RSERV_CONFLICT    0x18
-#define SS_CMD_TERMINATED    0x22
-#define SS_QUEUE_FULL        0x28
+#define SCSI_STATUS_GOOD		0x00
+#define SCSI_STATUS_CHECK_CONDITION	0x02
+#define SCSI_STATUS_CONDITION_MET	0x04
+#define SCSI_STATUS_TARGET_BUSY		0x08
+#define SCSI_STATUS_INTERMID		0x10
+#define SCSI_STATUS_INTERMID_COND_MET	0x14
+#define SCSI_STATUS_RSERV_CONFLICT	0x18
+#define SCSI_STATUS_CMD_TERMINATED	0x22
+#define SCSI_STATUS_QUEUE_FULL		0x28
 
 
 /*
@@ -1314,52 +1316,6 @@ do { \
  * Convert target id to target id bit mask.
  */
 #define ADW_TID_TO_TIDMASK(tid)   (0x01 << ((tid) & ADW_MAX_TID))
-
-/*
- * SCSI Iquiry structure
- */
-#define INQ_CLOCKING_ST_ONLY    0x0
-#define INQ_CLOCKING_DT_ONLY    0x1
-#define INQ_CLOCKING_ST_AND_DT  0x3
-
-typedef struct {
-	u_int8_t	peri_dvc_type	: 5;	/* peripheral device type */
-	u_int8_t	peri_qualifier  : 3;	/* peripheral qualifier */
-	u_int8_t	dvc_type_modifier : 7;	/* device type modifier (for SCSI I) */
-	u_int8_t	rmb	 : 1;		/* RMB - removable medium bit */
-	u_int8_t	ansi_apr_ver : 3;	/* ANSI approved version */
-	u_int8_t	ecma_ver : 3;		/* ECMA version */
-	u_int8_t	iso_ver  : 2;		/* ISO version */
-	u_int8_t	rsp_data_fmt : 4;	/* response data format */
-						/* 0 SCSI 1 */
-						/* 1 CCS */
-						/* 2 SCSI-2 */
-						/* 3-F reserved */
-	u_int8_t	res1	 : 2;	     	/* reserved */
-	u_int8_t	TemIOP   : 1;	     	/* terminate I/O process bit (see 5.6.22) */
-	u_int8_t	aenc	 : 1;	     	/* asynch. event notification (processor) */
-	u_int8_t	add_len;		/* additional length */
-	u_int8_t	res2;			/* reserved */
-	u_int8_t	res3;			/* reserved */
-	u_int8_t	StfRe	: 1;	    	/* soft reset implemented */
-	u_int8_t	CmdQue  : 1;	    	/* command queuing */
-	u_int8_t	res4	: 1;	    	/* reserved */
-	u_int8_t	Linked  : 1;	    	/* linked command for this logical unit */
-	u_int8_t	Sync	: 1;	    	/* synchronous data transfer */
-	u_int8_t	WBus16  : 1;	    	/* wide bus 16 bit data transfer */
-	u_int8_t	WBus32  : 1;	    	/* wide bus 32 bit data transfer */
-	u_int8_t	RelAdr  : 1;	    	/* relative addressing mode */
-	u_int8_t	vendor_id[8];		/* vendor identification */
-	u_int8_t	product_id[16];		/* product identification */
-	u_int8_t	product_rev_level[4];	/* product revision level */
-	u_int8_t	vendor_specific[20];	/* vendor specific */
-	u_int8_t	IUS	 : 1;		/* information unit supported */
-	u_int8_t	QAS	 : 1;		/* quick arbitrate supported */
-	u_int8_t	Clocking : 2;		/* clocking field */
-	u_int8_t	res5	 : 4;		/* reserved */
-	u_int8_t	res6;			/* reserved */
-} ADW_SCSI_INQUIRY; /* 58 bytes */
-
 
 /*
  * Adv Library functions available to drivers.

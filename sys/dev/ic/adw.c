@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.20 2000/05/10 21:22:34 dante Exp $	 */
+/* $NetBSD: adw.c,v 1.21 2000/05/14 18:25:49 dante Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -92,6 +92,7 @@ static void adw_print_info __P((ADW_SOFTC *, int));
 
 static int adw_poll __P((ADW_SOFTC *, struct scsipi_xfer *, int));
 static void adw_timeout __P((void *));
+static void adw_reset_bus __P((ADW_SOFTC *, struct scsipi_xfer *));
 
 
 /******************************************************************************/
@@ -566,6 +567,10 @@ adw_attach(sc)
 		       sc->sc_dev.dv_xname, i, ADW_MAX_CARRIER);
 	}
 
+	/*
+	 * Zero's the freeze_device status
+	 */
+	 bzero(sc->sc_freeze_dev, sizeof(sc->sc_freeze_dev));
 
 	/*
 	 * Initialize the adapter
@@ -691,10 +696,20 @@ adw_scsi_cmd(xs)
          * called with the first queue entry as our argument.
          */
 	if (xs == TAILQ_FIRST(&sc->sc_queue)) {
+		if(sc->sc_freeze_dev[xs->sc_link->scsipi_scsi.target]) {
+			splx(s);
+			return (TRY_AGAIN_LATER);
+		}
+
 		TAILQ_REMOVE(&sc->sc_queue, xs, adapter_q);
 		fromqueue = 1;
 		nowait = 1;
 	} else {
+		if(sc->sc_freeze_dev[xs->sc_link->scsipi_scsi.target]) {
+			splx(s);
+			xs->error = XS_DRIVER_STUFFUP;
+			return (TRY_AGAIN_LATER);
+		}
 
 		/* Polled requests can't be queued for later. */
 		dontqueue = xs->xs_control & XS_CTL_POLL;
@@ -835,9 +850,7 @@ adw_build_req(xs, ccb, flags)
 	scsiqp->vsense_addr = &ccb->scsi_sense;
 	scsiqp->sense_addr = sc->sc_dmamap_control->dm_segs[0].ds_addr +
 			ADW_CCB_OFF(ccb) + offsetof(struct adw_ccb, scsi_sense);
-/*	scsiqp->sense_addr = ccb->hashkey +
-	    offsetof(struct adw_ccb, scsi_sense);
-*/	scsiqp->sense_len = sizeof(struct scsipi_sense_data);
+	scsiqp->sense_len = sizeof(struct scsipi_sense_data);
 
 	/*
 	 * Build ADW_SCSI_REQ_Q for a scatter-gather buffer command.
@@ -1023,17 +1036,8 @@ adw_timeout(arg)
 	 * reinitialize the host adapter.
 	 */
 		callout_stop(&xs->xs_callout);
-
 		printf(" AGAIN. Resetting SCSI Bus\n");
-		AdvResetSCSIBus(sc);
-
-		while((ccb = TAILQ_LAST(&sc->sc_pending_ccb,
-				adw_pending_ccb)) != NULL) {
-			callout_stop(&ccb->xs->xs_callout);
-			TAILQ_REMOVE(&sc->sc_pending_ccb, ccb, chain);
-			TAILQ_INSERT_HEAD(&sc->sc_waiting_ccb, ccb, chain);
-		}
-		adw_queue_ccb(sc, TAILQ_FIRST(&sc->sc_waiting_ccb), 1);
+		adw_reset_bus(sc, xs);
 		splx(s);
 		return;
 	} else if (ccb->flags & CCB_ABORTING) {
@@ -1104,6 +1108,27 @@ adw_timeout(arg)
 			    (ccb->timeout * hz) / 1000, adw_timeout, ccb);
 	}
 
+	splx(s);
+}
+
+
+static void
+adw_reset_bus(sc, xs) 
+	ADW_SOFTC		*sc;
+	struct scsipi_xfer	*xs;
+{
+	ADW_CCB	*ccb;
+	int	 s;
+
+	s = splbio();
+	AdvResetSCSIBus(sc);
+	while((ccb = TAILQ_LAST(&sc->sc_pending_ccb,
+			adw_pending_ccb)) != NULL) {
+		callout_stop(&ccb->xs->xs_callout);
+		TAILQ_REMOVE(&sc->sc_pending_ccb, ccb, chain);
+		TAILQ_INSERT_HEAD(&sc->sc_waiting_ccb, ccb, chain);
+	}
+	adw_queue_ccb(sc, TAILQ_FIRST(&sc->sc_waiting_ccb), 1);
 	splx(s);
 }
 
@@ -1237,89 +1262,137 @@ adw_isr_callback(sc, scsiq)
 	 * 'host_status' conatins the host adapter status.
 	 * 'scsi_status' contains the scsi peripheral status.
 	 */
-	switch (scsiq->done_status) {
-	case QD_NO_ERROR:
-		xs->error = XS_NOERROR;
-		xs->resid = scsiq->data_cnt;
-#ifdef ADW_DEBUG
-		/* Check for an underrun condition. */
-		if ((xs->datalen != 0) && (scsiq->data_cnt != 0) &&
-		    (scsiq->data_cnt <= xs->datalen)) {
-			printf("%s: underrun condition %d bytes\n",
-				sc->sc_dev.dv_xname, scsiq->data_cnt);
-		}
-#endif
-		if ((scsiq->cdb[0] == INQUIRY) && (scsiq->target_lun == 0)) {
-			adw_print_info(sc, scsiq->target_id);
-		}
-		break;
-
-	case QD_WITH_ERROR:
+	if ((scsiq->host_status == QHSTA_NO_ERROR) &&
+	   ((scsiq->done_status == QD_NO_ERROR) ||
+	   (scsiq->done_status == QD_WITH_ERROR))) {
 		switch (scsiq->host_status) {
-		case QHSTA_NO_ERROR:
-			switch(scsiq->scsi_status) {
-			case SS_CHK_CONDITION:
-				s1 = &ccb->scsi_sense;
-				s2 = &xs->sense.scsi_sense;
-				*s2 = *s1;
-				xs->error = XS_SENSE;
-				break;
-
-			default:
-				xs->error = XS_DRIVER_STUFFUP;
-#ifdef ADW_DEBUG
-				printf("%s: Command %d completed with error."
-					" SCSI Status = %d\n",
-					sc->sc_dev.dv_xname, scsiq->cdb[0],
-					scsiq->scsi_status);
-#endif
-				break;
+		case SCSI_STATUS_GOOD:
+			if ((scsiq->cdb[0] == INQUIRY) &&
+			    (scsiq->target_lun == 0)) {
+				adw_print_info(sc, scsiq->target_id);
 			}
+			xs->error = XS_NOERROR;
+			xs->resid = scsiq->data_cnt;
+			sc->sc_freeze_dev[scsiq->target_id] = 0;
+			break;
+
+		case SCSI_STATUS_CHECK_CONDITION:
+		case SCSI_STATUS_CMD_TERMINATED:
+			s1 = &ccb->scsi_sense;
+			s2 = &xs->sense.scsi_sense;
+			*s2 = *s1;
+			xs->error = XS_SENSE;
+			sc->sc_freeze_dev[scsiq->target_id] = 1;
+			break;
+
+		default:
+			xs->error = XS_BUSY;
+			sc->sc_freeze_dev[scsiq->target_id] = 1;
+			break;
+		}
+	} else if (scsiq->done_status == QD_ABORTED_BY_HOST) {
+		xs->error = XS_DRIVER_STUFFUP;
+	} else {
+		switch (scsiq->host_status) {
+		case QHSTA_M_SEL_TIMEOUT:
+			xs->error = XS_SELTIMEOUT;
+			break;
+
+		case QHSTA_M_SXFR_OFF_UFLW:
+		case QHSTA_M_SXFR_OFF_OFLW:
+		case QHSTA_M_DATA_OVER_RUN:
+			printf("%s: Overrun/Overflow/Underflow condition\n",
+				sc->sc_dev.dv_xname);
+			xs->error = XS_DRIVER_STUFFUP;
+			break;
+
+		case QHSTA_M_SXFR_DESELECTED:
+		case QHSTA_M_UNEXPECTED_BUS_FREE:
+			printf("%s: Unexpected BUS free\n",sc->sc_dev.dv_xname);
+			xs->error = XS_DRIVER_STUFFUP;
+			break;
+
+		case QHSTA_M_SCSI_BUS_RESET:
+		case QHSTA_M_SCSI_BUS_RESET_UNSOL:
+			printf("%s: BUS Reset\n", sc->sc_dev.dv_xname);
+			xs->error = XS_DRIVER_STUFFUP;
+			break;
+
+		case QHSTA_M_BUS_DEVICE_RESET:
+			printf("%s: Device Reset\n", sc->sc_dev.dv_xname);
+			xs->error = XS_DRIVER_STUFFUP;
+			break;
+
+		case QHSTA_M_QUEUE_ABORTED:
+			printf("%s: Queue Aborted\n", sc->sc_dev.dv_xname);
+			xs->error = XS_DRIVER_STUFFUP;
 			break;
 
 		case QHSTA_M_SXFR_SDMA_ERR:
+		case QHSTA_M_SXFR_SXFR_PERR:
+		case QHSTA_M_RDMA_PERR:
 			/*
-			 * SCSI DMA Error. This should *NEVER* happen!
+			 * DMA Error. This should *NEVER* happen!
 			 *
 			 * Lets try resetting the bus and reinitialize
 			 * the host adapter.
 			 */
-			AdvResetSCSIBus(sc);
-			while((ccb = TAILQ_LAST(&sc->sc_pending_ccb,
-					adw_pending_ccb)) != NULL) {
-				callout_stop(&ccb->xs->xs_callout);
-				TAILQ_REMOVE(&sc->sc_pending_ccb, ccb, chain);
-				TAILQ_INSERT_HEAD(&sc->sc_waiting_ccb, ccb, chain);
-			}
-			adw_queue_ccb(sc, TAILQ_FIRST(&sc->sc_waiting_ccb), 1);
-			return;
+			printf("%s: DMA Error. Reseting bus\n",
+				sc->sc_dev.dv_xname);
+			adw_reset_bus(sc, xs);
+			xs->error = XS_BUSY;
+			break;
+			
+		case QHSTA_M_WTM_TIMEOUT:
+		case QHSTA_M_SXFR_WD_TMO:
+			/* The SCSI bus hung in a phase */
+			printf("%s: Watch Dog timer expired. Reseting bus\n",
+				sc->sc_dev.dv_xname);
+			adw_reset_bus(sc, xs);
+			xs->error = XS_BUSY;
+			break;
+
+		case QHSTA_M_SXFR_XFR_PH_ERR:
+			printf("%s: Transfer Error\n", sc->sc_dev.dv_xname);
+			xs->error = XS_DRIVER_STUFFUP;
+			break;
+
+		case QHSTA_M_BAD_CMPL_STATUS_IN:
+			/* No command complete after a status message */
+			printf("%s: Bad Completion Status\n",
+				sc->sc_dev.dv_xname);
+			xs->error = XS_DRIVER_STUFFUP;
+			break;
+
+		case QHSTA_M_AUTO_REQ_SENSE_FAIL:
+			printf("%s: Auto Sense Failed\n", sc->sc_dev.dv_xname);
+			xs->error = XS_DRIVER_STUFFUP;
+			break;
+
+		case QHSTA_M_INVALID_DEVICE:
+			printf("%s: Invalid Device\n", sc->sc_dev.dv_xname);
+			xs->error = XS_DRIVER_STUFFUP;
+			break;
+
+		case QHSTA_M_NO_AUTO_REQ_SENSE:
+			/*
+			 * User didn't request sense, but we got a
+			 * check condition.
+			 */
+			printf("%s: Unexpected Check Condition\n",
+					sc->sc_dev.dv_xname);
+			xs->error = XS_DRIVER_STUFFUP;
+			break;
+
+		case QHSTA_M_SXFR_UNKNOWN_ERROR:
+			printf("%s: Unknown Error\n", sc->sc_dev.dv_xname);
+			xs->error = XS_DRIVER_STUFFUP;
+			break;
 
 		default:
-			xs->error = XS_DRIVER_STUFFUP;
-#ifdef ADW_DEBUG
-			printf("%s: Command %d completed with error."
-				" Host Status = %d\n",
-				sc->sc_dev.dv_xname, scsiq->cdb[0],
-				scsiq->host_status);
-#endif
-			break;
+			panic("%s: Unhandled Host Status Error %x",
+			      sc->sc_dev.dv_xname, scsiq->host_status);
 		}
-		break;
-
-	case QD_ABORTED_BY_HOST:
-		xs->error = XS_DRIVER_STUFFUP;
-		printf("%s: Command aborted by host.\n", sc->sc_dev.dv_xname);
-		break;
-
-	default:
-		xs->error = XS_DRIVER_STUFFUP;
-#ifdef ADW_DEBUG
-		printf("%s: Command %d completed with error."
-			" Done Status = %d\n",
-			sc->sc_dev.dv_xname, scsiq->cdb[0],
-			scsiq->done_status);
-#endif
-		break;
 	}
 
 	TAILQ_REMOVE(&sc->sc_pending_ccb, ccb, chain);
@@ -1339,9 +1412,7 @@ adw_async_callback(sc, code)
 {
 	switch (code) {
 	case ADV_ASYNC_SCSI_BUS_RESET_DET:
-		/*
-		 * The firmware detected a SCSI Bus reset.
-		 */
+		/* The firmware detected a SCSI Bus reset. */
 		printf("%s: SCSI Bus reset detected\n", sc->sc_dev.dv_xname);
 		break;
 
@@ -1356,17 +1427,13 @@ adw_async_callback(sc, code)
 		break;
 
 	case ADV_HOST_SCSI_BUS_RESET:
-		/*
-		 * Host generated SCSI bus reset occurred.
-		 */
+		/* Host generated SCSI bus reset occurred. */
 		printf("%s: Host generated SCSI bus reset occurred\n",
 				sc->sc_dev.dv_xname);
 		break;
 
 	case ADV_ASYNC_CARRIER_READY_FAILURE:
-		/*
-		 * Carrier Ready failure.
-		 */
+		/* Carrier Ready failure. */
 		printf("%s: Carrier Ready failure!\n", sc->sc_dev.dv_xname);
 		break;
 
