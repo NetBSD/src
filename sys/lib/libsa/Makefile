@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.47 2001/10/31 17:20:50 thorpej Exp $
+#	$NetBSD: Makefile,v 1.48 2001/11/14 21:59:32 tv Exp $
 
 LIB=	sa
 MKPIC=	no
@@ -49,6 +49,7 @@ SRCS+=	lfs.c ufs.c ufs_ls.c cd9660.c ustarfs.c dosfs.c
 # only needed during build
 libinstall::
 
+.undef DESTDIR
 .include <bsd.lib.mk>
 
 lib${LIB}.o:: ${OBJS}
