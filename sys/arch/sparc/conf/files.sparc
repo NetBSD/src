@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.26 1996/06/20 20:05:46 pk Exp $
+#	$NetBSD: files.sparc,v 1.27 1996/06/20 20:17:57 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -227,5 +227,5 @@ file	netns/ns_cksum.c		ns
 
 pseudo-device rd
 major	{rd = 5}
-file	arch/sparc/dev/rd_root.c	ramdisk_hooks
+file	arch/sparc/dev/md_root.c	ramdisk_hooks
 file	dev/ramdisk.c			rd needs-flag
