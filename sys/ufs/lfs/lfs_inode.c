@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.87 2004/08/15 17:37:07 mycroft Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.88 2004/08/15 19:01:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.87 2004/08/15 17:37:07 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.88 2004/08/15 19:01:16 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -238,8 +238,8 @@ lfs_truncate(void *v)
 	struct lfs *fs;
 	struct buf *bp;
 	int offset, size, level;
-	long count, rcount, nblocks, blocksreleased = 0, real_released = 0;
-	int i;
+	long count, rcount, blocksreleased = 0, real_released = 0;
+	int i, ioflag, nblocks;
 	int aflags, error, allerror = 0;
 	off_t osize;
 	long lastseg;
@@ -281,6 +281,7 @@ lfs_truncate(void *v)
 	fs = oip->i_lfs;
 	lfs_imtime(fs);
 	osize = oip->i_size;
+	ioflag = ap->a_flags;
 	usepc = (ovp->v_type == VREG && ovp != fs->lfs_ivnode);
 
 	/*
@@ -292,7 +293,7 @@ lfs_truncate(void *v)
 		if (length > ump->um_maxfilesize)
 			return (EFBIG);
 		aflags = B_CLRBUF;
-		if (ap->a_flags & IO_SYNC)
+		if (ioflag & IO_SYNC)
 			aflags |= B_SYNC;
 		if (usepc) {
 			if (lblkno(fs, osize) < NDADDR &&
@@ -305,7 +306,7 @@ lfs_truncate(void *v)
 				    eob - osize, ap->a_cred, aflags);
 				if (error)
 					return error;
-				if (ap->a_flags & IO_SYNC) {
+				if (ioflag & IO_SYNC) {
 					ovp->v_size = eob;
 					simple_lock(&ovp->v_interlock);
 					VOP_PUTPAGES(ovp,
@@ -318,7 +319,7 @@ lfs_truncate(void *v)
 						 aflags);
 			if (error) {
 				(void) VOP_TRUNCATE(ovp, osize,
-						    ap->a_flags & IO_SYNC,
+						    ioflag & IO_SYNC,
 				    		    ap->a_cred, ap->a_p);
 				return error;
 			}
@@ -367,7 +368,7 @@ lfs_truncate(void *v)
 	} else if (!usepc) {
 		lbn = lblkno(fs, length);
 		aflags = B_CLRBUF;
-		if (ap->a_flags & IO_SYNC)
+		if (ioflag & IO_SYNC)
 			aflags |= B_SYNC;
 		error = VOP_BALLOC(ovp, length - 1, 1, ap->a_cred, aflags, &bp);
 		if (error) {
@@ -403,7 +404,7 @@ lfs_truncate(void *v)
 		daddr_t lbn;
 		voff_t eoz;
 
-		aflags = ap->a_flags & IO_SYNC ? B_SYNC : 0;
+		aflags = ioflag & IO_SYNC ? B_SYNC : 0;
 		error = ufs_balloc_range(ovp, length - 1, 1, ap->a_cred,
 		    aflags);
 		if (error) {
@@ -419,7 +420,8 @@ lfs_truncate(void *v)
 			simple_lock(&ovp->v_interlock);
 			error = VOP_PUTPAGES(ovp, round_page(length),
 			    round_page(eoz),
-			    PGO_CLEANIT | PGO_DEACTIVATE | PGO_SYNCIO);
+			    PGO_CLEANIT | PGO_DEACTIVATE |
+			    ((ioflag & IO_SYNC) ? PGO_SYNCIO : 0));
 			if (error) {
 				lfs_reserve(fs, ovp, NULL,
 					    -btofsb(fs, (2 * NIADDR + 3) << fs->lfs_bshift));
