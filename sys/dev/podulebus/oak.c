@@ -1,4 +1,4 @@
-/*	$NetBSD: oak.c,v 1.3 2001/07/04 15:01:08 bjh21 Exp $	*/
+/*	$NetBSD: oak.c,v 1.4 2001/07/04 16:35:20 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.3 2001/07/04 15:01:08 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.4 2001/07/04 16:35:20 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.3 2001/07/04 15:01:08 bjh21 Exp $");
 
 #include <dev/podulebus/podulebus.h>
 #include <dev/podulebus/podules.h>
+#include <dev/podulebus/powerromreg.h>
 
 void oak_attach (struct device *, struct device *, void *);
 int  oak_match  (struct device *, struct cfdata *, void *);
