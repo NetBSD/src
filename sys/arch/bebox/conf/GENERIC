@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.28.2.2 2000/08/11 20:18:02 mason Exp $
+#	$NetBSD: GENERIC,v 1.28.2.3 2000/10/05 00:04:08 itojun Exp $
 #
 # First try for BEBOX config file
 #
 
 include "arch/bebox/conf/std.bebox"
 
-#ident 		"GENERIC-$Revision: 1.28.2.2 $"
+#ident 		"GENERIC-$Revision: 1.28.2.3 $"
 
 maxusers	32
 
@@ -71,6 +71,10 @@ pseudo-device	pty		64	# pseudo-terminals
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	wsmux		2
+
+# random number generator pseudo-device
+pseudo-device	rnd			# /dev/random and in-kernel generator
+#options 	RND_COM			# use "com" randomness as well (BROKEN)
 
 #
 # device

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.32 2000/06/14 22:02:41 veego Exp $
+# $NetBSD: GENERIC3X,v 1.32.2.1 2000/10/05 00:04:08 itojun Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -216,7 +216,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 # rnd is EXPERIMENTAL
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator
 
 pseudo-device	pty		32	# pseudo-terminals
 pseudo-device	vnd		4	# paging to files
