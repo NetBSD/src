@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/03/10 22:18:17 skrll Exp $
+#	$NetBSD: Makefile,v 1.5 2004/03/25 07:48:34 skrll Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -15,7 +15,7 @@ LIB=		gcc
 
 .cc: # disable .cc->NULL transform
 
-SRCS+=		${LIB2FUNCS} ${LIB2DIVMOD} \
+SRCS+=		${LIB2FUNCS} ${LIB2FUNCS_ST} ${LIB2DIVMOD} \
 		${G_LIB2ADD:T:S/.asm/.S/} ${LIB1ASMFUNCS}
 .if ${MKPIC} == "no"
 SRCS+=		${LIB2_EH}
