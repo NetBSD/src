@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.10.2.4 2001/08/24 00:09:15 nathanw Exp $	*/
+/*	$NetBSD: an.c,v 1.10.2.5 2001/08/24 04:20:04 nathanw Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -110,6 +110,7 @@
 #include <sys/ucred.h>
 #include <sys/socket.h>
 #include <sys/device.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/md4.h>
 #ifdef ANCACHE
@@ -525,7 +526,8 @@ an_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		error = copyout(areq, ifr->ifr_data, sizeof(struct an_req));
 		break;
 	case SIOCSAIRONET:
-		if ((error = suser(curproc->p_ucred, &curproc->p_acflag)))
+		if ((error = suser(curproc->l_proc->p_ucred, 
+		    &curproc->l_proc->p_acflag)))
 			break;
 		areq = &sc->an_reqbuf;
 		error = copyin(ifr->ifr_data, areq, sizeof(struct an_req));
@@ -831,7 +833,8 @@ an_get_nwkey(struct an_softc *sc, struct ieee80211_nwkey *nwkey)
 		if (nwkey->i_key[i].i_keydat == NULL)
 			continue;
 		/* do not show any keys to non-root user */
-		if ((error = suser(curproc->p_ucred, &curproc->p_acflag)) != 0)
+		if ((error = suser(curproc->l_proc->p_ucred, 
+		    &curproc->l_proc->p_acflag)) != 0)
 			break;
 		nwkey->i_key[i].i_keylen = sc->an_wepkeys[i].an_wep_keylen;
 		if (nwkey->i_key[i].i_keylen < 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.49.2.4 2001/08/24 00:13:41 nathanw Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.49.2.5 2001/08/24 04:20:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1074,7 +1074,8 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 	} else {
 		vp = (struct vnode *)handle;
 		if (vp->v_type != VCHR) {
-			error = VOP_MMAP(vp, 0, curproc->p_ucred, curproc);
+			error = VOP_MMAP(vp, 0, curproc->l_proc->p_ucred, 
+			    curproc->l_proc);
 			if (error) {
 				return error;
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.53.2.3 2001/08/24 00:11:59 nathanw Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.53.2.4 2001/08/24 04:20:08 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -226,7 +226,7 @@ spec_open(v)
 			return error;
 		}
 		error = (*bdevsw[major(vp->v_rdev)].d_ioctl)(vp->v_rdev,
-		    DIOCGPART, (caddr_t)&pi, FREAD, curproc);
+		    DIOCGPART, (caddr_t)&pi, FREAD, curproc->l_proc);
 		if (error == 0) {
 			vp->v_uvm.u_size = (voff_t)pi.disklab->d_secsize *
 			    pi.part->p_size;

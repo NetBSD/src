@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.89.2.4 2001/08/24 00:11:27 nathanw Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.89.2.5 2001/08/24 04:20:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -121,7 +121,15 @@
 
 #include <uvm/uvm_extern.h>
 
+
+#define DEBUG_EXIT
+
+#ifdef DEBUG_EXIT
+int debug_exit = 0;
+#define DPRINTF(x) if (debug_exit) printf x
+#else
 #define DPRINTF(x)
+#endif
 
 /*
  * exit --

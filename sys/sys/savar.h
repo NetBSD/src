@@ -1,4 +1,4 @@
-/*	$Id: savar.h,v 1.1.2.3 2001/07/13 02:33:45 nathanw Exp $	*/
+/*	$Id: savar.h,v 1.1.2.4 2001/08/24 04:20:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@ struct sadata_upcall {
 	int sau_type;
 	int sau_sig;
 	u_long sau_code;
+	void *sau_arg;
 	stack_t sau_stack;
 	struct lwp *sau_event;
 	struct lwp *sau_interrupted;
@@ -77,7 +78,7 @@ extern struct pool saupcall_pool;	/* memory pool for pending upcalls */
 
 void	sa_switch(struct lwp *, int);
 void	sa_switchcall(void *);
-int	sa_upcall(struct lwp *, int, struct lwp *, struct lwp *, int, u_long);
+int	sa_upcall(struct lwp *, int, struct lwp *, struct lwp *, int, u_long, void *);
 void	cpu_upcall(struct lwp *);
 ucontext_t *cpu_stashcontext(struct lwp *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.101.2.3 2001/06/21 20:06:55 nathanw Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.101.2.4 2001/08/24 04:20:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -775,7 +775,7 @@ preempt(struct lwp *newl)
 	l->l_proc->p_stats->p_ru.ru_nivcsw++;
 	r = mi_switch(l, newl);
 	if (r && (l->l_flag & L_SA))
-		sa_upcall(l, SA_UPCALL_PREEMPTED, l, NULL, 0, 0);
+		sa_upcall(l, SA_UPCALL_PREEMPTED, l, NULL, 0, 0, NULL);
 	SCHED_ASSERT_UNLOCKED();
 	splx(s);
 }

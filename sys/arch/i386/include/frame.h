@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.15.2.2 2001/06/21 19:25:47 nathanw Exp $	*/
+/*	$NetBSD: frame.h,v 1.15.2.3 2001/08/24 04:20:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -169,10 +169,14 @@ struct sigframe {
  */
 struct saframe {
 	int		sa_type;
-	struct sa_t 	**sa_sas;
+	struct sa_t**	sa_sas;
 	int		sa_events;
 	int		sa_interrupted;
+	int		sa_sig;
+	int		sa_code;
+	void*		sa_arg;
 	sa_upcall_t	sa_upcall;
 };
 
 #endif  /* _I386_FRAME_H_ */
+
