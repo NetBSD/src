@@ -1,4 +1,4 @@
-/*	$NetBSD: cfsetospeed.c,v 1.1 1995/04/25 00:04:33 jtc Exp $	*/
+/*	$NetBSD: cfsetospeed.c,v 1.2 1997/07/13 20:26:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-static char rcsid[] = "$NetBSD: cfsetospeed.c,v 1.1 1995/04/25 00:04:33 jtc Exp $";
+__RCSID("$NetBSD: cfsetospeed.c,v 1.2 1997/07/13 20:26:20 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

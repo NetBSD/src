@@ -1,8 +1,13 @@
-/*	$NetBSD: ialloc.c,v 1.4 1997/06/18 01:12:43 jtc Exp $	*/
+/*	$NetBSD: ialloc.c,v 1.5 1997/07/13 20:26:49 christos Exp $	*/
 
+#include <sys/cdefs.h>
 #ifndef lint
 #ifndef NOID
+#if 0
 static char	elsieid[] = "@(#)ialloc.c	8.29";
+#else
+__RCSID("$NetBSD: ialloc.c,v 1.5 1997/07/13 20:26:49 christos Exp $");
+#endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
 

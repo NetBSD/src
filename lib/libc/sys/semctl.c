@@ -29,8 +29,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: semctl.c,v 1.3 1995/02/27 11:23:09 cgd Exp $";
+__RCSID("$NetBSD: semctl.c,v 1.4 1997/07/13 20:25:32 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.2 1997/04/29 20:00:14 kleink Exp $	*/
+/*	$NetBSD: strftime.c,v 1.3 1997/07/13 20:26:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -33,9 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)strftime.c	5.11 (Berkeley) 2/24/91";*/
-static char *rcsid = "$NetBSD: strftime.c,v 1.2 1997/04/29 20:00:14 kleink Exp $";
+#if 0
+static char *sccsid = "@(#)strftime.c	5.11 (Berkeley) 2/24/91";
+#else
+__RCSID("$NetBSD: strftime.c,v 1.3 1997/07/13 20:26:52 christos Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>

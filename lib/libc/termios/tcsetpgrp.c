@@ -1,4 +1,4 @@
-/*	$NetBSD: tcsetpgrp.c,v 1.2 1995/06/26 23:06:13 jtc Exp $	*/
+/*	$NetBSD: tcsetpgrp.c,v 1.3 1997/07/13 20:26:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -33,17 +33,19 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-static char rcsid[] = "$NetBSD: tcsetpgrp.c,v 1.2 1995/06/26 23:06:13 jtc Exp $";
+__RCSID("$NetBSD: tcsetpgrp.c,v 1.3 1997/07/13 20:26:26 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <termios.h>
+#include <unistd.h>
 
 int
 #if __STDC__
