@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.10 1994/10/26 08:47:02 cgd Exp $	*/
+/*	$NetBSD: genassym.c,v 1.11 1994/12/03 23:34:48 briggs Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -129,8 +129,6 @@ main()
 	printf("#define\tSPL6 %d\n", PSL_S | PSL_IPL6);
 	printf("#define\tFC_USERD %d\n", FC_USERD);
 	printf("#define\tFC_SUPERD %d\n", FC_SUPERD);
-	printf("#define\tIIOMAPSIZE %d\n", IIOMAPSIZE);
-	printf("#define\tNBMAPSIZE %d\n", NBMAPSIZE);
 	printf("#define\tCACHE_ON %d\n", CACHE_ON);
 	printf("#define\tCACHE_OFF %d\n", CACHE_OFF);
 	printf("#define\tCACHE_CLR %d\n", CACHE_CLR);
@@ -186,6 +184,10 @@ main()
 	printf("#define\tPCB_TRCB %d\n", 5);
 	printf("#define\tINTIOBASE %d\n", INTIOBASE);
 	printf("#define\tNBBASE %d\n", NBBASE);
+	printf("#define\tROMBASE %d\n", ROMBASE);
+	printf("#define\tROMMAPSIZE %d\n", ROMMAPSIZE);
+	printf("#define\tIIOMAPSIZE %d\n", IIOMAPSIZE);
+	printf("#define\tNBMAPSIZE %d\n", NBMAPSIZE);
 	printf("#define\tCACHE40_ON %d\n", CACHE40_ON);
 	printf("#define\tCACHE40_OFF %d\n", CACHE40_OFF);
 	printf("#define\tSG_040ISHIFT %d\n", SG_040ISHIFT);

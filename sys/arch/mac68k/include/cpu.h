@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16 1994/10/26 08:46:26 cgd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.17 1994/12/03 23:34:30 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -201,7 +201,8 @@ extern unsigned char ssir;
  */
 #define MACH_CLASSH	0x0000	/* Hopeless cases... */
 #define MACH_CLASSII	0x0001	/* MacII class */
-#define MACH_CLASSIIci	0x0003	/* Similar to IIci -- Have RBV. */
+#define MACH_CLASSIIci	0x0002	/* Have RBV, but no Egret */
+#define MACH_CLASSIIsi	0x0003	/* Similar to IIci -- Have Egret. */
 #define MACH_CLASSIIfx	0x0004	/* The IIfx is in a class by itself. */
 #define MACH_CLASSPB	0x0008	/* Powerbooks.  Power management. */
 #define MACH_CLASSLC	0x0010	/* Low-Cost/Performa/Wal-Mart Macs. */
@@ -253,6 +254,17 @@ struct mac68k_machine_S {
 	int			sccClkConst;	/* "Constant" for SCC bps */
 };
 
+	/* What kind of model is this */
+struct cpu_model_info {
+	int	machineid;	/* MacOS Gestalt value. */
+	char	*model_major;	/* Make this distinction to save a few */
+	char	*model_minor;	/*      bytes--might be useful, too. */
+	int	class;		/* Rough class of machine. */
+	  /* forwarded romvec_s is defined in mac68k/macrom.h */
+	struct romvec_s *rom_vectors; /* Pointer to our known rom vectors */
+};
+extern struct cpu_model_info *current_mac_model;
+
 extern unsigned long		IOBase;		/* Base address of I/O */
 extern unsigned long		NuBusBase;	/* Base address of NuBus */
 
@@ -262,7 +274,9 @@ extern	unsigned long		load_addr      ;
 #endif
 
 /* physical memory sections */
-#define	ROMBASE		(0x40000000)
+#define	ROMBASE		(0x40800000)
+#define	ROMTOP		(0x41800000)		/* 16MB should be plenty! */
+#define	ROMMAPSIZE	btoc(ROMTOP - ROMBASE)	/* 16k of page tables.  */
 
 /* This should not be used.  Use IOBase, instead. */
 #define INTIOBASE	(0x50000000)

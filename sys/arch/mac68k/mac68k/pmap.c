@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.14 1994/10/26 08:47:12 cgd Exp $	*/
+/*	$NetBSD: pmap.c,v 1.15 1994/12/03 23:35:06 briggs Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -541,20 +541,13 @@ pmap_init(phys_start, phys_end)
 		panic("pmap_init: NuBus space not mapped!\n");
 
 	/*
-	 * Mac II ROM space (0x40000000 - 0x40800000)
-	 * (Added by LK)
+	 * Mac II ROM space (0x40800000 - 0x41800000)
 	 */
-#if 0
-	/*
-	 * Make sure to uncomment the code in remap_rom() if this is
-	 * uncommented.
-	 */
-	addr = (vm_offset_t) 0x40000000;
+	addr = (vm_offset_t) ROMBASE;
 	(void) vm_map_find(kernel_map, NULL, (vm_offset_t) 0,
-			   &addr, 0x800000, FALSE);
-	if (addr != (vm_offset_t)0x40000000)
+			   &addr, ROMTOP-ROMBASE, FALSE);
+	if (addr != (vm_offset_t) ROMBASE)
 		panic("pmap_init: ROM space not mapped!\n");
-#endif
 
 	/*
 	 * This is the System Map.

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13 1994/11/30 02:42:47 briggs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.14 1994/12/03 23:34:45 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -132,6 +132,8 @@ configure()
 
 	VIA_initialize();
 
+	mrg_init();		/* Init Mac ROM Glue */
+
 	adb_init();		/* ADB device subsystem & driver */
 
 	startrtclock();
@@ -141,11 +143,6 @@ configure()
 	setroot(); /* Make root dev <== load dev */
 	swapconf();
 	cold = 0;
-}
-
-find_adbs()
-{
-   printf("No ADB drivers to match to devices; using default.\n");
 }
 
 struct newconf_S {

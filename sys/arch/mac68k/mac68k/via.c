@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.10 1994/10/26 08:47:20 cgd Exp $	*/
+/*	$NetBSD: via.c,v 1.11 1994/12/03 23:35:11 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -47,7 +47,7 @@
 static int	scsi_drq_intr(void), scsi_irq_intr(void);
 
 long	via1_noint(), via2_noint();
-long	adb_intr(), rtclock_intr(), profclock();
+long	mrg_adbintr(), mrg_pmintr(), rtclock_intr(), profclock();
 long	nubus_intr();
 int	slot_noint();
 int	VIA2 = 1;		/* default for II, IIx, IIcx, SE/30. */
@@ -60,9 +60,9 @@ long via1_spent[2][7]={
 long (*via1itab[7])()={
 	via1_noint,
 	via1_noint,
-	adb_intr,
+	mrg_adbintr,
 	via1_noint,
-	via1_noint,
+	mrg_pmintr,
 	via1_noint,
 	rtclock_intr,
 };	/* VIA1 interrupt handler table */
@@ -107,22 +107,6 @@ void VIA_initialize()
 	via_reg(VIA1, vT2C) = 0;
 	via_reg(VIA1, vT2CH) = 0;
 
-#if not_on_all_machines_ugh
-	/* program direction and data for VIA #1 */
-	via_reg(VIA1, vBufA) = 0x01;
-	via_reg(VIA1, vDirA) = 0x3f;
-	via_reg(VIA1, vBufB) = 0x07;
-	via_reg(VIA1, vDirB) = 0x87;
-#endif
-
-	/* disable all interrupts */
-	via_reg(VIA1, vIFR) = 0x7f;
-	via_reg(VIA1, vIER) = 0x7f;
-
-	/* enable specific interrupts */
-	/* via_reg(VIA1, vIER) = (VIA1_INTS & (~(V1IF_T1))) | 0x80; */
-	via_reg(VIA1, vIER) = V1IF_ADBRDY | 0x80;
-
 	/* turn off timer latch */
 	via_reg(VIA1, vACR) &= 0x3f;
 
@@ -138,36 +122,13 @@ void VIA_initialize()
 		/* turn off timer latch */
 		via_reg(VIA2, vACR) &= 0x3f;
 
-#if not_on_all_machines_ugh
-		/* program direction and data for VIA #2 */
-		via_reg(VIA2, vBufA) = via_reg(VIA2, vBufA);
-		via_reg(VIA2, vDirA) = 0xc0;
-		via_reg(VIA2, vBufB) = 0x05;
-		via_reg(VIA2, vDirB) = 0x80;
-#endif
-
+#if 1
 		/* unlock nubus */
 		via_reg(VIA2, vPCR)   = 0x06;
 		via_reg(VIA2, vBufB) |= 0x02;
 		via_reg(VIA2, vDirB) |= 0x02;
-
-#ifdef never
-		/* disable all interrupts */
-		via_reg(VIA2, vIER) = 0x7f;
-		via_reg(VIA2, vIFR) = 0x7f;
-
-		/* enable specific interrupts */
-		switch(machineid){	/* Argh!  setmachdep()! */
-			case MACH_MACPB140:
-			case MACH_MACPB170:
-				/* below, we will keep track of interrupts. */
-				via_reg(VIA2, vIER) = 0xff /*VIA2_INTS | 0x80 | V1IF_ADBRDY*/;
-				break;
-			default:
-				via_reg(VIA2, vIER) = VIA2_INTS | 0x80;
-				break;
-		}
 #endif
+
 	}else{	/* RBV */
 		/* I'm sure that I'll find something to put in here
 			someday. -- BG */
@@ -188,6 +149,13 @@ void via1_intr(struct frame *fp)
 	intbits = via_reg(VIA1, vIFR);	/* get interrupts pending */
 	intbits &= via_reg(VIA1, vIER);	/* only care about enabled ones */
 	intbits &= ~ intpend;  		/* to stop recursion */
+
+	if (intbits == 0)
+		return;
+
+	if (intbits & 0x04) {
+		asm("movw #0x2400, sr");
+	}
 
 	bitmsk = 1;
 	bitnum = 0;
@@ -227,27 +195,26 @@ void via2_intr(struct frame *fp)
 	if(VIA2 == VIA2OFF){
 		intbits = via_reg(VIA2, vIFR);	/* get interrupts pending */
 /*		if(via_inited)printf("via2 %02x\n", intbits); */
-		intbits &= via_reg(VIA2, vIER);	/* only care about enabled ones */
+		intbits &= via_reg(VIA2, vIER);	/* only care about enabled */
 	}else{/* assume RBV */
 		intbits = via_reg(VIA2, rIFR);	/* get interrupts pending */
 /*		if(via_inited)printf("rbv %02x\n", intbits); */
-		intbits &= via_reg(VIA2, rIER);	/* only care about enabled ones */
+		intbits &= via_reg(VIA2, rIER);	/* only care about enabled */
 	}
 	intbits &= ~ intpend;  		/* to stop recursion */
-
 
 	bitmsk = 1;
 	bitnum = 0;
 	while(bitnum < 7){
 		if(intbits & bitmsk){
 			intpend |= bitmsk;	/* don't process this twice */
-			via2itab[bitnum](bitnum);	/* run interrupt handler */
-			intpend &= ~bitmsk;	/* fix previous pending */
 			if(VIA2 == VIA2OFF)
 				via_reg(VIA2, vIFR) = bitmsk;
 			else	/* Assume RBV */
 				via_reg(VIA2, rIFR) = bitmsk;
 					/* turn off interrupt pending. */
+			via2itab[bitnum](bitnum);
+			intpend &= ~bitmsk;
 		}
 		bitnum++;
 		bitmsk <<= 1;
@@ -281,26 +248,40 @@ int unit;
 	slotitab[slot-9] = func;
 	slotutab[slot-9] = unit;
 
-	via_reg(VIA2, vIER) = /*VIA2_INTS |*/ V2IF_SLOTINT | 0x80;
+	if (VIA2 == VIA2OFF) {
+		via_reg(VIA2, vIER) = V2IF_SLOTINT | 0x80;
+	} else {
+		via_reg(VIA2, rIER) = V2IF_SLOTINT | 0x80;
+	}
 	splx(s);
 	return 1;
 }
 
-long nubus_intr()
+long
+nubus_intr(int bit)
 {
 	int i, mask;
-
-if ((~(via_reg(VIA2, vBufA) & 0x3f)) == 0x02)
-	printf("slot a nu-bus intr\n");
 
 	do {
 	    mask = 1;
 	    for (i = 0; i < 6; i++) {
-		if ((via_reg(VIA2, vBufA) & mask) == 0)
-			(*slotitab[i])(slotutab[i], i+9);
+		if (VIA2 == VIA2OFF) {
+			if ((via_reg(VIA2, vBufA) & mask) == 0) {
+				(*slotitab[i])(slotutab[i], i+9);
+			}
+		} else {
+			if ((via_reg(VIA2, rBufA) & mask) == 0) {
+				(*slotitab[i])(slotutab[i], i+9);
+			}
+		}
 		mask <<= 1;
 	    } 
-	} while ((via_reg(VIA2, vBufA) & 0x3f) != 0x3f);
+	    if (VIA2 == VIA2OFF) {
+	    	i = via_reg(VIA2, vBufA);
+	    } else {
+	    	i = via_reg(VIA2, rBufA);
+	    }
+	} while ((i & 0x3f) != 0x3f);
 
 	return 1;
 }
@@ -309,10 +290,11 @@ static char zero = 0;
 
 int slot_noint(int unit, int slot)
 {
-/*
-	printf("slot_noint() slot %x\n", slot);
-*/
-((char *)(0xf0000000 | ((long)slot << 24)))[0xa0000] = zero;
+/*	printf("slot_noint() slot %x\n", slot); */
+
+	/* attempt to turn off toby fb vblank interrupt */
+	((char *)(0xf0000000 | ((long)slot << 24)))[0xa0000] = zero;
+
 	return 1;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.9 1994/10/26 08:46:13 cgd Exp $	*/
+/*	$NetBSD: ite.c,v 1.10 1994/12/03 23:34:17 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -71,6 +71,7 @@
 #define KEYBOARD_ARRAY
 #include <machine/keyboard.h>
 #include <machine/adbsys.h>
+#include <machine/iteioctl.h>
 
 #include "6x10.h"
 #define CHARWIDTH	6
@@ -394,6 +395,7 @@ static void putc_normal (char ch)
 {
 	switch (ch) {
 		case '\a':			/* Beep			*/
+			asc_ringbell();
 			break;
 		case 127:			/* Delete		*/
 		case '\b':			/* Backspace		*/
@@ -622,8 +624,13 @@ static int ite_pollforchar(void)
 		intbits = via_reg(VIA1, vIFR);
 
 		if (intbits & V1IF_ADBRDY) {
-			adb_intr();
+			mrg_adbintr();
 			via_reg(VIA1, vIFR) = V1IF_ADBRDY;
+		}
+
+		if (intbits & 0x10) {
+			mrg_pmintr();
+			via_reg(VIA1, vIFR) = 0x10;
 		}
 	}
 
@@ -655,7 +662,7 @@ struct cfdriver itecd =
 	NULL,
 	0 };
 
-iteopen(dev_t dev, int mode, int devtype, struct proc *p)
+iteopen(dev_t dev, int mode, int devtype, struct proc *p, struct file *fp)
 {
 	register struct tty *tp;
 	register int error;
@@ -731,6 +738,24 @@ iteioctl(dev_t dev, int cmd, caddr_t addr, int flag, struct proc *p)
 	if (error >= 0) {
 		dprintf ("iteioctl: exit(%d)\n", error);
 		return (error);
+	}
+	switch (cmd) {
+		case ITEIOC_RINGBELL: {
+			asc_ringbell();
+			return (0);
+		}
+		case ITEIOC_SETBELL: {
+			struct bellparams	*bp = (void *) addr;
+
+			asc_setbellparams(bp->freq, bp->len, bp->vol);
+			return (0);
+		}
+		case ITEIOC_GETBELL: {
+			struct bellparams	*bp = (void *) addr;
+
+			asc_getbellparams(&bp->freq, &bp->len, &bp->vol);
+			return (0);
+		}
 	}
 	dprintf ("iteioctl: exit(ENOTTY)\n");
 	return (ENOTTY);

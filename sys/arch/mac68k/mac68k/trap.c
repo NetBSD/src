@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.18 1994/11/29 03:37:37 briggs Exp $	*/
+/*	$NetBSD: trap.c,v 1.19 1994/12/03 23:35:08 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -166,7 +166,7 @@ panictrap(type, code, v, fp)
 	static int panicing = 0;
 	if (panicing++ == 0) {
 		printf("trap type %d, code = %x, v = %x\n", type, code, v);
-		regdump(fp->f_regs, 128);
+		regdump(fp, 128);
 	}
 	type &= ~T_USER;
 	DCIS(); /* XXX? push cache */
