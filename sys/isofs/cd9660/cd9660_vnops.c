@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.55 1999/08/03 20:19:18 wrstuden Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.56 2000/03/29 03:43:32 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -49,7 +49,6 @@
 #include <sys/stat.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/conf.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>

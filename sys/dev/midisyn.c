@@ -1,4 +1,4 @@
-/*	$NetBSD: midisyn.c,v 1.5 1998/11/25 22:17:07 augustss Exp $	*/
+/*	$NetBSD: midisyn.c,v 1.6 2000/03/29 03:43:31 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,6 @@
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/kernel.h>
-#include <sys/conf.h>
 #include <sys/audioio.h>
 #include <sys/midiio.h>
 #include <sys/device.h>
