@@ -1,10 +1,11 @@
-/*	$NetBSD: midivar.h,v 1.5 1998/10/05 09:21:41 augustss Exp $	*/
+/*	$NetBSD: midivar.h,v 1.6 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * Author: Lennart Augustsson
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Lennart Augustsson (augustss@netbsd.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

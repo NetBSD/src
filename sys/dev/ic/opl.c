@@ -1,10 +1,11 @@
-/*	$NetBSD: opl.c,v 1.5 1998/09/13 04:41:34 mycroft Exp $	*/
+/*	$NetBSD: opl.c,v 1.6 1998/11/25 22:17:06 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * Author: Lennart Augustsson
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Lennart Augustsson (augustss@netbsd.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

@@ -1,15 +1,11 @@
-/*	$NetBSD: eap.c,v 1.18 1998/11/19 15:38:25 mrg Exp $	*/
+/*	$NetBSD: eap.c,v 1.19 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * Author:      Lennart Augustsson <augustss@cs.chalmers.se>
- *		Charles M. Hannum  <mycroft@netbsd.org>
- *
- * Debugging:   Andreas Gustafsson <gson@araneus.fi>
- * Testing:     Chuck Cranor       <chuck@maria.wustl.edu>
- *              Phil Nelson        <phil@cs.wwu.edu>
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Lennart Augustsson (augustss@netbsd.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,6 +34,13 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ */
+/*
+ * Further work: Charles M. Hannum  <mycroft@netbsd.org>
+ *
+ * Debugging:   Andreas Gustafsson <gson@araneus.fi>
+ * Testing:     Chuck Cranor       <chuck@maria.wustl.edu>
+ *              Phil Nelson        <phil@cs.wwu.edu>
  */
 
 /* 
