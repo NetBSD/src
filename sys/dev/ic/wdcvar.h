@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.54 2004/01/03 22:56:53 thorpej Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.55 2004/01/03 23:59:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ struct wdc_channel {
 	struct ata_queue *ch_queue;
 
 	/* The channel kernel thread */
-	struct proc *thread;
+	struct proc *ch_thread;
 };
 
 /*
