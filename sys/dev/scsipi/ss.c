@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.40 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: ss.c,v 1.41 2002/09/14 21:41:24 chs Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.40 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.41 2002/09/14 21:41:24 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,15 +106,19 @@ struct scsipi_inquiry_pattern ss_patterns[] = {
 	{T_SCANNER, T_REMOV,
 	 "",         "",                 ""},
 	{T_PROCESSOR, T_FIXED,
+	 "HP      ", "C1130A          ", ""},
+	{T_PROCESSOR, T_FIXED,
 	 "HP      ", "C1750A          ", ""},
 	{T_PROCESSOR, T_FIXED,
 	 "HP      ", "C2500A          ", ""},
 	{T_PROCESSOR, T_FIXED,
-	 "HP      ", "C1130A          ", ""},
+	 "HP      ", "C2520A          ", ""},
 	{T_PROCESSOR, T_FIXED,
 	 "HP      ", "C5110A          ", ""},
 	{T_PROCESSOR, T_FIXED,
 	 "HP      ", "C7670A          ", ""},
+	{T_PROCESSOR, T_FIXED,
+	 "HP      ", "", ""},
 };
 
 int
