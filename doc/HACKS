@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.20 2003/10/28 20:12:00 skrll Exp $
+# $NetBSD: HACKS,v 1.21 2003/10/29 21:31:33 mycroft Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -27,35 +27,6 @@
 #
 # this is a comment.
 
-hack	gcc 2.95/vax cannot handle __builtin_ffs()
-cdate	Fri Aug 23 21:31:15 CEST 2002
-who	ragge
-port	vax
-file	sys/lib/libkern/libkern.h : 1.42
-descr
-	__builtin_ffs() is ifdef'd away if __vax__. Matt Thomas has added
-	this feature to GCC 3 so it can be removed when switching.
-kcah
-
-hack	binutil-2.11-sparc64-pltrela
-mdate	14 Aug 2001
-who	eeh
-port	sparc64
-file	libexec/ld.elf_so/reloc.c: 1.41 : 597 : 619
-descr
-	The first for PLT entries are reserved.  There is some disagreement
-	whether they should have associated relocation entries.  Both the
-	SPARC 32-bit and 64-bit ELF specifications say that they should have
-	relocation entries, but the 32-bit SPARC binutils do not generate
-	them, and now the 64-bit SPARC binutils have stopped generating them
-	too.
-
-	To provide binary compatibility, we will check the first entry, if it
-	is reserved it should not be of the type JMP_SLOT.  If it is JMP_SLOT,
-	then the 4 reserved entries were not generated and our index is 4
-	entries too far, so we frob the rela pointer.
-kcah
-
 hack	netstat ieee1394 address printing.
 mdate	14 Nov 2000
 who	matt
@@ -79,35 +50,6 @@ descr
 	exported termcap, this would cause those modifications to be ignored.
 kcah
 
-hack	gcc-sh3-sed
-mdate	23 Apr 2002
-who	thorpej
-file	usr.bin/sed/Makefile	: 1.9 : 9 : 13
-descr
-	The in-tree GCC 2.95.3-based compiler ICEs when building
-	with optimization for SuperH.  Hack is to biuld with -O0.
-kcah
-
-hack	gcc-unsigned-compare
-cdate	09 Mar 2002
-mdate	18 Mar 2002
-who	bjh21
-port	arm
-file	dist/bind/lib/nameser/ns_parse.c : 1.3
-file	dist/dhcp/minires/ns_parse.c : 1.3
-file	dist/dhcp/omapip/result.c : 1.2
-file	dist/dhcp/server/failover.c : 1.3
-file	gnu/dist/gawk/eval.c : 1.4
-file	gnu/dist/toolchain/bfd/bfd.c : 1.2
-file	gnu/dist/toolchain/bfd/format.c : 1.2
-file	gnu/dist/toolchain/gdb/target.c : 1.2
-file	sys/kern/vfs_subr.c : 1.172
-descr	When checking that a potentially-unsigned enum is >= 0, assign it
-	to an int first.  This is necessary to avoid "comparison is always
-	true" warnings with -fshort-enums.  Casting to an int really should
-	be enough, but turns out not to be.
-kcah
-
 hack	wi-at-big-endian-bus
 cdate	15 Mar 2002
 who	martin
@@ -118,75 +60,15 @@ descr	Add an option to access the underlying bus in big endian byte order
 	tag.
 kcah
 
-hack	gcc-vax-libbz2
-mdate	27 Jun 2002
-who	thorpej
-port	vax
-file	lib/libbz2/Makefile
-descr
-	libbz2 is mis-compiled with optimization with GCC 2.95.3
-	on VAX.  -O0 works around this problem.
-kcah
-
-hack	egcs-pc532-ip6_mroute
-cdate	09 Jul 2002
-who	simonb
-port	pc532
-file	sys/arch/pc532/conf/Makefile.pc532 : 1.70
-file	sys/arch/pc532/conf/files.pc532 : 1.47
-descr
-	egcs 1.1.2 gets an "internal error--insn does not satisfy its
-	constraints" error compiling ip6_mroute.c with -O2 or greater.
-	-O1 works around this problem.
-kcah
-
-hack	SuperH SH5 Toolchain Bugs
-cdate	11 Jul 2002
-who	scw
-port	sh5
-file	usr.sbin/ndbootd/ndbootd.c : 1.6
-file	usr.sbin/traceroute/traceroute.c : 1.48
-descr
-	The SuperH SH5 toolchain (2.97-sh5-010522) gets an internal
-	compiler error when assigning a bit-wise inverted value
-	under some circumstances.
-	Work around it by splitting the statement into two.
-kcah
-
-hack	vax Toolchain bug
-cdate	28 Mar 2003
-who	he
-port	vax
-file	sys/arch/vax/vax/intvec.S : 1.5
-descr
-	Workaround for PR toolchain/20924.  The assembler apparently
-	tries to range-check byte offsets when it doesn't have
-	sufficient information to make that decision.
-	Workaround uses `brw' instead of `brb' instruction.
-kcah
-
 hack	specific knowledge of colours in curses code
 cdate	Sun Apr  6 11:05:24 BST 2003
 who	jdc
-port	all
 file	lib/libcurses/color.c : r1.24
 descr
 	Swap red/blue and yellow/cyan colours for COLOR_OTHER.
 	Fix is to enhance libtermcap to understand terminfo-style % sequences.
 	See also:
 	    http://mail-index.NetBSD.org/tech-userlevel/2003/04/06/0000.html
-kcah
-
-hack	SuperH SH5 Toolchain Bugs
-cdate	17 May 2003
-who	scw
-port	sh5
-file	lib/libpthread/pthread_lock.c : 1.7
-descr
-	The SuperH SH5 toolchain generates incorrect PIC code when faced
-	with a symbol which is declared extern, but has local scope due
-	to being defined within an asm() statement (without being declared
-	.globl in that statement). Work around it by adding the .globl.
 kcah
 
 hack	Compensation for differing types of LINUX_USRSTACK and USRSTACK
@@ -202,75 +84,186 @@ descr
 	symbols should be consistent across all ports.
 kcah
 
-hack	gcc 3.3.x bug
-cdate	Sun Oct 26 01:50:16 UTC 2003
-who	lukem
-port	MACHINE_ARCH == arm
-file	usr.bin/newsyslog/newsyslog.c
-pr	22986 23002 23217
-descr
-	newsyslog fails with
-		newsyslog: config line 7: bad flags
-	solved when compiled with -fno-gcse-lm
-kcah
 
-hack	gcc-pc532-duffs_device
-cdate	Mon Oct 27 07:23:05 UTC 2003
-who	simonb
+port	vax
+
+	hack	gcc 2.95/vax cannot handle __builtin_ffs()
+	cdate	Fri Aug 23 21:31:15 CEST 2002
+	who	ragge
+	file	sys/lib/libkern/libkern.h : 1.42
+	descr
+		__builtin_ffs() is ifdef'd away if __vax__. Matt Thomas has
+		added this feature to GCC 3 so it can be removed when switching.
+	kcah
+
+	hack	gcc-vax-libbz2
+	mdate	27 Jun 2002
+	who	thorpej
+	file	lib/libbz2/Makefile
+	descr
+		libbz2 is mis-compiled with optimization with GCC 2.95.3
+		on VAX.  -O0 works around this problem.
+	kcah
+
+	hack	vax Toolchain bug
+	cdate	28 Mar 2003
+	who	he
+	file	sys/arch/vax/vax/intvec.S : 1.5
+	descr
+		Workaround for PR toolchain/20924.  The assembler apparently
+		tries to range-check byte offsets when it doesn't have
+		sufficient information to make that decision.
+		Workaround uses `brw' instead of `brb' instruction.
+	kcah
+
+
+port	sparc64
+
+	hack	binutil-2.11-sparc64-pltrela
+	mdate	14 Aug 2001
+	who	eeh
+	file	libexec/ld.elf_so/arch/sparc64/mdreloc.c
+	descr
+		The first for PLT entries are reserved.  There is some
+		disagreement whether they should have associated relocation
+		entries.  Both the SPARC 32-bit and 64-bit ELF specifications
+		say that they should have relocation entries, but the 32-bit
+		SPARC binutils do not generate them, and now the 64-bit SPARC
+		binutils have stopped generating them too.
+
+		To provide binary compatibility, we will check the first entry,
+		if it is reserved it should not be of the type JMP_SLOT.  If it
+		is JMP_SLOT, then the 4 reserved entries were not generated and
+		our index is 4 entries too far, so we frob the rela pointer.
+	kcah
+
+
+port	arm
+
+	hack	gcc-unsigned-compare
+	cdate	09 Mar 2002
+	mdate	18 Mar 2002
+	who	bjh21
+	file	dist/bind/lib/nameser/ns_parse.c : 1.3
+	file	dist/dhcp/minires/ns_parse.c : 1.3
+	file	dist/dhcp/omapip/result.c : 1.2
+	file	dist/dhcp/server/failover.c : 1.3
+	file	gnu/dist/gawk/eval.c : 1.4
+	file	gnu/dist/toolchain/bfd/bfd.c : 1.2
+	file	gnu/dist/toolchain/bfd/format.c : 1.2
+	file	gnu/dist/toolchain/gdb/target.c : 1.2
+	file	sys/kern/vfs_subr.c : 1.172
+	descr	When checking that a potentially-unsigned enum is >= 0, assign
+		it to an int first.  This is necessary to avoid "comparison is
+		always true" warnings with -fshort-enums.  Casting to an int
+		really should be enough, but turns out not to be.
+	kcah
+
+	hack	gcc 3.3.x bug
+	cdate	Sun Oct 26 01:50:16 UTC 2003
+	who	lukem
+	file	usr.bin/newsyslog/newsyslog.c
+	pr	22986 23002 23217
+	descr
+		newsyslog fails with
+			newsyslog: config line 7: bad flags
+		solved when compiled with -fno-gcse-lm
+	kcah
+
+	hack	gcc 3.3.2/arm sys/kern/uipc_socket.c
+	cdate	Tue Oct 28 18:02:16 GMT 2003
+	who	skrll
+	file	sys/conf/arm/Makefile.arm : 1.19
+	descr
+		Performing a build.sh tools on a CATS with NFS mounted 
+		obj and src directories results in "panic: receive 1"
+		The hack is to compile sys/kern/uipc_socket.c with
+		-fno-strict-aliasing
+	kcah
+
+
 port	pc532
-file	sys/arch/pc532/conf/Makefile.pc532 : 1.71
-file	sys/arch/pc532/conf/files.pc532 : 1.52
-pr	GCC PR optimization/5230
-descr
-	gcc incorrectly gives an "unreachable code at beginning of switch
-	statement" for a Duff's device construct in arch/pc532/dev/ncr.c.
-	There is no way to disable just this warning, so -Wno-error is
-	turned on for this file.
-kcah
 
-hack	gcc 3.3.2 m68k {u,}int64_t uninitialized bug
-cdate	Tue Oct 28 02:46:46 CET 2003
-who	cl
-port	MACHINE_ARCH == m68k
-file	sys/dev/scsipi/sd.c : 1.212 : 686
-file	sys/dev/ata/wd.c : 1.265 : 483
-file	sys/nfs/nfs_serv.c : 1.84 : 3290
-file	sys/conf/Makefile.kern.inc : 1.39
-descr
-	gcc incorrectly reports {u,}int64_t variables as used uninitialized.
-	Work around by adding explicit initializers.
-	gcc bug report at http://gcc.gnu.org/bugzilla/show_bug.cgi?id=12792
-	Worked around by disabling uninitialized warnings for m68k.
-kcah
+	hack	egcs-pc532-ip6_mroute
+	cdate	09 Jul 2002
+	who	simonb
+	file	sys/arch/pc532/conf/Makefile.pc532 : 1.70
+	file	sys/arch/pc532/conf/files.pc532 : 1.47
+	descr
+		egcs 1.1.2 gets an "internal error--insn does not satisfy its
+		constraints" error compiling ip6_mroute.c with -O2 or greater.
+		-O1 works around this problem.
+	kcah
 
-hack	gcc 3.3.2/mdsetimage
-cdate	Tue Oct 28 18:43:05 EST 2003
-who	fredette
+	hack	gcc-pc532-duffs_device
+	cdate	Mon Oct 27 07:23:05 UTC 2003
+	who	simonb
+	file	sys/arch/pc532/conf/Makefile.pc532 : 1.71
+	file	sys/arch/pc532/conf/files.pc532 : 1.52
+	pr	GCC PR optimization/5230
+	descr
+		gcc incorrectly gives an "unreachable code at beginning of
+		switch statement" for a Duff's device construct in
+		arch/pc532/dev/ncr.c.  There is no way to disable just this
+		warning, so -Wno-error is turned on for this file.
+	kcah
+
+
+port	sh3
+
+	hack	gcc-sh3-sed
+	mdate	23 Apr 2002
+	who	thorpej
+	file	usr.bin/sed/Makefile	: 1.9 : 9 : 13
+	descr
+		The in-tree GCC 2.95.3-based compiler ICEs when building
+		with optimization for SuperH.  Hack is to biuld with -O0.
+	kcah
+
+
+port	sh5
+
+	hack	SuperH SH5 Toolchain Bugs
+	cdate	11 Jul 2002
+	who	scw
+	file	usr.sbin/ndbootd/ndbootd.c : 1.6
+	file	usr.sbin/traceroute/traceroute.c : 1.48
+	descr
+		The SuperH SH5 toolchain (2.97-sh5-010522) gets an internal
+		compiler error when assigning a bit-wise inverted value
+		under some circumstances.
+		Work around it by splitting the statement into two.
+	kcah
+
+	hack	SuperH SH5 Toolchain Bugs
+	cdate	17 May 2003
+	who	scw
+	file	lib/libpthread/pthread_lock.c : 1.7
+	descr
+		The SuperH SH5 toolchain generates incorrect PIC code when
+		faced with a symbol which is declared extern, but has local
+		scope due to being defined within an asm() statement (without
+		being declared .globl in that statement). Work around it by
+		adding the .globl.
+	kcah
+
+
 port	sun2
-file	gnu/usr.sbin/mdsetimage/Makefile : 1.15
-descr
-	mdsetimage.c causes cc1 to barf for as-yet unknown reasons.  this
-	hack ues -O0 to avoid the problem.
-kcah
 
-hack	gcc 3.3.2/installboot/ffs.c
-cdate	Tue Oct 28 18:43:05 EST 2003
-who	fredette
-port	sun2
-file	usr.sbin/installboot/Makefile : 1.26
-descr
-	ffs.c causes cc1 to barf for as-yet unknown reasons.  this
-	hack ues -O0 to avoid the problem.
-kcah
+	hack	gcc 3.3.2/mdsetimage
+	cdate	Tue Oct 28 18:43:05 EST 2003
+	who	fredette
+	file	gnu/usr.sbin/mdsetimage/Makefile : 1.15
+	descr
+		mdsetimage.c causes cc1 to barf for as-yet unknown reasons.
+		this hack ues -O0 to avoid the problem.
+	kcah
 
-hack	gcc 3.3.2/arm sys/kern/uipc_socket.c
-cdate	Tue Oct 28 18:02:16 GMT 2003
-who	skrll
-port	MACHINE_ARCH == arm
-file	sys/conf/arm/Makefile.arm : 1.19
-descr
-	Performing a build.sh tools on a CATS with NFS mounted 
-	obj and src directories results in "panic: receive 1"
-	The hack is to compile sys/kern/uipc_socket.c with
-	-fno-strict-aliasing
-kcah
+	hack	gcc 3.3.2/installboot/ffs.c
+	cdate	Tue Oct 28 18:43:05 EST 2003
+	who	fredette
+	file	usr.sbin/installboot/Makefile : 1.26
+	descr
+		ffs.c causes cc1 to barf for as-yet unknown reasons.  this
+		hack ues -O0 to avoid the problem.
+	kcah
