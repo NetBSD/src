@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscallargs.h,v 1.21 2003/01/24 21:37:02 manu Exp $ */
+/* $NetBSD: darwin_syscallargs.h,v 1.22 2003/04/20 00:09:41 manu Exp $ */
 
 /*
  * System call argument lists.
@@ -197,6 +197,13 @@ struct bsd_sys_pathconf_args {
 	syscallarg(int) name;
 };
 
+struct darwin_sys_lseek_args {
+	syscallarg(int) fd;
+	syscallarg(long) off1;
+	syscallarg(long) off2;
+	syscallarg(int) whence;
+};
+
 struct bsd_sys_truncate_args {
 	syscallarg(const char *) path;
 	syscallarg(int) pad;
@@ -251,7 +258,7 @@ int	bsd_sys_chmod(struct lwp *, void *, register_t *);
 int	bsd_sys_chown(struct lwp *, void *, register_t *);
 int	sys_obreak(struct lwp *, void *, register_t *);
 int	sys_getfsstat(struct lwp *, void *, register_t *);
-int	sys_lseek(struct lwp *, void *, register_t *);
+int	compat_43_sys_lseek(struct lwp *, void *, register_t *);
 int	darwin_sys_getpid(struct lwp *, void *, register_t *);
 int	bsd_sys_mount(struct lwp *, void *, register_t *);
 int	bsd_sys_unmount(struct lwp *, void *, register_t *);
@@ -405,7 +412,7 @@ int	sys_getrlimit(struct lwp *, void *, register_t *);
 int	sys_setrlimit(struct lwp *, void *, register_t *);
 int	compat_12_sys_getdirentries(struct lwp *, void *, register_t *);
 int	sys_mmap(struct lwp *, void *, register_t *);
-int	compat_43_sys_lseek(struct lwp *, void *, register_t *);
+int	darwin_sys_lseek(struct lwp *, void *, register_t *);
 int	bsd_sys_truncate(struct lwp *, void *, register_t *);
 int	sys_ftruncate(struct lwp *, void *, register_t *);
 int	darwin_sys___sysctl(struct lwp *, void *, register_t *);

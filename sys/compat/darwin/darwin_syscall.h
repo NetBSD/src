@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscall.h,v 1.21 2003/01/24 21:37:02 manu Exp $ */
+/* $NetBSD: darwin_syscall.h,v 1.22 2003/04/20 00:09:41 manu Exp $ */
 
 /*
  * System call numbers.
@@ -381,7 +381,7 @@
 /* syscall: "mmap" ret: "void *" args: "void *" "size_t" "int" "int" "int" "long" "off_t" */
 #define	DARWIN_SYS_mmap	197
 
-/* syscall: "lseek" ret: "off_t" args: "int" "int" "off_t" "int" */
+/* syscall: "lseek" ret: "off_t" args: "int" "long" "long" "int" */
 #define	DARWIN_SYS_lseek	199
 
 /* syscall: "ftruncate" ret: "int" args: "int" "int" "off_t" */
