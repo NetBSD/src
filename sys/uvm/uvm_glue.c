@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.44.2.21 2002/12/15 18:23:18 thorpej Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.44.2.22 2002/12/15 22:48:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.44.2.21 2002/12/15 18:23:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.44.2.22 2002/12/15 22:48:35 thorpej Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -101,6 +101,7 @@ static void uvm_swapout __P((struct lwp *));
 #define UVM_NUAREA_MAX 16
 void *uvm_uareas;
 int uvm_nuarea;
+struct simplelock uvm_uareas_slock = SIMPLELOCK_INITIALIZER;
 
 /*
  * XXXCDC: do these really belong here?
@@ -376,13 +377,16 @@ uvm_uarea_alloc(vaddr_t *uaddrp)
 #define USPACE_ALIGN    0
 #endif
 
+	simple_lock(&uvm_uareas_slock);
 	uaddr = (vaddr_t)uvm_uareas;
 	if (uaddr) {
 		uvm_uareas = *(void **)uvm_uareas;
 		uvm_nuarea--;
+		simple_unlock(&uvm_uareas_slock);
 		*uaddrp = uaddr;
 		return TRUE;
 	} else {
+		simple_unlock(&uvm_uareas_slock);
 		*uaddrp = uvm_km_valloc_align(kernel_map, USPACE, USPACE_ALIGN);
 		return FALSE;
 	}
@@ -396,11 +400,14 @@ void
 uvm_uarea_free(vaddr_t uaddr)
 {
 
+	simple_lock(&uvm_uareas_slock);
 	if (uvm_nuarea < UVM_NUAREA_MAX) {
 		*(void **)uaddr = uvm_uareas;
 		uvm_uareas = (void *)uaddr;
 		uvm_nuarea++;
+		simple_unlock(&uvm_uareas_slock);
 	} else {
+		simple_unlock(&uvm_uareas_slock);
 		uvm_km_free(kernel_map, uaddr, USPACE);
 	}
 }
