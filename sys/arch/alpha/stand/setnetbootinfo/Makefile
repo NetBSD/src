@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.7 1998/03/02 20:01:05 cgd Exp $
+# $NetBSD: Makefile,v 1.8 1998/03/02 21:36:55 cgd Exp $
 
-.include <bsd.prog.mk>
+.include <bsd.own.mk>
 
 PROG=	setnetbootinfo
 BINDIR=	/usr/mdec
