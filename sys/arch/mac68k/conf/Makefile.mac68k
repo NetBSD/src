@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mac68k,v 1.32 1996/02/03 00:44:04 mycroft Exp $
+#	$NetBSD: Makefile.mac68k,v 1.33 1996/02/03 15:14:39 briggs Exp $
 
 # Makefile for NetBSD
 #
@@ -35,7 +35,7 @@ MAC68K=	../..
 
 INCLUDES=	-I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Dmac68k
-CFLAGS=		${DEBUG} -O2 -Werror -msoft-float
+CFLAGS=		${DEBUG} -O -Werror -msoft-float
 AFLAGS=		-D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
 
