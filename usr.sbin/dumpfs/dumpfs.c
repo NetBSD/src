@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.35 2003/08/07 11:25:19 agc Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.36 2003/08/12 13:15:35 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.35 2003/08/07 11:25:19 agc Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.36 2003/08/12 13:15:35 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -132,7 +132,11 @@ dumpfs(const char *name)
 	if (fd == -1)
 		goto err;
 
-	for (i = 0; sblock_try[i] != -1; i++) {
+	for (i = 0; ; i++) {
+		if (sblock_try[i] == -1) {
+			warnx("%s: could not find superblock, skipped", name);
+			return 1;
+		}
 		if (lseek(fd, sblock_try[i], SEEK_SET) == (off_t)-1)
 			continue;
 		if (read(fd, &afs, SBLOCKSIZE) != SBLOCKSIZE)
@@ -140,21 +144,21 @@ dumpfs(const char *name)
 		switch(afs.fs_magic) {
 		case FS_UFS2_MAGIC:
 			is_ufs2 = 1;
-			/*FALLTHROUGH*/
+			break;
 		case FS_UFS1_MAGIC:
-			goto found;
+			break;
 		case FS_UFS2_MAGIC_SWAPPED:
-			/*FALLTHROUGH*/
+			is_ufs2 = 1;
+			needswap = 1;
+			break;
 		case FS_UFS1_MAGIC_SWAPPED:
 			needswap = 1;
-			goto found;
+			break;
 		default:
 			continue;
 		}
+		break;
 	}
-	warnx("%s: could not find superblock, skipped", name);
-	return 1;
-found:
 
 	if (needswap)
 		ffs_sb_swap(&afs, &afs);
@@ -189,23 +193,28 @@ found:
 	t = afs.fs_time;
 	printf("location%lld\tmagic\t%x\ttime\t%s", (long long)sblock_try[i],
 	    afs.fs_magic, ctime(&t));
-	i = 0;
-	if (printold && afs.fs_old_postblformat != FS_42POSTBLFMT) {
-		i++;
-		if (afs.fs_old_inodefmt >= FS_44INODEFMT) {
-			int max;
-
+	if (is_ufs2)
+		i = 4;
+	else {
+		i = 0;
+		if (!printold && afs.fs_old_postblformat != FS_42POSTBLFMT) {
 			i++;
-			max = afs.fs_maxcontig;
-			size = afs.fs_contigsumsize;
-			if ((max < 2 && size == 0)
-			    || (max > 1 && size >= MIN(max, FS_MAXCONTIG)))
+			if (afs.fs_old_inodefmt >= FS_44INODEFMT) {
+				int max;
+
 				i++;
+				max = afs.fs_maxcontig;
+				size = afs.fs_contigsumsize;
+				if ((max < 2 && size == 0)
+				    || (max > 1 && size >= MIN(max, FS_MAXCONTIG)))
+					i++;
+			}
 		}
 	}
 	printf("id\t[ %x %x ]\n", afs.fs_id[0], afs.fs_id[1]);
 	printf("cylgrp\t%s\tinodes\t%s\tfslevel %d\tsoftdep %sabled\n",
-	    i < 1 ? "static" : "dynamic", i < 2 ? "4.2/4.3BSD" : "4.4BSD", i,
+	    i < 1 ? "static" : "dynamic",
+	    i < 2 ? "4.2/4.3BSD" : i < 4 ? "4.4BSD" : "FFSv2", i,
 	    (afs.fs_flags & FS_DOSOFTDEP) ? "en" : "dis");
 	printf("nbfree\t%lld\tndir\t%lld\tnifree\t%lld\tnffree\t%lld\n",
 	    (long long)afs.fs_cstotal.cs_nbfree,
