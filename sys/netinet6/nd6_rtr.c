@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.25 2001/10/16 06:24:45 itojun Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.26 2001/10/17 10:55:10 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -246,6 +246,7 @@ nd6_ra_input(m, off, icmp6len)
 	u_int32_t advreachable = nd_ra->nd_ra_reachable;
 	long time_second = time.tv_sec;
 
+	Bzero(&dr0, sizeof(dr0));
 	dr0.rtaddr = saddr6;
 	dr0.flags  = nd_ra->nd_ra_flags_reserved;
 	dr0.rtlifetime = ntohs(nd_ra->nd_ra_router_lifetime);
@@ -382,7 +383,7 @@ nd6_ra_input(m, off, icmp6len)
  skip:
 	
 	/*
-	 * Src linkaddress
+	 * Source link layer address
 	 */
     {
 	char *lladdr = NULL;
@@ -1435,7 +1436,7 @@ in6_init_prefix_ltimes(struct nd_prefix *ndpr)
 {
 	long time_second = time.tv_sec;
 
-	/* check if preferred lifetime > valid lifetime */
+	/* check if preferred lifetime > valid lifetime.  RFC2462 5.5.3 (c) */
 	if (ndpr->ndpr_pltime > ndpr->ndpr_vltime) {
 		nd6log((LOG_INFO, "in6_init_prefix_ltimes: preferred lifetime"
 		    "(%d) is greater than valid lifetime(%d)\n",
@@ -1496,8 +1497,8 @@ in6_init_address_ltimes(struct nd_prefix *new,
  */
 void
 rt6_flush(gateway, ifp)
-    struct in6_addr *gateway;
-    struct ifnet *ifp;
+	struct in6_addr *gateway;
+	struct ifnet *ifp;
 {
 	struct radix_node_head *rnh = rt_tables[AF_INET6];
 	int s = splsoftnet();
@@ -1530,6 +1531,14 @@ rt6_deleteroute(rn, arg)
 		return(0);
 
 	/*
+	 * Do not delete a static route.
+	 * XXX: this seems to be a bit ad-hoc. Should we consider the
+	 * 'cloned' bit instead?
+	 */
+	if ((rt->rt_flags & RTF_STATIC) != 0)
+		return(0);
+
+	/*
 	 * We delete only host route. This means, in particular, we don't
 	 * delete default route.
 	 */
@@ -1552,9 +1561,9 @@ nd6_setdefaultiface(ifindex)
 
 	if (nd6_defifindex != ifindex) {
 		nd6_defifindex = ifindex;
-		if (nd6_defifindex > 0)
+		if (nd6_defifindex > 0) {
 			nd6_defifp = ifindex2ifnet[nd6_defifindex];
-		else
+		} else
 			nd6_defifp = NULL;
 
 		/*
