@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.108 1999/02/01 16:16:52 he Exp $
+#	$NetBSD: INSTALL,v 1.109 1999/02/02 16:18:18 bouyer Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -316,7 +316,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 
 # IDE and Related Devices
-# PCI IDE controllers (CMD tech's PCI0640, Intel's PIIx).  
+# PCI IDE controllers - see pciide(4) for suppored hardware.
 # The 0x0001 flag force the driver to use DMA, even if the driver doesn't know
 # how to set up DMA modes for this chip. This may work, or may cause
 # a machine hang with some controllers.
