@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_var.h,v 1.3 2002/12/18 04:20:36 bsh Exp $        */
+/*      $NetBSD: sa11x0_var.h,v 1.4 2003/04/14 14:18:41 rjs Exp $        */
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -49,7 +49,6 @@ struct sa11x0_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	bus_space_handle_t sc_gpioh;
-	bus_space_handle_t sc_egpioh;
 	bus_space_handle_t sc_ppch;
 	bus_space_handle_t sc_dmach;
 	bus_space_handle_t sc_reseth;
@@ -65,8 +64,6 @@ struct sa11x0_attach_args {
 	bus_space_tag_t		sa_iot;		/* Bus tag */
 	bus_addr_t		sa_addr;	/* i/o address  */
 	bus_size_t		sa_size;
-	bus_addr_t		sa_membase;	/* mem address  */
-	bus_size_t		sa_memsize;
 
 	int			sa_intr;
 	int			sa_gpio;
