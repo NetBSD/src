@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1999/12/17 07:40:10 tsubai Exp $
+#	$NetBSD: Makefile,v 1.3 2000/10/12 05:34:29 onoe Exp $
 
 PROG= bootxx
 SRCS= start.S bootxx.c
@@ -9,7 +9,7 @@ SIZE?= size
 
 COMMON!=  cd ${.CURDIR}/../common && ${MAKE} print-objdir
 
-LDFLAGS= -x -N -Ttext a0000000 -e _start
+LDFLAGS= -x -N -Ttext a0004000 -e _start
 CFLAGS= -Os -mno-abicalls -G 0 -Wall
 
 CPPFLAGS+= -D_STANDALONE #-DBOOTXX_DEBUG
