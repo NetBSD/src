@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.105 1998/12/21 13:43:11 drochner Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.106 1998/12/30 13:50:42 hwr Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.99 1998/12/21 13:37:00 drochner Exp 
+ *	NetBSD: pcidevs,v 1.100 1998/12/30 13:49:49 hwr Exp 
  */
 
 /*
@@ -922,6 +922,9 @@
 
 /* NEC products */
 #define	PCI_PRODUCT_NEC_POWERVR2	0x0046		/* PowerVR PCX2 */
+
+/* Neomagic products */
+#define	PCI_PRODUCT_NEOMAGIC_NMMG128ZV	0x0003		/* MagicGraph 128ZV */
 
 /* NexGen products */
 #define	PCI_PRODUCT_NEXGEN_NX82C501	0x4e78		/* NX82C501 Host-PCI Bridge */

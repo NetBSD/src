@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.104 1998/12/21 13:43:11 drochner Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.105 1998/12/30 13:50:42 hwr Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.99 1998/12/21 13:37:00 drochner Exp 
+ *	NetBSD: pcidevs,v 1.100 1998/12/30 13:49:49 hwr Exp 
  */
 
 /*
@@ -1592,6 +1592,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "NEC",
 	    "PowerVR PCX2",
+	},
+	{
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMG128ZV,
+	    0,
+	    "Neomagic",
+	    "MagicGraph 128ZV",
 	},
 	{
 	    PCI_VENDOR_NEXGEN, PCI_PRODUCT_NEXGEN_NX82C501,
