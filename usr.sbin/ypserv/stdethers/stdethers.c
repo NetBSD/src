@@ -1,4 +1,4 @@
-/*	$NetBSD: stdethers.c,v 1.8 1997/11/02 14:25:25 lukem Exp $	*/
+/*	$NetBSD: stdethers.c,v 1.9 1997/11/13 18:41:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stdethers.c,v 1.8 1997/11/02 14:25:25 lukem Exp $");
+__RCSID("$NetBSD: stdethers.c,v 1.9 1997/11/13 18:41:51 thorpej Exp $");
 #endif
 
 #include <sys/types.h>
@@ -63,7 +63,8 @@ main(argc, argv)
 {
 	struct ether_addr eth_addr;
 	FILE	*data_file;
-	int	 line_no, len;
+	int	 line_no;
+	size_t	 len;
 	char	*fname, *p, *h;
 	char	 hostname[MAXHOSTNAMELEN + 1];
 

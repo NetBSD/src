@@ -1,4 +1,4 @@
-/*	$NetBSD: revnetgroup.c,v 1.3 1997/11/01 14:25:04 lukem Exp $ */
+/*	$NetBSD: revnetgroup.c,v 1.4 1997/11/13 18:40:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: revnetgroup.c,v 1.3 1997/11/01 14:25:04 lukem Exp $");
+__RCSID("$NetBSD: revnetgroup.c,v 1.4 1997/11/13 18:40:12 thorpej Exp $");
 #endif
 
 #include <ctype.h>
@@ -89,7 +89,8 @@ main(argc, argv)
 	struct member_entry *mcur;
 	FILE	*fp;
 	char	*p, *host, *user, *domain;
-	int	 ch, len, i;
+	int	 ch, i;
+	size_t	 len;
 	char	*key;
 	int	 hosts = -1;
 
