@@ -1,4 +1,4 @@
-/*	$NetBSD: podulebus_io.c,v 1.4 1997/10/14 23:52:46 mark Exp $	*/
+/*	$NetBSD: podulebus_io.c,v 1.5 1998/03/09 19:11:30 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -88,7 +88,7 @@ struct bus_space podulebus_bs_tag = {
 	bs_notimpl_w_8,
 
 	/* write multiple */
-	bs_notimpl_wm_1,
+	podulebus_wm_1,
 	podulebus_wm_2,
 	bs_notimpl_wm_4,
 	bs_notimpl_wm_8,

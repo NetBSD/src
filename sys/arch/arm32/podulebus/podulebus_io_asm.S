@@ -1,4 +1,4 @@
-/*	$NetBSD: podulebus_io_asm.S,v 1.5 1997/10/17 06:46:29 mark Exp $	*/
+/*	$NetBSD: podulebus_io_asm.S,v 1.6 1998/03/09 19:11:30 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -93,6 +93,22 @@ ENTRY(podulebus_rm_2)
 /*
  * write multiple
  */
+
+ENTRY(podulebus_wm_1)
+	add	r0, r1, r2, lsl r0
+	ldr	r2, [sp, #0]
+
+	/* Make sure that we have a positive length */
+	cmp	r2, #0x00000000
+	movle	pc, lr
+
+podulebus_wm_1_loop:
+	ldrb	r1, [r3], #0x0001
+	strb	r1, [r0]
+	subs	r2, r2, #0x00000001
+	bgt	podulebus_wm_1_loop
+
+	mov	pc, lr
 
 ENTRY(podulebus_wm_2)
 	add	r0, r1, r2, lsl r0
