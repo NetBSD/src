@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.10 2001/08/08 19:36:49 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.11 2001/09/04 21:17:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <string.h>
 #include <ucontext.h>
 
 #include "sched.h"
