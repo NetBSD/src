@@ -1,4 +1,4 @@
-/*	$NetBSD: iophy.c,v 1.21 2003/04/29 01:49:34 thorpej Exp $	*/
+/*	$NetBSD: iophy.c,v 1.22 2004/08/23 06:16:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iophy.c,v 1.21 2003/04/29 01:49:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iophy.c,v 1.22 2004/08/23 06:16:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,20 +88,20 @@ __KERNEL_RCSID(0, "$NetBSD: iophy.c,v 1.21 2003/04/29 01:49:34 thorpej Exp $");
 
 #include <dev/mii/iophyreg.h>
 
-int	iophymatch(struct device *, struct cfdata *, void *);
-void	iophyattach(struct device *, struct device *, void *);
+static int	iophymatch(struct device *, struct cfdata *, void *);
+static void	iophyattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(iophy, sizeof(struct mii_softc),
     iophymatch, iophyattach, mii_phy_detach, mii_phy_activate);
 
-int	iophy_service(struct mii_softc *, struct mii_data *, int);
-void	iophy_status(struct mii_softc *);
+static int	iophy_service(struct mii_softc *, struct mii_data *, int);
+static void	iophy_status(struct mii_softc *);
 
-const struct mii_phy_funcs iophy_funcs = {
+static const struct mii_phy_funcs iophy_funcs = {
 	iophy_service, iophy_status, mii_phy_reset,
 };
 
-const struct mii_phydesc iophys[] = {
+static const struct mii_phydesc iophys[] = {
 	{ MII_OUI_xxINTEL,		MII_MODEL_xxINTEL_I82553,
 	  MII_STR_xxINTEL_I82553 },
 
@@ -112,7 +112,7 @@ const struct mii_phydesc iophys[] = {
 	  NULL },
 };
 
-int
+static int
 iophymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
@@ -123,7 +123,7 @@ iophymatch(struct device *parent, struct cfdata *match, void *aux)
 	return (0);
 }
 
-void
+static void
 iophyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
@@ -154,7 +154,7 @@ iophyattach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 }
 
-int
+static int
 iophy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -216,7 +216,7 @@ iophy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	return (0);
 }
 
-void
+static void
 iophy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;

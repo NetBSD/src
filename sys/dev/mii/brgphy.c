@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.20 2004/04/11 15:40:56 thorpej Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.21 2004/08/23 06:16:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.20 2004/04/11 15:40:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.21 2004/08/23 06:16:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,47 +92,47 @@ __KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.20 2004/04/11 15:40:56 thorpej Exp $");
 
 #include <dev/mii/brgphyreg.h>
 
-int	brgphymatch(struct device *, struct cfdata *, void *);
-void	brgphyattach(struct device *, struct device *, void *);
+static int	brgphymatch(struct device *, struct cfdata *, void *);
+static void	brgphyattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(brgphy, sizeof(struct mii_softc),
     brgphymatch, brgphyattach, mii_phy_detach, mii_phy_activate);
 
-int	brgphy_service(struct mii_softc *, struct mii_data *, int);
-void	brgphy_status(struct mii_softc *);
+static int	brgphy_service(struct mii_softc *, struct mii_data *, int);
+static void	brgphy_status(struct mii_softc *);
 
-void	brgphy_5401_reset(struct mii_softc *);
-void	brgphy_5411_reset(struct mii_softc *);
-void	brgphy_5703_reset(struct mii_softc *);
-void	brgphy_5704_reset(struct mii_softc *);
-void	brgphy_5705_reset(struct mii_softc *);
+static void	brgphy_5401_reset(struct mii_softc *);
+static void	brgphy_5411_reset(struct mii_softc *);
+static void	brgphy_5703_reset(struct mii_softc *);
+static void	brgphy_5704_reset(struct mii_softc *);
+static void	brgphy_5705_reset(struct mii_softc *);
 
-const struct mii_phy_funcs brgphy_funcs = {
+static const struct mii_phy_funcs brgphy_funcs = {
 	brgphy_service, brgphy_status, mii_phy_reset,
 };
 
-const struct mii_phy_funcs brgphy_5401_funcs = {
+static const struct mii_phy_funcs brgphy_5401_funcs = {
 	brgphy_service, brgphy_status, brgphy_5401_reset,
 };
 
-const struct mii_phy_funcs brgphy_5411_funcs = {
+static const struct mii_phy_funcs brgphy_5411_funcs = {
 	brgphy_service, brgphy_status, brgphy_5411_reset,
 };
 
-const struct mii_phy_funcs brgphy_5703_funcs = {
+static const struct mii_phy_funcs brgphy_5703_funcs = {
 	brgphy_service, brgphy_status, brgphy_5703_reset,
 };
 
-const struct mii_phy_funcs brgphy_5704_funcs = {
+static const struct mii_phy_funcs brgphy_5704_funcs = {
 	brgphy_service, brgphy_status, brgphy_5704_reset,
 };
 
-const struct mii_phy_funcs brgphy_5705_funcs = {
+static const struct mii_phy_funcs brgphy_5705_funcs = {
 	brgphy_service, brgphy_status, brgphy_5705_reset,
 };
 
 
-const struct mii_phydesc brgphys[] = {
+static const struct mii_phydesc brgphys[] = {
 	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5400,
 	  MII_STR_BROADCOM_BCM5400 },
 
@@ -166,7 +166,7 @@ static void bcm5411_load_dspcode(struct mii_softc *);
 static void bcm5703_load_dspcode(struct mii_softc *);
 static void bcm5704_load_dspcode(struct mii_softc *);
 
-int
+static int
 brgphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
@@ -177,7 +177,7 @@ brgphymatch(struct device *parent, struct cfdata *match, void *aux)
 	return (0);
 }
 
-void
+static void
 brgphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
@@ -256,7 +256,7 @@ brgphyattach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 }
 
-int
+static int
 brgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -328,7 +328,7 @@ brgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	return (0);
 }
 
-void
+static void
 brgphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
@@ -409,7 +409,7 @@ brgphy_status(struct mii_softc *sc)
 		mii->mii_media_active = ife->ifm_media;
 }
 
-void
+static void
 brgphy_5401_reset(struct mii_softc *sc)
 {
 
@@ -417,7 +417,7 @@ brgphy_5401_reset(struct mii_softc *sc)
 	bcm5401_load_dspcode(sc);
 }
 
-void
+static void
 brgphy_5411_reset(struct mii_softc *sc)
 {
 
@@ -426,7 +426,7 @@ brgphy_5411_reset(struct mii_softc *sc)
 }
 
 
-void
+static void
 brgphy_5703_reset(struct mii_softc *sc)
 {
 
@@ -434,7 +434,7 @@ brgphy_5703_reset(struct mii_softc *sc)
 	bcm5703_load_dspcode(sc);
 }
 
-void
+static void
 brgphy_5704_reset(struct mii_softc *sc)
 {
 
@@ -447,7 +447,7 @@ brgphy_5704_reset(struct mii_softc *sc)
  * reset the 5705 PHY would get stuck in 10/100 MII mode.
  */
 
-void
+static void
 brgphy_5705_reset(struct mii_softc *sc)
 {
 }
