@@ -1,4 +1,4 @@
-/*	$NetBSD: com_frodo.c,v 1.1 2003/11/08 11:18:33 tsutsui Exp $	*/
+/*	$NetBSD: com_frodo.c,v 1.1.2.1 2004/04/11 02:57:46 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_frodo.c,v 1.1 2003/11/08 11:18:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_frodo.c,v 1.1.2.1 2004/04/11 02:57:46 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,8 +151,7 @@ com_frodo_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ioh = ioh;
 	sc->sc_iobase = fa->fa_base + fa->fa_offset;
 	sc->sc_frequency = COM_FRODO_FREQ;
-	if (mmuid == MMUID_425_E)
-		SET(sc->sc_hwflags, COM_HW_NOIEN);
+	SET(sc->sc_hwflags, COM_HW_NOIEN);
 
 	com_attach_subr(sc);
 
