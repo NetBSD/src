@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.55 2003/09/30 20:34:28 christos Exp $
+#	$NetBSD: makesyscalls.sh,v 1.56 2004/07/31 00:55:51 lukem Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -55,7 +55,7 @@ esac
 #	sys_nosys	[optional] name of function called for unsupported
 #			syscalls, if not sys_nosys()
 #
-# NOTE THAT THIS makesyscalls.sh DOES NOT SUPPORT 'LIBCOMPAT'.
+# NOTE THAT THIS makesyscalls.sh DOES NOT SUPPORT 'SYSLIBCOMPAT'.
 
 # source the config file.
 sys_nosys="sys_nosys"	# default is sys_nosys(), if not specified otherwise
