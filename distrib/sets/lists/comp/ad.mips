@@ -42,3 +42,7 @@
 ./usr/include/mips/types.h
 ./usr/include/mips/varargs.h
 ./usr/include/mips/vmparam.h
+./usr/share/man/cat1/elf2aout.0
+./usr/share/man/cat1/elf2ecoff.0
+./usr/share/man/man1/elf2aout.1
+./usr/share/man/man1/elf2ecoff.1
