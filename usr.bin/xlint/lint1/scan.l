@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.28 2002/09/13 14:59:25 christos Exp $ */
+/* $NetBSD: scan.l,v 1.29 2002/10/22 18:15:01 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.28 2002/09/13 14:59:25 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.29 2002/10/22 18:15:01 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1328,6 +1328,30 @@ getsym(sbuf_t *sb)
 
 	freesb(sb);
 	return (sym);
+}
+
+/*
+ * Construct a temporary symbol. The symbol starts with a digit, so that
+ * it is illegal.
+ */
+sym_t *
+mktempsym(type_t *t)
+{
+	static int n = 0;
+	int h;
+	char *s = getlblk(blklev, 64);
+	sym_t *sym = getblk(sizeof (sym_t));
+
+	(void)snprintf(s, 64, "%.8d_tmp", n++);
+	h = hash(s);
+	sym->s_name = s;
+	sym->s_type = t;
+	sym->s_blklev = blklev;
+	sym->s_scl = AUTO;
+	if ((sym->s_link = symtab[h]) != NULL)
+		symtab[h]->s_rlink = &sym->s_link;
+	(symtab[h] = sym)->s_rlink = &symtab[h];
+	return sym;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.31 2002/10/22 13:48:51 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.32 2002/10/22 18:15:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.31 2002/10/22 13:48:51 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.32 2002/10/22 18:15:01 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -2239,6 +2239,36 @@ conmemb(type_t *tp)
 }
 
 const char *
+basictyname(tspec_t t)
+{
+	switch (t) {
+	case CHAR:	return "char";
+	case UCHAR:	return "unsigned char";
+	case SCHAR:	return "signed char";
+	case SHORT:	return "short";
+	case USHORT:	return "unsigned short";
+	case INT:	return "int";
+	case UINT:	return "unsigned int";
+	case LONG:	return "long";
+	case ULONG:	return "unsigned long";
+	case QUAD:	return "long long";
+	case UQUAD:	return "unsigned long long";
+	case FLOAT:	return "float";
+	case DOUBLE:	return "double";
+	case LDOUBLE:	return "long double";
+	case PTR:	return "pointer";
+	case ENUM:	return "enum";
+	case STRUCT:	return "struct";
+	case UNION:	return "union";
+	case FUNC:	return "function";
+	case ARRAY:	return "array";
+	default:
+		LERROR("basictyname()");
+		return NULL;
+	}
+}
+
+const char *
 tyname(char *buf, size_t bufsiz, type_t *tp)
 {
 	tspec_t	t;
@@ -2248,30 +2278,8 @@ tyname(char *buf, size_t bufsiz, type_t *tp)
 	if ((t = tp->t_tspec) == INT && tp->t_isenum)
 		t = ENUM;
 
-	switch (t) {
-	case CHAR:	s = "char";			break;
-	case UCHAR:	s = "unsigned char";		break;
-	case SCHAR:	s = "signed char";		break;
-	case SHORT:	s = "short";			break;
-	case USHORT:	s = "unsigned short";		break;
-	case INT:	s = "int";			break;
-	case UINT:	s = "unsigned int";		break;
-	case LONG:	s = "long";			break;
-	case ULONG:	s = "unsigned long";		break;
-	case QUAD:	s = "long long";		break;
-	case UQUAD:	s = "unsigned long long";	break;
-	case FLOAT:	s = "float";			break;
-	case DOUBLE:	s = "double";			break;
-	case LDOUBLE:	s = "long double";		break;
-	case PTR:	s = "pointer";			break;
-	case ENUM:	s = "enum";			break;
-	case STRUCT:	s = "struct";			break;
-	case UNION:	s = "union";			break;
-	case FUNC:	s = "function";			break;
-	case ARRAY:	s = "array";			break;
-	default:
-		LERROR("tyname()");
-	}
+	s = basictyname(t);
+
 
 	switch (t) {
 	case CHAR:
