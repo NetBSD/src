@@ -1,4 +1,4 @@
-/*	$NetBSD: setenv.c,v 1.28 2005/02/17 19:58:21 christos Exp $	*/
+/*	$NetBSD: setenv.c,v 1.29 2005/02/17 21:22:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setenv.c,v 1.28 2005/02/17 19:58:21 christos Exp $");
+__RCSID("$NetBSD: setenv.c,v 1.29 2005/02/17 21:22:25 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -90,7 +90,7 @@ setenv(name, value, rewrite)
 	} else {					/* create new slot */
 		size_t cnt;
 
-		for (cnt = 0; *environ[cnt]; ++cnt)
+		for (cnt = 0; environ[cnt]; ++cnt)
 			continue;
 		size = (size_t)(sizeof(char *) * (cnt + 2));
 		if (saveenv == environ) {		/* just increase size */
