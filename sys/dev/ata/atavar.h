@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.56 2004/08/12 22:39:41 thorpej Exp $	*/
+/*	$NetBSD: atavar.h,v 1.57 2004/08/13 02:10:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -313,6 +313,7 @@ void	ata_free_xfer(struct wdc_channel *, struct ata_xfer *);
 #define	ATAXF_CANSLEEP	0x00
 #define	ATAXF_NOSLEEP	0x01
 
+void	ata_exec_xfer(struct wdc_channel *, struct ata_xfer *);
 void	ata_kill_pending(struct ata_drive_datas *);
 
 int	ata_addref(struct wdc_channel *);
