@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_twovar.h,v 1.1 2002/02/12 20:38:52 scw Exp $	*/
+/*	$NetBSD: vme_twovar.h,v 1.2 2002/03/24 17:22:33 scw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@ struct vmetwo_softc {
 extern int vmetwo_not_present;
 
 void	vmetwo_init(struct vmetwo_softc *);
+void	vmetwo_md_intr_init(struct vmetwo_softc *);
 int	vmetwo_probe(bus_space_tag_t, bus_addr_t);
 void	vmetwo_intr_init(struct vmetwo_softc *);
 void	vmetwo_intr_establish(void *, int, int, int, int,
