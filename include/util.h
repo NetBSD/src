@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.24 2002/08/08 16:50:35 abs Exp $	*/
+/*	$NetBSD: util.h,v 1.25 2002/08/15 04:47:12 enami Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -34,7 +34,7 @@
  */
 
 #ifndef _UTIL_H_
-#define _UTIL_H_
+#define	_UTIL_H_
 
 #include <sys/cdefs.h>
 #include <sys/ttycom.h>
@@ -46,7 +46,7 @@
 #include <utmpx.h>
 
 #define	PIDLOCK_NONBLOCK	1
-#define PIDLOCK_USEHOSTNAME	2
+#define	PIDLOCK_USEHOSTNAME	2
 
 #define	FPARSELN_UNESCESC	0x01
 #define	FPARSELN_UNESCCONT	0x02
@@ -74,7 +74,8 @@ char	       *fparseln(FILE *, size_t *, size_t *, const char[3], int);
 const char     *getbootfile(void);
 int		getmaxpartitions(void);
 int		getrawpartition(void);
-int		humanize_number(char *, size_t, int64_t, const char *, int, int);
+int		humanize_number(char *, size_t, int64_t, const char *, int,
+		    int);
 void		login(const struct utmp *);
 void		loginx(const struct utmpx *);
 int		login_tty(int);
@@ -84,7 +85,7 @@ void		logwtmp(const char *, const char *, const char *);
 void		logwtmpx(const char *, const char *, const char *, int, int);
 int		opendisk(const char *, int, char *, size_t, int);
 int		openpty(int *, int *, char *, struct termios *,
-			struct winsize *);
+		    struct winsize *);
 int		pidfile(const char *);
 int		pidlock(const char *, int, pid_t *, const char *);
 int		pw_abort(void);
