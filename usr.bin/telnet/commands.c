@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95"; */
-static char rcsid[] = "$NetBSD: commands.c,v 1.10 1996/02/24 01:18:33 jtk Exp $";
+static char rcsid[] = "$NetBSD: commands.c,v 1.11 1996/02/24 18:33:50 jtk Exp $";
 #endif /* not lint */
 
 #if	defined(unix)
@@ -415,7 +415,7 @@ send_tncmd(func, cmd, name)
     extern char *telopts[];
     register int val = 0;
 
-    if (isprefix(name, "help") || isprefix(name, "?")) {
+    if (isprefix(name, "?")) {
 	register int col, len;
 
 	printf("Usage: send %s <value|option>\n", cmd);
