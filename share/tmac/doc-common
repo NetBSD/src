@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc-common,v 1.34 1999/12/10 06:04:01 itohy Exp $
+.\"	$NetBSD: doc-common,v 1.35 2000/01/08 17:15:18 tron Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -180,10 +180,11 @@
 .			if "\\$3"sun3"     .as vT /\\$3\ 
 .			if "\\$3"vax"      .as vT /\\$3\ 
 .			if "\\$3"x68k"     .as vT /\\$3\ 
-.			if \\$2>1 .if \\$2<6 .as vT Programmer's Manual
-.			if "\\$2"7" .as vT Reference Manual
-.			if "\\$2"8" .as vT System Manager's Manual
-.			if "\\$2"9" .as vT Kernel Manual
+.			if "\\$2"1" .as vT " Reference Manual
+.			if \\$2>1 .if \\$2<6 .as vT " Programmer's Manual
+.			if "\\$2"7" .as vT " Reference Manual
+.			if "\\$2"8" .as vT " System Manager's Manual
+.			if "\\$2"9" .as vT " Kernel Manual
 .			nr sN \\$2
 .		\}
 .		if "\\$2"unass"  .ds vT DRAFT
