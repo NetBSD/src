@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_2.S,v 1.2 2002/07/10 11:29:32 scw Exp $	*/
+/*	$NetBSD: byte_swap_2.S,v 1.3 2002/07/10 12:42:28 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 ALTENTRY(htons)
 ALTENTRY(ntohs)
 #endif
-ENTRY(__bswap16)
+ENTRY(bswap16)
 	ptabs/l	r18, tr0
 	byterev	r2, r2
 	shlri	r2, 48, r2
