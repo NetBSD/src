@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.2 1999/01/25 23:34:22 garbled Exp $
+.\"	$NetBSD: contents,v 1.3 1999/02/20 16:19:48 scw Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -153,7 +153,7 @@ installation section, below.
 .		It Pa miniroot/
 The miniroot filesystem image.
 .		It Pa netboot/
-Two programs needed to boot a VME147 kernel over the network.
+Two programs needed to boot mvme68k kernels over the network.
 .		It Pa tapeimage/
 Tape boot programs, and a RAMDISK kernel.
 .	El
@@ -296,7 +296,8 @@ subset of the platforms that arm32 supports (See
 .if r_mvme68k \{\
 .Pp
 The NetBSD/mvme68k install distribution contains files that can be
-used to install NetBSD onto a completely "bare" VME147. The files
+used to install NetBSD onto completely "bare" MVME147 and MVME167
+boards. The files
 in the "mvme68k/installation/*" directories are described below.
 .Bl -tag -width netbsd-rd.gz
 .It Pa miniroot.gz
@@ -309,22 +310,23 @@ A gzipped copy of the
 for installing the miniroot filesystem.
 .It Pa stboot
 A tape boot-block, in the form required to
-allow 147-Bug to boot from tape. This is the
+allow 1x7-Bug to boot from tape. This is the
 first segment of a boot tape.
 .It Pa bootst
 A copy of the tape boot program, used
 as the second segment of a boot tape.
 .It Pa sboot
-A copy of the serial boot program. This is
+A copy of the MVME147 serial boot program. This is
 necessary if you don't have a tape drive,
 but you _do_ have another system which can
 act as a boot and NFS server. This is also
 useful if you are installing a diskless
-NetBSD/mvme68k system.
+NetBSD system on an MVME147 board.
 .It Pa netboot
 A copy of the network boot program. Used
-in conjunction with sboot to get your system
-booted over a network.
+in conjunction with sboot on the MVME147 to get your system
+booted over a network. The MVME167 can boot this file
+directly using 167Bug's builtin TFTP client.
 .El
 .Pp
 These files can be used to make a boot tape suitable for installing
