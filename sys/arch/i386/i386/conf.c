@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.69 1996/02/18 22:57:54 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.70 1996/02/22 05:53:23 scottr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -155,7 +155,7 @@ cdev_decl(ch);
 dev_decl(fd,open);
 #include "bpfilter.h"
 cdev_decl(bpf);
-#include "speaker.h"
+#include "spkr.h"
 cdev_decl(spkr);
 #ifdef LKM
 #define	NLKM	1
@@ -211,7 +211,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 24 */
 	cdev_notdef(),			/* 25 */
 	cdev_notdef(),			/* 26 */
-	cdev_spkr_init(NSPEAKER,spkr),	/* 27: PC speaker */
+	cdev_spkr_init(NSPKR,spkr),	/* 27: PC speaker */
 	cdev_lkm_init(NLKM,lkm),	/* 28: loadable module driver */
 	cdev_lkm_dummy(),		/* 29 */
 	cdev_lkm_dummy(),		/* 30 */
