@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.14 1995/08/09 03:23:57 briggs Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.15 1995/09/27 04:16:54 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -259,6 +259,13 @@ pmap_bootstrap(nextpa, firstpa)
 		while (pte < epte) {
 			*pte++ = protopte;
 			protopte += NBPG;
+		}
+		/*
+		 * Invalidate all but the last remaining entries in both.
+		 */
+		epte = &(PA2VA(kptmpa, u_int *))[NPTEPG-1];
+		while (pte < epte) {
+			*pte++ = PG_NV;
 		}
 		pte = &(PA2VA(kptmpa, u_int *))[NPTEPG-1];
 		*pte = lkptpa | PG_RW | PG_CI | PG_V;
