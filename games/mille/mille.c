@@ -1,4 +1,4 @@
-/*	$NetBSD: mille.c,v 1.4 1995/03/24 05:01:48 cgd Exp $	*/
+/*	$NetBSD: mille.c,v 1.5 1997/05/23 23:09:38 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mille.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: mille.c,v 1.4 1995/03/24 05:01:48 cgd Exp $";
+static char rcsid[] = "$NetBSD: mille.c,v 1.5 1997/05/23 23:09:38 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,10 +60,10 @@ static char rcsid[] = "$NetBSD: mille.c,v 1.4 1995/03/24 05:01:48 cgd Exp $";
 void	rub();
 
 main(ac, av)
-reg int		ac;
-reg char	*av[]; {
-
-	reg bool	restore;
+register int	ac;
+register char	*av[];
+{
+	register bool	restore;
 
 	/* run as the user */
 	setuid(getuid());

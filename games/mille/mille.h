@@ -1,4 +1,4 @@
-/*	$NetBSD: mille.h,v 1.5 1995/03/24 05:01:51 cgd Exp $	*/
+/*	$NetBSD: mille.h,v 1.6 1997/05/23 23:09:39 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -153,17 +153,7 @@
 # ifdef	SYSV
 # define	srandom(x)	srand(x)
 # define	random()	rand()
-
-# ifndef	attron
-#	define	erasechar()	_tty.c_cc[VERASE]
-#	define	killchar()	_tty.c_cc[VKILL]
-# endif
-# else
-# ifndef	erasechar
-#	define	erasechar()	_tty.sg_erase
-#	define	killchar()	_tty.sg_kill
-# endif
-# endif	SYSV
+# endif	/* SYSV */
 
 typedef struct {
 	bool	coups[NUM_SAFE];
