@@ -1,4 +1,4 @@
-#	$NetBSD: PAIN,v 1.50 1995/03/05 22:32:57 mycroft Exp $
+#	$NetBSD: PAIN,v 1.51 1995/03/26 16:36:12 mycroft Exp $
 #
 #	PAIN -- mail server and test machine
 #
@@ -39,12 +39,12 @@ options		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 
 #options	COMPAT_SVR4	# binary compatibility with SVR4
 #options	COMPAT_IBCS2	# binary compatibility with SCO and ISC
-options		COMPAT_LINUX	# binary compatibility with Linux
+#options	COMPAT_LINUX	# binary compatibility with Linux
 
 options		USER_LDT	# user-settable LDT; used by WINE
 options		LKM		# loadable kernel modules
 
-options		FFS,QUOTA	# UFS and quotas
+options		FFS #,QUOTA	# UFS and quotas
 #options	LFS		# log-structured file system
 options		MFS		# memory file system
 
@@ -58,7 +58,7 @@ options		FIFO		# FIFOs; RECOMMENDED
 options		KERNFS		# /kern
 #options	NULLFS		# loopback file system
 #options	PORTAL		# ?
-options		PROCFS		# /proc
+#options	PROCFS		# /proc
 #options	UMAPFS		# NULLFS + uid and gid remapping
 options		UNION		# union file system
 
