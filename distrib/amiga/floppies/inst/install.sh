@@ -28,17 +28,16 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: install.sh,v 1.1 1994/10/06 20:25:47 chopps Exp $
+#	$Id: install.sh,v 1.2 1995/10/02 12:58:43 chopps Exp $
 
 #	NetBSD installation script.
 #	In a perfect world, this would be a nice C program, with a reasonable
 #	user interface.
 
-DT=/etc/disktab				# /etc/disktab
 FSTABDIR=/mnt/etc			# /mnt/etc
-#DONTDOIT=echo
+#DONTDOIT==echo
 
-VERSION=1.0
+VERSION=1.1
 FSTAB=${FSTABDIR}/fstab
 
 getresp() {
@@ -48,23 +47,66 @@ getresp() {
 	fi
 }
 
+getvar() {
+	echo $(eval $(echo "echo \$$1"))
+}
+
+shiftvar() {
+	local - var
+	var="$1"
+	list="$(getvar $var)"
+	set -- $list
+	shift
+	setvar $var "$*"
+}
+
+getparts() {
+	disklabel $1 2>/dev/null | sed -e '/^[ ][ ][ad-p]/!d' |
+	sed -e 's,^[ ]*\([a-p]\):[ ]*[0-9]*[ ]*[0-9]*[ ][ ]*\([a-zA-Z0-9.]*\).*,\1 \2,' |
+	sed -e ':a
+		N;${s/\n/ /g;p;d;}
+		ba'
+}
+
+getdrives() {
+	local du thispart
+	for du in /dev/r${drivetype}?a; do
+		dd if=$du of=/dev/null bs=1b count=1 >/dev/null 2>&1
+		if [ $? -eq 0 ]; then
+			thisunit=`echo $du | sed -e 's,/dev/r\(...\)a,\1,g'`
+			driveunits="$driveunits $thisunit"
+		else
+			continue;
+		fi
+		setvar $thisunit "$(getparts $thisunit)"
+		export $thisunit
+	done
+	export drivenunits
+}
+
+prepdrive() {
+	echo	"which drive would you like to prepare next?"
+	echo	"choices are: ${driveunits}"
+	echo	""
+	getresp
+	case $resp in
+	*)	;;
+	esac
+}
+
 echo	"Welcome to the NetBSD ${VERSION} installation program."
 echo	""
 echo	"This program is designed to help you put NetBSD on your hard disk,"
-echo	"in a simple and rational way.  You'll be asked several questions,"
-echo	"and it would probably be useful to have your disk's hardware"
-echo	"manual, the installation notes, and a calculator handy."
-echo	""
-echo	"In particular, you will need to know some reasonably detailed"
-echo	"information about your disk's geometry, because there is currently"
-echo	"no way this this program can figure that information out."
+echo	"in a simple and rational way.  Its main objective is to format,"
+echo	"mount and create an fstab for your root (/) and user (/usr)"
+echo	"partitions."
 echo	""
 echo	"As with anything which modifies your hard drive's contents, this"
 echo	"program can cause SIGNIFICANT data loss, and you are advised"
 echo	"to make sure your hard drive is backed up before beginning the"
 echo	"installation process."
 echo	""
-echo	"Default answers are displyed in brackets after the questions."
+echo	"Default answers are displayed in brackets after the questions."
 echo	"You can hit Control-C at any time to quit, but if you do so at a"
 echo	"prompt, you may have to hit return.  Also, quitting in the middle of"
 echo	"installation may leave your system in an inconsistent state."
@@ -73,7 +115,7 @@ echo -n "Proceed with installation? [n] "
 getresp "n"
 case "$resp" in
 	y*|Y*)
-		echo	"Cool!  Let's get to it..."
+		echo	"scanning for the root device"
 		;;
 	*)
 		echo	""
@@ -84,41 +126,41 @@ case "$resp" in
 		;;
 esac
 
-echo	""
-echo	"To do the installation, you'll need to provide some information about"
-echo	"your disk."
-echo	""
-echo	"NetBSD can be installed on ST506, ESDI, IDE, or SCSI disks."
-echo -n	"What kind of disk will you be installing on? [SCSI] "
-getresp "SCSI"
-case "$resp" in
-	esdi|ESDI|st506|ST506)
-		drivetype=wd
-		echo -n "Does it support _automatic_ sector remapping? [y] "
-		getresp "y"
-		case "$resp" in
-			n*|N*)
-				sect_fwd="sf:"
-				;;
-			*)
-				sect_fwd=""
-				;;
-		esac
-		;;
-	ide|IDE)
-		drivetype=wd
-		sect_fwd=""
-		type=ST506
-		;;
-	scsi|SCSI)
-		drivetype=sd
-		sect_fwd=""
-		type=SCSI
-		;;
-esac
+drivetype=sd
+sect_fwd=""
 
 # find out what units are possible for that disk, and query the user.
-driveunits=`ls /dev/${drivetype}?a | sed -e 's,/dev/\(...\)a,\1,g'`
+getdrives
+for du in $driveunits; do
+	set -- $(getvar $du)
+	if [ $# -ge 2 -a "$1" = "a" -a "`echo $2 | sed -e 's,.*BSD.*,BSD,'`" = "BSD" ]; then
+		rdev=$du
+	fi
+done
+
+echo	""
+echo	"The following root devices are available on your machine:"
+echo	"      "${driveunits}
+echo	""
+prefdev=${rdev}
+rdev=""
+while [ "X${rdev}" = "X" ]; do
+	echo -n "Which device would you like to install on ? [${prefdev}] "
+	getresp ${prefdev}
+	otherdrives=`echo "${driveunits}" | sed -e s,${resp},,`
+	if [ "X${driveunits}" = "X${otherdrives}" ]; then
+		echo	""
+		echo	"\"${resp}\" is an invalid drive name. Valid choices"
+		echo	"are: "${driveunits}
+	else
+		rdev=${resp}
+	fi
+done
+
+echo	""
+echo	"The root device you have chosen is on: ${rdev}"
+echo	""
+# driveunits=`ls /dev/${drivetype}?a | sed -e 's,/dev/\(...\)a,\1,g'`
 if [ "X${driveunits}" = "X" ]; then
 	echo	"FATAL ERROR:"
 	echo	"No devices for disks of type '${drivetype}'."
@@ -126,254 +168,11 @@ if [ "X${driveunits}" = "X" ]; then
 	echo	"Exiting install program."
 	exit
 fi
-prefdrive=${drivetype}0
-
-echo	""
-echo	"The following ${drivetype}-type disks are supported by this"
-echo	"installation procedure:"
-echo	"	"${driveunits}
-echo	"Note that they may not exist in _your_ machine; the list of"
-echo	"disks in your machine was printed when the system was booting."
-echo	""
-while [ "X${drivename}" = "X" ]; do
-	echo -n	"Which disk would like to install on? [${prefdrive}] "
-	getresp ${prefdrive}
-	otherdrives=`echo "${driveunits}" | sed -e s,${resp},,`
-	if [ "X${driveunits}" = "X${otherdrives}" ]; then
-		echo	""
-		echo	"\"${resp}\" is an invalid drive name.  Valid choices"
-		echo	"are: "${driveunits}
-		echo	""
-	else
-		drivename=${resp}
-	fi
-done
-
-echo	""
-echo	"Using disk ${drivename}."
-echo	""
-echo -n	"What kind of disk is it? (one word please) [my${drivetype}] "
-getresp "my${drivetype}"
-labelname=$resp
-
-echo	""
-echo	"You will now need to provide some information about your disk's"
-echo	"geometry.  This should either be in the User's Manual for your disk,"
-echo	"or you should have written down what NetBSD printed when booting."
-echo	"(Note that he geometry that's printed at boot time is preferred.)"
-echo	""
-echo -n	"Number of bytes per disk sector? [512] "
-getresp 512
-bytes_per_sect="$resp"
-
-echo -n "Number of disk cylinders? "
-getresp
-cyls_per_disk="$resp"
-
-echo -n	"Number of disk tracks (heads) per disk cylinder? "
-getresp
-tracks_per_cyl="$resp"
-
-echo -n	"Number of disk sectors per disk track? "
-getresp
-sects_per_track="$resp"
-
-cylindersize=`expr $sects_per_track \* $tracks_per_cyl`
-cylbytes=`expr $cylindersize \* $bytes_per_sect`
-disksize=`expr $cylindersize \* $cyls_per_disk`
-
-echo	""
-echo	"Your disk has a total of $disksize $bytes_per_sect byte sectors,"
-echo	"arranged as $cyls_per_disk cylinders which contain $cylindersize"
-echo	"sectors ($cylbytes bytes) each."
-echo	""
-echo	"You can specify partition sizes in cylinders ('c') or sectors ('s')."
-while [ "X${sizemult}" = "X" ]; do
-	echo -n	"What units would you like to use? [cylinders] "
-	getresp cylinders
-	case "$resp" in
-		c*|C*)
-			sizemult=$cylindersize
-			sizeunit="cylinders"
-			;;
-		s*|S*)
-			sizemult=1
-			sizeunit="sectors"
-			;;
-		*)
-			echo	""
-			echo	"Enter cylinders ('c') or sectors ('s')."
-			;;
-	esac
-done
-
-if [ $sizeunit = "sectors" ]; then
-	echo	""
-	echo	"For best disk performance, partitions should being and end on"
-	echo	"cylinder boundaries.  Wherever possible, pick sizes that are"
-	echo -n	"multiples are multiples of the cylinder size ($cylindersize"
-	echo	"sectors)."
-fi
-
-echo -n ""
-echo -n "Size of NetBSD portion of disk (in $sizeunit)? "
-getresp
-partition=$resp
-partition_sects=`expr $resp \* $sizemult`
-part_offset=0
-if [ $partition_sects -lt $disksize ]; then
-	echo -n "Offset of NetBSD portion of disk (in $sizeunit)? "
-	getresp
-	part_offset=$resp
-fi
-badspacesec=0
-if [ "$sect_fwd" = "sf:" ]; then
-	badspacecyl=`expr $sects_per_track + 126`
-	badspacecyl=`expr $badspacecyl + $cylindersize - 1`
-	badspacecyl=`expr $badspacecyl / $cylindersize`
-	badspacesec=`expr $badspacecyl \* $cylindersize`
-	echo	""
-	echo -n "Using $badspacesec sectors ($badspacecyl cylinders) for the "
-	echo	"bad144 bad block table"
-fi
-
-sects_left=`expr $partition_sects - $badspacesec`
-units_left=`expr $sects_left / $sizemult`
-echo	""
-echo	"There are $units_left $sizeunit left to allocate."
-echo	""
-root=0
-while [ $root -eq 0 ]; do
-	echo -n "Root partition size (in $sizeunit)? "
-	getresp
-	case $resp in
-		[1-9]*)
-			total=$resp
-			if [ $total -gt $units_left ]; then
-				echo -n	"Root size is greater than remaining "
-				echo	"free space on disk."
-			else
-				root=$resp
-			fi
-			;;
-	esac
-done
-root_offset=$part_offset
-part_used=`expr $root + $badspacesec / $sizemult`
-units_left=`expr $partition - $part_used`
-echo	""
-
-swap=0
-while [ $swap -eq 0 ]; do 
-	echo	"$units_left $sizeunit remaining in NetBSD portion of disk."
-	echo -n	"Swap partition size (in $sizeunit)? "
-	getresp
-	case $resp in
-		[1-9]*)
-			if [ $swap -gt $units_left ]; then
-				echo -n	"Swap size is greater than remaining "
-				echo	"free space on disk."
-			else
-				swap=$resp
-			fi
-			;;
-	esac
-done
-swap_offset=`expr $root_offset + $root`
-part_used=`expr $part_used + $swap`
-echo	""
-
-fragsize=1024
-blocksize=8192
-$DONTDOIT mount -u /dev/fd0a /
-cat /etc/disktab.preinstall > $DT
-echo	"" >> $DT
-echo	"$labelname|NetBSD installation generated:\\" >> $DT
-echo	"	:dt=${type}:ty=winchester:\\" >> $DT
-echo -n	"	:nc#${cyls_per_disk}:ns#${sects_per_track}" >> $DT
-echo	":nt#${tracks_per_cyl}:\\" >> $DT
-echo	"	:se#${bytes_per_sect}:${sect_fwd}\\" >> $DT
-_size=`expr $root \* $sizemult`
-_offset=`expr $root_offset \* $sizemult`
-echo -n	"	:pa#${_size}:oa#${_offset}" >> $DT
-echo	":ta=4.2BSD:ba#${blocksize}:fa#${fragsize}:\\" >> $DT
-_size=`expr $swap \* $sizemult`
-_offset=`expr $swap_offset \* $sizemult`
-echo	"	:pb#${_size}:ob#${_offset}:tb=swap:\\" >> $DT
-_size=`expr $partition \* $sizemult`
-_offset=`expr $part_offset \* $sizemult`
-echo	"	:pc#${_size}:oc#${_offset}:\\" >> $DT
-
-echo	"You will now have to enter information about any other partitions"
-echo	"to be created in the NetBSD portion of the disk.  This process will"
-echo	"be complete when you've filled up all remaining space in the NetBSD"
-echo	"portion of the disk."
-
-while [ $part_used -lt $partition ]; do
-	part_size=0
-	units_left=`expr $partition - $part_used`
-	while [ $part_size -eq 0 ]; do
-		echo	""
-		echo -n	"$units_left $sizeunit remaining in NetBSD portion of "
-		echo	"the disk"
-		echo -n "Next partition size (in $sizeunit)? "
-		getresp
-		case $resp in
-			[1-9]*)
-				total=`expr $part_used + $resp`
-				if [ $total -gt $partition ]; then
-					echo -n	"That would make the parition"
-					echo	"too large to fit!"
-				else
-					part_size=$resp
-					part_used=$total
-					part_name=""
-					while [ "$part_name" = "" ]; do
-						echo -n "Mount point? "
-						getresp
-						part_name=$resp
-					done
-				fi
-				;;
-		esac
-	done
-	if [ "$ename" = "" ]; then
-		ename=$part_name
-		offset=`expr $part_offset + $root + $swap`
-		_size=`expr $part_size \* $sizemult`
-		_offset=`expr $offset \* $sizemult`
-		echo -n "	:pe#${_size}:oe#${_offset}" >> $DT
-		echo ":te=4.2BSD:be#${blocksize}:fe#${fragsize}:\\" >> $DT
-		offset=`expr $offset + $part_size`
-	elif [ "$fname" = "" ]; then
-		fname=$part_name
-		_size=`expr $part_size \* $sizemult`
-		_offset=`expr $offset \* $sizemult`
-		echo -n "	:pf#${_size}:of#${_offset}" >> $DT
-		echo ":tf=4.2BSD:bf#${blocksize}:ff#${fragsize}:\\" >> $DT
-		offset=`expr $offset + $part_size`
-	elif [ "$gname" = "" ]; then
-		gname=$part_name
-		_size=`expr $part_size \* $sizemult`
-		_offset=`expr $offset \* $sizemult`
-		echo -n "	:pg#${_size}:og#${_offset}" >> $DT
-		echo ":tg=4.2BSD:bg#${blocksize}:fg#${fragsize}:\\" >> $DT
-		offset=`expr $offset + $part_size`
-	elif [ "$hname" = "" ]; then
-		hname=$part_name
-		_size=`expr $part_size \* $sizemult`
-		_offset=`expr $offset \* $sizemult`
-		echo -n "	:ph#${_size}:oh#${_offset}" >> $DT
-		echo ":th=4.2BSD:bh#${blocksize}:fh#${fragsize}:\\" >> $DT
-		part_used=$partition
-	fi
-done
-echo	"	:pd#${disksize}:od#0:" >> $DT
-sync
 
 echo	""
 echo	"THIS IS YOUR LAST CHANCE!!!"
 echo	""
+echo	"(answering yes will format your root partition on $rdev)"
 echo -n	"Are you SURE you want NetBSD installed on your hard drive? (yes/no) "
 answer=""
 while [ "$answer" = "" ]; do
@@ -381,7 +180,6 @@ while [ "$answer" = "" ]; do
 	case $resp in
 		yes|YES)
 			echo	""
-			echo	"Here we go..."
 			answer=yes
 			;;
 		no|NO)
@@ -397,65 +195,85 @@ while [ "$answer" = "" ]; do
 			;;
 	esac
 done
+echo	"Initializing / (root) filesystem, and mounting..."
+$DONTDOIT newfs /dev/r${rdev}a $name
+$DONTDOIT mount -v /dev/${rdev}a /mnt
+echo	""
+echo -n	"Creating a fstab..."
+mkdir -p $FSTABDIR
+echo "/dev/${rdev}a	/	ufs	rw	1	1" > $FSTAB
+
+# get rid of this partition
+shiftvar $rdev
+shiftvar $rdev
 
 echo	""
-echo -n	"Labellling disk $drivename..."
-$DONTDOIT disklabel -w -B $drivename $labelname
-echo	" done."
+echo	"Now lets setup your /usr file system"
+echo	"(Once a valid input for drive and partition is seen"
+echo	"it will be FORMATTED and inserted in the fstab.)"
+while [ "X$usrpart" = "X" ]; do
+	resp=""
+	drivename=""
+	while [ "X$resp" = "X" ]; do
+		echo	"choices: $driveunits"
+		echo	"which drive do you want /usr on?"
+		getresp
+		set -- $driveunits
+		while [ $# -gt 0 ]; do
+			if [ "X$resp" = "X$1" ]; then
+				drivename=$1
+				break;
+			else
+				shift
+			fi
+		done
+		if [ "X$drivename" != "X" ]; then
+			break
+		fi
+	done
 
-if [ "$sect_fwd" = "sf:" ]; then
-	echo -n "Initializing bad144 badblock table..."
-	$DONTDOIT bad144 $drivename 0
-	echo " done."
-fi
+	usrpart=""
+	echo	"You have selected $drivename"
+	echo	"here is a list of partitions on $drivename"
+	disklabel $drivename 2>/dev/null | sed -e '/^[ ][ ][ad-p]:/p;/^#[ \t]*size/p;d' 
+	echo	"which partition would you like to format and have"
+	echo -n	"mounted as /usr? (supply the letter): "
+	getresp
+	if [ "X$resp" = "X" ]; then
+		continue;
+	fi
 
-echo	"Initializing root filesystem, and mounting..."
-$DONTDOIT newfs /dev/r${drivename}a $name
-$DONTDOIT mount -v /dev/${drivename}a /mnt
-if [ "$ename" != "" ]; then
-	echo	""
-	echo	"Initializing $ename filesystem, and mounting..."
-	$DONTDOIT newfs /dev/r${drivename}e $name
-	$DONTDOIT mkdir -p /mnt/$ename
-	$DONTDOIT mount -v /dev/${drivename}e /mnt/$ename
-fi
-if [ "$fname" != "" ]; then
-	echo	""
-	echo	"Initializing $fname filesystem, and mounting..."
-	$DONTDOIT newfs /dev/r${drivename}f $name
-	$DONTDOIT mkdir -p /mnt/$fname
-	$DONTDOIT mount -v /dev/${drivename}f /mnt/$fname
-fi
-if [ "$gname" != "" ]; then
-	echo	""
-	echo	"Initializing $gname filesystem, and mounting..."
-	$DONTDOIT newfs /dev/r${drivename}g $name
-	$DONTDOIT mkdir -p /mnt/$gname
-	$DONTDOIT mount -v /dev/${drivename}g /mnt/$gname
-fi
-if [ "$hname" != "" ]; then
-	echo	""
-	echo	"Initializing $hname filesystem, and mounting..."
-	$DONTDOIT newfs /dev/r${drivename}h $name
-	$DONTDOIT mkdir -p /mnt/$hname
-	$DONTDOIT mount -v /dev/${drivename}h /mnt/$hname
-fi
+	list=$(getvar $drivename)
+	set -- $list
+	while [ $# -gt 0 ]; do
+		if [ "$resp" = "$1" ]; then
+			if [ "`echo $2 | sed -e 's,.*BSD.*,BSD,'`" != "BSD" ]; then
+				echo	""
+				echo -n	"$drivename$resp is of type $2 which is not"
+				echo	" a BSD filesystem type"
+				break
+			fi
+			usrpart=$drivename$resp
+			break
+		else
+			shift
+			shift
+		fi
+	done
+	if [ "X$usrpart" = "X" ]; then
+		echo	"$resp is not a valid input."
+		echo	""
+	fi
+done
 
-echo -n	"Creating a fstab..."
-$DONTDOIT mkdir -p $FSTABDIR
-echo /dev/${drivename}a / ufs rw 1 1 | sed -e s,//,/, > $FSTAB
-if [ "$ename" != "" ]; then
-	echo /dev/${drivename}e /$ename ufs rw 1 2 | sed -e s,//,/, >> $FSTAB
-fi
-if [ "$fname" != "" ]; then
-	echo /dev/${drivename}f /$fname ufs rw 1 3 | sed -e s,//,/, >> $FSTAB
-fi
-if [ "$gname" != "" ]; then
-	echo /dev/${drivename}g /$gname ufs rw 1 4 | sed -e s,//,/, >> $FSTAB
-fi
-if [ "$hname" != "" ]; then
-	echo /dev/${drivename}h /$hname ufs rw 1 5 | sed -e s,//,/, >> $FSTAB
-fi
+echo	""
+echo	"Initializing /usr filesystem, and mounting..."
+$DONTDOIT newfs /dev/r${usrpart} $name
+$DONTDOIT mkdir -p /mnt/usr
+$DONTDOIT mount -v /dev/${usrpart} /mnt/usr
+echo	""
+echo -n	"Adding to fstab..."
+echo "/dev/${usrpart}	/usr	ufs	rw	1	2" >> $FSTAB
 sync
 echo	" done."
 
@@ -464,10 +282,10 @@ echo	""
 echo	"OK!  The preliminary work of setting up your disk is now complete,"
 echo	"and you can install the actual NetBSD software."
 echo	""
-echo	"Right now, your disk is mounted on /mnt.  You should consult"
-echo	"the installation notes to determine how to load and install the"
-echo	"NetBSD distribution sets, and how to configure your system when"
-echo	"you are done."
+echo	"Right now, your root is mounted on /mnt and your usr on /mnt/usr."
+echo	"You should consult the installation notes to determine how to load"
+echo	"and install the NetBSD distribution sets, and how to configure your"
+echo	"system when you are done."
 echo	""
 echo	"GOOD LUCK!"
 echo	""
