@@ -1,11 +1,11 @@
-/*	$NetBSD: zs_kgdb.c,v 1.1 2001/05/11 04:24:44 thorpej Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.2 2001/07/07 23:13:25 wdk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Gordon W. Ross.
+ * by Gordon W. Ross and Wayne Knowles.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -59,53 +59,47 @@
 
 #include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
-#include <machine/promlib.h>
-#include <sparc/dev/cons.h>
 
-/* The SGI provides a 3.6718 MHz (?) clock to the ZS chips.  */
-#define PCLK	3671808
+/*
+ * Hooks for kgdb when attached via the z8530 driver
+ *
+ * To use this, build a kernel with: option KGDB, and
+ * boot that kernel with "-d".  (The kernel will call
+ * zs_kgdb_init, kgdb_connect.)  When the console prints
+ * "kgdb waiting..." you run "gdb -k kernel" and do:
+ *   (gdb) set remotebaud 19200
+ *   (gdb) target remote /dev/ttyb
+ */
 
-/* The layout of this is hardware-dependent (padding, order). */
-struct zschan {
-	u_int32_t	zc_control;
-	u_int32_t	zs_data;
-};
+void zs_kgdb_init __P((void));
+void zskgdb __P((struct zs_chanstate *cs));
 
-struct zsdevice {
-	/* Yes, they are backwards. */
-	struct	zschan zs_chan_b;
-	struct	zschan zs_chan_a;
-};
+static void	zs_setparam __P((struct zs_chanstate *, int, int));
+static struct	zsops zsops_kgdb;
 
-static void zs_setparam __P((struct zs_chanstate *, int, int));
-static void *findzs __P((int));
-struct zsops zsops_kgdb;
-
-extern int  zs_getc __P((void *arg));
-extern void zs_putc __P((void *arg, int c));
+extern struct	zschan *zs_get_chan_addr (int zs_unit, int channel);
+extern int	zs_getc __P((void *arg));
+extern void	zs_putc __P((void *arg, int c));
 
 static u_char zs_kgdb_regs[16] = {
 	0,	/* 0: CMD (reset, etc.) */
 	0,	/* 1: No interrupts yet. */
 	0,	/* 2: IVECT */
 	ZSWR3_RX_8 | ZSWR3_RX_ENABLE,
-	ZSWR4_CLK_X16 | ZSWR4_ONESB | ZSWR4_EVENP,
+	ZSWR4_CLK_X16 | ZSWR4_ONESB,
 	ZSWR5_TX_8 | ZSWR5_TX_ENABLE,
 	0,	/* 6: TXSYNC/SYNCLO */
 	0,	/* 7: RXSYNC/SYNCHI */
 	0,	/* 8: alias for data port */
 	ZSWR9_MASTER_IE | ZSWR9_NO_VECTOR,
 	0,	/*10: Misc. TX/RX control bits */
-	ZSWR11_TXCLK_BAUD | ZSWR11_RXCLK_BAUD,
-	14,	/*12: BAUDLO (default=9600) */
-	0,	/*13: BAUDHI (default=9600) */
-	ZSWR14_BAUD_ENA | ZSWR14_BAUD_FROM_PCLK,
+	ZSWR11_TXCLK_BAUD | ZSWR11_RXCLK_BAUD | ZSWR11_TRXC_OUT_ENA,
+	10,     /*12: BAUDLO (updated by KGDB_RATE) */
+	0,	/*13: BAUDHI (updated by KGDB_RATE) */
+	ZSWR14_BAUD_ENA,
 	ZSWR15_BREAK_IE,
 };
 
-/*
- * This replaces "zs_reset()" in the sparc driver.
- */
 static void
 zs_setparam(cs, iena, rate)
 	struct zs_chanstate *cs;
@@ -122,6 +116,7 @@ zs_setparam(cs, iena, rate)
 
 	/* Initialize the speed, etc. */
 	tconst = BPS_TO_TCONST(cs->cs_brg_clk, rate);
+
 	cs->cs_preg[5] |= ZSWR5_DTR | ZSWR5_RTS;
 	cs->cs_preg[12] = tconst;
 	cs->cs_preg[13] = tconst >> 8;
@@ -139,45 +134,26 @@ zs_setparam(cs, iena, rate)
 void
 zs_kgdb_init()
 {
-	struct zs_chanstate cs;
-	struct zsdevice *zsd;
 	volatile struct zschan *zc;
-	int channel, promzs_unit;
+	int channel, unit;
 
-	/* printf("zs_kgdb_init: kgdb_dev=0x%x\n", kgdb_dev); */
 	if (major(kgdb_dev) != zs_major)
 		return;
 
-	/* Note: (ttya,ttyb) on zs0, and (ttyc,ttyd) on zs2 */
-	promzs_unit = (kgdb_dev & 2) ? 2 : 0;
-	channel  =  kgdb_dev & 1;
-	printf("zs_kgdb_init: attaching tty%c at %d baud\n",
-		   'a' + (kgdb_dev & 3), kgdb_rate);
+	unit = (kgdb_dev & 2) ? 2 : 0;
+	channel = kgdb_dev & 1;
+	printf("zs_kgdb_init: attaching to Serial(%d) at %d baud\n",
+		   (kgdb_dev & 3), kgdb_rate);
 
-	/* Setup temporary chanstate. */
-	bzero((caddr_t)&cs, sizeof(cs));
-	zsd = findzs(promzs_unit);
-	if (zsd == NULL) {
-		printf("zs_kgdb_init: zs not mapped.\n");
-		return;
-	}
-	zc = (channel == 0) ? &zsd->zs_chan_a : &zsd->zs_chan_b;
+	zc = zs_get_chan_addr(unit, channel);
 
-	cs.cs_channel = channel;
-	cs.cs_brg_clk = PCLK / 16;
-	cs.cs_reg_csr  = &zc->zc_csr;
-	cs.cs_reg_data = &zc->zc_data;
-
-	/* Now set parameters. (interrupts disabled) */
-	zs_setparam(&cs, 0, kgdb_rate);
-
-	/* Store the getc/putc functions and arg. */
+	/* Attach KGDB comms functions to this device */
 	kgdb_attach(zs_getc, zs_putc, (void *)zc);
 }
 
 /*
- * This is a "hook" called by zstty_attach to allow the tty
- * to be "taken over" for exclusive use by kgdb.
+ * This is a "hook" called by the MI zstty_attach driver 
+ * to allow the tty to be "taken over" for exclusive use by kgdb.
  * Return non-zero if this is the kgdb port.
  *
  * Set the speed to kgdb_rate, CS8, etc.
@@ -227,6 +203,13 @@ static void zs_kgdb_rxint __P((struct zs_chanstate *));
 static void zs_kgdb_stint __P((struct zs_chanstate *, int));
 static void zs_kgdb_txint __P((struct zs_chanstate *));
 static void zs_kgdb_softint __P((struct zs_chanstate *));
+
+static struct zsops zsops_kgdb = {
+	zs_kgdb_rxint,		/* receive char available */
+	zs_kgdb_stint,		/* external/status */
+	zs_kgdb_txint,		/* xmit buffer empty */
+	zs_kgdb_softint,	/* process software interrupt */
+};
 
 int kgdb_input_lost;
 
@@ -286,24 +269,7 @@ zs_kgdb_stint(cs, force)
 
 static void
 zs_kgdb_softint(cs)
+	struct zs_chanstate *cs;
 {
 	printf("zs_kgdb_softint?\n");
-}
-
-struct zsops zsops_kgdb = {
-	zs_kgdb_rxint,	/* receive char available */
-	zs_kgdb_stint,	/* external/status */
-	zs_kgdb_txint,	/* xmit buffer empty */
-	zs_kgdb_softint,	/* process software interrupt */
-};
-
-/*
- * findzs() should return the address of the given zs channel.
- * Here we count on the PROM to map in the required zs chips.
- */
-void *
-findzs(zs)
-	int zs;
-{
-	return (NULL);
 }
