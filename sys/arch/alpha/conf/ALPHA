@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.122 2000/05/08 13:49:44 augustss Exp $
+# $NetBSD: ALPHA,v 1.123 2000/05/23 02:04:28 thorpej Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include	"arch/alpha/conf/std.alpha"
 
 maxusers 32
 
-ident		"ALPHA-$Revision: 1.122 $"
+ident		"ALPHA-$Revision: 1.123 $"
 
 # CPU Support
 #options 	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
@@ -18,7 +18,7 @@ options 	DEC_EB164	# EB164:	AlphaPC 164
 options 	DEC_EB64PLUS	# EB64+:	AlphaPC 64, etc.
 options 	DEC_KN20AA	# KN20AA:	AlphaStation 500 and 600
 options 	DEC_KN8AE	# KN8AE:	AlphaServer 8200 and 8400
-options 	DEC_KN300	# KN300:	AlphaServer 4100
+options 	DEC_KN300	# KN300:	AlphaServer 4100 and 1200
 options 	DEC_550		# Miata:	Digital Personal Workstation
 options 	DEC_1000	# Mikasa etc:	Digital AlphaServer 1000
 options 	DEC_1000A	# Corelle etc:	Digital AlphaServer 800/1000A
