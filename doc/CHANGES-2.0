@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.532 2004/11/12 06:45:43 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.533 2004/11/12 06:47:16 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -8051,3 +8051,9 @@ distrib/notes/hp300/whatis			1.10
 
 	Mention theres now a sysinst installer available and fix a typo.
 	[mbw, ticket #964]
+
+distrib/notes/common/contents			1.111-1.112
+
+	Update hp300 info, shifting info to correct location.
+	hp300 miniroot doesnt have sysinst -- only the ramdisk kernel has it.
+	[mbw, ticket #965]
