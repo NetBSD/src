@@ -7,11 +7,11 @@
 # Public domain.
 #
 
-trap "rm -f /tmp/makewhatislist$$ /tmp/whatis$$; exit 1" 1 2 15
-
-MANDIR=${1-/usr/share/man}
 LIST=/tmp/makewhatislist$$
 TMP=/tmp/whatis$$
+trap "rm -f $LIST $TMP; exit 1" 1 2 15
+
+MANDIR=${1-/usr/share/man}
 if test ! -d "$MANDIR"; then 
 	echo "makewhatis: $MANDIR: not a directory"
 	exit 1
@@ -33,7 +33,8 @@ do
 	gzip -fdc $file | sed -n -f /usr/share/man/makewhatis.sed;
 done >> $TMP
 
-sort -u -o /tmp/whatis$$ /tmp/whatis$$
+sort -u -o $TMP $TMP
 
-install -o bin -g bin -m 444 /tmp/whatis$$ "$MANDIR/whatis.db"
+install -o bin -g bin -m 444 $TMP "$MANDIR/whatis.db"
+rm -f $LIST $TMP
 exit 0
