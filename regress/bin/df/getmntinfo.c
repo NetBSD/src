@@ -1,4 +1,4 @@
-/*	$NetBSD: getmntinfo.c,v 1.2 2004/07/07 01:57:35 enami Exp $	*/
+/*	$NetBSD: getmntinfo.c,v 1.3 2004/07/17 00:31:38 enami Exp $	*/
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -17,6 +17,7 @@ static void other_variants(const struct statvfs *, const int *, int,
     const int *, int);
 static void setup_filer(void);
 static void setup_ld0g(void);
+static void setup_strpct(void);
 
 static struct statvfs *allstatvfs;
 static int sftotal, sfused;
@@ -125,12 +126,43 @@ setup_ld0g(void)
 	    consumed, sizeof(consumed) / sizeof(consumed[0]));
 }
 
+/*
+ * Test of strpct() with huge number.
+ */
+void
+setup_strpct(void)
+{
+	static const struct statvfs tmpl = {
+#define	BSIZE	4096			/* Guess */
+#define	TOTAL	0x4ffffffffULL KB
+#define	USED	(TOTAL / 2)
+#define	AVAIL	(TOTAL / 2)
+		.f_bsize = BSIZE,
+		.f_frsize = BSIZE,
+		.f_blocks = TOTAL / BSIZE,
+		.f_bfree = (TOTAL - USED) / BSIZE,
+		.f_bavail = AVAIL / BSIZE,
+		.f_bresvd = (TOTAL - USED) / BSIZE - AVAIL / BSIZE,
+		.f_mntfromname = "/dev/strpct",
+		.f_mntonname = "/strpct",
+#undef AVAIL
+#undef USED
+#undef TOTAL
+#undef BSIZE
+	};
+	struct statvfs *sf;
+
+	sf = getnewstatvfs();
+	*sf = tmpl;
+}
+
 int
 getmntinfo(struct statvfs **mntbuf, int flags)
 {
 
 	setup_filer();
 	setup_ld0g();
+	setup_strpct();
 
 	*mntbuf = allstatvfs;
 	return (sfused);
