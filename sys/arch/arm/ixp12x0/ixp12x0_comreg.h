@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_comreg.h,v 1.6 2003/02/22 05:32:00 igy Exp $ */
+/*	$NetBSD: ixp12x0_comreg.h,v 1.7 2003/03/06 06:14:16 igy Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -38,6 +38,9 @@
  *  UART_CR 0x90003800
  *  UART_DR 0x90003C00
  */
+
+#ifndef _IXP12X0_COMREG_H_
+#define _IXP12X0_COMREG_H_
 
 #define IXPCOM_FREQ		(3686400 / 16)
 #define IXPCOMSPEED(b)		(IXPCOM_FREQ / (b) - 1)
@@ -92,3 +95,5 @@
 
 #define IXPCOMSPLRAISED		(~(CR_RIE | CR_XIE))
 #define IXPCOMSPLLOWERD		(~0UL);
+
+#endif /* _IXP12X0_COMREG_H_ */
