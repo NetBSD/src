@@ -1,4 +1,4 @@
-.\"	$NetBSD: send.2,v 1.21 2003/04/16 13:34:56 wiz Exp $
+.\"	$NetBSD: send.2,v 1.22 2003/04/20 22:53:01 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -161,6 +161,13 @@ The total length of the I/O is more than can be expressed by the ssize_t
 return value.
 .It Bq Er EAFNOSUPPORT
 Addresses in the specified address family cannot be used with this socket.
+.El
+.Pp
+.Fn sendto
+will also fail if:
+.Bl -tag -width Er
+.It Bq Er EISCONN
+A destination address was specified and the socket is already connected.
 .El
 .Pp
 .Fn sendmsg
