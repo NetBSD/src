@@ -1,7 +1,7 @@
-/*	$NetBSD: ip.c,v 1.7 2000/06/13 13:37:12 ad Exp $	*/
+/*	$NetBSD: ip.c,v 1.8 2000/07/05 11:03:21 ad Exp $	*/
 
 /*
- * Copyright (c) 1999 Andrew Doran <ad@NetBSD.org>
+ * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ip.c,v 1.7 2000/06/13 13:37:12 ad Exp $");
+__RCSID("$NetBSD: ip.c,v 1.8 2000/07/05 11:03:21 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -63,7 +63,16 @@ struct mystat {
 	struct udpstat u;
 };
 
+enum update {
+	UPDATE_TIME,
+	UPDATE_BOOT,
+	UPDATE_RUN,
+};
+
+static enum update update = UPDATE_TIME;
 static struct mystat curstat;
+static struct mystat oldstat;
+static struct mystat newstat;
 
 static struct nlist namelist[] = {
 	{ "_ipstat" },
@@ -79,8 +88,7 @@ openip(void)
 }
 
 void
-closeip(w)
-	WINDOW *w;
+closeip(WINDOW *w)
 {
 
 	if (w != NULL) {
@@ -201,6 +209,80 @@ void
 fetchip(void)
 {
 
-	KREAD((void *)namelist[0].n_value, &curstat.i, sizeof(curstat.i));
-	KREAD((void *)namelist[1].n_value, &curstat.u, sizeof(curstat.u));
+	KREAD((void *)namelist[0].n_value, &newstat.i, 
+	    sizeof(newstat.i));
+	KREAD((void *)namelist[1].n_value, &newstat.u, 
+	    sizeof(newstat.u));
+
+	ADJINETCTR(curstat, oldstat, newstat, i.ips_total);
+	ADJINETCTR(curstat, oldstat, newstat, i.ips_delivered);
+	ADJINETCTR(curstat, oldstat, newstat, i.ips_badsum);
+	ADJINETCTR(curstat, oldstat, newstat, i.ips_tooshort);
+	ADJINETCTR(curstat, oldstat, newstat, i.ips_toosmall);
+	ADJINETCTR(curstat, oldstat, newstat, i.ips_badhlen);
+	ADJINETCTR(curstat, oldstat, newstat, i.ips_badlen);
+	ADJINETCTR(curstat, oldstat, newstat, i.ips_badvers);
+	ADJINETCTR(curstat, oldstat, newstat, i.ips_toolong);
+	ADJINETCTR(curstat, oldstat, newstat, i.ips_badoptions);
+	ADJINETCTR(curstat, oldstat, newstat, i.ips_localout);
+	ADJINETCTR(curstat, oldstat, newstat, i.ips_odropped);
+	ADJINETCTR(curstat, oldstat, newstat, i.ips_ofragments);
+	ADJINETCTR(curstat, oldstat, newstat, i.ips_cantfrag);
+	ADJINETCTR(curstat, oldstat, newstat, i.ips_noroute);
+	ADJINETCTR(curstat, oldstat, newstat, i.ips_rawout);
+	ADJINETCTR(curstat, oldstat, newstat, i.ips_fragments);
+	ADJINETCTR(curstat, oldstat, newstat, i.ips_fragdropped);
+	ADJINETCTR(curstat, oldstat, newstat, i.ips_fragtimeout);
+	ADJINETCTR(curstat, oldstat, newstat, i.ips_reassembled);
+	ADJINETCTR(curstat, oldstat, newstat, i.ips_forward);
+	ADJINETCTR(curstat, oldstat, newstat, i.ips_fastforward);
+	ADJINETCTR(curstat, oldstat, newstat, i.ips_cantforward);
+	ADJINETCTR(curstat, oldstat, newstat, i.ips_redirectsent);
+	ADJINETCTR(curstat, oldstat, newstat, u.udps_opackets);
+	ADJINETCTR(curstat, oldstat, newstat, u.udps_ipackets);
+	ADJINETCTR(curstat, oldstat, newstat, u.udps_hdrops);
+	ADJINETCTR(curstat, oldstat, newstat, u.udps_badsum);
+	ADJINETCTR(curstat, oldstat, newstat, u.udps_badlen);
+	ADJINETCTR(curstat, oldstat, newstat, u.udps_noport);
+	ADJINETCTR(curstat, oldstat, newstat, u.udps_noportbcast);
+	ADJINETCTR(curstat, oldstat, newstat, u.udps_fullsock);
+
+	if (update == UPDATE_TIME)
+		memcpy(&oldstat, &newstat, sizeof(oldstat));
+}
+
+void
+ip_boot(char *args)
+{
+
+	memset(&oldstat, 0, sizeof(oldstat));
+	update = UPDATE_BOOT;
+}
+
+void
+ip_run(char *args)
+{
+
+	if (update != UPDATE_RUN) {
+		memcpy(&oldstat, &newstat, sizeof(oldstat));
+		update = UPDATE_RUN;
+	}
+}
+
+void
+ip_time(char *args)
+{
+
+	if (update != UPDATE_TIME) {
+		memcpy(&oldstat, &newstat, sizeof(oldstat));
+		update = UPDATE_TIME;
+	}
+}
+
+void
+ip_zero(char *args)
+{
+
+	if (update == UPDATE_RUN)
+		memcpy(&oldstat, &newstat, sizeof(oldstat));
 }
