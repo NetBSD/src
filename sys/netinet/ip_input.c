@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.134 2001/05/21 03:31:36 lukem Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.135 2001/06/02 16:17:09 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -105,6 +105,7 @@
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
 #include "opt_mrouting.h"
+#include "opt_inet_csum.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,6 +271,24 @@ do {									\
 
 struct pool ipqent_pool;
 
+#ifdef INET_CSUM_COUNTERS
+#include <sys/device.h>
+
+struct evcnt ip_hwcsum_bad = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "inet", "hwcsum bad");
+struct evcnt ip_hwcsum_ok = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "inet", "hwcsum ok");
+struct evcnt ip_swcsum = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "inet", "swcsum");
+
+#define	INET_CSUM_COUNTER_INCR(ev)	(ev)->ev_count++
+
+#else
+
+#define	INET_CSUM_COUNTER_INCR(ev)	/* nothing */
+
+#endif /* INET_CSUM_COUNTERS */
+
 /*
  * We need to save the IP options in case a protocol wants to respond
  * to an incoming packet over the same route if the packet got here
@@ -332,6 +351,12 @@ ip_init()
 		printf("ip_init: WARNING: unable to register pfil hook, "
 		    "error %d\n", i);
 #endif /* PFIL_HOOKS */
+
+#ifdef INET_CSUM_COUNTERS
+	evcnt_attach_static(&ip_hwcsum_bad);
+	evcnt_attach_static(&ip_hwcsum_ok);
+	evcnt_attach_static(&ip_swcsum);
+#endif /* INET_CSUM_COUNTERS */
 }
 
 struct	sockaddr_in ipaddr = { sizeof(ipaddr), AF_INET };
@@ -433,9 +458,24 @@ ip_input(struct mbuf *m)
 		}
 	}
 
-	if (in_cksum(m, hlen) != 0) {
-		ipstat.ips_badsum++;
-		goto bad;
+	switch (m->m_pkthdr.csum_flags &
+		((m->m_pkthdr.rcvif->if_csum_flags & M_CSUM_IPv4) |
+		 M_CSUM_IPv4_BAD)) {
+	case M_CSUM_IPv4|M_CSUM_IPv4_BAD:
+		INET_CSUM_COUNTER_INCR(&ip_hwcsum_bad);
+		goto badcsum;
+
+	case M_CSUM_IPv4:
+		/* Checksum was okay. */
+		INET_CSUM_COUNTER_INCR(&ip_hwcsum_ok);
+		break;
+
+	default:
+		/* Must compute it ourselves. */
+		INET_CSUM_COUNTER_INCR(&ip_swcsum);
+		if (in_cksum(m, hlen) != 0)
+			goto bad;
+		break;
 	}
 
 	/* Retrieve the packet length. */
@@ -753,6 +793,11 @@ found:
 	return;
     }
 bad:
+	m_freem(m);
+	return;
+
+badcsum:
+	ipstat.ips_badsum++;
 	m_freem(m);
 }
 
@@ -1433,6 +1478,11 @@ ip_forward(m, srcrt)
 #ifdef IPSEC
 	struct ifnet dummyifp;
 #endif
+
+	/*
+	 * Clear any in-bound checksum flags for this packet.
+	 */
+	m->m_pkthdr.csum_flags = 0;
 
 	dest = 0;
 #ifdef DIAGNOSTIC
