@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.1 2002/11/22 15:01:18 fvdl Exp $	*/
+/*	$NetBSD: vector.S,v 1.2 2002/11/27 21:59:55 fvdl Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -146,8 +146,8 @@
 	shl	$24,%eax				;\
 	orl	%edx,%eax
 
-
 #if NLAPIC > 0
+#ifdef MULTIPROCESSOR
 IDTVEC(recurse_lapic_ipi)
 	pushfl
 	pushl	%cs
@@ -178,7 +178,7 @@ IDTVEC(intr_lapic_ipi)
 	sti
 	INTRFASTEXIT
 
-#if defined(DDB) && defined(MULTIPROCESSOR)
+#if defined(DDB)
 IDTVEC(intrddbipi)
 1:
 	str	%ax
@@ -194,7 +194,8 @@ IDTVEC(intrddbipi)
 	movl	$0,_C_LABEL(lapic_tpr)
 	iret
 	jmp	1b
-#endif /* DDB && MULTIPROCESSOR */
+#endif /* DDB */
+#endif /* MULTIPROCESSOR */
 	
 	/*
 	 * Interrupt from the local APIC timer.
@@ -230,7 +231,7 @@ IDTVEC(intr_lapic_ltimer)
 	orl	$(1 << LIR_TIMER),CPUVAR(IPENDING)
 	sti
 	INTRFASTEXIT
-#endif
+#endif /* NLAPIC > 0 */
 
 #ifdef MULTIPROCESSOR
 #define LOCK_KERNEL	call _C_LABEL(i386_intlock)
