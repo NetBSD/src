@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.6 1998/09/05 23:57:29 eeh Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.7 1998/11/24 13:02:59 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,6 @@
  */
 #include <sys/param.h>
 #include <sys/systm.h>
-
 #include <machine/psl.h>
 #include <machine/stdarg.h>
 
@@ -476,6 +475,8 @@ OF_read(handle, addr, len)
 	}
 	return act;
 }
+
+void prom_printf __P((const char *fmt, ...));	/* XXX for below */
 
 int
 OF_write(handle, addr, len)
