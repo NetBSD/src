@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.74 2004/02/05 22:28:33 christos Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.75 2004/02/06 13:46:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.74 2004/02/05 22:28:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.75 2004/02/06 13:46:27 christos Exp $");
 
 #define SYSVSHM
 
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.74 2004/02/05 22:28:33 christos Exp $
 #include <sys/pool.h>
 
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_object.h>
 
 struct shmid_ds *shm_find_segment_by_shmid __P((int, int));
 
