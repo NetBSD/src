@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.2 1995/11/04 00:23:06 cgd Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.3 1996/09/09 00:58:02 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -37,8 +37,8 @@ EXPORT(curbrk)
 
 	.text
 LEAF(sbrk, 1)
-	br	pv, 1f				/* XXX profiling */
-1:	SETGP(pv)
+	br	pv, L1				/* XXX profiling */
+L1:	SETGP(pv)
 	ldq	a1, curbrk
 	addq	a0, a1, a0
 	SYSCALL_NOLABEL(break)
