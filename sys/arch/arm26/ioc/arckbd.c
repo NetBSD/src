@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.14 2001/07/02 23:49:17 bjh21 Exp $ */
+/* $NetBSD: arckbd.c,v 1.15 2001/12/03 22:37:57 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arckbd.c,v 1.14 2001/07/02 23:49:17 bjh21 Exp $");
+__RCSID("$NetBSD: arckbd.c,v 1.15 2001/12/03 22:37:57 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -68,6 +68,7 @@ __RCSID("$NetBSD: arckbd.c,v 1.14 2001/07/02 23:49:17 bjh21 Exp $");
 #include <arch/arm26/ioc/arckbdreg.h>
 #include <arch/arm26/ioc/arckbdvar.h>
 
+#include "arckbd.h"
 #include "locators.h"
 
 #include "rnd.h"
@@ -93,21 +94,28 @@ static void arckbd_attach(struct device *parent, struct device *self,
 #if 0 /* XXX should be used */
 static kbd_t arckbd_pick_layout(int kbid);
 #endif
+#if NARCWSKBD > 0
 static int arcwskbd_match(struct device *parent, struct cfdata *cf, void *aux);
 static void arcwskbd_attach(struct device *parent, struct device *self,
     void *aux);
+#endif
+#if NARCWSMOUSE > 0
 static int arcwsmouse_match(struct device *parent, struct cfdata *cf,
     void *aux);
 static void arcwsmouse_attach(struct device *parent, struct device *self,
     void *aux);
+#endif
 
 static int arckbd_rint(void *self);
 static int arckbd_xint(void *self);
+#if NARCWSMOUSE > 0
 static void arckbd_mousemoved(struct device *self, int byte1, int byte2);
+#endif
 static void arckbd_keyupdown(struct device *self, int byte1, int byte2);
 static int arckbd_send(struct device *self, int data,
     enum arckbd_state newstate, int waitok);
 
+#if NARCWSKBD > 0
 static int arckbd_enable(void *cookie, int on);
 static int arckbd_led_encode(int);
 static int arckbd_led_decode(int);
@@ -116,10 +124,13 @@ static int arckbd_ioctl(void *cookie, u_long cmd, caddr_t data, int flag,
     struct proc *p);
 static void arckbd_getc(void *cookie, u_int *typep, int *valuep);
 static void arckbd_pollc(void *cookie, int poll);
+#endif
+#if NARCWSMOUSE > 0
 static int arcmouse_enable(void *cookie);
 static int arcmouse_ioctl(void *cookie, u_long cmd, caddr_t data, int flag,
     struct proc *p);
 static void arcmouse_disable(void *cookie);
+#endif
 
 struct arckbd_softc {
 	struct device		sc_dev;
@@ -167,13 +178,17 @@ struct cfattach arckbd_ca = {
  * of configuration.
  */
 
+#if NARCWSKBD > 0
 struct cfattach arcwskbd_ca = {
 	sizeof(struct device), arcwskbd_match, arcwskbd_attach
 };
+#endif
 
+#if NARCWSMOUSE > 0
 struct cfattach arcwsmouse_ca = {
 	sizeof(struct device), arcwsmouse_match, arcwsmouse_attach
 };
+#endif
 
 struct arckbd_attach_args {
 	enum { ARCKBD_KBDDEV, ARCKBD_MOUSEDEV } aka_devtype;
@@ -181,6 +196,7 @@ struct arckbd_attach_args {
 	struct wsmousedev_attach_args aka_wsmouseargs;
 };
 
+#if NARCWSKBD > 0
 static struct wskbd_accessops arckbd_accessops = {
 	arckbd_enable, arckbd_set_leds, arckbd_ioctl
 };
@@ -188,10 +204,13 @@ static struct wskbd_accessops arckbd_accessops = {
 static struct wskbd_consops arckbd_consops = {
 	arckbd_getc, arckbd_pollc
 };
+#endif
 
+#if NARCWSMOUSE > 0
 static struct wsmouse_accessops arcmouse_accessops = {
 	arcmouse_enable, arcmouse_ioctl, arcmouse_disable
 };
+#endif
 
 /* ARGSUSED */
 static int
@@ -247,8 +266,10 @@ arckbd_attach(struct device *parent, struct device *self, void *aux)
 
 	/* XXX set the LEDs to a known state? (or will wskbd do this?) */
 
+#if NARCWSKBD > 0
 	/* Attach the wskbd console */
 	arckbd_cnattach(self);
+#endif
 
 	printf("\n");
 
@@ -257,16 +278,24 @@ arckbd_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	/* Attach the dummy drivers */
+#if NARCWSKBD > 0
 	aka.aka_wskbdargs.console = 1; /* XXX FIXME */
 	aka.aka_wskbdargs.keymap = &sc->sc_mapdata;
 	aka.aka_wskbdargs.accessops = &arckbd_accessops;
 	aka.aka_wskbdargs.accesscookie = self;
+#endif
+#if NARCWSMOUSE > 0
 	aka.aka_wsmouseargs.accessops = &arcmouse_accessops;
 	aka.aka_wsmouseargs.accesscookie = self;
+#endif
+#if NARCWSKBD > 0
 	aka.aka_devtype = ARCKBD_KBDDEV;
 	config_found(self, &aka, NULL);
+#endif
+#if NARCWSMOUSE > 0
 	aka.aka_devtype = ARCKBD_MOUSEDEV;
 	config_found(self, &aka, NULL);
+#endif
 }
 
 #if 0 /* XXX should be used */
@@ -283,6 +312,7 @@ arckbd_pick_layout(int kbid)
 }
 #endif
 
+#if NARCWSKBD > 0
 /* ARGSUSED */
 static int
 arcwskbd_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -293,7 +323,9 @@ arcwskbd_match(struct device *parent, struct cfdata *cf, void *aux)
 		return 1;
 	return 0;
 }
+#endif
 
+#if NARCWSMOUSE > 0
 /* ARGSUSED */
 static int
 arcwsmouse_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -304,7 +336,9 @@ arcwsmouse_match(struct device *parent, struct cfdata *cf, void *aux)
 		return 1;
 	return 0;
 }
+#endif
 
+#if NARCWSKBD > 0
 static void
 arcwskbd_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -316,7 +350,9 @@ arcwskbd_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_wskbddev = config_found(self, &(aka->aka_wskbdargs),
 				       wskbddevprint);
 }
+#endif
 
+#if NARCWSMOUSE > 0
 static void
 arcwsmouse_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -328,8 +364,10 @@ arcwsmouse_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_wsmousedev = config_found(self, &(aka->aka_wsmouseargs),
 					 wsmousedevprint);
 }
+#endif
 
 
+#if NARCWSKBD > 0
 /*
  * We don't really _need_ a console keyboard before
  * autoconfiguration's finished, so for now this function's written to
@@ -387,6 +425,7 @@ arckbd_pollc(void *cookie, int poll)
 	}
 	splx(s);
 }
+#endif
 
 static int
 arckbd_send(struct device *self, int data, enum arckbd_state newstate,
@@ -494,7 +533,9 @@ arckbd_rint(void *cookie)
 		sc->sc_byteone = data;
 	} else if (ARCKBD_IS_MDAT(data) && sc->sc_state == AS_MDAT) {
 		arckbd_send(self, ARCKBD_SMAK, AS_IDLE, 0);
+#if NARCWSMOUSE > 0
 		arckbd_mousemoved(self, sc->sc_byteone, data);
+#endif
 	}
 
 	/* Key down data */
@@ -503,7 +544,9 @@ arckbd_rint(void *cookie)
 		sc->sc_byteone = data;
 	} else if (ARCKBD_IS_KDDA(data) && sc->sc_state == AS_KDDA) {
 		arckbd_send(self, ARCKBD_SMAK, AS_IDLE, 0);
+#if NARCWSKBD > 0 || NARCWSMOUSE > 0
 		arckbd_keyupdown(self, sc->sc_byteone, data);
+#endif
 	}
 
 	/* Key up data */
@@ -512,7 +555,9 @@ arckbd_rint(void *cookie)
 		sc->sc_byteone = data;
 	} else if (ARCKBD_IS_KUDA(data) && sc->sc_state == AS_KUDA) {
 		arckbd_send(self, ARCKBD_SMAK, AS_IDLE, 0);
+#if NARCWSKBD > 0 || NARCWSMOUSE > 0
 		arckbd_keyupdown(self, sc->sc_byteone, data);
+#endif
 	}
 
 	/* Other cruft */
@@ -534,6 +579,7 @@ arckbd_rint(void *cookie)
 	return IRQ_HANDLED;
 }
 
+#if NARCWSMOUSE > 0
 static void
 arckbd_mousemoved(struct device *self, int byte1, int byte2)
 {
@@ -552,18 +598,23 @@ arckbd_mousemoved(struct device *self, int byte1, int byte2)
 			      WSMOUSE_INPUT_DELTA);
 	}
 }
+#endif
 
+#if NARCWSKBD > 0 || NARCWSMOUSE > 0
 static void
 arckbd_keyupdown(struct device *self, int byte1, int byte2)
 {
 	struct arckbd_softc *sc = (void *)self;
+#if NARCWSKBD > 0
 	u_int type;
 	int value;
+#endif
 
 #if NRND > 0
 	rnd_add_uint32(&sc->sc_rnd_source, byte1);
 #endif
 	if ((byte1 & 0x0f) == 7) {
+#if NARCWSMOUSE > 0		
 		/* Mouse button event */
 		/*
 		 * This is all very silly, as the wsmouse driver then
@@ -580,7 +631,9 @@ arckbd_keyupdown(struct device *self, int byte1, int byte2)
 		if (sc->sc_wsmousedev != NULL)
 			wsmouse_input(sc->sc_wsmousedev, sc->sc_mouse_buttons,
 				      0, 0, 0, WSMOUSE_INPUT_DELTA);
+#endif
 	} else {
+#if NARCWSKBD > 0
 		type = ARCKBD_IS_KDDA(byte1) ?
 			WSCONS_EVENT_KEY_DOWN : WSCONS_EVENT_KEY_UP;
 		value = ((byte1 & 0x0f) << 4) | (byte2 & 0x0f);
@@ -589,9 +642,12 @@ arckbd_keyupdown(struct device *self, int byte1, int byte2)
 			sc->sc_poll_value = value;
 		} else if (sc->sc_wskbddev != NULL)
 			wskbd_input(sc->sc_wskbddev, type, value);
+#endif
 	}
 }
+#endif
 
+#if NARCWSKBD > 0
 /*
  * Keyboard access functions
  */
@@ -678,7 +734,9 @@ arckbd_ioctl(void *cookie, u_long cmd, caddr_t data, int flag, struct proc *p)
 	}
 	return -1;
 }
+#endif
 
+#if NARCWSMOUSE > 0
 /*
  * Mouse access functions
  */
@@ -715,3 +773,4 @@ arcmouse_disable(void *cookie)
 
 	sc->sc_flags &= ~AKF_WANTMOUSE;
 }
+#endif
