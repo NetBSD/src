@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tsort.c	5.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: tsort.c,v 1.2 1993/08/01 18:04:16 mycroft Exp $";
+static char rcsid[] = "$Id: tsort.c,v 1.3 1993/11/17 12:01:04 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -197,9 +197,14 @@ add_arc(s1, s2)
 		n2 = add_node(s2);
 
 	/*
-	 * could check to see if this arc is here already, but it isn't
-	 * worth the bother -- there usually isn't and it doesn't hurt if
-	 * there is (I think :-).
+	 * Check if this arc is already here.
+	 */
+	for (i = 0; i < n1->n_narcs; i++)
+		if (n1->n_arcs[i] == n2)
+			return;
+
+	/*
+	 * Add it.
 	 */
 	if (n1->n_narcs == n1->n_arcsize) {
 		if (!n1->n_arcsize)
