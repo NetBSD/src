@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.409 2000/11/09 17:34:51 kim Exp $	*/
+/*	$NetBSD: machdep.c,v 1.410 2000/11/09 19:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -2077,7 +2077,7 @@ init386(first_avail)
 				break;
 		}
 		if (x == vm_nphysseg)
-			panic("init386: can't find end of memory (increase VM_PHYSSEG_MAX?)");
+			panic("init386: can't find end of memory");
 
 		/* Shrink so it'll fit in the last segment. */
 		if ((vps->avail_end - vps->avail_start) < atop(sz))
