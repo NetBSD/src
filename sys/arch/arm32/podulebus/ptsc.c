@@ -1,4 +1,4 @@
-/* $NetBSD: ptsc.c,v 1.5 1996/06/12 20:47:02 mark Exp $ */
+/* $NetBSD: ptsc.c,v 1.6 1996/06/13 18:29:45 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -185,8 +185,8 @@ ptscattach(pdp, dp, auxp)
 	sc->sc_softc.sc_ih.ih_arg  = &sc->sc_softc;
 	sc->sc_softc.sc_ih.ih_level = IPL_BIO;
 	sc->sc_softc.sc_ih.ih_name = "scsi: ptsc";
-	sc->sc_softc.sc_ih.ih_maskaddr = sc->sc_podule->irq_addr;
-	sc->sc_softc.sc_ih.ih_maskbits = sc->sc_podule->irq_mask;
+	sc->sc_softc.sc_ih.ih_maskaddr = sc->sc_specific.sc_podule->irq_addr;
+	sc->sc_softc.sc_ih.ih_maskbits = sc->sc_specific.sc_podule->irq_mask;
 
 /* initialise the card */
 	*rp->term = 0;
