@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.150 2003/01/22 04:46:08 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.151 2003/02/19 18:26:48 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.150 2003/01/22 04:46:08 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.151 2003/02/19 18:26:48 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -1092,7 +1092,11 @@ pass(const char *passwd)
 	}
 	(void) initgroups(pw->pw_name, pw->pw_gid);
 			/* cache groups for cmds.c::matchgroup() */
-	gidcount = getgroups(sizeof(gidlist), gidlist);
+	gidcount = getgroups(0, NULL);
+	if (gidlist)
+		free(gidlist);
+	gidlist = malloc(gidcount * sizeof *gidlist);
+	gidcount = getgroups(gidcount, gidlist);
 
 	/* open utmp/wtmp before chroot */
 	login_utmp(ttyline, pw->pw_name, remotehost);
@@ -1206,6 +1210,7 @@ pass(const char *passwd)
 		}
 		break;
 	}
+	setsid();
 	setlogin(pw->pw_name);
 	if (dropprivs ||
 	    (curclass.type != CLASS_REAL && 
