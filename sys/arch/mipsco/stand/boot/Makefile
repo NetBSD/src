@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2000/09/18 11:40:47 wdk Exp $
+#	$NetBSD: Makefile,v 1.2 2000/09/26 09:11:04 wdk Exp $
 #	@(#)Makefile	8.3 (Berkeley) 2/16/94
 
-SECONDARY_PROG=	boot.mipsco
+SECONDARY_PROG=	boot
 
 SRCS=		start.S boot.c
 SRCS+=		bootinfo.c callvec.c conf.c devopen.c saio.c
