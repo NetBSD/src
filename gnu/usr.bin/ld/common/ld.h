@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.h,v 1.24 1998/10/21 06:13:08 matt Exp $	*/
+/*	$NetBSD: ld.h,v 1.25 1998/10/24 21:07:15 kristerw Exp $	*/
 
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -354,29 +354,7 @@ extern int	netzmagic;
 #endif
 #endif /* not __GNU_STAB__ */
 
-#ifndef N_WEAKU
-#define	N_WEAKU	0x0d		/* Weak undefined symbol */
-#endif
-
-#ifndef N_WEAKA
-#define	N_WEAKA	0x0e		/* Weak absolute symbol */
-#endif
-
-#ifndef N_WEAKT
-#define	N_WEAKT	0x0f		/* Weak text symbol */
-#endif
-
-#ifndef N_WEAKD
-#define	N_WEAKD	0x10		/* Weak data symbol */
-#endif
-
-#ifndef N_WEAKB
-#define	N_WEAKB	0x11		/* Weak bss symbol */
-#endif
-
-#define N_ISWEAK(p)		((N_BIND(p) & BIND_WEAK) \
-				 || ((p)->n_type >= N_WEAKU \
-				     && (p)->n_type <= N_WEAKB))
+#define N_ISWEAK(p)		(N_BIND(p) & BIND_WEAK)
 
 
 typedef struct localsymbol {
