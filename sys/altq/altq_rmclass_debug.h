@@ -1,3 +1,4 @@
+/*	$NetBSD: altq_rmclass_debug.h,v 1.2 2000/12/14 08:49:51 thorpej Exp $	*/
 /*	$KAME: altq_rmclass_debug.h,v 1.2 2000/02/22 14:00:35 itojun Exp $	*/
 
 /*
