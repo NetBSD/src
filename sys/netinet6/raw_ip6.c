@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.43 2002/06/07 22:03:02 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.44 2002/06/07 22:05:37 itojun Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.43 2002/06/07 22:03:02 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.44 2002/06/07 22:05:37 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -347,7 +347,7 @@ rip6_ctlinput(cmd, sa, d)
 		/*
 		 * Depending on the value of "valid" and routing table
 		 * size (mtudisc_{hi,lo}wat), we will:
-		 * - recalcurate the new MTU and create the
+		 * - recalculate the new MTU and create the
 		 *   corresponding routing entry, or
 		 * - ignore the MTU change notification.
 		 */
