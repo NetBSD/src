@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.21 1999/04/02 03:35:54 cgd Exp $
+# $NetBSD: Makefile,v 1.22 1999/04/06 18:43:18 cgd Exp $
 
-PROG = bootxx
+PROG = bootxx.old
 
 SRCS = start.S bootxx.c prom.c prom_disp.S putstr.c booted_dev.c
 
