@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.16 1998/03/10 12:45:44 kleink Exp $	*/
+/*	$NetBSD: compress.c,v 1.17 1998/10/08 01:56:28 wsanchez Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: compress.c,v 1.16 1998/03/10 12:45:44 kleink Exp $");
+__RCSID("$NetBSD: compress.c,v 1.17 1998/10/08 01:56:28 wsanchez Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	enum {COMPRESS, DECOMPRESS} style;
+        enum {COMPRESS, DECOMPRESS} style = COMPRESS;
 	size_t len;
 	int bits, cat, ch;
 	char *p, newname[MAXPATHLEN];
@@ -94,8 +94,12 @@ main(argc, argv)
 		++p;
 	if (!strcmp(p, "uncompress"))
 		style = DECOMPRESS;
-	else if (!strcmp(p, "compress")) 
-		style = COMPRESS;
+        else if (!strcmp(p, "compress"))
+                style = COMPRESS;
+        else if (!strcmp(p, "zcat")) {
+                style = DECOMPRESS;
+                cat = 1;
+        }
 	else
 		errx(1, "unknown program name");
 
