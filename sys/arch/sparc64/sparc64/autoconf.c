@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.82 2003/08/27 15:59:55 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.83 2003/10/09 17:55:44 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.82 2003/08/27 15:59:55 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.83 2003/10/09 17:55:44 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -973,6 +973,8 @@ static struct {
 	{ "simba",	BUSCLASS_PCI },
 	{ "ppb",	BUSCLASS_PCI },
 	{ "pciide",	BUSCLASS_PCI },
+	{ "cmdide",	BUSCLASS_PCI },
+	{ "aceride",	BUSCLASS_PCI },
 	{ "siop",	BUSCLASS_PCI },
 	{ "esiop",	BUSCLASS_PCI },
 	{ "pci",	BUSCLASS_PCI },
