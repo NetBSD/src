@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.7.4.1 1996/12/10 05:31:46 mycroft Exp $	*/
+/*	$NetBSD: wds.c,v 1.7.4.2 1996/12/10 06:07:57 mycroft Exp $	*/
 
 #undef	WDSDIAG
 #define	integrate
@@ -273,10 +273,11 @@ wdsattach(parent, self, aux)
 		panic("wdsattach: wds_find of %s failed", self->dv_xname);
 	sc->sc_iobase = ia->ia_iobase;
 
+	wds_init(sc);
+
 	if (sc->sc_drq != DRQUNK)
 		isa_dmacascade(sc->sc_drq);
 
-	wds_init(sc);
 	TAILQ_INIT(&sc->sc_free_scb);
 	TAILQ_INIT(&sc->sc_waiting_scb);
 	wds_inquire_setup_information(sc);
@@ -529,9 +530,10 @@ wds_get_scb(sc, flags, needbuffer)
 
 	if (needbuffer) {
 		scb->buf = wds_get_buf(sc, flags);
-		if (scb->buf == 0)
+		if (scb->buf == 0) {
 			wds_free_scb(sc, scb);
-		scb = 0;
+			scb = 0;
+		}
 	}
 
 out:
