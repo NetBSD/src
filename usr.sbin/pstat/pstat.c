@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.73 2002/09/26 21:30:30 agc Exp $	*/
+/*	$NetBSD: pstat.c,v 1.74 2002/11/06 09:32:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.73 2002/09/26 21:30:30 agc Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.74 2002/11/06 09:32:26 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,7 +109,7 @@ char	*nlistf	= NULL;
 char	*memf	= NULL;
 kvm_t	*kd;
 
-struct {
+static const struct {
 	u_int m_flag;
 	const char *m_name;
 } mnt_flags[] = {
@@ -798,7 +798,7 @@ ttymode()
 	}
 }
 
-const struct flagbit_desc ttystates[] = {
+static const struct flagbit_desc ttystates[] = {
 	{ TS_ISOPEN,	'O'},
 	{ TS_DIALOUT,	'>'},
 	{ TS_CARR_ON,	'C'},
@@ -867,7 +867,7 @@ ttyprt(tp)
 	(void)putchar('\n');
 }
 
-const struct flagbit_desc filemode_flags[] = {
+static const struct flagbit_desc filemode_flags[] = {
 	{ FREAD,	'R' },
 	{ FWRITE,	'W' },
 	{ FAPPEND,	'A' },
@@ -887,7 +887,8 @@ filemode()
 	char flags[sizeof(filemode_flags) / sizeof(filemode_flags[0])];
 	char *buf;
 	int len, maxfile, nfile, ovflw;
-	static char *dtypes[] = { "???", "inode", "socket" };
+	static const char * const dtypes[] =
+		{ "???", "inode", "socket", "pipe" };
 
 	KGET(FNL_MAXFILE, maxfile);
 	if (totalflag) {
@@ -911,7 +912,7 @@ filemode()
 	    (PTRSTRWIDTH - 4) / 2, "", " LOC", (PTRSTRWIDTH - 4) / 2, "",
 	    (PTRSTRWIDTH - 4) / 2, "", "DATA", (PTRSTRWIDTH - 4) / 2, "");
 	for (; (char *)fp < buf + len; addr = fp->f_list.le_next, fp++) {
-		if ((unsigned)fp->f_type > DTYPE_SOCKET)
+		if ((unsigned)fp->f_type > DTYPE_PIPE)
 			continue;
 		ovflw = 0;
 		(void)getflags(filemode_flags, flags, fp->f_flag);
