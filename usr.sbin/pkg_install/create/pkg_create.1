@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.19 1999/11/29 19:48:45 hubertf Exp $
+.\" $NetBSD: pkg_create.1,v 1.20 1999/11/29 20:09:55 hubertf Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -288,6 +288,12 @@ All subsequent filenames will be assumed relative to this directory.
 Note:
 .Cm @cd
 is also an alias for this command.
+.It Cm @src Ar directory
+Set the internal directory pointer for _creation only_ to
+.Ar directory .
+That is to say that it overrides
+.Cm @cwd
+for package creation but not extraction.
 .It Cm @exec Ar command
 Execute
 .Ar command

@@ -1,11 +1,11 @@
-/*	$NetBSD: pl.c,v 1.17 1999/11/29 19:48:45 hubertf Exp $	*/
+/*	$NetBSD: pl.c,v 1.18 1999/11/29 20:09:55 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pl.c,v 1.11 1997/10/08 07:46:35 charnier Exp";
 #else
-__RCSID("$NetBSD: pl.c,v 1.17 1999/11/29 19:48:45 hubertf Exp $");
+__RCSID("$NetBSD: pl.c,v 1.18 1999/11/29 20:09:55 hubertf Exp $");
 #endif
 #endif
 
@@ -132,6 +132,9 @@ check_list(char *home, package_t *pkg, const char *PkgName)
 			break;
 		case PLIST_IGNORE:
 			p = p->next;
+			break;
+		case PLIST_SRC:
+			srcdir = p->name;
 			break;
 		case PLIST_DIR_RM:
 			dirc++;
