@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.78 2000/11/28 06:01:46 mycroft Exp $	*/
+/*	$NetBSD: rtld.c,v 1.79 2000/12/17 21:41:15 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1477,6 +1477,9 @@ findhint(name, major, minor, prefered_path)
 	char	*prefered_path;
 {
 	struct hints_bucket	*bp;
+
+	if (hheader->hh_nbucket == 0)
+		return (NULL);
 
 	bp = hbuckets + (hinthash(name, major, minor) % hheader->hh_nbucket);
 
