@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.6 2003/03/03 02:09:18 enami Exp $
+#	$NetBSD: list,v 1.7 2003/05/26 09:46:47 lukem Exp $
 
 SRCDIRS	bin
 
@@ -114,6 +114,7 @@ PROG	wsconsctl
 SRCDIRS	usr.bin
 
 PROG	bzip2		bunzip2 bzcat
+PROG	ftp
 PROG	kdump
 PROG	ktrace
 PROG	ktruss
@@ -131,4 +132,4 @@ SRCDIRS	gnu/usr.bin
 PROG	gzip		gunzip gzcat zcat 
 
 
-LIBS	-lbz2 -lcrypt -ledit -lipsec -lkvm -ll -lm -lrmt -ltermcap -lutil -lz 
+LIBS	liboverride.o -lbz2 -lcrypt -ledit -lipsec -lkvm -ll -lm -lrmt -ltermcap -lutil -lz 
