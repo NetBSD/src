@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.9 1995/11/17 09:54:49 thorpej Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.10 1996/01/31 20:25:31 hpeyerl Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -27,7 +27,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: rarpd.c,v 1.9 1995/11/17 09:54:49 thorpej Exp $";
+static char rcsid[] = "$NetBSD: rarpd.c,v 1.10 1996/01/31 20:25:31 hpeyerl Exp $";
 #endif
 
 
@@ -216,7 +216,7 @@ init_all()
 {
 	char inbuf[8192];
 	struct ifconf ifc;
-	struct ifreq *ifr;
+	struct ifreq ifreq, *ifr;
 	int fd;
 	int i, len;
 
@@ -233,9 +233,13 @@ init_all()
 		/* NOTREACHED */
 	}
 	ifr = ifc.ifc_req;
+	ifreq.ifr_name[0] = '\0';
 	for (i = 0; i < ifc.ifc_len;
 	     i += len, ifr = (struct ifreq *)((caddr_t)ifr + len)) {
 		len = sizeof(ifr->ifr_name) + ifr->ifr_addr.sa_len;
+		if (!strncmp(ifreq.ifr_name, ifr->ifr_name, sizeof(ifr->ifr_name)))
+			continue;
+		ifreq = *ifr;
 		if (ioctl(fd, SIOCGIFFLAGS, (caddr_t)ifr) < 0) {
 			err(FATAL, "init_all: SIOCGIFFLAGS: %s",
 			    strerror(errno));
