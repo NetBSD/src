@@ -128,7 +128,7 @@ char * PKCS12_decrypt_d2i (X509_ALGOR *algor, char * (*d2i)(),
 
 		char fname[30];
 		static int fnm = 1;
-		sprintf(fname, "DER%d", fnm++);
+		snprintf(fname, sizeof(fname), "DER%d", fnm++);
 		op = fopen(fname, "wb");
 		fwrite (p, 1, outlen, op);
 		fclose(op);

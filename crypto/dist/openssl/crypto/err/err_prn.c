@@ -96,8 +96,8 @@ void ERR_print_errors(BIO *bp)
 	while ((l=ERR_get_error_line_data(&file,&line,&data,&flags)) != 0)
 		{
 		ERR_error_string_n(l, buf, sizeof buf);
-		sprintf(buf2,"%lu:%s:%s:%d:",es,buf,
-			file,line);
+		snprintf(buf2, sizeof(buf2), "%lu:%s:%s:%d:", es, buf,
+		    file, line);
 		BIO_write(bp,buf2,strlen(buf2));
 		if (flags & ERR_TXT_STRING)
 			BIO_write(bp,data,strlen(data));

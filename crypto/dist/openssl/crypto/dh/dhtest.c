@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
 	BIO_puts(out,"key1 =");
 	for (i=0; i<aout; i++)
 		{
-		sprintf(buf,"%02X",abuf[i]);
+		snprintf(buf, sizeof(buf), "%02X", abuf[i]);
 		BIO_puts(out,buf);
 		}
 	BIO_puts(out,"\n");
@@ -169,7 +169,7 @@ int main(int argc, char *argv[])
 	BIO_puts(out,"key2 =");
 	for (i=0; i<bout; i++)
 		{
-		sprintf(buf,"%02X",bbuf[i]);
+		snprintf(buf, sizeof(buf), "%02X", bbuf[i]);
 		BIO_puts(out,buf);
 		}
 	BIO_puts(out,"\n");

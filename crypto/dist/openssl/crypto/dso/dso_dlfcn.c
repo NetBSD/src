@@ -145,7 +145,7 @@ static int dlfcn_load(DSO *dso, const char *filename)
 			(len + 6 < DSO_MAX_TRANSLATED_SIZE) &&
 			(strstr(filename, "/") == NULL))
 		{
-		sprintf(translated, "lib%s.so", filename);
+		snprintf(translated, sizeof(translated), "lib%s.so", filename);
 		ptr = dlopen(translated, DLOPEN_FLAG);
 		}
 	else

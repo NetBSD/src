@@ -37,18 +37,89 @@ NO_SSL3
 NO_STACK
 NO_STDIO
 NO_X509
+OPENSSL_NO_AES
+OPENSSL_NO_BF
+OPENSSL_NO_BIO
+OPENSSL_NO_CAST
+OPENSSL_NO_COMP
+OPENSSL_NO_DES
+OPENSSL_NO_DH
+OPENSSL_NO_DSA
+OPENSSL_NO_ENGINE
+OPENSSL_NO_FP_API
+OPENSSL_NO_IDEA
+OPENSSL_NO_LOCKING
+OPENSSL_NO_MD2
+OPENSSL_NO_MD4
+OPENSSL_NO_MD5
+OPENSSL_NO_MDC2
+OPENSSL_NO_RC2
+OPENSSL_NO_RC4
+OPENSSL_NO_RC5
+OPENSSL_NO_RMD160
+OPENSSL_NO_RSA
+OPENSSL_NO_SHA
+OPENSSL_NO_SHA1
+OPENSSL_NO_SOCK
+OPENSSL_NO_SSL2
+OPENSSL_NO_SPEED
+OPENSSL_NO_STDIO
+OPENSSL_NO_X509
+OPENSSL_SYS_AIX
+OPENSSL_SYS_CRAY
+OPENSSL_SYS_LINUX
+OPENSSL_SYS_MACINTOSH_CLASSIC
+OPENSSL_SYS_MACOSX
+OPENSSL_SYS_MACOSX_RHAPSODY
+OPENSSL_SYS_MPE
+OPENSSL_SYS_MSDOS
+OPENSSL_SYS_NEWS4
+OPENSSL_SYS_OS2
+OPENSSL_SYS_SNI
+OPENSSL_SYS_SUNOS
+OPENSSL_SYS_ULTRASPARC
+OPENSSL_SYS_VMS
+OPENSSL_SYS_VMS_DECC
+OPENSSL_SYS_VMS_DECCXX  
+OPENSSL_SYS_VMS_NODECC
+OPENSSL_SYS_VXWORKS
+OPENSSL_SYS_WIN16
+OPENSSL_SYS_WIN32
+OPENSSL_SYS_WIN32_CYGWIN
+OPENSSL_SYS_WIN32_UWIN  
+OPENSSL_SYS_WINCE
+OPENSSL_SYS_WINDOWS
+OPENSSL_SYS_WINNT
+OPENSSL_NO_KRB5
 PEDANTIC
 EOF
 
-$unifdef = $unifdef0;
-$unifdef =~ s/\n$//;
-$unifdef =~ s/^/-U/;
-$unifdef =~ s/\n/\n-U/g;
-$unifdef =~ s/\n/ /g;
-$unifdef =~ join("\n", $unifdef);
+#$unifdef1 = <<EOF;
+#EOF
 
-$files = `find . -name \\\*.h -print | grep -v MacOS`;
+$unifdef0 =~ s/\n$//;
+$unifdef0 =~ s/^/-U/;
+$unifdef0 =~ s/\n/\n-U/g;
+$unifdef0 =~ s/\n/ /g;
+$unifdef0 =~ join("\n", $unifdef);
+#$unifdef1 =~ s/\n$//;
+#$unifdef1 =~ s/^/-D/;
+#$unifdef1 =~ s/\n/\n-D/g;
+#$unifdef1 =~ s/\n/ /g;
+#$unifdef1 =~ join("\n", $unifdef);
+#$unifdef = $unifdef0 . ' ' . $unifdef1;
+$unifdef = $unifdef0;
+
+$files = `find . -name \\\*.h -type f -print | grep -v MacOS`;
 foreach $i (split(/[\n ]/, $files)) {
 	print "unifdef $unifdef <$i >$tmp\n";
 	print "mv $tmp $i\n";
 }
+
+#unifdef =~ s/-D/-DOPENSSL_/;
+$files = `find . -name \\\*.h -type f -print | grep -v MacOS`;
+foreach $i (split(/[\n ]/, $files)) {
+	print "unifdef $unifdef <$i >$tmp\n";
+	print "mv $tmp $i\n";
+}
+

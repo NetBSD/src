@@ -586,22 +586,23 @@ static void print_leak(MEM *m, MEM_LEAK *l)
 		{
 		lcl = localtime(&m->time);
 	
-		sprintf(bufp, "[%02d:%02d:%02d] ",
+		snprintf(bufp, sizeof(buf) - (bufp - buf), "[%02d:%02d:%02d] ",
 			lcl->tm_hour,lcl->tm_min,lcl->tm_sec);
 		bufp += strlen(bufp);
 		}
 
-	sprintf(bufp, "%5lu file=%s, line=%d, ",
+	snprintf(bufp, sizeof(buf) - (bufp - buf), "%5lu file=%s, line=%d, ",
 		m->order,m->file,m->line);
 	bufp += strlen(bufp);
 
 	if (options & V_CRYPTO_MDEBUG_THREAD)
 		{
-		sprintf(bufp, "thread=%lu, ", m->thread);
+		snprintf(bufp, sizeof(buf) - (bufp - buf), "thread=%lu, ",
+		    m->thread);
 		bufp += strlen(bufp);
 		}
 
-	sprintf(bufp, "number=%d, address=%08lX\n",
+	snprintf(bufp, sizeof(buf) - (bufp - buf), "number=%d, address=%08lX\n",
 		m->num,(unsigned long)m->addr);
 	bufp += strlen(bufp);
 
@@ -623,7 +624,7 @@ static void print_leak(MEM *m, MEM_LEAK *l)
 
 		ami_cnt++;
 		memset(buf,'>',ami_cnt);
-		sprintf(buf + ami_cnt,
+		snprintf(buf + ami_cnt, sizeof(buf) - ami_cnt, 
 			" thread=%lu, file=%s, line=%d, info=\"",
 			amip->thread, amip->file, amip->line);
 		buf_len=strlen(buf);
@@ -635,10 +636,11 @@ static void print_leak(MEM *m, MEM_LEAK *l)
 			}
 		else
 			{
-			strcpy(buf + buf_len, amip->info);
+			strlcpy(buf + buf_len, amip->info,
+			    sizeof(buf) - buf_len);
 			buf_len = strlen(buf);
 			}
-		sprintf(buf + buf_len, "\"\n");
+		snprintf(buf + buf_len, sizeof(buf) - buf_len, "\"\n");
 		
 		BIO_puts(l->bio,buf);
 
@@ -672,7 +674,7 @@ void CRYPTO_mem_leaks(BIO *b)
 		lh_doall_arg(mh,(void (*)())print_leak,(char *)&ml);
 	if (ml.chunks != 0)
 		{
-		sprintf(buf,"%ld bytes leaked in %d chunks\n",
+		snprintf(buf, sizeof(buf), "%ld bytes leaked in %d chunks\n",
 			ml.bytes,ml.chunks);
 		BIO_puts(b,buf);
 		}
