@@ -1,4 +1,4 @@
-/*	$NetBSD: wall.c,v 1.18 2001/01/05 04:06:49 mjl Exp $	*/
+/*	$NetBSD: wall.c,v 1.19 2002/08/02 01:52:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-__RCSID("$NetBSD: wall.c,v 1.18 2001/01/05 04:06:49 mjl Exp $");
+__RCSID("$NetBSD: wall.c,v 1.19 2002/08/02 01:52:13 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -63,8 +63,9 @@ __RCSID("$NetBSD: wall.c,v 1.18 2001/01/05 04:06:49 mjl Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <utmp.h>
 #include <util.h>
+
+#include "utmpentry.h"
 
 void	makemsg(const char *);
 int	main(int, char **);
@@ -79,11 +80,9 @@ main(int argc, char **argv)
 {
 	int ch;
 	struct iovec iov;
-	struct utmp utmp;
-	FILE *fp;
 	char *p;
 	struct passwd *pep = getpwnam("nobody");
-	char line[sizeof(utmp.ut_line) + 1];
+	struct utmpentry *ep;
 
 	while ((ch = getopt(argc, argv, "n")) != -1)
 		switch (ch) {
@@ -105,19 +104,12 @@ usage:
 
 	makemsg(*argv);
 
-	if (!(fp = fopen(_PATH_UTMP, "r")))
-		err(1, "cannot read %s", _PATH_UTMP);
 	iov.iov_base = mbuf;
 	iov.iov_len = mbufsize;
-	/* NOSTRICT */
-	while (fread((char *)&utmp, sizeof(utmp), 1, fp) == 1) {
-		if (!utmp.ut_name[0])
-			continue;
-		strncpy(line, utmp.ut_line, sizeof(utmp.ut_line));
-		line[sizeof(utmp.ut_line)] = '\0';
-		if ((p = ttymsg(&iov, 1, line, 60*5)) != NULL)
+	(void)getutentries(NULL, &ep);
+	for (; ep; ep = ep->next)
+		if ((p = ttymsg(&iov, 1, ep->line, 60*5)) != NULL)
 			warnx("%s", p);
-	}
 	exit(0);
 }
 
