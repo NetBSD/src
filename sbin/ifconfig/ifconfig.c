@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.66 2000/01/25 02:16:57 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.67 2000/01/25 06:11:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.66 2000/01/25 02:16:57 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.67 2000/01/25 06:11:25 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -1218,7 +1218,7 @@ print_media_word(ifmw, print_type, as_syntax)
 	for (desc = ifm_option_descriptions; desc->ifmt_string != NULL;
 	     desc++) {
 		if (IFM_TYPE_MATCH(desc->ifmt_word, ifmw) &&
-		    (ifmw & desc->ifmt_word) != 0 &&
+		    (ifmw & IFM_OPTIONS(desc->ifmt_word)) != 0 &&
 		    (seen_option & IFM_OPTIONS(desc->ifmt_word)) == 0) {
 			if (seen_option == 0)
 				printf(" %s", as_syntax ? "mediaopt " : "");
