@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.61 1999/03/12 18:45:40 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.62 1999/07/08 01:26:29 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -102,8 +102,8 @@ static int nproc_targets = sizeof(proc_targets) / sizeof(proc_targets[0]);
 static pid_t atopid __P((const char *, u_int));
 
 int	procfs_lookup	__P((void *));
-#define	procfs_create	genfs_eopnotsupp
-#define	procfs_mknod	genfs_eopnotsupp
+#define	procfs_create	genfs_eopnotsupp_rele
+#define	procfs_mknod	genfs_eopnotsupp_rele
 int	procfs_open	__P((void *));
 int	procfs_close	__P((void *));
 int	procfs_access	__P((void *));
@@ -117,24 +117,24 @@ int	procfs_setattr	__P((void *));
 #define	procfs_mmap	genfs_eopnotsupp
 #define	procfs_fsync	genfs_nullop
 #define	procfs_seek	genfs_nullop
-#define	procfs_remove	genfs_eopnotsupp
+#define	procfs_remove	genfs_eopnotsupp_rele
 int	procfs_link	__P((void *));
-#define	procfs_rename	genfs_eopnotsupp
-#define	procfs_mkdir	genfs_eopnotsupp
-#define	procfs_rmdir	genfs_eopnotsupp
+#define	procfs_rename	genfs_eopnotsupp_rele
+#define	procfs_mkdir	genfs_eopnotsupp_rele
+#define	procfs_rmdir	genfs_eopnotsupp_rele
 int	procfs_symlink	__P((void *));
 int	procfs_readdir	__P((void *));
 int	procfs_readlink	__P((void *));
 #define	procfs_abortop	genfs_abortop
 int	procfs_inactive	__P((void *));
 int	procfs_reclaim	__P((void *));
-#define	procfs_lock	genfs_nolock
-#define	procfs_unlock	genfs_nounlock
+#define	procfs_lock	genfs_lock
+#define	procfs_unlock	genfs_unlock
 int	procfs_bmap	__P((void *));
 #define	procfs_strategy	genfs_badop
 int	procfs_print	__P((void *));
 int	procfs_pathconf	__P((void *));
-#define	procfs_islocked	genfs_noislocked
+#define	procfs_islocked	genfs_islocked
 #define	procfs_advlock	genfs_einval
 #define	procfs_blkatoff	genfs_eopnotsupp
 #define	procfs_valloc	genfs_eopnotsupp
@@ -324,7 +324,7 @@ procfs_bmap(v)
  * chances are that the process will still be
  * there and PFIND is not free.
  *
- * (vp) is ocked on entry, but must be unlocked on exit.
+ * (vp) is locked on entry, but must be unlocked on exit.
  */
 int
 procfs_inactive(v)
@@ -671,9 +671,20 @@ procfs_access(v)
  * general case, however for most pseudo-filesystems
  * very little needs to be done.
  *
- * unless you want to get a migraine, just make sure your
- * filesystem doesn't do any locking of its own.  otherwise
- * read and inwardly digest ufs_lookup().
+ * Locking isn't hard here, just poorly documented.
+ *
+ * If we're looking up ".", just vref the parent & return it. 
+ *
+ * If we're looking up "..", unlock the parent, and lock "..". If everything
+ * went ok, and we're on the last component and the caller requested the
+ * parent locked, try to re-lock the parent. We do this to prevent lock
+ * races.
+ *
+ * For anything else, get the needed node. Then unlock the parent if not
+ * the last component or not LOCKPARENT (i.e. if we wouldn't re-lock the
+ * parent in the .. case).
+ *
+ * We try to exit with the parent locked in error cases.
  */
 int
 procfs_lookup(v)
@@ -693,9 +704,10 @@ procfs_lookup(v)
 	pid_t pid;
 	struct pfsnode *pfs;
 	struct proc *p;
-	int i;
+	int i, error, wantpunlock;
 
 	*vpp = NULL;
+	cnp->cn_flags &= ~PDIRUNLOCK;
 
 	if (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)
 		return (EROFS);
@@ -703,18 +715,27 @@ procfs_lookup(v)
 	if (cnp->cn_namelen == 1 && *pname == '.') {
 		*vpp = dvp;
 		VREF(dvp);
-		/* vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY, curp); */
 		return (0);
 	}
 
+	wantpunlock = (~cnp->cn_flags & (LOCKPARENT | ISLASTCN));
 	pfs = VTOPFS(dvp);
 	switch (pfs->pfs_type) {
 	case Proot:
-		if (cnp->cn_flags & ISDOTDOT)
+		/*
+		 * Shouldn't get here with .. in the root node.
+		 */
+		if (cnp->cn_flags & ISDOTDOT) 
 			return (EIO);
 
-		if (CNEQ(cnp, "curproc", 7))
-			return (procfs_allocvp(dvp->v_mount, vpp, 0, Pcurproc));
+		if (CNEQ(cnp, "curproc", 7)) {
+			error = procfs_allocvp(dvp->v_mount, vpp, 0, Pcurproc);
+			if ((error == 0) && (wantpunlock)) {
+				VOP_UNLOCK(dvp, 0);
+				cnp->cn_flags |= PDIRUNLOCK;
+			}
+			return (error);
+		}
 
 		pid = atopid(pname, cnp->cn_namelen);
 		if (pid == NO_PID)
@@ -724,11 +745,29 @@ procfs_lookup(v)
 		if (p == 0)
 			break;
 
-		return (procfs_allocvp(dvp->v_mount, vpp, pid, Pproc));
+		error = procfs_allocvp(dvp->v_mount, vpp, 0, Pproc);
+		if ((error == 0) && (wantpunlock)) {
+			VOP_UNLOCK(dvp, 0);
+			cnp->cn_flags |= PDIRUNLOCK;
+		}
+		return (error);
 
 	case Pproc:
-		if (cnp->cn_flags & ISDOTDOT)
-			return (procfs_root(dvp->v_mount, vpp));
+		/*
+		 * do the .. dance. We unlock the directory, and then
+		 * get the root dir. That will automatically return ..
+		 * locked. Then if the caller wanted dvp locked, we
+		 * re-lock.
+		 */
+		if (cnp->cn_flags & ISDOTDOT) {
+			VOP_UNLOCK(dvp, 0);
+			cnp->cn_flags |= PDIRUNLOCK;
+			error = procfs_root(dvp->v_mount, vpp);
+			if ((error == 0) && (wantpunlock == 0) &&
+				    ((error = vn_lock(dvp, LK_EXCLUSIVE)) == 0))
+				cnp->cn_flags &= ~PDIRUNLOCK;
+			return (error);
+		}
 
 		p = PFIND(pfs->pfs_pid);
 		if (p == 0)
@@ -748,12 +787,21 @@ procfs_lookup(v)
 			/* We already checked that it exists. */
 			VREF(fvp);
 			vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY);
+			if (wantpunlock) {
+				VOP_UNLOCK(dvp, 0);
+				cnp->cn_flags |= PDIRUNLOCK;
+			}
 			*vpp = fvp;
 			return (0);
 		}
 
-		return (procfs_allocvp(dvp->v_mount, vpp, pfs->pfs_pid,
-		    pt->pt_pfstype));
+		error = procfs_allocvp(dvp->v_mount, vpp, pfs->pfs_pid,
+					pt->pt_pfstype);
+		if ((error == 0) && (wantpunlock)) {
+			VOP_UNLOCK(dvp, 0);
+			cnp->cn_flags |= PDIRUNLOCK;
+		}
+		return (error);
 
 	default:
 		return (ENOTDIR);
