@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.7 1999/01/20 13:05:29 christos Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.8 1999/01/20 23:31:02 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -155,7 +155,8 @@ _nsdbtget(name)
 				for (j = 0; j < _nsmap[i].srclistsize; j++) {
 					if (_nsmap[i].srclist[j].name != NULL) {
 						/*LINTED const cast*/
-						free((void *)_nsmap[i].srclist[j].name);
+						free((void *)
+						    _nsmap[i].srclist[j].name);
 					}
 				}
 				if (_nsmap[i].srclist)
@@ -183,7 +184,8 @@ _nsdbtget(name)
 		qsort(_nsmap, (size_t)_nsmapsize, sizeof(ns_dbt), _nscmp);
 		confmod = statbuf.st_mtime;
 	}
-	return (bsearch(&dbt, _nsmap, (size_t)_nsmapsize, sizeof(ns_dbt), _nscmp));
+	return (bsearch(&dbt, _nsmap, (size_t)_nsmapsize, sizeof(ns_dbt),
+	    _nscmp));
 }
 
 
