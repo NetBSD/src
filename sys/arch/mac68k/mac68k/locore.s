@@ -86,7 +86,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.14 1994/06/26 13:19:18 briggs Exp $
+ *	$Id: locore.s,v 1.15 1994/07/02 13:03:13 briggs Exp $
  */
 
 #include "assym.s"
@@ -978,6 +978,11 @@ start:
 	movl	#CACHE40_OFF,d0		| 68040 cache disable
 	movc	d0, cacr
 	movl	#1, _mmutype		| 68040 MMU
+
+	jbsr	_gray_bar
+	movel	#0x0, d0
+	.word	0x4e7b, 0x0003
+	jbsr	_gray_bar
 
 	jbsr	_macserinit		| For debugging
 	jbsr	_macinit		| For debugging
