@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.15 2002/10/10 18:16:40 rafal Exp $	*/
+/*	$NetBSD: bus.c,v 1.16 2002/12/23 20:41:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -244,6 +244,29 @@ bus_space_subregion(t, bsh, offset, size, nbshp)
 
 	*nbshp = bsh + offset;
 	return 0;
+}
+
+void *
+bus_space_vaddr(t, bsh)
+	bus_space_tag_t t;
+	bus_space_handle_t bsh;
+{
+	switch(t) {
+	case 0:
+		return ((void *)bsh);
+
+	case 1: /* XXX HPC */
+		panic("bus_space_vaddr not supported on HPC space!");
+
+	case 2: /* mem */
+		return ((void *)bsh);
+
+	case 4: /* I/O */
+		panic("bus_space_vaddr not supported on I/O space!");
+
+	default:
+		panic("no bus tag");
+	}
 }
 
 /*

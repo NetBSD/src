@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.5 2002/03/17 21:45:09 simonb Exp $	*/
+/*	$NetBSD: bus.h,v 1.6 2002/12/23 20:41:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -117,6 +117,11 @@ int	bus_space_alloc (bus_space_tag_t t, bus_addr_t rstart,
 
 void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t size);
+
+/*
+ * Get kernel virtual address of mapped bus space
+ */
+void *	bus_space_vaddr(bus_space_tag_t t, bus_space_handle_t bsh);
 
 /*
  *	u_intN_t bus_space_read_N(bus_space_tag_t tag,
