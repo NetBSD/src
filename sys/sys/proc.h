@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.120 2001/01/25 19:14:40 jdolecek Exp $	*/
+/*	$NetBSD: proc.h,v 1.121 2001/01/25 20:18:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -91,7 +91,7 @@ struct	emul {
 #ifndef __HAVE_MINIMAL_EMUL
 	int	e_flags;		/* Miscellaneous flags */
 					/* Syscall handling function */
-	int	*e_errno;		/* Errno array */
+	const int *e_errno;		/* Errno array */
 	int	e_nosys;		/* Offset of the nosys() syscall */
 	int	e_nsysent;		/* Number of system call entries */
 #endif
