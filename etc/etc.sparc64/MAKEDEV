@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.42 2002/10/21 03:26:40 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.43 2002/10/26 13:15:05 martin Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -150,6 +150,7 @@ all)
 	makedev pci0 pci1 pci2 pci3 pci4 pci5 pci6 pci7
 	makedev clockctl
 	makedev systrace
+	makedev wscons
 	;;
 floppy|ramdisk)
 	makedev std ttya ttyb ttyc ttyd opty
@@ -269,6 +270,85 @@ tcx*)
 	unit=${i#tcx}
 	rm -f tcx$unit
 	mknod tcx$unit		c 109 $unit; chmod 666 tcx$unit
+	;;
+
+wscons)
+	makedev ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
+	makedev wsmouse0 wsmouse1 wsmouse2 wsmouse3
+	makedev wskbd0 wskbd1 wskbd2 wskbd3
+	makedev wsmux0 wsmux1 wsmux2 wsmux3
+	makedev wsmouse wskbd
+	makedev ttyEcfg ttyEstat
+	makedev wsfont
+	;;
+
+ttyEstat)
+	chr=90
+	rm -f ttyEstat
+	mknod ttyEstat c $chr 254
+	chmod 600 ttyEstat
+	;;
+
+ttyEcfg)
+	chr=90
+	rm -f ttyEcfg
+	mknod ttyEcfg c $chr 255
+	chmod 600 ttyEcfg
+	;;
+
+ttyE*)
+	chr=90; unit=${i#ttyE}
+	rm -f ttyE$unit
+	mknod ttyE$unit c $chr $unit
+	;;
+
+wsmux*)
+	unit=${i#wsmux}
+	unitctl=$(($unit + 128))
+	wsmux=wsmux$unit
+	wsmuxctl=wsmuxctl$unit
+	major=93
+	rm -f $wsmux $wsmuxctl
+	mknod $wsmux c $major $unit
+	chmod 600 $wsmux
+	mknod $wsmuxctl c $major $unitctl
+	chmod 200 $wsmuxctl
+	;;
+
+wsmouse)
+	rm -f wsmouse
+	mknod wsmouse c 93 0
+	chmod 600 wsmouse
+	;;
+
+wskbd)
+	rm -f wskbd
+	mknod wskbd c 93 1
+	chmod 600 wskbd
+	;;
+
+wskbd*)
+	unit=${i#wskbd}
+	wskbd=wskbd$unit
+	major=91
+	rm -f $wskbd
+	mknod $wskbd c $major $unit
+	chmod 600 $wskbd
+	;;
+
+wsmouse*)
+	unit=${i#wsmouse}
+	wsmouse=wsmouse$unit
+	major=92
+	rm -f $wsmouse
+	mknod $wsmouse c $major $unit
+	chmod 600 $wsmouse
+	;;
+
+wsfont)
+	rm -f wsfont
+	mknod wsfont c 94 0
+	chmod 600 wsfont
 	;;
 
 audio*)
