@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.30 1996/03/26 12:21:39 jonathan Exp $
+#	$NetBSD: files.pmax,v 1.31 1996/05/07 01:16:36 thorpej Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -107,9 +107,11 @@ file	arch/pmax/dev/dtop.c		dtop needs-flag
 
 # LANCE ethernet driver.
 #  XXX Should use new machine-independent one instead.
-device le: ifnet, ether
-attach le at ioasic, tc, mainbus
-file	arch/pmax/tc/if_le.c		le needs-flag
+# device defined in sys/conf/files
+attach le at ioasic with le_pmax
+attach le at tc with le_pmax
+attach le at mainbus with le_pmax
+file	arch/pmax/tc/if_le.c		le_pmax needs-flag
 
 # 3100 (pmax) onboard framebuffer
 device pm
