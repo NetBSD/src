@@ -1,13 +1,4 @@
-/* $Header: /cvsroot/src/usr.bin/patch/util.h,v 1.1 1993/04/09 11:34:11 cgd Exp $
- *
- * $Log: util.h,v $
- * Revision 1.1  1993/04/09 11:34:11  cgd
- * patch 2.0.12u8, from prep.ai.mit.edu.  this is not under the GPL.
- *
- * Revision 2.0  86/09/17  15:40:06  lwall
- * Baseline for netwide release.
- * 
- */
+/*	$Id: util.h,v 1.2 1993/08/02 17:55:25 mycroft Exp $ */
 
 /* and for those machine that can't handle a variable argument list */
 

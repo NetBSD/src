@@ -1,3 +1,7 @@
+#ifndef lint
+static char rcsid[] = "$Id: getopt.c,v 1.2 1993/08/02 17:54:29 mycroft Exp $";
+#endif /* not lint */
+
 #include <stdio.h>
 
 main(argc, argv)

@@ -5,6 +5,8 @@
  *	14407 SW Teal Blvd. #C
  *	Beaverton, OR 97005
  *	kirkenda@cs.pdx.edu
+ *
+ *	$Id: vi.h,v 1.3 1993/08/02 17:54:15 mycroft Exp $
  */
 
 #define VERSION "ELVIS 1.7, by Steve Kirkendall (30 December 1992)"

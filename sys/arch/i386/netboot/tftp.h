@@ -1,20 +1,10 @@
-/* netboot
- *
- * $Log: tftp.h,v $
- * Revision 1.1  1993/07/08 16:04:13  brezak
- * Diskless boot prom code from Jim McKim (mckim@lerc.nasa.gov)
- *
- * Revision 1.2  1993/06/30  20:14:17  mckim
- * Added BOOTP support.
- *
- * Revision 1.1.1.1  1993/05/28  11:41:08  mckim
- * Initial version.
- *
- *
+/*
  * source in this file came from
  * the Mach ethernet boot written by Leendert van Doorn.
  *
  * Trivial File Transfer Protocol (see RFC 783)
+ *
+ *	$Id: tftp.h,v 1.2 1993/08/02 17:53:05 mycroft Exp $
  */
 
 #define	SEGSIZE		512		/* data segment size */

@@ -1,4 +1,4 @@
-# $Header: /cvsroot/src/usr.bin/tn3270/Attic/Makefile.inc,v 1.3 1993/06/18 05:41:32 cgd Exp $
+#	$Id: Makefile.inc,v 1.4 1993/08/02 17:56:24 mycroft Exp $
 
 CFLAGS += -DTERMCAP -DSRCRT -DKLUDGELINEMODE -DUSE_TERMIO -DTN3270
 KBD = unix.kbd

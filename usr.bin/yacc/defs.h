@@ -1,3 +1,5 @@
+/*	$Id: defs.h,v 1.3 1993/08/02 17:56:36 mycroft Exp $ */
+
 #include <assert.h>
 #include <ctype.h>
 #include <stdio.h>

@@ -1,8 +1,4 @@
-#
-# a makefile for /usr/bin/rwall
-#
-# $Header: /cvsroot/src/usr.bin/rwall/Makefile,v 1.4 1993/06/08 19:24:16 brezak Exp $
-#
+#	$Id: Makefile,v 1.5 1993/08/02 17:55:49 mycroft Exp $
 
 PROG = rwall
 MAN1 = rwall.0

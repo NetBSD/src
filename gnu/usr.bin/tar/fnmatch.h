@@ -13,7 +13,10 @@ Library General Public License for more details.
 You should have received a copy of the GNU Library General Public
 License along with this library; see the file COPYING.LIB.  If
 not, write to the Free Software Foundation, Inc., 675 Mass Ave,
-Cambridge, MA 02139, USA.  */
+Cambridge, MA 02139, USA.
+
+	$Id: fnmatch.h,v 1.2 1993/08/02 17:48:45 mycroft Exp $
+*/
 
 #ifndef	_FNMATCH_H
 

@@ -1,19 +1,4 @@
-/* netboot
- *
- * $Log: misc.c,v $
- * Revision 1.1  1993/07/08 16:04:03  brezak
- * Diskless boot prom code from Jim McKim (mckim@lerc.nasa.gov)
- *
- * Revision 1.3  1993/06/30  20:17:54  mckim
- * Exit to BIOS in exit().
- *
- * Revision 1.2  1993/06/08  14:22:37  mckim
- * Fast in line assembly bcopy(), bzero().
- *
- * Revision 1.1.1.1  1993/05/28  11:41:07  mckim
- * Initial version.
- *
- */
+/*	$Id: misc.c,v 1.2 1993/08/02 17:52:57 mycroft Exp $ */
 
 #include "proto.h"
 

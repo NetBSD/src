@@ -1,14 +1,3 @@
-/* netboot
- *
- * $Log: bootp.h,v $
- * Revision 1.1  1993/07/08 16:03:53  brezak
- * Diskless boot prom code from Jim McKim (mckim@lerc.nasa.gov)
- *
- * Revision 1.1  1993/06/30  20:14:07  mckim
- * Added BOOTP support.
- *
- */
-
 /*
  * Bootstrap Protocol (BOOTP).  RFC951 and RFC1048.
  *
@@ -29,6 +18,8 @@
  * University.  Carnegie Mellon makes no representations about the
  * suitability of this software for any purpose.  It is provided "as is"
  * without express or implied warranty.
+ *
+ *	$Id: bootp.h,v 1.2 1993/08/02 17:52:51 mycroft Exp $
  */
 
 

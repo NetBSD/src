@@ -10,6 +10,11 @@
 
 /* This file contains movement functions that perform character searches */
 
+#ifndef lint
+static char rcsid[] = "$Id: move3.c,v 1.3 1993/08/02 17:53:59 mycroft Exp $";
+#endif /* not lint */
+
+
 #include "config.h"
 #include "vi.h"
 

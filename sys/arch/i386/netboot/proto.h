@@ -1,21 +1,5 @@
-/* netboot
- *
- * $Log: proto.h,v $
- * Revision 1.1  1993/07/08 16:04:10  brezak
- * Diskless boot prom code from Jim McKim (mckim@lerc.nasa.gov)
- *
- * Revision 1.4  1993/06/30  20:14:15  mckim
- * Added BOOTP support.
- *
- * Revision 1.3  1993/06/08  14:22:38  mckim
- * Fast in line assembly bcopy(), bzero().
- *
- * Revision 1.2  1993/05/28  20:01:28  mckim
- * Fixed various StartProg() problems.
- *
- * Revision 1.1.1.1  1993/05/28  11:41:08  mckim
- * Initial version.
- *
+/*
+ *	$Id: proto.h,v 1.2 1993/08/02 17:53:02 mycroft Exp $
  *
  * TBD - need for common typedefs - rethink?
  * TBD - move config include into the source files - this is just expedient

@@ -1,5 +1,7 @@
 /*
  * PIT port addresses and speaker control values
+ *
+ *	$Id: spkr_reg.h,v 1.2 1993/08/02 17:52:36 mycroft Exp $
  */
 
 #define PITAUX_PORT	0x61	/* port of Programmable Peripheral Interface */

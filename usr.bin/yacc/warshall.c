@@ -1,3 +1,7 @@
+#ifndef lint
+static char rcsid[] = "$Id: warshall.c,v 1.3 1993/08/02 17:56:52 mycroft Exp $";
+#endif /* not lint */
+
 #include "defs.h"
 
 transitive_closure(R, n)

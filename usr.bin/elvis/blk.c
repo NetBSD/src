@@ -12,6 +12,10 @@
  * It also contains the "do" and "undo" functions.
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: blk.c,v 1.3 1993/08/02 17:53:42 mycroft Exp $";
+#endif /* not lint */
+
 #include "config.h"
 #include "vi.h"
 

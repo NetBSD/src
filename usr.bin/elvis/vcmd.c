@@ -10,6 +10,10 @@
 
 /* This file contains the functions that handle VI commands */
 
+#ifndef lint
+static char rcsid[] = "$Id: vcmd.c,v 1.3 1993/08/02 17:54:13 mycroft Exp $";
+#endif /* not lint */
+
 
 #include "config.h"
 #include "ctype.h"

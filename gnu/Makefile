@@ -1,4 +1,4 @@
-# $Header: /cvsroot/src/gnu/Attic/Makefile,v 1.2 1993/05/04 07:11:19 glass Exp $
+#	$Id: Makefile,v 1.3 1993/08/02 17:49:15 mycroft Exp $
 
 SUBDIR+= lib libexec usr.bin games
 

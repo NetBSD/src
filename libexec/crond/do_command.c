@@ -1,47 +1,3 @@
-#if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/do_command.c,v 1.5 1993/05/28 09:19:08 cgd Exp $";
-#endif
-
-/* $Source: /cvsroot/src/libexec/crond/Attic/do_command.c,v $
- * $Revision: 1.5 $
- * $Log: do_command.c,v $
- * Revision 1.5  1993/05/28 09:19:08  cgd
- * it was putting EOF, rather than newline.  comments around
- * change bogus; it will *always* be putting out newline because
- * of the program logic.  the comments don't seem to indicate that.
- *
- * Revision 1.4  1993/05/28  08:34:17  cgd
- * update for newest version of vixie's cron, as of May 27 1993
- *
- * Revision 2.2  1992/12/18  18:46:57  vixie
- * vix/ckp
- *
- * Revision 2.1  90/07/18  00:23:38  vixie
- * Baseline for 4.4BSD release
- * 
- * Revision 2.0  88/12/10  04:57:44  vixie
- * V2 Beta
- * 
- * Revision 1.5  88/11/29  13:06:06  vixie
- * seems to work on Ultrix 3.0 FT1
- * 
- * Revision 1.4  87/05/02  17:33:35  paul
- * baseline for mod.sources release
- * 
- * Revision 1.3  87/04/09  00:03:58  paul
- * improved data hiding, locality of declaration/references
- * fixed a rs@mirror bug by redesigning the mailto stuff completely
- * 
- * Revision 1.2  87/03/19  12:46:24  paul
- * implemented suggestions from rs@mirror (Rich $alz):
- *    MAILTO="" means no mail should be sent
- *    various fixes of bugs or lint complaints
- *    put a To: line in the mail message
- * 
- * Revision 1.1  87/01/26  23:47:00  paul
- * Initial revision
- */
-
 /* Copyright 1988,1990 by Paul Vixie
  * All rights reserved
  *
@@ -59,6 +15,10 @@ static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/do_command.c,v 
  * Paul Vixie, 329 Noe Street, San Francisco, CA, 94114, (415) 864-7013,
  * paul@vixie.sf.ca.us || {hoptoad,pacbell,decwrl,crash}!vixie!paul
  */
+
+#ifndef lint
+static char rcsid[] = "$Id: do_command.c,v 1.6 1993/08/02 17:50:23 mycroft Exp $";
+#endif
 
 
 #include "cron.h"

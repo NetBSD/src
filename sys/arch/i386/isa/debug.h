@@ -1,4 +1,4 @@
-/* debug.h */
+/*	$Id: debug.h,v 1.4 1993/08/02 17:52:30 mycroft Exp $ */
 
 /* #define	SHOW_A_LOT */
 

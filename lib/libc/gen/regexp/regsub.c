@@ -18,6 +18,11 @@
  *	3. Altered versions must be plainly marked as such, and must not
  *		be misrepresented as being the original software.
  */
+
+#ifndef lint
+static char rcsid[] = "$Id: regsub.c,v 1.2 1993/08/02 17:49:33 mycroft Exp $";
+#endif /* not lint */
+
 #include <regexp.h>
 #include <stdio.h>
 #include <string.h>

@@ -1,8 +1,4 @@
-#
-# a makefile for /usr/sbin/rpc.rusersd
-#
-#	/b/source/CVS/src/libexec/rpc.rusersd/Makefile,v 1.2 1993/06/04 14:55:55 brezak Exp
-#
+#	$Id: Makefile,v 1.5 1993/08/02 17:50:44 mycroft Exp $
 
 PROG =	rpc.rusersd
 SRCS =	rusersd.c rusers_proc.c

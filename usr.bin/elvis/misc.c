@@ -10,6 +10,11 @@
 
 /* This file contains functions which didn't seem happy anywhere else */
 
+#ifndef lint
+static char rcsid[] = "$Id: misc.c,v 1.2 1993/08/02 17:53:56 mycroft Exp $";
+#endif /* not lint */
+
+
 #include "config.h"
 #include "vi.h"
 

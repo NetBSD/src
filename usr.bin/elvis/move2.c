@@ -10,6 +10,11 @@
 
 /* This function contains the movement functions that perform RE searching */
 
+#ifndef lint
+static char rcsid[] = "$Id: move2.c,v 1.3 1993/08/02 17:53:59 mycroft Exp $";
+#endif /* not lint */
+
+
 #include "config.h"
 #include "vi.h"
 #include "regexp.h"

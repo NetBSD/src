@@ -26,9 +26,11 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Header: /cvsroot/src/usr.sbin/catman/catman.c,v 1.1 1993/07/27 21:29:32 jtc Exp $
  */
+
+#ifndef lint
+static char rcsid[] = "$Id: catman.c,v 1.2 1993/08/02 17:54:59 mycroft Exp $";
+#endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>

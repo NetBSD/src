@@ -1,6 +1,8 @@
 /*  Header : extr.h
     Author : Ozan Yigit
     Updated: %G%
+
+	$Id: extr.h,v 1.4 1993/08/02 17:54:40 mycroft Exp $
 */
 #ifndef	putback
 

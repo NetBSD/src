@@ -24,18 +24,8 @@
  * 
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
- */
-
-/*
- * HISTORY
- * $Log: sys.c,v $
- * Revision 1.1  1993/03/21 18:04:42  cgd
- * after 0.2.2 "stable" patches applied
  *
- * Revision 2.2  92/04/04  11:36:34  rpd
- * 	Fabricated from 3.0 bootstrap and scratch.
- * 	[92/03/30            mg32]
- * 
+ *	$Id: sys.c,v 1.2 1993/08/02 17:52:17 mycroft Exp $
  */
 
 #include "boot.h"

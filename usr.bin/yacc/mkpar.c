@@ -1,3 +1,6 @@
+#ifndef lint
+static char rcsid[] = "$Id: mkpar.c,v 1.3 1993/08/02 17:56:42 mycroft Exp $";
+#endif /* not lint */
 
 #include "defs.h"
 

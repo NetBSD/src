@@ -10,6 +10,11 @@
 
 /* This file contains movement functions which are screen-relative */
 
+#ifndef lint
+static char rcsid[] = "$Id: move4.c,v 1.3 1993/08/02 17:54:00 mycroft Exp $";
+#endif /* not lint */
+
+
 #include "config.h"
 #include "vi.h"
 

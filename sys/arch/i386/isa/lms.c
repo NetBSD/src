@@ -18,25 +18,8 @@
  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- *  Ported to 386bsd Oct 17, 1992 
- *  Sandi Donno, Computer Science, University of Cape Town, South Africa
- *  Please send bug reports to sandi@cs.uct.ac.za
  *
- *  Thanks are also due to Rick Macklem, rick@snowhite.cis.uoguelph.ca -
- *  although I was only partially successful in getting the alpha release
- *  of his "driver for the Logitech and ATI Inport Bus mice for use with 
- *  386bsd and the X386 port" to work with my Microsoft mouse, I nevertheless 
- *  found his code to be an invaluable reference when porting this driver 
- *  to 386bsd.
- *
- *  Further modifications for latest 386BSD+patchkit and port to NetBSD,
- *  Andrew Herbert <andrew@werple.apana.org.au> - 8 June 1993
- *
- *  Cloned from the Microsoft Bus Mouse driver, also by Erik Forsberg, by
- *  Andrew Herbert - 12 June 1993 
+ *	$Id: lms.c,v 1.6 1993/08/02 17:52:34 mycroft Exp $
  */
 
 #include "lms.h"

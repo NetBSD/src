@@ -10,6 +10,11 @@
 
 /* This file contains variables which weren't happy anyplace else */
 
+#ifndef lint
+static char rcsid[] = "$Id: vars.c,v 1.3 1993/08/02 17:54:12 mycroft Exp $";
+#endif /* not lint */
+
+
 #include "config.h"
 #include "vi.h"
 

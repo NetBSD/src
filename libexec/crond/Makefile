@@ -1,13 +1,4 @@
-#
-#
-#
-# PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
-# --------------------         -----   ----------------------
-# CURRENT PATCH LEVEL:         1       00037
-# --------------------         -----   ----------------------
-#
-# 15 Sep 92	Adrian Hall		Fixes SRCS line
-#
+#	$Id: Makefile,v 1.4 1993/08/02 17:50:18 mycroft Exp $
 
 PROG=	crond
 SRCS=	crond.c database.c user.c entry.c misc.c job.c do_command.c env.c

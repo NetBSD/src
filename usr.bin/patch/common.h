@@ -1,19 +1,4 @@
-/* $Header: /cvsroot/src/usr.bin/patch/common.h,v 1.1 1993/04/09 11:33:58 cgd Exp $
- *
- * $Log: common.h,v $
- * Revision 1.1  1993/04/09 11:33:58  cgd
- * patch 2.0.12u8, from prep.ai.mit.edu.  this is not under the GPL.
- *
- * Revision 2.0.1.2  88/06/22  20:44:53  lwall
- * patch12: sprintf was declared wrong
- * 
- * Revision 2.0.1.1  88/06/03  15:01:56  lwall
- * patch10: support for shorter extensions.
- * 
- * Revision 2.0  86/09/17  15:36:39  lwall
- * Baseline for netwide release.
- * 
- */
+/*	$Id: common.h,v 1.2 1993/08/02 17:55:15 mycroft Exp $ */
 
 #define DEBUGGING
 

@@ -49,6 +49,10 @@
  *					- tell user that file was preserved
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: elvispreserve.c,v 1.3 1993/08/02 17:50:34 mycroft Exp $";
+#endif /* not lint */
+
 #include <stdio.h>
 #include "config.h"
 #include "vi.h"

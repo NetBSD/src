@@ -31,6 +31,10 @@
  * SUCH DAMAGE.
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: rusers.c,v 1.4 1993/08/02 17:55:46 mycroft Exp $";
+#endif /* not lint */
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>

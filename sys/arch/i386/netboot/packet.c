@@ -1,20 +1,14 @@
-/* netboot
- *
- * $Log: packet.c,v $
- * Revision 1.1  1993/07/08 16:04:06  brezak
- * Diskless boot prom code from Jim McKim (mckim@lerc.nasa.gov)
- *
- * Revision 1.1.1.1  1993/05/28  11:41:07  mckim
- * Initial version.
- *
- *
+/*
  * source in this file came from
  * the Mach ethernet boot written by Leendert van Doorn.
  *
  * Packet allocation and deallocation routines.
  *
  * Copyright (c) 1992 by Leendert van Doorn
+ *
+ *	$Id: packet.c,v 1.2 1993/08/02 17:53:00 mycroft Exp $
  */
+
 #include "proto.h"
 #include "assert.h"
 #include "param.h"

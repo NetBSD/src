@@ -1,5 +1,4 @@
-# $Header: /cvsroot/src/usr.bin/getopt/Makefile,v 1.1 1993/06/21 12:43:58 brezak Exp $
-#
+#	$Id: Makefile,v 1.2 1993/08/02 17:54:27 mycroft Exp $
 
 PROG = getopt
 MAN1 = getopt.0

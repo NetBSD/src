@@ -18,6 +18,10 @@
  * The bitdomain table should be rebuilt monthly.
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: bitdomain.c,v 1.2 1993/08/02 17:57:11 mycroft Exp $";
+#endif /* not lint */
+
 #include <stdio.h>
 #include <errno.h>
 #include <sys/types.h>

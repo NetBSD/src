@@ -1,20 +1,10 @@
-/* netboot
- *
- * $Log: arp.h,v $
- * Revision 1.1  1993/07/08 16:03:48  brezak
- * Diskless boot prom code from Jim McKim (mckim@lerc.nasa.gov)
- *
- * Revision 1.2  1993/06/30  20:14:12  mckim
- * Added BOOTP support.
- *
- * Revision 1.1.1.1  1993/05/28  11:41:07  mckim
- * Initial version.
- *
- *
+/*
  * source in this file came from
  * the Mach ethernet boot written by Leendert van Doorn.
  *
  * Ethernet Address Resolution Protocol (see RFC 826)
+ *
+ *	$Id: arp.h,v 1.2 1993/08/02 17:52:47 mycroft Exp $
  */
 
 /*

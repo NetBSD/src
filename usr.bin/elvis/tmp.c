@@ -10,6 +10,10 @@
 
 /* This file contains functions which create & readback a TMPFILE */
 
+#ifndef lint
+static char rcsid[] = "$Id: tmp.c,v 1.4 1993/08/02 17:54:11 mycroft Exp $";
+#endif /* not lint */
+
 
 #include "config.h"
 #include "vi.h"

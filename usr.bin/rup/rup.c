@@ -31,6 +31,10 @@
  * SUCH DAMAGE.
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: rup.c,v 1.5 1993/08/02 17:55:42 mycroft Exp $";
+#endif /* not lint */
+
 #include <stdio.h>
 #include <string.h>
 #include <time.h>

@@ -1,3 +1,4 @@
+#	$Id: Makefile,v 1.5 1993/08/02 17:53:21 mycroft Exp $
 
 PROG=	crontab
 SRCS=	crontab.c misc.c entry.c env.c

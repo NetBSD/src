@@ -7,6 +7,8 @@
  * This file uses the "uchar" data type and "UCHAR" conversion macro which
  * are defined in "config.h".  Consequently, any file that includes this
  * header must include config.h first.
+ *
+ *	$Id: ctype.h,v 1.2 1993/08/02 17:53:48 mycroft Exp $
  */
 
 #ifndef _CT_UPPER
