@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.32 2001/01/18 20:28:21 jdolecek Exp $	*/
+/*	$NetBSD: procfs.h,v 1.33 2001/01/25 12:44:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -103,12 +103,10 @@ struct procfs_args {
 
 struct procfsmount {
 	void *pmnt_exechook;
-	struct mount *pmnt_mp;
 	int pmnt_flags;
 };
 
 #define VFSTOPROC(mp)	((struct procfsmount *)(mp)->mnt_data)
-#define PROCTOVFS(pp)	((pp)->pmnt_mp)
 
 /*
  * Convert between pfsnode vnode
