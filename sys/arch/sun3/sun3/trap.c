@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.69 1997/03/11 21:30:51 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.70 1997/04/09 20:50:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -70,6 +70,8 @@
 #include <machine/trap.h>
 #include <machine/reg.h>
 #include <machine/machdep.h>
+
+#include <m68k/cpu.h>
 
 #ifdef COMPAT_SUNOS
 #include <compat/sunos/sunos_syscall.h>
