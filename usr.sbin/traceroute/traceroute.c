@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: traceroute.c,v 1.3 1994/05/16 19:16:01 mycroft Exp $";
+static char *rcsid = "$Id: traceroute.c,v 1.4 1995/01/04 04:28:20 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -226,63 +226,53 @@ static char *rcsid = "$Id: traceroute.c,v 1.3 1994/05/16 19:16:01 mycroft Exp $"
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
+#include <netinet/ip_var.h>
 #include <netinet/udp.h>
 
 #include <arpa/inet.h>
 
+#include <ctype.h>
+#include <errno.h>
 #include <netdb.h>
 #include <stdio.h>
-#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#define	MAXPACKET	65535	/* max ip packet size */
-#ifndef MAXHOSTNAMELEN
-#define MAXHOSTNAMELEN	64
-#endif
-
-#ifndef FD_SET
-#define NFDBITS         (8*sizeof(fd_set))
-#define FD_SETSIZE      NFDBITS
-#define FD_SET(n, p)    ((p)->fds_bits[(n)/NFDBITS] |= (1 << ((n) % NFDBITS)))
-#define FD_CLR(n, p)    ((p)->fds_bits[(n)/NFDBITS] &= ~(1 << ((n) % NFDBITS)))
-#define FD_ISSET(n, p)  ((p)->fds_bits[(n)/NFDBITS] & (1 << ((n) % NFDBITS)))
-#define FD_ZERO(p)      bzero((char *)(p), sizeof(*(p)))
-#endif
 
 #define Fprintf (void)fprintf
 #define Sprintf (void)sprintf
 #define Printf (void)printf
 
+#define	HEADERSIZE	(sizeof(struct ip) + lsrrlen + sizeof(struct udphdr) + sizeof(struct packetdata))
+#define	MAX_LSRR	((MAX_IPOPTLEN - 4) / 4)
+
 /*
- * format of a (udp) probe packet.
+ * Format of the data in a (udp) probe packet.
  */
-struct opacket {
-	struct ip ip;
-	struct udphdr udp;
+struct packetdata {
 	u_char seq;		/* sequence number of this packet */
 	u_char ttl;		/* ttl packet left with */
 	struct timeval tv;	/* time packet left */
 };
 
-u_char	packet[512];		/* last inbound (icmp) packet */
-struct opacket	*outpacket;	/* last output (udp) packet */
+struct in_addr gateway[MAX_LSRR + 1];
+int lsrrlen = 0;
+
+u_char packet[512], *outpacket;	/* last inbound (icmp) packet */
 
 int wait_for_reply __P((int, struct sockaddr_in *));
-void send_probe __P((int, int));
+void send_probe __P((int, int, struct sockaddr_in *));
 double deltaT __P((struct timeval *, struct timeval *));
 int packet_ok __P((u_char *, int, struct sockaddr_in *, int));
 void print __P((u_char *, int, struct sockaddr_in *));
 void tvsub __P((struct timeval *, struct timeval *));
 char *inetname __P((struct in_addr));
-void usage __P(());
+void usage __P((void));
 
 int s;				/* receive (icmp) socket file descriptor */
 int sndsock;			/* send (udp) socket file descriptor */
 struct timezone tz;		/* leftover */
 
-struct sockaddr whereto;	/* Who to try to reach */
 int datalen;			/* How much data */
 
 char *source = 0;
@@ -296,32 +286,60 @@ int options;			/* socket options */
 int verbose;
 int waittime = 5;		/* time to wait for response (in seconds) */
 int nflag;			/* print addresses numerically */
+int dump;
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern char *optarg;
-	extern int optind;
 	struct hostent *hp;
 	struct protoent *pe;
-	struct sockaddr_in from, *to;
-	int ch, i, on, probe, seq, tos, ttl;
+	struct sockaddr_in from, to;
+	int ch, i, lsrr, on, probe, seq, tos, ttl;
+	u_long gw;
+	struct ip *ip;
 
+	lsrr = 0;
 	on = 1;
 	seq = tos = 0;
-	to = (struct sockaddr_in *)&whereto;
-	while ((ch = getopt(argc, argv, "dm:np:q:rs:t:w:v")) != EOF)
-		switch(ch) {
+	while ((ch = getopt(argc, argv, "dDg:m:np:q:rs:t:w:v")) != -1)
+		switch (ch) {
 		case 'd':
 			options |= SO_DEBUG;
 			break;
+		case 'D':
+			dump = 1;
+			break;
+		case 'g':
+			if (lsrr >= MAX_LSRR) {
+				Fprintf(stderr,
+				    "traceroute: too many gateways; max %d\n",
+				    MAX_LSRR);
+				exit(1);
+			}
+			gw = inet_addr(optarg);
+			if (gw == -1) {
+				hp = gethostbyname(optarg);
+				if (hp == 0) {
+					Fprintf(stderr,
+					    "traceroute: unknown host %s\n",
+					    optarg);
+					exit(1);
+				}
+				bcopy(hp->h_addr, &gw, 4);
+			}
+			gateway[lsrr++].s_addr = gw;
+			if (lsrr == 1)
+				lsrrlen = 4;
+			lsrrlen += 4;
+			break;
 		case 'm':
 			max_ttl = atoi(optarg);
-			if (max_ttl <= 1) {
+			if (max_ttl < 1 || max_ttl > MAXTTL) {
 				Fprintf(stderr,
-				    "traceroute: max ttl must be >1.\n");
+				    "traceroute: max ttl must be >0 and <%d.\n",
+				    MAXTTL);
 				exit(1);
 			}
 			break;
@@ -384,42 +402,57 @@ main(argc, argv)
 
 	setlinebuf (stdout);
 
-	(void) bzero((char *)&whereto, sizeof(struct sockaddr));
-	to->sin_family = AF_INET;
-	to->sin_addr.s_addr = inet_addr(*argv);
-	if (to->sin_addr.s_addr != -1)
+	(void) bzero((char *)&to, sizeof(struct sockaddr));
+	to.sin_family = AF_INET;
+	to.sin_addr.s_addr = inet_addr(*argv);
+	if (to.sin_addr.s_addr != -1)
 		hostname = *argv;
 	else {
 		hp = gethostbyname(*argv);
-		if (hp) {
-			to->sin_family = hp->h_addrtype;
-			bcopy(hp->h_addr, (caddr_t)&to->sin_addr, hp->h_length);
-			hostname = hp->h_name;
-		} else {
+		if (hp == 0) {
 			(void)fprintf(stderr,
 			    "traceroute: unknown host %s\n", *argv);
 			exit(1);
 		}
+		to.sin_family = hp->h_addrtype;
+		bcopy(hp->h_addr, (caddr_t)&to.sin_addr, hp->h_length);
+		hostname = hp->h_name;
 	}
 	if (*++argv)
 		datalen = atoi(*argv);
-	if (datalen < 0 || datalen >= MAXPACKET - sizeof(struct opacket)) {
+	if (datalen < 0 || datalen >= IP_MAXPACKET - HEADERSIZE) {
 		Fprintf(stderr,
 		    "traceroute: packet size must be 0 <= s < %ld.\n",
-		    MAXPACKET - sizeof(struct opacket));
+		    IP_MAXPACKET - HEADERSIZE);
 		exit(1);
 	}
-	datalen += sizeof(struct opacket);
-	outpacket = (struct opacket *)malloc((unsigned)datalen);
-	if (! outpacket) {
+	datalen += HEADERSIZE;
+	outpacket = (u_char *)malloc(datalen);
+	if (outpacket == 0) {
 		perror("traceroute: malloc");
 		exit(1);
 	}
-	(void) bzero((char *)outpacket, datalen);
-	outpacket->ip.ip_dst = to->sin_addr;
-	outpacket->ip.ip_tos = tos;
-	outpacket->ip.ip_v = IPVERSION;
-	outpacket->ip.ip_id = 0;
+
+	(void) bzero(outpacket, datalen);
+	ip = (struct ip *)outpacket;
+	if (lsrr != 0) {
+		u_char *p;
+		p = (u_char *)(ip + 1);
+		*p++ = IPOPT_NOP;
+		*p++ = IPOPT_LSRR;
+		*p++ = lsrrlen - 1;
+		*p++ = IPOPT_MINOFF;
+		gateway[lsrr] = to.sin_addr;
+		for (i = 1; i <= lsrr; i++)
+			*((struct in_addr *)p)++ = gateway[i];
+		ip->ip_dst = gateway[0];
+	} else
+		ip->ip_dst = to.sin_addr;
+	ip->ip_off = 0;
+	ip->ip_hl = (sizeof(struct ip) + lsrrlen) >> 2;
+	ip->ip_p = IPPROTO_UDP;
+	ip->ip_v = IPVERSION;
+	ip->ip_tos = tos;
 
 	ident = (getpid() & 0xffff) | 0x8000;
 
@@ -442,6 +475,7 @@ main(argc, argv)
 		perror("traceroute: raw socket");
 		exit(5);
 	}
+
 #ifdef SO_SNDBUF
 	if (setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF, (char *)&datalen,
 		       sizeof(datalen)) < 0) {
@@ -471,7 +505,7 @@ main(argc, argv)
 			Printf("traceroute: unknown host %s\n", source);
 			exit(1);
 		}
-		outpacket->ip.ip_src = from.sin_addr;
+		ip->ip_src = from.sin_addr;
 #ifndef IP_HDRINCL
 		if (bind(sndsock, (struct sockaddr *)&from, sizeof(from)) < 0) {
 			perror ("traceroute: bind:");
@@ -481,7 +515,7 @@ main(argc, argv)
 	}
 
 	Fprintf(stderr, "traceroute to %s (%s)", hostname,
-		inet_ntoa(to->sin_addr));
+		inet_ntoa(to.sin_addr));
 	if (source)
 		Fprintf(stderr, " from %s", source);
 	Fprintf(stderr, ", %d hops max, %d byte packets\n", max_ttl, datalen);
@@ -497,10 +531,9 @@ main(argc, argv)
 			int cc;
 			struct timeval t1, t2;
 			struct timezone tz;
-			struct ip *ip;
 
 			(void) gettimeofday(&t1, &tz);
-			send_probe(++seq, ttl);
+			send_probe(++seq, ttl, &to);
 			while (cc = wait_for_reply(s, &from)) {
 				(void) gettimeofday(&t2, &tz);
 				if ((i = packet_ok(packet, cc, &from, seq))) {
@@ -547,7 +580,7 @@ main(argc, argv)
 			(void) fflush(stdout);
 		}
 		putchar('\n');
-		if (got_there || unreachable >= nprobes-1)
+		if (got_there || unreachable >= nprobes)
 			exit(0);
 	}
 }
@@ -573,35 +606,50 @@ wait_for_reply(sock, from)
 	return(cc);
 }
 
-
 void
-send_probe(seq, ttl)
-	int seq, ttl;
+dump_packet()
 {
-	struct opacket *op = outpacket;
-	struct ip *ip = &op->ip;
-	struct udphdr *up = &op->udp;
+	u_char *p;
 	int i;
 
-	ip->ip_off = 0;
-	ip->ip_hl = sizeof(*ip) >> 2;
-	ip->ip_p = IPPROTO_UDP;
+	Fprintf(stderr, "packet data:");
+	for (p = outpacket, i = 0; i < datalen; i++) {
+		if ((i % 24) == 0)
+			Fprintf(stderr, "\n ");
+		Fprintf(stderr, " %02x", *p++);
+	}
+	Fprintf(stderr, "\n");
+}
+
+void
+send_probe(seq, ttl, to)
+	int seq, ttl;
+	struct sockaddr_in *to;
+{
+	struct ip *ip = (struct ip *)outpacket;
+	u_char *p = (u_char *)(ip + 1);
+	struct udphdr *up = (struct udphdr *)(p + lsrrlen);
+	struct packetdata *op = (struct packetdata *)(up + 1);
+	int i;
+
 	ip->ip_len = datalen;
 	ip->ip_ttl = ttl;
-	ip->ip_v = IPVERSION;
 	ip->ip_id = htons(ident+seq);
 
 	up->uh_sport = htons(ident);
 	up->uh_dport = htons(port+seq);
-	up->uh_ulen = htons((u_short)(datalen - sizeof(struct ip)));
+	up->uh_ulen = htons((u_short)(datalen - sizeof(struct ip) - lsrrlen));
 	up->uh_sum = 0;
 
 	op->seq = seq;
 	op->ttl = ttl;
 	(void) gettimeofday(&op->tv, &tz);
 
-	i = sendto(sndsock, (char *)outpacket, datalen, 0, &whereto,
-		   sizeof(struct sockaddr));
+	if (dump)
+		dump_packet();
+
+	i = sendto(sndsock, outpacket, datalen, 0, (struct sockaddr *)to,
+		   sizeof(struct sockaddr_in));
 	if (i < 0 || i != datalen)  {
 		if (i<0)
 			perror("sendto");
@@ -830,7 +878,6 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-"usage: traceroute [-dnrv] [-m max_ttl] [-p port#] [-q nqueries]\n\t\
-[-s src_addr] [-t tos] [-w wait] host [data size]\n");
-	exit(1);
-}
+"usage: traceroute [-dDnrv] [-g gateway_addr] ... [-m max_ttl] [-p port#]\n\t\
+[-q nqueries] [-s src_addr] [-t tos] [-w wait] host [data size]\n");
+	exit(1)
