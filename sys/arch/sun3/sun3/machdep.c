@@ -21,6 +21,11 @@
 #include "../hpux/hpux.h"
 #endif
 
+#include "vm/vm.h"
+#include "vm/vm_map.h"
+#include "vm/vm_kern.h"
+#include "vm/vm_page.h"
+
 #include "machine/cpu.h"
 #include "machine/reg.h"
 #include "machine/psl.h"
@@ -35,14 +40,151 @@
 char kstack[NBPG];		/* totally bogus */
 
 struct proc *proc0paddr = &proc0;
-
+extern char *cpu_string;
+int physmem;
 int cold;
+
+/*
+ * Declare these as initialized data so we can patch them.
+ */
+int	nswbuf = 0;
+#ifdef	NBUF
+int	nbuf = NBUF;
+#else
+int	nbuf = 0;
+#endif
+#ifdef	BUFPAGES
+int	bufpages = BUFPAGES;
+#else
+int	bufpages = 0;
+#endif
+
+void identifycpu()
+{
+    /*
+     * actual identification done earlier because i felt like it,
+     * and i believe i will need the info to deal with some VAC, and awful
+     * framebuffer placement problems.  could be moved later.
+     */
+
+    printf("SUN3/%s\n", cpu_string);
+    /* should eventually include whether it has a VAC, etc */
+}
 
 void cpu_startup()
 {
-    mon_printf("got to cpu_startup()\n");
+    caddr_t v;
+    int firstaddr, i;
+    vm_size_t size;    
+    vm_offset_t minaddr, maxaddr;
+
     printf("got to cpu_startup()\n");
+
+    /* msgbuf mapped earlier, should figure out why? */
+    printf(version);
+    identifycpu();
+		/* compute physmem? */
+    printf("real mem  = %d\n", ctob(physmem));
+    /*
+     * Allocate space for system data structures.
+     * The first available real memory address is in "firstaddr".
+     * The first available kernel virtual address is in "v".
+     * As pages of kernel virtual memory are allocated, "v" is incremented.
+     * As pages of memory are allocated and cleared,
+     * "firstaddr" is incremented.
+     * An index into the kernel page table corresponding to the
+     * virtual memory address maintained in "v" is kept in "mapaddr".
+     */
+    /*
+     * Make two passes.  The first pass calculates how much memory is
+     * needed and allocates it.  The second pass assigns virtual
+     * addresses to the various data structures.
+     */
     
+    firstaddr = 0;
+ again:
+    v = (caddr_t)firstaddr;
+    
+#define	valloc(name, type, num) \
+    (name) = (type *)v; v = (caddr_t)((name)+(num))
+#define	valloclim(name, type, num, lim) \
+	(name) = (type *)v; v = (caddr_t)((lim) = ((name)+(num)))
+	    /*	valloc(cfree, struct cblock, nclist);  no clists any more!!! - cgd */
+	    valloc(callout, struct callout, ncallout);
+    valloc(swapmap, struct map, nswapmap = maxproc * 2);
+#ifdef SYSVSHM
+    valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
+#endif
+    if (bufpages == 0)
+	if (physmem < (2 * 1024 * 1024))
+	    bufpages = physmem / 10 / CLSIZE;
+	else
+	    bufpages = ((2 * 1024 * 1024 + physmem) / 20) / CLSIZE;
+    if (nswbuf == 0) {
+	nswbuf = (nbuf / 2) &~ 1;	/* force even */
+	if (nswbuf > 256)
+	    nswbuf = 256;		/* sanity */
+    }
+    valloc(swbuf, struct buf, nswbuf);
+    valloc(buf, struct buf, nbuf);
+    /*
+     * End of first pass, size has been calculated so allocate memory
+     */
+    if (firstaddr == 0) {
+	size = (vm_size_t)(v - firstaddr);
+	firstaddr = (caddr_t) kmem_alloc(kernel_map, round_page(size));
+	if (firstaddr == 0)
+	    panic("startup: no room for tables");
+	goto again;
+    }
+    /*
+     * End of second pass, addresses have been assigned
+     */
+    if ((vm_size_t)(v - firstaddr) != size)
+	panic("startup: table size inconsistency");
+    /* buffer_map stuff but not used */
+    /*
+     * Allocate a submap for exec arguments.  This map effectively
+     * limits the number of processes exec'ing at any time.
+     */
+    /*	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
+     *				16*NCARGS, TRUE);
+     *	NOT CURRENTLY USED -- cgd
+     */
+    /*
+     * Allocate a submap for physio
+     */
+    phys_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
+			     VM_PHYS_SIZE, TRUE);
+    
+    /*
+     * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
+     * we use the more space efficient malloc in place of kmem_alloc.
+     */
+    mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES,
+			       M_MBUF, M_NOWAIT);
+    bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
+    mb_map = kmem_suballoc(kernel_map, (vm_offset_t)&mbutl, &maxaddr,
+			   VM_MBUF_SIZE, FALSE);
+    /*
+     * Initialize callouts
+     */
+    callfree = callout;
+    for (i = 1; i < ncallout; i++)
+	callout[i-1].c_next = &callout[i];
+    
+    printf("avail mem = %d\n", ptoa(vm_page_free_count));
+/*    initcpu();*/
+    /*
+     * Set up buffers, so they can be used to read disk labels.
+     */
+    bufinit();
+    /*
+     * Configure the system.
+     */
+    printf("about to call configure\n");
+/*    configure();*/
+
     sun3_stop();
     cold = 0;
 }

@@ -32,6 +32,16 @@
 #define	DMMAX	4096			/* largest potential swap allocation */
 
 /*
+ * PTEs for mapping user space into the kernel for phyio operations.
+ * [this figure is based on the assumption that you can put ptes in real
+ *  memory.  this is a false assumption on a sun3]
+ *  
+ */
+#ifndef USRIOSIZE
+#define USRIOSIZE	1
+#endif
+
+/*
  * The time for a process to be blocked before being very swappable.
  * This is a number of seconds which the system takes as being a non-trivial
  * amount of real time.  You probably shouldn't change this;

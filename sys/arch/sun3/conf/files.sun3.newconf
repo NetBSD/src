@@ -1,0 +1,47 @@
+#
+# new style config file for sun3 architecture
+#
+#
+#
+
+define sunfb
+
+#device mainbus at root { }
+device obio at root {addr = -1, [priority = -1]}
+device obmem at root {addr, size, [priority = -1]}
+
+#define obio { addr = -1, size = -1, priority = -1, dvma = -1, flags = -1}
+#define obmem { addr = -1, size = -1}
+
+device le at obio: ifnet, ether
+file arch/sun3/dev/if_le.c		le device-driver needs-count
+
+device zs at obio: tty
+file arch/sun3/dev/zs.c			zs device-driver needs-count
+
+device bwtwo at obmem: sunfb
+file arch/sun3/dev/bwtwo.c		bwtwo
+
+#
+#
+file arch/sun3/sun3/clock.c		
+file arch/sun3/sun3/conf.c		
+file arch/sun3/sun3/cons.c		
+file arch/sun3/sun3/control.c	
+#file arch/sun3/sun3/db_disasm.c	ddb
+file arch/sun3/sun3/db_interface.c	ddb
+file arch/sun3/sun3/db_trace.c	 	ddb
+file arch/sun3/sun3/disksubr.c	
+file arch/sun3/sun3/machdep.c	
+file arch/sun3/sun3/mem.c		
+file arch/sun3/sun3/obio.c		
+file arch/sun3/sun3/pmap.c		
+file arch/sun3/sun3/stub.c		
+file arch/sun3/sun3/sun3_startup.c	
+file arch/sun3/sun3/trap.c		
+file arch/sun3/sun3/vector.c		
+file arch/sun3/sun3/vm_machdep.c	
+file arch/sun3/dev/idprom.c		idprom device-driver
+file arch/sun3/dev/prom.c		prom device-driver
+file arch/sun3/dev/obmem.c		obmem device-driver
+
