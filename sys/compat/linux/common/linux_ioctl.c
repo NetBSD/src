@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.36 2003/06/28 22:52:53 bouyer Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.37 2003/06/29 05:26:25 enami Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.36 2003/06/28 22:52:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.37 2003/06/29 05:26:25 enami Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "sequencer.h"
@@ -112,6 +112,7 @@ linux_sys_ioctl(l, v, retval)
 		 * way.  We do it by indexing in the cdevsw with the major
 		 * device number and check if that is the sequencer entry.
 		 */
+		struct proc *p = l->l_proc;
 		struct file *fp;
 		struct filedesc *fdp;
 		struct vnode *vp;
