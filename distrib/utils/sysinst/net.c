@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.91 2003/07/25 08:26:22 dsl Exp $	*/
+/*	$NetBSD: net.c,v 1.92 2003/07/27 21:09:57 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -459,21 +459,22 @@ config_network(void)
 		return (1);
 
 	get_ifconfig_info();
-	if (net_devices[0] == 0) {
-		/* No network interfaces found! */
-		msg_display(MSG_nonet);
-		process_menu(MENU_ok, NULL);
-		return (-1);
-	}
-	network_up = 1;
 
-	if (net_up[0] != 0) {
+	if (net_up != NULL) {
 		/* active interfaces found */
 		msg_display(MSG_netup, net_up);
 		process_menu(MENU_yesno, NULL);
 		if (yesno)
 			return 1;
 	}
+
+	if (net_devices == NULL) {
+		/* No network interfaces found! */
+		msg_display(MSG_nonet);
+		process_menu(MENU_ok, NULL);
+		return (-1);
+	}
+	network_up = 1;
 
 again:
 	tp = strchr(net_devices, ' ');
