@@ -1,4 +1,4 @@
-/*	$NetBSD: stb1_locore.S,v 1.2 2002/07/12 15:42:29 scw Exp $	*/
+/*	$NetBSD: stb1_locore.S,v 1.3 2002/08/26 10:08:02 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -69,6 +69,16 @@
  */
 Lsh5_stb1_init:
 	addz.l	r2, r63, r2		/* Clear the upper 32-bits of r2 */
+	movi	2, r1
+	LDC32(0x01600000, r0)		/* Instruction Cache Control Register */
+	putcfg	r0, 0, r1		/* Invalidate instruction cache */
+	putcfg	r0, 1, r63
+	synci
+	LDC32(0x01e00000, r0)		/* Operand Cache Control Register */
+	putcfg	r0, 0, r1		/* Invalidate operand cache */
+	putcfg	r0, 1, r63
+	synco
+
 	pta/u	1f, tr0			/* Pre-load branches */
 	LDC32(0x00800000 + (16 * 63), r0)	/* Top of DTLB */
 	movi	(16 * 63), r1		/* Top of ITLB */
@@ -103,21 +113,21 @@ Lsh5_stb1_init:
 	putcfg	r0, 0, r2
 	putcfg	r1, 0, r2
 
-	/* XXX: Cache */
-
 	/*
 	 * The TLB is primed, the cache is clean. All we have to do now
-	 * is enable the MMU and return to the caller.
+	 * is enable the MMU and FPU before returning to the caller.
 	 */
 	getcon	sr, r0
 	LDUC32(SH5_CONREG_SR_ASID_MASK << SH5_CONREG_SR_ASID_SHIFT, r1)
-	andc	r0, r1, r1
-	LDUC32(SH5_CONREG_SR_INIT|SH5_CONREG_SR_IMASK_ALL, r0)
-	or	r1, r0, r0
+	andc	r0, r1, r0
+	LDUC32(SH5_CONREG_SR_FD, r1)
+	andc	r0, r1, r0
+	LDUC32(SH5_CONREG_SR_INIT|SH5_CONREG_SR_IMASK_ALL, r1)
+	or	r0, r1, r0
 	putcon	r0, ssr
 	putcon	r18, spc
 	synco
-	rte				/* Enable MMU and return to caller */
+	rte
 	nop
 	nop
 	nop
