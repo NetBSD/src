@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.80 2000/02/16 11:57:00 fvdl Exp $	*/
+/*	$NetBSD: mount.h,v 1.81 2000/03/13 18:52:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -254,6 +254,7 @@ struct mount {
 	{ MOUNT_EXT2FS, CTLTYPE_NODE }, \
 	{ MOUNT_CODA, CTLTYPE_NODE }, \
 	{ MOUNT_FILECORE, CTLTYPE_NODE }, \
+	{ MOUNT_NTFS, CTLTYPE_NODE }, \
 }
 
 #define	VFS_MAXID	20		/* number of valid vfs ids */
