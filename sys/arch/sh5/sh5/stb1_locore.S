@@ -1,4 +1,4 @@
-/*	$NetBSD: stb1_locore.S,v 1.4 2002/08/30 13:54:16 scw Exp $	*/
+/*	$NetBSD: stb1_locore.S,v 1.5 2002/09/04 13:58:36 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -261,10 +261,9 @@ ENTRY_NOPROFILE(_sh5_stb1_tlbinv_cookie)
 	 */
 	blink	tr4, r63
 
-	/* Found the required TLB entry. Disable exceptions and check again */
+	/* Found the required TLB entry. Disable interrupts and check again */
 2:	getcon	sr, r4			/* Grab SR */
-	LDC32(SH5_CONREG_SR_BL, r1)
-	or	r4, r1, r1
+	ori	r4, SH5_CONREG_SR_IMASK_ALL, r1
 	putcon	r1, sr			/* Disable ALL exceptions */
 	getcfg	r0, 0, r1		/* Fetch TLB.PTEH entry again */
 	bne/u	r1, r2, tr3		/* It changed under our noses */
