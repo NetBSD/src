@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.31 2002/03/02 12:25:23 mrg Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.32 2002/05/29 02:19:56 cjs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.31 2002/03/02 12:25:23 mrg Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.32 2002/05/29 02:19:56 cjs Exp $");
 #endif
 #endif /* not lint */
 
@@ -704,7 +704,7 @@ tryagain:
 			}
 			if ((opflags & ISBGRND) == 0)
 				clnt_pcreateerror(
-				    "mount_nfs: rpcbind on server");
+				    "mount_nfs: rpcbind to nfs on server");
 		} else {
 			pertry.tv_sec = 10;
 			pertry.tv_usec = 0;
@@ -715,8 +715,10 @@ tryagain:
 			clp = clnt_tp_create(hostp, RPCPROG_MNT, mntvers,
 			     mnttcp_ok ? nconf : getnetconfigent("udp"));
 			if (clp == NULL) {
-				if ((opflags & ISBGRND) == 0)
-					clnt_pcreateerror("Cannot MNT RPC");
+				if ((opflags & ISBGRND) == 0) {
+					clnt_pcreateerror(
+					    "Cannot MNT RPC (mountd)");
+				}
 			} else {
 				CLNT_CONTROL(clp, CLSET_RETRY_TIMEOUT,
 				    (char *)&pertry);
