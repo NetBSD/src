@@ -125,3 +125,7 @@ Boston, MA 02111-1307, USA.  */
 #define TRANSFER_FROM_TRAMPOLINE NETBSD_ENABLE_EXECUTE_STACK
 
 #define TARGET_VERSION fprintf (stderr, " (NetBSD/i386 ELF)");
+
+/* XXX delete me when NetBSD switches to GDB 5.3.  */
+#undef PREFERRED_DEBUGGING_TYPE
+#define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
