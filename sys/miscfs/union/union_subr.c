@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.20 1996/10/13 02:21:45 christos Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.21 1996/10/25 21:58:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -74,7 +74,7 @@ static void union_list_unlock __P((int));
 void union_updatevp __P((struct union_node *, struct vnode *, struct vnode *));
 static int union_relookup __P((struct union_mount *, struct vnode *,
 			       struct vnode **, struct componentname *,
-			       struct componentname *, char *, int));
+			       struct componentname *, const char *, int));
 int union_vn_close __P((struct vnode *, int, struct ucred *, struct proc *));
 static void union_dircache_r __P((struct vnode *, struct vnode ***, int *));
 struct vnode *union_dircache __P((struct vnode *));
@@ -705,7 +705,7 @@ union_relookup(um, dvp, vpp, cnp, cn, path, pathlen)
 	struct vnode **vpp;
 	struct componentname *cnp;
 	struct componentname *cn;
-	char *path;
+	const char *path;
 	int pathlen;
 {
 	int error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.47 1996/10/13 02:21:31 christos Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.48 1996/10/25 21:58:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -316,7 +316,7 @@ kernfs_lookup(v)
 	struct componentname *cnp = ap->a_cnp;
 	struct vnode **vpp = ap->a_vpp;
 	struct vnode *dvp = ap->a_dvp;
-	char *pname = cnp->cn_nameptr;
+	const char *pname = cnp->cn_nameptr;
 	struct kern_target *kt;
 	struct vnode *fvp;
 	int error, i;

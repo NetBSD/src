@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.44 1996/10/13 02:21:39 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.45 1996/10/25 21:58:03 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -670,7 +670,7 @@ procfs_lookup(v)
 	struct componentname *cnp = ap->a_cnp;
 	struct vnode **vpp = ap->a_vpp;
 	struct vnode *dvp = ap->a_dvp;
-	char *pname = cnp->cn_nameptr;
+	const char *pname = cnp->cn_nameptr;
 	struct proc_target *pt;
 	struct vnode *fvp;
 	pid_t pid;

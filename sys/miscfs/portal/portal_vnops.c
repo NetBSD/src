@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.23 1996/10/13 02:21:36 christos Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.24 1996/10/25 21:58:02 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -197,11 +197,11 @@ portal_lookup(v)
 	struct componentname *cnp = ap->a_cnp;
 	struct vnode **vpp = ap->a_vpp;
 	struct vnode *dvp = ap->a_dvp;
-	char *pname = cnp->cn_nameptr;
+	const char *pname = cnp->cn_nameptr;
 	struct portalnode *pt;
 	int error;
 	struct vnode *fvp = 0;
-	char *path;
+	const char *path;
 	int size;
 
 	*vpp = NULLVP;
