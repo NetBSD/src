@@ -1,4 +1,3 @@
-#undef DEBUG_PFAULT
 #undef DEBUG_SCALL
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +43,7 @@
  *	@(#)trap.c	8.1 (Berkeley) 6/16/93
  *
  * from: Header: trap.c,v 1.34 93/05/28 04:34:50 torek Exp 
- * $Id: trap.c,v 1.6 1993/11/10 06:22:15 deraadt Exp $
+ * $Id: trap.c,v 1.7 1993/11/27 01:49:20 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -548,9 +547,6 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	if (i != 0 && i != -1)
 		goto fault;
 	ftype = ser & SER_WRITE ? VM_PROT_READ|VM_PROT_WRITE : VM_PROT_READ;
-#ifdef DEBUG_PFAULT
-printf("ADDR va=%8x pc=%8x psr=%8x\n", v, pc, psr);
-#endif
 	va = trunc_page(v);
 	if (psr & PSR_PS) {
 		extern char Lfsbail[];
