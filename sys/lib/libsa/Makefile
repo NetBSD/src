@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 1999/05/07 14:28:51 drochner Exp $
+#	$NetBSD: Makefile,v 1.33 1999/08/18 20:04:39 cgd Exp $
 
 LIB=	sa
 MKPIC=	no
@@ -42,7 +42,7 @@ SRCS+=	bootp.c rarp.c bootparam.c
 # boot filesystems
 SRCS+=	nfs.c tftp.c
 .endif
-SRCS+=	ufs.c ufs_ls.c cd9660.c ustarfs.c
+SRCS+=	lfs.c ufs.c ufs_ls.c cd9660.c ustarfs.c
 
 # only needed during build
 libinstall::
