@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: import-BtNetBSD,v 1.1 2001/02/19 14:09:00 reinoud Exp $
+# $NetBSD: import-BtNetBSD,v 1.2 2001/02/19 15:28:13 reinoud Exp $
 # creates all uue file from the binaries to get them in the source tree
 # to be run in the directory next to the directory NetBSD
 #
@@ -11,28 +11,24 @@ cd BtNetBSD
 # unixfs is copied at install time
 rm -rf unixfs
 
-mv \!BtNetBSD pling.BtNetBSD
+cp -Rf \!BtNetBSD/* pling.BtNetBSD
+rm -R \!BtNetBSD
+
 cd pling.BtNetBSD
 
-echo "\$NetBSD\$" > Banner,uue
-uuencode Banner < Banner >> Banner,uue && rm Banner
+uuencode Banner < Banner > Banner,uue && rm Banner
 
-echo "\$NetBSD\$" > MemFix,uue
-uuencode MemFix < MemFix >> MemFix,uue && rm MemFix
+uuencode MemFix < MemFix > MemFix,uue && rm MemFix
 
-echo "\$NetBSD\$" > pling.Sprites,uue
-uuencode \!Sprites < \!Sprites >> pling.Sprites,uue && rm \!Sprites
+uuencode \!Sprites < \!Sprites > pling.Sprites,uue && rm \!Sprites
 
-echo "\$NetBSD\$" > pling.Sprites22,uue
-uuencode \!Sprites22 < \!Sprites22 >> pling.Sprites22,uue && rm \!Sprites22
+uuencode \!Sprites22 < \!Sprites22 > pling.Sprites22,uue && rm \!Sprites22
 
 cd native
-echo "\$NetBSD\$" > unixfs_res,uue
-uuencode unixfs_res < unixfs_res >> unixfs_res,uue && rm unixfs_res
+uuencode unixfs_res < unixfs_res > unixfs_res,uue && rm unixfs_res
 
 cd ../src/Banner
-echo "\$NetBSD\$" > sprite,uue
-uuencode Sprite < Sprite >> sprite,uue && rm Sprite
+uuencode Sprite < Sprite > sprite,uue && rm Sprite
 cd ../..
 
 cd ../..

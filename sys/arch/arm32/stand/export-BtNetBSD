@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: export-BtNetBSD,v 1.5 2001/02/19 14:32:45 reinoud Exp $
+# $NetBSD: export-BtNetBSD,v 1.6 2001/02/19 15:28:13 reinoud Exp $
 # creates all binary files from the uue files from the source tree
 # to be run in the directory next to the directory NetBSD
 #
@@ -37,4 +37,3 @@ cd ..
 rm -f BtNetBSD.RO.tar
 tar cvf BtNetBSD.RO.tar BtNetBSD.RO
 
-rm -rf BtNetBSD.RO
