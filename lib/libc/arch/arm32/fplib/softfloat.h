@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat.h,v 1.3 1998/01/06 00:06:13 perry Exp $	*/
+/*	$NetBSD: softfloat.h,v 1.4 1999/05/06 13:56:28 kleink Exp $	*/
 
 /*
 ===============================================================================
@@ -102,10 +102,14 @@ Software IEC/IEEE floating-point conversion routines.
 */
 float32 int32_to_float32( int );
 float64 int32_to_float64( int );
-int float32_to_int32( float32 );
+#if 0 /* unused */
+static int float32_to_int32( float32 );
+#endif
 int float32_to_int32_round_to_zero( float32 );
 float64 float32_to_float64( float32 );
-int float64_to_int32( float64 );
+#if 0 /* unused */
+static int float64_to_int32( float64 );
+#endif
 int float64_to_int32_round_to_zero( float64 );
 float32 float64_to_float32( float64 );
 unsigned int float64_to_uint32_round_to_zero( float64 a );
@@ -116,35 +120,47 @@ unsigned int float32_to_uint32_round_to_zero( float32 a );
 Software IEC/IEEE single-precision operations.
 -------------------------------------------------------------------------------
 */
-float32 float32_round_to_int( float32 );
+#if 0 /* unused */
+static float32 float32_round_to_int( float32 );
+#endif
 float32 float32_add( float32, float32 );
 float32 float32_sub( float32, float32 );
 float32 float32_mul( float32, float32 );
 float32 float32_div( float32, float32 );
-float32 float32_rem( float32, float32 );
-float32 float32_sqrt( float32 );
+#if 0 /* unused */
+static float32 float32_rem( float32, float32 );
+static float32 float32_sqrt( float32 );
+#endif
 char float32_eq( float32, float32 );
 char float32_le( float32, float32 );
 char float32_lt( float32, float32 );
-char float32_eq_signaling( float32, float32 );
-char float32_le_quiet( float32, float32 );
-char float32_lt_quiet( float32, float32 );
+#if 0 /* unused */
+static char float32_eq_signaling( float32, float32 );
+static char float32_le_quiet( float32, float32 );
+static char float32_lt_quiet( float32, float32 );
+#endif
 
 /*
 -------------------------------------------------------------------------------
 Software IEC/IEEE double-precision operations.
 -------------------------------------------------------------------------------
 */
-float64 float64_round_to_int( float64 );
+#if 0 /* unused */
+static float64 float64_round_to_int( float64 );
+#endif
 float64 float64_add( float64, float64 );
 float64 float64_sub( float64, float64 );
 float64 float64_mul( float64, float64 );
 float64 float64_div( float64, float64 );
-float64 float64_rem( float64, float64 );
-float64 float64_sqrt( float64 );
+#if 0 /* unused */
+static float64 float64_rem( float64, float64 );
+static float64 float64_sqrt( float64 );
+#endif
 char float64_eq( float64, float64 );
 char float64_le( float64, float64 );
 char float64_lt( float64, float64 );
+#if 0 /* unused */
 char float64_eq_signaling( float64, float64 );
+#endif
 char float64_le_quiet( float64, float64 );
 char float64_lt_quiet( float64, float64 );

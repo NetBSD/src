@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat-specialize.h,v 1.3 1998/01/06 00:06:12 perry Exp $	*/
+/*	$NetBSD: softfloat-specialize.h,v 1.4 1999/05/06 13:56:28 kleink Exp $	*/
 
 /*
 ===============================================================================
@@ -30,15 +30,15 @@ this code that are retained.
 ===============================================================================
 */
 
-flag float32_is_signaling_nan( float32 a );
-flag float64_is_signaling_nan( float64 a );
+static flag float32_is_signaling_nan( float32 a );
+static flag float64_is_signaling_nan( float64 a );
 
 /*
 -------------------------------------------------------------------------------
 Underflow tininess-detection mode.  (Statically initialized to default.)
 -------------------------------------------------------------------------------
 */
-flag float_detect_tininess = float_tininess_after_rounding;
+static flag float_detect_tininess = float_tininess_after_rounding;
 
 /*
 -------------------------------------------------------------------------------
@@ -81,7 +81,7 @@ Returns true if the single-precision floating-point value `a' is a signaling
 NaN; otherwise returns false.
 -------------------------------------------------------------------------------
 */
-flag float32_is_signaling_nan( float32 a )
+static flag float32_is_signaling_nan( float32 a )
 {
 
     return ( ( a & 0x7FC00000 ) == 0x7F800000 ) && ( a & 0x003FFFFF );
@@ -94,7 +94,7 @@ Returns true if the double-precision floating-point value `a' is a signaling
 NaN; otherwise returns false.
 -------------------------------------------------------------------------------
 */
-flag float64_is_signaling_nan( float64 a )
+static flag float64_is_signaling_nan( float64 a )
 {
 
     return

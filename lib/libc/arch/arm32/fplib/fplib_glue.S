@@ -1,4 +1,4 @@
-/*	$NetBSD: fplib_glue.S,v 1.1 1997/10/12 21:18:08 mark Exp $	*/
+/*	$NetBSD: fplib_glue.S,v 1.2 1999/05/06 13:56:28 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -48,13 +48,13 @@
  */
 ENTRY(__eqsf2)
 	stmfd		sp!, {lr}
-	bl		_float32_eq
+	bl		_C_LABEL(_arm32_float32_eq)
 	eor		r0, r0, #1
 	ldmfd		sp!, {pc}
 
 ENTRY(__eqdf2)
 	stmfd		sp!, {lr}
-	bl		_float64_eq
+	bl		_C_LABEL(_arm32_float64_eq)
 	eor		r0, r0, #1
 	ldmfd		sp!, {pc}
 
@@ -66,13 +66,13 @@ ENTRY(__eqdf2)
  */
 ENTRY(__nesf2)
 	stmfd		sp!, {lr}
-	bl		_float32_eq
+	bl		_C_LABEL(_arm32_float32_eq)
 	eor		r0, r0, #1
 	ldmfd		sp!, {pc}
 
 ENTRY(__nedf2)
 	stmfd		sp!, {lr}
-	bl		_float64_eq
+	bl		_C_LABEL(_arm32_float64_eq)
 	eor		r0, r0, #1
 	ldmfd		sp!, {pc}
 
@@ -85,13 +85,13 @@ ENTRY(__nedf2)
  */
 ENTRY(__gtsf2)
 	stmfd		sp!, {lr}
-	bl		_float32_le
+	bl		_C_LABEL(_arm32_float32_le)
 	eor		r0, r0, #1
 	ldmfd		sp!, {pc}
 
 ENTRY(__gtdf2)
 	stmfd		sp!, {lr}
-	bl		_float64_le
+	bl		_C_LABEL(_arm32_float64_le)
 	eor		r0, r0, #1
 	ldmfd		sp!, {pc}
 
@@ -101,7 +101,7 @@ ENTRY(__gtdf2)
  */
 ENTRY(__gesf2)
 	stmfd		sp!, {lr}
-	bl		_float32_lt
+	bl		_C_LABEL(_arm32_float32_lt)
 	eor		r0, r0, #1
 	cmp		r0, #0
 	mvneq		r0, #0
@@ -109,7 +109,7 @@ ENTRY(__gesf2)
 
 ENTRY(__gedf2)
 	stmfd		sp!, {lr}
-	bl		_float64_lt
+	bl		_C_LABEL(_arm32_float64_lt)
 	eor		r0, r0, #1
 	cmp		r0, #0
 	mvneq		r0, #0
@@ -120,14 +120,14 @@ ENTRY(__gedf2)
  */
 ENTRY(__ltsf2)
 	stmfd		sp!, {lr}
-	bl		_float32_lt
+	bl		_C_LABEL(_arm32_float32_lt)
 	cmp		r0, #1
 	mvneq		r0, #0
 	ldmfd		sp!, {pc}
 
 ENTRY(__ltdf2)
 	stmfd		sp!, {lr}
-	bl		_float64_lt
+	bl		_C_LABEL(_arm32_float64_lt)
 	cmp		r0, #1
 	mvneq		r0, #0
 	ldmfd		sp!, {pc}
@@ -137,13 +137,13 @@ ENTRY(__ltdf2)
  */
 ENTRY(__lesf2)
 	stmfd		sp!, {lr}
-	bl		_float32_le
+	bl		_C_LABEL(_arm32_float32_le)
 	eor		r0, r0, #1
 	ldmfd		sp!, {pc}
 
 ENTRY(__ledf2)
 	stmfd		sp!, {lr}
-	bl		_float64_le
+	bl		_C_LABEL(_arm32_float64_le)
 	eor		r0, r0, #1
 	ldmfd		sp!, {pc}
 
