@@ -1,11 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.13 2001/05/13 16:55:40 chs Exp $ */
-
-/*
- * This file was taken from mvme68k/mvme68k/sys_machdep.c
- * should probably be re-synced when needed.
- * Darrin B. Jewell <jewell@mit.edu>  Tue Nov 10 05:07:16 1998
- * original cvs id: NetBSD: sys_machdep.c,v 1.12 1998/08/22 10:55:36 scw Exp
- */
+/*	$NetBSD: sys_machdep.c,v 1.1 2002/11/03 02:29:40 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -42,17 +35,13 @@
  *	@(#)sys_machdep.c	8.2 (Berkeley) 1/13/94
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD");
+
 #include "opt_compat_hpux.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/ioctl.h>
-#include <sys/file.h>
-#include <sys/time.h>
 #include <sys/proc.h>
-#include <sys/uio.h>
-#include <sys/kernel.h>
-#include <sys/buf.h>
 #include <sys/mount.h>
 
 #include <uvm/uvm_extern.h>
@@ -70,7 +59,7 @@
 /* XXX end should be */
 
 /*
- * Note that what we do here for a 68040 is different than HP-UX.
+ * Note that what we do here on 040/060 for BSD is different than for HP-UX.
  *
  * In 'pux they either act on a line (len == 16), a page (len == NBPG)
  * or the whole cache (len == anything else).
@@ -89,12 +78,12 @@ cachectl1(req, addr, len, p)
 {
 	int error = 0;
 
-#if defined(M68040)
+#if defined(M68040) || defined(M68060)
 	if (mmutype == MMU_68040) {
 		int inc = 0;
-		int doall = 0;
+		boolean_t doall = FALSE;
 		paddr_t pa = 0;
-		vaddr_t end;
+		vaddr_t end = 0;
 #ifdef COMPAT_HPUX
 		extern struct emul emul_hpux;
 
@@ -115,7 +104,7 @@ cachectl1(req, addr, len, p)
 		if (!doall) {
 			end = addr + len;
 			if (len <= 1024) {
-				addr = addr & ~0xF;
+				addr = addr & ~0xf;
 				inc = 16;
 			} else {
 				addr = addr & ~PGOFSET;
@@ -126,10 +115,10 @@ cachectl1(req, addr, len, p)
 			/*
 			 * Convert to physical address if needed.
 			 * If translation fails, we perform operation on
-			 * entire cache (XXX is this a rational thing to do?)
+			 * entire cache.
 			 */
 			if (!doall &&
-			    (pa == 0 || ((int)addr & PGOFSET) == 0)) {
+			    (pa == 0 || m68k_page_offset(addr) == 0)) {
 				if (pmap_extract(p->p_vmspace->vm_map.pmap,
 				    addr, &pa) == FALSE)
 					doall = 1;
@@ -152,7 +141,7 @@ cachectl1(req, addr, len, p)
 			case CC_EXTPURGE|CC_PURGE:
 			case CC_PURGE:
 				if (doall)
-					DCFA(); /* note: flush not purge */
+					DCFA();	/* note: flush not purge */
 				else if (inc == 16)
 					DCPL(pa);
 				else if (inc == NBPG)
@@ -178,13 +167,13 @@ cachectl1(req, addr, len, p)
 			pa += inc;
 			addr += inc;
 		} while (addr < end);
-		return(error);
+		return (error);
 	}
 #endif
 	switch (req) {
 	case CC_EXTPURGE|CC_PURGE:
 	case CC_EXTPURGE|CC_FLUSH:
-#if defined(HP370)
+#if defined(CACHE_HAVE_PAC)
 		if (ectype == EC_PHYS)
 			PCIA();
 		/* fall into... */
@@ -194,7 +183,7 @@ cachectl1(req, addr, len, p)
 		DCIU();
 		break;
 	case CC_EXTPURGE|CC_IPURGE:
-#if defined(HP370)
+#if defined(CACHE_HAVE_PAC)
 		if (ectype == EC_PHYS)
 			PCIA();
 		else
@@ -208,14 +197,66 @@ cachectl1(req, addr, len, p)
 		error = EINVAL;
 		break;
 	}
-	return(error);
+	return (error);
 }
 
 int
 sys_sysarch(p, v, retval)
 	struct proc *p;
 	void *v;
-	int *retval;
+	register_t *retval;
 {
+
 	return (ENOSYS);
 }
+
+#if defined(amiga) || defined(x68k)
+
+/*
+ * DMA cache control
+ */
+
+/*ARGSUSED1*/
+int
+dma_cachectl(addr, len)
+	caddr_t	addr;
+	int len;
+{
+#if defined(M68040) || defined(M68060)
+	int inc = 0;
+	int pa = 0;
+	caddr_t end;
+
+	if (mmutype != MMU_68040) {
+		return (0);
+	}
+
+	end = addr + len;
+	if (len <= 1024) {
+		addr = (caddr_t)((vaddr_t)addr & ~0xf);
+		inc = 16;
+	} else {
+		addr = (caddr_t)((vaddr_t)addr & ~PGOFSET);
+		inc = NBPG;
+	}
+	do {
+		/*
+		 * Convert to physical address.
+		 */
+		if (pa == 0 || ((vaddr_t)addr & PGOFSET) == 0) {
+			pa = kvtop(addr);
+		}
+		if (inc == 16) {
+			DCFL(pa);
+			ICPL(pa);
+		} else {
+			DCFP(pa);
+			ICPP(pa);
+		}
+		pa += inc;
+		addr += inc;
+	} while (addr < end);
+#endif	/* defined(M68040) || defined(M68060) */
+	return (0);
+}
+#endif	/* defined(amiga) || defined(x68k) */
