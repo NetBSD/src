@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.4 2001/01/28 00:28:01 thorpej Exp $	*/
+/*	$NetBSD: yacc.y,v 1.5 2001/01/28 00:50:04 thorpej Exp $	*/
 
 %{
 /*-
@@ -43,11 +43,12 @@
 static char sccsid[] = "@(#)yacc.y	8.1 (Berkeley) 6/6/93";
 static char rcsid[] = "$FreeBSD$";
 #else
-__RCSID("$NetBSD: yacc.y,v 1.4 2001/01/28 00:28:01 thorpej Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.5 2001/01/28 00:50:04 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>
+#include <err.h>
 #if !defined(__FreeBSD__)
 #define _BSD_RUNE_T_    int
 #define _BSD_CT_RUNE_T_ rune_t
@@ -269,10 +270,8 @@ main(ac, av)
 	    break;
 	case 'o':
 	    locale_file = optarg;
-	    if ((fp = fopen(locale_file, "w")) == 0) {
-		perror(locale_file);
-		exit(1);
-	    }
+	    if ((fp = fopen(locale_file, "w")) == 0)
+		err(1, "unable to open output file %s", locale_file);
 	    break;
 	default:
 	usage:
@@ -285,10 +284,8 @@ main(ac, av)
     case 0:
 	break;
     case 1:
-	if (freopen(av[optind], "r", stdin) == 0) {
-	    perror(av[optind]);
-	    exit(1);
-	}
+	if (freopen(av[optind], "r", stdin) == 0)
+	    err(1, "unable to open input file %s", av[optind]);
 	break;
     default:
 	goto usage;
@@ -601,7 +598,7 @@ add_map(map, list, flag)
 void
 dump_tables()
 {
-    int x;
+    int x, n;
     rune_list *list;
     _FileRuneLocale file_new_locale;
 
@@ -678,94 +675,68 @@ dump_tables()
     /*
      * PART 1: The _RuneLocale structure
      */
-    if (fwrite((char *)&file_new_locale, sizeof(file_new_locale), 1, fp) != 1) {
-	perror(locale_file);
-	exit(1);
-    }
+    if (fwrite((char *)&file_new_locale, sizeof(file_new_locale), 1, fp) != 1)
+	err(1, "writing _RuneLocale to %s", locale_file);
     /*
      * PART 2: The runetype_ext structures (not the actual tables)
      */
-    list = types.root;
-
-    while (list) {
+    for (list = types.root, n = 0; list != NULL; list = list->next, n++) {
 	_FileRuneEntry re;
 
 	re.__min = htonl(list->min);
 	re.__max = htonl(list->max);
 	re.__map = htonl(list->map);
 
-	if (fwrite((char *)&re, sizeof(re), 1, fp) != 1) {
-	    perror(locale_file);
-	    exit(1);
-	}
-
-        list = list->next;
+	if (fwrite((char *)&re, sizeof(re), 1, fp) != 1)
+	    err(1, "writing runetype_ext #%d to %s", n, locale_file);
     }
     /*
      * PART 3: The maplower_ext structures
      */
-    list = maplower.root;
-
-    while (list) {
+    for (list = maplower.root, n = 0; list != NULL; list = list->next, n++) {
 	_FileRuneEntry re;
 
 	re.__min = htonl(list->min);
 	re.__max = htonl(list->max);
 	re.__map = htonl(list->map);
 
-	if (fwrite((char *)&re, sizeof(re), 1, fp) != 1) {
-	    perror(locale_file);
-	    exit(1);
-	}
-
-        list = list->next;
+	if (fwrite((char *)&re, sizeof(re), 1, fp) != 1)
+	    err(1, "writing maplower_ext #%d to %s", n, locale_file);
     }
     /*
      * PART 4: The mapupper_ext structures
      */
-    list = mapupper.root;
-
-    while (list) {
+    for (list = mapupper.root, n = 0; list != NULL; list = list->next, n++) {
 	_FileRuneEntry re;
 
 	re.__min = htonl(list->min);
 	re.__max = htonl(list->max);
 	re.__map = htonl(list->map);
 
-	if (fwrite((char *)&re, sizeof(re), 1, fp) != 1) {
-	    perror(locale_file);
-	    exit(1);
-	}
-
-        list = list->next;
+	if (fwrite((char *)&re, sizeof(re), 1, fp) != 1)
+	    err(1, "writing mapupper_ext #%d to %s", n, locale_file);
     }
     /*
      * PART 5: The runetype_ext tables
      */
-    list = types.root;
-
-    while (list) {
+    for (list = types.root, n = 0; list != NULL; list = list->next, n++) {
 	for (x = 0; x < list->max - list->min + 1; ++x)
 	    list->types[x] = htonl(list->types[x]);
 
 	if (!list->map) {
 	    if (fwrite((char *)list->types,
 		       (list->max - list->min + 1) * sizeof(u_int32_t),
-		       1, fp) != 1) {
-		perror(locale_file);
-		exit(1);
-	    }
+		       1, fp) != 1)
+		err(1, "writing runetype_ext table #%d to %s", n, locale_file);
 	}
-        list = list->next;
     }
     /*
      * PART 5: And finally the variable data
      */
-    if (fwrite((char *)new_locale.__rune_variable,
-	       new_locale.__variable_len, 1, fp) != 1) {
-	perror(locale_file);
-	exit(1);
-    }
+    if (new_locale.__variable_len != 0 &&
+	fwrite((char *)new_locale.__rune_variable,
+	       new_locale.__variable_len, 1, fp) != 1)
+	err(1, "writing variable data to %s", locale_file);
     fclose(fp);
 
     if (!debug)
