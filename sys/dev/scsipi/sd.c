@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.127 1998/07/15 20:21:12 mjacob Exp $	*/
+/*	$NetBSD: sd.c,v 1.128 1998/07/30 00:49:21 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -46,7 +46,7 @@
  * Ported to run under 386BSD by Julian Elischer (julian@dialix.oz.au) Sept 1992
  */
 
-#include "opt_scsiverbose.h"
+#include "opt_scsi.h"
 #include "rnd.h"
 
 #include <sys/types.h>
