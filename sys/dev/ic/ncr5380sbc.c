@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.36 2000/03/29 13:09:02 tsutsui Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.37 2000/05/26 21:11:00 ragge Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -1685,6 +1685,8 @@ have_msg:
 		NCR_TRACE("msg_in: PARITY_ERROR\n", 0);
 		/* Resend the last message. */
 		ncr_sched_msgout(sc, sc->sc_msgout);
+		/* Reset icmd after scheduling the REJECT cmd - jwg */
+		icmd = NCR5380_READ(sc, sci_icmd) & SCI_ICMD_RMASK;
 		break;
 
 	case MSG_MESSAGE_REJECT:
@@ -1746,6 +1748,8 @@ have_msg:
 		/* fallthrough */
 	reject:
 		ncr_sched_msgout(sc, SEND_REJECT);
+		/* Reset icmd after scheduling the REJECT cmd - jwg */
+		icmd = NCR5380_READ(sc, sci_icmd) & SCI_ICMD_RMASK;
 		break;
 
 	abort:
