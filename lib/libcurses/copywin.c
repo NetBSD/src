@@ -1,4 +1,4 @@
-/*	$NetBSD: copywin.c,v 1.3 2000/04/20 13:12:14 blymn Exp $	*/
+/*	$NetBSD: copywin.c,v 1.4 2000/04/23 14:14:49 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -49,8 +49,8 @@ int copywin(const WINDOW *srcwin, WINDOW *dstwin, int sminrow,
 	int starty, startx, endy, endx, x, y, y1, y2, smaxrow, smaxcol;
 	__LDATA *sp, *end;
 	
-	smaxrow = sminrow + dmaxrow - dminrow;
-	smaxcol = smincol + dmaxcol - dmincol;
+	smaxrow = min(sminrow + dmaxrow - dminrow, srcwin->maxy - sminrow);
+	smaxcol = min(smincol + dmaxcol - dmincol, srcwin->maxx - smincol);
 	starty = max(sminrow, dminrow);
 	startx = max(smincol, dmincol);
 	endy = min(sminrow + smaxrow, dminrow + dmaxrow);
@@ -58,43 +58,30 @@ int copywin(const WINDOW *srcwin, WINDOW *dstwin, int sminrow,
 	if (starty >= endy || startx >= endx)
 		return (OK);
 	
-	if (overlay == TRUE) {
-		  /* non destructive copy */
 #ifdef DEBUG
+	if (overlay == TRUE) {
 		__CTRACE("copywin overlay mode: from (%d,%d) to (%d,%d)\n",
 			 starty, startx, endy, endx);
-#endif
-		y1 = starty - sminrow;
-		y2 = starty - dminrow;
-		for (y = starty; y < endy; y++, y1++, y2++) {
-			end = &srcwin->lines[y1]->line[endx - srcwin->begx];
-			x = startx - dstwin->begx;
-			for (sp = &srcwin->lines[y1]->line[startx - srcwin->begx];
-			     sp < end; sp++) {
-				if (!isspace(sp->ch)) {
-					wmove(dstwin, y2, x);
-					__waddch(dstwin, sp);
-				}
-				x++;
-			}
-		}
-		return (OK);
 	} else {
-		  /* destructive copy */
-#ifdef DEBUG
 		__CTRACE("copywin overwrite mode: from (%d,%d) to (%d,%d)\n",
 			 starty, startx, endy, endx);
-#endif
-		x = endx - startx;
-		for (y = starty; y < endy; y++) {
-			(void) memcpy(
-				&dstwin->lines[y - dstwin->begy]->line[startx - dstwin->begx],
-				&srcwin->lines[y - srcwin->begy]->line[startx - srcwin->begx],
-				(size_t) x * __LDATASIZE);
-			__touchline(dstwin, y - dstwin->begy, (int) (startx - dstwin->begx),
-				    (int) (endx - dstwin->begx), 0);
-		}
-		return (OK);
 	}
+	
+#endif
+	y1 = starty - sminrow;
+	y2 = starty - dminrow;
+	for (y = starty; y < endy; y++, y1++, y2++) {
+		end = &srcwin->lines[y1]->line[endx - srcwin->begx];
+		x = startx - dstwin->begx;
+		for (sp = &srcwin->lines[y1]->line[startx - srcwin->begx];
+		     sp < end; sp++) {
+			if ((!isspace(sp->ch)) || (overlay == FALSE)){
+				wmove(dstwin, y2, x);
+				__waddch(dstwin, sp);
+			}
+			x++;
+		}
+	}
+	return (OK);
 }
 
