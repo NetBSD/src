@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.26 2003/08/07 09:46:53 agc Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.27 2004/01/06 14:30:10 briggs Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.26 2003/08/07 09:46:53 agc Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.27 2004/01/06 14:30:10 briggs Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,12 +59,10 @@ __RCSID("$NetBSD: tftpd.c,v 1.26 2003/08/07 09:46:53 agc Exp $");
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <fcntl.h>
 #include <grp.h>
 #include <netdb.h>
 #include <pwd.h>
 #include <setjmp.h>
-#include <signal.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
