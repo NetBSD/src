@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 2000/09/19 19:31:34 scw Exp $	*/
+/*	$NetBSD: intr.h,v 1.6 2000/12/10 18:43:02 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -90,11 +90,8 @@
 #define splsched()		spl7()
 #define spllock()		spl7()
 
-/* watch out for side effects */
-#define splx(s)         (s & PSL_IPL ? _spl(s) : spl0())
-
-
 #ifndef _LOCORE
+
 /*
  * Simulated software interrupt register
  * This is cleared to zero to indicate a soft interrupt is pending
@@ -102,6 +99,35 @@
  * instruction so we can avoid masking interrupts elsewhere.)
  */
 extern volatile unsigned char ssir;
+
+extern void mvme68k_dossir(void);
+
+static __inline void
+splx(int sr)
+{
+
+	if ((u_int16_t)sr < (u_int16_t)(PSL_IPL1|PSL_S) && ssir == 0)
+		mvme68k_dossir();
+	else
+		__asm __volatile("movw %0,%%sr" : : "di" (sr));
+}
+
+static __inline int
+spl0(void)
+{
+	int sr;
+
+	__asm __volatile("movw %%sr,%0" : "=d" (sr));
+
+	if (ssir == 0)
+		mvme68k_dossir();
+	else
+		__asm __volatile("movw %0,%%sr" : : "i" (PSL_LOWIPL));
+
+	return sr;
+}
+
+
 #define setsoft(x)		x = 0
 
 #define __GENERIC_SOFT_INTERRUPTS
@@ -139,7 +165,6 @@ extern struct mvme68k_soft_intrhand *softclock_intrhand;
 #define setsoftnet()	softintr_schedule(softnet_intrhand)
 #define setsoftclock()	softintr_schedule(softclock_intrhand)
 
-extern int spl0 __P((void));
 #endif /* !_LOCORE */
 #endif /* _KERNEL */
 
