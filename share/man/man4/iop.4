@@ -1,4 +1,4 @@
-.\"	$NetBSD: iop.4,v 1.5 2000/12/11 13:53:11 ad Exp $
+.\"	$NetBSD: iop.4,v 1.6 2001/01/07 16:01:10 ad Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,9 +56,12 @@ specification, revision 1.5.
 .Sh IOCTL INTERFACE
 The following structures and constants are defined in
 .Pa dev/i2o/i2ovar.h .
-Note that the header
+Note that the headers
+.Pa sys/types.h ,
+.Pa sys/device.h
+and
 .Pa dev/i2o/i2o.h
-is a prerequsite and must therefore be included beforehand.
+are prerequsites and must therefore be included beforehand.
 .Bl -tag -width OTTF
 .It Dv IOPIOCPT (struct ioppt)
 Submit a message to the IOP and return the reply.  Note that the return
@@ -87,7 +90,7 @@ must not exceed the
 .Nm
 driver's operational limits.
 .It Dv IOPIOCGLCT (struct iovec)
-Return the
+Retreive the
 .Nm
 driver's copy of the logical configuration table.  This copy of the LCT
 matches the current device configuration, but is not necessarily the latest
@@ -104,6 +107,20 @@ driver scan all bus ports, retrieve the latest version of the LCT, and
 attach or detach devices as necessary.  Note that higher-level
 reconfiguration tasks (such as logically re-scanning SCSI busses) will not
 be performed by this ioctl.
+.It Dv IOPIOCGTIDMAP (struct iovec)
+Retrieve the TID to device map.  This map indicates which targets are
+configured, and what the corresponding device name for each is.  Although at
+any given point it contains the same number of entries as the LCT, the number
+of entries should be determined using the iov_len field from the returned
+iovec.
+.Bd -literal
+struct iop_tidmap {
+	u_short	it_tid;
+	u_short	it_flags;
+	char	it_dvname[sizeof(((struct device *)NULL)->dv_xname)];
+};
+#define	IT_CONFIGURED	0x02	/* target configured */
+.Ed
 .El
 .Sh FILES
 .Bl -tag -width /dev/iopn -compact
