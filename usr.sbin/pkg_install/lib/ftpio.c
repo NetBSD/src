@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpio.c,v 1.7 2000/01/19 23:28:33 hubertf Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.8 2000/01/25 17:21:07 hubertf Exp $	*/
 /*	 Id: foo2.c,v 1.12 1999/12/17 02:31:57 feyrer Exp feyrer 	*/
 
 /*
@@ -404,7 +404,8 @@ expandURL(char *expandedurl, const char *wildcardurl)
 	warnx("expandURL: no '/' in url %s?!", wildcardurl);
 	return -1;
     }
-    snprintf(base, FILENAME_MAX, "%*.*s/", pkg-wildcardurl, pkg-wildcardurl, wildcardurl);
+    snprintf(base, FILENAME_MAX, "%*.*s/", (int)(pkg-wildcardurl),
+             (int)(pkg-wildcardurl), wildcardurl);
     pkg++;
 
     rc = ftp_start(base);
@@ -435,7 +436,8 @@ expandURL(char *expandedurl, const char *wildcardurl)
 		 * we can't use the pkg wildcards here as dewey compare
 		 * and alternates won't be handled by ftp(1); sort
 		 * out later, using pmatch() */
-		snprintf(buf, FILENAME_MAX, "ls %*.*s*.tgz %s\n", s-pkg, s-pkg, pkg, tmpname);
+		snprintf(buf, FILENAME_MAX, "ls %*.*s*.tgz %s\n",
+                         (int)(s-pkg), (int)(s-pkg), pkg, tmpname);
 	}
 	
 	rc = ftp_cmd(buf, "\n(550|226).*\n"); /* catch errors */
@@ -528,8 +530,10 @@ unpackURL(const char *url, const char *dir)
 		warnx("unpackURL: no '/' in url %s?!", url);
 		return -1;
 	}
-	snprintf(base, FILENAME_MAX, "%*.*s/", pkg-url, pkg-url, url);
-	snprintf(pkg_path, FILENAME_MAX, "%*.*s", pkg-url, pkg-url, url); /* no trailing '/' */
+	snprintf(base, FILENAME_MAX, "%*.*s/", (int)(pkg-url),
+                 (int)(pkg-url), url);
+	snprintf(pkg_path, FILENAME_MAX, "%*.*s", (int)(pkg-url),
+                 (int)(pkg-url), url); /* no trailing '/' */
 	pkg++;
 
 	/* Leave a hint for any depending pkgs that may need it */
@@ -579,7 +583,8 @@ miscstuff(const char *url)
 	warnx("miscstuff: no '/' in url %s?!", url);
 	return -1;
     }
-    snprintf(base, FILENAME_MAX, "%*.*s/", pkg-url, pkg-url, url);
+    snprintf(base, FILENAME_MAX, "%*.*s/", (int)(pkg-url), (int)(pkg-url),
+             url);
     pkg++;
 
     rc = ftp_start(base);
