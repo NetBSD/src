@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.43 2000/08/14 06:03:21 enami Exp $	*/
+/*	$NetBSD: fstat.c,v 1.44 2000/08/14 09:17:11 enami Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.43 2000/08/14 06:03:21 enami Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.44 2000/08/14 09:17:11 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -155,8 +155,7 @@ int	ext2fs_filestat __P((struct vnode *, struct filestat *));
 int	getfname __P((char *));
 void	getinetproto __P((int));
 char   *getmnton __P((struct mount *));
-int	layer_filestat __P((struct vnode *, struct filestat *,
-    struct vnode **));
+char   *layer_filestat __P((struct vnode *, struct filestat *));
 int	main __P((int, char **));
 int	msdosfs_filestat __P((struct vnode *, struct filestat *));
 int	nfs_filestat __P((struct vnode *, struct filestat *));
@@ -166,6 +165,7 @@ static const char *inet6_addrstr __P((struct in6_addr *));
 void	socktrans __P((struct socket *, int));
 int	ufs_filestat __P((struct vnode *, struct filestat *));
 void	usage __P((void));
+char   *vfilestat __P((struct vnode *, struct filestat *));
 void	vtrans __P((struct vnode *, int, int));
 void	ftrans __P((struct file *, int));
 
@@ -399,6 +399,62 @@ ftrans (fp, i)
 	}
 }
 
+char *
+vfilestat(vp, fsp)
+	struct vnode *vp;
+	struct filestat *fsp;
+{
+	char *badtype = NULL;
+
+	if (vp->v_type == VNON || vp->v_tag == VT_NON)
+		badtype = "none";
+	else if (vp->v_type == VBAD)
+		badtype = "bad";
+	else
+		switch (vp->v_tag) {
+		case VT_UFS:
+			if (!ufs_filestat(vp, fsp))
+				badtype = "error";
+			break;
+		case VT_MFS:
+			if (!ufs_filestat(vp, fsp))
+				badtype = "error";
+			break;
+		case VT_MSDOSFS:
+			if (!msdosfs_filestat(vp, fsp))
+				badtype = "error";
+			break;
+		case VT_NFS:
+			if (!nfs_filestat(vp, fsp))
+				badtype = "error";
+			break;
+		case VT_EXT2FS:
+			if (!ext2fs_filestat(vp, fsp))
+				badtype = "error";
+			break;
+		case VT_ISOFS:
+			if (!isofs_filestat(vp, fsp))
+				badtype = "error";
+			break;
+		case VT_NTFS:
+			if (!ntfs_filestat(vp, fsp))
+				badtype = "error";
+			break;
+		case VT_NULL:
+		case VT_OVERLAY:
+		case VT_UMAP:
+			badtype = layer_filestat(vp, fsp);
+			break;
+		default: {
+			static char unknown[10];
+			(void)snprintf(badtype = unknown, sizeof unknown,
+			    "?(%x)", vp->v_tag);
+			break;
+		}
+	}
+	return (badtype);
+}
+
 void
 vtrans(vp, i, flag)
 	struct vnode *vp;
@@ -410,61 +466,12 @@ vtrans(vp, i, flag)
 	char mode[15], rw[3];
 	char *badtype, *filename;
 
-again:
-	filename = badtype = NULL;
-	if (!KVM_READ(vp, &vn, sizeof (struct vnode))) {
+	filename = NULL;
+	if (!KVM_READ(vp, &vn, sizeof(struct vnode))) {
 		dprintf("can't read vnode at %p for pid %d", vp, Pid);
 		return;
 	}
-	if (vn.v_type == VNON || vn.v_tag == VT_NON)
-		badtype = "none";
-	else if (vn.v_type == VBAD)
-		badtype = "bad";
-	else
-		switch (vn.v_tag) {
-		case VT_UFS:
-			if (!ufs_filestat(&vn, &fst))
-				badtype = "error";
-			break;
-		case VT_MFS:
-			if (!ufs_filestat(&vn, &fst))
-				badtype = "error";
-			break;
-		case VT_MSDOSFS:
-			if (!msdosfs_filestat(&vn, &fst))
-				badtype = "error";
-			break;
-		case VT_NFS:
-			if (!nfs_filestat(&vn, &fst))
-				badtype = "error";
-			break;
-		case VT_EXT2FS:
-			if (!ext2fs_filestat(&vn, &fst))
-				badtype = "error";
-			break;
-		case VT_ISOFS:
-			if (!isofs_filestat(&vn, &fst))
-				badtype = "error";
-			break;
-		case VT_NTFS:
-			if (!ntfs_filestat(&vn, &fst))
-				badtype = "error";
-			break;
-		case VT_NULL:
-		case VT_OVERLAY:
-		case VT_UMAP:
-			if (!layer_filestat(&vn, &fst, &vp))
-				badtype = "error";
-			else
-				goto again;
-			break;
-		default: {
-			static char unknown[10];
-			(void)snprintf(badtype = unknown, sizeof unknown,
-			    "?(%x)", vn.v_tag);
-			break;;
-		}
-	}
+	badtype = vfilestat(&vn, &fst);
 	if (checkfile) {
 		int fsmatch = 0;
 		DEVS *d;
@@ -615,21 +622,34 @@ msdosfs_filestat(vp, fsp)
 	return 1;
 }
 
-int
-layer_filestat(vp, fsp, nvp)
+char *
+layer_filestat(vp, fsp)
 	struct vnode *vp;
 	struct filestat *fsp;
-	struct vnode **nvp;
 {
 	struct layer_node layer_node;
+	struct mount mount;
+	struct vnode vn;
+	char *badtype;
 
 	if (!KVM_READ(VTOLAYER(vp), &layer_node, sizeof(layer_node))) {
 		dprintf("can't read layer_node at %p for pid %d",
 		    VTOLAYER(vp), Pid);
-		return (0);
+		return ("error");
 	}
-	*nvp = layer_node.layer_lowervp;
-	return (1);
+	if (!KVM_READ(vp->v_mount, &mount, sizeof(struct mount))) {
+		dprintf("can't read mount struct at %p for pid %d",
+		    vp->v_mount, Pid);
+		return ("error");
+	}
+	vp = layer_node.layer_lowervp;
+	if (!KVM_READ(vp, &vn, sizeof(struct vnode))) {
+		dprintf("can't read vnode at %p for pid %d", vp, Pid);
+		return ("error");
+	}
+	if ((badtype = vfilestat(&vn, fsp)) == NULL)
+		fsp->fsid = mount.mnt_stat.f_fsid.val[0];
+	return (badtype);
 }
 
 char *
