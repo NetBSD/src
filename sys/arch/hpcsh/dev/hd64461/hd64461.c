@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461.c,v 1.1 2001/02/21 15:39:09 uch Exp $	*/
+/*	$NetBSD: hd64461.c,v 1.2 2001/07/13 16:21:39 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -153,7 +153,7 @@ hd64461_module_attach(struct hd64461_softc *sc)
 	
 	/* attach all sub modules */
 	for (i = 0, module = hd64461_modules; i < HD64461_NMODULE;
-	     i++, module++) {
+	    i++, module++) {
 		if (module->name == 0)
 			continue;
 		ha.ha_module_id = i;
@@ -168,14 +168,14 @@ hd64461_print(void *aux, const char *pnp)
 
 	if (pnp)
 		printf("%s at %s",
-		       hd64461_modules[ha->ha_module_id].name, pnp);
+		    hd64461_modules[ha->ha_module_id].name, pnp);
 
 	return (UNCONF);
 }
 
 void *
 hd64461_intr_establish(enum hd64461_irq irq, int mode, int level,
-		       int (*func)(void *), void *arg)
+    int (*func)(void *), void *arg)
 {
 	struct hd64461_intr_entry *entry = &hd64461_intr_entry[irq];
 	u_int16_t r;
