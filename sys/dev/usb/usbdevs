@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.341 2003/09/28 06:55:57 jdolecek Exp $
+$NetBSD: usbdevs,v 1.342 2003/09/28 07:14:56 jdolecek Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1242,14 +1242,28 @@ product QUICKSHOT STRIKEPAD	0x6238	USB StrikePad
 product	RAINBOW IKEY2000	0x1200	i-Key 2000  
 
 /* Roland products */
-product	ROLAND SC8850		0x0003	RolandED SC-8850 SOUND Canvas MIDI Synth.
-product	ROLAND UM1		0x0009	UM-1 MIDI I/F
+product ROLAND UA100		0x0000	UA-100 USB Audio I/F
+product ROLAND UM4		0x0002	UM-4 MIDI I/F
+product ROLAND SC8850		0x0003	RolandED SC-8850 SOUND Canvas MIDI Synth.
+product ROLAND U8		0x0004	U-8 USB Audio I/F
+product ROLAND UM2		0x0005	UM-2 MIDI I/F
+product ROLAND SC8820		0x0007	SoundCanvas SC-8820 MIDI Synth.
+product ROLAND PC300		0x0008	PC-300 MIDI Keyboard
+product ROLAND UM1		0x0009	UM-1 MIDI I/F
+product ROLAND SK500		0x000b	SoundCanvas SK-500 MIDI Keyboard
+product ROLAND SCD70		0x000c	SC-D70 MIDI Synth.
 product ROLAND UA3		0x000f	EDIROL UA-3 USB audio I/F
-product	ROLAND UM880N		0x0014	EDIROL UM-880 MIDI I/F (native)
-product	ROLAND UM880G		0x0015	EDIROL UM-880 MIDI I/F (generic)
-product	ROLAND SD90		0x0016	EDIROL SD-90 STDIO Canvas MIDI Synth.
-product	ROLAND UA3FXA		0x0050	EDIROL UA-3FX USB audio I/F (advanced)
-product	ROLAND UA3FX		0x0051	EDIROL UA-3FX USB audio I/F
+product ROLAND XV5050		0x0012	XV-5050 MIDI Synth. 
+product ROLAND UM880N		0x0014	EDIROL UM-880 MIDI I/F (native)
+product ROLAND UM880G		0x0015	EDIROL UM-880 MIDI I/F (generic)
+product ROLAND SD90		0x0016	EDIROL SD-90 STDIO Canvas MIDI Synth.
+product ROLAND UA1A		0x0018	UA-1A USB Audio I/F
+product ROLAND UM550		0x0023	UM-550 MIDI I/F
+product ROLAND SD20		0x0027	SD-20 MIDI Synth.
+product ROLAND SD80		0x0029	SD-80 MIDI Synth.
+product ROLAND UA700		0x002b	UA-700 USB Audio I/F
+product ROLAND UA3FXA		0x0050	EDIROL UA-3FX USB audio I/F (advanced)
+product ROLAND UA3FX		0x0051	EDIROL UA-3FX USB audio I/F
 
 /* Rockfire products */
 product ROCKFIRE GAMEPAD	0x2033	gamepad 203USB
@@ -1463,7 +1477,18 @@ product YEDATA FLASHBUSTERU	0x0000	Flashbuster-U
 
 /* Yamaha products */
 product YAMAHA UX256		0x1000	UX256 MIDI I/F
-product	YAMAHA UX96		0x1008	UX96 MIDI I/F
+product YAMAHA MU1000		0x1001	MU1000 MIDI Synth.
+product YAMAHA MU2000		0x1002	MU2000 MIDI Synth.
+product YAMAHA MU500		0x1003	MU500 MIDI Synth.
+product YAMAHA UW500		0x1004	UW500 USB Audio I/F
+product YAMAHA MOTIF6		0x1005	MOTIF6 MIDI Synth. Workstation
+product YAMAHA MOTIF7		0x1006	MOTIF7 MIDI Synth. Workstation
+product YAMAHA MOTIF8		0x1007	MOTIF8 MIDI Synth. Workstation
+product YAMAHA UX96		0x1008	UX96 MIDI I/F
+product YAMAHA UX16		0x1009	UX16 MIDI I/F
+product YAMAHA S08		0x100e	S08 MIDI Keyboard
+product YAMAHA CLP150		0x100f	CLP-150 digital piano
+product YAMAHA CLP170		0x1010	CLP-170 digital piano
 product YAMAHA RPU200		0x3104	RP-U200
 
 /* Yano products */
