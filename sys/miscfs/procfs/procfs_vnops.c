@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.117 2004/10/01 16:32:16 yamt Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.118 2004/10/02 04:28:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.117 2004/10/01 16:32:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.118 2004/10/02 04:28:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -624,7 +624,7 @@ procfs_getattr(v)
 		vap->va_nlink = 1;
 		vap->va_uid = 0;
 		vap->va_gid = 0;
-		vap->va_bytes = vap->va_size = sizeof("curproc");
+		vap->va_bytes = vap->va_size = sizeof("curproc") - 1;
 		break;
 
 	case PFSfd:
