@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.114 2004/02/12 23:47:21 enami Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.115 2004/05/06 22:20:30 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.114 2004/02/12 23:47:21 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.115 2004/05/06 22:20:30 pk Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -326,8 +326,10 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	if (p1->p_limit->p_lflags & PL_SHAREMOD)
 		p2->p_limit = limcopy(p1->p_limit);
 	else {
+		simple_lock(&p1->p_limit->p_slock);
+		p1->p_limit->p_refcnt++;
+		simple_unlock(&p1->p_limit->p_slock);
 		p2->p_limit = p1->p_limit;
-		p2->p_limit->p_refcnt++;
 	}
 
 	/* Inherit STOPFORK and STOPEXEC flags */

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.236 2004/04/25 16:42:41 simonb Exp $	*/
+/*	$NetBSD: init_main.c,v 1.237 2004/05/06 22:20:30 pk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.236 2004/04/25 16:42:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.237 2004/05/06 22:20:30 pk Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -341,6 +341,7 @@ main(void)
 
 	/* Create the limits structures. */
 	p->p_limit = &limit0;
+	simple_lock_init(&limit0.p_slock);
 	for (i = 0; i < sizeof(p->p_rlimit)/sizeof(p->p_rlimit[0]); i++)
 		limit0.pl_rlimit[i].rlim_cur =
 		    limit0.pl_rlimit[i].rlim_max = RLIM_INFINITY;
