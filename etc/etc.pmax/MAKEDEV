@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.46 2002/02/02 07:04:53 tls Exp $
+#	$NetBSD: MAKEDEV,v 1.47 2002/02/02 20:58:51 tls Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -64,7 +64,7 @@ case $i in
 all)
 	sh $0 minimal fd 
 	sh $0 raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
-	sh $0 pty0 pty1 vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
+	sh $0 pty0 vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
 	sh $0 tun0 tun1 tun2 tun3
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 fb0 fb1 fb2
