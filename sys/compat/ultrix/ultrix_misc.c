@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.13 1995/06/01 16:38:17 mellon Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.14 1995/06/18 14:46:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -340,11 +340,11 @@ sun_mount(p, uap, retval)
 	    (size_t *)0))
 		return (error);
 
-	if (strcmp(fsname, "4.2") == 0) {
+	if (strncmp(fsname, "4.2", sizeof fsname) == 0) {
 		uap->type = (caddr_t)ALIGN(PS_STRINGS - szsigcode - STACKGAPLEN);
 		if (error = copyout("ufs", uap->type, sizeof("ufs")))
 			return (error);
-	} else if (strcmp(fsname, "nfs") == 0) {
+	} else if (strncmp(fsname, "nfs", sizeof fsname) == 0) {
 		struct sun_nfs_args sna;
 		struct sockaddr_in sain;
 		struct nfs_args na;

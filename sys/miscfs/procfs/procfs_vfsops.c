@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.23 1995/03/09 12:05:54 mycroft Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.24 1995/06/18 14:47:39 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -159,7 +159,6 @@ procfs_statfs(mp, sbp, p)
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
 	}
 	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
-	sbp->f_fstypename[MFSNAMELEN] = '\0';
 	return (0);
 }
 
