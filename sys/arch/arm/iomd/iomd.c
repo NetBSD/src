@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd.c,v 1.8 2002/10/02 15:45:12 thorpej Exp $	*/
+/*	$NetBSD: iomd.c,v 1.9 2002/10/13 12:20:44 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -148,9 +148,7 @@ iomdattach(parent, self, aux)
 /*	struct mainbus_attach_args *mb = aux;*/
 	int refresh;
 #if 0
-	int dma_time;
-	int combo_time;
-	int loop;
+	int i, tmp;
 #endif
 	union iomd_attach_args ia;
 	bus_space_tag_t iot;
@@ -221,20 +219,25 @@ iomdattach(parent, self, aux)
 		break;
 	}
 
+	printf("\n");
 #if 0
 	/*
 	 * No point in reporting this as it may get changed when devices are
 	 * attached
 	 */
-	dma_time = ReadByte(IOMD_DMATCR);
-	printf(", dma cycle types=");
-	for (loop = 0; loop < 4; ++loop,dma_time = dma_time >> 2)
-		printf("%c", 'A' + (dma_time & 3));
-
-     	combo_time = ReadByte(IOMD_IOTCR);
-	printf(", combo cycle type=%c", 'A' + ((combo_time >> 2) & 3));
-#endif
+	tmp = bus_space_read_1(iot, ioh, IOMD_IOTCR);
+	printf("%s: I/O timings: combo %c, NPCCS1/2 %c", self->dv_xname,
+	    'A' + ((tmp >>2) & 3), 'A' + (tmp & 3));
+	tmp = bus_space_read_1(iot, ioh, IOMD_ECTCR);
+	printf(", EASI ");
+	for (i = 0; i < 8; i++, tmp >>= 1)
+		printf("%c", 'A' + ((tmp & 1) << 2));
+	tmp = bus_space_read_1(iot, ioh, IOMD_DMATCR);
+	printf(", DMA ");
+	for (i = 0; i < 4; i++, tmp >>= 2)
+		printf("%c", 'A' + (tmp & 3));	
 	printf("\n");
+#endif
 
 	/* Set up the external DMA channels */
 	/* XXX - this should be machine dependant not IOMD dependant */
