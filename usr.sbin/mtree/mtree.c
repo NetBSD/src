@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.16 2001/03/21 23:56:35 cgd Exp $	*/
+/*	$NetBSD: mtree.c,v 1.17 2001/09/22 03:56:29 perry Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.16 2001/03/21 23:56:35 cgd Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.17 2001/09/22 03:56:29 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,8 @@ __RCSID("$NetBSD: mtree.c,v 1.16 2001/03/21 23:56:35 cgd Exp $");
 extern int crc_total;
 
 int ftsoptions = FTS_PHYSICAL;
-int cflag, dflag, eflag, iflag, mflag, rflag, sflag, tflag, uflag, Uflag;
+int cflag, dflag, eflag, iflag, lflag, mflag,
+    rflag, sflag, tflag, uflag, Uflag;
 int keys;
 char fullpath[MAXPATHLEN];
 
@@ -79,7 +80,7 @@ main(int argc, char **argv)
 
 	dir = NULL;
 	keys = KEYDEFAULT;
-	while ((ch = getopt(argc, argv, "cdef:iK:k:mp:rs:tUux")) != -1)
+	while ((ch = getopt(argc, argv, "cdef:iK:k:lmp:rs:tUux")) != -1)
 		switch((char)ch) {
 		case 'c':
 			cflag = 1;
@@ -107,6 +108,9 @@ main(int argc, char **argv)
 			while ((p = strsep(&optarg, " \t,")) != NULL)
 				if (*p != '\0')
 					keys |= parsekey(p, NULL);
+			break;
+		case 'l':
+			lflag = 1;
 			break;
 		case 'm':
 			mflag = 1;
@@ -154,6 +158,9 @@ main(int argc, char **argv)
 	if (iflag == 1 && mflag == 1)
 		mtree_err("-i and -m flags are mutually exclusive");
 
+	if (lflag == 1 && uflag == 1)
+		mtree_err("-l and -u flags are mutually exclusive");
+
 	if (cflag) {
 		cwalk();
 		exit(0);
@@ -168,7 +175,7 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: mtree [-cderUux] [-i|-m] [-f spec]"
+	(void)fprintf(stderr, "usage: mtree [-cdelrUux] [-i|-m] [-f spec]"
 	    " [-K key] [-k key] [-p path] [-s seed]\n");
 	exit(1);
 }
