@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkeyv2.h,v 1.10 2000/10/03 22:43:52 itojun Exp $	*/
+/*	$NetBSD: pfkeyv2.h,v 1.11 2000/10/03 22:46:21 itojun Exp $	*/
 /*	$KAME: pfkeyv2.h,v 1.23 2000/10/03 21:38:21 itojun Exp $	*/
 
 /*
@@ -312,7 +312,7 @@ struct sadb_x_ipsecrequest {
 #define SADB_EALG_NONE		0
 #define SADB_EALG_DESCBC	2
 #define SADB_EALG_3DESCBC	3
-#define SADB_EALG_NULL		12
+#define SADB_EALG_NULL		11
 #define SADB_EALG_MAX		12
 /* private allocations - based on RFC2407/IANA assignment */
 #define SADB_X_EALG_CAST128CBC	6
