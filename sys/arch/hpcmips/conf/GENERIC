@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.46 2000/04/27 19:38:23 uch Exp $
+# 	$NetBSD: GENERIC,v 1.47 2000/04/28 07:19:33 shin Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.46 $"
+#ident 		"GENERIC-$Revision: 1.47 $"
 
 maxusers	8
 
@@ -44,7 +44,6 @@ options 	NTP			# network time protocol
 #options 	SYSCALL_DEBUG		# for debug
 #options 	HPCMIPS_L1CACHE_DISABLE	# disable L1 cache for debug
 #options 	HPCMIPS_FLUSHCACHE_XXX	# for debug
-#options 	MIPS_16K_PAGE		# page size is 16KB
 
 # Filesystem options
 file-system 	FFS             # fast filesystem with user and group quotas
