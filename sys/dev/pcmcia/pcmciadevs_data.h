@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.86 2000/03/26 10:31:19 itojun Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.87 2000/04/12 21:13:12 scw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.86 2000/03/26 10:24:51 itojun Exp 
+ *	NetBSD: pcmciadevs,v 1.87 2000/04/12 21:07:55 scw Exp 
  */
 
 /*-
@@ -743,6 +743,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Billionton Systems Inc.",
 	    "Billionton Systems Inc. LNT-10TN NE2000 Compatible Card"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_NDC_ND5100_E,
+	    PCMCIA_CIS_NDC_ND5100_E,
+	    0,
+	    "",
+	    "Sohoware ND5100E NE2000 Compatible Card"	},
 	},
 	{
 	    PCMCIA_VENDOR_FUJITSU, 0,
