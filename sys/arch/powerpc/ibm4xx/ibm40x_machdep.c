@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm40x_machdep.c,v 1.2 2003/12/30 12:33:19 pk Exp $	*/
+/*	$NetBSD: ibm40x_machdep.c,v 1.3 2005/01/17 17:19:36 shige Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm40x_machdep.c,v 1.2 2003/12/30 12:33:19 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm40x_machdep.c,v 1.3 2005/01/17 17:19:36 shige Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -130,9 +130,6 @@ char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 struct mem_region physmemr[MEMREGIONS];	/* Hard code memory */
 struct mem_region availmemr[MEMREGIONS];/* Who's supposed to set these up? */
 
-struct board_cfg_data board_data;
-struct propdb *board_info = NULL;
-
 extern struct user *proc0paddr;
 
 paddr_t msgbuf_paddr;
@@ -140,21 +137,19 @@ vaddr_t msgbuf_vaddr;
 
 
 void
-ibm4xx_init_board_data(void *info_block, u_int startkernel)
+ibm40x_memsize_init(u_int memsize, u_int startkernel)
 {
+
         /* Initialize cache info for memcpy, etc. */
         cpu_probe_cache();
-
-	/* Save info block */
-	memcpy(&board_data, info_block, sizeof(board_data));
 
 	memset(physmemr, 0, sizeof physmemr);
 	memset(availmemr, 0, sizeof availmemr);
 	physmemr[0].start = 0;
-	physmemr[0].size = board_data.mem_size & ~PGOFSET;
+	physmemr[0].size = memsize & ~PGOFSET;
 	/* Lower memory reserved by eval board BIOS */
 	availmemr[0].start = startkernel; 
-	availmemr[0].size = board_data.mem_size - availmemr[0].start;
+	availmemr[0].size = memsize - availmemr[0].start;
 }
 
 void
@@ -373,27 +368,6 @@ ibm4xx_startup(const char *model)
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 }
-
-void
-ibm4xx_setup_propdb(void)
-{
-	/*
-	 * Set up the board properties database.
-	 */
-	if (!(board_info = propdb_create("board info")))
-		panic("Cannot create board info database");
-
-	if (board_info_set("mem-size", &board_data.mem_size, 
-		sizeof(&board_data.mem_size), PROP_CONST, 0))
-		panic("setting mem-size");
-	if (board_info_set("sip0-mac-addr", &board_data.mac_address_pci, 
-		sizeof(&board_data.mac_address_pci), PROP_CONST, 0))
-		panic("setting sip0-mac-addr");
-	if (board_info_set("processor-frequency", &board_data.processor_speed, 
-		sizeof(&board_data.processor_speed), PROP_CONST, 0))
-		panic("setting processor-frequency");
-}
-
 
 /*
  * Crash dump handling.
