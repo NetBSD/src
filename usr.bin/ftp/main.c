@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.34 1998/09/28 09:03:22 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.35 1998/12/27 05:49:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.34 1998/09/28 09:03:22 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.35 1998/12/27 05:49:53 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,11 @@ __RCSID("$NetBSD: main.c,v 1.34 1998/09/28 09:03:22 lukem Exp $");
 
 #include "ftp_var.h"
 #include "pathnames.h"
+
+#define FTP_PROXY	"ftp_proxy"	/* env var with ftp proxy location */
+#define HTTP_PROXY	"http_proxy"	/* env var with http proxy location */
+#define NO_PROXY	"no_proxy"	/* env var with list of non-proxied 
+					 * hosts, comma or space separated */
 
 int main __P((int, char **));
 
@@ -90,6 +95,9 @@ main(argc, argv)
 		httpport = htons(HTTP_PORT);	/* good fallback */
 	else
 		httpport = sp->s_port;
+	ftpproxy = getenv(FTP_PROXY);
+	httpproxy = getenv(HTTP_PROXY);
+	no_proxy = getenv(NO_PROXY);
 	gateport = 0;
 	cp = getenv("FTPSERVERPORT");
 	if (cp != NULL) {
