@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.150 2004/04/29 04:13:36 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.151 2004/04/29 04:20:02 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1520,3 +1520,10 @@ usr.bin/su/su.1					1.37-1.38
 
 	Fix typo's
 	[cjep, ticket #210]
+
+sys/arch/sparc/sparc/pmap.c			1.294
+sys/arch/sparc/sparc/machdep.c			1.248
+
+	Changes to fix and help diagnose MMU resource shortage on small 
+	sun4c systems.
+	[pk, ticket #211]
