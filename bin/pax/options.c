@@ -37,7 +37,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)options.c	8.2 (Berkeley) 4/18/94";*/
-static char *rcsid = "$Id: options.c,v 1.3 1994/06/14 00:42:47 mycroft Exp $";
+static char *rcsid = "$Id: options.c,v 1.4 1994/06/14 01:16:10 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -583,35 +583,23 @@ tar_options(argc, argv)
 	register char **argv;
 #endif
 {
-	register char *cp;
+	register int c;
 	int fstdin = 0;
 
-	if (argc < 2)
-		tar_usage();
 	/*
 	 * process option flags
 	 */
-	++argv;
-	for (cp = *argv++; *cp != '\0'; ++cp) {
-		switch (*cp) {
-		case '-':
-			/*
-			 * skip over -
-			 */
-			break;
+	while ((c = getoldopt(argc, argv, "b:cef:moprutvwxBHLPX014578")) 
+	    != EOF)  {
+		switch(c) {
 		case 'b':
 			/*
 			 * specify blocksize
 			 */
-			if (*argv == (char *)NULL) {
-				warn(1,"blocksize must be specified with 'b'");
+			if ((wrblksz = (int)str_offt(optarg)) <= 0) {
+				warn(1, "Invalid block size %s", optarg);
 				tar_usage();
 			}
-			if ((wrblksz = (int)str_offt(*argv)) <= 0) {
-				warn(1, "Invalid block size %s", *argv);
-				tar_usage();
-			}
-			++argv;
 			break;
 		case 'c':
 			/*
@@ -629,21 +617,16 @@ tar_options(argc, argv)
 			/*
 			 * filename where the archive is stored
 			 */
-			if (*argv == (char *)NULL) {
-				warn(1, "filename must be specified with 'f'");
-				tar_usage();
-			}
-			if ((argv[0][0] == '-') && (argv[0][1]== '\0')) {
+			if ((optarg[0] == '-') && (optarg[1]== '\0')) {
 				/*
 				 * treat a - as stdin
 				 */
-				++argv;
-				++fstdin;
+				fstdin = 1;
 				arcname = (char *)0;
 				break;
 			}
 			fstdin = 0;
-			arcname = *argv++;
+			arcname = optarg;
 			break;
 		case 'm':
 			/*
@@ -748,6 +731,8 @@ tar_options(argc, argv)
 			break;
 		}
 	}
+	argc -= optind;
+	argv += optind;
 
 	/*
 	 * if we are writing (ARCHIVE) specify tar, otherwise run like pax
