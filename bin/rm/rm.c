@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rm.c	4.26 (Berkeley) 3/10/91";*/
-static char rcsid[] = "$Id: rm.c,v 1.13 1994/01/28 20:02:54 jtc Exp $";
+static char rcsid[] = "$Id: rm.c,v 1.14 1994/03/16 17:49:40 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -191,10 +191,10 @@ rmtree(argv)
 		if (p->fts_info == FTS_DP || p->fts_info == FTS_DNR) {
 			if (!rmdir(p->fts_accpath) || fflag && errno == ENOENT) 
 				continue;
-			error(p->fts_path, errno);
-		} 
-		if (!unlink(p->fts_accpath) || fflag && errno == ENOENT)
-			continue;
+		} else {
+			if (!unlink(p->fts_accpath) || fflag && errno == ENOENT)
+				continue;
+		}
 		error(p->fts_path, errno);
 	}
 }
