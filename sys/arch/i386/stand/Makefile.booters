@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.52 2003/10/08 13:06:30 dsl Exp $
+#	$NetBSD: Makefile.booters,v 1.53 2003/10/08 18:20:15 dsl Exp $
 
 .include <bsd.own.mk>
 
@@ -51,11 +51,11 @@ CLEANFILES+= ${STARTFILE} vers.c ${BASE}.list
 SRCS+=	vers.c
 
 .if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN: machine x86
+.BEGIN: machine x86 lib
 .NOPATH: machine x86
 .endif
 
-realdepend realall: machine x86
+realdepend realall: machine x86 lib
 CLEANFILES+= machine x86
 
 machine:: x86
@@ -66,7 +66,15 @@ x86::
 	-rm -f $@
 	ln -s $S/arch/x86/include $@
 
-${OBJS} ${ROMSTART} ${DOSSTART} ${PXESTART}: machine x86
+${OBJS} ${ROMSTART} ${DOSSTART} ${PXESTART}: machine x86 lib
+
+lib:
+.ifdef LIBOBJ
+	-rm -f $@
+	ln -s ${LIBOBJ}/lib .
+.else
+	mkdir lib
+.endif
 
 ### find out what to use for libkern
 KERN_AS=	library
