@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.6 2000/07/17 07:04:19 jeffs Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.7 2000/08/10 22:31:26 jeffs Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -149,7 +149,25 @@ db_disasm(loc, altfmt)
 	boolean_t	altfmt;
 
 {
-	return (db_disasm_insn(*(int*)loc, loc, altfmt));
+	u_int32_t instr;
+
+	/*
+	 * Take some care with addresses to not UTLB here as it
+	 * loses the current debugging context.  KSEG2 not checked.
+	 */
+	if (loc < MIPS_KSEG0_START) {
+		instr = fuword((void *)loc);
+		if (instr == 0xffffffff) {
+			/* "sd ra, -1(ra)" is unlikely */
+			db_printf("invalid address.\n");
+			return loc;
+		}
+	}
+	else {
+		instr =  *(u_int32_t *)loc;
+	}
+
+	return (db_disasm_insn(instr, loc, altfmt));
 }
 
 
