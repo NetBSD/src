@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.46 1997/04/01 16:32:38 matthias Exp $	*/
+/*	$NetBSD: locore.s,v 1.47 1997/05/08 13:44:13 matthias Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -52,56 +52,53 @@
 #include <machine/cpufunc.h>
 #include <machine/jmpbuf.h>
 
+#define	SET(a, b)	.globl	_C_LABEL(a); .set _C_LABEL(a),b
+
 /*
  * PTmap is recursive pagemap at top of virtual address space.
  * Within PTmap, the page directory can be found (third indirection).
  */
-	.globl	_PTmap, _PTD, _PTDpde, _Sysmap
-	.set	_PTmap,(PTDPTDI << PDSHIFT)
-	.set	_PTD,(_PTmap + PTDPTDI * NBPG)
-	.set	_PTDpde,(_PTD + PTDPTDI * 4)		# XXX 4 == sizeof pde
-	.set	_Sysmap,(_PTmap + KPTDI * NBPG)
+
+	SET(PTmap,	(PTDPTDI << PDSHIFT))
+	SET(PTD,	(_C_LABEL(PTmap) + PTDPTDI * NBPG))
+	SET(PTDpde,	(_C_LABEL(PTD) + PTDPTDI * 4))	/* XXX 4 == sizeof pde */
+	SET(Sysmap,	(_C_LABEL(PTmap) + KPTDI * NBPG))
 
 /*
  * APTmap, APTD is the alternate recursive pagemap.
  * It's used when modifying another process's page tables.
  */
-	.globl	_APTmap, _APTD, _APTDpde
-	.set	_APTmap,(APTDPTDI << PDSHIFT)
-	.set	_APTD,(_APTmap + APTDPTDI * NBPG)
-	.set	_APTDpde,(_PTD + APTDPTDI * 4)		# XXX 4 == sizeof pde
+	SET(APTmap,	(APTDPTDI << PDSHIFT))
+	SET(APTD,	(_C_LABEL(APTmap) + APTDPTDI * NBPG))
+	SET(APTDpde,	(_C_LABEL(PTD) + APTDPTDI * 4))	/* XXX 4 == sizeof pde */
+
+/*
+ * kernel_text is used by libkvm.
+ */
+	SET(kernel_text,(KERNBASE + 0x2000))
 
 /*
  * Initialization
  */
-	.data
 
-	.globl	_cold, _esym, _bootdev, _boothowto, __have_fpu
-	.globl	_proc0paddr
-_cold:		.long	1	/* cold till we are not */
-_esym:		.long	0	/* pointer to end of symbols */
-__have_fpu:	.long	0	/* Have we an FPU installed? */
-_proc0paddr:	.long	0
+	DATA_D(cold,		1)	/* cold till we are not */
+	DATA_D(esym,		0)	/* pointer to end of symbols */
+	DATA_D(_have_fpu,	0)	/* Have we an FPU installed? */
 
-	.globl	_kernel_text
-	.set	_kernel_text,(KERNBASE + 0x2000)
-
-	.text
-	.globl	start
-start:
-	ints_off			# make sure interrupts are off.
-	bicpsrw	PSL_US			# make sure we are using sp0.
-	lprd    sb,0			# gcc expects this.
+ASENTRY(start)
+	ints_off			/* make sure interrupts are off. */
+	bicpsrw	PSL_US			/* make sure we are using sp0. */
+	lprd    sb,0			/* gcc expects this. */
 
 	/*
 	 * Zero the bss segment.
 	 */
-	addr	_end(pc),r0		# setup to zero the bss segment.
-	addr	_edata(pc),r1
-	subd	r1,r0			# compute _end - _edata
-	movd	r0,tos			# push length
-	addr	_edata(pc),tos		# push address
-	bsr	_bzero			# zero the bss segment
+	addr	_C_LABEL(end)(pc),r0	/* setup to zero the bss segment. */
+	addr	_C_LABEL(edata)(pc),r1
+	subd	r1,r0			/* compute _end - _edata */
+	movd	r0,tos			/* push length */
+	addr	r1,tos			/* push address */
+	bsr	_C_LABEL(bzero)		/* zero the bss segment */
 
 	/*
 	 * The boot program provides us a magic in r3,
@@ -110,15 +107,15 @@ start:
 	 */
 	cmpd	0xc1e86394,r3
 	bne	1f
-	movd	r4,_esym(pc)
-	movd	r6,_bootdev(pc)
-	movd	r7,_boothowto(pc)
+	movd	r4,_C_LABEL(esym)(pc)
+	movd	r6,_C_LABEL(bootdev)(pc)
+	movd	r7,_C_LABEL(boothowto)(pc)
 1:	/*
 	 * Finish machine initialization and start main.
 	 */
-	br	_init532
+	br	_C_LABEL(init532)
 
-_ENTRY(proc_trampoline)
+ENTRY_NOPROFILE(proc_trampoline)
 	movd	r4,tos
 	jsr	0(r3)
 	cmpqd	0,tos
@@ -158,7 +155,7 @@ ENTRY(delay)			/* bsr  2 cycles;  80 ns */
  * Signal trampoline; copied to top of user stack.
  */
 
-_ENTRY(sigcode)
+ENTRY_NOPROFILE(sigcode)
 	jsr	0(SIGF_HANDLER(sp))
 	addr	SIGF_SC(sp),tos		/* scp (the call may have clobbered */
 					/* the copy at SIGF_SCP(sp)). */
@@ -166,10 +163,10 @@ _ENTRY(sigcode)
 	movd	SYS_sigreturn,r0
 	svc
 	movd	0,0			/* Illegal instruction. */
-	.globl	_esigcode
-_esigcode:
+GLOBAL(esigcode)
+
 #if defined(PROF) || defined(GPROF) || defined(KGDB) || defined(DDB)
-	/* Just a gap between _esigcode and the next label */
+	/* Just a gap between esigcode and the next label */
 	.long	0
 #endif
 
@@ -186,8 +183,8 @@ _esigcode:
  */
 ENTRY(copyout)
 	enter	[r3,r4],0
-	movd	_curpcb(pc),r4
-	addr	_copy_fault(pc),PCB_ONFAULT(r4)
+	movd	_C_LABEL(curpcb)(pc),r4
+	addr	_C_LABEL(copy_fault)(pc),PCB_ONFAULT(r4)
 
 	movd	B_ARG0,r1		/* from */
 	movd	B_ARG1,r2		/* to */
@@ -241,8 +238,8 @@ ENTRY(copyout)
  */
 ENTRY(copyin)
 	enter	[r3,r4],0
-	movd	_curpcb(pc),r4
-	addr	_copy_fault(pc),PCB_ONFAULT(r4)
+	movd	_C_LABEL(curpcb)(pc),r4
+	addr	_C_LABEL(copy_fault)(pc),PCB_ONFAULT(r4)
 
 	movd	B_ARG0,r1		/* from */
 	movd	B_ARG1,r2		/* to */
@@ -258,9 +255,9 @@ ENTRY(copyin)
 	movd	r1,r3
 	addd	r0,r3
 	cmpd	r3,VM_MAXUSER_ADDRESS
-	bhi	_copy_fault
+	bhi	_C_LABEL(copy_fault)
 	cmpd	r1,r3
-	bhs	_copy_fault		/* check for overflow. */
+	bhs	_C_LABEL(copy_fault)	/* check for overflow. */
 
 	/* And now do the copy. */
 	lshd	-2,r0
@@ -281,14 +278,14 @@ ENTRY(copy_fault)
 /*
  * copyoutstr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
  * Copy a NUL-terminated string, at most maxlen characters long, into the
- * user's address space.  Return the number of characters copied (including the
- * NUL) in *lencopied.  If the string is too long, return ENAMETOOLONG; else
- * return 0 or EFAULT.
+ * user's address space.  Return the number of characters copied (including
+ * the NUL) in *lencopied.  If the string is too long, return ENAMETOOLONG;
+ * else return 0 or EFAULT.
  */
 ENTRY(copyoutstr)
 	enter	[r3],0
-	movd	_curpcb(pc),r3
-	addr	_copystr_fault(pc),PCB_ONFAULT(r3)
+	movd	_C_LABEL(curpcb)(pc),r3
+	addr	_C_LABEL(copystr_fault)(pc),PCB_ONFAULT(r3)
 	movd	B_ARG0,r0		/* from */
 	movd	B_ARG1,r1		/* to */
 	movd	B_ARG2,r2		/* maxlen */
@@ -302,22 +299,22 @@ ENTRY(copyoutstr)
 	addqd	1,r1
 	acbd	-1,r2,1b
 2:	movd	ENAMETOOLONG,r0
-	br	copystr_return
+	br	_ASM_LABEL(copystr_return)
 3:	addqd	-1,r2
 	movqd	0,r0
-	br	copystr_return
+	br	_ASM_LABEL(copystr_return)
 
 /*
  * copyinstr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
  * Copy a NUL-terminated string, at most maxlen characters long, from the
- * user's address space.  Return the number of characters copied (including the
- * NUL) in *lencopied.  If the string is too long, return ENAMETOOLONG; else
- * return 0 or EFAULT.
+ * user's address space.  Return the number of characters copied (including
+ * the NUL) in *lencopied.  If the string is too long, return ENAMETOOLONG;
+ * else return 0 or EFAULT.
  */
 ENTRY(copyinstr)
 	enter	[r3],0
-	movd	_curpcb(pc),r3
-	addr	_copystr_fault(pc),PCB_ONFAULT(r3)
+	movd	_C_LABEL(curpcb)(pc),r3
+	addr	_C_LABEL(copystr_fault)(pc),PCB_ONFAULT(r3)
 	movd	B_ARG0,r0		/* from */
 	movd	B_ARG1,r1		/* to */
 	movd	B_ARG2,r2		/* maxlen */
@@ -331,15 +328,15 @@ ENTRY(copyinstr)
 	addqd	1,r1
 	acbd	-1,r2,1b
 2:	movd	ENAMETOOLONG,r0
-	br	copystr_return
+	br	_ASM_LABEL(copystr_return)
 3:	addqd	-1,r2
 	movqd	0,r0
-	br	copystr_return
+	br	_ASM_LABEL(copystr_return)
 
 ENTRY(copystr_fault)
 	movd	EFAULT,r0
 
-copystr_return:
+ASLOCAL(copystr_return)
 	/* Set *lencopied and return r0. */
 	movqd	0,PCB_ONFAULT(r3)
 	movd	B_ARG2,r1
@@ -400,8 +397,8 @@ ENTRY(copystr)
  * Fetch an int from the user's address space.
  */
 ENTRY(fuword)
-	movd	_curpcb(pc),r2
-	addr	_fusufault(pc),PCB_ONFAULT(r2)
+	movd	_C_LABEL(curpcb)(pc),r2
+	addr	_C_LABEL(fusufault)(pc),PCB_ONFAULT(r2)
 	movd	S_ARG0,r0
 	/*
 	 * MACH's locore.s code says that
@@ -419,8 +416,8 @@ ENTRY(fuword)
  * interrupt.
  */
 ENTRY(fuswintr)
-	movd	_curpcb(pc),r2
-	addr	_fusubail(pc),PCB_ONFAULT(r2)
+	movd	_C_LABEL(curpcb)(pc),r2
+	addr	_C_LABEL(fusubail)(pc),PCB_ONFAULT(r2)
 	movd	S_ARG0,r0
 	movusw	0(r0),S_ARG0
 	movqd	0,r0
@@ -433,8 +430,8 @@ ENTRY(fuswintr)
  * Fetch a byte from the user's address space.
  */
 ENTRY(fubyte)
-	movd	_curpcb(pc),r2
-	addr	_fusufault(pc),PCB_ONFAULT(r2)
+	movd	_C_LABEL(curpcb)(pc),r2
+	addr	_C_LABEL(fusufault)(pc),PCB_ONFAULT(r2)
 	movd	S_ARG0,r0
 	movusb	0(r0),S_ARG0
 	movqd	0,r0
@@ -447,8 +444,8 @@ ENTRY(fubyte)
  * Store an int in the user's address space.
  */
 ENTRY(suword)
-	movd	_curpcb(pc),r2
-	addr	_fusufault(pc),PCB_ONFAULT(r2)
+	movd	_C_LABEL(curpcb)(pc),r2
+	addr	_C_LABEL(fusufault)(pc),PCB_ONFAULT(r2)
 	movd	S_ARG0,r0
 	movsud	S_ARG1,0(r0)
 	movqd	0,r0
@@ -461,8 +458,8 @@ ENTRY(suword)
  * interrupt.
  */
 ENTRY(suswintr)
-	movd	_curpcb(pc),r2
-	addr	_fusubail(pc),PCB_ONFAULT(r2)
+	movd	_C_LABEL(curpcb)(pc),r2
+	addr	_C_LABEL(fusubail)(pc),PCB_ONFAULT(r2)
 	movd	S_ARG0,r0
 	movsuw	S_ARG1,0(r0)
 	movqd	0,r0
@@ -474,8 +471,8 @@ ENTRY(suswintr)
  * Store a byte in the user's address space.
  */
 ENTRY(subyte)
-	movd	_curpcb(pc),r2
-	addr	_fusufault(pc),PCB_ONFAULT(r2)
+	movd	_C_LABEL(curpcb)(pc),r2
+	addr	_C_LABEL(fusufault)(pc),PCB_ONFAULT(r2)
 	movd	S_ARG0,r0
 	movsub	S_ARG1,0(r0)
 	movqd	0,r0
@@ -546,14 +543,13 @@ ENTRY(longjmp)
 
 /*
  * The following primitives manipulate the run queues.
- * _whichqs tells which of the 32 queues _qs have processes
+ * whichqs tells which of the 32 queues qs have processes
  * in them.  Setrunqueue puts processes into queues, remrunqueue
  * removes them from queues.  The running process is on no queue,
  * other processes are on a queue related to p->p_pri, divided by 4
  * actually to shrink the 0-127 range of priorities into the 32 available
  * queues.
  */
-	.globl	_whichqs, _qs, _cnt, _panic
 
 /*
  * setrunqueue(struct proc *p);
@@ -568,11 +564,11 @@ ENTRY(setrunqueue)
 	bne	1f
 	cmpb	SRUN,P_STAT(r0)
 	bne	1f
-#endif /* DIAGNOSTIC */
+#endif
 	movzbd	P_PRIORITY(r0),r1
 	lshd	-2,r1
-	sbitd	r1,_whichqs(pc)		/* set queue full bit */
-	addr	_qs(pc)[r1:q],r1	/* locate q hdr */
+	sbitd	r1,_C_LABEL(whichqs)(pc) /* set queue full bit */
+	addr	_C_LABEL(qs)(pc)[r1:q],r1 /* locate q hdr */
 	movd	P_BACK(r1),r2		/* locate q tail */
 	movd	r1,P_FORW(r0)		/* set p->p_forw */
 	movd	r0,P_BACK(r1)		/* update q's p_back */
@@ -580,9 +576,7 @@ ENTRY(setrunqueue)
 	movd    r2,P_BACK(r0)		/* set p->p_back */
 	ret	0
 #ifdef DIAGNOSTIC
-1:	addr	3f(pc),tos		/* Was on the list! */
-	bsr	_panic
-3:	.asciz "setrunqueue"
+1:	PANIC("setrunqueue)		/* Was on the list! */
 #endif
 
 /*
@@ -594,9 +588,9 @@ ENTRY(remrunqueue)
 	movzbd	P_PRIORITY(r1),r0
 #ifdef DIAGNOSTIC
 	lshd	-2,r0
-	tbitd	r0,_whichqs(pc)
+	tbitd	r0,_C_LABEL(whichqs)(pc)
 	bfc	1f
-#endif /* DIAGNOSTIC */
+#endif
 	movd	P_BACK(r1),r2		/* Address of prev. item */
 	movqd	0,P_BACK(r1)		/* Clear reverse link */
 	movd	P_FORW(r1),r1		/* Addr of next item. */
@@ -607,12 +601,10 @@ ENTRY(remrunqueue)
 #ifndef DIAGNOSTIC
 	lshd	-2,r0
 #endif
-	cbitd	r0,_whichqs(pc)		/* mark q as empty */
+	cbitd	r0,_C_LABEL(whichqs)(pc) /* mark q as empty */
 2:	ret	0
 #ifdef DIAGNOSTIC
-1:	addr	3f(pc),tos		/* No queue entry! */
-	bsr	_panic
-3:	.asciz "remrunqueue"
+1:	PANIC("remrunqueue")		/* No queue entry! */
 #endif
 
 /*
@@ -624,12 +616,12 @@ ENTRY(remrunqueue)
  *        possible to insert a fake "enter" after the _idle label for the
  *        benefit of kgdb and ddb.
  */
-_ENTRY(idle)
+ENTRY_NOPROFILE(idle)
 #if defined(DDB) || defined(KGDB)
 	enter	[r3,r4,r5,r6,r7],0
 #endif
 0:	ints_off
-	ffsd	_whichqs(pc),r0
+	ffsd	_C_LABEL(whichqs)(pc),r0
 	bfc	sw1
 	ints_on				/* We may lose a tick here ... */
 	wait				/* Wait for interrupt. */
@@ -642,7 +634,7 @@ _ENTRY(idle)
 ENTRY(cpu_switch)
 	enter	[r3,r4,r5,r6,r7],0
 
-	movd	_curproc(pc),r4
+	movd	_C_LABEL(curproc)(pc),r4
 
 	/*
 	 * Clear curproc so that we don't accumulate system time while idle.
@@ -651,7 +643,7 @@ ENTRY(cpu_switch)
 	 * below and changes the priority.  (See corresponding comment in
 	 * userret()).
 	 */
-	movqd	0,_curproc(pc)
+	movqd	0,_C_LABEL(curproc)(pc)
 
 	movd	_imask(pc),tos
 	bsr	_splx			/* spl0 - process pending interrupts */
@@ -675,17 +667,17 @@ ENTRY(cpu_switch)
 	ints_off
 
 	movqd	0,r0
-	ffsd	_whichqs(pc),r0		/* find a full q */
+	ffsd	_C_LABEL(whichqs)(pc),r0 /* find a full q */
 	bfs	0b			/* if none, idle */
 
 sw1:	/* Get the process and unlink it from the queue. */
-	addr	_qs(pc)[r0:q],r1	/* address of qs entry! */
+	addr	_C_LABEL(qs)(pc)[r0:q],r1 /* address of qs entry! */
 
 	movd	P_FORW(r1),r2		/* unlink from front of process q */
 #ifdef	DIAGNOSTIC
 	cmpd	r2,r1			/* linked to self (i.e. nothing queued? */
-	beq	_switch_error		/* not possible */
-#endif /* DIAGNOSTIC */
+	beq	_C_LABEL(switch_error)	/* not possible */
+#endif
 	movd	P_FORW(r2),r3
 	movd	r3,P_FORW(r1)
 	movd	r1,P_BACK(r3)
@@ -693,33 +685,33 @@ sw1:	/* Get the process and unlink it from the queue. */
 	cmpd	r1,r3			/* q empty? */
 	bne	3f
 
-	cbitd	r0,_whichqs(pc)		/* queue is empty, turn off whichqs. */
+	cbitd	r0,_C_LABEL(whichqs)(pc) /* queue is empty, turn off whichqs. */
 
-3:	movqd	0,_want_resched(pc)	/* We did a resched! */
+3:	movqd	0,_C_LABEL(want_resched)(pc) /* We did a resched! */
 
 #ifdef	DIAGNOSTIC
 	cmpqd	0,P_WCHAN(r2)		/* Waiting for something? */
-	bne	_switch_error		/* Yes; shouldn't be queued. */
+	bne	_C_LABEL(switch_error)	/* Yes; shouldn't be queued. */
 	cmpb	SRUN,P_STAT(r2)		/* In run state? */
-	bne	_switch_error		/* No; shouldn't be queued. */
-#endif /* DIAGNOSTIC */
+	bne	_C_LABEL(switch_error)	/* No; shouldn't be queued. */
+#endif
 
 	/* Isolate process. XXX Is this necessary? */
 	movqd	0,P_BACK(r2)
 
 	/* Record new process. */
-	movd	r2,_curproc(pc)
+	movd	r2,_C_LABEL(curproc)(pc)
 
 	/* It's okay to take interrupts here. */
 	ints_on
 
 	/* Skip context switch if same process. */
 	cmpd	r2,r4
-	beq	switch_return
+	beq	_ASM_LABEL(switch_return)
 
 	/* If old process exited, don't bother. */
 	cmpqd	0,r4
-	beq	switch_exited
+	beq	_ASM_LABEL(switch_exited)
 
 	/*
 	 * Second phase: save old context.
@@ -735,7 +727,7 @@ sw1:	/* Get the process and unlink it from the queue. */
 	sprd	sp,PCB_KSP(r4)
 	sprd	fp,PCB_KFP(r4)
 
-switch_exited:
+ASLOCAL(switch_exited)
 	/*
 	 * Third phase: restore saved context.
 	 *
@@ -757,7 +749,7 @@ switch_exited:
 	lprd	fp,PCB_KFP(r1)
 
 	/* Record new pcb. */
-	movd	r1,_curpcb(pc)
+	movd	r1,_C_LABEL(curpcb)(pc)
 
 	/*
 	 * Disable the FPU.
@@ -773,7 +765,7 @@ switch_return:
 	/*
 	 * Restore old priority level from stack.
 	 */
-	bsr	_splx
+	bsr	_C_LABEL(splx)
 	cmpqd	0,tos
 
 	exit	[r3,r4,r5,r6,r7]
@@ -781,10 +773,8 @@ switch_return:
 
 #ifdef	DIAGNOSTIC
 ENTRY(switch_error)
-	addr	1f(pc),tos
-	bsr	_panic
-1:	.asciz	"cpu_switch"
-#endif /* DIAGNOSTIC */
+	PANIC("cpu_switch")
+#endif
 
 /****************************************************************************/
 
@@ -797,9 +787,9 @@ ENTRY(switch_error)
  * Check if we have a FPU installed.
  */
 #ifdef NS381
-#define FPU_INSTALLED
+# define FPU_INSTALLED
 #else
-#define FPU_INSTALLED	cmpqd 0,__have_fpu(pc); beq 9f
+# define FPU_INSTALLED	cmpqd 0,_C_LABEL(_have_fpu)(pc); beq 9f
 #endif
 
 /*
@@ -899,9 +889,9 @@ ENTRY(restore_fpu_context)
 	9:
 
 #define	TRAP(label, code) \
-	.align 2; CAT(label,:); KENTER; \
+	_ALIGN_TEXT; CAT(_ASM_LABEL(label),:); KENTER; \
 	movd	code,tos; \
-	br	_handle_trap
+	br	_C_LABEL(handle_trap)
 
 TRAP(trap_nmi,	    T_NMI)	/*  1 non-maskable interrupt */
 TRAP(trap_abt,	    T_ABT)	/*  2 abort */
@@ -920,7 +910,7 @@ TRAP(trap_reserved, T_RESERVED)	/* 15 reserved */
 /*
  * The following handles all synchronous traps and non maskable interupts.
  */
-_ENTRY(handle_trap)
+ENTRY_NOPROFILE(handle_trap)
 	lprd    sb,0			/* Kernel code expects sb to be 0 */
 	/*
 	 * Store the mmu status.
@@ -940,13 +930,12 @@ _ENTRY(handle_trap)
  * cache line aligned.
  */
 	.align	4
-_ENTRY(flush_icache)
+ASENTRY_NOPROFILE(flush_icache)
 #ifndef CINVSMALL
 	cinv	ia,r0
 	addqd	1,tos
 	rett	0
 #else
-	.globl	_cinvstart, _cinvend
 	addqd	1,tos			/* Increment return address. */
 	addd	r0,r1
 	movd	r1,tos			/* Save address of second line. */
@@ -961,32 +950,32 @@ _ENTRY(flush_icache)
 1:	movd	r0,r1
 	andd	PGOFSET,r0
 	lshd	-PGSHIFT,r1
-_cinvstart:
+GLOBAL(cinvstart)
 	movd	@_PTmap[r1:d],r1
 	andd	~PGOFSET,r1
 	addd	r0,r1
 	cinv	i,r1
-_cinvend:
+GLOBALcinvend)
 	rett	0
 #endif
 
 /*
  * The system call trap handler.
  */
-_ENTRY(svc)
+ASENTRY_NOPROFILE(svc_handler)
 	KENTER
 	lprd	sb,0			/* Kernel code expects sb to be 0 */
-	bsr	_syscall
+	bsr	_C_LABEL(syscall)
 rei:	CHECKAST
 	KEXIT
 
 /*
  * The handler for all asynchronous interrupts.
  */
-_ENTRY(interrupt)
+ASENTRY_NOPROFILE(interrupt)
 	KENTER
 	lprd    sb,0			/* Kernel code expects sb to be 0 */
-	movd	_Cur_pl(pc),tos
+	movd	_C_LABEL(Cur_pl)(pc),tos
 	movb	@ICU_ADR+SVCT,r0	/* Fetch vector */
 	andd	0x0f,r0
 	movd	r0,tos
@@ -997,8 +986,8 @@ _ENTRY(interrupt)
 	 */
 	movd	r0,r1
 	muld	IV_SIZE,r0
-	movd	_ivt+IV_MASK(r0),r2
-	orw	r2,_Cur_pl(pc)
+	movd	_C_LABEL(ivt)+IV_MASK(r0),r2
+	orw	r2,_C_LABEL(Cur_pl)(pc)
 	orw	r2,@ICU_ADR+IMSK
 	movb	@ICU_ADR+HVCT,r2	/* Acknowledge Interrupt */
 	/* 
@@ -1008,16 +997,16 @@ _ENTRY(interrupt)
 	/* 
 	 * Increment interrupt counters.
 	 */
-	addqd	1,_intrcnt(pc)[r1:d]
-	addqd	1,_cnt+V_INTR(pc)
-	addqd	1,_ivt+IV_CNT(r0)
+	addqd	1,_C_LABEL(intrcnt)(pc)[r1:d]
+	addqd	1,_C_LABEL(cnt)+V_INTR(pc)
+	addqd	1,_C_LABEL(ivt)+IV_CNT(r0)
 
-	movd	_ivt+IV_ARG(r0),r1	/* Get argument */
+	movd	_C_LABEL(ivt)+IV_ARG(r0),r1 /* Get argument */
 	cmpqd	0,r1
 	bne	1f
 	addr	0(sp),r1		/* NULL -> push frame address */
 1:	movd	r1,tos
-	movd	_ivt+IV_VEC(r0),r0	/* Call the handler */
+	movd	_C_LABEL(ivt)+IV_VEC(r0),r0 /* Call the handler */
 	jsr	0(r0)
 	adjspd	-8			/* Remove arg and vec from stack */
 	/*
@@ -1026,9 +1015,9 @@ _ENTRY(interrupt)
 	 * splsoft and call check_sir now.
 	 */
 	movd	tos,r3
-	cmpd	r3,_imask(pc)
+	cmpd	r3,_C_LABEL(imask)(pc)
 	bne	1f
-	cmpqd	0,_sirpending(pc)
+	cmpqd	0,_C_LABEL(sirpending)(pc)
 	beq	1f
 	/*
 	 * r3 contains imask[IPL_ZERO] and IR_SOFT is
@@ -1037,38 +1026,37 @@ _ENTRY(interrupt)
 	 * 	r0 = r3 | (1 << IR_SOFT).
 	 */
 	addr	1 << IR_SOFT(r3),r0
-	movd	r0,_Cur_pl(pc)
+	movd	r0,_C_LABEL(Cur_pl)(pc)
 	movw	r0,@ICU_ADR+IMSK
-	bsr	_check_sir
+	bsr	_C_LABEL(check_sir)
 
 1:	CHECKAST
 	ints_off
-	movd	r3,_Cur_pl(pc)
+	movd	r3,_C_LABEL(Cur_pl)(pc)
 	movw	r3,@ICU_ADR+IMSK	/* Restore Cur_pl */
 	KEXIT
 
 /*
  * Finally the interrupt vector table.
  */
-	.globl	_inttab
-	.align 2
-_inttab:
-	.long _interrupt
-	.long trap_nmi
-	.long trap_abt
-	.long trap_slave
-	.long trap_ill
-	.long _svc
-	.long trap_dvz
-	.long _flush_icache
-	.long trap_bpt
-	.long trap_trc
-	.long trap_und
-	.long trap_rbe
-	.long trap_nbe
-	.long trap_ovf
-	.long trap_dbg
-	.long trap_reserved
+	_ALIGN_TEXT
+GLOBAL(inttab)
+	ASVECTOR(interrupt)
+	ASVECTOR(trap_nmi)
+	ASVECTOR(trap_abt)
+	ASVECTOR(trap_slave)
+	ASVECTOR(trap_ill)
+	ASVECTOR(svc_handler)
+	ASVECTOR(trap_dvz)
+	ASVECTOR(flush_icache)
+	ASVECTOR(trap_bpt)
+	ASVECTOR(trap_trc)
+	ASVECTOR(trap_und)
+	ASVECTOR(trap_rbe)
+	ASVECTOR(trap_nbe)
+	ASVECTOR(trap_ovf)
+	ASVECTOR(trap_dbg)
+	ASVECTOR(trap_reserved)
 
 /****************************************************************************/
 
@@ -1110,15 +1098,12 @@ _inttab:
  *   sb - pointer to intbase
  */
 
-pattern0	= 0xa5a5a5a5
-pattern1	= 0x5a5a5a5a
-parity_clr	= 0x28000050
-
 ENTRY(ram_size)
 	enter	[r3,r4,r5,r6,r7],0
 	sprd	sb,tos
 	sprd	intbase,r0
 	lprd	sb,r0			/* load intbase into sb */
+
 	/*
 	 * Initialize things.
 	 */
@@ -1131,73 +1116,72 @@ ENTRY(ram_size)
 	andw	~CFG_DC,r2
 	lprw	cfg,r2
 	movd	4(sb),r5		/* save old NMI vector */
-	addr	tmp_nmi(pc),4(sb)	/* tmp NMI vector */
+	addr	2f(pc),4(sb)		/* tmp NMI vector */
 	cinv	ia,r0			/* Vector reads go through the icache? */
 	movd	8(fp),r0		/* r0 = start */
 	addr	PGOFSET(r0),r0 		/* round up to page */
 	andd	~PGOFSET,r0
-	movd	pattern0,r3
-	movd	pattern1,r4
-rz_loop:
-	movd	r3,0(r0)		/* write 8 bytes */
+	movd	0xa5a5a5a5,r3
+	comd	r3,r4
+
+0:	movd	r3,0(r0)		/* write 8 bytes */
 	movd	r4,4(r0)
 	lprw	cfg,r2			/* flush write buffer */
 	cmpd	r3,0(r0)		/* read back and compare */
-	bne	rz_exit
+	bne	1f
 	cmpd	r4,4(r0)
-	bne	rz_exit
+	bne	1f
 	cmpqd	0,@0			/* check for address wrap */
-	bne	rz_exit
+	bne	1f
 	cmpqd	0,@4			/* check for address wrap */
-	bne	rz_exit
+	bne	1f
 	addr	NBPG(r0),r0		/* next page */
-	br	rz_loop
-rz_exit:
-	movd	r6,@0			/* restore 8 bytes of first page */
+	br	0b
+
+1:	movd	r6,@0			/* restore 8 bytes of first page */
 	movd	r7,@4
 	lprw	cfg,r1			/* turn data cache back on */
 	movd	r5,4(sb)		/* restore NMI vector */
 	cinv	ia,r0			/* Vector reads go through the icache? */
-	movd	parity_clr,r2
+	movd	PARCLU_PHYS,r2
 	movb	0(r2),r2		/* clear parity status */
 	lprd	sb,tos
 	exit	[r3,r4,r5,r6,r7]
 	ret	0
 
-tmp_nmi:				/* come here if parity error */
-	addr	rz_exit(pc),0(sp)	/* modify return addr to exit */
+2:					/* come here if parity error */
+	addr	1b(pc),0(sp)		/* modify return addr to exit */
 	rett	0
 
 /****************************************************************************/
 
 /*
- * vmstat -i uses the following labels and _interrupt even increments the
+ * vmstat -i uses the following labels and interrupt even increments the
  * counters. This information is also availiable from ivt[n].iv_use
  * and ivt[n].iv_cnt in much better form.
  */
-	.globl	_intrnames, _eintrnames, _intrcnt, _eintrcnt
 	.text
-_intrnames:
-	.asciz "int  0"
-	.asciz "int  1"
-	.asciz "int  2"
-	.asciz "int  3"
-	.asciz "int  4"
-	.asciz "int  5"
-	.asciz "int  6"
-	.asciz "int  7"
-	.asciz "int  8"
-	.asciz "int  9"
-	.asciz "int 10"
-	.asciz "int 11"
-	.asciz "int 12"
-	.asciz "int 13"
-	.asciz "int 14"
-	.asciz "int 15"
-_eintrnames:
+GLOBAL(intrnames)
+	ASMSTR "int  0"
+	ASMSTR "int  1"
+	ASMSTR "int  2"
+	ASMSTR "int  3"
+	ASMSTR "int  4"
+	ASMSTR "int  5"
+	ASMSTR "int  6"
+	ASMSTR "int  7"
+	ASMSTR "int  8"
+	ASMSTR "int  9"
+	ASMSTR "int 10"
+	ASMSTR "int 11"
+	ASMSTR "int 12"
+	ASMSTR "int 13"
+	ASMSTR "int 14"
+	ASMSTR "int 15"
+GLOBAL(eintrnames)
 
 	.data
-_intrcnt:
+GLOBAL(intrcnt)
 	.long	0
 	.long	0
 	.long	0
@@ -1214,4 +1198,4 @@ _intrcnt:
 	.long	0
 	.long	0
 	.long	0
-_eintrcnt:
+GLOBAL(eintrcnt)
