@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $NetBSD: flexdef.h,v 1.12 1998/02/22 12:08:34 christos Exp $ */
+/* $NetBSD: flexdef.h,v 1.13 2001/01/06 02:09:48 christos Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -982,7 +982,9 @@ extern void synerr PROTO((char []));	/* report a syntax error */
 extern void format_warn PROTO((char [], char[]));
 extern void warn PROTO((char []));	/* report a warning */
 extern void yyerror PROTO((char []));	/* report a parse error */
+#ifndef YYRECOVERING
 extern int yyparse PROTO((void));	/* the YACC parser */
+#endif
 
 
 /* from file scan.l */

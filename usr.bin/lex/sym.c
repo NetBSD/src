@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $NetBSD: sym.c,v 1.10 1998/02/22 12:08:35 christos Exp $ */
+/* $NetBSD: sym.c,v 1.11 2001/01/06 02:09:49 christos Exp $ */
 
 #include "flexdef.h"
 
@@ -39,9 +39,6 @@ int hashfunct PROTO((register char[], int));
 struct hash_entry *ndtbl[NAME_TABLE_HASH_SIZE];
 struct hash_entry *sctbl[START_COND_HASH_SIZE];
 struct hash_entry *ccltab[CCL_HASH_SIZE];
-
-struct hash_entry *findsym PROTO((char [], hash_table, int));
-
 
 /* addsym - add symbol and definitions to symbol table
  *

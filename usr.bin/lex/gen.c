@@ -26,17 +26,14 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $NetBSD: gen.c,v 1.14 1999/01/18 22:18:17 christos Exp $ */
+/* $NetBSD: gen.c,v 1.15 2001/01/06 02:09:49 christos Exp $ */
 
 #include "flexdef.h"
 
 
 /* declare functions that have forward references */
 
-void gen_next_state PROTO((int));
 void genecs PROTO((void));
-void indent_put2s PROTO((char [], char []));
-void indent_puts PROTO((char []));
 
 
 static int indent_level = 0; /* each level is 8 spaces */
