@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.29 2000/01/22 22:19:14 mycroft Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.30 2000/01/22 23:30:27 mycroft Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.29 2000/01/22 22:19:14 mycroft Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.30 2000/01/22 23:30:27 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -647,8 +647,8 @@ gethostbyaddr(addr, len, af)
 	_DIAGASSERT(addr != NULL);
 
 	if (af == AF_INET6 && len == IN6ADDRSZ &&
-	    (IN6_IS_ADDR_V4MAPPED((struct in6_addr *)uaddr) ||
-	     IN6_IS_ADDR_V4COMPAT((struct in6_addr *)uaddr))) {
+	    (IN6_IS_ADDR_V4MAPPED((const struct in6_addr *)uaddr) ||
+	     IN6_IS_ADDR_V4COMPAT((const struct in6_addr *)uaddr))) {
 		/* Unmap. */
 		addr += IN6ADDRSZ - INADDRSZ;
 		uaddr += IN6ADDRSZ - INADDRSZ;
@@ -780,12 +780,12 @@ _gethtbyname(rv, cb_data, ap)
 {
 	struct hostent *hp;
 	const char *name;
-	int len, af;
+	int af;
 
 	_DIAGASSERT(rv != NULL);
 
 	name = va_arg(ap, char *);
-	len = va_arg(ap, int);
+	/* NOSTRICT skip len */(void)va_arg(ap, int);
 	af = va_arg(ap, int);
 
 	hp = NULL;
