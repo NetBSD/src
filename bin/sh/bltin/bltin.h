@@ -1,4 +1,4 @@
-/*	$NetBSD: bltin.h,v 1.9 1997/07/04 21:02:29 christos Exp $	*/
+/*	$NetBSD: bltin.h,v 1.10 2002/11/24 22:35:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -48,20 +48,37 @@
 #include "../mystring.h"
 #ifdef SHELL
 #include "../output.h"
+#include "../error.h"
+#undef stdout
+#undef stderr
+#undef putc
+#undef putchar
+#undef fileno
 #define stdout out1
 #define stderr out2
 #define printf out1fmt
 #define putc(c, file)	outc(c, file)
 #define putchar(c)	out1c(c)
+#define FILE struct output
 #define fprintf outfmt
 #define fputs outstr
 #define fflush flushout
+#define fileno(f) ((f)->fd)
 #define INITARGS(argv)
-#define warnx(a, b, c) {				\
-	char buf[64];					\
-	(void)snprintf(buf, sizeof(buf), a, b, c);	\
-	error("%s", buf);				\
-}
+#define	err sh_err
+#define	verr sh_verr
+#define	errx sh_errx
+#define	verrx sh_verrx
+#define	warn sh_warn
+#define	vwarn sh_vwarn
+#define	warnx sh_warnx
+#define	vwarnx sh_vwarnx
+#define exit sh_exit
+#define setprogname(s)
+#define getprogname() commandname
+#define setlocate(l,s) 0
+
+#define getenv(p) bltinlookup((p),0)
 
 #else
 #undef NULL
@@ -70,9 +87,12 @@
 #define INITARGS(argv)	if ((commandname = argv[0]) == NULL) {fputs("Argc is zero\n", stderr); exit(2);} else
 #endif
 
-pointer stalloc __P((int));
-void error __P((char *, ...));
-int	echocmd __P((int, char **));
+pointer stalloc(int);
+void error(const char *, ...);
+void sh_warnx(const char *, ...);
+void sh_exit(int) __attribute__((__noreturn__));
+
+int echocmd(int, char **);
 
 
-extern char *commandname;
+extern const char *commandname;

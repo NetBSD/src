@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.18 2002/09/27 18:56:51 christos Exp $	*/
+/*	$NetBSD: exec.h,v 1.19 2002/11/24 22:35:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,14 +41,16 @@
 /* values of cmdtype */
 #define CMDUNKNOWN -1		/* no entry in table for command */
 #define CMDNORMAL 0		/* command is an executable program */
-#define CMDBUILTIN 1		/* command is a shell builtin */
-#define CMDFUNCTION 2		/* command is a shell function */
+#define CMDFUNCTION 1		/* command is a shell function */
+#define CMDBUILTIN 2		/* command is a shell builtin */
+#define CMDSPLBLTIN 3		/* command is a special shell builtin */
 
 
 struct cmdentry {
 	int cmdtype;
 	union param {
 		int index;
+		int (*bltin)(int, char**);
 		union node *func;
 	} u;
 };
@@ -58,19 +60,20 @@ struct cmdentry {
 #define DO_ABS	2		/* find_command checks absolute paths */
 
 extern const char *pathopt;	/* set by padvance */
-extern int exerrno;		/* last exec error */
 
-void shellexec __P((char **, char **, const char *, int, int))
-    __attribute__((noreturn));
-char *padvance __P((const char **, const char *));
-int hashcmd __P((int, char **));
-void find_command __P((char *, struct cmdentry *, int, const char *));
-int find_builtin __P((char *));
-void hashcd __P((void));
-void changepath __P((const char *));
-void deletefuncs __P((void));
-void getcmdentry __P((char *, struct cmdentry *));
-void addcmdentry __P((char *, struct cmdentry *));
-void defun __P((char *, union node *));
-int unsetfunc __P((char *));
-int typecmd __P((int, char **));
+void shellexec(char **, char **, const char *, int, int)
+    __attribute__((__noreturn__));
+char *padvance(const char **, const char *);
+int hashcmd(int, char **);
+void find_command(char *, struct cmdentry *, int, const char *);
+int (*find_builtin(char *))(int, char **);
+int (*find_splbltin(char *))(int, char **);
+void hashcd(void);
+void changepath(const char *);
+void deletefuncs(void);
+void getcmdentry(char *, struct cmdentry *);
+void addcmdentry(char *, struct cmdentry *);
+void defun(char *, union node *);
+int unsetfunc(char *);
+int typecmd(int, char **);
+void hash_special_builtins(void);

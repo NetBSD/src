@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.h,v 1.12 2002/09/28 01:25:01 christos Exp $	*/
+/*	$NetBSD: eval.h,v 1.13 2002/11/24 22:35:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,6 +40,7 @@
 
 extern char *commandname;	/* currently executing command */
 extern int exitstatus;		/* exit status of last command */
+extern int back_exitstatus;	/* exit status of backquoted command */
 extern struct strlist *cmdenviron;  /* environment for builtin command */
 
 
@@ -50,17 +51,10 @@ struct backcmd {		/* result of evalbackcmd */
 	struct job *jp;		/* job structure for command */
 };
 
-int evalcmd __P((int, char **));
-void evalstring __P((char *, int));
+void evalstring(char *, int);
 union node;	/* BLETCH for ansi C */
-void evaltree __P((union node *, int));
-void evalbackcmd __P((union node *, struct backcmd *));
-int bltincmd __P((int, char **));
-int breakcmd __P((int, char **));
-int returncmd __P((int, char **));
-int falsecmd __P((int, char **));
-int truecmd __P((int, char **));
-int execcmd __P((int, char **));
+void evaltree(union node *, int);
+void evalbackcmd(union node *, struct backcmd *);
 
 /* in_function returns nonzero if we are currently evaluating a function */
 #define in_function()	funcnest

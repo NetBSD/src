@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.h,v 1.12 1999/07/09 03:05:50 christos Exp $	*/
+/*	$NetBSD: expand.h,v 1.13 2002/11/24 22:35:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -61,15 +61,15 @@ struct arglist {
 
 
 union node;
-void expandhere __P((union node *, int));
-void expandarg __P((union node *, struct arglist *, int));
-void expari __P((int));
-int patmatch __P((char *, char *, int));
-void rmescapes __P((char *));
-int casematch __P((union node *, char *));
+void expandhere(union node *, int);
+void expandarg(union node *, struct arglist *, int);
+void expari(int);
+int patmatch(char *, char *, int);
+void rmescapes(char *);
+int casematch(union node *, char *);
 
 /* From arith.y */
-int arith __P((const char *));
-int expcmd __P((int , char **));
-void arith_lex_reset __P((void));
-int yylex __P((void));
+int arith(const char *);
+int expcmd(int , char **);
+void arith_lex_reset(void);
+int yylex(void);
