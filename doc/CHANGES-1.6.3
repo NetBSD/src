@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.111 2004/06/14 02:51:08 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.112 2004/06/14 17:08:49 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1022,7 +1022,6 @@ usr.sbin/syslogd/syslogd.c			patch
 	configuration at the wrong moment. Fixes PR bin/24682.
 	[he, ticket #1707]
 
-
 sys/compat/linux/arch/arm/syscalls.master	patch
 sys/compat/linux/arch/i386/syscalls.master	patch
 sys/compat/linux/arch/mips/syscalls.master	patch
@@ -1062,3 +1061,23 @@ usr.bin/sed/compile.c				1.26-1.28
 
 	sed(1) fixes for PR#25899, PR#24234, PR#25911
 	[grant, ticket #1710]
+
+tools/compat/compat_defs.h			1.36
+
+	Before sucking in stdlib.h check if this is NetBSD. If so, explicitly
+	make sure to use _POSIX_C_SOURCE and undef _NETBSD_SOURCE so the
+	myriad of NetBSD extentions don't get pulled into scope (and likely
+	conflict at some point with branched code trying to build on -current
+	due to drift). Fixes PR toolchain/25533.
+	[jmc, ticket #1711]
+
+usr.bin/vi/cl/cl_screen.c			1.7
+
+	. don't call newterm() more than once; use setterm() and resizeterm()
+	  instead on subsequent calls. Newterm() would fail after a few calls,
+	  leading to vi exiting with a "ex/vi: error initializing terminal"
+	  message
+	. if tcsetattr() fails due to EINTR, ignore it
+	Fixes PR bin/25849.
+	[aymeric, ticket #1713]
+
