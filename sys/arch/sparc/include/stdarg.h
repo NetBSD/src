@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.13 1999/02/20 00:33:55 kristerw Exp $ */
+/*	$NetBSD: stdarg.h,v 1.14 1999/05/03 16:20:28 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,6 +51,12 @@
 
 typedef _BSD_VA_LIST_	va_list;
 
+#ifdef __lint__
+#define __builtin_saveregs()		0
+#define __builtin_classify_type(t)	0
+#define __builtin_next_arg(t)		((t) ? 0 : 0)
+#endif
+
 #define	__va_size(type) \
 	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))
 
@@ -81,7 +87,7 @@ typedef _BSD_VA_LIST_	va_list;
 #ifdef __lint__
 # define va_arg(ap, type)	(*(type *)(void *)(ap)) 
 #else /* !__lint__ */
-# if __GNUC__ == 1 && !defined(__extension__)
+# if __GNUC__ < 2
 #  define __extension__
 # endif
 # define __va_8byte(ap, type) \
