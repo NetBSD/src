@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_alloclist.c,v 1.19 2004/03/05 02:53:55 oster Exp $	*/
+/*	$NetBSD: rf_alloclist.c,v 1.20 2004/03/07 21:57:44 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.19 2004/03/05 02:53:55 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.20 2004/03/07 21:57:44 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -48,10 +48,10 @@ __KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.19 2004/03/05 02:53:55 oster Exp 
 #include "rf_etimer.h"
 #include "rf_general.h"
 #include "rf_shutdown.h"
+#include "rf_netbsd.h"
 
 #include <sys/pool.h>
 
-static struct pool rf_alloclist_pool;
 #define RF_AL_FREELIST_MAX 256
 #define RF_AL_FREELIST_MIN 64
 
@@ -59,20 +59,15 @@ static void rf_ShutdownAllocList(void *);
 
 static void rf_ShutdownAllocList(void *ignored)
 {
-	pool_destroy(&rf_alloclist_pool);
+	pool_destroy(&rf_pools.alloclist);
 }
 
 int 
 rf_ConfigureAllocList(RF_ShutdownList_t **listp)
 {
 
-	pool_init(&rf_alloclist_pool, sizeof(RF_AllocListElem_t),
-		  0, 0, 0, "rf_alloclist_pl", NULL);
-	pool_sethiwat(&rf_alloclist_pool, RF_AL_FREELIST_MAX);
-	pool_prime(&rf_alloclist_pool, RF_AL_FREELIST_MIN);
-	pool_setlowat(&rf_alloclist_pool, RF_AL_FREELIST_MIN);
-	
-
+	rf_pool_init(&rf_pools.alloclist, sizeof(RF_AllocListElem_t),
+		     "rf_alloclist_pl", RF_AL_FREELIST_MIN, RF_AL_FREELIST_MAX);
 	rf_ShutdownCreate(listp, rf_ShutdownAllocList, NULL);
 
 	return (0);
@@ -120,7 +115,7 @@ rf_FreeAllocList(RF_AllocListElem_t *l)
 	while (l) {
 		temp = l;
 		l = l->next;
-		pool_put(&rf_alloclist_pool, temp);
+		pool_put(&rf_pools.alloclist, temp);
 	}
 }
 
@@ -129,7 +124,7 @@ rf_real_MakeAllocList()
 {
 	RF_AllocListElem_t *p;
 
-	p = pool_get(&rf_alloclist_pool, PR_WAITOK);
+	p = pool_get(&rf_pools.alloclist, PR_WAITOK);
 	memset((char *) p, 0, sizeof(RF_AllocListElem_t));
 	return (p);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.31 2004/03/05 02:53:55 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.32 2004/03/07 21:57:44 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.31 2004/03/05 02:53:55 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.32 2004/03/07 21:57:44 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -147,7 +147,6 @@ static const RF_DiskQueueSW_t diskqueuesw[] = {
 };
 #define NUM_DISK_QUEUE_TYPES (sizeof(diskqueuesw)/sizeof(RF_DiskQueueSW_t))
 
-static struct pool rf_dqd_pool;
 #define RF_MAX_FREE_DQD 256
 #define RF_MIN_FREE_DQD  64
 
@@ -182,19 +181,15 @@ rf_ConfigureDiskQueue(RF_Raid_t *raidPtr, RF_DiskQueue_t *diskqueue,
 static void 
 rf_ShutdownDiskQueueSystem(void *ignored)
 {
-	pool_destroy(&rf_dqd_pool);
+	pool_destroy(&rf_pools.dqd);
 }
 
 int
 rf_ConfigureDiskQueueSystem(RF_ShutdownList_t **listp)
 {
 
-	pool_init(&rf_dqd_pool, sizeof(RF_DiskQueueData_t), 0, 0, 0,
-		  "rf_dqd_pl", NULL);
-	pool_sethiwat(&rf_dqd_pool, RF_MAX_FREE_DQD);
-	pool_prime(&rf_dqd_pool, RF_MIN_FREE_DQD);
-	pool_setlowat(&rf_dqd_pool, RF_MIN_FREE_DQD);
-
+	rf_pool_init(&rf_pools.dqd, sizeof(RF_DiskQueueData_t),
+		     "rf_dqd_pl", RF_MIN_FREE_DQD, RF_MAX_FREE_DQD);
 	rf_ShutdownCreate(listp, rf_ShutdownDiskQueueSystem, NULL);
 
 	return (0);
@@ -455,13 +450,13 @@ rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
 {
 	RF_DiskQueueData_t *p;
 
-	p = pool_get(&rf_dqd_pool, PR_WAITOK);
+	p = pool_get(&rf_pools.dqd, PR_WAITOK);
 	p->bp = pool_get(&bufpool, PR_NOWAIT); /* XXX: make up our minds here.
 						  WAITOK, or NOWAIT?? */
 
 	if (p->bp == NULL) {
 		/* no memory for the buffer!?!? */
-		pool_put(&rf_dqd_pool, p);
+		pool_put(&rf_pools.dqd, p);
 		return(NULL);
 	}
 
@@ -487,5 +482,5 @@ void
 rf_FreeDiskQueueData(RF_DiskQueueData_t *p)
 {
 	pool_put(&bufpool, p->bp);
-	pool_put(&rf_dqd_pool, p);
+	pool_put(&rf_pools.dqd, p);
 }

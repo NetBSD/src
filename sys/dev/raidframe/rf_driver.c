@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.88 2004/03/05 02:53:56 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.89 2004/03/07 21:57:45 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.88 2004/03/05 02:53:56 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.89 2004/03/07 21:57:45 oster Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -123,7 +123,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.88 2004/03/05 02:53:56 oster Exp $")
 
 /* rad == RF_RaidAccessDesc_t */
 RF_DECLARE_MUTEX(rf_rad_pool_lock)
-static struct pool rf_rad_pool;
 #define RF_MAX_FREE_RAD 128
 #define RF_MIN_FREE_RAD  32
 
@@ -425,19 +424,15 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 static void 
 rf_ShutdownRDFreeList(void *ignored)
 {
-	pool_destroy(&rf_rad_pool);
+	pool_destroy(&rf_pools.rad);
 }
 
 static int 
 rf_ConfigureRDFreeList(RF_ShutdownList_t **listp)
 {
 
-	pool_init(&rf_rad_pool, sizeof(RF_RaidAccessDesc_t), 0, 0, 0,
-		  "rf_rad_pl", NULL);
-	pool_sethiwat(&rf_rad_pool, RF_MAX_FREE_RAD);
-	pool_prime(&rf_rad_pool, RF_MIN_FREE_RAD);
-	pool_setlowat(&rf_rad_pool, RF_MIN_FREE_RAD);
-
+	rf_pool_init(&rf_pools.rad, sizeof(RF_RaidAccessDesc_t),
+		     "rf_rad_pl", RF_MIN_FREE_RAD, RF_MAX_FREE_RAD);
 	rf_ShutdownCreate(listp, rf_ShutdownRDFreeList, NULL);
 	simple_lock_init(&rf_rad_pool_lock);
 	return (0);
@@ -451,7 +446,7 @@ rf_AllocRaidAccDesc(RF_Raid_t *raidPtr, RF_IoType_t type,
 {
 	RF_RaidAccessDesc_t *desc;
 
-	desc = pool_get(&rf_rad_pool, PR_WAITOK);
+	desc = pool_get(&rf_pools.rad, PR_WAITOK);
 	simple_lock_init(&desc->mutex);
 
 	RF_LOCK_MUTEX(rf_rad_pool_lock);
@@ -462,7 +457,7 @@ rf_AllocRaidAccDesc(RF_Raid_t *raidPtr, RF_IoType_t type,
 	         */
 
 		RF_UNLOCK_MUTEX(rf_rad_pool_lock);
-		pool_put(&rf_rad_pool, desc);
+		pool_put(&rf_pools.rad, desc);
 		return (NULL);
 	}
 	raidPtr->nAccOutstanding++;
@@ -510,7 +505,7 @@ rf_FreeRaidAccDesc(RF_RaidAccessDesc_t *desc)
 	}
 
 	rf_FreeAllocList(desc->cleanupList);
-	pool_put(&rf_rad_pool, desc);
+	pool_put(&rf_pools.rad, desc);
 	RF_LOCK_MUTEX(rf_rad_pool_lock);
 	raidPtr->nAccOutstanding--;
 	if (raidPtr->waitShutdown) {
