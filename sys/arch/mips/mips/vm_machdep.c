@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.67 2000/06/29 08:11:27 mrg Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.68 2000/07/24 20:16:29 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.67 2000/06/29 08:11:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.68 2000/07/24 20:16:29 jeffs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -299,7 +299,7 @@ vmapbuf(bp, len)
 	faddr = trunc_page((vaddr_t)bp->b_saveaddr = bp->b_data);
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
-	taddr = uvm_km_valloc_wait(phys_map, len);
+	taddr = uvm_km_valloc_prefer_wait(phys_map, len, (vaddr_t)bp->b_data);
 	bp->b_data = (caddr_t)(taddr + off);
 	len = atop(len);
 	while (len--) {
