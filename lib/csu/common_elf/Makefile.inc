@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 1999/04/03 16:39:31 simonb Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2000/01/22 19:37:58 mycroft Exp $
 
 .if !defined(ELFSIZE)
 ELFSIZE=32
@@ -15,7 +15,7 @@ OBJS=		crt0.o gcrt0.o crtbegin.o crtend.o
 
 CLEANFILES+=	core a.out
 
-all: ${OBJS}
+realall: ${OBJS}
 
 crt0.o: crt0.c
 	@echo "${COMPILE.c} -DCRT0 ${.ALLSRC} -o ${.TARGET}"
