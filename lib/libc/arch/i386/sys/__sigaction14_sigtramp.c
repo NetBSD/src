@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigaction14_sigtramp.c,v 1.5 2003/09/11 20:24:39 christos Exp $	*/
+/*	$NetBSD: __sigaction14_sigtramp.c,v 1.6 2003/09/12 20:42:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,8 +36,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define	__LIBC12_SOURCE__
-
 #include <sys/types.h>
 #include <sys/param.h>
 #include <signal.h>
@@ -53,31 +51,36 @@ static int have_sigreturn = -1;
 
 static void get_have_sigreturn(void);
 
+extern int __sigtramp_siginfo_2[];
+extern int __sigtramp_sigcontext_1[];
+
 static void
 get_have_sigreturn(void)
 {
-#if defined(SYS___sigreturn14)
-        have_sigreturn = syscall(SYS___sigreturn14, NULL) == EFAULT;
-#elif defined(SYS_compat_16___sigreturn14)
-	have_sigreturn = syscall(SYS_compat_16___sigreturn14, NULL) == EFAULT;
-#else
-	have_sigreturn = 0;
-#endif
+	struct sigaction nsa, osa;
+
+	sigemptyset(&nsa.sa_mask);
+	nsa.sa_flags = 0;
+	nsa.sa_handler = SIG_IGN;
+
+	__sigaction_sigtramp(SIGSYS, &nsa, &osa, __sigtramp_siginfo_2, 2);
+
+	(void)syscall(SYS_compat_16___sigreturn14, NULL);
+	have_sigreturn = errno == EFAULT;
+
+	__sigaction_sigtramp(SIGSYS, &osa, NULL, __sigtramp_siginfo_2, 2);
 }
 
 
 int
 __libc_sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
 {
-	extern int __sigtramp_siginfo_2[];
-	extern int __sigtramp_sigcontext_1[];
-
 	if (have_sigreturn == -1)
 		get_have_sigreturn();
 
 	if (have_sigreturn && act && (act->sa_flags & SA_SIGINFO) == 0)
-		return (__sigaction_sigtramp(sig, act, oact,
-		    __sigtramp_sigcontext_1, 1));
+		return __sigaction_sigtramp(sig, act, oact,
+		    __sigtramp_sigcontext_1, 1);
 
-	return (__sigaction_sigtramp(sig, act, oact, __sigtramp_siginfo_2, 2));
+	return __sigaction_sigtramp(sig, act, oact, __sigtramp_siginfo_2, 2);
 }
