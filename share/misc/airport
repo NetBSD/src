@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.22 2004/01/20 22:30:11 zuntum Exp $
+#	$NetBSD: airport,v 1.23 2004/04/02 14:41:59 pooka Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from http://www.mapping.com/airportcodes.html.
@@ -22,6 +22,7 @@ ATH:Athens, Greece
 ATL:Atlanta William B. Hartsfield International, Georgia, USA
 AUS:Austin Robert Mueller Municipal, Texas, USA
 AVL:Asheville Regional, North Carolina, USA
+AVP:Wilkes-Barre/Scranton International Airport, Pennsylvania, USA
 AVV:Avalon Airport, Victoria, Australia
 AXA:Anguilla
 BAR:Baker Island, Baker & Howland Islands
