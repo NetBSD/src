@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.9 2002/12/07 21:23:04 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.10 2002/12/09 21:29:24 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.9 2002/12/07 21:23:04 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.10 2002/12/09 21:29:24 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -123,14 +123,7 @@ mach_port_deallocate(p, msgh, maxlen, dst)
 	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
 	rep.rep_trailer.msgh_trailer_size = 8;
 
-	if (sizeof(rep) > maxlen)
-		return EMSGSIZE;
-	if (dst != NULL)
-		msgh = dst;
-
-	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
-		return error;
-	return 0;
+	return MACH_MSG_RETURN(p, &rep, msgh, sizeof(rep), maxlen, dst);
 }
 
 int 
@@ -158,14 +151,7 @@ mach_port_allocate(p, msgh, maxlen, dst)
 	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
 	rep.rep_trailer.msgh_trailer_size = 8;
 
-	if (sizeof(rep) > maxlen)
-		return EMSGSIZE;
-	if (dst != NULL)
-		msgh = dst;
-
-	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
-		return error;
-	return 0;
+	return MACH_MSG_RETURN(p, &rep, msgh, sizeof(rep), maxlen, dst);
 }
 
 int 
@@ -193,14 +179,7 @@ mach_port_insert_right(p, msgh, maxlen, dst)
 	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
 	rep.rep_trailer.msgh_trailer_size = 8;
 
-	if (sizeof(rep) > maxlen)
-		return EMSGSIZE;
-	if (dst != NULL)
-		msgh = dst;
-
-	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
-		return error;
-	return 0;
+	return MACH_MSG_RETURN(p, &rep, msgh, sizeof(rep), maxlen, dst);
 }
 
 int 
@@ -230,13 +209,6 @@ mach_port_type(p, msgh, maxlen, dst)
 	rep.rep_ptype = 0;
 	rep.rep_trailer.msgh_trailer_size = 8;
 
-	if (sizeof(rep) > maxlen)
-		return EMSGSIZE;
-	if (dst != NULL)
-		msgh = dst;
-
-	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
-		return error;
-	return 0;
+	return MACH_MSG_RETURN(p, &rep, msgh, sizeof(rep), maxlen, dst);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.c,v 1.13 2002/11/28 21:21:32 manu Exp $ */
+/*	$NetBSD: mach_host.c,v 1.14 2002/12/09 21:29:24 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.13 2002/11/28 21:21:32 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.14 2002/12/09 21:29:24 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -137,15 +137,7 @@ mach_host_info(p, msgh, maxlen, dst)
 		break;
 	}
 
-	if (msglen > maxlen)
-		return EMSGSIZE;
-	if (dst != NULL)
-		msgh = dst;
-
-	if ((error = copyout(&rep, msgh, msglen)) != 0)
-		return error;
-
-	return 0;
+	return MACH_MSG_RETURN(p, &rep, msgh, msglen, maxlen, dst);
 }
 
 
@@ -175,14 +167,7 @@ mach_host_page_size(p, msgh, maxlen, dst)
 	rep.rep_page_size = PAGE_SIZE;
 	rep.rep_trailer.msgh_trailer_size = 8;
 	
-	if (sizeof(rep) > maxlen)
-		return EMSGSIZE;
-	if (dst != NULL)
-		msgh = dst;
-
-	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
-		return error;
-	return 0;
+	return MACH_MSG_RETURN(p, &rep, msgh, sizeof(rep), maxlen, dst);
 }
 
 int
@@ -214,14 +199,7 @@ mach_host_get_clock_service(p, msgh, maxlen, dst)
 	rep.rep_clock_serv.disposition = 0x11; /* XXX */
 	rep.rep_trailer.msgh_trailer_size = 8;
 
-	if (sizeof(rep) > maxlen)
-		return EMSGSIZE;
-	if (dst != NULL)
-		msgh = dst;
-
-	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
-		return error;
-	return 0;
+	return MACH_MSG_RETURN(p, &rep, msgh, sizeof(rep), maxlen, dst);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.16 2002/12/07 19:06:33 manu Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.17 2002/12/09 21:29:26 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.16 2002/12/07 19:06:33 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.17 2002/12/09 21:29:26 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -89,7 +89,7 @@ mach_vm_map(p, msgh, maxlen, dst)
 #if 1
 	/* XXX Darwin fails on mapping a page at address 0 */
 	if (req.req_address == 0)
-		return MACH_MSG_ERROR(msgh, &req, &rep, ENOMEM, maxlen, dst);
+		return MACH_MSG_ERROR(p, msgh, &req, &rep, ENOMEM, maxlen, dst);
 #endif
 
 	bzero(&rep, sizeof(rep));
@@ -121,7 +121,7 @@ mach_vm_map(p, msgh, maxlen, dst)
 	vm_map_unlock(&p->p_vmspace->vm_map);
 
 	if (ret == NULL)
-		return MACH_MSG_ERROR(msgh, &req, &rep, ENOMEM, maxlen, dst);
+		return MACH_MSG_ERROR(p, msgh, &req, &rep, ENOMEM, maxlen, dst);
 
 	switch(req.req_inherance) {
 	case MACH_VM_INHERIT_SHARE:
@@ -144,7 +144,7 @@ mach_vm_map(p, msgh, maxlen, dst)
 	SCARG(&cup, pos) = req.req_offset;
 	
 	if ((error = sys_mmap(p, &cup, &rep.rep_retval)) != 0)
-		return MACH_MSG_ERROR(msgh, &req, &rep, error, maxlen, dst);
+		return MACH_MSG_ERROR(p, msgh, &req, &rep, error, maxlen, dst);
 
 	rep.rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -153,14 +153,7 @@ mach_vm_map(p, msgh, maxlen, dst)
 	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
 	rep.rep_trailer.msgh_trailer_size = 8;
 
-	if (sizeof(rep) > maxlen)
-		return EMSGSIZE;
-	if (dst != NULL)
-		msgh = dst;
-
-	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
-		return error;
-	return 0;
+	return MACH_MSG_RETURN(p, &rep, msgh, sizeof(rep), maxlen, dst);
 }
 
 int
@@ -210,7 +203,7 @@ mach_vm_allocate(p, msgh, maxlen, dst)
 	SCARG(&cup, pos) = 0;
 
 	if ((error = sys_mmap(p, &cup, &rep.rep_address)) != 0) 
-		return MACH_MSG_ERROR(msgh, &req, &rep, error, maxlen, dst);
+		return MACH_MSG_ERROR(p, msgh, &req, &rep, error, maxlen, dst);
 	DPRINTF(("vm_allocate: success at %p\n", (void *)rep.rep_address));
 
 out:
@@ -221,14 +214,7 @@ out:
 	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
 	rep.rep_trailer.msgh_trailer_size = 8;
 
-	if (sizeof(rep) > maxlen)
-		return EMSGSIZE;
-	if (dst != NULL)
-		msgh = dst;
-
-	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
-		return error;
-	return 0;
+	return MACH_MSG_RETURN(p, &rep, msgh, sizeof(rep), maxlen, dst);
 }
 
 int
@@ -255,7 +241,7 @@ mach_vm_deallocate(p, msgh, maxlen, dst)
 	SCARG(&cup, len) = req.req_size;
 
 	if ((error = sys_munmap(p, &cup, &rep.rep_retval)) != 0)
-		return MACH_MSG_ERROR(msgh, &req, &rep, error, maxlen, dst);
+		return MACH_MSG_ERROR(p, msgh, &req, &rep, error, maxlen, dst);
 
 	rep.rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -264,14 +250,7 @@ mach_vm_deallocate(p, msgh, maxlen, dst)
 	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
 	rep.rep_trailer.msgh_trailer_size = 8;
 
-	if (sizeof(rep) > maxlen)
-		return EMSGSIZE;
-	if (dst != NULL)
-		msgh = dst;
-
-	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
-		return error;
-	return 0;
+	return MACH_MSG_RETURN(p, &rep, msgh, sizeof(rep), maxlen, dst);
 }
 
 int
@@ -295,7 +274,7 @@ mach_vm_wire(p, msgh, maxlen, dst)
 	bzero(&rep, sizeof(rep));
 
 	if ((req.req_access & ~VM_PROT_ALL) != 0)
-		return MACH_MSG_ERROR(msgh, &req, &rep, EINVAL, maxlen, dst);
+		return MACH_MSG_ERROR(p, msgh, &req, &rep, EINVAL, maxlen, dst);
 
 	/* 
 	 * Mach maitains a count of how many times a page is wired
@@ -315,11 +294,11 @@ mach_vm_wire(p, msgh, maxlen, dst)
 		error = sys_mlock(p, &cup, &retval);
 	}
 	if (error != 0)
-		return MACH_MSG_ERROR(msgh, &req, &rep, error, maxlen, dst);
+		return MACH_MSG_ERROR(p, msgh, &req, &rep, error, maxlen, dst);
 		
 	if ((error = uvm_map_protect(&p->p_vmspace->vm_map, req.req_address, 
 	    req.req_address + req.req_size, req.req_access, 0)) != 0)
-		return MACH_MSG_ERROR(msgh, &req, &rep, error, maxlen, dst);
+		return MACH_MSG_ERROR(p, msgh, &req, &rep, error, maxlen, dst);
 
 	rep.rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -328,14 +307,7 @@ mach_vm_wire(p, msgh, maxlen, dst)
 	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
 	rep.rep_trailer.msgh_trailer_size = 8;
 
-	if (sizeof(rep) > maxlen)
-		return EMSGSIZE;
-	if (dst != NULL)
-		msgh = dst;
-
-	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
-		return error;
-	return 0;
+	return MACH_MSG_RETURN(p, &rep, msgh, sizeof(rep), maxlen, dst);
 }
 
 /* XXX The findspace argument is not handled correctly */

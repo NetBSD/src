@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.45 2002/11/29 19:15:41 wiz Exp $	*/
+/*	$NetBSD: kdump.c,v 1.46 2002/12/09 21:29:28 manu Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.45 2002/11/29 19:15:41 wiz Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.46 2002/12/09 21:29:28 manu Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: kdump.c,v 1.45 2002/11/29 19:15:41 wiz Exp $");
 #include <sys/ioctl.h>
 #include <sys/ptrace.h>
 
+#include <ctype.h>
 #include <err.h>
 #include <signal.h>
 #include <stdio.h>
@@ -107,6 +108,7 @@ void	ktrgenio __P((struct ktr_genio *, int));
 void	ktrpsig __P((struct ktr_psig *));
 void	ktrcsw __P((struct ktr_csw *));
 void	ktruser __P((struct ktr_user *, int));
+void	ktrmmsg __P((struct ktr_mmsg *, int));
 void	usage __P((void));
 void	eprint __P((int));
 char	*ioctlname __P((long));
@@ -233,6 +235,9 @@ main(argc, argv)
 		case KTR_USER:
 			ktruser((struct ktr_user *)m, ktrlen);
 			break;
+		case KTR_MMSG:
+			ktrmmsg((struct ktr_mmsg *)m, ktrlen);
+			break;
 		}
 		if (tail)
 			(void)fflush(stdout);
@@ -286,6 +291,9 @@ dumpheader(kth)
 		break;
 	case KTR_USER:
 		type = "USER";
+		break;
+	case KTR_MMSG:
+		type = "MMSG";
 		break;
 	default:
 		(void)sprintf(unknown, "UNKNOWN(%d)", kth->ktr_type);
@@ -637,6 +645,49 @@ ktruser(usr, len)
 	printf("\"\n");
 }
 
+void
+ktrmmsg(mmsg, len)
+	struct ktr_mmsg *mmsg;
+	int len;
+{
+	int i,j;
+	unsigned char *data;
+	int row_len = 16;
+	int aligned_len;
+
+	printf("id %d [0x%x -> 0x%x] %d bytes, flags 0x%x", 
+	    mmsg->ktr_id, mmsg->ktr_local_port, 
+	    mmsg->ktr_remote_port, mmsg->ktr_size, mmsg->ktr_bits);
+
+	data = (unsigned char *)mmsg;
+	aligned_len = (len & ~(row_len - 1)) + row_len;
+	for (i = 0; i < aligned_len; i += row_len) {
+		printf("\n\t0x%04x  ", i);
+
+		for (j = 0; j < row_len; j += sizeof(int)) 
+			if ((i + j) < len)
+				printf("0x%08x ", *((int *)&data[i + j]));
+			else
+				printf("           ");
+
+		printf("  ");
+
+		for (j = 0; j < row_len; j++) {
+			if ((i + j) < len) {
+				if (isprint(data[i + j]))
+					printf("%c", data[i + j]);
+				else
+					printf(".");
+			} else {
+				printf(" ");
+			}
+		}
+	}
+
+	if (aligned_len != sizeof(struct ktr_mmsg))
+		printf("\n");
+}
+
 static const char *
 signame(long sig, int xlat)
 {
@@ -655,8 +706,8 @@ void
 usage()
 {
 
-	(void)fprintf(stderr,
-"usage: kdump [-dlNnRT] [-e emulation] [-f file] [-m maxdata] [-p pid]\n"
-"             [-t trstr] [file]\n");
+	(void)fprintf(stderr, "usage: kdump [-dlNnRT] [-e emulation] "
+	   "[-f file] [-m maxdata] [-p pid]\n             [-t trstr] "
+	   "[file]\n");
 	exit(1);
 }

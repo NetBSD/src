@@ -1,4 +1,4 @@
-.\"	$NetBSD: ktrace.1,v 1.15 2001/10/26 23:38:07 jdolecek Exp $
+.\"	$NetBSD: ktrace.1,v 1.16 2002/12/09 21:29:26 manu Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -138,10 +138,13 @@ trace
 trace signal processing
 .It Cm u
 trace user data
+.It Cm m
+trace Mach messages when running Mach binaries with COMPAT_MACH 
+(currently limited to i386 and powerpc ports).
 .It Cm w
 trace context switches
 .It Cm +
-trace the default set of trace points (c, e, n, i, s, u)
+trace the default set of trace points (c, e, n, i, s, u, m)
 .El
 .It Fl e Ar emulation
 If an emulation of a process is unknown,
