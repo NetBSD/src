@@ -1,40 +1,31 @@
-#	$NetBSD: bsd.subdir.mk,v 1.23 1997/05/27 17:45:59 cjs Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.23.2.1 1997/10/12 22:00:54 cjs Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
+.if !target(__initialized__)
+__initialized__:
+.if exists(${.CURDIR}/../Makefile.inc)
+.include "${.CURDIR}/../Makefile.inc"
+.endif
 .include <bsd.own.mk>
-
-.if !target(.MAIN)
-.MAIN: all
+.MAIN:		all
 .endif
 
-_SUBDIRUSE: .USE ${SUBDIR:S/^/${.TARGET}-/}
-
-__SUBDIRINTERNALUSE: .USE
-	@(_maketarget_="${.TARGET}"; \
-	entry="$${_maketarget_#*-}";\
-	target="$${_maketarget_%%-*}";\
-	set -e; if test -d ${.CURDIR}/$${entry}.${MACHINE}; then \
-		_newdir_="$${entry}.${MACHINE}"; \
-	else \
-		_newdir_="$${entry}"; \
-	fi; \
-	if test X"${_THISDIR_}" = X""; then \
-		_nextdir_="$${_newdir_}"; \
-	else \
-		_nextdir_="$${_THISDIR_}/$${_newdir_}"; \
-	fi; \
-	if test -d ${.CURDIR}/$${_newdir_}; then \
-		echo "===> $${_nextdir_}"; \
-		cd ${.CURDIR}/$${_newdir_}; \
-		${MAKE} _THISDIR_="$${_nextdir_}" $${target}; \
-	else \
-		echo "===> $${_nextdir_} [skipped: missing]"; \
-	fi)
-
 .for dir in ${SUBDIR}
+.if exists(${dir}.${MACHINE})
+__REALSUBDIR+=${dir}.${MACHINE}
+.else
+__REALSUBDIR+=${dir}
+.endif
+.endfor
+
+.for dir in ${__REALSUBDIR}
 .for targ in ${TARGETS}
 .PHONY: ${targ}-${dir}
-${targ}-${dir}: .MAKE __SUBDIRINTERNALUSE
+${targ}-${dir}: .MAKE
+	@echo "===> ${_THISDIR_}${dir}"
+	@cd ${.CURDIR}/${dir}; \
+	${MAKE} "_THISDIR_=${_THISDIR_}${dir}/" ${targ}
+${targ}: ${targ}-${dir}
 .endfor
 
 # Backward-compatibility with the old rules.  If this went away,
@@ -42,12 +33,5 @@ ${targ}-${dir}: .MAKE __SUBDIRINTERNALUSE
 ${dir}: all-${dir}
 .endfor
 
-.for targ in ${TARGETS}
-${targ}: _SUBDIRUSE
-.endfor
-
-.if defined(SUBDIR) && !empty(SUBDIR)
-realinstall: ${SUBDIR:S/^/install-/g}
-.endif
-
-.include <bsd.own.mk>
+# Make sure all of the standard targets are defined, even if they do nothing.
+${TARGETS}:
