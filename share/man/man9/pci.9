@@ -1,4 +1,4 @@
-.\"     $NetBSD: pci.9,v 1.6 2002/02/13 08:18:47 ross Exp $
+.\"     $NetBSD: pci.9,v 1.7 2002/08/04 01:03:12 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,6 +52,8 @@
 .Nm pci_intr_evcnt ,
 .Nm pci_intr_establish ,
 .Nm pci_intr_disestablish ,
+.Nm pci_get_powerstate ,
+.Nm pci_set_powerstate ,
 .Nm pci_make_tag ,
 .Nm pci_decompose_tag ,
 .Nm pci_findvendor ,
@@ -99,6 +101,11 @@
 "int level" "int (*handler)(void *)" "void *arg"
 .Ft void
 .Fn pci_intr_disestablish "pci_chipset_tag_t pc" "void *ih"
+.Ft int
+.Fn pci_set_powerstate "pci_chipset_tag_t pc" "pcitag_t tag" \
+"int newstate"
+.Ft int
+.Fn pci_get_powerstate "pci_chipset_tag_t pc" "pcitag_t tag"
 .Ft pcitag_t
 .Fn pci_make_tag "pci_chipset_tag_t pc" "int bus" "int device" \
 "int function"
@@ -345,6 +352,19 @@ See
 .It Fn pci_intr_disestablish "pc" "ih"
 See
 .Xr pci_intr 9 .
+.It Fn pci_set_powerstate "pc" "tag" "newstate"
+Set power state of the device to newstate.  Valid values for
+.Fa newstate
+are:
+.Pp
+.Bl -tag -width PCI_PWR_D0 -compact
+.It PCI_PWR_D0
+.It PCI_PWR_D1
+.It PCI_PWR_D2
+.It PCI_PWR_D3
+.El
+.It Fn pci_get_powerstate "pc" "tag"
+Get current power state of the device.
 .It Fn pci_make_tag "pc" "bus" "device" "function"
 Create a new PCI tag for the PCI device specified by the tuple
 .Ao
