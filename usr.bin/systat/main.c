@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 1998/07/19 17:47:07 drochner Exp $	*/
+/*	$NetBSD: main.c,v 1.15.2.1 1999/09/26 13:36:43 he Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.15 1998/07/19 17:47:07 drochner Exp $");
+__RCSID("$NetBSD: main.c,v 1.15.2.1 1999/09/26 13:36:43 he Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -194,8 +194,8 @@ main(argc, argv)
 	}
 	gethostname(hostname, sizeof (hostname));
 	hostname[sizeof(hostname) - 1] = '\0';
-	NREAD(X_HZ, &hz, LONG);
-	NREAD(X_STATHZ, &stathz, LONG);
+	NREAD(X_HZ, &hz, sizeof hz);
+	NREAD(X_STATHZ, &stathz, sizeof stathz);
 	(*curcmd->c_init)();
 	curcmd->c_flags |= CF_INIT;
 	labels();
