@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.23 2000/12/05 11:11:49 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.24 2000/12/09 02:02:20 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -859,6 +859,7 @@ rtk_detach(sc)
 	bus_dmamap_destroy(sc->sc_dmat, sc->recv_dmamap);
 	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->rtk_cdata.rtk_rx_buf,
 	    RTK_RXBUFLEN + 16);
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_dmaseg, sc->sc_dmanseg);
 
 	shutdownhook_disestablish(sc->sc_sdhook);
 	powerhook_disestablish(sc->sc_powerhook);
