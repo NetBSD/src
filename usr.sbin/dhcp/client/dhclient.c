@@ -56,7 +56,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.16 1999/03/26 17:52:45 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.17 1999/03/29 23:08:21 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -89,17 +89,17 @@ int log_priority;
 int no_daemon;
 int save_scripts;
 
-static void usage PROTO ((void));
-
 void catch_sighup PROTO ((int));
 void catch_sigterm PROTO ((int));
 
 static char copyright[] =
 "Copyright 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.";
 static char arr [] = "All rights reserved.";
-static char message [] = "Internet Software Consortium DHCP Client V2.0b1pl19";
-static char contrib [] = "\nPlease contribute if you find this software useful.";
-static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.html\n";
+static char message [] = "Internet Software Consortium DHCP Client V2.0b1pl20";
+static char contrib [] = "Please contribute if you find this software useful.";
+static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.html";
+
+static void usage PROTO ((char *));
 
 int main (argc, argv, envp)
 	int argc;
@@ -111,12 +111,20 @@ int main (argc, argv, envp)
 	struct sigaction sa;
 	int seed;
 	int quiet = 0;
+	char *s;
 
+	s = strchr (argv [0], '/');
+	if (!s)
+		s = argv [0];
+	else
+		s++;
+
+	/* Initially, log errors to stderr as well as to syslogd. */
 #ifdef SYSLOG_4_2
-	openlog ("dhclient", LOG_NDELAY);
-	log_priority = LOG_DAEMON;
+	openlog (s, LOG_NDELAY);
+	log_priority = DHCPD_LOG_FACILITY;
 #else
-	openlog ("dhclient", LOG_NDELAY, LOG_DAEMON);
+	openlog (s, LOG_NDELAY, DHCPD_LOG_FACILITY);
 #endif
 
 #if !(defined (DEBUG) || defined (SYSLOG_4_2) || defined (__CYGWIN32__))
@@ -126,7 +134,7 @@ int main (argc, argv, envp)
 	for (i = 1; i < argc; i++) {
 		if (!strcmp (argv [i], "-p")) {
 			if (++i == argc)
-				usage ();
+				usage (s);
 			local_port = htons (atoi (argv [i]));
 			debug ("binding to user-specified port %d",
 			       ntohs (local_port));
@@ -134,15 +142,19 @@ int main (argc, argv, envp)
 			no_daemon = 1;
 		} else if (!strcmp (argv [i], "-D")) {
 			save_scripts = 1;
+		} else if (!strcmp (argv [i], "-pf")) {
+			if (++i == argc)
+				usage (s);
+			path_dhclient_pid = argv [i];
 		} else if (!strcmp (argv [i], "-lf")) {
 			if (++i == argc)
-				usage ();
+				usage (s);
 			path_dhclient_db = argv [i];
 		} else if (!strcmp (argv [i], "-q")) {
 			quiet = 1;
 			quiet_interface_discovery = 1;
  		} else if (argv [i][0] == '-') {
- 		    usage ();
+ 		    usage (s);
  		} else {
  		    struct interface_info *tmp =
  			((struct interface_info *)
@@ -163,8 +175,10 @@ int main (argc, argv, envp)
 		note (message);
 		note (copyright);
 		note (arr);
+		note ("")
 		note (contrib);
 		note (url);
+		note ("")
 	}
 
 	/* Default to the DHCP/BOOTP port. */
@@ -287,9 +301,19 @@ int main (argc, argv, envp)
 	return 0;
 }
 
-static void usage ()
+static void usage (appname)
+	char *appname;
 {
-	error ("Usage: dhclient [-c] [-p <port>] [-lf lease-file] [interface]");
+	note (message);
+	note (copyright);
+	note (arr);
+	note ("");
+	note (contrib);
+	note (url);
+	note ("");
+
+	warn ("Usage: %s [-c] [-p <port>] [-lf lease-file]", appname);
+	error ("       [-pf pidfile] [interface]");
 }
 
 void cleanup ()
@@ -484,7 +508,6 @@ void dhcpack (packet)
 {
 	struct interface_info *ip = packet -> interface;
 	struct client_lease *lease;
-	int i;
 	
 	/* If we're not receptive to an offer right now, or if the offer
 	   has an unrecognizable transaction id, then just drop it. */
@@ -728,7 +751,6 @@ void dhcpoffer (packet)
 	int arp_timeout_needed, stop_selecting;
 	char *name = (packet -> options [DHO_DHCP_MESSAGE_TYPE].len
 		      ? "DHCPOFFER" : "BOOTREPLY");
-	struct iaddrlist *ap;
 	
 #ifdef DEBUG_PACKET
 	dump_packet (packet);
@@ -1386,7 +1408,6 @@ void make_discover (ip, lease)
 	struct interface_info *ip;
 	struct client_lease *lease;
 {
-	struct dhcp_packet *raw;
 	unsigned char discover = DHCPDISCOVER;
 	int i;
 
@@ -1696,7 +1717,6 @@ void make_release (ip, lease)
 
 	struct tree_cache *options [256];
 	struct tree_cache message_type_tree;
-	struct tree_cache requested_address_tree;
 	struct tree_cache server_id_tree;
 
 	memset (options, 0, sizeof options);
