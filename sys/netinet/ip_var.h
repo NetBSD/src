@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.20 1997/06/24 02:26:05 thorpej Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.21 1997/10/14 08:38:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -146,6 +146,7 @@ struct	ipstat {
 /* flags passed to ip_output as last parameter */
 #define	IP_FORWARDING		0x1		/* most of ip header exists */
 #define	IP_RAWOUTPUT		0x2		/* raw ip header exists */
+#define	IP_RETURNMTU		0x4		/* pass back mtu on EMSGSIZE */
 #define	IP_ROUTETOIF		SO_DONTROUTE	/* bypass routing tables */
 #define	IP_ALLOWBROADCAST	SO_BROADCAST	/* can send broadcast packets */
 
