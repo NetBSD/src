@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)function.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$Id: function.c,v 1.15 1994/10/18 17:02:44 mycroft Exp $";
+static char rcsid[] = "$Id: function.c,v 1.16 1995/06/18 11:00:17 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -345,7 +345,7 @@ f_fstype(plan, entry)
 	static int first = 1;
 	struct statfs sb;
 	static short val;
-	static char fstype[MFSNAMELEN+1];
+	static char fstype[MFSNAMELEN];
 	char *p, save[2];
 
 	/* Only check when we cross mount point. */
@@ -386,7 +386,6 @@ f_fstype(plan, entry)
 		 */
 		val = sb.f_flags;
 		strncpy(fstype, sb.f_fstypename, MFSNAMELEN);
-		fstype[MFSNAMELEN] = '\0';
 	}
 	switch (plan->flags) {
 	case F_MTFLAG:

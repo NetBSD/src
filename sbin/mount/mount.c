@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.17 1995/05/28 05:25:34 jtc Exp $	*/
+/*	$NetBSD: mount.c,v 1.18 1995/06/18 10:58:59 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$NetBSD: mount.c,v 1.17 1995/05/28 05:25:34 jtc Exp $";
+static char rcsid[] = "$NetBSD: mount.c,v 1.18 1995/06/18 10:58:59 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -396,8 +396,8 @@ prmount(sf)
 	struct opt *o;
 	int f;
 
-	(void)printf("%s on %s type %s", sf->f_mntfromname, sf->f_mntonname,
-	    sf->f_fstypename);
+	(void)printf("%s on %s type %*s", sf->f_mntfromname, sf->f_mntonname,
+	    MFSNAMELEN, sf->f_fstypename);
 
 	flags = sf->f_flags & MNT_VISFLAGMASK;
 	for (f = 0, o = optnames; flags && o->o_opt; o++)
@@ -435,7 +435,7 @@ selected(type)
 	if (typelist == NULL)
 		return (1);
 	for (av = typelist; *av != NULL; ++av)
-		if (!strcmp(type, *av))
+		if (!strncmp(type, *av, MFSNAMELEN))
 			return (which == IN_LIST ? 1 : 0);
 	return (which == IN_LIST ? 0 : 1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.19 1995/03/21 09:04:17 cgd Exp $	*/
+/*	$NetBSD: df.c,v 1.20 1995/06/18 10:58:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: df.c,v 1.19 1995/03/21 09:04:17 cgd Exp $";
+static char rcsid[] = "$NetBSD: df.c,v 1.20 1995/06/18 10:58:06 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -210,7 +210,7 @@ selected(type)
 	if (typelist == NULL)
 		return (1);
 	for (av = typelist; *av != NULL; ++av)
-		if (!strcmp(type, *av))
+		if (!strncmp(type, *av, MFSNAMELEN))
 			return (which == IN_LIST ? 1 : 0);
 	return (which == IN_LIST ? 0 : 1);
 }
@@ -394,7 +394,6 @@ ufs_df(file, sfsp)
 	memmove(&sfsp->f_mntonname[0], mntpt, MNAMELEN);
 	memmove(&sfsp->f_mntfromname[0], file, MNAMELEN);
 	strncpy(sfsp->f_fstypename, MOUNT_UFS, MFSNAMELEN);
-	sfsp->f_fstypename[MFSNAMELEN] = '\0';
 	(void)close(rfd);
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.13 1995/03/18 15:01:37 cgd Exp $	*/
+/*	$NetBSD: umount.c,v 1.14 1995/06/18 10:59:46 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)umount.c	8.3 (Berkeley) 2/20/94";
 #else
-static char rcsid[] = "$NetBSD: umount.c,v 1.13 1995/03/18 15:01:37 cgd Exp $";
+static char rcsid[] = "$NetBSD: umount.c,v 1.14 1995/06/18 10:59:46 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -223,7 +223,7 @@ umountfs(name)
 	if (!selected(type))
 		return (1);
 
-	if (!strcmp(type, MOUNT_NFS)) {
+	if (!strncmp(type, MOUNT_NFS, MFSNAMELEN)) {
 		if ((delimp = strchr(name, '@')) != NULL) {
 			hostp = delimp + 1;
 			*delimp = '\0';
@@ -251,7 +251,7 @@ umountfs(name)
 		return (1);
 	}
 
-	if (!strcmp(type, MOUNT_NFS) &&
+	if (!strncmp(type, MOUNT_NFS, MFSNAMELEN) &&
 	    (hp != NULL) && !(fflag & MNT_FORCE)) {
 		*delimp = '\0';
 		memset(&saddr, 0, sizeof(saddr));
@@ -323,7 +323,7 @@ selected(type)
 	if (typelist == NULL)
 		return (1);
 	for (av = typelist; *av != NULL; ++av)
-		if (!strcmp(type, *av))
+		if (!strncmp(type, *av, MFSNAMELEN))
 			return (which == IN_LIST ? 1 : 0);
 	return (which == IN_LIST ? 0 : 1);
 }
