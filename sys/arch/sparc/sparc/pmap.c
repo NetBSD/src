@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.154 1999/11/17 06:16:49 chs Exp $ */
+/*	$NetBSD: pmap.c,v 1.155 2000/01/28 13:06:02 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -2534,7 +2534,8 @@ pv_unlink4m(pv, pm, va)
 		if (npv != NULL) {
 			/*
 			 * Shift next entry into the head.
-			 * Make sure to retain the REF, MOD and ANC flags.
+			 * Make sure to retain the REF, MOD and ANC flags
+			 * on the list head.
 			 */
 			pv->pv_next = npv->pv_next;
 			pv->pv_pmap = npv->pv_pmap;
@@ -2544,8 +2545,8 @@ pv_unlink4m(pv, pm, va)
 			pool_put(&pv_pool, npv);
 		} else {
 			/*
-			 * No mappings left; we still need to maintain
-			 * the REF and MOD flags. since pmap_is_modified()
+			 * No mappings left; we need to maintain
+			 * the REF and MOD flags, since pmap_is_modified()
 			 * can still be called for this page.
 			 */
 			pv->pv_pmap = NULL;
@@ -2574,7 +2575,7 @@ pv_unlink4m(pv, pm, va)
 			if (BADALIAS(va, npv->pv_va) ||
 			    (npv->pv_flags & PV_C4M) == 0)
 				return;
-		pv->pv_flags &= PV_ANC;
+		pv->pv_flags &= ~PV_ANC;
 		pv_changepte4m(pv, SRMMU_PG_C, 0);
 	}
 }
