@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.69 2002/06/30 04:54:43 tv Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.70 2002/07/02 02:18:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.69 2002/06/30 04:54:43 tv Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.70 2002/07/02 02:18:01 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,10 @@ char	*fromname;
 %}
 
 %union {
-	int	i;
+	struct {
+		off_t	o;
+		int	i;
+	} u;
 	char   *s;
 }
 
@@ -162,10 +165,10 @@ char	*fromname;
 
 %token	<s> STRING
 %token	<s> ALL
-%token	<i> NUMBER
+%token	<u> NUMBER
 
-%type	<i> check_login octal_number byte_size
-%type	<i> struct_code mode_code type_code form_code decimal_integer
+%type	<u.i> check_login octal_number byte_size
+%type	<u.i> struct_code mode_code type_code form_code decimal_integer
 %type	<s> pathstring pathname password username
 %type	<s> mechanism_name base64data prot_code
 
@@ -308,7 +311,8 @@ cmd
 		{
 			if ($2) {
 				if (CURCLASS_FLAGS_ISSET(passive))
-					long_passive("EPSV", epsvproto2af($4));
+					long_passive("EPSV",
+					    epsvproto2af($4.i));
 				else
 					reply(500, "EPSV mode not available.");
 			}
@@ -318,7 +322,8 @@ cmd
 		{
 			if ($2) {
 				if (CURCLASS_FLAGS_ISSET(passive)) {
-					reply(200, "EPSV ALL command successful.");
+					reply(200,
+					    "EPSV ALL command successful.");
 					epsvall++;
 				} else
 					reply(500, "EPSV mode not available.");
@@ -573,12 +578,12 @@ cmd
 	| SITE SP IDLE check_login SP NUMBER CRLF
 		{
 			if ($4) {
-				if ($6 < 30 || $6 > curclass.maxtimeout) {
+				if ($6.i < 30 || $6.i > curclass.maxtimeout) {
 					reply(501,
 			    "IDLE time limit must be between 30 and %d seconds",
 					    curclass.maxtimeout);
 				} else {
-					curclass.timeout = $6;
+					curclass.timeout = $6.i;
 					(void) alarm(curclass.timeout);
 					reply(200,
 					    "IDLE time limit set to %d seconds",
@@ -875,11 +880,11 @@ cmd
 	;
 
 rcmd
-	: REST check_login SP byte_size CRLF
+	: REST check_login SP NUMBER CRLF
 		{
 			if ($2) {
 				fromname = NULL;
-				restart_point = $4; /* XXX: $4 is only "int" */
+				restart_point = $4.o;
 				reply(350,
     "Restarting at " LLF ". Send STORE or RETRIEVE to initiate transfer.",
 				    (LLT)restart_point);
@@ -911,6 +916,9 @@ password
 
 byte_size
 	: NUMBER
+		{
+			$$ = $1.i;
+		}
 	;
 
 host_port
@@ -923,9 +931,9 @@ host_port
 			data_dest.su_len = sizeof(struct sockaddr_in);
 			data_dest.su_family = AF_INET;
 			p = (char *)&data_dest.su_port;
-			p[0] = $9; p[1] = $11;
+			p[0] = $9.i; p[1] = $11.i;
 			a = (char *)&data_dest.su_addr;
-			a[0] = $1; a[1] = $3; a[2] = $5; a[3] = $7;
+			a[0] = $1.i; a[1] = $3.i; a[2] = $5.i; a[3] = $7.i;
 		}
 	;
 
@@ -940,12 +948,12 @@ host_long_port4
 			data_dest.su_len = sizeof(struct sockaddr_in);
 			data_dest.su_family = AF_INET;
 			p = (char *)&data_dest.su_port;
-			p[0] = $15; p[1] = $17;
+			p[0] = $15.i; p[1] = $17.i;
 			a = (char *)&data_dest.su_addr;
-			a[0] =  $5;  a[1] =  $7;  a[2] =  $9;  a[3] = $11;
+			a[0] = $5.i; a[1] = $7.i; a[2] = $9.i; a[3] = $11.i;
 
 			/* reject invalid LPRT command */
-			if ($1 != 4 || $3 != 4 || $13 != 2)
+			if ($1.i != 4 || $3.i != 4 || $13.i != 2)
 				memset(&data_dest, 0, sizeof(data_dest));
 		}
 	;
@@ -965,12 +973,12 @@ host_long_port6
 			data_dest.su_len = sizeof(struct sockaddr_in6);
 			data_dest.su_family = AF_INET6;
 			p = (char *)&data_dest.su_port;
-			p[0] = $39; p[1] = $41;
+			p[0] = $39.i; p[1] = $41.i;
 			a = (char *)&data_dest.si_su.su_sin6.sin6_addr;
-			 a[0] =  $5;  a[1] =  $7;  a[2] =  $9;  a[3] = $11;
-			 a[4] = $13;  a[5] = $15;  a[6] = $17;  a[7] = $19;
-			 a[8] = $21;  a[9] = $23; a[10] = $25; a[11] = $27;
-			a[12] = $29; a[13] = $31; a[14] = $33; a[15] = $35;
+			a[0] = $5.i; a[1] = $7.i; a[2] = $9.i; a[3] = $11.i;
+			a[4] = $13.i; a[5] = $15.i; a[6] = $17.i; a[7] = $19.i;
+			a[8] = $21.i; a[9] = $23.i; a[10] = $25.i; a[11] = $27.i;
+			a[12] = $29.i; a[13] = $31.i; a[14] = $33.i; a[15] = $35.i;
 			if (his_addr.su_family == AF_INET6) {
 				/* XXX: more sanity checks! */
 				data_dest.su_scope_id = his_addr.su_scope_id;
@@ -979,7 +987,7 @@ host_long_port6
 			memset(&data_dest, 0, sizeof(data_dest));
 #endif /* INET6 */
 			/* reject invalid LPRT command */
-			if ($1 != 6 || $3 != 16 || $37 != 2)
+			if ($1.i != 6.i || $3.i != 16.i || $37.i != 2)
 				memset(&data_dest, 0, sizeof(data_dest));
 		}
 	;
@@ -1141,7 +1149,7 @@ octal_number
 			 * Convert a number that was read as decimal number
 			 * to what it would be if it had been read as octal.
 			 */
-			dec = $1;
+			dec = $1.i;
 			multby = 1;
 			ret = 0;
 			while (dec) {
@@ -1172,6 +1180,9 @@ prot_code
 
 decimal_integer
 	: NUMBER
+		{
+			$$ = $1.i;
+		}
 	;
 
 check_login
@@ -1279,13 +1290,13 @@ struct tab cmdtab[] = {
 };
 
 struct tab sitetab[] = {
-	{ "CHMOD",   	CHMOD,	NSTR, 1,	"<sp> mode <sp> file-name" },
-	{ "HELP",    	HELP,	OSTR, 1,	"[ <sp> <string> ]" },
-	{ "IDLE",    	IDLE,	ARGS, 1,	"[ <sp> maximum-idle-time ]" },
-	{ "RATEGET", 	RATEGET,OSTR, 1,	"[ <sp> get-throttle-rate ]" },
-	{ "RATEPUT", 	RATEPUT,OSTR, 1,	"[ <sp> put-throttle-rate ]" },
-	{ "UMASK",   	UMASK,	ARGS, 1,	"[ <sp> umask ]" },
-	{ NULL,		0,     0,     0,	NULL }
+	{ "CHMOD",	CHMOD,	NSTR,	1,	"<sp> mode <sp> file-name" },
+	{ "HELP",	HELP,	OSTR,	1,	"[ <sp> <string> ]" },
+	{ "IDLE",	IDLE,	ARGS,	1,	"[ <sp> maximum-idle-time ]" },
+	{ "RATEGET",	RATEGET,OSTR,	1,	"[ <sp> get-throttle-rate ]" },
+	{ "RATEPUT",	RATEPUT,OSTR,	1,	"[ <sp> put-throttle-rate ]" },
+	{ "UMASK",	UMASK,	ARGS,	1,	"[ <sp> umask ]" },
+	{ NULL,		0,	0,	0,	NULL }
 };
 
 static	int	check_write(const char *, int);
@@ -1599,7 +1610,7 @@ yylex(void)
 				;
 			c = cmdp[cpos];
 			cmdp[cpos] = '\0';
-			yylval.i = atoi(cp);
+			yylval.u.i = atoi(cp);
 			cmdp[cpos] = c;
 			state = STR1;
 			return (NUMBER);
@@ -1614,7 +1625,8 @@ yylex(void)
 				;
 			c = cmdp[cpos];
 			cmdp[cpos] = '\0';
-			yylval.i = atoi(cp);
+			yylval.u.i = atoi(cp);
+			yylval.u.o = strtoull(cp, (char **)NULL, 10);
 			cmdp[cpos] = c;
 			return (NUMBER);
 		}
