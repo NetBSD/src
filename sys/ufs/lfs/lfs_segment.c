@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.84 2002/12/13 14:40:02 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.85 2002/12/14 11:54:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.84 2002/12/13 14:40:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.85 2002/12/14 11:54:47 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -404,6 +404,10 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 			printf("lfs_writevnodes: starting over\n");
 			goto loop;
 		}
+		
+		if (vp->v_type == VNON) {
+			continue;
+		}
 
 		ip = VTOI(vp);
 		if ((op == VN_DIROP && !(vp->v_flag & VDIROP)) ||
@@ -414,10 +418,6 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 		
 		if (op == VN_EMPTY && LIST_FIRST(&vp->v_dirtyblkhd)) {
 			vndebug(vp,"empty");
-			continue;
-		}
-		
-		if (vp->v_type == VNON) {
 			continue;
 		}
 
