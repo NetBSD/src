@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.33 1999/04/16 22:35:49 abs Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.34 1999/05/24 10:17:49 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -122,6 +122,11 @@ struct ne2000dev {
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_SVEC_COMBOCARD,
       0, -1, { 0x00, 0xe0, 0x98 } },
+
+    { "SMC EZCard 10 PCMCIA",
+      0x108, 0x8022,
+      { "SMC", "EZCard-10-PCMCIA", "SMC8022", "R01" },
+      0, 0x1c0, { 0, 0xe0, 0x29 }},
 
     { PCMCIA_STR_SVEC_LANCARD,
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
