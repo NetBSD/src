@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.109 2001/09/01 23:08:43 atatat Exp $
+#	$NetBSD: GENERIC,v 1.110 2001/09/12 21:05:37 manu Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.109 $"
+#ident 		"GENERIC-$Revision: 1.110 $"
 
 maxusers	32
 
@@ -46,7 +46,7 @@ options 	COMPAT_13	# NetBSD 1.3,
 options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-#options 	COMPAT_LINUX	# Linux binary compatibility (experimental)
+#options 	COMPAT_LINUX	# Linux binary compatibility
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # File systems

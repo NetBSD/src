@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.43 2001/09/01 23:08:41 atatat Exp $
+#	$NetBSD: GENERIC,v 1.44 2001/09/12 21:05:38 manu Exp $
 #
 # First try for BEBOX config file
 #
 
 include "arch/bebox/conf/std.bebox"
 
-#ident 		"GENERIC-$Revision: 1.43 $"
+#ident 		"GENERIC-$Revision: 1.44 $"
 
 maxusers	32
 
@@ -32,7 +32,7 @@ options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
 options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
-#options 	COMPAT_LINUX   # Linux binary compatibility (experimental)
+#options 	COMPAT_LINUX   # Linux binary compatibility
 
 file-system 	FFS
 file-system 	MFS
