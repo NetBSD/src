@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.287 2000/12/21 05:41:37 itojun Exp $
+#	$NetBSD: mi,v 1.288 2000/12/22 02:03:33 itojun Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -2230,6 +2230,18 @@
 ./usr/share/man/cat3/ispunct.0	comp-c-catman
 ./usr/share/man/cat3/isspace.0	comp-c-catman
 ./usr/share/man/cat3/isupper.0	comp-c-catman
+./usr/share/man/cat3/iswalnum.0			comp-c-catman
+./usr/share/man/cat3/iswalpha.0			comp-c-catman
+./usr/share/man/cat3/iswblank.0			comp-c-catman
+./usr/share/man/cat3/iswcntrl.0			comp-c-catman
+./usr/share/man/cat3/iswdigit.0			comp-c-catman
+./usr/share/man/cat3/iswgraph.0			comp-c-catman
+./usr/share/man/cat3/iswlower.0			comp-c-catman
+./usr/share/man/cat3/iswprint.0			comp-c-catman
+./usr/share/man/cat3/iswpunct.0			comp-c-catman
+./usr/share/man/cat3/iswspace.0			comp-c-catman
+./usr/share/man/cat3/iswupper.0			comp-c-catman
+./usr/share/man/cat3/iswxdigit.0			comp-c-catman
 ./usr/share/man/cat3/isxdigit.0	comp-c-catman
 ./usr/share/man/cat3/j0.0	comp-c-catman
 ./usr/share/man/cat3/j0f.0	comp-c-catman
@@ -2433,8 +2445,8 @@
 ./usr/share/man/cat3/pw_lock.0	comp-c-catman
 ./usr/share/man/cat3/pw_mkdb.0	comp-c-catman
 ./usr/share/man/cat3/pw_prompt.0	comp-c-catman
-./usr/share/man/cat3/pw_setprefix.0	comp-c-catman
 ./usr/share/man/cat3/pw_scan.0	comp-c-catman
+./usr/share/man/cat3/pw_setprefix.0	comp-c-catman
 ./usr/share/man/cat3/pwcache.0	comp-c-catman
 ./usr/share/man/cat3/qabs.0	comp-c-catman
 ./usr/share/man/cat3/qdiv.0	comp-c-catman
@@ -3999,6 +4011,18 @@
 ./usr/share/man/man3/ispunct.3		comp-c-man
 ./usr/share/man/man3/isspace.3		comp-c-man
 ./usr/share/man/man3/isupper.3		comp-c-man
+./usr/share/man/man3/iswalnum.3			comp-c-man
+./usr/share/man/man3/iswalpha.3			comp-c-man
+./usr/share/man/man3/iswblank.3			comp-c-man
+./usr/share/man/man3/iswcntrl.3			comp-c-man
+./usr/share/man/man3/iswdigit.3			comp-c-man
+./usr/share/man/man3/iswgraph.3			comp-c-man
+./usr/share/man/man3/iswlower.3			comp-c-man
+./usr/share/man/man3/iswprint.3			comp-c-man
+./usr/share/man/man3/iswpunct.3			comp-c-man
+./usr/share/man/man3/iswspace.3			comp-c-man
+./usr/share/man/man3/iswupper.3			comp-c-man
+./usr/share/man/man3/iswxdigit.3			comp-c-man
 ./usr/share/man/man3/isxdigit.3		comp-c-man
 ./usr/share/man/man3/j0.3		comp-c-man
 ./usr/share/man/man3/j0f.3		comp-c-man
@@ -4202,8 +4226,8 @@
 ./usr/share/man/man3/pw_lock.3		comp-c-man
 ./usr/share/man/man3/pw_mkdb.3		comp-c-man
 ./usr/share/man/man3/pw_prompt.3		comp-c-man
-./usr/share/man/man3/pw_setprefix.3	comp-c-man
 ./usr/share/man/man3/pw_scan.3		comp-c-man
+./usr/share/man/man3/pw_setprefix.3	comp-c-man
 ./usr/share/man/man3/pwcache.3		comp-c-man
 ./usr/share/man/man3/qabs.3		comp-c-man
 ./usr/share/man/man3/qdiv.3		comp-c-man
