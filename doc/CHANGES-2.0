@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.371 2004/08/04 12:05:34 he Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.372 2004/08/11 19:41:35 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6320,3 +6320,9 @@ sbin/dmesg/dmesg.8				1.15-1.16
 	MSGBUFSIZE in options(4).  Bump date and some minor cleanup.
 	Part of fix for PR#26439.
 	[briggs, ticket #727]
+
+lib/libc/rpc/getrpcent.c			1.19
+
+	Fix a long standing bug in getrpcbyname() where it would not find 
+	any matches when an alias was used. PR#23294
+	[ginsbach, ticket #737]
