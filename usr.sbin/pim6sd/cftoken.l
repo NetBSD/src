@@ -1,4 +1,4 @@
-/*	$NetBSD: cftoken.l,v 1.2 2000/05/19 10:43:46 itojun Exp $	*/
+/*	$NetBSD: cftoken.l,v 1.2.4.1 2000/10/18 02:18:43 tv Exp $	*/
 
 %{
 /*
@@ -57,6 +57,13 @@ static void cfdebug_print __P((char *, char *, int));
 #endif
 
 extern int yylex __P((void));
+
+static void yyerror0(char *s, va_list ap)
+	__attribute__((__format__(__printf__, 1, 0)));
+void yyerror(char *s, ...)
+	__attribute__((__format__(__printf__, 1, 2)));
+void yywarn(char *s, ...)
+	__attribute__((__format__(__printf__, 1, 2)));
 %}
 
 /* common seciton */
