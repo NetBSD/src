@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.55 1998/03/03 00:36:24 mycroft Exp $	*/
+/*	$NetBSD: rtld.c,v 1.56 1998/03/15 21:24:27 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -1221,8 +1221,15 @@ static void
 maphints()
 {
 	caddr_t		addr;
+	struct stat	statbuf;
 
 	if ((hfd = open(_PATH_LD_HINTS, O_RDONLY, 0)) == -1) {
+		hheader = (struct hints_header *)-1;
+		return;
+	}
+
+	if (fstat(hfd, &statbuf) != 0 ||
+	    statbuf.st_size < sizeof(struct hints_header)) {
 		hheader = (struct hints_header *)-1;
 		return;
 	}
