@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2003/06/27 08:40:49 tshiozak Exp $
+# $NetBSD: Makefile.inc,v 1.2 2003/07/01 12:16:25 tshiozak Exp $
 
 .PATH: ${.CURDIR}/MISC
 
@@ -6,7 +6,9 @@ SRCS_mapper.dir+=	mapper.dir.MISC
 SRCS_charset.pivot+=	charset.pivot.MISC
 CLEANFILES+=		mapper.dir.MISC charset.pivot.MISC
 MAPS_MISC=		Big5%UCS.mps \
-			UCS%Big5.mps
+			UCS%Big5.mps \
+			KOI8-R%UCS.mps \
+			UCS%KOI8-R.mps
 
 mapper.dir.MISC: ${.CURDIR}/MISC/mapper.dir.MISC.src
 	echo "# MISC" > $@
