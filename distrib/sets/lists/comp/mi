@@ -3100,6 +3100,7 @@
 ./usr/share/misc/getopt
 ./usr/share/misc/gprof.callg
 ./usr/share/misc/gprof.flat
+./usr/share/misc/indent.pro
 ./usr/share/misc/menu_sys.def
 ./usr/share/misc/msg_sys.def
 ./usr/share/misc/operator
