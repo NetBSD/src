@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.21 2000/03/03 03:10:03 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.22 2000/03/03 03:47:17 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -121,43 +121,14 @@ rf_ConfigureDisks( listp, raidPtr, cfgPtr )
 
 	force = cfgPtr->force;
 
-	RF_CallocAndAdd(disks, raidPtr->numRow, sizeof(RF_RaidDisk_t *), 
-			(RF_RaidDisk_t **), raidPtr->cleanupList);
-	if (disks == NULL) {
-		ret = ENOMEM;
+	ret = rf_AllocDiskStructures(raidPtr, cfgPtr);
+	if (ret)
 		goto fail;
-	}
-	raidPtr->Disks = disks;
 
-	/* get space for the device-specific stuff... */
-	RF_CallocAndAdd(raidPtr->raid_cinfo, raidPtr->numRow,
-	    sizeof(struct raidcinfo *), (struct raidcinfo **),
-	    raidPtr->cleanupList);
-	if (raidPtr->raid_cinfo == NULL) {
-		ret = ENOMEM;
-		goto fail;
-	}
+	disks = raidPtr->Disks;
+
 	for (r = 0; r < raidPtr->numRow; r++) {
 		numFailuresThisRow = 0;
-		/* We allocate RF_MAXSPARE on the first row so that we
-		   have room to do hot-swapping of spares */
-		RF_CallocAndAdd(disks[r], raidPtr->numCol 
-				+ ((r == 0) ? RF_MAXSPARE : 0), 
-				sizeof(RF_RaidDisk_t), (RF_RaidDisk_t *), 
-				raidPtr->cleanupList);
-		if (disks[r] == NULL) {
-			ret = ENOMEM;
-			goto fail;
-		}
-		/* get more space for device specific stuff.. */
-		RF_CallocAndAdd(raidPtr->raid_cinfo[r],
-		    raidPtr->numCol + ((r == 0) ? raidPtr->numSpare : 0),
-		    sizeof(struct raidcinfo), (struct raidcinfo *),
-		    raidPtr->cleanupList);
-		if (raidPtr->raid_cinfo[r] == NULL) {
-			ret = ENOMEM;
-			goto fail;
-		}
 		for (c = 0; c < raidPtr->numCol; c++) {
 			ret = rf_ConfigureDisk(raidPtr, 
 					       &cfgPtr->devnames[r][c][0],
