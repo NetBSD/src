@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.52 1994/10/18 18:24:35 mycroft Exp $
+ *	$Id: fd.c,v 1.53 1994/10/20 00:52:23 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -924,7 +924,9 @@ again:
 		/* make sure seek really happened */
 		out_fdc(iobase, NE7CMD_SENSEI);
 		if (fdcresult(fdc) != 2 || (st0 & 0xf8) != 0x20 || cyl != bp->b_cylin) {
+#ifdef FD_DEBUG
 			fdcstatus(&fd->sc_dev, 2, "seek failed");
+#endif
 			fdcretry(fdc);
 			goto again;
 		}
@@ -951,8 +953,10 @@ again:
 #else
 			isa_dmaabort(fdc->sc_drq);
 #endif
+#ifdef FD_DEBUG
 			fdcstatus(&fd->sc_dev, 7, bp->b_flags & B_READ ?
 			    "read failed" : "write failed");
+#endif
 			printf("blkno %d skip %d cylin %d status %x\n",
 			    bp->b_blkno, fd->sc_skip, bp->b_cylin,
 			    fdc->sc_status[0]);
@@ -1017,7 +1021,9 @@ again:
 	case RECALCOMPLETE:
 		out_fdc(iobase, NE7CMD_SENSEI);
 		if (fdcresult(fdc) != 2 || (st0 & 0xf8) != 0x20 || cyl != 0) {
+#ifdef FD_DEBUG
 			fdcstatus(&fd->sc_dev, 2, "recalibrate failed");
+#endif
 			fdcretry(fdc);
 			goto again;
 		}
