@@ -1,4 +1,4 @@
-/*	$NetBSD: consdefs.h,v 1.2 1995/08/05 16:47:38 thorpej Exp $	*/
+/*	$NetBSD: consdefs.h,v 1.3 1995/10/04 06:54:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -32,6 +32,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+/*
+ * Glue for determining console select code.
+ */
+extern	int curcons_scode;
+extern	int cons_scode;
 
 /*
  * Console routine prototypes.

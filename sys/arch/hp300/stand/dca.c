@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.7 1995/08/05 16:47:39 thorpej Exp $	*/
+/*	$NetBSD: dca.c,v 1.8 1995/10/04 06:54:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -84,7 +84,9 @@ dcaprobe(cp)
 		cp->cn_pri = CN_DEAD;
 		break;
 	}
+
 #endif
+	curcons_scode = CONSCODE;
 }
 
 void
