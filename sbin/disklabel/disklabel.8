@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.8,v 1.43 2003/02/25 10:34:53 wiz Exp $
+.\"	$NetBSD: disklabel.8,v 1.44 2003/05/02 08:09:35 gmcgarry Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -124,6 +124,13 @@ on a system; it must be used when first installing a label on a disk.
 Any special effects of the
 .Fl r
 flag are described with the affected commands.
+.Pp
+The
+.Fl I
+option is similar to the
+.Fl r
+option but provides defaults instead of failing with
+an error, if there is no existing disklabel on the disk.
 .Pp
 The read and install forms also support the
 .Fl B
