@@ -1,4 +1,4 @@
-#	$NetBSD: P5064,v 1.19 2003/04/10 22:06:51 christos Exp $
+#	$NetBSD: P5064,v 1.20 2003/10/08 11:01:38 bouyer Exp $
 #
 # Algorithmics P-5064 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P5064-$Revision: 1.19 $"
+#ident 		"P5064-$Revision: 1.20 $"
 
 maxusers 32
 
@@ -264,13 +264,15 @@ cd*	at	scsibus? target ? lun ?		# SCSI CD-ROM drives
 sd*	at	scsibus? target ? lun ?		# SCSI disk drives
 #st*	at	scsibus? target ? lun ?		# SCSI tape drives
 
+# ATA bus support
+atabus* at pciide? channel ?
+atabus* at wdc? channel ?
+
 # ST506/ESDI/IDE devices
-wd*	at	pciide? channel ?
-wd*	at	wdc? drive ?
+wd*	at	atabus? drive ?
 
 # ATAPI bus support
-atapibus* at	pciide? channel ?
-atapibus* at	wdc?
+atapibus* at	atabus?
 
 # ATAPI devices
 sd*	at	atapibus? drive ?		# ATAPI disk devices
@@ -314,7 +316,7 @@ fd*	at	fdc? drive ?
 
 # USB Mass Storage
 #umass*	at uhub? port ? configuration ? interface ?
-#atapibus* at umass? channel ?
+#atapibus* at umass?
 #scsibus* at umass? channel ?
 
 # USB Ethernet adapters
