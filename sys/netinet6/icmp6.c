@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.33.2.2 2000/08/04 15:11:59 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.33.2.3 2000/08/16 01:22:25 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.131 2000/08/03 15:24:34 itojun Exp $	*/
 
 /*
@@ -96,11 +96,11 @@
 #include <netinet6/in6_ifattach.h>
 #include <netinet6/ip6protosw.h>
 
+#include <netkey/key_debug.h>
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
 #include <netkey/key.h>
-#include <netkey/key_debug.h>
 #endif
 
 #include "faith.h"
@@ -112,7 +112,9 @@ extern struct domain inet6domain;
 struct icmp6stat icmp6stat;
 
 extern struct in6pcb rawin6pcb;
-extern struct timeval icmp6errratelim;
+extern int icmp6errppslim;
+static int icmp6errpps_count = 0;
+static struct timeval icmp6errppslim_last;
 extern int icmp6_nodeinfo;
 static struct rttimer_queue *icmp6_mtudisc_timeout_q = NULL;
 extern int pmtu_expire;
@@ -2470,13 +2472,18 @@ icmp6_ratelimit(dst, type, code)
 	const int type;			/* not used at this moment */
 	const int code;			/* not used at this moment */
 {
-	static struct timeval icmp6errratelim_last;
+	int ret;
 
-	/*
-	 * ratecheck() returns true if it is okay to send.  We return
-	 * true if it is not okay to send.
-	 */
-	return (ratecheck(&icmp6errratelim_last, &icmp6errratelim) == 0);
+	ret = 0;	/*okay to send*/
+
+	/* PPS limit */
+	if (!ppsratecheck(&icmp6errppslim_last, &icmp6errpps_count,
+	    icmp6errppslim)) {
+		/* The packet is subject to rate limit */
+		ret++;
+	}
+
+	return ret;
 }
 
 static struct rtentry *
@@ -2562,28 +2569,6 @@ icmp6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case ICMPV6CTL_STATS:
 		return sysctl_rdstruct(oldp, oldlenp, newp,
 				&icmp6stat, sizeof(icmp6stat));
-	case ICMPV6CTL_ERRRATELIMIT:
-	    {
-		int rate_usec, error, s;
-
-		/*
-		 * The sysctl specifies the rate in usec-between-icmp,
-		 * so we must convert from/to a timeval.
-		 */
-		rate_usec = (icmp6errratelim.tv_sec * 1000000) +
-		    icmp6errratelim.tv_usec;
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &rate_usec);
-		if (error)
-			return (error);
-		if (rate_usec < 0)
-			return (EINVAL);
-		s = splsoftnet();
-		icmp6errratelim.tv_sec = rate_usec / 1000000;
-		icmp6errratelim.tv_usec = rate_usec % 1000000;
-		splx(s);
-
-		return (0);
-	    }
 	case ICMPV6CTL_ND6_PRUNE:
 		return sysctl_int(oldp, oldlenp, newp, newlen, &nd6_prune);
 	case ICMPV6CTL_ND6_DELAY:
@@ -2597,6 +2582,8 @@ icmp6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 				&nd6_useloopback);
 	case ICMPV6CTL_NODEINFO:
 		return sysctl_int(oldp, oldlenp, newp, newlen, &icmp6_nodeinfo);
+	case ICMPV6CTL_ERRPPSLIMIT:
+		return sysctl_int(oldp, oldlenp, newp, newlen, &icmp6errppslim);
 	case ICMPV6CTL_ND6_MAXNUDHINT:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 				&nd6_maxnudhint);

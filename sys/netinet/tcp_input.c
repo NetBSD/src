@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.108.4.6 2000/07/28 02:31:08 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.108.4.7 2000/08/16 01:22:22 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -182,7 +182,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
 #include <netkey/key.h>
-#include <netkey/key_debug.h>
 #endif /*IPSEC*/
 #ifdef INET6
 #include "faith.h"
@@ -191,7 +190,8 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 int	tcprexmtthresh = 3;
 int	tcp_log_refused;
 
-struct timeval tcp_rst_ratelim_last;
+static int tcp_rst_ppslim_count = 0;
+static struct timeval tcp_rst_ppslim_last;
 
 #define TCP_PAWS_IDLE	(24 * 24 * 60 * 60 * PR_SLOWHZ)
 
@@ -2144,7 +2144,8 @@ dropwithreset_ratelim:
 	 * an attempt to connect to or otherwise communicate with
 	 * a port for which we have no socket.
 	 */
-	if (ratecheck(&tcp_rst_ratelim_last, &tcp_rst_ratelim) == 0) {
+	if (ppsratecheck(&tcp_rst_ppslim_last, &tcp_rst_ppslim_count,
+	    tcp_rst_ppslim) == 0) {
 		/* XXX stat */
 		goto drop;
 	}
@@ -2483,6 +2484,7 @@ tcp_newreno(tp, th)
 	return 0;
 }
 
+#include <netkey/key_debug.h>
 
 /*
  * TCP compressed state engine.  Currently used to hold compressed
