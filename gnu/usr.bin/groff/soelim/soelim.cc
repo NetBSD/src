@@ -28,12 +28,13 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 #include "errarg.h"
 #include "error.h"
 #include "stringclass.h"
+#include "searchpath.h"
 
 int compatible_flag = 0;
 
 extern int interpret_lf_args(const char *);
 
-int do_file(const char *filename);
+int do_file(const char *filename, search_path& sp);
 
 void usage()
 {
@@ -43,9 +44,11 @@ void usage()
 
 int main(int argc, char **argv)
 {
+  search_path sp(NULL, NULL);
   program_name = argv[0];
   int opt;
-  while ((opt = getopt(argc, argv, "vC")) != EOF)
+  sp.command_line_dir(".");
+  while ((opt = getopt(argc, argv, "vCI:")) != EOF)
     switch (opt) {
     case 'v':
       {
@@ -57,6 +60,9 @@ int main(int argc, char **argv)
     case 'C':
       compatible_flag = 1;
       break;
+    case 'I':
+      sp.command_line_dir(optarg);
+      break;
     case '?':
       usage();
       break;
@@ -65,10 +71,10 @@ int main(int argc, char **argv)
     }
   int nbad = 0;
   if (optind >= argc)
-    nbad += !do_file("-");
+    nbad += !do_file("-", sp);
   else
     for (int i = optind; i < argc; i++)
-      nbad += !do_file(argv[i]);
+      nbad += !do_file(argv[i], sp);
   if (ferror(stdout) || fflush(stdout) < 0)
     fatal("output error");
   return nbad != 0;
@@ -79,7 +85,7 @@ void set_location()
   printf(".lf %d %s\n", current_lineno, current_filename);
 }
 
-void do_so(const char *line)
+void do_so(const char *line, search_path& sp)
 {
   const char *p = line;
   while (*p == ' ')
@@ -110,7 +116,7 @@ void do_so(const char *line)
     const char *fn = current_filename;
     int ln = current_lineno;
     current_lineno--;
-    if (do_file(filename.contents())) {
+    if (do_file(filename.contents(), sp)) {
       current_filename = fn;
       current_lineno = ln;
       set_location();
@@ -122,14 +128,14 @@ void do_so(const char *line)
   fputs(line, stdout);
 }
 
-int do_file(const char *filename)
+int do_file(const char *filename, search_path& sp)
 {
   FILE *fp;
   if (strcmp(filename, "-") == 0)
     fp = stdin;
   else {
     errno = 0;
-    fp = fopen(filename, "r");
+    fp = sp.open_file(filename, NULL);
     if (fp == 0) {
       error("can't open `%1': %2", filename, strerror(errno));
       return 0;
@@ -203,7 +209,7 @@ int do_file(const char *filename)
 	current_lineno++;
 	line += '\n';
 	line += '\0';
-	do_so(line.contents());
+	do_so(line.contents(), sp);
 	state = START;
       }
       else {
