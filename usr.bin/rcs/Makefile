@@ -19,14 +19,7 @@
 
 SUBDIR=	src man
 
-all: ${SUBDIR}
-
-${SUBDIR}: FRC
-	cd $@; make ${MFLAGS}
-
 all clean cleandir depend install lint tags obj:
-	for i in ${SUBDIR}; do \
-		(cd $$i; make ${MFLAGS} DESTDIR=${DESTDIR} $@); \
+	@for i in ${SUBDIR}; do \
+		(echo "===> $$i"; cd $$i; make ${MFLAGS} DESTDIR=${DESTDIR} $@); \
 	done
-
-FRC:
