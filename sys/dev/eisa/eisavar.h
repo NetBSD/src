@@ -1,4 +1,4 @@
-/*	$NetBSD: eisavar.h,v 1.14 2000/02/12 19:05:55 thorpej Exp $	*/
+/*	$NetBSD: eisavar.h,v 1.15 2000/08/10 23:30:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -90,5 +90,44 @@ struct eisa_attach_args {
  */
 #define	eisacf_slot		cf_loc[EISACF_SLOT]
 #define	EISA_UNKNOWN_SLOT	EISACF_SLOT_DEFAULT	/* wildcarded 'slot' */
+
+/*
+ * EISA Configuration entries, set up by an EISA Configuration Utility.
+ */
+
+struct eisa_cfg_mem {
+	bus_addr_t ecm_addr;
+	bus_size_t ecm_size;
+	int ecm_isram;
+	int ecm_decode;
+	int ecm_unitsize;
+};
+
+struct eisa_cfg_irq {
+	int eci_irq;
+	int eci_ist;
+	int eci_shared;
+};
+
+struct eisa_cfg_dma {
+	int ecd_drq;
+	int ecd_shared;
+	int ecd_size;
+#define	ECD_SIZE_8BIT		0
+#define	ECD_SIZE_16BIT		1
+#define	ECD_SIZE_32BIT		2
+#define	ECD_SIZE_RESERVED	3
+	int ecd_timing;
+#define	ECD_TIMING_ISA		0
+#define	ECD_TIMING_TYPEA	1
+#define	ECD_TIMING_TYPEB	2
+#define	ECD_TIMING_TYPEC	3
+};
+
+struct eisa_cfg_io {
+	bus_addr_t ecio_addr;
+	bus_size_t ecio_size;
+	int ecio_shared;
+};
 
 #endif /* _DEV_EISA_EISAVAR_H_ */
