@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.245 1997/08/23 14:22:03 drochner Exp $	*/
+/*	$NetBSD: machdep.c,v 1.246 1997/08/24 09:38:19 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1761,8 +1761,6 @@ consinit()
 void
 kgdb_port_init()
 {
-	if(!strcmp(kgdb_devname, consdevname)) /* must be != console */
-		return;
 #if (NCOM > 0)
 	if(!strcmp(kgdb_devname, "com")) {
 		bus_space_tag_t tag = I386_BUS_SPACE_IO;
