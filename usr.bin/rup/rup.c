@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rup.c,v 1.7 1993/11/10 03:52:21 deraadt Exp $";
+static char rcsid[] = "$Id: rup.c,v 1.8 1993/12/03 23:34:10 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -201,7 +201,7 @@ allhosts()
 
 usage()
 {
-	fprintf(stderr, "Usage: %s [hosts ...]\n", argv0);
+	fprintf(stderr, "Usage: %s [-t] [hosts ...]\n", argv0);
 	exit(1);
 }
 
