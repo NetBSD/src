@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.2 2000/06/27 04:18:53 mrg Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.3 2000/07/01 03:34:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -34,7 +34,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/user.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
