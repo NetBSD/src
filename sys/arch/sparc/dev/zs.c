@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.28 1995/04/21 15:51:26 pk Exp $ */
+/*	$NetBSD: zs.c,v 1.29 1995/06/26 21:32:51 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -570,9 +570,14 @@ zsopen(dev, flags, mode, p)
 	}
 	error = 0;
 	for (;;) {
+		register int rr0;
+
 		/* loop, turning on the device, until carrier present */
 		zs_modem(cs, 1);
-		if (cs->cs_softcar)
+		/* May never get status intr if carrier already on. -gwr */
+		rr0 = cs->cs_zc->zc_csr;
+		ZS_DELAY();
+		if ((rr0 & ZSRR0_DCD) || cs->cs_softcar)
 			tp->t_state |= TS_CARR_ON;
 		if (flags & O_NONBLOCK || tp->t_cflag & CLOCAL ||
 		    tp->t_state & TS_CARR_ON)
@@ -790,6 +795,7 @@ zsrint(cs, zc)
 {
 	register int c = zc->zc_data;
 
+	ZS_DELAY();
 	if (cs->cs_conk) {
 		register struct conk_state *conk = &zsconk_state;
 
@@ -870,6 +876,7 @@ zssint(cs, zc)
 	register int rr0;
 
 	rr0 = zc->zc_csr;
+	ZS_DELAY();
 	zc->zc_csr = ZSWR0_RESET_STATUS;
 	ZS_DELAY();
 	zc->zc_csr = ZSWR0_CLR_INTR;
@@ -1351,10 +1358,12 @@ zsparam(tp, t)
 	 * carrier detect drops, the receiver is disabled.  Hence we
 	 * can only do this when the carrier is on.
 	 */
-	if (cflag & CCTS_OFLOW && cs->cs_zc->zc_csr & ZSRR0_DCD)
-		tmp |= ZSWR3_HFC | ZSWR3_RX_ENABLE;
-	else
-		tmp |= ZSWR3_RX_ENABLE;
+	tmp |= ZSWR3_RX_ENABLE;
+	if (cflag & CCTS_OFLOW) {
+		if (cs->cs_zc->zc_csr & ZSRR0_DCD)
+			tmp |= ZSWR3_HFC;
+		ZS_DELAY();
+	}
 	cs->cs_preg[3] = tmp;
 	cs->cs_preg[5] = tmp5 | ZSWR5_TX_ENABLE | ZSWR5_DTR | ZSWR5_RTS;
 
