@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.19 2002/05/15 21:05:23 matt Exp $ */
+/*	$NetBSD: gem.c,v 1.20 2002/05/15 23:51:49 matt Exp $ */
 
 /*
  * 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.19 2002/05/15 21:05:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.20 2002/05/15 23:51:49 matt Exp $");
 
 #include "bpfilter.h"
 
@@ -1835,6 +1835,7 @@ gem_ioctl(ifp, cmd, data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
+	s = splnet();
 
 	switch (cmd) {
 	case SIOCGIFMEDIA:
