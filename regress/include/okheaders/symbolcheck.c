@@ -221,7 +221,9 @@
 #include <ctype.h>
 #include <curses.h>
 #include <db.h>
+#if HAVE_DES_H
 #include <des.h>
+#endif
 #include <dirent.h>
 #include <disktab.h>
 #include <dlfcn.h>
