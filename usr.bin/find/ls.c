@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.10 1998/03/03 02:22:40 thorpej Exp $	*/
+/*	$NetBSD: ls.c,v 1.11 1998/10/14 00:50:59 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)ls.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: ls.c,v 1.10 1998/03/03 02:22:40 thorpej Exp $");
+__RCSID("$NetBSD: ls.c,v 1.11 1998/10/14 00:50:59 wsanchez Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: ls.c,v 1.10 1998/03/03 02:22:40 thorpej Exp $");
 #include <grp.h>
 #include <pwd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <tzfile.h>
