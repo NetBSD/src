@@ -170,8 +170,6 @@ main(argc, argv)
 	int ch;
 	int aflag = 0, cflag = 0, dflag = 0, sflag = 0, Hflag = 0,
 		pflag = 0, rflag = 0, Pflag = 0, Rflag = 0;
-	extern char *optarg;
-	extern int optind;
 
 	pid = getpid();
 	thiszone = gmt2local(0);
@@ -517,7 +515,6 @@ dump(addr)
 	struct rt_msghdr *rtm;
 	struct sockaddr_in6 *sin;
 	struct sockaddr_dl *sdl;
-	extern int h_errno;
 	struct in6_nbrinfo *nbi;
 	struct timeval time;
 	int addrwidth;
