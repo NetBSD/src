@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.79 2001/11/13 00:32:35 lukem Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.79.10.1 2003/10/01 06:08:59 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.79 2001/11/13 00:32:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.79.10.1 2003/10/01 06:08:59 tron Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -1064,11 +1064,16 @@ arplookup(m, addr, create, proxy)
 	else
 		return ((struct llinfo_arp *)rt->rt_llinfo);
 
-	if (create)
+	if (create) {
 		log(LOG_DEBUG, "arplookup: unable to enter address"
 		    " for %s@%s on %s (%s)\n",
 		    in_fmtaddr(*addr), lla_snprintf(ar_sha(ah), ah->ar_hln),
 		    ifp->if_xname, why);
+		if (rt->rt_refcnt <= 0 && (rt->rt_flags & RTF_CLONED) != 0) {
+			rtrequest(RTM_DELETE, (struct sockaddr *)rt_key(rt),
+			    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
+		}
+	}
 	return (0);
 }
 
