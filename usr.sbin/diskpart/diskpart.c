@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)diskpart.c	5.11 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: diskpart.c,v 1.4 1994/12/23 16:45:49 cgd Exp $";
+static char rcsid[] = "$Id: diskpart.c,v 1.5 1995/04/24 13:25:34 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -378,7 +378,7 @@ promptfordisk(name)
 			dp->d_type = 1;
 		else
 			dp->d_type = gettype(buf, dktypenames);
-		if (dp->d_type >= 0)
+		if ((int16_t)dp->d_type >= 0)
 			break;
 		fprintf(stderr, "%s: unrecognized controller type\n", buf);
 		fprintf(stderr, "use one of:\n", buf);
