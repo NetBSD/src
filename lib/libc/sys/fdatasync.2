@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdatasync.2,v 1.1 1998/06/05 20:48:59 kleink Exp $
+.\"	$NetBSD: fdatasync.2,v 1.2 1998/06/06 10:47:41 kleink Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,34 +39,32 @@
 .Os NetBSD 1.4
 .Sh NAME
 .Nm fdatasync
-.Nd synchronise the data of a file
+.Nd synchronize the data of a file
 .Sh SYNOPSIS
 .Fd #include <unistd.h>
 .Ft int
-.Fn fdatasync "int filedes"
+.Fn fdatasync "int fd"
 .Sh DESCRIPTION
 The
 .Fn fdatasync
-function forces all currently queued I/O operations associated with
-the file indicated by the file descriptor
-.Fa filedes
-to the synchronised I/O completition state.
+function forces all modified data associated with the file descriptor
+.Fa fd
+to be flushed to stable storage.
 .Pp
 The functionality is as described for
 .Xr fsync 2 ,
-with the exception that all I/O  operations are completed as defined
-for synchronised I/O data integrity completion.
+with the exception that file status information need not be synchronized,
+which may result in a performance gain, compared to
+.Xr fsync 2 .
+This behaviour is commonly known as
+.Bf -symbolic
+synchronized I/O data integrity completition.
+.Ef
 .Pp
 .Sh RETURN VALUES
-If successful, the
-.Fn fdatasync
-function returns the value 0.  Otherwise, the function returns the
-value -1 and sets
+A value of 0 is returned on success.  Otherwise, a value -1 is returned and
 .Dv errno
-to indicate the error. If the
-.Fn fdatasync
-function fails, outstanding I/O operations are not
-guaranteed to have been completed.
+is set to indicate the error.
 .Sh ERRORS
 The
 .Fn fdatasync
@@ -74,22 +72,23 @@ function will fail if:
 .Bl -tag -width Er
 .It Bq Er EBADF
 The
-.Fa filedes
+.Fa fd
 argument is not a valid file descriptor.
 .It Bq Er EINVAL
-This implementation does not support syncronised I/O for this file.
+This implementation does not support syncronized I/O for this file.
 .It Bq Er ENOSYS
-The function
+The
 .Fn fdatasync
-is not supported by this implementation.
+function is not supported by this implementation.
 .El
 .Pp
-In the event that any of the queued I/O operations fail,
+In the event that any of the I/O operations to be performed fail,
 .Fn fdatasync
 returns the eror conditions defined for
 .Xr read 2
 and
-.Xr write 2 .
+.Xr write 2 ,
+and outstanding I/O operations are not guaranteed to have been completed.
 .Sh SEE ALSO
 .Xr fsync 2 ,
 .Xr open 2 ,
