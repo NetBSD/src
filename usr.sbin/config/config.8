@@ -39,7 +39,7 @@
 .Nd build system configuration files
 .Sh SYNOPSIS
 .Nm config
-.Op Fl p
+.Op Fl gkp
 .Ar SYSTEM_NAME
 .Sh DESCRIPTION
 .Pp
@@ -61,6 +61,18 @@ section below)
 Available option and operand:
 .Pp
 .Bl -tag -width SYSTEM_NAME
+.It Fl g
+If the
+.Fl g
+option is supplied, 
+.Nm config
+will configure a system for debugging.
+.It Fl k
+If the
+.Fl k
+option is supplied, 
+.Nm config
+will not fail immediately on detection of a configuration error.
 .It Fl p
 If the
 .Fl p
@@ -70,6 +82,7 @@ will configure a system for profiling; for example,
 .Xr kgmon 8
 and
 .Xr gprof 1 .
+
 .It Ar SYSTEM_NAME
 specifies the name of the system configuration file
 containing device specifications, configuration options
