@@ -20,6 +20,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #ifndef TM_NBSD_H
 #define TM_NBSD_H
 
+/* NetBSD does not mark the outermost frame.  Instead, we consider the
+   entry point as the outermost frame.  */
+#define FRAME_CHAIN_VALID(chain, thisframe) \
+  func_frame_chain_valid(chain, thisframe)
+
 /* NetBSD doesn't have single stepping support in ptrace().  */
 #define SOFTWARE_SINGLE_STEP_P 1
 
