@@ -354,8 +354,8 @@ s(sp, cmdp, s, re, flags)
 	EVENT ev;
 	MARK from, to;
 	TEXTH tiq;
-	recno_t elno, slno;
-	long lno;
+	recno_t elno, lno, slno;
+	long llno;
 	regmatch_t match[10];
 	size_t blen, cnt, last, lbclen, lblen, len, llen;
 	size_t offset, saved_offset, scno;
@@ -415,13 +415,18 @@ s(sp, cmdp, s, re, flags)
 			if (lno != OOBLNO)
 				goto usage;
 			errno = 0;
-			lno = strtoul(s, &s, 10);
+			llno = strtoul(s, &s, 10);
 			if (*s == '\0')		/* Loop increment correction. */
 				--s;
+			lno = llno;
+			if (llno != lno) {
+				errno = ERANGE;
+				llno = LONG_MAX;
+			}
 			if (errno == ERANGE) {
-				if (lno == LONG_MAX)
+				if (llno == LONG_MAX)
 					msgq(sp, M_ERR, "153|Count overflow");
-				else if (lno == LONG_MIN)
+				else if (llno == LONG_MIN)
 					msgq(sp, M_ERR, "154|Count underflow");
 				else
 					msgq(sp, M_SYSERR, NULL);
