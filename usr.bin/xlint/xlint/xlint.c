@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.20 2000/07/06 01:12:24 christos Exp $ */
+/* $NetBSD: xlint.c,v 1.21 2000/11/27 00:54:25 wiz Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xlint.c,v 1.20 2000/07/06 01:12:24 christos Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.21 2000/11/27 00:54:25 wiz Exp $");
 #endif
 
 #include <sys/param.h>
@@ -365,9 +365,6 @@ main(argc, argv)
 
 	while (argc > optind) {
 
-		argc -= optind;
-		argv += optind;
-		optind = 0;
 
 		c = getopt(argc, argv, "abcd:eghil:no:prstuvwxzB:C:D:FHI:L:U:VX:");
 
@@ -510,12 +507,14 @@ main(argc, argv)
 
 		case -1:
 			/* filename */
-			fname(argv[0], argc == 1);
+			fname(argv[optind], argc == optind+1);
 			first = 0;
-			optind = 1;
+			optind++;
 		}
 
 	}
+	argc -= optind;
+	argv += optind;
 
 	if (first)
 		usage();
