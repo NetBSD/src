@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.4 1996/06/28 22:08:42 leo Exp $
+#	$NetBSD: install.md,v 1.5 1996/07/04 06:41:00 leo Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -88,8 +88,17 @@ md_get_partition_range() {
 
 md_installboot() {
 	if [ -x /mnt/usr/mdec/installboot ]; then
-		echo "Installing boot block..."
-		chroot /mnt /usr/mdec/installboot -v $1
+		echo -n "Should a boot block be installed? [y] "
+		getresp "y"
+		case "$resp" in
+			y*|Y*)
+				echo "Installing boot block..."
+				chroot /mnt /usr/mdec/installboot -v $1
+				;;
+			*)
+				echo "No bootblock installed..."
+				;;
+		esac
 	elif [ "$MODE" = "install" ]; then
 		cat << \__md_installboot_1
 There is no installboot program found on the installed filesystems. No boot
@@ -184,23 +193,6 @@ md_labeldisk() {
 	edlabel /dev/r${1}c
 }
 
-md_copy_kernel() {
-	if [ ! -e /netbsd ]; then
-cat << \__md_copy_kernel_1
-Your installation set did not include a netbsd kernel on the installation
-filesystem. You have to install this yourself after you have booted your
-newly installed filesystems. See the INSTALL document for further information.
-
-Hit the <return> key when you have read this...
-__md_copy_kernel_1
-		getresp ""
-	else
-		echo -n "Copying kernel..."
-		cp -p /netbsd /mnt/netbsd
-		echo "done."
-	fi
-}
-
 md_welcome_banner() {
 	if [ "$MODE" = "install" ]; then
 		echo ""
@@ -272,4 +264,88 @@ Note: If you wish to have another try. Just type '^D' at the prompt. After
       a moment, the installer will restart itself.
 
 __congratulations_1
+}
+
+md_copy_kernel() {
+	# This is largely a copy of install_disk and install_from_mounted_fs()
+	# with some special frobbing.
+
+	local _directory
+	local _sets
+	local _filename
+	local _f
+
+	if [ -e /netbsd ]; then
+		echo -n "Copying kernel..."
+		cp -p /netbsd /mnt/netbsd
+		echo "done."
+		return
+	fi
+
+cat << \__md_copy_kernel_1
+Your installation set did not include a netbsd kernel on the installation
+filesystem. You are now given the opportunity install it from either the
+kernel-floppy from the distribution or another location on one of your disks.
+
+The following disk devices are installed on your system; please select
+the disk device containing the partition with the netbsd kernel:
+__md_copy_kernel_1
+
+	_DKDEVS=`md_get_diskdevs`
+	echo    "$_DKDEVS"
+	echo	"fd0"
+	echo	""
+	_DKDEVS="$_DKDEVS fd0"		# Might be on the kernel floppy!
+	echo -n	"Which is the disk with the kernel? [abort] "
+
+	if mount_a_disk ; then
+		return	# couldn't mount the disk
+	fi
+
+	# Get the directory where the file lives
+	resp=""		# force one iteration
+	while [ "X${resp}" = X"" ]; do
+		echo "Enter the directory relative to the mount point that"
+		echo -n "contains the file. [${_directory}] "
+		getresp "${_directory}"
+	done
+	_directory=$resp
+
+	_sets=`(cd /mnt2/$_directory; ls netbsd* 2> /dev/null)`
+	if [ -z "$_sets" ]; then
+		echo "There are no NetBSD kernels available in \"$1\""
+		umount -f /mnt2 > /dev/null 2>&1
+		return
+	fi
+	while : ; do
+		echo "The following kernels are available:"
+		echo ""
+
+		for _f in $_sets ; do
+			echo "    $_f"
+		done
+		echo ""
+		set -- $_sets
+		echo -n "File name [$1]? "
+		getresp "$1"
+		_f=$resp
+		_filename="/mnt2/$_directory/$_f"
+
+		# Ensure file exists
+		if [ ! -f $_filename ]; then
+			echo "File $_filename does not exist.  Check to make"
+			echo "sure you entered the information properly."
+			echo -n "Do you want to retry [y]? "
+			getresp "y"
+			if [ "$resp" = "n" ]; then
+				break
+			fi
+			continue
+		fi
+
+		# Copy the kernel
+		cp $_filename /mnt
+		break
+	done
+	umount -f /mnt2 > /dev/null 2>&1
 }
