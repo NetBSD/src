@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.48 1998/09/08 23:50:14 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.49 1998/11/11 06:34:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -61,6 +61,13 @@
 
 #include <sys/syscallargs.h>
 
+/*
+ * note that stdarg.h and the ansi style va_start macro is used for both
+ * ansi and traditional c complers.
+ * XXX: this requires that stdarg.h define: va_alist and va_dcl
+ */
+#include <machine/stdarg.h>
+
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
@@ -111,6 +118,52 @@ sys___vfork14(p, v, retval)
 	return (fork1(p, FORK_PPWAIT|FORK_SHAREVM, retval, NULL));
 }
 
+/*
+ * Fork a kernel thread.  Any process can request this to be done.
+ * The VM space and limits, etc. will be shared with proc0.
+ */
+int
+#ifdef __STDC__
+fork_kthread(void (*func)(void *), void *arg,
+    struct proc **newpp, const char *fmt, ...)
+#else
+fork_kthread(func, arg, newpp, fmt, va_alist)
+	void (*func) __P((void *));
+	void *arg;
+	struct proc **newpp;
+	const char *fmt;
+	va_dcl
+#endif
+{
+	struct proc *p2;
+	int error;
+	va_list ap;
+
+	/* First, create the new process. */
+	error = fork1(&proc0, FORK_SHAREVM, NULL, &p2);
+	if (error)
+		return (error);
+
+	/*
+	 * Mark it as a system process and not a candidate for
+	 * swapping.
+	 */
+	p2->p_flag |= P_INMEM | P_SYSTEM;	/* XXX */
+
+	/* Name it as specified. */
+	va_start(ap, fmt);
+	vsprintf(p2->p_comm, fmt, ap);
+	va_end(ap);
+
+	/* Arrange for it to start at the specified function. */
+	cpu_set_kpc(p2, func, arg);
+
+	/* All done! */
+	if (newpp != NULL)
+		*newpp = p2;
+	return (0);
+}
+
 int
 fork1(p1, flags, retval, rnewprocp)
 	register struct proc *p1;
@@ -121,7 +174,7 @@ fork1(p1, flags, retval, rnewprocp)
 	register struct proc *p2;
 	register uid_t uid;
 	struct proc *newproc;
-	int count;
+	int count, s;
 	vaddr_t uaddr;
 	static int nextpid, pidchecked = 0;
 
@@ -336,12 +389,12 @@ again:
 	/*
 	 * Make child runnable, set start time, and add to run queue.
 	 */
-	(void) splstatclock();
+	s = splstatclock();
 	p2->p_stats->p_start = time;
 	p2->p_acflag = AFORK;
 	p2->p_stat = SRUN;
 	setrunqueue(p2);
-	(void) spl0();
+	splx(s);
 
 	/*
 	 * Now can be swapped.
