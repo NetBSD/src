@@ -1,5 +1,5 @@
 /*
- *	$Id: disksubr.c,v 1.2 1994/10/02 21:51:37 deraadt Exp $
+ *	$Id: disksubr.c,v 1.3 1994/11/02 04:58:25 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -19,8 +19,8 @@
 #include <sparc/dev/sbusvar.h>
 #include <sparc/dev/espvar.h>
 
-static int sun_disklabel_to_bsd  (caddr_t, struct disklabel *);
-static int sun_disklabel_from_bsd(caddr_t, struct disklabel *);
+int sun_disklabel_to_bsd	__P((caddr_t, struct disklabel *));
+int sun_disklabel_from_bsd	__P((caddr_t, struct disklabel *));
 
 extern struct device *bootdv;
 
@@ -36,10 +36,8 @@ dk_establish(dk, dev)
 
 #define CRAZYMAP(v) ((v) == 3 ? 0 : (v) == 0 ? 3 : (v))
 
-	if (bp == NULL) {
-		printf("no boot path\n");
+	if (bp == NULL)
 		return -1;
-	}
 	sprintf(name, "%s%d", bp->name, CRAZYMAP(bp->val[0]));
 	if (strcmp(name, dev->dv_xname) == 0) {
 		bootdv = dev;
@@ -292,7 +290,7 @@ sun_fstypes[8] = {
  * Take a sector (cp) containing a SunOS disk label and set lp to a
  * BSD disk label.  Returns non-zero on error.
  */
-static int
+int
 sun_disklabel_to_bsd(cp, lp)
 	register caddr_t cp;
 	register struct disklabel *lp;
@@ -335,7 +333,7 @@ sun_disklabel_to_bsd(cp, lp)
 int
 sun_dkioctl(dk, cmd, data, partition)
 	struct dkdevice *dk;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int partition;
 {
