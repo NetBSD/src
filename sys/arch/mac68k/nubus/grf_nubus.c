@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.50 1998/08/17 15:04:51 briggs Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.51 1998/09/18 06:08:28 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -315,6 +315,11 @@ bad:
 		break;
 	case NUBUS_DRHW_GVIMAGE:
 		add_nubus_intr(na->slot, grfmv_intr_gvimage, sc);
+		break;
+	case NUBUS_DRHW_2124NB:
+		sc->cli_offset = 0xfd1000;
+		sc->cli_value = 0x00;
+		add_nubus_intr(na->slot, grfmv_intr_generic_write4, sc);
 		break;
 	case NUBUS_DRHW_MICRON:
 		/* What do we know about this one? */
