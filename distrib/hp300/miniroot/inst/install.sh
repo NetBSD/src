@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.1 1995/10/03 22:48:00 thorpej Exp $
+#	$NetBSD: install.sh,v 1.2 1995/11/07 08:30:45 thorpej Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe.
 # All rights reserved.
@@ -49,6 +49,46 @@ getresp() {
 	fi
 }
 
+isin() {
+# test the first argument against the remaining ones, return succes on a match
+	_a=$1; shift
+	while [ $# != 0 ]; do
+		if [ "$_a" = "$1" ]; then return 0; fi
+		shift
+	done
+	return 1
+}
+
+#
+# machine dependent section
+#
+md_get_diskdevs() {
+	# return available disk devices
+	dmesg | grep "^rd.*:" | awk -F: '{print $1}' | sort -u
+	dmesg | grep "^sd.*:*cylinders" | awk -F: '{print $1}' | sort -u
+}
+
+md_get_cddevs() {
+	# return available CD-ROM devices
+	dmesg | grep "sd.*:*CD-ROM" | awk -F: '{print $1}' | sort -u
+}
+
+md_get_ifdevs() {
+	# return available network interfaces
+	dmesg | grep "^le.*:" | awk -F: '{print $1}' | sort -u
+}
+
+md_installboot() {
+	# $1 is the root disk
+
+	echo -n "Installing boot block..."
+	disklabel -W ${1}
+	disklabel -B ${1}
+	echo "done."
+}
+
+# end of machine dependent section
+
 do_mfs_mount() {
 	umount $1 > /dev/null 2>&1
 	if ! mount_mfs -s 2048 swap $1 ; then
@@ -75,12 +115,12 @@ program.
 Available disks are:
 
 __getrootdisk_1
-	dmesg | grep "^rd" | grep "slave"
-	dmesg | grep "^sd" | grep "slave"
+	_DKDEVS=`md_get_diskdevs`
+	echo	"$_DKDEVS"
 	echo	""
 	echo -n	"Which disk is the root disk? "
 	getresp ""
-	if dmesg | grep "^$resp " | grep "slave" > /dev/null ; then
+	if isin $resp $_DKDEVS ; then
 		ROOTDISK="$resp"
 	else
 		echo ""
@@ -108,8 +148,7 @@ labelmoredisks() {
 You may label the following disks:
 
 __labelmoredisks_1
-	dmesg | grep "^rd" | grep "slave" | grep -v "${ROOTDISK} "
-	dmesg | grep "^sd" | grep "slave" | grep -v "${ROOTDISK} "
+	echo "$_DKDEVS" | grep -v "${ROOTDISK}"
 	echo	""
 	echo -n	"Label which disk? [done] "
 	getresp "done"
@@ -118,8 +157,8 @@ __labelmoredisks_1
 			;;
 
 		*)
-			if dmesg | grep "^$resp " | grep "slave" \
-			    > /dev/null ; then
+			if echo "$_DKDEVS" | grep -v "${ROOTDISK}" | \
+			    grep "^$resp" > /dev/null ; then
 				# XXX CODE ME
 				echo "Yup, it exists."
 			else
@@ -168,7 +207,8 @@ You may configure the following network interfaces:
 
 __configurenetwork_1
 
-	dmesg | grep "^le" | grep "ipl"
+	_IFS=`md_get_ifdevs`
+	echo	$_IFS
 	echo	""
 	echo -n	"Configure which interface? [done] "
 	getresp "done"
@@ -177,8 +217,7 @@ __configurenetwork_1
 			;;
 
 		*)
-			if dmesg | grep "^$resp " | grep "^le" | grep "ipl" \
-			    > /dev/null ; then
+			if isin $resp $_IFS ; then
 				_interface_name=$resp
 
 				# Get IP address
@@ -333,11 +372,12 @@ install_cdrom() {
 	# Get the cdrom device info
 	cat << \__install_cdrom_1
 
-The following SCSI disk or disk-like devices are installed on your system;
-please select the CD-ROM device containing the installation media:
+The following CD-ROM devices are installed on your system; please select
+the CD-ROM device containing the installation media:
 
 __install_cdrom_1
-	dmesg | grep "^sd" | grep "rev"
+	_CDDEVS=`md_get_cddevs`
+	echo    "$_CDDEVS"
 	echo	""
 	echo -n	"Which is the CD-ROM with the installation media? [abort] "
 	getresp "abort"
@@ -348,8 +388,7 @@ __install_cdrom_1
 			;;
 
 		*)
-			if dmesg | grep "^$resp " | grep "slave" \
-			    > /dev/null ; then
+			if isin $resp $_CDDEVS ; then
 				_cdrom_drive=$resp
 			else
 				echo ""
@@ -552,7 +591,7 @@ __install_tape_2
 			2)
 				(
 					cd /mnt
-					tar -zxvpf $TAPE
+					dd if=$TAPE | tar -xvpf -
 				)
 				;;
 
@@ -563,6 +602,31 @@ __install_tape_2
 		esac
 	done
 	echo "Extraction complete."
+}
+
+get_timezone() {
+cat << \__get_timezone_1
+
+Select a time zone:
+
+__get_timezone_1
+	ls /usr/share/zoneinfo	# XXX
+	echo	""
+	if [ X"$TZ" = "X" ]; then
+		TZ=`ls -l /etc/timezone 2>/dev/null | awk -F/ '{print $NF}'`
+	fi
+	echo -n "What timezone are you in [$TZ]? "
+	getresp "$TZ"
+	case "$resp" in
+	"")
+		echo "Timezone defaults to GMT"
+		TZ="GMT"
+		;;
+	*)
+		TZ="$resp"
+		;;
+	esac
+	export TZ
 }
 
 echo	""
@@ -941,32 +1005,66 @@ Make sure The sets are either on a local device (i.e. tape, CD-ROM) or on a
 network server.
 
 __install_sets_1
-resp=""		# force at least one iteration
-while [ "X${resp}" = X"" ]; do
-	echo -n	"Install from (f)tp, (t)ape, (C)D-ROM, or (N)FS? [f] "
-	getresp "f"
+if [ -f /base.tar.gz ]; then
+	echo -n "Install from sets in the current root filesystem? [y] "
+	getresp "y"
 	case "$resp" in
-		f*|F*)
-			install_ftp
+		y*|Y*)
+			for _f in /*.tar.gz; do
+				echo -n "Install $_f ? [y]"
+				getresp "y"
+				case "$resp" in
+				y*|Y*)
+					cat $_f | (cd /mnt; tar -zxvpf -)
+					_yup="TRUE"
+					;;
+				*)
+					;;
+				esac
+				echo "Extraction complete."
+			done
 			;;
-
-		t*|T*)
-			install_tape
-			;;
-
-		c*|C*)
-			install_cdrom
-			;;
-
-		n*|N*)
-			install_nfs
-			;;
-
 		*)
-			echo "Invalid response: $resp"
-			resp=""
+			_yup="FALSE"
 			;;
 	esac
+else
+	_yup="FALSE"
+fi
+
+# Go on prodding for alternate locations
+resp=""		# force at least one iteration
+while [ "X${resp}" = X"" ]; do
+	# If _yup is not FALSE, it means that we extracted sets above.
+	# If that's the case, bypass the menu the first time.
+	if [ X"$_yup" = X"FALSE" ]; then
+		echo -n	"Install from (f)tp, (t)ape, (C)D-ROM, or (N)FS? [f] "
+		getresp "f"
+		case "$resp" in
+			f*|F*)
+				install_ftp
+				;;
+
+			t*|T*)
+				install_tape
+				;;
+
+			c*|C*)
+				install_cdrom
+				;;
+
+			n*|N*)
+				install_nfs
+				;;
+
+			*)
+				echo "Invalid response: $resp"
+				resp=""
+				;;
+		esac
+	else
+		_yup="FALSE"	# So we'll ask next time
+	fi
 
 	# Give the user the opportunity to extract more sets.  They don't
 	# necessarily have to come from the same media.
@@ -984,34 +1082,41 @@ while [ "X${resp}" = X"" ]; do
 	esac
 done
 
+# Get timezone info
+get_timezone
+
 # Copy in configuration information and make devices in target root.
 (
 	cd /tmp
 	for file in fstab hostname.* hosts myname mygate; do
 		if [ -f $file ]; then
-			echo "Copying $file..."
+			echo -n "Copying $file..."
 			cp $file /mnt/etc/$file
+			echo "done."
 		fi
 	done
+
+	echo -n "Installing timezone link..."
+	rm -f /mnt/etc/localtime
+	ln -s /usr/share/zoneinfo/$TZ /mnt/etc/localtime
+	echo "done."
 
 	echo -n "Making devices..."
 	cd /mnt/dev
 	sh MAKEDEV all
 	echo "done."
 
-	echo "Copying kernel..."
+	echo -n "Copying kernel..."
 	cp /netbsd /mnt/netbsd
+	echo "done."
+
+	md_installboot ${ROOTDISK}
 )
 
 # Unmount all filesystems and check their integrity.
 umount -a
 echo "Checking filesystem integrity..."
 fsck -pf
-
-# Install boot code on target disk.
-echo "Installing boot block..."
-disklabel -W ${ROOTDISK}
-disklabel -B ${ROOTDISK}
 
 cat << \__congratulations_1
 
