@@ -1,0 +1,23 @@
+#	$NetBSD: files.dev,v 1.1 2004/01/18 04:07:17 sekiya Exp $
+
+define giobus {}
+
+device imc: giobus, eisabus
+attach imc at mainbus
+file arch/sgimips/dev/imc.c		imc
+
+device pic: giobus
+attach pic at mainbus
+file arch/sgimips/dev/pic.c		pic
+
+device crime
+attach crime at mainbus
+file arch/sgimips/dev/crime.c		crime
+
+device	zsc {[channel = -1]}
+device	zstty: tty
+attach	zstty at zsc
+file 	dev/ic/z8530tty.c			zstty needs-flag
+file	arch/sgimips/dev/zs_kgdb.c		kgdb
+file 	arch/sgimips/dev/zs.c			zsc needs-flag
+file 	dev/ic/z8530sc.c			zsc
