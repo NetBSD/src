@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.87 2003/04/28 23:16:25 bjh21 Exp $	*/
+/*	$NetBSD: if.h,v 1.88 2003/04/30 18:50:26 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -75,6 +75,13 @@
 #define _NET_IF_H_
 
 #include <sys/featuretest.h>
+
+/*
+ * Length of interface external name, including terminating '\0'.
+ * Note: this is the same size as a generic device's external name.
+ */
+#define IF_NAMESIZE 16
+
 #if defined(_NETBSD_SOURCE)
 
 #include <sys/socket.h>
@@ -129,12 +136,7 @@ struct ether_header;
 struct ifnet;
 struct rt_addrinfo;
 
-/*
- * Length of interface external name, including terminating '\0'.
- * Note: this is the same size as a generic device's external name.
- */
-#define	IFNAMSIZ	16
-#define	IF_NAMESIZE	IFNAMSIZ
+#define	IFNAMSIZ	IF_NAMESIZE
 
 /*
  * Structure describing a `cloning' interface.
