@@ -1,4 +1,4 @@
-/*	$NetBSD: edlabel.c,v 1.11 2002/03/02 12:22:27 mrg Exp $	*/
+/*	$NetBSD: edlabel.c,v 1.12 2002/03/03 12:13:47 he Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -534,18 +534,18 @@ main(argc, argv)
 {
 	struct disklabel dl;
 	struct cmd *cmd;
-	char *devname;
+	char *dev_name;
 
 	if (argc != 2) {
 		fprintf(stderr, "usage: edlabel RAWDISK\n");
 		exit(1);
 	}
-	devname = argv[1];
+	dev_name = argv[1];
 
 	rawpartition = getrawpartition();
 	maxpartitions = getmaxpartitions();
 
-	label_read(&dl, devname);
+	label_read(&dl, dev_name);
 
 	menu();
 
@@ -562,7 +562,7 @@ main(argc, argv)
 		continue;
 
 	found:
-		cmd->cmd_func(&dl, devname);
+		cmd->cmd_func(&dl, dev_name);
 	}
 	exit(0);
 }
