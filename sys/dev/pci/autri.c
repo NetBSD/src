@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.4 2002/02/05 01:51:51 eeh Exp $	*/
+/*	$NetBSD: autri.c,v 1.5 2002/05/30 17:04:13 someya Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -398,12 +398,12 @@ autri_reset_codec(void *sc_)
 		ready = AUTRI_NX_ACR0_CODEC_READY;
 		break;
 	case AUTRI_DEVICE_ID_SIS_7018:
-		/* warm reset AC'97 codec */
-		autri_reg_set_4(sc, AUTRI_SIS_SCTRL, 1);
-		delay(100);
+		/* cold reset AC'97 codec */
+		autri_reg_set_4(sc, AUTRI_SIS_SCTRL, 2);
+		delay(1000);
 		/* release reset (warm & cold) */
 		autri_reg_clear_4(sc, AUTRI_SIS_SCTRL, 3);
-		delay(100);
+		delay(2000);
 
 		addr = AUTRI_SIS_SCTRL;
 		ready = AUTRI_SIS_SCTRL_CODEC_READY;
@@ -654,7 +654,7 @@ autri_init(void *sc_)
 		delay(100);
 		/* reset Digital Controller */
 		reg = pci_conf_read(pc, pt, AUTRI_PCI_LEGACY_IOBASE);
-		pci_conf_write(pc, pt, AUTRI_PCI_LEGACY_IOBASE, reg | 0x000c0000);
+		pci_conf_write(pc, pt, AUTRI_PCI_LEGACY_IOBASE, reg | 0x00040000);
 		delay(100);
 		/* release reset */
 		reg = pci_conf_read(pc, pt, AUTRI_PCI_LEGACY_IOBASE);
@@ -725,10 +725,10 @@ autri_enable_loop_interrupt(void *sc_)
 
 	/*reg = (ENDLP_IE | MIDLP_IE);*/
 	reg = ENDLP_IE;
-#if 0
+
 	if (sc->sc_devid == AUTRI_DEVICE_ID_SIS_7018)
 		reg |= BANK_B_EN;
-#endif
+
 	autri_reg_set_4(sc,AUTRI_LFO_GC_CIR,reg);
 }
 
@@ -1223,16 +1223,14 @@ autri_setup_channel(struct autri_softc *sc, int mode,
 	if (mode == AUMODE_PLAY) {
 		chst = &sc->sc_play;
 		dch[0] = ((delta << 12) / 48000) & 0x0000ffff;
-		if (sc->sc_devid != AUTRI_DEVICE_ID_SIS_7018)
-			ctrl |= AUTRI_CTRL_WAVEVOL;
-/*
-		if (sc->sc_devid == AUTRI_DEVICE_ID_ALI_M5451)
-			ctrl |= 0x80000000;
-*/
+		ctrl |= AUTRI_CTRL_WAVEVOL;
 	} else {
 		chst = &sc->sc_rec;
 		dch[0] = ((48000 << 12) / delta) & 0x0000ffff;
-		ctrl |= AUTRI_CTRL_MUTE;
+		if (sc->sc_devid == AUTRI_DEVICE_ID_SIS_7018)
+			ctrl |= AUTRI_CTRL_MUTEVOL_SIS;
+		else
+			ctrl |= AUTRI_CTRL_MUTEVOL;
 	}
 
 	dmaaddr = DMAADDR(chst->dma);
@@ -1248,7 +1246,10 @@ autri_setup_channel(struct autri_softc *sc, int mode,
 		else {
 			/* channel for interrupt */
 			dmalen = (chst->blksize >> factor);
-			ctrl |= AUTRI_CTRL_MUTE;
+			if (sc->sc_devid == AUTRI_DEVICE_ID_SIS_7018)
+				ctrl |= AUTRI_CTRL_MUTEVOL_SIS;
+			else
+				ctrl |= AUTRI_CTRL_MUTEVOL;
 		}
 
 		eso = dmalen - 1;
