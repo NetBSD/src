@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbm.h,v 1.5 1994/10/26 00:56:08 cgd Exp $	*/
+/*	$NetBSD: ndbm.h,v 1.6 1995/07/20 23:31:11 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -74,6 +74,8 @@ datum	 dbm_nextkey __P((DBM *));
 DBM	*dbm_open __P((const char *, int, int));
 int	 dbm_store __P((DBM *, datum, datum, int));
 int	 dbm_dirfno __P((DBM *));
+int	 dbm_error __P((DBM *));
+int	 dbm_clearerr __P((DBM *));
 __END_DECLS
 
 #endif /* !_NDBM_H_ */
