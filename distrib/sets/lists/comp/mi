@@ -1007,6 +1007,7 @@
 ./usr/include/sys/socketvar.h
 ./usr/include/sys/sockio.h
 ./usr/include/sys/stat.h
+./usr/include/sys/swap.h
 ./usr/include/sys/syscall.h
 ./usr/include/sys/syscallargs.h
 ./usr/include/sys/sysctl.h
