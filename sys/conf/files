@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.121 1997/04/02 21:34:11 christos Exp $
+#	$NetBSD: files,v 1.122 1997/04/29 05:11:32 scottr Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -75,6 +75,10 @@ file	dev/ic/elink3.c		ep
 # LANCE and PCnet Ethernet controllers
 device	le: arp, ether, ifnet
 file	dev/ic/am7990.c		le
+
+# 8390-family Ethernet controllers
+define	dp8390nic
+file	dev/ic/dp8390.c		dp8390nic
 
 # NCR 5380 SCSI Bus Controller
 define	ncr5380sbc
