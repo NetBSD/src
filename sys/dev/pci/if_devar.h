@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.34 2000/03/23 07:01:38 thorpej Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.35 2000/05/03 20:52:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -915,7 +915,7 @@ static void tulip_softintr(void);
 #endif
 
 #if defined(__FreeBSD__)
-typedef void ifnet_ret_t;
+#define	ifnet_ret_t void
 typedef int ioctl_cmd_t;
 #if defined(TULIP_HDR_DATA)
 static tulip_softc_t *tulips[TULIP_MAX_DEVICES];
@@ -951,7 +951,7 @@ NETISR_SET(NETISR_DE, tulip_softintr);
 #endif
 
 #if defined(__bsdi__)
-typedef int ifnet_ret_t;
+#define	ifnet_ret_t int
 typedef u_long ioctl_cmd_t;
 extern struct cfdriver decd;
 #define	TULIP_UNIT_TO_SOFTC(unit)	((tulip_softc_t *) decd.cd_devs[unit])
@@ -979,7 +979,7 @@ arp_ifinit(
 #endif	/* __bsdi__ */
 
 #if defined(__NetBSD__)
-typedef void ifnet_ret_t;
+#define	ifnet_ret_t void
 typedef u_long ioctl_cmd_t;
 extern struct cfattach de_ca;
 extern struct cfdriver de_cd;
