@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.6 1999/01/10 18:22:14 augustss Exp $ */
+/* $NetBSD: wsmouse.c,v 1.7 1999/06/30 06:21:21 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsmouse.c,v 1.6 1999/01/10 18:22:14 augustss Exp $";
+    "$NetBSD: wsmouse.c,v 1.7 1999/06/30 06:21:21 augustss Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -94,6 +94,7 @@ static const char _rcsid[] __attribute__ ((unused)) =
 #include <sys/tty.h>
 #include <sys/signalvar.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
@@ -115,13 +116,23 @@ struct wsmouse_softc {
 	int		sc_dx;		/* delta-x */
 	int		sc_dy;		/* delta-y */
 	int		sc_dz;		/* delta-z */
+
+	int		sc_refcnt;
+	u_char		sc_dying;	/* device is being detached */
+
 };
 
 int	wsmouse_match __P((struct device *, struct cfdata *, void *));
 void	wsmouse_attach __P((struct device *, struct device *, void *));
+int	wsmouse_detach __P((struct device *, int));
+int	wsmouse_activate __P((struct device *, enum devact));
+
+int	wsmouse_do_ioctl __P((struct wsmouse_softc *, u_long, caddr_t, 
+			      int, struct proc *));
 
 struct cfattach wsmouse_ca = {
 	sizeof (struct wsmouse_softc), wsmouse_match, wsmouse_attach,
+	wsmouse_detach, wsmouse_activate
 };
 
 #if NWSMOUSE > 0
@@ -150,7 +161,6 @@ wsmouse_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-
 	return (1);
 }
 
@@ -162,11 +172,68 @@ wsmouse_attach(parent, self, aux)
         struct wsmouse_softc *sc = (struct wsmouse_softc *)self;
 	struct wsmousedev_attach_args *ap = aux;
 
-	printf("\n");
-
 	sc->sc_accessops = ap->accessops;
 	sc->sc_accesscookie = ap->accesscookie;
 	sc->sc_ready = 0;				/* sanity */
+
+	printf("\n");
+}
+
+int
+wsmouse_activate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	/* XXX should we do something more? */
+	return (0);
+}
+
+/*
+ * Detach a mouse.  To keep track of users of the softc we keep
+ * a reference count that's incremented while inside, e.g., read.
+ * If the mouse is active and the reference count is > 0 (0 is the
+ * normal state) we post an event and then wait for the process
+ * that had the reference to wake us up again.  Then we blow away the
+ * vnode and return (which will deallocate the softc).
+ */
+int
+wsmouse_detach(self, flags)
+	struct device  *self;
+	int flags;
+{
+	struct wsmouse_softc *sc = (struct wsmouse_softc *)self;
+	struct wseventvar *evar;
+	int maj, mn;
+	int s;
+
+	sc->sc_dying = 1;
+
+	evar = &sc->sc_events;
+	if (evar->io) {
+		s = spltty();
+		if (--sc->sc_refcnt >= 0) {
+			/* Wake everyone by generating a dummy event. */
+			if (++evar->put >= WSEVENT_QSIZE)
+				evar->put = 0;
+			WSEVENT_WAKEUP(evar);
+			/* Wait for processes to go away. */
+			if (tsleep(sc, PZERO, "wsmdet", hz * 60))
+				printf("wsmouse_detach: %s didn't detach\n",
+				       sc->sc_dv.dv_xname);
+		}
+		splx(s);
+	}
+
+	/* locate the major number */
+	for (maj = 0; maj < nchrdev; maj++)
+		if (cdevsw[maj].d_open == wsmouseopen)
+			break;
+
+	/* Nuke the vnodes for any open instances (calls close). */
+	mn = self->dv_unit;
+	vdevgone(maj, mn, mn, VCHR);
+
+	return (0);
 }
 
 void
@@ -177,6 +244,7 @@ wsmouse_input(wsmousedev, btns, dx, dy, dz)
 {
 	struct wsmouse_softc *sc = (struct wsmouse_softc *)wsmousedev;
 	struct wscons_event *ev;
+	struct wseventvar *evar;
 	int mb, ub, d, get, put, any;
 
         /*
@@ -184,6 +252,8 @@ wsmouse_input(wsmousedev, btns, dx, dy, dz)
          */
 	if (sc->sc_ready == 0)
 		return;
+
+	evar = &sc->sc_events;
 
 	sc->sc_mb = btns;
 	sc->sc_dx += dx;
@@ -198,9 +268,9 @@ wsmouse_input(wsmousedev, btns, dx, dy, dz)
 	 * mark them `unchanged'.
 	 */
 	any = 0;
-	get = sc->sc_events.get;
-	put = sc->sc_events.put;
-	ev = &sc->sc_events.q[put];
+	get = evar->get;
+	put = evar->put;
+	ev = &evar->q[put];
 
 	/* NEXT prepares to put the next event, backing off if necessary */
 #define	NEXT								\
@@ -213,7 +283,7 @@ wsmouse_input(wsmousedev, btns, dx, dy, dz)
 	ev++;								\
 	if (put >= WSEVENT_QSIZE) {					\
 		put = 0;						\
-		ev = &sc->sc_events.q[0];				\
+		ev = &evar->q[0];				\
 	}								\
 	any = 1
 	/* TIMESTAMP sets `time' field of the event to the current time */
@@ -271,8 +341,8 @@ wsmouse_input(wsmousedev, btns, dx, dy, dz)
 out:
 	if (any) {
 		sc->sc_ub = ub;
-		sc->sc_events.put = put;
-		WSEVENT_WAKEUP(&sc->sc_events);
+		evar->put = put;
+		WSEVENT_WAKEUP(evar);
 	}
 }
 
@@ -290,6 +360,9 @@ wsmouseopen(dev, flags, mode, p)
 	if (unit >= wsmouse_cd.cd_ndevs ||	/* make sure it was attached */
 	    (sc = wsmouse_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
+
+	if (sc->sc_dying)
+		return (EIO);
 
 	if ((flags & (FREAD | FWRITE)) == FWRITE)
 		return (0);			/* always allow open for write
@@ -349,8 +422,18 @@ wsmouseread(dev, uio, flags)
 {
 #if NWSMOUSE > 0
 	struct wsmouse_softc *sc = wsmouse_cd.cd_devs[minor(dev)];
+	int error;
 
-	return (wsevent_read(&sc->sc_events, uio, flags));
+	if (sc->sc_dying)
+		return (EIO);
+
+	sc->sc_refcnt++;
+	error = wsevent_read(&sc->sc_events, uio, flags);
+	if (--sc->sc_refcnt < 0) {
+		wakeup(sc);
+		error = EIO;
+	}
+	return (error);
 #else
 	return (ENXIO);
 #endif /* NWSMOUSE > 0 */
@@ -367,6 +450,30 @@ wsmouseioctl(dev, cmd, data, flag, p)
 #if NWSMOUSE > 0
 	struct wsmouse_softc *sc = wsmouse_cd.cd_devs[minor(dev)];
 	int error;
+
+	sc->sc_refcnt++;
+	error = wsmouse_do_ioctl(sc, cmd, data, flag, p);
+	if (--sc->sc_refcnt < 0)
+		wakeup(sc);
+	return (error);
+#else
+	return (ENXIO);
+#endif /* NWSMOUSE > 0 */
+}
+
+#if NWSMOUSE > 0
+int
+wsmouse_do_ioctl(sc, cmd, data, flag, p)
+	struct wsmouse_softc *sc;
+	u_long cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
+{
+	int error;
+
+	if (sc->sc_dying)
+		return (EIO);
 
 	/*
 	 * Try the generic ioctls that the wsmouse interface supports.
@@ -392,10 +499,8 @@ wsmouseioctl(dev, cmd, data, flag, p)
 	error = (*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd,
 	    data, flag, p);
 	return (error != -1 ? error : ENOTTY);
-#else
-	return (ENXIO);
-#endif /* NWSMOUSE > 0 */
 }
+#endif /* NWSMOUSE > 0 */
 
 int
 wsmousepoll(dev, events, p)
@@ -411,3 +516,4 @@ wsmousepoll(dev, events, p)
 	return (0);
 #endif /* NWSMOUSE > 0 */
 }
+
