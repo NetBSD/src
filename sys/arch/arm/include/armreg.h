@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.16 2002/04/15 16:34:32 thorpej Exp $	*/
+/*	$NetBSD: armreg.h,v 1.17 2002/04/15 17:27:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -265,7 +265,8 @@
 #define	XSCALE_AUXCTL_P		0x00000002 /* ECC protect page table access */
 #define	XSCALE_AUXCTL_MD_WB_RA	0x00000000 /* mini-D$ wb, read-allocate */
 #define	XSCALE_AUXCTL_MD_WB_RWA	0x00000010 /* mini-D$ wb, read/write-allocate */
-#define	XSCALE_AUXCTL_MB_WT	0x00000020 /* mini-D$ wt, read-allocate */
+#define	XSCALE_AUXCTL_MD_WT	0x00000020 /* mini-D$ wt, read-allocate */
+#define	XSCALE_AUXCTL_MD_MASK	0x00000030
 
 /* Cache type register definitions */
 #define	CPU_CT_ISIZE(x)		((x) & 0xfff)		/* I$ info */
