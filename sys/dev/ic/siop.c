@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.39 2001/02/11 18:04:49 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.40 2001/03/01 22:10:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -1060,8 +1060,8 @@ siop_scsicmd_end(siop_cmd)
 		    &siop_cmd->rs_cmd, sizeof(struct scsipi_sense),
 		    NULL, BUS_DMA_NOWAIT);
 		if (error) {
-			printf("%s: unable to load cmd DMA map: %d",
-			    sc->sc_dev.dv_xname, error);
+			printf("%s: unable to load cmd DMA map "
+			    "(for SENSE): %d\n", sc->sc_dev.dv_xname, error);
 			xs->error = XS_DRIVER_STUFFUP;
 			goto out;
 		}
@@ -1069,7 +1069,7 @@ siop_scsicmd_end(siop_cmd)
 		    &xs->sense.scsi_sense, sizeof(struct  scsipi_sense_data),
 		    NULL, BUS_DMA_NOWAIT);
 		if (error) {
-			printf("%s: unable to load sense DMA map: %d",
+			printf("%s: unable to load sense DMA map: %d\n",
 			    sc->sc_dev.dv_xname, error);
 			xs->error = XS_DRIVER_STUFFUP;
 			bus_dmamap_unload(sc->sc_dmat, siop_cmd->dmamap_cmd);
@@ -1323,7 +1323,7 @@ siop_scsicmd(xs)
 	error = bus_dmamap_load(sc->sc_dmat, siop_cmd->dmamap_cmd,
 	    xs->cmd, xs->cmdlen, NULL, BUS_DMA_NOWAIT);
 	if (error) {
-		printf("%s: unable to load cmd DMA map: %d",
+		printf("%s: unable to load cmd DMA map: %d\n",
 		    sc->sc_dev.dv_xname, error);
 		xs->error = XS_DRIVER_STUFFUP;
 		splx(s);
@@ -1333,7 +1333,7 @@ siop_scsicmd(xs)
 		error = bus_dmamap_load(sc->sc_dmat, siop_cmd->dmamap_data,
 		    xs->data, xs->datalen, NULL, BUS_DMA_NOWAIT);
 		if (error) {
-			printf("%s: unable to load cmd DMA map: %d",
+			printf("%s: unable to load data DMA map: %d\n",
 			    sc->sc_dev.dv_xname, error);
 			xs->error = XS_DRIVER_STUFFUP;
 			bus_dmamap_unload(sc->sc_dmat, siop_cmd->dmamap_cmd);
