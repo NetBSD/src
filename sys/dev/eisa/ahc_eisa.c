@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ahc_eisa.c,v 1.2 1996/05/16 06:30:22 mycroft Exp $
+ *	$Id: ahc_eisa.c,v 1.3 1996/05/16 06:39:34 mycroft Exp $
  */
 
 #if defined(__FreeBSD__)
@@ -250,10 +250,13 @@ ahc_eisa_match(parent, match, aux)
 		return (0);
 
 	if (bus_io_map(bc, EISA_SLOT_ADDR(ea->ea_slot) + AHC_EISA_SLOT_OFFSET, 
-		       AHC_EISA_IOSIZE, &ioh))
+	    AHC_EISA_IOSIZE, &ioh))
 		return (0);
+
 	irq = ahc_eisa_irq(bc, ioh);
-	bus_io_unmap(bc, ioh, EISA_SLOT_SIZE);
+
+	bus_io_unmap(bc, ioh, AHC_EISA_IOSIZE);
+
 	return (irq >= 0);
 }
 
