@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_net.c,v 1.13 1996/06/14 22:21:12 cgd Exp $	*/
+/*	$NetBSD: hpux_net.c,v 1.14 1997/04/01 19:59:02 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,6 +53,7 @@
 #include <sys/errno.h>
 #include <sys/proc.h>
 #include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/socket.h>
@@ -87,6 +88,8 @@ struct hpux_sys_getsockopt_args {
 int	hpux_sys_setsockopt	__P((struct proc *, void *, register_t *));
 int	hpux_sys_getsockopt	__P((struct proc *, void *, register_t *));
 
+void	socksetsize __P((int, struct mbuf *));
+
 
 #define MINBSDIPCCODE	0x3EE
 #define NUMBSDIPC	32
@@ -97,7 +100,7 @@ int	hpux_sys_getsockopt	__P((struct proc *, void *, register_t *));
  */
 
 struct hpuxtobsdipc {
-	int (*rout)();
+	int (*rout) __P((struct proc *, void *, register_t *));
 	int nargs;
 } hpuxtobsdipc[NUMBSDIPC] = {
 	{ sys_socket,			3 }, /* 3ee */
@@ -146,7 +149,7 @@ hpux_sys_netioctl(p, v, retval)
 {
 	struct hpux_sys_netioctl_args *uap = v;
 	int *args, i;
-	register int code;
+	int code;
 	int error;
 
 	args = SCARG(uap, args);
@@ -172,12 +175,12 @@ hpux_sys_netioctl(p, v, retval)
 	return ((*hpuxtobsdipc[code].rout)(p, uap, retval));
 }
 
-int
+void
 socksetsize(size, m)
 	int size;
 	struct mbuf *m;
 {
-	register int tmp;
+	int tmp;
 
 	if (size < sizeof(int)) {
 		switch(size) {
@@ -188,6 +191,7 @@ socksetsize(size, m)
 			tmp = (int) *mtod(m, short *);
 			break;
 	    	case 3:
+		default:	/* XXX uh, what if sizeof(int) > 4? */
 			tmp = (((int) *mtod(m, int *)) >> 8) & 0xffffff;
 			break;
 		}
@@ -199,6 +203,7 @@ socksetsize(size, m)
 }
 
 /* ARGSUSED */
+int
 hpux_sys_setsockopt(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -209,14 +214,14 @@ hpux_sys_setsockopt(p, v, retval)
 	struct mbuf *m = NULL;
 	int tmp, error;
 
-	if (error = getsock(p->p_fd, SCARG(uap, s), &fp))
+	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)))
 		return (error);
 	if (SCARG(uap, valsize) > MLEN)
 		return (EINVAL);
 	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
-		if (error = copyin(SCARG(uap, val), mtod(m, caddr_t),
-		    (u_int)SCARG(uap, valsize))) {
+		if ((error = copyin(SCARG(uap, val), mtod(m, caddr_t),
+		    (u_int)SCARG(uap, valsize)))) {
 			(void) m_free(m);
 			return (error);
 		}
@@ -244,19 +249,19 @@ hpux_sys_setsockopt2(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct hpux_sys_setsockopt2_args *uap = v;
+	struct hpux_sys_setsockopt2_args *uap = v;
 	struct file *fp;
 	struct mbuf *m = NULL;
 	int error;
 
-	if (error = getsock(p->p_fd, SCARG(uap, s), &fp))
+	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)))
 		return (error);
 	if (SCARG(uap, valsize) > MLEN)
 		return (EINVAL);
 	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
-		if (error = copyin(SCARG(uap, val), mtod(m, caddr_t),
-		    (u_int)SCARG(uap, valsize))) {
+		if ((error = copyin(SCARG(uap, val), mtod(m, caddr_t),
+		    (u_int)SCARG(uap, valsize)))) {
 			(void) m_free(m);
 			return (error);
 		}
@@ -277,16 +282,16 @@ hpux_sys_getsockopt(p, v, retval)
 	struct mbuf *m = NULL;
 	int valsize, error;
 
-	if (error = getsock(p->p_fd, SCARG(uap, s), &fp))
+	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)))
 		return (error);
 	if (SCARG(uap, val)) {
-		if (error = copyin((caddr_t)SCARG(uap, avalsize),
-		    (caddr_t)&valsize, sizeof (valsize)))
+		if ((error = copyin((caddr_t)SCARG(uap, avalsize),
+		    (caddr_t)&valsize, sizeof (valsize))))
 			return (error);
 	} else
 		valsize = 0;
-	if (error = sogetopt((struct socket *)fp->f_data, SCARG(uap, level),
-	    SCARG(uap, name), &m))
+	if ((error = sogetopt((struct socket *)fp->f_data, SCARG(uap, level),
+	    SCARG(uap, name), &m)))
 		goto bad;
 	if (SCARG(uap, val) && valsize && m != NULL) {
 		if (SCARG(uap, name) == SO_LINGER) {
