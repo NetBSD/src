@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.12 2000/11/02 21:18:03 tsutsui Exp $	*/
+/*	$NetBSD: obio.c,v 1.13 2001/09/05 12:37:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -222,7 +222,8 @@ obio_submatch(parent, cf, aux)
  * physical address it maps to (if found).
  */
 static struct prom_map {
-	vm_offset_t pa, va;
+	paddr_t pa;
+	vaddr_t va;
 } prom_mappings[] = {
 	{ OBIO_ENABLEREG, 0 },	/* regs: Sys ENA, Bus ERR, etc. */
 	{ OBIO_ZS_KBD_MS, 0 },	/* Keyboard and Mouse */
@@ -268,7 +269,8 @@ static void
 save_prom_mappings __P((void))
 {
 	int *mon_pte;
-	vm_offset_t va, pa;
+	vaddr_t va;
+	paddr_t pa;
 	int i;
 
 	/* Note: mon_ctbl[0] maps SUN3X_MON_KDB_BASE */

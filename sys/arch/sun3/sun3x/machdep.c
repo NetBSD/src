@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.72 2001/08/31 04:44:57 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.73 2001/09/05 12:37:25 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -110,7 +110,7 @@ int	fputype;
 caddr_t	msgbufaddr;
 
 /* Virtual page frame for /dev/mem (see mem.c) */
-vm_offset_t vmmap;
+vaddr_t vmmap;
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -182,9 +182,9 @@ cpu_startup()
 {
 	caddr_t v;
 	int sz, i;
-	vm_size_t size;
+	vsize_t size;
 	int base, residual;
-	vm_offset_t minaddr, maxaddr;
+	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
 
 	/*
@@ -229,12 +229,12 @@ cpu_startup()
 	 * in that they usually occupy more virtual memory than physical.
 	 */
 	size = MAXBSIZE * nbuf;
-	if (uvm_map(kernel_map, (vm_offset_t *) &buffers, round_page(size),
+	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != 0)
 		panic("startup: cannot allocate VM for buffers");
-	minaddr = (vm_offset_t)buffers;
+	minaddr = (vaddr_t)buffers;
 	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
 		/* don't want to alloc more physical mem than needed */
 		bufpages = btoc(MAXBSIZE) * nbuf;
@@ -242,8 +242,8 @@ cpu_startup()
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
 	for (i = 0; i < nbuf; i++) {
-		vm_size_t curbufsize;
-		vm_offset_t curbuf;
+		vsize_t curbufsize;
+		vaddr_t curbuf;
 		struct vm_page *pg;
 
 		/*
@@ -252,7 +252,7 @@ cpu_startup()
 		 * for the first "residual" buffers, and then we allocate
 		 * "base" pages for the rest.
 		 */
-		curbuf = (vm_offset_t) buffers + (i * MAXBSIZE);
+		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
 		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
@@ -629,7 +629,7 @@ dumpsys()
 	struct sun3x_kcore_hdr *sh;
 	phys_ram_seg_t *crs_p;
 	char *vaddr;
-	vm_offset_t paddr;
+	paddr_t paddr;
 	int psize, todo, seg, segsz;
 	daddr_t blkno;
 	int error = 0;

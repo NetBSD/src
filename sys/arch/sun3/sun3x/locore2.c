@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.24 2001/02/22 07:11:13 chs Exp $	*/
+/*	$NetBSD: locore2.c,v 1.25 2001/09/05 12:37:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@ _save_symtab()
 static void
 _vm_init()
 {
-	vm_offset_t nextva;
+	vaddr_t nextva;
 
 	/*
 	 * First preserve our symbol table, which might have been

@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.20 2001/08/31 04:44:57 simonb Exp $	*/
+/*	$NetBSD: dvma.c,v 1.21 2001/09/05 12:37:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -172,13 +172,13 @@ dvma_mapin(kmem_va, len, canwait)
 	int     len, canwait;
 {
 	void * dvma_addr;
-	vm_offset_t kva, tva;
-	register int npf, s;
+	vaddr_t kva, tva;
+	int npf, s;
 	paddr_t pa;
 	long off, pn;
 	boolean_t rv;
 
-	kva = (u_long)kmem_va;
+	kva = (vaddr_t)kmem_va;
 #ifdef	DIAGNOSTIC
 	/*
 	 * Addresses below VM_MIN_KERNEL_ADDRESS are not part of the kernel
@@ -191,7 +191,7 @@ dvma_mapin(kmem_va, len, canwait)
 	/*
 	 * Calculate the offset of the data buffer from a page boundary.
 	 */
-	off = (int)kva & PGOFSET;
+	off = kva & PGOFSET;
 	kva -= off;	/* Truncate starting address to nearest page. */
 	len = round_page(len + off); /* Round the buffer length to pages. */
 	npf = btoc(len); /* Determine the number of pages to be mapped. */
@@ -295,7 +295,7 @@ dvma_malloc(bytes)
 	size_t bytes;
 {
 	void *new_mem, *dvma_mem;
-	vm_size_t new_size;
+	vsize_t new_size;
 
 	if (!bytes)
 		return NULL;
@@ -315,7 +315,7 @@ dvma_free(addr, size)
 	void *addr;
 	size_t size;
 {
-	vm_size_t sz = m68k_round_page(size);
+	vsize_t sz = m68k_round_page(size);
 
 	dvma_mapout(addr, sz);
 	/* XXX: need kmem address to free it...

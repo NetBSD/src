@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.19 2001/04/24 04:31:15 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.20 2001/09/05 12:37:25 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,7 +64,7 @@
 #include <sun3/sun3/machdep.h>
 
 /* XXX - Put this in pmap_pvt.h or something? */
-extern vm_offset_t avail_start;
+extern paddr_t avail_start;
 
 #define	mmread	mmrw
 cdev_decl(mm);
@@ -101,9 +101,9 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register struct iovec *iov;
-	register vm_offset_t o, v;
-	register int c, rw;
+	struct iovec *iov;
+	vaddr_t o, v;
+	int c, rw;
 	int error = 0;
 	static int physlock;
 	vm_prot_t prot;
@@ -299,10 +299,10 @@ promacc(va, len, rw)
 	caddr_t va;
 	int len, rw;
 {
-	vm_offset_t sva, eva;
+	vaddr_t sva, eva;
 
-	sva = (vm_offset_t)va;
-	eva = (vm_offset_t)va + len;
+	sva = (vaddr_t)va;
+	eva = (vaddr_t)va + len;
 
 	/* Test for the most common case first. */
 	if (sva < SUN3X_PROM_BASE)
