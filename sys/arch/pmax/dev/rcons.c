@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.22 1999/04/13 18:53:30 ad Exp $	*/
+/*	$NetBSD: rcons.c,v 1.23 1999/04/22 00:33:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -68,6 +68,7 @@
 #include <machine/fbio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rcons/rcons.h>
+#include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
 #include <machine/fbvar.h>
 
@@ -75,6 +76,7 @@
 #include <pmax/dev/fbreg.h>
 #include <pmax/dev/lk201var.h>
 
+#include "fb.h"
 
 /*
  * Console I/O is redirected to the appropriate device, either a screen and
@@ -108,12 +110,14 @@ static void	rcons_later __P((void*));
  * rcons_connect is called by fbconnect when the first frame buffer is
  * attached.   That frame buffer will always be the console frame buffer.
  */
+#if NFB > 0
 void
 rcons_connect (info)
 	struct fbinfo *info;
 {
 	static struct rasops_info ri;
-
+	int cookie;
+	
 	/* TC mfb has special needs; 8-bits per pel, but monochrome */
 	if (info->fi_type.fb_boardtype == PMAX_FBTYPE_MFB) {
 		ri.ri_depth = 8;
@@ -125,10 +129,16 @@ rcons_connect (info)
 	ri.ri_height = info->fi_type.fb_height;
 	ri.ri_stride = info->fi_linebytes;
 	ri.ri_bits = (u_char *)info->fi_pixels;
+
+	wsfont_init();
 	
+	/* Choose 'Gallant' font if this is an 8-bit display */
+	if (ri.ri_depth == 8 && (cookie = wsfont_find("Gallant", 0, 0, 0)) >= 0)
+		wsfont_lock(cookie, &ri.ri_font, WSFONT_LITTLE, WSFONT_LITTLE);
+
 	/* Get operations set and set framebugger colormap */
 	rasops_init(&ri, 0, 80, 1, 0);
-	
+
 	if (ri.ri_depth == 8 && info->fi_type.fb_boardtype != PMAX_FBTYPE_MFB)
 		info->fi_driver->fbd_putcmap(info, rasops_cmap, 0, 256);
 
@@ -151,11 +161,13 @@ rcons_connect (info)
 	rc.rc_height = ri.ri_height;
 	rcons_init(&rc);
 }
+#endif
 
 
 /*
  * Called by drivers which can provide a native 'struct wsdisplay_emulops'.
  */
+#if NPX > 0
 void
 rcons_connect_native (ops, cookie, width, height, cols, rows)
 	struct wsdisplay_emulops *ops;
@@ -186,7 +198,7 @@ rcons_connect_native (ops, cookie, width, height, cols, rows)
 	rc.rc_maxrow = rows;
 	rcons_init(&rc);
 }
-
+#endif
 
 /* 
  * Hack around the rcons putchar interface not taking a dev_t.
