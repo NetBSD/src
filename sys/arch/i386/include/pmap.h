@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.68 2003/01/29 14:12:35 drochner Exp $	*/
+/*	$NetBSD: pmap.h,v 1.69 2003/02/26 21:29:02 fvdl Exp $	*/
 
 /*
  *
@@ -336,7 +336,7 @@ extern int pmap_pg_g;			/* do we support PG_G? */
 #define pmap_is_modified(pg)		pmap_test_attrs(pg, PG_M)
 #define pmap_is_referenced(pg)		pmap_test_attrs(pg, PG_U)
 #define pmap_move(DP,SP,D,L,S)
-#define pmap_phys_address(ppn)		i386_ptob(ppn)
+#define pmap_phys_address(ppn)		x86_ptob(ppn)
 #define pmap_valid_entry(E) 		((E) & PG_V) /* is PDE or PTE valid? */
 
 
@@ -471,7 +471,7 @@ vtopte(vaddr_t va)
 
 	KASSERT(va < (PDSLOT_KERN << PDSHIFT));
 
-	return (PTE_BASE + i386_btop(va));
+	return (PTE_BASE + x86_btop(va));
 }
 
 static __inline pt_entry_t * __attribute__((__unused__))
@@ -490,7 +490,7 @@ kvtopte(vaddr_t va)
 	}
 #endif
 
-	return (PTE_BASE + i386_btop(va));
+	return (PTE_BASE + x86_btop(va));
 }
 
 paddr_t vtophys __P((vaddr_t));
