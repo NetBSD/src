@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.78 1998/07/04 22:18:53 jonathan Exp $	*/
+/*	$NetBSD: systm.h,v 1.79 1998/08/06 04:50:14 perry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -185,26 +185,28 @@ char	*bitmask_snprintf __P((u_long, const char *, char *, size_t));
 
 void	tablefull __P((const char *));
 
-void	bcopy __P((const void *, void *, size_t));
-void	ovbcopy __P((const void *, void *, size_t));
-void	bzero __P((void *, size_t));
-int	bcmp __P((const void *, const void *, size_t));
-#if defined(UVM)
-int	kcopy __P((const void *, void *, size_t));
-#endif
-
 void	*memchr __P((const void *, int, size_t));
 int      memcmp __P((const void *, const void *, size_t));
 void    *memcpy __P((void *, const void *, size_t));
 void    *memmove __P((void *, const void *, size_t));
 void    *memset __P((void *, int, size_t));
 
-#if 0		/* XXX not ready for this yet */
-#define bcopy(s,t,n)	memcpy(t,s,n)
-#define ovbcopy(s,t,n)	memmove(t,s,n)
-#define bzero(s,n)	memset(s,0,n)
-#define bcmp(s,t,n)	memcmp(s,t,n)
+/* XXX b*() are now macros. should remove these prototypes soon */
+#if 0
+void	bcopy __P((const void *, void *, size_t));
+void	ovbcopy __P((const void *, void *, size_t));
+void	bzero __P((void *, size_t));
+int	bcmp __P((const void *, const void *, size_t));
 #endif
+
+#if defined(UVM)
+int	kcopy __P((const void *, void *, size_t));
+#endif
+
+#define bcopy(src, dst, len)	memcpy(dst, src, len)
+#define ovbcopy(src, dst, len)	memmove(dst, src, len)
+#define bzero(src, len)		memset(src, 0, len)
+#define bcmp(a, b, len)		memcmp(a, b, len)
 
 int	copystr __P((const void *, void *, size_t, size_t *));
 int	copyinstr __P((const void *, void *, size_t, size_t *));
