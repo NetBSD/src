@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.23 1995/07/24 07:08:14 cgd Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.24 1995/07/24 09:03:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -145,7 +145,7 @@ struct scsi_link {
 	void	*device_softc;		/* needed for call to foo_start */
 	struct	scsi_adapter *adapter;	/* adapter entry points etc. */
 	void	*adapter_softc;		/* needed for call to foo_scsi_cmd */
-}	
+};
 
 /*
  * This describes matching information for scsi_inqmatch().  The more things
