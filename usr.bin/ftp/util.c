@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.47 1999/05/05 16:04:58 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.48 1999/05/20 14:08:12 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.47 1999/05/05 16:04:58 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.48 1999/05/20 14:08:12 matthias Exp $");
 #endif /* not lint */
 
 /*
@@ -333,10 +333,10 @@ ftp_login(host, user, pass)
 		warnx("Login failed.");
 		goto cleanup_ftp_login;
 	}
-	if (proxy) {
-		rval = 1;
+	rval = 1;
+	if (proxy)
 		goto cleanup_ftp_login;
-	}
+
 	connected = -1;
 	for (n = 0; n < macnum; ++n) {
 		if (!strcmp("init", macros[n].mac_name)) {
