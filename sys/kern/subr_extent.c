@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.29 1999/10/11 22:57:17 thorpej Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.30 2000/05/24 02:22:36 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -66,15 +66,29 @@
 #include <stdio.h>
 #include <string.h>
 
-#define	malloc(s, t, flags)		malloc(s)
-#define	free(p, t)			free(p)
-#define	tsleep(chan, pri, str, timo)	(EWOULDBLOCK)
-#define	wakeup(chan)			((void)0)
-#define	pool_get(pool, flags)		malloc(pool->pr_size,0,0)
-#define	pool_put(pool, rp)		free(rp,0)
-#define	panic(a)			printf(a)
-#define	splhigh()			(1)
-#define	splx(s)				((void)(s))
+/*
+ * Use multi-line #defines to avoid screwing up the kernel tags file;
+ * without this, ctags produces a tags file where panic() shows up
+ * in subr_extent.c rather than subr_prf.c.
+ */
+#define	\
+malloc(s, t, flags)		malloc(s)
+#define	\
+free(p, t)			free(p)
+#define	\
+tsleep(chan, pri, str, timo)	(EWOULDBLOCK)
+#define	\
+wakeup(chan)			((void)0)
+#define	\
+pool_get(pool, flags)		malloc(pool->pr_size,0,0)
+#define	\
+pool_put(pool, rp)		free(rp,0)
+#define	\
+panic(a)			printf(a)
+#define	\
+splhigh()			(1)
+#define	\
+splx(s)				((void)(s))
 
 #define	KMEM_IS_RUNNING			(1)
 #endif
