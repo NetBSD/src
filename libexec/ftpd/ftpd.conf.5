@@ -1,6 +1,6 @@
-.\"	$NetBSD: ftpd.conf.5,v 1.15 2000/12/18 02:32:51 lukem Exp $
+.\"	$NetBSD: ftpd.conf.5,v 1.16 2001/06/26 19:30:45 lukem Exp $
 .\"
-.\" Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 18, 2000
+.Dd June 27, 2001
 .Dt FTPD.CONF 5
 .Os
 .Sh NAME
@@ -119,7 +119,8 @@ command will return the class settings for the current user as defined by
 Each configuration line may be one of:
 .Bl -tag -width 4n
 .It Sy advertise Ar class Ar host
-Set the address to advertise in the response to the
+.It Sy advertize Ar class Ar host
+Set the address to advertize in the response to the
 .Sy PASV
 and
 .Sy LPSV
@@ -127,7 +128,7 @@ commands to the address for
 .Ar host
 (which may be either a host name or IP address).
 This may be useful in some firewall configurations, although many
-ftp clients may not work if the address being advertised is different
+ftp clients may not work if the address being advertized is different
 to the address that they've connected to.
 If
 .Ar class

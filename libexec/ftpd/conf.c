@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.42 2001/05/25 23:40:25 kristerw Exp $	*/
+/*	$NetBSD: conf.c,v 1.43 2001/06/26 19:30:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.42 2001/05/25 23:40:25 kristerw Exp $");
+__RCSID("$NetBSD: conf.c,v 1.43 2001/06/26 19:30:44 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -208,7 +208,8 @@ parse_conf(const char *findclass)
 		if (0)  {
 			/* no-op */
 
-		} else if (strcasecmp(word, "advertise") == 0) {
+		} else if ((strcasecmp(word, "advertise") == 0)
+			|| (strcasecmp(word, "advertize") == 0)) {
 			struct addrinfo	hints, *res;
 			int		error;
 
