@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_pcc.c,v 1.6 1998/01/12 19:51:15 thorpej Exp $	*/
+/*	$NetBSD: zs_pcc.c,v 1.6.8.1 1999/02/13 16:54:27 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -189,13 +189,10 @@ void
 zsc_pcccnprobe(cp)
 	struct consdev *cp;
 {
-
-#ifdef notyet
-	if (cputyp != CPU_147) {
+	if (machineid != MVME_147) {
 		cp->cn_pri = CN_DEAD;
 		return;
 	}
-#endif
 
 	/* Initialize required fields. */
 	cp->cn_dev = makedev(zs_major, 0);

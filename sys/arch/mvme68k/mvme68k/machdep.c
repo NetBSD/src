@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45.2.1 1999/01/31 14:27:30 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45.2.2 1999/02/13 16:54:28 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -209,6 +209,7 @@ void	mvme162_init __P((void));
 #endif
 
 #ifdef MVME167
+#include <mvme68k/dev/pcctworeg.h>
 void	mvme167_init __P((void));
 #endif
 
@@ -333,8 +334,23 @@ mvme162_init()
 void
 mvme167_init()
 {
+	struct pcctwo *pcctwo;
 
-	/* XXX implement XXX */
+	pcctwo = (struct pcctwo *)PCCTWO_VADDR(PCCTWO_REG_OFF);
+
+	pcctwo->tt1_icr = 0;
+
+	for (delay_divisor = 60; delay_divisor > 0; delay_divisor--) {
+		pcctwo->tt1_counter = 0;
+		pcctwo->tt1_ctrl = PCCTWO_TT_CTRL_CEN;
+		delay(10000);
+		pcctwo->tt1_ctrl = 0;
+		if (pcctwo->tt1_counter > 10000)
+			break;	/* got it! */
+	}
+
+	/* calculate cpuspeed */
+	cpuspeed = 759 / delay_divisor;
 }
 #endif /* MVME167 */
 
@@ -771,13 +787,12 @@ identifycpu()
 	case MVME_162:
 	case MVME_167:
 	case MVME_177: {
-		int i;
-		char c;
-		for (i = 0; i < sizeof(boardid.longname); i++) {
-			c = boardid.longname[i];
-			if (c == '\0' || c == ' ')
-				break;
-			board_str[i] = c;
+		char *suffix = (char *)&boardid.suffix;
+		len = sprintf(board_str, "%x", machineid);
+		if (suffix[0] != '\0') {
+			board_str[len++] = suffix[0];
+			if (suffix[1] != '\0')
+				board_str[len++] = suffix[1];
 		}
 		break; }
 #endif
@@ -1331,5 +1346,5 @@ myetheraddr(ether)
 	e = e >> 8;
 	ether[4] = (u_char)(e & 0xff);
 	e = e >> 8;
-	ether[3] = (u_char)e;
+	ether[3] = (u_char)(e & 0x0f) | 0x20;
 }

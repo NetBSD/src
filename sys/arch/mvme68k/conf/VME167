@@ -1,15 +1,19 @@
-#	$NetBSD: VME167,v 1.1.2.1 1999/01/30 21:58:41 scw Exp $
+#	$NetBSD: VME167,v 1.1.2.2 1999/02/13 16:54:23 scw Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
 # Boards this kernel supports; need at lest the correct one
 options 	MVME167
 
+options 	FPSP
+
 maxusers	2
 
 options 	DDB
 
 options 	DIAGNOSTIC, DEBUG
+
+options 	NFS_BOOT_BOOTPARAM	# Diskless client w/ bootparamd
 
 #options 	SYSVSHM
 options 	KTRACE
@@ -54,9 +58,10 @@ mainbus0	at root
 
 pcctwo0		at mainbus0
 clock0		at pcctwo? ipl 5
+clmpcc0		at pcctwo? ipl 4
 ie0		at pcctwo? ipl 3
 #ncrsc0		at pcctwo? ipl 2
-lpt0		at pcctwo? ipl 1
+lpt*		at pcctwo? ipl 1
 
 
 #scsibus*	at ncrsc?

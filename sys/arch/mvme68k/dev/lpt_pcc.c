@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_pcc.c,v 1.1.2.1 1999/01/30 21:58:42 scw Exp $ */
+/*	$NetBSD: lpt_pcc.c,v 1.1.2.2 1999/02/13 16:54:26 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -60,30 +60,16 @@
 #include <mvme68k/dev/pccvar.h>
 
 
-struct lpt_pcc_softc {
-	struct device	sc_dev;
-	union lpt_regs	*sc_regs;
-	int		sc_ipl;
-	u_char		sc_prir;
-	u_char		sc_laststatus;
-	int		(*sc_lptint) __P((void *));
-	void		*sc_intarg;
-};
 
-
-int lpt_pcc_intr __P((void *));
-
-
-static void	lpt_pcc_hook_int __P((void *, int (*) __P((void *)), void *));
-static void	lpt_pcc_open __P((void *, int));
-static void	lpt_pcc_close __P((void *));
-static void	lpt_pcc_iprime __P((void *));
-static void	lpt_pcc_speed __P((void *, int));
-static int	lpt_pcc_notrdy __P((void *, int));
-static void	lpt_pcc_wr_data __P((void *, u_char));
+static int	lpt_pcc_intr __P((void *));
+static void	lpt_pcc_open __P((struct lpt_softc *, int));
+static void	lpt_pcc_close __P((struct lpt_softc *));
+static void	lpt_pcc_iprime __P((struct lpt_softc *));
+static void	lpt_pcc_speed __P((struct lpt_softc *, int));
+static int	lpt_pcc_notrdy __P((struct lpt_softc *, int));
+static void	lpt_pcc_wr_data __P((struct lpt_softc *, u_char));
 
 struct lpt_funcs lpt_pcc_funcs = {
-	lpt_pcc_hook_int,
 	lpt_pcc_open,
 	lpt_pcc_close,
 	lpt_pcc_iprime,
@@ -92,16 +78,14 @@ struct lpt_funcs lpt_pcc_funcs = {
 	lpt_pcc_wr_data
 };
 
-
 /*
  * Autoconfig stuff
  */
 static int  lpt_pcc_match  __P((struct device *, struct cfdata *, void *));
 static void lpt_pcc_attach __P((struct device *, struct device *, void *));
-static int  lpt_pcc_print  __P((void *, const char *));
 
 struct cfattach lpt_pcc_ca = {
-	sizeof(struct lpt_pcc_softc), lpt_pcc_match, lpt_pcc_attach
+	sizeof(struct lpt_softc), lpt_pcc_match, lpt_pcc_attach
 };
 
 extern struct cfdriver lpt_cd;
@@ -129,15 +113,17 @@ lpt_pcc_attach(parent, self, args)
 struct	device *parent, *self;
 void	*args;
 {
-	struct lpt_pcc_softc *sc = (void *)self;
+	struct lpt_softc *sc = (void *)self;
 	struct pcc_attach_args *pa = args;
-	struct lpt_attach_args lptarg;
+	union lpt_regs *regs;
 
 	/*
 	 * Get pointer to regs
 	 */
-	sc->sc_regs = (union lpt_regs *) PCC_VADDR(pa->pa_offset);
+	regs = sc->sc_regs = (void *) PCC_VADDR(pa->pa_offset);
 	sc->sc_ipl = pa->pa_ipl & PCC_IMASK;
+	sc->sc_laststatus = 0;
+	sc->sc_funcs = &lpt_pcc_funcs;
 
 	printf(": PCC Parallel Printer\n");
 
@@ -146,18 +132,15 @@ void	*args;
 	 */
 	sys_pcc->pr_int = 0;
 
-	lptarg.pa_funcs = &lpt_pcc_funcs;
-	lptarg.pa_arg = (void *)sc;
+	/*
+	 * Main attachment code
+	 */
+	lpt_attach_subr(sc);
 
-	(void) config_found(self, &lptarg, lpt_pcc_print);
-}
-
-static int
-lpt_pcc_print(aux, cp)
-	void *aux;
-	const char *cp;
-{
-	return (UNCONF);
+	/*
+	 * Hook into the printer interrupt
+	 */
+	pccintr_establish(PCCV_PRINTER, lpt_pcc_intr, sc->sc_ipl, sc);
 }
 
 /*
@@ -168,74 +151,59 @@ int
 lpt_pcc_intr(arg)
 	void *arg;
 {
-	struct lpt_pcc_softc *sc = arg;
+	struct lpt_softc *sc = (struct lpt_softc *)arg;
 	int i;
 
 	/* is printer online and ready for output */
 	if (lpt_pcc_notrdy(sc, 0) && lpt_pcc_notrdy(sc, 1))
 		return 0;
 
-	i = (sc->sc_lptint)(sc->sc_intarg);
+	i = lpt_intr(sc);
 
 	if ( sys_pcc->pr_int & LPI_ACKINT )
-		sys_pcc->pr_int = sc->sc_prir | LPI_ACKINT;
+		sys_pcc->pr_int = sc->sc_icr | LPI_ACKINT;
 
 	return i;
 }
 
-static void
-lpt_pcc_hook_int(arg, func, iarg)
-	void *arg;
-	int (*func) __P((void *));
-	void *iarg;
-{
-	struct lpt_pcc_softc *sc = (struct lpt_pcc_softc *)arg;
-
-	sc->sc_lptint = func;
-	sc->sc_intarg = iarg;
-
-	/*
-	 * Hook into the printer interrupt
-	 */
-	pccintr_establish(PCCV_PRINTER, lpt_pcc_intr, sc->sc_ipl, sc);
-}
 
 static void
-lpt_pcc_open(arg, int_ena)
-	void *arg;
+lpt_pcc_open(sc, int_ena)
+	struct lpt_softc *sc;
 	int int_ena;
 {
-	struct lpt_pcc_softc *sc = (struct lpt_pcc_softc *)arg;
 	int sps;
 
 	sys_pcc->pr_int = LPI_ACKINT | LPI_FAULTINT;
 
 	if ( int_ena == 0 ) {
-		sc->sc_prir = sc->sc_ipl | LPI_ENABLE;
 		sps = splhigh();
-		sys_pcc->pr_int = sc->sc_prir;
+		sc->sc_icr = sc->sc_ipl | LPI_ENABLE;
+		sys_pcc->pr_int = sc->sc_icr;
 		splx(sps);
 	}
 }
 
 static void
-lpt_pcc_close(arg)
-	void *arg;
+lpt_pcc_close(sc)
+	struct lpt_softc *sc;
 {
-	struct lpt_pcc_softc *sc = (struct lpt_pcc_softc *)arg;
+	sys_pcc->pr_int = 0;
+	sc->sc_icr = sc->sc_ipl;
+	sys_pcc->pr_int = sc->sc_icr;
 }
 
 static void
-lpt_pcc_iprime(arg)
-	void *arg;
+lpt_pcc_iprime(sc)
+	struct lpt_softc *sc;
 {
 	sys_pcc->pr_cr = LPC_INPUT_PRIME;
 	delay(100);
 }
 
 static void
-lpt_pcc_speed(arg, speed)
-	void *arg;
+lpt_pcc_speed(sc, speed)
+	struct lpt_softc *sc;
 	int speed;
 {
 	if ( speed == LPT_STROBE_FAST )
@@ -245,18 +213,18 @@ lpt_pcc_speed(arg, speed)
 }
 
 static int
-lpt_pcc_notrdy(arg, err)
-	void *arg;
+lpt_pcc_notrdy(sc, err)
+	struct lpt_softc *sc;
 	int err;
 {
-	struct lpt_pcc_softc *sc = (struct lpt_pcc_softc *)arg;
+	union lpt_regs *regs = sc->sc_reg;
 	u_char status;
 	u_char new;
 
 #define	LPS_INVERT	(LPS_SELECT)
 #define	LPS_MASK	(LPS_SELECT|LPS_FAULT|LPS_BUSY|LPS_PAPER_EMPTY)
 
-	status = (sc->sc_regs->pr_status ^ LPS_INVERT) & LPS_MASK;
+	status = (regs->pr_status ^ LPS_INVERT) & LPS_MASK;
 
 	if ( err ) {
 		new = status & ~sc->sc_laststatus;
@@ -273,17 +241,17 @@ lpt_pcc_notrdy(arg, err)
 				sc->sc_dev.dv_xname);
 	}
 
-	sys_pcc->pr_int = sc->sc_prir | LPI_FAULTINT;
+	sys_pcc->pr_int = sc->sc_icr | LPI_FAULTINT;
 
 	return status;
 }
 
 static void
-lpt_pcc_wr_data(arg, data)
-	void *arg;
+lpt_pcc_wr_data(sc, data)
+	struct lpt_softc *sc;
 	u_char data;
 {
-	struct lpt_pcc_softc *sc = (struct lpt_pcc_softc *)arg;
+	union lpt_regs *regs = sc->sc_reg;
 
-	sc->sc_regs->pr_data = data;
+	regs->pr_data = data;
 }

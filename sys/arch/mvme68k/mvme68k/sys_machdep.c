@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.13 1999/01/19 18:18:42 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.13.2.1 1999/02/13 16:54:30 scw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -132,6 +132,7 @@ vdoualarm(arg)
  * do pages, above that we do the entire cache.
  */
 /*ARGSUSED1*/
+int
 cachectl(req, addr, len)
 	int req;
 	caddr_t	addr;
@@ -142,8 +143,9 @@ cachectl(req, addr, len)
 #if defined(M68040)
 	if (mmutype == MMU_68040) {
 		int inc = 0;
-		int pa = 0, doall = 0;
-		caddr_t end;
+		int doall = 0;
+		paddr_t pa = 0;
+		caddr_t end = 0;
 #ifdef COMPAT_HPUX
 		extern struct emul emul_hpux;
 
@@ -153,7 +155,7 @@ cachectl(req, addr, len)
 #endif
 
 		if (addr == 0 ||
-		    (req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG)
+		    ((req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG))
 			doall = 1;
 
 		if (!doall) {
@@ -262,10 +264,12 @@ sys_sysarch(p, v, retval)
 	void *v;
 	int *retval;
 {
+#if 0 /* unused */
 	struct sysarch_args /* {
 		syscallarg(int) op; 
 		syscallarg(void *) parms;
 	} */ *uap = v;
+#endif
 
 	return (ENOSYS);
 }
