@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.21 1997/07/29 06:43:51 fair Exp $ */
+/*	$NetBSD: if_ie.c,v 1.22 1997/10/28 21:10:07 gwr Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -490,14 +490,14 @@ ie_intr(arg)
 		}
 	}
 
-	status = sc->scb->ie_status & IE_ST_WHENCE;
-	if (status == 0)
+	status = sc->scb->ie_status;
+	if ((status & IE_ST_WHENCE) == 0)
 		return 0;
 
-	loopcnt = 5;
+	loopcnt = sc->nframes;
 loop:
 	/* Ack interrupts FIRST in case we receive more during the ISR. */
-	ie_ack(sc, status);
+	ie_ack(sc, IE_ST_WHENCE & status);
 
 	if (status & (IE_ST_RECV | IE_ST_RNR)) {
 #ifdef IEDEBUG
@@ -542,11 +542,14 @@ loop:
 		printf("%s: cna\n", sc->sc_dev.dv_xname);
 #endif
 
-	status = sc->scb->ie_status & IE_ST_WHENCE;
-	if (status) {
+	status = sc->scb->ie_status;
+	if (status & IE_ST_WHENCE) {
+		/* It still wants service... */
 		if (--loopcnt > 0)
 			goto loop;
-		printf("%s: interrupt stuck?\n", sc->sc_dev.dv_xname);
+		/* ... but we've been here long enough. */
+		log(LOG_ERR, "%s: interrupt stuck?\n",
+			sc->sc_dev.dv_xname);
 		iereset(sc);
 	}
 	return 1;
