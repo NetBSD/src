@@ -27,6 +27,7 @@ extern initialize_file_ftype _initialize_gdb_osabi;
 extern initialize_file_ftype _initialize_copying;
 extern initialize_file_ftype _initialize_m68k_tdep;
 extern initialize_file_ftype _initialize_m68knbsd_tdep;
+extern initialize_file_ftype _initialize_nbsd_thread;
 extern initialize_file_ftype _initialize_corelow;
 extern initialize_file_ftype _initialize_solib;
 extern initialize_file_ftype _initialize_svr4_solib;
@@ -114,6 +115,7 @@ initialize_all_files (void)
   _initialize_copying ();
   _initialize_m68k_tdep ();
   _initialize_m68knbsd_tdep ();
+  _initialize_nbsd_thread ();
   _initialize_corelow ();
   _initialize_solib ();
   _initialize_svr4_solib ();
