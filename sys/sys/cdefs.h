@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cdefs.h	7.6 (Berkeley) 5/4/91
- *	$Id: cdefs.h,v 1.6 1993/12/03 20:39:35 jtc Exp $
+ *	$Id: cdefs.h,v 1.7 1993/12/12 07:47:04 cgd Exp $
  */
 
 #ifndef	_SYS_CDEFS_H_
@@ -83,9 +83,10 @@
 
 
 /*
- * Disable GCC's __atrribute__ extension when we're not using GCC.
+ * Disable GCC's __atrribute__ extension when we're not using GCC, or
+ * when using gcc -traditional.
  */
-#if !defined(__GNUC__)
+#if !defined(__GNUC__) || !defined(__STDC__)
 #define __attribute__(x)
 #endif
 
