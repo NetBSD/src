@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.45 1996/06/17 22:21:31 pk Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.46 1996/06/18 20:50:23 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -290,46 +290,31 @@ bwrite(bp)
 		bdwrite(bp);
 		return (0);
 	}
+
 	wasdelayed = ISSET(bp->b_flags, B_DELWRI);
 	CLR(bp->b_flags, (B_READ | B_DONE | B_ERROR | B_DELWRI));
 
 	s = splbio();
-	if (!sync) {
-		/*
-		 * If not synchronous, pay for the I/O operation and make
-		 * sure the buf is on the correct vnode queue.  We have
-		 * to do this now, because if we don't, the vnode may not
-		 * be properly notified that its I/O has completed.
-		 */
-		if (wasdelayed)
-			reassignbuf(bp, bp->b_vp);
-		else
-			curproc->p_stats->p_ru.ru_oublock++;
-	}
+
+	/*
+	 * Pay for the I/O operation and make sure the buf is on the correct
+	 * vnode queue.
+	 */
+	if (wasdelayed)
+		reassignbuf(bp, bp->b_vp);
+	else
+		curproc->p_stats->p_ru.ru_oublock++;
 
 	/* Initiate disk write.  Make sure the appropriate party is charged. */
 	bp->b_vp->v_numoutput++;
 	splx(s);
+
 	SET(bp->b_flags, B_WRITEINPROG);
 	VOP_STRATEGY(bp);
 
 	if (sync) {
-		/*
-		 * If I/O was synchronous, wait for it to complete.
-		 */
+		/* If I/O was synchronous, wait for it to complete. */
 		rv = biowait(bp);
-
-		/*
-		 * Pay for the I/O operation, if it's not been paid for, and
-		 * make sure it's on the correct vnode queue. (async operatings
-		 * were payed for above.)
-		 */
-		s = splbio();
-		if (wasdelayed)
-			reassignbuf(bp, bp->b_vp);
-		else
-			curproc->p_stats->p_ru.ru_oublock++;
-		splx(s);
 
 		/* Release the buffer. */
 		brelse(bp);
@@ -368,6 +353,12 @@ bdwrite(bp)
 {
 	int s;
 
+	/* If this is a tape block, write the block now. */
+	if (bdevsw[major(bp->b_dev)].d_type == D_TAPE) {
+		bawrite(bp);
+		return;
+	}
+
 	/*
 	 * If the block hasn't been seen before:
 	 *	(1) Mark it as having been seen,
@@ -376,16 +367,10 @@ bdwrite(bp)
 	 */
 	if (!ISSET(bp->b_flags, B_DELWRI)) {
 		SET(bp->b_flags, B_DELWRI);
-		curproc->p_stats->p_ru.ru_oublock++;	/* XXX */
+		curproc->p_stats->p_ru.ru_oublock++;
 		s = splbio();
 		reassignbuf(bp, bp->b_vp);
 		splx(s);
-	}
-
-	/* If this is a tape block, write the block now. */
-	if (bdevsw[major(bp->b_dev)].d_type == D_TAPE) {
-		bawrite(bp);
-		return;
 	}
 
 	/* Otherwise, the "write" is done, so mark and release the buffer. */
