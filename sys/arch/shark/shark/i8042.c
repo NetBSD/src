@@ -1,4 +1,4 @@
-/*	$NetBSD: i8042.c,v 1.3 2003/07/15 03:36:03 lukem Exp $	*/
+/*	$NetBSD: i8042.c,v 1.4 2003/10/22 09:43:07 agc Exp $	*/
 
 /*
  * Copyright 1997
@@ -59,7 +59,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i8042.c,v 1.3 2003/07/15 03:36:03 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i8042.c,v 1.4 2003/10/22 09:43:07 agc Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -272,7 +272,7 @@ i8042_cmd(bus_space_tag_t    iot,
           u_char             value)
 {
     u_int              retries;
-    register u_char    c = NULL;
+    register u_char    c = 0;
     int                status;  
     
     /* Assume failure
