@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_core.h,v 1.1.1.1 2000/05/07 00:16:18 wiz Exp $	*/
+/*	$NetBSD: bktr_core.h,v 1.2 2000/05/21 15:43:57 wiz Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_core.h,v 1.2 1999/10/28 13:58:16 roger Exp */
 
@@ -69,6 +69,9 @@ void            msp_dpl_write( bktr_ptr_t bktr, int i2c_addr, unsigned char dev,
 #define BKTR_SLEEP  ((caddr_t)bktr    )
 #define VBI_SLEEP   ((caddr_t)bktr + 1)
 
+
+/* device name for printf */
+char *bktr_name(bktr_ptr_t bktr);
 
 /* Prototypes for attatch and interrupt functions */
 void	common_bktr_attach( bktr_ptr_t bktr, int unit,
