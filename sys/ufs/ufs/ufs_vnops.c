@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.72 2000/07/22 15:26:16 jdolecek Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.73 2000/08/03 20:41:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -685,7 +685,7 @@ ufs_link(v)
 		if (DOINGSOFTDEP(vp))
 			softdep_change_linkcnt(ip);
 	}
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(cnp->cn_pnbuf);
 out1:
 	if (dvp != vp)
 		VOP_UNLOCK(vp, 0);
@@ -750,7 +750,7 @@ ufs_whiteout(v)
 		/* NOTREACHED */
 	}
 	if (cnp->cn_flags & HASBUF) {
-		FREE(cnp->cn_pnbuf, M_NAMEI);
+		PNBUF_PUT(cnp->cn_pnbuf);
 		cnp->cn_flags &= ~HASBUF;
 	}
 	return (error);
@@ -1204,7 +1204,7 @@ ufs_mkdir(v)
 #ifdef QUOTA
 	if ((error = getinoquota(ip)) ||
 	    (error = chkiq(ip, 1, cnp->cn_cred, 0))) {
-		free(cnp->cn_pnbuf, M_NAMEI);
+		PNBUF_PUT(cnp->cn_pnbuf);
 		VOP_VFREE(tvp, ip->i_number, dmode);
 		vput(tvp);
 		vput(dvp);
@@ -1324,7 +1324,7 @@ bad:
 		vput(tvp);
 	}
 out:
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	return (error);
 }
@@ -1573,8 +1573,7 @@ ufs_readdir(v)
 			dp = (struct dirent *)((caddr_t)dp + dp->d_reclen);
 		}
 		lost += uio->uio_offset - off;
-		MALLOC(cookies, off_t *, ncookies * sizeof(off_t), M_TEMP,
-		    M_WAITOK);
+		cookies = malloc(ncookies * sizeof(off_t), M_TEMP, M_WAITOK);
 		uio->uio_offset = off;
 		*ap->a_ncookies = ncookies;
 		*ap->a_cookies = cookies;
@@ -1973,7 +1972,7 @@ ufs_makeinode(mode, dvp, vpp, cnp)
 		mode |= IFREG;
 
 	if ((error = VOP_VALLOC(dvp, mode, cnp->cn_cred, &tvp)) != 0) {
-		free(cnp->cn_pnbuf, M_NAMEI);
+		PNBUF_PUT(cnp->cn_pnbuf);
 		vput(dvp);
 		return (error);
 	}
@@ -1983,7 +1982,7 @@ ufs_makeinode(mode, dvp, vpp, cnp)
 #ifdef QUOTA
 	if ((error = getinoquota(ip)) ||
 	    (error = chkiq(ip, 1, cnp->cn_cred, 0))) {
-		free(cnp->cn_pnbuf, M_NAMEI);
+		PNBUF_PUT(cnp->cn_pnbuf);
 		VOP_VFREE(tvp, ip->i_number, mode);
 		vput(tvp);
 		vput(dvp);
@@ -2014,7 +2013,7 @@ ufs_makeinode(mode, dvp, vpp, cnp)
 	if ((error = ufs_direnter(dvp, tvp, &newdir, cnp, NULL)) != 0)
 		goto bad;
 	if ((cnp->cn_flags & SAVESTART) == 0)
-		FREE(cnp->cn_pnbuf, M_NAMEI);
+		PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	*vpp = tvp;
 	return (0);
@@ -2024,7 +2023,7 @@ bad:
 	 * Write error occurred trying to update the inode
 	 * or the directory so must deallocate the inode.
 	 */
-	free(cnp->cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	ip->i_ffs_effnlink = 0;
 	ip->i_ffs_nlink = 0;

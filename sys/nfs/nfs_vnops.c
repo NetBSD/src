@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.116 2000/08/03 06:15:06 thorpej Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.117 2000/08/03 20:41:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1262,7 +1262,7 @@ nfs_mknodrpc(dvp, vpp, cnp, vap)
 			cache_enter(dvp, newvp, cnp);
 		*vpp = newvp;
 	}
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		VTONFS(dvp)->n_attrstamp = 0;
@@ -1393,7 +1393,7 @@ again:
 			cache_enter(dvp, newvp, cnp);
 		*ap->a_vpp = newvp;
 	}
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		VTONFS(dvp)->n_attrstamp = 0;
@@ -1467,7 +1467,7 @@ nfs_remove(v)
 			error = 0;
 	} else if (!np->n_sillyrename)
 		error = nfs_sillyrename(dvp, vp, cnp);
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(cnp->cn_pnbuf);
 	np->n_attrstamp = 0;
 	vrele(dvp);
 	vrele(vp);
@@ -1698,7 +1698,7 @@ nfs_link(v)
 		nfsm_wcc_data(dvp, wccflag);
 	}
 	nfsm_reqdone;
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!attrflag)
 		VTONFS(vp)->n_attrstamp = 0;
@@ -1767,7 +1767,7 @@ nfs_symlink(v)
 	nfsm_reqdone;
 	if (newvp)
 		vrele(newvp);
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		VTONFS(dvp)->n_attrstamp = 0;
@@ -1860,7 +1860,7 @@ nfs_mkdir(v)
 			cache_enter(dvp, newvp, cnp);
 		*ap->a_vpp = newvp;
 	}
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(cnp->cn_pnbuf);
 	vrele(dvp);
 	return (error);
 }
@@ -1891,7 +1891,7 @@ nfs_rmdir(v)
 	if (dvp == vp) {
 		vrele(dvp);
 		vrele(dvp);
-		FREE(cnp->cn_pnbuf, M_NAMEI);
+		PNBUF_PUT(cnp->cn_pnbuf);
 		return (EINVAL);
 	}
 	nfsstats.rpccnt[NFSPROC_RMDIR]++;
@@ -1903,7 +1903,7 @@ nfs_rmdir(v)
 	if (v3)
 		nfsm_wcc_data(dvp, wccflag);
 	nfsm_reqdone;
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		VTONFS(dvp)->n_attrstamp = 0;

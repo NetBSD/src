@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.18 2000/05/29 18:59:51 mycroft Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.19 2000/08/03 20:41:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -119,7 +119,7 @@ genfs_abortop(v)
 	} */ *ap = v;
  
 	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
-		FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
+		PNBUF_PUT(ap->a_cnp->cn_pnbuf);
 	return (0);
 }
 

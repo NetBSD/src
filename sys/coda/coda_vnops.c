@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.19 2000/06/27 17:53:44 mrg Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.20 2000/08/03 20:41:05 thorpej Exp $	*/
 
 /*
  * 
@@ -720,7 +720,7 @@ coda_abortop(v)
 /* locals */
 
     if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
-	FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(ap->a_cnp->cn_pnbuf);
     return (0);
 }
 
@@ -1169,7 +1169,7 @@ coda_create(v)
      * why it's here, but what the hey...
      */
     if ((cnp->cn_flags & SAVESTART) == 0) {
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(cnp->cn_pnbuf);
     }
     return(error);
 }
@@ -1244,7 +1244,7 @@ coda_remove(v)
     vput(dvp);
 
     if ((cnp->cn_flags & SAVESTART) == 0) {
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(cnp->cn_pnbuf);
     }
     return(error);
 }
@@ -1323,7 +1323,7 @@ exit:
 
     /* Drop the name buffer if we don't need to SAVESTART */
     if ((cnp->cn_flags & SAVESTART) == 0) {
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(cnp->cn_pnbuf);
     }
     return(error);
 }
@@ -1511,7 +1511,7 @@ coda_mkdir(v)
      * follow their lead, but this seems like it is probably
      * incorrect.  
      */
-    FREE(cnp->cn_pnbuf, M_NAMEI);
+    PNBUF_PUT(cnp->cn_pnbuf);
     return(error);
 }
 
@@ -1573,7 +1573,7 @@ coda_rmdir(v)
     vput(dvp);
 
     if ((cnp->cn_flags & SAVESTART) == 0) {
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(cnp->cn_pnbuf);
     }
     return(error);
 }
@@ -1672,7 +1672,7 @@ coda_symlink(v)
      * Free the name buffer 
      */
     if ((cnp->cn_flags & SAVESTART) == 0) {
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(cnp->cn_pnbuf);
     }
 
  exit:    

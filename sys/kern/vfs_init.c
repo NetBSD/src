@@ -1,7 +1,7 @@
-/*	$NetBSD: vfs_init.c,v 1.15 1999/11/15 18:49:09 fvdl Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.16 2000/08/03 20:41:23 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -314,6 +314,12 @@ vfsinit()
 {
 	extern struct vfsops *vfs_list_initial[];
 	int i;
+
+	/*
+	 * Initialize the namei pathname buffer pool.
+	 */
+	pool_init(&pnbuf_pool, MAXPATHLEN, 0, 0, 0, "pnbufpl",
+	     0, pool_page_alloc_nointr,  pool_page_free_nointr, M_NAMEI);
 
 	/*
 	 * Initialize the vnode table

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.34 2000/07/14 07:21:21 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.35 2000/08/03 20:41:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -2021,7 +2021,7 @@ netbsd32_execve(p, v, retval)
 
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
-	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
 	vput(pack.ep_vp);
@@ -2054,7 +2054,7 @@ bad:
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
 	vput(pack.ep_vp);
-	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
 freehdr:
@@ -2071,7 +2071,7 @@ exec_abort:
 		VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
 	if (pack.ep_emul_arg)
 		FREE(pack.ep_emul_arg, M_TEMP);
-	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
 	vput(pack.ep_vp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.18 2000/04/16 21:41:50 chs Exp $	*/
+/*	$NetBSD: namei.h,v 1.19 2000/08/03 20:41:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -174,6 +174,13 @@ struct	namecache {
 };
 
 #ifdef _KERNEL
+#include <sys/pool.h>
+
+extern struct pool pnbuf_pool;		/* pathname buffer pool */
+
+#define	PNBUF_GET()	pool_get(&pnbuf_pool, PR_WAITOK)
+#define	PNBUF_PUT(pnb)	pool_put(&pnbuf_pool, (pnb))
+
 int	namei __P((struct nameidata *ndp));
 int	lookup __P((struct nameidata *ndp));
 int	relookup __P((struct vnode *dvp, struct vnode **vpp,
@@ -185,7 +192,6 @@ void cache_enter __P((struct vnode *, struct vnode *, struct componentname *));
 void nchinit __P((void));
 struct mount;
 void cache_purgevfs __P((struct mount *));
-
 #endif
 
 /*

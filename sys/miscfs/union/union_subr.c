@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.39 2000/06/28 02:44:08 mrg Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.40 2000/08/03 20:41:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -748,10 +748,12 @@ union_relookup(um, dvp, vpp, cnp, cn, path, pathlen)
 	 * the work done by VOP_LOOKUP when given a CREATE flag.
 	 * Conclusion: Horrible.
 	 *
-	 * The pathname buffer will be FREEed by VOP_MKDIR.
+	 * The pathname buffer will be PNBUF_PUT'd by VOP_MKDIR.
 	 */
 	cn->cn_namelen = pathlen;
-	cn->cn_pnbuf = malloc(cn->cn_namelen+1, M_NAMEI, M_WAITOK);
+	if ((cn->cn_namelen + 1) > MAXPATHLEN)
+		return (ENAMETOOLONG);
+	cn->cn_pnbuf = PNBUF_GET();
 	memcpy(cn->cn_pnbuf, path, cn->cn_namelen);
 	cn->cn_pnbuf[cn->cn_namelen] = '\0';
 
@@ -771,7 +773,7 @@ union_relookup(um, dvp, vpp, cnp, cn, path, pathlen)
 	if (!error)
 		vrele(dvp);
 	else {
-		free(cn->cn_pnbuf, M_NAMEI);
+		PNBUF_PUT(cn->cn_pnbuf);
 		cn->cn_pnbuf = 0;
 	}
 
@@ -919,7 +921,9 @@ union_vn_create(vpp, un, p)
 	 * copied in the first place).
 	 */
 	cn.cn_namelen = strlen(un->un_path);
-	cn.cn_pnbuf = (caddr_t) malloc(cn.cn_namelen+1, M_NAMEI, M_WAITOK);
+	if ((cn.cn_namelen + 1) > MAXPATHLEN)
+		return (ENAMETOOLONG);
+	cn.cn_pnbuf = PNBUF_GET();
 	memcpy(cn.cn_pnbuf, un->un_path, cn.cn_namelen+1);
 	cn.cn_nameiop = CREATE;
 	cn.cn_flags = (LOCKPARENT|HASBUF|SAVENAME|SAVESTART|ISLASTCN);
