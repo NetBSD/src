@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1999/05/11 20:47:00 veego Exp $
+#	$NetBSD: Makefile,v 1.3 2000/03/04 16:06:41 ragge Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -24,7 +24,8 @@ LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		mtree.conf
 
-DISKTYPE=	rx33
+DISKTYPE=	ramdisk
+DISKSIZE=	2112
 
 install.sh: install.tmpl
 	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
@@ -36,10 +37,10 @@ start.sh: start.tmpl
 	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
 
 all: ${AUXTARGETS} ${CBIN} 
-	dd if=/dev/zero of=${IMAGE} count=2400
+	dd if=/dev/zero of=${IMAGE} count=${DISKSIZE}
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
-	newfs -m 0 -o space -c 80 ${VND_RDEV} ${DISKTYPE}
+	newfs -m 0 -o space -c 2 ${VND_RDEV} ${DISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
