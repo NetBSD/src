@@ -1,4 +1,4 @@
-/*	$NetBSD: sshpty.c,v 1.4 2002/03/08 02:00:57 itojun Exp $	*/
+/*	$NetBSD: sshpty.c,v 1.5 2002/06/24 05:48:40 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshpty.c,v 1.4 2001/12/19 07:18:56 deraadt Exp $");
+RCSID("$OpenBSD: sshpty.c,v 1.6 2002/06/23 21:06:13 deraadt Exp $");
 
 #include <util.h>
 #include "sshpty.h"
@@ -226,9 +226,8 @@ pty_make_controlling_tty(int *ttyfd, const char *ttyname)
 	if (fd < 0)
 		error("open /dev/tty failed - could not set controlling tty: %.100s",
 		    strerror(errno));
-	else {
+	else
 		close(fd);
-	}
 }
 
 /* Changes the window size associated with the pty. */
@@ -238,6 +237,7 @@ pty_change_window_size(int ptyfd, int row, int col,
 	int xpixel, int ypixel)
 {
 	struct winsize w;
+
 	w.ws_row = row;
 	w.ws_col = col;
 	w.ws_xpixel = xpixel;
@@ -275,12 +275,12 @@ pty_setowner(struct passwd *pw, const char *ttyname)
 	if (st.st_uid != pw->pw_uid || st.st_gid != gid) {
 		if (chown(ttyname, pw->pw_uid, gid) < 0) {
 			if (errno == EROFS &&
-			   (st.st_uid == pw->pw_uid || st.st_uid == 0))
-				error("chown(%.100s, %d, %d) failed: %.100s",
+			    (st.st_uid == pw->pw_uid || st.st_uid == 0))
+				error("chown(%.100s, %u, %u) failed: %.100s",
 				    ttyname, pw->pw_uid, gid,
 				    strerror(errno));
 			else
-				fatal("chown(%.100s, %d, %d) failed: %.100s",
+				fatal("chown(%.100s, %u, %u) failed: %.100s",
 				    ttyname, pw->pw_uid, gid,
 				    strerror(errno));
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-int.c,v 1.13 2002/04/22 07:59:44 itojun Exp $	*/
+/*	$NetBSD: sftp-int.c,v 1.14 2002/06/24 05:48:35 itojun Exp $	*/
 /*
  * Copyright (c) 2001,2002 Damien Miller.  All rights reserved.
  *
@@ -27,7 +27,7 @@
 /* XXX: recursive operations */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-int.c,v 1.46 2002/03/30 18:51:15 markus Exp $");
+RCSID("$OpenBSD: sftp-int.c,v 1.47 2002/06/23 09:30:14 deraadt Exp $");
 
 #include <glob.h>
 
@@ -838,7 +838,7 @@ parse_dispatch_command(struct sftp_conn *conn, const char *cmd, char **pwd)
 		help();
 		break;
 	case I_VERSION:
-		printf("SFTP protocol version %d\n", sftp_proto_version(conn));
+		printf("SFTP protocol version %u\n", sftp_proto_version(conn));
 		break;
 	default:
 		fatal("%d is not implemented", cmdnum);
