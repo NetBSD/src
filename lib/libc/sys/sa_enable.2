@@ -1,4 +1,4 @@
-.\"     $NetBSD: sa_enable.2,v 1.1 2004/03/14 09:18:45 yamt Exp $
+.\"     $NetBSD: sa_enable.2,v 1.2 2004/03/14 10:18:33 snj Exp $
 .\"
 .\" Copyright (c)2004 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -44,7 +44,7 @@
 .Fn sa_enable
 is used to enable scheduler activation.
 .Pp
-upcall handler and upcall stacks should be registered by
+upcall handlers and upcall stacks should be registered with
 .Fn sa_register
 and
 .Fn sa_stacks
@@ -54,7 +54,7 @@ beforehand.
 On success,
 .Fn sa_enable
 will not return to userland in the normal way.
-it returns into upcall hander with a
+It returns into the upcall hander with an
 .Dv SA_UPCALL_NEWPROC
 upcall.
 Otherwise, a value of \-1 is returned and
