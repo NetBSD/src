@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.195 2003/01/17 22:11:18 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.196 2003/02/23 22:41:24 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -153,7 +153,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.195 2003/01/17 22:11:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.196 2003/02/23 22:41:24 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3036,15 +3036,15 @@ pmap_physpage_alloc(int usage, paddr_t *pap)
 	if (pg != NULL) {
 		pa = VM_PAGE_TO_PHYS(pg);
 
+#ifdef DEBUG
 		simple_lock(&pg->mdpage.pvh_slock);
-#ifdef DIAGNOSTIC
 		if (pg->wire_count != 0) {
 			printf("pmap_physpage_alloc: page 0x%lx has "
 			    "%d references\n", pa, pg->wire_count);
 			panic("pmap_physpage_alloc");
 		}
-#endif
 		simple_unlock(&pg->mdpage.pvh_slock);
+#endif
 		*pap = pa;
 		return (TRUE);
 	}
@@ -3064,12 +3064,12 @@ pmap_physpage_free(paddr_t pa)
 	if ((pg = PHYS_TO_VM_PAGE(pa)) == NULL)
 		panic("pmap_physpage_free: bogus physical page address");
 
+#ifdef DEBUG
 	simple_lock(&pg->mdpage.pvh_slock);
-#ifdef DIAGNOSTIC
 	if (pg->wire_count != 0)
 		panic("pmap_physpage_free: page still has references");
-#endif
 	simple_unlock(&pg->mdpage.pvh_slock);
+#endif
 
 	uvm_pagefree(pg);
 }
