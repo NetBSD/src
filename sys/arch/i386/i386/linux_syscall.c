@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.14 2000/12/13 01:24:46 mycroft Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.15 2000/12/14 18:35:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -58,9 +58,10 @@
 #include <machine/psl.h>
 #include <machine/userret.h>
 
-#include <compat/linux/arch/i386/linux_errno.h>
+#include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_errno.h>
 #include <compat/linux/linux_syscall.h>
-#include <compat/linux/arch/i386/linux_signal.h>
+#include <compat/linux/common/linux_signal.h>
 #include <compat/linux/arch/i386/linux_machdep.h>
 
 void linux_syscall_plain __P((struct trapframe));
