@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_kq.c,v 1.3 2003/04/07 12:04:15 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_kq.c,v 1.4 2003/04/08 18:16:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.3 2003/04/07 12:04:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.4 2003/04/08 18:16:01 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,14 +131,13 @@ smbfs_kqpoll(void *arg)
 {
 	struct kevq *ke;
 	struct vattr attr;
-	int error;
+	int error=0;
 	struct proc *p = smbkqp;
 	u_quad_t osize;
 	int needwake;
 
+	simple_lock(&smbkq_lock);
 	for(;;) {
-		simple_lock(&smbkq_lock);
-
 		/* check all entries on poll list for changes */
 		SLIST_FOREACH(ke, &kplist, k_link) {
 			/* skip if still in attrcache */
@@ -197,7 +196,6 @@ smbfs_kqpoll(void *arg)
 		/* Exit if there are no more kevents to watch for */
 		if (kevs == 0) {
 			smbkqp = NULL;
-			simple_unlock(&smbkq_lock);
 			break;
 		}
 
@@ -205,8 +203,11 @@ smbfs_kqpoll(void *arg)
 		needwake = !SLIST_EMPTY(&kplist);
 
 		/* wait a while before checking for changes again */
-		error = ltsleep(smbkqp, PSOCK, "smbkqidl",
-			needwake ? (SMBFS_ATTRTIMO * hz / 2) : 0, &smbkq_lock);
+		if (SLIST_EMPTY(&kdnlist)) {
+			error = ltsleep(smbkqp, PSOCK, "smbkqidl",
+				needwake ? (SMBFS_ATTRTIMO * hz / 2) : 0,
+				&smbkq_lock);
+		}
 
 		if (!error) {
 			/* woken up, check if any pending notifications */
@@ -218,6 +219,15 @@ smbfs_kqpoll(void *arg)
 				SLIST_REMOVE_HEAD(&kdnlist, k_link);
 				SLIST_NEXT(ke, k_link) = NULL;
 				splx(s);
+
+				/* drop lock while processing */
+				simple_unlock(&smbkq_lock);
+			
+				/*
+				 * Skip fetch if not yet setup.
+				 */
+				if (__predict_false(ke->rq == NULL))
+					goto notifyrq;
 
 				error = smbfs_smb_nt_dirnotify_fetch(ke->rq,
 				    &hint);
@@ -234,14 +244,19 @@ smbfs_kqpoll(void *arg)
 
 				VN_KNOTE(ke->vp, hint);
 
+			notifyrq:
 				/* reissue the notify request */
 				(void) smbfs_smb_nt_dirnotify_setup(
 				    VTOSMB(ke->vp),
 				    &ke->rq, &smbkq_scred,
 				    smbfskq_dirnotify, ke);
+
+				/* reacquire the lock */
+				simple_lock(&smbkq_lock);
 			}
 		}
 	}
+	simple_unlock(&smbkq_lock);
 
 	kthread_exit(0);
 }
@@ -450,6 +465,7 @@ smbfs_kqfilter(void *v)
 		FREE(ken, M_KEVENT);	/* dispose, don't need */
 	} else {
 		/* need a new one */
+		memset(ken, 0, sizeof(*ken));
 		ke = ken;
 		ke->vp = vp;
 		ke->usecount = 1;
@@ -459,16 +475,16 @@ smbfs_kqfilter(void *v)
 		ke->onlink = attr.va_nlink;
 
 		if (dnot) {
-			/* If directory notify, queue request for execution */
-			SLIST_NEXT(ke, k_link) = NULL;
+			int s;
 
-			error = smbfs_smb_nt_dirnotify_setup(VTOSMB(vp),
-			    &ke->rq, &smbkq_scred, smbfskq_dirnotify, ke);
-			if (error) {
-				kevs--;
-				FREE(ke, M_KEVENT);
-				return (error);
-			}
+			/*
+			 * Add kevent to list of 'need attend' kevnets.
+			 * The handler will pick it up and setup request
+			 * appropriately.
+			 */
+			s = splnet();
+			SLIST_INSERT_HEAD(&kdnlist, ke, k_link);
+			splx(s);
 			dnot_num++;
 		} else {
 			/* add to poll list */
