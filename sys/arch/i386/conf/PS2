@@ -1,0 +1,91 @@
+#	$NetBSD: PS2,v 1.1 2000/05/11 16:38:10 jdolecek Exp $
+#
+#	Sample kernel config for PS/2 with MCA bus
+#
+#	BEWARE: do NOT use MCA-enabled kernel on non-MCA machine
+
+include "arch/i386/conf/std.i386"
+
+maxusers	32              # estimated number of users
+
+options 	I386_CPU
+options 	I486_CPU
+
+options 	MATH_EMULATE    # floating point emulation
+#options 	XSERVER         # X server support in console drivers
+
+#options 	UCONSOLE        # users can use TIOCCONS (for xconsole)
+options 	INSECURE        # disable kernel security levels
+
+options	RTC_OFFSET=-600 # hardware clock is this many mins. west of GMT
+options 	KTRACE          # system call tracing via ktrace(1)
+
+options 	SYSVMSG         # System V-like message queues
+options 	SYSVSEM         # System V-like semaphores
+options 	SYSVSHM         # System V-like memory sharing
+#options 	SHMMAXPGS=1024  # 1024 pages is the default
+
+options 	DIAGNOSTIC      # cheap kernel consistency checks
+options 	DEBUG           # expensive debugging checks/support
+options 	KMEMSTATS       # kernel memory statistics (vmstat -m)
+options 	DDB             # in-kernel debugger
+
+file-system 	FFS             # UFS
+#file-system 	NFS             # Network File System client
+file-system 	MSDOSFS         # MS-DOS file system
+#file-system 	FDESC           # /dev/fd
+#file-system 	KERNFS          # /kern
+
+#options 	QUOTA           # UFS quotas
+#options 	NFSSERVER       # Network File System server
+options 	FIFO            # FIFOs; RECOMMENDED
+
+options 	INET            # IP + ICMP + TCP + UDP
+
+options 	COMPAT_AOUT
+options 	COMPAT_13
+options 	COMPAT_14
+
+options 	MCAVERBOSE      # verbose MCA device autoconfig messages
+
+#options 	NFS_BOOT_BOOTP
+
+options 	WSEMUL_VT100            # VT100 / VT220 emulation
+options 	WS_KERNEL_FG=WSCOL_GREEN
+
+config		netbsd  root on ? type ?
+#config		netbsd  root on ? type nfs
+
+#
+# Device Configuration
+#
+
+mainbus0 at root
+mca0	at mainbus0
+isa0	at mainbus0
+
+npx0	at isa? port 0xf0 irq 13        # x86 math coprocessor
+
+#pc0	at isa? port 0x60 irq 1   
+
+# wscons
+pckbc0		at isa?			# pc keyboard controller
+#pcconskbd*	at pckbc?
+pms*		at pckbc?		# PS/2 mouse for wsmouse
+wsmouse*	at pms?
+pckbd*		at pckbc?               # PC keyboard
+wskbd*		at pckbd? console ?
+vga0		at isa?
+wsdisplay*	at vga? console ?
+options	WSDISPLAY_DEFAULTSCREENS=4
+
+com0	at isa? port 0x3f8 irq 4	# "SERIAL_!"
+lpt0	at isa? port 0x3bc irq 7	# "PARALLEL_1"
+fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
+fd*	at fdc? drive ?			# the drives themselves
+tr*	at mca? slot ?			# IBM Token Ring adapter
+#ef*	at mca? slot ?			# 3Com 3C523 (not yet)
+
+pseudo-device	bpfilter	4	# Berkeley packet filter
+pseudo-device	loop			# network loopback
+pseudo-device	pty		16	# pseudo-terminals
