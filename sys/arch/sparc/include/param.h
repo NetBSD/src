@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.25 1996/08/28 03:01:27 mrg Exp $ */
+/*	$NetBSD: param.h,v 1.26 1996/10/20 20:26:52 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,31 +72,11 @@
 #define SUN4CM_PGSHIFT	12	/* for a sun4c or sun4m machine */
 
 /*
- * Three possible cases:
- * 	sun4 only		8192 bytes/page
- *	sun4c/sun4m only	4096 bytes/page
- *	any machine		either of the above
- *
- * In the later case NBPG, PGOFSET, and PGSHIFT are encoded in variables
- * initialized early in locore.s.  Since they are variables, rather than
- * simple constants, the kernel will perform slighly worse.
+ * The following variables are always defined and initialized (in locore)
+ * so independently compiled modules (e.g. LKMs) can be used irrespective
+ * of the `options SUN4?' combination a particular kernel was configured with.
+ * See also the definitions of NBPG, PGOFSET and PGSHIFT below.
  */
-#if defined(SUN4) && !defined(SUN4C) && !defined(SUN4M)
-# define	NBPG		8192		/* bytes/page */
-# define	PGOFSET		(NBPG-1)	/* byte offset into page */
-# define	PGSHIFT		SUN4_PGSHIFT	/* log2(NBPG) */
-#else
-# if !defined(SUN4) && (defined(SUN4C) || defined(SUN4M))
-#  define	NBPG		4096		/* bytes/page */
-#  define	PGOFSET		(NBPG-1)	/* byte offset into page */
-#  define	PGSHIFT		SUN4CM_PGSHIFT	/* log2(NBPG) */
-# else
-#  define	NBPG		nbpg		/* bytes/page */
-#  define	PGOFSET		pgofset		/* byte offset into page */
-#  define	PGSHIFT		pgshift		/* log2(NBPG) */
-# endif
-#endif
-
 #if defined(_KERNEL) && !defined(_LOCORE)
 extern int nbpg, pgofset, pgshift;
 #endif
@@ -230,6 +210,15 @@ extern int mmumod;
 /*
  * Shorthand CPU-type macros. Enumerate all eight cases.
  * Let compiler optimize away code conditional on constants.
+ *
+ * On a sun4 machine, the page size is 8192, while on a sun4c and sun4m
+ * it is 4096. Therefore, in the (SUN4 && (SUN4C || SUN4M)) cases below,
+ * NBPG, PGOFSET and PGSHIFT are defined as variables which are initialized
+ * early in locore.s after the machine type has been detected.
+ *
+ * Note that whenever the macros defined below evaluate to expressions
+ * involving variables, the kernel will perform slighly worse due to the
+ * extra memory references they'll generate.
  */
 #if   defined(SUN4M) && defined(SUN4C) && defined(SUN4)
 #	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
@@ -237,46 +226,70 @@ extern int mmumod;
 #	define CPU_ISSUN4	(cputyp == CPU_SUN4)
 #	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4 || cputyp == CPU_SUN4C)
 #	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
+#	define NBPG		nbpg
+#	define PGOFSET		pgofset
+#	define PGSHIFT		pgshift
 #elif defined(SUN4M) && defined(SUN4C) && !defined(SUN4)
 #	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
 #	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
 #	define CPU_ISSUN4	(0)
 #	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4C)
 #	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
+#	define NBPG		4096
+#	define PGOFSET		(NBPG-1)
+#	define PGSHIFT		SUN4CM_PGSHIFT
 #elif defined(SUN4M) && !defined(SUN4C) && defined(SUN4)
 #	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
 #	define CPU_ISSUN4C	(0)
 #	define CPU_ISSUN4	(cputyp == CPU_SUN4)
 #	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4)
 #	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4M)
+#	define NBPG		nbpg
+#	define PGOFSET		pgofset
+#	define PGSHIFT		pgshift
 #elif defined(SUN4M) && !defined(SUN4C) && !defined(SUN4)
 #	define CPU_ISSUN4M	(1)
 #	define CPU_ISSUN4C	(0)
 #	define CPU_ISSUN4	(0)
 #	define CPU_ISSUN4OR4C	(0)
 #	define CPU_ISSUN4COR4M	(1)
+#	define NBPG		4096
+#	define PGOFSET		(NBPG-1)
+#	define PGSHIFT		SUN4CM_PGSHIFT
 #elif !defined(SUN4M) && defined(SUN4C) && defined(SUN4)
 #	define CPU_ISSUN4M	(0)
 #	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
 #	define CPU_ISSUN4	(cputyp == CPU_SUN4)
 #	define CPU_ISSUN4OR4C	(1)
 #	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C)
+#	define NBPG		nbpg
+#	define PGOFSET		pgofset
+#	define PGSHIFT		pgshift
 #elif !defined(SUN4M) && defined(SUN4C) && !defined(SUN4)
 #	define CPU_ISSUN4M	(0)
 #	define CPU_ISSUN4C	(1)
 #	define CPU_ISSUN4	(0)
 #	define CPU_ISSUN4OR4C	(1)
 #	define CPU_ISSUN4COR4M	(1)
+#	define NBPG		4096
+#	define PGOFSET		(NBPG-1)
+#	define PGSHIFT		SUN4CM_PGSHIFT
 #elif !defined(SUN4M) && !defined(SUN4C) && defined(SUN4)
 #	define CPU_ISSUN4M	(0)
 #	define CPU_ISSUN4C	(0)
 #	define CPU_ISSUN4	(1)
 #	define CPU_ISSUN4OR4C	(1)
 #	define CPU_ISSUN4COR4M	(0)
+#	define NBPG		8192
+#	define PGOFSET		(NBPG-1)
+#	define PGSHIFT		SUN4_PGSHIFT
 #elif !defined(SUN4M) && !defined(SUN4C) && !defined(SUN4)
 #	define CPU_ISSUN4M	(0)
 #	define CPU_ISSUN4C	(0)
 #	define CPU_ISSUN4	(0)
 #	define CPU_ISSUN4OR4C	(0)
 #	define CPU_ISSUN4COR4M	(0)
+#	define NBPG		(0)
+#	define PGOFSET		(0)
+#	define PGSHIFT		(0)
 #endif
