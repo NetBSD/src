@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.513 2004/12/28 23:59:22 thorpej Exp $
+# $NetBSD: mi,v 1.514 2005/01/02 17:55:48 thorpej Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -435,6 +435,7 @@
 ./usr/bin/gencat				base-locale-bin
 ./usr/bin/getconf				base-util-bin
 ./usr/bin/getent				base-util-bin
+./usr/bin/getextattr				base-util-bin
 ./usr/bin/getopt				base-util-bin
 ./usr/bin/grep					base-util-bin
 ./usr/bin/groups				base-util-bin
@@ -490,6 +491,7 @@
 ./usr/bin/lpq					base-lpr-bin
 ./usr/bin/lpr					base-lpr-bin
 ./usr/bin/lprm					base-lpr-bin
+./usr/bin/lsextattr				base-util-bin
 ./usr/bin/m4					base-util-bin
 ./usr/bin/machine				base-util-bin
 ./usr/bin/mail					base-mail-bin
@@ -560,6 +562,7 @@
 ./usr/bin/rlog					base-rcs-bin
 ./usr/bin/rlogin				base-netutil-bin
 ./usr/bin/rmd160				base-util-bin
+./usr/bin/rmextattr				base-util-bin
 ./usr/bin/rpcinfo				base-rpcutil-bin
 ./usr/bin/rs					base-util-bin
 ./usr/bin/rsh					base-netutil-bin
@@ -573,6 +576,7 @@
 ./usr/bin/sdiff					base-util-bin
 ./usr/bin/sed					base-util-bin
 ./usr/bin/send-pr				base-gnats-bin
+./usr/bin/setextattr				base-util-bin
 ./usr/bin/sftp					base-secsh-bin		crypto
 ./usr/bin/sha1					base-util-bin
 ./usr/bin/shar					base-util-bin
