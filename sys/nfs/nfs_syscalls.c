@@ -33,15 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nfs_syscalls.c	7.26 (Berkeley) 4/16/91
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00053
- * --------------------         -----   ----------------------
- *
- * 08 Sep 92    Rick "gopher I"         Fix "reserved port" bug, fixed for
- *                                              AIX3.2 NFS clients
+ *	from: @(#)nfs_syscalls.c	7.26 (Berkeley) 4/16/91
+ *	$Id: nfs_syscalls.c,v 1.4 1993/05/18 18:20:31 cgd Exp $
  */
 
 #include "param.h"
@@ -55,6 +48,7 @@
 #include "proc.h"
 #include "malloc.h"
 #include "buf.h"
+#include "select.h"
 #include "mbuf.h"
 #include "socket.h"
 #include "socketvar.h"

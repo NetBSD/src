@@ -31,10 +31,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * derived from:
- *	@(#)subr_log.c	7.11 (Berkeley) 3/17/91
- *
- *	$Id: subr_acct.c,v 1.1 1993/05/02 09:23:17 cgd Exp $
+ * 	from: @(#)subr_log.c	7.11 (Berkeley) 3/17/91
+ *	$Id: subr_acct.c,v 1.2 1993/05/18 18:19:18 cgd Exp $
  */
 
 /*
@@ -49,6 +47,7 @@
 #include "malloc.h"
 #include "acct.h"
 #include "acctbuf.h"
+#include "select.h"
 
 #define ACCT_RDPRI	(PZERO + 1)
 
@@ -57,7 +56,7 @@
 
 struct acctsoftc {
 	int	sc_state;		/* see above for possibilities */
-	struct	proc *sc_selp;		/* process waiting on select call */
+	struct selinfo sc_selp;		/* process waiting on select call */
 	int	sc_pgid;		/* process/group for async I/O */
 } acctsoftc;
 
@@ -90,7 +89,7 @@ acctclose(dev, flag)
 {
 	acct_open = 0;
 	acctsoftc.sc_state = 0;
-	acctsoftc.sc_selp = 0;
+	bzero(&acctsoftc.sc_selp,sizeof(acctsoftc.sc_selp));
 }
 
 /*ARGSUSED*/
@@ -155,7 +154,7 @@ acctselect(dev, rw, p)
 		if (acctbufp->ab_rind != acctbufp->ab_wind) {
 			return (1);
 		}
-		acctsoftc.sc_selp = p;
+		selrecord(p, &acctsoftc.sc_selp);
 		break;
 	}
 	return (0);
@@ -167,10 +166,7 @@ acctwakeup()
 
 	if (!acct_open)
 		return;
-	if (acctsoftc.sc_selp) {
-		selwakeup(acctsoftc.sc_selp, 0);
-		acctsoftc.sc_selp = 0;
-	}
+	selwakeup(&acctsoftc.sc_selp);
 	if (acctsoftc.sc_state & ACCT_ASYNC) {
 		if (acctsoftc.sc_pgid < 0)
 			gsignal(-acctsoftc.sc_pgid, SIGIO); 

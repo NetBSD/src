@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tty_compat.c	7.10 (Berkeley) 5/9/91
+ *	from: @(#)tty_compat.c	7.10 (Berkeley) 5/9/91
+ *	$Id: tty_compat.c,v 1.3 1993/05/18 18:19:29 cgd Exp $
  */
 
 /* 
@@ -41,6 +42,7 @@
 #include "param.h"
 #include "systm.h"
 #include "ioctl.h"
+#include "select.h"
 #include "tty.h"
 #include "termios.h"
 #include "proc.h"

@@ -45,22 +45,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00133
- * --------------------         -----   ----------------------
- *
- * 06 Apr 93	Eric Haug		Fixed comments and includes. [Ed: I did
- *					not include the unit-1 thing, that is a
- *					DOSism, fixed the config file instead]
- * 06 Apr 93	Rodney W. Grimes	A real probe routine, may even cause on
- *					interrupt if a printer is attached.
- *
+ *	$Id: lpt_isa.c,v 1.3 1993/05/18 18:19:04 cgd Exp $
  */
 
 /*
  * Device Driver for AT parallel printer port
  * Written by William Jolitz 12/18/90
+ *
+ * Hacked heavily by Rod Grimes and Eric Haug...
  */
 
 #include "lpt.h"
@@ -73,6 +65,7 @@
 #include "buf.h"
 #include "kernel.h"
 #include "ioctl.h"
+#include "select.h"
 #include "tty.h"
 #include "uio.h"
 

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tcp_debug.c	7.6 (Berkeley) 6/28/90
+ *	from: @(#)tcp_debug.c	7.6 (Berkeley) 6/28/90
+ *	$Id: tcp_debug.c,v 1.2 1993/05/18 18:20:13 cgd Exp $
  */
 
 #ifdef TCPDEBUG
@@ -43,6 +44,7 @@
 
 #include "param.h"
 #include "systm.h"
+#include "select.h"
 #include "mbuf.h"
 #include "socket.h"
 #include "socketvar.h"

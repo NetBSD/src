@@ -30,7 +30,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if_sl.c	7.22 (Berkeley) 4/20/91
+ * from if_sl.c,v 1.11 84/10/04 12:54:47 rick Exp
+ *
+ *	from: @(#)if_sl.c	7.22 (Berkeley) 4/20/91
+ *	$Id: if_sl.c,v 1.7 1993/05/18 18:19:56 cgd Exp $
  */
 
 /*
@@ -64,9 +67,6 @@
  * interrupts and network activity; thus, splimp must be >= spltty.
  */
 
-/* $Header: /cvsroot/src/sys/net/if_sl.c,v 1.6 1993/05/10 23:16:44 deraadt Exp $ */
-/* from if_sl.c,v 1.11 84/10/04 12:54:47 rick Exp */
-
 #include "sl.h"
 #if NSL > 0
 
@@ -78,6 +78,7 @@
 #include "socket.h"
 #include "ioctl.h"
 #include "file.h"
+#include "select.h"
 #include "tty.h"
 #include "kernel.h"
 #include "conf.h"

@@ -30,13 +30,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kern_kinfo.c	7.17 (Berkeley) 6/26/91
+ *	from: @(#)kern_kinfo.c	7.17 (Berkeley) 6/26/91
+ *	$Id: kern_kinfo.c,v 1.3 1993/05/18 18:19:16 cgd Exp $
  */
 
 #include "param.h"
 #include "proc.h"
 #include "kinfo.h"
 #include "ioctl.h"
+#include "select.h"
 #include "tty.h"
 #include "buf.h"
 #include "file.h"

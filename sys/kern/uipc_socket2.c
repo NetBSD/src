@@ -30,14 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)uipc_socket2.c	7.17 (Berkeley) 5/4/91
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00061
- * --------------------         -----   ----------------------
- *
- * 11 Dec 92	Williams Jolitz		Fixed tty handling
+ *	from: @(#)uipc_socket2.c	7.17 (Berkeley) 5/4/91
+ *	$Id: uipc_socket2.c,v 1.3 1993/05/18 18:19:38 cgd Exp $
  */
 
 #include "param.h"
@@ -46,6 +40,7 @@
 #include "file.h"
 #include "buf.h"
 #include "malloc.h"
+#include "select.h"
 #include "mbuf.h"
 #include "protosw.h"
 #include "socket.h"
@@ -274,14 +269,8 @@ sbselqueue(sb, cp)
 	struct sockbuf *sb;
 	struct proc *cp;
 {
-	struct proc *p;
-
-	if (sb->sb_sel && (p = pfind(sb->sb_sel)) && p->p_wchan == (caddr_t)&selwait)
-		sb->sb_flags |= SB_COLL;
-	else {
-		sb->sb_sel = cp->p_pid;
-		sb->sb_flags |= SB_SEL;
-	}
+	selrecord(cp, &sb->sb_sel);
+	sb->sb_flags |= SB_SEL;
 }
 
 /*
@@ -328,11 +317,8 @@ sowakeup(so, sb)
 {
 	struct proc *p;
 
-	if (sb->sb_sel) {
-		selwakeup(sb->sb_sel, sb->sb_flags & SB_COLL);
-		sb->sb_sel = 0;
-		sb->sb_flags &= ~(SB_SEL|SB_COLL);
-	}
+	selwakeup(&sb->sb_sel);
+        sb->sb_flags &= ~SB_SEL;
 	if (sb->sb_flags & SB_WAIT) {
 		sb->sb_flags &= ~SB_WAIT;
 		wakeup((caddr_t)&sb->sb_cc);

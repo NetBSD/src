@@ -30,14 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)socketvar.h	7.17 (Berkeley) 5/5/91
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00061
- * --------------------         -----   ----------------------
- *
- * 11 Dec 92	Williams Jolitz		Fixed tty handling
+ *	from: @(#)socketvar.h	7.17 (Berkeley) 5/5/91
+ *	$Id: socketvar.h,v 1.4 1993/05/18 18:20:38 cgd Exp $
  */
 
 #ifndef _SYS_SOCKETVAR_H_
@@ -87,7 +81,7 @@ struct socket {
 		u_long	sb_mbmax;	/* max chars of mbufs to use */
 		long	sb_lowat;	/* low water mark */
 		struct	mbuf *sb_mb;	/* the mbuf chain */
-		pid_t	sb_sel;		/* process selecting read/write */
+		struct selinfo sb_sel;	/* process selecting read/write */
 		short	sb_flags;	/* flags, see below */
 		short	sb_timeo;	/* timeout for read/write */
 	} so_rcv, so_snd;
@@ -98,7 +92,7 @@ struct socket {
 #define	SB_SEL		0x08		/* someone is selecting */
 #define	SB_ASYNC	0x10		/* ASYNC I/O, need signals */
 #define	SB_NOTIFY	(SB_WAIT|SB_SEL|SB_ASYNC)
-#define	SB_COLL		0x20		/* collision selecting */
+/* was	SB_COLL		0x20		/* collision selecting */
 #define	SB_NOINTR	0x40		/* operations not interruptible */
 
 	caddr_t	so_tpcb;		/* Wisc. protocol control block XXX */

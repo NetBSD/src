@@ -30,12 +30,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)sys_socket.c	7.11 (Berkeley) 4/16/91
+ *	from: @(#)sys_socket.c	7.11 (Berkeley) 4/16/91
+ *	$Id: sys_socket.c,v 1.2 1993/05/18 18:19:25 cgd Exp $
  */
 
 #include "param.h"
 #include "systm.h"
 #include "file.h"
+#include "select.h"
 #include "mbuf.h"
 #include "protosw.h"
 #include "socket.h"

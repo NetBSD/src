@@ -33,15 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nfs_socket.c	7.23 (Berkeley) 4/20/91
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00053
- * --------------------         -----   ----------------------
- *
- * 08 Sep 92    Rick "gopher I"         Fix "reserved port" bug, fixed for
- *						AIX3.2 NFS clients
+ *	from: @(#)nfs_socket.c	7.23 (Berkeley) 4/20/91
+ *	$Id: nfs_socket.c,v 1.4 1993/05/18 18:20:28 cgd Exp $
  */
 
 /*
@@ -56,6 +49,7 @@
 #include "mbuf.h"
 #include "namei.h"
 #include "vnode.h"
+#include "select.h"
 #include "domain.h"
 #include "protosw.h"
 #include "socket.h"

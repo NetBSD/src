@@ -33,26 +33,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pccons.c	5.11 (Berkeley) 5/21/91
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         5       00083
- * --------------------         -----   ----------------------
- *
- * 15 Aug 92	Pace Willisson		Patches for X server
- * 21 Aug 92	Frank Maclachlan	Fixed back-scroll system crash
- * 28 Nov 92	Terry Lee		Fixed LED's in X mode
- * 09 Feb 93	Rich Murphey		Added 'BELL' mode in X
- * 14 Mar 93	Bruce Evans		Added keyboard timeout in pcprobe
- * 					Fixed color/mono test and mono
- *					kernel color.  Added check for
- *					minor. 
- * 14 Mar 93	Chris G. Demetriou	Moved pg() to i386/cons.c, code
- *					cleanup, removed ctl-alt-del.
+ *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
+ *	$Id*
  */
-
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/pccons.c,v 1.15 1993/05/10 23:14:54 deraadt Exp $";
 
 /*
  * code to work keyboard & display for PC-style console
@@ -62,6 +45,7 @@ static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/pccons.c,v 
 #include "ioctl.h"
 #include "proc.h"
 #include "user.h"
+#include "select.h"
 #include "tty.h"
 #include "uio.h"
 #include "i386/isa/isa_device.h"
@@ -480,11 +464,7 @@ register struct tty *tp;
 			tp->t_state &= ~TS_ASLEEP;
 			wakeup((caddr_t)rbp);
 		}
-		if (tp->t_wsel) {
-			selwakeup(tp->t_wsel, tp->t_state & TS_WCOLL);
-			tp->t_wsel = 0;
-			tp->t_state &= ~TS_WCOLL;
-		}
+		selwakeup(&tp->t_wsel);
 	}
 out:
 	splx(s);

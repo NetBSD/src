@@ -13,10 +13,13 @@
  * 90/02/06 15:03 - Fixed a bug in where TIOCGPGRP and TIOCSPGRP were
  * mixed up. Anders Klemets - klemets@sics.se
  *
- * $Header: /cvsroot/src/sys/net/if_tun.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $
+ * $Id: if_tun.c,v 1.2 1993/05/18 18:19:58 cgd Exp $
  * 
  * $Log: if_tun.c,v $
- * Revision 1.1.1.1  1993/03/21 09:45:37  cgd
+ * Revision 1.2  1993/05/18 18:19:58  cgd
+ * make kernel select interface be one-stop shopping & clean it all up.
+ *
+ * Revision 1.1.1.1  1993/03/21  09:46:06  cgd
  * initial import of 386bsd-0.1 sources
  *
  * Revision 1.13  88/07/11  08:28:51  jpo
@@ -107,8 +110,8 @@ struct tunctl
         u_short         tun_flags;      /* misc flags */
         struct ifnet    tun_if;         /* the interface */
         int             tun_pgrp;       /* the process group - if any */
-        struct proc    *tun_rsel;       /* read select */
-        struct proc    *tun_wsel;       /* write select (not used) */
+        struct selinfo	tun_rsel;       /* read select */
+        struct selinfo	tun_wsel;       /* write select (not used) */
 }       tunctl[NTUN];
 
 extern int      ifqmaxlen;
@@ -145,13 +148,11 @@ tunclose (dev, flag)
 dev_t           dev;
 {
         int             s;
-        int             rcoll;
         register int    unit = minor (dev);
         register struct tunctl *tp = &tunctl[unit];
         register struct ifnet *ifp = &tp->tun_if;
         register struct mbuf *m;
 
-        rcoll = tp->tun_flags & TUN_RCOLL;
         tp->tun_flags &= TUN_INITED;
 
         /*
@@ -173,7 +174,7 @@ dev_t           dev;
         }
         tp -> tun_pgrp = 0;
         if (tp -> tun_rsel)
-                selwakeup (tp->tun_rsel, rcoll);
+                selwakeup (&tp->tun_rsel);
                 
         tp -> tun_rsel = tp -> tun_wsel = (struct proc *)0;
 
@@ -369,11 +370,7 @@ struct sockaddr *dst;
                 else if ((p = pfind (-tp->tun_pgrp)) != 0)
                         psignal (p, SIGIO);
         }
-        if (tp->tun_rsel) {
-                selwakeup (tp->tun_rsel, tp->tun_flags & TUN_RCOLL);
-                tp->tun_flags &= ~TUN_RCOLL;
-                tp->tun_rsel = (struct proc *) 0;
-        }
+	selwakeup (&tp->tun_rsel);
         return 0;
 }
 
@@ -591,11 +588,7 @@ int             rw;
                                   ifp->if_unit, ifp->if_snd.ifq_len);
                         return 1;
                 }
-                if (tp->tun_rsel && tp->tun_rsel->p_wchan ==
-                    (caddr_t) & selwait)
-                        tp->tun_flags |= TUN_RCOLL;
-                else
-                        tp->tun_rsel = u.u_procp;
+                selrecord(p, &tp->tun_rsel);
                 break;
             case FWRITE:
                 splx (s);
