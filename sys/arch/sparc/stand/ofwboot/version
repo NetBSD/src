@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.7 2002/10/20 20:55:39 martin Exp $
+$NetBSD: version,v 1.8 2004/05/02 19:45:55 martin Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -10,3 +10,4 @@ is taken as the current.
 1.4:	Align end of BSS on 4MB boundary
 1.5:	Fix previous.
 1.6:	Allow hyphen in kernel names
+1.7:	Fix size calculation for symbol table
