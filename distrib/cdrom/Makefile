@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2000/11/30 00:04:08 tv Exp $
+# $NetBSD: Makefile,v 1.4 2000/11/30 21:33:41 tv Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -78,8 +78,8 @@ VAX_IBOOT?=	/sys/arch/vax/stand/installboot/installboot
 MACPPC_IBOOTDIR!= cd ${.CURDIR}/macppc_installboot && ${MAKE} print-objdir
 .endif
 
-RSYNC_SITE?=	ftp.netbsd.org:/pub/NetBSD/
-RSYNC_ARGS?=	-va --delete --rsh=ssh
+RSYNC_SITE?=	rsync://rsync.netbsd.org/NetBSD/
+RSYNC_ARGS?=	-va --delete
 RSYNC_EXCLUDE+=	--exclude=/* --exclude=Split --exclude=cdrom
 
 DISTDIR?=	${.OBJDIR}/download
