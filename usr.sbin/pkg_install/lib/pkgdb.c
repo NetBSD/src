@@ -1,8 +1,8 @@
-/*	$NetBSD: pkgdb.c,v 1.7.2.1 2001/03/20 18:13:43 he Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.7.2.2 2002/02/23 18:14:23 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkgdb.c,v 1.7.2.1 2001/03/20 18:13:43 he Exp $");
+__RCSID("$NetBSD: pkgdb.c,v 1.7.2.2 2002/02/23 18:14:23 he Exp $");
 #endif
 
 /*
@@ -150,7 +150,7 @@ pkgdb_retrieve(const char *key)
  *  Return value as ypdb_delete:
  *   0: everything ok
  *   1: key not present
- *  -1: some error occured (see errno)
+ *  -1: some error occurred (see errno)
  */
 int
 pkgdb_remove(const char *key)
