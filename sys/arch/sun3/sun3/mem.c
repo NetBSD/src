@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.23 1997/02/28 22:35:12 gwr Exp $	*/
+/*	$NetBSD: mem.c,v 1.24 1997/03/18 23:21:04 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -59,7 +59,6 @@
 #include <vm/vm_map.h>
 
 #include <machine/cpu.h>
-#include <machine/eeprom.h>
 #include <machine/pte.h>
 #include <machine/pmap.h>
 #include <machine/machdep.h>
@@ -196,12 +195,14 @@ mmrw(dev, uio, flags)
 
 		case 11:                        /*  /dev/eeprom  */
 			error = eeprom_uio(uio);
+			/* Yes, return (not continue) so EOF works. */
 			return (error);
 
 		case 12:                        /*  /dev/zero  */
+			/* Write to /dev/zero is ignored. */
 			if (uio->uio_rw == UIO_WRITE) {
-				c = iov->iov_len;
-				break;
+				uio->uio_resid = 0;
+				return 0;
 			}
 			/*
 			 * On the first call, allocate and zero a page
@@ -216,15 +217,14 @@ mmrw(dev, uio, flags)
 			error = uiomove(devzeropage, c, uio);
 			continue;
 
+		case 13:                        /*  /dev/leds  */
+			error = leds_uio(uio);
+			/* Yes, return (not continue) so EOF works. */
+			return (error);
+
 		default:
 			return (ENXIO);
 		}
-		if (error)
-			break;
-		iov->iov_base += c;
-		iov->iov_len -= c;
-		uio->uio_offset += c;
-		uio->uio_resid -= c;
 	}
 
 	/*
