@@ -35,7 +35,7 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$Id: ttyflags.c,v 1.1 1994/03/30 09:29:19 cgd Exp $";
+static char rcsid[] = "$Id: ttyflags.c,v 1.2 1994/03/30 09:53:07 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -185,13 +185,17 @@ change_ttyflags(tep)
 
 	/* Open the device NON-BLOCKING, set the flags, and close it. */
 	if ((fd = open(path, O_RDONLY | O_NONBLOCK, 0)) == -1) {
-		warn("open %s", path);
-		return (1);
+		if (errno != ENOENT || (st & TTY_ON) != 0)
+			rval = 1;
+		if (rval || vflag)
+			warn("open %s", path);
+		return (rval);
 	}
-	if (ioctl(fd, TIOCSFLAGS, &flags) == -1 && errno != ENOTTY) {
-		warn("TIOCSFLAGS on %s", path);
-		rval = 1;
-	}
+	if (ioctl(fd, TIOCSFLAGS, &flags) == -1)
+		if (errno != ENOTTY || vflag) {
+			warn("TIOCSFLAGS on %s", path);
+			rval = (errno != ENOTTY);
+		}
 	if (close(fd) == -1) {
 		warn("close %s", path);
 		return (1);
