@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.46 2002/05/15 16:33:35 christos Exp $	*/
+/*	$NetBSD: jobs.c,v 1.47 2002/09/27 18:56:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.46 2002/05/15 16:33:35 christos Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.47 2002/09/27 18:56:53 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -198,19 +198,27 @@ out:
 			return;
 		}
 #endif
-		setsignal(SIGTSTP);
-		setsignal(SIGTTOU);
-		setsignal(SIGTTIN);
-		setpgid(0, rootpid);
-		tcsetpgrp(ttyfd, rootpid);
+		setsignal(SIGTSTP, 0);
+		setsignal(SIGTTOU, 0);
+		setsignal(SIGTTIN, 0);
+		if (getpgid(0) != rootpid && setpgid(0, rootpid) == -1)
+			error("Cannot set process group (%s) at %d",
+			    strerror(errno), __LINE__);
+		if (tcsetpgrp(ttyfd, rootpid) == -1)
+			error("Cannot set tty process group (%s) at %d",
+			    strerror(errno), __LINE__);
 	} else { /* turning job control off */
-		setpgid(0, initialpgrp);
-		tcsetpgrp(ttyfd, initialpgrp);
+		if (getpgid(0) != initialpgrp && setpgid(0, initialpgrp) == -1)
+			error("Cannot set process group (%s) at %d",
+			    strerror(errno), __LINE__);
+		if (tcsetpgrp(ttyfd, initialpgrp) == -1)
+			error("Cannot set tty process group (%s) at %d",
+			    strerror(errno), __LINE__);
 		close(ttyfd);
 		ttyfd = -1;
-		setsignal(SIGTSTP);
-		setsignal(SIGTTOU);
-		setsignal(SIGTTIN);
+		setsignal(SIGTSTP, 0);
+		setsignal(SIGTTOU, 0);
+		setsignal(SIGTTIN, 0);
 	}
 	jobctl = on;
 }
@@ -237,14 +245,21 @@ fgcmd(argc, argv)
 	char **argv;
 {
 	struct job *jp;
-	int pgrp;
+	int i;
 	int status;
 
 	jp = getjob(argv[1]);
 	if (jp->jobctl == 0)
 		error("job not created under job control");
-	pgrp = jp->ps[0].pid;
-	tcsetpgrp(ttyfd, pgrp);
+
+	for (i = 0; i <= jp->nprocs; i++)
+	    if (tcsetpgrp(ttyfd, jp->ps[i].pid) != -1)
+		    break;
+
+	if (i > jp->nprocs) {
+		error("Cannot set tty process group (%s) at %d",
+		    strerror(errno), __LINE__);
+	}
 	restartjob(jp);
 	INTOFF;
 	status = waitforjob(jp);
@@ -280,7 +295,11 @@ restartjob(jp)
 	if (jp->state == JOBDONE)
 		return;
 	INTOFF;
-	killpg(jp->ps[0].pid, SIGCONT);
+	for (i = 0; i <= jp->nprocs; i++)
+		if (killpg(jp->ps[i].pid, SIGCONT) != -1)
+			break;
+	if (i > jp->nprocs)
+		error("Cannot continue job (%s)", strerror(errno));
 	for (ps = jp->ps, i = jp->nprocs ; --i >= 0 ; ps++) {
 		if (WIFSTOPPED(ps->status)) {
 			ps->status = -1;
@@ -321,10 +340,28 @@ showjobs(change)
 	struct job *jp;
 	struct procstat *ps;
 	int col;
+	int silent = 0, gotpid;
 	char s[64];
 
 	TRACE(("showjobs(%d) called\n", change));
-	while (dowait(0, (struct job *)NULL) > 0);
+
+	/* If not even one one job changed, there is nothing to do */
+	gotpid = dowait(0, NULL);
+	while (dowait(0, NULL) > 0)
+		continue;
+#ifdef JOBS
+	/*
+	 * Check if we are not in our foreground group, and if not
+	 * put us in it.
+	 */
+	if (gotpid != -1 && tcgetpgrp(ttyfd) != getpid()) {
+		if (tcsetpgrp(ttyfd, getpid()) == -1)
+			error("Cannot set tty process group (%s) at %d",
+			    strerror(errno), __LINE__);
+		TRACE(("repaired tty process group\n"));
+		silent = 1;
+	}
+#endif
 	for (jobno = 1, jp = jobtab ; jobno <= njobs ; jobno++, jp++) {
 		if (! jp->used)
 			continue;
@@ -334,6 +371,10 @@ showjobs(change)
 		}
 		if (change && ! jp->changed)
 			continue;
+		if (silent && jp->changed) {
+			jp->changed = 0;
+			continue;
+		}
 		procno = jp->nprocs;
 		for (ps = jp->ps ; ; ps++) {	/* for each process */
 			if (ps == jp->ps)
@@ -616,85 +657,42 @@ forkshell(jp, n, mode)
 	int mode;
 {
 	int pid;
-	int pgrp;
-	const char *devnull = _PATH_DEVNULL;
-	const char *nullerr = "Can't open %s";
 
 	TRACE(("forkshell(%%%d, %p, %d) called\n", jp - jobtab, n, mode));
 	INTOFF;
-	pid = fork();
-	if (pid == -1) {
+	switch ((pid = fork())) {
+	case -1:
 		TRACE(("Fork failed, errno=%d", errno));
 		INTON;
 		error("Cannot fork");
+		break;
+	case 0:
+		forkchild(jp, n, mode, 0);
+		return 0;
+	default:
+		return forkparent(jp, n, mode, pid);
 	}
-	if (pid == 0) {
-		struct job *p;
-		int wasroot;
-		int i;
+}
 
-		TRACE(("Child shell %d\n", getpid()));
-		wasroot = rootshell;
-		rootshell = 0;
-		for (i = njobs, p = jobtab ; --i >= 0 ; p++) {
-			if (p == jp)
-				continue;	/* don't free current job */
-			if (p->used)
-				freejob(p);
-		}
-		closescript();
-		INTON;
-		clear_traps();
-#if JOBS
-		jobctl = 0;		/* do job control only in root shell */
-		if (wasroot && mode != FORK_NOJOB && mflag) {
-			if (jp == NULL || jp->nprocs == 0)
-				pgrp = getpid();
-			else
-				pgrp = jp->ps[0].pid;
-			setpgid(0, pgrp);
-			if (mode == FORK_FG) {
-				/*** this causes superfluous TIOCSPGRPS ***/
-				if (tcsetpgrp(ttyfd, pgrp) < 0)
-					error("tcsetpgrp failed, errno=%d", errno);
-			}
-			setsignal(SIGTSTP);
-			setsignal(SIGTTOU);
-		} else if (mode == FORK_BG) {
-			ignoresig(SIGINT);
-			ignoresig(SIGQUIT);
-			if ((jp == NULL || jp->nprocs == 0) &&
-			    ! fd0_redirected_p ()) {
-				close(0);
-				if (open(devnull, O_RDONLY) != 0)
-					error(nullerr, devnull);
-			}
-		}
-#else
-		if (mode == FORK_BG) {
-			ignoresig(SIGINT);
-			ignoresig(SIGQUIT);
-			if ((jp == NULL || jp->nprocs == 0) &&
-			    ! fd0_redirected_p ()) {
-				close(0);
-				if (open(devnull, O_RDONLY) != 0)
-					error(nullerr, devnull);
-			}
-		}
-#endif
-		if (wasroot && iflag) {
-			setsignal(SIGINT);
-			setsignal(SIGQUIT);
-			setsignal(SIGTERM);
-		}
-		return pid;
-	}
+int
+forkparent(jp, n, mode, pid)
+	union node *n;
+	struct job *jp;
+	int mode;
+	pid_t pid;
+{
+	int pgrp;
+
 	if (rootshell && mode != FORK_NOJOB && mflag) {
 		if (jp == NULL || jp->nprocs == 0)
 			pgrp = pid;
 		else
 			pgrp = jp->ps[0].pid;
-		setpgid(pid, pgrp);
+#ifdef notdef
+		if (setpgid(pid, pgrp) == -1)
+			error("Cannot set process group (%s) at %d",
+			    strerror(errno), __LINE__);
+#endif
 	}
 	if (mode == FORK_BG)
 		backgndpid = pid;		/* set $! */
@@ -709,6 +707,80 @@ forkshell(jp, n, mode)
 	INTON;
 	TRACE(("In parent shell:  child = %d\n", pid));
 	return pid;
+}
+
+void
+forkchild(jp, n, mode, vforked)
+	union node *n;
+	struct job *jp;
+	int mode;
+	int vforked;
+{
+	struct job *p;
+	int wasroot;
+	int i;
+	int pgrp;
+	const char *devnull = _PATH_DEVNULL;
+	const char *nullerr = "Can't open %s";
+
+	TRACE(("Child shell %d\n", getpid()));
+	wasroot = rootshell;
+	if (!vforked) {
+		rootshell = 0;
+		for (i = njobs, p = jobtab ; --i >= 0 ; p++)
+			if (p->used)
+				freejob(p);
+	}
+	closescript(vforked);
+	if (!vforked) {
+		INTON;
+	}
+	clear_traps(vforked);
+#if JOBS
+	if (!vforked)
+		jobctl = 0;		/* do job control only in root shell */
+	if (wasroot && mode != FORK_NOJOB && mflag) {
+		if (jp == NULL || jp->nprocs == 0)
+			pgrp = getpid();
+		else
+			pgrp = jp->ps[0].pid;
+		if (setpgid(0, pgrp) == -1)
+			error("Cannot set process group (%s) at %d",
+			    strerror(errno), __LINE__);
+		if (mode == FORK_FG) {
+			if (tcsetpgrp(ttyfd, pgrp) == -1)
+				error("Cannot set tty process group (%s) at %d",
+				    strerror(errno), __LINE__);
+		}
+		setsignal(SIGTSTP, vforked);
+		setsignal(SIGTTOU, vforked);
+	} else if (mode == FORK_BG) {
+		ignoresig(SIGINT, vforked);
+		ignoresig(SIGQUIT, vforked);
+		if ((jp == NULL || jp->nprocs == 0) &&
+		    ! fd0_redirected_p ()) {
+			close(0);
+			if (open(devnull, O_RDONLY) != 0)
+				error(nullerr, devnull);
+		}
+	}
+#else
+	if (mode == FORK_BG) {
+		ignoresig(SIGINT, vforked);
+		ignoresig(SIGQUIT, vforked);
+		if ((jp == NULL || jp->nprocs == 0) &&
+		    ! fd0_redirected_p ()) {
+			close(0);
+			if (open(devnull, O_RDONLY) != 0)
+				error(nullerr, devnull);
+		}
+	}
+#endif
+	if (wasroot && iflag) {
+		setsignal(SIGINT, vforked);
+		setsignal(SIGQUIT, vforked);
+		setsignal(SIGTERM, vforked);
+	}
 }
 
 
@@ -749,8 +821,9 @@ waitforjob(jp)
 	}
 #if JOBS
 	if (jp->jobctl) {
-		if (tcsetpgrp(ttyfd, mypgrp) < 0)
-			error("tcsetpgrp failed, errno=%d\n", errno);
+		if (tcsetpgrp(ttyfd, mypgrp) == -1)
+			error("Cannot set tty process group (%s) at %d",
+			    strerror(errno), __LINE__);
 	}
 	if (jp->state == JOBSTOPPED)
 		curjob = jp - jobtab + 1;
@@ -846,7 +919,6 @@ dowait(block, job)
 			}
 		}
 	}
-	INTON;
 	if (! rootshell || ! iflag || (job && thisjob == job)) {
 		core = WCOREDUMP(status);
 #if JOBS
@@ -877,10 +949,11 @@ dowait(block, job)
 			       status, sig));
 		}
 	} else {
-		TRACE(("Not printing status, rootshell=%d, job=0x%x\n", rootshell, job));
+		TRACE(("Not printing status, rootshell=%d, job=%p\n", rootshell, job));
 		if (thisjob)
 			thisjob->changed = 1;
 	}
+	INTON;
 	return pid;
 }
 
