@@ -1,4 +1,4 @@
-/*	$NetBSD: le_elb.c,v 1.2 2003/07/15 01:37:37 lukem Exp $	*/
+/*	$NetBSD: le_elb.c,v 1.3 2003/08/16 15:40:41 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: le_elb.c,v 1.2 2003/07/15 01:37:37 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: le_elb.c,v 1.3 2003/08/16 15:40:41 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -79,6 +79,9 @@ static u_int16_t le_rdcsr(struct lance_softc *, u_int16_t);
 static void	le_wrcsr(struct lance_softc *, u_int16_t, u_int16_t);
 static void	le_copytodesc(struct lance_softc *, void *, int, int);
 static void	le_copyfromdesc(struct lance_softc *, void *, int, int);
+static void	le_copytobuf(struct lance_softc *, void *, int, int);
+static void	le_copyfrombuf(struct lance_softc *, void *, int, int);
+static void	le_zerobuf(struct lance_softc *, int, int);
 
 CFATTACH_DECL(le_elb, sizeof(struct le_elb_softc),
     le_elb_probe, le_elb_attach, NULL, NULL);
@@ -157,9 +160,9 @@ le_elb_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_copytodesc = le_copytodesc;
 	sc->sc_copyfromdesc = le_copyfromdesc;
-	sc->sc_copytobuf = lance_copytobuf_contig;
-	sc->sc_copyfrombuf = lance_copyfrombuf_contig;
-	sc->sc_zerobuf = lance_zerobuf_contig;
+	sc->sc_copytobuf = le_copytobuf;
+	sc->sc_copyfrombuf = le_copyfrombuf;
+	sc->sc_zerobuf = le_zerobuf;
 
 	sc->sc_rdcsr = le_rdcsr;
 	sc->sc_wrcsr = le_wrcsr;
@@ -217,8 +220,10 @@ le_wrcsr(struct lance_softc *sc, u_int16_t reg, u_int16_t val)
 static void
 le_copytodesc(struct lance_softc *sc, void *from, int boff, int len)
 {
+	struct le_elb_softc *msc = (struct le_elb_softc *)sc;
 	volatile u_int32_t *src = from;
 	volatile u_int32_t *dst = (u_int32_t *)((u_char *)sc->sc_mem+boff);
+	int todo = len;
 
 	/* XXX lance_setladrf should be modified to use u_int32_t instead.
 	 * The init block contains u_int16_t values that require
@@ -229,9 +234,12 @@ le_copytodesc(struct lance_softc *sc, void *from, int boff, int len)
 		src[4] = (src[4] >> 16) | (src[4] << 16);
 	}
 
-	len /= sizeof(u_int32_t);
-	while (len-- > 0)
+	todo /= sizeof(u_int32_t);
+	while (todo-- > 0)
 		*dst++ = bswap32(*src++);
+
+	bus_dmamap_sync(msc->sc_dmat, msc->sc_dmam, boff, len,
+	    BUS_DMASYNC_PREWRITE);
 }
 
 /*
@@ -240,10 +248,59 @@ le_copytodesc(struct lance_softc *sc, void *from, int boff, int len)
 static void
 le_copyfromdesc(struct lance_softc *sc, void *to, int boff, int len)
 {
+	struct le_elb_softc *msc = (struct le_elb_softc *)sc;
 	volatile u_int32_t *src = (u_int32_t *)((u_char *)sc->sc_mem+boff);
 	volatile u_int32_t *dst = to;
+
+	bus_dmamap_sync(msc->sc_dmat, msc->sc_dmam, boff, len,
+	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 	len /= sizeof(u_int32_t);
 	while (len-- > 0)
 		*dst++ = bswap32(*src++);
+}
+
+/*
+ * Copy data to memory.
+ */
+static void
+le_copytobuf(struct lance_softc *sc, void *from, int boff, int len)
+{
+	struct le_elb_softc *msc = (struct le_elb_softc *)sc;
+	volatile caddr_t buf = (caddr_t)((u_char *)sc->sc_mem+boff);
+
+	memcpy(buf, from, len);
+
+	bus_dmamap_sync(msc->sc_dmat, msc->sc_dmam, boff, len,
+	    BUS_DMASYNC_PREWRITE);
+}
+
+/*
+ * Copy data from memory.
+ */
+static void
+le_copyfrombuf(struct lance_softc *sc, void *to, int boff, int len)
+{
+	struct le_elb_softc *msc = (struct le_elb_softc *)sc;
+	volatile caddr_t buf = (caddr_t)((u_char *)sc->sc_mem+boff);
+
+	bus_dmamap_sync(msc->sc_dmat, msc->sc_dmam, boff, len,
+	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+
+	memcpy(to, buf, len);
+}
+
+/*
+ * Zero memory.
+ */
+static void
+le_zerobuf(struct lance_softc *sc, int boff, int len)  
+{
+	struct le_elb_softc *msc = (struct le_elb_softc *)sc;
+	volatile caddr_t buf = (caddr_t)((u_char *)sc->sc_mem+boff);
+
+	memset(buf, 0, len);
+
+	bus_dmamap_sync(msc->sc_dmat, msc->sc_dmam, boff, len,
+	    BUS_DMASYNC_PREWRITE);
 }
