@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_addchstr.3,v 1.1 2003/05/21 21:19:52 jdc Exp $
+.\"	$NetBSD: curses_addchstr.3,v 1.2 2003/05/22 09:25:52 wiz Exp $
 .\"
 .\" Copyright (c) 2003
 .\"	Douwe Kiela (virtus@wanadoo.nl)
@@ -73,8 +73,7 @@ or to the specified window.
 .Pp
 The
 .Fn addchstr
-function
-will add the characters and their attributes passed in
+function will add the characters and their attributes passed in
 .Fa chstr
 to
 .Dv stdscr
@@ -111,8 +110,7 @@ will be merged with the background attributes currently set on
 .Pp
 The
 .Fn waddchnstr
-function
-does the same as
+function does the same as
 .Fa addchnstr
 but adds the string to the window specified by
 .Fa win .
@@ -129,18 +127,14 @@ are the same as the functions
 .Fn waddchstr
 and
 .Fn waddchnstr ,
-respectively, excepting that
+respectively, except that
 .Fn wmove
 is called to move the cursor to the position specified by
 .Fa y ,
 .Fa x
 before the string is added to the window.
 .Sh RETURN VALUES
-Functions returning pointers will return
-.Dv NULL
-if an error is detected.
-The functions that return an int will return one of the following
-values:
+The functions will return one of the following values:
 .Pp
 .Bl -tag -width ERR -compact
 .It Er OK
