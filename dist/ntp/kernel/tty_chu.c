@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_chu.c,v 1.2 2002/05/16 19:40:53 wiz Exp $	*/
+/*	$NetBSD: tty_chu.c,v 1.3 2003/12/04 16:23:36 drochner Exp $	*/
 
 /* tty_chu.c,v 3.1 1993/07/06 01:07:30 jbj Exp
  * tty_chu.c - CHU line driver
@@ -275,4 +275,4 @@ win:
 	splx(s);
 	return (1);
 }
-#endif /* NCHU */
+#endif NCHU

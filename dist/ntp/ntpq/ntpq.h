@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq.h,v 1.1.1.2 2003/12/04 16:05:32 drochner Exp $	*/
+/*	$NetBSD: ntpq.h,v 1.2 2003/12/04 16:23:38 drochner Exp $	*/
 
 /*
  * ntpq.h - definitions of interest to ntpq

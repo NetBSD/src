@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_datum.c,v 1.1.1.2 2003/12/04 16:05:27 drochner Exp $	*/
+/*	$NetBSD: refclock_datum.c,v 1.2 2003/12/04 16:23:37 drochner Exp $	*/
 
 /*
 ** refclock_datum - clock driver for the Datum Programmable Time Server

@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_meinberg.c,v 1.2 2001/04/21 21:57:16 thorpej Exp $	*/
+/*	$NetBSD: clk_meinberg.c,v 1.3 2003/12/04 16:23:37 drochner Exp $	*/
 
 /*
  * /src/NTP/ntp-4/libparse/clk_meinberg.c,v 4.8 1999/11/28 09:13:50 kardel RELEASE_19991128_A
@@ -21,9 +21,6 @@
 #endif
 
 #if defined(REFCLOCK) && defined(CLOCK_PARSE) && defined(CLOCK_MEINBERG)
-
-#include <sys/types.h>
-#include <sys/time.h>
 
 #include "ntp_fp.h"
 #include "ntp_unixtime.h"
@@ -414,7 +411,7 @@ mbg_input(
 {
 	unsigned int rtc;
 	
-	parseprintf(DD_PARSE, ("mbg_input(0x%lx, 0x%x, ...)\n", (unsigned long)parseio, ch));
+	parseprintf(DD_PARSE, ("mbg_input(0x%lx, 0x%x, ...)\n", (long)parseio, ch));
 	
 	switch (ch)
 	{
@@ -582,7 +579,7 @@ gps_input(
   
   msg_buf = (struct msg_buf *)parseio->parse_pdata;
 
-  parseprintf(DD_PARSE, ("gps_input(0x%lx, 0x%x, ...)\n", (unsigned long)parseio, ch));
+  parseprintf(DD_PARSE, ("gps_input(0x%lx, 0x%x, ...)\n", (long)parseio, ch));
 
   if (!msg_buf)
     return PARSE_INP_SKIP;

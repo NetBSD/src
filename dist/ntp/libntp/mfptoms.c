@@ -1,4 +1,4 @@
-/*	$NetBSD: mfptoms.c,v 1.1.1.2 2003/12/04 16:05:24 drochner Exp $	*/
+/*	$NetBSD: mfptoms.c,v 1.2 2003/12/04 16:23:37 drochner Exp $	*/
 
 /*
  * mfptoms - Return an asciized signed long fp number in milliseconds
