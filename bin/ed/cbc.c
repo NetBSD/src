@@ -67,6 +67,8 @@ static char sccsid[] = "@(#)cbc.c	5.5 (Berkeley) 6/27/91";
 #include <string.h>
 #include <sys/types.h>
 
+#include "ed.h"
+
 /*
  * Define a divisor for rand() that yields a uniform distribution in the
  * range 0-255.
@@ -176,7 +178,7 @@ err(s)
  * map a hex character to an integer
  */
 tobinhex(c, radix)
-	char c;			/* char to be converted */
+	int c;			/* char to be converted */
 	int radix;		/* base (2 to 16) */
 {
 	switch(c) {
@@ -222,7 +224,7 @@ cvtkey(obuf, ibuf)
 		 * now translate it, bombing on any illegal hex digit
 		 */
 		for (i = 0; ibuf[i] && i < 16; i++)
-			if ((nbuf[i] = tobinhex(ibuf[i], 16)) == -1)
+			if ((nbuf[i] = tobinhex((int) ibuf[i], 16)) == -1)
 				err("bad hex digit in key");
 		while (i < 16)
 			nbuf[i++] = 0;
@@ -242,7 +244,7 @@ cvtkey(obuf, ibuf)
 		 * now translate it, bombing on any illegal binary digit
 		 */
 		for (i = 0; ibuf[i] && i < 16; i++)
-			if ((nbuf[i] = tobinhex(ibuf[i], 2)) == -1)
+			if ((nbuf[i] = tobinhex((int) ibuf[i], 2)) == -1)
 				err("bad binary digit in key");
 		while (i < 64)
 			nbuf[i++] = 0;
@@ -347,7 +349,6 @@ cbcdec(msgbuf, fp)
 	Desbuf ibuf;	/* temp buffer for initialization vector */
 	register int n;		/* number of bytes actually read */
 	register int c;		/* used to test for EOF */
-	register int bn;	/* block number */
 	int inverse = 1;	/* 0 to encrypt, 1 to decrypt */
 
 	if ((n = READ(BUFFER(msgbuf), 8, fp)) == 8) {
