@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2003/08/01 17:03:43 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2003/08/22 02:39:56 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -26,7 +26,7 @@ LIB2FUNCS=	${G_LIB2FUNCS_1:=.c} ${G_LIB2FUNCS_2:=.c} ${G_LIB2FUNCS_ST:=.c}
 LIB2DIVMOD=	${G_LIB2_DIVMOD_FUNCS:=.c}
 LIB2_EH=	${G_LIB2ADDEH:M*.c:T}
 
-SRCS+=		${LIB2FUNCS} ${LIB2DIVMOD} ${LIB2_EH} ${G_LIB2ADD:M*.c:T}
+SRCS+=		${LIB2FUNCS} ${LIB2DIVMOD} ${LIB2_EH} ${G_LIB2ADD:T:S/.asm/.S/}
 
 DPSRCS+=	${.CURDIR}/${MACHINE_ARCH}.mk tconfig.h
 CLEANFILES+=	${LIB2FUNCS} tconfig.h
@@ -36,6 +36,15 @@ ${LIB2FUNCS}: ${.CURDIR}/Makefile
 
 ${LIB2DIVMOD}: ${.CURDIR}/Makefile
 	printf '#define L${.PREFIX}\n#include <libgcc2.c>\n' >${.TARGET}
+
+${G_LIB2ADD:T:S/.asm/.S/}: ${.CURDIR}/Makefile ${G_LIB2ADD}
+	@echo copying ${G_LIB2ADD}
+	for i in ${G_LIB2ADD}; do \
+		j=$${i##*/}; \
+		j=`echo $$j | sed 's/\.asm$$/\.S/'`; \
+		cp $$i $$j; \
+	done
+	@echo copying ${G_LIB2ADD} complete
 
 # XXX
 .if ${MACHINE_ARCH} == "m68000"
