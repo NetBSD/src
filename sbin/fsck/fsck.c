@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.12 1997/09/14 14:11:00 lukem Exp $	*/
+/*	$NetBSD: fsck.c,v 1.13 1997/10/13 09:44:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.12 1997/09/14 14:11:00 lukem Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.13 1997/10/13 09:44:18 bouyer Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -498,7 +498,7 @@ getfslab(str)
 	if ((p - 'a') >= dl.d_npartitions)
 		errx(1, "partition `%s' is not defined on disk", str);
 
-	if ((t = dl.d_partitions[p - 'a'].p_fstype) >= DKMAXTYPES) 
+	if ((t = dl.d_partitions[p - 'a'].p_fstype) >= FSMAXTYPES) 
 		errx(1, "partition `%s' is not of a legal vfstype",
 		    str);
 
