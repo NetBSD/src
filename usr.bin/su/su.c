@@ -226,10 +226,8 @@ main(argc, argv)
 				exit(1);
 			}
 		}
-		if (asthem || pwd->pw_uid) {
-			(void)setenv("LOGNAME", pwd->pw_name, 1);
+		if (asthem || pwd->pw_uid)
 			(void)setenv("USER", pwd->pw_name, 1);
-		}
 		(void)setenv("HOME", pwd->pw_dir, 1);
 		(void)setenv("SHELL", shell, 1);
 	}
