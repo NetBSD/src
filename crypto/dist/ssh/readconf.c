@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.c,v 1.1.1.2 2001/01/14 04:50:31 itojun Exp $	*/
+/*	$NetBSD: readconf.c,v 1.2 2001/01/18 13:37:17 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -17,7 +17,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: readconf.c,v 1.1.1.2 2001/01/14 04:50:31 itojun Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.2 2001/01/18 13:37:17 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -757,7 +757,7 @@ fill_default_options(Options * options)
 	if (options->pubkey_authentication == -1)
 		options->pubkey_authentication = 1;
 	if (options->skey_authentication == -1)
-		options->skey_authentication = 1;
+		options->skey_authentication = 0;
 #ifdef KRB4
 	if (options->kerberos_authentication == -1)
 		options->kerberos_authentication = 4;
