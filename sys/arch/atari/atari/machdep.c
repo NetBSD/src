@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.120 2003/01/17 22:34:23 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.121 2003/04/01 23:47:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -144,8 +144,8 @@ consinit()
 	 * and initialize it now.
 	 */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
-		    msgbufpa + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
+		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * PAGE_SIZE,
+		    msgbufpa + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE,
 		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	pmap_update(pmap_kernel());
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
@@ -254,7 +254,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
+		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -295,7 +295,7 @@ cpu_startup()
 	 * XXX This is bogus; should just fix KERNBASE and
 	 * XXX VM_MIN_KERNEL_ADDRESS, but not right now.
 	 */
-	if (uvm_map_protect(kernel_map, 0, NBPG, UVM_PROT_NONE, TRUE) != 0)
+	if (uvm_map_protect(kernel_map, 0, PAGE_SIZE, UVM_PROT_NONE, TRUE) != 0)
 		panic("can't mark page 0 off-limits");
 
 	/*
@@ -303,9 +303,9 @@ cpu_startup()
 	 * If we don't, we might end up COW'ing the text segment!
 	 *
 	 * XXX Should be m68k_trunc_page(&kernel_text) instead
-	 * XXX of NBPG.
+	 * XXX of PAGE_SIZE.
 	 */
-	if (uvm_map_protect(kernel_map, NBPG, m68k_round_page(&etext),
+	if (uvm_map_protect(kernel_map, PAGE_SIZE, m68k_round_page(&etext),
 	    UVM_PROT_READ|UVM_PROT_EXEC, TRUE) != 0)
 		panic("can't protect kernel text");
 
@@ -314,7 +314,7 @@ cpu_startup()
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
 	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -513,7 +513,7 @@ cpu_reboot(howto, bootstr)
 	/*NOTREACHED*/
 }
 
-#define	BYTES_PER_DUMP	NBPG		/* Must be a multiple of NBPG	*/
+#define	BYTES_PER_DUMP	PAGE_SIZE	/* Must be a multiple of PAGE_SIZE */
 static vaddr_t	dumpspace;	/* Virt. space to map dumppages	*/
 
 /*
@@ -557,11 +557,11 @@ cpu_dumpconf()
 	dumplo -= cpu_dumpsize();
 
 	/*
-	 * Don't dump on the first NBPG (why NBPG?)
+	 * Don't dump on the first PAGE_SIZE (why PAGE_SIZE?)
 	 * in case the dump device includes a disk label.
 	 */
-	if (dumplo < btodb(NBPG))
-		dumplo = btodb(NBPG);
+	if (dumplo < btodb(PAGE_SIZE))
+		dumplo = btodb(PAGE_SIZE);
 }
 
 /*
@@ -620,7 +620,7 @@ dumpsys()
 	segbytes = boot_segs[0].end;
 	blkno    = dumplo;
 	dump     = bdev->d_dump;
-	nbytes   = dumpsize * NBPG;
+	nbytes   = dumpsize * PAGE_SIZE;
 
 	printf("dump ");
 

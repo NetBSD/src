@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_tt.c,v 1.11 2002/09/27 15:35:52 provos Exp $	*/
+/*	$NetBSD: grfabs_tt.c,v 1.12 2003/04/01 23:47:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -39,6 +39,8 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/iomap.h>
 #include <machine/video.h>
@@ -350,7 +352,7 @@ u_char	depth;
 	 * (or more) the user writes into someone elses memory. -ch
 	 */
 	bm_size    = m68k_round_page((width * height * depth) / NBBY);
-	total_size = bm_size + sizeof(bmap_t) + NBPG;
+	total_size = bm_size + sizeof(bmap_t) + PAGE_SIZE;
 
 	if ((bm = (bmap_t*)alloc_stmem(total_size, &hw_address)) == NULL)
 		return(NULL);
