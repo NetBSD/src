@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.5 2002/11/28 16:37:35 fvdl Exp $	*/
+/*	$NetBSD: intr.c,v 1.6 2002/11/30 22:22:53 fvdl Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -460,7 +460,7 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 #ifdef INTRDEBUG
 	printf("allocated pic %s type %s pin %d level %d to cpu%u slot %d idt entry %d\n",
 	    pic->pic_name, type == IST_EDGE ? "edge" : "level", pin, level,
-	    (unsigned)ci->ci_apicid, slot, idt_vec);
+	    ci->ci_apicid, slot, idt_vec);
 #endif
 
 	return (ih);
@@ -505,7 +505,7 @@ intr_disestablish(struct intrhand *ih)
 	pic->pic_hwunmask(pic, ih->ih_pin);
 
 #ifdef INTRDEBUG
-	printf("cpu%lu: remove slot %d (pic %s pin %d vec %d)\n",
+	printf("cpu%u: remove slot %d (pic %s pin %d vec %d)\n",
 	    ci->ci_apicid, ih->ih_slot, pic->pic_dev.dv_xname, ih->ih_pin,
 	    idtvec);
 #endif
@@ -653,7 +653,7 @@ intr_printconfig(void)
 	CPU_INFO_ITERATOR cii;
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		printf("cpu%d: interrupt masks:\n", (unsigned)ci->ci_apicid);
+		printf("cpu%d: interrupt masks:\n", ci->ci_apicid);
 		for (i = 0; i < NIPL; i++)
 			printf("IPL %d mask %lx unmask %lx\n", i,
 			    (u_long)ci->ci_imask[i], (u_long)ci->ci_iunmask[i]);
@@ -663,7 +663,7 @@ intr_printconfig(void)
 			if (isp == NULL)
 				continue;
 			printf("cpu%u source %d is pin %d from pic %s maxlevel %d\n",
-			    (unsigned)ci->ci_apicid, i, isp->is_pin,
+			    ci->ci_apicid, i, isp->is_pin,
 			    isp->is_pic->pic_name, isp->is_maxlevel);
 			for (ih = isp->is_handlers; ih != NULL;
 			     ih = ih->ih_next)
