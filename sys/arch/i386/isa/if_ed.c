@@ -13,7 +13,7 @@
  * Currently supports the Western Digital/SMC 8003 and 8013 series, the 3Com
  * 3c503, the NE1000 and NE2000, and a variety of similar clones.
  *
- *	$Id: if_ed.c,v 1.45 1994/05/05 02:20:44 mycroft Exp $
+ *	$Id: if_ed.c,v 1.46 1994/05/11 12:09:17 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -1014,6 +1014,9 @@ edattach(parent, self, aux)
 	/* Initialize ifnet structure. */
 	ifp->if_unit = sc->sc_dev.dv_unit;
 	ifp->if_name = edcd.cd_name;
+	ifp->if_type = IFT_ETHER;
+	ifp->if_addrlen = ETHER_ADDR_LEN;
+	ifp->if_hdrlen = 14;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
 	ifp->if_start = ed_start;

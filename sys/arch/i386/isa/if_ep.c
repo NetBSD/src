@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.35 1994/05/02 06:37:10 deraadt Exp $
+ *	$Id: if_ep.c,v 1.36 1994/05/11 12:09:23 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -323,6 +323,9 @@ epattach(parent, self, aux)
 
 	ifp->if_unit = sc->sc_dev.dv_unit;
 	ifp->if_name = epcd.cd_name;
+	ifp->if_type = IFT_ETHER;
+	ifp->if_addrlen = ETHER_ADDR_LEN;
+	ifp->if_hdrlen = 14;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS |
 	    IFF_MULTICAST;

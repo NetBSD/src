@@ -11,7 +11,7 @@
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
  *
- *	$Id: if_is.c,v 1.28 1994/04/22 22:58:57 mycroft Exp $
+ *	$Id: if_is.c,v 1.29 1994/05/11 12:09:27 mycroft Exp $
  */
 
 /* TODO
@@ -300,6 +300,9 @@ isattach(parent, self, aux)
 
 	ifp->if_unit = sc->sc_dev.dv_unit;
 	ifp->if_name = iscd.cd_name;
+	ifp->if_type = IFT_ETHER;
+	ifp->if_addrlen = ETHER_ADDR_LEN;
+	ifp->if_hdrlen = 14;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
 	ifp->if_start = is_start;

@@ -9,7 +9,7 @@
 /*
  * 3COM Etherlink 3C501 device driver
  *
- *	$Id: if_el.c,v 1.11 1994/04/24 01:30:00 mycroft Exp $
+ *	$Id: if_el.c,v 1.12 1994/05/11 12:09:21 mycroft Exp $
  */
 
 /*
@@ -196,6 +196,9 @@ elattach(parent, self, aux)
 	/* Initialize ifnet structure. */
 	ifp->if_unit = sc->sc_dev.dv_unit;
 	ifp->if_name = elcd.cd_name;
+	ifp->if_type = IFT_ETHER;
+	ifp->if_addrlen = ETHER_ADDR_LEN;
+	ifp->if_hdrlen = 14;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
 	ifp->if_start = el_start;

@@ -40,7 +40,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: if_ie.c,v 1.9 1994/04/07 06:50:50 mycroft Exp $
+ *	$Id: if_ie.c,v 1.10 1994/05/11 12:09:25 mycroft Exp $
  */
 
 /*
@@ -528,6 +528,9 @@ ieattach(parent, self, aux)
 
 	ifp->if_unit = sc->sc_dev.dv_unit;
 	ifp->if_name = iecd.cd_name;
+	ifp->if_type = IFT_ETHER;
+	ifp->if_addrlen = ETHER_ADDR_LEN;
+	ifp->if_hdrlen = 14;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
 	ifp->if_start = iestart;
