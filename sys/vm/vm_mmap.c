@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_mmap.c,v 1.36 1994/12/10 11:48:12 pk Exp $	*/
+/*	$NetBSD: vm_mmap.c,v 1.37 1995/01/09 17:36:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -248,7 +248,7 @@ mmap(p, uap, retval)
 		if (addr & PAGE_MASK)
 			return (EINVAL);
 		/* Address range must be all in user VM space. */
-		if (VM_MAXUSER_ADDRESS > 0 && addr + size >= VM_MAXUSER_ADDRESS)
+		if (VM_MAXUSER_ADDRESS > 0 && addr + size > VM_MAXUSER_ADDRESS)
 			return (EINVAL);
 		if (VM_MIN_ADDRESS > 0 && addr < VM_MIN_ADDRESS)
 			return (EINVAL);
@@ -454,7 +454,7 @@ munmap(p, uap, retval)
 	 * Check for illegal addresses.  Watch out for address wrap...
 	 * Note that VM_*_ADDRESS are not constants due to casts (argh).
 	 */
-	if (VM_MAXUSER_ADDRESS > 0 && addr + size >= VM_MAXUSER_ADDRESS)
+	if (VM_MAXUSER_ADDRESS > 0 && addr + size > VM_MAXUSER_ADDRESS)
 		return (EINVAL);
 	if (VM_MIN_ADDRESS > 0 && addr < VM_MIN_ADDRESS)
 		return (EINVAL);
