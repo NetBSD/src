@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.6 1995/05/06 18:17:15 mycroft Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.7 1995/05/07 02:59:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -38,7 +38,6 @@
 #include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/exec.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
@@ -52,14 +51,18 @@
 #include <sys/device.h>
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
+
 #include <compat/linux/linux_types.h>
 #include <compat/linux/linux_syscallargs.h>
+#include <compat/linux/linux_util.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
+#include <machine/segments.h>
 #include <machine/specialreg.h>
+#include <machine/sysarch.h>
 #include <machine/linux_machdep.h>
 
 /*
@@ -107,42 +110,42 @@ linux_sendsig(catcher, sig, mask, code)
 		fp = (struct linux_sigframe *)tf->tf_esp - 1;
 	}
 
-	frame.ls_handler = catcher;
-	frame.ls_sig = bsd_to_linux_sig(sig);
+	frame.sf_handler = catcher;
+	frame.sf_sig = bsd_to_linux_sig(sig);
 
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
-	frame.ls_sc.lsc_mask   = mask;
+	frame.sf_sc.sc_mask   = mask;
 #ifdef VM86
 	if (tf->tf_eflags & PSL_VM) {
-		frame.ls_sc.lsc_gs = tf->tf_vm86_gs;
-		frame.ls_sc.lsc_fs = tf->tf_vm86_fs;
-		frame.ls_sc.lsc_es = tf->tf_vm86_es;
-		frame.ls_sc.lsc_ds = tf->tf_vm86_ds;
+		frame.sf_sc.sc_gs = tf->tf_vm86_gs;
+		frame.sf_sc.sc_fs = tf->tf_vm86_fs;
+		frame.sf_sc.sc_es = tf->tf_vm86_es;
+		frame.sf_sc.sc_ds = tf->tf_vm86_ds;
 	} else
 #else
 	{
-		__asm("movl %%gs,%w0" : "=r" (frame.ls_sc.lsc_gs));
-		__asm("movl %%fs,%w0" : "=r" (frame.ls_sc.lsc_fs));
-		frame.ls_sc.lsc_es = tf->tf_es;
-		frame.ls_sc.lsc_ds = tf->tf_ds;
+		__asm("movl %%gs,%w0" : "=r" (frame.sf_sc.sc_gs));
+		__asm("movl %%fs,%w0" : "=r" (frame.sf_sc.sc_fs));
+		frame.sf_sc.sc_es = tf->tf_es;
+		frame.sf_sc.sc_ds = tf->tf_ds;
 	}
 #endif
-	frame.ls_sc.lsc_edi    = tf->tf_edi;
-	frame.ls_sc.lsc_esi    = tf->tf_esi;
-	frame.ls_sc.lsc_ebp    = tf->tf_ebp;
-	frame.ls_sc.lsc_ebx    = tf->tf_ebx;
-	frame.ls_sc.lsc_edx    = tf->tf_edx;
-	frame.ls_sc.lsc_ecx    = tf->tf_ecx;
-	frame.ls_sc.lsc_eax    = tf->tf_eax;
-	frame.ls_sc.lsc_eip    = tf->tf_eip;
-	frame.ls_sc.lsc_cs     = tf->tf_cs;
-	frame.ls_sc.lsc_eflags = tf->tf_eflags;
-	frame.ls_sc.lsc_esp    = tf->tf_esp;
-	frame.ls_sc.lsc_ss     = tf->tf_ss;
-	frame.ls_sc.lsc_err    = tf->tf_err;
-	frame.ls_sc.lsc_trapno = tf->tf_trapno;
+	frame.sf_sc.sc_edi    = tf->tf_edi;
+	frame.sf_sc.sc_esi    = tf->tf_esi;
+	frame.sf_sc.sc_ebp    = tf->tf_ebp;
+	frame.sf_sc.sc_ebx    = tf->tf_ebx;
+	frame.sf_sc.sc_edx    = tf->tf_edx;
+	frame.sf_sc.sc_ecx    = tf->tf_ecx;
+	frame.sf_sc.sc_eax    = tf->tf_eax;
+	frame.sf_sc.sc_eip    = tf->tf_eip;
+	frame.sf_sc.sc_cs     = tf->tf_cs;
+	frame.sf_sc.sc_eflags = tf->tf_eflags;
+	frame.sf_sc.sc_esp_at_signal = tf->tf_esp;
+	frame.sf_sc.sc_ss     = tf->tf_ss;
+	frame.sf_sc.sc_err    = tf->tf_err;
+	frame.sf_sc.sc_trapno = tf->tf_trapno;
 
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*
@@ -203,44 +206,150 @@ linux_sigreturn(p, uap, retval)
 	/*
 	 * Check for security violations.
 	 */
-	if (((context.lsc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-	    ISPL(context.lsc_cs) != SEL_UPL)
+	if (((context.sc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
+	    ISPL(context.sc_cs) != SEL_UPL)
 		return (EINVAL);
 
 	p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
-	p->p_sigmask = context.lsc_mask & ~sigcantmask;
+	p->p_sigmask = context.sc_mask & ~sigcantmask;
 
 	/*
 	 * Restore signal context.
 	 */
 #ifdef VM86
-	if (context.lsc_eflags & PSL_VM) {
-		tf->tf_vm86_gs = context.lsc_gs;
-		tf->tf_vm86_fs = context.lsc_fs;
-		tf->tf_vm86_es = context.lsc_es;
-		tf->tf_vm86_ds = context.lsc_ds;
+	if (context.sc_eflags & PSL_VM) {
+		tf->tf_vm86_gs = context.sc_gs;
+		tf->tf_vm86_fs = context.sc_fs;
+		tf->tf_vm86_es = context.sc_es;
+		tf->tf_vm86_ds = context.sc_ds;
 	} else
 #endif
 	{
 		/* %fs and %gs were restored by the trampoline. */
-		tf->tf_es = context.lsc_es;
-		tf->tf_ds = context.lsc_ds;
+		tf->tf_es = context.sc_es;
+		tf->tf_ds = context.sc_ds;
 	}
-	tf->tf_edi    = context.lsc_edi;
-	tf->tf_esi    = context.lsc_esi;
-	tf->tf_ebp    = context.lsc_ebp;
-	tf->tf_ebx    = context.lsc_ebx;
-	tf->tf_edx    = context.lsc_edx;
-	tf->tf_ecx    = context.lsc_ecx;
-	tf->tf_eax    = context.lsc_eax;
-	tf->tf_eip    = context.lsc_eip;
-	tf->tf_cs     = context.lsc_cs;
-	tf->tf_eflags = context.lsc_eflags;
-	tf->tf_esp    = context.lsc_esp;
-	tf->tf_ss     = context.lsc_ss;
+	tf->tf_edi    = context.sc_edi;
+	tf->tf_esi    = context.sc_esi;
+	tf->tf_ebp    = context.sc_ebp;
+	tf->tf_ebx    = context.sc_ebx;
+	tf->tf_edx    = context.sc_edx;
+	tf->tf_ecx    = context.sc_ecx;
+	tf->tf_eax    = context.sc_eax;
+	tf->tf_eip    = context.sc_eip;
+	tf->tf_cs     = context.sc_cs;
+	tf->tf_eflags = context.sc_eflags;
+	tf->tf_esp    = context.sc_esp_at_signal;
+	tf->tf_ss     = context.sc_ss;
 
 	return (EJUSTRETURN);
 }
+
+#ifdef USER_LDT
+
+int
+linux_read_ldt(p, uap, retval)
+	struct proc *p;
+	struct linux_modify_ldt_args /* {
+		syscallarg(int) func;
+		syscallarg(void *) ptr;
+		syscallarg(size_t) bytecount;
+	} */ *uap;
+	register_t *retval;
+{
+	struct i386_get_ldt_args gl;
+	int error;
+	caddr_t sg;
+	char *parms;
+
+	sg = stackgap_init();
+
+	gl.start = 0;
+	gl.desc = SCARG(uap, ptr);
+	gl.num = SCARG(uap, bytecount) / sizeof(union descriptor);
+
+	parms = stackgap_alloc(&sg, sizeof(gl));
+
+	if (error = copyout(&gl, parms, sizeof(gl)))
+		return (error);
+
+	if (error = i386_get_ldt(p, parms, retval))
+		return (error);
+
+	*retval *= sizeof(union descriptor);
+	return (0);
+}
+
+struct linux_ldt_info {
+	u_int entry_number;
+	u_long base_addr;
+	u_int limit;
+	u_int seg_32bit:1;
+	u_int contents:2;
+	u_int read_exec_only:1;
+	u_int limit_in_pages:1;
+	u_int seg_not_present:1;
+};
+
+int
+linux_write_ldt(p, uap, retval)
+	struct proc *p;
+	struct linux_modify_ldt_args /* {
+		syscallarg(int) func;
+		syscallarg(void *) ptr;
+		syscallarg(size_t) bytecount;
+	} */ *uap;
+	register_t *retval;
+{
+	struct linux_ldt_info ldt_info;
+	struct segment_descriptor sd;
+	struct i386_set_ldt_args sl;
+	int error;
+	caddr_t sg;
+	char *parms;
+
+	if (SCARG(uap, bytecount) != sizeof(ldt_info))
+		return (EINVAL);
+	if (error = copyin(SCARG(uap, ptr), &ldt_info, sizeof(ldt_info)))
+		return error;
+	if (ldt_info.contents == 3)
+		return (EINVAL);
+
+	sg = stackgap_init();
+
+	sd.sd_lobase = ldt_info.base_addr & 0xffffff;
+	sd.sd_hibase = (ldt_info.base_addr >> 24) & 0xff;
+	sd.sd_lolimit = ldt_info.limit & 0xffff;
+	sd.sd_hilimit = (ldt_info.limit >> 16) & 0xf;
+	sd.sd_type =
+	    16 | (ldt_info.contents << 2) | (!ldt_info.read_exec_only << 1);
+	sd.sd_dpl = SEL_UPL;
+	sd.sd_p = !ldt_info.seg_not_present;
+	sd.sd_def32 = ldt_info.seg_32bit;
+	sd.sd_gran = ldt_info.limit_in_pages;
+
+	sl.start = ldt_info.entry_number;
+	sl.desc = stackgap_alloc(&sg, sizeof(sd));
+	sl.num = 1;
+
+	printf("linux_write_ldt: idx=%d, base=%x, limit=%x\n",
+	    ldt_info.entry_number, ldt_info.base_addr, ldt_info.limit);
+
+	parms = stackgap_alloc(&sg, sizeof(sl));
+
+	if (error = copyout(&sd, sl.desc, sizeof(sd)))
+		return (error);
+	if (error = copyout(&sl, parms, sizeof(sl)))
+		return (error);
+
+	if (error = i386_set_ldt(p, parms, retval))
+		return (error);
+
+	*retval = 0;
+	return (0);
+}
+
+#endif /* USER_LDT */
 
 int
 linux_modify_ldt(p, uap, retval)
@@ -254,10 +363,14 @@ linux_modify_ldt(p, uap, retval)
 {
 
 	switch (SCARG(uap, func)) {
+#ifdef USER_LDT
 	case 0:
-		/* read */
+		return (linux_read_ldt(p, uap, retval));
+
 	case 1:
-		/* write */
+		return (linux_write_ldt(p, uap, retval));
+#endif /* USER_LDT */
+
 	default:
 		return (ENOSYS);
 	}
