@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.15 1999/01/03 14:11:54 lukem Exp $
+.\"	$NetBSD: find.1,v 1.16 1999/01/03 14:54:28 lukem Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
 .\"
 .\"	from: @(#)find.1	8.7 (Berkeley) 5/9/95
 .\"
-.Dd May 9, 1995
+.Dd January 4, 1999
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -165,6 +165,31 @@ arguments it is replaced by the pathname of the current file.
 will be executed from the directory from which
 .Nm
 was executed.
+.It Xo
+.Ic -flags
+.Op Fl
+.Ns Ar flags 
+.Xc
+If
+.Ar flags
+are preceded by a dash (``\-''), this primary evaluates to true
+if at least all of the bits in
+.Ar flags
+are set in the file's flags bits.
+If
+.Ar flags
+are not preceded by a dash, this primary evaluates to true if
+the bits in
+.Ar flags
+exactly match the file's flags bits.
+If
+.Ar flags
+is
+.Dq none ,
+files with no flags bits set are matched.
+(See
+.Xr chflags 1
+for more information about file flags.)
 .It Ic -follow
 Follow symbolic links.
 .It Ic -fstype Ar type 
@@ -416,6 +441,7 @@ Print out a list of all the files that are either owned by ``wnj'' or
 that are newer than ``ttt''.
 .El
 .Sh SEE ALSO
+.Xr chflags 1 ,
 .Xr chmod 1 ,
 .Xr locate 1 ,
 .Xr stat 2 ,

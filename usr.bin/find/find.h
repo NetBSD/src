@@ -1,4 +1,4 @@
-/*	$NetBSD: find.h,v 1.8 1998/02/21 22:47:20 christos Exp $	*/
+/*	$NetBSD: find.h,v 1.9 1999/01/03 14:54:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,9 +41,9 @@
 /* node type */
 enum ntype {
 	N_AND = 1, 				/* must start > 0 */
-	N_ATIME, N_CLOSEPAREN, N_CTIME, N_DEPTH, N_EXEC, N_EXPR, N_FOLLOW,
-	N_FSTYPE, N_GROUP, N_INUM, N_LINKS, N_LS, N_MTIME, N_NAME, N_NEWER,
-	N_NOGROUP, N_NOT, N_NOUSER, N_OK, N_OPENPAREN, N_OR, N_PATH,
+	N_ATIME, N_CLOSEPAREN, N_CTIME, N_DEPTH, N_EXEC, N_EXPR, N_FLAGS,
+	N_FOLLOW, N_FSTYPE, N_GROUP, N_INUM, N_LINKS, N_LS, N_MTIME, N_NAME,
+	N_NEWER, N_NOGROUP, N_NOT, N_NOUSER, N_OK, N_OPENPAREN, N_OR, N_PATH,
 	N_PERM, N_PRINT, N_PRINT0, N_PRUNE, N_SIZE, N_TYPE, N_USER, N_XDEV,
 };
 
@@ -62,6 +62,7 @@ typedef struct _plandata {
 	int flags;				/* private flags */
 	enum ntype type;			/* plan node type */
 	union {
+		u_int32_t _f_data;		/* flags */
 		gid_t _g_data;			/* gid */
 		ino_t _i_data;			/* inode */
 		mode_t _m_data;			/* mode mask */
@@ -83,6 +84,7 @@ typedef struct _plandata {
 #define	a_data	p_un._a_data
 #define	c_data	p_un._c_data
 #define	i_data	p_un._i_data
+#define	f_data	p_un._f_data
 #define	g_data	p_un._g_data
 #define	l_data	p_un._l_data
 #define	m_data	p_un._m_data
