@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.20 2000/08/08 12:08:17 ad Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.21 2000/11/20 14:09:36 tron Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000\n\
 Copyright (c) 1991, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n");
 __SCCSID("from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.20 2000/08/08 12:08:17 ad Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.21 2000/11/20 14:09:36 tron Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -107,7 +107,7 @@ main(int argc, char *argv[])
 
 	hasyp = 0;
 	oldfp = NULL;
-	strcpy(prefix, "/");
+	prefix[0] = '\0';
 	makeold = 0;
 	
 	while ((ch = getopt(argc, argv, "d:pvBL")) != -1)
