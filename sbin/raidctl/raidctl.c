@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.24 2000/08/19 19:51:17 oster Exp $   */
+/*      $NetBSD: raidctl.c,v 1.25 2000/10/31 14:18:39 lukem Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -49,15 +49,15 @@
 #include <sys/stat.h>
 #include <sys/disklabel.h>
 
-#include <util.h>
-#include <stdio.h>
-#include <fcntl.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
-#include <string.h>
+#include <fcntl.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "rf_raidframe.h"
 
@@ -103,7 +103,6 @@ main(argc,argv)
 	int do_rewrite;
 	int is_clean;
 	int raidID;
-	int rawpart;
 	int serial_number;
 	struct stat st;
 	int fd;
@@ -223,39 +222,24 @@ main(argc,argv)
 		usage();
 
 	strncpy(name,argv[0],PATH_MAX);
-
-	if ((name[0] == '/') || (name[0] == '.')) {
-		/* they've (apparently) given a full path... */
-		strncpy(dev_name, name, PATH_MAX);
-	} else {
-		if (isdigit(name[strlen(name)-1])) {
-			rawpart = getrawpartition();
-			snprintf(dev_name,PATH_MAX,"/dev/%s%c",name,
-				 'a'+rawpart);		
-		} else {
-			snprintf(dev_name,PATH_MAX,"/dev/%s",name);
-		}
-	}	
-
-	if (stat(dev_name, &st) != 0) {
+	fd = opendisk(name, O_RDWR, dev_name, sizeof(dev_name), 1);
+	if (fd == -1) {
+		fprintf(stderr, "%s: unable to open device file: %s\n",
+			__progname, name);
+		exit(1);
+	}
+	if (fstat(fd, &st) != 0) {
 		fprintf(stderr,"%s: stat failure on: %s\n",
-			__progname,dev_name);
-		return (errno);
+			__progname, dev_name);
+		exit(1);
 	}
 	if (!S_ISBLK(st.st_mode) && !S_ISCHR(st.st_mode)) {
 		fprintf(stderr,"%s: invalid device: %s\n",
 			__progname,dev_name);
-		return (EINVAL);
+		exit(1);
 	}
 
 	raidID = RF_DEV2RAIDID(st.st_rdev);
-
-	if ((fd = open( dev_name, O_RDWR, 0640)) < 0) {
-		fprintf(stderr, "%s: unable to open device file: %s\n",
-			__progname, dev_name);
-		exit(1);
-	}
-	
 
 	switch(action) {
 	case RAIDFRAME_ADD_HOT_SPARE:
@@ -563,21 +547,22 @@ get_component_label(fd, component)
 
 	printf("Component label for %s:\n",component);
 
-	printf("   Row: %d Column: %d Num Rows: %d Num Columns: %d\n",
+	printf("   Row: %d, Column: %d, Num Rows: %d, Num Columns: %d\n",
 	       component_label.row, component_label.column, 
 	       component_label.num_rows, component_label.num_columns);
-	printf("   Version: %d Serial Number: %d Mod Counter: %d\n",
+	printf("   Version: %d, Serial Number: %d, Mod Counter: %d\n",
 	       component_label.version, component_label.serial_number,
 	       component_label.mod_counter);
-	printf("   Clean: %s Status: %d\n",
+	printf("   Clean: %s, Status: %d\n",
 	       component_label.clean ? "Yes" : "No", 
 	       component_label.status );
-	printf("   sectPerSU: %d SUsPerPU: %d SUsPerRU: %d\n",
+	printf("   sectPerSU: %d, SUsPerPU: %d, SUsPerRU: %d\n",
 	       component_label.sectPerSU, component_label.SUsPerPU, 
 	       component_label.SUsPerRU);
-	printf("   RAID Level: %c  blocksize: %d numBlocks: %d\n",
-	       (char) component_label.parityConfig, 
-	       component_label.blockSize, component_label.numBlocks);
+	printf("   Queue size: %d, blocksize: %d, numBlocks: %d\n",
+	       component_label.maxOutstanding, component_label.blockSize,
+	       component_label.numBlocks);
+	printf("   RAID Level: %c\n", (char) component_label.parityConfig);
 	printf("   Autoconfig: %s\n", 
 	       component_label.autoconfigure ? "Yes" : "No" );
 	printf("   Root partition: %s\n",
