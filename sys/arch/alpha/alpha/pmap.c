@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.132 2000/05/23 05:12:54 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.133 2000/06/04 17:39:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.132 2000/05/23 05:12:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.133 2000/06/04 17:39:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1469,21 +1469,12 @@ pmap_page_protect(pg, prot)
 		printf("pmap_page_protect(%p, %x)\n", pg, prot);
 #endif
 
-	/*
-	 * Even though we don't change the mapping of the page,
-	 * we still flush the I-cache if VM_PROT_EXECUTE is set
-	 * because we might be "adding" execute permissions to
-	 * a previously non-execute page.
-	 */
-
 	switch (prot) {
 	case VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE:
-		alpha_pal_imb();	/* XXX XXX XXX */
 	case VM_PROT_READ|VM_PROT_WRITE:
 		return;
 	/* copy_on_write */
 	case VM_PROT_READ|VM_PROT_EXECUTE:
-		alpha_pal_imb();	/* XXX XXX XXX */
 	case VM_PROT_READ:
 		pvh = pa_to_pvh(pa);
 		PMAP_HEAD_TO_MAP_LOCK();
