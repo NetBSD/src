@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.48 1997/03/27 02:39:15 mikel Exp $
+#	$NetBSD: Makefile.inc,v 1.49 1997/03/29 21:07:19 thorpej Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
@@ -66,7 +66,7 @@ ${PASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-.if (${MACHINE_ARCH} != "alpha")
+.if (${MACHINE_ARCH} != "alpha") && (${MACHINE_ARCH} != "powerpc")
 ${SASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
@@ -98,7 +98,7 @@ ${PNOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-.if (${MACHINE_ARCH} != "alpha")
+.if (${MACHINE_ARCH} != "alpha") && (${MACHINE_ARCH} != "powerpc")
 ${SNOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' | \
@@ -124,7 +124,7 @@ ${PPSEUDO}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-.if (${MACHINE_ARCH} != "alpha")
+.if (${MACHINE_ARCH} != "alpha") && (${MACHINE_ARCH} != "powerpc")
 ${SPSEUDO}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nPSEUDO(${.PREFIX},${.PREFIX:S/_//})\n' | \
