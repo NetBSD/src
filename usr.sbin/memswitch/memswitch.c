@@ -1,4 +1,4 @@
-/*	$NetBSD: memswitch.c,v 1.1.1.1 1999/06/21 15:56:03 minoura Exp $	*/
+/*	$NetBSD: memswitch.c,v 1.2 1999/06/25 14:27:55 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@ char *progname;
 int nflag = 0;
 u_int8_t *current_values = 0;
 u_int8_t *modified_values = 0;
+int main __P((int, char*[]));
 
 void
 usage(void)
@@ -210,7 +211,7 @@ modify_single(expr)
 			l = i + 1;
 			class = alloca(l);
 			if (class == 0)
-				err (1, NULL);
+				err (1, "alloca");
 			strncpy (class, expr, i);
 			class[i] = 0;
 			break;
@@ -223,7 +224,7 @@ modify_single(expr)
 		if (expr[i] == '=') {
 			node = alloca(i - l + 1);
 			if (node == 0)
-				err (1, NULL);
+				err (1, "alloca");
 			strncpy (node, &(expr[l]), i - l);
 			node[i - l] = 0;
 			break;
@@ -287,7 +288,7 @@ alloc_modified_values(void)
 		alloc_current_values();
 	modified_values = malloc (256);
 	if (modified_values == 0)
-		err (1, NULL);
+		err (1, "malloc");
 	memcpy (modified_values, current_values, 256);
 }
 
@@ -300,7 +301,7 @@ alloc_current_values(void)
 
 	current_values = malloc (256);
 	if (current_values == 0)
-		err (1, "Opening %s", _PATH_DEVSRAM);
+		err (1, "malloc");
 
 	sramfd = open (_PATH_DEVSRAM, O_RDONLY);
 	if (sramfd < 0)

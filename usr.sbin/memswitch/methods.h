@@ -1,4 +1,4 @@
-/*	$NetBSD: methods.h,v 1.1.1.1 1999/06/21 15:56:03 minoura Exp $	*/
+/*	$NetBSD: methods.h,v 1.2 1999/06/25 14:27:55 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 
-int atoi_ __P((char*));
+int atoi_ __P((const char**));
 
 int fill_uchar __P((struct property*));
 int fill_ushort __P((struct property*));
