@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1995/10/01 21:22:45 ragge Exp $
+#	$NetBSD: Makefile,v 1.2 2002/03/06 12:29:57 lukem Exp $
 #
 #	Create TK50 files and tapes.
 
@@ -7,8 +7,8 @@ TAPEDEV=mt8
 .include "../Makefile.inc"
 
 all:
-	cp ../inst/bootroot-${REV}.fs tk50-file1-${REV}
-	cp ../inst/miniroot-${REV}.fs tk50-file2-${REV}
+	cp ../inst/bootroot-${DISTRIBREV}.fs tk50-file1-${DISTRIBREV}
+	cp ../inst/miniroot-${DISTRIBREV}.fs tk50-file2-${DISTRIBREV}
 
 tape:
 .if !defined(DESTDIR)
@@ -17,8 +17,8 @@ tape:
 
 .else
 	mt -f /dev/r${TAPEDEV} rewind
-	dd if=tk50-file1-${REV} of=/dev/nr${TAPEDEV} bs=512
-	dd if=tk50-file2-${REV} of=/dev/nr${TAPEDEV} bs=512
+	dd if=tk50-file1-${DISTRIBREV} of=/dev/nr${TAPEDEV} bs=512
+	dd if=tk50-file2-${DISTRIBREV} of=/dev/nr${TAPEDEV} bs=512
 	dd if=${DESTDIR}/snapshot/bin.tar.gz of=/dev/nr${TAPEDEV} bs=64k
 	dd if=${DESTDIR}/snapshot/dev.tar.gz of=/dev/nr${TAPEDEV} bs=64k
 	dd if=${DESTDIR}/snapshot/etc.tar.gz of=/dev/nr${TAPEDEV} bs=64k
