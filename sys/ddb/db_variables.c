@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.29 2003/12/04 19:38:23 atatat Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.30 2004/03/24 15:34:52 atatat Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.29 2003/12/04 19:38:23 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.30 2004/03/24 15:34:52 atatat Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -101,35 +101,44 @@ db_rw_internal_variable(const struct db_variable *vp, db_expr_t *valp, int rw)
 SYSCTL_SETUP(sysctl_ddb_setup, "sysctl ddb subtree setup")
 {
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "ddb", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_DDB, CTL_EOL);
-        sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "radix", NULL,
 		       NULL, 0, &db_radix, 0,
 		       CTL_DDB, DDBCTL_RADIX, CTL_EOL);
-        sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "maxoff", NULL,
 		       NULL, 0, &db_maxoff, 0,
 		       CTL_DDB, DDBCTL_MAXOFF, CTL_EOL);
-        sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "maxwidth", NULL,
 		       NULL, 0, &db_max_width, 0,
 		       CTL_DDB, DDBCTL_MAXWIDTH, CTL_EOL);
-        sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "lines", NULL,
 		       NULL, 0, &db_max_line, 0,
 		       CTL_DDB, DDBCTL_LINES, CTL_EOL);
-        sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "tabstops", NULL,
 		       NULL, 0, &db_tab_stop_width, 0,
 		       CTL_DDB, DDBCTL_TABSTOPS, CTL_EOL);
-        sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "onpanic", NULL,
 		       NULL, 0, &db_onpanic, 0,
 		       CTL_DDB, DDBCTL_ONPANIC, CTL_EOL);
-        sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "fromconsole", NULL,
 		       NULL, 0, &db_fromconsole, 0,
 		       CTL_DDB, DDBCTL_FROMCONSOLE, CTL_EOL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.164 2004/03/09 05:30:24 dbj Exp $	*/
+/*	$NetBSD: tty.c,v 1.165 2004/03/24 15:34:53 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.164 2004/03/09 05:30:24 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.165 2004/03/24 15:34:53 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,28 +181,34 @@ u_int64_t tk_rawcc;
 SYSCTL_SETUP(sysctl_kern_tkstat_setup, "sysctl kern.tkstat subtree setup")
 {
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "kern", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "tkstat", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, KERN_TKSTAT, CTL_EOL);
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_QUAD, "nin", NULL,
 		       NULL, 0, &tk_nin, 0,
 		       CTL_KERN, KERN_TKSTAT, KERN_TKSTAT_NIN, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_QUAD, "nout", NULL,
 		       NULL, 0, &tk_nout, 0,
 		       CTL_KERN, KERN_TKSTAT, KERN_TKSTAT_NOUT, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_QUAD, "cancc", NULL,
 		       NULL, 0, &tk_cancc, 0,
 		       CTL_KERN, KERN_TKSTAT, KERN_TKSTAT_CANCC, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_QUAD, "rawcc", NULL,
 		       NULL, 0, &tk_rawcc, 0,
 		       CTL_KERN, KERN_TKSTAT, KERN_TKSTAT_RAWCC, CTL_EOL);

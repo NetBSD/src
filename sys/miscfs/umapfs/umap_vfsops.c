@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.42 2004/03/09 03:16:09 atatat Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.43 2004/03/24 15:34:54 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.42 2004/03/09 03:16:09 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.43 2004/03/24 15:34:54 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -293,11 +293,13 @@ umapfs_unmount(mp, mntflags, p)
 SYSCTL_SETUP(sysctl_vfs_umap_setup, "sysctl vfs.umap subtree setup")
 {
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "vfs", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "umap", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, 10, CTL_EOL);

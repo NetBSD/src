@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.82 2004/03/20 05:22:41 atatat Exp $ */
+/*	$NetBSD: sysctl.c,v 1.83 2004/03/24 15:34:56 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.82 2004/03/20 05:22:41 atatat Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.83 2004/03/24 15:34:56 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,7 +148,7 @@ static void sysctlerror(int);
 int learn_tree(int *, u_int, struct sysctlnode *);
 int sysctlbyname(const char *, void *, size_t *, void *, size_t);
 int sysctlgetmibinfo(const char *, int *, u_int *,
-		     char *, size_t *, struct sysctlnode **);
+		     char *, size_t *, struct sysctlnode **, int);
 
 /*
  * "handlers"
@@ -227,8 +227,7 @@ struct sysctlnode my_root = {
 #if defined(lint)
 	0
 #else /* defined(lint) */
-	.sysctl_flags = SYSCTL_ROOT|
-	    SYSCTL_TYPE(CTLTYPE_NODE),
+	.sysctl_flags = SYSCTL_VERSION|CTLFLAG_ROOT|CTLTYPE_NODE,
 	.sysctl_size = sizeof(struct sysctlnode),
 	.sysctl_num = 0,
 	.sysctl_name = "(prog_root)",
@@ -418,28 +417,26 @@ sf(u_int f)
 	c = "";
 
 #define print_flag(_f, _s, _c, _q, _x) \
-	if ((/*CONSTCOND*/_x) ? \
-	    (((_f) & (_x)) == (__CONCAT(SYSCTL_,_q))) : \
-	    ((_f) & (__CONCAT(SYSCTL_,_q)))) { \
+	if (((_f) & (__CONCAT(CTLFLAG_,_x))) == (__CONCAT(CTLFLAG_,_q))) { \
 		strlcat((_s), (_c), sizeof(_s)); \
 		strlcat((_s), __STRING(_q), sizeof(_s)); \
 		(_c) = ","; \
-		(_f) &= ~(__CONCAT(SYSCTL_,_q)|(_x)); \
+		(_f) &= ~(__CONCAT(CTLFLAG_,_x)); \
 	}
-	print_flag(f, s, c, READONLY, SYSCTL_READWRITE);
-	print_flag(f, s, c, READONLY1, SYSCTL_READWRITE);
-	print_flag(f, s, c, READONLY2, SYSCTL_READWRITE);
-	print_flag(f, s, c, READWRITE, SYSCTL_READWRITE);
-	print_flag(f, s, c, ANYWRITE, 0);
-	print_flag(f, s, c, PRIVATE, 0);
-	print_flag(f, s, c, PERMANENT, 0);
-	print_flag(f, s, c, OWNDATA, 0);
-	print_flag(f, s, c, IMMEDIATE, 0);
-	print_flag(f, s, c, HEX, 0);
-	print_flag(f, s, c, ROOT, 0);
-	print_flag(f, s, c, ANYNUMBER, 0);
-	print_flag(f, s, c, HIDDEN, 0);
-	print_flag(f, s, c, ALIAS, 0);
+	print_flag(f, s, c, READONLY,  READWRITE);
+	print_flag(f, s, c, READONLY1, READWRITE);
+	print_flag(f, s, c, READONLY2, READWRITE);
+	print_flag(f, s, c, READWRITE, READWRITE);
+	print_flag(f, s, c, ANYWRITE,  ANYWRITE);
+	print_flag(f, s, c, PRIVATE,   PRIVATE);
+	print_flag(f, s, c, PERMANENT, PERMANENT);
+	print_flag(f, s, c, OWNDATA,   OWNDATA);
+	print_flag(f, s, c, IMMEDIATE, IMMEDIATE);
+	print_flag(f, s, c, HEX,       HEX);
+	print_flag(f, s, c, ROOT,      ROOT);
+	print_flag(f, s, c, ANYNUMBER, ANYNUMBER);
+	print_flag(f, s, c, HIDDEN,    HIDDEN);
+	print_flag(f, s, c, ALIAS,     ALIAS);
 #undef print_flag
 
 	if (f) {
@@ -521,7 +518,7 @@ print_tree(int *name, u_int namelen, struct sysctlnode *pnode, u_int type,
 			printf("%s (%s): ", gsname, gdname);
 		printf("CTLTYPE_%s", st(type));
 		if (type == CTLTYPE_NODE) {
-			if (SYSCTL_FLAGS(pnode->sysctl_flags) & SYSCTL_ALIAS)
+			if (SYSCTL_FLAGS(pnode->sysctl_flags) & CTLFLAG_ALIAS)
 				printf(", alias %d",
 				       pnode->sysctl_alias);
 			else
@@ -549,7 +546,7 @@ print_tree(int *name, u_int namelen, struct sysctlnode *pnode, u_int type,
 	 * only way to print an aliased node is with either -M or by
 	 * name specifically.
 	 */
-	if (SYSCTL_FLAGS(pnode->sysctl_flags) & SYSCTL_ALIAS && add) {
+	if (SYSCTL_FLAGS(pnode->sysctl_flags) & CTLFLAG_ALIAS && add) {
 		*sp = *dp = '\0';
 		return;
 	}
@@ -594,7 +591,7 @@ print_tree(int *name, u_int namelen, struct sysctlnode *pnode, u_int type,
 			req = 0;
 			for (ni = 0; ni < pnode->sysctl_clen; ni++) {
 				name[namelen] = node[ni].sysctl_num;
-				if ((node[ni].sysctl_flags & SYSCTL_HIDDEN) &&
+				if ((node[ni].sysctl_flags & CTLFLAG_HIDDEN) &&
 				    !(Aflag || req))
 					continue;
 				print_tree(name, namelen + 1, &node[ni],
@@ -722,8 +719,8 @@ parse(char *l)
 	namelen = CTL_MAXNAME;
 	sz = sizeof(gsname);
 
-	if (sysctlgetmibinfo(key, &name[0], &namelen, gsname, &sz, &node) == -1)
-	{
+	if (sysctlgetmibinfo(key, &name[0], &namelen, gsname, &sz, &node,
+			     SYSCTL_VERSION) == -1) {
 		fprintf(warnfp, "%s: %s level name '%s' in '%s' is invalid\n",
 			getprogname(), lname[namelen], gsname, l);
 		exit(1);
@@ -791,8 +788,8 @@ parse(char *l)
   with [r12w] being read-only, writeable below securelevel 1,
   writeable below securelevel 2, and unconditionally writeable
   respectively.  if you specify addr, it is assumed to be the name of
-  a kernel symbol, if value, SYSCTL_OWNDATA will be asserted for
-  strings, SYSCTL_IMMEDIATE for ints and u_quad_ts.  you cannot
+  a kernel symbol, if value, CTLFLAG_OWNDATA will be asserted for
+  strings, CTLFLAG_IMMEDIATE for ints and u_quad_ts.  you cannot
   specify both value and addr.
 
 */
@@ -968,35 +965,35 @@ parse_create(char *l)
 			while (*t != '\0') {
 				switch (*t) {
 				case 'a':
-					flags |= SYSCTL_ANYWRITE;
+					flags |= CTLFLAG_ANYWRITE;
 					break;
 				case 'h':
-					flags |= SYSCTL_HIDDEN;
+					flags |= CTLFLAG_HIDDEN;
 					break;
 				case 'i':
-					flags |= SYSCTL_IMMEDIATE;
+					flags |= CTLFLAG_IMMEDIATE;
 					break;
 				case 'o':
-					flags |= SYSCTL_OWNDATA;
+					flags |= CTLFLAG_OWNDATA;
 					break;
 				case 'p':
-					flags |= SYSCTL_PRIVATE;
+					flags |= CTLFLAG_PRIVATE;
 					break;
 				case 'x':
-					flags |= SYSCTL_HEX;
+					flags |= CTLFLAG_HEX;
 					break;
 
 				case 'r':
-					rw = SYSCTL_READONLY;
+					rw = CTLFLAG_READONLY;
 					break;
 				case '1':
-					rw = SYSCTL_READONLY1;
+					rw = CTLFLAG_READONLY1;
 					break;
 				case '2':
-					rw = SYSCTL_READONLY2;
+					rw = CTLFLAG_READONLY2;
 					break;
 				case 'w':
-					rw = SYSCTL_READWRITE;
+					rw = CTLFLAG_READWRITE;
 					break;
 				default:
 					fprintf(warnfp,
@@ -1045,8 +1042,8 @@ parse_create(char *l)
 					getprogname(), nname, value);
 				exit(1);
 			}
-			if (!(flags & SYSCTL_OWNDATA)) {
-				flags |= SYSCTL_IMMEDIATE;
+			if (!(flags & CTLFLAG_OWNDATA)) {
+				flags |= CTLFLAG_IMMEDIATE;
 				node.sysctl_idata = i;
 			}
 			else
@@ -1055,7 +1052,7 @@ parse_create(char *l)
 				sz = sizeof(int);
 			break;
 		case CTLTYPE_STRING:
-			flags |= SYSCTL_OWNDATA;
+			flags |= CTLFLAG_OWNDATA;
 			node.sysctl_data = data;
 			if (sz == 0)
 				sz = strlen(data) + 1;
@@ -1075,8 +1072,8 @@ parse_create(char *l)
 					getprogname(), nname, value);
 				exit(1);
 			}
-			if (!(flags & SYSCTL_OWNDATA)) {
-				flags |= SYSCTL_IMMEDIATE;
+			if (!(flags & CTLFLAG_OWNDATA)) {
+				flags |= CTLFLAG_IMMEDIATE;
 				node.sysctl_qdata = q;
 			}
 			else
@@ -1115,15 +1112,15 @@ parse_create(char *l)
 				getprogname(), nname);
                         exit(1);
                 }
-		if (!(flags & SYSCTL_IMMEDIATE))
-			flags |= SYSCTL_OWNDATA;
+		if (!(flags & CTLFLAG_IMMEDIATE))
+			flags |= CTLFLAG_OWNDATA;
 	}
 
 	/*
 	 * now we do a few sanity checks on the description we've
 	 * assembled
 	 */
-	if ((flags & SYSCTL_IMMEDIATE) &&
+	if ((flags & CTLFLAG_IMMEDIATE) &&
 	    (type == CTLTYPE_STRING || type == CTLTYPE_STRUCT)) {
 		fprintf(warnfp,
 			"%s: %s: cannot make an immediate %s\n", 
@@ -1162,16 +1159,16 @@ parse_create(char *l)
 	 */
 	if (rw == -1) {
 		if (type == CTLTYPE_NODE ||
-		    (flags & (SYSCTL_OWNDATA|SYSCTL_IMMEDIATE)))
-			rw = SYSCTL_READWRITE;
+		    (flags & (CTLFLAG_OWNDATA|CTLFLAG_IMMEDIATE)))
+			rw = CTLFLAG_READWRITE;
 		else
-			rw = SYSCTL_READONLY;
+			rw = CTLFLAG_READONLY;
 	}
 
 	/*
 	 * if a kernel address was specified, that can't be made
 	 * writeable by us.
-	if (rw != SYSCTL_READONLY && addr) {
+	if (rw != CTLFLAG_READONLY && addr) {
 		fprintf(warnfp, "%s: %s: kernel data can only be readable\n",
 			getprogname(), nname);
 		exit(1);
@@ -1191,7 +1188,7 @@ parse_create(char *l)
 	/*
 	 * put it all together, now.  t'ain't much, is it?
 	 */
-	node.sysctl_flags = flags|rw|type;
+	node.sysctl_flags = SYSCTL_VERSION|flags|rw|type;
 	node.sysctl_size = sz;
 	t = strrchr(nname, sep[0]);
 	if (t != NULL)
@@ -1218,7 +1215,7 @@ parse_create(char *l)
 		sz = sizeof(gsname);
 		*t = '\0';
 		rc = sysctlgetmibinfo(nname, &name[0], &namelen,
-				      gsname, &sz, NULL);
+				      gsname, &sz, NULL, SYSCTL_VERSION);
 		*t = sep[0];
 		if (rc == -1) {
 			fprintf(warnfp,
@@ -1266,7 +1263,8 @@ parse_destroy(char *l)
 	memset(name, 0, sizeof(name));
 	namelen = sizeof(name) / sizeof(name[0]);
 	sz = sizeof(gsname);
-	rc = sysctlgetmibinfo(l, &name[0], &namelen, gsname, &sz, NULL);
+	rc = sysctlgetmibinfo(l, &name[0], &namelen, gsname, &sz, NULL,
+			      SYSCTL_VERSION);
 	if (rc == -1) {
 		fprintf(warnfp,
 			"%s: %s level name '%s' in '%s' is invalid\n",
@@ -1275,6 +1273,7 @@ parse_destroy(char *l)
 	}
 
 	memset(&node, 0, sizeof(node));
+	node.sysctl_flags = SYSCTL_VERSION;
 	node.sysctl_num = name[namelen - 1];
 	name[namelen - 1] = CTL_DESTROY;
 
@@ -1477,7 +1476,7 @@ display_number(const struct sysctlnode *node, const char *name,
 		memcpy(&i, data, sz);
 		if (xflag)
 			printf("0x%0*x", (int)sz * 2, i);
-		else if (node->sysctl_flags & SYSCTL_HEX)
+		else if (node->sysctl_flags & CTLFLAG_HEX)
 			printf("%#x", i);
 		else
 			printf("%d", i);
@@ -1486,7 +1485,7 @@ display_number(const struct sysctlnode *node, const char *name,
 		memcpy(&q, data, sz);
 		if (xflag)
 			printf("0x%0*" PRIx64, (int)sz * 2, q);
-		else if (node->sysctl_flags & SYSCTL_HEX)
+		else if (node->sysctl_flags & CTLFLAG_HEX)
 			printf("%#" PRIx64, q);
 		else
 			printf("%" PRIu64, q);
@@ -1530,7 +1529,7 @@ display_string(const struct sysctlnode *node, const char *name,
 		return;
 	}
 
-	if (xflag || node->sysctl_flags & SYSCTL_HEX) {
+	if (xflag || node->sysctl_flags & CTLFLAG_HEX) {
 		for (ni = 0; ni < (int)sz; ni++) {
 			if (xflag)
 				printf("%02x", buf[ni]);

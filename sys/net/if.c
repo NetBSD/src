@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.138 2004/01/29 16:33:14 drochner Exp $	*/
+/*	$NetBSD: if.c,v 1.139 2004/03/24 15:34:54 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.138 2004/01/29 16:33:14 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.139 2004/03/24 15:34:54 atatat Exp $");
 
 #include "opt_inet.h"
 
@@ -1701,43 +1701,52 @@ ifconf(cmd, data)
 
 #if defined(INET) || defined(INET6)
 static void
-sysctl_net_ifq_setup(int pf, const char *pfname,
+sysctl_net_ifq_setup(struct sysctllog **clog,
+		     int pf, const char *pfname,
 		     int ipn, const char *ipname,
 		     int qid, struct ifqueue *ifq)
 {
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "net", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, pfname, NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, pf, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, ipname, NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, pf, ipn, CTL_EOL);
-        sysctl_createv(SYSCTL_PERMANENT,
-                       CTLTYPE_NODE, "ifq", NULL,
-                       NULL, 0, NULL, 0,
-                       CTL_NET, pf, ipn, qid, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "ifq", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, pf, ipn, qid, CTL_EOL);
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "len", NULL,
 		       NULL, 0, &ifq->ifq_len, 0,
 		       CTL_NET, pf, ipn, qid, IFQCTL_LEN, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "maxlen", NULL,
 		       NULL, 0, &ifq->ifq_maxlen, 0,
 		       CTL_NET, pf, ipn, qid, IFQCTL_MAXLEN, CTL_EOL);
 #ifdef notyet
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "peak", NULL,
 		       NULL, 0, &ifq->ifq_peak, 0,
 		       CTL_NET, pf, ipn, qid, IFQCTL_PEAK, CTL_EOL);
 #endif
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "drops", NULL,
 		       NULL, 0, &ifq->ifq_drops, 0,
 		       CTL_NET, pf, ipn, qid, IFQCTL_DROPS, CTL_EOL);
@@ -1749,7 +1758,7 @@ SYSCTL_SETUP(sysctl_net_inet_ip_ifq_setup,
 {
 	extern struct ifqueue ipintrq;
 
-	sysctl_net_ifq_setup(PF_INET, "inet", IPPROTO_IP, "ip",
+	sysctl_net_ifq_setup(clog, PF_INET, "inet", IPPROTO_IP, "ip",
 			     IPCTL_IFQ, &ipintrq);
 }
 #endif /* INET */
@@ -1760,7 +1769,7 @@ SYSCTL_SETUP(sysctl_net_inet6_ip6_ifq_setup,
 {
 	extern struct ifqueue ip6intrq;
 
-	sysctl_net_ifq_setup(PF_INET6, "inet6", IPPROTO_IPV6, "ip6",
+	sysctl_net_ifq_setup(clog, PF_INET6, "inet6", IPPROTO_IPV6, "ip6",
 			     IPV6CTL_IFQ, &ip6intrq);
 }
 #endif /* INET6 */

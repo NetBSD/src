@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.118 2004/02/22 01:00:41 dan Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.119 2004/03/24 15:34:53 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.118 2004/02/22 01:00:41 dan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.119 2004/03/24 15:34:53 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1566,11 +1566,13 @@ sysctl_bufvm_update(SYSCTLFN_ARGS)
 SYSCTL_SETUP(sysctl_kern_buf_setup, "sysctl kern.buf subtree setup")
 {
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "kern", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "buf", NULL,
 		       sysctl_dobuf, 0, NULL, 0,
 		       CTL_KERN, KERN_BUF, CTL_EOL);
@@ -1579,20 +1581,24 @@ SYSCTL_SETUP(sysctl_kern_buf_setup, "sysctl kern.buf subtree setup")
 SYSCTL_SETUP(sysctl_vm_buf_setup, "sysctl vm.buf* subtree setup")
 {
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "vm", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VM, CTL_EOL);
 
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "bufcache", NULL,
 		       sysctl_bufvm_update, 0, &bufcache, 0,
 		       CTL_VM, CTL_CREATE, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "bufmem_lowater", NULL,
 		       sysctl_bufvm_update, 0, &bufmem_lowater, 0,
 		       CTL_VM, CTL_CREATE, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "bufmem_hiwater", NULL,
 		       sysctl_bufvm_update, 0, &bufmem_hiwater, 0,
 		       CTL_VM, CTL_CREATE, CTL_EOL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.89 2004/01/22 00:32:41 jonathan Exp $	*/
+/*	$NetBSD: bpf.c,v 1.90 2004/03/24 15:34:54 atatat Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.89 2004/01/22 00:32:41 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.90 2004/03/24 15:34:54 atatat Exp $");
 
 #include "bpfilter.h"
 
@@ -1520,18 +1520,21 @@ SYSCTL_SETUP(sysctl_net_bfp_setup, "sysctl net.bpf subtree setup")
 {
 	struct sysctlnode *node;
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "net", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, CTL_EOL);
 
 	node = NULL;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_NODE, "bpf", &node,
+	sysctl_createv(clog, 0, NULL, &node,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "bpf", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, CTL_CREATE, CTL_EOL);
 	if (node != NULL)
-		sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 			CTLTYPE_INT, "maxbufsize", NULL,
 			sysctl_net_bpf_maxbufsize, 0, &bpf_maxbufsize, 0,
 			CTL_NET, node->sysctl_num, CTL_CREATE, CTL_EOL);
