@@ -1,4 +1,4 @@
-.\"	$NetBSD: isa.4,v 1.20 2000/05/01 22:46:43 augustss Exp $
+.\"	$NetBSD: isa.4,v 1.21 2000/05/02 11:11:39 augustss Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -215,6 +215,11 @@ devices also have newer
 Plug-and-Play variants.
 These are listed in
 .Xr isapnp 4 .
+Some i386 platforms use
+.Xr pnpbios 4
+to attach
+.Tn ISA
+devices.
 .Sh SEE ALSO
 .Xr aha 4 ,
 .Xr aic 4 ,
@@ -238,6 +243,7 @@ These are listed in
 .Xr nca 4 ,
 .Xr ne 4 ,
 .Xr pas 4 ,
+.Xr pnpbios 4 ,
 .Xr pss 4 ,
 .Xr rtfps 4 ,
 .Xr sb 4 ,
