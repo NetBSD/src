@@ -1,4 +1,4 @@
-/*	$NetBSD: ka860.c,v 1.16 2000/08/09 03:02:54 tv Exp $	*/
+/*	$NetBSD: ka860.c,v 1.17 2002/07/24 10:17:45 ragge Exp $	*/
 /*
  * Copyright (c) 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -415,8 +415,12 @@ abus_print(aux, hej)
         void *aux;
         const char *hej;
 {
+#if ABUS_VERBOSE
         struct bp_conf *bp = aux;
         if (hej)
                 printf("%s at %s", bp->type, hej);
         return (UNCONF);
+#else
+	return (QUIET);
+#endif
 }
