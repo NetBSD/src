@@ -1,4 +1,4 @@
-.\"	$NetBSD: zlib.3,v 1.3 2004/01/29 15:23:09 wiz Exp $
+.\"	$NetBSD: zlib.3,v 1.4 2004/03/05 01:30:52 wiz Exp $
 .\"	$OpenBSD: zlib.3,v 1.1 2003/09/25 09:12:09 jmc Exp $
 .\"
 .\"  Copyright (C) 1995-2002 Jean-loup Gailly and Mark Adler
@@ -391,7 +391,7 @@ does not return
 then it must be called again as described above.
 .Pp
 .Fn deflate
-sets strm-\*[Gt]adler to the adler32 checksum of all input read so far
+sets strm-\*[Gt]adler to the Adler-32 checksum of all input read so far
 (that is,
 .Fa total_in
 bytes).
@@ -621,10 +621,10 @@ If a preset dictionary is needed at this point (see
 .Fn inflateSetDictionary
 below),
 .Fn inflate
-sets strm-\*[Gt]adler to the adler32 checksum of the dictionary
+sets strm-\*[Gt]adler to the Adler-32 checksum of the dictionary
 chosen by the compressor and returns
 .Dv Z_NEED_DICT ;
-otherwise it sets strm-\*[Gt]adler to the adler32 checksum of all output produced
+otherwise it sets strm-\*[Gt]adler to the Adler-32 checksum of all output produced
 so far
 (that is,
 .Fa total_out
@@ -635,7 +635,7 @@ and returns
 or an error code as described below.
 At the end of the stream,
 .Fn inflate
-checks that its computed adler32 checksum is equal to that saved by the
+checks that its computed Adler-32 checksum is equal to that saved by the
 compressor and returns
 .Dv Z_STREAM_END
 only if the checksum is correct.
@@ -653,7 +653,7 @@ if a preset dictionary is needed at this point,
 .Dv Z_DATA_ERROR
 if the input data was corrupted (input stream not conforming to the
 .Nm
-format or incorrect adler32 checksum),
+format or incorrect Adler-32 checksum),
 .Dv Z_STREAM_ERROR
 if the stream structure was inconsistent
 (for example, if
@@ -825,10 +825,10 @@ or
 Thus the strings most likely to be useful should be
 put at the end of the dictionary, not at the front.
 .Pp
-Upon return of this function, strm-\*[Gt]adler is set to the Adler32 value
+Upon return of this function, strm-\*[Gt]adler is set to the Adler-32 value
 of the dictionary; the decompressor may later use this value to determine
 which dictionary has been used by the compressor.
-(The Adler32 value applies to the whole dictionary even if only a subset
+(The Adler-32 value applies to the whole dictionary even if only a subset
 of the dictionary is actually used by the compressor.)
 .Pp
 .Fn deflateSetDictionary
@@ -1006,7 +1006,7 @@ This function must be called immediately after a call to
 if this call returned
 .Dv Z_NEED_DICT .
 The dictionary chosen by the compressor can be determined from the
-Adler32 value returned by this call to
+Adler-32 value returned by this call to
 .Fn inflate .
 The compressor and decompressor must use exactly the same dictionary
 (see
@@ -1022,7 +1022,7 @@ if a parameter is invalid
 or the stream state is inconsistent,
 .Dv Z_DATA_ERROR
 if the given dictionary doesn't match the expected one
-.Pq incorrect Adler32 value .
+.Pq incorrect Adler-32 value .
 .Fn inflateSetDictionary
 does not perform any decompression: this will be done by subsequent calls of
 .Fn inflate .
@@ -1606,7 +1606,7 @@ typedef struct z_stream_s {
     voidpf     opaque;  /* private data object passed to zalloc and zfree*/
 
     int     data_type;  /*best guess about the data type: ascii or binary*/
-    uLong   adler;      /* adler32 value of the uncompressed data */
+    uLong   adler;      /* Adler-32 value of the uncompressed data */
     uLong   reserved;   /* reserved for future use */
 } z_stream;
 
