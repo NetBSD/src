@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.2 1995/04/10 08:56:18 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.3 1995/04/16 14:56:25 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -315,7 +315,7 @@ struct proc	*p;
  * Note that partition info on the floppy device is used to distinguise
  * between 780Kb and 360Kb floppy's.
  *	partition 0: 360Kb
- *  partition 1: 780Kb
+ *	partition 1: 780Kb
  */
 Fdopen(dev, flags, devtype, proc)
 dev_t		dev;
@@ -465,6 +465,15 @@ struct buf	*bp;
 done:
 	bp->b_resid = bp->b_bcount;
 	biodone(bp);
+}
+
+/* 
+ * no dumps to floppy disks thank you.
+ */
+int
+fddump(dev_t dev)
+{
+	return(ENXIO);
 }
 
 /* 
