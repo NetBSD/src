@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_sig.c,v 1.20.2.4 2002/05/29 21:32:24 nathanw Exp $	*/
+/*	$NetBSD: hpux_sig.c,v 1.20.2.5 2002/07/03 23:08:22 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.20.2.4 2002/05/29 21:32:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.20.2.5 2002/07/03 23:08:22 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -389,7 +389,7 @@ hpux_sys_ssig_6x(l, v, retval)
 	*retval = (register_t)SIGACTION(p, a).sa_handler;
 	sigaction1(p, a, sa, NULL);
 #if 0
-	p->p_flag |= SOUSIG;	/* mark as simulating old stuff */
+	p->p_flag |= SOUSIG;		/* mark as simulating old stuff */
 #endif
 	return (0);
 }

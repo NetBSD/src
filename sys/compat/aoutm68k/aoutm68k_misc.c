@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_misc.c,v 1.2.2.6 2002/05/29 21:32:10 nathanw Exp $	*/
+/*	$NetBSD: aoutm68k_misc.c,v 1.2.2.7 2002/07/03 22:58:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_misc.c,v 1.2.2.6 2002/05/29 21:32:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_misc.c,v 1.2.2.7 2002/07/03 22:58:22 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -105,7 +105,7 @@ aoutm68k_sys_unlink(l, v, retval)
 	register_t *retval;
 {
 	struct aoutm68k_sys_unlink_args *uap = v;
-	    struct proc *p = l->l_proc;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));

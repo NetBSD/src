@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_tty.c,v 1.17.2.3 2001/11/18 00:07:49 gmcgarry Exp $	*/
+/*	$NetBSD: hpux_tty.c,v 1.17.2.4 2002/07/03 23:10:04 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.17.2.3 2001/11/18 00:07:49 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.17.2.4 2002/07/03 23:10:04 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -493,8 +493,7 @@ hpux_sys_stty_6x(l, v, retval)
 		syscallarg(caddr_t) arg;
 	} */ *uap = v;
 
-	return (getsettty(l, SCARG(uap, fd), HPUXTIOCGETP,
-	    SCARG(uap, arg)));
+	return (getsettty(l, SCARG(uap, fd), HPUXTIOCGETP, SCARG(uap, arg)));
 }
 
 int
@@ -508,8 +507,7 @@ hpux_sys_gtty_6x(l, v, retval)
 		syscallarg(caddr_t) arg;
 	} */ *uap = v;
 
-	return (getsettty(l, SCARG(uap, fd), HPUXTIOCSETP,
-	    SCARG(uap, arg)));
+	return (getsettty(l, SCARG(uap, fd), HPUXTIOCSETP, SCARG(uap, arg)));
 }
 
 /*
