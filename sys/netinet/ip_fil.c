@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.29 1998/11/14 07:42:37 tls Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.30 1998/11/15 17:36:19 drochner Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -397,7 +397,7 @@ int mode;
 	{
 		u_int	enable;
 
-# if defined(__NetBSD__)
+# if defined(__NetBSD__) && defined(_KERNEL)
 		if ((securelevel >= 2) || !(mode & FWRITE))
 #else
 		if (!(mode & FWRITE))
@@ -421,7 +421,7 @@ int mode;
 	}
 #endif
 	case SIOCSETFF :
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) && defined(_KERNEL)
 		if ((securelevel >= 2) || !(mode & FWRITE))
 #else
 		if (!(mode & FWRITE))
@@ -437,7 +437,7 @@ int mode;
 	case SIOCRMAFR :
 	case SIOCADAFR :
 	case SIOCZRLST :
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) && defined(_KERNEL)
 		if ((securelevel >= 2) || !(mode & FWRITE))
 #else
 		if (!(mode & FWRITE))
@@ -449,7 +449,7 @@ int mode;
 	case SIOCINIFR :
 	case SIOCRMIFR :
 	case SIOCADIFR :
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) && defined(_KERNEL)
 		if ((securelevel >= 2) || !(mode & FWRITE))
 #else
 		if (!(mode & FWRITE))
@@ -459,7 +459,7 @@ int mode;
 			error = frrequest(unit, cmd, data, 1 - fr_active);
 		break;
 	case SIOCSWAPA :
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) && defined(_KERNEL)
 		if((securelevel >= 2) || !(mode & FWRITE))
 #else
 		if (!(mode & FWRITE))
@@ -493,7 +493,7 @@ int mode;
 		break;
 	}
 	case	SIOCFRZST :
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) && defined(_KERNEL)
 		if ((securelevel >= 2) || !(mode & FWRITE))
 #else
 		if (!(mode & FWRITE))
@@ -503,7 +503,7 @@ int mode;
 			frzerostats(data);
 		break;
 	case	SIOCIPFFL :
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) && defined(_KERNEL)
 		if ((securelevel >= 2) || !(mode & FWRITE))
 #else
 		if (!(mode & FWRITE))
@@ -517,7 +517,7 @@ int mode;
 		break;
 #ifdef	IPFILTER_LOG
 	case	SIOCIPFFB :
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) && defined(_KERNEL)
 		if ((securelevel >= 2) || !(mode & FWRITE))
 #else
 		if (!(mode & FWRITE))
@@ -532,7 +532,7 @@ int mode;
 		break;
 	case SIOCAUTHW :
 	case SIOCAUTHR :
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) && defined(_KERNEL)
 		if ((securelevel >= 2) || !(mode & FWRITE)) {
 #else
 		if (!(mode & FWRITE)) {
@@ -544,7 +544,7 @@ int mode;
 		error = fr_auth_ioctl(data, cmd, NULL, NULL);
 		break;
 	case SIOCFRSYN :
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) && defined(_KERNEL)
 		if ((securelevel >= 2) || !(mode & FWRITE))
 #else
 		if (!(mode & FWRITE))

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.21 1998/11/14 07:42:37 tls Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.22 1998/11/15 17:36:20 drochner Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 by Darren Reed.
@@ -236,7 +236,7 @@ int mode;
 	switch (cmd)
 	{
 	case SIOCADNAT :
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) && defined(_KERNEL)
 		if ((securelevel >= 2) || !(mode & FWRITE)) {
 #else
 		if (!(mode & FWRITE)) {
@@ -285,7 +285,7 @@ int mode;
 		ATOMIC_INC(nat_stats.ns_rules);
 		break;
 	case SIOCRMNAT :
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) && defined(_KERNEL)
 		if ((securelevel >= 2) || !(mode & FWRITE)) {
 #else
 		if (!(mode & FWRITE)) {
@@ -331,7 +331,7 @@ int mode;
 		break;
 	    }
 	case SIOCFLNAT :
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) && defined(_KERNEL)
 		if ((securelevel >= 2) || !(mode & FWRITE)) {
 #else
 		if (!(mode & FWRITE)) {
@@ -345,7 +345,7 @@ int mode;
 		IWCOPY((caddr_t)&ret, data, sizeof(ret));
 		break;
 	case SIOCCNATL :
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) && defined(_KERNEL)
 		if ((securelevel >= 2) || !(mode & FWRITE)) {
 #else
 		if (!(mode & FWRITE)) {
