@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1993 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)err.c	5.2 (Berkeley) 3/19/93";*/
-static char *rcsid = "$Id: err.c,v 1.6 1993/11/06 00:27:23 jtc Exp $";
+/* from: static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93"; */
+static char *rcsid = "$Id: err.c,v 1.7 1993/11/06 00:55:23 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <err.h>
@@ -60,7 +60,7 @@ err(eval, fmt, va_alist)
 	va_dcl
 #endif
 {
-	_VA_LIST_ ap;
+	va_list ap;
 #if __STDC__
 	va_start(ap, fmt);
 #else
@@ -74,7 +74,7 @@ __dead void
 verr(eval, fmt, ap)
 	int eval;
 	const char *fmt;
-	_VA_LIST_ ap;
+	va_list ap;
 {
 	int sverrno;
 
@@ -98,7 +98,7 @@ errx(eval, fmt, va_alist)
 	va_dcl
 #endif
 {
-	_VA_LIST_ ap;
+	va_list ap;
 #if __STDC__
 	va_start(ap, fmt);
 #else
@@ -112,7 +112,7 @@ __dead void
 verrx(eval, fmt, ap)
 	int eval;
 	const char *fmt;
-	_VA_LIST_ ap;
+	va_list ap;
 {
 	(void)fprintf(stderr, "%s: ", __progname);
 	if (fmt != NULL)
@@ -130,7 +130,7 @@ warn(fmt, va_alist)
 	va_dcl
 #endif
 {
-	_VA_LIST_ ap;
+	va_list ap;
 #if __STDC__
 	va_start(ap, fmt);
 #else
@@ -143,7 +143,7 @@ warn(fmt, va_alist)
 void
 vwarn(fmt, ap)
 	const char *fmt;
-	_VA_LIST_ ap;
+	va_list ap;
 {
 	int sverrno;
 
@@ -165,7 +165,7 @@ warnx(fmt, va_alist)
 	va_dcl
 #endif
 {
-	_VA_LIST_ ap;
+	va_list ap;
 #ifdef __STDC__
 	va_start(ap, fmt);
 #else
@@ -178,7 +178,7 @@ warnx(fmt, va_alist)
 void
 vwarnx(fmt, ap)
 	const char *fmt;
-	_VA_LIST_ ap;
+	va_list ap;
 {
 	(void)fprintf(stderr, "%s: ", __progname);
 	if (fmt != NULL)
