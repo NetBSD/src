@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_cksum.c,v 1.10 2001/02/10 04:14:27 itojun Exp $	*/
+/*	$NetBSD: in6_cksum.c,v 1.11 2001/05/30 03:06:56 thorpej Exp $	*/
 /*	$KAME: in6_cksum.c,v 1.9 2000/09/09 15:33:31 itojun Exp $	*/
 
 /*
@@ -127,6 +127,10 @@ in6_cksum(m, nxt, off, len)
 			m->m_pkthdr.len, off, len);
 	}
 
+	/* Skip pseudo-header if nxt == 0. */
+	if (nxt == 0)
+		goto skip_phdr;
+
 	bzero(&uph, sizeof(uph));
 
 	/*
@@ -169,6 +173,7 @@ in6_cksum(m, nxt, off, len)
 	if (dstifid)
 		ip6->ip6_dst.s6_addr16[1] = dstifid;
 #endif
+ skip_phdr:
 	/*
 	 * Secondly calculate a summary of the first mbuf excluding offset.
 	 */
