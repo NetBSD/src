@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.5 2000/11/02 00:37:57 eeh Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.6 2000/11/03 18:50:49 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -433,7 +433,7 @@ kbd_intr(event)
 			polledkey = str[0];
 		else
 			for (s = str; *s; s++)
-				(*linesw[ite_tty->t_line].l_rint)(*s, ite_tty);
+				(*ite_tty->t_linesw->l_rint)(*s, ite_tty);
 	}
 	return 0;
 }
