@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.26 2000/01/10 03:53:22 eeh Exp $ */
+/*	$NetBSD: db_interface.c,v 1.27 2000/01/21 23:29:09 thorpej Exp $ */
 
 /*
  * Mach Operating System
@@ -801,8 +801,9 @@ db_dump_buf(addr, have_addr, count, modif)
 		return;
 	}
 	buf = (struct buf*) addr;
-	db_printf("buf %p:\nhash:%p vnbufs:%p freelist:%p actf:%p actb:%p\n",
-		  buf, buf->b_hash, buf->b_vnbufs, buf->b_freelist, buf->b_actf, buf->b_actb);
+	db_printf("buf %p:\nhash:%p vnbufs:%p freelist:%p actq next:%p\n",
+		  buf, buf->b_hash, buf->b_vnbufs, buf->b_freelist,
+		  BUFQ_NEXT(buf));
 	db_printf("flags:%x => %b\n", buf->b_flags, buf->b_flags, flagnames);
 	db_printf("error:%x bufsiz:%x bcount:%x resid:%x dev:%x un.addr:%x\n",
 		  buf->b_error, buf->b_bufsize, buf->b_bcount, buf->b_resid,

@@ -1,4 +1,4 @@
-/*	$NetBSD: rdvar.h,v 1.7 1997/03/31 07:40:02 scottr Exp $	*/
+/*	$NetBSD: rdvar.h,v 1.8 2000/01/21 23:29:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,7 +77,9 @@ struct	rd_softc {
 	struct	rd_ssmcmd sc_ssmc;
 	struct	rd_srcmd sc_src;
 	struct	rd_clearcmd sc_clear;
-	struct	buf sc_tab;		/* buffer queue */
+	struct	buf_queue sc_tab;
+	int	sc_active;
+	int	sc_errcnt;
 	struct	rdstats sc_stats;
 };
 
@@ -94,8 +96,6 @@ struct	rd_softc {
 #define rdpart(x)	(minor(x) & 0x7)
 #define	rdpunit(x)	((x) & 7)
 #define rdlabdev(d)	(dev_t)(((int)(d)&~7)|2)	/* rd?c */
-
-#define	b_cylin		b_resid
 
 #define	RDRETRY		5
 #define RDWAITC		1	/* min time for timeout in seconds */
