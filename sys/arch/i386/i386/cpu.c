@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.13 2003/04/01 20:54:23 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.14 2003/04/25 21:54:29 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@ cpu_vm_init(struct cpu_info *ci)
 	int ncolors = 2, i;
 
 	for (i = CAI_ICACHE; i <= CAI_L2CACHE; i++) {
-		struct i386_cache_info *cai;
+		struct x86_cache_info *cai;
 		int tcolors;
 
 		cai = &ci->ci_cinfo[i];

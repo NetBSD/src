@@ -46,16 +46,53 @@ void
 identifycpu(struct cpu_info *ci)
 {
 	u_int64_t last_tsc;
+	u_int32_t dummy, val;
+	char buf[512];
+	u_int32_t brand[12];
+	char chipname[48];
+
+	CPUID(1, ci->ci_signature, val, dummy, ci->ci_feature_flags);
+	CPUID(0x80000001, dummy, dummy, dummy, val);
+	ci->ci_feature_flags |= val;
+
+	CPUID(0x80000002, brand[0], brand[1], brand[2], brand[3]);
+	CPUID(0x80000003, brand[4], brand[5], brand[6], brand[7]);
+	CPUID(0x80000004, brand[8], brand[9], brand[10], brand[11]);
+
+	strcpy(chipname, (char *)brand);
+	if (chipname[0] == 0)
+		strcpy(chipname, "Opteron or Athlon 64");
 
 	last_tsc = rdtsc();
 	delay(100000);
 	ci->ci_tsc_freq = (rdtsc() - last_tsc) * 10;
 
-	printf("AMD x86-64");
+	amd_cpu_cacheinfo(ci);
+
+	printf("%s: %s", ci->ci_dev->dv_xname, chipname);
+
 	if (ci->ci_tsc_freq != 0)
 		printf(", %lu.%02lu MHz", (ci->ci_tsc_freq + 4999) / 1000000,
 		    ((ci->ci_tsc_freq + 4999) / 10000) % 100);
 	printf("\n");
+
+	if ((ci->ci_feature_flags & CPUID_MASK1) != 0) {
+		bitmask_snprintf(ci->ci_feature_flags,
+		    CPUID_FLAGS1, buf, sizeof(buf));
+		printf("%s: features: %s\n", ci->ci_dev->dv_xname, buf);
+	}
+	if ((ci->ci_feature_flags & CPUID_MASK2) != 0) {
+		bitmask_snprintf(ci->ci_feature_flags,
+		    CPUID_EXT_FLAGS2, buf, sizeof(buf));
+		printf("%s: features: %s\n", ci->ci_dev->dv_xname, buf);
+	}
+	if ((ci->ci_feature_flags & CPUID_MASK3) != 0) {
+		bitmask_snprintf(ci->ci_feature_flags,
+		    CPUID_EXT_FLAGS3, buf, sizeof(buf));
+		printf("%s: features: %s\n", ci->ci_dev->dv_xname, buf);
+	}
+
+	x86_print_cacheinfo(ci);
 
 	microtime_func = cc_microtime;
 }
