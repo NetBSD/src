@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.17 2000/12/13 03:17:53 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.18 2001/03/05 16:53:13 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.16 1997/10/08 07:45:43 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.17 2000/12/13 03:17:53 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.18 2001/03/05 16:53:13 wiz Exp $");
 #endif
 #endif
 
@@ -35,7 +35,7 @@ __RCSID("$NetBSD: main.c,v 1.17 2000/12/13 03:17:53 hubertf Exp $");
 #include "lib.h"
 #include "add.h"
 
-static char Options[] = "hvIRfnp:SMt:";
+static char Options[] = "hVvIRfnp:SMt:";
 
 char   *Prefix = NULL;
 Boolean NoInstall = FALSE;
@@ -53,7 +53,7 @@ static void
 usage(void)
 {
 	fprintf(stderr, "%s\n%s\n",
-	    "usage: pkg_add [-vInfRMS] [-t template] [-p prefix]",
+	    "usage: pkg_add [-hVvInfRMS] [-t template] [-p prefix]",
 	    "               pkg-name [pkg-name ...]");
 	exit(1);
 }
@@ -105,6 +105,10 @@ main(int argc, char **argv)
 		case 'M':
 			AddMode = MASTER;
 			break;
+
+		case 'V':
+			show_version();
+			/* NOTREACHED */
 
 		case 'h':
 		case '?':
