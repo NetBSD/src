@@ -1,4 +1,4 @@
-/*	$NetBSD: ipnat.c,v 1.17 1998/05/29 20:46:46 veego Exp $	*/
+/*	$NetBSD: ipnat.c,v 1.18 1998/05/29 20:52:04 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -371,7 +371,7 @@ int fd, opts;
 					ntohs(nat.nat_outport));
 				printf(" [%s %hu]", inet_ntoa(nat.nat_oip),
 					ntohs(nat.nat_oport));
-				printf(" %ld %hu %lx", nat.nat_age,
+				printf(" %ld %hu %d", nat.nat_age,
 					nat.nat_use, nat.nat_sumd);
 #if SOLARIS
 				printf(" %lx", nat.nat_ipsumd);
