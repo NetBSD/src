@@ -1,4 +1,6 @@
 
+/* This is now in lib/libsa/printf.c */
+
 static short tw_on;
 static short tw_pos;
 static char tw_chars[4] = "|/-\\";

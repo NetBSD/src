@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.1.1.1 1995/02/14 22:56:36 gwr Exp $ */
+/*	$NetBSD: installboot.c,v 1.1.1.2 1995/06/01 20:37:53 gwr Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -49,13 +49,18 @@
 int	verbose, nowrite;
 char	*boot, *proto, *dev;
 struct nlist nl[] = {
-#define X_BLOCKNUM	0
-	{"_blocknum"},
-#define X_MAXBLOCKNUM	1
-	{"_maxblocknum"},
+#define X_BLOCK_SIZE	0
+	{"_block_size"},
+#define X_BLOCK_COUNT	1
+	{"_block_count"},
+#define X_BLOCK_TABLE	2
+	{"_block_table"},
 	{NULL}
 };
-daddr_t	*blocknums;		/* block number array in prototype image */
+
+int *block_size_p;		/* block size var. in prototype image */
+int *block_count_p;		/* block count var. in prototype image */
+daddr_t	*block_table;	/* block number array in prototype image */
 int	maxblocknum;		/* size of this array */
 
 
@@ -63,7 +68,7 @@ char	*loadprotoblocks __P((char *, long *));
 int	loadblocknums __P((char *, int));
 
 
-	void
+void
 usage()
 {
 	fprintf(stderr,
@@ -71,7 +76,7 @@ usage()
 	exit(1);
 }
 
-	int
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
@@ -125,6 +130,10 @@ main(argc, argv)
 	if (nowrite)
 		return 0;
 
+#ifndef	sparc	/* XXX */
+	protostore += sizeof(struct exec);
+#endif
+
 	/* Write patched proto bootblocks into the superblock */
 	if (protosize > SBSIZE - DEV_BSIZE)
 		errx(1, "proto bootblocks too big");
@@ -141,73 +150,93 @@ main(argc, argv)
 	return 0;
 }
 
-	char *
+char *
 loadprotoblocks(fname, size)
 	char *fname;
 	long *size;
 {
 	int	fd;
+	size_t	dsize, fsize;
 	char	*bp;
-	struct	stat statbuf;
-	struct	exec *hp;
+	struct	nlist *nlp;
+	struct	exec eh;
 	long	off;
+
+	fd = -1;
+	bp = NULL;
 
 	/* Locate block number array in proto file */
 	if (nlist(fname, nl) != 0) {
 		warnx("nlist: %s: symbols not found", fname);
 		return NULL;
 	}
-	if (nl[X_BLOCKNUM].n_type != N_DATA + N_EXT) {
-		warnx("nlist: %s: wrong type", nl[X_BLOCKNUM].n_un.n_name);
-		return NULL;
-	}
-	if (nl[X_MAXBLOCKNUM].n_type != N_DATA + N_EXT) {
-		warnx("nlist: %s: wrong type", nl[X_MAXBLOCKNUM].n_un.n_name);
-		return NULL;
+	/* Validate symbol types (global data). */
+	for (nlp = nl; nlp->n_un.n_name; nlp++) {
+		if (nlp->n_type != (N_DATA | N_EXT)) {
+			warnx("nlist: %s: wrong type", nlp->n_un.n_name);
+			return NULL;
+		}
 	}
 
 	if ((fd = open(fname, O_RDONLY)) < 0) {
 		warn("open: %s", fname);
 		return NULL;
 	}
-	if (fstat(fd, &statbuf) != 0) {
-		warn("fstat: %s", fname);
-		close(fd);
-		return NULL;
-	}
-	if ((bp = calloc(roundup(statbuf.st_size, DEV_BSIZE), 1)) == NULL) {
-		warnx("malloc: %s: no memory", fname);
-		close(fd);
-		return NULL;
-	}
-	if (read(fd, bp, statbuf.st_size) != statbuf.st_size) {
+	if (read(fd, &eh, sizeof(eh)) != sizeof(eh)) {
 		warn("read: %s", fname);
-		free(bp);
-		close(fd);
-		return NULL;
+		goto bad;
 	}
-	close(fd);
+	if (N_GETMAGIC(eh) != OMAGIC) {
+		warn("bad magic: 0x%x", eh.a_midmag);
+		goto bad;
+	}
+	/*
+	 * We have to include the exec header in the beginning
+	 * of the buffer, as well as a blank one at the end.
+	 * Later, we will decide where to start copying from.
+	 */
+	dsize = eh.a_text + eh.a_data;
+	fsize = dsize + (2 * sizeof(eh));
+	fsize = roundup(fsize, DEV_BSIZE);
 
-	hp = (struct exec *)bp;
-	*size = roundup(hp->a_text + hp->a_data, DEV_BSIZE);
+	if ((bp = calloc(fsize, 1)) == NULL) {
+		warnx("malloc: %s: no memory", fname);
+		goto bad;
+	}
+	memcpy(bp, &eh, sizeof(eh));
+	if (read(fd, bp+sizeof(eh), dsize) != dsize) {
+		warn("read: %s", fname);
+		goto bad;
+	}
 
-	/* Calculate the symbols' location within the proto file */
-	off = N_DATOFF(*hp) - N_DATADDR(*hp) - (hp->a_entry - N_TXTADDR(*hp));
-	blocknums = (daddr_t *) (bp + nl[X_BLOCKNUM].n_value + off);
-	bcopy(bp + nl[X_MAXBLOCKNUM].n_value + off,
-	      &maxblocknum, sizeof(maxblocknum));
+	*size = fsize;
+
+	/* Calculate the symbols' locations within the proto file */
+	off = N_DATOFF(eh) - N_DATADDR(eh) - (eh.a_entry - N_TXTADDR(eh));
+	block_size_p  =   (int *) (bp + nl[X_BLOCK_SIZE ].n_value + off);
+	block_count_p =   (int *) (bp + nl[X_BLOCK_COUNT].n_value + off);
+	block_table = (daddr_t *) (bp + nl[X_BLOCK_TABLE].n_value + off);
+	maxblocknum = *block_count_p;
 
 	if (verbose) {
-		printf("%s: entry point %#x\n", fname, hp->a_entry);
+		printf("%s: entry point %#x\n", fname, eh.a_entry);
 		printf("proto bootblock size %ld\n", *size);
 		printf("room for %d filesystem blocks at %#x\n",
-			maxblocknum, nl[X_BLOCKNUM].n_value);
+			maxblocknum, nl[X_BLOCK_TABLE].n_value);
 	}
 
+	close(fd);
 	return bp;
+
+ bad:
+	if (bp)
+		free(bp);
+	if (fd >= 0)
+		close(fd);
+	return NULL;
 }
 
-	static void
+static void
 devread(fd, buf, blk, size, msg)
 	int	fd;
 	char	*buf;
@@ -260,8 +289,14 @@ int	devfd;
 	close(fd);
 
 	/* Read superblock */
-	devread(devfd, sblock, btodb(SBOFF), SBSIZE, "superblock");
+	devread(devfd, sblock, SBLOCK, SBSIZE, "superblock");
 	fs = (struct fs *)sblock;
+
+	/* Sanity-check super-block. */
+	if (fs->fs_magic != FS_MAGIC)
+		errx(1, "Bad magic number in superblock");
+	if (fs->fs_inopb <= 0)
+		err(1, "Bad inopb=%d in superblock", fs->fs_inopb);
 
 	/* Read inode */
 	if ((buf = malloc(fs->fs_bsize)) == NULL)
@@ -272,14 +307,26 @@ int	devfd;
 	ip = (struct dinode *)(buf) + ino_to_fsbo(fs, statbuf.st_ino);
 
 	/*
-	 * Get the block numbers; we don't handle fragments
+	 * Have the inode.  Figure out how many blocks we need.
 	 */
 	ndb = howmany(ip->di_size, fs->fs_bsize);
+	if (ndb > maxblocknum)
+		errx(1, "Too many blocks");
+	*block_count_p = ndb;
+	*block_size_p = fs->fs_bsize;
+	if (verbose)
+		printf("Will load %d blocks of size %d each.\n",
+			   ndb, fs->fs_bsize);
+
+	/*
+	 * Get the block numbers; we don't handle fragments
+	 */
 	ap = ip->di_db;
 	for (i = 0; i < NDADDR && *ap && ndb; i++, ap++, ndb--) {
-		if (i >= maxblocknum)
-			errx(1, "Too many blocks");
-		*blocknums++ = *ap;
+		blk = fsbtodb(fs, *ap);
+		if (verbose)
+			printf("%d: %d\n", i, blk);
+		block_table[i] = blk;
 	}
 	if (ndb == 0)
 		return 0;
@@ -288,17 +335,16 @@ int	devfd;
 	 * Just one level of indirections; there isn't much room
 	 * for more in the 1st-level bootblocks anyway.
 	 */
-	blk = ip->di_ib[0];
+	blk = fsbtodb(fs, ip->di_ib[0]);
 	devread(devfd, buf, blk, fs->fs_bsize, "indirect block");
 	ap = (daddr_t *)buf;
 	for (; i < NINDIR(fs) && *ap && ndb; i++, ap++, ndb--) {
-		if (i >= maxblocknum)
-			errx(1, "Too many blocks");
-		*blocknums++ = *ap;
+		blk = fsbtodb(fs, *ap);
+		if (verbose)
+			printf("%d: %d\n", i, blk);
+		block_table[i] = blk;
 	}
 
-	if (ndb)
-		errx(1, "Too many blocks");
 	return 0;
 }
 

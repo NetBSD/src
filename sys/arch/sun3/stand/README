@@ -1,4 +1,4 @@
-/*	$NetBSD: README,v 1.1.1.1 1995/02/14 22:56:36 gwr Exp $ */
+/*	$NetBSD: README,v 1.1.1.2 1995/06/01 20:37:47 gwr Exp $ */
 
 The sun bootblocks are split into two parts: a small 1st-level program that
 gets written right after the superblock in a partition (and is hence limited
@@ -18,4 +18,25 @@ Use the following command to install the 1st-level bootblocks in the
 root filesystem (on `sd0a') using the file `/boot' as the second level
 boot program:
 
-	installboot /boot bootxx /dev/rsd0a
+	mount /dev/sd0a /mnt
+	installboot /mnt/boot bootxx /dev/rsd0a
+
+The above only works with securelevel <= 0 (see init.8 manual).
+
+Status:
+
+bootxx, installboot are tested and working.  It would be nice if
+installboot would find the inumber for the 2nd stage boot program
+without having the filesystem mounted so this command can work
+with securelevel==1 (the default).  Doing this requies adding
+code to read and do a directory lookup in the root...
+
+netboot does not work yet... (netif_sun stuff in libsa not done)
+
+Note:
+Before installation, the second stage boot programs (ufsboot, ...)
+need the a.out header stripped off.  For now I do this by hand
+using the following command.  This needs to be automated...
+
+dd ibs=32 skip=1 if=a.out.file | dd conv=sync of=no.header.file
+
