@@ -69,6 +69,7 @@ fbioctl(dev, cmd, data, flag, p)
 	register struct fbinfo *fi;
 	register struct pmax_fbtty *fbtty;
 	int s;
+	char cmap_buf [3];
 
 	if (minor(dev) >= fbcd.cd_ndevs ||
 	    (fi = fbcd.cd_devs[minor(dev)]) == NULL)
@@ -131,9 +132,12 @@ fbioctl(dev, cmd, data, flag, p)
 		break;
 
 	case QIOSETCMAP:
+		cmap_buf[0] = ((ColorMap *)data)->Entry.red;
+		cmap_buf[1] = ((ColorMap *)data)->Entry.green;
+		cmap_buf[2] = ((ColorMap *)data)->Entry.blue;
 		(*fi->fi_driver->fbd_putcmap)
 			(fi,
-			 (char *)&((ColorMap *)data)->Entry,
+			 cmap_buf,
 			 ((ColorMap *)data)->index,  1);
 		break;
 
