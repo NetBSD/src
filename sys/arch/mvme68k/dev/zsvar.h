@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.1 1996/04/26 19:00:25 chuck Exp $	*/
+/*	$NetBSD: zsvar.h,v 1.2 1996/12/17 22:30:21 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 /*
  * XXX Make cnprobe a little easier.
  */
-#define NZS		2
+#define NZSC	2
 
 /*
  * The layout of this is hardware-dependent (padding, order).
