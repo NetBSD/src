@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312.c,v 1.2 2001/11/09 17:44:43 thorpej Exp $	*/
+/*	$NetBSD: i80312.c,v 1.3 2001/11/10 23:14:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -83,6 +83,8 @@ i80312_attach(struct i80312_softc *sc)
 	    I80312_ATU_SIZE, &sc->sc_atu_sh))
 		panic("%s: unable to subregion ATU registers\n",
 		    sc->sc_dev.dv_xname);
+
+	/* We expect the Memory Controller to be already sliced off. */
 
 	/*
 	 * Disable the private space decode.
@@ -240,9 +242,7 @@ i80312_attach(struct i80312_softc *sc)
 	 */
 	i80312_io_bs_init(&sc->sc_pci_iot, sc);
 	i80312_mem_bs_init(&sc->sc_pci_memt, sc);
-#if 0
 	i80312_pci_dma_init(&sc->sc_pci_dmat, sc);
-#endif
 	i80312_pci_init(&sc->sc_pci_chipset, sc);
 
 	/*
