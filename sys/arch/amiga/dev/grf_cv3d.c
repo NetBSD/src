@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3d.c,v 1.1.2.2 1997/11/11 01:46:22 mellon Exp $	*/
+/*	$NetBSD: grf_cv3d.c,v 1.1.2.3 1997/11/24 00:53:18 mellon Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -37,7 +37,7 @@
  * Graphics routines for the CyberVision 64/3D board, using the S3 ViRGE.
  *
  * Modified for CV64/3D from Michael Teske's CV driver by Tobias Abt 10/97.
- * Bugfixes by Bernd Ernest 10/97.
+ * Bugfixes by Bernd Ernesti 10/97.
  * Many thanks to Richard Hartmann who gave us his board so we could make
  * driver.
  *
