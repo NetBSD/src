@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.25 2004/04/23 22:11:44 christos Exp $	*/
+/*	$NetBSD: tip.c,v 1.26 2004/04/23 22:24:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.25 2004/04/23 22:11:44 christos Exp $");
+__RCSID("$NetBSD: tip.c,v 1.26 2004/04/23 22:24:34 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -65,6 +65,8 @@ void	intprompt __P((int));
 void	tipin __P((void));
 
 char	PNbuf[256];			/* This limits the size of a number */
+
+static char path_phones[] = _PATH_PHONES;
 
 int
 main(argc, argv)
@@ -171,7 +173,7 @@ notnumber:
 	 *   in the right order, so force it here
 	 */
 	if ((PH = getenv("PHONES")) == NULL)
-		PH = strdup(_PATH_PHONES);
+		PH = path_phones;
 	vinit();				/* init variables */
 	setparity("even");			/* set the parity table */
 	if ((i = speed(number(value(BAUDRATE)))) == 0) {
@@ -601,9 +603,13 @@ setparity(defparity)
 {
 	int i, flip, clr, set;
 	const char *parity;
+	static char *curpar;
 
-	if (value(PARITY) == NULL || (value(PARITY))[0] == '\0')
-		value(PARITY) = strdup(defparity);
+	if (value(PARITY) == NULL || (value(PARITY))[0] == '\0') {
+		if (curpar != NULL)
+			free(curpar);
+		value(PARITY) = curpar = strdup(defparity);
+	}
 	parity = value(PARITY);
 	if (equal(parity, "none")) {
 		bits8 = 1;
