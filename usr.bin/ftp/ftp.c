@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.86 1999/11/03 02:03:08 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.87 1999/11/11 01:19:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.86 1999/11/03 02:03:08 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.87 1999/11/11 01:19:12 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -369,7 +369,7 @@ hookup(host, port)
 	}
 	if (verbose)
 		fprintf(ttyout, "Connected to %s.\n", hostname);
-	if (getreply(0) > 2) { 	/* read startup message from server */
+	if (getreply(0) > 2) {	/* read startup message from server */
 		if (cin)
 			(void)fclose(cin);
 		if (cout)
