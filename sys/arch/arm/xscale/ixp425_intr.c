@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.c,v 1.5 2003/10/08 19:31:17 scw Exp $ */
+/*	$NetBSD: ixp425_intr.c,v 1.6 2003/10/08 19:39:40 scw Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.5 2003/10/08 19:31:17 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.6 2003/10/08 19:39:40 scw Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -526,21 +526,21 @@ ixp425_intr_dispatch(struct clockframe *frame)
 			    ixp425_irq2gpio_bit(irq);
 		}
 
-		if (handled == 0 && iq->iq_ist == IST_LEVEL) {
+		/*
+		 * We sometimes see spurious (GPIO) interrupts from
+		 * some PCIbus cards on certain boards. If nobody
+		 * claimed the interrupt, let's see if it cleared
+		 * down anyway.
+		 */
+		if (handled == 0 && iq->iq_ist == IST_LEVEL &&
+		    (ibit & IXP425_INT_GPIOMASK) != 0 &&
+		    (IXPREG(IXP425_GPIO_VBASE + IXP425_GPIO_GPISR) &
+		     ixp425_irq2gpio_bit(irq)) != 0) {
 			/*
-			 * Let's see if the interrupt really did clear down.
-			 * We sometimes see spurious (GPIO) interrupts from
-			 * some PCIbus cards on certain boards.
+			 * Nope, still asserted. We're toast.
 			 */
-			if ((ibit & IXP425_INT_GPIOMASK) == 0 ||
-			    IXPREG(IXP425_GPIO_VBASE + IXP425_GPIO_GPISR) &
-			    ixp425_irq2gpio_bit(irq)) {
-				/*
-				 * Nope, still asserted. We're toast.
-				 */
-				panic("ixp425_intr_dispatch: unhandled "
-				    "level-triggered interrupt: irq %d", irq);
-			}
+			panic("ixp425_intr_dispatch: unhandled "
+			    "level-triggered GPIO interrupt: irq %d", irq);
 		}
 
 		current_spl_level = pcpl;
