@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.30 1999/11/29 23:34:00 fvdl Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.31 2000/03/16 18:08:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -83,6 +83,17 @@ nfs_nhinit()
 	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_NFSNODE);
 	pool_init(&nfs_vattr_pool, sizeof(struct vattr), 0, 0, 0, "nfsvapl",
 	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_NFSNODE);
+}
+
+/*
+ * Free resources previoslu allocated in nfs_nhinit().
+ */
+void
+nfs_nhdone()
+{
+	hashdone(nfsnodehashtbl, M_NFSNODE);
+	pool_destroy(&nfs_node_pool);
+	pool_destroy(&nfs_vattr_pool);
 }
 
 /*

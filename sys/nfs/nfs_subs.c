@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.72 1999/11/01 21:32:41 fvdl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.73 2000/03/16 18:08:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1475,6 +1475,12 @@ nfs_vfs_init()
 		nfs_iodmount[i] = (struct nfsmount *)0;
 	}
 	nfs_nhinit();			/* Init the nfsnode table */
+}
+
+void
+nfs_vfs_done()
+{
+	nfs_nhdone();
 }
 
 /*

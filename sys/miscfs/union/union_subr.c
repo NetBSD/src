@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.36 1999/10/16 23:53:28 wrstuden Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.37 2000/03/16 18:08:27 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -91,6 +91,15 @@ union_init()
 	for (i = 0; i < NHASH; i++)
 		LIST_INIT(&unhead[i]);
 	memset((caddr_t) unvplock, 0, sizeof(unvplock));
+}
+
+/*
+ * Free global unionfs resources.
+ */
+void
+union_done()
+{
+	/* Nothing */
 }
 
 static int

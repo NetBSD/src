@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_ihash.c,v 1.5 1999/09/30 16:56:40 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_ihash.c,v 1.6 2000/03/16 18:08:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993, 1995
@@ -73,6 +73,18 @@ ntfs_nthashinit()
 	    &ntfs_nthash);
 	simple_lock_init(&ntfs_nthash_slock);
 }
+
+#ifdef __NetBSD__
+/*
+ * Free the inode hash table. Called from ntfs_done(), only needed
+ * on NetBSD.
+ */
+void
+ntfs_nthashdone()
+{
+	hashdone(ntfs_nthashtbl, M_NTFSNTHASH);
+}
+#endif
 
 /*
  * Use the device/inum pair to find the incore inode, and return a pointer

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.32 2000/01/25 21:52:04 fvdl Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.33 2000/03/16 18:08:27 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -62,6 +62,7 @@
 #include <vm/vm.h>			/* for PAGE_SIZE */
 
 void	procfs_init __P((void));
+void	procfs_done __P((void));
 int	procfs_mount __P((struct mount *, const char *, void *,
 			  struct nameidata *, struct proc *));
 int	procfs_start __P((struct mount *, int, struct proc *));
@@ -272,6 +273,12 @@ procfs_init()
 	procfs_hashinit();
 }
 
+void
+procfs_done()
+{
+	procfs_hashdone();
+}
+
 int
 procfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
@@ -305,6 +312,7 @@ struct vfsops procfs_vfsops = {
 	procfs_fhtovp,
 	procfs_vptofh,
 	procfs_init,
+	procfs_done,
 	procfs_sysctl,
 	NULL,				/* vfs_mountroot */
 	procfs_checkexp,

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.53 1999/08/25 14:42:35 sommerfeld Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.54 2000/03/16 18:08:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -196,6 +196,15 @@ fdesc_init()
 			break;
 	devctty = makedev(cttymajor, 0);
 	fdhashtbl = hashinit(NFDCACHE, M_CACHE, M_NOWAIT, &fdhash);
+}
+
+/*
+ * Free hash table.
+ */
+void
+fdesc_done()
+{
+	hashdone(fdhashtbl, M_CACHE);
 }
 
 /*
