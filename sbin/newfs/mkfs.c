@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.83 2003/10/15 13:07:34 dsl Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.84 2003/10/29 08:14:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.83 2003/10/15 13:07:34 dsl Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.84 2003/10/29 08:14:13 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1380,6 +1380,9 @@ zap_old_sblock(int sblkoff)
 	const struct fsm *fsm;
 
 	if (Nflag)
+		return;
+
+	if (sblkoff == 0)	/* Why did UFS2 add support for this?  sigh. */
 		return;
 
 	if (cg0_data == 0)
