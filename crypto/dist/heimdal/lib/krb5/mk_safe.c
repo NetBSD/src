@@ -33,7 +33,7 @@
 
 #include <krb5_locl.h>
 
-RCSID("$Id: mk_safe.c,v 1.1.1.2 2000/08/02 19:59:36 assar Exp $");
+RCSID("$Id: mk_safe.c,v 1.1.1.3 2001/02/11 13:51:45 assar Exp $");
 
 krb5_error_code
 krb5_mk_safe(krb5_context context,
@@ -76,13 +76,20 @@ krb5_mk_safe(krb5_context context,
   s.cksum.checksum.data   = NULL;
   s.cksum.checksum.length = 0;
 
-
   buf_size = length_KRB_SAFE(&s);
   buf = malloc(buf_size + 128); /* add some for checksum */
   if(buf == NULL)
       return ENOMEM;
   ret = encode_KRB_SAFE (buf + buf_size - 1, buf_size, &s, &len);
+  if (ret) {
+      free (buf);
+      return ret;
+  }
   ret = krb5_crypto_init(context, auth_context->keyblock, 0, &crypto);
+  if (ret) {
+      free (buf);
+      return ret;
+  }
   ret = krb5_create_checksum(context, 
 			     crypto,
 			     KRB5_KU_KRB_SAFE_CKSUM,

@@ -33,7 +33,7 @@
 
 #include "telnet_locl.h"
 
-RCSID("$Id: commands.c,v 1.1.1.2 2000/08/02 19:58:20 assar Exp $");
+RCSID("$Id: commands.c,v 1.1.1.3 2001/02/11 13:51:14 assar Exp $");
 
 #if	defined(IPPROTO_IP) && defined(IP_TOS)
 int tos = -1;
@@ -2566,6 +2566,8 @@ sourceroute(struct addrinfo *ai,
 		break;
 #ifdef INET6
 	case AF_INET6:
+/* this needs to be updated for rfc2292bis */
+#ifdef IPV6_PKTOPTIONS
 		cmsg = inet6_rthdr_init(rhbuf, IPV6_RTHDR_TYPE_0);
 		if (*cp != '@')
 			return -1;
@@ -2573,6 +2575,9 @@ sourceroute(struct addrinfo *ai,
 		*protop = IPPROTO_IPV6;
 		*optp = IPV6_PKTOPTIONS;
 		break;
+#else
+		return -1;
+#endif
 #endif
 	default:
 		return -1;

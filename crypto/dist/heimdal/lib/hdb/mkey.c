@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 2000 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -36,7 +36,7 @@
 #define O_BINARY 0
 #endif
 
-RCSID("$Id: mkey.c,v 1.1.1.1 2000/08/02 19:59:13 assar Exp $");
+RCSID("$Id: mkey.c,v 1.1.1.2 2001/02/11 13:51:40 assar Exp $");
 
 struct hdb_master_key_data {
     krb5_keytab_entry keytab;
@@ -213,6 +213,39 @@ read_master_encryptionkey(krb5_context context, const char *filename,
 	key.keytype = ETYPE_DES_CFB64_NONE;
     
     ret = hdb_process_master_key(context, 0, &key, 0, mkey);
+    krb5_free_keyblock_contents(context, &key);
+    return ret;
+}
+
+/* read a krb4 /.k style file */
+static krb5_error_code
+read_master_krb4(krb5_context context, const char *filename, 
+		 hdb_master_key *mkey)
+{
+    int fd;
+    krb5_keyblock key;
+    krb5_error_code ret;
+    unsigned char buf[256];
+    ssize_t len;
+	       
+    fd = open(filename, O_RDONLY | O_BINARY);
+    if(fd < 0)
+	return errno;
+    
+    len = read(fd, buf, sizeof(buf));
+    close(fd);
+    if(len < 0)
+	return errno;
+
+    memset(&key, 0, sizeof(key));
+    key.keytype = ETYPE_DES_PCBC_NONE;
+    ret = krb5_data_copy(&key.keyvalue, buf, len);
+    memset(buf, 0, sizeof(buf));
+    if(ret) 
+	return ret;
+
+    ret = hdb_process_master_key(context, 0, &key, 0, mkey);
+    krb5_free_keyblock_contents(context, &key);
     return ret;
 }
 
@@ -249,7 +282,9 @@ hdb_read_master_key(krb5_context context, const char *filename,
     if(len < 0)
 	return errno;
     
-    if(buf[0] == 0x30 && len <= 127 && buf[1] == len - 2) {
+    if(len == 8) {
+	ret = read_master_krb4(context, filename, mkey);
+    } else if(buf[0] == 0x30 && len <= 127 && buf[1] == len - 2) {
 	ret = read_master_encryptionkey(context, filename, mkey);
     } else if(buf[0] == 5 && buf[1] >= 1 && buf[1] <= 2) {
 	ret = read_master_keytab(context, filename, mkey);
@@ -300,13 +335,14 @@ find_master_key(Key *key, hdb_master_key mkey)
     return ret;
 }
 
-void
+krb5_error_code
 hdb_unseal_keys_mkey(krb5_context context, hdb_entry *ent, hdb_master_key mkey)
 {
     int i;
     krb5_error_code ret;
     krb5_data res;
     Key *k;
+
     for(i = 0; i < ent->keys.len; i++){
 	hdb_master_key key;
 
@@ -316,10 +352,15 @@ hdb_unseal_keys_mkey(krb5_context context, hdb_entry *ent, hdb_master_key mkey)
 
 	key = find_master_key(&ent->keys.val[i], mkey);
 
+	if (key == NULL)
+	    return HDB_ERR_NO_MKEY;
+
 	ret = krb5_decrypt(context, key->crypto, HDB_KU_MKEY,
 			   k->key.keyvalue.data,
 			   k->key.keyvalue.length,
 			   &res);
+	if (ret)
+	    return ret;
 
 	memset(k->key.keyvalue.data, 0, k->key.keyvalue.length);
 	free(k->key.keyvalue.data);
@@ -327,17 +368,18 @@ hdb_unseal_keys_mkey(krb5_context context, hdb_entry *ent, hdb_master_key mkey)
 	free(k->mkvno);
 	k->mkvno = NULL;
     }
+    return 0;
 }
 
-void
+krb5_error_code
 hdb_unseal_keys(krb5_context context, HDB *db, hdb_entry *ent)
 {
     if (db->master_key_set == 0)
-	return;
-    hdb_unseal_keys_mkey(context, ent, db->master_key);
+	return 0;
+    return hdb_unseal_keys_mkey(context, ent, db->master_key);
 }
 
-void
+krb5_error_code
 hdb_seal_keys_mkey(krb5_context context, hdb_entry *ent, hdb_master_key mkey)
 {
     int i;
@@ -352,27 +394,35 @@ hdb_seal_keys_mkey(krb5_context context, hdb_entry *ent, hdb_master_key mkey)
 
 	key = find_master_key(k, mkey);
 
+	if (key == NULL)
+	    return HDB_ERR_NO_MKEY;
+
 	ret = krb5_encrypt(context, key->crypto, HDB_KU_MKEY,
 			   k->key.keyvalue.data,
 			   k->key.keyvalue.length,
 			   &res);
+	if (ret)
+	    return ret;
 
 	memset(k->key.keyvalue.data, 0, k->key.keyvalue.length);
 	free(k->key.keyvalue.data);
 	k->key.keyvalue = res;
 
 	k->mkvno = malloc(sizeof(*k->mkvno));
+	if (k->mkvno == NULL)
+	    return ENOMEM;
 	*k->mkvno = key->keytab.vno;
     }
+    return 0;
 }
 
-void
+krb5_error_code
 hdb_seal_keys(krb5_context context, HDB *db, hdb_entry *ent)
 {
     if (db->master_key_set == 0)
-	return;
+	return 0;
     
-    hdb_seal_keys_mkey(context, ent, db->master_key);
+    return hdb_seal_keys_mkey(context, ent, db->master_key);
 }
 
 krb5_error_code

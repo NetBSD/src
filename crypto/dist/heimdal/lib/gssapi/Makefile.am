@@ -1,11 +1,11 @@
-# $Id: Makefile.am,v 1.1.1.2 2000/08/02 19:59:07 assar Exp $
+# $Id: Makefile.am,v 1.1.1.3 2001/02/11 13:51:37 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
-INCLUDES += -I$(srcdir)/../krb5
+INCLUDES += -I$(srcdir)/../krb5 $(INCLUDE_krb4)
 
 lib_LTLIBRARIES = libgssapi.la
-libgssapi_la_LDFLAGS = -version-info 2:0:1
+libgssapi_la_LDFLAGS = -version-info 3:0:2
 
 include_HEADERS = gssapi.h
 
@@ -17,6 +17,7 @@ libgssapi_la_SOURCES =		\
 	canonicalize_name.c	\
 	compare_name.c		\
 	context_time.c		\
+	copy_ccache.c		\
 	create_emtpy_oid_set.c	\
 	decapsulate.c		\
 	delete_sec_context.c	\

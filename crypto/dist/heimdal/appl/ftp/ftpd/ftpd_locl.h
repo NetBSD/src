@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: ftpd_locl.h,v 1.1.1.2 2000/08/02 19:58:39 assar Exp $ */
+/* $Id: ftpd_locl.h,v 1.1.1.3 2001/02/11 13:51:19 assar Exp $ */
 
 #ifndef __ftpd_locl_h__
 #define __ftpd_locl_h__
@@ -134,14 +134,13 @@
 #endif
 
 #include <err.h>
+#include "roken.h"
 
 #include "pathnames.h"
 #include "extern.h"
 #include "common.h"
 
 #include "security.h"
-
-#include "roken.h"
 
 #ifdef KRB5
 #include <krb5.h>

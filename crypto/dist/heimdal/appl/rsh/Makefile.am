@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.1.1.2 2000/08/02 19:58:10 assar Exp $
+# $Id: Makefile.am,v 1.1.1.3 2001/02/11 13:51:12 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -14,7 +14,6 @@ rshd_SOURCES = rshd.c common.c rsh_locl.h
 
 LDADD = $(LIB_kafs) \
 	$(LIB_krb5) \
-	$(top_builddir)/lib/des/libdes.la \
 	$(LIB_krb4) \
-	$(top_builddir)/lib/des/libdes.la \
+	$(LIB_des) \
 	$(LIB_roken)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,7 +34,7 @@
 #include "kadmin_locl.h"
 #include <kadm5/private.h>
 
-RCSID("$Id: load.c,v 1.1.1.2 2000/08/02 19:58:52 assar Exp $");
+RCSID("$Id: load.c,v 1.1.1.3 2001/02/11 13:51:33 assar Exp $");
 
 struct entry {
     char *principal;
@@ -340,7 +340,9 @@ doit(const char *filename, int merge)
 	return 1;
     }
     line = 0;
-    while(fgets(s, sizeof(s), f)){
+    ret = 0;
+    while(fgets(s, sizeof(s), f) != NULL) {
+	ret = 0;
 	line++;
 	e.principal = s;
 	for(p = s; *p; p++){
@@ -461,32 +463,71 @@ doit(const char *filename, int merge)
 	}
 #endif
 
-	db->store(context, db, HDB_F_REPLACE, &ent);
+	ret = db->store(context, db, HDB_F_REPLACE, &ent);
 	hdb_free_entry (context, &ent);
+	if (ret) {
+	    krb5_warn(context, ret, "db_store");
+	    break;
+	}
     }
     db->close(context, db);
     fclose(f);
-    return 0;
+    return ret != 0;
 }
+
+
+static struct getargs args[] = {
+    { "help", 'h', arg_flag, NULL }
+};
+
+static int num_args = sizeof(args) / sizeof(args[0]);
+
+static void
+usage(const char *name)
+{
+    arg_printusage (args, num_args, name, "file");
+}
+
+
 
 int
 load(int argc, char **argv)
 {
-    if(argc < 2){
-	krb5_warnx(context, "Usage: load filename");
+    int optind = 0;
+    int help_flag = 0;
+
+    args[0].value = &help_flag;
+
+    if(getarg(args, num_args, argc, argv, &optind)) {
+	usage ("load");
 	return 0;
     }
-    doit(argv[1], 0);
+    if(argc - optind != 1 || help_flag) {
+	usage ("load");
+	return 0;
+    }
+
+    doit(argv[optind], 0);
     return 0;
 }
 
 int
 merge(int argc, char **argv)
 {
-    if(argc < 2){
-	krb5_warnx(context, "Usage: merge filename");
+    int optind = 0;
+    int help_flag = 0;
+
+    args[0].value = &help_flag;
+
+    if(getarg(args, num_args, argc, argv, &optind)) {
+	usage ("merge");
 	return 0;
     }
-    doit(argv[1], 1);
+    if(argc - optind != 1 || help_flag) {
+	usage ("merge");
+	return 0;
+    }
+
+    doit(argv[optind], 1);
     return 0;
 }

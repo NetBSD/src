@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan 
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan 
  * (Royal Institute of Technology, Stockholm, Sweden).  
  * All rights reserved.
  * 
@@ -33,10 +33,11 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: verrx.c,v 1.1.1.2 2000/08/02 20:00:00 assar Exp $");
+RCSID("$Id: verrx.c,v 1.1.1.3 2001/02/11 13:51:47 assar Exp $");
 #endif
 
-#include "err.h"
+#include "roken.h"
+#include <err.h>
 
 void
 verrx(int eval, const char *fmt, va_list ap)

@@ -32,12 +32,12 @@
  */
 
 #include "rsh_locl.h"
-RCSID("$Id: rsh.c,v 1.1.1.2 2000/08/02 19:58:10 assar Exp $");
+RCSID("$Id: rsh.c,v 1.1.1.3 2001/02/11 13:51:12 assar Exp $");
 
 enum auth_method auth_method;
-int do_encrypt;
-int do_forward;
-int do_forwardable;
+int do_encrypt       = -1;
+int do_forward       = -1;
+int do_forwardable   = -1;
 int do_unique_tkfile = 0;
 char *unique_tkfile  = NULL;
 char tkfile[MAXPATHLEN];
@@ -62,6 +62,9 @@ loop (int s, int errsock)
     fd_set real_readset;
     int count = 1;
 
+    if (s >= FD_SETSIZE || errsock >= FD_SETSIZE)
+	errx (1, "fd too large");
+    
     FD_ZERO(&real_readset);
     FD_SET(s, &real_readset);
     if (errsock != -1) {
@@ -404,7 +407,7 @@ proto (int s, int errsock,
     struct sockaddr *thataddr = (struct sockaddr *)&thataddr_ss;
     struct sockaddr_storage erraddr_ss;
     struct sockaddr *erraddr = (struct sockaddr *)&erraddr_ss;
-    int addrlen;
+    socklen_t addrlen;
     int ret;
 
     addrlen = sizeof(thisaddr_ss);
@@ -444,6 +447,9 @@ proto (int s, int errsock,
 
 	for (;;) {
 	    fd_set fdset;
+
+	    if (errsock >= FD_SETSIZE || s >= FD_SETSIZE)
+		errx (1, "fd too large");
 
 	    FD_ZERO(&fdset);
 	    FD_SET(errsock, &fdset);
@@ -703,7 +709,7 @@ doit (const char *hostname,
 	    continue;
 	}
 	if (do_errsock) {
-	    struct addrinfo *ea;
+	    struct addrinfo *ea, *eai;
 	    struct addrinfo hints;
 
 	    memset (&hints, 0, sizeof(hints));
@@ -712,15 +718,23 @@ doit (const char *hostname,
 	    hints.ai_family   = a->ai_family;
 	    hints.ai_flags    = AI_PASSIVE;
 
-	    error = getaddrinfo (NULL, "0", &hints, &ea);
+	    errsock = -1;
+
+	    error = getaddrinfo (NULL, "0", &hints, &eai);
 	    if (error)
 		errx (1, "getaddrinfo: %s", gai_strerror(error));
-	    errsock = socket (ea->ai_family, ea->ai_socktype, ea->ai_protocol);
+	    for (ea = eai; ea != NULL; ea = ea->ai_next) {
+		errsock = socket (ea->ai_family, ea->ai_socktype,
+				  ea->ai_protocol);
+		if (errsock < 0)
+		    continue;
+		if (bind (errsock, ea->ai_addr, ea->ai_addrlen) < 0)
+		    err (1, "bind");
+		break;
+	    }
 	    if (errsock < 0)
 		err (1, "socket");
-	    if (bind (errsock, ea->ai_addr, ea->ai_addrlen) < 0)
-		err (1, "bind");
-	    freeaddrinfo (ea);
+	    freeaddrinfo (eai);
 	} else
 	    errsock = -1;
     
@@ -831,26 +845,31 @@ main(int argc, char **argv)
     
     status = krb5_init_context (&context);
     if (status)
-        errx(1, "krb5_init_context failed: %u", status);
+        errx(1, "krb5_init_context failed: %d", status);
       
-    do_forwardable = krb5_config_get_bool (context, NULL,
-					   "libdefaults",
-					   "forwardable",
-					   NULL);
-	
-    do_forward = krb5_config_get_bool (context, NULL,
-				       "libdefaults",
-				       "forward",
-				       NULL);
-
-    do_encrypt = krb5_config_get_bool (context, NULL,
-				       "libdefaults",
-				       "encrypt",
-				       NULL);
-
     if (getarg (args, sizeof(args) / sizeof(args[0]), argc, argv,
 		&optind))
 	usage (1);
+
+    if (do_forwardable == -1)
+	do_forwardable = krb5_config_get_bool (context, NULL,
+					       "libdefaults",
+					       "forwardable",
+					       NULL);
+	
+    if (do_forward == -1)
+	do_forward = krb5_config_get_bool (context, NULL,
+					   "libdefaults",
+					   "forward",
+					   NULL);
+    else if (do_forward == 0)
+	do_forwardable = 0;
+
+    if (do_encrypt == -1)
+	do_encrypt = krb5_config_get_bool (context, NULL,
+					   "libdefaults",
+					   "encrypt",
+					   NULL);
 
     if (do_forwardable)
 	do_forward = 1;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "gen_locl.h"
 
-RCSID("$Id: gen_decode.c,v 1.1.1.2 2000/08/02 19:59:03 assar Exp $");
+RCSID("$Id: gen_decode.c,v 1.1.1.3 2001/02/11 13:51:36 assar Exp $");
 
 static void
 decode_primitive (const char *typename, const char *name)
@@ -131,7 +131,8 @@ decode_type (const char *name, const Type *t)
 	    if (0 && m->type->type == TType){
 		if(m->optional)
 		    fprintf (codefile,
-			     "%s = malloc(sizeof(*%s));\n", s, s);
+			     "%s = malloc(sizeof(*%s));\n"
+			     "if(%s == NULL) return ENOMEM;\n", s, s, s);
 		fprintf (codefile, 
 			 "e = decode_seq_%s(p, len, %d, %d, %s, &l);\n",
 			 m->type->symbol->gen_name,
@@ -179,8 +180,8 @@ decode_type (const char *name, const Type *t)
 			 "return ASN1_BAD_FORMAT;\n");
 		if (m->optional)
 		    fprintf (codefile,
-			     "%s = malloc(sizeof(*%s));\n",
-			     s, s);
+			     "%s = malloc(sizeof(*%s));\n"
+			     "if(%s == NULL) return ENOMEM;\n", s, s, s);
 		decode_type (s, m->type);
 		fprintf (codefile,
 			 "if(dce_fix){\n"

@@ -33,7 +33,7 @@
 
 #include "kdc_locl.h"
 
-RCSID("$Id: kerberos5.c,v 1.1.1.2 2000/08/02 19:58:55 assar Exp $");
+RCSID("$Id: kerberos5.c,v 1.1.1.3 2001/02/11 13:51:31 assar Exp $");
 
 #define MAX_TIME ((time_t)((1U << 31) - 1))
 
@@ -71,62 +71,34 @@ find_padata(KDC_REQ *req, int *start, int type)
     return NULL;
 }
 
-#if 0
-
-static krb5_error_code
-find_keys(hdb_entry *client, 
-	  hdb_entry *server, 
-	  Key **ckey, 
-	  krb5_enctype *cetype,
-	  Key **skey,
-	  krb5_enctype *setype,
-	  unsigned *etypes, 
-	  unsigned num_etypes)
-{
-    int i;
-    krb5_error_code ret;
-    for(i = 0; i < num_etypes; i++) {
-	if(client){
-	    ret = hdb_enctype2key(context, client, etypes[i], ckey);
-	    if(ret)
-		continue;
-	}
-	if(server){
-	    ret = hdb_enctype2key(context, server, etypes[i], skey);
-	    if(ret)
-		continue;
-	}
-	if(etype)
-	    *cetype = *setype = etypes[i];
-	return 0;
-    }
-    return KRB5KDC_ERR_ETYPE_NOSUPP;
-}
-
-#else
+/*
+ * return the first appropriate key of `princ' in `ret_key'.  Look for
+ * all the etypes in (`etypes', `len'), stopping as soon as we find
+ * one, but preferring one that has default salt
+ */
 
 static krb5_error_code
 find_etype(hdb_entry *princ, unsigned *etypes, unsigned len, 
-	   Key **key, int *index)
+	   Key **ret_key, krb5_enctype *ret_etype)
 {
     int i;
     krb5_error_code ret = KRB5KDC_ERR_ETYPE_NOSUPP;
 
-    for(i = 0; i < len ; i++) {
-	krb5_error_code tmp;
+    for(i = 0; ret != 0 && i < len ; i++) {
+	Key *key = NULL;
 
-	tmp = hdb_enctype2key(context, princ, etypes[i], key);
-	if (tmp == 0) {
-	    if ((*key)->key.keyvalue.length != 0) {
-		ret = 0;
-		break;
-	    } else {
+	while (hdb_next_enctype2key(context, princ, etypes[i], &key) == 0) {
+	    if (key->key.keyvalue.length == 0) {
 		ret = KRB5KDC_ERR_NULL_KEY;
+		continue;
 	    }
+	    *ret_key   = key;
+	    *ret_etype = etypes[i];
+	    ret = 0;
+	    if (key->salt == NULL)
+		return ret;
 	}
     }
-    if(index)
-	*index = i;
     return ret;
 }
 
@@ -140,30 +112,27 @@ find_keys(hdb_entry *client,
 	  int *etypes,
 	  unsigned num_etypes)
 {
-    int i;
     krb5_error_code ret;
+
     if(client){
 	/* find client key */
-	ret = find_etype(client, etypes, num_etypes, ckey, &i);
+	ret = find_etype(client, etypes, num_etypes, ckey, cetype);
 	if (ret) {
 	    kdc_log(0, "Client has no support for etypes");
 	    return ret;
 	}
-	*cetype = etypes[i];
     }
 
     if(server){
 	/* find server key */
-	ret = find_etype(server, etypes, num_etypes, skey, NULL);
+	ret = find_etype(server, etypes, num_etypes, skey, setype);
 	if (ret) {
 	    kdc_log(0, "Server has no support for etypes");
 	    return ret;
 	}
-	*setype = (*skey)->key.keytype;
     }
     return 0;
 }
-#endif
 
 static krb5_error_code
 make_anonymous_principalname (PrincipalName *pn)
@@ -202,7 +171,12 @@ encode_reply(KDC_REP *rep, EncTicketPart *et, EncKDCRepPart *ek,
     }
     
 
-    krb5_crypto_init(context, skey, etype, &crypto);
+    ret = krb5_crypto_init(context, skey, etype, &crypto);
+    if (ret) {
+	kdc_log(0, "krb5_crypto_init failed: %s",
+		krb5_get_err_text(context, ret));
+	return ret;
+    }
 
     krb5_encrypt_EncryptedData(context, 
 			       crypto,
@@ -225,7 +199,12 @@ encode_reply(KDC_REP *rep, EncTicketPart *et, EncKDCRepPart *ek,
 		krb5_get_err_text(context, ret));
 	return ret;
     }
-    krb5_crypto_init(context, ckey, 0, &crypto);
+    ret = krb5_crypto_init(context, ckey, 0, &crypto);
+    if (ret) {
+	kdc_log(0, "krb5_crypto_init failed: %s",
+		krb5_get_err_text(context, ret));
+	return ret;
+    }
     if(rep->msg_type == krb_as_rep) {
 	krb5_encrypt_EncryptedData(context,
 				   crypto,
@@ -490,17 +469,18 @@ as_rep(KDC_REQ *req,
     if(ret)
 	goto out;
 
-    client = db_fetch(client_princ);
-    if(client == NULL){
-	kdc_log(0, "UNKNOWN -- %s", client_name);
+    ret = db_fetch(client_princ, &client);
+    if(ret){
+	kdc_log(0, "UNKNOWN -- %s: %s", client_name,
+		krb5_get_err_text(context, ret));
 	ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
 	goto out;
     }
 
-    server = db_fetch(server_princ);
-
-    if(server == NULL){
-	kdc_log(0, "UNKNOWN -- %s", server_name);
+    ret = db_fetch(server_princ, &server);
+    if(ret){
+	kdc_log(0, "UNKNOWN -- %s: %s", server_name,
+		krb5_get_err_text(context, ret));
 	ret = KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN;
 	goto out;
     }
@@ -557,7 +537,14 @@ as_rep(KDC_REQ *req,
 		continue;
 	    }
 	    
-	    krb5_crypto_init(context, &pa_key->key, 0, &crypto);
+	    ret = krb5_crypto_init(context, &pa_key->key, 0, &crypto);
+	    if (ret) {
+		kdc_log(0, "krb5_crypto_init failed: %s",
+			krb5_get_err_text(context, ret));
+		free_EncryptedData(&enc_data);
+		continue;
+	    }
+
 	    ret = krb5_decrypt_EncryptedData (context,
 					      crypto,
 					      KRB5_KU_PA_ENC_TIMESTAMP,
@@ -661,11 +648,17 @@ as_rep(KDC_REQ *req,
     {
 	char *cet;
 	char *set;
-	krb5_enctype_to_string(context, cetype, &cet);
-	krb5_enctype_to_string(context, setype, &set);
-	kdc_log(5, "Using %s/%s", cet, set);
-	free(cet);
-	free(set);
+
+	ret = krb5_enctype_to_string(context, cetype, &cet);
+	if(ret == 0) {
+	    ret = krb5_enctype_to_string(context, setype, &set);
+	    if (ret == 0) {
+		kdc_log(5, "Using %s/%s", cet, set);
+		free(set);
+	    } else
+	    free(cet);
+	} else
+	    kdc_log(5, "Using e-types %d/%d", cetype, setype);
     }
     
     {
@@ -878,15 +871,10 @@ out2:
     free(client_name);
     krb5_free_principal(context, server_princ);
     free(server_name);
-    if(client){
-	hdb_free_entry(context, client);
-	free(client);
-    }
-    if(server){
-	hdb_free_entry(context, server);
-	free(server);
-    }
-    
+    if(client)
+	free_ent(client);
+    if(server)
+	free_ent(server);
     return ret;
 }
 
@@ -990,7 +978,7 @@ check_tgs_flags(KDC_REQ_BODY *b, EncTicketPart *tgt, EncTicketPart *et)
 	    old_life -= *tgt->starttime;
 	else
 	    old_life -= tgt->authtime;
-	et->endtime = min(*b->till, *et->starttime + old_life);
+	et->endtime = min(*et->renew_till, *et->starttime + old_life);
     }	    
     
     /* checks for excess flags */
@@ -1274,7 +1262,12 @@ tgs_check_authenticator(krb5_auth_context ac,
 		krb5_get_err_text(context, ret));
 	goto out;
     }
-    krb5_crypto_init(context, key, 0, &crypto);
+    ret = krb5_crypto_init(context, key, 0, &crypto);
+    if (ret) {
+	kdc_log(0, "krb5_crypto_init failed: %s",
+		krb5_get_err_text(context, ret));
+	goto out;
+    }
     ret = krb5_verify_checksum(context,
 			       crypto,
 			       KRB5_KU_TGS_REQ_AUTH_CKSUM,
@@ -1358,12 +1351,13 @@ tgs_rep2(KDC_REQ_BODY *b,
 				 ap_req.ticket.sname,
 				 ap_req.ticket.realm);
     
-    krbtgt = db_fetch(princ);
+    ret = db_fetch(princ, &krbtgt);
 
-    if(krbtgt == NULL) {
+    if(ret) {
 	char *p;
 	krb5_unparse_name(context, princ, &p);
-	kdc_log(0, "Ticket-granting ticket not found in database: %s", p);
+	kdc_log(0, "Ticket-granting ticket not found in database: %s: %s",
+		p, krb5_get_err_text(context, ret));
 	free(p);
 	ret = KRB5KRB_AP_ERR_NOT_US;
 	goto out2;
@@ -1398,14 +1392,15 @@ tgs_rep2(KDC_REQ_BODY *b,
     else
 	verify_ap_req_flags = 0;
 
-    ret = krb5_verify_ap_req(context,
-			     &ac,
-			     &ap_req,
-			     princ,
-			     &tkey->key,
-			     verify_ap_req_flags,
-			     &ap_req_options,
-			     &ticket);
+    ret = krb5_verify_ap_req2(context,
+			      &ac,
+			      &ap_req,
+			      princ,
+			      &tkey->key,
+			      verify_ap_req_flags,
+			      &ap_req_options,
+			      &ticket,
+			      KRB5_KU_TGS_REQ_AUTH);
 			     
     krb5_free_principal(context, princ);
     if(ret) {
@@ -1427,6 +1422,7 @@ tgs_rep2(KDC_REQ_BODY *b,
 					    ac,
 					    &subkey);
 	if(ret){
+	    krb5_auth_con_free(context, ac);
 	    kdc_log(0, "Failed to get remote subkey: %s", 
 		    krb5_get_err_text(context, ret));
 	    goto out2;
@@ -1434,17 +1430,25 @@ tgs_rep2(KDC_REQ_BODY *b,
 	if(subkey == NULL){
 	    ret = krb5_auth_con_getkey(context, ac, &subkey);
 	    if(ret) {
+		krb5_auth_con_free(context, ac);
 		kdc_log(0, "Failed to get session key: %s", 
 			krb5_get_err_text(context, ret));
 		goto out2;
 	    }
 	}
 	if(subkey == NULL){
+	    krb5_auth_con_free(context, ac);
 	    kdc_log(0, "Failed to get key for enc-authorization-data");
 	    ret = KRB5KRB_AP_ERR_BAD_INTEGRITY; /* ? */
 	    goto out2;
 	}
-	krb5_crypto_init(context, subkey, 0, &crypto);
+	ret = krb5_crypto_init(context, subkey, 0, &crypto);
+	if (ret) {
+	    krb5_auth_con_free(context, ac);
+	    kdc_log(0, "krb5_crypto_init failed: %s",
+		    krb5_get_err_text(context, ret));
+	    goto out2;
+	}
 	ret = krb5_decrypt_EncryptedData (context,
 					  crypto,
 					  KRB5_KU_TGS_REQ_AUTH_DAT_SUBKEY,
@@ -1452,6 +1456,7 @@ tgs_rep2(KDC_REQ_BODY *b,
 					  &ad);
 	krb5_crypto_destroy(context, crypto);
 	if(ret){
+	    krb5_auth_con_free(context, ac);
 	    kdc_log(0, "Failed to decrypt enc-authorization-data");
 	    ret = KRB5KRB_AP_ERR_BAD_INTEGRITY; /* ? */
 	    goto out2;
@@ -1460,6 +1465,7 @@ tgs_rep2(KDC_REQ_BODY *b,
 	ALLOC(auth_data);
 	ret = decode_AuthorizationData(ad.data, ad.length, auth_data, NULL);
 	if(ret){
+	    krb5_auth_con_free(context, ac);
 	    free(auth_data);
 	    auth_data = NULL;
 	    kdc_log(0, "Failed to decode authorization data");
@@ -1506,10 +1512,11 @@ tgs_rep2(KDC_REQ_BODY *b,
 		goto out2;
 	    }
 	    principalname2krb5_principal(&p, t->sname, t->realm);
-	    uu = db_fetch(p);
+	    ret = db_fetch(p, &uu);
 	    krb5_free_principal(context, p);
-	    if(uu == NULL){
-		ret = KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN;
+	    if(ret){
+		if (ret == ENOENT)
+		    ret = KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN;
 		goto out;
 	    }
 	    ret = hdb_enctype2key(context, uu, t->enc_part.etype, &tkey);
@@ -1537,10 +1544,9 @@ tgs_rep2(KDC_REQ_BODY *b,
 	else
 	    kdc_log(0, "TGS-REQ %s from %s for %s", cpn, from, spn);
     server_lookup:
-	server = db_fetch(sp);
-    
+	ret = db_fetch(sp, &server);
 
-	if(server == NULL){
+	if(ret){
 	    Realm req_rlm, new_rlm;
 	    if(loop++ < 2 && (req_rlm = is_krbtgt(&sp->name))){
 		new_rlm = find_rpath(req_rlm);
@@ -1555,19 +1561,24 @@ tgs_rep2(KDC_REQ_BODY *b,
 		    goto server_lookup;
 		}
 	    }
-	    kdc_log(0, "Server not found in database: %s", spn);
-	    ret = KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN;
+	    kdc_log(0, "Server not found in database: %s: %s", spn,
+		    krb5_get_err_text(context, ret));
+	    if (ret == ENOENT)
+		ret = KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN;
 	    goto out;
 	}
 
-	client = db_fetch(cp);
-	if(client == NULL)
-	    kdc_log(1, "Client not found in database: %s", cpn);
+	ret = db_fetch(cp, &client);
+	if(ret)
+	    kdc_log(1, "Client not found in database: %s: %s",
+		    cpn, krb5_get_err_text(context, ret));
 #if 0
 	/* XXX check client only if same realm as krbtgt-instance */
-	if(client == NULL){
-	    kdc_log(0, "Client not found in database: %s", cpn);
-	    ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
+	if(ret){
+	    kdc_log(0, "Client not found in database: %s: %s",
+		    cpn, krb5_get_err_text(context, ret));
+	    if (ret == ENOENT)
+		ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
 	    goto out;
 	}
 #endif
@@ -1607,15 +1618,10 @@ tgs_rep2(KDC_REQ_BODY *b,
 	free(spn);
 	free(cpn);
 	    
-	if(server){
-	    hdb_free_entry(context, server);
-	    free(server);
-	}
-	if(client){
-	    hdb_free_entry(context, client);
-	    free(client);
-	}
-	
+	if(server)
+	    free_ent(server);
+	if(client)
+	    free_ent(client);
     }
 out2:
     if(ret)
@@ -1639,10 +1645,8 @@ out2:
 	free(auth_data);
     }
 
-    if(krbtgt){
-	hdb_free_entry(context, krbtgt);
-	free(krbtgt);
-    }
+    if(krbtgt)
+	free_ent(krbtgt);
     return ret;
 }
 

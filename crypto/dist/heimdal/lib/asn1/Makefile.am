@@ -1,11 +1,11 @@
-# $Id: Makefile.am,v 1.1.1.2 2000/08/02 19:59:01 assar Exp $
+# $Id: Makefile.am,v 1.1.1.3 2001/02/11 13:51:36 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
 YFLAGS = -d
 
 lib_LTLIBRARIES = libasn1.la
-libasn1_la_LDFLAGS = -version-info 3:0:1
+libasn1_la_LDFLAGS = -version-info 4:0:2
 
 BUILT_SOURCES =			\
 	$(gen_files:.x=.c)	\

@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.1.1.2 2000/08/02 19:58:07 assar Exp $
+# $Id: Makefile.am,v 1.1.1.3 2001/02/11 13:51:12 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -25,7 +25,7 @@ LDADD = $(LIB_otp) \
 	$(LIB_kafs) \
 	$(top_builddir)/lib/krb5/libkrb5.la \
 	$(LIB_krb4) \
-	$(top_builddir)/lib/des/libdes.la \
+	$(LIB_des) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken) \
 	$(LIB_security) \
