@@ -1,8 +1,8 @@
-.\"	$NetBSD: wtf.6,v 1.7 2003/04/11 11:13:34 jmmv Exp $
+.\"	$NetBSD: wtf.6,v 1.8 2003/04/25 19:08:31 jmmv Exp $
 .\"
 .\" Public Domain
 .\"
-.Dd April 11, 2003
+.Dd April 25, 2003
 .Dt WTF 6
 .Os
 .Sh NAME
@@ -11,6 +11,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl f Ar dbfile
+.Op Fl t Ar type
 .Op Ar is
 .Ar acronym Ar ...
 .Sh DESCRIPTION
@@ -37,6 +38,13 @@ The following options are available:
 Overrides the default acronym database, bypassing the value of the
 .Ev ACRONYMDB
 variable.
+.It Fl t Ar type
+Specifies the acronym's type.
+Simply put, it makes the program use the acronyms database named
+.Pa /usr/share/misc/acronyms.type ,
+where
+.Ar type
+is given by the argument.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width ACRONYMDB
