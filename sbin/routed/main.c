@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.34 2003/09/06 12:46:50 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.35 2003/11/14 01:31:24 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n"
 	    "The Regents of the University of California."
 	    "  All rights reserved.\n");
 #ifdef __NetBSD__
-__RCSID("$NetBSD: main.c,v 1.34 2003/09/06 12:46:50 itojun Exp $");
+__RCSID("$NetBSD: main.c,v 1.35 2003/11/14 01:31:24 enami Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -112,7 +112,7 @@ main(int argc,
 	const char *cp;
 	struct timeval wtime, t2;
 	time_t dt;
-	fd_set *ibitsp;
+	fd_set *ibitsp = NULL;
 	naddr p_net, p_mask;
 	struct interface *ifp;
 	struct parm parm;
