@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.9 1997/11/05 07:28:37 jonathan Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.10 1997/11/06 09:02:36 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -48,8 +48,9 @@
 /*
  * local prototypes
  */
-void check_prereqs(void);
-int save_etc(void);
+void 	check_prereqs __P((void));
+int	save_etc __P((void));
+int	merge_etc __P((void));
 
 /* Do the system upgrade. */
 void do_upgrade(void)
@@ -84,6 +85,9 @@ void do_upgrade(void)
 	process_menu (MENU_ok);
 
 	get_and_unpack_sets(MSG_upgrcomplete, MSG_abortupgr);
+
+	/* Copy back any files we shuld restore after the upgrade.*/
+	merge_etc();
 
 	sanity_check();
 }
@@ -143,4 +147,17 @@ int save_etc(void)
 	cp_within_target("/etc.old/hostname.*", "/etc/");
 
 	return 0;
+}
+
+
+/*
+ * Merge back saved target /etc files after unpacking the new
+ * sets has completed.
+ */
+int merge_etc(void)
+{
+	/* just move back fstab, so we can boot cleanly.  */
+	cp_within_target("/etc.old/fstab", "/etc/");
+
+	return 0;	
 }
