@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.7 1997/06/14 11:38:30 mycroft Exp $	*/
+/*	$NetBSD: joy.c,v 1.7.8.1 1997/10/31 20:56:38 mellon Exp $	*/
 
 /*
  * XXX This _really_ should be rewritten such that it doesn't
@@ -99,9 +99,9 @@ joyattach(sc)
 	sc->timeout[0] = sc->timeout[1] = 0;
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, 0, 0xff);
 	DELAY(10000);		/* 10 ms delay */
-	printf("%s: joystick%sconnected\n", sc->sc_dev.dv_xname,
+	printf("%s: joystick %sconnected\n", sc->sc_dev.dv_xname,
 	    (bus_space_read_1(sc->sc_iot, sc->sc_ioh, 0) & 0x0f) == 0x0f ?
-	    " not " : " ");
+	    " not" : "");
 }
 
 int
@@ -121,11 +121,11 @@ joyopen(dev, flag, mode, p)
 		return (ENXIO);
 
 	if (sc->timeout[i])
-		return EBUSY;
+		return (EBUSY);
 
 	sc->x_off[i] = sc->y_off[i] = 0;
 	sc->timeout[i] = JOY_TIMEOUT;
-	return 0;
+	return (0);
 }
 
 int
@@ -139,7 +139,7 @@ joyclose(dev, flag, mode, p)
 	struct joy_softc *sc = joy_cd.cd_devs[unit];
 
 	sc->timeout[i] = 0;
-	return 0;
+	return (0);
 }
 
 int
@@ -150,11 +150,11 @@ joyread(dev, uio, flag)
 {
 	int unit = JOYUNIT(dev);
 	struct joy_softc *sc = joy_cd.cd_devs[unit];
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	struct joystick c;
 	int i, t0, t1;
 	int state = 0, x = 0, y = 0;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
 
 	disable_intr();
 	bus_space_write_1(iot, ioh, 0, 0xff);
@@ -181,7 +181,7 @@ joyread(dev, uio, flag)
 	state >>= 4;
 	c.b1 = ~state & 1;
 	c.b2 = ~(state >> 1) & 1;
-	return uiomove((caddr_t) & c, sizeof(struct joystick), uio);
+	return (uiomove(&c, sizeof(struct joystick), uio));
 }
 
 int
@@ -201,7 +201,7 @@ joyioctl(dev, cmd, data, flag, p)
 	case JOY_SETTIMEOUT:
 		x = *(int *) data;
 		if (x < 1 || x > 10000)	/* 10ms maximum! */
-			return EINVAL;
+			return (EINVAL);
 		sc->timeout[i] = x;
 		break;
 	case JOY_GETTIMEOUT:
@@ -220,7 +220,7 @@ joyioctl(dev, cmd, data, flag, p)
 		*(int *) data = sc->y_off[i];
 		break;
 	default:
-		return ENXIO;
+		return (ENXIO);
 	}
 	return 0;
 }
@@ -234,5 +234,5 @@ get_tick()
 	low = inb(TIMER_CNTR0);
 	high = inb(TIMER_CNTR0);
 
-	return (high << 8) | low;
+	return ((high << 8) | low);
 }
