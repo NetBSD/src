@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.hp300	7.10 (Berkeley) 6/27/91
-#	$Id: Makefile.hp300,v 1.10 1994/01/06 17:29:59 mycroft Exp $
+#	$Id: Makefile.hp300,v 1.11 1994/01/10 02:34:51 mycroft Exp $
 #
 # Makefile for 4.4 BSD
 #
@@ -89,7 +89,7 @@ SYSTEM_LD_TAIL=	@size $@; chmod 755 $@; \
 %LOAD
 
 vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
-	sh $S/conf/newvers.sh ${KERN_IDENT} ${IDENT}
+	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} -c vers.c
 
 clean:
