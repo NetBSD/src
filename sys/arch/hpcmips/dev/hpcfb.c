@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.30 2001/01/04 01:35:21 enami Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.31 2001/01/04 03:03:04 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.30 2001/01/04 01:35:21 enami Exp $";
+    "$Id: hpcfb.c,v 1.31 2001/01/04 03:03:04 enami Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1264,7 +1264,7 @@ hpcfb_redraw(cookie, row, num, all)
 		return;
 	}
 #endif /* HPCFB_JUMP */
-	if (dc->dc_sc->sc_mapping)
+	if (dc->dc_sc != NULL && dc->dc_sc->sc_mapping)
 		return;
 
 	if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
