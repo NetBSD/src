@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.124 2000/08/28 12:06:11 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.125 2000/09/28 12:29:23 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.124 2000/08/28 12:06:11 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.125 2000/09/28 12:29:23 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -670,8 +670,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 
 			((struct sockaddr_in *)res->ai_addr)->sin_port =
 			    htons(portnum);
-			s = socket(res->ai_family, res->ai_socktype,
-				res->ai_protocol);
+			s = socket(res->ai_family, SOCK_STREAM,
+			    res->ai_protocol);
 			if (s < 0) {
 				warn("Can't create socket");
 				continue;
@@ -1736,7 +1736,7 @@ auto_put(int argc, char **argv, const char *uploadserver)
 		}
 	}
 	if (debug)
-		fprintf(ttyout, "autoput: url `%s' argv[2] `%s'\n",
+		fprintf(ttyout, "auto_put: url `%s' argv[2] `%s'\n",
 		    path, uargv[2] ? uargv[2] : "<null>");
 		
 			/* connect and cwd */		 

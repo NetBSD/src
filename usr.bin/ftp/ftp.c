@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.108 2000/08/06 08:51:22 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.109 2000/09/28 12:29:24 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.108 2000/08/06 08:51:22 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.109 2000/09/28 12:29:24 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -228,7 +228,7 @@ hookup(char *host, char *port)
 			fprintf(ttyout, "Trying %s...\n", hbuf);
 		}
 		((struct sockaddr_in *)res->ai_addr)->sin_port = htons(portnum);
-		s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+		s = socket(res->ai_family, SOCK_STREAM, res->ai_protocol);
 		if (s < 0) {
 			cause = "socket";
 			continue;
