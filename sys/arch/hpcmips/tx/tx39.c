@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.28 2002/01/02 13:08:05 uch Exp $ */
+/*	$NetBSD: tx39.c,v 1.29 2002/01/05 04:47:30 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -232,6 +232,11 @@ tx_find_dram(paddr_t start, paddr_t end)
  memend_found:
 	mem_clusters[mem_cluster_cnt].start = start;
 	mem_clusters[mem_cluster_cnt].size = page - startaddr;
+
+	/* skip kernel area */
+	if (mem_cluster_cnt == 1)
+		mem_clusters[mem_cluster_cnt].size -= start;
+
 	mem_cluster_cnt++;
 #undef MAGIC0
 #undef MAGIC1
