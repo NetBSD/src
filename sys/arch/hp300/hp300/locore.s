@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.52 1996/05/17 15:27:26 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.53 1996/05/17 16:32:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,8 +55,6 @@
 	.globl  _kernel_text
 _kernel_text:
 
-#include <hp300/hp300/vectors.s>
-
 /*
  * Temporary stack for a variety of purposes.
  * Try and make this the first thing is the data segment so it
@@ -66,6 +64,8 @@ _kernel_text:
 	.data
 	.space	NBPG
 tmpstk:
+
+#include <hp300/hp300/vectors.s>
 
 	.text
 /*
