@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.63 1999/03/24 05:50:55 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.64 1999/03/26 22:00:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -402,7 +402,8 @@ cpu_startup()
 	for (loop = 0; loop < btoc(MSGBUFSIZE); ++loop)
 		pmap_enter(pmap_kernel(),
 		    (vm_offset_t)((caddr_t)msgbufaddr + loop * NBPG),
-		    msgbufphys + loop * NBPG, VM_PROT_ALL, TRUE);
+		    msgbufphys + loop * NBPG, VM_PROT_READ|VM_PROT_WRITE, TRUE,
+		    VM_PROT_READ|VM_PROT_WRITE);
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
 	/*
@@ -450,10 +451,12 @@ cpu_startup()
 		curbufsize = CLBYTES * ((loop < residual) ? (base+1) : base);
 
 		while (curbufsize) {
-			if ((pg = uvm_pagealloc(NULL, 0, NULL)) == NULL)
-				panic("cpu_startup: More RAM needed for buffer cache");
+			pg = uvm_pagealloc(NULL, 0, NULL);
+			if (pg == NULL)
+				panic("cpu_startup: not enough memory for buffer cache");
 			pmap_enter(kernel_map->pmap, curbuf,
-			    VM_PAGE_TO_PHYS(pg), VM_PROT_ALL, TRUE);
+			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
+			    TRUE, VM_PROT_READ|VM_PROT_WRITE);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -482,9 +485,9 @@ cpu_startup()
 	 * Initialise callouts
 	 */
 	callfree = callout;
-
 	for (loop = 1; loop < ncallout; ++loop)
 		callout[loop - 1].c_next = &callout[loop];
+	callout[loop - 1].c_next = NULL;
 
 	printf("avail mem = %ld\n", ptoa(uvmexp.free));
 	printf("using %d buffers containing %d bytes of memory\n",
@@ -493,7 +496,6 @@ cpu_startup()
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
-
 	bufinit();
 
 	curpcb = &proc0.p_addr->u_pcb;
