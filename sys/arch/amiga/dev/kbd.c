@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.26 1996/10/13 03:07:22 christos Exp $	*/
+/*	$NetBSD: kbd.c,v 1.27 1996/11/30 01:30:37 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -332,7 +332,7 @@ kbdintr(mask)
 #ifdef DRACO
 /* maps MF-II keycodes to Amiga keycodes */
 
-u_char drkbdtab[] = {
+const u_char drkbdtab[] = {
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x50,
 	0x45, 0xff, 0xff, 0xff, 0xff, 0x42, 0x00, 0x51,
 
