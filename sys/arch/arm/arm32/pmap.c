@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30 2001/11/03 00:06:02 rearnsha Exp $	*/
+/*	$NetBSD: pmap.c,v 1.31 2001/11/19 18:41:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -142,7 +142,7 @@
 #include <machine/param.h>
 #include <machine/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30 2001/11/03 00:06:02 rearnsha Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.31 2001/11/19 18:41:32 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -1727,6 +1727,19 @@ pmap_deactivate(p)
 {
 }
 
+/*
+ * Perform any deferred pmap operations.
+ */
+void
+pmap_update(struct pmap *pmap)
+{
+
+	/*
+	 * We haven't deferred any pmap operations, but we do need to
+	 * make sure TLB/cache operations have completed.
+	 */
+	cpu_cpwait();
+}
 
 /*
  * pmap_clean_page()
