@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.236 2004/05/30 11:51:51 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.237 2004/05/30 11:55:12 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3356,4 +3356,10 @@ gnu/dist/gcc/gcc/objc/objc-parse.c		1.4
 
 	Fix merge conflicts with GCC 3.3.3.
 	[mrg, ticket #422]
+
+sys/arch/sparc/sparc/autoconf.c			1.207
+
+	Increase buffer size for s[dt]-targets PROM property otherwise some
+	 machines (including my SS1+) with old PROM fails to get it.
+	[tsutsui, ticket #423]
 
