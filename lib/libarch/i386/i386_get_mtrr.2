@@ -1,4 +1,4 @@
-.\"     $NetBSD: i386_get_mtrr.2,v 1.2 2001/11/10 08:10:49 wiz Exp $
+.\"     $NetBSD: i386_get_mtrr.2,v 1.3 2001/11/10 19:06:54 fvdl Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .Sh NAME
 .Nm i386_get_mtrr ,
 .Nm i386_set_mtrr
-.Nd access MTRR registers
+.Nd access Memory Type Range Registers
 .Sh LIBRARY
 .Lb libi386
 .Sh SYNOPSIS
@@ -55,6 +55,30 @@
 These functions provide an interface to the MTRR registers found on
 686-class processors.
 .Pp
+.Fa mtrrp
+is a pointer to one or more mtrr structures, as described below. The
+.Fa n
+argument is a pointer to an integer containing the number of structures
+pointed to by
+.Fa mtrrp .
+For
+.Fn i386_set_mtrr
+the integer pointed to by
+.Fa n
+will be updated to reflect the actual number of MTRRs successfully set.
+For
+.Fn i386_get_mtrr no more than
+.Fa n
+structures will be copied out, and the integer value pointed to by
+.Fa n
+will be updated to reflect the actual number of valid structures
+retrieved.
+A NULL argument to
+.Fa mtrrp
+will result in just the number of MTRRs available being returned
+in the integer pointed to by
+.Fa n .
+.Pp
 The argument
 .Fa mtrrp
 has the following structure:
@@ -68,7 +92,7 @@ struct mtrr {
 };
 .Ed
 .Pp
-The location of the mapping is described by its base address
+The location of the mapping is described by its physical base address
 .Em base
 and length
 .Em len .
@@ -78,12 +102,15 @@ are:
 .Pp
 .Bl -tag -offset indent -width MTRR_TYPE_UNDEF1 -compact
 .It MTRR_TYPE_UC
+uncached memory.
 .It MTRR_TYPE_WC
-.It MTRR_TYPE_UNDEF1
-.It MTRR_TYPE_UNDEF2
+use write-combining.
 .It MTRR_TYPE_WT
+use write-through caching.
 .It MTRR_TYPE_WP
+write-protected memory.
 .It MTRR_TYPE_WB
+use write-back caching.
 .El
 .Pp
 Valid values for
@@ -92,11 +119,11 @@ are:
 .Pp
 .Bl -tag -offset indent -width MTRR_PRIVATE -compact
 .It MTRR_PRIVATE
-own range, reset at exit
+own range, reset the MTRR when the current process exits.
 .It MTRR_FIXED
-use fixed range MTRR
+use fixed range MTRR.
 .It MTRR_VALID
-entry is valid
+entry is valid.
 .El
 .Pp
 The
@@ -104,6 +131,26 @@ The
 member the PID of the user process which claims the mapping.  It is
 only valid if MTRR_PRIVATE is set in
 .Em flags .
+To clear/reset MTRRs, use a 
+.Em flags
+field without MTRR_VALID set.
 .Sh RETURN VALUES
 Upon successful completion zero is returned, otherwise -1 is returned
-on failure.
+on failure, and the global variable
+.Va errno
+is set to indicate the error. The integer value pointed to by
+.Fa n
+will be container the number of successfully processed mtrr structures
+in both cases.
+.Sh ERRORS
+.Bl -tag -width [EINVAL]
+.It Bq Er ENOSYS
+The currently running kernel or CPU has no MTRR support.
+.It Bq Er EINVAL
+The currently running kernel has no MTRR support, or one of the mtrr
+structures pointed to by
+.Fa mtrrp
+is invalid.
+.It Bq Er EBUSY
+No unused MTRRs are available.
+.El
