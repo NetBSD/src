@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.89 2003/06/01 09:26:10 wiz Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.90 2003/11/01 15:18:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.89 2003/06/01 09:26:10 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.90 2003/11/01 15:18:42 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1218,6 +1218,8 @@ uvm_pagefree(pg)
 	struct vm_page *pg;
 {
 	int s;
+	struct pglist *pgfl;
+	boolean_t iszero;
 
 	KASSERT((pg->flags & PG_PAGEOUT) == 0);
 	LOCK_ASSERT(simple_lock_held(&uvm.pageqlock) ||
@@ -1306,19 +1308,23 @@ uvm_pagefree(pg)
 	 * and put on free queue
 	 */
 
-	pg->flags &= ~PG_ZERO;
+	iszero = (pg->flags & PG_ZERO);
+	pgfl = &uvm.page_free[uvm_page_lookup_freelist(pg)].
+	    pgfl_buckets[VM_PGCOLOR_BUCKET(pg)].
+	    pgfl_queues[iszero ? PGFL_ZEROS : PGFL_UNKNOWN];
 
-	s = uvm_lock_fpageq();
-	TAILQ_INSERT_TAIL(&uvm.page_free[
-	    uvm_page_lookup_freelist(pg)].pgfl_buckets[
-	    VM_PGCOLOR_BUCKET(pg)].pgfl_queues[PGFL_UNKNOWN], pg, pageq);
 	pg->pqflags = PQ_FREE;
 #ifdef DEBUG
 	pg->uobject = (void *)0xdeadbeef;
 	pg->offset = 0xdeadbeef;
 	pg->uanon = (void *)0xdeadbeef;
 #endif
+
+	s = uvm_lock_fpageq();
+	TAILQ_INSERT_TAIL(pgfl, pg, pageq);
 	uvmexp.free++;
+	if (iszero)
+		uvmexp.zeropages++;
 
 	if (uvmexp.zeropages < UVM_PAGEZERO_TARGET)
 		uvm.page_idle_zero = vm_page_zero_enable;
