@@ -16,7 +16,7 @@
  * scatter gather is done by the board, then look at one of the Adaptec
  * drivers to finish off the job..
  *
- *	$Id: wd7000.c,v 1.9 1993/12/20 23:27:40 davidb Exp $
+ *	$Id: wd7000.c,v 1.10 1994/01/03 23:53:39 mycroft Exp $
  */
 #include "wds.h"
 #if NWDS > 0
@@ -41,7 +41,7 @@
 
 extern int delaycount;  /* from clock setup code */
 
-#define PHYSTOKV(x)	( (u_long)(x) | 0xFE000000)
+#define PHYSTOKV(x)	((x) + KERNBASE)
 #define KVTOPHYS(x)	vtophys(x)
 #define PAGESIZ 	4096
 

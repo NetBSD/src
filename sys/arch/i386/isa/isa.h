@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.h	5.7 (Berkeley) 5/9/91
- *	$Id: isa.h,v 1.12 1993/12/16 20:23:56 mycroft Exp $
+ *	$Id: isa.h,v 1.13 1994/01/03 23:54:35 mycroft Exp $
  */
 
 /*
@@ -192,9 +192,9 @@ int isa_irq_pending __P((struct isa_device *dvp));
 
 /* stuff that used to be in pccons.c */
 #define MONO_BASE	0x3B4
-#define MONO_BUF	0xfe0B0000
+#define MONO_BUF	(KERNBASE + 0xB0000)
 #define CGA_BASE	0x3D4
-#define CGA_BUF		0xfe0B8000
+#define CGA_BUF		(KERNBASE + 0xB8000)
 #define IOPHYSMEM	0xA0000
 
 /*

@@ -15,7 +15,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: ultra14f.c,v 1.16 1993/12/20 23:27:39 davidb Exp $
+ *	$Id: ultra14f.c,v 1.17 1994/01/03 23:53:37 mycroft Exp $
  */
  
 #include <sys/types.h>
@@ -80,8 +80,8 @@ extern physaddr kvtophys();
 #endif MACH
 
 #ifdef        __NetBSD__
-#define PHYSTOKV(x)   (x | 0xFE000000)
-#define KVTOPHYS(x)   vtophys(x)
+#define PHYSTOKV(x)	((x) + KERNBASE)
+#define KVTOPHYS(x)	vtophys(x)
 #endif        __NetBSD__
 
 extern int delaycount;  /* from clock setup code */

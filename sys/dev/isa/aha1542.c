@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1542.c,v 1.16 1993/12/20 23:27:28 davidb Exp $
+ *	$Id: aha1542.c,v 1.17 1994/01/03 23:53:29 mycroft Exp $
  */
 
 /*
@@ -255,7 +255,7 @@ struct	aha_config {
 
 
 
-#define PHYSTOKV(x)	(x | 0xFE000000)
+#define PHYSTOKV(x)	((x) + KERNBASE)
 #define KVTOPHYS(x)	vtophys(x)
 #define	AHA_DMA_PAGES	AHA_NSEG
 
