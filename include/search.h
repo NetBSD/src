@@ -1,4 +1,4 @@
-/*	$NetBSD: search.h,v 1.12 1999/02/22 10:34:28 christos Exp $	*/
+/*	$NetBSD: search.h,v 1.13 2000/06/13 01:21:53 simonb Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>
@@ -40,26 +40,26 @@ typedef struct node {
 #endif
 
 __BEGIN_DECLS
-extern void	*bsearch __P((const void *, const void *, size_t, size_t,
-			      int (*)(const void *, const void *)));
-extern int	 hcreate __P((size_t));
-extern void	 hdestroy __P((void));
-extern ENTRY	*hsearch __P((ENTRY, ACTION));
+void	*bsearch __P((const void *, const void *, size_t, size_t,
+		      int (*)(const void *, const void *)));
+int	 hcreate __P((size_t));
+void	 hdestroy __P((void));
+ENTRY	*hsearch __P((ENTRY, ACTION));
 
-extern void	*lfind __P((const void *, const void *, size_t *, size_t,
-			      int (*)(const void *, const void *)));
-extern void	*lsearch __P((const void *, const void *, size_t *, size_t,
-			      int (*)(const void *, const void *)));
-extern void	 insque __P((void *, void *));
-extern void	 remque __P((void *));
+void	*lfind __P((const void *, const void *, size_t *, size_t,
+		      int (*)(const void *, const void *)));
+void	*lsearch __P((const void *, const void *, size_t *, size_t,
+		      int (*)(const void *, const void *)));
+void	 insque __P((void *, void *));
+void	 remque __P((void *));
 
-extern void	*tdelete __P((const void *, void **,
-			      int (*)(const void *, const void *)));
-extern void	*tfind __P((const void *, void **,
-			      int (*)(const void *, const void *)));
-extern void	*tsearch __P((const void *, void **, 
-			      int (*)(const void *, const void *)));
-extern void      twalk __P((const void *, void (*)(const void *, VISIT, int)));
+void	*tdelete __P((const void *, void **,
+		      int (*)(const void *, const void *)));
+void	*tfind __P((const void *, void **,
+		      int (*)(const void *, const void *)));
+void	*tsearch __P((const void *, void **, 
+		      int (*)(const void *, const void *)));
+void      twalk __P((const void *, void (*)(const void *, VISIT, int)));
 __END_DECLS
 
 #endif /* !_SEARCH_H_ */
