@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.77 2004/07/30 07:40:26 dogcow Exp $ */
+/* $NetBSD: vga.c,v 1.78 2004/07/30 10:47:20 jmmv Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -35,7 +35,7 @@
 #include "opt_wsmsgattrs.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.77 2004/07/30 07:40:26 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.78 2004/07/30 10:47:20 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -591,12 +591,9 @@ vga_init(struct vga_config *vc, bus_space_tag_t iot, bus_space_tag_t memt)
 
 	vc->currentfontset1 = vc->currentfontset2 = 0;
 
-#ifdef WSDISPLAY_CUSTOM_BORDER
-	/* This function does all the required sanity checks for us
-	 * (mono video, valid color, etc.); we just don't care about
-	 * possible errors during initialization. */
-	(void)vga_setborder(vc->active, WSDISPLAY_BORDER_COLOR);
-#endif /* WSDISPLAY_CUSTOM_BORDER */
+	if (!vh->vh_mono && (u_int)WSDISPLAY_BORDER_COLOR < sizeof(fgansitopc))
+		_vga_attr_write(vh, VGA_ATC_OVERSCAN,
+		                fgansitopc[WSDISPLAY_BORDER_COLOR]);
 }
 
 void
