@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.82 2003/02/13 02:42:06 jhawk Exp $
+#	$NetBSD: security,v 1.83 2003/02/21 22:47:51 jhawk Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -130,7 +130,7 @@ backup_and_diff()
 	if [ -f $_file ]; then
 		if [ -f $CUR ] ; then
 			if [ "$_printdiff" -ne 0 ]; then
-				diff $CUR $_file > $OUTPUT
+				diff ${diff_options} $CUR $_file > $OUTPUT
 			else
 				if ! cmp -s $CUR $_file; then
 					echo "[changes omitted]"
@@ -145,7 +145,7 @@ backup_and_diff()
 		else
 			printf "\n======\n%s added\n======\n" $_file
 			if [ "$_printdiff" -ne 0 ]; then
-				diff /dev/null $_file
+				diff ${diff_options} /dev/null $_file
 			else
 				echo "[changes omitted]"
 			fi
@@ -155,7 +155,7 @@ backup_and_diff()
 		if [ -f $CUR ]; then
 			printf "\n======\n%s removed\n======\n" $_file
 			if [ "$_printdiff" -ne 0 ]; then
-				diff $CUR /dev/null
+				diff ${diff_options} $CUR /dev/null
 			else
 				echo "[changes omitted]"
 			fi
