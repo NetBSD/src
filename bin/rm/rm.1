@@ -1,5 +1,5 @@
-.\" Copyright (c) 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1993, 1994
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" the Institute of Electrical and Electronics Engineers, Inc.
@@ -32,19 +32,19 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)rm.1	6.9 (Berkeley) 7/27/91
-.\"	$Id: rm.1,v 1.4 1993/08/01 07:48:04 mycroft Exp $
+.\"	from: @(#)rm.1	8.2 (Berkeley) 4/18/94
+.\"	$Id: rm.1,v 1.5 1994/09/20 00:37:14 mycroft Exp $
 .\"
-.Dd July 27, 1991
+.Dd April 18, 1994
 .Dt RM 1
 .Os
 .Sh NAME
 .Nm rm
-.Nd Remove directory entries.
+.Nd remove directory entries
 .Sh SYNOPSIS
 .Nm rm
 .Op Fl f | Fl i
-.Op Fl dRr
+.Op Fl dPRr
 .Ar file ...
 .Sh DESCRIPTION
 The
@@ -78,6 +78,10 @@ The
 option overrides any previous
 .Fl f 
 options.
+.It Fl P
+Overwrite regular files before deleting them.
+Files are overwritten three times, first with the byte pattern 0xff,
+then 0x00, and then 0xff again, before they are deleted.
 .It Fl R
 Attempt to remove the file hierarchy rooted in each file argument.
 The 
@@ -117,7 +121,16 @@ exits with a value >0.
 .Sh SEE ALSO
 .Xr rmdir 1 ,
 .Xr unlink 2 ,
-.Xr fts 3
+.Xr fts 3 ,
+.Xr symlink 7
+.Sh BUGS
+The
+.Fl P
+option assumes that the underlying file system is a fixed-block file
+system.
+UFS is a fixed-block file system, LFS is not.
+In addition, only regular files are overwritten, other types of files
+are not.
 .Sh COMPATIBILITY
 The
 .Nm rm
