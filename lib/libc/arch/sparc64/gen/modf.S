@@ -1,4 +1,4 @@
-/*	$NetBSD: modf.S,v 1.1 1998/09/11 04:56:28 eeh Exp $	*/
+/*	$NetBSD: modf.S,v 1.2 2000/07/23 07:12:22 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 	.asciz "@(#)modf.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: modf.S,v 1.1 1998/09/11 04:56:28 eeh Exp $")
+	RCSID("$NetBSD: modf.S,v 1.2 2000/07/23 07:12:22 eeh Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -75,9 +75,9 @@
  * various aspects.
  *
  * Stack usage:
- *	4@[%fp - 4]	saved %fsr
- *	4@[%fp - 8]	new %fsr with rounding set to `towards 0'
- *	8@[%fp - 16]	space for moving between %i and %f registers
+ *	4@[%fp + BIAS - 4]	saved %fsr
+ *	4@[%fp + BIAS - 8]	new %fsr with rounding set to `towards 0'
+ *	8@[%fp + BIAS - 16]	space for moving between %i and %f registers
  * Register usage:
  *	%i0%i1		double val;
  *	%l0		scratch
@@ -97,7 +97,7 @@ L0:
 	.word	0
 
 ENTRY(modf)
-	save	%sp, -64-16, %sp
+	save	%sp, -CC64FSZ-16, %sp
 
 	/*
 	 * First, compute v = abs(val) by clearing sign bit,
@@ -106,7 +106,7 @@ ENTRY(modf)
 	 */
 	sethi	%hi(0x80000000), %l1	! sign bit
 	andn	%i0, %l1, %l0
-	st	%l0, [%fp - 16]
+	st	%l0, [%fp + BIAS - 16]
 #ifdef PIC
 	PICCY_SET(Lmagic, %l0, %o7)
 	ldd	[%l0], %f2
@@ -114,8 +114,8 @@ ENTRY(modf)
 	sethi	%hi(Lmagic), %l0
 	ldd	[%l0 + %lo(Lmagic)], %f2
 #endif
-	st	%i1, [%fp - 12]
-	ldd	[%fp - 16], %f4		! %f4:f5 = v
+	st	%i1, [%fp + BIAS - 12]
+	ldd	[%fp + BIAS - 16], %f4		! %f4:f5 = v
 
 	/*
 	 * Is %f4:f5 >= %f2:f3 ?  If so, it is all integer bits.
@@ -132,15 +132,15 @@ ENTRY(modf)
 	 * traps enabled, but change the rounding mode.  This might
 	 * not be so good.  Oh well....
 	 */
-	st	%fsr, [%fp - 4]		! %l5 = current FSR mode
+	st	%fsr, [%fp + BIAS - 4]		! %l5 = current FSR mode
 	set	FSR_RD, %l3		! %l3 = rounding direction mask
-	ld	[%fp - 4], %l5
+	ld	[%fp + BIAS - 4], %l5
 	set	FSR_RD_RZ << FSR_RD_SHIFT, %l4
 	andn	%l5, %l3, %l6
 	or	%l6, %l4, %l6		! round towards zero, please
 	and	%l5, %l3, %l5		! save original rounding mode
-	st	%l6, [%fp - 8]
-	ld	[%fp - 8], %fsr
+	st	%l6, [%fp + BIAS - 8]
+	ld	[%fp + BIAS - 8], %fsr
 
 	faddd	%f4, %f2, %f4		! %f4:f5 += 2^52
 	fsubd	%f4, %f2, %f4		! %f4:f5 -= 2^52
@@ -148,12 +148,12 @@ ENTRY(modf)
 	/*
 	 * Restore %fsr, but leave exceptions accrued.
 	 */
-	st	%fsr, [%fp - 4]
-	ld	[%fp - 4], %l6
+	st	%fsr, [%fp + BIAS - 4]
+	ld	[%fp + BIAS - 4], %l6
 	andn	%l6, %l3, %l6		! %l6 = %fsr & ~FSR_RD;
 	or	%l5, %l6, %l5		! %l5 |= %l6;
-	st	%l5, [%fp - 4]
-	ld	[%fp - 4], %fsr		! restore %fsr, leaving accrued stuff
+	st	%l5, [%fp + BIAS - 4]
+	ld	[%fp + BIAS - 4], %fsr		! restore %fsr, leaving accrued stuff
 
 	/*
 	 * Now insert the original sign in %f4:f5.
@@ -162,11 +162,11 @@ ENTRY(modf)
 	btst	%l1, %i0
 	be	1f
 	nop
-	st	%f4, [%fp - 16]
-	ld	[%fp - 16], %g1
+	st	%f4, [%fp + BIAS - 16]
+	ld	[%fp + BIAS - 16], %g1
 	or	%l1, %g1, %g1
-	st	%g1, [%fp - 16]
-	ld	[%fp - 16], %f4
+	st	%g1, [%fp + BIAS - 16]
+	ld	[%fp + BIAS - 16], %f4
 1:
 
 	/*
@@ -175,8 +175,8 @@ ENTRY(modf)
 	 * from the original value argument (%i0:i1), and return the result.
 	 */
 	std	%f4, [%i2]		! *ival = %f4:f5;
-	std	%i0, [%fp - 16]
-	ldd	[%fp - 16], %f0		! %f0:f1 = val;
+	std	%i0, [%fp + BIAS - 16]
+	ldd	[%fp + BIAS - 16], %f0		! %f0:f1 = val;
 	fsubd	%f0, %f4, %f0		! %f0:f1 -= %f4:f5;
 	ret
 	restore
