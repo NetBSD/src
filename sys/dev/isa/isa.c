@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.92 1996/12/05 22:16:04 cgd Exp $	*/
+/*	$NetBSD: isa.c,v 1.93 1996/12/08 00:14:03 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -188,7 +188,7 @@ isasearch(parent, cf, aux)
 	else
 		free(dev, M_DEVBUF);
 #else
-	if (((*cf->cf_attach->ca_match)(parent, cf, &ia) > 0)
+	if ((*cf->cf_attach->ca_match)(parent, cf, &ia) > 0)
 		config_attach(parent, cf, &ia, isaprint);
 	return (0);
 #endif
