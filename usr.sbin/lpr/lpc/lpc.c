@@ -1,4 +1,4 @@
-/*	$NetBSD: lpc.c,v 1.9 1997/10/05 16:45:44 mrg Exp $	*/
+/*	$NetBSD: lpc.c,v 1.10 2000/08/24 17:40:16 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpc.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpc.c,v 1.9 1997/10/05 16:45:44 mrg Exp $");
+__RCSID("$NetBSD: lpc.c,v 1.10 2000/08/24 17:40:16 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 
@@ -304,7 +304,7 @@ ingroup(grname)
 	static struct group *gptr=NULL;
 	static gid_t groups[NGROUPS];
 	gid_t gid;
-	int i;
+	int i, ngroups;
 
 	if (gptr == NULL) {
 		if ((gptr = getgrnam(grname)) == NULL) {
@@ -312,11 +312,12 @@ ingroup(grname)
 				grname);
 			return(0);
 		}
-		if (getgroups(NGROUPS, groups) < 0)
+		ngroups = getgroups(NGROUPS, groups);
+		if (ngroups < 0)
 			err(1, "getgroups");
 	}
 	gid = gptr->gr_gid;
-	for (i = 0; i < NGROUPS; i++)
+	for (i = 0; i < ngroups; i++)
 		if (gid == groups[i])
 			return(1);
 	return(0);
