@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mount.c	8.19 (Berkeley) 4/19/94";*/
-static char *rcsid = "$Id: mount.c,v 1.14 1994/12/18 16:03:02 cgd Exp $";
+static char *rcsid = "$Id: mount.c,v 1.15 1995/01/30 17:22:42 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -57,15 +57,15 @@ static char *rcsid = "$Id: mount.c,v 1.14 1994/12/18 16:03:02 cgd Exp $";
 
 #include "pathnames.h"
 
-int debug, verbose, skipvfs;
+int	debug, verbose;
+char	**typelist = NULL;
 
-int	badvfsname __P((const char *, const char **));
+int	selected __P((const char *));
 char   *catopt __P((char *, const char *));
 struct statfs
        *getmntpt __P((const char *));
 int	hasopt __P((const char *, const char *));
-const char
-      **makevfslist __P((char *));
+void	maketypelist __P((char *));
 void	mangle __P((char *, int *, const char **));
 int	mountfs __P((const char *, const char *, const char *,
 			int, const char *, const char *));
@@ -98,7 +98,7 @@ main(argc, argv)
 	int argc;
 	char * const argv[];
 {
-	const char *mntonname, **vfslist, *vfstype;
+	const char *mntonname, *vfstype;
 	struct fstab *fs;
 	struct statfs *mntbuf;
 	FILE *mountdfp;
@@ -108,7 +108,6 @@ main(argc, argv)
 
 	all = init_flags = 0;
 	options = NULL;
-	vfslist = NULL;
 	vfstype = "ufs";
 	while ((ch = getopt(argc, argv, "adfo:rwt:uv")) != EOF)
 		switch (ch) {
@@ -129,9 +128,9 @@ main(argc, argv)
 			init_flags |= MNT_RDONLY;
 			break;
 		case 't':
-			if (vfslist != NULL)
+			if (typelist != NULL)
 				errx(1, "only one -t option may be specified.");
-			vfslist = makevfslist(optarg);
+			maketypelist(optarg);
 			vfstype = optarg;
 			break;
 		case 'u':
@@ -162,7 +161,7 @@ main(argc, argv)
 			while ((fs = getfsent()) != NULL) {
 				if (BADTYPE(fs->fs_type))
 					continue;
-				if (badvfsname(fs->fs_vfstype, vfslist))
+				if (!selected(fs->fs_vfstype))
 					continue;
 				if (hasopt(fs->fs_mntops, "noauto"))
 					continue;
@@ -175,14 +174,14 @@ main(argc, argv)
 			if ((mntsize = getmntinfo(&mntbuf, MNT_NOWAIT)) == 0)
 				err(1, "getmntinfo");
 			for (i = 0; i < mntsize; i++) {
-				if (badvfsname(mntbuf[i].f_fstypename, vfslist))
+				if (!selected(mntbuf[i].f_fstypename))
 					continue;
 				prmount(&mntbuf[i]);
 			}
 		}
 		exit(rval);
 	case 1:
-		if (vfslist != NULL)
+		if (typelist != NULL)
 			usage();
 
 		if (init_flags & MNT_UPDATE) {
@@ -216,7 +215,7 @@ main(argc, argv)
 		 * a ':' or a '@' then assume that an NFS filesystem is being
 		 * specified ala Sun.
 		 */
-		if (vfslist == NULL && strpbrk(argv[0], ":@") != NULL)
+		if (typelist == NULL && strpbrk(argv[0], ":@") != NULL)
 			vfstype = "nfs";
 		rval = mountfs(vfstype,
 		    argv[0], argv[1], init_flags, options, NULL);
@@ -419,52 +418,58 @@ getmntpt(name)
 	return (NULL);
 }
 
-int
-badvfsname(vfsname, vfslist)
-	const char *vfsname;
-	const char **vfslist;
-{
+static enum { IN_LIST, NOT_IN_LIST } which;
 
-	if (vfslist == NULL)
-		return (0);
-	while (*vfslist != NULL) {
-		if (strcmp(vfsname, *vfslist) == 0)
-			return (skipvfs);
-		++vfslist;
-	}
-	return (!skipvfs);
+int
+selected(type)
+	const char *type;
+{
+	char **av;
+
+	/* If no type specified, it's always selected. */
+	if (typelist == NULL)
+		return (1);
+	for (av = typelist; *av != NULL; ++av)
+		if (!strcmp(type, *av))
+			return (which == IN_LIST ? 1 : 0);
+	return (which == IN_LIST ? 0 : 1);
 }
 
-const char **
-makevfslist(fslist)
+void
+maketypelist(fslist)
 	char *fslist;
 {
-	const char **av;
 	int i;
-	char *nextcp;
+	char *nextcp, **av;
 
-	if (fslist == NULL)
-		return (NULL);
+	if ((fslist == NULL) || (fslist[0] == '\0'))
+		errx(1, "empty type list");
+
+	/*
+	 * XXX
+	 * Note: the syntax is "noxxx,yyy" for no xxx's and
+	 * no yyy's, not the more intuitive "noyyy,noyyy".
+	 */
 	if (fslist[0] == 'n' && fslist[1] == 'o') {
 		fslist += 2;
-		skipvfs = 1;
+		which = NOT_IN_LIST;
+	} else
+		which = IN_LIST;
+
+	/* Count the number of types. */
+	for (i = 1, nextcp = fslist; nextcp = strchr(nextcp, ','); i++)
+		++nextcp;
+
+	/* Build an array of that many types. */
+	if ((av = typelist = malloc((i + 1) * sizeof(char *))) == NULL)
+		err(1, NULL);
+	av[0] = fslist;
+	for (i = 1, nextcp = fslist; nextcp = strchr(nextcp, ','); i++) {
+		*nextcp = '\0';
+		av[i] = ++nextcp;
 	}
-	for (i = 0, nextcp = fslist; *nextcp; nextcp++)
-		if (*nextcp == ',')
-			i++;
-	if ((av = malloc((size_t)(i + 2) * sizeof(char *))) == NULL) {
-		warn(NULL);
-		return (NULL);
-	}
-	nextcp = fslist;
-	i = 0;
-	av[i++] = nextcp;
-	while ((nextcp = strchr(nextcp, ',')) != NULL) {
-		*nextcp++ = '\0';
-		av[i++] = nextcp;
-	}
-	av[i++] = NULL;
-	return (av);
+	/* Terminate the array. */
+	av[i] = NULL;
 }
 
 char *
