@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.58 2002/03/08 20:48:41 thorpej Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.59 2002/03/09 01:46:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.58 2002/03/08 20:48:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.59 2002/03/09 01:46:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,6 +128,9 @@ mbinit()
 
 	pool_init(&mbpool, msize, 0, 0, 0, "mbpl", NULL);
 	pool_init(&mclpool, mclbytes, 0, 0, 0, "mclpl", &mclpool_allocator);
+
+	pool_set_drain_hook(&mbpool, m_reclaim, NULL);
+	pool_set_drain_hook(&mclpool, m_reclaim, NULL);
 
 	pool_cache_init(&mbpool_cache, &mbpool, NULL, NULL, NULL);
 	pool_cache_init(&mclpool_cache, &mclpool, NULL, NULL, NULL);
@@ -240,50 +243,8 @@ mclpool_release(pp, v)
 	uvm_km_free_poolpage1(mb_map, (vaddr_t)v);
 }
 
-/*
- * When MGET failes, ask protocols to free space when short of memory,
- * then re-attempt to allocate an mbuf.
- */
-struct mbuf *
-m_retry(i, t)
-	int i, t;
-{
-	struct mbuf *m;
-
-	m_reclaim(i);
-#define m_retry(i, t)	(struct mbuf *)0
-	MGET(m, i, t);
-#undef m_retry
-	if (m != NULL)
-		mbstat.m_wait++;
-	else
-		mbstat.m_drops++;
-	return (m);
-}
-
-/*
- * As above; retry an MGETHDR.
- */
-struct mbuf *
-m_retryhdr(i, t)
-	int i, t;
-{
-	struct mbuf *m;
-
-	m_reclaim(i);
-#define m_retryhdr(i, t) (struct mbuf *)0
-	MGETHDR(m, i, t);
-#undef m_retryhdr
-	if (m != NULL)
-		mbstat.m_wait++;
-	else
-		mbstat.m_drops++;
-	return (m);
-}
-
 void
-m_reclaim(how)
-	int how;
+m_reclaim(void *arg, int flags)
 {
 	struct domain *dp;
 	struct protosw *pr;
