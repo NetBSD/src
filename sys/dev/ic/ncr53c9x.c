@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.36.2.16 2001/04/23 09:42:18 bouyer Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.36.2.17 2001/04/24 07:29:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -949,10 +949,10 @@ ncr53c9x_update_xfer_mode(sc, target)
 		xm.xm_period = ti->period;
 		xm.xm_offset = ti->offset;
 	}
-	if (ti->flags & T_WIDE)
+	if (ti->width)
 		xm.xm_mode |= PERIPH_CAP_WIDE16;
 
-	if ((ti->flags & (T_RSELECTOFF|T_TAG)) != (T_RSELECTOFF|T_TAG))
+	if ((ti->flags & (T_RSELECTOFF|T_TAG)) == T_TAG)
 		xm.xm_mode |= PERIPH_CAP_TQING;
 
 	scsipi_async_event(&sc->sc_channel, ASYNC_EVENT_XFER_MODE, &xm);
@@ -1682,6 +1682,7 @@ gotit:
 				    sc->sc_dev.dv_xname, 
 				    ecb->xs->xs_periph->periph_target);
 				ti->flags &= ~T_WIDE;
+				ti->width = 0;
 				break;
 
 			case SEND_INIT_DET_ERR:
@@ -1803,7 +1804,8 @@ gotit:
 				if (sc->sc_imess[3] == 1) {
 					ti->cfg3 |= NCRFASCFG3_EWIDE;
 					ncr53c9x_setsync(sc, ti);
-				}
+				} else
+					ti->width = 0;
 				ti->flags &= ~T_WIDE;
 				break;
 			default:
