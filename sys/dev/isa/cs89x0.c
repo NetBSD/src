@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.17 2000/12/14 06:59:01 thorpej Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.18 2001/07/18 20:42:54 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -147,9 +147,8 @@
 **       safe, and not really a performance win anyway.  (It was only used when
 **       setting up the multicast logical address filter, which is an
 **       infrequent event.  It could have been used in the IFF_PROMISCUOUS
-**       address check above, but the benefit of it vs. bcmp or memcmp would be
-**       inconsequential, there.)  Use bcmp() instead.  Eventually, this should
-**       use memcmp(), so that the compiler can optimize it into inline code.
+**       address check above, but the benefit of it vs. memcmp would be
+**       inconsequential, there.)  Use memcmp() instead.
 **     * restructure csStartOuput to avoid the following bugs in the case where
 **       txWait was being set:
 **         * it would accidentally drop the outgoing packet if told to wait
@@ -1057,7 +1056,7 @@ cs_set_ladr_filt(sc, ec)
 	 */
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    sizeof enm->enm_addrlo)) {
 			/*
 	                 * We must listen to a range of multicast addresses.
