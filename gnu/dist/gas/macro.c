@@ -1,3 +1,4 @@
+/* $NetBSD: macro.c,v 1.1.1.1.2.1 1998/02/07 06:34:07 mellon Exp $ */
 /* macro.c - macro support for gas and gasp
    Copyright (C) 1994, 95, 96, 1997 Free Software Foundation, Inc.
 
@@ -91,9 +92,14 @@ static const char *macro_expand PARAMS ((int, sb *, macro_entry *, sb *, int));
 
 #define ISWHITE(x) ((x) == ' ' || (x) == '\t')
 
+/*
+ * Apply macro_alternate and macro_mri restrictions only when enabled
+ */
+#define	WA(e) ((macro_alternate || macro_mri) && (e))
+
 #define ISSEP(x) \
  ((x) == ' ' || (x) == '\t' || (x) == ',' || (x) == '"' || (x) == ';' \
-  || (x) == '<' || (x) == '>' || (x) == ')' || (x) == '(')
+  || WA((x) == '<') || WA((x) == '>') || (x) == ')' || (x) == '(')
 
 #define ISBASE(x) \
   ((x) == 'b' || (x) == 'B' \
@@ -269,10 +275,10 @@ getstring (idx, in, acc)
 
   while (idx < in->len
 	 && (in->ptr[idx] == '"' 
-	     || in->ptr[idx] == '<' 
+	     || WA(in->ptr[idx] == '<')
 	     || (in->ptr[idx] == '\'' && macro_alternate)))
     {
-      if (in->ptr[idx] == '<')
+      if WA(in->ptr[idx] == '<')
 	{
 	  if (macro_alternate || macro_mri)
 	    {
@@ -383,7 +389,7 @@ get_any_string (idx, in, out, expand, pretend_quoted)
 	  sb_add_string (out, buf);
 	}
       else if (in->ptr[idx] == '"'
-	       || in->ptr[idx] == '<'
+	       || WA(in->ptr[idx] == '<')
 	       || (macro_alternate && in->ptr[idx] == '\''))
 	{
 	  if (macro_alternate
@@ -410,7 +416,7 @@ get_any_string (idx, in, out, expand, pretend_quoted)
 		     || (in->ptr[idx] != ' '
 			 && in->ptr[idx] != '\t'
 			 && in->ptr[idx] != ','
-			 && in->ptr[idx] != '<')))
+			 && !WA(in->ptr[idx] == '<'))))
 	    {
 	      if (in->ptr[idx] == '"' 
 		  || in->ptr[idx] == '\'')
@@ -661,22 +667,13 @@ macro_expand_body (in, out, formals, formal_hash, comment_char, locals)
 
   while (src < in->len)
     {
-      if (in->ptr[src] == '&')
+      if (in->ptr[src] == '&' && macro_mri)
 	{
 	  sb_reset (&t);
-	  if (macro_mri)
-	    {
-	      if (src + 1 < in->len && in->ptr[src + 1] == '&')
-		src = sub_actual (src + 2, in, &t, formal_hash, '\'', out, 1);
-	      else
-		sb_add_char (out, in->ptr[src++]);
-	    }
+	  if (src + 1 < in->len && in->ptr[src + 1] == '&')
+	    src = sub_actual (src + 2, in, &t, formal_hash, '\'', out, 1);
 	  else
-	    {
-	      /* FIXME: Why do we do this?  It prevents people from
-                 using the & operator in a macro.  */
-	      src = sub_actual (src + 1, in, &t, formal_hash, '&', out, 0);
-	    }
+	    sb_add_char (out, in->ptr[src++]);
 	}
       else if (in->ptr[src] == '\\')
 	{
@@ -950,8 +947,8 @@ macro_expand (idx, in, m, out, comment_char)
       if (scan < in->len && !macro_alternate && in->ptr[scan] == '=')
 	{
 	  is_keyword = 1;
-	  if (is_positional)
-	    return "can't mix positional and keyword arguments";
+
+	  /* It's OK to go from positional to keyword */
 
 	  /* This is a keyword arg, fetch the formal name and
 	     then the actual stuff */
