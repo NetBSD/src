@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.26 2004/05/31 09:00:24 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.27 2004/05/31 09:05:01 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.26 2004/05/31 09:00:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.27 2004/05/31 09:05:01 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2110,7 +2110,8 @@ atw_recv_beacon(struct ieee80211com *ic, struct mbuf *m0,
 
 	if (ic->ic_if.if_flags & IFF_DEBUG)
 		do_print = (ic->ic_if.if_flags & IFF_LINK0)
-		    ? 1 : ratecheck(&sc->sc_last_beacon, &atw_beacon_mininterval);
+		    ? 1 : ratecheck(&sc->sc_last_beacon,
+		    &atw_beacon_mininterval);
 
 	wh = mtod(m0, struct ieee80211_frame *);
 
@@ -3707,7 +3708,6 @@ atw_start(struct ifnet *ifp)
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 		/* Wake up the transmitter. */
-		/* XXX USE AUTOPOLLING? */
 		ATW_WRITE(sc, ATW_TDR, 0x1);
 
 		/* Set a watchdog timer in case the chip flakes out. */
