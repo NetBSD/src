@@ -1,4 +1,4 @@
-/*	$NetBSD: hexdump.c,v 1.6 1997/10/18 13:54:17 mrg Exp $	*/
+/*	$NetBSD: hexdump.c,v 1.7 1997/10/19 02:34:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)hexdump.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: hexdump.c,v 1.6 1997/10/18 13:54:17 mrg Exp $";
+__RCSID("$NetBSD: hexdump.c,v 1.7 1997/10/19 02:34:06 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,12 +61,14 @@ int blocksize;				/* data block size */
 int exitval;				/* final exit value */
 int length = -1;			/* max bytes to read */
 
+int	main __P((int, char **));
+
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register FS *tfs;
+	FS *tfs;
 	char *p;
 
 	if (!(p = strrchr(argv[0], 'o')) || strcmp(p, "od"))
@@ -87,33 +89,4 @@ main(argc, argv)
 	(void)next(argv);
 	display();
 	exit(exitval);
-}
-
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#if __STDC__
-err(const char *fmt, ...)
-#else
-err(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
-{
-	va_list ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "hexdump: ");
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
-	exit(1);
-	/* NOTREACHED */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.6 1997/10/18 13:54:39 mrg Exp $	*/
+/*	$NetBSD: parse.c,v 1.7 1997/10/19 02:34:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: parse.c,v 1.6 1997/10/18 13:54:39 mrg Exp $";
+__RCSID("$NetBSD: parse.c,v 1.7 1997/10/19 02:34:10 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,6 +46,7 @@ static char rcsid[] = "$NetBSD: parse.c,v 1.6 1997/10/18 13:54:39 mrg Exp $";
 #include <sys/file.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -59,16 +61,16 @@ void
 addfile(name)
 	char *name;
 {
-	register char *p;
+	char *p;
 	FILE *fp;
 	int ch;
 	char buf[2048 + 1];
 
 	if ((fp = fopen(name, "r")) == NULL)
-		err("%s: %s\n", name, strerror(errno));
+		err(1, "fopen %s", name);
 	while (fgets(buf, sizeof(buf), fp)) {
 		if (!(p = strchr(buf, '\n'))) {
-			(void)fprintf(stderr, "hexdump: line too long.\n");
+			warnx("line too long.");
 			while ((ch = getchar()) != '\n' && ch != EOF);
 			continue;
 		}
@@ -85,7 +87,7 @@ void
 add(fmt)
 	char *fmt;
 {
-	register char *p;
+	char *p;
 	static FS **nextfs;
 	FS *tfs;
 	FU *tfu, **nextfu;
@@ -160,9 +162,9 @@ int
 size(fs)
 	FS *fs;
 {
-	register FU *fu;
-	register int bcnt, cursize;
-	register char *fmt;
+	FU *fu;
+	int bcnt, cursize;
+	char *fmt;
 	int prec;
 
 	/* figure out the data block size needed for each format unit */
@@ -215,12 +217,14 @@ rewrite(fs)
 	FS *fs;
 {
 	enum { NOTOKAY, USEBCNT, USEPREC } sokay;
-	register PR *pr, **nextpr;
-	register FU *fu;
-	register char *p1, *p2;
+	PR *pr, **nextpr;
+	FU *fu;
+	char *p1, *p2;
 	char savech, *fmtp, cs[3];
 	int nconv, prec;
 
+	nextpr = NULL;
+	prec = 0;
 	for (fu = fs->nextfu; fu; fu = fu->nextfu) {
 		/*
 		 * Break each format unit into print units; each conversion
@@ -399,7 +403,8 @@ isint2:					switch(fu->bcnt) {
 
 			/* Only one conversion character if byte count. */
 			if (!(pr->flags&F_ADDRESS) && fu->bcnt && nconv++)
-	    err("byte count with multiple conversion characters");
+				errx(1,
+			    "byte count with multiple conversion characters");
 		}
 		/*
 		 * If format unit byte count not specified, figure it out
@@ -446,9 +451,9 @@ isint2:					switch(fu->bcnt) {
 
 void
 escape(p1)
-	register char *p1;
+	char *p1;
 {
-	register char *p2;
+	char *p2;
 
 	/* alphabetic escape sequences have to be done in place */
 	for (p2 = p1;; ++p1, ++p2) {
@@ -491,25 +496,25 @@ void
 badcnt(s)
 	char *s;
 {
-	err("%s: bad byte count", s);
+	errx(1, "%s: bad byte count", s);
 }
 
 void
 badsfmt()
 {
-	err("%%s: requires a precision or a byte count\n");
+	errx(1, "%%s: requires a precision or a byte count\n");
 }
 
 void
 badfmt(fmt)
 	char *fmt;
 {
-	err("\"%s\": bad format\n", fmt);
+	errx(1, "\"%s\": bad format\n", fmt);
 }
 
 void
 badconv(ch)
 	char *ch;
 {
-	err("%%%s: bad conversion character\n", ch);
+	errx(1, "%%%s: bad conversion character\n", ch);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: hexsyntax.c,v 1.5 1997/10/18 13:54:27 mrg Exp $	*/
+/*	$NetBSD: hexsyntax.c,v 1.6 1997/10/19 02:34:07 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -33,16 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)hexsyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: hexsyntax.c,v 1.5 1997/10/18 13:54:27 mrg Exp $";
+__RCSID("$NetBSD: hexsyntax.c,v 1.6 1997/10/19 02:34:07 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -83,7 +85,7 @@ newsyntax(argc, argvp)
 			break;
 		case 'n':
 			if ((length = atoi(optarg)) < 0)
-				err("%s: bad length value", optarg);
+				errx(1, "%s: bad length value", optarg);
 			break;
 		case 'o':
 			add("\"%07.7_Ax\n\"");
@@ -91,7 +93,7 @@ newsyntax(argc, argvp)
 			break;
 		case 's':
 			if ((skip = strtol(optarg, &p, 0)) < 0)
-				err("%s: bad skip value", optarg);
+				errx(1, "%s: bad skip value", optarg);
 			switch(*p) {
 			case 'b':
 				skip *= 512;

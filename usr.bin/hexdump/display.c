@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.6 1997/10/18 13:54:07 mrg Exp $	*/
+/*	$NetBSD: display.c,v 1.7 1997/10/19 02:34:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,17 +33,20 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)display.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: display.c,v 1.6 1997/10/18 13:54:07 mrg Exp $";
+__RCSID("$NetBSD: display.c,v 1.7 1997/10/19 02:34:03 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
 
+#include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,14 +65,15 @@ static inline void print __P((PR *, u_char *));
 void
 display()
 {
-	register FS *fs;
-	register FU *fu;
-	register PR *pr;
-	register int cnt;
-	register u_char *bp;
+	FS *fs;
+	FU *fu;
+	PR *pr;
+	int cnt;
+	u_char *bp;
 	off_t saveaddress;
 	u_char savech, *savebp;
 
+	savech = 0;
 	while ((bp = get()) != NULL)
 	    for (fs = fshead, savebp = bp, saveaddress = address; fs;
 		fs = fs->nextfs, bp = savebp, address = saveaddress)
@@ -143,11 +147,11 @@ print(pr, bp)
 	case F_DBL:
 		switch(pr->bcnt) {
 		case 4:
-			bcopy(bp, &f4, sizeof(f4));
+			memmove(&f4, bp, sizeof(f4));
 			(void)printf(pr->fmt, f4);
 			break;
 		case 8:
-			bcopy(bp, &f8, sizeof(f8));
+			memmove(&f8, bp, sizeof(f8));
 			(void)printf(pr->fmt, f8);
 			break;
 		}
@@ -158,15 +162,15 @@ print(pr, bp)
 			(void)printf(pr->fmt, (quad_t)*bp);
 			break;
 		case 2:
-			bcopy(bp, &s2, sizeof(s2));
+			memmove(&s2, bp, sizeof(s2));
 			(void)printf(pr->fmt, (quad_t)s2);
 			break;
 		case 4:
-			bcopy(bp, &s4, sizeof(s4));
+			memmove(&s4, bp, sizeof(s4));
 			(void)printf(pr->fmt, (quad_t)s4);
 			break;
 		case 8:
-			bcopy(bp, &s8, sizeof(s8));
+			memmove(&s8, bp, sizeof(s8));
 			(void)printf(pr->fmt, s8);
 			break;
 		}
@@ -189,15 +193,15 @@ print(pr, bp)
 			(void)printf(pr->fmt, (u_quad_t)*bp);
 			break;
 		case 2:
-			bcopy(bp, &u2, sizeof(u2));
+			memmove(&u2, bp, sizeof(u2));
 			(void)printf(pr->fmt, (u_quad_t)u2);
 			break;
 		case 4:
-			bcopy(bp, &u4, sizeof(u4));
+			memmove(&u4, bp, sizeof(u4));
 			(void)printf(pr->fmt, (u_quad_t)u4);
 			break;
 		case 8:
-			bcopy(bp, &u8, sizeof(u8));
+			memmove(&u8, bp, sizeof(u8));
 			(void)printf(pr->fmt, u8);
 			break;
 		}
@@ -210,7 +214,7 @@ bpad(pr)
 	PR *pr;
 {
 	static const char *spec = " -0+#";
-	register char *p1, *p2;
+	char *p1, *p2;
 
 	/*
 	 * Remove all conversion flags; '-' is the only one valid
@@ -231,7 +235,7 @@ get()
 {
 	static int ateof = 1;
 	static u_char *curp, *savp;
-	register int n;
+	int n;
 	int need, nread;
 	u_char *tmpp;
 
@@ -253,12 +257,12 @@ get()
 		if (!length || (ateof && !next(NULL))) {
 			if (need == blocksize)
 				return(NULL);
-			if (vflag != ALL && !bcmp(curp, savp, nread)) {
+			if (vflag != ALL && !memcmp(curp, savp, nread)) {
 				if (vflag != DUP)
 					(void)printf("*\n");
 				return(NULL);
 			}
-			bzero((char *)curp + nread, need);
+			memset((char *)curp + nread, 0, need);
 			eaddress = address + nread;
 			return(curp);
 		}
@@ -266,8 +270,7 @@ get()
 		    length == -1 ? need : MIN(length, need), stdin);
 		if (!n) {
 			if (ferror(stdin))
-				(void)fprintf(stderr, "hexdump: %s: %s\n",
-				    _argv[-1], strerror(errno));
+				warn("%s", _argv[-1]);
 			ateof = 1;
 			continue;
 		}
@@ -276,7 +279,7 @@ get()
 			length -= n;
 		if (!(need -= n)) {
 			if (vflag == ALL || vflag == FIRST ||
-			    bcmp(curp, savp, blocksize)) {
+			    memcmp(curp, savp, blocksize)) {
 				if (vflag == DUP || vflag == FIRST)
 					vflag = WAIT;
 				return(curp);
@@ -307,8 +310,7 @@ next(argv)
 	for (;;) {
 		if (*_argv) {
 			if (!(freopen(*_argv, "r", stdin))) {
-				(void)fprintf(stderr, "hexdump: %s: %s\n",
-				    *_argv, strerror(errno));
+				warn("%s", *_argv);
 				exitval = 1;
 				++_argv;
 				continue;
@@ -334,12 +336,12 @@ doskip(fname, statok)
 	char *fname;
 	int statok;
 {
-	register int cnt;
+	int cnt;
 	struct stat sb;
 
 	if (statok) {
 		if (fstat(fileno(stdin), &sb))
-			err("%s: %s", fname, strerror(errno));
+			err(1, "fstat %s", fname);
 		if (S_ISREG(sb.st_mode) && skip >= sb.st_size) {
 			address += sb.st_size;
 			skip -= sb.st_size;
@@ -348,7 +350,7 @@ doskip(fname, statok)
 	}
 	if (S_ISREG(sb.st_mode)) {
 		if (fseek(stdin, skip, SEEK_SET))
-			err("%s: %s", fname, strerror(errno));
+			err(1, "fseek %s", fname);
 		address += skip;
 		skip = 0;
 	} else {
@@ -368,12 +370,12 @@ emalloc(size)
 
 	if ((p = malloc((u_int)size)) == NULL)
 		nomem();
-	bzero(p, size);
+	memset(p, 0, size);
 	return(p);
 }
 
 void
 nomem()
 {
-	err("%s", strerror(errno));
+	err(1, "%s", "");
 }
