@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.9 1998/12/19 22:41:21 christos Exp $	*/
+/*	$NetBSD: tftp.c,v 1.9.2.1 2000/01/23 12:10:09 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftp.c,v 1.9 1998/12/19 22:41:21 christos Exp $");
+__RCSID("$NetBSD: tftp.c,v 1.9.2.1 2000/01/23 12:10:09 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,8 +65,6 @@ __RCSID("$NetBSD: tftp.c,v 1.9 1998/12/19 22:41:21 christos Exp $");
 
 #include "extern.h"
 #include "tftpsubs.h"
-
-extern	int errno;
 
 extern  struct sockaddr_in peeraddr;	/* filled in by main */
 extern  int     f;			/* the opened socket */
