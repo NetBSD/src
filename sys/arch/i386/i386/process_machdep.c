@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.36 2001/08/02 22:04:28 thorpej Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.37 2001/08/03 01:21:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -215,22 +215,24 @@ process_read_fpregs(p, regs)
 			npxsave();
 #endif
 	} else {
-		u_short cw;
-
 		/*
 		 * Fake a FNINIT.
 		 * The initial control word was already set by setregs(), so
 		 * save it temporarily.
 		 */
 		if (i386_use_fxsave) {
-			cw = frame->sv_xmm.sv_env.en_cw;
+			uint32_t mxcsr = frame->sv_xmm.sv_env.en_mxcsr;
+			uint16_t cw = frame->sv_xmm.sv_env.en_cw;
+
 			/* XXX Don't zero XMM regs? */
 			memset(&frame->sv_xmm, 0, sizeof(frame->sv_xmm));
 			frame->sv_xmm.sv_env.en_cw = cw;
+			frame->sv_xmm.sv_env.en_mxcsr = mxcsr;
 			frame->sv_xmm.sv_env.en_sw = 0x0000;
 			frame->sv_xmm.sv_env.en_tw = 0x00;
 		} else {
-			cw = frame->sv_87.sv_env.en_cw;
+			uint16_t cw = frame->sv_87.sv_env.en_cw;
+
 			memset(&frame->sv_87, 0, sizeof(frame->sv_87));
 			frame->sv_87.sv_env.en_cw = cw;
 			frame->sv_87.sv_env.en_sw = 0x0000;
