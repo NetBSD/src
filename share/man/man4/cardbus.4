@@ -1,4 +1,4 @@
-.\"	$NetBSD: cardbus.4,v 1.6 2000/07/31 11:45:48 ad Exp $
+.\"	$NetBSD: cardbus.4,v 1.7 2000/10/12 12:48:00 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@ drivers for Cardbus devices.
 The flags are used with cardslot definition.  The lowest order bit
 (rightmost bit) of the flags define the pccard attach sequence at the
 boot time.  When the bit is set, a pccard on the slot is probed and
-attached immidiately.  On the other hand, the pccard is probed after
+attached immediately.  On the other hand, the pccard is probed after
 kernel thread wakes up.  If a pccard is used as a boot device (ex. CF
 card or network card), you should set the bit 1.
 .Sh SUPPORTED DEVICES
