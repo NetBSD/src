@@ -1,4 +1,4 @@
-/*	$NetBSD: netif.c,v 1.2 1994/10/26 05:44:53 cgd Exp $	*/
+/*	$NetBSD: netif.c,v 1.3 1995/02/20 00:19:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -46,6 +46,9 @@
 #include "netif.h"
 
 struct iodesc sockets[SOPEN_MAX];
+#ifdef NETIF_DEBUG
+int netif_debug = 0;
+#endif
 
 /*
  * netif_init:
