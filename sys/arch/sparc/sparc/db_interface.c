@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.41 2001/05/26 18:16:01 chs Exp $ */
+/*	$NetBSD: db_interface.c,v 1.42 2001/06/08 09:49:28 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -119,46 +119,74 @@ cpu_Debugger()
 
 static int nil;
 
+/*
+ * Machine register set.
+ */
+#define dbreg(xx) (long *)offsetof(db_regs_t, db_tf.tf_ ## xx)
+#define dbregfr(xx) (long *)offsetof(db_regs_t, db_fr.fr_ ## xx)
+
+static int db_sparc_regop (const struct db_variable *, db_expr_t *, int);
+
 const struct db_variable db_regs[] = {
-	{ "psr", (long *)&DDB_TF->tf_psr, FCN_NULL, },
-	{ "pc", (long *)&DDB_TF->tf_pc, FCN_NULL, },
-	{ "npc", (long *)&DDB_TF->tf_npc, FCN_NULL, },
-	{ "y", (long *)&DDB_TF->tf_y, FCN_NULL, },
-	{ "wim", (long *)&DDB_TF->tf_global[0], FCN_NULL, }, /* see reg.h */
-	{ "g0", (long *)&nil, FCN_NULL, },
-	{ "g1", (long *)&DDB_TF->tf_global[1], FCN_NULL, },
-	{ "g2", (long *)&DDB_TF->tf_global[2], FCN_NULL, },
-	{ "g3", (long *)&DDB_TF->tf_global[3], FCN_NULL, },
-	{ "g4", (long *)&DDB_TF->tf_global[4], FCN_NULL, },
-	{ "g5", (long *)&DDB_TF->tf_global[5], FCN_NULL, },
-	{ "g6", (long *)&DDB_TF->tf_global[6], FCN_NULL, },
-	{ "g7", (long *)&DDB_TF->tf_global[7], FCN_NULL, },
-	{ "o0", (long *)&DDB_TF->tf_out[0], FCN_NULL, },
-	{ "o1", (long *)&DDB_TF->tf_out[1], FCN_NULL, },
-	{ "o2", (long *)&DDB_TF->tf_out[2], FCN_NULL, },
-	{ "o3", (long *)&DDB_TF->tf_out[3], FCN_NULL, },
-	{ "o4", (long *)&DDB_TF->tf_out[4], FCN_NULL, },
-	{ "o5", (long *)&DDB_TF->tf_out[5], FCN_NULL, },
-	{ "o6", (long *)&DDB_TF->tf_out[6], FCN_NULL, },
-	{ "o7", (long *)&DDB_TF->tf_out[7], FCN_NULL, },
-	{ "l0", (long *)&DDB_FR->fr_local[0], FCN_NULL, },
-	{ "l1", (long *)&DDB_FR->fr_local[1], FCN_NULL, },
-	{ "l2", (long *)&DDB_FR->fr_local[2], FCN_NULL, },
-	{ "l3", (long *)&DDB_FR->fr_local[3], FCN_NULL, },
-	{ "l4", (long *)&DDB_FR->fr_local[4], FCN_NULL, },
-	{ "l5", (long *)&DDB_FR->fr_local[5], FCN_NULL, },
-	{ "l6", (long *)&DDB_FR->fr_local[6], FCN_NULL, },
-	{ "l7", (long *)&DDB_FR->fr_local[7], FCN_NULL, },
-	{ "i0", (long *)&DDB_FR->fr_arg[0], FCN_NULL, },
-	{ "i1", (long *)&DDB_FR->fr_arg[1], FCN_NULL, },
-	{ "i2", (long *)&DDB_FR->fr_arg[2], FCN_NULL, },
-	{ "i3", (long *)&DDB_FR->fr_arg[3], FCN_NULL, },
-	{ "i4", (long *)&DDB_FR->fr_arg[4], FCN_NULL, },
-	{ "i5", (long *)&DDB_FR->fr_arg[5], FCN_NULL, },
-	{ "i6", (long *)&DDB_FR->fr_arg[6], FCN_NULL, },
-	{ "i7", (long *)&DDB_FR->fr_arg[7], FCN_NULL, },
+	{ "psr",	dbreg(psr),		db_sparc_regop, },
+	{ "pc",		dbreg(pc),		db_sparc_regop, },
+	{ "npc",	dbreg(npc),		db_sparc_regop, },
+	{ "y",		dbreg(y),		db_sparc_regop, },
+	{ "wim",	dbreg(global[0]),	db_sparc_regop, }, /* see reg.h */
+	{ "g0",		(long *)&nil,		FCN_NULL, },
+	{ "g1",		dbreg(global[1]),	db_sparc_regop, },
+	{ "g2",		dbreg(global[2]),	db_sparc_regop, },
+	{ "g3",		dbreg(global[3]),	db_sparc_regop, },
+	{ "g4",		dbreg(global[4]),	db_sparc_regop, },
+	{ "g5",		dbreg(global[5]),	db_sparc_regop, },
+	{ "g6",		dbreg(global[6]),	db_sparc_regop, },
+	{ "g7",		dbreg(global[7]),	db_sparc_regop, },
+	{ "o0",		dbreg(out[0]),		db_sparc_regop, },
+	{ "o1",		dbreg(out[1]),		db_sparc_regop, },
+	{ "o2",		dbreg(out[2]),		db_sparc_regop, },
+	{ "o3",		dbreg(out[3]),		db_sparc_regop, },
+	{ "o4",		dbreg(out[4]),		db_sparc_regop, },
+	{ "o5",		dbreg(out[5]),		db_sparc_regop, },
+	{ "o6",		dbreg(out[6]),		db_sparc_regop, },
+	{ "o7",		dbreg(out[7]),		db_sparc_regop, },
+	{ "l0",		dbregfr(local[0]),	db_sparc_regop, },
+	{ "l1",		dbregfr(local[1]),	db_sparc_regop, },
+	{ "l2",		dbregfr(local[2]),	db_sparc_regop, },
+	{ "l3",		dbregfr(local[3]),	db_sparc_regop, },
+	{ "l4",		dbregfr(local[4]),	db_sparc_regop, },
+	{ "l5",		dbregfr(local[5]),	db_sparc_regop, },
+	{ "l6",		dbregfr(local[6]),	db_sparc_regop, },
+	{ "l7",		dbregfr(local[7]),	db_sparc_regop, },
+	{ "i0",		dbregfr(arg[0]),	db_sparc_regop, },
+	{ "i1",		dbregfr(arg[1]),	db_sparc_regop, },
+	{ "i2",		dbregfr(arg[2]),	db_sparc_regop, },
+	{ "i3",		dbregfr(arg[3]),	db_sparc_regop, },
+	{ "i4",		dbregfr(arg[4]),	db_sparc_regop, },
+	{ "i5",		dbregfr(arg[5]),	db_sparc_regop, },
+	{ "i6",		dbregfr(arg[6]),	db_sparc_regop, },
+	{ "i7",		dbregfr(arg[7]),	db_sparc_regop, },
 };
-const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+const struct db_variable * const db_eregs =
+    db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+
+static int
+db_sparc_regop (const struct db_variable *vp, db_expr_t *val, int opcode)
+{
+	db_expr_t *regaddr =
+	    (db_expr_t *)(((uint8_t *)DDB_REGS) + ((size_t)vp->valuep));
+	
+	switch (opcode) {
+	case DB_VAR_GET:
+		*val = *regaddr;
+		break;
+	case DB_VAR_SET:
+		*regaddr = *val;
+		break;
+	default:
+		panic("db_sparc_regop: unknown op %d", opcode);
+	}
+	return 0;
+}
 
 extern label_t	*db_recover;
 
@@ -189,6 +217,65 @@ kdb_kbd_trap(tf)
 	}
 }
 
+#ifdef MULTIPROCESSOR
+
+#define NOCPU -1
+
+static int db_suspend_others(void);
+static void db_resume_others(void);
+static void ddb_suspend(struct trapframe *tf);
+
+__cpu_simple_lock_t db_lock;
+db_regs_t *ddb_regp = 0;
+int ddb_cpu = NOCPU;
+
+static int
+db_suspend_others(void)
+{
+	int cpu_me = cpu_number();
+	int win;
+
+	if (cpus == NULL)
+		return 1;
+
+	__cpu_simple_lock(&db_lock);
+	if (ddb_cpu == NOCPU)
+		ddb_cpu = cpu_me;
+	win = (ddb_cpu == cpu_me);
+	__cpu_simple_unlock(&db_lock);
+
+	if (win)
+		mp_pause_cpus();
+
+	return win;
+}
+
+static void
+db_resume_others(void)
+{
+
+	mp_resume_cpus();
+
+	__cpu_simple_lock(&db_lock);
+	ddb_cpu = NOCPU;
+	__cpu_simple_unlock(&db_lock);
+}
+
+static void
+ddb_suspend(struct trapframe *tf)
+{
+	db_regs_t regs;
+
+	regs.db_tf = *tf;
+	regs.db_fr = *(struct frame *)tf->tf_out[6];
+
+	cpuinfo.ci_ddb_regs = &regs;
+	while (cpuinfo.flags & CPUFLG_PAUSED)
+		cpuinfo.cache_flush((caddr_t)&cpuinfo.flags, sizeof(cpuinfo.flags));
+	cpuinfo.ci_ddb_regs = 0;
+}
+#endif
+
 /*
  *  kdb_trap - field a TRACE or BPT trap
  */
@@ -197,14 +284,14 @@ kdb_trap(type, tf)
 	int	type;
 	struct trapframe *tf;
 {
+#ifdef MULTIPROCESSOR
+	db_regs_t dbreg;
+#endif
 	int s;
 
 #if NFB > 0
 	fb_unblank();
 #endif
-
-	/* While we're in the debugger, pause all other CPUs */
-	mp_pause_cpus();
 
 	switch (type) {
 	case T_BREAKPOINT:	/* breakpoint */
@@ -217,6 +304,13 @@ kdb_trap(type, tf)
 			/*NOTREACHED*/
 		}
 	}
+
+#ifdef MULTIPROCESSOR
+	if (!db_suspend_others()) {
+		ddb_suspend(tf);
+	} else {
+		curcpu()->ci_ddb_regs = ddb_regp = &dbreg;
+#endif
 
 	/* Should switch to kdb`s own stack here. */
 
@@ -234,8 +328,11 @@ kdb_trap(type, tf)
 	*(struct frame *)tf->tf_out[6] = ddb_regs.db_fr;
 	*tf = ddb_regs.db_tf;
 
-	/* Other CPUs can continue now */
-	mp_resume_cpus();
+#ifdef MULTIPROCESSOR
+		db_resume_others();
+		curcpu()->ci_ddb_regs = ddb_regp = 0;
+	}
+#endif
 
 	return (1);
 }
@@ -327,6 +424,7 @@ db_prom_cmd(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
+
 	prom_abort();
 }
 
@@ -418,10 +516,8 @@ const struct db_command db_machine_command_table[] = {
 	{ "slock",	db_simple_lock_cmd,	0,	0 },
 	{ "page",	db_page_cmd,	0,	0 },
 	{ "uvmdump",	db_uvmhistdump,	0,	0 },
-#if 0
 #ifdef MULTIPROCESSOR
 	{ "cpu",	db_cpu_cmd,	0,	0 },
-#endif
 #endif
 	{ (char *)0, }
 };
@@ -660,7 +756,6 @@ db_inst_store(inst)
     }
 }
 
-#if 0
 #ifdef MULTIPROCESSOR
 extern void cpu_debug_dump(void); /* XXX */
 
@@ -686,14 +781,12 @@ db_cpu_cmd(addr, have_addr, count, modif)
 		db_printf("cpu %ld not configured\n", addr);
 		return;
 	}
-#if 0
 	if (ci != curcpu()) {
-		if (!(ci->ci_flags & CPUF_PAUSE)) {
+		if (!(ci->flags & CPUFLG_PAUSED)) {
 			db_printf("cpu %ld not paused\n", addr);
 			return;
 		}
 	}
-#endif
 	if (ci->ci_ddb_regs == 0) {
 		db_printf("cpu %ld has no saved regs\n", addr);
 		return;
@@ -701,5 +794,4 @@ db_cpu_cmd(addr, have_addr, count, modif)
 	db_printf("using cpu %ld", addr);
 	ddb_regp = ci->ci_ddb_regs;
 }
-#endif
 #endif
