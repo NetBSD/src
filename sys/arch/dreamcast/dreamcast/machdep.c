@@ -1,7 +1,7 @@
-/*	$NetBSD: machdep.c,v 1.15 2002/03/10 07:46:12 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 2002/03/11 15:58:20 uch Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -77,7 +77,6 @@
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_syscall_debug.h"
 #include "opt_memsize.h"
 #include "scif.h"
 
@@ -89,8 +88,6 @@
 #include <sys/reboot.h>
 #include <sys/sysctl.h>
 #include <sys/msgbuf.h>
-
-#include <uvm/uvm_extern.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -117,85 +114,6 @@ extern char start[], etext[], edata[], end[];
 
 void main(void) __attribute__((__noreturn__));
 void dreamcast_startup(void) __attribute__((__noreturn__));
-
-/*
- * Machine-dependent startup code
- *
- * This is called from main() in kern/main.c.
- */
-void
-cpu_startup()
-{
-
-	sh3_startup();
-	printf("%s\n", cpu_model);
-}
-
-/*
- * machine dependent system variables.
- */
-int
-cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct proc *p)
-{
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
-
-	switch (name[0]) {
-	case CPU_CONSDEV:
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &cn_tab->cn_dev,
-		    sizeof cn_tab->cn_dev));
-	default:
-	}
-
-	return (EOPNOTSUPP);
-}
-
-void
-cpu_reboot(int howto, char *bootstr)
-{
-	static int waittime = -1;
-
-	if (cold) {
-		howto |= RB_HALT;
-		goto haltsys;
-	}
-
-	boothowto = howto;
-	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
-		waittime = 0;
-		vfs_shutdown();
-		/*
-		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now.
-		 */
-		/* resettodr(); */
-	}
-
-	/* Disable interrupts. */
-	splhigh();
-
-	/* Do a dump if requested. */
-	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
-		dumpsys();
-
-haltsys:
-	doshutdownhooks();
-
-	if (howto & RB_HALT) {
-		printf("\n");
-		printf("The operating system has halted.\n");
-		printf("Please press any key to reboot.\n\n");
-		cngetc();
-	}
-
-	printf("rebooting...\n");
-	cpu_reset();
-	for(;;)
-		;
-	/*NOTREACHED*/
-}
 
 void
 dreamcast_startup()
@@ -259,3 +177,75 @@ consinit()
 
 	cninit();
 }
+
+void
+cpu_startup()
+{
+
+	sh3_startup();
+	printf("%s\n", cpu_model);
+}
+
+int
+cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen, struct proc *p)
+{
+	/* all sysctl names at this level are terminal */
+	if (namelen != 1)
+		return (ENOTDIR);		/* overloaded */
+
+	switch (name[0]) {
+	case CPU_CONSDEV:
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &cn_tab->cn_dev,
+		    sizeof cn_tab->cn_dev));
+	default:
+	}
+
+	return (EOPNOTSUPP);
+}
+
+void
+cpu_reboot(int howto, char *bootstr)
+{
+	static int waittime = -1;
+
+	if (cold) {
+		howto |= RB_HALT;
+		goto haltsys;
+	}
+
+	boothowto = howto;
+	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
+		waittime = 0;
+		vfs_shutdown();
+		/*
+		 * If we've been adjusting the clock, the todr
+		 * will be out of synch; adjust it now.
+		 */
+		/* resettodr(); */
+	}
+
+	/* Disable interrupts. */
+	splhigh();
+
+	/* Do a dump if requested. */
+	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
+		dumpsys();
+
+haltsys:
+	doshutdownhooks();
+
+	if (howto & RB_HALT) {
+		printf("\n");
+		printf("The operating system has halted.\n");
+		printf("Please press any key to reboot.\n\n");
+		cngetc();
+	}
+
+	printf("rebooting...\n");
+	cpu_reset();
+	for(;;)
+		;
+	/*NOTREACHED*/
+}
+
