@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.40 2004/06/21 22:13:32 jmc Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.41 2004/06/21 23:14:42 christos Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -130,6 +130,7 @@ typedef unsigned long id_t;
 typedef int socklen_t;
 #endif
 
+#if !_NETBSD_SOURCE
 #if !HAVE_U_LONG
 typedef unsigned long u_long;
 #endif
@@ -144,6 +145,7 @@ typedef unsigned int u_int;
 
 #if !HAVE_U_SHORT
 typedef unsigned short u_short;
+#endif
 #endif
 
 /* Prototypes for replacement functions. */
@@ -174,6 +176,7 @@ extern int optind, opterr, optopt;
 char *dirname(char *);
 #endif
 
+#ifndef dirfd
 #if !HAVE_DIRFD
 #if HAVE_DIR_DD_FD
 #define dirfd(dirp) ((dirp)->dd_fd)
@@ -195,6 +198,7 @@ struct _dirdesc {
 #define dirfd(dirp)     (((struct _dirdesc *)dirp)->dd_fd)
 #else
 #error cannot figure out how to turn a DIR * into a fd
+#endif
 #endif
 #endif
 #endif
