@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.23 2002/09/12 22:56:30 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.24 2002/09/13 03:09:38 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -295,30 +295,5 @@ _rtld_relocate_plt_lazy(obj)
 		rdbg(("fixup !main in %s --> %p", obj->path, (void *)*where));
 	}
 
-	return 0;
-}
-
-int
-_rtld_relocate_plt_object(obj, rela, addrp)
-	const Obj_Entry *obj;
-	const Elf_Rela *rela;
-	caddr_t *addrp;
-{
-	Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
-	Elf_Addr new_value;
-
-	/* Fully resolve procedure addresses now */
-
-	if (obj->isdynamic) {
-		/* Just relocate the GOT slots pointing into the PLT */
-		new_value = *where + (Elf_Addr)(obj->relocbase);
-		rdbg(("fixup !main in %s --> %p", obj->path, (void *)*where));
-	} else {
-		return 0;
-	}
-	if (*where != new_value)
-		*where = new_value;
-
-	*addrp = (caddr_t)new_value;
 	return 0;
 }
