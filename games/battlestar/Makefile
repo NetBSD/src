@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1997/11/20 00:12:32 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 1998/02/05 12:15:51 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	battlestar
@@ -7,7 +7,7 @@ SRCS=	battlestar.c com1.c com2.c com3.c com4.c com5.c com6.c com7.c \
 	globals.c dayfile.c nightfile.c dayobjs.c nightobjs.c words.c
 MAN=	battlestar.6
 DPADD=	${LIBCURSES} ${LIBTERMCAP}
-LDADD=	-lcurses -ltermlib
+LDADD=	-lcurses -ltermcap
 HIDEGAME=hidegame
 SETGIDGAME=yes
 
