@@ -1,4 +1,4 @@
-/*	$NetBSD: ops_nfs.c,v 1.7 1999/02/01 19:05:10 christos Exp $	*/
+/*	$NetBSD: ops_nfs.c,v 1.7.2.1 1999/09/21 04:55:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Erez Zadok
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: ops_nfs.c,v 1.3 1999/01/13 23:31:01 ezk Exp 
+ * Id: ops_nfs.c,v 1.5 1999/03/13 17:03:28 ezk Exp 
  *
  */
 
@@ -587,10 +587,13 @@ mount_nfs_fh(am_nfs_handle_t *fhp, char *dir, char *fs_name, char *opts, mntfs *
     strcpy(host + MAXHOSTNAMELEN - 3, "..");
 #endif /* MAXHOSTNAMELEN */
 
-  if (mf->mf_remopts && *mf->mf_remopts && !islocalnet(fs->fs_ip->sin_addr.s_addr))
+  if (mf->mf_remopts && *mf->mf_remopts &&
+      !islocalnet(fs->fs_ip->sin_addr.s_addr)) {
+    plog(XLOG_INFO, "Using remopts=\"%s\"", mf->mf_remopts);
     xopts = strdup(mf->mf_remopts);
-  else
+  } else {
     xopts = strdup(opts);
+  }
 
   memset((voidp) &mnt, 0, sizeof(mnt));
   mnt.mnt_dir = dir;
@@ -661,8 +664,10 @@ mount_nfs_fh(am_nfs_handle_t *fhp, char *dir, char *fs_name, char *opts, mntfs *
 
   /* finally call the mounting function */
 #ifdef DEBUG
-  amuDebug(D_TRACE)
+  amuDebug(D_TRACE) {
     print_nfs_args(&nfs_args, nfs_version);
+    plog(XLOG_DEBUG, "Generic mount flags 0x%x", genflags);
+  }
 #endif /* DEBUG */
   error = mount_fs(&mnt, genflags, (caddr_t) &nfs_args, retry, type,
 		   nfs_version, nfs_proto, mnttab_file_name);
