@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.14 1998/07/12 05:59:01 mrg Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.15 1998/07/19 17:47:08 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.14 1998/07/12 05:59:01 mrg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.15 1998/07/19 17:47:08 drochner Exp $");
 #endif /* not lint */
 
 /*
@@ -202,6 +202,7 @@ initkre()
 	char *intrnamebuf, *cp;
 	int i;
 	static int once = 0;
+	extern gid_t egid;
 
 	if (namelist[0].n_type == 0) {
 		if (kvm_nlist(kd, namelist)) {
@@ -214,7 +215,7 @@ initkre()
 		}
 	}
 	hertz = stathz ? stathz : hz;
-	if (! dkinit(1))
+	if (! dkinit(1, egid))
 		return(0);
 	if (dk_ndrive && !once) {
 #define	allocate(e, t) \
