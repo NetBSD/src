@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.18.6.2 2001/11/21 20:25:03 scw Exp $	*/
+/*	$NetBSD: frame.h,v 1.18.6.3 2001/12/02 10:38:25 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -343,23 +343,10 @@ struct fpframe060 {
 void reenter_syscall __P((struct frame *, int)) __attribute__((__noreturn__));
 
 /*
- * Test for a null floating point frame given a pointer to the start
- * of an fsave'd frame.
+ * Create an FPU "idle" frame for use by cpu_setmcontext()
  */
-#if defined(M68020) || defined(M68030) || defined(M68040)
-#if defined(M68060)
-#define	FPFRAME_IS_NULL(fp)						    \
-	    ((fputype == FPU_68060 &&					    \
-	      ((struct fpframe060 *)(fp))->fpf6_frmfmt == FPF6_FMT_NULL) || \
-	     (fputype != FPU_68060  &&					    \
-	      ((struct FPF_nonnull *)(fp))->FPF_version == 0))
-#endif
-#define FPFRAME_IS_NULL(fp) \
-	    (((struct FPF_nonnull *)(fp))->FPF_version == 0)
-#else
-#define FPFRAME_IS_NULL(fp) \
-	    (((struct fpframe060 *)(fp))->fpf6_frmfmt == FPF6_FMT_NULL)
-#endif
+extern void m68k_make_fpu_idle_frame(void);
+extern struct fpframe m68k_cached_fpu_idle_frame;
 #endif	/* _KERNEL */
 
 #endif	/* _M68K_FRAME_H_ */
