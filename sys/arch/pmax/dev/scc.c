@@ -97,7 +97,6 @@
 
 extern int pmax_boardtype;
 extern struct consdev cn_tab;
-extern void ttrstrt	__P((void *));
 extern void KBDReset	__P((dev_t, void (*)()));
 extern void MouseInit	__P((dev_t, void (*)(), int (*)()));
 
@@ -420,19 +419,18 @@ sccwrite(dev, uio, flag)
 }
 
 /*ARGSUSED*/
-sccioctl(dev, cmd, data, flag, p)
+sccioctl(dev, cmd, data, flag)
 	dev_t dev;
 	int cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
 {
 	register struct scc_softc *sc;
 	register struct tty *tp;
 	int error, line;
 
 	tp = &scc_tty[minor(dev)];
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag);
 	if (error >= 0)
 		return (error);
 	error = ttioctl(tp, cmd, data, flag);
@@ -646,7 +644,8 @@ sccintr(unit)
 			if (tp->t_state & TS_FLUSH)
 				tp->t_state &= ~TS_FLUSH;
 			else {
-				ndflush(&tp->t_outq, dp->p_mem-tp->t_outq.c_cf);
+				ndflush(&tp->t_outq,
+				    (u_char *)(dp->p_mem) - tp->t_outq.c_cf);
 				dp->p_end = dp->p_mem = tp->t_outq.c_cf;
 			}
 			if (tp->t_line)
