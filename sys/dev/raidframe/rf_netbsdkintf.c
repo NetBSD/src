@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.22 1999/08/10 18:18:30 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.23 1999/08/10 21:41:37 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -732,6 +732,7 @@ raidioctl(dev, cmd, data, flag, p)
 	case RAIDFRAME_REMOVE_HOT_SPARE:
 	case RAIDFRAME_INIT_LABELS:
 	case RAIDFRAME_REBUILD_IN_PLACE:
+	case RAIDFRAME_CHECK_PARITY:
 		if ((rs->sc_flags & RAIDF_INITED) == 0)
 			return (ENXIO);
 	}
