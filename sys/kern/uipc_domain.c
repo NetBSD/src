@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_domain.c	7.9 (Berkeley) 3/4/91
- *	$Id: uipc_domain.c,v 1.9 1994/05/05 09:27:37 mycroft Exp $
+ *	$Id: uipc_domain.c,v 1.10 1994/05/07 00:46:28 cgd Exp $
  */
 
 #include <sys/cdefs.h>
@@ -43,6 +43,9 @@
 #include <sys/mbuf.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/proc.h>
+#include <vm/vm.h>
+#include <sys/sysctl.h>
 
 #define	ADDDOMAIN(x)	{ \
 	extern struct domain __CONCAT(x,domain); \
@@ -141,6 +144,29 @@ found:
 			maybe = pr;
 	}
 	return (maybe);
+}
+
+net_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	register struct domain *dp;
+	register struct protosw *pr;
+	int family, protocol;
+
+	/*
+	 * All sysctl names at this level are nonterminal;
+	 * next two components are protocol family and protocol number,
+	 * then at least one addition component.
+	 */
+	if (namelen < 3)
+		return (EISDIR);		/* overloaded */
+	return (ENOPROTOOPT);
 }
 
 void
