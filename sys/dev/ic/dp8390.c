@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.41 2000/12/14 06:27:24 thorpej Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.42 2001/02/12 18:49:03 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -80,21 +80,29 @@ static __inline__ int	dp8390_write_mbuf __P((struct dp8390_softc *,
 
 static int		dp8390_test_mem __P((struct dp8390_softc *));
 
-int	dp8390_mediachange __P((struct ifnet *));
-void	dp8390_mediastatus __P((struct ifnet *, struct ifmediareq *));
-
 int	dp8390_debug = 0;
+
+/*
+ * Standard media init routine for the dp8390.
+ */
+void
+dp8390_media_init(struct dp8390_softc *sc)
+{
+
+	ifmedia_init(&sc->sc_media, 0, dp8390_mediachange, dp8390_mediastatus);
+	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
+	ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
+}
 
 /*
  * Do bus-independent setup.
  */
 int
-dp8390_config(sc, media, nmedia, defmedia)
+dp8390_config(sc)
 	struct dp8390_softc *sc;
-	int *media, nmedia, defmedia;
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
-	int i, rv;
+	int rv;
 
 	rv = 1;
 
@@ -135,15 +143,8 @@ dp8390_config(sc, media, nmedia, defmedia)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Initialize media goo. */
-	ifmedia_init(&sc->sc_media, 0, dp8390_mediachange, dp8390_mediastatus);
-	if (media != NULL) {
-		for (i = 0; i < nmedia; i++)
-			ifmedia_add(&sc->sc_media, media[i], 0, NULL);
-		ifmedia_set(&sc->sc_media, defmedia);
-	} else {
-		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
-		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
-	}
+	(*sc->sc_media_init)(sc);
+
 
 	/*
 	 * We can support 802.1Q VLAN-sized frames.
@@ -1327,7 +1328,10 @@ dp8390_detach(sc, flags)
 	/* dp8390_disable() checks sc->sc_enabled */
 	dp8390_disable(sc);
 
-	/* Delete all media. */
+	if (sc->sc_media_fini != NULL)
+		(*sc->sc_media_fini)(sc);
+
+	/* Delete all remaining media. */
 	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 
 #if NRND > 0
