@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.50 2002/01/07 17:34:09 bouyer Exp $	*/
+/*	$NetBSD: main.c,v 1.51 2002/11/16 14:15:35 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.50 2002/01/07 17:34:09 bouyer Exp $");
+__RCSID("$NetBSD: main.c,v 1.51 2002/11/16 14:15:35 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -202,12 +202,11 @@ main(int argc, char *argv[])
 			 * the last must be '\0', so the limit on strlen()
 			 * is really LBLSIZE-1.
 			 */
-			strncpy(labelstr, optarg, LBLSIZE);
-			labelstr[LBLSIZE-1] = '\0';
-			if (strlen(optarg) > LBLSIZE-1) {
+			if (strlcpy(labelstr, optarg, sizeof(labelstr))
+			    >= sizeof(labelstr)) {
 				msg(
 		"WARNING Label `%s' is larger than limit of %d characters.\n",
-				    optarg, LBLSIZE-1);
+				    optarg, sizeof(labelstr) - 1);
 				msg("WARNING: Using truncated label `%s'.\n",
 				    labelstr);
 			}
@@ -402,19 +401,21 @@ main(int argc, char *argv[])
 	}
 	if (mountpoint != NULL) {
 		if (dirc != 0)
-			(void)snprintf(spcl.c_filesys, NAMELEN,
+			(void)snprintf(spcl.c_filesys, sizeof(spcl.c_filesys),
 			    "a subset of %s", mountpoint);
 		else
-			(void)strncpy(spcl.c_filesys, mountpoint, NAMELEN);
+			(void)strlcpy(spcl.c_filesys, mountpoint,
+			    sizeof(spcl.c_filesys));
 	} else if (Fflag) {
-		(void)strncpy(spcl.c_filesys, "a file system image", NAMELEN);
+		(void)strlcpy(spcl.c_filesys, "a file system image",
+		    sizeof(spcl.c_filesys));
 	} else {
-		(void)strncpy(spcl.c_filesys, "an unlisted file system",
-		    NAMELEN);
+		(void)strlcpy(spcl.c_filesys, "an unlisted file system",
+		    sizeof(spcl.c_filesys));
 	}
-	(void)strncpy(spcl.c_dev, disk, NAMELEN);
-	(void)strncpy(spcl.c_label, labelstr, sizeof(spcl.c_label) - 1);
-	(void)gethostname(spcl.c_host, NAMELEN);
+	(void)strlcpy(spcl.c_dev, disk, sizeof(spcl.c_dev));
+	(void)strlcpy(spcl.c_label, labelstr, sizeof(spcl.c_label));
+	(void)gethostname(spcl.c_host, sizeof(spcl.c_host));
 	spcl.c_host[sizeof(spcl.c_host) - 1] = '\0';
 
 	if ((diskfd = open(disk, O_RDONLY)) < 0) {
