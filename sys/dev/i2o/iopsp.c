@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.1 2000/11/08 19:45:31 ad Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.2 2000/11/09 12:51:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -581,7 +581,7 @@ iopsp_intr(struct device *dv, struct iop_msg *im, void *reply)
 	struct iop_softc *iop;
 	u_int hba_status, scsi_status, detail;
 	int sl;
-	
+
 	sc = (struct iopsp_softc *)dv;
 	xs = (struct scsipi_xfer *)im->im_dvcontext;
 	iop = (struct iop_softc *)dv->dv_parent;
