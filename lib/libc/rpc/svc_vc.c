@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_vc.c,v 1.1 2000/06/02 23:11:17 fvdl Exp $	*/
+/*	$NetBSD: svc_vc.c,v 1.2 2000/06/03 20:26:05 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_vc.c,v 1.1 2000/06/02 23:11:17 fvdl Exp $");
+__RCSID("$NetBSD: svc_vc.c,v 1.2 2000/06/03 20:26:05 fvdl Exp $");
 #endif
 #endif
 
@@ -265,6 +265,7 @@ makefd_xprt(fd, sendsize, recvsize)
 		warnx("svc_tcp: makefd_xprt: out of memory");
 		goto done;
 	}
+	memset(xprt, 0, sizeof *xprt);
 	cd = (struct cf_conn *)mem_alloc(sizeof(struct cf_conn));
 	if (cd == (struct cf_conn *)NULL) {
 		warnx("svc_tcp: makefd_xprt: out of memory");
@@ -275,7 +276,6 @@ makefd_xprt(fd, sendsize, recvsize)
 	cd->strm_stat = XPRT_IDLE;
 	xdrrec_create(&(cd->xdrs), sendsize, recvsize,
 	    (caddr_t)(void *)xprt, read_vc, write_vc);
-	xprt->xp_p2 = NULL;
 	xprt->xp_p1 = (caddr_t)(void *)cd;
 	xprt->xp_verf.oa_base = cd->verf_body;
 	svc_vc_ops(xprt);  /* truely deals with calls */
