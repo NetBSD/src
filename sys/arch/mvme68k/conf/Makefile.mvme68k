@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mvme68k,v 1.27 1997/09/12 07:55:19 mycroft Exp $
+#	$NetBSD: Makefile.mvme68k,v 1.28 1997/09/12 09:29:13 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -37,7 +37,7 @@ MVME68K=$S/arch/mvme68k
 # Keep -nostdinc before all -I flags, similar for -undef ...
 INCLUDES=	-nostdinc -I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
-		-Dmc68020 -Dmvme68k -DFPCOPROC
+		-Dmc68020 -Dmvme68k
 CWARNFLAGS=	-Werror
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
