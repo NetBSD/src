@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1998/08/28 22:50:54 dbj Exp $
+#	$NetBSD: Makefile,v 1.5 1998/09/14 00:50:22 tv Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -24,10 +24,10 @@ RELOC=	4380000
 INCLUDES+=	-I${.CURDIR} -I${.CURDIR}/obj.${MACHINE} -I${S}/arch -I${S} -I${S}/lib/libsa -I${S}/lib/libkern
 DEFS+=		-D_STANDALONE -DMC68040 -DSUPPORT_BOOTP -DSUPPORT_DHCP  -DDEBUG # -DEN_DEBUG   -DNETIF_DEBUG  # -DSD_DEBUG -DSCSI_DEBUG
 SAMISCCPPFLAGS=	-DSUPPORT_DHCP -DSUPPORT_BOOTP -DINSECURE # -DBOOTP_DEBUG -DETHER_DEBUG -DNET_DEBUG # -DNETIF_DEBUG -DNFS_DEBUG  -DARP_DEBUG 
-.if defined(USE_EGCS)
-COPTS+=		-Wall -Wno-main
-.else
-COPTS+=		-Wall
+WARNS=1
+HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
+.if (${HAVE_GCC28} != "")
+CWARNFLAGS+=	-Wno-main
 .endif
 CFLAGS+=	 -nostdinc ${INCLUDES} ${DEFS}
 LIBCRT0=
