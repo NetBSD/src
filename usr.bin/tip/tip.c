@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tip.c	5.15 (Berkeley) 2/4/91";*/
-static char rcsid[] = "$Id: tip.c,v 1.4 1993/08/01 18:06:35 mycroft Exp $";
+static char rcsid[] = "$Id: tip.c,v 1.5 1994/04/20 17:21:28 pk Exp $";
 #endif /* not lint */
 
 /*
@@ -252,8 +252,8 @@ static int uidswapped;
 user_uid()
 {
 	if (uidswapped == 0) {
-		setregid(egid, gid);
-		setreuid(euid, uid);
+		setegid(gid);
+		seteuid(uid);
 		uidswapped = 1;
 	}
 }
@@ -262,8 +262,8 @@ daemon_uid()
 {
 
 	if (uidswapped) {
-		setreuid(uid, euid);
-		setregid(gid, egid);
+		seteuid(euid);
+		setegid(egid);
 		uidswapped = 0;
 	}
 }
@@ -271,8 +271,8 @@ daemon_uid()
 shell_uid()
 {
 
-	setreuid(uid, uid);
-	setregid(gid, gid);
+	setgid(gid);
+	setuid(uid);
 }
 
 /*
