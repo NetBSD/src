@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2002/02/21 04:13:45 jmc Exp $
+#	$NetBSD: Makefile,v 1.3 2002/03/01 06:06:50 jmc Exp $
 
 TOP=	${.CURDIR}/../../..
 
@@ -21,7 +21,7 @@ libinstall:
 
 .include <bsd.lib.mk>
 
-MIC=	${DIST}/move-if-change
+MIC=	sh ${DIST}/move-if-change
 
 HOST_CPPFLAGS+=	-I${DIST}/sim/ppc -I${DIST}/sim/ppc/../../include \
 		-I${DIST}/sim/ppc/../../bfd -I../../gdb \
