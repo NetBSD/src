@@ -1,9 +1,9 @@
-# $NetBSD: shl.elf,v 1.17 2000/03/13 21:23:58 itojun Exp $
+# $NetBSD: shl.elf,v 1.18 2000/04/14 22:55:56 thorpej Exp $
 ./usr/lib/libamu.so.1
 ./usr/lib/libbz2.so.0
 ./usr/lib/libc.so.12
 ./usr/lib/libcrypt.so.0
-./usr/lib/libcurses.so.2
+./usr/lib/libcurses.so.3
 ./usr/lib/libedit.so.2
 ./usr/lib/libg2c.so.0
 ./usr/lib/libgnumalloc.so.0
