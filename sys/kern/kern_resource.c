@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.69 2003/03/05 11:44:01 dsl Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.70 2003/03/14 21:38:26 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.69 2003/03/05 11:44:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.70 2003/03/14 21:38:26 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -390,7 +390,8 @@ calcru(p, up, sp, ip)
 	struct timeval *ip;
 {
 	u_quad_t u, st, ut, it, tot;
-	unsigned long sec, usec;
+	unsigned long sec;
+	long usec;
 	int s;
 	struct timeval tv;
 	struct lwp *l;
@@ -403,8 +404,7 @@ calcru(p, up, sp, ip)
 
 	sec = p->p_rtime.tv_sec;
 	usec = p->p_rtime.tv_usec;
-	for (l = LIST_FIRST(&p->p_lwps); l != NULL; 
-	     l = LIST_NEXT(l, l_sibling)) {
+	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		if (l->l_stat == LSONPROC) {
 			struct schedstate_percpu *spc;
 			
@@ -425,33 +425,22 @@ calcru(p, up, sp, ip)
 	}
 
 	tot = st + ut + it;
+	u = sec * 1000000ull + usec;
+
 	if (tot == 0) {
 		/* No ticks, so can't use to share time out, split 50-50 */
-		if (usec > 1000000 && (sec & 1)) {
-			usec -= 1000000;
-			sec++;
-		} else {
-			if (sec & 1) {
-				usec += 1000000;
-				sec--;
-			}
-		}
-		up->tv_sec = sp->tv_sec = sec / 2;
-		up->tv_usec = sp->tv_usec = usec / 2;
-		if (ip != NULL)
-			ip->tv_sec = ip->tv_usec = 0;
-		return;
+		st = ut = u / 2;
+	} else {
+		st = (u * st) / tot;
+		ut = (u * ut) / tot;
 	}
-
-	u = (u_quad_t) sec * 1000000 + usec;
-	st = (u * st) / tot;
 	sp->tv_sec = st / 1000000;
 	sp->tv_usec = st % 1000000;
-	ut = (u * ut) / tot;
 	up->tv_sec = ut / 1000000;
 	up->tv_usec = ut % 1000000;
 	if (ip != NULL) {
-		it = (u * it) / tot;
+		if (it != 0)
+			it = (u * it) / tot;
 		ip->tv_sec = it / 1000000;
 		ip->tv_usec = it % 1000000;
 	}
