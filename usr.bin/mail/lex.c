@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.17 2002/03/02 14:59:36 wiz Exp $	*/
+/*	$NetBSD: lex.c,v 1.18 2002/03/04 03:07:26 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.17 2002/03/02 14:59:36 wiz Exp $");
+__RCSID("$NetBSD: lex.c,v 1.18 2002/03/04 03:07:26 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ setfile(char *name)
 	char *who = name[1] ? name + 1 : myname;
 	static int shudclob;
 
-	if ((name = expand(name)) == NOSTR)
+	if ((name = expand(name)) == NULL)
 		return -1;
 
 	if ((ibuf = Fopen(name, "r")) == NULL) {
@@ -230,8 +230,8 @@ commands(void)
 		 * Print the prompt, if needed.  Clear out
 		 * string space, and flush the output.
 		 */
-		if (!sourcing && value("interactive") != NOSTR) {
-			if ((value("autoinc") != NOSTR) && (incfile() > 0))
+		if (!sourcing && value("interactive") != NULL) {
+			if ((value("autoinc") != NULL) && (incfile() > 0))
 				printf("New mail has arrived.\n");
 			reset_on_stop = 1;
 			printf("%s", prompt);
@@ -265,8 +265,8 @@ commands(void)
 				unstack();
 				continue;
 			}
-			if (value("interactive") != NOSTR &&
-			    value("ignoreeof") != NOSTR &&
+			if (value("interactive") != NULL &&
+			    value("ignoreeof") != NULL &&
 			    ++eofloop < 25) {
 				printf("Use \"quit\" to quit.\n");
 				continue;
@@ -317,7 +317,7 @@ execute(char linebuf[], int contxt)
 		return(0);
 	}
 	cp2 = word;
-	while (*cp && strchr(" \t0123456789$^.:/-+*'\"", *cp) == NOSTR)
+	while (*cp && strchr(" \t0123456789$^.:/-+*'\"", *cp) == NULL)
 		*cp2++ = *cp++;
 	*cp2 = '\0';
 
@@ -468,7 +468,7 @@ out:
 	}
 	if (com == NULL)
 		return(0);
-	if (value("autoprint") != NOSTR && com->c_argtype & P)
+	if (value("autoprint") != NULL && com->c_argtype & P)
 		if ((dot->m_flag & MDELETED) == 0) {
 			muvec[0] = dot - &message[0] + 1;
 			muvec[1] = 0;
@@ -502,7 +502,7 @@ lex(char word[])
 {
 	const struct cmd *cp;
 
-	for (cp = &cmdtab[0]; cp->c_name != NOSTR; cp++)
+	for (cp = &cmdtab[0]; cp->c_name != NULL; cp++)
 		if (isprefix(word, cp->c_name))
 			return(cp);
 	return(NONE);
@@ -603,7 +603,7 @@ announce(void)
 	vec[0] = mdot;
 	vec[1] = 0;
 	dot = &message[mdot - 1];
-	if (msgCount > 0 && value("noheader") == NOSTR) {
+	if (msgCount > 0 && value("noheader") == NULL) {
 		inithdr++;
 		headers(vec);
 		inithdr = 0;
