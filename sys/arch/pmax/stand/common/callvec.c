@@ -1,4 +1,4 @@
-/*	$NetBSD: callvec.c,v 1.12 1999/11/27 03:14:47 simonb Exp $	*/
+/*	$NetBSD: callvec.c,v 1.13 1999/11/27 06:44:00 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -86,3 +86,5 @@ const struct callback callvec = {
 	(int (*) __P((char *cmd)))0,
 	(void (*) __P((char cmd)))0,
 };
+
+const   struct callback *callv = &callvec;
