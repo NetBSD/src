@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.204 2004/08/06 19:07:27 mycroft Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.205 2004/08/07 17:18:20 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.203 2004/08/06 19:07:13 mycroft Exp 
+ *	NetBSD: pcmciadevs,v 1.204 2004/08/07 17:18:09 mycroft Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -631,11 +631,25 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Instant Wireless Network CF Card",	}
 	,
 	{
-	    PCMCIA_VENDOR_LUCENT, PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
-	    PCMCIA_CIS_LUCENT_WAVELAN_IEEE,
+	    PCMCIA_VENDOR_LUCENT, PCMCIA_PRODUCT_LUCENT_HERMES,
+	    PCMCIA_CIS_LUCENT_HERMES,
 	    0,
 	    "Lucent Technologies",
-	    "WaveLAN/IEEE",	}
+	    "Hermes",	}
+	,
+	{
+	    PCMCIA_VENDOR_LUCENT, PCMCIA_PRODUCT_LUCENT_HERMES2,
+	    PCMCIA_CIS_LUCENT_HERMES2,
+	    0,
+	    "Lucent Technologies",
+	    "Hermes II",	}
+	,
+	{
+	    PCMCIA_VENDOR_LUCENT, PCMCIA_PRODUCT_LUCENT_HERMES25,
+	    PCMCIA_CIS_LUCENT_HERMES25,
+	    0,
+	    "Lucent Technologies",
+	    "Hermes II.5",	}
 	,
 	{
 	    PCMCIA_VENDOR_MACNICA, PCMCIA_PRODUCT_MACNICA_ME1_JEIDA,
