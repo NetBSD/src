@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.220 1999/02/27 03:26:09 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.221 1999/02/27 05:28:35 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -211,7 +211,7 @@ int	bufpages = BUFPAGES;
 int	bufpages = 0;
 #endif
 #ifdef BUFCACHE
-int	bufchache = BUFCACHE;
+int	bufcache = BUFCACHE;
 #else
 int	bufcache = 0;
 #endif
