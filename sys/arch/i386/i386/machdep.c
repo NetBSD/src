@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.241.2.5 1997/09/22 06:31:04 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.241.2.6 1997/10/14 09:09:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -243,6 +243,7 @@ void	init386 __P((vm_offset_t));
 #ifndef CONSDEVNAME
 #define CONSDEVNAME "pc"
 #endif
+#if (NCOM > 0)
 #ifndef CONADDR
 #define CONADDR 0x3f8
 #endif
@@ -252,12 +253,17 @@ void	init386 __P((vm_offset_t));
 #ifndef CONMODE
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #endif
+int comcnmode = CONMODE;
+#endif /* NCOM */
 struct btinfo_console default_consinfo = {
 	{0, 0},
 	CONSDEVNAME,
+#if (NCOM > 0)
 	CONADDR, CONSPEED
+#else
+	0, 0
+#endif
 };
-int comcnmode = CONMODE;
 void	consinit __P((void));
 
 #ifdef KGDB
@@ -307,15 +313,6 @@ cpu_startup()
 	extern int biostramp_image_size;
 	extern u_char biostramp_image[];
 #endif
-
-	/*
-	 * Initialize error message buffer (at end of core).
-	 */
-	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
-	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + i * NBPG,
-			avail_end + i * NBPG, VM_PROT_ALL, TRUE);
-	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
 	printf(version);
 	identifycpu();
@@ -1546,6 +1543,15 @@ init386(first_avail)
 	/* call pmap initialization to make new kernel address space */
 	pmap_bootstrap((vm_offset_t)atdevbase + IOM_SIZE);
 
+	/*
+	 * Initialize error message buffer (at end of core).
+	 */
+	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
+	for (x = 0; x < btoc(MSGBUFSIZE); x++)
+		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + x * NBPG,
+		    avail_end + x * NBPG, VM_PROT_ALL, TRUE);
+	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
+
 #ifdef DDB
 	ddb_init();
 	if (boothowto & RB_KDB)
@@ -1777,7 +1783,7 @@ consinit()
 		bus_space_tag_t tag = I386_BUS_SPACE_IO;
 
 		if(comcnattach(tag, consinfo->addr, consinfo->speed,
-			       COM_FREQ, CONMODE))
+			       COM_FREQ, comcnmode))
 			panic("can't init serial console @%x", consinfo->addr);
 
 		return;
