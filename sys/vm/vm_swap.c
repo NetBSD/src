@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.46 1997/10/14 08:50:18 pk Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.47 1997/10/17 19:06:05 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -323,32 +323,13 @@ static void insert_swapdev __P((struct swapdev *, int));
 static struct swapdev *find_swapdev __P((struct vnode *, int));
 static void swaplist_trim __P((void));
 
-/* XXX - Replace with general locking device when available */
-static void _swaplist_lock __P((void));
-static void _swaplist_unlock __P((void));
-int swaplock = 0;
-#define SWP_LOCKED	1
-#define SWP_WANT	2
-
-static __inline void
-_swaplist_lock()
-{
-	if (swaplock & SWP_LOCKED) {
-		swaplock |= SWP_WANT;
-		tsleep((caddr_t)&swaplock, PSWP, "swaplock", 0);
-	}
-	swaplock |= SWP_LOCKED;
-}
-
-static __inline void
-_swaplist_unlock()
-{
-	swaplock &= ~SWP_LOCKED;
-	if (swaplock & SWP_WANT) {
-		swaplock &= ~SWP_WANT;
-		wakeup((caddr_t)&swaplock);
-	}
-}
+/*
+ * We use two locks to protect the swap device lists.
+ * The long-term lock is used only used to prevent races in
+ * concurrently executing swapctl(2) system calls.
+ */
+struct simplelock	swaplist_lock;
+struct lock		swaplist_change_lock;
 
 /*
  * Insert a swap device on the priority list.
@@ -361,7 +342,7 @@ insert_swapdev(sdp, priority)
 	struct swappri *spp, *pspp;
 
 again:
-	_swaplist_lock();
+	simple_lock(&swaplist_lock);
 
 	/*
 	 * Find entry at or after which to insert the new device.
@@ -378,7 +359,7 @@ again:
 			malloc(sizeof *spp, M_VMSWAP, M_NOWAIT);
 
 		if (spp == NULL) {
-			_swaplist_unlock();
+			simple_unlock(&swaplist_lock);
 			tsleep((caddr_t)&lbolt, PSWP, "memory", 0);
 			goto again;
 		}
@@ -400,7 +381,7 @@ again:
 	/* Onto priority list */
 	CIRCLEQ_INSERT_TAIL(&spp->spi_swapdev, sdp, swd_next);
 	sdp->swd_priority = priority;
-	_swaplist_unlock();
+	simple_unlock(&swaplist_lock);
 }
 
 /*
@@ -414,7 +395,7 @@ find_swapdev(vp, remove)
 	struct swapdev *sdp;
 	struct swappri *spp;
 
-	_swaplist_lock();
+	simple_lock(&swaplist_lock);
 	for (spp = swap_priority.lh_first; spp != NULL;
 	     spp = spp->spi_swappri.le_next) {
 		for (sdp = spp->spi_swapdev.cqh_first;
@@ -424,11 +405,11 @@ find_swapdev(vp, remove)
 				if (remove)
 					CIRCLEQ_REMOVE(&spp->spi_swapdev, sdp,
 							swd_next);
-				_swaplist_unlock();
+				simple_unlock(&swaplist_lock);
 				return(sdp);
 			}
 	}
-	_swaplist_unlock();
+	simple_unlock(&swaplist_lock);
 	return (NULL);
 }
 
@@ -440,7 +421,7 @@ swaplist_trim()
 {
 	struct swappri *spp;
 
-	_swaplist_lock();
+	simple_lock(&swaplist_lock);
 restart:
 	for (spp = swap_priority.lh_first; spp != NULL;
 	     spp = spp->spi_swappri.le_next) {
@@ -450,7 +431,7 @@ restart:
 		free((caddr_t)spp, M_VMSWAP);
 		goto restart;
 	}
-	_swaplist_unlock();
+	simple_unlock(&swaplist_lock);
 }
 
 int
@@ -494,6 +475,9 @@ sys_swapctl(p, v, retval)
 		sep = (struct swapent *)SCARG(uap, arg);
 		count = 0;
 
+		error = lockmgr(&swaplist_change_lock, LK_SHARED, (void *)0, p);
+		if (error)
+			return (error);
 		for (spp = swap_priority.lh_first; spp != NULL;
 		    spp = spp->spi_swappri.le_next) {
 			for (sdp = spp->spi_swapdev.cqh_first;
@@ -502,11 +486,14 @@ sys_swapctl(p, v, retval)
 				error = copyout((caddr_t)&sdp->swd_se,
 				    (caddr_t)sep, sizeof(struct swapent));
 				if (error)
-					return (error);
+					break;
 				count++;
 				sep++;
 			}
 		}
+		(void)lockmgr(&swaplist_change_lock, LK_RELEASE, (void *)0, p);
+		if (error)
+			return (error);
 #ifdef SWAPDEBUG
 		if (vmswapdebug & VMSDB_SWFLOW)
 			printf("sw: did SWAP_STATS:  leaving sys_swapctl\n");
@@ -530,6 +517,10 @@ sys_swapctl(p, v, retval)
 
 		vp = nd.ni_vp;
 	}
+
+	error = lockmgr(&swaplist_change_lock, LK_EXCLUSIVE, (void *)0, p);
+	if (error)
+		goto bad2;
 
 	switch(SCARG(uap, cmd)) {
 	case SWAP_CTL:
@@ -616,6 +607,8 @@ sys_swapctl(p, v, retval)
 	}
 
 bad:
+	(void)lockmgr(&swaplist_change_lock, LK_RELEASE, (void *)0, p);
+bad2:
 	vput(vp);
 
 #ifdef SWAPDEBUG
@@ -862,7 +855,7 @@ swap_alloc(size)
 	if (nswapdev < 1)
 		return 0;
 	
-	_swaplist_lock();
+	simple_lock(&swaplist_lock);
 	for (spp = swap_priority.lh_first; spp != NULL;
 	     spp = spp->spi_swappri.le_next) {
 		for (sdp = spp->spi_swapdev.cqh_first;
@@ -882,11 +875,11 @@ swap_alloc(size)
 			CIRCLEQ_REMOVE(&spp->spi_swapdev, sdp, swd_next);
 			CIRCLEQ_INSERT_TAIL(&spp->spi_swapdev, sdp, swd_next);
 			sdp->swd_inuse += size;
-			_swaplist_unlock();
+			simple_unlock(&swaplist_lock);
 			return (daddr_t)(result + sdp->swd_mapoffset);
 		}
 	}
-	_swaplist_unlock();
+	simple_unlock(&swaplist_lock);
 	return 0;
 }
 
@@ -928,17 +921,17 @@ swap_getsdpfromaddr(addr)
 	struct swapdev *sdp;
 	struct swappri *spp;
 	
-	_swaplist_lock();
+	simple_lock(&swaplist_lock);
 	for (spp = swap_priority.lh_first; spp != NULL;
 	     spp = spp->spi_swappri.le_next)
 		for (sdp = spp->spi_swapdev.cqh_first;
 		     sdp != (void *)&spp->spi_swapdev;
 		     sdp = sdp->swd_next.cqe_next)
 			if (ADDR_IN_MAP(addr, sdp)) {
-				_swaplist_unlock();
+				simple_unlock(&swaplist_lock);
 				return sdp;
 			}
-	_swaplist_unlock();
+	simple_unlock(&swaplist_lock);
 	return NULL;
 }
 
@@ -1271,6 +1264,8 @@ swapinit()
 	if (bdevvp(swapdev, &swapdev_vp))
 		panic("swapinit: can setup swapdev_vp");
 
+	simple_lock_init(&swaplist_lock);
+	lockinit(&swaplist_change_lock, PSWP, "swap change", 0, 0);
 	LIST_INIT(&swap_priority);
 
 	/*
