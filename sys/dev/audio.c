@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.184.2.17 2005/01/01 11:28:26 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.184.2.18 2005/01/01 11:30:27 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.17 2005/01/01 11:28:26 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.18 2005/01/01 11:30:27 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2023,7 +2023,7 @@ audiostartr(struct audio_softc *sc)
 	if (sc->hw_if->trigger_input)
 		error = sc->hw_if->trigger_input(sc->hw_hdl, sc->sc_rr.s.start,
 		    sc->sc_rr.s.end, sc->sc_rr.blksize,
-		    audio_rint, (void *)sc, &sc->sc_rparams);
+		    audio_rint, (void *)sc, &sc->sc_rr.s.param);
 	else
 		error = sc->hw_if->start_input(sc->hw_hdl, sc->sc_rr.s.start,
 		    sc->sc_rr.blksize, audio_rint, (void *)sc);
@@ -2054,7 +2054,7 @@ audiostartp(struct audio_softc *sc)
 	if (sc->hw_if->trigger_output)
 		error = sc->hw_if->trigger_output(sc->hw_hdl, sc->sc_pr.s.start,
 		    sc->sc_pr.s.end, sc->sc_pr.blksize,
-		    audio_pint, (void *)sc, &sc->sc_pparams);
+		    audio_pint, (void *)sc, &sc->sc_rr.s.param);
 	else
 		error = sc->hw_if->start_output(sc->hw_hdl, sc->sc_pr.s.outp,
 		    sc->sc_pr.blksize, audio_pint, (void *)sc);
