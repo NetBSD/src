@@ -42,7 +42,7 @@ Loading: Operating System
 Volume: NBSD
 
 IPL loaded at:  $003F0000
->> BSD MVME147 tapeboot [$Revision: 1.1 $]
+>> BSD MVME147 tapeboot [$Revision: 1.2 $]
 578616+422344+55540+[46032+51284]=0x11a6e4
 Start @ 0x8000 ...
 Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.  All rights reserved.
@@ -146,14 +146,12 @@ you don't feel like typing each one in full.
 
 To start creating the basic partitions, you should enter 'm' (modify)
 at the edlabel prompt, then enter the letter corresponding to the first
-partition, 'a'. (Note: the program shows "a-i : modify partition". This
-is incorrect for port-mvme68k. Only letters 'a' to 'h' are acceptable.
-This will be fixed in the next release.)
+partition, 'a'.
 
 -->     edlabel> m
         modify subcommands:
          @   : modify disk parameters
-         a-i : modify partition
+         a-h : modify partition
          s   : standarize geometry
          q   : quit this subcommand
 -->     edlabel/modify> a
@@ -317,7 +315,7 @@ from the server:
         4800 
         Download was a success!
         Start @ 0x8000 ... 
-        >> BSD MVME147 netboot (via sboot) [$Revision: 1.1 $]
+        >> BSD MVME147 netboot (via sboot) [$Revision: 1.2 $]
         device: le0 attached to 08:00:3e:20:cb:87
         boot: client IP address: 192.168.1.4
         boot: client name: soapy

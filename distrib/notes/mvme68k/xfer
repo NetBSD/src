@@ -12,10 +12,10 @@ The procedure for transferring the distribution sets onto installation
 media depends on the type of media. Instructions for each type of media
 are given below.
 
-In order to create installation media, you will need all the files in
-these two directories:
+In order to create installation media, you will need all the files and
+subdirectories in these two directories:
 
-        .../NetBSD-_VER/mvme68k/install
+        .../NetBSD-_VER/mvme68k/installation
         .../NetBSD-_VER/mvme68k/binary
 
 
@@ -27,18 +27,18 @@ the installation sets.
 
 The boot tape is created as follows:
 
--->     cd .../NetBSD-_VER/mvme68k/install
+-->     cd .../NetBSD-_VER/mvme68k/installation
 -->     set T = /dev/nrst0
 -->     mt -f $T rewind
--->     dd if=stboot of=$T
--->     dd if=bootst of=$T obs=8k conv=osync
--->     gzip -dc netbsd-rd.gz | dd of=$T obs=8k conv=osync
--->     gzip -dc miniroot.gz  | dd of=$T obs=8k conv=osync
+-->     dd if=tapeimage/stboot of=$T
+-->     dd if=tapeimage/bootst of=$T obs=8k conv=osync
+-->     gzip -dc tapeimage/netbsd-rd.gz | dd of=$T obs=8k conv=osync
+-->     gzip -dc miniroot/miniroot.gz  | dd of=$T obs=8k conv=osync
 -->     mt -f $T rewind
 
 The installation set tape is created as follows:
 
--->     cd .../NetBSD-_VER/mvme68k/binary
+-->     cd .../NetBSD-_VER/mvme68k/binary/sets
 -->     set T = /dev/nrst0
 -->     mt -f $T rewind
 -->     foreach f (base etc comp games man misc text)
@@ -137,5 +137,5 @@ server, you may want to keep the following information handy:
         Server path: /pub/NetBSD/NetBSD-_VER/mvme68k/binary
 
 Note: if you're not using a nameserver duing installation,
-you might find 206.86.8.12 handy; it's the IP address of
-ftp.NetBSD.ORG as of September 2, 1996.
+you might find 204.152.184.75 handy; it's the IP address of
+ftp.NetBSD.ORG as of January 3, 1997.
