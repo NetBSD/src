@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.238 2004/05/30 15:02:18 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.239 2004/05/30 15:18:55 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3379,4 +3379,38 @@ usr.bin/gzip/zgrep				1.3-1.4
 	compressed files (as reported by simonb) as well as not printing
 	random warnings that zgrep isn't ready to handle.
 	[mrg, ticket #421]
+
+sys/miscfs/genfs/layer.h			1.6
+sys/miscfs/genfs/layer_extern.h			1.14
+sys/miscfs/genfs/layer_vnops.c			1.16
+sys/miscfs/nullfs/null_vnops.c			1.29
+sys/miscfs/overlay/overlay_vnops.c		1.12
+sys/miscfs/umapfs/umap_vnops.c			1.26
+
+	Since VOP_UPCALL() has been a long time in coming, add this partial
+	fix for layered-file-removal. It will work for the case of accessing
+	and deleting a file through the layered file system. Accessing via
+	the layer and deleting on the underlying still won't work, nor will
+	accessing via complicated structures (like two umap layers over a
+	given file systems).
+	We still need VOP_UPCALL(), but this is better than things were before.
+	This patch has been discussed off & on for a while. This incarnation
+	was tested by hannken at netbsd dot org.
+	[wrstuden, ticket #424]
+
+share/man/man9/vnode.9				1.21
+
+	Change comments around locking. While you _can_ grab vnode locks
+	as LK_SHARED, the VOP_ code (in all our existing file systems)
+	was implememted assuming exclusive locking. Use of LK_SHARED
+	is technically a bug and only works right for uni-processor and
+	big-lock SMP systems. Our current file systems will blow up
+	(probably quite subtlely) with LK_SHARED and fine-grained SMP
+	locking.
+	[wrstuden, ticket #425]
+
+share/man/man4/fss.4				1.6
+
+	The fss command appeared -> The fss device appeared
+	[bouyer, ticket #426]
 
