@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.22 1998/08/30 23:19:37 mark Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.23 1998/08/31 00:08:11 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -926,9 +926,6 @@ initarm(bootconf)
 	 */
 	l2pagetable = kernel_pt_table[KERNEL_PT_SYS] - physical_start;
 	map_entry(l2pagetable, 0x0000000, systempage.physical);
-
-	/* Now we construct the L1 pagetable */
-	l1pagetable = kernel_l1pt.physical - physical_start;
 
 	/* Map the VIDC20, IOMD, COMBO and podules */
 
