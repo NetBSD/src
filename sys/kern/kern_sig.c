@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.60 1996/12/22 10:21:10 cgd Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.61 1997/03/27 07:52:25 mikel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -104,7 +104,7 @@ sys_sigaction(p, v, retval)
 
 	signum = SCARG(uap, signum);
 	if (signum <= 0 || signum >= NSIG ||
-	    signum == SIGKILL || signum == SIGSTOP)
+	    ((signum == SIGKILL || signum == SIGSTOP) && SCARG(uap, nsa)))
 		return (EINVAL);
 	sa = &vec;
 	if (SCARG(uap, osa)) {
