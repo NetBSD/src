@@ -1,5 +1,5 @@
-# $NetBSD: KRUPS,v 1.20 2003/12/14 17:26:58 martin Exp $
-# From: NetBSD: GENERIC,v 1.148 2003/10/07 09:43:58 tron Exp
+# $NetBSD: KRUPS,v 1.21 2004/07/10 12:12:55 uwe Exp $
+# From: NetBSD: GENERIC,v 1.160 2004/07/10 12:05:35 uwe Exp
 #
 # Krups (JavaStation-NC) machine description file
 #
@@ -8,7 +8,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"KRUPS-$Revision: 1.20 $"
+#ident 		"KRUPS-$Revision: 1.21 $"
 
 maxusers	32
 
@@ -22,7 +22,7 @@ options 	SUN4M		# sun4m - SS10, SS20, Classic, etc.
 # microSPARC-IIep is PCI based sun4m (JavaStation-NC, CP1200, etc)
 # This option selects if SUN4M means "normal" 4m or IIep.  Kernels
 # with this option turned on will refuse to work on normal 4m.
-options		MSIIEP		# microSPARC-IIep
+options 	MSIIEP		# microSPARC-IIep
 
 # XXX: uwe: PROM location conflicts with kernel VA space !!!
 options 	PROM_AT_F0
@@ -63,6 +63,7 @@ options 	SYSVSEM		# System V semaphores
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
+options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 ## Loadable kernel module support; still under development.
 #options 	LKM
@@ -165,11 +166,12 @@ options 	COMPAT_12	# NetBSD 1.2 binary compatibility
 options 	COMPAT_13	# NetBSD 1.3 binary compatibility
 options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 options 	COMPAT_16	# NetBSD 1.6 binary compatibility
+options 	COMPAT_20	# NetBSD 2.0 binary compatibility
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 
 ## File systems.  You probably need at least one of FFS or NFS.
-#file-system	FFS		# Berkeley Fast Filesystem
+file-system	FFS		# Berkeley Fast Filesystem
 file-system	NFS		# Sun NFS-compatible filesystem client
 file-system	KERNFS		# kernel data-structure filesystem
 file-system	NULLFS		# NULL layered filesystem
@@ -214,6 +216,7 @@ options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
 options 	PPP_BSDCOMP	# Add BSD compression to ppp device
 options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
 options 	PPP_FILTER	# Add active filters for ppp (via bpf)
+
 
 
 #### Main bus and CPU .. all systems.
