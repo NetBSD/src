@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.39 2001/12/27 11:24:42 augustss Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.40 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.14 1999/11/17 22:33:50 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.39 2001/12/27 11:24:42 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.40 2002/07/11 21:14:36 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,13 +84,13 @@ usbd_get_desc(usbd_device_handle dev, int type, int index, int len, void *desc)
 }
 
 usbd_status
-usbd_get_config_desc(usbd_device_handle dev, int confidx, 
+usbd_get_config_desc(usbd_device_handle dev, int confidx,
 		     usb_config_descriptor_t *d)
 {
 	usbd_status err;
 
 	DPRINTFN(3,("usbd_get_config_desc: confidx=%d\n", confidx));
-	err = usbd_get_desc(dev, UDESC_CONFIG, confidx, 
+	err = usbd_get_desc(dev, UDESC_CONFIG, confidx,
 			    USB_CONFIG_DESCRIPTOR_SIZE, d);
 	if (err)
 		return (err);
@@ -114,7 +114,7 @@ usbd_status
 usbd_get_device_desc(usbd_device_handle dev, usb_device_descriptor_t *d)
 {
 	DPRINTFN(3,("usbd_get_device_desc:\n"));
-	return (usbd_get_desc(dev, UDESC_DEVICE, 
+	return (usbd_get_desc(dev, UDESC_DEVICE,
 			     0, USB_DEVICE_DESCRIPTOR_SIZE, d));
 }
 
@@ -129,7 +129,7 @@ usbd_get_device_status(usbd_device_handle dev, usb_status_t *st)
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, sizeof(usb_status_t));
 	return (usbd_do_request(dev, &req, st));
-}	
+}
 
 usbd_status
 usbd_get_hub_status(usbd_device_handle dev, usb_hub_status_t *st)
@@ -142,7 +142,7 @@ usbd_get_hub_status(usbd_device_handle dev, usb_hub_status_t *st)
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, sizeof(usb_hub_status_t));
 	return (usbd_do_request(dev, &req, st));
-}	
+}
 
 usbd_status
 usbd_set_address(usbd_device_handle dev, int addr)
@@ -263,7 +263,7 @@ usbd_set_protocol(usbd_interface_handle iface, int report)
 }
 
 usbd_status
-usbd_set_report(usbd_interface_handle iface, int type, int id, void *data, 
+usbd_set_report(usbd_interface_handle iface, int type, int id, void *data,
 		int len)
 {
 	usb_interface_descriptor_t *ifd = usbd_get_interface_descriptor(iface);
@@ -412,7 +412,7 @@ usbd_read_report_desc(usbd_interface_handle ifc, void **descp, int *sizep,
 	return (USBD_NORMAL_COMPLETION);
 }
 
-usbd_status 
+usbd_status
 usbd_get_config(usbd_device_handle dev, u_int8_t *conf)
 {
 	usb_device_request_t req;
@@ -435,7 +435,7 @@ usbd_bulk_transfer_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 }
 
 usbd_status
-usbd_bulk_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe, 
+usbd_bulk_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 		   u_int16_t flags, u_int32_t timeout, void *buf,
 		   u_int32_t *size, char *lbl)
 {
@@ -475,14 +475,14 @@ usb_detach_wait(device_ptr_t dv)
 		printf("usb_detach_wait: %s didn't detach\n",
 		        USBDEVPTRNAME(dv));
 	DPRINTF(("usb_detach_wait: %s done\n", USBDEVPTRNAME(dv)));
-}       
+}
 
 void
 usb_detach_wakeup(device_ptr_t dv)
 {
 	DPRINTF(("usb_detach_wakeup: for %s\n", USBDEVPTRNAME(dv)));
 	wakeup(dv);
-}       
+}
 
 usb_descriptor_t *
 usb_find_desc(usbd_device_handle dev, int type)

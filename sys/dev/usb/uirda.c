@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.10 2002/07/08 17:46:25 augustss Exp $	*/
+/*	$NetBSD: uirda.c,v 1.11 2002/07/11 21:14:30 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.10 2002/07/08 17:46:25 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.11 2002/07/11 21:14:30 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,7 +236,7 @@ int uirda_get_turnarounds(void *h, int *times);
 int uirda_poll(void *h, int events, usb_proc_ptr p);
 
 struct irframe_methods uirda_methods = {
-	uirda_open, uirda_close, uirda_read, uirda_write, uirda_poll, 
+	uirda_open, uirda_close, uirda_read, uirda_write, uirda_poll,
 	uirda_set_params, uirda_get_speeds, uirda_get_turnarounds
 };
 
@@ -246,7 +246,7 @@ usbd_status uirda_start_read(struct uirda_softc *sc);
 
 usb_descriptor_t *usb_find_desc(usbd_device_handle dev, int type);
 
-/* 
+/*
  * These devices don't quite follow the spec.  Speed changing is broken
  * and they don't handle windows.
  * But we change speed in a safe way, and don't use windows now.
@@ -573,7 +573,7 @@ uirda_read(void *h, struct uio *uio, int flag)
 			}
 		}
 		splx(s);
-		
+
 		lockmgr(&sc->sc_rd_buf_lk, LK_EXCLUSIVE, NULL);
 		n = sc->sc_rd_count - UIRDA_INPUT_HEADER_SIZE;
 		DPRINTFN(1,("%s: sc=%p n=%u, hdr=0x%02x\n", __func__,
@@ -585,7 +585,7 @@ uirda_read(void *h, struct uio *uio, int flag)
 					n, uio);
 		sc->sc_rd_count = 0;
 		lockmgr(&sc->sc_rd_buf_lk, LK_RELEASE, NULL);
-		
+
 		err = uirda_start_read(sc);
 		/* XXX check err */
 
@@ -711,7 +711,7 @@ uirda_set_params(void *h, struct irda_params *p)
 	found1:
 		DPRINTF(("uirda_set_params: ebofs hdr=0x%02x\n", hdr));
 		;
-				
+
 	}
 	if (hdr != 0 || p->speed != sc->sc_params.speed) {
 		/* find speed */
@@ -765,7 +765,7 @@ uirda_set_params(void *h, struct irda_params *p)
 #endif
 	}
 	if (hdr != 0 && hdr != sc->sc_wr_hdr) {
-		/* 
+		/*
 		 * A change has occurred, transmit a 0 length frame with
 		 * the new settings.  The 0 length frame is not sent to the
 		 * device.
