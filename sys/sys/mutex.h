@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.2.1 2002/03/10 21:39:48 thorpej Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.2.2 2002/03/11 00:43:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  *		not the current thread, call mutex_vector_exit().
  */
 
-#include <sys/lock.h>
+#include <sys/simplelock.h>
 
 typedef int kmutex_type_t;
 
