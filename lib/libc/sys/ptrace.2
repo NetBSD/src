@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.8 1999/03/26 23:37:27 sommerfe Exp $
+.\"	$NetBSD: ptrace.2,v 1.9 1999/10/06 17:14:55 jdolecek Exp $
 .\"
 .\" This file is in the public domain.
 .Dd November 7, 1994
@@ -380,6 +380,9 @@ on a process in violation of the requirements listed under
 above.
 .El
 .El
+.Sh SEE ALSO
+.Xr sigaction 2 ,
+.Xr signal 7
 .Sh BUGS
 On the SPARC, the PC is set to the provided PC value for
 .Dv PT_CONTINUE
