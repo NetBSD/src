@@ -1,4 +1,4 @@
-.\" $NetBSD: ifwatchd.8,v 1.5 2002/01/10 19:38:51 martin Exp $
+.\" $NetBSD: ifwatchd.8,v 1.6 2002/02/23 08:11:22 martin Exp $
 .\"
 .\" Copyright (C) 2001 by Martin Husemann
 .\" All rights reserved.
@@ -97,6 +97,28 @@ Events for other interfaces are ignored.
 .Bd -literal -offset indent
 # ifwatchd -u /etc/ppp/ip-up -d /etc/ppp/ip-down pppoe0
 .Ed
+If your pppoe0 interface is your main connection to the internet, the typical
+use of the up/down scripts is to add and remove a default route. This is
+an example for an up script doing this:
+.Bd -literal -offset indent
+#! /bin/sh
+/sbin/route add default $4
+.Ed
+As described below the fourth command line parameter will contain the peer
+address of the pppoe link. The coresponding ip-down script is:
+.Bd -literal -offset indent
+#! /bin/sh
+/sbin/route delete default
+.Ed
+Note that this is not a good idea if you have pppoe0 configured to connect 
+only on demand (via the link1 flag), but works well for all permanent connected
+cases. Use
+.Bd -literal -offset indent
+! /sbin/route add default -iface 0.0.0.1
+.Ed
+in your
+.Pa /etc/ifconfig.pppoe0
+file in the on-demand case.
 .Sh PARAMETERS PASSED TO SCRIPTS
 The invoked scripts get four parameters passed:
 .Bl -tag -width destination
