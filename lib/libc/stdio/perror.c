@@ -1,4 +1,4 @@
-/*	$NetBSD: perror.c,v 1.15 1998/07/28 12:22:31 mycroft Exp $	*/
+/*	$NetBSD: perror.c,v 1.16 1998/09/09 12:15:55 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)perror.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: perror.c,v 1.15 1998/07/28 12:22:31 mycroft Exp $");
+__RCSID("$NetBSD: perror.c,v 1.16 1998/09/09 12:15:55 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,7 +71,7 @@ perror(s)
 {
 	struct iovec *v;
 	struct iovec iov[4];
-	static char buf[NL_TEXTMAX];
+	char buf[NL_TEXTMAX];
 
 	v = iov;
 	if (s && *s) {
