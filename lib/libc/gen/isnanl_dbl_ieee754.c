@@ -1,4 +1,4 @@
-/*	$NetBSD: isnanl_dbl_ieee754.c,v 1.1 2003/10/24 00:58:01 kleink Exp $	*/
+/*	$NetBSD: isnanl_dbl_ieee754.c,v 1.2 2003/10/24 10:30:36 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,19 +40,24 @@
 #if 0
 static char sccsid[] = "@(#)isinf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: isnanl_dbl_ieee754.c,v 1.1 2003/10/24 00:58:01 kleink Exp $");
+__RCSID("$NetBSD: isnanl_dbl_ieee754.c,v 1.2 2003/10/24 10:30:36 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
 #include <machine/ieee.h>
+#include <float.h>
 #include <math.h>
 
 #if 0	/* XXX Currently limited to internal use. */
 #ifdef __weak_alias
 __weak_alias(isnanl,_isnanl)
 #endif
+#endif
+
+#if LDBL_MANT_DIG != DBL_MANT_DIG
+#error double / long double mismatch
 #endif
 
 /*
