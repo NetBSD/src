@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.22 2000/06/13 13:36:42 ad Exp $	*/
+/*	$NetBSD: dpt.c,v 1.23 2000/07/18 15:27:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.22 2000/06/13 13:36:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.23 2000/07/18 15:27:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,6 @@ static char *dpt_cname[] = {
 	NULL,     "unknown adapter, please report using send-pr(1)",
 };
 
-TAILQ_HEAD(, dpt_softc) dpt_hba;	/* tailq of HBA softc's */
 void *dpt_sdh;				/* shutdown hook */
 
 /*
@@ -266,10 +265,8 @@ dpt_init(sc, intrstr)
 	}
 
 	/* Set shutdownhook before we start any device activity */
-	if (dpt_sdh == NULL) {
-		TAILQ_INIT(&dpt_hba);
+	if (dpt_sdh == NULL)
 		dpt_sdh = shutdownhook_establish(dpt_shutdown, NULL);
-	}
 
 	/* Get the page 0 inquiry data from the HBA */
 	dpt_hba_inquire(sc, &ei);
@@ -334,8 +331,6 @@ dpt_init(sc, intrstr)
 		link->openings = sc->sc_nccbs;	/* XXX */
 		config_found(&sc->sc_dv, link, scsiprint);
 	}
-
-	TAILQ_INSERT_TAIL(&dpt_hba, sc, sc_chain);
 }
 
 /*
@@ -346,14 +341,18 @@ void
 dpt_shutdown(xxx_sc)
 	void *xxx_sc;
 {
+	extern struct cfdriver dpt_cd;
 	struct dpt_softc *sc;
+	int i;
 
 	printf("shutting down dpt devices...");
 
-	for (sc = TAILQ_FIRST(&dpt_hba); sc != NULL; 
-	    sc = TAILQ_NEXT(sc, sc_chain))
+	for (i = 0; i < dpt_cd.cd_ndevs; i++) {
+		if ((sc = device_lookup(&dpt_cd, i)) == NULL)
+			continue; 
 		dpt_cmd(sc, NULL, 0, CP_IMMEDIATE, CPI_POWEROFF_WARN);
-
+	}
+	
 	DELAY(5000*1000);
 	printf(" done\n");
 }
