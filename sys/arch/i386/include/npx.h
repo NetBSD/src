@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)npx.h	5.3 (Berkeley) 1/18/91
- *	$Id: npx.h,v 1.9 1994/01/25 19:58:30 jtc Exp $
+ *	$Id: npx.h,v 1.10 1994/09/22 00:37:13 jtc Exp $
  */
 
 /*
@@ -89,49 +89,31 @@ struct	emcsts {
 
 /* Intel prefers long real (53 bit) precision */
 #define	__iBCS_NPXCW__		0x262
-/* wfj prefers temporary real (64 bit) precision */
-#define	__386BSD_NPXCW__	0x362
-/* */
 #define	__NetBSD_NPXCW__	0x127f
+
 /*
- * bde prefers 53 bit precision and all exceptions masked.
- *
  * The standard control word from finit is 0x37F, giving:
- *
  *	round to nearest
  *	64-bit precision
  *	all exceptions masked.
  *
- * Now I want:
- *
- *	affine mode for 287's (if they work at all) (1 in bitfield 1<<12)
- *	53-bit precision (2 in bitfield 3<<8)
- *	overflow exception unmasked (0 in bitfield 1<<3)
- *	zero divide exception unmasked (0 in bitfield 1<<2)
- *	invalid-operand exception unmasked (0 in bitfield 1<<0).
+ * Now we want:
+ *	affine mode (if we decide to support 287's)
+ *	round to nearest
+ *	53-bit precision
+ *	all exceptions masked.
  *
  * 64-bit precision often gives bad results with high level languages
  * because it makes the results of calculations depend on whether
  * intermediate values are stored in memory or in FPU registers.
  *
- * The "Intel" and wfj control words have:
- *
- *	underflow exception unmasked (0 in bitfield 1<<4)
- *
- * but that causes an unexpected exception in the test program 'paranoia'
- * and makes denormals useless (DBL_MIN / 2 underflows).  It doesn't make
- * a lot of sense to trap underflow without trapping denormals.
- *
- * Later I will want the IEEE default of all exceptions masked.  See the
- * 0.0 math manpage for why this is better.  The 0.1 math manpage is empty.
+ * The iBCS control word has underflow, overflow, zero divide, and invalid
+ * operation exceptions unmasked.  But that causes an unexpected exception
+ * in the test program 'paranoia' and makes denormals useless (DBL_MIN / 2
+ * underflows).  It doesn't make a lot of sense to trap underflow without
+ * trapping denormals.
  */
-#define	__BDE_NPXCW__		0x1272
-#define	__BETTER_BDE_NPXCW__	0x127f
 
-#ifdef __NetBSD__
 #define	__INITIAL_NPXCW__	__NetBSD_NPXCW__
-#else
-#define	__INITIAL_NPXCW__	__iBCS_NPXCW__
-#endif
 
 #endif /* !_I386_NPX_H_ */
