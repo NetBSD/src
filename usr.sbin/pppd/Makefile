@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1 1993/08/14 06:29:56 deraadt Exp $
+#	$Id: Makefile,v 1.2 1993/10/11 10:52:31 cgd Exp $
 
 #DEBUG_FLAGS = -DDEBUGFSM -DDEBUGLCP -DDEBUGIPCP -DDEBUGUPAP -DDEBUGCHAP \
 #	-DDEBUGMAIN
@@ -10,5 +10,8 @@ MAN8=	pppd.0
 SUBDIR=	pppstats chat
 BINMODE=4555
 BINOWN=	root
+
+LDADD=	-lcrypt
+DPADD=	${LIBCRYPT}
 
 .include <bsd.prog.mk>
