@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ktrace.h	8.1 (Berkeley) 6/6/93
+ *	from: @(#)ktrace.h	8.1 (Berkeley) 6/6/93
+ *	$Id: ktrace.h,v 1.2 1994/10/06 15:45:42 mycroft Exp $
  */
 
 #define DEF_POINTS (KTRFAC_SYSCALL | KTRFAC_SYSRET | KTRFAC_NAMEI | \
