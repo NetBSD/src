@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.39 2000/07/04 12:21:04 itojun Exp $
+# $NetBSD: mi,v 1.40 2000/07/10 23:43:36 soren Exp $
 ./usr/share/dict/README
 ./usr/share/dict/eign
 ./usr/share/dict/propernames
@@ -404,7 +404,6 @@
 ./usr/share/examples/supfiles/sup.de.netbsd.org
 ./usr/share/examples/supfiles/sup.jp.netbsd.org
 ./usr/share/examples/supfiles/sup.netbsd.org
-./usr/share/examples/supfiles/sup.no.netbsd.org
 ./usr/share/examples/supfiles/sup.uk.netbsd.org
 ./usr/share/examples/usermgmt/.cshrc
 ./usr/share/examples/usermgmt/.login
