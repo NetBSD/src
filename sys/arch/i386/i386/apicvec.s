@@ -1,4 +1,4 @@
-/* $NetBSD: apicvec.s,v 1.1.2.2 2000/02/21 21:54:01 sommerfeld Exp $ */	
+/* $NetBSD: apicvec.s,v 1.1.2.3 2000/08/18 13:50:22 sommerfeld Exp $ */	
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,11 +38,26 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 	
-#include <machine/i82489reg.h>	
-
+#include <machine/i82489reg.h>
+	
 #ifdef MULTIPROCESSOR
-	.globl	XINTR(ipi)	
+	.globl	XINTR(ipi)
 XINTR(ipi):			
+	pushl	$0		
+	pushl	$T_ASTFLT
+	INTRENTRY		
+	MAKE_FRAME
+	pushl	CPL
+	movl	_C_LABEL(lapic_ppr),%eax
+	movl	%eax,CPL
+	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
+        sti			/* safe to take interrupts.. */
+	call	_C_LABEL(i386_ipi_handler)
+	jmp	_C_LABEL(Xdoreti)
+
+#if defined(DDB)
+	.globl	XINTR(ddbipi)	
+XINTR(ddbipi):			
 	pushl	$0		
 	pushl	$T_ASTFLT
 	INTRENTRY		
@@ -52,10 +67,10 @@ XINTR(ipi):
 	movl	%eax,CPL
 	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
         sti			/* safe to take interrupts.. */
-	call	_C_LABEL(i386_ipi_handler)
+	call	_C_LABEL(ddb_ipi)
 	jmp	_C_LABEL(Xdoreti)
 #endif
-	
+#endif
 	
 	/*
 	 * Interrupt from the local APIC timer.
@@ -88,7 +103,9 @@ XINTR(softclock):
 	andl	$~(1<<SIR_CLOCK),_C_LABEL(ipending)
 	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
 	sti
+	call	_C_LABEL(apic_intlock)
 	call	_C_LABEL(softclock)
+	call	_C_LABEL(apic_intunlock)	
 	jmp	_C_LABEL(Xdoreti)
 	
 XINTR(softnet):
@@ -97,15 +114,17 @@ XINTR(softnet):
 	INTRENTRY		
 	MAKE_FRAME		
 	pushl	CPL
-	movl	$IPL_SOFTNET,CPL	
+	movl	$IPL_SOFTNET,CPL
 	andl	$~(1<<SIR_NET),_C_LABEL(ipending)
 	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI	
 	sti
+	call	_C_LABEL(apic_intlock)		
 	xorl	%edi,%edi
 	xchgl	_C_LABEL(netisr),%edi
 
 #include "net/netisr_dispatch.h"
 	
+	call	_C_LABEL(apic_intunlock)		
 	jmp	_C_LABEL(Xdoreti)
 
 XINTR(softser):	
@@ -118,7 +137,9 @@ XINTR(softser):
 	andl	$~(1<<SIR_SERIAL),_C_LABEL(ipending)
 	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI	
 	sti
+	call	_C_LABEL(apic_intlock)
 	call	_C_LABEL(comsoft)
+	call	_C_LABEL(apic_intunlock)	
 	jmp	_C_LABEL(Xdoreti)
 
 #if NIOAPIC > 0
@@ -133,6 +154,40 @@ XINTR(softser):
 	
 #define APICINTR(minor)							\
 XINTR(ioapic/**/minor):							\
+	pushl	$0							;\
+	pushl	$T_ASTFLT						;\
+	INTRENTRY							;\
+	MAKE_FRAME							;\
+	pushl	CPL							;\
+	movl	_C_LABEL(lapic_ppr),%eax				;\
+	movl	%eax,CPL						;\
+	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI			;\
+	sti								;\
+	orl	$minor,%eax						;\
+	incl	_C_LABEL(apic_intrcount)(,%eax,4)			;\
+	movl	_C_LABEL(apic_intrhand)(,%eax,4),%ebx /* chain head */	;\
+	testl	%ebx,%ebx						;\
+	jz	8f			/* oops, no handlers.. */	;\
+	call	_C_LABEL(apic_intlock)					;\
+7:									 \
+	movl	IH_ARG(%ebx),%eax	/* get handler arg */		;\
+	testl	%eax,%eax						;\
+	jnz	6f							;\
+	movl	%esp,%eax		/* 0 means frame pointer */	;\
+6:									 \
+	pushl	%eax							;\
+	call	IH_FUN(%ebx)		/* call it */			;\
+	addl	$4,%esp			/* toss the arg */		;\
+	incl	IH_COUNT(%ebx)		/* count the intrs */		;\
+	movl	IH_NEXT(%ebx),%ebx	/* next handler in chain */	;\
+	testl	%ebx,%ebx						;\
+	jnz	7b							;\
+	call	_C_LABEL(apic_intunlock)				;\
+8:									 \
+	jmp	_C_LABEL(Xdoreti)
+
+#define APICULINTR(minor)						\
+XINTR(ioapicul/**/minor):						\
 	pushl	$0							;\
 	pushl	$T_ASTFLT						;\
 	INTRENTRY							;\
@@ -162,7 +217,7 @@ XINTR(ioapic/**/minor):							\
 	jnz	7b							;\
 8:									 \
 	jmp	_C_LABEL(Xdoreti)
-	
+		
 APICINTR(0)
 APICINTR(1)
 APICINTR(2)
@@ -180,6 +235,23 @@ APICINTR(13)
 APICINTR(14)
 APICINTR(15)
 
+APICULINTR(0)
+APICULINTR(1)
+APICULINTR(2)
+APICULINTR(3)
+APICULINTR(4)
+APICULINTR(5)
+APICULINTR(6)
+APICULINTR(7)
+APICULINTR(8)
+APICULINTR(9)
+APICULINTR(10)
+APICULINTR(11)
+APICULINTR(12)
+APICULINTR(13)
+APICULINTR(14)
+APICULINTR(15)
+	
 	.globl _C_LABEL(apichandler)
 
 _C_LABEL(apichandler):	
@@ -191,6 +263,14 @@ _C_LABEL(apichandler):
 	.long	_C_LABEL(Xintrioapic10),_C_LABEL(Xintrioapic11)
 	.long	_C_LABEL(Xintrioapic12),_C_LABEL(Xintrioapic13)
 	.long	_C_LABEL(Xintrioapic14),_C_LABEL(Xintrioapic15)
+	.long	_C_LABEL(Xintrioapicul0),_C_LABEL(Xintrioapicul1)
+	.long	_C_LABEL(Xintrioapicul2),_C_LABEL(Xintrioapicul3)
+	.long	_C_LABEL(Xintrioapicul4),_C_LABEL(Xintrioapicul5)
+	.long	_C_LABEL(Xintrioapicul6),_C_LABEL(Xintrioapicul7)
+	.long	_C_LABEL(Xintrioapicul8),_C_LABEL(Xintrioapicul9)
+	.long	_C_LABEL(Xintrioapicul10),_C_LABEL(Xintrioapicul11)
+	.long	_C_LABEL(Xintrioapicul12),_C_LABEL(Xintrioapicul13)
+	.long	_C_LABEL(Xintrioapicul14),_C_LABEL(Xintrioapicul15)
 
 #endif
 	
