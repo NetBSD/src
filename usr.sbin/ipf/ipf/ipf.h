@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.h,v 1.1.1.3 1997/05/25 11:45:51 darrenr Exp $	*/
+/*	$NetBSD: ipf.h,v 1.1.1.4 1997/05/27 22:16:49 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993-1997 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ipf.h	1.12 6/5/96
- * $Id: ipf.h,v 1.1.1.3 1997/05/25 11:45:51 darrenr Exp $
+ * Id: ipf.h,v 2.0.2.6 1997/04/30 13:49:05 darrenr Exp 
  */
 
 #ifndef	__IPF_H__
