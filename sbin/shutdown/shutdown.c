@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)shutdown.c	5.16 (Berkeley) 2/3/91";*/
-static char rcsid[] = "$Id: shutdown.c,v 1.5 1994/02/16 02:56:04 cgd Exp $";
+static char rcsid[] = "$Id: shutdown.c,v 1.6 1994/09/17 00:02:23 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -435,7 +435,6 @@ nolog()
 {
 	int logfd;
 	char *ct, *ctime();
-	void finish();
 
 	(void)unlink(_PATH_NOLOGIN);	/* in case linked to another file */
 	(void)signal(SIGINT, finish);
@@ -456,7 +455,8 @@ nolog()
 void
 finish()
 {
-	(void)unlink(_PATH_NOLOGIN);
+	if (!killflg)
+		(void)unlink(_PATH_NOLOGIN);
 	exit(0);
 }
 
