@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 1993 Christopher G. Demetriou
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
  *
@@ -33,7 +34,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)kvm.c	5.18 (Berkeley) 5/7/91"; */
-static char rcsid[] = "$Id: kvm.c,v 1.8 1993/06/01 01:35:01 cgd Exp $";
+static char rcsid[] = "$Id: kvm.c,v 1.9 1993/06/01 01:48:36 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -858,7 +859,6 @@ kvm_procread(p, addr, buf, len)
         }
 #endif  /* i386 */
 	
-	swb.size = 0; /* XXX */
         if (memaddr == 0 && vatosw(p, addr & ~CLOFSET, &memaddr, &swb)) {
 		if (memaddr != 0) {
 			memaddr += addr & CLOFSET;
