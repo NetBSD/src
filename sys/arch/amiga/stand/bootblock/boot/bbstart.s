@@ -1,4 +1,4 @@
-/* $NetBSD: bbstart.s,v 1.6 2001/02/26 14:58:36 is Exp $ */
+/* $NetBSD: bbstart.s,v 1.7 2001/03/01 21:32:53 is Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,46 +80,46 @@ Lreltab:
  * autoload
  */
 Lautoload:
-	movl	a6,sp@-			|SysBase
-	movl	a1,sp@-			|IORequest
+	movl	%a6,sp@-			|SysBase
+	movl	%a1,sp@-			|IORequest
 
-	movl	#AUTOLOAD,d0		|Howmuch
-	movl	d0,a1@(IOlen)		| for the actual read...
-	movl	#0x10001,d1		|MEMF_CLEAR|MEMF_PUBLIC
-	jsr	a6@(LVOAllocMem)
-	movl	sp@+,a1			|IORequest
-	movl	sp@+,a6			|SysBase
-	orl	d0,d0
+	movl	#AUTOLOAD,%d0		|Howmuch
+	movl	%d0,a1@(IOlen)		| for the actual read...
+	movl	#0x10001,%d1		|MEMF_CLEAR|MEMF_PUBLIC
+	jsr	%a6@(LVOAllocMem)
+	movl	%sp@+,%a1			|IORequest
+	movl	%sp@+,%a6			|SysBase
+	orl	%d0,d0
 	jne	Lgotmem
-	movql	#1,d0
+	movql	#1,%d0
 	rts
 
 Lgotmem:
-	movl	d0,sp@-			|Address
-	movl	a1@(IOoff),sp@-		|Old offset
-	movl	a1,sp@-
-	movl	a6,sp@-
+	movl	%d0,sp@-			|Address
+	movl	%a1@(IOoff),%sp@-		|Old offset
+	movl	%a1,sp@-
+	movl	%a6,sp@-
 
 /* we've set IOlen above */
-	movl	d0,a1@(IObuf)
-	movw	#Cmd_Rd,a1@(IOcmd)
-	jsr	a6@(LVODoIO)
+	movl	%d0,a1@(IObuf)
+	movw	#Cmd_Rd,%a1@(IOcmd)
+	jsr	%a6@(LVODoIO)
 
-	movl	sp@+,a6
-	movl	sp@+,a1
-	movl	sp@+,a1@(IOoff)
+	movl	%sp@+,%a6
+	movl	%sp@+,%a1
+	movl	%sp@+,%a1@(IOoff)
 
-	tstb	a1@(IOerr)
+	tstb	%a1@(IOerr)
 	jne	Lioerr
-	addl	#Lrelocate-Lzero,sp@
+	addl	#Lrelocate-Lzero,%sp@
 
-	movl	a6,sp@-
-	jsr	a6@(LVOCacheClearU)
-	movl	sp@+,a6
+	movl	%a6,sp@-
+	jsr	%a6@(LVOCacheClearU)
+	movl	%sp@+,%a6
 	rts
 Lioerr:
-	movql	#1,d0
-	addql	#4,sp
+	movql	#1,%d0
+	addql	#4,%sp
 	rts
 #endif
 
@@ -139,42 +139,42 @@ Lioerr:
  */
  
 Lrelocate:
-	lea	pc@(Lzero),a0
-	movl	a0,d1
-	movw	pc@(Lreltab),a2
-	addl	d1,a2
+	lea	%pc@(Lzero),%a0
+	movl	%a0,d1
+	movw	%pc@(Lreltab),%a2
+	addl	%d1,a2
 	jra	Loopend
 	
 Loopw:
-	clrw	a2@+
-	movl	d1,a0	| for a variant with relative words, erase this line
+	clrw	%a2@+
+	movl	%d1,a0	| for a variant with relative words, erase this line
 Loopb:
-	addl	d0,a0
-	addl	d1,a0@
+	addl	%d0,a0
+	addl	%d1,a0@
 Loopend:
-	movq	#0,d0
-	movb	a2@,d0
-	clrb	a2@+	| bfclr a2@+{0:8} is still two shorts
-	tstb	d0	| we could save one short by using casb d0,d0,a2@+
+	movq	#0,%d0
+	movb	%a2@,%d0
+	clrb	%a2@+	| bfclr %a2@+{0:8} is still two shorts
+	tstb	%d0	| we could save one short by using casb %d0,d0,%a2@+
 	jne	Loopb
 
-	movw	a2@,d0
+	movw	%a2@,%d0
 	jne	Loopw
 
 Lendtab:
-	movl	a6,sp@-
-	jsr	a6@(LVOCacheClearU)
-	movl	sp@+,a6
+	movl	%a6,sp@-
+	jsr	%a6@(LVOCacheClearU)
+	movl	%sp@+,%a6
 
 /* We are relocated. Now it is safe to initialize _SysBase: */
 
-	movl	a6,_SysBase
+	movl	%a6,_SysBase
 
-	movl	a1,sp@-
+	movl	%a1,sp@-
 	bsr	_C_LABEL(pain)
 
 Lerr:
-	movq	#1,d0
+	movq	#1,%d0
 	rts
 
 	.comm _C_LABEL(SysBase),4
