@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.6 1995/03/28 18:38:37 jtc Exp $	*/
+/*	$NetBSD: genassym.c,v 1.7 1995/05/16 22:25:08 jtc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,7 +38,6 @@
  *	@(#)genassym.c	8.2 (Berkeley) 9/23/93
  */
 
-#define KERNEL
 #define _KERNEL
 
 #include <sys/param.h>
