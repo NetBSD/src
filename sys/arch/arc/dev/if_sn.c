@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.16 2000/02/22 11:26:00 soda Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.17 2000/02/25 13:28:42 soda Exp $	*/
 /*	$OpenBSD: if_sn.c,v 1.12 1999/05/13 15:44:48 jason Exp $	*/
 
 /*
@@ -30,8 +30,6 @@
 #include <sys/device.h>
 #include <vm/vm.h>
 #include <machine/autoconf.h>
-
-#include <arc/arc/arctype.h>	/* XXX - cputype */
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -67,7 +65,6 @@
 #include <machine/bus.h>
 
 #include <mips/locore.h> /* for mips3_HitFlushDCache() */
-#include <mips/cpuregs.h>	/* XXX */
 
 #include <arc/dev/dma.h>
 
@@ -778,19 +775,9 @@ sngetaddr(sc, ap)
 	sc->sc_csr->s_cr = 0;
 	wbflush();
 #else
-	if (cputype == MAGNUM) { /* XXX */
-		extern char prodid[];
+	extern u_int8_t prodid[]; /* XXX */
 
-		bcopy(prodid, ap, ETHER_ADDR_LEN);
-		return (0);
-	}
-
-	ap[0] = 0x08;
-	ap[1] = 0x00;
-	ap[2] = 0x20;
-	ap[3] = 0xa0;
-	ap[4] = 0x66;
-	ap[5] = 0x54;
+	bcopy(prodid, ap, ETHER_ADDR_LEN);
 #endif	
 	return (0);
 }
