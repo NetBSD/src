@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.2 1999/03/12 20:17:47 is Exp $	*/
+/*	$NetBSD: siop2.c,v 1.3 1999/03/13 21:30:55 is Exp $	*/
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -816,6 +816,12 @@ siopng_start (sc, target, lun, cbuf, clen, buf, len)
 		acb->ds.chain[nchain].databuf = (char *) kvtop (addr);
 		if (count < (tcount = NBPG - ((int) addr & PGOFSET)))
 			tcount = count;
+
+#if DEBUG_ONLY_IF_DESPERATE
+		printf("chain[%d]: count %d tcount %d vaddr %p paddr %p\n",
+			nchain, count, tcount, addr,
+			acb->ds.chain[nchain].databuf);
+#endif
 		acb->ds.chain[nchain].datalen = tcount;
 		addr += tcount;
 		count -= tcount;
@@ -902,11 +908,13 @@ siopng_checkintr(sc, istat, dstat, sist, status)
 	siop_regmap_p rp = sc->sc_siopp;
 	struct siop_acb *acb = sc->sc_nexus;
 	int	target = 0;
-	int	dfifo, dbc, sstat1;
+	int	dfifo, dbc, sstat0, sstat1, sstat2;
 
 	dfifo = rp->siop_dfifo;
 	dbc = rp->siop_dbc0;
+	sstat0 = rp->siop_sstat0;
 	sstat1 = rp->siop_sstat1;
+	sstat2 = rp->siop_sstat2;
 	rp->siop_ctest3 |= SIOP_CTEST8_CLF;
 	while ((rp->siop_ctest1 & SIOP_CTEST1_FMT) != SIOP_CTEST1_FMT)
 		;
@@ -1021,9 +1029,13 @@ siopng_checkintr(sc, istat, dstat, sist, status)
 		if (acb->iob_len) {
 			int adjust;
 			adjust = ((dfifo - (dbc & 0x7f)) & 0x7f);
-			if (sstat1 & SIOP_SSTAT1_ORF)
+			if (sstat0 & (1<<5))	/* sstat0 SODL lsb */
 				++adjust;
-			if (sstat1 & SIOP_SSTAT1_OLF)
+			if (sstat0 & (1<<6))	/* sstat0 SODR lsb */
+				++adjust;
+			if (sstat2 & (1<<5))	/* sstat2 SODL msb */
+				++adjust;
+			if (sstat2 & (1<<6))	/* sstat2 SODR msb */
 				++adjust;
 			acb->iob_curlen = *((long *)&rp->siop_dcmd) & 0xffffff;
 			acb->iob_curlen += adjust;
