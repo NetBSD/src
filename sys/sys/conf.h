@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.88 2001/05/02 10:32:08 scw Exp $	*/
+/*	$NetBSD: conf.h,v 1.88.2.1 2001/07/10 13:22:49 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -48,6 +48,7 @@
  */
 
 struct buf;
+struct knote;
 struct proc;
 struct tty;
 struct uio;
@@ -155,6 +156,7 @@ struct cdevsw {
 		(*d_tty)	__P((dev_t dev));
 	int	(*d_poll)	__P((dev_t dev, int events, struct proc *p));
 	paddr_t	(*d_mmap)	__P((dev_t, off_t, int));
+	int	(*d_kqfilter)	__P((dev_t dev, struct knote *kn));
 	int	d_type;
 };
 
@@ -168,12 +170,14 @@ extern struct cdevsw cdevsw[];
 #define	dev_type_stop(n)	void n __P((struct tty *, int))
 #define	dev_type_tty(n)		struct tty *n __P((dev_t))
 #define	dev_type_poll(n)	int n __P((dev_t, int, struct proc *))
+#define	dev_type_kqfilter(n)	int n __P((dev_t, struct knote *))
 #define	dev_type_mmap(n)	paddr_t n __P((dev_t, off_t, int))
 
 #define	cdev_decl(n) \
 	dev_decl(n,open); dev_decl(n,close); dev_decl(n,read); \
 	dev_decl(n,write); dev_decl(n,ioctl); dev_decl(n,stop); \
-	dev_decl(n,tty); dev_decl(n,poll); dev_decl(n,mmap)
+	dev_decl(n,tty); dev_decl(n,poll); dev_decl(n,mmap); \
+	dev_decl(n,kqfilter)
 
 /* helper macros */
 
@@ -181,103 +185,108 @@ extern struct cdevsw cdevsw[];
 #define	cdev__oci_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_noimpl(read,enodev), \
 	dev_noimpl(write,enodev), dev_init(c,n,ioctl), \
-	dev_noimpl(stop,enodev), 0, seltrue, dev_noimpl(mmap,enodev), 0 }
+	dev_noimpl(stop,enodev), 0, seltrue, dev_noimpl(mmap,enodev), \
+	dev_noimpl(kqfilter,enodev), 0 }
 
 /*  open, close, ioctl, poll */
 #define cdev__ocip_init(c,n) { \
         dev_init(c,n,open), dev_init(c,n,close), dev_noimpl(read,enodev), \
         dev_noimpl(write,enodev), dev_init(c,n,ioctl), \
         dev_noimpl(stop,enodev), 0, dev_init(c,n,poll), \
-        dev_noimpl(mmap,enodev), 0 }
+	dev_noimpl(mmap,enodev), dev_noimpl(kqfilter,enodev), 0 }
 
 /*  open, close, ioctl, poll, mmap */
 #define cdev__ocipm_init(c,n) { \
         dev_init(c,n,open), dev_init(c,n,close), dev_noimpl(read,enodev), \
         dev_noimpl(write,enodev), dev_init(c,n,ioctl), \
-        dev_noimpl(stop,enodev), 0, dev_init(c,n,poll), dev_init(c,n,mmap), 0 }
+        dev_noimpl(stop,enodev), 0, dev_init(c,n,poll), \
+	dev_init(c,n,mmap), dev_noimpl(kqfilter,enodev), 0 }
 
 /*  open, close, read, ioctl */
 #define	cdev__ocri_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_noimpl(write,enodev), dev_init(c,n,ioctl), \
-	dev_noimpl(stop,enodev), 0, seltrue, dev_noimpl(mmap,enodev), 0 }
+	dev_noimpl(stop,enodev), 0, seltrue, dev_noimpl(mmap,enodev), \
+	dev_noimpl(kqfilter,enodev), 0 }
 
 /*  open, close, read, write */
 #define	cdev__ocrw_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_noimpl(ioctl,enodev), \
-	dev_noimpl(stop,enodev), 0, seltrue, dev_noimpl(mmap,enodev), 0 }
+	dev_noimpl(stop,enodev), 0, seltrue, dev_noimpl(mmap,enodev), \
+	dev_noimpl(kqfilter,enodev), 0 }
 
 /*  open, close, read, write, ioctl */
 #define	cdev__ocrwi_t_init(c,n,t) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_noimpl(stop,enodev), \
-	0, seltrue, dev_noimpl(mmap,enodev), t }
+	0, seltrue, dev_noimpl(mmap,enodev), dev_noimpl(kqfilter,enodev), t }
 #define	cdev__ocrwi_init(c,n)	cdev__ocrwi_t_init(c,n,0)
 
 /*  open, close, read, write, ioctl, mmap */
 #define	cdev__ocrwim_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_noimpl(stop,enodev), \
-	0, seltrue, dev_init(c,n,mmap), 0 }
+	0, seltrue, dev_init(c,n,mmap), dev_noimpl(kqfilter,enodev), 0 }
 
 /*  open, close, read, ioctl, poll */
 #define	cdev__ocrip_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_noimpl(write,enodev), dev_init(c,n,ioctl), \
 	dev_noimpl(stop,enodev), 0, dev_init(c,n,poll), \
-	dev_noimpl(mmap,enodev), 0 }
+	dev_noimpl(mmap,enodev), dev_noimpl(kqfilter,enodev), 0 }
 
 /*  open, close, read, write, poll */
 #define	cdev__ocrwp_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_noimpl(ioctl,enodev), \
 	dev_noimpl(stop,enodev), 0, dev_init(c,n,poll), \
-	dev_noimpl(mmap,enodev), 0 }
+	dev_noimpl(mmap,enodev), dev_noimpl(kqfilter,enodev), 0 }
 
 /*  open, close, read, write, ioctl, poll */
 #define cdev__ocrwip_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_noimpl(stop,enodev), \
-	0, dev_init(c,n,poll), dev_noimpl(mmap,enodev), 0 }
+	0, dev_init(c,n,poll), dev_noimpl(mmap,enodev), \
+	dev_noimpl(kqfilter,enodev), 0 }
 
 /*  open, close, (read), (write), ioctl, poll, mmap */
 #define	cdev__ocRWipm_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), \
 	dev_noimpl(read,nullop), dev_noimpl(write,nullop), \
 	dev_init(c,n,ioctl), dev_noimpl(stop,enodev), 0, \
-	dev_init(c,n,poll), dev_init(c,n,mmap), 0 }
+	dev_init(c,n,poll), dev_init(c,n,mmap), dev_noimpl(kqfilter,enodev), 0 }
 
 /*  open, close, read, write, ioctl, stop, poll */
 #define	cdev__ocrwisp_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	0, dev_init(c,n,poll), dev_noimpl(mmap,enodev), 0 }
+	0, dev_init(c,n,poll), dev_noimpl(mmap,enodev), \
+	dev_noimpl(kqfilter,enodev), 0 }
 
 /*  open, close, write, ioctl */
 #define	cdev__ocwi_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_noimpl(read,enodev), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_noimpl(stop,enodev), \
-	0, seltrue, dev_noimpl(mmap,enodev), 0 }
+	0, seltrue, dev_noimpl(mmap,enodev), dev_noimpl(kqfilter,enodev), 0 }
 
-/*  open, close, read, write, ioctl, stop, tty, poll */
-#define	cdev__tty_init(c,n,t) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	dev_init(c,n,tty), dev_init(c,n,poll), dev_noimpl(mmap,enodev), t }
-
-/*  open, close, read, write, ioctl, stop, tty, poll, mmap */
+/*  open, close, read, write, ioctl, stop, tty, poll, mmap, kqfilter */
 #define	cdev__ttym_init(c,n,t) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	dev_init(c,n,tty), dev_init(c,n,poll), dev_init(c,n,mmap), t }
+	dev_init(c,n,tty), dev_init(c,n,poll), dev_init(c,n,mmap), \
+	dev_init(c,n,kqfilter), t }
 
 /* open, close, read, write, ioctl */
 #define	cdev_disk_init(c,n)	cdev__ocrwi_t_init(c,n,D_DISK)
 #define	cdev_tape_init(c,n)	cdev__ocrwi_t_init(c,n,D_TAPE)
 
-/* open, close, read, write, ioctl, stop, tty, poll */
-#define	cdev_tty_init(c,n)	cdev__tty_init(c,n,D_TTY)
+/* open, close, read, write, ioctl, stop, tty, poll, ttykqfilter */
+#define	cdev_tty_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
+	dev_init(c,n,tty), dev_init(c,n,poll), dev_noimpl(mmap,enodev), \
+	ttykqfilter, D_TTY }
 
 /* open, close, read, ioctl, poll */
 #define	cdev_mouse_init(c,n)	cdev__ocrip_init(c,n)
@@ -290,7 +299,7 @@ extern struct cdevsw cdevsw[];
 	dev_noimpl(open,lkmenodev), dev_noimpl(close,enodev), \
 	dev_noimpl(read,enodev), dev_noimpl(write,enodev), \
 	dev_noimpl(ioctl,enodev), dev_noimpl(stop,enodev), \
-	0, seltrue, dev_noimpl(mmap,enodev) }
+	0, seltrue, dev_noimpl(mmap,enodev), dev_noimpl(kqfilter,enodev), 0 }
 #else
 #define	cdev_lkm_dummy()	cdev_notdef()
 #endif
@@ -299,37 +308,43 @@ extern struct cdevsw cdevsw[];
 	dev_noimpl(open,enodev), dev_noimpl(close,enodev), \
 	dev_noimpl(read,enodev), dev_noimpl(write,enodev), \
 	dev_noimpl(ioctl,enodev), dev_noimpl(stop,enodev), \
-	0, seltrue, dev_noimpl(mmap,enodev) }
+	0, seltrue, dev_noimpl(mmap,enodev), dev_noimpl(kqfilter,enodev), 0 }
 
-/* open, close, read, write, ioctl, stop, poll -- XXX should be a tty */
+/* open, close, read, write, ioctl, stop, poll, kqfilter -- XXX should be a tty
+but needs own kqfilter */
 #define	cdev_cn_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	0, dev_init(c,n,poll), dev_noimpl(mmap,enodev), D_TTY }
+	0, dev_init(c,n,poll), dev_noimpl(mmap,enodev), \
+	dev_init(c,n,kqfilter), D_TTY }
 
 /* open, (close), read, write, ioctl, (stop), poll -- XXX should be a tty */
 #define cdev_ctty_init(c,n) { \
 	dev_init(c,n,open), dev_noimpl(close,nullop), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_noimpl(stop,nullop), \
-	0, dev_init(c,n,poll), dev_noimpl(mmap,enodev), D_TTY }
+	0, dev_init(c,n,poll), dev_noimpl(mmap,enodev), \
+	dev_noimpl(kqfilter,enodev), D_TTY }
 
 /* open, close, read, write, mmap */
 #define cdev_mm_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_noimpl(ioctl,enodev), \
-	dev_noimpl(stop,enodev), 0, seltrue, dev_init(c,n,mmap) }
+	dev_noimpl(stop,enodev), 0, seltrue, dev_init(c,n,mmap), \
+	dev_noimpl(kqfilter,enodev), 0 }
 
 /* (open), (close), read, write */
 #define cdev_swap_init(c,n) { \
 	dev_noimpl(open,nullop), dev_noimpl(close,nullop), \
 	dev_init(c,n,read), dev_init(c,n,write), dev_noimpl(ioctl,enodev), \
-	dev_noimpl(stop,enodev), 0, seltrue, dev_noimpl(mmap,enodev) }
+	dev_noimpl(stop,enodev), 0, seltrue, dev_noimpl(mmap,enodev), \
+	dev_noimpl(kqfilter,enodev), 0 }
 
-/* open, close, read, write, ioctl, (stop), tty, poll */
+/* open, close, read, write, ioctl, (stop), tty, poll, kqfilter */
 #define cdev_ptc_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_noimpl(stop,nullop), \
-	dev_init(c,n,tty), dev_init(c,n,poll), dev_noimpl(mmap,enodev), D_TTY }
+	dev_init(c,n,tty), dev_init(c,n,poll), dev_noimpl(mmap,enodev), \
+	dev_init(c,n,kqfilter), D_TTY }
 
 /* open, close, read, ioctl, poll -- XXX should be a generic device */
 #define cdev_log_init(c,n)	cdev__ocrip_init(c,n)
@@ -340,7 +355,7 @@ extern struct cdevsw cdevsw[];
 	dev_init(c,n,open), dev_noimpl(close,enodev), \
 	dev_noimpl(read,enodev), dev_noimpl(write,enodev), \
 	dev_noimpl(ioctl,enodev), dev_noimpl(stop,enodev), \
-	0, seltrue, dev_noimpl(mmap,enodev) }
+	0, seltrue, dev_noimpl(mmap,enodev), dev_noimpl(kqfilter,enodev), 0 }
 
 /* open, close, read, write, ioctl, poll -- XXX should be generic device */
 #define cdev_bpftun_init(c,n)	cdev__ocrwip_init(c,n)
@@ -371,7 +386,8 @@ extern struct cdevsw cdevsw[];
 #define cdev_audio_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_noimpl(stop,enodev), \
-	0, dev_init(c,n,poll), dev_init(c,n,mmap) }
+	0, dev_init(c,n,poll), dev_init(c,n,mmap), \
+	dev_noimpl(kqfilter,enodev), 0 }
 
 /* open, close, read, ioctl */
 #define cdev_ipf_init(c,n)	cdev__ocri_init(c,n)
@@ -381,7 +397,7 @@ extern struct cdevsw cdevsw[];
 	dev_init(c,n,open), dev_noimpl(close,enodev), \
 	dev_noimpl(read,enodev), dev_noimpl(write,enodev), \
 	dev_noimpl(ioctl,enodev), dev_noimpl(stop,enodev), \
-	0, seltrue, dev_noimpl(mmap,enodev) }
+	0, seltrue, dev_noimpl(mmap,enodev), dev_noimpl(kqfilter,enodev), 0 }
 
 /* open, close, read, write, ioctl, stop, tty, poll, mmap */
 #define cdev_wsdisplay_init(c,n)	cdev__ttym_init(c,n,D_TTY)
@@ -403,10 +419,12 @@ extern struct cdevsw cdevsw[];
 #define cdev_bktr_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_noimpl(write,enodev), dev_init(c,n,ioctl), \
-	dev_noimpl(stop,enodev), 0, seltrue, (dev_init(c,n,mmap)) }
+	dev_noimpl(stop,enodev), 0, seltrue, \
+	dev_init(c,n,mmap), dev_noimpl(kqfilter,enodev), 0 }
 
 /* open, close, read, write, ioctl, stop, tty, poll, mmap */
 #define	cdev_pc_init(c,n)	cdev__ttym_init(c,n,D_TTY)
+#define	pckqfilter		ttykqfilter
 
 /* open, close, write, ioctl */
 #define cdev_lpt_init(c,n)	cdev__ocwi_init(c,n)
@@ -514,10 +532,12 @@ cdev_decl(ctty);
 
 #define	ptctty		ptytty
 #define	ptcioctl	ptyioctl
+#define	ptckqfilter	ttykqfilter
 cdev_decl(ptc);
 
 #define	ptstty		ptytty
 #define	ptsioctl	ptyioctl
+#define	ptskqfilter	ttykqfilter
 cdev_decl(pts);
 
 /*
