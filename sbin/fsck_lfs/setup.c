@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.17 2003/08/07 10:04:24 agc Exp $ */
+/* $NetBSD: setup.c,v 1.18 2004/09/15 03:24:09 minoura Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -98,28 +98,8 @@
 #include "extern.h"
 #include "fsutil.h"
 
-#define POWEROF2(num)	(((num) & ((num) - 1)) == 0)
-
-u_quad_t maxtable[] = {
-	 /* 1 */ -1,
-	 /* 2 */ -1,
-	 /* 4 */ -1,
-	 /* 8 */ -1,
-	 /* 16 */ -1,
-	 /* 32 */ -1,
-	 /* 64 */ -1,
-	 /* 128 */ -1,
-	 /* 256 */ -1,
-	 /* 512 */ NDADDR + 128 + 128 * 128 + 128 * 128 * 128,
-	 /* 1024 */ NDADDR + 256 + 256 * 256 + 256 * 256 * 256,
-	 /* 2048 */ NDADDR + 512 + 512 * 512 + 512 * 512 * 512,
-	 /* 4096 */ NDADDR + 1024 + 1024 * 1024 + 1024 * 1024 * 1024,
-	 /* 8192 */ 1 << 31,
-	 /* 16 K */ 1 << 31,
-	 /* 32 K */ 1 << 31,
-};
-
 static struct disklabel *getdisklabel(const char *, int);
+static uint64_t calcmaxfilesize(int);
 
 ufs_daddr_t *din_table;
 SEGUSE *seg_table;
@@ -137,6 +117,21 @@ useless(void)
 }
 #endif
 
+/*
+ * calculate the maximum file size allowed with the specified block shift.
+ */
+static uint64_t
+calcmaxfilesize(int bshift)
+{
+	uint64_t nptr; /* number of block pointers per block */
+	uint64_t maxblock;
+
+	nptr = (1 << bshift) / sizeof(uint32_t);
+	maxblock = NDADDR + nptr + nptr * nptr + nptr * nptr * nptr;
+
+	return maxblock << bshift;
+}
+ 
 int
 setup(const char *dev)
 {
@@ -220,7 +215,7 @@ setup(const char *dev)
 		maxfsblock = fs->lfs_size * (fs->lfs_bsize / dev_bsize);
 	else
 		maxfsblock = fs->lfs_size;
-	maxfilesize = maxtable[fs->lfs_bshift] << fs->lfs_bshift;
+	maxfilesize = calcmaxfilesize(fs->lfs_bshift);
 	if ((fs->lfs_minfree < 0 || fs->lfs_minfree > 99)) {
 		pfatal("IMPOSSIBLE MINFREE=%d IN SUPERBLOCK",
 		    fs->lfs_minfree);
