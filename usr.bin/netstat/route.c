@@ -49,6 +49,12 @@ static char sccsid[] = "@(#)route.c	5.20 (Berkeley) 11/29/90";
 #include <netns/ns.h>
 #endif
 
+#ifdef ISO
+#include <netiso/iso.h>
+#include <net/if_dl.h>
+#include <netiso/iso_snpac.h>
+#endif
+
 #include <netdb.h>
 #include <sys/kinfo.h>
 
@@ -84,33 +90,17 @@ struct bits {
 	{ 0 }
 };
 
-/*
- * Print address family.
- */
-void
-p_proto(proto)
-	int	proto;
-{
-	switch (proto)
-	{
-	case AF_INET:
-		printf("inet");
-		break;
-	case AF_NS:
-		printf("ns");
-		break;
-	case AF_ISO:
-		printf("iso");
-		break;
-	case AF_CCITT:
-		printf("ccitt");
-		break;
-	default:
-		printf("%d", proto);
-		break;
-	}
-}
-
+#ifdef ISO
+struct bits2 {
+	short	b_mask;
+	char	b_val;
+} bits2[] = {
+	{ SNPA_ES,	'E' },
+	{ SNPA_IS,	'I' },
+	{ SNPA_PERM,	'P' },
+	{ 0 }
+};
+#endif
 
 /*
  * Print routing tables.
@@ -127,11 +117,6 @@ routepr(hostaddr, netaddr, hashsizeaddr, treeaddr)
 	int i, doinghost = 1;
 
 	printf("Routing tables\n");
-	if (Aflag)
-		printf("%-8.8s ","Address");
-	printf("%-16.16s %-18.18s %-6.6s  %6.6s%8.8s  %s\n",
-		"Destination", "Gateway",
-		"Flags", "Refs", "Use", "Interface");
 	if (treeaddr)
 		return treestuff(treeaddr);
 	if (hostaddr == 0) {
@@ -172,6 +157,56 @@ again:
 	return;
 }
 
+
+char *
+af_name(af)
+{
+	static char buf[10];
+
+	switch(af) {
+	case AF_INET:
+		return "inet";
+	case AF_UNIX:
+		return "unix";
+	case AF_NS:
+		return "ns";
+	case AF_ISO:
+		return "iso";
+	default:
+		sprintf(buf, "%d", af);
+	}
+	return buf;
+}
+
+void
+p_heading(af)
+{
+	if (Aflag)
+		printf("%-8.8s ","Address");
+	switch(af) {
+	case AF_INET:
+		printf("%-16.16s %-18.18s %-6.6s %6.6s %8.8s  %s\n",
+			"Destination", "Gateway",
+			"Flags", "Refs", "Use", "Interface");
+		break;
+	case AF_ISO:
+		if (nflag) {
+			printf("%-50.50s %-17.17s %-5.5s %s\n",
+				"Destination", "Media addr", "Flags", "Intf");
+		} else {
+			printf("%-12.12s %-19.19s %-17.17s %-6.6s %6s %8s %s\n",
+				"NSAP-prefix", "Area/Id", "Media addr", 
+				"Flags", "Refs", "Use", "Intf");
+		}
+		break;
+	default:
+		printf("%-16.16s %-18.18s %-6.6s  %6.6s%8.8s  %s\n",
+			"Destination", "Gateway",
+			"Flags", "Refs", "Use", "Interface");
+	}
+}
+
+
 static union {
 	struct	sockaddr u_sa;
 	u_short	u_data[128];
@@ -197,9 +232,9 @@ off_t rtree;
 				p_tree(head.rnh_treetop);
 			}
 		} else if (af == AF_UNSPEC || af == head.rnh_af) {
-			printf("\nRoute Tree for Protocol Family ");
-			p_proto(head.rnh_af);
-			printf(":\n");
+			printf("\nRoute Tree for Protocol Family %s:\n",
+					af_name(head.rnh_af));
+			p_heading(head.rnh_af);
 			do_rtent = 1;
 			p_tree(head.rnh_treetop);
 		}
@@ -338,6 +373,10 @@ register struct rt_msghdr *rtm;
 	putchar('\n');
 }
 
+#ifdef ISO
+extern char* dl_print();
+#endif
+
 p_sockaddr(sa, flags, width)
 struct sockaddr *sa;
 int flags, width;
@@ -359,6 +398,15 @@ int flags, width;
 #ifdef NS
 	case AF_NS:
 		cp = ns_print((struct sockaddr_ns *)sa);
+		break;
+#endif
+#ifdef ISO
+	case AF_ISO:
+		cp = iso_ntoa(&((struct sockaddr_iso *)sa)->siso_addr);
+		break;
+
+	case AF_LINK:
+		cp = dl_print((struct sockaddr_dl *)sa);
 		break;
 #endif
 
@@ -399,17 +447,114 @@ char *format;
 	printf(format, name);
 }
 
-p_rtentry(rt)
-register struct rtentry *rt;
-{
-	char name[16];
-	register struct sockaddr *sa;
-	struct ifnet ifnet;
 
-	p_sockaddr(kgetsa(rt_key(rt)), rt->rt_flags, 16);
-	p_sockaddr(kgetsa(rt->rt_gateway), RTF_HOST, 18);
-	p_flags(rt->rt_flags, "%-6.6s ");
-	printf("%6d %8d ", rt->rt_refcnt, rt->rt_use);
+#ifdef ISO
+
+p_iso_flags(f, lli, format)
+	register int f;
+	char *format;
+	caddr_t lli;
+{
+	struct llinfo_llc ls;
+	char name[33], *flags;
+	register struct bits *p = bits;
+	register struct bits2 *p2 = bits2;
+
+	for (flags = name; p->b_mask; p++)
+		if (p->b_mask & f)
+			*flags++ = p->b_val;
+	if (lli) {
+		kget(lli, ls);
+		for (; p2->b_mask; p2++)
+			if (p2->b_mask & ls.lc_flags)
+				*flags++ = p2->b_val;
+	}
+	*flags = '\0';
+	printf(format, name);
+}
+
+static char *hexlist = "0123456789abcdef";
+
+char *
+iso_areatoa(isoa)
+        const struct iso_addr *isoa;
+{
+	static char obuf[16];
+	register char *out = obuf; 
+	register int i;
+	/* Assumption: ISO address always with 2 byte area, 1 byte NSEL */
+	/* and 6 bytes ID */
+	register u_char *in = (u_char*)isoa->isoa_genaddr + isoa->isoa_len - 9;
+	u_char *inlim = in + 2;
+
+	if (isoa->isoa_len < 10) return "";
+	while (in < inlim) {
+		i = *in++;
+		out[1] = hexlist[i & 0xf];
+		i >>= 4;
+		out[0] = hexlist[i];
+		out += 2;
+	}
+	*out = 0;
+	return(obuf);
+}
+
+char *
+iso_idtoa(isoa)
+        const struct iso_addr *isoa;
+{
+	static char obuf[16];
+	register char *out = obuf; 
+	register int i;
+	/* Assumption: ISO address always with 1 byte NSEL and 6 bytes ID */
+	register u_char *in = (u_char*)isoa->isoa_genaddr + isoa->isoa_len - 7;
+	u_char *inlim = in + 6;
+
+	if (isoa->isoa_len < 10) return "";
+	out[1] = 0;
+	while (in < inlim) {
+		i = *in++;
+		if ((inlim - in) % 2 || out == obuf)
+			*out++ = '.';
+		out[1] = hexlist[i & 0xf];
+		i >>= 4;
+		out[0] = hexlist[i];
+		out += 2;
+	}
+	*out = 0;
+	return(obuf + 1);
+}
+
+p_iso_route(rt, sa)
+	struct rtentry *rt;
+	struct sockaddr *sa;
+{
+	struct sockaddr_iso *siso = (struct sockaddr_iso *)sa;
+
+	if (nflag) {
+		p_sockaddr(sa, rt->rt_flags, 50);
+		p_sockaddr(kgetsa(rt->rt_gateway), 0, 17);
+		p_iso_flags(rt->rt_flags, rt->rt_llinfo, "%-6.6s");
+		p_interface_nl(rt);
+	} else {
+		p_sockaddr(sa, rt->rt_flags, 12);
+		printf("%4.4s/%14.14s ",
+			iso_areatoa(&siso->siso_addr),
+			iso_idtoa(&siso->siso_addr));
+		p_sockaddr(kgetsa(rt->rt_gateway), 0, 17);
+		p_iso_flags(rt->rt_flags, rt->rt_llinfo, "%-6.6s ");
+		printf("%6d %8d", rt->rt_refcnt, rt->rt_use);
+		p_interface_nl(rt);
+	}
+}
+#endif /* ISO */
+
+p_interface_nl(rt)
+	struct rtentry *rt;
+{
+	struct ifnet ifnet;
+	char name[16];
+
 	if (rt->rt_ifp == 0) {
 		putchar('\n');
 		return;
@@ -418,6 +563,23 @@ register struct rtentry *rt;
 	kvm_read((off_t)ifnet.if_name, name, 16);
 	printf(" %.15s%d%s", name, ifnet.if_unit,
 		rt->rt_nodes[0].rn_dupedkey ? " =>\n" : "\n");
+}
+
+p_rtentry(rt)
+register struct rtentry *rt;
+{
+	struct sockaddr *sa;
+
+	sa = kgetsa(rt_key(rt));
+	if (sa->sa_family == AF_ISO) {
+		p_iso_route(rt, sa);
+		return;
+	}
+	p_sockaddr(sa, rt->rt_flags, 16);
+	p_sockaddr(kgetsa(rt->rt_gateway), RTF_HOST, 18);
+	p_flags(rt->rt_flags, "%-6.6s ");
+	printf("%6d %8d ", rt->rt_refcnt, rt->rt_use);
+	p_interface_nl(rt);
 }
 
 p_ortentry(rt)
@@ -642,3 +804,25 @@ char *p0;
 	}
 }
 #endif /* NS */
+#ifdef ISO
+
+char *
+dl_print(sdl)
+	struct sockaddr_dl *sdl;
+{
+	static char buf[20];
+	char *cp = buf, *dp;
+	int i;
+
+	dp = sdl->sdl_data;
+	for (i = 0; i < sdl->sdl_nlen; i++)
+		*cp++ = *dp++;
+	if (sdl->sdl_nlen != 0 && sdl->sdl_alen != 0)
+		*cp++ = ':';
+	for (; i < sdl->sdl_nlen + sdl->sdl_alen; i++)
+		cp += sprintf(cp, "%x%c", *dp++ & 0xff,
+			i + 1 == sdl->sdl_nlen + sdl->sdl_alen ? ' ' : '.');
+	*cp = 0;
+	return buf;
+}
+#endif /* ISO */
