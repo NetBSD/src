@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.37 2001/07/15 01:44:10 matt Exp $	 */
+/*	$NetBSD: reloc.c,v 1.38 2001/07/15 03:09:22 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -721,7 +721,8 @@ _rtld_relocate_objects(first, bind_now, dodebug)
 
 		/* Set the special PLTGOT entries. */
 		if (obj->pltgot != NULL) {
-#if defined(__i386__) || defined(__m68k__) || defined(__x86_64__)
+#if defined(__arm__) || defined(__i386__) || defined(__m68k__) || \
+    defined(__x86_64__)
 			obj->pltgot[1] = (Elf_Addr) obj;
 			obj->pltgot[2] = (Elf_Addr) & _rtld_bind_start;
 #endif
