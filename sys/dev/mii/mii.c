@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.11 1999/02/05 02:46:34 thorpej Exp $	*/
+/*	$NetBSD: mii.c,v 1.12 1999/08/03 19:41:49 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -142,58 +142,6 @@ mii_submatch(parent, cf, aux)
 }
 
 /*
- * Given an ifmedia word, return the corresponding ANAR value.
- */
-int
-mii_anar(media)
-	int media;
-{
-	int rv;
-
-	switch (media & (IFM_TMASK|IFM_NMASK|IFM_FDX)) {
-	case IFM_ETHER|IFM_10_T:
-		rv = ANAR_10|ANAR_CSMA;
-		break;
-	case IFM_ETHER|IFM_10_T|IFM_FDX:
-		rv = ANAR_10_FD|ANAR_CSMA;
-		break;
-	case IFM_ETHER|IFM_100_TX:
-		rv = ANAR_TX|ANAR_CSMA;
-		break;
-	case IFM_ETHER|IFM_100_TX|IFM_FDX:
-		rv = ANAR_TX_FD|ANAR_CSMA;
-		break;
-	case IFM_ETHER|IFM_100_T4:
-		rv = ANAR_T4|ANAR_CSMA;
-		break;
-	default:
-		rv = 0;
-		break;
-	}
-
-	return (rv);
-}
-
-/*
- * Given a BMCR value, return the corresponding ifmedia word.
- */
-int
-mii_media_from_bmcr(bmcr)
-	int bmcr;
-{
-	int rv = IFM_ETHER;
-
-	if (bmcr & BMCR_S100)
-		rv |= IFM_100_TX;
-	else
-		rv |= IFM_10_T;
-	if (bmcr & BMCR_FDX)
-		rv |= IFM_FDX;
-
-	return (rv);
-}
-
-/*
  * Media changed; notify all PHYs.
  */
 int
@@ -244,58 +192,4 @@ mii_pollstat(mii)
 	for (child = LIST_FIRST(&mii->mii_phys); child != NULL;
 	     child = LIST_NEXT(child, mii_list))
 		(void) (*child->mii_service)(child, mii, MII_POLLSTAT);
-}
-
-/*
- * Initialize generic PHY media based on BMSR, called when a PHY is
- * attached.  We expect to be set up to print a comma-separated list
- * of media names.  Does not print a newline.
- */
-void
-mii_add_media(mii, bmsr, instance)
-	struct mii_data *mii;
-	int bmsr, instance;
-{
-	const char *sep = "";
-
-#define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
-#define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
-
-	if (bmsr & BMSR_10THDX) {
-		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, 0, instance), 0);
-		PRINT("10baseT");
-	}
-	if (bmsr & BMSR_10TFDX) {
-		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, IFM_FDX, instance),
-		    BMCR_FDX);
-		PRINT("10baseT-FDX");
-	}
-	if (bmsr & BMSR_100TXHDX) {
-		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, 0, instance),
-		    BMCR_S100);
-		PRINT("100baseTX");
-	}
-	if (bmsr & BMSR_100TXFDX) {
-		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_FDX, instance),
-		    BMCR_S100|BMCR_FDX);
-		PRINT("100baseTX-FDX");
-	}
-	if (bmsr & BMSR_100T4) {
-		/*
-		 * XXX How do you enable 100baseT4?  I assume we set
-		 * XXX BMCR_S100 and then assume the PHYs will take
-		 * XXX watever action is necessary to switch themselves
-		 * XXX into T4 mode.
-		 */
-		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_T4, 0, instance),
-		    BMCR_S100);
-		PRINT("100baseT4");
-	}
-	if (bmsr & BMSR_ANEG) {
-		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_AUTO, 0, instance),
-		    BMCR_AUTOEN);
-		PRINT("auto");
-	}
-#undef ADD
-#undef PRINT
 }
