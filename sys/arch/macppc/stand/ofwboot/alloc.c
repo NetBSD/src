@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.3 2002/09/20 03:20:24 wrstuden Exp $	*/
+/*	$NetBSD: alloc.c,v 1.4 2003/02/17 08:21:39 soren Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -186,7 +186,7 @@ alloc(size)
 		f->size = size;
 #ifdef ALLOC_TRACE
 		printf("=%lx (new chunk size %u)\n",
-		    (u_long)(help + OVERHEAD), f->f_size);
+		    (u_long)(help + OVERHEAD), f->size);
 #endif
 		goto out;
 	}
