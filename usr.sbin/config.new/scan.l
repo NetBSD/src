@@ -114,7 +114,7 @@ needs-flag	{ yylval.val = FI_NEEDSFLAG; return FFLAG; }
 {PATH}		{ yylval.str = intern(yytext); return PATHNAME; }
 {WORD}		{ yylval.str = intern(yytext); return WORD; }
 
-\"[^"]+/\" {
+\"([^"]|\\\")*/\" {
 		yylval.str = intern(yytext + 1);
 		(void)input();	/* eat closing quote */
 		return WORD;
