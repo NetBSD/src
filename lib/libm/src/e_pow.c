@@ -11,7 +11,7 @@
  */
 
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: e_pow.c,v 1.8 1995/05/10 20:45:57 jtc Exp $";
+static char rcsid[] = "$NetBSD: e_pow.c,v 1.9 1995/05/12 04:57:32 jtc Exp $";
 #endif
 
 /* __ieee754_pow(x,y) return x**y
@@ -160,7 +160,7 @@ ivln2_l  =  1.92596299112661746887e-08; /* 0x3E54AE0B, 0xF85DDF44 =1/ln2 tail*/
 	    if(hy==0x40000000) return x*x; /* y is  2 */
 	    if(hy==0x3fe00000) {	/* y is  0.5 */
 		if(hx>=0)	/* x >= +0 */
-		return sqrt(x);	
+		return __ieee754_sqrt(x);	
 	    }
 	}
 
