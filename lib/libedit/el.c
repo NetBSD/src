@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.38 2004/02/27 14:52:18 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.39 2004/07/08 00:51:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.38 2004/02/27 14:52:18 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.39 2004/07/08 00:51:36 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -522,10 +522,13 @@ el_editmode(EditLine *el, int argc, const char **argv)
 		return (-1);
 
 	how = argv[1];
-	if (strcmp(how, "on") == 0)
+	if (strcmp(how, "on") == 0) {
 		el->el_flags &= ~EDIT_DISABLED;
-	else if (strcmp(how, "off") == 0)
+		tty_rawmode(el);
+	} else if (strcmp(how, "off") == 0) {
+		tty_cookedmode(el);
 		el->el_flags |= EDIT_DISABLED;
+	}
 	else {
 		(void) fprintf(el->el_errfile, "edit: Bad value `%s'.\n", how);
 		return (-1);
