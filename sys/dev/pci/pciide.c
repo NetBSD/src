@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.108 2001/03/12 09:53:28 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.109 2001/03/20 17:54:39 bouyer Exp $	*/
 
 
 /*
@@ -925,7 +925,7 @@ pciide_dma_init(v, channel, drive, databuf, datalen, flags)
 
 	error = bus_dmamap_load(sc->sc_dmat,
 	    dma_maps->dmamap_xfer,
-	    databuf, datalen, NULL, BUS_DMA_NOWAIT);
+	    databuf, datalen, NULL, BUS_DMA_NOWAIT | BUS_DMA_STREAMING);
 	if (error) {
 		printf("%s:%d: unable to load xfer DMA map for"
 		    "drive %d, error=%d\n", sc->sc_wdcdev.sc_dev.dv_xname,
