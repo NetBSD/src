@@ -38,6 +38,7 @@ void
 scsi_user_done(xs)
 	struct scsi_xfer *xs;
 {
+#ifdef notyet
 	struct buf *bp;
 	scsireq_t *screq;
 
@@ -95,6 +96,7 @@ scsi_user_done(xs)
 	}
 	biodone(bp); 	/* we're waiting on it in scsi_strategy() */
 	return;		/* it'll free the xs and restart any queue */
+#endif
 }
 
 
@@ -115,6 +117,7 @@ scsi_user_done(xs)
  */
 void scsistrategy(struct buf *bp)
 {
+#ifdef notyet
 	int err;
 	struct	scsi_link *sc_link = bp->b_sc_link;
 	scsireq_t *screq;
@@ -191,6 +194,7 @@ void scsistrategy(struct buf *bp)
 	splx(s);
 	SC_DEBUG(sc_link, SDEV_DB3, ("back from sleep\n"));
 	return;
+#endif
 }
 
 void scsiminphys(struct buf *bp)
